@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.6 2003/10/06 04:19:41 itojun Exp $ 
+ *	$Id: curses.c,v 1.7 2003/10/06 09:18:41 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -58,22 +58,22 @@ init_screen(void)
 	int i, j;
 	struct cfg_entry *p;
 	struct isdn_ctrl_state *ctrl;
-	
+
 	initscr();			/* curses init */
 	ncontroller = count_ctrl_states();
-	
+
 	if((COLS < 80) || (LINES < 24))
 	{
 		logit(LL_ERR, "ERROR, minimal screensize must be 80x24, is %dx%d, terminating!",COLS, LINES);
 		do_exit(1);
-	}		
+	}
 
 	noecho();
 	raw();
 
 	uheight = ncontroller * 2; /* cards * b-channels */
 	lheight = LINES - uheight - 6 + 1; /* rest of display */
-	
+
 	if((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
 	{
 		logit(LL_ERR, "ERROR, curses init upper window, terminating!");
@@ -91,26 +91,26 @@ init_screen(void)
 		logit(LL_ERR, "ERROR, curses init lower window, LINES = %d, lheight = %d, uheight = %d, terminating!", LINES, lheight, uheight);
 		exit(1);
 	}
-	
+
 	scrollok(lower_w, 1);
 
-	snprintf(buffer, sizeof(buffer), "----- isdn controller channel state ------------- isdnd %02d.%02d.%d [pid %d] -", VERSION, REL, STEP, (int)getpid());	
+	snprintf(buffer, sizeof(buffer), "----- isdn controller channel state ------------- isdnd %02d.%02d.%d [pid %d] -", VERSION, REL, STEP, (int)getpid());
 
 	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(0, 0);
 	standout();
 	addstr(buffer);
 	standend();
-	
+
 	move(1, 0);
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
-	
-	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");	
+
+	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");
 	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+2, 0);
 	standout();
@@ -119,13 +119,13 @@ init_screen(void)
 
 	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
 	while(strlen(buffer) < COLS && strlen(buffer) < sizeof(buffer) - 1)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+4, 0);
 	standout();
 	addstr(buffer);
 	standend();
-	
+
 	refresh();
 
 	for (ctrl = get_first_ctrl_state(), i=j=0; ctrl; ctrl = NEXT_CTRL(ctrl), i++, j+=2)
@@ -165,17 +165,17 @@ do_menu(void)
 		"2 - (H)angup (choose a channel)",
 		"3 - (R)eread config file",
 		"4 - (S)how card types",
-		"5 - (B)udget information",				
-		"6 - (Q)uit the program",		
+		"5 - (B)udget information",
+		"6 - (Q)uit the program",
 	};
 
 	WINDOW *menu_w;
 	int c;
 	int mpos;
 	struct pollfd set[1];
-	
+
 	/* create a new window in the lower screen area */
-	
+
 	if((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init menu window!");
@@ -183,29 +183,29 @@ do_menu(void)
 	}
 
 	/* create a border around the window */
-	
+
 	box(menu_w, '|', '-');
 
 	/* add a title */
-	
+
 	wstandout(menu_w);
 	mvwaddstr(menu_w, 0, (WMENU_LEN / 2) - (strlen(WMENU_TITLE) / 2), WMENU_TITLE);
-	wstandend(menu_w);	
+	wstandend(menu_w);
 
 	/* fill the window with the menu options */
-	
+
 	for(mpos=0; mpos <= (WMITEMS-1); mpos++)
 		mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 
 	/* highlight the first menu option */
-	
+
 	mpos = 0;
 	wstandout(menu_w);
 	mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 	wstandend(menu_w);
 
 	/* input loop */
-	
+
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
 	for(;;)
@@ -213,10 +213,10 @@ do_menu(void)
 		wrefresh(menu_w);
 
 		/* if no char is available within timeout, exit menu*/
-		
+
 		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			goto mexit;
-		
+
 		c = wgetch(menu_w);
 
 		switch(c)
@@ -293,14 +293,14 @@ do_menu(void)
 					case WBUDGET:
 						display_budget();
 						break;
-						
+
 					case WSHOW:
 						display_cards();
 						break;
 				}
 				goto mexit;
 				break;
-		
+
 			default:
 				goto mexit;
 				break;
@@ -322,7 +322,7 @@ menuexit(WINDOW *menu_w)
 	delwin(menu_w);
 
 	/* re-display the original lower window contents */
-	
+
 	touchwin(mid_w);
 	wrefresh(mid_w);
 
@@ -335,10 +335,10 @@ menuexit(WINDOW *menu_w)
 	move(1, 0);
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
-	
-	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");	
+
+	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");
 	while(strlen(buffer) < COLS)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+2, 0);
 	standout();
@@ -347,13 +347,13 @@ menuexit(WINDOW *menu_w)
 
 	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
 	while(strlen(buffer) < COLS)
-		strcat(buffer, "-");	
+		strlcat(buffer, "-", sizeof(buffer));
 
 	move(uheight+4, 0);
 	standout();
 	addstr(buffer);
 	standend();
-		
+
 	refresh();
 }
 
@@ -364,7 +364,7 @@ void
 display_charge(struct cfg_entry *cep)
 {
 	mvwprintw(upper_w, CHPOS(cep), H_UNITS, "%d", cep->charge);
-	wclrtoeol(upper_w);	
+	wclrtoeol(upper_w);
 	wrefresh(upper_w);
 }
 
@@ -375,7 +375,7 @@ void
 display_ccharge(struct cfg_entry *cep, int units)
 {
 	mvwprintw(upper_w, CHPOS(cep), H_UNITS, "(%d)", units);
-	wclrtoeol(upper_w);	
+	wclrtoeol(upper_w);
 	wrefresh(upper_w);
 }
 
@@ -414,18 +414,18 @@ display_connect(struct cfg_entry *cep)
 		if(cep->direction == DIR_IN)
 			snprintf(buffer, sizeof(buffer), "%s/%s", cep->name, cep->real_phone_incoming);
 		else
-			snprintf(buffer, sizeof(buffer), "%s/%s", cep->name, cep->remote_phone_dialout);	
+			snprintf(buffer, sizeof(buffer), "%s/%s", cep->name, cep->remote_phone_dialout);
 	}
-		
+
 	buffer[H_IFN - H_TELN - 1] = '\0';
 
 	mvwprintw(upper_w, CHPOS(cep), H_TELN, "%s", buffer);
 
 	/* interface */
-	
+
 	mvwprintw(upper_w, CHPOS(cep), H_IFN, "%s%d ",
 			cep->usrdevicename, cep->usrdeviceunit);
-	
+
 	mvwprintw(upper_w, CHPOS(cep), H_IO,
 		cep->direction == DIR_OUT ? "out" : "in");
 
@@ -436,7 +436,7 @@ display_connect(struct cfg_entry *cep)
 
 	if(do_bell)
 		display_bell();
-	
+
 	wrefresh(upper_w);
 }
 
@@ -453,7 +453,7 @@ display_disconnect(struct cfg_entry *cep)
 
 	if(do_bell)
 		display_bell();
-	
+
 }
 
 /*---------------------------------------------------------------------------*
@@ -576,14 +576,14 @@ display_chans(void)
 	else
 	{
 		nlines = 5;
-		ncols = 22;		
+		ncols = 22;
 	}
 
 	pos_y = WMENU_POSLN + 4;
 	pos_x = WMENU_POSCO + 10;
 
 	/* create a new window in the lower screen area */
-	
+
 	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init channel window!");
@@ -593,14 +593,14 @@ display_chans(void)
 	}
 
 	/* create a border around the window */
-	
+
 	box(chan_w, '|', '-');
 
 	/* add a title */
-	
+
 	wstandout(chan_w);
 	mvwaddstr(chan_w, 0, (ncols / 2) - (strlen("Channels") / 2), "Channels");
-	wstandend(chan_w);	
+	wstandend(chan_w);
 
 	/* no active channels */
 	if (cnt == 0)
@@ -649,10 +649,10 @@ display_chans(void)
 		wrefresh(chan_w);
 
 		/* if no char is available within timeout, exit menu*/
-		
+
 		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			break;
-		
+
 		ncols = wgetch(chan_w);
 
 		if (!(isdigit(ncols)))
@@ -696,14 +696,14 @@ display_cards(void)
 	struct pollfd set[1];
 	int i;
 	struct isdn_ctrl_state *ctrl;
-	
+
 	nlines = 6+ncontroller;
 	ncols = 60;
 	pos_y = WMENU_POSLN;
 	pos_x = WMENU_POSCO;
 
 	/* create a new window in the lower screen area */
-	
+
 	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init channel window!");
@@ -711,11 +711,11 @@ display_cards(void)
 	}
 
 	/* create a border around the window */
-	
+
 	box(chan_w, '|', '-');
 
 	/* add a title */
-	
+
 	wstandout(chan_w);
 	mvwaddstr(chan_w, 0, (ncols / 2) - (strlen("Cards") / 2), "Cards");
 	wstandend(chan_w);
@@ -730,7 +730,7 @@ display_cards(void)
 	}
 
 	wrefresh(chan_w);
-	
+
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
 
@@ -760,7 +760,7 @@ display_budget(void)
 	int minutes;
 	int hours;
 	int days;
-	
+
 	nlines = 0;
 	ncols = 73;
 	pos_y = WMENU_POSLN;
@@ -775,11 +775,11 @@ display_budget(void)
 
 	if(nlines == 0)
 		return;
-		
-	nlines += 6;	
+
+	nlines += 6;
 
 	/* create a new window in the lower screen area */
-	
+
 	if((bud_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init budget window!");
@@ -791,16 +791,16 @@ display_budget(void)
 
 	minutes = (time_t) (uptime / 60) % 60;
 	hours = (time_t) (uptime / (60*60)) % (60*60);
-	days = (time_t) (uptime / (60*60*24)) % (60*60*24);	
+	days = (time_t) (uptime / (60*60*24)) % (60*60*24);
 
 	uptime = uptime / (60*60);
-	
+
 	/* create a border around the window */
-	
+
 	box(bud_w, '|', '-');
 
 	/* add a title */
-	
+
 	wstandout(bud_w);
 	mvwaddstr(bud_w, 0, (ncols / 2) - (strlen("Budget") / 2), "Budget");
 	wstandend(bud_w);
@@ -812,7 +812,7 @@ display_budget(void)
 		hours == 1 ? "hour" : "hours",
 		minutes,
 		minutes == 1 ? "minute" : "minutes");
-		
+
 	mvwprintw(bud_w, 2, 2, "name     t period rest   ncall rest  rqsts /hr  rdone /hr  rrjct /hr ");
 	mvwprintw(bud_w, 3, 2, "-------- - ------ ------ ----- ----- ----- ---- ----- ---- ----- ----");
 
@@ -854,7 +854,7 @@ display_budget(void)
 	}
 
 	wrefresh(bud_w);
-	
+
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
 
