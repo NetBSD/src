@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.16 2003/06/16 08:40:11 itojun Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.17 2003/06/27 22:31:29 wiz Exp $
 .\"	$KAME: racoon.conf.5,v 1.101 2002/07/17 03:43:38 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,9 +65,9 @@ Parameters are specified with
 font.
 Square brackets
 .Po
-.Ql \*(lB
+.Ql \&[
 and
-.Ql \*(rB
+.Ql \&]
 .Pc
 are used to show optional keywords and parameters.
 Note that
@@ -77,24 +77,24 @@ numbers.
 The
 .Ar port
 number is always enclosed by
-.Ql \*(lB
+.Ql \&[
 and
-.Ql \*(rB .
+.Ql \&] .
 In this case, the port number is not an optional keyword.
 If it is possible to omit
 .Ar port
 number,
 the expression becomes
-.Bq Ic Bq Ar port .
+.Bq Bq Ar port .
 The vertical bar
 .Pq Ql \*(Ba
 is used to indicate
 a choice between optional parameters.
 Parentheses
 .Po
-.Ql \*(lP
+.Ql \&(
 and
-.Ql \*(rP
+.Ql \&)
 .Pc
 are used to group keywords and parameters when necessary.
 Major parameters are listed below.
@@ -115,9 +115,9 @@ means IPv6 and/or IPv4 address.
 .It Ar port
 means a TCP/UDP port number.
 The port number is always enclosed by
-.Ql \*(lB
+.Ql \&[
 and
-.Ql \*(rB .
+.Ql \&] .
 .It Ar timeunit
 is one of following:
 .Ic sec , secs , second , seconds ,
@@ -627,7 +627,8 @@ The default is off.
 .It Ic maximum_length Ar number ;
 define a maximum padding length.
 If
-.Ic randomize_length is off, this is ignored.
+.Ic randomize_length
+is off, this is ignored.
 The default is 20 bytes.
 .It Ic exclusive_tail (on \(ba off) ;
 means to put the number of pad bytes minus one into last part of the padding.
