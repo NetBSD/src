@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.134 1998/10/19 22:19:26 tron Exp $	*/
+/*	$NetBSD: init_main.c,v 1.134.2.1 1999/04/09 04:19:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -138,6 +138,7 @@ struct	timeval runtime;
 static void check_console __P((struct proc *p));
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
+static void start_aiodoned __P((struct proc *));
 static void start_reaper __P((struct proc *));
 void main __P((void));
 
@@ -422,7 +423,12 @@ main()
 		panic("fork pager");
 	cpu_set_kpc(p2, start_pagedaemon);
 
-	/* Create process 3 (the process reaper). */
+	/* Create process 3 (the aiodone daemon). */
+	if (fork1(p, FORK_SHAREVM, NULL, &p2))
+		panic("fork aiodoned");
+	cpu_set_kpc(p2, start_aiodoned);
+
+	/* Create process 4 (the process reaper). */
 	if (fork1(p, FORK_SHAREVM, NULL, &p2))
 		panic("fork reaper");
 	cpu_set_kpc(p2, start_reaper);
@@ -607,12 +613,26 @@ start_pagedaemon(p)
 }
 
 static void
+start_aiodoned(p)
+	struct proc *p;
+{
+	/*
+	 * Now in process 3.
+	 */
+	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
+	memcpy(curproc->p_comm, "aiodoned", sizeof("aiodoned"));
+	uvm_aiodone_daemon();
+	/* NOTREACHED */
+}
+
+
+static void
 start_reaper(p)
 	struct proc *p;
 {
 
 	/*
-	 * Now in process 3.
+	 * Now in process 4.
 	 */
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	memcpy(curproc->p_comm, "reaper", sizeof("reaper"));
