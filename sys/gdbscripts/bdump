@@ -1,3 +1,5 @@
+#	$NetBSD: bdump,v 1.2 1997/02/12 23:35:06 gwr Exp $
+
 # Count the number of buffers in the buffer cache for which
 # bp->b_flags & $bufcount_match is non-0.
 #

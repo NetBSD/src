@@ -1,3 +1,5 @@
+#	$NetBSD: stats,v 1.2 1997/02/12 23:35:09 gwr Exp $
+
 #	@(#)stats	8.1 (Berkeley) 6/10/93
 #
 # disk statistics
