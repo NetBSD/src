@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23 1997/11/13 03:16:50 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.24 1998/01/15 22:25:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -63,6 +63,8 @@
  * process_set_pc(proc)
  *	Set the process's program counter.
  */
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

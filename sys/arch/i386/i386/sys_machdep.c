@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.35 1997/11/13 03:16:51 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.36 1998/01/15 22:26:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -39,6 +39,8 @@
  *
  *	@(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
  */
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

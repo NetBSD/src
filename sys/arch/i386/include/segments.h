@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.26 1997/11/13 03:16:53 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.27 1998/01/15 22:26:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -62,6 +62,10 @@
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_vm86.h"
+#endif
 
 #ifdef VM86
 #define	USERMODE(c, f)		(ISPL(c) == SEL_UPL || ((f) & PSL_VM) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.31 1997/03/19 03:52:02 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.32 1998/01/15 22:26:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,6 +66,9 @@
 #define	PSL_MBZ		0xffc08028	/* must be zero bits */
 
 #define	PSL_USERSET	(PSL_MBO | PSL_I)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_vm86.h"
+#endif
 #ifdef VM86
 #define	PSL_USERSTATIC	(PSL_MBO | PSL_MBZ | PSL_I | PSL_IOPL | PSL_NT | PSL_VIF | PSL_VIP)
 #else

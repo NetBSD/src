@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 1997/11/27 11:53:58 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 1998/01/15 22:26:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -172,6 +172,9 @@ int	i386_set_ldt __P((struct proc *, char *, register_t *));
 void	isa_defaultirq __P((void));
 int	isa_nmi __P((void));
 
+#if !defined(_LKM)
+#include "opt_vm86.h"
+#endif
 #ifdef VM86
 /* vm86.c */
 void	vm86_gpfault __P((struct proc *, int));

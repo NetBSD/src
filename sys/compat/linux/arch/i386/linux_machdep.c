@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.34 1997/10/16 04:23:38 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.35 1998/01/15 22:25:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

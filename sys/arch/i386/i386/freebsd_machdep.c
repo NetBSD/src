@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.13 1997/10/16 04:23:36 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.14 1998/01/15 22:25:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -39,6 +39,8 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
