@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tstp.c	5.7 (Berkeley) 8/23/92";*/
-static char rcsid[] = "$Id: tstp.c,v 1.3 1993/08/07 05:49:09 mycroft Exp $";
+static char rcsid[] = "$Id: tstp.c,v 1.4 1993/08/10 02:12:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <curses.h>
@@ -65,15 +65,15 @@ tstp(signo)
 
 	/* Stop ourselves. */
 	(void)sigemptyset(&set);
-	(void)sigaddset(&set, SIGTSTP);
+	(void)sigaddset(&set, signo);
 	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
-	(void)signal(SIGTSTP, SIG_DFL);
-	(void)kill(0, SIGTSTP);
+	(void)signal(signo, SIG_DFL);
+	(void)kill(0, signo);
 
 	/* Time passes ... */
 
 	/* Reset the signal handler. */
-	(void)signal(SIGTSTP, tstp);
+	(void)signal(signo, tstp);
 
 	/* Reset the terminal state. */
 	(void)tcsetattr(STDIN_FILENO, TCSADRAIN, &save);
