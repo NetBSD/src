@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.59 2002/02/10 12:01:59 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.60 2002/03/04 00:34:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.59 2002/02/10 12:01:59 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.60 2002/03/04 00:34:35 enami Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.59 2002/02/10 12:01:59 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.60 2002/03/04 00:34:35 enami Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3411,6 +3411,8 @@ Job_TokenWithdraw()
     char tok;
     int count;
 
+    wantToken = FALSE;
+
     if (aborting)
 	    return FALSE;
 
@@ -3418,13 +3420,11 @@ Job_TokenWithdraw()
 	if (DEBUG(JOB))
 	    printf("first one's free\n");
 	jobTokensRunning++;
-	wantToken = FALSE;
 	return TRUE;
     }
     if (jobTokensFree > 0) {
 	jobTokensFree--;
 	jobTokensRunning++;
-	wantToken = FALSE;
 	return TRUE;
     }
     count = read(job_pipe[0], &tok, 1);
@@ -3439,7 +3439,6 @@ Job_TokenWithdraw()
 	wantToken = TRUE;
 	return FALSE;
     }
-    wantToken = FALSE;
     jobTokensRunning++;
     if (DEBUG(JOB))
 	printf("withdrew token\n");
