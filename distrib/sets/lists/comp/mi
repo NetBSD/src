@@ -1084,6 +1084,7 @@
 ./usr/share/man/cat1/f77.0
 ./usr/share/man/cat1/fgen.0
 ./usr/share/man/cat1/flex.0
+./usr/share/man/cat1/fort77.0
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0
 ./usr/share/man/cat1/g77.0
@@ -2078,6 +2079,7 @@
 ./usr/share/man/man1/f77.1
 ./usr/share/man/man1/fgen.1
 ./usr/share/man/man1/flex.1
+./usr/share/man/man1/fort77.1
 ./usr/share/man/man1/fpr.1
 ./usr/share/man/man1/g++.1
 ./usr/share/man/man1/g77.1
