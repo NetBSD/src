@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.1 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.2 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -2225,7 +2225,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 	sun3: Fixed ufsboot for Sun3/260.  The sun3 port now has a full
 		set of boot programs for NFS or disk boot that should
 		work on any device known to the Sun PROM. [GWR 19950812]
-	ccd(4): new verion of ccd, along with run-time configuration utility
+	ccd(4): new version of ccd, along with run-time configuration utility
 		and conf.c/MAKEDEV entries for each port. [thorpej 19950817]
 	amiga: siop (ncr53710) and sbic (amd33c93) now support disconnect
 		siop from osymh@gemini.oscs.montana.edu (Michael L. Hitch)
