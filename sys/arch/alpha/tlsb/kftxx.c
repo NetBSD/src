@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.7 1998/01/12 10:21:23 thorpej Exp $ */
+/* $NetBSD: kftxx.c,v 1.8 1998/05/13 23:22:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.7 1998/01/12 10:21:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.8 1998/05/13 23:22:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,9 +111,9 @@ kftattach(parent, self, aux)
 	struct kft_dev_attach_args ka;
 	int hoseno;
 
-	sc->sc_dev = *self;;
 	sc->sc_node = ta->ta_node;
 	sc->sc_dtype = ta->ta_dtype;
+
 	printf("\n");
 
 	for (hoseno = 0; hoseno < MAXHOSE; hoseno++) {
