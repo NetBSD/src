@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.11 1999/09/30 23:01:12 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.12 1999/12/17 03:21:12 tsubai Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -49,6 +49,7 @@ extern int scintr __P((void));
 extern void scsi_hardreset __P((void));
 extern int sc_busy __P((struct sc_softc *, int));
 extern paddr_t kvtophys __P((vaddr_t));
+extern int dma_intr __P((void *));
 
 static int sc_disconnect = IDT_DISCON;
 
@@ -113,6 +114,8 @@ cxd1185_attach(parent, self, aux)
 	DELAY(100000);
 
 	printf("\n");
+	hb_intr_establish(0, IPL_BIO, dma_intr, sc);
+
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
 
@@ -349,10 +352,13 @@ sc_done(scb)
 	xs->status = 0;
 
 	if (scb->istatus != INST_EP) {
-		if (! cold)
+		if (scb->istatus == INST_EP|INST_TO)
+			xs->error = XS_SELTIMEOUT;
+		else {
 			printf("SC(i): [istatus=0x%x, tstatus=0x%x]\n",
 				scb->istatus, scb->tstatus);
-		xs->error = XS_DRIVER_STUFFUP;
+			xs->error = XS_DRIVER_STUFFUP;
+		}
 	}
 
 	switch (scb->tstatus) {
