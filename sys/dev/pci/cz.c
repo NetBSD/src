@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.3 2000/05/19 06:01:14 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.4 2000/05/23 01:02:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -101,7 +101,7 @@
 	(C_IN_MDSR | C_IN_MRI | C_IN_MRTS | C_IN_MCTS | C_IN_TXBEMPTY |	\
 	 C_IN_TXFEMPTY | C_IN_TXLOWWM | C_IN_RXHIWM | C_IN_RXNNDT |	\
 	 C_IN_MDCD | C_IN_PR_ERROR | C_IN_FR_ERROR | C_IN_OVR_ERROR |	\
-	 C_IN_RXOFL | C_IN_IOCTLW)
+	 C_IN_RXOFL | C_IN_IOCTLW | C_IN_RXBRK)
 
 /*
  * cztty_softc:
@@ -757,6 +757,12 @@ cz_intr(void *arg)
 			    CHNCTL_RS_STATUS)));
 			break;
 
+		case C_CM_MDSR:
+		case C_CM_MRI:
+		case C_CM_CTS:
+		case C_CM_RTS:
+			break;
+
 		case C_CM_PR_ERROR:
 			sc->sc_parity_errors++;
 			goto error_common;
@@ -771,6 +777,10 @@ cz_intr(void *arg)
 			if (sc->sc_errors++ == 0)
 				callout_reset(&sc->sc_diag_ch, 60 * hz,
 				    cztty_diag, sc);
+			break;
+
+		case C_CM_RXBRK:
+			printf("Got BREAK\n");
 			break;
 
 		default:
@@ -891,6 +901,9 @@ cztty_shutdown(struct cztty_softc *sc)
 	CZ_FWCTL_WRITE(cz, BRDCTL_HCMD_CHANNEL, sc->sc_channel);
 	CZ_PLX_WRITE(cz, PLX_PCI_LOCAL_DOORBELL, C_CM_IOCTL);
 
+#ifdef CZ_DEBUG
+		printf("last close with %d open channels and no interrupt handler == %d", cz->cz_nopenchan, (cz->cz_ih == NULL));
+#endif
 	if ((--cz->cz_nopenchan == 0) && (cz->cz_ih == NULL)) {
 #ifdef CZ_DEBUG
 		printf("%s: Disabling polling\n", cz->cz_dev.dv_xname);
@@ -955,6 +968,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 		cz_wait_pci_doorbell(cz, "czopen");
 
 		CZTTY_CHAN_WRITE(sc, CHNCTL_OP_MODE, C_CH_ENABLE);
+		sc->sc_chanctl_rs_control |= C_RS_DTR | C_RS_CTS | C_RS_RTS;
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -1353,11 +1367,9 @@ czttyparam(struct tty *tp, struct termios *t)
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		sc->sc_rs_control_dtr = C_RS_DTR;
 		sc->sc_chanctl_hw_flow = C_RS_CTS | C_RS_RTS;
-#if 0
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
-		sc->sc_rs_control_dtr = C_RS_RTS;
+		sc->sc_rs_control_dtr = 0;
 		sc->sc_chanctl_hw_flow = C_RS_DCD | C_RS_DTR;
-#endif
 	} else {
 		/*
 		 * If no flow control, then always set RTS.  This will make
@@ -1391,6 +1403,14 @@ czttyparam(struct tty *tp, struct termios *t)
 	CZTTY_CHAN_WRITE(sc, CHNCTL_COMM_PARITY, sc->sc_chanctl_comm_parity);
 	CZTTY_CHAN_WRITE(sc, CHNCTL_HW_FLOW, sc->sc_chanctl_hw_flow);
 	CZTTY_CHAN_WRITE(sc, CHNCTL_RS_CONTROL, sc->sc_chanctl_rs_control);
+
+#ifdef CZ_DEBUG
+	printf(
+	    "cz0: baud %d data %x parity %x\n\thwflow %x rscont %x dtrflg %x\n",
+	    sc->sc_chanctl_comm_baud, sc->sc_chanctl_comm_data_l,
+	    sc->sc_chanctl_comm_parity, sc->sc_chanctl_hw_flow,
+	    sc->sc_chanctl_rs_control,  sc->sc_rs_control_dtr);
+#endif
 
 	CZ_FWCTL_WRITE(cz, BRDCTL_HCMD_CHANNEL, sc->sc_channel);
 	CZ_PLX_WRITE(cz, PLX_PCI_LOCAL_DOORBELL, C_CM_IOCTL);
