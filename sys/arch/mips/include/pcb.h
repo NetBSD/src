@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.9 1999/01/16 03:12:18 nisimura Exp $	*/
+/*	$NetBSD: pcb.h,v 1.10 2000/03/28 01:06:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,5 +65,5 @@ struct md_coredump {
 };
 
 #ifdef _KERNEL
-struct pcb *curpcb;			/* the current running pcb */
+extern struct pcb *curpcb;			/* the current running pcb */
 #endif
