@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/08/04 03:40:43 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1999/05/09 18:51:36 eeh Exp $
 
 SRCS+=  __main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -18,22 +18,22 @@ SRCS+=	mul.S saveregs.S umul.S
 SRCS+=	rem.S sdiv.S udiv.S urem.S
 CLEANFILES+=rem.S sdiv.S udiv.S urem.S
 
-sdiv.S: divrem.m4
+sdiv.S: $M/divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
 	(echo "define(NAME,\`.div')define(OP,\`div')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 
-udiv.S: divrem.m4
+udiv.S: $M/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.udiv')define(OP,\`div')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 
-rem.S:	divrem.m4
+rem.S:	$M/divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
 	(echo "define(NAME,\`.rem')define(OP,\`rem')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 
-urem.S: divrem.m4
+urem.S: $M/divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
