@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.5 2002/01/13 14:44:15 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.6 2002/01/13 15:07:28 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -970,6 +970,18 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/*
+	 * Every card I've seen has had their channels swapped with respect
+	 * to the mixer. Ie:
+	 *  $ mixerctl -w outputs.master=0,191
+	 * Would result in the _right_ speaker being turned off.
+	 * 
+	 * So, we will swap the left and right mixer channels to compensate
+	 * for this.
+	 */ 
+	sc->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
+	sc->codec_flags |= AC97_HOST_DONT_READ;
 
 	/* Attach AC97 host interface */
 	sc->host_if.arg = self;
