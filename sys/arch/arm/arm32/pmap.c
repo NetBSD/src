@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2002/08/09 21:49:09 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2002/08/10 00:11:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2002/08/09 21:49:09 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2002/08/10 00:11:51 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2460,18 +2460,17 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *pte = NULL, *ptes;
 	struct vm_page *pg;
-	int armprot;
 	int flush = 0;
-	paddr_t pa;
 
 	PDEBUG(0, printf("pmap_protect: pmap=%p %08lx->%08lx %x\n",
 	    pmap, sva, eva, prot));
 
 	if (~prot & VM_PROT_READ) {
-		/* Just remove the mappings. */
+		/*
+		 * Just remove the mappings.  pmap_update() is not required
+		 * here since the caller should do it.
+		 */
 		pmap_remove(pmap, sva, eva);
-		/* pmap_update not needed as it should be called by the caller
-		 * of pmap_protect */
 		return;
 	}
 	if (prot & VM_PROT_WRITE) {
@@ -2522,26 +2521,17 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		flush = 1;
 
-		armprot = 0;
-		if (sva < VM_MAXUSER_ADDRESS)
-			armprot |= L2_S_PROT_U;
-		else if (sva < VM_MAX_ADDRESS)
-			armprot |= L2_S_PROT_W;  /* XXX Ekk what is this ? */
-		*pte = (*pte & 0xfffff00f) | armprot;
-
-		pa = pmap_pte_pa(pte);
-
-		/* Get the physical page index */
+		*pte &= ~L2_S_PROT_W;		/* clear write bit */
 
 		/* Clear write flag */
-		if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
+		if ((pg = PHYS_TO_VM_PAGE(pmap_pte_pa(pte))) != NULL) {
 			simple_lock(&pg->mdpage.pvh_slock);
 			(void) pmap_modify_pv(pmap, sva, pg, PVF_WRITE, 0);
 			pmap_vac_me_harder(pmap, pg, ptes, FALSE);
 			simple_unlock(&pg->mdpage.pvh_slock);
 		}
 
-next:
+ next:
 		sva += NBPG;
 		pte++;
 	}
