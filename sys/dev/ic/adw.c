@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.6 1998/12/09 08:47:18 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.7 1999/02/23 20:18:16 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -81,7 +81,7 @@ static void adw_start_ccbs __P((ADW_SOFTC *));
 
 static int adw_scsi_cmd __P((struct scsipi_xfer *));
 static int adw_build_req __P((struct scsipi_xfer *, ADW_CCB *));
-static void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *));
+static void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *));
 static void adwminphys __P((struct buf *));
 static void adw_wide_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 
@@ -108,7 +108,7 @@ struct scsipi_device adw_dev =
 
 
 /******************************************************************************/
-/* Control Blocks routines                        */
+/*                                Control Blocks routines                     */
 /******************************************************************************/
 
 
@@ -224,7 +224,7 @@ adw_init_ccb(sc, ccb)
 	ADW_SOFTC      *sc;
 	ADW_CCB        *ccb;
 {
-	int             error;
+	int	hashnum, error;
 
 	/*
          * Create the DMA map for this CCB.
@@ -238,6 +238,16 @@ adw_init_ccb(sc, ccb)
 		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
+
+	/*
+	 * put in the phystokv hash table
+	 * Never gets taken out.
+	 */
+	ccb->hashkey = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    ADW_CCB_OFF(ccb);
+	hashnum = CCB_HASH(ccb->hashkey);
+	ccb->nexthash = sc->sc_ccbhash[hashnum];
+	sc->sc_ccbhash[hashnum] = ccb;
 	adw_reset_ccb(ccb);
 	return (0);
 }
@@ -283,6 +293,26 @@ out:
 
 
 /*
+ * Given a physical address, find the ccb that it corresponds to.
+ */
+ADW_CCB *
+adw_ccb_phys_kv(sc, ccb_phys)
+	ADW_SOFTC	*sc;
+	u_long		ccb_phys;
+{
+	int hashnum = CCB_HASH(ccb_phys);
+	ADW_CCB *ccb = sc->sc_ccbhash[hashnum];
+
+	while (ccb) {
+		if (ccb->hashkey == ccb_phys)
+			break;
+		ccb = ccb->nexthash;
+	}
+	return (ccb);
+}
+
+
+/*
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
 static void
@@ -322,7 +352,7 @@ adw_start_ccbs(sc)
 
 
 /******************************************************************************/
-/* SCSI layer interfacing routines                    */
+/*                           SCSI layer interfacing routines                  */
 /******************************************************************************/
 
 
@@ -587,9 +617,11 @@ adw_build_req(xs, ccb)
 	bzero(scsiqp, sizeof(ADW_SCSI_REQ_Q));
 
 	/*
-	 * Set the ADW_SCSI_REQ_Q 'ccb_ptr' to point to the CCB structure.
+	 * Set the ADW_SCSI_REQ_Q 'ccb_ptr' to point to the
+	 * physical CCB structure.
 	 */
-	scsiqp->ccb_ptr = (ulong) ccb;
+	scsiqp->ccb_ptr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+		    ADW_CCB_OFF(ccb);
 
 
 	/*
@@ -604,7 +636,7 @@ adw_build_req(xs, ccb)
 	scsiqp->target_id = sc_link->scsipi_scsi.target;
 	scsiqp->target_lun = sc_link->scsipi_scsi.lun;
 
-	scsiqp->vsense_addr = (ulong) & ccb->scsi_sense;
+	scsiqp->vsense_addr = &ccb->scsi_sense;
 	scsiqp->sense_addr = sc->sc_dmamap_control->dm_segs[0].ds_addr +
 		ADW_CCB_OFF(ccb) + offsetof(struct adw_ccb, scsi_sense);
 	scsiqp->sense_len = sizeof(struct scsipi_sense_data);
@@ -655,12 +687,10 @@ adw_build_req(xs, ccb)
 		 * Build scatter-gather list.
 		 */
 		scsiqp->data_cnt = xs->datalen;
-		scsiqp->vdata_addr = (ulong) xs->data;
+		scsiqp->vdata_addr = xs->data;
 		scsiqp->data_addr = ccb->dmamap_xfer->dm_segs[0].ds_addr;
-		scsiqp->sg_list_ptr = &ccb->sg_block[0];
-		bzero(scsiqp->sg_list_ptr,
-				sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
-		adw_build_sglist(ccb, scsiqp);
+		bzero(ccb->sg_block, sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
+		adw_build_sglist(ccb, scsiqp, ccb->sg_block);
 	} else {
 		/*
                  * No data xfer, use non S/G values.
@@ -668,7 +698,6 @@ adw_build_req(xs, ccb)
 		scsiqp->data_cnt = 0;
 		scsiqp->vdata_addr = 0;
 		scsiqp->data_addr = 0;
-		scsiqp->sg_list_ptr = NULL;
 	}
 
 	return (1);
@@ -679,13 +708,13 @@ adw_build_req(xs, ccb)
  * Build scatter-gather list for Wide Boards.
  */
 static void
-adw_build_sglist(ccb, scsiqp)
+adw_build_sglist(ccb, scsiqp, sg_block)
 	ADW_CCB        *ccb;
 	ADW_SCSI_REQ_Q *scsiqp;
+	ADW_SG_BLOCK   *sg_block;
 {
 	struct scsipi_xfer *xs = ccb->xs;
 	ADW_SOFTC      *sc = xs->sc_link->adapter_softc;
-	ADW_SG_BLOCK   *sg_block = scsiqp->sg_list_ptr;
 	ulong           sg_block_next_addr;	/* block and its next */
 	ulong           sg_block_physical_addr;
 	int             sg_block_index, i;	/* how many SG entries */
@@ -838,7 +867,7 @@ adw_watchdog(arg)
 
 
 /******************************************************************************/
-/* NARROW and WIDE boards Interrupt callbacks                */
+/*                           WIDE boards Interrupt callbacks                  */
 /******************************************************************************/
 
 
@@ -853,11 +882,14 @@ adw_wide_isr_callback(sc, scsiq)
 	ADW_SCSI_REQ_Q *scsiq;
 {
 	bus_dma_tag_t   dmat = sc->sc_dmat;
-	ADW_CCB        *ccb = (ADW_CCB *) scsiq->ccb_ptr;
-	struct scsipi_xfer *xs = ccb->xs;
+	ADW_CCB        *ccb;
+	struct scsipi_xfer *xs;
 	struct scsipi_sense_data *s1, *s2;
 	//int           underrun = ASC_FALSE;
 
+
+	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
+	xs = ccb->xs;
 
 	untimeout(adw_timeout, ccb);
 
