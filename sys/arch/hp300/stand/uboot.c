@@ -1,4 +1,4 @@
-/*	$NetBSD: pboot.c,v 1.10 1995/10/04 07:24:31 thorpej Exp $	*/
+/*	$NetBSD: uboot.c,v 1.1 1996/06/26 17:44:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -54,11 +54,14 @@ extern	char *lowram;
 extern	int noconsole;
 extern	int cons_scode;
 
+/*
+ * XXX UFS accepts a /, NFS doesn't.
+ */
 char *name;
 char *names[] = {
-	"/netbsd", "/onetbsd", "/netbsd.old",
+	"netbsd", "onetbsd", "netbsd.old",
 };
-#define NUMNAMES	(sizeof(names)/sizeof(char *))
+#define NUMNAMES	(sizeof(names) / sizeof(char *))
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
@@ -66,9 +69,9 @@ main()
 {
 	int currname = 0;
 
-	printf("\n>> NetBSD BOOT HP9000/%s CPU\n",
+	printf("\n>> NetBSD UNIFIED BOOT HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: pboot.c,v 1.10 1995/10/04 07:24:31 thorpej Exp $\n");
+	printf(">> $NetBSD: uboot.c,v 1.1 1996/06/26 17:44:39 thorpej Exp $\n");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
@@ -87,11 +90,6 @@ main()
 			getbootdev(&howto);
 		} else
 			printf(": %s\n", name);
-
-#if 0
-		printf("Booting %s%d%c:%s @ 0x%x\n",
-		    devsw[dev].dv_name, ctlr + (8 * adapt), 'a' + part, name, x.a_entry);
-#endif
 
 		exec(name, lowram, howto);
 		printf("boot: %s\n", strerror(errno));
@@ -145,7 +143,23 @@ getbootdev(howto)
 }
 
 void
-machdep_start(entry, howto, loadaddr, ssym, esym)
+machdep_start_net(entry, howto, loadaddr, ssym, esym)
+	char *entry;
+	int howto;
+	char *loadaddr;
+	char *ssym, *esym;
+{
+
+	asm("movl %0,d7" : : "m" (howto));
+	asm("movl #0,d6");	/* tell setroot we've netbooted */
+	asm("movl %0,d5" : : "m" (cons_scode));
+	asm("movl %0,a5" : : "a" (loadaddr));
+	asm("movl %0,a4" : : "a" (esym));
+	(*((int (*)())entry))();
+}
+
+void
+machdep_start_disk_tape(entry, howto, loadaddr, ssym, esym)
 	char *entry;
 	int howto;
 	char *loadaddr;
@@ -158,4 +172,15 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	asm("movl %0,a5" : : "a" (loadaddr));
 	asm("movl %0,a4" : : "a" (esym));
 	(*((int (*)())entry))();
+}
+
+void
+machdep_start(entry, howto, loadaddr, ssym, esym)
+	char *entry;
+	int howto;
+	char *loadaddr;
+	char *ssym, *esym;
+{
+
+	(*__machdep_start)(entry, howto, loadaddr, ssym, esym);
 }

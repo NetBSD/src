@@ -1,6 +1,7 @@
-/*	$NetBSD: devopen.c,v 1.5 1995/08/05 16:47:41 thorpej Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 1996/06/26 17:44:28 thorpej Exp $	*/
 
 /*-
+ *  Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
  * 
@@ -61,10 +62,38 @@ devlookup(d, len)
     struct devsw *dp = devsw;
     int i;
     
-    for (i = 0; i < ndevs; i++, dp++)
-	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
-	    return(i);
+    for (i = 0; i < ndevs; i++, dp++) {
+	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0) {
+	    /*
+	     * Set the filesystem and startup up according to the device
+	     * being opened.
+	     */
+	    switch (i) {
+	    case 0:	/* ct */
+		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_disk_tape;
+		break;
 
+	    case 2:	/* rd */
+	    case 4:	/* sd */
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_disk_tape;
+		break;
+
+	    case 6:	/* le */
+		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_net;
+		break;
+
+	    default:
+		/* Agh!  What happened?! */
+		goto bad;
+	    }
+	    return(i);
+	}
+    }
+
+ bad:
     printf("No such device - Configured devices are:\n");
     for (dp = devsw, i = 0; i < ndevs; i++, dp++)
 	if (dp->dv_name)
@@ -187,7 +216,38 @@ devopen(f, fname, file)
 	ctlr  = B_CONTROLLER(bootdev);
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
-	
+
+	/*
+	 * Set up defaults for filesystem and startup, according to
+	 * type detetect by the BOOT ROM. 
+	 */
+	switch (dev) {
+	case 0:		/* ct */
+		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_disk_tape;
+		break;
+
+	case 2:		/* rd */
+	case 4:		/* sd */
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_disk_tape;
+		break; 
+
+	case 6:		/* le */
+		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_net;
+		break;
+
+	default:
+		/* XXX what else should we do here? */
+		printf("WARNING: BOGUS BOOT DEV TYPE 0x%x!\n", dev);
+		printf("FALLING BACK ON `sd'\n");
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		__machdep_start = machdep_start_disk_tape;
+		break;
+	}
+
+
 	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
 	    return(error);
 	
@@ -197,9 +257,9 @@ devopen(f, fname, file)
 		return(ENODEV);
 
 	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
-	
+
 	f->f_dev = dp;
-    
+
 	if ((error = (*dp->dv_open)(f, adapt, ctlr, part)) == 0)
 	    return(0);
 	
@@ -207,4 +267,4 @@ devopen(f, fname, file)
 	    adapt, ctlr, unit, part, strerror(error));
 
 	return(error);
-}    
+}

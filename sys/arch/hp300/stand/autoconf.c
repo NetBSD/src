@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1995/08/05 16:47:34 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1996/06/26 17:44:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,9 @@
  * WARNING: major numbers must match bdevsw indices in hp300/conf.c.
  */
 char rom2mdev[] = {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 0-13: none */
+	0, 0, 						/* 0-1: none */
+	6,	/* 2: network device; special */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		/* 3-13: none */
 	4,	/* 14: SCSI disk */
 	0,	/* 15: none */
 	2,	/* 16: CS/80 device on HPIB */
