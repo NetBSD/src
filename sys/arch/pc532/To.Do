@@ -1,11 +1,9 @@
-$NetBSD: To.Do,v 1.3 1995/02/03 18:34:11 phil Exp $
+$NetBSD: To.Do,v 1.4 1995/06/09 06:03:45 phil Exp $
 
 This is the "To Do" list for NetBSD/pc532
   (Order is not in order of importance.)
 
 - improve scn driver (integrate mods from Phil Bunde)
-
-- get shared libs working (mostly done)
 
 - get kernel debugger working
 
