@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.8 1998/10/14 00:58:00 wsanchez Exp $	*/
+/*	$NetBSD: users.c,v 1.9 1998/12/19 23:35:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: users.c,v 1.8 1998/10/14 00:58:00 wsanchez Exp $");
+__RCSID("$NetBSD: users.c,v 1.9 1998/12/19 23:35:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -108,10 +108,11 @@ main(argc, argv)
 
 	if (ncnt) {
 		qsort(names, ncnt, UT_NAMESIZE, scmp);
-		(void)printf("%.*s", UT_NAMESIZE, names[0]);
+		(void)printf("%.*s", (int)UT_NAMESIZE, names[0]);
 		for (cnt = 1; cnt < ncnt; ++cnt)
 			if (strncmp(names[cnt], names[cnt - 1], UT_NAMESIZE))
-				(void)printf(" %.*s", UT_NAMESIZE, names[cnt]);
+				(void)printf(" %.*s", (int)UT_NAMESIZE,
+				names[cnt]);
 		(void)printf("\n");
 	}
 	exit(0);
