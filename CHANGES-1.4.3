@@ -1,0 +1,53 @@
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.1 2000/03/29 22:49:17 he Exp $
+
+A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
+
+File						Revision(s)
+----						--------
+
+sys/conf/osrelease.sh				patch
+
+  Bump visible version number to 1.4.2A, to indicate that we're
+  no longer exactly at 1.4.2.
+
+sys/ufs/lfs/lfs_vfsops.c			1.37-1.38
+
+  Prevent lfs_mountroot() from attempting to use a network device
+  as root.
+
+sys/arch/sparc/dev/zs.c				patch
+
+  Fix a NULL pointer dereference when a zs device interrupts during
+  autoconfiguration of subdevices (keyboard & mouse).
+
+usr.sbin/sup/source/scm.c			1.10
+
+  Improve error message when unable to look up local hostname.
+
+gnu/dist/gcc/config/alpha/alpha.c		1.5
+
+  Change ev5/ev56 L1 cache latency from 2 to 3.
+
+usr.bin/lex/flex.skl				1.13-1.14
+
+  Allow C++ lexers to build.  Fixes PR#8258.
+
+sbin/mknod/mknod.8				1.17
+
+  In the example conf.c path, arch-specific directories now
+  live under sys/arch, not directly under sys.
+
+libexec/ld.aout_so/rtld.1			1.9-1.10
+
+  Document LD_PRELOAD and note the security restrictions.
+  Fixes PR#9663.  Also some spelling fixes.
+
+distrib/notes/Makefile				patch
+distrib/notes/Makefile.inc			patch
+
+  Format HTML with latin1 characters.  Add a "release" target to
+  install the formatted release notes.
+
+sys/arch/arm32/conf/CATS			patch
+
+  Add vr(4) and ukphy to config.
