@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.82 2002/11/09 20:12:55 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.83 2002/11/24 11:37:57 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.82 2002/11/09 20:12:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.83 2002/11/24 11:37:57 scw Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1037,7 +1037,7 @@ pool_put(struct pool *pp, void *v)
 int
 pool_prime(struct pool *pp, int n)
 {
-	struct pool_item_header *ph;
+	struct pool_item_header *ph = NULL;
 	caddr_t cp;
 	int newpages;
 
@@ -1158,7 +1158,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 static int
 pool_catchup(struct pool *pp)
 {
-	struct pool_item_header *ph;
+	struct pool_item_header *ph = NULL;
 	caddr_t cp;
 	int error = 0;
 

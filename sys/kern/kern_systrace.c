@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.21 2002/11/10 14:02:13 fvdl Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.22 2002/11/24 11:37:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.21 2002/11/10 14:02:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.22 2002/11/24 11:37:56 scw Exp $");
 
 #include "opt_systrace.h"
 
@@ -286,7 +286,7 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 #else
 	struct filedesc *fdp;
 #endif
-	struct str_process *strp;
+	struct str_process *strp = NULL;
 	pid_t pid = 0;
 
 	switch (cmd) {

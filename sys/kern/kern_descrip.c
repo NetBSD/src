@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.96 2002/10/23 09:14:13 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.97 2002/11/24 11:37:54 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.96 2002/10/23 09:14:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.97 2002/11/24 11:37:54 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1425,7 +1425,7 @@ fdcheckstd(p)
 	struct nameidata nd;
 	struct filedesc *fdp;
 	struct file *fp;
-	struct file *devnullfp;
+	struct file *devnullfp = NULL;	/* Quell compiler warning */
 	struct proc *pp;
 	register_t retval;
 	int fd, i, error, flags = FREAD|FWRITE, devnull = -1;

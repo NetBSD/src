@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.64 2002/08/25 23:15:21 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.65 2002/11/24 11:37:57 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.64 2002/08/25 23:15:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.65 2002/11/24 11:37:57 scw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -519,6 +519,7 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
+		com = 0;
 		goto out;
 	}
 
@@ -693,6 +694,7 @@ sys_select(struct proc *p, void *v, register_t *retval)
 	getbits(ex, 2);
 #undef	getbits
 
+	timo = 0;
 	if (SCARG(uap, tv)) {
 		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
 			sizeof(atv));
@@ -705,8 +707,8 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		splx(s);
-	} else
-		timo = 0;
+	}
+
  retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
@@ -826,6 +828,7 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 	if (error)
 		goto done;
 
+	timo = 0;
 	if (SCARG(uap, timeout) != INFTIM) {
 		atv.tv_sec = SCARG(uap, timeout) / 1000;
 		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
@@ -836,8 +839,8 @@ sys_poll(struct proc *p, void *v, register_t *retval)
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		splx(s);
-	} else
-		timo = 0;
+	}
+
  retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
