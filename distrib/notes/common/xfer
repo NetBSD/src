@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.10 2000/11/13 01:22:40 hubertf Exp $
+.\"	$NetBSD: xfer,v 1.11 2000/11/13 02:38:36 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,7 @@ It will write a file system image (.fs file) to a floppy disk.
 A
 .Ic rawrite32
 is also available that runs under
-.Tn MS Window .
+.Tn Windows .
 .Pp
 .\} \" r_i386
 .
@@ -140,7 +140,7 @@ It will write a file system image (.fs file) to a floppy disk.
 A
 .Ic rawrite32
 is also available that runs under
-.Tn MS Window .
+.Tn Windows .
 .Pp
 Though
 .Nx*M
