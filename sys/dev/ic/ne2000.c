@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.24 2000/02/02 10:00:06 itojun Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.25 2000/02/02 11:41:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -734,8 +734,9 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 }
 
 int
-ne2000_detach(sc)
+ne2000_detach(sc, flags)
 	struct ne2000_softc *sc;
+	int flags;
 {
-	return dp8390_detach(&sc->sc_dp8390);
+	return dp8390_detach(&sc->sc_dp8390, flags);
 }
