@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.18 1997/09/15 07:58:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $";
+__RCSID("$NetBSD: traverse.c,v 1.18 1997/09/15 07:58:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +193,7 @@ mapfiles(maxino, tapesize, disk, dirv)
 			dumpabort(0);
 		}
 		if ((dirh = fts_open(dirv, FTS_PHYSICAL|FTS_SEEDOT|FTS_XDEV,
-		    		    (int (*)())NULL)) == NULL) {
+		    		    NULL)) == NULL) {
 			msg("fts_open failed: %s\n", strerror(errno));
 			dumpabort(0);
 		}

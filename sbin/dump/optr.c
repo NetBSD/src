@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
+/*	$NetBSD: optr.c,v 1.12 1997/09/15 07:58:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $";
+__RCSID("$NetBSD: optr.c,v 1.12 1997/09/15 07:58:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +68,8 @@ static char rcsid[] = "$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $";
 #include "dump.h"
 #include "pathnames.h"
 
-void	alarmcatch __P((/* int, int */));
+void	alarmcatch __P((int));
+struct fstab *allocfsent __P((struct fstab *fs));
 int	datesort __P((const void *, const void *));
 static	void sendmes __P((char *, char *));
 
@@ -100,7 +102,7 @@ query(question)
 		quit("fopen on %s fails: %s\n", _PATH_TTY, strerror(errno));
 	attnmessage = question;
 	timeout = 0;
-	alarmcatch();
+	alarmcatch(0);
 	back = -1;
 	errcount = 0;
 	do {
@@ -144,7 +146,8 @@ char lastmsg[100];
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  */
 void
-alarmcatch()
+alarmcatch(dummy)
+	int dummy;
 {
 	if (notify == 0) {
 		if (timeout == 0)
