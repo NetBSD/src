@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61.6.3 2002/01/04 19:12:27 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.61.6.4 2002/01/08 23:30:12 petrov Exp $ */
 
 /*
  * Mach Operating System
@@ -731,9 +731,10 @@ db_proc_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct proc *p;
+	struct proc *p = NULL;
 
-	p = curproc->l_proc;
+	if (curproc)
+		p = curproc->l_proc;
 	if (have_addr) 
 		p = (struct proc*) addr;
 	if (p == NULL) {
