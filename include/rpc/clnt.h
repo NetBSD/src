@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.11 1998/02/13 04:36:13 lukem Exp $	*/
+/*	$NetBSD: clnt.h,v 1.12 1998/07/26 11:45:21 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -117,7 +117,7 @@ struct rpc_err {
  */
 typedef struct __rpc_client {
 	AUTH	*cl_auth;			/* authenticator */
-	struct clnt_ops {
+	const struct clnt_ops {
 		/* call remote procedure */
 		enum clnt_stat	(*cl_call) __P((struct __rpc_client *,
 				    u_long, xdrproc_t, caddr_t, xdrproc_t,
