@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)telnet.h	5.14 (Berkeley) 4/3/91
- *	$Id: telnet.h,v 1.2 1993/08/01 18:46:20 mycroft Exp $
+ *	from: @(#)telnet.h	8.1 (Berkeley) 6/2/93
+ *	$Id: telnet.h,v 1.3 1994/02/25 02:31:18 cgd Exp $
  */
 
 #ifndef _TELNET_H_
@@ -75,7 +75,8 @@ extern char *telcmds[];
 
 #define	TELCMD_FIRST	xEOF
 #define	TELCMD_LAST	IAC
-#define	TELCMD_OK(x)	((x) <= TELCMD_LAST && (x) >= TELCMD_FIRST)
+#define	TELCMD_OK(x)	((unsigned int)(x) <= TELCMD_LAST && \
+			 (unsigned int)(x) >= TELCMD_FIRST)
 #define	TELCMD(x)	telcmds[(x)-TELCMD_FIRST]
 
 /* telnet options */
@@ -115,13 +116,14 @@ extern char *telcmds[];
 #define	TELOPT_LFLOW	33	/* remote flow control */
 #define TELOPT_LINEMODE	34	/* Linemode option */
 #define TELOPT_XDISPLOC	35	/* X Display Location */
-#define TELOPT_ENVIRON	36	/* Environment variables */
+#define TELOPT_OLD_ENVIRON 36	/* Old - Environment variables */
 #define	TELOPT_AUTHENTICATION 37/* Authenticate */
 #define	TELOPT_ENCRYPT	38	/* Encryption option */
+#define TELOPT_NEW_ENVIRON 39	/* New - Environment variables */
 #define	TELOPT_EXOPL	255	/* extended-options-list */
 
 
-#define	NTELOPTS	(1+TELOPT_ENCRYPT)
+#define	NTELOPTS	(1+TELOPT_NEW_ENVIRON)
 #ifdef TELOPTS
 char *telopts[NTELOPTS+1] = {
 	"BINARY", "ECHO", "RCP", "SUPPRESS GO AHEAD", "NAME",
@@ -132,13 +134,13 @@ char *telopts[NTELOPTS+1] = {
 	"SEND LOCATION", "TERMINAL TYPE", "END OF RECORD",
 	"TACACS UID", "OUTPUT MARKING", "TTYLOC",
 	"3270 REGIME", "X.3 PAD", "NAWS", "TSPEED", "LFLOW",
-	"LINEMODE", "XDISPLOC", "ENVIRON", "AUTHENTICATION",
-	"ENCRYPT",
+	"LINEMODE", "XDISPLOC", "OLD-ENVIRON", "AUTHENTICATION",
+	"ENCRYPT", "NEW-ENVIRON",
 	0,
 };
 #define	TELOPT_FIRST	TELOPT_BINARY
-#define	TELOPT_LAST	TELOPT_ENCRYPT
-#define	TELOPT_OK(x)	((x) <= TELOPT_LAST && (x) >= TELOPT_FIRST)
+#define	TELOPT_LAST	TELOPT_NEW_ENVIRON
+#define	TELOPT_OK(x)	((unsigned int)(x) <= TELOPT_LAST)
 #define	TELOPT(x)	telopts[(x)-TELOPT_FIRST]
 #endif
 
@@ -148,6 +150,11 @@ char *telopts[NTELOPTS+1] = {
 #define	TELQUAL_INFO	2	/* ENVIRON: informational version of IS */
 #define	TELQUAL_REPLY	2	/* AUTHENTICATION: client version of IS */
 #define	TELQUAL_NAME	3	/* AUTHENTICATION: client version of IS */
+
+#define	LFLOW_OFF		0	/* Disable remote flow control */
+#define	LFLOW_ON		1	/* Enable remote flow control */
+#define	LFLOW_RESTART_ANY	2	/* Restart output on any char */
+#define	LFLOW_RESTART_XON	3	/* Restart output only on XON */
 
 /*
  * LINEMODE suboptions
@@ -209,7 +216,7 @@ extern char *slc_names[];
 #define	SLC_NAMES SLC_NAMELIST
 #endif
 
-#define	SLC_NAME_OK(x)	((x) >= 0 && (x) < NSLC)
+#define	SLC_NAME_OK(x)	((unsigned int)(x) <= NSLC)
 #define SLC_NAME(x)	slc_names[x]
 
 #define	SLC_NOSUPPORT	0
@@ -226,9 +233,12 @@ extern char *slc_names[];
 #define	SLC_FLUSHIN	0x40
 #define	SLC_FLUSHOUT	0x20
 
-#define	ENV_VALUE	0
-#define	ENV_VAR		1
+#define	OLD_ENV_VAR	1
+#define	OLD_ENV_VALUE	0
+#define	NEW_ENV_VAR	0
+#define	NEW_ENV_VALUE	1
 #define	ENV_ESC		2
+#define ENV_USERVAR	3
 
 /*
  * AUTHENTICATION suboptions
@@ -265,7 +275,7 @@ char *authtype_names[] = {
 extern char *authtype_names[];
 #endif
 
-#define	AUTHTYPE_NAME_OK(x)	((x) >= 0 && (x) < AUTHTYPE_CNT)
+#define	AUTHTYPE_NAME_OK(x)	((unsigned int)(x) < AUTHTYPE_CNT)
 #define	AUTHTYPE_NAME(x)	authtype_names[x]
 
 /*
@@ -302,10 +312,10 @@ extern char *enctype_names[];
 #endif
 
 
-#define	ENCRYPT_NAME_OK(x)	((x) >= 0 && (x) < ENCRYPT_CNT)
+#define	ENCRYPT_NAME_OK(x)	((unsigned int)(x) < ENCRYPT_CNT)
 #define	ENCRYPT_NAME(x)		encrypt_names[x]
 
-#define	ENCTYPE_NAME_OK(x)	((x) >= 0 && (x) < ENCTYPE_CNT)
+#define	ENCTYPE_NAME_OK(x)	((unsigned int)(x) < ENCTYPE_CNT)
 #define	ENCTYPE_NAME(x)		enctype_names[x]
 
 #endif /* !_TELNET_H_ */
