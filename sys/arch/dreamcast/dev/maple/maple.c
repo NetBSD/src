@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.3 2001/01/21 22:45:57 marcus Exp $	*/
+/*	$NetBSD: maple.c,v 1.4 2001/01/31 00:14:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -63,6 +63,7 @@
 static int	maplematch __P((struct device *, struct cfdata *, void *));
 static void	mapleattach __P((struct device *, struct device *, void *));
 static int	mapleprint __P((void *, const char *));
+static int	maplesubmatch __P((struct device *, struct cfdata *, void *));
 static void	maple_attach_dev __P((struct maple_softc *, int, int));
 static void	maple_begin_txbuf __P((struct maple_softc *));
 static int	maple_end_txbuf __P((struct maple_softc *));
@@ -89,8 +90,6 @@ struct cfattach maple_ca = {
 	sizeof(struct maple_softc), maplematch, mapleattach
 };
 
-int	maplesearch __P((struct device *, struct cfdata *, void *));
-
 static int
 maplematch(parent, cf, aux)
 	struct device *parent;
@@ -106,7 +105,6 @@ maplematch(parent, cf, aux)
 	return (1);
 }
 
-
 static void
 maple_attach_dev(sc, port, subunit)
 	struct maple_softc *sc;
@@ -114,10 +112,12 @@ maple_attach_dev(sc, port, subunit)
 	int subunit;
 {
 	struct maple_attach_args ma;
+
 	ma.ma_port = port;
 	ma.ma_subunit = subunit;
 	ma.ma_devinfo = &sc->sc_unit[port][subunit].devinfo;
-	config_search(maplesearch, &sc->sc_dev, &ma);
+
+	(void) config_found_sm(&sc->sc_dev, &ma, mapleprint, maplesubmatch);
 }
 
 static void
@@ -395,7 +395,6 @@ maple_free_dma(paddr, size)
 	uvm_pglistfree(&mlist);
 }
 
-
 static void
 mapleattach(parent, self, aux)
 	struct device *parent, *self;
@@ -455,26 +454,35 @@ mapleprint(aux, pnp)
 	struct maple_attach_args *ma = aux;
 
 	if (pnp != NULL)
-		printf("%s", pnp);
+		printf("%.*s at %s",
+		    (int)sizeof(ma->ma_devinfo->di_product_name),
+		    ma->ma_devinfo->di_product_name, pnp);
 
-	printf(" port %c", ma->ma_port+'A');
+	printf(" port %d", ma->ma_port);
 
 	if (ma->ma_subunit != 0)
-	  printf("%d", ma->ma_subunit);
+		printf(" subunit %d", ma->ma_subunit);
 
 	return (UNCONF);
 }
 
-int
-maplesearch(parent, cf, aux)
+static int
+maplesubmatch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	struct cfdata *match;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, aux) > 0)
-	  config_attach(parent, cf, aux, mapleprint);
+	struct maple_attach_args *ma = aux;
 
-	return (0);
+	if (match->cf_loc[MAPLECF_PORT] != MAPLECF_PORT_DEFAULT &&
+	    match->cf_loc[MAPLECF_PORT] != ma->ma_port)
+		return (0);
+
+	if (match->cf_loc[MAPLECF_SUBUNIT] != MAPLECF_SUBUNIT_DEFAULT &&
+	    match->cf_loc[MAPLECF_SUBUNIT] != ma->ma_subunit)
+		return (0);
+
+	return ((*match->cf_attach->ca_match)(parent, match, aux));
 }
 
 u_int32_t
@@ -493,4 +501,3 @@ maple_get_function_data(devinfo, function_code)
 		break;
 	return (0);
 }
-

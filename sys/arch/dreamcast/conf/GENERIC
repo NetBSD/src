@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 2001/01/21 23:38:34 marcus Exp $
+#	$NetBSD: GENERIC,v 1.5 2001/01/31 00:14:29 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -116,7 +116,7 @@ scif0 at shb? port 0xffe80000 irq 12
 
 pvr0    at shb?
 
-mkbd*	at maple?
+mkbd*	at maple? port ? subunit ?
 
 wsdisplay*      at pvr? console ?
 wskbd*          at mkbd? console ?
