@@ -1,4 +1,4 @@
-/*	$NetBSD: printenv.c,v 1.5 1997/01/09 15:17:32 tls Exp $	*/
+/*	$NetBSD: printenv.c,v 1.6 1997/10/19 12:44:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,15 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
-      The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
+      The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printenv.c	8.2 (Berkeley) 5/4/95";*/
-static char rcsid[] = "$NetBSD: printenv.c,v 1.5 1997/01/09 15:17:32 tls Exp $";
+__RCSID("$NetBSD: printenv.c,v 1.6 1997/10/19 12:44:26 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,8 @@ static char rcsid[] = "$NetBSD: printenv.c,v 1.5 1997/01/09 15:17:32 tls Exp $";
 #include <string.h>
 #include <unistd.h>
 
-void  usage __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
 /*
  * printenv
@@ -69,7 +70,7 @@ main(argc, argv)
 	size_t len;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
