@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.17 2002/10/01 12:56:48 fvdl Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.18 2003/01/28 01:07:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.17 2002/10/01 12:56:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.18 2003/01/28 01:07:52 kent Exp $");
 
 #include "opt_largepages.h"
 
@@ -796,6 +796,7 @@ _bus_dmamem_free(t, segs, nsegs)
 /*
  * Common function for mapping DMA-safe memory.  May be called by
  * bus-specific DMA memory map functions.
+ * This supports BUS_DMA_NOCACHE.
  */
 int
 _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
@@ -809,8 +810,15 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
+	int32_t cpumask;
+	int nocache;
+	int marked;
+	pt_entry_t *pte;
 
 	size = round_page(size);
+	cpumask = 0;
+	nocache = (flags & BUS_DMA_NOCACHE) != 0 && cpu_class != CPUCLASS_386;
+	marked = 0;
 
 	va = uvm_km_valloc(kernel_map, size);
 
@@ -828,8 +836,22 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+			/*
+			 * mark page as non-cacheable
+			 */
+			if (nocache) {
+				pte = kvtopte(va);
+				if ((*pte & PG_N) == 0) {
+					*pte |= PG_N;
+					pmap_tlb_shootdown(pmap_kernel(), va,
+					    *pte, &cpumask);
+					marked = 1;
+				}
+			}
 		}
 	}
+	if (marked)
+		pmap_tlb_shootnow(cpumask);
 	pmap_update(pmap_kernel());
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.28 2002/01/07 07:17:17 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.29 2003/01/28 01:07:56 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -557,6 +557,7 @@ paddr_t bus_space_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

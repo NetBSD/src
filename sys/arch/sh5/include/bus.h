@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2002/10/01 07:55:17 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 2003/01/28 01:08:06 kent Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -874,6 +874,7 @@ bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

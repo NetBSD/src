@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2001/11/11 01:38:00 isaki Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2003/01/28 01:08:08 kent Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -912,6 +912,7 @@ int	x68k_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /*
  * Operations performed by bus_dmamap_sync().
