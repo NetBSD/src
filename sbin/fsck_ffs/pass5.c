@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.20.4.2 1999/10/26 19:30:04 fvdl Exp $	*/
+/*	$NetBSD: pass5.c,v 1.20.4.3 1999/10/26 23:20:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.20.4.2 1999/10/26 19:30:04 fvdl Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.20.4.3 1999/10/26 23:20:11 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,18 +68,14 @@ pass5()
 	struct fs *fs = sblock;
 	ufs_daddr_t dbase, dmax;
 	ufs_daddr_t d;
-	long i, j;
+	long i, j, k;
 	struct csum *cs;
 	struct csum cstotal;
 	struct inodesc idesc[3];
 	char buf[MAXBSIZE];
 	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
-	struct cg *cg;
-
-	cg = cgrp = malloc(fs->fs_cgsize);
-	if (cg == NULL)
-		errx(EEXIT, "cannot allocate space for cylinder group");
+	struct cg *cg = cgrp;
 
 	statemap[WINO] = USTATE;
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
@@ -117,6 +113,11 @@ pass5()
 						    doit);
 					fs->fs_cgsize =
 					    fragroundup(fs, CGSIZE(fs));
+					cg = cgrp =
+					    realloc(cgrp, fs->fs_cgsize);
+					if (cg == NULL)
+						errx(EEXIT,
+						"cannot reallocate cg space");
 					doinglevel1 = 1;
 					sbdirty();
 				}
@@ -189,7 +190,7 @@ pass5()
 		if((doswap && !needswap) || (!doswap && needswap))
 			swap_cg(cgblk.b_un.b_cg, cg);
 		if (!cg_chkmagic(cg, 0))
-			pfatal("CG %d: BAD MAGIC NUMBER\n", c);
+			pfatal("CG %d: PASS5: BAD MAGIC NUMBER\n", c);
 		if(doswap)
 			cgdirty();
 		dbase = cgbase(fs, c);
@@ -327,20 +328,6 @@ pass5()
 			cgdirty();
 			continue;
 		}
-		if (memcmp(cg_inosused(newcg, 0), cg_inosused(cg, 0), mapsize) != 0) {
-			if (debug) {
-				printf("newcg map:\n");
-				print_bmap(cg_inosused(newcg, 0), mapsize);
-				printf("\ncg map:\n");
-				print_bmap(cg_inosused(cg, 0), mapsize);
-			}
-		    if (dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
-			memmove(cg_inosused(cg, 0), cg_inosused(newcg, 0),
-			      (size_t)mapsize);
-			cgdirty();
-			} else
-				markclean = 0;
-		}
 		if (memcmp(newcg, cg, basesize) != 0 ||
 		     memcmp(&cg_blktot(newcg, 0)[0],
 				&cg_blktot(cg, 0)[0], sumsize) != 0) {
@@ -349,9 +336,43 @@ pass5()
 			memmove(&cg_blktot(cg, 0)[0],
 			       &cg_blktot(newcg, 0)[0], (size_t)sumsize);
 			cgdirty();
-			} else markclean = 0;
+			} else
+				markclean = 0;
 		}
-
+		if (usedsoftdep) {
+			for (i = 0; i < inomapsize; i++) {
+				j = cg_inosused(newcg, 0)[i];
+				if ((cg_inosused(cg, 0)[i] & j) == j)
+					continue;
+				for (k = 0; k < NBBY; k++) {
+					if ((j & (1 << k)) == 0)
+						continue;
+					if (cg_inosused(cg, 0)[i] & (1 << k))
+						continue;
+					pwarn("ALLOCATED INODE %d MARKED FREE",
+					    c * fs->fs_ipg + i * 8 + k);
+				}
+			}
+			for (i = 0; i < blkmapsize; i++) {
+				j = cg_blksfree(cg, 0)[i];
+				if ((cg_blksfree(newcg, 0)[i] & j) == j)
+					continue;
+				for (k = 0; k < NBBY; k++) {
+					if ((j & (1 << k)) == 0)
+						continue;
+					if (cg_inosused(cg, 0)[i] & (1 << k))
+						continue;
+					pwarn("ALLOCATED FRAG %d MARKED FREE",
+					    c * fs->fs_fpg + i * 8 + k);
+				}
+			}
+		}
+		if (memcmp(cg_inosused(newcg, 0), cg_inosused(cg, 0), mapsize)
+		    != 0 && dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
+			memmove(cg_inosused(cg, 0), cg_inosused(newcg, 0),
+			    (size_t)mapsize);
+                        cgdirty();
+                }
 	}
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;
