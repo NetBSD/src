@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.36 2003/11/17 11:16:10 wiz Exp $
+#	$NetBSD: vnode_if.src,v 1.37 2004/01/24 01:40:57 wiz Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -260,8 +260,8 @@ vop_fsync {
 	IN struct vnode *vp;
 	IN struct ucred *cred;
 	IN int flags;
-	IN off_t offlo
-	IN off_t offhi
+	IN off_t offlo;
+	IN off_t offhi;
 	IN struct proc *p;
 };
 
