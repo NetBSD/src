@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.10 2002/10/21 02:30:14 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.11 2002/10/24 00:50:31 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -347,4 +347,46 @@ sys/netinet/tcp_input.c				1.156 (via patch)
 	Correct log_refused check.
 	Fixes PR#18669.
 	[itojun, ticket #915]
+
+sys/dev/pci/if_pcn.c				1.16
+
+	Fix typos in media configuration register init.
+	May address PR#16346.
+	[thorpej, ticket #940]
+
+lib/libpcap/pcap-bpf.c				1.9
+
+	Open the BPF file descriptor as read-write.
+	[thorpej, ticket #932]
+
+sys/miscfs/genfs/genfs_vnops.c			1.65
+
+	Improve NFS read performance.
+	[fvdl, ticket #935]
+
+etc/services					1.58
+
+	Add iscsi at 3260/tcp.
+	[thorpej, ticket #937]
+
+sys/netinet/tcp_input.c				1.158
+
+	Make sure TF_REQ_TSTMP and TF_REQ_SCALE get set correctly
+	in the new TCPCB in the passive-open case.
+	Fixes PR#18677.
+	[thorpej, ticket #938]
+
+sys/dev/i2o/iop.c				1.27
+
+	Don't issue I2O_EXEC_IOP_CLEAR to AMI boards, since some
+	firmware revisions can't handle it.
+	Fixes PR#18760.
+	[ad, ticket #939]
+
+etc/rc.d/network				1.39
+share/man/man5/ifconfig.if.5			1.6
+
+	Automatically create and destroy cloning interfaces and sync
+	IP Filter immediately afterwards before bringing the interface up.
+	[tron, ticket #901]
 
