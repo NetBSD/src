@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.11 2001/11/13 01:10:47 lukem Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.12 2001/11/21 19:01:33 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.11 2001/11/13 01:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_options.c,v 1.12 2001/11/21 19:01:33 wiz Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -314,7 +314,7 @@ clnp_opt_sanity(m, opts, len, oidx)
 
 	/*
 	 *	We need to indicate whether the ER option is present. This is done
-	 *	by overloading the er_reason field to also indicate presense of
+	 *	by overloading the er_reason field to also indicate presence of
 	 *	the option along with the option value. I would like ER_INVALREAS
 	 *	to have value 0, but alas, 0 is a valid er reason...
 	 */
