@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/08/30 18:16:09 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.16 2000/09/23 13:53:42 simonb Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -54,8 +54,11 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${PROG}
 
 install:
-	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} ${DESTDIR}${BINDIR}
-	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} ${DESTDIR}${MDEC_DIR}
-	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG}.mop ${DESTDIR}${MDEC_DIR}
+	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} \
+	    ${DESTDIR}${BINDIR}
+	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} \
+	    ${DESTDIR}${MDEC_DIR}
+	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG}.mop \
+	    ${DESTDIR}${MDEC_DIR}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/09/23 06:18:08 simonb Exp $
+#	$NetBSD: Makefile,v 1.7 2000/09/23 13:53:42 simonb Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,9 @@ dependall-ssh dependall-sshd dependall-ssh-add dependall-ssh-keygen \
 	dependall-ssh-agent dependall-scp: dependall-libssh
 
 distribution:
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \
+	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 644 \
 	    ${SSHDIST}/ssh.conf ${DESTDIR}/etc/ssh.conf
-	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \
+	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 644 \
 	    ${SSHDIST}/sshd.conf ${DESTDIR}/etc/sshd.conf
 .else
 distribution:
