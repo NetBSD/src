@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.25 1999/07/25 22:50:59 ad Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.26 1999/08/02 12:01:46 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.25 1999/07/25 22:50:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.26 1999/08/02 12:01:46 mrg Exp $");
 
 
 #include <sys/types.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.25 1999/07/25 22:50:59 ad Exp $");
 #include "mfb.h"
 #include "sfb.h"
 #include "px.h"
+#include "fb.h"
+#include "xcfb.h"
 
 /*
  * Tables for table-driven TC and console configuration.
@@ -334,7 +336,7 @@ static int
 tc_consprobeslot(tc_slotaddr)
 	tc_addr_t tc_slotaddr;
 {
-
+#if NCFB > 0 || NFB > 0 || NMFB > 0 || NSFB > 0 || NXCFB > 0 || NPX > 0
 	void *slotaddr = (void *) tc_slotaddr;
 	struct fbinfo *fi;
 	char name[20];
@@ -365,6 +367,7 @@ tc_consprobeslot(tc_slotaddr)
 				return (1);
 		}
 	}
+#endif
 
 	return (0);
 }
