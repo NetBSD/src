@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.130 2001/09/24 13:22:30 wiz Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.131 2001/11/27 23:42:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.130 2001/09/24 13:22:30 wiz Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.131 2001/11/27 23:42:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1118,7 +1118,8 @@ pass(const char *passwd)
 			 * Display a login message, if it exists.
 			 * N.B. reply(230,) must follow the message.
 			 */
-	(void)display_file(conffilename(curclass.motd), 230);
+	if (! EMPTYSTR(curclass.motd))
+		(void)display_file(conffilename(curclass.motd), 230);
 	show_chdir_messages(230);
 	if (curclass.type == CLASS_GUEST) {
 		char *p;
@@ -2039,7 +2040,7 @@ statcmd(void)
 			reply(0, "Maximum connections: %d", curclass.limit);
 		if (curclass.limitfile)
 			reply(0, "Connection limit exceeded message file: %s",
-			    curclass.limitfile);
+			    conffilename(curclass.limitfile));
 		if (! EMPTYSTR(curclass.chroot))
 			reply(0, "Chroot format: %s", curclass.chroot);
 		if (! EMPTYSTR(curclass.homedir))
@@ -2050,7 +2051,7 @@ statcmd(void)
 			reply(0, "Maximum file size: " LLF,
 			    (LLT)curclass.maxfilesize);
 		if (! EMPTYSTR(curclass.motd))
-			reply(0, "MotD file: %s", curclass.motd);
+			reply(0, "MotD file: %s", conffilename(curclass.motd));
 		reply(0,
 	    "Modify commands (CHMOD, DELE, MKD, RMD, RNFR, UMASK): %sabled",
 		    CURCLASS_FLAGS_ISSET(modify) ? "en" : "dis");
