@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 1996/11/29 16:32:18 jtk Exp $
+#	$NetBSD: Makefile,v 1.65 1996/12/16 20:00:26 cgd Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -35,6 +35,11 @@ SUBDIR+= ar gprof nm ranlib size strip
 
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR+= fdformat
+.endif
+
+# Always build (ELF) ldd on the alpha, to be ready for ELF
+.if (${MACHINE_ARCH} == "alpha")
+SUBDIR+= ldd
 .endif
 
 .include <bsd.subdir.mk>
