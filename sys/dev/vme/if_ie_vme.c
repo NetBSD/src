@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.8 2000/03/13 23:52:37 soren Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.9 2000/04/10 02:16:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -492,7 +492,7 @@ ie_vme_attach(parent, self, aux)
 	void   *aux;
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-#ifdef sparc
+#ifdef __sparc__
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
 #endif
 	struct ie_vme_softc *vsc = (void *) self;
@@ -593,7 +593,7 @@ ie_vme_attach(parent, self, aux)
 
 	printf("\n%s:", self->dv_xname);
 
-#ifdef sparc
+#ifdef __sparc__
 	myetheraddr(myaddr);
 #endif
 	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);
