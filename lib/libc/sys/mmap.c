@@ -1,3 +1,5 @@
+/*	$NetBSD: mmap.c,v 1.4 1995/02/27 11:23:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93"; */
-static char *rcsid = "$Id: mmap.c,v 1.3 1994/10/19 03:21:41 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
+#else
+static char rcsid[] = "$NetBSD: mmap.c,v 1.4 1995/02/27 11:23:07 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
