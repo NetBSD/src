@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.23 2001/08/16 17:45:26 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.24 2001/11/04 20:55:26 matt Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -328,8 +328,7 @@ gif_validate4(ip, sc, ifp)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
-	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
-	{
+	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)
