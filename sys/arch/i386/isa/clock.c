@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.85 2005/02/03 21:08:58 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.86 2005/02/03 21:54:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.85 2005/02/03 21:08:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.86 2005/02/03 21:54:49 perry Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -187,7 +187,6 @@ int 	bcdtobin(int);
 int	bintobcd(int);
 
 static int cmoscheck(void);
-static int cmoscheckps2(void);
 
 static int clock_expandyear(int);
 
@@ -689,6 +688,7 @@ cmoscheck(void)
 /*
  * Check whether the CMOS layout is PS/2 like, to be called at splclock().
  */
+static int cmoscheckps2(void);
 static int
 cmoscheckps2(void)
 {
