@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2001/03/15 06:10:39 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2001/03/23 11:09:49 sato Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2001/03/15 06:10:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2001/03/23 11:09:49 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2001/03/15 06:10:39 chs Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
@@ -128,6 +129,7 @@ extern int (*mountroot) __P((void));
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];	
+char	booted_kernel[128];
 
 char	cpu_name[40];			/* set cpu depend xx_init() */
 
@@ -318,6 +320,8 @@ mach_init(argc, argv, bi)
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
+	strncpy(booted_kernel, argv[0], sizeof(booted_kernel));
+	booted_kernel[sizeof(booted_kernel)-1] = 0;
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			switch (*cp) {
@@ -584,6 +588,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_CONSDEV:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
+	case CPU_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp, 
+		    root_device->dv_xname));
+	case CPU_BOOTED_KERNEL:
+		return (sysctl_rdstring(oldp, oldlenp, newp, 
+		    booted_kernel));
 	default:
 		return (EOPNOTSUPP);
 	}
