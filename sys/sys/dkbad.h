@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.h,v 1.9 1994/12/14 13:09:04 mycroft Exp $	*/
+/*	$NetBSD: dkbad.h,v 1.10 1994/12/25 13:14:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -35,6 +35,9 @@
  *	@(#)dkbad.h	8.2 (Berkeley) 7/10/94
  */
 
+#ifndef _SYS_DKBAD_H_
+#define _SYS_DKBAD_H_
+
 /*
  * Definitions needed to perform bad sector revectoring ala DEC STD 144.
  *
@@ -68,3 +71,5 @@ struct dkbad {
 #define	SSE	1
 #define	BSE	2
 #define	CONT	3
+
+#endif /* _SYS_DKBAD_H_ */
