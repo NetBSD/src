@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.6 1995/02/01 01:37:35 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.7 1995/03/31 03:06:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -29,6 +29,8 @@
 
 #ifndef	_SVR4_SIGNAL_H_
 #define	_SVR4_SIGNAL_H_
+
+#include <compat/svr4/svr4_siginfo.h>
 
 #define	SVR4_SIGHUP	 1
 #define	SVR4_SIGINT	 2

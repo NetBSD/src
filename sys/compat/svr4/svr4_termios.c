@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.3 1995/01/10 00:04:09 christos Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.4 1995/03/31 03:06:45 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -454,9 +454,34 @@ svr4_termioctl(fp, cmd, data, p, retval)
 		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t) &bt, p)) != 0)
 			return error;
 
+#ifdef DEBUG_SVR4
+		{
+			int i;
+			printf("iflag=%o oflag=%o cflag=%o lflag=%o\n",
+			       bt.c_iflag, bt.c_oflag, bt.c_lflag);
+			printf("cc: ");
+			for (i = 0; i < NCCS; i++)
+				printf("%o ", bt.c_cc[i]);
+			printf("\n");
+		}
+#endif
+
 		bsd_to_svr4_termios(&bt, &st);
 
 		DPRINTF(("ioctl(TCGET[A|S]);\n"));
+
+#ifdef DEBUG_SVR4
+		{
+			int i;
+			printf("iflag=%o oflag=%o cflag=%o lflag=%o\n",
+			       st.c_iflag, st.c_oflag, st.c_lflag);
+			printf("cc: ");
+			for (i = 0; i < SVR4_NCCS; i++)
+				printf("%o ", st.c_cc[i]);
+			printf("\n");
+		}
+#endif
+
 		if (cmd == SVR4_TCGETA) {
 		    svr4_termios_to_termio(&st, &t);
 		    return copyout(&t, data, sizeof(t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_wait.h,v 1.4 1995/01/25 04:17:07 christos Exp $	 */
+/*	$NetBSD: svr4_wait.h,v 1.5 1995/03/31 03:06:50 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -51,39 +51,5 @@
 
 #define SVR4_WOPTMASK   (SVR4_WEXITED|SVR4_WTRAPPED|SVR4_WSTOPPED|\
 			 SVR4_WCONTINUED|SVR4_WNOHANG|SVR4_WNOWAIT)
-
-#define	SVR4_CLD_EXITED		1
-#define	SVR4_CLD_KILLED		2
-#define	SVR4_CLD_DUMPED		3
-#define	SVR4_CLD_TRAPPED	4
-#define	SVR4_CLD_STOPPED	5
-#define	SVR4_CLD_CONTINUED	6
-
-/*
- * This is the stuff we need for waitid(2)
- */
-typedef union svr4_siginfo {
-	char	si_pad[128];	/* Total size; for future expansion */
-	struct {
-		int			_signo;
-		int			_code;
-		int			_errno;
-		svr4_pid_t		_pid;
-		struct {
-			svr4_clock_t	_utime;
-			int		_status;
-			svr4_clock_t	_stime;
-		} _child;
-
-	} _info;
-} svr4_siginfo_t;
-
-#define	si_signo	_info._signo
-#define	si_code		_info._code
-#define	si_errno	_info._errno
-#define si_pid		_info._pid
-#define si_stime	_info._child._stime
-#define si_status	_info._child._status
-#define si_utime	_info._child._utime
 
 #endif /* !_SVR4_WAIT_H_ */

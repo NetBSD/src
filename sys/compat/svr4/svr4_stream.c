@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.4 1995/02/01 01:37:37 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.5 1995/03/31 03:06:39 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -61,6 +61,50 @@
 #include <compat/svr4/svr4_sockmod.h>
 #include <compat/svr4/svr4_ioctl.h>
 
+static void svr4_getparm __P((struct socket *, struct svr4_si_sockparms *));
+static int svr4_sockmod __P((struct file *, struct svr4_strioctl *,
+			     struct proc *));
+static int svr4_timod __P((struct file *, struct svr4_strioctl *,
+			   struct proc *));
+#ifdef DEBUG_SVR4
+static int svr4_showioc __P((const char *, struct svr4_strioctl *));
+static int svr4_getstrbuf __P((struct svr4_strbuf *));
+static void svr4_showmsg __P((const char *, int, struct svr4_strbuf *, 
+			      struct svr4_strbuf *, int));
+#endif /* DEBUG_SVR4 */
+
+
+static void
+svr4_getparm(so, pa)
+	struct socket *so;
+	struct svr4_si_sockparms *pa;
+{
+	pa->family = AF_INET;
+
+	switch (so->so_type) {
+	case SOCK_DGRAM:
+		pa->type = SVR4_SOCK_DGRAM;
+		pa->protocol = IPPROTO_UDP;
+		return;
+
+	case SOCK_STREAM:
+		pa->type = SVR4_SOCK_STREAM;
+		pa->protocol = IPPROTO_TCP;
+		return;
+
+	case SOCK_RAW:
+		pa->type = SVR4_SOCK_RAW;
+		pa->protocol = IPPROTO_RAW;
+		return;
+
+	default:
+		pa->type = 0;
+		pa->protocol = 0;
+		return;
+	}
+}
+
+
 static int
 svr4_sockmod(fp, ioc, p)
 	struct file		*fp;
@@ -70,12 +114,12 @@ svr4_sockmod(fp, ioc, p)
 	int error;
 
 	switch (ioc->cmd) {
-	case SVR4_SI_GETUDATA:
+	case SVR4_SI_OGETUDATA:
+		DPRINTF(("SI_OGETUDATA\n"));
 		{
-			struct svr4_si_udata ud;
+			struct svr4_si_oudata ud;
+			struct svr4_si_sockparms pa;
 			struct socket *so = (struct socket *) fp->f_data;
-
-			DPRINTF(("SI_GETUDATA\n"));
 
 			if (sizeof(ud) != ioc->len) {
 				DPRINTF(("Wrong size %d != %d\n", 
@@ -91,27 +135,14 @@ svr4_sockmod(fp, ioc, p)
 			ud.addrsize = sizeof(struct sockaddr_in);
 			ud.optsize = 128;
 
-			switch (so->so_type) {
-			case SOCK_DGRAM:
-				ud.etsdusize = 0;
-				ud.servtype = 3;	/* SOCK_DGRAM ??? */
-				break;
+			svr4_getparm(so, &pa);
 
-			case SOCK_STREAM:
+			if (pa.type == SVR4_SOCK_STREAM) 
 				ud.etsdusize = 1;
-				ud.servtype = 2;	/* SOCK_STREAM ??? */
-				break;
-
-			case SOCK_RAW:
+			else
 				ud.etsdusize = 0;
-				ud.servtype = 1;	/* SOCK_RAW ??? */
-				break;
 
-			default:
-				ud.etsdusize = 0;
-				ud.servtype = 0;
-				break;
-			}
+			ud.servtype = pa.type;
 
 			/* XXX: Fixme */
 			ud.so_state = 0;
@@ -145,6 +176,54 @@ svr4_sockmod(fp, ioc, p)
 
 	case SVR4_SI_TCL_UNLINK:
 		DPRINTF(("SI_TCL_UNLINK\n"));
+		return 0;
+
+	case SVR4_SI_SOCKPARAMS:
+		DPRINTF(("SI_SOCKPARAMS\n"));
+		{
+			struct socket *so = (struct socket *) fp->f_data;
+			struct svr4_si_sockparms pa;
+
+			svr4_getparm(so, &pa);
+			return copyout(&pa, ioc->buf, sizeof(pa));
+		}
+		return 0;
+
+	case SVR4_SI_GETUDATA:
+		DPRINTF(("SI_GETUDATA\n"));
+		{
+			struct svr4_si_udata ud;
+			struct socket *so = (struct socket *) fp->f_data;
+
+			if (sizeof(ud) != ioc->len) {
+				DPRINTF(("Wrong size %d != %d\n", 
+					 sizeof(ud), ioc->len));
+				return EINVAL;
+			}
+
+			if ((error = copyin(ioc->buf, &ud, sizeof(ud))) != 0)
+				return error;
+
+			/* I have no idea what these should be! */
+			ud.tidusize = 16384;
+			ud.addrsize = sizeof(struct sockaddr_in);
+			ud.optsize = 128;
+			ud.tsdusize = 16384;
+
+			svr4_getparm(so, &ud.sockparms);
+
+			if (ud.sockparms.type == SVR4_SOCK_STREAM) 
+				ud.etsdusize = 1;
+			else
+				ud.etsdusize = 0;
+
+			ud.servtype = ud.sockparms.type;
+
+			/* XXX: Fixme */
+			ud.so_state = 0;
+			ud.so_options = 0;
+			return copyout(&ud, ioc->buf, sizeof(ud));
+		}
 		return 0;
 
 	default:
@@ -250,6 +329,35 @@ svr4_timod(fp, ioc, p)
 }
 
 
+#ifdef DEBUG_SVR4
+static int
+svr4_showioc(str, ioc)
+	const char		*str;
+	struct svr4_strioctl	*ioc;
+{
+	char *ptr = (char *) malloc(ioc->len, M_TEMP, M_WAITOK);
+	int error;
+	int i;
+
+	printf("%s cmd = %d, timeout = %d, len = %d, buf = %x { ",
+	       str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
+
+	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
+		free((char *) ptr, M_TEMP);
+		return error;
+	}
+
+	for (i = 0; i < ioc->len; i++)
+		printf("%x ", (unsigned char) ptr[i]);
+
+	printf("}\n");
+
+	free((char *) ptr, M_TEMP);
+	return 0;
+}
+#endif /* DEBUG_SVR4 */
+
+
 int
 svr4_streamioctl(fp, cmd, dat, p, retval)
 	struct file	*fp;
@@ -306,27 +414,9 @@ svr4_streamioctl(fp, cmd, dat, p, retval)
 			return error;
 
 #ifdef DEBUG_SVR4
-		{
-			char *ptr = (char *) malloc(ioc.len, M_TEMP, M_WAITOK);
-			int i;
-
-			printf("cmd = %d, timeout = %d, len = %d, buf = %x { ",
-			       ioc.cmd, ioc.timeout, ioc.len, ioc.buf);
-
-			if ((error = copyin(ioc.buf, ptr, ioc.len)) != 0) {
-				free((char *) ptr, M_TEMP);
-				return error;
-			}
-
-			for (i = 0; i < ioc.len; i++)
-				printf("%x ", (unsigned char) ptr[i]);
-
-			printf("}\n");
-
-			free((char *) ptr, M_TEMP);
-		}
-#endif
-
+		if ((error = svr4_showioc(">", &ioc)) != 0)
+			return error;
+#endif /* DEBUG_SVR4 */
 		switch (ioc.cmd & 0xff00) {
 		case SVR4_SIMOD:
 			if ((error = svr4_sockmod(fp, &ioc, p)) != 0)
@@ -344,6 +434,10 @@ svr4_streamioctl(fp, cmd, dat, p, retval)
 			return 0;
 		}
 
+#ifdef DEBUG_SVR4
+		if ((error = svr4_showioc("<", &ioc)) != 0)
+			return error;
+#endif /* DEBUG_SVR4 */
 		return copyout(&ioc, dat, sizeof(ioc));
 
 	case SVR4_I_SETSIG:
@@ -465,8 +559,6 @@ svr4_streamioctl(fp, cmd, dat, p, retval)
 
 
 #ifdef DEBUG_SVR4
-
-
 static int
 svr4_getstrbuf(str)
 	struct svr4_strbuf *str;
@@ -493,8 +585,13 @@ svr4_getstrbuf(str)
 	}
 
 	printf(", { %d, %d, %x=[ ", str->maxlen, str->len, str->buf);
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		printf("%x ", (unsigned char) ptr[i]);
+		if (i > 20) {
+			printf("...");
+			break;
+		}
+	}
 	printf("]}");
 
 	if (ptr)
@@ -534,7 +631,7 @@ svr4_showmsg(str, fd, ctl, dat, flags)
 
 	printf(", %x);\n", flags);
 }
-#endif
+#endif /* DEBUG_SVR4 */
 
 
 int
@@ -557,7 +654,7 @@ svr4_putmsg(p, uap, retval)
 #ifdef DEBUG_SVR4
 	svr4_showmsg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		     SCARG(uap, dat), SCARG(uap, flags));
-#endif
+#endif /* DEBUG_SVR4 */
 
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
@@ -594,8 +691,10 @@ svr4_putmsg(p, uap, retval)
 	if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
 		return error;
 
-	if (sc.len != sizeof(sa))
+	if (sc.len != sizeof(sa)) {
+		DPRINTF(("putmsg: Cannot handle variable address lengths\n"));
 		return ENOSYS;
+	}
 
 	na = SVR4_ADDROF(&sc);
 	bzero(&sa, sizeof(sa));
@@ -632,7 +731,7 @@ svr4_putmsg(p, uap, retval)
 			msg.msg_control = 0;
 #ifdef COMPAT_OLDSOCK
 			msg.msg_flags = 0;
-#endif
+#endif /* COMPAT_OLDSOCK */
 			aiov.iov_base = dat.buf;
 			aiov.iov_len = dat.len;
 			error = sendit(p, SCARG(uap, fd), &msg,
@@ -642,7 +741,7 @@ svr4_putmsg(p, uap, retval)
 			return error;
 		}
 	default:
-		DPRINTF(("Unimplemented putmsg command %x\n", sc.cmd));
+		DPRINTF(("putmsg: Unimplemented command %x\n", sc.cmd));
 		return ENOSYS;
 	}
 }
@@ -675,7 +774,7 @@ svr4_getmsg(p, uap, retval)
 #ifdef DEBUG_SVR4
 	svr4_showmsg(">getmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		     SCARG(uap, dat), 0);
-#endif
+#endif /* DEBUG_SVR4 */
 			
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
@@ -745,7 +844,7 @@ svr4_getmsg(p, uap, retval)
 		SCARG(&ga, alen) = flen;
 		
 		if ((error = getpeername(p, &ga, retval)) != 0) {
-			DPRINTF(("getpeername failed %d\n", error));
+			DPRINTF(("getmsg: getpeername failed %d\n", error));
 			return error;
 		}
 
@@ -799,7 +898,7 @@ svr4_getmsg(p, uap, retval)
 		error = recvit(p, SCARG(uap, fd), &msg, flen, retval);
 
 		if (error) {
-			DPRINTF(("recvit failed %d\n", error))
+			DPRINTF(("getmsg: recvit failed %d\n", error))
 			return error;
 		}
 
@@ -819,7 +918,7 @@ svr4_getmsg(p, uap, retval)
 		break;
 
 	default:
-		DPRINTF(("Unknown state %x\n", st->s_cmd));
+		DPRINTF(("getmsg: Unknown state %x\n", st->s_cmd));
 		return EINVAL;
 	}
 
@@ -849,6 +948,6 @@ svr4_getmsg(p, uap, retval)
 #ifdef DEBUG_SVR4
 	svr4_showmsg("<getmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		     SCARG(uap, dat), fl);
-#endif
+#endif /* DEBUG_SVR4 */
 	return error;
 }

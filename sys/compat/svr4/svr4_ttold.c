@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.4 1995/01/10 00:04:13 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.5 1995/03/31 03:06:46 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -164,10 +164,15 @@ svr4_ttoldioctl(fp, cmd, data, p, retval)
 		{
 			pid_t pid;
 
-			if ((error = copyin(data, &pid, sizeof(pid))) != 0)
+			if ((error = (*ctl)(fp, TIOCGPGRP,
+					    (caddr_t) &pid, p)) != 0)
+			    return error;
+
+			DPRINTF(("TIOCGPGRP %d", pid));
+
+			if ((error = copyout(&pid, data, sizeof(pid))) != 0)
 				return error;
 
-			return (*ctl)(fp, TIOCGPGRP, (caddr_t) &pid, p);
 		}
 
 	case SVR4_TIOCSPGRP:
@@ -177,7 +182,22 @@ svr4_ttoldioctl(fp, cmd, data, p, retval)
 			if ((error = copyin(data, &pid, sizeof(pid))) != 0)
 				return error;
 
+			DPRINTF(("TIOCSPGRP %d", pid));
+
 			return (*ctl)(fp, TIOCSPGRP, (caddr_t) &pid, p);
+		}
+
+	case SVR4_TIOCGSID:
+		{
+			pid_t pid;
+
+			if ((error = (*ctl)(fp, TIOCGSID,
+					    (caddr_t) &pid, p)) != 0)
+				return error;
+
+			DPRINTF(("TIOCGSID %d", pid));
+
+			return copyout(&pid, data, sizeof(pid));
 		}
 
 	case SVR4_TIOCGETP:
@@ -259,7 +279,6 @@ svr4_ttoldioctl(fp, cmd, data, p, retval)
 
 			return (*ctl)(fp, TIOCSLTC, (caddr_t) &bl, p);
 		}
-
 
 	default:
 		DPRINTF(("Unknown svr4 ttold %x\n", cmd));
