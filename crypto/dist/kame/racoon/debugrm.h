@@ -1,4 +1,4 @@
-/*	$KAME: debugrm.h,v 1.3 2001/11/26 16:54:29 sakane Exp $	*/
+/*	$KAME: debugrm.h,v 1.4 2002/06/10 19:58:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,19 +47,19 @@
 #else /*!NONEED_DRM*/
 #ifndef racoon_malloc
 #define	racoon_malloc(sz)	\
-	DRM_malloc(__FILE__, __LINE__, __FUNCTION__, (sz))
+	DRM_malloc(__FILE__, __LINE__, __func__, (sz))
 #endif
 #ifndef racoon_calloc
 #define	racoon_calloc(cnt, sz)	\
-	DRM_calloc(__FILE__, __LINE__, __FUNCTION__, (cnt), (sz))
+	DRM_calloc(__FILE__, __LINE__, __func__, (cnt), (sz))
 #endif
 #ifndef racoon_realloc
 #define	racoon_realloc(old, sz)	\
-	DRM_realloc(__FILE__, __LINE__, __FUNCTION__, (old), (sz))
+	DRM_realloc(__FILE__, __LINE__, __func__, (old), (sz))
 #endif
 #ifndef racoon_free
 #define	racoon_free(p)		\
-	DRM_free(__FILE__, __LINE__, __FUNCTION__, (p))
+	DRM_free(__FILE__, __LINE__, __func__, (p))
 #endif
 #endif /*NONEED_DRM*/
 
@@ -72,13 +72,13 @@ extern void DRM_free __P((char *, int, char *, void *));
 
 #ifndef NONEED_DRM
 #define	vmalloc(sz)	\
-	DRM_vmalloc(__FILE__, __LINE__, __FUNCTION__, (sz))
+	DRM_vmalloc(__FILE__, __LINE__, __func__, (sz))
 #define	vdup(old)	\
-	DRM_vdup(__FILE__, __LINE__, __FUNCTION__, (old))
+	DRM_vdup(__FILE__, __LINE__, __func__, (old))
 #define	vrealloc(old, sz)	\
-	DRM_vrealloc(__FILE__, __LINE__, __FUNCTION__, (old), (sz))
+	DRM_vrealloc(__FILE__, __LINE__, __func__, (old), (sz))
 #define	vfree(p)		\
-	DRM_vfree(__FILE__, __LINE__, __FUNCTION__, (p))
+	DRM_vfree(__FILE__, __LINE__, __func__, (p))
 #endif
 
 extern void *DRM_vmalloc __P((char *, int, char *, size_t));
