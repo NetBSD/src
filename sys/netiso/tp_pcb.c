@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.24 2003/08/07 16:33:40 agc Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.25 2004/04/18 18:54:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.24 2003/08/07 16:33:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.25 2004/04/18 18:54:04 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -644,12 +644,11 @@ tp_attach(so, protocol)
 	if (error)
 		goto bad2;
 
-	MALLOC(tpcb, struct tp_pcb *, sizeof(*tpcb), M_PCB, M_NOWAIT);
+	MALLOC(tpcb, struct tp_pcb *, sizeof(*tpcb), M_PCB, M_NOWAIT|M_ZERO);
 	if (tpcb == NULL) {
 		error = ENOBUFS;
 		goto bad2;
 	}
-	bzero((caddr_t) tpcb, sizeof(struct tp_pcb));
 
 	if (((lref = tp_getref(tpcb)) & TP_ENOREF) != 0) {
 		error = ETOOMANYREFS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.30 2003/08/07 16:33:35 agc Exp $	*/
+/*	$NetBSD: esis.c,v 1.31 2004/04/18 18:54:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.30 2003/08/07 16:33:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.31 2004/04/18 18:54:03 matt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -204,12 +204,11 @@ esis_usrreq(so, req, m, nam, control, p)
 			if (error)
 				break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		if (rp == 0) {
 			error = ENOBUFS;
 			break;
 		}
-		bzero(rp, sizeof(*rp));
 		rp->rcb_socket = so;
 		LIST_INSERT_HEAD(&esis_pcb, rp, rcb_list);
 		so->so_pcb = rp;

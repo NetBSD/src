@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.23 2004/04/17 15:18:53 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.24 2004/04/18 18:54:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.23 2004/04/17 15:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.24 2004/04/18 18:54:04 matt Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -848,8 +848,7 @@ tp_setup_perf(tpcb)
 	struct tp_pcb *tpcb;
 {
 	if (tpcb->tp_p_meas == 0) {
-		tpcb->tp_p_meas = malloc(sizeof(struct tp_pmeas), M_PCB, M_WAITOK);
-		bzero((caddr_t)tpcb->tp_p_meas, sizeof(struct tp_pmeas));
+		tpcb->tp_p_meas = malloc(sizeof(struct tp_pmeas), M_PCB, M_WAITOK|M_ZERO);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_PERF_MEAS]) {
 			printf(

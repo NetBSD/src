@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.33 2003/08/07 16:33:36 agc Exp $	*/
+/*	$NetBSD: iso.c,v 1.34 2004/04/18 18:54:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.33 2003/08/07 16:33:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.34 2004/04/18 18:54:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,10 +488,9 @@ iso_control(so, cmd, data, ifp, p)
 			panic("iso_control");
 		if (ia == 0) {
 			MALLOC(ia, struct iso_ifaddr *, sizeof(*ia),
-			       M_IFADDR, M_WAITOK);
+			       M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == 0)
 				return (ENOBUFS);
-			bzero((caddr_t)ia, sizeof(*ia));
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
 			IFAREF((struct ifaddr *)ia);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,

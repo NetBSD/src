@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.12 2003/08/07 16:33:35 agc Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.13 2004/04/18 18:54:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.12 2003/08/07 16:33:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.13 2004/04/18 18:54:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -192,12 +192,11 @@ idrp_usrreq(so, req, m, nam, control, p)
 			if (error)
 				break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		if (rp == 0) {
 			error = ENOBUFS;
 			break;
 		}
-		bzero(rp, sizeof(*rp));
 		rp->rcb_socket = so;
 		LIST_INSERT_HEAD(&idrp_pcb, rp, rcb_list);
 		so->so_pcb = rp;

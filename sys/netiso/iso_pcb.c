@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.25 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.26 2004/04/18 18:54:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.25 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.26 2004/04/18 18:54:04 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -123,7 +123,7 @@ iso_pcballoc(so, v)
 		printf("iso_pcballoc(so %p)\n", so);
 	}
 #endif
-	MALLOC(isop, struct isopcb *, sizeof(*isop), M_PCB, M_NOWAIT);
+	MALLOC(isop, struct isopcb *, sizeof(*isop), M_PCB, M_NOWAIT|M_ZERO);
 	if (isop == NULL)
 		return ENOBUFS;
 	bzero(isop, sizeof(*isop));
