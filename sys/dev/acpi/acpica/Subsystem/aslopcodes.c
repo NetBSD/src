@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: aslopcode - AML opcode generation
- *              $Revision: 48 $
+ *              $Revision: 52 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -206,7 +206,7 @@ OpcSetOptimalIntegerSize (
     ACPI_PARSE_OBJECT       *Op)
 {
 
-    /* 
+    /*
      * Check for the special AML integers first - Zero, One, Ones.
      * These are single-byte opcodes that are the smallest possible
      * representation of an integer.
@@ -443,12 +443,12 @@ OpcDoEisaId (
 {
     UINT32                  EisaId = 0;
     UINT32                  BigEndianId;
-    NATIVE_CHAR             *InString;
+    char                    *InString;
     ACPI_STATUS             Status = AE_OK;
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
 
 
-    InString = (NATIVE_CHAR *) Op->Asl.Value.String;
+    InString = (char *) Op->Asl.Value.String;
 
     /*
      * The EISAID string must be exactly 7 characters and of the form
