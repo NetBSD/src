@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.22 1999/10/31 19:45:17 rh Exp $
+.\"	$NetBSD: packages.7,v 1.23 1999/11/22 23:45:15 dmcmahill Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -63,6 +63,8 @@ to each package).  The default is
 .Pa ${PKGSRCDIR}/packages .
 .It GMAKE
 Set to path of GNU make if not in $PATH (default: gmake).
+.It PKG_FC
+Set to the path of the desired fortran compiler (default: f2c-f77).
 .It XMKMF
 Set to path of
 .Dq xmkmf
@@ -289,6 +291,8 @@ to retrieve distribution files.
 Says that the package uses
 .Pa libtool
 to manage building of libraries and shared objects, where applicable.
+.It USE_FORTRAN
+Says that the package uses a fortran compiler for building.
 .It USE_GMAKE	
 Says that the package uses
 .Pa gmake .
