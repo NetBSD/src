@@ -30,14 +30,12 @@ fmt_puts(s, leftp)
 	if (*leftp != -1) {
 		len = strlen(v);
 		if (len > *leftp) {
-			printf("%.*s", *leftp, v);
+			v[*leftp] = '\0';
 			*leftp = 0;
-		} else {
-			printf("%s", v);
+		} else
 			*leftp -= len;
-		}
-	} else
-		printf("%s", v);
+	}
+	printf("%s", v);
 }
 
 void
