@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.9 1996/10/09 00:50:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,8 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -367,15 +369,15 @@ kbdwrite(dev, uio, flags)
 }
 
 int
-kbdselect(dev, rw, p)
+kbdpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct kbd_softc *k;
 
 	k = kbd_cd.cd_devs[minor(dev)];
-	return (ev_select(&k->k_events, rw, p));
+	return (ev_poll(&k->k_events, events, p));
 }
 
 
