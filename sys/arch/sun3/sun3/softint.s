@@ -49,62 +49,60 @@
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.
+ * do not have to do it here.  After identifing that we need an AST we
+ * drop the IPL to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.  A cleanup should only be needed at this
- * point for coprocessor mid-instruction frames (type 9), but we also test
- * for bus error frames (type 10 and 11).
+ * necessitating a stack cleanup.
  */
 	.comm	_ssir,1
 	.globl	_astpending
 rei:
-#ifdef DEBUG
+#ifdef STACKCHECK
 	tstl	_panicstr		| have we paniced?
-	jne	Ldorte			| yes, do not make matters worse
+	jne	Ldorte1			| yes, do not make matters worse
 #endif
 	tstl	_astpending		| AST pending?
 	jeq	Lchksir			| no, go check for SIR
+Lrei1:
 	btst	#5,sp@			| yes, are we returning to user mode?
 	jne	Lchksir			| no, go check for SIR
-	clrw	sp@-			| pad SR to longword
+	movw	#PSL_LOWIPL,sr		| lower SPL
+	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
-	movl	a1,sp@(60)		|    the users SP
+	movl	a1,sp@(FR_SP)		|    the users SP
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_ASTFLT,sp@-		| type == async system trap
 	jbsr	_trap			| go handle it
 	lea	sp@(12),sp		| pop value args
-	movl	sp@(60),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#4,sp			| toss SSP
-	tstw	sp@+			| do we need to clean up stack?
-	jeq	Ldorte			| no, just continue
-	btst	#7,sp@(6)		| type 9/10/11 frame?
-	jeq	Ldorte			| no, nothing to do
-	btst	#5,sp@(6)		| type 9?
-	jne	Last1			| no, skip
-	movw	sp@,sp@(12)		| yes, push down SR
-	movl	sp@(2),sp@(14)		| and PC
-	clrw	sp@(18)			| and mark as type 0 frame
-	lea	sp@(12),sp		| clean the excess
-	jra	Ldorte			| all done
-Last1:
-	btst	#4,sp@(6)		| type 10?
-	jne	Last2			| no, skip
-	movw	sp@,sp@(24)		| yes, push down SR
-	movl	sp@(2),sp@(26)		| and PC
-	clrw	sp@(30)			| and mark as type 0 frame
-	lea	sp@(24),sp		| clean the excess
-	jra	Ldorte			| all done
-Last2:
-	movw	sp@,sp@(84)		| type 11, push down SR
-	movl	sp@(2),sp@(86)		| and PC
-	clrw	sp@(90)			| and mark as type 0 frame
-	lea	sp@(84),sp		| clean the excess
-	jra	Ldorte			| all done
+	movl	sp@(FR_SP),a0		| restore user SP
+	movl	a0,usp			|   from save area
+	movw	sp@(FR_ADJ),d0		| need to adjust stack?
+	jne	Laststkadj		| yes, go to it
+	moveml	sp@+,#0x7FFF		| no, restore most user regs
+	addql	#8,sp			| toss SP and stack adjust
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
+	rte				| and do real RTE
+#endif
+Laststkadj:
+	lea	sp@(FR_HW),a1		| pointer to HW frame
+	addql	#8,a1			| source pointer
+	movl	a1,a0			| source
+	addw	d0,a0			|  + hole size = dest pointer
+	movl	a1@-,a0@-		| copy
+	movl	a1@-,a0@-		|  8 bytes
+	movl	a0,sp@(FR_SP)		| new SSP
+	moveml	sp@+,#0x7FFF		| restore user registers
+	movl	sp@,sp			| and our SP
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
+	rte				| and do real RTE
+#endif
 Lchksir:
 	tstb	_ssir			| SIR pending?
 	jeq	Ldorte			| no, all done
@@ -117,23 +115,63 @@ Lgotsir:
 	movw	#SPL1,sr		| prevent others from servicing int
 	tstb	_ssir			| too late?
 	jeq	Ldorte			| yes, oh well...
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
-	movl	a1,sp@(60)		|    the users SP
+	movl	a1,sp@(FR_SP)		|    the users SP
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_SSIR,sp@-		| type == software interrupt
 	jbsr	_trap			| go handle it
 	lea	sp@(12),sp		| pop value args
-	movl	sp@(60),a0		| restore
+	movl	sp@(FR_SP),a0		| restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#6,sp			| pop SSP and align word
+	addql	#8,sp			| pop SP and stack adjust
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
 	rte
+#endif
 Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
+#ifdef STACKCHECK
+	movw	#SPL6,sr		| avoid trouble
+	btst	#5,sp@			| are we returning to user mode?
+	jne	Ldorte1			| no, skip it
+	movl	a6,tmpstk-20
+	movl	d0,tmpstk-76
+	moveq	#0,d0
+	movb	sp@(6),d0		| get format/vector
+	lsrl	#3,d0			| convert to index
+	lea	_exframesize,a6		|  into exframesize
+	addl	d0,a6			|  to get pointer to correct entry
+	movw	a6@,d0			| get size for this frame
+	addql	#8,d0			| adjust for unaccounted for bytes
+	lea	_kstackatbase,a6	| desired stack base
+	subl	d0,a6			|   - frame size == our stack
+	cmpl	a6,sp			| are we where we think?
+	jeq	Ldorte2			| yes, skip it
+	lea	tmpstk,a6		| will be using tmpstk
+	movl	sp@(4),a6@-		| copy common
+	movl	sp@,a6@-		|   frame info
+	clrl	a6@-
+	movl	sp,a6@-			| save sp
+	subql	#4,a6			| skip over already saved a6
+	moveml	#0x7FFC,a6@-		| push remaining regs (d0/a6/a7 done)
+	lea	a6@(-4),sp		| switch to tmpstk (skip saved d0)
+	clrl	sp@-			| is an underflow
+	jbsr	_badkstack		| badkstack(0, frame)
+	addql	#4,sp
+	moveml	sp@+,#0x7FFF		| restore most registers
+	movl	sp@,sp			| and SP
+	rte
+Ldorte2:
+	movl	tmpstk-76,d0
+	movl	tmpstk-20,a6
+Ldorte1:
+#endif
 	rte				| real return
 
 /* this code is un-altered from the hp300 version */

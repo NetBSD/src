@@ -51,17 +51,17 @@ sigreturn:
 	lea	sp@(-84),sp		| leave enough space for largest frame
 	movl	sp@(84),sp@		| move up current 8 byte frame
 	movl	sp@(88),sp@(4)
-	movw	#84,sp@-		| default: adjust by 84 bytes
+	movl	#84,sp@-		| default: adjust by 84 bytes
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
-	movl	a0,sp@(60)		|   in the savearea
+	movl	a0,sp@(FR_SP)		|   in the savearea
 	movl	#SYS_sigreturn,sp@-	| push syscall number
 	jbsr	_syscall		| handle it
 	addql	#4,sp			| pop syscall#
-	movl	sp@(60),a0		| grab and restore
+	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
-	lea	sp@(64),a1		| pointer to HW frame
-	movw	a1@+,d0			| do we need to adjust the stack?
+	lea	sp@(FR_HW),a1		| pointer to HW frame
+	movw	sp@(FR_ADJ),d0		| do we need to adjust the stack?
 	jeq	Lsigr1			| no, just continue
 	moveq	#92,d1			| total size
 	subw	d0,d1			|  - hole size = frame size
@@ -74,7 +74,7 @@ Lsigrlp:
 	dbf	d1,Lsigrlp		| continue
 	movl	a0,a1			| new HW frame base
 Lsigr1:
-	movl	a1,sp@(60)		| new SP value
+	movl	a1,sp@(FR_SP)		| new SP value
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
 	jra	rei			| all done
@@ -93,12 +93,13 @@ Lsigr1:
  *			.
  *	scp+0->	beginning of signal context frame
  */
-	.globl	_sigcode, _esigcode
+	.globl	_sigcode, _esigcode, _sigcodetrap
 	.data
 _sigcode:
 	movl	sp@(12),a0		| signal handler addr	(4 bytes)
 	jsr	a0@			| call signal handler	(2 bytes)
 	addql	#4,sp			| pop signo		(2 bytes)
+_sigcodetrap:
 	trap	#1			| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)		| save errno		(4 bytes)
 	moveq	#1,d0			| syscall == exit	(2 bytes)

@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.21 1994/05/20 04:40:23 gwr Exp $
+ *	$Id: trap.c,v 1.22 1994/05/27 14:58:41 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -62,13 +62,11 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 
-
 #include <vm/vm.h>
 #include <vm/pmap.h>
-#include <sys/vmmeter.h>
 
 #ifdef COMPAT_HPUX
-#include <../../hp300/hpux/hpux.h>
+#include <hp300/hpux/hpux.h>
 #endif
 
 #ifdef COMPAT_SUNOS
@@ -83,6 +81,8 @@
 
 struct	sysent	sysent[];
 int	nsysent;
+int astpending;
+int want_resched;
 #ifdef COMPAT_SUNOS
 struct	sysent	sun_sysent[];
 int	nsun_sysent;
@@ -123,20 +123,29 @@ short	exframesize[] = {
 	-1, -1, -1, -1	/* type C-F - undefined */
 };
 
+#define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
+#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+
 #ifdef DEBUG
 int mmudebug = 0;
+int mmupid = -1;
+#define MDB_FOLLOW	1
+#define MDB_WBFOLLOW	2
+#define MDB_WBFAILED	4
+#define MDB_ISPID(p)	((p) == mmupid)
 #endif
 
 /*
- * Define the code needed before returning to user mode, for
- * trap, and syscall.
+ * trap and syscall both need the following work done before
+ * returning to user mode.
  */
-void userret(p, pc, oticks)
-	struct proc *p;
-	int pc;
+static void
+userret(p, fp, oticks)
+	register struct proc *p;
+	register struct frame *fp;
 	u_quad_t oticks;
 {
-        int sig, s;
+	int sig, s;
     
 	while ((sig = CURSIG(p)) !=0)
 		postsig(sig);
@@ -154,7 +163,7 @@ void userret(p, pc, oticks)
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		mi_switch();
-		splx(s);	/* XXX - Is this right?  was: spl0() */
+		splx(s);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -164,7 +173,8 @@ void userret(p, pc, oticks)
 	 */
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(p, fp->f_pc,
+					(int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curpriority = p->p_priority;
@@ -181,6 +191,7 @@ trap(type, code, v, frame)
 	register unsigned v;
 	struct frame frame;
 {
+	extern char fuswintr[];
 	register struct proc *p;
 	register int i = 0;
 	unsigned ucode = 0;
@@ -192,9 +203,9 @@ trap(type, code, v, frame)
 	p = curproc;
 	if ((p = curproc) == NULL)
 		p = &proc0;
-	sticks = p->p_sticks;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
+		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
 
@@ -208,7 +219,12 @@ trap(type, code, v, frame)
 	switch (type) {
 	default:
 dopanic:
-		printf("trap type %d, code = %x, v = %x\n", type, code, v);
+		printf("trap type %d, code = %x, v = %x, pc=%x\n",
+			   type, code, v, frame.f_pc);
+#ifdef DDB
+		if (kdb_trap(type, &frame))
+			return;
+#endif
 		regdump(frame.f_regs, 128);
 		type &= ~T_USER;
 		if ((unsigned)type < TRAP_TYPES)
@@ -234,13 +250,15 @@ copyfault:
 
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
+		ucode = v;
 		i = SIGBUS;
 		break;
 
 #ifdef FPCOPROC
 	case T_COPERR:		/* kernel coprocessor violation */
 #endif
-	case T_FMTERR:		/* kernel format error */
+	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
+	case T_FMTERR:		/* ...just in case... */
 	/*
 	 * The user has most likely trashed the RTE or FP state info
 	 * in the stack frame of a signal handler.
@@ -400,15 +418,20 @@ copyfault:
 			return;
 		}
 		spl0();
-#ifndef PROFTIMER
-		if ((p->p_flag&P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
-			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
+		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
 		}
-#endif
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
+		/*
+		 * If we were doing profiling ticks or other user mode
+		 * stuff from interrupt code, Just Say No.
+		 * XXX - Can this test ever succeed? -gwr
+		 */
+		if (p->p_addr->u_pcb.pcb_onfault == fuswintr)
+			goto copyfault;
 		/* fall into ... */
 
 	case T_MMUFLT|T_USER:	/* page fault */
@@ -420,6 +443,12 @@ copyfault:
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
+		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
+		       p->p_pid, code, v, frame.f_pc, frame.f_sr);
+#endif
+
 		/*
 		 * It is only a kernel address space fault iff:
 		 * 	1. (type & T_USER) == 0  and
@@ -429,12 +458,11 @@ copyfault:
 		 * argument space is lazy-allocated.
 		 */
 		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault ||
-		     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD)))
+		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
-		if ((code & (SSW_DF|SSW_RW)) == SSW_DF)	/* what about RMW? */
+		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
@@ -445,7 +473,25 @@ copyfault:
 			goto dopanic;
 		}
 #endif
+#if 0	/* XXX def COMPAT_HPUX */
+		if (ISHPMMADDR(va)) {
+			vm_offset_t bva;
+
+			rv = pmap_mapmulti(map->pmap, va);
+			if (rv != KERN_SUCCESS) {
+				bva = HPMMBASEADDR(va);
+				rv = vm_fault(map, bva, ftype, FALSE);
+				if (rv == KERN_SUCCESS)
+					(void) pmap_mapmulti(map->pmap, va);
+			}
+		} else
+#endif
 		rv = vm_fault(map, va, ftype, FALSE);
+#ifdef DEBUG
+		if (rv && MDB_ISPID(p->p_pid))
+			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			       map, va, ftype, rv);
+#endif
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x, %x, %x, 0) -> %x in context %d at %x\n",
 		       map, va, ftype, rv, get_context(),
@@ -501,14 +547,14 @@ copyfault:
 	if (i)
 	    trapsignal(p, i, ucode);
 out:
-	userret(p, frame.f_pc, sticks);
+	userret(p, &frame, sticks);
 }
 
 /*
  * Process a system call.
  */
 syscall(code, frame)
-	volatile int code;
+	u_int code;
 	struct frame frame;
 {
 	register caddr_t params;
@@ -525,7 +571,7 @@ syscall(code, frame)
 	struct sysent *systab;
 #ifdef COMPAT_HPUX
 	extern struct sysent hpuxsysent[];
-	extern int hpuxnsysent, notimp();
+	extern int hpux_nsysent, notimp();
 #endif
 
 	cnt.v_syscall++;
@@ -550,20 +596,19 @@ syscall(code, frame)
 	    /* XXX don't do this for sun_sigreturn, as there's no
 	       XXX stored pc on the stack to skip, the argument follows
 	       XXX the syscall number without a gap. */
-	    if (code != SUN_SYS_sigreturn)
-	      {
-		  frame.f_regs[SP] += sizeof (int);
-		  /* remember that we adjusted the SP, might have to undo
-		     this if the system call returns ERESTART. */
-		  p->p_md.md_flags |= MDP_STACKADJ;
-	      }
+		if (code != SUN_SYS_sigreturn) {
+			frame.f_regs[SP] += sizeof (int);
+			/* remember that we adjusted the SP, might have to undo
+			   this if the system call returns ERESTART. */
+			p->p_md.md_flags |= MDP_STACKADJ;
+		}
 	}
 	    break;
 #endif
 #ifdef COMPAT_HPUX
 	case EMUL_HPUX: 
-		systab = hpuxsysent;
-		numsys = hpuxnsysent;
+		systab = hpux_sysent;
+		numsys = hpux_nsysent;
 	    break;
 	    
 #endif
@@ -576,18 +621,32 @@ syscall(code, frame)
 	}
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 	switch (code) {
+
 	case SYS_syscall:
-	        code = fuword(params); /* indir */
-	        params += sizeof(int);
-	        break;
-        case SYS___syscall:
-#ifdef COMPAT_SUNOS
-		if (p->p_emul == EMUL_SUNOS)
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
+		code = fuword(params); /* indir */
+		params += sizeof(int);
+		/*
+		 * XXX sigreturn requires special stack manipulation
+		 * that is only done if entered via the sigreturn
+		 * trap.  Cannot allow it here so make sure we fail.
+		 */
+		if (code == SYS_sigreturn)
+			code = numsys;
+		break;
+
+	case SYS___syscall:
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
+		if (p->p_emul != EMUL_NETBSD)
 			break;
-#endif		
-	        code = fuword(params + _QUAD_LOWWORD*sizeof(int)); /* indir */
-	        params += sizeof(quad_t);
-	        break;
+		code = fuword(params + _QUAD_LOWWORD*sizeof(int)); /* indir */
+		params += sizeof(quad_t);
+		break;
 	default:
 	}
 	if (code >= numsys)
@@ -667,7 +726,7 @@ done:
 	    p->p_md.md_flags &= ~MDP_STACKADJ;
 	  }
 #endif
-	userret(p, opc, sticks);
+	userret(p, &frame, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);

@@ -28,14 +28,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.7 1994/05/16 16:47:38 gwr Exp $
+ * $Id: isr.c,v 1.8 1994/05/27 14:58:29 gwr Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/vmmeter.h>
 
 #include <net/netisr.h>
+#include <machine/cpu.h>
 #include <machine/isr.h>
 
 #include "vector.h"
@@ -187,18 +189,19 @@ void isr_soft_clear(level)
     splx(s);
 }
 
-void intrhand(sr)
-	int sr;
+int intrcnt[8];
+void intrhand(ipl)
+	int ipl;
 {
     struct isr *isr;
     int found;
-    int ipl;
 
-    ipl = (sr >> 8) & 7;
+	intrcnt[ipl]++;
+	cnt.v_intr++;
 
     isr = isr_array[ipl];
     if (!isr) {
-	printf("intrhand: unexpected sr 0x%x\n", sr);
+	printf("intrhand: unexpected ipl %d\n", ipl);
 	return;
     }
     if (!ipl) {
@@ -212,32 +215,44 @@ void intrhand(sr)
 	    break;
 	}
     if (!found)
-	printf("intrhand: stray interrupt, sr 0x%x\n", sr);
+	printf("intrhand: stray interrupt, ipl %d\n", ipl);
 }
 
+/*
+ * XXX - This probably belongs in src/sys/net/netisr.c -gwr
+ */
 netintr()
 {
+	int n, s;
+
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
+
+	/*
+	 * Theo says:
+	 * XXX	this is bogus: should just have a list of
+	 *	routines to call, a la timeouts.  Mods to
+	 *	netisr are not atomic and must be protected (gah).
+	 */
 #ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
+	if (n & (1 << NETISR_ARP))
 		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
+	if (n & (1 << NETISR_IP))
 		ipintr();
-	}
 #endif
 #ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
+	if (n & (1 << NETISR_NS))
 		nsintr();
-	}
 #endif
 #ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
+	if (n & (1 << NETISR_ISO))
 		clnlintr();
+#endif
+#ifdef CCITT
+	if (n & (1 << NETISR_CCITT)) {
+		ccittintr();
 	}
 #endif
 }
-

@@ -39,7 +39,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.15 1994/05/20 04:40:25 gwr Exp $
+ *	$Id: vm_machdep.c,v 1.16 1994/05/27 14:58:44 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -76,10 +76,8 @@ cpu_fork(p1, p2)
 	
 	/* copy over the machdep part of struct proc, so we don't lose
 	   any emulator-properties of processes. */
-	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
-
-	/* need to copy current frame pointer */
 	p2->p_md.md_regs = p1->p_md.md_regs;
+	p2->p_md.md_flags = (p1->p_md.md_flags & ~(MDP_AST|MDP_HPUXTRACE));
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
@@ -142,13 +140,12 @@ cpu_coredump(p, vp, cred)
 
 #ifdef COMPAT_HPUX
 	/*
-	 * BLETCH!  If we loaded from an HPUX format binary file
-	 * we have to dump an HPUX style user struct so that the
-	 * HPUX debuggers can grok it.
+	 * If we loaded from an HP-UX format binary file we dump enough
+	 * of an HP-UX style user struct so that the HP-UX debuggers can
+	 * grok it.
 	 */
-	if (p->p_addr->u_pcb.pcb_flags & PCB_HPUXBIN)
-		return (hpuxdumpu(vp, cred));
-	else
+	if (p->p_emul == EMUL_HPUX)
+		return (hpux_dumpu(vp, cred));
 #endif
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
 	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
@@ -175,6 +172,11 @@ extern vm_map_t phys_map;
  *
  * All requests are (re)mapped into kernel VA space via the useriomap
  * (a name with only slightly more meaning than "kernelmap")
+ *
+ * XXX we allocate KVA space by using kmem_alloc_wait which we know
+ * allocates space without backing physical memory.  This implementation
+ * is a total crock, the multiple mappings of these physical pages should
+ * be reflected in the higher-level VM structures to avoid problems.
  */
 vmapbuf(bp)
 	register struct buf *bp;
@@ -189,12 +191,12 @@ vmapbuf(bp)
 
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_un.b_addr;
+	addr = bp->b_saveaddr = bp->b_data;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_un.b_addr = (caddr_t) (kva + off);
+	bp->b_data = (caddr_t) (kva + off);
 	while (npf--) {
 		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
 		    (vm_offset_t)addr);
@@ -214,16 +216,17 @@ vmapbuf(bp)
 vunmapbuf(bp)
 	register struct buf *bp;
 {
+	register caddr_t addr;
 	register int npf;
-	register caddr_t addr = bp->b_un.b_addr;
 	vm_offset_t kva;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
+	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
-	bp->b_un.b_addr = bp->b_saveaddr;
+	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
 
@@ -269,19 +272,29 @@ caddr_t obio_vm_alloc(npages)
  * and size must be a multiple of CLSIZE.
  */
 void pagemove(from, to, size)
-        caddr_t from, to;
+	register caddr_t from, to;
 	int size;
 {
-        vm_offset_t fpte;
+	register vm_offset_t pa;
 
-	if (size % CLBYTES)
+#ifdef DEBUG
+	if (size & CLOFSET)
 		panic("pagemove");
+#endif
 	while (size > 0) {
-	    fpte = get_pte(from);
-	    set_pte(to, fpte);
-	    set_pte(from, PG_INVAL);
-	    from += NBPG;
-	    to += NBPG;
-	    size -= NBPG;
+		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+#ifdef DEBUG
+		if (pa == 0)
+			panic("pagemove 2");
+		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
+			panic("pagemove 3");
+#endif
+		pmap_remove(kernel_pmap,
+			    (vm_offset_t)from, (vm_offset_t)from + NBPG);
+		pmap_enter(kernel_pmap,
+			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+		from += NBPG;
+		to += NBPG;
+		size -= NBPG;
 	}
 }

@@ -38,7 +38,7 @@
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
- *	$Id: cpu.h,v 1.10 1994/05/10 05:24:05 gwr Exp $
+ *	$Id: cpu.h,v 1.11 1994/05/27 14:55:20 gwr Exp $
  */
 
 #ifdef KERNEL
@@ -53,39 +53,50 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-#define	cpu_exec(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
+#define	cpu_exec(p) 	/* nothing */
+#define	cpu_swapin(p)	/* nothing */
+#define	cpu_wait(p) 	/* nothing */
+#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
+#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
 
 /*
- * Arguments to hardclock, softclock and gatherstats
- * encapsulate the previous machine state in an opaque
- * clockframe; for sun3, use just what the hardware
- * leaves on the stack.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.  One the sun3, we use
+ * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
-	int	pc;
-	int	ps;
-}; 
+	u_short	sr;		/* sr at time of interrupt */
+	u_long	pc;		/* pc at time of interrupt */
+	u_short	vo;		/* vector offset (4-word frame) */
+};
 
-#define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
+#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(0) /* XXX laziness */
+#if 0
+/* We would like to do it this way... */
+#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#else
+/* but until we start using PSL_M, we have to do this instead */
+#define	CLKF_INTR(framep)	(0)	/* XXX */
+#endif
 
-typedef struct clockframe clockframe;
+extern int astpending;	 /* need to trap before returning to user mode */
+#define aston() (astpending++)
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
+extern int want_resched; /* resched() was called */
 #define	need_resched()	{ want_resched++; aston(); }
 
 /*
- * Give a profiling tick to the current process from the softclock
- * interrupt.  On the sun3, request an ast to send us through trap(),
- * marking the proc as needing a profiling tick.
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the sun3, request an ast to send us
+ * through trap, marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, aston())
-#define	need_proftick(p) 	((p)->p_flag |= P_OWEUPC, aston())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston())
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -93,14 +104,9 @@ typedef struct clockframe clockframe;
  */
 #define	signotify(p)	aston()
 
-#define aston() (astpending++)
-
-int astpending;	 /* need to trap before returning to user mode */
-int want_resched; /* resched() was called */
-
-#define fuswintr(x) (-1)
-#define suswintr(x,y) (-1)
-
+/*
+ * simulated software interrupt register
+ */
 #include <machine/mtpr.h>
 
 /*
@@ -132,7 +138,7 @@ extern	char *intiobase, *intiolimit;
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
 #define	FC_USERP	2	/* user program space */
-#define	FC_CONTROL	3	/* HPMMU: clear TLB entries */
+#define	FC_CONTROL	3	/* sun control space */
 #define	FC_SUPERD	5	/* supervisor data space */
 #define	FC_SUPERP	6	/* supervisor program space */
 #define	FC_CPU		7	/* CPU space */
