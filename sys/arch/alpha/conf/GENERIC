@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68 1997/10/13 06:59:58 cjs Exp $
+# $NetBSD: GENERIC,v 1.69 1997/10/20 18:47:08 explorer Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -202,6 +202,9 @@ pseudo-device	loop		1
 pseudo-device	md		1
 pseudo-device	ppp		4
 pseudo-device	pty		64
-pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	sl		4
 pseudo-device	vnd		4
+
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness too
