@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.108 2000/02/29 21:54:03 erh Exp $
+#	$NetBSD: Makefile,v 1.109 2000/03/08 00:50:05 cjs Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -52,6 +52,9 @@ _J= -j${NBUILDJOBS}
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
 SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share sys
+.if make(obj)
+SUBDIR+= distrib
+.endif
 
 includes-lib: includes-include includes-sys
 
@@ -110,7 +113,6 @@ build: buildmsg beforeinstall
 .endif
 .if ${MKOBJDIRS} != "no"
 	${MAKE} obj
-	(cd ${.CURDIR}/distrib && ${MAKE} obj)
 .endif
 .if empty(HAVE_GCC28)
 .if defined(DESTDIR)
