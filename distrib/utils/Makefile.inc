@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 1998/03/02 19:50:53 cgd Exp $
+# $NetBSD: Makefile.inc,v 1.7 1999/04/28 09:18:13 drochner Exp $
 # utils one might want in a crunched binary
 
 LDSTATIC=	-static		# only static compilation makes sense here
@@ -9,6 +9,4 @@ LDSTATIC=	-static		# only static compilation makes sense here
 COPTS+= -msoft-float
 .endif
 
-install:	.NOTMAIN
-	@echo "install not expected"
-
+install: .NOTMAIN .MADE
