@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.2 2000/11/26 08:33:43 takemura Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.3 2000/12/03 13:24:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -71,19 +71,21 @@
 /*
  * Graphics Controller 1/2
  */
-/* GC Control (index: 00h)	*/
+#define MQ200_GCR(n)		(MQ200_GC1+(n)*4)
+/* GC Control (GC00R and GC20R)	*/
 #define MQ200_GCCR(n)		(MQ200_GC(n)+0x00)
 #	define MQ200_GCC_ENABLE		(1<<0)
 #	define MQ200_GCC_HCRESET	(1<<1)
 #	define MQ200_GCC_VCRESET	(1<<2)
-#	define MQ200_GCC_EN		(1<<3)
+#	define MQ200_GCC_WINEN		(1<<3)
 #	define MQ200_GCC_DEPTH_SHIFT	4
 #	define MQ200_GCC_DEPTH_MASK	0x000000f0
-#	define MQ200_GCC_CSREN		(1<<8)
+#	define MQ200_GCC_HCEN		(1<<8)
 	/* bits 10-9 is reserved */
 #	define MQ200_GCC_ALTEN		(1<<11)
 #	define MQ200_GCC_ALTDEPTH_SHIFT 12
 #	define MQ200_GCC_ALTDEPTH_MASK	0x0000f000
+#	define MQ200_GCC_RCLK_SHIFT	16
 #	define MQ200_GCC_RCLK_MASK	0x00030000
 #	define MQ200_GCC_RCLK_BUS	0x00000000
 #	define MQ200_GCC_RCLK_PLL1	0x00010000
@@ -92,6 +94,7 @@
 #	define MQ200_GCC_TESTMODE0	(1<<18)
 #	define MQ200_GCC_TESTMODE1	(1<<19)
 	/* FD(first clock divisor) is 1, 1.5, 2.5, 3.5, 4.5, 5.6 or 6.5 */
+#	define MQ200_GCC_MCLK_FD_SHIFT	20
 #	define MQ200_GCC_MCLK_FD_MASK	0x00700000
 #	define MQ200_GCC_MCLK_FD_1	0x00000000
 #	define MQ200_GCC_MCLK_FD_1_5	0x00100000
@@ -122,46 +125,61 @@
 #	define MQ200_GCC_ABGR888_DIRECT 0xf
 #	define MQ200_GCC_PALRGB_DIRECT	0xf
 
-/* GC CRT Control (index: 04h)	*/
-#define MQ200_GCCRTCR(n)	(MQ200_GC(n)+0x04)
-#	define MQ200_GCCRTC_DACEN		(1<<0)
-#	define MQ200_GCCRTC_HSYNC_PMCLK		(1<<2)
-#	define MQ200_GCCRTC_VSYNC_PMCLK		(1<<3)
-#	define MQ200_GCCRTC_HSYNC_LOW		0x00000010
-#	define MQ200_GCCRTC_HSYNC_HIGH		0x00000020
-#	define MQ200_GCCRTC_VSYNC_LOW		0x00000040
-#	define MQ200_GCCRTC_VSYNC_HIGH		0x00000080
-#	define MQ200_GCCRTC_HSYNC_ACTVHIGH	(0<<8)
-#	define MQ200_GCCRTC_HSYNC_ACTVLOW	(1<<8)
-#	define MQ200_GCCRTC_VSYNC_ACTVHIGH	(0<<9)
-#	define MQ200_GCCRTC_VSYNC_ACTVLOW	(1<<9)
-#	define MQ200_GCCRTC_SYNC_PEDESTAL_EN	(1<<10)
-#	define MQ200_GCCRTC_BLANK_PEDESTAL_EN	(1<<11)
-#	define MQ200_GCCRTC_COMPOSITE_SYNC_EN	(1<<12)
-#	define MQ200_GCCRTC_VREF_INTR		(0<<13)
-#	define MQ200_GCCRTC_VREF_EXTR		(1<<13)
-#	define MQ200_GCCRTC_MONITOR_SENCE_EN	(1<<14)
-#	define MQ200_GCCRTC_CONSTAND_OUTPUT_EN	(1<<15)
-#	define MQ200_GCCRTC_OUTPUT_LEVEL_MASK	0x00ff0000
-#	define MQ200_GCCRTC_OUTPUT_LEVEL_SHIFT	16
-#	define MQ200_GCCRTC_BLUE_NOTLOADED	(1<<24)
-#	define MQ200_GCCRTC_RED_NOTLOADED	(1<<25)
-#	define MQ200_GCCRTC_GREEN_NOTLOADED	(1<<26)
+/* GC CRT Control (GC1only)	*/
+#define MQ200_GC1CRTCR		MQ200_GCR(0x01)
+#	define MQ200_GC1CRTC_DACEN		(1<<0)
+#	define MQ200_GC1CRTC_HSYNC_PMCLK	(1<<2)
+#	define MQ200_GC1CRTC_VSYNC_PMCLK	(1<<3)
+#	define MQ200_GC1CRTC_HSYNC_PMMASK	0x00000030
+#	define MQ200_GC1CRTC_HSYNC_PMNORMAL	0x00000000
+#	define MQ200_GC1CRTC_HSYNC_PMLOW	0x00000010
+#	define MQ200_GC1CRTC_HSYNC_PMHIGH	0x00000020
+#	define MQ200_GC1CRTC_VSYNC_PMMASK	0x000000c0
+#	define MQ200_GC1CRTC_VSYNC_PMNORMAL	0x00000000
+#	define MQ200_GC1CRTC_VSYNC_PMLOW	0x00000040
+#	define MQ200_GC1CRTC_VSYNC_PMHIGH	0x00000080
+#	define MQ200_GC1CRTC_HSYNC_ACTVHIGH	(0<<8)
+#	define MQ200_GC1CRTC_HSYNC_ACTVLOW	(1<<8)
+#	define MQ200_GC1CRTC_VSYNC_ACTVHIGH	(0<<9)
+#	define MQ200_GC1CRTC_VSYNC_ACTVLOW	(1<<9)
+#	define MQ200_GC1CRTC_SYNC_PEDESTAL_EN	(1<<10)
+#	define MQ200_GC1CRTC_BLANK_PEDESTAL_EN	(1<<11)
+#	define MQ200_GC1CRTC_COMPOSITE_SYNC_EN	(1<<12)
+#	define MQ200_GC1CRTC_VREF_INTR		(0<<13)
+#	define MQ200_GC1CRTC_VREF_EXTR		(1<<13)
+#	define MQ200_GC1CRTC_MONITOR_SENCE_EN	(1<<14)
+#	define MQ200_GC1CRTC_CONSTANT_OUTPUT_EN	(1<<15)
+#	define MQ200_GC1CRTC_OUTPUT_LEVEL_MASK	0x00ff0000
+#	define MQ200_GC1CRTC_OUTPUT_LEVEL_SHIFT	16
+#	define MQ200_GC1CRTC_BLUE_NOTLOADED	(1<<24)
+#	define MQ200_GC1CRTC_RED_NOTLOADED	(1<<25)
+#	define MQ200_GC1CRTC_GREEN_NOTLOADED	(1<<26)
 	/* bit 27 is reserved */
-#	define MQ200_GCCRTC_COLOR		(0<<28)
-#	define MQ200_GCCRTC_MONO		(1<<28)
+#	define MQ200_GC1CRTC_COLOR		(0<<28)
+#	define MQ200_GC1CRTC_MONO		(1<<28)
 	/* bits 31-29 are reserved */
 
-/* GC Hotizontal Display Control (index: 08h)	*/
+/* GC CRC Control (GC2 only)	*/
+#define MQ200_GC2CRCCR		MQ200_GCR(0x21)
+#	define MQ200_GC2CRCC_ENABLE		(1<<0)
+#	define MQ200_GC2CRCC_WAIT1VSYNC		(0<<1)
+#	define MQ200_GC2CRCC_WAIT2VSYNC		(1<<1)
+#	define MQ200_GC2CRCC_BLUE		(0x0<<2)
+#	define MQ200_GC2CRCC_GREEN		(0x1<<2)
+#	define MQ200_GC2CRCC_RED		(0x2<<2)
+#	define MQ200_GC2CRCC_RESULT_SHIFT	8
+#	define MQ200_GC2CRCC_RESULT_MASK	0x3fffff00
+
+/* GC Hotizontal Display Control (GC02R and GC22R)	*/
 #define MQ200_GCHDCR(n)		(MQ200_GC(n)+0x08)
-#	define MQ200_GCHDC_TOTAL_MASK		0x00000fff
-#	define MQ200_GCHDC_TOTAL_SHIFT		0
+#	define MQ200_GC1HDC_TOTAL_MASK		0x00000fff
+#	define MQ200_GC1HDC_TOTAL_SHIFT		0
 	/* bits 15-12 are reserved */
 #	define MQ200_GCHDC_END_MASK		0x0fff0000
 #	define MQ200_GCHDC_END_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Vertical Display Control (index: 0Ch)	*/
+/* GC Vertical Display Control (GC03R and GC23R)	*/
 #define MQ200_GCVDCR(n)		(MQ200_GC(n)+0x0c)
 #	define MQ200_GCVDC_TOTAL_MASK		0x00000fff
 #	define MQ200_GCVDC_TOTAL_SHIFT		0
@@ -170,7 +188,7 @@
 #	define MQ200_GCVDC_END_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Hotizontal Sync Control (index: 10h)	*/
+/* GC Hotizontal Sync Control (GC04R and GC24R)	*/
 #define MQ200_GCHSCR(n)		(MQ200_GC(n)+0x10)
 #	define MQ200_GCHSC_START_MASK		0x00000fff
 #	define MQ200_GCHSC_START_SHIFT		0
@@ -179,7 +197,7 @@
 #	define MQ200_GCHSC_END_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Vertical Sync Control (index: 14h)	*/
+/* GC Vertical Sync Control (GC05R and GC25R)	*/
 #define MQ200_GCVSCR(n)		(MQ200_GC(n)+0x14)
 #	define MQ200_GCVSC_START_MASK		0x00000fff
 #	define MQ200_GCVSC_START_SHIFT		0
@@ -188,57 +206,57 @@
 #	define MQ200_GCVSC_END_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Vertical Display Count (index: 1Ch)	*/
-#define MQ200_GCVDCNTR(n)	(MQ200_GC(n)+0x1c)
-#	define MQ200_GCVDCNT_MASK		0x00000fff
+/* GC Vertical Display Count (GC07R)	*/
+#define MQ200_GC1VDCNTR		MQ200_GCR(0x07)
+#	define MQ200_GC1VDCNT_MASK		0x00000fff
 	/* bits 31-12 are reserved */
 
-/* GC Horizontal Window Control (index: 20h)	*/
-#define MQ200_GCHWCR(n)		(MQ200_GC(n)+0x20)
-#	define MQ200_GCHWC_START_MASK		0x00000fff
-#	define MQ200_GCHWC_START_SHIFT		0
+/* GC Window Horizontal Control (GC08R and GC28R)	*/
+#define MQ200_GCWHCR(n)		(MQ200_GC(n)+0x20)
+#	define MQ200_GCWHC_START_MASK		0x00000fff
+#	define MQ200_GCWHC_START_SHIFT		0
 	/* bits 15-12 are reserved */
-#	define MQ200_GCHWC_WIDTH_MASK		0x0fff0000
-#	define MQ200_GCHWC_WIDTH_SHIFT		16
-	/* ALD: Additional Line Delta */
-#	define MQ200_GCHWC_ALD_MASK		0xf0000000
-#	define MQ200_GCHWC_ALD_SHIFT		28
+#	define MQ200_GCWHC_WIDTH_MASK		0x0fff0000
+#	define MQ200_GCWHC_WIDTH_SHIFT		16
+	/* ALD: Additional Line Delta (GC1 only) */
+#	define MQ200_GC1WHC_ALD_MASK		0xf0000000
+#	define MQ200_GC1WHC_ALD_SHIFT		28
 
-/* GC Vertical Window Control (index: 24h)	*/
-#define MQ200_GCVWCR(n)		(MQ200_GC(n)+0x24)
-#	define MQ200_GCVWC_START_MASK		0x00000fff
-#	define MQ200_GCVWC_START_SHIFT		0
+/* GC Window Vertical Control (GC09R and GC29R)	*/
+#define MQ200_GCWVCR(n)		(MQ200_GC(n)+0x24)
+#	define MQ200_GCWVC_START_MASK		0x00000fff
+#	define MQ200_GCWVC_START_SHIFT		0
 	/* bits 15-12 are reserved */
-#	define MQ200_GCVWC_HEIGHT_MASK		0x0fff0000
-#	define MQ200_GCVWC_HEIGHT_SHIFT		16
+#	define MQ200_GCWVC_HEIGHT_MASK		0x0fff0000
+#	define MQ200_GCWVC_HEIGHT_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Altarnate Horizontal Window Control (index: 28h)	*/
-#define MQ200_GCHAWCR(n)	(MQ200_GC(n)+0x28)
-#	define MQ200_GCAHWC_START_MASK		0x00000fff
-#	define MQ200_GCAHWC_START_SHIFT		0
+/* GC Altarnate Window Horizontal Control (GC0AR and GC2AR)	*/
+#define MQ200_GCAWHCR(n)	(MQ200_GC(n)+0x28)
+#	define MQ200_GCAWHC_START_MASK		0x00000fff
+#	define MQ200_GCAWHC_START_SHIFT		0
 	/* bits 15-12 are reserved */
-#	define MQ200_GCAHWC_WIDTH_MASK		0x0fff0000
-#	define MQ200_GCAHWC_WIDTH_SHIFT		16
-	/* ALD: Additional Line Delta */
-#	define MQ200_GCAHWC_ALD_MASK		0xf0000000
-#	define MQ200_GCAHWC_ALD_SHIFT		28
+#	define MQ200_GCAWHC_WIDTH_MASK		0x0fff0000
+#	define MQ200_GCAWHC_WIDTH_SHIFT		16
+	/* ALD: Additional Line Delta (GC1 only) */
+#	define MQ200_GC1AWHC_ALD_MASK		0xf0000000
+#	define MQ200_GC1AWHC_ALD_SHIFT		28
 
-/* GC Alternate Vertical Window Control (index: 2Ch)	*/
-#define MQ200_GCAVWCR(n)	(MQ200_GC(n)+0x2C)
-#	define MQ200_GCAVWC_START_MASK		0x00000fff
-#	define MQ200_GCAVWC_START_SHIFT		0
+/* GC Alternate Window Vertical Control (GC0BR and GC2BR)	*/
+#define MQ200_GCAWVCR(n)	(MQ200_GC(n)+0x2C)
+#	define MQ200_GCAWVC_START_MASK		0x00000fff
+#	define MQ200_GCAWVC_START_SHIFT		0
 	/* bits 15-12 are reserved */
-#	define MQ200_GCAVWC_HEIGHT_MASK		0x0fff0000
-#	define MQ200_GCAVWC_HEIGHT_SHIFT	16
+#	define MQ200_GCAWVC_HEIGHT_MASK		0x0fff0000
+#	define MQ200_GCAWVC_HEIGHT_SHIFT	16
 	/* bits 31-28 are reserved */
 
-/* GC Window Start Address (index: 30h)	*/
+/* GC Window Start Address (GC0CR and GC2CR)	*/
 #define MQ200_GCWSAR(n)		(MQ200_GC(n)+0x30)
 #	define MQ200_GCWSA_MASK		0x000fffff
 	/* bits 31-21 are reserved */
 
-/* GC Alternate Window Start Address (index: 34h)	*/
+/* GC Alternate Window Start Address (GC0DR and GC2DR)	*/
 #define MQ200_GCAWSAR(n)	(MQ200_GC(n)+0x34)
 #	define MQ200_GCAWSA_MASK	0x000fffff
 	/* bits 24-21 are reserved */
@@ -246,14 +264,22 @@
 #	define MQ200_GCAWPI_SHIFT	24	/* XXX, 24 could be usefull
 						   than 23 */
 
-/* GC Window Stride (index: 38h)	*/
+/* GC Window Stride (GC0ER and GC2ER)	*/
 #define MQ200_GCWSTR(n)		(MQ200_GC(n)+0x38)
 #	define MQ200_GCWST_MASK		0x0000ffff
 #	define MQ200_GCWST_SHIFT	0
-#	define MQ200_GCWST_ALTMASK	0xffff0000
-#	define MQ200_GCWST_ALTSHIFT	16
+#	define MQ200_GCAWST_MASK	0xffff0000
+#	define MQ200_GCAWST_SHIFT	16
 
-/* GC Hardware Cursor Position (index: 40h)	*/
+/* GC2 Line Size (GC2 only, GC2FR)	*/
+#define MQ200_GC2LSR		MQ200_GCR(0x2f)
+#	define MQ200_GC2WLS_MASK	0x00003fff
+#	define MQ200_GC2WLS_SHIFT	0
+#	define MQ200_GC2AWLS_MASK	0x3fff0000
+#	define MQ200_GC2AWLS_SHIFT	16
+
+
+/* GC Hardware Cursor Position (GC10R and GC30R)	*/
 #define MQ200_GCHCPR(n)		(MQ200_GC(n)+0x40)
 #	define MQ200_GCHCP_HSTART_MASK		0x00000fff
 #	define MQ200_GCHCP_HSTART_SHIFT		0
@@ -262,7 +288,7 @@
 #	define MQ200_GCHCP_VSTART_SHIFT		16
 	/* bits 31-28 are reserved */
 
-/* GC Hardware Start Address and Offset (index: 44h)	*/
+/* GC Hardware Start Address and Offset (GC11R and GC31R)	*/
 #define MQ200_GCHCAOR(n)		(MQ200_GC(n)+0x44)
 #	define MQ200_GCHCAO_ADDR_MASK		0x00000fff
 #	define MQ200_GCHCAO_ADDR_SHIFT		0
@@ -274,25 +300,23 @@
 #	define MQ200_GCHCAO_VOFFSET_SHIFT	24
 	/* bits 31-30 are reserved */
 
-/* GC Hardware Cursor Foreground Color (index: 48h)	*/
+/* GC Hardware Cursor Foreground Color (GC13R and GC33R)	*/
 #define MQ200_GCHCFCR(n)	(MQ200_GC(n)+0x48)
 #	define MQ200_GCHCFC_MASK		0x00ffffff
 	/* you can use MQ200_GC_RGB macro	*/
 	/* bits 31-24 are reserved */
 
-/* GC Hardware Cursor Background Color (index: 4Ch)	*/
+/* GC Hardware Cursor Background Color (GC14R and GC34R)	*/
 #define MQ200_GCHCBCR(n)	(MQ200_GC(n)+0x4c)
 #	define MQ200_GCHCBC_MASK		0x00ffffff
 	/* you can use MQ200_GC_RGB macro	*/
 	/* bits 31-24 are reserved */
 
 #define MQ200_GC1CR		MQ200_GCCR(0)
-#define MQ200_GC1CRTCR		MQ200_GCCRTCR(0)
 #define MQ200_GC1HDCR		MQ200_GCHDCR(0)
 #define MQ200_GC1VDCR		MQ200_GCVDCR(0)
 #define MQ200_GC1HSCR		MQ200_GCHSCR(0)
 #define MQ200_GC1VSCR		MQ200_GCVSCR(0)
-#define MQ200_GC1VDCNTR		MQ200_GCVDCNTR(0)
 #define MQ200_GC1HWCR		MQ200_GCHWCR(0)
 #define MQ200_GC1VWCR		MQ200_GCVWCR(0)
 #define MQ200_GC1HAWCR		MQ200_GCHAWCR(0)
@@ -306,12 +330,10 @@
 #define MQ200_GC1HCBCR		MQ200_GCHCBCR(0)
 
 #define MQ200_GC2CR		MQ200_GCCR(1)
-#define MQ200_GC2CRTCR		MQ200_GCCRTCR(1)
 #define MQ200_GC2HDCR		MQ200_GCHDCR(1)
 #define MQ200_GC2VDCR		MQ200_GCVDCR(1)
 #define MQ200_GC2HSCR		MQ200_GCHSCR(1)
 #define MQ200_GC2VSCR		MQ200_GCVSCR(1)
-#define MQ200_GC2VDCNTR		MQ200_GCVDCNTR(1)
 #define MQ200_GC2HWCR		MQ200_GCHWCR(1)
 #define MQ200_GC2VWCR		MQ200_GCVWCR(1)
 #define MQ200_GC2HAWCR		MQ200_GCHAWCR(1)
@@ -331,31 +353,44 @@
 /*
  * Flat Pannel Controler
  */
-/* FP Control	(index: 00h)	*/
-#define MQ200_FPCR		(MQ200_FP + 0x00)
-#	define MQ200_FPC_EN		(1<<0)
+#define MQ200_FPR(n)		(MQ200_FP + (n)*4)
+/* FP Control	(FP00R)	*/
+#define MQ200_FPCR		MQ200_FPR(0)
+#	define MQ200_FPC_ENABLE		(1<<0)
 #	define MQ200_FPC_GC1		(0<<1)
 #	define MQ200_FPC_GC2		(1<<1)
+#	define MQ200_FPC_TYPE_MASK	0x000000fc
+#	define MQ200_FPC_TYPE_SHIFT	2
+
 #	define MQ200_FPC_TFT		(0<<2)
 #	define MQ200_FPC_SSTN		(1<<2)
 #	define MQ200_FPC_DSTN		(2<<2)
-#	define MQ200_FPC_MODE_MASK	0x000000e0
-#	define MQ200_FPC_MODE_SHIFT	5
+
+#	define MQ200_FPC_COLOR		(0<<4)
 #	define MQ200_FPC_MONO		(1<<4)
-#	define MQ200_FPC_TFT4MONO	(0<<5)
-#	define MQ200_FPC_TFT12		(0<<5)
-#	define MQ200_FPC_SSTN4		(0<<5)
-#	define MQ200_FPC_DSTN8		(0<<5)
-#	define MQ200_FPC_TFT6MONO	(1<<5)
-#	define MQ200_FPC_TFT18		(1<<5)
-#	define MQ200_FPC_SSTN8		(1<<5)
-#	define MQ200_FPC_DSTN16		(1<<5)
-#	define MQ200_FPC_TFT8MONO	(2<<5)
-#	define MQ200_FPC_TFT24		(2<<5)
-#	define MQ200_FPC_SSTN12		(2<<5)
-#	define MQ200_FPC_DSTN24		(2<<5)
-#	define MQ200_FPC_SSTN16		(3<<5)
-#	define MQ200_FPC_SSTN24		(4<<5)
+
+#	define MQ200_FPC_TFTCOLOR	(MQ200_FPC_TFT|MQ200_FPC_COLOR)
+#	define MQ200_FPC_SSTNCOLOR	(MQ200_FPC_SSTN|MQ200_FPC_COLOR)
+#	define MQ200_FPC_DSTNCOLOR	(MQ200_FPC_DSTN|MQ200_FPC_COLOR)
+
+#	define MQ200_FPC_TFTMONO	(MQ200_FPC_TFT|MQ200_FPC_MONO)
+#	define MQ200_FPC_SSTNMONO	(MQ200_FPC_SSTN|MQ200_FPC_MONO)
+#	define MQ200_FPC_DSTNMONO	(MQ200_FPC_DSTN|MQ200_FPC_MONO)
+
+#	define MQ200_FPC_TFT4MONO	((0<<5)|MQ200_FPC_TFTMONO)
+#	define MQ200_FPC_TFT12		((0<<5)|MQ200_FPC_TFTCOLOR)
+#	define MQ200_FPC_SSTN4		((0<<5)|MQ200_FPC_SSTNCOLOR)
+#	define MQ200_FPC_DSTN8		((0<<5)|MQ200_FPC_DSTNCOLOR)
+#	define MQ200_FPC_TFT6MONO	((1<<5)|MQ200_FPC_TFTMONO)
+#	define MQ200_FPC_TFT18		((1<<5)|MQ200_FPC_TFTCOLOR)
+#	define MQ200_FPC_SSTN8		((1<<5)|MQ200_FPC_SSTNCOLOR)
+#	define MQ200_FPC_DSTN16		((1<<5)|MQ200_FPC_DSTNCOLOR)
+#	define MQ200_FPC_TFT8MONO	((2<<5)|MQ200_FPC_TFTMONO)
+#	define MQ200_FPC_TFT24		((2<<5)|MQ200_FPC_TFTCOLOR)
+#	define MQ200_FPC_SSTN12		((2<<5)|MQ200_FPC_SSTNCOLOR)
+#	define MQ200_FPC_DSTN24		((2<<5)|MQ200_FPC_DSTNCOLOR)
+#	define MQ200_FPC_SSTN16		((3<<5)|MQ200_FPC_SSTNCOLOR)
+#	define MQ200_FPC_SSTN24		((4<<5)|MQ200_FPC_SSTNCOLOR)
 #	define MQ200_FPC_DITH_DISABLE	(0<<8)
 #	define MQ200_FPC_DITH_PTRN1	(1<<8)
 #	define MQ200_FPC_DITH_PTRN2	(2<<8)
@@ -385,8 +420,8 @@
 #	define MQ200_FPC_TESTMODE2	(1<<30)
 #	define MQ200_FPC_TESTMODE3	(1<<31)
 
-/* FP Output Pin Control	(index: 04h)	*/
-#define MQ200_FPPCR		(MQ200_FP + 0x04)
+/* FP Output Pin Control	(FP01R)	*/
+#define MQ200_FPPCR		MQ200_FPR(1)
 #	define MQ200_FPPC_PIN_LOW	(1<<0)
 #	define MQ200_FPPC_INVERSION_EN	(1<<1)
 #	define MQ200_FPPC_FDE_COMPOSITE	(0<<2)
@@ -429,8 +464,8 @@
 #	define MQ200_FPPC_FSCLK_DELAY_SHIFT 24
 	/* bits 31-27 are reserved */
 
-/* FP General Purpose Output Port Control	(index: 08h)	*/
-#define MQ200_FPGPOCR		(MQ200_FP + 0x08)
+/* FP General Purpose Output Port Control	(FP02R)	*/
+#define MQ200_FPGPOCR		MQ200_FPR(2)
 #	define MQ200_FPGPOC_ENCTL_EN	(0<<0)
 #	define MQ200_FPGPOC_GPO0_EN	(1<<0)
 #	define MQ200_FPGPOC_OSCCLK_EN	(2<<0)
@@ -462,8 +497,8 @@
 #	define MQ200_FPGPOC_GPO4	(1<<20)
 	/* bits 31-21 are reserved */
 
-/* FP General Purpose I/O Port Control	(index: 0Ch)	*/
-#define MQ200_FPGPOICR		(MQ200_FP + 0x0c)
+/* FP General Purpose I/O Port Control	(FP03R)	*/
+#define MQ200_FPGPOICR		MQ200_FPR(3)
 #	define MQ200_FPGPIOC_INPUT0_EN	(0<<0)
 #	define MQ200_FPGPIOC_OUTPUT0_EN	(1<<0
 #	define MQ200_FPGPIOC_PLL1_EN	(2<<0)
@@ -486,8 +521,8 @@
 #	define MQ200_FPGPIOC_INPUT2	(1<<26)
 	/* bits 31-27 are reserved */
 
-/* FP STN Panel Control	(index: 10h)	*/
-#define MQ200_FPSTNCR		(MQ200_FP + 0x10)
+/* FP STN Panel Control	(FP04R)	*/
+#define MQ200_FPSTNCR		MQ200_FPR(4)
 #	define MQ200_FPSTNC_FRCPRM0_MASK	0x000000ff
 #	define MQ200_FPSTNC_FRCPRM0_SHIFT	0
 #	define MQ200_FPSTNC_FRCPRM1_MASK	0x0000ff00
@@ -499,16 +534,16 @@
 #	define MQ200_FPSTNC_FMOD_FRAMECLK	(0<<31)
 #	define MQ200_FPSTNC_FMOD_LINECLK	(0<<31)
 
-/* FP D-STN Half-Frame Buffer Control	(index: 14h)	*/
-#define MQ200_FPHFBCR		(MQ200_FP + 0x14)
+/* FP D-STN Half-Frame Buffer Control	(FP05R)	*/
+#define MQ200_FPHFBCR		MQ200_FPR(5)
 #	define MQ200_FPHFBC_START_MASK	0x00003fff
 #	define MQ200_FPHFBC_START_SHIFT	-7	/* XXX, does this work? */
 	/* bits 15-14 are reserved */
 #	define MQ200_FPHFBC_END_MASK	0xffff0000
 #	define MQ200_FPHFBC_END_SHIFT	(16-4)	/* XXX, does this work? */
 
-/* FP Pulse Width Modulation Control	(index: 3Ch)	*/
-#define MQ200_FPPWMCR		(MQ200_FP + 0x3c)
+/* FP Pulse Width Modulation Control	(FP0FR)	*/
+#define MQ200_FPPWMCR		MQ200_FPR(0xf)
 #	define MQ200_FPPWMC_PWM0_OSCCLK		(0<<0)
 #	define MQ200_FPPWMC_PWM0_BUSCLK		(1<<0)
 #	define MQ200_FPPWMC_PWM0_PMCLK		(2<<0)
@@ -530,11 +565,11 @@
 #	define MQ200_FPPWMC_PWM1_DCYCLE_MASK	0xff000000
 #	define MQ200_FPPWMC_PWM1_DCYCLE_SHIFT	24
 
-/* FP Frame Rate Control Pattern	(index: 40h to BCh)	*/
-#define MQ200_FPFRCPR		(MQ200_FP + 0x40)
+/* FP Frame Rate Control Pattern	(FP10R to FP2FR)	*/
+#define MQ200_FPFRCPR(n)	MQ200_FPR(0x10+n)
 
-/* FP Frame Rate Control Weight	(index: C0h to DCh)	*/
-#define MQ200_FPFRCWR		(MQ200_FP + 0xC0)
+/* FP Frame Rate Control Weight		(FP30R to FP37R)	*/
+#define MQ200_FPFRCWR(n)	MQ200_FPR(0x30+n)
 
 /*
  * Color Palette 1
