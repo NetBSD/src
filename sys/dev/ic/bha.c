@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.12 1997/04/11 01:34:25 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.12.2.1 1997/05/13 03:04:42 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -6,6 +6,43 @@
 #else
 #define	integrate	static inline
 #endif
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -76,14 +113,7 @@
 #define Debugger() panic("should call debugger here (bha.c)")
 #endif /* ! DDB */
 
-#ifdef alpha		/* XXX */
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
-extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
-#undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t) va)
-#endif	/* alpha */
-
-#define KVTOPHYS(x)	vtophys(x)
+#define	BHA_MAXXFER	((BHA_NSEG - 1) << PGSHIFT)
 
 #ifdef BHADEBUG
 int     bha_debug = 0;
@@ -102,11 +132,11 @@ void bha_collect_mbo __P((struct bha_softc *));
 void bha_start_ccbs __P((struct bha_softc *));
 void bha_done __P((struct bha_softc *, struct bha_ccb *));
 void bha_init __P((struct bha_softc *));
-void bha_inquire_setup_information __P((struct bha_softc *));
 void bhaminphys __P((struct buf *));
 int bha_scsi_cmd __P((struct scsi_xfer *));
 int bha_poll __P((struct bha_softc *, struct scsi_xfer *, int));
 void bha_timeout __P((void *arg));
+int bha_create_ccbs __P((struct bha_softc *, void *, size_t));
 
 struct scsi_adapter bha_switch = {
 	bha_scsi_cmd,
@@ -129,6 +159,9 @@ struct cfdriver bha_cd = {
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	BHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
+
+/* XXX Should put this in a better place. */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
@@ -287,10 +320,15 @@ bha_attach(sc, bpd)
 	sc->sc_link.openings = 4;
 	sc->sc_link.max_target = bpd->sc_iswide ? 15 : 7;
 
-	bha_inquire_setup_information(sc);
-	bha_init(sc);
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
+
+	bha_inquire_setup_information(sc);
+
+	printf("%s: model BT-%s, firmware %s\n", sc->sc_dev.dv_xname,
+	    sc->sc_model, sc->sc_firmware);
+
+	bha_init(sc);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -473,18 +511,92 @@ bha_init_ccb(sc, ccb)
 	struct bha_softc *sc;
 	struct bha_ccb *ccb;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum;
 
+	/*
+	 * XXX Should we put a DIAGNOSTIC check for multiple
+	 * XXX CCB inits here?
+	 */
+
 	bzero(ccb, sizeof(struct bha_ccb));
+
+	/*
+	 * Create DMA maps for this CCB.
+	 */
+	if (bus_dmamap_create(dmat, sizeof(struct bha_ccb), 1,
+	    sizeof(struct bha_ccb), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
+	    &ccb->dmamap_self) ||
+
+					/* XXX What's a good value for this? */
+	    bus_dmamap_create(dmat, BHA_MAXXFER, BHA_NSEG, BHA_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
+	    &ccb->dmamap_xfer))
+		panic("bha_init_ccb: can't create DMA maps");
+
+	/*
+	 * Load the permanent DMA maps.
+	 */
+	if (bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
+	    sizeof(struct bha_ccb), NULL, BUS_DMA_NOWAIT))
+		panic("bha_init_ccb: can't load permanent maps");
+
 	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ccb->hashkey = KVTOPHYS(ccb);
+	ccb->hashkey = ccb->dmamap_self->dm_segs[0].ds_addr;
 	hashnum = CCB_HASH(ccb->hashkey);
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
 	bha_reset_ccb(sc, ccb);
+}
+
+/*
+ * Create a set of ccbs and add them to the free list.
+ */
+int
+bha_create_ccbs(sc, mem, size)
+	struct bha_softc *sc;
+	void *mem;
+	size_t size;
+{
+	bus_dma_segment_t seg;
+	struct bha_ccb *ccb;
+	int rseg, error;
+
+	if (sc->sc_numccbs >= BHA_CCB_MAX)
+		return (0);
+
+	if ((ccb = mem) != NULL)
+		goto have_mem;
+
+	size = NBPG;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT);
+	if (error)
+		return (error);
+
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
+	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return (error);
+	}
+
+ have_mem:
+	bzero(ccb, size);
+	while (size > sizeof(struct bha_ccb)) {
+		bha_init_ccb(sc, ccb);
+		sc->sc_numccbs++;
+		if (sc->sc_numccbs >= BHA_CCB_MAX)
+			break;
+		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
+		(caddr_t)ccb += ALIGN(sizeof(struct bha_ccb));
+		size -= ALIGN(sizeof(struct bha_ccb));
+	}
+
+	return (0);
 }
 
 /*
@@ -514,16 +626,12 @@ bha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < BHA_CCB_MAX) {
-			ccb = (struct bha_ccb *) malloc(sizeof(struct bha_ccb),
-			    M_TEMP, M_NOWAIT);
-			if (!ccb) {
-				printf("%s: can't malloc ccb\n",
+			if (bha_create_ccbs(sc, NULL, 0)) {
+				printf("%s: can't allocate ccbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
-			bha_init_ccb(sc, ccb);
-			sc->sc_numccbs++;
-			break;
+			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -634,7 +742,7 @@ bha_start_ccbs(sc)
 #endif
 
 		/* Link ccb to mbo. */
-		ltophys(KVTOPHYS(ccb), wmbo->ccb_addr);
+		ltophys(ccb->dmamap_self->dm_segs[0].ds_addr, wmbo->ccb_addr);
 		if (ccb->flags & CCB_ABORT)
 			wmbo->cmd = BHA_MBO_ABORT;
 		else
@@ -663,10 +771,23 @@ bha_done(sc, ccb)
 	struct bha_softc *sc;
 	struct bha_ccb *ccb;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = ccb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("bha_done\n"));
+
+	/*
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
+	if (xs->datalen) {
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
+	}
+
 	/*
 	 * Otherwise, put the results of the operation
 	 * into the xfer and call whoever started it
@@ -921,11 +1042,12 @@ bha_init(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_dma_segment_t seg;
 	struct bha_devices devices;
 	struct bha_setup setup;
 	struct bha_mailbox mailbox;
 	struct bha_period period;
-	int i, rlen;
+	int i, rlen, rseg;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
 	if (strcmp(sc->sc_firmware, "3.31") >= 0) {
@@ -1015,6 +1137,34 @@ bha_init(sc)
 	}
 
 	/*
+	 * Allocate the mailbox.
+	 */
+	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, &seg, 1,
+	    &rseg, BUS_DMA_NOWAIT) ||
+	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+		panic("bha_init: can't create or map mailbox");
+
+	/*
+	 * Since DMA memory allocation is always rounded up to a
+	 * page size, create some ccbs from the leftovers.
+	 */
+	if (bha_create_ccbs(sc, ((caddr_t)wmbx) +
+	    ALIGN(sizeof(struct bha_mbx)),
+	    NBPG - ALIGN(sizeof(struct bha_mbx))))
+		panic("bha_init: can't create ccbs");
+
+	/*
+	 * Create and load the mailbox DMA map.
+	 */
+	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct bha_mbx), 1,
+	    sizeof(struct bha_mbx), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
+	    &sc->sc_dmamap_mbox) ||
+	    bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox, wmbx,
+	    sizeof(struct bha_mbx), NULL, BUS_DMA_NOWAIT))
+		panic("bha_init: can't create or load mailbox dma map");
+
+	/*
 	 * Set up initial mail box for round-robin operation.
 	 */
 	for (i = 0; i < BHA_MBX_SIZE; i++) {
@@ -1028,7 +1178,7 @@ bha_init(sc)
 	/* Initialize mail box. */
 	mailbox.cmd.opcode = BHA_MBX_INIT_EXTENDED;
 	mailbox.cmd.nmbx = BHA_MBX_SIZE;
-	ltophys(KVTOPHYS(wmbx), mailbox.cmd.addr);
+	ltophys(sc->sc_dmamap_mbox->dm_segs[0].ds_addr, mailbox.cmd.addr);
 	bha_cmd(iot, ioh, sc,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
@@ -1097,9 +1247,6 @@ bha_inquire_setup_information(sc)
 		*p = '\0';
 	} else
 		strcpy(sc->sc_model, "542B");
-
-	printf("%s: model BT-%s, firmware %s\n", sc->sc_dev.dv_xname,
-	    sc->sc_model, sc->sc_firmware);
 }
 
 void
@@ -1107,8 +1254,8 @@ bhaminphys(bp)
 	struct buf *bp;
 {
 
-	if (bp->b_bcount > ((BHA_NSEG - 1) << PGSHIFT))
-		bp->b_bcount = ((BHA_NSEG - 1) << PGSHIFT);
+	if (bp->b_bcount > BHA_MAXXFER)
+		bp->b_bcount = BHA_MAXXFER;
 	minphys(bp);
 }
 
@@ -1122,15 +1269,9 @@ bha_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct bha_softc *sc = sc_link->adapter_softc;
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct bha_ccb *ccb;
-	struct bha_scat_gath *sg;
-	int seg;		/* scatter gather seg being worked on */
-	u_long thiskv, thisphys, nextphys;
-	int bytes_this_seg, bytes_this_page, datalen, flags;
-#ifdef TFS
-	struct iovec *iovp;
-#endif
-	int s;
+	int error, seg, flags, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("bha_scsi_cmd\n"));
 	/*
@@ -1161,92 +1302,60 @@ bha_scsi_cmd(xs)
 	}
 
 	if (xs->datalen) {
-		sg = ccb->scat_gath;
-		seg = 0;
-#ifdef	TFS
+		/*
+		 * Map the DMA transfer.
+		 */
+#ifdef TFS
 		if (flags & SCSI_DATA_UIO) {
-			iovp = ((struct uio *)xs->data)->uio_iov;
-			datalen = ((struct uio *)xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < BHA_NSEG) {
-				ltophys(iovp->iov_base, sg->seg_addr);
-				ltophys(iovp->iov_len, sg->seg_len);
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
+			error = bus_dmamap_load_uio(dmat,
+			    ccb->dmamap_xfer, (struct uio *)xs->data,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
 		} else
-#endif	/* TFS */
+#endif /* TFS */
 		{
-			/*
-			 * Set up the scatter-gather block.
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
-
-			datalen = xs->datalen;
-			thiskv = (u_long)xs->data;
-			thisphys = KVTOPHYS(thiskv);
-
-			while (datalen && seg < BHA_NSEG) {
-				bytes_this_seg = 0;
-
-				/* put in the base address */
-				ltophys(thisphys, sg->seg_addr);
-
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("0x%x", thisphys));
-
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the the last, just extend the
-					 * length
-					 */
-					/* how far to the end of the page */
-					nextphys =
-					    (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
-
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
-				/*
-				 * next page isn't contiguous, finish the seg
-				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				ltophys(bytes_this_seg, sg->seg_len);
-				sg++;
-				seg++;
-			}
+			error = bus_dmamap_load(dmat,
+			    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
 		}
-		/* end of iov/kv decision */
-		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
-		if (datalen) {
-			/*
-			 * there's still data, must have run out of segs!
-			 */
-			printf("%s: bha_scsi_cmd, more than %d dma segs\n",
-			    sc->sc_dev.dv_xname, BHA_NSEG);
+
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: bha_scsi_cmd, more than %d"
+				    " dma segments\n",
+				    sc->sc_dev.dv_xname, BHA_NSEG);
+			} else {
+				printf("%s: bha_scsi_cmd, error %d loading"
+				    " dma map\n",
+				    sc->sc_dev.dv_xname, error);
+			}
 			goto bad;
 		}
-		ltophys(KVTOPHYS(ccb->scat_gath), ccb->data_addr);
-		ltophys(seg * sizeof(struct bha_scat_gath), ccb->data_length);
-	} else {		/* No data xfer, use non S/G values */
+
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Load the hardware scatter/gather map with the
+		 * contents of the DMA map.
+		 */
+		for (seg = 0; seg < ccb->dmamap_xfer->dm_nsegs; seg++) {
+			ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_addr,
+			    ccb->scat_gath[seg].seg_addr);
+			ltophys(ccb->dmamap_xfer->dm_segs[seg].ds_len,
+			    ccb->scat_gath[seg].seg_len);
+		}
+
+		ltophys(ccb->dmamap_self->dm_segs[0].ds_addr +
+		    offsetof(struct bha_ccb, scat_gath), ccb->data_addr);
+		ltophys(ccb->dmamap_xfer->dm_nsegs *
+		    sizeof(struct bha_scat_gath), ccb->data_length);
+	} else {
+		/*
+		 * No data xfer, use non S/G values.
+		 */
 		ltophys(0, ccb->data_addr);
 		ltophys(0, ccb->data_length);
 	}
@@ -1255,7 +1364,8 @@ bha_scsi_cmd(xs)
 	ccb->data_in = 0;
 	ccb->target = sc_link->target;
 	ccb->lun = sc_link->lun;
-	ltophys(KVTOPHYS(&ccb->scsi_sense), ccb->sense_ptr);
+	ltophys(ccb->dmamap_self->dm_segs[0].ds_addr +
+	    offsetof(struct bha_ccb, scsi_sense), ccb->sense_ptr);
 	ccb->req_sense_length = sizeof(ccb->scsi_sense);
 	ccb->host_stat = 0x00;
 	ccb->target_stat = 0x00;

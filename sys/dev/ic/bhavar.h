@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.6 1997/03/28 23:47:11 mycroft Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.6.2.1 1997/05/13 03:04:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -59,10 +59,13 @@ struct bha_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap_mbox;	/* maps the mailbox */
+	int sc_dmaflags;		/* bus-specific dma map flags */
 	void *sc_ih;
 
-	struct bha_mbx sc_mbx;		/* all our mailboxes */
-#define	wmbx	(&sc->sc_mbx)
+	struct bha_mbx *sc_mbx;		/* all our mailboxes */
+#define	wmbx	(sc->sc_mbx)
 	struct bha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, bha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
@@ -86,3 +89,4 @@ void	bha_attach __P((struct bha_softc *, struct bha_probe_data *));
 int	bha_intr __P((void *));
 
 int	bha_disable_isacompat __P((struct bha_softc *));
+void	bha_inquire_setup_information __P((struct bha_softc *));
