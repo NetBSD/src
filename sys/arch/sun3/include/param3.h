@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.19 1994/10/26 09:10:54 cgd Exp $	*/
+/*	$NetBSD: param3.h,v 1.20 1994/10/26 18:56:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: Utah Hdr: machparam.h 1.16 92/12/20
- *	@(#)param.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef	MACHINE
@@ -138,15 +138,13 @@
 /*
  * Mach derived conversion macros
  */
-#define sun3_round_seg(x)	((((unsigned)(x)) + NBSG - 1) & ~(NBSG-1))
-#define sun3_trunc_seg(x)	((unsigned)(x) & ~(NBSG-1))
-#define sun3_round_up_seg(x)	(sun3_trunc_seg(x) + NBSG)
+#define sun3_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
+#define sun3_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
 #define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
 #define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
 
-#define sun3_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define sun3_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define sun3_round_up_page(x)	(sun3_round_page(x) + NBPG)
+#define sun3_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define sun3_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.6 1994/10/26 09:10:21 cgd Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.7 1994/10/26 18:56:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -27,31 +27,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SUN3_EXEC_H_
-#define _SUN3_EXEC_H_
-
-#if 0
-/* delete once we talk to chris */
-/*
- * the following, if defined, prepares a set of vmspace commands for
- * a given exectable package defined by epp.
- * The standard executable formats are taken care of automatically;
- * machine-specific ones can be defined using this function.
- */
-/*#define cpu_exec_makecmds(p,epp)        ENOEXEC*/
-
-/*
- * the following function/macro checks to see if a given machine
- * type (a_mid) field is valid for this architecture
- * a non-zero return value indicates that the machine type is correct.
- */
-/*#define cpu_exec_checkmid(mid) (mid == MID_SUN3)*/
-#endif
-
+#ifndef __LDPGSZ
 #define __LDPGSZ	8192
 
 /* Relocation format. */
-struct relocation_info_sun3 {
+struct relocation_info_m68k {
 	int r_address;			/* offset in text or data segment */
 	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
 			 r_pcrel :  1,	/* 1 if value should be pc-relative */
@@ -62,6 +42,6 @@ struct relocation_info_sun3 {
 		      r_relative :  1,	/* load address relative */
 			  r_copy :  1;	/* run time copy */
 };
-#define relocation_info	relocation_info_sun3
+#define relocation_info	relocation_info_m68k
 
-#endif  /* _SUN3_EXEC_H_ */
+#endif  /* _LDPGSZ */
