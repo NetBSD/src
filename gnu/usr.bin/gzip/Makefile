@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.26 1999/02/02 02:04:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.27 1999/07/25 07:06:05 simonb Exp $
 
 .include <bsd.own.mk>
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
-	crypt.c lzw.c unlzw.c unlzh.c unpack.c getopt.c
+	crypt.c lzw.c unbzip2.c unlzw.c unlzh.c unpack.c getopt.c
 MAN=	gzexe.1 gzip.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 CPPFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1 -Dunix
 
@@ -20,8 +20,8 @@ MATCHCPPFLAGS+=-DNO_UNDERLINE
 .endif	# m68k || i386
 
 LDSTATIC?= -static
-LDADD+=	-lgnumalloc
-DPADD+=	${LIBGNUMALLOC}
+LDADD+=	-lgnumalloc -lbz2
+DPADD+=	${LIBGNUMALLOC} ${LIBBZ2}
 
 MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 zcat.1
 MLINKS+= zdiff.1 zcmp.1
