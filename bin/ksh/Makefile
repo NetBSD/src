@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/10/20 15:09:58 hubertf Exp $
+#	$NetBSD: Makefile,v 1.12.6.1 2000/09/03 22:44:02 soren Exp $
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I.
 
@@ -11,6 +11,8 @@ DPSRCS=	emacs.out siglist.out ksh.1
 
 # needs tbl for the man page.
 USETBL= 
+
+CLEANFILES+=	siglist.out emacs.out
 
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
