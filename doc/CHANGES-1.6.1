@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.35 2002/11/18 03:02:02 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.36 2002/11/19 21:45:13 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -31,8 +31,8 @@ sys/arch/vax/vsa/asc_vsbus.c			1.25
 
 sys/dev/pcmcia/if_ne_pcmcia.c			1.95
 sys/dev/pcmcia/pcmciadevs			1.177
-sys/dev/pcmcia/pcmciadevs.h			regen
-sys/dev/pcmcia/pcmciadevs_data.h		regen
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
 
 	Add support for ACCTON EN2216-PCMCIA-ETHERNET.
 	[bouyer, ticket #829]
@@ -1332,3 +1332,37 @@ crypto/dist/openssl/apps/progs.h		1.3
 
 	More NO_xx cleanup.
 	[itojun, ticket #696]
+
+sys/net/if_ethersubr.c				1.96-1.97
+
+	In ether_output(), don't bother calling memcpy() to plop the ethertype
+	into the packet: On system with no strict alignment constraints, just
+	assign the value, and on others, do an inline 2 byte copy.
+	[thorpej, ticket #702]
+
+sys/netkey/key.c				1.73
+
+	fixed that the incorrect time was set to sadb_comb_{hard|soft}_usetime.
+	sync w/kame
+	[itojun, ticket #704]
+
+sys/netkey/key.c				1.74
+
+	should return error code from key_senderror().  sync w/kame
+	[itojun, ticket #705]
+
+sys/dev/pcmcia/if_wi_pcmcia.c			1.25
+sys/dev/pcmcia/pcmciadevs			1.176
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+
+	Support this device, which is evidently a rebadged GEMTEK WLAN which we
+	already support under another name:
+
+	wi0 at pcmcia0 function 0: NETGEAR MA401RA Wireless PC, Card,
+	  ISL37300PEval-RevA
+	wi0: 802.11 address <whatever>
+	wi0: using RF:PRISM2.5 MAC:ISL3873B(PCMCIA)
+	wi0: Intersil Firmware: Primary (1.0.7), Station (1.3.6)
+	[abs, ticket #971]
+
