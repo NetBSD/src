@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1995/08/29 19:53:59 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.8 1995/08/29 23:09:29 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Theo de Raadt
@@ -49,7 +49,6 @@
 #endif
 
 #include <sparc/dev/sbusvar.h>
-#include <sparc/dev/espvar.h>
 
 int sun_disklabel_to_bsd	__P((caddr_t, struct disklabel *));
 int sun_disklabel_from_bsd	__P((caddr_t, struct disklabel *));
@@ -71,7 +70,6 @@ dk_establish(dk, dev)
 {
 	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
 	char name[10];
-	struct xd_softc *xdsc;
 	struct scsibus_softc *sbsc;
 	int targ, lun;
 
