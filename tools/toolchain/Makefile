@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/10/08 22:43:56 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/10/31 01:20:10 tv Exp $
 
 .include <bsd.own.mk>	# for TOOLDIR
 
@@ -18,9 +18,11 @@ ${TIMESTAMP}: \
 	${DIST}/ld/ChangeLog \
 	${DIST}/opcodes/ChangeLog
 
+.if ${USETOOLS} == "yes"
 realall: toolchain.all
 realinstall: toolchain.install
 clean: toolchain.clean
+.endif
 
 .for f in aclocal autoconf autoheader automake
 toolchain.configure: ${TOOLDIR}/bin/${f}
