@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.39 2000/04/15 21:14:52 tsarna Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.40 2000/05/07 01:38:36 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -109,7 +109,7 @@ static struct nfsdrt nfsdrt;
 
 #ifdef NFS
 static struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
-int nfs_niothreads = 0;
+int nfs_niothreads = -1; /* == "0, and has never been set" */
 #endif
 
 #ifdef NFSSERVER
@@ -1000,7 +1000,8 @@ nfs_getset_niothreads(set)
 				start++;
 			}
 	} else {
-		nfs_niothreads = have;
+		if (nfs_niothreads >= 0)
+			nfs_niothreads = have;
 	}
 }
 
