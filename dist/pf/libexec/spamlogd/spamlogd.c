@@ -1,3 +1,4 @@
+/*	$NetBSD: spamlogd.c,v 1.2 2004/06/25 16:34:45 itojun Exp $	*/
 /*	$OpenBSD: spamlogd.c,v 1.7 2004/03/11 17:48:59 millert Exp $	*/
 
 /*
@@ -34,10 +35,14 @@
 #include "grey.h"
 #define PATH_TCPDUMP "/usr/sbin/tcpdump"
 
+#ifdef HAVE_SYSLOG_R
 struct syslog_data sdata = SYSLOG_DATA_INIT;
+#endif
 int inbound; /* do we only whitelist inbound smtp? */
 
 extern char *__progname;
+
+int dbupdate(char *, char *);
 
 int
 dbupdate(char *dbname, char *ip)
@@ -56,7 +61,11 @@ dbupdate(char *dbname, char *ip)
 	if (db == NULL)
 		return(-1);
 	if (inet_pton(AF_INET, ip, &ia) != 1) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_NOTICE, &sdata, "invalid ip address %s", ip);
+#else
+		syslog(LOG_NOTICE, "invalid ip address %s", ip);
+#endif
 		goto bad;
 	}
 	memset(&dbk, 0, sizeof(dbk));
@@ -66,7 +75,11 @@ dbupdate(char *dbname, char *ip)
 	/* add or update whitelist entry */
 	r = db->get(db, &dbk, &dbd, 0);
 	if (r == -1) {
+#ifdef HAVE_SYSLOG_R
 		syslog_r(LOG_NOTICE, &sdata, "db->get failed (%m)");
+#else
+		syslog(LOG_NOTICE, "db->get failed (%m)");
+#endif
 		goto bad;
 	}
 	if (r) {
@@ -84,7 +97,11 @@ dbupdate(char *dbname, char *ip)
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
 		if (r) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_NOTICE, &sdata, "db->put failed (%m)");
+#else
+			syslog(LOG_NOTICE, "db->put failed (%m)");
+#endif
 			goto bad;
 		}
 	} else {
@@ -104,7 +121,11 @@ dbupdate(char *dbname, char *ip)
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
 		if (r) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_NOTICE, &sdata, "db->put failed (%m)");
+#else
+			syslog(LOG_NOTICE, "db->put failed (%m)");
+#endif
 			goto bad;
 		}
 	}
@@ -185,7 +206,11 @@ main(int argc, char **argv)
 	if (f == NULL)
 		err(1, "fdopen");
 	tzset();
+#ifdef HAVE_SYSLOG_R
 	openlog_r("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
+#else
+	openlog("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+#endif
 
 	lbuf = NULL;
 	while ((buf = fgetln(f, &len))) {
@@ -196,7 +221,11 @@ main(int argc, char **argv)
 			buf[len - 1] = '\0';
 		else {
 			if ((lbuf = (char *)malloc(len + 1)) == NULL) {
+#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_ERR, &sdata, "malloc failed");
+#else
+				syslog(LOG_ERR, "malloc failed");
+#endif
 				exit(1);
 			}
 			memcpy(lbuf, buf, len);
@@ -217,8 +246,13 @@ main(int argc, char **argv)
 					if (cp != NULL) {
 						*cp = '\0';
 						cp = buf2;
+#ifdef HAVE_SYSLOG_R
 						syslog_r(LOG_DEBUG, &sdata,
 						    "outbound %s\n", cp);
+#else
+						syslog(LOG_DEBUG,
+						    "outbound %s\n", cp);
+#endif
 					}
 				} else
 					cp = NULL;
@@ -239,8 +273,12 @@ main(int argc, char **argv)
 				while (*cp != ' ' && cp >= buf)
 					cp--;
 				cp++;
+#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_DEBUG, &sdata,
 				    "inbound %s\n", cp);
+#else
+				syslog(LOG_DEBUG, "inbound %s\n", cp);
+#endif
 			}
 		}
 		if (cp != NULL)
