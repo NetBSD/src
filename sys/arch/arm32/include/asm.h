@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 1998/12/02 21:16:46 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.12 1999/05/06 13:54:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,10 +54,12 @@
 
 #ifdef __STDC__
 # define _C_FUNC(x)	_ ## x
+# define _C_LABEL(x)	_ ## x
 # define __CONCAT(x,y)	x ## y
 # define __STRING(x)	#x
 #else
 # define _C_FUNC(x)	_/**/x
+# define _C_LABEL(x)	_/**/x
 # define __CONCAT(x,y)	x/**/y
 #endif
 #define	_ASM_FUNC(x)	x
