@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.21 2002/04/02 18:59:54 christos Exp $       */
+/*      $NetBSD: scanform.c,v 1.21.2.1 2002/07/29 14:37:55 lukem Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -775,7 +775,7 @@ process_preform(FORM *form, char *path)
 	char file[PATH_MAX];
 	struct stat sb;
 	char *p;
-	int lcnt, i, j;
+	int fc, lcnt, i, j;
 	FIELD **f;
 	char **args;
 
@@ -790,14 +790,14 @@ process_preform(FORM *form, char *path)
 	args = malloc(sizeof(char *) * 2);
 	if (args == NULL)
 		bailout("malloc: %s", strerror(errno));
-	lcnt = field_count(form);
+	fc = lcnt = field_count(form);
 	args = realloc(args, sizeof(char *) * (lcnt+1));
 	f = malloc(sizeof(FIELD *) * lcnt);
 	if (f == NULL || args == NULL)
 		bailout("malloc: %s", strerror(errno));
 
 	f = form_fields(form);
-	for (lcnt=0, i=0; f[lcnt] != NULL; lcnt++)
+	for (lcnt=0, i=0; lcnt < fc; lcnt++)
 		if (F[lcnt].type != (PF_field)LABEL) {
 			if (field_buffer(f[lcnt], 0) == NULL)
 				args[i] = "";
@@ -839,7 +839,7 @@ process_form(FORM *form, char *path)
 	struct stat sb;
 	char *exec, *t, *p;
 	size_t len;
-	int lcnt, i, j;
+	int fc, lcnt, i, j;
 	FIELD **f;
 	char **args;
 
@@ -894,14 +894,14 @@ process_form(FORM *form, char *path)
 	} else
 		bailout(catgets(catalog, 1, 13, "no files"));
 
-	lcnt = field_count(form);
+	fc = lcnt = field_count(form);
 	args = realloc(args, sizeof(char *) * (lcnt+1+i));
 	f = malloc(sizeof(FIELD *) * lcnt);
 	if (f == NULL || args == NULL)
 		bailout("malloc: %s", strerror(errno));
 
 	f = form_fields(form);
-	for (lcnt=0; f[lcnt] != NULL; lcnt++)
+	for (lcnt=0; lcnt < fc; lcnt++)
 		if (F[lcnt].type != (PF_field)LABEL) {
 			if (field_buffer(f[lcnt], 0) == NULL)
 				args[i] = "";
@@ -1582,7 +1582,7 @@ handle_form(char *basedir, char *path, char **args)
 	FORM *menuform;
 	FIELD **f;
 	int done = FALSE;
-	int c, i, j;
+	int c, i, j, fc;
 	FTREE_ENTRY *ftp;
 
 	CIRCLEQ_INIT(&cqFormHead);
@@ -1641,9 +1641,10 @@ handle_form(char *basedir, char *path, char **args)
 			break;
 		}
 	}
+	fc = field_count(menuform);
 	f = form_fields(menuform);
 	unpost_form(menuform);
-	while (*f)
+	for(; fc > 0; fc--)
 		free_field(*f++);
 	free_form(menuform);
 	for (i=0; F[i].type != NULL; i++) {
@@ -1681,7 +1682,7 @@ handle_preform(char *basedir, char *path)
 	FORM *menuform;
 	FIELD **f;
 	int done = FALSE;
-	int c, i, j;
+	int c, i, j, fc;
 	char *args[2];
 	FTREE_ENTRY *ftp;
 
@@ -1738,9 +1739,10 @@ handle_preform(char *basedir, char *path)
 			break;
 		}
 	}
+	fc = field_count(menuform);
 	f = form_fields(menuform);
 	unpost_form(menuform);
-	while (*f)
+	for(; fc > 0; fc--)
 		free_field(*f++);
 	free_form(menuform);
 	if (done == 3) {
