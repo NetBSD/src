@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.19 2003/04/03 06:21:35 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.20 2003/05/14 18:17:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.102 2002/11/26 00:45:03 wcobb Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.104 2003/05/11 16:56:48 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -159,6 +159,10 @@ do_convert_to_ssh2(struct passwd *pw)
 			fprintf(stderr, "load failed\n");
 			exit(1);
 		}
+	}
+	if (k->type == KEY_RSA1) {
+		fprintf(stderr, "version 1 keys are not supported\n");
+		exit(1);
 	}
 	if (key_to_blob(k, &blob, &len) <= 0) {
 		fprintf(stderr, "key_to_blob failed\n");
