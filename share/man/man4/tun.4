@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.2 1997/09/25 13:14:46 matt Exp $
+.\" $NetBSD: tun.4,v 1.3 1998/05/06 00:03:02 ross Exp $
 .\" Based on PR#2411
 .\"
 .Dd March 10, 1996
@@ -207,10 +207,9 @@ brought down
 .Dq ifconfig tun Ns Sy n No down
 .Pc .
 All queued packets are thrown away.
-.Po If the interface is up when the data device is not open
-output packets are always
-thrown away rather than letting them pile up
-.Pc .
+If the interface is up when the data device is not open
+output packets are always thrown away rather than letting
+them pile up.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr inet 4
