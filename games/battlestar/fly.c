@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.9 2000/09/24 09:44:28 jsm Exp $	*/
+/*	$NetBSD: fly.c,v 1.10 2001/12/04 13:00:24 blymn Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.9 2000/09/24 09:44:28 jsm Exp $");
+__RCSID("$NetBSD: fly.c,v 1.10 2001/12/04 13:00:24 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -87,7 +87,7 @@ visual()
 		return (0);
 	}
 	oldsig = signal(SIGINT, succumb);
-	crmode();
+	cbreak();
 	noecho();
 	screen();
 	row = rnd(LINES - 3) + 1;
