@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.20 1999/07/04 22:44:28 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.21 1999/07/06 02:00:41 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.20 1999/07/04 22:44:28 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.21 1999/07/06 02:00:41 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -727,6 +727,11 @@ _gethtent()
 	} else {
 		goto again;
 	}
+	/* if this is not something we're looking for, skip it. */
+	if (host.h_addrtype != af)
+		goto again;
+	if (host.h_length != len)
+		goto again;
 	h_addr_ptrs[0] = (char *)host_addr;
 	h_addr_ptrs[1] = NULL;
 	host.h_addr_list = h_addr_ptrs;
@@ -885,6 +890,8 @@ _gethtbyaddr(rv, cb_data, ap)
 	len = va_arg(ap, int);
 	af = va_arg(ap, int);
 	
+	host.h_length = len;
+	host.h_addrtype = af;
 
 	_sethtent(0);
 	while ((p = _gethtent()) != NULL)
