@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.45 2001/11/06 07:11:29 simonb Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.46 2001/11/08 04:52:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.45 2001/11/06 07:11:29 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.46 2001/11/08 04:52:31 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,8 +242,8 @@ ffs_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
-		off_t offlo;
-		off_t offhi;
+		off_t a_offlo;
+		off_t a_offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct buf *bp;
@@ -271,10 +271,9 @@ ffs_fsync(v)
 	 */
 
 	if (vp->v_type == VREG) {
-		simple_lock(&vp->v_uobj.vmobjlock);
-		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
-		    trunc_page(ap->a_offlo), round_page(ap->a_offhi),
-		    PGO_CLEANIT|PGO_SYNCIO);
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+		    round_page(ap->a_offhi), PGO_CLEANIT|PGO_SYNCIO);
 		if (error) {
 			return error;
 		}
@@ -327,14 +326,13 @@ ffs_full_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_flags;
-		off_t offlo;
-		off_t offhi;
+		off_t a_offlo;
+		off_t a_offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
 	int s, error, passes, skipmeta;
-	struct uvm_object *uobj;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -346,10 +344,8 @@ ffs_full_fsync(v)
 	 */
 
 	if (vp->v_type == VREG) {
-		uobj = &vp->v_uobj;
-		simple_lock(&uobj->vmobjlock);
-		error = (uobj->pgops->pgo_put)(uobj, 0, 0,
-		    PGO_ALLPAGES|PGO_CLEANIT|
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
 		if (error) {
 			return error;
@@ -491,7 +487,7 @@ ffs_getpages(void *v)
 	     blkoff(fs, *ap->a_count << PAGE_SHIFT) != 0) &&
 	    DOINGSOFTDEP(ap->a_vp)) {
 		if ((ap->a_flags & PGO_LOCKED) == 0) {
-			simple_unlock(&vp->v_uobj.vmobjlock);
+			simple_unlock(&vp->v_interlock);
 		}
 		return EINVAL;
 	}
