@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.3 1999/10/27 09:29:18 haya Exp $	*/
 /*
  * Copyright (c) 1999
  *       HAYAKAWA Koichi.  All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define CARDSLOT_DEBUG */
+#include "opt_cardslot.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
