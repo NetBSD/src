@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.clnt,v 1.6 2000/07/25 06:29:46 cgd Exp $
+#	$NetBSD: Makefile.clnt,v 1.7 2000/09/10 23:21:50 erh Exp $
 
 #	This Makefile builds a client used for testing.
 
@@ -13,13 +13,20 @@ LDADD=	-lrpcsvc
 
 # Special rules for the generated C code...
 
-pcnfsd_clnt.c: pcnfsd.x
+.ifnmake getrpcgen
+XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
+.endif
+
+getrpcgen:
+	@set -- X `type ${RPCGEN}` && shift $$(($$# - 1)) && echo "$$1"
+
+pcnfsd_clnt.c: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -l ${.CURDIR}/pcnfsd.x -o $@
 
-pcnfsd_xdr.c: pcnfsd.x
+pcnfsd_xdr.c: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -c ${.CURDIR}/pcnfsd.x -o $@
 
-pcnfsd.h: pcnfsd.x
+pcnfsd.h: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -h ${.CURDIR}/pcnfsd.x -o $@
 
 CLEANFILES += pcnfsd_clnt.c pcnfsd_xdr.c pcnfsd.h

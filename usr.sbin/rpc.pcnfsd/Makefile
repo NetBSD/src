@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/07/25 06:29:46 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 2000/09/10 23:21:50 erh Exp $
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
@@ -11,13 +11,20 @@ SRCS=	pcnfsd_v1.c pcnfsd_v2.c pcnfsd_misc.c \
 DPADD=	${LIBRPCSVC} ${LIBCRYPT}
 LDADD=	-lrpcsvc -lcrypt
 
-pcnfsd_svc.c: pcnfsd.x
+.ifnmake getrpcgen
+XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
+.endif
+
+getrpcgen:
+	@set -- X `type ${RPCGEN}` && shift $$(($$# - 1)) && echo "$$1"
+
+pcnfsd_svc.c: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -C -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
 
-pcnfsd_xdr.c: pcnfsd.x
+pcnfsd_xdr.c: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -C -c ${.CURDIR}/pcnfsd.x -o $@
 
-pcnfsd.h: pcnfsd.x
+pcnfsd.h: pcnfsd.x ${XRPCGEN}
 	${RPCGEN} -C -h ${.CURDIR}/pcnfsd.x -o $@
 
 CLEANFILES += pcnfsd_svc.c pcnfsd_xdr.c pcnfsd.h
