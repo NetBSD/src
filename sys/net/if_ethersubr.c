@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
- *	$Id: if_ethersubr.c,v 1.2 1993/05/20 03:05:59 cgd Exp $
+ *	$Id: if_ethersubr.c,v 1.2.4.1 1993/10/16 10:49:24 mycroft Exp $
  */
 
 #include "param.h"
@@ -50,8 +50,6 @@
 #include "route.h"
 #include "if_llc.h"
 #include "if_dl.h"
-
-#include "machine/mtpr.h"
 
 #ifdef INET
 #include "../netinet/in.h"

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_x25subr.c	7.14 (Berkeley) 6/26/91
- *	$Id: if_x25subr.c,v 1.2.4.1 1993/09/24 08:54:32 mycroft Exp $
+ *	$Id: if_x25subr.c,v 1.2.4.2 1993/10/16 10:51:44 mycroft Exp $
  */
 
 #include "param.h"
@@ -50,7 +50,6 @@
 #include "../net/netisr.h"
 #include "../net/route.h"
 
-#include "machine/mtpr.h"
 #include "machine/cpu.h"
 
 #include "x25.h"

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_eon.c	7.16 (Berkeley) 6/27/91
- *	$Id: if_eon.c,v 1.2.4.1 1993/09/24 08:55:23 mycroft Exp $
+ *	$Id: if_eon.c,v 1.2.4.2 1993/10/16 10:51:50 mycroft Exp $
  */
 
 /***********************************************************
@@ -85,7 +85,6 @@ SOFTWARE.
 #include "types.h"
 #include "kernel.h"
 
-#include "machine/mtpr.h"
 #include "machine/cpu.h"
 
 #include "../net/if.h"

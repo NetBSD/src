@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_loop.c	7.13 (Berkeley) 4/26/91
- *	$Id: if_loop.c,v 1.6.4.2 1993/09/24 08:53:57 mycroft Exp $
+ *	$Id: if_loop.c,v 1.6.4.3 1993/10/16 10:49:26 mycroft Exp $
  */
 
 /*
@@ -53,7 +53,6 @@
 #include "../net/netisr.h"
 #include "../net/route.h"
 
-#include "machine/mtpr.h"
 #include "machine/cpu.h"
 
 #ifdef	INET
