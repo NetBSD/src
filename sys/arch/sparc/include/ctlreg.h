@@ -42,52 +42,77 @@
  *	@(#)ctlreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ctlreg.h,v 1.6 93/04/27 14:29:07 torek Exp 
- * $Id: ctlreg.h,v 1.1 1993/10/02 10:23:07 deraadt Exp $
+ * $Id: ctlreg.h,v 1.2 1994/05/05 07:51:25 deraadt Exp $
  */
 
 /*
- * Sun-4 (sort of) and 4c (Campus, i.e., SparcStation) control registers
- * (includes address space definitions and registers in control space).
- *
- * Address space identifiers are 8 bits (0 through 255), but we
- * only use four of them.
+ * Sun-4, 4c, and 4m control registers. (includes address space definitions
+ * and some registers in control space).
  */
 
-/*			0	   unused */
-/*			1	   unused */
-#define	ASI_CONTROL	2	/* cache enable, context reg, etc */
-#define	ASI_SEGMAP	3	/* segment maps (so we can reach each pmeg) */
-#define	ASI_PTE		4	/* PTE space (pmegs) */
-#define	ASI_HWFLUSHSEG	5	/* hardware assisted version of FLUSHSEG */
-#define	ASI_HWFLUSHPG	6	/* hardware assisted version of FLUSHPG */
-#define	ASI_HWFLUSHCTX	7	/* hardware assisted version of FLUSHCTX */
-#define	ASI_USERI	8	/* I-space (user) */
-#define	ASI_KERNELI	9	/* I-space (kernel) */
-#define	ASI_USERD	10	/* D-space (user) */
-#define	ASI_KERNELD	11	/* D-space (kernel) */
-#define	ASI_FLUSHSEG	12	/* causes hardware to flush cache segment */
-#define	ASI_FLUSHPG	13	/* causes hardware to flush cache page */
-#define	ASI_FLUSHCTX	14	/* causes hardware to flush cache context */
-#ifdef SUN4
-#define	ASI_DCACHE	15	/* flush data cache; not used on 4c */
+/*			0x00	   unused */
+/*			0x01	   unused */
+#if defined(SUN4C) || defined(SUN4)
+#define	ASI_CONTROL	0x02	/* cache enable, context reg, etc */
+#define	ASI_SEGMAP	0x03	/* segment maps (so we can reach each pmeg) */
+#define	ASI_PTE		0x04	/* PTE space (pmegs) */
+#define	ASI_HWFLUSHSEG	0x05	/* hardware assisted version of FLUSHSEG */
+#define	ASI_HWFLUSHPG	0x06	/* hardware assisted version of FLUSHPG */
+#define	ASI_HWFLUSHCTX	0x07	/* hardware assisted version of FLUSHCTX */
 #endif
-/* 16 through 255 unused (and probably wrap, but who cares?) */
+#if defined(SUN4M) || defined(SUN4M)
+#define ASI_SRMMUFP	0x03	/* ref mmu flush/probe */
+#define ASI_SRMMU	0x04	/* ref mmu registers */
+#define ASI_SRMMUDIAG	0x06
+#endif
 
+#define	ASI_USERI	0x08	/* I-space (user) */
+#define	ASI_KERNELI	0x09	/* I-space (kernel) */
+#define	ASI_USERD	0x0a	/* D-space (user) */
+#define	ASI_KERNELD	0x0b	/* D-space (kernel) */
+
+#if defined(SUN4C) || defined(SUN4)
+#define	ASI_FLUSHSEG	0x0c	/* causes hardware to flush cache segment */
+#define	ASI_FLUSHPG	0x0d	/* causes hardware to flush cache page */
+#define	ASI_FLUSHCTX	0x0e	/* causes hardware to flush cache context */
+#if defined(SUN4)
+#define	ASI_DCACHE	0x0f	/* flush data cache; not used on 4c */
+#endif
+#endif
+
+#if defined(SUN4M)
+#define ASI_ICACHETAG	0x0c	/* instruction cache tag */
+#define ASI_ICACHEDATA	0x0d	/* instruction cache data */
+#define ASI_DCACHETAG	0x0e	/* data cache tag */
+#define ASI_DCACHEDATA	0x0f	/* data cache data */
+#define ASI_IDCACHELFP	0x10	/* ms2 only: flush i&d cache line (page) */
+#define ASI_IDCACHELFS	0x11	/* ms2 only: flush i&d cache line (seg) */
+#define ASI_IDCACHELFR	0x12	/* ms2 only: flush i&d cache line (reg) */
+#define ASI_IDCACHELFC	0x13	/* ms2 only: flush i&d cache line (ctxt) */
+#define ASI_IDCACHELFU	0x14	/* ms2 only: flush i&d cache line (user) */
+#define ASI_SRMMUTLB	0x20	/* sun ref mmu bypass, ie. direct tlb access */
+#define ASI_ICACHECLR	0x36	/* ms1 only: instruction cache flash clear */
+#define ASI_DCACHECLR	0x37	/* ms1 only: data cache clear */
+#define ASI_DCACHEDIAG	0x39	/* data cache diagnostic register access */
+#endif
+
+#if defined(SUN4) || defined(SUN4C)
 /* registers in the control space */
 #define	AC_CONTEXT	0x30000000	/* context register (byte) */
 #define	AC_SYSENABLE	0x40000000	/* system enable register (byte) */
 #define	AC_CACHETAGS	0x80000000	/* cache tag base address */
 #define	AC_SERIAL	0xf0000000	/* special serial port sneakiness */
 	/* AC_SERIAL is not used in the kernel (it is for the PROM) */
+#endif
 
-#ifdef SUN4
+#if defined(SUN4)
 #define	AC_DVMA_ENABLE	0x50000000	/* enable user dvma */
 #define	AC_BUS_ERR	0x60000000	/* bus error register */
 #define	AC_DIAG_REG	0x70000000	/* diagnostic reg */
 #define	AC_DVMA_MAP	0xd0000000	/* user dvma map entries */
 #endif
 
-#ifdef SUN4C
+#if defined(SUN4C)
 #define	AC_SYNC_ERR	0x60000000	/* sync (memory) error reg */
 #define	AC_SYNC_VA	0x60000004	/* sync error virtual addr */
 #define	AC_ASYNC_ERR	0x60000008	/* async error reg */
@@ -130,9 +155,20 @@
 
 #endif /* SUN4C */
 
+#if defined(SUN4) || defined(SUN4C)
 /*
  * Bits in system enable register.
  */
 #define	SYSEN_DVMA	0x20		/* enable dvma */
 #define	SYSEN_CACHE	0x10		/* enable cache */
 #define	SYSEN_RESET	0x04		/* reset the hardware */
+#endif
+
+#if defined(SUN4M)
+#define SRMMU_PCR	0x00000000	/* processor control register */
+#define SRMMU_CXTPTR	0x00000100	/* context table pointer register */
+#define SRMMU_CXR	0x00000200	/* context register */
+#define SRMMU_SFSTAT	0x00000300	/* syncronous fault status reg */
+#define SRMMU_SFADDR	0x00000400	/* syncronous fault address reg */
+#define SRMMU_TLBCTRL	0x00001000	/* TLB replacement control reg */
+#endif
