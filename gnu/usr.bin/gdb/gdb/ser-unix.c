@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: ser-unix.c,v 1.1 1994/01/28 12:40:33 pk Exp $
+	$Id: ser-unix.c,v 1.2 1994/09/19 01:00:48 mycroft Exp $
 */
 
 #include "defs.h"
@@ -498,6 +498,8 @@ hardwire_readchar(scb, timeout)
   return *scb->bufp++;
 }
 
+#if !defined(TERMIOS)
+
 #ifndef B19200
 #define B19200 EXTA
 #endif
@@ -547,6 +549,8 @@ rate_to_code(rate)
   return -1;
 }
 
+#endif
+
 static int
 hardwire_setbaudrate(scb, rate)
      serial_t scb;
@@ -558,8 +562,8 @@ hardwire_setbaudrate(scb, rate)
     return -1;
 
 #ifdef HAVE_TERMIOS
-  cfsetospeed (&state.termios, rate_to_code (rate));
-  cfsetispeed (&state.termios, rate_to_code (rate));
+  cfsetospeed (&state.termios, rate);
+  cfsetispeed (&state.termios, rate);
 #endif
 
 #ifdef HAVE_TERMIO
