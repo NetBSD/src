@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.3 2004/05/21 04:24:53 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.4 2004/05/21 08:20:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.3.2.1.4.4 2004/03/17 01:13:36 marka Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.3 2004/05/21 04:24:53 christos Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.4 2004/05/21 08:20:50 martin Exp $");
 #endif
 #endif
 
@@ -719,7 +719,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	int n, m;
 	char *p;
 
-	len = SPRINTF((tmp, "\\# %u (\t; %s", edata - rdata, comment));
+	len = SPRINTF((tmp, "\\# %tu (\t; %s", edata - rdata, comment));
 	T(addstr(tmp, (size_t)len, &buf, &buflen));
 	while (rdata < edata) {
 		p = tmp;
