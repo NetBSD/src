@@ -1,7 +1,7 @@
-/*	$NetBSD: romboot.S,v 1.5 2002/02/13 12:02:49 shin Exp $	*/
+/*	$NetBSD: romboot.S,v 1.6 2002/02/16 05:26:02 shin Exp $	*/
 
 /*-
- * Copyright (c) 2001 Takao Shinohara.
+ * Copyright (c) 2001, 2002 Takao Shinohara.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,8 +65,12 @@
 #define s8	$30
 #define ra	$31
 
+#define MIPS_KSEG0_START	0x80000000
 #define MIPS_KSEG1_START	0xa0000000
+#define KSEG1_KSEG0_DIFF	(MIPS_KSEG1_START - MIPS_KSEG0_START)
 #define KERNEL_LOADADDR		0x80001000
+#define MAX_KERNEL_SIZE		(1024*1024*6)	# 6MB
+#define MAX_DCACHE_SIZE		(1024*32)	# 32KB
 
 	.text
 	.set	noreorder
@@ -74,24 +78,34 @@
 _start:
 	bal	1f			# ra = ROM address + 8
 	nop
-1:	subu	a0, ra, 8		# a0 = ROM address
+1:	subu	a0, ra, 8		# a0 = ROM address(kseg1)
+	subu	a0, KSEG1_KSEG0_DIFF	# convert to kseg0 address
 	move	s0, a0			# keep it in s0	
 	la	t0, _etext
 	la	t1, _ftext
 	subu	t0, t1			# t0 = size of boot loader
 	addu	a0, t0			# a0 = kernel address in ROM
 	li	a1, KERNEL_LOADADDR
-	li	t2, (1024*1024*6)	# max kernel size = 6MB - boot
+	li	t2, MAX_KERNEL_SIZE	# max kernel size = 6MB - boot
 	subu	t2, t0
 	addu	t2, a1			# kernel end address
-	or	a1, MIPS_KSEG1_START	# convert to kseg1 addr
-	or	t2, MIPS_KSEG1_START	# convert to kseg1 addr
+	la	t9, 2f
+	addu	t9, s0
+	jr	t9			# jump to cached address
+	nop
 2:
 	lw	v0, 0(a0)
 	sw	v0, 0(a1)
 	addu	a0, 4
 	bltu	a1, t2, 2b
 	addu	a1, 4			# BDSLOT
+
+	/* purge data cache */
+	li	v0, MAX_DCACHE_SIZE
+3:	lw	zero, 0(a1)
+	addu	a1, 4
+	bnez	v0, 3b
+	subu	v0, 4			# BDSLOT
 
 	li	sp, KERNEL_LOADADDR	# initialize stack pointer
 	li	a0, 1			# argc = 1
