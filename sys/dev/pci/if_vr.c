@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.47 2001/06/12 15:17:26 wiz Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.48 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -103,8 +103,6 @@
  * 2 bytes so that the payload is aligned on a 4-byte boundary.
  */
 
-#include "opt_inet.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -122,11 +120,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if defined(INET)
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

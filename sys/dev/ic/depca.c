@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.1 2000/08/11 02:27:09 thorpej Exp $	*/
+/*	$NetBSD: depca.c,v 1.2 2001/06/12 22:32:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -88,11 +87,6 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

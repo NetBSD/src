@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.32 2001/06/03 03:55:10 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.33 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@
  *	- Reduce the interrupt load.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -108,16 +106,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/bus.h>

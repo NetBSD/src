@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.53 2001/06/02 01:04:01 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.54 2001/06/12 22:32:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -72,8 +72,6 @@
  * and its successors, the i82558 and i82559.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -103,16 +101,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/bus.h>
