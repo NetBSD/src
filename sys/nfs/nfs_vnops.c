@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.101 1999/05/29 01:22:03 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.102 1999/07/08 22:53:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -723,7 +723,7 @@ nfs_lookup(v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
-	int flags = cnp->cn_flags;
+	int flags;
 	struct vnode *newvp;
 	u_int32_t *tl;
 	caddr_t cp;
@@ -736,6 +736,8 @@ nfs_lookup(v)
 	struct nfsnode *np;
 	int lockparent, wantparent, error = 0, attrflag, fhsize;
 	int v3 = NFS_ISV3(dvp);
+	cnp->cn_flags &= ~PDIRUNLOCK;
+	flags = cnp->cn_flags;
 
 	*vpp = NULLVP;
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
