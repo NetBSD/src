@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.19 2003/07/14 23:16:19 lukem Exp $
+# $NetBSD: etcupdate,v 1.20 2003/11/06 07:09:40 martti Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,10 @@ CONTINUE=
 BINARY=
 AUTOMATIC=
 LOCALSKIP=
+MACHINE="${MACHINE:=`uname -m`}"
+export MACHINE
+MACHINE_ARCH="${MACHINE_ARCH:=`uname -p`}"
+export MACHINE_ARCH
 
 # Settings for post-installation procedures
 NEED_MTREE=
