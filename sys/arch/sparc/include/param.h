@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.56 2002/07/17 06:17:20 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.57 2002/07/17 06:19:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,5 +271,11 @@ extern void	delay __P((unsigned int));
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
 #endif
+
+/*
+ * Step 4: Sun4M and Sun4D systems have an SRMMU.  Define some
+ * short-hand for this.
+ */
+#define	CPU_HAS_SRMMU		(CPU_ISSUN4M || CPU_ISSUN4D)
 
 #endif /* _KERNEL || _STANDALONE */
