@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.51 2002/11/01 19:26:22 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.52 2002/12/21 15:48:57 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.51 2002/11/01 19:26:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.52 2002/12/21 15:48:57 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,6 @@ void syscall __P((void));
 
 #ifdef IBCS2_DEBUG
 int ibcs2_debug = 1;
-#else
-int ibcs2_debug = 0;
 #endif
 
 const struct emul emul_ibcs2 = {
