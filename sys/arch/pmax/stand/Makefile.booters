@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.20 1999/03/31 03:10:56 simonb Exp $
+#	$NetBSD: Makefile.booters,v 1.21 1999/04/01 06:05:04 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -32,19 +32,21 @@ CPPFLAGS+=	${DEFS} ${INCL}
 
 LDBUG=	-T $S/arch/mips/conf/stand.ldscript
 
-# We don't need libkern/libsa for the first stage bootblocks
-.if ${PROG} != "bootxx"
-
 ### find out what to use for libsa
 SA_AS=		library
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
+SAMISCMAKEFLAGS= SA_INCLUDE_NET=yes
+
+# We don't need libkern/libz for the first stage bootblocks
+.if ${PROG} != "bootxx"
 
 ### find out what to use for libz
 Z_AS=		library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=		${ZLIB}
+# and use compressed read in libsa
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 ### find out what to use for libkern
 KERN_AS=	library
