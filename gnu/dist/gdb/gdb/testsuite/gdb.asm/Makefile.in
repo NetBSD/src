@@ -1,0 +1,36 @@
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+EXECUTABLES =
+
+# uuencoded format to avoid SCCS/RCS problems with binary files.
+CROSS_EXECUTABLES =
+
+all:
+	@echo "Nothing to be done for all..."
+
+info:
+install-info:
+dvi:
+install:
+uninstall: force
+installcheck:
+check:
+
+clean mostlyclean:
+	-rm -f *~ *.o a.out xgdb *.x $(CROSS_EXECUTABLES) *.ci *.tmp
+	-rm -f core core.coremaker coremaker.core corefile $(EXECUTABLES)
+	-rm -f twice-tmp.c
+
+distclean maintainer-clean realclean: clean
+	-rm -f *~ core
+	-rm -f Makefile config.status config.log
+	-rm -f arch.inc
+	-rm -f *-init.exp
+	-rm -fr *.log summary detail *.plog *.sum *.psum site.*
+
+Makefile : $(srcdir)/Makefile.in config.status
+	$(SHELL) ./config.status
+
+config.status: $(srcdir)/configure
+	$(SHELL) ./config.status --recheck
