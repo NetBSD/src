@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.17 1997/07/31 00:03:54 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.18 1997/10/06 00:49:34 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -748,7 +748,7 @@ Lse_context_switched:
 	mov	r1, #0x00000000
 	add	r2, r1, #NBPG
 	ldr	r0, [r3, #(P_VMSPACE)]
-	add	r0, r0, #(VM_PMAP)
+	ldr	r0, [r0, #(VM_PMAP)]
 	bl	_pmap_remove
 	ldr	r0, [sp]
 
