@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.21 1998/04/19 23:37:22 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.22 1998/04/20 17:27:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -97,10 +97,8 @@ ENTRY(setrunqueue)
 	 * 	r1 = queue
 	 * 	r2 = &qs[queue] and temp
 	 * 	r3 = temp
-	 *	r4 = whichqs
+	 *	r12 = whichqs
 	 */
-	stmfd	sp!, {r4}
-
 #ifdef DIAGNOSTIC
 	ldr	r1, [r0, #(P_BACK)]
 	teq	r1, #0x00000000
@@ -116,12 +114,12 @@ ENTRY(setrunqueue)
 	mov	r1, r1, lsr #2
 
 	/* Indicate that there is a process on this queue */
-	ldr	r4, Lwhichqs
-	ldr	r2, [r4]
+	ldr	r12, Lwhichqs
+	ldr	r2, [r12]
 	mov	r3, #0x00000001
 	mov	r3, r3, lsl r1
 	orr	r2, r2, r3
-	str	r2, [r4]
+	str	r2, [r12]
 
 	/* Get the address of the queue */
 	ldr	r2, Lqs
@@ -138,8 +136,6 @@ ENTRY(setrunqueue)
 #endif
 	str	r0, [r2, #(P_FORW)]
 	str	r2, [r0, #(P_BACK)]
-
-	ldmfd	sp!, {r4}
 
 	mov	pc, lr
 
@@ -174,9 +170,8 @@ ENTRY(remrunqueue)
 	 * 	r1 = queue
 	 * 	r2 = &qs[queue] and scratch
 	 *	r3 = scratch
-	 *	r4 = whichqs
+	 *	r12 = whichqs
 	 */
-	stmfd	sp!, {r4}
 
 	/* Get the priority of the queue */
 	ldrb	r1, [r0, #(P_PRIORITY)]
@@ -193,18 +188,16 @@ ENTRY(remrunqueue)
 	teq	r2, r3
 
 	/* This could be reworked to avoid the use of r4 */
-	ldreq	r4, Lwhichqs
-	ldreq	r2, [r4]
+	ldreq	r12, Lwhichqs
+	ldreq	r2, [r12]
 	moveq	r3, #0x00000001
 	moveq	r3, r3, lsl r1
 	biceq	r2, r2, r3
-	streq	r2, [r4]
+	streq	r2, [r12]
 
 	/* Remove the back pointer for the process */
 	mov	r1, #0x00000000
 	str	r1, [r0, #(P_BACK)]
-
-	ldmfd	sp!, {r4}
 
 	mov	pc, lr
 
