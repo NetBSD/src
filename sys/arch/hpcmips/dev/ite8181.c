@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.9 2001/03/09 08:54:18 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.10 2001/03/12 08:54:26 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -270,6 +270,9 @@ ite8181_attach(sc)
 	printf("\n");
 	printf("%s: framebuffer address: 0x%08lx\n", 
 		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	if (ite8181_lcd_control_disable)
+		printf("%s: ite8181 lcd coontrol is DISABLED.\n", 
+			sc->sc_dev.dv_xname);
 
 	/* set base offsets */
 	sc->sc_mba = ite8181_config_read_4(sc->sc_iot, sc->sc_ioh, ITE8181_MBA);
@@ -447,6 +450,22 @@ ite8181_power(why, arg)
 	int why;
 	void *arg;
 {
+        struct ite8181_softc *sc = arg;
+
+	switch (why) {
+	case PWR_STANDBY:
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
+		break;
+	case PWR_SUSPEND:
+		sc->sc_powerstate |= PWRSTAT_SUSPEND;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
+		break;
+	case PWR_RESUME:
+		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
+		ite8181_update_powerstate(sc, PWRSTAT_ALL);
+		break;
+	}
 }
 
 static int
@@ -461,20 +480,14 @@ ite8181_hardpower(ctx, type, id, msg)
 
 	switch (why) {
 	case PWR_STANDBY:
-		sc->sc_powerstate |= PWRSTAT_SUSPEND;
-		ite8181_update_powerstate(sc, PWRSTAT_ALL);
 		/* ite8181_lcd_power(sc, 0); */
 		delay(MSEC);
 		break;
 	case PWR_SUSPEND:
-		sc->sc_powerstate |= PWRSTAT_SUSPEND;
-		ite8181_update_powerstate(sc, PWRSTAT_ALL);
 		ite8181_lcd_power(sc, 0);	
 		delay(MSEC);
 		break;
 	case PWR_RESUME:
-		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
-		ite8181_update_powerstate(sc, PWRSTAT_ALL);
 		delay(MSEC);
 		ite8181_lcd_power(sc, 1);	
 		/*
@@ -883,15 +896,14 @@ ite8181_get_backlight(sc)
 {
 	int val = -1;
 
-	if (sc->sc_max_brightness < 0) {
-		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
-			if (val == 0)
-				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
-			else
-				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-		}
-	}
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+		if (val == 0)
+			sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+		else
+			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+	} else /* assume backlight is on */
+		sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 }
 
 void

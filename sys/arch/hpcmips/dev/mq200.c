@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.11 2001/03/09 08:54:18 sato Exp $	*/
+/*	$NetBSD: mq200.c,v 1.12 2001/03/12 08:54:26 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -194,6 +194,7 @@ mq200_update_powerstate(sc, updates)
 	struct mq200_softc *sc;
 	int updates;
 {
+
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
@@ -213,31 +214,22 @@ mq200_power(why, arg)
 	int why;
 	void *arg;
 {
-#if 0
 	struct mq200_softc *sc = arg;
 
 	switch (why) {
 	case PWR_SUSPEND:
 		sc->sc_powerstate |= PWRSTAT_SUSPEND;
 		mq200_update_powerstate(sc, PWRSTAT_ALL);
-		sc->sc_mq200pwstate = MQ200_POWERSTATE_D2;
 		break;
 	case PWR_STANDBY:
 		sc->sc_powerstate |= PWRSTAT_SUSPEND;
 		mq200_update_powerstate(sc, PWRSTAT_ALL);
-		sc->sc_mq200pwstate = MQ200_POWERSTATE_D3;
 		break;
 	case PWR_RESUME:
 		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
 		mq200_update_powerstate(sc, PWRSTAT_ALL);
-		sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
 		break;
 	}
-
-	printf("MQ200_PMCSR=%08x\n", sc->sc_mq200pwstate);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  MQ200_PMCSR, sc->sc_mq200pwstate);
-#endif
 }
 
 static int
@@ -252,18 +244,12 @@ mq200_hardpower(ctx, type, id, msg)
 
 	switch (why) {
 	case PWR_SUSPEND:
-		sc->sc_powerstate |= PWRSTAT_SUSPEND;
-		mq200_update_powerstate(sc, PWRSTAT_ALL);
 		sc->sc_mq200pwstate = MQ200_POWERSTATE_D2;
 		break;
 	case PWR_STANDBY:
-		sc->sc_powerstate |= PWRSTAT_SUSPEND;
-		mq200_update_powerstate(sc, PWRSTAT_ALL);
 		sc->sc_mq200pwstate = MQ200_POWERSTATE_D3;
 		break;
 	case PWR_RESUME:
-		sc->sc_powerstate &= ~PWRSTAT_SUSPEND;
-		mq200_update_powerstate(sc, PWRSTAT_ALL);
 		sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
 		break;
 	}
@@ -672,15 +658,14 @@ mq200_get_backlight(sc)
 {
 	int val = -1;
 
-	if (sc->sc_max_brightness < 0) {
-		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
-			if (val == 0)
-				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
-			else
-				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-		}
-	}
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+		if (val == 0)
+			sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+		else
+			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+	} else /* assume backlight is on */
+		sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 }
 
 void
