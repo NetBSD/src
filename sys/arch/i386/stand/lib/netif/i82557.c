@@ -1,4 +1,4 @@
-/* $NetBSD: i82557.c,v 1.4 2001/07/07 22:57:58 perry Exp $ */
+/* $NetBSD: i82557.c,v 1.5 2001/07/25 12:47:34 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 1999
@@ -232,9 +232,9 @@ EtherInit(myadr)
 	cbp->adaptive_ifs =	0;	/* (no) adaptive interframe spacing */
 	cbp->rx_dma_bytecount =	0;	/* (no) rx DMA max */
 	cbp->tx_dma_bytecount =	0;	/* (no) tx DMA max */
-	cbp->dma_bce =		0;	/* (disable) dma max counters */
+	cbp->dma_mbce =		0;	/* (disable) dma max counters */
 	cbp->late_scb =		0;	/* (don't) defer SCB update */
-	cbp->tno_int =		0;	/* (disable) tx not okay interrupt */
+	cbp->tno_int_or_tco_en = 0;	/* (disable) tx not okay interrupt */
 	cbp->ci_int =		0;	/* interrupt on CU not active */
 	cbp->save_bf =		prm;	/* save bad frames */
 	cbp->disc_short_rx =	!prm;	/* discard short packets */
