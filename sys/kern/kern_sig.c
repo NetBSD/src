@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.179 2003/11/17 19:21:56 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.180 2003/11/27 23:16:47 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.179 2003/11/17 19:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.180 2003/11/27 23:16:47 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1198,7 +1198,7 @@ kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 				 */
 				child_psignal(p, 0);
 			}
-			proc_stop(p);	/* XXXSMP: recurse? */
+			proc_stop(p, 1);	/* XXXSMP: recurse? */
 			goto done;
 		}
 
@@ -1453,7 +1453,7 @@ issignal(struct lwp *l)
 				child_psignal(p, dolock);
 			if (dolock)
 				SCHED_LOCK(s);
-			proc_stop(p);
+			proc_stop(p, 1);
 		sigtraceswitch:
 			mi_switch(l, NULL);
 			SCHED_ASSERT_UNLOCKED();
@@ -1526,7 +1526,7 @@ issignal(struct lwp *l)
 					child_psignal(p, dolock);
 				if (dolock)
 					SCHED_LOCK(s);
-				proc_stop(p);
+				proc_stop(p, 1);
 			sigswitch:
 				mi_switch(l, NULL);
 				SCHED_ASSERT_UNLOCKED();
@@ -1583,7 +1583,7 @@ issignal(struct lwp *l)
  * on the run queue.
  */
 void
-proc_stop(struct proc *p)
+proc_stop(struct proc *p, int wakeup)
 {
 	struct lwp *l;
 	struct proc *parent;
@@ -1674,7 +1674,8 @@ proc_stop(struct proc *p)
  out:
 	/* XXX unlock process LWP state */
 
-	sched_wakeup((caddr_t)p->p_pptr);
+	if (wakeup)
+		sched_wakeup((caddr_t)p->p_pptr);
 }
 
 /*
