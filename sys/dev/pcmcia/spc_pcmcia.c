@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.3 2004/08/09 14:07:57 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.4 2004/08/09 14:24:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.3 2004/08/09 14:07:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.4 2004/08/09 14:24:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,8 @@ spc_pcmcia_attach(parent, self, aux)
 			continue;
 
 		if (pcmcia_io_alloc(pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, 0, &sc->sc_pcioh) == 0)
+		    cfe->iospace[0].length, cfe->iospace[0].length,
+		    &sc->sc_pcioh) == 0)
 			break;
 	}
 
