@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.10 2001/11/23 21:18:34 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.11 2001/11/27 00:34:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -60,7 +60,6 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/irqhandler.h>
 #include <arm/undefined.h>
 
 #include <arm/xscale/i80312reg.h>
