@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.2.2.4 2001/01/15 09:27:42 bouyer Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.2.2.5 2001/01/22 18:00:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
 
 #include <dev/i2o/i2o.h>
 #include <dev/i2o/iopreg.h>
@@ -70,21 +71,14 @@
 
 static void	iopsp_attach(struct device *, struct device *, void *);
 static void	iopsp_intr(struct device *, struct iop_msg *, void *);
-static int	iopsp_ioctl(struct scsipi_link *, u_long, caddr_t, int,
-			    struct proc *);
+static int	iopsp_ioctl(struct scsipi_channel *, u_long,
+			    caddr_t, int, struct proc *);
 static int	iopsp_match(struct device *, struct cfdata *, void *);
-static void	iopsp_minphys(struct buf *);
 static int	iopsp_rescan(struct iopsp_softc *);
 static int	iopsp_reconfig(struct device *);
 static int	iopsp_scsi_abort(struct iopsp_softc *, int, struct iop_msg *);
-static int	iopsp_scsi_cmd(struct scsipi_xfer *);
-
-static struct scsipi_device iopsp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
+static void	iopsp_scsipi_request(struct scsipi_channel *,
+			    scsipi_adapter_req_t, void *);
 
 struct cfattach iopsp_ca = {
 	sizeof(struct iopsp_softc), iopsp_match, iopsp_attach
@@ -128,7 +122,6 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iop_attach_args *ia;
 	struct iopsp_softc *sc;
-	struct scsipi_link *sc_link;
 	struct iop_softc *iop;
 	struct {
 		struct	i2o_param_op_results pr;
@@ -207,29 +200,29 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	    le32toh(param.p.sci.initiatorid));
 #endif
 
-	sc->sc_adapter.scsipi_cmd = iopsp_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = iopsp_minphys;
-	sc->sc_adapter.scsipi_ioctl = iopsp_ioctl;
+	sc->sc_adapter.adapt_dev = &sc->sc_dv;
+	sc->sc_adapter.adapt_nchannels = 1;
+	sc->sc_adapter.adapt_openings = iop->sc_maxqueuecnt;
+	sc->sc_adapter.adapt_max_periph = iop->sc_maxqueuecnt;
+	sc->sc_adapter.adapt_ioctl = iopsp_ioctl;
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = iopsp_scsipi_request;
 
-	sc_link = &sc->sc_link;
-	sc_link->type = BUS_SCSI;
-	sc_link->device = &iopsp_dev;
-	sc_link->adapter = &sc->sc_adapter;
-	sc_link->adapter_softc = sc;
-	sc_link->scsipi_scsi.channel = 0;
-	sc_link->scsipi_scsi.adapter_target = le32toh(param.p.sci.initiatorid);
-	sc_link->scsipi_scsi.max_target = 
-	    fcal ? IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth - 1;
-	sc_link->scsipi_scsi.max_lun = IOPSP_MAX_LUN;
-	sc_link->openings = iop->sc_maxqueuecnt / 4;		/* XXX */
+	memset(&sc->sc_channel, 0, sizeof(sc->sc_channel));
+	sc->sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_channel.chan_bustype = &scsi_bustype;
+	sc->sc_channel.chan_channel = 0;
+	sc->sc_channel.chan_ntargets = fcal ?
+			IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth;
+	sc->sc_channel.chan_nluns = IOPSP_MAX_LUN;
+	sc->sc_channel.chan_id = le32toh(param.p.sci.initiatorid);
 
 #ifdef I2OVERBOSE
 	/*
 	 * Allocate the target map.  Currently used for informational
 	 * purposes only.
 	 */
-	size = (sc_link->scsipi_scsi.max_target + 1) *
-	    sizeof(struct iopsp_target);
+	size = sc->sc_channel.chan_ntargets * sizeof(struct iopsp_target);
 	sc->sc_targetmap = malloc(size, M_DEVBUF, M_NOWAIT);
 	memset(sc->sc_targetmap, 0, size);
 #endif
@@ -239,7 +232,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: bus scan failed\n", sc->sc_dv.dv_xname);
 		goto bad;
 	}
-	config_found(self, sc_link, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
 	return;
 
 bad:
@@ -256,7 +249,7 @@ iopsp_reconfig(struct device *dv)
 	struct iopsp_softc *sc;
 	struct iop_softc *iop;
 	struct i2o_lct_entry *le;
-	struct scsipi_link *sc_link;
+	struct scsipi_channel *sc_chan;
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
@@ -271,7 +264,7 @@ iopsp_reconfig(struct device *dv)
 
 	sc = (struct iopsp_softc *)dv;
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
-	sc_link = &sc->sc_link;
+	sc_chan = &sc->sc_channel;
 
 	/* Anything to do? */
 	if (iop->sc_lct->changeindicator == sc->sc_chgindicator)
@@ -282,14 +275,13 @@ iopsp_reconfig(struct device *dv)
 	 * denote absent targets (zero is the TID of the I2O executive,
 	 * and we never address that here).
 	 */
-	size = (sc_link->scsipi_scsi.max_target + 1) *
-	    (IOPSP_MAX_LUN + 1) * sizeof(u_short);
+	size = sc_chan->chan_ntargets * (IOPSP_MAX_LUN) * sizeof(u_short);
 	if ((tidmap = malloc(size, M_DEVBUF, M_WAITOK)) == NULL)
 		return (ENOMEM);
 	memset(tidmap, 0, size);
 
 #ifdef I2OVERBOSE
-	for (i = 0; i <= sc_link->scsipi_scsi.max_target; i++)
+	for (i = 0; i < sc_chan->chan_ntargets; i++)
 		sc->sc_targetmap[i].it_flags &= ~IT_PRESENT;
 #endif
 
@@ -362,7 +354,7 @@ iopsp_reconfig(struct device *dv)
 	}
 
 #ifdef I2OVERBOSE
-	for (i = 0; i <= sc_link->scsipi_scsi.max_target; i++)
+	for (i = 0; i < sc_chan->chan_ntargets; i++)
 		if ((sc->sc_targetmap[i].it_flags & IT_PRESENT) == 0)
 			sc->sc_targetmap[i].it_width = 0;
 #endif
@@ -375,18 +367,6 @@ iopsp_reconfig(struct device *dv)
 	splx(s);
 	sc->sc_chgindicator = iop->sc_lct->changeindicator;
 	return (0);
-}
-
-/*
- * Adjust the size of an I/O request.
- */
-static void
-iopsp_minphys(struct buf *bp)
-{
-
-	if (bp->b_bcount > IOP_MAX_XFER)
-		bp->b_bcount = IOP_MAX_XFER;
-	minphys(bp);
 }
 
 /*
@@ -440,109 +420,133 @@ done:
 /*
  * Start a SCSI command.
  */
-static int
-iopsp_scsi_cmd(struct scsipi_xfer *xs)
+static void
+iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+	void *arg)
 {
-	struct scsipi_link *sc_link;
-	struct iopsp_softc *sc;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct iopsp_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct iop_msg *im;
-	struct iop_softc *iop;
+	struct iop_softc *iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 	struct i2o_scsi_scb_exec *mb;
 	int error, flags, tid;
 
-	sc_link = xs->sc_link;
-	flags = xs->xs_control;
-	sc = sc_link->adapter_softc;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	tid = IOPSP_TIDMAP(sc->sc_tidmap, sc_link->scsipi_scsi.target,
-	    sc_link->scsipi_scsi.lun);
-	if (tid == IOPSP_TID_ABSENT || tid == IOPSP_TID_INUSE) {
-		xs->error = XS_SELTIMEOUT;
-		return (COMPLETE);
-	}
-
-	SC_DEBUG(sc_link, SDEV_DB2, ("iopsp_scsi_cmd\n"));
-
-	/* Need to reset the target? */
-	if ((flags & XS_CTL_RESET) != 0) {
-		if (iop_simple_cmd(iop, tid, I2O_SCSI_DEVICE_RESET,
-		    sc->sc_ii.ii_ictx, 1, 10*1000) != 0) {
-#ifdef I2ODEBUG
-			printf("%s: reset failed\n", sc->sc_dv.dv_xname);
-#endif
-			xs->error = XS_DRIVER_STUFFUP;
+		tid = IOPSP_TIDMAP(sc->sc_tidmap, periph->periph_target,
+		     periph->periph_lun);
+		if (tid == IOPSP_TID_ABSENT || tid == IOPSP_TID_INUSE) {
+			xs->error = XS_SELTIMEOUT;
+			scsipi_done(xs);
+			return;
 		}
-		return (COMPLETE);
-	}
+
+		SC_DEBUG(periph, SDEV_DB2, ("iopsp_scsi_request run_xfer\n"));
+
+		/* Need to reset the target? */
+		if ((flags & XS_CTL_RESET) != 0) {
+			if (iop_simple_cmd(iop, tid, I2O_SCSI_DEVICE_RESET,
+		    	sc->sc_ii.ii_ictx, 1, 10*1000) != 0) {
+#ifdef I2ODEBUG
+				printf("%s: reset failed\n",
+				    sc->sc_dv.dv_xname);
+#endif
+				xs->error = XS_DRIVER_STUFFUP;
+			} else
+				xs->error = XS_NOERROR;
+				
+			scsipi_done(xs);
+			return;
+		}
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
-	if (xs->cmdlen > 16)
-		panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
+		if (xs->cmdlen > 16)
+			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
 #endif
 
-	if (iop_msg_alloc(iop, &sc->sc_ii, &im,
-	    (flags & (XS_CTL_POLL | XS_CTL_NOSLEEP)) != 0 ? IM_NOWAIT : 0)) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return (TRY_AGAIN_LATER);
-	}
-	im->im_dvcontext = xs;
+		if (iop_msg_alloc(iop, &sc->sc_ii, &im,
+		    (flags & (XS_CTL_POLL | XS_CTL_NOSLEEP)) != 0 ? IM_NOWAIT : 0)) {
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			return;
+		}
+		im->im_dvcontext = xs;
 
-	mb = (struct i2o_scsi_scb_exec *)im->im_msg;
-	mb->msgflags = I2O_MSGFLAGS(i2o_scsi_scb_exec);
-	mb->msgfunc = I2O_MSGFUNC(tid, I2O_SCSI_SCB_EXEC);
-	mb->msgictx = sc->sc_ii.ii_ictx;
-	mb->msgtctx = im->im_tctx;
-	mb->flags = xs->cmdlen | I2O_SCB_FLAG_ENABLE_DISCONNECT |
-	    I2O_SCB_FLAG_SENSE_DATA_IN_MESSAGE;
-	memcpy(mb->cdb, xs->cmd, xs->cmdlen);
-	mb->datalen = xs->datalen;
+		mb = (struct i2o_scsi_scb_exec *)im->im_msg;
+		mb->msgflags = I2O_MSGFLAGS(i2o_scsi_scb_exec);
+		mb->msgfunc = I2O_MSGFUNC(tid, I2O_SCSI_SCB_EXEC);
+		mb->msgictx = sc->sc_ii.ii_ictx;
+		mb->msgtctx = im->im_tctx;
+		mb->flags = xs->cmdlen | I2O_SCB_FLAG_ENABLE_DISCONNECT |
+		    I2O_SCB_FLAG_SENSE_DATA_IN_MESSAGE;
+		memcpy(mb->cdb, xs->cmd, xs->cmdlen);
+		mb->datalen = xs->datalen;
 
-	if ((xs->sc_link->quirks & SDEV_NOTAG) == 0 &&
-	    (xs->xs_control & XS_CTL_POLL) != 0) {
-		if (xs->bp != NULL && (xs->bp->b_flags & B_ASYNC) != 0)
-			mb->flags |= I2O_SCB_FLAG_ORDERED_QUEUE_TAG;
-		else
+		switch(xs->xs_tag_type) {
+		case MSG_ORDERED_Q_TAG:
+			flags |= I2O_SCB_FLAG_ORDERED_QUEUE_TAG;
+			break;
+		case MSG_SIMPLE_Q_TAG:
 			mb->flags |= I2O_SCB_FLAG_SIMPLE_QUEUE_TAG;
-	}
+			break;
+		case MSG_HEAD_OF_Q_TAG:
+			flags |= I2O_SCB_FLAG_HEAD_QUEUE_TAG;
+			break;
+		default:
+			break;
+		}
 
-	if (xs->datalen != 0) {
-		error = iop_msg_map(iop, im, xs->data, xs->datalen, 
-		    (flags & XS_CTL_DATA_OUT) == 0);
-		if (error) {
+		if (xs->datalen != 0) {
+			error = iop_msg_map(iop, im, xs->data, xs->datalen, 
+			    (flags & XS_CTL_DATA_OUT) == 0);
+			if (error) {
 #ifdef I2ODEBUG
-			printf("%s: error %d mapping xfer\n",
-			    sc->sc_dv.dv_xname, error);
+				printf("%s: error %d mapping xfer\n",
+				    sc->sc_dv.dv_xname, error);
 #endif
-			xs->error = XS_DRIVER_STUFFUP;
-			iop_msg_free(iop, &sc->sc_ii, im);
-			return (COMPLETE);
+				xs->error = XS_DRIVER_STUFFUP;
+				iop_msg_free(iop, &sc->sc_ii, im);
+				scsipi_done(xs);
+				return;
+			}
+			if ((flags & XS_CTL_DATA_IN) == 0)
+				mb->flags |= I2O_SCB_FLAG_XFER_TO_DEVICE;
+			else
+				mb->flags |= I2O_SCB_FLAG_XFER_FROM_DEVICE;
 		}
-		if ((flags & XS_CTL_DATA_IN) == 0)
-			mb->flags |= I2O_SCB_FLAG_XFER_TO_DEVICE;
-		else
-			mb->flags |= I2O_SCB_FLAG_XFER_FROM_DEVICE;
-	}
 
-	/* 
-	 * If the command is allowed to execute asynchronously, enqueue it
-	 * with the IOP.
-	 */ 
-	if ((flags & XS_CTL_POLL) == 0) {
-		iop_msg_enqueue(iop, im, 0);
-		return (SUCCESSFULLY_QUEUED);
-	}
-
-	if (iop_msg_send(iop, im, xs->timeout)) {
-		scsi_print_addr(xs->sc_link);
-		printf("timeout; aborting command\n");
-		if (iopsp_scsi_abort(sc, tid, im)) {
-			scsi_print_addr(xs->sc_link);
-			printf("abort failed\n");
+		/* 
+		 * If the command is allowed to execute asynchronously,
+		 * enqueue it with the IOP.
+		 */ 
+		if ((flags & XS_CTL_POLL) == 0) {
+			iop_msg_enqueue(iop, im, 0);
+			return;
 		}
-		xs->error = XS_DRIVER_STUFFUP;
+
+		if (iop_msg_send(iop, im, xs->timeout)) {
+			scsipi_printaddr(xs->xs_periph);
+			printf("timeout; aborting command\n");
+			if (iopsp_scsi_abort(sc, tid, im)) {
+				scsipi_printaddr(xs->xs_periph);
+				printf("abort failed\n");
+			}
+			xs->error = XS_TIMEOUT;
+		}
+		scsipi_done(xs);
+		return;
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
 	}
-	return (COMPLETE);
 }
 
 /*
@@ -592,7 +596,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 	xs = (struct scsipi_xfer *)im->im_dvcontext;
 	iop = (struct iop_softc *)dv->dv_parent;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("iopsp_intr\n"));
+	SC_DEBUG(xs->xs_periph, SDEV_DB2, ("iopsp_intr\n"));
 
 	if (xs->error == XS_NOERROR) {
 		rb = reply;
@@ -633,6 +637,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 					sl = sizeof(xs->sense.scsi_sense);
 				memcpy(&xs->sense.scsi_sense, rb->sense, sl);
 				break;
+			case SCSI_QUEUE_FULL:
 			case SCSI_BUSY:
 				xs->error = XS_BUSY;
 				break;
@@ -657,14 +662,15 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
  * ioctl hook; used here only to initiate low-level rescans.
  */
 static int
-iopsp_ioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t data, int flag,
+iopsp_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data, int flag,
 	    struct proc *p)
 {
 	int rv;
 
 	switch (cmd) {
 	case SCBUSIOLLSCAN:
-		rv = iopsp_rescan(sc_link->adapter_softc);
+		rv = iopsp_rescan(
+		    (struct iopsp_softc *)chan->chan_adapter->adapt_dev);
 		break;
 	default:
 		rv = ENXIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopspvar.h,v 1.2.2.2 2000/11/22 17:34:20 bouyer Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.2.2.3 2001/01/22 18:00:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 #ifndef _I2O_IOPSPVAR_H_
 #define	_I2O_IOPSPVAR_H_
 
-#define	IOPSP_MAX_LUN		7
+#define	IOPSP_MAX_LUN		8
 #define	IOPSP_MAX_SCSI_TARGET	15
-#define	IOPSP_MAX_FCAL_TARGET	126
+#define	IOPSP_MAX_FCAL_TARGET	127
 
 #define	IOPSP_TIDMAP(map, t, l)	(map[(t) * (IOPSP_MAX_LUN + 1) + (l)])
 #define	IOPSP_TID_ABSENT	0x0000	/* Device is absent */
@@ -60,7 +60,7 @@ struct iopsp_target {
 struct iopsp_softc {
 	struct	device sc_dv;			/* Generic device data */
 	struct	scsipi_adapter sc_adapter;	/* scsipi adapter */
-	struct	scsipi_link sc_link;		/* Prototype link */
+	struct	scsipi_channel sc_channel;	/* Prototype link */
 	struct	iop_initiator sc_ii;		/* I2O initiator state */
 	u_int	sc_tid;				/* Bus port TID */
 	u_short	*sc_tidmap;			/* Target/LUN -> TID map */
