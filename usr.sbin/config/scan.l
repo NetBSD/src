@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.10 1996/11/12 17:42:47 gwr Exp $	*/
+/*	$NetBSD: scan.l,v 1.11 1996/11/13 18:42:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,43 +79,54 @@ PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 
 %%
+		/* Local variables for yylex() */
+		int tok;
 
-		/* plain keywords */
-and		{ return AND; }
-at		{ return AT; }
-attach		{ return ATTACH; }
-build		{ return BUILD; }
-compile-with	{ return COMPILE_WITH; }
-config		{ return CONFIG; }
-define		{ return DEFINE; }
-device		{ return DEVICE; }
-dumps		{ return DUMPS; }
-file		{ return XFILE; }
-flags		{ return FLAGS; }
-include		{ return INCLUDE; }
-machine		{ return XMACHINE; }
-major		{ return MAJOR; }
-makeoptions	{ return MAKEOPTIONS; }
-maxpartitions	{ return MAXPARTITIONS; }
-maxusers	{ return MAXUSERS; }
-minor		{ return MINOR; }
-needs-count	{ return NEEDS_COUNT; }
-needs-flag	{ return NEEDS_FLAG; }
-on		{ return ON; }
-options		{ return OPTIONS; }
-pseudo-device	{ return PSEUDO_DEVICE; }
-root		{ return ROOT; }
-source		{ return SOURCE; }
-swap		{ return SWAP; }
-with		{ return WITH; }
+and		return AND;
+at		return AT;
+attach		return ATTACH;
+build		return BUILD;
+compile-with	return COMPILE_WITH;
+config		return CONFIG;
+define		return DEFINE;
+device		return DEVICE;
+dumps		return DUMPS;
+file		return XFILE;
+flags		return FLAGS;
+include		return INCLUDE;
+machine		return XMACHINE;
+major		return MAJOR;
+makeoptions	return MAKEOPTIONS;
+maxpartitions	return MAXPARTITIONS;
+maxusers	return MAXUSERS;
+minor		return MINOR;
+needs-count	return NEEDS_COUNT;
+needs-flag	return NEEDS_FLAG;
+on		return ON;
+options		return OPTIONS;
+pseudo-device	return PSEUDO_DEVICE;
+root		return ROOT;
+source		return SOURCE;
+swap		return SWAP;
+with		return WITH;
 
-		/* all the rest */
-{PATH}		{ yylval.str = intern(yytext); return PATHNAME; }
-{WORD}		{ yylval.str = intern(yytext); return WORD; }
+{PATH}	{
+		yylval.str = intern(yytext);
+		return PATHNAME;
+	}
 
-\"([^"]|\\\")*/\" {
+{WORD}	{
+		yylval.str = intern(yytext);
+		return WORD;
+	}
+
+\"([^"\n]|\\\")+ {
+		tok = input();  /* eat closing quote */
+		if (tok != '"') {
+			error("closing quote missing\n");
+			unput(tok);
+		}
 		yylval.str = intern(yytext + 1);
-		(void)input();	/* eat closing quote */
 		return WORD;
 	}
 0[0-7]*	{
@@ -130,7 +141,7 @@ with		{ return WITH; }
 		yylval.val = strtol(yytext, NULL, 10);
 		return NUMBER;
 	}
-\n/[ \t] {
+\n[ \t] {
 		/*
 		 * Note: newline followed by whitespace is always a
 		 * continuation of the previous line, so do NOT
@@ -143,10 +154,9 @@ with		{ return WITH; }
 		return '\n';
 	}
 #.*	{ /* ignored (comment) */; }
-[ \t]*	{ /* ignored (white space) */; }
+[ \t]+	{ /* ignored (white space) */; }
 .	{ return yytext[0]; }
 <<EOF>> {
-		int tok;
 		if (incl == NULL)
 			return YY_NULL;
 		tok = endinclude();
