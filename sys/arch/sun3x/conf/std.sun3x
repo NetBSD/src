@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3x,v 1.1.1.1 1997/01/14 20:57:01 gwr Exp $
+#	$NetBSD: std.sun3x,v 1.2 1997/04/25 19:11:48 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3x m68k
@@ -17,21 +17,27 @@ vmel0 at mainbus?
 
 # Devices that should be present in any Sun3x kernel.
 
-# OBIO
-zsc0    at obio0 addr 0x62000000
-zsc1    at obio0 addr 0x62002000
-iommu0  at obio0 addr 0x60000000
-
-# These are all on one page...
-eeprom0 at obio0 addr 0x64000000
-#idprom0 at obio0 addr 0x640007D8
-clock0  at obio0 addr 0x640007F8
-
 # These are also on one page...
-#enable0 at obio0 addr 0x61000000
-#buserr0 at obio0 addr 0x61000400
-memerr0 at obio0 addr 0x61001000
-intreg0 at obio0 addr 0x61001400
+#enab0	at obio0 addr 0x61000000
+#berr0	at obio0 addr 0x61000400
+#leds0	at obio0 addr 0x61000800
+idprom0	at obio0 addr 0x61000C00	# Sun3/470
+memerr0	at obio0 addr 0x61001000
+intreg0	at obio0 addr 0x61001400
+
+zsc0	at obio0 addr 0x62000000
+zsc1	at obio0 addr 0x62002000
+
+eeprom0	at obio0 addr 0x64000000
+idprom0	at obio0 addr 0x640007D8	# Sun3/80
+
+# The clock can be either the old Intersil...
+oclock0	at obio0 addr 0x64002000 ipl 5
+# ... or the Mostek (EEPROM/IDPROM/clock).
+clock0	at obio0 addr 0x640007F8 ipl 5
+
+# The I/O MMU (a.k.a IOMAPPER)
+iommu0	at obio0 addr 0x60000000
 
 # Standard defines
 options		EXEC_AOUT
