@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.1 2001/05/06 03:26:39 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.2 2001/05/08 13:42:04 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -556,7 +556,7 @@ wi_cmd(sc, cmd, val)
 	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_CMD)
 			break;
-		DELAY(10);
+		DELAY(1);
 	}
 
 	/* Ack the command */
