@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.8 1997/10/18 10:53:37 lukem Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.8.12.1 2001/10/27 17:58:51 he Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_clntout.c,v 1.8 1997/10/18 10:53:37 lukem Exp $");
+__RCSID("$NetBSD: rpc_clntout.c,v 1.8.12.1 2001/10/27 17:58:51 he Exp $");
 #endif
 #endif
 
@@ -193,7 +193,7 @@ printbody(proc)
 		f_print(fout,
 		    "\tif (clnt_call(clnt, %s, xdr_void", proc->proc_name);
 		f_print(fout,
-		    ", NULL, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
+		    ", NULL, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS)\n",
 		    stringfix(proc->res_type), ampr(proc->res_type), RESULT);
 
 	} else
