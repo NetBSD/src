@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.114 2004/03/26 17:48:13 jmc Exp $
+$NetBSD: UPDATING,v 1.114.2.1 2004/07/23 08:45:42 tron Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,26 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040715:
+	The rc.d/sendmail script now uses a heuristic to determine
+	if sendmail should be started at boot time.  It checks the
+	contents of /etc/mailer.conf, /etc/mail/submit.cf, and the
+	owner and mode of the sendmail binary to see if any changes
+	to the mail infrastructure have been made.  If no changes
+	are detected, it will start an SMTP listener.
+
+	Setting sendmail=NO in /etc/rc.conf will override this.
+
+	If you are only using sendmail by default and only for
+	local delivery, it is important that you also update your
+	sendmail.cf so that the SMTP listener only listens on the
+	loopback interface.
+
+20040715:
+	The method by which athhal-elf.o gets pulled into i386
+	kernel builds has been changed again.  The latest version
+	of bsd.files.mk is no longer required.
 
 20040326:
 
