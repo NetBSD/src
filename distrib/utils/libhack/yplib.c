@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.2 1999/03/13 19:08:44 sommerfe Exp $	*/
+/*	$NetBSD: yplib.c,v 1.3 1999/09/19 19:51:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -41,6 +41,22 @@
  *      lib/libc/yp/yplib.c
  * (and then completely gutted! 8^)
  */
+#include <sys/cdefs.h>
+
+#ifdef __weak_alias
+#define yp_all			_yp_all
+#define yp_bind			_yp_bind
+#define yp_first		_yp_first
+#define yp_get_default_domain	_yp_get_default_domain
+#define yp_maplist		_yp_maplist
+#define yp_master		_yp_master
+#define yp_match		_yp_match
+#define yp_next			_yp_next
+#define yp_order		_yp_order
+#define yp_unbind		_yp_unbind
+#define yperr_string		_yperr_string
+#define ypprot_err		_ypprot_err
+#endif
 
 #include <sys/types.h>
 
@@ -55,7 +71,35 @@
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-static char _yp_domain[256];
+struct dom_binding *_ypbindlist;
+char _yp_domain[256];
+
+#define YPLIB_TIMEOUT		10
+#define YPLIB_RPC_RETRIES	4
+
+struct timeval _yplib_timeout = { YPLIB_TIMEOUT, 0 };
+struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
+	1000000 * (YPLIB_TIMEOUT % YPLIB_RPC_RETRIES) / YPLIB_RPC_RETRIES };
+int _yplib_nerrs = 5;
+
+
+#ifdef __weak_alias
+__weak_alias(yp_all,_yp_all);
+__weak_alias(yp_bind, _yp_bind);
+__weak_alias(yp_first,_yp_first);
+__weak_alias(yp_get_default_domain, _yp_get_default_domain);
+__weak_alias(yp_maplist,_yp_maplist);
+__weak_alias(yp_master,_yp_master);
+__weak_alias(yp_match,_yp_match);
+__weak_alias(yp_next,_yp_next);
+__weak_alias(yp_order,_yp_order);
+__weak_alias(yp_unbind, _yp_unbind);
+__weak_alias(yperr_string,_yperr_string);
+__weak_alias(ypprot_err,_ypprot_err);
+#endif
+
+void __yp_unbind __P((struct dom_binding *));
+int _yp_invalid_domain __P((const char *));
 
 int
 _yp_dobind(dom, ypdb)
@@ -63,6 +107,12 @@ _yp_dobind(dom, ypdb)
 	struct dom_binding **ypdb;
 {
 	return YPERR_YPBIND;
+}
+
+void
+__yp_unbind(ypb)
+	struct dom_binding *ypb;
+{
 }
 
 int
@@ -79,6 +129,52 @@ yp_unbind(dom)
 }
 
 int
+yp_get_default_domain(domp)
+	char **domp;
+{
+	*domp = NULL;
+	if (_yp_domain[0] == '\0')
+		if (getdomainname(_yp_domain, sizeof(_yp_domain)))
+			return YPERR_NODOM;
+	*domp = _yp_domain;
+	return 0;
+}
+
+int
+_yp_check(dom)
+	char          **dom;
+{
+	char           *unused;
+
+	if (_yp_domain[0] == '\0')
+		if (yp_get_default_domain(&unused))
+			return 0;
+
+	if (dom)
+		*dom = _yp_domain;
+
+	if (yp_bind(_yp_domain) == 0)
+		return 1;
+	return 0;
+}
+
+int
+_yp_invalid_domain(dom)
+	const char *dom;
+{
+	if (dom == NULL || *dom == '\0')
+		return 1;
+
+	if (strlen(dom) > YPMAXDOMAIN)
+		return 1;
+
+	if (strchr(dom, '/') != NULL)
+		return 1;
+
+	return 0;
+}
+
+int
 yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	const char     *indomain;
 	const char     *inmap;
@@ -91,18 +187,6 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	*outvallen = 0;
 
 	return YPERR_DOMAIN;
-}
-
-int
-yp_get_default_domain(domp)
-	char **domp;
-{
-	*domp = NULL;
-	if (_yp_domain[0] == '\0')
-		if (getdomainname(_yp_domain, sizeof(_yp_domain)))
-			return YPERR_NODOM;
-	*domp = _yp_domain;
-	return 0;
 }
 
 int
@@ -199,20 +283,3 @@ ypprot_err(incode)
 	return YPERR_YPERR;
 }
 
-int
-_yp_check(dom)
-	char          **dom;
-{
-	char           *unused;
-
-	if (_yp_domain[0] == '\0')
-		if (yp_get_default_domain(&unused))
-			return 0;
-
-	if (dom)
-		*dom = _yp_domain;
-
-	if (yp_bind(_yp_domain) == 0)
-		return 1;
-	return 0;
-}
