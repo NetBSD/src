@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.2 2002/12/09 13:36:27 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.3 2002/12/28 16:25:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -96,16 +96,16 @@ timer_nec_jazz_init(interval)
 struct pica_dev nec_rd94_cpu[] = {
 	{{ "timer",	-1, 0, },	(void *)RD94_SYS_IT_VALUE, },
 	{{ "dallas_rtc", -1, 0, },	(void *)RD94_SYS_CLOCK, },
-	{{ "lpt",	0, 0, },	(void *)RD94_SYS_PAR1, },
-	{{ "fdc",	1, 0, },	(void *)RD94_SYS_FLOPPY, },
+	{{ "LPT1",	0, 0, },	(void *)RD94_SYS_PAR1, },
+	{{ "I82077",	1, 0, },	(void *)RD94_SYS_FLOPPY, },
 	{{ "AD1848",	2, 0, },	(void *)RD94_SYS_SOUND,},
-	{{ "sonic",	3, 0, },	(void *)RD94_SYS_SONIC, },
+	{{ "SONIC",	3, 0, },	(void *)RD94_SYS_SONIC, },
 	{{ "NCRC700",	4, 0, },	(void *)RD94_SYS_SCSI0, },
 	{{ "NCRC700",	5, 0, },	(void *)RD94_SYS_SCSI1, },
-	{{ "pckbd",	6, 0, },	(void *)RD94_SYS_KBD, },
-	{{ "pms",	7, 0, },	(void *)RD94_SYS_KBD, },
-	{{ "com",	8, 0, },	(void *)RD94_SYS_COM1, },
-	{{ "com",	9, 0, },	(void *)RD94_SYS_COM2, },
+	{{ "I8247",	6, 0, },	(void *)RD94_SYS_KBD, },
+	{{ "pms",	7, 0, },	(void *)RD94_SYS_KBD, }, /* XXX */
+	{{ "COM1",	8, 0, },	(void *)RD94_SYS_COM1, },
+	{{ "COM2",	9, 0, },	(void *)RD94_SYS_COM2, },
 	{{ NULL,	-1, 0, },	(void *)NULL, },
 };
 
