@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.10 2001/05/29 23:22:42 perry Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.11 2001/09/01 02:17:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,16 +33,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.10 2001/05/29 23:22:42 perry Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.11 2001/09/01 02:17:29 simonb Exp $");
 #endif /* not lint */
 
+#include <sys/time.h>
+
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/time.h>
 
 static void enomem(void);
 static void *emalloc(size_t);
