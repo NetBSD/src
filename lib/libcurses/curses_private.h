@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.32 2003/07/30 11:19:00 dsl Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.33 2003/07/31 10:36:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -87,6 +87,7 @@ struct __line {
 #endif
 #define	__ISDIRTY	0x01		/* Line is dirty. */
 #define __ISPASTEOL	0x02		/* Cursor is past end of line */
+#define __ISAFTERCR	0x04		/* Last char was <cr> */
 	unsigned int flags;
 	unsigned int hash;		/* Hash value for the line. */
 	int *firstchp, *lastchp;	/* First and last chngd columns ptrs */
