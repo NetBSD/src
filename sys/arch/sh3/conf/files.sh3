@@ -1,6 +1,4 @@
-#	$NetBSD: files.sh3,v 1.22 2002/03/17 14:05:47 uch Exp $
-#
-# new style config file for sh3 architecture
+#	$NetBSD: files.sh3,v 1.23 2002/03/17 17:55:24 uch Exp $
 #
 
 defparam	PCLOCK

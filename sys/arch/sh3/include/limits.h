@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.3 2000/08/08 22:31:14 tshiozak Exp $	*/
+/*	$NetBSD: limits.h,v 1.4 2002/03/17 17:55:25 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,8 +35,8 @@
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+#ifndef	_SH3_LIMITS_H_
+#define	_SH3_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	32		/* no multibyte characters */
@@ -63,7 +63,7 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) ||		\
      defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
 #define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
 #define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
@@ -80,7 +80,7 @@
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) ||		\
     defined(_XOPEN_SOURCE)
 #define LONG_BIT	32
 #define WORD_BIT	32
@@ -94,4 +94,4 @@
 #define FLT_MIN		1.17549435E-38F
 #endif
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* !_SH3_LIMITS_H_ */

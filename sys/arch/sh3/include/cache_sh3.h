@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.h,v 1.4 2002/03/16 05:27:53 chs Exp $	*/
+/*	$NetBSD: cache_sh3.h,v 1.5 2002/03/17 17:55:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,8 +39,8 @@
 /*
  * SH3: SH7708, SH7708S, SH7708R, SH7709, SH7709A
  */
-#ifndef _CACHE_SH3_H_
-#define _CACHE_SH3_H_
+#ifndef _SH3_CACHE_SH3_H_
+#define _SH3_CACHE_SH3_H_
 #include <sh3/devreg.h>
 #ifdef _KERNEL
 
@@ -155,4 +155,4 @@ do {									\
 extern void sh3_cache_config(void);
 #endif
 #endif /* _KERNEL */
-#endif /* !_CACHE_SH3_H_ */
+#endif /* !_SH3_CACHE_SH3_H_ */
