@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.6 1997/10/11 02:07:11 lukem Exp $	*/
+/*	$NetBSD: cypher.c,v 1.7 1998/08/24 00:25:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.6 1997/10/11 02:07:11 lukem Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.7 1998/08/24 00:25:32 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -103,7 +103,7 @@ cypher()
 		case SHOOT:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && *objsht[n]) {
+					if (testbit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = shoot();
 					}
@@ -116,7 +116,7 @@ cypher()
 		case TAKE:
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && *objsht[n]) {
+					if (testbit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = take(location[position].objects);
 					}
@@ -146,7 +146,7 @@ cypher()
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
 					if (testbit(inven, n) ||
-					    (testbit(location[position].objects, n) && *objsht[n])) {
+					    (testbit(location[position].objects, n) && objsht[n])) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
 					}
@@ -186,7 +186,7 @@ cypher()
 
 			if (wordnumber < wordcount && wordvalue[wordnumber + 1] == EVERYTHING) {
 				for (n = 0; n < NUMOFOBJECTS; n++)
-					if (testbit(location[position].objects, n) && *objsht[n]) {
+					if (testbit(location[position].objects, n) && objsht[n]) {
 						wordvalue[wordnumber + 1] = n;
 						wordnumber = puton();
 					}
