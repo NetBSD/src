@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.631 2004/09/08 11:38:22 jmmv Exp $
+# $NetBSD: GENERIC,v 1.632 2004/10/10 16:39:36 augustss Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.631 $"
+#ident 		"GENERIC-$Revision: 1.632 $"
 
 maxusers	32		# estimated number of users
 
@@ -1016,6 +1016,7 @@ irframe* at oboe?
 # Audio Devices
 
 # PCI audio devices
+auacer*	at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
