@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2001/03/10 23:52:45 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2001/09/24 13:22:32 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.28 2001/03/10 23:52:45 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2001/09/24 13:22:32 wiz Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -866,11 +866,14 @@ msglog(const char *p, ...)
 
 	va_start(args, p);
 	vsyslog(LOG_ERR, p, args);
+	va_end(args);
 
 	if (ftrace != 0) {
 		if (ftrace == stdout)
 			(void)fputs("routed: ", ftrace);
+		va_start(args, p);
 		(void)vfprintf(ftrace, p, args);
+		va_end(args);
 		(void)fputc('\n', ftrace);
 	}
 }
@@ -890,8 +893,6 @@ msglim(struct msg_limit *lim, naddr addr, const char *p, ...)
 	int i;
 	struct msg_sub *ms1, *ms;
 	const char *p1;
-
-	va_start(args, p);
 
 	/* look for the oldest slot in the table
 	 * or the slot for the bad router.
@@ -927,14 +928,17 @@ msglim(struct msg_limit *lim, naddr addr, const char *p, ...)
 		trace_flush();
 		for (p1 = p; *p1 == ' '; p1++)
 			continue;
-		p = p1;
-		vsyslog(LOG_ERR, p, args);
+		va_start(args, p);
+		vsyslog(LOG_ERR, p1, args);
+		va_end(args);
 	}
 
 	/* always display the message if tracing */
 	if (ftrace != 0) {
+		va_start(args, p);
 		(void)vfprintf(ftrace, p, args);
 		(void)fputc('\n', ftrace);
+		va_end(args);
 	}
 }
 
@@ -948,9 +952,12 @@ logbad(int dump, const char *p, ...)
 
 	va_start(args, p);
 	vsyslog(LOG_ERR, p, args);
+	va_end(args);
 
 	(void)fputs("routed: ", stderr);
+	va_start(args, p);
 	(void)vfprintf(stderr, p, args);
+	va_end(args);
 	(void)fputs("; giving up\n",stderr);
 	(void)fflush(stderr);
 

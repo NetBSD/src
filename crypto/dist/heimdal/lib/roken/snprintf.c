@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: snprintf.c,v 1.1.1.4 2001/09/17 12:25:07 assar Exp $");
+RCSID("$Id: snprintf.c,v 1.2 2001/09/24 13:22:26 wiz Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -496,6 +496,7 @@ snprintf (char *str, size_t sz, const char *format, ...)
 
   va_start(args, format);
   ret = vsnprintf (str, sz, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -506,14 +507,15 @@ snprintf (char *str, size_t sz, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (ret != ret2 || strcmp(str, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return ret;
 }
 #endif

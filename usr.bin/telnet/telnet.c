@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.18 2001/07/22 13:34:14 wiz Exp $	*/
+/*	$NetBSD: telnet.c,v 1.19 2001/09/24 13:22:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.18 2001/07/22 13:34:14 wiz Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.19 2001/09/24 13:22:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,7 @@ printring(va_alist)
 	    *ptr++ = i;
 	}
     }
+    va_end(ap);
     ring_supply_data(ring, buffer, ptr-buffer);
 }
 #endif

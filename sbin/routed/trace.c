@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.25 2001/03/10 23:52:47 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.26 2001/09/24 13:22:32 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.25 2001/03/10 23:52:47 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.26 2001/09/24 13:22:32 wiz Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -189,6 +189,7 @@ tmsg(const char *p, ...)
 		lastlog();
 		va_start(args, p);
 		vfprintf(ftrace, p, args);
+		va_end(args);
 		(void)fputc('\n',ftrace);
 		fflush(ftrace);
 	}
@@ -242,6 +243,7 @@ trace_off(const char *p, ...)
 		lastlog();
 		va_start(args, p);
 		vfprintf(ftrace, p, args);
+		va_end(args);
 		(void)fputc('\n',ftrace);
 	}
 	trace_close(file_trace);
@@ -724,6 +726,7 @@ trace_misc(const char *p, ...)
 	lastlog();
 	va_start(args, p);
 	vfprintf(ftrace, p, args);
+	va_end(args);
 	(void)fputc('\n',ftrace);
 }
 
@@ -741,6 +744,7 @@ trace_act(const char *p, ...)
 	lastlog();
 	va_start(args, p);
 	vfprintf(ftrace, p, args);
+	va_end(args);
 	(void)fputc('\n',ftrace);
 }
 
@@ -758,6 +762,7 @@ trace_pkt(const char *p, ...)
 	lastlog();
 	va_start(args, p);
 	vfprintf(ftrace, p, args);
+	va_end(args);
 	(void)fputc('\n',ftrace);
 }
 

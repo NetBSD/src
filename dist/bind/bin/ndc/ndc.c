@@ -1,4 +1,4 @@
-/*	$NetBSD: ndc.c,v 1.4 2001/05/17 22:59:41 itojun Exp $	*/
+/*	$NetBSD: ndc.c,v 1.5 2001/09/24 13:22:27 wiz Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ndc.c,v 1.16.2.1 2001/04/26 02:56:10 marka Exp";
@@ -499,6 +499,7 @@ logger(enum ctl_severity ctlsev, const char *format, ...) {
 			verror(format, args);
 		break;
 	default:
+		va_end(args);
 		abort();
 	}
 	va_end(args);

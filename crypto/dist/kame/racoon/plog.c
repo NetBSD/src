@@ -130,13 +130,16 @@ plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 
 	newfmt = plog_common(pri, fmt, func);
 
-	va_start(ap, fmt);
-	if (f_foreground)
+	if (f_foreground) {
+		va_start(ap, fmt);
 		vprintf(newfmt, ap);
+		va_end(ap);
+	}
 
-	if (logfile)
+	va_start(ap, fmt);
+	if (logfile) {
 		log_vaprint(logp, newfmt, ap);
-	else {
+	} else {
 		if (pri < ARRAYLEN(ptab))
 			vsyslog(ptab[pri].priority, newfmt, ap);
 		else
