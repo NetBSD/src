@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.38 1999/11/10 04:21:30 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.39 1999/11/10 05:02:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -493,6 +493,7 @@ ncr53c9x_select(sc, ecb)
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
+	size_t dmasize;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
 		   target, lun, ecb->cmd.cmd.opcode));
@@ -521,16 +522,41 @@ ncr53c9x_select(sc, ecb)
 		 * otherwise mangle the target.  There should be no MESSAGE IN
 		 * phase.
 		 */
-		NCRCMD(sc, NCRCMD_SELNATN);
+		if (ncr53c9x_dmaselect) {
+			/* setup DMA transfer for command */
+			dmasize = clen = ecb->clen;
+			sc->sc_cmdlen = clen;
+			sc->sc_cmdp = (caddr_t)&ecb->cmd + 1;
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
+	
+			/* Program the SCSI counter */
+			NCR_WRITE_REG(sc, NCR_TCL, dmasize);
+			NCR_WRITE_REG(sc, NCR_TCM, dmasize >> 8);
+			if (sc->sc_cfg2 & NCRCFG2_FE) {
+				NCR_WRITE_REG(sc, NCR_TCH, dmasize >> 16);
+			}
+
+			/* load the count in */
+			NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
+
+			/* And get the targets attention */
+			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
+			NCRDMA_GO(sc);
+		} else {
+			/* Now the command into the FIFO */
+			cmd = (u_char *)&ecb->cmd.cmd;
+			clen = ecb->clen;
+			while (clen--)
+				NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+
+			NCRCMD(sc, NCRCMD_SELNATN);
+		}
 		return;
 	}
 
 	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
-		size_t dmasize;
-
 		ecb->cmd.id = 
 		    MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
-
 
 		/* setup DMA transfer for command */
 		dmasize = clen = ecb->clen + 1;
