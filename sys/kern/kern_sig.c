@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.35 2002/12/11 06:43:05 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.36 2003/01/03 21:42:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.35 2002/12/11 06:43:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.36 2003/01/03 21:42:50 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -998,6 +998,12 @@ psignal1(struct proc *p, int signum,
 					sigdelset(&p->p_sigctx.ps_siglist, 
 					signum);
 				l = proc_unstop(p);
+				/*
+				 * XXX see note in proc_unstop(). SIGKILL
+				 * XXX and SIGCONT have conflicting needs.
+				 */
+				if (l->l_stat == LSSLEEP)
+					l = NULL;
 				if (l && (action == SIG_CATCH))
 					goto runfast;
 				if (l)
@@ -1373,6 +1379,15 @@ proc_unstop(p)
 	 */
 
 	p->p_stat = SACTIVE;
+	/*
+	 * For the benefit of SIGKILL, return the idle LWP if there's
+	 * nothing better (and if there is an idle LWP, there
+	 * shouldn't be anything better.
+	 * XXX This is bad for SIGCONT; SIGSTOP/SIGCONT shouldn't
+	 * XXX noticably affect the state of a process, idling or
+	 * XXX not. We work around this in the SIGCONT handling in
+	 * XXX psignal().
+	 */
 	if (p->p_flag & P_SA)
 		lr = p->p_sa->sa_idle; /* OK if this is NULL. */
 	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
