@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.6 2002/10/02 05:15:54 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.7 2003/07/05 16:48:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6 2002/10/02 05:15:54 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2003/07/05 16:48:12 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,15 +102,18 @@ rtcattach(parent, self, aux)
 	struct intio_attach_args *ia = aux;
 	struct rtc_softc *sc = (struct rtc_softc *)self;
 	struct todr_chip_handle *todr_handle;
+	bus_space_tag_t bst = ia->ia_bst;
 
 	printf("\n");
 
-	if (bus_space_map(ia->ia_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
+	if (bus_space_map(bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
 	    &sc->sc_bsh)) {
 		printf("%s: can't map registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	sc->sc_bst = bst;
 
 	MALLOC(todr_handle, struct todr_chip_handle *,
 	    sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
