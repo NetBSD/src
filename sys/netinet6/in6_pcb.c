@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.61 2004/01/13 06:17:14 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.61.2.1 2004/04/28 05:56:07 jmc Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.61 2004/01/13 06:17:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.61.2.1 2004/04/28 05:56:07 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -100,6 +100,12 @@ extern struct ifnet loif[NLOOP];
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec6.h>
+#include <netipsec/key.h>
+#endif /* FAST_IPSEC */
 
 struct in6_addr zeroin6_addr;
 
@@ -150,7 +156,7 @@ in6_pcballoc(so, v)
 	struct inpcbtable *table = v;
 	struct in6pcb *in6p;
 	int s;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	int error;
 #endif
 
@@ -163,7 +169,7 @@ in6_pcballoc(so, v)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 	if (error != 0) {
 		pool_put(&in6pcb_pool, in6p);
@@ -464,7 +470,7 @@ in6_pcbconnect(v, nam)
 	if (ip6_auto_flowlabel)
 		in6p->in6p_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	if (in6p->in6p_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(in6p->in6p_sp);
 #endif
@@ -479,7 +485,7 @@ in6_pcbdisconnect(in6p)
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	ipsec_pcbdisconn(in6p->in6p_sp);
 #endif
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
@@ -496,7 +502,7 @@ in6_pcbdetach(in6p)
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	ipsec6_delete_pcbpolicy(in6p);
 #endif /* IPSEC */
 	sotoin6pcb(so) = 0;
