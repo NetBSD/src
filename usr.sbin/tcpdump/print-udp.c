@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.6 1997/10/03 19:55:50 christos Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.7 1998/12/18 20:28:54 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.6 1997/10/03 19:55:50 christos Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.7 1998/12/18 20:28:54 sommerfe Exp $");
 #endif
 #endif
 
@@ -291,6 +291,50 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 	return (hdr + len);
 }
 
+static int udp_cksum(register const struct ip *ip,
+		     register const struct udphdr *up,
+		     register int len)
+{
+	int i, tlen;
+	struct phdr {
+		u_long src;
+		u_long dst;
+		u_char mbz;
+		u_char proto;
+		u_short len;
+	} ph;
+	register const u_short *sp;
+	int sum;
+	tlen = ntohs(ip->ip_len) - ((const char *)up-(const char*)ip);
+
+	/* pseudo-header.. */
+	ph.len = htons(tlen);
+	ph.mbz = 0;
+	ph.proto = ip->ip_p;
+	ph.src = ip->ip_src.s_addr;
+	ph.dst = ip->ip_dst.s_addr;
+
+	sp = (const u_short *)&ph;
+	sum = sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5];
+
+	sp = (const u_short *)up;
+
+	for (i=0; i<(tlen&~1); i+= 2)
+		sum += *sp++;
+
+	if (tlen & 1) {
+		sum += htons( (*(const char *)sp) << 8);
+	}
+
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum = ~sum & 0xffff;
+
+	return (sum);
+}
+
+
+
 /* XXX probably should use getservbyname() and cache answers */
 #define TFTP_PORT 69		/*XXX*/
 #define KERBEROS_PORT 88	/*XXX*/
@@ -421,6 +465,19 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	(void)printf("%s.%s > %s.%s:",
 		ipaddr_string(&ip->ip_src), udpport_string(sport),
 		ipaddr_string(&ip->ip_dst), udpport_string(dport));
+
+	if (vflag) {
+		int sum = up->uh_sum;
+		if (sum == 0) {
+			(void)printf(" [no cksum]");
+		} else if (TTEST2(up->uh_sport, length)) {
+			sum = udp_cksum(ip, up, length);
+			if (sum != 0)
+				(void)printf(" [bad udp cksum %x!]", sum);
+			else
+				(void)printf(" [udp sum ok]");
+		}
+	}
 
 	if (!qflag) {
 #define ISPORT(p) (dport == (p) || sport == (p))

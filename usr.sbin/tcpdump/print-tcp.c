@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.9 1997/10/03 20:38:03 christos Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.10 1998/12/18 20:28:54 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.9 1997/10/03 20:38:03 christos Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.10 1998/12/18 20:28:54 sommerfe Exp $");
 #endif
 #endif
 
@@ -104,6 +104,48 @@ struct tcp_seq_hash {
 #define ZEROLENOPT(o) ((o) == TCPOPT_EOL || (o) == TCPOPT_NOP)
 
 static struct tcp_seq_hash tcp_seq_hash[TSEQ_HASHSIZE];
+
+static int tcp_cksum(register const struct ip *ip,
+		     register const struct tcphdr *tp,
+		     register int len)
+{
+	int i, tlen;
+	struct phdr {
+		u_long src;
+		u_long dst;
+		u_char mbz;
+		u_char proto;
+		u_short len;
+	} ph;
+	register const u_short *sp;
+	int sum;
+	tlen = ntohs(ip->ip_len) - ((const char *)tp-(const char*)ip);
+
+	/* pseudo-header.. */
+	ph.len = htons(tlen);
+	ph.mbz = 0;
+	ph.proto = ip->ip_p;
+	ph.src = ip->ip_src.s_addr;
+	ph.dst = ip->ip_dst.s_addr;
+
+	sp = (const u_short *)&ph;
+	sum = sp[0]+sp[1]+sp[2]+sp[3]+sp[4]+sp[5];
+
+	sp = (const u_short *)tp;
+
+	for (i=0; i<(tlen&~1); i+= 2)
+		sum += *sp++;
+
+	if (tlen & 1) {
+		sum += htons( (*(const char *)sp) << 8);
+	}
+
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum = ~sum & 0xffff;
+
+	return (sum);
+}
 
 
 void
@@ -229,6 +271,18 @@ tcp_print(register const u_char *bp, register u_int length,
 		(void)printf(" [bad hdr length]");
 		return;
 	}
+
+	if (vflag) {
+		int sum;
+		if (TTEST2(tp->th_sport, length)) {
+			sum = tcp_cksum(ip, tp, length);
+			if (sum != 0)
+				(void)printf(" [bad tcp cksum %x!]", sum);
+			else
+				(void)printf(" [tcp sum ok]");
+		}
+	}
+
 	length -= hlen;
 	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
 		(void)printf(" %lu:%lu(%d)", (long) seq, (long) (seq + length),
