@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.11.4.6 2001/10/27 17:55:47 he Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.11.4.7 2002/03/09 17:02:19 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -691,6 +691,7 @@ sip_start(ifp)
 		if (m0 == NULL)
 			break;
 
+		m = NULL;
 		dmamap = txs->txs_dmamap;
 
 		/*
