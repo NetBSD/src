@@ -1,4 +1,4 @@
-.\"     $NetBSD: ath.4,v 1.3 2004/02/29 17:51:18 snj Exp $
+.\"     $NetBSD: ath.4,v 1.4 2004/02/29 18:43:23 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
 .\" All rights reserved.
@@ -46,8 +46,7 @@
 .Os
 .Sh NAME
 .Nm ath
-.Nd
-Atheros IEEE 802.11 driver
+.Nd Atheros IEEE 802.11 driver
 .Sh SYNOPSIS
 .Cd "ath* at pci? dev ? function ?"
 .Cd "ath* at cardbus? dev ? function ?"
@@ -86,7 +85,8 @@ All chips also support an Atheros Turbo Mode (TM) that operates in the
 (This mode is, however, only interoperable with other Atheros-based devices.)
 .Pp
 The actual transmit speed used is dependent on signal quality and the
-``rate control'' algorithm employed by the driver.
+.Dq rate control
+algorithm employed by the driver.
 All chips support WEP encryption.
 AR5211 and AR5212 support the AES, TKIP, and Michael cryptographic
 operations required for WPA but at this time the driver does not support them.
