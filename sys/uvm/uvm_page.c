@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.73 2001/12/31 19:21:37 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.74 2002/02/20 07:06:56 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.73 2001/12/31 19:21:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.74 2002/02/20 07:06:56 enami Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1358,7 +1358,7 @@ uvm_page_own(pg, tag)
 		if (pg->owner_tag) {
 			printf("uvm_page_own: page %p already owned "
 			    "by proc %d [%s]\n", pg,
-			     pg->owner, pg->owner_tag);
+			    pg->owner, pg->owner_tag);
 			panic("uvm_page_own");
 		}
 		pg->owner = (curproc) ? curproc->p_pid :  (pid_t) -1;
@@ -1372,14 +1372,13 @@ uvm_page_own(pg, tag)
 		    "page (%p)\n", pg);
 		panic("uvm_page_own");
 	}
-	pg->owner_tag = NULL;
 	KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) ||
-		(pg->uanon == NULL && pg->uobject == NULL) ||
-		pg->uobject == uvm.kernel_object ||
-		pg->wire_count > 0 ||
-		(pg->loan_count == 1 && pg->uanon == NULL) ||
-		pg->loan_count > 1);
-	return;
+	    (pg->uanon == NULL && pg->uobject == NULL) ||
+	    pg->uobject == uvm.kernel_object ||
+	    pg->wire_count > 0 ||
+	    (pg->loan_count == 1 && pg->uanon == NULL) ||
+	    pg->loan_count > 1);
+	pg->owner_tag = NULL;
 }
 #endif
 
