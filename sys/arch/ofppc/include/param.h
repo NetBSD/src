@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 1998/04/29 23:11:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.4 1998/05/28 08:12:15 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
-#define	MACHINE		"powerpc"
+#define	MACHINE		"ofppc"
 #define	MACHINE_ARCH	"powerpc"
 #define	MID_MACHINE	MID_POWERPC
 
@@ -62,6 +62,10 @@
 
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
+
+#ifndef	MSGBUFSIZE
+#define	MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 #define	KERNBASE	0x100000
 
@@ -131,9 +135,6 @@
 /*
  * Some system constants
  */
-#ifndef	HTABENTS
-#define	HTABENTS	1024	/* Number of hashslots in HTAB */
-#endif
 #ifndef	NPMAPS
 #define	NPMAPS		32768	/* Number of pmaps in system */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1998/05/19 19:00:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 1998/05/28 08:19:49 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,7 +44,7 @@
 #include <machine/powerpc.h>
 
 pte_t *ptable;
-int ptab_cnt = HTABENTS;
+int ptab_cnt;
 u_int ptab_mask;
 #define	HTABSIZE	(ptab_cnt * 64)
 
@@ -60,6 +60,9 @@ struct pmap kernel_pmap_;
 int physmem;
 static int npgs;
 static u_int nextavail;
+#ifdef __NO_FIXED_MSGBUF
+extern vm_offset_t msgbuf_paddr;
+#endif
 
 static struct mem_region *mem, *avail;
 
@@ -94,7 +97,6 @@ int pv_nfree;
 int pv_pcnt;
 static struct pv_entry *pmap_alloc_pv __P((void));
 static void pmap_free_pv __P((struct pv_entry *));
-
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -368,6 +370,15 @@ pmap_bootstrap(kernelstart, kernelend)
 			mp->size = sz;
 		}
 	}
+
+#ifdef	HTABENTS
+	ptab_cnt = HTABENTS;
+#else /* HTABENTS */
+	ptab_cnt = 1024;
+	while ((HTABSIZE << 7) < ctob(physmem))
+		ptab_cnt <<= 1;
+#endif /* HTABENTS */
+
 	/*
 	 * Find suitably aligned memory for HTAB.
 	 */
@@ -401,7 +412,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	npgs -= btoc(HTABSIZE);
 	bzero((void *)ptable, HTABSIZE);
 	ptab_mask = ptab_cnt - 1;
-	
+
 	/*
 	 * We cannot do pmap_steal_memory here,
 	 * since we don't run with translation enabled yet.
@@ -423,7 +434,26 @@ pmap_bootstrap(kernelstart, kernelend)
 	for (i = 0; i < ptab_cnt; i++)
 		LIST_INIT(potable + i);
 	LIST_INIT(&pv_page_freelist);
-	
+
+#ifdef __NO_FIXED_MSGBUF
+	/*
+	 * allow for msgbuf
+	 */
+	sz = round_page(MSGBUFSIZE);
+	for (mp = avail; mp->size; mp++)
+		if (mp->size >= sz)
+			break;
+	if (!mp->size)
+		panic("not enough memory?");
+
+	npgs -= btoc(sz);
+	msgbuf_paddr = mp->start;
+	mp->size -= sz;
+	mp->start += sz;
+	if (mp->size <= 0)
+		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
+#endif
+
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
@@ -443,6 +473,12 @@ pmap_bootstrap(kernelstart, kernelend)
 		      :: "r"((u_int)ptable | (ptab_mask >> 10)));
 	tlbia();
 	nextavail = avail->start;
+
+#if defined(MACHINE_NEW_NONCONTIG)
+	for (mp = avail; mp->size; mp++)
+		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
+				 atop(mp->start), atop(mp->start + mp->size));
+#endif
 }
 
 /*
@@ -945,7 +981,7 @@ pmap_enter(pm, va, pa, prot, wired)
 	 * Have to remove any existing mapping first.
 	 */
 	pmap_remove(pm, va, va + NBPG - 1);
-	
+
 	/*
 	 * Compute the HTAB index.
 	 */
@@ -968,7 +1004,7 @@ pmap_enter(pm, va, pa, prot, wired)
 		pte.pte_lo |= PTE_RW;
 	else
 		pte.pte_lo |= PTE_RO;
-	
+
 	/*
 	 * Now record mapping for later back-translation.
 	 */
@@ -979,7 +1015,7 @@ pmap_enter(pm, va, pa, prot, wired)
 			 */
 			syncicache((void *)pa, NBPG);
 		}
-	
+
 	s = splimp();
 	/*
 	 * Try to insert directly into HTAB.
@@ -988,7 +1024,7 @@ pmap_enter(pm, va, pa, prot, wired)
 		splx(s);
 		return;
 	}
-	
+
 	/*
 	 * Have to allocate overflow entry.
 	 *
@@ -1283,6 +1319,7 @@ pmap_page_protect(pa, prot)
 				asm volatile ("sync");
 				tlbie(va);
 				tlbsync();
+				goto next;
 			}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if ((ptp->pte_hi & PTE_VALID)
@@ -1292,6 +1329,7 @@ pmap_page_protect(pa, prot)
 				asm volatile ("sync");
 				tlbie(va);
 				tlbsync();
+				goto next;
 			}
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
@@ -1299,8 +1337,10 @@ pmap_page_protect(pa, prot)
 				pmap_remove_pv(idx, va, pind, &po->po_pte);
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
+				goto next;
 			}
 		}
+next:
 	}
 	splx(s);
 }

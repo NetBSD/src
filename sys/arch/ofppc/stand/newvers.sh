@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.1 1997/04/17 20:24:17 thorpej Exp $
+#	$NetBSD: newvers.sh,v 1.2 1998/05/28 08:12:17 sakamoto Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 u=${USER-root} h=`hostname` t=`date`
 r=`head -1 $1 | awk ' { print $3 } '`
 
-echo "char bootprog_name[] = \"NetBSD/powerpc ${2}\";" > vers.c
+echo "char bootprog_name[] = \"NetBSD/ofppc ${2}\";" > vers.c
 echo "char bootprog_rev[] = \"${r}\";" >> vers.c
 echo "char bootprog_date[] = \"${t}\";" >> vers.c
 echo "char bootprog_maker[] = \"${u}@${h}\";" >> vers.c
