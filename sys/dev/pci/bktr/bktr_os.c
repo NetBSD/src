@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_os.c,v 1.1.1.2 2000/07/01 01:30:43 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.1.1.3 2000/10/28 14:17:51 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.10 2000/06/28 15:09:12 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.18 2000/10/15 14:18:06 phk Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -52,7 +52,6 @@
 
 #ifdef __FreeBSD__
 #include "bktr.h"
-#include "opt_devfs.h"
 #endif /* __FreeBSD__ */
 
 #include "opt_bktr.h"		/* include any kernel config options */
@@ -82,12 +81,6 @@
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
 
-#if (__FreeBSD_version < 400000)
-#ifdef DEVFS
-#include <sys/devfsext.h>
-#endif /* DEVFS */
-#endif
-
 #if (__FreeBSD_version >=400000) || (NSMBUS > 0)
 #include <sys/bus.h>		/* used by smbus and newbus */
 #endif
@@ -103,14 +96,12 @@
 #include <machine/resource.h>	/* used by newbus */
 #endif
 
+#if (__FreeBSD_version < 500000)
+#include <machine/clock.h>              /* for DELAY */
+#endif
 
-#include <machine/clock.h>      /* for DELAY */
 #include <pci/pcivar.h>
 #include <pci/pcireg.h>
-
-#if (NSMBUS > 0)
-#include <dev/bktr/bktr_i2c.h>
-#endif
 
 #include <sys/sysctl.h>
 int bt848_card = -1; 
@@ -197,6 +188,9 @@ int bktr_debug = 0;
 #include <dev/bktr/bktr_audio.h>
 #include <dev/bktr/bktr_core.h>
 #include <dev/bktr/bktr_os.h>
+#if defined(BKTR_USE_FREEBSD_SMBUS)
+#include <dev/bktr/bktr_i2c.h>
+#endif
 #endif
 
 
@@ -257,6 +251,10 @@ static struct cdevsw bktr_cdevsw = {
 };
 
 DRIVER_MODULE(bktr, pci, bktr_driver, bktr_devclass, 0, 0);
+#if (__FreeBSD_version > 410000)
+MODULE_DEPEND(bktr, bktr_mem, 1,1,1);
+MODULE_VERSION(bktr, 1);
+#endif
 
 
 /*
@@ -268,20 +266,25 @@ bktr_probe( device_t dev )
 	unsigned int type = pci_get_devid(dev);
         unsigned int rev  = pci_get_revid(dev);
 
-	switch (type) {
-	case BROOKTREE_848_PCI_ID:
-		if (rev == 0x12) device_set_desc(dev, "BrookTree 848A");
-		else             device_set_desc(dev, "BrookTree 848");
-                return 0;
-        case BROOKTREE_849_PCI_ID:
-                device_set_desc(dev, "BrookTree 849A");
-                return 0;
-        case BROOKTREE_878_PCI_ID:
-                device_set_desc(dev, "BrookTree 878");
-                return 0;
-        case BROOKTREE_879_PCI_ID:
-                device_set_desc(dev, "BrookTree 879");
-                return 0;
+	if (PCI_VENDOR(type) == PCI_VENDOR_BROOKTREE)
+	{
+		switch (PCI_PRODUCT(type)) {
+		case PCI_PRODUCT_BROOKTREE_BT848:
+			if (rev == 0x12)
+				device_set_desc(dev, "BrookTree 848A");
+			else
+				device_set_desc(dev, "BrookTree 848");
+			return 0;
+		case PCI_PRODUCT_BROOKTREE_BT849:
+			device_set_desc(dev, "BrookTree 849A");
+			return 0;
+		case PCI_PRODUCT_BROOKTREE_BT878:
+			device_set_desc(dev, "BrookTree 878");
+			return 0;
+		case PCI_PRODUCT_BROOKTREE_BT879:
+			device_set_desc(dev, "BrookTree 879");
+			return 0;
+		}
 	};
 
         return ENXIO;
@@ -300,7 +303,6 @@ bktr_attach( device_t dev )
 	unsigned int	rev;
 	unsigned int	unit;
 	int		error = 0;
-	int		rid;
 #ifdef BROOKTREE_IRQ
 	u_long		old_irq, new_irq;
 #endif 
@@ -322,9 +324,10 @@ bktr_attach( device_t dev )
 	/*
 	 * Map control/status registers.
 	 */
-	rid = PCIR_MAPS;
-	bktr->res_mem = bus_alloc_resource(dev, SYS_RES_MEMORY, &rid,
-                                  0, ~0, 1, RF_ACTIVE);
+	bktr->mem_rid = PCIR_MAPS;
+	bktr->res_mem = bus_alloc_resource(dev, SYS_RES_MEMORY, &bktr->mem_rid,
+					0, ~0, 1, RF_ACTIVE);
+
 
 	if (!bktr->res_mem) {
 		device_printf(dev, "could not map memory\n");
@@ -353,9 +356,9 @@ bktr_attach( device_t dev )
 	/*
 	 * Allocate our interrupt.
 	 */
-	rid = 0;
-	bktr->res_irq = bus_alloc_resource(dev, SYS_RES_IRQ, &rid, 0, ~0, 1,
-                                 RF_SHAREABLE | RF_ACTIVE);
+	bktr->irq_rid = 0;
+	bktr->res_irq = bus_alloc_resource(dev, SYS_RES_IRQ, &bktr->irq_rid,
+				0, ~0, 1, RF_SHAREABLE | RF_ACTIVE);
 	if (bktr->res_irq == NULL) {
 		device_printf(dev, "could not map interrupt\n");
 		error = ENXIO;
@@ -390,7 +393,7 @@ bktr_attach( device_t dev )
 
 
 	/* XXX call bt848_i2c dependent attach() routine */
-#if (NSMBUS > 0)
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 	if (bt848_i2c_attach(unit, bktr, &bktr->i2c_sc))
 		printf("bktr%d: i2c_attach: can't attach\n", unit);
 #endif
@@ -427,13 +430,32 @@ bktr_attach( device_t dev )
 	/* call the common attach code */
 	common_bktr_attach( bktr, unit, fun, rev );
 
-	make_dev(&bktr_cdevsw, unit,    0, 0, 0444, "bktr%d",  unit);
-	make_dev(&bktr_cdevsw, unit+16, 0, 0, 0444, "tuner%d", unit);
-	make_dev(&bktr_cdevsw, unit+32, 0, 0, 0444, "vbi%d", unit);
+	/* make the device entries */
+	bktr->bktrdev = make_dev(&bktr_cdevsw, unit,    
+				0, 0, 0444, "bktr%d",  unit);
+	bktr->tunerdev= make_dev(&bktr_cdevsw, unit+16,
+				0, 0, 0444, "tuner%d", unit);
+	bktr->vbidev  = make_dev(&bktr_cdevsw, unit+32,
+				0, 0, 0444, "vbi%d"  , unit);
+
+
+	/* if this is unit 0 (/dev/bktr0, /dev/tuner0, /dev/vbi0) then make */
+	/* alias entries to /dev/bktr /dev/tuner and /dev/vbi */
+#if (__FreeBSD_version >=500000)
+	if (unit == 0) {
+		bktr->bktrdev_alias = make_dev_alias(bktr->bktrdev,  "bktr");
+		bktr->tunerdev_alias= make_dev_alias(bktr->tunerdev, "tuner");
+		bktr->vbidev_alias  = make_dev_alias(bktr->vbidev,   "vbi");
+	}
+#endif
 
 	return 0;
 
 fail:
+	if (bktr->res_irq)
+		bus_release_resource(dev, SYS_RES_IRQ, bktr->irq_rid, bktr->res_irq);
+	if (bktr->res_mem)
+		bus_release_resource(dev, SYS_RES_IRQ, bktr->mem_rid, bktr->res_mem);
 	return error;
 
 }
@@ -444,21 +466,41 @@ fail:
 static int
 bktr_detach( device_t dev )
 {
+	unsigned int	unit;
+
 	struct bktr_softc *bktr = device_get_softc(dev);
+
+	unit = device_get_unit(dev);
 
 	/* Disable the brooktree device */
 	OUTL(bktr, BKTR_INT_MASK, ALL_INTS_DISABLED);
 	OUTW(bktr, BKTR_GPIO_DMA_CTL, FIFO_RISC_DISABLED);
 
-	/* FIXME - Free memory for RISC programs, grab buffer, vbi buffers */
+	/* Note: We do not free memory for RISC programs, grab buffer, vbi buffers */
+	/* The memory is retained by the bktr_mem module so we can unload and */
+	/* then reload the main bktr driver module */
+
+	/* Unregister the /dev/bktrN, tunerN and vbiN devices */
+	destroy_dev(bktr->vbidev);
+	destroy_dev(bktr->tunerdev);
+	destroy_dev(bktr->bktrdev);
+
+	/* If this is unit 0, then destroy the alias entries too */
+#if (__FreeBSD_version >=500000)
+	if (unit == 0) {
+	    destroy_dev(bktr->vbidev_alias);
+	    destroy_dev(bktr->tunerdev_alias);
+	    destroy_dev(bktr->bktrdev_alias);
+	}
+#endif
 
 	/*
 	 * Deallocate resources.
 	 */
 	bus_teardown_intr(dev, bktr->res_irq, bktr->res_ih);
-	bus_release_resource(dev, SYS_RES_IRQ, 0, bktr->res_irq);
-	bus_release_resource(dev, SYS_RES_MEMORY, PCIR_MAPS, bktr->res_mem);
-
+	bus_release_resource(dev, SYS_RES_IRQ, bktr->irq_rid, bktr->res_irq);
+	bus_release_resource(dev, SYS_RES_MEMORY, bktr->mem_rid, bktr->res_mem);
+	 
 	return 0;
 }
 
@@ -834,17 +876,20 @@ static const char*
 bktr_probe( pcici_t tag, pcidi_t type )
 {
         unsigned int rev = pci_conf_read( tag, PCIR_REVID) & 0x000000ff;
-	 
-	switch (type) {
-	case BROOKTREE_848_PCI_ID:
-		if (rev == 0x12) return("BrookTree 848A");
-		else             return("BrookTree 848"); 
-        case BROOKTREE_849_PCI_ID:
-                return("BrookTree 849A");
-        case BROOKTREE_878_PCI_ID:
-                return("BrookTree 878");
-        case BROOKTREE_879_PCI_ID:
-                return("BrookTree 879");
+
+	if (PCI_VENDOR(type) == PCI_VENDOR_BROOKTREE)
+	{
+		switch (PCI_PRODUCT(type)) {
+		case PCI_PRODUCT_BROOKTREE_BT848:
+			if (rev == 0x12) return("BrookTree 848A");
+			else             return("BrookTree 848");
+		case PCI_PRODUCT_BROOKTREE_BT849:
+			return("BrookTree 849A");
+		case PCI_PRODUCT_BROOKTREE_BT878:
+			return("BrookTree 878");
+		case PCI_PRODUCT_BROOKTREE_BT879:
+			return("BrookTree 879");
+		}
 	};
 
 	return ((char *)0);
@@ -937,7 +982,7 @@ bktr_attach( pcici_t tag, int unit )
 
 
 	/* XXX call bt848_i2c dependent attach() routine */
-#if (NSMBUS > 0)
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 	if (bt848_i2c_attach(unit, bktr, &bktr->i2c_sc))
 		printf("bktr%d: i2c_attach: can't attach\n", unit);
 #endif
@@ -974,14 +1019,6 @@ bktr_attach( pcici_t tag, int unit )
 
 	/* call the common attach code */
 	common_bktr_attach( bktr, unit, fun, rev );
- 
-#ifdef DEVFS
-	/* XXX This just throw away the token, which should probably be fixed when
-	   DEVFS is finally made really operational. */
-	devfs_add_devswf(&bktr_cdevsw, unit,    DV_CHR, 0, 0, 0444, "bktr%d",  unit);
-	devfs_add_devswf(&bktr_cdevsw, unit+16, DV_CHR, 0, 0, 0444, "tuner%d", unit);
-	devfs_add_devswf(&bktr_cdevsw, unit+32, DV_CHR, 0, 0, 0444, "vbi%d", unit);
-#endif /* DEVFS */
 
 }
 
