@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.19 1999/09/26 09:57:31 enami Exp $
+.\"	$NetBSD: pax.1,v 1.20 1999/09/26 21:19:54 jdolecek Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -1124,6 +1124,10 @@ will update (and list) only those files in the destination directory
 which are older (less recent inode change or file modification times) than
 files with the same name found in the source file tree
 .Pa home .
+.Sh SEE ALSO
+.Xr tar 1 ,
+.Xr cpio 1 ,
+.Xr symlink 7
 .Sh STANDARDS
 The
 .Nm
