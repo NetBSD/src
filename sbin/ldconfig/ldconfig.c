@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.30 2000/06/01 18:17:06 matt Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.31 2000/09/29 17:47:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <link.h>
+#include <link_aout.h>
 #include <paths.h>
 
 #include "shlib.h"
@@ -167,13 +167,25 @@ do_conf ()
 	char		*cline = NULL;
 	size_t		len;
 	int		rval = 0;
+#ifdef __ELF__
+	char		*aout_conf;
 
+	aout_conf = xmalloc(sizeof(_PATH_EMUL_AOUT) + strlen(_PATH_LD_SO_CONF));	strcpy(aout_conf, _PATH_EMUL_AOUT);
+	strcat(aout_conf, _PATH_LD_SO_CONF);
+	if ((conf = fopen(aout_conf, "r")) == NULL) {
+		if (verbose)
+			warnx("can't open `%s'", aout_conf);
+		return (0);
+	}
+	free(aout_conf);
+#else
 	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL) {
 		if (verbose) {
 			warnx("can't open `%s'", _PATH_LD_SO_CONF);
 		}
 		return (0);
 	}
+#endif
 
 	while ((line = fgetln(conf, &len)) != NULL) {
 		if (*line != '/')
