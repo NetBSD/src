@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.8 1998/10/23 05:36:43 lukem Exp $	*/
+/*	$NetBSD: show.c,v 1.8.2.1 2000/10/10 22:25:14 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.8 1998/10/23 05:36:43 lukem Exp $");
+__RCSID("$NetBSD: show.c,v 1.8.2.1 2000/10/10 22:25:14 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ static void pr_rthdr __P((void));
 static void p_rtentry __P((struct rt_msghdr *));
 static void pr_family __P((int));
 static void p_sockaddr __P((struct sockaddr *, int, int ));
-static void p_flags __P((int, char *));
+static void p_flags __P((int));
 
 /*
  * Print routing tables.
@@ -197,7 +197,7 @@ p_rtentry(rtm)
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}
-	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
+	p_flags(rtm->rtm_flags & interesting);
 	putchar('\n');
 }
 
@@ -326,9 +326,8 @@ p_sockaddr(sa, flags, width)
 }
 
 static void
-p_flags(f, format)
+p_flags(f)
 	int f;
-	char *format;
 {
 	char name[33], *flags;
 	const struct bits *p = bits;
@@ -337,6 +336,6 @@ p_flags(f, format)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
 	*flags = '\0';
-	printf(format, name);
+	printf("%-6.6s ", name);
 }
 
