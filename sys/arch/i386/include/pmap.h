@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75 2003/08/24 17:52:33 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76 2003/10/23 03:03:20 provos Exp $	*/
 
 /*
  *
@@ -268,7 +268,7 @@ struct pmap {
  */
 
 struct pv_entry {			/* locked by its list's pvh_lock */
-	struct pv_entry *pv_next;	/* next entry */
+	SPLAY_ENTRY(pv_entry) pv_next;	/* next entry */
 	struct pmap *pv_pmap;		/* the pmap */
 	vaddr_t pv_va;			/* the virtual address */
 	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
