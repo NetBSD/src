@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.10 2000/06/29 09:02:58 mrg Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.11 2001/07/12 23:25:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.10 2000/06/29 09:02:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.11 2001/07/12 23:25:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ tc_dma_init_3000_500(nslots)
 	tc_dma_slot_info = malloc(sisize, M_DEVBUF, M_NOWAIT);
 	if (tc_dma_slot_info == NULL)
 		panic("tc_dma_init: can't allocate per-slot DMA info");
-	bzero(tc_dma_slot_info, sisize);
+	memset(tc_dma_slot_info, 0, sisize);
 
 	/* Default all slots to direct-mapped. */
 	for (i = 0; i < nslots; i++)

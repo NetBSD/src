@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.245 2001/06/02 18:09:08 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.246 2001/07/12 23:25:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2001/06/02 18:09:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2001/07/12 23:25:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1196,7 +1196,7 @@ cpu_dump()
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
 	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
@@ -1544,8 +1544,8 @@ sendsig(catcher, sig, mask, code)
 	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	ksc.sc_fp_control = alpha_read_fp_c(p);
-	bzero(ksc.sc_reserved, sizeof ksc.sc_reserved);		/* XXX */
-	bzero(ksc.sc_xxx, sizeof ksc.sc_xxx);			/* XXX */
+	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
+	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
 	/* Save signal stack. */
 	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -1773,9 +1773,9 @@ setregs(p, pack, stack)
 	for (i = 0; i < FRAME_SIZE; i++)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
 #else
-	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
+	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
-	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
+	memset(&p->p_addr->u_pcb.pcb_fp, 0, sizeof p->p_addr->u_pcb.pcb_fp);
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
