@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.10 2001/12/10 00:24:12 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.11 2001/12/10 23:23:24 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.10 2001/12/10 00:24:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.11 2001/12/10 23:23:24 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -204,7 +204,8 @@ pppoe_clone_create(ifc, unit)
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header)+PPPOE_HEADERLEN;
 	sc->sc_sppp.pp_if.if_dlt = DLT_PPP_ETHER;
-	sc->sc_sppp.pp_flags |= PP_NOFRAMING;	/* no serial encapsulation */
+	sc->sc_sppp.pp_flags |= PP_KEEPALIVE|	/* use LCP keepalive */
+				PP_NOFRAMING;	/* no serial encapsulation */
 	sc->sc_sppp.pp_if.if_ioctl = pppoe_ioctl;
 	IFQ_SET_MAXLEN(&sc->sc_sppp.pp_if.if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&sc->sc_sppp.pp_if.if_snd);
