@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.5 1998/11/16 22:41:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -36,6 +36,17 @@
 
 #include <dev/ic/i82365reg.h>
 
+struct proc;
+
+struct pcic_event {
+	SIMPLEQ_ENTRY(pcic_event) pe_q;
+	int pe_type;
+};
+
+/* pe_type */
+#define	PCIC_EVENT_INSERTION	0
+#define	PCIC_EVENT_REMOVAL	1
+
 struct pcic_handle {
 	struct pcic_softc *sc;
 	int	vendor;
@@ -56,6 +67,10 @@ struct pcic_handle {
 	} io[PCIC_IO_WINS];
 	int	ih_irq;
 	struct device *pcmcia;
+
+	int shutdown;
+	struct proc *event_thread;
+	SIMPLEQ_HEAD(, pcic_event) events;
 };
 
 #define	PCIC_FLAG_SOCKETP	0x0001
