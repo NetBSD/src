@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2002/08/25 20:19:59 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2003/04/01 20:50:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@
 /*
  * CAVEATS:
  *
- *	PAGE_SIZE must equal NBPG
  *	Needs more work for MP support
  *	page maps are stored as linear linked lists, some
  *		improvement may be achieved should we use smth else
@@ -795,10 +794,7 @@ pmap_bootstrap(vstart, vend)
 
 	uvm_setpagesize();
 
-	pages_per_vm_page = PAGE_SIZE / NBPG;
-	/* XXX for now */
-	if (pages_per_vm_page != 1)
-		panic("HPPA page != VM page");
+	pages_per_vm_page = 1;	/* XXX This should die */
 
 	kern_prot[VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_NA;
 	kern_prot[VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_KR;
