@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2003/11/06 08:49:13 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.96 2003/11/21 22:57:14 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2003/11/06 08:49:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2003/11/21 22:57:14 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -131,6 +131,16 @@ trap(struct trapframe *frame)
 				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
 				/* KERNEL_PROC_LOCK(l); */
+#ifdef PPC_OEA64
+				if ((frame->dsisr & DSISR_NOTFOUND) &&
+				    vm_map_pmap(map)->pm_ste_evictions > 0 &&
+				    pmap_ste_spill(vm_map_pmap(map),
+					    trunc_page(va), FALSE)) {
+					/* KERNEL_PROC_UNLOCK(l); */
+					KERNEL_UNLOCK();
+					return;
+				}
+#endif
 
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_evictions > 0 &&
@@ -209,6 +219,16 @@ trap(struct trapframe *frame)
 		 * has some evicted pte's.
 		 */
 		map = &p->p_vmspace->vm_map;
+#ifdef PPC_OEA64
+		if ((frame->dsisr & DSISR_NOTFOUND) &&
+		    vm_map_pmap(map)->pm_ste_evictions > 0 &&
+		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->dar),
+				   FALSE)) {
+			KERNEL_PROC_UNLOCK(l);
+			break;
+		}
+#endif
+
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar),
@@ -276,7 +296,17 @@ trap(struct trapframe *frame)
 		 * has some evicted pte's.
 		 */
 		map = &p->p_vmspace->vm_map;
-		if (pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0),
+#ifdef PPC_OEA64
+		if (vm_map_pmap(map)->pm_ste_evictions > 0 &&
+		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->srr0),
+				   TRUE)) {
+			KERNEL_PROC_UNLOCK(l);
+			break;
+		}
+#endif
+
+		if (vm_map_pmap(map)->pm_evictions > 0 &&
+		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0),
 				   TRUE)) {
 			KERNEL_PROC_UNLOCK(l);
 			break;
