@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.127 2004/11/30 04:25:43 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.128 2005/01/12 20:41:45 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.127 2004/11/30 04:25:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.128 2005/01/12 20:41:45 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ find_last_set(struct filedesc *fd, int last)
 		off--;
 
 	if (off < 0)
-		return (0);
+		return (-1);
        
 	i = ((off + 1) << NDENTRYSHIFT) - 1;
 	if (i >= last)
@@ -1100,6 +1100,7 @@ fdinit1(struct filedesc0 *newfdp)
 	newfdp->fd_fd.fd_knlistsize = -1;
 	newfdp->fd_fd.fd_himap = newfdp->fd_dhimap;
 	newfdp->fd_fd.fd_lomap = newfdp->fd_dlomap;
+	newfdp->fd_fd.fd_lastfile = -1;
 	simple_lock_init(&newfdp->fd_fd.fd_slock);
 }
 
@@ -1222,8 +1223,12 @@ restart:
 	newfdp->fd_lastfile = lastfile;
 	newfdp->fd_freefile = fdp->fd_freefile;
 
-	memset(newfdp->fd_ofiles + lastfile, 0,
-		(i - lastfile) * sizeof(struct file **));
+	/* Clear the entries that will not be copied over.
+	 * Avoid calling memset with 0 size (i.e. when
+	 * lastfile == i-1 */
+	if (lastfile < (i-1))
+		memset(newfdp->fd_ofiles + lastfile + 1, 0,
+		    (i - lastfile - 1) * sizeof(struct file **));
 	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
 	if (i < NDENTRIES * NDENTRIES)
 		i = NDENTRIES * NDENTRIES; /* size of inlined bitmaps */
