@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.113 1999/03/24 05:51:11 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.114 1999/03/30 19:41:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3583,7 +3583,7 @@ start_havetype:
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
 	bne	2f
-#if defined(MMU_3L)
+#if defined(SUN4_MMU3L)
 	set	AC_IDPROM+1, %l3
 	lduba	[%l3] ASI_CONTROL, %l3
 	cmp	%l3, 0x24 ! XXX - SUN4_400
