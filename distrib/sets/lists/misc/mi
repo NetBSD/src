@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.64 2001/04/01 23:47:45 itojun Exp $
+# $NetBSD: mi,v 1.65 2001/04/19 23:26:18 wiz Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -425,11 +425,11 @@
 ./usr/share/examples/racoon/racoon.conf.sample		misc-netutil-examples
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples
 ./usr/share/examples/rtadvd/rtadvd.conf			misc-router-examples
-./usr/share/examples/supfiles/ftp.cs.umn.edu		misc-sup-examples
 ./usr/share/examples/supfiles/sup.au.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup.jp.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup.uk.netbsd.org		misc-sup-examples
+./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples
 ./usr/share/examples/syslogd/all.debug			misc-sysutil-examples
 ./usr/share/sendmail/LICENSE				misc-sendmail-share
 ./usr/share/sendmail/README				misc-sendmail-share
