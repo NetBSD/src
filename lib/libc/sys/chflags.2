@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.2,v 1.15 1999/12/02 21:42:36 kleink Exp $
+.\"	$NetBSD: chflags.2,v 1.16 2000/04/17 14:31:21 mrg Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,6 +48,8 @@
 .Ft int
 .Fn chflags "const char *path"  "u_long flags"
 .Ft int
+.Fn lchflags "const char *path"  "u_long flags"
+.Ft int
 .Fn fchflags "int fd" "u_long flags"
 .Sh DESCRIPTION
 The file whose name
@@ -57,6 +59,10 @@ or referenced by the descriptor
 .Fa fd
 has its flags changed to
 .Fa flags .
+For
+.Fn lchflags ,
+symbolic links are not traversed and thus their modes may be changed with
+this call.
 .Pp
 The flags specified are formed by
 .Em or Ns 'ing
@@ -179,3 +185,7 @@ and
 .Fn fchflags
 functions first appeared in
 .Bx 4.4 .
+The
+.Fn lchflags
+function first appeared in
+.Nx 1.5 .
