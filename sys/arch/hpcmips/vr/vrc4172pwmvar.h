@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwmvar.h,v 1.1 2000/11/11 04:42:09 sato Exp $	*/
+/*	$NetBSD: vrc4172pwmvar.h,v 1.2 2000/11/11 10:08:13 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -29,6 +29,7 @@
 
 struct vrc4172pwm_param {
 	platid_mask_t *mask;
+	int max_brightness;
 	int values[VRC2_PWM_MAX_BRIGHTNESS];
 };
 
@@ -41,6 +42,8 @@ struct vrc4172pwm_softc {
 	config_hook_tag sc_sethook;
 	config_hook_tag sc_pmhook;
 	int sc_brightness;
+	int sc_raw_duty;
+	int sc_raw_freq;
 	struct vr4172pwm_param *sc_pwm_param;
 };
 
