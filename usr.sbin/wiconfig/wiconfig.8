@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.12 2000/11/07 05:47:33 lukem Exp $
+.\"	$NetBSD: wiconfig.8,v 1.13 2001/01/11 19:33:51 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	From: wicontrol.8,v 1.6 1999/05/22 16:12:47 wpaul Exp $
 .\"
-.Dd August 18, 2000
+.Dd January 11, 2001
 .Dt WICONFIG 8
 .Os
 .Sh NAME
@@ -220,8 +220,8 @@ are 1 (BSS mode) and 3 (ad-hoc) mode. In ad-hoc mode, the station can
 communicate directly with any other stations within direct radio range
 (provided that they are also operating in ad-hoc mode). In BSS mode,
 hosts must associate with a service set controlled by an access point,
-which relays traffic between end stations. The default setting is 3
-(ad-hoc mode).
+which relays traffic between end stations. The default setting is 1
+(BSS mode).
 .It Fl a Ar access_point_density
 Specify the
 .Ar access point density

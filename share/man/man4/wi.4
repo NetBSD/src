@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.13 2000/11/12 20:47:44 hubertf Exp $
+.\"     $NetBSD: wi.4,v 1.14 2001/01/11 19:33:51 jhawk Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,9 +30,9 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.13 2000/11/12 20:47:44 hubertf Exp $
+.\"	$Id: wi.4,v 1.14 2001/01/11 19:33:51 jhawk Exp $
 .\"
-.Dd November 12, 2000
+.Dd January 11, 2001
 .Dt WI 4 
 .Os 
 .Sh NAME
@@ -75,19 +75,19 @@ For WaveLAN/IEEE Turbo adapters, speeds up to 6Mbps are available.
 For WaveLAN/IEEE Turbo 11Mbps adapters and PRISM-II adapters, speeds up to
 11Mbps are available.
 .Pp
-By default, the
+The
 .Nm
-driver configures the WaveLAN card for special ad-hoc operation.
+driver supports configuration of WaveLAN card for special ad-hoc operation.
 In this mode, the nwid is ignored and
 stations can communicate among each other without the aid of an access
 point.
-Note that this mode is out of IEEE 802.11 specification and the driver
-cannot interoperate with other cards.
-To join a service set, the driver must be set for BSS mode using the
+Note that this mode is not in the IEEE 802.11 specification and the driver
+may interoperate with other cards. This mode is no longer the default
+and must be selected using the
 .Xr ifconfig 8
 or
 .Xr wiconfig 8
-utility.
+utilities.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8
@@ -98,7 +98,7 @@ Cards supported by the
 .Nm
 driver include:
 .Pp
-.Bl -item -offset indent
+.Bl -item -offset indent -compact
 .It
 Lucent Wavelan/IEEE 2.0Mb Bronze
 .It
@@ -142,9 +142,10 @@ One reason can be that the board is mis-configured, see
 .El
 .Sh BUGS
 The IBSS mode is not supported.
+.Pp
 The execution of
 .Xr wiconfig 8
-during the interface is down produces some error messages.
+while the interface is down can produce some error messages.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
