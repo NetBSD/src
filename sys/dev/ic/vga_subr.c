@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.7 2001/11/13 13:14:46 lukem Exp $ */
+/* $NetBSD: vga_subr.c,v 1.8 2001/12/13 08:34:55 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.7 2001/11/13 13:14:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.8 2001/12/13 08:34:55 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,12 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.7 2001/11/13 13:14:46 lukem Exp $");
 
 #include <dev/wscons/wsdisplayvar.h>
 
-static void fontram __P((struct vga_handle *));
-static void textram __P((struct vga_handle *));
+static void fontram(struct vga_handle *);
+static void textram(struct vga_handle *);
 
 static void
-fontram(vh)
-	struct vga_handle *vh;
+fontram(struct vga_handle *vh)
 {
 	/* program sequencer to access character generator */
 
@@ -70,8 +69,7 @@ fontram(vh)
 }
 
 static void
-textram(vh)
-	struct vga_handle *vh;
+textram(struct vga_handle *vh)
 {
 	/* program sequencer to access video ram */
 
@@ -89,11 +87,8 @@ textram(vh)
 }
 
 void
-vga_loadchars(vh, fontset, first, num, lpc, data)
-	struct vga_handle *vh;
-	int fontset, first, num;
-	int lpc;
-	char *data;
+vga_loadchars(struct vga_handle *vh, int fontset, int first, int num, int lpc, 
+	      char *data)
 {
 	int offset, i, j, s;
 
@@ -114,9 +109,7 @@ vga_loadchars(vh, fontset, first, num, lpc, data)
 }
 
 void
-vga_setfontset(vh, fontset1, fontset2)
-	struct vga_handle *vh;
-	int fontset1, fontset2;
+vga_setfontset(struct vga_handle *vh, int fontset1, int fontset2)
 {
 	u_int8_t cmap;
 	static u_int8_t cmaptaba[] = {
@@ -135,9 +128,7 @@ vga_setfontset(vh, fontset1, fontset2)
 }
 
 void
-vga_setscreentype(vh, type)
-	struct vga_handle *vh;
-	const struct wsscreen_descr *type;
+vga_setscreentype(struct vga_handle *vh, const struct wsscreen_descr *type)
 {
 	vga_6845_write(vh, maxrow, type->fontheight - 1);
 
