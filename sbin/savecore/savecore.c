@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.56 2002/03/06 13:13:08 tsutsui Exp $	*/
+/*	$NetBSD: savecore.c,v 1.57 2002/03/19 18:55:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.56 2002/03/06 13:13:08 tsutsui Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.57 2002/03/19 18:55:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 };
 
 /* Types match kernel declarations. */
-long	dumplo;				/* where dump starts on dumpdev */
+off_t	dumplo;				/* where dump starts on dumpdev */
 u_int32_t dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
@@ -274,19 +274,24 @@ kmem_setup(void)
 		syslog(LOG_WARNING, "no core dump (no dumpdev)");
 		exit(1);
 	}
-	if (KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &dumplo) != 0) {
-		if (verbose)
-		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+	{
+	    long l_dumplo;
+
+	    if (KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &l_dumplo) != 0) {
+		    if (verbose)
+			syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
+		    exit(1);
+	    }
+	    if (l_dumplo == -1) {
+		syslog(LOG_WARNING, "no core dump (invalid dumplo)");
 		exit(1);
+	    }
+	    dumplo = DEV_BSIZE * (off_t) l_dumplo;
 	}
-	if (dumplo == -1) {
-	    syslog(LOG_WARNING, "no core dump (invalid dumplo)");
-	    exit(1);
-	}
-	dumplo *= DEV_BSIZE;
+
 	if (verbose)
-		(void)printf("dumplo = %ld (%ld * %ld)\n",
-		    (long)dumplo, (long)(dumplo / DEV_BSIZE), (long)DEV_BSIZE);
+		(void)printf("dumplo = %lld (%ld * %ld)\n",
+		    (long long)dumplo, (long)(dumplo / DEV_BSIZE), (long)DEV_BSIZE);
 	if (KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag) != 0) {
 		if (verbose)
 		    syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_kern));
@@ -316,7 +321,7 @@ kmem_setup(void)
 			    kernel, dump_nl[dumpsyms[i]].n_name);
 			exit(1);
 		}
-	hdrsz = kvm_dump_mkheader(kd_dump, (off_t)dumplo);
+	hdrsz = kvm_dump_mkheader(kd_dump, dumplo);
 
 	/*
 	 * If 'hdrsz' == 0, kvm_dump_mkheader() failed on the magic-number
@@ -533,7 +538,7 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 	}
 
 	/* Seek to the start of the core. */
-	Lseek(ifd, (off_t)dumplo, SEEK_SET);
+	Lseek(ifd, dumplo, SEEK_SET);
 
 	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
