@@ -1,5 +1,5 @@
 .\" $KTH-KRB: krb.conf.5,v 1.2 2000/12/07 15:23:41 assar Exp $
-.\" $NetBSD: krb.conf.5,v 1.1.1.2 2002/09/12 12:22:09 joda Exp $
+.\" $NetBSD: krb.conf.5,v 1.2 2003/06/26 10:03:39 wiz Exp $
 .\" Copyright 1989 by the Massachusetts Institute of Technology.
 .\"
 .\" For copying and distribution information,
@@ -14,7 +14,7 @@
 .Pa krb.conf
 contains configuration information describing the Kerberos realm(s) and the
 Kerberos key distribution center (KDC) servers for known realms.
-.PP
+.Pp
 .Pa krb.conf
 starts with a definition of the local realm on the first line, this is
 followed by any number lines defining supplementary local realms.  The
@@ -23,11 +23,17 @@ first token is a realm name, and the second is a server specification
 of a host running a KDC for that realm. The words "admin server"
 following the hostname indicate that the host also provides an
 administrative database server.
-
+.Pp
 To be able to communicate with the KDC through a firewall it is
 sometimes necessary to tunnel requests over HTTP or TCP. Tunnel
 protocols and port numbers are specified in the server specification
 using the syntax [(UDP|TCP|HTTP)/]hostname[:port].
+.Sh ENVIRONMENT
+The environment variable
+.Ev KRBCONFDIR
+can be used to point out the directory where the
+.Pa krb.conf
+file resides.
 .Sh EXAMPLES
 .nf
 .in +1i
@@ -40,13 +46,7 @@ NADA.KTH.SE kerberos-2.nada.kth.se
 NADA.KTH.SE HTTP/kerberos-3.nada.kth.se
 KTH.SE      kerberos.kth.se         admin server
 .in -1i
-.Sh ENVIRONMENT
-The environment variable
-.Ev KRBCONFDIR
-can be used to point out the directory where the
-.Pa krb.conf
-file resides.
 .Sh SEE ALSO
-.Xr krb.realms 5 ,
 .Xr krb_get_krbhst 3 ,
-.Xr krb_get_lrealm 3
+.Xr krb_get_lrealm 3 ,
+.Xr krb.realms 5
