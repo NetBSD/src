@@ -3868,6 +3868,8 @@ sh_valid_machine_decl_attribute (decl, attributes, attr, args)
       trap_exit = TREE_INT_CST_LOW (TREE_VALUE (args));
       return 1;
     }
+
+  return 0;
 }
 
 
