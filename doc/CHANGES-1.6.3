@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.53 2004/03/29 05:43:06 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.54 2004/03/29 08:43:03 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -96,17 +96,17 @@ sys/arch/amiga/dev/toccata.c			1.7
 	Remove forgotten debug printf from development.
 	[is, ticket #1593]
 
-sys/dev/usb/ehci.c			1.51
-sys/dev/usb/ohci.c			1.146
-sys/dev/usb/uhci.c			1.177
-sys/dev/usb/uhub.c			1.65
+sys/dev/usb/ehci.c				1.51
+sys/dev/usb/ohci.c				1.146
+sys/dev/usb/uhci.c				1.177
+sys/dev/usb/uhub.c				1.65
 
 	Use the correct wValue to get hub desriptors.
 	Also, make wValue checks of root hub codes less strict.
 	[toshii, ticket #1599]
 
-lib/libc/net/nslexer.l			1.7
-lib/libc/net/nsparser.y			1.9
+lib/libc/net/nslexer.l				1.7
+lib/libc/net/nsparser.y				1.9
 
 	Use syslog(3) instead of err(3) to log errors.
 	Add '0ption never-interactive' to nslexer.l, to prevent isatty() from
@@ -119,136 +119,136 @@ lib/libc/net/getnetnamadr.c			1.28
 	_yp_getnetbyaddr(). Fixes getnetbyaddr() when reading from YP.
 	[lukem, ticket #1602]
 
-etc/namedb/root.cache			1.10
+etc/namedb/root.cache				1.10
 
 	Update to 2004012900 version
 	[taca, ticket #1603]
 
-sys/uvm/uvm_mmap.c			1.66
+sys/uvm/uvm_mmap.c				1.66
 
 	#if 0 the call to uvm_map_checkprot() in sys_munmap() -- it's not 
 	documented, and programs do not expect it.  Also fixes memory leaks 
 	in dlopen()/dlclose().
 	[skrll, ticket #1607]
 
-sys/dev/pci/eso.c			1.32
+sys/dev/pci/eso.c				1.32
 
 	Audio 2's DMA current address register implements only the least
 	significant 20 bits, so make sure its memory allocation won't cross
 	a 1M boundary.
 	[kleink, ticket #1613]
 
-sys/dev/pci/eso.c			1.33
+sys/dev/pci/eso.c				1.33
 
 	Fix a (non-dangerous) malloc size botch in eso_allocm(). PR#18342
 	[kleink, ticket #1614]
 
-usr.sbin/route6d/route6d.c		1.51
+usr.sbin/route6d/route6d.c			1.51
 
 	Let it compile again on sparc/sparc64.
 	[martin, ticket #1626]
 
-sys/dev/scsipi/scsiconf.c		1.220
+sys/dev/scsipi/scsiconf.c			1.220
 
 	Add a drive with broken tagged queuing support. PR#23815
 	[bouyer, ticket #1625]
 
-gnu/usr.bin/cvs/include/config.h	hand patch
+gnu/usr.bin/cvs/include/config.h		patch
 
 	Correct version # reported to correct one
 	[wiz, ticket #1620]
 
-sys/kern/vfs_getcwd.c			1.22
+sys/kern/vfs_getcwd.c				1.22
 
 	Rewind the 'bp' advanced backward by cache_revlookup() if 
 	getcwd_getcache() finally returns cache miss.
 	[enami, ticket #1616]
 
-sys/kern/vfs_cache.c			hand patch
-sys/kern/vfs_getcwd.c			hand patch
+sys/kern/vfs_cache.c				patch
+sys/kern/vfs_getcwd.c				patch
 
 	Fix LP64 bugs triggered by overflow.
 	[enami, ticket #1617]
 
-usr.bin/rpcgen/rpc_main.c		1.24
+usr.bin/rpcgen/rpc_main.c			1.24
 
 	Remove special case handling for $CPP and use execvp() instead.
 	[martin, ticket #1619]
 
-sys/miscfs/fifofs/fifo_vnops.c		1.46
+sys/miscfs/fifofs/fifo_vnops.c			1.46
 
 	Handle the case of fifo_close() getting called from vclean().
 	Fixes memory leak in revoke(2) path.
 	[wrstuden, ticket #1621]
 
-share/man/man4/auich.4			patch
-sys/dev/pci/auich.c			patch
-sys/dev/pci/auichreg.h			patch
-sys/dev/pci/pcidevs			patch
-sys/dev/pci/pcidevs.h			regen
-sys/dev/pci/pcidevs_data.h		regen
+share/man/man4/auich.4				patch
+sys/dev/pci/auich.c				patch
+sys/dev/pci/auichreg.h				patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for ICH3, ICH4, ICH5, SiS 7012, nForce MCP, nForce2 MCP-T,
 	and nForce3 MCP-T to auich driver.
 	[kent, ticket #1612]
 
-sys/dev/pci/if_bge.c			1.59
+sys/dev/pci/if_bge.c				1.59
 
 	Set BGE_JUMBO_RXRING_VALID in bge_flags when allocating jumbo ring 
 	buffers so it can be freed later. PR#24686
 	[martin, ticket #1622]
 
-sys/netinet/tcp_timer.c			1.66
+sys/netinet/tcp_timer.c				1.66
 
 	callout_ack() was called with wrong argument
 	[he, ticket #1624]
 
-usr.sbin/route6d/route6d.c		1.50
+usr.sbin/route6d/route6d.c			1.50
 
 	Need_trigger/idx should be u_int
 	[martin, ticket #1627]
 
-lib/libc/gen/arc4random.c		0-1.5
-lib/libc/gen/arc4random.3		0-1.6
-lib/libc/gen/Makefile.inc		1.111
-lib/libcrypt/blowfish.c			0-1.3
-lib/libcrypt/bcrypt.c			0-1.3
-lib/libcrypt/crypt.c			1.19-1.21
-lib/libcrypt/crypt.3			1.14-1.17
-include/pwd.h				1.26
-include/stdlib.h			1.56
-usr.bin/passwd/pwd_gensalt.c		1.6
-share/man/man5/passwd.conf.5		1.5-1.6
-lib/libcrypt/Makefile			1.12,1.14
-lib/libc/shlib_version			1.117
-lib/libcrypt/shlib_version		1.4
-distrib/sets/lists/base/shl.mi		patch
-distrib/sets/lists/comp/mi		patch
+lib/libc/gen/arc4random.c			0-1.5
+lib/libc/gen/arc4random.3			0-1.6
+lib/libc/gen/Makefile.inc			1.111
+lib/libcrypt/blowfish.c				0-1.3
+lib/libcrypt/bcrypt.c				0-1.3
+lib/libcrypt/crypt.c				1.19-1.21
+lib/libcrypt/crypt.3				1.14-1.17
+include/pwd.h					1.26
+include/stdlib.h				1.56
+usr.bin/passwd/pwd_gensalt.c			1.6
+share/man/man5/passwd.conf.5			1.5-1.6
+lib/libcrypt/Makefile				1.12,1.14
+lib/libc/shlib_version				1.117
+lib/libcrypt/shlib_version			1.4
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/mi			patch
 
 	Introduce bcrypt password scheme. Adds the arc4random API for creating 
 	cryptographically strong random numbers.
 	[provos, ticket #1386]
 
-gnu/lib/libstdc++/include/Makefile	1.4 via patch
+gnu/lib/libstdc++/include/Makefile		1.4 via patch
 
 	Add more rules to disable default '.cc -> NULL' transforms, because the 
 	default rules cause problems if "valarray.cc" is newer than "valarray"
 	(for example).
 	[junyoung, ticket #1611]
 
-sys/kern/kern_exit.c			1.104-1.106
+sys/kern/kern_exit.c				1.104-1.106
 
 	Make sure that, if orphaned child is being traced, it's reparented back 
 	to the original parent before it's killed.
 	[junyoung, ticket #1615]
 
-sys/dev/ata/wd.c			1.258 via patch
+sys/dev/ata/wd.c				1.258 via patch
 
 	Add LBA48_THRESHOLD #define and set it to the *correct* value.  Use it
 	in place of 0xffffff (which is one too few 'f').
 	[bouyer, ticket #1628]
 
-sys/dev/ata/wd.c			1.260 via patch
+sys/dev/ata/wd.c				1.260 via patch
 
 	For LBA drives, compute the number of cylinders from the drive capacity
 	in the default disklabel and the boot message, instead of using the
@@ -256,57 +256,81 @@ sys/dev/ata/wd.c			1.260 via patch
 	than 8G). Fixes PR#9864
 	[bouyer, ticket #1629]
 
-sys/dev/pci/pciide.c			1.195
+sys/dev/pci/pciide.c				1.195
 
 	Correct offset for the promise "magic registers" (it depends on channel
 	number). This makes cable detect work properly for newer promise 
 	(pdc268 and newer).
 	[bouyer, ticket #1630]
 
-sys/dev/pci/pcidevs			1.565 via patch
+sys/dev/pci/pcidevs				1.565 via patch
 sys/dev/pci/pcidevs_data.h		regen
 sys/dev/pci/pcidevs.h			regen
 
 	Add 3com 3c940 Gigabit Ethernet, and VIA KT600 PCI devices. PR#22453
 	[bouyer, ticket #1631]
 
-sys/dev/pci/pciide.c			1.196 via patch
+sys/dev/pci/pciide.c				1.196 via patch
 
 	Add support for VIA VT8237 (KT600) IDE controller. PR#22453
 	[bouyer, ticket #1632]
 
-sys/dev/ic/esiop.c			1.25
+sys/dev/ic/esiop.c				1.25
 
 	The real value of the message is in msgin, not 
 	esiop_cmd->cmd_tables->msg_in[0], so print the correct value.
 	[bouyer, ticket #1633]
 
-sys/arch/vax/include/stdarg.h		1.16
+sys/arch/vax/include/stdarg.h			1.16
 
 	Fix == vs = typo from rev. 1.13 in __va_copy. PR#24846
 	[kleink, ticket #1634]
 
-lib/libc/time/strptime.3		1.16-1.17 via patch
+lib/libc/time/strptime.3			1.16-1.17 via patch
 
 	% doesn't write anything; a literal  0s matched.
 	[kleink, ticket #1635]
 
-sys/dev/ic/wdc.c			patch
+sys/dev/ic/wdc.c				1.172 via patch
 
 	Wait a bit more after reset before re-enabling interrupts. PR#24904
 	[bouyer, ticket #1637]
 
-usr.sbin/sushi/sushi.c			1.11-1.12
+usr.sbin/sushi/sushi.c				1.11-1.12
 
 	Don't report curses initialization failure using curses. PR#24435
 	[martin, ticket #1638]
 
-usr.sbin/arp/arp.c			1.39
+usr.sbin/arp/arp.c				1.39
 
 	Plug memory leak. PR#22479
 	[fair, ticket #1636]
 
-libexec/fingerd/fingerd.c		1.21
+libexec/fingerd/fingerd.c			1.21
 
 	Correct option parse error reporting. PR#24917
 	[fair, ticket #1639]
+
+gnu/dist/cvs/ChangeLog				patch
+gnu/dist/cvs/NEWS				patch
+gnu/dist/cvs/configure				patch
+gnu/dist/cvs/configure.in			patch
+gnu/dist/cvs/doc/ChangeLog			patch
+gnu/dist/cvs/doc/stamp-1			patch
+gnu/dist/cvs/doc/stamp-vti			patch
+gnu/dist/cvs/doc/version-client.texi		patch
+gnu/dist/cvs/doc/version.texi			patch
+gnu/dist/cvs/lib/ChangeLog			patch
+gnu/dist/cvs/lib/system.h			patch
+gnu/dist/cvs/ChangeLog				patch
+gnu/dist/cvs/sanity.sh				patch
+gnu/dist/cvs/commit.c				patch
+gnu/dist/cvs/recurse.c				patch
+gnu/dist/cvs/run.c				patch
+gnu/dist/cvs/server.c				patch
+gnu/usr.bin/cvs/include/config.h		patch
+
+	Fixes a known security problem w. syslog'ing as root (and prevents
+	pserver from being run as root).
+	[jmc, ticket #1641]
+
