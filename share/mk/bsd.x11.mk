@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.35 2004/03/14 16:59:00 matt Exp $
+#	$NetBSD: bsd.x11.mk,v 1.36 2004/03/16 00:24:47 perry Exp $
 
 .include <bsd.init.mk>
 
@@ -82,11 +82,12 @@ PRINTX11VERSION=awk '/^\#define XF86_VERSION_MAJOR/ {major = $$3} \
 		     END { print "((("major") * 10000000) + (("minor") * 100000) + (("patch") * 1000) + "snap")"}' \
 		     ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86Version.h
 
-# Commandline to convert 'XCOMM' comments to #
+# Commandline to convert 'XCOMM' comments and 'XHASH' to #
 #
 X11TOOL_UNXCOMM=	sed -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
 			    -e '/^XCOMM$$/s//\#/' \
-			    -e '/^XCOMM[^a-zA-Z0-9_]/s/^XCOMM/\#/'
+			    -e '/^XCOMM[^a-zA-Z0-9_]/s/^XCOMM/\#/' \
+			    -e '/^XHASH[ie]/s/^XHASH/\#/'
 
 
 CPPFLAGS+=		-DCSRG_BASED -DFUNCPROTO=15 -DNARROWPROTO
