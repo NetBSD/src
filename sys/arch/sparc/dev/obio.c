@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12 1995/03/01 21:09:35 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.13 1995/04/10 16:48:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -349,7 +349,7 @@ bus_tmp(pa, bustype)
 	vm_offset_t addr = (vm_offset_t)pa & ~PGOFSET;
 	int pmtype = bt2pmt[bustype];
 
-	pmap_enter(kernel_pmap, TMPMAP_VA,
+	pmap_enter(pmap_kernel(), TMPMAP_VA,
 	    addr | pmtype | PMAP_NC,
 	    VM_PROT_READ | VM_PROT_WRITE, 1);
 	return ((void *)TMPMAP_VA);
@@ -358,5 +358,5 @@ bus_tmp(pa, bustype)
 void
 bus_untmp()
 {
-	pmap_remove(kernel_pmap, TMPMAP_VA, TMPMAP_VA+NBPG);
+	pmap_remove(pmap_kernel(), TMPMAP_VA, TMPMAP_VA+NBPG);
 }

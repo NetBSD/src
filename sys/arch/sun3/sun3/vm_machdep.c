@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 1995/04/03 22:06:11 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26 1995/04/10 16:49:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -340,14 +340,14 @@ void pagemove(from, to, size)
 		panic("pagemove 1");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
 #ifdef DIAGNOSTIC
 		if (pa == 0)
 			panic("pagemove 2");
 #endif
-		pmap_remove(kernel_pmap,
+		pmap_remove(pmap_kernel(),
 			(vm_offset_t)from, (vm_offset_t)from + NBPG);
-		pmap_enter(kernel_pmap,
+		pmap_enter(pmap_kernel(),
 			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += NBPG;
 		to += NBPG;
@@ -431,12 +431,12 @@ caddr_t dvma_remap(char *kva, int len)
 
 	dvma = (vm_offset_t) dvma1st;
 	while (len > 0) {
-		phys = pmap_extract(kernel_pmap, (vm_offset_t)kva);
+		phys = pmap_extract(pmap_kernel(), (vm_offset_t)kva);
 		if (phys == 0)
 			panic("dvma_remap: phys=0");
 
 		/* Duplicate the mapping */
-		pmap_enter(kernel_pmap, dvma,
+		pmap_enter(pmap_kernel(), dvma,
 				   phys | PMAP_NC,
 				   VM_PROT_ALL, FALSE);
 
@@ -450,7 +450,7 @@ caddr_t dvma_remap(char *kva, int len)
 
 void dvma_unmap(caddr_t dvma_addr, int len)
 {
-	pmap_remove(kernel_pmap, (vm_offset_t)dvma_addr,
+	pmap_remove(pmap_kernel(), (vm_offset_t)dvma_addr,
 			(vm_offset_t)dvma_addr + len);
 	dvma_vm_free(dvma_addr, len);
 }
