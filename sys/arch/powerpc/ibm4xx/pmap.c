@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2003/07/15 02:54:43 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2003/07/19 08:20:22 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2003/07/15 02:54:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2003/07/19 08:20:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -204,13 +204,11 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 	int seg = STIDX(va);
 	int ptn = PTIDX(va);
 	u_int oldpte;
-	paddr_t pa;
 
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
 		if (!pte) return (0);
 		/* Allocate a page XXXX this will sleep! */
-		pa = 0;
 		pm->pm_ptbl[seg] =
 		    (uint *)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
 	}
