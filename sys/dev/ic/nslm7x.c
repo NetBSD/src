@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.14 2002/03/30 13:37:41 tron Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.15 2002/04/05 16:11:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.14 2002/03/30 13:37:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.15 2002/04/05 16:11:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,9 @@ lm_match(sc)
 		break;
 	case LM_ID_LM79:
 		printf(": LM79\n");
+		break;
+	case LM_ID_LM81:
+		printf(": LM81\n");
 		break;
 	default:
 		return 0;
