@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.33 2002/02/09 15:00:40 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.34 2002/02/10 13:47:06 takemura Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -119,7 +119,15 @@ struct vrgiu_softc {
 	u_int32_t sc_intr_mode[MAX_GPIO_INOUT];
 	TAILQ_HEAD(, vrgiu_intr_entry) sc_intr_head[MAX_GPIO_INOUT]; 
 	struct hpcio_chip sc_iochip;
+#ifndef SINGLE_VRIP_BASE
+	int sc_useupdn_reg, sc_termupdn_reg;
+#endif /* SINGLE_VRIP_BASE */
 };
+
+#ifndef SINGLE_VRIP_BASE
+#define GIUUSEUPDN_REG_W	(sc->sc_useupdn_reg)
+#define GIUTERMUPDN_REG_W	(sc->sc_termupdn_reg)
+#endif /* SINGLE_VRIP_BASE */
 
 /*
  * prototypes
@@ -187,6 +195,20 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 	struct vrgiu_softc *sc = (void*)self;
 	struct hpcio_attach_args haa;
 	int i;
+
+#ifndef SINGLE_VRIP_BASE
+	if (va->va_addr == VR4102_GIU_ADDR) {
+		sc->sc_useupdn_reg = VR4102_GIUUSEUPDN_REG_W;
+		sc->sc_termupdn_reg = VR4102_GIUTERMUPDN_REG_W;
+	} else
+	if (va->va_addr == VR4122_GIU_ADDR) {
+		sc->sc_useupdn_reg = VR4122_GIUUSEUPDN_REG_W;
+		sc->sc_termupdn_reg = VR4122_GIUTERMUPDN_REG_W;
+	} else {
+		panic("%s: unknown base address 0x%lx\n",
+		    sc->sc_dev.dv_xname, va->va_addr);
+	}
+#endif /* SINGLE_VRIP_BASE */
 
 	this_giu = sc;
 	sc->sc_vc = va->va_vc;
