@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.15 2002/01/20 06:45:22 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.16 2002/01/20 06:49:32 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -458,11 +458,6 @@ struct wi_ltv_pcf {
 	u_int16_t		wi_cfp_max_duration;
 };
 
-/*
- * Scan Results Table
- */
-struct wi_ltv_scanreq {
-	u_int16_t
 /*
  * Connection control characteristics. (0xFC00)
  * 1 == Basic Service Set (BSS)
