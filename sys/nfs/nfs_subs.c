@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.109 2003/02/26 06:31:19 matt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.110 2003/03/28 13:05:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.109 2003/02/26 06:31:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.110 2003/03/28 13:05:48 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1880,7 +1880,7 @@ int
 nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 	struct nameidata *ndp;
 	fhandle_t *fhp;
-	int len;
+	uint32_t len;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	struct mbuf **mdp;
