@@ -1,4 +1,4 @@
-| $NetBSD: vectors.s,v 1.5 1998/11/10 22:45:45 dbj Exp $
+| $NetBSD: vectors.s,v 1.6 1998/11/19 08:32:26 dbj Exp $
 
 | This file was taken from from mvme68k/mvme68k/vectors.s
 | should probably be re-synced when needed.
@@ -41,7 +41,6 @@
 |
 
 	.data
-	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
 	.globl	_spurintr,_intrhand_autovec,_lev7intr
