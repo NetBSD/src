@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: libsa.h,v 1.3 2003/10/11 03:57:32 matt Exp $	*/
 
 /*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 
@@ -76,7 +76,7 @@ void machdep(void);
 void devboot(dev_t, char *);
 void fcacheall(void);
 
-int     lif_open(char *, struct open_file *);
+int     lif_open(const char *, struct open_file *);
 int     lif_close(struct open_file *);
 int     lif_read(struct open_file *, void *, size_t, size_t *);
 int     lif_write(struct open_file *, void *, size_t, size_t *);

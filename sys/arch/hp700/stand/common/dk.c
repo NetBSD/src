@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: dk.c,v 1.3 2003/10/11 03:57:32 matt Exp $	*/
 
 /*	$OpenBSD: dk.c,v 1.5 1999/04/20 20:01:01 mickey Exp $	*/
 
@@ -40,7 +40,7 @@ const char *
 dk_disklabel(struct hppa_dev *dp, struct disklabel *label)
 {
 	char buf[DEV_BSIZE];
-	int ret;
+	size_t ret;
 
 	if (iodcstrategy(dp, F_READ, LABELSECTOR, DEV_BSIZE, buf, &ret))
 		if (ret != DEV_BSIZE)
