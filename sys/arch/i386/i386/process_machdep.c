@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.35 2001/08/02 21:04:44 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.36 2001/08/02 22:04:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ process_read_fpregs(p, regs)
 		 * The initial control word was already set by setregs(), so
 		 * save it temporarily.
 		 */
-		if (cpu_use_fxsave) {
+		if (i386_use_fxsave) {
 			cw = frame->sv_xmm.sv_env.en_cw;
 			/* XXX Don't zero XMM regs? */
 			memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
@@ -239,7 +239,7 @@ process_read_fpregs(p, regs)
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	if (cpu_use_fxsave) {
+	if (i386_use_fxsave) {
 		struct save87 s87;
 
 		/* XXX Yuck */
@@ -320,7 +320,7 @@ process_write_fpregs(p, regs)
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
 
-	if (cpu_use_fxsave) {
+	if (i386_use_fxsave) {
 		struct save87 s87;
 
 		/* XXX Yuck. */
