@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf2_eh.h,v 1.1 2001/08/03 05:54:44 thorpej Exp $	*/
+/*	$NetBSD: dwarf2_eh.h,v 1.2 2003/09/07 22:27:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,19 @@ struct dwarf2_eh_object {
  * This is so that we can link with a libgcc that doesn't have these
  * routines (e.g. one that uses sjlj exceptions).
  */
-extern void __register_frame_info(void *,
+
+/*
+ * A few platforms (x86_64, s390) have read-only .eh_frame by default,
+ * so they must have it declared 'const'. These platforms will override
+ * __EH_FRAME_CONST (which is empty by default) in their CPP flags.
+ */
+
+#ifndef __EH_FRAME_CONST
+#define __EH_FRAME_CONST
+#endif
+
+extern void __register_frame_info(__EH_FRAME_CONST void *,
     struct dwarf2_eh_object *) __attribute__((weak));
-extern void __deregister_frame_info(void *) __attribute__((weak));
+extern void __deregister_frame_info(__EH_FRAME_CONST void *)
+    __attribute__((weak));
 #endif /* __GNUC__ */
