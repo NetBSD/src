@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.2 1998/07/07 03:05:05 eeh Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.3 1998/09/05 23:57:29 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -69,7 +69,7 @@
  */
 
 #ifndef IODEV_0
-#define	IODEV_0	0xfe000000	/* must match VM_MAX_KERNEL_ADDRESS */
+#define	IODEV_0	0x0fe000000L	/* must match VM_MAX_KERNEL_ADDRESS */
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 #define _MAXNCPU	4	/* fixed VA allocation allows 4 CPUs */
@@ -86,7 +86,7 @@
 #define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
 #define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
 #define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
-#define	IODEV_END	0xff000000		/* 16 MB of iospace */
+#define	IODEV_END	0x0ff000000L		/* 16 MB of iospace */
 
 /*
  * The next constant defines the amount of reserved DVMA space on the
@@ -126,9 +126,9 @@
  * We will use the 8MB size for now.
  */
 
-#define DVMA_BASE	0xff800000	/* can change subject to above rule */
-#define DVMA_TOP	0xffffffff 	/* do not modify */
-#define DVMA_START	0xff800000	/* 8M of DVMA */
-#define DVMA_END	0xfff00000	/* XXX is this enough? */
+#define DVMA_BASE	0x0ff800000L	/* can change subject to above rule */
+#define DVMA_TOP	0x0ffffffffL 	/* do not modify */
+#define DVMA_START	0x0ff800000L	/* 8M of DVMA */
+#define DVMA_END	0x0fff00000L	/* XXX is this enough? */
 
 #endif /* IODEV_0 */

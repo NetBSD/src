@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 1998/08/30 15:32:18 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.4 1998/09/05 23:57:27 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -165,13 +165,13 @@ u_int64_t frame;
 
 		db_printf("frame64 %x locals, ins:\n", f);		
 		if (INKERNEL(f)) {
-			db_printf("%x:%x %x:%x %x:%x %x:%x\n",
+			db_printf("%llx %llx %llx %llx ",
 				  f->fr_local[0], f->fr_local[1], f->fr_local[2], f->fr_local[3]);
-			db_printf("%x:%x %x:%x %x:%x %x:%x\n",
+			db_printf("%llx %llx %llx %llx\n",
 				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
-			db_printf("%x:%x %x:%x %x:%x %x:%x\n",
+			db_printf("%llx %llx %llx %llx ",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
-			db_printf("%x:%x %x:%x %x:%xsp %x:%xpc=",
+			db_printf("%llx %llx %llxsp %llxpc=",
 				  f->fr_arg[0], f->fr_arg[1], f->fr_fp, f->fr_pc);
 			db_printsym(f->fr_pc, DB_STGY_PROC);
 			db_printf("\n");
@@ -292,59 +292,39 @@ db_dump_trap(addr, have_addr, count, modif)
 	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %p\tkstack: %p\ttt: %x\tGlobals:\n", 
 		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil, (long)tf->tf_fault,
 		  (long)tf->tf_kstack, (int)tf->tf_tt);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-		  (long)(tf->tf_global[0]>>32), (long)tf->tf_global[0],
-		  (long)(tf->tf_global[1]>>32), (long)tf->tf_global[1],
-		  (long)(tf->tf_global[2]>>32), (long)tf->tf_global[2],
-		  (long)(tf->tf_global[3]>>32), (long)tf->tf_global[3]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\nouts:\n",
-		  (long)(tf->tf_global[4]>>32), (long)tf->tf_global[4],
-		  (long)(tf->tf_global[5]>>32), (long)tf->tf_global[5],
-		  (long)(tf->tf_global[6]>>32), (long)tf->tf_global[6],
-		  (long)(tf->tf_global[7]>>32), (long)tf->tf_global[7]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-		  (long)(tf->tf_out[0]>>32), (long)tf->tf_out[0],
-		  (long)(tf->tf_out[1]>>32), (long)tf->tf_out[1],
-		  (long)(tf->tf_out[2]>>32), (long)tf->tf_out[2],
-		  (long)(tf->tf_out[3]>>32), (long)tf->tf_out[3]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\nlocals:\n",
-		  (long)(tf->tf_out[4]>>32), (long)tf->tf_out[4],
-		  (long)(tf->tf_out[5]>>32), (long)tf->tf_out[5],
-		  (long)(tf->tf_out[6]>>32), (long)tf->tf_out[6],
-		  (long)(tf->tf_out[7]>>32), (long)tf->tf_out[7]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-		  (long)(tf->tf_local[0]>>32), (long)tf->tf_local[0],
-		  (long)(tf->tf_local[1]>>32), (long)tf->tf_local[1],
-		  (long)(tf->tf_local[2]>>32), (long)tf->tf_local[2],
-		  (long)(tf->tf_local[3]>>32), (long)tf->tf_local[3]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\nins:\n",
-		  (long)(tf->tf_local[4]>>32), (long)tf->tf_local[4],
-		  (long)(tf->tf_local[5]>>32), (long)tf->tf_local[5],
-		  (long)(tf->tf_local[6]>>32), (long)tf->tf_local[6],
-		  (long)(tf->tf_local[7]>>32), (long)tf->tf_local[7]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-		  (long)(tf->tf_in[0]>>32), (long)tf->tf_in[0],
-		  (long)(tf->tf_in[1]>>32), (long)tf->tf_in[1],
-		  (long)(tf->tf_in[2]>>32), (long)tf->tf_in[2],
-		  (long)(tf->tf_in[3]>>32), (long)tf->tf_in[3]);
-	db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-		  (long)(tf->tf_in[4]>>32), (long)tf->tf_in[4],
-		  (long)(tf->tf_in[5]>>32), (long)tf->tf_in[5],
-		  (long)(tf->tf_in[6]>>32), (long)tf->tf_in[6],
-		  (long)(tf->tf_in[7]>>32), (long)tf->tf_in[7]);
+	db_printf("%016llx %016llx %016llx %016llx\n",
+		  (int64_t)tf->tf_global[0], (int64_t)tf->tf_global[1],
+		  (int64_t)tf->tf_global[2], (int64_t)tf->tf_global[3]);
+	db_printf("%016llx %016llx %016llx %016llx\nouts:\n",
+		  (int64_t)tf->tf_global[4], (int64_t)tf->tf_global[5],
+		  (int64_t)tf->tf_global[6], (int64_t)tf->tf_global[7]);
+	db_printf("%016llx %016llx %016llx %016llx\n",
+		  (int64_t)tf->tf_out[0], (int64_t)tf->tf_out[1],
+		  (int64_t)tf->tf_out[2], (int64_t)tf->tf_out[3]);
+	db_printf("%016llx %016llx %016llx %016llx\nlocals:\n",
+		  (int64_t)tf->tf_out[4], (int64_t)tf->tf_out[5],
+		  (int64_t)tf->tf_out[6], (int64_t)tf->tf_out[7]);
+	db_printf("%016llx %016llx %016llx %016llx\n",
+		  (int64_t)tf->tf_local[0], (int64_t)tf->tf_local[1],
+		  (int64_t)tf->tf_local[2], (int64_t)tf->tf_local[3]);
+	db_printf("%016llx %016llx %016llx %016llx\nins:\n",
+		  (int64_t)tf->tf_local[4], (int64_t)tf->tf_local[5],
+		  (int64_t)tf->tf_local[6], (int64_t)tf->tf_local[7]);
+	db_printf("%016llx %016llx %016llx %016llx\n",
+		  (int64_t)tf->tf_in[0], (int64_t)tf->tf_in[1],
+		  (int64_t)tf->tf_in[2], (int64_t)tf->tf_in[3]);
+	db_printf("%016llx %016llx %016llx %016llx\n",
+		  (int64_t)tf->tf_in[4], (int64_t)tf->tf_in[5],
+		  (int64_t)tf->tf_in[6], (int64_t)tf->tf_in[7]);
 #if 0
 	if (tf == curproc->p_md.md_tf) {
 		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);
-		db_printf("ins (from stack):\n%08x%08x %08x%08x %08x%08x %08x%08x\n",
-			  (long)(kstack->rw_local[0]>>32), (long)kstack->rw_local[0],
-			  (long)(kstack->rw_local[1]>>32), (long)kstack->rw_local[1],
-			  (long)(kstack->rw_local[2]>>32), (long)kstack->rw_local[2],
-			  (long)(kstack->rw_local[3]>>32), (long)kstack->rw_local[3]);
-		db_printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
-			  (long)(kstack->rw_local[4]>>32), (long)kstack->rw_local[4],
-			  (long)(kstack->rw_local[5]>>32), (long)kstack->rw_local[5],
-			  (long)(kstack->rw_local[6]>>32), (long)kstack->rw_local[6],
-			  (long)(kstack->rw_local[7]>>32), (long)kstack->rw_local[7]);
+		db_printf("ins (from stack):\n%016llx %016llx %016llx %016llx\n",
+			  (int64_t)kstack->rw_local[0], (int64_t)kstack->rw_local[1],
+			  (int64_t)kstack->rw_local[2], (int64_t)kstack->rw_local[3]);
+		db_printf("%016llx %016llx %016llx %016llx\n",
+			  (int64_t)kstack->rw_local[4], (int64_t)kstack->rw_local[5],
+			  (int64_t)kstack->rw_local[6], (int64_t)kstack->rw_local[7]);
 	}
 #endif
 }

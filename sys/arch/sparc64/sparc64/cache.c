@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: cache.c,v 1.2 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,7 +64,6 @@
 #include <machine/ctlreg.h>
 #include <machine/pte.h>
 
-#include <sparc64/sparc64/asm.h>
 #include <sparc64/sparc64/cache.h>
 
 enum vactype vactype;
@@ -93,7 +92,7 @@ cache_enable()
  */
 int
 cache_flush_page(va)
-	u_int va;
+	vaddr_t va;
 {
 	register int i, j, ls;
 	register char *p;
@@ -138,11 +137,12 @@ cache_flush_page(va)
 int
 cache_flush(base, len)
 	caddr_t base;
-	register u_int len;
+	size_t len;
 {
-	register int i, j, ls, baseoff;
-	register char *p;
-	register int *kp;
+	int i, j, ls;
+	vaddr_t baseoff;
+	char *p;
+	int *kp;
 
 #ifdef DEBUG
 	if (cachedebug)
@@ -152,18 +152,18 @@ cache_flush(base, len)
 	/* Don't flush if not enabled or not probed. */
 	if (!cacheinfo.c_enabled) return 0;
 
-	baseoff = (int)base & PGOFSET;
+	baseoff = (vaddr_t)base & PGOFSET;
 	i = (baseoff + len + PGOFSET) >> PGSHIFT;
 
 	cachestats.cs_nraflush++;
 
 	i = min(i,CACHE_FLUSH_MAGIC);
 
-	p = (char *)((int)base & ~baseoff);
+	p = (char *)((vaddr_t)base & ~baseoff);
 	ls = cacheinfo.dc_linesize;
 	i >>= cacheinfo.dc_l2linesize;
 	/* Pick right physical color for E$ */
-	kp = (int *)(((int)p & (cacheinfo.ec_totalsize - 1)) + KERNBASE);
+	kp = (int *)(((vaddr_t)p & (cacheinfo.ec_totalsize - 1)) + KERNBASE);
 	j = 0; /* defeat optimizer? */
 	for (; --i >= 0; p += ls) {
 		flush(p);	/* Take care of I$. */

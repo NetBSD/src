@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 1998/08/30 15:32:19 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.7 1998/09/05 23:57:29 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -203,8 +203,12 @@ vunmapbuf(bp, len)
  */
 #ifdef _LP64
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame64))
+#define rwindow		rwindow64
+#define STACK_OFFSET	BIAS
 #else
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-sizeof(struct frame32))
+#define rwindow		rwindow32
+#define STACK_OFFSET	0
 #endif
 
 #ifdef DEBUG
@@ -226,7 +230,7 @@ cpu_fork(p1, p2)
 	register struct pcb *opcb = &p1->p_addr->u_pcb;
 	register struct pcb *npcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf2;
-	register struct rwindow32 *rp;
+	register struct rwindow *rp;
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of
@@ -301,26 +305,14 @@ cpu_fork(p1, p2)
 	tf2->tf_out[0] = 0;
 	tf2->tf_out[1] = 1;
 
-#ifdef DEBUG
-	/* Need to sync tf locals and ins with stack to prevent panic */
-	{
-		int i;
-
-		rp = (struct rwindow32 *)tf2->tf_out[6];
-		for (i=0; i<8; i++) {
-			tf2->tf_local[i] = fuword(&rp->rw_local[i]);
-			tf2->tf_in[i] = fuword(&rp->rw_in[i]);
-		}
-	}
-#endif
 	/* Construct kernel frame to return to in cpu_switch() */
-	rp = (struct rwindow32 *)((u_long)npcb + TOPFRAMEOFF);
-	*rp = *(struct rwindow32 *)((u_long)opcb + TOPFRAMEOFF);
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (long)child_return;	/* Function to call */
 	rp->rw_local[1] = (long)p2;		/* and its argument */
 
 	npcb->pcb_pc = (long)proc_trampoline - 8;
-	npcb->pcb_sp = (long)rp;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 
 #ifdef NOTDEF_DEBUG
 	printf("cpu_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
@@ -352,7 +344,7 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcb;
-	struct rwindow32 *rp;
+	struct rwindow *rp;
 
 #if 0
 	/* Make sure our D$ is not polluted w/bad data */
@@ -361,7 +353,7 @@ cpu_set_kpc(p, pc)
 
 	pcb = &p->p_addr->u_pcb;
 
-	rp = (struct rwindow32 *)((u_long)pcb + TOPFRAMEOFF);
+	rp = (struct rwindow *)((u_long)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (long)pc;		/* Function to call */
 	rp->rw_local[1] = (long)p;		/* and its argument */
 
@@ -382,7 +374,7 @@ cpu_set_kpc(p, pc)
 	 *	- make it run in a clear set of register windows
 	 */
 	pcb->pcb_pc = (long)proc_trampoline - 8 ;
-	pcb->pcb_sp = (long)rp;
+	pcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 1998/09/02 05:51:38 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.3 1998/09/05 23:57:27 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -65,7 +65,6 @@
 #include <machine/pmap.h>
 
 #include <sparc64/sparc64/cache.h>
-#include <sparc64/sparc64/asm.h>
 
 /* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo;
