@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.9 2002/11/08 04:13:13 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.10 2002/11/12 14:00:41 nisimura Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1880,6 +1880,7 @@ END(MIPSX(VCEI))
  * and s1 respectively.  There is no need register save operation.
  */
 LEAF(MIPSX(proc_trampoline))
+	addu	sp, sp, -CALLFRAME_SIZ
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
