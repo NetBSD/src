@@ -31,7 +31,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)zcat.sh	8.1 (Berkeley) 6/6/93
+#	from: @(#)zcat.sh	8.1 (Berkeley) 6/6/93
+#	$Id: zcat.sh,v 1.2 1994/06/13 14:48:36 cgd Exp $
 #
 
 uncompress -c $*
