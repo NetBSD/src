@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.19 1998/01/12 19:22:00 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.20 1998/02/21 00:37:07 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -30,6 +30,8 @@ e*    notice, this list of conditions and the following disclaimer in the
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_adb.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
@@ -57,6 +59,9 @@ static void	adbattach __P((struct device *, struct device *, void *));
  */
 int     adb_polling = 0;	/* Are we polling?  (Debugger mode) */
 int     adb_initted = 0;	/* adb_init() has completed successfully */
+#ifdef ADB_DEBUG
+int	adb_debug = 0;		/* Output debugging messages */
+#endif /* ADB_DEBUG */
 
 /*
  * Local variables.

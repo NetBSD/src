@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.8 1997/11/07 07:38:14 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.9 1998/02/21 00:37:07 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -43,6 +43,10 @@ typedef struct adb_trace_xlate_s {
 }       adb_trace_xlate_t;
 
 extern adb_trace_xlate_t adb_trace_xlations[];
+
+#ifdef ADB_DEBUG
+extern int	adb_debug;
+#endif
 
 /* adb.c */
 void	adb_enqevent __P((adb_event_t *event));
