@@ -51,8 +51,9 @@
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/vuid_event.h
 ./usr/include/sparc
-./usr/lib/libc_pic.a
 ./usr/lib/libamu_pic.a
+./usr/lib/libbfd_pic.a
+./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a
@@ -61,6 +62,7 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
+./usr/lib/libossaudio_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libposix_pic.a
 ./usr/lib/libresolv_pic.a
