@@ -1,6 +1,6 @@
-.\"	$NetBSD: donations,v 1.24 2002/07/19 07:17:46 scottr Exp $
+.\"	$NetBSD: donations,v 1.24.2.1 2004/08/25 21:47:02 he Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -32,75 +32,108 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Bd -unfilled -offset indent
+.\"
+.\" Individuals:
+.\"
+Kenneth Alan Hornstein
 Steve Allen
 Jason Birnschein
-Mason Loring Bliss
+Ed Braaten
 Jason Brazile
 Mark Brinicombe
+Andrew Brown
 David Brownlee
 Simon Burge
 Dave Burgess
+Oliver Cahagne
 Ralph Campbell
 Brian Carlstrom
 James Chacon
 Bill Coldwell
+Ben Collver
 Charles Conn
 Tom Coulter
+Alistair Crooks
 Charles D. Cranor
-Christopher G. Demetriou
+Perry E. Metzger
 Scott Ellis
+Derek Fellion
 Hubert Feyrer
 Castor Fu
+Christopher G. Demetriou
 Greg Gingerich
 William Gnadt
 Michael Graff
 Guenther Grau
 Ross Harvey
-Charles M. Hannum
-Michael L. Hitch
-Kenneth Alan Hornstein
-Jordan K. Hubbard
+Neil J. McRae
+Douglas J. Trainor
 S\(/oren J\(/orvang
+Soren Jacobsen
+Jan Joris Vereijken
+Jordan K. Hubbard
 Scott Kaplan
-Noah M. Keiserman
+Mattias Karlsson
+Kevin Keith Woo
 Harald Koerfgen
 John Kohl
+Michael L. Hitch
+Thor Lancelot Simon
+Tim Law
 Chris Legrow
 Ted Lemon
-Norman R. McBride
-Neil J. McRae
-Perry E. Metzger
+Mason Loring Bliss
+Charles M. Hannum
+Noah M. Keiserman
+Harry McDonald
+Brian McGroarty
 Luke Mewburn
+Richard Nelson
 Toru Nishimura
+Christer O. Andersson
+Jonathan P. Kay
 Herb Peyerl
+Alex Poylisher
 Mike Price
+Norman R. McBride
+Jason R. Thorpe
 Dave Rand
 Michael Richardson
-Heiko W. Rupp
+Edward Richley
+Mark S. Thomas
 Brad Salai
+Curt Sampson
 Chuck Silvers
-Thor Lancelot Simon
 Bill Sommerfeld
 Paul Southworth
-Eric and Rosemary Spahr
 Ted Spradley
 Kimmo Suominen
-Jason R. Thorpe
+Petri T. Koistinen
+Michael Thompson
+Michael W. James
+Heiko W. Rupp
 Steve Wadlow
 Krister Walfridsson
+Lex Wennmacher
 Rob Windsor
 Jim Wise
+Atsushi YOKOYAMA
 Reinoud Zandijk
 Christos Zoulas
+Eric and Rosemary Spahr
 .Ed
 .Pp
 .Bd -unfilled -offset indent
+.\"
+.\" Companies:
+.\"
 AboveNet Communications, Inc.
 Advanced System Products, Inc.
 Avalon Computer Systems
 Bay Area Internet Solutions
 Brains Corporation, Japan
 Canada Connect Corporation
+Central Iowa (Model) Railroad
 Co-operative Research Centre for Enterprise Distributed Systems Technology
 Demon Internet, UK
 Digital Equipment Corporation
@@ -109,12 +142,17 @@ Easynet, UK
 Free Hardware Foundation
 Innovation Development Enterprises of America
 Internet Software Consortium
+LinuxFest Northwest
 MS Macro System GmbH, Germany
 Numerical Aerospace Simulation Facility, NASA Ames Research Center
 Piermont Information Systems Inc.
 Precedence Technologies Ltd
+SDF Public Access Unix, Inc. 501(c)(7)
 Salient Systems Inc.
+SunROOT# Project
 VMC Harald Frank, Germany
 Warped Communications, Inc.
+Wasabi Systems
 Whitecross Database Systems Ltd.
+Worria Web Hosting
 .Ed
