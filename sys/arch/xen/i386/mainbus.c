@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.1 2004/05/22 15:59:58 he Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.1 2004/05/22 15:59:58 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include "pnpbios.h"
 #include "acpi.h"
 #include "vesabios.h"
-#include "xenc.h"
-#include "xennet.h"
-#include "npx.h"
+#include "hypervisor.h"
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -95,13 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include <machine/hypervisor.h>
 #endif
 
-#if NXENNET > 0
-#include <net/if.h>
-#include <net/if_ether.h>
-#include <net/if_media.h>
-#include <machine/if_xennetvar.h>
-#endif
-
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -132,17 +123,8 @@ union mainbus_attach_args {
 #if NVESABIOS > 0
 	struct vesabios_attach_args mba_vba;
 #endif
-#if NXENC > 0
-	struct xenc_attach_args mba_xenc;
-#endif
-#if NXENNET > 0
-	struct xennet_attach_args mba_xennet;
-#endif
-#if NXENDISK > 0
-	struct xendisk_attach_args mba_xendisk;
-#endif
-#if NNPX > 0
-	struct xen_npx_attach_args mba_xennpx;
+#if NHYPERVISOR > 0
+	struct hypervisor_attach_args mba_haa;
 #endif
 };
 
@@ -380,17 +362,9 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
-#if NXENC > 0
-	mba.mba_xenc.xa_busname = "xenc";
-	config_found(self, &mba.mba_xenc, mainbus_print);
-#endif
-#if NXENNET > 0
-	mba.mba_xennet.xa_busname = "xennet";
-	xennet_scan(self, &mba.mba_xennet, mainbus_print);
-#endif
-#if NNPX > 0
-	mba.mba_xennpx.xa_busname = "npx";
-	config_found(self, &mba.mba_xennpx, mainbus_print);
+#if NHYPERVISOR > 0
+	mba.mba_haa.haa_busname = "hypervisor";
+	config_found(self, &mba.mba_haa, mainbus_print);
 #endif
 }
 
