@@ -32,7 +32,7 @@
  *
  * from: @(#)gets.c	8.1 (Berkeley) 6/11/93
  *
- * $Id: tgets.c,v 1.1 1994/01/26 02:39:03 brezak Exp $
+ * $Id: tgets.c,v 1.2 1994/08/22 21:41:07 brezak Exp $
  */
 
 tgets(buf)
@@ -43,47 +43,49 @@ tgets(buf)
     register char *lp = buf;
 
     for (i = 240000; i > 0; i--) {
-	c = tgetchar() & 0177;
-	if (c) {
-	    for (;;) {
-		switch (c) {
-		case '\n':
-		case '\r':
-		    *lp = '\0';
-		    return;
-		case '\b':
-		case '\177':
-		    if (lp > buf) {
-			lp--;
-			putchar('\b');
-			putchar(' ');
-			putchar('\b');
-		    }
-		    break;
-		case '#':
-		    if (lp > buf)
-			--lp;
-		    break;
-		case 'r'&037: {
-		    register char *p;
+        c = tgetchar() & 0177;
+        if (c) {
+            for (;;) {
+                switch (c) {
+                case '\n':
+                case '\r':
+                    *lp = '\0';
+                    putchar('\n');
+                    return;
+                case '\b':
+                case '\177':
+                    if (lp > buf) {
+                        lp--;
+                        putchar('\b');
+                        putchar(' ');
+                        putchar('\b');
+                    }
+                    break;
+                case '#':
+                    if (lp > buf)
+                        --lp;
+                    break;
+                case 'r'&037: {
+                    register char *p;
 
-		    putchar('\n');
-		    for (p = buf; p < lp; ++p)
-			putchar(*p);
-		    break;
-		}
-		case '@':
-		case 'u'&037:
-		case 'w'&037:
-		    lp = buf;
-		    putchar('\n');
-		    break;
-		default:
-		    *lp++ = c;
-		}
-		c = getchar() & 0177;
-	    }
-	}
+                    putchar('\n');
+                    for (p = buf; p < lp; ++p)
+                        putchar(*p);
+                    break;
+                }
+                case '@':
+                case 'u'&037:
+                case 'w'&037:
+                    lp = buf;
+                    putchar('\n');
+                    break;
+                default:
+                    *lp++ = c;
+                    putchar(c);
+                }
+                c = getchar() & 0177;
+            }
+        }
     }
     return(0);
 }
