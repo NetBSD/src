@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2000/03/18 22:16:46 erh Exp $
+	$NetBSD: syscalls.master,v 1.15 2000/08/31 03:46:30 itohy Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -333,7 +333,9 @@
 183	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 184	UNIMPL		capget
 185	UNIMPL		capset
-186	UNIMPL		sigaltstack
+186	STD		{ int linux_sys_sigaltstack( \
+			    const struct linux_sigaltstack *ss, \
+			    struct linux_sigaltstack *oss); }
 187	UNIMPL		sendfile
 188	UNIMPL		getpmsg
 189	UNIMPL		putpmsg
