@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)v_replace.c	8.15 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)v_replace.c	8.19 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,7 +100,7 @@ v_replace(sp, ep, vp)
 		goto nochar;
 	}
 	if (len == 0) {
-nochar:		msgq(sp, M_BERR, "No characters to replace.");
+nochar:		msgq(sp, M_BERR, "No characters to replace");
 		return (1);
 	}
 
@@ -125,8 +125,11 @@ nochar:		msgq(sp, M_BERR, "No characters to replace.");
 	 */
 	if (F_ISSET(vp, VC_ISDOT)) {
 		ikey.ch = VIP(sp)->rlast;
-		ikey.value = term_key_val(sp, ikey.ch);
+		ikey.value = KEY_VAL(sp, ikey.ch);
 	} else {
+		sp->showmode = "Replace char";
+		(void)sp->s_refresh(sp, ep);
+
 		if (term_key(sp, &ikey, 0) != INP_OK)
 			return (1);
 		switch (ikey.value) {

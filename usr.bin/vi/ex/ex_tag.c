@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_tag.c	8.40 (Berkeley) 3/22/94";
+static const char sccsid[] = "@(#)ex_tag.c	8.44 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ ex_tagfirst(sp, tagarg)
 		return (1);
 
 	/* Create the file entry. */
-	if ((frp = file_add(sp, NULL, name, 0)) == NULL)
+	if ((frp = file_add(sp, name)) == NULL)
 		return (1);
 	if (file_init(sp, frp, NULL, 0))
 		return (1);
@@ -125,7 +125,7 @@ ex_tagfirst(sp, tagarg)
 			    &m, &m, search, NULL, &flags);
 		}
 		if (sval)
-			msgq(sp, M_ERR, "%s: search pattern not found.", tag);
+			msgq(sp, M_ERR, "%s: search pattern not found", tag);
 	}
 
 	/* Set up the screen. */
@@ -195,7 +195,7 @@ ex_tagpush(sp, ep, cmdp)
 		break;
 	case 0:
 		if (exp->tlast == NULL) {
-			msgq(sp, M_ERR, "No previous tag entered.");
+			msgq(sp, M_ERR, "No previous tag entered");
 			return (1);
 		}
 		break;
@@ -212,13 +212,15 @@ ex_tagpush(sp, ep, cmdp)
 		return (1);
 
 	/* Get the (possibly new) FREF structure. */
-	if ((frp = file_add(sp, sp->frp, name, 1)) == NULL)
-		goto modify_err;
+	if ((frp = file_add(sp, name)) == NULL)
+		goto err;
 
 	if (sp->frp == frp)
 		which = TC_CURRENT;
 	else {
-		MODIFY_GOTO(sp, sp->ep, F_ISSET(cmdp, E_FORCE));
+		if (file_m1(sp, sp->ep,
+		    F_ISSET(cmdp, E_FORCE), FS_ALL | FS_POSSIBLE))
+			goto err;
 		which = TC_CHANGE;
 	}
 
@@ -256,7 +258,7 @@ ex_tagpush(sp, ep, cmdp)
 		/* Handle special, first-tag case. */
 		if (exp->tagq.tqh_first->q.tqe_next == NULL)
 			TAILQ_REMOVE(&exp->tagq, exp->tagq.tqh_first, q);
-modify_err:	free(tag);
+err:		free(tag);
 		return (1);
 	}
 
@@ -285,7 +287,7 @@ modify_err:	free(tag);
 			p[1] = '(';
 		}
 		if (sval)
-			msgq(sp, M_ERR, "%s: search pattern not found.", tag);
+			msgq(sp, M_ERR, "%s: search pattern not found", tag);
 	}
 	free(tag);
 
@@ -325,7 +327,7 @@ ex_tagpop(sp, ep, cmdp)
 	/* Check for an empty stack. */
 	exp = EXP(sp);
 	if (exp->tagq.tqh_first == NULL) {
-		msgq(sp, M_INFO, "The tags stack is empty.");
+		msgq(sp, M_INFO, "The tags stack is empty");
 		return (1);
 	}
 
@@ -343,7 +345,7 @@ ex_tagpop(sp, ep, cmdp)
 			    tp != NULL && --off > 1; tp = tp->q.tqe_next);
 			if (tp == NULL) {
 				msgq(sp, M_ERR,
-"Less than %s entries on the tags stack; use :display to see the tags stack.",
+"Less than %s entries on the tags stack; use :display to see the tags stack",
 				    arg);
 				return (1);
 			}
@@ -363,7 +365,7 @@ ex_tagpop(sp, ep, cmdp)
 			}
 			if (tp == NULL) {
 				msgq(sp, M_ERR,
-"No file named %s on the tags stack; use :display to see the tags stack.",
+"No file named %s on the tags stack; use :display to see the tags stack",
 				    arg);
 				return (1);
 			}
@@ -379,7 +381,9 @@ ex_tagpop(sp, ep, cmdp)
 		sp->lno = tp->lno;
 		sp->cno = tp->cno;
 	} else {
-		MODIFY_RET(sp, ep, F_ISSET(cmdp, E_FORCE));
+		if (file_m1(sp, ep,
+		    F_ISSET(cmdp, E_FORCE), FS_ALL | FS_POSSIBLE))
+			return (1);
 		if (file_init(sp, tp->frp, NULL, 0))
 			return (1);
 
@@ -422,7 +426,7 @@ ex_tagtop(sp, ep, cmdp)
 	for (tp = exp->tagq.tqh_first;
 	    tp != NULL && tp->q.tqe_next != NULL; tp = tp->q.tqe_next);
 	if (tp == NULL) {
-		msgq(sp, M_INFO, "The tags stack is empty.");
+		msgq(sp, M_INFO, "The tags stack is empty");
 		return (1);
 	}
 
@@ -431,7 +435,9 @@ ex_tagtop(sp, ep, cmdp)
 		sp->lno = tp->lno;
 		sp->cno = tp->cno;
 	} else {
-		MODIFY_RET(sp, sp->ep, F_ISSET(cmdp, E_FORCE));
+		if (file_m1(sp, sp->ep,
+		    F_ISSET(cmdp, E_FORCE), FS_ALL | FS_POSSIBLE))
+			return (1);
 		if (file_init(sp, tp->frp, NULL, 0))
 			return (1);
 
@@ -656,7 +662,7 @@ tag_get(sp, tag, tagp, filep, searchp)
 	}
 
 	if (p == NULL) {
-		msgq(sp, M_ERR, "%s: tag not found.", tag);
+		msgq(sp, M_ERR, "%s: tag not found", tag);
 		if (dne)
 			for (tfp = exp->tagfq.tqh_first;
 			    tfp != NULL; tfp = tfp->q.tqe_next)
@@ -684,7 +690,7 @@ tag_get(sp, tag, tagp, filep, searchp)
 	*searchp = p;
 	if (*p == '\0') {
 malformed:	free(*tagp);
-		msgq(sp, M_ERR, "%s: corrupted tag in %s.", tag, tfp->name);
+		msgq(sp, M_ERR, "%s: corrupted tag in %s", tag, tfp->name);
 		return (1);
 	}
 

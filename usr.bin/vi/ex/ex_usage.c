@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ex_usage.c	8.14 (Berkeley) 3/14/94";
+static const char sccsid[] = "@(#)ex_usage.c	8.20 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ static char sccsid[] = "@(#)ex_usage.c	8.14 (Berkeley) 3/14/94";
 
 #include "vi.h"
 #include "excmd.h"
-#include "vcmd.h"
+#include "../vi/vcmd.h"
 
 /*
  * ex_help -- :help
@@ -97,7 +97,7 @@ ex_usage(sp, ep, cmdp)
 		    memcmp(ap->bp, cp->name, ap->len); ++cp);
 		if (cp->name == NULL)
 			(void)ex_printf(EXCOOKIE,
-			    "The %.*s command is unknown.",
+			    "The %.*s command is unknown",
 			    (int)ap->len, ap->bp);
 		else {
 			(void)ex_printf(EXCOOKIE,
@@ -151,6 +151,10 @@ ex_viusage(sp, ep, cmdp)
 
 	switch (cmdp->argc) {
 	case 1:
+		if (cmdp->argv[0]->len != 1) {
+			msgq(sp, M_ERR, "Usage: %s", cmdp->cmd->usage);
+			return (1);
+		}
 		key = cmdp->argv[0]->bp[0];
 		if (key > MAXVIKEY)
 			goto nokey;
@@ -159,11 +163,16 @@ ex_viusage(sp, ep, cmdp)
 		if ((key == '[' || key == ']') && cmdp->argv[0]->bp[1] != key)
 			goto nokey;
 
-		kp = &vikeys[key];
+		/* Special case: ~ command. */
+		if (key == '~' && O_ISSET(sp, O_TILDEOP))
+			kp = &tmotion;
+		else
+			kp = &vikeys[key];
+
 		if (kp->func == NULL)
 nokey:			(void)ex_printf(EXCOOKIE,
 			    "The %s key has no current meaning",
-			    charname(sp, key));
+			    KEY_NAME(sp, key));
 		else
 			(void)ex_printf(EXCOOKIE,
 			    "  Key:%s%s\nUsage: %s\n",
@@ -172,7 +181,11 @@ nokey:			(void)ex_printf(EXCOOKIE,
 	case 0:
 		F_SET(sp, S_INTERRUPTIBLE);
 		for (key = 0; key <= MAXVIKEY; ++key) {
-			kp = &vikeys[key];
+			/* Special case: ~ command. */
+			if (key == '~' && O_ISSET(sp, O_TILDEOP))
+				kp = &tmotion;
+			else
+				kp = &vikeys[key];
 			if (kp->help != NULL)
 				(void)ex_printf(EXCOOKIE, "%s\n", kp->help);
 		}

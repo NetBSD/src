@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)excmd.h.stub	8.54 (Berkeley) 3/23/94
+ *	@(#)excmd.h.stub	8.73 (Berkeley) 8/9/94
  */
+
+#define	PROMPTCHAR	':'		/* Prompt character. */
 
 /* Ex command structure. */
 typedef struct _excmdlist {
@@ -65,29 +67,33 @@ typedef struct _excmdlist {
 #define	E_NOGLOBAL	0x0200000	/* Not in a global. */
 #define	E_NOPERM	0x0400000	/* Permission denied for now. */
 #define	E_NORC		0x0800000	/* Not from a .exrc or EXINIT. */
-#define	E_SETLAST	0x1000000	/* Reset last command. */
-#define	E_ZERO		0x2000000	/* 0 is a legal addr1. */
-#define	E_ZERODEF	0x4000000	/* 0 is default addr1 of empty files. */
-	u_long	 flags;
-	char	*syntax;		/* Syntax script. */
+#define	E_ZERO		0x1000000	/* 0 is a legal addr1. */
+#define	E_ZERODEF	0x2000000	/* 0 is default addr1 of empty files. */
+	u_int32_t flags;
+	char	 *syntax;		/* Syntax script. */
 	char	*usage;			/* Usage line. */
 	char	*help;			/* Help line. */
 } EXCMDLIST;
 #define	MAXCMDNAMELEN	12		/* Longest command name. */
 extern EXCMDLIST const cmds[];		/* List of ex commands. */
 
-/* Structure passed around to functions implementing ex commands. */
+/*
+ * Structure passed around to functions implementing ex commands.
+ * There are several commands in vi that build one of these and
+ * call ex directly.  See vi/v_ex.c for details.
+ */
 struct _excmdarg {
 	EXCMDLIST const *cmd;	/* Command entry in command table. */
-	CHAR_T	buffer;		/* Named buffer. */
-	recno_t	lineno;		/* Line number. */
-	long	count;		/* Signed, specified count. */
-	int	addrcnt;	/* Number of addresses (0, 1 or 2). */
-	MARK	addr1;		/* 1st address. */
-	MARK	addr2;		/* 2nd address. */
-	ARGS  **argv;		/* Array of arguments. */
-	int	argc;		/* Count of arguments. */
-	u_int	flags;		/* Selected flags from EXCMDLIST. */
+	CHAR_T	  buffer;	/* Named buffer. */
+	recno_t	  lineno;	/* Line number. */
+	long	  count;	/* Signed, specified count. */
+	long	  flagoff;	/* Signed, flag offset parsed by command. */
+	int	  addrcnt;	/* Number of addresses (0, 1 or 2). */
+	MARK	  addr1;	/* 1st address. */
+	MARK	  addr2;	/* 2nd address. */
+	ARGS	**argv;		/* Array of arguments. */
+	int	  argc;		/* Count of arguments. */
+	u_int32_t flags;	/* Selected flags from EXCMDLIST. */
 };
 
 /* Global ranges. */
@@ -116,11 +122,10 @@ typedef struct _ex_private {
 	char	*ibp;			/* Line input buffer. */
 	size_t	 ibp_len;		/* Line input buffer length. */
 
-	EXCMDLIST const *lastcmd;	/* Last command. */
+	u_int32_t fdef;			/* Default command flags. */
 
 	CHAR_T	*lastbcomm;		/* Last bang command. */
 
-	struct sigaction leave_act;	/* ex_[sr]leave signal state. */
 	struct termios leave_term;	/* ex_[sr]leave tty state. */
 	/* XXX: Should be struct timespec's, but time_t is more portable. */
 	time_t leave_atime;		/* ex_[sr]leave old access time. */
@@ -134,35 +139,13 @@ typedef struct _ex_private {
 
 					/* Linked list of ranges. */
 	CIRCLEQ_HEAD(_rangeh, _range) rangeq;
-	recno_t range_lno;		/* Range set line number. */
+	recno_t  range_lno;		/* Range set line number. */
 
-#define	EX_AUTOPRINT	0x01		/* Autoprint flag. */
-	u_int	flags;
+#define	EX_ABSMARK	0x01		/* Set the absolute mark. */
+#define	EX_AUTOPRINT	0x02		/* Autoprint flag. */
+	u_int8_t flags;
 } EX_PRIVATE;
 #define	EXP(sp)	((EX_PRIVATE *)((sp)->ex_private))
-
-/* Macro to set up a command structure. */
-#define	SETCMDARG(s, cmd_id, naddr, lno1, lno2, force, arg) {		\
-	ARGS *__ap[2], __a;						\
-	memset(&s, 0, sizeof(EXCMDARG));				\
-	s.cmd = &cmds[cmd_id];						\
-	s.addrcnt = (naddr);						\
-	s.addr1.lno = (lno1);						\
-	s.addr2.lno = (lno2);						\
-	s.addr1.cno = s.addr2.cno = 1;					\
-	if (force)							\
-		s.flags |= E_FORCE;					\
-	if ((__a.bp = arg) == NULL) {					\
-		s.argc = 0;						\
-		__a.len = 0;						\
-	} else {							\
-		s.argc = 1;						\
-		__a.len = strlen(arg);					\
-	}								\
-	__ap[0] = &__a;							\
-	__ap[1] = NULL;							\
-	s.argv = __ap;							\
-}
 
 /*
  * !!!
@@ -172,31 +155,7 @@ typedef struct _ex_private {
  */
 #define	IS_ESCAPE(sp, ch)						\
 	(F_ISSET(sp, S_VLITONLY) ?					\
-	    (ch) == LITERAL_CH : term_key_val(sp, ch) == K_VLNEXT)
-
-/*
- * :next, :prev, :rewind, :tag, :tagpush, :tagpop modifications check.
- * If force is set, the autowrite is skipped.
- */
-#define	MODIFY_GOTO(sp, ep, force) {					\
-	if (F_ISSET((ep), F_MODIFIED))					\
-		if (O_ISSET((sp), O_AUTOWRITE)) {			\
-			if (!(force) &&					\
-			    file_write((sp), (ep), NULL, NULL, NULL,	\
-			    FS_ALL | FS_POSSIBLE))			\
-				goto modify_err;			\
-		} else if (ep->refcnt <= 1 && !(force)) {		\
-			msgq(sp, M_ERR,					\
-	"Modified since last write; write or use ! to override.");	\
-			goto modify_err;				\
-		}							\
-}
-#define	MODIFY_RET(sp, ep, force) {					\
-	MODIFY_GOTO(sp, ep, force);					\
-	if (0) {							\
-modify_err:	return (1);						\
-	}								\
-}
+	    (ch) == CH_LITERAL : KEY_VAL(sp, ch) == K_VLNEXT)
 
 /*
  * Filter actions:
@@ -219,18 +178,20 @@ int	argv_free __P((SCR *));
 
 /* Ex function prototypes. */
 int	ex __P((SCR *, EXF *));
-int	ex_cfile __P((SCR *, EXF *, char *));
-int	ex_cmd __P((SCR *, EXF *, char *, size_t));
+int	ex_cfile __P((SCR *, EXF *, char *, int));
+int	ex_cmd __P((SCR *, EXF *, char *, size_t, int));
 int	ex_cdalloc __P((SCR *, char *));
 int	ex_cdfree __P((SCR *));
 int	ex_end __P((SCR *));
 int	ex_exec_proc __P((SCR *, char *, char *, char *));
 int	ex_gb __P((SCR *, EXF *, TEXTH *, int, u_int));
 int	ex_getline __P((SCR *, FILE *, size_t *));
-int	ex_icmd __P((SCR *, EXF *, char *, size_t));
+int	ex_icmd __P((SCR *, EXF *, char *, size_t, int));
 int	ex_init __P((SCR *, EXF *));
 int	ex_is_abbrev __P((char *, size_t));
 int	ex_is_unmap __P((char *, size_t));
+int	ex_ldisplay __P((SCR *, CHAR_T *, size_t, size_t, u_int));
+int	ex_ncheck __P((SCR *, int));
 int	ex_optchange __P((SCR *, int));
 int	ex_print __P((SCR *, EXF *, MARK *, MARK *, int));
 int	ex_readfp __P((SCR *, EXF *, char *, FILE *, MARK *, recno_t *, int));
@@ -249,6 +210,9 @@ int	proc_wait __P((SCR *, long, const char *, int));
 int	sscr_end __P((SCR *));
 int	sscr_exec __P((SCR *, EXF *, recno_t));
 int	sscr_input __P((SCR *));
+
+int	abbr_save __P((SCR *, FILE *));
+int	map_save __P((SCR *, FILE *));
 
 #define	EXPROTO(name)	int name __P((SCR *, EXF *, EXCMDARG *))
 EXPROTO(ex_abbr);
@@ -287,6 +251,7 @@ EXPROTO(ex_prev);
 EXPROTO(ex_put);
 EXPROTO(ex_quit);
 EXPROTO(ex_read);
+EXPROTO(ex_recover);
 EXPROTO(ex_resize);
 EXPROTO(ex_rew);
 EXPROTO(ex_script);
@@ -305,7 +270,6 @@ EXPROTO(ex_tagpush);
 EXPROTO(ex_tagtop);
 EXPROTO(ex_unabbr);
 EXPROTO(ex_undo);
-EXPROTO(ex_undol);
 EXPROTO(ex_unmap);
 EXPROTO(ex_usage);
 EXPROTO(ex_validate);
@@ -313,6 +277,7 @@ EXPROTO(ex_version);
 EXPROTO(ex_vglobal);
 EXPROTO(ex_visual);
 EXPROTO(ex_viusage);
+EXPROTO(ex_wn);
 EXPROTO(ex_wq);
 EXPROTO(ex_write);
 EXPROTO(ex_xit);

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tag.h	8.11 (Berkeley) 11/22/93
+ *	@(#)tag.h	8.13 (Berkeley) 7/17/94
  */
 
 struct _tagf {				/* Tag file. */
@@ -39,7 +39,7 @@ struct _tagf {				/* Tag file. */
 
 #define	TAGF_DNE	0x01		/* Didn't exist. */
 #define	TAGF_DNE_WARN	0x02		/* DNE error reported. */
-	u_char	 flags;
+	u_int8_t flags;
 };
 
 struct _tag {				/* Tag stack. */
