@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.33 2001/06/05 11:22:51 wiz Exp $
+.\"	$NetBSD: ping.8,v 1.34 2001/06/25 01:12:53 jhawk Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd March 11, 1997
+.Dd July 2, 1999
 .Dt PING 8
 .Os
 .Sh NAME
@@ -440,7 +440,26 @@ Others may use completely wild values.
 returns 0 on success (the host is alive),
 and non-zero if the arguments are incorrect or the host is not responding.
 .Sh BUGS
-Many Hosts and Gateways ignore the
+Flood pinging is not recommended in general, and flood pinging a broadcast
+or multicast address should only be done under very controlled conditions.
+.Pp
+The
+.Nm
+program has evolved differently under different operating systems,
+and in some cases the same flag performs a different function
+under different operating systems. The
+.Fl t 
+flag conflicts with
+.Fx .
+The
+.Fl a , c , i , I ,
+.Fl l , p , P , s ,
+and
+.Fl t
+flags conflict with
+.Sy Solaris .
+.Pp
+Some hosts and gateways ignore the
 .Tn RECORD_ROUTE
 option.
 .Pp
@@ -450,8 +469,6 @@ to
 be completely useful.
 There's not much that that can be done about this, however.
 .Pp
-Flood pinging is not recommended in general, and flood pinging the
-broadcast address should only be done under very controlled conditions.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr icmp 4 ,
