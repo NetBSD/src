@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.15 2003/08/07 09:44:09 agc Exp $	*/
+/*	$NetBSD: assert.h,v 1.16 2004/05/18 21:03:08 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -63,11 +63,6 @@
 	                                          __assert_function__, "e"))
 # endif /* !__STDC__ */
 #endif /* NDEBUG */
-
-#if defined(_NETBSD_SOURCE)
-# undef _assert
-# define _assert(e) assert(e)
-#endif
 
 #undef _DIAGASSERT
 #if !defined(_DIAGNOSTIC)
