@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 2000/05/31 05:06:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.17 2000/06/07 05:28:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -85,7 +85,6 @@
 	and	r15, r9		; \
 	cmp/eq	r8, r9		; \
 	bt	1f		; /* If already kernel mode then jump */ \
-	nop			; \
 	ldc	r15, r2_bank	; \
 	mov.l	3f, r8		; /* 3f = Kernel Stack */ \
 	mov.l	@r8, r15	; /* Change to Kernel Stack */ \
@@ -325,7 +324,6 @@ start1:
 	add	#4, r3
 	dt	r0		/* decrement and Test */
 	bf	1b
-	nop
 	/* kernel image copy end */
 
 	mov.l	LXstart_in_RAM, r0
@@ -474,7 +472,6 @@ ENTRY(idle)
 	mov	r0, r14
 	tst	r0, r0
 	bf	sw1
-	nop
 	ESTI
 
 	sleep
