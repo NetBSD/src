@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.27 1999/11/07 09:14:34 mrg Exp $ */
+/* $NetBSD: ioasic.c,v 1.28 2000/02/03 08:13:45 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.27 1999/11/07 09:14:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.28 2000/02/03 08:13:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.27 1999/11/07 09:14:34 mrg Exp $");
 #endif
 
 #include <dev/tc/tcvar.h>
-#include <alpha/tc/ioasicreg.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
 /* Definition of the driver for autoconfig. */

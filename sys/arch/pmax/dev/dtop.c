@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.46 2000/02/03 04:09:20 nisimura Exp $	*/
+/*	$NetBSD: dtop.c,v 1.47 2000/02/03 08:13:44 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.46 2000/02/03 04:09:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.47 2000/02/03 08:13:44 nisimura Exp $");
 
 #include "rasterconsole.h"
 
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.46 2000/02/03 04:09:20 nisimura Exp $");
 #include <dev/cons.h>
 #include <dev/dec/lk201.h>
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
 #include <machine/conf.h>
@@ -125,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.46 2000/02/03 04:09:20 nisimura Exp $");
 #include <pmax/dev/lk201var.h>
 #include <pmax/dev/rconsvar.h>
 
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/maxine.h>
 
 
