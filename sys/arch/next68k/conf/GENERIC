@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2000/02/29 06:32:27 simonb Exp $
+# $NetBSD: GENERIC,v 1.27 2000/03/06 03:48:57 deberg Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -126,8 +126,8 @@ options 	M68030
 options 	FPSP
 #options 	FPU_EMULATE
 
-options         ZS_CONSOLE_ABORT
-#options        SERCONSOLE
+options 	ZS_CONSOLE_ABORT	# drop to debugger on break
+#options 	SERCONSOLE		# use serial console
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
