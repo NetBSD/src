@@ -54,12 +54,6 @@ static char empty[1];
 char *__progname = empty;
 int	errno = 0;
 
-asm(".text");
-asm(".long 0xc000c000");
-asm(".long 0xc000c000");
-asm(".long 0xc000c000");
-asm(".long 0xc000c000");
-
 extern	unsigned char	etext;
 extern	unsigned char	eprol asm ("eprol");
 extern			start() asm("start");
