@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.168 2003/10/02 10:04:52 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.169 2003/10/02 10:43:47 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2188,4 +2188,9 @@ sys/netinet6/ipsec.c				1.84
 	permit tunnel mode over link-local address. (outer header is
 	link-local) iij seil team
 	[itojun, ticket #1498]
+
+sys/net/if_vlan.c				1.37
+
+	need to use m_freem(), not m_free().  from iij seil team
+	[itojun, ticket #1499]
 
