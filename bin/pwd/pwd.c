@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.10 1998/07/28 05:31:26 mycroft Exp $	*/
+/*	$NetBSD: pwd.c,v 1.11 1998/11/03 21:38:19 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.10 1998/07/28 05:31:26 mycroft Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.11 1998/11/03 21:38:19 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,14 @@ __RCSID("$NetBSD: pwd.c,v 1.10 1998/07/28 05:31:26 mycroft Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <string.h>
 
-void usage __P((void));
-int  main __P((int, char *[]));
+char *getcwd_logical __P((char *, size_t));
+void  usage __P((void));
+int   main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -61,18 +66,16 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	char *p;
+	int lFlag=0;
+	char *p = NULL;
 
-	/*
-	 * Flags for pwd are a bit strange.  The POSIX 1003.2B/D9 document
-	 * has an optional -P flag for physical, which is what this program
-	 * will produce by default.  The logical flag, -L, should fail, as
-	 * there's no way to display a logical path after forking.  We don't
-	 * document either flag, only adding -P for future portability.
-	 */
-	while ((ch = getopt(argc, argv, "P")) != -1)
+	while ((ch = getopt(argc, argv, "LP")) != -1)
 		switch (ch) {
+		case 'L':
+			lFlag=1;
+			break;
 		case 'P':
+			lFlag=0;
 			break;
 		case '?':
 		default:
@@ -84,11 +87,54 @@ main(argc, argv)
 	if (argc != 0)
 		usage();
 
-	if ((p = getcwd(NULL, 0)) == NULL)
-		err(1, "%s", "");
+	if (lFlag)
+		p = getcwd_logical(NULL, 0);
+	else
+		p = getcwd(NULL, 0);
+
+	if (p == NULL) err(1, "%s", "");
+
 	(void)printf("%s\n", p);
+
 	exit(0);
 	/* NOTREACHED */
+}
+
+char *
+getcwd_logical(pt, size)
+        char *pt;
+        size_t size;
+{
+        char *pwd;
+        size_t pwdlen;
+        dev_t dev;
+        ino_t ino;
+        struct stat s;
+
+        /* Check $PWD -- if it's right, it's fast. */
+        if ((pwd = getenv("PWD")) != NULL && pwd[0] == '/' && stat(pwd, &s) != -1) {
+                dev = s.st_dev;
+                ino = s.st_ino;
+                if (stat(".", &s) != -1 && dev == s.st_dev && ino == s.st_ino) {
+                        pwdlen = strlen(pwd);
+			if (pt) {
+				if (!size) {
+                                        errno = EINVAL;
+                                        return (NULL);
+				}
+                                if (pwdlen + 1 > size) {
+                                        errno = ERANGE;
+                                        return (NULL);
+                                }
+                        } else if ((pt = malloc(pwdlen + 1)) == NULL)
+                                return (NULL);
+                        memmove(pt, pwd, pwdlen);
+                        pt[pwdlen] = '\0';
+                        return (pt);
+                }
+        }
+
+        return (NULL);
 }
 
 void
