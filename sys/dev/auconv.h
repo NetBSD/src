@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.11.2.3 2004/12/30 15:22:17 kent Exp $	*/
+/*	$NetBSD: auconv.h,v 1.11.2.4 2004/12/30 16:02:27 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ extern void stream_filter_list_prepend(stream_filter_list_t *,
 extern stream_filter_t *auconv_nocontext_filter_factory
 	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
 extern void auconv_nocontext_filter_dtor(struct stream_filter *);
-extern u_int auconv_normalize_encoding(u_int, u_int);
 
 /* Convert between signed and unsigned. */
 extern stream_filter_factory_t change_sign8;

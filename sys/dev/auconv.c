@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.4 2004/12/30 15:25:12 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.5 2004/12/30 16:02:27 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.4 2004/12/30 15:25:12 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.5 2004/12/30 16:02:27 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -73,7 +73,8 @@ static void auconv_dump_formats(const struct audio_format *, int);
 #endif
 static int auconv_exact_match(const struct audio_format *, int, int,
 			      const struct audio_params *);
-static int auconv_is_supported_rate(const struct audio_format *, u_long);
+static u_int auconv_normalize_encoding(u_int, u_int);
+static int auconv_is_supported_rate(const struct audio_format *, u_int);
 static int auconv_add_encoding(int, int, int, struct audio_encoding_set **,
 			       int *);
 
@@ -274,8 +275,7 @@ DEFINE_FILTER(change_sign16)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(dst->param.encoding,
-					dst->param.precision);
+	enc = dst->param.encoding;
 	if (enc == AUDIO_ENCODING_SLINEAR_LE
 	    || enc == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src >= 2) {
@@ -350,8 +350,7 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc = auconv_normalize_encoding(dst->param.encoding,
-					dst->param.precision);
+	enc = dst->param.encoding;
 	if (enc == AUDIO_ENCODING_SLINEAR_LE
 	    || enc == AUDIO_ENCODING_ULINEAR_LE) {
 		while (used_dst < m && used_src >= 2) {
@@ -395,10 +394,8 @@ DEFINE_FILTER(linear8_to_linear16)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc_dst = auconv_normalize_encoding(dst->param.encoding,
-					    dst->param.precision);
-	enc_src = auconv_normalize_encoding(this->src->param.encoding,
-					    this->src->param.precision);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
 	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
 	     && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
 	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
@@ -483,10 +480,8 @@ DEFINE_FILTER(linear16_to_linear8)
 	s = this->src->outp;
 	used_dst = audio_stream_get_used(dst);
 	used_src = audio_stream_get_used(this->src);
-	enc_dst = auconv_normalize_encoding(dst->param.encoding,
-					    dst->param.precision);
-	enc_src = auconv_normalize_encoding(this->src->param.encoding,
-					    this->src->param.precision);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
 	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
 	     && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
 	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
@@ -946,8 +941,9 @@ auconv_exact_match(const struct audio_format *formats, int nformats,
  *   ULINEAR ==> ULINEAR_<host-endian>
  *   SLINEAR_BE 8bit ==> SLINEAR_LE 8bit
  *   ULINEAR_BE 8bit ==> ULINEAR_LE 8bit
+ * This should be the same rule as audio_check_params()
  */
-u_int
+static u_int
 auconv_normalize_encoding(u_int encoding, u_int precision)
 {
 	int enc;
@@ -979,7 +975,7 @@ auconv_normalize_encoding(u_int encoding, u_int precision)
  * a sub-routine for auconv_set_converter()
  */
 static int
-auconv_is_supported_rate(const struct audio_format *format, u_long rate)
+auconv_is_supported_rate(const struct audio_format *format, u_int rate)
 {
 	u_int i;
 
