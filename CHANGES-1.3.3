@@ -931,3 +931,40 @@ sys/arch/i386/conf/INSTALL			1.102
 
   Avoid IRQs 5 and 7, the most likely cause of problems on modern
   laptops.  (marc)
+
+sys/arch/alpha/pci/tga.c			patch
+sys/arch/alpha/tc/cfb.c				patch
+sys/arch/alpha/tc/sfb.c				patch
+sys/arch/alpha/wscons/wscons.c			patch
+sys/arch/amiga/amiga/mem.c			patch
+sys/arch/arm32/arm32/mem.c			patch
+sys/arch/arm32/vidc/console/vidcconsole.c	patch
+sys/arch/atari/atari/mem.c			patch
+sys/arch/bebox/bebox/mem.c			patch
+sys/arch/bebox/isa/pccons.c			patch
+sys/arch/hp300/hp300/mem.c			patch
+sys/arch/i386/i386/mem.c			patch
+sys/arch/i386/isa/pccons.c			patch
+sys/arch/i386/isa/pcvt/pcvt_drv.c		patch
+sys/arch/mac68k/dev/asc.c			patch
+sys/arch/mac68k/dev/grf.c			patch
+sys/arch/mips/mips/mem.c			patch
+sys/arch/mvme68k/mvme68k/mem.c			patch
+sys/arch/pc532/pc532/mem.c			patch
+sys/arch/pmax/dev/fb_usrreq.c			patch
+sys/arch/pmax/dev/rcons.c			patch
+sys/arch/powerpc/powerpc/mem.c			patch
+sys/arch/sparc/dev/cgeight.c			patch
+sys/arch/sparc/dev/cgfour.c			patch
+sys/arch/sparc/dev/cgfourteen.c			patch
+sys/arch/sparc/dev/cgthree.c			patch
+sys/arch/sun3/sun3/mem.c			patch
+sys/arch/sun3x/sun3x/mem.c			patch
+sys/arch/vax/vax/mem.c				patch
+sys/arch/x68k/x68k/mem.c			patch
+sys/dev/audio.c					patch
+sys/dev/isa/isadma.c				patch
+
+  Fix many real and potential security problems with character device
+  driver mmap routines that did not properly bounds check offsets.
+  See NetBSD security advisory NetBSD-SA1998-005 for details.  (mrg)
