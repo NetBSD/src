@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.59 1998/07/26 18:00:50 mycroft Exp $	*/
+/*	$NetBSD: kvm.c,v 1.60 1998/08/01 21:29:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.59 1998/07/26 18:00:50 mycroft Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.60 1998/08/01 21:29:41 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,7 +125,7 @@ _kvm_err(kd, program, fmt, va_alist)
 		(void)fputc('\n', stderr);
 	} else
 		(void)vsnprintf(kd->errbuf,
-		    sizeof(kd->errbuf), (char *)fmt, ap);
+		    sizeof(kd->errbuf), fmt, ap);
 
 	va_end(ap);
 }
@@ -141,7 +141,7 @@ _kvm_syserr(kd, program, fmt, va_alist)
 #endif
 {
 	va_list ap;
-	int n;
+	size_t n;
 
 #if __STDC__
 	va_start(ap, fmt);
@@ -155,7 +155,7 @@ _kvm_syserr(kd, program, fmt, va_alist)
 	} else {
 		char *cp = kd->errbuf;
 
-		(void)vsnprintf(cp, sizeof(kd->errbuf), (char *)fmt, ap);
+		(void)vsnprintf(cp, sizeof(kd->errbuf), fmt, ap);
 		n = strlen(cp);
 		(void)snprintf(&cp[n], sizeof(kd->errbuf) - n, ": %s",
 		    strerror(errno));
@@ -462,7 +462,8 @@ kvm_t	*kd;
 off_t	dump_off;
 {
 	kcore_seg_t	cpu_hdr;
-	int	hdr_size, sz;
+	size_t hdr_size;
+	ssize_t sz;
 
 	if (kd->kcore_hdr != NULL) {
 	    _kvm_err(kd, kd->program, "already has a dump header");
@@ -578,7 +579,7 @@ int	dumpsize;
 	 * Write the generic header
 	 */
 	offset = 0;
-	if (fwrite((void*)kd->kcore_hdr, sizeof(kcore_hdr_t), 1, fp) <= 0) {
+	if (fwrite((void*)kd->kcore_hdr, sizeof(kcore_hdr_t), 1, fp) == 0) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -592,7 +593,7 @@ int	dumpsize;
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_CPU);
 	seghdr.c_size = ALIGN(kd->cpu_dsize);
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) <= 0) {
+	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) == 0) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -601,7 +602,7 @@ int	dumpsize;
 	if (clear_gap(kd, fp, gap) == -1)
 		return (-1);
 
-	if (fwrite((void*)kd->cpu_data, kd->cpu_dsize, 1, fp) <= 0) {
+	if (fwrite((void*)kd->cpu_data, kd->cpu_dsize, 1, fp) == 0) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -615,7 +616,7 @@ int	dumpsize;
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_DATA);
 	seghdr.c_size = dumpsize;
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) <= 0) {
+	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) == 0) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -825,21 +826,21 @@ kvm_nlist(kd, nl)
 int kvm_dump_inval(kd)
 kvm_t	*kd;
 {
-	struct nlist	nlist[2];
+	struct nlist	nl[2];
 	u_long		pa, val;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, kd->program, "clearing dump on live kernel");
 		return (-1);
 	}
-	nlist[0].n_name = "_dumpmag";
-	nlist[1].n_name = NULL;
+	nl[0].n_name = "_dumpmag";
+	nl[1].n_name = NULL;
 
-	if (kvm_nlist(kd, nlist) == -1) {
+	if (kvm_nlist(kd, nl) == -1) {
 		_kvm_err(kd, 0, "bad namelist");
 		return (-1);
 	}
-	if (_kvm_kvatop(kd, (u_long)nlist[0].n_value, &pa) == 0)
+	if (_kvm_kvatop(kd, (u_long)nl[0].n_value, &pa) == 0)
 		return (-1);
 
 	errno = 0;
