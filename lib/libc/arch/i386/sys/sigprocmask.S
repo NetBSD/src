@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.15 2000/12/08 22:57:57 mycroft Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.16 2002/03/20 22:06:18 ross Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigprocmask.S,v 1.15 2000/12/08 22:57:57 mycroft Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.16 2002/03/20 22:06:18 ross Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -71,7 +71,7 @@ err:
 	PIC_PROLOGUE
 	mov	PIC_GOT(CERROR), %ecx
 	PIC_EPILOGUE
-	jmp	%ecx
+	jmp	*%ecx
 #else
 	jmp	CERROR
 #endif
