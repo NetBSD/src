@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/24 01:55:59 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 2000/07/24 02:00:39 mycroft Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -10,7 +10,8 @@ S=	${CURDIR}/../../../..
 PROG=	bootblk
 SRCS=		bootblk.fth
 OBJS=
-CLEANFILES=	assym.fth.h machine bootblk bootblk.text
+CLEANFILES=	assym.fth.h assym.fth.h.tmp machine bootblk bootblk.text \
+		bootblk.text.tmp
 
 NOMAN=
 STRIPFLAG=
@@ -38,11 +39,13 @@ machine:
 
 assym.fth.h: ${.CURDIR}/genassym.sh genfth.cf machine
 	sh ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${.CURDIR}/genfth.cf > assym.fth.h
+	    <${.CURDIR}/genfth.cf >assym.fth.h.tmp && \
+	    mv -f assym.fth.h.tmp assym.fth.h
 
 bootblk.text: bootblk.fth assym.fth.h
 	awk '/fload/ { print "#include \"" $$2 "\"" }; !/fload/' \
-	    ${.CURDIR}/bootblk.fth | /usr/bin/cpp -P >bootblk.text
+	    ${.CURDIR}/bootblk.fth | /usr/bin/cpp -P >bootblk.text.tmp &&
+	    mv -f bootblk.text.tmp bootblk.text
 
 bootblk: bootblk.fth assym.fth.h
 	fgen -o bootblk ${.CURDIR}/bootblk.fth
