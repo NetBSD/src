@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.42 1998/06/25 22:49:48 thorpej Exp $	*/
+/*	$NetBSD: tty.h,v 1.43 1998/06/25 23:40:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -269,6 +269,7 @@ void	clfree __P((struct clist *));
 
 #if !defined(_LKM)
 #include "opt_compat_freebsd.h"
+#include "opt_compat_sunos.h"
 #endif
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \

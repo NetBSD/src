@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.40 1998/03/21 04:02:47 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.41 1998/06/25 23:41:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
  */
+
+#include "opt_compat_sunos.h"
+
 #include "pty.h"		/* XXX */
 
 #include <sys/param.h>
