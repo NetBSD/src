@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.26 1999/04/27 21:32:05 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.27 1999/05/09 14:35:13 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.26 1999/04/27 21:30:53 augustss Exp 
+ *	NetBSD: usbdevs,v 1.27 1999/05/09 14:34:41 augustss Exp 
  */
 
 /*
@@ -114,6 +114,7 @@
 /* Microsoft products */
 #define	USB_PRODUCT_MICROSOFT_INTELLIMOUSE	0x0009		/* IntelliMouse */
 #define	USB_PRODUCT_MICROSOFT_NATURALKBD	0x000b		/* Natural Keyboard Elite */
+#define	USB_PRODUCT_MICROSOFT_DDS80	0x0014		/* Digital Sound System 80 */
 
 /* Kensington products */
 #define	USB_PRODUCT_KENSINGTON_MOUSEINABOX	0x4d02		/* Mouse-in-a-Box */
