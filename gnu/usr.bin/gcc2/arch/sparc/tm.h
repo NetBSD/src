@@ -1,5 +1,5 @@
 /* Configuration for NetBSD Sparc */
-/* $Id: tm.h,v 1.5 1994/01/27 19:43:11 pk Exp $ */
+/* $Id: tm.h,v 1.6 1994/02/10 20:36:31 pk Exp $ */
 
 #include "sparc/sparc.h"
 
@@ -18,10 +18,8 @@
 
 #define HAVE_ATEXIT
 
-#ifdef notyet
 /*
  * Some imports from svr4.h in support of shared libraries.
- * Currently, we need the DECLARE_OBJECT_SIZE stuff.
  */
 
 /* Define the strings used for the special svr4 .type and .size directives.
@@ -51,6 +49,7 @@
    Some svr4 assemblers need to also have something extra said about the
    function's return value.  We allow for that here.  */
 
+#undef ASM_DECLARE_FUNCTION_NAME
 #define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
   do {									\
     fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
@@ -100,5 +99,4 @@
 	putc ('\n', FILE);						\
       }									\
   } while (0)
-#endif /*notyet*/
 
