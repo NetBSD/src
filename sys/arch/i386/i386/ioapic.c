@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.3 2000/02/27 20:42:54 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.4 2000/06/25 20:46:08 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -347,8 +347,15 @@ apic_set_redir (struct ioapic_softc *sc, int irq)
 		ioapic_print_redir(sc, "int", irq);
 }
 
-extern int fakeintr (void *);		/* XXX headerify */
+static int fakeintr __P((void *)); 	/* XXX headerify */
 extern char *isa_intr_typename (int); 	/* XXX headerify */
+
+static int fakeintr(arg)
+	void *arg;
+{
+	return 0;
+}
+
 
 /*
  * apic_vectorset: allocate a vector for the given pin, based on
