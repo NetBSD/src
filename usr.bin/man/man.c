@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.17 1999/06/19 05:25:31 itohy Exp $	*/
+/*	$NetBSD: man.c,v 1.18 1999/07/22 03:02:36 itohy Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.17 1999/06/19 05:25:31 itohy Exp $");
+__RCSID("$NetBSD: man.c,v 1.18 1999/07/22 03:02:36 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -712,9 +712,17 @@ static void
 onsig(signo)
 	int signo;
 {
+	sigset_t set;
+
 	(void)cleanup();
 
 	(void)signal(signo, SIG_DFL);
+
+	/* unblock the signal */
+	sigemptyset(&set);
+	sigaddset(&set, signo);
+	sigprocmask(SIG_UNBLOCK, &set, (sigset_t *) NULL);
+
 	(void)kill(getpid(), signo);
 
 	/* NOTREACHED */
