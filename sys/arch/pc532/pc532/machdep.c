@@ -115,7 +115,6 @@ int maxmem = 0;
 vm_offset_t KPTphys;
 
 int IdlePTD;
-int rebootPTD;
 int start_page;
 int _istack;
 
@@ -216,11 +215,6 @@ _low_level_init ()
   for (ix = 0; ix < (avail_start)/NS532_PAGE_SIZE; ix++) {
     WR_ADR(int, p2 + ix*4, NS532_PAGE_SIZE * ix + 3);
   }
-
-  /* the PTD for the reboot process */
-  rebootPTD = (int) avail_start;
-  avail_start += NS532_PAGE_SIZE;
-  bcopy ((char *)p0, (char *)rebootPTD, NS532_PAGE_SIZE);
 
   /* Load the ptb0 register and start mapping. */
 
@@ -1095,7 +1089,7 @@ void reboot_cpu()
   extern void low_level_reboot();
   
   /* Point Low MEMORY to Kernel Memory! */
-  WR_ADR(int, PTD, RD_ADR(int,PTD+4*pdei(KERNBASE)));
+  PTD[0] =  PTD[pdei(KERNBASE)];
   low_level_reboot();
 
 }
