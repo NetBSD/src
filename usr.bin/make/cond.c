@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.19.2.4 2004/05/10 15:32:16 tron Exp $	*/
+/*	$NetBSD: cond.c,v 1.19.2.5 2004/05/10 15:44:10 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,15 +69,15 @@
  * SUCH DAMAGE.
  */
 
-#ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.19.2.4 2004/05/10 15:32:16 tron Exp $";
+#ifndef MAKE_NATIVE
+static char rcsid[] = "$NetBSD: cond.c,v 1.19.2.5 2004/05/10 15:44:10 tron Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.19.2.4 2004/05/10 15:32:16 tron Exp $");
+__RCSID("$NetBSD: cond.c,v 1.19.2.5 2004/05/10 15:44:10 tron Exp $");
 #endif
 #endif /* not lint */
 #endif
