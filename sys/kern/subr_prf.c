@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.55 1998/09/29 21:03:02 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.56 1998/10/29 21:22:32 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -210,6 +210,19 @@ panic(fmt, va_alist)
 		Debugger();
 #endif
 	cpu_reboot(bootopt, NULL);
+}
+
+/*
+ * Enter debugger(s) from console attention
+ */
+void
+console_debugger()
+{
+	/* XXX ipkdb, kgdb, kadb? */
+#ifdef DDB
+	if (db_fromconsole)
+		Debugger();
+#endif
 }
 
 /*

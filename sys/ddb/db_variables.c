@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.13 1998/07/04 22:18:48 jonathan Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.14 1998/10/29 21:22:33 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -54,6 +54,15 @@
 #endif
 int		db_onpanic = DDB_ONPANIC;
 
+/*
+ * Can  DDB can be entered from the console?
+ */
+#ifndef	DDB_FROMCONSOLE
+#define	DDB_FROMCONSOLE 1
+#endif
+int		db_fromconsole = DDB_FROMCONSOLE;
+
+
 extern int	db_radix;
 extern int	db_max_width;
 extern int	db_tab_stop_width;
@@ -70,6 +79,7 @@ struct db_variable db_vars[] = {
 	{ "tabstops",	(long *)&db_tab_stop_width, db_rw_internal_variable },
 	{ "lines",	(long *)&db_max_line,	db_rw_internal_variable },
 	{ "onpanic",	(long *)&db_onpanic,	db_rw_internal_variable },
+	{ "fromconsole", (long *)&db_onpanic,	db_rw_internal_variable },
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
@@ -129,6 +139,9 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	case DDBCTL_ONPANIC:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_onpanic));
+	case DDBCTL_FROMCONSOLE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &db_fromconsole));
 	}
 
 	return (EOPNOTSUPP);
