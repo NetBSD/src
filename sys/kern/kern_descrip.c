@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.128 2005/01/12 20:41:45 cube Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.129 2005/01/14 00:25:12 cube Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.128 2005/01/12 20:41:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.129 2005/01/14 00:25:12 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ fdrelease(struct proc *p, int fd)
 
 	fdp = p->p_fd;
 	simple_lock(&fdp->fd_slock);
-	if ((u_int) fd > fdp->fd_lastfile)
+	if (fd < 0 || fd > fdp->fd_lastfile)
 		goto badf;
 	fpp = &fdp->fd_ofiles[fd];
 	fp = *fpp;
