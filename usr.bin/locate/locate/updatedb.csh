@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$NetBSD: updatedb.csh,v 1.5 1994/12/22 06:17:51 jtc Exp $
+#	$NetBSD: updatedb.csh,v 1.6 1995/02/15 15:37:56 jtc Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 set SRCHPATHS = "/"			# directories to be put in the database
 set LIBDIR = /usr/libexec		# for subprograms
 					# for temp files
-if (! $?TMPDIR) setenv TMPDIR = /var/tmp
+if (! $?TMPDIR) setenv TMPDIR /var/tmp
 set FCODES = /var/db/locate.database	# the database
 
 set path = ( /bin /usr/bin )
