@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.24 2003/01/28 20:26:04 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2003/03/07 07:11:36 tshiozak Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -15,8 +15,8 @@ SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
 	putchar.c puts.c putw.c refill.c remove.c rewind.c rget.c scanf.c \
 	setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c stdio.c tmpfile.c \
 	ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
-	vsnprintf.c vsscanf.c wbuf.c wsetup.c fputwc.c \
-	fgetwc.c ungetwc.c putwc.c putwchar.c getwc.c getwchar.c \
+	vsnprintf.c vsscanf.c wbuf.c wsetup.c fputwc.c fputws.c \
+	fgetwc.c fgetws.c ungetwc.c putwc.c putwchar.c getwc.c getwchar.c \
 	fwide.c fparseln.c
 
 .if !defined(AUDIT)
@@ -29,7 +29,7 @@ SRCS+=	_fseeko.c _ftello.c
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 flockfile.3 fopen.3 \
 	fputs.3 fread.3 fseek.3 funopen.3 getc.3 mktemp.3 perror.3 printf.3 \
 	putc.3 remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 ungetc.3 putwc.3 \
-	getwc.3 ungetwc.3 fwide.3 fparseln.3
+	getwc.3 ungetwc.3 fwide.3 fparseln.3 fgetws.3 fputws.3
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3

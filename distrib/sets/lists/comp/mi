@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.543 2003/03/06 04:05:45 lukem Exp $
+#	$NetBSD: mi,v 1.544 2003/03/07 07:11:38 tshiozak Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1908,6 +1908,7 @@
 ./usr/share/man/cat3/fgetpos.0	comp-c-catman
 ./usr/share/man/cat3/fgets.0	comp-c-catman
 ./usr/share/man/cat3/fgetwc.0	comp-c-catman
+./usr/share/man/cat3/fgetws.0	comp-c-catman
 ./usr/share/man/cat3/field_arg.0	comp-c-catman
 ./usr/share/man/cat3/field_back.0	comp-c-catman
 ./usr/share/man/cat3/field_buffer.0	comp-c-catman
@@ -1983,6 +1984,7 @@
 ./usr/share/man/cat3/fputc.0	comp-c-catman
 ./usr/share/man/cat3/fputs.0	comp-c-catman
 ./usr/share/man/cat3/fputwc.0	comp-c-catman
+./usr/share/man/cat3/fputws.0	comp-c-catman
 ./usr/share/man/cat3/fread.0	comp-c-catman
 ./usr/share/man/cat3/free.0	comp-c-catman
 ./usr/share/man/cat3/free_field.0	comp-c-catman
@@ -4957,6 +4959,7 @@
 ./usr/share/man/man3/fgetpos.3		comp-c-man
 ./usr/share/man/man3/fgets.3		comp-c-man
 ./usr/share/man/man3/fgetwc.3		comp-c-man
+./usr/share/man/man3/fgetws.3		comp-c-man
 ./usr/share/man/man3/field_arg.3	comp-c-man
 ./usr/share/man/man3/field_back.3	comp-c-man
 ./usr/share/man/man3/field_buffer.3	comp-c-man
@@ -5032,6 +5035,7 @@
 ./usr/share/man/man3/fputc.3		comp-c-man
 ./usr/share/man/man3/fputs.3		comp-c-man
 ./usr/share/man/man3/fputwc.3		comp-c-man
+./usr/share/man/man3/fputws.3		comp-c-man
 ./usr/share/man/man3/fread.3		comp-c-man
 ./usr/share/man/man3/free.3		comp-c-man
 ./usr/share/man/man3/free_field.3	comp-c-man
