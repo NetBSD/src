@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/06 15:33:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2000/07/07 04:26:59 cgd Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ PROG=		sendmail
 BINOWN=		root
 BINMODE=	4555
 
-LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; make print-objdir
+LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil; ${MAKE} print-objdir
 
 LDADD+=		-lwrap -L${LIBSMUTILDIR} -lsmutil
 DPADD+=		${LIBWRAP} ${LIBSMUTILDIR}/libsmutil.a
