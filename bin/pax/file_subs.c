@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.44 2004/04/27 13:45:45 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.45 2004/04/30 05:14:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.44 2004/04/27 13:45:45 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.45 2004/04/30 05:14:23 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,11 +190,6 @@ file_close(ARCHD *arcn, int fd)
 		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS(0));
 	if (patime || pmtime)
 		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
-#if HAVE_STRUCT_STAT_ST_FLAGS
-	if (pfflags && arcn->type != PAX_SLK)
-		set_chflags(arcn->tmp_name, arcn->sb.st_flags);
-#endif
-
 	/*
 	 * Finally, now the temp file is fully instantiated rename it to
 	 * the desired file name.
@@ -204,6 +199,11 @@ file_close(ARCHD *arcn, int fd)
 		    arcn->tmp_name, arcn->name);
 		(void)unlink(arcn->tmp_name);
 	}
+
+#if HAVE_STRUCT_STAT_ST_FLAGS
+	if (pfflags && arcn->type != PAX_SLK)
+		set_chflags(arcn->name, arcn->sb.st_flags);
+#endif
 
 	free(arcn->tmp_name);
 	arcn->tmp_name = NULL;
