@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2003/11/04 10:33:15 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.32 2004/12/12 10:22:20 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -256,10 +256,6 @@ define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
 define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
-
-# errno
-define	EFAULT			EFAULT
-define	ENAMETOOLONG		ENAMETOOLONG
 
 # clock registers
 define	CLKSR			CLKSR
