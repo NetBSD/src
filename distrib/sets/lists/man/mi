@@ -106,7 +106,6 @@
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/leave.0
 ./usr/share/man/cat1/limit.0
-./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/ln.0
 ./usr/share/man/cat1/locate.0
 ./usr/share/man/cat1/lock.0
@@ -452,6 +451,7 @@
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/pac.0
+./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
@@ -478,6 +478,7 @@
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
+./usr/share/man/cat8/rpc.pcnfsd.0
 ./usr/share/man/cat8/rpc.rquotad.0
 ./usr/share/man/cat8/rpc.rstatd.0
 ./usr/share/man/cat8/rpc.rusersd.0
