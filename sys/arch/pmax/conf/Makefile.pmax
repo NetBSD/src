@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.62 1998/10/15 18:44:11 drochner Exp $
+#	$NetBSD: Makefile.pmax,v 1.63 1998/11/27 00:09:33 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -121,7 +121,7 @@ SYSTEM_LD_TAIL+=;\
 
 assym.h: $S/kern/genassym.sh ${MIPS}/mips/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${MIPS}/mips/genassym.cf > assym.h.tmp && \
+	  < ${MIPS}/mips/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 
@@ -142,7 +142,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	  [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 __CLEANDEPEND: .USE
 	rm -f .depend
@@ -153,9 +153,9 @@ cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${MIPS}/mips/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
-	    grep -v 'static function .* unused'
+	  ${MIPS}/mips/Locore.c ${CFILES} \
+	  ioconf.c param.c | \
+	  grep -v 'static function .* unused'
 
 tags:
 	@echo "see $S/kern/Makefile for tags"
