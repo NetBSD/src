@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.8 1998/12/19 09:31:44 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.9 1998/12/27 09:03:15 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -214,7 +214,7 @@ mb8795_config(sc)
 
 	/* @@@ more next hacks 
 	 * the  2000 covers at least a 1500 mtu + headers
-	 * + DMA_BEGINALIGNMENT+ ENDMA_ENDALIGNMENT
+	 * + DMA_BEGINALIGNMENT+ DMA_ENDALIGNMENT
 	 */
 	sc->sc_txbuf = malloc(2000, M_DEVBUF, M_NOWAIT);
 	if (!sc->sc_txbuf) panic("%s: can't malloc tx DMA buffer",
@@ -772,8 +772,8 @@ mb8795_start(ifp)
 #define REALIGN_DMABUF(s,l) \
 	{ (s) = ((u_char *)(((unsigned)(s)+DMA_BEGINALIGNMENT-1) \
 			&~(DMA_BEGINALIGNMENT-1))); \
-    (l) = ((u_char *)(((unsigned)((s)+(l))+ENDMA_ENDALIGNMENT-1) \
-				&~(ENDMA_ENDALIGNMENT-1)))-(s);}
+    (l) = ((u_char *)(((unsigned)((s)+(l))+DMA_ENDALIGNMENT-1) \
+				&~(DMA_ENDALIGNMENT-1)))-(s);}
 
 #if 0
   error = bus_dmamap_load_mbuf(sc->sc_tx_dmat,
@@ -986,7 +986,7 @@ mb8795_rxdmamap_load(sc,map)
 	{
 		u_char *buf = m->m_data;
 		int buflen = m->m_len;
-		buflen -= ENDMA_ENDALIGNMENT+DMA_BEGINALIGNMENT;
+		buflen -= DMA_ENDALIGNMENT+DMA_BEGINALIGNMENT;
 		REALIGN_DMABUF(buf, buflen);
 		m->m_data = buf;
 		m->m_len = buflen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.2 1998/07/19 21:41:17 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.3 1998/12/27 09:03:15 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -37,14 +37,8 @@
 
 /* from nextdev/dma.h */
 
-#if 0
-#define	DMA_BEGINALIGNMENT	4	/* initial buffer must be on long */
-#define ENDMA_ENDALIGNMENT	32	/* Ethernet DMA is very special */
-#else
-#define	DMA_BEGINALIGNMENT	16 /* initial buffer must be on long */
-#define ENDMA_ENDALIGNMENT	16	/* Ethernet DMA is very special */
-#endif
-#define	DMA_ENDALIGNMENT	16	/* DMA must end on quad longword */
+#define	DMA_BEGINALIGNMENT	4		/* initial buffer must be on long */
+#define	DMA_ENDALIGNMENT	16		/* DMA must end on quad longword */
 
 #define	DMA_ALIGN(type, addr)	\
 	((type)(((unsigned)(addr)+DMA_BEGINALIGNMENT-1) \
@@ -53,10 +47,6 @@
 #define	DMA_ENDALIGN(type, addr)	\
 	((type)(((unsigned)(addr)+DMA_ENDALIGNMENT-1) \
 		&~(DMA_ENDALIGNMENT-1)))
-
-#define	ENDMA_ENDALIGN(type, addr)	\
-	((type)((((unsigned)(addr)+ENDMA_ENDALIGNMENT-1) \
-		 &~(ENDMA_ENDALIGNMENT-1))|0x80000000))
 
 #define	DMA_BEGINALIGNED(addr)	(((unsigned)(addr)&(DMA_BEGINALIGNMENT-1))==0)
 #define	DMA_ENDALIGNED(addr)	(((unsigned)(addr)&(DMA_ENDALIGNMENT-1))==0)

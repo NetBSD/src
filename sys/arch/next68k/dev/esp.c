@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.11 1998/12/26 06:17:44 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.12 1998/12/27 09:03:14 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -558,7 +558,9 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*addr,*len,*dmasize));
 
-#ifdef DIAGNOSTIC								/* @@@ this is ok sometimes, verify.  */
+#ifdef DIAGNOSTIC /* @@@ this is ok sometimes. verify that we handle it ok
+									 * and then remove this check
+									 */
 	if (*(esc->sc_dmalen) != esc->sc_dmasize) {
 		panic("esp dmalen != size");
 	}
@@ -664,6 +666,7 @@ esp_dma_go(sc)
 #endif
 
 	if (esc->sc_dmamap->dm_mapsize != 0) {
+
 		if (esc->sc_datain) { 
 			NCR_WRITE_REG(sc, ESP_DCTL,
 					ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
@@ -674,6 +677,7 @@ esp_dma_go(sc)
 
 		nextdma_start(&esc->sc_scsi_dma, 
 				(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
+
 	} else {
 #if defined(DIAGNOSTIC)
 		/* verify that end slop is 0, since the shutdown
@@ -798,6 +802,25 @@ esp_dmacb_shutdown(arg)
 	bus_dmamap_unload(esc->sc_scsi_dma.nd_dmat, esc->sc_dmamap);
 
 	if (esc->sc_datain) { 
+
+#if 0
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+
+		delay(2);
+
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_FLUSH | ESPDCTL_DMARD);
+
+		delay(2);
+
+		NCR_WRITE_REG(sc, ESP_DCTL,
+				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+
+		delay(2);
+
+#endif
+
 		NCR_WRITE_REG(sc, ESP_DCTL,
 				ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD);
 	} else {
