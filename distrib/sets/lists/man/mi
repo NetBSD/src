@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.185 1999/12/20 05:50:47 itojun Exp $
+# $NetBSD: mi,v 1.186 1999/12/21 08:09:43 fair Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -422,6 +422,7 @@
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/iy.0
 ./usr/share/man/cat4/lc.0
+./usr/share/man/cat4/le.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lxtphy.0
@@ -1334,6 +1335,7 @@
 ./usr/share/man/man4/isp.4
 ./usr/share/man/man4/iy.4
 ./usr/share/man/man4/lc.4
+./usr/share/man/man4/le.4
 ./usr/share/man/man4/lkm.4
 ./usr/share/man/man4/lo.4
 ./usr/share/man/man4/lxtphy.4
