@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.53 1995/04/28 00:34:08 hpeyerl Exp $	*/
+/*	$NetBSD: com.c,v 1.54 1995/05/12 17:54:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -704,6 +704,12 @@ comeint(sc, stat)
 	int c;
 
 	c = inb(iobase + com_data);
+#ifdef DDB
+	if ((stat & LSR_BI) && (sc->sc_dev.dv_unit == comconsole)) {
+		Debugger();
+		return;
+	}
+#endif
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
 		/* we don't care about parity errors */
@@ -713,10 +719,6 @@ comeint(sc, stat)
 #endif
 		return;
 	}
-#ifdef COMCONSOLE
-	if ((stat & LSR_BI) && (sc->sc_dev.dv_unit == comconsole))
-		Debugger();
-#endif
 	if (stat & (LSR_BI | LSR_FE))
 		c |= TTY_FE;
 	else if (stat & LSR_PE)
@@ -794,7 +796,7 @@ comintr(arg)
 			tp = sc->sc_tty;
 			/* XXXX put in FIFO and process later */
 			while (code = (inb(iobase + com_lsr) & LSR_RCV_MASK)) {
-				if (code & LSR_RXRDY) {
+				if (code == LSR_RXRDY) {
 					code = inb(iobase + com_data);
 					if (tp->t_state & TS_ISOPEN)
 						(*linesw[tp->t_line].l_rint)(code, tp);
