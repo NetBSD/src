@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.72 2003/10/30 01:43:09 simonb Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.73 2003/11/06 06:10:51 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.72 2003/10/30 01:43:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.73 2003/11/06 06:10:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1792,8 +1792,8 @@ ip6_setmoptions(optname, im6op, m)
 		/*
 		 * If the interface is specified, validate it.
 		 */
-		if (mreq->ipv6mr_interface < 0
-		 || if_index < mreq->ipv6mr_interface) {
+		if (mreq->ipv6mr_interface < 0 ||
+		    if_index < mreq->ipv6mr_interface) {
 			error = ENXIO;	/* XXX EINVAL? */
 			break;
 		}
@@ -1843,7 +1843,7 @@ ip6_setmoptions(optname, im6op, m)
 		 */
 		if (IN6_IS_ADDR_MC_LINKLOCAL(&mreq->ipv6mr_multiaddr)) {
 			mreq->ipv6mr_multiaddr.s6_addr16[1] =
-			    htons(mreq->ipv6mr_interface);
+			    htons(ifp->if_index);
 		}
 		/*
 		 * See if the membership already exists.
