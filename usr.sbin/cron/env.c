@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.11 1999/03/22 22:18:45 aidan Exp $	*/
+/*	$NetBSD: env.c,v 1.12 2004/10/29 20:51:11 dsl Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.11 1999/03/22 22:18:45 aidan Exp $");
+__RCSID("$NetBSD: env.c,v 1.12 2004/10/29 20:51:11 dsl Exp $");
 #endif
 #endif
 
@@ -142,7 +142,7 @@ load_env(envstr, f)
 		 * <min> <hour> <day> <month> <weekday> command flag=value)
 		 */
 		/* space before var name */
-		for (name = envstr; name < equal && isspace(*name); name++)
+		for (name = envstr; name < equal && isspace((unsigned char)*name); name++)
 			;
 
 		/* var name */
@@ -157,7 +157,7 @@ load_env(envstr, f)
 			}
 			name_end = s++;
 		} else {
-			for (s = name ; s < equal && !isspace(*s); s++)
+			for (s = name ; s < equal && !isspace((unsigned char)*s); s++)
 				;
 			name_end = s;
 			if (s < equal)
@@ -165,7 +165,7 @@ load_env(envstr, f)
 		}
 
 		/* space after var name */
-		for ( ; s < equal && isspace(*s); s++)
+		for ( ; s < equal && isspace((unsigned char)*s); s++)
 			;
 		/*
 		 * "s" should equal "equal"..  otherwise, this is not an
@@ -183,7 +183,7 @@ load_env(envstr, f)
 	 * process value string
 	 */
 	val = equal + 1;
-	while (*val && isspace(*val))
+	while (*val && isspace((unsigned char)*val))
 		val++;
 	if (*val) {
 		len = strdtb(val);

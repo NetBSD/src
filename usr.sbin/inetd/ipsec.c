@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.1 2000/01/31 14:28:19 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.2 2004/10/29 21:27:34 dsl Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -71,7 +71,7 @@ ipsecsetup(af, fd, policy)
 		p = strtok(p, ";");
 		if (p == NULL)
 			break;
-		while (*p && isspace(*p))
+		while (*p && isspace((unsigned char)*p))
 			p++;
 		if (!*p) {
 			p = NULL;
@@ -104,7 +104,7 @@ ipsecsetup_test(policy)
 		p = strtok(p, ";");
 		if (p == NULL)
 			break;
-		while (*p && isspace(*p))
+		while (*p && isspace((unsigned char)*p))
 			p++;
 		if (!*p) {
 			p = NULL;

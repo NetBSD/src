@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2004/03/20 10:38:34 jdolecek Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2004/10/29 20:51:11 dsl Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2004/03/20 10:38:34 jdolecek Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2004/10/29 20:51:11 dsl Exp $");
 #endif
 #endif
 
@@ -99,7 +99,7 @@ strdtb(s)
 	 * or the last non-blank in the string, whichever comes first.
 	 */
 	do	{x--;}
-	while (x >= s && isspace(*x));
+	while (x >= s && isspace((unsigned char)*x));
 
 	/* one character beyond where we stopped above is where the null
 	 * goes.

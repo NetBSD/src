@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.97 2004/10/20 11:37:42 pk Exp $	*/
+/*	$NetBSD: inetd.c,v 1.98 2004/10/29 21:27:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.97 2004/10/20 11:37:42 pk Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.98 2004/10/29 21:27:34 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1289,7 +1289,7 @@ more:
 		/* lines starting with #@ is not a comment, but the policy */
 		if (cp[0] == '#' && cp[1] == '@') {
 			char *p;
-			for (p = cp + 2; p && *p && isspace(*p); p++)
+			for (p = cp + 2; p && *p && isspace((unsigned char)*p); p++)
 				;
 			if (*p == '\0') {
 				if (policy)
@@ -1420,7 +1420,7 @@ do { \
 
 #define	GETVAL(arg) \
 do { \
-	if (!isdigit(*(arg))) \
+	if (!isdigit((unsigned char)*(arg))) \
 		MALFORMED(arg); \
 	val = strtol((arg), &cp0, 10); \
 	if (cp0 != NULL) { \

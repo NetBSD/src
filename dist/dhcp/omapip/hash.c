@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: hash.c,v 1.3 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: hash.c,v 1.4 2004/10/29 21:19:32 dsl Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -407,13 +407,13 @@ int casecmp (const void *v1, const void *v2, unsigned long len)
 	for (i = 0; i < len; i++)
 	{
 		int c1, c2;
-		if (isascii (s [i]) && isupper (s [i]))
-			c1 = tolower (s [i]);
+		if (isupper ((unsigned char)s [i]))
+			c1 = tolower ((unsigned char)s [i]);
 		else
 			c1 = s [i];
 		
-		if (isascii (t [i]) && isupper (t [i]))
-			c2 = tolower (t [i]);
+		if (isupper ((unsigned char)t [i]))
+			c2 = tolower ((unsigned char)t [i]);
 		else
 			c2 = t [i];
 		

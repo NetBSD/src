@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.7 2003/10/27 21:08:25 mellon Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.8 2004/10/29 21:19:32 dsl Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -545,7 +545,7 @@ void convert_num (cfile, buf, str, base, size)
 			if (ptr [1] == 'x') {
 				base = 16;
 				ptr += 2;
-			} else if (isascii (ptr [1]) && isdigit (ptr [1])) {
+			} else if (isdigit ((unsigned char)ptr [1])) {
 				base = 8;
 				ptr += 1;
 			} else {
