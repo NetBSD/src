@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.2 2001/05/08 18:51:25 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.cpp,v 1.3 2001/05/16 08:19:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ MIPSArchitecture::jump(paddr_t info, paddr_t pvec)
 		DPRINTF((TEXT("SetKMode(1) failed.\n")));
 		return;
 	}
-	DPRINTF((TEXT("jump to 0x%08x(info=0x%08x, pvec=0x%08x\n"),
+	DPRINTF((TEXT("jump to 0x%08x (info=0x%08x, pvec=0x%08x)\n"),
 	    _loader_addr, info, pvec));
 
 	// writeback whole D-cache and invalidate whole I-cache.
