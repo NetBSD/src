@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.15 2003/02/24 09:30:43 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.16 2003/02/24 09:57:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -146,7 +146,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	error = smb_dev2share(args.dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
-	smb_share_unlock(ssp, 0);
+	smb_share_unlock(ssp, 0);	/* keep ref, but unlock */
 	vcp = SSTOVC(ssp);
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 
@@ -199,8 +199,10 @@ bad:
 #endif
 		free(smp, M_SMBFSDATA);
 	}
-	if (ssp)
+	if (ssp) {
+		smb_share_lock(smp->sm_share, 0);
 		smb_share_put(ssp, &scred);
+	}
         return error;
 }
 
@@ -229,6 +231,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	}
 
 	smb_makescred(&scred, p, p->p_ucred);
+	smb_share_lock(smp->sm_share, 0);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
