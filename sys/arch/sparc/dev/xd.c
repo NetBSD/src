@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.1 1995/06/26 23:06:57 pk Exp $ */
+/* $NetBSD: xd.c,v 1.2 1995/07/05 13:34:12 pk Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.1 1995/06/26 23:06:57 pk Exp $
+ * id: $Id: xd.c,v 1.2 1995/07/05 13:34:12 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -960,6 +960,25 @@ int flag, fmt;
   
   return 0;
 }
+
+int
+xdread(dev, uio)
+        dev_t dev;
+        struct uio *uio;
+{
+
+        return (physio(xdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+xdwrite(dev, uio)
+        dev_t dev;
+        struct uio *uio;
+{
+
+        return (physio(xdstrategy, NULL, dev, B_WRITE, minphys, uio));
+}
+
 
 /*
  * xdsize: return size of a partition for a dump
