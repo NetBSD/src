@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.1 2000/08/19 17:51:21 sommerfeld Exp $	*/
+/*	$NetBSD: test.c,v 1.2 2000/08/19 17:52:13 sommerfeld Exp $	*/
 
 /*
  * Combined MD5/SHA1 time and regression test.
@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <md5.h>
 #include <sha1.h>
+
 
 int mflag, rflag, sflag, tflag;
 
