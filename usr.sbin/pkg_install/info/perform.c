@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.18 1998/10/13 17:08:31 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.19 1998/10/21 09:54:09 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.18 1998/10/13 17:08:31 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.19 1998/10/21 09:54:09 agc Exp $");
 #endif
 #endif
 
@@ -179,6 +179,9 @@ pkg_do(char *pkg)
 		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
 			show_file("Build version:\n", BUILD_VERSION_FNAME);
 		}
+		if ((Flags & SHOW_BUILD_INFO) && fexists(BUILD_INFO_FNAME)) {
+			show_file("Build information:\n", BUILD_INFO_FNAME);
+		}
 		if (!Quiet) {
 			puts(InfoPrefix);
 		}
@@ -195,35 +198,32 @@ bail:
 static int
 foundpkg(const char *found, char *data)
 {
-    if(!Quiet)
-	printf("%s\n", found);
-    return 0;
+	if (!Quiet) {
+		printf("%s\n", found);
+	}
+	return 0;
 }
 
 /* check if a package "pkgspec" (which can be a pattern) is installed */
 /* return 0 if found, 1 otherwise (indicating an error). */
 static int
-check4pkg(char *pkgspec, char *dbdir)
+CheckForPkg(char *pkgspec, char *dbdir)
 {
-	if (strpbrk(pkgspec, "<>[]?*{")) {
-	    /* expensive (pattern) match */
-	    int found;
-
-	    found=findmatchingname(dbdir, pkgspec, foundpkg, NULL);
-	    return !found;
-	} else {
-		/* simple match */
+	struct stat     st;
 	char            buf[FILENAME_MAX];
 	int             error;
-		struct stat     st;
 
-		snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-		error = (stat(buf, &st) < 0);
-		if (!error && !Quiet)
-		printf("%s\n", pkgspec);
-
-	return error;
+	if (strpbrk(pkgspec, "<>[]?*{")) {
+	    /* expensive (pattern) match */
+	    return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
 	}
+	/* simple match */
+	snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
+	error = (stat(buf, &st) < 0);
+	if (!error && !Quiet) {
+		printf("%s\n", pkgspec);
+	}
+	return error;
 }
 
 void
@@ -236,23 +236,24 @@ cleanup(int sig)
 int
 pkg_perform(char **pkgs)
 {
-	int             i, err_cnt = 0;
+	struct dirent  *dp;
 	char           *tmp;
+	DIR            *dirp;
+	int             i;
+	int		err_cnt = 0;
 
 	signal(SIGINT, cleanup);
 
-	tmp = getenv(PKG_DBDIR);
-	if (!tmp)
+	if ((tmp = getenv(PKG_DBDIR)) == (char *) NULL) {
 		tmp = DEF_LOG_DIR;
+	}
 	/* Overriding action? */
 	if (CheckPkg) {
-		err_cnt += check4pkg(CheckPkg, tmp);
+		err_cnt += CheckForPkg(CheckPkg, tmp);
 	} else if (AllInstalled) {
-		struct dirent  *dp;
-		DIR            *dirp;
-
-		if (!(isdir(tmp) || islinktodir(tmp)))
+		if (!(isdir(tmp) || islinktodir(tmp))) {
 			return 1;
+		}
 		if ((dirp = opendir(tmp)) != (DIR *) NULL) {
 			while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 				if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
