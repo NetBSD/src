@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)nfsd.c	5.10 (Berkeley) 4/24/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsd/Attic/nfsd.c,v 1.5 1993/05/11 07:14:24 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsd/Attic/nfsd.c,v 1.6 1993/06/02 05:01:49 cgd Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -64,6 +64,9 @@ static char rcsid[] = "$Header: /cvsroot/src/sbin/nfsd/Attic/nfsd.c,v 1.5 1993/0
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
 #include <err.h>
+
+#include <machine/vmparam.h>	/* these are for PS_STRINGS */
+#include <sys/exec.h>
 
 /* Global defs */
 #ifdef DEBUG
@@ -352,17 +355,14 @@ setproctitle(a, sin)
 	struct sockaddr_in *sin;
 {
 	register char *cp;
-	char buf[80];
+	static char buf[80];
 
-	cp = Argv[0];
 	if (sin)
 		(void) sprintf(buf, "%s [%s]", a, inet_ntoa(sin->sin_addr));
 	else
 		(void) sprintf(buf, "%s", a);
-	(void) strncpy(cp, buf, LastArg - cp);
-	cp += strlen(cp);
-	while (cp < LastArg)
-		*cp++ = ' ';
+	PS_STRINGS->ps_nargvstr = 1;
+	PS_STRINGS->ps_argvstr = buf;
 }
 
 void not_nfsserver()
