@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.175 2004/05/06 07:06:46 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.176 2004/05/12 12:21:39 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.175 2004/05/06 07:06:46 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.176 2004/05/12 12:21:39 cube Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2102,6 +2102,7 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	pnode = node;
 	node = &dnode;
 	memset(&dnode, 0, sizeof(dnode));
+	dnode.sysctl_flags = SYSCTL_VERSION;
 	dnode.sysctl_num = name[namelen - 1];
 
 	/*
