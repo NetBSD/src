@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.20 2000/05/04 02:24:13 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.21 2000/05/04 08:19:01 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -35,8 +35,6 @@
  *
  */
 
-#define VRKIUDEBUG
-
 #include <sys/param.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
@@ -57,14 +55,18 @@
 #include <hpcmips/vr/vrkiureg.h>
 #include <hpcmips/vr/icureg.h>
 
+#include "opt_wsdisplay_compat.h"
+#include "opt_pckbd_layout.h"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <hpcmips/dev/pckbd_encode.h>
+#endif
 
-#include "opt_pckbd_layout.h"
-
+#define VRKIUDEBUG
 #ifdef VRKIUDEBUG
 int vrkiu_debug = 0;
 #define DPRINTF(arg) if (vrkiu_debug) printf arg;
@@ -96,6 +98,9 @@ struct vrkiu_softc {
 	struct vrkiu_chip sc_chip_body;
 	int sc_enabled;
 	struct device *sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 
 	void *sc_handler;
 };
@@ -573,6 +578,15 @@ detect_key(chip)
 							   keytrans[key]) == 0)
 						printf("vrkiu: queue over flow");
 				} else {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+					if (chip->kc_sc->sc_rawkbd) {
+						int n;
+						u_char data[16];
+						n = pckbd_encode(type,
+						    keytrans[key], data);
+						wskbd_rawinput(chip->kc_sc->sc_wskbddev, data, n);
+					} else
+#endif
 					wskbd_input(chip->kc_sc->sc_wskbddev,
 						    type,
 						    keytrans[key]);
@@ -637,8 +651,9 @@ vrkiu_ioctl(scx, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	/*struct vrkiu_softc *sc = scx;
-	 */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct vrkiu_softc *sc = scx;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -651,8 +666,15 @@ vrkiu_ioctl(scx, cmd, data, flag, p)
 		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
 		*(int *)data = 0;
 		return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	    case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
+		DPRINTF(("%s(%d): rawkbd is %s\n", __FILE__, __LINE__,
+			 sc->sc_rawkbd ? "on" : "off"));
+		return (0);
+#endif
 	}
-	return -1;
+	return (-1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: skbd.c,v 1.4 2000/04/30 18:43:37 uch Exp $ */
+/*	$NetBSD: skbd.c,v 1.5 2000/05/04 08:19:00 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -40,12 +40,16 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
+#include "opt_wsdisplay_compat.h"
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <hpcmips/dev/pckbd_encode.h>
+#endif
 
 #include <hpcmips/dev/skbdvar.h>
 #include <hpcmips/dev/skbdkeymap.h>
@@ -69,6 +73,9 @@ struct skbd_chip {
 	int		sk_enabled;
 	struct device		*sk_wskbddev;
 	struct skbd_softc*	sk_sc;	/* back link */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int		sk_rawkbd;
+#endif
 };
 
 struct skbd_softc {
@@ -259,6 +266,14 @@ __skbd_input(arg, flag, scancode)
 		sk->sk_type = type;
 		sk->sk_data = sk->sk_keymap[scancode];
 	} else {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+		if (sk->sk_rawkbd) {
+			int n;
+			u_char data[16];
+			n = pckbd_encode(type, sk->sk_keymap[scancode], data);
+			wskbd_rawinput(sk->sk_wskbddev, data, n);
+		} else
+#endif
 		wskbd_input(sk->sk_wskbddev, type,
 			    sk->sk_keymap[scancode]);
 	}
@@ -371,6 +386,15 @@ skbd_ioctl(arg, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	/* No ioctls */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct skbd_chip *sk = arg;
+#endif
+	switch (cmd) {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	    case WSKBDIO_SETMODE:
+		sk->sk_rawkbd = (*(int *)data == WSKBD_RAW);
+		return (0);
+#endif
+	}
 	return (-1);
 }

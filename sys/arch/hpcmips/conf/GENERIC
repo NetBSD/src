@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.47 2000/04/28 07:19:33 shin Exp $
+# 	$NetBSD: GENERIC,v 1.48 2000/05/04 08:18:59 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.47 $"
+#ident 		"GENERIC-$Revision: 1.48 $"
 
 maxusers	8
 
@@ -101,6 +101,11 @@ options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=4
 #options 	FONT_VT220L8x8
 options 	FONT_VT220L8x10
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 vrip*	at mainbus0
 vrcmu*	at vrip? addr 0x0b000060 size 0x20
