@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.33 2003/10/19 19:13:21 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.34 2003/10/27 06:19:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.33 2003/10/19 19:13:21 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.34 2003/10/27 06:19:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ histedit(void)
 			/*
 			 * turn editing on
 			 */
-			char *term;
+			char *term, *shname;
 
 			INTOFF;
 			if (el_in == NULL)
@@ -124,7 +124,10 @@ histedit(void)
 				setenv("TERM", term, 1);
 			else
 				unsetenv("TERM");
-			el = el_init(arg0, el_in, el_out, el_err);
+			shname = arg0;
+			if (shname[0] == '-')
+				shname++;
+			el = el_init(shname, el_in, el_out, el_err);
 			if (el != NULL) {
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
