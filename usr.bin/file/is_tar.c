@@ -4,14 +4,12 @@
  * Stolen (by the author!) from the public domain tar program:
  * Pubic Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
+ * @(#)list.c 1.18 9/23/86 Public Domain - gnu
+ * $Id: is_tar.c,v 1.4 1995/03/25 22:36:07 christos Exp $
+ *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)list.c 1.18 9/23/86 Public Domain - gnu";*/
-static char rcsid[] = "$Id: is_tar.c,v 1.3 1993/08/01 18:16:24 mycroft Exp $";
-#endif /* not lint */
 
 #include <string.h>
 #include <ctype.h>
@@ -33,13 +31,17 @@ static long from_oct();
  *	2 for Unix Std (POSIX) tar file.
  */
 int
-is_tar(buf)
+is_tar(buf, nbytes)
 unsigned char *buf;
+int nbytes;
 {
 	register union record *header = (union record *)buf;
 	register int	i;
 	register long	sum, recsum;
 	register char	*p;
+
+	if (nbytes < sizeof(union record))
+		return 0;
 
 	recsum = from_oct(8,  header->header.chksum);
 

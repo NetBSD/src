@@ -1,3 +1,5 @@
+#------------------------------------------------------------------------------
+# mirage:  file(1) magic for NetBSD executables
 #
 # All new-style magic numbers are in network byte order.
 #

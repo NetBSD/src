@@ -1,18 +1,12 @@
 .TH FILE 1 "Copyright but distributable"
-.\" $Id: file.1,v 1.6 1994/01/11 02:21:43 jtc Exp $
+.\" $Id: file.1,v 1.7 1995/03/25 22:35:42 christos Exp $
 .SH NAME
-.I file
+file
 \- determine file type
 .SH SYNOPSIS
 .B file
 [
-.B \-c
-]
-[
-.B \-z
-]
-[
-.B \-L
+.B \-vczL
 ]
 [
 .B \-f
@@ -100,40 +94,38 @@ The language test routines also test for some miscellany
 (such as 
 .I tar
 archives) and determine whether an unknown file should be
-labeled as `ascii text' or `data'. 
-.PP
-Use
-.B \-m
-.I file
-to specify an alternate file of magic numbers.
-.PP
-The
+labelled as `ascii text' or `data'. 
+.SH OPTIONS
+.TP 8
+.B \-v
+Print the version of the program and exit.
+.TP 8
+.B \-m file
+Specify an alternate file of magic numbers.
+.TP 8
 .B \-z
-tries to look inside compressed files.
-.PP
-The
+Try to look inside compressed files.
+.TP 8
 .B \-c
-option causes a checking printout of the parsed form of the magic file.
+Cause a checking printout of the parsed form of the magic file.
 This is usually used in conjunction with 
 .B \-m
 to debug a new magic file before installing it.
-.PP
-The 
-.B \-f
+.TP 8
+.B \-f namefile
+Read the names of the files to be examined from 
 .I namefile
-option specifies that the names of the files to be examined
-are to be read (one per line) from 
-.I namefile
+(one per line) 
 before the argument list.
 Either 
 .I namefile
 or at least one filename argument must be present;
 to test the standard input, use ``-'' as a filename argument.
-.PP
-The 
+.TP 8
 .B \-L
 option causes symlinks to be followed, as the like-named option in
 .IR ls (1).
+(on systems that support symbolic links).
 .SH FILES
 .I /etc/magic
 \- default list of magic numbers
@@ -147,7 +139,7 @@ option causes symlinks to be followed, as the like-named option in
 This program is believed to exceed the System V Interface Definition
 of FILE(CMD), as near as one can determine from the vague language
 contained therein. 
-Its behavior is mostly compatible with the System V program of the same name.
+Its behaviour is mostly compatible with the System V program of the same name.
 This version knows more magic, however, so it will produce
 different (albeit more accurate) output in many cases. 
 .PP
@@ -184,7 +176,7 @@ for example,
 .SH MAGIC DIRECTORY
 The magic file entries have been collected from various sources,
 mainly USENET, and contributed by various authors.
-Ian Darwin (address below) will collect additional
+Christos Zoulas (address below) will collect additional
 or corrected magic file entries.
 A consolidation of magic file entries 
 will be distributed periodically.
@@ -346,6 +338,6 @@ This manual page, and particularly this section, is too long.
 .SH AVAILABILITY
 You can obtain the original author's latest version by anonymous FTP
 on
-.B ftp.cs.toronto.edu
+.B tesla.ee.cornell.edu
 in the directory
-.BR /pub/darwin/file .
+.BR /pub/file-X.YY.tar.gz
