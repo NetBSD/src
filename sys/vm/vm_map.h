@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.20 1998/10/11 22:56:42 chuck Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.21 1998/10/23 19:37:32 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -257,11 +257,15 @@ vm_map_t map;
 
 /* XXX: number of kernel maps and entries to statically allocate */
 #define MAX_KMAP	10
-#if 0
-#define	MAX_KMAPENT	500
+
+#if !defined(MAX_KMAPENT)
+#if (50 + (2 * NPROC) > 1000)
+#define MAX_KMAPENT (50 + (2 * NPROC))
 #else
 #define	MAX_KMAPENT	1000  /* XXXCDC: no crash */
 #endif
+#endif	/* !defined MAX_KMAPENT */
+
 
 #ifdef _KERNEL
 boolean_t	 vm_map_check_protection __P((vm_map_t,
