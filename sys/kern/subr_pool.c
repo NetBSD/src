@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.32 2000/04/10 02:17:42 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.33 2000/04/13 00:44:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -97,8 +97,8 @@ struct pool_item_header {
 struct pool_item {
 #ifdef DIAGNOSTIC
 	int pi_magic;
-#define	PI_MAGIC 0xdeadbeef
 #endif
+#define	PI_MAGIC 0xdeadbeef
 	/* Other entries use only this list entry */
 	TAILQ_ENTRY(pool_item)	pi_list;
 };
