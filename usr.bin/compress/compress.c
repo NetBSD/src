@@ -366,11 +366,7 @@ main(argc, argv)
 		maxbits = BITS;
 	maxmaxcode = 1 << maxbits;
 
-	/* Build useless input file list. */
-	filelist = fileptr = (char **)(malloc((argc+1) * sizeof(*argv)));
-	while (*argv)
-		*fileptr++ = *argv++;
-	*fileptr = NULL;
+	filelist = fileptr = argv;
 
     if (*filelist != NULL) {
 	for (fileptr = filelist; *fileptr; fileptr++) {
