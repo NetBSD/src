@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.172 2001/10/29 07:02:31 simonb Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.173 2001/11/12 15:25:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)vfs_syscalls.c	8.42 (Berkeley) 7/31/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.173 2001/11/12 15:25:41 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"

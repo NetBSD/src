@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.2 2000/12/19 04:39:19 mrg Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.3 2001/11/12 15:25:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.3 2001/11/12 15:25:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

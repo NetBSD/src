@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.34 2001/07/18 06:48:28 thorpej Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.35 2001/11/12 15:25:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)tty_conf.c	8.5 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.35 2001/11/12 15:25:28 lukem Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
