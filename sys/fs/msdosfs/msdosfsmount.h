@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.5.2.1 2004/04/21 03:17:13 jmc Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.5.2.2 2004/05/23 10:46:11 tron Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -230,4 +230,7 @@ void msdosfs_init __P((void));
 void msdosfs_reinit __P((void));
 void msdosfs_done __P((void));
 
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_msdosfs_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
