@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.131 2001/03/10 23:55:30 is Exp $
+.\"	$NetBSD: options.4,v 1.132 2001/03/29 22:42:48 fvdl Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -618,6 +618,14 @@ is to examine your system's current computed value with
 until either the namei cache hit rate improves or it is determined that
 your system does not benefit substantially from an increase in the size of
 the namei cache.
+.It Cd options NAMECACHE_ENTER_REVERSE
+Causes the namei cache to always enter a reverse mapping (vnode -> name)
+as well as a normal one. Normally, this is already done for directory
+vnodes, to speed up the getcwd operation. This option will cause
+longer hash chains in the reverse cache, and thus slow down
+getcwd somewhat. However, it does make vnode -> path translations
+possible in some cases. For now, only useful if strict /proc/#/maps
+emulation for Linux binaries is required.
 .It Cd options EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
