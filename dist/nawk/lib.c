@@ -80,7 +80,7 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 		if (fldtab[i] == NULL)
 			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
-		sprintf(temp, "%d", i);
+		snprintf(temp, sizeof(temp), "%d", i);
 		fldtab[i]->nval = tostring(temp);
 	}
 }
@@ -185,7 +185,8 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 
 	if (strlen(*FS) >= sizeof(inputFS))
 		FATAL("field separator %.10s... is too long", *FS);
-	strcpy(inputFS, *FS);	/* for subsequent field splitting */
+	/* for subsequent field splitting */
+	strlcpy(inputFS, *FS, sizeof(inputFS));
 	if ((sep = **RS) == 0) {
 		sep = '\n';
 		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
@@ -224,7 +225,7 @@ char *getargv(int n)	/* get ARGV[n] */
 	char *s, temp[50];
 	extern Array *ARGVtab;
 
-	sprintf(temp, "%d", n);
+	snprintf(temp, sizeof(temp), "%d", n);
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
 	s = getsval(x);
 	   dprintf( ("getargv(%d) returns |%s|\n", n, s) );
@@ -436,7 +437,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			rec = patbeg + patlen;
 		} else {
 			   dprintf( ("no match %s\n", rec) );
-			strcpy(fr, rec);
+			strlcpy(fr, rec, sizeof(fields) - (fr - fields));
 			pfa->initstat = tempstat;
 			break;
 		}
