@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.29 1997/11/04 23:25:05 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.30 1997/11/23 20:40:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -106,8 +106,8 @@ struct stat {
 	long	  st_ctimensec;		/* nsec of last file status change */
 #endif
 	off_t	  st_size;		/* file size, in bytes */
-	int64_t	  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_blksize;		/* optimal blocksize for I/O */
+	blkcnt_t  st_blocks;		/* blocks allocated for file */
+	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 	int64_t	  st_qspare[2];
