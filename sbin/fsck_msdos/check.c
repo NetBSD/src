@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.9 1998/08/25 19:18:15 ross Exp $	*/
+/*	$NetBSD: check.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.9 1998/08/25 19:18:15 ross Exp $");
+__RCSID("$NetBSD: check.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -55,8 +55,9 @@ checkfilesys(fname)
 	int dosfs;
 	struct bootblock boot;
 	struct fatEntry *fat = NULL;
-	int i;
+	int i, finish_dosdirsection=0;
 	int mod = 0;
+	int ret = 8;
 
 	rdonly = alwaysno;
 	if (!preen)
@@ -102,85 +103,52 @@ checkfilesys(fname)
 
 			mod |= readfat(dosfs, &boot, i, &currentFat);
 
-			if (mod & FSFATAL) {
-				free(fat);
-				close(dosfs);
-				return 8;
-			}
+			if (mod & FSFATAL)
+				goto out;
 
 			mod |= comparefat(&boot, fat, currentFat, i);
 			free(currentFat);
-			if (mod & FSFATAL) {
-				free(fat);
-				close(dosfs);
-				return 8;
-			}
+			if (mod & FSFATAL)
+				goto out;
 		}
 
 	if (!preen)
 		printf("** Phase 2 - Check Cluster Chains\n");
 
 	mod |= checkfat(&boot, fat);
-	if (mod & FSFATAL) {
-		free(fat);
-		close(dosfs);
-		return 8;
-	}
-
-	if (mod & FSFATMOD)
-		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?	XXX */
-	if (mod & FSFATAL) {
-		free(fat);
-		close(dosfs);
-		return 8;
-	}
+	if (mod & FSFATAL)
+		goto out;
+	/* delay writing FATs */
 
 	if (!preen)
 		printf("** Phase 3 - Checking Directories\n");
 
 	mod |= resetDosDirSection(&boot, fat);
-	if (mod & FSFATAL) {
-		free(fat);
-		close(dosfs);
-		return 8;
-	}
-
-	if (mod & FSFATMOD)
-		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?	XXX */
-	if (mod & FSFATAL) {
-		finishDosDirSection();
-		free(fat);
-		close(dosfs);
-		return 8;
-	}
+	finish_dosdirsection = 1;
+	if (mod & FSFATAL)
+		goto out;
+	/* delay writing FATs */
 
 	mod |= handleDirTree(dosfs, &boot, fat);
-	if (mod & FSFATAL) {
-		finishDosDirSection();
-		free(fat);
-		close(dosfs);
-		return 8;
-	}
+	if (mod & FSFATAL)
+		goto out;
 
 	if (!preen)
 		printf("** Phase 4 - Checking for Lost Files\n");
 
 	mod |= checklost(dosfs, &boot, fat);
-	if (mod & FSFATAL) {
-		finishDosDirSection();
-		free(fat);
-		close(dosfs);
-		return 8;
-	}
-
-	if (mod & FSFATMOD)
-		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?	XXX */
-
-	finishDosDirSection();
-	free(fat);
-	close(dosfs);
 	if (mod & FSFATAL)
-		return 8;
+		goto out;
+
+	/* now write the FATs */
+	if (mod & FSFATMOD) {
+		if (ask(1, "Update FATs")) {
+			mod |= writefat(dosfs, &boot, fat, mod & FSFIXFAT);
+			if (mod & FSFATAL)
+				goto out;
+		} else
+			mod |= FSERROR;
+	}
 
 	if (boot.NumBad)
 		pwarn("%d files, %d free (%d clusters), %d bad (%d clusters)\n",
@@ -192,11 +160,34 @@ checkfilesys(fname)
 		      boot.NumFiles,
 		      boot.NumFree * boot.ClusterSize / 1024, boot.NumFree);
 
-	if (mod & (FSFATAL | FSERROR))
-		return 8;
-	if (mod) {
-		pwarn("\n***** FILE SYSTEM WAS MODIFIED *****\n");
-		return 4;
+	if (mod && (mod & FSERROR) == 0) {
+		if (mod & FSDIRTY) {
+			if (ask(1, "MARK FILE SYSTEM CLEAN") == 0)
+				mod &= ~FSDIRTY;
+
+			if (mod & FSDIRTY) {
+				pwarn("MARKING FILE SYSTEM CLEAN\n");
+				mod |= writefat(dosfs, &boot, fat, 1);
+			} else {
+				pwarn("\n***** FILE SYSTEM IS LEFT MARKED AS DIRTY *****\n");
+				mod |= FSERROR; /* file system not clean */
+			}
+		}
 	}
-	return 0;
+
+	if (mod & (FSFATAL | FSERROR))
+		goto out;
+
+	ret = 0;
+
+    out:
+	if (finish_dosdirsection)
+		finishDosDirSection();
+	free(fat);
+	close(dosfs);
+
+	if (mod & (FSFATMOD|FSDIRMOD))
+		pwarn("\n***** FILE SYSTEM WAS MODIFIED *****\n");
+
+	return ret;
 }
