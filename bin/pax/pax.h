@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.13 2002/01/31 22:43:36 tv Exp $	*/
+/*	$NetBSD: pax.h,v 1.13.2.1 2004/04/07 06:58:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,11 +35,7 @@
  *	@(#)pax.h	8.2 (Berkeley) 4/18/94
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
-#define HAVE_LCHMOD 1
-#define HAVE_LCHOWN 1
+#if ! HAVE_NBTOOL_CONFIG_H
 #define HAVE_LUTIMES 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
@@ -65,12 +57,12 @@
 /*
  * Pax modes of operation
  */
+#define ERROR		-1	/* nothing selected */
 #define	LIST		0	/* List the file in an archive */
 #define	EXTRACT		1	/* extract the files in an archive */
 #define ARCHIVE		2	/* write a new archive */
 #define APPND		3	/* append to the end of an archive */
 #define	COPY		4	/* copy files to destination dir */
-#define DEFOP		LIST	/* if no flags default is to LIST */
 
 /*
  * Device type of the current archive volume
@@ -80,7 +72,9 @@
 #define ISBLK		2	/* block device */
 #define ISTAPE		3	/* tape drive */
 #define ISPIPE		4	/* pipe/socket */
-
+#ifdef SUPPORT_RMT
+#define	ISRMT		5	/* rmt */
+#endif
 
 /*
  * Pattern matching structure
@@ -90,11 +84,11 @@
 typedef struct pattern {
 	char		*pstr;		/* pattern to match, user supplied */
 	char		*pend;		/* end of a prefix match */
+	char		*chdname;	/* the dir to change to if not NULL. */
 	int		plen;		/* length of pstr */
 	int		flgs;		/* processing/state flags */
 #define MTCH		0x1		/* pattern has been matched */
 #define DIR_MTCH	0x2		/* pattern matched a directory */
-#define PTCHDIR		0x4		/* not pattern but chdir */
 	struct pattern	*fow;		/* next pattern */
 } PATTERN;
 
@@ -116,6 +110,7 @@ typedef struct {
 	int ln_nlen;			/* link name length */
 	char ln_name[PAXPATHLEN+1];	/* name to link to (if any) */
 	char *org_name;			/* orig name in file system */
+	char *tmp_name;			/* tmp name used to restore */
 	PATTERN *pat;			/* ptr to pattern match (if any) */
 	struct stat sb;			/* stat buffer see stat(2) */
 	off_t pad;			/* bytes of padding after file xfer */
@@ -244,9 +239,17 @@ typedef struct oplist {
 #ifndef MIN
 #define        MIN(a,b) (((a)<(b))?(a):(b))
 #endif
-#define MAJOR(x)        major(x)
-#define MINOR(x)        minor(x)
-#define TODEV(x, y)	makedev(x, y)
+
+#ifdef HOSTPROG
+# include "pack_dev.h"			/* explicitly use NetBSD's macros */
+# define MAJOR(x)	major_netbsd(x)
+# define MINOR(x)	minor_netbsd(x)
+# define TODEV(x, y)	makedev_netbsd((x), (y))
+#else
+# define MAJOR(x)	major(x)
+# define MINOR(x)	minor(x)
+# define TODEV(x, y)	makedev((x), (y))
+#endif
 
 /*
  * General Defines
@@ -259,12 +262,12 @@ typedef struct oplist {
  * Pathname base component of the temporary file template, to be created in
  * ${TMPDIR} or, as a fall-back, _PATH_TMP.
  */
-#define TMPFILE	"paxXXXXXX"
+#define _TFILE_BASE	"paxXXXXXXXXXX"
 
 /*
  * Macros to manipulate off_t as a unsigned long or unsigned long long
  */
-#ifdef NET2_STAT
+#if defined(NET2_STAT) || defined(_LP64)
 #define	OFFT_F			"%lu"
 #define	OFFT_FP(x)		"%" x "lu"
 #define	OFFT_T			u_long
