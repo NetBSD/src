@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $
+$NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -35,6 +35,8 @@ $NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
  *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
+ *
+ * (but it doesn't always seem to match vendor documentation)
  */
 
 /*
@@ -850,13 +852,15 @@ product SYMPHONY 82C105	0x0105	82C105
 product SYMPHONY2 82C101	0x0001	82C101
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
-product TEKRAM 	DC290	0xdc29	DC-290(M)
+product TEKRAM DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
-product TEKRAM2	DC690C 0x690c	DC-690C
+product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
-product TI	CT1130		0xac12	CT1130
+product TI	PCI1130		0xac12	PCI1130
+product TI	PCI1131		0xac15	PCI1131
+product TI	PCI2030		0xac20	PCI2030
   
 /* Toshiba products */
 product TOSHIBA R4X00	0x102f	R4x00 Host-PCI Bridge
