@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1998/08/25 21:55:06 mark Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 1998/08/27 03:55:06 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -118,6 +118,16 @@ typedef struct {
         vm_offset_t va;
         pt_entry_t *pte;
 } pagehook_t;
+
+/*
+ * Physical / virtual address structure. In a number of places (particularly
+ * during bootstrapping) we need to keep track of the physical and virtual
+ * addresses of various pages
+ */
+typedef struct {
+	vm_offset_t physical;
+	vm_offset_t virtual;
+} pv_addr_t;
 
 /*
  * _KERNEL specific macros, functions and prototypes
