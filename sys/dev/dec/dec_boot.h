@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.1 2000/06/16 23:09:57 matt Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.2 2000/06/16 23:33:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ struct vax_boot_block {
  */
 	u_int8_t	pad0[2];
 	u_int8_t	bb_id_offset;	/* offset in words to id (magic1)*/
-	u_int8_t	bb_mbone	/* must be one */
+	u_int8_t	bb_mbone;	/* must be one */
 	u_int16_t	bb_lbn_hi;	/* lbn (hi word) of bootstrap */
 	u_int16_t	bb_lbn_low;	/* lbn (low word) of bootstrap */
 	u_int8_t	pad1[332];
