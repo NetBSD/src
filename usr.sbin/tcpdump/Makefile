@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 1994/02/22 04:08:21 cgd Exp $
+# $Id: Makefile,v 1.4 1994/12/22 11:43:55 cgd Exp $
 #
 # Possible Options:
 #  -DCSLIP	include support for kernel slip interface
@@ -9,7 +9,7 @@
 # CSLIP and PPP work only under BPF.
 #
 PROG=	tcpdump
-MAN8=	tcpdump.0
+MAN=	tcpdump.8
 DEFINES = -DCSLIP -DPPP -DFDDI
 CFLAGS+=-I. -I${.CURDIR} ${DEFINES}
 .if ${MACHINE_ARCH} == "sparc"

@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.2 1993/07/30 20:50:28 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 11:44:54 cgd Exp $
 
 PROG=	trpt
-MAN8=	trpt.0
+MAN=	trpt.8
 BINGRP=	kmem
 BINMODE=2555
 
