@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.5 2002/02/13 08:18:47 ross Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.6 2002/02/21 16:26:27 kleink Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2002
+.Dd February 21, 2002
 .Dt PCI_CONFIGURE_BUS 9
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .Fa "struct extent *ioext"
 .Fa "struct extent *memext"
 .Fa "struct extent *pmemext"
+.Fa "int firstbus"
+.Fa "int cacheline_size"
 .Fc
 .Sh DESCRIPTION
 The
@@ -60,9 +62,11 @@ Defining bus numbers for all busses on the system,
 .It
 Setting the Base Address Registers for all devices,
 .It
-Setting up the interrupt line register for all devices, and
+Setting up the interrupt line register for all devices,
 .It
-Configuring bus latency timers for all devices.
+Configuring bus latency timers for all devices, and
+.It
+Configuring cacheline sizes for all devices.
 .El
 .Pp
 In traditional PCs and Alpha systems, the BIOS or firmware takes care
@@ -92,7 +96,12 @@ in their BAR.  If an implementation does not distinguish between
 prefetchable and non-prefetchable memory, it may pass NULL for
 .Fa pmemext .
 In this case, prefetchable memory allocations will be made from the
-non-prefetchable region.
+non-prefetchable region.  The
+.Fa firstbus
+argument indicates the number of the first bus to be configured.  The
+.Fa cacheline_size
+argument is used to configure the PCI Cache Line Size Register; it
+should be the size of the largest D-cache line on the system.
 .Pp
 An implementation may choose to not have full configuration performed
 by
