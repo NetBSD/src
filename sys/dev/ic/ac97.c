@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.66 2005/01/10 22:01:37 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.67 2005/04/04 02:08:58 jmcneill Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.66 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.67 2005/04/04 02:08:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,7 @@ struct ac97_softc {
 #define AC97_STANDARD_CLOCK	48000U
 	uint16_t caps;		/* -> AC97_REG_RESET */
 	uint16_t ext_id;	/* -> AC97_REG_EXT_AUDIO_ID */
+	uint16_t ext_mid;	/* -> AC97_REG_EXT_MODEM_ID */
 	uint16_t shadow_reg[128];
 };
 
@@ -985,11 +986,13 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 
 #define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
 			| AC97_POWER_ADC)
-	for (i = 500000; i >= 0; i--) {
-		ac97_read(as, AC97_REG_POWER, &val);
-		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
-		       break;
-		DELAY(1);
+	if (!(as->host_flags & AC97_HOST_SKIP_AUDIO)) {
+		for (i = 500000; i >= 0; i--) {
+			ac97_read(as, AC97_REG_POWER, &val);
+			if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
+			       break;
+			DELAY(1);
+		}
 	}
 #undef AC97_POWER_ALL
 
@@ -1036,7 +1039,8 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 	       ac97enhancement[AC97_CAPS_ENHANCEMENT(as->caps)]);
 
 	as->ac97_clock = AC97_STANDARD_CLOCK;
-	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
+	if (!(as->host_flags & AC97_HOST_SKIP_AUDIO))
+		ac97_read(as, AC97_REG_EXT_AUDIO_ID, &as->ext_id);
 	if (as->ext_id != 0) {
 		/* Print capabilities */
 		bitmask_snprintf(as->ext_id, "\20\20SECONDARY10\17SECONDARY01"
@@ -1097,6 +1101,59 @@ ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 			ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,
 				   AC97_SINGLE_RATE);
 		}
+	}
+
+	if (as->ext_id == 0 && !(as->host_flags & AC97_HOST_SKIP_MODEM)) {
+		ac97_read(as, AC97_REG_EXT_MODEM_ID, &as->ext_mid);
+		if (as->ext_mid == 0xffff)
+			as->ext_mid = 0;
+	}
+	if (as->ext_mid != 0) {
+		uint16_t rate = 12000;
+		uint16_t val, reg;
+
+		/* Print capabilities */
+		bitmask_snprintf(as->ext_mid,
+				 "\20\5CID2\4CID1\3HANDSET\2LINE2\1LINE1",
+				 flagbuf, FLAGBUFLEN);
+		aprint_normal("%s: ac97: ext mid %s", sc_dev->dv_xname,
+			      flagbuf);
+		aprint_normal(", %s codec\n",
+			      (as->ext_mid & 0xc000) == 0 ?
+			      "primary" : "secondary");
+
+		/* Setup modem */
+		val = AC97_MEA_GPIO;
+		if (as->ext_mid & AC97_EXT_MODEM_LINE1) {
+			ac97_write(as, AC97_REG_LINE1_RATE, rate);
+			val |= AC97_MEA_ADC1 | AC97_MEA_DAC1;
+		}
+		if (as->ext_mid & AC97_EXT_MODEM_LINE2) {
+			ac97_write(as, AC97_REG_LINE2_RATE, rate);
+			val |= AC97_MEA_ADC2 | AC97_MEA_DAC2;
+		}
+		if (as->ext_mid & AC97_EXT_MODEM_HANDSET) {
+			ac97_write(as, AC97_REG_HANDSET_RATE, rate);
+			val |= AC97_MEA_HADC | AC97_MEA_HDAC;
+		}
+		ac97_write(as, AC97_REG_EXT_MODEM_STATUS, 0xff00 & ~(val << 8));
+		delay(100);
+		ac97_write(as, AC97_REG_EXT_MODEM_STATUS, 0xff00 & ~(val << 8));
+		do {
+			ac97_read(as, AC97_REG_EXT_MODEM_STATUS, &reg);
+			delay(1);
+		} while ((reg & val) != val && i--);
+		if (i == 0)
+			printf("%s: error setting extended modem controls\n",
+			    sc_dev->dv_xname);
+
+		ac97_write(as, AC97_REG_GPIO_CFG,
+			   0xffff & ~(AC97_GPIO_LINE1_OH));
+		ac97_write(as, AC97_REG_GPIO_POLARITY,
+			   0xffff & ~(AC97_GPIO_LINE1_OH));
+		ac97_write(as, AC97_REG_GPIO_STICKY, 0xffff);
+		ac97_write(as, AC97_REG_GPIO_WAKEUP, 0x0);
+		ac97_write(as, AC97_REG_MISC_AFE, 0x0);
 	}
 
 	ac97_setup_source_info(as);
