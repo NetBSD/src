@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.13 1999/07/04 10:29:30 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.14 1999/07/04 10:35:19 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,15 +43,17 @@ static size_t cbuffersize;
 static int last_i_was_nl, last_i_was_space;
 static int last_o_was_punct, last_o_was_space;
 
+static void	_msg_beep(void);
 static int	_msg_vprintf(int auto_fill, char *fmt, va_list ap);
 static void	_msg_vprompt(char *msg, int do_echo, char *def, char *val,
 		    int max_chars, va_list ap);
 
 /* Routines */
 
-void msg_beep (void)
+static void
+msg_beep(void)
 {
-	fprintf (stderr, "\a");
+	fprintf(stderr, "\a");
 }
 
 int msg_window(WINDOW *window)
@@ -297,7 +299,7 @@ _msg_vprompt(char *msg, int do_echo, char *def, char *val, int max_chars,
 					wdelch(msg_win);
 				}
 			} else
-				msg_beep ();
+				_msg_beep();
 		} else if (ch == 0x15) {	/* ^U; line kill */
 			while (count > 0) {
 				count--;
@@ -337,7 +339,7 @@ _msg_vprompt(char *msg, int do_echo, char *def, char *val, int max_chars,
 				waddch (msg_win, ch);
 			ibuf[count++] = ch;
 		} else
-			msg_beep ();
+			_msg_beep();
 		if (do_echo)
 			wrefresh(msg_win);
 	}
