@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.53 2003/11/10 15:35:39 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.53 2003/11/10 15:35:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1635,6 +1635,14 @@ tweclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
+static void
+twe_tweio_command_handler(struct twe_ccb *ccb, int error)
+{
+
+	/* Just wake up the sleeper. */
+	wakeup(ccb);
+}
+
 /*
  * Handle control operations.
  */
@@ -1662,6 +1670,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
+		/* XXX mutex */
 		if (tu->tu_size > 0) {
 			/*
 			 * XXX Handle > TWE_SECTOR_SIZE?  Let's see if
@@ -1683,13 +1692,15 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			KASSERT(ccb != NULL);
 			ccb->ccb_data = pdata;
 			ccb->ccb_datasize = TWE_SECTOR_SIZE;
-			ccb->ccb_tx.tx_handler = 0;
-			ccb->ccb_tx.tx_context = pdata;
-			ccb->ccb_tx.tx_dv = &twe->sc_dv;
 		} else {
 			ccb = twe_ccb_alloc_wait(twe, 0);
 			KASSERT(ccb != NULL);
 		}
+
+		ccb->ccb_tx.tx_handler = twe_tweio_command_handler;
+		ccb->ccb_tx.tx_context = NULL;
+		ccb->ccb_tx.tx_dv = &twe->sc_dv;
+
 		cmdid = ccb->ccb_cmdid;
 		memcpy(ccb->ccb_cmd, &tu->tu_cmd, sizeof(struct twe_cmd));
 		ccb->ccb_cmd->tc_cmdid = cmdid;
@@ -1700,13 +1711,14 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			goto done;
 		}
 
-		/* Submit the command and wait. */
-		/* XXX Should use a callback and sleep, instead. */
+		/* Submit the command and wait up to 1 minute. */
+		error = 0;
+		twe_ccb_enqueue(twe, ccb);
 		s = splbio();
-		if (twe_ccb_poll(twe, ccb, 5))
-			printf("%s: TWEIO_COMMAND: CCB timed out\n",
-			    twe->sc_dv.dv_xname);
-		twe_ccb_unmap(twe, ccb);
+		while ((ccb->ccb_flags & TWE_CCB_COMPLETE) == 0)
+			if ((error = tsleep(ccb, PRIBIO, "tweioctl",
+					    60 * hz)) != 0)
+				break;
 		splx(s);
 
 		/* Copy the command back to the ioctl argument. */
