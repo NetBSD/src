@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.29.8.1 2002/05/30 14:47:27 gehenna Exp $	*/
+/*	$NetBSD: ehci.c,v 1.29.8.2 2002/06/20 16:34:09 gehenna Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.29.8.1 2002/05/30 14:47:27 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.29.8.2 2002/06/20 16:34:09 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -970,7 +970,7 @@ ehci_allocx(struct usbd_bus *bus)
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 #ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
 			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,

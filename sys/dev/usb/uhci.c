@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.158.4.1 2002/05/30 14:47:35 gehenna Exp $	*/
+/*	$NetBSD: uhci.c,v 1.158.4.2 2002/06/20 16:34:12 gehenna Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.158.4.1 2002/05/30 14:47:35 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.158.4.2 2002/06/20 16:34:12 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,7 +568,7 @@ uhci_detach(struct uhci_softc *sc, int flags)
 		xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 		if (xfer == NULL)
 			break;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 		free(xfer, M_USB);
 	}
 
@@ -623,7 +623,7 @@ uhci_allocx(struct usbd_bus *bus)
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 #ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
 			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,

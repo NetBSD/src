@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_gram.y,v 1.1 2000/03/15 02:09:13 fvdl Exp $	*/
+/*	$NetBSD: aicasm_gram.y,v 1.1.22.1 2002/06/20 16:33:24 gehenna Exp $	*/
 
 /*
  * Parser for the Aic7xxx SCSI Host adapter sequencer assembler.
@@ -1328,9 +1328,7 @@ type_check(symbol, expression, opcode)
 	 * expression are defined for this register.
 	 */
 	if(symbol->info.rinfo->typecheck_masks != FALSE) {
-		for(node = expression->referenced_syms.slh_first;
-		    node != NULL;
-		    node = node->links.sle_next) {
+		SLIST_FOREACH(node, &expression->referenced_syms, links) {
 			if ((node->symbol->type == MASK
 			  || node->symbol->type == BIT)
 			 && symlist_search(&node->symbol->info.minfo->symrefs,
@@ -1404,8 +1402,9 @@ static int
 is_download_const(immed)
 	expression_t *immed;
 {
-	if ((immed->referenced_syms.slh_first != NULL)
-	 && (immed->referenced_syms.slh_first->symbol->type == DOWNLOAD_CONST))
+	if (! SLIST_EMPTY(&immed->referenced_syms)
+	 && (SLIST_FIRST(&immed->referenced_syms)->symbol->type ==
+	    DOWNLOAD_CONST))
 		return (TRUE);
 
 	return (FALSE);

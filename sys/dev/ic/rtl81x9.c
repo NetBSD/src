@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.40 2001/11/13 13:14:43 lukem Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.40.8.1 2002/06/20 16:33:17 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.40 2001/11/13 13:14:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.40.8.1 2002/06/20 16:33:17 gehenna Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -796,9 +796,9 @@ STATIC int rtk_list_tx_init(sc)
 	int i;
 
 	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_dirty)) != NULL)
-		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd, txd_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd_q);
 	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_free)) != NULL)
-		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd, txd_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd_q);
 
 	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
 		txd = &sc->rtk_tx_descs[i];
@@ -1182,7 +1182,7 @@ STATIC void rtk_txeof(sc)
 		    RTK_TXSTAT_TX_UNDERRUN|RTK_TXSTAT_TXABRT)) == 0)
 			break;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd, txd_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd_q);
 
 		bus_dmamap_sync(sc->sc_dmat, txd->txd_dmamap, 0,
 		    txd->txd_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1331,7 +1331,7 @@ STATIC void rtk_start(ifp)
 		}
 		txd->txd_mbuf = m_head;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd, txd_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_free, txd_q);
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_dirty, txd, txd_q);
 
 #if NBPFILTER > 0
@@ -1363,7 +1363,7 @@ STATIC void rtk_start(ifp)
 	 * full. Mark the NIC as busy until it drains some of the
 	 * packets from the queue.
 	 */
-	if (SIMPLEQ_FIRST(&sc->rtk_tx_free) == NULL)
+	if (SIMPLEQ_EMPTY(&sc->rtk_tx_free))
 		ifp->if_flags |= IFF_OACTIVE;
 
 	/*
@@ -1576,7 +1576,7 @@ STATIC void rtk_stop(ifp, disable)
 	 * Free the TX list buffers.
 	 */
 	while ((txd = SIMPLEQ_FIRST(&sc->rtk_tx_dirty)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd, txd_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->rtk_tx_dirty, txd_q);
 		bus_dmamap_unload(sc->sc_dmat, txd->txd_dmamap);
 		m_freem(txd->txd_mbuf);
 		txd->txd_mbuf = NULL;

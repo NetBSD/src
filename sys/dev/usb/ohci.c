@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.122.4.1 2002/05/30 14:47:30 gehenna Exp $	*/
+/*	$NetBSD: ohci.c,v 1.122.4.2 2002/06/20 16:34:10 gehenna Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.122.4.1 2002/05/30 14:47:30 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.122.4.2 2002/06/20 16:34:10 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,7 +915,7 @@ ohci_allocx(struct usbd_bus *bus)
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
 #ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
 			printf("ohci_allocx: xfer=%p not free, 0x%08x\n", xfer,

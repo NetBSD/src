@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.65 2002/05/14 20:03:54 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.65.2.1 2002/06/20 15:53:11 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.65 2002/05/14 20:03:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.65.2.1 2002/06/20 15:53:11 gehenna Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -282,7 +282,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	 * any Ifile blocks that we might be asked to clean will never get
 	 * to the disk.
 	 */
-	lfs_seglock(fs, SEGM_SYNC|SEGM_CLEAN|SEGM_CKP);
+	lfs_seglock(fs, SEGM_CLEAN | SEGM_CKP | SEGM_SYNC);
 	
 	/* Mark blocks/inodes dirty.  */
 	error = 0;
@@ -444,6 +444,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					printf("lfs_markv: wrong da same seg: %x vs %x\n",
 					       blkp->bi_daddr, dbtofsb(fs, b_daddr));
 				}
+				do_again++;
 				continue;
 			}
 		}
@@ -465,9 +466,13 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			s = splbio();
 			bp = incore(vp, blkp->bi_lbn);
 			if (bp && bp->b_bcount > blkp->bi_size) {
-				printf("lfs_markv: %ld > %d (fixed)\n",
-				       bp->b_bcount, blkp->bi_size);
-				blkp->bi_size = bp->b_bcount;
+				splx(s);
+				printf("lfs_markv: ino %d lbn %d fragment size changed (%ld > %d), try again\n",
+					blkp->bi_inode, blkp->bi_lbn,
+					bp->b_bcount, blkp->bi_size);
+				do_again++;
+				continue;
+				/* blkp->bi_size = bp->b_bcount; */
 			}
 			splx(s);
 		}
@@ -524,7 +529,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	 * over the newly cleaned data contained in a checkpoint, and then
 	 * we'd be unhappy at recovery time.
 	 */
-	lfs_segwrite(mntp, SEGM_SYNC|SEGM_CLEAN|SEGM_CKP);
+	lfs_segwrite(mntp, SEGM_CLEAN | SEGM_CKP | SEGM_SYNC);
 	
 	lfs_segunlock(fs);
 
@@ -834,6 +839,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				continue;
 			}
 			blkp->bi_daddr = dbtofsb(fs, blkp->bi_daddr);
+			/* Fill in the block size, too */
+			blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
 		}
 	}
 	
@@ -882,6 +889,7 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 	struct lfs *fs;
 	fsid_t fsid;
 	int error;
+	unsigned long segnum;
 	
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -892,8 +900,9 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 		return (ENOENT);
 	
 	fs = VFSTOUFS(mntp)->um_lfs;
+	segnum = SCARG(uap, segment);
 	
-	if (dtosn(fs, fs->lfs_curseg) == SCARG(uap, segment))
+	if (dtosn(fs, fs->lfs_curseg) == segnum)
 		return (EBUSY);
 	
 	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0) 
@@ -901,7 +910,17 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 #ifdef LFS_AGGRESSIVE_SEGLOCK
 	lfs_seglock(fs, SEGM_PROT);
 #endif
-	LFS_SEGENTRY(sup, fs, SCARG(uap, segment), bp);
+	LFS_SEGENTRY(sup, fs, segnum, bp);
+	if (sup->su_nbytes) {
+		printf("lfs_segclean: not cleaning segment %lu: %d live bytes\n",
+			segnum, sup->su_nbytes);
+		brelse(bp);
+#ifdef LFS_AGGRESSIVE_SEGLOCK
+		lfs_segunlock(fs);
+#endif
+		vfs_unbusy(mntp);
+		return (EBUSY);
+	}
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		brelse(bp);
 #ifdef LFS_AGGRESSIVE_SEGLOCK
@@ -922,7 +941,7 @@ sys_lfs_segclean(struct proc *p, void *v, register_t *retval)
 	fs->lfs_avail += segtod(fs, 1);
 	if (sup->su_flags & SEGUSE_SUPERBLOCK)
 		fs->lfs_avail -= btofsb(fs, LFS_SBPAD);
-	if (fs->lfs_version > 1 && SCARG(uap, segment) == 0 &&
+	if (fs->lfs_version > 1 && segnum == 0 &&
 	    fs->lfs_start < btofsb(fs, LFS_LABELPAD))
 		fs->lfs_avail -= btofsb(fs, LFS_LABELPAD) - fs->lfs_start;
 	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
@@ -1238,9 +1257,7 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 #endif
 #if 0
 	bp->b_saveaddr = (caddr_t)fs;
-	s = splbio();
 	++fs->lfs_iocount;
-	splx(s);
 #endif
 	bp->b_bufsize = size;
 	bp->b_bcount = size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.4 2000/05/26 06:32:56 haya Exp $	*/
+/*	$NetBSD: rbus.h,v 1.4.20.1 2002/06/20 16:32:59 gehenna Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -35,32 +35,32 @@
 #define _DEV_CARDBUS_RBUS_H_
 
 /*
- * This file defines rbus (pseudo) class
+ * This file defines the rbus (pseudo) class
  *
  * What is rbus?
  * 
- *  Ths rbus is a recursive bus-space administrator.  This means a
+ *  The rbus is a recursive bus-space administrator.  This means a
  *  parent bus-space administrator, which usually belongs to a bus
- *  bridge, makes some child bus-space administorators and gives
- *  (restricted) bus-space for children.  There are a root bus-space
- *  administrator which maintains whole bus-space.
+ *  bridge, makes some child bus-space administrators and gives
+ *  (restricted) bus-space to the children.  There is a root bus-space
+ *  administrator which maintains the whole bus-space.
  *
  * Why recursive?
  *
  *  The recursive bus-space administration has two virtues.  The
  *  former is this modelling matches the actual memory and io space
- *  management of bridge devices well.  The latter is the rbus is
- *  distributed management system, so it matches well with
+ *  management of bridge devices well.  The latter is that the rbus is a
+ *  distributed management system, so it matches well with a
  *  multi-thread kernel.
  *
  * Abstraction
  *
- *  The rbus models bus-to-bus bridge into three way: dedicate, share
- *  and slave.  Dedicate means that the bridge has dedicate bus space.
- *  Share means that the bridge has bus space, but this bus space is
- *  shared with other bus bridges.  Slave means the bus bridge which
- *  does not have it own bus space and ask a parent bus bridge for bus
- *  space when a client requests bus space to the bridge.
+ *  The rbus models bus-to-bus bridges into three types: dedicated, shared,
+ *  and slave.  Dedicated means that the bridge has dedicated bus space.
+ *  Shared means that the bridge has bus space, but this bus space is
+ *  shared with other bus bridges.  Slave means a bus bridge which
+ *  does not have it own bus space and asks a parent bus bridge for bus
+ *  space when a client requests bus space from the bridge.
  */
 
 

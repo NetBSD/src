@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.7 2000/06/13 13:37:00 ad Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.7.18.1 2002/06/20 16:34:06 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,8 +102,10 @@ NAME(erasecols)(cookie, row, col, num, attr)
 			dp = rp;
 			DELTA(rp, ri->ri_stride, int32_t *);
 
-			if (lmask)
-				*dp++ = (*dp & lmask) | lclr;
+			if (lmask) {
+				*dp = (*dp & lmask) | lclr;
+				dp++;
+			}
 
 			for (cnt = num; cnt > 0; cnt--)
 				*dp++ = clr;

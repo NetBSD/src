@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_cpcbus.c,v 1.1.4.2 2002/05/30 14:45:42 gehenna Exp $	*/
+/*	$NetBSD: iic_cpcbus.c,v 1.1.4.3 2002/06/20 16:33:08 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ iic_cpcbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 
-	return (strcmp(caa->cpca_name, "iic") == 0);
+	return (strcmp(caa->cpca_name, "cpciic") == 0);
 }
 
 void

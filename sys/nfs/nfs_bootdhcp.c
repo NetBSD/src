@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.20 2002/05/12 12:52:58 simonb Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.20.2.1 2002/06/20 15:52:59 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.20 2002/05/12 12:52:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.20.2.1 2002/06/20 15:52:59 gehenna Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -506,6 +506,26 @@ bootpc_call(nd, procp)
 	/* Enable broadcast. */
 	if ((error = nfs_boot_enbroadcast(so))) {
 		DPRINT("SO_BROADCAST");
+		goto out;
+	}
+
+	/*
+	 * Set some TTL so we can boot through routers.
+	 * Real BOOTP forwarding agents don't need this; they obey "bp_hops"
+	 * and set "bp_giaddr", thus rewrite the packet anyway.
+	 * The "helper-address" feature of some popular router vendor seems
+	 * to do simple IP forwarding and drops packets with (ip_ttl == 1).
+	 */
+	{	u_char *opt;
+		m = m_get(M_WAIT, MT_SOOPTS);
+		opt = mtod(m, u_char *);
+		m->m_len = sizeof(*opt);
+		*opt = 7;
+		error = sosetopt(so, IPPROTO_IP, IP_MULTICAST_TTL, m);
+		m = NULL;	/* was consumed */
+	}
+	if (error) {
+		DPRINT("IP_MULTICAST_TTL");
 		goto out;
 	}
 

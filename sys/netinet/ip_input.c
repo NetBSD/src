@@ -1,9 +1,9 @@
-/*	$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.150.2.1 2002/06/20 15:52:21 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.150.2.1 2002/06/20 15:52:21 gehenna Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -168,7 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.150 2002/05/12 20:33:50 matt Exp $");
 #define	IPALLOWSRCRT	1	/* allow source-routed packets */
 #endif
 #ifndef IPMTUDISC
-#define IPMTUDISC	0
+#define IPMTUDISC	1
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
@@ -339,7 +339,7 @@ ip_init()
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
 	    M_WAITOK, &in_ifaddrhash);
 	if (ip_mtudisc != 0)
-		ip_mtudisc_timeout_q = 
+		ip_mtudisc_timeout_q =
 		    rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init();
@@ -1662,6 +1662,8 @@ ip_forward(m, srcrt)
 					ro = &sp->req->sav->sah->sa_route;
 					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
 						dummyifp.if_mtu =
+						    ro->ro_rt->rt_rmx.rmx_mtu ?
+						    ro->ro_rt->rt_rmx.rmx_mtu :
 						    ro->ro_rt->rt_ifp->if_mtu;
 						dummyifp.if_mtu -= ipsechdr;
 						destifp = &dummyifp;
@@ -1805,7 +1807,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc);
 		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
-			ip_mtudisc_timeout_q = 
+			ip_mtudisc_timeout_q =
 			    rt_timer_queue_create(ip_mtudisc_timeout);
 		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
 			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
@@ -1842,7 +1844,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
 		if (ip_mtudisc_timeout_q != NULL)
-			rt_timer_queue_change(ip_mtudisc_timeout_q, 
+			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
 		return (error);
 #ifdef GATEWAY

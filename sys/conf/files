@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.527.2.2 2002/05/30 14:45:17 gehenna Exp $
+#	$NetBSD: files,v 1.527.2.3 2002/06/20 16:31:16 gehenna Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -8,6 +8,7 @@
 defflag				INSECURE
 defflag				KMEMSTATS
 defflag				KTRACE
+defflag				SYSTRACE
 defparam			MAXUPRC
 defparam			RTC_OFFSET
 defparam			DEFCORENAME
@@ -850,6 +851,7 @@ file	dev/ic/iic_cpcbus.c		iic_cpcbus
 # Attribute used by various things that need BPF's virtual machine
 #
 define	bpf_filter
+defparam opt_bpf.h	BPF_BUFSIZE
 
 # Attributes used by the ISDN subsystem
 #
@@ -1016,6 +1018,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
+file	kern/kern_systrace.c
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_malloc.c
@@ -1199,7 +1202,6 @@ file	netinet6/in6_cksum.c		inet6 & !inet6_md_cksum
 file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_ifattach.c		inet6
 file	netinet6/in6_pcb.c		inet6
-file	netinet6/in6_prefix.c		inet6
 file	netinet6/in6_proto.c		inet6
 file	netinet6/in6_src.c		inet6
 file	netinet6/ip6_forward.c		inet6

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.42 2002/03/19 01:21:19 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.42.4.1 2002/06/20 15:52:54 gehenna Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.42 2002/03/19 01:21:19 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.42.4.1 2002/06/20 15:52:54 gehenna Exp $");
 
 #include "opt_ipsec.h"
 
@@ -124,6 +124,7 @@ struct rip6stat rip6stat;
 void
 rip6_init()
 {
+
 	rawin6pcb.in6p_next = rawin6pcb.in6p_prev = &rawin6pcb;
 }
 
@@ -209,8 +210,7 @@ rip6_input(mp, offp, proto)
 				/* strip intermediate headers */
 				m_adj(n, *offp);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
-						(struct sockaddr *)&rip6src,
-						 n, opts) == 0) {
+				    (struct sockaddr *)&rip6src, n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
 					if (opts)
@@ -240,7 +240,7 @@ rip6_input(mp, offp, proto)
 		/* strip intermediate headers */
 		m_adj(m, *offp);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
-				(struct sockaddr *)&rip6src, m, opts) == 0) {
+		    (struct sockaddr *)&rip6src, m, opts) == 0) {
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
@@ -257,8 +257,8 @@ rip6_input(mp, offp, proto)
 			char *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_protounknown);
 			icmp6_error(m, ICMP6_PARAM_PROB,
-				    ICMP6_PARAMPROB_NEXTHEADER,
-				    prvnxtp - mtod(m, char *));
+			    ICMP6_PARAMPROB_NEXTHEADER,
+			    prvnxtp - mtod(m, char *));
 		}
 		ip6stat.ip6s_delivered--;
 	}
@@ -325,8 +325,7 @@ rip6_ctlinput(cmd, sa, d)
 		 * from icmp6_notify_error()
 		 */
 		in6p = NULL;
-		in6p = in6_pcblookup_connect(&rawin6pcb,
-		    &sa6->sin6_addr, 0,
+		in6p = in6_pcblookup_connect(&rawin6pcb, &sa6->sin6_addr, 0,
 		    (struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
 #if 0
 		if (!in6p) {
@@ -349,7 +348,7 @@ rip6_ctlinput(cmd, sa, d)
 		/*
 		 * Depending on the value of "valid" and routing table
 		 * size (mtudisc_{hi,lo}wat), we will:
-		 * - recalcurate the new MTU and create the
+		 * - recalculate the new MTU and create the
 		 *   corresponding routing entry, or
 		 * - ignore the MTU change notification.
 		 */
@@ -458,11 +457,8 @@ rip6_output(m, va_alist)
 	{
 		struct in6_addr *in6a;
 
-		if ((in6a = in6_selectsrc(dstsock, optp,
-					  in6p->in6p_moptions,
-					  &in6p->in6p_route,
-					  &in6p->in6p_laddr,
-					  &error)) == 0) {
+		if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
+		    &in6p->in6p_route, &in6p->in6p_laddr, &error)) == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			goto bad;
@@ -487,8 +483,6 @@ rip6_output(m, va_alist)
 	    in6p->in6p_cksum != -1) {
 		int off;
 		u_int16_t sum;
-
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
 
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
@@ -519,7 +513,7 @@ rip6_output(m, va_alist)
 	if (in6p->in6p_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 #endif
-	
+
 	error = ip6_output(m, optp, &in6p->in6p_route, flags,
 	    in6p->in6p_moptions, &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
@@ -554,10 +548,6 @@ rip6_ctloutput(op, so, level, optname, mp)
 	struct mbuf **mp;
 {
 	int error = 0;
-	int optval;
-	struct in6pcb *in6p;
-	struct mbuf *m;
-	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
 
 	switch (level) {
 	case IPPROTO_IPV6:
@@ -579,38 +569,7 @@ rip6_ctloutput(op, so, level, optname, mp)
 				error = EINVAL;
 			return (error);
 		case IPV6_CHECKSUM:
-			/*
-			 * for ICMPv6 sockets, no modification allowed for
-			 * checksum offset, permit "no change" values to
-			 * help existing apps.
-			 */
-			in6p = sotoin6pcb(so);
-			error = 0;
-			if (op == PRCO_SETOPT) {
-				m = *mp;
-				if (m && m->m_len == sizeof(int)) {
-					optval = *mtod(m, int *);
-					if (so->so_proto->pr_protocol ==
-					    IPPROTO_ICMPV6) {
-						if (optval != icmp6off)
-							error = EINVAL;
-					} else
-						in6p->in6p_cksum = optval;
-				} else
-					error = EINVAL;
-				if (m)
-					m_free(m);
-			} else if (op == PRCO_GETOPT) {
-				if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
-					optval = icmp6off;
-				else
-					optval = in6p->in6p_cksum;
-				*mp = m = m_get(M_WAIT, MT_SOOPTS);
-				m->m_len = sizeof(int);
-				*mtod(m, int *) = optval;
-			} else
-				error = EINVAL;
-			return error;
+			return (ip6_raw_ctloutput(op, so, level, optname, mp));
 		default:
 			return (ip6_ctloutput(op, so, level, optname, mp));
 		}
@@ -620,7 +579,7 @@ rip6_ctloutput(op, so, level, optname, mp)
 		 * XXX: is it better to call icmp6_ctloutput() directly
 		 * from protosw?
 		 */
-		return(icmp6_ctloutput(op, so, level, optname, mp));
+		return (icmp6_ctloutput(op, so, level, optname, mp));
 
 	default:
 		if (op == PRCO_SETOPT && *mp)
@@ -651,7 +610,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
-				    (struct ifnet *)control, p));
+		    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
 		in6_pcbpurgeif0(&rawin6pcb, (struct ifnet *)control);
@@ -682,9 +641,9 @@ rip6_usrreq(so, req, m, nam, control, p)
 		in6p = sotoin6pcb(so);
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
-		
+
 		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
-			sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
+		    sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
 		if (in6p->in6p_icmp6filt == NULL) {
 			in6_pcbdetach(in6p);
 			error = ENOMEM;
@@ -734,7 +693,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 #ifdef ENABLE_DEFAULT_SCOPE
 		if (addr->sin6_scope_id == 0)	/* not change if specified  */
 			addr->sin6_scope_id =
-				scope6_addr2default(&addr->sin6_addr);
+			    scope6_addr2default(&addr->sin6_addr);
 #endif
 		/* KAME hack: embed scopeid */
 		if (in6_embedscope(&addr->sin6_addr, addr, in6p, NULL) != 0)
@@ -756,8 +715,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EADDRNOTAVAIL;
 			break;
 		}
-		if (ia &&
-		    ((struct in6_ifaddr *)ia)->ia6_flags &
+		if (ia && ((struct in6_ifaddr *)ia)->ia6_flags &
 		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
 		     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
 			error = EADDRNOTAVAIL;
@@ -795,16 +753,14 @@ rip6_usrreq(so, req, m, nam, control, p)
 			sin6 = *addr;
 			addr = &sin6;
 			addr->sin6_scope_id =
-				scope6_addr2default(&addr->sin6_addr);
+			    scope6_addr2default(&addr->sin6_addr);
 		}
 #endif
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-				     in6p->in6p_moptions,
-				     &in6p->in6p_route,
-				     &in6p->in6p_laddr,
-				     &error);
+		    in6p->in6p_moptions, &in6p->in6p_route,
+		    &in6p->in6p_laddr, &error);
 		if (in6a == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
@@ -846,7 +802,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			tmp.sin6_family = AF_INET6;
 			tmp.sin6_len = sizeof(struct sockaddr_in6);
 			bcopy(&in6p->in6p_faddr, &tmp.sin6_addr,
-				sizeof(struct in6_addr));
+			    sizeof(struct in6_addr));
 			dst = &tmp;
 		} else {
 			if (nam == NULL) {
@@ -869,7 +825,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 #ifdef ENABLE_DEFAULT_SCOPE
 		if (dst->sin6_scope_id == 0) {
 			dst->sin6_scope_id =
-				scope6_addr2default(&dst->sin6_addr);
+			    scope6_addr2default(&dst->sin6_addr);
 		}
 #endif
 		error = rip6_output(m, so, dst, control);

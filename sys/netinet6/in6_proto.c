@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.39.4.1 2002/05/30 13:52:32 gehenna Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.39.4.2 2002/06/20 15:52:43 gehenna Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.39.4.1 2002/05/30 13:52:32 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.39.4.2 2002/06/20 15:52:43 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -167,37 +167,37 @@ struct ip6protosw inet6sw[] = {
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_DSTOPTS,PR_ATOMIC|PR_ADDR,
   dest6_input,	0,	 	0,		0,
-  0,	  
+  0,
   0,		0,		0,		0,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_ROUTING,PR_ATOMIC|PR_ADDR,
   route6_input,	0,	 	0,		0,
-  0,	  
+  0,
   0,		0,		0,		0,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_FRAGMENT,PR_ATOMIC|PR_ADDR,
   frag6_input,	0,	 	0,		0,
-  0,	  
+  0,
   0,		0,		0,		0,
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inet6domain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
   ah6_input,	0,	 	ah6_ctlinput,	0,
-  0,	  
+  0,
   0,		0,		0,		0,
   ipsec6_sysctl,
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp6_input,	0,	 	esp6_ctlinput,	0,
-  0,	  
+  0,
   0,		0,		0,		0,
   ipsec6_sysctl,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp6_input, 0,	 	0,		0,
-  0,	  
+  0,
   0,		0,		0,		0,
   ipsec6_sysctl,
 },
@@ -222,7 +222,7 @@ struct ip6protosw inet6sw[] = {
 },
 #endif
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  pim6_input,	rip6_output,	0,              rip6_ctloutput, 
+  pim6_input,	rip6_output,	0,              rip6_ctloutput,
   rip6_usrreq,
   0,            0,              0,              0,
 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.10.8.1 2002/05/30 13:52:32 gehenna Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.10.8.2 2002/06/20 15:52:43 gehenna Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10.8.1 2002/05/30 13:52:32 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10.8.2 2002/06/20 15:52:43 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.10.8.1 2002/05/30 13:52:32 gehenna Exp
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #ifdef ENABLE_DEFAULT_SCOPE
-#include <netinet6/scope6_var.h> 
+#include <netinet6/scope6_var.h>
 #endif
 
 #include <net/net_osdep.h>
@@ -241,7 +241,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 * Note that we should check the address family of the
-	 * cached destination, in case of sharing the cache with IPv4. 
+	 * cached destination, in case of sharing the cache with IPv4.
 	 */
 	if (ro) {
 		if (ro->ro_rt &&

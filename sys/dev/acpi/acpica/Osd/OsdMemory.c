@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.2 2001/11/13 13:01:58 lukem Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.2.10.1 2002/06/20 16:31:28 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.2 2001/11/13 13:01:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.2.10.1 2002/06/20 16:31:28 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -99,21 +99,6 @@ AcpiOsAllocate(UINT32 Size)
 {
 
 	return (malloc(Size, M_DEVBUF, M_NOWAIT));
-}
-
-/*
- * AcpiOsCallocate:
- *
- *	Allocate and initialize memory.
- */
-void *
-AcpiOsCallocate(UINT32 Size)
-{
-	void *rv;
-
-	if ((rv = malloc(Size, M_DEVBUF, M_NOWAIT)) != NULL)
-		memset(rv, 0, Size);
-	return (rv);
 }
 
 /*

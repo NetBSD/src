@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199.6.1 2002/05/30 14:47:56 gehenna Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199.6.2 2002/06/20 16:02:18 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.1 2002/05/30 14:47:56 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.2 2002/06/20 16:02:18 gehenna Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.1 2002/05/30 14:47:56 gehenna 
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
+#include "opt_systrace.h"
 
 #include "rnd.h"
 
@@ -89,6 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.6.1 2002/05/30 14:47:56 gehenna 
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #include <sys/domain.h>
 #include <sys/mbuf.h>
@@ -385,6 +389,9 @@ main(void)
 	/* Initialize system accouting. */
 	acct_init();
 
+#ifdef SYSTRACE
+	systrace_init();
+#endif
 	/*
 	 * Initialize signal-related data structures, and signal state
 	 * for proc0.

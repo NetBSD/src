@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.79.2.2 2002/05/30 13:52:27 gehenna Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.79.2.3 2002/06/20 15:52:17 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -123,7 +123,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.79.2.2 2002/05/30 13:52:27 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.79.2.3 2002/06/20 15:52:17 gehenna Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
@@ -198,7 +198,7 @@ struct timeout ipfr_slowtimer_ch;
 toid_t ipfr_slowtimer_ch;
 #endif
 
-#if defined(__NetBSD__) && (__NetBSD_Version__ >= 105290000)
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106020000)
 #include <sys/conf.h>
 const struct cdevsw ipl_cdevsw = {
 	iplopen, iplclose, iplread, nowrite, iplioctl,
@@ -298,7 +298,7 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
@@ -1809,7 +1809,7 @@ sendorfree:
 		else
 			m_freem(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		ipl_frouteok[0]++;

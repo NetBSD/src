@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.h,v 1.16 2002/02/15 07:33:51 simonb Exp $	*/
+/*	$NetBSD: db_output.h,v 1.16.8.1 2002/06/20 16:31:18 gehenna Exp $	*/
 
 /*
  * Mach Operating System
@@ -37,6 +37,7 @@ void	db_putchar(int);
 int	db_print_position(void);
 void	db_printf(const char *, ...)
 	    __attribute__((__format__(__printf__,1,2)));
+void	db_vprintf __P((const char *, _BSD_VA_LIST_));
 void	db_format_radix(char *, size_t, quad_t, int);
 void	db_format_hex(char *, size_t, quad_t, int);
 void	db_end_line(void);

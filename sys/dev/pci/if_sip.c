@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.52.2.1 2002/05/30 14:46:06 gehenna Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.52.2.2 2002/06/20 16:33:36 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.2.1 2002/05/30 14:46:06 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.2.2 2002/06/20 16:33:36 gehenna Exp $");
 
 #include "bpfilter.h"
 
@@ -1247,7 +1247,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 		sc->sc_txfree -= dmamap->dm_nsegs;
 		sc->sc_txnext = nexttx;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 #if NBPFILTER > 0
@@ -1518,7 +1518,7 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
 
@@ -2321,7 +2321,7 @@ SIP_DECL(stop)(struct ifnet *ifp, int disable)
 		     CMDSTS_INTR) == 0)
 			printf("%s: sip_stop: last descriptor does not "
 			    "have INTR bit set\n", sc->sc_dev.dv_xname);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 #ifdef DIAGNOSTIC
 		if (txs->txs_mbuf == NULL) {
 			printf("%s: dirty txsoft with no mbuf chain\n",
