@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.39 2004/03/28 08:03:02 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.40 2004/03/28 08:08:58 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -242,3 +242,9 @@ sys/kern/kern_exit.c			1.104-1.106
 	Make sure that, if orphaned child is being traced, it's reparented back 
 	to the original parent before it's killed.
 	[junyoung, ticket #1615]
+
+sys/dev/ata/wd.c			1.258 (patch)
+
+	Add LBA48_THRESHOLD #define and set it to the *correct* value.  Use it
+	in place of 0xffffff (which is one too few 'f').
+	[bouyer, ticket #1628]
