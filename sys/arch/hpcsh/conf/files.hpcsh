@@ -1,8 +1,14 @@
-#	$NetBSD: files.hpcsh,v 1.14 2001/07/02 17:19:09 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.15 2002/01/27 05:14:33 uch Exp $
 #
 maxpartitions 8
 
 maxusers 2 16 64
+
+defflag debug_hpcsh.h	BUS_SPACE_DEBUG
+			KLOADER_DEBUG
+			PFCKBD_DEBUG
+			HD64461VIDEO_DEBUG
+			HD64461PCMCIA_DEBUG			
 
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
@@ -11,7 +17,13 @@ file	arch/hpcsh/hpcsh/console.c
 file	arch/hpcsh/hpcsh/autoconf.c
 file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
+
 file	arch/hpcsh/hpcsh/debug.c
+defflag	opt_interrupt_monitor.h		INTERRUPT_MONITOR
+
+file	arch/hpcsh/hpcsh/kloader.c
+defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
+
 
 device mainbus { [id = -1] }
 
