@@ -1,4 +1,4 @@
-/*	$NetBSD: localhostname.c,v 1.7 2000/12/09 00:47:57 thorpej Exp $	*/
+/*	$NetBSD: localhostname.c,v 1.8 2002/07/06 21:39:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: localhostname.c,v 1.7 2000/12/09 00:47:57 thorpej Exp $");
+__RCSID("$NetBSD: localhostname.c,v 1.8 2002/07/06 21:39:25 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: localhostname.c,v 1.7 2000/12/09 00:47:57 thorpej Exp $");
 #include "protos.h"
 
 void
-localhostname(buf, buflen)
-	char *buf;
-	size_t buflen;
+localhostname(char *buf, size_t buflen)
 {
 	struct addrinfo *res, hints;
 	char hostname[MAXHOSTNAMELEN + 1];
