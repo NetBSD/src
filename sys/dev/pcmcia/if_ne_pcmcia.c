@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.57 2000/02/20 03:18:15 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.58 2000/02/27 11:15:47 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -308,6 +308,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_MELCO, PCMCIA_PRODUCT_MELCO_LPC3_TX,
       PCMCIA_CIS_MELCO_LPC3_TX, 
       0, -1, { 0x00, 0x40, 0x26 }, NE2000DVF_AX88190 },
+
+    { PCMCIA_STR_BILLIONTON_LNT10TN,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_BILLIONTON_LNT10TN,
+      0, -1, { 0x00, 0x00, 0x00 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
