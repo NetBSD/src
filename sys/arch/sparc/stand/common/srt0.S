@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.7 1996/10/18 01:36:16 thorpej Exp $	*/
+/*	$NetBSD: srt0.S,v 1.1 1997/06/01 03:39:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Paul Kranenburg

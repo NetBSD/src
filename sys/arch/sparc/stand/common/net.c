@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.4 1997/03/15 18:10:43 is Exp $	*/
+/*	$NetBSD: net.c,v 1.1 1997/06/01 03:39:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -52,13 +52,13 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include "if_ether.h"
+#include <lib/libsa/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include "stand.h"
-#include "net.h"
-#include "netif.h"
-#include "bootparam.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
 
 char		rootpath[FNAME_SIZE];
 
