@@ -1,5 +1,5 @@
-/*	$NetBSD: spamd.c,v 1.4 2004/11/11 11:27:34 yamt Exp $	*/
-/*	$OpenBSD: spamd.c,v 1.64 2004/03/17 14:42:20 beck Exp $	*/
+/*	$NetBSD: spamd.c,v 1.5 2004/11/14 11:26:48 yamt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.71 2004/08/17 09:38:07 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -45,8 +45,6 @@
 #include <unistd.h>
 
 #include <netdb.h>
-#include <sys/types.h>
-#include <machine/endian.h>
 
 #include "sdl.h"
 #include "grey.h"
@@ -56,7 +54,7 @@ struct con {
 	int state;
 	int laststate;
 	int af;
-	struct sockaddr_in sin;
+	struct sockaddr_storage ss;
 	void *ia;
 	char addr[32];
 	char mail[MAX_MAIL], rcpt[MAX_MAIL];
@@ -96,7 +94,7 @@ char	*loglists(struct con *);
 void     build_reply(struct  con *);
 void     doreply(struct con *);
 void     setlog(char *, size_t, char *);
-void     initcon(struct con *, int, struct sockaddr_in *);
+void     initcon(struct con *, int, struct sockaddr *);
 void     closecon(struct con *);
 int      match(const char *, const char *);
 void     nextstate(struct con *);
@@ -532,10 +530,11 @@ setlog(char *p, size_t len, char *f)
 }
 
 void
-initcon(struct con *cp, int fd, struct sockaddr_in *sin)
+initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
 	time_t t;
 	char *tmp;
+	int error;
 
 	time(&t);
 	free(cp->obuf);
@@ -549,12 +548,19 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	if (grow_obuf(cp, 0) == NULL)
 		err(1, "malloc");
 	cp->fd = fd;
-	memcpy(&cp->sin, sin, sizeof(struct sockaddr_in));
-	cp->af = sin->sin_family;
-	cp->ia = (void *) &cp->sin.sin_addr;
+	if (sa->sa_len > sizeof(cp->ss))
+		errx(1, "sockaddr size");
+	if (sa->sa_family != AF_INET)
+		errx(1, "not supported yet");
+	memcpy(&cp->ss, sa, sa->sa_len);
+	cp->af = sa->sa_family;
+	cp->ia = &((struct sockaddr_in *)sa)->sin_addr;
 	cp->blacklists = sdl_lookup(blacklists, cp->af, cp->ia);
 	cp->stutter = (greylist && cp->blacklists == NULL) ? 0 : stutter;
-	strlcpy(cp->addr, inet_ntoa(sin->sin_addr), sizeof(cp->addr));
+	error = getnameinfo(sa, sa->sa_len, cp->addr, sizeof(cp->addr), NULL, 0,
+	    NI_NUMERICHOST);
+	if (error)
+		errx(1, "%s", gai_strerror(error));
 	tmp = strdup(ctime(&t));
 	if (tmp == NULL)
 		err(1, "malloc");
@@ -622,6 +628,16 @@ match(const char *s1, const char *s2)
 void
 nextstate(struct con *cp)
 {
+	if (match(cp->ibuf, "QUIT") && cp->state < 99) {
+		snprintf(cp->obuf, cp->osize, "221 %s\n", hostname);
+		cp->op = cp->obuf;
+		cp->ol = strlen(cp->op);
+		cp->w = t + cp->stutter;
+		cp->laststate = cp->state;
+		cp->state = 99;
+		return;
+	}
+
 	switch (cp->state) {
 	case 0:
 		/* banner sent; wait for input */
@@ -746,25 +762,43 @@ nextstate(struct con *cp)
 		cp->w = t + cp->stutter;
 		break;
 	case 60:
-		if (!strcmp(cp->ibuf, ".") ||
-		    (cp->data_body && ++cp->data_lines >= 10)) {
-			cp->laststate = cp->state;
-			cp->state = 98;
-			goto done;
-		}
-		if (!cp->data_body && !*cp->ibuf)
-			cp->data_body = 1;
-		if (verbose && cp->data_body && *cp->ibuf)
-			syslog_r(LOG_DEBUG, &sdata, "%s: Body: %s", cp->addr,
-			    cp->ibuf);
-		else if (verbose && (match(cp->ibuf, "FROM:") ||
-		    match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:")))
-			syslog_r(LOG_INFO, &sdata, "%s: %s", cp->addr,
-			    cp->ibuf);
+		/* sent 354 blah */
+		cp->ip = cp->ibuf;
+		cp->il = sizeof(cp->ibuf) - 1;
+		cp->laststate = cp->state;
+		cp->state = 70;
+		cp->r = t;
+		break;
+	case 70: {
+		char *p, *q;
+
+		for (p = q = cp->ibuf; q <= cp->ip; ++q)
+			if (*q == '\n' || q == cp->ip) {
+				*q = 0;
+				if (q > p && q[-1] == '\r')
+					q[-1] = 0;
+				if (!strcmp(p, ".") ||
+				    (cp->data_body && ++cp->data_lines >= 10)) {
+					cp->laststate = cp->state;
+					cp->state = 98;
+					goto done;
+				}
+				if (!cp->data_body && !*p)
+					cp->data_body = 1;
+				if (verbose && cp->data_body && *p)
+					syslog_r(LOG_DEBUG, &sdata, "%s: "
+					    "Body: %s", cp->addr, p);
+				else if (verbose && (match(p, "FROM:") ||
+				    match(p, "TO:") || match(p, "SUBJECT:")))
+					syslog_r(LOG_INFO, &sdata, "%s: %s",
+					    cp->addr, p);
+				p = ++q;
+			}
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->r = t;
 		break;
+	}
 	done:
 	case 98:
 		doreply(cp);
@@ -812,9 +846,6 @@ handler(struct con *cp)
 			cp->ip--;
 		*cp->ip = '\0';
 		cp->r = 0;
-		if (verbose)
-			syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
-			    cp->ibuf);
 		nextstate(cp);
 	}
 }
@@ -958,7 +989,7 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
-	
+
 	if (!greylist)
 		maxblack = maxcon;
 	else if (maxblack > maxcon)
@@ -1042,7 +1073,7 @@ main(int argc, char *argv[])
 		}
 		jail_pid = fork();
 		switch(jail_pid) {
-		case -1: 
+		case -1:
 			syslog(LOG_ERR, "fork (%m)");
 			exit(1);
 		case 0:
@@ -1107,7 +1138,7 @@ jail:
 			free(fdsr);
 			fdsr = NULL;
 			free(fdsw);
-			fdsr = NULL;
+			fdsw = NULL;
 			fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsr == NULL)
@@ -1186,7 +1217,7 @@ jail:
 			if (i == maxcon)
 				close(s2);
 			else {
-				initcon(&con[i], s2, &sin);
+				initcon(&con[i], s2, (struct sockaddr *)&sin);
 				syslog_r(LOG_INFO, &sdata,
 				    "%s: connected (%d/%d)%s%s",
 				    con[i].addr, clients, blackcount,
