@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.6 1999/02/24 00:00:03 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.7 1999/03/02 03:18:49 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -119,9 +119,11 @@ rf_ConfigureDisks( listp, raidPtr, cfgPtr )
 	int bs, ret;
 	unsigned i, count, foundone = 0, numFailuresThisRow;
 	int num_rows_done, num_cols_done;
+	int force;
 
 	num_rows_done = 0;
 	num_cols_done = 0;
+	force = cfgPtr->force;
 
 	RF_CallocAndAdd(disks, raidPtr->numRow, sizeof(RF_RaidDisk_t *), 
 			(RF_RaidDisk_t **), raidPtr->cleanupList);
@@ -166,14 +168,14 @@ rf_ConfigureDisks( listp, raidPtr, cfgPtr )
 					       &disks[r][c], r, c);
 			if (ret)
 				goto fail;
-#ifdef NOT_YET_BOYS_AND_GIRLS
+
 			if (disks[r][c].status == rf_ds_optimal) {
 				raidread_component_label(
 					 raidPtr->raid_cinfo[r][c].ci_dev,
 					 raidPtr->raid_cinfo[r][c].ci_vp,
 					 &raidPtr->raid_cinfo[r][c].ci_label);
 			}
-#endif
+
 			if (disks[r][c].status != rf_ds_optimal) {
 				numFailuresThisRow++;
 			} else {
@@ -221,11 +223,17 @@ rf_ConfigureDisks( listp, raidPtr, cfgPtr )
 		goto fail;
 	}
 
-#if NOT_YET_BOYS_AND_GIRLS
 	if (rf_CheckLabels( raidPtr, cfgPtr )) {
-		printf("There were fatal errors (ignored for now)\n");
+		printf("raid%d: There were fatal errors\n", raidPtr->raidid);
+		if (force != 0) {
+			printf("raid%d: Fatal errors being ignored.\n",
+			       raidPtr->raidid);
+		} else {
+			ret = EINVAL;
+			goto fail;
+		} 
 	}
-#endif
+
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
 			if (disks[r][c].status == rf_ds_optimal) {
@@ -417,6 +425,78 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	return (0);
 }
 
+static void rf_print_label_status( RF_Raid_t *, int, int, char *, 
+				  RF_ComponentLabel_t *);
+
+static void
+rf_print_label_status( raidPtr, row, column, dev_name, ci_label )
+	RF_Raid_t *raidPtr;
+	int row;
+	int column;
+	char *dev_name;
+	RF_ComponentLabel_t *ci_label;
+{
+
+	printf("raid%d: Component %s being configured at row: %d col: %d\n", 
+	       raidPtr->raidid, dev_name, row, column );
+	printf("         Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
+	       ci_label->row, ci_label->column, 
+	       ci_label->num_rows, ci_label->num_columns);
+	printf("         Version: %d Serial Number: %d Mod Counter: %d\n",
+	       ci_label->version, ci_label->serial_number,
+	       ci_label->mod_counter);
+	printf("         Clean: %d Status: %d\n",
+	       ci_label->clean, ci_label->status );
+}
+
+static int rf_check_label_vitals( RF_Raid_t *, int, int, char *, 
+				  RF_ComponentLabel_t *, int, int );
+static int rf_check_label_vitals( raidPtr, row, column, dev_name, ci_label,
+				  serial_number, mod_counter )
+	RF_Raid_t *raidPtr;
+	int row;
+	int column;
+	char *dev_name;
+	RF_ComponentLabel_t *ci_label;
+	int serial_number;
+	int mod_counter;
+{
+	int fatal_error = 0;
+
+	if (serial_number != ci_label->serial_number) {
+		printf("%s has a different serial number: %d %d\n", 
+		       dev_name, serial_number, ci_label->serial_number);
+		fatal_error = 1;
+	}
+	if (mod_counter != ci_label->mod_counter) {
+		printf("%s has a different modfication count: %d %d\n",
+		       dev_name, mod_counter, ci_label->mod_counter);
+	}
+	
+	if (row != ci_label->row) {
+		printf("Row out of alignment for: %s\n", dev_name); 
+		fatal_error = 1;
+	}
+	if (column != ci_label->column) {
+		printf("Column out of alignment for: %s\n", dev_name);
+		fatal_error = 1;
+	}
+	if (raidPtr->numRow != ci_label->num_rows) {
+		printf("Number of rows do not match for: %s\n", dev_name);
+		fatal_error = 1;
+	}
+	if (raidPtr->numCol != ci_label->num_columns) {
+		printf("Number of columns do not match for: %s\n", dev_name);
+		fatal_error = 1;
+	}
+	if (ci_label->clean == 0) {
+		/* it's not clean, but that's not fatal */
+		printf("%s is not clean!\n", dev_name);
+	}
+	return(fatal_error);
+}
+
+
 /* 
 
    rf_CheckLabels() - check all the component labels for consistency.
@@ -432,80 +512,252 @@ rf_CheckLabels( raidPtr, cfgPtr )
 	int r,c;
 	char *dev_name;
 	RF_ComponentLabel_t *ci_label;
-	int version = 0;
 	int serial_number = 0;
-	int mod_counter = 0;
+	int mod_number = 0;
 	int fatal_error = 0;
-	int disk_num = 0;
+	int mod_values[4];
+	int mod_count[4];
+	int ser_values[4];
+	int ser_count[4];
+	int num_ser;
+	int num_mod;
+	int i;
+	int found;
+	int hosed_row;
+	int hosed_column;
+	int too_fatal;
+	int parity_good;
+	int force;
 
+	hosed_row = -1;
+	hosed_column = -1;
+	too_fatal = 0;
+	force = cfgPtr->force;
+
+	/* 
+	   We're going to try to be a little intelligent here.  If one 
+	   component's label is bogus, and we can identify that it's the
+	   *only* one that's gone, we'll mark it as "failed" and allow
+	   the configuration to proceed.  This will be the *only* case
+	   that we'll proceed if there would be (otherwise) fatal errors.
+	   
+	   Basically we simply keep a count of how many components had
+	   what serial number.  If all but one agree, we simply mark
+	   the disagreeing component as being failed, and allow 
+	   things to come up "normally".
+	   
+	   We do this first for serial numbers, and then for "mod_counter".
+
+	 */
+
+	num_ser = 0;
+	num_mod = 0;
+	for (r = 0; r < raidPtr->numRow && !fatal_error ; r++) {
+		for (c = 0; c < raidPtr->numCol; c++) {
+			ci_label = &raidPtr->raid_cinfo[r][c].ci_label;
+			found=0;
+			for(i=0;i<num_ser;i++) {
+				if (ser_values[i] == ci_label->serial_number) {
+					ser_count[i]++;
+					found=1;
+					break;
+				}
+			}
+			if (!found) {
+				ser_values[num_ser] = ci_label->serial_number;
+				ser_count[num_ser] = 1;
+				num_ser++;
+				if (num_ser>2) {
+					fatal_error = 1;
+					break;
+				}
+			}
+			found=0;
+			for(i=0;i<num_mod;i++) {
+				if (mod_values[i] == ci_label->mod_counter) {
+					mod_count[i]++;
+					found=1;
+					break;
+				}
+			}
+			if (!found) {
+			        mod_values[num_mod] = ci_label->mod_counter;
+				mod_count[num_mod] = 1;
+				num_mod++;
+				if (num_mod>2) {
+					fatal_error = 1;
+					break;
+				}
+			}
+		}
+	}
+#if DEBUG
+	printf("raid%d: Summary of serial numbers:\n", raidPtr->raidid);
+	for(i=0;i<num_ser;i++) {
+		printf("%d %d\n", ser_values[i], ser_count[i]);
+	}
+	printf("raid%d: Summary of mod counters:\n", raidPtr->raidid);
+	for(i=0;i<num_mod;i++) {
+		printf("%d %d\n", mod_values[i], mod_count[i]);
+	}
+#endif
+	serial_number = ser_values[0];
+	if (num_ser == 2) {
+		if ((ser_count[0] == 1) || (ser_count[1] == 1)) {
+			/* Locate the maverick component */
+			if (ser_count[1] > ser_count[0]) {
+				serial_number = ser_values[1];
+			} 
+			for (r = 0; r < raidPtr->numRow; r++) {
+				for (c = 0; c < raidPtr->numCol; c++) {
+				ci_label = &raidPtr->raid_cinfo[r][c].ci_label;
+					if (serial_number != 
+					    ci_label->serial_number) {
+						hosed_row = r;
+						hosed_column = c;
+						break;
+					}
+				}
+			}
+			printf("Hosed component: %s\n",
+			       &cfgPtr->devnames[hosed_row][hosed_column][0]);
+			if (!force) {
+				/* we'll fail this component, as if there are
+				   other major errors, we arn't forcing things
+				   and we'll abort the config anyways */
+				raidPtr->Disks[hosed_row][hosed_column].status
+					= rf_ds_failed;
+				raidPtr->numFailures++;
+				raidPtr->status[hosed_row] = rf_rs_degraded;
+			}
+		} else {
+			too_fatal = 1;
+		}
+		if (cfgPtr->parityConfig == '0') {
+			/* We've identified two different serial numbers. 
+			   RAID 0 can't cope with that, so we'll punt */
+			too_fatal = 1;
+		}
+
+	} 
+
+	/* record the serial number for later.  If we bail later, setting
+	   this doesn't matter, otherwise we've got the best guess at the 
+	   correct serial number */
+	raidPtr->serial_number = serial_number;
+
+	mod_number = mod_values[0];
+	if (num_mod == 2) {
+		if ((mod_count[0] == 1) || (mod_count[1] == 1)) {
+			/* Locate the maverick component */
+			if (mod_count[1] > mod_count[0]) {
+				mod_number = mod_values[1];
+			} 
+			for (r = 0; r < raidPtr->numRow && !too_fatal ; r++) {
+				for (c = 0; c < raidPtr->numCol; c++) {
+					ci_label = &raidPtr->raid_cinfo[r][c].ci_label;
+					if (mod_number != 
+					    ci_label->mod_counter) {
+						if ( ( hosed_row == r ) &&
+						     ( hosed_column == c )) {
+							/* same one.  Can
+							   deal with it.  */
+						} else {
+							hosed_row = r;
+							hosed_column = c;
+							if (num_ser != 1) {
+								too_fatal = 1;
+								break;
+							}
+						}
+					}
+				}
+			}
+			printf("Hosed component: %s\n",
+			       &cfgPtr->devnames[hosed_row][hosed_column][0]);
+			if (!force) {
+				/* we'll fail this component, as if there are
+				   other major errors, we arn't forcing things
+				   and we'll abort the config anyways */
+				raidPtr->Disks[hosed_row][hosed_column].status
+					= rf_ds_failed;
+				raidPtr->numFailures++;
+				raidPtr->status[hosed_row] = rf_rs_degraded;
+			}
+		} else {
+			too_fatal = 1;
+		}
+		if (cfgPtr->parityConfig == '0') {
+			/* We've identified two different mod counters.
+			   RAID 0 can't cope with that, so we'll punt */
+			too_fatal = 1;
+		}
+	} 
+
+	raidPtr->mod_counter = mod_number;
+
+	if (too_fatal) {
+		/* we've had both a serial number mismatch, and a mod_counter
+		   mismatch -- and they involved two different components!!
+		   Bail -- make things fail so that the user must force
+		   the issue... */
+		hosed_row = -1;
+		hosed_column = -1;
+	}
+
+	if (num_ser > 2) {
+		printf("raid%d: Too many different serial numbers!\n", 
+		       raidPtr->raidid);
+	}
+
+	if (num_mod > 2) {
+		printf("raid%d: Too many different mod counters!\n", 
+		       raidPtr->raidid);
+	}
+
+	/* we start by assuming the parity will be good, and flee from
+	   that notion at the slightest sign of trouble */
+
+	parity_good = RF_RAID_CLEAN;
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
 			dev_name = &cfgPtr->devnames[r][c][0];
 			ci_label = &raidPtr->raid_cinfo[r][c].ci_label;
-			
-			printf("Component label for %s being configured at row: %d col: %d\n", dev_name, r, c );
-			printf("         Row: %d Column: %d Num Rows: %d Num Columns: %d\n", 			       ci_label->row, ci_label->column, 
-			       ci_label->num_rows, ci_label->num_columns);
-			printf("         Version: %d Serial Number: %d Clean: %d Status: %d\n", ci_label->version, ci_label->serial_number,
-			       ci_label->clean, ci_label->status );
-			
-			if ( r !=0 && c != 0) {
-				if (serial_number != ci_label->serial_number) {
-					printf("%s has a different %s\n", 
-					       dev_name, "serial number!");
+
+			if ((r == hosed_row) && (c == hosed_column)) {
+				printf("raid%d: Ignoring %s\n",
+				       raidPtr->raidid, dev_name);
+			} else {			
+				rf_print_label_status( raidPtr, r, c, 
+						       dev_name, ci_label );
+				if (rf_check_label_vitals( raidPtr, r, c, 
+							   dev_name, ci_label,
+							   serial_number, 
+							   mod_number )) {
 					fatal_error = 1;
 				}
-				if (version != ci_label->version) {
-					printf("%s has a different %s\n",
-					       dev_name, "version!");
-					fatal_error = 1;
+				if (ci_label->clean != RF_RAID_CLEAN) {
+					parity_good = RF_RAID_DIRTY;
 				}
-				if (mod_counter != ci_label->mod_counter) {
-					printf("%s has a different modfication count!\n",dev_name);
-				}
-			} else { 
-				serial_number = ci_label->serial_number;
-				version = ci_label->version;
-				mod_counter = ci_label->mod_counter;
 			}
-							
-			if (r != ci_label->row) {
-				printf("Row out of alignment for: %s\n", 
-				       dev_name); 
-				fatal_error = 1;
-			}
-			if (c != ci_label->column) {
-				printf("Column out of alignment for: %s\n", 
-				       dev_name);
-				fatal_error = 1;
-			}
-			if (raidPtr->numRow != ci_label->num_rows) {
-				printf("Number of rows do not match for: %s\n", 
-				       dev_name);
-				fatal_error = 1;
-			}
-			if (raidPtr->numCol != ci_label->num_columns) {
-				printf("Number of columns do not match for: %s\n",
-				       dev_name);
-				fatal_error = 1;
-			}
-			if (ci_label->clean == 0) {
-				/* it's not clean, but it's not fatal */
-				printf("%s is not clean!\n", dev_name);
-			}
-			disk_num++;
 		}
 	}
+	if (fatal_error) {
+		parity_good = RF_RAID_DIRTY;
+	}
+
+	/* we note the state of the parity */
+	raidPtr->parity_good = parity_good;
 
 	return(fatal_error);	
 }
 
 
-int rf_add_hot_spare(RF_Raid_t *, RF_HotSpare_t *);
+int rf_add_hot_spare(RF_Raid_t *, RF_SingleComponent_t *);
 int
 rf_add_hot_spare(raidPtr, sparePtr)
 	RF_Raid_t *raidPtr;
-	RF_HotSpare_t *sparePtr;
+	RF_SingleComponent_t *sparePtr;
 {
 	RF_RaidDisk_t *disks;
 	int ret;
@@ -524,7 +776,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 
 	spare_number = raidPtr->numSpare;
 
-	ret = rf_ConfigureDisk(raidPtr, sparePtr->spare_name,
+	ret = rf_ConfigureDisk(raidPtr, sparePtr->component_name,
 			       &disks[spare_number], 0,
 			       raidPtr->numCol + spare_number);
 
@@ -532,7 +784,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 		goto fail;
 	if (disks[spare_number].status != rf_ds_optimal) {
 		RF_ERRORMSG1("Warning: spare disk %s failed TUR\n", 
-			     sparePtr->spare_name);
+			     sparePtr->component_name);
 		ret=EINVAL;
 		goto fail;
 	} else {
@@ -581,7 +833,7 @@ fail:
 int
 rf_remove_hot_spare(raidPtr,sparePtr)
 	RF_Raid_t *raidPtr;
-	RF_HotSpare_t *sparePtr;
+	RF_SingleComponent_t *sparePtr;
 {
 	int spare_number;
 
@@ -591,7 +843,7 @@ rf_remove_hot_spare(raidPtr,sparePtr)
 		return(EINVAL);
 	}
 
-	spare_number = sparePtr->spare_number;
+	spare_number = sparePtr->column;
 
 	return(EINVAL); /* XXX not implemented yet */
 #if 0

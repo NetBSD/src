@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.4 1999/02/23 23:57:54 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.5 1999/03/02 03:18:48 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -106,16 +106,17 @@ typedef struct RF_ComponentLabel_s {
 	int status;           /* rf_ds_optimal, rf_ds_dist_spared, whatever. */
 } RF_ComponentLabel_t;
 
-typedef struct RF_HotSpare_s {
-	int spare_number;
-	char spare_name[50]; /* name of the spare disk */
-} RF_HotSpare_t; 
+typedef struct RF_SingleComponent_s {
+	int row;
+	int column;
+	char component_name[50]; /* name of the component */
+} RF_SingleComponent_t; 
 
 #ifdef _KERNEL
 
 /* XXX this is *not* the place for these... */
-int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_HotSpare_t *sparePtr);
-int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_HotSpare_t *sparePtr);
+int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
+int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
 
 
 struct raidcinfo {
