@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.1 2001/09/13 23:51:04 thorpej Exp $
+.\"	$NetBSD: pcictl.8,v 1.2 2001/09/15 18:35:00 thorpej Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -60,7 +60,9 @@ The following commands are available:
 .Op Fl f Ar function
 .Pp
 List the devices in the PCI domain.  The bus, device, and function
-numbers may be specified by flags.  Any locator not specified defaults
+numbers may be specified by flags.  If the bus is not
+specified, it defaults to the bus number of the PCI bus specified
+on the command line.  Any other locator not specified defaults
 to a wildcard, or may be explicitly wildcarded by specifying
 .Dq any .
 .Pp
