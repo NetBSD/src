@@ -31,15 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.5 1993/07/15 14:25:18 cgd Exp $
+ *	$Id: vm.h,v 1.6 1993/12/20 12:40:02 cgd Exp $
  */
 
 #ifndef _VM_VM_H_
 #define _VM_VM_H_
 
+typedef struct pager_struct	*vm_pager_t;
+typedef struct vm_page		*vm_page_t;
+
+#include <sys/vmmeter.h>
+#include <vm/queue.h>			/* sys/queue.h in 4.4 */
 #include <vm/vm_param.h>
 #include <vm/lock.h>
-#include <vm/queue.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_inherit.h>
 #include <vm/vm_map.h>

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1990 University of Utah.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: swap_pager.c 1.4 91/04/30
- *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.12 1993/12/17 07:56:37 mycroft Exp $
+ * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
+ *
+ *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
+ *	$Id: swap_pager.c,v 1.13 1993/12/20 12:39:59 cgd Exp $
  */
 
 /*
@@ -48,29 +49,27 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/map.h>
-#include <sys/systm.h>
-#include <miscfs/specfs/specdev.h>	 /* XXX */
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <miscfs/specfs/specdev.h>
 
-#include <vm/vm_param.h>
-#include <vm/queue.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_object.h>
+#include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 #include <vm/swap_pager.h>
+
+#include <machine/cpu.h>
 
 #define NSWSIZES	16	/* size of swtab */
 #define NPENDINGIO	64	/* max # of pending cleans */
 #define MAXDADDRS	64	/* max # of disk addrs for fixed allocations */
 
 #ifdef DEBUG
-int	swpagerdebug = 0 /*0x100*/;
+int	swpagerdebug = 0x100;
 #define	SDB_FOLLOW	0x001
 #define SDB_INIT	0x002
 #define SDB_ALLOC	0x004
@@ -91,7 +90,8 @@ struct swpagerclean {
 	vm_offset_t		spc_kva;
 	vm_page_t		spc_m;
 } swcleanlist[NPENDINGIO];
-typedef	struct swpagerclean	*swp_clean_t;
+typedef struct swpagerclean *swp_clean_t;
+
 
 /* spc_flags values */
 #define SPC_FREE	0x00
@@ -119,7 +119,30 @@ queue_head_t	swap_pager_inuse;	/* list of pending page cleans */
 queue_head_t	swap_pager_free;	/* list of free pager clean structs */
 queue_head_t	swap_pager_list;	/* list of "named" anon regions */
 
-void
+static int		swap_pager_finish __P((swp_clean_t));
+static void 		swap_pager_init __P((void));
+static vm_pager_t	swap_pager_alloc
+			    __P((caddr_t, vm_size_t, vm_prot_t, vm_offset_t));
+static boolean_t	swap_pager_clean __P((vm_page_t, int));
+static void		swap_pager_dealloc __P((vm_pager_t));
+static int		swap_pager_getpage
+			    __P((vm_pager_t, vm_page_t, boolean_t));
+static boolean_t	swap_pager_haspage __P((vm_pager_t, vm_offset_t));
+static int		swap_pager_io __P((sw_pager_t, vm_page_t, int));
+static void		swap_pager_iodone __P((struct buf *));
+static int		swap_pager_putpage
+			    __P((vm_pager_t, vm_page_t, boolean_t));
+
+struct pagerops swappagerops = {
+	swap_pager_init,
+	swap_pager_alloc,
+	swap_pager_dealloc,
+	swap_pager_getpage,
+	swap_pager_putpage,
+	swap_pager_haspage
+};
+
+static void
 swap_pager_init()
 {
 	register swp_clean_t spc;
@@ -185,11 +208,12 @@ swap_pager_init()
  * Note that if we are called from the pageout daemon (handle == NULL)
  * we should not wait for memory as it could resulting in deadlock.
  */
-vm_pager_t
-swap_pager_alloc(handle, size, prot)
+static vm_pager_t
+swap_pager_alloc(handle, size, prot, foff)
 	caddr_t handle;
 	register vm_size_t size;
 	vm_prot_t prot;
+	vm_offset_t foff;
 {
 	register vm_pager_t pager;
 	register sw_pager_t swp;
@@ -282,7 +306,7 @@ swap_pager_alloc(handle, size, prot)
 	pager->pg_handle = handle;
 	pager->pg_ops = &swappagerops;
 	pager->pg_type = PG_SWAP;
-	pager->pg_data = (caddr_t)swp;
+	pager->pg_data = swp;
 
 #ifdef DEBUG
 	if (swpagerdebug & SDB_ALLOC)
@@ -292,7 +316,7 @@ swap_pager_alloc(handle, size, prot)
 	return(pager);
 }
 
-void
+static void
 swap_pager_dealloc(pager)
 	vm_pager_t pager;
 {
@@ -332,7 +356,7 @@ swap_pager_dealloc(pager)
 	s = splbio();
 	while (swp->sw_poip) {
 		swp->sw_flags |= SW_WANTED;
-		assert_wait((int)swp);
+		assert_wait((int)swp, 0);
 		thread_block();
 	}
 	splx(s);
@@ -341,7 +365,6 @@ swap_pager_dealloc(pager)
 	/*
 	 * Free left over swap blocks
 	 */
-	s = splbio();
 	for (i = 0, bp = swp->sw_blocks; i < swp->sw_nblocks; i++, bp++)
 		if (bp->swb_block) {
 #ifdef DEBUG
@@ -351,7 +374,6 @@ swap_pager_dealloc(pager)
 #endif
 			rmfree(swapmap, swp->sw_bsize, bp->swb_block);
 		}
-	splx(s);
 	/*
 	 * Free swap management resources
 	 */
@@ -360,6 +382,7 @@ swap_pager_dealloc(pager)
 	free((caddr_t)pager, M_VMPAGER);
 }
 
+static int
 swap_pager_getpage(pager, m, sync)
 	vm_pager_t pager;
 	vm_page_t m;
@@ -372,6 +395,7 @@ swap_pager_getpage(pager, m, sync)
 	return(swap_pager_io((sw_pager_t)pager->pg_data, m, B_READ));
 }
 
+static int
 swap_pager_putpage(pager, m, sync)
 	vm_pager_t pager;
 	vm_page_t m;
@@ -385,7 +409,7 @@ swap_pager_putpage(pager, m, sync)
 #endif
 	if (pager == NULL) {
 		(void) swap_pager_clean(NULL, B_WRITE);
-		return;
+		return (VM_PAGER_OK);		/* ??? */
 	}
 	flags = B_WRITE;
 	if (!sync)
@@ -393,7 +417,7 @@ swap_pager_putpage(pager, m, sync)
 	return(swap_pager_io((sw_pager_t)pager->pg_data, m, flags));
 }
 
-boolean_t
+static boolean_t
 swap_pager_haspage(pager, offset)
 	vm_pager_t pager;
 	vm_offset_t offset;
@@ -437,6 +461,7 @@ swap_pager_haspage(pager, offset)
  * BOGUS:  lower level IO routines expect a KVA so we have to map our
  * provided physical page into the KVA to keep them happy.
  */
+static int
 swap_pager_io(swp, m, flags)
 	register sw_pager_t swp;
 	vm_page_t m;
@@ -453,9 +478,11 @@ swap_pager_io(swp, m, flags)
 #ifdef DEBUG
 	/* save panic time state */
 	if ((swpagerdebug & SDB_ANOMPANIC) && panicstr)
-		return;
+		return (VM_PAGER_FAIL);		/* XXX: correct return? */
 	if (swpagerdebug & (SDB_FOLLOW|SDB_IO))
 		printf("swpg_io(%x, %x, %x)\n", swp, m, flags);
+	if ((flags & (B_READ|B_ASYNC)) == (B_READ|B_ASYNC))
+		panic("swap_pager_io: cannot do ASYNC reads");
 #endif
 
 	/*
@@ -475,7 +502,7 @@ swap_pager_io(swp, m, flags)
 				printf("swap_pager_io: page %x cleaning\n", m);
 
 			swp->sw_flags |= SW_WANTED;
-			assert_wait((int)swp);
+			assert_wait((int)swp, 0);
 			thread_block();
 		}
 #else
@@ -513,7 +540,6 @@ swap_pager_io(swp, m, flags)
 #endif
 		return(VM_PAGER_FAIL);
 	}
-	s = splbio();
 	swb = &swp->sw_blocks[ix];
 	off = off % dbtob(swp->sw_bsize);
 	if (flags & B_READ) {
@@ -528,7 +554,6 @@ swap_pager_io(swp, m, flags)
 				       m->offset, m->object->paging_offset);
 #endif
 			/* XXX: should we zero page here?? */
-	splx(s);
 			return(VM_PAGER_FAIL);
 		}
 	} else if (swb->swb_block == 0) {
@@ -539,7 +564,6 @@ swap_pager_io(swp, m, flags)
 				printf("swpg_io: rmalloc of %x failed\n",
 				       swp->sw_bsize);
 #endif
-	splx(s);
 			return(VM_PAGER_FAIL);
 		}
 #ifdef DEBUG
@@ -548,7 +572,6 @@ swap_pager_io(swp, m, flags)
 			       swp->sw_blocks, swb->swb_block, ix);
 #endif
 	}
-	splx(s);
 
 	/*
 	 * Allocate a kernel virtual address and initialize so that PTE
@@ -560,7 +583,7 @@ swap_pager_io(swp, m, flags)
 	 * Get a swap buffer header and perform the IO
 	 */
 	s = splbio();
-	while (bswlist.av_forw == NULL) {
+	while (bswlist.b_actf == NULL) {
 #ifdef DEBUG
 		if (swpagerdebug & SDB_ANOM)
 			printf("swap_pager_io: wait on swbuf for %x (%d)\n",
@@ -569,16 +592,14 @@ swap_pager_io(swp, m, flags)
 		bswlist.b_flags |= B_WANTED;
 		tsleep((caddr_t)&bswlist, PSWP+1, "swpgio", 0);
 	}
-	bp = bswlist.av_forw;
-	bswlist.av_forw = bp->av_forw;
+	bp = bswlist.b_actf;
+	bswlist.b_actf = bp->b_actf;
 	splx(s);
 	bp->b_flags = B_BUSY | (flags & B_READ);
 	bp->b_proc = &proc0;	/* XXX (but without B_PHYS set this is ok) */
 	/* No need for crhold(), as we hope that proc0 won't go away soon */
 	bp->b_rcred = bp->b_wcred = proc0.p_ucred;
 	bp->b_un.b_addr = (caddr_t)kva;
-	if (!swb->swb_block)
-		panic("swap_pager_io: page to first block\n");
 	bp->b_blkno = swb->swb_block + btodb(off);
 	VHOLD(swapdev_vp);
 	bp->b_vp = swapdev_vp;
@@ -651,7 +672,7 @@ swap_pager_io(swp, m, flags)
 		swap_pager_poip++;
 #endif
 	while ((bp->b_flags & B_DONE) == 0) {
-		assert_wait((int)bp);
+		assert_wait((int)bp, 0);
 		thread_block();
 	}
 #ifdef DEBUG
@@ -660,10 +681,10 @@ swap_pager_io(swp, m, flags)
 	else
 		--swap_pager_poip;
 #endif
-	rv = (bp->b_flags & B_ERROR) ? VM_PAGER_FAIL : VM_PAGER_OK;
-	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_DIRTY);
-	bp->av_forw = bswlist.av_forw;
-	bswlist.av_forw = bp;
+	rv = (bp->b_flags & B_ERROR) ? VM_PAGER_ERROR : VM_PAGER_OK;
+	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY);
+	bp->b_actf = bswlist.b_actf;
+	bswlist.b_actf = bp;
 	if (bp->b_vp)
 		brelvp(bp);
 	if (bswlist.b_flags & B_WANTED) {
@@ -671,21 +692,21 @@ swap_pager_io(swp, m, flags)
 		thread_wakeup((int)&bswlist);
 	}
 	if ((flags & B_READ) == 0 && rv == VM_PAGER_OK) {
-		m->clean = TRUE;
+		m->flags |= PG_CLEAN;
 		pmap_clear_modify(VM_PAGE_TO_PHYS(m));
 	}
 	splx(s);
 #ifdef DEBUG
 	if (swpagerdebug & SDB_IO)
 		printf("swpg_io:  IO done: bp %x, rv %d\n", bp, rv);
-	if ((swpagerdebug & SDB_FAIL) && rv == VM_PAGER_FAIL)
+	if ((swpagerdebug & SDB_FAIL) && rv == VM_PAGER_ERROR)
 		printf("swpg_io: IO error\n");
 #endif
 	vm_pager_unmap_page(kva);
 	return(rv);
 }
 
-boolean_t
+static boolean_t
 swap_pager_clean(m, rw)
 	vm_page_t m;
 	int rw;
@@ -696,7 +717,7 @@ swap_pager_clean(m, rw)
 #ifdef DEBUG
 	/* save panic time state */
 	if ((swpagerdebug & SDB_ANOMPANIC) && panicstr)
-		return;
+		return (FALSE);			/* ??? */
 	if (swpagerdebug & SDB_FOLLOW)
 		printf("swpg_clean(%x, %d)\n", m, rw);
 #endif
@@ -778,6 +799,7 @@ swap_pager_clean(m, rw)
 	return(tspc ? TRUE : FALSE);
 }
 
+static int
 swap_pager_finish(spc)
 	register swp_clean_t spc;
 {
@@ -808,7 +830,7 @@ swap_pager_finish(spc)
 		if (swpagerdebug & SDB_ANOM)
 			printf("swap_pager_finish: page %x dirty again\n",
 			       spc->spc_m);
-		spc->spc_m->busy = FALSE;
+		spc->spc_m->flags &= ~PG_BUSY;
 		PAGE_WAKEUP(spc->spc_m);
 		vm_object_unlock(object);
 		return(1);
@@ -822,18 +844,19 @@ swap_pager_finish(spc)
 	if (spc->spc_flags & SPC_ERROR) {
 		printf("swap_pager_finish: clean of page %x failed\n",
 		       VM_PAGE_TO_PHYS(spc->spc_m));
-		spc->spc_m->laundry = TRUE;
+		spc->spc_m->flags |= PG_LAUNDRY;
 	} else {
-		spc->spc_m->clean = TRUE;
+		spc->spc_m->flags |= PG_CLEAN;
 		pmap_clear_modify(VM_PAGE_TO_PHYS(spc->spc_m));
 	}
-	spc->spc_m->busy = FALSE;
+	spc->spc_m->flags &= ~PG_BUSY;
 	PAGE_WAKEUP(spc->spc_m);
 
 	vm_object_unlock(object);
 	return(1);
 }
 
+static void
 swap_pager_iodone(bp)
 	register struct buf *bp;
 {
@@ -862,10 +885,8 @@ swap_pager_iodone(bp)
 
 	spc->spc_flags &= ~SPC_BUSY;
 	spc->spc_flags |= SPC_DONE;
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_flags & B_ERROR)
 		spc->spc_flags |= SPC_ERROR;
-printf("error %d blkno %d sz %d ", bp->b_error, bp->b_blkno, bp->b_bcount);
-	}
 	spc->spc_bp = NULL;
 	blk = bp->b_blkno;
 
@@ -883,15 +904,22 @@ printf("error %d blkno %d sz %d ", bp->b_error, bp->b_blkno, bp->b_bcount);
 		thread_wakeup((int)spc->spc_swp);
 	}
 		
-	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_DIRTY);
-	bp->av_forw = bswlist.av_forw;
-	bswlist.av_forw = bp;
+	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY);
+	bp->b_actf = bswlist.b_actf;
+	bswlist.b_actf = bp;
 	if (bp->b_vp)
 		brelvp(bp);
 	if (bswlist.b_flags & B_WANTED) {
 		bswlist.b_flags &= ~B_WANTED;
 		thread_wakeup((int)&bswlist);
 	}
-	thread_wakeup((int) &vm_pages_needed);
+#ifdef notyet /* XXX */
+	/*
+	 * Only kick the pageout daemon if we are really hurting
+	 * for pages, otherwise this page will be picked up later.
+	 */
+	if (cnt.v_free_count < cnt.v_free_min)
+		thread_wakeup((int) &vm_pages_needed);
+#endif
 	splx(s);
 }

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_kern.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_kern.c,v 1.7 1993/12/17 07:56:49 mycroft Exp $
+ *	$Id: vm_kern.c,v 1.8 1993/12/20 12:40:08 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -101,6 +101,11 @@ vm_offset_t kmem_alloc_pageable(map, size)
 	if (result != KERN_SUCCESS) {
 		return(0);
 	}
+
+#ifdef KMEM_DEBUG
+	if (map == kernel_map)
+		printf("kmem_alloc_pageable: %x %x\n", addr, size);
+#endif
 
 	return(addr);
 }
@@ -183,7 +188,7 @@ vm_offset_t kmem_alloc(map, size)
 			vm_object_lock(kernel_object);
 		}
 		vm_page_zero_fill(mem);
-		mem->busy = FALSE;
+		mem->flags &= ~PG_BUSY;
 	}
 	vm_object_unlock(kernel_object);
 		
@@ -198,6 +203,11 @@ vm_offset_t kmem_alloc(map, size)
 	 */
 
 	vm_map_simplify(map, addr);
+
+#ifdef KMEM_DEBUG
+	if (map == kernel_map)
+		printf("kmem_alloc: %x %x\n", addr, size);
+#endif
 
 	return(addr);
 }
@@ -214,6 +224,12 @@ void kmem_free(map, addr, size)
 	register vm_offset_t	addr;
 	vm_size_t		size;
 {
+
+#ifdef KMEM_DEBUG
+	if (map == kernel_map)
+		printf("kmem_free: %x %x\n", addr, size);
+#endif
+
 	(void) vm_map_remove(map, trunc_page(addr), round_page(addr + size));
 	vm_map_simplify(map, addr);
 }
@@ -256,6 +272,12 @@ vm_map_t kmem_suballoc(parent, min, max, size, pageable)
 		panic("kmem_suballoc: cannot create submap");
 	if ((ret = vm_map_submap(parent, *min, *max, result)) != KERN_SUCCESS)
 		panic("kmem_suballoc: unable to change range to submap");
+
+#ifdef KMEM_DEBUG
+	if (parent == kernel_map)
+		printf("kmem_suballoc: %x %x %x %x\n", *min, *max, size, pageable);
+#endif
+
 	return(result);
 }
 
@@ -431,7 +453,7 @@ kmem_malloc(map, size, canwait)
 #if 0
 		vm_page_zero_fill(m);
 #endif
-		m->busy = FALSE;
+		m->flags &= ~PG_BUSY;
 	}
 	vm_object_unlock(kmem_object);
 
@@ -597,6 +619,10 @@ void kmem_init(start, end)
 {
 	vm_offset_t	addr;
 	extern vm_map_t	kernel_map;
+
+#ifdef KMEM_DEBUG
+	printf("kmem_init: %x %x %x\n", VM_MIN_KERNEL_ADDRESS, start, end);
+#endif
 
 	addr = VM_MIN_KERNEL_ADDRESS;
 	kernel_map = vm_map_create(pmap_kernel(), addr, end, FALSE);

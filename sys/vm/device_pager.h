@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.h	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.h,v 1.4 1993/11/03 14:48:44 cgd Exp $
+ *	$Id: device_pager.h,v 1.5 1993/12/20 12:39:57 cgd Exp $
  */
 
 #ifndef	_DEVICE_PAGER_

@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vm_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pager.c,v 1.8 1993/12/17 07:57:14 mycroft Exp $
+ *	from: @(#)vm_pager.c	8.1 (Berkeley) 6/11/93
+ *	$Id: vm_pager.c,v 1.9 1993/12/20 12:40:23 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -69,33 +69,41 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
 
-#if SWAPPAGER
+#ifdef SWAPPAGER
 extern struct pagerops swappagerops;
 #endif
-#if VNODEPAGER
+
+#ifdef VNODEPAGER
 extern struct pagerops vnodepagerops;
 #endif
-#if DEVPAGER
+
+#ifdef DEVPAGER
 extern struct pagerops devicepagerops;
 #endif
 
 struct pagerops *pagertab[] = {
-#if SWAPPAGER
+#ifdef SWAPPAGER
 	&swappagerops,		/* PG_SWAP */
+#else
+	NULL,
 #endif
-#if VNODEPAGER
+#ifdef VNODEPAGER
 	&vnodepagerops,		/* PG_VNODE */
+#else
+	NULL,
 #endif
-#if DEVPAGER
+#ifdef DEVPAGER
 	&devicepagerops,	/* PG_DEV */
+#else
+	NULL,
 #endif
-	NULL			/* pager table terminator */
 };
 int npagers = sizeof (pagertab) / sizeof (pagertab[0]);
 
@@ -123,13 +131,16 @@ vm_pager_init()
 	 * Initialize known pagers
 	 */
 	for (pgops = pagertab; pgops < &pagertab[npagers]; pgops++)
-		if (*pgops) (*(*pgops)->pgo_init)();
+		if (*pgops != NULL)
+			(*(*pgops)->pgo_init)();
 	if (dfltpagerops == NULL)
 		panic("no default pager");
 }
 
 /*
  * Allocate an instance of a pager of the given type.
+ * Size, protection and offset parameters are passed in for pagers that
+ * need to perform page-level validation (e.g. the device pager).
  */
 vm_pager_t
 vm_pager_allocate(type, handle, size, prot, off)
@@ -137,12 +148,16 @@ vm_pager_allocate(type, handle, size, prot, off)
 	caddr_t handle;
 	vm_size_t size;
 	vm_prot_t prot;
+	vm_offset_t off;
 {
 	vm_pager_t pager;
 	struct pagerops *ops;
 
 	ops = (type == PG_DFLT) ? dfltpagerops : pagertab[type];
-	return((*ops->pgo_alloc)(handle, size, prot, off));
+	if (ops == NULL)
+		return NULL;	/* not compiled in; punt */
+	else
+		return((*ops->pgo_alloc)(handle, size, prot, off));
 }
 
 void
@@ -155,6 +170,7 @@ vm_pager_deallocate(pager)
 	VM_PAGER_DEALLOC(pager);
 }
 
+int
 vm_pager_get(pager, m, sync)
 	vm_pager_t	pager;
 	vm_page_t	m;
@@ -167,6 +183,7 @@ vm_pager_get(pager, m, sync)
 	return(VM_PAGER_GET(pager, m, sync));
 }
 
+int
 vm_pager_put(pager, m, sync)
 	vm_pager_t	pager;
 	vm_page_t	m;
@@ -197,7 +214,8 @@ vm_pager_sync()
 	struct pagerops **pgops;
 
 	for (pgops = pagertab; pgops < &pagertab[npagers]; pgops++)
-		if (*pgops) (*(*pgops)->pgo_putpage)(NULL, NULL, FALSE);
+		if (*pgops != NULL)
+			(*(*pgops)->pgo_putpage)(NULL, NULL, FALSE);
 }
 
 vm_offset_t
@@ -207,14 +225,14 @@ vm_pager_map_page(m)
 	vm_offset_t kva;
 
 #ifdef DEBUG
-	if (!m->busy || m->active)
-		panic("vm_pager_map_page: page active or not busy");
-	if (m->pagerowned)
+	if ((m->flags & PG_BUSY) == 0)
+		panic("vm_pager_map_page: page not busy");
+	if (m->flags & PG_PAGEROWNED)
 		printf("vm_pager_map_page: page %x already in pager\n", m);
 #endif
 	kva = kmem_alloc_wait(pager_map, PAGE_SIZE);
 #ifdef DEBUG
-	m->pagerowned = 1;
+	m->flags |= PG_PAGEROWNED;
 #endif
 	pmap_enter(vm_map_pmap(pager_map), kva, VM_PAGE_TO_PHYS(m),
 		   VM_PROT_DEFAULT, TRUE);
@@ -230,10 +248,11 @@ vm_pager_unmap_page(kva)
 
 	m = PHYS_TO_VM_PAGE(pmap_extract(vm_map_pmap(pager_map), kva));
 #endif
+	pmap_remove(vm_map_pmap(pager_map), kva, kva + PAGE_SIZE);
 	kmem_free_wakeup(pager_map, kva, PAGE_SIZE);
 #ifdef DEBUG
-	if (m->pagerowned)
-		m->pagerowned = 0;
+	if (m->flags & PG_PAGEROWNED)
+		m->flags &= ~PG_PAGEROWNED;
 	else
 		printf("vm_pager_unmap_page: page %x(%x/%x) not owned\n",
 		       m, kva, VM_PAGE_TO_PHYS(m));
@@ -260,6 +279,7 @@ vm_pager_lookup(list, handle)
  * This routine gains a reference to the object.
  * Explicit deallocation is necessary.
  */
+int
 pager_cache(object, should_cache)
 	vm_object_t	object;
 	boolean_t	should_cache;
@@ -269,7 +289,10 @@ pager_cache(object, should_cache)
 
 	vm_object_cache_lock();
 	vm_object_lock(object);
-	object->can_persist = should_cache;
+	if (should_cache)
+		object->flags |= OBJ_CANPERSIST;
+	else
+		object->flags &= ~OBJ_CANPERSIST;
 	vm_object_unlock(object);
 	vm_object_cache_unlock();
 

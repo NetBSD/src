@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.10 1993/12/06 13:00:49 mycroft Exp $
+ *	$Id: device_pager.c,v 1.11 1993/12/20 12:39:55 cgd Exp $
  */
 
 /*
@@ -48,6 +48,8 @@
 #include <sys/conf.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>			/* XXX arguably shouldn't be here */
+#include <miscfs/specfs/specdev.h>	/* XXX arguably shouldn't be here */
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -127,7 +129,7 @@ dev_pager_alloc(handle, size, prot, foff)
 	/*
 	 * Make sure this device can be mapped.
 	 */
-	dev = (dev_t)handle;
+	dev = (dev_t)(long)handle;
 	mapfunc = cdevsw[major(dev)].d_mmap;
 	if (mapfunc == NULL || mapfunc == enodev || mapfunc == nullop)
 		return(NULL);
@@ -264,7 +266,7 @@ dev_pager_getpage(pager, m, sync)
 #endif
 
 	object = m->object;
-	dev = (dev_t)pager->pg_handle;
+	dev = (dev_t)(long)pager->pg_handle;
 	offset = m->offset + object->paging_offset;
 	prot = PROT_READ;	/* XXX should pass in? */
 	mapfunc = cdevsw[major(dev)].d_mmap;
@@ -285,9 +287,9 @@ dev_pager_getpage(pager, m, sync)
 	queue_enter(&((dev_pager_t)pager->pg_data)->devp_pglist,
 		    page, vm_page_t, pageq);
 	vm_object_lock(object);
-	vm_page_lock_queues();
+	VM_PAGE_LOCK_QUEUES();
 	vm_page_free(m);
-	vm_page_unlock_queues();
+	VM_PAGE_UNLOCK_QUEUES();
 	vm_page_insert(page, object, offset);
 	PAGE_WAKEUP(m);
 	if (offset + PAGE_SIZE > object->size)
@@ -339,28 +341,7 @@ dev_pager_getfake(paddr)
 		}
 	}
 	queue_remove_first(&dev_pager_fakelist, m, vm_page_t, pageq);
-
-        /*
-	 * in 4.4, there is 'flags'.  I HATE BIT-FIELDS!!!
-	 * this chunk is the translation from hibler's new code
-	 *	m->flags = PG_BUSY | PG_CLEAN | PG_FAKE | PG_FICTITIOUS;
-	 * to ours:
-	 */
-	m->inactive = 0;
-	m->active = 0;
-	m->laundry = 0;
-	m->clean = 1;
-	m->busy = 1;
-	m->wanted = 0;
-	m->tabled = 0;
-	m->copy_on_write = 0;
-	m->fictitious = 1;
-	m->fake = 1;
-#ifdef DEBUG
-	m->pagerowned = 0;
-	m->ptpage = 0;
-#endif /* DEBUG */
-
+	m->flags = PG_BUSY | PG_CLEAN | PG_FAKE | PG_FICTITIOUS;
 	m->phys_addr = paddr;
 	m->wire_count = 1;
 	return(m);
@@ -371,7 +352,7 @@ dev_pager_putfake(m)
 	vm_page_t m;
 {
 #ifdef DIAGNOSTIC
-	if (!m->fictitious)
+	if (!(m->flags & PG_FICTITIOUS))
 		panic("dev_pager_putfake: bad page");
 #endif
 	queue_enter(&dev_pager_fakelist, m, vm_page_t, pageq);

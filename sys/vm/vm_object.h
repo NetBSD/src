@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_object.h,v 1.4 1993/07/29 21:45:40 jtc Exp $
+ *	$Id: vm_object.h,v 1.5 1993/12/20 12:40:17 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -82,7 +82,6 @@ struct vm_object {
 	queue_chain_t		memq;		/* Resident memory */
 	queue_chain_t		object_list;	/* list of all objects */
 	simple_lock_data_t	Lock;		/* Synchronization */
-	int			LockHolder;
 	int			ref_count;	/* How many refs?? */
 	vm_size_t		size;		/* Object size */
 	int			resident_page_count;
@@ -90,18 +89,19 @@ struct vm_object {
 	struct vm_object	*copy;		/* Object that holds copies of
 						   my changed pages */
 	vm_pager_t		pager;		/* Where to get data */
-	boolean_t		pager_ready;	/* Have pager fields been filled? */
 	vm_offset_t		paging_offset;	/* Offset into paging space */
 	struct vm_object	*shadow;	/* My shadow */
 	vm_offset_t		shadow_offset;	/* Offset in shadow */
-	unsigned int
-				paging_in_progress:16,
+	u_short			paging_in_progress;
 						/* Paging (in or out) - don't
 						   collapse or destroy */
-	/* boolean_t */		can_persist:1,	/* allow to persist */
-	/* boolean_t */		internal:1;	/* internally created object */
+	u_short			flags;		/* object flags; see below */
 	queue_chain_t		cached_list;	/* for persistence */
 };
+
+/* Object flags */
+#define OBJ_CANPERSIST		0x0001	/* allow to persist */
+#define OBJ_INTERNAL		0x0002	/* internally created object */
 
 typedef struct vm_object	*vm_object_t;
 
@@ -153,20 +153,15 @@ void		vm_object_setpager();
 void		vm_object_cache_clear();
 void		vm_object_print();
 
-#if	VM_OBJECT_DEBUG
-#define	vm_object_lock_init(object)	{ simple_lock_init(&(object)->Lock); (object)->LockHolder = 0; }
-#define	vm_object_lock(object)		{ simple_lock(&(object)->Lock); (object)->LockHolder = (int) current_thread(); }
-#define	vm_object_unlock(object)	{ (object)->LockHolder = 0; simple_unlock(&(object)->Lock); }
-#define	vm_object_lock_try(object)	(simple_lock_try(&(object)->Lock) ? ( ((object)->LockHolder = (int) current_thread()) , TRUE) : FALSE)
+#define	vm_object_lock_init(object) \
+	simple_lock_init(&(object)->Lock)
+#define	vm_object_lock(object) \
+	simple_lock(&(object)->Lock)
+#define	vm_object_unlock(object) \
+	simple_unlock(&(object)->Lock)
+#define	vm_object_lock_try(object) \
+	simple_lock_try(&(object)->Lock)
 #define	vm_object_sleep(event, object, interruptible) \
-					{ (object)->LockHolder = 0; thread_sleep((event), &(object)->Lock, (interruptible)); }
-#else	/* VM_OBJECT_DEBUG */
-#define	vm_object_lock_init(object)	simple_lock_init(&(object)->Lock)
-#define	vm_object_lock(object)		simple_lock(&(object)->Lock)
-#define	vm_object_unlock(object)	simple_unlock(&(object)->Lock)
-#define	vm_object_lock_try(object)	simple_lock_try(&(object)->Lock)
-#define	vm_object_sleep(event, object, interruptible) \
-					thread_sleep((event), &(object)->Lock, (interruptible))
-#endif	/* VM_OBJECT_DEBUG */
+	thread_sleep((event), &(object)->Lock, (interruptible))
 
 #endif /* !_VM_VM_OBJECT_H_ */

@@ -72,6 +72,8 @@
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
 
+#include <machine/cpu.h>
+
 int	avefree = 0;		/* XXX */
 int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
 
@@ -198,7 +200,7 @@ vm_fork(p1, p2, isvfork)
 	 * objects that reside in the map by marking all of them non-inheritable
 	 */
 	(void)vm_map_inherit(&p1->p_vmspace->vm_map,
-		UPT_MIN_ADDRESS-UPAGES*NBPG, VM_MAX_ADDRESS, VM_INHERIT_NONE);
+		VM_MAXUSER_ADDRESS, VM_MAX_ADDRESS, VM_INHERIT_NONE);
 #endif
 	p2->p_vmspace = vmspace_fork(p1->p_vmspace);
 
@@ -236,13 +238,13 @@ vm_fork(p1, p2, isvfork)
 	     (caddr_t)&up->u_stats.pstat_startcopy));
 
 #if defined(i386) || defined(pc532)
-	{ u_int addr = UPT_MIN_ADDRESS - UPAGES*NBPG; struct vm_map *vp;
+	{ u_int addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
 
 	vp = &p2->p_vmspace->vm_map;
 
 	/* ream out old pagetables and kernel stack */
-	(void)vm_deallocate(vp, addr, UPT_MAX_ADDRESS - addr);
-	(void)vm_allocate(vp, &addr, UPT_MAX_ADDRESS - addr, FALSE);
+	(void)vm_deallocate(vp, addr, VM_MAX_ADDRESS - addr);
+	(void)vm_allocate(vp, &addr, VM_MAX_ADDRESS - addr, FALSE);
 	}
 #endif
 	/*
