@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.14 2004/01/10 07:03:28 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.15 2004/01/10 07:41:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.14 2004/01/10 07:03:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.15 2004/01/10 07:41:18 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -393,14 +393,14 @@ atw_read_srom(struct atw_softc *sc)
 #ifdef ATW_DEBUG
 	{
 		int i;
-		ATW_DPRINTF2(("\nSerial EEPROM:\n\t"));
+		ATW_DPRINTF(("\nSerial EEPROM:\n\t"));
 		for (i = 0; i < sc->sc_sromsz/2; i = i + 1) {
 			if (((i % 8) == 0) && (i != 0)) {
-				ATW_DPRINTF2(("\n\t"));
+				ATW_DPRINTF(("\n\t"));
 			}
-			ATW_DPRINTF2((" 0x%x", sc->sc_srom[i]));
+			ATW_DPRINTF((" 0x%x", sc->sc_srom[i]));
 		}
-		ATW_DPRINTF2(("\n"));
+		ATW_DPRINTF(("\n"));
 	}
 #endif /* ATW_DEBUG */
 	return 0;
@@ -646,7 +646,7 @@ atw_attach(struct atw_softc *sc)
 	 */
 	sc->sc_flags |= ATWF_ATTACHED /* | ATWF_RTSCTS */;
 
-	ATW_DPRINTF2((" SROM MAC %04x%04x%04x",
+	ATW_DPRINTF((" SROM MAC %04x%04x%04x",
 	    htole16(sc->sc_srom[ATW_SR_MAC00]),
 	    htole16(sc->sc_srom[ATW_SR_MAC01]),
 	    htole16(sc->sc_srom[ATW_SR_MAC10])));
@@ -2719,6 +2719,7 @@ atw_intr(arg)
 			PRINTINTR(ATW_INTR_LINKON);
 			PRINTINTR(ATW_INTR_RCI);
 			PRINTINTR(ATW_INTR_RDU);
+			PRINTINTR(ATW_INTR_REIS);
 			PRINTINTR(ATW_INTR_RPS);
 			PRINTINTR(ATW_INTR_TCI);
 			PRINTINTR(ATW_INTR_TDU);
