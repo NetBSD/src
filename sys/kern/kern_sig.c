@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.149 2003/09/10 16:41:26 kleink Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.150 2003/09/11 01:32:09 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.149 2003/09/10 16:41:26 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.150 2003/09/11 01:32:09 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1157,13 +1157,14 @@ kpsendsig(struct lwp *l, ksiginfo_t *ksi, sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *le, *li;
-	siginfo_t *si;	
+	siginfo_t *si;
+	int f;
 
 	if (p->p_flag & P_SA) {
 
 		/* XXXUPSXXX What if not on sa_vp ? */
 
-		int s = l->l_flag & L_SA;
+		f = l->l_flag & L_SA;
 		l->l_flag &= ~L_SA; 
 		si = pool_get(&siginfo_pool, PR_WAITOK);
 		si->_info = *ksi;
@@ -1175,7 +1176,7 @@ kpsendsig(struct lwp *l, ksiginfo_t *ksi, sigset_t *mask)
 
 		sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li, 
 			    sizeof(siginfo_t), si);
-		l->l_flag |= s;
+		l->l_flag |= f;
 		return;
 	}
 
