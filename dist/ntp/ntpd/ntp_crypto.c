@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.4 2003/12/04 17:06:12 drochner Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3723,6 +3723,7 @@ crypto_setup(void)
 	tstamp_t sstamp;	/* sign filestamp */
 	u_int	len, bytes;
 	u_char	*ptr;
+	const char *fnptr;
 
 	/*
 	 * Initialize structures.
@@ -3748,9 +3749,10 @@ crypto_setup(void)
 	 */
 	ERR_load_crypto_strings();
 	if (rand_file == NULL) {
-		if ((RAND_file_name(filename, MAXFILENAME)) != NULL) {
-			rand_file = emalloc(strlen(filename) + 1);
-			strcpy(rand_file, filename);
+		fnptr = RAND_file_name(filename, MAXFILENAME);
+		if (fnptr != NULL) {
+			rand_file = emalloc(strlen(fnptr) + 1);
+			strcpy(rand_file, fnptr);
 		}
 	} else if (*rand_file != '/') {
 		snprintf(filename, MAXFILENAME, "%s/%s", keysdir,
