@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.23 2004/07/28 12:34:05 jmmv Exp $
+.\" $NetBSD: wsdisplay.4,v 1.24 2004/07/29 22:29:37 jmmv Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 28, 2004
+.Dd July 29, 2004
 .Os
 .Dt WSDISPLAY 4
 .Sh NAME
@@ -437,6 +437,13 @@ Set the attributes (colors and flags) used to print console messages, including
 separate fields for default output and kernel output.
 The argument structure is the same as for
 .Dv WSDISPLAYIO_GMSGATTRS .
+.It Dv WSDISPLAYIO_GBORDER Pq Li u_int
+Retrieve the color of the screen border.
+This number corresponds to an ANSI standard color.
+.It Dv WSDISPLAYIO_SBORDER Pq Li u_int
+Set the color of the screen border, if applicable.
+This number corresponds to an ANSI standard color.
+Not all drivers support this feature.
 .El
 .Sh FILES
 .Bl -item
