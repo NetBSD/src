@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.10 1997/03/21 22:46:05 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.11 1997/04/09 20:56:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -163,8 +163,6 @@ void	proc_trampoline __P((void));
 void	pmap_bootstrap __P((vm_offset_t nextva));
 int 	pmap_pa_exists __P((vm_offset_t pa));
 void	pmap_set_kcore_hdr __P((struct cpu_kcore_hdr *));
-
-void	regdump __P((struct trapframe *, int));
 
 void	savectx __P((struct pcb *));
 
