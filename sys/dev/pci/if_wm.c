@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.68.2.3.2.1 2005/01/07 11:44:30 jdc Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.68.2.3.2.2 2005/01/08 08:57:26 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68.2.3.2.1 2005/01/07 11:44:30 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68.2.3.2.2 2005/01/08 08:57:26 jdc Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -249,6 +249,7 @@ struct wm_softc {
 	/* Event counters. */
 	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
+ 	struct evcnt sc_ev_txfifo_stall;/* Tx FIFO stalls (82547) */
 	struct evcnt sc_ev_txforceintr;	/* Tx interrupts forced */
 	struct evcnt sc_ev_txdw;	/* Tx descriptor interrupts */
 	struct evcnt sc_ev_txqe;	/* Tx queue empty interrupts */
@@ -263,7 +264,6 @@ struct wm_softc {
 	struct evcnt sc_ev_txctx_init;	/* Tx cksum context cache initialized */
 	struct evcnt sc_ev_txctx_hit;	/* Tx cksum context cache hit */
 	struct evcnt sc_ev_txctx_miss;	/* Tx cksum context cache miss */
-	struct evcnt sc_ev_txfifo_stall;/* Tx FIFO stalls (82547) */
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
@@ -279,6 +279,13 @@ struct wm_softc {
 	int	sc_txsfree;		/* number of free Tx jobs */
 	int	sc_txsnext;		/* next free Tx job */
 	int	sc_txsdirty;		/* dirty Tx jobs */
+
+	/* These 5 variables are used only on the 82547. */
+	int	sc_txfifo_size;		/* Tx FIFO size */
+	int	sc_txfifo_head;		/* current head of FIFO */
+	uint32_t sc_txfifo_addr;	/* internal address of start of FIFO */
+	int	sc_txfifo_stall;	/* Tx FIFO is stalled */
+	struct callout sc_txfifo_ch;	/* Tx FIFO stall work-around timer */
 
 	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum ctx */
 	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum ctx */
@@ -299,15 +306,9 @@ struct wm_softc {
 	uint32_t sc_icr;		/* prototype interrupt bits */
 	uint32_t sc_tctl;		/* prototype TCTL register */
 	uint32_t sc_rctl;		/* prototype RCTL register */
-	/* These 5 variables are used only on the 82547. */
-	int	sc_txfifo_size;		/* Tx FIFO size */
-	int	sc_txfifo_head;		/* current head of FIFO */
-	uint32_t sc_txfifo_addr;	/* internal address of start of FIFO */
-	int	sc_txfifo_stall;	/* Tx FIFO is stalled */
-	struct callout sc_txfifo_ch;	/* Tx FIFO stall work-around timer */
-
 	uint32_t sc_txcw;		/* prototype TXCW register */
 	uint32_t sc_tipg;		/* prototype TIPG register */
+ 	uint32_t sc_pba;		/* prototype PBA register */
 
 	int sc_tbi_linkup;		/* TBI link status */
 	int sc_tbi_anstate;		/* autonegotiation state */
@@ -328,7 +329,6 @@ do {									\
 
 #define	WM_RXCHAIN_LINK(sc, m)						\
 do {									\
-	uint32_t sc_pba;		/* prototype PBA register */
 	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
@@ -352,6 +352,8 @@ do {									\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
 #define	CSR_WRITE(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+#define	CSR_WRITE_FLUSH(sc)						\
+	(void) CSR_READ((sc), WMREG_STATUS)
 
 #define	WM_CDTXADDR(sc, x)	((sc)->sc_cddma + WM_CDTXOFF((x)))
 #define	WM_CDRXADDR(sc, x)	((sc)->sc_cddma + WM_CDRXOFF((x)))
@@ -374,8 +376,6 @@ do {									\
 									\
 	/* Now sync whatever is left. */				\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
-#define	CSR_WRITE_FLUSH(sc)						\
-	(void) CSR_READ((sc), WMREG_STATUS)
 	    WM_CDTXOFF(__x), sizeof(wiseman_txdesc_t) * __n, (ops));	\
 } while (/*CONSTCOND*/0)
 
@@ -469,6 +469,8 @@ static void	wm_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
 
+static void	wm_82547_txfifo_stall(void *);
+
 /*
  * Devices supported by this driver.
  */
@@ -499,8 +501,6 @@ const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544EI_FIBER,
 	  "Intel i82544EI 1000BASE-X Ethernet",
-static void	wm_82547_txfifo_stall(void *);
-
 	  WM_T_82544,		WMP_F_1000X },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC_COPPER,
@@ -1219,9 +1219,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdstall");
+ 	evcnt_attach_dynamic(&sc->sc_ev_txfifo_stall, EVCNT_TYPE_MISC,
+ 	    NULL, sc->sc_dev.dv_xname, "txfifo_stall");
 	evcnt_attach_dynamic(&sc->sc_ev_txforceintr, EVCNT_TYPE_MISC,
-	evcnt_attach_dynamic(&sc->sc_ev_txfifo_stall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txfifo_stall");
 	    NULL, sc->sc_dev.dv_xname, "txforceintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txdw, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "txdw");
@@ -1440,31 +1440,6 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 }
 
 /*
- * wm_start:		[ifnet interface function]
- *
- *	Start packet transmission on the interface.
- */
-static void
-wm_start(struct ifnet *ifp)
-{
-	struct wm_softc *sc = ifp->if_softc;
-	struct mbuf *m0;
-#if 0 /* XXXJRT */
-	struct m_tag *mtag;
-#endif
-	struct wm_txsoft *txs;
-	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx = -1, ofree, seg;
-	uint32_t cksumcmd;
-	uint8_t cksumfields;
-
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
-	/*
-	 * Remember the previous number of free descriptors.
-	 */
-	ofree = sc->sc_txfree;
  * wm_82547_txfifo_stall:
  *
  *	Callout used to wait for the 82547 Tx FIFO to drain,
@@ -1556,6 +1531,31 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 }
 
 /*
+ * wm_start:		[ifnet interface function]
+ *
+ *	Start packet transmission on the interface.
+ */
+static void
+wm_start(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	struct mbuf *m0;
+#if 0 /* XXXJRT */
+	struct m_tag *mtag;
+#endif
+	struct wm_txsoft *txs;
+	bus_dmamap_t dmamap;
+	int error, nexttx, lasttx = -1, ofree, seg;
+	uint32_t cksumcmd;
+	uint8_t cksumfields;
+
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	/*
+	 * Remember the previous number of free descriptors.
+	 */
+	ofree = sc->sc_txfree;
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -1641,6 +1641,22 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 			break;
 		}
 
+		/*
+		 * Check for 82547 Tx FIFO bug.  We need to do this
+		 * once we know we can transmit the packet, since we
+		 * do some internal FIFO space accounting here.
+		 */
+		if (sc->sc_type == WM_T_82547 &&
+		    wm_82547_txfifo_bugchk(sc, m0)) {
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: 82547 Tx FIFO bug detected\n",
+			    sc->sc_dev.dv_xname));
+			ifp->if_flags |= IFF_OACTIVE;
+			bus_dmamap_unload(sc->sc_dmat, dmamap);
+			WM_EVCNT_INCR(&sc->sc_ev_txfifo_stall);
+			break;
+		}
+
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/*
@@ -1667,22 +1683,6 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 		 * is used to set the checksum context).
 		 */
 		txs->txs_mbuf = m0;
-		/*
-		 * Check for 82547 Tx FIFO bug.  We need to do this
-		 * once we know we can transmit the packet, since we
-		 * do some internal FIFO space accounting here.
-		 */
-		if (sc->sc_type == WM_T_82547 &&
-		    wm_82547_txfifo_bugchk(sc, m0)) {
-			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: 82547 Tx FIFO bug detected\n",
-			    sc->sc_dev.dv_xname));
-			ifp->if_flags |= IFF_OACTIVE;
-			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			WM_EVCNT_INCR(&sc->sc_ev_txfifo_stall);
-			break;
-		}
-
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_ndesc = dmamap->dm_nsegs;
 
@@ -2334,6 +2334,25 @@ wm_reset(struct wm_softc *sc)
 {
 	int i;
 
+	/*
+	 * Allocate on-chip memory according to the MTU size.
+	 * The Packet Buffer Allocation register must be written
+	 * before the chip is reset.
+	 */
+	if (sc->sc_type < WM_T_82547) {
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
+		    PBA_40K : PBA_48K;
+	} else {
+		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
+		    PBA_22K : PBA_30K;
+		sc->sc_txfifo_head = 0;
+		sc->sc_txfifo_addr = sc->sc_pba << PBA_ADDR_SHIFT;
+		sc->sc_txfifo_size =
+		    (PBA_40K - sc->sc_pba) << PBA_BYTE_SHIFT;
+		sc->sc_txfifo_stall = 0;
+	}
+	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
+
 	switch (sc->sc_type) {
 	case WM_T_82544:
 	case WM_T_82540:
@@ -2381,25 +2400,6 @@ wm_reset(struct wm_softc *sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-	/*
-	 * Allocate on-chip memory according to the MTU size.
-	 * The Packet Buffer Allocation register must be written
-	 * before the chip is reset.
-	 */
-	if (sc->sc_type < WM_T_82547) {
-		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
-		    PBA_40K : PBA_48K;
-	} else {
-		sc->sc_pba = sc->sc_ethercom.ec_if.if_mtu > 8192 ?
-		    PBA_22K : PBA_30K;
-		sc->sc_txfifo_head = 0;
-		sc->sc_txfifo_addr = sc->sc_pba << PBA_ADDR_SHIFT;
-		sc->sc_txfifo_size =
-		    (PBA_40K - sc->sc_pba) << PBA_BYTE_SHIFT;
-		sc->sc_txfifo_stall = 0;
-	}
-	CSR_WRITE(sc, WMREG_PBA, sc->sc_pba);
-
 static int
 wm_init(struct ifnet *ifp)
 {
@@ -2703,6 +2703,10 @@ wm_stop(struct ifnet *ifp, int disable)
 	/* Stop the one second clock. */
 	callout_stop(&sc->sc_tick_ch);
 
+	/* Stop the 82547 Tx FIFO stall check timer. */
+	if (sc->sc_type == WM_T_82547)
+		callout_stop(&sc->sc_txfifo_ch);
+
 	if (sc->sc_flags & WM_F_HAS_MII) {
 		/* Down the MII. */
 		mii_down(&sc->sc_mii);
@@ -2740,10 +2744,6 @@ wm_acquire_eeprom(struct wm_softc *sc)
 {
 	uint32_t reg;
 	int x;
-
-	/* Stop the 82547 Tx FIFO stall check timer. */
-	if (sc->sc_type == WM_T_82547)
-		callout_stop(&sc->sc_txfifo_ch);
 
 	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
 		reg = CSR_READ(sc, WMREG_EECD);
