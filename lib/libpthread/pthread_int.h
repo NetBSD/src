@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.14 2001/08/08 16:33:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.15 2001/08/08 19:36:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,9 +151,6 @@ struct	pthread_st {
 void	pthread_init(void)  __attribute__ ((__constructor__));
 
 /* Utility functions */
-
-void*	pthread__malloc(size_t size);
-void	pthread__free(void *ptr);
 
 /* Set up/clean up a thread's basic state. */
 void	pthread__initthread(pthread_t t);

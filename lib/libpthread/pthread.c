@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.9 2001/08/08 19:07:34 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.10 2001/08/08 19:36:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -504,23 +504,6 @@ pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
 	param->sched_priority = 0;
 
 	return 0;
-}
-
-
-
-void *
-pthread__malloc(size_t size)
-{
-	/* XXX locking */
-	return malloc(size);
-}
-
-
-void
-pthread__free(void *ptr)
-{
-	/* XXX locking */
-	free(ptr);
 }
 
 /* XXX There should be a way for applications to use the efficent
