@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.19 1997/11/03 20:18:00 mycroft Exp $	*/
+/*	$NetBSD: kbd.c,v 1.20 1998/01/12 09:39:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,10 +195,7 @@ struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbd_match, kbd_attach
 };
 
-struct cfdriver kbd_cd = {
-	NULL, "kbd", DV_DULL
-};
-
+extern struct cfdriver kbd_cd;
 
 /*
  * kbd_match: how is this zs channel configured?
