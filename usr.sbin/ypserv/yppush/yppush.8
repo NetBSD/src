@@ -1,4 +1,4 @@
-.\"	$NetBSD: yppush.8,v 1.6 1998/08/19 12:29:00 tv Exp $
+.\"	$NetBSD: yppush.8,v 1.7 1999/03/07 11:58:27 mycroft Exp $
 .\"
 .\" Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -36,10 +36,14 @@
 .Nm yppush
 .Nd force distribution of YP map
 .Sh SYNOPSIS
-.Nm
-.Op Fl d Ar domainname
-.Op Fl h Ar hostname
+.Nm ""
 .Op Fl v
+.Bk -words
+.Op Fl d Ar domainname
+.Ek
+.Bk -words
+.Op Fl h Ar hostname
+.Ek
 .Ar mapname
 .Sh DESCRIPTION
 .Nm

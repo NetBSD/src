@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknetid.8,v 1.4 1997/11/08 15:03:24 lukem Exp $
+.\"	$NetBSD: mknetid.8,v 1.5 1999/03/07 11:58:26 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -36,13 +36,23 @@
 .Nm mknetid
 .Nd a YP filter program
 .Sh SYNOPSIS
-.Nm
-.Op Fl d Ar domain
+.Nm ""
 .Op Fl q
+.Bk -words
+.Op Fl d Ar domain
+.Ek
+.Bk -words
 .Op Fl p Ar passwdfile
+.Ek
+.Bk -words
 .Op Fl g Ar groupfile
+.Ek
+.Bk -words
 .Op Fl h Ar hostfile
+.Ek
+.Bk -words
 .Op Fl m Ar netidfile
+.Ek
 .Sh DESCRIPTION
 .Nm
 is used to create a map named 
