@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.85 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.86 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -258,3 +258,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	build.sh: Rework command line into command line options followed
 		by a list of operations to perform.  [lukem 20030123]
 	gcore(1): Add it back [christos 20030123]
+	semaphores: Fix kernel implementation, and add non-pthreads
+		version in new librt.  [thorpej 20030123]
