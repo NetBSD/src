@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.38 2000/05/26 03:04:28 simonb Exp $	*/
+/*	$NetBSD: ps.c,v 1.39 2000/06/07 04:58:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.38 2000/05/26 03:04:28 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.39 2000/06/07 04:58:01 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ struct varent *vhead, *vtail;
 int	eval;			/* exit value */
 int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
-int	dontuseprocfs=0;	/* -K */
+int	dontuseprocfs;		/* -K */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
@@ -113,7 +113,7 @@ main(argc, argv)
 	struct varent *vent;
 	struct winsize ws;
 	int ch, flag, i, fmt, lineno, nentries;
-	int prtheader, wflag, what, xflg;
+	int prtheader, wflag, what, xflg, mode;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
 
@@ -132,6 +132,7 @@ main(argc, argv)
 	what = KERN_PROC_UID;
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
+	mode = PRINTMODE;
 	while ((ch = getopt(argc, argv,
 	    "acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch((char)ch) {
@@ -316,8 +317,7 @@ main(argc, argv)
 		parsefmt(dfmt);
 
 	/*
-	 * scan requested variables, noting what structures are needed,
-	 * and adjusting header widths as appropiate.
+	 * scan requested variables, noting what structures are needed.
 	 */
 	scanvars();
 
@@ -347,19 +347,38 @@ main(argc, argv)
 		    "valid data for all fields.\n");
 		use_procfs = 1;
 	}
-
-	/*
-	 * print header
-	 */
-	printheader();
-	if (nentries == 0)
+	if (nentries == 0) {
+		printheader();
 		exit(0);
+	}
 	/*
 	 * sort proc list
 	 */
 	qsort(kinfo, nentries, sizeof(struct kinfo_proc2), pscomp);
 	/*
-	 * for each proc, call each variable output function.
+	 * For each proc, call each variable output function in
+	 * "setwidth" mode to determine the widest element of
+	 * the column.
+	 */
+	if (mode == PRINTMODE)
+		for (i = 0; i < nentries; i++) {
+			struct kinfo_proc2 *ki = &kinfo[i];
+
+			if (xflg == 0 && (ki->p_tdev == NODEV ||
+			    (ki->p_flag & P_CONTROLT) == 0))
+				continue;
+			for (vent = vhead; vent; vent = vent->next)
+				(vent->var->oproc)(ki, vent, WIDTHMODE);
+		}
+	/*
+	 * Print header - AFTER determining process field widths.
+	 * printheader() also adds up the total width of all
+	 * fields the first time it's called.
+	 */
+	printheader();
+	/*
+	 * For each proc, call each variable output function in
+	 * print mode.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
 		struct kinfo_proc2 *ki = &kinfo[i];
@@ -368,7 +387,7 @@ main(argc, argv)
 		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
-			(vent->var->oproc)(ki, vent);
+			(vent->var->oproc)(ki, vent, mode);
 			if (vent->next != NULL)
 				(void)putchar(' ');
 		}
@@ -397,18 +416,12 @@ scanvars()
 {
 	struct varent *vent;
 	VAR *v;
-	int i;
 
 	for (vent = vhead; vent; vent = vent->next) {
 		v = vent->var;
-		i = strlen(v->header);
-		if (v->width < i)
-			v->width = i;
-		totwidth += v->width + 1;	/* +1 for space */
 		if (v->flag & COMM)
 			needcomm = 1;
 	}
-	totwidth--;
 }
 
 static int
