@@ -300,6 +300,7 @@
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/usb/usb.h
+./usr/include/dev/usb/usbcdc.h
 ./usr/include/dev/usb/usbhid.h
 ./usr/include/dev/vme
 ./usr/include/dev/vme/vmevar.h
