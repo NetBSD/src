@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.38 2001/07/02 10:46:03 onoe Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.39 2001/07/02 11:12:09 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ static void fwohci_buf_start_rx(struct fwohci_softc *);
 static void fwohci_buf_stop_tx(struct fwohci_softc *);
 static void fwohci_buf_stop_rx(struct fwohci_softc *);
 static void fwohci_buf_next(struct fwohci_softc *, struct fwohci_ctx *);
-static int  fwohci_buf_pktget(struct fwohci_softc *, struct fwohci_ctx *,
+static int  fwohci_buf_pktget(struct fwohci_softc *, struct fwohci_buf **,
     caddr_t *, int);
 static int  fwohci_buf_input(struct fwohci_softc *, struct fwohci_ctx *,
     struct fwohci_pkt *);
@@ -1122,14 +1122,14 @@ fwohci_buf_next(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 }
 
 static int
-fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_ctx *fc, caddr_t *pp,
+fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_buf **fbp, caddr_t *pp,
     int len)
 {
 	struct fwohci_buf *fb;
 	struct fwohci_desc *fd;
 	int bufend;
 
-	fb = TAILQ_FIRST(&fc->fc_buf);
+	fb = *fbp;
   again:
 	fd = fb->fb_desc;
 	DPRINTFN(1, ("fwohci_buf_pktget: desc %ld, off %d, req %d, res %d,"
@@ -1139,7 +1139,8 @@ fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_ctx *fc, caddr_t *pp,
 	bufend = fd->fd_reqcount - fd->fd_rescount;
 	if (fb->fb_off >= bufend) {
 		if (fd->fd_rescount == 0) {
-			if ((fb = TAILQ_NEXT(fb, fb_list)) != NULL)
+			*fbp = fb = TAILQ_NEXT(fb, fb_list);
+			if (fb != NULL)
 				goto again;
 		}
 		return 0;
@@ -1158,6 +1159,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
     struct fwohci_pkt *pkt)
 {
 	caddr_t p;
+	struct fwohci_buf *fb;
 	int len, count, i;
 
 	memset(pkt, 0, sizeof(*pkt));
@@ -1166,8 +1168,9 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	pkt->fp_uio.uio_segflg = UIO_SYSSPACE;
 
 	/* get first quadlet */
+	fb = TAILQ_FIRST(&fc->fc_buf);
 	count = 4;
-	len = fwohci_buf_pktget(sc, fc, &p, count);
+	len = fwohci_buf_pktget(sc, &fb, &p, count);
 	if (len <= 0) {
 		DPRINTFN(1, ("fwohci_buf_input: no input for %d\n",
 		    fc->fc_ctx));
@@ -1191,7 +1194,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	case IEEE1394_TCODE_LOCK_RESP:
 		pkt->fp_hlen = 16;
 		break;
-#ifdef DIAGNOSTICS
+#ifdef DIAGNOSTIC
 	case IEEE1394_TCODE_STREAM_DATA:
 		printf("fwohci_buf_input: bad tcode: STREAM_DATA\n");
 		return 0;
@@ -1204,7 +1207,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 	/* get header */
 	while (count < pkt->fp_hlen) {
-		len = fwohci_buf_pktget(sc, fc, &p, pkt->fp_hlen - count);
+		len = fwohci_buf_pktget(sc, &fb, &p, pkt->fp_hlen - count);
 		if (len == 0) {
 			printf("fwohci_buf_input: malformed input 1: %d\n",
 			    pkt->fp_hlen - count);
@@ -1223,7 +1226,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	count = 0;
 	i = 0;
 	while (count < pkt->fp_dlen) {
-		len = fwohci_buf_pktget(sc, fc,
+		len = fwohci_buf_pktget(sc, &fb,
 		    (caddr_t *)&pkt->fp_iov[i].iov_base,
 		    pkt->fp_dlen - count);
 		if (len == 0) {
@@ -1238,7 +1241,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	pkt->fp_uio.uio_resid = count;
 
 	/* get trailer */
-	len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
+	len = fwohci_buf_pktget(sc, &fb, (caddr_t *)&pkt->fp_trail,
 	    sizeof(*pkt->fp_trail));
 	if (len <= 0) {
 		printf("fwohci_buf_input: malformed input 3: %d\n",
@@ -1290,7 +1293,7 @@ fwohci_buf_input_ppb(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	*pkt->fp_trail = (*pkt->fp_trail & 0xffff) | (fd->fd_status << 16);
 	pkt->fp_hdr[0] = ((u_int32_t *)p)[1];
 	pkt->fp_tcode = (pkt->fp_hdr[0] & 0x000000f0) >> 4;
-#ifdef DIAGNOSTICS
+#ifdef DIAGNOSTIC
 	if (pkt->fp_tcode != IEEE1394_TCODE_STREAM_DATA) {
 		printf("fwohci_buf_input_ppb: bad tcode: 0x%x\n",
 		    pkt->fp_tcode);
