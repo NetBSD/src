@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.2 2000/02/28 00:22:33 augustss Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.3 2000/03/04 23:08:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -124,8 +124,7 @@ ess_pnpbios_attach(parent, self, aux)
 
 	if (!essmatch(sc)) {
 		printf("%s: essmatch failed\n", sc->sc_dev.dv_xname);
-		/* XXX should probably use "pnpbios_io_unmap", but it doesn't exist. */
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, ESS_NPORT);
+		pnpbios_io_unmap(aa->pbt, aa->resc, 0, sc->sc_iot, sc->sc_ioh);
 		return;
 	}
 
