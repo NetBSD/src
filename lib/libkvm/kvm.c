@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.76 2002/09/17 20:34:08 atatat Exp $	*/
+/*	$NetBSD: kvm.c,v 1.77 2002/09/17 21:37:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.76 2002/09/17 20:34:08 atatat Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.77 2002/09/17 21:37:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -161,7 +161,7 @@ open_cloexec(fname, flags, mode)
 
 	if ((fd = open(fname, flags, mode)) == -1)
 		return fd;
-	if (fcntl(fd, F_SETFD, (void *)1) == -1)
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
 		goto error;
 
 	return fd;
@@ -753,7 +753,7 @@ kvm_dbopen(kd)
 	if (kd->db == 0)
 		return (-1);
 	if ((fd = (*kd->db->fd)(kd->db)) >= 0) {
-		if (fcntl(fd, F_SETFD, (void *)1) == -1) {
+		if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
 		       (*kd->db->close)(kd->db);
 		       return (-1);
 		}
@@ -880,7 +880,7 @@ kvm_t	*kd;
 
 	errno = 0;
 	val = 0;
-	if (pwrite(kd->pmfd, (void *) &val, sizeof(val),
+	if (pwrite(kd->pmfd, (void *)&val, sizeof(val),
 	    _kvm_pa2off(kd, pa)) == -1) {
 		_kvm_syserr(kd, 0, "cannot invalidate dump - pwrite");
 		return (-1);
