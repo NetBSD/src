@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.7 1999/11/01 09:59:23 haya Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.8 1999/11/08 19:59:08 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -317,6 +317,24 @@ typedef struct cardbus_devfunc {
 } *cardbus_devfunc_t;
 
 
+/* XXX various things extracted from CIS */
+struct cardbus_cis_info {
+    int32_t		manufacturer;
+    int32_t		product;
+    char		cis1_info_buf[256];
+    char*		cis1_info[4];
+    struct cb_bar_info {
+	unsigned int flags;
+	unsigned int size;
+    } bar[5];
+    unsigned int	funcid;
+    union {
+	struct {
+	    char netid[6];
+	} network;
+    } funce;
+};
+
 struct cardbus_attach_args {
   int ca_unit;
   cardbus_devfunc_t ca_ct;
@@ -338,6 +356,8 @@ struct cardbus_attach_args {
   rbus_tag_t ca_rbus_iot;	/* CardBus i/o rbus tag */
   rbus_tag_t ca_rbus_memt;	/* CardBus mem rbus tag */
 #endif
+
+  struct cardbus_cis_info ca_cis;
 };
 
 
