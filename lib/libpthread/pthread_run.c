@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.14 2002/10/14 23:46:23 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.15 2002/10/22 01:28:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,8 +124,7 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 	thread->pt_state = PT_STATE_RUNNABLE;
 	thread->pt_type = PT_THREAD_IDLE;
 	thread->pt_flags &= ~PT_FLAG_IDLED;
-	_getcontext_u(thread->pt_uc);
-	thread->pt_uc->uc_flags &= ~_UC_USER;
+	_INITCONTEXT_U(thread->pt_uc);
 	thread->pt_uc->uc_stack = thread->pt_stack;
 	thread->pt_uc->uc_link = NULL;
 	makecontext(thread->pt_uc, pthread__idle, 0);
@@ -182,8 +181,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_flags &= ~PT_FLAG_IDLED;
 			qhead->pt_next = NULL;
 			qhead->pt_parent = NULL;
-			_getcontext_u(qhead->pt_uc);
-			qhead->pt_uc->uc_flags &= ~_UC_USER;
+			_INITCONTEXT_U(qhead->pt_uc);
 			qhead->pt_uc->uc_stack = qhead->pt_stack;
 			qhead->pt_uc->uc_link = NULL;
 			makecontext(qhead->pt_uc, pthread__idle, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.28 2002/10/07 19:30:32 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.29 2002/10/22 01:28:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -264,7 +264,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * The pt_uc pointer points to a location safely below the
 	 * stack start; this is arranged by pthread__stackalloc().
 	 */
-	getcontext(newthread->pt_uc);
+	_INITCONTEXT_U(newthread->pt_uc);
 	newthread->pt_uc->uc_stack = newthread->pt_stack;
 	newthread->pt_uc->uc_link = NULL;
 	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
