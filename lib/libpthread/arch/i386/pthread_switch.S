@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.5 2001/07/20 19:20:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.6 2001/07/23 21:32:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -222,11 +222,12 @@ ENTRY(pthread__upcall_switch)
 	NOTREACHED
 	
 upcall_no_old_preempt:		
-	pushl   %ecx
-	pushl   %eax
+	pushl	%ecx	/* caller save */
+	pushl   %ecx	/* pthread_t new */
+	pushl   %eax	/* pthread_t old */
 	call    PIC_PLT(_C_LABEL(pthread__sa_recycle))
-	popl	%eax
-	popl    %ecx
+	addl	$8, %esp
+	popl	%ecx
 	decl	PT_SPINLOCKS(%ecx)
 	/* Check if we were preempted while holding the fake lock. */
 	cmpl	$0, PT_NEXT(%ecx)
