@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.38 2001/11/15 09:48:13 lukem Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.38.10.1 2003/10/20 05:25:38 cyber Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.38 2001/11/15 09:48:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.38.10.1 2003/10/20 05:25:38 cyber Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1047,6 +1047,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 	if (disks[spare_number].status != rf_ds_optimal) {
 		RF_ERRORMSG1("Warning: spare disk %s failed TUR\n", 
 			     sparePtr->component_name);
+		rf_close_component(raidPtr, raidPtr->raid_cinfo[0][raidPtr->numCol+spare_number].ci_vp, 0);
 		ret=EINVAL;
 		goto fail;
 	} else {
@@ -1064,6 +1065,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 	bs = 1 << raidPtr->logBytesPerSector;
 	if (disks[spare_number].blockSize != bs) {
 		RF_ERRORMSG3("Block size of %d on spare disk %s is not the same as on other disks (%d)\n", disks[spare_number].blockSize, disks[spare_number].devname, bs);
+		rf_close_component(raidPtr, raidPtr->raid_cinfo[0][raidPtr->numCol+spare_number].ci_vp, 0);
 		ret = EINVAL;
 		goto fail;
 	}
@@ -1072,6 +1074,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 			     disks[spare_number].devname, 
 			     disks[spare_number].blockSize, 
 			     (long int) raidPtr->sectorsPerDisk);
+		rf_close_component(raidPtr, raidPtr->raid_cinfo[0][raidPtr->numCol+spare_number].ci_vp, 0);
 		ret = EINVAL;
 		goto fail;
 	} else {
