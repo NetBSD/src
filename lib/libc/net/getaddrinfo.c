@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.63 2002/08/27 08:50:49 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.64 2003/03/17 23:10:25 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.63 2002/08/27 08:50:49 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.64 2003/03/17 23:10:25 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -500,10 +500,10 @@ getaddrinfo(hostname, servname, hints, res)
 	if (sentinel.ai_next)
 		goto good;
 
-	if (pai->ai_flags & AI_NUMERICHOST)
-		ERR(EAI_NODATA);
 	if (hostname == NULL)
 		ERR(EAI_NODATA);
+	if (pai->ai_flags & AI_NUMERICHOST)
+		ERR(EAI_NONAME);
 
 	/*
 	 * hostname as alphabetical name.
