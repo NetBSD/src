@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.29 2002/06/26 18:23:31 itojun Exp $	*/
+/*	$NetBSD: tty.c,v 1.30 2003/01/09 12:48:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.29 2002/06/26 18:23:31 itojun Exp $");
+__RCSID("$NetBSD: tty.c,v 1.30 2003/01/09 12:48:06 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -225,6 +225,12 @@ nocbreak(void)
 	__rawmode = 0;
 	if (_cursesi_screen->notty == TRUE)
 		return OK;
+	  /* if we were in halfdelay mode then nuke the timeout */
+	if ((_cursesi_screen->half_delay == TRUE) &&
+	    (__notimeout() == ERR))
+		return ERR;
+
+	_cursesi_screen->half_delay = FALSE;
 	_cursesi_screen->curt = _cursesi_screen->useraw ?
 		&_cursesi_screen->rawt : &_cursesi_screen->baset;
 	return (tcsetattr(fileno(_cursesi_screen->infd), __tcaction ?
@@ -232,6 +238,27 @@ nocbreak(void)
 			  _cursesi_screen->curt) ? ERR : OK);
 }
 
+/*
+ * halfdelay --
+ *    Put the terminal into cbreak mode with the specified timeout.
+ *
+ */
+int
+halfdelay(int timeout)
+{
+	if ((timeout < 1) || (timeout > 255))
+		return ERR;
+
+	if (cbreak() == ERR)
+		return ERR;
+
+	if (__timeout(timeout) == ERR)
+		return ERR;
+
+	_cursesi_screen->half_delay = TRUE;
+	return OK;
+}
+	
 int
 __delay(void)
  {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2002/12/24 07:36:32 jdc Exp $
+#	$NetBSD: Makefile,v 1.40 2003/01/09 12:48:04 blymn Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -68,6 +68,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addstr.3 \
 	 curses_cursor.3 getparyx.3 curses_input.3 getstr.3 \
 	 curses_tty.3 gettmode.3 curses_cursor.3 getyx.3 \
 	 curses_color.3 has_colors.3 curses_tty.3 has_ic.3 \
+	 curses_tty.3 halfdelay.3 \
 	 curses_tty.3 has_il.3 curses_line.3 hline.3 \
 	 curses_tty.3 idcok.3 curses_tty.3 idlok.3 \
 	 curses_inch.3 inch.3 curses_inch.3 inchnstr.3 \
