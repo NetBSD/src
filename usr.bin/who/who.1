@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.4 1994/11/14 05:13:16 jtc Exp $
+.\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)who.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd December 30, 1993
+.Dd December 6, 1994
 .Dt WHO 1
 .Os
 .Sh NAME
@@ -41,19 +41,38 @@
 .Nd display who is logged in
 .Sh SYNOPSIS
 .Nm who
-.Op Ar am I
+.Op Fl mTu
 .Op Ar file 
-.Sh DESCRIPTION
-The utility
 .Nm who
-displays
-a list of all users currently logged on, showing for each user
-the login name,
-tty name, the date and time of login, and hostname if not local.
+.Ar am i
+.Sh DESCRIPTION
+The 
+.Nm who
+utility displays a list of all users currently logged on, showing for
+each user the login name, tty name, the date and time of login, and
+hostname if not local.
 .Pp
 Available options:
 .Pp
 .Bl -tag -width file
+.It Fl m
+Only print information about the current terminal.  This is the
+.Tn POSIX
+way of saying
+.Nm who 
+.Ar am i .
+.It Fl T
+Print a character after the user name indicating the state of the
+terminal line:
+.Sq + 
+if the terminal is writable;
+.Sq - 
+if it is not;
+and
+.Sq ?
+if a bad line is encountered.
+.It Fl u
+Print the idle time for each user.
 .It Ar \&am I
 Returns the invoker's real user name. 
 .It Ar file
@@ -97,11 +116,17 @@ special characters, see
 .El
 .Sh SEE ALSO
 .Xr last 1 ,
+.Xr mesg 1 ,
 .Xr users 1 ,
 .Xr getuid 2 ,
 .Xr utmp 5
 .Sh HISTORY
 A
 .Nm
-command appeared in
+utility appeared in
 .At v6 .
+.Sh STANDARDS
+The
+.Nm
+utility is expected to conform to
+.St -p1003.2-92 .
