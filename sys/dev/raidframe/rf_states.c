@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.32 2004/03/20 17:30:40 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.33 2004/03/21 21:20:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.32 2004/03/20 17:30:40 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.33 2004/03/21 21:20:46 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -603,7 +603,6 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 	RF_DagHeader_t *dag_h;
 	int     i, j, done = RF_TRUE;
 	RF_DagList_t *dagList, *temp;
-	RF_Etimer_t timer;
 
 	/* check to see if this is the last dag */
 	dagList = desc->dagList;
@@ -616,7 +615,6 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 	if (done) {
 		if (desc->status) {
 			/* a dag failed, retry */
-			RF_ETIMER_START(timer);
 			/* free all dags */
 			dagList = desc->dagList;
 			for (i = 0; i < desc->numStripes; i++) {
