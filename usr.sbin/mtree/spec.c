@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.25 2001/10/01 02:30:40 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.26 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.25 2001/10/01 02:30:40 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.26 2001/10/04 04:51:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,9 +157,28 @@ dump_nodes(const char *dir, NODE *root)
 {
 	NODE	*cur;
 	char	path[MAXPATHLEN + 1];
-	extern int keys;
 
 	for (cur = root; cur != NULL; cur = cur->next) {
+		if (cur->type == F_FILE) {
+			if (cur->tags) {
+				int	i;
+
+				for (i = 0; excludetags[i] != NULL; i++)
+					if (strstr(cur->tags, excludetags[i]))
+						break;
+				if (excludetags[i] != NULL)
+					continue;
+
+				for (i = 0; includetags[i] != NULL; i++)
+					if (strstr(cur->tags, includetags[i]))
+						break;
+				if (i > 0 && includetags[i] == NULL)
+					continue;
+			} else if (includetags[0] != NULL) {
+				continue;
+			}
+		}
+
 		if (snprintf(path, sizeof(path), "%s%s%s",
 		    dir, *dir ? "/" : "", cur->name)
 		    >= sizeof(path))
@@ -186,11 +205,13 @@ dump_nodes(const char *dir, NODE *root)
 			    cur->st_mtimespec.tv_nsec);
 		if (keys & F_CKSUM && cur->type == F_FILE)
 			printf("cksum=%lu ", cur->cksum);
-		if (keys & F_MD5 && cur->type == F_FILE)
+		if (keys & F_MD5 && cur->type == F_FILE && cur->md5sum != NULL)
 			printf("md5=%s ", cur->md5sum);
 		if (keys & F_FLAGS)
 			printf("flags=%s ",
 			    flags_to_string(cur->st_flags, "none"));
+		if (keys & F_TAGS && cur->tags != NULL)
+			printf("tags=%s ", cur->tags);
 		puts(path);
 
 		if (cur->child)
@@ -206,7 +227,7 @@ set(char *t, NODE *ip)
 	uid_t uid;
 	char *kw, *val, *md;
 	void *m;
-	int value;
+	int value, len;
 	char *ep;
 
 	val = NULL;
@@ -238,6 +259,12 @@ set(char *t, NODE *ip)
 			break;
 		case F_IGN:
 			/* just set flag bit */
+			break;
+		case F_TAGS:
+			len = strlen(val) + 3;	/* "," + str + ",\0" */
+			if ((ip->tags = malloc(len)) == NULL)
+				mtree_err("memory allocation error");
+			snprintf(ip->tags, len, ",%s,", val);
 			break;
 		case F_MD5:
 			if (val[0]=='0' && val[1]=='x')
@@ -290,6 +317,11 @@ set(char *t, NODE *ip)
 			    mtree_err("unknown user `%s'", val);
 			ip->st_uid = uid;
 			break;
+		default:
+			mtree_err(
+			    "set(): unsupported key type 0x%x (INTERNAL ERROR)",
+			    type);
+			/* NOTREACHED */
 		}
 	}
 }

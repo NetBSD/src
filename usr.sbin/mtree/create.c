@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.30 2001/10/01 02:30:40 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.31 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.30 2001/10/01 02:30:40 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.31 2001/10/04 04:51:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,11 +65,6 @@ __RCSID("$NetBSD: create.c,v 1.30 2001/10/01 02:30:40 lukem Exp $");
 #define	INDENTNAMELEN	15
 #define	MAXLINELEN	80
 #define VISFLAGS        VIS_CSTYLE
-
-extern int crc_total, ftsoptions;
-extern int dflag, sflag;
-extern int keys;
-extern char fullpath[MAXPATHLEN];
 
 static gid_t gid;
 static uid_t uid;

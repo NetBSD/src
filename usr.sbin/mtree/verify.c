@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.18 2001/03/09 03:09:46 simonb Exp $	*/
+/*	$NetBSD: verify.c,v 1.19 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.18 2001/03/09 03:09:46 simonb Exp $");
+__RCSID("$NetBSD: verify.c,v 1.19 2001/10/04 04:51:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,6 @@ __RCSID("$NetBSD: verify.c,v 1.18 2001/03/09 03:09:46 simonb Exp $");
 
 #include "mtree.h"
 #include "extern.h"
-
-extern int crc_total, ftsoptions;
-extern int dflag, eflag, iflag, rflag, sflag, uflag;
-extern char fullpath[MAXPATHLEN];
 
 static NODE *root;
 static char path[MAXPATHLEN];

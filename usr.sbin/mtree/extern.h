@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2001/10/01 02:30:40 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,5 +50,12 @@ u_int	 parsetype(const char *);
 const char *rlink(const char *);
 NODE	*spec(void);
 int	 verify(void);
+
+extern int	dflag, eflag, iflag, lflag, mflag, rflag, sflag, tflag, uflag;
+extern size_t	lineno;
+extern int	crc_total, ftsoptions, keys;
+extern char	fullpath[];
+extern char	**includetags, **excludetags;
+
 
 #include "stat_flags.h"

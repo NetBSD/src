@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.16 2001/10/01 02:30:40 lukem Exp $
+.\"	$NetBSD: mtree.8,v 1.17 2001/10/04 04:51:27 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 1, 2001
+.Dd October 4, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -59,6 +59,12 @@
 .Ek
 .Bk -words
 .Op Fl R Ar keywords
+.Ek
+.Bk -words
+.Op Fl E Ar tags
+.Ek
+.Bk -words
+.Op Fl I Ar tags
 .Ek
 .Bk -words
 .Op Fl s Ar seed
@@ -89,20 +95,38 @@ The name is always printed as the last field, and
 .Fl K ,
 and
 .Fl R
-can be used to control which other keywords are printed.
+can be used to control which other keywords are printed,
+and
+.Fl E
+and
+.Fl R
+can be used to control which files are printed.
+.It Fl E Ar tags
+Add the comma separated tags to the
+.Dq exclusion
+list.
+Regular files with tags which are in the exclusion list are not printed with
+.Fl D .
 .It Fl e
 Don't complain about files that are in the file hierarchy, but not in the
 specification.
-.It Fl f
+.It Fl f Ar spec
 Read the specification from
 .Ar file  ,
 instead of from the standard input.
+.It Fl I Ar tags
+Add the comma separated tags to the
+.Dq inclusion
+list.
+Only regular files with tags which are in the inclusion list are printed with
+.Fl D .
+If no inclusion list is provided, the default is to display all files.
 .It Fl i
 If specified, set the schg and/or sappnd flags.
-.It Fl K
+.It Fl K Ar keywords
 Add the specified (whitespace or comma separated) keywords to the current
 set of keywords.
-.It Fl k
+.It Fl k Ar keywords
 Use the ``type'' keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
 .It Fl l
@@ -126,17 +150,17 @@ this is only possible with securelevel less than 1 (i. e. in single user mode
 or while the system is running in insecure mode). See
 .Xr init 8
 for information on security levels.
-.It Fl p
+.It Fl p Ar path
 Use the file hierarchy rooted in
 .Ar path  ,
 instead of the current directory.
+.It Fl R Ar keywords
+Remove the specified (whitespace or comma separated) keywords from the current
+set of keywords.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
 specification.
-.It Fl R
-Remove the specified (whitespace or comma separated) keywords from the current
-set of keywords.
-.It Fl s
+.It Fl s Ar seed
 Display a single checksum to the standard error output that represents all
 of the files for which the keyword
 .Cm cksum
@@ -211,6 +235,13 @@ The file owner as a numeric value.
 The file owner as a symbolic name.
 .It Cm size
 The size, in bytes, of the file.
+.It Cm tags
+Comma delimited tags to be matched with
+.Fl E
+and
+.Fl I .
+These may be specified without leading or trailing commas, but will be
+stored internally with them.
 .It Cm time
 The last modification time of the file.
 .It Cm type
@@ -336,8 +367,8 @@ system specification directory
 .Xr cksum 1 ,
 .Xr md5 1 ,
 .Xr stat 2 ,
-.Xr strsvis 3 ,
 .Xr fts 3 ,
+.Xr strsvis 3 ,
 .Xr chown 8
 .Sh HISTORY
 The

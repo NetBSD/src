@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.27 2001/10/01 02:30:40 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.28 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.27 2001/10/01 02:30:40 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.28 2001/10/04 04:51:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,6 @@ __RCSID("$NetBSD: compare.c,v 1.27 2001/10/01 02:30:40 lukem Exp $");
 
 #include "mtree.h"
 #include "extern.h"
-
-extern int iflag, lflag, mflag, tflag, uflag;
 
 #define	INDENTNAMELEN	8
 #define MARK                                                                  \

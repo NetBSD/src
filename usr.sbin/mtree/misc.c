@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2001/09/11 15:10:45 thorpej Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.12 2001/09/11 15:10:45 thorpej Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2001/10/04 04:51:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,8 +49,6 @@ __RCSID("$NetBSD: misc.c,v 1.12 2001/09/11 15:10:45 thorpej Exp $");
 
 #include "mtree.h"
 #include "extern.h"
-
-extern size_t lineno;
 
 typedef struct _key {
 	const char	*name;		/* key name */
@@ -73,6 +71,7 @@ static KEY keylist[] = {
 	{"nlink",	F_NLINK,	NEEDVALUE},
 	{"optional",	F_OPT,		0},
 	{"size",	F_SIZE,		NEEDVALUE},
+	{"tags",	F_TAGS,		NEEDVALUE},
 	{"time",	F_TIME,		NEEDVALUE},
 	{"type",	F_TYPE,		NEEDVALUE},
 	{"uid",		F_UID,		NEEDVALUE},
@@ -100,7 +99,7 @@ parsekey(const char *name, int *needvaluep)
 	k = (KEY *)bsearch(&tmp, keylist, sizeof(keylist) / sizeof(KEY),
 	    sizeof(KEY), keycompare);
 	if (k == NULL)
-		mtree_err("unknown keyword %s", name);
+		mtree_err("unknown keyword `%s'", name);
 
 	if (needvaluep)
 		*needvaluep = k->flags & NEEDVALUE ? 1 : 0;
@@ -117,7 +116,7 @@ parsetype(const char *name)
 	k = (KEY *)bsearch(&tmp, typelist, sizeof(typelist) / sizeof(KEY),
 	    sizeof(KEY), keycompare);
 	if (k == NULL)
-		mtree_err("unknown file type %s", name);
+		mtree_err("unknown file type `%s'", name);
 
 	return (k->val);
 }
