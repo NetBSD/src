@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.44 1995/03/24 22:47:39 mycroft Exp $
+#	$NetBSD: files.i386.newconf,v 1.45 1995/04/07 22:25:41 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -240,3 +240,4 @@ file	compat/linux/linux_util.c		compat_linux
 file	compat/linux/linux_error.c		compat_linux
 file	compat/linux/linux_socket.c		compat_linux
 file	compat/linux/linux_ipc.c		compat_linux
+file	arch/i386/i386/linux_machdep.c		compat_linux
