@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2000/06/29 07:07:56 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 2001/01/11 14:00:11 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,6 @@
 
 #include <uvm/uvm_extern.h>
 
-extern u_int lowram;
 static caddr_t devzeropage;
 
 #define mmread  mmrw
@@ -84,6 +83,8 @@ mmclose(dev, flag, mode, p)
 
 	return (0);
 }
+
+static int isinram(vaddr_t);
 
 /*ARGSUSED*/
 int
@@ -126,7 +127,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0xFFFFFFFC || v < lowram) {
+			if (!isinram(v)) {
 				error = EFAULT;
 				goto unlock;
 			}
@@ -222,7 +223,21 @@ mmmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if ((u_int)off < lowram || (u_int)off >= 0xFFFFFFFC)
+	if (!isinram ((vaddr_t) off))
 		return (-1);
 	return (m68k_btop((u_int)off));
+}
+
+static int
+isinram(addr)
+	vaddr_t addr;
+{
+	int i;
+
+	for (i = 0; i < vm_nphysseg; i++) {
+		if (ctob(vm_physmem[i].start) <= addr &&
+		    addr < ctob(vm_physmem[i].end))
+			return 1;
+	}
+	return 0;
 }
