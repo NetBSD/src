@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.8.2.1 1999/09/10 22:37:10 he Exp $	*/
+/*	$NetBSD: interact.c,v 1.8.2.2 1999/12/17 23:07:32 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.8.2.1 1999/09/10 22:37:10 he Exp $");
+__RCSID("$NetBSD: interact.c,v 1.8.2.2 1999/12/17 23:07:32 he Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ static void cmd_name __P((struct disklabel *, char *, int));
 static int runcmd __P((char *, struct disklabel *, int));
 static int getinput __P((const char *, const char *, const char *, char *));
 static void defnum __P((char *, struct disklabel *, int));
-static int getnum __P((char *, struct disklabel *));
+static int getnum __P((char *, int, struct disklabel *));
 static void deffstypename __P((char *, int));
 static int getfstypename __P((const char *));
 
@@ -176,7 +176,7 @@ cmd_part(lp, s, fd)
 		i = getinput(":", "Start offset", def, line);
 		if (i <= 0)
 			break;
-		if ((i = getnum(line, lp)) == -1) {
+		if ((i = getnum(line, 0, lp)) == -1) {
 			printf("Bad offset `%s'\n", line);
 			continue;
 		}
@@ -185,10 +185,12 @@ cmd_part(lp, s, fd)
 	}
 	for (;;) {
 		defnum(def, lp, p->p_size);
-		i = getinput(":", "Partition size", def, line);
+		i = getinput(":", "Partition size ('$' for all remaining)",
+		    def, line);
 		if (i <= 0)
 			break;
-		if ((i = getnum(line, lp)) == -1) {
+		if ((i = getnum(line, lp->d_secperunit - p->p_offset, lp))
+		    == -1) {
 			printf("Bad size `%s'\n", line);
 			continue;
 		}
@@ -295,19 +297,24 @@ defnum(buf, lp, size)
 
 
 static int
-getnum(buf, lp)
+getnum(buf, max, lp)
 	char *buf;
+	int max;
 	struct disklabel *lp;
 {
 	char *ep;
-	double d = strtod(buf, &ep);
+	double d;
 	int rv;
 
+	if (max && buf[0] == '$' && buf[1] == 0)
+		return max;
+
+	d = strtod(buf, &ep);
 	if (buf == ep)
 		return -1;
 
 #define ROUND(a)	((a / lp->d_secpercyl) + \
-			 ((a % lp->d_secpercyl) ? 1 : 0)) * lp->d_secpercyl
+		 ((a % lp->d_secpercyl) ? 1 : 0)) * lp->d_secpercyl
 
 	switch (*ep) {
 	case '\0':
