@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.15 1997/03/23 20:59:58 fvdl Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.16 1997/05/12 01:52:27 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.15 1997/03/23 20:59:58 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.16 1997/05/12 01:52:27 jtk Exp $";
 #endif
 #endif /* not lint */
 
@@ -659,7 +659,7 @@ tryagain:
 				pertry, &so);
 			if (clp == NULL) {
 				if ((opflags & ISBGRND) == 0)
-					clnt_pcreateerror("Cannot MNT PRC");
+					clnt_pcreateerror("Cannot MNT RPC");
 			} else {
 				clp->cl_auth = authunix_create_default();
 				try.tv_sec = 10;
