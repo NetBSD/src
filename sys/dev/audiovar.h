@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.5 1996/02/16 02:25:44 mycroft Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.6 1996/02/17 02:29:05 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -116,6 +116,7 @@ struct audio_softc {
 	int	sc_hiwat;	/* xmit high water mark (for wakeup) */
 
 	int	sc_rblks;	/* number of phantom record blocks */
+	int	sc_wblks;	/* number of output silence blocks */
 	int	sc_pencoding;	/* current encoding; play */
 	int	sc_rencoding;	/* current encoding; record */
 };
