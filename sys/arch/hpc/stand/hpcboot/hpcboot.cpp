@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.13 2004/01/02 12:13:36 uwe Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.14 2004/02/27 02:02:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ hpcboot(void *arg)
 		goto failed_exit;
 	}
 
-	// open file system image.
+	// determine the size of file system image.
 	if (f.args.loadmfs)
 	{
 		if (!f._file->open(f.args.mfsName)) {
@@ -140,7 +140,7 @@ hpcboot(void *arg)
 			    TEXT("Can't open file system image.\n");
 			goto failed_exit;
 		}
-		sz = f._file->size();
+		sz = f._file->realsize();
 		sz = f._mem->roundPage(sz);
 		f._file->close();
 	}
