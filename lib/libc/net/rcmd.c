@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.22 1997/12/21 17:14:24 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.23 1998/01/18 06:22:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.22 1997/12/21 17:14:24 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.23 1998/01/18 06:22:19 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: rcmd.c,v 1.22 1997/12/21 17:14:24 christos Exp $");
 #include <sys/wait.h>
 
 #include <netinet/in.h>
+#include <rpc/rpc.h>
 #include <arpa/inet.h>
 #include <netgroup.h>
 
@@ -396,6 +397,7 @@ rresvport(alport)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0)
 		return (-1);
+#if 0
 	for (;;) {
 		sin.sin_port = htons((u_short)*alport);
 		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
@@ -411,6 +413,18 @@ rresvport(alport)
 			return (-1);
 		}
 	}
+#else
+	sin.sin_port = 0;
+	if (bindresvport(s, &sin) < 0) {
+		int sverr = errno;
+
+		(void)close(s);
+		errno = sverr;
+		return (-1);
+	}
+	*alport = (int)ntohs(sin.sin_port);
+	return (s);
+#endif
 }
 
 int	__check_rhosts_file = 1;
