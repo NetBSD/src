@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.54.2.4 2001/12/03 05:05:53 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.54.2.5 2001/12/15 06:53:23 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.4 2001/12/03 05:05:53 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.54.2.5 2001/12/15 06:53:23 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1185,30 +1185,78 @@ hpux_sys_alarm_6x(l, v, retval)
 		syscallarg(int) deltat;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int s = splhigh();
+	int s;
+	struct itimerval *itp, it;
 
-	callout_stop(&p->p_timers[ITIMER_REAL]->pt_ch);
-	timerclear(&p->p_timers[ITIMER_REAL]->pt_time.it_interval);
-	*retval = 0;
-	if (timerisset(&p->p_timers[ITIMER_REAL]->pt_time.it_value) &&
-	    timercmp(&p->p_timers[ITIMER_REAL]->pt_time.it_value, &time, >))
-		*retval = p->p_timers[ITIMER_REAL]->pt_time.it_value.tv_sec
-		    - time.tv_sec;
+	if (p->p_timers && p->p_timers[ITIMER_REAL])
+		itp = &p->p_timers[ITIMER_REAL]->pt_time;
+	else
+		itp = NULL;
+
+	s = splhigh();
+
+	/*
+	 * Clear any pending timer alarms.
+	 */
+	if (itp) {
+		callout_stop(&p->p_timers[ITIMER_REAL]->pt_ch);
+		timerclear(&itp->it_interval);
+		if (timerisset(&itp->it_value) &&
+		    timercmp(&itp->it_value, &time, >))
+			timersub(&itp->it_value, &time, &itp->it_value);
+		/*
+		 * Return how many seconds were left (rounded up)
+		 */
+		retval[0] = itp->it_value.tv_sec;
+		if (itp->it_value.tv_usec)
+			retval[0]++;
+	} else {
+		retval[0] = 0;
+	}
+
+	/*
+	 * alarm(0) just resets the timer.
+	 */
 	if (SCARG(uap, deltat) == 0) {
-		timerclear(&p->p_timers[ITIMER_REAL]->pt_time.it_value);
+		if (itp)
+			timerclear(&itp->it_value);
 		splx(s);
 		return (0);
 	}
-	p->p_timers[ITIMER_REAL]->pt_time.it_value = time;
-	p->p_timers[ITIMER_REAL]->pt_time.it_value.tv_sec += SCARG(uap, deltat);
+
 	/*
-	 * We don't need to check the hzto() return value, here.
-	 * callout_reset() does it for us.
+	 * Check the new alarm time for sanity, and set it.
 	 */
-	callout_reset(&p->p_timers[ITIMER_REAL]->pt_ch,
-	    hzto(&p->p_timers[ITIMER_REAL]->pt_time.it_value),
-	    realtimerexpire, p->p_timers[ITIMER_REAL]);
+	timerclear(&it.it_interval);
+	it.it_value.tv_sec = SCARG(uap, deltat);
+	it.it_value.tv_usec = 0;
+	if (itimerfix(&it.it_value) || itimerfix(&it.it_interval)) {
+		splx(s);
+		return (EINVAL);
+	}
+	if (p->p_timers == NULL)
+		timers_alloc(p);
+	if (p->p_timers[ITIMER_REAL] == NULL) {
+		p->p_timers[ITIMER_REAL] = pool_get(&ptimer_pool, PR_WAITOK);
+		p->p_timers[ITIMER_REAL]->pt_ev.sigev_notify = SIGEV_SIGNAL;
+		p->p_timers[ITIMER_REAL]->pt_ev.sigev_signo = SIGALRM;
+		p->p_timers[ITIMER_REAL]->pt_type = CLOCK_REALTIME;
+		callout_init(&p->p_timers[ITIMER_REAL]->pt_ch);
+	}
+
+	if (timerisset(&it.it_value)) {
+		/*
+		 * We don't need to check the hzto() return value, here.
+		 * callout_reset() does it for us.
+		 */
+		timeradd(&it.it_value, &time, &it.it_value);
+		callout_reset(&p->p_timers[ITIMER_REAL]->pt_ch,
+		    hzto(&p->p_timers[ITIMER_REAL]->pt_time.it_value),
+		    realtimerexpire, p->p_timers[ITIMER_REAL]);
+	}
+	p->p_timers[ITIMER_REAL]->pt_time = it;
 	splx(s);
+
 	return (0);
 }
 
