@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.1 1996/05/09 20:31:09 is Exp $	*/
+/*	$NetBSD: drsc.c,v 1.2 1996/05/19 19:03:01 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -55,6 +55,9 @@ int drscprint __P((void *auxp, char *));
 void drscattach __P((struct device *, struct device *, void *));
 int drscmatch __P((struct device *, void *, void *));
 int drsc_dmaintr __P((struct siop_softc *));
+#ifdef DEBUG
+void drsc_dump __P((void));
+#endif
 
 struct scsi_adapter drsc_scsiswitch = {
 	siop_scsicmd,
