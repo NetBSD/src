@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.18 2000/02/18 03:53:16 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.19 2000/04/24 02:53:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.18 2000/02/18 03:53:16 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.19 2000/04/24 02:53:05 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,10 +321,12 @@ checkremote()
 		hints.ai_socktype = SOCK_STREAM;
 		res = NULL;
 		error = getaddrinfo(hname, NULL, &hints, &res);
-		if (error) {
+		if (error || !res->ai_canonname) {
 			(void)snprintf(errbuf, sizeof(errbuf),
 			    "unable to get official name for local machine %s: "
 			    "%s", hname, gai_strerror(error));
+			if (res)
+				freeaddrinfo(res);
 			return errbuf;
 		} else {
 			(void)strncpy(hname, res->ai_canonname,
@@ -340,10 +342,12 @@ checkremote()
 		hints.ai_socktype = SOCK_STREAM;
 		res = NULL;
 		error = getaddrinfo(RM, NULL, &hints, &res);
-		if (error) {
+		if (error || !res->ai_canonname) {
 			(void)snprintf(errbuf, sizeof(errbuf),
 			    "unable to get official name for local machine %s: "
 			    "%s", RM, gai_strerror(error));
+			if (res)
+				freeaddrinfo(res);
 			return errbuf;
 		}
 
