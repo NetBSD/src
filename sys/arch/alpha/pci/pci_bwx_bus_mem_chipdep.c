@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.6 1999/12/02 19:44:49 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.7 2000/02/06 04:07:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -301,12 +301,12 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	bus_space_handle_t *memhp;
 	int acct;
 {
-	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
+	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	int error;
 
-	/* Requests for linear uncacheable space can't be satisfied. */
-	if (linear && !cacheable)
+	/* Requests for linear unprefetchable space can't be satisfied. */
+	if (linear && !prefetchable)
 		return (EOPNOTSUPP);
 
 	if (acct == 0)
@@ -387,13 +387,13 @@ __C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
+	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t memaddr;
 	int error;
 
-	/* Requests for linear uncacheable space can't be satisfied. */
-	if (linear && !cacheable)
+	/* Requests for linear unprefetchable space can't be satisfied. */
+	if (linear && !prefetchable)
 		return (EOPNOTSUPP);
 
 	/*
