@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.47 1999/10/13 02:47:54 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.48 1999/10/24 12:31:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -115,15 +115,16 @@ void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
+void	cleanuppeer __P((void));
 void	cmdabort __P((int));
 void	cmdtimeout __P((int));
 void	cmdscanner __P((void));
-void	crankrate __P((int));
 int	command __P((const char *, ...));
 #ifndef NO_EDITCOMPLETE
 unsigned char complete __P((EditLine *, int));
 void	controlediting __P((void));
 #endif /* !NO_EDITCOMPLETE */
+void	crankrate __P((int));
 FILE   *dataconn __P((const char *));
 void	delete __P((int, char **));
 void	disconnect __P((int, char **));
@@ -140,6 +141,8 @@ int	ftp_login __P((const char *, const char *, const char *));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
+struct option *getoption __P((const char *));
+char   *getoptionvalue __P((const char *));
 int	getreply __P((int));
 char   *globulize __P((const char *));
 char   *gunique __P((const char *));
@@ -151,7 +154,7 @@ void	intr __P((int));
 int	isipv6addr __P((const char *));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
-void	lostpeer __P((void));
+void	lostpeer __P((int));
 void	lpage __P((int, char **));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
@@ -212,6 +215,7 @@ void	setglob __P((int, char **));
 void	sethash __P((int, char **));
 void	setnmap __P((int, char **));
 void	setntrans __P((int, char **));
+void	setoption __P((int, char **));
 void	setpassive __P((int, char **));
 void	setpeer __P((int, char **));
 void	setport __P((int, char **));
@@ -237,6 +241,7 @@ void	status __P((int, char **));
 int	strsuftoi __P((const char *));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
+void	unsetoption __P((int, char **));
 void	usage __P((void));
 void	user __P((int, char **));
 int	xconnect __P((int, const struct sockaddr *, int));
