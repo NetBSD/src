@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2003/01/18 08:02:50 thorpej Exp $  
+	$NetBSD: syscalls.master,v 1.15 2003/06/23 21:25:58 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -353,7 +353,9 @@
 190	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
 191	UNIMPL		/* unused */
-192	UNIMPL		mmap2
+192	NOARGS		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
+			    size_t len, int prot, int flags, int fd, \
+			    linux_off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
 194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.117 2003/03/05 18:44:46 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.118 2003/06/23 21:25:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.117 2003/03/05 18:44:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.118 2003/06/23 21:25:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,8 @@ static const struct mnttypes {
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
 static int linux_to_bsd_limit __P((int));
+static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
+    const struct linux_sys_mmap_args *));
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -449,28 +451,68 @@ linux_sys_mmap(l, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_mmap_args cma;
-	int flags = 0, fl = SCARG(uap, flags);
-	
+
 	if (SCARG(uap, offset) & PAGE_MASK)
 		return EINVAL;
 
+	linux_to_bsd_mmap_args(&cma, uap);
+	SCARG(&cma, pos) = (off_t)SCARG(uap, offset);
+
+	return sys_mmap(l, &cma, retval);
+}
+
+/*
+ * Guts of most architectures' mmap64() implementations.  This shares
+ * its list of arguments with linux_sys_mmap().
+ *
+ * The difference in linux_sys_mmap2() is that "offset" is actually
+ * (offset / pagesize), not an absolute byte count.  This translation
+ * to pagesize offsets is done inside glibc between the mmap64() call
+ * point, and the actual syscall.
+ */
+int
+linux_sys_mmap2(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_mmap2_args /* {
+		syscallarg(unsigned long) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(linux_off_t) offset;
+	} */ *uap = v;
+	struct sys_mmap_args cma;
+
+	linux_to_bsd_mmap_args(&cma, uap);
+	SCARG(&cma, pos) = ((off_t)SCARG(uap, offset)) << PAGE_SHIFT;
+
+	return sys_mmap(l, &cma, retval);
+}
+
+static void
+linux_to_bsd_mmap_args(cma, uap)
+	struct sys_mmap_args *cma;
+	const struct linux_sys_mmap_args *uap;
+{
+	int flags = 0, fl = SCARG(uap, flags);
+	
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_FIXED, MAP_FIXED);
 	flags |= cvtto_bsd_mask(fl, LINUX_MAP_ANON, MAP_ANON);
 	/* XXX XAX ERH: Any other flags here?  There are more defined... */
 
-	SCARG(&cma, addr) = (void *)SCARG(uap, addr);
-	SCARG(&cma, len) = SCARG(uap, len);
-	SCARG(&cma, prot) = SCARG(uap, prot);
-	if (SCARG(&cma, prot) & VM_PROT_WRITE) /* XXX */
-		SCARG(&cma, prot) |= VM_PROT_READ;
-	SCARG(&cma, flags) = flags;
-	SCARG(&cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
-	SCARG(&cma, pad) = 0;
-	SCARG(&cma, pos) = (off_t)SCARG(uap, offset);
-
-	return sys_mmap(l, &cma, retval);
+	SCARG(cma, addr) = (void *)SCARG(uap, addr);
+	SCARG(cma, len) = SCARG(uap, len);
+	SCARG(cma, prot) = SCARG(uap, prot);
+	if (SCARG(cma, prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(cma, prot) |= VM_PROT_READ;
+	SCARG(cma, flags) = flags;
+	SCARG(cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
+	SCARG(cma, pad) = 0;
 }
 
 int
