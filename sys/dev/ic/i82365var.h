@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.20 2004/08/12 13:37:40 mycroft Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.21 2004/09/13 12:34:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -58,7 +58,8 @@ struct pcic_handle {
 
 	int	vendor;		/* vendor of chip */
 	int	chip;		/* chip index 0 or 1 */
-	int	sock;
+	int	socket;		/* socket index 0 or 1 */
+	int	sock;		/* register offset */
 	int	flags;
 	int	laststate;
 	int	memalloc;
