@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.3 1995/03/29 22:09:23 briggs Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.4 1995/04/14 17:09:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -80,7 +80,7 @@ u_char	arcbroadcastaddr;
 
 void arc_ifattach __P((struct ifnet *));
 char *arc_sprintf __P((u_char *));
-void arc_input __P((struct ifnet *, struct arc_header *, struct mbuf *));
+void arc_input __P((struct ifnet *, struct mbuf *));
 int arc_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *));
 #endif
