@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.28 1996/12/31 17:55:28 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.28 1996/12/31 17:55:28 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,7 @@ static struct {
 { ".INVISIBLE",	  Attribute,   	OP_INVISIBLE },
 { ".JOIN",  	  Attribute,   	OP_JOIN },
 { ".LIBS",  	  Libs,	    	0 },
+{ ".MADE",	  Attribute,	OP_MADE },
 { ".MAIN",	  Main,		0 },
 { ".MAKE",  	  Attribute,   	OP_MAKE },
 { ".MAKEFLAGS",	  MFlags,   	0 },
