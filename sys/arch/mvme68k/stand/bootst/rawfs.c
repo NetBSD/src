@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.3 2001/11/09 18:25:11 scw Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.4 2001/11/09 18:27:59 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -163,13 +163,7 @@ off_t	rawfs_seek(f, offset, where)
 	 * In all cases, we can't seek back past the start of the
 	 * current block.
 	 */
-	if (fs->fs_curblk < 0) {
-		curblk = 0;
-		idx = 0;
-	} else {
-		curblk = fs->fs_curblk;
-		idx = RAWFS_BSIZE - fs->fs_len;
-	}
+	curblk = (fs->fs_curblk < 0) ? 0 : fs->fs_curblk;
 
 	/*
 	 * Only support SEEK_SET and SEEK_CUR which result in offsets
@@ -196,9 +190,6 @@ off_t	rawfs_seek(f, offset, where)
 	}
 
 	if (newoff < (curblk * RAWFS_BSIZE)) {
-		printf("\nrawfs_seek(%d): newoff = %d, curroff = %d\n",
-		    where, (int) newoff,
-		    (int)((curblk * RAWFS_BSIZE) + (RAWFS_BSIZE - fs->fs_len)));
 		errno = EINVAL;
 		return (-1);
 	}
@@ -213,7 +204,6 @@ off_t	rawfs_seek(f, offset, where)
 		;
 
 	if (err) {
-		printf("\nrawfs_seek: rawfs_get_block failed: %d\n", err);
 		errno = err;
 		return (-1);
 	}
