@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.27 2001/11/13 21:48:11 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.28 2001/11/13 21:52:44 he Exp $	*/
 
 
 /*
@@ -3017,8 +3017,12 @@ hpt_chip_map(sc, pa)
 	printf(": Triones/Highpoint ");
 	if (revision == HPT370_REV)
 		printf("HPT370 IDE Controller\n");
-	else
+	else if (revision == HPT370A_REV)
+		printf("HPT370A IDE Controller\n");
+	else if (revision == HPT366_REV)
 		printf("HPT366 IDE Controller\n");
+	else
+		printf("unknown HPT IDE controller rev %d\n", revision);
 
 	/* 
 	 * when the chip is in native mode it identifies itself as a
@@ -3029,7 +3033,7 @@ hpt_chip_map(sc, pa)
 	} else {
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0);
-		if (revision == HPT370_REV)
+		if (revision == HPT370_REV || revision == HPT370A_REV)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
 
@@ -3097,7 +3101,7 @@ hpt_chip_map(sc, pa)
 		wdcattach(&cp->wdc_channel);
 		hpt_setup_channel(&cp->wdc_channel);
 	}
-	if (revision == HPT370_REV) {
+	if (revision == HPT370_REV || revision == HPT370A_REV) {
 		/*
 		 * HPT370_REV has a bit to disable interrupts, make sure
 		 * to clear it
