@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.6 1999/05/14 11:37:30 drochner Exp $
+$NetBSD: miidevs,v 1.7 1999/09/04 23:58:55 soren Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -58,10 +58,13 @@ oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
 oui TI				0x080028	Texas Instruments
-
+oui TSC				0x00c039	TDK Semiconductor
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
 oui xxAMD			0x00606e	Advanced Micro Devices
+
+/* Some Intel 82553's use an alternative OUI. */
+oui xxINTEL			0x00f800	Intel
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
@@ -93,7 +96,9 @@ model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
 model xxICS 1890		0x0002 ICS1890 10/100 media interface
 
 /* Intel PHYs */
+model xxINTEL I82553		0x0000 i82553 10/100 media interface
 model INTEL I82555		0x0015 i82555 10/100 media interface
+model INTEL I82553		0x0035 i82553 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
@@ -115,3 +120,6 @@ model xxSIS 900			0x0000 SiS 900 10/100 media interface
 /* Texas Instruments PHYs */
 model xxTI TLAN10T		0x0001 ThunderLAN 10baseT media interface
 model xxTI 100VGPMI		0x0002 ThunderLAN 100VG-AnyLan media interface
+
+/* TDK Semiconductor PHYs */
+model TSC 78Q2120		0x0014 78Q2120 10/100 media interface
