@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.53 2003/02/17 11:07:20 dsl Exp $	*/
+/*	$NetBSD: refresh.c,v 1.54 2003/03/29 21:43:22 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.53 2003/02/17 11:07:20 dsl Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.54 2003/03/29 21:43:22 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -109,7 +109,7 @@ pnoutrefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	if (sbegx < 0)
 		sbegx = 0;
 
-	/* Calculate rectangle on pad - used bu _cursesi_wnoutrefresh */
+	/* Calculate rectangle on pad - used by _cursesi_wnoutrefresh */
 	pmaxy = pbegy + smaxy - sbegy + 1;
 	pmaxx = pbegx + smaxx - sbegx + 1;
 
@@ -140,6 +140,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 
 	short	wy, wx, y_off, x_off;
 	__LINE	*wlp, *vlp;
+	WINDOW	*sub_win;
 
 #ifdef DEBUG
 	__CTRACE("wnoutrefresh: win %p, flags 0x%08x\n", win, win->flags);
@@ -254,7 +255,16 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 		}
 	}
 
-	return (OK);
+	/* Recurse through any sub-windows */
+	if ((sub_win = win->nextp) != win && sub_win != win->orig) {
+#ifdef DEBUG
+		__CTRACE("wnoutrefresh: win %o, sub_win %o\n", win, sub_win);
+#endif
+		return _cursesi_wnoutrefresh(screen, sub_win, 0, 0,
+		    sub_win->begy, sub_win->begx,
+		    sub_win->maxy, sub_win->maxx);
+	} else
+		return OK;
 }
 
 /*
