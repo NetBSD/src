@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 1999/07/29 19:37:00 augustss Exp $
+# $NetBSD: GENERIC,v 1.19 1999/08/04 06:49:50 dbj Exp $
 #
 # GENERIC next68k
 #
@@ -117,8 +117,6 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
-# @@@ remove this once wsconscfg is working or something?
-options         WSDISPLAY_DEFAULTSCREENS=1
 # see dev/wskbdmap_next.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 
