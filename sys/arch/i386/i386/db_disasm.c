@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20 2000/08/09 20:09:25 tv Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.21 2000/09/06 22:22:27 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1097,7 +1097,10 @@ db_disasm(loc, altfmt)
 	 * Don't try to disassemble the location if the mapping is invalid.
 	 * If we do, we'll fault, and end up debugging the debugger!
 	 */
-	pte = vtopte((vaddr_t)loc);
+	if ((vaddr_t)loc >= VM_MIN_KERNEL_ADDRESS)
+		pte = kvtopte((vaddr_t)loc);
+	else
+		pte = vtopte((vaddr_t)loc);
 	if ((*pte & PG_V) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
