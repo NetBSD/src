@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.28 1998/03/09 19:14:44 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.29 1998/03/21 21:30:07 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -72,7 +72,6 @@ extern struct bus_space podulebus_bs_tag;
 
 void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 int poduleirqhandler __P((void *arg));
-u_int poduleread __P((u_int address, int offset, int slottype));
 
 
 /*
@@ -572,8 +571,11 @@ podulebusattach(parent, self, aux)
 		sprintf(argstring, "podule%d.disable", loop);
 		if (get_bootconf_option(boot_args, argstring,
 		    BOOTOPT_TYPE_BOOLEAN, &boolean)) {
-			if (boolean)
+			if (boolean) {
+				if (podules[loop].slottype != SLOT_NONE)
+					printf("podule%d: Disabled\n", loop);
 				continue;
+			}
 		}
 		
 		if (podules[loop].slottype != SLOT_NONE) {
@@ -651,6 +653,19 @@ matchpodule(pa, manufacturer, product, required_slot)
 		return(1);
 
 	return(0);
+}
+
+void
+netslot_ea(buffer)
+	u_int8_t *buffer;
+{
+	/* Build station address from machine ID */
+	buffer[0] = 0x00;
+	buffer[1] = 0x00;
+	buffer[2] = 0xa4;
+	buffer[3] = bootconfig.machine_id[2] + 0x10;
+	buffer[4] = bootconfig.machine_id[1];
+	buffer[5] = bootconfig.machine_id[0];
 }
 
 /* End of podulebus.c */
