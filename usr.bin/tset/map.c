@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.5 1996/11/15 05:52:42 lukem Exp $	*/
+/*	$NetBSD: map.c,v 1.6 1997/05/17 20:16:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: map.c,v 1.5 1996/11/15 05:52:42 lukem Exp $";
+static char rcsid[] = "$NetBSD: map.c,v 1.6 1997/05/17 20:16:18 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,7 +142,7 @@ next:	if (*arg == ':') {
 		mapp->speed = baudrate(p);
 	}
 
-	if (*arg == NULL)			/* Non-optional type. */
+	if (*arg == '\0')			/* Non-optional type. */
 		goto badmopt;
 
 	mapp->type = arg;
