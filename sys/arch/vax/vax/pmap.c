@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2000/05/29 20:00:55 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.81 2000/06/10 14:59:38 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -80,7 +80,7 @@ vaddr_t	istack;
  * Scratch pages usage:
  * Page 1: initial frame pointer during autoconfig. Stack and pcb for
  *	   processes during exit on boot cpu only.
- * Page 2: cpu_info struct for master (or only) cpu.
+ * Page 2: cpu_info struct for any cpu.
  * Page 3: unused
  * Page 4: unused
  */
@@ -285,6 +285,9 @@ pmap_bootstrap()
 	mtpr(pcb->SSP, PR_SSP);
 	bzero((caddr_t)pcb->SSP, sizeof(struct cpu_info));
 	curcpu()->ci_exit = scratch;
+#if defined(MULTIPROCESSOR)
+	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
+#endif
 
 	/*
 	 * Now everything should be complete, start virtual memory.
