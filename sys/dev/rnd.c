@@ -1,12 +1,12 @@
-/*	$NetBSD: rnd.c,v 1.5 1997/10/13 18:35:15 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.6 1997/10/13 20:00:11 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.  This code is derived from the
- * random driver written by Ted Ts'o.
+ * by Michael Graff <explorer@flame.org>.  This code uses ideas and
+ * algorithms from the Linux driver written by Ted Ts'o.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
