@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.28 2003/03/05 03:58:44 lukem Exp $ */
+/* $NetBSD: mkdir.c,v 1.29 2003/03/10 23:33:10 lukem Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.28 2003/03/05 03:58:44 lukem Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.29 2003/03/10 23:33:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			 * including the sticky, setuid, setgid bits you lose
 			 * them. So chmod().
 			 */
-			if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
+			if ((mode & ~(S_IRWXU|S_IRWXG|S_IRWXO)) != 0 &&
 			    chmod(path, mode) == -1) {
 				warn("%s", path);
 				return -1;
