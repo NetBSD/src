@@ -1,4 +1,4 @@
-.\"	$NetBSD: fpa.4,v 1.2 1997/02/18 01:07:46 jonathan Exp $
+.\"	$NetBSD: fpa.4,v 1.3 1998/05/23 16:10:30 matt Exp $
 .\"
 .\" Copyright (c) 1995, Matt Thomas
 .\" All rights reserved.
@@ -6,23 +6,28 @@
 .Dd March 13, 1995
 .Dt FPA 4
 .Dt FEA 4
+.Dt FYA 4
 .Os
 .Sh NAME
 .Nm fpa , 
-.Nm fea
+.Nm fea ,
+.Nm fta
 .Nd
 Device Drivers for DEC FDDI Controllers
 .Sh SYNOPSIS
 .Pp
 .Cd "fpa0 at pci?"
 .Cd "fea0 at eisa?"
+.Cd "fta0 at tc?"
 .Sh DESCRIPTION
 The
-.Nm fpa
-and
+.Nm fpa ,
 .Nm fea
-device driver provides support for the DEC DEFPA PCI FDDI Controller and
-the DEC DEFEA EISA FDDI Controller, respectively.  All variants of either
+and
+.Nm fta
+device driver provides support for the DEC DEFPA PCI FDDI Controller,
+the DEC DEFEA EISA FDDI Controller, and the DEC DEFTA TurboChannel FDDI
+Controller, respectively.  All variants of either
 controller are supported including the DAS and SAS configurations.
 .Pp
 .Sh DIAGNOSTICS
@@ -48,7 +53,8 @@ processing.
 .Xr netintro 4
 .Sh AUTHOR
 The
-.Nm fpa
-and
+.Nm fpa ,
 .Nm fea
+and
+.Nm fta
 device driver and manual page was written by Matt Thomas.
