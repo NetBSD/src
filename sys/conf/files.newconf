@@ -206,7 +206,7 @@ file netns/idp_usrreq.c	 	ns
 file netns/ns.c		 	ns
 file netns/ns_error.c	 	ns
 file netns/ns_input.c	 	ns
-file netns/ns_ip.c		ns
+file netns/ns_ip.c		nsip
 file netns/ns_output.c	 	ns
 file netns/ns_pcb.c		ns
 file netns/ns_proto.c	 	ns
