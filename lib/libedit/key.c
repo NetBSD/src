@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.7 2000/09/04 22:06:30 lukem Exp $	*/
+/*	$NetBSD: key.c,v 1.8 2000/10/04 16:21:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.7 2000/09/04 22:06:30 lukem Exp $");
+__RCSID("$NetBSD: key.c,v 1.8 2000/10/04 16:21:39 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -565,7 +565,7 @@ key_kprint(EditLine *el, char *key, key_value_t *val, int ntype)
 {
 	el_bindings_t *fp;
 	char unparsbuf[EL_BUFSIZ];
-	static char *fmt = "%-15s->  %s\n";
+	static const char fmt[] = "%-15s->  %s\n";
 
 	if (val != NULL)
 		switch (ntype) {
