@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.21 2004/04/26 17:08:45 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.22 2004/05/23 11:18:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.21 2004/04/26 17:08:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.22 2004/05/23 11:18:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,10 +208,12 @@ smbfs_smb_statvfs2(struct smb_share *ssp, struct statvfs *sbp,
 	}
 	mdp = &t2p->t2_rdata;
 	md_get_uint32(mdp, NULL);	/* fs id */
-	md_get_uint32le(mdp, &bpu);
-	md_get_uint32le(mdp, &units);
-	md_get_uint32le(mdp, &funits);
-	md_get_uint16le(mdp, &bsize);
+	md_get_uint32le(mdp, &bpu);	/* Number of sectors per alloc. unit */
+	md_get_uint32le(mdp, &units);	/* Total number of allocation units */
+	md_get_uint32le(mdp, &funits);	/* Total number of avail. alloc units */
+	md_get_uint16le(mdp, &bsize);	/* Number of bytes per sector */
+	smb_t2_done(t2p);
+
 	sbp->f_bsize = bpu * bsize;	/* fundamental file system block size */
 	sbp->f_frsize = bsize;		/* fundamental file system frag size */
 	sbp->f_iosize = bsize;		/* I/O size */
@@ -223,7 +225,6 @@ smbfs_smb_statvfs2(struct smb_share *ssp, struct statvfs *sbp,
 	sbp->f_ffree = 0xffff;		/* free file nodes to non-superuser */
 	sbp->f_favail = 0xffff;		/* free file nodes in fs */
 	sbp->f_fresvd = 0;		/* reserved file nodes in fs */
-	smb_t2_done(t2p);
 	return 0;
 }
 
@@ -249,10 +250,12 @@ smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 		return error;
 	}
 	smb_rq_getreply(rqp, &mdp);
-	md_get_uint16le(mdp, &units);
-	md_get_uint16le(mdp, &bpu);
-	md_get_uint16le(mdp, &bsize);
-	md_get_uint16le(mdp, &funits);
+	md_get_uint16le(mdp, &units);	/* Total allocation units per server */
+	md_get_uint16le(mdp, &bpu);	/* Blocks per allocation unit */
+	md_get_uint16le(mdp, &bsize);	/* Block size (in bytes) */
+	md_get_uint16le(mdp, &funits);	/* Number of free units */
+	smb_rq_done(rqp);
+
 	sbp->f_bsize = bpu * bsize;	/* fundamental file system block size */
 	sbp->f_frsize = bsize;		/* fundamental file system frag size */
 	sbp->f_iosize = bsize;		/* I/O size */
@@ -264,7 +267,6 @@ smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	sbp->f_ffree = 0xffff;		/* free file nodes to non-superuser */
 	sbp->f_favail = 0xffff;		/* free file nodes in fs */
 	sbp->f_fresvd = 0;		/* reserved file nodes in fs */
-	smb_rq_done(rqp);
 	return 0;
 }
 
