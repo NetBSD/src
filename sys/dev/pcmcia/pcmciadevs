@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.46 1999/09/25 09:47:13 enami Exp $
+$NetBSD: pcmciadevs,v 1.47 1999/09/27 04:27:28 enami Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,7 @@ product LUCENT WAVELAN_IEEE	0x0002	WaveLAN/IEEE
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
 vendor PLANET			-1 	Planet
+vendor PLANEX			-1	Planex Communications Inc
 vendor DLINK			-1 	D-Link
 vendor RPTI			-1 	RPTI
 vendor ACCTON			-1 	ACCTON
@@ -181,6 +182,11 @@ vendor AMBICOM			-1	AmbiCom Inc
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
 product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2000
+/*
+ * vendor ID of FMW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
+ * it conflicts with LINKSYS Combo EhternetCard.
+ */
+product PLANEX FMW3600T		{ "Fast&spEthernet", "Adapter", "1.0", NULL } Planex FMW-3600-T
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL } D-Link DE-660
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
@@ -188,7 +194,7 @@ product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
-product LINKSYS ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
+product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL } Corega
 product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
