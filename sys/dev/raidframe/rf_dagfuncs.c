@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.13 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.14 2003/12/29 03:43:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.13 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.14 2003/12/29 03:43:07 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -81,14 +81,15 @@ int     (*rf_RegularXorUndoFunc) (RF_DagNode_t *);
 int     (*rf_SimpleXorUndoFunc) (RF_DagNode_t *);
 int     (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
 
-/*****************************************************************************************
+/*****************************************************************************
  * main (only) configuration routine for this module
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_ConfigureDAGFuncs(listp)
 	RF_ShutdownList_t **listp;
 {
-	RF_ASSERT(((sizeof(long) == 8) && RF_LONGSHIFT == 3) || ((sizeof(long) == 4) && RF_LONGSHIFT == 2));
+	RF_ASSERT(((sizeof(long) == 8) && RF_LONGSHIFT == 3) || 
+		  ((sizeof(long) == 4) && RF_LONGSHIFT == 2));
 	rf_DiskReadFunc = rf_DiskReadFuncForThreads;
 	rf_DiskReadUndoFunc = rf_DiskUndoFunc;
 	rf_DiskWriteFunc = rf_DiskWriteFuncForThreads;
@@ -103,9 +104,9 @@ rf_ConfigureDAGFuncs(listp)
 
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a terminate node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_TerminateFunc(node)
 	RF_DagNode_t *node;
@@ -170,9 +171,9 @@ rf_DiskReadMirrorUndoFunc(node)
 
 
 #if RF_INCLUDE_PARITYLOGGING > 0
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a parity log update node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_ParityLogUpdateFunc(node)
 	RF_DagNode_t *node;
@@ -217,7 +218,8 @@ rf_ParityLogOverwriteFunc(node)
 
 	if (node->dagHdr->status == rf_enable) {
 		RF_ETIMER_START(timer);
-		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, buf, (RF_Raid_t *) (node->dagHdr->raidPtr),
+		logData = rf_CreateParityLogData(RF_OVERWRITE, pda, buf, 
+(RF_Raid_t *) (node->dagHdr->raidPtr),
 		    node->wakeFunc, (void *) node, node->dagHdr->tracerec, timer);
 		if (logData)
 			rf_ParityLogAppend(logData, RF_FALSE, NULL, RF_FALSE);
@@ -246,9 +248,9 @@ rf_ParityLogOverwriteUndoFunc(node)
 }
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a NOP node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_NullNodeFunc(node)
 	RF_DagNode_t *node;
@@ -266,9 +268,9 @@ rf_NullNodeUndoFunc(node)
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a disk-read node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_DiskReadFuncForThreads(node)
 	RF_DagNode_t *node;
@@ -308,9 +310,9 @@ rf_DiskReadFuncForThreads(node)
 }
 
 
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with a disk-write node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_DiskWriteFuncForThreads(node)
 	RF_DagNode_t *node;
@@ -352,11 +354,11 @@ rf_DiskWriteFuncForThreads(node)
 
 	return (0);
 }
-/*****************************************************************************************
+/*****************************************************************************
  * the undo function for disk nodes
  * Note:  this is not a proper undo of a write node, only locks are released.
  *        old data is not restored to disk!
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_DiskUndoFunc(node)
 	RF_DagNode_t *node;
@@ -381,9 +383,9 @@ rf_DiskUndoFunc(node)
 
 	return (0);
 }
-/*****************************************************************************************
+/*****************************************************************************
  * the execution function associated with an "unlock disk queue" node
- ****************************************************************************************/
+ ****************************************************************************/
 int 
 rf_DiskUnlockFuncForThreads(node)
 	RF_DagNode_t *node;
@@ -408,11 +410,11 @@ rf_DiskUnlockFuncForThreads(node)
 
 	return (0);
 }
-/*****************************************************************************************
- * Callback routine for DiskRead and DiskWrite nodes.  When the disk op completes,
- * the routine is called to set the node status and inform the execution engine that
- * the node has fired.
- ****************************************************************************************/
+/*****************************************************************************
+ * Callback routine for DiskRead and DiskWrite nodes.  When the disk
+ * op completes, the routine is called to set the node status and
+ * inform the execution engine that the node has fired.
+ ****************************************************************************/
 int 
 rf_GenericWakeupFunc(node, status)
 	RF_DagNode_t *node;
@@ -450,28 +452,31 @@ rf_GenericWakeupFunc(node, status)
 }
 
 
-/*****************************************************************************************
- * there are three distinct types of xor nodes
- * A "regular xor" is used in the fault-free case where the access spans a complete
- * stripe unit.  It assumes that the result buffer is one full stripe unit in size,
- * and uses the stripe-unit-offset values that it computes from the PDAs to determine
- * where within the stripe unit to XOR each argument buffer.
+/*****************************************************************************
+ * there are three distinct types of xor nodes:
+
+ * A "regular xor" is used in the fault-free case where the access
+ * spans a complete stripe unit.  It assumes that the result buffer is
+ * one full stripe unit in size, and uses the stripe-unit-offset
+ * values that it computes from the PDAs to determine where within the
+ * stripe unit to XOR each argument buffer.
  *
- * A "simple xor" is used in the fault-free case where the access touches only a portion
- * of one (or two, in some cases) stripe unit(s).  It assumes that all the argument
- * buffers are of the same size and have the same stripe unit offset.
+ * A "simple xor" is used in the fault-free case where the access
+ * touches only a portion of one (or two, in some cases) stripe
+ * unit(s).  It assumes that all the argument buffers are of the same
+ * size and have the same stripe unit offset.
  *
- * A "recovery xor" is used in the degraded-mode case.  It's similar to the regular
- * xor function except that it takes the failed PDA as an additional parameter, and
- * uses it to determine what portions of the argument buffers need to be xor'd into
- * the result buffer, and where in the result buffer they should go.
- ****************************************************************************************/
+ * A "recovery xor" is used in the degraded-mode case.  It's similar
+ * to the regular xor function except that it takes the failed PDA as
+ * an additional parameter, and uses it to determine what portions of
+ * the argument buffers need to be xor'd into the result buffer, and
+ * where in the result buffer they should go.
+ ****************************************************************************/
 
 /* xor the params together and store the result in the result field.
- * assume the result field points to a buffer that is the size of one SU,
- * and use the pda params to determine where within the buffer to XOR
- * the input buffers.
- */
+ * assume the result field points to a buffer that is the size of one
+ * SU, and use the pda params to determine where within the buffer to
+ * XOR the input buffers.  */
 int 
 rf_RegularXorFunc(node)
 	RF_DagNode_t *node;
@@ -525,13 +530,13 @@ rf_SimpleXorFunc(node)
 							 * explicitly since no
 							 * I/O in this node */
 }
-/* this xor is used by the degraded-mode dag functions to recover lost data.
- * the second-to-last parameter is the PDA for the failed portion of the access.
- * the code here looks at this PDA and assumes that the xor target buffer is
- * equal in size to the number of sectors in the failed PDA.  It then uses
- * the other PDAs in the parameter list to determine where within the target
- * buffer the corresponding data should be xored.
- */
+/* this xor is used by the degraded-mode dag functions to recover lost
+ * data.  the second-to-last parameter is the PDA for the failed
+ * portion of the access.  the code here looks at this PDA and assumes
+ * that the xor target buffer is equal in size to the number of
+ * sectors in the failed PDA.  It then uses the other PDAs in the
+ * parameter list to determine where within the target buffer the
+ * corresponding data should be xored.  */
 int 
 rf_RecoveryXorFunc(node)
 	RF_DagNode_t *node;
@@ -562,18 +567,20 @@ rf_RecoveryXorFunc(node)
 	}
 	return (rf_GenericWakeupFunc(node, retcode));
 }
-/*****************************************************************************************
- * The next three functions are utilities used by the above xor-execution functions.
- ****************************************************************************************/
+/*****************************************************************************
+ * The next three functions are utilities used by the above
+ * xor-execution functions.
+ ****************************************************************************/
 
 
 /*
- * this is just a glorified buffer xor.  targbuf points to a buffer that is one full stripe unit
- * in size.  srcbuf points to a buffer that may be less than 1 SU, but never more.  When the
- * access described by pda is one SU in size (which by implication means it's SU-aligned),
- * all that happens is (targbuf) <- (srcbuf ^ targbuf).  When the access is less than one
- * SU in size the XOR occurs on only the portion of targbuf identified in the pda.
- */
+ * this is just a glorified buffer xor.  targbuf points to a buffer
+ * that is one full stripe unit in size.  srcbuf points to a buffer
+ * that may be less than 1 SU, but never more.  When the access
+ * described by pda is one SU in size (which by implication means it's
+ * SU-aligned), all that happens is (targbuf) <- (srcbuf ^ targbuf).
+ * When the access is less than one SU in size the XOR occurs on only
+ * the portion of targbuf identified in the pda.  */
 
 int 
 rf_XorIntoBuffer(raidPtr, pda, srcbuf, targbuf, bp)
@@ -595,11 +602,11 @@ rf_XorIntoBuffer(raidPtr, pda, srcbuf, targbuf, bp)
 	retcode = rf_bxor(srcbuf, targptr, length, bp);
 	return (retcode);
 }
-/* it really should be the case that the buffer pointers (returned by malloc)
- * are aligned to the natural word size of the machine, so this is the only
- * case we optimize for.  The length should always be a multiple of the sector
- * size, so there should be no problem with leftover bytes at the end.
- */
+/* it really should be the case that the buffer pointers (returned by
+ * malloc) are aligned to the natural word size of the machine, so
+ * this is the only case we optimize for.  The length should always be
+ * a multiple of the sector size, so there should be no problem with
+ * leftover bytes at the end.  */
 int 
 rf_bxor(src, dest, len, bp)
 	char   *src;
@@ -609,8 +616,11 @@ rf_bxor(src, dest, len, bp)
 {
 	unsigned mask = sizeof(long) - 1, retcode = 0;
 
-	if (!(((unsigned long) src) & mask) && !(((unsigned long) dest) & mask) && !(len & mask)) {
-		retcode = rf_longword_bxor((unsigned long *) src, (unsigned long *) dest, len >> RF_LONGSHIFT, bp);
+	if (!(((unsigned long) src) & mask) && 
+	    !(((unsigned long) dest) & mask) && !(len & mask)) {
+		retcode = rf_longword_bxor((unsigned long *) src, 
+					   (unsigned long *) dest, 
+					   len >> RF_LONGSHIFT, bp);
 	} else {
 		RF_ASSERT(0);
 	}
@@ -619,12 +629,12 @@ rf_bxor(src, dest, len, bp)
 /* map a user buffer into kernel space, if necessary */
 #define REMAP_VA(_bp,x,y) (y) = (x)
 
-/* When XORing in kernel mode, we need to map each user page to kernel space before we can access it.
- * We don't want to assume anything about which input buffers are in kernel/user
- * space, nor about their alignment, so in each loop we compute the maximum number
- * of bytes that we can xor without crossing any page boundaries, and do only this many
- * bytes before the next remap.
- */
+/* When XORing in kernel mode, we need to map each user page to kernel
+ * space before we can access it.  We don't want to assume anything
+ * about which input buffers are in kernel/user space, nor about their
+ * alignment, so in each loop we compute the maximum number of bytes
+ * that we can xor without crossing any page boundaries, and do only
+ * this many bytes before the next remap.  */
 int 
 rf_longword_bxor(src, dest, len, bp)
 	unsigned long *src;
@@ -634,8 +644,7 @@ rf_longword_bxor(src, dest, len, bp)
 {
 	unsigned long *end = src + len;
 	unsigned long d0, d1, d2, d3, s0, s1, s2, s3;	/* temps */
-	unsigned long *pg_src, *pg_dest;	/* per-page source/dest
-							 * pointers */
+	unsigned long *pg_src, *pg_dest;   /* per-page source/dest pointers */
 	int     longs_this_time;/* # longwords to xor in the current iteration */
 
 	REMAP_VA(bp, src, pg_src);
