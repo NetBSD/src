@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.28 2004/12/27 10:17:38 mycroft Exp $ */
+/* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.28 2004/12/27 10:17:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1431,31 +1431,15 @@ rtw_txbuf_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 
 static void
 rtw_txbufs_release(bus_dma_tag_t dmat, bus_dmamap_t desc_dmamap,
-    struct ieee80211com *ic, struct rtw_txctl_blk *stc,
-    struct rtw_txdesc_blk *htc)
+    struct ieee80211com *ic, struct rtw_txctl_blk *stc)
 {
-	int desc, i;
 	struct rtw_txctl *stx;
 
 	while ((stx = SIMPLEQ_FIRST(&stc->stc_dirtyq)) != NULL) {
-		rtw_txdescs_sync(dmat, desc_dmamap, htc, stx->stx_first,
-		    stx->stx_dmamap->dm_nsegs,
-		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
-		for (i = 0, desc = stx->stx_first;
-		     i < stx->stx_dmamap->dm_nsegs;
-		     i++, desc = RTW_NEXT_IDX(htc, desc)) {
-			htc->htc_desc[desc].htx_ctl0 &=
-			    ~htole32(RTW_TXCTL0_OWN);
-		}
-		rtw_txdescs_sync(dmat, desc_dmamap, htc, stx->stx_first,
-		    stx->stx_dmamap->dm_nsegs,
-		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
-		htc->htc_nfree += stx->stx_dmamap->dm_nsegs;
 		rtw_txbuf_release(dmat, ic, stx);
 		SIMPLEQ_REMOVE_HEAD(&stc->stc_dirtyq, stx_q);
 		SIMPLEQ_INSERT_TAIL(&stc->stc_freeq, stx, stx_q);
 	}
-	htc->htc_next = 0;
 }
 
 static __inline void
@@ -1642,8 +1626,12 @@ rtw_txdesc_blk_reset(struct rtw_txdesc_blk *htc)
 {
 	int i;
 
+	(void)memset(htc->htc_desc, 0,
+	    sizeof(htc->htc_desc[0]) * htc->htc_ndesc);
 	for (i = 0; i < htc->htc_ndesc; i++)
 		htc->htc_desc[i].htx_next = htole32(RTW_NEXT_DESC(htc, i));
+	htc->htc_nfree = htc->htc_ndesc;
+	htc->htc_next = 0;
 }
 
 static void
@@ -1655,9 +1643,11 @@ rtw_txdescs_reset(struct rtw_softc *sc)
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		htc = &sc->sc_txdesc_blk[pri];
 		rtw_txbufs_release(sc->sc_dmat, sc->sc_desc_dmamap, &sc->sc_ic,
-		    &sc->sc_txctl_blk[pri], htc);
+		    &sc->sc_txctl_blk[pri]);
 		rtw_txdesc_blk_reset(htc);
-		KASSERT(htc->htc_nfree == htc->htc_ndesc);
+		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap, htc,
+		    0, htc->htc_ndesc,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	}
 }
 
@@ -1870,7 +1860,7 @@ rtw_stop(struct ifnet *ifp, int disable)
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		rtw_txbufs_release(sc->sc_dmat, sc->sc_desc_dmamap, &sc->sc_ic,
-		    &sc->sc_txctl_blk[pri], &sc->sc_txdesc_blk[pri]);
+		    &sc->sc_txctl_blk[pri]);
 	}
 
 	if (disable) {
@@ -2827,9 +2817,14 @@ rtw_watchdog(struct ifnet *ifp)
 			printf("%s: transmit timeout, priority %d\n",
 			    ifp->if_xname, pri);
 			ifp->if_oerrors++;
-			/* XXX do more? */
-			rtw_intr_tx(sc, 0);
+			/* Stop Tx DMA, disable transmitter, clear
+			 * Tx rings, and restart.
+			 */
+			RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL_SNPQ);
+			RTW_SYNC(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL);
+			rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 0);
 			rtw_txdescs_reset(sc);
+			rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 1);
 			rtw_start(ifp);
 		} else
 			ifp->if_timer = 1;
