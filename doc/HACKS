@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.5 2003/07/26 17:24:48 salo Exp $
+# $NetBSD: HACKS,v 1.6 2003/08/14 15:08:32 uwe Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -205,18 +205,6 @@ descr
 	Without this hack, xterm will export a termcap containing the ZZ
 	entry, which will then be ignored by libterm.  As xterm modifies the
 	exported termcap, this would cause those modifications to be ignored.
-kcah
-
-hack	gcc-3-libtelnet
-mdate	29 Jan 2002
-who	thorpej
-file	lib/libtelnet/Makefile	: 1.14 : 14 : 17
-descr
-	GCC 3.x issues a spurious warning when compiling a Duff's Device
-	with optimization, even though it compiles the file correctly.
-	GCC PR optimization/5230.  kerberos.c contains a Duff's Device
-	in the checksum routine.  Hack is to build libtelnet w/o optimization
-	if HAVE_GCC3 is set.
 kcah
 
 hack	gcc-sh3-sed
