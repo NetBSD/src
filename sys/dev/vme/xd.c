@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.6 1998/02/04 00:39:49 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.7 1998/02/04 00:55:52 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,6 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.6 1998/02/04 00:39:49 thorpej Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -236,6 +235,7 @@ int	xdcmatch __P((struct device *, struct cfdata *, void *));
 void	xdcattach __P((struct device *, struct device *, void *));
 int	xdmatch __P((struct device *, struct cfdata *, void *));
 void	xdattach __P((struct device *, struct device *, void *));
+static	int xdc_probe __P((void *, void *));
 
 static	void xddummystrat __P((struct buf *));
 int	xdgetdisklabel __P((struct xd_softc *, void *));
@@ -362,6 +362,19 @@ xdgetdisklabel(xd, b)
  * soft reset to detect the xdc.
  */
 
+int
+xdc_probe(vaddr, arg)
+	void *vaddr;
+	void *arg;
+{
+	struct xdc *xdc = vaddr;
+	int del = 0;
+
+	xdc->xdc_csr = XDC_RESET;
+	XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
+	return (del > 0);
+}
+
 int xdcmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -370,21 +383,12 @@ int xdcmatch(parent, cf, aux)
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->vma_chipset_tag;
 	bus_space_tag_t		bt = va->vma_bustag;
-	struct xdc		*xdc;
 	vme_mod_t		mod;
+	vme_addr_t		vaddr;
 
-	mod = VMEMOD_A32 | VMEMOD_S | VMEMOD_D;
-	xdc = (struct xdc *) va->vma_reg[0];
-	if (vme_bus_probe(ct, bt, (vme_addr_t)&xdc->xdc_csr, 1, mod)) {
-		int del = 0;
-		xdc->xdc_csr = XDC_RESET;
-		XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
-		if (del <= 0)
-			return (0);
-		return (1);
-	}
-
-	return (0);
+	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
+	vaddr = va->vma_reg[0] + (long)(&((struct xdc *)0)->xdc_csr);
+	return (vme_bus_probe(ct, bt, va->vma_reg[0], 1, mod, xdc_probe, 0));
 }
 
 /*
@@ -415,7 +419,7 @@ xdcattach(parent, self, aux)
 	 * into our xdc_softc. */
 
 	xdc->dmatag = va->vma_dmatag;
-	mod = VMEMOD_A32 | VMEMOD_S | VMEMOD_D;
+	mod = VMEMOD_A16 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
 
 	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct xdc),
 			mod, bt, &bh) != 0)
