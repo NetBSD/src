@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4 1996/05/06 00:32:19 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.5 1996/05/12 21:30:15 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -58,7 +58,6 @@
 #include "rd.h"
 #include "sd.h"
 #include "cd.h"
-#include "wcd.h"
 #include "podulebus.h"
 
 extern dev_t rootdev;
@@ -94,9 +93,6 @@ struct {
 #endif
 #if NCD > 0
 	{ "cd", 0x1a },
-#endif
-#if NWCD > 0
-	{ "wcd", 0x14 },
 #endif
 	{ NULL, 0x00 },
 };
