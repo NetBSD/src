@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.10 2003/01/03 09:09:21 rafal Exp $	*/
+/*	$NetBSD: mace.c,v 1.11 2003/01/06 06:19:40 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -46,8 +46,8 @@
 #include <machine/bus.h>
 #include <machine/machtype.h>
 
-#include <sgimips/dev/macereg.h>
 #include <sgimips/dev/macevar.h>
+#include <sgimips/dev/macereg.h>
 #include <sgimips/dev/crimereg.h>
 
 #include "locators.h"
@@ -60,6 +60,7 @@ static int	mace_match(struct device *, struct cfdata *, void *);
 static void	mace_attach(struct device *, struct device *, void *);
 static int	mace_print(void *, const char *);
 static int	mace_search(struct device *, struct cfdata *, void *);
+void mace_intr(int irqs);
 
 CFATTACH_DECL(mace, sizeof(struct mace_softc),
     mace_match, mace_attach, NULL, NULL);
@@ -86,20 +87,25 @@ mace_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	u_int32_t id;
+
+        id = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_REV_INFO_R);
+	aprint_normal(": rev %x", id);
 	printf("\n");
 
-	/*
-	 * Enable all "ISA" interrupts.
-	 */
-#if 0
-	aprint_debug("mace0: isa sts %llx\n", *(volatile u_int64_t *)0xbf310010);
-	aprint_debug("mace0: isa msk %llx\n", *(volatile u_int64_t *)0xbf310018);
-	*(volatile u_int64_t *)0xbf310018 = 0xffffffff;
-#endif
 	aprint_debug("%s: isa sts %llx\n", self->dv_xname,
 	    *(volatile u_int64_t *)0xbf310010);
 	aprint_debug("%s: isa msk %llx\n", self->dv_xname,
 	    *(volatile u_int64_t *)0xbf310018);
+
+	/* 
+	 * Disable interrupts.  These are enabled and unmasked during 
+	 * interrupt establishment 
+	 */
+        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_ADDR) = 0;
+        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_ERROR_FLAGS) = 0;
+        *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_CONTROL) = 0xff008500;
+        *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = 0;
 
 	config_search(mace_search, self, NULL);
 }
@@ -117,9 +123,9 @@ mace_print(aux, pnp)
 
 	if (maa->maa_offset != MACECF_OFFSET_DEFAULT)
 		aprint_normal(" offset 0x%lx", maa->maa_offset);
+#if 0
 	if (maa->maa_intr != MACECF_INTR_DEFAULT)
 		aprint_normal(" intr %d", maa->maa_intr);
-#if 0
 	if (maa->maa_offset != MACECF_STRIDE_DEFAULT)
 		aprint_normal(" stride 0x%lx", maa->maa_stride);
 #endif
@@ -138,8 +144,8 @@ mace_search(parent, cf, aux)
 
 	do {
 		maa.maa_offset = cf->cf_loc[MACECF_OFFSET];
-		maa.maa_intr = cf->cf_loc[MACECF_INTR];
 #if 0
+		maa.maa_intr = cf->cf_loc[MACECF_INTR];
 		maa.maa_stride = cf->cf_loc[MACECF_STRIDE];
 #endif
 		maa.maa_st = 3;
@@ -173,20 +179,20 @@ mace_intr_establish(intr, level, func, arg)
 {
         u_int64_t mask;
 
-        if (level < 0 || level >= 8)
-                panic("invalid interrupt level");
+        if (intr < 0 || intr >= 8)
+                panic("invalid interrupt number");
 
-        if (maceintrtab[level].func != NULL)
-                return (void *)-1; /* panic("cannot share mace interrupts"); */
+        if (maceintrtab[intr].func != NULL)
+                return NULL;	/* panic("Cannot share MACE interrupts!"); */
 
-        maceintrtab[level].func = func;
-        maceintrtab[level].arg = arg;
+        maceintrtab[intr].func = func;
+        maceintrtab[intr].arg = arg;
         mask = *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK);
-        mask |= (1 << level);
+        mask |= (1 << intr);
         *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = mask;
-	aprint_debug("mace: established interrupt at ipl %i (level %d)\n", intr, level);
+	aprint_debug("mace: established interrupt %d (level %i)\n", intr, level);
 	aprint_debug("mace: CRM_MASK now %llx\n", *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK));
-	return (void *)-1;
+	return (void *)&maceintrtab[intr];
 }
 
 void 
