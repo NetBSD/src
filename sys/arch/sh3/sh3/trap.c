@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 2000/09/08 19:48:12 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 2000/09/08 19:52:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -772,7 +772,6 @@ tlb_handler(p1, p2, p3, p4, frame)
 			nss = 0;
 		}
 	}
-#endif
 
 #ifdef RECURSE_TLB_HANDLER
 	if (((PSL_BL | PSL_IMASK) & frame.tf_ssr) == 0)
