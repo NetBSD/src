@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.73 2002/03/04 14:02:38 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.74 2002/03/13 01:27:02 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -122,7 +122,7 @@ all)
 	sh -$- $0 audio0 audio1 audio2 audio3
 	sh -$- $0 pty0 vnd0 vnd1 vnd2 vnd3 audio
 	sh -$- $0 tun0 tun1 tun2 tun3
-	sh -$- $0 ccd0 ccd1 ccd2 ccd3 
+	sh -$- $0 ccd0 ccd1 ccd2 ccd3
 	sh -$- $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	sh -$- $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh -$- $0 bwtwo0 cgthree0 cgsix0 tcx0
@@ -285,12 +285,12 @@ tun*)
 	;;
 
 md*)
-	unit=${i#md}; blk=5; chr=61;
+	unit=${i#md}; blk=5; chr=61
 	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
-	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
-#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
-#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
@@ -340,7 +340,7 @@ st*)
 	st*) name=st; unit=${i#st}; blk=11; chr=18;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod ${name}${unit}	b $blk $(($unit * 16 + 0))
 	mknod n${name}${unit}	b $blk $(($unit * 16 + 1))
 	mknod e${name}${unit}	b $blk $(($unit * 16 + 2))
@@ -352,11 +352,11 @@ st*)
 	chgrp operator ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
+		er${name}${unit} enr${name}${unit}
 	chmod 660 ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
+		er${name}${unit} enr${name}${unit}
 	;;
 
 ss*)
@@ -415,7 +415,7 @@ opty)
 		mknod ttyp$j c 20 $jn
 		mknod ptyp$j c 21 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -500,7 +500,7 @@ clcd*)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 120 $unit
 	chmod 644 scsibus$unit
@@ -533,28 +533,28 @@ i4bctl)
 	;;
 
 i4brbch*)
-	unit=${i#i4brbch};
+	unit=${i#i4brbch}
 	rm -f i4brbch$unit
 	mknod i4brbch$unit c 74 $unit
 	chmod 600 i4brbch$unit
 	;;
 
 i4btel*)
-	unit=${i#i4btel};
+	unit=${i#i4btel}
 	rm -f i4btel$unit
 	mknod i4btel$unit c 76 $unit
 	chmod 600 i4btel$unit
 	;;
 
 i4btrc*)
-	unit=${i#i4btrc};
+	unit=${i#i4btrc}
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 75 $unit
 	chmod 600 i4btrc$unit
 	;;
 
 pci*)
-	unit=${i#pci};
+	unit=${i#pci}
 	rm -f pci$unit
 	mknod pci$unit c 123 $unit
 	chmod 644 pci$unit

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 2002/03/04 14:02:33 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.16 2002/03/13 01:26:58 simonb Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -95,7 +95,7 @@ fd)
 	;;
 
 md*)
-	unit=${i#md};	blk=7; chr=16;
+	unit=${i#md};	blk=7; chr=16
 	rm -rf md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}c  b $blk $(($unit * 8 + 2))
@@ -160,7 +160,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -272,7 +272,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus};
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 31 $unit
 	chmod 644 scsibus$unit

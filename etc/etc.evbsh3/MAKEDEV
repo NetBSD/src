@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 2002/03/04 14:02:32 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2002/03/13 01:26:57 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -205,7 +205,7 @@ opty)
 		mknod ttyp$j c 5 $jn
 		mknod ptyp$j c 6 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		

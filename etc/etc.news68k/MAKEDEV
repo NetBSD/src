@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 2002/03/04 14:02:35 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2002/03/13 01:27:00 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -95,7 +95,7 @@ all)
 	makedev std fd sd0 sd1 sd2 sd3 cd0 st0 st1
 	makedev pty0 tty0 tty1
 	makedev vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3 md0 md1
-	makedev tun0 tun1 tun2 tun3 
+	makedev tun0 tun1 tun2 tun3
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
@@ -147,9 +147,9 @@ fd)
 
 audio)
 	rm -f audio sound mixer
-	mknod audio		c 35 0;
-	mknod mixer		c 35 16;
-	mknod sound		c 35 128;
+	mknod audio		c 35 0
+	mknod mixer		c 35 16
+	mknod sound		c 35 128
 	chmod 666 audio sound mixer
 	;;
 
@@ -168,7 +168,7 @@ tun*)
 	;;
 
 md*)
-	unit=${i#md}; blk=2; chr=10;
+	unit=${i#md}; blk=2; chr=10
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}c  b $blk $(($unit * 8 + 2))
@@ -299,7 +299,7 @@ opty)
 		mknod ttyp$j c 8 $jn
 		mknod ptyp$j c 9 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -346,7 +346,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus};
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 73 $unit
 	chmod 644 scsibus$unit

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.47 2002/03/04 14:02:39 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.48 2002/03/13 01:27:03 simonb Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -208,7 +208,7 @@ ht*|tm*|mt*|ts*|ut*)
 		chmod 660 $name$unit $name$four $name$eight $name$twelve \
 		    n$name$unit n$name$eight nr$name$unit nr$name$eight \
 		    r$name$unit r$name$four r$name$eight r$name$twelve
-		if [ $i = ut ] 
+		if [ $i = ut ]
 		then
 			rm -f $name$twenty r$name$twenty
 			mknod $name$twenty	b $blk $twenty
@@ -328,19 +328,19 @@ ch*|uk*)
 	;;
 
 md*)
-	unit=${i#md}; blk=23; chr=62;
+	unit=${i#md}; blk=23; chr=62
 	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
-	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
-#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
-#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
 uu*)
 	unit=${i#uu}
-	name=uu; blk=13;
+	name=uu; blk=13
 	case $unit in
 	[0-3])
 		mknod ${name}${unit}	b $blk $(($unit * 2 + 0))
@@ -353,7 +353,7 @@ uu*)
 	;;
 
 dz*)
-	unit=${i#dz};
+	unit=${i#dz}
 	case $unit in
 	[0-7])
 		i=0
@@ -371,33 +371,33 @@ dz*)
 
 dhu*|dh*|dmf*|dmz*|vt*)
 	case $i in
-	vt*)	name=vt; major=68; count=8;
+	vt*)	name=vt; major=68; count=8
 		unit=${i#vt}
 		case $unit in
 		0) ch=w ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
-	dmz*)	name=dmz; major=37; count=24;
+	dmz*)	name=dmz; major=37; count=24
 		unit=${i#dmz}
 		case $unit in
 		0) ch=a ;; 1) ch=b ;; 2) ch=c ;; 3) ch=e ;; 4) ch=f ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
-	dmf*)	name=dmf; major=22; count=8;
+	dmf*)	name=dmf; major=22; count=8
 		unit=${i#dmf}
 		case $unit in
 		0) ch=A ;; 1) ch=B ;; 2) ch=C ;; 3) ch=E ;;
 		4) ch=F ;; 5) ch=G ;; 6) ch=H ;; 7) ch=I ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
-	dhu*)	name=dhu; major=34; count=16;
+	dhu*)	name=dhu; major=34; count=16
 		unit=${i#dhu}
 		case $unit in
 		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
 		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
-	dh*)	name=dh; major=12; count=16;
+	dh*)	name=dh; major=12; count=16
 		unit=${i#dh}
 		case $unit in
 		0) ch=h ;; 1) ch=i ;; 2) ch=j ;; 3) ch=k ;;
@@ -428,7 +428,7 @@ lp*|va*|vp*)
 	esac
 	case $unit in
 	[0-7])
-		mknod $i c $major $unit;
+		mknod $i c $major $unit
 		chmod 666 $i
 		;;
 	*)
@@ -453,7 +453,7 @@ opty)
 		mknod ttyp$j c 20 $jn
 		mknod ptyp$j c 21 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -525,7 +525,7 @@ dn*|ik*|ps*|ad*|ct*)
 	;;
 
 bpf*)
-	unit=${i#bpf};
+	unit=${i#bpf}
 	rm -f bpf$unit
 	mknod bpf$unit c 56 $unit
 	chmod 600 bpf$unit
@@ -558,7 +558,7 @@ qv0)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 72 $unit
 	chmod 644 scsibus$unit

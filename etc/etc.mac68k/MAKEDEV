@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.58 2002/03/04 14:02:33 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.59 2002/03/13 01:26:58 simonb Exp $
 #
 ###########################################################################
 #
@@ -109,7 +109,7 @@ case $i in
 all)
 	makedev std wscons fd sd0 sd1 sd2 sd3 tty0 tty1 pty0
 	makedev st0 st1 ch0 cd0 cd1 fd0 fd1 vnd0 vnd1 vnd2 vnd3
-	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1 
+	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev ttye0 adb grf0 grf1 grf2 grf3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
@@ -137,7 +137,7 @@ std)
 	;;
 
 raminst)
-	makedev std 
+	makedev std
 	makedev sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 md0
 	makedev adb grf0 grf1 ttye0
 	makedev tty0 tty1 opty
@@ -213,7 +213,7 @@ fd)
 	;;
 
 md*)
-	unit=${i#md}; blk=13; chr=32;
+	unit=${i#md}; blk=13; chr=32
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}c  b $blk $(($unit * 8 + 2))
@@ -221,7 +221,7 @@ md*)
 #	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
-	;;      
+	;;
 
 ss*)
 	case $i in
@@ -288,7 +288,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -324,7 +324,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=14;	blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -334,9 +334,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -404,7 +404,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 39 $unit
 	chmod 644 scsibus$unit

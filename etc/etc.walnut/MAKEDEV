@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 2002/03/04 14:02:39 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.15 2002/03/13 01:27:03 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,7 +58,7 @@
 #
 # Keyboard devices:
 #	wskbd*	wscons keyboard events
-# 
+#
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
@@ -241,7 +241,7 @@ fd)
 	;;
 
 md*)
-	unit=${i#md}; blk=17; chr=24;
+	unit=${i#md}; blk=17; chr=24
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}d  b $blk $(($unit * 8 + 3))
@@ -338,7 +338,7 @@ opty)
 		mknod ttyp$j c 3 $jn
 		mknod ptyp$j c 4 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -374,7 +374,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=14;	blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -384,9 +384,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -449,7 +449,7 @@ lkm)
 	;;
 
 satlink*)
-	unit=${i#satlink};
+	unit=${i#satlink}
 	rm -f satlink$unit
 	mknod satlink$unit c 45 $unit
 	chmod 444 satlink$unit
@@ -473,7 +473,7 @@ cfs*)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 61 $unit
 	chmod 644 scsibus$unit
@@ -492,21 +492,21 @@ i4bctl)
 	;;
 
 i4brbch*)
-	unit=${i#i4brbch};
+	unit=${i#i4brbch}
 	rm -f i4brbch$unit
 	mknod i4brbch$unit c 55 $unit
 	chmod 600 i4brbch$unit
 	;;
 
 i4btel*)
-	unit=${i#i4btel};
+	unit=${i#i4btel}
 	rm -f i4btel$unit
 	mknod i4btel$unit c 57 $unit
 	chmod 600 i4btel$unit
 	;;
 
 i4btrc*)
-	unit=${i#i4btrc};
+	unit=${i#i4btrc}
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 56 $unit
 	chmod 600 i4btrc$unit
