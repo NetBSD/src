@@ -1,9 +1,10 @@
-/*	$NetBSD: in6_ifattach.h,v 1.5 1999/12/13 15:17:22 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.h,v 1.6 2000/04/12 10:36:44 itojun Exp $	*/
+/*	$KAME: in6_ifattach.h,v 1.8 2000/04/12 03:51:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,11 +34,7 @@
 #define _NETINET6_IN6_IFATTACH_H_
 
 #ifdef _KERNEL
-extern int found_first_ifid;
-
-int in6_ifattach_getifid __P((struct ifnet *));
-void in6_ifattach_p2p __P((void));
-void in6_ifattach __P((struct ifnet *, u_int, caddr_t, int));
+void in6_ifattach __P((struct ifnet *, struct ifnet *));
 void in6_ifdetach __P((struct ifnet *));
 #endif /* _KERNEL */
 
