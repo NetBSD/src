@@ -106,7 +106,8 @@ prompt(const char *msg)
 			break;
 		}
 	}
-	alarm(0);
+	if (openpam_ttyconv_timeout >= 0)
+		alarm(0);
 	sigaction(SIGALRM, &saved_action, NULL);
 	sigprocmask(SIG_SETMASK, &saved_sigs, NULL);
 	if (openpam_ttyconv_timeout >= 0)
