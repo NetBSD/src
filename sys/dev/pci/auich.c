@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.77 2004/11/10 17:17:14 cube Exp $	*/
+/*	$NetBSD: auich.c,v 1.78 2004/11/10 17:22:25 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.77 2004/11/10 17:17:14 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.78 2004/11/10 17:22:25 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,6 +331,8 @@ static const struct auich_devtype {
 	    "i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
 	    "i82801EB (ICH5) AC-97 Audio",   "ICH5" },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_AC,
+	    "i82801FB (ICH6) AC-97 Audio",   "ICH6" },
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
 	    "SiS 7012 AC-97 Audio",		"SiS7012" },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
@@ -400,12 +402,12 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": %s\n", d->name);
 
-	if ((d->vendor == PCI_VENDOR_INTEL
-	     && d->product == PCI_PRODUCT_INTEL_82801DB_AC)
-	    || (d->vendor == PCI_VENDOR_INTEL
-		&& d->product == PCI_PRODUCT_INTEL_82801EB_AC)) {
+	if (d->vendor == PCI_VENDOR_INTEL &&
+	    (d->product == PCI_PRODUCT_INTEL_82801DB_AC ||
+	    d->product == PCI_PRODUCT_INTEL_82801EB_AC ||
+	    d->product == PCI_PRODUCT_INTEL_82801FB_AC)) {
 		/*
-		 * Use native mode for ICH4/ICH5
+		 * Use native mode for ICH4/ICH5/ICH6
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
