@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.18 2002/01/27 13:23:11 jdolecek Exp $
+#	$NetBSD: M403,v 1.19 2002/03/04 13:24:08 sommerfeld Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -195,7 +195,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

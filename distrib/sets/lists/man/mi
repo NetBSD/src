@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.448 2002/03/01 11:26:49 ad Exp $
+# $NetBSD: mi,v 1.449 2002/03/04 13:24:06 sommerfeld Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -704,7 +704,6 @@
 ./usr/share/man/cat4/ip6.0			man-sys-catman
 ./usr/share/man/cat4/ipf.0			man-sys-catman
 ./usr/share/man/cat4/ipfilter.0			man-sys-catman
-./usr/share/man/cat4/ipip.0			man-sys-catman
 ./usr/share/man/cat4/ipkdb.0			man-sys-catman
 ./usr/share/man/cat4/ipl.0			man-sys-catman
 ./usr/share/man/cat4/ipnat.0			man-sys-catman
@@ -2378,7 +2377,6 @@
 ./usr/share/man/man4/ip6.4			man-sys-man
 ./usr/share/man/man4/ipf.4			man-sys-man
 ./usr/share/man/man4/ipfilter.4			man-sys-man
-./usr/share/man/man4/ipip.4			man-sys-man
 ./usr/share/man/man4/ipkdb.4			man-sys-man
 ./usr/share/man/man4/ipl.4			man-sys-man
 ./usr/share/man/man4/ipnat.4			man-sys-man

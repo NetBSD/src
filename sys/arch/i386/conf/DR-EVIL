@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.38 2002/02/10 17:36:57 wiz Exp $
+#	$NetBSD: DR-EVIL,v 1.39 2002/03/04 13:24:09 sommerfeld Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -831,7 +831,6 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC 1933)
 pseudo-device	faith		1	# IPv[46] TCP relay translation
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29 2002/01/27 13:23:22 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.30 2002/03/04 13:24:11 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	8
 
@@ -211,7 +211,6 @@ pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
 pseudo-device	strip		1	# Starmode Radio IP (Metricom)
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
