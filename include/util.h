@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.19.2.3 2002/06/21 18:17:09 nathanw Exp $	*/
+/*	$NetBSD: util.h,v 1.19.2.4 2002/08/01 03:31:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -43,6 +43,7 @@
 #include <pwd.h>
 #include <termios.h>
 #include <utmp.h>
+#include <utmpx.h>
 
 #define	PIDLOCK_NONBLOCK	1
 #define PIDLOCK_USEHOSTNAME	2
@@ -66,9 +67,12 @@ const char     *getbootfile(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
 void		login(const struct utmp *);
+void		loginx(const struct utmpx *);
 int		login_tty(int);
 int		logout(const char *);
+int		logoutx(const char *, int, int);
 void		logwtmp(const char *, const char *, const char *);
+void		logwtmpx(const char *, const char *, const char *, int, int);
 int		opendisk(const char *, int, char *, size_t, int);
 int		openpty(int *, int *, char *, struct termios *,
 			struct winsize *);

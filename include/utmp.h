@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.h,v 1.6 1994/10/26 00:56:40 cgd Exp $	*/
+/*	$NetBSD: utmp.h,v 1.6.20.1 2002/08/01 03:31:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -63,5 +63,12 @@ struct utmp {
 	char	ut_host[UT_HOSTSIZE];
 	time_t	ut_time;
 };
+
+__BEGIN_DECLS
+int utmpname __P((const char *));
+void setutent __P((void));
+struct utmp *getutent __P((void));
+void endutent __P((void));
+__END_DECLS
 
 #endif /* !_UTMP_H_ */
