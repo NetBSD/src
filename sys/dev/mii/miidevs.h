@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.11 2000/05/08 13:26:05 augustss Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.12 2000/11/06 22:32:49 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.11 2000/05/08 13:23:21 augustss Exp 
+ *	NetBSD: miidevs,v 1.12 2000/11/06 22:32:26 augustss Exp 
  */
 
 /*-
@@ -56,31 +56,35 @@
  */
 
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
-#define	MII_OUI_BROADCOM	0x001018	/* Broadcom */
+#define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
+#define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
+#define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
 
 /* Some Intel 82553's use an alternative OUI. */
-#define	MII_OUI_xxINTEL	0x00f800	/* Intel */
+#define	MII_OUI_xxINTEL	0x00f800	/* Intel (alt) */
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
+#define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
 #define	MII_OUI_xxICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_xxSEEQ	0x0005be	/* Seeq */
 #define	MII_OUI_xxSIS	0x000760	/* Silicon Integrated Systems */
 #define	MII_OUI_xxTI	0x100014	/* Texas Instruments */
+#define	MII_OUI_xxXAQTI	0x350700	/* XaQti Corp. */
 
 /* Level 1 is completely different - from right to left.
 	(Two bits get lost in the third OUI byte.) */
@@ -88,6 +92,9 @@
 
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x006040	/* Davicom Semiconductor */
+
+/* Contrived vendor for dcphy */
+#define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
 
 
 /*
@@ -104,13 +111,21 @@
 #define	MII_MODEL_AMD_79c901home	0x0039
 #define	MII_STR_AMD_79c901home	"Am79C901 HomePHY"
 
-/* Broadcom PHYs */
+/* Broadcom Corp. PHYs */
+#define	MII_MODEL_BROADCOM_3C905C	0x0017
+#define	MII_STR_BROADCOM_3C905C	"Broadcom 3C905C internal PHY"
 #define	MII_MODEL_BROADCOM_BCM5201	0x0021
 #define	MII_STR_BROADCOM_BCM5201	"BCM5201 10/100 media interface"
+#define	MII_MODEL_xxBROADCOM_BCM5400	0x0004
+#define	MII_STR_xxBROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
+
+/* Contrived vendor/model for dcphy */
+#define	MII_MODEL_xxDEC_xxDC	0x0001
+#define	MII_STR_xxDEC_xxDC	"DC"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_xxICS_1890	0x0002
@@ -127,6 +142,10 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
+
+/* Myson Technology PHYs */
+#define	MII_MODEL_MYSON_MTD972	0x0000
+#define	MII_STR_MYSON_MTD972	"MTD972 10/100 media interface"
 
 /* National Semiconductor PHYs */
 #define	MII_MODEL_NATSEMI_DP83840	0x0000
@@ -153,9 +172,15 @@
 #define	MII_STR_xxTI_TLAN10T	"ThunderLAN 10baseT media interface"
 #define	MII_MODEL_xxTI_100VGPMI	0x0002
 #define	MII_STR_xxTI_100VGPMI	"ThunderLAN 100VG-AnyLan media interface"
+#define	MII_MODEL_xxTI_TNETE2101	0x0003
+#define	MII_STR_xxTI_TNETE2101	"TNETE2101 media interface"
 
 /* TDK Semiconductor PHYs */
 #define	MII_MODEL_TSC_78Q2120	0x0014
 #define	MII_STR_TSC_78Q2120	"78Q2120 10/100 media interface"
 #define	MII_MODEL_TSC_78Q2121	0x0015
 #define	MII_STR_TSC_78Q2121	"78Q2121 100baseTX media interface"
+
+/* XaQti Corp. PHYs */
+#define	MII_MODEL_XAQTI_XMACII	0x0000
+#define	MII_STR_XAQTI_XMACII	"XaQti Corp. XMAC II gigabit interface"
