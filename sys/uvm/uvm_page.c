@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.31 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.32 2000/04/02 20:39:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -337,6 +337,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 * done!
 	 */
 
+	uvm.page_init_done = TRUE;
 }
 
 /*
@@ -475,7 +476,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 #endif
 	{
 
-		if (vm_physmem[lcv].pgs)
+		if (uvm.page_init_done == TRUE)
 			panic("vm_page_physget: called _after_ bootstrap");
 
 		if (vm_physmem[lcv].free_list != freelist)
