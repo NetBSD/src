@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makewhatis.sh,v 1.12 1998/02/09 01:34:57 lukem Exp $
+#	$NetBSD: makewhatis.sh,v 1.13 1998/03/21 23:46:00 tron Exp $
 #
 # written by matthew green <mrg@eterna.com.au>, based on the
 # original by J.T. Conklin <jtc@netbsd.org> and Thorsten
@@ -14,12 +14,12 @@ TMP=/tmp/whatis$$
 trap "rm -f $LIST $TMP; exit 1" 1 2 15
 
 MANDIR=${1-/usr/share/man}
-if test ! -d "$MANDIR"; then 
-	echo "makewhatis: $MANDIR: not a directory"
+if test ! -d "${DESTDIR}$MANDIR"; then 
+	echo "makewhatis: ${DESTDIR}$MANDIR: not a directory"
 	exit 1
 fi
 
-find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
+find ${DESTDIR}$MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
     sort -n | awk '{if (u[$1]) next; u[$1]++ ; print $11}' > $LIST
  
 egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
@@ -27,12 +27,12 @@ egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
 
 egrep '\.0$' $LIST | while read file
 do
-	sed -n -f /usr/share/man/makewhatis.sed $file;
+	sed -n -f ${DESTDIR}/usr/share/man/makewhatis.sed $file;
 done >> $TMP
 
 egrep '\.[0].(gz|Z)$' $LIST | while read file
 do
-	gzip -fdc $file | sed -n -f /usr/share/man/makewhatis.sed;
+	gzip -fdc $file | sed -n -f ${DESTDIR}/usr/share/man/makewhatis.sed;
 done >> $TMP
 
 sort -u -o $TMP $TMP
