@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2004/01/13 05:47:09 sekiya Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2004/01/13 12:57:24 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,10 @@ typedef u_long	bus_space_handle_t;
 #define	SGIMIPS_BUS_SPACE_MACE		3
 #define	SGIMIPS_BUS_SPACE_IO		4
 #define SGIMIPS_BUS_SPACE_CRIME		5
+
+/* Initialization for bus_dmamap_sync, which differs from MIPS1 to MIPS3 */
+
+void	sgimips_bus_dma_init(void);
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -616,7 +620,6 @@ struct sgimips_bus_dmamap {
 };
 
 #ifdef _SGIMIPS_BUS_DMA_PRIVATE
-void	sgimips_bus_dma_init(void);
 
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
