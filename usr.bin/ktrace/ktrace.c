@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.22 2001/05/01 02:15:04 simonb Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.23 2001/05/04 07:09:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.22 2001/05/01 02:15:04 simonb Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.23 2001/05/04 07:09:55 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,14 +85,14 @@ main(argc, argv)
 	char **argv;
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
-	int append, ch, fd, inherit, ops, pid, pidset, trpoints;
+	int append, ch, fd, inherit, ops, pid, pidset, synclog, trpoints;
 	const char *infile, *outfile;
 #ifdef KTRUSS
 	const char *emul_name = "netbsd";
 #endif
 
 	clear = NOTSET;
-	append = ops = pidset = inherit = 0;
+	append = ops = pidset = inherit = synclog = 0;
 	trpoints = DEF_POINTS;
 	pid = 0;	/* Appease GCC */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 # define OPTIONS "aCce:df:g:ilm:o:p:RTt:"
 	outfile = infile = NULL;
 #else
-# define OPTIONS "aCcdf:g:ip:t:"
+# define OPTIONS "aCcdf:g:ip:st:"
 	outfile = infile = DEF_TRACEFILE;
 #endif
 
@@ -158,6 +158,12 @@ main(argc, argv)
 		case 'R':
 			timestamp = 2;	/* relative timestamp */
 			break;
+#else
+		case 's':
+			synclog = 1;
+			break;
+#endif
+#ifdef KTRUSS
 		case 'T':
 			timestamp = 1;
 			break;
@@ -211,7 +217,8 @@ main(argc, argv)
 
 	if (outfile && strcmp(outfile, "-")) {
 		if ((fd = open(outfile, O_CREAT | O_WRONLY |
-		    (append ? 0 : O_TRUNC), DEFFILEMODE)) < 0)
+		    (append ? 0 : O_TRUNC) | (synclog ? 0 : O_SYNC),
+		    DEFFILEMODE)) < 0)
 			err(1, "%s", outfile);
 		(void)close(fd);
 	}
