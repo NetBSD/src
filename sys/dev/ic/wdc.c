@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66.2.1 1999/04/12 09:14:30 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.66.2.2 1999/06/24 00:06:01 perry Exp $ */
 
 
 /*
@@ -321,7 +321,28 @@ wdcattach(chp)
 			    chp->channel, i), DEBUG_PROBE);
 			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
 				continue;
-			/* Pre-ATA drive ? */
+			/*
+			 * Pre-ATA drive ?
+			 * Test registers writability (Error register not
+			 * writable, but cyllo is), then try an ATA command.
+			 */
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM | (i << 4));
+			delay(10);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_error, 0x58);
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+			    wd_cyl_lo, 0xa5);
+			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+			        wd_error == 0x58) ||
+			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+				wd_cyl_lo) != 0xa5) {
+				WDCDEBUG_PRINT(("%s:%d:%d: register "
+				    "writability failed\n",
+				    chp->wdc->sc_dev.dv_xname,
+				    chp->channel, i), DEBUG_PROBE);
+				    chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+			}
 			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 			    WDSD_IBM | (i << 4));
 			delay(100);
