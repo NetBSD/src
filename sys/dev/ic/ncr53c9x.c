@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.104 2003/01/30 11:03:45 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.105 2003/02/04 20:05:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.104 2003/01/30 11:03:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.105 2003/02/04 20:05:12 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,8 @@ ncr53c9x_attach(sc)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
+
+	simple_lock_init(&sc->sc_lock);
 
 	/*
 	 * Note, the front-end has set us up to print the chip variation.
@@ -834,6 +836,9 @@ ncr53c9x_scsipi_request(chan, req, arg)
 
 	NCR_TRACE(("[ncr53c9x_scsipi_request] "));
 
+	s = splbio();
+	simple_lock(&sc->sc_lock);
+
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
@@ -853,6 +858,8 @@ ncr53c9x_scsipi_request(chan, req, arg)
 			scsipi_printaddr(periph);
 			printf("unable to allocate ecb\n");
 			xs->error = XS_RESOURCE_SHORTAGE;
+			simple_unlock(&sc->sc_lock);
+			splx(s);
 			scsipi_done(xs);
 			return;
 		}
@@ -873,17 +880,13 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		}
 		ecb->stat = 0;
 
-		s = splbio();
-
 		TAILQ_INSERT_TAIL(&sc->ready_list, ecb, chain);
 		ecb->flags |= ECB_READY;
 		if (sc->sc_state == NCR_IDLE)
 			ncr53c9x_sched(sc);
 
-		splx(s);
-
 		if ((flags & XS_CTL_POLL) == 0)
-			return;
+			break;
 
 		/* Not allowed to use interrupts, use polling instead */
 		if (ncr53c9x_poll(sc, xs, ecb->timeout)) {
@@ -891,11 +894,11 @@ ncr53c9x_scsipi_request(chan, req, arg)
 			if (ncr53c9x_poll(sc, xs, ecb->timeout))
 				ncr53c9x_timeout(ecb);
 		}
-		return;
+		break;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
 		/* XXX Not supported. */
-		return;
+		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 	    {
@@ -937,9 +940,12 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		 */
 		if ((ti->flags & T_NEGOTIATE) == 0)
 			ncr53c9x_update_xfer_mode(sc, xm->xm_target);
-		return;
 	    }
+		break;
 	}
+
+	simple_unlock(&sc->sc_lock);
+	splx(s);
 }
 
 void
@@ -982,7 +988,9 @@ ncr53c9x_poll(sc, xs, count)
 	NCR_TRACE(("[ncr53c9x_poll] "));
 	while (count) {
 		if (NCRDMA_ISINTR(sc)) {
+			simple_unlock(&sc->sc_lock);
 			ncr53c9x_intr(sc);
+			simple_lock(&sc->sc_lock);
 		}
 #if alternatively
 		if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT)
@@ -1014,7 +1022,9 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 	switch (cmd) {
 	case SCBUSIORESET:
 		s = splbio();
+		simple_lock(&sc->sc_lock);
 		ncr53c9x_init(sc, 1);
+		simple_unlock(&sc->sc_lock);
 		splx(s);
 		break;
 	default:
@@ -1042,9 +1052,9 @@ ncr53c9x_sched(sc)
 	struct ncr53c9x_ecb *ecb;
 	struct scsipi_periph *periph;
 	struct ncr53c9x_tinfo *ti;
-	int lun;
 	struct ncr53c9x_linfo *li;
-	int s, tag;
+	int lun;
+	int tag;
 
 	NCR_TRACE(("[ncr53c9x_sched] "));
 	if (sc->sc_state != NCR_IDLE)
@@ -1075,13 +1085,11 @@ ncr53c9x_sched(sc)
 			tag = 0;
 #endif
 
-		s = splbio();
 		li = TINFO_LUN(ti, lun);
 		if (li == NULL) {
 			/* Initialize LUN info and add to list. */
 			if ((li = malloc(sizeof(*li),
 			    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
-				splx(s);
 				continue;
 			}
 			li->lun = lun;
@@ -1104,7 +1112,6 @@ ncr53c9x_sched(sc)
 				periph = ecb->xs->xs_periph;
 			} else {
 				/* Not ready yet */
-				splx(s);
 				continue;
 			}
 		}
@@ -1114,7 +1121,6 @@ ncr53c9x_sched(sc)
 			ecb->tag[1] = ecb->xs->xs_tag_id;
 			li->used++;
 		}
-		splx(s);
 		if (li->untagged != NULL && (li->busy != 1)) {
 			li->busy = 1;
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
@@ -1256,7 +1262,9 @@ ncr53c9x_done(sc, ecb)
 
 	ncr53c9x_free_ecb(sc, ecb);
 	ti->cmds++;
+	simple_unlock(&sc->sc_lock);
 	scsipi_done(xs);
+	simple_lock(&sc->sc_lock);
 }
 
 void
@@ -2065,6 +2073,7 @@ ncr53c9x_intr(arg)
 	if (!NCRDMA_ISINTR(sc))
 		return (0);
 
+	simple_lock(&sc->sc_lock);
 again:
 	/* and what do the registers say... */
 	ncr53c9x_readregs(sc);
@@ -2097,7 +2106,7 @@ again:
 		if (sc->sc_state != NCR_SBR) {
 			printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
 			ncr53c9x_init(sc, 0); /* Restart everything */
-			return (1);
+			goto out;
 		}
 #if 0
 /*XXX*/		printf("<expected bus reset: "
@@ -2127,7 +2136,7 @@ again:
 				ecb->xs->error = XS_TIMEOUT;
 				ncr53c9x_done(sc, ecb);
 			}
-			return (1);
+			goto out;
 		}
 
 		if ((sc->sc_espintr & NCRINTR_ILL) != 0) {
@@ -2143,7 +2152,7 @@ again:
 					sc->sc_dev.dv_xname);
 #endif
 				sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
-				return (1);
+				goto out;
 			}
 			/* illegal command, out of sync ? */
 			printf("%s: illegal command: 0x%x "
@@ -2155,7 +2164,7 @@ again:
 				DELAY(1);
 			}
 			ncr53c9x_init(sc, 1); /* Restart everything */
-			return (1);
+			goto out;
 		}
 	}
 	sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
@@ -2173,11 +2182,11 @@ again:
 			printf("%s: DMA error; resetting\n",
 			    sc->sc_dev.dv_xname);
 			ncr53c9x_init(sc, 1);
-			return 1;
+			goto out;
 		}
 		/* If DMA active here, then go back to work... */
 		if (NCRDMA_ISACTIVE(sc))
-			return (1);
+			goto out;
 
 		if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
 			/*
@@ -2335,7 +2344,7 @@ again:
 	case NCR_SBR:
 		printf("%s: waiting for SCSI Bus Reset to happen\n",
 		    sc->sc_dev.dv_xname);
-		return (1);
+		goto out;
 
 	case NCR_RESELECTED:
 		/*
@@ -2345,7 +2354,7 @@ again:
 			"state %d, intr %02x\n",
 			sc->sc_dev.dv_xname, sc->sc_state, sc->sc_espintr);
 		ncr53c9x_init(sc, 1);
-		return (1);
+		goto out;
 		break;
 
 	case NCR_IDENTIFIED:
@@ -2363,7 +2372,7 @@ again:
 				printf("[%d] ", NCR_READ_REG(sc, NCR_FIFO));
 
 			ncr53c9x_init(sc, 1);
-			return (1);
+			goto out;
 		} else
 			goto msgin;
 
@@ -2397,7 +2406,7 @@ again:
 				printf("%s: target didn't identify\n",
 				    sc->sc_dev.dv_xname);
 				ncr53c9x_init(sc, 1);
-				return (1);
+				goto out;
 			}
 			/*
 			 * The C90 only inhibits FIFO writes until reselection
@@ -2440,7 +2449,7 @@ again:
 				    sc->sc_espstep,
 				    sc->sc_prevphase);
 				ncr53c9x_init(sc, 1);
-				return (1);
+				goto out;
 			}
 			sc->sc_selid = sc->sc_imess[0];
 			NCR_INTS(("selid=%02x ", sc->sc_selid));
@@ -2456,7 +2465,7 @@ again:
 				    sc->sc_dev.dv_xname, sc->sc_state,
 				    sc->sc_espintr);
 				ncr53c9x_init(sc, 1);
-				return (1);
+				goto out;
 			}
 			goto shortcut; /* ie. next phase expected soon */
 		}
@@ -2550,7 +2559,7 @@ again:
 				    sc->sc_espstep);
 				NCRCMD(sc, NCRCMD_FLUSH);
 				ncr53c9x_sched_msgout(SEND_ABORT);
-				return (1);
+				goto out;
 			case 2:
 				/* Select stuck at Command Phase */
 				NCRCMD(sc, NCRCMD_FLUSH);
@@ -2591,6 +2600,7 @@ again:
 		}
 		if (sc->sc_state == NCR_IDLE) {
 			printf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
+			simple_unlock(&sc->sc_lock);
 			return (0);
 		}
 		break;
@@ -2758,7 +2768,7 @@ msgin:
 		NCRCMD(sc,
 		    (size == 0 ? NCRCMD_TRPAD : NCRCMD_TRANS) | NCRCMD_DMA);
 		NCRDMA_GO(sc);
-		return (1);
+		goto out;
 
 	case STATUS_PHASE:
 		NCR_PHASE(("STATUS_PHASE "));
@@ -2778,6 +2788,7 @@ msgin:
 	}
 
 out:
+	simple_unlock(&sc->sc_lock);
 	return (1);
 
 reset:
@@ -2884,6 +2895,7 @@ ncr53c9x_timeout(arg)
 #endif
 
 	s = splbio();
+	simple_lock(&sc->sc_lock);
 
 	if (ecb->flags & ECB_ABORT) {
 		/* abort timed out */
@@ -2909,6 +2921,7 @@ ncr53c9x_timeout(arg)
 		}
 	}
 
+	simple_unlock(&sc->sc_lock);
 	splx(s);
 }
 
@@ -2924,6 +2937,7 @@ ncr53c9x_watch(arg)
 	time_t old = time.tv_sec - (10 * 60);
 
 	s = splbio();
+	simple_lock(&sc->sc_lock);
 	for (t = 0; t < sc->sc_ntarg; t++) {
 		ti = &sc->sc_tinfo[t];
 		li = LIST_FIRST(&ti->luns);
@@ -2942,6 +2956,7 @@ ncr53c9x_watch(arg)
 			li = LIST_NEXT(li, link);
 		}
 	}
+	simple_unlock(&sc->sc_lock);
 	splx(s);
 	callout_reset(&sc->sc_watchdog, 60 * hz, ncr53c9x_watch, sc);
 }
