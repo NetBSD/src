@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)rec_put.c	5.11 (Berkeley) 3/19/93";
+static char sccsid[] = "@(#)rec_put.c	5.13 (Berkeley) 5/16/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,11 +52,11 @@ static char sccsid[] = "@(#)rec_put.c	5.11 (Berkeley) 3/19/93";
  *	dbp:	pointer to access method
  *	key:	key
  *	data:	data
- *	flag:	R_CURSORLOG, R_CURSOR, R_IAFTER, R_IBEFORE, R_NOOVERWRITE
+ *	flag:	R_CURSOR, R_IAFTER, R_IBEFORE, R_NOOVERWRITE
  *
  * Returns:
- *	RET_ERROR, RET_SUCCESS and RET_SPECIAL if the key is already in the
- *	tree and R_NOOVERWRITE specified.
+ *	RET_ERROR, RET_SUCCESS and RET_SPECIAL if the key is
+ *	already in the tree and R_NOOVERWRITE specified.
  */
 int
 __rec_put(dbp, key, data, flags)
@@ -74,13 +74,9 @@ __rec_put(dbp, key, data, flags)
 
 	switch (flags) {
 	case R_CURSOR:
-		if (!ISSET(t, BTF_SEQINIT))
+		if (!ISSET(t, B_SEQINIT))
 			goto einval;
 		nrec = t->bt_rcursor;
-		break;
-	case R_CURSORLOG:
-		nrec = t->bt_rcursor + 1;
-		SET(t, BTF_SEQINIT);
 		break;
 	case R_SETCURSOR:
 		if ((nrec = *(recno_t *)key->data) == 0)
@@ -113,7 +109,7 @@ einval:		errno = EINVAL;
 	 * already in the database.  If skipping records, create empty ones.
 	 */
 	if (nrec > t->bt_nrecs) {
-		if (!ISSET(t, BTF_EOF | BTF_RINMEM) &&
+		if (!ISSET(t, R_EOF | R_INMEM) &&
 		    t->bt_irec(t, nrec) == RET_ERROR)
 			return (RET_ERROR);
 		if (nrec > t->bt_nrecs + 1) {
@@ -129,16 +125,10 @@ einval:		errno = EINVAL;
 	if ((status = __rec_iput(t, nrec - 1, data, flags)) != RET_SUCCESS)
 		return (status);
 
-	SET(t, BTF_MODIFIED);
-	switch(flags) {
-	case R_CURSORLOG:
-		++t->bt_rcursor;
-		break;
-	case R_SETCURSOR:
+	if (flags == R_SETCURSOR)
 		t->bt_rcursor = nrec;
-		break;
-	}
 	
+	SET(t, R_MODIFIED);
 	return (__rec_ret(t, NULL, nrec, key, NULL));
 }
 
@@ -239,7 +229,9 @@ __rec_iput(t, nrec, data, flags)
 	dest = (char *)h + h->upper;
 	WR_RLEAF(dest, data, dflags);
 
-	mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 	++t->bt_nrecs;
+	SET(t, B_MODIFIED);
+	mpool_put(t->bt_mp, h, MPOOL_DIRTY);
+
 	return (RET_SUCCESS);
 }

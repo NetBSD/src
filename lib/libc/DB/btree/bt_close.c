@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_close.c	5.10 (Berkeley) 2/16/93";
+static char sccsid[] = "@(#)bt_close.c	5.12 (Berkeley) 5/16/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -73,10 +73,10 @@ __bt_close(dbp)
 	 * Delete any already deleted record that we've been saving
 	 * because the cursor pointed to it.
 	 */
-	if (ISSET(t, BTF_DELCRSR) && __bt_crsrdel(t, &t->bt_bcursor))
+	if (ISSET(t, B_DELCRSR) && __bt_crsrdel(t, &t->bt_bcursor))
 		return (RET_ERROR);
 
-	if (__bt_sync(dbp) == RET_ERROR)
+	if (__bt_sync(dbp, 0) == RET_ERROR)
 		return (RET_ERROR);
 
 	if (mpool_close(t->bt_mp) == RET_ERROR)
@@ -105,20 +105,26 @@ __bt_close(dbp)
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__bt_sync(dbp)
+__bt_sync(dbp, flags)
 	const DB *dbp;
+	u_int flags;
 {
 	BTREE *t;
 	int status;
 	PAGE *h;
 	void *p;
 
+	if (flags != 0) {
+		errno = EINVAL;
+		return (RET_ERROR);
+	}
+
 	t = dbp->internal;
 
-	if (ISSET(t, BTF_INMEM | BTF_RDONLY) || !ISSET(t, BTF_MODIFIED))
+	if (ISSET(t, B_INMEM | B_RDONLY) || !ISSET(t, B_MODIFIED))
 		return (RET_SUCCESS);
 
-	if (ISSET(t, BTF_METADIRTY) && bt_meta(t) == RET_ERROR)
+	if (ISSET(t, B_METADIRTY) && bt_meta(t) == RET_ERROR)
 		return (RET_ERROR);
 
 	/*
@@ -127,22 +133,22 @@ __bt_sync(dbp)
 	 * key/data item, sync the file, and then restore the original page
 	 * contents.
 	 */
-	if (ISSET(t, BTF_DELCRSR)) {
+	if (ISSET(t, B_DELCRSR)) {
 		if ((p = malloc(t->bt_psize)) == NULL)
 			return (RET_ERROR);
 		if ((h = mpool_get(t->bt_mp, t->bt_bcursor.pgno, 0)) == NULL)
 			return (RET_ERROR);
 		memmove(p, h, t->bt_psize);
-		if (status =
-		    __bt_dleaf(t, h, t->bt_bcursor.index) == RET_ERROR)
+		if ((status =
+		    __bt_dleaf(t, h, t->bt_bcursor.index)) == RET_ERROR)
 			goto ecrsr;
 		mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 	}
 		
 	if ((status = mpool_sync(t->bt_mp)) == RET_SUCCESS)
-		CLR(t, BTF_MODIFIED);
+		CLR(t, B_MODIFIED);
 
-ecrsr:	if (ISSET(t, BTF_DELCRSR)) {
+ecrsr:	if (ISSET(t, B_DELCRSR)) {
 		if ((h = mpool_get(t->bt_mp, t->bt_bcursor.pgno, 0)) == NULL)
 			return (RET_ERROR);
 		memmove(h, p, t->bt_psize);
@@ -171,23 +177,13 @@ bt_meta(t)
 	if ((p = mpool_get(t->bt_mp, P_META, 0)) == NULL)
 		return (RET_ERROR);
 
-	/* Fill in metadata -- lorder is host-independent. */
+	/* Fill in metadata. */
 	m.m_magic = BTREEMAGIC;
 	m.m_version = BTREEVERSION;
 	m.m_psize = t->bt_psize;
 	m.m_free = t->bt_free;
 	m.m_nrecs = t->bt_nrecs;
 	m.m_flags = t->bt_flags & SAVEMETA;
-	m.m_lorder = htonl((u_long)t->bt_lorder);
-
-	if (t->bt_lorder != BYTE_ORDER) {
-		BLSWAP(m.m_magic);
-		BLSWAP(m.m_version);
-		BLSWAP(m.m_psize);
-		BLSWAP(m.m_free);
-		BLSWAP(m.m_nrecs);
-		BLSWAP(m.m_flags);
-	}
 
 	memmove(p, &m, sizeof(BTMETA));
 	mpool_put(t->bt_mp, p, MPOOL_DIRTY);

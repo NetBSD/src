@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_debug.c	5.7 (Berkeley) 2/14/93";
+static char sccsid[] = "@(#)bt_debug.c	5.9 (Berkeley) 5/16/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -65,8 +65,8 @@ __bt_dump(dbp)
 
 	t = dbp->internal;
 	(void)fprintf(stderr, "%s: pgsz %d",
-	    ISSET(t, BTF_INMEM) ? "memory" : "disk", t->bt_psize);
-	if (ISSET(t, BTF_RECNO))
+	    ISSET(t, B_INMEM) ? "memory" : "disk", t->bt_psize);
+	if (ISSET(t, R_RECNO))
 		(void)fprintf(stderr, " keys %lu", t->bt_nrecs);
 #undef X
 #define	X(flag, name) \
@@ -76,14 +76,14 @@ __bt_dump(dbp)
 	}
 	if (t->bt_flags) {
 		sep = " flags (";
-		X(BTF_DELCRSR,	"DELCRSR");
-		X(BTF_FIXEDLEN,	"FIXEDLEN");
-		X(BTF_INMEM,	"INMEM");
-		X(BTF_NODUPS,	"NODUPS");
-		X(BTF_RDONLY,	"RDONLY");
-		X(BTF_RECNO,	"RECNO");
-		X(BTF_SEQINIT,	"SEQINIT");
-		X(BTF_METADIRTY,"METADIRTY");
+		X(B_DELCRSR,	"DELCRSR");
+		X(R_FIXLEN,	"FIXLEN");
+		X(B_INMEM,	"INMEM");
+		X(B_NODUPS,	"NODUPS");
+		X(B_RDONLY,	"RDONLY");
+		X(R_RECNO,	"RECNO");
+		X(B_SEQINIT,	"SEQINIT");
+		X(B_METADIRTY,"METADIRTY");
 		(void)fprintf(stderr, ")\n");
 	}
 #undef X
@@ -122,11 +122,10 @@ __bt_dmpage(h)
 	}
 	if (m->m_flags) {
 		sep = " (";
-		X(BTF_NODUPS,	"NODUPS");
-		X(BTF_RECNO,	"RECNO");
+		X(B_NODUPS,	"NODUPS");
+		X(R_RECNO,	"RECNO");
 		(void)fprintf(stderr, ")");
 	}
-	(void)fprintf(stderr, "\nlorder %lu\n", m->m_lorder);
 }
 
 /*
@@ -202,7 +201,7 @@ __bt_dpage(h)
 				(void)fprintf(stderr, " (indirect)");
 			else if (bi->ksize)
 				(void)fprintf(stderr,
-				    " {%.*s}", bi->ksize, bi->bytes);
+				    " {%.*s}", (int)bi->ksize, bi->bytes);
 			break;
 		case P_RINTERNAL:
 			ri = GETRINTERNAL(h, cur);
@@ -225,8 +224,8 @@ __bt_dpage(h)
 				    *(size_t *)(bl->bytes + bl->ksize +
 				    sizeof(pgno_t)));
 			else if (bl->dsize)
-				(void)fprintf(stderr,
-				    "%.*s", bl->dsize, bl->bytes + bl->ksize);
+				(void)fprintf(stderr, "%.*s",
+				    (int)bl->dsize, bl->bytes + bl->ksize);
 			break;
 		case P_RLEAF:
 			rl = GETRLEAF(h, cur);
@@ -237,17 +236,11 @@ __bt_dpage(h)
 				    *(size_t *)(rl->bytes + sizeof(pgno_t)));
 			else if (rl->dsize)
 				(void)fprintf(stderr,
-				    "%.*s", rl->dsize, rl->bytes);
+				    "%.*s", (int)rl->dsize, rl->bytes);
 			break;
 		}
 		(void)fprintf(stderr, "\n");
 	}
-}
-#else
-void
-__bt_dump(dbp)
-	DB *dbp;
-{
 }
 #endif
 
@@ -303,7 +296,7 @@ __bt_stat(dbp)
 			(void)mpool_put(t->bt_mp, h, 0);
 			break;
 		}
-		i = ISSET(t, BTF_RECNO) ?
+		i = ISSET(t, R_RECNO) ?
 		    GETRINTERNAL(h, 0)->pgno :
 		    GETBINTERNAL(h, 0)->pgno;
 		(void)mpool_put(t->bt_mp, h, 0);
@@ -311,7 +304,7 @@ __bt_stat(dbp)
 
 	(void)fprintf(stderr, "%d level%s with %ld keys",
 	    levels, levels == 1 ? "" : "s", nkeys);
-	if (ISSET(t, BTF_RECNO))
+	if (ISSET(t, R_RECNO))
 		(void)fprintf(stderr, " (%ld header count)", t->bt_nrecs);
 	(void)fprintf(stderr,
 	    "\n%lu pages (leaf %ld, internal %ld, overflow %ld)\n",
@@ -335,11 +328,5 @@ __bt_stat(dbp)
 	if (bt_pfxsaved)
 		(void)fprintf(stderr, "prefix checking removed %lu bytes.\n",
 		    bt_pfxsaved);
-}
-#else
-void
-__bt_stat(dbp)
-	DB *dbp;
-{
 }
 #endif

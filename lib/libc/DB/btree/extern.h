@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.6 (Berkeley) 2/19/93
+ *	@(#)extern.h	5.8 (Berkeley) 5/24/93
  */
 
 int	 __bt_close __P((DB *));
@@ -40,6 +40,7 @@ int	 __bt_defcmp __P((const DBT *, const DBT *));
 int	 __bt_defpfx __P((const DBT *, const DBT *));
 int	 __bt_delete __P((const DB *, const DBT *, u_int));
 int	 __bt_dleaf __P((BTREE *, PAGE *, int));
+int	 __bt_fd __P((const DB *));
 EPG	*__bt_first __P((BTREE *, const DBT *, int *));
 int	 __bt_free __P((BTREE *, PAGE *));
 int	 __bt_get __P((const DB *, const DBT *, DBT *, u_int));
@@ -54,7 +55,7 @@ EPG	*__bt_search __P((BTREE *, const DBT *, int *));
 int	 __bt_seq __P((const DB *, DBT *, DBT *, u_int));
 int	 __bt_split __P((BTREE *, PAGE *,
 	    const DBT *, const DBT *, u_long, size_t, u_int));
-int	 __bt_sync __P((const DB *));
+int	 __bt_sync __P((const DB *, u_int));
 
 int	 __ovfl_delete __P((BTREE *, void *));
 int	 __ovfl_get __P((BTREE *, void *, size_t *, char **, size_t *));

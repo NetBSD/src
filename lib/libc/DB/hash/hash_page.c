@@ -55,7 +55,6 @@ static char sccsid[] = "@(#)hash_page.c	5.25 (Berkeley) 2/16/93";
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -474,6 +473,13 @@ __add_ovflpage(hashp, bufp)
 	int tmp1, tmp2;
 #endif
 	sp = (u_short *)bufp->page;
+
+	/* Check if we are dynamically determining the fill factor */
+	if (hashp->FFACTOR == DEF_FFACTOR) {
+		hashp->FFACTOR = sp[0] >> 1;
+		if (hashp->FFACTOR < MIN_FFACTOR)
+			hashp->FFACTOR = MIN_FFACTOR;
+	}
 	bufp->flags |= BUF_MOD;
 	ovfl_num = overflow_page(hashp);
 #ifdef DEBUG1
