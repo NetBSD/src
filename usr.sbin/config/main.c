@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.22.2.1 1997/03/02 16:05:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@ static char copyright[] =
 #include <string.h>
 #include <unistd.h>
 #include "config.h"
+#include "sem.h"
 
 int	firstfile __P((const char *));
 int	yyparse __P((void));
@@ -524,10 +525,9 @@ loop:
 }
 
 /*
- * Cross-check the configuration: make sure that each target device
- * or attribute (`at foo[0*?]') names at least one real device.  Also
- * see that the root, swap, and dump devices for all configurations
- * are there.
+ * Cross-check the configuration: make sure that each target device or
+ * attribute (`at foo[0*?]') names at least one real device.  Also see
+ * that the root, and dump devices for all configurations are there.
  */
 int
 crosscheck()
@@ -553,9 +553,8 @@ crosscheck()
 		errs++;
 	}
 	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
-		if (cf->cf_root != NULL) {	/* i.e., not swap generic */
+		if (cf->cf_root->nv_str != s_qmark) {
 			errs += cfcrosscheck(cf, "root", cf->cf_root);
-			errs += cfcrosscheck(cf, "swap", cf->cf_swap);
 			errs += cfcrosscheck(cf, "dumps", cf->cf_dump);
 		}
 	}

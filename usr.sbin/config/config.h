@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.30.2.1 1997/03/02 16:05:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,6 @@ struct config {
 	int	cf_lineno;		/* source line */
 	const char *cf_fstype;		/* file system type */
 	struct	nvlist *cf_root;	/* "root on ra0a" */
-	struct	nvlist *cf_swap;	/* "swap on ra0b and ra1b" */
 	struct	nvlist *cf_dump;	/* "dumps on ra0b" */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.11 1997/01/31 03:12:37 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.11.2.1 1997/03/02 16:05:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -716,8 +716,7 @@ addconf(cf0)
 		 * Make sure no swap or dump device specified.
 		 * Note single | here (check all).
 		 */
-		if (exclude(cf->cf_swap, name, "swap devices") |
-		    exclude(cf->cf_dump, name, "dump device"))
+		if (exclude(cf->cf_dump, name, "dump device"))
 			goto bad;
 	} else {
 		nv = cf->cf_root;
@@ -726,7 +725,6 @@ addconf(cf0)
 			goto bad;
 		}
 		if (resolve(&cf->cf_root, name, "root", nv, 'a') |
-		    lresolve(&cf->cf_swap, name, "swap", nv, 'b') |
 		    resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
 			goto bad;
 	}
@@ -740,7 +738,6 @@ addconf(cf0)
 	return;
 bad:
 	nvfreel(cf0->cf_root);
-	nvfreel(cf0->cf_swap);
 	nvfreel(cf0->cf_dump);
 }
 
