@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.9 2003/05/20 22:45:13 provos Exp $	*/
+/*	$NetBSD: lex.l,v 1.10 2003/06/03 01:20:06 provos Exp $	*/
 /*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -30,11 +30,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-%x incl
+%x quote
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lex.l,v 1.9 2003/05/20 22:45:13 provos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.10 2003/06/03 01:20:06 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -60,6 +60,9 @@ int yylex(void);
 
 char *mystring;
 int myoff;
+
+char quotestr[8192];
+int quoteescape;
 
 #define YY_INPUT(buf,result,max_size) \
 { \
@@ -108,11 +111,32 @@ as		{ return AS; }
 ">"		{ return GREATER; }
 [\$A-Za-z][\.\(\)\/A-Za-z_\-0-9]* { yylval.string = strdup(yytext); return STRING; }
 [0-9]+		{ yylval.number = atoi(yytext); return NUMBER; }
-\"[^\"]*\" { char line[1024];
-	 strlcpy(line, yytext + 1, sizeof(line));
-	 line[strlen(line)-1] = '\0';
-	 yylval.string = strdup(line);
-	 return CMDSTRING; }
+\"		{ BEGIN(quote);
+		  *quotestr = '\0';
+		  quoteescape = 0;
+		}
+<quote>[^\\\"]+	{
+		  strlcat(quotestr, yytext, sizeof(quotestr));
+		  quoteescape = 0;
+		}
+<quote>\\	{
+		  if (!quoteescape)
+		     quoteescape = 1;
+		  else {
+		     strlcat(quotestr, "\\", sizeof(quotestr));
+		     quoteescape = 0;
+		  }
+		}
+<quote>\"	{
+		  if (!quoteescape) {
+			BEGIN(INITIAL);
+			yylval.string = strdup(quotestr);
+			return CMDSTRING;
+		  } else {
+		        strlcat(quotestr, "\"", sizeof(quotestr));
+		        quoteescape = 0;
+		  }
+		}
 \[		{ return LSQBRACE; }
 \]		{ return RSQBRACE; }
 \ 		{ ; }
