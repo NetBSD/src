@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.14.4.2 2001/11/05 19:46:20 briggs Exp $
+#	$NetBSD: GENERIC,v 1.14.4.3 2001/11/13 20:02:04 briggs Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.14.4.2 $"
+#ident 		"GENERIC-$Revision: 1.14.4.3 $"
 
 maxusers	32
 
@@ -26,6 +26,15 @@ options 	KTRACE
 #options 	PMAPCHECK
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
+
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+options 	SYSVSHM		# System V shared memory
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	COMPAT_43
 options 	COMPAT_09
