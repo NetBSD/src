@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.58 1994/12/04 03:10:45 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.59 1995/02/04 14:22:13 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -397,27 +397,25 @@ execve(p, uap, retval)
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		goto exec_abort;
 	dp = (char *) (cpp + argc + envc + 2 + pack.ep_setup_arglen);
+	sp = argp;
+	np = 0;
 
 	/* XXX don't copy them out, remap them! */
 	arginfo.ps_argvstr = dp; /* remember location of argv for later */
-	for (sp = argp; --argc >= 0; sp += len, dp += len) {
+	for (; --argc >= 0; sp += len, dp += len) {
 		len = strlen(sp) + 1;
-		if (copyout(&dp, cpp++, sizeof(dp))
-		    || copyoutstr(sp, dp, len, 0))
+		if (copyout(&dp, cpp++, sizeof(dp)) || copyout(sp, dp, len))
 			goto exec_abort;
 	}
-	np = 0;
 	if (copyout(&np, cpp++, sizeof(np)))
 		goto exec_abort;
 
-	arginfo.ps_envstr = dp;	/* remember location of env for later */
+	arginfo.ps_envstr = dp;	/* remember location of envp for later */
 	for (; --envc >= 0; sp += len, dp += len) {
 		len = strlen(sp) + 1;
-		if (copyout(&dp, cpp++, sizeof(dp))
-		    || copyoutstr(sp, dp, len, 0))
+		if (copyout(&dp, cpp++, sizeof(dp)) || copyout(sp, dp, len))
 			goto exec_abort;
 	}
-
 	if (copyout(&np, cpp++, sizeof(np)))
 		goto exec_abort;
 
