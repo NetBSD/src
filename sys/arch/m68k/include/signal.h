@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 2003/08/07 16:28:15 agc Exp $	*/
+/*	$NetBSD: signal.h,v 1.14 2003/09/22 14:18:38 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -37,6 +37,8 @@
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
+
+#define __HAVE_SIGINFO
 
 #if defined(_NETBSD_SOURCE)
 /*
@@ -99,8 +101,9 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PS] = (sc)->sc_ps;		\
 } while (/*CONSTCOND*/0)
 
-#if defined(__M68K_SIGNAL_PRIVATE)
-#include <m68k/frame.h>
+
+
+#include <m68k/cpuframe.h>
 
 /*
  * Register state saved while kernel delivers a signal.
@@ -114,6 +117,8 @@ struct sigstate {
 #define	SS_RTEFRAME	0x01
 #define	SS_FPSTATE	0x02
 #define	SS_USERREGS	0x04
+
+#if defined(__M68K_SIGNAL_PRIVATE)
 
 #ifdef _KERNEL
 #define	_SIGSTATE_EXFRAMESIZE(fmt)	exframesize[(fmt)]
@@ -192,18 +197,7 @@ do {									\
 		(uc)->uc_flags &= ~_UC_FPU;				\
 } while (/*CONSTCOND*/0)
 
-/*
- * Stack frame layout when delivering a signal.
- */
-struct sigframe {
-	int	sf_ra;			/* handler return address */
-	int	sf_signum;		/* signal number for handler */
-	int	sf_code;		/* additional info for handler */
-	struct sigcontext *sf_scp;	/* context pointer for handler */
-	struct sigcontext sf_sc;	/* actual context */
-	struct sigstate sf_state;	/* state of the hardware */
-};
-#endif /* _KERNEL && __M68K_SIGNAL_PRIVATE */
+#endif /* __M68K_SIGNAL_PRIVATE */
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_M68K_SIGNAL_H_ */
