@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.30.2.4 1994/08/03 17:12:45 cgd Exp $
+ *      $Id: ultra14f.c,v 1.30.2.5 1994/08/22 21:55:28 mycroft Exp $
  */
 
 /*
@@ -1059,13 +1059,13 @@ u24_find(uha, ia)
 			continue;
 		}
 
-		printf("u24_find: resetting card\n");
-
+#if 0
 		outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 		delay(10);
 		outb(iobase + EISA_CONTROL, EISA_ENABLE);
 		/* Wait for reset? */
 		delay(1000);
+#endif
 
 		config0 = inb(iobase + U24_CONFIG);
 		config1 = inb(iobase + U24_CONFIG + 1);
