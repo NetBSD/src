@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.62 2002/05/18 16:09:44 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.63 2002/07/18 11:59:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62 2002/05/18 16:09:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.63 2002/07/18 11:59:08 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,7 +699,7 @@ scintr:
 				if (siop_cmd->cmd_tables->msg_out[0] & 0x80) {
 					/*
 					 * message was part of a identify +
-					 * something else. Identify shoudl't
+					 * something else. Identify shouldn't
 					 * have been rejected.
 					 */
 					msg =
