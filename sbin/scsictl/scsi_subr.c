@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.2 1998/11/12 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.3 2001/04/17 13:31:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,8 @@
 #include <dev/scsipi/scsi_all.h>
 
 #include "extern.h"
+
+#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 void
 scsi_command(fd, cmd, cmdlen, data, datalen, timeout, flags)
@@ -142,9 +144,9 @@ scsi_strvis(sdst, dlen, ssrc, slen)
 	const u_char *src = (const u_char *)ssrc;
 
 	/* Trim leading and trailing blanks and NULs. */
-	while (slen > 0 && (src[0] == ' ' || src[0] == '\0'))
+	while (slen > 0 && STRVIS_ISWHITE(src[0]))
 		++src, --slen;
-	while (slen > 0 && (src[slen-1] == ' ' || src[slen-1] == '\0'))
+	while (slen > 0 && STRVIS_ISWHITE(src[slen - 1]))
 		--slen;
 
 	while (slen > 0) {
