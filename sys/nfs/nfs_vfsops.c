@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	8.3 (Berkeley) 1/4/94
- *	$Id: nfs_vfsops.c,v 1.24 1994/06/22 14:01:45 pk Exp $
+ *	$Id: nfs_vfsops.c,v 1.25 1994/06/28 19:12:59 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -211,7 +211,7 @@ nfs_mountroot()
 
 
 	/* Get root attributes (for the time). */
-	error = VOP_GETATTR(vp, &attr, procp->p_cred->pc_ucred, procp);
+	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
 	if (error) panic("nfs_mountroot: getattr for root");
 	n = attr.va_mtime.ts_sec;
 #ifdef	DEBUG
@@ -259,10 +259,10 @@ nfs_mountroot()
 	/*
 	 * Find out how large the swap file is.
 	 */
-	error = VOP_GETATTR(vp, &attr, procp->p_cred->pc_ucred, procp);
+	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
 	if (error)
 		panic("nfs_mountroot: getattr for swap");
-	n = (long) (attr.va_size / DEV_BSIZE);
+	n = (long) (attr.va_size >> DEV_BSHIFT);
 #ifdef	DEBUG
 	printf(" swap size: 0x%x (blocks)\n", n);
 #endif
