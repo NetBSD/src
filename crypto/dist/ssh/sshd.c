@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.15 2001/11/27 04:10:26 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.16 2001/11/30 00:48:25 thorpej Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -955,7 +955,7 @@ main(int ac, char **av)
 				error("select: %.100s", strerror(errno));
 			if (received_sigterm) {
 				log("Received signal %d; terminating.",
-				    received_sigterm);
+				    (int) received_sigterm);
 				close_listen_socks();
 				unlink(options.pid_file);
 				exit(255);
