@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.16 2002/08/06 00:00:21 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.17 2002/08/06 01:16:56 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,6 +145,32 @@ struct bitinfo ata_cmd_set2[] = {
 	{ NULL, NULL },
 };
 
+static const struct {
+	const int	id;
+	const char	*name;
+} smart_attrs[] = {
+	{ 1,		"Raw read error date" },
+	{ 2,		"Throughput performance" },
+	{ 3,		"Spin-up time" },
+	{ 4,		"Start/stop count" },
+	{ 5,		"Reallocated sector count" },
+	{ 7,		"Seek error rate" },
+	{ 8,		"Seek time performance" },
+	{ 9,		"Power-on hours count" },
+	{ 10,		"Spin retry count" },
+	{ 11,		"Calibration retry count" },
+	{ 12,		"Device power cycle count" },
+	{ 191,		"Gsense error rate" },
+	{ 192,		"Power-off retract count" },
+	{ 193,		"Load cycle count" },
+	{ 194,		"Temperature" },
+	{ 196,		"Reallocated event count" },
+	{ 197,		"Current pending sector" },
+	{ 198,		"Offline uncorrectable" },
+	{ 199,		"Ultra DMA CRC error count" },
+	{ 0,		"" },
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -279,7 +305,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	int values[256];
 	int thresholds[256];
 	int flags[256];
-	int i;
+	int i, j;
 	int id;
 	int8_t checksum;
 
@@ -311,14 +337,16 @@ print_smart_status(void *vbuf, void *tbuf)
 		thresholds[id] = threshold_buf->thresholds[i].value;
 	}
 
-	printf("id\tvalue\tthresh\tcrit\tcollect\treliability\n");
+	printf("id\tvalue\tthresh\tcrit\tcollect\treliability description\n");
 	for (i = 0; i < 256; i++) {
 		if (values[i] != 00 && values[i] != 0xFE && values[i] != 0xFF) {
-			printf("%3d\t%3d\t%3d\t%s\t%sline\t%stive\n",
+			for (j = 0; smart_attrs[j].id != i && smart_attrs[j].id != 0; j++);
+			printf("%3d\t%3d\t%3d\t%s\t%sline\t%stive    %s\n",
 			       i, values[i], thresholds[i],
 			       flags[i] & WDSM_ATTR_ADVISORY ? "yes" : "no",
 			       flags[i] & WDSM_ATTR_COLLECTIVE ? "on" : "off",
-			       values[i] > thresholds[i] ? "posi" : "nega");
+			       values[i] > thresholds[i] ? "posi" : "nega",
+			       smart_attrs[j].name);
 		}
 	}
 }
