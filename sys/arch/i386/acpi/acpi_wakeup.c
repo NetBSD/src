@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.5 2002/11/22 15:23:35 fvdl Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.6 2002/11/22 16:16:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5 2002/11/22 15:23:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.6 2002/11/22 16:16:56 fvdl Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -76,6 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5 2002/11/22 15:23:35 fvdl Exp $")
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
 #include <machine/i8259.h>
 
 #include "acpi.h"
