@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 1997/07/12 19:03:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 1997/08/16 23:10:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -405,7 +405,7 @@ Lbe1stpg:
 Lberr40:
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	Lisberr			| no, handle as usual
-	movl	sp@(FR_HW+8+16),_C_LABEL(m68k_fault_addr) | save fault addr
+	movl	sp@(FR_HW+8+20),_C_LABEL(m68k_fault_addr) | save fault addr
 	movl	_C_LABEL(nofault),sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
 	/* NOTREACHED */
