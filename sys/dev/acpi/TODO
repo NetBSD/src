@@ -1,0 +1,13 @@
+Important things to make ACPI useful on more machines:
+
+* Add support for attaching acpiec devices using the ECDT.  Some systems
+  need this because otherwise their _INI methods try to access regions in
+  the EC space before it's initialized.
+
+* Fix the locking protocol in acpiec.
+
+* Support thermal levels and fan control in acpitz.
+
+* Deal with the "implicit" return problem for older laptops.
+
+- mycroft, 2003/11/01
