@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.21 1999/07/04 09:41:03 cgd Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.22 1999/07/04 21:52:13 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@ menu editpart, title  "Changement";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,editpart);
-			   msg_printf_add ("\n");
+			   msg_display_add(MSG_newline);
 			};
 	option "du type de FS", sub menu chooseid;
 	option "du Début et de la taille", action 
