@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.54 2003/06/12 11:20:01 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.55 2003/06/13 11:45:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -181,12 +181,11 @@ message layout
 NetBSD en de multiples partitions BSD. Vous devez maintenant paramétrer le
 disklabel BSD. Vous avez différent choix: 
 -- Standard : les partitions sont calculées par ce programme. 
--- Standard avec X : plus la taille des binaires X. 
 -- Use existing: use current partitions. You must assign mount points.
 
-La taille allouée pour NetBSD sur votre disque est de %.2f Megaoctets. 
-L'installation standard requière au moins %.2f Megaoctets. 
-L'installation standard avec X requière au moins %.2f Megaoctets.
+La taille allouée pour NetBSD sur votre disque est de %d Megaoctets. 
+L'installation standard requière au moins %d Megaoctets. 
+L'installation standard avec X requière au moins %d Megaoctets.
 }
 
 message sizechoice
