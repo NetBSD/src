@@ -1,5 +1,6 @@
-# $NetBSD: obsolete.mi,v 1.7 2000/04/25 05:36:06 mellon Exp $
+# $NetBSD: obsolete.mi,v 1.8 2000/06/05 03:17:23 simonb Exp $
 /dev/log
+/etc/rc.d/xntpd
 /sbin/dumpfs
 /sbin/dumplfs
 /sbin/mountd
@@ -7,6 +8,8 @@
 /sbin/nfsd
 /sbin/nfsiod
 /sbin/quotacheck
+/usr/lib/libntp.so.0
+/usr/lib/libntp.so.0.0
 /usr/sbin/dig
 /usr/sbin/dnsquery
 /usr/sbin/gettable
@@ -21,6 +24,8 @@
 /usr/sbin/statmsg
 /usr/sbin/sysconfd
 /usr/sbin/sysctl
+/usr/sbin/xntpd
+/usr/sbin/xntpdc
 /usr/share/doc/smm/01.setup/tahoe
 /usr/share/doc/smm/01.setup/vax
 /usr/share/games/ching
