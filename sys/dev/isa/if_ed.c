@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.115 1997/10/14 23:06:30 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.116 1997/10/15 05:58:59 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -27,7 +27,6 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -1078,8 +1077,7 @@ edattach(parent, self, aux)
 	    IPL_NET, edintr, sc);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
 #endif
 }
 
@@ -1775,7 +1773,8 @@ edintr(arg)
 		}
 
 #if NRND > 0
-		rnd_add_uint32(&sc->rnd_source, isr);
+		if (isr)
+			rnd_add_uint32(&sc->rnd_source, isr);
 #endif
 
 		isr = NIC_GET(iot, ioh, nicbase, ED_P0_ISR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.34 1997/10/14 21:28:37 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.35 1997/10/15 05:55:26 explorer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -32,6 +32,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +43,9 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -352,6 +356,10 @@ epconfig(sc, chipset, enaddr)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
+#endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
@@ -1097,6 +1105,7 @@ epintr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int16_t status;
 	int ret = 0;
+	int addrandom = 0;
 
 	if (sc->enabled == 0)
 		return (0);
@@ -1145,11 +1154,14 @@ epintr(arg)
 		       (status & S_CARD_FAILURE)?" CARD_FAILURE":"");
 #endif
 
-		if (status & S_RX_COMPLETE)
+		if (status & S_RX_COMPLETE) {
 			epread(sc);
+			addrandom = 1;
+		}
 		if (status & S_TX_AVAIL) {
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 			epstart(&sc->sc_ethercom.ec_if);
+			addrandom = 1;
 		}
 		if (status & S_CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
@@ -1160,7 +1172,13 @@ epintr(arg)
 		if (status & S_TX_COMPLETE) {
 			eptxstat(sc);
 			epstart(ifp);
+			addrandom = 1;
 		}
+
+#if NRND > 0
+		if (status)
+			rnd_add_uint32(&sc->rnd_source, status);
+#endif
 	}	
 
 	/* no more interrupts */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.17 1997/10/14 21:32:48 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.18 1997/10/15 05:59:34 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 
 #ifdef INET
 #include <netinet/in.h>

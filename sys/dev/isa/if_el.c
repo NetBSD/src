@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.48 1997/09/10 05:40:23 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.49 1997/10/15 05:59:26 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,6 +19,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,6 +29,9 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -81,6 +85,10 @@ struct el_softc {
 	struct ethercom sc_ethercom;	/* ethernet common */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 /*
@@ -247,6 +255,11 @@ elattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, elintr, sc);
+
+#if NRND > 0
+	DPRINTF(("Attaching to random...\n"));
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+#endif
 
 	DPRINTF(("elattach() finished.\n"));
 }
@@ -545,6 +558,10 @@ elintr(arg)
 		/* Is there another packet? */
 		if ((bus_space_read_1(iot, ioh, EL_AS) & EL_AS_RXBUSY) != 0)
 			break;
+
+#if NRND > 0
+		rnd_add_uint32(&sc->rnd_source, rxstat);
+#endif
 
 		DPRINTF(("<rescan> "));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.24 1997/03/15 18:11:44 is Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.25 1997/10/15 05:59:55 explorer Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -55,6 +55,8 @@
 #include "hp.h"
 #if NHP > 0
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -64,6 +66,9 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -136,7 +141,10 @@ struct hp_softc {
 	caddr_t ns_bpf;
 #endif
 	u_int8_t ns_addrp[ETHER_ADDR_LEN]; /* hardware Ethernet address */
-	
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif	
 }
         hp_softc[NHP];
 #define	ENBUFSIZE	(sizeof(struct ether_header) + ETHERMTU + 2 + ETHER_MIN_LEN)
@@ -421,6 +429,11 @@ hpattach(dvp)
 	bpfattach(&ns->ns_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+
+#if NRND > 0
+	rnd_attach_source(&ns->rnd_source, ns->sc_dev.dv_xname, RND_TYPE_NET);
+#endif
+
 }
 /*
  * Initialization of interface; set up initialization block
@@ -767,6 +780,11 @@ loop:
 	hpstart(&ns->ns_if);
 	outb(hpc + ds_cmd, cmd);
 	outb(hpc + ds0_imr, 0xff);
+
+#if NRND > 0
+	if (irs)
+		rnd_add_uint32(&sc->rnd_source, isr);
+#endif
 
 	/* Still more to do? */
 	isr = inb(hpc + ds0_isr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.60 1997/09/07 10:16:07 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.61 1997/10/15 06:00:11 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -106,6 +106,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +118,9 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -266,6 +270,10 @@ struct ie_softc {
 #endif
 	u_int8_t sc_enaddr[6];
 	u_int8_t sc_pad[2];
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 void iewatchdog __P((struct ifnet *));
@@ -855,6 +863,10 @@ ieattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, ieintr, sc);
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+#endif
 }
 
 /*
@@ -932,6 +944,11 @@ loop:
 #ifdef IEDEBUG
 	if ((status & IE_ST_CNA) && (sc->sc_debug & IED_CNA))
 		printf("%s: cna\n", sc->sc_dev.dv_xname);
+#endif
+
+#if NRND > 0
+	if (status & (IE_ST_FR | IE_ST_CX))
+		rnd_add_uint32(&sc->rnd_source, status);
 #endif
 
 	/* Clear the interrupt latch on the 3C507. */
