@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.68.4.2 2000/10/18 16:23:59 tv Exp $	*/
+/*	$NetBSD: exec.h,v 1.68.4.3 2000/11/03 20:01:37 tv Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -116,7 +116,7 @@ struct exec_vmcmd_set {
 	struct	exec_vmcmd *evs_cmds;
 };
 
-#define	EXEC_DEFAULT_VMCMD_SETSIZE	5	/* # of cmds in set to start */
+#define	EXEC_DEFAULT_VMCMD_SETSIZE	9	/* # of cmds in set to start */
 
 struct exec_package {
 	const char *ep_name;		/* file's name */
@@ -156,6 +156,9 @@ struct exec_vmcmd {
 	struct	vnode *ev_vp;	/* vnode pointer for the file w/the data */
 	u_long	ev_offset;	/* offset in the file for the data */
 	u_int	ev_prot;	/* protections for segment */
+	int	ev_flags;
+#define	VMCMD_RELATIVE	0x0001	/* ev_addr is relative to base entry */
+#define	VMCMD_BASE	0x0002	/* marks a base entry */
 };
 
 #ifdef _KERNEL
@@ -182,11 +185,15 @@ int	check_exec		__P((struct proc *, struct exec_package *));
 void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 		    int (*proc) __P((struct proc *p, struct exec_vmcmd *)),
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
-		    u_int prot));
+		    u_int prot, int flags));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot);
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0);
+#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
+	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags);
 #else	/* DEBUG */
-#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) { \
+#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
+	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
+#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
 	struct exec_vmcmd *vcp; \
 	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
 		vmcmdset_extend(evsp); \
@@ -198,7 +205,8 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
                 VREF(vp); \
         vcp->ev_offset = (offset); \
         vcp->ev_prot = (prot); \
-}
+	vcp->ev_flags = (flags); \
+} while (0)
 #endif /* EXEC_DEBUG */
 
 /*
