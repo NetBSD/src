@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.25 2000/09/26 13:26:02 fvdl Exp $	*/
+/*	$NetBSD: target.c,v 1.26 2000/10/11 11:10:11 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -34,9 +34,48 @@
  *
  */
 
+/* Copyright below applies to the realpath() code */
+
+/*
+ * Copyright (c) 1989, 1991, 1993, 1995
+ *      The Regents of the University of California.  All rights reserved.
+ *      
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission. 
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */     
+
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.25 2000/09/26 13:26:02 fvdl Exp $");
+__RCSID("$NetBSD: target.c,v 1.26 2000/10/11 11:10:11 fvdl Exp $");
 #endif
 
 /*
@@ -74,7 +113,6 @@ int must_mount_root __P((void));
 
 static void make_prefixed_dir __P((const char *prefix, const char *path));
 static int do_target_chdir __P((const char *dir, int flag));
-static const char* concat_paths __P((const char *prefix, const char *suffix));
 int	target_test(unsigned int mode, const char *path);
 int	target_test_dir __P((const char *path));	/* deprecated */
 int	target_test_file __P((const char *path));	/* deprecated */
@@ -339,12 +377,12 @@ target_prefix()
  * next call to a target-prefixing  function, or to modify the inputs..
  * Used only  internally so this is probably safe.
  */
-static const char*  
+const char*  
 concat_paths(prefix, suffix)
 	const char* prefix;
 	const char *suffix;
 {
-	static char realpath[STRSIZE];
+	static char realpath[MAXPATHLEN];
 
 	/* absolute prefix and null suffix? */
 	if (prefix[0] == '/' && suffix[0] == 0)
@@ -356,9 +394,9 @@ concat_paths(prefix, suffix)
 
 	/* avoid "//" */
 	if (suffix[0] == '/' || suffix[0] == 0)
-		snprintf(realpath, STRSIZE, "%s%s", prefix, suffix);
+		snprintf(realpath, MAXPATHLEN, "%s%s", prefix, suffix);
 	else
-		snprintf(realpath, STRSIZE, "%s/%s", prefix, suffix);
+		snprintf(realpath, MAXPATHLEN, "%s/%s", prefix, suffix);
 	return (realpath);
 }
 
@@ -762,4 +800,135 @@ int target_symlink_exists_p(path)
 {
 
 	return (target_test_symlink(path) == 0);
+}
+
+/*
+ * XXXX had to include this to deal with symlinks in some places. When the target
+ * disk is mounted under /mnt, absolute symlinks on it don't work right. This
+ * function will resolve them using the mountpoint as prefix. Copied verbatim
+ * from libc, with added prefix handling.
+ *
+ * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);
+ *
+ * Find the real name of path, by removing all ".", ".." and symlink
+ * components.  Returns (resolved) on success, or (NULL) on failure,
+ * in which case the path which caused trouble is left in (resolved).
+ */
+char *
+target_realpath(const char *path, char *resolved)
+{
+	struct stat sb;
+	int fd, n, rootd, serrno, nlnk = 0;
+	char *p, *q, wbuf[MAXPATHLEN];
+
+	/* Save the starting point. */
+	if ((fd = open(".", O_RDONLY)) < 0) {
+		(void)strcpy(resolved, ".");
+		return (NULL);
+	}
+
+	/*
+	 * Find the dirname and basename from the path to be resolved.
+	 * Change directory to the dirname component.
+	 * lstat the basename part.
+	 *     if it is a symlink, read in the value and loop.
+	 *     if it is a directory, then change to that directory.
+	 * get the current directory name and append the basename.
+	 */
+	if (target_prefix() != NULL && strcmp(target_prefix(), "") != 0)
+		snprintf(resolved, MAXPATHLEN, "%s/%s", target_prefix(), path);
+	else {
+		(void)strncpy(resolved, path, MAXPATHLEN - 1);
+		resolved[MAXPATHLEN - 1] = '\0';
+	}
+loop:
+	q = strrchr(resolved, '/');
+	if (q != NULL) {
+		p = q + 1;
+		if (q == resolved)
+			q = "/";
+		else {
+			do {
+				--q;
+			} while (q > resolved && *q == '/');
+			q[1] = '\0';
+			q = resolved;
+		}
+		if (chdir(q) < 0)
+			goto err1;
+	} else
+		p = resolved;
+
+	/* Deal with the last component. */
+	if (lstat(p, &sb) == 0) {
+		if (S_ISLNK(sb.st_mode)) {
+			if (nlnk++ >= MAXSYMLINKS) {
+				errno = ELOOP;
+				goto err1;
+			}
+			n = readlink(p, wbuf, MAXPATHLEN);
+			if (n < 0)
+				goto err1;
+			wbuf[n] = '\0';
+			if (wbuf[0] == '/')
+				snprintf(resolved, MAXPATHLEN, "%s%s", target_prefix(),
+				    wbuf);
+			else
+				strcpy(resolved, wbuf);
+			goto loop;
+		}
+		if (S_ISDIR(sb.st_mode)) {
+			if (chdir(p) < 0)
+				goto err1;
+			p = "";
+		}
+	}
+
+	/*
+	 * Save the last component name and get the full pathname of
+	 * the current directory.
+	 */
+	(void)strncpy(wbuf, p, (sizeof(wbuf) - 1));
+
+	/*
+	 * Call the inernal internal version of getcwd which
+	 * does a physical search rather than using the $PWD short-cut
+	 */
+	if (getcwd(resolved, MAXPATHLEN) == 0)
+		goto err1;
+
+	/*
+	 * Join the two strings together, ensuring that the right thing
+	 * happens if the last component is empty, or the dirname is root.
+	 */
+	if (resolved[0] == '/' && resolved[1] == '\0')
+		rootd = 1;
+	else
+		rootd = 0;
+
+	if (*wbuf) {
+		if (strlen(resolved) + strlen(wbuf) + rootd + 1 > MAXPATHLEN) {
+			errno = ENAMETOOLONG;
+			goto err1;
+		}
+		if (rootd == 0)
+			(void)strcat(resolved, "/"); /* XXX: strcat is safe */
+		(void)strcat(resolved, wbuf);	/* XXX: strcat is safe */
+	}
+
+	/* Go back to where we came from. */
+	if (fchdir(fd) < 0) {
+		serrno = errno;
+		goto err2;
+	}
+
+	/* It's okay if the close fails, what's an fd more or less? */
+	(void)close(fd);
+	return (resolved);
+
+err1:	serrno = errno;
+	(void)fchdir(fd);
+err2:	(void)close(fd);
+	errno = serrno;
+	return (NULL);
 }
