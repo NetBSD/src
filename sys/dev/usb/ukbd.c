@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.75 2001/12/28 17:32:36 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.76 2001/12/29 02:53:41 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.75 2001/12/28 17:32:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.76 2001/12/29 02:53:41 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,41 +101,43 @@ struct ukbd_data {
 #define NN 0			/* no translation */
 /* 
  * Translate USB keycodes to US keyboard XT scancodes.
- * Scancodes >= 128 represent EXTENDED keycodes.
+ * Scancodes >= 0x80 represent EXTENDED keycodes.
+ *
+ * See http://www.microsoft.com/HWDEV/TECH/input/Scancode.asp
  */
 Static const u_int8_t ukbd_trtab[256] = {
-	  NN,  NN,  NN,  NN,  30,  48,  46,  32, /* 00 - 07 */
-	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
-	  50,  49,  24,  25,  16,  19,  31,  20, /* 10 - 17 */
-	  22,  47,  17,  45,  21,  44,   2,   3, /* 18 - 1F */
-	   4,   5,   6,   7,   8,   9,  10,  11, /* 20 - 27 */
-	  28,   1,  14,  15,  57,  12,  13,  26, /* 28 - 2F */
-	  27,  43,  43,  39,  40,  41,  51,  52, /* 30 - 37 */
-	  53,  58,  59,  60,  61,  62,  63,  64, /* 38 - 3F */
-	  65,  66,  67,  68,  87,  88, 170,  70, /* 40 - 47 */
-	 127, 210, 199, 201, 211, 207, 209, 205, /* 48 - 4F */
-	 203, 208, 200,  69, 181,  55,  74,  78, /* 50 - 57 */
-	 156,  79,  80,  81,  75,  76,  77,  71, /* 58 - 5F */
-          72,  73,  82,  83,  86, 221,  NN,  NN, /* 60 - 67 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 68 - 6F */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 70 - 77 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 78 - 7F */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 80 - 87 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 88 - 8F */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 90 - 97 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 98 - 9F */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* A0 - A7 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* A8 - AF */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* B0 - B7 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* B8 - BF */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* C0 - C7 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* C8 - CF */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D0 - D7 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D8 - DF */
-          29,  42,  56, 219,  157, 54,  184,220, /* E0 - E7 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* E8 - EF */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F0 - F7 */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F8 - FF */
+      NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
+    0x12, 0x21, 0x22, 0x23, 0x17, 0x24, 0x25, 0x26, /* 08 - 0f */
+    0x32, 0x31, 0x18, 0x19, 0x10, 0x13, 0x1f, 0x14, /* 10 - 17 */
+    0x16, 0x2f, 0x11, 0x2d, 0x15, 0x2c, 0x02, 0x03, /* 18 - 1f */
+    0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, /* 20 - 27 */
+    0x1c, 0x01, 0x0e, 0x0f, 0x39, 0x0c, 0x0d, 0x1a, /* 28 - 2f */
+    0x1b, 0x2b, 0x2b, 0x27, 0x28, 0x29, 0x33, 0x34, /* 30 - 37 */
+    0x35, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, /* 38 - 3f */
+    0x41, 0x42, 0x43, 0x44, 0x57, 0x58, 0xaa, 0x46, /* 40 - 47 */
+    0x7f, 0xd2, 0xc7, 0xc9, 0xd3, 0xcf, 0xd1, 0xcd, /* 48 - 4f */
+    0xcb, 0xd0, 0xc8, 0x45, 0xb5, 0x37, 0x4a, 0x4e, /* 50 - 57 */
+    0x9c, 0x4f, 0x50, 0x51, 0x4b, 0x4c, 0x4d, 0x47, /* 58 - 5f */
+    0x48, 0x49, 0x52, 0x53, 0x56, 0xdd,   NN, 0x59, /* 60 - 67 */
+    0x5d, 0x5e, 0x5f,   NN,   NN,   NN,   NN,   NN, /* 68 - 6f */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 70 - 77 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 78 - 7f */
+      NN,   NN,   NN,   NN,   NN, 0x7e,   NN, 0x73, /* 80 - 87 */
+    0x70, 0x7d, 0x79, 0x7b, 0x5c,   NN,   NN,   NN, /* 88 - 8f */
+      NN,   NN, 0x78, 0x77, 0x76,   NN,   NN,   NN, /* 90 - 97 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 98 - 9f */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* a0 - a7 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* a8 - af */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* b0 - b7 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* b8 - bf */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* c0 - c7 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* c8 - cf */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* d0 - d7 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* d8 - df */
+    0x1d, 0x2a, 0x38, 0xdb, 0x9d, 0x36, 0xb8, 0xdc, /* e0 - e7 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* e8 - ef */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* f0 - f7 */
+      NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* f8 - ff */
 };
 #endif /* defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD) */
 
@@ -460,6 +462,16 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		return;
 	}
 #endif
+
+#ifdef UKBD_DEBUG
+	if (ukbddebug > 5) {
+		printf("ukbd_intr: data");
+		for (i = 0; i < len; i++)
+			printf(" %0x02x", ((u_char *)ibuf)[i]);
+		printf("\n");
+	}
+#endif
+
 	ud->modifiers = 0;
 	for (i = 0; i < sc->sc_nmod; i++)
 		if (hid_get_data(ibuf, &sc->sc_modloc[i]))
