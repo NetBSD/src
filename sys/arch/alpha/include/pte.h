@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 1996/07/14 20:00:42 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.7 1996/10/01 20:21:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -84,6 +84,9 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PTEMASK		(NPTEPG - 1)
 #define	vatopte(va)	(((va) >> PGSHIFT) & PTEMASK)
 #define	vatoste(va)	(((va) >> SEGSHIFT) & PTEMASK)
+#define kvtol1pte(va) \
+	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
+
 #define	vatopa(va) \
 	((PG_PFNUM(*kvtopte(va)) << PGSHIFT) | ((vm_offset_t)(va) & PGOFSET))
 
@@ -98,12 +101,6 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 	(Sysmap + (((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
 #define	ptetokv(pte) \
 	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
-
-/*
- * Kernel virtual address to Lev1map entry index.
- */
-#define kvtol1pte(va) \
-	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
 
 #define loadustp(stpte) {					\
 	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = stpte;		\
