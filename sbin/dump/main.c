@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2001/12/22 08:05:24 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2001/12/23 12:29:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.44 2001/12/22 08:05:24 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.45 2001/12/23 12:29:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ int
 main(int argc, char *argv[])
 {
 	ino_t ino;
-	int dirty; 
+	int dirty;
 	struct dinode *dp;
 	struct fstab *dt;
 	struct statfs *mntinfo, fsbuf;
@@ -119,13 +119,13 @@ main(int argc, char *argv[])
 	int just_estimate = 0;
 	char labelstr[LBLSIZE];
 	char *new_time_format;
-	
+
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
 	tzset(); /* set up timezone for strftime */
 	if ((new_time_format = getenv("TIMEFORMAT")) != NULL)
 		time_string = new_time_format;
-	
+
 	/* Save setgid bit for use later */
 	egid = getegid();
 	setegid(getgid());
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 		quit("TP_BSIZE must be a multiple of DEV_BSIZE\n");
 	level = '0';
 	timestamp = 0;
-	
+
 	if (argc < 2)
 		usage();
 
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 		case 'r':		/* read cache size */
 			readcache = numarg("read cache size", 0, 512);
 			break;
-		
+
 		case 's':		/* tape size, feet */
 			tsize = numarg("tape size", 1L, 0L) * 12 * 10;
 			break;
@@ -468,7 +468,7 @@ main(int argc, char *argv[])
 	nonodump = iswap32(spcl.c_level) < honorlevel;
 
 	initcache(readcache, readblksize);
-	
+
 	(void)signal(SIGINFO, statussig);
 
 	msg("mapping (Pass I) [regular files]\n");
@@ -493,7 +493,7 @@ main(int argc, char *argv[])
 			   the end of each block written, and not in mid-block.
 			   Assume no erroneous blocks; this can be compensated
 			   for with an artificially low tape size. */
-			fetapes = 
+			fetapes =
 			(	  tapesize	/* blocks */
 				* TP_BSIZE	/* bytes/block */
 				* (1.0/density)	/* 0.1" / byte */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1999/10/01 04:35:22 perseant Exp $
+#	$NetBSD: Makefile,v 1.26 2001/12/23 12:29:55 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -26,6 +26,6 @@ BINMODE=2555
 MAN=	dump.8
 MLINKS+=dump.8 rdump.8
 
-.PATH:  ${.CURDIR}/../../sys/ufs/ffs 
+.PATH:  ${.CURDIR}/../../sys/ufs/ffs
 
 .include <bsd.prog.mk>

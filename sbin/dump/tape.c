@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.32 2001/12/22 08:05:25 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.33 2001/12/23 12:29:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.32 2001/12/22 08:05:25 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.33 2001/12/23 12:29:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,7 +254,7 @@ do_stats(void)
 	if (ttaken > 0) {
 		msg("Volume %d took %d:%02d:%02d\n", tapeno,
 		    (int) (ttaken / 3600), (int) ((ttaken % 3600) / 60),
-		    (int) (ttaken % 60)); 
+		    (int) (ttaken % 60));
 		msg("Volume %d transfer rate: %d KB/s\n", tapeno,
 		    (int) (blocks / ttaken));
 		xferrate += blocks / ttaken;
@@ -274,7 +274,7 @@ statussig(int notused)
 	char	msgbuf[128];
 
 	if (blockswritten < 500)
-		return;	
+		return;
 	(void) time((time_t *) &tnow);
 	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
 		/ blockswritten * tapesize;
@@ -371,12 +371,12 @@ trewind(int eject)
 
 	for (f = 0; f < SLAVES; f++) {
 		/*
-		 * Drain the results, but unlike EOT we DO (or should) care 
-		 * what the return values were, since if we detect EOT after 
-		 * we think we've written the last blocks to the tape anyway, 
+		 * Drain the results, but unlike EOT we DO (or should) care
+		 * what the return values were, since if we detect EOT after
+		 * we think we've written the last blocks to the tape anyway,
 		 * we have to replay those blocks with rollforward.
 		 *
-		 * fixme: punt for now.  
+		 * fixme: punt for now.
 		 */
 		if (slaves[f].sent) {
 			if (atomic_read(slaves[f].fd, (char *)&got, sizeof got)
@@ -457,7 +457,7 @@ close_rewind(void)
 			sleep (10);
 		}
 	}
-		
+
 	while (!query("Is the new volume mounted and ready to go?"))
 		if (query("Do you want to abort?")) {
 			dumpabort(0);
@@ -476,9 +476,9 @@ rollforward(void)
 	ntb = (union u_spcl *)tslp->tblock[1];
 
 	/*
-	 * Each of the N slaves should have requests that need to 
-	 * be replayed on the next tape.  Use the extra slave buffers 
-	 * (slaves[SLAVES]) to construct request lists to be sent to 
+	 * Each of the N slaves should have requests that need to
+	 * be replayed on the next tape.  Use the extra slave buffers
+	 * (slaves[SLAVES]) to construct request lists to be sent to
 	 * each slave in turn.
 	 */
 	for (i = 0; i < SLAVES; i++) {
@@ -486,7 +486,7 @@ rollforward(void)
 		otb = (union u_spcl *)slp->tblock;
 
 		/*
-		 * For each request in the current slave, copy it to tslp. 
+		 * For each request in the current slave, copy it to tslp.
 		 */
 
 		prev = NULL;
@@ -530,8 +530,8 @@ rollforward(void)
 
 		if (prev->dblk != 0) {
 			/*
-			 * If the last one was a disk block, make the 
-			 * first of this one be the last bit of that disk 
+			 * If the last one was a disk block, make the
+			 * first of this one be the last bit of that disk
 			 * block...
 			 */
 			q->dblk = prev->dblk +
@@ -539,7 +539,7 @@ rollforward(void)
 			ntb = (union u_spcl *)tslp->tblock;
 		} else {
 			/*
-			 * It wasn't a disk block.  Copy the data to its 
+			 * It wasn't a disk block.  Copy the data to its
 			 * new location in the buffer.
 			 */
 			q->dblk = 0;
@@ -634,7 +634,7 @@ restore_check_point:
 			case X_FINOK:
 				msg("Child %d finishes X_FINOK\n", childpid);
 				break;
-			case X_ABORT:	
+			case X_ABORT:
 				msg("Child %d finishes X_ABORT\n", childpid);
 				break;
 			case X_REWRITE:
@@ -684,7 +684,7 @@ restore_check_point:
 		while ((tapefd = (host ? rmtopen(tape, 2, 1) :
 			pipeout ? 1 : open(tape, O_WRONLY|O_CREAT, 0666))) < 0)
 #else
-		while ((tapefd = (pipeout ? 1 : 
+		while ((tapefd = (pipeout ? 1 :
 				  open(tape, O_WRONLY|O_CREAT, 0666))) < 0)
 #endif
 		    {
@@ -792,13 +792,13 @@ enslave(void)
 			Exit(X_FINOK);
 		}
 	}
-	
+
 	for (i = 0; i < SLAVES; i++)
-		(void) atomic_write(slaves[i].fd, 
-				(char *) &slaves[(i + 1) % SLAVES].pid, 
+		(void) atomic_write(slaves[i].fd,
+				(char *) &slaves[(i + 1) % SLAVES].pid,
 				sizeof slaves[0].pid);
-		
-	master = 0; 
+
+	master = 0;
 }
 
 void
@@ -853,7 +853,7 @@ doslave(int cmd, int slave_number)
 					p->count * TP_BSIZE);
 			} else {
 				if (p->count != 1 || atomic_read(cmd,
-				    (char *)slp->tblock[trecno], 
+				    (char *)slp->tblock[trecno],
 				    TP_BSIZE) != TP_BSIZE)
 				       quit("master/slave protocol botched.\n");
 			}
@@ -882,7 +882,7 @@ doslave(int cmd, int slave_number)
 #ifdef WRITEDEBUG
 			fprintf(stderr, "slave %d wrote %d\n", slave_number, wrote);
 #endif
-			if (wrote < 0) 
+			if (wrote < 0)
 				break;
 			if (wrote == 0)
 				eot_count++;
@@ -890,7 +890,7 @@ doslave(int cmd, int slave_number)
 		}
 
 #ifdef WRITEDEBUG
-		if (size != writesize) 
+		if (size != writesize)
 			fprintf(stderr,
 		    "slave %d only wrote %d out of %d bytes and gave up.\n",
 			    slave_number, size, writesize);
@@ -914,7 +914,7 @@ doslave(int cmd, int slave_number)
 			 * (for EOT handling)
 			 */
 			(void) atomic_write(cmd, (char *)&size, sizeof size);
-		} 
+		}
 
 		/*
 		 * If partial write, don't want next slave to go.

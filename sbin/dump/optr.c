@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.22 2001/12/22 08:05:24 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.23 2001/12/23 12:29:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.22 2001/12/22 08:05:24 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.23 2001/12/23 12:29:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,7 @@ struct	group *gp;
 
 /*
  *	Get the names from the group entry "operator" to notify.
- */	
+ */
 void
 set_operators(void)
 {
@@ -224,7 +224,7 @@ broadcast(char	*message)
 	if (!notify || gp == NULL)
 		return;
 
-	/* Restore 'tty' privs for the child's use only. */	
+	/* Restore 'tty' privs for the child's use only. */
 	setegid(egid);
 	switch (pid = fork()) {
 	case -1:
@@ -318,7 +318,7 @@ do_timestamp(time_t thistime, char *message)
 {
 	struct tm tm_time;
 	char then[STAMP_LENGTH + 1];
-	
+
 	(void) localtime_r(&thistime, &tm_time);
 	if (strftime(then, STAMP_LENGTH, time_string, &tm_time) == 0) {
 		time_string = default_time_string;
@@ -326,11 +326,11 @@ do_timestamp(time_t thistime, char *message)
 		fprintf(stderr,
 		   "DUMP: ERROR: TIMEFORMAT too long, reverting to default\n");
 	}
-	
+
 	fprintf(stderr, message, then);
 }
 
-			
+
 /*
  *	print out an estimate of the amount of time left to do the dump
  */
@@ -346,7 +346,7 @@ timeest(void)
 	if (tnow >= tschedule) {
 		tschedule = tnow + 300;
 		if (blockswritten < 500)
-			return;	
+			return;
 		deltat = tstart_writing - tnow +
 			(1.0 * (tnow - tstart_writing))
 			/ blockswritten * tapesize;
@@ -354,7 +354,7 @@ timeest(void)
 		msg("%3.2f%% done, finished in %ld:%02ld",
 		    (blockswritten * 100.0) / tapesize,
 		    (long)(deltat / 3600), (long)((deltat % 3600) / 60));
-		
+
 		if (timestamp == 1)
 			do_timestamp(tnow + deltat, " (at %s)");
 
