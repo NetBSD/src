@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.6 2003/01/01 00:39:20 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.7 2004/08/30 15:05:16 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.6 2003/01/01 00:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.7 2004/08/30 15:05:16 drochner Exp $");
 
 #include "isadma.h"
 
@@ -117,9 +117,6 @@ int
 sableio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
-
-	if (strcmp(pba->pba_busname, cf->cf_name) != 0)
-		return (0);
 
 	/*
 	 * These are really ISA devices, and thus must be on

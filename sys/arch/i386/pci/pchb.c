@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.53 2004/07/05 19:15:05 mycroft Exp $	*/
+/*	$NetBSD: pchb.c,v 1.54 2004/08/30 15:05:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.53 2004/07/05 19:15:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.54 2004/08/30 15:05:17 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,9 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.53 2004/07/05 19:15:05 mycroft Exp $");
 
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
-
-int	pchb_print __P((void *, const char *));
-int	agp_print __P((void *, const char *));
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
@@ -331,13 +328,11 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	if (has_agp ||
 	    pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 			       NULL, NULL) != 0) {
-		apa.apa_busname = "agp";
 		apa.apa_pci_args = *pa;
-		config_found(self, &apa, agp_print);
+		config_found_ia(self, "agpbus", &apa, agpbusprint);
 	}
 
 	if (doattach) {
-		pba.pba_busname = "pci";
 		pba.pba_iot = pa->pa_iot;
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
@@ -349,27 +344,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_pc = pa->pa_pc;
 		pba.pba_intrswiz = 0;
 		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
-		config_found(self, &pba, pchb_print);
+		config_found_ia(self, "pcibus", &pba, pcibusprint);
 	}
-}
-
-int
-pchb_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp != NULL)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
-}
-
-int
-agp_print(void *aux, const char *pnp)
-{
-	struct agpbus_attach_args *apa = aux;
-
-	if (pnp != NULL)
-		aprint_normal("%s at %s", apa->apa_busname, pnp);
-	return (UNCONF);
 }

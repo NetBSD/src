@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.32 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: agp.c,v 1.33 2004/08/30 15:05:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.32 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.33 2004/08/30 15:05:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,9 +227,6 @@ agpmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
-
-	if (strcmp(apa->apa_busname, "agp") != 0)
-		return (0);
 
 	if (agp_lookup(pa) == NULL)
 		return (0);

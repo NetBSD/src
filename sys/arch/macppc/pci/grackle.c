@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.8 2003/07/15 02:43:33 lukem Exp $	*/
+/*	$NetBSD: grackle.c,v 1.9 2004/08/30 15:05:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.8 2003/07/15 02:43:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grackle.c,v 1.9 2004/08/30 15:05:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,6 @@ struct grackle_softc {
 
 void grackle_attach __P((struct device *, struct device *, void *));
 int grackle_match __P((struct device *, struct cfdata *, void *));
-int grackle_print __P((void *, const char *));
 
 pcireg_t grackle_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void grackle_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
@@ -121,7 +120,6 @@ grackle_attach(parent, self, aux)
 	}
 
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_busname = "pci";
 	pba.pba_memt = pc->memt;
 	pba.pba_iot = pc->iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
@@ -131,20 +129,7 @@ grackle_attach(parent, self, aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-	config_found(self, &pba, grackle_print);
-}
-
-int
-grackle_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pa = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pa->pba_busname, pnp);
-	aprint_normal(" bus %d", pa->pba_bus);
-	return UNCONF;
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 pcireg_t

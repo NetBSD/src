@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.11 2003/12/27 07:34:21 shin Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.12 2004/08/30 15:05:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.11 2003/12/27 07:34:21 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.12 2004/08/30 15:05:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,6 @@ struct vrc4172pci_softc {
 
 static int	vrc4172pci_match(struct device *, struct cfdata *, void *);
 static void	vrc4172pci_attach(struct device *, struct device *, void *);
-#if NPCI > 0
-static int	vrc4172pci_print(void *, const char *);
-#endif
 static void	vrc4172pci_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 static int	vrc4172pci_bus_maxdevs(pci_chipset_tag_t, int);
@@ -197,7 +194,6 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 
 #if NPCI > 0
 	memset(&pba, 0, sizeof(pba));
-	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_iot;
 	pba.pba_memt = sc->sc_iot;
 	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
@@ -208,24 +204,9 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_FLAGS_MRL_OKAY;
 	pba.pba_pc = pc;
 
-	config_found(self, &pba, vrc4172pci_print);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
 }
-
-#if NPCI > 0
-static int
-vrc4172pci_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp != NULL)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	else
-		aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
-}
-#endif
 
 void
 vrc4172pci_attach_hook(struct device *parent, struct device *self,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.128 2004/04/03 17:43:50 chs Exp $
+#	$NetBSD: files.sparc,v 1.129 2004/08/30 15:05:18 drochner Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -29,7 +29,7 @@ attach mspcic at msiiep
 file	arch/sparc/sparc/msiiep.c		msiiep | mspcic
 file	arch/sparc/sparc/pci_machdep.c		msiiep | mspcic
 
-device ebus {[addr = -1]}: pcibus
+device ebus {[addr = -1]}
 attach ebus at pci
 file	arch/sparc/dev/ebus.c			ebus
 

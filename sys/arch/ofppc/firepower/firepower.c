@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.12 2003/12/14 05:20:57 thorpej Exp $	*/
+/*	$NetBSD: firepower.c,v 1.13 2004/08/30 15:05:18 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.12 2003/12/14 05:20:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.13 2004/08/30 15:05:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,8 +235,6 @@ void	firepower_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(firepower, sizeof(struct firepower_softc),
     firepower_match, firepower_attach, NULL, NULL);
 
-int	firepower_print(void *, const char *);
-
 /* There can be only one. */
 struct firepower_config firepower_configuration;
 int firepower_found;
@@ -338,7 +336,6 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 
 	firepower_dma_init(cp);
 
-	pba.pba_busname = "pci";
 	pba.pba_iot = &cp->c_iot;
 	pba.pba_memt = &cp->c_memt;
 	pba.pba_dmat = &cp->c_dmat_pci;
@@ -348,17 +345,5 @@ firepower_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found(self, &pba, firepower_print);
-}
-
-int
-firepower_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
+	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
