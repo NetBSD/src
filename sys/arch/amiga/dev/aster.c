@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.3 1999/02/16 23:34:12 is Exp $ */
+/*	$NetBSD: aster.c,v 1.4 1999/03/17 21:44:18 is Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@ astermatch(parent, cfp, auxp)
 	if (zap->manid == 2092 && zap->prodid == 64)	/* BSC ISDN Master */
 		return (1);
 
+	if (zap->manid == 5000 && zap->prodid == 1)	/* ITH ISDN Master II */
+		return (1);
+
 	return (0);
 }
 
@@ -100,24 +103,29 @@ asterattach(parent, self, auxp)
 	struct aster_softc *astrsc;
 	struct zbus_args *zap;
 	struct supio_attach_args supa;
+	char *cardname;
 
 	astrsc = (struct aster_softc *)self;
 	zap = auxp;
 
 	if (zap->manid == 5001 && zap->prodid == 1) {
-		if (parent)
-			printf(": ISDN Blaster\n");
-	} else { /* if (zap->manid == 2092 && zap->prodid == 64) */
-		if (parent)
-			printf(": ISDN Master\n");
+		cardname = "Blaster";
+		supa.supio_name = "isic";
+	} else if (zap->manid == 2092 && zap->prodid == 64) {
+		cardname = "Master";
+		supa.supio_name = "isic";
+	} else /* if (zap->manid == 5000 && zap->prodid == 1) */ {
+		cardname = "Master II";
+		supa.supio_name = "isicII";
 	}
+	if (parent)
+		printf(": ISDN %s\n", cardname);
 
 	astrsc->sc_bst.base = (u_long)zap->va + 0;
 	astrsc->sc_bst.stride = 1;
 
 	supa.supio_iot = &astrsc->sc_bst;
 
-	supa.supio_name = "isic";
 	supa.supio_iobase = 0;
 	supa.supio_arg = 0;
 	supa.supio_ipl = 2;	/* could be 6. isic_supio will decide. */
