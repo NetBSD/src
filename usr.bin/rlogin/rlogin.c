@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.16 1997/01/09 20:21:05 tls Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.17 1997/02/17 06:14:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.16 1997/01/09 20:21:05 tls Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.17 1997/02/17 06:14:25 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ main(argc, argv)
 	char *host, *p, *user, term[1024] = "network";
 	speed_t ospeed;
 	struct sigaction sa;
+	struct rlimit rlim;
 #ifdef KERBEROS
 	KTEXT_ST ticket;
 	char **orig_argv = argv;
@@ -318,6 +319,11 @@ main(argc, argv)
 	(void)sigaction(SIGURG, &sa, (struct sigaction *) 0);
 	sa.sa_handler = writeroob;
 	(void)sigaction(SIGUSR1, &sa, (struct sigaction *) 0);
+	
+	/* don't dump core */
+	rlim.rlim_cur = rlim.rlim_max = 0;
+	if (setrlimit(RLIMIT_CORE, &rlim) < 0)
+		warn("setrlimit");
 
 #ifdef KERBEROS
 try_connect:
