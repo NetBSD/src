@@ -1,3 +1,5 @@
+/*	$NetBSD: fb_sub.c,v 1.4 1998/08/21 14:52:29 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -1984,7 +1986,7 @@ fbgetpalette(fbp, data)
 #endif
 	fbstart(fbp, 1);
 #ifdef mips
-	MachFlushDCache((vm_offset_t)srcdestlist, sizeof (sPalette));
+	MachFlushDCache((vaddr_t)srcdestlist, sizeof (sPalette));
 	*data = *(sPalette *)MIPS_KSEG0_TO_KSEG1(srcdestlist);
 #else
 	*data = *(sPalette *)srcdestlist;

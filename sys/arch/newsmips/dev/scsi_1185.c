@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.4 1998/06/10 16:27:30 tsubai Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.5 1998/08/21 14:52:29 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -163,7 +163,7 @@ static void adjust_transfer __P((struct sc_softc *, struct sc_chan_stat *));
 static void clean_k2dcache __P((struct sc_scb *));
 
 extern void sc_done __P((struct sc_scb *));
-extern vm_offset_t kvtophys __P((vm_offset_t));
+extern paddr_t kvtophys __P((vaddr_t));
 
 #if defined(mips) && defined(CPU_SINGLE)
 #define dma_reset(x) {						\
@@ -1590,7 +1590,7 @@ sc_dio(sc, cs)
 		/*
 		 * Set DMAC map entry from logical address
 		 */
-		pfn = (u_int)kvtophys((vm_offset_t)cs->act_point) >> PGSHIFT;
+		pfn = kvtophys((vaddr_t)cs->act_point) >> PGSHIFT;
 		pages = (cs->act_trcnt >> PGSHIFT) + 2;
 		for (i = 0; i < pages; i++) {
 #if defined(mips) && defined(CPU_SINGLE)
@@ -1780,17 +1780,17 @@ clean_k2dcache(scb)
 	struct sc_scb *scb;
 {
 	struct sc_map *sc_map = scb->sc_map;
-	vm_offset_t pa;
+	paddr_t pa;
 	int i, pages;
 
-	pa = kvtophys((vm_offset_t)scb->msgbuf);
+	pa = kvtophys((vaddr_t)scb->msgbuf);
 	MachFlushDCache(MIPS_PHYS_TO_KSEG0(pa), sizeof(scb->msgbuf));
 
 	if (MACH_IS_USPACE(scb->sc_cpoint))
 		panic("clean_k2dcache: user address is not supported");
 
 	if (MACH_IS_CACHED(scb->sc_cpoint)) {
-		MachFlushDCache((vm_offset_t)scb->sc_cpoint, scb->sc_ctrnscnt);
+		MachFlushDCache((vaddr_t)scb->sc_cpoint, scb->sc_ctrnscnt);
 		return;
 	}
 
