@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.15 1996/10/10 19:58:34 gwr Exp $
+#	$NetBSD: install.sub,v 1.16 1997/05/01 13:26:56 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -296,10 +296,16 @@ addifconfig() {
 	# $2 - interface symbolic name
 	# $3 - interface IP address
 	# $4 - interface netmask
-	# $5 - (optional) interface link-layer directives
+	# $5 - (optional) interface link-layer medium
+	# $6 - (optional) interface link-layer directives
+	local _m
 
-	# Create a hostname.* file for the interface.
-	echo "inet $2 $4 NONE $5" > /tmp/hostname.$1
+	_m=""
+	if [ "$5" != "" ]; then
+		_m="media $5"
+	fi
+	# Create a ifconfig.* file for the interface.
+	echo "inet $2 netmask $4 $_m $6" > /tmp/ifconfig.$1
 
 	addhostent $3 $2
 }
@@ -308,7 +314,13 @@ configurenetwork() {
 	local _ifsdone
 	local _ifs
 
-	_IFS=`md_get_ifdevs`
+#	_IFS=`md_get_ifdevs`
+	_IFS=`ifconfig -l | sed '
+		s/lo0//
+		s/ppp[0-9]//g
+		s/sl[0-9]//g
+		s/tun[0-9]//g'`
+
 	_ifsdone=""
 	resp=""		# force at least one iteration
 	while [ "X${resp}" != X"done" ]; do
@@ -357,17 +369,23 @@ configure_ifs() {
 	local _interface_extra
 
 	_interface_name=$1
+	_up=DOWN
+	if isin $_interface_name `ifconfig -l -u` ; then
+		_up=UP
+	fi
+
+	_interface_supported_media=`ifconfig -m $_interface_name | sed -n '
+		3s/supported media: //p'`
 
 	set -- `ifconfig $_interface_name | sed -n '
-		1s/.*<UP,.*$/UP/p
-		1s/.*<.*>*$/DOWN/p
-		2s/inet//
-		2s/--> [0-9.][0-9.]*//
-		2s/netmask//
-		2s/broadcast//
-		2p'`
+		2s/media: \([^ ][^ ]*\).*/\1/p
+		3s/inet//
+		3s/--> [0-9.][0-9.]*//
+		3s/netmask//
+		3s/broadcast//
+		3p'`
 
-	_up=$1
+	_interface_mediumtype=$1
 	_interface_ip=$2
 	_interface_mask=$3
 
@@ -395,6 +413,16 @@ configure_ifs() {
 		_interface_mask=$resp
 	done
 
+	echo "Your network interface might require explicit selection"
+	echo "of the type of network medium attached. Supported media:"
+	echo " $_interface_supported_media."
+	echo -n "Additional media type arguments? [$_interface_mediumtype] "
+	getresp "$_interface_mediumtype"
+	if [ "X${resp}" != X"" ]; then
+		_interface_mediumtype=$resp
+	fi
+
+
 	echo "Your network interface might require additional link-layer"
 	echo "directives (like \`link0'). If this is the case you can enter"
 	echo "these at the next prompt."
@@ -417,7 +445,9 @@ configure_ifs() {
 			    ${_interface_name} \
 			    ${_interface_symname} \
 			    ${_interface_ip} \
-			    ${_interface_mask} ${_interface_extra}
+			    ${_interface_mask} \
+			    ${_interface_mediumtype} \
+			    ${_interface_extra}
 			return 0
 		fi
 	else
@@ -427,7 +457,9 @@ configure_ifs() {
 		    ${_interface_name} \
 		    ${_interface_symname} \
 		    ${_interface_ip} \
-		    ${_interface_mask} ${_interface_extra}
+		    ${_interface_mask} \
+		    ${_interface_mediumtype} \
+		    ${_interface_extra}
 	fi
 	return 1
 }
@@ -444,6 +476,39 @@ enable_network() {
 	hostname $hostname
 
 	# configure all the interfaces which we know about.
+if [ -f /mnt/etc/rc.conf ]; then
+(
+	# assume network interface configuration style 1.2D and up
+	. /mnt/etc/rc.conf
+
+	if [ "$net_interfaces" != NO ]; then
+		if [ "$net_interfaces" = DEFAULT ]; then
+			tmp="`ifconfig -l`"
+		else
+			tmp="$net_interfaces"
+		fi
+		echo -n "configuring network interfaces:"
+		for i in $tmp; do
+			eval `echo 'args=$ifconfig_'$i`
+			if [ ! -z "$args" ]; then
+				echo -n " $i"
+				ifconfig $i $args
+			elif [ -f /mnt/etc/ifconfig.$i ]; then
+				echo -n " $i"
+				(while read args; do
+					ifconfig $i $args
+				done) < /mnt/etc/ifconfig.$i
+			elif [ "$net_interfaces" != DEFAULT ]; then
+				echo
+				echo -n "/mnt/etc/ifconfig.$i missing"
+				echo -n "& ifconfig_$i not set"
+				echo "; interface $i can't be configured"
+			fi
+		done
+		echo "."
+	fi
+)
+else
 (
 	tmp="$IFS"
 	IFS="$IFS."
@@ -475,6 +540,7 @@ enable_network() {
 		shift
 	done
 )
+fi
 
 	# set the address for the loopback interface
 	ifconfig lo0 inet localhost
@@ -552,8 +618,11 @@ __install_ftp_1
 	# Get password
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Password? [${_ftp_server_password}] "
-		getresp "${_ftp_server_password}"
+		echo -n "Password? "
+		stty -echo
+		getresp ""
+		echo ""
+		stty echo
 		_ftp_server_password=$resp
 	done
 
