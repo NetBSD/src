@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.450 2004/09/16 03:31:48 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.451 2004/09/17 03:59:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7366,3 +7366,22 @@ distrib/utils/sysinst/util.c			1.130
 	Run the new copy of /etc/postinstall, not the one that happens to be 
 	on the users system already.
 	[dsl, ticket #851]
+
+xfree/xc/extras/Xpm/cxpm/cxpm.c			1.2
+xfree/xc/extras/Xpm/lib/Attrib.c		1.2
+xfree/xc/extras/Xpm/lib/hashtab.c		1.2
+xfree/xc/extras/Xpm/lib/CrBufFrI.c		1.2
+xfree/xc/extras/Xpm/lib/CrDatFrI.c		1.2
+xfree/xc/extras/Xpm/lib/RdFToI.c		1.2
+xfree/xc/extras/Xpm/lib/WrFFrI.c		1.2
+xfree/xc/extras/Xpm/lib/data.c			1.2
+xfree/xc/extras/Xpm/lib/scan.c			1.2
+xfree/xc/extras/Xpm/lib/XpmI.h			1.2
+xfree/xc/extras/Xpm/lib/create.c		1.4
+xfree/xc/extras/Xpm/lib/parse.c			1.2
+xfree/xc/extras/Xpm/lib/xpm.h			1.2
+xfree/xc/extras/Xpm/sxpm/sxpm.c			1.2
+xfree/xc/extras/Xpm/sxpm/sxpm.man		1.2
+
+	Incorporate security fixes from Xorgs X11R6.8.1 release
+	[tron, ticket #852]
