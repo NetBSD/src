@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.22 1998/07/31 04:00:35 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.23 1998/07/31 05:26:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -75,6 +75,16 @@ static void isapnp_callback __P((struct device *));
 struct cfattach isapnp_ca = {
 	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
 };
+
+/*
+ * This keeps track if which ISA's we have been probed on.
+ */
+struct isapnp_probe_cookie {
+	LIST_ENTRY(isapnp_probe_cookie)	ipc_link;
+	struct device *ipc_parent;
+};
+LIST_HEAD(, isapnp_probe_cookie) isapnp_probes =
+    LIST_HEAD_INITIALIZER(isapnp_probes);
 
 /* isapnp_init():
  *	Write the PNP initiation key to wake up the cards...
@@ -816,6 +826,23 @@ isapnp_match(parent, match, aux)
 {
 	struct isapnp_softc sc;
 	struct isa_attach_args *ia = aux;
+	struct isapnp_probe_cookie *ipc;
+
+	/*
+	 * Ensure we only probe ISA PnP once; we don't actually consume
+	 * bus resources, so we have to prevent being cloned forever.
+	 */
+	for (ipc = LIST_FIRST(&isapnp_probes); ipc != NULL;
+	     ipc = LIST_NEXT(ipc, ipc_link))
+		if (ipc->ipc_parent == parent)
+			return (0);
+
+	ipc = malloc(sizeof(*ipc), M_DEVBUF, M_NOWAIT);
+	if (ipc == NULL)
+		panic("isapnp_match: can't allocate probe cookie");
+
+	ipc->ipc_parent = parent;
+	LIST_INSERT_HEAD(&isapnp_probes, ipc, ipc_link);
 
 	sc.sc_iot = ia->ia_iot;
 	(void) strcpy(sc.sc_dev.dv_xname, "(isapnp probe)");
