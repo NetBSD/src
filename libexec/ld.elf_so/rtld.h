@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.13 1999/06/22 16:28:22 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.14 1999/07/05 17:55:34 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -41,6 +41,8 @@
 #include "rtldenv.h"
 #include "link.h"
 
+#if defined(_RTLD_SOURCE)
+
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
 
 #if 0
@@ -72,6 +74,8 @@ extern int _rtld_pagesz;
 
 #define NEW(type)	((type *) xmalloc(sizeof(type)))
 #define CNEW(type)	((type *) xcalloc(sizeof(type)))
+
+#endif /* _RTLD_SOURCE */
 
 /*
  * C++ has mandated the use of the following keywords for its new boolean
@@ -175,6 +179,8 @@ typedef struct Struct_Obj_Entry {
 	struct link_map linkmap;	/* for GDB */
 } Obj_Entry;
 
+#if defined(_RTLD_SOURCE)
+
 extern struct r_debug _rtld_debug;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
@@ -244,4 +250,6 @@ int _rtld_reloc_powerpc_plt __P((const Obj_Entry *, const Elf_RelA *, bool));
 void _rtld_setup_powerpc_plt __P((const Obj_Entry *));
 #endif
 
-#endif
+#endif /* _RTLD_SOURCE */
+
+#endif /* RTLD_H */
