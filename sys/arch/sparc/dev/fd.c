@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.95 2002/10/23 09:12:08 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.96 2002/11/01 11:31:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1606,7 +1606,8 @@ loop:
 		}
 		/*FALLTHROUGH*/
 	case SEEKCOMPLETE:
-		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+		/* no data on seek */
+		disk_unbusy(&fd->sc_dk, 0, 0);
 
 		/* Make sure seek really happened. */
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
@@ -1650,14 +1651,16 @@ loop:
 
 	case IOCLEANUPWAIT: /* IO FAILED, cleanup succeeded */
 		callout_stop(&fdc->sc_timo_ch);
-		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 		fdcretry(fdc);
 		goto loop;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		callout_stop(&fdc->sc_timo_ch);
 
-		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		if (fdc->sc_nstat != 7 || st1 != 0 ||
 		    ((st0 & 0xf8) != 0 &&

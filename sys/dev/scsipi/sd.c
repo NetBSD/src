@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.190 2002/10/23 09:13:48 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.191 2002/11/01 11:32:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.190 2002/10/23 09:13:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.191 2002/11/01 11:32:00 mrg Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -816,7 +816,7 @@ sdstart(periph)
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
 		if (error) {
-			disk_unbusy(&sd->sc_dk, 0);
+			disk_unbusy(&sd->sc_dk, 0, 0);
 			printf("%s: not queued, error %d\n",
 			    sd->sc_dev.dv_xname, error);
 		}
@@ -835,7 +835,8 @@ sddone(xs)
 	}
 
 	if (xs->bp != NULL) {
-		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
+		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
+		    (xs->bp->b_flags & B_READ));
 #if NRND > 0
 		rnd_add_uint32(&sd->rnd_source, xs->bp->b_rawblkno);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.79 2002/10/23 09:12:59 jdolecek Exp $	*/
+/*	$NetBSD: ccd.c,v 1.80 2002/11/01 11:31:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.79 2002/10/23 09:12:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.80 2002/11/01 11:31:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ ccdstart(cs, bp)
 			bp->b_error = ENOMEM;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
-			disk_unbusy(&cs->sc_dkdev, 0);
+			disk_unbusy(&cs->sc_dkdev, 0, 0);
 			return;
 		}
 		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
@@ -849,7 +849,8 @@ ccdintr(cs, bp)
 	 */
 	if (bp->b_flags & B_ERROR)
 		bp->b_resid = bp->b_bcount;
-	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.34 2002/10/23 09:10:51 jdolecek Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.35 2002/11/01 11:31:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -1108,7 +1108,8 @@ loop:
 		return 1;
 
 	case SEEKCOMPLETE:
-		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+		/* no data on seek */
+		disk_unbusy(&fd->sc_dk, 0, 0);
 
 		/* Make sure seek really happened. */
 		out_fdc(NE7CMD_SENSEI);
@@ -1133,7 +1134,8 @@ loop:
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		callout_stop(&fdc->sc_timo_ch);
 
-		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		if (fdcresult(fdc) != 7 || (st1 & 0x37) != 0) {
 			/*

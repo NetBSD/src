@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.144 2002/10/23 09:13:40 jdolecek Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.145 2002/11/01 11:31:59 mrg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.144 2002/10/23 09:13:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.145 2002/11/01 11:31:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3373,5 +3373,5 @@ rf_disk_unbusy(desc)
 
 	bp = (struct buf *)desc->bp;
 	disk_unbusy(&raid_softc[desc->raidPtr->raidid].sc_dkdev, 
-			    (bp->b_bcount - bp->b_resid));
+	    (bp->b_bcount - bp->b_resid), (bp->b_flags & B_READ));
 }
