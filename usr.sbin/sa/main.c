@@ -33,7 +33,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.7 1997/10/18 03:57:25 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1997/10/19 09:56:10 mrg Exp $");
 #endif
 
 /*
@@ -354,7 +354,8 @@ acct_load(pn, wr)
 			printf("%6u %12.2f cpu %12quk mem %12qu io %s\n",
 			    ci.ci_uid,
 			    (ci.ci_utime + ci.ci_stime) / (double) AHZ,
-			    ci.ci_mem, ci.ci_io, ci.ci_comm);
+			    (unsigned long long)ci.ci_mem,
+			    (unsigned long long)ci.ci_io, ci.ci_comm);
 	}
 
 	/* finally, return the file descriptor for possible truncation */
