@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.30 2003/10/20 04:49:34 cyber Exp $
+$NetBSD: pcidevs,v 1.428.2.31 2004/03/15 05:41:25 jmc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -792,6 +792,7 @@ product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
 product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
 product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
 product AMD PBC768_USB	0x7449	AMD768 USB Controller
+product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
@@ -1761,7 +1762,9 @@ product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
 product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
+product NVIDIA	NFORCE3_MCPT_AC	0x00da	nForce3 MCP-T AC-97
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
 product NVIDIA	QUADRO		0x0103	Quadro
@@ -1770,6 +1773,7 @@ product NVIDIA	GEFORCE2	0x0150	GeForce2 GTS
 product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
 product NVIDIA	QUADRO2		0x0153	Quadro2
+product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
@@ -1978,6 +1982,7 @@ product SIS 5597_HB		0x5597	5597/5598 host bridge
 product SIS 530VGA		0x6306	530 GUI Accelerator+3D
 product SIS 6326		0x6326	6326 AGP VGA
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
+product SIS 7012_AC		0x7012	SiS 7012 AC-97 Sound
 product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
 product SIS 7018		0x7018	SiS 7018 Sound
 
