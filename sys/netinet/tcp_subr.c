@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.89 2000/03/01 12:49:42 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.90 2000/03/30 02:38:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1063,7 +1063,6 @@ tcp6_ctlinput(cmd, sa, d)
 	struct tcphdr th;
 	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
 	int nmatch;
-	extern struct in6_addr zeroin6_addr;	/* netinet6/in6_pcb.c */
 	struct sockaddr_in6 sa6;
 	register struct ip6_hdr *ip6;
 	struct mbuf *m;
