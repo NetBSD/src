@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.58 2000/01/08 01:41:13 sommerfeld Exp $
+#	$NetBSD: bsd.README,v 1.59 2000/01/17 21:21:55 jlam Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -392,7 +392,7 @@ SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
 		parallel makes.
 
-STRIP		The flag passed to the install program to cause the binary
+STRIPFLAG	The flag passed to the install program to cause the binary
 		to be stripped.
 
 SUBDIR		A list of subdirectories that should be built as well.
