@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.3 2003/02/25 10:35:33 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.4 2003/03/30 17:51:52 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,7 @@ Mitsumi CD-ROM, see
 Memory pseudo-disk devices, see
 .Xr \&md 4
 . It Ar ccd#
-Contatenated disk devices, see
+Concatenated disk devices, see
 .Xr \&ccd 4
 . It Ar cgd#
 Cryptographic disk devices, see
@@ -154,9 +154,9 @@ PS/2 ESDI disk devices
 .It Console ports :
 . Bl -tag -width 0123456789 -compact
 . It Ar ttyv0
-Pccons
+pccons
 . It Ar ttyE#
-Wscons
+wscons
 . El
 .It Pointing devices :
 . Bl -tag -width 0123456789 -compact
@@ -165,13 +165,13 @@ Microsoft bus mouse
 . It Ar lms#
 Logitech bus mouse
 . It Ar wsmouse#
-Wscons mouse events, see
+wscons mouse events, see
 .Xr \&wsmouse 4
 . El
 .It Keyboard devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar wskbd#
-Wscons keyboard events, see
+wscons keyboard events, see
 .Xr \&wskbd 4
 . El
 .It Terminal ports :
@@ -266,7 +266,7 @@ IrDA physical frame, see
 Random number generator, see
 .Xr \&rnd 4
 . It Ar speaker
-Pc speaker, see
+PC speaker, see
 .Xr \&speaker 4
 . It Ar lkm
 Loadable kernel modules interface, see
@@ -323,7 +323,7 @@ Generic VME access
 . It Ar wsfont#
 Console font control
 . It Ar wsmux#
-Wscons event multiplexor, see
+wscons event multiplexor, see
 .Xr \&wsmux 4
 . It Ar agp#
 AGP GART devices, see
