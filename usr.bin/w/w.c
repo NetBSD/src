@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.19 1997/01/09 11:55:19 tls Exp $	*/
+/*	$NetBSD: w.c,v 1.20 1997/03/03 22:12:19 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-static char rcsid[] = "$NetBSD: w.c,v 1.19 1997/01/09 11:55:19 tls Exp $";
+static char rcsid[] = "$NetBSD: w.c,v 1.20 1997/03/03 22:12:19 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static char rcsid[] = "$NetBSD: w.c,v 1.19 1997/01/09 11:55:19 tls Exp $";
 #include <errno.h>
 #include <fcntl.h>
 #include <kvm.h>
+#include <limits.h>
 #include <netdb.h>
 #include <nlist.h>
 #include <paths.h>
@@ -129,7 +130,7 @@ main(argc, argv)
 	u_long l;
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
-	char buf[MAXHOSTNAMELEN], errbuf[256];
+	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
 
 	/* Are we w(1) or uptime(1)? */
 	p = __progname;
