@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.1.1.1 1996/08/09 10:14:55 thorpej Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.2 1997/07/18 21:57:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -49,6 +49,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <rpcsvc/ypclnt.h>
+
 #include "protos.h"
 
 struct user {
@@ -87,6 +89,7 @@ char *NetidFile = "/etc/netid";
 
 #define HASHMAX 55
 
+int	main __P((int, char *[]));
 void	print_passwd_group __P((int, char *));
 void	print_hosts __P((FILE *, char *, char *));
 void	print_netid __P((FILE *, char *));
@@ -103,13 +106,11 @@ struct user_list root;
 struct user_list hroot[HASHMAX];
 
 extern	char *__progname;		/* from crt0.s */
-extern	char *optarg;
-extern	int optind;
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int qflag, ch;
 	char *domain;
@@ -449,7 +450,7 @@ print_hosts(pfile, fname, domain)
 	char *fname, *domain;
 {
 	char line[_POSIX2_LINE_MAX];
-	int line_no = 0, len, colon;
+	int line_no = 0, len;
 	char *p, *k, *u;
 
 	while (read_line(pfile, line, sizeof(line))) {
@@ -505,7 +506,7 @@ print_netid(mfile, fname)
 	char *fname;
 {
 	char line[_POSIX2_LINE_MAX];
-	int line_no = 0, len, colon;
+	int line_no = 0, len;
 	char *p, *k, *u;
 
 	while (read_line(mfile, line, sizeof(line))) {
@@ -558,8 +559,9 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage %s: %s %s\n", __progname,
+	fprintf(stderr, "usage: %s %s\n", __progname,
 	    "[-d domain] [-q] [-p passwdfile] [-g groupfile]");
-	fprintf(stderr, "          %s",
+	fprintf(stderr, "       %s  %s", __progname,
 	    "[-g groupfile] [-h hostfile] [-m netidfile]");
+	exit(1);
 }

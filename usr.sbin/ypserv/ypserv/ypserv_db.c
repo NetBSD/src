@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.3 1997/01/12 20:42:41 tls Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.4 1997/07/18 21:57:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -56,6 +56,7 @@
 #include <netdb.h>
 #include <resolv.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
@@ -118,7 +119,6 @@ yp_private(key, ypprivate)
 	datum key;
 	int ypprivate;
 {
-	int result;
 
 	if (ypprivate)
 		return (FALSE);
@@ -399,7 +399,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	struct in_addr *addr_name;
 	struct in_addr addr_addr;
 	static char val[BUFSIZ + 1];	/* match libc */
-	static hostname[MAXHOSTNAMELEN];
+	static char hostname[MAXHOSTNAMELEN];
 	char tmpbuf[MAXHOSTNAMELEN + 20];
 	char *v, *ptr;
 	int l;
@@ -490,6 +490,8 @@ ypdb_get_record(domain, map, key, ypprivate)
 	datum k, v;
 	int host_lookup, hn;
 	struct opt_map *map_info = NULL;
+
+	host_lookup = 0;	/* XXX gcc -Wuninitialized */
 
 	memset(&res, 0, sizeof(res));
 
