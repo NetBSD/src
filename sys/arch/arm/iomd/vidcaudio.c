@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.27 2004/01/01 16:23:15 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.28 2004/01/01 16:35:35 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.27 2004/01/01 16:23:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.28 2004/01/01 16:35:35 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -92,6 +92,12 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.27 2004/01/01 16:23:15 bjh21 Exp $")
 #include "vidcaudio.h"
 
 extern int *vidc_base;
+
+#ifdef VIDCAUDIO_DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
 
 struct vidcaudio_softc {
 	struct	device sc_dev;
@@ -251,9 +257,7 @@ static int
 vidcaudio_open(void *addr, int flags)
 {
 
-#ifdef VIDCAUDIO_DEBUG
-	printf("DEBUG: vidcaudio_open called\n");
-#endif
+	DPRINTF(("DEBUG: vidcaudio_open called\n"));
 	return 0;
 }
  
@@ -261,9 +265,7 @@ static void
 vidcaudio_close(void *addr)
 {
 
-#ifdef VIDCAUDIO_DEBUG
-	printf("DEBUG: vidcaudio_close called\n");
-#endif
+	DPRINTF(("DEBUG: vidcaudio_close called\n"));
 }
 
 /*
@@ -421,10 +423,8 @@ vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize));
 
-#ifdef VIDCAUDIO_DEBUG
-	printf("vidcaudio_trigger_output %p-%p/0x%x\n",
-	    start, end, blksize);
-#endif
+	DPRINTF(("vidcaudio_trigger_output %p-%p/0x%x\n",
+	    start, end, blksize));
 
 	sc->sc_pstart = start;
 	sc->sc_pend = end;
@@ -460,9 +460,7 @@ vidcaudio_halt_output(void *addr)
 {
 	struct vidcaudio_softc *sc = addr;
 
-#ifdef VIDCAUDIO_DEBUG
-	printf("vidcaudio_halt_output\n");
-#endif
+	DPRINTF(("vidcaudio_halt_output\n"));
 	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_CLEAR | IOMD_DMACR_QUADWORD);
 	disable_irq(sc->sc_dma_intr);
 	return 0;
@@ -542,9 +540,7 @@ vidcaudio_intr(void *arg)
 	paddr_t pnext, pend;
 
 	status = IOMD_READ_BYTE(IOMD_SD0ST);
-#ifdef VIDCAUDIO_DEBUG
-	printf ( "I[%x]", status );
-#endif
+	DPRINTF(("I[%x]", status));
 	if ((status & IOMD_DMAST_INT) == 0)
 		return 0;
 
@@ -557,18 +553,14 @@ vidcaudio_intr(void *arg)
 
 	case (IOMD_DMAST_INT | IOMD_DMAST_BANKA):
 	case (IOMD_DMAST_OVERRUN | IOMD_DMAST_INT | IOMD_DMAST_BANKB):
-#ifdef VIDCAUDIO_DEBUG
-		printf("B<0x%08lx,0x%03lx>", pnext, pend);
-#endif
+		DPRINTF(("B<0x%08lx,0x%03lx>", pnext, pend));
 		IOMD_WRITE_WORD(IOMD_SD0CURB, pnext);
 		IOMD_WRITE_WORD(IOMD_SD0ENDB, pend);
 		break;
 
 	case (IOMD_DMAST_INT | IOMD_DMAST_BANKB):
 	case (IOMD_DMAST_OVERRUN | IOMD_DMAST_INT | IOMD_DMAST_BANKA):
-#ifdef VIDCAUDIO_DEBUG
-		printf("A<0x%08lx,0x%03lx>", pnext, pend);
-#endif
+		DPRINTF(("A<0x%08lx,0x%03lx>", pnext, pend));
 		IOMD_WRITE_WORD(IOMD_SD0CURA, pnext);
 		IOMD_WRITE_WORD(IOMD_SD0ENDA, pend);
 		break;
