@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 1999/08/27 20:04:32 ragge Exp $
+#	$NetBSD: GENERIC,v 1.52 1999/11/13 20:55:12 matt Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -75,7 +75,6 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 #options 	COMPAT_ULTRIX
-options 	TCP_COMPAT_42
 
 options 	LKM
 
