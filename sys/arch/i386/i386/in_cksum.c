@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -32,15 +33,11 @@
  *
  * from tahoe:	in_cksum.c	1.2	86/01/05
  *	from: @(#)in_cksum.c	1.3 (Berkeley) 1/19/91
- *	$Id: in_cksum.c,v 1.3 1993/05/22 07:59:51 cgd Exp $
+ *	$Id: in_cksum.c,v 1.3.6.1 1994/10/16 19:57:09 cgd Exp $
  */
 
-/*
- * 920724 	i386 changes by Bakul Shah <bvs@bitblocks.com>
- */
-
-#include "param.h"
-#include "sys/mbuf.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -51,49 +48,34 @@
  * This implementation is 386 version.
  */
 
-#undef	ADDCARRY
-#define ADDCARRY(x)     if ((x) > 0xffff) (x) -= 0xffff
-#define REDUCE          {sum = (sum & 0xffff) + (sum >> 16); ADDCARRY(sum);}
+#define REDUCE          {sum = (sum & 0xffff) + (sum >> 16);}
+#define	ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
 
 /*
  * Thanks to gcc we don't have to guess
  * which registers contain sum & w.
  */
-#define CLC     asm("clc")
-#define ADD(n)  asm("adcl " #n "(%2), %0": "=r"(sum): "0"(sum), "r"(w))
-#define MOP     asm("adcl $0, %0":         "=r"(sum): "0"(sum))
+#define	Asm	__asm __volatile
+#define ADD(n)  Asm("addl " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define ADC(n)  Asm("adcl " #n "(%2),%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define MOP     Asm("adcl $0,%0" :         "=r" (sum) : "0" (sum))
+#define	ROL	Asm("roll $8,%0" :	   "=r" (sum) : "0" (sum))
 
+int
 in_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
-	register u_short *w;
+	register u_char *w;
 	register unsigned sum = 0;
 	register int mlen = 0;
 	int byte_swapped = 0;
-	union { char	c[2]; u_short	s; } su;
 
-	for (;m && len; m = m->m_next) {
+	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_short *);
-		if (mlen == -1) {
-			/*
-			 * The first byte of this mbuf is the continuation
-			 * of a word spanning between this mbuf and the
-			 * last mbuf.
-			 */
-
-			/* su.c[0] is already saved when scanning previous 
-			 * mbuf.  sum was REDUCEd when we found mlen == -1
-			 */
-			su.c[1] = *(u_char *)w;
-			sum += su.s;
-			w = (u_short *)((char *)w + 1);
-			mlen = m->m_len - 1;
-			len--;
-		} else
-			mlen = m->m_len;
+		w = mtod(m, u_char *);
+		mlen = m->m_len;
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
@@ -101,19 +83,35 @@ in_cksum(m, len)
 		 * Force to long boundary so we do longword aligned
 		 * memory operations
 		 */
-		if (3 & (int) w) {
+		if ((3 & (int) w) != 0) {
 			REDUCE;
-			if ((1 & (int) w) && (mlen > 0)) {
-				sum <<= 8;
-				su.c[0] = *(char *)w;
-				w = (u_short *)((char *)w + 1);
-				mlen--;
-				byte_swapped = 1;
+			if ((1 & (int) w) != 0 && mlen >= 1) {
+				sum += *w;
+				ROL;
+				byte_swapped ^= 1;
+				w += 1;
+				mlen -= 1;
 			}
-			if ((2 & (int) w) && (mlen >= 2)) {
-				sum += *w++;
+			if ((2 & (int) w) != 0 && mlen >= 2) {
+				sum += *(u_short *)w;
+				w += 2;
 				mlen -= 2;
 			}
+		}
+		/*
+		 * Align 4 bytes past a 16-byte cache line boundary.
+		 */
+		if ((4 & (int) w) == 0 && mlen >= 4) {
+			ADD(0);
+			MOP;
+			w += 4;
+			mlen -= 4;
+		}
+		if ((8 & (int) w) != 0 && mlen >= 8) {
+			ADD(0);  ADC(4);
+			MOP;
+			w += 8;
+			mlen -= 8;
 		}
 		/*
 		 * Do as much of the checksum as possible 32 bits at at time.
@@ -122,56 +120,52 @@ in_cksum(m, len)
 		 */
 		while ((mlen -= 32) >= 0) {
 			/*
-			 * Clear the carry flag, add with carry 16 words
-			 * and fold-in last carry by adding a 0 with carry.
+			 * Add with carry 16 words and fold in the last carry
+			 * by adding a 0 with carry.
+			 *
+			 * We aligned the pointer above so that the out-of-
+			 * order operations will cause the next cache line to
+			 * be preloaded while we finish with the current one.
 			 */
-			CLC;
-			ADD(0);  ADD(4);  ADD(8);  ADD(12);
-			ADD(16); ADD(20); ADD(24); ADD(28);
-			MOP; w += 16;
+			ADD(12); ADC(0);  ADC(4);  ADC(8);
+			ADC(28); ADC(16); ADC(20); ADC(24);
+			MOP;
+			w += 32;
 		}
 		mlen += 32;
-		while ((mlen -= 8) >= 0) {
-			CLC;
-			ADD(0); ADD(4);
+		if (mlen >= 16) {
+			ADD(12); ADC(0);  ADC(4);  ADC(8);
 			MOP;
-			w += 4;
+			w += 16;
+			mlen -= 16;
 		}
-		mlen += 8;
-		if (mlen == 0 && byte_swapped == 0)
-			continue;       /* worth 1% maybe ?? */
+		if (mlen >= 8) {
+			ADD(0);  ADC(4);
+			MOP;
+			w += 8;
+			mlen -= 8;
+		}
+		if (mlen == 0)
+			continue;
 		REDUCE;
 		while ((mlen -= 2) >= 0) {
-			sum += *w++;
+			sum += *(u_short *)w;
+			w += 2;
 		}
-		if (byte_swapped) {
-			sum <<= 8;
-			byte_swapped = 0;
-			if (mlen == -1) {
-				su.c[1] = *(char *)w;
-				sum += su.s;
-				mlen = 0;
-			} else
-				mlen = -1;
-		} else if (mlen == -1)
-			/*
-			 * This mbuf has odd number of bytes.
-			 * There could be a word split betwen
-			 * this mbuf and the next mbuf.
-			 * Save the last byte (to prepend to next mbuf).
-			 */
-			su.c[0] = *(char *)w;
+		if (mlen == -1) {
+			sum += *w;
+			ROL;
+			byte_swapped ^= 1;
+		}
 	}
 
 	if (len)
 		printf("cksum: out of data\n");
-	if (mlen == -1) {
-		/* The last mbuf has odd # of bytes. Follow the
-		   standard (the odd byte is shifted left by 8 bits) */
-		su.c[1] = 0;
-		sum += su.s;
+	if (byte_swapped) {
+		ROL;
 	}
 	REDUCE;
-	return (~sum & 0xffff);
+	ADDCARRY;
+	return (sum ^ 0xffff);
 }
 
