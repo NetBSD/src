@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 1996/11/18 01:08:00 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 1996/12/03 23:54:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,15 +100,31 @@ void	delay __P((int));
  */
 #include <machine/cputypes.h>
 
-struct cpu_nameclass {
-	char *cpu_name;
-	int  cpu_class;
+struct cpu_nocpuid_nameclass {
+	int cpu_vendor;
+	const char *cpu_vendorname;
+	const char *cpu_name;
+	int cpu_class;
+};
+
+
+struct cpu_cpuid_nameclass {
+	const char *cpu_id;
+	int cpu_vendor;
+	const char *cpu_vendorname;
+	struct cpu_cpuid_family {
+		int cpu_class;
+		const char *cpu_models[CPU_MAXMODEL+2];
+	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
 #ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
-extern struct cpu_nameclass i386_cpus[];
+extern int cpu_feature;
+extern int cpuid_level;
+extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
+extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
 /* autoconf.c */
 void	configure __P((void));
