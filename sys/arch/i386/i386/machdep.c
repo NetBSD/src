@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.418 2000/11/16 17:00:17 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.419 2000/11/19 23:38:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -286,7 +286,7 @@ const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
  * Source: Intel Processor Identification and the CPUID Instruction, AP-485
  */
 const char * const i386_p3_brand[] = {
-	NULL,		/* Unsupported */
+	"",		/* Unsupported */
 	"Celeron",	/* Intel (R) Celeron (TM) processor */
 	"",		/* Intel (R) Pentium (R) III processor */	
 	"Xeon",		/* Intel (R) Pentium (R) III Xeon (TM) processor */
@@ -640,7 +640,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III Xeon (Cascades)", 0, 0,
+				0, "Pentium III (Cascades)", 0, 0,
 				0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
@@ -953,7 +953,7 @@ identifycpu()
 	}
 
 	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier, name,
-		(brand && *brand) ? " " : "", brand,
+		(*brand) ? " " : "", brand,
 		classnames[class]);
 
 	cpu_class = class;
