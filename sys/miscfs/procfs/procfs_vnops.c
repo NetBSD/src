@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.61.2.1 1999/08/28 23:28:16 he Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.61.2.2 2002/01/14 15:20:58 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -233,7 +233,7 @@ procfs_open(v)
 			return (EBUSY);
 
 		if ((error = procfs_checkioperm(p1, p2)) != 0)
-			return (EPERM);
+			return (error);
 
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);
