@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.38 1998/09/14 21:09:51 hwr Exp $	*/
+/*	$NetBSD: in.h,v 1.39 1998/09/14 21:15:56 hwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -61,7 +61,7 @@
 #define	IPPROTO_ESP		50 		/* encap. security payload */
 #define	IPPROTO_AH		51 		/* authentication header */
 #define IPPROTO_MOBILE		55		/* IP Mobility RFC 2004 */
-#define IPPROTO_IPV6-ICMP	58		/* IPv6 ICMP */
+#define IPPROTO_IPV6_ICMP	58		/* IPv6 ICMP */
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 #define IPPROTO_PIM		103		/* Protocol indep. multicast */
