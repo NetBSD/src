@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7.4.2 2005/03/19 08:33:21 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7.4.3 2005/03/21 10:26:26 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.4.2 2005/03/19 08:33:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.4.3 2005/03/21 10:26:26 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1855,11 +1855,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	memset(&pdir[PDSLOT_KERN + nkpde], 0,
 	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
 
-	pmap_enter(pmap_kernel(), (vaddr_t)pdir, pdirpa, VM_PROT_READ,
-	    VM_PROT_READ);
-#if 0
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
-#endif
 	pmap_update(pmap_kernel());
 
 	/* pin page type */
@@ -1883,12 +1879,7 @@ pmap_pdp_dtor(void *arg, void *object)
 	/* unpin page type */
 	xpq_queue_unpin_table(xpmap_ptom(pdirpa));
 	xpq_flush_queue();
-	pmap_enter(pmap_kernel(), (vaddr_t)pdir, pdirpa,
-	    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ | VM_PROT_WRITE);
-#if 0
-	pmap_kremove((vaddr_t)pdir, PAGE_SIZE)
 	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ | VM_PROT_WRITE);
-#endif
 	pmap_update(pmap_kernel());
 }
 
