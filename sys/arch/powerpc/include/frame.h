@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2.26.3 2002/06/20 03:40:32 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.2.26.4 2002/07/03 20:35:22 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,13 +89,11 @@ struct callframe {
 	register_t r31;
 };
 
-
 struct saframe {
 	register_t r1;		/* stack pointer */
 	register_t lr;		/* Callee lr save area */
 	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
-
 
 #define	IFRAMELEN	sizeof(struct intrframe)
 struct intrframe {
@@ -142,6 +140,5 @@ struct spillframe {
 	register_t	r3;		/* 44 */
 	register_t	r0;		/* 48 */
 };
-
 
 #endif	/* _MACHINE_FRAME_H_ */
