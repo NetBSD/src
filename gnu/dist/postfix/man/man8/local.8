@@ -121,6 +121,8 @@ for recipients that are not found in the UNIX passwd database.
 In the case of UNIX-style mailbox delivery,
 the \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 envelope header to each message, prepends an
+\fBX-Original-To:\fR header with the recipient address as given to
+Postfix, prepends an
 optional \fBDelivered-To:\fR header
 with the envelope recipient address, prepends a \fBReturn-Path:\fR
 header with the envelope sender address, prepends a \fB>\fR character
@@ -131,7 +133,10 @@ mailbox to its original length.
 
 In the case of \fBmaildir\fR delivery, the local daemon prepends
 an optional
-\fBDelivered-To:\fR header with the envelope recipient address
+\fBDelivered-To:\fR header with the final envelope recipient address,
+prepends an
+\fBX-Original-To:\fR header with the recipient address as given to
+Postfix,
 and prepends a \fBReturn-Path:\fR header with the envelope sender
 address.
 .SH EXTERNAL COMMAND DELIVERY
@@ -176,15 +181,20 @@ The entire recipient address localpart (text to the left of the
 rightmost @ character).
 .IP \fBRECIPIENT\fR
 The entire recipient address.
+.IP \fBSENDER\fR
+The entire sender address.
 .PP
 The \fBPATH\fR environment variable is always reset to a
-system-dependent default path, and the \fBTZ\fR (time zone)
-environment variable is always passed on without change.
+system-dependent default path, and environment variables
+whose names are blessed by the \fBexport_environment\fR
+configuration parameter are exported unchanged.
 
 The current working directory is the mail queue directory.
 
 The \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 envelope header to each message, prepends an
+\fBX-Original-To:\fR header with the recipient address as given to
+Postfix, prepends an
 optional \fBDelivered-To:\fR
 header with the recipient envelope address, prepends a
 \fBReturn-Path:\fR header with the sender envelope address,
@@ -205,6 +215,8 @@ forward\fR) forbids file destinations in \fB:include:\fR files.
 In the case of UNIX-style mailbox delivery,
 the \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 envelope header to each message, prepends an
+\fBX-Original-To:\fR header with the recipient address as given to
+Postfix, prepends an
 optional \fBDelivered-To:\fR
 header with the recipient envelope address, prepends a \fB>\fR
 character to lines beginning with "\fBFrom \fR", and appends an
@@ -217,7 +229,10 @@ is made to truncate a regular file to its original length.
 
 In the case of \fBmaildir\fR delivery, the local daemon prepends
 an optional
-\fBDelivered-To:\fR header with the envelope recipient address.
+\fBDelivered-To:\fR header with the envelope recipient address, and
+prepends an
+\fBX-Original-To:\fR header with the recipient address as given to
+Postfix.
 The envelope sender address is available in the \fBReturn-Path:\fR
 header.
 .SH ADDRESS EXTENSION
@@ -326,12 +341,22 @@ recipient before attempting delivery. Defer delivery otherwise.
 Message transport for recipients that are not found in the UNIX
 passwd database.
 This parameter overrides \fBluser_relay\fR.
+.sp
+Note: you must update the \fBlocal_recipient_maps\fR
+setting in the \fBmain.cf\fR file, otherwise the Postfix SMTP
+server will reject mail for non-UNIX accounts with "\fBUser
+unknown in local recipient table\fR".
 .IP \fBhome_mailbox\fR
 Pathname of a mailbox relative to a user's home directory.
 Specify a path ending in \fB/\fR for maildir-style delivery.
 .IP \fBluser_relay\fR
 Destination (\fI@domain\fR or \fIaddress\fR) for non-existent users.
 The \fIaddress\fR is subjected to \fI$name\fR expansion.
+.sp
+Note: you must specify "\fBlocal_recipient_maps =\fR"
+(i.e. empty) in the \fBmain.cf\fR file, otherwise the Postfix SMTP
+server will reject mail for non-UNIX accounts with "\fBUser
+unknown in local recipient table\fR".
 .IP \fBmail_spool_directory\fR
 Directory with UNIX-style mailboxes. The default pathname is system
 dependent.
@@ -348,6 +373,12 @@ Message transport to use for mailbox delivery to all local
 recipients, whether or not they are found in the UNIX passwd database.
 This parameter overrides all other configuration parameters that
 control mailbox delivery, including \fBluser_relay\fR.
+.sp
+Note: if you use this feature to receive mail for non-UNIX
+accounts then you must update the \fBlocal_recipient_maps\fR
+setting in the \fBmain.cf\fR file, otherwise the Postfix SMTP
+server will reject mail for non-UNIX accounts with "\fBUser
+unknown in local recipient table\fR".
 .SH "Locking controls"
 .ad
 .fi

@@ -26,7 +26,7 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	unix_connect.c unix_listen.c unix_trigger.c unsafe.c username.c \
 	valid_hostname.c vbuf.c vbuf_print.c vstream.c vstream_popen.c \
 	vstring.c vstring_vstream.c watchdog.c writable.c write_buf.c \
-	write_wait.c strcasecmp.c
+	write_wait.c strcasecmp.c nvtable.c host_port.c
 OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	attr_scan0.o attr_scan64.o base64_code.o basename.o binhash.o \
 	chroot_uid.o clean_env.o close_on_exec.o concatenate.o ctable.o \
@@ -54,7 +54,7 @@ OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	unix_connect.o unix_listen.o unix_trigger.o unsafe.o username.o \
 	valid_hostname.o vbuf.o vbuf_print.o vstream.o vstream_popen.o \
 	vstring.o vstring_vstream.o watchdog.o writable.o write_buf.o \
-	write_wait.o $(STRCASE)
+	write_wait.o nvtable.o $(STRCASE) host_port.o
 HDRS	= argv.h attr.h base64_code.h binhash.h chroot_uid.h clean_env.h \
 	connect.h ctable.h dict.h dict_db.h dict_dbm.h dict_env.h \
 	dict_ht.h dict_ldap.h dict_mysql.h dict_ni.h dict_nis.h \
@@ -71,7 +71,8 @@ HDRS	= argv.h attr.h base64_code.h binhash.h chroot_uid.h clean_env.h \
 	scan_dir.h set_eugid.h set_ugid.h sigdelay.h spawn_command.h \
 	split_at.h stat_as.h stringops.h sys_defs.h timed_connect.h \
 	timed_wait.h trigger.h username.h valid_hostname.h vbuf.h \
-	vbuf_print.h vstream.h vstring.h vstring_vstream.h watchdog.h
+	vbuf_print.h vstream.h vstring.h vstring_vstream.h watchdog.h \
+	nvtable.h host_port.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
@@ -89,7 +90,7 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	vstring vstring_vstream doze select_bug stream_test mac_expand \
 	watchdog unescape hex_quote name_mask rand_sleep sane_time ctable \
 	inet_addr_list attr_print64 attr_scan64 base64_code attr_print0 \
-	attr_scan0
+	attr_scan0 host_port
 
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
@@ -208,112 +209,117 @@ fifo_rdonly_bug: fifo_rdonly_bug.c $(LIB)
 select_bug: select_bug.c $(LIB)
 	$(CC) $(CFLAGS)  -o $@ $@.c $(LIB) $(SYSLIBS)
 
-translit: $(LIB) $@.o
+translit: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-fsspace: $(LIB) $@.o
+fsspace: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-exec_command: $(LIB) $@.o
+exec_command: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-make_dirs: $(LIB) $@.o
+make_dirs: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-mac_parse: $(LIB) $@.o
+mac_parse: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-vstream_popen: $(LIB) $@.o
+vstream_popen: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-fifo_trigger: $(LIB) $@.o
+fifo_trigger: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-doze: $(LIB) $@.o
+doze: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-mac_expand: $(LIB) $@.o
+mac_expand: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-watchdog: $(LIB) $@.o
+watchdog: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-unescape: $(LIB) $@.o
+unescape: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-hex_quote: $(LIB) $@.o
+hex_quote: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-name_mask: $(LIB) $@.o
+name_mask: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-rand_sleep: $(LIB) $@.o
+rand_sleep: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-sane_time: $(LIB) $@.o
+sane_time: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-ctable: $(LIB) $@.o
+ctable: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-inet_addr_list: $(LIB) $@.o
+inet_addr_list: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-attr_print64: $(LIB) $@.o
+attr_print64: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-attr_scan64: $(LIB) $@.o
+attr_scan64: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-base64_code: $(LIB) $@.o
+base64_code: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-attr_print0: $(LIB) $@.o
+attr_print0: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-attr_scan0: $(LIB) $@.o
+attr_scan0: $(LIB)
+	mv $@.o junk
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
+	mv junk $@.o
+
+host_port: $(LIB)
 	mv $@.o junk
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
@@ -331,7 +337,7 @@ stream_test: stream_test.c $(LIB)
 
 tests: valid_hostname_test mac_expand_test dict_test unescape_test \
 	hex_quote_test ctable_test inet_addr_list_test base64_code_test \
-	attr_scan64_test attr_scan0_test
+	attr_scan64_test attr_scan0_test dict_pcre_test host_port_test
 
 valid_hostname_test: valid_hostname valid_hostname.in valid_hostname.ref
 	./valid_hostname <valid_hostname.in 2>valid_hostname.tmp
@@ -377,17 +383,30 @@ attr_scan0_test: attr_print0 attr_scan0 attr_scan0.ref
 	diff attr_scan0.ref attr_scan0.tmp
 	rm -f attr_scan0.tmp
 
-DB_TYPE	= `../postconf/postconf -h default_database_type`
-
 dict_test: dict_open testdb dict_test.in dict_test.ref
 	rm -f testdb.db testdb.dir testdb.pag
-	../postmap/postmap -N testdb
-	./dict_open $(DB_TYPE):testdb write < dict_test.in > dict_test.tmp 2>&1
+	../postmap/postmap -N hash:testdb
+	./dict_open hash:testdb write < dict_test.in > dict_test.tmp 2>&1
 	diff dict_test.ref dict_test.tmp
-	../postmap/postmap -n testdb
-	./dict_open $(DB_TYPE):testdb write < dict_test.in > dict_test.tmp 2>&1
+	../postmap/postmap -n hash:testdb
+	./dict_open hash:testdb write < dict_test.in > dict_test.tmp 2>&1
 	diff dict_test.ref dict_test.tmp
 	rm -f testdb.db testdb.dir testdb.pag dict_test.tmp
+
+dict_pcre_test: dict_open dict_pcre.in dict_pcre.map dict_pcre.ref
+	./dict_open pcre:dict_pcre.map read <dict_pcre.in >dict_pcre.tmp 2>&1
+	diff dict_pcre.ref dict_pcre.tmp
+	rm -f dict_pcre.tmp
+
+dict_regexp_test: dict_open dict_regexp.in dict_regexp.map dict_regexp.ref
+	./dict_open regexp:dict_regexp.map read <dict_regexp.in >dict_regexp.tmp 2>&1
+	diff dict_regexp.ref dict_regexp.tmp
+	rm -f dict_regexp.tmp
+
+host_port_test: host_port host_port.in host_port.ref
+	./host_port <host_port.in >host_port.tmp 2>&1
+	diff host_port.ref host_port.tmp
+	rm -f host_port.tmp
 
 # do not edit below this line - it is generated by 'make depend'
 alldig.o: alldig.c
@@ -736,6 +755,15 @@ hex_quote.o: msg.h
 hex_quote.o: vstring.h
 hex_quote.o: vbuf.h
 hex_quote.o: hex_quote.h
+host_port.o: host_port.c
+host_port.o: sys_defs.h
+host_port.o: msg.h
+host_port.o: split_at.h
+host_port.o: stringops.h
+host_port.o: vstring.h
+host_port.o: vbuf.h
+host_port.o: valid_hostname.h
+host_port.o: host_port.h
 htable.o: htable.c
 htable.o: sys_defs.h
 htable.o: mymalloc.h
@@ -922,6 +950,11 @@ non_blocking.o: non_blocking.c
 non_blocking.o: sys_defs.h
 non_blocking.o: msg.h
 non_blocking.o: iostuff.h
+nvtable.o: nvtable.c
+nvtable.o: sys_defs.h
+nvtable.o: mymalloc.h
+nvtable.o: htable.h
+nvtable.o: nvtable.h
 open_as.o: open_as.c
 open_as.o: sys_defs.h
 open_as.o: msg.h
