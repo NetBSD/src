@@ -13,8 +13,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_log1pf.c,v 1.4 1995/05/10 20:47:48 jtc Exp $";
+__RCSID("$NetBSD: s_log1pf.c,v 1.5 1997/10/09 11:32:45 lukem Exp $");
 #endif
 
 #include "math.h"
@@ -52,6 +53,8 @@ static float zero = 0.0;
 	float hfsq,f,c,s,z,R,u;
 	int32_t k,hx,hu,ax;
 
+	f = c = 0;
+	hu = 0;
 	GET_FLOAT_WORD(hx,x);
 	ax = hx&0x7fffffff;
 

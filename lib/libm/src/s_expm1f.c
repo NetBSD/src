@@ -13,8 +13,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_expm1f.c,v 1.6 1996/04/08 15:43:45 phil Exp $";
+__RCSID("$NetBSD: s_expm1f.c,v 1.7 1997/10/09 11:31:45 lukem Exp $");
 #endif
 
 #include "math.h"
@@ -50,6 +51,7 @@ Q5  =  -2.0109921195e-07; /* 0xb457edbb */
 	int32_t k,xsb;
 	u_int32_t hx;
 
+	c = 0;
 	GET_FLOAT_WORD(hx,x);
 	xsb = hx&0x80000000;		/* sign bit of x */
 	if(xsb==0) y=x; else y= -x;	/* y = |x| */
