@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.21 2000/11/01 20:43:58 jdolecek Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.22 2000/11/08 04:19:01 erh Exp $ */
 
 /*
  * System call names.
@@ -50,7 +50,7 @@ char *linux_syscallnames[] = {
 	"lseek",			/* 19 = lseek */
 	"getpid",			/* 20 = getpid */
 	"#21 (unimplemented osf_mount)",		/* 21 = unimplemented osf_mount */
-	"#22 (unimplemented osf_umount)",		/* 22 = unimplemented osf_umount */
+	"#22 (unimplemented umount)",		/* 22 = unimplemented umount */
 	"setuid",			/* 23 = setuid */
 	"getuid",			/* 24 = getuid */
 	"#25 (unimplemented)",		/* 25 = unimplemented */
@@ -140,7 +140,7 @@ char *linux_syscallnames[] = {
 	"#109 (unimplemented)",		/* 109 = unimplemented */
 	"#110 (unimplemented)",		/* 110 = unimplemented */
 	"sigsuspend",			/* 111 = sigsuspend */
-	"#112 (unimplemented)",		/* 112 = unimplemented */
+	"#112 (unimplemented osf_sigstack)",		/* 112 = unimplemented osf_sigstack */
 	"recvmsg",			/* 113 = recvmsg */
 	"sendmsg",			/* 114 = sendmsg */
 	"#115 (unimplemented)",		/* 115 = unimplemented */
@@ -266,7 +266,7 @@ char *linux_syscallnames[] = {
 	"#215 (unimplemented)",		/* 215 = unimplemented */
 	"#216 (unimplemented)",		/* 216 = unimplemented */
 	"msync",			/* 217 = msync */
-	"#218 (unimplemented osf_signal)",		/* 218 = unimplemented osf_signal */
+	"#218 (unimplemented)",		/* 218 = unimplemented */
 	"#219 (unimplemented)",		/* 219 = unimplemented */
 	"#220 (unimplemented)",		/* 220 = unimplemented */
 	"#221 (unimplemented)",		/* 221 = unimplemented */
@@ -283,7 +283,7 @@ char *linux_syscallnames[] = {
 	"#232 (unimplemented)",		/* 232 = unimplemented */
 	"getpgid",			/* 233 = getpgid */
 	"getsid",			/* 234 = getsid */
-	"#235 (unimplemented)",		/* 235 = unimplemented */
+	"#235 (unimplemented sigaltstack)",		/* 235 = unimplemented sigaltstack */
 	"#236 (unimplemented)",		/* 236 = unimplemented */
 	"#237 (unimplemented)",		/* 237 = unimplemented */
 	"#238 (unimplemented)",		/* 238 = unimplemented */
@@ -354,7 +354,7 @@ char *linux_syscallnames[] = {
 	"#303 (unimplemented old_adjtimex)",		/* 303 = unimplemented old_adjtimex */
 	"#304 (unimplemented swapoff)",		/* 304 = unimplemented swapoff */
 	"getdents",			/* 305 = getdents */
-	"#306 (unimplemented create_module)",		/* 306 = unimplemented create_module */
+	"#306 (unimplemented alpha_create_module)",		/* 306 = unimplemented alpha_create_module */
 	"#307 (unimplemented init_module)",		/* 307 = unimplemented init_module */
 	"#308 (unimplemented delete_module)",		/* 308 = unimplemented delete_module */
 	"#309 (unimplemented get_kernel_syms)",		/* 309 = unimplemented get_kernel_syms */
@@ -373,7 +373,7 @@ char *linux_syscallnames[] = {
 	"#318 (unimplemented sysinfo)",		/* 318 = unimplemented sysinfo */
 	"__sysctl",			/* 319 = __sysctl */
 	"#320 (unimplemented idle)",		/* 320 = unimplemented idle */
-	"#321 (unimplemented umount)",		/* 321 = unimplemented umount */
+	"#321 (unimplemented oldumount)",		/* 321 = unimplemented oldumount */
 	"swapon",			/* 322 = swapon */
 	"times",			/* 323 = times */
 	"personality",			/* 324 = personality */
