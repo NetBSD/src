@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.147 2000/06/11 02:41:10 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.148 2000/06/18 23:53:32 cyber Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -15,7 +15,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
+options 	MINIROOTSIZE=4096	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
@@ -642,7 +642,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
-#pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
