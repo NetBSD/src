@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.146 2001/08/13 06:10:09 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.147 2001/09/13 13:12:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4407,6 +4407,10 @@ ENTRY(switchexit)
 	b,a	idle_enter_no_schedlock
 	/* FALLTHROUGH */
 
+
+/* Macro used for register window flushing in the context switch code */
+#define	SAVE save %sp, -64, %sp
+
 /*
  * When no processes are on the runq, switch
  * idles here waiting for something to come ready.
@@ -4418,7 +4422,6 @@ idle:
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
 	 * and %psr to PSR_S, and set cpcb to point to idle_u.
 	 */
-#define	SAVE save %sp, -64, %sp
 	/* XXX: FIXME
 	 * 7 of each:
 	 */
