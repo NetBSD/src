@@ -836,7 +836,7 @@ term_set(el, term)
 
     if (i <= 0) {
 	if (i == -1) 
-	    (void) fprintf(el->el_errfile, "Cannot open read termcap database;\n");
+	    (void) fprintf(el->el_errfile, "Cannot read termcap database;\n");
 	else if (i == 0) 
 	    (void) fprintf(el->el_errfile, 
 			   "No entry for terminal type \"%s\";\n", term);
