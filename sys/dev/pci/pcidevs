@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.15 2002/11/26 18:28:40 tron Exp $
+$NetBSD: pcidevs,v 1.428.2.16 2002/11/26 18:29:31 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1276,6 +1276,7 @@ product IBM MPIC	0x0046	MPIC
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM GXT800P	0x005e	GXT-800P
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
+product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
