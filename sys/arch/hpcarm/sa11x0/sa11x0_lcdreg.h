@@ -1,11 +1,11 @@
-/*	$NetBSD: sa11x0_lcdreg.h,v 1.3 2001/03/10 13:34:35 toshii Exp $ */
+/*	$NetBSD: sa11x0_lcdreg.h,v 1.4 2001/07/08 06:38:59 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ichiro FUKUHARA.
+ * by Ichiro FUKUHARA(ichiro@ichiro.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define SALCD_BASE           0xd0010000 */
-
 /* size of I/O space */
 #define SALCD_NPORTS      11
 
@@ -55,31 +53,38 @@
 						generate an intrrupt */
 #define CR0_ERM		(1<<5)	/* Bus error generate an intrrupt */
 #define CR0_PAS		(1<<7)	/* Passive / Active and TFT-LCD enable */
-#define CR0_BLE		(1<<8)	/* endial select 0=little */
+#define CR0_BLE		(1<<8)	/* endian select 0=little */
 #define CR0_DPD		(1<<9)
 
 /* LCD Control Register 1 */
 #define SALCD_CR1	0x20
-	/* PPL ; Pixel per line - 16 */
-	/* HSW ; */
-	/* ELW ; */
-	/* BLW ; */
+#define CR1_PPL(pixel)	((pixel) - 16)		/* PPL ; Pixel per line
+								 - 16 */
+#define CR1_HSW(pixel)	(((pixel) - 1) << 10)	/* HSW ; */
+#define CR1_ELW(pixel)	(((pixel) - 1) << 16)	/* ELW ; */
+#define CR1_BLW(pixel)	(((pixel) - 1) << 24)	/* BLW ; */
 
 /* LCD Control Register 2 */
 #define SALCD_CR2	0x24
-	/* LPP ; Lines per panel */
-	/* VSW ; */
-	/* EFW ; */
-	/* BFW ; */
+#define CR2_LPP(line)	((line) - 1)		/* LPP ; Lines per panel */
+#define CR2_VSW(line)	(((line) -1) << 10)	/* VSW ; */
+#define CR2_EFW(line)	((line) << 16)		/* EFW ; */
+#define CR2_BFW(line)	((line) << 24)		/* BFW ; */
 
 /* LCD Control Register 3 */
 #define SALCD_CR3	0x28
-	/* PCD ; Pixel clock divisor	*/
-	/* ACB ; */
-	/* API ; AC Bias 		*/
-	/* VSP ; Vertical sync		*/
-	/* HSP ; Horizontal sync	*/
-	/* PCP ; Pixel clock polarity	*/
+#define CR3_PCD(div)	(((div) - 4)/2)	/* PCD ; Pixel clock divisor */
+#define CR3_ACB(div)	(((div) - 2)/2)	/* ACB ; */
+#define CR3_API(div)	((div) << 16)	/* API ; AC Bias */
+#define CR3_VSPL	(0 << 20)	/* VSP ; Vsync = Low */
+#define CR3_VSPH	(1 << 20)	/* VSP ; Vsync = High */
+#define CR3_HSPL	(0 << 21)	/* HSP ; Hsync = Low */
+#define CR3_HSPH	(1 << 21)	/* HSP ; Hsync = High */
+#define CR3_PCP_RE	(0 << 22)	/* PCP ; Pixel clock Rising-Edge */
+#define CR3_PCP_FE	(1 << 22)	/* PCP ; Pixel clock Falling-Edge */
+#define CR3_OEPH	(0 << 23)	/* OEP ; Output Enable active High */
+#define CR3_OEPL	(0 << 23)	/* OEP ; Output Enable active Low */
+
 
 /* DMA Channel 1 Base Address Register */
 #define SALCD_BA1	0x10
@@ -107,5 +112,14 @@
 #define SR_OUL		(1<<9)
 #define SR_OOU		(1<<10)
 #define SR_OUU		(1<<11)
+
+/* Products Specification */
+#define IPAQ_LCCR0	CR0_LEN | CR0_PAS
+#define IPAQ_LCCR1	CR1_PPL(320) | CR1_HSW(3) | \
+			CR1_ELW(17) | CR1_BLW(12)
+#define IPAQ_LCCR2	CR2_LPP(240) | CR2_VSW(3) | \
+			CR2_EFW(1) | CR2_BFW(10)
+#define IPAQ_LCCR3	CR3_PCD(36) | CR3_ACB(2) | \
+			CR3_VSPL | CR3_HSPL | CR3_API(0)
 
 /* end of sa11x0_lcdreg.h */
