@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.282 2001/10/13 20:23:24 augustss Exp $
+# $NetBSD: mi,v 1.283 2001/10/17 05:20:20 jmc Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2227,6 +2227,7 @@
 ./var/at/jobs			base-cron-root
 ./var/at/spool			base-cron-root
 ./var/backups			base-sys-root
+./var/chroot			base-sys-root
 ./var/chroot/named			base-bind-root
 ./var/chroot/named/dev			base-bind-root
 ./var/chroot/named/etc			base-bind-root
