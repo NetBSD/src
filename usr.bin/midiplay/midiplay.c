@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.3 1998/08/13 15:19:40 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.4 1998/08/13 17:20:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -398,6 +398,8 @@ playdata(buf, tot, name)
 		} else {
 			if (MIDI_IS_STATUS(byte))
 				tp->status = byte;
+			else
+				tp->start--;
 			mlen = MIDI_LENGTH(tp->status);
 			msg = tp->start;
 			if (verbose > 1) {
