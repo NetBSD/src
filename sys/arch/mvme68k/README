@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.1.1.1.2.1 1995/10/18 02:27:18 chuck Exp $
+	$NetBSD: README,v 1.1.1.1.2.2 1995/10/20 02:10:17 chuck Exp $
 
 NetBSD/mvme68k port README for NetBSD 1.1
 
@@ -118,7 +118,7 @@ Server ip address is: 128.252.169.2
 3a00 
 Download was a success!
 Start @ 0x8000 ... 
->> NetBSD netboot [$Revision: 1.1.1.1.2.1 $]
+>> NetBSD netboot [$Revision: 1.1.1.1.2.2 $]
 boot: client addr: 128.252.169.63
 boot: client name: vme147
 boot: subnet mask: 255.255.0.0
@@ -158,3 +158,28 @@ Automatic boot in progress: starting file system checks.
 
 good luck!
 
+
+step by step installation directions:
+
+[0] get the distribution
+[1] unpack export_exec_mvme68k.tar.gz: gunzip, tar xfp, in /export/exec or equiv
+[2] unpack export_root_mvme68k.tar.gz: gunzip, tar xfp, in /export/root or equiv
+[3] run "MAKEDEV all" in NFS /export/root/mvme68k/dev directory
+	(may have to add /etc, /usr/etc to the PATH line of MAKEDEV if 
+	on non-NetBSD system)
+[4] fix NFS root's etc/fstab
+[5] fix NFS root's etc/myname (put your hostname in there)
+[6] fix NFS root's etc/hosts
+[7] create the file etc/hostname.le0 with "inet HOSTNAME" in it (replace
+	"HOSTNAME" with your hostname as per etc/hosts)
+[8] create etc/defaultdomain with your YP domainname (if using YP)
+[9] adjust etc/localtime symbolic link as needed
+[10] create etc/mygate with your default router in it (if wanted, also
+		consider turning off routed in etc/netstart)
+[11] create etc/resolv.conf (if wanted)
+[12] make sure the mount point for /usr is there 
+	(e.g. mkdir /export/root/mvme68k/usr)
+[13] make sure the var/yp directory is there if you want to run YP
+[14] boot as described above
+[15] install domestic stuff if in US
+[16] have fun
