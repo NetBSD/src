@@ -1,17 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.9 1997/03/24 17:48:19 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1997/04/01 23:11:28 gwr Exp $
 
 .if defined(SA_PROG)
 
-# Allow "make CWD=." to show "normal" -I paths.
-CWD=	${.CURDIR}
-
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
-S=	${CWD}/../../../..
+S=	${.CURDIR}/../../../..
 
 RELOC?= 240000
 DEFS?= -Dsun3 -DSTANDALONE
-INCL?= -I${CWD} -I${CWD}/../libsa -I${S}/lib/libsa -I${S}
+INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 COPTS?= -msoft-float ${DEFS} ${INCL} ${DBG}
 
 LIBSA?= ../libsa
