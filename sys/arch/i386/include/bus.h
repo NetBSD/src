@@ -1,7 +1,7 @@
-/*	$NetBSD: bus.h,v 1.12 1997/10/01 08:25:15 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 1998/02/04 00:34:20 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -848,7 +848,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_WAITOK		0x00	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x01	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x02	/* perform resource allocation now */
-#define	BUS_DMAMEM_NOSYNC	0x04	/* map memory to not require sync */
+#define	BUS_DMA_COHERENT	0x04	/* hint: map memory DMA coherent */
 #define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
@@ -976,6 +976,7 @@ struct i386_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };

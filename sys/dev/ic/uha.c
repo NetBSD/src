@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.13 1998/01/28 02:31:11 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.14 1998/02/04 00:36:53 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -347,7 +347,7 @@ uha_create_mscps(sc, mem, size)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&mscp, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	    (caddr_t *)&mscp, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: can't map memory for mscps\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.28 1998/01/28 02:31:29 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.29 1998/02/04 00:37:50 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -667,7 +667,7 @@ wds_create_scbs(sc, mem, size)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&scb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	    (caddr_t *)&scb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: can't map memory for scbs\n",
 		    sc->sc_dev.dv_xname);
@@ -1076,7 +1076,7 @@ wds_init(sc, isreset)
 	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
-	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
 		panic("wds_init: can't create or map mailbox");
 
 	/*

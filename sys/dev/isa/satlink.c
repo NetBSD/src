@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.4 1998/01/12 09:43:45 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.5 1998/02/04 00:37:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ satlinkattach(parent, self, aux)
 		return;
 	}
 	if (isa_dmamem_map(parent, sc->sc_drq, ringaddr, SATLINK_BUFSIZE,
-	    &sc->sc_buf, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+	    &sc->sc_buf, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: can't map ring buffer\n", sc->sc_dev.dv_xname);
 		isa_dmamem_free(parent, sc->sc_drq, ringaddr, SATLINK_BUFSIZE);
 		return;
