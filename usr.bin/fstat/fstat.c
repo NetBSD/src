@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.19 1997/03/03 22:47:17 explorer Exp $	*/
+/*	$NetBSD: fstat.c,v 1.20 1997/06/12 07:45:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95";*/
-static char *rcsid = "$NetBSD: fstat.c,v 1.19 1997/03/03 22:47:17 explorer Exp $";
+static char *rcsid = "$NetBSD: fstat.c,v 1.20 1997/06/12 07:45:28 bouyer Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -144,7 +144,7 @@ int maxfiles;
 
 kvm_t *kd;
 
-int ufs_filestat(), nfs_filestat();
+int ufs_filestat(), ext2fs_filestat(), nfs_filestat();
 void dofiles(), getinetproto(), socktrans();
 void usage(), vtrans();
 
@@ -407,6 +407,10 @@ vtrans(vp, i, flag)
 			if (!nfs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
+		case VT_EXT2FS:
+			if (!ext2fs_filestat(&vn, &fst))
+				badtype = "error";
+			break;
 		default: {
 			static char unknown[10];
 			(void)snprintf(badtype = unknown, sizeof unknown,
@@ -484,10 +488,30 @@ ufs_filestat(vp, fsp)
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
-	fsp->mode = (mode_t)inode.i_mode;
-	fsp->size = (u_long)inode.i_size;
-	fsp->rdev = inode.i_rdev;
+	fsp->mode = (mode_t)inode.i_ffs_mode;
+	fsp->size = (u_long)inode.i_ffs_size;
+	fsp->rdev = inode.i_ffs_rdev;
 
+	return 1;
+}
+
+int
+ext2fs_filestat(vp, fsp)
+	struct vnode *vp;
+	struct filestat *fsp;
+{
+	struct inode inode;
+
+	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
+		dprintf(stderr, "can't read inode at %x for pid %d\n",
+		VTOI(vp), Pid);
+		return 0;
+	}
+	fsp->fsid = inode.i_dev & 0xffff;
+	fsp->fileid = (long)inode.i_number;
+	fsp->mode = (mode_t)inode.i_e2fs_mode;
+	fsp->size = (u_long)inode.i_e2fs_size;
+	fsp->rdev = 0;  /* XXX */
 	return 1;
 }
 
