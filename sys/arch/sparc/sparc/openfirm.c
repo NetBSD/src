@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.3 2001/03/22 06:21:15 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.4 2001/05/30 12:28:51 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -749,7 +749,7 @@ OF_milliseconds()
 	return (args.ticks);
 }
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

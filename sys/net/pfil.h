@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.19 2001/04/11 14:44:55 itojun Exp $	*/
+/*	$NetBSD: pfil.h,v 1.20 2001/05/30 12:04:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -99,7 +99,7 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 }
 
 /* XXX */
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "ipfilter.h"
 #endif
 

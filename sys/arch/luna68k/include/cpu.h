@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.4 2000/12/19 21:09:56 scw Exp $ */
+/* $NetBSD: cpu.h,v 1.5 2001/05/30 12:28:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #ifndef _MACHINE_CPU_H
 #define _MACHINE_CPU_H
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 

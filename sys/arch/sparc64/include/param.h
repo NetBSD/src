@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 2001/02/11 00:07:10 eeh Exp $ */
+/*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,9 +201,9 @@ extern int nbpg, pgofset, pgshift;
 #define	MCLSHIFT	11		/* log2(MCLBYTES) */
 #define	MCLOFSET	(MCLBYTES - 1)
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_gateway.h"
-#endif /* _KERNEL && ! _LKM */
+#endif
 
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
