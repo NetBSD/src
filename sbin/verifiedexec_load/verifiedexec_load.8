@@ -1,0 +1,95 @@
+.\" Copyright (c) 1999
+.\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
+.\"
+.\" This code is donated to The NetBSD Foundation by the author.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the Author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$Id: verifiedexec_load.8,v 1.1 2002/10/29 13:58:02 blymn Exp $
+.\"
+.Dd January, 2000
+.Dt VERIFIEDEXEC_LOAD 8
+.Os BSD 4
+.Sh NAME
+.Nm verifiedexec_load
+.Nd load verified exec fingerprints
+.Sh SYNOPSIS
+.Nm
+.Ar fingerprints
+.Sh DESCRIPTION
+The
+.Nm
+command loads the in kernel fingerprint table from the fingerprints
+given in the
+.Ar fingerprints
+file.
+Once loaded the kernel can then validate executed programs
+or files against the loaded fingerprints and report when fingerprints
+do not match.
+.Pp
+The
+.Ar fingerprints
+file contains lines of fields separated by one or more whitespace
+characters of the form:
+.Pp
+path	fingerprint	type	options
+.Pp
+Where path is the full path to the executable, fingerprint is a
+hexadecimal representation of the fingerprint for the executable.
+Type is the type of fingerprint used, currently this may be either
+md5 or sha1, other fingerprints may be available depending on kernel
+support.
+Options are the associated options for the executable.
+Currently
+there are two valid options:
+.Pp
+.Bl -tag -width INDIRECT -compact
+.It Pa INDIRECT
+if this option is set then the executable cannot be invoked directly, it
+can only be used as an interpreter in shell scripts.
+.It Pa FILE
+indicates that the fingerprint is associated with a file not an
+executable.  Files have their fingerprints verified during
+.Xr open 2
+and are automatically made read only.
+.El
+
+  There must be only one
+executable/fingerprint pair per line.  Comments are indicated by the
+first character of a line being a `#' character.
+.Pp
+.Sh FILES
+.Bl -tag -width /dev/verifiedexec -compact
+.It Pa /dev/verifiedexec
+verified executable device node
+.El
+.Sh HISTORY
+.Nm
+first appeared in NetBSD 1.7
+.Sh NOTES
+.Nm
+requires the kernel to have been configured with the VERIFIED_EXEC
+option and verifiedexec pseudo-device.
+
