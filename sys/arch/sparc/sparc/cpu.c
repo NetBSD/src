@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43 1997/06/09 00:00:05 veego Exp $ */
+/*	$NetBSD: cpu.c,v 1.44 1997/07/02 14:52:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -685,7 +685,6 @@ cpumatch_ms1(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
-	sc->flags |= CPUFLG_CACHEPAGETABLES;
 	sc->cpu_type = CPUTYP_MS1;
 }
 
@@ -717,7 +716,6 @@ cpumatch_ms2(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
-	sc->flags |= CPUFLG_CACHEPAGETABLES;
 	sc->cpu_type = CPUTYP_MS2;
 }
 
@@ -744,7 +742,6 @@ cpumatch_swift(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
-	sc->flags |= CPUFLG_CACHEPAGETABLES;
 	sc->cpu_type = CPUTYP_MS2;
 }
 
@@ -767,7 +764,7 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_line
+	srmmu_pcache_flush_line
 };
 
 void
@@ -787,8 +784,12 @@ viking_hotfix(sc)
 	/* Test if we're directly on the MBus */
 	if (!(lda(SRMMU_PCR, ASI_SRMMU) & VIKING_PCR_MB)) {
 		sc->mxcc = 1;
-		sc->flags |= CPUFLG_CACHEPAGETABLES;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
+		/*
+		 * Ok to cache PTEs; set the flag here, so we don't
+		 * uncache in pmap_bootstrap().
+		 */
+		sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
 		sc->cache_flush = viking_cache_flush;
 		sc->pcache_flush_line = viking_pcache_flush_line;
