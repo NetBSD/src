@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_syscalls.c	7.26 (Berkeley) 4/16/91
- *	$Id: nfs_syscalls.c,v 1.7 1993/12/18 00:45:34 mycroft Exp $
+ *	$Id: nfs_syscalls.c,v 1.8 1994/02/06 11:28:39 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -353,26 +353,24 @@ async_daemon(p, uap, retval)
 	if (myiod == -1)
 		return (EBUSY);
 	nfs_numasync++;
-	dp = &nfs_bqueue;
 	/*
 	 * Just loop around doin our stuff until SIGKILL
 	 */
 	for (;;) {
-		while (dp->b_actf == NULL && error == 0) {
+		while (nfs_bqueue.b_actf == NULL && error == 0) {
 			nfs_iodwant[myiod] = p;
 			error = tsleep((caddr_t)&nfs_iodwant[myiod],
 				PWAIT | PCATCH, "nfsidl", 0);
 			nfs_iodwant[myiod] = (struct proc *)0;
 		}
-		while (dp->b_actf != NULL) {
-			/* Take one off the end of the list */
-			bp = dp->b_actl;
-			if (bp->b_actl == dp) {
-				dp->b_actf = dp->b_actl = (struct buf *)0;
-			} else {
-				dp->b_actl = bp->b_actl;
-				bp->b_actl->b_actf = dp;
-			}
+		while (nfs_bqueue.b_actf != NULL) {
+			/* Take one off the front of the list */
+			bp = nfs_bqueue.b_actf;
+			if (dp = bp->b_actf)
+				dp->b_actb = bp->b_actb;
+			else
+				nfs_bqueue.b_actb = bp->b_actb;
+			*bp->b_actb = dp;
 			(void) nfs_doio(bp);
 		}
 		if (error) {
