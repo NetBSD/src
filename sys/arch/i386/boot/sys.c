@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.6 1994/02/03 22:56:33 mycroft Exp $
+ *	$Id: sys.c,v 1.7 1994/05/01 06:46:33 cgd Exp $
  */
 
 #include "boot.h"
@@ -173,22 +173,16 @@ openrd()
 		if (!*cp)
 			return 1;
 	}
-	switch(maj) {
-	case 1:
+	if (maj == 1) {
 		dosdev = unit | 0x80;
 		unit = 0;
-		break;
-	case 0:
-	case 4:
+	} else if (maj == 0 || maj == 4)
 		dosdev = unit | 0x80;
-		break;
-	case 2:
+	else if (maj == 2)
 		dosdev = unit;
-		break;
-	case 3:
+	else if (maj == 3) {
 		printf("Wangtek unsupported\n");
 		return 1;
-		break;
 	}
 	inode.i_dev = dosdev;
 	/***********************************************\
