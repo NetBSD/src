@@ -1,4 +1,4 @@
-#	$NetBSD: std.atari,v 1.9 1996/11/08 14:12:31 leo Exp $
+#	$NetBSD: std.atari,v 1.10 1996/11/17 13:33:40 leo Exp $
 #
 # standard atari information
 #
@@ -9,6 +9,10 @@ options		MACHINE_NONCONTIG	# Non-contiguous memory support
 
 options		EXEC_SCRIPT		# Support #!
 options		EXEC_AOUT		# a.out format executables
+
+options		SWAPPAGER		# Pager for swap device
+options		VNODEPAGER		# Pager for vnodes
+options		DEVPAGER		# Pager
 
 mainbus0	at root
 
