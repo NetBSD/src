@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.32.2.1 1998/11/09 06:06:38 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.32.2.2 1999/02/25 04:15:05 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2917,6 +2917,13 @@ uvm_page_print(pg, full)
  * uvm_page_printit: actually print the page
  */
 
+
+const char page_flagbits[] =
+	"\20\4CLEAN\5BUSY\6WANTED\7TABLED\12FAKE\13FILLED\14DIRTY\15RELEASED"
+	"\16FAULTING\17CLEANCHK";
+const char page_pqflagbits[] =
+	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
+
 void
 uvm_page_printit(pg, full, pr)
 	struct vm_page *pg;
@@ -2926,12 +2933,16 @@ uvm_page_printit(pg, full, pr)
 	struct vm_page *lcv;
 	struct uvm_object *uobj;
 	struct pglist *pgl;
+	char pgbuf[128];
+	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	(*pr)("  flags=0x%x, pqflags=0x%x, vers=%d, wire_count=%d, pa=0x%lx\n", 
-	pg->flags, pg->pqflags, pg->version, pg->wire_count, (long)pg->phys_addr);
+	bitmask_snprintf(pg->flags, page_flagbits, pgbuf, sizeof(pgbuf));
+	bitmask_snprintf(pg->pqflags, page_pqflagbits, pqbuf, sizeof(pqbuf));
+	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%lx\n",
+	      pgbuf, pqbuf, pg->version, pg->wire_count, (long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
-	pg->uobject, pg->uanon, pg->offset, pg->loan_count);
+	      pg->uobject, pg->uanon, pg->offset, pg->loan_count);
 	(*pr)("  blkno=0x%x\n", pg->blkno);
 
 #if defined(UVM_PAGE_TRKOWN)
