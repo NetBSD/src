@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.7 1997/05/25 21:22:19 jonathan Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.8 1997/07/07 19:37:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -59,30 +59,34 @@ extern void	cpu_exec_ecoff_setregs __P((
 struct ecoff_symhdr {
 	int16_t		magic;
 	int16_t		vstamp;
-	int32_t		lineMax;
-	int32_t		densenumMax;
-	int32_t		procMax;
-	int32_t		lsymMax;
-	int32_t		optsymMax;
-	int32_t		auxsymMax;
-	int32_t		lstrMax;
-	int32_t		estrMax;
-	int32_t		fdMax;
-	int32_t		rfdMax;
-	int32_t		esymMax;
-	long		linesize;
-	long		cbLineOffset;
-	long		cbDnOffset;
-	long		cbPdOffset;
-	long		cbSymOffset;
-	long		cbOptOffset;
-	long		cbAuxOffset;
-	long		cbSsOffset;
-	long		cbSsExtOffset;
-	long		cbFdOffset;
-	long		cbRfdOffset;
-	long		cbExtOffset;
+	int32_t		ilineMax;
+	int32_t		cbLine;
+	int32_t		cbLineOffset;
+	int32_t		idnMax;
+	int32_t		cbDnOffset;
+	int32_t		ipdMax;
+	int32_t		cbPdOffset;
+	int32_t		isymMax;
+	int32_t		cbSymOffset;
+	int32_t		ioptMax;
+	int32_t		cbOptOffset;
+	int32_t		iauxMax;
+	int32_t		cbAuxOffset;
+	int32_t		issMax;
+	int32_t		cbSsOffset;
+	int32_t		issExtMax;
+	int32_t		cbSsExtOffset;
+	int32_t		ifdMax;
+	int32_t		cbFdOffset;
+	int32_t		crfd;
+	int32_t		cbRfdOffset;
+	int32_t		iextMax;
+	int32_t		cbExtOffset;
 };
+
+/* Macro for field name used by cgd's Alpha-derived code */
+#define esymMax iextMax
+
 
 struct ecoff_extsym {
 	int32_t		es_strindex;
