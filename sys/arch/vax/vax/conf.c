@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 1995/07/04 07:17:21 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 1995/07/05 08:30:41 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -216,6 +216,9 @@ cdev_decl(ut);
 cdev_decl(idc);
 cdev_decl(fd);
 cdev_decl(gencn);
+cdev_decl(rx);
+cdev_decl(rl);
+cdev_decl(kdb);
 
 #include "ct.h"
 cdev_decl(ct);
