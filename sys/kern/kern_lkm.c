@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.11 1994/01/13 06:24:16 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.12 1994/02/05 02:25:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -804,10 +804,13 @@ int			cmd;
 		}
 
 		/* save old*/
-		bcopy( &execsw[ i], &(args->lkm_oldexec), sizeof( struct execsw));
+		bcopy(&execsw[i], &(args->lkm_oldexec), sizeof(struct execsw));
 
 		/* replace with new*/
-		bcopy( args->lkm_exec, &execsw[ i], sizeof( struct execsw));
+		bcopy(args->lkm_exec, &execsw[i], sizeof(struct execsw));
+
+		/* realize need to recompute max header size */
+		exec_maxhdrsz = 0;
 
 		/* done!*/
 		args->lkm_offset = i;	/* slot in execsw[]*/
@@ -819,7 +822,10 @@ int			cmd;
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents*/
-		bcopy( &(args->lkm_oldexec), &execsw[i], sizeof( struct execsw));
+		bcopy(&(args->lkm_oldexec), &execsw[i], sizeof(struct execsw));
+
+		/* realize need to recompute max header size */
+		exec_maxhdrsz = 0;
 
 		break;
 
