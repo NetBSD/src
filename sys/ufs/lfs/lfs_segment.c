@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.142 2003/10/25 18:26:46 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.143 2003/11/07 17:55:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.142 2003/10/25 18:26:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.143 2003/11/07 17:55:29 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1193,22 +1193,22 @@ loop:
  * location using ufs_bmaparray().
  *
  * Account for this change in the segment table.
+ *
+ * called with sp == NULL by roll-forwarding code.
  */
 void
-lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
-		  int32_t ndaddr, int size)
+lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
+    daddr_t lbn, int32_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct buf *bp;
 	struct indir a[NIADDR + 2], *ap;
 	struct inode *ip;
-	struct vnode *vp;
 	daddr_t daddr, ooff;
 	int num, error;
 	int bb, osize, obb;
 	
-	KASSERT(sp->vp != NULL);
-	vp = sp->vp;
+	KASSERT(sp == NULL || sp->vp == vp);
 	ip = VTOI(vp);
 
 	error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL, NULL);
@@ -1269,8 +1269,13 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 	if (daddr > 0) {
 		u_int32_t oldsn = dtosn(fs, daddr);
 #ifdef DIAGNOSTIC
-		int ndupino = (sp->seg_number == oldsn) ?
-			sp->ndupino : 0;
+		int ndupino;
+
+		if (sp && sp->seg_number == oldsn) {
+			ndupino = sp->ndupino;
+		} else {
+			ndupino = 0;
+		}
 #endif
 		KASSERT(oldsn >= 0 && oldsn < fs->lfs_nseg);
 		if (lbn >= 0 && lbn < NDADDR)
@@ -1285,22 +1290,22 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 			       "(segment %" PRIu32 " short by %" PRId64
 			       ")\n", dtosn(fs, daddr),
 			       (int64_t)osize -
-			       (sizeof (struct ufs1_dinode) * sp->ndupino +
+			       (sizeof (struct ufs1_dinode) * ndupino +
 				sup->su_nbytes));
 			printf("lfs_updatemeta: ino %d, lbn %" PRId64
 			       ", addr = 0x%" PRIx64 "\n",
-			       VTOI(sp->vp)->i_number, lbn, daddr);
+			       ip->i_number, lbn, daddr);
 			printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 			panic("lfs_updatemeta: negative bytes");
 			sup->su_nbytes = osize -
-			    sizeof (struct ufs1_dinode) * sp->ndupino;
+			    sizeof (struct ufs1_dinode) * ndupino;
 		}
 #endif
 #ifdef DEBUG_SU_NBYTES
 		printf("seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
 		       " db 0x%" PRIx64 "\n",
 		       dtosn(fs, daddr), osize,
-		       VTOI(sp->vp)->i_number, lbn, daddr);
+		       ip->i_number, lbn, daddr);
 #endif
 		sup->su_nbytes -= osize;
 		if (!(bp->b_flags & B_GATHERED))
@@ -1414,7 +1419,8 @@ lfs_updatemeta(struct segment *sp)
 			size = MIN(bytesleft, fs->lfs_bsize);
 			bb = fragstofsb(fs, numfrags(fs, size));
 			lbn = *sp->start_lbp++;
-			lfs_update_single(fs, sp, lbn, fs->lfs_offset, size);
+			lfs_update_single(fs, sp, sp->vp, lbn, fs->lfs_offset,
+			    size);
 			fs->lfs_offset += bb;
 		}
 
