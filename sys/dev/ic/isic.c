@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.18 2002/05/21 10:31:12 martin Exp $ 
+ *	$Id: isic.c,v 1.19 2003/01/06 13:05:10 wiz Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.18 2002/05/21 10:31:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.19 2003/01/06 13:05:10 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -94,7 +94,7 @@ isicintr(void *arg)
 	if (sc->sc_intr_valid == ISIC_INTR_DYING)
 		return 0;	/* do not touch removed hardware */
 
-	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
+	if(sc->sc_ipac == 0)	/* HSCX/ISAC interrupt routine */
 	{
 		u_char was_hscx_irq = 0;
 		u_char was_isac_irq = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.11 2002/11/07 11:44:12 someya Exp $	*/
+/*	$NetBSD: autri.c,v 1.12 2003/01/06 13:05:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -782,9 +782,9 @@ autri_intr(void *p)
 			mask = 1 << (ch & 0x1f);
 			if (active[(ch & 0x20) ? 1 : 0] & mask) {
 
-				/* clear interupt */
+				/* clear interrupt */
 				TWRITE4(sc, (ch & 0x20) ? AUTRI_AIN_B : AUTRI_AIN_A, mask);
-				/* disable interupt */
+				/* disable interrupt */
 				autri_reg_clear_4(sc,(ch & 0x20) ? AUTRI_AINTEN_B : AUTRI_AINTEN_A, mask);
 #if 0
 				reg = TREAD4(sc,AUTRI_LFO_GC_CIR) & ~0x0000003f;
