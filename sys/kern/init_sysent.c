@@ -1,3 +1,5 @@
+/*	$NetBSD: init_sysent.c,v 1.77 1998/01/09 06:09:17 thorpej Exp $	*/
+
 /*
  * System call switch table.
  *
@@ -46,6 +48,8 @@
 #else
 #define compat_13(func) sys_nosys
 #endif
+/*	$NetBSD: init_sysent.c,v 1.77 1998/01/09 06:09:17 thorpej Exp $	*/
+
 
 #define	s(type)	sizeof(type)
 
