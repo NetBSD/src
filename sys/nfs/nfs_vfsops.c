@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.111 2001/11/10 10:59:10 lukem Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.112 2001/12/04 18:38:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.111 2001/11/10 10:59:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.112 2001/12/04 18:38:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -160,8 +160,10 @@ nfs_statfs(mp, sbp, p)
 	vp = nmp->nm_vnode;
 	cred = crget();
 	cred->cr_ngroups = 0;
+#ifndef NFS_V2_ONLY
 	if (v3 && (nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+#endif
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	nfsm_reqhead(vp, NFSPROC_FSSTAT, NFSX_FH(v3));
 	nfsm_fhtom(vp, v3);
