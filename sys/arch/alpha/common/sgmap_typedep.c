@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.13 1999/07/08 18:05:23 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.13.12.1 2002/04/27 10:25:26 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.13 1999/07/08 18:05:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.13.12.1 2002/04/27 10:25:26 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -237,6 +237,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 #endif
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
+	map->_dm_window = t;
 	return (0);
 }
 
@@ -332,4 +333,5 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 }
