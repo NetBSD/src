@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.35 2003/03/06 20:53:05 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.36 2003/03/07 18:40:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -201,7 +201,7 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_ONLY_PHY_1		0x00000004
 #define	BGE_QUIRK_5700_SMALLDMA		0x00000008
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
-#define	BGE_QUIRK_PRODUCER_BUG		0x00000011
+#define	BGE_QUIRK_PRODUCER_BUG		0x00000020
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
