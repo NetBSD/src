@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.118 2000/08/01 04:57:29 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.119 2000/08/02 20:36:33 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -244,7 +244,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = SCARG(uap, path);
-	MALLOC(pack.ep_hdr, void *, exec_maxhdrsz, M_EXEC, M_WAITOK);
+	pack.ep_hdr = malloc(exec_maxhdrsz, M_EXEC, M_WAITOK);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
@@ -525,7 +525,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		psignal(p, SIGTRAP);
 
 	p->p_emul = pack.ep_emul;
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
@@ -550,7 +550,7 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
@@ -562,13 +562,13 @@ exec_abort:
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_emul_arg)
-		FREE(pack.ep_emul_arg, M_TEMP);
+		free(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
-	FREE(pack.ep_hdr, M_EXEC);
+	free(pack.ep_hdr, M_EXEC);
 	exit1(p, W_EXITCODE(0, SIGABRT));
 	exit1(p, -1);
 
