@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennetvar.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: if_xennetvar.h,v 1.1.2.1 2004/05/22 15:59:31 he Exp $	*/
 
 /*
  *
@@ -85,7 +85,7 @@ struct xennet_softc {
 };
 
 struct xennet_attach_args {
-	const char 		*xa_busname;
+	const char 		*xa_device;
 	netop_t			xa_netop;
 };
 
