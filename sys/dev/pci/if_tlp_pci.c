@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.26 1999/12/07 07:36:20 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.27 1999/12/11 00:33:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>
