@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.35 1997/11/03 20:00:17 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.36 1997/11/04 20:52:27 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -173,60 +173,7 @@ cpu_set_kpc(p, pc)
 	nyproc->PC = (unsigned)pc + 2;
 }
 
-/* Should check that values is in bounds XXX */
-int
-copyinstr(from, to, maxlen, lencopied)
-	const void *from;
-	void *to;
-	size_t *lencopied;
-	size_t maxlen;
-{
-	u_int i;
-	void *addr=&curproc->p_addr->u_pcb.iftrap;
-	const char *gfrom = from;
-	char *gto = to;
-
-	asm("movl $Lstr,(%0)":: "r"(addr));
-	for(i=0;i<maxlen;i++){
-		*(gto +i )=*(gfrom + i);
-		if(!(*(gto+i))) goto ok;
-	}
-
-	return(ENAMETOOLONG);
-ok:
-	if(lencopied) *lencopied=i+1;
-	return(0);
-}
-
-asm("Lstr:	ret");
-
-/* Should check that values is in bounds XXX */
-int
-copyoutstr(from, to, maxlen, lencopied)
-	const	void *from;
-	void	*to;
-	size_t	*lencopied;
-	size_t	maxlen;
-{
-	u_int i;
-	const char *gfrom=from;
-	char *gto=to;
-        void *addr=&curproc->p_addr->u_pcb.iftrap;
-
-        asm("movl $Lstr,(%0)":: "r"(addr));
-	for(i=0;i<maxlen;i++){
-		*(gto+i)=*(gfrom+i);
-		if(!(*(gto+i))) goto ok;
-	}
-
-	return(ENAMETOOLONG);
-ok:
-	if(lencopied) *lencopied=i+1;
-	return 0;
-}
-
 int	reno_zmagic __P((struct proc *, struct exec_package *));
-
 
 int
 cpu_exec_aout_makecmds(p, epp)
@@ -322,18 +269,6 @@ reno_zmagic(p, epp)
 	return exec_aout_setup_stack(p, epp);
 }
 
-int
-suword(ptr, val)
-	void *ptr;
-	long val;
-{
-        void *addr=&curproc->p_addr->u_pcb.iftrap;
-
-        asm("movl $Lstr,(%0)":: "r"(addr));
-	*(int *)ptr=val;
-	return 0;
-}
-
 /*
  * Dump the machine specific header information at the start of a core dump.
  * First put all regs in PCB for debugging purposes. This is not an good
@@ -377,31 +312,6 @@ cpu_coredump(p, vp, cred, chdr)
                 chdr->c_nseg++;
 
         return error;
-}
-
-int	locopyout __P((const void *, void *, size_t, void *));
-int	locopyin __P((const void *, void *, size_t, void *));
-
-int
-copyout(from, to, len)
-	const	void *from;
-	void	*to;
-	size_t	len;
-{
-	void *addr=&curproc->p_addr->u_pcb.iftrap;
-
-	return locopyout(from, to, len, addr);
-}
-
-int
-copyin(from, to, len)
-	const	void *from;
-	void	*to;
-	size_t	len;
-{
-	void *addr = &curproc->p_addr->u_pcb.iftrap;
-
-	return locopyin(from, to, len, addr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.31 1997/11/02 14:25:25 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.32 1997/11/04 20:52:28 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -95,7 +95,9 @@ int no_traps = 18;
 #define FAULTCHK                                                \
         if (p->p_addr->u_pcb.iftrap) {                          \
                 frame->pc = (unsigned)p->p_addr->u_pcb.iftrap;  \
-		frame->r0 = EFAULT;				\
+		frame->psl &= ~PSL_FPD;				\
+		frame->r0 = EFAULT;/* for copyin/out */		\
+		frame->r1 = -1;	/* for fetch/store */		\
                 return;                                         \
         }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.48 1997/11/02 14:07:27 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.49 1997/11/04 20:52:30 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -697,33 +697,6 @@ dumpsys()
 		printf("succeeded\n");
 		break;
 	}
-}
-
-int
-fuswintr(addr)
-	const void *addr;
-{
-	panic("fuswintr: need to be implemented");
-	return 0;
-
-}
-
-int
-suibyte(base, byte)
-	void *base;
-	short byte;
-{
-	panic("suibyte: need to be implemented");
-	return 0;
-}
-
-int
-suswintr(addr, cnt)
-	void *addr;
-	short	cnt;
-{
-	panic("suswintr: need to be implemented");
-	return 0;
 }
 
 int
