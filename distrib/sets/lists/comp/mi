@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.407 2001/11/25 23:39:50 thorpej Exp $
+#	$NetBSD: mi,v 1.408 2001/11/29 18:45:39 lukem Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -718,7 +718,6 @@
 ./usr/include/sys/file.h		comp-c-include
 ./usr/include/sys/filedesc.h		comp-c-include
 ./usr/include/sys/filio.h		comp-c-include
-./usr/include/sys/fnv_hash.h		comp-c-include
 ./usr/include/sys/gmon.h		comp-c-include
 ./usr/include/sys/inttypes.h		comp-c-include
 ./usr/include/sys/ioccom.h		comp-c-include
