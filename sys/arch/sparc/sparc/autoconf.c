@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.108 1998/12/03 23:49:58 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.109 1998/12/05 21:05:44 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1761,7 +1761,15 @@ device_register(dev, aux)
 		if (sc_link->scsipi_scsi.target == target &&
 		    sc_link->scsipi_scsi.lun == lun) {
 			/*bp->dev = dev;	-* got it! */
-			altbootdev = dev;
+			/*
+			 * What is missing here is the mapping between
+			 * our SCSI bus number and the parent (hba) path
+			 * from which we booted from. As a temp fix.
+			 * we'll only go with the first match- not additional
+			 * matches.
+			 */
+			if (altbootdev == NULL) /* do it on the *first* one */
+				altbootdev = dev;
 			return;
 		}
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
