@@ -1,54 +1,150 @@
-.\"	$NetBSD: prep,v 1.9 2000/10/10 12:55:22 lukem Exp $
+.\"	$NetBSD: prep,v 1.10 2000/10/21 04:49:26 mbw Exp $
 .
-Before you start you might need to consider your disk configuration
-to sort out a quirk in SCSI-ID to SD-UNIT mapping that exists on
-Sun Sparcstations.
+.Ss2 Configuring your ROM
+.
+Before you start, you should configure your ROM.  There are three
+categories of ROM: ``sunmon'' (sometimes called Restricted Prompt,
+sun monitor, or old command mode), OpenBoot PROM 1, and OpenBoot PROM 2.
+The sun4 machines only have sunmon.  Some of the early sun4c models
+default to sunmon but have OpenBoot PROM 1 (OBP1).  The later sun4c
+models and all sun4m models have OBP2.
 .Pp
-Upon leaving the factory, SunOS and the OpenBOOT ROM map according to
-this table:
-.Bl -column -offset indent SCSI-ID SunOS\ SD-Unit
-.It Tn Em SCSI-ID Ta Tn Em SunOS\ SD-Unit
-.It \~\~\~0 Ta \~\~\~sd3
-.It \~\~\~1 Ta \~\~\~sd1
-.It \~\~\~2 Ta \~\~\~sd2
-.It \~\~\~3 Ta \~\~\~sd0
-.It \~\~\~4 Ta \~\~\~sd4
-.It \~\~\~5 Ta \~\~\~sd5
-.It \~\~\~6 Ta \~\~\~sd6
+First, you should set your system to always use the OpenBoot PROM
+(sometimes called ``new command mode'') if it defaults to sunmon. The 
+.Nx
+kernel relies on some of the functionality provided by the OBP.
+If your machine gives you a `\*>' prompt instead of an `ok' prompt,
+type:
+.Pp
+.Dl \*> Ic n
+.Dl ok Ic setenv sunmon-compat? false
+.Dl ok
+.Pp
+Next, if you are using any security features of OBP, you should turn
+them off -- NetBSD can't deal well with this.
+.Dl ok Ic setenv security-mode none
+.Pp
+The OBP1 machines (SPARCstation/server 1, SPARCstation/server 1+,
+IPC, and SLC) have an odd SCSI quirk you should be aware of.  
+There are three SCSI addressing schemes used by your
+system: SCSI ID (set by physical jumpers on the device),
+SCSI target (set by OBP1, based on its SCSI ID), and the name you
+reference within an operating system (set by the kernel, based on the SCSI
+target).
+.Pp
+Sun shipped these systems with the internal drive at SCSI ID 0.
+The default value of the OBP variable 
+.Pa sd-targets
+is 
+.Pa 31204567.
+The means that the device at SCSI ID 3 is 
+at SCSI target 0, and the SCSI device at ID 0 is at target 3.  
+When you type ``boot scsi(0,0,0)'', OBP will boot from target 0 
+(that is, SCSI ID 3).  The
+SunOS kernel is hard-wired to map sd0 to SCSI target 3, and sd3 
+to SCSI target 0.  This means that SCSI ID 0 (target 3) is sd0, SCSI ID
+1 (target 1) is sd1, 
+and so on.  Essentially, SunOS reverses the OBP target remapping.
+.Bl -column -offset indent SCSI\ ID SCSI\ Target SunOS\ SD-Unit
+.It Em SCSI-ID Ta Em SCSI\ Target Ta Em SunOS\ SD-Unit
+.It \~\~\~0 Ta \~\~\~3 Ta \~\~\~sd0
+.It \~\~\~1 Ta \~\~\~1 Ta \~\~\~sd1
+.It \~\~\~2 Ta \~\~\~2 Ta \~\~\~sd2
+.It \~\~\~3 Ta \~\~\~0 Ta \~\~\~sd3
+.It \~\~\~4 Ta \~\~\~4 Ta \~\~\~st0
+.It \~\~\~5 Ta \~\~\~5 Ta \~\~\~st1
+.It \~\~\~6 Ta \~\~\~6 Ta \~\~\~cdrom
 .El
 .Pp
-Unlike SunOS and the OpenBOOT ROM, a generic NetBSD kernel numbers
-scsi drives sequentially as it finds them.  The drive with the
-lowest scsi-id will be called sd0, the next one sd1, etc.
+The 
+.Nx
+kernel is not hard-wired in this manner and names the disks in the order
+that the targets are probed (01234567).  If you only have one disk, it is
+always sd0 irregardless of its SCSI ID or target, and there are no 
+problems.  If you have two disks, one at
+SCSI ID 2 (target 2) and SCSI ID 3 (target 0), then they are recognized
+as sd1 and sd0 respectively.  This can be a problem if you are not 
+aware of it, particularly when creating an fstab.
 .Pp
-To ease the installation process, the default NetBSD kernel in the
-distribution is setup to match the Sun mapping above by hard-wiring
-scsi-id#3 to sd0 and scsi-id#0 to sd3. The remaining drives will be
-dynamically mapped to other sd* numbers.
+There are two approaches to fixing this problem: changing OBP1, and
+changing the
+.Nx
+kernel.  To get OBP1 to number the SCSI targets the same as the SCSI
+IDs, you need to run this command:
+.Dl ok Ic setenv sd-targets 01234567
+This may, however, cause problems if you were to later attempt to use
+SunOS on this machine or if you reset the OBP variables.
 .Pp
-A truly generic NetBSD kernel is also provided as `/netbsd.GENERIC',
-which will do the standard NetBSD probe ordering. If your configuration
-differs from the default Sun setup, you can try to use this kernel to
-complete the installation.
+The other approach is to use a 
+.Nx
+kernel that reverses this odd target mapping by treating target 0
+(i.e. SCSI ID 3) as sd3 and target 3 (i.e. SCSI ID 0) as sd0.
+The GENERIC_SCSI3 kernel performs this target remapping, but the 
+GENERIC and INSTALL kernels do not.
 .Pp
 .(Note
 This is also a concern when you start building your own customised kernels.
 .Note)
 .Pp
-Your OpenBOOT ROM may need some setup.  make sure you boot from `new
-command mode'.  If your machine comes up and gives you a `\*>' prompt
-instead of `ok', type:
-.Dl \*> Ic n
-.Dl ok Ic setenv sunmon-compat? false
-.Dl ok
-This is needed because the NetBSD kernel relies on functionality provided
-by OpenBOOT ROMs -- the ability to pass down Forth commands and have them
-executed in the ROM -- that appears to go away when the OpenBOOT ROM
-operates in `old monitor compatibility' mode.
+The machines with OBP2 (SPARCstation/server 2, ELC, IPX, and all sun4m 
+models) do not have this target mapping problem.  You should be aware, 
+however, that some models have their internal hard drives fixed at
+SCSI ID 3, so it may still be advantageous to use the GENERIC_SCSI3 
+kernel to ensure that your internal drive shows up as sd0.
+.
+.Ss2 Determining how to access your SCSI disk from the ROM
+.
+sunmon and OBP1 use a strange
+.Ic sd( Ns Ar c,u,p Ns Ic \&)
+syntax to address SCSI devices.  OBP2 uses a more intuitive
+syntax using device aliases.
 .Pp
-Also, you cannot use the security modes of the sparc OpenBOOT ROM.
-.Dl ok Ic setenv security-mode none
+To calculate the parameters for sunmon and OBP1:
+.(tag xcc
+.It Ar c
+specifies the SCSI controller number (first is 0, second is 1, ...)
+.It Ar u
+the hexadecimal number obtained from evaluating
+the expression `(8 * TARGET) + LUN'
+.It Ar p
+the partition number from which to boot (0=`a', 1=`b', etc).
+.tag)
+Therefore, to boot from the swap partition on the internal hard drive
+(first SCSI bus, target 0, lun 0, partition 1), one would use:
+.Dl ok Ic "boot sd(0,0,1)"
+To boot from a CD-ROM (first SCSI bus, target 6,
+lun 0, partition dynamically determined), one would use:
+.Dl ok Ic "boot sd(0,30,)"
+And, to boot from the fourth (`d', typically 
+.Pa usr
+) partition on an external hard drive (first SCSI bus, target 2, lun 0,
+partition 3), one would use:
+.Dl ok Ic "boot sd(0,10,3)"
 .Pp
+Now, for OBP2, SCSI devices are specified by an OpenBOOT
+.Pa devalias
+which provides simple mnemonics for the full path to the device.  Type
+.Pa devalias
+in OBP2 to get a list of all of the available aliases.
+Just the alias and partition are necessary when booting.
+.Pp
+Therefore, to boot from the swap partition on the internal hard drive
+(OBP2 assumes the internal hard drive is at target 3), one would use:
+.Dl ok Ic "boot disk:b"
+To boot from a CD-ROM (OBP2 assumes the CD-ROM is at target 6), one would use:
+.Dl ok Ic "boot cdrom"
+And, to boot from the fourth (`d', typically
+.Pa usr Ns
+) partition on an external hard drive (target 2, partition 3), one would use:
+.Dl ok Ic "boot disk2:d"
+.Pp
+The full device path specifier for OBP2 depends on how OBP2 recognizes
+your SCSI controller.  Typically, one would use something like:
+.Pa /sbus/esp/sd@ Ns Ar t,p
+where t is the SCSI target and p is the partition number.
+.
+.Ss2 Deciding on partition sizes
+.
 If you're installing
 .Nx*M
 for the first time it's a good idea
@@ -60,14 +156,22 @@ a good initial size for the swap partition is twice the amount of physical
 memory in your machine (though, unlike SunOS 4.x, there are no restrictions
 on the size of the swap partition that would render part of your memory
 unusable). A full binary installation takes about 60 MB in `/usr'.
-.Pp
+.
+.Ss2 Configuration of network interfaces
+.
 Some network devices (i.e. the built-in `le' interface on sun4m machines)
 allow a choice between operating on a UTP or a AUI port. The `le' driver
 supports automatic detection of the port which is actually connected to
-the wire.
+the wire. Additionally, some of the Fast ethernet devices (such as `be', 
+`hme', `qec', and `qfe') support selection of various speeds and options.
+The default is to attempt to automatically detect the speed.
 .Pp
 If automatic detection is not available or not working properly in your
 environment, you may have to specify the type connection using the
 `media' parameter of ifconfig(8). During installation, you'll get the
-opportunity to specify the appropriate medium. Use ``10base5/AUI''
-to select the AUI connector, or ``10baseT/UTP'' to select the UTP connector.
+opportunity to specify the appropriate medium. Use ``10base5'' or ``AUI''
+to select the AUI connector, or ``10baseT'' or ``UTP'' to select the UTP 
+connector. Fast ethernet interfaces default to ``auto'', which 
+usually does not detect properly and runs at ``10BaseT'' speed.  The 
+options are ``10baseT'', ``100baseTX'', and ``auto''.  The hme and qfe 
+interfaces also allow ``10baseT-FDX'' and ``100baseTX-FDX''.
