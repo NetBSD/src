@@ -1,6 +1,7 @@
-/*	$NetBSD: cpu.h,v 1.23 2002/03/08 13:12:10 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2002/03/17 14:06:38 uch Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -76,10 +77,14 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
+/* 
+ * Can't swapout u-area, (__SWAP_BROKEN) 
+ * since we use P1 converted address for trapframe.
+ */
+#define cpu_swapin(p)			/* nothing */
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -98,24 +103,43 @@ extern struct cpu_info cpu_info_store;
 #define	CLKF_INTR(frame)	(0)
 
 /*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)							\
+	(((struct trapframe *)(p)->p_md.md_regs)->tf_spc)
+
+/*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
+#define	need_resched(ci)						\
+do {									\
+	want_resched = 1;						\
+	if (curproc != NULL)						\
+		aston(curproc);						\
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the i386, request an ast to send us
- * through trap(), marking the proc as needing a profiling tick.
+ * buffer pages are invalid.  On the MIPS, request an ast to send us
+ * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)						\
+do {									\
+	(p)->p_flag |= P_OWEUPC;					\
+	aston(p);							\
+} while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		setsoftast()
+#define	signotify(p)	aston(p)
+
+#define aston(p)	((p)->p_md.md_astpending = 1)
+
+extern int want_resched;		/* need_resched() was called */
 
 /*
  * We need a machine-independent name for this.
