@@ -1,6 +1,6 @@
 /* Output routines for GCC for Hitachi / SuperH SH.
-   Copyright (C) 1993, 1994, 1995, 1997, 1997, 1998, 1999, 2000, 2001, 2002
-   Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1997, 1997, 1998, 1999, 2000, 2001, 2002,
+   2004 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com).
    Improved by Jim Wilson (wilson@cygnus.com). 
 
@@ -3065,6 +3065,14 @@ gen_block_redirect (jump, addr, need_block)
       else if (recog_memoized (prev) == CODE_FOR_block_branch_redirect)
 	need_block = 0;
     }
+  if (GET_CODE (PATTERN (jump)) == RETURN)
+    {
+      if (! need_block)
+	return prev;
+      /* Reorg even does nasty things with return insns that cause branches
+	 to go out of range - see find_end_label and callers.  */
+      return emit_insn_before (gen_block_branch_redirect (GEN_INT (0)) , jump);
+    }
   /* We can't use JUMP_LABEL here because it might be undefined
      when not optimizing.  */
   dest = XEXP (SET_SRC (PATTERN (jump)), 0);
@@ -3233,11 +3241,16 @@ gen_far_branch (bp)
   JUMP_LABEL (jump) = bp->far_label;
   if (! invert_jump (insn, label, 1))
     abort ();
-  (emit_insn_after
-   (gen_stuff_delay_slot
-    (GEN_INT (INSN_UID (XEXP (SET_SRC (PATTERN (jump)), 0))),
-     GEN_INT (recog_memoized (insn) == CODE_FOR_branch_false)),
-    insn));
+  /* If we are branching around a jump (rather than a return), prevent
+     reorg from using an insn from the jump target as the delay slot insn -
+     when reorg did this, it pessimized code (we rather hide the delay slot)
+     and it could cause branches to go out of range.  */
+  if (bp->far_label)
+    (emit_insn_after
+     (gen_stuff_delay_slot
+      (GEN_INT (INSN_UID (XEXP (SET_SRC (PATTERN (jump)), 0))),
+       GEN_INT (recog_memoized (insn) == CODE_FOR_branch_false)),
+      insn));
   /* Prevent reorg from undoing our splits.  */
   gen_block_redirect (jump, bp->address += 2, 2);
 }
@@ -5238,7 +5251,7 @@ sh_build_va_list ()
   if (TARGET_SH5 || (! TARGET_SH3E && ! TARGET_SH4) || TARGET_HITACHI)
     return ptr_type_node;
 
-  record = make_node (RECORD_TYPE);
+  record = (*lang_hooks.types.make_type) (RECORD_TYPE);
 
   f_next_o = build_decl (FIELD_DECL, get_identifier ("__va_next_o"),
 			 ptr_type_node);
@@ -7862,6 +7875,53 @@ sh_get_pr_initial_val (void)
 {
   return
     get_hard_reg_initial_val (Pmode, TARGET_SHMEDIA ? PR_MEDIA_REG : PR_REG);
+}
+
+/* INSN is an sfunc; return the rtx that describes the address used.  */
+static rtx
+extract_sfunc_addr (rtx insn)
+{
+  rtx pattern, part = NULL_RTX;
+  int len, i;
+
+  pattern = PATTERN (insn);
+  len = XVECLEN (pattern, 0);
+  for (i = 0; i < len; i++)
+    {
+      part = XVECEXP (pattern, 0, i);
+      if (GET_CODE (part) == USE && GET_MODE (XEXP (part, 0)) == Pmode
+	  && GENERAL_REGISTER_P (true_regnum (XEXP (part, 0))))
+	return XEXP (part, 0);
+    }
+  if (GET_CODE (XVECEXP (pattern, 0, 0)) == UNSPEC_VOLATILE)
+    return XVECEXP (XVECEXP (pattern, 0, 0), 0, 1);
+  abort ();
+}
+
+/* Verify that the register in use_sfunc_addr still agrees with the address
+   used in the sfunc.  This prevents fill_slots_from_thread from changing
+   use_sfunc_addr.
+   INSN is the use_sfunc_addr instruction, and REG is the register it
+   guards.  */
+int
+check_use_sfunc_addr (rtx insn, rtx reg)
+{
+  /* Search for the sfunc.  It should really come right after INSN.  */
+  while ((insn = NEXT_INSN (insn)))
+    {
+      if (GET_CODE (insn) == CODE_LABEL || GET_CODE (insn) == JUMP_INSN)
+	break;
+      if (! INSN_P (insn))
+	continue;
+	
+      if (GET_CODE (PATTERN (insn)) == SEQUENCE)
+	insn = XVECEXP (PATTERN (insn), 0, 0);
+      if (GET_CODE (PATTERN (insn)) != PARALLEL
+	  || get_attr_type (insn) != TYPE_SFUNC)
+	continue;
+      return rtx_equal_p (extract_sfunc_addr (insn), reg);
+    }
+  abort ();
 }
 
 #include "gt-sh.h"
