@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.24 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.25 2002/09/26 19:05:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.24 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.25 2002/09/26 19:05:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ dec_kn300_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_driver->cd_name;
 
 	if (found)
 		return;
@@ -251,7 +251,7 @@ dec_kn300_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(cd->cd_name, "pci"))
+		if (strcmp(name, "pci"))
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -288,9 +288,9 @@ dec_kn300_device_register(dev, aux)
 	}
 
 	if (scsiboot &&
-	    (!strcmp(cd->cd_name, "sd") ||
-	     !strcmp(cd->cd_name, "st") ||
-	     !strcmp(cd->cd_name, "cd"))) {
+	    (!strcmp(name, "sd") ||
+	     !strcmp(name, "st") ||
+	     !strcmp(name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -305,9 +305,9 @@ dec_kn300_device_register(dev, aux)
 		 * the value in boot_dev_type is some weird number
 		 * XXX: Only support SD booting for now.
 		 */
-		if (strcmp(cd->cd_name, "sd") &&
-		    strcmp(cd->cd_name, "cd") &&
-		    strcmp(cd->cd_name, "st"))
+		if (strcmp(name, "sd") &&
+		    strcmp(name, "cd") &&
+		    strcmp(name, "st"))
 			return;
 
 		/* we've found it! */
