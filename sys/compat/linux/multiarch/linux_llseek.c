@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.17 1997/06/27 05:29:36 kleink Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.18 1997/09/05 01:49:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -346,6 +346,11 @@ linux_sys_fcntl(p, v, retval)
 	case LINUX_F_GETLK:
 		sg = stackgap_init(p->p_emul);
 		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);
+		if ((error = copyin(arg, &lfl, sizeof lfl)))
+			return error;
+		linux_to_bsd_flock(&lfl, &bfl);
+		if ((error = copyout(&bfl, bfp, sizeof bfl)))
+			return error;
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_GETLK;
 		SCARG(&fca, arg) = bfp;
