@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.12 2001/05/06 15:31:09 kleink Exp $	*/
+/*	$NetBSD: assert.h,v 1.13 2003/06/05 17:27:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,20 +46,18 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #undef assert
-#undef _assert
 
 #ifdef NDEBUG
 # ifndef lint
 #  define assert(e)	(__static_cast(void,0))
-#  define _assert(e)	(__static_cast(void,0))
+#  endif
 # else /* !lint */
 #  define assert(e)
-#  define _assert(e)
 # endif /* lint */
 #else /* !NDEBUG */
-# define _assert(e)	assert(e)
 # if __STDC__
 #  define assert(e)							\
 	((e) ? __static_cast(void,0) : __assert13(__FILE__, __LINE__,	\
@@ -70,6 +68,11 @@
 	                                          __assert_function__, "e"))
 # endif /* !__STDC__ */
 #endif /* NDEBUG */
+
+#if defined(_NETBSD_SOURCE)
+# undef _assert
+# define _assert(e) assert(e)
+#endif
 
 #undef _DIAGASSERT
 #if !defined(_DIAGNOSTIC)
