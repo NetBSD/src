@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.1.2.5 2002/08/13 02:17:58 nathanw Exp $	*/
+/*	$NetBSD: i80321.c,v 1.1.2.6 2002/08/19 21:39:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -303,7 +303,8 @@ i80321_pci_dma_init(struct i80321_softc *sc)
 	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
 	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
 	dmat->_dmamap_unload = _bus_dmamap_unload;
-	dmat->_dmamap_sync = _bus_dmamap_sync;
+	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
+	dmat->_dmamap_sync_post = NULL;
 
 	dmat->_dmamem_alloc = _bus_dmamem_alloc;
 	dmat->_dmamem_free = _bus_dmamem_free;
@@ -332,7 +333,8 @@ i80321_local_dma_init(struct i80321_softc *sc)
 	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
 	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
 	dmat->_dmamap_unload = _bus_dmamap_unload;
-	dmat->_dmamap_sync = _bus_dmamap_sync;
+	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
+	dmat->_dmamap_sync_post = NULL;
 
 	dmat->_dmamem_alloc = _bus_dmamem_alloc;
 	dmat->_dmamem_free = _bus_dmamem_free;

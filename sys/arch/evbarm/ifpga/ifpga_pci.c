@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.1.2.3 2002/08/01 02:41:34 nathanw Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.1.2.4 2002/08/19 21:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -127,7 +127,8 @@ struct arm32_bus_dma_tag ifpga_pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync,
+	_bus_dmamap_sync,	/* pre */
+	NULL,			/* post */
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.6.2.8 2002/06/20 03:38:02 nathanw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.6.2.9 2002/08/19 21:38:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -378,6 +378,25 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return sysctl_rdstring(oldp, oldlenp, newp,
 			    booted_kernel);
 		return (EOPNOTSUPP);
+	}
+	case CPU_POWERSAVE: {
+		int error, newval;
+
+		newval = cpu_do_powersave;
+
+		if (cpufuncs.cf_sleep == (void *) cpufunc_nullop)
+			error = sysctl_rdint(oldp, oldlenp, newp, newval);
+		else
+			error = sysctl_int(oldp, oldlenp, newp, newlen,
+			    &newval);
+		if (error || newval == cpu_do_powersave)
+			return (error);
+
+		if (newval < 0 || newval > 1)
+			return (EINVAL);
+
+		cpu_do_powersave = newval;
+		return (0);
 	}
 
 	default:

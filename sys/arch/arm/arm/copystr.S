@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.3.2.2 2002/08/13 02:17:48 nathanw Exp $	*/
+/*	$NetBSD: copystr.S,v 1.3.2.3 2002/08/19 21:38:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,13 +41,13 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.3.2.2 2002/08/13 02:17:48 nathanw Exp $")
+RCSID("$NetBSD: copystr.S,v 1.3.2.3 2002/08/19 21:38:50 thorpej Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
-Lcurpcb:
+.Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
 /*
@@ -107,15 +107,15 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	Lcopystrpcbfault
+	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #Lcopystrfault - . - 8
+	add	r5, pc, #.Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrbt	r5, [r0], #0x0001
@@ -154,15 +154,15 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	Lcopystrpcbfault
+	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #Lcopystrfault - . - 8
+	add	r5, pc, #.Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrb	r5, [r0], #0x0001
@@ -186,14 +186,14 @@ ENTRY(copyoutstr)
 	mov	pc, lr
 
 /* A fault occurred during the copy */
-Lcopystrfault:
+.Lcopystrfault:
 	mov	r1, #0x00000000
 	str	r1, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-Lcopystrpcbfault:
+.Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Lcopystrpcbfaulttext - . - 8

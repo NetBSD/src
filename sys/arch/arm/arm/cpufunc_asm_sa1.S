@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.4.2.2 2002/06/20 03:38:00 nathanw Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.4.2.3 2002/08/19 21:38:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
-Lblock_userspace_access:
+.Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
 /*
@@ -53,7 +53,7 @@ ENTRY(sa1_setttb)
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r1
 #else
-	ldr	r3, Lblock_userspace_access
+	ldr	r3, .Lblock_userspace_access
 	ldr	r2, [r3]
 	orr	r1, r2, #1 
 	str	r1, [r3]
@@ -136,9 +136,9 @@ _C_LABEL(sa1_cache_clean_size):
 
 	.text
 
-Lsa1_cache_clean_addr:
+.Lsa1_cache_clean_addr:
 	.word	_C_LABEL(sa1_cache_clean_addr)
-Lsa1_cache_clean_size:
+.Lsa1_cache_clean_size:
 	.word	_C_LABEL(sa1_cache_clean_size)
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
@@ -151,7 +151,7 @@ Lsa1_cache_clean_size:
 	msr	cpsr_all, r3
 #else
 #define	SA1_CACHE_CLEAN_BLOCK						\
-	ldr	r3, Lblock_userspace_access			;	\
+	ldr	r3, .Lblock_userspace_access			;	\
 	ldr	ip, [r3]					;	\
 	orr	r0, ip, #1					;	\
 	str	r0, [r3]
@@ -170,7 +170,7 @@ Lsa1_cache_clean_size:
 
 #define	SA1_CACHE_CLEAN_PROLOGUE					\
 	SA1_CACHE_CLEAN_BLOCK					;	\
-	ldr	r2, Lsa1_cache_clean_addr			;	\
+	ldr	r2, .Lsa1_cache_clean_addr			;	\
 	ldmia	r2, {r0, r1}					;	\
 	SA1_DOUBLE_CACHE_CLEAN_BANK
 
@@ -224,7 +224,7 @@ ENTRY(sa1_cache_cleanD_rng)
 1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -241,7 +241,7 @@ ENTRY(sa1_cache_purgeID_rng)
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
@@ -259,7 +259,7 @@ ENTRY(sa1_cache_purgeD_rng)
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
@@ -275,7 +275,7 @@ ENTRY(sa1_cache_syncI_rng)
 1:	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	add	r0, r0, #32
 	subs	r1, r1, #32
-	bpl	1b
+	bhi	1b
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
@@ -311,5 +311,3 @@ ENTRY(sa110_context_switch)
 	mov	r0, r0
 	mov	pc, lr
 #endif
-
-

@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4.2.6 2002/08/01 02:41:32 nathanw Exp $
+#	$NetBSD: files.evbarm,v 1.4.2.7 2002/08/19 21:39:25 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -66,6 +66,7 @@ include "dev/cardbus/files.cardbus"		# CARDBus device
 #
 # ARM evaluation board specific devices
 #
+defparam	opt_evbarm_boardtype.h EVBARM_BOARDTYPE
 
 # We need to define the Integrator's "plcom" device here since
 # it we need to generate a "plcom.h" header file for conf.c

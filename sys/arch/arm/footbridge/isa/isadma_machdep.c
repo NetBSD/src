@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.1.2.3 2002/08/01 02:41:15 nathanw Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.1.2.4 2002/08/19 21:39:09 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -106,7 +106,8 @@ struct arm32_bus_dma_tag isa_bus_dma_tag = {
 	_isa_bus_dmamap_load_uio,
 	_isa_bus_dmamap_load_raw,
 	_isa_bus_dmamap_unload,
-	_isa_bus_dmamap_sync,
+	_isa_bus_dmamap_sync,		/* pre */
+	_isa_bus_dmamap_sync,		/* post */
 	_isa_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,

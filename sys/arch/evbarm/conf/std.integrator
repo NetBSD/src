@@ -1,6 +1,6 @@
-#	$NetBSD: std.integrator,v 1.2.4.3 2002/02/28 04:09:08 nathanw Exp $
+#	$NetBSD: std.integrator,v 1.2.4.4 2002/08/19 21:39:26 thorpej Exp $
 #
-# standard NetBSD/netwinder options
+# standard NetBSD/integrator options
 
 machine	evbarm arm
 
@@ -19,3 +19,5 @@ options		__OLD_INTERRUPT_CODE	# XXX for now
 makeoptions	LOADADDRESS="0xa0100000"
 makeoptions	LINKENTRY="-e 0x10000"
 makeoptions	BOARDTYPE="integrator"
+
+options 	EVBARM_BOARDTYPE=EVBARM_BOARDTYPE_INTEGRATOR

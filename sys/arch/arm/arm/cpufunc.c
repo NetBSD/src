@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15.2.9 2002/08/13 02:17:48 nathanw Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.15.2.10 2002/08/19 21:38:50 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -94,6 +94,9 @@ int	arm_pcache_unified;
 
 int	arm_dcache_align;
 int	arm_dcache_align_mask;
+
+/* 1 == use cpu_sleep(), 0 == don't */
+int cpu_do_powersave;
 
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
@@ -827,6 +830,10 @@ set_cpufuncs()
 	cputype = cpufunc_id();
 	cputype &= CPU_ID_CPU_MASK;
 
+	/*
+	 * NOTE: cpu_do_powersave defaults to off.  If we encounter a
+	 * CPU type where we want to use it by default, then we set it.
+	 */
 
 #ifdef CPU_ARM3
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
@@ -903,6 +910,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif	/* CPU_SA1100 */
@@ -912,6 +923,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_generic();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif	/* CPU_SA1110 */
@@ -1020,6 +1035,10 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
+
+		/* Use powersave on this CPU. */
+		cpu_do_powersave = 1;
+
 		return 0;
 	}
 #endif /* CPU_XSCALE_PXA2X0 */
@@ -1486,6 +1505,10 @@ arm6_setup(args)
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm6_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1527,6 +1550,10 @@ arm7_setup(args)
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm7_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1561,6 +1588,10 @@ arm7tdmi_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm7tdmi_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1605,6 +1636,10 @@ arm8_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm678_options, cpuctrl);
 	cpuctrl = parse_cpu_options(args, arm8_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Get clock configuration */
 	clocktest = arm8_clock_config(0, 0) & 0x0f;
@@ -1683,6 +1718,10 @@ arm9_setup(args)
 
 	cpuctrl = parse_cpu_options(args, arm9_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1729,6 +1768,10 @@ sa110_setup(args)
 		 | CPU_CONTROL_CPCLK;
 
 	cpuctrl = parse_cpu_options(args, sa110_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1783,6 +1826,10 @@ sa11x0_setup(args)
 
 	cpuctrl = parse_cpu_options(args, sa11x0_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1822,6 +1869,10 @@ ixp12x0_setup(args)
 		 | CPU_CONTROL_VECRELOC;
 
 	cpuctrl = parse_cpu_options(args, ixp12x0_options, cpuctrl);
+
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1876,6 +1927,10 @@ xscale_setup(args)
 
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
 
+#ifdef __ARMEB__
+	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
+#endif
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1886,14 +1941,5 @@ xscale_setup(args)
 	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
-
-#if 0
-	/*
-	 * XXX FIXME
-	 * Disable write buffer coalescing, PT ECC, and set
-	 * the mini-cache to write-back/read-allocate.
-	 */
-	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
-#endif
 }
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
