@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.h,v 1.3 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_semaphore.h,v 1.4 2003/12/30 00:15:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -44,16 +44,16 @@
 
 extern int mach_semaphore_cold;
 
-struct mach_waiting_proc {
-	TAILQ_ENTRY(mach_waiting_proc) mwp_list;
-	struct proc *mwp_p;
+struct mach_waiting_lwp {
+	TAILQ_ENTRY(mach_waiting_lwp) mwl_list;
+	struct lwp *mwl_l;
 };
 
 struct mach_semaphore {
 	int ms_value;
 	int ms_policy;
 	LIST_ENTRY(mach_semaphore) ms_list;
-	TAILQ_HEAD(ms_waiting, mach_waiting_proc) ms_waiting;
+	TAILQ_HEAD(ms_waiting, mach_waiting_lwp) ms_waiting;
 	struct lock ms_lock;
 };
 
@@ -92,7 +92,7 @@ typedef struct {
 } mach_semaphore_destroy_reply_t;
 
 void mach_semaphore_init(void);
-void mach_semaphore_cleanup(struct proc *);
+void mach_semaphore_cleanup(struct lwp *);
 
 #endif /* _MACH_SEMAPHORE_H_ */
 
