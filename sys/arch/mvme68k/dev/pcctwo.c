@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.15 2001/08/12 18:33:13 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.16 2001/08/12 19:16:18 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ static int pcctwo_vec2icsr_1x7[] = {
  * Devices that live on the MCchip, attached in this order.
  */
 static struct pcctwo_device mcchip_devices[] = {
-	{"clock", PCCTWO_NVRAM_OFF},
+	{"clock", 0},
 	{"zsc", MCCHIP_ZS0_OFF},
 	{"zsc", MCCHIP_ZS1_OFF},
 	{"ie", PCCTWO_IE_OFF},
