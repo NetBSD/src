@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.20 1994/01/08 07:14:24 cgd Exp $
+ *	$Id: machdep.c,v 1.21 1994/01/08 11:11:46 cgd Exp $
  */
 
 #include "param.h"
@@ -1557,60 +1557,3 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	return exec_aout_setup_stack(p, epp);
 }
 #endif /* COMPAT_NOMID */
-
-int
-ptrace_set_pc(p, addr)
-	struct proc *p;
-	int addr;
-{
-	struct frame *frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
-
-	frame->f_pc = addr & ~1;
-	return 0;
-}
-
-int
-ptrace_single_step(p)
-	struct proc *p;
-{
-	struct frame *frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
-
-	frame->f_sr |= PSL_T;
-	return 0;
-}
-
-int
-ptrace_getregs(p, addr)
-	struct proc *p;
-	int *addr;
-{
-	struct reg ipcreg;
-	struct frame *frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
-
-	bcopy(frame->f_regs, ipcreg.r_regs, sizeof(frame->f_regs));
-	ipcreg.r_sr = frame->f_sr;
-	ipcreg.r_pc = frame->f_pc;
-	return copyout(&ipcreg, addr, sizeof(ipcreg));
-}
-
-int
-ptrace_setregs(p, addr)
-	struct proc *p;
-	int *addr;
-{
-	int error;
-	struct reg ipcreg;
-	struct frame *frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
-
-	if (error = copyin(addr, &ipcreg, sizeof(ipcreg)))
-		return error;
-
-	bcopy(ipcreg.r_regs, frame->f_regs, sizeof(frame->f_regs));
-	frame->f_sr = (ipcreg.r_sr | PSL_USERSET) & ~PSL_USERCLR;
-	frame->f_pc = ipcreg.r_pc;
-	return 0;
-}
