@@ -1,5 +1,14 @@
 Things to do for scheduler activations/LWP code.
 
+- MD bug: i386 npx handling. cpu_getcontext() may call npxsave(), which
+  can only be run at spl0, which is a problem. Options
+   * Change npxsave to avoid that requirement.
+   * Don't save FP context at getcontext() time, but do something
+     More Clever with lazy FPU switching.
+
+- MD bug: tetss/thread2 panics the alpha somewhere after the first
+  unblocked upcall. The kernel appears to jump into space.
+
 - Document! Not everyone wants to read the thesis. Man pages, etc.
 
 - Rethink scheduler. Verify that behavior is still correct for a system
@@ -12,9 +21,6 @@ Things to do for scheduler activations/LWP code.
 
 - lwp-exit2: kill -9 should succeed against processes whose LWPs are
   all suspended.
-
-- sa_yield() should put the yielding LWP into the cache, not exiting.
-  Requires a certain amount of chumminess with the reaper.
 
 - Adapt /proc and libkvm interfaces to support examining LWP/SA data
   structures. Adapt ps and friends to display such.
