@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425reg.h,v 1.3 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixdp425reg.h,v 1.4 2003/10/23 10:50:01 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -35,11 +35,16 @@
 #ifndef	_IXDP425REG_H_
 #define	_IXDP425REG_H_
 
+#include "opt_evbarm_boardtype.h"
+
+#define	ixdp425	1
+#define	zao425	2
+
 /*
  * Interrupt & GPIO  
  */
 
-#if BOARDTYPE == ixdp425
+#if EVBARM_BOARDTYPE == ixdp425
 /* GPIOs */
 #define	GPIO_PCI_CLK	14
 #define	GPIO_PCI_RESET	13
@@ -54,9 +59,9 @@
 #define	PCI_INT_D	IXP425_INT_GPIO_8
 #define	I2C_SDA		IXP425_INT_GPIO_7
 #define	I2C_SCL		IXP425_INT_GPIO_6
-#endif /* BOARDTYPE == ixdp425 */
+#endif /* EVBARM_BOARDTYPE == ixdp425 */
 
-#if BOARDTYPE == zao425		/* conf/ZAO425 */
+#if EVBARM_BOARDTYPE == zao425		/* conf/ZAO425 */
 /* GPIOs */
 #define	GPIO_PCI_CLK	14
 #define	GPIO_PCI_RESET	13
@@ -78,6 +83,6 @@
 #define	HSS0_SDI	IXP425_INT_GPIO_2
 #define	HSS0_SDO	IXP425_INT_GPIO_1
 #define	HSS0_CS		IXP425_INT_GPIO_0
-#endif /* BOARDTYPE == zao425 */
+#endif /* EVBARM_BOARDTYPE == zao425 */
 
 #endif	/* _IXDP425REG_H_ */
