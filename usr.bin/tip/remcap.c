@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
+static char sccsid[] = "@(#)remcap.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -43,6 +43,7 @@ static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "pathnames.h"
 
 #ifndef BUFSIZ
@@ -78,10 +79,9 @@ char	*RM;
 
 static	char *tbuf;
 static	int hopcount;	/* detect infinite loops in termcap, init 0 */
-char	*tskip();
+static	char *tskip();
 char	*tgetstr();
-char	*tdecode();
-char	*getenv();
+static	char *tdecode();
 static	char *remotefile;
 
 /*

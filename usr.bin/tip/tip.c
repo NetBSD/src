@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)tip.c	5.15 (Berkeley) 2/4/91";
+static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)tip.c	5.15 (Berkeley) 2/4/91";
  */
 int bauds[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600,
-	1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, -1
+	1200, 1800, 2400, 4800, 9600, 19200, -1
 };
 
 int	disc = OTTYDISC;		/* tip normally runs this way */
@@ -250,8 +250,7 @@ static int uidswapped;
 user_uid()
 {
 	if (uidswapped == 0) {
-		setregid(egid, gid);
-		setreuid(euid, uid);
+		seteuid(uid);
 		uidswapped = 1;
 	}
 }
@@ -260,8 +259,7 @@ daemon_uid()
 {
 
 	if (uidswapped) {
-		setreuid(uid, euid);
-		setregid(gid, egid);
+		seteuid(euid);
 		uidswapped = 0;
 	}
 }
@@ -269,8 +267,7 @@ daemon_uid()
 shell_uid()
 {
 
-	setreuid(uid, uid);
-	setregid(gid, gid);
+	seteuid(uid);
 }
 
 /*
@@ -385,6 +382,8 @@ tipin()
 	}
 }
 
+extern esctable_t etable[];
+
 /*
  * Escape handler --
  *  called on recognition of ``escapec'' at the beginning of a line
@@ -394,7 +393,6 @@ escape()
 	register char gch;
 	register esctable_t *p;
 	char c = character(value(ESCAPE));
-	extern esctable_t etable[];
 
 	gch = (getchar()&0177);
 	for (p = etable; p->e_char; p++)
@@ -491,7 +489,6 @@ help(c)
 	char c;
 {
 	register esctable_t *p;
-	extern esctable_t etable[];
 
 	printf("%c\r\n", c);
 	for (p = etable; p->e_char; p++) {
@@ -553,22 +550,12 @@ pwrite(fd, buf, n)
 	extern int errno;
 
 	bp = buf;
-	if (bits8 == 0) {
-		static char *mbp; static sz;
-
-		if (mbp == 0 || n > sz) {
-			if (mbp)
-				free(mbp);
-			mbp = (char *) malloc(n);
-			sz = n;
+	if (bits8 == 0)
+		for (i = 0; i < n; i++) {
+			*bp = partab[(*bp) & 0177];
+			bp++;
 		}
-		
-		bp = mbp;
-		for (i = 0; i < n; i++)
-			*bp++ = partab[*buf++ & 0177];
-		bp = mbp;
-	}
-	if (write(fd, bp, n) < 0) {
+	if (write(fd, buf, n) < 0) {
 		if (errno == EIO)
 			tipabort("Lost carrier.");
 		/* this is questionable */
