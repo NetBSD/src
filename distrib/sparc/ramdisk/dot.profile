@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.13 2000/10/31 20:53:04 pk Exp $
+# $NetBSD: dot.profile,v 1.14 2000/11/06 23:17:45 pk Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -78,11 +78,17 @@ getresp() {
 
 floppy()
 {
-	local dev
-	cat <<EOF
-First, remove the boot disk from the floppy station.
+	local dev rval
 
-Next, insert the floppy disk labeled \`instfs' into the disk drive.
+	rval=0
+
+	echo "Ejecting floppy disk"
+	eject floppy
+
+	cat <<EOF
+Remove the boot disk from the floppy station and insert the second disk of
+the floppy installation set into the disk drive.
+
 The question below allows you to specify the device name of the floppy
 drive.  Usually, the default device will do just fine.
 EOF
@@ -91,7 +97,11 @@ EOF
 	getresp "$dev"; dev="$_resp"
 
 	echo "Extracting installation utilities... "
-	(cd $INSTFS_MP && tar zxpf $dev) || return 1
+	(cd $INSTFS_MP && tar zxpf $dev) || rval=1
+
+	echo "Ejecting floppy disk"
+	eject floppy
+	return $rval
 }
 
 tape()
