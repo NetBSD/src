@@ -3,7 +3,7 @@
   use method to get sc of muxee, common code for add&rem
  */
 
-/*	$NetBSD: wsmux.c,v 1.16 2001/10/25 14:46:41 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.17 2001/10/26 20:35:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -642,7 +642,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 				error = 0;
 			if (!error) {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-				DPRINTF(("wsmux_attach_sc: on %s set rawkbd=%d\n",
+				DPRINTF(("wsmux_attach_sc: %s set rawkbd=%d\n",
 					 me->me_dv.dv_xname, sc->sc_rawkbd));
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE, 
 						    &sc->sc_rawkbd, 0, 0);
