@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.86 1997/09/19 13:55:33 leo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,9 +110,7 @@ int	bufpages = 0;
 
 int	physmem;
 
-extern struct msgbuf msgbuf;
-struct	msgbuf *msgbufp = &msgbuf;
-int	msgbufmapped = 0;	/* not mapped until pmap_bootstrap */
+extern	caddr_t msgbufaddr;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -288,9 +286,9 @@ cpu_startup()
 
 	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE, 1);
 	if (CPU_ISSUN4)
-		msgbufp = (struct msgbuf *)(MSGBUF_VA + 4096);
+		msgbufaddr = (caddr_t)(MSGBUF_VA + 4096);
 	else
-		msgbufp = (struct msgbuf *)MSGBUF_VA;
+		msgbufaddr = (caddr_t)MSGBUF_VA;
 	pmap_redzone();
 }
 

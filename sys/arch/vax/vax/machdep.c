@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.45 1997/07/26 10:12:49 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.46 1997/09/19 13:55:49 leo Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -128,8 +128,7 @@ int		want_resched;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
-int		msgbufmapped = 0;
-struct msgbuf  *msgbufp;
+caddr_t		msgbufaddr;
 int		physmem;
 struct cfdriver nexuscd;
 int		todrstopped = 0, glurg;
@@ -165,7 +164,7 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer.
 	 */
-	msgbufmapped = 1;
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 #if VAX750 || VAX650
 	if (vax_cputype == VAX_750 || vax_cputype == VAX_650)
