@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.13 1997/01/22 07:09:22 mikel Exp $	*/
+/*	$NetBSD: protosw.h,v 1.14 1997/05/21 20:09:24 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -68,7 +68,7 @@ struct domain;
 struct proc;
 
 struct protosw {
-	short	pr_type;		/* socket type used for */
+	int 	pr_type;		/* socket type used for */
 	struct	domain *pr_domain;	/* domain protocol a member of */
 	short	pr_protocol;		/* protocol number */
 	short	pr_flags;		/* see below */
