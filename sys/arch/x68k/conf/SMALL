@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.12.2.1 1998/12/27 14:12:32 minoura Exp $
+#	$NetBSD: SMALL,v 1.12.2.2 1998/12/27 15:16:55 minoura Exp $
 
 #
 #	SMALL -- works with a small memory, e.g. 4MB
@@ -177,8 +177,8 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 
 #### Device configurations
 
-## Fundamental devices; see std.x68k
-# nothing there.
+## Fundamental devices; see also std.x68k
+xel0	at intio0
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays

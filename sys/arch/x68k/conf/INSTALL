@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.6.1 1998/12/23 16:47:26 minoura Exp $
+#	$NetBSD: INSTALL,v 1.7.6.2 1998/12/27 15:16:55 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -182,6 +182,7 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #### Device configurations
 
 ## Fundamental devices; see also std.x68k
+xel0	at intio0
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
