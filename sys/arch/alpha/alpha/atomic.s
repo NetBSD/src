@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.s,v 1.3 1998/09/22 06:10:53 thorpej Exp $ */
+/* $NetBSD: atomic.s,v 1.4 1998/09/24 22:22:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.3 1998/09/22 06:10:53 thorpej Exp $")
+__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.4 1998/09/24 22:22:07 thorpej Exp $")
 
 /*
  * Misc. `atomic' operations.
@@ -45,6 +45,38 @@ __KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.3 1998/09/22 06:10:53 thorpej Exp $")
 
 	.text
 inc4:	.stabs	__FILE__,132,0,0,inc4; .loc	1 __LINE__
+
+/*
+ * alpha_atomic_testset_l:
+ *
+ *	Atomically test and set a single bit in a longword (32-bit).
+ *
+ * Inputs:
+ *
+ *	a0	Address of longword in which to perform the t&s.
+ *	a1	Mask of bit (just one!) to test and set.
+ *
+ * Outputs:
+ *
+ *	v0	0 if bit already set, non-0 if bit set successfully.
+ */
+	.text
+LEAF(alpha_atomic_testset_l,2)
+Laatl_loop:
+	ldl_l	t0, 0(a0)
+	and	t0, a1, t3
+	bne	t3, Laatl_already	/* already set, return(0) */
+	or	t0, a1, v0
+	stl_c	v0, 0(a0)
+	beq	v0, Laatl_retry
+	mb
+	RET				/* v0 != 0 */
+Laatl_already:
+	mov	zero, v0
+	RET
+Laatl_retry:
+	br	Laatl_loop
+	END(alpha_atomic_testset_l)
 
 /*
  * alpha_atomic_setbits_q:
