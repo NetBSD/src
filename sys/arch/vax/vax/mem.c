@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2000/06/27 18:38:27 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 2000/06/29 07:14:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define mmread  mmrw
 #define mmwrite mmrw

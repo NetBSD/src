@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2000/01/19 02:52:21 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2000/06/29 07:07:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,7 +209,7 @@ DELAY(mic)
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>	/* XXX needed? */
 #include <x68k/x68k/clockioctl.h>
 #include <sys/specdev.h>
 #include <sys/vnode.h>

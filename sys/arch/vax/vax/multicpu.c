@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.3 2000/06/26 14:21:06 mrg Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.4 2000/06/29 07:14:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
 #include <sys/user.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 
