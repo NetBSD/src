@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 1997/07/07 22:26:56 veego Exp $
+#	$NetBSD: MAKEDEV,v 1.9 1997/07/17 00:12:55 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,16 +90,16 @@ do
 case $i in
 
 all)
-	sh $0 std fd fd0 fd1 wd0 wd1 md0 md1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
-	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0 acd0 acd1
+	sh $0 std fd fd0 fd1 wd0 wd1 wd2 wd3 md0 md1 sd0 sd1 sd2 tty0 tty1
+	sh $0 pty0 pty1 st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 ipl
-	sh $0 beep lkm quadmouse0 pms0 local cpu0 cpu1
+	sh $0 beep lkm quadmouse0 pms0 local cpu0 cpu1 acd0 acd1
 	sh $0 mouse-quadmouse0
 	;;
 
 floppy)
-	sh $0 std fd0 fd1 wd0 wd1 md0 md1 sd0 sd1 sd2 tty0 tty1
+	sh $0 std fd0 fd1 wd0 wd1 wd2 wd3 md0 md1 sd0 sd1 sd2 tty0 tty1
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5
 	sh $0 st0 st1 cd0 cd1
 	;;
