@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.7 1993/11/14 05:17:34 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.8 1994/01/11 15:15:47 mycroft Exp $
  */
 
 /*
@@ -96,16 +96,16 @@ cpu_fork(p1, p2)
 	 * Wire top of address space of child to it's USRSTACK.
 	 * First, fault in a page of pte's to map it.
 	 */
-        addr = trunc_page((u_int)vtopte(USRSTACK));
-	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
-	for (i=0; i < UPAGES; i++)
-		pmap_enter(&p2->p_vmspace->vm_pmap, USRSTACK+i*NBPG,
-			pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG),
-			VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
+	addr = trunc_page((u_int)vtopte(USRSTACK));
+	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr + NBPG, FALSE);
+	for (i = 0; i < UPAGES; i++)
+		pmap_enter(&p2->p_vmspace->vm_pmap, USRSTACK + i * NBPG,
+		    pmap_extract(kernel_pmap, ((int)p2->p_addr) + i * NBPG),
+		    VM_PROT_READ | VM_PROT_WRITE,	/* must be writable for
 							 * i486 WP support;
 							 * i386 doesn't care
 							 */
-			TRUE);
+		    TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
 
@@ -168,16 +168,16 @@ void
 cpu_exit(p)
 	register struct proc *p;
 {
-        extern int _default_ldt, currentldt;
+	extern int _default_ldt, currentldt;
 	
 #if NNPX > 0
 	npxexit(p);
 #endif
 #ifdef	USER_LDT
-        if (p->p_addr->u_pcb.pcb_ldt && (currentldt != _default_ldt)) {
-                lldt(_default_ldt);
-                currentldt = _default_ldt;
-        }
+	if (p->p_addr->u_pcb.pcb_ldt && (currentldt != _default_ldt)) {
+		lldt(_default_ldt);
+		currentldt = _default_ldt;
+	}
 #endif
 	splclock();
 	cnt.v_swtch++;
@@ -189,16 +189,16 @@ void
 cpu_wait(p)
 	struct proc *p;
 {
-        struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	/* drop per-process resources */
 	vmspace_free(p->p_vmspace);
 #ifdef	USER_LDT
-        if (pcb->pcb_ldt) {
-                kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-                          (pcb->pcb_ldt_len * sizeof(union descriptor)));
-                pcb->pcb_ldt = NULL;
-        }
+	if (pcb->pcb_ldt) {
+		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+			  (pcb->pcb_ldt_len * sizeof(union descriptor)));
+		pcb->pcb_ldt = NULL;
+	}
 #endif
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 }
@@ -410,8 +410,9 @@ cpu_reset() {
 
 	/* force a shutdown by unmapping entire address space ! */
 	bzero((caddr_t) PTD, NBPG);
+
 	/* "good night, sweet prince .... <THUNK!>" */
 	tlbflush(); 
 	/* just in case */
-	for(;;);
+	for (;;);
 }
