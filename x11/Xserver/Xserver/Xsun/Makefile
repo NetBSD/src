@@ -1,12 +1,18 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/10 16:21:16 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2004/03/14 08:08:45 jdc Exp $
 
 .include <bsd.own.mk>
 
 PROG=	Xsun
 BINMODE=4711
 
+.include "../../Makefile.common"
+
 MAN=		Xsun.1
-MLINKS=		Xsun.1 Xsun24.1 Xsun.1 XsunMono.1
+
+MLINKS=		Xsun.1 XsunMono.1
+.if ${XSERVER_XSUN24} != "no"
+MLINKS=		Xsun.1 Xsun24.1
+.endif
 
 .include "../Makefile.Xserver"
 
