@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.7 1999/02/22 00:21:39 jonathan Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.8 1999/03/30 14:27:56 soda Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1936,7 +1936,7 @@ END(mips3_InvalidateDCache)
  *----------------------------------------------------------------------------
  */
 LEAF_NOPROFILE(mips3_VCED)
-ALIAS(mips3_VCEI)	/* XXXX */
+XLEAF(mips3_VCEI)	/* XXXX */
 	.set	noat
 	move	k0, AT
 	.set	at

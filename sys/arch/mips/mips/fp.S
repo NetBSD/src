@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.12 1999/01/16 09:25:18 nisimura Exp $	*/
+/*	$NetBSD: fp.S,v 1.13 1999/03/30 14:27:56 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2459,7 +2459,7 @@ get_ft_s_done:
  *
  *----------------------------------------------------------------------------
  */
-ALIAS(get_fs_s)
+XLEAF(get_fs_s)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_s_tbl(a3)		# switch on register number
@@ -2678,7 +2678,7 @@ get_ft_d_done:
  *
  *----------------------------------------------------------------------------
  */
-ALIAS(get_fs_d)
+XLEAF(get_fs_d)
 	srl	a3, a0, 12 - 2			# get FS field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FS field
 	lw	a3, get_fs_d_tbl(a3)		# switch on register number
@@ -3193,7 +3193,7 @@ LEAF(set_fd_s)
 	sll	t1, t1, 23			# position exponent
 	or	t2, t2, t0
 	or	t2, t2, t1
-ALIAS(set_fd_word)
+XLEAF(set_fd_word)
 	srl	a3, a0, 7 - 2			# get FD field (even regs only)
 	and	a3, a3, 0xF << 2		# mask FT field
 	lw	a3, set_fd_s_tbl(a3)		# switch on register number
