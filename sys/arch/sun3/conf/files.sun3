@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.39 1997/04/09 20:37:17 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.40 1997/04/28 21:44:53 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -45,8 +45,6 @@ file dev/cons.c
 #
 # Bus types
 #
-# The implementation of the bus_* functions in autoconfig.c
-# requires these all to agree with <autoconf.h> struct bus_loc
 
 device mainbus {}
 attach mainbus at root
