@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.67 2002/10/18 00:11:03 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.68 2002/10/18 00:30:10 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1645,6 +1645,10 @@ gnu/dist/sendmail/smrsh/smrsh.c			1.9
   Plug smrsh vulnerability, as presented in
   http://www.sendmail.org/smrsh.adv.txt.  Fixes SA#2002-023.
 
-bin/ps						1.28 via patch
+bin/ps/keywords.c				1.28 via patch
   
   Correct printf format string.
+
+sbin/route/route.c				1.60-1.61 via patch
+
+  Correct prefixlen option handling.
