@@ -42,7 +42,7 @@
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: openprom.c,v 1.3 93/04/27 08:56:09 torek Exp 
- * $Id: openprom.c,v 1.2 1994/10/02 21:58:02 deraadt Exp $
+ * $Id: openprom.c,v 1.3 1994/11/02 04:57:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ openpromgetstr(len, user, cpp)
 int
 openpromioctl(dev, cmd, data, flags, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flags;
 	struct proc *p;
