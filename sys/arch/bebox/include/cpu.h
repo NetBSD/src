@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 1997/10/14 06:48:11 sakamoto Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1997/11/05 00:38:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -102,15 +102,15 @@ syncicache(from, len)
 	void *p = from;
 	
 	do {
-		asm volatile ("dcbst 0,%0" :: "r"(p));
+		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	asm volatile ("sync");
+	__asm__ __volatile ("sync");
 	do {
-		asm volatile ("icbi 0,%0" :: "r"(from));
+		__asm__ __volatile ("icbi 0,%0" :: "r"(from));
 		from += CACHELINESIZE;
 	} while ((len -= CACHELINESIZE) > 0);
-	asm volatile ("isync");
+	__asm__ __volatile ("isync");
 }
 
 extern char *bootpath;
