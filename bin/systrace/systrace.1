@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.2 2002/06/17 17:06:08 wiz Exp $
+.\"	$NetBSD: systrace.1,v 1.3 2002/06/20 10:07:42 agc Exp $
 .\"	$OpenBSD: systrace.1,v 1.16 2002/06/13 00:15:00 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -51,7 +51,7 @@ utility enforces system call policies for applications by
 constraining the application's access to the system.
 The policy is generated interactively.
 Operations not covered by the policy raise an
-alarm and allow an user to refine the currently configured policy.
+alarm and allow a user to refine the currently configured policy.
 .Pp
 The options are as follows:
 .Bl -tag -width Dfxfile
@@ -64,7 +64,7 @@ Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
 .It Fl i
-Inherits the policy of the first executed binary to all children.
+Inherits the policy - child processes inherit the policy of the parent binary.
 .It Fl t
 Uses text mode to ask for interactive policy generation.
 .It Fl U
@@ -182,4 +182,4 @@ Policy: /bin/ls, Emulation: native
 .Sh AUTHORS
 The
 .Nm
-utility has been developed by Niels Provos.
+utility was developed by Niels Provos.
