@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.14 1998/09/09 19:34:00 kleink Exp $	*/
+/*	$NetBSD: random.c,v 1.15 1998/10/19 15:52:37 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.14 1998/09/09 19:34:00 kleink Exp $");
+__RCSID("$NetBSD: random.c,v 1.15 1998/10/19 15:52:37 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -290,7 +290,7 @@ char *
 initstate(seed, arg_state, n)
 	unsigned long seed;		/* seed for R.N.G. */
 	char *arg_state;		/* pointer to state array */
-	size_t n;				/* # bytes of state info */
+	size_t n;			/* # bytes of state info */
 {
 	void *ostate = (void *)(&state[-1]);
 	long *long_arg_state = (long *) arg_state;
