@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.8 1996/05/05 14:33:55 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.9 1996/05/05 16:21:20 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -326,7 +326,7 @@ adb_processevent(event)
 		case ADBMS_USPEED:
 			/* MicroSpeed mouse */
 			if (max_byte == 4)
-				buttons = (~event->bytes[2]) & 0xff
+				buttons = (~event->bytes[2]) & 0xff;
 			else
 				buttons = (event->bytes[0] & 0x80) ? 0 : 1;
 			break;
