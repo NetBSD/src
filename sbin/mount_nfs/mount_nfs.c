@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.39 2003/04/10 04:40:38 lukem Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.40 2003/04/11 17:39:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.39 2003/04/10 04:40:38 lukem Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.40 2003/04/11 17:39:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,20 +93,30 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.39 2003/04/10 04:40:38 lukem Exp $");
 
 #include <mntopts.h>
 
-#define	ALTF_BG		0x1
-#define ALTF_CONN	0x2
-#define ALTF_DUMBTIMR	0x4
-#define ALTF_INTR	0x8
-#define ALTF_KERB	0x10
-#define ALTF_NFSV3	0x20
-#define ALTF_RDIRPLUS	0x40
-#define	ALTF_MNTUDP	0x80
-#define ALTF_NORESPORT	0x100
-#define ALTF_SEQPACKET	0x200
-#define ALTF_NQNFS	0x400
-#define ALTF_SOFT	0x800
-#define ALTF_TCP	0x1000
-#define ALTF_NFSV2	0x2000
+#define	ALTF_BG		0x00000001
+#define ALTF_CONN	0x00000002
+#define ALTF_DUMBTIMR	0x00000004
+#define ALTF_INTR	0x00000008
+#define ALTF_KERB	0x00000010
+#define ALTF_NFSV3	0x00000020
+#define ALTF_RDIRPLUS	0x00000040
+#define	ALTF_MNTUDP	0x00000080
+#define ALTF_NORESPORT	0x00000100
+#define ALTF_SEQPACKET	0x00000200
+#define ALTF_NQNFS	0x00000400
+#define ALTF_SOFT	0x00000800
+#define ALTF_TCP	0x00001000
+#define ALTF_NFSV2	0x00002000
+#define ALTF_PORT	0x00004000
+#define ALTF_RSIZE	0x00008000
+#define ALTF_WSIZE	0x00010000
+#define ALTF_RDIRSIZE	0x00020000
+#define ALTF_MAXGRPS	0x00040000
+#define ALTF_LEASETERM	0x00080000
+#define ALTF_READAHEAD	0x00100000
+#define ALTF_DEADTHRESH	0x00200000
+#define ALTF_TIMEO	0x00400000
+#define ALTF_RETRANS	0x00800000
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -131,7 +141,17 @@ static const struct mntopt mopts[] = {
 	{ "soft", 0, ALTF_SOFT, 1 },
 	{ "tcp", 0, ALTF_TCP, 1 },
 	{ "nfsv2", 0, ALTF_NFSV2, 1 },
+	{ "port", 0, ALTF_PORT, 1 },
+	{ "rsize", 0, ALTF_RSIZE, 1 },
+	{ "wsize", 0, ALTF_WSIZE, 1 },
+	{ "rdirsize", 0, ALTF_RDIRSIZE, 1 },
+	{ "maxgrps", 0, ALTF_MAXGRPS, 1 },
+	{ "leaseterm", 0, ALTF_LEASETERM, 1 },
+	{ "readahead", 0, ALTF_READAHEAD, 1 },
+	{ "deadthresh", 0, ALTF_DEADTHRESH, 1 },
+	{ "timeo", 0, ALTF_TIMEO, 1 },
 	{ NULL }
+
 };
 
 struct nfs_args nfsdefargs = {
@@ -171,6 +191,7 @@ int nfsproto = IPPROTO_UDP;
 int force2 = 0;
 int force3 = 0;
 int mnttcp_ok = 1;
+int port = 0;
 
 #ifdef NFSKERB
 static char inst[INST_SZ];
@@ -221,6 +242,7 @@ mount_nfs(argc, argv)
 	struct sockaddr_storage sa;
 	int mntflags, altflags, i, nfssvc_flag, num;
 	char *name, *p, *spec, *ospec;
+	mntoptparse_t mp;
 #ifdef NFSKERB
 	uid_t last_ruid;
 
@@ -321,7 +343,9 @@ mount_nfs(argc, argv)
 			break;
 #endif
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, &altflags);
+			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
+			if (mp == NULL)
+				err(1, NULL);
 			if (altflags & ALTF_BG)
 				opflags |= BGRND;
 			if (altflags & ALTF_CONN)
@@ -367,7 +391,59 @@ mount_nfs(argc, argv)
 				nfsargsp->sotype = SOCK_STREAM;
 				nfsproto = IPPROTO_TCP;
 			}
+			if (altflags & ALTF_PORT) {
+				port = getmntoptnum(mp, "port");
+			}
+			if (altflags & ALTF_RSIZE) {
+				nfsargsp->rsize =
+				    (int)getmntoptnum(mp, "rsize");
+				nfsargsp->flags |= NFSMNT_RSIZE;
+			}
+			if (altflags & ALTF_WSIZE) {
+				nfsargsp->rsize =
+				    (int)getmntoptnum(mp, "wsize");
+				nfsargsp->flags |= NFSMNT_WSIZE;
+			}
+			if (altflags & ALTF_RDIRSIZE) {
+				nfsargsp->rsize =
+				    (int)getmntoptnum(mp, "rdirsize");
+				nfsargsp->flags |= NFSMNT_READDIRSIZE;
+			}
+#if 0
+			if (altflags & ALTF_MAXGRPS) {
+				set_rpc_maxgrouplist(num);
+				nfsargsp->maxgrouplist =
+				    (int)getmntoptnum(mp, "maxgrps");
+				nfsargsp->flags |= NFSMNT_MAXGRPS;
+			}
+#endif
+			if (altflags & ALTF_LEASETERM) {
+				nfsargsp->leaseterm =
+				(int)getmntoptnum(mp, "leaseterm");
+				nfsargsp->flags |= NFSMNT_LEASETERM;
+			}
+			if (altflags & ALTF_READAHEAD) {
+				nfsargsp->readahead =
+				    (int)getmntoptnum(mp, "readahead");
+				nfsargsp->flags |= NFSMNT_READAHEAD;
+			}
+			if (altflags & ALTF_DEADTHRESH) {
+				nfsargsp->deadthresh = 
+				    (int)getmntoptnum(mp, "deadthresh");
+				nfsargsp->flags |= NFSMNT_DEADTHRESH;
+			}
+			if (altflags & ALTF_TIMEO) {
+				nfsargsp->timeo = 
+				    (int)getmntoptnum(mp, "timeo");
+				nfsargsp->flags |= NFSMNT_TIMEO;
+			}
+			if (altflags & ALTF_RETRANS) {
+				nfsargsp->retrans = 
+				    (int)getmntoptnum(mp, "retrans");
+				nfsargsp->flags |= NFSMNT_RETRANS;
+			}
 			altflags = 0;
+			freemntopts(mp);
 			break;
 		case 'P':
 			nfsargsp->flags |= NFSMNT_RESVPORT;
@@ -857,6 +933,21 @@ tryagain:
 	{
 		nfsargsp->addr = (struct sockaddr *) nfs_nb.buf;
 		nfsargsp->addrlen = nfs_nb.len;
+		if (port != 0) {
+			struct sockaddr *sa = nfsargsp->addr;
+			switch (sa->sa_family) {
+			case AF_INET:
+				((struct sockaddr_in *)sa)->sin_port = port;
+#ifdef INET6
+			case AF_INET6:
+				((struct sockaddr_in6 *)sa)->sin6_port = port;
+				break;
+#endif
+			default:
+				errx(1, "Unsupported socket family %d",
+				    sa->sa_family);
+			}
+		}
 	}
 	nfsargsp->fh = nfhret.nfh;
 	nfsargsp->fhsize = nfhret.fhsize;
