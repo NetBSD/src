@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.48 1998/09/02 00:03:05 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1998/09/05 01:23:04 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,15 +17,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,13 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * RiscBSD kernel project
- *
- * machdep.c
- *
  * Machine dependant functions for kernel setup
- *
- * This file needs a lot of work. 
  *
  * Created      : 17/09/94
  */
@@ -208,7 +203,6 @@ bootsync(void)
 		 * did not come from a user process e.g. shutdown, but must
 		 * have come from somewhere in the kernel.
 		 */
-
 		IRQenable;
 		printf("Warning IRQ's disabled during boot()\n");
 	}
@@ -229,7 +223,7 @@ map_section(pagetable, va, pa, cacheable)
 	int cacheable;
 {
 #ifdef	DIAGNOSTIC
-	if ((va & 0xfffff) != 0)
+	if (((va | pa) & (L1_SEC_SIZE - 1)) != 0)
 		panic("initarm: Cannot allocate 1MB section on non 1MB boundry\n");
 #endif	/* DIAGNOSTIC */
 
@@ -335,12 +329,8 @@ map_entry(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
-/*
-	((u_int *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KRW));
-*/
-	WriteWord(pagetable + ((va >> 10) & 0x00000ffc),
-	    L2_PTE((pa & PG_FRAME), AP_KRW));
+	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
+	    L2_PTE((pa & PG_FRAME), AP_KRW);
 }
 
 
@@ -350,12 +340,8 @@ map_entry_nc(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
-/*
-	((u_int *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW));
-*/
-	WriteWord(pagetable + ((va >> 10) & 0x00000ffc),
-	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW));
+	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
+	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
 }
 
 
@@ -365,13 +351,8 @@ map_entry_ro(pagetable, va, pa)
 	vm_offset_t va;
 	vm_offset_t pa;
 {
-/*
-	((u_int *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
-	    L2_PTE((pa & PG_FRAME), AP_KR));
-*/
-
-	WriteWord(pagetable + ((va >> 10) & 0x00000ffc),
-	    L2_PTE((pa & PG_FRAME), AP_KR));
+	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
+	    L2_PTE((pa & PG_FRAME), AP_KR);
 }
 
 
@@ -593,7 +574,7 @@ cpu_startup()
 
 caddr_t
 allocsys(v)
-	register caddr_t v;
+	caddr_t v;
 {
 
 #define valloc(name, type, num) \
@@ -690,12 +671,12 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
-	register struct trapframe *tf;
+	struct trapframe *tf;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= -1)
-		printf("setregs: ip=%08x sp=%08x proc=%08x\n",
-		    (u_int) pack->ep_entry, (u_int) stack, (u_int) p);
+		printf("setregs: ip=%08lx sp=%08lx proc=%p\n",
+		    pack->ep_entry, stack, p);
 #endif
 
 	tf = p->p_md.md_regs;
@@ -789,8 +770,8 @@ sendsig(catcher, sig, mask, code)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("Sendsig: sig=%d mask=%08x catcher=%08x code=%08x\n",
-		    sig, mask, (u_int)catcher, (u_int)code);
+		printf("Sendsig: sig=%d mask=%08x catcher=%p code=%08lx\n",
+		    sig, mask, catcher, code);
 #endif
 
 	tf = p->p_md.md_regs;
@@ -799,7 +780,6 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Allocate space for the signal handler context.
 	 */
-
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
@@ -812,7 +792,6 @@ sendsig(catcher, sig, mask, code)
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-
 	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
@@ -821,7 +800,6 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-
 	frame.sf_sc.sc_onstack = oonstack;
 	frame.sf_sc.sc_mask   = mask;
 	frame.sf_sc.sc_r0     = tf->tf_r0;
@@ -848,7 +826,6 @@ sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
@@ -856,7 +833,6 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-
 	tf->tf_r0 = frame.sf_signum;
 	tf->tf_r1 = frame.sf_code;
 	tf->tf_r2 = (u_int)frame.sf_scp;
@@ -864,7 +840,6 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 
-	/* XXX - should just be a data purge and icache flush */
 	cpu_cache_syncI();
 
 #ifdef PMAP_DEBUG
@@ -895,12 +870,11 @@ sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;
-/*	register struct sigframe *fp;*/
-	register struct trapframe *tf;
+	struct trapframe *tf;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("sigreturn: context=%08x\n", (int)SCARG(uap, sigcntxp));
+		printf("sigreturn: context=%p\n", SCARG(uap, sigcntxp));
 #endif
 
 	tf = p->p_md.md_regs;
@@ -910,7 +884,6 @@ sys_sigreturn(p, v, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-
 	scp = SCARG(uap, sigcntxp);
 
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
@@ -921,7 +894,6 @@ sys_sigreturn(p, v, retval)
 	 */
 
 	/* Make sure the processor mode has not been tampered with */
-
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE)
 		return(EINVAL);
 
@@ -934,7 +906,6 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore signal context.
 	 */
-
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;
@@ -1090,8 +1061,8 @@ parse_mi_bootargs(args)
 	}
 #endif	/* PMAP_DEBUG */
 
-	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
-		bufpages = integer;
+/*	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
+		bufpages = integer;*/
 
 #ifndef PMAP_STATIC_L1S
 	if (get_bootconf_option(args, "maxproc", BOOTOPT_TYPE_INT, &integer)) {
