@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: conf.c,v 1.45 1994/06/14 19:47:51 mycroft Exp $
+ *	$Id: conf.c,v 1.46 1994/10/26 18:00:13 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -550,17 +550,19 @@ chrtoblk(dev)
 /* XXX - all this could be autoconfig()ed */
 #if NPC > 0 || NVT > 0
 int pccnprobe(), pccninit(), pccngetc(), pccnputc();
+void pccnpollc();
 #endif
 #if NCOM > 0
 int comcnprobe(), comcninit(), comcngetc(), comcnputc();
+void comcnpollc();
 #endif
 
 struct	consdev constab[] = {
 #if NPC > 0 || NVT > 0
-	{ pccnprobe,	pccninit,	pccngetc,	pccnputc },
+	{ pccnprobe,	pccninit,	pccngetc,	pccnputc,	pccnpollc },
 #endif
 #if NCOM > 0
-	{ comcnprobe,	comcninit,	comcngetc,	comcnputc },
+	{ comcnprobe,	comcninit,	comcngetc,	comcnputc,	comcnpollc },
 #endif
 	{ 0 },
 };
