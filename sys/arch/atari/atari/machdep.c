@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1995/05/28 19:31:50 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 1995/07/11 18:25:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -813,21 +813,33 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
+#define	BYTES_PER_DUMP	NBPG		/* Must be a multiple of NBPG	*/
+static vm_offset_t	dumpspace;	/* Virt. space to map dumppages	*/
+
+vm_offset_t
+reserve_dumppages(p)
+vm_offset_t	p;
+{
+	dumpspace = p;
+	return(p + BYTES_PER_DUMP);
+}
+
+unsigned	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
+int		dumpsize = 0;		/* also for savecore		*/
+long		dumplo   = 0;
 
 dumpconf()
 {
-	int nblks;
+	extern	 u_long	boot_ttphysize, boot_stphysize;
+		 int	nblks;
 
-	dumpsize = physmem;
+	dumpsize = (boot_ttphysize + boot_stphysize) / NBPG;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
+			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
@@ -844,6 +856,14 @@ dumpconf()
  */
 dumpsys()
 {
+	extern	 u_long	boot_ttphysize, boot_ttphystart, boot_stphysize;
+
+	daddr_t	blkno;		/* Current block to write	*/
+	int	(*dump)();	/* Dumping function		*/
+	u_long	maddr;		/* PA being dumped		*/
+	int	segbytes;	/* Number of bytes in this seg.	*/
+	int	nbytes;		/* Bytes left to dump		*/
+	int	i, n, error;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -857,8 +877,64 @@ dumpsys()
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
+#if defined(DDB) || defined(PANICWAIT)
+	printf("Do you want to dump memory? [y]");
+	cnputc(i = cngetc());
+	switch (i) {
+		case 'n':
+		case 'N':
+			return(0);
+		case '\n':
+			break;
+		default :
+			cnputc('\n');
+	}
+#endif /* defined(DDB) || defined(PANICWAIT) */
+
+	maddr    = 0;
+	segbytes = boot_stphysize;
+	blkno    = dumplo;
+	dump     = bdevsw[major(dumpdev)].d_dump;
+	nbytes   = dumpsize * NBPG;
+
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+
+	for (i = 0; i < nbytes; i += n, segbytes -= n) {
+		/*
+		 * Skip the hole
+		 */
+		if (segbytes == 0) {
+			maddr    = boot_ttphystart;
+			segbytes = boot_ttphysize;
+		}
+		/*
+		 * Print Mb's to go
+		 */
+		n = nbytes - i;
+		if (n && (n % (1024*1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/*
+		 * Limit transfer to BYTES_PER_DUMP
+		 */
+		if (n > BYTES_PER_DUMP)
+			n = BYTES_PER_DUMP;
+
+		/*
+		 * Map to a VA and write it
+		 */
+		if (maddr != 0) { /* XXX kvtop chokes on this	*/
+			(void)pmap_map(dumpspace, maddr, maddr+n, VM_PROT_READ);
+			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			if (error)
+				break;
+		}
+
+		maddr += n;
+		blkno += btodb(n);
+	}
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -880,6 +956,8 @@ dumpsys()
 		printf("succeeded\n");
 		break;
 	}
+	printf("\n\n");
+	delay(5000000);		/* 5 seconds */
 }
 
 /*
