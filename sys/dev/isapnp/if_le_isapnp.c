@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.7 1997/12/17 01:31:59 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.8 1998/02/04 00:39:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ le_isapnp_attach(parent, self, aux)
 		return;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_ISAPNP_MEMSIZE,
-	    (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+	    (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: couldn't map memory for card\n",
 		    sc->sc_dev.dv_xname);
 		return;
