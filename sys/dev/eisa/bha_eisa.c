@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.17 2001/04/25 17:53:27 bouyer Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.18 2001/05/03 20:34:54 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ bha_eisa_match(parent, match, aux)
 		return (0);
 	}
 
-	rv = bha_find(iot, ioh2, NULL);
+	rv = bha_find(iot, ioh2);
 
 	bus_space_unmap(iot, ioh2, BHA_ISA_IOSIZE);
 	bus_space_unmap(iot, ioh, BHA_EISA_IOSIZE);
@@ -181,8 +181,8 @@ bha_eisa_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh2;
 	sc->sc_dmat = ea->ea_dmat;
-	if (!bha_find(iot, ioh2, &bpd))
-		panic("bha_eisa_attach: bha_find failed");
+	if (!bha_probe_inquiry(iot, ioh2, &bpd))
+		panic("bha_eisa_attach failed");
 
 	sc->sc_dmaflags = 0;
 
@@ -204,5 +204,5 @@ bha_eisa_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	bha_attach(sc, &bpd);
+	bha_attach(sc);
 }
