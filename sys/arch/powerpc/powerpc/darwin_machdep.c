@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.6 2003/01/24 21:37:01 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.6 2003/01/24 21:37:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,6 @@ darwin_sendsig(sig, mask, code)
 	sf.dmc.ss.lr = tf->lr;
 	sf.dmc.ss.ctr = tf->ctr;
 	sf.dmc.ss.mq = 0; /* XXX */
-	sf.dmc.ss.vrsave = tf->vrsave;
 
 	/* XXX What should we do with th FP regs? */
 
@@ -233,7 +232,6 @@ darwin_sys_sigreturn(l, v, retval)
 	tf->xer = mctx.ss.xer;
 	tf->lr = mctx.ss.lr;
 	tf->ctr = mctx.ss.ctr;
-	tf->vrsave = mctx.ss.vrsave;
 
 	/* Restore signal stack */
 	if (uctx.uc_onstack & SS_ONSTACK)
