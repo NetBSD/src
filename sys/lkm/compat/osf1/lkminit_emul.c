@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.1 2000/12/08 20:15:19 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2 2000/12/13 11:10:36 enami Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/file.h>
 #include <sys/errno.h>
 
-extern const struct emul_osf1;
+extern const struct emul emul_osf1;
 
 int compat_osf1_lkmentry __P((struct lkm_table *, int, int));
 
