@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.51 2000/04/07 19:47:18 aymeric Exp $	*/
+/*	$NetBSD: ser.c,v 1.52 2000/04/14 21:56:22 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -182,11 +182,21 @@ sermatch(pdp, cfp, auxp)
 	void *auxp;
 {
 	static int ser_matched = 0;
+	static int ser_matched_real = 0;
 
 	/* Allow only once instance. */
-	if (matchname("ser", (char *)auxp) == 0 || ser_matched)
+	if (matchname("ser", (char *)auxp) == 0)
 		return(0);
-	if (serconsole != 0 && amiga_realconfig == 0)
+
+	if (amiga_realconfig) {
+		if (ser_matched_real)
+			return(0);
+		ser_matched_real = 1;
+	}
+
+	if (serconsole != 0)
+		return(0);
+	if (ser_matched != 0)
 		return(0);
 
 	ser_matched = 1;
