@@ -1,4 +1,4 @@
-.\"     $NetBSD: ping6.8,v 1.9 2000/08/09 14:36:00 itojun Exp $
+.\"     $NetBSD: ping6.8,v 1.10 2000/09/04 07:33:29 kleink Exp $
 .\"     $KAME: ping6.8,v 1.26 2000/08/03 15:26:34 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -388,9 +388,9 @@ using the
 .Fl p
 option of
 .Nm Ns .
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 .Nm
-returns 0 on success (the host is alive),
+exits 0 on success (the host is alive),
 and non-zero if the arguments are incorrect or the host is not responding.
 .Sh SEE ALSO
 .Xr netstat 1 ,
