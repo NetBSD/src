@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1995/06/21 03:06:33 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 1995/07/06 13:25:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -272,11 +272,14 @@ extern	unsigned long		load_addr      ;
 #define INTIOTOP	(IOBase+0x01000000)
 #define IIOMAPSIZE	btoc(0x01000000)
 
-/* XXX -- Need to do something about superspace. */
-#ifdef NO_SUPER_SPACE_YET
-#define	NBSBASE		0x60000000	/* NUBUS Super space */
+/* XXX -- Need to do something about superspace.
+ * Technically, NuBus superspace starts at 0x60000000, but no
+ * known Macintosh has used any slot lower numbered than 9, and
+ * the super space is defined as 0xS000 0000 through 0xSFFF FFFF
+ * where S is the slot number--ranging from 0x9 - 0xE.
+ */
+#define	NBSBASE		0x90000000
 #define	NBSTOP		0xF0000000
-#endif
 #define NBBASE		0xF9000000	/* NUBUS space */
 #define NBTOP		0xFF000000	/* NUBUS space */
 #define NBMAPSIZE	btoc(NBTOP-NBBASE)	/* ~ 96 megs */
