@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1999/02/07 09:34:59 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1999/02/08 16:33:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -1657,6 +1657,20 @@ fdioctl(dev, cmd, addr, flag, p)
 		return (0);
 
 	case DIOCEJECT:
+		if (*(int *)addr == 0) {
+			int part = DISKPART(dev);
+			/*
+			 * Don't force eject: check that we are the only
+			 * partition open. If so, unlock it.
+			 */
+			if ((fd->sc_dk.dk_openmask & ~(1 << part)) != 0 ||
+			    fd->sc_dk.dk_bopenmask + fd->sc_dk.dk_copenmask !=
+			    fd->sc_dk.dk_openmask) {
+				return (EBUSY);
+			}
+		}
+		/* FALLTHROUGH */
+	case ODIOCEJECT:
 		fd_do_eject(fd);
 		return (0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.120 1999/01/29 11:17:58 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.121 1999/02/08 16:33:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -709,6 +709,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
+	int part = CDPART(dev);
 	int error;
 
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));
@@ -721,6 +722,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		switch (cmd) {
 		case DIOCWLABEL:
 		case DIOCLOCK:
+		case ODIOCEJECT:
 		case DIOCEJECT:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
@@ -742,7 +744,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		case CDIOCRESET:
 		case SCIOCRESET:
 		case CDIOCLOADUNLOAD:
-			if (CDPART(dev) == RAW_PART)
+			if (part == RAW_PART)
 				break;
 		/* FALLTHROUGH */
 		default:
@@ -761,7 +763,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = cd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &cd->sc_dk.dk_label->d_partitions[CDPART(dev)];
+		    &cd->sc_dk.dk_label->d_partitions[part];
 		return (0);
 
 	case DIOCWDINFO:
@@ -967,8 +969,26 @@ cdioctl(dev, cmd, addr, flag, p)
 		return (scsipi_start(cd->sc_link, SSS_STOP, 0));
 	case CDIOCCLOSE:
 		return (scsipi_start(cd->sc_link, SSS_START|SSS_LOEJ, 0));
-	case CDIOCEJECT: /* FALLTHROUGH */
 	case DIOCEJECT:
+		if (*(int *)addr == 0) {
+			/*
+			 * Don't force eject: check that we are the only
+			 * partition open. If so, unlock it.
+			 */
+			if ((cd->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
+			    cd->sc_dk.dk_bopenmask + cd->sc_dk.dk_copenmask ==
+			    cd->sc_dk.dk_openmask) {
+				error =  scsipi_prevent(cd->sc_link, PR_ALLOW,
+				    SCSI_IGNORE_NOT_READY);
+				if (error)
+					return (error);
+			} else {
+				return (EBUSY); 
+			}
+		}
+		/* FALLTHROUGH */
+	case CDIOCEJECT: /* FALLTHROUGH */
+	case ODIOCEJECT:
 		return (scsipi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 	case CDIOCALLOW:
 		return (scsipi_prevent(cd->sc_link, PR_ALLOW, 0));
@@ -994,7 +1014,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	}
 
 	default:
-		if (CDPART(dev) != RAW_PART)
+		if (part != RAW_PART)
 			return (ENOTTY);
 		return (scsipi_do_ioctl(cd->sc_link, dev, cmd, addr, flag, p));
 	}
