@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.13 2000/03/10 14:50:36 kleink Exp $	*/
+/*	$NetBSD: find.c,v 1.14 2000/03/16 18:44:29 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.13 2000/03/10 14:50:36 kleink Exp $");
+__RCSID("$NetBSD: find.c,v 1.14 2000/03/16 18:44:29 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,8 @@ static int
 ftscompare(e1, e2)
 	const FTSENT **e1, **e2;
 {
-	return strcoll((*e1)->fts_name, (*e2)->fts_name);
+
+	return (strcoll((*e1)->fts_name, (*e2)->fts_name));
 }
 
 FTS *tree;			/* pointer to top of FTS hierarchy */
