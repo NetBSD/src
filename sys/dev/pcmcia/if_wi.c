@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3 1999/09/10 00:30:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $
+ *	$Id: if_wi.c,v 1.3 1999/09/10 00:30:59 itojun Exp $
  */
 
 /*
@@ -115,7 +115,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $";
+	"$Id: if_wi.c,v 1.3 1999/09/10 00:30:59 itojun Exp $";
 #endif
 
 #ifdef foo
@@ -973,7 +973,7 @@ static int wi_ioctl(ifp, command, data)
 	if (sc->wi_gone)
 		return(ENODEV);
 
-	switch(command) {
+	switch (command) {
 	case SIOCSIFADDR:
 		if (!(ifp->if_flags & IFF_RUNNING) &&
 		    (error = wi_enable(sc)) != 0)
@@ -982,15 +982,15 @@ static int wi_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
+			wi_init(sc);
 			arp_ifinit(&sc->sc_ethercom.ec_if, ifa);
 			break;
 #endif
+		default:
+			wi_init(sc);
+			break;
 		}
-		break;
-
-
-
-
+		error = 0;
 		break;
 #if 0
 	case SIOCSIFMTU:
@@ -1022,8 +1022,15 @@ static int wi_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		wi_setmulti(sc);
-		error = 0;
+		/* Update our multicast list. */
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
+		if (error == ENETRESET || error == 0) {
+			/* Configure list onto the chip. */
+			wi_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGWAVELAN:
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
@@ -1075,13 +1082,15 @@ static void wi_init(xsc)
 	int			s;
 	struct wi_ltv_macaddr	mac;
 	int			id = 0;
+	int			running;
 
 	if (sc->wi_gone)
 		return;
 
 	s = splimp();
 
-	if (ifp->if_flags & IFF_RUNNING)
+	running = ifp->if_flags & IFF_RUNNING;
+	if (running)
 		wi_stop(sc);
 
 	wi_reset(sc);
@@ -1156,7 +1165,8 @@ static void wi_init(xsc)
 
 	splx(s);
 
-	ifp->if_flags |= IFF_RUNNING;
+	if (running)
+		ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	timeout(wi_inquire, sc, hz * 60);
@@ -1195,7 +1205,8 @@ static void wi_start(ifp)
 	 */
 	if (ntohs(eh->ether_type) == ETHERTYPE_IP ||
 	    ntohs(eh->ether_type) == ETHERTYPE_ARP ||
-	    ntohs(eh->ether_type) == ETHERTYPE_REVARP) {
+	    ntohs(eh->ether_type) == ETHERTYPE_REVARP ||
+	    ntohs(eh->ether_type) == ETHERTYPE_IPV6) {
 		bcopy((char *)&eh->ether_dhost,
 		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
 		bcopy((char *)&eh->ether_shost,
@@ -1307,7 +1318,7 @@ static void wi_stop(sc)
 
 	untimeout(wi_inquire, sc);
 
-	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return;
 }
