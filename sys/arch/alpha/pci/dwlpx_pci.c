@@ -1,4 +1,4 @@
-/*	$NetBSD: dwlpx_pci.c,v 1.2 1997/03/12 21:10:06 cgd Exp $	*/
+/*	$NetBSD: dwlpx_pci.c,v 1.3 1997/03/13 23:59:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -174,6 +174,7 @@ dwlpx_conf_read(cpv, tag, offset)
 	paddr |= (((unsigned long) sc->dwlpx_hosenum) << 34);
 	paddr |= (((u_long) sc->dwlpx_node - 4) << 36);
 	paddr |= (1LL << 39);
+	paddr |= (1LL << 3);	/* 32 Bit PCI byte enables */
 
 	dp = (pcireg_t *)KV(paddr);
 	if (badaddr(dp, sizeof (*dp)) == 0) {
@@ -242,6 +243,7 @@ dwlpx_conf_write(cpv, tag, offset, data)
 	paddr |= (((unsigned long) sc->dwlpx_hosenum) << 34);
 	paddr |= (((u_long) sc->dwlpx_node - 4) << 36);
 	paddr |= (1LL << 39);
+	paddr |= (1LL << 3);	/* 32 bit PCI byte enables */
 
 	dp = (pcireg_t *)KV(paddr);
 	*dp = data;
