@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 1996/07/14 20:00:22 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 1996/07/16 04:51:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -91,7 +91,6 @@
 #define	VM_PAGE_NULL	NULL
 #define	BYTE_SIZE	NBBY
 #define	page_size	PAGE_SIZE
-#define	pmap_steal_memory pmap_bootstrap_alloc
 #define	ALPHA_PTE_GLOBAL ALPHA_PTE_ASM
 #define	MACRO_BEGIN	do {
 #define	MACRO_END	} while (0)
@@ -103,14 +102,13 @@
 #define	db_printf	printf
 #define	tbia		ALPHA_TBIA
 #define	alphacache_Iflush alpha_pal_imb
-#define assert(e) \
-	    ((e) ? (void)0 : panic("assertion \"%s\" failed at %s:%d", \
-		#e, __FILE__, __LINE__))
 #define cpu_number()	0
-#define	gimmeabreak()	panic("pmap gimmeabreak")
 #define	check_simple_locks()
 #define	K0SEG_TO_PHYS	ALPHA_K0SEG_TO_PHYS
 #define	ISA_K0SEG(v)	(v >= ALPHA_K0SEG_BASE && v <= ALPHA_K0SEG_END)
+#ifndef assert
+#define	assert(x)
+#endif
 
 vm_offset_t	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -570,18 +568,50 @@ extern	vm_offset_t	avail_start, avail_end;
  */
 vm_size_t	pmap_kernel_vm = 5;	/* each one 8 meg worth */
 
-void pmap_bootstrap(firstaddr, ptaddr)
+/* XXX */
+int pmapdebug = -1;
+#define	PDB_BOOTSTRAP		0x00000001
+#define	PDB_BOOTSTRAP_ALLOC	0x00000002
+#define	PDB_UNMAP_PROM		0x00000004
+#define	PDB_FOLLOW		0x40000000
+#define PDB_VERBOSE		0x80000000
+
+unsigned int
+pmap_free_pages()
+{
+	return atop(avail_end - avail_start);
+}
+
+void
+pmap_bootstrap(firstaddr, ptaddr)
 	vm_offset_t firstaddr, ptaddr;
 {
 	vm_offset_t	pa;
 	pt_entry_t	template;
 	pt_entry_t	*pde, *pte;
-	int		i;
+	vm_offset_t start;
         extern int firstusablepage, lastusablepage;
+	int i;
+	long npages;
 
-	avail_start = alpha_round_page(firstaddr);
-	avail_end = alpha_ptob(lastusablepage + 1);
+#ifdef DEBUG
+        if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap(0x%lx, 0x%lx)\n", firstaddr, ptaddr);
+#endif
 
+	/* must be page aligned */
+	start = firstaddr = alpha_round_page(firstaddr);
+
+#define valloc(name, type, num)						\
+	    (name) = (type *)firstaddr;					\
+	    firstaddr = ALIGN((vm_offset_t)((name)+(num)))
+#define vallocsz(name, cast, size)					\
+	    (name) = (cast)firstaddr;					\
+	    firstaddr = ALIGN(firstaddr + size)
+
+	/*
+	 *	Initialize protection array.
+	 */
 	alpha_protection_init();
 
 	/*
@@ -612,22 +642,34 @@ void pmap_bootstrap(firstaddr, ptaddr)
 	 *	No other physical memory has been allocated.
 	 */
 
-	root_kpdes = (pt_entry_t *) pmap_steal_memory(ALPHA_PGBYTES);
-printf("root_kpdes = %p\n", root_kpdes);
+	vallocsz(root_kpdes, pt_entry_t *, PAGE_SIZE);
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: root_kpdes = %p\n", root_kpdes);
+#endif
 	kernel_pmap->dirbase = root_kpdes;
 
         /* First, copy mappings for things below VM_MIN_KERNEL_ADDRESS */
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: setting up root_kpdes (copy 0x%lx)\n",
+		    pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
+#endif
+	bzero(root_kpdes, PAGE_SIZE);
         bcopy((caddr_t)ptaddr, root_kpdes,
             pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
-	bzero(root_kpdes, pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
 
 	/*
-	 *	The distinguished tlbpid value of 0 is reserved for
-	 *	the kernel pmap. Initialize the tlbpid allocator,
-	 *	who knows about this.
+	 *	Set up the virtual page table.
 	 */
-	kernel_pmap->pid = 0;
-	pmap_tlbpid_init();
+	pte_ktemplate(template, kvtophys(root_kpdes),
+	    VM_PROT_READ | VM_PROT_WRITE);
+	root_kpdes[pdenum(VPTBASE)] = template & ~ALPHA_PTE_GLOBAL;
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: VPT PTE 0x%lx at 0x%lx)\n",
+		    root_kpdes[pdenum(VPTBASE)], &root_kpdes[pdenum(VPTBASE)]);
+#endif
 
 #if 0
 	/*
@@ -646,9 +688,17 @@ printf("root_kpdes = %p\n", root_kpdes);
 	 */
 #define	enough_kseg2()	(PAGE_SIZE)
 
-	pte = (pt_entry_t *) pmap_steal_memory(enough_kseg2());	/* virtual */
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: allocating kvseg segment pages\n");
+#endif
+	vallocsz(pte, pt_entry_t *, enough_kseg2());		/* virtual */
 	pa  = kvtophys(pte);					/* physical */
 	bzero(pte, enough_kseg2());
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: kvseg segment pages at %p\n", pte);
+#endif
 
 #undef	enough_kseg2
 
@@ -656,6 +706,10 @@ printf("root_kpdes = %p\n", root_kpdes);
 	 *	Make a note of it in the seg1 table
 	 */
 
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: inserting segment pages into root\n");
+#endif
 	tbia();
 	pte_ktemplate(template,pa,VM_PROT_READ|VM_PROT_WRITE);
 	pde = pmap_pde(kernel_pmap,K2SEG_BASE);
@@ -675,11 +729,15 @@ printf("root_kpdes = %p\n", root_kpdes);
 	/*
 	 *	But don't we need some seg2 pagetables to start with ?
 	 */
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: allocating kvseg page table pages\n");
+#endif
 	pde = &pte[pte2num(K2SEG_BASE)];
 	for (i = pmap_kernel_vm; i > 0; i--) {
 	    register int j;
 
-	    pte = (pt_entry_t *) pmap_steal_memory(PAGE_SIZE);	/* virtual */
+	    vallocsz(pte, pt_entry_t *, PAGE_SIZE);		/* virtual */
 	    pa  = kvtophys(pte);				/* physical */
 	    pte_ktemplate(template,pa,VM_PROT_READ|VM_PROT_WRITE);
 	    bzero(pte, PAGE_SIZE);
@@ -691,15 +749,77 @@ printf("root_kpdes = %p\n", root_kpdes);
 	}
 
 	/*
+	 *	Fix up managed physical memory information.
+	 */
+	avail_start = ALPHA_K0SEG_TO_PHYS(firstaddr);
+	avail_end = alpha_ptob(lastusablepage + 1);
+	mem_size = avail_end - avail_start;
+#ifdef DEBUG
+	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+		printf("pmap_bootstrap: avail: 0x%lx -> 0x%lx (0x%lx)\n",
+		    avail_start, avail_end, mem_size);
+#endif
+
+	/*
+	 *	Allocate memory for the pv_head_table and its
+	 *	lock bits, and the reference/modify byte array.
+	 */
+#ifdef DEBUG
+	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+		printf("pmap_bootstrap: allocating page management data\n");
+#endif
+
+	npages = ((BYTE_SIZE * mem_size) /
+	          (BYTE_SIZE * (PAGE_SIZE + sizeof (struct pv_entry) + 1) + 1));
+
+	valloc(pv_head_table, struct pv_entry, npages);
+	bzero(pv_head_table, sizeof (struct pv_entry) * npages);
+
+	valloc(pv_lock_table, char, pv_lock_table_size(npages));
+	bzero(pv_lock_table, pv_lock_table_size(npages));
+
+	valloc(pmap_phys_attributes, char, npages);
+	bzero(pmap_phys_attributes, sizeof (char) * npages);
+
+	avail_start = alpha_round_page(ALPHA_K0SEG_TO_PHYS(firstaddr));
+	if (npages > pmap_free_pages())
+		panic("pmap_bootstrap");
+	mem_size = avail_end - avail_start;
+#ifdef DEBUG
+	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+		printf("pmap_bootstrap: avail: 0x%lx -> 0x%lx (0x%lx)\n",
+		    avail_start, avail_end, mem_size);
+#endif
+
+	/*
 	 *	Assert kernel limits (cuz pmap_expand)
 	 */
 
-	virtual_avail = round_page(K2SEG_BASE);
+	virtual_avail = alpha_round_page(K2SEG_BASE);
 	virtual_end   = trunc_page(K2SEG_BASE + pde2tova(pmap_kernel_vm));
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP)) {
+		printf("pmap_bootstrap: virtual_avail = %p\n", virtual_avail);
+		printf("pmap_bootstrap: virtual_end = %p\n", virtual_end);
+	}
+#endif
 
-	/* no console yet, so no printfs in this function */
+	/*
+	 *	The distinguished tlbpid value of 0 is reserved for
+	 *	the kernel pmap. Initialize the tlbpid allocator,
+	 *	who knows about this.
+	 */
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: setting up tlbpid machinery\n");
+#endif
+	kernel_pmap->pid = 0;
+	pmap_tlbpid_init();
 
-	mem_size = avail_end - avail_start;
+#ifdef DEBUG
+        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap: leaving\n");
+#endif
 }
 
 pmap_rid_of_console()
@@ -713,90 +833,85 @@ pmap_rid_of_console()
 		*pde++ = 0;
 }
 
-unsigned int
-pmap_free_pages()
-{
-	return atop(avail_end - avail_start);
-}
+/*
+ * Bootstrap memory allocator. This function allows for early dynamic
+ * memory allocation until the virtual memory system has been bootstrapped.
+ * After that point, either kmem_alloc or malloc should be used. This
+ * function works by stealing pages from the (to be) managed page pool,
+ * implicitly mapping them (by using their k0seg addresses),
+ * and zeroing them.
+ *
+ * It should be used from pmap_bootstrap till vm_page_startup, afterwards
+ * it cannot be used, and will generate a panic if tried. Note that this
+ * memory will never be freed, and in essence it is wired down.
+ */
 
-#ifndef pmap_steal_memory
-vm_offset_t
-#else
 void *
-#endif
-pmap_steal_memory(size)
-#ifndef pmap_steal_memory
-	vm_size_t size;
-#else
+pmap_bootstrap_alloc(size)
 	int size;
-#endif
 {
-	vm_offset_t addr;
+	vm_offset_t val;
+	extern boolean_t vm_page_startup_initialized;
 
-	/*
-	 *	We round the size to a long integer multiple.
-	 */
-
-	size = roundup(size,sizeof(integer_t));
-	addr = phystokv(avail_start);
-	avail_start += size;
-#ifndef pmap_steal_memory
-	return addr;
-#else
-	return (void *)addr;
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP_ALLOC))
+		printf("pmap_bootstrap_alloc(%lx)\n", size);
 #endif
+	if (vm_page_startup_initialized)
+		panic("pmap_bootstrap_alloc: called after startup initialized");
+
+	val = ALPHA_PHYS_TO_K0SEG(avail_start);
+	size = alpha_round_page(size);
+	avail_start += size;
+	if (avail_start > avail_end)			/* sanity */
+		panic("pmap_bootstrap_alloc");
+
+	bzero((caddr_t)val, size);
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP_ALLOC))
+		printf("pmap_bootstrap_alloc: returns %p\n", val);
+#endif
+	return ((void *)val);
 }
 
 /*
- *	Allocate permanent data structures in the k0seg.
+ * Unmap the PROM mappings.  PROM mappings are kept around
+ * by pmap_bootstrap, so we can still use the prom's printf.
+ * Basically, blow away all mappings in the level one PTE
+ * table below VM_MIN_KERNEL_ADDRESS.  The Virtual Page Table
+ * Is at the end of virtual space, so it's safe.
  */
-void pmap_startup(startp, endp)
-	vm_offset_t *startp, *endp;
+void
+pmap_unmap_prom()
 {
-	register long		npages;
-	vm_offset_t		addr;
-	register vm_size_t	size;
-	int			i;
-	vm_page_t 		pages;
+	int i;
+	extern int prom_mapped;
+	extern pt_entry_t *rom_ptep, rom_pte;
 
-	/*
-	 *	Allocate memory for the pv_head_table and its lock bits,
-	 *	the modify bit array, and the vm_page structures.
-	 */
-
-	npages = ((BYTE_SIZE * (avail_end - avail_start)) /
-		  (BYTE_SIZE * (PAGE_SIZE + sizeof *pages +
-				sizeof *pv_head_table) + 2));
-
-	size = npages * sizeof *pages;
-	pages = (vm_page_t) pmap_steal_memory(size);
-
-	size = npages * sizeof *pv_head_table;
-	pv_head_table = (pv_entry_t) pmap_steal_memory(size);
-	bzero((char *) pv_head_table, size);
-
-	size = pv_lock_table_size(npages);
-	pv_lock_table = (char *) pmap_steal_memory(size);
-	bzero((char *) pv_lock_table, size);
-
-	size = (npages + BYTE_SIZE - 1) / BYTE_SIZE;
-	pmap_phys_attributes = (char *) pmap_steal_memory(size);
-	bzero((char *) pmap_phys_attributes, size);
-
-	avail_start = round_page(avail_start);
-
-	if (npages > pmap_free_pages())
-		panic("pmap_startup");
-
-#if 0 /* XXX */
-	for (i = 0; i < npages; i++) {
-		vm_page_init(&pages[i], avail_start + ptoa(i));
-		vm_page_release(&pages[i]);
-	}
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_UNMAP_PROM))
+		printf("pmap_unmap_prom\n");
 #endif
 
-	*startp = virtual_avail;
-	*endp = virtual_end;
+	/* XXX save old pte so that we can remap prom if necessary */
+	rom_ptep = &root_kpdes[0];				/* XXX */
+	rom_pte = *rom_ptep & ~ALPHA_PTE_ASM;			/* XXX */
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_VERBOSE|PDB_UNMAP_PROM))
+		printf("pmap_unmap_prom: zero 0x%lx, rom_pte was 0x%lx\n",
+		    pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0],
+		    rom_pte);
+#endif
+	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
+	bzero(root_kpdes, pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
+	prom_mapped = 0;
+	ALPHA_TBIA();
+#ifdef DEBUG
+	if (pmapdebug & (PDB_VERBOSE|PDB_UNMAP_PROM))
+		printf("pmap_unmap_prom: leaving\n");
+#endif
 }
 
 /*
@@ -806,7 +921,7 @@ void pmap_startup(startp, endp)
  */
 void
 pmap_init(phys_start, phys_end)
-        vm_offset_t     phys_start, phys_end;
+	vm_offset_t	phys_start, phys_end;
 {
 	vm_size_t	s;
 	int		i;
@@ -1214,7 +1329,7 @@ if (pmap_debug > 1) db_printf("iterate2(%x,%x,%x)", s, e, spte);
 		if (n == 0) n = SEG_MASK + 1;/* l == next segment up */
 		epte = &cpte[n];
 		cpte = &cpte[pte3num(s)];
-if (epte < cpte) gimmeabreak();
+		assert(epte >= cpte);
 if (pmap_debug > 1) db_printf(" [%x %x, %x %x]", s, l, cpte, epte);
 		operation(pmap, s, cpte, epte);
 	    }
@@ -1547,7 +1662,7 @@ if (pmap_debug || ((v > pmap_suspect_vs) && (v < pmap_suspect_ve)))
 db_printf("[%d]pmap_enter(%x(%d), %x, %x, %x, %x)\n", cpu_number(), pmap, pmap->pid, v, pa, prot, wired);
 	if (pmap == PMAP_NULL)
 		return;
-if (pmap->pid < 0) gimmeabreak();
+	assert(pmap->pid >= 0);
 
 	/*
 	 *	Must allocate a new pvlist entry while we're unlocked;
@@ -2677,6 +2792,7 @@ set_ptbr(pmap_t map, pcb_t pcb, boolean_t switchit)
 	vm_offset_t     pa;
 
 	pa = pmap_resident_extract(kernel_pmap, map->dirbase);
+printf("set_ptbr (switch = %d): dirbase = 0x%lx, pa = 0x%lx\n", switchit, map->dirbase, pa);
 	if (pa == 0)
 		panic("set_ptbr");
 #if 0
@@ -2715,7 +2831,7 @@ pmap_tlbpid_init()
 
 #define	MAX_PID_EVER	1023	/* change if necessary, this is one page */
 	pids_in_use = (struct pmap **)
-		pmap_steal_memory( (MAX_PID_EVER+1) * sizeof(struct pmap *));
+		pmap_bootstrap_alloc( (MAX_PID_EVER+1) * sizeof(struct pmap *));
 	bzero(pids_in_use, (MAX_PID_EVER+1) * sizeof(struct pmap *));
 #undef	MAX_PID_EVER
 
@@ -2829,37 +2945,6 @@ void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 
 void pmap_update()
 {
-}
-
-/*
- * Unmap the PROM mappings.  PROM mappings are kept around
- * by pmap_bootstrap, so we can still use the prom's printf.
- * Basically, blow away all mappings in the level one PTE
- * table below VM_MIN_KERNEL_ADDRESS.  The Virtual Page Table
- * Is at the end of virtual space, so it's safe.
- */
-void
-pmap_unmap_prom()
-{
-	int i;
-	extern int prom_mapped;
-	extern pt_entry_t *rom_ptep, rom_pte;
-
-#if 0
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
-		printf("pmap_unmap_prom\n");
-#endif
-#endif
-
-	/* XXX save old pte so that we can remap prom if necessary */
-	rom_ptep = &root_kpdes[0];				/* XXX */
-	rom_pte = *rom_ptep & ~ALPHA_PTE_ASM;			/* XXX */
-
-	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
-	bzero(root_kpdes, pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
-	prom_mapped = 0;
-	ALPHA_TBIA();
 }
 
 vm_page_t
