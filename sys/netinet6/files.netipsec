@@ -1,7 +1,7 @@
-#	$NetBSD: files.netipsec,v 1.2 2002/10/12 15:41:24 thorpej Exp $
+#	$NetBSD: files.netipsec,v 1.3 2003/07/22 03:24:27 itojun Exp $
 
 defflag opt_ipsec.h		IPSEC
-defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128, rijndael
+defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128, rijndael, sha2
 
 file	netinet6/ah_core.c		ipsec
 file	netinet6/ah_input.c		ipsec
