@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88.2.1 1999/03/05 08:24:23 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.2.2 1999/03/08 02:06:13 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -69,6 +69,10 @@ file	arch/mac68k/dev/grf.c		grf needs-flag
 device	ite: tty
 attach	ite at grf
 file	arch/mac68k/dev/ite.c		ite needs-flag
+
+device	macfb: wsemuldisplaydev, wsrasteremulops
+attach	macfb at grfbus
+file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus

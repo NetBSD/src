@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.48.2.1 1999/03/08 02:06:14 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -179,16 +179,18 @@ pmap_bootstrap(nextpa, firstpa)
 	p0upa = nextpa;
 	nextpa += USPACE;
 
-#if 0
 	if (nextpa > high[0]) {
-		printf("Failure in NetBSD boot; nextpa=0x%lx, high[0]=0x%lx.\n",
-			nextpa, high[0]);
-		printf("You're hosed!  Try booting with 32-bit addressing ");
-		printf("enabled in the memory control panel.\n");
-		printf("Older machines may need Mode32 to get that option.\n");
+		if (mac68k_machine.do_graybars) {
+			printf("Failure in NetBSD boot; "
+			    "nextpa=0x%lx, high[0]=0x%lx.\n", nextpa, high[0]);
+			printf("You're hosed!  Try booting with 32-bit ");
+			printf("addressing enabled in the memory control ");
+			printf("panel.\n");
+			printf("Older machines may need Mode32 to get that ");
+			printf("option.\n");
+		}
 		panic("Cannot work with the current memory mappings.\n");
 	}
-#endif
 
 	/*
 	 * Initialize segment table and kernel page table map.

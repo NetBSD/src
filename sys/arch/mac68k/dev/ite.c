@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.46.2.1 1999/03/05 08:24:25 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.46.2.2 1999/03/08 02:06:13 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,10 +137,10 @@ enum vt100state_e {
 } vt100state = ESnormal;
 
 /* From Booter via locore */
-long		videoaddr;
-long		videorowbytes;
-long		videobitdepth;
-u_long		videosize;
+extern long	videoaddr;
+extern long	videorowbytes;
+extern long	videobitdepth;
+extern u_long	videosize;
 
 /* Calculated by itecninit() */
 static int	ite_initted = 0;
