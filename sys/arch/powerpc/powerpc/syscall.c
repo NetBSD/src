@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.2 2002/08/01 02:43:11 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.3 2002/08/01 04:05:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -76,7 +76,8 @@ void syscall_fancy(struct trapframe *frame);
 void
 syscall_plain(struct trapframe *frame)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	const struct sysent *callp;
 	size_t argsize;
 	register_t code;
@@ -117,11 +118,11 @@ syscall_plain(struct trapframe *frame)
 
 	if (argsize > n * sizeof(register_t)) {
 		memcpy(args, params, n * sizeof(register_t));
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		error = copyin(MOREARGS(frame->fixreg[1]),
 		       args + n,
 		       argsize - n * sizeof(register_t));
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		if (error)
 			goto syscall_bad;
 		params = args;
@@ -131,13 +132,13 @@ syscall_plain(struct trapframe *frame)
 	rval[1] = 0;
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 	}
 
-	error = (*callp->sy_call)(p, params, rval);
+	error = (*callp->sy_call)(l, params, rval);
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 
 	switch (error) {
@@ -168,7 +169,8 @@ syscall_bad:
 void
 syscall_fancy(struct trapframe *frame)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	const struct sysent *callp;
 	size_t argsize;
 	register_t code;
@@ -177,7 +179,7 @@ syscall_fancy(struct trapframe *frame)
 	int error;
 	int n;
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	curcpu()->ci_ev_scalls.ev_count++;
 	uvmexp.syscalls++;
@@ -219,13 +221,13 @@ syscall_fancy(struct trapframe *frame)
 		params = args;
 	}
 
-	if ((error = trace_enter(p, code, params, rval)) != 0)
+	if ((error = trace_enter(l, code, params, rval)) != 0)
 		goto syscall_bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(p, params, rval);
+	error = (*callp->sy_call)(l, params, rval);
 	switch (error) {
 	case 0:
 		frame->fixreg[FIRSTARG] = rval[0];
@@ -249,8 +251,8 @@ syscall_bad:
 		frame->cr |= 0x10000000;
 		break;
 	}
-	KERNEL_PROC_UNLOCK(p);
-	trace_exit(p, code, params, rval, error);
+	KERNEL_PROC_UNLOCK(l);
+	trace_exit(l, code, params, rval, error);
 }
 
 void
@@ -282,25 +284,26 @@ linux_syscall_intern(struct proc *p)
 void
 child_return(void *arg)
 {
-	struct proc * const p = arg;
-	struct trapframe * const tf = trapframe(p);
+	struct lwp * const l = arg;
+	struct proc *p = l->l_proc;
+	struct trapframe * const tf = trapframe(l);
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
 					   be them. */
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 	}
 #endif
 	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 
