@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2000/08/16 21:54:44 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2000/08/17 05:05:01 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2000/08/16 21:54:44 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2000/08/17 05:05:01 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -109,9 +109,7 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int maxmem;			/* max memory per process */
 int physmem;			/* max supported memory, changes to actual */
-int physmem_max = 32*1024*1024 / NBPG;		/* XXX: Pages */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -129,6 +127,7 @@ void configure __P((void));
 
 void mach_init __P((int, char *[], char*[]));
 void softintr_init __P((void));
+int  memsize_scan __P((caddr_t));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -222,41 +221,8 @@ mach_init(argc, argv, envp)
 
 	consinit();
 
-	/*
-         * The MIPS Rc3230 series machine have a really ugly memory
-         * alias that is difficult to detect.
-	 *
-	 * For now we limit the scan to 32MB which is the maximum
-	 * onboard memory allowed when using 1MB SIMM's
-	 */
-
-	/*
-	 * Non destructive scan of memory to determine the size
-	 */
-	physmem = btoc((vaddr_t)kernend - MIPS_KSEG0_START);
-	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
-	while (cp < (char *)MIPS_MAX_MEM_ADDR) {
-	  	int i, j;
-		i = *(int *)cp;
-		j = ((int *)cp)[4];
-		*(int *)cp = 0xa5a5a5a5;
-		/*
-		 * Data will persist on the bus if we read it right away.
-		 * Have to be tricky here.
-		 */
-		((int *)cp)[4] = 0x5a5a5a5a;
-		wbflush();
-		if (*(int *)cp != 0xa5a5a5a5)
-			break;
-		*(int *)cp = i;
-		((int *)cp)[4] = j;
-		cp += NBPG;
-		if (physmem >= physmem_max)
-		        break;
-		physmem++;
-	}
-
-	maxmem = physmem;
+	/* Find out how much memory is available. */
+	physmem = memsize_scan(kernend);
 
 	/*
 	 * Now that we know how much memory we have, initialize the
@@ -317,7 +283,7 @@ mach_init(argc, argv, envp)
 				break;
 
 			default:
-				printf("bootflag '%c' not recognised", *cp);
+				printf("bootflag '%c' not recognised\n", *cp);
 			}
 		}
 	}
@@ -494,8 +460,8 @@ softintr_init()
     static const char *intr_names[] = IPL_SOFTNAMES;
 
     for (i=0; i < IPL_NSOFT; i++) {
-	evcnt_attach_dynamic(&soft_evcnt[i], EVCNT_TYPE_INTR, NULL,
-		"soft", intr_names[i]);
+	    evcnt_attach_dynamic(&soft_evcnt[i], EVCNT_TYPE_INTR, NULL,
+				 "soft", intr_names[i]);
     }
 }
 
@@ -742,6 +708,51 @@ cpu_intr(status, cause, pc, ipending)
 	}
 }
 
+/*
+ * Find out how much memory is available by testing memory.
+ * Be careful to save and restore the original contents for msgbuf.
+ */
+int
+memsize_scan(first)
+	caddr_t first;
+{
+	volatile int *vp, *vp0;
+	int mem, tmp, tmp0;
+
+#define PATTERN1 0xa5a5a5a5
+#define	PATTERN2 ~PATTERN1
+
+	/*
+	 * Non destructive scan of memory to determine the size
+	 * Use the first page to test for memory aliases.  This
+	 * also has the side effect of flushing the bus alignment
+	 * buffer
+	 */
+	mem = btoc((paddr_t)first - MIPS_KSEG0_START);
+	vp = (int *)MIPS_PHYS_TO_KSEG1(mem << PGSHIFT);
+	vp0 = (int *)MIPS_PHYS_TO_KSEG1(0); /* Start of physical memory */
+	tmp0 = *vp0;
+	while (vp < (int *)MIPS_MAX_MEM_ADDR) {
+		tmp = *vp;
+		*vp  = PATTERN1;
+		*vp0 = PATTERN2;
+		wbflush();
+		if (*vp != PATTERN1)
+			break;
+		*vp  = PATTERN2;
+		*vp0 = PATTERN1;
+		wbflush();
+		if (*vp != PATTERN2)
+			break;
+		*vp = tmp;
+		vp += NBPG/sizeof(int);
+		mem++;
+	}
+	*vp0 = tmp0;
+	return mem;
+}
+
+
 #ifdef EXEC_ECOFF
 #include <sys/exec_ecoff.h>
 
@@ -803,12 +814,12 @@ null_cnpollc(dev, on)
 void
 consinit()
 {
-  int zs_unit = 0;
+	int zs_unit = 0;
 
-  tty00_is_console = 1;
+	tty00_is_console = 1;
 
-  zs_unit = 0;
-  cn_tab = &consdev_zs;
+	zs_unit = 0;
+	cn_tab = &consdev_zs;
 
-  (*cn_tab->cn_init)(cn_tab);
+	(*cn_tab->cn_init)(cn_tab);
 }
