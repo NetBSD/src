@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.12.2.3 1997/11/20 08:30:37 mellon Exp $
+#	$NetBSD: MAKEDEV,v 1.12.2.4 1997/11/28 09:12:54 mellon Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -87,8 +87,8 @@ fd)
 		mknod fd/$n c 7 $n
 		n=$(($n + 1))
 	done
-	chown -R bin.bin fd
-	chmod 555 fd
+	chown -R root.wheel fd
+	chmod 755 fd
 	chmod 666 fd/*
 	;;
 
@@ -118,7 +118,7 @@ bpf*|tun*)
 	tun*) name=tun;	unit=${i#tun};	chr=90;;
 	esac
 	rm -f $name$unit
-	mknod $name$unit c 12 $unit
+	mknod $name$unit c $chr $unit
 	chmod 600 $name$unit
 	chown root.wheel $name$unit
 	;;
@@ -137,7 +137,7 @@ rz*|vnd*|ccd*)
 	ccd*) name=ccd;	unit=${i#ccd};	blk=24; chr=87;;
 	esac
 	case $unit in
-	[0-6])
+	[0-6]|8|9|1[0-4])
 		rm -f ${name}${unit}[a-h] r${name}${unit}[a-h]
 		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
 		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
@@ -227,10 +227,10 @@ mouse)
 #
 pm*|cfb*|xcfb*|mfb*)
 	case $i in
-	pm*)	name=pm;	unit=$i{#pm};	chr=8;;
-	cfb*)	name=cfb;	unit=$i{#cfb};	chr=13;;
-	xcfb*)	name=xcfb;	unit=$i{#xcfb};	chr=14;;
-	mfb*)	name=mfb;	unit=$i{#mfb};	chr=18;;
+	pm*)	name=pm;	unit=${i#pm};	chr=8;;
+	cfb*)	name=cfb;	unit=${i#cfb};	chr=13;;
+	xcfb*)	name=xcfb;	unit=${i#xcfb};	chr=14;;
+	mfb*)	name=mfb;	unit=${i#mfb};	chr=18;;
 	esac
 	case $unit in
 	0)
