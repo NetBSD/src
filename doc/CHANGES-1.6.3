@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.45 2004/03/28 08:56:45 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.46 2004/03/28 09:02:41 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -281,3 +281,8 @@ sys/dev/ic/esiop.c			1.25
 	The real value of the message is in msgin, not 
 	esiop_cmd->cmd_tables->msg_in[0], so print the correct value.
 	[bouyer, ticket #1633]
+
+sys/arch/vax/include/stdarg.h		1.16
+
+	Fix == vs = typo from rev. 1.13 in __va_copy. PR#24846
+	[kleink, ticket #1634]
