@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.33 2000/11/24 18:58:37 chs Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.34 2000/11/27 08:39:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -167,6 +167,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	}
 
 	procfs_hashins(pfs);
+	uvm_vnp_setsize(vp, 0);
 	lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 
 	return (error);

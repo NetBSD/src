@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.25 2000/10/09 18:07:06 thorpej Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.26 2000/11/27 08:39:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -263,7 +263,7 @@ mfs_close(v)
 	 * vnode, so if we find any other uses, it is a panic.
 	 */
 	if (vp->v_usecount > 1)
-		printf("mfs_close: ref count %ld > 1\n", vp->v_usecount);
+		printf("mfs_close: ref count %d > 1\n", vp->v_usecount);
 	if (vp->v_usecount > 1 || BUFQ_FIRST(&mfsp->mfs_buflist) != NULL)
 		panic("mfs_close");
 	/*

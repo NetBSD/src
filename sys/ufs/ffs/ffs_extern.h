@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.16 2000/04/04 09:23:20 jdolecek Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.17 2000/11/27 08:39:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -79,7 +79,7 @@ __BEGIN_DECLS
 int ffs_alloc __P((struct inode *, ufs_daddr_t, ufs_daddr_t , int, struct ucred *,
 		   ufs_daddr_t *));
 int ffs_realloccg __P((struct inode *, ufs_daddr_t, ufs_daddr_t, int, int ,
-		       struct ucred *, struct buf **));
+		       struct ucred *, struct buf **, ufs_daddr_t *));
 int ffs_reallocblks __P((void *));
 int ffs_valloc __P((void *));
 ufs_daddr_t ffs_blkpref __P((struct inode *, ufs_daddr_t, int, ufs_daddr_t *));
@@ -89,6 +89,7 @@ void ffs_clusteracct __P((struct fs *, struct cg *, ufs_daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((void *));
+int ffs_ballocn __P((void *));
 
 /* ffs_bswap.c */
 void ffs_sb_swap __P((struct fs*, struct fs *, int));
@@ -137,6 +138,7 @@ int ffs_read __P((void *));
 int ffs_write __P((void *));
 int ffs_fsync __P((void *));
 int ffs_reclaim __P((void *));
+int ffs_size __P((void *));
 __END_DECLS
 
  
