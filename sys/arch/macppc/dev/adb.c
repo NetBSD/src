@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.15 2003/07/15 02:43:26 lukem Exp $	*/
+/*	$NetBSD: adb.c,v 1.16 2005/02/01 02:05:10 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.15 2003/07/15 02:43:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.16 2005/02/01 02:05:10 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,7 +122,7 @@ adbattach(parent, self, aux)
 	if (strcmp(ca->ca_name, "via-cuda") == 0)
 		adbHardware = ADB_HW_CUDA;
 	else if (strcmp(ca->ca_name, "via-pmu") == 0)
-		adbHardware = ADB_HW_PB;
+		adbHardware = ADB_HW_PMU;
 
 	node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (node)
