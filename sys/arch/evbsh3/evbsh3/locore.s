@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.18 2000/07/13 18:02:10 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.19 2000/08/03 08:19:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -52,10 +52,18 @@
 #include <machine/trap.h>
 
 #define INIT_STACK	IOM_RAM_BEGIN + 0x003ff000
+
+#ifdef SH4
+#define SHREG_EXPEVT	0xff000024
+#define SHREG_INTEVT	0xff000028
+#define SHREG_MMUCR	0xff000010
+#define SHREG_TTB	0xff000008
+#else
 #define SHREG_EXPEVT	0xffffffd4
 #define SHREG_INTEVT	0xffffffd8
 #define SHREG_MMUCR	0xffffffe0
 #define SHREG_TTB	0xfffffff8
+#endif
 
 /*
  * These are used on interrupt or trap entry or exit.
@@ -270,7 +278,7 @@ start:
 	ldc	r0, sr
 
 	xor	r0, r0
-	mov	#SHREG_MMUCR, r2
+	mov.l	XL_SHREG_MMUCR, r2
 	mov.l	r0, @r2		/* MMU OFF */
 
 	bra	start1
@@ -286,6 +294,7 @@ start:
 #endif
 	.align	2
 SR_init:	.long	0x500000F0
+XL_SHREG_MMUCR:	.long	SHREG_MMUCR
 start1:
 
 #ifdef ROMIMAGE
@@ -969,11 +978,11 @@ switch_exited:
 	nop
 
 	mov.l	@r0, r0
-	mov	#SHREG_TTB, r2
+	mov.l	XL_SHREG_TTB, r2
 	mov.l	r0, @r2
 
 	/* flush TLB */
-	mov	#SHREG_MMUCR, r0
+	mov.l	XXL_SHREG_MMUCR, r0
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
@@ -1022,6 +1031,7 @@ XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
 XL_MMUCR_VBITS:	.long	0xfcfcff05
+XL_SHREG_TTB:	.long	SHREG_TTB
 /*
  * switch_exit(struct proc *p);
  * Switch to proc0's saved context and deallocate the address space and kernel
@@ -1054,11 +1064,11 @@ ENTRY(switch_exit)
 	mov	r10, r0
 	add	#PCB_PAGEDIRREG, r0
 	mov.l	@r0, r2
-	mov	#SHREG_TTB, r1
+	mov.l	XXL_SHREG_TTB, r1
 	mov.l	r2, @r1
 
 	/* flush TLB */
-	mov	#SHREG_MMUCR, r0
+	mov.l	XXL_SHREG_MMUCR, r0
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
@@ -1089,7 +1099,8 @@ ENTRY(switch_exit)
 	.globl	_C_LABEL(exit2)
 XLexit2:
 	.long	_C_LABEL(exit2)
-
+XXL_SHREG_MMUCR:
+	.long	SHREG_MMUCR
 XXLP_ADDR:
 	.long	P_ADDR
 
@@ -1142,7 +1153,7 @@ NENTRY(exphandler)
 100:
 #endif
 
-	mov	#SHREG_EXPEVT, r0
+	mov.l	XL_SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	cmp/eq	#0x40, r0	/* T_TLBINVALIDR */
 	bf	1f
@@ -1158,7 +1169,7 @@ NENTRY(exphandler)
 	bt	3b
 
 	INTRENTRY
-	mov	#SHREG_EXPEVT, r0
+	mov.l	XL_SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 	ESTI
@@ -1206,6 +1217,8 @@ NENTRY(exphandler)
 	.align	2
 XL_TLBPROTWR:
 	.long	0x000000c0
+XL_SHREG_EXPEVT:
+	.long	SHREG_EXPEVT
 
 	.globl	_C_LABEL(tlbmisshandler_stub)
 	.globl	_C_LABEL(tlbmisshandler_stub_end)
@@ -1320,7 +1333,7 @@ ENTRY(ConvVtoP)
 	neg	r1, r1
 	shld	r1, r0
 	shll2	r0
-	mov.l	XXXL_SHREG_TTB, r1
+	mov.l	XXL_SHREG_TTB, r1
 	or	r5, r1	
 	mov.l	@r1, r1
 	add	r0, r1
@@ -1367,7 +1380,7 @@ ENTRY(ConvVtoP)
 	neg	r1, r1
 	shld	r1, r0
 	shll2	r0
-	mov	#SHREG_TTB, r1
+	mov.l	XXL_SHREG_TTB, r1
 	mov.l	@r1, r1
 	add	r0, r1
 	mov.l	@r1, r2		/* r2 = pde */
@@ -1402,7 +1415,7 @@ XL_PT_MASK:	.long	PT_MASK
 XL_PG_FRAME:	.long	PG_FRAME
 XL_CSMASK:	.long	0xc0000000
 XL_KCSAREA:	.long	0x80000000
-XXXL_SHREG_TTB:		.long	SHREG_TTB
+XXL_SHREG_TTB:	.long	SHREG_TTB
 XL_P2AREA:	.long	0xa0000000
 #ifdef SH4
 XL_cacheflush:	.long	_sh4_cache_flush
@@ -1434,7 +1447,7 @@ XL_splimit_low2:	.long	0x80000000
 100:
 #endif
 7:
-	mov	#SHREG_INTEVT, r0
+	mov.l	XL_SHREG_INTEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
@@ -1489,6 +1502,7 @@ XL_splimit_low2:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
+XL_SHREG_INTEVT:	.long	SHREG_INTEVT
 XL_intrhandler:		.long	_C_LABEL(intrhandler)
 XXL_astpending:		.long	_C_LABEL(astpending)
 XXLT_ASTFLT:		.long	T_ASTFLT
