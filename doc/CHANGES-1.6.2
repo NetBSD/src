@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.1 2003/04/22 02:12:55 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.2 2003/04/28 06:27:19 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -9,3 +9,13 @@ sys/conf/osrelease.sh				patch
 share/tmac/doc-common				patch
 
 	Mark this as 1.6.1_STABLE.
+
+sys/dev/ata/ata_wdc.c				1.39
+sys/dev/ic/wdcvar.h				1.36
+sys/dev/pci/pciide.c				1.191
+sys/dev/pci/pciide_pdc202xx_reg.h		1.9
+
+	Make DMA mode works on Promise Ultra66/100 with 48-bit LBA drives.
+	Ok'ed by bouyer in tech-kern@netbsd.org.
+	[nakayama, ticket #1275]
+
