@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.52 2003/09/02 05:38:13 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.53 2003/10/10 23:51:00 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -184,6 +184,7 @@ For example:
 .
 .ds IFname de0
 .if \n[hp300]:\n[mvme68k]:\n[pmax]:\n[sparc] .ds IFname le0
+.if \n[hp700]   .ds IFname ie0
 .if \n[next68k] .ds IFname xe0
 .if \n[mac68k]  .ds IFname sn0
 .if \n[macppc]  .ds IFname mc0
@@ -294,7 +295,7 @@ directly.
 See
 .Xr useradd 8
 for more information on how to add a new user to the system.
-.if !\n[next68k] \{\
+.if !\n[hp700]:\n[next68k] \{\
 .It
 The X Window System
 .Pp
