@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2003/03/15 19:50:31 matt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.4 2003/05/16 21:40:41 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -97,23 +97,23 @@ struct pci_chipset {
 #define	pci_attach_hook(parent, self,  pba) \
 	((*(pba)->pba_pc->pc_funcs->pcf_bus_attach_hook)((parent), (self), (pba)))
 #define	pci_bus_maxdevs(pc, busno) \
-	((*pc->pc_funcs->pcf_bus_maxdevs)((pc), (busno)))
+	((*(pc)->pc_funcs->pcf_bus_maxdevs)((pc), (busno)))
 #define	pci_enumerate_bus(sc, match, pa) \
 	(pci_enumerate_bus_generic((sc), (match), (pa)))
 #define	pci_make_tag(pc, bus, dev, func) \
-	((*pc->pc_funcs->pcf_make_tag)((pc), (bus), (dev), (func)))
+	((*(pc)->pc_funcs->pcf_make_tag)((pc), (bus), (dev), (func)))
 #define	pci_decompose_tag(pc, tag, bp, dp, fp) \
-	((*pc->pc_funcs->pcf_decompose_tag)((pc), (tag), (bp), (dp), (fp)))
+	((*(pc)->pc_funcs->pcf_decompose_tag)((pc), (tag), (bp), (dp), (fp)))
 #define	pci_conf_read(pc, tag, reg) \
-	((*pc->pc_funcs->pcf_conf_read)((pc), (tag), (reg)))
+	((*(pc)->pc_funcs->pcf_conf_read)((pc), (tag), (reg)))
 #define	pci_conf_write(pc, tag, reg, data) \
-	((*pc->pc_funcs->pcf_conf_write)((pc), (tag), (reg), (data)))
+	((*(pc)->pc_funcs->pcf_conf_write)((pc), (tag), (reg), (data)))
 #define	pci_conf_hook(pc, bus, dev, func, id) \
-	((*pc->pc_funcs->pcf_conf_hook)((pc), (bus), (dev), (func), (id)))
+	((*(pc)->pc_funcs->pcf_conf_hook)((pc), (bus), (dev), (func), (id)))
 #define	pci_conf_interrupt(pc, bus, dev, pin, swiz, iline) \
-	((*pc->pc_funcs->pcf_conf_interrupt)((pc), (bus), (dev), (pin), (swiz), (iline)))
+	((*(pc)->pc_funcs->pcf_conf_interrupt)((pc), (bus), (dev), (pin), (swiz), (iline)))
 #define	pci_intr_map(pa, ihp) \
-	((*pa->pa_pc->pc_funcs->pcf_intr_map)((pa), (ihp)))
+	((*(pa)->pa_pc->pc_funcs->pcf_intr_map)((pa), (ihp)))
 #define	pci_intr_string(pc, ih) \
 	((*(pc)->pc_funcs->pcf_intr_string)((pc), (ih)))
 #define	pci_intr_evcnt(pc, ih) \
