@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.19 2004/04/10 18:47:56 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.20 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.19 2004/04/10 18:47:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.20 2004/04/11 15:40:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,7 +404,7 @@ brgphy_status(struct mii_softc *sc)
 			mii->mii_media_status = 0;
 		}
 		if (mii->mii_media_active & IFM_FDX)
-			mii->mii_media_active |= gmii_phy_getflowcontrol(sc);
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.11 2004/04/10 18:47:56 thorpej Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.11 2004/04/10 18:47:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ gentbi_status(struct mii_softc *sc)
 		if ((sc->mii_extcapabilities & EXTSR_1000XFDX) != 0 &&
 		    (anlpar & ANLPAR_X_FD) != 0)
 			mii->mii_media_active |=
-			    IFM_FDX | gmii_phy_getflowcontrol(sc);
+			    IFM_FDX | mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
