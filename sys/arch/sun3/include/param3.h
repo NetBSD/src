@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.35 1996/12/13 19:46:14 gwr Exp $	*/
+/*	$NetBSD: param3.h,v 1.36 1997/01/18 19:27:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -135,19 +135,6 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define sun3_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define sun3_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
-
-#define sun3_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define sun3_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /* XXX - Does this really belong here? -gwr */
 #include <machine/psl.h>
