@@ -1,0 +1,122 @@
+$NetBSD: UPDATING,v 1.1 2000/08/17 20:17:43 abs Exp $
+
+This file is intended to be a brief introduction to the build
+process and a reference on what to do if something doesn't work.
+
+For a more detailed description see Makefile.
+
+Recent changes:
+^^^^^^^^^^^^^^^
+
+20000623:
+	MKCRYPTO and friends added to share/mk/bsd.own.mk.
+	'cd share/mk ; make install' needed before make build.
+
+
+Hints for a more successful build:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Use object directories:
+	This helps to keep stale object
+	   files from polluting the build if a Makefile "forgets"
+	   about one.  It also makes it easier to clean up after
+	   a build.  It's also necessary if you want to use the
+	   same source tree for multiple machines.
+	   To use object directories:
+	    a) cd /usr/src ; make cleandir
+	    b) Add "OBJMACHINE=obj.<arch>" to /etc/mk.conf
+	    c) cd /usr/src ; make obj
+	    d) cd /usr/src ; make build
+    Build to a DESTDIR:
+	This helps to keep old
+	   installed files (especially libraries) from interfering
+	   with the new build.
+	   To build to a DESTDIR, set the DESTDIR environment
+	   variable before running make build.
+	   Problems: you might need to update critical utilities
+		without using DESTDIR since nothing is executed
+		from what is installed in DESTDIR.
+		(See critical utils, below)
+    Build often:
+	This keeps critical utilities current enough to not choke
+	on any other part of the source tree that depends on up to
+	date functionality.
+ 
+What to do if things don't work:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+When things don't work there is usually a few things that commonly
+should be done.
+    1)	make includes
+	This should be done automatically by make build.
+    2)  cd share/mk && make install
+	Again, automatically done by make build.
+
+Failsafe rebuild of a small part of the tree:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To make sure you rebuild something correctly you want to do
+something like the following:
+    1)  Make sure the includes and .mk files are up to date.
+    2)  Make sure any program used to build the particular
+	utility is up to date.  (yacc, lex, etc...)
+    3)  cd ...path/to/util...
+	make cleandir
+	rm ...all obj directories...
+	make cleandir			# yes, again
+	make obj
+	make depend && make
+
+Failsafe rebuild of the entire tree:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you really want to make sure the source tree is clean and
+ready for a build try the following:
+
+---cut here---
+#!/bin/sh
+. /etc/mk.conf
+
+if [ -z $BSDSRCDIR ] ; then
+    BSDSRCDIR=/usr/src
+fi
+if [ \! -d $BSDSRCDIR ] ; then
+    echo Unable to find sources
+    exit 1
+fi
+find $BSDSRCDIR -name \*.o -o -name obj.\* -o -name obj -exec rm \{\} \;
+
+if [ -z $BSDOBJDIR ] ; then
+    BSDOBJDIR=/usr/obj
+fi
+if [ -d $BSDOBJDIR ] ; then
+    rm -rf $BSDOBJDIR
+fi
+
+cd $BSDSRCDIR && make cleandir
+
+---cut here---
+
+Critical utilities:
+^^^^^^^^^^^^^^^^^^^
+	gnu/usr.bin/egcs
+	usr.bin/make
+	usr.bin/yacc
+	usr.bin/lex
+	crypto-*/usr.bin/compile_et
+	crypto-*/usr.bin/make_cmds
+
+Other problems and possibly solutions:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Symptom:Unreasonable compiler errors.
+Fix:	Rebuild gnu/usr.bin/egcs
+
+Symptom:Complaints involving a Makefile.
+Fix:	Make sure .mk files are up to date.
+	cd share/mk && make install
+Fix:	Rebuild usr.bin/make
+
+Symptom:
+Fix:	Rebuild usr.bin/yacc
+
+Symptom:
+Fix:	Rebuild usr.bin/lex
+
+Symptom:
+Fix:	rm /usr/lib/libbfd.a
