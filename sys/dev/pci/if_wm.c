@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.41 2003/09/10 04:02:17 tls Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.42 2003/10/17 20:41:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.41 2003/09/10 04:02:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.42 2003/10/17 20:41:21 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -107,21 +107,6 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #else
 #define	DPRINTF(x, y)	/* nothing */
 #endif /* WM_DEBUG */
-
-/*
- * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
- * There is a small but measurable benefit to avoiding the adjusment
- * of the descriptor so that the headers are aligned, for normal mtu,
- * on such platforms.  One possibility is that the DMA itself is
- * slightly more efficient if the front of the entire packet (instead
- * of the front of the headers) is aligned.
- */
-
-#ifdef __NO_STRICT_ALIGNMENT
-int wm_align_tweak	=	0;
-#else
-int wm_align_tweak	= 	2;
-#endif
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -215,6 +200,8 @@ struct wm_softc {
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
+
+	int		sc_align_tweak;
 
 	/*
 	 * Software state for the transmit and receive descriptors.
@@ -379,14 +366,14 @@ do {									\
 	 * size option, but what we REALLY want is (2K - 2)!  For this	\
 	 * reason, we can't "scoot" packets longer than the standard	\
 	 * Ethernet MTU.  On strict-alignment platforms, if the total	\
-	 * size exceeds (2K - 2) we set wm_align_tweak to 0 and let	\
+	 * size exceeds (2K - 2) we set align_tweak to 0 and let	\
 	 * the upper layer copy the headers.				\
 	 */								\
-	__m->m_data = __m->m_ext.ext_buf + wm_align_tweak;		\
+	__m->m_data = __m->m_ext.ext_buf + (sc)->sc_align_tweak;	\
 									\
 	__rxd->wrx_addr.wa_low =					\
 	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr + 		\
-		wm_align_tweak);					\
+		(sc)->sc_align_tweak);					\
 	__rxd->wrx_addr.wa_high = 0;					\
 	__rxd->wrx_len = 0;						\
 	__rxd->wrx_cksum = 0;						\
@@ -1951,17 +1938,25 @@ wm_init(struct ifnet *ifp)
 	int i, error = 0;
 	uint32_t reg;
 
-#ifndef __NO_STRICT_ALIGNMENT
-	if((ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN) >
-            (MCLBYTES - 2)) {
-		wm_align_tweak = 0;
-	}
-	else {
-		wm_align_tweak = 2;
-	}
+	/*
+	 * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
+	 * There is a small but measurable benefit to avoiding the adjusment
+	 * of the descriptor so that the headers are aligned, for normal mtu,
+	 * on such platforms.  One possibility is that the DMA itself is
+	 * slightly more efficient if the front of the entire packet (instead
+	 * of the front of the headers) is aligned.
+	 *
+	 * Note we must always set align_tweak to 0 if we are using
+	 * jumbo frames.
+	 */
+#ifdef __NO_STRICT_ALIGNMENT
+	sc->sc_align_tweak = 0;
 #else
-	wm_align_tweak = 0;
-#endif
+	if ((ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN) > (MCLBYTES - 2))
+		sc->sc_align_tweak = 0;
+	else
+		sc->sc_align_tweak = 2;
+#endif /* __NO_STRICT_ALIGNMENT */
 
 	/* Cancel any pending I/O. */
 	wm_stop(ifp, 0);
