@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfs_vfsops.c	7.19 (Berkeley) 4/16/91
- *	$Id: mfs_vfsops.c,v 1.3 1993/12/17 08:11:58 mycroft Exp $
+ *	$Id: mfs_vfsops.c,v 1.4 1994/02/06 10:13:02 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -164,7 +164,7 @@ mfs_start(mp, flags, p)
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_buflist != (struct buf *)(-1)) {
 		while (bp = mfsp->mfs_buflist) {
-			mfsp->mfs_buflist = bp->av_forw;
+			mfsp->mfs_buflist = bp->b_actf;
 			mfs_doio(bp, base);
 			wakeup((caddr_t)bp);
 		}

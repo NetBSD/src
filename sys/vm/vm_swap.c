@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.15 1994/01/07 22:34:37 mycroft Exp $
+ *	$Id: vm_swap.c,v 1.16 1994/02/06 10:16:50 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -99,10 +99,10 @@ swapinit()
 	/*
 	 * Now set up swap buffer headers.
 	 */
-	bswlist.av_forw = sp;
+	bswlist.b_actf = sp;
 	for (i = 0; i < nswbuf - 1; i++, sp++)
-		sp->av_forw = sp + 1;
-	sp->av_forw = NULL;
+		sp->b_actf = sp + 1;
+	sp->b_actf = NULL;
 }
 
 void
