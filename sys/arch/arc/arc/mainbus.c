@@ -1,8 +1,9 @@
-/*	$NetBSD: mainbus.c,v 1.8 2000/01/23 21:01:52 soda Exp $	*/
-/*	$OpenBSD: mainbus.c,v 1.6 1997/04/19 17:19:45 pefo Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
 /*
+ * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -62,17 +63,7 @@ mbmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-
-	/*
-	 * Only one mainbus, but some people are stupid...
-	 */	
-	if (match->cf_unit > 0)
-		return(0);
-
-	/*
-	 * That one mainbus is always here.
-	 */
-	return(1);
+	return (match->cf_unit == 0);
 }
 
 static void
@@ -83,7 +74,6 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
-	extern int cputype;
 
 	printf("\n");
 
@@ -105,42 +95,50 @@ mbattach(parent, self, aux)
 	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 
-	if (cputype == ACER_PICA_61 || cputype == MAGNUM) {
-		/* we have a PICA bus! */
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
 		nca.ca_name = "pica";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
-	}
-	else if (cputype == ALGOR_P4032) {
-		/* we have an ALGOR bus! :-) */
+		break;
+
+	case ALGOR_P4032:
+	case ALGOR_P5064:
 		nca.ca_name = "algor";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
+		break;
 	}
 
 	/* The following machines have a PCI bus */
-	if (cputype == ALGOR_P4032) {
+	switch (cputype) {
+	case ALGOR_P4032:
+	case ALGOR_P5064:
 		nca.ca_name = "pbcpcibr";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
+		break;
 	}
 
 	/* The following machines have an ISA bus */
-	if (cputype == ACER_PICA_61 ||
-	    cputype == MAGNUM ||
-	    cputype == DESKSTATION_TYNE ||
-            cputype == DESKSTATION_RPC44) {
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+	case DESKSTATION_TYNE:
+	case DESKSTATION_RPC44:
 		nca.ca_name = "isabr";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
+		break;
 	}
 }
 

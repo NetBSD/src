@@ -1,9 +1,9 @@
-/*	$NetBSD: arcbios.c,v 1.2 2000/01/23 21:01:50 soda Exp $	*/
-/*	$OpenBSD: arcbios.c,v 1.8 1997/05/01 15:13:28 pefo Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.3 2000/02/22 11:25:56 soda Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
- * Copyright (c) 1996 Per Fogelstrom.  All rights reserved.
+ * Copyright (c) 1996, 1997, 1998 Per Fogelstrom.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,10 +59,24 @@ static struct systypes {
 	char *sys_name;		/* May be left NULL if name is sufficient */
 	int  sys_type;
 } sys_types[] = {
+#ifdef arc
     { NULL,		"PICA-61",			ACER_PICA_61 },
+    { NULL,		"NEC-R94",			ACER_PICA_61 },
     { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE }, 
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
+    { NULL,		"RM200PCI",			SNI_RM200 },
+#endif
+#ifdef sgi
+    { NULL,		"SGI-IP17",			SGI_CRIMSON },
+    { NULL,		"SGI-IP19",			SGI_ONYX },
+    { NULL,		"SGI-IP20",			SGI_INDIGO },
+    { NULL,		"SGI-IP21",			SGI_POWER },
+    { NULL,		"SGI-IP22",			SGI_INDY },
+    { NULL,		"SGI-IP25",			SGI_POWER10 },
+    { NULL,		"SGI-IP26",			SGI_POWERI },
+    { NULL,		"SGI-IP32",			SGI_O2 },
+#endif
 };
 
 #define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
@@ -92,7 +106,7 @@ ARC_Call(Bios_PowerDown,		0x10);
 ARC_Call(Bios_Restart,			0x14);
 ARC_Call(Bios_Reboot,			0x18);
 ARC_Call(Bios_EnterInteractiveMode,	0x1c);
-ARC_Call(Bios_Unused1,			0x20);
+ARC_Call(Bios_Unused1,			0x20);	/* return_from_main? */
 ARC_Call(Bios_GetPeer,			0x24);
 ARC_Call(Bios_GetChild,			0x28);
 ARC_Call(Bios_GetParent,		0x2c);
@@ -103,7 +117,7 @@ ARC_Call(Bios_GetComponent,		0x3c);
 ARC_Call(Bios_SaveConfiguration,	0x40);
 ARC_Call(Bios_GetSystemId,		0x44);
 ARC_Call(Bios_GetMemoryDescriptor,	0x48);
-ARC_Call(Bios_Unused2,			0x4c);
+ARC_Call(Bios_Unused2,			0x4c);	/* signal??? */
 ARC_Call(Bios_GetTime,			0x50);
 ARC_Call(Bios_GetRelativeTime,		0x54);
 ARC_Call(Bios_GetDirectoryEntry,	0x58);
@@ -119,8 +133,11 @@ ARC_Call(Bios_SetEnvironmentVariable,	0x7c);
 ARC_Call(Bios_GetFileInformation,	0x80);
 ARC_Call(Bios_SetFileInformation,	0x84);
 ARC_Call(Bios_FlushAllCaches,		0x88);
+/* note: the followings don't exist on SGI */
+#ifdef arc
 ARC_Call(Bios_TestUnicodeCharacter,	0x8c);
 ARC_Call(Bios_GetDisplayStatus,		0x90);
+#endif
 
 /*
  *	BIOS based console, for early stage.
@@ -173,8 +190,7 @@ bios_init_console()
 /*
  * Get memory descriptor for the memory configuration and
  * create a layout database used by pmap init to set up
- * the memory system. Note that kernel option "MACHINE_NEW_NONCONTIG"
- * must be set for systems with non contigous physical memory.
+ * the memory system.
  *
  * Concatenate obvious adjecent segments.
  */
@@ -188,7 +204,7 @@ bios_configure_memory(mem_reserved, mem_clusters, mem_cluster_cnt_return)
 	int mem_cluster_cnt = 0;
 
 	arc_mem_t *descr = NULL;
-	vm_offset_t seg_start, seg_end;
+	paddr_t seg_start, seg_end;
 	int i, reserved;
 
 	while ((descr = Bios_GetMemoryDescriptor(descr)) != NULL) {
@@ -332,9 +348,12 @@ bios_ident()
 void
 bios_save_info()
 {
+#ifdef arc
 	displayinfo = *Bios_GetDisplayStatus(1);
+#endif
 }
 
+#ifdef arc
 /*
  * Return geometry of the display. Used by pccons.c to set up the
  * display configuration.
@@ -351,39 +370,4 @@ bios_display_info(xpos, ypos, xsize, ysize)
 	*xsize = displayinfo.CursorMaxXPosition;
 	*ysize = displayinfo.CursorMaxYPosition;
 }
-
-/*
- * Load the incore miniroot into memory. This is used for
- * Initial booting before we have any file system. CD-rom booting.
- */
-int
-bios_load_miniroot(path, where)
-	char *path;
-	caddr_t where;
-{
-	u_int file;
-	u_int count;
-	int error, size = 0;
-	static char mrdefault[] =
-	    {"scsi(0)disk(0)rdisk(0)partition(1)\\miniroot" };
-
-	if (path == 0)
-		path = mrdefault;
-	printf("Loading miniroot: %s\n", path);
-
-	if ((error = Bios_Open(path, 0, &file)) != arc_ESUCCESS) {
-		printf("Error %d. Load failed!\n", error);
-		return (-1);
-	}
-	do {
-
-		error = Bios_Read(file, where, 4096, &count);
-		cnputc('.');
-		where += count;
-		size += count;
-	} while ((error == arc_ESUCCESS) && (count != 0));
-
-	Bios_Close(file);
-	printf("\nLoaded.\n");
-	return (size);
-}
+#endif

@@ -1,5 +1,5 @@
-/*	$NetBSD: bus.h,v 1.5 2000/01/23 21:01:56 soda Exp $	*/
-/*	$OpenBSD: bus.h,v 1.13 1997/04/19 17:19:56 pefo Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2000/02/22 11:26:02 soda Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -53,10 +53,6 @@ typedef u_int32_t bus_addr_t;
 typedef u_int32_t bus_size_t;
 typedef u_int32_t bus_space_handle_t;
 typedef struct arc_bus_space *bus_space_tag_t;
-#if 1 /* XXX - <dev/isa/isavar.h> requires these types, not actually defined */
-typedef int bus_dma_tag_t; 
-typedef int bus_dmamap_t; 
-#endif
 
 struct arc_bus_space {
 	u_int32_t	bus_base;
@@ -79,6 +75,9 @@ extern struct arc_bus_space arc_bus_io, arc_bus_mem;
     ((*(nbshp) = (bsh) + (offset)), 0)
 
 #define bus_space_unmap(t, bsh, size)
+
+#define bus_space_subregion(t, bsh, offset, size, nbshp)		      \
+    ((*(nbshp) = (bsh) + (offset)), 0)
 
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \
@@ -108,6 +107,21 @@ bus_space_read(4,32)
 
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
 
+#define bus_space_read_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_read_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
+     bus_addr_t ba, CAT3(u_int,m,_t) *x, size_t cnt)			      \
+{									      \
+	while (cnt--)							      \
+		*x++ = CAT(bus_space_read_,n)(bst, bsh, ba++);		      \
+}
+
+bus_space_read_region(1,8)
+bus_space_read_region(2,16)
+bus_space_read_region(4,32)
+
+#define	bus_space_read_region_8	!!! bus_space_read_region_8 not implemented !!!
+
 #define bus_space_write(n,m)						      \
 static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
@@ -136,6 +150,38 @@ bus_space_write(4,32)
 	} while(0)
 
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
+
+#define bus_space_write_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_write_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,   \
+     bus_addr_t ba, const CAT3(u_int,m,_t) *x, size_t cnt)		      \
+{									      \
+	while (cnt--)							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba++, *x++);		      \
+}
+
+bus_space_write_region(1,8)
+bus_space_write_region(2,16)
+bus_space_write_region(4,32)
+
+#define	bus_space_write_region_8					      \
+    !!! bus_space_write_region_8 not implemented !!!
+
+#define bus_space_set_region(n,m)					      \
+static __inline void							      \
+CAT(bus_space_set_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
+     bus_addr_t ba, CAT3(u_int,m,_t) x, size_t cnt)			      \
+{									      \
+	while (cnt--)							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba++, x);		      \
+}
+
+bus_space_set_region(1,8)
+bus_space_set_region(2,16)
+bus_space_set_region(4,32)
+
+#define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
+
 
 /* These are OpenBSD extensions to the general NetBSD bus interface.  */
 #define	bus_space_read_raw_multi(n,m,l)					      \
@@ -182,5 +228,9 @@ bus_space_write_raw_multi(4,32,2)
 	 wbflush())
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+/* XXX - <dev/isa/isavar.h> requires these types, not actually defined */
+typedef void *bus_dma_tag_t;
+typedef void *bus_dmamap_t;
 
 #endif /* _ARC_BUS_H_ */

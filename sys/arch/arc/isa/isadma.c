@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
+/*	$NetBSD: isadma.c,v 1.3 2000/02/22 11:26:03 soda Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
@@ -24,7 +24,7 @@ struct dma_info {
 	int flags;
 	int active;
 	caddr_t addr;
-	vm_size_t nbytes;
+	bus_size_t nbytes;
 	struct isadma_seg phys[1];
 };
 
@@ -133,14 +133,13 @@ isadma_cascade(chan)
 void
 isadma_start(addr, nbytes, chan, flags)
 	caddr_t addr;
-	vm_size_t nbytes;
+	bus_size_t nbytes;
 	int chan;
 	int flags;
 {
 	struct dma_info *di;
 	int waport;
 	int mflags;
-	vm_size_t size;
 	struct isadma_softc *sc = isadma_sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;

@@ -1,5 +1,5 @@
-/*	$NetBSD: minidebug.c,v 1.7 2000/01/23 21:01:52 soda Exp $	*/
-/*	$OpenBSD: minidebug.c,v 1.5 1997/04/19 17:19:46 pefo Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.8 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -141,6 +141,9 @@ static char *c0_reg[32] = {
 
 extern u_int mdbpeek __P((int));
 extern void mdbpoke __P((int, int));
+#ifdef __OpenBSD__
+extern void cpu_setwatch __P((int, int));
+#endif
 extern void trapDump __P((char *));
 extern void stacktrace __P((void));
 extern u_int MachEmulateBranch __P((int *, int, int, u_int));
@@ -576,6 +579,25 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			}
 			break;
 			
+#ifdef __OpenBSD__
+		case 'w':
+			printf("watch ");
+			c = gethex(&newaddr, newaddr);
+			size = 3;
+			if(c == ',') {
+				c = cngetc();
+				cnputc(c);
+				if(c == 'r')
+					size = 2;
+				else if(c == 'w')
+					size = 1;
+				else
+					size = 0;
+			}
+			cpu_setwatch(0, (newaddr & ~7) | size);
+			break;
+#endif
+
 		default:
 			cnputc('\a');
 			break;

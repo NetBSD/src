@@ -1,5 +1,5 @@
-/*	$NetBSD: arc_trap.c,v 1.8 2000/01/23 21:01:49 soda Exp $	*/
-/*	$OpenBSD: trap.c,v 1.5 1996/09/02 11:33:24 pefo Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.9 2000/02/22 11:25:56 soda Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,15 +71,16 @@
 
 #include <arc/pica/pica.h>
 #include <arc/arc/arctype.h>
-extern u_int cputype;
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
+#define	MIPS_INT_LEVELS	8
+
 struct {
 	int	int_mask;
 	int	(*int_hand)(u_int, struct clockframe *);
-} cpu_int_tab[8];
+} cpu_int_tab[MIPS_INT_LEVELS];
 
 int cpu_int_mask;	/* External cpu interrupt mask */
 
@@ -103,7 +104,7 @@ arc_hardware_intr(mask, pc, statusReg, causeReg)
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
-	for(i = 0; i < 5; i++) {
+	for(i = 0; i < MIPS_INT_LEVELS; i++) {
 		if(cpu_int_tab[i].int_mask & mask) {
 			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
 		}
@@ -125,13 +126,14 @@ set_intr(mask, int_hand, prio)
 	int	(*int_hand)(u_int, struct clockframe *);
 	int	prio;
 {
-	if(prio > 5)
+	if(prio > MIPS_INT_LEVELS)
 		panic("set_intr: to high priority");
 
 	if(cpu_int_tab[prio].int_mask != 0 &&
 	   (cpu_int_tab[prio].int_mask != mask ||
-	    cpu_int_tab[prio].int_hand != int_hand))
+	    cpu_int_tab[prio].int_hand != int_hand)) {
 		panic("set_intr: int already set");
+	}
 
 	cpu_int_tab[prio].int_hand = int_hand;
 	cpu_int_tab[prio].int_mask = mask;
@@ -152,6 +154,7 @@ set_intr(mask, int_hand, prio)
 	case DESKSTATION_RPC44:
 		break;
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		break;
 	}
 }

@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.arc,v 1.33 2000/02/01 05:25:27 tsutsui Exp $
-#	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
+#	$NetBSD: Makefile.arc,v 1.34 2000/02/22 11:25:58 soda Exp $
+#	$OpenBSD: Makefile.arc,v 1.13 1999/08/15 20:43:57 niklas Exp $
 
 # Makefile for NetBSD
 #
@@ -187,9 +187,6 @@ SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
 	${ARC}/arc/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
-#OBSOLETE:
-#.depend: ${SRCS} assym.h param.c
-#	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARC}/arc/locore.S ${ARC}/arc/fp.S
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${ARC}/arc/locore_machdep.S 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.5 2000/01/23 21:01:53 soda Exp $	*/
+/*	$NetBSD: dma.h,v 1.6 2000/02/22 11:26:00 soda Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -48,14 +48,14 @@
  *  Hardware dma registers.
  */
 typedef volatile struct {
-	int		dma_mode;
-	int		pad1;
-	int		dma_enab;
-	int		pad2;
-	int		dma_count;
-	int		pad3;
-	vm_offset_t	dma_addr;
-	int		pad4;
+	int32_t		dma_mode;
+	int32_t		pad1;
+	int32_t		dma_enab;
+	int32_t		pad2;
+	int32_t		dma_count;
+	int32_t		pad3;
+	int32_t		dma_addr;
+	int32_t		pad4;
 } DmaReg, *pDmaReg;
 
 #define	R4030_DMA_MODE_40NS	0x00	/* Device dma timing */
@@ -95,8 +95,8 @@ typedef volatile struct {
 
 typedef union dma_pte {
 	struct {
-	    vm_offset_t	lo_addr;	/* Low part of translation addr */
-	    vm_offset_t	hi_addr;	/* High part of translation addr */
+	    paddr_t	lo_addr;	/* Low part of translation addr */
+	    paddr_t	hi_addr;	/* High part of translation addr */
 	} entry;
 	struct bbb {
 	    union dma_pte *next;	/* Next free translation entry */
@@ -111,9 +111,9 @@ typedef union dma_pte {
 typedef struct dma_softc {
 	struct device	sc_dev;		/* use as a device */
 	struct esp_softc *sc_esp;
-	vm_offset_t	dma_va;		/* Viritual address for transfer */
-	int		req_va;		/* Original request va */
-	vm_offset_t	next_va;	/* Value to program into dma regs */
+	bus_addr_t	dma_va;		/* Viritual address for transfer */
+	vaddr_t		req_va;		/* Original request va */
+	bus_addr_t	next_va;	/* Value to program into dma regs */
 	int		next_size;	/* Value to program into dma regs */
 	int		mode;		/* Mode register value and direction */
 	dma_pte_t	*pte_base;	/* Pointer to dma tlb array */

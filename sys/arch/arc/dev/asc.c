@@ -1,5 +1,5 @@
-/*	$NetBSD: asc.c,v 1.20 2000/01/23 21:01:53 soda Exp $	*/
-/*	$OpenBSD: asc.c,v 1.5 1997/04/19 17:19:50 pefo Exp $	*/
+/*	$NetBSD: asc.c,v 1.21 2000/02/22 11:25:59 soda Exp $	*/
+/*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
 /*-
@@ -121,9 +121,6 @@
  *
  */
 
-#include <asc.h>
-#if NASC > 0
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/dkstat.h>
@@ -152,7 +149,6 @@
 
 
 #define	readback(a)	{ register int foo; foo = (a); }
-extern int cputype;
 
 /*
  * In 4ns ticks.
@@ -407,7 +403,7 @@ typedef struct scsi_state {
 	int	dmaresid;	/* amount not transfered if chunk suspended */
 	int	cmdlen;		/* length of command in cmd */
 	int	buflen;		/* total remaining amount of data to transfer */
-	vm_offset_t buf;	/* current pointer within scsicmd->buf */
+	vaddr_t	buf;		/* current pointer within scsicmd->buf */
 	int	flags;		/* see below */
 	int	msglen;		/* number of message bytes to read */
 	int	msgcnt;		/* number of message bytes received */
@@ -487,7 +483,9 @@ struct scsipi_device asc_dev = {
 
 static int asc_intr __P((void *));
 static int asc_poll __P((struct asc_softc *, int));
+#ifdef DEBUG
 static void asc_DumpLog __P((char *));
+#endif
 
 /*
  * Match driver based on name
@@ -538,10 +536,10 @@ ascattach(parent, self, aux)
 		bufsiz = 64 * 1024;
 	};
 	/*
-	 * Now for timing. The pica has a 25Mhz, NEC RISCstation has a 40MHz.
+	 * Now for timing. The pica has a 25Mhz, NEC M403 has a 40MHz.
 	 */
 	switch (cputype) {
-	case MAGNUM:
+	case MAGNUM: /* XXX - NEC M403 */
 		asc->min_period = ASC_MIN_PERIOD40;
 		asc->max_period = ASC_MAX_PERIOD40;
 		asc->ccf = ASC_CCF(40);
@@ -677,7 +675,7 @@ asc_scsi_cmd(xs)
 	 *  Flush caches for any data buffer
 	 */
 	if(xs->datalen != 0) {
-		mips3_HitFlushDCache((vm_offset_t)xs->data, xs->datalen);
+		mips3_HitFlushDCache((vaddr_t)xs->data, xs->datalen);
 	}
 	/*
 	 *  The hack on the next few lines are to avoid buffers
@@ -773,7 +771,7 @@ asc_reset(asc, regs)
 	/* include ASC_CNFG2_SCSI2 if you want to allow SCSI II commands */
 	regs->asc_cnfg2 = /* ASC_CNFG2_RFB | ASC_CNFG2_SCSI2 | */ ASC_CNFG2_EPL;
 	switch (cputype) {
-	case MAGNUM: /* NEC RISCstation */
+	case MAGNUM: /* XXX - NEC M403 */
 		/* only if EPL is FE (Feature Enable bit for 53CF94) */
 		regs->asc_cnfg3 = ASC_CNFG3_FCLK; /* clock 40MHz */
 		break;
@@ -837,7 +835,7 @@ asc_startcmd(asc, target)
 	if(!(state->flags & CHECK_SENSE)) {
 		bcopy(scsicmd->cmd, &state->cmd, scsicmd->cmdlen);
 		state->cmdlen = scsicmd->cmdlen;
-		state->buf = (vm_offset_t)scsicmd->data;
+		state->buf = (vaddr_t)scsicmd->data;
 		state->buflen = scsicmd->datalen;
 	}
 	len = state->cmdlen;
@@ -872,7 +870,7 @@ asc_startcmd(asc, target)
 			state->flags |= TRY_SYNC;
 		} else
 			asc->script = &asc_scripts[SCRIPT_SIMPLE];
-		state->buf = (vm_offset_t)0;
+		state->buf = (vaddr_t)0;
 	}
 
 #ifdef DEBUG
@@ -1433,7 +1431,7 @@ asc_end(asc, status, ss, ir)
 			ss->byte2 = sc_link->scsipi_scsi.lun << 5;
 			ss->length = sizeof(struct scsipi_sense_data);
 			state->cmdlen = sizeof(*ss);
-			state->buf = (vm_offset_t)&scsicmd->sense.scsi_sense;
+			state->buf = (vaddr_t)&scsicmd->sense.scsi_sense;
 			state->buflen = sizeof(struct scsipi_sense_data);
 			state->flags |= CHECK_SENSE;
 			mips3_HitFlushDCache(state->buf, state->buflen);
@@ -2110,5 +2108,3 @@ asc_DumpLog(str)
 	} while (lp != asc_logp);
 }
 #endif	/* DEBUG */
-
-#endif	/* NASC > 0 */

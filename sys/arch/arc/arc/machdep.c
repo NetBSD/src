@@ -1,5 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.28 2000/01/23 21:01:51 soda Exp $	*/
-/*	$OpenBSD: machdep.c,v 1.29 1997/05/19 16:21:20 pefo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +91,7 @@
 #include <mips/psl.h>
 #ifdef DDB
 #include <mips/db_machdep.h>
+#include <ddb/db_extern.h>
 #endif
 
 #include <sys/exec_ecoff.h>
@@ -212,9 +214,9 @@ mach_init(argc, argv, envv)
 {
 	char *cp;
 	int i;
-	vm_offset_t kernstartpfn, kernendpfn, first, last;
+	paddr_t kernstartpfn, kernendpfn, first, last;
 	caddr_t kernend, v;
-	vm_size_t size;
+	vsize_t size;
 	extern char edata[], end[];
 
 	/* clear the BSS segment in kernel code */
@@ -269,8 +271,8 @@ mach_init(argc, argv, envv)
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-		arc_bus_io.bus_base = 0xb0000000;		/*XXX*/
-		arc_bus_mem.bus_base = 0xa0000000;		/*XXX*/
+		arc_bus_io.bus_base = RPC44_V_ISA_IO;
+		arc_bus_mem.bus_base = RPC44_V_ISA_MEM;
 		com_console_address = 0; /* Don't screew the mouse... */
 
 		/*
@@ -297,11 +299,21 @@ mach_init(argc, argv, envv)
 
 		break;
 
+	case SNI_RM200:
+		strcpy(cpu_model, "Siemens Nixdorf RM200");
+#if 0
+		arc_bus_io.bus_base = RM200_V_ISA_IO;
+		arc_bus_mem.bus_base = RM200_V_ISA_MEM;
+#endif
+		com_console_address = 0; /* Don't screew the mouse... */
+		break;
+
 	case -1:	/* Not identified as an ARC system. We have a couple */
 			/* of other options. Systems not having an ARC Bios  */
 
 			/* Make this more fancy when more comes in here */
 		environment = envv;
+#if 0
 		cputype = ALGOR_P4032;
 		strcpy(cpu_model, "Algorithmics P-4032");
 		arc_bus_io.bus_sparse1 = 2;
@@ -309,6 +321,15 @@ mach_init(argc, argv, envv)
 		arc_bus_io.bus_sparse4 = 0;
 		arc_bus_io.bus_sparse8 = 0;
 		com_console_address = P4032_COM1;
+#else
+		cputype = ALGOR_P5064;
+		strcpy(cpu_model, "Algorithmics P-5064");
+		arc_bus_io.bus_sparse1 = 0;
+		arc_bus_io.bus_sparse2 = 0;
+		arc_bus_io.bus_sparse4 = 0;
+		arc_bus_io.bus_sparse8 = 0;
+		com_console_address = P5064_COM1;
+#endif
 
 		mem_clusters[0].start = 0;
 		mem_clusters[0].size =
@@ -413,28 +434,12 @@ mach_init(argc, argv, envv)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 *
-	 * XXX this may clobber PTEs needed by the BIOS.
-	 */
-	mips_vector_init();
-
-#ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
-#endif
-
-	/*
 	 * Now its time to abandon the BIOS and be self supplying.
 	 * Start with cleaning out the TLB. Bye bye Microsoft....
+	 *
+	 * This may clobber PTEs needed by the BIOS.
 	 */
-#ifdef	PREDATES_LOCORE_VECTOR_INIT
-	cpu_arch = 3;
-	mips3_SetWIRED(0);
-	mips3_TLBFlush();
-	mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
-	mips3_vector_init();
-#endif
+	mips_vector_init();
 
 	switch (cputype) {
 	case ACER_PICA_61:
@@ -450,6 +455,11 @@ mach_init(argc, argv, envv)
 		break;
 
 	case ALGOR_P4032:
+	case ALGOR_P5064:
+		break;
+
+	case SNI_RM200:
+		/*XXX*/
 		break;
 	}
 
@@ -556,7 +566,7 @@ mach_init(argc, argv, envv)
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vm_size_t)allocsys(NULL, NULL);
+	size = (vsize_t)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
@@ -762,12 +772,14 @@ consinit()
 		return;
 #endif
 		break;
+
 	case MAGNUM:
 #if NFB > 0
 		fb_console();
 		return;
 #endif
 		break;
+
 	case DESKSTATION_TYNE:
 	case DESKSTATION_RPC44:
 #if NPC_ISA > 0
@@ -775,9 +787,12 @@ consinit()
 		return;
 #endif
 		break;
+
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		/* XXX For now... */
 		break;
+
 	default:
 #if NVGA > 0
 		vga_localbus_console();
@@ -982,10 +997,12 @@ cpu_reboot(howto, bootstr)
 		if (howto & RB_DUMP)
 			dumpsys();
 		printf("System restart.\n");
-		delay(2000000);
 #if NPC > 0
-		(void)kbc_8042sysreset();	/* Try this first */
-		delay(100000);			/* Give it a chance */
+		/* This is only done on systems with pccons driver */
+		if(cputype != ALGOR_P4032) {		
+			(void)kbc_8042sysreset();	/* Try this first */
+			delay(100000);			/* Give it a chance */
+		}
 #endif
 		__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
 		while(1); /* Forever */

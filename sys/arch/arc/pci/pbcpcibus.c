@@ -1,4 +1,4 @@
-/*	$NetBSD: pbcpcibus.c,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
+/*	$OpenBSD: pbcpcibus.c,v 1.7 1998/03/25 11:52:48 pefo Exp $ */
 /*	$OpenBSD: pbcpcibus.c,v 1.4 1997/04/19 17:20:02 pefo Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom.
+ *	Per Fogelstrom, Opsycon AB.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -57,7 +57,6 @@
 #include <arc/pci/v962pcbreg.h>
 
 extern vm_map_t phys_map;
-extern int cputype;
 extern char eth_hw_addr[];	/* Hardware ethernet address stored elsewhere */
 
 int	 pbcpcibrmatch __P((struct device *, struct cfdata *, void *));
@@ -89,6 +88,27 @@ struct cfdriver pbcpcibr_cd = {
 static int      pbcpcibrprint __P((void *, const char *pnp));
 
 struct pcibr_config pbc_config;
+static int pbc_version;
+
+/*
+ * Code from "pci/if_de.c" used to calculate crc32 of ether rom data.
+ * Another example can be found in document EC-QPQWA-TE from DEC.
+ */
+#define	TULIP_CRC32_POLY	0xEDB88320UL
+static __inline__ unsigned
+srom_crc32(const unsigned char *databuf, size_t datalen)
+{
+	u_int idx, bit, data, crc = 0xFFFFFFFFUL;
+
+	for (idx = 0; idx < datalen; idx++) {
+		for (data = *databuf++, bit = 0; bit < 8; bit++, data >>= 1) {
+			crc = (crc >> 1) ^
+			    (((crc ^ data) & 1) ? TULIP_CRC32_POLY : 0);
+		}
+	}
+	return (crc);
+}
+
 
 int
 pbcpcibrmatch(parent, match, aux)
@@ -116,6 +136,7 @@ pbcpcibrattach(parent, self, aux)
 
 	switch(cputype) {
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		V96X_PCI_BASE0 = V96X_PCI_BASE0 & 0xffff0000;
 
 		lcp = sc->sc_pcibr = &pbc_config;
@@ -134,6 +155,7 @@ pbcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_conf_read = pbc_conf_read;
 		lcp->lc_pc.pc_conf_write = pbc_conf_write;
 		lcp->lc_pc.pc_ether_hw_addr = pbc_ether_hw_addr;
+		lcp->lc_pc.pc_sync_cache = mips3_HitFlushDCache;
 
 	        lcp->lc_pc.pc_intr_v = lcp;
 		lcp->lc_pc.pc_intr_map = pbc_intr_map;
@@ -141,7 +163,8 @@ pbcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_establish = pbc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = pbc_intr_disestablish;
 
-		printf(": V3 V962, Revision %x.\n", V96X_PCI_CC_REV);
+		pbc_version = V96X_PCI_CC_REV;
+		printf(": V3 V962, Revision %x.\n", pbc_version);
 		break;
 	}
 
@@ -171,22 +194,25 @@ pbcpcibrprint(aux, pnp)
  *  Get PCI physical address from given viritual address.
  */
 
-vm_offset_t
-vtophys(p)
-	void *p;
+paddr_t
+vtophysaddr(dp, va)
+	struct device *dp;
+	vaddr_t va;
 {
-	vm_offset_t pa;
-	vm_offset_t va;
+	paddr_t pa;
 
-	va = (vm_offset_t)p;
 	if(va >= UADDR) {	/* Stupid driver have buf on stack!! */
-		va = (vm_offset_t)curproc->p_addr + (va & ~UADDR);
+		va = (vaddr_t)curproc->p_addr + (va & ~UADDR);
 	}
-	if((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
+	if(va < VM_MIN_KERNEL_ADDRESS) {
 		pa = MIPS_CACHED_TO_PHYS(va);
 	}
-	else {
-		pa = pmap_extract(vm_map_pmap(phys_map), va);
+	else if (!pmap_extract(vm_map_pmap(phys_map), va, &pa)) {
+		panic("pbcpcibus.c:vtophysaddr(): pmap_extract %p", va);
+	}
+	if(dp->dv_class == DV_IFNET && pbc_version < V96X_VREV_C0) { 
+					/* BUG in early V962PBC's */
+		pa |= 0xc0000000;	/* Use aparture II */
 	}
 	return(pa);
 }
@@ -221,7 +247,7 @@ pbc_decompose_tag(cpv, tag, busp, devp, fncp)
 	int *busp, *devp, *fncp;
 {
 	if (busp != NULL)
-		*busp = (tag >> 16) & 0xff;
+		*busp = (tag >> 16) & 0x7;
 	if (devp != NULL)
 		*devp = (tag >> 11) & 0x1f;
 	if (fncp != NULL)
@@ -236,21 +262,50 @@ pbc_conf_read(cpv, tag, offset)
 {
 	pcireg_t data;
 	u_int32_t addr;
-	int device;
+	int bus, device, func, ad_low;
 	int s;
 
-	if((tag >> 16) != 0)
-		return(~0);
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
 		printf ("pci_conf_read: bad reg %x\n", offset);
 		return(~0);
 	}
+	pbc_decompose_tag(cpv, tag, &bus, &device, &func);
+	ad_low = 0;
 
-	device = (tag >> 11) & 0x1f;
-	addr = (0x800 << device) | (tag & 0x380) | offset;
+	switch (cputype) {
+	case ALGOR_P4032:
+		if(bus != 0 || device > 5 || func > 7) {
+			return(~0);
+		}
+		addr = (0x800 << device) | (func << 8) | offset;
+		ad_low = 0;
+		break;
+
+	case ALGOR_P5064:
+		if(bus == 0) {
+			if(device > 5 || func > 7) {
+				return(~0);
+			}
+			addr = (1L << (device + 24)) | (func << 8) | offset;
+			ad_low = 0;
+		}
+		else if(pbc_version >= V96X_VREV_C0) {
+			if(bus > 255 || device > 15 || func > 7) {
+				return(~0);
+			}
+			addr = (bus << 16) | (device << 11) | (func << 8);
+			ad_low = V96X_LB_MAPx_AD_LOW_EN;
+		}
+		else {
+			return(~0);
+		}
+		break;
+	}
 
 	s = splhigh();
 
+	/* high 12 bits of address go in map register, and set for conf space */
+	V96X_LB_MAP0 = ((addr >> 16) & V96X_LB_MAPx_MAP_ADR) | ad_low | V96X_LB_TYPE_CONF;
 	/* clear aborts */
 	V96X_PCI_STAT |= V96X_PCI_STAT_M_ABORT | V96X_PCI_STAT_T_ABORT;
 
@@ -263,14 +318,13 @@ pbc_conf_read(cpv, tag, offset)
 
 	if (V96X_PCI_STAT & V96X_PCI_STAT_M_ABORT) {
 		V96X_PCI_STAT |= V96X_PCI_STAT_M_ABORT;
-		printf ("device %d: master abort\n", device);
-		return(~0);
+		return(~0);	/* Nothing there */
 	}
 
 	if (V96X_PCI_STAT & V96X_PCI_STAT_T_ABORT) {
 		V96X_PCI_STAT |= V96X_PCI_STAT_T_ABORT;
 		printf ("PCI slot %d: target abort!\n", device);
-		return(~0);
+		return(~0);	/* Ooops! */
 	}
 
 	splx(s);
@@ -285,14 +339,46 @@ pbc_conf_write(cpv, tag, offset, data)
 	pcireg_t data;
 {
 	u_int32_t addr;
-	int device;
+	int bus, device, func, ad_low;
 	int s;
 
-	device = (tag >> 11) & 0x1f;
-	addr = (0x800 << device) | (tag & 0x380) | offset;
+	pbc_decompose_tag(cpv, tag, &bus, &device, &func);
+	ad_low = 0;
 
+	switch (cputype) {
+	case ALGOR_P4032:
+		if(bus != 0 || device > 5 || func > 7) {
+			return;
+		}
+		addr = (0x800 << device) | (func << 8) | offset;
+		ad_low = 0;
+		break;
+
+	case ALGOR_P5064:
+		if(bus == 0) {
+			if(device > 5 || func > 7) {
+				return;
+			}
+			addr = (1L << (device + 24)) | (func << 8) | offset;
+			ad_low = 0;
+		}
+		else if(pbc_version >= V96X_VREV_C0) {
+			if(bus > 255 || device > 15 || func > 7) {
+				return;
+			}
+			addr = (bus << 16) | (device << 11) | (func << 8);
+			ad_low = V96X_LB_MAPx_AD_LOW_EN;
+		}
+		else {
+			return;
+		}
+		break;
+	}
+  
 	s = splhigh();
 
+	/* high 12 bits of address go in map register, and set for conf space */
+	V96X_LB_MAP0 = ((addr >> 16) & V96X_LB_MAPx_MAP_ADR) | ad_low | V96X_LB_TYPE_CONF;
 	/* clear aborts */
 	V96X_PCI_STAT |= V96X_PCI_STAT_M_ABORT | V96X_PCI_STAT_T_ABORT;
 
@@ -321,17 +407,63 @@ pbc_conf_write(cpv, tag, offset, data)
 }
 
 /*
- *	Hook to get ethernet hardware address when not in dev rom
+ *	Build the serial rom info normaly stored in an EEROM on
+ *	PCI DEC21x4x boards. Cheapo designs skips the rom so
+ *	we do the job here. The setup is not 100% correct but
+ *	close enough to make the driver happy!
  */
 int
-pbc_ether_hw_addr(cp)
-	u_int8_t *cp;
+pbc_ether_hw_addr(p)
+	u_int8_t *p;
 {
-	if(cputype == ALGOR_P4032) {
-		bcopy(eth_hw_addr, cp, 6);
-		return(0);
+	int i;
+
+	for(i = 0; i < 128; i++)
+		p[i] = 0x00;
+	p[18] = 0x03;	/* Srom version. */
+	p[19] = 0x01;	/* One chip. */
+	/* Next six, ethernet address. */
+	bcopy(eth_hw_addr, &p[20], 6);
+
+	p[26] = 0x00;	/* Chip 0 device number */
+	p[27] = 30;		/* Descriptor offset */
+	p[28] = 00;
+	p[29] = 00;		/* MBZ */
+					/* Descriptor */
+	p[30] = 0x00;	/* Autosense. */
+	p[31] = 0x08;
+	switch (cputype) {
+	case ALGOR_P4032:
+	case ALGOR_P5064:
+		p[32] = 0x01;	/* Block cnt */
+		p[33] = 0x02;	/* Medium type is AUI */
+		break;
+
+	default:
+		p[32] = 0xff;	/* GP cntrl */
+		p[33] = 0x01;	/* Block cnt */
+#define GPR_LEN 0
+#define	RES_LEN 0
+		p[34] = 0x80 + 12 + GPR_LEN + RES_LEN;
+		p[35] = 0x01;	/* MII PHY type */
+		p[36] = 0x00;	/* PHY number 0 */
+		p[37] = 0x00;	/* GPR Length */
+		p[38] = 0x00;	/* Reset Length */
+		p[39] = 0x00;	/* Media capabilities */
+		p[40] = 0x78;	/* Media capabilities */
+		p[41] = 0x00;	/* Autoneg advertisment */
+		p[42] = 0x78;	/* Autoneg advertisment */
+		p[43] = 0x00;	/* Full duplex map */
+		p[44] = 0x50;	/* Full duplex map */
+		p[45] = 0x00;	/* Treshold map */
+		p[46] = 0x18;	/* Treshold map */
+		break;
 	}
-	return(-1);
+
+	i = (srom_crc32(p, 126) & 0xFFFF) ^ 0xFFFF;
+	p[126] = i;
+	p[127] = i >> 8;
+	return(1);	/* Got it! */
 }
 
 int
@@ -360,11 +492,11 @@ pbc_intr_map(lcv, bustag, buspin, line, ihp)
 	pirq = buspin - 1;
 
 	switch(device) {
-	case 5:				/* DC21041 */
-		pirq = 1;
+	case 0:				/* DC21041 */
+		pirq = 9;
 		break;
-	case 8:				/* NCR SCSI */
-		pirq = 0;
+	case 1:				/* NCR SCSI */
+		pirq = 10;
 		break;
 	default:
 		switch (buspin) {

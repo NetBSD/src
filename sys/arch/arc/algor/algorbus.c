@@ -1,8 +1,8 @@
-/*	$NetBSD: algorbus.c,v 1.2 2000/01/23 21:01:49 soda Exp $	*/
-/*	$OpenBSD: algorbus.c,v 1.3 1997/04/19 17:19:37 pefo Exp $ */
+/*	$NetBSD: algorbus.c,v 1.3 2000/02/22 11:25:56 soda Exp $	*/
+/*	$OpenBSD: algorbus.c,v 1.6 1999/01/11 05:11:09 millert Exp $ */
 
 /*
- * Copyright (c) 1996 Per Fogelstrom
+ * Copyright (c) 1996, 1997, 1998 Per Fogelstrom, Opsycon AB
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom.
+ *	Per Fogelstrom, Opsycon AB.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -75,10 +75,9 @@ int	algor_iointr __P((unsigned, struct clockframe *));
 int	algor_clkintr __P((unsigned, struct clockframe *));
 int	algor_errintr __P((unsigned, struct clockframe *));
 
-extern int cputype;
-
 int p4032_imask = 0;
-int p4032_ixr = 0;
+int p4032_ixr0 = 0;	/* Routing for local and panic ints. */
+int p4032_ixr1 = 0;	/* Routing for pci and ide ints. */
 
 /*
  *  Interrupt dispatch table.
@@ -100,14 +99,18 @@ static struct algor_int_desc int_table[] = {
 	{0, algor_intrnull, (void *)NULL, 0 },  /* 13 */
 	{0, algor_intrnull, (void *)NULL, 0 },  /* 14 */
 	{0, algor_intrnull, (void *)NULL, 0 },  /* 15 */
+	{0, algor_intrnull, (void *)NULL, 0 },  /* 16 */
+	{0, algor_intrnull, (void *)NULL, 0 },  /* 17 */
+	{0, algor_intrnull, (void *)NULL, 0 },  /* 18 */
+	{0, algor_intrnull, (void *)NULL, 0 },  /* 19 */
 };
 #define NUM_INT_SLOTS (sizeof(int_table) / sizeof(struct algor_int_desc))
 
 struct algor_dev {
 	struct confargs	ps_ca;
-	u_int8_t	ps_mask;
-	u_int8_t	ps_ipl;
-	u_int16_t	ps_route;
+	u_int8_t	ps_mask;	/* Interrupt mask register value */
+	u_int8_t	ps_ipl;		/* IPL to route int to */
+	u_int16_t	ps_route;	/* int routing mask bits */
 	intr_handler_t	ps_handler;
 	void 		*ps_base;
 };
@@ -123,27 +126,34 @@ struct algor_dev algor_4032_cpu[] = {
     {{ NULL,     	 -1, NULL, },
        0, 		0x0000,	NULL,		(void *)NULL, },
 };
-#define NUM_ALGOR_DEVS (sizeof(algor_4032_cpu) / sizeof(struct algor_dev))
+
+struct algor_dev algor_5064_cpu[] = {
+    {{ "dallas_rtc",	 0, 0, },
+       P4032_IM_RTC,  IPL_CLOCK, 0xc000, algor_intrnull, (void *)P5064_CLOCK, },
+    {{ "com",		 1, 0, },
+       P4032_IM_COM1, IPL_TTY,   0x00c0, algor_intrnull, (void *)P5064_COM1,  },
+    {{ "com",      	 2, 0, },
+       P4032_IM_COM2, IPL_TTY,   0x0300, algor_intrnull, (void *)P5064_COM2,  },
+    {{ "lpt",      	 3, 0, },
+       P4032_IM_CENTR,IPL_TTY,   0x0c00, algor_intrnull, (void *)P5064_CENTR, },
+    {{ NULL,     	 -1, NULL, },
+       0, 		0x0000,	NULL,		(void *)NULL, },
+};
 
 /* IPL routing values */
 static int ipxrtab[] = {
-	0x000000,	/* IPL_BIO */
-	0x555555,	/* IPL_NET */
-	0xaaaaaa,	/* IPL_TTY */
-	0xffffff,	/* IPL_CLOCK */
+	0x00000000,	/* IPL_BIO */
+	0x55555555,	/* IPL_NET */
+	0xaaaaaaaa,	/* IPL_TTY */
+	0xffffffff,	/* IPL_CLOCK */
 };
 	
 
 
 struct algor_dev *algor_cpu_devs[] = {
-	NULL,			/* Unused */
-	NULL,			/* Unused */
-	NULL,			/* Unused */
-	NULL,			/* Unused */
-	NULL,			/* Unused */
-	NULL,			/* Unused */
-	algor_4032_cpu,		/* 6 = ALGORITHMICS R4032 Board */
-	NULL,
+  	NULL,			/* Unused */
+	algor_4032_cpu,		/* 0x21 = ALGORITHMICS P-4032 board */
+	algor_5064_cpu,		/* 0x22 = ALGORITHMICS P-5064 board */
 };
 int nalgor_cpu_devs = sizeof algor_cpu_devs / sizeof algor_cpu_devs[0];
 
@@ -160,8 +170,9 @@ algormatch(parent, match, aux)
                 return (0);
 
         /* Make sure that unit exists. */
-	if (match->cf_unit != 0 ||
-	    cputype > nalgor_cpu_devs || algor_cpu_devs[cputype] == NULL)
+	if (match->cf_unit != 0
+	    || (system_type - ALGOR_CLASS) > nalgor_cpu_devs
+	    || algor_cpu_devs[system_type - ALGOR_CLASS] == NULL)
 		return (0);
 
 	return (1);
@@ -180,10 +191,10 @@ algorattach(parent, self, aux)
 	printf("\n");
 
 	/* keep our CPU device description handy */
-	sc->sc_devs = algor_cpu_devs[cputype];
+	sc->sc_devs = algor_cpu_devs[system_type - ALGOR_CLASS];
 
 	/* set up interrupt handlers */
-	set_intr(MIPS_INT_MASK_1, algor_iointr, 2);
+	set_intr(MIPS_INT_MASK_1, algor_iointr, 3);
 	set_intr(MIPS_INT_MASK_4, algor_errintr, 0);
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
@@ -249,16 +260,23 @@ algor_intr_establish(ca, handler, arg)
 		int_table[slot].int_hand = handler;
 		int_table[slot].param = arg;
 	}
-	p4032_ixr |= ipxrtab[ipl] & dev->ps_route;
-	outb(P4032_IXR0, p4032_ixr);
-	outb(P4032_IXR1, p4032_ixr >> 8);
-	outb(P4032_IXR2, p4032_ixr >> 16);
+	p4032_ixr0 |= ipxrtab[ipl] & dev->ps_route;
+	switch(system_type) {
+	case ALGOR_P4032:
+		outb(P4032_IXR0, p4032_ixr0);
+		outb(P4032_IXR1, p4032_ixr0 >> 8);
+		break;
+	case ALGOR_P5064:
+		outb(P5064_IXR0, p4032_ixr0);
+		outb(P5064_IXR1, p4032_ixr0 >> 8);
+		break;
+	}
 
 	if(slot == 0) {		/* Slot 0 is special, clock */
-		set_intr(MIPS_INT_MASK_0 << ipl, algor_clkintr, ipl + 1);
+		set_intr(MIPS_INT_MASK_0 << ipl, algor_clkintr, ipl + 2);
 	}
 	else {
-		set_intr(MIPS_INT_MASK_0 << ipl, algor_iointr, ipl + 1);
+		set_intr(MIPS_INT_MASK_0 << ipl, algor_iointr, ipl + 2);
 	}
 
 	p4032_imask |= dev->ps_mask;
@@ -281,12 +299,25 @@ algor_pci_intr_establish(ih, level, handler, arg, name)
 	if(level < IPL_BIO || level >= IPL_CLOCK) {
 		panic("pci intr: ipl level out of range");
 	}
-	if(ih < 0 || ih >= 4) {
+	if(ih < 0 || ih >= 12 || ih == 7 || ih == 8) {
 		panic("pci intr: irq out of range");
 	}
 
-	imask = (0x1000 << ih);
-	route = (0x30000 << (ih+ih));
+	switch(system_type) {
+	case ALGOR_P4032:
+		imask = (0x00001000 << ih);
+		route = (0x3 << (ih+ih));
+		break;
+	case ALGOR_P5064:
+		if(ih > 8) {
+			imask = (0x00000100 << (ih - 8));
+		}
+		else {
+			imask = (0x00001000 << ih);
+		}
+		route = (0x3 << (ih+ih));
+		break;
+	}
 
 	slot = NUM_INT_SLOTS;
 	while(slot > 0) {
@@ -302,12 +333,20 @@ algor_pci_intr_establish(ih, level, handler, arg, name)
 	int_table[slot].int_hand = handler;
 	int_table[slot].param = arg;
 
-	p4032_ixr |= ipxrtab[level] & route;
-	outb(P4032_IXR0, p4032_ixr);
-	outb(P4032_IXR1, p4032_ixr >> 8);
-	outb(P4032_IXR2, p4032_ixr >> 16);
+	p4032_ixr1 |= ipxrtab[level] & route;
+	switch(system_type) {
+	case ALGOR_P4032:
+		outb(P4032_IXR2, p4032_ixr1);
+		break;
+	case ALGOR_P5064:
+		outb(P5064_IXR2, p4032_ixr1);
+		outb(P5064_IXR3, p4032_ixr1 >> 8);
+		outb(P5064_IXR4, p4032_ixr1 >> 16);
+		break;
+	}
 
 	set_intr(MIPS_INT_MASK_0 << level, algor_iointr, level + 1);
+	set_intr(MIPS_INT_MASK_0 << level, algor_iointr, level + 2);
 
 	p4032_imask |= imask;
 	outb(P4032_IMR, p4032_imask);
@@ -361,7 +400,7 @@ int
 algor_intrnull(val)
 	void *val;
 {
-	panic("uncaught ALGOR intr for slot %d\n", val);
+	panic("uncaught ALGOR intr for slot %d", val);
 }
 
 /*
@@ -396,8 +435,14 @@ algor_clkintr(mask, cf)
 	struct clockframe *cf;
 {
 	/* Ack clock interrupt */
-	outb(P4032_CLOCK, MC_REGC);
-	(void) inb(P4032_CLOCK + 4);
+	if(system_type == ALGOR_P4032) {
+		outb(P4032_CLOCK, MC_REGC);
+		(void) inb(P4032_CLOCK + 4);
+	}
+	else {
+		outb(P5064_CLOCK, MC_REGC);
+		(void) inb(P5064_CLOCK + 1);
+	}
 
 	hardclock(cf);
 
@@ -408,7 +453,7 @@ algor_clkintr(mask, cf)
 }
 
 /*
- * Handle algor interval clock interrupt.
+ * Handle algor error interrupt.
  */
 int
 algor_errintr(mask, cf)
@@ -422,6 +467,9 @@ algor_errintr(mask, cf)
 	if(why & P4032_IRR_BER) {
 		printf("Bus error interrupt\n");
 		outb(P4032_ICR, P4032_IRR_BER);
+#ifdef DDB
+		Debugger();
+#endif
 	}
 	if(why & P4032_IRR_PFAIL) {
 		printf("Power failure!\n");
@@ -429,11 +477,12 @@ algor_errintr(mask, cf)
 	if(why & P4032_IRR_DBG) {
 		printf("Debug switch\n");
 		outb(P4032_ICR, P4032_IRR_DBG);
-#ifdef DEBUG
-		mdbpanic();
+#ifdef DDB
+		Debugger();
 #else
-		printf("Not DEBUG compiled, sorry!\n");
+		printf("Sorry, recompile kernel with DDB!\n");
 #endif
+		outb(P4032_ICR, P4032_IRR_DBG);
 	}
 	return(~0);
 }

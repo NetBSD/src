@@ -1,5 +1,5 @@
-/*	$NetBSD: isabus.c,v 1.5 2000/01/23 21:01:59 soda Exp $	*/
-/*	$OpenBSD: isabus.c,v 1.11 1997/04/19 17:20:01 pefo Exp $	*/
+/*	$NetBSD: isabus.c,v 1.6 2000/02/22 11:26:03 soda Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
 /*-
@@ -140,9 +140,6 @@ int	isabr_iointr __P((unsigned int, struct clockframe *));
 void	isabr_initicu __P((void));
 void	intr_calculatemasks __P((void));
 int	fakeintr __P((void *a));
-
-extern int cputype;
-
 
 int
 isabrmatch(parent, match, aux)

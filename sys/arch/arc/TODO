@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.4 2000/01/23 21:01:48 soda Exp $
+$NetBSD: TODO,v 1.5 2000/02/22 11:25:55 soda Exp $
 
 To do list (not in any particular order).
 
@@ -7,17 +7,18 @@ To do list (not in any particular order).
 
     o   Boot. Standalone boot program instead of booting the kernel directly?
 
-    o   sigsetjmp/siglongjmp missing....
-
-    o   Add more videomodes to pccons driver. 50kHz and 64kHz monitors?
-	This seems to be hard. Need more info on the chip.
-
-    o   Find out why bitmap load to S3-928 flashes screen.
+    o   Find out why bitmap load to S3-928 flashes screen. (X server)
 	Know why (enable linear mode). Need S3 info.
 
     o   Can we have 32 double registers?
 
     o	64bit kernel/userland
+
+    o	repair DeskStation and Algor support
+
+	-   64bit device physical address space for Tyne (see OpenBSD pmap.c)
+
+	-   requires bus_dma
 
     o	source code structure is quite obsolete,
 	general clean up is needed as nisimura-san suggested.
@@ -30,17 +31,26 @@ To do list (not in any particular order).
 
 	-   clean up bus_space implementation, remove inb/outb
 
-	-   eliminate OpenBSD compat #define symbols
-
     o	fix kernel start address
 
     o	merge new wscons
 
     o	parse ARC BIOS configuration information and use it
 
+    o	omit __BROKEN_CONFIG_UNIT_USAGE
+
+    o	omit __SWAP_BROKEN in <mips/types.h>
+
     o	fix implementation of DELAY(), clean up clock implementation
 
+    o	asc.c scsi clock/NCR53CF94 handling clean up
+
     o	if_sn.c ether address handling clean up
+
+    o	com_lbus.c clock handling clean up
+
+    o	implement NCR 53c700(?) driver for NEC RISCserver 2200
+	based on amiga siop driver?
 
     o	use MI driver
 
@@ -55,5 +65,16 @@ To do list (not in any particular order).
 
 	-   make pccons MI, and share it with i386,
 	    or simply eliminate pccons
+
+    o easy part
+
+	- ARC boot device name -> NetBSD root device conversion
+
+	- and missing MI devices
+		lkm, tun, vcoda, raidframe, ...
+
+	- way to specify serial console
+
+    o resolve "XXX"
 
 Lots of other things.....

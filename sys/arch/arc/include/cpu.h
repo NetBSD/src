@@ -1,5 +1,5 @@
-/*	$NetBSD: cpu.h,v 1.7 2000/01/23 21:01:56 soda Exp $	*/
-/*	$OpenBSD: cpu.h,v 1.8 1997/04/19 17:19:56 pefo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2000/02/22 11:26:02 soda Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
 #define _ARC_CPU_H_
