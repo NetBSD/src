@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.44 1999/07/02 08:07:41 itojun Exp $
+.\" 	$NetBSD: ftp.1,v 1.45 1999/07/11 20:37:39 itojun Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -406,6 +406,17 @@ Toggle command line editing, and context sensitive command and file
 completion.
 This is automatically enabled if input is from a terminal, and
 disabled otherwise.
+.It Ic epsv4
+Toggle the use of 
+.Li EPSV/EPRT
+command on IPv4 connections.
+This is enabled by default
+.Po
+first try
+.Li EPSV/EPRT ,
+then
+.Li PASV/PORT
+.Pc .
 .It Ic exit
 A synonym for
 .Ic bye .
