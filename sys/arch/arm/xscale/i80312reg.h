@@ -106,7 +106,7 @@
 #define	I80312_PMU_GTMR		(I80312_PMU_BASE + 0x00)
 #define	I80312_PMU_ESR		(I80312_PMU_BASE + 0x04)
 #define	I80312_PMU_EMISR	(I80312_PMU_BASE + 0x08)
-#define	I80312_PMU_GTMR		(I80312_PMU_BASE + 0x10)
+#define	I80312_PMU_GTSR		(I80312_PMU_BASE + 0x10)
 #define	I80312_PMU_PECR1	(I80312_PMU_BASE + 0x14)
 #define	I80312_PMU_PECR2	(I80312_PMU_BASE + 0x18)
 #define	I80312_PMU_PECR3	(I80312_PMU_BASE + 0x1c)
@@ -281,13 +281,13 @@
  */
 #define	I80312_AAU_CTL		0x00	/* Control */
 #define	I80312_AAU_STS		0x04	/* Status */
-#define	I80312_AAU_DA		0x08	/* Descriptor Address */
+#define	I80312_AAU_DSCA		0x08	/* Descriptor Address */
 #define	I80312_AAU_NDA		0x0c	/* Next Descriptor Address */
 #define	I80312_AAU_SA1		0x10	/* i80200 Source Address 1 */
 #define	I80312_AAU_SA2		0x14	/* i80200 Source Address 2 */
 #define	I80312_AAU_SA3		0x18	/* i80200 Source Address 3 */
 #define	I80312_AAU_SA4		0x1c	/* i80200 Source Address 4 */
-#define	I80312_AAU_DA		0x20	/* i80200 Destination Address */
+#define	I80312_AAU_DSTA		0x20	/* i80200 Destination Address */
 #define	I80312_AAU_ABC		0x24	/* Accelerator Byte Count */
 #define	I80312_AAU_ADC		0x28	/* Accelerator Descriptor Count */
 #define	I80312_AAU_SA5		0x2c	/* i80200 Source Address 5 */
