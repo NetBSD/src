@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2001/07/08 10:42:37 uch Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2001/07/09 18:18:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,13 +35,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/vnode.h>
-
-#include <dev/cons.h>
 
 /*
  * Block devices.
