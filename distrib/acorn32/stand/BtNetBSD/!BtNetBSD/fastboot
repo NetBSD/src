@@ -1,4 +1,4 @@
-| $NetBSD: fastboot,v 1.5 2003/09/26 22:25:21 wiz Exp $
+| $NetBSD: fastboot,v 1.6 2004/06/08 21:57:25 gavan Exp $
 |
 | Fast boot configuration file, edit by hand, save and run !BtNetBSD
 | Part of !BtNetBSD
@@ -35,6 +35,6 @@ If "<NetBSD$MDF>" <> "" Then loadmodefile <NetBSD$MDF>
 If "<NetBSD$ScreenMode>" <> "" Then Set Alias$SetNetBSDMode Wimpmode <NetBSD$ScreenMode>
 If "<NetBSD$ScreenMode>" <> "" Then SetNetBSDMode
 
-Set Alias$RunNetBSD <BtNetBSD$Dir>.BtNetBSD <NetBSD$Kernel> root=<NetBSD$Root> <NetBSD$BootOptions>
+Set Alias$RunNetBSD <BtNetBSD$Dir>.boot32 <NetBSD$Kernel> root=<NetBSD$Root> <NetBSD$BootOptions>
 
 RunNetBSD
