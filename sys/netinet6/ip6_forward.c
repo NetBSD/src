@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_forward.c,v 1.19 2001/03/30 11:08:57 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.67 2001/03/29 05:34:31 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.20 2001/06/12 15:12:33 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.72 2001/06/11 13:29:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,6 +31,7 @@
  */
 
 #include "opt_ipsec.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +61,17 @@
 #include <netkey/key.h>
 #endif /* IPSEC */
 
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
+
 #include <net/net_osdep.h>
 
 struct	route_in6 ip6_forward_rt;
+
+#ifdef PFIL_HOOKS
+extern struct pfil_head inet6_pfil_hook;	/* XXX */
+#endif
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -459,6 +468,18 @@ ip6_forward(m, srcrt)
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
 		ip6->ip6_dst.s6_addr16[1] = 0;
 
+#ifdef PFIL_HOOKS
+	/*
+	 * Run through list of hooks for output packets.
+	 */
+	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, rt->rt_ifp,
+				    PFIL_OUT)) != 0)
+		goto senderr;
+	if (m == NULL)
+		goto freecopy;
+	ip6 = mtod(m, struct ip6_hdr *);
+#endif /* PFIL_HOOKS */
+
 #ifdef OLDIP6OUTPUT
 	error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
 					 (struct sockaddr *)dst,
@@ -479,9 +500,10 @@ ip6_forward(m, srcrt)
 				goto freecopy;
 		}
 	}
+
+ senderr:
 	if (mcopy == NULL)
 		return;
-
 	switch (error) {
 	case 0:
 #if 1
