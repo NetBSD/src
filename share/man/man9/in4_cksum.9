@@ -1,4 +1,4 @@
-.\"	$NetBSD: in4_cksum.9,v 1.1 2001/05/23 15:58:41 sommerfeld Exp $
+.\"	$NetBSD: in4_cksum.9,v 1.2 2001/05/23 18:49:59 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm in4_cksum
-.Nd Compute checksum for IPv4 packets.
+.Nd compute checksum for IPv4 packets
 .Sh SYNOPSIS
 .Ft uint16_t
 .Fn in4_cksum "struct mbuf *m" "uint8_t nxt" "int off" "int len"
@@ -50,7 +50,7 @@ function is used to compute the ones-complement checksum required by the
 .Xr inet 4
 protocol family over a range of bytes starting at
 .Fa off
-and continuing on for 
+and continuing on for
 .Fa len
 bytes within the mbuf
 .Fa m .
@@ -69,16 +69,16 @@ reimplemented in assembler or optimized C for each platform; use of
 repeated full-width add-with-carry followed by reduction of the sum to
 a 16 bit width usually leads to best results.
 .Sh RETURN VALUES
-The 
-.Nm
+The
+.Fn in4_cksum
 function returns the computed checksum value.
 .Sh SEE ALSO
 .Xr inet 4 ,
-.Xr mbuf 9 ,
-.Xr protocols 5 ,
 .Xr tcp 4 ,
-.Xr udp 4 .
+.Xr udp 4 ,
+.Xr protocols 5 ,
+.Xr mbuf 9
 .Sh STANDARDS
 The
-.Nm
-function implements the checksum specified in RFC768 and RFC793
+.Fn in4_cksum
+function implements the checksum specified in RFC768 and RFC793.
