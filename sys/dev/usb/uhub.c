@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.37 2000/02/02 07:33:59 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.38 2000/02/02 13:18:46 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -290,11 +290,6 @@ uhub_init_port(up)
 
 		/* First let the device go through a good power cycle, */
 		usbd_delay_ms(dev, USB_PORT_POWER_DOWN_TIME);
-
-#if 0
-usbd_clear_hub_feature(dev, UHF_C_HUB_OVER_CURRENT);
-usbd_clear_port_feature(dev, port, UHF_C_PORT_OVER_CURRENT);
-#endif
 
 		/* then turn the power on. */
 		err = usbd_set_port_feature(dev, port, UHF_PORT_POWER);

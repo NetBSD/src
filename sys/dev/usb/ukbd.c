@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.54 2000/01/19 00:23:58 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.55 2000/02/02 13:18:46 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ static u_int8_t ukbd_trtab[256] = {
 
 struct ukbd_softc {
 	USBBASEDEVICE	sc_dev;		/* base device */
+	usbd_device_handle sc_udev;
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_intrpipe;	/* interrupt pipe */
 	int sc_ep_addr;
@@ -273,6 +274,7 @@ USB_ATTACH(ukbd)
 	int i;
 #endif
 	
+	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 	usbd_devinfo(uaa->device, 0, devinfo);
@@ -348,6 +350,9 @@ USB_ATTACH(ukbd)
 	ukbd_set_leds(sc, 0);
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -447,6 +452,10 @@ USB_DETACH(ukbd)
 	/* No need to do reference counting of ukbd, wskbd has all the goo. */
 	if (sc->sc_wskbddev != NULL)
 		rv = config_detach(sc->sc_wskbddev, flags);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	return (rv);
 }
 
