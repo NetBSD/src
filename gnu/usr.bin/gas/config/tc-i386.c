@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.2 1993/10/25 21:57:06 pk Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.3 1993/10/27 00:14:50 pk Exp $";
 #endif
 
 #include "as.h"
@@ -2033,18 +2033,22 @@ relax_addressT segment_address_in_file;
 #ifdef PIC
 	{
 	int	extra_bits = 0;
+	int	extrn_bit = !S_IS_DEFINED(fixP->fx_addsy);
 
 	switch (fixP->fx_r_type) {
 	case NO_RELOC:
 		break;
 	case RELOC_32:
-		if (!S_IS_EXTERNAL(fixP->fx_addsy))
+		if (!flagseen['k'] || !S_IS_EXTERNAL(fixP->fx_addsy))
 			break;
 		r_symbolnum = fixP->fx_addsy->sy_number;
+		extrn_bit = 1;
 		break;
 	case RELOC_GLOB_DAT:
 		extra_bits = (1 << 4) & 0x10; /* r_baserel */
 		r_symbolnum = fixP->fx_addsy->sy_number;
+		if (S_IS_EXTERNAL(fixP->fx_addsy))
+			extrn_bit = 1;
 		break;
 	case RELOC_JMP_TBL:
 		extra_bits = (1 << 5) & 0x20; /* r_jmptable */
@@ -2060,18 +2064,11 @@ relax_addressT segment_address_in_file;
 	where[6] = (r_symbolnum >> 16) & 0x0ff;
 	where[5] = (r_symbolnum >> 8) & 0x0ff;
 	where[4] = r_symbolnum & 0x0ff;
-	where[7] = ((((
-			(!S_IS_DEFINED(fixP->fx_addsy) ||
-				(S_IS_EXTERNAL(fixP->fx_addsy) &&
-				(fixP->fx_r_type == RELOC_GLOB_DAT ||
-				fixP->fx_r_type == RELOC_32)
-				)
-			)
-							) << 3)  & 0x08)
-		    | ((nbytes_r_length[fixP->fx_size] << 1) & 0x06)
-		    | ((fixP->fx_pcrel << 0) & 0x01)
-		    | (extra_bits)
-			);
+	where[7] = (      ((extrn_bit << 3)  & 0x08)
+			| ((nbytes_r_length[fixP->fx_size] << 1) & 0x06)
+			| ((fixP->fx_pcrel << 0) & 0x01)
+			| (extra_bits)
+		   );
 	}
 #else
 	where[6] = (r_symbolnum >> 16) & 0x0ff;
