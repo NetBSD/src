@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.21 2000/11/27 08:39:53 chs Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.22 2001/02/07 12:40:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -57,6 +57,8 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
+extern int prtactive;
+
 static int ext2fs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
 				  ufs_daddr_t, int, long *));
 
@@ -76,7 +78,6 @@ ext2fs_inactive(v)
 	struct proc *p = ap->a_p;
 	struct timespec ts;
 	int error = 0;
-	extern int prtactive;
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ext2fs_inactive: pushing active", vp);
