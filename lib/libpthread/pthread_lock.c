@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.10 2004/03/03 21:06:07 thorpej Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.11 2004/03/14 01:19:42 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.10 2004/03/03 21:06:07 thorpej Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.11 2004/03/14 01:19:42 cl Exp $");
 
-#include <sys/param.h>
+#include <sys/lock.h>
 #include <sys/ras.h>
-#include <sys/sysctl.h>
 
 #include <errno.h>
 #include <unistd.h>
@@ -56,7 +55,7 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.10 2004/03/03 21:06:07 thorpej Exp $");
 #endif
 
 /* How many times to try before checking whether we've been continued. */
-#define NSPINS 1	/* no point in actually spinning until MP works */
+#define NSPINS 1000	/* no point in actually spinning until MP works */
 
 static int nspins = NSPINS;
 
@@ -136,18 +135,9 @@ const struct pthread_lock_ops *pthread__lock_ops = &pthread__lock_ops_ras;
  * we fall back onto machine-dependent atomic lock primitives.
  */
 void
-pthread__lockprim_init(void)
+pthread__lockprim_init(int ncpu)
 {
-	int mib[2];
-	size_t len; 
-	int ncpu;
  
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU; 
- 
-	len = sizeof(ncpu);
-	sysctl(mib, 2, &ncpu, &len, NULL, 0);
-
 	if (ncpu == 1 && rasctl(RAS_ADDR(pthread__lock),
 				RAS_SIZE(pthread__lock), RAS_INSTALL) == 0) {
 		pthread__lock_ops = &pthread__lock_ops_ras;

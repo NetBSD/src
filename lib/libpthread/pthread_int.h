@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.25 2004/02/02 20:36:18 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.26 2004/03/14 01:19:42 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ struct	__pthread_st {
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
 	int	pt_blockedlwp;	/* LWP/SA number when blocked */
+	int	pt_vpid;	/* VP number */
 	int	pt_blockgen;	/* SA_UPCALL_BLOCKED counter */
 	int	pt_unblockgen;	/* SA_UPCALL_UNBLOCKED counter */
 
@@ -275,6 +276,7 @@ void	pthread__initmain(pthread_t *t);
 
 void	pthread__sa_start(void);
 void	pthread__sa_recycle(pthread_t old, pthread_t new);
+void	pthread__setconcurrency(int);
 
 /* Alarm code */
 void	pthread__alarm_init(void);
@@ -285,7 +287,7 @@ int	pthread__alarm_fired(struct pt_alarm_t *);
 void	pthread__alarm_process(pthread_t self, void *arg);
 
 /* Internal locking primitives */
-void	pthread__lockprim_init(void);
+void	pthread__lockprim_init(int ncpu);
 void	pthread_lockinit(pthread_spin_t *lock);
 void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
 int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);

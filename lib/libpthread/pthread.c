@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.32 2003/12/31 16:45:48 cl Exp $	*/
+/*	$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.32 2003/12/31 16:45:48 cl Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.33 2004/03/14 01:19:41 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: pthread.c,v 1.32 2003/12/31 16:45:48 cl Exp $");
 #include <syslog.h>
 #include <ucontext.h>
 #include <unistd.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <sched.h>
 #include "pthread.h"
@@ -69,7 +71,7 @@ struct pthread_queue_t pthread__allqueue;
 
 pthread_spin_t pthread__deadqueue_lock;
 struct pthread_queue_t pthread__deadqueue;
-struct pthread_queue_t pthread__reidlequeue;
+struct pthread_queue_t *pthread__reidlequeue;
 
 static int nthreads;
 static int nextthread;
@@ -88,6 +90,8 @@ pthread_spin_t pthread__runqueue_lock;
 struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
 struct pthread_queue_t pthread__suspqueue;
+
+int pthread__concurrency, pthread__maxconcurrency;
 
 __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
@@ -126,18 +130,43 @@ pthread_init(void)
 {
 	pthread_t first;
 	char *p;
+	int i, mib[2], ncpu;
+	size_t len;
 	extern int __isthreaded;
 
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU; 
+
+	len = sizeof(ncpu);
+	sysctl(mib, 2, &ncpu, &len, NULL, 0);
+
 	/* Initialize locks first; they're needed elsewhere. */
-	pthread__lockprim_init();
+	pthread__lockprim_init(ncpu);
+
+	/* Find out requested/possible concurrency */
+	pthread__maxconcurrency = 1;
+	p = getenv("PTHREAD_CONCURRENCY");
+	if (p)
+		pthread__maxconcurrency = atoi(p);
+	if (pthread__maxconcurrency < 1)
+		pthread__maxconcurrency = 1;
+	if (pthread__maxconcurrency > ncpu)
+		pthread__maxconcurrency = ncpu;
+
+	/* Allocate data structures */
+	pthread__reidlequeue = (struct pthread_queue_t *)malloc
+		(pthread__maxconcurrency * sizeof(struct pthread_queue_t));
+	if (pthread__reidlequeue == NULL)
+		err(1, "Couldn't allocate memory for pthread__reidlequeue");
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
 	PTQ_INIT(&pthread__allqueue);
 	PTQ_INIT(&pthread__deadqueue);
-	PTQ_INIT(&pthread__reidlequeue);
 	PTQ_INIT(&pthread__runqueue);
 	PTQ_INIT(&pthread__idlequeue);
+	for (i = 0; i < pthread__maxconcurrency; i++)
+		PTQ_INIT(&pthread__reidlequeue[i]);
 	nthreads = 1;
 
 	/* Create the thread structure corresponding to main() */
@@ -151,7 +180,7 @@ pthread_init(void)
 	pthread__signal_init();
 	PTHREAD_MD_INIT
 #ifdef PTHREAD__DEBUG
-	pthread__debug_init();
+	pthread__debug_init(ncpu);
 #endif
 
 	for (p = getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
@@ -215,7 +244,10 @@ pthread__start(void)
 
 	pthread_atfork(NULL, NULL, pthread__child_callback);
 
-	/* Create idle threads */
+	/*
+	 * Create idle threads
+	 * XXX need to create more idle threads if concurrency > 3
+	 */
 	for (i = 0; i < NIDLETHREADS; i++) {
 		ret = pthread__stackalloc(&idle);
 		if (ret != 0)
@@ -468,7 +500,10 @@ pthread__idle(void)
 	 * a list somewhere for the thread system to know about us.
 	 */
 	pthread_spinlock(self, &pthread__deadqueue_lock);
-	PTQ_INSERT_TAIL(&pthread__reidlequeue, self, pt_runq);
+	PTQ_INSERT_TAIL(&pthread__reidlequeue[self->pt_vpid], self, pt_runq);
+	pthread__concurrency--;
+	SDPRINTF(("(yield %p concurrency) now %d\n", self,
+		     pthread__concurrency));
 	/* Don't need a flag lock; nothing else has a handle on this thread */
 	self->pt_flags |= PT_FLAG_IDLED;
 	pthread_spinunlock(self, &pthread__deadqueue_lock);
