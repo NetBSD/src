@@ -1,4 +1,4 @@
-/*	$NetBSD: dotlock.c,v 1.5 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: dotlock.c,v 1.6 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dotlock.c,v 1.5 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: dotlock.c,v 1.6 2002/03/05 21:18:15 wiz Exp $");
 #endif
 
 #include "rcv.h"
@@ -78,7 +78,7 @@ create_exclusive(const char *fname)
 	else
 		ptr++;
 
-	(void) snprintf(path, sizeof(path), "%.*s.%s.%lx", 
+	(void)snprintf(path, sizeof(path), "%.*s.%s.%lx", 
 	    (int)(ptr - fname), fname, hostname, (u_long)cookie);
 
 	/*
@@ -87,7 +87,7 @@ create_exclusive(const char *fname)
 	for (ntries = 0; ntries < 5; ntries++) {
 		fd = open(path, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL|O_SYNC, 0);
 		if (fd != -1) {
-			(void) close(fd);
+			(void)close(fd);
 			break;
 		}
 		else if (errno == EEXIST)
@@ -109,7 +109,7 @@ create_exclusive(const char *fname)
 	if (stat(path, &st) == -1)
 		goto bad;
 
-	(void) unlink(path);
+	(void)unlink(path);
 
 	/*
 	 * If the number of links was two (one for the unique file and one
@@ -123,7 +123,7 @@ create_exclusive(const char *fname)
 
 bad:
 	serrno = errno;
-	(void) unlink(path);
+	(void)unlink(path);
 	errno = serrno;
 	return -1;
 }
@@ -150,22 +150,22 @@ dot_lock(const char *fname, int pollinterval, FILE *fp, const char *msg)
 	sigaddset(&nset, SIGTSTP);
 	sigaddset(&nset, SIGCHLD);
 
-	(void) snprintf(path, sizeof(path), "%s.lock", fname);
+	(void)snprintf(path, sizeof(path), "%s.lock", fname);
 
 	for (;;) {
-		(void) sigprocmask(SIG_BLOCK, &nset, &oset);
+		(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 		if (create_exclusive(path) != -1) {
-			(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 			return 0;
 		}
 		else
-			(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 
 		if (errno != EEXIST)
 			return -1;
 
 		if (fp && msg)
-		    (void) fputs(msg, fp);
+		    (void)fputs(msg, fp);
 
 		if (pollinterval) {
 			if (pollinterval == -1) {
@@ -182,6 +182,6 @@ dot_unlock(const char *fname)
 {
 	char path[MAXPATHLEN];
 
-	(void) snprintf(path, sizeof(path), "%s.lock", fname);
-	(void) unlink(path);
+	(void)snprintf(path, sizeof(path), "%s.lock", fname);
+	(void)unlink(path);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.16 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.17 2002/03/05 21:18:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.16 2002/03/04 03:07:25 wiz Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.17 2002/03/05 21:18:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ printhead(int mesg)
 	char *name;
 
 	mp = &message[mesg-1];
-	(void) readline(setinput(mp), headline, LINESIZE);
+	(void)readline(setinput(mp), headline, LINESIZE);
 	if ((subjline = hfield("subject", mp)) == NULL)
 		subjline = hfield("subj", mp);
 	/*
@@ -305,8 +305,8 @@ type1(int *msgvec, int doign, int page)
 	FILE *obuf;
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &cp;
-	(void) &obuf;
+	(void)&cp;
+	(void)&obuf;
 #endif
 
 	obuf = stdout;
@@ -337,7 +337,7 @@ type1(int *msgvec, int doign, int page)
 		dot = mp;
 		if (value("quiet") == NULL)
 			fprintf(obuf, "Message %d:\n", *ip);
-		(void) sendmessage(mp, obuf, doign ? ignore : 0, NULL);
+		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
 	}
 close_pipe:
 	if (obuf != stdout) {
@@ -454,7 +454,7 @@ folders(void *v)
 	}
 	if ((cmd = value("LISTER")) == NULL)
 		cmd = "ls";
-	(void) run_command(cmd, 0, -1, -1, dirname, NULL, NULL);
+	(void)run_command(cmd, 0, -1, -1, dirname, NULL, NULL);
 	return 0;
 }
 

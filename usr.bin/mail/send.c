@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.17 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: send.c,v 1.18 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.17 2002/03/04 03:16:10 wiz Exp $");
+__RCSID("$NetBSD: send.c,v 1.18 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				}
 				if (doign != ignoreall)
 					/* add blank line */
-					(void) putc('\n', obuf);
+					(void)putc('\n', obuf);
 				isheadflag = 0;
 				ignoring = 0;
 			} else {
@@ -182,10 +182,10 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 				if (length > 1)
 					fputs(prefix, obuf);
 				else
-					(void) fwrite(prefix, sizeof *prefix,
+					(void)fwrite(prefix, sizeof *prefix,
 							prefixlen, obuf);
 			}
-			(void) fwrite(line, sizeof *line, length, obuf);
+			(void)fwrite(line, sizeof *line, length, obuf);
 			if (ferror(obuf))
 				return -1;
 		}
@@ -209,9 +209,9 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 			if (c > 1)
 				fputs(prefix, obuf);
 			else
-				(void) fwrite(prefix, sizeof *prefix,
+				(void)fwrite(prefix, sizeof *prefix,
 						prefixlen, obuf);
-			(void) fwrite(line, sizeof *line, c, obuf);
+			(void)fwrite(line, sizeof *line, c, obuf);
 			if (ferror(obuf))
 				return -1;
 		}
@@ -316,7 +316,7 @@ mail1(struct header *hp, int printheaders)
 				grabh(hp, GBCC);
 		} else {
 			printf("EOT\n");
-			(void) fflush(stdout);
+			(void)fflush(stdout);
 		}
 	}
 	if (fsize(mtf) == 0) {
@@ -364,7 +364,7 @@ mail1(struct header *hp, int printheaders)
 		goto out;
 	}
 	if ((cp = value("record")) != NULL)
-		(void) savemail(expand(cp), mtf);
+		(void)savemail(expand(cp), mtf);
 	/*
 	 * Fork, set up the temporary mail file as standard
 	 * input for "mail", and exec with the user list we generated
@@ -395,11 +395,11 @@ mail1(struct header *hp, int printheaders)
 		_exit(1);
 	}
 	if (value("verbose") != NULL)
-		(void) wait_child(pid);
+		(void)wait_child(pid);
 	else
 		free_child(pid);
 out:
-	(void) Fclose(mtf);
+	(void)Fclose(mtf);
 }
 
 /*
@@ -445,14 +445,14 @@ infix(struct header *hp, FILE *fi)
 	}
 	if ((nfi = Fopen(tempMail, "r")) == NULL) {
 		perror(tempMail);
-		(void) Fclose(nfo);
+		(void)Fclose(nfo);
 		return(fi);
 	}
-	(void) rm(tempMail);
-	(void) puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GNL|GCOMMA);
+	(void)rm(tempMail);
+	(void)puthead(hp, nfo, GTO|GSUBJECT|GCC|GBCC|GNL|GCOMMA);
 	c = getc(fi);
 	while (c != EOF) {
-		(void) putc(c, nfo);
+		(void)putc(c, nfo);
 		c = getc(fi);
 	}
 	if (ferror(fi)) {
@@ -460,16 +460,16 @@ infix(struct header *hp, FILE *fi)
 		rewind(fi);
 		return(fi);
 	}
-	(void) fflush(nfo);
+	(void)fflush(nfo);
 	if (ferror(nfo)) {
 		perror(tempMail);
-		(void) Fclose(nfo);
-		(void) Fclose(nfi);
+		(void)Fclose(nfo);
+		(void)Fclose(nfi);
 		rewind(fi);
 		return(fi);
 	}
-	(void) Fclose(nfo);
-	(void) Fclose(fi);
+	(void)Fclose(nfo);
+	(void)Fclose(fi);
 	rewind(nfi);
 	return(nfi);
 }
@@ -493,7 +493,7 @@ puthead(struct header *hp, FILE *fo, int w)
 	if (hp->h_bcc != NULL && w & GBCC)
 		fmt("Bcc:", hp->h_bcc, fo, w&GCOMMA), gotcha++;
 	if (gotcha && w & GNL)
-		(void) putc('\n', fo);
+		(void)putc('\n', fo);
 	return(0);
 }
 
@@ -544,15 +544,15 @@ savemail(char name[], FILE *fi)
 		perror(name);
 		return (-1);
 	}
-	(void) time(&now);
+	(void)time(&now);
 	fprintf(fo, "From %s %s", myname, ctime(&now));
 	while ((i = fread(buf, 1, sizeof buf, fi)) > 0)
-		(void) fwrite(buf, 1, i, fo);
-	(void) putc('\n', fo);
-	(void) fflush(fo);
+		(void)fwrite(buf, 1, i, fo);
+	(void)putc('\n', fo);
+	(void)fflush(fo);
 	if (ferror(fo))
 		perror(name);
-	(void) Fclose(fo);
+	(void)Fclose(fo);
 	rewind(fi);
 	return (0);
 }

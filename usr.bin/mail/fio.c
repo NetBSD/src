@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.18 2002/03/05 19:25:16 wiz Exp $	*/
+/*	$NetBSD: fio.c,v 1.19 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.18 2002/03/05 19:25:16 wiz Exp $");
+__RCSID("$NetBSD: fio.c,v 1.19 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,14 +80,14 @@ setptr(FILE *ibuf, off_t offset)
 		 msgCount = 0;
 	} else {
 		/* Seek into the file to get to the new messages */
-		(void) fseek(ibuf, offset, 0);
+		(void)fseek(ibuf, offset, 0);
 		/*
 		 * We need to make "offset" a pointer to the end of
 		 * the temp file that has the copy of the mail file.
 		 * If any messages have been edited, this will be
 		 * different from the offset into the mail file.
 		 */
-		(void) fseek(otf, 0L, 2);
+		(void)fseek(otf, 0L, 2);
 		offset = ftell(otf);
 	}
 	omsgCount = msgCount;
@@ -117,7 +117,7 @@ setptr(FILE *ibuf, off_t offset)
 			linebuf[len-2] = '\n';
 			len--;
 		}
-		(void) fwrite(linebuf, sizeof *linebuf, len, otf);
+		(void)fwrite(linebuf, sizeof *linebuf, len, otf);
 		if (ferror(otf)) {
 			perror("/tmp");
 			exit(1);
@@ -175,9 +175,9 @@ putline(FILE *obuf, char *linebuf, int outlf)
 	int c;
 
 	c = strlen(linebuf);
-	(void) fwrite(linebuf, sizeof *linebuf, c, obuf);
+	(void)fwrite(linebuf, sizeof *linebuf, c, obuf);
 	if (outlf) {
-		(void) putc('\n', obuf);
+		(void)putc('\n', obuf);
 		c++;
 	}
 	if (ferror(obuf))
@@ -237,7 +237,7 @@ makemessage(FILE *f, int omsgCount)
 	message = nmessage;
 	size -= (omsgCount + 1) * sizeof (struct message);
 	fflush(f);
-	(void) lseek(fileno(f), (off_t)sizeof *message, 0);
+	(void)lseek(fileno(f), (off_t)sizeof *message, 0);
 	if (read(fileno(f), (char *) &message[omsgCount], size) != size)
 		errx(1, "Message temporary file corrupted");
 	message[msgCount].m_size = 0;
@@ -445,7 +445,7 @@ getdeadletter(void)
 	else if (*cp != '/') {
 		char buf[PATHSIZE];
 
-		(void) snprintf(buf, PATHSIZE, "~/%s", cp);
+		(void)snprintf(buf, PATHSIZE, "~/%s", cp);
 		cp = expand(buf);
 	}
 	return cp;

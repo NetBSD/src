@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.13 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: names.c,v 1.14 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.13 2002/03/04 03:16:10 wiz Exp $");
+__RCSID("$NetBSD: names.c,v 1.14 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 
 	begin = names;
 	np = names;
-	(void) time(&now);
+	(void)time(&now);
 	date = ctime(&now);
 	while (np != NULL) {
 		if (!isfileaddr(np->n_name) && np->n_name[0] != '|') {
@@ -248,28 +248,28 @@ outof(struct name *names, FILE *fo, struct header *hp)
 				goto cant;
 			}
 			image = open(tempEdit, 2);
-			(void) unlink(tempEdit);
+			(void)unlink(tempEdit);
 			if (image < 0) {
 				perror(tempEdit);
 				senderr++;
-				(void) Fclose(fout);
+				(void)Fclose(fout);
 				goto cant;
 			}
-			(void) fcntl(image, F_SETFD, 1);
+			(void)fcntl(image, F_SETFD, 1);
 			fprintf(fout, "From %s %s", myname, date);
 			puthead(hp, fout, GTO|GSUBJECT|GCC|GNL);
 			while ((c = getc(fo)) != EOF)
-				(void) putc(c, fout);
+				(void)putc(c, fout);
 			rewind(fo);
-			(void) putc('\n', fout);
-			(void) fflush(fout);
+			(void)putc('\n', fout);
+			(void)fflush(fout);
 			if (ferror(fout)) {
 				perror(tempEdit);
 				senderr++;
-				(void) Fclose(fout);
+				(void)Fclose(fout);
 				goto cant;
 			}
-			(void) Fclose(fout);
+			(void)Fclose(fout);
 		}
 
 		/*
@@ -317,22 +317,22 @@ outof(struct name *names, FILE *fo, struct header *hp)
 				fin = Fdopen(f, "r");
 			if (fin == NULL) {
 				fprintf(stderr, "Can't reopen image\n");
-				(void) Fclose(fout);
+				(void)Fclose(fout);
 				senderr++;
 				goto cant;
 			}
 			rewind(fin);
 			while ((c = getc(fin)) != EOF)
-				(void) putc(c, fout);
+				(void)putc(c, fout);
 			if (ferror(fout)) {
 				perror(fname);
 				senderr++;
-				(void) Fclose(fout);
-				(void) Fclose(fin);
+				(void)Fclose(fout);
+				(void)Fclose(fin);
 				goto cant;
 			}
-			(void) Fclose(fout);
-			(void) Fclose(fin);
+			(void)Fclose(fout);
+			(void)Fclose(fin);
 		}
 cant:
 		/*
@@ -344,7 +344,7 @@ cant:
 		np = np->n_flink;
 	}
 	if (image >= 0) {
-		(void) close(image);
+		(void)close(image);
 		image = -1;
 	}
 	return(begin);
