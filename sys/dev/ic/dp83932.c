@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.3 2001/07/19 16:25:24 thorpej Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.4 2001/07/23 16:33:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -916,7 +916,8 @@ sonic_init(struct ifnet *ifp)
 				sonic_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			SONIC_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
