@@ -1,4 +1,4 @@
-.\"	$NetBSD: apply.1,v 1.8 1999/03/22 18:16:34 garbled Exp $
+.\"	$NetBSD: apply.1,v 1.9 2001/10/17 22:02:30 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,13 +91,18 @@ as a magic character may be changed with the
 .Fl a
 option.
 .El
-.Sh ENVIRONMENT VARIABLES
+.Sh ENVIRONMENT
 The following environment variable affects the execution of
 .Nm "" :
 .Bl -tag -width SHELL
 .It Ev SHELL
 Pathname of shell to use.
 If this variable is not defined, the Bourne shell is used.
+.El
+.Sh FILES
+.Bl -tag -width /bin/sh -compact
+.It Pa /bin/sh
+Default shell
 .El
 .Sh EXAMPLES
 .Bl -tag -width apply -compact
@@ -114,21 +119,16 @@ runs
 links all files in the current directory to the directory
 .Pa /usr/joe .
 .El
-.Sh Files
-.Bl -tag -width /bin/sh -compact
-.It Pa /bin/sh
-Default shell
-.El
-.Sh AUTHOR
-Rob Pike
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
+.Sh AUTHORS
+.An Rob Pike
 .Sh BUGS
 Shell metacharacters in
 .Ar command
 may have bizarre effects; it is best to enclose complicated
 commands in single quotes
 .Pq '' .
-.Sh HISTORY
-The
-.Nm
-command appeared in 
-.Bx 4.2 .
