@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.31 1998/08/25 21:56:14 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.32 1998/08/28 03:19:34 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -49,12 +49,13 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
 #include <machine/pte.h>
-#include <machine/vmparam.h>
+#include <machine/pmap.h>
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
@@ -530,8 +531,8 @@ podulebusattach(parent, self, aux)
 
 	/* Map the FAST and SYNC simple podules */
 
-	map_section(PAGE_DIRS_BASE, SYNC_PODULE_BASE & 0xfff00000,
-	    SYNC_PODULE_HW_BASE & 0xfff00000, 0);
+	map_section((vm_offset_t)kernel_pmap->pm_pdir,
+	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000, 0);
 	cpu_tlb_flushD();
 
 	/* Now map the EASI space */
@@ -541,7 +542,7 @@ podulebusattach(parent, self, aux)
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
 		    loop1 += L1_SEC_SIZE)
-		map_section(PAGE_DIRS_BASE, EASI_BASE + loop1,
+		map_section((vm_offset_t)kernel_pmap->pm_pdir, EASI_BASE + loop1,
 		    EASI_HW_BASE + loop1, 0);
 	}
 	cpu_tlb_flushD();
