@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.26 2004/05/29 23:48:08 wrstuden Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.27 2004/07/01 10:03:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.26 2004/05/29 23:48:08 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.27 2004/07/01 10:03:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ ov_mount(mp, path, data, ndp, p)
 	memset(nmp, 0, sizeof(struct overlay_mount));
 
 	mp->mnt_data = nmp;
+	mp->mnt_leaf = lowerrootvp->v_mount->mnt_leaf;
 	nmp->ovm_vfs = lowerrootvp->v_mount;
 	if (nmp->ovm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.209 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.210 2004/07/01 10:03:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.209 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.210 2004/07/01 10:03:30 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -303,6 +303,7 @@ sys_mount(l, v, retval)
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
 	mp->mnt_unmounter = NULL;
+	mp->mnt_leaf = mp;
 
 	/*
 	 * The underlying file system may refuse the mount for
