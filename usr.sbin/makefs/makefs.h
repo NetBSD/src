@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.7 2002/01/31 22:44:03 tv Exp $	*/
+/*	$NetBSD: makefs.h,v 1.8 2002/02/14 05:16:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,9 +77,6 @@
  *	-   first always points to first entry, at current level, which
  *	    must be "." when the tree has been built; during build it may
  *	    not be if "." hasn't yet been found by readdir(2).
- *
- *	-   if dup is not NULL, it points to an fsent that this is a
- *	    duplicate of; only relevant for non directories with > 1 link
  */
 
 enum fi_flags {
