@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2000/03/27 08:56:21 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2000/03/28 01:00:00 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2000/03/27 08:56:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2000/03/28 01:00:00 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -185,8 +185,11 @@ int		 pv_table_npages;
 struct segtab	*free_segtab;		/* free list kept locally */
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned	Sysmapsize;		/* number of pte's in Sysmap */
-unsigned pmap_next_asid = 2;		/* next available ASID */
-unsigned pmap_asid_generation = 0;	/* ASID generation count */
+
+unsigned pmap_max_asid;			/* max ASID supported by the system */
+unsigned pmap_next_asid;		/* next free ASID to use */
+unsigned pmap_asid_generation;		/* current ASID generation */
+#define PMAP_ASID_RESERVED 0
 
 boolean_t	pmap_initialized = FALSE;
 
@@ -308,7 +311,11 @@ pmap_bootstrap()
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
 	pmap_kernel()->pm_asid = 1;
-	pmap_kernel()->pm_asidgen = pmap_asid_generation;
+	pmap_kernel()->pm_asidgen = 0;
+
+	pmap_max_asid = MIPS_TLB_NUM_PIDS;
+	pmap_next_asid = 2;
+	pmap_asid_generation = 0;
 
 	MachSetPID(1);
 
@@ -529,8 +536,8 @@ pmap_pinit(pmap)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
 			panic("pmap_pinit: pm_segtab != 0");
 #endif
-	pmap->pm_asid = 0;
-	pmap->pm_asidgen = 0;
+	pmap->pm_asid = PMAP_ASID_RESERVED;
+	pmap->pm_asidgen = pmap_asid_generation;
 }
 
 /*
@@ -1836,11 +1843,12 @@ pmap_alloc_asid(p)
 	pmap_t pmap;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_asid != 0 && pmap->pm_asidgen == pmap_asid_generation)
+	if (pmap->pm_asid != PMAP_ASID_RESERVED
+	     && pmap->pm_asidgen == pmap_asid_generation)
 		;
 	else {
-		if (pmap_next_asid == MIPS_TLB_NUM_PIDS) {
-			MachTLBFlush();
+		if (pmap_next_asid == pmap_max_asid) {
+			MachTLBFlush();		/* MIPS_TBIAP */
 			pmap_asid_generation++; /* ok to wrap to 0 */
 			pmap_next_asid = 1;	/* 0 means invalid */
 			pmap->pm_asidgen = pmap_asid_generation;
