@@ -12,7 +12,9 @@
 #include "vms_fab.h"
 
 void
-vms_fab (int * argp, char **argvp[])
+vms_fab (argp, argvp)
+	int * argp;
+	char **argvp[];
 {
   extern int optind;
   int optout;

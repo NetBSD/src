@@ -28,7 +28,7 @@ translation approved by the Foundation.
 
 File: grep.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
 
-   This document was produced for version 2.2f of GNU GREP.
+   This document was produced for version 2.3 of GNU GREP.
 
 * Menu:
 
@@ -50,7 +50,7 @@ Introduction
 
    GREP searches the input files for lines containing a match to a given
 pattern list.  When it finds a match in a line, it copies the line to
-standard output (by default), or does whatever othre sort of output you
+standard output (by default), or does whatever other sort of output you
 have requested with options.  GREP expects to do the matching on text.
 Since newline is also a separator for the list of patterns, there is no
 way to match newline characters in a text.
@@ -594,13 +594,13 @@ options.
 
 Tag Table:
 Node: Top1091
-Node: Introduction1763
-Node: Invoking2271
-Node: Diagnostics8603
-Node: Grep Programs8975
-Node: Regular Expressions9922
-Node: Reporting Bugs15093
-Node: Concept Index15650
-Node: Index19688
+Node: Introduction1762
+Node: Invoking2270
+Node: Diagnostics8602
+Node: Grep Programs8974
+Node: Regular Expressions9921
+Node: Reporting Bugs15092
+Node: Concept Index15649
+Node: Index19687
 
 End Tag Table
