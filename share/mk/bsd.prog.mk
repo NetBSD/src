@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.167 2003/05/31 20:33:16 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.168 2003/06/11 04:56:58 msaitoh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -181,7 +181,7 @@ cleanextra:
 
 .if defined(SRCS) && !target(afterdepend)
 afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; \
+	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.ln:/' \
 	      < .depend > $$TMP; \
 	    mv $$TMP .depend)

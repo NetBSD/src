@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.26 2003/05/14 00:24:06 dbj Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.27 2003/06/11 04:56:58 msaitoh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -95,7 +95,7 @@ CPPFLAGS:=	${HOST_CPPFLAGS}
 
 .if defined(SRCS)
 afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; \
+	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.lo \1.ln:/' \
 	      < .depend > $$TMP; \
 	    mv $$TMP .depend)
