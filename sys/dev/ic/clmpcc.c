@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.2 1999/02/20 00:27:29 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.3 1999/02/20 16:23:39 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/param.h>
 
 #include <dev/ic/clmpccreg.h>
 #include <dev/ic/clmpccvar.h>
@@ -69,8 +70,6 @@
 #error	"CLMPCC_ONLY_BYTESWAP_LOW and CLMPCC_ONLY_BYTESWAP_HIGH are mutually exclusive."
 #endif
 
-
-#define	splserial()	spl4()
 
 static int	clmpcc_init	__P((struct clmpcc_softc *sc));
 static void	clmpcc_shutdown	__P((struct clmpcc_chan *));
