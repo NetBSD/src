@@ -1,3 +1,4 @@
+/*	$NetBSD: readconf.c,v 1.8 2001/04/10 08:07:59 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.68 2001/03/19 17:07:23 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.71 2001/04/07 08:55:17 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -113,7 +114,7 @@ typedef enum {
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol, oMacs,
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
-	oPreferredAuthentications
+	oDynamicForward, oPreferredAuthentications
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -178,6 +179,7 @@ static struct {
 	{ "keepalive", oKeepAlives },
 	{ "numberofpasswordprompts", oNumberOfPasswordPrompts },
 	{ "loglevel", oLogLevel },
+	{ "dynamicforward", oDynamicForward },
 	{ "preferredauthentications", oPreferredAuthentications },
 	{ NULL, 0 }
 };
@@ -223,8 +225,7 @@ add_remote_forward(Options *options, u_short port, const char *host,
 }
 
 /*
- * Returns the number of the token pointed to by cp of length len. Never
- * returns if the token is not known.
+ * Returns the number of the token pointed to by cp or oBadOption.
  */
 
 static OpCodes
@@ -594,6 +595,18 @@ parse_int:
 			add_local_forward(options, fwd_port, buf, fwd_host_port);
 		break;
 
+	case oDynamicForward:
+		arg = strdelim(&s);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing port argument.",
+			    filename, linenum);
+		if (arg[0] < '0' || arg[0] > '9')
+			fatal("%.200s line %d: Badly formatted port number.",
+			    filename, linenum);
+		fwd_port = atoi(arg);
+		add_local_forward(options, fwd_port, "socks4", 0);
+                break;
+
 	case oHost:
 		*activep = 0;
 		while ((arg = strdelim(&s)) != NULL && *arg != '\0')
@@ -822,7 +835,7 @@ fill_default_options(Options * options)
 	/* options->ciphers, default set in myproposals.h */
 	/* options->macs, default set in myproposals.h */
 	if (options->protocol == SSH_PROTO_UNKNOWN)
-		options->protocol = SSH_PROTO_1|SSH_PROTO_2|SSH_PROTO_1_PREFERRED;
+		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
 	if (options->num_identity_files == 0) {
 		if (options->protocol & SSH_PROTO_1) {
 			len = 2 + strlen(_PATH_SSH_CLIENT_IDENTITY) + 1;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/04/01 15:11:05 ad Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/10 08:08:06 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ BINDIR=	/usr/sbin
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
-	auth.c auth1.c auth2.c auth-options.c session.c dh.c \
+	auth.c auth1.c auth2.c auth-options.c session.c \
 	auth-chall.c auth2-chall.c groupaccess.c
 
 .if (${MKKERBEROS} != "no")

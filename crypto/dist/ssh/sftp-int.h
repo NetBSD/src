@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.h,v 1.1.1.2 2001/04/10 07:14:09 itojun Exp $	*/
+/*	$NetBSD: sftp-int.h,v 1.2 2001/04/10 08:08:01 itojun Exp $	*/
 /* $OpenBSD: sftp-int.h,v 1.1 2001/02/04 11:11:54 djm Exp $ */
 
 /*
