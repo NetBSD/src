@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.13 2004/11/24 20:49:20 bouyer Exp $
+# $NetBSD: INSTALL_ACPI,v 1.14 2005/01/17 15:28:51 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.13 $"
+#ident 		"INSTALL-$Revision: 1.14 $"
 
 maxusers	32		# estimated number of users
 
@@ -612,6 +612,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2004/11/10 17:54:06 christos Exp $
+# $NetBSD: GENERIC,v 1.85 2005/01/17 15:28:52 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.84 $"
+#ident		"GENERIC-$Revision: 1.85 $"
 
 maxusers	32
 
@@ -520,6 +520,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f

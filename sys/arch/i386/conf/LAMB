@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.42 2004/11/10 17:25:22 christos Exp $
+#	$NetBSD: LAMB,v 1.43 2005/01/17 15:28:51 cube Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -372,6 +372,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

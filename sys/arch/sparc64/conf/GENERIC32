@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.91 2004/11/24 20:49:24 bouyer Exp $
+# 	$NetBSD: GENERIC32,v 1.92 2005/01/17 15:28:52 cube Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	64
 
@@ -570,6 +570,7 @@ pseudo-device	strip		1
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
 pseudo-device	tun		4
+pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
 #pseudo-device	gre		2	# generic L3 over IP tunnel

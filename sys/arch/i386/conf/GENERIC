@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.649 2005/01/12 00:18:16 reinoud Exp $
+# $NetBSD: GENERIC,v 1.650 2005/01/17 15:28:51 cube Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.649 $"
+#ident 		"GENERIC-$Revision: 1.650 $"
 
 maxusers	32		# estimated number of users
 
@@ -1212,6 +1212,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
