@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.10 1997/10/20 22:05:34 thorpej Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.11 1998/02/05 04:15:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.10 1997/10/20 22:05:34 thorpej Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.11 1998/02/05 04:15:28 gwr Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -91,13 +91,19 @@ setproctitle(fmt, va_alist)
 		(void)snprintf(buf, MAX_PROCTITLE, "%s", __progname);
 	va_end(ap);
 
+#ifdef	USRSTACK
 	/*
 	 * For compatibility with old versions of crt0 and old kernels, set
 	 * __ps_strings to a default value if it's null.
+	 * But only if USRSTACK is defined.  It might not be defined if
+	 * user-level code can not assume it's a constant (i.e. m68k).
 	 */
 	if (__ps_strings == 0)
 		__ps_strings = PS_STRINGS;
+#endif	/* USRSTACK */
 
-	__ps_strings->ps_nargvstr = 1;
-	__ps_strings->ps_argvstr = &bufp;
+	if (__ps_strings != 0) {
+		__ps_strings->ps_nargvstr = 1;
+		__ps_strings->ps_argvstr = &bufp;
+	}
 }
