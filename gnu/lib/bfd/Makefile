@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/08/21 21:11:02 tv Exp $
+#	$NetBSD: Makefile,v 1.15 1998/08/21 21:12:19 tv Exp $
 
 LIB=	bfd
 
@@ -33,6 +33,8 @@ CPPFLAGS+= -I$(dist)/include
 BFD_WORDSIZE?=	32
 BFD_64BIT_LONG?=0
 
+DPSRCS+=	bfd.h
+CLEANFILES+=	bfd.h
 bfd.h: bfd-in2.h
 	@sed	-e 's,@VERSION@,2.8.1,' \
 		-e 's,@wordsize@,${BFD_WORDSIZE},' \
