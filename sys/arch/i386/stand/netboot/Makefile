@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/06/13 13:17:49 drochner Exp $
+#	$NetBSD: Makefile,v 1.7 1997/06/21 14:43:51 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -40,11 +40,13 @@ CPPFLAGS+= -DBOOTROM -DRELOC=0x$(RELOC)
 .PATH: ${.CURDIR}/../lib/netif
 
 #USE_NETIF= 3c509
-#USE_NETIF= 3c590
+#USE_NETIF= 3c590 #handles 3c900 combo too
 #CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x5900 -DPCI_CLASS=0x020000
+#CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x9001 -DPCI_CLASS=0x020000
 USE_NETIF= pcnet_pci
 #USE_NETIF= pcnet_isapnp
-#USE_NETIF= wd80x3
+#USE_NETIF= wd80x3 #supports SMC Ultra together with flag below
+#CPPFLAGS+= -DSUPPORT_SMC_ULTRA
 
 .include "../lib/netif/Makefile.inc"
 
