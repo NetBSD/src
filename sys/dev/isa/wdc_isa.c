@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.12 1998/12/03 18:24:31 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.13 1999/02/22 03:24:33 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,8 +188,8 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 {
 	struct wdc_isa_softc *sc = v;
 
-	isa_dmastart(sc->sc_ic, sc->sc_drq, databuf,
-	    datalen, NULL, read ? DMAMODE_READ : DMAMODE_WRITE,
+	isa_dmastart(sc->sc_ic, sc->sc_drq, databuf, datalen, NULL,
+	    (read ? DMAMODE_READ : DMAMODE_WRITE) | DMAMODE_DEMAND,
 	    BUS_DMA_NOWAIT);
 	return 0;
 }
