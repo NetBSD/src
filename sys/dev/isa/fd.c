@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.34 2003/01/25 13:02:07 tron Exp $	*/
+/*	$NetBSD: fd.c,v 1.35 2003/01/25 18:12:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.34 2003/01/25 13:02:07 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.35 2003/01/25 18:12:31 tron Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1026,8 +1026,8 @@ loop:
 			block = (fd->sc_cylin * type->heads + head)
 			    * type->sectrac + sec;
 			if (block != fd->sc_blkno) {
-				printf("fdcintr: block %d != blkno %lld\n",
-				    block, fd->sc_blkno);
+				printf("fdcintr: block %d != blkno "
+				    "%" PRId64 "\n", block, fd->sc_blkno);
 #ifdef DDB
 				 Debugger();
 #endif

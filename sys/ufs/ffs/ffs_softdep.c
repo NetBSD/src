@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.40 2003/01/25 12:52:47 tron Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.41 2003/01/25 18:12:32 tron Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.40 2003/01/25 12:52:47 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.41 2003/01/25 18:12:32 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.40 2003/01/25 12:52:47 tron Exp $"
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/inttypes.h>
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/inode.h>
@@ -3419,14 +3420,14 @@ initiate_write_inodeblock(inodedep, bp)
 		if (adp->ad_lbn < NDADDR &&
 		    ufs_rw32(dp->di_db[adp->ad_lbn], needswap) !=
 		    adp->ad_newblkno)
-			panic("%s: direct pointer #%d mismatch %d != %lld",
+			panic("%s: direct pointer #%d mismatch %d != %" PRId64,
 			    "softdep_write_inodeblock", (int)adp->ad_lbn,
 			    ufs_rw32(dp->di_db[adp->ad_lbn], needswap), 
 			    adp->ad_newblkno);
 		if (adp->ad_lbn >= NDADDR &&
 		    ufs_rw32(dp->di_ib[adp->ad_lbn - NDADDR], needswap) !=
 		    adp->ad_newblkno)
-			panic("%s: indirect pointer #%d mismatch %d != %lld",
+			panic("%s: indirect pointer #%d mismatch %d != %" PRId64,
 			    "softdep_write_inodeblock",
 			    (int)(adp->ad_lbn - NDADDR),
 			    (int)ufs_rw32(dp->di_ib[adp->ad_lbn - NDADDR],
@@ -3791,7 +3792,7 @@ handle_written_inodeblock(inodedep, bp)
 		if (adp->ad_lbn < NDADDR) {
 			if (ufs_rw32(dp->di_db[adp->ad_lbn], needswap) !=
 			    adp->ad_oldblkno)
-				panic("%s: %s #%d mismatch %d != %lld",
+				panic("%s: %s #%d mismatch %d != %" PRId64,
 				    "handle_written_inodeblock",
 				    "direct pointer", (int)adp->ad_lbn,
 				    ufs_rw32(dp->di_db[adp->ad_lbn], needswap),
