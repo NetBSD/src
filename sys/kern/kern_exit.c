@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.65 1999/03/24 05:51:22 mrg Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.66 1999/04/30 20:54:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,6 +181,7 @@ exit1(p, rv)
 	 * This may block!
 	 */
 	fdfree(p);
+	cwdfree(p);
 
 	/* The next three chunks should probably be moved to vmspace_exit. */
 	vm = p->p_vmspace;
