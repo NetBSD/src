@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.68 2003/05/31 23:42:23 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.69 2003/06/16 21:52:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.68 2003/05/31 23:42:23 thorpej Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.69 2003/06/16 21:52:58 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,9 +169,10 @@ FILE	*warnfp = stderr;
  */
 #define	CLOCK		0x00000001
 #define	BOOTTIME	0x00000002
-#define	CONSDEV		0x00000004
-#define	DISKINFO	0x00000008
-#define	CPTIME		0x00000010
+#define	CONSDEV		0x00000003
+#define	DISKINFO	0x00000004
+#define	CPTIME		0x00000005
+#define	CNMAGIC		0x00000006
 
 /*
  * A dummy type for limits, which requires special parsing
@@ -400,10 +401,10 @@ parse(char *string, int flags)
 			USEAPP(string, "ps");
 			return;
 		case KERN_CLOCKRATE:
-			special |= CLOCK;
+			special = CLOCK;
 			break;
 		case KERN_BOOTTIME:
-			special |= BOOTTIME;
+			special = BOOTTIME;
 			break;
 		case KERN_NTPTIME:
 			USEAPP(string, "ntpdc -c kerninfo");
@@ -415,13 +416,13 @@ parse(char *string, int flags)
 				return;
 			break;
 		case KERN_CP_TIME:
-			special |= CPTIME;
+			special = CPTIME;
 			break;
 		case KERN_MSGBUF:
 			USEAPP(string, "dmesg");
 			return;
 		case KERN_CONSDEV:
-			special |= CONSDEV;
+			special = CONSDEV;
 			break;
 		case KERN_PIPE:
 			len = sysctl_3rd(&pipevars, string, &bufp, mib, flags,
@@ -435,6 +436,9 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 			break;
+		case KERN_DRIVERS:
+			USEAPP(string, "mknod -l");
+			return;
 		}
 		break;
 
@@ -443,6 +447,10 @@ parse(char *string, int flags)
 		case HW_DISKSTATS:
 			USEAPP(string, "iostat");
 			return;
+		case HW_CNMAGIC:
+			if (!nflag)
+				special = CNMAGIC;
+			break;
 		}
 		break;
 
@@ -501,11 +509,11 @@ parse(char *string, int flags)
 	case CTL_MACHDEP:
 #ifdef CPU_CONSDEV
 		if (mib[1] == CPU_CONSDEV)
-			special |= CONSDEV;
+			special = CONSDEV;
 #endif
 #ifdef CPU_DISKINFO
 		if (mib[1] == CPU_DISKINFO)
-			special |= DISKINFO;
+			special = DISKINFO;
 #endif
 		break;
 
@@ -616,7 +624,7 @@ parse(char *string, int flags)
 	}
 	if (qflag && (newsize > 0))
 		return;
-	if (special & CLOCK) {
+	if (special == CLOCK) {
 		struct clockinfo *clkp = (struct clockinfo *)buf;
 
 		if (!nflag)
@@ -626,7 +634,7 @@ parse(char *string, int flags)
 		    clkp->tick, clkp->tickadj, clkp->hz, clkp->profhz, clkp->stathz);
 		return;
 	}
-	if (special & BOOTTIME) {
+	if (special == BOOTTIME) {
 		struct timeval *btp = (struct timeval *)buf;
 		time_t boottime;
 
@@ -638,7 +646,7 @@ parse(char *string, int flags)
 			printf("%ld\n", (long) btp->tv_sec);
 		return;
 	}
-	if (special & CONSDEV) {
+	if (special == CONSDEV) {
 		dev_t dev = *(dev_t *)buf;
 
 		if (!nflag)
@@ -647,7 +655,7 @@ parse(char *string, int flags)
 			printf("0x%x\n", dev);
 		return;
 	}
-	if (special & DISKINFO) {
+	if (special == DISKINFO) {
 #ifdef CPU_DISKINFO
 		/* Don't know a good way to deal with this i386 specific one */
 		/* OTOH this does pass the info out... */
@@ -684,7 +692,7 @@ parse(char *string, int flags)
 #endif
 		return;
 	}
-	if (special & CPTIME) {
+	if (special == CPTIME) {
 		u_int64_t *cp_time = (u_int64_t *)buf;
 
 		if (!nflag)
@@ -695,6 +703,21 @@ parse(char *string, int flags)
 		    (unsigned long long) cp_time[2],
 		    (unsigned long long) cp_time[3],
 		    (unsigned long long) cp_time[4]);
+		return;
+	}
+	if (special == CNMAGIC) {
+		int i;
+
+		if (!nflag)
+			printf("%s%s ", string, newsize ? ":" : " =");
+		for (i = 0; i < size - 1; i++)
+			printf("\\x%2.2x", buf[i]);
+		if (newsize != 0) {
+			printf(" -> ");
+			for (i = 0; i < newsize - 1; i++)
+				printf("\\x%2.2x", ((unsigned char *)newval)[i]);
+		}
+		printf("\n");
 		return;
 	}
 
