@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.36 2003/10/18 23:48:42 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.37 2004/02/21 16:42:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.36 2003/10/18 23:48:42 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.37 2004/02/21 16:42:30 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -271,7 +271,7 @@ el_set(EditLine *el, int op, ...)
 	case EL_PREP_TERM:
 		rv = va_arg(va, int);
 		if (rv)
-			read_prepare(el);
+			read_prepare_tty(el);
 		else
 			read_finish(el);
 		rv = 0;
