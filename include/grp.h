@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.20 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: grp.h,v 1.21 2005/04/02 04:54:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -69,6 +69,7 @@ int		 getgrnam_r(const char *, struct group *, char *, size_t,
 #if defined(_NETBSD_SOURCE)
 void		 setgrfile(const char *);
 int		 setgroupent(int);
+int		 getgrent_r(struct group *, char *, size_t, struct group **);
 const char	*group_from_gid(gid_t, int);
 int		 gid_from_group(const char *, gid_t *);
 int		 pwcache_groupdb(int (*)(int), void (*)(void),
