@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.32 1998/01/07 22:51:22 lukem Exp $	*/
+/*	$NetBSD: in.h,v 1.33 1998/02/10 01:26:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -323,4 +323,5 @@ void	in_socktrim __P((struct sockaddr_in *));
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 #endif
+
 #endif /* !_NETINET_IN_H_ */

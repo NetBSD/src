@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.9 1998/01/05 10:32:07 thorpej Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.10 1998/02/10 01:27:15 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -35,6 +35,9 @@
  *	@(#)tcp_seq.h	8.3 (Berkeley) 6/21/95
  */
 
+#ifndef _NETINET_TCP_SEQ_H_
+#define _NETINET_TCP_SEQ_H_
+
 /*
  * TCP sequence numbers are 32 bit integers operated
  * on with modular arithmetic.  These macros can be
@@ -63,3 +66,5 @@
 #ifdef _KERNEL
 extern tcp_seq	 tcp_iss_seq;		/* tcp initial seq # */
 #endif
+
+#endif /* _NETINET_TCP_SEQ_H_ */

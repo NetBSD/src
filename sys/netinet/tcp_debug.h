@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.5 1994/06/29 06:38:38 cgd Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.6 1998/02/10 01:27:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)tcp_debug.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_TCP_DEBUG_H_
+#define _NETINET_TCP_DEBUG_H_
+
 struct	tcp_debug {
 	n_time	td_time;
 	short	td_act;
@@ -59,3 +62,5 @@ char	*tanames[] =
 #define	TCP_NDEBUG 100
 struct	tcp_debug tcp_debug[TCP_NDEBUG];
 int	tcp_debx;
+
+#endif /* _NETINET_TCP_DEBUG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.28 1998/01/05 10:31:47 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.29 1998/02/10 01:26:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)if_ether.h	8.3 (Berkeley) 5/2/95
  */
+
+#ifndef _NETINET_IF_ETHER_H_
+#define _NETINET_IF_ETHER_H_
 
 
 #ifdef _KERNEL
@@ -84,3 +87,5 @@ struct	ether_arp {
 #define	arp_op	ea_hdr.ar_op
 
 #endif /* _netinet_if_ether_compat_h_ */
+
+#endif /* _NETINET_IF_ETHER_H_ */

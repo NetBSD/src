@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.24 1998/01/05 10:31:59 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.25 1998/02/10 01:27:05 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ip_var.h	8.2 (Berkeley) 1/9/95
  */
+
+#ifndef _NETINET_IP_VAR_H_
+#define _NETINET_IP_VAR_H_
 
 #include <sys/queue.h>
 
@@ -192,3 +195,5 @@ int	 rip_output __P((struct mbuf *, ...));
 int	 rip_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 #endif
+
+#endif /* _NETINET_IP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.7 1998/02/10 01:27:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)tcp_timer.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_TCP_TIMER_H_
+#define _NETINET_TCP_TIMER_H_
 
 /*
  * Definitions of the TCP timers.  These timers are counted
@@ -128,3 +131,5 @@ extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
 #endif
+
+#endif /* _NETINET_TCP_TIMER_H_ */

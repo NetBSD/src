@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.2 1996/07/03 17:17:17 chuck Exp $       */
+/*      $NetBSD: if_atm.h,v 1.3 1998/02/10 01:26:23 perry Exp $       */
 
 /*
  *
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NETINET_IF_ATM_H_
+#define _NETINET_IF_ATM_H_
+
 /*
  * if_atm.h
  */
@@ -39,3 +42,5 @@
 void atm_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int atmresolve __P((struct rtentry *, struct mbuf *, struct sockaddr *, 
 		struct atm_pseudohdr *));
+
+#endif /* _NETINET_IF_ATM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.33 1998/01/05 10:32:14 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.34 1998/02/10 01:27:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994, 1995
@@ -34,6 +34,9 @@
  *
  *	@(#)tcp_var.h	8.4 (Berkeley) 5/24/95
  */
+
+#ifndef _NETINET_TCP_VAR_H_
+#define _NETINET_TCP_VAR_H_
 
 /*
  * Kernel variables for tcp.
@@ -425,3 +428,5 @@ int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *,
 void	 syn_cache_timer __P((int));
 
 #endif
+
+#endif /* _NETINET_TCP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.19 1998/01/05 10:31:56 thorpej Exp $	*/
+/*	$NetBSD: in_var.h,v 1.20 1998/02/10 01:26:42 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)in_var.h	8.2 (Berkeley) 1/9/95
  */
+
+#ifndef _NETINET_IN_VAR_H_
+#define _NETINET_IN_VAR_H_
 
 #include <sys/queue.h>
 
@@ -214,3 +217,5 @@ void	in_setmaxmtu __P ((void));
 int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	    struct proc *));
 #endif
+
+#endif /* _NETINET_IN_VAR_H_ */

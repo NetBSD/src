@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.6 1995/05/31 06:08:21 mycroft Exp $	*/
+/*	$NetBSD: igmp.h,v 1.7 1998/02/10 01:26:29 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -38,6 +38,9 @@
  *
  *	@(#)igmp.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IGMP_H_
+#define _NETINET_IGMP_H_
 
 /*
  * Internet Group Management Protocol (IGMP) definitions.
@@ -90,3 +93,5 @@ struct igmp {
  * Revert to v2 if we haven't heard from the router in this amount of time.
  */
 #define	IGMP_AGE_THRESHOLD	540
+
+#endif /* _NETINET_IGMP_H_ */

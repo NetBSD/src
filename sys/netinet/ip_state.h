@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.10 1997/11/14 12:47:24 mrg Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.11 1998/02/10 01:27:03 perry Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -10,8 +10,9 @@
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
  * Id: ip_state.h,v 2.0.2.14.2.1 1997/11/06 21:23:15 darrenr Exp 
  */
-#ifndef	__IP_STATE_H__
-#define	__IP_STATE_H__
+
+#ifndef _NETINET_IP_STATE_H_
+#define _NETINET_IP_STATE_H_
 
 #define	IPSTATE_SIZE	257
 #define	IPSTATE_MAX	2048	/* Maximum number of states held */
@@ -137,4 +138,5 @@ extern	int	fr_state_ioctl __P((caddr_t, u_long, int));
 #else
 extern	int	fr_state_ioctl __P((caddr_t, int, int));
 #endif
-#endif /* __IP_STATE_H__ */
+
+#endif /* _NETINET_IP_STATE_H_ */

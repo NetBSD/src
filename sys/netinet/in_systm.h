@@ -1,4 +1,4 @@
-/*	$NetBSD: in_systm.h,v 1.9 1997/07/07 20:57:46 phil Exp $	*/
+/*	$NetBSD: in_systm.h,v 1.10 1998/02/10 01:26:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,8 +35,8 @@
  *	@(#)in_systm.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef __IN_SYSTM_H__
-#define __IN_SYSTM_H__
+#ifndef _NETINET_IN_SYSTM_H_
+#define _NETINET_IN_SYSTM_H_
 
 /*
  * Miscellaneous internetwork
@@ -60,4 +60,4 @@ typedef u_int32_t n_time;		/* ms since 00:00 GMT, byte rev */
 n_time	 iptime __P((void));
 #endif
 
-#endif /* __IN_SYSTM_H__ */
+#endif /* _NETINET_IN_SYSTM_H_ */
