@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.54 1997/07/12 22:07:58 leo Exp $
+#	$NetBSD: Makefile.mac68k,v 1.55 1997/07/24 05:48:51 scottr Exp $
 
 # Makefile for NetBSD
 #
@@ -22,8 +22,10 @@
 # PROF is set to -pg if profiling.
 
 CC?=	cc
+CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
 COPTS?= 	-O2
 
@@ -38,13 +40,9 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dmac68k
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
-
-HOSTED_CC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
 
 ### Find out what to use for libkern.
 .include "$S/lib/libkern/Makefile.inc"
@@ -69,9 +67,7 @@ LIBCOMPAT=${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's/^\#.*//' | ${AS} -o ${.TARGET}
 
 %OBJS
 
@@ -90,7 +86,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
