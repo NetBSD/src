@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.booters,v 1.1 2002/05/05 11:46:29 isaki Exp $
+
+S?=	${.CURDIR}/../../../..
+
+.PHONY:	machine-links
+
+machine-links:
+	-rm -f machine && \
+	ln -s $S/arch/${MACHINE}/include machine
+	-rm -f ${MACHINE_ARCH} && \
+	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+
+CLEANFILES+=	machine ${MACHINE_ARCH}
+
+beforedepend:	machine-links
+
