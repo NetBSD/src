@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.8 2004/07/01 22:34:12 kleink Exp $	*/
+/*	$NetBSD: endian.h,v 1.9 2004/09/12 22:52:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -172,5 +172,5 @@ __END_DECLS
 #define LE64TOH(x)	HTOLE64(x)
 
 #endif /* !_LOCORE */
-#endif /* !_POSIX_SOURCE */
+#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 #endif /* !_SYS_ENDIAN_H_ */
