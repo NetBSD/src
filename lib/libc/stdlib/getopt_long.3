@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.3 2000/04/07 00:02:32 wiz Exp $
+.\"	$NetBSD: getopt_long.3,v 1.4 2000/11/26 22:35:53 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,6 @@ shortcuts is not backwards compatible with
 It is possible to combine these methods, providing for long options
 processing with short option equivalents for some options. Less
 frequently used options would be processed as long options only.
-.Sh USAGE
 .Pp
 The 
 .Fn getopt_long
@@ -133,7 +132,7 @@ to NULL and setting
 to the corresponding short option will make this function act just
 like
 .Xr getopt 3 .
-.Sh EXAMPLE
+.Sh EXAMPLES
 .Bd -literal -compact
 extern char *optarg;
 extern int optind;
@@ -163,7 +162,7 @@ while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
 		break;
 	case 0:
 		if(daggerset) {
-			fprintf(stderr,"Buffy will put use her dagger to "
+			fprintf(stderr,"Buffy will use her dagger to "
 				       "apply floride to dracula's teeth\en");
 		}
 		break;
@@ -174,11 +173,6 @@ while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
 argc -= optind;
 argv += optind;
 .Ed
-.Sh HISTORY
-The
-.Fn getopt_long
-function first appeared in GNU libiberty. The first NetBSD implementation
-appeared in 1.5.
 .Sh IMPLEMENTATION DIFFERENCES
 .Pp
 This section describes differences to the GNU implementation
@@ -267,6 +261,14 @@ the caller (ordering after -1 is returned, value of optind relative
 to current positions) are the same, though.  (We do fewer variable
 swaps.)
 .El
+.Sh SEE ALSO
+.Xr getopt 3
+.Sh HISTORY
+The
+.Fn getopt_long
+function first appeared in GNU libiberty. The first 
+.Nx
+implementation appeared in 1.5.
 .Sh BUGS
 The implementation, can completelely replace
 .Xr getopt 3 ,
