@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)map.h	8.3 (Berkeley) 1/26/94
- *	$Id: map.h,v 1.3 1994/05/21 03:52:00 cgd Exp $
+ *	$Id: map.h,v 1.4 1994/05/24 00:50:19 cgd Exp $
  */
 
 /*
@@ -48,8 +48,8 @@
  * of the controlled object.  Each additional structure represents
  * a free segment of the address space.
  *
- * A call to rminit initializes a resource map and may also be used
- * to free some address space for the map.  Subsequent calls to rmalloc
+ * A call to rminit initializes a resource map.  Later on, rmfree may be used
+ * to free some more address space for the map.  Subsequent calls to rmalloc
  * and rmfree allocate and free space in the resource map.  If the resource
  * map becomes too fragmented to be described in the available space,
  * then some of the resource is discarded.  This may lead to critical
@@ -63,7 +63,7 @@
  * as it is used internally by the resource map routines.
  */
 struct map {
-	struct	mapent *m_limit;	/* address of last slot in map */
+	struct	mapent *m_limit;	/* first slot beyond map */
 	char	*m_name;		/* name of resource, for messages */
 };
 
@@ -73,9 +73,8 @@ struct mapent {
 };
 
 #ifdef KERNEL
-#define	ARGMAPSIZE	16
-struct	map *kmemmap, *mbmap, *swapmap;
-int	nswapmap;
+extern struct map	*swapmap;
+extern int		nswapmap;
 
 long	rmalloc __P((struct map *, long));
 void	rmfree __P((struct map *, long, long));
