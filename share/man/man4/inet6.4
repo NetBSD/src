@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: inet6.4,v 1.6 2000/01/06 02:22:31 itojun Exp $
-.\"	KAME Id: inet6.4,v 1.4 2000/01/06 02:20:16 itojun Exp
+.\"	$NetBSD: inet6.4,v 1.7 2000/02/20 06:51:28 itojun Exp $
+.\"	KAME Id: inet6.4,v 1.5 2000/02/20 06:50:01 itojun Exp
 .\"
 .Dd January 29, 1999
 .Dt INET6 4
@@ -77,8 +77,8 @@ Sockets bound to the
 family utilize the following addressing structure,
 .Bd -literal -offset indent
 struct sockaddr_in6 {
-	u_char		sin6_len;
-	u_char		sin6_family;
+	u_int8_t	sin6_len;
+	u_int8_t	sin6_family;
 	u_int16_t	sin6_port;
 	u_int32_t	sin6_flowinfo;
 	struct in6_addr	sin6_addr;
