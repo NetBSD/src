@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.52 2000/05/09 00:32:21 thorpej Exp $
+#	$NetBSD: Makefile.arm32,v 1.53 2000/05/09 00:56:22 hubertf Exp $
 
 # Makefile for NetBSD
 #
@@ -219,5 +219,17 @@ modedefs.c: ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} Makefi
 
 modedefs.o: modedefs.c
 	${NORMAL_C}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /onetbsd
+	ln /netbsd /onetbsd
+	cp netbsd /nnetbsd
+	mv /nnetbsd /netbsd
+.endif
 
 %RULES
