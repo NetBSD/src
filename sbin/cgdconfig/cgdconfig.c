@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.2 2002/10/12 15:56:26 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.3 2002/10/12 21:02:18 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.2 2002/10/12 15:56:26 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.3 2002/10/12 21:02:18 elric Exp $");
 #endif
 
 #include <errno.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.2 2002/10/12 15:56:26 elric Exp $");
 #include <util.h>
 
 #include <sys/ioctl.h>
+#include <sys/disklabel.h>
 #include <sys/param.h>
 
 #include <dev/cgdvar.h>
@@ -78,11 +79,12 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.2 2002/10/12 15:56:26 elric Exp $");
 
 int	nflag = 0;
 
-static int	configure(int, char **, int);
+static int	configure(int, char **, struct params *, int);
 static int	configure_stdin(struct params *, int argc, char **);
 static int	generate(struct params *, int, char **, const char *);
-static int	unconfigure(int, char **, int);
-static int	do_all(const char *, int, char **, int (*)(int, char **, int));
+static int	unconfigure(int, char **, struct params *, int);
+static int	do_all(const char *, int, char **,
+		       int (*)(int, char **, struct params *, int));
 
 #define CONFIG_FLAGS_FROMALL	1	/* called from configure_all() */
 #define CONFIG_FLAGS_FROMMAIN	2	/* called from main() */
@@ -95,8 +97,10 @@ static int	 getkey(const char *, struct params *);
 static int	 getkeyfrompassphrase(const char *, struct params *);
 static int	 getkeyfromfile(FILE *, struct params *);
 static int	 opendisk_werror(const char *, char *, int);
+static int	 unconfigure_fd(int);
+static int	 verify(struct params *, int);
 
-static void	usage(void);
+static void	 usage(void);
 
 /* Verbose Framework */
 int	verbose = 0;
@@ -108,12 +112,12 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-nv] cgd dev [paramsfile]\n",
+	fprintf(stderr, "usage: %s [-nv] [-V vmeth] cgd dev [paramsfile]\n",
 	    getprogname());
 	fprintf(stderr, "       %s -C [-nv] [-f configfile]\n", getprogname());
 	fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
 	fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
-	    "[-o outfile] alg [keylen]\n", getprogname());
+	    "[-o outfile] [-V vmeth] alg [keylen]\n", getprogname());
 	fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
 	fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
@@ -134,7 +138,7 @@ main(int argc, char **argv)
 	setprogname(*argv);
 	params_init(&cf);
 
-	while ((ch = getopt(argc, argv, "CUb:f:gi:k:no:usv")) != -1)
+	while ((ch = getopt(argc, argv, "CUV:b:f:gi:k:no:usv")) != -1)
 		switch (ch) {
 		case 'C':
 			action = ACTION_CONFIGALL;
@@ -144,7 +148,11 @@ main(int argc, char **argv)
 			action = ACTION_UNCONFIGALL;
 			actions++;
 			break;
-
+		case 'V':
+			ret = params_setverify_method_str(&cf, optarg);
+			if (ret)
+				usage();
+			break;
 		case 'b':
 			ret = params_setbsize(&cf, atoi(optarg));
 			if (ret)
@@ -200,9 +208,9 @@ main(int argc, char **argv)
 
 	switch (action) {
 	case ACTION_CONFIGURE:
-		return configure(argc, argv, CONFIG_FLAGS_FROMMAIN);
+		return configure(argc, argv, &cf, CONFIG_FLAGS_FROMMAIN);
 	case ACTION_UNCONFIGURE:
-		return unconfigure(argc, argv, CONFIG_FLAGS_FROMMAIN);
+		return unconfigure(argc, argv, NULL, CONFIG_FLAGS_FROMMAIN);
 	case ACTION_GENERATE:
 		return generate(&cf, argc, argv, outfile);
 	case ACTION_CONFIGALL:
@@ -264,6 +272,8 @@ getkeyfrompassphrase(const char *target, struct params *p)
 	snprintf(buf, 1024, "%s's passphrase:", target);
 	passp = getpass(buf);
 	/* XXXrcd: data hiding ? we should be allocating the key here. */
+	if (!p->key)
+		free(p->key);
 	ret = pkcs5_pbkdf2(&p->key, BITS2BYTES(p->keylen), passp,
 	    strlen(passp), p->keygen_salt, BITS2BYTES(p->keygen_saltlen),
 	    p->keygen_iterations);
@@ -272,10 +282,10 @@ getkeyfrompassphrase(const char *target, struct params *p)
 	return ret;
 }
 
+/* ARGSUSED */
 static int
-unconfigure(int argc, char **argv, int flags)
+unconfigure(int argc, char **argv, struct params *inparams, int flags)
 {
-	struct	cgd_ioctl ci;
 	int	fd;
 	int	ret;
 	char	buf[MAXPATHLEN] = "";
@@ -303,10 +313,21 @@ unconfigure(int argc, char **argv, int flags)
 	if (nflag)
 		return 0;
 
+	ret = unconfigure_fd(fd);
+	close(fd);
+	return ret;
+}
+
+static int
+unconfigure_fd(int fd)
+{
+	struct	cgd_ioctl ci;
+	int	ret;
+
 	ret = ioctl(fd, CGDIOCCLR, &ci);
 	if (ret == -1) {
 		perror("ioctl");
-		return errno;
+		return -1;
 	}
 
 	return 0;
@@ -314,7 +335,7 @@ unconfigure(int argc, char **argv, int flags)
 
 /* ARGSUSED */
 static int
-configure(int argc, char **argv, int flags)
+configure(int argc, char **argv, struct params *inparams, int flags)
 {
 	struct params	params;
 	int		fd;
@@ -348,18 +369,53 @@ configure(int argc, char **argv, int flags)
 	if (ret)
 		return ret;
 
-	fd = opendisk_werror(argv[0], cgdname, sizeof(cgdname));
-	if (fd == -1)
-		return -1;
+	/*
+	 * over-ride the verify method with that specified on the
+	 * command line
+	 */
 
-	ret = getkey(argv[1], &params);
-	if (ret)
-		return ret;
+	if (inparams && inparams->verify_method != VERIFY_UNKNOWN)
+		params.verify_method = inparams->verify_method;
 
-	ret = configure_params(fd, cgdname, argv[1], &params);
+	/*
+	 * loop over configuring the disk and checking to see if it
+	 * verifies properly.  We open and close the disk device each
+	 * time, because if the user passes us the block device we
+	 * need to flush the buffer cache.
+	 */
+
+	for (;;) {
+		fd = opendisk_werror(argv[0], cgdname, sizeof(cgdname));
+		if (fd == -1)
+			return -1;
+
+		ret = getkey(argv[1], &params);
+		if (ret)
+			goto bail_err;
+
+		ret = configure_params(fd, cgdname, argv[1], &params);
+		if (ret)
+			goto bail_err;
+
+		ret = verify(&params, fd);
+		if (ret == -1)
+			goto bail_err;
+		if (!ret)
+			break;
+
+		fprintf(stderr, "verification failed, please reenter "
+		    "passphrase\n");
+
+		unconfigure_fd(fd);
+		close(fd);
+	}
 
 	params_free(&params);
-	return ret;
+	close(fd);
+	return 0;
+bail_err:
+	close(fd);
+	return -1;
 }
 
 static int
@@ -410,7 +466,7 @@ opendisk_werror(const char *cgd, char *buf, int buflen)
 		return 0;
 	}
 
-	fd = opendisk(cgd, O_RDWR, buf, buflen, 1);
+	fd = opendisk(cgd, O_RDWR, buf, buflen, 0);
 	if (fd == -1)
 		fprintf(stderr, "can't open cgd \"%s\", \"%s\": %s\n",
 		    cgd, buf, strerror(errno));
@@ -450,6 +506,51 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 	}
 
 	return 0;
+}
+
+/*
+ * verify returns 0 for success, -1 for unrecoverable error, or 1 for retry.
+ */
+
+#define SCANSIZE	8192
+
+static int
+verify(struct params *p, int fd)
+{
+	struct	disklabel l;
+	int	ret;
+	char	buf[SCANSIZE];
+
+	switch (p->verify_method) {
+	case VERIFY_NONE:
+		return 0;
+	case VERIFY_DISKLABEL:
+		/*
+		 * for now this is the only method, so we just perform it
+		 * in this function.
+		 */
+		break;
+	default:
+		fprintf(stderr, "verify: unimplemented verification method\n");
+		return -1;
+	}
+
+	/*
+	 * we simply scan the first few blocks for a disklabel, ignoring
+	 * any MBR/filecore sorts of logic.  MSDOS and RiscOS can't read
+	 * a cgd, anyway, so it is unlikely that there will be non-native
+	 * partition information.
+	 */
+
+	ret = pread(fd, buf, 8192, 0);
+	if (ret == -1) {
+		fprintf(stderr, "verify: can't read disklabel area\n");
+		return -1;
+	}
+
+	/* now scan for the disklabel */
+
+	return disklabel_scan(&l, buf, sizeof(buf));
 }
 
 static int
@@ -505,7 +606,7 @@ generate(struct params *p, int argc, char **argv, const char *outfile)
 
 static int
 do_all(const char *cfile, int argc, char **argv,
-       int (*conf)(int, char **, int))
+       int (*conf)(int, char **, struct params *, int))
 {
 	FILE		 *f;
 	size_t		  len;
@@ -542,7 +643,7 @@ do_all(const char *cfile, int argc, char **argv,
 			continue;
 
 		my_argv = words(line, &my_argc);
-		ret = conf(my_argc, my_argv, CONFIG_FLAGS_FROMALL);
+		ret = conf(my_argc, my_argv, NULL, CONFIG_FLAGS_FROMALL);
 		if (ret) {
 			fprintf(stderr, "on \"%s\" line %lu\n", fn,
 			    (u_long)lineno);
