@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.33 1997/07/07 03:54:42 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.33.6.1 1997/11/09 20:14:07 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)dc.c	8.5 (Berkeley) 6/2/95
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.33.6.1 1997/11/09 20:14:07 mellon Exp $");
 
 /*
  * devDC7085.c --
@@ -95,8 +98,8 @@
  * #include <pmax/dev/pdma.h>
  */
 #include "dcvar.h"
-
 #include "tc.h"
+#include "rasterconsole.h"
 
 #include <pmax/dev/lk201var.h>		/* XXX KbdReset band friends */
 
@@ -382,6 +385,7 @@ dcopen(dev, flag, mode, p)
 	register struct dc_softc *sc;
 	register int unit, line;
 	int s, error = 0;
+	int firstopen = 0;
 
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
@@ -403,6 +407,7 @@ dcopen(dev, flag, mode, p)
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
+		firstopen = 1;
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
 #endif
@@ -439,7 +444,19 @@ dcopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+#if NRASTERCONSOLE > 0
+	/*
+	 * Handle console cases specially.
+	 */
+	if (firstopen && raster_console() && 
+	    unit == 0 && tp == sc->dc_tty[DCKBD_PORT]) {
+	  	extern struct tty *fbconstty;
+		tp->t_winsize = fbconstty->t_winsize;
+	}
+#endif	/* NRASTERCONSOLE */
+	return (error);
 }
 
 /*ARGSUSED*/
