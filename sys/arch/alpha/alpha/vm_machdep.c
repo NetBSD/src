@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.57 2000/05/28 05:48:59 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.57.2.1 2001/04/21 21:49:43 he Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2000/05/28 05:48:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57.2.1 2001/04/21 21:49:43 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,6 +235,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		    (u_int64_t)arg;			/* s2: arg */
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
+		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
 	}
 }
 
