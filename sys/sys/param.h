@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.188.2.1 2004/03/29 05:21:33 jmc Exp $	*/
+/*	$NetBSD: param.h,v 1.188.2.2 2004/03/29 15:31:52 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * needs to be updated and the changes sent back to the groff maintainers.
  */
 
-#define	__NetBSD_Version__	200000000	/* NetBSD 2.0 */
+#define	__NetBSD_Version__	200000000	/* NetBSD 2.0_BETA */
 
 /*
  * Historical NetBSD #define
