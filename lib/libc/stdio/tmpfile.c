@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfile.c,v 1.8 1998/10/13 14:07:04 kleink Exp $	*/
+/*	$NetBSD: tmpfile.c,v 1.9 2002/08/10 16:28:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tmpfile.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tmpfile.c,v 1.8 1998/10/13 14:07:04 kleink Exp $");
+__RCSID("$NetBSD: tmpfile.c,v 1.9 2002/08/10 16:28:51 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ tmpfile()
 	sigset_t set, oset;
 	FILE *fp;
 	int fd, sverrno;
-#define	TRAILER	"tmp.XXXXXX"
+#define	TRAILER	"tmp.XXXXXXXXXX"
 	char buf[sizeof(_PATH_TMP) + sizeof(TRAILER)];
 
 	(void)memcpy(buf, _PATH_TMP, sizeof(_PATH_TMP) - 1);
