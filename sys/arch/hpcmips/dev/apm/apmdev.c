@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.11 2002/10/02 15:45:19 thorpej Exp $ */
+/*	$NetBSD: apmdev.c,v 1.12 2002/10/14 13:34:09 takemura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -843,6 +843,7 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct apm_ctl *actl;
 #endif
 	int i, error = 0;
+	int batt_flags;
 
 	APM_LOCK(sc);
 	switch (cmd) {
@@ -884,6 +885,26 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((error = sc->ops->get_powstat(sc->cookie, powerp)) != 0) {
 			apm_perror("ioctl get power status", error);
 			error = EIO;
+			break;
+		}
+		switch (apm_minver) {
+		case 0:
+			break;
+		case 1:
+		default:
+			batt_flags = powerp->battery_state;
+			powerp->battery_state = APM_BATT_UNKNOWN;
+			if (batt_flags & APM_BATT_FLAG_HIGH)
+				powerp->battery_state = APM_BATT_HIGH;
+			else if (batt_flags & APM_BATT_FLAG_LOW)
+				powerp->battery_state = APM_BATT_LOW;
+			else if (batt_flags & APM_BATT_FLAG_CRITICAL)
+				powerp->battery_state = APM_BATT_CRITICAL;
+			else if (batt_flags & APM_BATT_FLAG_CHARGING)
+				powerp->battery_state = APM_BATT_CHARGING;
+			else if (batt_flags & APM_BATT_FLAG_NO_SYSTEM_BATTERY)
+				powerp->battery_state = APM_BATT_ABSENT;
+			break;
 		}
 		break;
 		
