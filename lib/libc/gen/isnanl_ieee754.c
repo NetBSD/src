@@ -1,4 +1,4 @@
-/*	$NetBSD: isnanl_ieee754.c,v 1.2 2003/08/07 16:42:52 agc Exp $	*/
+/*	$NetBSD: isnanl_ieee754.c,v 1.3 2003/10/22 21:37:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ isnanl(long double ld)
 	} u;
 
 	u.ld = ld;
-	return (u.ldbl.ext_exp == DBL_EXP_INFNAN &&
+	return (u.ldbl.ext_exp == EXT_EXP_INFNAN &&
 	    (u.ldbl.ext_frach != 0 || u.ldbl.ext_frachm != 0 ||
 	     u.ldbl.ext_fraclm != 0 || u.ldbl.ext_fracl != 0));
 #else
