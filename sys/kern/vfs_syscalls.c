@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.102 1997/10/11 00:05:15 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.103 1997/10/19 03:29:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2157,7 +2157,7 @@ sys_umask(p, v, retval)
 	register_t *retval;
 {
 	struct sys_umask_args /* {
-		syscallarg(int) newmask;
+		syscallarg(mode_t) newmask;
 	} */ *uap = v;
 	register struct filedesc *fdp;
 
