@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.15 1996/10/13 01:38:07 christos Exp $	*/
+/*	$NetBSD: wss.c,v 1.16 1996/12/05 06:48:47 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -159,10 +159,6 @@ struct audio_hw_if wss_hw_if = {
 	0,	/* not full-duplex */
 	0
 };
-
-#ifndef NEWCONFIG
-#define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
-#endif
 
 int	wssprobe __P((struct device *, void *, void *));
 void	wssattach __P((struct device *, struct device *, void *));
@@ -355,7 +351,7 @@ wss_get_out_port(addr)
     void *addr;
 {
     DPRINTF(("wss_get_out_port:\n"));
-    return(EINVAL);
+    return(WSS_DAC_LVL);
 }
 
 int
