@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.22 2001/11/30 07:05:54 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.23 2002/03/17 23:58:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.22 2001/11/30 07:05:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.23 2002/03/17 23:58:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,7 @@ ext2fs_write(v)
 	vsize_t bytelen;
 	void *win;
 	off_t oldoff;
+	boolean_t async;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -258,6 +259,7 @@ ext2fs_write(v)
 		return (EFBIG);
 	}
 
+	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
 	osize = ip->i_e2fs_size;
 
@@ -295,7 +297,7 @@ ext2fs_write(v)
 			 * XXXUBC simplistic async flushing.
 			 */
 
-			if (oldoff >> 16 != uio->uio_offset >> 16) {
+			if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
 				simple_lock(&vp->v_interlock);
 				error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
