@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.7 2001/05/26 21:27:11 chs Exp $	*/
+/*	$NetBSD: bus.c,v 1.8 2001/09/10 21:19:20 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -719,7 +719,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			/* XXX Do something about COHERENT here. */
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return 0;
 }

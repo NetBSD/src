@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2001/07/20 14:19:59 ichiro Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2001/09/10 21:19:23 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1006,7 +1006,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = NULL;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -1808,7 +1808,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return va;
 }
 
@@ -2674,7 +2674,7 @@ pmap_collect(pmap)
 	 */
 
 	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-	pmap_update();
+	pmap_update(pmap);
 }
 
 /*

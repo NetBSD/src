@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2001/08/22 19:13:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2001/09/10 21:19:41 chris Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -675,7 +675,7 @@ cpu_startup(void)
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.4 2001/09/10 02:20:20 reinoud Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.5 2001/09/10 21:19:35 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -170,7 +170,7 @@ mainbus_bs_map(t, bpa, size, cacheable, bshp)
 		else
 			*pte &= ~PT_CACHEABLE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return(0);
 }
