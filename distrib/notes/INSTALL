@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.53 1998/03/22 03:56:55 thorpej Exp $
+	$NetBSD: INSTALL,v 1.54 1998/04/09 21:11:23 thorpej Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -579,6 +579,7 @@ The NetBSD core group:
 J.T. Conklin		<jtc@NetBSD.ORG>
 Charles Hannum		<mycroft@NetBSD.ORG>
 Paul Kranenburg		<pk@NetBSD.ORG>
+Herb Peyerl		<hpeyerl@NetBSD.ORG>
 Jason Thorpe		<thorpej@NetBSD.ORG>
 Christos Zoulas 	<christos@NetBSD.ORG>
 
@@ -655,7 +656,6 @@ Perry Metzger		<perry@NetBSD.ORG>
 Luke Mewburn		<lukem@NetBSD.ORG>
 der Mouse		<mouse@NetBSD.ORG>
 Tohru Nishimura		<nisimura@NetBSD.ORG>
-Herb Peyerl		<hpeyerl@NetBSD.ORG>
 Matthias Pfaller	<matthias@NetBSD.ORG>
 Chris Provenzano	<proven@NetBSD.ORG>
 Waldi Ravens		<waldi@moacs.indiv.nl.net>
