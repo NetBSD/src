@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.46 1997/11/13 03:16:49 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 1997/11/13 03:25:33 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -196,6 +196,10 @@ int	nkpde = 0;
 pt_entry_t	*CMAP1, *CMAP2;
 caddr_t		CADDR1, CADDR2, vmmap;
 extern vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+#ifdef I586_CPU
+extern vm_offset_t pentium_trap_vaddr, pentium_trap_paddr;
+extern int pentium_trap_fixup;
+#endif
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -268,6 +272,13 @@ pmap_bootstrap(virtual_start)
 	SYSMAP(vm_offset_t, junk, msgbuf_vaddr, btoc(MSGBUFSIZE));
 	avail_end -= round_page(MSGBUFSIZE);
 	msgbuf_paddr = avail_end;
+#ifdef I586_CPU
+	if (pentium_trap_fixup) {
+		SYSMAP(vm_offset_t, junk, pentium_trap_vaddr, 2);
+		avail_end -= ctob(1);
+		pentium_trap_paddr = avail_end;
+	}
+#endif
 
 	virtual_avail = va;
 

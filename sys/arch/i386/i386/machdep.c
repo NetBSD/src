@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.263 1997/11/13 03:16:47 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.264 1997/11/13 03:25:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,8 @@
  */
 
 /*-
- * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996, 1997
+ *	 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -213,6 +214,10 @@ int	boothowto;
 int	cpu_class;
 
 vm_offset_t msgbuf_vaddr, msgbuf_paddr;
+#ifdef I586_CPU
+vm_offset_t pentium_trap_vaddr, pentium_trap_paddr;
+int pentium_trap_fixup = 1;
+#endif
 
 vm_map_t buffer_map;
 
@@ -1394,7 +1399,7 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(syscall), IDTVEC(osyscall);
+extern	IDTVEC(syscall), IDTVEC(osyscall), IDTVEC(trap0e_pentium);
 extern	*IDTVEC(exceptions)[];
 
 void
@@ -1559,11 +1564,27 @@ init386(first_avail)
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + x * NBPG,
 		    msgbuf_paddr + x * NBPG, VM_PROT_ALL, TRUE);
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+
+#ifdef I586_CPU
+	if (pentium_trap_fixup) {
+		struct gate_descriptor *new_idt;
+
+		pmap_enter(pmap_kernel(), pentium_trap_vaddr + NBPG,
+		    pentium_trap_paddr, VM_PROT_ALL, TRUE);
+		new_idt =
+		    (struct gate_descriptor *)(pentium_trap_vaddr + NBPG) - 7;
+		bcopy(&idt[7], &new_idt[7], (NIDT - 7) * sizeof(idt[0]));
+		setgate(&new_idt[14], &IDTVEC(trap0e_pentium), 0, SDT_SYS386TGT,
+		    SEL_KPL);
+		idt = new_idt;
+		setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+		lidt(&region);
+	}
+#endif
 
 #ifdef DDB
 	ddb_init();
