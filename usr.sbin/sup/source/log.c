@@ -1,3 +1,5 @@
+/*	$NetBSD: log.c,v 1.3 1997/06/17 18:56:20 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -26,16 +28,6 @@
  * Logging support for SUP
  **********************************************************************
  * HISTORY
- * $Log: log.c,v $
- * Revision 1.2  1996/12/23 19:42:06  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 1.5  92/08/11  12:03:43  mrt
  * 	Brad's delinting and variable argument list usage
  * 	changes. Added copyright.

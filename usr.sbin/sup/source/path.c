@@ -1,3 +1,5 @@
+/*	$NetBSD: path.c,v 1.3 1997/06/17 18:56:27 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
