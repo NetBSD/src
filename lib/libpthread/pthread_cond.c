@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.1 2001/07/25 21:24:13 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.2 2001/07/25 23:53:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,11 +47,11 @@ int
 pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 {
 
-	assert(cond != NULL);
-
-	/* XXX no cond attr support yet. */
-	if (attr != NULL)
+#ifdef ERRORCHECK
+	if ((cond == NULL) || 
+	    (attr && (attr->ptca_magic != _PT_CONDATTR_MAGIC)))
 		return EINVAL;
+#endif
 
 	cond->ptc_magic = _PT_COND_MAGIC;
 	pthread_lockinit(&cond->ptc_lock);
@@ -65,8 +65,13 @@ int
 pthread_cond_destroy(pthread_cond_t *cond)
 {
 
-	assert(cond->ptc_magic == _PT_COND_MAGIC);
-
+#ifdef ERRORCHECK
+	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
+	    (cond->ptc_mutex != NULL) ||
+	    (cond->ptc_lock != __SIMPLELOCK_UNLOCKED))
+		return EINVAL;
+#endif
+						     
 	cond->ptc_magic = _PT_COND_DEAD;
 
 	return 0;
@@ -77,6 +82,11 @@ int
 pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
 	pthread_t self;
+#ifdef ERRORCHECK
+	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC) ||
+	    (mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
+		return EINVAL;
+#endif
 
 	self = pthread__self();
 	pthread_spinlock(self, &cond->ptc_lock);
@@ -111,6 +121,10 @@ int
 pthread_cond_signal(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
+#ifdef ERRORCHECK
+	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
+		return EINVAL;
+#endif
 
 	self = pthread__self();
 
@@ -134,6 +148,10 @@ pthread_cond_broadacst(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
 	struct pt_queue_t blockedq, nullq = PTQ_HEAD_INITIALIZER;
+#ifdef ERRORCHECK
+	if ((cond == NULL) || (cond->ptc_magic != _PT_COND_MAGIC))
+		return EINVAL;
+#endif
 
 	self = pthread__self();
 
@@ -148,4 +166,35 @@ pthread_cond_broadacst(pthread_cond_t *cond)
 
 	return 0;
 
+}
+
+
+int
+pthread_condattr_init(pthread_condattr_t *attr)
+{
+
+#ifdef ERRORCHECK
+	if (attr == NULL)
+		return EINVAL;
+#endif
+
+	attr->ptca_magic = _PT_CONDATTR_MAGIC;
+
+	return 0;
+}
+
+
+int
+pthread_condattr_destroy(pthread_condattr_t *attr)
+{
+
+#ifdef ERRORCHECK
+	if ((attr == NULL) ||
+	    (attr->ptca_magic != _PT_CONDATTR_MAGIC))
+		return EINVAL;
+#endif
+
+	attr->ptca_magic = _PT_CONDATTR_DEAD;
+
+	return 0;
 }

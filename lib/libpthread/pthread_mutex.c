@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.4 2001/07/24 21:21:12 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.5 2001/07/25 23:53:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,13 +47,11 @@ int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
 {
 
-	assert(mutex != NULL);
-
-	/* XXX No mutex attr support yet. */
-	if (attr != NULL)
+#ifdef ERRORCHECK
+	if ((mutex == NULL) || 
+	    (attr && (attr->ptma_magic != _PT_MUTEXATTR_MAGIC)))
 		return EINVAL;
-
-	/* Allocate. */
+#endif
 
 	mutex->ptm_magic = _PT_MUTEX_MAGIC;
 	mutex->ptm_owner = NULL;
@@ -69,9 +67,12 @@ int
 pthread_mutex_destroy(pthread_mutex_t *mutex)
 {
 
-	assert(mutex != NULL);
-	assert(mutex->ptm_magic == _PT_MUTEX_MAGIC);
-	assert(mutex->ptm_lock == __SIMPLELOCK_UNLOCKED);
+#ifdef ERRORCHECK
+	if ((mutex == NULL) ||
+	    (mutex->ptm_magic != _PT_MUTEX_MAGIC) ||
+	    (mutex->ptm_lock != __SIMPLELOCK_UNLOCKED))
+		return EINVAL;
+#endif
 
 	mutex->ptm_magic = _PT_MUTEX_DEAD;
 
@@ -95,16 +96,17 @@ int
 pthread_mutex_lock(pthread_mutex_t *mutex)
 {
 	pthread_t self;
+
 #ifdef ERRORCHECK
 	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
 #endif
+	self = pthread__self();
 
 	while (/*CONSTCOND*/1) {
 		if (__cpu_simple_lock_try(&mutex->ptm_lock))
 		    break; /* got it! */
 		
-		self = pthread__self();
 		/* Okay, didn't look free. Get the interlock... */
 		pthread_spinlock(self, &mutex->ptm_interlock);
 		/* The mutex_unlock routine will get the interlock
@@ -156,6 +158,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
 	pthread_t self, blocked; 
 
+	self = pthread__self();
+
 #ifdef ERRORCHECK
 	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
@@ -168,7 +172,6 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 		return EPERM; 
 #endif
 
-	self = pthread__self();
 	pthread_spinlock(self, &mutex->ptm_interlock);
 	blocked = PTQ_FIRST(&mutex->ptm_blocked);
 	if (blocked)
@@ -182,6 +185,36 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	/* Give the head of the blocked queue another try. */
 	if (blocked)
 		pthread__sched(self, blocked);
+
+	return 0;
+}
+
+int
+pthread_mutexattr_init(pthread_mutexattr_t *attr)
+{
+
+#ifdef ERRORCHECK
+	if (attr == NULL)
+		return EINVAL;
+#endif
+
+	attr->ptma_magic = _PT_MUTEXATTR_MAGIC;
+
+	return 0;
+}
+
+
+int
+pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
+{
+
+#ifdef ERRORCHECK
+	if ((attr == NULL) ||
+	    (attr->ptma_magic != _PT_MUTEXATTR_MAGIC))
+		return EINVAL;
+#endif
+
+	attr->ptma_magic = _PT_MUTEXATTR_DEAD;
 
 	return 0;
 }
