@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15 2000/06/26 14:59:03 mrg Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16 2000/09/19 06:22:51 jeffs Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,8 +26,11 @@
  * the rights to redistribute these changes.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
-#include <uvm/uvm_param.h>		/* XXX boolean_t */
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <mips/mips_opcode.h>
 
@@ -134,12 +137,41 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	void		(*pr) __P((const char *, ...));
 {
 #ifndef DDB_TRACE
-	stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1],
-			ddb_regs.f_regs[A2], ddb_regs.f_regs[A3],
-			ddb_regs.f_regs[PC],
-			ddb_regs.f_regs[SP],
-			ddb_regs.f_regs[S8],	/* non-virtual frame pointer */
-			ddb_regs.f_regs[RA],
+	struct pcb *pcb;
+	struct proc *p;
+
+	if (!have_addr) {
+		stacktrace_subr(ddb_regs.f_regs[A0], ddb_regs.f_regs[A1],
+				ddb_regs.f_regs[A2], ddb_regs.f_regs[A3],
+				ddb_regs.f_regs[PC],
+				ddb_regs.f_regs[SP],
+				/* non-virtual frame pointer */
+				ddb_regs.f_regs[S8],
+				ddb_regs.f_regs[RA],
+				pr);
+		return;
+	}
+
+	/* "trace/t" */
+	(*pr)("pid %d ", (int)addr);
+	p = pfind(addr);
+	if (p == NULL) {
+		(*pr)("not found\n");
+		return;
+	}	
+	if (!(p->p_flag&P_INMEM)) {
+		(*pr)("swapped out\n");
+		return;
+	}
+
+	pcb = &(p->p_addr->u_pcb);
+	(*pr)("at %p\n", pcb);
+
+	stacktrace_subr(0,0,0,0,	/* no args known */
+			(int)cpu_switch,
+			pcb->pcb_context[8],
+			pcb->pcb_context[9],
+			pcb->pcb_context[10],
 			pr);
 #else
 /*
