@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.50.4.4 2002/06/12 20:41:45 he Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.50.4.5 2002/09/18 16:04:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -271,7 +271,7 @@ soaccept(so, nam)
 		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
 		    (struct mbuf *)0, nam, (struct mbuf *)0, (struct proc *)0);
 	else
-		nam->m_len = 0;
+		error = ECONNABORTED;
 
 	splx(s);
 	return (error);
