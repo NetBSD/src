@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.16 2002/05/17 05:40:42 lukem Exp $
+# $NetBSD: postinstall,v 1.17 2002/05/26 04:38:13 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -146,7 +146,7 @@ check_ids()
 		}
 	' ${_ids} < ${_file})	|| return 1
 	if [ -n "${_missing}" ]; then
-		msg "Missing ${_type}: ${_missing}"
+		msg "Missing ${_type}:" $(echo ${_missing})
 		return 1
 	fi
 	return 0
