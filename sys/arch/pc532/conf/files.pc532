@@ -1,5 +1,5 @@
 #
-#	$Id: files.pc532,v 1.4 1994/03/08 19:47:51 phil Exp $
+#	$Id: files.pc532,v 1.5 1994/03/10 21:35:17 phil Exp $
 #
 arch/pc532/pc532/autoconf.c		standard 
 arch/pc532/pc532/clock.c		standard
@@ -13,6 +13,7 @@ arch/pc532/pc532/vm_machdep.c		standard
 arch/pc532/pc532/icode.c		standard
 arch/pc532/pc532/disksubr.c		standard
 arch/pc532/pc532/ntoh.s			standard
+arch/pc532/pc532/random.s		standard
 arch/pc532/pc532/ns_cksum.c		optional ns
 arch/pc532/pc532/in_cksum.c		optional inet
 arch/pc532/pc532/oc_cksum.s		optional inet

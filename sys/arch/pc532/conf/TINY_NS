@@ -11,25 +11,25 @@ maxusers	8
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
 options		"COMPAT_43"
-options		"RAMD_SIZE=1536000"
-#options		"RAMD_ADR=0x400000"
+#options		"RAMD_SIZE=1536000"
+#options		"RAMD_ADR=0x200000"
 options		"COMDEF_SPEED=B19200"
 
 options		SCSI
 
-config		"netbsd"	root on rd0
+config		"netbsd"	root on sd0 swap on sd0
 
 controller	rd0
 
-#controller	ncr0
-#disk		sd0	at ncr0 flags 0 drive ? bio
-#disk		sd1	at ncr0 flags 0 drive ? bio
-#tape		st0	at ncr0 flags 1 drive ? bio
+controller	ncr0
+disk		sd0	at ncr0 flags 0 drive ? bio
+disk		sd1	at ncr0 flags 0 drive ? bio
+tape		st0	at ncr0 flags 1 drive ? bio
 
-controller	dp0
-disk		sd0	at dp0 flags 0 drive ? bio
-disk		sd1	at dp0 flags 0 drive ? bio
-tape		st0	at dp0 flags 1 drive ? bio
+#controller	dp0
+#disk		sd0	at dp0 flags 0 drive ? bio
+#disk		sd1	at dp0 flags 0 drive ? bio
+#tape		st0	at dp0 flags 1 drive ? bio
 
 controller	scn0
 device		com0 	at scn0 port 0 tty
