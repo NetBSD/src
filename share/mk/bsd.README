@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.8 1994/12/22 09:20:40 cgd Exp $
+#	$NetBSD: bsd.README,v 1.9 1994/12/22 12:22:59 cgd Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -252,7 +252,7 @@ To build foo from foo.c with a manual page foo.1, use:
 
 To build foo from foo.c with a manual page foo.2, add the line:
 
-	MAN2=	foo.0
+	MAN=	foo.2
 
 If foo does not have a manual page at all, add the line:
 
