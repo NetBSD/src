@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.22.2.1 2001/11/14 19:32:37 nathanw Exp $	*/
+/*	$NetBSD: pwd.h,v 1.22.2.2 2002/01/28 21:27:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -110,6 +110,9 @@ int		 pw_scan __P((char *bp, struct passwd *pw, int *flags));
 int		 setpassent __P((int));
 const char	*user_from_uid __P((uid_t, int));
 int		 uid_from_user __P((const char *, uid_t *));
+int		 pwcache_userdb __P((int (*)(int), void (*)(void),
+				    struct passwd * (*)(const char *),
+				    struct passwd * (*)(uid_t)));
 #endif
 __END_DECLS
 

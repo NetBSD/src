@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_types.h,v 1.9.2.1 2002/01/14 21:37:09 nathanw Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.9.2.2 2002/01/28 21:27:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

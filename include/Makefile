@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95.2.4 2002/01/14 21:37:09 nathanw Exp $
+#	$NetBSD: Makefile,v 1.95.2.5 2002/01/28 21:27:18 nathanw Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
