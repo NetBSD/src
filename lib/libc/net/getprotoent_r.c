@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $	*/
+/*	$NetBSD: getprotoent_r.c,v 1.2 2004/02/23 16:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotoent_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $");
+__RCSID("$NetBSD: getprotoent_r.c,v 1.2 2004/02/23 16:06:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ void
 setprotoent_r(int f, struct protoent_data *pd)
 {
 	if (pd->fp == NULL)
-		pd->fp = fopen(_PATH_PROTOCOLS, "r" );
+		pd->fp = fopen(_PATH_PROTOCOLS, "r");
 	else
 		rewind(pd->fp);
 	pd->stayopen |= f;
@@ -73,26 +73,31 @@ endprotoent_r(struct protoent_data *pd)
 		pd->aliases = NULL;
 		pd->maxaliases = 0;
 	}
+	if (pd->line) {
+		free(pd->line);
+		pd->line = NULL;
+	}
 	pd->stayopen = 0;
 }
 
 struct protoent *
 getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 {
-	char *l = NULL, *p, *cp, **q;
+	char *p, *cp, **q;
 	size_t i = 0;
 	int oerrno;
 
-	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "r" )) == NULL)
+	if (pd->fp == NULL && (pd->fp = fopen(_PATH_PROTOCOLS, "r")) == NULL)
 		return NULL;
 
 	for (;;) {
-		if (l)
-			free(l);
-		l = fparseln(pd->fp, NULL, NULL, NULL, FPARSELN_UNESCALL);
-		if (l == NULL)
+		if (pd->line)
+			free(pd->line);
+		pd->line = fparseln(pd->fp, NULL, NULL, NULL,
+		    FPARSELN_UNESCALL);
+		if (pd->line == NULL)
 			return NULL;
-		pr->p_name = p = l;
+		pr->p_name = p = pd->line;
 		cp = strpbrk(p, " \t");
 		if (cp == NULL)
 			continue;
@@ -115,7 +120,6 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 		q = pr->p_aliases = pd->aliases;
 		if (p != NULL) {
 			cp = p;
-			q = pr->p_aliases;
 			while (cp && *cp) {
 				if (*cp == ' ' || *cp == '\t') {
 					cp++;
@@ -123,14 +127,14 @@ getprotoent_r(struct protoent *pr, struct protoent_data *pd)
 				}
 				if (i == pd->maxaliases - 2) {
 					pd->maxaliases *= 2;
-					q = pd->aliases =
-					    realloc(q, pd->maxaliases);
+					q = realloc(q, pd->maxaliases);
 					if (q == NULL) {
 						oerrno = errno;
 						endprotoent_r(pd);
 						errno = oerrno;
 						return NULL;
 					}
+					pr->p_aliases = pd->aliases = q;
 				}
 				q[i++] = cp;
 
