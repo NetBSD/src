@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.16 2003/08/02 14:29:33 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.17 2003/08/02 14:34:35 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.16 2003/08/02 14:29:33 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.17 2003/08/02 14:34:35 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -626,16 +626,16 @@ normalize_filename(int fd, pid_t pid, char *name, int userp)
 
 	if (userp != ICLINK_NONE) {
 		static char rcwd[2*MAXPATHLEN];
-		char *file = basename(cwd);
+		char *base = basename(cwd);
 		int failed = 0;
 
  		/* The dot may be used by rmdir("/tmp/something/.") */
- 		if (strcmp(file, ".") == 0)
+ 		if (strcmp(base, ".") == 0)
  			goto nolast;
 
 		if (userp == ICLINK_NOLAST) {
 			/* Check if the last component has special meaning */
-			if (strcmp(file, "..") == 0 || strcmp(file, "/") == 0)
+			if (strcmp(base, "..") == 0 || strcmp(base, "/") == 0)
 				userp = ICLINK_ALL;
 			else
 				goto nolast;
