@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2000/02/03 19:27:45 tsubai Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2000/07/05 16:02:39 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,11 +69,18 @@ mainbus_attach(parent, self, aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node;
+	int node, i;
 	u_int32_t reg[4];
 	char name[32];
 
 	printf("\n");
+
+	for (i = 0; i < 2; i++) {
+		ca.ca_name = "cpu";
+		ca.ca_reg = reg;
+		reg[0] = i;
+		config_found(self, &ca, NULL);
+	}
 
 	node = OF_peer(0);
 	if (node) {
@@ -81,9 +88,6 @@ mainbus_attach(parent, self, aux)
 		oba.oba_phandle = node;
 		config_found(self, &oba, NULL);
 	}
-
-	ca.ca_name = "cpu";
-	config_found(self, &ca, NULL);
 
 	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
 		bzero(name, sizeof(name));
