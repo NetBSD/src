@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.29 1998/08/24 22:36:36 mrg Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.30 1999/01/16 20:00:28 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -216,7 +216,6 @@ struct vm_page {
 #define	PG_PTPAGE	0x8000		/* DEBUG: is a user page table page */
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 /*
  * physical memory layout structure
  *
@@ -251,8 +250,6 @@ struct vm_physseg {
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 };
 
-#endif /* MACHINE_NEW_NONCONTIG */
-
 #if defined(_KERNEL)
 
 /*
@@ -279,8 +276,6 @@ extern
 struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
 
-#if defined(MACHINE_NEW_NONCONTIG)
-
 /*
  * physical memory config is stored in vm_physmem.
  */
@@ -288,48 +283,12 @@ struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
 extern int vm_nphysseg;
 
-#else
-#if defined(MACHINE_NONCONTIG)
-/* OLD NONCONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
-extern
-u_long	first_page;		/* first physical page number */
-extern
-int	vm_page_count;		/* How many pages do we manage? */
-extern
-vm_page_t	vm_page_array;		/* First resident page in table */
-
-#define	VM_PAGE_INDEX(pa) \
-		(pmap_page_index((pa)) - first_page)
-#else 
-/* OLD CONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
-extern
-long	first_page;		/* first physical page number */
-					/* ... represented in vm_page_array */
-extern
-long	last_page;		/* last physical page number */
-					/* ... represented in vm_page_array */
-					/* [INCLUSIVE] */
-extern
-paddr_t first_phys_addr;	/* physical address for first_page */
-extern
-paddr_t last_phys_addr;		/* physical address for last_page */
-extern
-vm_page_t	vm_page_array;		/* First resident page in table */
-
-#define	VM_PAGE_INDEX(pa) \
-	(atop((pa)) - first_page)
-
-#endif	/* MACHINE_NONCONTIG */
-#endif /* MACHINE_NEW_NONCONTIG */
-
 /*
  * prototypes
  */
 
-#if defined(MACHINE_NEW_NONCONTIG)
 static struct vm_page *PHYS_TO_VM_PAGE __P((paddr_t));
 static int vm_physseg_find __P((paddr_t, int *));
-#endif
 
 void		 vm_page_activate __P((vm_page_t));
 vm_page_t	 vm_page_alloc __P((vm_object_t, vaddr_t));
@@ -338,25 +297,18 @@ int		 vm_page_alloc_memory __P((psize_t size, paddr_t low,
 			paddr_t high, paddr_t alignment, paddr_t boundary,
 			struct pglist *rlist, int nsegs, int waitok));
 void		 vm_page_free_memory __P((struct pglist *list));
-#if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 void		 vm_page_bootstrap __P((vaddr_t *, vaddr_t *));
-#endif
 void		 vm_page_copy __P((vm_page_t, vm_page_t));
 void		 vm_page_deactivate __P((vm_page_t));
 void		 vm_page_free __P((vm_page_t));
 void		 vm_page_free1 __P((vm_page_t));
 void		 vm_page_insert __P((vm_page_t, vm_object_t, vaddr_t));
 vm_page_t	 vm_page_lookup __P((vm_object_t, vaddr_t));
-#if defined(MACHINE_NEW_NONCONTIG)
 void		 vm_page_physload __P((paddr_t, paddr_t,
 					paddr_t, paddr_t));
 void		 vm_page_physrehash __P((void));
-#endif
 void		 vm_page_remove __P((vm_page_t));
 void		 vm_page_rename __P((vm_page_t, vm_object_t, vaddr_t));
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-void		 vm_page_startup __P((paddr_t *, paddr_t *));
-#endif
 void		 vm_page_unwire __P((vm_page_t));
 void		 vm_page_wire __P((vm_page_t));
 boolean_t	 vm_page_zero_fill __P((vm_page_t));
@@ -365,8 +317,6 @@ boolean_t	 vm_page_zero_fill __P((vm_page_t));
  * macros and inlines
  */
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
-
-#if defined(MACHINE_NEW_NONCONTIG)
 
 /*
  * when VM_PHYSSEG_MAX is 1, we can simplify these functions
@@ -471,26 +421,6 @@ PHYS_TO_VM_PAGE(pa)
 	return(NULL);
 }
 
-#elif defined(MACHINE_NONCONTIG)
-
-/* OLD NONCONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
-#define IS_VM_PHYSADDR(pa) \
-		(pmap_page_index(pa) >= 0)
-
-#define PHYS_TO_VM_PAGE(pa) \
-		(&vm_page_array[pmap_page_index(pa) - first_page])
-
-#else
-
-/* OLD CONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
-#define IS_VM_PHYSADDR(pa) \
-		((pa) >= first_phys_addr && (pa) <= last_phys_addr)
-
-#define PHYS_TO_VM_PAGE(pa) \
-		(&vm_page_array[atop(pa) - first_page ])
-
-#endif /* (OLD) MACHINE_NONCONTIG */
-
 #if defined(UVM)
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
@@ -525,16 +455,6 @@ simple_lock_data_t	vm_page_queue_free_lock;
 
 #define vm_page_set_modified(m)	{ (m)->flags &= ~PG_CLEAN; }
 
-/*
- * XXXCDC: different versions of this should die
- */
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-#define	VM_PAGE_INIT(mem, obj, offset) { \
-	(mem)->flags = PG_BUSY | PG_CLEAN | PG_FAKE; \
-	vm_page_insert((mem), (obj), (offset)); \
-	(mem)->wire_count = 0; \
-}
-#else	/* MACHINE_NONCONTIG */
 #define	VM_PAGE_INIT(mem, obj, offset) { \
 	(mem)->flags = PG_BUSY | PG_CLEAN | PG_FAKE; \
 	if (obj) \
@@ -543,10 +463,8 @@ simple_lock_data_t	vm_page_queue_free_lock;
 		(mem)->object = NULL; \
 	(mem)->wire_count = 0; \
 }
-#endif	/* MACHINE_NONCONTIG */
 
 #if VM_PAGE_DEBUG
-#if defined(MACHINE_NEW_NONCONTIG) 
 
 /*
  * VM_PAGE_CHECK: debugging check of a vm_page structure
@@ -567,32 +485,6 @@ VM_PAGE_CHECK(mem)
 		panic("vm_page_check: not valid!"); 
 	return;
 }
-
-#elif defined(MACHINE_NONCONTIG)
-
-/* OLD NONCONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
-#define	VM_PAGE_CHECK(mem) { \
-	if ((((unsigned int) mem) < ((unsigned int) &vm_page_array[0])) || \
-	    (((unsigned int) mem) > \
-		((unsigned int) &vm_page_array[vm_page_count])) || \
-	    ((mem->flags & (PG_ACTIVE | PG_INACTIVE)) == \
-		(PG_ACTIVE | PG_INACTIVE))) \
-		panic("vm_page_check: not valid!"); \
-}
-
-#else
-
-/* OLD CONTIG CODE: NUKE NUKE NUKE ONCE CONVERTED */
-#define	VM_PAGE_CHECK(mem) { \
-	if ((((unsigned int) mem) < ((unsigned int) &vm_page_array[0])) || \
-	    (((unsigned int) mem) > \
-		((unsigned int) &vm_page_array[last_page-first_page])) || \
-	    ((mem->flags & (PG_ACTIVE | PG_INACTIVE)) == \
-		(PG_ACTIVE | PG_INACTIVE))) \
-		panic("vm_page_check: not valid!"); \
-}
-
-#endif
 
 #else /* VM_PAGE_DEBUG */
 #define	VM_PAGE_CHECK(mem)
