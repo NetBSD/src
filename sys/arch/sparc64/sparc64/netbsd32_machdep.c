@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.12 2001/02/12 16:07:38 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.13 2001/05/09 20:13:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -405,7 +405,7 @@ netbsd32___sigreturn14(p, v, retval)
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(sc.sc_tstate);
 	tf->tf_pc = (int64_t)scp->sc_pc;
 	tf->tf_npc = (int64_t)scp->sc_npc;
 	tf->tf_global[1] = (int64_t)scp->sc_g1;
