@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_rintf.c,v 1.5 1997/10/09 11:33:13 lukem Exp $");
+__RCSID("$NetBSD: s_rintf.c,v 1.6 1999/07/02 15:37:43 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: s_rintf.c,v 1.5 1997/10/09 11:33:13 lukem Exp $");
 #ifdef __STDC__
 static const float
 #else
-static float 
+static float
 #endif
 TWO23[2]={
   8.3886080000e+06, /* 0x4b000000 */
@@ -45,7 +45,7 @@ TWO23[2]={
 	sx = (i0>>31)&1;
 	j0 = ((i0>>23)&0xff)-0x7f;
 	if(j0<23) {
-	    if(j0<0) { 	
+	    if(j0<0) {
 		if((i0&0x7fffffff)==0) return x;
 		i1 = (i0&0x07fffff);
 		i0 &= 0xfff00000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.3 1998/11/11 15:26:14 matt Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.4 1999/07/02 15:37:35 simonb Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 /*
  *  libm$argred implements Bob Corbett's argument reduction and
  *  libm$sincos implements Peter Tang's double precision sin/cos.
- *  
+ *
  *  Note: The two entry points libm$argred and libm$sincos are meant
  *        to be used only by _sin, _cos and _tan.
  *
@@ -333,13 +333,13 @@ bits2opi:
  *  the input argument must be greater
  *  than or equal to  1/2 .  Trigred produces
  *  three results:  the number of the octant
- *  occupied by the argument, the reduced 
+ *  occupied by the argument, the reduced
  *  argument, and an extension of the
- *  reduced argument.  The octant number is 
- *  returned in  r0 .  The reduced argument 
- *  is returned as a D-format number in 
- *  r2/r1 .  An 8 bit extension of the 
- *  reduced argument is returned as an 
+ *  reduced argument.  The octant number is
+ *  returned in  r0 .  The reduced argument
+ *  is returned as a D-format number in
+ *  r2/r1 .  An 8 bit extension of the
+ *  reduced argument is returned as an
  *  F-format number in r3.
  *						p.2
  */
@@ -381,7 +381,7 @@ posmid:
 	mnegl	r3,r3
 	movab	bits2opi[r3],r3
 /*
- *  Set  r2  to the size of the shift needed to 
+ *  Set  r2  to the size of the shift needed to
  *  obtain the correct portion of  2/pi .
  */
 	bicb2	$0xe0,r2
@@ -410,7 +410,7 @@ signoff2:
 signoff3:
 /*						p.5
  *
- *  Multiply the contents of  r0/r1  by the 
+ *  Multiply the contents of  r0/r1  by the
  *  slice of  2/pi  in  r11 - r8 .
  */
 	emul	r0,r8,$0,r4
@@ -475,7 +475,7 @@ more2:
  *
  *  If massive cancellation has occurred,
  *  generate another  24  result bits.
- *  Testing has shown there will always be 
+ *  Testing has shown there will always be
  *  enough bits after this point.
  */
 	subl2	$4,r3
@@ -518,7 +518,7 @@ result:
 /*						p.11
  *
  *  Check to see if the fraction is greater than
- *  or equal to one-half.  If it is, add one 
+ *  or equal to one-half.  If it is, add one
  *  to the octant number, set the sign flag
  *  on, and replace the fraction with  1 minus
  *  the fraction.
@@ -537,7 +537,7 @@ small:
 /*						p.12
  *
  *  Test whether the first  29  bits of the ...used for  pi/4  reduction -S.McD
- *  Test whether the first  30  bits of the 
+ *  Test whether the first  30  bits of the
  *  fraction are zero.
  */
 	tstl	r10
@@ -643,7 +643,7 @@ signoff6:
 	emul	r2,r10,$0,r7
 	emul	r2,r11,r8,r7
 /*
- *  Multiply the fraction by the portion of  pi/2 
+ *  Multiply the fraction by the portion of  pi/2
  *  in  r3 .
  */
 	emul	r3,r10,$0,r9
@@ -738,9 +738,9 @@ chop:
 	brb	return
 /*						p.21
  *
- *  The following code generates the appropriate 
+ *  The following code generates the appropriate
  *  result for the unlikely possibility that
- *  rounding the number in  r9/r8  resulted in 
+ *  rounding the number in  r9/r8  resulted in
  *  a carry out.
  */
 carryout:
@@ -757,13 +757,13 @@ carryout:
 /*						p.22
  *
  *  The following code makes an needed
- *  adjustments to the signs of the 
+ *  adjustments to the signs of the
  *  results or to the octant number, and
  *  then returns.
  */
 return:
 /*
- *  Test if the fraction was greater than or 
+ *  Test if the fraction was greater than or
  *  equal to  1/2 .  If so, negate the reduced
  *  argument.
  */

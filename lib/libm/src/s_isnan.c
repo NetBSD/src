@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_isnan.c,v 1.9 1997/10/09 11:32:25 lukem Exp $");
+__RCSID("$NetBSD: s_isnan.c,v 1.10 1999/07/02 15:37:43 simonb Exp $");
 #endif
 
 /*
@@ -33,7 +33,7 @@ __RCSID("$NetBSD: s_isnan.c,v 1.9 1997/10/09 11:32:25 lukem Exp $");
 	int32_t hx,lx;
 	EXTRACT_WORDS(hx,lx,x);
 	hx &= 0x7fffffff;
-	hx |= (u_int32_t)(lx|(-lx))>>31;	
+	hx |= (u_int32_t)(lx|(-lx))>>31;
 	hx = 0x7ff00000 - hx;
 	return (int)((u_int32_t)(hx))>>31;
 }

@@ -5,17 +5,17 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_log10.c,v 1.7 1997/10/09 11:35:39 lukem Exp $");
+__RCSID("$NetBSD: w_log10.c,v 1.8 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
-/* 
+/*
  * wrapper log10(X)
  */
 
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: w_log10.c,v 1.7 1997/10/09 11:35:39 lukem Exp $");
 	if(x<=0.0) {
 	    if(x==0.0)
 	        return __kernel_standard(x,x,18); /* log10(0) */
-	    else 
+	    else
 	        return __kernel_standard(x,x,19); /* log10(x<0) */
 	} else
 	    return z;

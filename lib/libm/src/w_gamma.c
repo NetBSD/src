@@ -5,14 +5,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_gamma.c,v 1.8 1997/10/09 11:34:48 lukem Exp $");
+__RCSID("$NetBSD: w_gamma.c,v 1.9 1999/07/02 15:37:44 simonb Exp $");
 #endif
 
 /* double gamma(double x)
@@ -47,4 +47,4 @@ extern int signgam;
         } else
             return y;
 #endif
-}             
+}
