@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.9 1997/11/01 06:20:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: dbtest.c,v 1.9 1997/11/01 06:20:47 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	fname = NULL;
 	oflags = O_CREAT | O_RDWR;
 	sflag = 0;
-	while ((ch = getopt(argc, argv, "f:i:lo:s")) != EOF)
+	while ((ch = getopt(argc, argv, "f:i:lo:s")) != -1)
 		switch (ch) {
 		case 'f':
 			fname = optarg;
