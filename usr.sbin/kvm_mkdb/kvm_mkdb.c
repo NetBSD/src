@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.10 1996/09/30 18:27:01 thorpej Exp $	*/
+/*	$NetBSD: kvm_mkdb.c,v 1.11 1996/09/30 19:48:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,9 +42,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.10 1996/09/30 18:27:01 thorpej Exp $";
+static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.11 1996/09/30 19:48:44 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.10 1996/09/30 18:27:01 thorpej Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "extern.h"
 
