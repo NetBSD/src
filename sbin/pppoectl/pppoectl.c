@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.3 2002/01/06 20:23:55 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.4 2002/01/07 11:10:26 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -48,7 +48,9 @@
 
 static void usage(void);
 static void print_error(const char *ifname, int error, const char * str);
-static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout, time_t idle_timeout);
+static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
+	int lcp_timeout, time_t idle_timeout, int authfailures, 
+	int max_auth_failures);
 const char *phase_name(int phase);
 const char *proto_name(int proto);
 const char *authflags(int flags);
@@ -67,8 +69,10 @@ main(int argc, char **argv)
 	struct sppplcpcfg lcp;
 	struct spppstatus status;
 	struct spppidletimeout timeout;
+	struct spppauthfailurestats authfailstats;
+	struct spppauthfailuresettings authfailset;
 	int mib[2];
-	int set_auth = 0, set_lcp = 0, set_idle_to = 0;
+	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0;
 	struct clockinfo clockinfo;
 
 	eth_if_name = NULL;
@@ -177,6 +181,10 @@ main(int argc, char **argv)
 	strncpy(status.ifname, ifname, sizeof status.ifname);
 	memset(&timeout, 0, sizeof timeout);
 	strncpy(timeout.ifname, ifname, sizeof timeout.ifname);
+	memset(&authfailstats, 0, sizeof &authfailstats);
+	strncpy(authfailstats.ifname, ifname, sizeof authfailstats.ifname);
+	memset(&authfailset, 0, sizeof authfailset);
+	strncpy(authfailset.ifname, ifname, sizeof authfailset.ifname);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -210,8 +218,10 @@ main(int argc, char **argv)
 			err(EX_OSERR, "SPPPGETSTATUS");
 		if (ioctl(s, SPPPGETIDLETO, &timeout) == -1)
 			err(EX_OSERR, "SPPPGETIDLETO");
+		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
+			err(EX_OSERR, "SPPPGETAUTHFAILURES");
 
-		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds);
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds, authfailstats.auth_failures, authfailstats.max_failures);
 
 		if (spr.hisname) free(spr.hisname);
 		if (spr.myname) free(spr.myname);
@@ -293,8 +303,11 @@ main(int argc, char **argv)
 			lcp.lcp_timeout = timeout_arg * hz / 1000;
 			set_lcp = 1;
 		} else if (startswith("idle-timeout=")) {
-			timeout.idle_seconds = atol(argv[0]+off);
+			timeout.idle_seconds = (time_t)atol(argv[0]+off);
 			set_idle_to = 1;
+		} else if (startswith("max-auth-failure=")) {
+			authfailset.max_failures = atoi(argv[0]+off);
+			set_auth_failure = 1;
 		} else
 			errx(EX_DATAERR, "bad parameter: \"%s\"", argv[0]);
 
@@ -314,9 +327,16 @@ main(int argc, char **argv)
 		if (ioctl(s, SPPPSETIDLETO, &timeout) == -1)
 			err(EX_OSERR, "SPPPSETIDLETO");
 	}
+	if (set_auth_failure) {
+		if (ioctl(s, SPPPSETAUTHFAILURE, &authfailset) == -1)
+			err(EX_OSERR, "SPPPSETAUTHFAILURE");
+	}
 
-	if (verbose)
-		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds);
+	if (verbose) {
+		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
+			err(EX_OSERR, "SPPPGETAUTHFAILURES");
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds, authfailstats.auth_failures, authfailstats.max_failures);
+	}
 
 	return 0;
 }
@@ -331,7 +351,8 @@ usage(void)
 }
 
 static void
-print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout, time_t idle_timeout)
+print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout,
+	time_t idle_timeout, int authfailures, int max_auth_failures)
 {
 #ifndef __NetBSD__
 	time_t send, recv;
@@ -365,6 +386,10 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 	else
 		printf("\tidle timeout = disabled\n");
 
+	if (authfailures != 0)
+		printf("\tauthentication failures = %d\n", authfailures);
+	printf("\tmax-auth-failure = %d\n", max_auth_failures);
+	
 #ifndef __NetBSD__
 	printf("\tenable_vj: %s\n",
 	       sp->defs.enable_vj ? "on" : "off");
