@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.25 1999/08/27 19:38:29 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.26 1999/08/29 20:38:36 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -634,6 +634,7 @@ arc_storelladdr(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		*(LLADDR(sdl)) = lla;
 	}
+	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
 }
 
 /*
@@ -656,7 +657,6 @@ arc_ifattach(ifp, lla)
 		    "%s: arc_phdsmtu is %d, but must not exceed 60480",
 		    ifp->if_xname, arc_phdsmtu);
 
-	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
 	ifp->if_output = arc_output;
 	ifp->if_input = arc_input;
 	ac = (struct arccom *)ifp;
