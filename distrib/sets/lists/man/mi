@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.19 2001/03/11 20:28:26 he Exp $
+# $NetBSD: mi,v 1.253.2.20 2001/04/06 01:54:04 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -719,6 +719,7 @@
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
+./usr/share/man/cat4/se.0
 ./usr/share/man/cat4/sea.0
 ./usr/share/man/cat4/sequencer.0
 ./usr/share/man/cat4/si.0
@@ -1149,9 +1150,13 @@
 ./usr/share/man/cat8/ipmon.0
 ./usr/share/man/cat8/ipnat.0
 ./usr/share/man/cat8/iteconfig.0
+./usr/share/man/cat8/kadmin.0
+./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdc.0
+./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/kfd.0
 ./usr/share/man/cat8/kpasswdd.0
+./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/ktutil.0
 ./usr/share/man/cat8/kvm_mkdb.0
 ./usr/share/man/cat8/lastlogin.0
@@ -1404,6 +1409,7 @@
 ./usr/share/man/cat8/vax/format.0
 ./usr/share/man/cat8/vax/installboot.0
 ./usr/share/man/cat8/vax/makedev.0
+./usr/share/man/cat8/verify_krb5_conf.0
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
@@ -2132,6 +2138,7 @@
 ./usr/share/man/man4/scsi.4
 ./usr/share/man/man4/scsibus.4
 ./usr/share/man/man4/sd.4
+./usr/share/man/man4/se.4
 ./usr/share/man/man4/sea.4
 ./usr/share/man/man4/sequencer.4
 ./usr/share/man/man4/si.4
@@ -2562,9 +2569,13 @@
 ./usr/share/man/man8/ipmon.8
 ./usr/share/man/man8/ipnat.8
 ./usr/share/man/man8/iteconfig.8
+./usr/share/man/man8/kadmin.8
+./usr/share/man/man8/kadmind.8
 ./usr/share/man/man8/kdc.8
+./usr/share/man/man8/kerberos.8
 ./usr/share/man/man8/kfd.8
 ./usr/share/man/man8/kpasswdd.8
+./usr/share/man/man8/kstash.8
 ./usr/share/man/man8/ktutil.8
 ./usr/share/man/man8/kvm_mkdb.8
 ./usr/share/man/man8/lastlogin.8
@@ -2817,6 +2828,7 @@
 ./usr/share/man/man8/vax/format.8
 ./usr/share/man/man8/vax/installboot.8
 ./usr/share/man/man8/vax/makedev.8
+./usr/share/man/man8/verify_krb5_conf.8
 ./usr/share/man/man8/vipw.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37.2.9 2001/03/22 03:55:49 he Exp $
+# $NetBSD: mi,v 1.37.2.10 2001/04/06 01:54:05 he Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -356,6 +356,7 @@
 ./usr/share/examples/ipf/nat.eg
 ./usr/share/examples/ipf/server
 ./usr/share/examples/ipf/tcpstate
+./usr/share/examples/kerberos/krb5.conf
 ./usr/share/examples/mount_portal/advanced.1
 ./usr/share/examples/mount_portal/advanced.1.conf
 ./usr/share/examples/mount_portal/fing.c
@@ -412,7 +413,6 @@
 ./usr/share/sendmail/cf/chimera.mc
 ./usr/share/sendmail/cf/ihack.net.mc
 ./usr/share/sendmail/cf/minbar.mc
-./usr/share/sendmail/cf/netbsd-proto-IPv4only.mc
 ./usr/share/sendmail/cf/netbsd-proto.mc
 ./usr/share/sendmail/cf/sun-lamp.mc
 ./usr/share/sendmail/cf/zhadum.mc
