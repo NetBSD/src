@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.70 1997/03/12 19:15:16 mycroft Exp $
+#	$NetBSD: rc,v 1.71 1997/03/12 19:21:26 mycroft Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -65,7 +65,7 @@ umount -a >/dev/null 2>&1
 mount -a -t nonfs
 rm -f /fastboot		# XXX (root now writeable)
 
-if [ -s /etc/rc.conf ]; then
+if [ -f /etc/rc.conf ]; then
 	. /etc/rc.conf
 fi
 
@@ -175,14 +175,14 @@ if [ "$nfs_locking" != NO ]; then
 		if [ "$statd_flags" = DEFAULT ]; then
 			statd_flags=""
 		fi
-		echo -n ' statd';		rpc.statd $statd_flags
+		echo -n ' rpc.statd';		rpc.statd $statd_flags
 	fi
 
 	if [ "$lockd_flags" != NO ]; then
 		if [ "$lockd_flags" = DEFAULT ]; then
 			lockd_flags=""
 		fi
-		echo -n ' lockd';		rpc.lockd $lockd_flags
+		echo -n ' rpc.lockd';		rpc.lockd $lockd_flags
 	fi
 fi
 
@@ -199,7 +199,7 @@ mount -a -t nfs
 
 if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
-	if [ -s /etc/ld.so.conf ]; then
+	if [ -f /etc/ld.so.conf ]; then
 		ldconfig `cat /etc/ld.so.conf`
 	else
 		ldconfig
