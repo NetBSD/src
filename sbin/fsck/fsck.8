@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.13 1996/09/23 16:11:33 christos Exp $
+.\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .Nd file system consistency check and interactive repair
 .Sh SYNOPSIS
 .Nm fsck
-.Op Fl dvplyn
+.Op Fl dvplfyn
 .Op Fl l Ar maxparallel
 .Op Fl t Ar fstype 
 .Op Fl T Ar fstype:fsoptions 
@@ -54,6 +54,9 @@ Debugging mode. Just print the commands without executing them. Available
 only if
 .Nm
 fsck is compiled to support it.
+.It Fl f
+Force checking of filesystems, even when they are marked clean (for filesystems
+that support this).
 .It Fl l Ar maxparallel
 Limit the number of parallel checks to the number specified in
 the following argument. By default, the limit is the number of
