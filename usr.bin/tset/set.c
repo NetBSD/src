@@ -1,6 +1,8 @@
+/*	$NetBSD: set.c,v 1.6 1994/12/07 05:08:10 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)set.c	5.3 (Berkeley) 12/1/92";*/
-static char rcsid[] = "$Id: set.c,v 1.5 1994/03/13 14:29:34 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
+#endif
+static char rcsid[] = "$NetBSD: set.c,v 1.6 1994/12/07 05:08:10 jtc Exp $";
 #endif /* not lint */
 
 #include <termios.h>
