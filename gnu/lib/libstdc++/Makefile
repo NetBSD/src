@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/04/09 00:06:09 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/04/09 01:32:08 tv Exp $
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -127,6 +127,7 @@ CLEANFILES+=ldcomio.cc
 .else
 
 # XXX Temporary: during an egcs bootstrap, don't try to build with gcc 2.7
+.include <bsd.own.mk>
 ${TARGETS}:
 
 .endif
