@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1997/10/13 00:47:04 explorer Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1997/10/16 23:44:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -516,7 +516,7 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 67 */
 };
 
-int
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
