@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2002/09/25 22:21:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2002/12/14 05:23:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1431,7 +1431,7 @@ haltsys:
 	/* NOTREACHED */
 }
 
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
