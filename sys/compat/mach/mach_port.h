@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.7 2002/12/15 00:40:25 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.8 2002/12/17 18:42:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,9 +46,9 @@
 #define MACH_PORT_RIGHT_DEAD_NAME	4
 #define MACH_PORT_RIGHT_NUMBER		5
 
-#define MACH_PORT_TYPE_SEND		(MACH_PORT_RIGHT_SEND << 16)
-#define MACH_PORT_TYPE_RECEIVE		(MACH_PORT_RIGHT_RECEIVE << 16)
-#define MACH_PORT_TYPE_SEND_ONCE	(MACH_PORT_RIGHT_SEND_ONCE << 16)
+#define MACH_PORT_TYPE_SEND		(1 << (MACH_PORT_RIGHT_SEND + 16))
+#define MACH_PORT_TYPE_RECEIVE		(1 << (MACH_PORT_RIGHT_RECEIVE + 16))
+#define MACH_PORT_TYPE_SEND_ONCE	(1 << (MACH_PORT_RIGHT_SEND_ONCE + 16))
 #define MACH_PORT_TYPE_PORT_RIGHTS \
     (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE | MACH_PORT_TYPE_SEND_ONCE)
 
@@ -190,20 +190,13 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_move_member_reply_t;
 
-int mach_port_deallocate(struct proc *, mach_msg_header_t *, 
-    size_t,  mach_msg_header_t *);
-int mach_port_allocate(struct proc *, mach_msg_header_t *,
-    size_t,  mach_msg_header_t *);
-int mach_port_insert_right(struct proc *, mach_msg_header_t *,
-    size_t,  mach_msg_header_t *);
-int mach_port_type(struct proc *, mach_msg_header_t *,
-    size_t,  mach_msg_header_t *);
-int mach_port_set_attributes(struct proc *, mach_msg_header_t *,
-    size_t,  mach_msg_header_t *);
-int mach_port_insert_member(struct proc *, mach_msg_header_t *,
-    size_t,  mach_msg_header_t *);
-int mach_port_move_member(struct proc *, mach_msg_header_t *,
-    size_t,  mach_msg_header_t *);
+int mach_port_deallocate(struct mach_trap_args *);
+int mach_port_allocate(struct mach_trap_args *);
+int mach_port_insert_right(struct mach_trap_args *);
+int mach_port_type(struct mach_trap_args *);
+int mach_port_set_attributes(struct mach_trap_args *);
+int mach_port_insert_member(struct mach_trap_args *);
+int mach_port_move_member(struct mach_trap_args *);
 
 
 /* In-kernel Mach port right description */
@@ -211,11 +204,14 @@ struct mach_right {
 	struct mach_port *mr_port;	/* Port we have the right on */
 	struct proc *mr_p;		/* points back to struct proc */
 	int mr_type;			/* right type (recv, send, sendonce) */
-	LIST_ENTRY(mach_right) mr_list; 
+	LIST_ENTRY(mach_right) mr_list; /* Right list for a process */
+	LIST_ENTRY(mach_right) mr_listall; /* All processes right list */
 };
 
 struct mach_right *mach_right_get(struct mach_port *, struct proc *, int);
 void mach_right_put(struct mach_right *);
+void mach_right_put_shlocked(struct mach_right *);
+void mach_right_put_exclocked(struct mach_right *);
 int mach_right_check(struct mach_right *, struct proc *, int);
 
 /* In-kernel Mach port description */
@@ -225,10 +221,10 @@ struct mach_port {
 	TAILQ_HEAD(mp_msglist,	/* Queue of messages pending delivery */
 	    mach_message) mp_msglist;
 	struct lock mp_msglock;	/* Lock for the queue */
-	LIST_ENTRY(mach_port) 	/* List of all ports */
-	    mp_alllist;
 	int mp_refcount;	/* Reference count (amount of rights) */
 };
+
+extern struct lock mach_right_list_lock;
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(struct proc *);       

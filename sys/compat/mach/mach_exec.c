@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.15 2002/12/15 00:40:25 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.16 2002/12/17 18:42:56 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.15 2002/12/15 00:40:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.16 2002/12/17 18:42:56 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,9 +241,6 @@ mach_e_proc_init(p, vmspace)
 	LIST_INIT(&med->med_recv);
 	LIST_INIT(&med->med_send);
 	LIST_INIT(&med->med_sendonce);
-	lockinit(&med->med_rlock, PZERO|PCATCH, "mach_port", 0, 0);
-	lockinit(&med->med_slock, PZERO|PCATCH, "mach_port", 0, 0);
-	lockinit(&med->med_solock, PZERO|PCATCH, "mach_port", 0, 0);
 
 	med->med_bootstrap = mach_port_get(NULL);
 	med->med_kernel = mach_port_get(NULL);
@@ -261,10 +258,32 @@ static void
 mach_e_proc_exit(p)
 	struct proc *p;
 {
-	free(p->p_emuldata, M_EMULDATA);
-	p->p_emuldata = NULL;
+	struct mach_emuldata *med;
+	struct mach_right *mr;
 
 	mach_semaphore_cleanup(p);
+
+	med = (struct mach_emuldata *)p->p_emuldata;
+
+	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
+	while ((mr = LIST_FIRST(&med->med_recv)) != NULL)
+		mach_right_put_exclocked(mr);
+	while ((mr = LIST_FIRST(&med->med_send)) != NULL)
+		mach_right_put_exclocked(mr);
+	while ((mr = LIST_FIRST(&med->med_sendonce)) != NULL)
+		mach_right_put_exclocked(mr);
+	lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
+
+	med->med_bootstrap->mp_refcount--;
+	med->med_kernel->mp_refcount--;
+	med->med_host->mp_refcount--;
+
+	mach_port_put(med->med_bootstrap);
+	mach_port_put(med->med_kernel);
+	mach_port_put(med->med_host);
+
+	free(med, M_EMULDATA);
+	p->p_emuldata = NULL;
 
 	return;
 }

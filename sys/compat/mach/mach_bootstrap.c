@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.2 2002/12/09 21:29:22 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.3 2002/12/17 18:42:55 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.2 2002/12/09 21:29:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.3 2002/12/17 18:42:55 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,42 +51,33 @@ __KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.2 2002/12/09 21:29:22 manu Exp 
 #include <compat/mach/mach_errno.h>
 
 int 
-mach_bootstrap_look_up(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_bootstrap_look_up(args)
+	struct mach_trap_args *args;
 {
-	mach_bootstrap_look_up_request_t req;
-	mach_bootstrap_look_up_reply_t rep;
-	int error;
-	int msglen;
+	mach_bootstrap_look_up_request_t *req = args->smsg;
+	mach_bootstrap_look_up_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 	const char service_name[] = "lookup\21"; /* XXX Why */
 	int service_name_len;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	bzero(&rep, sizeof(rep));
-
 	/* The trailer is word aligned  */
 	service_name_len = (sizeof(service_name) + 1) & ~0x7UL; 
-	msglen = sizeof(rep.rep_msgh) + sizeof(rep.rep_count) + 
-	    sizeof(rep.rep_bootstrap_port) + service_name_len *
-	    sizeof(rep.rep_trailer);
+	*msglen = sizeof(rep->rep_msgh) + sizeof(rep->rep_count) + 
+	    sizeof(rep->rep_bootstrap_port) + service_name_len *
+	    sizeof(rep->rep_trailer);
 
-	rep.rep_msgh.msgh_bits =
+	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
-	rep.rep_msgh.msgh_size = msglen - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_count = 1; /* XXX Why? */
-	rep.rep_bootstrap_port = 0x21b; /* XXX Why? */
-	strcpy((char *)&rep.rep_service_name, service_name); 
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_count = 1; /* XXX Why? */
+	rep->rep_bootstrap_port = 0x21b; /* XXX Why? */
+	strcpy((char *)&rep->rep_service_name, service_name); 
 	/* XXX This is the trailer. We should find something better */
-	rep.rep_service_name[service_name_len + 7] = 8;
+	rep->rep_service_name[service_name_len + 7] = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, msglen, maxlen, dst);
+	return 0;
 }
 

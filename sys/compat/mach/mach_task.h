@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.4 2002/12/15 00:40:25 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.5 2002/12/17 18:42:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,11 +92,8 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_task_set_special_port_reply_t;
 
-int mach_task_get_special_port(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
-int mach_ports_lookup(struct proc *, mach_msg_header_t *,
-    size_t, mach_msg_header_t *);
-int mach_task_set_special_port(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
+int mach_task_get_special_port(struct mach_trap_args *);
+int mach_ports_lookup(struct mach_trap_args *);
+int mach_task_set_special_port(struct mach_trap_args *);
 
 #endif /* _MACH_TASK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.5 2002/12/12 23:18:22 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.6 2002/12/17 18:42:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.5 2002/12/12 23:18:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.6 2002/12/17 18:42:57 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,63 +103,51 @@ mach_sys_syscall_thread_switch(p, v, retval)
 
 
 int 
-mach_thread_policy(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_thread_policy(args)
+	struct mach_trap_args *args;
 {
-	mach_thread_policy_request_t req;
-	mach_thread_policy_reply_t rep;
-	int error;
+	mach_thread_policy_request_t *req = args->smsg;
+	mach_thread_policy_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
+	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
 
 int 
-mach_thread_create_running(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_thread_create_running(args)
+	struct mach_trap_args *args;
 {
-	mach_thread_create_running_request_t req;
-	mach_thread_create_running_reply_t rep;
+	mach_thread_create_running_request_t *req = args->smsg;
+	mach_thread_create_running_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->p;
 	struct mach_create_thread_child_args mctc;
 	register_t retval;
 	struct proc *child;
 	int flags;
 	int error;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-	
 	/* 
 	 * Prepare the data we want to transmit to the child
 	 */
 	mctc.mctc_proc = &child;
-	mctc.mctc_flavor = req.req_flavor;
+	mctc.mctc_flavor = req->req_flavor;
 	mctc.mctc_child_done = 0;
-	mctc.mctc_state = req.req_state;
+	mctc.mctc_state = req->req_state;
 
 	flags = (FORK_SHAREVM | FORK_SHARECWD | 
 	    FORK_SHAREFILES | FORK_SHARESIGS);
-	error = fork1(p, flags, SIGCHLD, NULL, 0, 
-	    mach_create_thread_child, (void *)&mctc, &retval, &child);
-	if (error != 0)
-		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
+	if ((error = fork1(p, flags, SIGCHLD, NULL, 0, 
+	    mach_create_thread_child, (void *)&mctc, &retval, &child)) != 0)
+		return mach_msg_error(args, error);
 		
 	/* 
 	 * The child relies on some values in mctc, so we should not
@@ -169,16 +157,15 @@ mach_thread_create_running(p, msgh, maxlen, dst)
 	while(mctc.mctc_child_done == 0)
 		(void)tsleep(&mctc.mctc_child_done, PZERO, "mach_thread", 0);
 
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
+	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	/* XXX do something for rep.rep_child_act */
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	/* XXX do something for rep->rep_child_act */
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
 

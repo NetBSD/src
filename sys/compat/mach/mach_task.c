@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.11 2002/12/15 00:40:25 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.12 2002/12/17 18:42:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.11 2002/12/15 00:40:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.12 2002/12/17 18:42:57 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,24 +58,20 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.11 2002/12/15 00:40:25 manu Exp $");
 
 
 int 
-mach_task_get_special_port(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_task_get_special_port(args)
+	struct mach_trap_args *args;
 {
-	mach_task_get_special_port_request_t req;
-	mach_task_get_special_port_reply_t rep;
+	mach_task_get_special_port_request_t *req = args->smsg;
+	mach_task_get_special_port_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->p;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	int error;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-	
 	med = (struct mach_emuldata *)p->p_emuldata;
 
-	switch (req.req_which_port) {
+	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
 		mr = mach_right_get(med->med_kernel, p, MACH_PORT_RIGHT_SEND);
 		break;
@@ -93,42 +89,37 @@ mach_task_get_special_port(p, msgh, maxlen, dst)
 	case MACH_TASK_PAGED_LEDGER_PORT:
 	default:
 		uprintf("mach_task_get_special_port(): unimpl. port %d\n",
-		    req.req_which_port);
-		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
+		    req->req_which_port);
+		return mach_msg_error(args, error);
 		break;
 	}
 
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits = 
+	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_msgh_body.msgh_descriptor_count = 1;
-	rep.rep_special_port.name = (mach_port_t)mr;
-	rep.rep_special_port.disposition = 0x11; /* XXX why? */
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_msgh_body.msgh_descriptor_count = 1;
+	rep->rep_special_port.name = (mach_port_t)mr;
+	rep->rep_special_port.disposition = 0x11; /* XXX why? */
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
 
 int 
-mach_ports_lookup(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_ports_lookup(args)
+	struct mach_trap_args *args;
 {
-	mach_ports_lookup_request_t req;
-	mach_ports_lookup_reply_t rep;
+	mach_ports_lookup_request_t *req = args->smsg;
+	mach_ports_lookup_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->p;
 	struct exec_vmcmd evc;
 	int error;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-	
 	/* 
 	 * This is some out of band data sent with the reply. In the 
 	 * encoutered situation the out of band data has laways been
@@ -142,50 +133,42 @@ mach_ports_lookup(p, msgh, maxlen, dst)
 	evc.ev_proc = *vmcmd_map_zero;
  
 	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
-		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
+		return mach_msg_error(args, error);
 
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
+	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
-	rep.rep_init_port_set.address = (void *)evc.ev_addr;
-	rep.rep_init_port_set.count = 3; /* XXX why ? */
-	rep.rep_init_port_set.copy = 2; /* XXX why ? */
-	rep.rep_init_port_set.disposition = 0x11; /* XXX why? */
-	rep.rep_init_port_set.type = 2; /* XXX why? */
-	rep.rep_init_port_set_count = 3; /* XXX why? */
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
+	rep->rep_init_port_set.address = (void *)evc.ev_addr;
+	rep->rep_init_port_set.count = 3; /* XXX why ? */
+	rep->rep_init_port_set.copy = 2; /* XXX why ? */
+	rep->rep_init_port_set.disposition = 0x11; /* XXX why? */
+	rep->rep_init_port_set.type = 2; /* XXX why? */
+	rep->rep_init_port_set_count = 3; /* XXX why? */
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
 
 int 
-mach_task_set_special_port(p, msgh, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	size_t maxlen;
-	mach_msg_header_t *dst;
+mach_task_set_special_port(args)
+	struct mach_trap_args *args;
 {
-	mach_task_set_special_port_request_t req;
-	mach_task_set_special_port_reply_t rep;
-	int error;
+	mach_task_set_special_port_request_t *req = args->smsg;
+	mach_task_set_special_port_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 
-	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
-		return error;
-
-	bzero(&rep, sizeof(rep));
-
-	rep.rep_msgh.msgh_bits =
+	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
-	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
-	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_trailer.msgh_trailer_size = 8;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+	return 0;
 }
