@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.23 2000/02/01 01:23:29 assar Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.24 2000/06/27 17:41:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -47,7 +47,6 @@
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 #include <sys/exec_script.h>
 

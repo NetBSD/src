@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.57 2000/05/31 05:02:32 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.58 2000/06/27 17:41:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -51,8 +51,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

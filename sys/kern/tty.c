@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.119 2000/05/26 00:36:52 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.120 2000/06/27 17:41:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -61,8 +61,6 @@
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
-
-#include <vm/vm.h>
 
 static int ttnread __P((struct tty *));
 static void ttyblock __P((struct tty *));

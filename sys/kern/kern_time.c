@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.47 2000/05/31 05:02:34 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.48 2000/06/27 17:41:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #if defined(NFS) || defined(NFSSERVER)
