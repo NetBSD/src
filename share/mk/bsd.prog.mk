@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.189 2003/09/29 01:06:37 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.190 2003/10/18 15:33:59 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -161,13 +161,17 @@ _CCLINK=	${CC}
 .endif
 
 .gdbinit:
+	${_MKCMD}\
 	rm -f .gdbinit
 .if defined(DESTDIR) && !empty(DESTDIR)
+	${_MKCMD}\
 	echo "set solib-absolute-prefix ${DESTDIR}" > .gdbinit
 .else
+	${_MKCMD}\
 	touch .gdbinit
 .endif
 .for __gdbinit in ${GDBINIT}
+	${_MKCMD}\
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 
@@ -175,14 +179,18 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
 
 ${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
+	${_MKMSG} "   link  ${PROG}"
 .if defined(DESTDIR)
+	${_MKCMD}\
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
 .else
+	${_MKCMD}\
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif	# defined(DESTDIR)
 .endif	# !commands(${PROG})
 
 ${PROG}.ro: ${OBJS} ${DPADD}
+	${_MKCMD}\
 	${LD} -r -dc -o ${.TARGET} ${OBJS}
 
 .endif	# defined(OBJS) && !empty(OBJS)
@@ -195,15 +203,18 @@ MAN=	${PROG}.1
 realall: ${PROG} ${SCRIPTS}
 
 cleanprog: cleanobjs cleanextra
+	${_MKCMD}\
 	rm -f a.out [Ee]rrs mklog core *.core .gdbinit ${PROG}
 
 cleanobjs:
 .if defined(OBJS) && !empty(OBJS)
+	${_MKCMD}\
 	rm -f ${OBJS} ${LOBJS}
 .endif
 
 cleanextra:
 .if defined(CLEANFILES) && !empty(CLEANFILES)
+	${_MKCMD}\
 	rm -f ${CLEANFILES}
 .endif
 
@@ -222,6 +233,8 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 .PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 
 __proginstall: .USE
+	${_MKMSG} "install  ${.TARGET}"
+	${_MKCMD}\
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${STRIPFLAG} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
@@ -252,6 +265,8 @@ scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRI
 .PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 
 __scriptinstall: .USE
+	${_MKMSG} "install  ${.TARGET}"
+	${_MKCMD}\
 	${INSTALL_FILE} \
 	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
 	    -g ${SCRIPTSGRP_${.ALLSRC:T}:U${SCRIPTSGRP}} \
@@ -279,6 +294,7 @@ scriptsinstall::
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
+	${_MKCMD}\
 	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 

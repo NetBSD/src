@@ -1,9 +1,22 @@
-#	$NetBSD: bsd.sys.mk,v 1.95 2003/08/22 18:07:21 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.96 2003/10/18 15:33:59 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
 .if !defined(_BSD_SYS_MK_)
 _BSD_SYS_MK_=1
+
+MAKEVERBOSE?=	2
+
+.if ${MAKEVERBOSE} == 0
+_MKMSG=	@\#
+_MKCMD=	@
+.elif ${MAKEVERBOSE} == 1
+_MKMSG=	@echo '   '
+_MKCMD=	@
+.else	# MAKEVERBOSE == 2 ?
+_MKMSG=	@echo '\#  '
+_MKCMD=	
+.endif
 
 .if defined(WARNS)
 .if ${WARNS} > 0
@@ -138,25 +151,38 @@ TOOL_ZIC?=		zic
 
 # C
 .c:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
 	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .c.o:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 .c.ln:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[IDU]*} -i ${.IMPSRC}
 
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
 #  used for Objective C source)
 .m:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
 	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .m.o:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
 	${COMPILE.m} ${.IMPSRC}
 
 # Host-compiled C objects
 # The intermediate step is necessary for Sun CC, which objects to calling
 # object files anything but *.o
 .c.lo:
+	${_MKMSG} "compile  ${.TARGET}"
+	${_MKCMD}\
 	${HOST_COMPILE.c} -o ${.TARGET}.o ${.IMPSRC}
+	${_MKCMD}\
 	mv ${.TARGET}.o ${.TARGET}
 
 # Lex
@@ -165,10 +191,16 @@ LFLAGS+=	-P${LPREFIX}
 
 .l.o: # remove to force use of .l.c->.c.o transforms
 .l:
+	${_MKMSG} "    lex  ${.TARGET}"
+	${_MKCMD}\
 	${LEX.l} -o${.TARGET:R}.${LPREFIX}.c ${.IMPSRC}
+	${_MKCMD}\
 	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}}-o ${.TARGET} ${.TARGET:R}.${LPREFIX}.c ${LDLIBS} -ll
+	${_MKCMD}\
 	rm -f ${.TARGET:R}.${LPREFIX}.c
 .l.c:
+	${_MKMSG} "    lex  ${.TARGET}"
+	${_MKCMD}\
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
 
 # Yacc
@@ -176,10 +208,16 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
 .y.o: # remove to force use of .y.c->.c.o transforms
 .y:
+	${_MKMSG} "   yacc  ${.TARGET}"
+	${_MKCMD}\
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
+	${_MKCMD}\
 	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}}-o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
+	${_MKCMD}\
 	rm -f ${.TARGET:R}.tab.[ch]
 .y.c:
+	${_MKMSG} "   yacc  ${.TARGET}"
+	${_MKCMD}\
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
 
 .ifdef YHEADER
