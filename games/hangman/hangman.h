@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)hangman.h	5.5 (Berkeley) 2/28/91
- *	$Id: hangman.h,v 1.2 1993/08/01 18:54:30 mycroft Exp $
+ *	$Id: hangman.h,v 1.3 1994/06/29 21:22:52 deraadt Exp $
  */
 
 # include	<curses.h>
@@ -78,5 +78,3 @@ extern FILE	*Dict;
 extern off_t	Dict_size;
 
 void	die();
-
-off_t	abs();
