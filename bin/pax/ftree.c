@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.7 1998/03/06 09:13:02 mrg Exp $	*/
+/*	$NetBSD: ftree.c,v 1.8 1998/07/28 17:44:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.7 1998/03/06 09:13:02 mrg Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.8 1998/07/28 17:44:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,8 +407,7 @@ next_file(arcn)
 			 */
 			if (cpio_mode)
 				continue;
-			else
-				/* FALLTHROUGH */ ;
+			/* FALLTHROUGH */
 		case FTS_DEFAULT:
 		case FTS_F:
 		case FTS_SL:
