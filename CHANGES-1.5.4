@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.121 2004/01/06 20:24:55 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.122 2004/01/06 21:02:04 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1850,6 +1850,7 @@ gnu/dist/sendmail/sendmail/sendmail.h		1.11
 lib/libz/gzio.c                                 1.14
 
   Fix for potential buffer overflow in snprintf() (from OpenBSD)
+  Fixes SA#2003-004.
   [groo, ticket #29]
 
 lib/libz/gzio.c                                 1.15
@@ -2004,12 +2005,14 @@ crypto/dist/openssl/crypto/rsa/rsa_eay.c	1.2
 crypto/dist/openssl/crypto/rsa/rsa_lib.c	1.2
 
   Enable RSA blinding by default.
+  Fixes SA#2003-005.
   [itojun, ticket #34]
 
 crypto/dist/openssl/ssl/s3_srvr.c		1.4
 
   OpenSSL Security Advisory [19 March 2003]
   Klima-Pokorny-Rosa attack on RSA in SSL/TLS
+  Fixes SA#2003-007.
   [itojun, ticket #35]
 
 lib/libc/rpc/xdr_mem.c			1.16
@@ -2039,6 +2042,7 @@ gnu/dist/sendmail/sendmail/version.c	via patch
 
 	Apply new patch from sendmail.org to address the new buffer overflow
 	in address parsing.  Change version number to 8.11.6p2.
+	Fixes SA#2003-009.
 	[atatat, ticket #39]
 
 crypto/dist/heimdal/kdc/524.c		1.8 via patch
@@ -2051,7 +2055,8 @@ include/heimdal/version.h		via patch
 
 	Fix Kerberos 4 procotocol problem mentioned in
 	[MIT krb5 Security Advisory 2003-004]/[heimdal-0.5.2 release notes]
-	by disable support for it.  [lha, ticket #37]
+	by disable support for it.  Fixes SA#2003-006.
+	[lha, ticket #37]
 
 etc/mtree/NetBSD.dist			via patch
 
@@ -2077,7 +2082,8 @@ sys/netiso/clnp_er.c			1.13
 
 	Keep pkthdr when prepending new mbuf in front of a given chain.
 	This keeps us from panic()ing in the interface output routine.
-	[Ignatios, ticket #45]
+	Fixes SA#2003-010.
+	[is, ticket #45]
 
 sys/arch/mac68k/dev/if_mc.c		1.21
 sys/arch/macppc/dev/am79c950.c		1.14
@@ -2140,8 +2146,8 @@ sys/netkey/key.c			1.84
 
 lib/libc/gen/getcwd.c			1.29
 
-	Fix NetBSD SA 2003-011.
 	Fix off-by-one error in realpath().
+	Fixes SA#2003-011.
 	[itojun, ticket #61]
 
 usr.bin/menuc/menuc.1			1.5
@@ -2159,6 +2165,7 @@ sys/arch/i386/i386/machdep.c		1.529 via patch
 
 sys/compat/ibcs2/ibcs2_stat.c		1.21-1.23
 	buffer len check. from silvio@qualys.com.
+	Fixes SA#2003-013.
 	[itojun, ticket #64]
 
 sys/kern/kern_sysctl.c			1.142 via patch
@@ -2221,7 +2228,7 @@ crypto/dist/ssh/version.h		1.29 (via patch)
 	associated memory. From OpenBSD, via FreeBSD.
 
 	crank __NETBSDSSH_VERSION for buffer.c fix
-	Fixes SA#2003-12.
+	Fixes SA#2003-012.
 	[christos, no ticket]
 
 crypto/dist/ssh/buffer.c		1.4 (via patch)
@@ -2234,9 +2241,10 @@ crypto/dist/ssh/version.h		1.31 (via patch)
 gnu/dist/sendmail/sendmail/parseaddr.c	1.13
 gnu/dist/sendmail/sendmail/version.c	1.14 (via patch)
 
-	fix prescan() bug (potentially remotely exploitable), CAN-2003-0694
+	Fix prescan() bug (potentially remotely exploitable), CAN-2003-0694
 	Bump version number after parse8.359.2.8 patch has been applied.
-	[Aymeric, ticket #81]
+	Fixes SA#2003-016.
+	[aymeric, ticket #81]
 
 crypto/dist/ssh/ssh-agent.c		1.23
 
@@ -2269,8 +2277,8 @@ sys/dev/ic/wdc.c			1.132
 
 sys/kern/kern_sysctl.c			1.147 (via patch)
 
-	make debug_sysctl() sysctl MIB check more strict. from smak.
-	attack similar to NetBSD-SA2003-014 can be mounted due to this flaw.
+	Make debug_sysctl() sysctl MIB check more strict. from smak.
+	An attack similar to SA#2003-014 can be mounted due to this flaw.
 	[itojun, ticket #88]
 
 crypto/dist/openssl/ssl/ssl_ciph.c	1.6 (via patch)
@@ -2282,7 +2290,7 @@ crypto/dist/openssl/ssl/ssl_ciph.c	1.6 (via patch)
 crypto/dist/openssl/ssl/s3_clnt.c	1.5
 crypto/dist/openssl/ssl/s3_srvr.c	1.6
 
-	more fixes from 0.9.7c, from openbsd
+	More fixes from 0.9.7c, from openbsd
 	[itojun, ticket #90]
 
 crypto/dist/openssl/crypto/asn1/asn1_lib.c	1.7 (via patch)
@@ -2293,6 +2301,7 @@ crypto/dist/openssl/crypto/x509/x509_vfy.c	1.2 (via patch)
 	invalid tags (CAN-2003-0543 and CAN-2003-0544).
 	If verify callback ignores invalid public key errors don't try to check
 	certificate signature with the NULL public key.
+	Fixes SA#2003-017.
 	[itojun, ticket #95]
 
 crypto/dist/openssl/crypto/asn1/a_bytes.c	patch
@@ -2302,9 +2311,8 @@ crypto/dist/openssl/ssl/ssl_ciph.c		patch
 	  *) Fix additional bug revealed by the NISCC test suite:
 		Stop bug triggering large recursion when presented with
 		certain ASN.1 tags (CAN-2003-0851). From Steve Henson.
+	Fixes SA#2003-019.
 	[itojun, ticket#107]
-
-
 
 dist/bind/README				1.8, 1.9
 dist/bind/Version				1.4, 1.5
@@ -2400,8 +2408,8 @@ dist/bind/man/dig.1				1.10
 dist/bind/man/named-xfer.8			1.8
 dist/bind/man/named.conf.5			1.13
 
-	sync w/ 8.3.5
-	sync w/ 8.3.6
+	Update BIND to version 8.3.5.
+	Update BIND to version 8.3.6.
 	[itojun, ticket #104]
 
 dist/bind/README				1.10
@@ -2410,7 +2418,8 @@ dist/bind/bin/named/ns_init.c			1.7
 dist/bind/bin/named/ns_resp.c			1.12
 dist/bind/bin/nslookup/commands.l		1.5
 
-	sync w/ bind837
+	Update BIND to version 8.3.7.
+	Fixes SA#2003-018.
 	[itojun, ticket #111]
 
 sys/netinet/in.c				1.89 via patch
