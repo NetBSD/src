@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 1997/10/17 03:17:01 gwr Exp $
+# $NetBSD: GENERIC,v 1.42.2.1 1997/11/20 08:48:22 mellon Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # Supports root on: ie0, le0, sd*, ...
@@ -186,6 +186,8 @@ pseudo-device	sl		2	# CSLIP
 pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	ipfilter		# ip filter
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
