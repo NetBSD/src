@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 2000/10/10 12:49:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2001/11/26 00:28:17 jhawk Exp $
 #
 
-TARGETS+= release
+TARGETS+= release tocs
 
 .ifndef ALLNOTES
 .if exists(${MACHINE}/Makefile)
