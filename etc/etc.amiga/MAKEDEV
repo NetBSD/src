@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.12 1994/08/31 18:44:50 chopps Exp $
+#	$Id: MAKEDEV,v 1.13 1995/03/02 03:04:48 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -76,6 +76,7 @@
 #	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
+#	tun*	network tunnel driver
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -86,8 +87,8 @@ all)
 	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 mouse0 mouse1 tty00 grf0 grf1 grf2
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 par0
-	sh MAKEDEV lkm local
+	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV tun0 tun1 par0 lkm local
 	;;
 
 floppy)
@@ -377,6 +378,14 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 40 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
+	;;
+
 lkm)
         rm -f lkm
         mknod lkm c 24 0
@@ -384,11 +393,12 @@ lkm)
         chmod 640 lkm
         ;;
 
-
 local)
 	umask 0
 	sh MAKEDEV.local
+	umask 77
 	;;
+
 *)
 	echo $i: unknown device
 	;;
