@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.1 2003/05/23 21:56:34 leo Exp $
+#	$NetBSD: Makefile.bootxx,v 1.2 2003/06/28 14:14:48 he Exp $
 
 NOMAN=	# defined
 
@@ -51,6 +51,7 @@ beforeinstall:
 			bs=1 count=6656  2>/dev/null
 	@mv -f ${PROG} ${PROG}XX
 	@mv -f ${PROG}X ${PROG};
+	mkdir -p ${DESTDIR}${BINDIR}
 
 afterinstall:
 	@mv -f ${PROG}XX ${PROG}
