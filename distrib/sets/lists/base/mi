@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.349 2002/09/01 20:32:43 atatat Exp $
+# $NetBSD: mi,v 1.350 2002/09/10 22:19:41 joda Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -382,7 +382,6 @@
 ./usr/bin/jot		base-util-bin
 ./usr/bin/kdestroy	base-krb5-bin
 ./usr/bin/kdump		base-krb5-bin
-./usr/bin/kf		base-krb5-bin
 ./usr/bin/kinit		base-krb5-bin
 ./usr/bin/klist		base-krb5-bin
 ./usr/bin/kpasswd	base-krb5-bin
@@ -630,7 +629,6 @@
 ./usr/libexec/hpropd		base-krb5-bin
 ./usr/libexec/identd		base-netutil-bin
 ./usr/libexec/kadmind		base-krb5-bin
-./usr/libexec/kfd		base-krb5-bin
 ./usr/libexec/kpasswdd		base-krb5-bin
 ./usr/libexec/lfs_cleanerd	base-sysutil-bin
 ./usr/libexec/locate.bigram	base-sysutil-bin
