@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1998/08/17 12:13:00 tv Exp $
+#	$NetBSD: Makefile,v 1.14 1998/08/17 13:58:55 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -59,7 +59,8 @@ genattrtab: rtlanal.lo
 .for _GEN_ in attrtab emit extract opinit output peep recog
 DPSRCS+=	gen${_GEN_}.c
 CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.c
-gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo genrtl.h ${MD}
+gen${_GEN_}.lo: genrtl.h
+gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
 insn-${_GEN_}.c: gen${_GEN_}
 	./gen${_GEN_} ${MD} >$@
@@ -67,7 +68,8 @@ insn-${_GEN_}.c: gen${_GEN_}
 
 .for _GEN_ in attr codes config flags
 CLEANFILES+=	gen${_GEN_} gen${_GEN_}.lo insn-${_GEN_}.h
-gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo genrtl.h ${MD}
+gen${_GEN_}.lo: genrtl.h
+gen${_GEN_}: gen${_GEN_}.lo bitmap.lo obstack.lo print-rtl.lo rtl.lo ${MD}
 	${HOST_LINK.c} -o $@ ${.ALLSRC:M*.lo}
 insn-${_GEN_}.h: gen${_GEN_}
 	./gen${_GEN_} ${MD} >$@
