@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.10 1995/09/23 03:36:10 gwr Exp $	*/
+/*	$NetBSD: rarp.c,v 1.11 1996/06/03 22:11:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -193,7 +193,7 @@ rarprecv(d, pkt, len, tleft)
 	{
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad hrd/pro/hln/pln\n")
+			printf("bad hrd/pro/hln/pln\n");
 #endif
 		return (-1);
 	}
