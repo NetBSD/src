@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.6 2002/06/02 15:30:29 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.7 2003/04/15 08:07:10 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.28 2002/06/02 15:27:40 itojun Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.6 2002/06/02 15:30:29 itojun Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.7 2003/04/15 08:07:10 itojun Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -239,7 +239,7 @@ pfkey_msgtype_names(x)
 {
 	const int max =
 	    sizeof(pfkey_msgtypenames)/sizeof(pfkey_msgtypenames[0]);
-	static char buf[10];
+	static char buf[20];
 
 	if (x < max && pfkey_msgtypenames[x])
 		return pfkey_msgtypenames[x];
