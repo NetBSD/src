@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.28 2001/02/27 23:57:30 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.29 2001/03/08 21:30:35 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.28 2001/02/27 23:57:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29 2001/03/08 21:30:35 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ checkvectors()
 #endif
 
 
+#if 0
 void
 undefined_handler(struct trapframe *tf)
 {
@@ -184,6 +185,8 @@ undefined_handler(struct trapframe *tf)
 		userret(p, pc, sticks);
 	}
 }
+#endif
+
 
 void
 swi_handler(struct trapframe *tf)

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.12 2001/01/23 22:41:16 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.13 2001/03/08 21:30:35 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -226,7 +226,7 @@ Lreset_panicmsg:
 
 	.global	undefined_entry
 undefined_entry:
-	HANDLER	_C_LABEL(undefined_handler), 4
+	HANDLER	_C_LABEL(undefinedinstruction), 4
 
 	.global	swi_entry
 swi_entry:
@@ -450,4 +450,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.12 2001/01/23 22:41:16 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.13 2001/03/08 21:30:35 bjh21 Exp $")
