@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.12 1994/11/05 02:16:26 mycroft Exp $	*/
+/*	$NetBSD: microtime.s,v 1.13 1994/11/06 20:33:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -46,26 +46,17 @@
  */
 #ifndef HZ
 ENTRY(microtime)
-	pushl	%edi
-	pushl	%esi
-	pushl	%ebx
-
-	movl	$_time,%ebx		# get pointer to time
-
 	cli				# disable interrupts
-
-	movl	(%ebx),%edi		# sec = time.tv_sec
-	movl	4(%ebx),%esi		# usec = time.tv_usec
 
 	movb	$(TIMER_SEL0|TIMER_LATCH),%al
 	outb	%al,$TIMER_MODE		# latch timer 0's counter
 
-	# Read counter value into ebx, LSB first
-	xorl	%ebx,%ebx
+	# Read counter value into ecx, LSB first
+	xorl	%ecx,%ecx
 	inb	$TIMER_CNTR0,%al
-	movb	%al,%bl
+	movb	%al,%cl
 	inb	$TIMER_CNTR0,%al
-	movb	%al,%bh
+	movb	%al,%ch
 
 	# Now check for counter overflow.  This is tricky because the
 	# timer chip doesn't let us atomically read the current counter
@@ -79,61 +70,60 @@ ENTRY(microtime)
 	# from the IRR, and mistakenly add a correction to the "close
 	# to zero" value.
 	#
-	# We compare the counter value to heuristic constant 12.
+	# We compare the counter value to the heuristic constant 12.
 	# If the counter value is less than this, we assume the counter
-	# didn't overflow between disabling interrupts above and latching
-	# the counter value.  For example, we assume that the above 10 or so
+	# didn't overflow between disabling clock interrupts and latching
+	# the counter value above.  For example, we assume that the first 3
 	# instructions take less than 12 microseconds to execute.
 	#
-	# We used to check for overflow only if the value read was close to
+	# (We used to check for overflow only if the value read was close to
 	# the timer limit, but this doesn't work very well if we're at the
-	# clock's ipl or higher.
+	# clock's ipl or higher.)
 	#
 	# Otherwise, the counter might have overflowed.  We check for this
 	# condition by reading the interrupt request register out of the ICU.
 	# If it overflowed, we add in one clock period.
 
-	movl	$11932,%edx	# timer limit
+	movl	$11932,%edx	# counter limit
 
 	testb	$IRQ_BIT(0),_ipending + IRQ_BYTE(0)
 	jnz	1f
 
-	cmpl	$12,%ebx	# check for potential overflow
+	cmpl	$12,%ecx	# check for potential overflow
 	jbe	2f
 	
 	inb	$IO_ICU1,%al	# read IRR in ICU
 	testb	$IRQ_BIT(0),%al	# is a timer interrupt pending?
 	jz	2f
 
-1:	subl	%edx,%ebx	# add another tick
+1:	subl	%edx,%ecx	# add another tick
 	
-2:	subl	%ebx,%edx	# subtract counter value from limit
+2:	subl	%ecx,%edx	# subtract counter value from counter limit
+
+	# Divide by 1193280/1000000.  We use a fast approximation of 4096/3433.
+	# For values of hz more than 100, this has a maximum error of 2us.
+
+	leal	(%edx,%edx,2),%eax	# a = 3d
+	leal	(%edx,%eax,4),%eax	# a = 4a + d = 13d
+	movl	%eax,%ecx
+	shll	$5,%ecx
+	addl	%ecx,%eax		# a = 33a    = 429d
+	leal	(%edx,%eax,8),%eax	# a = 8a + d = 3433d
+	shrl	$12,%eax		# a = a/4096 = 3433d/4096
+
+	movl	time,%edx	# get time.tv_sec
+	addl	time+4,%eax	# add time.tv_usec
 
 	sti			# enable interrupts
-
-	movl	%edx,%eax	# movl %edx,%eax; imull $1000,%eax,%eax
-	sall	$10,%eax
-	sall	$3,%edx
-	subl	%edx,%eax
-	sall	$1,%edx
-	subl	%edx,%eax
-
-	xorl	%edx,%edx	# zero extend eax for div
-	movl	$1193,%ecx
-	idivl	%ecx		# convert to usecs: mult by 1000/1193
-
-	addl	%eax,%esi	# add counter usecs to time.tv_usec
-	cmpl	$1000000,%esi	# carry in timeval?
-	jl	3f
-	subl	$1000000,%esi	# adjust usec
-	incl	%edi		# bump sec
+	
+	cmpl	$1000000,%eax	# carry in timeval?
+	jb	3f
+	subl	$1000000,%eax	# adjust usec
+	incl	%edx		# bump sec
 	
 3:	movl	16(%esp),%ecx	# load timeval pointer arg
-	movl	%edi,(%ecx)	# tvp->tv_sec = sec
-	movl	%esi,4(%ecx)	# tvp->tv_usec = usec
+	movl	%edx,(%ecx)	# tvp->tv_sec = sec
+	movl	%eax,4(%ecx)	# tvp->tv_usec = usec
 
-	popl	%ebx		# restore regs
-	popl	%esi
-	popl	%edi
 	ret
 #endif
