@@ -99,8 +99,6 @@ up-to-date.  Many thanks.
 #define MCLoadBySet	0	/* Load entire sets as they are used */
 #define MCLoadAll	1	/* Load entire DB on catopen */
 
-extern char	*MCAppPath;	/* Additional search path for strings (appended) */
-
 /*
  * MCOffsetT - Union to handle both disk and runtime pointers
  */
