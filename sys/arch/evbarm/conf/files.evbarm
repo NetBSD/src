@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4 2001/11/04 02:38:28 thorpej Exp $
+#	$NetBSD: files.evbarm,v 1.5 2001/11/14 23:47:51 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -64,9 +64,14 @@ include "dev/pci/files.pci"			# PCI devices
 include "dev/usb/files.usb"			# USB device
 include "dev/cardbus/files.cardbus"		# CARDBus device
 
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
 file	arch/evbarm/pci/pciide_machdep.c	pciide
+
+#
+# ARM evaluation board specific devices
+#
+
+# We need to define the Integrator's "plcom" device here since
+# it we need to generate a "plcom.h" header file for conf.c
+defopt	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
+device	plcom { }: tty
+file	arch/evbarm/dev/plcom.c			plcom needs-flag
