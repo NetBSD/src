@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.95 1999/07/12 21:55:21 kleink Exp $
+	$NetBSD: syscalls.master,v 1.96 1999/07/12 23:01:27 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -565,5 +565,3 @@
 			    struct stat *sb); }
 300	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs *buf); }
-301	STD		{ int sys_getcontext(struct ucontext *ucp); }
-302	STD		{ int sys_setcontext(const struct ucontext *ucp); }
