@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.21 2003/11/02 20:08:41 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.22 2004/08/13 12:10:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.21 2003/11/02 20:08:41 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.22 2004/08/13 12:10:38 mycroft Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -135,6 +135,21 @@ c_delafter(EditLine *el, int num)
 }
 
 
+/* c_delafter1():
+ *	Delete the character after the cursor, do not yank
+ */
+protected void
+c_delafter1(EditLine *el)
+{
+	char *cp;
+
+	for (cp = el->el_line.cursor; cp <= el->el_line.lastchar; cp++)
+		*cp = cp[1];
+
+	el->el_line.lastchar--;
+}
+
+
 /* c_delbefore():
  *	Delete num characters before the cursor
  */
@@ -160,6 +175,21 @@ c_delbefore(EditLine *el, int num)
 
 		el->el_line.lastchar -= num;
 	}
+}
+
+
+/* c_delbefore1():
+ *	Delete the character before the cursor, do not yank
+ */
+protected void
+c_delbefore1(EditLine *el)
+{
+	char *cp;
+
+	for (cp = el->el_line.cursor - 1; cp <= el->el_line.lastchar; cp++)
+		*cp = cp[1];
+
+	el->el_line.lastchar--;
 }
 
 
