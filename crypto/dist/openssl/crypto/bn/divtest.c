@@ -16,6 +16,7 @@ static void bug(char *m, BIGNUM *a, BIGNUM *b)
     BN_print_fp(stdout, b);
     printf("\n");
     fflush(stdout);
+    exit(1);
 }
 
 main(int argc, char **argv)
@@ -45,4 +46,5 @@ main(int argc, char **argv)
 	else if (BN_cmp(c,C) != 0 || BN_cmp(c,C) != 0)
 	    bug("mismatch",a,b);
     }
+    exit(0);
 }
