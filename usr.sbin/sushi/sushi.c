@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.19 2004/10/30 15:51:20 dsl Exp $       */
+/*      $NetBSD: sushi.c,v 1.20 2005/01/11 23:11:05 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@
 #include "handlers.h"
 #include "blabel.h"
 
-MTREE_ENTRY *navigate_menu __P((struct cqMenu *, char *, char *));
-MTREE_ENTRY *navigate_submenu __P((MTREE_ENTRY *));
-MTREE_ENTRY *display_menu __P((struct cqMenu *, char *, char *));
-void parse_config __P((void));
+MTREE_ENTRY *navigate_menu(struct cqMenu *, char *, char *);
+MTREE_ENTRY *navigate_submenu(MTREE_ENTRY *);
+MTREE_ENTRY *display_menu(struct cqMenu *, char *, char *);
+void parse_config(void);
 
 CDKSCREEN	*cdkscreen;
 int		scripting;
