@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.38 2001/08/24 15:33:16 mhitch Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.39 2001/08/27 02:00:18 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.38 2001/08/24 15:33:16 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.39 2001/08/27 02:00:18 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,8 +358,10 @@ dec_maxine_intr(status, cause, pc, ipending)
 			}
 		} while (ifound);
 	}
-	if (ipending & MIPS_INT_MASK_2)
+	if (ipending & MIPS_INT_MASK_2) {
 		kn02ba_errintr();
+		pmax_memerr_evcnt.ev_count++;
+	}
 
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }

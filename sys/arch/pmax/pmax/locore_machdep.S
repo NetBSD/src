@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.17 2001/08/26 11:47:25 simonb Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.18 2001/08/27 02:00:19 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -176,18 +176,16 @@ EXPORT(intrnames)
 	.asciiz	"serial1"
 	.asciiz	"ether"
 	.asciiz	"scsi"
-	.asciiz	"memory"
 	.asciiz	"optslot0"
 	.asciiz	"optslot1"
 	.asciiz	"optslot2"
 	.asciiz "dtop"
 	.asciiz "isdn"
-	.asciiz	"floppy"
-	.asciiz	"stray"
+	.asciiz "floppy"
 EXPORT(eintrnames)
 	.align	2
 EXPORT(intrcnt)
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0
 EXPORT(eintrcnt)
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.

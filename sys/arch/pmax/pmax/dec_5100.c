@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.31 2001/08/22 09:20:38 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.32 2001/08/27 02:00:18 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.31 2001/08/22 09:20:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.32 2001/08/27 02:00:18 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ dec_5100_intr(status, cause, pc, ipending)
 
 	if (ipending & MIPS_INT_MASK_3) {
 		dec_5100_memintr();
-		intrcnt[ERROR_INTR]++;
+		pmax_memerr_evcnt.ev_count++;
 	}
 
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
