@@ -218,8 +218,6 @@ int main(int argc, char **argv)
 	if (daemonize) {
 		FILE *fp;
 
-		printf("altqd: going into the daemon mode.\n");
-
 		daemon(0, 0);
 
 		/* save pid to the pid file (/var/tmp/altqd.pid) */
