@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.31 1998/08/09 20:51:09 perry Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.32 1998/08/10 08:11:12 matthias Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ int	portal_getattr	__P((void *));
 int	portal_setattr	__P((void *));
 #define	portal_read	genfs_eopnotsupp
 #define	portal_write	genfs_eopnotsupp
-#define	portal_ioctl	genfs_eopnotsupp
+#define	portal_ioctl	genfs_enoioctl
 #define	portal_poll	genfs_eopnotsupp
 #define	portal_mmap	genfs_eopnotsupp
 #define portal_revoke	genfs_revoke
