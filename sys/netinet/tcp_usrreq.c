@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.60 2001/02/11 06:39:35 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.61 2001/03/20 20:07:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -427,7 +427,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
-		tp->iss = tcp_new_iss(tp, sizeof(struct tcpcb), 0);
+		tp->iss = tcp_new_iss(tp, 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
 		break;
