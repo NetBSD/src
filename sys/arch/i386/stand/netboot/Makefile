@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/02/13 02:54:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 1999/02/24 19:38:17 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -7,7 +7,7 @@ PROG= ${BASE}.rom
 MKMAN=	no
 NEWVERSWHAT=	"Network Boot"
 
-SRCS= main.c devopen.c conf.c dev_net.c
+SRCS= main.c devopen.c conf.c dev_net.c exec.c
 
 CLEANFILES+= ${ROMSTART} ${BASE}.bin ${BASE}.sym
 
@@ -26,7 +26,6 @@ CFLAGS+= -Wall
 
 # XXX should go into library
 .PATH: ${.CURDIR}/../libsa
-#SRCS+= tftp.c
 SRCS+= nfs.c
 CPPFLAGS+= -I${.CURDIR}/../libsa
 
