@@ -1,7 +1,11 @@
-#	$NetBSD: rc.subr,v 1.4 1998/02/28 22:54:02 lukem Exp $
+#	$NetBSD: rc.subr,v 1.5 1998/02/28 22:56:11 lukem Exp $
 # functions used by various rc scripts
 
-# Test $1 variable, and warn if not set to YES or NO.
+#
+# checkyesno
+#	Test $1 variable, and warn if not set to YES or NO.
+#	return 0 if it's "yes" (et al), nonzero otherwise
+#
 checkyesno() {
 	eval value=\$${1}
 	case $value in
