@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.2 2000/10/31 15:23:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -34,6 +34,8 @@ extern const char *__domainname;
 #define MO_REVISION		0
 
 #define GETTEXT_MMAP_MAX	(64 * 1024)	/*XXX*/
+
+#define DEFAULT_DOMAINNAME	"messages"
 
 /* *.mo file format */
 struct mo {
