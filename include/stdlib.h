@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.43 1999/12/22 21:26:19 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.44 2000/01/10 16:58:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@ typedef struct {
 #endif
 
 
-#include <null.h>
+#include <sys/null.h>
 
 #define	EXIT_FAILURE	1
 #define	EXIT_SUCCESS	0
