@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.2 2003/03/17 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.1 2003/03/16 08:26:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.2 2003/03/17 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ int union_advlock	__P((void *));
 int union_strategy	__P((void *));
 int union_getpages	__P((void *));
 int union_putpages	__P((void *));
+int union_kqfilter	__P((void *));
 
 static void union_fixup __P((struct union_node *));
 static int union_lookup1 __P((struct vnode *, struct vnode **,
@@ -148,6 +149,7 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_advlock_desc, union_advlock },		/* advlock */
 	{ &vop_getpages_desc, union_getpages },		/* getpages */
 	{ &vop_putpages_desc, union_putpages },		/* putpages */
+	{ &vop_kqfilter_desc, union_kqfilter },		/* kqfilter */
 #ifdef notdef
 	{ &vop_blkatoff_desc, union_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, union_valloc },		/* valloc */
@@ -2028,4 +2030,31 @@ union_putpages(v)
 	simple_lock(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
+}
+
+int
+union_kqfilter(void *v)
+{
+	struct vop_kqfilter_args /* {
+		struct vnode	*a_vp;
+		struct knote	*a_kn;
+	} */ *ap = v;
+	int error;
+
+	/*
+	 * We watch either the upper layer file (if it already exists),
+	 * or the lower layer one. If there is lower layer file only
+	 * at this moment, we will keep watching that lower layer file
+	 * even if upper layer file would be created later on.
+	 */
+	if (UPPERVP(ap->a_vp))
+		error = VOP_KQFILTER(UPPERVP(ap->a_vp), ap->a_kn);
+	else if (LOWERVP(ap->a_vp))
+		error = VOP_KQFILTER(LOWERVP(ap->a_vp), ap->a_kn);
+	else {
+		/* panic? */
+		error = EOPNOTSUPP;
+	}
+
+	return (error);
 }
