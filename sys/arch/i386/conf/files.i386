@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.136 1999/08/17 18:58:49 drochner Exp $
+#	$NetBSD: files.i386,v 1.137 1999/08/17 21:31:57 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -333,5 +333,3 @@ include "dev/pcmcia/files.pcmcia"
 
 
 include "dev/usb/files.usb"
-
-include "arch/i386/pnpbios/files.pnpbios"
