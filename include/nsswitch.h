@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.2 1999/01/15 12:21:16 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.3 1999/01/16 02:58:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,9 +65,8 @@
  */
 #define NSSRC_FILES	"files"		/* local files */
 #define	NSSRC_DNS	"dns"		/* DNS; IN for hosts, HS for others */
-#define	NSSRC_NIS	"nis"		/* yp/nis */
-#define	NSSRC_NISPLUS	"nisplus"	/* nis+ */
-#define	NSSRC_COMPAT	"compat"	/* passwd,group in yp compat mode */
+#define	NSSRC_NIS	"nis"		/* YP/NIS */
+#define	NSSRC_COMPAT	"compat"	/* passwd,group in YP compat mode */
 
 /*
  * currently implemented databases
@@ -76,6 +75,7 @@
 #define NSDB_GROUP		"group"
 #define NSDB_GROUP_COMPAT	"group_compat"
 #define NSDB_NETGROUP		"netgroup"
+#define NSDB_NETWORKS		"networks"
 #define NSDB_PASSWD		"passwd"
 #define NSDB_PASSWD_COMPAT	"passwd_compat"
 #define NSDB_SHELLS		"shells"
@@ -90,7 +90,6 @@
 #define NSDB_ETHERS		"ethers"
 #define NSDB_EXPORTS		"exports"
 #define NSDB_NETMASKS		"netmasks"
-#define NSDB_NETWORKS		"networks"
 #define NSDB_PHONES		"phones"
 #define NSDB_PRINTCAP		"printcap"
 #define NSDB_PROTOCOLS		"protocols"
