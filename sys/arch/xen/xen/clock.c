@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2004/04/10 23:50:23 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2004/04/10 23:50:23 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,19 +45,87 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include <machine/hypervisor.h>
 #include <machine/events.h>
 
+#include <dev/clock_subr.h>
+
+#include "config_time.h"		/* for CONFIG_TIME */
+
 static int xen_timer_handler(void *, struct trapframe *);
 
-void
-inittodr(base)
-	time_t base;
+/* These are peridically updated in shared_info, and then copied here. */
+static unsigned long shadow_tsc_stamp;
+static uint64_t shadow_system_time;
+static unsigned long shadow_time_version;
+static struct timeval shadow_tv;
+
+static int timeset;
+
+/*
+ * Reads a consistent set of time-base values from Xen, into a shadow data
+ * area.  Must be called at splclock.
+ */
+static void get_time_values_from_xen(void)
 {
-	/* printf("inittodr %08lx\n", base); */
+	do {
+		shadow_time_version = HYPERVISOR_shared_info->time_version2;
+		__insn_barrier();
+		shadow_tv.tv_sec = HYPERVISOR_shared_info->wc_sec;
+		shadow_tv.tv_usec = HYPERVISOR_shared_info->wc_usec;
+		shadow_tsc_stamp = HYPERVISOR_shared_info->tsc_timestamp;
+		shadow_system_time = HYPERVISOR_shared_info->system_time;
+		__insn_barrier();
+	} while (shadow_time_version != HYPERVISOR_shared_info->time_version1);
+}
+
+void
+inittodr(time_t base)
+{
+	int s;
+
+	/*
+	 * if the file system time is more than a year older than the
+	 * kernel, warn and then set the base time to the CONFIG_TIME.
+	 */
+	if (base && base < (CONFIG_TIME-SECYR)) {
+		printf("WARNING: preposterous time in file system\n");
+		base = CONFIG_TIME;
+	}
+
+	s = splclock();
+	get_time_values_from_xen();
+	splx(s);
+
+	time.tv_usec = shadow_tv.tv_usec;
+	time.tv_sec = shadow_tv.tv_sec + rtc_offset * 60;
+#ifdef DEBUG_CLOCK
+	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
+#endif
+	if (base != 0 && base < time.tv_sec - 5*SECYR)
+		printf("WARNING: file system time much less than clock time\n");
+	else if (base > time.tv_sec + 5*SECYR) {
+		printf("WARNING: clock time much less than file system time\n");
+		printf("WARNING: using file system time\n");
+		goto fstime;
+	}
+
+	timeset = 1;
+	return;
+
+fstime:
+	timeset = 1;
+	time.tv_sec = base;
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
 void
 resettodr()
 {
-	/* panic("resettodr"); */
+
+	/*
+	 * We might have been called by boot() due to a crash early
+	 * on.  Don't reset the clock chip in this case.
+	 */
+	if (!timeset)
+		return;
 }
 
 void
@@ -80,14 +148,14 @@ void
 xen_delay(int n)
 {
 	int k;
-	/* panic("xen_delay %d\n", n); */
+
 	for (k = 0; k < 10 * n; k++);
 }
 
 void
 xen_microtime(struct timeval *tv)
 {
-	panic("xen_microtime %p\n", tv);
+	printf("xen_microtime %p\n", tv);
 }
 
 void
@@ -102,26 +170,13 @@ xen_initclocks()
 static int
 xen_timer_handler(void *arg, struct trapframe *regs)
 {
-#if 0
-	static int hztest;
 
-	if ((hztest--) == 0) {
-		hztest = hz - 1;
-		printf("ping!!! hz=%d regs %p level %d ipending %08x\n", hz,
-		    regs, cpu_info_primary.ci_ilevel,
-		    cpu_info_primary.ci_ipending);
-	}
-#endif
-
-	/* printf("timer event\n"); */
 	hardclock((struct clockframe *)regs);
 
 	return 0;
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
-	/* printf("setstatclockrate\n"); */
 }
