@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.67 2003/08/07 16:30:40 agc Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.68 2003/11/01 17:48:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.67 2003/08/07 16:30:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.68 2003/11/01 17:48:20 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1236,9 +1236,10 @@ hpux_sys_alarm_6x(l, v, retval)
 	struct itimerval *itp, it;
 	struct ptimer *ptp;
 
- 	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
+ 	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL]) {
+		ptp = p->p_timers->pts_timers[ITIMER_REAL];
 		itp = &ptp->pt_time;
-	else
+	} else
 		itp = NULL;
 
 	s = splhigh();
