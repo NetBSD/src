@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.3 1996/05/27 20:44:08 leo Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.4 1997/09/14 13:26:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -75,7 +76,24 @@ struct field label_head[] = {
 };
 #undef dloff
 
-char tmpbuf[64];
+void	check_divisors __P((struct disklabel *));
+u_short	dkcksum __P((struct disklabel *));
+void	edit_geo __P((struct disklabel *));
+void	edit_head_all __P((struct disklabel *, int));
+void	edit_head_field __P((void *, struct field *, int));
+void	edit_partition __P((struct disklabel *, int, int));
+void	get_fstype __P((char *, u_int8_t *));
+void	get_val_cts __P((struct disklabel *, char *, u_int32_t *));
+void	label_modify __P((struct disklabel *, char *));
+void	label_print __P((struct disklabel *, char *));
+void	label_quit __P((struct disklabel *, char *));
+void	label_read __P((struct disklabel *, char *));
+void	label_write __P((struct disklabel *, char *));
+int	main __P((int, char *[]));
+void	menu __P((void));
+void	print_val_cts __P((struct disklabel *, u_long val));
+
+char	tmpbuf[64];
 
 void
 edit_head_field(v, f, modify)
@@ -259,7 +277,7 @@ get_fstype(tmpbuf, fstype)
 void
 edit_partition(d, idx, modify)
 	struct disklabel *d;
-	int idx;
+	int idx, modify;
 {
 	struct partition *p;
 	char letter, *comment;
@@ -477,13 +495,15 @@ label_modify(dl, dn)
 }
 
 void
-label_quit()
+label_quit(dl, dn)
+	struct disklabel *dl;
+	char *dn;
 {
 	exit(0);
 }
 
 struct cmd {
-	void (*cmd_func)();
+	void (*cmd_func)__P((struct disklabel *, char *));
 	char *cmd_name;
 	char *cmd_descr;
 } cmds[] = {
@@ -543,4 +563,3 @@ main(argc, argv)
 	}
 	exit(0);
 }
-
