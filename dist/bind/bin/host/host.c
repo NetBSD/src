@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.2.8.1 2000/10/08 18:28:42 is Exp $	*/
+/*	$NetBSD: host.c,v 1.2.8.2 2000/11/13 22:00:06 tv Exp $	*/
 
 #ifndef lint
 static const char rcsid[] = "Id: host.c,v 8.34 1999/11/11 19:39:10 cyarnell Exp";
