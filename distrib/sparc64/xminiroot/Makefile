@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/03/28 04:33:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/28 14:47:10 rafal Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -95,7 +95,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=	${DISTRIBDIR}/utils/libhack
+HACKSRC=	${SRCROOT}/distrib/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
 ${CBIN}:	libhack.o
 
