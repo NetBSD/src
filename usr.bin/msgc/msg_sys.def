@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.14 1999/07/04 10:35:19 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.15 1999/07/04 10:39:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,7 +51,7 @@ static void	_msg_vprompt(char *msg, int do_echo, char *def, char *val,
 /* Routines */
 
 static void
-msg_beep(void)
+_msg_beep(void)
 {
 	fprintf(stderr, "\a");
 }
