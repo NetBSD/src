@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2003/05/21 10:05:26 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2003/05/30 11:56:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -98,18 +98,6 @@ EXTERN distinfo dist_list[]
     { NULL,		0, NULL }
 }
 #endif
-;
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On  mvme68k, allow "sd" scsi disks only.
- */
-EXTERN  char *disk_names[]
-#ifdef MAIN
-= {"sd", NULL}
-#endif
-;
 ;
 
 

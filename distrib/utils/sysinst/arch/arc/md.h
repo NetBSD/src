@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2003/05/21 10:05:23 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2003/05/30 11:56:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,18 +85,6 @@ EXTERN distinfo dist_list[]
     {"xmisc",		1, "X11 Misc.     : "},
     { NULL,		0, NULL }
 }
-#endif
-;
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On arc, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
- * disks.
- */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", "sd", "ld", NULL}
 #endif
 ;
 

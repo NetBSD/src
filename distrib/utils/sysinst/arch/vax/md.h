@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2003/05/21 10:05:29 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.12 2003/05/30 11:56:30 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,11 +87,7 @@ EXTERN distinfo dist_list[]
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
  */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"sd", "ra", "rd", "hp", NULL}
-#endif
-;
+#define DISK_NAMES "sd", "ra", "rd", "hp"
 
 /*
  * Machine-specific command to write a new label to a disk.

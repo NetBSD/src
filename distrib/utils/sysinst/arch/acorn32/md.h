@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2003/05/21 10:05:22 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2003/05/30 11:56:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,17 +79,6 @@ EXTERN distinfo dist_list[]
     {"xmisc",		1, "X11 Misc.    : "},
     { NULL,		0, NULL }
 }
-#endif
-;
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On acorn32, we allow "wd" IDE disks and "sd" scsi disks.
- */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", "sd", NULL}
 #endif
 ;
 

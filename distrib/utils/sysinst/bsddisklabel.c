@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.8 2003/05/29 17:53:24 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.9 2003/05/30 11:56:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -186,29 +186,31 @@ make_bsd_partitions(void)
 		bsdlabel[C].pi_size = ptsize;
 	} else {
 		part_bsd = part_raw;
-#ifdef BOOT_SIZE
-		part_size = BOOT_SIZE;
-		if (part_size >= 1024) {
-			/* Treat big numbers as a byte count */
-			part_size = (part_size + dlcylsize * sectorsize - 1)
-					/ (dlcylsize * sectorsize);
-			part_size *= dlcylsize;
-		}
-		bsdlabel[D].pi_fstype = FS_BOOT;
-		bsdlabel[D].pi_size = part_size;
-#ifdef BOOT_HIGH
-		bsdlabel[D].pi_offset = ptend - part_size;
-		ptend -= part_size;
-#else
-		bsdlabel[D].pi_offset = ptstart;
-		ptstart += part_size;
-#endif
-#endif
-#ifdef PART_REST
-		bsdlabel[D].pi_offset = 0;
-		bsdlabel[D].pi_size = ptstart;
-#endif
 	}
+
+#if defined(PART_BOOT) && defined(BOOT_SIZE)
+	partsize = BOOT_SIZE;
+	if (partsize >= 1024) {
+		/* Treat big numbers as a byte count */
+		partsize = (partsize + dlcylsize * sectorsize - 1)
+				/ (dlcylsize * sectorsize);
+		partsize *= dlcylsize;
+	}
+	bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+	bsdlabel[PART_BOOT].pi_size = partsize;
+#ifdef BOOT_HIGH
+	bsdlabel[PART_BOOT].pi_offset = ptend - partsize;
+	ptend -= partsize;
+#else
+	bsdlabel[PART_BOOT].pi_offset = ptstart;
+	partstart += partsize;
+#endif
+#endif
+
+#ifdef PART_REST
+	bsdlabel[PART_REST].pi_offset = 0;
+	bsdlabel[PART_REST].pi_size = ptstart;
+#endif
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c "unused", PART_USR /usr */
@@ -412,16 +414,23 @@ make_bsd_partitions(void)
 
 		for (i = 0; i < maxpart; i++) {
 #define p l.d_partitions[i]
+			if (i == part_raw || i == part_bsd)
+				continue;
+#ifdef PART_BOOT
+			if (i == PART_BOOT)
+				continue;
+#endif
+#ifdef PART_REST
+			if (i == PART_REST)
+				continue;
+#endif
 			bsdlabel[i].pi_size = p.p_size;
 			bsdlabel[i].pi_offset = p.p_offset;
-			if (i != part_raw) {
-				bsdlabel[i].pi_fstype = p.p_fstype;
-				bsdlabel[i].pi_bsize = p.p_fsize * p.p_frag;
-				bsdlabel[i].pi_fsize = p.p_fsize;
-				/* menu to get fsmount[] entry */
+			bsdlabel[i].pi_fstype = p.p_fstype;
+			bsdlabel[i].pi_bsize = p.p_fsize * p.p_frag;
+			bsdlabel[i].pi_fsize = p.p_fsize;
+			/* menu to get fsmount[] entry */
 #undef p
-			} else
-				bsdlabel[i].pi_fstype = FS_UNUSED;
 		}
 		msg_display(MSG_postuseexisting);
 		getchar();

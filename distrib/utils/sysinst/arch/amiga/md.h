@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2003/05/21 10:05:22 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2003/05/30 11:56:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,12 +91,7 @@ EXTERN distinfo dist_list[]
  * On amiga, disks are always named "sd", regardless they are attached
  * to the IDE bus or to the SCSI bus.
  */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"sd", NULL}
-#endif
-;
-
+#define DISK_NAMES "sd"
 
 /*
  * Machine-specific command to write a new label to a disk.

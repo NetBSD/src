@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.51 2003/05/18 20:04:21 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.52 2003/05/30 11:56:23 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,6 +73,11 @@ static int fsck_num(const char *);
 static int fsck_with_error_menu(const char *);
 static int target_mount_with_error_menu(const char *, char *, const char *);
 
+#ifndef DISK_NAMES
+#define DISK_NAMES "wd", "sd", "ld"
+#endif
+
+static char *disk_names[] = { DISK_NAMES, NULL };
 
 static void
 get_disks(void)
@@ -91,8 +96,11 @@ get_disks(void)
 	for (xd = disk_names; *xd != NULL; xd++) {
 		for (i = 0; i < MAX_DISKS; i++) {
 			snprintf(d_name, sizeof d_name, "%s%d", *xd, i);
-			if (!get_geom(d_name, &l))
+			if (!get_geom(d_name, &l)) {
+				if (errno == ENOENT)
+					break;
 				continue;
+			}
 			strncpy(dd->dd_name, d_name, sizeof dd->dd_name);
 			strlcat(disknames, d_name, sizeof disknames);
 			strlcat(disknames, " ", sizeof disknames);

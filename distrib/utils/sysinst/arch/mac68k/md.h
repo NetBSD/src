@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2003/05/21 10:05:25 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2003/05/30 11:56:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -220,13 +220,6 @@ EXTERN struct apple_part_map_entry new_map[]
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
-
-/* Disk names. */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", "sd", NULL}
-#endif
-;
 
 /*
  * Machine-specific command to write a new label to a disk.

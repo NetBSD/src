@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2003/05/21 10:05:28 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.9 2003/05/30 11:56:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,21 +50,14 @@
 #define PART_USR	E	/* Can be after PART_FIRST_FREE */
 #define PART_FIRST_FREE	F
 
+#define BOOT_SIZE	MEG	/* Size in bytes, rounded to cylinders later */
+
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	120	/* Default /usr size, if /home */
 #define STDNEEDMB	140	/* Min space for non X install */
 #define XNEEDMB		100	/* Extra megs for full X installation */
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"sd", NULL}
-#endif
-;
 
 /*
  * Machine-specific command to write a new label to a disk.

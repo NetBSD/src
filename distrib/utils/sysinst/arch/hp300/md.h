@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2003/05/21 10:05:24 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2003/05/30 11:56:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,12 +105,7 @@ EXTERN distinfo dist_list[]
  *
  * On  hp300, allow "rd" HP-IB and "sd" scsi disks.
  */
-EXTERN  char *disk_names[]
-#ifdef MAIN
-= {"rd", "sd", NULL}
-#endif
-;
-;
+#define DISK_NAMES "rd", "sd"
 
 
 /*
