@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.32 1996/10/16 19:33:30 ws Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.33 1996/10/25 22:01:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -389,13 +389,13 @@ kprintf(fmt, flags, tp, ap)
 	for (;;) {
 		padc = ' ';
 		width = 0;
-		while ((ch = *(u_char *)fmt++) != '%') {
+		while ((ch = *(const u_char *)fmt++) != '%') {
 			if (ch == '\0')
 				return;
 			putchar(ch, flags, tp);
 		}
 		lflag = 0;
-reswitch:	switch (ch = *(u_char *)fmt++) {
+reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case '0':
 		case '.':
 			padc = '0';
@@ -553,12 +553,12 @@ sprintf(buf, cfmt, va_alist)
 	for (bp = buf; ; ) {
 		padc = ' ';
 		width = 0;
-		while ((ch = *(u_char *)fmt++) != '%')
+		while ((ch = *(const u_char *)fmt++) != '%')
 			if ((*bp++ = ch) == '\0')
 				return ((bp - buf) - 1);
 
 		lflag = 0;
-reswitch:	switch (ch = *(u_char *)fmt++) {
+reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case '0':
 			padc = '0';
 			goto reswitch;
