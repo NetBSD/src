@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.22 2004/02/13 11:36:13 wiz Exp $	*/
+/*	$NetBSD: locore.S,v 1.23 2004/02/16 17:11:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 #include "opt_compat_oldboot.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
-#include "opt_dummy_nops.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"

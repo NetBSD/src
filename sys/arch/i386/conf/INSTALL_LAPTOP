@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.56 2003/12/14 09:54:01 dyoung Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.57 2004/02/16 17:11:27 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -33,8 +33,6 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
 
 # Misc. i386-specific options
 #options 	XSERVER		# X server support in console drivers
