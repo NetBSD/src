@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.22 2002/05/03 03:28:49 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.23 2002/05/03 16:45:22 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -266,6 +266,48 @@ void	arm8_setup		__P((char *string));
 u_int	arm8_clock_config	__P((u_int, u_int));
 #endif
 
+#ifdef CPU_SA110
+void	sa110_setup		__P((char *string));
+void	sa110_context_switch	__P((void));
+#endif	/* CPU_SA110 */
+
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
+void	sa11x0_drain_readbuf	__P((void));
+
+void	sa11x0_context_switch	__P((void));
+void	sa11x0_cpu_sleep	__P((int mode));
+ 
+void	sa11x0_setup		__P((char *string));
+#endif
+
+#if defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
+void	sa1_setttb		__P((u_int ttb));
+
+void	sa1_tlb_flushID_SE	__P((u_int va));
+
+void	sa1_cache_flushID	__P((void));
+void	sa1_cache_flushI	__P((void));
+void	sa1_cache_flushD	__P((void));
+void	sa1_cache_flushD_SE	__P((u_int entry));
+
+void	sa1_cache_cleanID	__P((void));
+void	sa1_cache_cleanD	__P((void));
+void	sa1_cache_cleanD_E	__P((u_int entry));
+
+void	sa1_cache_purgeID	__P((void));
+void	sa1_cache_purgeID_E	__P((u_int entry));
+void	sa1_cache_purgeD	__P((void));
+void	sa1_cache_purgeD_E	__P((u_int entry));
+
+void	sa1_cache_syncI		__P((void));
+void	sa1_cache_cleanID_rng	__P((vaddr_t start, vsize_t end));
+void	sa1_cache_cleanD_rng	__P((vaddr_t start, vsize_t end));
+void	sa1_cache_purgeID_rng	__P((vaddr_t start, vsize_t end));
+void	sa1_cache_purgeD_rng	__P((vaddr_t start, vsize_t end));
+void	sa1_cache_syncI_rng	__P((vaddr_t start, vsize_t end));
+
+#endif
+
 #ifdef CPU_ARM9
 void	arm9_setttb		__P((u_int));
 
@@ -290,8 +332,10 @@ void	arm9_context_switch	__P((void));
 void	arm9_setup		__P((char *string));
 #endif
 
-#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE_80200) || \
+#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_SA1100) || \
+    defined(CPU_SA1110) || defined(CPU_XSCALE_80200) || \
     defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_PXA2X0)
+
 void	armv4_tlb_flushID	__P((void));
 void	armv4_tlb_flushI	__P((void));
 void	armv4_tlb_flushD	__P((void));
@@ -299,39 +343,6 @@ void	armv4_tlb_flushD_SE	__P((u_int va));
 
 void	armv4_drain_writebuf	__P((void));
 #endif
-
-#ifdef CPU_SA110
-void	sa110_setttb		__P((u_int ttb));
-
-void	sa11x0_cpu_sleep	__P((int mode));
-
-void	sa110_tlb_flushID_SE	__P((u_int va));
-
-void	sa110_cache_flushID	__P((void));
-void	sa110_cache_flushI	__P((void));
-void	sa110_cache_flushD	__P((void));
-void	sa110_cache_flushD_SE	__P((u_int entry));
-
-void	sa110_cache_cleanID	__P((void));
-void	sa110_cache_cleanD	__P((void));
-void	sa110_cache_cleanD_E	__P((u_int entry));
-
-void	sa110_cache_purgeID	__P((void));
-void	sa110_cache_purgeID_E	__P((u_int entry));
-void	sa110_cache_purgeD	__P((void));
-void	sa110_cache_purgeD_E	__P((u_int entry));
-
-void	sa110_cache_syncI	__P((void));
-void	sa110_cache_cleanID_rng	__P((vaddr_t start, vsize_t end));
-void	sa110_cache_cleanD_rng	__P((vaddr_t start, vsize_t end));
-void	sa110_cache_purgeID_rng	__P((vaddr_t start, vsize_t end));
-void	sa110_cache_purgeD_rng	__P((vaddr_t start, vsize_t end));
-void	sa110_cache_syncI_rng	__P((vaddr_t start, vsize_t end));
-
-void	sa110_context_switch	__P((void));
-
-void	sa110_setup		__P((char *string));
-#endif	/* CPU_SA110 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0)
