@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15.2.2 2000/09/29 07:50:07 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.2.3 2001/10/08 19:01:19 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -852,6 +852,187 @@ sh_memio_unmap(t, bsh, size)
 {
 	return;
 }
+
+#ifdef SH4_PCMCIA
+
+int
+shpcmcia_memio_map(t, bpa, size, flags, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int flags;
+	bus_space_handle_t *bshp;
+{
+	int error;
+	struct extent *ex;
+	bus_space_tag_t pt = t & ~SH3_BUS_SPACE_PCMCIA_8BIT;
+
+	if (pt != SH3_BUS_SPACE_PCMCIA_IO && 
+	    pt != SH3_BUS_SPACE_PCMCIA_MEM &&
+	    pt != SH3_BUS_SPACE_PCMCIA_ATT) {
+		*bshp = (bus_space_handle_t)bpa;
+
+		return 0;
+	}
+
+	ex = iomem_ex;
+
+#if 0
+	/*
+	 * Before we go any further, let's make sure that this
+	 * region is available.
+	 */
+	error = extent_alloc_region(ex, bpa, size,
+				    EX_NOWAIT | EX_MALLOCOK );
+	if (error){
+		printf("sh3_pcmcia_memio_map:extent_alloc_region error\n");
+		return (error);
+	}
+#endif
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	error = shpcmcia_mem_add_mapping(bpa, size, (int)t, bshp );
+#if 0
+	if (error) {
+		if (extent_free(ex, bpa, size, EX_NOWAIT | EX_MALLOCOK )) {
+			printf("sh3_pcmcia_memio_map: pa 0x%lx, size 0x%lx\n",
+			       bpa, size);
+			printf("sh3_pcmcia_memio_map: can't free region\n");
+		}
+	}
+#endif
+
+	return (error);
+}
+
+int
+shpcmcia_mem_add_mapping(bpa, size, type, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int type;
+	bus_space_handle_t *bshp;
+{
+	u_long pa, endpa;
+	vaddr_t va;
+	pt_entry_t *pte;
+	unsigned int m = 0;
+	int io_type = type & ~SH3_BUS_SPACE_PCMCIA_8BIT;
+
+	pa = sh3_trunc_page(bpa);
+	endpa = sh3_round_page(bpa + size);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("sh3_pcmcia_mem_add_mapping: overflow");
+#endif
+
+	va = uvm_km_valloc(kernel_map, endpa - pa);
+	if (va == 0){
+		printf("shpcmcia_add_mapping: nomem \n");
+		return (ENOMEM);
+	}
+
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+
+	if( io_type == SH3_BUS_SPACE_PCMCIA_IO ){
+		m = PG_PCMCIA_IO;
+	}
+	else if( io_type == SH3_BUS_SPACE_PCMCIA_MEM ){
+		m = PG_PCMCIA_MEM;
+	}
+	else if( io_type == SH3_BUS_SPACE_PCMCIA_ATT ){
+		m = PG_PCMCIA_ATT;
+	}
+
+	if( type & SH3_BUS_SPACE_PCMCIA_8BIT ){
+		m |= PG_PCMCIA_8;
+	}
+
+	for (; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+
+		pte = kvtopte(va);
+		*pte &= ~PG_N;
+		*pte |= m;
+		pmap_update_pg(va);
+	}
+ 
+	return 0;
+}
+
+void
+shpcmcia_memio_unmap(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	struct extent *ex;
+	u_long va, endva;
+	bus_addr_t bpa;
+	bus_space_tag_t pt = t & ~SH3_BUS_SPACE_PCMCIA_8BIT;
+
+	if (pt != SH3_BUS_SPACE_PCMCIA_IO && 
+	    pt != SH3_BUS_SPACE_PCMCIA_MEM &&
+	    pt != SH3_BUS_SPACE_PCMCIA_ATT) {
+		return ;
+	}
+
+	ex = iomem_ex;
+
+	va = sh3_trunc_page(bsh);
+	endva = sh3_round_page(bsh + size);
+
+#ifdef DIAGNOSTIC
+	if (endva <= va)
+		panic("sh3_pcmcia_memio_unmap: overflow");
+#endif
+
+	pmap_extract(pmap_kernel(), va, &bpa);
+	bpa += bsh & PGOFSET;
+
+	/*
+	 * Free the kernel virtual mapping.
+	 */
+	uvm_km_free(kernel_map, va, endva - va);
+
+#if 0
+	if (extent_free(ex, bpa, size,
+			EX_NOWAIT | EX_MALLOCOK)) {
+		printf("sh3_pcmcia_memio_unmap: %s 0x%lx, size 0x%lx\n",
+		       "pa", bpa, size);
+		printf("sh3_pcmcia_memio_unmap: can't free region\n");
+	}
+#endif
+}
+
+void    
+shpcmcia_memio_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+	/* sh3_pcmcia_memio_unmap() does all that we need to do. */
+	shpcmcia_memio_unmap(t, bsh, size);
+}
+
+int
+shpcmcia_memio_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+
+	*nbshp = bsh + offset;
+	return (0);
+}
+
+#endif /* SH4_PCMCIA */
 
 #if !defined(DONT_INIT_BSC)
 /*
