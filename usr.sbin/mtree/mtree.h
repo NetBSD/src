@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.10 1998/12/06 19:07:53 jwise Exp $	*/
+/*	$NetBSD: mtree.h,v 1.11 1999/02/11 15:32:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -97,5 +97,13 @@ typedef struct _node {
 #define	RP(p)	\
 	((p)->fts_path[0] == '.' && (p)->fts_path[1] == '/' ? \
 	    (p)->fts_path + 2 : (p)->fts_path)
+
+#define UF_MASK ((UF_NODUMP | UF_IMMUTABLE |   \
+                  UF_APPEND | UF_OPAQUE)       \
+                    & UF_SETTABLE)              /* user settable flags */
+#define SF_MASK ((SF_ARCHIVED | SF_IMMUTABLE | \
+                  SF_APPEND) & SF_SETTABLE)     /* root settable flags */
+#define CH_MASK  (UF_MASK | SF_MASK)            /* all settable flags */
+#define SP_FLGS  (SF_IMMUTABLE | SF_APPEND)     /* special flags */
 
 #endif /* _MTREE_H_ */

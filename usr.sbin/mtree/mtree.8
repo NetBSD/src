@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.9 1998/12/06 19:07:53 jwise Exp $
+.\"	$NetBSD: mtree.8,v 1.10 1999/02/11 15:32:24 mrg Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl cderUux
+.Op Fl i | Fl m
 .Op Fl f Ar spec
 .Op Fl K Ar keywords
 .Op Fl k Ar keywords
@@ -69,12 +70,20 @@ specification.
 Read the specification from
 .Ar file  ,
 instead of from the standard input.
+.It Fl i
+If specified, set the schg and/or sappnd flags.
 .It Fl K
 Add the specified (whitespace or comma separated) keywords to the current
 set of keywords.
 .It Fl k
 Use the ``type'' keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
+.It Fl m
+If the schg and/or sappnd flags are specified, reset these flags. Note that
+this is only possible with securelevel less than 1 (i. e. in single user mode
+or while the system is running in insecure mode). See
+.Xr init 8
+for information on security levels.
 .It Fl p
 Use the file hierarchy rooted in
 .Ar path  ,
@@ -89,10 +98,16 @@ of the files for which the keyword
 was specified.
 The checksum is seeded with the specified value.
 .It Fl U
-Modify the owner, group, and permissions of existing files to match
+Modify the owner, group, permissions, and flags of existing files to match
 the specification and create any missing directories.
 User, group, and permissions must all be specified for missing directories
 to be created.
+Note that unless the
+.Fl i
+option is given, the schg and sappnd flags will not be set, even if
+specified. If 
+.Fl m
+is given, these flags will be reset.
 Exit with a status of 0 on success, 1 if any error occurred;
 a mismatch is not considered to be an error if it was corrected.
 .It Fl u
@@ -122,6 +137,11 @@ The file flags as a symbolic name.  See
 for information on these names.  If no flags are to be set the string
 .Dq none
 may be used to override the current default.
+Note that the schg and sappnd flags are treated specially (see the
+.Fl i
+and
+.Fl m
+options).
 .It Cm ignore
 Ignore any file hierarchy below this file.
 .It Cm gid

@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.16 1998/10/10 07:50:29 mrg Exp $	*/
+/*	$NetBSD: verify.c,v 1.17 1999/02/11 15:32:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.16 1998/10/10 07:50:29 mrg Exp $");
+__RCSID("$NetBSD: verify.c,v 1.17 1999/02/11 15:32:24 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: verify.c,v 1.16 1998/10/10 07:50:29 mrg Exp $");
 #include "extern.h"
 
 extern int crc_total, ftsoptions;
-extern int dflag, eflag, rflag, sflag, uflag;
+extern int dflag, eflag, iflag, rflag, sflag, uflag;
 extern char fullpath[MAXPATHLEN];
 
 static NODE *root;
@@ -159,6 +159,7 @@ miss(p, tail)
 {
 	int create;
 	char *tp;
+	u_int32_t flags;
 
 	for (; p; p = p->next) {
 		if (p->flags & F_OPT && !(p->flags & F_VISIT))
@@ -210,9 +211,14 @@ miss(p, tail)
 		if (chmod(path, p->st_mode))
 			(void)printf("%s: permissions not set: %s\n",
 			    path, strerror(errno));
-		if ((p->flags & F_FLAGS) && p->st_flags &&
-		    chflags(path, p->st_flags))
-			(void)printf("%s: file flags not set: %s\n",
-			    path, strerror(errno));
+		if ((p->flags & F_FLAGS) && p->st_flags) {
+			if (iflag)
+				flags = p->st_flags;
+			else
+				flags = p->st_flags & ~SP_FLGS;
+			if (chflags(path, flags))
+				(void)printf("%s: file flags not set: %s\n",
+				    path, strerror(errno));
+		}
 	}
 }

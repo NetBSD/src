@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.19 1998/12/19 15:38:45 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.20 1999/02/11 15:32:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.19 1998/12/19 15:38:45 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.20 1999/02/11 15:32:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,22 +55,61 @@ __RCSID("$NetBSD: compare.c,v 1.19 1998/12/19 15:38:45 christos Exp $");
 #include "mtree.h"
 #include "extern.h"
 
-extern int tflag, uflag;
+extern int iflag, mflag, tflag, uflag;
 
 static char *ftype __P((u_int));
 
 #define	INDENTNAMELEN	8
-#define	LABEL \
-	if (!label++) { \
-		len = printf("%s: ", RP(p)); \
-		if (len > INDENTNAMELEN) { \
-			tab = "\t"; \
-			(void)printf("\n"); \
-		} else { \
-			tab = ""; \
-			(void)printf("%*s", INDENTNAMELEN - (int)len, ""); \
-		} \
+#define MARK                                                                  \
+do {                                                                          \
+	len = printf("%s: ", RP(p));                                          \
+	if (len > INDENTNAMELEN) {                                            \
+		tab = "\t";                                                   \
+		(void)printf("\n");                                           \
+	} else {                                                              \
+		tab = "";                                                     \
+		(void)printf("%*s", INDENTNAMELEN - (int)len, "");            \
+	}                                                                     \
+} while (0)
+#define	LABEL if (!label++) MARK
+
+#define CHANGEFLAGS(path, oflags) \
+	if (flags != (oflags)) {                                              \
+		if (!label) {                                                 \
+			MARK;                                                 \
+			(void)printf("%sflags (\"%s\"", tab,                  \
+			    flags_to_string(p->fts_statp->st_flags, "none")); \
+		}                                                             \
+		if (chflags(path, flags)) {                                   \
+			label++;                                              \
+			(void)printf(", not modified: %s)\n",                 \
+			    strerror(errno));                                 \
+		} else                                                        \
+			(void)printf(", modified to \"%s\")\n",               \
+			     flags_to_string(flags, "none"));                 \
 	}
+
+/* SETFLAGS:
+ * given pflags, additionally set those flags specified in sflags and
+ * selected by mask (the other flags are left unchanged). oflags is
+ * passed as reference to check if chflags is necessary.
+ */
+#define SETFLAGS(path, sflags, pflags, oflags, mask)                          \
+do {                                                                          \
+	flags = ((sflags) & (mask)) | (pflags);                               \
+        CHANGEFLAGS(path, oflags);                                            \
+} while (0)
+
+/* CLEARFLAGS:
+ * given pflags, reset the flags specified in sflags and selected by mask
+ * (the other flags are left unchanged). oflags is
+ * passed as reference to check if chflags is necessary.
+ */
+#define CLEARFLAGS(path, sflags, pflags, oflags, mask)                        \
+do {                                                                          \
+	flags = (~((sflags) & (mask)) & CH_MASK) & (pflags);                  \
+        CHANGEFLAGS(path, oflags);                                            \
+} while (0)
 
 int
 compare(name, s, p)
@@ -78,7 +117,7 @@ compare(name, s, p)
 	NODE *s;
 	FTSENT *p;
 {
-	u_int32_t len, val;
+	u_int32_t len, val, flags;
 	int fd, label;
 	char *cp, *tab;
 	char md5buf[35];
@@ -118,6 +157,20 @@ typeerr:		LABEL;
 		}
 		break;
 	}
+	if (iflag && !uflag) {
+		if (s->flags & F_FLAGS)
+		    SETFLAGS(p->fts_accpath, s->st_flags,
+			p->fts_statp->st_flags, p->fts_statp->st_flags,
+			SP_FLGS);
+		return (label);
+        }
+	if (mflag && !uflag) {
+		if (s->flags & F_FLAGS)
+		    CLEARFLAGS(p->fts_accpath, s->st_flags, 
+			p->fts_statp->st_flags, p->fts_statp->st_flags,
+			SP_FLGS);
+		return (label);
+        }
 	/* Set the uid/gid first, then set the mode. */
 	if (s->flags & (F_UID | F_UNAME) && s->st_uid != p->fts_statp->st_uid) {
 		LABEL;
@@ -217,18 +270,26 @@ typeerr:		LABEL;
 	 * may have been useless!  oh well, we'd rather have correct
 	 * flags, rather than times?
 	 */
-	if ((s->flags & F_FLAGS) && s->st_flags != p->fts_statp->st_flags) {
-		LABEL;
-		(void)printf("%sflags (\"%s\" is not ", tab,
-		    flags_to_string(s->st_flags, "none"));
-		(void)printf("\"%s\"",
-		    flags_to_string(p->fts_statp->st_flags, "none"));
+        if ((s->flags & F_FLAGS) && ((s->st_flags != p->fts_statp->st_flags)
+	    || mflag || iflag)) {
+		if (s->st_flags != p->fts_statp->st_flags) {
+			LABEL;
+			(void)printf("%sflags (\"%s\" is not ", tab,
+			    flags_to_string(s->st_flags, "none"));
+			(void)printf("\"%s\"",
+			    flags_to_string(p->fts_statp->st_flags, "none"));
+		}
 		if (uflag) {
-			if (chflags(p->fts_accpath, s->st_flags))
-				(void)printf(", not modified: %s)\n",
-				    strerror(errno));
+			if (iflag)
+				SETFLAGS(p->fts_accpath, s->st_flags,
+				    0, p->fts_statp->st_flags, CH_MASK);
+			else if (mflag)
+				CLEARFLAGS(p->fts_accpath, s->st_flags,
+				    0, p->fts_statp->st_flags, SP_FLGS);
 			else
-				(void)printf(", modified)\n");
+				SETFLAGS(p->fts_accpath, s->st_flags,
+			     	    0, p->fts_statp->st_flags,
+				    (~SP_FLGS & CH_MASK));
 		} else
 			(void)printf(")\n");
 		tab = "\t";
