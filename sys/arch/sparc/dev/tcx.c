@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.1 1996/06/19 13:17:38 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.2 1996/10/04 20:34:40 thorpej Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -105,11 +105,10 @@ struct tcx_softc {
 /* autoconfiguration driver */
 static void	tcxattach __P((struct device *, struct device *, void *));
 static int	tcxmatch __P((struct device *, void *, void *));
-int		tcxopen __P((dev_t, int, int, struct proc *));
-int		tcxclose __P((dev_t, int, int, struct proc *));
-int		tcxioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		tcxmmap __P((dev_t, int, int));
 static void	tcx_unblank __P((struct device *));
+
+/* cdevsw prototypes */
+cdev_decl(tcx);
 
 struct cfattach tcx_ca = {
 	sizeof(struct tcx_softc), tcxmatch, tcxattach
@@ -121,7 +120,7 @@ struct cfdriver tcx_cd = {
 
 /* frame buffer generic driver */
 static struct fbdriver tcx_fbdriver = {
-	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxmmap
+	tcx_unblank, tcxopen, tcxclose, tcxioctl, tcxpoll, tcxmmap
 };
 
 extern int fbnode;
@@ -353,6 +352,16 @@ tcxioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
+}
+
+int
+tcxpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*

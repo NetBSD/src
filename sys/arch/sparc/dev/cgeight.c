@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.8 1996/08/25 07:47:34 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.9 1996/10/04 20:34:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -90,13 +90,12 @@ struct cgeight_softc {
 /* autoconfiguration driver */
 static void	cgeightattach(struct device *, struct device *, void *);
 static int	cgeightmatch(struct device *, void *, void *);
-int		cgeightopen __P((dev_t, int, int, struct proc *));
-int		cgeightclose __P((dev_t, int, int, struct proc *));
-int		cgeightioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgeightmmap __P((dev_t, int, int));
 #if defined(SUN4)
 static void	cgeightunblank __P((struct device *));
 #endif
+
+/* cdevsw prototypes */
+cdev_decl(cgeight);
 
 struct cfattach cgeight_ca = {
 	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
@@ -109,7 +108,8 @@ struct cfdriver cgeight_cd = {
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
-	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, cgeightmmap
+	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, 
+	cgeightpoll, cgeightmmap
 };
 
 extern int fbnode;
@@ -372,6 +372,16 @@ cgeightioctl(dev, cmd, data, flags, p)
 	}
 #endif
 	return (0);
+}
+
+int
+cgeightpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.18 1996/04/01 17:29:54 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.19 1996/10/04 20:34:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -176,6 +176,16 @@ fbioctl(dev, cmd, data, flags, p)
 {
 
 	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
+}
+
+int
+fbpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (devfb->fb_driver->fbd_poll)(dev, events, p);
 }
 
 int

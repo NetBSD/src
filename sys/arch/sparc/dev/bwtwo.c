@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.27 1996/09/20 17:35:49 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.28 1996/10/04 20:34:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -104,13 +104,12 @@ struct bwtwo_softc {
 /* autoconfiguration driver */
 static void	bwtwoattach __P((struct device *, struct device *, void *));
 static int	bwtwomatch __P((struct device *, void *, void *));
-int		bwtwoopen __P((dev_t, int, int, struct proc *));
-int		bwtwoclose __P((dev_t, int, int, struct proc *));
-int		bwtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		bwtwommap __P((dev_t, int, int));
 static void	bwtwounblank __P((struct device *));
 static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
 static int	bwtwo_get_video __P((struct bwtwo_softc *));
+
+/* cdevsw prototypes */
+cdev_decl(bwtwo);
 
 struct cfattach bwtwo_ca = {
 	sizeof(struct bwtwo_softc), bwtwomatch, bwtwoattach
@@ -124,7 +123,7 @@ struct cfdriver bwtwo_cd = {
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
-	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwommap
+	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwopoll, bwtwommap
 };
 
 extern int fbnode;
@@ -440,6 +439,16 @@ bwtwounblank(dev)
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
 
 	bwtwo_set_video(sc, 1);
+}
+
+int
+bwtwopoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*
