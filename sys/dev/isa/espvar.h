@@ -1,3 +1,5 @@
+/*	$NetBSD: espvar.h,v 1.2 1997/05/18 06:08:04 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1997 Allen Briggs.
  * All rights reserved.
