@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/12/21 09:12:54 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/12/14 22:21:46 thorpej Exp $
 
 SRCS+=	rtld_start.S
 
-CPPFLAGS+= -fpic -DELFSIZE=32 -DRTLD_RELOCATE_SELF -DVARPSZ
+COPTS+=	-fpic
+
+CPPFLAGS+= -DELFSIZE=32 -DRTLD_RELOCATE_SELF -DVARPSZ
+
 LDFLAGS+= -Bshareable -Bsymbolic -e .rtld_start
