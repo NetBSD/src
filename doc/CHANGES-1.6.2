@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.123 2003/08/26 06:49:08 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.124 2003/08/26 14:47:16 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1369,4 +1369,17 @@ sys/uvm/uvm_pdaemon.c				1.51
 	effect of allowing clustering to MAXPHYS even on systems that need to
 	run with a reduced MAXBSIZE to get more metadata buffers.
 	[tls, ticket #1434]
+
+sys/kern/kern_sysctl.c				1.143 (via patch)
+
+	Use pfind() in proc_sysctl() to find the target process instead of a
+	home-grown routine.  Remove defcorenamelen, since it's not used
+	anywhere.
+	[atatat, ticket #1437]
+
+sys/net/if_pppoe.c				1.45
+
+	When trying to (re-)establish a session cope with intermediate output
+	failures of the underlying ethernet interface - just keep trying.
+	[martin, ticket #1438]
 
