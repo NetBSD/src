@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.73 2000/03/28 00:52:57 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.74 2000/03/28 02:53:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.73 2000/03/28 00:52:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.74 2000/03/28 02:53:18 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1151,7 +1151,8 @@ dumpsys()
 void
 mips_init_msgbuf()
 {
-	size_t sz = round_page(MSGBUFSIZE);
+	vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
+	vsize_t reqsz = sz;
 	struct vm_physseg *vps;
 
 	vps = &vm_physmem[vm_nphysseg - 1];
@@ -1170,8 +1171,7 @@ mips_init_msgbuf()
 		vm_nphysseg--;
 
 	/* warn if the message buffer had to be shrunk */
-	if (sz != round_page(MSGBUFSIZE))
+	if (sz != reqsz)
 		printf("WARNING: %ld bytes not available for msgbuf "
-		    "in last cluster (%d used)\n",
-		    round_page(MSGBUFSIZE), sz);
+		    "in last cluster (%ld used)\n", reqsz, sz);
 }
