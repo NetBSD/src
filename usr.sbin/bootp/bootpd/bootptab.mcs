@@ -41,9 +41,9 @@
 
 # First, we define a global entry which specifies the stuff every host uses.
 
-# If you leave "td" and "hd" unset, run bootpd with the "-c /tftpboot"
-# switch so path names (boot files) will be interpreted relative to
-# the same directory as tftpd will use as its CWD.
+# If you leave "td" empty, run bootpd with the "-c /tftpboot" switch
+# so path names (boot files) will be interpreted relative to the same
+# directory as tftpd will use when opening files.
 .default:\
 	:hn:dn="mc.com":\
 	:td=/tftpboot:\
@@ -82,14 +82,11 @@ eps1:	tc=.subnet16:ha=00.80.A3.04.1D.78:
 tp885:  tc=.subnet17:ha=08.00.4C.00.2F.74:bf=tp885sys2.cfe:
 
 # MVME147 VxWorks board.
-mvme147:tc=.subnet17:ha=08.00.3e.20.da.47:bf=mv147vxw.st:
+#mvme147:tc=.subnet17:ha=08.00.3e.20.da.47:bf=mv147vxw.st:
 
 # These are just for testing
 
-walnut:tc=.subnet16:ha=walnut:sa=merlin-gw:\
-	:td@:hd=/export/walnut/:
-
-banana:tc=.subnet17:ha=banana:bf=boot.sun4c:
-thor:tc=.subnet17:ha=thor:bf=boot.sun4e:
-
-classic: tc=.subnet16:ha=08.00.20.04.95.3E:
+walnut:tc=.subnet16:ha=walnut:
+banana:tc=.subnet17:ha=banana:
+thor:tc=.subnet17:ha=thor:
+classic:tc=.subnet16:ha=classic:

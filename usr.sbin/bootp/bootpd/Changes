@@ -2,6 +2,20 @@ Changes, most recent first
 Date, <email> Real Name
 	what...
 
+--> bootp-2.4.0
+
+08/20/94  gwr@mc.com (Gordon W. Ross)
+	Fix code to build bootfile name based on combination of
+	client requested name and bootfile specifications.
+	Behave similarly with or without CHECK_FILE_ACCESS.
+
+07/30/94  Dirk Koeppen <dirk@incom.de>
+	Add "min wait" option (mw) to cause bootpd to ignore
+	requests from clients that have not waited long enough.
+	Add code to honor client requests containing the DHCP
+	option "Maximum Message Size" and use its value to
+	determine the size of the reply message.
+
 --> bootp-2.3.8
 
 06/25/94  Christos Zoulas <christos@deshaw.com>

@@ -4,7 +4,7 @@ from the original BOOTP server created by Bill Croft at Stanford.
 This version merges most of the enhancements and bug-fixes from the
 NetBSD, Columbia, and other versions.
 
-New features:
+New features in version 2.4 include:
 
 	Added a simple BOOTP gateway program: bootpgw
 	Allow host name anywhere IP address is expected.
@@ -25,8 +25,10 @@ New features:
 	Added RFC 1533 tags 40,41,42
 		:yd=<NIS domain>:ys=<NIS server>:nt=<NTP server>:
 	ConvOldTab.sh to convert old (1.1) bootptab to new format.
+	Permits extended-length replies with more option data.
 
-Fixes included:
+Problems fixed in this version:
+
 	Fixed references to free host structures.
 		(used to cause core dump on Solaris)
 	Remove change that added null terminator to string options.
@@ -50,8 +52,11 @@ Systems on which I have seen this code work:
 Systems on which others say this code works:
 	CDC EP/IX (1.4.3, 2.1.1)
 	DEC Ultrix (4.2, 4.3)
-	NetBSD (Current-1/94)
+	NetBSD (Current-8/94)
 	OSF/1 (DEC Alpha CPU)
+
+Please direct questions, comments, and bug reports to:
+	<bootp@andrew.cmu.edu>
 
 Gordon W. Ross  		Mercury Computer Systems
 gwr@mc.com      		199 Riverneck Road

@@ -80,6 +80,8 @@ dumptab(filename)
 #\tip -- host IP address\n\
 #\tlg -- log servers\n\
 #\tlp -- LPR servers\n\
+#\tms -- message size\n\
+#\tmw -- min wait (secs)\n\
 #\tns -- IEN-116 name servers\n\
 #\tnt -- NTP servers (RFC 1129)\n\
 #\tra -- reply address override\n\
@@ -214,6 +216,12 @@ dump_host(fp, hp)
 			fprintf(fp, "\\\n\t:lp=");
 			list_ipaddresses(fp, hp->lpr_server);
 			fprintf(fp, ":");
+		}
+		if (hp->flags.msg_size) {
+			fprintf(fp, "\\\n\t:ms=%d:", hp->msg_size);
+		}
+		if (hp->flags.min_wait) {
+			fprintf(fp, "\\\n\t:mw=%d:", hp->min_wait);
 		}
 		if (hp->flags.name_server) {
 			fprintf(fp, "\\\n\t:ns=");

@@ -26,7 +26,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpgw.c,v 1.1.1.1 1994/06/27 21:25:51 gwr Exp $";
+static char rcsid[] = "$Id: bootpgw.c,v 1.2 1994/08/22 22:14:48 gwr Exp $";
 #endif
 
 /*
@@ -78,7 +78,7 @@ static char rcsid[] = "$Id: bootpgw.c,v 1.1.1.1 1994/06/27 21:25:51 gwr Exp $";
 #include "patchlevel.h"
 
 /* Local definitions: */
-#define MAXPKT			(3*512)	/* Maximum packet size */
+#define MAX_MSG_SIZE			(3*512)	/* Maximum packet size */
 #define TRUE 1
 #define FALSE 0
 #define get_network_errmsg get_errmsg
@@ -184,7 +184,7 @@ main(argc, argv)
 	assert(sizeof(struct bootp) == BP_MINPKTSZ);
 
 	/* Get space for receiving packets and composing replies. */
-	pktbuf = malloc(MAXPKT);
+	pktbuf = malloc(MAX_MSG_SIZE);
 	if (!pktbuf) {
 		report(LOG_ERR, "malloc failed");
 		exit(1);
@@ -455,7 +455,7 @@ main(argc, argv)
 			exit(0);
 		}
 		ra_len = sizeof(recv_addr);
-		n = recvfrom(s, pktbuf, MAXPKT, 0,
+		n = recvfrom(s, pktbuf, MAX_MSG_SIZE, 0,
 					 (struct sockaddr *) &recv_addr, &ra_len);
 		if (n <= 0) {
 			continue;

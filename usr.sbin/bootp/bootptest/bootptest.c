@@ -5,9 +5,9 @@
  * various places, including the CMU BOOTP client and server.
  * The packet printing routine is from the Berkeley "tcpdump"
  * program with some enhancements I added.  The print-bootp.c
- * file is shared with my copy of "tcpdump" and therefore uses
+ * file was shared with my copy of "tcpdump" and therefore uses
  * some unusual utility routines that would normally be provided
- * by various parts of the tcpdump program.
+ * by various parts of the tcpdump program.  Gordon W. Ross
  *
  * Boilerplate:
  *
@@ -129,6 +129,7 @@ main(argc, argv)
 	int s;						/* Socket file descriptor */
 	int n, tolen, fromlen, recvcnt;
 	int use_hwa = 0;
+	int32 vend_magic;
 	int32 xid;
 
 	progname = strrchr(argv[0], '/');
@@ -142,7 +143,10 @@ main(argc, argv)
 	if (debug)
 		printf("%s: version %s.%d\n", progname, VERSION, PATCHLEVEL);
 
-	/* Debugging for compilers with struct padding. */
+	/*
+	 * Verify that "struct bootp" has the correct official size.
+	 * (Catch evil compilers that do struct padding.)
+	 */
 	assert(sizeof(struct bootp) == BP_MINPKTSZ);
 
 	sndbuf = malloc(BUFLEN);
@@ -151,6 +155,10 @@ main(argc, argv)
 		printf("malloc failed\n");
 		exit(1);
 	}
+
+	/* default magic number */
+	bcopy(vm_rfc1048, (char*)&vend_magic, 4);
+
 	/* Handle option switches. */
 	while (argc > 0) {
 		if (argv[0][0] != '-')
@@ -166,6 +174,13 @@ main(argc, argv)
 
 		case 'h':				/* Use hardware address. */
 			use_hwa = 1;
+			break;
+
+		case 'm':				/* Magic number value. */
+			if (argc < 2)
+				goto error;
+			argc--; argv++;
+			vend_magic = inet_addr(*argv);
 			break;
 
 		error:
@@ -309,8 +324,9 @@ main(argc, argv)
 	/*
 	 * Copy in the default vendor data.
 	 */
-	bcopy(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048));
-	bp->bp_vend[4] = TAG_END;
+	bcopy((char*)&vend_magic, bp->bp_vend, 4);
+	if (vend_magic)
+		bp->bp_vend[4] = TAG_END;
 
 	/*
 	 * Read in the "options" part of the request.
@@ -363,7 +379,7 @@ main(argc, argv)
 		}
 		if (n == 0) {
 			/*
-			 * We have not received a response since the last send.
+			 * We have not received a response in the last second.
 			 * If we have ever received any responses, exit now.
 			 * Otherwise, bump the "wait time" field and re-send.
 			 */
