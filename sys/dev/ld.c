@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.31 2004/10/17 17:02:48 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.32 2004/10/26 22:46:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.31 2004/10/17 17:02:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.32 2004/10/26 22:46:13 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -482,6 +482,19 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		else if (sc->sc_flush)
+			error = (*sc->sc_flush)(sc);
+		else
+			error = 0;	/* XXX Error out instead? */
+		break;
 
 	case DIOCAWEDGE:
 	    {
