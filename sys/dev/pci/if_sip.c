@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.21 2000/12/14 06:42:57 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.22 2000/12/19 00:12:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -685,6 +685,7 @@ sip_start(ifp)
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+		m = NULL;
 
 		dmamap = txs->txs_dmamap;
 
@@ -713,18 +714,14 @@ sip_start(ifp)
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m0, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
 				break;
 			}
 		}
-
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/*
 		 * Ensure we have enough descriptors free to describe
@@ -743,8 +740,15 @@ sip_start(ifp)
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			IF_PREPEND(&ifp->if_snd, m0);
+			if (m != NULL)
+				m_freem(m);
 			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
 		}
 
 		/*

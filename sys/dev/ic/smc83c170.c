@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.40 2000/12/14 06:27:26 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.41 2000/12/19 00:06:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -354,6 +354,7 @@ epic_start(ifp)
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+		m = NULL;
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -389,10 +390,8 @@ epic_start(ifp)
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m0, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -400,6 +399,10 @@ epic_start(ifp)
 			}
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
+		}
 
 		/* Initialize the fraglist. */
 		fr->ef_nfrags = dmamap->dm_nsegs;
