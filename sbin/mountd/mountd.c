@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.26 1995/06/22 02:37:38 mycroft Exp $	*/
+/*	$NetBSD: mountd.c,v 1.27 1995/08/19 16:08:05 chopps Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.26 1995/06/22 02:37:38 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.27 1995/08/19 16:08:05 chopps Exp $";
 #endif
 #endif /* not lint */
 
@@ -645,11 +645,13 @@ get_exportlist()
 			struct iso_args ia;
 			struct mfs_args ma;
 			struct msdosfs_args da;
+			struct adosfs_args aa;
 		} targs;
 
 		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
@@ -1460,6 +1462,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		struct iso_args ia;
 		struct mfs_args ma;
 		struct msdosfs_args da;
+		struct adosfs_args aa;
 	} args;
 	u_long net;
 
