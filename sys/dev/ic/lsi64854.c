@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.16 2001/04/07 10:50:13 tsutsui Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.17 2001/04/08 11:45:45 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,8 @@ lsi64854_attach(sc)
 		printf("unknown (0x%x)", sc->sc_rev);
 	}
 
-	DPRINTF(LDB_ANY, (", burst 0x%x, csr 0x%x\n", sc->sc_burst, csr));
+	DPRINTF(LDB_ANY, (", burst 0x%x, csr 0x%x", sc->sc_burst, csr));
+	printf("\n");
 }
 
 /*
