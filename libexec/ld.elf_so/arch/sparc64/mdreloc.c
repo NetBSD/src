@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.34 2003/07/24 10:12:29 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.35 2005/01/05 09:16:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -223,6 +223,8 @@ caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 #define	MOV_g1_o1	0x92100001
 
 void _rtld_install_plt(Elf_Word *pltgot, Elf_Addr proc);
+static inline int _rtld_relocate_plt_object(const Obj_Entry *obj,
+    const Elf_Rela *rela, Elf_Addr *tp);
 
 void
 _rtld_install_plt(Elf_Word *pltgot, Elf_Addr proc)
@@ -447,10 +449,8 @@ caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = obj->pltrela + reloff;
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	Elf_Word *where;
-	Elf_Addr value, offset;
+	Elf_Addr result;
+	int err;
 
 	if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT)) {
 		/*
@@ -471,7 +471,45 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		rela -= 4;
 	}
 
-	where = (Elf_Word *)(obj->relocbase + rela->r_offset);
+	err = _rtld_relocate_plt_object(obj, rela, &result);
+	if (err)
+		_rtld_die();
+
+	return (caddr_t)result;
+}
+
+int
+_rtld_relocate_plt_objects(const Obj_Entry *obj)
+{
+	const Elf_Rela *rela;
+
+	rela = obj->pltrela;
+
+	/*
+	 * Check for first four reserved entries - and skip them.
+	 * See above for details.
+	 */
+	if (ELF_R_TYPE(obj->pltrela->r_info) != R_TYPE(JMP_SLOT))
+		rela += 4;
+
+	for (; rela < obj->pltrelalim; rela++)
+		if (_rtld_relocate_plt_object(obj, rela, NULL) < 0)
+			return -1;
+
+	return 0;
+}
+
+/*
+ * New inline function that is called by _rtld_relocate_plt_object and
+ * _rtld_bind
+ */
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
+{
+	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr value, offset;
 
 	/* Fully resolve procedure addresses now */
 
@@ -479,7 +517,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
-		_rtld_die();
+		return -1;
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> new=%p", 
@@ -687,5 +725,8 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	}
 
-	return (caddr_t)value;
+	if (tp)
+		*tp = value;
+
+	return 0;
 }
