@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2000/01/19 03:28:21 danw Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2000/02/08 12:49:07 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,6 +87,9 @@ GLOBAL(eintrcnt)
 
 GLOBAL(ofmsr)
 	.long	0			/* msr used in Open Firmware */
+
+GLOBAL(powersave)
+	.long	0
 
 /*
  * File-scope for locore.S
@@ -331,9 +334,19 @@ ASENTRY(Idle)
 	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
 	isync
-	
-/* May do some power saving here? */
 
+/* Check if we can use power saving mode */
+	lis	8,_C_LABEL(powersave)@ha
+	lwz	9,_C_LABEL(powersave)@l(8)
+
+	or.	9,9,9
+	beq	1f
+
+	sync
+	oris	3,3,PSL_POW@h		/* enter power saving mode */
+	mtmsr	3
+	isync
+1:
 	b	_ASM_LABEL(Idle)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2000/01/21 18:49:52 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2000/02/08 12:49:06 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -49,6 +49,7 @@ struct cfattach cpu_ca = {
 };
 
 extern struct cfdriver cpu_cd;
+extern int powersave;
 
 int
 cpumatch(parent, cf, aux)
@@ -89,13 +90,22 @@ cpuattach(parent, self, aux)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-	case MPC750:
-	case MPC7400:
-		/* Select DOZE power-save mode. */
+		/* Select DOZE power-saving mode. */
 		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
 		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
+		powersave = 1;
+		break;
+	case MPC750:
+	case MPC7400:
+		/* Select NAP power-saving mode. */
+		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
+		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM;
+		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
+		powersave = 1;
+		break;
 	}
 
 	if ((pvr >> 16) == MPC750 || (pvr >> 16) == MPC7400)
