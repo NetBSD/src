@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.2 2000/07/06 16:30:47 hannken Exp $ */
+/*	$NetBSD: keyboard.c,v 1.3 2001/09/19 12:45:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include "wsconsctl.h"
 
 static int kbtype;
+static int keyclick;
 static struct wskbd_bell_data bell;
 static struct wskbd_bell_data dfbell;
 static struct wscons_keymap mapdata[KS_NUMKEYCODES];
@@ -69,6 +70,7 @@ struct field keyboard_field_tab[] = {
     { "repeat.deln.default",	&dfrepeat.delN,	FMT_UINT,	FLG_MODIFY },
     { "ledstate",		&ledstate,	FMT_UINT,	0 },
     { "encoding",		&kbdencoding,	FMT_KBDENC,	FLG_MODIFY },
+    { "keyclick",		&keyclick,	FMT_UINT,	FLG_MODIFY },
 };
 
 int keyboard_field_tab_len = sizeof(keyboard_field_tab)/
@@ -134,6 +136,11 @@ keyboard_get_values(fd)
 	if (field_by_value(&kbdencoding)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GETENCODING, &kbdencoding) < 0)
 			err(1, "WSKBDIO_GETENCODING");
+
+	if (field_by_value(&keyclick)->flags & FLG_GET) {
+		ioctl(fd, WSKBDIO_GETKEYCLICK, &keyclick);
+		/* Optional; don't complain. */
+	}
 }
 
 void
@@ -215,5 +222,11 @@ keyboard_put_values(fd)
 		if (ioctl(fd, WSKBDIO_SETENCODING, &kbdencoding) < 0)
 			err(1, "WSKBDIO_SETENCODING");
 		pr_field(field_by_value(&kbdencoding), " -> ");
+	}
+
+	if (field_by_value(&keyclick)->flags & FLG_SET) {
+		if (ioctl(fd, WSKBDIO_SETKEYCLICK, &keyclick) < 0)
+			err(1, "WSKBDIO_SETKEYCLICK");
+		pr_field(field_by_value(&keyclick), " -> ");
 	}
 }
