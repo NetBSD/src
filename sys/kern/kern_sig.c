@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.150 2003/09/11 01:32:09 cl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.151 2003/09/13 15:32:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.150 2003/09/11 01:32:09 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.151 2003/09/13 15:32:41 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -79,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.150 2003/09/11 01:32:09 cl Exp $");
 
 #include <uvm/uvm_extern.h>
 
-static void	proc_stop(struct proc *p);
+static void	child_psignal(struct proc *, int);
+static void	proc_stop(struct proc *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 sigset_t	contsigmask, stopsigmask, sigcantmask;
 
@@ -819,6 +820,25 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 }
 
 /*
+ * Fill in signal information and signal the parent for a child status change.
+ */
+static void
+child_psignal(struct proc *p, int dolock)
+{
+	ksiginfo_t ksi;
+
+	(void)memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SIGCHLD;
+	ksi.ksi_code = p->p_xstat == SIGCONT ? CLD_CONTINUED : CLD_STOPPED;
+	ksi.ksi_pid = p->p_pid;
+	ksi.ksi_uid = p->p_ucred->cr_uid;
+	ksi.ksi_status = p->p_xstat;
+	ksi.ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+	ksi.ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
+	kpsignal1(p->p_pptr, &ksi, NULL, dolock);
+}
+
+/*
  * Send the signal to the process.  If the signal has an action, the action
  * is usually performed by the target process rather than the caller; we add
  * the signal to the set of pending signals for the process.
@@ -1041,7 +1061,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 					 * XXXSMP: recursive call; don't lock
 					 * the second time around.
 					 */
-					sched_psignal(p->p_pptr, SIGCHLD);
+					child_psignal(p, 0);
 				}
 				proc_stop(p);	/* XXXSMP: recurse? */
 				goto out;
@@ -1286,7 +1306,7 @@ issignal(struct lwp *l)
 			 */
 			p->p_xstat = signum;
 			if ((p->p_flag & P_FSTRACE) == 0)
-				psignal1(p->p_pptr, SIGCHLD, dolock);
+				child_psignal(p, dolock);
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p);
@@ -1359,7 +1379,7 @@ issignal(struct lwp *l)
 					break;	/* == ignore */
 				p->p_xstat = signum;
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-					psignal1(p->p_pptr, SIGCHLD, dolock);
+					child_psignal(p, dolock);
 				if (dolock)
 					SCHED_LOCK(s);
 				proc_stop(p);
