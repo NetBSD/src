@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.41 1999/01/20 09:15:41 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.42 1999/01/20 20:24:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -189,11 +189,11 @@ soclose(so)
 
 	if (so->so_options & SO_ACCEPTCONN) {
 		while ((so2 = so->so_q0.tqh_first) != 0) {
-			so2->so_head = 0;
+			(void) soqremque(so2, 0);
 			(void) soabort(so2);
 		}
 		while ((so2 = so->so_q.tqh_first) != 0) {
-			so2->so_head = 0;
+			(void) soqremque(so2, 1);
 			(void) soabort(so2);
 		}
 	}
