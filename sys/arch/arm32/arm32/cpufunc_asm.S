@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.4 1997/11/06 00:35:41 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.5 1998/05/08 23:21:31 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -43,7 +43,6 @@
  * Created      : 30/01/97
  */
 
-#include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
