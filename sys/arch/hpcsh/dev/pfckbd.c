@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.1 2001/02/24 19:58:00 uch Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.2 2001/03/02 19:21:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ pfckbd_ifsetup(struct pfckbd_core *pc)
 	pc->pc_if.hii_establish	= pfckbd_input_establish;
 	pc->pc_if.hii_poll = pfckbd_poll;
 	for (i = 0; i < 8; i++)
-		pc->pc_column[i] = 0xffdf;
+		pc->pc_column[i] = 0xdfff;
 }
 
 static void
@@ -194,6 +194,7 @@ pfckbd_soft(void *arg)
 		SHREG_PEDR = scan[column].e;
 		delay(50);
 		data = SHREG_PFDR | (SHREG_PCDR << 8);
+
 		if ((edge = (data ^ buf[column]))) {
 			buf[column] = data;
 
