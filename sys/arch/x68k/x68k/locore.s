@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 1999/09/17 20:07:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 1999/09/23 15:24:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -963,14 +963,17 @@ Lenab1:
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
 	addql	#4,sp
 Lenab2:
-/* flush TLB and turn on caches */
-	jbsr	_C_LABEL(TBIA)		| invalidate TLB
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lnocache0		| yes, cache already on
+	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
+	jeq	Ltbia040		| yes, cache already on
+	pflusha
+	tstl	_C_LABEL(mmutype)
+	jpl	Lenab3			| 68851 implies no d-cache
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
-	jra	Lnocache0
-Lnocache0:
+	jra	Lenab3
+Ltbia040:
+	.word	0xf518
+Lenab3:
 /* final setup for C code */
 	movl	d7,_C_LABEL(boothowto)	| save reboot flags
 	movl	d6,_C_LABEL(bootdev)	|   and boot device
@@ -1296,6 +1299,7 @@ Lsldone:
 	rts
 #endif
 
+#if 0
 /*
  * Invalidate entire TLB.
  */
@@ -1528,6 +1532,7 @@ LmotommuB:
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
+#endif
 
 ENTRY(ecacheon)
 	rts
