@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.456 2001/09/10 21:19:14 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.457 2001/09/19 01:26:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -210,7 +210,9 @@ int	i386_use_fxsave;
 int	i386_has_sse;
 int	i386_has_sse2;
 
+#define	CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
+#define	CPUID2STEPPING(cpuid)	((cpuid) & 15)
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
@@ -453,6 +455,19 @@ cpu_startup()
 		mtrr_funcs = &i686_mtrr_funcs;
 		i686_mtrr_init_first();
 		mtrr_init_cpu(ci);
+	} else if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+		/*
+		 * Must be a K6-2 Step >= 7 or a K6-III.
+		 */
+		if (CPUID2FAMILY(cpu_id) == 5) {
+			if (CPUID2MODEL(cpu_id) > 8 ||
+			    (CPUID2MODEL(cpu_id) == 8 &&
+			     CPUID2STEPPING(cpu_id) >= 7)) {
+				mtrr_funcs = &k6_mtrr_funcs;
+				k6_mtrr_init_first();
+				mtrr_init_cpu(ci);
+			}
+		}
 	}
 #endif
 
