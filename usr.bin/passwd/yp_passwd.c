@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.18 1998/07/12 15:18:55 mrg Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.19 1998/07/26 22:15:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.18 1998/07/12 15:18:55 mrg Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.19 1998/07/26 22:15:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,12 +169,12 @@ yp_passwd(username)
 	yppasswd.newpw.pw_passwd = getnewpasswd(pw, &yppasswd.oldpass);
 
 	/* tell rpc.yppasswdd */
-	yppasswd.newpw.pw_name	= pw->pw_name;
+	yppasswd.newpw.pw_name	= strdup(pw->pw_name);
 	yppasswd.newpw.pw_uid 	= pw->pw_uid;
 	yppasswd.newpw.pw_gid	= pw->pw_gid;
-	yppasswd.newpw.pw_gecos = pw->pw_gecos;
-	yppasswd.newpw.pw_dir	= pw->pw_dir;
-	yppasswd.newpw.pw_shell	= pw->pw_shell;
+	yppasswd.newpw.pw_gecos = strdup(pw->pw_gecos);
+	yppasswd.newpw.pw_dir	= strdup(pw->pw_dir);
+	yppasswd.newpw.pw_shell	= strdup(pw->pw_shell);
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL) {
