@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.18 2003/10/25 18:38:07 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.19 2003/11/22 23:26:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.18 2003/10/25 18:38:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.19 2003/11/22 23:26:52 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,6 +351,9 @@ darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_rdstring(oldp, oldlenp, newp,
 		    darwin_sysctl_hw_machine);
 		break; 
+	case DARWIN_HW_PAGESIZE:
+		return sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE);
+		break;
 	default:
 		return EOPNOTSUPP;
 	}
