@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.28 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: signal.h,v 1.29 1998/05/06 16:47:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -43,11 +43,14 @@
 #ifndef	_SYS_SIGNAL_H_
 #define	_SYS_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 #include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
 
 #define _NSIG	32		/* counting 0; could be 33 (mask is 1-32) */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 #define NSIG _NSIG
 #endif
 
@@ -121,7 +124,7 @@ struct	sigaction {
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#ifdef COMPAT_SUNOS
+#if (defined(_KERNEL) || defined(_LKM)) && defined(COMPAT_SUNOS)
 #define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
 #endif
 #endif
