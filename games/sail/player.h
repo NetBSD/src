@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.9 2001/01/04 04:41:42 jwise Exp $	*/
+/*	$NetBSD: player.h,v 1.10 2001/01/04 05:34:56 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -89,9 +89,9 @@
 #define SLOT_B		VIEW_B
 #define SLOT_R		(SLOT_L+SLOT_X-1)
 
-extern char done_curses;
-extern char loaded, fired, changed, repaired;
-extern char dont_adjust;
+extern int done_curses;
+extern int loaded, fired, changed, repaired;
+extern int dont_adjust;
 extern int viewrow, viewcol;
 extern char movebuf[sizeof SHIP(0)->file->movebuf];
 extern char version[];

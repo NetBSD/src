@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.15 2001/01/04 03:51:23 jwise Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.16 2001/01/04 05:34:56 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.15 2001/01/04 03:51:23 jwise Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.16 2001/01/04 05:34:56 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ fightitout(struct ship *from, struct ship *to, int key)
 			}
 			sprintf(message, "captured by the %s!", to->shipname);
 			Writestr(W_SIGNAL, from, message);
-			(void) sprintf(message, "killed in melee: %d.  %s: %d",
+			sprintf(message, "killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
 			Writestr(W_SIGNAL, to, message);
 			mento = 0;
