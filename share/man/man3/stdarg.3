@@ -33,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)stdarg.3	8.1 (Berkeley) 6/5/93
+.\"	@(#)stdarg.3	8.2 (Berkeley) 4/28/95
 .\"
-.Dd June 5, 1993
+.Dd April 28, 1995
 .Dt STDARG 3
 .Os
 .Sh NAME
@@ -149,11 +149,11 @@ void foo(char *fmt, ...)
 {
 	va_list ap;
 	int d;
-	char c, *p, *s;
+	char c, *s;
 
 	va_start(ap, fmt);
 	while (*fmt)
-		switch(*fmt++) {
+		switch (*fmt++) {
 		case 's':			/* string */
 			s = va_arg(ap, char *);
 			printf("string %s\en", s);
