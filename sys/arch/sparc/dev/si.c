@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.21 1996/03/17 02:01:16 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.22 1996/03/26 00:41:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -467,8 +467,7 @@ si_attach(parent, self, args)
 	}
 	printf(" pri %d\n", ra->ra_intr[0].int_pri);
 	if (sc->sc_options) {
-		static const char fmt1[] = "%s: options=%b\n";
-		printf(fmt1, ncr_sc->sc_dev.dv_xname,
+		printf("%s: options=%b\n", ncr_sc->sc_dev.dv_xname,
 		    sc->sc_options, SI_OPTIONS_BITS);
 	}
 #ifdef	DEBUG
