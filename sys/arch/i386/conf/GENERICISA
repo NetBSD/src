@@ -35,16 +35,6 @@ tape		st1	at aha0 flags 1 drive ?
 disk		cd0	at aha0	flags 2 drive ?
 disk		cd1	at aha0	flags 2 drive ?
 
-controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
-disk		sd0	at bt0 flags 0 drive ?
-disk		sd1	at bt0 flags 0 drive ?
-disk		sd2	at bt0 flags 0 drive ?
-disk		sd3	at bt0 flags 0 drive ?
-tape		st0	at bt0 flags 1 drive ?
-tape		st1	at bt0 flags 1 drive ?
-disk		cd0	at bt0	flags 2 drive ?
-disk		cd1	at bt0	flags 2 drive ?
-
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
 disk		sd0	at uha0 flags 0 drive ?
 disk		sd1	at uha0 flags 0 drive ?
