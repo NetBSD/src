@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: activate.c,v 1.2 1992/05/27 07:09:27 jsp Exp jsp
- *	from: @(#)activate.c	8.1 (Berkeley) 6/5/93
- *	$Id: activate.c,v 1.1 1994/01/12 20:01:32 cgd Exp $
+ *	from: Id: activate.c,v 1.2 1992/05/27 07:09:27 jsp Exp
+ *	from: @(#)activate.c	8.2 (Berkeley) 3/27/94
+ *	$Id: activate.c,v 1.2 1994/06/08 19:24:45 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -171,7 +171,6 @@ int so;
 {
 	struct portal_cred pcred;
 	char key[MAXPATHLEN+1];
-	int n;
 	int error;
 	char **v;
 	int fd = -1;

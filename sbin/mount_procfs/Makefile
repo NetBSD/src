@@ -1,7 +1,12 @@
-#	$Id: Makefile,v 1.3 1994/01/12 20:21:45 cgd Exp $
+#	from: @(#)Makefile	8.4 (Berkeley) 3/27/94
+#	$Id: Makefile,v 1.4 1994/06/08 19:25:35 mycroft Exp $
 
 PROG=	mount_procfs
-#MAN8=	mount_procfs.0
-NOMAN=
+SRCS=	mount_procfs.c getmntopts.c
+MAN8=	mount_procfs.0
+
+MOUNT=	${.CURDIR}/../mount
+CFLAGS+= -I${MOUNT}
+.PATH:	${MOUNT}
 
 .include <bsd.prog.mk>

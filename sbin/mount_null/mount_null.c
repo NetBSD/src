@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
- * All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -33,74 +32,99 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: Id: pt_file.c,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	from: @(#)pt_file.c	8.2 (Berkeley) 3/27/94
- *	$Id: pt_file.c,v 1.3 1994/06/08 19:24:55 mycroft Exp $
  */
 
+#ifndef lint
+char copyright[] =
+"@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+/*static char sccsid[] = "from: @(#)mount_null.c	8.5 (Berkeley) 3/27/94";*/
+static char *rcsid = "$Id: mount_null.c,v 1.1 1994/06/08 19:23:44 mycroft Exp $";
+#endif /* not lint */
+
+#include <sys/param.h>
+#include <sys/mount.h>
+#include <miscfs/nullfs/null.h>
+
+#include <err.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/syslog.h>
 
-#include "portald.h"
+#include "mntopts.h"
 
-int portal_file(pcr, key, v, so, fdp)
-struct portal_cred *pcr;
-char *key;
-char **v;
-int so;
-int *fdp;
+struct mntopt mopts[] = {
+	MOPT_STDOPTS,
+	{ NULL }
+};
+
+int	subdir __P((const char *, const char *));
+void	usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	int fd;
-	char pbuf[MAXPATHLEN];
-	int error;
-	gid_t gidset[NGROUPS];
-	int i;
+	struct null_args args;
+	int ch, mntflags;
+	char target[MAXPATHLEN];
 
-	pbuf[0] = '/';
-	strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));
-
-#ifdef DEBUG
-	printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid, pcr->pcr_groups[0]);
-#endif
-
-	for (i = 0; i < pcr->pcr_ngroups; i++)
-		gidset[i] = pcr->pcr_groups[i];
-
-	if (setgroups(pcr->pcr_ngroups, gidset) < 0)
-		return (errno);
-
-	if (seteuid(pcr->pcr_uid) < 0)
-		return (errno);
-
-	fd = open(pbuf, O_RDWR|O_CREAT, 0666);
-	if (fd < 0)
-		error = errno;
-	else
-		error = 0;
-
-	if (seteuid((uid_t) 0) < 0) {	/* XXX - should reset gidset too */
-		error = errno;
-		syslog(LOG_ERR, "setcred: %s", strerror(error));
-		if (fd >= 0) {
-			(void) close(fd);
-			fd = -1;
+	mntflags = 0;
+	while ((ch = getopt(argc, argv, "o:")) != EOF)
+		switch(ch) {
+		case 'o':
+			getmntopts(optarg, mopts, &mntflags);
+			break;
+		case '?':
+		default:
+			usage();
 		}
-	}
+	argc -= optind;
+	argv += optind;
 
-	if (error == 0)
-		*fdp = fd;
+	if (argc != 2)
+		usage();
 
-#ifdef DEBUG
-	fprintf(stderr, "pt_file returns *fdp = %d, error = %d\n", *fdp, error);
-#endif
+	if (realpath(argv[0], target) == 0)
+		err(1, "%s", target);
 
-	return (error);
+	if (subdir(target, argv[1]) || subdir(argv[1], target))
+		errx(1, "%s (%s) and %s are not distinct paths",
+		    argv[0], target, argv[1]);
+
+	args.target = target;
+
+	if (mount(MOUNT_NULL, argv[1], mntflags, &args))
+		err(1, NULL);
+	exit(0);
+}
+
+int
+subdir(p, dir)
+	const char *p;
+	const char *dir;
+{
+	int l;
+
+	l = strlen(dir);
+	if (l <= 1)
+		return (1);
+
+	if ((strncmp(p, dir, l) == 0) && (p[l] == '/' || p[l] == '\0'))
+		return (1);
+
+	return (0);
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr,
+		"usage: mount_null [-o options] target_fs mount_point\n");
+	exit(1);
 }

@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp jsp
- *	from: @(#)pt_tcp.c	8.2 (Berkeley) 1/14/94
- *	$Id: pt_tcp.c,v 1.4 1994/05/30 09:55:56 mycroft Exp $
+ *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp
+ *	from: @(#)pt_tcp.c	8.3 (Berkeley) 3/27/94
+ *	$Id: pt_tcp.c,v 1.5 1994/06/08 19:24:56 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -49,6 +49,7 @@
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 
 #include "portald.h"

@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: portald.h,v 1.1 1992/05/25 21:43:09 jsp Exp jsp
+ *	from: Id: portald.h,v 1.1 1992/05/25 21:43:09 jsp Exp
  *	from: @(#)portald.h	8.1 (Berkeley) 6/5/93
- *	$Id: portald.h,v 1.1 1994/01/12 20:02:06 cgd Exp $
+ *	$Id: portald.h,v 1.2 1994/06/08 19:24:52 mycroft Exp $
  */
 
 #include <sys/cdefs.h>

@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: pt_conf.c,v 1.2 1992/05/27 07:09:27 jsp Exp jsp
+ *	from: Id: pt_conf.c,v 1.2 1992/05/27 07:09:27 jsp Exp
  *	from: @(#)pt_conf.c	8.1 (Berkeley) 6/5/93
- *	$Id: pt_conf.c,v 1.1 1994/01/12 20:02:08 cgd Exp $
+ *	$Id: pt_conf.c,v 1.2 1994/06/08 19:24:53 mycroft Exp $
  */
 
 #include <sys/types.h>
