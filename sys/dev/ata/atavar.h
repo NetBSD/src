@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.30 2003/12/14 02:45:48 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.31 2003/12/14 04:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -29,53 +29,62 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Hight-level functions and structures used by both ATA and ATAPI devices */
+#ifndef _DEV_ATA_ATAVAR_H_
+#define	_DEV_ATA_ATAVAR_H_
+
+/* High-level functions and structures used by both ATA and ATAPI devices */
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
-    u_int8_t drive; /* drive number */
-    int8_t ata_vers; /* ATA version supported */
-    u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
-#define DRIVE_ATA	0x0001
-#define DRIVE_ATAPI	0x0002
-#define DRIVE_OLD	0x0004 
-#define DRIVE (DRIVE_ATA|DRIVE_ATAPI|DRIVE_OLD)
-#define DRIVE_CAP32	0x0008
-#define DRIVE_DMA	0x0010 
-#define DRIVE_UDMA	0x0020
-#define DRIVE_MODE	0x0040 /* the drive reported its mode */
-#define DRIVE_RESET	0x0080 /* reset the drive state at next xfer */
-#define DRIVE_DMAERR	0x0100 /* Udma transfer had crc error, don't try DMA */
-#define DRIVE_ATAPIST	0x0100 /* device is an ATAPI tape drive */
-    /*
-     * Current setting of drive's PIO, DMA and UDMA modes.
-     * Is initialised by the disks drivers at attach time, and may be
-     * changed later by the controller's code if needed
-     */
-    u_int8_t PIO_mode; /* Current setting of drive's PIO mode */
-    u_int8_t DMA_mode; /* Current setting of drive's DMA mode */
-    u_int8_t UDMA_mode; /* Current setting of drive's UDMA mode */
-    /* Supported modes for this drive */
-    u_int8_t PIO_cap; /* supported drive's PIO mode */
-    u_int8_t DMA_cap; /* supported drive's DMA mode */
-    u_int8_t UDMA_cap; /* supported drive's UDMA mode */
-    /*
-     * Drive state.
-     * This is reset to 0 after a channel reset.
-     */
-    u_int8_t state;
+	u_int8_t drive;		/* drive number */
+	int8_t ata_vers;	/* ATA version supported */
+	u_int16_t drive_flags;	/* bitmask for drives present/absent and cap */
+
+#define	DRIVE_ATA	0x0001
+#define	DRIVE_ATAPI	0x0002
+#define	DRIVE_OLD	0x0004 
+#define	DRIVE		(DRIVE_ATA|DRIVE_ATAPI|DRIVE_OLD)
+#define	DRIVE_CAP32	0x0008
+#define	DRIVE_DMA	0x0010 
+#define	DRIVE_UDMA	0x0020
+#define	DRIVE_MODE	0x0040	/* the drive reported its mode */
+#define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
+#define	DRIVE_DMAERR	0x0100	/* Udma transfer had crc error, don't try DMA */
+#define	DRIVE_ATAPIST	0x0100	/* device is an ATAPI tape drive */
+
+	/*
+	 * Current setting of drive's PIO, DMA and UDMA modes.
+	 * Is initialised by the disks drivers at attach time, and may be
+	 * changed later by the controller's code if needed
+	 */
+	u_int8_t PIO_mode;	/* Current setting of drive's PIO mode */
+	u_int8_t DMA_mode;	/* Current setting of drive's DMA mode */
+	u_int8_t UDMA_mode;	/* Current setting of drive's UDMA mode */
+
+	/* Supported modes for this drive */
+	u_int8_t PIO_cap;	/* supported drive's PIO mode */
+	u_int8_t DMA_cap;	/* supported drive's DMA mode */
+	u_int8_t UDMA_cap;	/* supported drive's UDMA mode */
+
+	/*
+	 * Drive state.
+	 * This is reset to 0 after a channel reset.
+	 */
+	u_int8_t state;
+
 #define RESET          0
 #define READY          1
 
-    /* numbers of xfers and DMA errs. Used by ata_dmaerr() */
-    u_int8_t n_dmaerrs;
-    u_int32_t n_xfers;
-    /* Downgrade after NERRS_MAX errors in at most NXFER xfers */
+	/* numbers of xfers and DMA errs. Used by ata_dmaerr() */
+	u_int8_t n_dmaerrs;
+	u_int32_t n_xfers;
+
+	/* Downgrade after NERRS_MAX errors in at most NXFER xfers */
 #define NERRS_MAX 4
 #define NXFER 4000
 
-    struct device *drv_softc; /* ATA drives softc, if any */
-    void *chnl_softc; /* channel softc */
+	struct device *drv_softc;	/* ATA drives softc, if any */
+	void *chnl_softc;		/* channel softc */
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -105,16 +114,19 @@ struct ata_drive_datas {
  * (which need multiple interrupts per commands).
  */
 struct wdc_command {
-    u_int8_t r_command;  /* Parameters to upload to registers */
-    u_int8_t r_head;
-    u_int16_t r_cyl;
-    u_int8_t r_sector;
-    u_int8_t r_count;
-    u_int8_t r_precomp;
-    u_int8_t r_st_bmask; /* status register mask to wait for before command */
-    u_int8_t r_st_pmask; /* status register mask to wait for after command */
-    u_int8_t r_error;    /* error register after command done */
-    volatile u_int16_t flags;
+	u_int8_t r_command;	/* Parameters to upload to registers */
+	u_int8_t r_head;
+	u_int16_t r_cyl;
+	u_int8_t r_sector;
+	u_int8_t r_count;
+	u_int8_t r_precomp;
+	u_int8_t r_st_bmask;	/* status register mask to wait for before
+				   command */
+	u_int8_t r_st_pmask;	/* status register mask to wait for after
+				   command */
+	u_int8_t r_error;	/* error register after command done */
+	volatile u_int16_t flags;
+
 #define AT_READ     0x0001 /* There is data to read */
 #define AT_WRITE    0x0002 /* There is data to write (excl. with AT_READ) */
 #define AT_WAIT     0x0008 /* wait in controller code for command completion */
@@ -125,11 +137,12 @@ struct wdc_command {
 #define AT_TIMEOU   0x0100 /* command timed out */
 #define AT_DF       0x0200 /* Drive fault */
 #define AT_READREG  0x0400 /* Read registers on completion */
-    int timeout;	 /* timeout (in ms) */
-    void *data;          /* Data buffer address */
-    int bcount;           /* number of bytes to transfer */
-    void (*callback) __P((void *)); /* command to call once command completed */
-    void *callback_arg;  /* argument passed to *callback() */
+
+	int timeout;		/* timeout (in ms) */
+	void *data;		/* Data buffer address */
+	int bcount;		/* number of bytes to transfer */
+	void (*callback)(void *); /* command to call once command completed */
+	void *callback_arg;	/* argument passed to *callback() */
 };
 
 /*
@@ -137,6 +150,7 @@ struct wdc_command {
  * If not WDSM_ATTR_ADVISORY, imminent data loss predicted.
  */
 #define WDSM_ATTR_ADVISORY	1
+
 /*
  * If WDSM_ATTR_COLLECTIVE, attribute only updated in off-line testing.
  * If not WDSM_ATTR_COLLECTIVE, attribute updated also in on-line testing.
@@ -193,3 +207,5 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 #define CMD_AGAIN 2
 
 void	ata_dmaerr(struct ata_drive_datas *, int);
+
+#endif /* _DEV_ATA_ATAVAR_H_ */
