@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.27 2001/04/11 18:31:53 wiz Exp $
+.\"	$NetBSD: ep.4,v 1.28 2001/05/13 20:26:21 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -183,7 +183,3 @@ card.  Erase the pencil mark and reboot.  (This is not a joke).
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
 .Xr ifconfig 8
-.Sh BUGS
-Performance of 3c529 under heavy load is quite terrible with 386DX CPU, mostly
-due to packet overruns. Faster CPU might help, as well as
-teaching the driver to use RX Early.
