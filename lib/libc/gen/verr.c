@@ -1,4 +1,4 @@
-/*	$NetBSD: verr.c,v 1.6.2.2 2002/03/22 20:42:14 nathanw Exp $	*/
+/*	$NetBSD: verr.c,v 1.6.2.3 2002/06/21 18:18:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verr.c,v 1.6.2.2 2002/03/22 20:42:14 nathanw Exp $");
+__RCSID("$NetBSD: verr.c,v 1.6.2.3 2002/06/21 18:18:12 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,15 +50,10 @@ __RCSID("$NetBSD: verr.c,v 1.6.2.2 2002/03/22 20:42:14 nathanw Exp $");
 #endif
 #include <err.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(verr, _verr)

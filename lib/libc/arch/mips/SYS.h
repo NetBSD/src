@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.12.6.1 2002/01/28 20:49:55 nathanw Exp $ */
+/*	$NetBSD: SYS.h,v 1.12.6.2 2002/06/21 18:18:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone

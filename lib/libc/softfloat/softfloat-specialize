@@ -1,3 +1,6 @@
+/*	$NetBSD: softfloat-specialize,v 1.2.2.3 2002/06/21 18:18:19 nathanw Exp $	*/
+
+/* This is a derivative work. */
 
 /*
 ===============================================================================
@@ -29,6 +32,8 @@ this code that are retained.
 ===============================================================================
 */
 
+#include <signal.h>
+
 /*
 -------------------------------------------------------------------------------
 Underflow tininess-detection mode, statically initialized to default value.
@@ -48,11 +53,15 @@ substitute a result value.  If traps are not implemented, this routine
 should be simply `float_exception_flags |= flags;'.
 -------------------------------------------------------------------------------
 */
-void float_raise( int8 flags )
+fp_except float_exception_mask = 0;
+void float_raise( fp_except flags )
 {
 
     float_exception_flags |= flags;
 
+    if ( flags & float_exception_mask ) {
+	raise( SIGFPE );
+    }
 }
 
 /*

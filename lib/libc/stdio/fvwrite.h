@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.h,v 1.4 1998/09/08 15:10:12 kleink Exp $	*/
+/*	$NetBSD: fvwrite.h,v 1.4.12.1 2002/06/21 18:18:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,8 +51,4 @@ struct __suio {
 	int	uio_resid;
 };
 
-#if __STDC__ || __cplusplus
 extern int __sfvwrite(FILE *, struct __suio *);
-#else
-extern int __sfvwrite();
-#endif

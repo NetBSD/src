@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.17 2000/12/20 20:51:08 christos Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.17.2.1 2002/06/21 18:18:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.17 2000/12/20 20:51:08 christos Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.17.2.1 2002/06/21 18:18:16 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -52,16 +52,11 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.17 2000/12/20 20:51:08 christos Exp $");
 #include <fcntl.h>
 #define _NS_PRIVATE
 #include <nsswitch.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 extern	FILE 	*_nsyyin;
 extern	int	 _nsyyparse __P((void));
@@ -248,18 +243,8 @@ _nsdbtput(dbt)
 
 int
 /*ARGSUSED*/
-#if __STDC__
 nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
 	    const char *method, const ns_src defaults[], ...)
-#else
-nsdispatch(retval, disp_tab, database, method, defaults, va_alist)
-	void		*retval;
-	const ns_dtab	 disp_tab[];
-	const char	*database;
-	const char	*method;
-	const ns_src	 defaults[];
-	va_dcl
-#endif
 {
 	va_list		 ap;
 	int		 i, curdisp, result;
@@ -291,11 +276,7 @@ nsdispatch(retval, disp_tab, database, method, defaults, va_alist)
 				break;
 		result = 0;
 		if (disp_tab[curdisp].callback) {
-#if __STDC__
 			va_start(ap, defaults);
-#else
-			va_start(ap);
-#endif
 			result = disp_tab[curdisp].callback(retval,
 			    disp_tab[curdisp].cb_data, ap);
 			va_end(ap);

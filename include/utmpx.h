@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.5.2.3 2002/04/25 04:07:11 nathanw Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.5.2.4 2002/06/21 18:17:10 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ void updwtmpx(const char *, const struct utmpx *);
 int lastlogxname(const char *);
 struct lastlogx *getlastlogxuid(uid_t);
 void updlastlogx(const char *, struct lastlogx *);
+struct utmp;
 void getutmp(const struct utmpx *, struct utmp *);
 void getutmpx(const struct utmp *, struct utmpx *);
 

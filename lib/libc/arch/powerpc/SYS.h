@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.7.12.1 2002/01/28 20:50:04 nathanw Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7.12.2 2002/06/21 18:18:01 nathanw Exp $	*/
 
 #include <machine/asm.h>
 #include <sys/syscall.h>

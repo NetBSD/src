@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.20.2.1 2001/10/08 20:21:08 nathanw Exp $	*/
+/*	$NetBSD: getopt.c,v 1.20.2.2 2002/06/21 18:18:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.20.2.1 2001/10/08 20:21:08 nathanw Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.20.2.2 2002/06/21 18:18:23 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,12 +83,12 @@ getopt(nargc, nargv, ostr)
 
 	if (optreset || !*place) {		/* update scanning pointer */
 		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-') {
+		if (optind >= nargc || *(place = nargv[optind]) != '-'
+		    || place[1] == '\0') {
 			place = EMSG;
 			return (-1);
 		}
-		if (place[1] && *++place == '-'	/* found "--" */
-		    && place[1] == '\0') {
+		if (*++place == '-' && place[1] == '\0') {   /* found "--" */
 			++optind;
 			place = EMSG;
 			return (-1);
@@ -96,12 +96,6 @@ getopt(nargc, nargv, ostr)
 	}					/* option letter okay? */
 	if ((optopt = (int)*place++) == (int)':' ||
 	    !(oli = strchr(ostr, optopt))) {
-		/*
-		 * if the user didn't specify '-' as an option,
-		 * assume it means -1.
-		 */
-		if (optopt == (int)'-')
-			return (-1);
 		if (!*place)
 			++optind;
 		if (opterr && *ostr != ':')

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.52.2.1 2001/04/08 20:31:41 nathanw Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.52.2.2 2002/06/21 18:17:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -229,6 +229,9 @@ void	*alloca __P((int));     /* built-in for gcc */
 void	*alloca __P((size_t)); 
 #endif /* __GNUC__ */ 
 
+u_int32_t arc4random __P((void));
+void	 arc4random_stir __P((void));
+void	 arc4random_addrandom __P((u_char *, int));
 char	*getbsize __P((int *, long *));
 char	*cgetcap __P((char *, const char *, int));
 int	 cgetclose __P((void));

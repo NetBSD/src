@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.26.2.2 2001/10/08 20:19:31 nathanw Exp $	*/
+/*	$NetBSD: syslog.c,v 1.26.2.3 2002/06/21 18:18:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.26.2.2 2001/10/08 20:19:31 nathanw Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.26.2.3 2002/06/21 18:18:11 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,18 +53,13 @@ __RCSID("$NetBSD: syslog.c,v 1.26.2.2 2001/10/08 20:19:31 nathanw Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include "reentrant.h"
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(closelog,_closelog)
@@ -99,22 +94,11 @@ static const int ZERO = 0;
  *	print message on log file; output is intended for syslogd(8).
  */
 void
-#if __STDC__
 syslog(int pri, const char *fmt, ...)
-#else
-syslog(pri, fmt, va_alist)
-	int pri;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsyslog(pri, fmt, ap);
 	va_end(ap);
 }

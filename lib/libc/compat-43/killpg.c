@@ -1,4 +1,4 @@
-/*	$NetBSD: killpg.c,v 1.6 1998/02/02 06:26:38 perry Exp $	*/
+/*	$NetBSD: killpg.c,v 1.6.12.1 2002/06/21 18:18:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)killpg.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: killpg.c,v 1.6 1998/02/02 06:26:38 perry Exp $");
+__RCSID("$NetBSD: killpg.c,v 1.6.12.1 2002/06/21 18:18:05 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,13 +50,7 @@ __RCSID("$NetBSD: killpg.c,v 1.6 1998/02/02 06:26:38 perry Exp $");
  * Backwards-compatible killpg().
  */
 int
-#if __STDC__
 killpg(pid_t pgid, int sig)
-#else
-killpg(pgid, sig)
-	pid_t pgid;
-	int sig;
-#endif
 {
 	if (pgid == 1) {
 		errno = ESRCH;

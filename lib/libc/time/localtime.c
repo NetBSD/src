@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.24.2.6 2002/04/25 04:01:46 nathanw Exp $	*/
+/*	$NetBSD: localtime.c,v 1.24.2.7 2002/06/21 18:18:29 nathanw Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.75";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.24.2.6 2002/04/25 04:01:46 nathanw Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.24.2.7 2002/06/21 18:18:29 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -250,11 +250,7 @@ const char * const	codep;
 	** that this implementation is superior.
         */
 
-#ifdef __STDC__
 #define SIGN_EXTEND_CHAR(x)	((signed char) x)
-#else
-#define SIGN_EXTEND_CHAR(x)	((x & 0x80) ? ((~0 << 8) | x) : x)
-#endif
 
 	result = (SIGN_EXTEND_CHAR(codep[0]) << 24) \
 	       | (codep[1] & 0xff) << 16 \

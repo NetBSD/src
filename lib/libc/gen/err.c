@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.16.10.3 2002/04/25 04:01:41 nathanw Exp $	*/
+/*	$NetBSD: err.c,v 1.16.10.4 2002/06/21 18:18:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.16.10.3 2002/04/25 04:01:41 nathanw Exp $");
+__RCSID("$NetBSD: err.c,v 1.16.10.4 2002/06/21 18:18:08 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,36 +49,18 @@ __RCSID("$NetBSD: err.c,v 1.16.10.3 2002/04/25 04:01:41 nathanw Exp $");
 #include "config.h"
 #endif
 #include <err.h>
-
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(err, _err)
 #endif
 
 __dead void
-#ifdef __STDC__
 _err(int eval, const char *fmt, ...)
-#else
-_err(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	int eval;
-	const char *fmt;
 
-	va_start(ap);
-	eval = va_arg(ap, int);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	_verr(eval, fmt, ap);
 	va_end(ap);
 }

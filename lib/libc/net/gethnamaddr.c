@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.39.2.1 2001/10/08 20:20:08 nathanw Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.39.2.2 2002/06/21 18:18:14 nathanw Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.39.2.1 2001/10/08 20:20:08 nathanw Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.39.2.2 2002/06/21 18:18:14 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,14 +79,9 @@ __RCSID("$NetBSD: gethnamaddr.c,v 1.39.2.1 2001/10/08 20:20:08 nathanw Exp $");
 #include <errno.h>
 #include <netdb.h>
 #include <resolv.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <syslog.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifndef LOG_AUTH
 # define LOG_AUTH 0
@@ -682,6 +677,12 @@ gethostbyaddr(addr, len, af)
 	_DIAGASSERT(addr != NULL);
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
+	    (IN6_IS_ADDR_LINKLOCAL((const struct in6_addr *)(const void *)uaddr) ||
+	     IN6_IS_ADDR_SITELOCAL((const struct in6_addr *)(const void *)uaddr))) {
+		h_errno = HOST_NOT_FOUND;
+		return (NULL);
+	}
+	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)(const void *)uaddr) ||
 	     IN6_IS_ADDR_V4COMPAT((const struct in6_addr *)(const void *)uaddr))) {
 		/* Unmap. */
@@ -834,7 +835,7 @@ _gethtbyname(rv, cb_data, ap)
 	hp = _gethtbyname2(name, af);
 #endif
 	*((struct hostent **)rv) = hp;
-	if (hp==NULL) {
+	if (hp == NULL) {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
@@ -1061,7 +1062,6 @@ addrsort(ap, num)
 		    hp = ap[j];
 		    ap[j] = ap[j+1];
 		    ap[j+1] = hp;
-
 		} else
 		    break;
 	    }
@@ -1180,7 +1180,7 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 	querybuf buf;
 	struct hostent *hp;
 	const unsigned char *uaddr;
-	int len, af;
+	int len, af, advance;
 
 	_DIAGASSERT(rv != NULL);
 
@@ -1190,21 +1190,23 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 
 	switch (af) {
 	case AF_INET:
-		(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-			(uaddr[3] & 0xff),
-			(uaddr[2] & 0xff),
-			(uaddr[1] & 0xff),
-			(uaddr[0] & 0xff));
+		(void)snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
+		    (uaddr[3] & 0xff), (uaddr[2] & 0xff),
+		    (uaddr[1] & 0xff), (uaddr[0] & 0xff));
 		break;
 
 	case AF_INET6:
 		qp = qbuf;
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-			qp += sprintf(qp, "%x.%x.",
-				       uaddr[n] & 0xf,
-				       ((unsigned int)uaddr[n] >> 4) & 0xf);
+			advance = sprintf(qp, "%x.%x.", uaddr[n] & 0xf,
+			    ((unsigned int)uaddr[n] >> 4) & 0xf);
+			if (advance > 0 &&
+			    qp + advance < qbuf + sizeof(qbuf) - 1)
+				qp += advance;
+			else
+				return NS_NOTFOUND;
 		}
-		strcpy(qp, "ip6.int");
+		strlcat(qbuf, "ip6.int", sizeof(qbuf));
 		break;
 	default:
 		abort();

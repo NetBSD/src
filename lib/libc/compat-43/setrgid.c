@@ -1,4 +1,4 @@
-/*	$NetBSD: setrgid.c,v 1.10 1998/02/25 22:53:03 perry Exp $	*/
+/*	$NetBSD: setrgid.c,v 1.10.12.1 2002/06/21 18:18:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setrgid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: setrgid.c,v 1.10 1998/02/25 22:53:03 perry Exp $");
+__RCSID("$NetBSD: setrgid.c,v 1.10.12.1 2002/06/21 18:18:06 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,12 +48,7 @@ __RCSID("$NetBSD: setrgid.c,v 1.10 1998/02/25 22:53:03 perry Exp $");
 __warn_references(setrgid, "warning: this program uses setrgid(), which is deprecated.")
 
 int
-#ifdef __STDC__
 setrgid(gid_t rgid)
-#else
-setrgid(rgid)
-	int rgid;
-#endif
 {
 	return (setregid(rgid, (gid_t)-1));
 }

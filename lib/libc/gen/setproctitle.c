@@ -1,4 +1,4 @@
-/* $NetBSD: setproctitle.c,v 1.19 2001/02/19 22:22:16 cgd Exp $ */
+/* $NetBSD: setproctitle.c,v 1.19.2.1 2002/06/21 18:18:10 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,22 +36,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.19 2001/02/19 22:22:16 cgd Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.19.2.1 2002/06/21 18:18:10 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/exec.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(setproctitle,_setproctitle)
@@ -66,23 +61,13 @@ __weak_alias(setproctitle,_setproctitle)
 struct ps_strings *__ps_strings;
 
 void
-#if __STDC__
 setproctitle(const char *fmt, ...)
-#else
-setproctitle(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	static char buf[MAX_PROCTITLE], *bufp;
 	int used;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (fmt != NULL) {
 		used = snprintf(buf, (size_t)MAX_PROCTITLE, "%s: ",
 		    getprogname());

@@ -1,4 +1,4 @@
-/*	$NetBSD: setpgrp.c,v 1.6 1998/02/02 06:26:39 perry Exp $	*/
+/*	$NetBSD: setpgrp.c,v 1.6.12.1 2002/06/21 18:18:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setpgrp.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: setpgrp.c,v 1.6 1998/02/02 06:26:39 perry Exp $");
+__RCSID("$NetBSD: setpgrp.c,v 1.6.12.1 2002/06/21 18:18:05 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,12 +46,7 @@ __RCSID("$NetBSD: setpgrp.c,v 1.6 1998/02/02 06:26:39 perry Exp $");
 #include <unistd.h>
 
 int
-#if __STDC__
 setpgrp(pid_t pid, pid_t pgid)
-#else
-setpgrp(pid, pgid)
-	pid_t pid, pgid;
-#endif
 {
 	return(setpgid(pid, pgid));
 }

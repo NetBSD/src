@@ -1,3 +1,5 @@
+/*	$NetBSD: inet.h,v 1.9.10.1 2002/06/21 18:17:10 nathanw Exp $	*/
+
 /*
  * ++Copyright++ 1983, 1993
  * -
@@ -51,11 +53,8 @@
  * SOFTWARE.
  * -
  * --Copyright--
- */
-
-/*
+ *
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: inet.h,v 1.9 1999/07/03 13:30:38 kleink Exp $
  */
 
 #ifndef _ARPA_INET_H_
@@ -70,6 +69,16 @@
 # include <sys/types.h>
 #endif
 #include <sys/cdefs.h>
+#include <netinet/in.h>
+
+#include <sys/ansi.h>
+
+#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
+#ifndef socklen_t
+typedef __socklen_t	socklen_t;
+#define socklen_t	__socklen_t
+#endif
+#endif /* !_XOPEN_SOURCE || (_XOPEN_SOURCE 0) >= 500 */
 
 __BEGIN_DECLS
 unsigned long	 inet_addr __P((const char *));
@@ -79,7 +88,7 @@ unsigned long	 inet_netof __P((struct in_addr));
 unsigned long	 inet_network __P((const char *));
 char		*inet_ntoa __P((struct in_addr));
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
-const char	*inet_ntop __P((int, const void *, char *, size_t));
+const char	*inet_ntop __P((int, const void *, char *, socklen_t));
 int		 inet_pton __P((int, const char *, void *));
 #endif
 #if !defined(_XOPEN_SOURCE)
