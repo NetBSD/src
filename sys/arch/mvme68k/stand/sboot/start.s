@@ -30,7 +30,6 @@
  */
 /*
  * start: at address 0x4000, load at 0xa000 (so put stack at 0x9ff0)
- * note this file is named "AAstart" so that it gets linked FIRST
  */
 
 .text
@@ -45,3 +44,20 @@ Ldoit:
 	movl	#0x00006ff0,sp
 	jsr _sboot
 
+Lname:
+	.ascii "sboot\0"
+
+.globl  _go
+_go:
+	clrl	d0		| dev lun
+	clrl	d1		| ctrl lun
+	movl	#0x2c, d4	| flags for IPL
+	movl	d0, a0		| address of disk ctrl
+	movl	sp@(4), a1	| entry point of loaded program
+	movl	d0, a2		| media config block (NULL)
+	movl	sp@(8), a3	| nb args (start)
+	movl	sp@(12), a4	| nb end args
+	movl	#Lname, a5	| args
+	movl	#Lname+6, a6	| end args
+				| SRT0 will set stack
+	jmp	a1@		| GO!

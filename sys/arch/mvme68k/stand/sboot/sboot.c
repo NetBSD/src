@@ -39,19 +39,21 @@ void sboot()
 
 {
   char * mesg;
-  char buf[128];
+  char buf[128], *ebuf;
   buf[0] = '0';
   consinit();
   printf("\nsboot: serial line bootstrap program (&end = %x)\n\n", &end);
   if (reboot) {  /* global flag from AAstart.s */
     reboot = 0;
     printf("[rebooting...]\n");
-    do_cmd("b");
+    buf[0] = 'b';
+    buf[1] = 0;
+    do_cmd(buf, &buf[1]);
   }
   while (1) {
     printf(">>> ");
-    ngets(buf, sizeof(buf));
-    do_cmd(buf);
+    ebuf = ngets(buf, sizeof(buf));
+    do_cmd(buf, ebuf);
   }
   /* not reached */
 }
@@ -69,9 +71,9 @@ void callrom ()
  * do_cmd: do a command
  */
 
-void do_cmd(buf)
+void do_cmd(buf, ebuf)
 
-char *buf;
+char *buf, *ebuf;
 
 {
   switch (*buf) {
@@ -115,7 +117,10 @@ char *buf;
     } else {
         printf("Download was a success!\n");
     }
-    go(buf);
+    /*FALLTHROUGH*/
+  case 'g':
+    printf("Start @ 0x%x ... \n", LOAD_ADDR);
+    go(LOAD_ADDR, buf+1, ebuf);
     return;
   case 'h':
   case '?':
@@ -131,20 +136,7 @@ char *buf;
   case 'i':
     le_init();
     return;
-  case 'g':
-    go(buf);
-    return;
   default:
     printf("sboot: %s: Unknown command\n", buf);
   }
 }
-
-go(buf) 
-char *buf;
-
-{
-  void (*entry)() =  (void (*)) LOAD_ADDR ;
-  printf("Start @ 0x%x ... \n", entry);
-  (*entry)(buf);
-}
-

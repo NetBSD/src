@@ -52,11 +52,11 @@ void printf(const char *, ...); /* libc_sa */
 void puts(char *);
 void putchar(char);
 char cngetc();
-void ngets(char *, int);
+char *ngets(char *, int);
 
 /* sboot */
 void callrom();
-void do_cmd(char *);
+void do_cmd(char *, char *);
 
 /* le */
 #define LANCE_ADDR 0xfffe0778
