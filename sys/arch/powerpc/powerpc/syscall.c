@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15 2002/11/15 23:19:22 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.16 2002/11/29 11:56:36 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2002/11/15 23:19:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2002/11/29 11:56:36 manu Exp $");
 
 void
 child_return(void *arg)
@@ -253,6 +253,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 
 		code &= EMULNAMEU(SYS_NSYSENT) - 1;
 		callp = p->p_emul->e_sysent + code;
+		realcode = code;
 	}
 
 	argsize = callp->sy_argsize;
