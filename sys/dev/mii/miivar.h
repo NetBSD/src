@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.8 1999/04/23 04:24:32 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.9 1999/09/25 00:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ struct mii_softc {
 	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
 
 	int mii_phy;			/* our MII address */
+	int mii_offset;			/* first PHY, second PHY, etc. */
 	int mii_inst;			/* instance for ifmedia */
 
 	mii_downcall_t mii_service;	/* our downcall */

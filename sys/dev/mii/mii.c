@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.12 1999/08/03 19:41:49 drochner Exp $	*/
+/*	$NetBSD: mii.c,v 1.13 1999/09/25 00:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,11 +69,30 @@ mii_phy_probe(parent, mii, capmask)
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
-	int bmsr;
+	int bmsr, offset = 0;
 
 	LIST_INIT(&mii->mii_phys);
 
 	for (ma.mii_phyno = 0; ma.mii_phyno < MII_NPHY; ma.mii_phyno++) {
+#if 0 /* XXX not yet --thorpej */
+		/*
+		 * Make sure we haven't already configured a PHY at this
+		 * address.  This allows mii_phy_probe() to be called
+		 * multiple times.
+		 */
+		for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
+		     child = LIST_NEXT(child, mii_list)) {
+			if (child->mii_phy == ma.mii_phyno) {
+				/*
+				 * Yes, there is already something
+				 * configured at this address.
+				 */
+				continue;
+				offset++;
+			}
+		}
+#endif
+
 		/*
 		 * Check to see if there is a PHY at this address.  Note,
 		 * many braindead PHYs report 0/0 in their ID registers,
@@ -105,8 +124,10 @@ mii_phy_probe(parent, mii, capmask)
 			 * Link it up in the parent's MII data.
 			 */
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
+			child->mii_offset = offset;
 			mii->mii_instance++;
 		}
+		offset++;
 	}
 }
 
