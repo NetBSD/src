@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.18 2002/05/28 03:04:05 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.19 2002/05/28 10:11:50 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.18 2002/05/28 03:04:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.19 2002/05/28 10:11:50 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,14 +139,8 @@ do {									\
 void
 frag6_init()
 {
-	struct timeval tv;
 
-	/*
-	 * in many cases, random() here does NOT return random number
-	 * as initialization during bootstrap time occur in fixed order.
-	 */
-	microtime(&tv);
-	ip6_id = random() ^ tv.tv_usec;
+	ip6_id = arc4random();
 	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
 }
 

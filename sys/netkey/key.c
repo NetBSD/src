@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.63 2002/05/19 08:22:12 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.64 2002/05/28 10:11:49 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63 2002/05/19 08:22:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.64 2002/05/28 10:11:49 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4309,13 +4309,6 @@ key_timehandler(arg)
 static void
 key_srandom()
 {
-	struct timeval tv;
-	int i;
-
-	microtime(&tv);
-
-	for (i = (int)((tv.tv_sec ^ tv.tv_usec) & 0x3ff); i > 0; i--)
-		(void)random();
 
 	return;
 }

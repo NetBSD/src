@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.34 2002/03/15 09:36:27 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.35 2002/05/28 10:11:51 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.34 2002/03/15 09:36:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.35 2002/05/28 10:11:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1099,9 +1099,9 @@ nd6_dad_start(ifa, tick)
 		int ntick;
 
 		if (*tick == 0)
-			ntick = random() % (MAX_RTR_SOLICITATION_DELAY * hz);
+			ntick = arc4random() % (MAX_RTR_SOLICITATION_DELAY * hz);
 		else
-			ntick = *tick + random() % (hz / 2);
+			ntick = *tick + arc4random() % (hz / 2);
 		*tick = ntick;
 		nd6_dad_starttimer(dp, ntick);
 	}
