@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.18.10.1 2002/12/11 18:06:09 he Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.18.10.2 2004/11/11 23:12:40 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.21.10.1 2002/12/11 18:05:30 he Exp 
+ *	NetBSD: cardbusdevs,v 1.21.10.2 2004/11/11 23:08:23 he Exp 
  */
 
 /*
@@ -55,6 +55,7 @@
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_IODATA	0x10fc		/* IO Data */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
+#define	CARDBUS_VENDOR_WORKBIT	0x1145		/* Workbit */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	CARDBUS_VENDOR_DLINK	0x1186		/* D-Link Systems */
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
@@ -97,6 +98,7 @@
 
 /* IO Data products */
 #define	CARDBUS_PRODUCT_IODATA_CBIDE2	0x0003		/* CBIDE2 IDE controller */
+#define	CARDBUS_PRODUCT_IODATA_CBSCII	0x0005		/* CBSCII NinjaSCSI-32Bi SCSI */
 
 /* Accton products */
 #define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
@@ -133,3 +135,8 @@
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
+
+/* Workbit products */
+#define	CARDBUS_PRODUCT_WORKBIT_NJSC32BI	0x8007		/* NinjaSCSI-32Bi SCSI */
+#define	CARDBUS_PRODUCT_WORKBIT_NJSC32UDE	0x8009		/* NinjaSCSI-32UDE SCSI */
+#define	CARDBUS_PRODUCT_WORKBIT_NJSC32BI_KME	0xf007		/* NinjaSCSI-32Bi SCSI (KME) */
