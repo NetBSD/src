@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.5 2002/03/15 13:23:34 simonb Exp $	*/
+/*	$NetBSD: globals.c,v 1.6 2003/03/19 17:19:32 drochner Exp $	*/
 
 /*
  *	globals.c:
@@ -19,13 +19,7 @@ u_char	bcea[6] = BA;			/* broadcast ethernet address */
 char	rootpath[FNAME_SIZE] = "/";	/* root mount path */
 char	bootfile[FNAME_SIZE];		/* bootp says to boot this */
 char	hostname[FNAME_SIZE];		/* our hostname */
-int	hostnamelen;
-char	domainname[FNAME_SIZE];		/* our DNS domain */
-int	domainnamelen;
-char	ifname[IFNAME_SIZE];		/* name of interface (e.g. "le0") */
 struct	in_addr myip;			/* my ip address */
-struct	in_addr nameip;			/* DNS server ip address */
 struct	in_addr rootip;			/* root ip address */
-struct	in_addr swapip;			/* swap ip address */
 struct	in_addr gateip;			/* swap ip address */
 n_long	netmask = 0xffffff00;		/* subnet or net mask */
