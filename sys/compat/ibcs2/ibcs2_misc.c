@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.36 1998/03/05 04:49:50 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.37 1998/06/28 01:20:06 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -72,6 +72,7 @@
 #include <sys/resourcevar.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/syslog.h>
 #include <sys/time.h>
 #include <sys/times.h>
 #include <sys/vnode.h>
@@ -495,8 +496,7 @@ ibcs2_sys_read(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VDIR)
 		return sys_read(p, uap, retval);
-	DPRINTF(("ibcs2_read: read directory\n"));
-	buflen = max(MAXBSIZE, SCARG(uap, nbytes));
+	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
