@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.36 1999/02/17 15:28:09 kleink Exp $	*/
+/*	$NetBSD: ls.c,v 1.36.2.1 2000/09/09 15:03:42 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.36 1999/02/17 15:28:09 kleink Exp $");
+__RCSID("$NetBSD: ls.c,v 1.36.2.1 2000/09/09 15:03:42 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ static int (*sortfcn) __P((const FTSENT *, const FTSENT *));
 long blocksize;			/* block size units */
 int termwidth = 80;		/* default terminal width */
 int sortkey = BY_NAME;
+int rval = EXIT_SUCCESS;	/* exit value - set if error encountered */
 
 /* flags */
 int f_accesstime;		/* use time of last access */
@@ -327,7 +328,7 @@ main(argc, argv)
 		traverse(argc, argv, fts_options);
 	else
 		traverse(1, dotav, fts_options);
-	exit(EXIT_SUCCESS);
+	exit(rval);
 	/* NOTREACHED */
 }
 
@@ -370,6 +371,7 @@ traverse(argc, argv, options)
 		case FTS_DNR:
 		case FTS_ERR:
 			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+			rval = EXIT_FAILURE;
 			break;
 		case FTS_D:
 			if (p->fts_level != FTS_ROOTLEVEL &&
@@ -448,6 +450,7 @@ display(p, list)
 			warnx("%s: %s",
 			    cur->fts_name, strerror(cur->fts_errno));
 			cur->fts_number = NO_PRINT;
+			rval = EXIT_FAILURE;
 			continue;
 		}
 
