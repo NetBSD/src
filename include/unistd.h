@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.61 1998/07/27 09:09:27 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.62 1998/07/27 09:33:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ gid_t	 getegid __P((void));
 uid_t	 geteuid __P((void));
 gid_t	 getgid __P((void));
 int	 getgroups __P((int, gid_t []));
-char	*getlogin __P((void));
+__aconst char *getlogin __P((void));
 pid_t	 getpgrp __P((void));
 pid_t	 getpid __P((void));
 pid_t	 getppid __P((void));
@@ -141,7 +141,7 @@ unsigned int	 sleep __P((unsigned int));
 long	 sysconf __P((int));
 pid_t	 tcgetpgrp __P((int));
 int	 tcsetpgrp __P((int, pid_t));
-char	*ttyname __P((int));
+__aconst char *ttyname __P((int));
 int	 unlink __P((const char *));
 ssize_t	 write __P((int, const void *, size_t));
 
@@ -204,9 +204,9 @@ int	 rename __P((const char *, const char *)) __RENAME(__posix_rename);
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_XOPEN_SOURCE - 0) >= 4
-char	*crypt __P((const char *, const char *));
+__aconst char *crypt __P((const char *, const char *));
 int	 encrypt __P((char *, int));
-char	*getpass __P((const char *));
+__aconst char *getpass __P((const char *));
 pid_t	 getsid __P((pid_t));
 #endif
 

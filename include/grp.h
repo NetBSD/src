@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.12 1998/07/27 09:09:25 mycroft Exp $	*/
+/*	$NetBSD: grp.h,v 1.13 1998/07/27 09:33:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -68,7 +68,7 @@ void		 endgrent __P((void));
 #endif
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 void		 setgrfile __P((const char *));
-char		*group_from_gid __P((gid_t, int));
+__aconst char	*group_from_gid __P((gid_t, int));
 int		 setgroupent __P((int));
 #endif
 __END_DECLS
