@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2000/01/14 19:09:35 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2000/02/24 23:32:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,6 +149,9 @@ extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
 /* autoconf.c */
 void	configure __P((void));
 
+/* sh3_machdep.c */
+void sh3_startup __P((void));
+
 /* machdep.c */
 void	delay __P((int));
 void	dumpconf __P((void));
@@ -213,8 +216,5 @@ void	child_return __P((struct proc *, int, int, int, struct trapframe));
 	{ "debug_mode", CTLTYPE_INT }, \
 	{ "load_and_reset", CTLTYPE_INT }, \
 }
-
-#include <machine/sh3.h>
-
 
 #endif /* !_SH3_CPU_H_ */

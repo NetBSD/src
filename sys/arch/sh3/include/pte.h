@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2000/02/24 17:18:30 msaitoh Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2000/02/24 23:32:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,16 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define	PG_N		0x00000008	/* 0=non-cacheable */
 #define	PG_M		0x00000004	/* has been modified */
 #define	PG_FRAME	0xfffff000	/* page frame mask */
+
+#ifdef SH4_PCMCIA
+#define PG_PCMCIA_16    0x00000000      /* 16bit width */
+#define PG_PCMCIA_8     0x00000080      /* 8 bit width */
+#define PG_PCMCIA_NONE  0x00000000      /* Non PCMCIA space */
+#define PG_PCMCIA       0x00000a00      /* PCMCIA space */
+#define PG_PCMCIA_IO    0x00000200      /* PCMCIA IO space */
+#define PG_PCMCIA_MEM   0x00000800      /* PCMCIA Memory space */
+#define PG_PCMCIA_ATT   0x00000a00      /* PCMCIA Attribute space */
+#endif
 
 #define	PG_KR		0x00000000
 #define	PG_KW		0x00000020

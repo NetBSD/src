@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 2000/02/24 19:42:36 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 2000/02/24 23:32:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -51,7 +51,7 @@
 #include <machine/pte.h>
 #include <machine/trap.h>
 
-#define INIT_STACK	0x8c3ff000
+#define INIT_STACK	IOM_RAM_BEGIN + 0x003ff000
 #define SHREG_EXPEVT	0xffffffd4
 #define SHREG_INTEVT	0xffffffd8
 #define SHREG_MMUCR	0xffffffe0
@@ -239,9 +239,9 @@
  *
  * XXX 4 == sizeof pde
  */
-	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
-	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
+	.set	_C_LABEL(APTmap), (PDSLOT_APTE << PDSHIFT)
+	.set	_C_LABEL(APTD), (_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
+	.set	_C_LABEL(APTDpde), (_C_LABEL(PTD) + PDSLOT_APTE * 4)
 
 /*
  * Initialization
@@ -352,6 +352,36 @@ start_in_RAM:
 	mov.l	r15, @r3
 #endif
 
+#ifdef SH4
+	/* CCR must be accessed from P2 area */
+	mova	cache_on, r0
+	mov	r0, r5
+	mov.l	XLtoP2, r1
+	add	r1, r5
+	mova	main_label, r0
+	mov	r0, r2
+	mov.l	XL_SHREG_CCR, r3
+	mov.l	XL_CCRVAL, r4
+	jmp	@r5
+	nop
+
+	.align	2
+cache_on:
+	mov.l	r4, @r3 /* Write to CCR */
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	jmp @r2
+	nop
+	
+	.align	2
+main_label:
+#endif
 	mov.l	XLmain, r0
 	jsr	@r0		/* call main() */
 	nop
@@ -370,6 +400,15 @@ _ROM_START:	.long	IOM_ROM_BEGIN
 XLKernelStack:	.long	KernelStack
 XLinitSH3:	.long	_C_LABEL(initSH3)
 XLmain:		.long	_C_LABEL(main)
+XLtoP2:		.long	0x20000000
+XL_SHREG_CCR:	.long	0xff00001c
+#ifdef SH4
+#if 1
+XL_CCRVAL:	.long	0x0909 /* Operand cache ON */
+#else
+XL_CCRVAL:	.long	0x0000 /* cache OFF */
+#endif
+#endif
 
 NENTRY(proc_trampoline)
 	mov	r11, r4
@@ -471,7 +510,6 @@ ENTRY(idle)
 	tst	r0, r0
 	bf	sw1
 	nop
-	STI
 	ESTI
 
 	sleep
@@ -555,16 +593,14 @@ XXLwhichqs:
 switch_error:
 	mova	1f, r0
 	mov	r0, r4
-	mov.l	XL_panic, r0
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 
 	.align	2
-1:
-	.asciz	"cpu_swicth"
+1:	.asciz	"cpu_swicth"
 	.align	2
-XL_panic:
-	.long	_C_LABEL(panic)
+2:	.long	_C_LABEL(panic)
 #endif
 
 /*
@@ -794,11 +830,9 @@ sw1:	mov	#1, r1
 	nop
 
 	.align	2
-1:
-	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
+1:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
-2:
-	.long	_C_LABEL(printf)
+2:	.long	_C_LABEL(printf)
 #endif
 
 3:
@@ -942,6 +976,10 @@ switch_exited:
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
+#ifdef SH4
+	mov.l	XL_MMUCR_VBITS,r1
+	and	r1, r2
+#endif
 	mov.l	r2, @r0
 
 switch_restored:
@@ -982,6 +1020,7 @@ XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
+XL_MMUCR_VBITS:	.long	0xfcfcff05
 /*
  * switch_exit(struct proc *p);
  * Switch to proc0's saved context and deallocate the address space and kernel
@@ -1144,7 +1183,7 @@ NENTRY(exphandler)
 	mov	#1, r1
 	mov	#31, r2
 	shld	r2, r1
-	tst	r1, r0	/* test MSB of TF_SPC */
+	tst	r1, r0		/* test MSB of TF_SPC */
 	bf	1f
 	nop
 5:	xor	r0, r0
@@ -1161,7 +1200,9 @@ NENTRY(exphandler)
 	add	#4, r15
 	bra	2b
 	nop
-1:	INTRFASTEXIT
+1:
+	CLI
+	INTRFASTEXIT
 
 	.align	2
 XL_TLBPROTWR:
@@ -1169,7 +1210,6 @@ XL_TLBPROTWR:
 
 	.globl	_C_LABEL(tlbmisshandler_stub)
 	.globl	_C_LABEL(tlbmisshandler_stub_end)
-
 _C_LABEL(tlbmisshandler_stub):
 	mov.l	XL_tlbmisshandler, r0
 	jmp	@r0
@@ -1256,6 +1296,65 @@ XLexphandler:	.long	_C_LABEL(exphandler)
 	 * r4 = Virtual Address
 	 * r0 = returned Physical address
 	 */
+#ifdef SH4
+ENTRY(ConvVtoP)
+	mov.l	r1, @-r15
+	mov.l	r2, @-r15
+	mov.l	r3, @-r15
+	mov.l	r5, @-r15
+#ifdef SH4 /*  cache flush */
+	sts.l	pr, @-r15
+	mov.l	r4, @-r15
+	mov.l	XL_cacheflush, r0
+	jsr	@r0
+	nop
+	mov.l	@r15+, r4
+	lds.l	@r15+, pr
+#endif
+	mov	r4, r0
+	mov.l	XL_CSMASK, r1
+	mov.l	XL_KCSAREA, r2
+	and	r4, r1
+	cmp/eq	r1, r2
+	bt	1f
+	mov.l	XL_P2AREA, r5
+	mov	#PDSHIFT, r1
+	neg	r1, r1
+	shld	r1, r0
+	shll2	r0
+	mov.l	XXXL_SHREG_TTB, r1
+	or	r5, r1	
+	mov.l	@r1, r1
+	add	r0, r1
+	or	r5, r1
+	mov.l	@r1, r2		/* r2 = pde  */
+	mov.l	XL_PG_FRAME, r1
+	and	r1, r2		/* r2 = page table address */
+	mov	r4, r0
+	mov.l	XL_PT_MASK, r3
+	and	r3, r0
+	mov	#PGSHIFT, r1
+	neg	r1, r1
+	shld	r1, r0
+	shll2	r0
+	add	r0, r2		/* r2 = pte */
+	or	r5, r2
+	mov.l	@r2, r2
+	mov.l	XL_PG_FRAME, r1
+	and	r1, r2
+	not	r1, r1
+	and	r1, r4
+	or	r4, r2
+	or	r5, r2
+	mov	r2, r0		/* r0 = Physical address */
+1:
+	mov.l	@r15+, r5
+	mov.l	@r15+, r3
+	mov.l	@r15+, r2
+	mov.l	@r15+, r1
+	rts
+	nop
+#else
 ENTRY(ConvVtoP)
 	mov.l	r1, @-r15
 	mov.l	r2, @-r15
@@ -1298,12 +1397,18 @@ ENTRY(ConvVtoP)
 
 	rts
 	nop
+#endif
 
 	.align	2
 XL_PT_MASK:	.long	PT_MASK
 XL_PG_FRAME:	.long	PG_FRAME
 XL_CSMASK:	.long	0xc0000000
 XL_KCSAREA:	.long	0x80000000
+XXXL_SHREG_TTB:		.long	SHREG_TTB
+XL_P2AREA:	.long	0xa0000000
+#ifdef SH4
+XL_cacheflush:	.long	_sh4_cache_flush
+#endif
 
 Xrecurse:
 	stc	sr, r0
@@ -1454,7 +1559,7 @@ ENTRY(cpu_printR15)
 	mova	1f, r0
 	mov	r0, r4
 	mov	r15, r5
-	mov.l	XL_printf, r0
+	mov.l	2f, r0
 	jsr	@r0
 	nop
 	lds.l	@r15+, pr
@@ -1462,11 +1567,9 @@ ENTRY(cpu_printR15)
 	nop
 
 	.align	2
-1:
-	.asciz	"sp=0x%x\n"
+1:	.asciz	"sp=0x%x\n"
 	.align	2
-2:
-	.long	_C_LABEL(printf)
+2:	.long	_C_LABEL(printf)
 
 load_and_reset:
 	mov.l	XL_start_address, r0
@@ -1523,6 +1626,8 @@ ENTRY(Sh3Reset)
 XL_reset_vector:
 	.long	0xa0000000
 
+	.data
+	.align	2
 	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
 	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
 _C_LABEL(intrcnt):

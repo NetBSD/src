@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2000/02/24 19:01:25 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2000/02/24 23:32:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -622,14 +622,28 @@ tlb_handler(p1, p2, p3, p4, frame)
 	va = (vaddr_t)SHREG_TEA;
 	va = trunc_page(va);
 	pde_index = pdei(va);
+#ifdef SH4
+	pd_top = (u_long *)(SH3_P1SEG_TO_P2SEG(SHREG_TTB));
+	pde = (u_long *)((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
+#else
 	pd_top = (u_long *)SHREG_TTB;
 	pde = (u_long *)pd_top[pde_index];
+#endif
 	exptype = SHREG_EXPEVT;
 
+#if 0 /* def SH4 */
+	if (((u_long)pde & PG_V) != 0 && 
+	    (incpuswitch || exptype != T_TLBPRIVW)) {
+#else
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
+#endif
 		(u_long)pde &= ~PGOFSET;
 		pte_index = ptei(va);
+#ifdef SH4
+		pte = SH3_P1SEG_TO_P2SEG(pde[pte_index]);
+#else
 		pte = pde[pte_index];
+#endif
 
 		if ((pte & PG_V) != 0) {
 #ifdef	DEBUG_TLB
@@ -638,8 +652,47 @@ tlb_handler(p1, p2, p3, p4, frame)
 				       va, pte);
 #endif
 
+#ifdef SH4_PCMCIA
+#define PTEL_VALIDBITS 0x1ffff17e
+#else
 #define PTEL_VALIDBITS 0x1ffffd7e
+#endif
+#ifdef SH4
+			if (pte & PG_PCMCIA) {
+				int pcmtype;
+				unsigned long ptea = 0;
+
+				pcmtype = pte & PG_PCMCIA;
+
+				/* printf("pcmtype = %lx,pte=%lx\n",
+				       pcmtype,pte); */
+
+				if (pcmtype == PG_PCMCIA_IO) {
+					ptea = 0x03;
+				} else if (pcmtype == PG_PCMCIA_MEM) {
+					ptea = 0x05; 
+					/* ptea = 0x03; */
+				} else if (pcmtype == PG_PCMCIA_ATT) {
+					ptea = 0x07;
+				}
+
+				SHREG_PTEL = (pte & PTEL_VALIDBITS)
+					& ~PG_N;
+
+				SHREG_PTEA = ptea;
+			} else {
+				if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
+					SHREG_PTEL = (pte & PTEL_VALIDBITS)
+						| PG_WT;
+				} else {
+					SHREG_PTEL = pte & PTEL_VALIDBITS;
+				}
+
+				SHREG_PTEA = 0;
+			}
+#else
 			SHREG_PTEL = pte & PTEL_VALIDBITS;
+#endif
 
 			return;
 		}
@@ -690,7 +743,18 @@ tlb_handler(p1, p2, p3, p4, frame)
 		ftype = VM_PROT_READ;
 
 	nss = 0;
-#if 1
+
+#ifdef SH4
+	if (vm != NULL && (caddr_t)va >= vm->vm_maxsaddr
+	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
+	    && map != kernel_map) {
+		nss = btoc(USRSTACK-(unsigned)va);
+		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
+			rv = KERN_FAILURE;
+			goto nogo;
+		}
+	}
+#else
 	if ((caddr_t)va >= vm->vm_maxsaddr
 	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 	    && map != kernel_map) {
@@ -717,7 +781,10 @@ tlb_handler(p1, p2, p3, p4, frame)
 		disable_ext_intr();
 #endif
 	if (rv == KERN_SUCCESS) {
-#if 1
+#ifdef SH4
+		if (vm != NULL && nss > vm->vm_ssize)
+			vm->vm_ssize = nss;
+#else
 		if (nss > vm->vm_ssize)
 			vm->vm_ssize = nss;
 #endif
@@ -726,7 +793,12 @@ tlb_handler(p1, p2, p3, p4, frame)
 		SHREG_PTEH = pteh_save;
 		pde_index = pdei(va);
 		pd_top = (u_long *)SHREG_TTB;
+#ifdef SH4
+		pde = (u_long *)
+			((u_long)SH3_P1SEG_TO_P2SEG(pd_top[pde_index]));
+#else
 		pde = (u_long *)pd_top[pde_index];
+#endif
 
 		if (((u_long)pde & PG_V) != 0) {
 			(u_long)pde &= ~PGOFSET;
@@ -739,7 +811,44 @@ tlb_handler(p1, p2, p3, p4, frame)
 					printf("tlb_handler#:va(0x%lx),pte(0x%lx)\n", va, pte);
 #endif
 
+#ifdef SH4
+				if (pte & PG_PCMCIA) {
+					int pcmtype;
+					unsigned long ptea = 0;
+
+					pcmtype = pte & PG_PCMCIA;
+
+					/* printf("pcmtype = %lx,pte=%lx\n",
+					       pcmtype,pte); */
+
+					if (pcmtype == PG_PCMCIA_IO) {
+						ptea = 0x03;
+					} else if (pcmtype == PG_PCMCIA_MEM) {
+						ptea = 0x05; 
+						/*ptea = 0x03; */
+					} else if (pcmtype == PG_PCMCIA_ATT) {
+						ptea = 0x07;
+					}
+
+					SHREG_PTEL = (pte & PTEL_VALIDBITS)
+						& ~PG_N;
+
+					SHREG_PTEA = ptea;
+				} else {
+					if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
+						SHREG_PTEL = 
+							(pte & PTEL_VALIDBITS)
+								| PG_WT;
+					} else {
+						SHREG_PTEL = 
+							(pte & PTEL_VALIDBITS);
+					}
+					SHREG_PTEA = 0;
+				}
+#else
+
 				SHREG_PTEL = pte & PTEL_VALIDBITS;
+#endif
 
 				return;
 			}

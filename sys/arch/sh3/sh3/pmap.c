@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 1999/11/13 00:30:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2000/02/24 23:32:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -439,7 +439,12 @@ __inline static vaddr_t
 pmap_tmpmap_pa(pa)
 	paddr_t pa;
 {
+#ifdef SH4
+	cacheflush(); 
+	return SH3_PHYS_TO_P2SEG(pa);
+#else
 	return SH3_PHYS_TO_P1SEG(pa);
+#endif
 }
 
 /*
@@ -1850,7 +1855,12 @@ void
 pmap_zero_page(pa)
 	paddr_t pa;
 {
+#ifdef SH4
+	cacheflush(); 
+	memset((void *)SH3_PHYS_TO_P2SEG(pa), 0, NBPG);
+#else
 	memset((void *)SH3_PHYS_TO_P1SEG(pa), 0, NBPG);
+#endif
 }
 
 /*
@@ -1861,8 +1871,14 @@ void
 pmap_copy_page(srcpa, dstpa)
 	paddr_t srcpa, dstpa;
 {
+#ifdef SH4
+	cacheflush(); 
+	memcpy((void *)SH3_PHYS_TO_P2SEG(dstpa),
+	       (void *)SH3_PHYS_TO_P2SEG(srcpa), NBPG);
+#else
 	memcpy((void *)SH3_PHYS_TO_P1SEG(dstpa),
 	       (void *)SH3_PHYS_TO_P1SEG(srcpa), NBPG);
+#endif
 }
 
 /*
@@ -3414,10 +3430,20 @@ paddr_t
 vtophys(va)
 	vaddr_t va;
 {
+#ifdef SH4
+	cacheflush();
+	if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
+		return (va|0x20000000);
+#else
 	if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
 		return va;
+#endif
 
 	/* XXX P4SEG? */
 
+#ifdef SH4
+	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | 0x20000000;
+#else
 	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME);
+#endif
 }
