@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2000/01/19 16:29:57 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2000/02/01 05:25:34 tsutsui Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -24,7 +24,7 @@ FPSP!=	printf "\#ifdef FPSP\n${FPSPOBJ}\n\#endif\n" | ${CPP} -P -undef ${CPPFLAG
 
 #	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 #	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
-#	    LD=${LD:Q} STRIPPROG=${STRIPPROG:Q} \
+#	    LD=${LD:Q} STRIP=${STRIP:Q} \
 
 FPSPMAKE= \
 	cd ${FPSPDIR} && MAKEOBJDIR=${FPSPDST} ${MAKE} .OBJDIR=${FPSPDST} \
