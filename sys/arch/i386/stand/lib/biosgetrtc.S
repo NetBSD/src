@@ -1,4 +1,4 @@
-/*	$NetBSD: biosgetrtc.S,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biosgetrtc.S,v 1.2 1997/06/13 13:42:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -53,6 +53,7 @@ ENTRY(biosgetrtc)
 	movb	$2, %ah
 	int	$0x1a
 	jnc	ok
+	data32
 	movl	$-1, %ebx
 
 ok:
