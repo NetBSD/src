@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.12 2000/12/30 14:26:50 sommerfeld Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.13 2001/01/23 23:03:50 enami Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.12 2000/12/30 14:26:50 sommerfeld Exp $
+ * $Id: m_netbsd15.c,v 1.13 2001/01/23 23:03:50 enami Exp $
  */
 
 #include <sys/param.h>
@@ -85,12 +85,12 @@ struct handle {
  */
 
 static char header[] =
-  "  PID X        PRI NICE   SIZE   RES STATE     TIME   WCPU    CPU COMMAND";
+  "  PID X        PRI NICE   SIZE   RES STATE      TIME   WCPU    CPU COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d%7s %5s %-7s%7s %5.2f%% %5.2f%% %.12s"
+	"%5d %-8.8s %3d %4d%7s %5s %-8.8s%7s %5.2f%% %5.2f%% %.12s"
 
 
 /* 
@@ -98,7 +98,7 @@ static char header[] =
  */
 
 const char *state_abbrev[] = {
-	"", "start", "run", "sleep", "stop", "zomb", "dead", "cpu"
+	"", "START", "RUN", "SLEEP", "STOP", "ZOMB", "DEAD", "CPU"
 };
 
 static kvm_t *kd;
@@ -451,6 +451,7 @@ format_next_process(handle, get_userid)
 #ifdef KI_NOCPU
 	char state[10];
 #endif
+	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[128];		/* static area where result is built */
 
 	/* find and remember the next proc structure */
@@ -484,7 +485,11 @@ format_next_process(handle, get_userid)
 	/* calculate the base for cpu percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
-	statep = state_abbrev[(unsigned)pp->p_stat];
+	if (pp->p_stat == SSLEEP) {
+		strlcpy(wmesg, pp->p_wmesg, sizeof(wmesg));
+		statep = wmesg;
+	} else
+		statep = state_abbrev[(unsigned)pp->p_stat];
 
 #ifdef KI_NOCPU
 	/* Post-1.5 change: add cpu number if appropriate */
@@ -493,7 +498,7 @@ format_next_process(handle, get_userid)
 		case SONPROC:
 		case SRUN:
 		case SSLEEP:			
-			snprintf(state, sizeof(state), "%s/%lld", 
+			snprintf(state, sizeof(state), "%.6s/%lld", 
 				 statep, (long long)pp->p_cpuid);
 			statep = state;
 			break;
