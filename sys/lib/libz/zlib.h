@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
+/* $NetBSD: zlib.h,v 1.5 2003/03/25 22:48:45 mycroft Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -66,7 +66,7 @@ extern "C" {
   crash even in case of corrupted input.
 */
 
-typedef voidpf (*alloc_func) __P((voidpf opaque, uInt items, uInt size));
+typedef voidpf (*alloc_func) __P((voidpf opaque, unsigned items, unsigned size));
 typedef void   (*free_func)  __P((voidpf opaque, voidpf address));
 
 struct internal_state;
@@ -88,7 +88,6 @@ typedef struct z_stream_s {
     voidpf     opaque;  /* private data object passed to zalloc and zfree */
 
     int     data_type;  /* best guess about the data type: ascii or binary */
-    uLong   adler;      /* adler32 value of the uncompressed data */
     uLong   reserved;   /* reserved for future use */
 } z_stream;
 
@@ -265,9 +264,6 @@ ZEXTERN int ZEXPORT deflate __P((z_streamp strm, int flush));
   0.1% larger than avail_in plus 12 bytes.  If deflate does not return
   Z_STREAM_END, then it must be called again as described above.
 
-    deflate() sets strm->adler to the adler32 checksum of all input read
-  so far (that is, total_in bytes).
-
     deflate() may update data_type if it can make a good guess about
   the input data type (Z_ASCII or Z_BINARY). In doubt, the data is considered
   binary. This field is only for information purposes and does not affect
@@ -363,21 +359,16 @@ ZEXTERN int ZEXPORT inflate __P((z_streamp strm, int flush));
   is never required, but can be used to inform inflate that a faster routine
   may be used for the single inflate() call.
 
-     If a preset dictionary is needed at this point (see inflateSetDictionary
-  below), inflate sets strm-adler to the adler32 checksum of the
-  dictionary chosen by the compressor and returns Z_NEED_DICT; otherwise 
-  it sets strm->adler to the adler32 checksum of all output produced
-  so far (that is, total_out bytes) and returns Z_OK, Z_STREAM_END or
+    inflate returns Z_OK, Z_STREAM_END or
   an error code as described below. At the end of the stream, inflate()
-  checks that its computed adler32 checksum is equal to that saved by the
-  compressor and returns Z_STREAM_END only if the checksum is correct.
+  returns Z_STREAM_END.
 
     inflate() returns Z_OK if some progress has been made (more input processed
   or more output produced), Z_STREAM_END if the end of the compressed data has
   been reached and all uncompressed output has been produced, Z_NEED_DICT if a
   preset dictionary is needed at this point, Z_DATA_ERROR if the input data was
-  corrupted (input stream not conforming to the zlib format or incorrect
-  adler32 checksum), Z_STREAM_ERROR if the stream structure was inconsistent
+  corrupted (input stream not conforming to the zlib format),
+  Z_STREAM_ERROR if the stream structure was inconsistent
   (for example if next_in or next_out was NULL), Z_MEM_ERROR if there was not
   enough memory, Z_BUF_ERROR if no progress is possible or if there was not
   enough room in the output buffer when Z_FINISH is used. In the Z_DATA_ERROR
@@ -469,12 +460,6 @@ ZEXTERN int ZEXPORT deflateSetDictionary __P((z_streamp strm,
    discarded, for example if the dictionary is larger than the window size in
    deflate or deflate2. Thus the strings most likely to be useful should be
    put at the end of the dictionary, not at the front.
-
-     Upon return of this function, strm->adler is set to the Adler32 value
-   of the dictionary; the decompressor may later use this value to determine
-   which dictionary has been used by the compressor. (The Adler32 value
-   applies to the whole dictionary even if only a subset of the dictionary is
-   actually used by the compressor.)
 
      deflateSetDictionary returns Z_OK if success, or Z_STREAM_ERROR if a
    parameter is invalid (such as NULL dictionary) or the stream state is
@@ -573,21 +558,6 @@ ZEXTERN int ZEXPORT inflateSetDictionary __P((z_streamp strm,
    expected one (incorrect Adler32 value). inflateSetDictionary does not
    perform any decompression: this will be done by subsequent calls of
    inflate().
-*/
-
-ZEXTERN int ZEXPORT inflateSync __P((z_streamp strm));
-/* 
-    Skips invalid compressed data until a full flush point (see above the
-  description of deflate with Z_FULL_FLUSH) can be found, or until all
-  available input is skipped. No output is provided.
-
-    inflateSync returns Z_OK if a full flush point has been found, Z_BUF_ERROR
-  if no more input was provided, Z_DATA_ERROR if no flush point has been found,
-  or Z_STREAM_ERROR if the stream structure was inconsistent. In the success
-  case, the application may save the current current value of total_in which
-  indicates where valid compressed data was found. In the error case, the
-  application may repeatedly call inflateSync, providing more input each time,
-  until success or end of the input data.
 */
 
 ZEXTERN int ZEXPORT inflateReset __P((z_streamp strm));
@@ -835,23 +805,6 @@ ZEXTERN const char * ZEXPORT gzerror __P((gzFile file, int *errnum));
    compression library.
 */
 
-ZEXTERN uLong ZEXPORT adler32 __P((uLong adler, const Bytef *buf, uInt len));
-
-/*
-     Update a running Adler-32 checksum with the bytes buf[0..len-1] and
-   return the updated checksum. If buf is NULL, this function returns
-   the required initial value for the checksum.
-   An Adler-32 checksum is almost as reliable as a CRC32 but can be computed
-   much faster. Usage example:
-
-     uLong adler = adler32(0L, Z_NULL, 0);
-
-     while (read_buffer(buffer, length) != EOF) {
-       adler = adler32(adler, buffer, length);
-     }
-     if (adler != original_adler) error();
-*/
-
 ZEXTERN uLong ZEXPORT crc32   __P((uLong crc, const Bytef *buf, uInt len));
 /*
      Update a running crc with the bytes buf[0..len-1] and return the updated
@@ -900,8 +853,6 @@ ZEXTERN int ZEXPORT inflateInit2_ __P((z_streamp strm, int  windowBits,
 #endif
 
 ZEXTERN const char   * ZEXPORT zError           __P((int err));
-ZEXTERN int            ZEXPORT inflateSyncPoint __P((z_streamp z));
-ZEXTERN const uLongf * ZEXPORT get_crc_table    __P((void));
 
 #ifdef __cplusplus
 }
