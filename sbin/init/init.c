@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.56 2003/05/26 09:34:55 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.57 2003/07/01 15:24:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.56 2003/05/26 09:34:55 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.57 2003/07/01 15:24:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,8 @@ __RCSID("$NetBSD: init.c,v 1.56 2003/05/26 09:34:55 lukem Exp $");
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-#ifdef DEBUG
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
-#endif
 
 #include <db.h>
 #include <errno.h>
