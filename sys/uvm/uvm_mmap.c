@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.82 2004/03/24 07:47:33 junyoung Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.83 2004/05/19 13:20:27 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.82 2004/03/24 07:47:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.83 2004/05/19 13:20:27 darrenr Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -1154,20 +1154,19 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			if (prot & PROT_EXEC)
 				vn_markexec(vp);
 		} else {
-			uobj = udv_attach((void *) &vp->v_rdev,
-			    (flags & MAP_SHARED) ? maxprot :
-			    (maxprot & ~VM_PROT_WRITE), foff, size);
+			int i = maxprot;
+
 			/*
 			 * XXX Some devices don't like to be mapped with
-			 * XXX PROT_EXEC, but we don't really have a
-			 * XXX better way of handling this, right now
+			 * XXX PROT_EXEC or PROT_WRITE, but we don't really
+			 * XXX have a better way of handling this, right now
 			 */
-			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
-				maxprot &= ~VM_PROT_EXECUTE;
-				uobj = udv_attach((void *)&vp->v_rdev,
-				    (flags & MAP_SHARED) ? maxprot :
-				    (maxprot & ~VM_PROT_WRITE), foff, size);
-			}
+			do {
+				uobj = udv_attach((void *) &vp->v_rdev,
+				    (flags & MAP_SHARED) ? i :
+				    (i & ~VM_PROT_WRITE), foff, size);
+				i--;
+			} while ((uobj == NULL) && (i > 0));
 			advice = UVM_ADV_RANDOM;
 		}
 		if (uobj == NULL)
