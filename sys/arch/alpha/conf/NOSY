@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.13 1997/01/31 05:20:06 thorpej Exp $
+#	$NetBSD: NOSY,v 1.14 1997/01/31 18:00:36 cgd Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -11,9 +11,12 @@ maxusers 8
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 
 # Standard system options
-options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 options 	NTP			# NTP PLL
+
+# Diagnostic/debugging support options
+options		DIAGNOSTIC		# Cheap kernel consistency checks
+options		DEBUG			# Expensive debugging checks/support
 
 # File systems
 file-system 	FFS		# Fast file system
