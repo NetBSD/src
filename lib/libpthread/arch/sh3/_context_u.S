@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2003/07/05 23:01:25 uwe Exp $ */
+/*	$NetBSD: _context_u.S,v 1.4 2003/11/17 22:38:11 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Christian P. Groessler
@@ -29,6 +29,12 @@
 
 #include <machine/asm.h>
 #include "assym.h"
+
+
+/*
+ * Enter debugger or die with SIGTRAP if "notreached" code is reached
+ */
+#define NOTREACHED	trapa #0xc3
 
 
 /*
@@ -101,7 +107,7 @@
 	add	#(_REG_R15 * 4), r1					; \
 	jmp	@r2							; \
 	 mov.l	@r1, r15						; \
-	/* NOTREACHED */						  \
+	NOTREACHED							; \
 									  \
 1:	/* not a _UC_USER context, pass to setcontext(2) */		  \
 	CALL_SETCONTEXT(uc)						  \
@@ -117,7 +123,7 @@
 	mov.l	2f, r1							; \
 1:	bsrf	r1							; \
 	 MAYBE_MOV_UC_R4(uc)						; \
-	/* NOTREACHED */						  \
+	NOTREACHED							; \
 	.align 2							; \
 2: .long _C_LABEL(setcontext)-(1b+4)
 #else /* !PIC */
@@ -128,8 +134,8 @@
 #define CALL_SETCONTEXT(uc)						  \
 	mov.l	.L_setcontext, r1					; \
 	jsr	@r1							; \
-	 MAYBE_MOV_UC_R4(uc)						  \
-	/* NOTREACHED */
+	 MAYBE_MOV_UC_R4(uc)						; \
+	NOTREACHED
 #endif
 
 #define MAYBE_MOV_UC_R4(uc)						  \
