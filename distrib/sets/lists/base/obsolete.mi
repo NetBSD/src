@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.70 2003/04/27 15:29:06 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.71 2003/05/11 19:01:27 ragge Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -81,6 +81,7 @@
 ./usr/sbin/htable
 ./usr/sbin/ispppcontrol
 ./usr/sbin/kmpstat
+./usr/sbin/kvm_mkdb
 ./usr/sbin/lmtp
 ./usr/sbin/mbrlabel
 ./usr/sbin/mopa.out
