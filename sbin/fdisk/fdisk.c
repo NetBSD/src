@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.87 2004/11/18 12:00:18 wiz Exp $ */
+/*	$NetBSD: fdisk.c,v 1.88 2005/01/20 16:01:02 xtraeme Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.87 2004/11/18 12:00:18 wiz Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.88 2005/01/20 16:01:02 xtraeme Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -208,8 +208,6 @@ daddr_t	get_default_boot(void);
 void	set_default_boot(daddr_t);
 #endif
 
-
-int	main(int, char *[]);
 
 int
 main(int argc, char *argv[])
