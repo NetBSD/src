@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 2002/09/27 15:36:02 provos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 2003/03/13 13:37:15 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -70,15 +70,17 @@ struct le_sel {
 /* offsets for:	   ID   REGS     MEM   NVRAM	le_heat	le_bonus*/
 {		    0,	0x4000, 0x8000, 0xC008,	1,	10   }
 };
+#define NLE0CONF (sizeof(le0conf) / sizeof(le0conf[0]))
 
 extern struct netif_stats	le_stats[];
 
 struct netif_dif le_ifs[] = {
 /*	dif_unit	dif_nsel	dif_stats	dif_private	*/
-{	0,		NENTS(le0conf),	&le_stats[0],	le0conf,	},
+{	0,		NLE0CONF,	&le_stats[0],	le0conf,	},
 };
+#define NLE_IFS (sizeof(le_ifs) / sizeof(le_ifs[0]))
 
-struct netif_stats le_stats[NENTS(le_ifs)];
+struct netif_stats le_stats[NLE_IFS];
 
 struct netif_driver le_driver = {
 	"le",			/* netif_bname */
@@ -89,7 +91,7 @@ struct netif_driver le_driver = {
 	le_put,			/* netif_put */
 	le_end,			/* netif_end */
 	le_ifs,			/* netif_ifs */
-	NENTS(le_ifs)		/* netif_nifs */
+	NLE_IFS			/* netif_nifs */
 };
 
 struct le_softc {
