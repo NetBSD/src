@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.1 2001/11/17 13:07:54 scw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.2 2001/11/18 12:57:58 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -342,13 +342,13 @@ Lcpu_switch_resfprest:
 #endif /* !_M68K_CUSTOM_FPU_CTX */
 
 Lcpu_switch_nofprest:
-	moveq	#0,%d0
+	moveq	#1,%d0
 	movw	%a1@(PCB_PS),%sr	| no, restore PS
 	rts
 
 	/* Switching to the same LWP */
 Lcpu_switch_same:
-	moveq	#1,%d0
+	moveq	#0,%d0
 	movl	%a1@(L_ADDR),%a1	| restore l_addr
 	movw	%a1@(PCB_PS),%sr	| restore PS
 	rts
