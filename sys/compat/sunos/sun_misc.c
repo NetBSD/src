@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.23 1994/05/21 08:47:25 deraadt Exp $
+ * $Id: sun_misc.c,v 1.24 1994/05/24 02:15:18 deraadt Exp $
  */
 
 /*
@@ -889,7 +889,7 @@ sun_sysconf(p, uap, retval)
 	struct sun_sysconf_args *uap;
 	int *retval;
 {
-	extern int maxfdescs;
+	extern int maxfiles;
 
 	switch(uap->name) {
 	case SUN_SC_ARG_MAX:
@@ -905,7 +905,7 @@ sun_sysconf(p, uap, retval)
 		*retval = NGROUPS_MAX;
 		break;
 	case SUN_SC_OPEN_MAX:
-		*retval = maxfdescs;
+		*retval = maxfiles;
 		break;
 	case SUN_SC_JOB_CONTROL:
 		*retval = 1;
