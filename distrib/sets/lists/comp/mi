@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.297 2001/01/06 09:24:11 jdolecek Exp $
+#	$NetBSD: mi,v 1.298 2001/01/08 14:08:17 lukem Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2675,6 +2675,7 @@
 ./usr/share/man/cat3/sprintf.0	comp-c-catman
 ./usr/share/man/cat3/sqrt.0	comp-c-catman
 ./usr/share/man/cat3/sqrtf.0	comp-c-catman
+./usr/share/man/cat3/sradixsort.0	comp-c-catman
 ./usr/share/man/cat3/srand.0	comp-c-catman
 ./usr/share/man/cat3/srand48.0	comp-c-catman
 ./usr/share/man/cat3/srandom.0	comp-c-catman
@@ -4508,6 +4509,7 @@
 ./usr/share/man/man3/sprintf.3		comp-c-man
 ./usr/share/man/man3/sqrt.3		comp-c-man
 ./usr/share/man/man3/sqrtf.3		comp-c-man
+./usr/share/man/man3/sradixsort.3		comp-c-man
 ./usr/share/man/man3/srand.3		comp-c-man
 ./usr/share/man/man3/srand48.3		comp-c-man
 ./usr/share/man/man3/srandom.3		comp-c-man
