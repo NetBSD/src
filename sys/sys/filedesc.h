@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.16 1998/01/05 04:51:15 thorpej Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.17 1999/04/30 18:42:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -58,14 +58,19 @@
 struct filedesc {
 	struct	file **fd_ofiles;	/* file structures for open files */
 	char	*fd_ofileflags;		/* per-process open file flags */
-	struct	vnode *fd_cdir;		/* current directory */
-	struct	vnode *fd_rdir;		/* root directory */
 	int	fd_nfiles;		/* number of open files allocated */
 	int	fd_lastfile;		/* high-water mark of fd_ofiles */
 	int	fd_freefile;		/* approx. next free file */
-	u_short	fd_cmask;		/* mask for file creation */
-	u_short	fd_refcnt;		/* reference count */
+	int	fd_refcnt;		/* reference count */
 };
+
+struct cwdinfo {
+	struct	vnode *cwdi_cdir;	/* current directory */
+	struct	vnode *cwdi_rdir;	/* root directory */
+	u_short	cwdi_cmask;		/* mask for file creation */
+	u_short cwdi_refcnt;		/* reference count */
+};
+
 
 /*
  * Basic allocation of descriptors:
@@ -111,6 +116,11 @@ void	fdclear __P((struct proc *p));
 void	fdfree __P((struct proc *p));
 int	fdrelease __P((struct proc *p, int));
 void	fdcloseexec __P((struct proc *));
+
+struct cwdinfo *cwdinit __P((struct proc *));
+void	cwdshare __P((struct proc *, struct proc *));
+void	cwdunshare __P((struct proc *));
+void	cwdfree __P((struct proc *));
 
 int	closef __P((struct file *, struct proc *));
 int	getsock __P((struct filedesc *, int, struct file **));
