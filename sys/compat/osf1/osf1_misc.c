@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.32 1999/04/28 06:01:51 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.33 1999/04/29 02:08:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,8 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/socketvar.h>
+#include <sys/resource.h>
+#include <sys/resourcevar.h>
 #include <vm/vm.h>				/* XXX UVM headers are Cool */
 #include <uvm/uvm.h>				/* XXX see mmap emulation */
 
@@ -374,6 +376,28 @@ done:
 	}
 
 	return sys_mmap(p, &a, retval);
+}
+
+int
+osf1_sys_mprotect(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_mprotect_args *uap = v;
+	struct sys_mprotect_args a;
+	unsigned long leftovers;
+
+	SCARG(&a, addr) = SCARG(uap, addr);
+	SCARG(&a, len) = SCARG(uap, len);
+
+	/* translate prot */
+	SCARG(&a, prot) = emul_flags_translate(osf1_mmap_prot_xtab,
+	    SCARG(uap, prot), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
+
+	return sys_mprotect(p, &a, retval);
 }
 
 int
@@ -1404,4 +1428,39 @@ osf1_sys_settimeofday(p, v, retval)
 		error = sys_settimeofday(p, &a, retval);
 
 	return (error);
+}
+
+const struct emul_flags_xtab osf1_access_flags_xtab[] = {
+#if 0 /* pseudo-flag */
+    {	OSF1_F_OK,		OSF1_F_OK,		F_OK		},
+#endif
+    {	OSF1_X_OK,		OSF1_X_OK,		X_OK		},
+    {	OSF1_W_OK,		OSF1_W_OK,		W_OK		},
+    {	OSF1_R_OK,		OSF1_R_OK,		R_OK		},
+    {	0								}
+};
+
+int
+osf1_sys_access(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_access_args *uap = v;
+	struct sys_access_args a;
+	unsigned long leftovers;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&a, path) = SCARG(uap, path);
+
+	/* translate opt */
+	SCARG(&a, flags) = emul_flags_translate(osf1_access_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
+
+	return sys_access(p, &a, retval);
 }
