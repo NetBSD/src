@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.7 2002/05/31 21:45:01 thorpej Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.8 2003/05/25 15:00:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -176,9 +176,8 @@
 #ifdef CPU_SINGLE
 # define	ipc_phys(x)	(caddr_t)(x)
 # ifdef news3400
-#  define	splsc		cpu_spl0	/* Lite2 used spl3 */
+#  define	splsc		splbio		/* Lite2 used spl3 */
 #  define	splscon		spl2 XXX not used
-   extern int cpu_spl0 __P((void));
 # else
 #  define	splsc		spl4
 #  define	splscon		spl3
