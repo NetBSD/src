@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.3 2002/12/28 10:14:43 matt Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.4 2003/01/27 19:18:46 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.3 2002/12/28 10:14:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.4 2003/01/27 19:18:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ static const char * const pckbc_acpi_ids[] = {
 	"PNP0303",	/* Standard PC KBD/MS port */
 	"PNP0320",	/* Japanese 106 */
 	"PNP0F13",
+	"PNP0F03",
 	"IBM3780",	/* IBM pointing device */
 	NULL
 };
