@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.24 2002/01/13 17:24:29 christos Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.25 2002/03/31 19:47:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #define	WDCC_WRITE_EXT		0x34	/* write 48-bit addressing */
 
 #define	WDCC_READMULTI_EXT	0x29	/* read multiple 48-bit addressing */
-#define	WDCC_WRITEMULTI_EXT	0x39	/* read multiple 48-bit addressing */
+#define	WDCC_WRITEMULTI_EXT	0x39	/* write multiple 48-bit addressing */
 
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
