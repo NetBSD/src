@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2002/05/15 13:55:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/02/03 23:35:39 matt Exp $
 
 PROG=		bootxx
 NOMAN=		# defined
 BINMODE=	444
 
 CFLAGS=		-Os -mmultiple -Wall -msoft-float
-CPPFLAGS+=	-D_STANDALONE
+CPPFLAGS+=	-D_STANDALONE -DPPC_OEA
 STRIPFLAG=
 LINKFLAGS=	-x -N -Ttext 4000 -e _start
 CLEANFILES+=	${PROG}.sym
