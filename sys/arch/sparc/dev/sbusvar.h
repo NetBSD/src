@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.3 1996/03/31 22:38:48 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.4 1996/04/22 02:35:05 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,6 +69,7 @@ struct sbus_softc {
 	struct	sbusdev *sc_sbdev;	/* list of all children */
 	struct	rom_range *sc_range;
 	int	sc_nrange;
+	int	sc_burst;		/* burst transfer sizes supported */
 };
 
 int	sbusdev_match __P((struct cfdata *, void *));
