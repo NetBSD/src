@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.52 2003/06/29 22:30:28 fvdl Exp $ */
+/* $NetBSD: tga.c,v 1.53 2003/10/21 16:17:18 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.52 2003/06/29 22:30:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.53 2003/10/21 16:17:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ tgaattach(parent, self, aux)
 		    M_WAITOK|M_ZERO);
 		tga_init(pa->pa_memt, pa->pa_pc, pa->pa_tag, sc->sc_dc);
 	}
-	if (sc->sc_dc->dc_vaddr == NULL) {
+	if (sc->sc_dc->dc_vaddr == 0) {
 		printf(": couldn't map memory space; punt!\n");
 		return;
 	}
@@ -739,7 +739,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	tga_init(memt, pc, pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
-	if (dcp->dc_vaddr == NULL)
+	if (dcp->dc_vaddr == 0)
 		panic("tga_console(%d, %d): couldn't map memory space",
 		    device, function);
 	if (dcp->dc_tgaconf == NULL)
