@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.53 2000/03/29 14:30:27 jdolecek Exp $
+.\"	$NetBSD: sysctl.3,v 1.54 2000/05/22 15:13:05 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -603,11 +603,11 @@ The currently defined protocols and names are:
 .It tcp	ack_on_push	integer	yes
 .It tcp	keepidle	integer	yes
 .It tcp	keepintvl	integer	yes
-.It tcp keepcnt	integer	yes
+.It tcp	keepcnt	integer	yes
 .It tcp	slowhz	integer	no
 .It tcp	newreno	integer	yes
 .It tcp	log_refused	integer	yes
-.It tcp rstratelimit	integer	yes
+.It tcp	rstratelimit	integer	yes
 .It udp	checksum	integer	yes
 .It udp	sendspace	integer	yes
 .It udp	recvspace	integer	yes
@@ -786,22 +786,6 @@ The currently defined protocols and names are:
 .It icmp6	nd6_mmaxtries	integer	yes
 .It icmp6	nd6_useloopback	integer	yes
 .It icmp6	nodeinfo	integer	yes
-.It tcp6	mssdflt	integer	yes
-.It tcp6	do_rfc1323	integer	yes
-.It tcp6	keepidle	integer	yes
-.It tcp6	keepinterval	integer	yes
-.It tcp6	keepcount	integer	yes
-.It tcp6	maxpersistidle	integer	yes
-.It tcp6	sendspace	integer	yes
-.It tcp6	recvspace	integer	yes
-.It tcp6	conntimeo	integer	yes
-.It tcp6	pmtu	integer	yes
-.It tcp6	pmtu_expire	integer	yes
-.It tcp6	pmtu_probe	integer	yes
-.It tcp6	43maxseg	integer	yes
-.It tcp6	syn_cache_limit	integer	yes
-.It tcp6	syn_bucket_limit	integer	yes
-.It tcp6	syn_cache_interval	integer	yes
 .It udp6	sendmax	integer	yes
 .It udp6	recvspace	integer	yes
 .El
@@ -929,8 +913,12 @@ The variable enables, or disables, kernel support for
 ICMPv6 node information query/reply.
 .El
 .Pp
-Variables net.*.tcp6 and net.*.udp6 are identical to
-net.*.tcp and net.*.udp.
+We reuse net.*.tcp for
+.Tn TCP
+over
+.Tn IPv6 ,
+and therefore we do not have variables net.*.tcp6.
+Variables net.inet6.udp6 have identical meaning to net.inet.udp.
 Please refer to
 .Li PF_INET
 section above.
