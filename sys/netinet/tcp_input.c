@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.18 1995/06/12 00:47:52 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.19 1995/08/04 01:12:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -472,7 +472,7 @@ findpcb:
 				else if (tp->t_timer[TCPT_PERSIST] == 0)
 					tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 
-				if (so->so_snd.sb_flags & SB_NOTIFY)
+				if (sb_notify(&so->so_snd))
 					sowwakeup(so);
 				if (so->so_snd.sb_cc)
 					(void) tcp_output(tp);
@@ -1032,7 +1032,7 @@ trimthenstep6:
 			tp->snd_wnd -= acked;
 			ourfinisacked = 0;
 		}
-		if (so->so_snd.sb_flags & SB_NOTIFY)
+		if (sb_notify(&so->so_snd))
 			sowwakeup(so);
 		tp->snd_una = ti->ti_ack;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
