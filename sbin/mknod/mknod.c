@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.22 2001/10/08 04:20:44 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.23 2001/10/08 04:25:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.22 2001/10/08 04:20:44 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.23 2001/10/08 04:25:00 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: mknod.c,v 1.22 2001/10/08 04:20:44 lukem Exp $");
 static	void	usage(void);
 
 
-#define	MAXARGS	8
+#define	MAXARGS	3		/* 3 for bsdos, 2 for rest */
 
 int
 main(int argc, char **argv)
@@ -128,7 +128,7 @@ main(int argc, char **argv)
 		if (argc != 0)
 			usage();
 	} else {
-		if (argc < 1 || argc >= MAXARGS)
+		if (argc < 1 || argc > MAXARGS)
 			usage();
 	}
 
