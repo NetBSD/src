@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.17 1999/03/03 12:20:00 jonathan Exp $	 */
+/*	$NetBSD: reloc.c,v 1.18 1999/03/03 21:18:00 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -92,9 +92,9 @@ _rtld_do_copy_relocation(dstobj, rela, dodebug)
 	}
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
 	(void)memcpy(dstaddr, srcaddr, size);
-	rdbg(dodebug, ("COPY %s %s %s --> src=%p dst=%p *dst= %p size %d",
+	rdbg(dodebug, ("COPY %s %s %s --> src=%p dst=%p *dst= %p size %ld",
 	    dstobj->path, srcobj->path, name, (void *)srcaddr,
-	    (void *)dstaddr, (void *)*(long *)dstaddr, size));
+	    (void *)dstaddr, (void *)*(long *)dstaddr, (long)size));
 	return (0);
 }
 #endif /* RTLD_INHIBIT_COPY_RELOCS */

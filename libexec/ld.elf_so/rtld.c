@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.15 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.16 1999/03/03 21:18:00 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -263,7 +263,7 @@ _rtld(sp)
 	/* Find the auxiliary vector on the stack. */
 	/* first Elf_Word reserved to address of exit routine */
 #if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
-	dbg(("sp = %p, argc = %d, argv = %p <%s>\n", sp, sp[2],
+	dbg(("sp = %p, argc = %ld, argv = %p <%s>\n", sp, (long)sp[2],
 	     &sp[3], (char *) sp[3]));
 	dbg(("got is at %p, dynamic is at %p\n",
 	    _GLOBAL_OFFSET_TABLE_, &_DYNAMIC));
