@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.15 2000/08/12 15:29:35 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.16 2000/08/12 17:03:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -54,7 +54,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.15 2000/08/12 15:29:35 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.16 2000/08/12 17:03:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -130,8 +130,8 @@ struct ea_softc {
 	int sc_config2;			/* Current config2 bits */
 	int sc_command;			/* Current command bits */
 	int sc_irqclaimed;		/* Whether we have an IRQ claimed */
-	int sc_rx_ptr;			/* Receive buffer pointer */
-	int sc_tx_ptr;			/* Transmit buffer pointer */
+	u_int sc_rx_ptr;		/* Receive buffer pointer */
+	u_int sc_tx_ptr;		/* Transmit buffer pointer */
 };
 
 /*
@@ -149,8 +149,8 @@ static void ea_ramtest(struct ea_softc *);
 static int ea_stoptx(struct ea_softc *);
 static int ea_stoprx(struct ea_softc *);
 static void ea_stop(struct ea_softc *);
-static void ea_writebuf(struct ea_softc *, u_char *, int, int);
-static void ea_readbuf(struct ea_softc *, u_char *, int, int);
+static void ea_writebuf(struct ea_softc *, u_char *, u_int, size_t);
+static void ea_readbuf(struct ea_softc *, u_char *, u_int, size_t);
 static void earead(struct ea_softc *, int, int);
 static struct mbuf *eaget(struct ea_softc *, int, int, struct ifnet *);
 static void ea_hardreset(struct ea_softc *);
@@ -178,13 +178,13 @@ struct cfattach ea_ca = {
  */
 
 void
-ea_dump_buffer(struct ea_softc *sc, int offset)
+ea_dump_buffer(struct ea_softc *sc, u_int offset)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int addr;
+	u_int addr;
 	int loop;
-	int size;
+	size_t size;
 	int ctrl;
 	int ptr;
 	
@@ -683,24 +683,33 @@ ea_hardreset(struct ea_softc *sc)
  * address is set to addr.
  * If len != 0 then data is copied from the address starting at buf
  * to the interface buffer.
+ * BUF must be usable as a u_int16_t *.
+ * If LEN is odd, it must be safe to overwrite one extra byte.
  */
 
 static void
-ea_writebuf(struct ea_softc *sc, u_char *buf, int addr, int len)
+ea_writebuf(struct ea_softc *sc, u_char *buf, u_int addr, size_t len)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int loop;
 	int timeout;
 
 	dprintf(("writebuf: st=%04x\n",
 		 bus_space_read_2(iot, ioh, EA_8005_STATUS)));
 
+#ifdef DIAGNOSTIC*/
+	if (!ALIGNED_POINTER(buf, u_int16_t))
+		panic("%s: unaligned writebuf", sc->sc_dev.dv_xname);
+#endif
+	/* Assume that copying too much is safe. */
+	if (len % 2 != 0)
+		len++;
+
 	/*
 	 * If we have a valid buffer address set the buffer pointer and
 	 * direction.
 	 */
-	if (addr >= 0 && addr < EA_BUFFER_SIZE) {
+	if (addr < EA_BUFFER_SIZE) {
 		bus_space_write_2(iot, ioh, EA_8005_CONFIG1,
 				  sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
 		bus_space_write_2(iot, ioh, EA_8005_COMMAND,
@@ -717,15 +726,9 @@ ea_writebuf(struct ea_softc *sc, u_char *buf, int addr, int len)
 		bus_space_write_2(iot, ioh, EA_8005_DMA_ADDR, addr);
 	}
 
-	for (loop = 0; loop < len; loop += 2)
-		bus_space_write_2(iot, ioh, EA_8005_BUFWIN,
-				  buf[loop] | buf[loop + 1] << 8);
-
-#if 0
 	if (len > 0)
 		bus_space_write_multi_2(iot, ioh, EA_8005_BUFWIN,
-					buf, len / 2);
-#endif
+					(u_int16_t *)buf, len / 2);
 }
 
 
@@ -736,26 +739,34 @@ ea_writebuf(struct ea_softc *sc, u_char *buf, int addr, int len)
  * address is set to addr.
  * If len != 0 then data is copied from the interface buffer to the
  * address starting at buf.
+ * BUF must be usable as a u_int16_t *.
+ * If LEN is odd, it must be safe to overwrite one extra byte.
  */
 
 static void
-ea_readbuf(struct ea_softc *sc, u_char *buf, int addr, int len)
+ea_readbuf(struct ea_softc *sc, u_char *buf, u_int addr, size_t len)
 {
 
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int loop;
-	int word;
 	int timeout;
 
 	dprintf(("readbuf: st=%04x addr=%04x len=%d\n",
 		 bus_space_read_2(iot, ioh, EA_8005_STATUS), addr, len));
 
+#ifdef DIAGNOSTIC*/
+	if (!ALIGNED_POINTER(buf, u_int16_t))
+		panic("%s: unaligned readbuf", sc->sc_dev.dv_xname);
+#endif
+	/* Assume that copying too much is safe. */
+	if (len % 2 != 0)
+		len++;
+
 	/*
 	 * If we have a valid buffer address set the buffer pointer and
 	 * direction.
 	 */
-	if (addr >= 0 && addr < EA_BUFFER_SIZE) {
+	if (addr < EA_BUFFER_SIZE) {
 		if ((bus_space_read_2(iot, ioh, EA_8005_STATUS) &
 		     EA_STATUS_FIFO_DIR) == 0) {
 			/* Should wait here of FIFO empty flag */
@@ -789,15 +800,11 @@ ea_readbuf(struct ea_softc *sc, u_char *buf, int addr, int len)
 		while ((bus_space_read_2(iot, ioh, + EA_8005_STATUS) &
 			EA_STATUS_FIFO_FULL) == 0 && --timeout > 0)
 			continue;
-
-
 	}
 
-	for (loop = 0; loop < len; loop += 2) {
-		word = bus_space_read_2(iot, ioh, EA_8005_BUFWIN);
-		buf[loop] = word & 0xff;
-		buf[loop + 1] = word >> 8;
-	}
+	if (len > 0)
+		bus_space_read_multi_2(iot, ioh, EA_8005_BUFWIN,
+				       (u_int16_t *)buf, len / 2);
 }
 
 
@@ -1168,7 +1175,7 @@ eagetpackets(struct ea_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int addr;
+	u_int addr;
 	int len;
 	int ctrl;
 	int ptr;
@@ -1338,7 +1345,7 @@ eaget(struct ea_softc *sc, int addr, int totlen, struct ifnet *ifp)
 {
         struct mbuf *top, **mp, *m;
         int len;
-        int cp, epkt;
+        u_int cp, epkt;
 
         cp = addr;
         epkt = cp + totlen;
