@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2003/07/11 15:29:00 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.13 2003/07/25 08:26:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -133,7 +133,7 @@ md_get_info(void)
 {
 	struct disklabel disklabel;
 	int fd;
-	char devname[100];
+	char dev_name[100];
 	static char bb[DEV_BSIZE];
 	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
 	int offset = 0;
@@ -143,17 +143,17 @@ md_get_info(void)
 	else
 		disktype = "SCSI";
 
-	snprintf(devname, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
+	snprintf(dev_name, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
 
-	fd = open(devname, O_RDONLY, 0);
+	fd = open(dev_name, O_RDONLY, 0);
 	if (fd < 0) {
 		endwin();
-		fprintf(stderr, "Can't open %s\n", devname);
+		fprintf(stderr, "Can't open %s\n", dev_name);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 		endwin();
-		fprintf(stderr, "Can't read disklabel on %s.\n", devname);
+		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
 		close(fd);
 		exit(1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.18 2003/06/14 12:58:49 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.19 2003/07/25 08:26:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@
 
 typedef struct {
 	int type;               /* Entry type from above */
-	char *name;             /* Partition Type string */
+	const char *name;             /* Partition Type string */
 } MAP_TYPE;
 
 /*
@@ -246,7 +246,7 @@ EXTERN struct apple_part_map_entry new_map[]
 /*
  * Default fileystem type for floppy disks.
  */
-EXTERN char *fdtype INIT("msdos");
+EXTERN const char *fdtype INIT("msdos");
 
 /*
  *  prototypes for MD code.

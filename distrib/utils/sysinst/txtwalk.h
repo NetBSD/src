@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.h,v 1.7 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: txtwalk.h,v 1.8 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,9 +51,9 @@ struct data {
 
 /* Strings of interest! */
 struct lookfor {
-	char *head;	/* Line starts this way. */
-	char *fmt;	/* Expected format. */
-	char *todo;	/* What to do ... */
+	const char *head;	/* Line starts this way. */
+	const char *fmt;	/* Expected format. */
+	const char *todo;	/* What to do ... */
 	void *var;	/* Possible var */
 	size_t  nument;    /* Number of entries in the "array" */
 	size_t  size;	/* size of string variables */

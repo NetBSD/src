@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2003/06/13 11:57:31 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2003/07/25 08:26:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,4 +100,4 @@
  * Default fileystem type for floppy disks.
  * On hp300, if we had floppies, that would be ffs.
  */
-EXTERN	char *fdtype INIT("ffs");
+EXTERN	const char *fdtype INIT("ffs");

@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.8 2003/06/16 19:42:14 dsl Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.9 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,7 +122,7 @@ process(struct lookfor *item, char *line)
 {
 	struct data found[MAXDATA];
 	size_t numfound = 0;
-	char *p;
+	const char *p;
 	size_t  i, j;
 	
 	if (finddata(item, line, found, &numfound)) {
@@ -191,7 +191,7 @@ process(struct lookfor *item, char *line)
 static int
 finddata(struct lookfor *item, char *line, struct data *found, size_t *numfound)
 {
-	char *fmt = item->fmt;
+	const char *fmt = item->fmt;
 	size_t len;
 
 	*numfound = 0;

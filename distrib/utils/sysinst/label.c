@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.35 2003/07/08 17:38:56 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.36 2003/07/25 08:26:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.35 2003/07/08 17:38:56 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.36 2003/07/25 08:26:21 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -607,7 +607,7 @@ get_last_mounted(int fd, int partstart)
 	const static int sblocks[] = SBLOCKSEARCH;
 	const int *sbp;
 	char *cp;
-	char *mnt = "";
+	const char *mnt = "";
 	int l;
 
 	if (fd == -1)

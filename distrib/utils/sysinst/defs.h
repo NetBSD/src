@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.98 2003/07/19 22:07:36 abs Exp $	*/
+/*	$NetBSD: defs.h,v 1.99 2003/07/25 08:26:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -127,7 +127,7 @@ extern const char * const fstypenames[];
 
 /* Types */
 typedef struct distinfo {
-	char		*name;
+	const char	*name;
 	int		set;
 	const char	*desc;
 } distinfo;
@@ -178,7 +178,7 @@ EXTERN unsigned int  rammb   INIT(0);
 /* Actual name of the disk. */
 EXTERN char diskdev[SSTRSIZE] INIT("");
 EXTERN int rootpart;				/* partition we install into */
-EXTERN char *disktype INIT("unknown");		/* ST506, SCSI, ... */
+EXTERN const char *disktype INIT("unknown");		/* ST506, SCSI, ... */
 
 /* Area of disk we can allocate, start and size in disk sectors. */
 EXTERN int ptstart, ptsize;	
@@ -198,7 +198,7 @@ EXTERN int tmp_mfs_size INIT(0);
 
 #define DISKNAME_SIZE 80
 EXTERN char bsddiskname[DISKNAME_SIZE];
-EXTERN char *doessf INIT("");
+EXTERN const char *doessf INIT("");
 
 /* other vars for menu communication */
 EXTERN int  nodist;
@@ -352,7 +352,7 @@ int	get_via_floppy(void);
 int	get_via_cdrom(void);
 int	get_via_localfs(void);
 int	get_via_localdir(void);
-void	cd_dist_dir(char *);
+void	cd_dist_dir(const char *);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
 void	ask_verbose_dist(void);
@@ -386,7 +386,7 @@ int	target_chdir(const char *);
 void	target_chdir_or_die(const char *);
 int	target_already_root(void);
 FILE	*target_fopen(const char *, const char *);
-int	target_collect_file(int, char **, char *);
+int	target_collect_file(int, char **, const char *);
 int	is_active_rootpart(const char *);
 int	cp_to_target(const char *, const char *);
 void	dup_file_into_target(const char *);
