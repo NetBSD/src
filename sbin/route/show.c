@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.4 1997/09/15 09:15:29 lukem Exp $	*/
+/*	$NetBSD: show.c,v 1.5 1997/11/16 17:03:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.4 1997/09/15 09:15:29 lukem Exp $");
+__RCSID("$NetBSD: show.c,v 1.5 1997/11/16 17:03:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: show.c,v 1.4 1997/09/15 09:15:29 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -118,14 +119,10 @@ show(argc, argv)
 		perror("route-sysctl-estimate");
 		exit(1);
 	}
-	if ((buf = malloc(needed)) == 0) {
-		printf("out of space\n");
-		exit(1);
-	}
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
-		perror("sysctl of routing table");
-		exit(1);
-	}
+	if ((buf = malloc(needed)) == 0)
+		err(1, "%s", "");
+	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		err(1, "sysctl of routing table");
 	lim  = buf + needed;
 
 	printf("Routing tables\n");
