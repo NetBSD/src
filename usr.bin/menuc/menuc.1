@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.17 2003/06/04 19:07:39 dsl Exp $
+.\"	$NetBSD: menuc.1,v 1.18 2003/06/09 18:48:41 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -363,8 +363,8 @@ struct menudesc {
         WINDOW      *mw;
         const char  *helpstr;
         const char  *exitstr;
-        void       (*post_act)(void);
-        void       (*exit_act)(void);
+        void       (*post_act)(struct menudesc *, void *);
+        void       (*exit_act)(struct menudesc *, void *);
 } menudesc ;
 
 /* defines for mopt field. */
@@ -376,7 +376,8 @@ struct menudesc {
 
 int new_menu (char * title, menu_ent * opts, int numopts,
         int x, int y, int h, int w, int mopt,
-        void (*post_act)(void), void (*exit_act)(void), char * help);
+        void (*post_act)(struct menudesc *, void *),
+        void (*exit_act)(struct menudesc *, void *), char *help);
 
 void free_menu (int menu_no);
 .Ed
