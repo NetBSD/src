@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.6 1998/11/06 23:10:08 christos Exp $	*/
+/*	$NetBSD: pi.c,v 1.7 2000/01/14 06:53:48 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.6 1998/11/06 23:10:08 christos Exp $");
+__RCSID("$NetBSD: pi.c,v 1.7 2000/01/14 06:53:48 mjl Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -248,7 +248,7 @@ pi()
 		 *	Where the | is intended to be a down arrow, so that
 		 *	the pi error messages can be inserted above the
 		 *	line in error, instead of below.  (All of the other
-		 *	languages put thier messages before the source line,
+		 *	languages put their messages before the source line,
 		 *	instead of after it as does pi.)
 		 *
 		 *	where the pointer to the error has been truncated
