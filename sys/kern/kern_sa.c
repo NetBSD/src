@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.13 2002/01/28 18:07:42 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.14 2002/01/30 17:56:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -360,71 +360,75 @@ sa_switch(struct lwp *l, int type)
 		 * has been woken up and put to sleep again without
 		 * returning to userland. We don't want to send a
 		 * second BLOCKED upcall.
+		 *
+		 * Instead, simply let the LWP that was running before
+		 * we woke up have another go.
 		 */
 		l2 = sa->sa_preempted;
 	} else {
-
-	/* Get an LWP */
-	/* The process of allocating a new LWP could cause
-         * sleeps. We're called from inside sleep, so that would be
-         * Bad. Therefore, we must use a cached new LWP. The first
-         * thing that this new LWP must do is allocate another LWP for
-         * the cache.
-	 */
-	if (sa->sa_ncached == 0) {
-		/* XXXSMP */
-		/* No upcall for you! */
-		/* XXX The consequences of this are more subtle and
-		 * XXX the recovery from this situation deserves
-		 * XXX more thought.
+		/* Get an LWP */
+		/* The process of allocating a new LWP could cause
+		 * sleeps. We're called from inside sleep, so that
+		 * would be Bad. Therefore, we must use a cached new
+		 * LWP. The first thing that this new LWP must do is
+		 * allocate another LWP for the cache.  
 		 */
-		mi_switch(l, NULL);
-		return;
-	}
+		if (sa->sa_ncached == 0) {
+			/* XXXSMP */
+			/* No upcall for you! */
+			/* XXX The consequences of this are more subtle and
+			 * XXX the recovery from this situation deserves
+			 * XXX more thought.
+			 */
+			mi_switch(l, NULL);
+			return;
+		}
 
-	/* XXX lock sadata */
-	sa->sa_ncached--;
-	l2 = LIST_FIRST(&sa->sa_lwpcache);
-	LIST_REMOVE(l2, l_sibling);
-	DPRINTFN(5,("sa_switch(%d.%d) Got LWP %d(%x) from cache.\n",
-	    p->p_pid,l->l_lid, l2->l_lid, l2->l_flag));
-	/* XXX unlock */
-
-	/*
-	 * XXX We need to allocate the sadata_upcall structure here,
-	 * XXX since we can't sleep while waiting for memory inside
-	 * XXX sa_upcall().  It would be nice if we could safely
-	 * XXX allocate the sadata_upcall structure on the stack, here.
-	 */
-	sd = sadata_upcall_alloc(0);
-	if (sd == NULL)
-		goto sa_upcall_failed;
-
-	cpu_setfunc(l2, sa_switchcall, l);
-	error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, sd);
-	if (error) {
- sa_upcall_failed:
-		/* Put the lwp back */
 		/* XXX lock sadata */
-		DPRINTFN(4,("sa_switch(%d.%d) Error %d in sa_upcall!\n",
-		    p->p_pid, l->l_lid, error));
-		LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
-		sa->sa_ncached++;
+		sa->sa_ncached--;
+		l2 = LIST_FIRST(&sa->sa_lwpcache);
+		LIST_REMOVE(l2, l_sibling);
+		DPRINTFN(5,("sa_switch(%d.%d) Got LWP %d(%x) from cache.\n",
+		    p->p_pid,l->l_lid, l2->l_lid, l2->l_flag));
 		/* XXX unlock */
-		mi_switch(l, NULL);
-		return;
-	}
-	LIST_INSERT_HEAD(&p->p_lwps, l2, l_sibling);
-	p->p_nlwps++;
-	p->p_nrlwps++;
-	l->l_flag |= L_SA_BLOCKING;
-	l2->l_priority = l2->l_usrpri;
-	setrunnable(l2);
-	PRELE(l2); /* Remove the artificial hold-count */
+		
+		/*
+		 * XXX We need to allocate the sadata_upcall structure here,
+		 * XXX since we can't sleep while waiting for memory inside
+		 * XXX sa_upcall().  It would be nice if we could safely
+		 * XXX allocate the sadata_upcall structure on the stack, here.
+		 */
 
-	KDASSERT(l2 != l);
-	KDASSERT(l2->l_wchan == 0);
+		sd = sadata_upcall_alloc(0);
+		if (sd == NULL)
+			goto sa_upcall_failed;
 
+		cpu_setfunc(l2, sa_switchcall, l);
+		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, 
+		    sd);
+		if (error) {
+		sa_upcall_failed:
+			/* Put the lwp back */
+			/* XXX lock sadata */
+			DPRINTFN(4,("sa_switch(%d.%d) Error %d in sa_upcall!\n",
+			    p->p_pid, l->l_lid, error));
+			LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
+			sa->sa_ncached++;
+			/* XXX unlock */
+			mi_switch(l, NULL);
+			return;
+		}
+		
+		LIST_INSERT_HEAD(&p->p_lwps, l2, l_sibling);
+		p->p_nlwps++;
+		p->p_nrlwps++;
+		l->l_flag |= L_SA_BLOCKING;
+		l2->l_priority = l2->l_usrpri;
+		setrunnable(l2);
+		PRELE(l2); /* Remove the artificial hold-count */
+		
+		KDASSERT(l2 != l);
+		KDASSERT(l2->l_wchan == 0);
 	}
 
 	DPRINTFN(4,("sa_switch(%d.%d) switching to ", p->p_pid, l->l_lid));
