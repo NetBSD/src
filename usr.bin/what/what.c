@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.5 1997/10/20 02:31:34 mrg Exp $	*/
+/*	$NetBSD: what.c,v 1.6 1997/10/20 03:16:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: what.c,v 1.5 1997/10/20 02:31:34 mrg Exp $");
+__RCSID("$NetBSD: what.c,v 1.6 1997/10/20 03:16:31 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ main(argc, argv)
 void
 search()
 {
-	register int c;
+	int c;
 
 	while ((c = getchar()) != EOF) {
 loop:		if (c != '@')

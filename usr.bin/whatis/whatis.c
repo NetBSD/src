@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.5 1997/10/17 07:08:06 mikel Exp $	*/
+/*	$NetBSD: whatis.c,v 1.6 1997/10/20 03:17:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.5 1997/10/17 07:08:06 mikel Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.6 1997/10/20 03:17:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ whatis(argv, path, buildpath)
 	char **argv, *path;
 	int buildpath;
 {
-	register char *end, *name, **p;
+	char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
 	char hold[MAXPATHLEN + 1];
 
@@ -192,10 +192,10 @@ whatis(argv, path, buildpath)
  */
 int
 match(bp, str)
-	register char *bp, *str;
+	char *bp, *str;
 {
-	register int len;
-	register char *start;
+	int len;
+	char *start;
 
 	if (!*str || !*bp)
 		return(0);
@@ -217,9 +217,9 @@ match(bp, str)
  */
 void
 dashtrunc(from, to)
-	register char *from, *to;
+	char *from, *to;
 {
-	register int ch;
+	int ch;
 
 	for (; (ch = *from) && ch != '\n' &&
 	    (ch != ' ' || from[1] != '-' || from[2] != ' '); ++from)
