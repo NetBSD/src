@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.mbr,v 1.4 2003/07/01 13:36:59 simonb Exp $
+#	$NetBSD: Makefile.mbr,v 1.5 2004/08/31 22:57:13 uwe Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=		# defined
-STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -11,6 +10,8 @@ LIBCRTEND=	# nothing
 LIBC=		# nothing
 
 .include <bsd.own.mk>
+
+STRIPFLAG=	# override
 
 SRCS?= mbr.S
 
