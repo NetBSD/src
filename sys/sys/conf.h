@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.2.7 2002/09/06 08:49:52 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.2.8 2002/09/24 10:45:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -564,7 +564,6 @@ cdev_decl(ctty);
 
 #define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
-#define	ptckqfilter	ttykqfilter
 cdev_decl(ptc);
 
 #define	ptstty		ptytty
