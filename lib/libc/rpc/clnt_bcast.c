@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.3 2000/07/06 03:05:20 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.4 2001/01/04 14:42:18 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -70,6 +70,7 @@ static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #ifdef RPC_DEBUG
 #include <stdio.h>
 #endif
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -137,6 +138,8 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 	struct sockaddr_in *sin;
 	struct addrinfo hints, *res;
 
+	_DIAGASSERT(list != NULL);
+
 	if (getifaddrs(&ifp) < 0)
 		return 0;
 
@@ -162,19 +165,20 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 		if (bip == NULL)
 			break;
 		bip->index = if_nametoindex(ifap->ifa_name);
+		if (
 #ifdef INET6
-		if (af != AF_INET6 && (ifap->ifa_flags & IFF_BROADCAST)) {
-#else
-		if (ifap->ifa_flags & IFF_BROADCAST) {
+		    af != AF_INET6 &&
 #endif
+		    (ifap->ifa_flags & IFF_BROADCAST)) {
 			memcpy(&bip->broadaddr, ifap->ifa_broadaddr,
 			    (size_t)ifap->ifa_broadaddr->sa_len);
 			sin = (struct sockaddr_in *)(void *)&bip->broadaddr;
 			sin->sin_port =
 			    ((struct sockaddr_in *)
 			    (void *)res->ai_addr)->sin_port;
+		}
 #ifdef INET6
-		} else if (af == AF_INET6) {
+		else if (af == AF_INET6) {
 			sin6 = (struct sockaddr_in6 *)(void *)&bip->broadaddr;
 			inet_pton(af, RPCB_MULTICAST_ADDR, &sin6->sin6_addr);
 			sin6->sin6_family = af;
@@ -183,8 +187,8 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 			    ((struct sockaddr_in6 *)
 			    (void *)res->ai_addr)->sin6_port;
 			sin6->sin6_scope_id = bip->index;
-#endif
 		}
+#endif
 		TAILQ_INSERT_TAIL(list, bip, link);
 		count++;
 	}
@@ -198,6 +202,8 @@ void
 __rpc_freebroadifs(broadlist_t *list)
 {
 	struct broadif *bip, *next;
+
+	_DIAGASSERT(list != NULL);
 
 	bip = TAILQ_FIRST(list);
 
@@ -215,6 +221,8 @@ __rpc_broadenable(int af, int s, struct broadif *bip)
 	int o = 1;
 
 #if 0
+	_DIAGASSERT(bip != NULL);
+
 	if (af == AF_INET6) {
 		fprintf(stderr, "set v6 multicast if to %d\n", bip->index);
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_IF, &bip->index,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.3 2000/07/14 08:40:42 fvdl Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.4 2001/01/04 14:42:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,6 +41,8 @@
 #include "namespace.h"
 #include <rpc/rpc.h>
 
+#include <assert.h>
+
 /* Link list of all the stats about getport and getaddr */
 
 #ifdef __weak_alias
@@ -58,6 +60,8 @@ xdr_rpcbs_addrlist(xdrs, objp)
 	XDR *xdrs;
 	rpcbs_addrlist *objp;
 {
+
+	_DIAGASSERT(objp != NULL);
 
 	    if (!xdr_u_int32_t(xdrs, &objp->prog)) {
 		return (FALSE);
@@ -92,6 +96,9 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 	rpcbs_rmtcalllist *objp;
 {
 	int32_t *buf;
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
 
 	if (xdrs->x_op == XDR_ENCODE) {
 	buf = XDR_INLINE(xdrs, 6 * BYTES_PER_XDR_UNIT);
@@ -240,6 +247,8 @@ xdr_rpcb_stat(xdrs, objp)
 	XDR *xdrs;
 	rpcb_stat *objp;
 {
+
+	_DIAGASSERT(objp != NULL);
 
 	if (!xdr_rpcbs_proc(xdrs, objp->info)) {
 		return (FALSE);
