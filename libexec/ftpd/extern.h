@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.24 2000/01/13 00:04:31 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.25 2000/03/05 06:12:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -204,35 +204,44 @@ extern  int		yyparse __P((void));
 #define	GLOBAL	extern
 #endif
 
+
+GLOBAL	union sockunion	ctrl_addr;
+GLOBAL	union sockunion	data_dest;
+GLOBAL	union sockunion	data_source;
+GLOBAL	union sockunion	his_addr;
+GLOBAL	union sockunion	pasv_addr;
 GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
-GLOBAL	union sockunion data_dest;
 GLOBAL	int		debug;
 GLOBAL	jmp_buf		errcatch;
 GLOBAL	int		form;
 GLOBAL	int		hasyyerrored;
-GLOBAL	union sockunion his_addr;
-GLOBAL	char		hostname[];
+GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
 #ifdef KERBEROS5
 GLOBAL	krb5_context	kcontext;
 #endif
 GLOBAL	int		logged_in;
 GLOBAL	int		logging;
-GLOBAL	int		pdata;
-GLOBAL	char		proctitle[];
+GLOBAL	int		pdata;			/* for passive mode */
+#ifdef HASSETPROCTITLE
+GLOBAL	char		proctitle[BUFSIZ];	/* initial part of title */
+#endif
 GLOBAL	struct passwd  *pw;
 GLOBAL	int		quietmessages;
-GLOBAL	char		remotehost[];
+GLOBAL	char		remotehost[MAXHOSTNAMELEN+1];
 GLOBAL	off_t		restart_point;
-GLOBAL	char		tmpline[];
+GLOBAL	char		tmpline[7];
 GLOBAL	sig_atomic_t	transflag;
 GLOBAL	int		type;
-GLOBAL	int		usedefault;
-GLOBAL	const char	version[];
+GLOBAL	int		usedefault;		/* for data transfers */
 
+						/* total file data bytes */
 GLOBAL	off_t		total_data_in,  total_data_out,  total_data;
+						/* total number of data files */
 GLOBAL	off_t		total_files_in, total_files_out, total_files;
+						/* total bytes */
 GLOBAL	off_t		total_bytes_in, total_bytes_out, total_bytes;
+						/* total number of xfers */
 GLOBAL	off_t		total_xfers_in, total_xfers_out, total_xfers;
 
 

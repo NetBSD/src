@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.86 2000/02/14 03:26:06 aidan Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.87 2000/03/05 06:12:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.86 2000/02/14 03:26:06 aidan Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.87 2000/03/05 06:12:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,52 +171,19 @@ __RCSID("$NetBSD: ftpd.c,v 1.86 2000/02/14 03:26:06 aidan Exp $");
 #include <varargs.h>
 #endif
 
-const char version[] = FTPD_VERSION;
-
-union sockunion  ctrl_addr;
-union sockunion  data_source;
-union sockunion  data_dest;
-union sockunion  his_addr;
-union sockunion  pasv_addr;
-
 int	data;
-jmp_buf	errcatch, urgcatch;
-int	logged_in;
-int	connections = 1;
+jmp_buf	urgcatch;
 struct	passwd *pw;
-int	debug;
 int	sflag;
-int	logging;
-int	type;
-int	form;
 int	stru;			/* avoid C keyword */
 int	mode;
 int	doutmp = 0;		/* update utmp file */
-int	usedefault = 1;		/* for data transfers */
-int	pdata = -1;		/* for passive mode */
 int	mapped = 0;		/* IPv4 connection on AF_INET6 socket */
-sig_atomic_t transflag;
 off_t	file_size;
 off_t	byte_count;
-char	tmpline[7];
-char	hostname[MAXHOSTNAMELEN+1];
-char	remotehost[MAXHOSTNAMELEN+1];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static struct utmp utmp;	/* for utmp */
-
-off_t	total_data_in;		/* total file data bytes received */
-off_t	total_data_out;		/* total file data bytes sent data */
-off_t	total_data;		/* total file data bytes transferred data */
-off_t	total_files_in;		/* total number of data files received */
-off_t	total_files_out;	/* total number of data files sent */
-off_t	total_files;		/* total number of data files transferred */
-off_t	total_bytes_in;		/* total bytes received */
-off_t	total_bytes_out;	/* total bytes sent */
-off_t	total_bytes;		/* total bytes transferred */
-off_t	total_xfers_in;		/* total number of xfers incoming */
-off_t	total_xfers_out;	/* total number of xfers outgoing */
-off_t	total_xfers;		/* total number of xfers */
 
 static char *anondir = NULL;
 static char confdir[MAXPATHLEN];
@@ -238,10 +205,6 @@ int epsvall = 0;
 
 int	swaitmax = SWAITMAX;
 int	swaitint = SWAITINT;
-
-#ifdef HASSETPROCTITLE
-char	proctitle[BUFSIZ];	/* initial part of title */
-#endif /* HASSETPROCTITLE */
 
 #define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
 		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \
@@ -282,9 +245,12 @@ main(argc, argv)
 	krb5_error_code	kerror;
 #endif
 
+	connections = 1;
 	debug = 0;
 	logging = 0;
+	pdata = -1;
 	sflag = 0;
+	usedefault = 1;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 	hostname[0] = '\0';
 
@@ -473,7 +439,7 @@ main(argc, argv)
 	}
 	(void)format_file(conffilename(_PATH_FTPWELCOME), 220);
 		/* reply(220,) must follow */
-	reply(220, "%s FTP server (%s) ready.", hostname, version);
+	reply(220, "%s FTP server (%s) ready.", hostname, FTPD_VERSION);
 
 	(void) setjmp(errcatch);
 	for (;;)
@@ -1733,7 +1699,7 @@ statcmd()
 	a = p = (u_char *)NULL;
 
 	lreply(211, "%s FTP server status:", hostname);
-	lreply(0, "%s", version);
+	lreply(0, "Version: %s", FTPD_VERSION);
 	ntop_buf[0] = '\0';
 	if (!getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
 			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
