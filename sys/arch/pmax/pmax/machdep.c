@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 1999/03/26 23:41:34 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 1999/03/28 01:56:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 1999/03/26 23:41:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 1999/03/28 01:56:41 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -244,11 +244,15 @@ mach_init(argc, argv, code, cv, bim, bip)
 {
 	char *cp, *bootinfo_msg;
 	u_long first, last;
-	int i, nsym;
-	caddr_t kernend, v, ssym;
+	int i;
+	caddr_t kernend, v;
 	unsigned size;
+#ifdef DDB
+	int nsym;
+	caddr_t ssym;
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
+#endif
 
 	extern char edata[], end[];
 
