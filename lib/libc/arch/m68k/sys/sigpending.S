@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.2 1995/12/13 22:18:12 thorpej Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.3 1998/10/05 02:34:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,11 +43,11 @@
 #if 0
 	RCSID("from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90")
 #else
-	RCSID("$NetBSD: sigpending.S,v 1.2 1995/12/13 22:18:12 thorpej Exp $")
+	RCSID("$NetBSD: sigpending.S,v 1.3 1998/10/05 02:34:21 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-SYSCALL(sigpending)
+_SYSCALL(sigpending,compat_13_sigpending13)
 	movl	sp@(4),a0
 	movl	d0,a0@
 	clrl	d0

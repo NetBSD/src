@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.1 1998/10/05 02:34:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,35 +37,45 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
+	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
+	RCSID("$NetBSD: __sigsetjmp14.S,v 1.1 1998/10/05 02:34:18 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-ENTRY(sigprocmask)
-	tstl	sp@(8)			/* check new sigset pointer */
-	jne	gotptr			/* if not null, indirect */
-/*	movl	#0,sp@(8)		/* null mask pointer: block empty set */
-	movl	#1,sp@(4)		/* SIG_BLOCK */
-	jra	doit
-gotptr:
-	movl	sp@(8),a0
-	movl	a0@,sp@(8)		/* indirect to new mask arg */
-doit:
-	movl	#SYS_compat_13_sigprocmask13,d0
-	trap	#0
-	jcs	err
-	tstl	sp@(12)			/* test if old mask requested */
-	jeq	out
-	movl	sp@(12),a0
-	movl	d0,a0@			/* store old mask */
-out:
-	clrl	d0
-	rts
-err:
-	jra	cerror
+/*
+ * C library -- sigsetjmp, siglongjmp
+ *
+ *	siglongjmp(a,v)
+ * will generate a "return(v)" from
+ * the last call to
+ *	sigsetjmp(a,m)
+ * by restoring registers from the stack,
+ * The previous signal state is restored if 'm' was non-zero.
+ */
+
+/* grab _JBLEN */
+#include <m68k/setjmp.h>
+
+ENTRY(__sigsetjmp14)
+	movl	sp@(8),d1	/* grab the mask */
+        movl	sp@(4),a0	/* grab the area pointer */
+	movl	d1,a0@(_JBLEN * 4)	/* save at end of area */
+	tstl	d1
+	bne	dosig
+	jra	_C_LABEL(_setjmp)
+dosig:
+	jra	_C_LABEL(__setjmp14)
+
+
+ENTRY(__siglongjmp14)
+	movl	sp@(4),a0	/* save area pointer */
+	tstl	a0@(_JBLEN * 4) /* check mask... */
+	bne	didsig
+	jra	_C_LABEL(_longjmp)
+didsig:
+	jra	_C_LABEL(__longjmp14)
