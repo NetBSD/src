@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.2 2004/07/14 00:12:28 wiz Exp $	*/
+/*	$NetBSD: node.c,v 1.3 2004/08/29 08:16:18 martin Exp $	*/
 
 /* node.c -- nodes for Texinfo.
    Id: node.c,v 1.19 2004/02/29 13:23:51 dirt Exp
@@ -1717,7 +1717,7 @@ split_file (char *filename, int size)
     return;
   file_size = (long) fileinfo.st_size;
 
-  the_file = find_and_load (filename, 1);
+  the_file = find_and_load (filename, 0);
   if (!the_file)
     return;
 
