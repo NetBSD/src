@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.11 2000/09/13 07:08:26 matt Exp $
+# $NetBSD: md.vax,v 1.12 2000/11/30 16:06:25 jdolecek Exp $
 ./boot
 ./pcs750.bin
 ./sbin/ldconfig
@@ -12,6 +12,7 @@
 ./usr/lkm/ext2fs.o
 ./usr/lkm/fdesc.o
 ./usr/lkm/if_ipl.o
+./usr/lkm/lfs.o
 ./usr/lkm/kernfs.o
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o
