@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.12 2002/09/14 05:00:58 thorpej Exp $
+#	$NetBSD: lorder.sh,v 1.13 2005/01/04 18:09:33 fredb Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -106,4 +106,4 @@ sed -ne 's/:.* U / /p' <$N >$R
 # join on that field, and print out the file names.
 sort +1 $R -o $R
 sort +1 $S -o $S
-join -j 2 -o 1.1 2.1 $R $S
+join -j 2 -o 1.1,2.1 $R $S
