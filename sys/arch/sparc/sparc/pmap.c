@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 1997/03/25 23:04:02 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.77 1997/03/31 19:53:41 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -343,6 +343,8 @@ int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ vm_offset_t	avail_end;	/* last free physical page */
 /*static*/ vm_offset_t	avail_next;	/* pmap_next_page() state:
 					   next free physical page */
+/*static*/ vm_offset_t	unavail_start;	/* first stolen free physical page */
+/*static*/ vm_offset_t	unavail_end;	/* last stolen free physical page */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
 
@@ -430,7 +432,7 @@ u_int	getptesw4m __P((struct pmap *pm, vm_offset_t va));
 static void mmu_setup4m_L1 __P((int, struct pmap *));
 static void mmu_setup4m_L2 __P((int, struct regmap *));
 static void  mmu_setup4m_L3 __P((int, struct segmap *));
-/*static*/ void	mmu_reservemon4m __P((struct pmap *, caddr_t *));
+/*static*/ void	mmu_reservemon4m __P((struct pmap *));
 
 /*static*/ void pmap_rmk4m __P((struct pmap *, vm_offset_t, vm_offset_t,
                           int, int));
@@ -813,7 +815,8 @@ pmap_next_page(paddr)
 		if (++cpmemarr == npmemarr)
 			return FALSE;
 		avail_next = pmemarr[cpmemarr].addr;
-	}
+	} else if (avail_next == unavail_start)
+		avail_next = unavail_end;
 
 #ifdef DIAGNOSTIC
         /* Any available memory remaining? */
@@ -992,9 +995,8 @@ mmu_reservemon4_4c(nrp, nsp)
  * NOTE: This also revokes all user-mode access to the mapped regions.
  */
 void
-mmu_reservemon4m(kpmap, kmemtop)
+mmu_reservemon4m(kpmap)
 	struct pmap *kpmap;
-	register caddr_t *kmemtop; /* Note: this is a *virtual* address! */
 {
 	unsigned int rom_ctxtbl;
 	register int te;
@@ -1029,7 +1031,8 @@ mmu_reservemon4m(kpmap, kmemtop)
 	switch (te & SRMMU_TETYPE) {
 	case SRMMU_TEINVALID:
 		cpuinfo.ctx_tbl[0] = SRMMU_TEINVALID;
-		panic("mmu_reservemon4m: no existing L0 mapping! (How are we running?");
+		panic("mmu_reservemon4m: no existing L0 mapping! "
+		      "(How are we running?");
 		break;
 	case SRMMU_TEPTE:
 #ifdef DEBUG
@@ -1086,7 +1089,8 @@ mmu_setup4m_L1(regtblptd, kpmap)
 
 		case SRMMU_TEPTE:
 #ifdef DEBUG
-			printf("mmu_reservemon4m: converting region 0x%x from L1->L3\n",i);
+			printf("mmu_reservemon4m: "
+			       "converting region 0x%x from L1->L3\n", i);
 #endif
 			/*
 			 * This region entry covers 64MB of memory -- or
@@ -2566,7 +2570,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 {
 	register union ctxinfo *ci;
 	register struct mmuentry *mmuseg;
-#ifdef SUN4_MMU3SUN4_MMU3L
+#if defined(SUN4_MMU3L)
 	register struct mmuentry *mmureg;
 #endif
 	struct   regmap *rp;
@@ -2935,14 +2939,11 @@ pmap_bootstrap4m(void)
 	register caddr_t q;
 	register union ctxinfo *ci;
 	register struct memarr *mp;
-	struct   regmap *rmapp = NULL;
-	struct	 segmap *smapp = NULL;
 	register int reg, seg;
 	unsigned int ctxtblsize;
 #if 0
 	int nkreg, nkseg, nkpag, kernsize, newpgs;
 #endif
-	int deadfill, deadspace;
 	extern char end[];
 	extern char etext[];
 #ifdef DDB
@@ -2966,8 +2967,6 @@ pmap_bootstrap4m(void)
 	pmap_rmk_p		=	pmap_rmk4m;
 	pmap_rmu_p		=	pmap_rmu4m;
 #endif /* defined Sun4/Sun4c */
-
-/*XXX-GCC!*/ci = 0;
 
 	/*
 	 * Intialize the kernel pmap.
@@ -3001,93 +3000,80 @@ pmap_bootstrap4m(void)
 		theend = p = esym;
 #endif
 
-#if 0
+
 	/* Allocate context administration */
 	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
 	bzero((caddr_t)ci, (u_int)p - (u_int)ci);
+#if 0
 	ctxbusyvector = p;
 	p += ncontext;
 	bzero(ctxbusyvector, ncontext);
 	ctxbusyvector[0] = 1;	/* context 0 is always in use */
 #endif
 
+
+	/*
+	 * Set up the `constants' for the call to vm_init()
+	 * in main().  All pages beginning at p (rounded up to
+	 * the next whole page) and continuing through the number
+	 * of available pages are free.
+	 */
+	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	avail_start = (int)p - KERNBASE;
+	/*
+	 * Grab physical memory list use it to compute `physmem' and
+	 * `avail_end'. The latter is used in conjuction with
+	 * `avail_start' and `avail_next' to dispatch left-over
+	 * physical pages to the VM system.
+	 */
+	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	sortm(pmemarr, npmemarr);
+	if (pmemarr[0].addr != 0) {
+		printf("pmap_bootstrap: no kernel memory?!\n");
+		callrom();
+	}
+	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
+	avail_next = avail_start;
+	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
+		physmem += btoc(mp->len);
+
+	/*
+	 * Reserve memory for MMU pagetables. Some of these have severe
+	 * alignment restrictions. We allocate in a sequence that
+	 * minimizes alignment gaps.
+	 * The amount of physical memory that becomes unavailable for
+	 * general VM use is marked by [unavail_start, unavail_end>.
+	 */
+
 	/*
 	 * Reserve memory for I/O pagetables. This takes 64k of memory
 	 * since we want to have 64M of dvma space (this actually depends
-	 * on the definition of DVMA4M_BASE...we may drop it back to 32M)
-	 * but since the table must be aligned, we might end up using
-	 * as much as 128K. (note 1024 = NBPG / sizeof(iopte_t))
-	 *
-	 * We optimize with some space saving song and dance to
-	 * squeeze other pagetables in the dead space.
+	 * on the definition of DVMA4M_BASE...we may drop it back to 32M).
+	 * The table must be aligned on a (-DVMA4M_BASE/NBPG) boundary
+	 * (i.e. 64K for 64M of dvma space).
 	 */
 #ifdef DEBUG
 	if ((0 - DVMA4M_BASE) % (16*1024*1024))
 	    panic("pmap_bootstrap4m: invalid DVMA4M_BASE of 0x%x", DVMA4M_BASE);
 #endif
 
-	deadfill = 0;
-	p = (caddr_t) roundup((u_int) p, sizeof(long) *
-			max(SRMMU_L1SIZE, max(SRMMU_L2SIZE, SRMMU_L3SIZE)));
-
-	deadspace = (int) (
-		((caddr_t)roundup((u_int)p, (0 - DVMA4M_BASE) / 1024)) - p);
-
-	if (deadspace >= SRMMU_L3SIZE * sizeof(long) * NKREG * NSEGRG) {
-		p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(long));
-		kernel_pagtable_store = (u_int *)p;
-		p += ((SRMMU_L3SIZE * sizeof(long)) * NKREG) * NSEGRG;
-		bzero(kernel_pagtable_store,
-		      p - (caddr_t) kernel_pagtable_store);
-		deadfill |= 8;
-		deadspace -= (int)(p - (caddr_t) kernel_pagtable_store);
-	}
-	if (deadspace >= ncontext * sizeof(union ctxinfo)) {
-		/* Allocate context administration */
-		ci = (union ctxinfo *)p;
-		p += ncontext * sizeof *ci;
-		bzero((caddr_t)ci, (u_int)p - (u_int)ci);
-		deadfill |= 4;
-		deadspace -= (int)(p - (caddr_t)ci);
-	}
-	if (deadspace >= SRMMU_L2SIZE * sizeof(long) * NKREG) {
-		p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(long));
-		kernel_segtable_store = (u_int *)p;
-		p += (SRMMU_L2SIZE * sizeof(long)) * NKREG;
-		bzero(kernel_segtable_store,
-		      p - (caddr_t) kernel_segtable_store);
-		deadfill |= 2;
-		deadspace -= (int)(p - (caddr_t) kernel_segtable_store);
-	}
-	if (deadspace >= SRMMU_L1SIZE * sizeof(long)) {
-		p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(long));
-		kernel_regtable_store = (u_int *)p;
-		p += SRMMU_L1SIZE * sizeof(long);
-		bzero(kernel_regtable_store,
-		      p - (caddr_t) kernel_regtable_store);
-		deadfill |= 1;
-		deadspace -= (int)(p - (caddr_t) kernel_regtable_store);
-	}
-	if (deadspace < 0)
-		printf("pmap_bootstrap4m: botch in memory-saver\n");
-
 	p = (caddr_t) roundup((u_int)p, (0 - DVMA4M_BASE) / 1024);
+	unavail_start = (int)p - KERNBASE;
+
 	kernel_iopte_table = (u_int *)p;
 	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
 	p += (0 - DVMA4M_BASE) / 1024;
 	bzero(kernel_iopte_table, p - (caddr_t) kernel_iopte_table);
 
 	/*
-	 * Allocate context table. We put it right after the IOPTEs,
-	 * so we avoid alignment-induced wastage.
+	 * Allocate context table.
 	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
 	 */
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
 	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
 	qzero(cpuinfo.ctx_tbl, ctxtblsize);
-
 
 	/*
 	 * Reserve memory for segment and page tables needed to map the entire
@@ -3099,39 +3085,33 @@ pmap_bootstrap4m(void)
 	 * pmap_enk4m to enter the new malloc'd page; pmap_enk4m needs to
 	 * malloc a page table to enter _that_ mapping; malloc deadlocks since
 	 * it is already allocating that object).
-	 *
-	 * We only do this if it wasn't done above...
 	 */
-	if (!(deadfill & 2)) {
-		p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(long));
-		kernel_segtable_store = (u_int *)p;
-		p += (SRMMU_L2SIZE * sizeof(long)) * NKREG;
-		bzero(kernel_segtable_store,
-		      p - (caddr_t) kernel_segtable_store);
-	}
-	if (!(deadfill & 8)) {
-		p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(long));
-		kernel_pagtable_store = (u_int *)p;
-		p += ((SRMMU_L3SIZE * sizeof(long)) * NKREG) * NSEGRG;
-		bzero(kernel_pagtable_store,
-		      p - (caddr_t) kernel_pagtable_store);
-	}
-	if (!(deadfill & 1)) {
-		p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(long));
-		kernel_regtable_store = (u_int *)p;
-		p += SRMMU_L1SIZE * sizeof(long);
-		bzero(kernel_regtable_store,
-		      p - (caddr_t) kernel_regtable_store);
-	}
-	if (!(deadfill & 4)) {
-		/* Allocate context administration */
-		p = (caddr_t) roundup((u_int)p, sizeof(long));
-		ci = (union ctxinfo *)p;
-		p += ncontext * sizeof *ci;
-		bzero((caddr_t)ci, (u_int)p - (u_int)ci);
-	}
+	p = (caddr_t) roundup((u_int)p, SRMMU_L1SIZE * sizeof(long));
+	kernel_regtable_store = (u_int *)p;
+	p += SRMMU_L1SIZE * sizeof(long);
+	bzero(kernel_regtable_store,
+	      p - (caddr_t) kernel_regtable_store);
 
-	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci;
+	p = (caddr_t) roundup((u_int)p, SRMMU_L2SIZE * sizeof(long));
+	kernel_segtable_store = (u_int *)p;
+	p += (SRMMU_L2SIZE * sizeof(long)) * NKREG;
+	bzero(kernel_segtable_store,
+	      p - (caddr_t) kernel_segtable_store);
+
+	p = (caddr_t) roundup((u_int)p, SRMMU_L3SIZE * sizeof(long));
+	kernel_pagtable_store = (u_int *)p;
+	p += ((SRMMU_L3SIZE * sizeof(long)) * NKREG) * NSEGRG;
+	bzero(kernel_pagtable_store,
+	      p - (caddr_t) kernel_pagtable_store);
+
+	/* Round to next page and mark end of stolen pages */
+	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	unavail_end = (int)p - KERNBASE;
+
+	/* Mark all MMU tables uncacheable, if required */
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
+		kvm_uncache((caddr_t)kernel_iopte_table,
+			    ((u_int)p - (u_int)kernel_iopte_table) >> PGSHIFT);
 
 	/*
 	 * Since we've statically allocated space to map the entire kernel,
@@ -3153,13 +3133,11 @@ pmap_bootstrap4m(void)
 	cpuinfo.L1_ptps = pmap_kernel()->pm_reg_ptps;
 
 	for (reg = VA_VREG(KERNBASE); reg < NKREG+VA_VREG(KERNBASE); reg++) {
-		struct   regmap *rp;
+		struct regmap *rp;
 		caddr_t kphyssegtbl;
 
 		/*
-		 * entering new region; install & build segtbl
-		 * XXX: WE TRASH ANY EXISTING MAPPINGS IN THE KERNEL
-		 *      REGION. SHOULD BE FIXED!
+		 * Entering new region; install & build segtbl
 		 */
 		int kregnum = reg - VA_VREG(KERNBASE);
 
@@ -3168,9 +3146,8 @@ pmap_bootstrap4m(void)
 		kphyssegtbl = (caddr_t)
 		    &kernel_segtable_store[kregnum * SRMMU_L2SIZE];
 
-		bzero(kphyssegtbl, SRMMU_L2SIZE * sizeof(long));
-		(pmap_kernel()->pm_reg_ptps)[reg] =
-		    (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg],
+		    (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 		rp->rg_seg_ptps = (int *)kphyssegtbl;
 
@@ -3180,7 +3157,7 @@ pmap_bootstrap4m(void)
 		}
 
 		for (seg = 0; seg < NSEGRG; seg++) {
-			struct	 segmap *sp;
+			struct segmap *sp;
 			caddr_t kphyspagtbl;
 
 			rp->rg_nsegmap++;
@@ -3190,11 +3167,9 @@ pmap_bootstrap4m(void)
 			    &kernel_pagtable_store
 				[((kregnum * NSEGRG) + seg) * SRMMU_L3SIZE];
 
-			bzero(kphyspagtbl, SRMMU_L3SIZE * sizeof(long));
-
-			rp->rg_seg_ptps[seg] =
-			    (VA2PA(kphyspagtbl) >> SRMMU_PPNPASHIFT) |
-				SRMMU_TEPTD;
+			setpgt4m(&rp->rg_seg_ptps[seg],
+				 (VA2PA(kphyspagtbl) >> SRMMU_PPNPASHIFT) |
+				 SRMMU_TEPTD);
 			sp->sg_pte = (int *) kphyspagtbl;
 		}
 	}
@@ -3203,35 +3178,14 @@ pmap_bootstrap4m(void)
 	 * Preserve the monitor ROM's reserved VM region, so that
 	 * we can use L1-A or the monitor's debugger.
 	 */
-	mmu_reservemon4m(&kernel_pmap_store, &p);
-
+	mmu_reservemon4m(&kernel_pmap_store);
 
 	/*
-	 * Set up the `constants' for the call to vm_init()
-	 * in main().  All pages beginning at p (rounded up to
-	 * the next whole page) and continuing through the number
-	 * of available pages are free, but they start at a higher
-	 * virtual address.  This gives us two mappable MD pages
-	 * for pmap_zero_page and pmap_copy_page, and one MI page
-	 * for /dev/mem, all with no associated physical memory.
+	 * Reserve virtual address space for two mappable MD pages
+	 * for pmap_zero_page and pmap_copy_page, one MI page
+	 * for /dev/mem, and some more for dumpsys().
 	 */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
-	avail_start = (int)p - KERNBASE;
-	/*
-	 * Grab physical memory list, so pmap_next_page() can do its bit.
-	 */
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
-	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0) {
-		printf("pmap_bootstrap: no kernel memory?!\n");
-		callrom();
-	}
-	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	avail_next = avail_start;
-	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
-		physmem += btoc(mp->len);
-
-	i = (int)p;
+	q = p;
 	vpage[0] = p, p += NBPG;
 	vpage[1] = p, p += NBPG;
 	vmmap = p, p += NBPG;
@@ -3247,7 +3201,7 @@ pmap_bootstrap4m(void)
 	virtual_avail = (vm_offset_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
-	p = (caddr_t)i;			/* retract to first free phys */
+	p = q;			/* retract to first free phys */
 
 	/*
 	 * Set up the ctxinfo structures (freelist of contexts)
@@ -3276,29 +3230,31 @@ pmap_bootstrap4m(void)
 #endif
 
 	for (q = (caddr_t) KERNBASE; q < p; q += NBPG) {
+		struct regmap *rp;
+		struct segmap *sp;
+		int pte;
+
+		if ((int)q >= avail_start && (int)q < unavail_start)
+			/* This gap is part of VM-managed pages */
+			continue;
+
 		/*
 		 * Now install entry for current page.
-		 * Cache and write-protect kernel text.
 		 */
-		rmapp = &(pmap_kernel()->pm_regmap[VA_VREG(q)]);
-		smapp = &(rmapp->rg_segmap[VA_VSEG(q)]);
-		smapp->sg_npte++;
-		if (q < (caddr_t) trapbase)
-			/* Must map in message buffer in low page. */
-			(smapp->sg_pte)[VA_VPG(q)] =
-				((q - (caddr_t)KERNBASE) >> SRMMU_PPNPASHIFT) |
-				PPROT_N_RWX | SRMMU_PG_C | SRMMU_TEPTE;
-		else if (q >= (caddr_t) trapbase && q < etext)
-			(smapp->sg_pte)[VA_VPG(q)] =
-				(VA2PA(q) >> SRMMU_PPNPASHIFT) |
-				PPROT_N_RX | SRMMU_PG_C | SRMMU_TEPTE;
-		else
-			(smapp->sg_pte)[VA_VPG(q)] =
-				(VA2PA(q) >> SRMMU_PPNPASHIFT) |
-				PPROT_N_RWX | SRMMU_PG_C | SRMMU_TEPTE;
+		rp = &pmap_kernel()->pm_regmap[VA_VREG(q)];
+		sp = &rp->rg_segmap[VA_VSEG(q)];
+		sp->sg_npte++;
+
+		pte = ((int)q - KERNBASE) >> SRMMU_PPNPASHIFT;
+		pte |= PPROT_N_RX | SRMMU_PG_C | SRMMU_TEPTE;
+		/* write-protect kernel text */
+		if (q < (caddr_t) trapbase || q >= etext)
+			pte |= PPROT_WRITE;
+
+		setpgt4m(&sp->sg_pte[VA_VPG(q)], pte);
 	}
 
-
+#if 0
 	/*
 	 * We also install the kernel mapping into all other contexts by
 	 * copying the context 0 L1 PTP from cpuinfo.ctx_tbl[0] into the
@@ -3308,7 +3264,6 @@ pmap_bootstrap4m(void)
 	 * in case some twit decides to switch to a context with no user
 	 * pmap associated with it.
 	 */
-#if 0
 	for (i = 1; i < ncontext; i++)
 		cpuinfo.ctx_tbl[i] = cpuinfo.ctx_tbl[0];
 #endif
@@ -3317,46 +3272,6 @@ pmap_bootstrap4m(void)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
-
-	/*
-	 * On SuperSPARC machines without a MXCC, we *cannot* cache the
-	 * page tables.
-	 */
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
-		int bytes, numpages;
-
-#define DO_THE_MATH(math)						\
-	bytes = (math);							\
-	numpages = (bytes >> PGSHIFT) + (bytes % NBPG ? 1 : 0);
-
-		DO_THE_MATH(SRMMU_L3SIZE * sizeof(long) * NKREG * NSEGRG);
-#ifdef DEBUG
-		printf("pmap_bootstrap4m: uncaching %d PT pages at 0x%lx\n",
-		    numpages, (long)kernel_pagtable_store);
-#endif
-		kvm_uncache((caddr_t)kernel_pagtable_store, numpages);
-
-		DO_THE_MATH(SRMMU_L2SIZE * sizeof(long) * NKREG);
-#ifdef DEBUG
-		printf("pmap_bootstrap4m: uncaching %d ST pages at 0x%lx\n",
-		    numpages, (long)kernel_segtable_store);
-#endif
-		kvm_uncache((caddr_t)kernel_segtable_store, numpages);
-
-		DO_THE_MATH(SRMMU_L1SIZE * sizeof(long));
-#ifdef DEBUG
-		printf("pmap_bootstrap4m: uncaching %d RT pages at 0x%lx\n",
-		    numpages, (long)kernel_regtable_store);
-#endif
-		kvm_uncache((caddr_t)kernel_regtable_store, numpages);
-
-#undef DO_THE_MATH
-	}
-
-#ifdef DEBUG
-	printf("\n");	/* Might as well make it pretty... */
-#endif
-	/* All done! */
 }
 
 void
@@ -3493,13 +3408,7 @@ pass2:
 		sva = trunc_page(va);
 
 		if (sva < eva) {
-#if defined(DEBUG) && !defined(SUN4M)
-			/*
-			 * crowded chunks are normal on SS20s; don't clutter
-			 * screen with messages
-			 */
-			printf("note: crowded chunk at 0x%x\n", mp->addr);
-#endif
+			/* This chunk overlaps the previous in pv_table[] */
 			sva += PAGE_SIZE;
 			if (sva < eva)
 				panic("pmap_init: sva(%lx) < eva(%lx)",
