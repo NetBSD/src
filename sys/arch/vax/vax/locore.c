@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.50 2000/07/19 18:15:03 matt Exp $	*/
+/*	$NetBSD: locore.c,v 1.51 2000/07/26 11:44:25 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -220,7 +220,6 @@ _start(struct rpb *prpb)
 #endif
 #if VAX8200
 	case VAX_BTYP_8000:
-		mastercpu = mfpr(PR_BINID);
 		dep_call = &ka820_calls;
 		strcpy(cpu_model, "VAX 8200");
 		break;
