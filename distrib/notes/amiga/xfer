@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.14 1999/04/11 15:12:49 is Exp $	
+.\"	$NetBSD: xfer,v 1.15 1999/05/05 18:47:40 is Exp $	
 .Pp
 Installation is supported from several media types, including:
 .Bl -bullet
@@ -13,7 +13,7 @@ FTP
 .It
 NetBSD partitions, if doing an upgrade.
 .It
-CD-ROM (but only SCSI CD-ROM)
+CD-ROM (SCSI or ATAPI)
 .El
 .Pp
 The miniroot file system needs to be transferred to the NetBSD swap
@@ -44,12 +44,14 @@ To prepare for installing from CD-ROM:
 .Pp
 To install NetBSD from a CD-ROM drive, make sure it is a SCSI
 CD-ROM on a SCSI bus currently supported by NetBSD (refer to the
-supported hardware list). If it is an ATAPI CD-ROM, or a
+supported hardware list) or an ATAPI cd-rom connected to the A1200
+or A4000 internal IDE connector. If it is a
 SCSI CD-ROM on a non-supported SCSI bus like 
 Blizzard-3 SCSI, Apollo SCSI) you must first copy the distribution
 sets to an AmigaDOS partition like described above.
 .Pp
 If your SCSI CD-ROM is connected to a supported SCSI host adapter,
+or it is an ATAPI cd-rom connected to the A1200/A4000 internal IDE connector,
 simply put the CD into the drive before installation.
 .Pp
 Once you have done this, you can proceed to the next
