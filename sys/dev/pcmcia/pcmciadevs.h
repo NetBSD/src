@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.192 2003/12/25 17:33:22 nonaka Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.193 2003/12/28 06:47:23 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.189 2003/12/07 10:37:11 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.191 2003/12/28 06:46:23 itohy Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -552,11 +552,6 @@
 #define	PCMCIA_PRODUCT_QUATECH_DSP_225	0x0008
 #define	PCMCIA_STR_QUATECH_DSP_225	"Quatech Dual Serial Port"
 
-/* RATOC System Inc. Products */
-#define	PCMCIA_CIS_RATOC_REX_R280	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_RATOC_REX_R280	0x0001
-#define	PCMCIA_STR_RATOC_REX_R280	"RATOC REX-R280"
-
 /* Raylink/WebGear */
 #define	PCMCIA_CIS_RAYTHEON_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_RAYTHEON_WLAN	0x0000
@@ -883,6 +878,22 @@
 #define	PCMCIA_CIS_PLANEX_GWNS11H	{ "PLANEX", "GW-NS11H Wireless LAN PC Card", NULL, NULL }
 #define	PCMCIA_PRODUCT_PLANEX_GWNS11H	-1
 #define	PCMCIA_STR_PLANEX_GWNS11H	"PLANEX GW-NS11H Wireless LAN PC Card"
+
+/*
+ * RATOC System Inc. uses the same product ID for many different cards.
+ * For such cards, we can't use product ID for identification.
+ */
+/* vendor = 0xc015, product = 0x0001 */
+#define	PCMCIA_CIS_RATOC_REX_9530	{ "RATOC System Inc.", "SCSI2 CARD 37", NULL, NULL }
+#define	PCMCIA_PRODUCT_RATOC_REX_9530	-1
+#define	PCMCIA_STR_RATOC_REX_9530	"RATOC REX-9530"
+#define	PCMCIA_CIS_RATOC_REX_CFU1	{ "RATOC", "USB HOST CF+ Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_RATOC_REX_CFU1	-1
+#define	PCMCIA_STR_RATOC_REX_CFU1	"RATOC REX-CFU1"
+#define	PCMCIA_CIS_RATOC_REX_R280	{ "RATOC System Inc.", "10BASE_T CARD R280", NULL, NULL }
+#define	PCMCIA_PRODUCT_RATOC_REX_R280	-1
+#define	PCMCIA_STR_RATOC_REX_R280	"RATOC REX-R280"
+
 #define	PCMCIA_CIS_RPTI_EP400	{ "RPTI LTD.", "EP400", "CISV100", NULL }
 #define	PCMCIA_PRODUCT_RPTI_EP400	-1
 #define	PCMCIA_STR_RPTI_EP400	"RPTI EP400"
