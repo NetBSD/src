@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
+# $NetBSD: Makefile,v 1.3.2.1 2004/04/28 05:42:39 jmc Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -13,7 +13,10 @@ SRCS=	pci.c xf86int10module.c helper_exec.c helper_mem.c xf86int10.c \
 	prim_ops.c sys.c
 
 CPPFLAGS+=	-D__DRIVER__ -DFORCE_POST -D_CEXPORT= -DNO_LONG_LONG \
-		-D_X86EMU -D_PC
+		-D_X86EMU
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-D_PC
+.endif
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
