@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.17 2002/04/12 22:34:13 leo Exp $
+#	$NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
 #
 # Generic atari
 #
@@ -209,7 +209,9 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
+#ifndef FALCON_KERNEL
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#endif
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
