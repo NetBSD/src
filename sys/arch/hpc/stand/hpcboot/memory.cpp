@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.2 2001/03/25 17:14:53 uch Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ MemoryManager::MemoryManager(Console *&cons, size_t pagesize)
 	_page_per_region = WCE_REGION_SIZE / _page_size;
 	_nbank = 0;
 	DPRINTF((TEXT("Page size %dbyte %dpages/region\n"),
-		 _page_size , _page_per_region));
+	    _page_size , _page_per_region));
 	_addr_table_idx = 0;
 	_addr_table = 0;
 	_memory = 0;
@@ -71,7 +71,7 @@ MemoryManager::loadBank(paddr_t paddr, psize_t psize)
 	b->addr = paddr;
 	b->size = psize;
 	DPRINTF((TEXT("Bank#%d 0x%08x size 0x%08x\n"), _nbank - 1,
-		 b->addr, b->size));
+	    b->addr, b->size));
 }
 
 BOOL
@@ -92,20 +92,20 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 
 	size_t tabsz = sizeof(struct AddressTranslationTable) * npage;
 	_addr_table = static_cast <struct AddressTranslationTable *>
-		(malloc(tabsz));
+	    (malloc(tabsz));
 	if (_addr_table == NULL) {
 		DPRINTF((TEXT("can't allocate memory for translation table.\n")));
 		return FALSE;
 	}
 	DPRINTF((TEXT("address translation table %d pages.(%d byte)\n"), npage,
-		 tabsz));
+	    tabsz));
 
 	if (page_commit)
 		vbase = vaddr_t(VirtualAlloc(0, vsize, MEM_RESERVE,
-					     PAGE_NOACCESS));
+		    PAGE_NOACCESS));
 	else
 		vbase = vaddr_t(VirtualAlloc(0, vsize, MEM_COMMIT,
-					     PAGE_READWRITE | PAGE_NOCACHE));
+		    PAGE_READWRITE | PAGE_NOCACHE));
 
 	if (vbase == 0) {
 		DPRINTF((TEXT("can't allocate memory\n")));
@@ -137,7 +137,7 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 		} else {
 #ifdef MEMORY_MAP_DEBUG
 			DPRINTF((TEXT("page %d vaddr=0x%08x paddr=0x%08x\n"),
-				 _naddr_table, vaddr, paddr));
+			    _naddr_table, vaddr, paddr));
 #endif
 			tab->vaddr = vaddr;
 			tab->paddr = paddr;
@@ -156,7 +156,7 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 	}
 #endif
 	DPRINTF((TEXT("allocated %d page. mapped %d page.\n"), npage,
-		 _naddr_table));
+	    _naddr_table));
 
 	return TRUE;
 }
@@ -187,7 +187,7 @@ MemoryManager::getTaggedPage(vaddr_t &vaddr, paddr_t &paddr)
 		return FALSE;
 	}
 	AddressTranslationTable *tab =
-		&_addr_table[_addr_table_idx++];  
+	    &_addr_table[_addr_table_idx++];  
 	vaddr = tab->vaddr;
 	paddr = tab->paddr;
   
@@ -196,7 +196,7 @@ MemoryManager::getTaggedPage(vaddr_t &vaddr, paddr_t &paddr)
 
 BOOL 
 MemoryManager::getTaggedPage(vaddr_t &v, paddr_t &p,
-			     struct PageTag **pvec, paddr_t &pvec_paddr)
+    struct PageTag **pvec, paddr_t &pvec_paddr)
 {
 	if (!getTaggedPage(v, p))
 		return FALSE;
@@ -220,14 +220,14 @@ MemoryManager::mapPhysicalPage(paddr_t paddr, psize_t size, u_int32_t flags)
 	LPVOID p = VirtualAlloc(0, psize, MEM_RESERVE, PAGE_NOACCESS);
 
 	int ok = VirtualCopy(p, LPVOID(pstart >> 8), psize,
-			     flags | PAGE_NOCACHE | PAGE_PHYSICAL);
+	    flags | PAGE_NOCACHE | PAGE_PHYSICAL);
 	if (!ok) {
 		DPRINTF((TEXT("can't map physical address 0x%08x\n"), paddr));
 		return ~0;
 	}
 #if 0
 	DPRINTF((TEXT("start=0x%08x end=0x%08x size=0x%08x return=0x%08x\n"),
-		 pstart, pend, psize, vaddr_t(p) + vaddr_t(paddr - pstart)));
+	    pstart, pend, psize, vaddr_t(p) + vaddr_t(paddr - pstart)));
 	    
 #endif
   
@@ -256,8 +256,8 @@ MemoryManager::readPhysical4(paddr_t paddr)
 //
 MemoryManager_LockPages::MemoryManager_LockPages
 (BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int),
- BOOL(*unlock_pages)(LPVOID, DWORD),
- Console *&cons, size_t pagesize, int shift)
+    BOOL(*unlock_pages)(LPVOID, DWORD),
+    Console *&cons, size_t pagesize, int shift)
 	:  MemoryManager(cons, pagesize)
 {
 	_lock_pages	= lock_pages;
@@ -289,7 +289,7 @@ MemoryManager_LockPages::searchPage(vaddr_t vaddr)
 //	Use VirtualCopy()
 //
 MemoryManager_VirtualCopy::MemoryManager_VirtualCopy(Console *&cons,
-						     size_t pagesize) 
+    size_t pagesize) 
 	: MemoryManager(cons, pagesize)
 {
 	_search_guess = 0;
@@ -350,10 +350,9 @@ MemoryManager_VirtualCopy::searchBank(int banknum)
 
 	for (paddr = pstart; paddr < pend; paddr += BLOCK_SIZE) {
 		if (!VirtualCopy(ref, LPVOID(paddr >> 8), BLOCK_SIZE,
-				 PAGE_READONLY | PAGE_NOCACHE |
-				 PAGE_PHYSICAL)) {
+		    PAGE_READONLY | PAGE_NOCACHE | PAGE_PHYSICAL)) {
 			DPRINTF((TEXT("can't map physical addr 0x%08x(->0x%08x)\n"),
-				 ref, paddr));
+			    ref, paddr));
 			goto release;
 		}
 
@@ -363,7 +362,7 @@ MemoryManager_VirtualCopy::searchBank(int banknum)
 		// decommit reference region.
 		if (!VirtualFree(ref, BLOCK_SIZE, MEM_DECOMMIT)) {
 			DPRINTF((TEXT("can't decommit addr 0x%08x(->0x%08x)\n"),
-				 ref, paddr));
+			    ref, paddr));
 			goto release;
 		}
 
