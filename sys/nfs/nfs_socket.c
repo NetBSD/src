@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.72 2002/02/27 03:46:36 lukem Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.73 2002/03/17 22:22:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.72 2002/02/27 03:46:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.73 2002/03/17 22:22:39 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -340,7 +340,7 @@ nfs_reconnect(rep)
 	 * Loop through outstanding request list and fix up all requests
 	 * on old socket.
 	 */
-	for (rp = nfs_reqq.tqh_first; rp != 0; rp = rp->r_chain.tqe_next) {
+	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
 		if (rp->r_nmp == nmp)
 			rp->r_flags |= R_MUSTRESEND;
 	}
@@ -806,8 +806,7 @@ nfsmout:
 		 * Loop through the request list to match up the reply
 		 * Iff no match, just drop the datagram
 		 */
-		for (rep = nfs_reqq.tqh_first; rep != 0;
-		    rep = rep->r_chain.tqe_next) {
+		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 			if (rep->r_mrep == NULL && rxid == rep->r_xid) {
 				/* Found it.. */
 				rep->r_mrep = mrep;
@@ -1359,7 +1358,7 @@ nfs_timer(arg)
 #endif
 
 	s = splsoftnet();
-	for (rep = nfs_reqq.tqh_first; rep != 0; rep = rep->r_chain.tqe_next) {
+	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 		nmp = rep->r_nmp;
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
@@ -1465,14 +1464,29 @@ nfs_timer(arg)
 	 * completed now.
 	 */
 	cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
-	for (slp = nfssvc_sockhead.tqh_first; slp != 0;
-	    slp = slp->ns_chain.tqe_next) {
+	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 	    if (slp->ns_tq.lh_first && slp->ns_tq.lh_first->nd_time<=cur_usec)
 		nfsrv_wakenfsd(slp);
 	}
 #endif /* NFSSERVER */
 	splx(s);
 	callout_reset(&nfs_timer_ch, nfs_ticks, nfs_timer, NULL);
+}
+
+/*ARGSUSED*/
+void
+nfs_exit(p, v)
+	struct proc *p;
+	void *v;
+{
+	struct nfsreq *rp;
+	int s = splsoftnet();
+
+	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
+		if (rp->r_procp == p)
+			TAILQ_REMOVE(&nfs_reqq, rp, r_chain);
+	}
+	splx(s);
 }
 
 /*
@@ -2212,7 +2226,7 @@ nfsrv_wakenfsd(slp)
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-	for (nd = nfsd_head.tqh_first; nd != 0; nd = nd->nfsd_chain.tqe_next) {
+	TAILQ_FOREACH(nd, &nfsd_head, nfsd_chain) {
 		if (nd->nfsd_flag & NFSD_WAITING) {
 			nd->nfsd_flag &= ~NFSD_WAITING;
 			if (nd->nfsd_slp)
