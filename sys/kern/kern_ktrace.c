@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.4 2004/08/12 11:42:19 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.5 2004/09/14 08:10:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.4 2004/08/12 11:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.5 2004/09/14 08:10:48 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.4 2004/08/12 11:42:19 skrll E
 void	ktrinitheader(struct ktr_header *, struct lwp *, int);
 int	ktrwrite(struct lwp *, struct ktr_header *);
 int	ktrace_common(struct lwp *, int, int, int, struct file *);
-int	ktrops(struct lwp *, struct proc *, int, int, struct file *);
-int	ktrsetchildren(struct lwp *, struct proc *, int, int,
+int	ktrops(struct proc *, struct proc *, int, int, struct file *);
+int	ktrsetchildren(struct proc *, struct proc *, int, int,
 	    struct file *);
 int	ktrcanset(struct proc *, struct proc *);
 int	ktrsamefile(struct file *, struct file *);
@@ -539,9 +539,9 @@ ktrace_common(struct lwp *l, int ops, int facs, int pid, struct file *fp)
 		}
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (descend)
-				ret |= ktrsetchildren(l, p, ops, facs, fp);
+				ret |= ktrsetchildren(curp, p, ops, facs, fp);
 			else
-				ret |= ktrops(l, curp, ops, facs, fp);
+				ret |= ktrops(curp, p, ops, facs, fp);
 		}
 
 	} else {
@@ -554,9 +554,9 @@ ktrace_common(struct lwp *l, int ops, int facs, int pid, struct file *fp)
 			goto done;
 		}
 		if (descend)
-			ret |= ktrsetchildren(l, p, ops, facs, fp);
+			ret |= ktrsetchildren(curp, p, ops, facs, fp);
 		else
-			ret |= ktrops(l, p, ops, facs, fp);
+			ret |= ktrops(curp, p, ops, facs, fp);
 	}
 	proclist_unlock_read();	/* taken by p{g}_find */
 	if (!ret)
@@ -677,10 +677,9 @@ done:
 }
 
 int
-ktrops(struct lwp *l, struct proc *p, int ops, int facs,
+ktrops(struct proc *curp, struct proc *p, int ops, int facs,
     struct file *fp)
 {
-	struct proc *curp = l->l_proc;
 
 	if (!ktrcanset(curp, p))
 		return (0);
@@ -718,15 +717,15 @@ ktrops(struct lwp *l, struct proc *p, int ops, int facs,
 }
 
 int
-ktrsetchildren(struct lwp *l, struct proc *top, int ops, int facs,
+ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
     struct file *fp)
 {
-	struct proc *p = l->l_proc;
+	struct proc *p;
 	int ret = 0;
 
 	p = top;
 	for (;;) {
-		ret |= ktrops(l, p, ops, facs, fp);
+		ret |= ktrops(curp, p, ops, facs, fp);
 		/*
 		 * If this process has children, descend to them next,
 		 * otherwise do any siblings, and if done with this level,
