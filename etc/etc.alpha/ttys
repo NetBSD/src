@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.8 2003/10/03 14:54:20 dsl Exp $
+#	$NetBSD: ttys,v 1.9 2003/10/04 07:41:11 dsl Exp $
 #
 # name	getty				type	status		comments
 
@@ -7,7 +7,7 @@
 # enabled for the correct 'real' device (e.g. one of the serial ports).
 
 # console pseudo-device
-constty	"/usr/libexec/getty std.9600"	vt100 on secure
+console	"/usr/libexec/getty std.9600"	vt100 on secure
 
 # Workstation console (framebuffer) ttys
 ttyE0	"/usr/libexec/getty std.9600"	vt100 off secure
