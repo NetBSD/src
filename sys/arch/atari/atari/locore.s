@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.18 1996/06/18 06:13:46 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.19 1996/07/12 13:12:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,21 +59,14 @@
 	.globl  _kernel_text
 _kernel_text:
 
+/*
+ * Clear & skip page zero, it will not be mapped
+ */
+	.fill	NBPG/4,4,0
+
 #include <atari/atari/vectors.s>
 
-/*
- * This is where we wind up if the kernel jumps to location 0.
- * (i.e. a bogus PC)  This is known to immediately follow the vector
- * table and is hence at 0x400 (see reset vector in vectors.s).
- */
-	.globl	_panic
-	pea	Ljmp0panic
-	jbsr	_panic
-	/* NOTREACHED */
-Ljmp0panic:
-	.asciz	"kernel jump to zero"
 	.even
-
 /*
  * Do a dump.
  * Called by auto-restart.
@@ -91,167 +84,167 @@ _doadump:
 
 	.globl	_trap, _nofault, _longjmp
 _buserr:
-	tstl	_nofault	|  device probe?
-	jeq	_addrerr	|  no, handle as usual
-	movl	_nofault,sp@-	|  yes,
-	jbsr	_longjmp	|   longjmp(nofault)
+	tstl	_nofault		|  device probe?
+	jeq	_addrerr		|  no, handle as usual
+	movl	_nofault,sp@-		|  yes,
+	jbsr	_longjmp		|   longjmp(nofault)
 _addrerr:
-	clrl	sp@-		|  stack adjust count
-	moveml	#0xFFFF,sp@-	|  save user registers
-	movl	usp,a0		|  save the user SP
-	movl	a0,sp@(FR_SP)	|    in the savearea
-	lea	sp@(FR_HW),a1	|  grab base of HW berr frame
-	tstl	_cpu040
-	jeq	Lbe030
-	movl	a1@(8),sp@-	|  V = exception address
-	clrl	sp@-		|  dummy code
+	clrl	sp@-			|  stack adjust count
+	moveml	#0xFFFF,sp@-		|  save user registers
+	movl	usp,a0			|  save the user SP
+	movl	a0,sp@(FR_SP)		|    in the savearea
+	lea	sp@(FR_HW),a1		|  grab base of HW berr frame
+	cmpl	#MMU_68040,_mmutype
+	jne	Lbe030
+	movl	a1@(8),sp@-		|  V = exception address
+	clrl	sp@-			|  dummy code
 	moveq	#0,d0
-	movw	a1@(6),d0	|  get vector offset
+	movw	a1@(6),d0		|  get vector offset
 	andw	#0x0fff,d0
-	cmpw	#12,d0		|  is it address error
+	cmpw	#12,d0			|  is it address error
 	jeq	Lisaerr
-	movl	a1@(20),d1	|  get fault address
+	movl	a1@(20),d1		|  get fault address
 	moveq	#0,d0
-	movw	a1@(12),d0	|  get SSW
-	btst	#11,d0		|  check for mis-aligned
-	jeq	Lbe1stpg	|  no skip
-	addl	#3,d1		|  get into next page
-	andl	#PG_FRAME,d1	|  and truncate
+	movw	a1@(12),d0		|  get SSW
+	btst	#11,d0			|  check for mis-aligned
+	jeq	Lbe1stpg		|  no skip
+	addl	#3,d1			|  get into next page
+	andl	#PG_FRAME,d1		|  and truncate
 Lbe1stpg:
-	movl	d1,sp@(4)	|  pass fault address.
-	movl	d0,sp@		|  pass SSW as code
-	btst	#10,d0		|  test ATC
-	jeq	Lisberr		| it's a bus error
+	movl	d1,sp@(4)		|  pass fault address.
+	movl	d0,sp@			|  pass SSW as code
+	btst	#10,d0			|  test ATC
+	jeq	Lisberr			| it's a bus error
 	jra	Lismerr
 Lbe030:
 	moveq	#0,d0
-	movw	a1@(10),d0	|  grab SSW for fault processing
-	btst	#12,d0		|  RB set?
-	jeq	LbeX0		|  no, test RC
-	bset	#14,d0		|  yes, must set FB
-	movw	d0,a1@(10)	|  for hardware too
+	movw	a1@(10),d0		|  grab SSW for fault processing
+	btst	#12,d0			|  RB set?
+	jeq	LbeX0			|  no, test RC
+	bset	#14,d0			|  yes, must set FB
+	movw	d0,a1@(10)		|  for hardware too
 LbeX0:
-	btst	#13,d0		|  RC set?
-	jeq	LbeX1		|  no, skip
-	bset	#15,d0		|  yes, must set FC
-	movw	d0,a1@(10)	|  for hardware too
+	btst	#13,d0			|  RC set?
+	jeq	LbeX1			|  no, skip
+	bset	#15,d0			|  yes, must set FC
+	movw	d0,a1@(10)		|  for hardware too
 LbeX1:
-	btst	#8,d0		|  data fault?
-	jeq	Lbe0		|  no, check for hard cases
-	movl	a1@(16),d1	|  fault address is as given in frame
-	jra	Lbe10		|  thats it
+	btst	#8,d0			|  data fault?
+	jeq	Lbe0			|  no, check for hard cases
+	movl	a1@(16),d1		|  fault address is as given in frame
+	jra	Lbe10			|  thats it
 Lbe0:
-	btst	#4,a1@(6)	|  long (type B) stack frame?
-	jne	Lbe4		|  yes, go handle
-	movl	a1@(2),d1	|  no, can use save PC
-	btst	#14,d0		|  FB set?
-	jeq	Lbe3		|  no, try FC
-	addql	#4,d1		|  yes, adjust address
-	jra	Lbe10		|  done
+	btst	#4,a1@(6)		|  long (type B) stack frame?
+	jne	Lbe4			|  yes, go handle
+	movl	a1@(2),d1		|  no, can use save PC
+	btst	#14,d0			|  FB set?
+	jeq	Lbe3			|  no, try FC
+	addql	#4,d1			|  yes, adjust address
+	jra	Lbe10			|  done
 Lbe3:
-	btst	#15,d0		|  FC set?
-	jeq	Lbe10		|  no, done
-	addql	#2,d1		|  yes, adjust address
-	jra	Lbe10		|  done
+	btst	#15,d0			|  FC set?
+	jeq	Lbe10			|  no, done
+	addql	#2,d1			|  yes, adjust address
+	jra	Lbe10			|  done
 Lbe4:
-	movl	a1@(36),d1	|  long format, use stage B address
-	btst	#15,d0		|  FC set?
-	jeq	Lbe10		|  no, all done
-	subql	#2,d1		|  yes, adjust address
+	movl	a1@(36),d1		|  long format, use stage B address
+	btst	#15,d0			|  FC set?
+	jeq	Lbe10			|  no, all done
+	subql	#2,d1			|  yes, adjust address
 Lbe10:
-	movl	d1,sp@-		|  push fault VA
-	movl	d0,sp@-		|  and padded SSW
-	movw	a1@(6),d0	|  get frame format/vector offset
-	andw	#0x0FFF,d0	|  clear out frame format
-	cmpw	#12,d0		|  address error vector?
-	jeq	Lisaerr		|  yes, go to it
-	movl	d1,a0		|  fault address
-	movl	sp@,d0		|  function code from ssw
-	btst	#8,d0		|  data fault?
+	movl	d1,sp@-			|  push fault VA
+	movl	d0,sp@-			|  and padded SSW
+	movw	a1@(6),d0		|  get frame format/vector offset
+	andw	#0x0FFF,d0		|  clear out frame format
+	cmpw	#12,d0			|  address error vector?
+	jeq	Lisaerr			|  yes, go to it
+	movl	d1,a0			|  fault address
+	movl	sp@,d0			|  function code from ssw
+	btst	#8,d0			|  data fault?
 	jne	Lbe10a
-	movql	#1,d0		|  user program access FC
-				|  (we don't separate data/program)
-	btst	#5,a1@		|  supervisor mode?
-	jeq	Lbe10a		|  if no, done
-	movql	#5,d0		|  else supervisor program access
+	movql	#1,d0			|  user program access FC
+					|  (we don't separate data/program)
+	btst	#5,a1@			|  supervisor mode?
+	jeq	Lbe10a			|  if no, done
+	movql	#5,d0			|  else supervisor program access
 Lbe10a:
-	ptestr	d0,a0@,#7	|  do a table search
-	pmove	psr,sp@		|  save result
+	ptestr	d0,a0@,#7		|  do a table search
+	pmove	psr,sp@			|  save result
 	movb	sp@,d1
-	btst	#2,d1		|  invalid (incl. limit viol. and berr)?
-	jeq	Lmightnotbemerr	|  no -> wp check
-	btst	#7,d1		|  is it a MMU table berr?
-	jeq	Lismerr		|  no, must be fast
-	jra	Lisberr1	|  real bus err needs not be fast
+	btst	#2,d1			|  invalid (incl. limit viol. and berr)?
+	jeq	Lmightnotbemerr		|  no -> wp check
+	btst	#7,d1			|  is it a MMU table berr?
+	jeq	Lismerr			|  no, must be fast
+	jra	Lisberr1		|  real bus err needs not be fast
 Lmightnotbemerr:
-	btst	#3,d1		|  write protect bit set?
-	jeq	Lisberr1	|  no: must be bus error
-	movl	sp@,d0		|  ssw into low word of d0
-	andw	#0xc0,d0	|  Write protect is set on page:
-	cmpw	#0x40,d0	|  was it a read cycle?
-	jeq	Lisberr1	|  yes, was not WPE, must be bus error
+	btst	#3,d1			|  write protect bit set?
+	jeq	Lisberr1		|  no: must be bus error
+	movl	sp@,d0			|  ssw into low word of d0
+	andw	#0xc0,d0		|  Write protect is set on page:
+	cmpw	#0x40,d0		|  was it a read cycle?
+	jeq	Lisberr1		|  yes, was not WPE, must be bus error
 Lismerr:
-	movl	#T_MMUFLT,sp@-	|  show that we are an MMU fault
-	jra	Ltrapnstkadj	|  and deal with it
+	movl	#T_MMUFLT,sp@-		|  show that we are an MMU fault
+	jra	Ltrapnstkadj		|  and deal with it
 Lisaerr:
-	movl	#T_ADDRERR,sp@-	|  mark address error
-	jra	Ltrapnstkadj	|  and deal with it
+	movl	#T_ADDRERR,sp@-		|  mark address error
+	jra	Ltrapnstkadj		|  and deal with it
 Lisberr1:
-	clrw	sp@		|  re-clear pad word
+	clrw	sp@			|  re-clear pad word
 Lisberr:
-	movl	#T_BUSERR,sp@-	|  mark bus error
+	movl	#T_BUSERR,sp@-		|  mark bus error
 Ltrapnstkadj:
-	jbsr	_trap		|  handle the error
-	lea	sp@(12),sp	|  pop value args
-	movl	sp@(FR_SP),a0	|  restore user SP
-	movl	a0,usp		|    from save area
-	movw	sp@(FR_ADJ),d0	|  need to adjust stack?
-	jne	Lstkadj		|  yes, go to it
-	moveml	sp@+,#0x7FFF	|  no, restore most user regs
-	addql	#8,sp		|  toss SSP and stkadj
-	jra	rei		|  all done
+	jbsr	_trap			|  handle the error
+	lea	sp@(12),sp		|  pop value args
+	movl	sp@(FR_SP),a0		|  restore user SP
+	movl	a0,usp			|    from save area
+	movw	sp@(FR_ADJ),d0		|  need to adjust stack?
+	jne	Lstkadj			|  yes, go to it
+	moveml	sp@+,#0x7FFF		|  no, restore most user regs
+	addql	#8,sp			|  toss SSP and stkadj
+	jra	rei			|  all done
 Lstkadj:
-	lea	sp@(FR_HW),a1	|  pointer to HW frame
-	addql	#8,a1		|  source pointer
-	movl	a1,a0		|  source
-	addw	d0,a0		|   + hole size = dest pointer
-	movl	a1@-,a0@-	|  copy
-	movl	a1@-,a0@-	|   8 bytes
-	movl	a0,sp@(FR_SP)	|  new SSP
-	moveml	sp@+,#0x7FFF	|  restore user registers
-	movl	sp@,sp		|  and our SP
-	jra	rei		|  all done
+	lea	sp@(FR_HW),a1		|  pointer to HW frame
+	addql	#8,a1			|  source pointer
+	movl	a1,a0			|  source
+	addw	d0,a0			|   + hole size = dest pointer
+	movl	a1@-,a0@-		|  copy
+	movl	a1@-,a0@-		|   8 bytes
+	movl	a0,sp@(FR_SP)		|  new SSP
+	moveml	sp@+,#0x7FFF		|  restore user registers
+	movl	sp@,sp			|  and our SP
+	jra	rei			|  all done
 
 /*
  * FP exceptions.
  */
 _fpfline:
-	tstl	_cpu040		|  an 040 FPU
-	jeq	fpfline_not40	|  no, do 6888? emulation
-	cmpw	#0x202c,sp@(6)	|  format type 2?
-	jne	_illinst	|  no, not an FP emulation
+	cmpl	#MMU_68040,_mmutype	|  an 040 FPU
+	jne	fpfline_not40		|  no, do 6888? emulation
+	cmpw	#0x202c,sp@(6)		|  format type 2?
+	jne	_illinst		|  no, not an FP emulation
 #ifdef FPSP
 	.globl fpsp_unimp
-	jmp	fpsp_unimp	|  yes, go handle it
+	jmp	fpsp_unimp		|  yes, go handle it
 #endif
 fpfline_not40:
-	clrl	sp@-		|  stack adjust count
-	moveml	#0xFFFF,sp@-	|  save registers
-	moveq	#T_FPEMULI,d0	|  denote as FP emulation trap
-	jra	fault		|  do it
+	clrl	sp@-			|  stack adjust count
+	moveml	#0xFFFF,sp@-		|  save registers
+	moveq	#T_FPEMULI,d0		|  denote as FP emulation trap
+	jra	fault			|  do it
 
 _fpunsupp:
-	tstl	_cpu040		|  an 040 FPU?
-	jeq	fpunsupp_not40
+	cmpl	#MMU_68040,_mmutype	|  an 040 FPU?
+	jne	fpunsupp_not40
 #ifdef FPSP
 	.globl	fpsp_unsupp
-	jmp	fpsp_unsupp	|  yes, go handle it
+	jmp	fpsp_unsupp		|  yes, go handle it
 #endif
 fpunsupp_not40:
-	clrl	sp@-		|  stack adjust count
-	moveml	#0xFFFF,sp@-	|  save registers
-	moveq	#T_FPEMULD,d0	|  denote as FP emulation trap
-	jra	fault		|  do it
+	clrl	sp@-			|  stack adjust count
+	moveml	#0xFFFF,sp@-		|  save registers
+	moveq	#T_FPEMULD,d0		|  denote as FP emulation trap
+	jra	fault			|  do it
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -261,14 +254,14 @@ fpunsupp_not40:
  */
 	.globl	_fpfault
 _fpfault:
-	clrl	sp@-		|  stack adjust count
-	moveml	#0xFFFF,sp@-	|  save user registers
-	movl	usp,a0		|  and save
-	movl	a0,sp@(FR_SP)	|    the user stack pointer
-	clrl	sp@-		|  no VA arg
-	movl	_curpcb,a0	|  current pcb
-	lea	a0@(PCB_FPCTX),a0 |  address of FP savearea
-	fsave	a0@		|  save state
+	clrl	sp@-			|  stack adjust count
+	moveml	#0xFFFF,sp@-		|  save user registers
+	movl	usp,a0			|  and save
+	movl	a0,sp@(FR_SP)		|    the user stack pointer
+	clrl	sp@-			|  no VA arg
+	movl	_curpcb,a0		|  current pcb
+	lea	a0@(PCB_FPCTX),a0	|  address of FP savearea
+	fsave	a0@			|  save state
 
 #if defined(M68040) || defined(M68060)
 #ifdef notdef /* XXX: Can't use this while we don't have the cputype */
@@ -276,21 +269,21 @@ _fpfault:
 	andb	#(ATARI_68040|ATARI_68060), d0
 	jne	Lfptnull
 #else
-	cmpb	#0x41,a0@	|  is it the 68040 FPU-frame format?
-	jeq	Lfptnull	|  yes, safe
+	cmpb	#0x41,a0@		|  is it the 68040 FPU-frame format?
+	jeq	Lfptnull		|  yes, safe
 #endif /* notdef */
 #endif /* defined(M68040) || defined(M68060) */
 
-	tstb	a0@		|  null state frame?
-	jeq	Lfptnull	|  yes, safe
-	clrw	d0		|  no, need to tweak BIU
-	movb	a0@(1),d0	|  get frame size
-	bset	#3,a0@(0,d0:w)	|  set exc_pend bit of BIU
+	tstb	a0@			|  null state frame?
+	jeq	Lfptnull		|  yes, safe
+	clrw	d0			|  no, need to tweak BIU
+	movb	a0@(1),d0		|  get frame size
+	bset	#3,a0@(0,d0:w)		|  set exc_pend bit of BIU
 Lfptnull:
-	fmovem	fpsr,sp@-	|  push fpsr as code argument
-	frestore a0@		|  restore state
-	movl	#T_FPERR,sp@-	|  push type arg
-	jra	Ltrapnstkadj	|  call trap and deal with stack cleanup
+	fmovem	fpsr,sp@-		|  push fpsr as code argument
+	frestore a0@			|  restore state
+	movl	#T_FPERR,sp@-		|  push type arg
+	jra	Ltrapnstkadj		|  call trap and deal with stack cleanup
 
 /*
  * Coprocessor and format errors can generate mid-instruction stack
@@ -476,42 +469,8 @@ _trace:
 	moveq	#T_TRACE,d0
 	jra	fault
 
-/*
- * The sigreturn() syscall comes here.  It requires special handling
- * because we must open a hole in the stack to fill in the (possibly much
- * larger) original stack frame.
- */
-sigreturn:
-	lea	sp@(-84),sp		|  leave enough space for largest frame
-	movl	sp@(84),sp@		|  move up current 8 byte frame
-	movl	sp@(88),sp@(4)
-	movl	#84,sp@-		|  default: adjust by 84 bytes
-	moveml	#0xFFFF,sp@-		|  save user registers 
-	movl	usp,a0			|  save the user SP
-	movl	a0,sp@(FR_SP)		|    in the savearea
-	movl	#SYS_sigreturn,sp@-	|  push syscall number
-	jbsr	_syscall		|  handle it
-	addql	#4,sp			|  pop syscall#
-	movl	sp@(FR_SP),a0		|  grab and restore
-	movl	a0,usp			|    user SP
-	lea	sp@(FR_HW),a1		|  pointer to HW frame
-	movw	sp@(FR_ADJ),d0		|  do we need to adjust the stack?
-	jeq	Lsigr1			|  no, just continue
-	moveq	#92,d1			|  total size
-	subw	d0,d1			|   - hole size = frame size
-	lea	a1@(92),a0		|  destination
-	addw	d1,a1			|  source
-	lsrw	#1,d1			|  convert to word count
-	subqw	#1,d1			|  minus 1 for dbf
-Lsigrlp:
-	movw	a1@-,a0@-		|  copy a word
-	dbf	d1,Lsigrlp		|  continue
-	movl	a0,a1			|  new HW frame base
-Lsigr1:
-	movl	a1,sp@(FR_SP)		|  new SP value
-	moveml	sp@+,#0x7FFF		|  restore user registers
-	movl	sp@,sp			|  and our SP
-	jra	rei			|  all done
+/* Use common m68k sigreturn */
+#include <m68k/m68k/sigreturn.s>
 
 /*
  * Interrupt handlers.
@@ -776,10 +735,6 @@ _esym:	.long	0
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
-	.globl	_first_8_bytes
-_first_8_bytes:				| Save first 8 bytes here
-	.long	0
-	.long	0
 
 	.word	0x0002			|  XXX: loadbsd version required
 					|  2: needs a4 = esym
@@ -796,10 +751,9 @@ start:
 	 * d3 = boothowto
 	 * d4 = size of loaded kernel
 	 */
-	movl	a0,	a6		| Save load address in a6
-	movl	#8, a5			| Addresses 0-8 are mapped to ROM on the
-	addql	#8, a0			|  atari ST. We cannot set these.
-	subl	#8, d4
+	movl	#8,a5			| Addresses 0-8 are mapped to ROM on the
+	addql	#8,a0			|  atari ST. We cannot set these.
+	subl	#8,d4
 
 	/*
 	 * Copy until end of kernel relocation code.
@@ -812,10 +766,7 @@ Lstart0:
 	/*
 	 * Enter kernel at destination address and continue copy
 	 */
-	jmp	Lstart1
-Lstart1:
-	movl	a6@+,_first_8_bytes	|  copy first 8 bytes
-	movl	a6@,_first_8_bytes+4
+	jmp	Lstart2
 Lstart2:
 	movl	a0@+,a5@+		|  copy the rest of the kernel
 	subl	#4, d4
@@ -856,8 +807,8 @@ Lsetcpu040:
 	movl	#CACHE40_OFF,d0		|  68040 cache disable
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
-	moveq	#0,d0			| This assumes load-address 0!!
-	movc	d0,vbr
+	movl	#Lvectab,a0		| set address of vector table
+	movc	a0,vbr
 
 	/*
 	 * Initialize source/destination control registers for movs
@@ -892,8 +843,8 @@ Lstartnot040:
 	/* flush TLB and turn on caches */
 	jbsr	_TBIA			|  invalidate TLB
 	movl	#CACHE_ON,d0
-	tstl	_cpu040
-	jeq	Lcacheon
+	cmpl	#MMU_68040,_mmutype
+	jne	Lcacheon
 	/*  is this needed? MLH */
 	.word	0xf4f8			|  cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
@@ -934,8 +885,8 @@ Lcacheon:
 	pea	sp@			|  addr of space for D0
 	jbsr	_main			|  main(r0)
 	addql	#4,sp			|  pop args
-	tstl	_cpu040			|  68040?
-	jeq	Lnoflush		|  no, skip
+	cmpl	#MMU_68040,_mmutype	|  68040?
+	jne	Lnoflush		|  no, skip
 	.word	0xf478			|  cpusha dc
 	.word	0xf498			|  cinva ic
 Lnoflush:
@@ -1006,8 +957,8 @@ ENTRY(copypage)
 	movl	sp@(4),a0		|  source address
 	movl	sp@(8),a1		|  destination address
 	movl	#NBPG/32,d0		|  number of 32 byte chunks
-	tstl	_cpu040
-	jeq	Lmlloop			|  no, use movl
+	cmpl	#MMU_68040,_mmutype
+	jne	Lmlloop			|  no, use movl
 Lm16loop:
 	.long	0xf6209000		|  move16 a0@+,a1@+
 	.long	0xf6209000		|  move16 a0@+,a1@+
@@ -1344,8 +1295,8 @@ Lswnofpsave:
 	movl	_curpcb,a1		|  restore p_addr 
 Lswnochg:
 	lea	tmpstk,sp		|  now goto a tmp stack for NMI 
-	tstl	_cpu040
-	jne	Lres2
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lres2
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			|  invalidate cache(s) 
 	pflusha				|  flush entire TLB 
@@ -1358,8 +1309,8 @@ Lres3:
 	movl	a1@(PCB_USTP),d0	|  get USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			|  convert to addr
-	tstl	_cpu040
-	jne	Lres4
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lres4
 	lea	_protorp,a0		|  CRP prototype
 	movl	d0,a0@(4)		|  stash USTP
 	pmove	a0@,crp			|  load new user root pointer
@@ -1497,8 +1448,8 @@ Lclrloop:
  */
 ENTRY(TBIA)
 __TBIA:
-	tstl	_cpu040
-	jne	Ltbia040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbia040
 	pflusha				|  flush entire TLB
 	tstl	_mmutype
 	jpl	Lmc68851a		|  68851 implies no d-cache
@@ -1519,8 +1470,8 @@ ENTRY(TBIS)
 	jne	__TBIA			|  yes, flush entire TLB
 #endif
 	movl	sp@(4),a0		|  get addr to flush
-	tstl	_cpu040
-	jne	Ltbis040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbis040
 	tstl	_mmutype
 	jpl	Lmc68851b		|  is 68851?
 	pflush	#0,#0,a0@		|  flush address from both sides
@@ -1547,8 +1498,8 @@ ENTRY(TBIAS)
 	tstl	fulltflush		|  being conservative?
 	jne	__TBIA			|  yes, flush everything
 #endif
-	tstl	_cpu040
-	jne	Ltbias040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbias040
 	tstl	_mmutype
 	jpl	Lmc68851c		|  68851?
 	pflush	#4,#4			|  flush supervisor TLB entries
@@ -1571,8 +1522,8 @@ ENTRY(TBIAU)
 	tstl	fulltflush		|  being conservative?
 	jne	__TBIA			|  yes, flush everything
 #endif
-	tstl	_cpu040
-	jne	Ltbiau040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbiau040
 	tstl	_mmutype
 	jpl	Lmc68851d		|  68851?
 	pflush	#0,#4			|  flush user TLB entries
@@ -1593,9 +1544,9 @@ Ltbiau040:
 ENTRY(ICIA)
 ENTRY(ICPA)
 #if defined(M68030) || defined(M68020)
-#if defined(M68040)
-	tstl	_cpu040
-	jne	Licia040
+#if defined(M68040) || defined(M68060)
+	cmpl	#MMU_68040,_mmutype
+	jeq	Licia040
 #endif
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			|  invalidate i-cache
@@ -1616,16 +1567,16 @@ Licia040:
  */
 ENTRY(DCIA)
 __DCIA:
-	tstl	_cpu040
-	jeq	Ldciax
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldciax
 	.word	0xf478			|  cpusha dc
 Ldciax:
 	rts
 
 ENTRY(DCIS)
 __DCIS:
-	tstl	_cpu040
-	jeq	Ldcisx
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldcisx
 	.word	0xf478			|  cpusha dc
 	nop
 Ldcisx:
@@ -1633,8 +1584,8 @@ Ldcisx:
 
 ENTRY(DCIU)
 __DCIU:
-	tstl	_cpu040
-	jeq	Ldciux
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldciux
 	.word	0xf478			|  cpusha dc
 Ldciux:
 	rts
@@ -1642,8 +1593,8 @@ Ldciux:
 /*  Invalid single cache line */
 ENTRY(DCIAS)
 __DCIAS:
-	tstl	_cpu040
-	jeq	Ldciasx
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldciasx
 	movl	sp@(4),a0
 	.word	0xf468			|  cpushl dc,a0@
 Ldciasx:
@@ -1680,9 +1631,9 @@ ENTRY(DCFP)	/* data cache flush page */
 
 ENTRY(PCIA)
 #if defined(M68030) || defined(M68030)
-#if defined(M68040)
-	tstl	_cpu040
-	jne	Lpcia040
+#if defined(M68040) || defined(M68060)
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lpcia040
 #endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			|  invalidate on-chip d-cache
@@ -1744,8 +1695,8 @@ ENTRY(loadustp)
 	movl	sp@(4),d0		|  new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			|  convert to addr
-	tstl	_cpu040
-	jne	Lldustp040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lldustp040
 	lea	_protorp,a0		|  CRP prototype
 	movl	d0,a0@(4)		|  stash USTP
 	pmove	a0@,crp			|  load root pointer
@@ -1762,8 +1713,8 @@ Lldustp040:
  * and ATC entries in PMMU.
  */
 ENTRY(flushustp)
-	tstl	_cpu040
-	jne	Lnot68851
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lnot68851
 	tstl	_mmutype		|  68851 PMMU?
 	jle	Lnot68851		|  no, nothing to do
 	movl	sp@(4),d0		|  get USTP to flush
@@ -1776,8 +1727,8 @@ Lnot68851:
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		|  address to load
-	tstl	_cpu040
-	jne	Lploadw040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lploadw040
 	ploadw	#1,a0@			|  pre-load translation
 Lploadw040:				|  should 68040 do a ptest?
 	rts
@@ -1858,8 +1809,8 @@ Lm68881rdone:
 	.globl	_doboot
 _doboot:
 	movl	#CACHE_OFF,d0
-	movl	_cpu040,d1		|  load 68040 flag
-	jeq	Ldoboot0
+	cmpl	#MMU_68040,_mmutype	|  is it 68040
+	jne	Ldoboot0
 	.word	0xf4f8			|  cpusha bc - push and inval caches
 	nop
 	movl	#CACHE40_OFF,d0
@@ -1885,16 +1836,18 @@ Ldb1:
 	movl	_page_zero,a0		| a0 = virtual base for page zero
 	addl	a1,a0			|		+ offset of Ldoreboot
 Ldb2:					| Do the copy
-	movel	a1@+,a0@+
-	cmpl	a1,a2
+	movl	a1@+,a0@+
+	cmpl	a2,a1
 	jle	Ldb2
+	movl	#0,a0
+	movl	a0@,d0
 
 	/*
 	 * Ok, turn off MMU..
 	 */
 Ldoreboot:
-	tstl	d1			| We saved cpu040 here
-	jne	Lmmuoff040		| Go turn off 68040 MMU
+	cmpl	#MMU_68040,_mmutype	| is it 68040
+	jeq	Lmmuoff040		| Go turn off 68040 MMU
 	lea	zero,a0
 	pmove	a0@,tc			| Turn off MMU
 	lea	nullrp,a0
@@ -1909,7 +1862,7 @@ Lmmuoff040:
 Ldoboot1:
 	movl	0x4,a0			| fetch reset-vector
 	jmp	a0@			| jump through it
-	/*  NOT REACHED */
+	/* NOTREACHED */
 
 /*  A do-nothing MMU root pointer (includes the following long as well) */
 
