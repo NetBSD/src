@@ -24,6 +24,8 @@
 #include "corefile.h"
 #include "symtab.h"
 
+#include <stdlib.h>
+
 bfd *core_bfd;
 int core_num_syms;
 asymbol **core_syms;
