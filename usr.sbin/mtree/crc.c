@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.6 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: crc.c,v 1.7 2005/02/06 04:52:53 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.6 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: crc.c,v 1.7 2005/02/06 04:52:53 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,14 +118,12 @@ extern int sflag;
 u_int32_t crc_total = ~0;		/* The crc over a number of files. */
 
 int
-crc(fd, cval, clen)
-	register int fd;
-	u_int32_t *cval, *clen;
+crc(int fd, u_int32_t *cval, u_int32_t *clen)
 {
-	register u_char *p;
-	register int nr;
-	register u_int32_t thecrc, len;
-	register u_int32_t crctot;
+	u_char *p;
+	int nr;
+	u_int32_t thecrc, len;
+	u_int32_t crctot;
 	u_char buf[16 * 1024];
 
 #define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
@@ -144,7 +142,7 @@ crc(fd, cval, clen)
 				COMPUTE(thecrc, *p);
 		}
 	if (nr < 0)
-		return (1);
+		return 1;
 
 	*clen = len;
 
@@ -162,5 +160,5 @@ crc(fd, cval, clen)
 	*cval = ~thecrc;
 	if (sflag)
 		crc_total = ~crctot;
-	return (0);
+	return 0;
 }
