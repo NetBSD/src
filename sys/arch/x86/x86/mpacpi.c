@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.10 2003/10/07 18:10:36 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.11 2003/10/07 21:47:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.10 2003/10/07 18:10:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.11 2003/10/07 21:47:57 fvdl Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -329,8 +329,20 @@ mpacpi_config_ioapic(APIC_HEADER *hdrp, void *aux)
 int
 mpacpi_scan_apics(struct device *self)
 {
-	int rv = 0;
+#if NPCI > 0
+	int quirks;
 
+	/*
+	 * If PCI routing tables can't be built, don't bother
+	 * with the rest. Let MPBIOS do everything.
+	 * XXX could still only do CPUs and I/O APICs, but
+	 * need to split the MPBIOS code into interrupt and
+	 * device probing.
+	 */
+	quirks = acpi_find_quirks();
+	if ((quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) != 0)
+		return 0;
+#endif
 	if (acpi_madt_map() != AE_OK)
 		return 0;
 
@@ -339,25 +351,14 @@ mpacpi_scan_apics(struct device *self)
 
 	lapic_boot_init(mpacpi_lapic_base);
 
-	acpi_madt_walk(mpacpi_config_cpu, self);
-
 	if (mpacpi_ncpu == 0)
-		goto done;
+		return 0;
 
+	acpi_madt_walk(mpacpi_config_cpu, self);
 	acpi_madt_walk(mpacpi_config_ioapic, self);
 
-#if NPCI > 0
-	/*
-	 * If PCI routing tables can't be built we report failure
-	 * and let MPBIOS do the work.
-	 */
-	if ((acpi_find_quirks() & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) != 0)
-		goto done;
-#endif
-	rv = 1;
-done:
 	acpi_madt_unmap();
-	return rv;
+	return 1;
 }
 
 #if NPCI > 0
