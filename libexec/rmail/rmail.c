@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.14 2000/10/10 19:54:39 is Exp $	*/
+/*	$NetBSD: rmail.c,v 1.15 2001/01/16 02:38:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.14 2000/10/10 19:54:39 is Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.15 2001/01/16 02:38:05 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,15 +64,13 @@ __RCSID("$NetBSD: rmail.c,v 1.14 2000/10/10 19:54:39 is Exp $");
  *
  * The output of rmail(8) compresses the <forward> lines into a single
  * from path.
- *
- * The err(3) routine is included here deliberately to make this code
- * a bit more portable.
  */
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -86,8 +84,6 @@ __RCSID("$NetBSD: rmail.c,v 1.14 2000/10/10 19:54:39 is Exp $");
 # define MAX(a, b)	((a) < (b) ? (b) : (a))
 #endif
 
-void err __P((int, const char *, ...))
-     __attribute((__format__(__printf__, 2, 3)));
 void usage __P((void));
 int main __P((int, char *[]));
 
@@ -348,33 +344,4 @@ usage()
 {
 	(void)fprintf(stderr, "usage: rmail [-T] [-D domain] user ...\n");
 	exit(EX_USAGE);
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(int eval, const char *fmt, ...)
-#else
-err(eval, fmt, va_alist)
-	int eval;
-	const char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "rmail: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(eval);
 }
