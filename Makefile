@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.123 2001/06/10 13:02:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.124 2001/06/10 13:12:32 mrg Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -139,7 +139,22 @@ whatis.db:
 build:
 	@echo "Build installed into ${DESTDIR}"
 .else
-build: buildstartmsg beforeinstall do-force-domestic do-share-mk do-cleandir do-make-obj do-check-egcs do-make-includes do-lib-csu do-lib do-gnu-lib do-dependall do-domestic do-whatisdb buildendmsg
+build:
+	@${MAKE} ${_M} buildstartmsg
+	@${MAKE} ${_M} beforeinstall
+	@${MAKE} ${_M} do-force-domestic
+	@${MAKE} ${_M} do-share-mk
+	@${MAKE} ${_M} do-cleandir
+	@${MAKE} ${_M} do-make-obj
+	@${MAKE} ${_M} do-check-egcs
+	@${MAKE} ${_M} do-make-includes
+	@${MAKE} ${_M} do-lib-csu
+	@${MAKE} ${_M} do-lib
+	@${MAKE} ${_M} do-gnu-lib
+	@${MAKE} ${_M} do-dependall
+	@${MAKE} ${_M} do-domestic
+	@${MAKE} ${_M} do-whatisdb
+	@${MAKE} ${_M} buildendmsg
 .endif
 
 do-force-domestic:
