@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.37 2004/03/12 13:22:28 drochner Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.38 2004/04/28 04:12:16 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.37 2004/03/12 13:22:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.38 2004/04/28 04:12:16 briggs Exp $");
 
 #include "rnd.h"
 
@@ -410,6 +410,7 @@ fxp_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_INTEL_PRO_100_VM_5:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_6:
 	case PCI_PRODUCT_INTEL_82801EB_LAN:
+	default:
 		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 		
 		/*
