@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.42 2000/01/17 04:55:26 matt Exp $	*/
+/*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -216,6 +216,7 @@ start()
 	case VAX_BTYP_8000:
 		mastercpu = mfpr(PR_BINID);
 		dep_call = &ka820_calls;
+		strcpy(cpu_model, "VAX 8200");
 		break;
 #endif
 	default:
