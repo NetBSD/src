@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.53 1998/09/12 13:12:14 pk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.54 1998/09/29 01:49:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -39,7 +39,9 @@
  *
  *	@(#)subr_prf.c	8.4 (Berkeley) 5/4/95
  */
+
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #include "ipkdb.h"
 
 #include <sys/param.h>
@@ -56,6 +58,7 @@
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <dev/cons.h>
 
@@ -63,6 +66,24 @@
 #include <ddb/ddbvar.h>
 #endif
 
+#if defined(MULTIPROCESSOR)
+struct simplelock kprintf_slock;
+
+#define	KPRINTF_MUTEX_ENTER(s)						\
+do {									\
+	(s) = splhigh();						\
+	simple_lock(&kprintf_slock);					\
+} while (0)
+
+#define	KPRINTF_MUTEX_EXIT(s)						\
+do {									\
+	simple_unlock(&kprintf_slock);					\
+	splx((s));							\
+} while (0)
+#else /* ! MULTIPROCESSOR */
+#define	KPRINTF_MUTEX_ENTER(s)	(s) = splhigh()
+#define	KPRINTF_MUTEX_EXIT(s)	splx((s))
+#endif
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
@@ -104,6 +125,7 @@ extern	int db_radix;		/* XXX: for non-standard '%r' format */
 static int	 kprintf __P((const char *, int, struct tty *, 
 				char *, va_list));
 static void	 putchar __P((int, int, struct tty *));
+static void	 klogpri __P((int));
 
 
 /*
@@ -211,20 +233,23 @@ log(level, fmt, va_alist)
 	va_dcl
 #endif
 {
-	register int s;
+	int s;
 	va_list ap;
 
-	s = splhigh();
-	logpri(level);		/* log the level first */
+	KPRINTF_MUTEX_ENTER(s);
+
+	klogpri(level);		/* log the level first */
 	va_start(ap, fmt);
 	kprintf(fmt, TOLOG, NULL, NULL, ap);
-	splx(s);
 	va_end(ap);
 	if (!log_open) {
 		va_start(ap, fmt);
 		kprintf(fmt, TOCONS, NULL, NULL, ap);
 		va_end(ap);
 	}
+
+	KPRINTF_MUTEX_EXIT(s);
+
 	logwakeup();		/* wake up anyone waiting for log msgs */
 }
 
@@ -232,8 +257,22 @@ log(level, fmt, va_alist)
  * logpri: log the priority level to the klog
  */
 
-void			/* XXXCDC: should be static? */
+void
 logpri(level)
+	int level;
+{
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+	klogpri(level);
+	KPRINTF_MUTEX_EXIT(s);
+}
+
+/*
+ * Note: we must be in the mutex here!
+ */
+static void
+klogpri(level)
 	int level;
 {
 	char *p;
@@ -259,19 +298,22 @@ addlog(fmt, va_alist)
 	va_dcl
 #endif
 {
-	register int s;
+	int s;
 	va_list ap;
 
-	s = splhigh();
+	KPRINTF_MUTEX_ENTER(s);
+
 	va_start(ap, fmt);
 	kprintf(fmt, TOLOG, NULL, NULL, ap);
-	splx(s);
 	va_end(ap);
 	if (!log_open) {
 		va_start(ap, fmt);
 		kprintf(fmt, TOCONS, NULL, NULL, ap);
 		va_end(ap);
 	}
+
+	KPRINTF_MUTEX_EXIT(s);
+
 	logwakeup();
 }
 
@@ -281,6 +323,7 @@ addlog(fmt, va_alist)
  *
  * => if console, then the last MSGBUFS chars are saved in msgbuf
  *	for inspection later (e.g. dmesg/syslog)
+ * => we must already be in the mutex!
  */
 static void
 putchar(c, flags, tp)
@@ -354,6 +397,7 @@ uprintf(fmt, va_alist)
 	va_list ap;
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
+		/* No mutex needed; going to process TTY. */
 		va_start(ap, fmt);
 		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
 		va_end(ap);
@@ -418,17 +462,23 @@ tprintf(tpr, fmt, va_alist)
 {
 	register struct session *sess = (struct session *)tpr;
 	struct tty *tp = NULL;
-	int flags = TOLOG;
+	int s, flags = TOLOG;
 	va_list ap;
 
-	logpri(LOG_INFO);
 	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
 	}
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	klogpri(LOG_INFO);
 	va_start(ap, fmt);
 	kprintf(fmt, flags, tp, NULL, ap);
 	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+
 	logwakeup();
 }
 
@@ -452,6 +502,7 @@ ttyprintf(tp, fmt, va_alist)
 {
 	va_list ap;
 
+	/* No mutex needed; going to process TTY. */
 	va_start(ap, fmt);
 	kprintf(fmt, TOTTY, tp, NULL, ap);
 	va_end(ap);
@@ -474,6 +525,7 @@ db_printf(fmt, va_alist)
 {
 	va_list ap;
 
+	/* No mutex needed; DDB pauses all processors. */
 	va_start(ap, fmt);
 	kprintf(fmt, TODDB, NULL, NULL, ap);
 	va_end(ap);
@@ -499,13 +551,18 @@ printf(fmt, va_alist)
 #endif
 {
 	va_list ap;
-	int savintr;
+	int s, savintr;
+
+	KPRINTF_MUTEX_ENTER(s);
 
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
 	va_start(ap, fmt);
 	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
@@ -521,11 +578,16 @@ vprintf(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	int savintr;
+	int s, savintr;
+
+	KPRINTF_MUTEX_ENTER(s);
 
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
 	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+
+	KPRINTF_MUTEX_EXIT(s);
+
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
@@ -734,6 +796,8 @@ out:
  * this is the actual printf innards
  *
  * This code is large and complicated...
+ *
+ * NOTE: The kprintf mutex must be held of we're going TOBUF or TOCONS!
  */
 
 /*
@@ -774,7 +838,10 @@ out:
 #define KPRINTF_PUTCHAR(C) \
 	(oflags == TOBUFONLY) ? *sbuf++ = (C) : putchar((C), oflags, tp);
 
-int
+/*
+ * Guts of kernel printf.  Note, we already expect to be in a mutex!
+ */
+static int
 kprintf(fmt0, oflags, tp, sbuf, ap)
 	const char *fmt0;
 	int oflags;
