@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.69 2002/03/18 13:28:25 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.70 2002/03/18 13:32:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.69 2002/03/18 13:28:25 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.70 2002/03/18 13:32:36 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.69 2002/03/18 13:28:25 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.70 2002/03/18 13:32:36 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -317,7 +317,7 @@ static int JobPrintCommand __P((ClientData, ClientData));
 static int JobSaveCommand __P((ClientData, ClientData));
 static void JobClose __P((Job *));
 #ifdef REMOTE
-static int JobCmpRmtID __P((Job *, int));
+static int JobCmpRmtID __P((ClientData, ClientData));
 # ifdef RMT_WILL_WATCH
 static void JobLocalInput __P((int, Job *));
 # endif
@@ -573,7 +573,7 @@ JobCmpRmtID(job, rmtID)
     ClientData      job;	/* job to examine */
     ClientData      rmtID;	/* remote id desired */
 {
-    return(*(int *) rmtID - *(int *) job->rmtID);
+    return(*(int *) rmtID - ((Job *) job)->rmtID);
 }
 #endif
 
@@ -1606,7 +1606,7 @@ JobRestart(job)
 #else
 		job->flags &= ~(JOB_REMIGRATE|JOB_RESUME);
 #endif
-	} else {
+	    } else {
 		/*
 		 * Job cannot be restarted. Mark the table as full and
 		 * place the job back on the list of stopped jobs.
@@ -1655,13 +1655,14 @@ JobRestart(job)
 	    (void) fflush(stdout);
 	}
 #ifdef REMOTE
-	if ((job->node->type&OP_NOEXPORT) ||
+	if ((job->node->type & OP_NOEXPORT) ||
  	    (nLocal < maxLocal && runLocalFirst)
 # ifdef RMT_NO_EXEC
 	    || !Rmt_Export(shellPath, argv, job)
 # else
 	    || !Rmt_Begin(shellPath, argv, job->node)
 # endif
+	   )
 #endif
 	{
 	    if (((nLocal >= maxLocal) && !(job->flags & JOB_SPECIAL))) {
@@ -1708,17 +1709,15 @@ JobRestart(job)
 	   (void) fprintf(stdout, "Resuming %s...", job->node->name);
 	   (void) fflush(stdout);
 	}
-	if (((job->flags & JOB_REMOTE) ||
-	    (nLocal < maxLocal) ||
+	if ((nJobs != maxJobs) &&
+	    ((job->flags & JOB_REMOTE) ||
+	     (nLocal < maxLocal) ||
+	     ((maxLocal == 0) &&
+		((job->flags & JOB_SPECIAL)
 #ifdef REMOTE
-	    (((job->flags & JOB_SPECIAL) &&
-	      (job->node->type & OP_NOEXPORT)) &&
-	     (maxLocal == 0))) &&
-#else
-	    ((job->flags & JOB_SPECIAL) &&
-	     (maxLocal == 0))) &&
+			&& (job->node->type & OP_NOEXPORT)
 #endif
-	   (nJobs != maxJobs))
+	    ))))
 	{
 	    /*
 	     * If the job is remote, it's ok to resume it as long as the
@@ -3246,7 +3245,7 @@ JobFlagForMigration(hostID)
 	(void) fprintf(stdout, "JobFlagForMigration(%d) called.\n", hostID);
 	(void) fflush(stdout);
     }
-    jnode = Lst_Find(jobs, (ClientData)hostID, JobCmpRmtID);
+    jnode = Lst_Find(jobs, (ClientData)&hostID, JobCmpRmtID);
 
     if (jnode == NILLNODE) {
 	jnode = Lst_Find(stoppedJobs, (ClientData)hostID, JobCmpRmtID);
