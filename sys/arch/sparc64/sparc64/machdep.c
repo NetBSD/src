@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.172 2004/10/31 21:59:51 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.173 2004/11/08 16:11:02 kleink Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2004/10/31 21:59:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2004/11/08 16:11:02 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1895,7 +1895,7 @@ cpu_getmcontext(l, mcp, flags)
 		sigexit(l, SIGILL);
 
 	/* For now: Erase any random indicators for optional state. */
-	(void)memset(mcp, '0', sizeof (*mcp));
+	(void)memset(mcp, 0, sizeof (*mcp));
 
 	/* Save general register context. */
 #ifdef __arch64__
