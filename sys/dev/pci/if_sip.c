@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.52.4.3 2002/11/01 18:23:53 tron Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.52.4.4 2002/11/01 18:25:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -78,11 +78,11 @@
  *
  *	- Support the 10-bit interface on the DP83820 (for fiber).
  *
- *	- Reduce the interrupt load.
+ *	- Reduce the Rx interrupt load.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.3 2002/11/01 18:23:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.4 2002/11/01 18:25:40 tron Exp $");
 
 #include "bpfilter.h"
 
