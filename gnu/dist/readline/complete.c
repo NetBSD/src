@@ -331,19 +331,20 @@ print_filename (to_print, full_pathname)
 {
 #if !defined (VISIBLE_STATS)
   char *s;
+  int c;
 
-  for (s = to_print; *s; s++)
+  for (s = to_print; c = *s; s++)
     {
-      PUTX (*s);
+      PUTX (c);
     }
   return 0;
 #else  
-  char *s, c, *new_full_pathname;
-  int extension_char, slen, tlen;
+  char *s, *new_full_pathname;
+  int c, int extension_char, slen, tlen;
 
-  for (s = to_print; *s; s++)
+  for (s = to_print; c = *s; s++)
     {
-      PUTX (*s);
+      PUTX (c);
     }
 
  if (rl_filename_completion_desired && rl_visible_stats)
