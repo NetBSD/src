@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.140 2000/07/26 02:21:21 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.141 2000/08/02 20:04:45 msaitoh Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -74,6 +74,16 @@ STRIPFLAG?=	-s
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
+
+# The sh3 port is incomplete.
+.if ${MACHINE_ARCH} == "sh3"
+NOLINT=1
+NOPROFILE=1
+OBJECT_FMT?=COFF
+.if ${OBJECT_FMT} == "COFF"
+NOPIC?=1
+.endif
+.endif
 
 # The sparc64 port is incomplete.
 .if ${MACHINE_ARCH} == "sparc64"
