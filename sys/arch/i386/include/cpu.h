@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.8 2000/06/26 02:04:14 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.9 2000/08/12 17:53:00 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -143,6 +143,7 @@ extern	struct cpu_info *cpu_info[I386_MAXPROCS];
 extern	u_long cpus_running;
 
 extern void cpu_boot_secondary_processors __P((void));
+extern void cpu_init_idle_pcbs __P((void));
 
 #define want_resched (curcpu()->ci_want_resched)
 #define astpending (curcpu()->ci_astpending)

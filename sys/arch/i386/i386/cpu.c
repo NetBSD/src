@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.8 2000/08/07 01:08:33 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.9 2000/08/12 17:53:02 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
+#include <machine/gdt.h>
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -181,6 +182,7 @@ cpu_attach(parent, self, aux)
 		if (cpu_info[cpunum] == &dummy_cpu_info) {	    /* XXX */
 			ci->ci_curproc = dummy_cpu_info.ci_curproc; /* XXX */
 			cpu_info[cpunum] = NULL; 		    /* XXX */
+			ci->ci_curproc->p_cpu = ci;		    /* XXX */
 		}				 		    /* XXX */
 	}
 	if (cpu_info[cpunum] != NULL)
@@ -318,10 +320,27 @@ cpu_boot_secondary_processors()
 			continue;
 		if ((ci->ci_flags & CPUF_PRESENT) == 0)
 			continue;
-		i386_init_pcb_tss_ldt(ci->ci_idle_pcb);
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
 		cpu_boot_secondary(ci);
+	}
+}
+
+void
+cpu_init_idle_pcbs()
+{
+	struct cpu_info *ci;
+	u_long i;
+
+	for (i=0; i < I386_MAXPROCS; i++) {
+		ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_idle_pcb == NULL)
+			continue;
+		if ((ci->ci_flags & CPUF_PRESENT) == 0)
+			continue;
+		i386_init_pcb_tss_ldt(ci->ci_idle_pcb);
 	}
 }
 
@@ -360,46 +379,30 @@ cpu_boot_secondary (ci)
 
 /*
  * The CPU ends up here when its ready to run
+ * This is called from code in mptramp.s; at this point, we are running
+ * in the idle pcb/idle stack of the new cpu.  When this function returns,
+ * this processor will enter the idle loop and start looking for work.
+ *
  * XXX should share some of this with init386 in machdep.c
- * for now it jumps into an infinite loop.
  */
 void
 cpu_hatch(void *v) 
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-        struct region_descriptor region;
-#if 0
-	volatile int i;
-#endif
-	
-	cpu_init_idt();
+	int s;
 
+	cpu_init_idt();
+	gdt_init_cpu();
 	lapic_enable();
 	lapic_set_lvt();
 
 	cpu_init(ci);
 
-	splbio();		/* XXX prevent softints from running here.. */
-
+	s = splhigh();
 	enable_intr();
-	printf("%s: CPU %d reporting for duty, Sir!\n",ci->ci_dev.dv_xname, cpu_number());
-	printf("%s: stack is %p\n", ci->ci_dev.dv_xname, &region);
-#if 0
-	printf("%s: sending IPI to cpu 0\n",ci->ci_dev.dv_xname);
-	i386_send_ipi(cpu_primary, I386_IPI_GMTB);
-
-	/* give it a chance to be handled.. */
-	for (i=0; i<1000000; i++)
-		;
-	
-	printf("%s: sending another IPI to cpu 0\n",
-	    ci->ci_dev.dv_xname);
-	i386_send_ipi(cpu_primary, I386_IPI_GMTB);
-#endif	
-	for (;;)
-		;
-
-
+	lapic_initclocks();
+	printf("%s: CPU %d running\n",ci->ci_dev.dv_xname, cpu_number());
+	splx(s);
 }
 
 static void

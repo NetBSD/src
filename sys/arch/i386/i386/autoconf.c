@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.3 2000/06/25 19:37:02 sommerfeld Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.4 2000/08/12 17:53:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,6 +128,7 @@ cpu_configure()
 	/* Set up proc0's TSS and LDT (after the FPU is configured). */
 	i386_proc0_tss_ldt_init();
 
+	cpu_init_idle_pcbs();
 	/* XXX Finish deferred buffer cache allocation. */
 	i386_bufinit();
 }
