@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isavar.h,v 1.2 2000/02/01 22:39:52 chopps Exp $	*/
+/*	$NetBSD: i82365_isavar.h,v 1.3 2000/02/22 16:04:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -29,6 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+struct pcic_isa_softc {
+	struct pcic_softc sc_pcic;	/* real pcic softc */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
+};
 
 extern int pcic_isa_intr_alloc_mask;
 

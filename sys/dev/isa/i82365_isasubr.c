@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.14 2000/02/08 17:53:48 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.15 2000/02/22 16:04:44 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -134,11 +134,13 @@ pcic_isa_count_intr(arg)
 	void *arg;
 {
 	struct pcic_softc *sc;
+	struct pcic_isa_softc *isc;
 	struct pcic_handle *h;
 	int cscreg;
 
 	h = arg;
 	sc = (struct pcic_softc *)h->ph_parent;
+	isc = (struct pcic_isa_softc *)h->ph_parent;
 
 	cscreg = pcic_read(h, PCIC_CSC);
 	if (cscreg & PCIC_CSC_CD) {
@@ -157,7 +159,7 @@ pcic_isa_count_intr(arg)
 		pcic_write(h, PCIC_CSC_INTR, 0);
 		delay(10);
 
-		isa_intr_disestablish(sc->intr_est, sc->ih);
+		isa_intr_disestablish(isc->sc_ic, sc->ih);
 		sc->ih = 0;
 	}
 
@@ -179,11 +181,12 @@ pcic_isa_probe_interrupts(sc, h)
 	struct pcic_softc *sc;
 	struct pcic_handle *h;
 {
+	struct pcic_isa_softc *isc = (void *) sc;
 	isa_chipset_tag_t ic;
 	int i, j, mask, irq;
 	int cd, cscintr, intr, csc;
 
-	ic = sc->intr_est;
+	ic = isc->sc_ic;
 
 	printf("%s: controller %d detecting irqs with mask 0x%04x:",
 	    sc->dev.dv_xname, h->chip, sc->intr_mask[h->chip]);
@@ -270,12 +273,14 @@ pcic_isa_config_interrupts(self)
 	struct device *self;
 {
 	struct pcic_softc *sc;
+	struct pcic_isa_softc *isc;
 	struct pcic_handle *h;
 	isa_chipset_tag_t ic;
 	int s, i, chipmask, chipuniq;
 
-	sc = (struct pcic_softc *)self;
-	ic = sc->intr_est;
+	sc = (struct pcic_softc *) self;
+	isc = (struct pcic_isa_softc *) self;
+	ic = isc->sc_ic;
 
 	/* probe each controller */
 	chipmask = 0xffff;
@@ -470,7 +475,8 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
-	isa_chipset_tag_t ic = sc->intr_est;
+	struct pcic_isa_softc *isc = (struct pcic_isa_softc *)(h->ph_parent);
+	isa_chipset_tag_t ic = isc->sc_ic;
 	int irq, ist;
 	void *ih;
 	int reg;
@@ -506,8 +512,8 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	void *ih;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
-	isa_chipset_tag_t ic = sc->intr_est;
+	struct pcic_isa_softc *isc = (struct pcic_isa_softc *)(h->ph_parent);
+	isa_chipset_tag_t ic = isc->sc_ic;
 	int reg;
 
 	h->ih_irq = 0;
