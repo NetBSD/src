@@ -1,8 +1,0 @@
-./sbin/edlabel
-./usr/mdec/bootsd
-./usr/mdec/bootst
-./usr/mdec/bootxx
-./usr/mdec/installboot
-./usr/mdec/netboot
-./usr/mdec/sboot
-./usr/mdec/stboot

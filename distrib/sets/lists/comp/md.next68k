@@ -1,7 +1,0 @@
-./usr/include/machine/autoconf.h
-./usr/include/machine/bus.h
-./usr/include/machine/bus_dma.h
-./usr/include/machine/bus_space.h
-./usr/include/machine/intr.h
-./usr/include/machine/kcore.h
-./usr/include/machine/z8530var.h

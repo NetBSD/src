@@ -1,4 +1,0 @@
-#	$NetBSD: shlib_version,v 1.57 1998/07/27 16:05:35 mycroft Exp $
-#
-major=12
-minor=30
