@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.9 1997/09/16 12:57:44 lukem Exp $
+.\"	$NetBSD: shutdown.8,v 1.10 1998/01/20 20:55:22 perry Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,6 +110,13 @@ where the year, month, and day may be defaulted
 to the current system values.  The first form brings the system down in
 .Ar number
 minutes and the second at the absolute time specified.
+Year
+values between 69 and 99 indicate the years 1969 to 1999;
+values between 00 and 68 indicate 2000 to 2068. A leading zero in the
+.Dq yy
+value is
+.Em not
+optional.
 .It Ar warning-message
 Any other arguments comprise the warning message that is broadcast
 to users currently logged into the system.
