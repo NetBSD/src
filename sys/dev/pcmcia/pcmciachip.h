@@ -37,7 +37,7 @@ struct pcmcia_chip_functions {
 		       bus_space_tag_t, bus_space_handle_t, int *));
     void (*io_unmap) __P((pcmcia_chipset_handle_t, int));
 
-    void *(*intr_establish) __P((pcmcia_chipset_handle_t, int,
+    void *(*intr_establish) __P((pcmcia_chipset_handle_t, u_int16_t, int,
 				 int (*)(void *), void *));
     void (*intr_disestablish) __P((pcmcia_chipset_handle_t, void *));
 };
@@ -64,8 +64,8 @@ struct pcmcia_chip_functions {
 #define pcmcia_chip_io_unmap(tag, handle, window) \
 	((*(tag)->io_unmap)((handle), (window)))
 
-#define pcmcia_chip_intr_establish(tag, handle, ipl, fct, arg) \
-	((*(tag)->intr_establish)((handle), (ipl), (fct), (arg)))
+#define pcmcia_chip_intr_establish(tag, handle, irqmask, ipl, fct, arg) \
+	((*(tag)->intr_establish)((handle), (irqmask), (ipl), (fct), (arg)))
 #define pcmcia_chip_intr_disestablish(tag, handle, ih) \
 	((*(tag)->intr_disestablish)((handle), (ih)))
 
