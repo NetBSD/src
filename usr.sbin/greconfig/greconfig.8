@@ -1,4 +1,4 @@
-.\" $NetBSD: greconfig.8,v 1.9 2002/01/15 14:19:27 wiz Exp $
+.\" $NetBSD: greconfig.8,v 1.10 2002/03/04 14:45:48 wiz Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,11 +97,9 @@ For tunnels that run IP as encapsulated protocol, the tunnel endpoints
 can be set with the normal
 .Xr ifconfig 8 .
 In this case, the encapsulation protocol can be chosen by giving
-.Dq link0
-for IPIP encapsulation and
 .Dq -link0
-GRE encapsulation
-as arguments to
+for GRE encapsulation
+as argument to
 .Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr gre 4 ,
