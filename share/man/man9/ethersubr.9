@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.1 1997/05/25 15:54:25 is Exp $
+.\"	$NetBSD: ethersubr.9,v 1.2 1997/05/25 17:58:22 is Exp $
 .\"
 .\" Copyright (c) 1997 Ignatios Souvatzis.
 .\" All rights reserved.
@@ -130,6 +130,10 @@ its hardware filter with it.
 returns, in addition to the above errors, ENXIO, if the specified address
 can't be found in the list of multicast addresses.
 
+.It Fn fddi_addmulti
+.It Fn fddi_delmulti
+corresponding functions for FDDI devices.
+
 .It Fn ETHER_NEXT_MULTI
 is a macro to step through all of the ether_multi records, one at a time.
 The current position is remembered in 
@@ -141,10 +145,6 @@ must be called to initialize
 and get the first record.  Both macros return a NULL 
 .Fa enm
 when there are no remaining records.
-
-.It Fn fddi_addmulti
-.It Fn fddi_delmulti
-corresponding functions for FDDI devices.
 
 .It Fn ETHER_IS_MULTICAST
 
@@ -170,7 +170,7 @@ Ignatios Souvatzis (support for new ARP system)
 
 .\" .Sh STANDARDS
 
-.Sh FILES
+.Sh CODE REFERENCES
 
 Ethernet support functions are declared in /usr/src/sys/net/if_ether.h
 and defined (if not implemented as macro) in
