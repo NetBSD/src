@@ -1,9 +1,9 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.7 1998/07/08 00:13:41 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.8 1998/08/16 02:14:15 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
  * arm8 support code Copyright (c) 1997 Causality Limited
- * Copyright (c) 1997 Mark Brinicombe.
+ * Copyright (c) 1997,1998 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
  *
@@ -42,7 +42,7 @@
  *
  * Created      : 30/01/97
  */
-
+ 
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
@@ -151,19 +151,22 @@ ENTRY(arm8_clock_config)
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 ENTRY(arm67_setttb)
 
-/* We need to flush the cache as it uses virtual addresses that are about to change */
+	/*
+	 * We need to flush the cache as it uses virtual addresses that
+	 * are about to change
+	 */
         mcr     15, 0, r0, c7, c0, 0
 
-/* Write the TTB */
+	/* Write the TTB */
 	mcr	15, 0, r0, c2, c0, 0
 
-/* If we have updated the TTB we must flush the TLB */
+	/* If we have updated the TTB we must flush the TLB */
         mcr     15, 0, r0, c5, c0, 0
 
-/* For good measure we will flush the IDC as well */
+	/* For good measure we will flush the IDC as well */
         mcr     15, 0, r0, c7, c0, 0
 
-/* Make sure that pipeline is emptied */
+	/* Make sure that pipeline is emptied */
         mov     r0, r0
         mov     r0, r0
 
@@ -203,15 +206,25 @@ ENTRY(arm8_setttb)
 
 
 #ifdef CPU_SA110
+Lblock_userspace_access:
+	.word	_block_userspace_access
+
 ENTRY(sa110_setttb)
 	/* We need to flush the cache as it uses virtual addresses that are about to change */
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r1, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r1
+#else
+	ldr	r3, Lblock_userspace_access
+	ldr	r2, [r3]
+	orr	r1, r2, #1
+	str	r1, [r3]
+#endif
 	stmfd	sp!, {r0-r3, lr}
 	bl	_sa110_cache_cleanID
 	ldmfd	sp!, {r0-r3, lr}
-	mcr	15, 0, r0, c7, c7, 0
+	mcr	15, 0, r0, c7, c5, 0
 	mcr	15, 0, r0, c7, c10, 4
 
 	/* Write the TTB */
@@ -226,7 +239,11 @@ ENTRY(sa110_setttb)
 	/* Make sure that pipeline is emptied */
         mov     r0, r0
         mov     r0, r0
-	msr	cpsr_all , r3
+#ifdef CACHE_CLEAN_BLOCK_INTR
+	msr	cpsr_all, r3
+#else
+	str	r2, [r3]
+#endif
 	mov	pc, lr
 #endif	/* CPU_SA110 */
 
@@ -484,9 +501,16 @@ Lsa110_cache_clean_size:
 
 ENTRY(sa110_cache_cleanID)
 ENTRY(sa110_cache_cleanD)
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
+#else
+	ldr	r3, Lblock_userspace_access
+	ldr	ip, [r3]
+	orr	r0, ip, #1
+	str	r0, [r3]
+#endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
 	eor	r0, r0, r1
@@ -497,14 +521,25 @@ Lsa110_cache_cleanD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_cleanD_loop
 
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
+#else
+	str	ip, [r3]
+#endif
 
 	mov	pc, lr	
 
 ENTRY(sa110_cache_purgeID)
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
+#else
+	ldr	r3, Lblock_userspace_access
+	ldr	ip, [r3]
+	orr	r0, ip, #1
+	str	r0, [r3]
+#endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
 	eor	r0, r0, r1
@@ -516,13 +551,24 @@ Lsa110_cache_purgeID_loop:
 	bne	Lsa110_cache_purgeID_loop
 
 	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
+#else
+	str	ip, [r3]
+#endif
 	mov	pc, lr	
 
 ENTRY(sa110_cache_purgeD)
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
+#else
+	ldr	r3, Lblock_userspace_access
+	ldr	ip, [r3]
+	orr	r0, ip, #1
+	str	r0, [r3]
+#endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
 	eor	r0, r0, r1
@@ -533,7 +579,11 @@ Lsa110_cache_purgeD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeD_loop
 
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
+#else
+	str	ip, [r3]
+#endif
 	mov	pc, lr	
 
 ENTRY(sa110_cache_purgeID_E)
@@ -564,9 +614,16 @@ ENTRY(sa110_drain_writebuf)
 
 #ifdef CPU_SA110
 ENTRY(sa110_cache_syncI)
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all , r0
+#else
+	ldr	r3, Lblock_userspace_access
+	ldr	ip, [r3]
+	orr	r0, ip, #1
+	str	r0, [r3]
+#endif
 	ldr	r2, Lsa110_cache_clean_addr
 	ldmia	r2, {r0, r1}
 	eor	r0, r0, r1
@@ -578,7 +635,11 @@ Lsa110_cache_syncI_loop:
 	bne	Lsa110_cache_syncI_loop
 
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
+#ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all , r3
+#else
+	str	ip, [r3]
+#endif
 	mov	pc, lr	
 
 ENTRY(sa110_cache_cleanID_rng)
@@ -715,6 +776,7 @@ ENTRY(sa110_context_switch)
 	 * CF_CACHE_PURGE_ID will ALWAYS be called prior to this
 	 * Thus the data cache will contain only kernel data
 	 * and the instruction cache will contain only kernel code
+	 * and all the kernel mappings shared by all processes.
 	 */
 
 	/* Write the TTB */
