@@ -6,11 +6,14 @@
 ./usr/bin/cc
 ./usr/bin/crunchgen
 ./usr/bin/crunchide
+./usr/bin/f77
 ./usr/bin/fgen
 ./usr/bin/flex
 ./usr/bin/flex++
+./usr/bin/fort77
 ./usr/bin/fpr
 ./usr/bin/g++
+./usr/bin/g77
 ./usr/bin/gcc
 ./usr/bin/gdb
 ./usr/bin/gprof
