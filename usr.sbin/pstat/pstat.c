@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.13 1995/06/22 11:15:14 cgd Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.14 1995/08/24 19:58:07 ragge Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -730,18 +730,7 @@ ttymode()
 #endif
 
 #ifdef vax
-	if (nl[SNQD].n_type != 0) 
-		qdss();
-	if (nl[SNDZ].n_type != 0)
-		ttytype_oldcf("dz", SDZ, SNDZ);
-	if (nl[SNDH].n_type != 0)
-		ttytype_oldcf("dh", SDH, SNDH);
-	if (nl[SNDMF].n_type != 0)
-		ttytype_oldcf("dmf", SDMF, SNDMF);
-	if (nl[SNDHU].n_type != 0)
-		ttytype_oldcf("dhu", SDHU, SNDHU);
-	if (nl[SNDMZ].n_type != 0)
-		ttytype_oldcf("dmz", SDMZ, SNDMZ);
+	/* May fill in this later */
 #endif
 #ifdef tahoe
 	if (nl[SNVX].n_type != 0)
