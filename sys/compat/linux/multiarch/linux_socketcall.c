@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.5 1995/05/28 09:39:45 mycroft Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.6 1995/05/28 10:16:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -511,8 +511,12 @@ linux_to_bsd_tcp_sockopt(lopt)
 	int lopt;
 {
 	switch (lopt) {
+	case LINUX_TCP_NODELAY:
+		return TCP_NODELAY;
+	case LINUX_TCP_MAXSEG:
+		return TCP_MAXSEG;
 	default:
-		return linux_to_bsd_ip_sockopt(lopt);
+		return -1;
 	}
 }
 
@@ -525,7 +529,7 @@ linux_to_bsd_udp_sockopt(lopt)
 {
 	switch (lopt) {
 	default:
-		return linux_to_bsd_ip_sockopt(lopt);
+		return -1;
 	}
 }
 
@@ -556,6 +560,8 @@ linux_setsockopt(p, args, retval)
 
 	SCARG(&bsa, s) = lsa.s;
 	SCARG(&bsa, level) = linux_to_bsd_sopt_level(lsa.level);
+	SCARG(&bsa, val) = lsa.optval;
+	SCARG(&bsa, valsize) = lsa.optlen;
 
 	switch (SCARG(&bsa, level)) {
 		case SOL_SOCKET:
@@ -577,8 +583,6 @@ linux_setsockopt(p, args, retval)
 	if (name == -1)
 		return EINVAL;
 	SCARG(&bsa, name) = name;
-	SCARG(&bsa, val) = lsa.optval;
-	SCARG(&bsa, valsize) = lsa.optlen;
 
 	return setsockopt(p, &bsa, retval);
 }
@@ -607,6 +611,8 @@ linux_getsockopt(p, args, retval)
 
 	SCARG(&bga, s) = lga.s;
 	SCARG(&bga, level) = linux_to_bsd_sopt_level(lga.level);
+	SCARG(&bga, val) = lga.optval;
+	SCARG(&bga, avalsize) = lga.optlen;
 
 	switch (SCARG(&bga, level)) {
 		case SOL_SOCKET:
@@ -628,8 +634,6 @@ linux_getsockopt(p, args, retval)
 	if (name == -1)
 		return EINVAL;
 	SCARG(&bga, name) = name;
-	SCARG(&bga, val) = lga.optval;
-	SCARG(&bga, avalsize) = lga.optlen;
 
 	return getsockopt(p, &bga, retval);
 }
