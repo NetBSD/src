@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.11 2002/10/08 15:53:04 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.12 2002/10/09 18:52:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1001,6 +1001,11 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
  */
 	.data
 	.balign 4
+#ifdef _LP64
+#define	TYPEOF_INTRCNT	.quad
+#else
+#define	TYPEOF_INTRCNT	.long
+#endif
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	TYPEOF_INTRCNT	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
