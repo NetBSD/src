@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1998/01/09 21:51:40 perry Exp $
+#	$NetBSD: dot.profile,v 1.3 1998/09/29 03:08:47 mark Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -30,14 +30,16 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/:/usr/local/sbin
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=vt100
+TERM=pc3
 export TERM
 HOME=/
 export HOME
 
 umask 022
+
+ROOTDEV=/dev/md0a
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
@@ -50,13 +52,12 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# run update, so that installed software is written as it goes.
 	update
 
+	# mount the ramdisk read write
+	mount -u $ROOTDEV /
+
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern
 
-	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
-	. /.instutils
-
 	# run the installation or upgrade script.
-	start
+	sysinst
 fi
