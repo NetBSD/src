@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.40 2003/11/04 22:20:50 scw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,16 +192,15 @@ _C_LABEL(curpcb):
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
+	ldr	r6, .Lcpu_do_powersave
+	IRQenable			/* Enable interrupts */
+	ldr	r6, [r6]		/* r6 = cpu_do_powersave */
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	/* Enable interrupts */
-	IRQenable
-
-	ldr	r6, .Lcpu_do_powersave
-
-	/* Lower the spl level to spl0 and get the current spl level. */
+	/* Drop to spl0 (returns the current spl level in r0). */
 #ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
@@ -210,36 +209,48 @@ ASENTRY_NP(idle)
 	bl	_C_LABEL(splx)
 #endif /* __NEWINTR */
 
-	/* Old interrupt level in r0 */
+	teq	r6, #0			/* cpu_do_powersave non zero? */
+	ldrne	r6, .Lcpufuncs
+	mov	r4, r0			/* Old interrupt level to r4 */
+	ldrne	r6, [r6, #(CF_SLEEP)]
 
-	/* If we don't want to sleep, use a simpler loop. */
-	ldr	r6, [r6]		/* r6 = cpu_do_powersave */
-	teq	r6, #0
-	bne	2f
+	/*
+	 * Main idle loop.
+	 * r6 points to power-save idle function if required, else NULL.
+	 */
+1:	ldr	r3, [r7]		/* r3 = sched_whichqs */
+	teq	r3, #0
+	bne	2f			/* We have work to do */
+	teq	r6, #0			/* Powersave idle? */
+	beq	1b			/* Nope. Just sit-n-spin. */
 
-	/* Non-powersave idle. */
-1:	/* should maybe do uvm pageidlezero stuff here */
-	ldr	r3, [r7]		/* r3 = whichqs */
-	teq	r3, #0x00000000
-	beq	1b
-	adr	lr, .Lswitch_search
-	b	_C_LABEL(splx)	    /* Restore ipl, return to switch_search */
-
-2:	/* Powersave idle. */
-	ldr	r4, .Lcpufuncs
-	mov	r6, r0			/* Preserve old interrupt level */
-
-3:	ldr	r3, [r7]		/* r3 = whichqs */
-	teq	r3, #0x00000000
-	movne	r0, r6
-	adrne	lr, .Lswitch_search
-	bne	_C_LABEL(splx)	    /* Restore ipl, return to switch_search */
-
-	/* if saving power, don't want to pageidlezero */
+	/*
+	 * Before going into powersave idle mode, disable interrupts
+	 * and check sched_whichqs one more time.
+	 */
+	IRQdisableALL
+	ldr	r3, [r7]
 	mov	r0, #0
-	adr	lr, 3b
-	ldr	pc, [r4, #(CF_SLEEP)]
-	/* loops back around */
+	teq	r3, #0			/* sched_whichqs still zero? */
+	moveq	lr, pc
+	moveq	pc, r6			/* If so, do powersave idle */
+	IRQenableALL
+	b	1b			/* Back around */
+
+	/*
+	 * sched_whichqs indicates that at least one lwp is ready to run.
+	 * Restore the original interrupt priority level, grab the
+	 * scheduler lock if necessary, and jump back into cpu_switch.
+	 */
+2:	mov	r0, r4
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(splx)
+	adr	lr, .Lswitch_search
+	b	_C_LABEL(sched_lock_idle)
+#else
+	adr	lr, .Lswitch_search
+	b	_C_LABEL(splx)
+#endif
 
 
 /*
@@ -343,6 +354,11 @@ ENTRY(cpu_switch)
 	 * the head of the queue.
 	 */
 	ldr	r6, [r5, #(L_FORW)]
+
+#ifdef DIAGNOSTIC
+	cmp	r6, r5
+	beq	.Lswitch_bogons
+#endif
 
 	/* rem: r6 = new lwp */
 	ldr	r7, [r6, #(L_FORW)]
@@ -785,6 +801,18 @@ ENTRY(cpu_switch)
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 	b	.Lcs_cache_purge_skipped
 
+
+#ifdef DIAGNOSTIC
+.Lswitch_bogons:
+	adr	r0, .Lswitch_panic_str
+	bl	_C_LABEL(panic)
+1:	nop
+	b	1b
+
+.Lswitch_panic_str:
+	.asciz	"cpu_switch: sched_qs empty with non-zero sched_whichqs!\n"
+#endif
+
 /*
  * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
@@ -947,6 +975,10 @@ ENTRY(switch_exit)
 	mov	r0, r4			/* {lwp_}exit2(l) */
 	mov	lr, pc
 	mov	pc, r6
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
 	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
