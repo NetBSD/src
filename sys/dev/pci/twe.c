@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.38 2003/07/25 11:49:19 jdolecek Exp $	*/
+/*	$NetBSD: twe.c,v 1.39 2003/08/03 18:45:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.38 2003/07/25 11:49:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.39 2003/08/03 18:45:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1262,10 +1262,9 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case TWEIO_GET_PARAM:
 		error = twe_param_get(twe, tp->tp_table_id, tp->tp_param_id,
-		    tp->tp_size, 0, (struct twe_param **) &pdata);
+		    tp->tp_size, 0, &param);
 		if (error != 0)
 			return (error);
-		param = pdata;
 		if (param->tp_param_size > tp->tp_size) {
 			error = EFAULT;
 			goto done;
