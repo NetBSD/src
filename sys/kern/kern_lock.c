@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.32 2000/06/10 18:44:43 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.33 2000/07/14 07:16:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 #include <machine/stdarg.h>
 
-void	lock_printf __P((const char *fmt, ...));
+void	lock_printf(const char *fmt, ...);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif
@@ -259,13 +259,7 @@ do {									\
  * or log to syslog.
  */
 void
-#ifdef __STDC__
 lock_printf(const char *fmt, ...)
-#else
-lock_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
@@ -282,12 +276,7 @@ lock_printf(fmt, va_alist)
  * Initialize a lock; required before use.
  */
 void
-lockinit(lkp, prio, wmesg, timo, flags)
-	struct lock *lkp;
-	int prio;
-	const char *wmesg;
-	int timo;
-	int flags;
+lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
 {
 
 	memset(lkp, 0, sizeof(struct lock));
@@ -307,8 +296,7 @@ lockinit(lkp, prio, wmesg, timo, flags)
  * Determine the status of a lock.
  */
 int
-lockstatus(lkp)
-	struct lock *lkp;
+lockstatus(struct lock *lkp)
 {
 	int lock_type = 0;
 
@@ -344,10 +332,8 @@ lockstatus(lkp)
  * accepted shared locks and shared-to-exclusive upgrades to go away.
  */
 int
-lockmgr(lkp, flags, interlkp)
-	__volatile struct lock *lkp;
-	u_int flags;
-	struct simplelock *interlkp;
+lockmgr(__volatile struct lock *lkp, u_int flags,
+    struct simplelock *interlkp)
 {
 	int error;
 	pid_t pid;
@@ -678,8 +664,7 @@ lockmgr(lkp, flags, interlkp)
  * routines to display ststus about contained locks.
  */
 void
-lockmgr_printinfo(lkp)
-	__volatile struct lock *lkp;
+lockmgr_printinfo(__volatile struct lock *lkp)
 {
 
 	if (lkp->lk_sharecount)
@@ -743,7 +728,7 @@ int simple_lock_debugger = 0;
 #define	SLOCK_WHERE(str, alp, id, l)					\
 do {									\
 	lock_printf(str);						\
-	lock_printf("lock: %p, currently at: %s:%d\n", (alp), (id), (l));		\
+	lock_printf("lock: %p, currently at: %s:%d\n", (alp), (id), (l)); \
 	SLOCK_MP();							\
 	if ((alp)->lock_file != NULL)					\
 		lock_printf("last locked: %s:%d\n", (alp)->lock_file,	\
@@ -759,8 +744,7 @@ do {									\
  * they are being called.
  */
 void
-simple_lock_init(alp)
-	struct simplelock *alp;
+simple_lock_init(struct simplelock *alp)
 {
 
 #if defined(MULTIPROCESSOR) /* { */
@@ -776,10 +760,7 @@ simple_lock_init(alp)
 }
 
 void
-_simple_lock(alp, id, l)
-	__volatile struct simplelock *alp;
-	const char *id;
-	int l;
+_simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 {
 	cpuid_t cpu_id = cpu_number();
 	int s;
@@ -826,10 +807,7 @@ _simple_lock(alp, id, l)
 }
 
 int
-_simple_lock_try(alp, id, l)
-	__volatile struct simplelock *alp;
-	const char *id;
-	int l;
+_simple_lock_try(__volatile struct simplelock *alp, const char *id, int l)
 {
 	cpuid_t cpu_id = cpu_number();
 	int s, rv = 0;
@@ -878,10 +856,7 @@ _simple_lock_try(alp, id, l)
 }
 
 void
-_simple_unlock(alp, id, l)
-	__volatile struct simplelock *alp;
-	const char *id;
-	int l;
+_simple_unlock(__volatile struct simplelock *alp, const char *id, int l)
 {
 	int s;
 
@@ -922,7 +897,7 @@ _simple_unlock(alp, id, l)
 }
 
 void
-simple_lock_dump()
+simple_lock_dump(void)
 {
 	struct simplelock *alp;
 	int s;
@@ -940,8 +915,7 @@ simple_lock_dump()
 }
 
 void
-simple_lock_freecheck(start, end)
-	void *start, *end;
+simple_lock_freecheck(void *start, void *end)
 {
 	struct simplelock *alp;
 	int s;
