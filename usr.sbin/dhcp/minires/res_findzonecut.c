@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.3 2000/07/08 20:40:52 mellon Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.4 2000/07/20 05:50:17 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -74,7 +74,7 @@ static void	free_nsrrset(rrset_ns *);
 static void	free_nsrr(rrset_ns *, rr_ns *);
 static rr_ns *	find_ns(rrset_ns *, const char *);
 static ns_rcode	do_query(res_state, const char *, ns_class, ns_type,
-			 u_char *, ns_msg *, int *);
+			 double *, ns_msg *, int *);
 
 /* Public. */
 
@@ -237,7 +237,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 	rrset_ns *nsrrsp)
 {
 	char tname[NS_MAXDNAME];
-	u_char resp[NS_PACKETSZ];
+	double resp[NS_PACKETSZ / sizeof (double)];
 	int n, i, ancount, nscount;
 	ns_sect sect;
 	ns_msg msg;
@@ -328,7 +328,8 @@ get_soa(res_state statp, const char *dname, ns_class class,
 			strcpy(zname, t);
 			rdata = ns_rr_rdata(rr);
 			rdlen = ns_rr_rdlen(rr);
-			if (ns_name_uncompress(resp, ns_msg_end(msg), rdata,
+			if (ns_name_uncompress((u_char *)resp,
+					       ns_msg_end(msg), rdata,
 					       mname, msize) < 0) {
 				DPRINTF(("get_soa: ns_name_uncompress failed"));
 				return ns_r_servfail;
@@ -362,7 +363,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 
 static int
 get_ns(res_state statp, const char *zname, ns_class class, rrset_ns *nsrrsp) {
-	u_char resp[NS_PACKETSZ];
+	double resp[NS_PACKETSZ / sizeof (double)];
 	ns_msg msg;
 	int n;
 	ns_rcode rcode;
@@ -391,7 +392,7 @@ get_glue(res_state statp, ns_class class, rrset_ns *nsrrsp) {
 
 	/* Go and get the A RRs for each empty NS RR on our list. */
 	for (nsrr = ISC_LIST_HEAD(*nsrrsp); nsrr != NULL; nsrr = nsrr_n) {
-		u_char resp[NS_PACKETSZ];
+		double resp[NS_PACKETSZ / sizeof (double)];
 		ns_msg msg;
 		int n;
 		ns_rcode rcode;
@@ -552,9 +553,9 @@ find_ns(rrset_ns *nsrrsp, const char *dname) {
 
 static ns_rcode
 do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
-	 u_char *resp, ns_msg *msg, int *alias_count)
+	 double *resp, ns_msg *msg, int *alias_count)
 {
-	u_char req[NS_PACKETSZ];
+	double req[NS_PACKETSZ / sizeof (double)];
 	int i;
 	unsigned n;
 
@@ -574,7 +575,7 @@ do_query(res_state statp, const char *dname, ns_class class, ns_type qtype,
 		errno = EMSGSIZE;
 		return ns_r_servfail;
 	}
-	if (ns_initparse(resp, n, msg) < 0) {
+	if (ns_initparse((u_char *)resp, n, msg) < 0) {
 		DPRINTF(("do_query: ns_initparse failed"));
 		return ns_r_servfail;
 	}
