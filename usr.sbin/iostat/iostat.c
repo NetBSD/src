@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.18 1999/06/27 12:32:13 mjl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.19 1999/09/13 16:56:35 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.18 1999/06/27 12:32:13 mjl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.19 1999/09/13 16:56:35 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -454,6 +454,11 @@ selectdrives(argc, argv)
 	 * The backward compatibility #ifdefs permit the syntax:
 	 *	iostat [ drives ] [ interval [ count ] ]
 	 */
+	if (ISSET(todo, SHOW_STATS_X)) {
+		for (i = 0; i < dk_ndrive; i++)
+			cur.dk_select[i] = 1;
+	}
+
 #define	BACKWARD_COMPATIBILITY
 	for (ndrives = 0; *argv; ++argv) {
 #ifdef	BACKWARD_COMPATIBILITY
@@ -491,3 +496,4 @@ selectdrives(argc, argv)
 			++ndrives;
 		}
 }
+
