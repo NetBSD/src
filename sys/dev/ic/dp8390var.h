@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.22 2001/02/12 18:49:04 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.23 2001/02/12 18:56:26 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -77,6 +77,7 @@ struct dp8390_softc {
 
 	int	(*test_mem) __P((struct dp8390_softc *));
 	void	(*init_card) __P((struct dp8390_softc *));
+	void	(*stop_card) __P((struct dp8390_softc *));
 	void	(*read_hdr) __P((struct dp8390_softc *,
 		    int, struct dp8390_ring *));
 	void	(*recv_int) __P((struct dp8390_softc *));
