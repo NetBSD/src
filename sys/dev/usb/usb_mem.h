@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.2 1998/07/24 21:09:07 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.1 1998/07/24 21:09:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,72 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-typedef struct ohci_soft_ed {
-	ohci_ed_t *ed;
-	struct ohci_soft_ed *next;
-	ohci_physaddr_t physaddr;
-} ohci_soft_ed_t;
-#define OHCI_ED_CHUNK 256
+typedef struct usb_block_dma {
+	bus_dma_tag_t tag;
+	bus_dmamap_t map;
+        caddr_t kaddr;
+        bus_dma_segment_t segs[1];
+        int nsegs;
+        size_t size;
+        size_t align;
+	int fullblock;
+	LIST_ENTRY(usb_block_dma) next;
+} usb_dma_block_t;
 
-typedef struct ohci_soft_td {
-	ohci_td_t *td;
-	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
-	struct ohci_soft_td *dnext; /* next in done list */
-	ohci_physaddr_t physaddr;
-	LIST_ENTRY(ohci_soft_td) hnext;
-	/*ohci_soft_ed_t *sed;*/
-	usbd_request_handle reqh;
-	u_int16_t len;
-} ohci_soft_td_t;
-#define OHCI_TD_CHUNK 256
+typedef struct {
+	usb_dma_block_t *block;
+	u_int offs;
+} usb_dma_t;
 
-#define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)
+#define DMAADDR(dma) ((dma)->block->segs[0].ds_addr + (dma)->offs)
+#define KERNADDR(dma) ((void *)((dma)->block->kaddr + (dma)->offs))
 
-#define OHCI_HASH_SIZE 128
-
-typedef struct ohci_softc {
-	struct usbd_bus sc_bus;		/* base device */
-	void *sc_ih;			/* interrupt vectoring */
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	bus_dma_tag_t sc_dmatag;	/* DMA tag */
-	/* XXX should keep track of all DMA memory */
-
-	usb_dma_t sc_hccadma;
-	struct ohci_hcca *sc_hcca;
-	ohci_soft_ed_t *sc_eds[OHCI_NO_EDS];
-	u_int sc_bws[OHCI_NO_INTRS];
-
-	u_int32_t sc_eintrs;
-	ohci_soft_ed_t *sc_ctrl_head;
-	ohci_soft_ed_t *sc_bulk_head;
-
-	LIST_HEAD(, ohci_soft_td) sc_hash_tds[OHCI_HASH_SIZE];
-
-	int sc_noport;
-	u_int8_t sc_addr;		/* device address */
-	u_int8_t sc_conf;		/* device configuration */
-
-	ohci_soft_ed_t *sc_freeeds;
-	ohci_soft_td_t *sc_freetds;
-
-	usbd_request_handle sc_intrreqh;
-
-	int sc_intrs;
-	char sc_vendor[16];
-} ohci_softc_t;
-
-usbd_status	ohci_init __P((ohci_softc_t *));
-int		ohci_intr __P((void *));
-
-#define MS_TO_TICKS(ms) ((ms) * hz / 1000)
-
-#ifdef USB_DEBUG
-#define DPRINTF(x)	if (ohcidebug) printf x
-#define DPRINTFN(n,x)	if (ohcidebug>(n)) printf x
-int ohcidebug;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif
+usbd_status	usb_allocmem __P((bus_dma_tag_t, size_t, size_t, usb_dma_t *));
+void		usb_freemem  __P((bus_dma_tag_t, usb_dma_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.2 1998/07/24 21:09:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,17 +54,6 @@
 typedef struct uhci_soft_qh uhci_soft_qh_t;
 typedef struct uhci_soft_td uhci_soft_td_t;
 
-typedef struct uhci_dma {
-	bus_dmamap_t map;
-        caddr_t kaddr;
-        bus_dma_segment_t segs[1];
-        int nsegs;
-        size_t size;
-	struct uhci_dma *next;
-} uhci_dma_t;
-#define DMAADDR(dma) ((dma)->segs[0].ds_addr)
-#define KERNADDR(dma) ((void *)((dma)->kaddr))
-
 /*
  * An interrupt info struct contains the information needed to
  * execute a requested routine when the controller generates an
@@ -78,6 +67,9 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
+#ifdef DIAGNOSTIC
+	int isdone;
+#endif
 } uhci_intr_info_t;
 
 /*
@@ -158,7 +150,7 @@ typedef struct uhci_softc {
 #define UHCI_HAS_LOCK 1
 #define UHCI_WANT_LOCK 2
 
-	uhci_dma_t *sc_mallocs;
+	usb_dma_t *sc_mallocs;
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.3 1998/07/23 13:41:04 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.4 1998/07/24 21:09:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,14 +52,13 @@
 #include <sys/queue.h>
 #include <sys/select.h>
 
-#include <dev/usb/usb.h>
+#include <machine/bus.h>
 
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-
 #include <dev/usb/usb_quirks.h>
-
-#include <machine/bus.h>
+#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
@@ -81,9 +80,6 @@ void		ohci_process_done __P((ohci_softc_t *, ohci_physaddr_t));
 void		ohci_ctrl_done __P((ohci_softc_t *, usbd_request_handle));
 void		ohci_intr_done __P((ohci_softc_t *, usbd_request_handle));
 void		ohci_bulk_done __P((ohci_softc_t *, usbd_request_handle));
-
-usbd_status	ohci_allocmem __P((ohci_softc_t *,size_t,size_t, ohci_dma_t*));
-void		ohci_freemem __P((ohci_softc_t *, ohci_dma_t *));
 
 usbd_status	ohci_device_request __P((usbd_request_handle reqh));
 void		ohci_add_ed __P((ohci_soft_ed_t *, ohci_soft_ed_t *));
@@ -146,20 +142,20 @@ struct ohci_pipe {
 	union {
 		/* Control pipe */
 		struct {
-			ohci_dma_t datadma;
-			ohci_dma_t reqdma;
+			usb_dma_t datadma;
+			usb_dma_t reqdma;
 			u_int length;
 			ohci_soft_td_t *setup, *xfer, *stat;
 		} ctl;
 		/* Interrupt pipe */
 		struct {
-			ohci_dma_t datadma;
+			usb_dma_t datadma;
 			int nslots;
 			int pos;
 		} intr;
 		/* Bulk pipe */
 		struct {
-			ohci_dma_t datadma;
+			usb_dma_t datadma;
 			u_int length;
 		} bulk;
 	} u;
@@ -197,59 +193,6 @@ struct usbd_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_close,
 };
 
-usbd_status
-ohci_allocmem(sc, size, align, p)
-	ohci_softc_t *sc;
-	size_t size;
-	size_t align;
-        ohci_dma_t *p;
-{
-	int error;
-
-	DPRINTFN(5, ("ohci_allocmem: size=%d align=%d\n", size, align));
-	p->size = size;
-	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
-	if (error)
-		return (USBD_NOMEM);
-
-	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size, 
-			       &p->kaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error)
-		goto free;
-
-	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-				  0, BUS_DMA_NOWAIT, &p->map);
-	if (error)
-		goto unmap;
-
-	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->kaddr,p->size, NULL, 
-				BUS_DMA_NOWAIT);
-	if (error)
-		goto destroy;
-	return 0;
-
-destroy:
-	bus_dmamap_destroy(sc->sc_dmatag, p->map);
-unmap:
-	bus_dmamem_unmap(sc->sc_dmatag, p->kaddr, p->size);
-free:
-	bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-	return (USBD_NOMEM);
-}
-
-void
-ohci_freemem(sc, p)
-	ohci_softc_t *sc;
-        ohci_dma_t *p;
-{
-	bus_dmamap_unload(sc->sc_dmatag, p->map);
-	bus_dmamap_destroy(sc->sc_dmatag, p->map);
-	bus_dmamem_unmap(sc->sc_dmatag, p->kaddr, p->size);
-	bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-}
-
 ohci_soft_ed_t *
 ohci_alloc_sed(sc)
 	ohci_softc_t *sc;
@@ -257,7 +200,7 @@ ohci_alloc_sed(sc)
 	ohci_soft_ed_t *sed;
 	usbd_status r;
 	int i, offs;
-	ohci_dma_t dma;
+	usb_dma_t dma;
 
 	if (!sc->sc_freeeds) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
@@ -265,8 +208,8 @@ ohci_alloc_sed(sc)
 			     M_USBDEV, M_NOWAIT);
 		if (!sed)
 			return 0;
-		r = ohci_allocmem(sc, OHCI_ED_SIZE * OHCI_ED_CHUNK,
-				     OHCI_ED_ALIGN, &dma);
+		r = usb_allocmem(sc->sc_dmatag, OHCI_ED_SIZE * OHCI_ED_CHUNK,
+				 OHCI_ED_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
 			free(sed, M_USBDEV);
 			return 0;
@@ -303,7 +246,7 @@ ohci_alloc_std(sc)
 	ohci_soft_td_t *std;
 	usbd_status r;
 	int i, offs;
-	ohci_dma_t dma;
+	usb_dma_t dma;
 
 	if (!sc->sc_freetds) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
@@ -311,8 +254,8 @@ ohci_alloc_std(sc)
 			     M_USBDEV, M_NOWAIT);
 		if (!std)
 			return 0;
-		r = ohci_allocmem(sc, OHCI_TD_SIZE * OHCI_TD_CHUNK,
-				     OHCI_TD_ALIGN, &dma);
+		r = usb_allocmem(sc->sc_dmatag, OHCI_TD_SIZE * OHCI_TD_CHUNK,
+				 OHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION) {
 			free(std, M_USBDEV);
 			return 0;
@@ -367,7 +310,8 @@ ohci_init(sc)
 		LIST_INIT(&sc->sc_hash_tds[i]);
 
 	/* Allocate the HCCA area. */
-	r = ohci_allocmem(sc, OHCI_HCCA_SIZE, OHCI_HCCA_ALIGN,&sc->sc_hccadma);
+	r = usb_allocmem(sc->sc_dmatag, OHCI_HCCA_SIZE, 
+			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 	sc->sc_hcca = (struct ohci_hcca *)KERNADDR(&sc->sc_hccadma);
@@ -516,7 +460,7 @@ ohci_init(sc)
  bad2:
 	ohci_free_sed(sc, sc->sc_bulk_head);
  bad1:
-	ohci_freemem(sc, &sc->sc_hccadma);
+	usb_freemem(sc->sc_dmatag, &sc->sc_hccadma);
 	return (r);
 }
 
@@ -736,7 +680,7 @@ ohci_ctrl_done(sc, reqh)
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
 	u_int len = opipe->u.ctl.length;
-	ohci_dma_t *dma;
+	usb_dma_t *dma;
 
 	DPRINTFN(10,("ohci_ctrl_done: reqh=%p\n", reqh));
 
@@ -749,7 +693,7 @@ ohci_ctrl_done(sc, reqh)
 		dma = &opipe->u.ctl.datadma;
 		if (reqh->request.bmRequestType & UT_READ)
 			memcpy(reqh->buffer, KERNADDR(dma), len);
-		ohci_freemem(sc, dma);
+		usb_freemem(sc->sc_dmatag, dma);
 	}
 }
 
@@ -759,7 +703,7 @@ ohci_intr_done(sc, reqh)
 	usbd_request_handle reqh;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
-	ohci_dma_t *dma;
+	usb_dma_t *dma;
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *xfer, *tail;
 
@@ -795,7 +739,7 @@ ohci_intr_done(sc, reqh)
 		sed->ed->ed_tailp = tail->physaddr;
 		opipe->tail = tail;
 	} else {
-		ohci_freemem(sc, dma);
+		usb_freemem(sc->sc_dmatag, dma);
 	}
 }
 
@@ -805,7 +749,7 @@ ohci_bulk_done(sc, reqh)
 	usbd_request_handle reqh;
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)reqh->pipe;
-	ohci_dma_t *dma;
+	usb_dma_t *dma;
 
 
 	DPRINTFN(10,("ohci_bulk_done: reqh=%p, actlen=%d\n", 
@@ -814,7 +758,7 @@ ohci_bulk_done(sc, reqh)
 	dma = &opipe->u.bulk.datadma;
 	if (reqh->request.bmRequestType & UT_READ)
 		memcpy(reqh->buffer, KERNADDR(dma), reqh->actlen);
-	ohci_freemem(sc, dma);
+	usb_freemem(sc->sc_dmatag, dma);
 }
 
 void
@@ -854,7 +798,7 @@ ohci_rhsc(sc, reqh)
 
 	if (reqh->pipe->intrreqh != reqh) {
 		sc->sc_intrreqh = 0;
-		ohci_freemem(sc, &opipe->u.intr.datadma);
+		usb_freemem(sc->sc_dmatag, &opipe->u.intr.datadma);
 	}
 }
 
@@ -903,7 +847,7 @@ ohci_device_request(reqh)
 	int addr = dev->address;
 	ohci_soft_td_t *setup, *xfer = 0, *stat, *next, *tail;
 	ohci_soft_ed_t *sed;
-	ohci_dma_t *dmap;
+	usb_dma_t *dmap;
 	int isread;
 	int len;
 	usbd_status r;
@@ -946,7 +890,7 @@ ohci_device_request(reqh)
 			r = USBD_NOMEM;
 			goto bad3;
 		}
-		r = ohci_allocmem(sc, len, 0, dmap);
+		r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 		if (r != USBD_NORMAL_COMPLETION)
 			goto bad4;
 		xfer->td->td_flags = 
@@ -1218,8 +1162,9 @@ ohci_open(pipe)
 		switch (ed->bmAttributes & UE_XFERTYPE) {
 		case UE_CONTROL:
 			pipe->methods = &ohci_device_ctrl_methods;
-			r = ohci_allocmem(sc, sizeof(ohci_dma_t), 0, 
-					  &opipe->u.ctl.reqdma);
+			r = usb_allocmem(sc->sc_dmatag, 
+					 sizeof(usb_device_request_t), 
+					 0, &opipe->u.ctl.reqdma);
 			if (r != USBD_NORMAL_COMPLETION)
 				goto bad;
 			s = splusb();
@@ -1654,7 +1599,7 @@ ohci_root_intr_transfer(reqh)
 	usbd_pipe_handle pipe = reqh->pipe;
 	ohci_softc_t *sc = (ohci_softc_t *)pipe->device->bus;
 	struct ohci_pipe *upipe = (struct ohci_pipe *)pipe;
-	ohci_dma_t *dmap;
+	usb_dma_t *dmap;
 	usbd_status r;
 	int len;
 
@@ -1663,7 +1608,7 @@ ohci_root_intr_transfer(reqh)
 	if (len == 0)
 		return (USBD_INVAL); /* XXX should it be? */
 
-	r = ohci_allocmem(sc, len, 0, dmap);
+	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 	sc->sc_intrreqh = reqh;
@@ -1756,7 +1701,7 @@ ohci_device_bulk_transfer(reqh)
 	int addr = dev->address;
 	ohci_soft_td_t *xfer, *tail;
 	ohci_soft_ed_t *sed;
-	ohci_dma_t *dmap;
+	usb_dma_t *dmap;
 	usbd_status r;
 	int s, len, isread;
 
@@ -1773,7 +1718,7 @@ ohci_device_bulk_transfer(reqh)
 
 	opipe->u.bulk.length = len;
 
-	r = ohci_allocmem(sc, len, 0, dmap);
+	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret1;
 
@@ -1820,7 +1765,7 @@ ohci_device_bulk_transfer(reqh)
 	return (USBD_IN_PROGRESS);
 
  ret2:
-	ohci_freemem(sc, dmap);
+	usb_freemem(sc->sc_dmatag, dmap);
  ret1:
 	return (r);
 }
@@ -1869,7 +1814,7 @@ ohci_device_intr_transfer(reqh)
 	ohci_softc_t *sc = (ohci_softc_t *)dev->bus;
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *xfer, *tail;
-	ohci_dma_t *dmap;
+	usb_dma_t *dmap;
 	usbd_status r;
 	int len;
 	int s;
@@ -1893,7 +1838,7 @@ ohci_device_intr_transfer(reqh)
 	}
 	tail->reqh = 0;
 
-	r = ohci_allocmem(sc, len, 0, dmap);
+	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret2;
 
