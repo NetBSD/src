@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.70 2002/09/24 18:03:46 junyoung Exp $	 */
+/*	$NetBSD: reloc.c,v 1.71 2002/09/24 18:28:42 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -235,7 +235,7 @@ _rtld_relocate_objects(first, bind_now, self)
 				return -1;
 			}
 		}
-
+		dbg(("doing non-PLT relocations"));
 		if (_rtld_relocate_nonplt_objects(obj, self) < 0)
 			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
@@ -246,7 +246,7 @@ _rtld_relocate_objects(first, bind_now, self)
 				return -1;
 			}
 		}
-
+		dbg(("doing lazy PLT binding"));
 		if (_rtld_relocate_plt_lazy(obj) < 0)
 			ok = 0;
 #if defined(__i386__)
@@ -269,6 +269,7 @@ _rtld_relocate_objects(first, bind_now, self)
 		obj->dlclose = _rtld_dlclose;
 		obj->dladdr = _rtld_dladdr;
 
+		dbg(("fixing up PLTGOT"));
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL)
 			_rtld_setup_pltgot(obj);
