@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.30 1998/09/01 01:02:33 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.31 1998/09/08 23:47:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -73,13 +73,28 @@ struct pidhashhead *pidhashtbl;
 u_long pidhash;
 struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
+
 struct proclist allproc;
-struct proclist zombproc;
+struct proclist deadproc;	/* dead, but not yet undead */
+struct proclist zombproc;	/* resources have been freed */
+
 struct pool proc_pool;
 struct pool pcred_pool;
 struct pool plimit_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
+
+/*
+ * The process list descriptors, used during pid allocation and
+ * by sysctl.  No locking on this data structure is needed since
+ * it is completely static.
+ */
+const struct proclist_desc proclists[] = {
+	{ &allproc	},
+	{ &deadproc	},
+	{ &zombproc	},
+	{ NULL		},
+};
 
 static void orphanpg __P((struct pgrp *));
 #ifdef DEBUG
@@ -92,12 +107,15 @@ void pgrpdump __P((void));
 void
 procinit()
 {
+	const struct proclist_desc *pd;
 
-	LIST_INIT(&allproc);
-	LIST_INIT(&zombproc);
+	for (pd = proclists; pd->pd_list != NULL; pd++)
+		LIST_INIT(pd->pd_list);
+
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
+
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
