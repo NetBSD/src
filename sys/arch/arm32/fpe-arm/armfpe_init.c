@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.15 1998/02/22 23:39:53 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.16 1998/05/01 15:35:43 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -46,7 +46,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
 #include <sys/acct.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -72,7 +71,7 @@ u_int arm_fpe_core_workspace;
  * Error messages for the various exceptions, numbered 0-5
  */
  
-static char *exception_errors[] = {
+static const char *exception_errors[] = {
 	"invalid operation",
 	"division by zero (0)",
 	"overflow",
