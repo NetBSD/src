@@ -1,8 +1,13 @@
-# $NetBSD: Makefile,v 1.4 2001/12/12 01:24:18 tv Exp $
+# $NetBSD: Makefile,v 1.5 2002/08/28 17:09:17 drochner Exp $
 
 PROG=		dlopen
 NOMAN=  	# defined
 CLEANFILES+=	dlopen.out
+
+# XXX work around toolchain problems (shared libs not linked against libgcc,
+# should be fixed in gcc3, providing a shared libgcc)
+#LDADD=	-Wl,-whole-archive -lgcc -Wl,-no-whole-archive
+#LDADD+=	-export-dynamic
 
 regress:
 	if [ -f ${TESTLIBDIR}/testlib.so ]; then \
