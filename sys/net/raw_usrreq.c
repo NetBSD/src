@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.12 1996/05/22 13:55:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,6 +43,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -156,10 +157,11 @@ raw_ctlinput(cmd, arg, d)
 
 /*ARGSUSED*/
 int
-raw_usrreq(so, req, m, nam, control)
+raw_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct rawcb *rp = sotorawcb(so);
 	register int error = 0;
@@ -183,7 +185,7 @@ raw_usrreq(so, req, m, nam, control)
 	 * the appropriate raw interface routine.
 	 */
 	case PRU_ATTACH:
-		if ((so->so_state & SS_PRIV) == 0) {
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}

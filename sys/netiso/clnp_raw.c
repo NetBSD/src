@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.9 1996/02/13 22:08:42 christos Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.10 1996/05/22 13:55:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -298,10 +298,11 @@ rclnp_ctloutput(op, so, level, optname, m)
 
 /* ARGSUSED */
 int
-clnp_usrreq(so, req, m, nam, control)
-	register struct socket *so;
-	int             req;
-	struct mbuf    *m, *nam, *control;
+clnp_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register int    error = 0;
 	register struct rawisopcb *rp = sotorawisopcb(so);
@@ -374,7 +375,7 @@ clnp_usrreq(so, req, m, nam, control)
 			return (0);
 		}
 	}
-	error = raw_usrreq(so, req, m, nam, control);
+	error = raw_usrreq(so, req, m, nam, control, p);
 
 	if (error && req == PRU_ATTACH && so->so_pcb)
 		free((caddr_t) rp, M_PCB);

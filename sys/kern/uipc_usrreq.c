@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.19 1996/05/22 13:55:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -64,15 +64,15 @@ ino_t	unp_ino;			/* prototype for fake inode numbers */
 
 /*ARGSUSED*/
 int
-uipc_usrreq(so, req, m, nam, control)
+uipc_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	struct unpcb *unp = sotounpcb(so);
 	register struct socket *so2;
 	register int error = 0;
-	struct proc *p = curproc;	/* XXX */
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.8 1996/02/13 22:12:40 christos Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.9 1996/05/22 13:56:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,10 +81,11 @@ extern struct isopcb tuba_isopcb;
  */
 /* ARGSUSED */
 int
-tuba_usrreq(so, req, m, nam, control)
-	struct socket  *so;
-	int             req;
-	struct mbuf    *m, *nam, *control;
+tuba_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct inpcb *inp;
 	register struct isopcb *isop = NULL;
@@ -95,8 +96,8 @@ tuba_usrreq(so, req, m, nam, control)
 	struct sockaddr_iso *siso;
 
 	if (req == PRU_CONTROL)
-		return (iso_control(so, (long) m, (caddr_t) nam,
-				    (struct ifnet *) control));
+		return (iso_control(so, (long)m, (caddr_t)nam,
+		    (struct ifnet *)control, p));
 
 	s = splsoftnet();
 	inp = sotoinpcb(so);
@@ -132,7 +133,7 @@ tuba_usrreq(so, req, m, nam, control)
 			break;
 		isop = (struct isopcb *) so->so_pcb;
 		so->so_pcb = 0;
-		if ((error = tcp_usrreq(so, req, m, nam, control)) != 0) {
+		if ((error = tcp_usrreq(so, req, m, nam, control, p)) != 0) {
 			isop->isop_socket = 0;
 			iso_pcbdetach(isop);
 		} else {
@@ -174,7 +175,7 @@ tuba_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		if ((error = iso_pcbbind(isop, nam)) ||
+		if ((error = iso_pcbbind(isop, nam, p)) ||
 		    (siso = isop->isop_laddr) == 0)
 			break;
 		bcopy(TSEL(siso), &inp->inp_lport, 2);
@@ -188,9 +189,12 @@ tuba_usrreq(so, req, m, nam, control)
 		 */
 	case PRU_CONNECT:
 	case PRU_LISTEN:
-		if (inp->inp_lport == 0 &&
-		    (error = iso_pcbbind(isop, NULL)))
-			break;
+		if (inp->inp_lport == 0) {
+			error = iso_pcbbind(isop, (struct mbuf *)0,
+			    (struct proc *)0);
+			if (error)
+				break;
+		}
 		bcopy(TSEL(isop->isop_laddr), &inp->inp_lport, 2);
 		if (req == PRU_LISTEN) {
 			tp->t_state = TCPS_LISTEN;
@@ -295,7 +299,7 @@ tuba_usrreq(so, req, m, nam, control)
 		break;
 
 	default:
-		error = tcp_usrreq(so, req, m, nam, control);
+		error = tcp_usrreq(so, req, m, nam, control, p);
 		goto notrace;
 	}
 	if (tp && (so->so_options & SO_DEBUG))
