@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.26 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.26.2.1 2005/01/02 20:03:11 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.26 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.26.2.1 2005/01/02 20:03:11 kent Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -143,9 +143,8 @@ static struct cmpci_dmanode * cmpci_find_dmamem __P((struct cmpci_softc *,
 static int cmpci_open __P((void *, int));
 static void cmpci_close __P((void *));
 static int cmpci_query_encoding __P((void *, struct audio_encoding *));
-static int cmpci_set_params __P((void *, int, int,
-				 struct audio_params *,
-				 struct audio_params *));
+static int cmpci_set_params __P((void *, int, int, audio_params_t *,
+	audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
 static int cmpci_round_blocksize __P((void *, int));
 static int cmpci_halt_output __P((void *));
 static int cmpci_halt_input __P((void *));
@@ -159,11 +158,9 @@ static size_t cmpci_round_buffersize __P((void *, int, size_t));
 static paddr_t cmpci_mappage __P((void *, void *, off_t, int));
 static int cmpci_get_props __P((void *));
 static int cmpci_trigger_output __P((void *, void *, void *, int,
-				     void (*)(void *), void *,
-				     struct audio_params *));
+	void (*)(void *), void *, const audio_params_t *));
 static int cmpci_trigger_input __P((void *, void *, void *, int,
-				    void (*)(void *), void *,
-				    struct audio_params *));
+	void (*)(void *), void *, const audio_params_t *));
 
 static const struct audio_hw_if cmpci_hw_if = {
 	cmpci_open,		/* open */
@@ -193,6 +190,18 @@ static const struct audio_hw_if cmpci_hw_if = {
 	cmpci_trigger_output,	/* trigger_output */
 	cmpci_trigger_input,	/* trigger_input */
 	NULL,			/* dev_ioctl */
+};
+
+#define CMPCI_NFORMATS	4
+static const struct audio_format cmpci_formats[CMPCI_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {5512, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {5512, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {5512, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {5512, 48000}},
 };
 
 
@@ -672,10 +681,11 @@ cmpci_query_encoding(handle, fp)
 
 
 static int
-cmpci_set_params(handle, setmode, usemode, play, rec)
+cmpci_set_params(handle, setmode, usemode, play, rec, pfil, rfil)
 	void *handle;
 	int setmode, usemode;
-	struct audio_params *play, *rec;
+	audio_params_t *play, *rec;
+	stream_filter_list_t *pfil, *rfil;
 {
 	int i;
 	struct cmpci_softc *sc = handle;
@@ -685,16 +695,20 @@ cmpci_set_params(handle, setmode, usemode, play, rec)
 		int md_divide;
 		int md_index;
 		int mode;
-		struct audio_params *p;
+		audio_params_t *p;
+		stream_filter_list_t *fil;
+		int ind;
 
 		switch (i) {
 		case 0:
 			mode = AUMODE_PLAY;
 			p = play;
+			fil = pfil;
 			break;
 		case 1:
 			mode = AUMODE_RECORD;
 			p = rec;
+			fil = rfil;
 			break;
 		default:
 			return EINVAL;
@@ -703,127 +717,38 @@ cmpci_set_params(handle, setmode, usemode, play, rec)
 		if (!(setmode & mode))
 			continue;
 
+		md_index = cmpci_rate_to_index(p->sample_rate);
+		md_divide = cmpci_index_to_divider(md_index);
+		p->sample_rate = cmpci_index_to_rate(md_index);
+		DPRINTF(("%s: sample:%u, divider=%d\n",
+			 sc->sc_dev.dv_xname, p->sample_rate, md_divide));
+
+		ind = auconv_set_converter(cmpci_formats, CMPCI_NFORMATS,
+					   mode, p, FALSE, fil);
+		if (ind < 0)
+			return EINVAL;
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
 
 		/* format */
-		p->sw_code = NULL;
-		switch ( p->channels ) {
-		case 1:
-			md_format = CMPCI_REG_FORMAT_MONO;
-			break;
-		case 2:
-			md_format = CMPCI_REG_FORMAT_STEREO;
-			break;
-		default:
-			return (EINVAL);
-		}
-		switch (p->encoding) {
-		case AUDIO_ENCODING_ULAW:
-			if (p->precision != 8)
-				return (EINVAL);
-			if (mode & AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-			} else {
-				p->sw_code = ulinear8_to_mulaw;
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-			}
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (p->precision != 8)
-				return (EINVAL);
-			if (mode & AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-			} else {
-				p->sw_code = ulinear8_to_alaw;
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			switch (p->precision) {
-			case 8:
-				p->sw_code = change_sign8;
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			switch (p->precision) {
-			case 8:
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				p->sw_code = change_sign8;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				p->sw_code = swap_bytes;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			switch (p->precision) {
-			case 8:
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				p->sw_code = change_sign16_le;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			switch (p->precision) {
-			case 8:
-				md_format |= CMPCI_REG_FORMAT_8BIT;
-				break;
-			case 16:
-				md_format |= CMPCI_REG_FORMAT_16BIT;
-				if (mode & AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-				break;
-			default:
-				return (EINVAL);
-			}
-			break;
-		default:
-			return (EINVAL);
-		}
-		if (mode & AUMODE_PLAY)
+		md_format = p->channels == 1
+			? CMPCI_REG_FORMAT_MONO : CMPCI_REG_FORMAT_STEREO;
+		md_format |= p->precision == 16
+			? CMPCI_REG_FORMAT_16BIT : CMPCI_REG_FORMAT_8BIT;
+		if (mode & AUMODE_PLAY) {
 			cmpci_reg_partial_write_4(sc,
 			   CMPCI_REG_CHANNEL_FORMAT,
 			   CMPCI_REG_CH0_FORMAT_SHIFT,
 			   CMPCI_REG_CH0_FORMAT_MASK, md_format);
-		else
-			cmpci_reg_partial_write_4(sc,
-			   CMPCI_REG_CHANNEL_FORMAT,
-			   CMPCI_REG_CH1_FORMAT_SHIFT,
-			   CMPCI_REG_CH1_FORMAT_MASK, md_format);
-		/* sample rate */
-		md_index = cmpci_rate_to_index(p->sample_rate);
-		md_divide = cmpci_index_to_divider(md_index);
-		p->sample_rate = cmpci_index_to_rate(md_index);
-		DPRINTF(("%s: sample:%d, divider=%d\n",
-			 sc->sc_dev.dv_xname, (int)p->sample_rate, md_divide));
-		if (mode & AUMODE_PLAY) {
 			cmpci_reg_partial_write_4(sc,
 			    CMPCI_REG_FUNC_1, CMPCI_REG_DAC_FS_SHIFT,
 			    CMPCI_REG_DAC_FS_MASK, md_divide);
 			sc->sc_play.md_divide = md_divide;
 		} else {
+			cmpci_reg_partial_write_4(sc,
+			   CMPCI_REG_CHANNEL_FORMAT,
+			   CMPCI_REG_CH1_FORMAT_SHIFT,
+			   CMPCI_REG_CH1_FORMAT_MASK, md_format);
 			cmpci_reg_partial_write_4(sc,
 			    CMPCI_REG_FUNC_1, CMPCI_REG_ADC_FS_SHIFT,
 			    CMPCI_REG_ADC_FS_MASK, md_divide);
@@ -1838,7 +1763,7 @@ cmpci_trigger_output(handle, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cmpci_softc *sc = handle;
 	struct cmpci_dmanode *p;
@@ -1846,7 +1771,7 @@ cmpci_trigger_output(handle, start, end, blksize, intr, arg, param)
 
 	sc->sc_play.intr = intr;
 	sc->sc_play.intr_arg = arg;
-	bps = param->channels*param->precision*param->factor / 8;
+	bps = param->channels * param->precision / 8;
 	if (!bps)
 		return EINVAL;
 
@@ -1880,7 +1805,7 @@ cmpci_trigger_input(handle, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cmpci_softc *sc = handle;
 	struct cmpci_dmanode *p;
@@ -1888,7 +1813,7 @@ cmpci_trigger_input(handle, start, end, blksize, intr, arg, param)
 
 	sc->sc_rec.intr = intr;
 	sc->sc_rec.intr_arg = arg;
-	bps = param->channels*param->precision*param->factor/8;
+	bps = param->channels * param->precision / 8;
 	if (!bps)
 		return EINVAL;
 
