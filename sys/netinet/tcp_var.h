@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.45 1998/04/30 18:27:21 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.46 1998/05/01 18:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -277,15 +277,12 @@ struct syn_cache_head {
 #define	TCP_REXMTVAL(tp) \
 	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
 
-#ifdef _KERNEL
 /*
  * Compute the initial window for slow start.
  */
-extern int tcp_init_win;
 #define	TCP_INITIAL_WINDOW(iw, segsz) \
 	(((iw) == 0) ? (min(4 * (segsz), max(2 * (segsz), 4380))) : \
 	 ((segsz) * (iw)))
-#endif /* _KERNEL */
 
 /*
  * TCP statistics.
