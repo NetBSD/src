@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.6.2.2 2002/06/18 14:23:25 lukem Exp $
+# $NetBSD: ntpd,v 1.6.2.3 2002/06/18 23:49:36 lukem Exp $
 #
 
 # PROVIDE: ntpd
 # REQUIRE: DAEMON
 # BEFORE:  LOGIN
+# KEYWORD: chrootdir
 
 . /etc/rc.subr
 
