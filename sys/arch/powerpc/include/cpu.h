@@ -1,8 +1,8 @@
-/*	$NetBSD: cpu.h,v 1.4 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1999/04/17 21:16:47 ws Exp $	*/
 
 /*
- * Copyright (C) 1995-1997 Wolfgang Solfrank.
- * Copyright (C) 1995-1997 TooLs GmbH.
+ * Copyright (C) 1999 Wolfgang Solfrank.
+ * Copyright (C) 1999 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,36 +30,19 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_CPU_H_
-#define	_MACHINE_CPU_H_
+#ifndef	_POWERPC_CPU_H_
+#define	_POWERPC_CPU_H_
 
-#include <machine/frame.h>
-#include <machine/psl.h>
+extern void __syncicache __P((void *, int));
 
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth > 0)
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CACHELINE	1
 
-#define	cpu_swapout(p)
-#define cpu_wait(p)
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "cachelinesize", CTLTYPE_INT }, \
+}
 
-extern void delay __P((int));
-#define	DELAY(n)		delay(n)
-
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define	need_resched()		(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
-
-extern char *bootpath;
-
-#ifdef	_KERNEL
-#define	CACHELINESIZE	32
-#endif
-
-#include <powerpc/cpu.h>
-
-#endif	/* _MACHINE_CPU_H_ */
+#endif	/* _POWERPC_CPU_H_ */

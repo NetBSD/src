@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/03/29 20:55:50 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1999/04/17 21:16:45 ws Exp $
 
-KMINCLUDES=	arch/powerpc/SYS.h
+KMINCLUDES=
 KMSRCS=
