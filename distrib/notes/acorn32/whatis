@@ -1,5 +1,13 @@
-.\"	$NetBSD: whatis,v 1.1 2001/10/14 14:08:04 bjh21 Exp $
+.\"	$NetBSD: whatis,v 1.1.2.1 2002/07/09 06:16:12 lukem Exp $
 .
+This is the fourth major release of
+.Nx
+for the \*M ,
+although it was known as
+.Nx Ns /arm32
+prior to
+.Nx 1.6 .
+.Pp
 .Nx \*V
 on \*M is, as usual, also fully backward compatible with old
 .Nx
