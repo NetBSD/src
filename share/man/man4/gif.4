@@ -1,5 +1,5 @@
-.\"	$NetBSD: gif.4,v 1.7 2000/04/19 06:31:49 itojun Exp $
-.\"	$KAME: gif.4,v 1.13 2000/04/17 12:09:30 itojun Exp $
+.\"	$NetBSD: gif.4,v 1.8 2000/04/19 09:42:24 itojun Exp $
+.\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nd
 .Tn Generic tunnel network device
 .Sh SYNOPSIS
-.Cd "pseudo-device gif 4"
+.Cd "pseudo-device gif" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -148,7 +148,7 @@ and can be attacked from a malicious node.
 .Ss ECN friendly behavior
 .Nm
 can be configured to be ECN friendly, as described in
-.Dv draft-ipsec-ecn-00.txt .
+.Dv draft-ietf-ipsec-ecn-02.txt .
 This is turned off by default, and can be turned on by
 .Dv IFF_LINK1
 interface flag.
