@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.h,v 1.32 1999/11/28 19:53:11 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.33 2000/03/01 02:22:03 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -113,6 +113,7 @@ struct pmap {
 	unsigned int		*pm_asn;	/* address space number */
 	unsigned long		*pm_asngen;	/* ASN generation number */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
+	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
 };
 
 typedef struct pmap	*pmap_t;
@@ -299,6 +300,25 @@ pmap_l3pte(pmap, v, l2pte)
  */
 #define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_slock)
 #define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_slock)
+
+/*
+ * Macro for processing deferred I-stream synchronization.
+ *
+ * The pmap module may defer syncing the user I-stream until the
+ * return to userspace, since the IMB PALcode op can be quite
+ * expensive.  Since user instructions won't be executed until
+ * the return to userspace, this can be deferred until userret().
+ */
+#define	PMAP_USERRET(pmap)						\
+do {									\
+	u_long cpu_mask = (1UL << cpu_number());			\
+									\
+	if ((pmap)->pm_needisync & cpu_mask) {				\
+		alpha_atomic_clearbits_q(&(pmap)->pm_needisync,		\
+		    cpu_mask);						\
+		alpha_pal_imb();					\
+	}								\
+} while (0)
 
 #endif /* _KERNEL */
 
