@@ -1,5 +1,8 @@
+/*	$NetBSD: infinity.c,v 1.2 1997/07/13 18:45:18 christos Exp $	*/
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$Id: infinity.c,v 1.1 1993/10/07 00:19:05 cgd Exp $";
+__RCSID("$NetBSD: infinity.c,v 1.2 1997/07/13 18:45:18 christos Exp $");
 #endif /* not lint */
 
 /* infinity.c */
