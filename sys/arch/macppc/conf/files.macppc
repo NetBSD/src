@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.25 1999/10/15 07:16:16 tsubai Exp $
+#	$NetBSD: files.macppc,v 1.26 2000/01/25 14:38:39 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -100,7 +100,7 @@ attach mc at obio
 file arch/macppc/dev/if_mc.c			mc
 file arch/macppc/dev/am79c950.c			mc
 
-device bm: ifnet, ether, arp
+device bm: ifnet, ether, arp, mii, mii_bitbang
 attach bm at obio
 file arch/macppc/dev/if_bm.c			bm
 
