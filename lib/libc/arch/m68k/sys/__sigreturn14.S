@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.1 1998/10/05 02:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,31 +41,23 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
+	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.1 1998/10/05 02:34:19 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-ENTRY(sigprocmask)
-	tstl	sp@(8)			/* check new sigset pointer */
-	jne	gotptr			/* if not null, indirect */
-/*	movl	#0,sp@(8)		/* null mask pointer: block empty set */
-	movl	#1,sp@(4)		/* SIG_BLOCK */
-	jra	doit
-gotptr:
-	movl	sp@(8),a0
-	movl	a0@,sp@(8)		/* indirect to new mask arg */
-doit:
-	movl	#SYS_compat_13_sigprocmask13,d0
-	trap	#0
-	jcs	err
-	tstl	sp@(12)			/* test if old mask requested */
-	jeq	out
-	movl	sp@(12),a0
-	movl	d0,a0@			/* store old mask */
-out:
-	clrl	d0
-	rts
-err:
+/*
+ * We must preserve the state of the registers as the user has set them up.
+ */
+#ifdef GPROF
+#undef ENTRY
+#define	ENTRY(x) \
+	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,sp@-; .data; \
+	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
+	moveml sp@+,#0x0303
+#endif /* GPROF */
+
+ENTRY(__sigreturn14)
+	trap	#3		/* special sigreturn syscall entry point */
 	jra	cerror

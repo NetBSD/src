@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.1 1998/10/05 02:34:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,35 +37,75 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
+	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.1 1998/10/05 02:34:18 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-ENTRY(sigprocmask)
-	tstl	sp@(8)			/* check new sigset pointer */
-	jne	gotptr			/* if not null, indirect */
-/*	movl	#0,sp@(8)		/* null mask pointer: block empty set */
-	movl	#1,sp@(4)		/* SIG_BLOCK */
-	jra	doit
-gotptr:
-	movl	sp@(8),a0
-	movl	a0@,sp@(8)		/* indirect to new mask arg */
-doit:
-	movl	#SYS_compat_13_sigprocmask13,d0
-	trap	#0
-	jcs	err
-	tstl	sp@(12)			/* test if old mask requested */
-	jeq	out
-	movl	sp@(12),a0
-	movl	d0,a0@			/* store old mask */
-out:
-	clrl	d0
+/*
+ * C library -- setjmp, longjmp
+ *
+ *	longjmp(a,v)
+ * will generate a "return(v)" from
+ * the last call to
+ *	setjmp(a)
+ * by restoring registers from the stack,
+ * and a struct sigcontext, see <signal.h>
+ */
+
+ENTRY(__setjmp14)
+	/* Get signal stack info.  Note overlay of ss_sp and ss_size! */
+	subl	#12,sp		/* sizeof(stack_t) */
+	clrl	sp@		/* ss = NULL */
+	movl	sp,sp@(4)	/* oss = stack_t on stack */
+	jbsr	_C_LABEL(__sigaltstack14)
+
+	movl	sp@(8),d0	/* ss_flags */
+	andl	#1,d0		/* extract SS_ONSTACK */
+	addl	#12,sp		/* pop stack_t */
+
+	/* Get pointer to jmp_buf; a sigcontext is at the beginning. */
+	movl	sp@(4),a0
+	movl	d0,a0@		/* store onstack */
+	clrl	a0@(4)		/* unused word (old style signal mask) */
+
+	/* Get the signal mask. */
+	pea	a0@(28)		/* oset = &sc.sc_mask */
+	movl	#0,sp@-		/* set = NULL */
+	movl	#0,sp@-		/* action = 0 <ignored> */
+	jbsr	_C_LABEL(__sigprocmask14)
+	addl	#12,sp
+
+	lea	sp@(4),a1	/* adjust SP since we won't rts */
+	movl	a1,a0@(8)	/* save SP */
+	movl	a6,a0@(12)	/* save FP */
+	clrl	a0@(16)		/* no AP */
+	movl	sp@,a0@(20)	/* save return PC */
+	clrl	a0@(24)		/* clear PS */
+
+	/* Save remaining non-scratch regs after signal mask. */
+	moveml	#0x3CFC,a0@(44)
+
+	clrl	d0		/* return 0 */
 	rts
-err:
-	jra	cerror
+
+ENTRY(__longjmp14)
+	movl	sp@(4),a0	/* save area pointer */
+	tstl	a0@(8)		/* ensure non-zero SP */
+	jeq	botch		/* oops! */
+	movl	sp@(8),d0	/* grab return value */
+	jne	ok		/* non-zero ok */
+	moveq	#1,d0		/* else make non-zero */
+ok:
+	moveml	a0@(44),#0x3CFC	/* restore non-scratch regs */
+	movl	a0,sp@-		/* let sigreturn */
+	jbsr	_C_LABEL(__sigreturn14) /* finish for us */
+
+botch:
+	jbsr	_C_LABEL(longjmperror)
+	stop	#0
