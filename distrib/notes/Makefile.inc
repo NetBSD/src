@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1999/03/06 11:31:51 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.1 1999/04/29 20:14:55 perry Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -49,6 +49,9 @@ ${TARG}.more: ${SRCS}
 
 echosrcs! ${SRCS}
 	@echo ${.ALLSRC}
+
+echomore!
+	@echo ${.OBJDIR}/${TARG}.more
 
 .PATH: ${.CURDIR}/../common
 
