@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.24 2002/10/05 16:26:37 junyoung Exp $	 */
+/*	$NetBSD: paths.c,v 1.25 2002/10/06 01:36:36 junyoung Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -363,10 +363,12 @@ _rtld_process_hints(path_p, lib_p, fname)
 		}
 
 		doing_path = *b == '/';
-		if (doing_path)
-			path_p = _rtld_append_path(head_p, path_p, b, 
-			    strcspn(b, " \t"));
-		else {
+		if (doing_path) {
+			size_t tmp = len - 1;
+			while (b[tmp] == '#' || b[tmp] == ' ' || b[tmp] == '\t')
+				tmp--;
+			path_p = _rtld_append_path(head_p, path_p, b, tmp + 1);
+		} else {
 			char tmp = b[len];
 			b[len] = '\0';
 			_rtld_process_mapping(lib_p, b, len);
