@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.89 2003/10/23 20:55:08 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.90 2003/10/28 17:18:37 provos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.89 2003/10/23 20:55:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.90 2003/10/28 17:18:37 provos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -142,6 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.89 2003/10/23 20:55:08 mycroft Exp $");
 
 struct	in_addr zeroin_addr;
 
+#define	INPCBHASH_PORT(table, lport) \
+	&(table)->inpt_porthashtbl[ ntohs(lport) & (table)->inpt_porthash]
 #define	INPCBHASH_BIND(table, laddr, lport) \
 	&(table)->inpt_bindhashtbl[ \
 	    ((ntohl((laddr).s_addr) + ntohs(lport))) & (table)->inpt_bindhash]
@@ -171,6 +173,8 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 	}
 
 	CIRCLEQ_INIT(&table->inpt_queue);
+	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
+	    M_WAITOK, &table->inpt_porthash);
 	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
 	    M_WAITOK, &table->inpt_bindhash);
 	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST,
@@ -210,6 +214,8 @@ in_pcballoc(so, v)
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, &inp->inp_head,
 	    inph_queue);
+	LIST_INSERT_HEAD(INPCBHASH_PORT(table, inp->inp_lport), &inp->inp_head,
+	    inph_lhash);
 	in_pcbstate(inp, INP_ATTACHED);
 	splx(s);
 	return (0);
@@ -351,6 +357,9 @@ noname:
 		lport = htons(lport);
 	}
 	inp->inp_lport = lport;
+	LIST_REMOVE(&inp->inp_head, inph_lhash);
+	LIST_INSERT_HEAD(INPCBHASH_PORT(table, inp->inp_lport), &inp->inp_head,
+	    inph_lhash);
 	in_pcbstate(inp, INP_BOUND);
 	return (0);
 }
@@ -500,6 +509,7 @@ in_pcbdetach(v)
 	ip_freemoptions(inp->inp_moptions);
 	s = splnet();
 	in_pcbstate(inp, INP_ATTACHED);
+	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head,
 	    inph_queue);
 	splx(s);
@@ -739,12 +749,14 @@ in_pcblookup_port(table, laddr, lport_arg, lookup_wildcard)
 	u_int lport_arg;
 	int lookup_wildcard;
 {
+	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
 	struct inpcb *inp, *match = 0;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
 
-	CIRCLEQ_FOREACH(inph, &table->inpt_queue, inph_queue) {
+	head = INPCBHASH_PORT(table, lport);
+	LIST_FOREACH(inph, head, inph_lhash) {
 		inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
