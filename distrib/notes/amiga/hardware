@@ -1,9 +1,10 @@
-	$NetBSD: hardware,v 1.23 1998/05/09 10:06:52 veego Exp $	
+	$NetBSD: hardware,v 1.24 1998/06/15 14:21:35 is Exp $	
 
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
 
-For 68020 and 68030 systems, a FPU is recommended but not required. 
+For 68020 and 68030 systems, a FPU is recommended but not required for the
+system utilities.
 68LC040, 68040V and 68LC060 systems don't work correctly at the moment.
 
 The minimal configuration requires 4M of RAM and about 75M of disk
@@ -77,7 +78,7 @@ Supported devices include:
 	Serial cards:
 		HyperCom Z3 and HyperCom 4
 		MultiFaceCard II and III
-		A2232
+		A2232 (normal and clockdoubled)
 	Amiga floppy drives with Amiga (880/1760kB) and 
 		IBM (720/1440kB) encoding. ****)
 	Amiga parallel port.
