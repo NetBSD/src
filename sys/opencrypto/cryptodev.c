@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.7 2003/08/26 15:01:38 thorpej Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.8 2003/11/16 00:16:06 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.7 2003/08/26 15:01:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.8 2003/11/16 00:16:06 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,14 +220,12 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 		case CRYPTO_RIPEMD160_HMAC:
 			thash = &auth_hash_hmac_ripemd_160_96;
 			break;
-#ifdef notdef
 		case CRYPTO_MD5:
 			thash = &auth_hash_md5;
 			break;
 		case CRYPTO_SHA1:
 			thash = &auth_hash_sha1;
 			break;
-#endif
 		case CRYPTO_NULL_HMAC:
 			thash = &auth_hash_null;
 			break;
