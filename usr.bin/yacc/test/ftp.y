@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
- *	$Id: ftp.y,v 1.3 1994/03/27 09:09:15 cgd Exp $
+ *	$Id: ftp.y,v 1.4 1996/04/08 19:10:49 jtc Exp $
  */
 
 /*
@@ -27,7 +27,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
-static char rcsid[] = "$Id: ftp.y,v 1.3 1994/03/27 09:09:15 cgd Exp $";
+static char rcsid[] = "$Id: ftp.y,v 1.4 1996/04/08 19:10:49 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -457,8 +457,9 @@ cmd:		USER SP username CRLF
 					struct tm *gmtime();
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
-					    "19%02d%02d%02d%02d%02d%02d",
-					    t->tm_year, t->tm_mon+1, t->tm_mday,
+					    "%04d%02d%02d%02d%02d%02d",
+					    1900 + t->tm_year,
+					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}
