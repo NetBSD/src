@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.2 2001/11/09 18:04:10 thorpej Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.3 2001/11/09 19:48:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,6 +42,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -51,6 +53,10 @@
 #include <arm/xscale/i80312var.h>
 
 #include <dev/pci/ppbreg.h>
+#include <dev/pci/pciconf.h>
+
+#include "opt_pci.h"
+#include "pci.h"
 
 void		i80312_pci_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
@@ -67,6 +73,12 @@ void		i80312_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 void
 i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 {
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
+	struct i80312_softc *sc = cookie;
+	struct extent *ioext, *memext;
+	pcireg_t binfo;
+	int pbus, sbus;
+#endif
 
 	pc->pc_conf_v = cookie;
 	pc->pc_attach_hook = i80312_pci_attach_hook;
@@ -75,6 +87,39 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_decompose_tag = i80312_pci_decompose_tag;
 	pc->pc_conf_read = i80312_pci_conf_read;
 	pc->pc_conf_write = i80312_pci_conf_write;
+
+#if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
+	/*
+	 * Configure the PCI bus.
+	 *
+	 * XXX We need to revisit this.  We currently only configure
+	 * the Secondary bus (and its children).  The bus configure
+	 * code needs changes to support how the busses are arranged
+	 * on this chip.
+	 */
+
+	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
+	pbus = PPB_BUSINFO_PRIMARY(binfo);
+	sbus = PPB_BUSINFO_SECONDARY(binfo);
+
+	ioext  = extent_create("pciio", sc->sc_sioout_base,
+	    sc->sc_sioout_base + sc->sc_sioout_size - 1,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", sc->sc_smemout_base,
+	    sc->sc_smemout_base + sc->sc_smemout_size - 1,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+
+	printf("%s: configuring Secondary PCI bus\n", sc->sc_dev.dv_xname);
+	pci_configure_bus(pc, ioext, memext, NULL, sbus);
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+#endif
+}
+
+void
+pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+{
 }
 
 void
