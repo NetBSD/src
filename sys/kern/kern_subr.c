@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.95 2003/01/18 10:06:30 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.96 2003/01/24 01:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.95 2003/01/18 10:06:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.96 2003/01/24 01:42:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -594,6 +594,37 @@ doexithooks(p)
 	struct proc *p;
 {
 	hook_proc_run(&exithook_list, p);
+}
+
+hook_list_t forkhook_list;
+
+void *
+forkhook_establish(fn)
+	void (*fn) __P((struct proc *, struct proc *));
+{
+	return hook_establish(&forkhook_list, (void (*) __P((void *)))fn, NULL);
+}
+
+void
+forkhook_disestablish(vhook)
+	void *vhook;
+{
+	hook_disestablish(&forkhook_list, vhook);
+}
+
+/*
+ * Run fork hooks.
+ */
+void
+doforkhooks(p2, p1)
+	struct proc *p2, *p1;
+{
+	struct hook_desc *hd;
+
+	LIST_FOREACH(hd, &forkhook_list, hk_list) {
+		((void (*) __P((struct proc *, struct proc *)))*hd->hk_fn)
+		    (p2, p1);
+	}
 }
 
 /*

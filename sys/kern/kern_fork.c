@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.105 2003/01/18 10:06:26 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.106 2003/01/24 01:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.105 2003/01/18 10:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.106 2003/01/24 01:42:53 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -374,6 +374,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (p2->p_emul->e_proc_fork)
 		(*p2->p_emul->e_proc_fork)(p2, p1);
+
+	/*
+	 * ...and finally, any other random fork hooks that subsystems
+	 * might have registered.
+	 */
+	doforkhooks(p2, p1);
 
 	/*
 	 * This begins the section where we must prevent the parent
