@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.261 2004/06/07 10:36:00 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.262 2004/06/13 08:24:36 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3623,4 +3623,20 @@ etc/rc.d/quota					1.4
 
 	Add rc variables "ldconfig" and "quota" defaulting to "YES".
 	[abs, ticket #455]
+
+sys/kern/kern_sig.c				1.196 (via patch)
+
+	Allow for struct sigacts being greater than PAGE_SIZE on sun2.
+	[skrll, ticket #456]
+
+sys/dev/wscons/wsconsio.h			1.65
+
+	Make the scroll lines ioctl struct take u_int's again.  The wsconsctl
+	command does not deal with shorts well.
+	[recht, ticket #457]
+
+usr.sbin/wsmoused/wsmoused.8			1.14
+
+	Spelling fixes, English tweaks.  Avoid using < and > directly.
+	[snj, ticket #458]
 
