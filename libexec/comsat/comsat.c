@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.17 2000/10/04 18:52:50 mjl Exp $	*/
+/*	$NetBSD: comsat.c,v 1.18 2001/02/04 21:59:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.17 2000/10/04 18:52:50 mjl Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.18 2001/02/04 21:59:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,8 @@ void notify (struct utmp *, off_t);
 void onalrm (int);
 void reapchildren (int);
 
+extern char *__progname;
+
 int
 main(int argc, char *argv[])
 {
@@ -93,7 +95,6 @@ main(int argc, char *argv[])
 	int fromlen;
 	char msgbuf[100];
 	sigset_t sigset;
-	extern char *__progname;
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
@@ -110,7 +111,7 @@ main(int argc, char *argv[])
 			logging = 1;
 			break;
 		default:
-			syslog(LOG_ERR, "usage: %s [-l]", __progname);
+			syslog(LOG_ERR, "Usage: %s [-l]", __progname);
 			exit(1);
 		}
 	if (chdir(_PATH_MAILDIR)) {
