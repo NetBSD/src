@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.26 2000/03/25 15:27:57 tsutsui Exp $	*/
+/*	$NetBSD: ncr.c,v 1.27 2000/05/27 10:12:45 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #include <machine/bus.h>
 #include <machine/sid.h>
 #include <machine/scb.h>
+#include <machine/clock.h>
 
 #include "ioconf.h"
 
@@ -146,8 +147,7 @@ si_attach(parent, self, aux)
 	struct vsbus_attach_args *va = aux;
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-
-	printf("\n");
+	int tweak, target;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
 
@@ -206,9 +206,20 @@ si_attach(parent, self, aux)
 
 	ncr_sc->sc_no_disconnect = 0xff;
 
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+	/*
+	 * Get the SCSI chip target address out of NVRAM.
+	 * This do not apply to the VS2000.
+	 */
+	tweak = clk_tweak + (va->va_paddr & 0x100 ? 3 : 0);
+	if (vax_boardtype == VAX_BTYP_410)
+		target = 7;
+	else
+		target = (clk_page[0xbc/2] >> tweak) & 7;
 
+	printf("\n%s: NCR5380, SCSI ID %d\n", ncr_sc->sc_dev.dv_xname, target);
+
+	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = target;
 	/*
 	 * Initialize si board itself.
 	 */
