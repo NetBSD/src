@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.202 2004/08/28 17:53:01 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.203 2005/03/04 06:01:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.202 2004/08/28 17:53:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.203 2005/03/04 06:01:21 mycroft Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -407,7 +407,6 @@ copyfault:
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
-		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		ksi.ksi_code = SEGV_ACCERR;
 		goto trapsignal;
@@ -419,7 +418,6 @@ copyfault:
 	case T_NMI|T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
-		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		switch (type) {
 		case T_SEGNPFLT|T_USER:
@@ -443,7 +441,6 @@ copyfault:
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
-		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
 		switch (type) {
 		case T_PRIVINFLT|T_USER:
@@ -478,12 +475,10 @@ copyfault:
 				goto trace;
 			return;
 		}
-		ksi.ksi_trap = type & ~T_USER;
 		goto trapsignal;
 #else
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGKILL;
-		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_eip;
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
@@ -494,9 +489,9 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
+	case T_ARITHTRAP|T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_eip;
 		switch (type) {
 		case T_BOUND|T_USER:
@@ -506,18 +501,13 @@ copyfault:
 		case T_DIVIDE|T_USER:
 			ksi.ksi_code = FPE_FLTDIV;
 			break;
+		case T_ARITHTRAP|T_USER:
+			ksi.ksi_code = FPE_INTOVF;
+			break;
 		default:
 			ksi.ksi_code = 0;
 			break;
 		}
-		goto trapsignal;
-
-	case T_ARITHTRAP|T_USER:
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGFPE;
-		ksi.ksi_trap = frame->tf_err & ~TC_FLAGMASK;
-		ksi.ksi_addr = (void *)frame->tf_eip;
-		ksi.ksi_code = FPE_INTOVF;
 		goto trapsignal;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
@@ -726,6 +716,7 @@ out:
 	userret(l);
 	return;
 trapsignal:
+	ksi.ksi_trap = type & ~T_USER;
 	KERNEL_PROC_LOCK(l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
