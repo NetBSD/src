@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.117 1999/12/22 04:54:16 jun Exp $	*/
+/*	$NetBSD: trap.c,v 1.118 2000/01/09 08:01:54 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 1999/12/22 04:54:16 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.118 2000/01/09 08:01:54 shin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -675,6 +675,10 @@ trap(status, cause, vaddr, opc, frame)
 		sig = SIGILL;
 		break; /* SIGNAL */
 	case T_COP_UNUSABLE+T_USER:
+#if defined(NOFPU) && !defined(SOFTFLOAT)
+		sig = SIGILL;
+		break; /* SIGNAL */
+#endif
 		if ((cause & MIPS_CR_COP_ERR) != 0x10000000) {
 			sig = SIGILL;	/* only FPU instructions allowed */
 			break; /* SIGNAL */
@@ -694,7 +698,9 @@ trap(status, cause, vaddr, opc, frame)
 		return; /* GEN */
 	case T_FPE+T_USER:
 		/* dealfpu(status, cause, opc); */
+#if !defined(NOFPU) || defined(SOFTFLOAT)
 		MachFPInterrupt(status, cause, opc, p->p_md.md_regs);
+#endif
 		userret(p, opc, sticks);
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
@@ -847,6 +853,7 @@ ast(pc)
 	userret(p, pc, p->p_sticks);
 }
 
+#if !defined(NOFPU) || defined(SOFTFLOAT)
 /* XXX XXX XXX */
 #define	set_cp0sr(x)			\
 {					\
@@ -922,6 +929,7 @@ notforemulation:
 	set_cp0sr(status &~ MIPS_SR_COP_1_BIT);
 	return;
 }
+#endif /* !defined(NOFPU) || defined(SOFTFLOAT) */
 
 /*
  * Analyse 'next' PC address taking account of branch/jump instructions
