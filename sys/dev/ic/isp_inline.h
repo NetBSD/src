@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.8 2000/08/14 07:06:50 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.9 2000/08/27 21:43:26 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -232,18 +232,20 @@ isp_print_bytes(isp, msg, amt, arg)
 	u_int8_t *ptr = arg;
 	int off;
 
+	if (msg)
+		isp_prt(isp, ISP_LOGALL, "%s:", msg);
 	off = 0;
+	buf[0] = 0;
 	while (off < amt) {
 		int j, to;
 		to = off;
-		SNPRINTF(buf, 128, "<");
 		for (j = 0; j < 16; j++) {
 			SNPRINTF(buf, 128, "%s %02x", buf, ptr[off++] & 0xff);
 			if (off == amt)
 				break;
 		}
-		isp_prt(isp, ISP_LOGALL,
-		    "<%s>offset=0x%x:\n%s>", msg, to, buf);
+		isp_prt(isp, ISP_LOGALL, "0x%08x:%s", to, buf);
+		buf[0] = 0;
 	}
 }
 #endif	/* _ISP_INLINE_H */
