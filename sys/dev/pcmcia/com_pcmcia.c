@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.8 1997/08/23 01:57:45 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.9 1997/09/13 17:25:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -67,6 +67,9 @@
 #define PCMCIA_MANUFACTURER_MOTOROLA		0x109
 #define PCMCIA_PRODUCT_MOTOROLA_POWER144	0x105
 
+#define	PCMCIA_MANUFACTURER_IBM			0xa4
+#define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x2e
+
 #ifdef __BROKEN_INDIRECT_CONFIG
 int com_pcmcia_match __P((struct device *, void *, void *));
 #else
@@ -109,6 +112,11 @@ com_pcmcia_match(parent, match, aux)
 	if ((pa->manufacturer == PCMCIA_MANUFACTURER_MOTOROLA) &&
 	    (pa->product == PCMCIA_PRODUCT_MOTOROLA_POWER144) &&
 	    (pa->pf->number == 0))
+		return(1);
+
+	if ((pa->manufacturer == PCMCIA_MANUFACTURER_IBM) &&
+	    (pa->product == PCMCIA_PRODUCT_IBM_HOME_AND_AWAY) &&
+	    (pa->pf->number == 1))
 		return(1);
 
 	/* find a cfe we can use (if it matches a standard COM port) */
