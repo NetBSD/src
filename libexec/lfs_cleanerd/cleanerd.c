@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.6 1998/04/01 14:37:45 kleink Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.7 1998/05/22 02:21:00 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.6 1998/04/01 14:37:45 kleink Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.7 1998/05/22 02:21:00 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ main(argc, argv)
 	cmd_err = nodaemon = 0;
 	clean_opts = 0;
 	segs_per_clean = 1;
-	while ((opt = getopt(argc, argv, "smd")) != -1) {
+	while ((opt = getopt(argc, argv, "bdmn:r:s")) != -1) {
 		switch (opt) {
 			case 'b':
 				/*
