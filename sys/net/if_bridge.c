@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.22 2004/01/31 20:11:13 jdc Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.22.2.1 2004/10/08 03:11:13 jmc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.22 2004/01/31 20:11:13 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.22.2.1 2004/10/08 03:11:13 jmc Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1120,6 +1120,11 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int len, error;
 	short mflags;
+
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
 
 #ifdef PFIL_HOOKS
 	if (runfilt) {
