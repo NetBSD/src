@@ -1,4 +1,4 @@
-/*	$NetBSD: utf2.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: utf2.c,v 1.6 2001/01/25 01:25:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf2.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: utf2.c,v 1.6 2001/01/25 01:25:10 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: utf2.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 
+const char *_UTF2_magic __P((void));
 int _UTF2_init __P((_RuneLocale *));
 size_t _UTF2_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
 	void *));
@@ -78,6 +79,13 @@ static _RuneState _UTF2_RuneState = {
 	_UTF2_packstate,		/* packstate */
 	_UTF2_unpackstate		/* unpackstate */
 };
+
+const char *
+_UTF2_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
+}
 
 int
 _UTF2_init(rl)

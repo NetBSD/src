@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.33 2001/01/22 00:29:46 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.34 2001/01/25 01:25:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.33 2001/01/22 00:29:46 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.34 2001/01/25 01:25:07 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,8 +91,6 @@ static char current_categories[_LC_LAST][32] = {
     "C"
 };
 
-size_t __mb_len_max_runtime = MB_LEN_MAX;
-
 /*
  * The locales we are going to try and load
  */
@@ -106,21 +104,8 @@ static char saved_categories[_LC_LAST][32];
 static char current_locale_string[_LC_LAST * 33];
 char *_PathLocale;
 
-static char	*currentlocale __P((void));
-static char	*loadlocale __P((int));
-
-char *
-__setlocale_mb_len_max_32(category, locale)
-	int category;
-	const char *locale;
-{
-#ifdef WITH_RUNE
-	__mb_len_max_runtime = 32;
-#else
-	__mb_len_max_runtime = 1;
-#endif
-	return __setlocale(category, locale);
-}
+static char *currentlocale __P((void));
+static char *loadlocale __P((int));
 
 char *
 __setlocale(category, locale)

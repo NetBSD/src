@@ -1,4 +1,4 @@
-/*	$NetBSD: big5.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: big5.c,v 1.6 2001/01/25 01:25:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)big5.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: big5.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: big5.c,v 1.6 2001/01/25 01:25:06 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: big5.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #define inline
 #endif
 
+const char *_BIG5_magic __P((void));
 int _BIG5_init __P((_RuneLocale *));
 static inline int _big5_check __P((u_int));
 static inline int _big5_check2 __P((u_int));
@@ -81,6 +82,13 @@ static _RuneState _BIG5_RuneState = {
 	_BIG5_packstate,		/* packstate */
 	_BIG5_unpackstate		/* unpackstate */
 };
+
+const char *
+_BIG5_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
+}
 
 int
 _BIG5_init(rl)
