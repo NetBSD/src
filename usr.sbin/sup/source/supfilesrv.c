@@ -44,6 +44,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.13  1997/06/17 18:37:59  christos
+ * Avoid coredump in svrfinishup.
+ *
  * Revision 1.12  1997/02/26 15:06:46  christos
  * compare only the prefix "nfs", not the whole word, so we match "nfs3" too.
  *
@@ -1433,6 +1436,10 @@ time_t starttime;
 		logerr ("Reason %d:  %s",doneack,donereason);
 	goawayreason = donereason;
 	cdprefix ((char *)NULL);
+	if (collname == NULL) {
+		logerr ("NULL collection in svrfinishup");
+		return;
+	}
 	(void) sprintf (lognam,FILELOGFILE,collname);
 	if ((logfd = open(lognam,O_APPEND|O_WRONLY,0644)) < 0)
 		return; /* can not open file up...error */
