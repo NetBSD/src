@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.6 2002/01/29 15:12:54 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.7 2002/09/20 20:57:58 jschauma Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -507,8 +507,10 @@ integer='typeset \-i'
 local='typeset'
 .br
 login='exec login'
-.br
-newgrp='exec newgrp'
+.\" ifndef __NetBSD__
+.\" .br
+.\" newgrp='exec newgrp'
+.\" endif
 .br
 nohup='nohup '
 .br
