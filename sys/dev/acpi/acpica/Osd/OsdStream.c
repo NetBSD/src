@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdStream.c,v 1.4 2002/06/15 18:02:43 thorpej Exp $	*/
+/*	$NetBSD: OsdStream.c,v 1.5 2003/02/13 14:16:14 kanaoka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdStream.c,v 1.4 2002/06/15 18:02:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdStream.c,v 1.5 2003/02/13 14:16:14 kanaoka Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,7 +63,7 @@ extern int acpi_indebugger;
  *	Formatted stream output.
  */
 void ACPI_INTERNAL_VAR_XFACE
-AcpiOsPrintf(const NATIVE_CHAR *Format, ...)
+AcpiOsPrintf(const char *Format, ...)
 {
 
 	va_list ap;
@@ -74,7 +74,7 @@ AcpiOsPrintf(const NATIVE_CHAR *Format, ...)
 }
 
 void
-AcpiOsVprintf(const NATIVE_CHAR *Format, va_list Args)
+AcpiOsVprintf(const char *Format, va_list Args)
 {
 
 #ifdef DDB

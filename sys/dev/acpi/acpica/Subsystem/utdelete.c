@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              xRevision: 93 $
+ *              xRevision: 95 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.5 2003/02/13 14:16:26 kanaoka Exp $");
 
 #define __UTDELETE_C__
 
@@ -172,6 +172,8 @@ AcpiUtDeleteInternalObj (
 
         if (!(Object->Common.Flags & AOPOBJ_STATIC_POINTER))
         {
+            /* But only if it is NOT a pointer into an ACPI table */
+
             ObjPointer = Object->String.Pointer;
         }
         break;
@@ -184,7 +186,12 @@ AcpiUtDeleteInternalObj (
 
         /* Free the actual buffer */
 
-        ObjPointer = Object->Buffer.Pointer;
+        if (!(Object->Common.Flags & AOPOBJ_STATIC_POINTER))
+        {
+            /* But only if it is NOT a pointer into an ACPI table */
+
+            ObjPointer = Object->Buffer.Pointer;
+        }
         break;
 
 

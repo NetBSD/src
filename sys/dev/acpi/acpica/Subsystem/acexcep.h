@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acexcep.h - Exception codes returned by the ACPI subsystem
- *       xRevision: 65 $
+ *       xRevision: 67 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -262,7 +262,7 @@
  * String versions of the exception codes above
  * These strings must match the corresponding defines exactly
  */
-NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Env[] =
+char const   *AcpiGbl_ExceptionNames_Env[] =
 {
     "AE_OK",
     "AE_ERROR",
@@ -295,7 +295,7 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Env[] =
     "AE_ABORT_METHOD"
 };
 
-NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Pgm[] =
+char const   *AcpiGbl_ExceptionNames_Pgm[] =
 {
     "AE_BAD_PARAMETER",
     "AE_BAD_CHARACTER",
@@ -308,7 +308,7 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Pgm[] =
     "AE_BAD_DECIMAL_CONSTANT"
 };
 
-NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Tbl[] =
+char const   *AcpiGbl_ExceptionNames_Tbl[] =
 {
     "AE_BAD_SIGNATURE",
     "AE_BAD_HEADER",
@@ -318,7 +318,7 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Tbl[] =
     "AE_INVALID_TABLE_LENGTH"
 };
 
-NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Aml[] =
+char const   *AcpiGbl_ExceptionNames_Aml[] =
 {
     "AE_AML_ERROR",
     "AE_AML_PARSE",
@@ -354,7 +354,7 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Aml[] =
     "AE_AML_CIRCULAR_REFERENCE"
 };
 
-NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Ctrl[] =
+char const   *AcpiGbl_ExceptionNames_Ctrl[] =
 {
     "AE_CTRL_RETURN_VALUE",
     "AE_CTRL_PENDING",

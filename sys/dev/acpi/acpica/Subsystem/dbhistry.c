@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dbhistry - debugger HISTORY command
- *              xRevision: 25 $
+ *              xRevision: 28 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.4 2002/12/23 00:22:07 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.5 2003/02/13 14:16:17 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.4 2002/12/23 00:22:07 kanaoka Exp $")
 
 typedef struct HistoryInfo
 {
-    NATIVE_CHAR             Command[80];
+    char                    Command[80];
     UINT32                  CmdNum;
 
 } HISTORY_INFO;
@@ -160,7 +160,7 @@ static UINT32               AcpiGbl_NextCmdNum = 1;
 
 void
 AcpiDbAddToHistory (
-    NATIVE_CHAR             *CommandLine)
+    char                    *CommandLine)
 {
 
     /* Put command into the next available slot */
@@ -210,7 +210,7 @@ AcpiDbAddToHistory (
 void
 AcpiDbDisplayHistory (void)
 {
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
     UINT16                  HistoryIndex;
 
 
@@ -245,11 +245,11 @@ AcpiDbDisplayHistory (void)
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiDbGetFromHistory (
-    NATIVE_CHAR             *CommandNumArg)
+    char                    *CommandNumArg)
 {
-    NATIVE_UINT             i;
+    ACPI_NATIVE_UINT        i;
     UINT16                  HistoryIndex;
     UINT32                  CmdNum;
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nssearch - Namespace search
- *              xRevision: 92 $
+ *              xRevision: 95 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $");
 
 #define __NSSEARCH_C__
 
@@ -138,8 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Search a single level of the namespace.  Performs a 
- *              simple search of the specified level, and does not add 
+ * DESCRIPTION: Search a single level of the namespace.  Performs a
+ *              simple search of the specified level, and does not add
  *              entries or search parents.
  *
  *
@@ -170,7 +170,7 @@ AcpiNsSearchNode (
 #ifdef ACPI_DEBUG_OUTPUT
     if (ACPI_LV_NAMES & AcpiDbgLevel)
     {
-        NATIVE_CHAR         *ScopeName;
+        char                *ScopeName;
 
         ScopeName = AcpiNsGetExternalPathname (Node);
         if (ScopeName)
@@ -184,7 +184,7 @@ AcpiNsSearchNode (
 #endif
 
     /*
-     * Search for name at this namespace level, which is to say that we 
+     * Search for name at this namespace level, which is to say that we
      * must search for the name among the children of this object
      */
     NextNode = Node->Child;
@@ -272,7 +272,7 @@ AcpiNsSearchParentTree (
     ParentNode = AcpiNsGetParentNode (Node);
 
     /*
-     * If there is no parent (i.e., we are at the root) or 
+     * If there is no parent (i.e., we are at the root) or
      * type is "local", we won't be searching the parent tree.
      */
     if (!ParentNode)
@@ -382,7 +382,7 @@ AcpiNsSearchAndEnter (
 
     if (!AcpiUtValidAcpiName (TargetName))
     {
-        ACPI_REPORT_ERROR (("NsSearchAndEnter: Bad character in ACPI Name: %X\n", 
+        ACPI_REPORT_ERROR (("NsSearchAndEnter: Bad character in ACPI Name: %X\n",
             TargetName));
         return_ACPI_STATUS (AE_BAD_CHARACTER);
     }

@@ -2,7 +2,7 @@
  *
  * Module Name: nseval - Object evaluation interfaces -- includes control
  *                       method lookup and execution.
- *              xRevision: 119 $
+ *              xRevision: 121 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.5 2003/02/13 14:16:22 kanaoka Exp $");
 
 #define __NSEVAL_C__
 
@@ -156,14 +156,14 @@ __KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.4 2002/12/23 00:22:12 kanaoka Exp $");
 ACPI_STATUS
 AcpiNsEvaluateRelative (
     ACPI_NAMESPACE_NODE     *Handle,
-    NATIVE_CHAR             *Pathname,
+    char                    *Pathname,
     ACPI_OPERAND_OBJECT     **Params,
     ACPI_OPERAND_OBJECT     **ReturnObject)
 {
     ACPI_NAMESPACE_NODE     *PrefixNode;
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node = NULL;
-    NATIVE_CHAR             *InternalPath = NULL;
+    char                    *InternalPath = NULL;
     ACPI_GENERIC_STATE      ScopeInfo;
 
 
@@ -259,13 +259,13 @@ Cleanup:
 
 ACPI_STATUS
 AcpiNsEvaluateByName (
-    NATIVE_CHAR             *Pathname,
+    char                    *Pathname,
     ACPI_OPERAND_OBJECT     **Params,
     ACPI_OPERAND_OBJECT     **ReturnObject)
 {
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node = NULL;
-    NATIVE_CHAR             *InternalPath = NULL;
+    char                    *InternalPath = NULL;
 
 
     ACPI_FUNCTION_TRACE ("NsEvaluateByName");

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmisc - common utility procedures
- *              xRevision: 90 $
+ *              xRevision: 93 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.4 2002/12/23 00:22:17 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.5 2003/02/13 14:16:27 kanaoka Exp $");
 
 #define __UTMISC_C__
 
@@ -390,7 +390,7 @@ BOOLEAN
 AcpiUtValidAcpiName (
     UINT32                  Name)
 {
-    NATIVE_CHAR             *NamePtr = (NATIVE_CHAR *) &Name;
+    char                    *NamePtr = (char *) &Name;
     UINT32                  i;
 
 
@@ -425,7 +425,7 @@ AcpiUtValidAcpiName (
 
 BOOLEAN
 AcpiUtValidAcpiCharacter (
-    NATIVE_CHAR             Character)
+    char                    Character)
 {
 
     ACPI_FUNCTION_ENTRY ();
@@ -454,7 +454,7 @@ AcpiUtValidAcpiCharacter (
 
 ACPI_STATUS
 AcpiUtStrtoul64 (
-    NATIVE_CHAR             *String,
+    char                    *String,
     UINT32                  Base,
     ACPI_INTEGER            *RetInteger)
 {
@@ -611,11 +611,11 @@ ErrorExit:
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiUtStrupr (
-    NATIVE_CHAR             *SrcString)
+    char                    *SrcString)
 {
-    NATIVE_CHAR             *String;
+    char                    *String;
 
 
     ACPI_FUNCTION_ENTRY ();
@@ -1589,7 +1589,7 @@ AcpiUtGetResourceEndTag (
 
 void
 AcpiUtReportError (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {
@@ -1616,7 +1616,7 @@ AcpiUtReportError (
 
 void
 AcpiUtReportWarning (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {
@@ -1642,13 +1642,12 @@ AcpiUtReportWarning (
 
 void
 AcpiUtReportInfo (
-    NATIVE_CHAR             *ModuleName,
+    char                    *ModuleName,
     UINT32                  LineNumber,
     UINT32                  ComponentId)
 {
 
     AcpiOsPrintf ("%8s-%04d: *** Info: ", ModuleName, LineNumber);
 }
-
 
 

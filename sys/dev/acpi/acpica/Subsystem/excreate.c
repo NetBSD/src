@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              xRevision: 97 $
+ *              xRevision: 99 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.4 2002/12/23 00:22:10 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.5 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXCREATE_C__
 
@@ -164,10 +164,10 @@ AcpiExCreateAlias (
 
     if (TargetNode->Type == ACPI_TYPE_LOCAL_ALIAS)
     {
-        /* 
+        /*
          * Dereference an existing alias so that we don't create a chain
          * of aliases.  With this code, we guarantee that an alias is
-         * always exactly one level of indirection away from the 
+         * always exactly one level of indirection away from the
          * actual aliased name.
          */
         TargetNode = (ACPI_NAMESPACE_NODE *) TargetNode->Object;

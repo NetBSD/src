@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbrsdt - ACPI RSDT table utilities
- *              $Revision: 1.1.1.2 $
+ *              xRevision: 7 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,9 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tbrsdt.c,v 1.2 2003/02/13 14:16:25 kanaoka Exp $");
 
 #define __TBRSDT_C__
 

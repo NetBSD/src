@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              xRevision: 105 $
+ *              xRevision: 108 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.5 2003/02/13 14:16:26 kanaoka Exp $");
 
 #define __UTDEBUG_C__
 
@@ -390,7 +390,7 @@ void
 AcpiUtTraceStr (
     UINT32                  LineNumber,
     ACPI_DEBUG_PRINT_INFO   *DbgInfo,
-    NATIVE_CHAR             *String)
+    char                    *String)
 {
 
     AcpiGbl_NestingLevel++;
@@ -595,8 +595,8 @@ AcpiUtDumpBuffer (
     UINT32                  Display,
     UINT32                  ComponentId)
 {
-    NATIVE_UINT             i = 0;
-    NATIVE_UINT             j;
+    ACPI_NATIVE_UINT        i = 0;
+    ACPI_NATIVE_UINT        j;
     UINT32                  Temp32;
     UINT8                   BufChar;
 
