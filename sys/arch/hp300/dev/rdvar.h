@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.11.6.2 2004/09/03 12:44:31 skrll Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.11.6.3 2004/09/18 14:34:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

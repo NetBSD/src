@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.8.2.1 2004/08/03 10:39:37 skrll Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.8.2.2 2004/09/18 14:39:19 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.8.2.1 2004/08/03 10:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.8.2.2 2004/09/18 14:39:19 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"

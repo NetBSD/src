@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.10.2.1 2004/08/03 10:30:56 skrll Exp $	*/
+/*	$NetBSD: sfas.c,v 1.10.2.2 2004/09/18 14:30:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.10.2.1 2004/08/03 10:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.10.2.2 2004/09/18 14:30:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

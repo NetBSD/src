@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.2.4.2 2004/08/03 10:39:28 skrll Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.2.4.3 2004/09/18 14:39:11 skrll Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6.6.1 2004/08/03 10:36:30 skrll Exp $	*/
+/*	$NetBSD: isr.c,v 1.6.6.2 2004/09/18 14:36:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.6.1 2004/08/03 10:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.6.2 2004/09/18 14:36:06 skrll Exp $");
 
 /*
  * Link and dispatch interrupts.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.5.6.1 2004/08/03 10:34:02 skrll Exp $ */
+/*	$NetBSD: intmmu.S,v 1.5.6.2 2004/09/18 14:33:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd

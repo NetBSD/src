@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.c,v 1.3.26.1 2004/08/03 10:39:37 skrll Exp $	*/
+/*	$NetBSD: copystr.c,v 1.3.26.2 2004/09/18 14:39:19 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copystr.c,v 1.3.26.1 2004/08/03 10:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copystr.c,v 1.3.26.2 2004/09/18 14:39:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

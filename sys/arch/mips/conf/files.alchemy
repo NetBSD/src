@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.2.2.1 2004/08/03 10:37:38 skrll Exp $
+#	$NetBSD: files.alchemy,v 1.2.2.2 2004/09/18 14:37:18 skrll Exp $
 
 file	arch/mips/alchemy/au_icu.c
 file	arch/mips/alchemy/au_timer.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.1.50.1 2004/08/03 10:33:36 skrll Exp $	*/
+/*	$NetBSD: pccons.h,v 1.1.50.2 2004/09/18 14:33:21 skrll Exp $	*/
 
 /*
  * pccons.h -- pccons ioctl definitions

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.2.1 2004/08/03 10:35:52 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.2.2 2004/09/18 14:35:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

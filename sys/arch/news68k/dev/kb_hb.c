@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.4.2.2 2004/09/18 14:37:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.4.2.2 2004/09/18 14:37:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,12 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $");
 
 #include <news68k/news68k/isr.h>
 
+#include "ioconf.h"
+
 #define KB_SIZE 0x10 /* XXX */
 #define KB_PRI 5
 
-int	kb_hb_match(struct device *, struct cfdata *, void *);
-void	kb_hb_attach(struct device *, struct device *, void *);
-void	kb_hb_init(struct kb_softc *);
+static int kb_hb_match(struct device *, struct cfdata *, void *);
+static void kb_hb_attach(struct device *, struct device *, void *);
+static void kb_hb_init(struct kb_softc *);
 int	kb_hb_intr(void *);
 int	kb_hb_cnattach(void);
 
@@ -62,13 +64,8 @@ CFATTACH_DECL(kb_hb, sizeof(struct kb_softc),
 
 struct console_softc kb_hb_conssc;
 
-extern struct cfdriver kb_hb_cd;
-
-int
-kb_hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+kb_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	u_int addr;
@@ -88,11 +85,8 @@ kb_hb_match(parent, cf, aux)
 	return 1;
 }
 
-void
-kb_hb_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void
+kb_hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct kb_softc *sc = (void *)self;
 	struct hb_attach_args *ha = aux;
@@ -129,9 +123,8 @@ kb_hb_attach(parent, self, aux)
 	sc->sc_wskbddev = config_found(self, &wsa, wskbddevprint);
 }
 
-void
-kb_hb_init(sc)
-	struct kb_softc *sc;
+static void
+kb_hb_init(struct kb_softc *sc)
 {
 	bus_space_tag_t bt = sc->sc_bt;
 	bus_space_handle_t bh = sc->sc_bh;
@@ -141,8 +134,7 @@ kb_hb_init(sc)
 }
 
 int
-kb_hb_intr(arg)
-	void *arg;
+kb_hb_intr(void *arg)
 {
 	struct kb_softc *sc = (struct kb_softc *)arg;
 	struct console_softc *kb_conssc = sc->sc_conssc;
@@ -163,7 +155,7 @@ kb_hb_intr(arg)
 }
 
 int
-kb_hb_cnattach()
+kb_hb_cnattach(void)
 {
 
 	kb_hb_conssc.cs_isconsole = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.28.2.1 2004/08/03 10:35:21 skrll Exp $	*/
+/*	$NetBSD: vrip.c,v 1.28.2.2 2004/09/18 14:35:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.28.2.1 2004/08/03 10:35:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.28.2.2 2004/09/18 14:35:06 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

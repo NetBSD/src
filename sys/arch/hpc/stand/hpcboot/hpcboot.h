@@ -1,7 +1,7 @@
-/*	$NetBSD: hpcboot.h,v 1.4.14.2 2004/08/25 06:57:18 skrll Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.4.14.3 2004/09/18 14:34:39 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

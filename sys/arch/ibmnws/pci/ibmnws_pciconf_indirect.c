@@ -1,4 +1,4 @@
-/*	$NetBSD: ibmnws_pciconf_indirect.c,v 1.1.4.2 2004/08/03 10:36:30 skrll Exp $	*/
+/*	$NetBSD: ibmnws_pciconf_indirect.c,v 1.1.4.3 2004/09/18 14:36:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

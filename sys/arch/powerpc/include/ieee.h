@@ -1,3 +1,3 @@
-/*	$NetBSD: ieee.h,v 1.1.62.1 2004/08/03 10:39:29 skrll Exp $	*/
+/*	$NetBSD: ieee.h,v 1.1.62.2 2004/09/18 14:39:11 skrll Exp $	*/
 
 #include <sys/ieee754.h>

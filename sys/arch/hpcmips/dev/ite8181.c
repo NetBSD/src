@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.18.6.1 2004/08/03 10:35:06 skrll Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.18.6.2 2004/09/18 14:34:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.18.6.1 2004/08/03 10:35:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.18.6.2 2004/09/18 14:34:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.11.6.2 2004/08/03 10:33:40 skrll Exp $	*/
+/*	$NetBSD: pfb.c,v 1.11.6.3 2004/09/18 14:33:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfb.c,v 1.11.6.2 2004/08/03 10:33:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfb.c,v 1.11.6.3 2004/09/18 14:33:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -92,7 +92,7 @@ struct wsscreen_list pfb_screenlist = {
 	sizeof(_pfb_scrlist) / sizeof(struct wsscreen_descr *), _pfb_scrlist
 };
 
-static int pfb_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int pfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t pfb_mmap __P((void *, off_t, int));
 static int pfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
@@ -196,12 +196,12 @@ pfb_common_init(addr, dc)
 }
 
 int
-pfb_ioctl(v, cmd, data, flag, l)
+pfb_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pfb_softc *sc = v;
 	struct pfb_devconfig *dc = sc->sc_dc;

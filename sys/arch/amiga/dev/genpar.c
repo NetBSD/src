@@ -1,4 +1,4 @@
-/*	$NetBSD: genpar.c,v 1.8.16.1 2004/08/03 10:31:52 skrll Exp $ */
+/*	$NetBSD: genpar.c,v 1.8.16.2 2004/09/18 14:31:34 skrll Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: genpar.c,v 1.8.16.1 2004/08/03 10:31:52 skrll Exp $");
+__RCSID("$NetBSD: genpar.c,v 1.8.16.2 2004/09/18 14:31:34 skrll Exp $");
 
 #include <stdio.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.5.2.1 2004/08/03 10:32:38 skrll Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.5.2.2 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.5.2.1 2004/08/03 10:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.5.2.2 2004/09/18 14:32:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

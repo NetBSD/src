@@ -1,4 +1,4 @@
-/*	$NetBSD: boot_params.S,v 1.2.4.3 2004/08/25 06:57:19 skrll Exp $	*/
+/*	$NetBSD: boot_params.S,v 1.2.4.4 2004/09/18 14:35:57 skrll Exp $	*/
 
 /* Default boot parameters - must match struct x86_boot_params in bootblock.h */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.110.2.3 2004/09/03 12:44:48 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.110.2.4 2004/09/18 14:35:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110.2.3 2004/09/03 12:44:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110.2.4 2004/09/18 14:35:28 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -302,13 +302,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, l);
+	    NULL, NULL);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 	if (error)
 		return error;
 
@@ -351,7 +351,6 @@ void
 vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
-	struct proc *p;
 	paddr_t fpa;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -373,9 +372,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * where we we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
-	p = bp->b_proc;
 	while (len) {
-		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE);
 		faddr += PAGE_SIZE;

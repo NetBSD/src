@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.2.1 2004/08/03 10:35:17 skrll Exp $
+#	$NetBSD: Makefile,v 1.16.2.2 2004/09/18 14:34:58 skrll Exp $
 
 INCSDIR= /usr/include/hpcmips
 

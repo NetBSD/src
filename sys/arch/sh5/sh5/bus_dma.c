@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10.2.2 2004/08/03 10:40:24 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10.2.3 2004/09/18 14:40:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10.2.2 2004/08/03 10:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10.2.3 2004/09/18 14:40:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,12 +117,12 @@ _bus_dmamap_create(void *cookie, bus_size_t size, int nsegments,
 	size_t mapsize;
 
 	/*
-	 * Allcoate and initialize the DMA map.  The end of the map
+	 * Allocate and initialize the DMA map.  The end of the map
 	 * is a variable-sized array of segments, so we allocate enough
 	 * room for them in one shot.
 	 *
 	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
-	 * of ALLOCNOW notifes others that we've reserved these resources,
+	 * of ALLOCNOW notifies others that we've reserved these resources,
 	 * and they are not to be freed.
 	 *
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
@@ -382,7 +382,7 @@ _bus_dmamap_load_uio_direct(void *cookie, bus_dmamap_t map, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp->l_proc;
+		p = uio->uio_procp;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_bus_dmamap_load_uio_direct: USERSPACE but no proc");

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.36.1 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.36.2 2004/09/18 14:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

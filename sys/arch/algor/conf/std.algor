@@ -1,4 +1,4 @@
-#	$NetBSD: std.algor,v 1.5.6.1 2004/08/03 10:31:02 skrll Exp $
+#	$NetBSD: std.algor,v 1.5.6.2 2004/09/18 14:30:43 skrll Exp $
 
 machine algor mips
 makeoptions	MACHINE_ARCH="mipsel"

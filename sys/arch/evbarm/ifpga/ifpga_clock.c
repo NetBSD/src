@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.4.6.1 2004/08/03 10:33:55 skrll Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.4.6.2 2004/09/18 14:33:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.4.6.1 2004/08/03 10:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.4.6.2 2004/09/18 14:33:45 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

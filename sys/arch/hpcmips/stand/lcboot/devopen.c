@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.1.2.1 2004/08/03 10:35:18 skrll Exp $ */
+/* $NetBSD: devopen.c,v 1.1.2.2 2004/09/18 14:34:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devopen.c,v 1.1.2.1 2004/08/03 10:35:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devopen.c,v 1.1.2.2 2004/09/18 14:34:58 skrll Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>

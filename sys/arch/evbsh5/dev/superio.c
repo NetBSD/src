@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.13.2.2 2004/09/03 12:44:30 skrll Exp $	*/
+/*	$NetBSD: superio.c,v 1.13.2.3 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: superio.c,v 1.13.2.2 2004/09/03 12:44:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: superio.c,v 1.13.2.3 2004/09/18 14:34:08 skrll Exp $");
 
 #include "locators.h"
 #include "com.h"

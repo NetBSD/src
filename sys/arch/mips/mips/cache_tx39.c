@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.2.20.1 2004/08/03 10:37:47 skrll Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.2.20.2 2004/09/18 14:37:25 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.2.20.1 2004/08/03 10:37:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.2.20.2 2004/09/18 14:37:25 skrll Exp $");
 
 #include <sys/param.h>
 

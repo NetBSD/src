@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.19.2.2 2004/08/03 10:40:16 skrll Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.19.2.3 2004/09/18 14:40:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.19.2.2 2004/08/03 10:40:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.19.2.3 2004/09/18 14:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,11 @@ static int coff_find_section(struct proc *, struct vnode *,
  */
 
 int
-exec_coff_makecmds(struct lwp *l, struct exec_package *epp)
+exec_coff_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	struct coff_filehdr *fp = epp->ep_hdr;
 	struct coff_aouthdr *ap;
-	struct proc *p;
 
 	if (epp->ep_hdrvalid < COFF_HDR_SIZE)
 		return ENOEXEC;
@@ -78,7 +77,6 @@ exec_coff_makecmds(struct lwp *l, struct exec_package *epp)
 	if (COFF_BADMAG(fp))
 		return ENOEXEC;
 
-	p = l->l_proc;
 	ap = (void *)((char *)epp->ep_hdr + sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
 	case COFF_OMAGIC:
@@ -200,7 +198,7 @@ coff_find_section(struct proc *p, struct vnode *vp, struct coff_filehdr *fp,
 		siz = sizeof(struct coff_scnhdr);
 		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
 		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-		    &resid, p);
+		    &resid, NULL);
 		if (error) {
 			DPRINTF(("section hdr %d read error %d\n", i, error));
 			return error;
@@ -337,7 +335,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 		error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t) buf,
 		    len, sh.s_scnptr,
 		    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-		    &resid, p);
+		    &resid, NULL);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
 			return ENOEXEC;
@@ -373,7 +371,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 
 #if 0
 int
-coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
+coff_load_shlib(struct proc *p, char *path, struct exec_package *epp)
 {
 	int error, siz, resid;
 	int taddr, tsize, daddr, dsize, offset;
@@ -390,7 +388,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 #ifdef TODO
 	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
 #endif
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));
@@ -399,7 +397,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 
 	siz = sizeof(struct coff_filehdr);
 	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
-	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
+	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, NULL);
 	if (error) {
 		DPRINTF(("filehdr read error %d\n", error));
 		vrele(nd.ni_vp);

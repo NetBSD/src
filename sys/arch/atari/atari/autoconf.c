@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.1 2004/08/03 10:33:09 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.2 2004/09/18 14:32:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.1 2004/08/03 10:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.2.2 2004/09/18 14:32:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.11.6.1 2004/08/03 10:35:21 skrll Exp $ */
+/*	$NetBSD: txsim.c,v 1.11.6.2 2004/09/18 14:34:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.11.6.1 2004/08/03 10:35:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.11.6.2 2004/09/18 14:34:59 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

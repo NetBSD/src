@@ -1,4 +1,4 @@
-/*	$NetBSD: adcreg.h,v 1.2.4.2 2004/08/03 10:40:15 skrll Exp $ */
+/*	$NetBSD: adcreg.h,v 1.2.4.3 2004/09/18 14:39:54 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov

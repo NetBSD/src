@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.9.6.1 2004/08/03 10:32:22 skrll Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.9.6.2 2004/09/18 14:32:09 skrll Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.1 2004/08/03 10:32:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.9.6.2 2004/09/18 14:32:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

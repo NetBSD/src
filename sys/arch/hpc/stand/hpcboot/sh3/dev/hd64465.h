@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.h,v 1.1.18.1 2004/08/12 11:41:10 skrll Exp $	*/
+/*	$NetBSD: hd64465.h,v 1.1.18.2 2004/09/18 14:34:46 skrll Exp $	*/
 
 #ifndef _HPCBOOT_SH_DEV_HD64465_H_
 #define	_HPCBOOT_SH_DEV_HD64465_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_7seg.c,v 1.1.2.1 2004/08/03 10:33:54 skrll Exp $	*/
+/*	$NetBSD: brh_7seg.c,v 1.1.2.2 2004/09/18 14:33:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_7seg.c,v 1.1.2.1 2004/08/03 10:33:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_7seg.c,v 1.1.2.2 2004/09/18 14:33:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

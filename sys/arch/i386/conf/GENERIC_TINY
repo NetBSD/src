@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.56.2.1 2004/08/03 10:35:47 skrll Exp $
+#	$NetBSD: GENERIC_TINY,v 1.56.2.2 2004/09/18 14:35:22 skrll Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -121,6 +121,7 @@ options 	VNODE_OP_NOINLINE # don't inline vnode op calls
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
@@ -174,8 +175,8 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR=""
-#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""

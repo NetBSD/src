@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.5.40.1 2004/08/03 10:38:48 skrll Exp $	*/
+/*	$NetBSD: trap.h,v 1.5.40.2 2004/09/18 14:38:25 skrll Exp $	*/
 
 /*
  * Mach Operating System

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.15.6.1 2004/08/03 10:38:22 skrll Exp $
+#	$NetBSD: Makefile.news68k,v 1.15.6.2 2004/09/18 14:37:58 skrll Exp $
 #
 # Makefile for NetBSD
 #

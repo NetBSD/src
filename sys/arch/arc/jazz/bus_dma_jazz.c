@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.7.2.2 2004/08/03 10:32:22 skrll Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.7.2.3 2004/09/18 14:32:08 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.7.2.2 2004/08/03 10:32:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.7.2.3 2004/09/18 14:32:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,8 +296,8 @@ jazz_bus_dmamap_load_uio(t, map, uio, flags)
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
 		    map->dm_nsegs, map->_dm_boundary,
-		    uio->uio_segflg == UIO_USERSPACE ? uio->uio_lwp->l_proc :
-		    NULL, flags);
+		    uio->uio_segflg == UIO_USERSPACE ? uio->uio_procp : NULL,
+		    flags);
 	}
 	return (error);
 }

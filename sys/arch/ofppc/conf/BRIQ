@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.10.2.1 2004/08/03 10:38:40 skrll Exp $
+#	$NetBSD: BRIQ,v 1.10.2.2 2004/09/18 14:38:17 skrll Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10.2.1 $"
+#ident 		"GENERIC-$Revision: 1.10.2.2 $"
 
 maxusers	32
 
@@ -95,6 +95,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.9.2.2 2004/09/03 12:44:58 skrll Exp $	*/
+/*	$NetBSD: firepower.c,v 1.9.2.3 2004/09/18 14:38:18 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.9.2.2 2004/09/03 12:44:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.9.2.3 2004/09/18 14:38:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

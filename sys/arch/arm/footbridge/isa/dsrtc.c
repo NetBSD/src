@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.5.2.1 2004/08/03 10:32:36 skrll Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.5.2.2 2004/09/18 14:32:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.5.2.1 2004/08/03 10:32:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.5.2.2 2004/09/18 14:32:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ dsrtcmatch(parent, cf, aux)
 	struct isa_attach_args *ia = aux;
 
 	if (ia->ia_nio < 1 ||
-	    ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	    ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	ia->ia_nio = 1;

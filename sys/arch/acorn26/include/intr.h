@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.2.1 2004/08/03 10:30:48 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.3.2.2 2004/09/18 14:30:30 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.1.2.1 2004/08/03 10:34:16 skrll Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.1.2.2 2004/09/18 14:33:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

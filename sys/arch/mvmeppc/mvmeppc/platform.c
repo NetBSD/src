@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.2.2.1 2004/08/03 10:38:16 skrll Exp $	*/
+/*	$NetBSD: platform.c,v 1.2.2.2 2004/09/18 14:37:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.2.2.1 2004/08/03 10:38:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.2.2.2 2004/09/18 14:37:57 skrll Exp $");
 
 #include "opt_mvmetype.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.6.1 2004/08/03 10:36:40 skrll Exp $
+#	$NetBSD: Makefile,v 1.10.6.2 2004/09/18 14:36:16 skrll Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division

@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec_mace.c,v 1.5.2.3 2004/08/25 06:57:20 skrll Exp $ */
+/* $NetBSD: if_mec_mace.c,v 1.5.2.4 2004/09/18 14:39:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.5.2.3 2004/08/25 06:57:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.5.2.4 2004/09/18 14:39:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"

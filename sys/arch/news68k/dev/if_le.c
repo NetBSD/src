@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7.2.2 2004/09/18 14:37:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7.2.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7.2.2 2004/09/18 14:37:58 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.7.2.1 2004/08/03 10:38:22 skrll Exp $");
 #include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
+
+#include "ioconf.h"
 
 /*
  * LANCE registers.
@@ -114,9 +116,7 @@ hide u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
 int leintr(int);
 
 hide void
-lewrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
@@ -125,23 +125,18 @@ lewrcsr(sc, port, val)
 }
 
 hide u_int16_t
-lerdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+lerdcsr(struct lance_softc *sc, u_int16_t port)
 {
 	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
-	return (val);
+	return val;
 }
 
 int
-le_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+le_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	int addr;
@@ -158,9 +153,7 @@ le_match(parent, cf, aux)
 }
 
 void
-le_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
@@ -208,11 +201,9 @@ le_attach(parent, self, aux)
 }
 
 int
-leintr(unit)
-	int unit;
+leintr(int unit)
 {
 	struct am7990_softc *sc;
-	extern struct cfdriver le_cd;
 
 	if (unit >= le_cd.cd_ndevs)
 		return 0;

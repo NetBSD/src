@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgen.c,v 1.2.20.1 2004/08/03 10:38:46 skrll Exp $	*/
+/*	$NetBSD: ofwgen.c,v 1.2.20.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgen.c,v 1.2.20.1 2004/08/03 10:38:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgen.c,v 1.2.20.2 2004/09/18 14:38:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

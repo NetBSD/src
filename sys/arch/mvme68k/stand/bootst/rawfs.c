@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.4.16.1 2004/08/03 10:38:16 skrll Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.4.16.2 2004/09/18 14:37:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

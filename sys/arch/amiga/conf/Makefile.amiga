@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.101.6.1 2004/08/03 10:31:49 skrll Exp $
+#	$NetBSD: Makefile.amiga,v 1.101.6.2 2004/09/18 14:31:33 skrll Exp $
 
 # Makefile for NetBSD
 #

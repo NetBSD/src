@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.122.6.2 2004/09/03 12:45:06 skrll Exp $
+#	$NetBSD: files.sparc,v 1.122.6.3 2004/09/18 14:40:27 skrll Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -329,9 +329,6 @@ file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 include "compat/sunos/files.sunos"
 file	arch/sparc/sparc/sunos_sigcode.s compat_sunos
 file	arch/sparc/sparc/sunos_machdep.c compat_sunos
-
-# NetBSD a.out Binary Compatibility (COMPAT_AOUT)
-include "compat/aout/files.aout"
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 # Note: SunOS compatibility also uses some of `compat_13_machdep.c'

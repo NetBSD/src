@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11.6.1 2004/08/03 10:32:10 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11.6.2 2004/09/18 14:31:56 skrll Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.6.1 2004/08/03 10:32:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.6.2 2004/09/18 14:31:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80312,v 1.6.8.1 2004/08/03 10:32:58 skrll Exp $
+#	$NetBSD: files.i80312,v 1.6.8.2 2004/09/18 14:32:47 skrll Exp $
 #
 # Configuration info for Intel i80312 Companion I/O support
 #

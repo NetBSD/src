@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.7.2.1 2004/08/03 10:37:53 skrll Exp $	*/
+/*	$NetBSD: prom.h,v 1.7.2.2 2004/09/18 14:37:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

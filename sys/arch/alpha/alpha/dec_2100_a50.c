@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.55.2.1 2004/08/03 10:31:03 skrll Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.55.2.2 2004/09/18 14:30:53 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.55.2.1 2004/08/03 10:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.55.2.2 2004/09/18 14:30:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

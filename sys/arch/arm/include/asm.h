@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4.24.2 2004/08/25 06:57:17 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.4.24.3 2004/09/18 14:32:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.1.4.2 2004/08/03 10:34:03 skrll Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.1.4.3 2004/09/18 14:33:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.1.4.2 2004/08/03 10:34:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.1.4.3 2004/09/18 14:33:51 skrll Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.

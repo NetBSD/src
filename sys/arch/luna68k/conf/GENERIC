@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41.2.1 2004/08/03 10:36:30 skrll Exp $
+# $NetBSD: GENERIC,v 1.41.2.2 2004/09/18 14:36:06 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.41.2.1 $"
+#ident 		"GENERIC-$Revision: 1.41.2.2 $"
 
 maxusers	8
 
@@ -104,6 +104,7 @@ options 	INET		# IP prototol stack support
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

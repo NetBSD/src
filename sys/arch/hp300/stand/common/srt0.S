@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.11.28.1 2004/08/03 10:34:38 skrll Exp $	*/
+/*	$NetBSD: srt0.S,v 1.11.28.2 2004/09/18 14:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.10.6.1 2004/08/12 16:15:32 skrll Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.10.6.2 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.10.6.1 2004/08/12 16:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.10.6.2 2004/09/18 14:30:29 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -212,17 +212,17 @@ const struct cdevsw altq_cdevsw = {
 static
 #endif
 int
-altqopen(dev, flag, fmt, l)
+altqopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = minor(dev);
 
 	if (unit == 0)
 		return (0);
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_open)(dev, flag, fmt, l);
+		return (*altqsw[unit].d_open)(dev, flag, fmt, p);
 
 	return ENXIO;
 }
@@ -231,17 +231,17 @@ altqopen(dev, flag, fmt, l)
 static
 #endif
 int
-altqclose(dev, flag, fmt, l)
+altqclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = minor(dev);
 
 	if (unit == 0)
 		return (0);
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_close)(dev, flag, fmt, l);
+		return (*altqsw[unit].d_close)(dev, flag, fmt, p);
 
 	return ENXIO;
 }
@@ -250,14 +250,13 @@ altqclose(dev, flag, fmt, l)
 static
 #endif
 int
-altqioctl(dev, cmd, addr, flag, l)
+altqioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
-	struct proc *p = l->l_proc;
 	int unit = minor(dev);
 
 	if (unit == 0) {
@@ -303,7 +302,7 @@ altqioctl(dev, cmd, addr, flag, l)
 		}
 	}
 	if (unit < naltqsw)
-		return (*altqsw[unit].d_ioctl)(dev, cmd, addr, flag, l);
+		return (*altqsw[unit].d_ioctl)(dev, cmd, addr, flag, p);
 
 	return ENXIO;
 }

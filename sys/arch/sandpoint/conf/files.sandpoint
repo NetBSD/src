@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.16.2.1 2004/08/03 10:39:55 skrll Exp $
+#	$NetBSD: files.sandpoint,v 1.16.2.2 2004/09/18 14:39:37 skrll Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #

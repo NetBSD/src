@@ -1,4 +1,4 @@
-/* $NetBSD: i28f128.c,v 1.2.2.1 2004/08/03 10:35:18 skrll Exp $ */
+/* $NetBSD: i28f128.c,v 1.2.2.2 2004/09/18 14:34:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -30,7 +30,7 @@
  * Flash Memory Writer
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i28f128.c,v 1.2.2.1 2004/08/03 10:35:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i28f128.c,v 1.2.2.2 2004/09/18 14:34:58 skrll Exp $");
 
 #include <lib/libsa/stand.h>
 

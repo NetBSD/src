@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.21.2.1 2004/08/03 10:38:02 skrll Exp $
+#	$NetBSD: MMTAICE,v 1.21.2.2 2004/09/18 14:37:43 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -117,6 +117,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

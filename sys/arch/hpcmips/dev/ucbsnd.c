@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.14.6.1 2004/08/03 10:35:07 skrll Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.14.6.2 2004/09/18 14:34:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.14.6.1 2004/08/03 10:35:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.14.6.2 2004/09/18 14:34:52 skrll Exp $");
 
 #include "opt_use_poll.h"
 

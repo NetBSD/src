@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.2 2004/09/03 12:44:28 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.3 2004/09/18 14:31:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.2 2004/09/03 12:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.3 2004/09/18 14:31:13 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -291,7 +291,6 @@ cpu_coredump(l, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -317,13 +316,13 @@ cpu_coredump(l, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, p);
+	    NULL, NULL);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 	if (error)
 		return error;
 

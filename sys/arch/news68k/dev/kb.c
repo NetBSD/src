@@ -1,4 +1,4 @@
-/*	$NetBSD: kb.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: kb.c,v 1.4.2.2 2004/09/18 14:37:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.4.2.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb.c,v 1.4.2.2 2004/09/18 14:37:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,7 @@ struct wskbd_mapdata kb_keymapdata = {
 };
 
 void
-kb_intr(sc)
-	struct kb_softc *sc;
+kb_intr(struct kb_softc *sc)
 {
 	struct console_softc *kb_conssc = sc->sc_conssc;
 	bus_space_tag_t bt = sc->sc_bt;
@@ -99,8 +98,7 @@ kb_intr(sc)
 }
 
 int
-kb_cnattach(conssc_p)
-	struct console_softc *conssc_p;
+kb_cnattach(struct console_softc *conssc_p)
 {
 
 	wskbd_cnattach(&kb_consops, conssc_p, &kb_keymapdata);
@@ -108,10 +106,7 @@ kb_cnattach(conssc_p)
 }
 
 void
-kb_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+kb_cngetc(void *v, u_int *type, int *data)
 {
 	struct console_softc *conssc = v;
 	u_int nkey;
@@ -132,35 +127,24 @@ kb_cngetc(v, type, data)
 }
 
 void
-kb_cnpollc(v, on)
-	void *v;
-	int on;
+kb_cnpollc(void *v, int on)
 {
 }
 
 int
-kb_enable(v, on)
-	void *v;
-	int on;
+kb_enable(void *v, int on)
 {
+
 	return 0;
 }
 
 void
-kb_set_leds(v, on)
-	void *v;
-	int on;
+kb_set_leds(void *v, int on)
 {
-	return;
 }
 
 int
-kb_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+kb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if 0
 	struct console_softc *cs = v;

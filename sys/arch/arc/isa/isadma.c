@@ -1,9 +1,9 @@
-/*	$NetBSD: isadma.c,v 1.6.6.1 2004/08/03 10:32:21 skrll Exp $	*/
+/*	$NetBSD: isadma.c,v 1.6.6.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.6.6.1 2004/08/03 10:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.6.6.2 2004/09/18 14:32:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4.10.1 2004/08/03 10:32:21 skrll Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4.10.2 2004/09/18 14:32:08 skrll Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*

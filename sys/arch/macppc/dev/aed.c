@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.13.2.1 2004/08/03 10:37:20 skrll Exp $	*/
+/*	$NetBSD: aed.c,v 1.13.2.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.13.2.1 2004/08/03 10:37:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.13.2.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.2.2 2004/09/03 12:45:05 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.2.3 2004/09/18 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.2 2004/09/03 12:45:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.3 2004/09/18 14:40:02 skrll Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -341,13 +341,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    (int *)0, l->l_proc);
+	    (int *)0, NULL);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, l->l_proc);
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)0, NULL);
 	if (error)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.17.2.3 2004/08/25 06:57:17 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.17.2.4 2004/09/18 14:32:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17.2.3 2004/08/25 06:57:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17.2.4 2004/09/18 14:32:17 skrll Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>

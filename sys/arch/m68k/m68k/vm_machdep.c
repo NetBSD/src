@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5.2.2 2004/09/03 12:44:57 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5.2.3 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5.2.2 2004/09/03 12:44:57 skrll Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5.2.3 2004/09/18 14:36:38 skrll Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,6 @@ int
 cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
     struct core *chdr)
 {
-	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -242,13 +241,13 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, p);
+	    NULL, NULL);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 	if (error)
 		return error;
 

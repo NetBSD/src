@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_sigreturn14.s,v 1.1.4.2 2004/08/03 10:36:59 skrll Exp $	*/
+/*	$NetBSD: compat_16_sigreturn14.s,v 1.1.4.3 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.3.6.1 2004/08/03 10:38:46 skrll Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.3.6.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

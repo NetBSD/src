@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.17.2.1 2004/08/03 10:32:38 skrll Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.17.2.2 2004/09/18 14:32:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17.2.1 2004/08/03 10:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.17.2.2 2004/09/18 14:32:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

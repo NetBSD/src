@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2.2.1 2004/08/03 10:39:22 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.2.2 2004/09/18 14:39:04 skrll Exp $	*/
 
 #ifndef _PMPPC_BUS_H_
 #define _PMPPC_BUS_H_

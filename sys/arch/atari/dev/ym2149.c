@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149.c,v 1.2.60.1 2004/08/03 10:33:12 skrll Exp $	*/
+/*	$NetBSD: ym2149.c,v 1.2.60.2 2004/09/18 14:32:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym2149.c,v 1.2.60.1 2004/08/03 10:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym2149.c,v 1.2.60.2 2004/09/18 14:32:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.2.2 2004/09/18 14:38:04 skrll Exp $	*/
 
 /*
  *

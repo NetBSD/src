@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.h,v 1.3.24.1 2004/08/03 10:36:13 skrll Exp $	*/
+/*	$NetBSD: pci_addr_fixup.h,v 1.3.24.2 2004/09/18 14:35:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.3.24.1 2004/08/03 10:39:55 skrll Exp $	*/
+/*	$NetBSD: boot.h,v 1.3.24.2 2004/09/18 14:39:37 skrll Exp $	*/
 
 #define TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define NS_PER_TICK	(1000000000 / TICKS_PER_SEC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: chrpicontoppm.c,v 1.1.1.1.32.1 2004/08/03 10:39:47 skrll Exp $	*/
+/*	$NetBSD: chrpicontoppm.c,v 1.1.1.1.32.2 2004/09/18 14:39:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chrpicontoppm.c,v 1.1.1.1.32.1 2004/08/03 10:39:47 skrll Exp $");
+__RCSID("$NetBSD: chrpicontoppm.c,v 1.1.1.1.32.2 2004/09/18 14:39:30 skrll Exp $");
 
 #include <stdlib.h>
 

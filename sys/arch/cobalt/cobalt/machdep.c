@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43.2.2 2004/09/03 12:44:29 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.3 2004/09/18 14:33:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.2 2004/09/03 12:44:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.3 2004/09/18 14:33:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

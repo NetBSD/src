@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_atari.c,v 1.1.2.1 2004/08/03 10:33:12 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_atari.c,v 1.1.2.2 2004/09/18 14:32:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.1.2.1 2004/08/03 10:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.1.2.2 2004/09/18 14:32:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

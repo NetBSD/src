@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.7.2.1 2004/08/03 10:34:08 skrll Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.7.2.2 2004/09/18 14:33:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.2.2.1 2004/08/03 10:39:37 skrll Exp $	*/
+/*	$NetBSD: setfault.S,v 1.2.2.2 2004/09/18 14:39:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

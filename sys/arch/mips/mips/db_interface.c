@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49.2.1 2004/08/03 10:37:47 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49.2.2 2004/09/18 14:37:25 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.1 2004/08/03 10:37:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.2 2004/09/18 14:37:25 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"

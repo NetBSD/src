@@ -1,4 +1,4 @@
-/*	$NetBSD: i8042.c,v 1.2.2.1 2004/08/03 10:40:33 skrll Exp $	*/
+/*	$NetBSD: i8042.c,v 1.2.2.2 2004/09/18 14:40:17 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -59,7 +59,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.2.2.1 2004/08/03 10:40:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8042.c,v 1.2.2.2 2004/09/18 14:40:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

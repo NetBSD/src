@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14.42.1 2004/08/03 10:38:47 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.14.42.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * Mach Operating System

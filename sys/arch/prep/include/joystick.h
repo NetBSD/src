@@ -1,3 +1,3 @@
-/* $NetBSD: joystick.h,v 1.1.30.1 2004/08/03 10:39:48 skrll Exp $ */
+/* $NetBSD: joystick.h,v 1.1.30.2 2004/09/18 14:39:30 skrll Exp $ */
 
 #include <sys/joystick.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.12.36.1 2004/08/03 10:31:30 skrll Exp $ */
+/* $NetBSD: start.S,v 1.12.36.2 2004/09/18 14:31:13 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

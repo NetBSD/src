@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.2.4.3 2004/09/03 12:44:31 skrll Exp $ */
+/* $NetBSD: spc.c,v 1.2.4.4 2004/09/18 14:34:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2.4.3 2004/09/03 12:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2.4.4 2004/09/18 14:34:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

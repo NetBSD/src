@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.20.6.1 2004/08/03 10:34:37 skrll Exp $
+#	$NetBSD: Makefile.buildboot,v 1.20.6.2 2004/09/18 14:34:19 skrll Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000

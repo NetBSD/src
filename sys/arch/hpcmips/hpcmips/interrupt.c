@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7.16.1 2004/08/03 10:35:17 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7.16.2 2004/09/18 14:34:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.16.1 2004/08/03 10:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.16.2 2004/09/18 14:34:58 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

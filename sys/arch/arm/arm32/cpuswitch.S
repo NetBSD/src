@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.36.2.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.36.2.2 2004/09/18 14:32:17 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockioctl.h,v 1.1.1.1.66.1 2004/08/03 10:33:11 skrll Exp $	*/
+/*	$NetBSD: clockioctl.h,v 1.1.1.1.66.2 2004/09/18 14:32:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.6.12.1 2004/08/03 10:40:16 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.6.12.2 2004/09/18 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.6.12.1 2004/08/03 10:40:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.6.12.2 2004/09/18 14:40:02 skrll Exp $");
 
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 

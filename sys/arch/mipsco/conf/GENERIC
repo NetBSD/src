@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30.2.1 2004/08/03 10:37:53 skrll Exp $
+# $NetBSD: GENERIC,v 1.30.2.2 2004/09/18 14:37:32 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -96,6 +96,7 @@ options 	QUOTA		# FFS quotas
 options 	INET		# Internet protocols
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.1.14.1 2004/08/03 10:30:47 skrll Exp $ */
+/* $NetBSD: softintr.c,v 1.1.14.2 2004/09/18 14:30:29 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.14.1 2004/08/03 10:30:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.14.2 2004/09/18 14:30:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22_cache.S,v 1.3.12.1 2004/08/03 10:40:08 skrll Exp $	*/
+/*	$NetBSD: ip22_cache.S,v 1.3.12.2 2004/09/18 14:39:54 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7043_140.c,v 1.1.12.1 2004/08/03 10:39:48 skrll Exp $	*/
+/*	$NetBSD: ibm_7043_140.c,v 1.1.12.2 2004/09/18 14:39:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.1.12.1 2004/08/03 10:39:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.1.12.2 2004/09/18 14:39:30 skrll Exp $");
 
 #include "opt_openpic.h"
 #if !defined(OPENPIC)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.1 2004/08/03 10:33:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.7.2.2 2004/09/18 14:33:11 skrll Exp $
 
 BTYPE=	STD
 PROG=	wdb00t.ahdi
