@@ -14,7 +14,7 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(mba->mba_name, cpu_cd.cd_name) != 0)
 		return 0;
 
-	if (cpu_info_store.ci_dev != NULL)
+	if (cpu_info[0].ci_dev != NULL)
 		return 0;
 
 	return 1;

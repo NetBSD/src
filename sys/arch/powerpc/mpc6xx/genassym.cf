@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2003/01/22 21:44:55 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.10 2003/02/02 20:43:23 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,8 +42,6 @@ include <machine/pmap.h>
 
 include <powerpc/cpu.h>
 
-define	CALLFRAMELEN	CALLFRAMELEN
-
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
 define	FRAME_1		offsetof(struct trapframe, fixreg[1])
@@ -58,8 +56,8 @@ define	FRAME_SRR1	offsetof(struct trapframe, srr1)
 define	FRAME_DAR	offsetof(struct trapframe, dar)
 define	FRAME_DSISR	offsetof(struct trapframe, dsisr)
 define	FRAME_EXC	offsetof(struct trapframe, exc)
-define	FRAME_VRSAVE	offsetof(struct trapframe, vrsave)
-define	FRAME_MQ	offsetof(struct trapframe, mq)
+define	FRAME_VRSAVE	offsetof(struct trapframe, tf_xtra[TF_VRSAVE])
+define	FRAME_MQ	offsetof(struct trapframe, tf_xtra[TF_MQ])
 
 define	IFRAMELEN		IFRAMELEN
 define	IFRAME_R1		offsetof(struct intrframe, r1)
@@ -67,7 +65,7 @@ define	IFRAME_SRR1		offsetof(struct intrframe, srr1)
 define	IFRAME_SRR0		offsetof(struct intrframe, srr0)
 define	IFRAME_PRI		offsetof(struct intrframe, pri)
 define	IFRAME_INTR_DEPTH	offsetof(struct intrframe, intrdepth)
-define	IFRAME_VRSAVE		offsetof(struct intrframe, vrsave)
+define	IFRAME_PID		offsetof(struct intrframe, pid)
 define	IFRAME_CTR		offsetof(struct intrframe, ctr)
 define	IFRAME_XER		offsetof(struct intrframe, xer)
 define	IFRAME_CR		offsetof(struct intrframe, cr)
@@ -84,30 +82,27 @@ define	IFRAME_R4		offsetof(struct intrframe, r4)
 define	IFRAME_R3		offsetof(struct intrframe, r3)
 define	IFRAME_R0		offsetof(struct intrframe, r0)
 
-define	SPFRAMELEN		SPFRAMELEN
-define	SPFRAME_R1		offsetof(struct spillframe, r1)
-define	SPFRAME_R12		offsetof(struct spillframe, r12)
-define	SPFRAME_R11		offsetof(struct spillframe, r11)
-define	SPFRAME_R10		offsetof(struct spillframe, r10)
-define	SPFRAME_R9		offsetof(struct spillframe, r9)
-define	SPFRAME_R8		offsetof(struct spillframe, r8)
-define	SPFRAME_R7		offsetof(struct spillframe, r7)
-define	SPFRAME_R6		offsetof(struct spillframe, r6)
-define	SPFRAME_R5		offsetof(struct spillframe, r5)
-define	SPFRAME_R4		offsetof(struct spillframe, r4)
-define	SPFRAME_R3		offsetof(struct spillframe, r3)
-define	SPFRAME_R0		offsetof(struct spillframe, r0)
+define	PM_SR		offsetof(struct pmap, pm_sr[0])
+define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
+define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
+
+define	CALLFRAMELEN	CALLFRAMELEN
+define	CFRAME_SP	offsetof(struct callframe, sp)
+define	CFRAME_LR	offsetof(struct callframe, lr)
+define	CFRAME_R30	offsetof(struct callframe, r30)
+define	CFRAME_R31	offsetof(struct callframe, r31)
 
 define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
+define	SFRAME_SP	offsetof(struct switchframe, sp)
+define	SFRAME_USER_SR	offsetof(struct switchframe, user_sr)
+define	SFRAME_CR	offsetof(struct switchframe, cr)
+define	SFRAME_R2	offsetof(struct switchframe, fixreg2)
+define	SFRAME_R19	offsetof(struct switchframe, fixreg[0])
 
 define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_SPL		offsetof(struct pcb, pcb_spl)
 define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
-
-define	PM_SR		offsetof(struct pmap, pm_sr[0])
-define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
-define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 
 define	L_FORW		offsetof(struct lwp, l_forw)
 define	L_BACK		offsetof(struct lwp, l_back)
@@ -135,6 +130,12 @@ define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
 define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
 define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
 define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)
+
+define	FB_PC		offsetof(struct faultbuf, fb_pc)
+define	FB_SP		offsetof(struct faultbuf, fb_sp)
+define	FB_R2		offsetof(struct faultbuf, fb_r2)
+define	FB_CR		offsetof(struct faultbuf, fb_cr)
+define	FB_FIXREG	offsetof(struct faultbuf, fb_fixreg)
 
 define	CACHELINESIZE	CACHELINESIZE
 

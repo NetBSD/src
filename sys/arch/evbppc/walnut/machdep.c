@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2003/01/30 07:46:28 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2003/02/02 20:43:19 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -127,10 +127,6 @@ char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-struct pcb *curpcb;
-struct pmap *curpm;
-struct proc *fpuproc;		/* XXX - shouldn't need this on fpu-less CPUs */
-
 extern struct user *proc0paddr;
 
 char bootpath[256];
@@ -176,7 +172,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #endif
 	int exc;
 	extern char _edata, _end;
-	struct cpu_info * const ci = &cpu_info_store;
+	struct cpu_info * const ci = &cpu_info[0];
 
 	/* Set the curcpu() pointer */
 	mtspr(SPR_SPRG0, ci);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.6 2003/01/18 06:23:31 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.7 2003/02/02 20:43:23 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,25 +82,10 @@
 /*
  * XXX Interrupt and spill stacks need to be per-CPU.
  */
-	.data
-	.align	4
-intstk:
-	.space	INTSTK		/* interrupt stack */
 
-GLOBAL(intr_depth)
-	.long	-1		/* in-use marker */
-
-	.comm	spillstk,SPILLSTK,8
-
-#if defined(MULTIPROCESSOR)
 #define	GET_PCB(rX)	\
 	GET_CPUINFO(rX);	\
 	lwz	rX,CI_CURPCB(rX)
-#else
-#define GET_PCB(x)	\
-	lis	1,_C_LABEL(curpcb)@ha; \
-	lwz	1,_C_LABEL(curpcb)@l(1)
-#endif
 
 #define	STANDARD_PROLOG(savearea)	\
 	mtsprg	1,1;			/* save SP */ 		\
@@ -180,11 +165,11 @@ _C_LABEL(extint):
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l
-	lwz	31,0(1)			/* were we already running on intstk? */
+	GET_CPUINFO(1)
+	lwz	31,CI_INTRDEPTH(1)	/* were we already running on intstk? */
 	addic.	31,31,1
-	stw	31,0(1)
+	stw	31,CI_INTRDEPTH(1)
+	lwz	1,CI_INTSTK(1)		/* get intstk */
 	beq	1f
 	mfsprg	1,1			/* yes, get old SP */
 1:
@@ -320,8 +305,7 @@ realtrap:	/* entry point after IPKDB is done with exception */
 	mfsprg	1,1			/* restore SP (might have been
 					   overwritten) */
 	bc	4,17,s_trap		/* branch if PSL_PR is false */
-	lis	1,_C_LABEL(curpcb)@ha
-	lwz	1,_C_LABEL(curpcb)@l(1)
+	GET_PCB(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
 /*
  * Now the common trap catching code.
@@ -342,13 +326,8 @@ _C_LABEL(trapexit):
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
-#if defined(MULTIPROCESSOR)
 	GET_CPUINFO(3)
 	lwz	4,CI_ASTPENDING(3)
-#else
-	lis	3,_C_LABEL(astpending)@ha
-	lwz	4,_C_LABEL(astpending)@l(3)
-#endif
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
@@ -373,10 +352,10 @@ s_sctrap:
 	wrteei	1			/* Enable interrupts */
 /* Call the appropriate syscall handler: */
 	addi	3,1,8
-	lis	4,_C_LABEL(curlwp)@ha
-	lwz	4,_C_LABEL(curlwp)@l(4)
-	lwz	4,L_PROC@l(4)
-	lwz	4,P_MD_SYSCALL@l(4)
+	GET_CPUINFO(4)
+	lwz	4,CI_CURLWP(4)
+	lwz	4,L_PROC(4)
+	lwz	4,P_MD_SYSCALL(4)
 	mtctr	4
 	bctrl
 /* Disable interrupts: */
@@ -385,13 +364,8 @@ s_sctrap:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
-#if defined(MULTIPROCESSOR)
 	GET_CPUINFO(3)
 	lwz	4,CI_ASTPENDING(3)
-#else
-	lis	3,_C_LABEL(astpending)@ha
-	lwz	4,_C_LABEL(astpending)@l(3)
-#endif
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
@@ -409,36 +383,36 @@ s_sctrap:
 
 #define	INTRENTER							\
 /* Save non-volatile registers: */					\
-	stwu	1,-92(1);		/* temporarily */		\
-	stw	0,84(1);						\
+	stwu	1,-IFRAMELEN(1);	/* temporarily */		\
+	stw	0,IFRAME_R0(1);						\
 	mfsprg	0,1;			/* get original SP */		\
-	stw	0,0(1);			/* and store it */		\
-	stw	3,80(1);						\
-	stw	4,76(1);						\
-	stw	5,72(1);						\
-	stw	6,68(1);						\
-	stw	7,64(1);						\
-	stw	8,60(1);						\
-	stw	9,56(1);						\
-	stw	10,52(1);						\
-	stw	11,48(1);						\
-	stw	12,44(1);						\
-	stw	28,40(1);		/* saved LR */			\
-	stw	29,36(1);		/* saved CR */			\
-	stw	30,32(1);		/* saved XER */			\
+	stw	0,IFRAME_R1(1);		/* and store it */		\
+	stw	3,IFRAME_R3(1);						\
+	stw	4,IFRAME_R4(1);						\
+	stw	5,IFRAME_R5(1);						\
+	stw	6,IFRAME_R6(1);						\
+	stw	7,IFRAME_R7(1);						\
+	stw	8,IFRAME_R8(1);						\
+	stw	9,IFRAME_R9(1);						\
+	stw	10,IFRAME_R10(1);					\
+	stw	11,IFRAME_R11(1);					\
+	stw	12,IFRAME_R12(1);					\
+	stw	28,IFRAME_LR(1);	/* saved LR */			\
+	stw	29,IFRAME_CR(1);	/* saved CR */			\
+	stw	30,IFRAME_XER(1);	/* saved XER */			\
 	lmw	28,tempsave(0);		/* restore r28-r31 */		\
 	mfctr	6;							\
-	lis	5,_C_LABEL(intr_depth)@ha;				\
-	lwz	5,_C_LABEL(intr_depth)@l(5);				\
+	GET_CPUINFO(5);							\
+	lwz	5,CI_INTRDEPTH(5);					\
 	mfsrr0	4;							\
 	mfsrr1	3;							\
-	stw	6,28(1);						\
-	stw	5,20(1);						\
-	stw	4,12(1);						\
-	stw	3,8(1);							\
+	stw	6,IFRAME_CTR(1);					\
+	stw	5,IFRAME_INTR_DEPTH(1);					\
+	stw	4,IFRAME_SRR0(1);					\
+	stw	3,IFRAME_SRR1(1);					\
 	mfpid	0;			/* get currect PID register */  \
-	stw	0,88(1)	;						\
-	li	0, KERNEL_PID;						\
+	stw	0,IFRAME_PID(1);					\
+	li	0,KERNEL_PID;						\
 	mtpid	0;							\
 /* interrupts are recoverable here, and enable translation */		\
 	mfmsr	5;							\
@@ -456,8 +430,8 @@ intr_exit:
 /* Disable interrupts (should already be disabled) and MMU here: */
 	wrteei	0
 	isync
-	lwz	3,88(1)
-	lwz	4,8(1)			/* Load srr1 */
+	lwz	3,IFRAME_PID(1)
+	lwz	4,IFRAME_SRR1(1)	/* Load srr1 */
 	bl	_C_LABEL(ctx_setup)	/* Get proper ctx */
 	mfmsr	5
 	lis	4,(PSL_EE|PSL_DR|PSL_IR)@h
@@ -468,30 +442,29 @@ intr_exit:
 	mtpid	3			/* Load CTX */
 
 /* restore possibly overwritten registers: */
-	lwz	12,44(1)
-	lwz	11,48(1)
-	lwz	10,52(1)
-	lwz	9,56(1)
-	lwz	8,60(1)
-	lwz	7,64(1)
-	lwz	6,8(1)
-	lwz	5,12(1)
-	lwz	4,28(1)
-	lwz	3,32(1)
+	lwz	12,IFRAME_R12(1)
+	lwz	11,IFRAME_R11(1)
+	lwz	10,IFRAME_R10(1)
+	lwz	9,IFRAME_R9(1)
+	lwz	8,IFRAME_R8(1)
+	lwz	7,IFRAME_R7(1)
+	lwz	6,IFRAME_SRR1(1)
+	lwz	5,IFRAME_SRR0(1)
+	lwz	4,IFRAME_CTR(1)
+	lwz	3,IFRAME_XER(1)
 	mtsrr1	6
 	mtsrr0	5
 	mtctr	4
 	mtxer	3
 /* Returning to user mode? */
+	GET_CPUINFO(5)
+	lwz	4,CI_INTRDEPTH(5)
+	addi	4,4,-1			/* adjust reentrancy count */
+	stw	4,CI_INTRDEPTH(5)
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
 
-#if defined(MULTIPROCESSOR)
-	lwz	4,CI_ASTPENDING(4)	 /* Test AST pending */
-#else
-	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
-	lwz	4,_C_LABEL(astpending)@l(3)
-#endif
+	lwz	4,CI_ASTPENDING(5)	 /* Test AST pending */
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
@@ -500,34 +473,26 @@ intr_exit:
 	li	6,EXC_AST
 	stmw	28,tempsave(0)		/* establish tempsave again */
 	mtlr	6
-	lwz	28,40(1)		/* saved LR */
-	lwz	29,36(1)		/* saved CR */
-	lwz	6,68(1)
-	lwz	5,72(1)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
-	lis	30,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
-	lwz	31,_C_LABEL(intr_depth)@l(30)
-	addi	31,31,-1
-	stw	31,_C_LABEL(intr_depth)@l(30)
+	lwz	28,IFRAME_LR(1)		/* saved LR */
+	lwz	29,IFRAME_CR(1)		/* saved CR */
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
-	lwz	5,36(1)
-	lwz	6,40(1)
+	lwz	5,IFRAME_CR(1)
+	lwz	6,IFRAME_LR(1)
 	mtcr	5
 	mtlr	6
-	lwz	6,68(1)
-	lwz	5,72(1)
-	lis	3,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
-	lwz	4,_C_LABEL(intr_depth)@l(3)
-	addi	4,4,-1
-	stw	4,_C_LABEL(intr_depth)@l(3)
-	lwz	4,76(1)
-	lwz	3,80(1)
-	lwz	0,84(1)
-	lwz	1,0(1)
+	lwz	6,IFRAME_R6(1)
+	lwz	5,IFRAME_R5(1)
+	lwz	4,IFRAME_R4(1)
+	lwz	3,IFRAME_R3(1)
+	lwz	0,IFRAME_R0(1)
+	lwz	1,IFRAME_R1(1)
 	rfi
 	ba	.	/* Protect against prefetch */
 
@@ -541,11 +506,11 @@ _C_LABEL(pitint):
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l
-	lwz	31,0(1)			/* were we already running on intstk? */
+	GET_CPUINFO(1)
+	lwz	31,CI_INTRDEPTH(1)	/* were we already running on intstk? */
 	addic.	31,31,1
-	stw	31,0(1)
+	stw	31,CI_INTRDEPTH(1)
+	lwz	1,CI_INTSTK(1)		/* get intstk */
 	beq	1f
 	mfsprg	1,1			/* yes, get old SP */
 1:
@@ -564,11 +529,11 @@ fitint:
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	lis	1,intstk+INTSTK@ha	/* get interrupt stack */
-	addi	1,1,intstk+INTSTK@l
-	lwz	31,0(1)			/* were we already running on intstk? */
+	GET_CPUINFO(1)
+	lwz	31,CI_INTRDEPTH(1)	/* were we already running on intstk? */
 	addic.	31,31,1
-	stw	31,0(1)
+	stw	31,CI_INTRDEPTH(1)
+	lwz	1,CI_INTSTK(1)		/* get intstk */
 	beq	1f
 	mfsprg	1,1			/* yes, get old SP */
 1:

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.3 2002/09/27 15:36:33 provos Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.4 2003/02/02 20:43:21 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -323,7 +323,7 @@ do_pending_int(void)
 			 * Fake a clock interrupt frame
 			 */
 			frame.pri = new;
-			frame.depth = intr_depth + 1;
+			frame.depth = curcpu()->ci_intrdepth + 1;
 			frame.srr1 = 0;
 			frame.srr0 = (int)firepower_splx;
 			/*

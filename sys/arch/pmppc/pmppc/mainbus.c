@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2003/01/01 02:01:29 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2003/02/02 20:43:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(maa->mb_name, cpu_cd.cd_name) != 0)
 		return 0;
 
-	if (cpu_info_store.ci_dev != NULL)
+	if (cpu_info[0].ci_dev != NULL)
 		return 0;
 
 	return 1;

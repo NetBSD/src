@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2002/10/02 04:10:09 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2003/02/02 20:43:22 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@ CFATTACH_DECL(cpu, sizeof(struct device),
 
 int ncpus;
 
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info[1];
 
 int cpufound = 0;
 

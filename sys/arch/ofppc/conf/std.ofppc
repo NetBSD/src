@@ -1,11 +1,14 @@
-#	$NetBSD: std.ofppc,v 1.7 2002/04/25 19:47:52 nonaka Exp $
+#	$NetBSD: std.ofppc,v 1.8 2003/02/02 20:43:21 matt Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
 machine		ofppc powerpc
 
+options 	PPC_MPC6XX
+makeoptions	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
+
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
-options 	PPC_MPC6XX
-makeoptions	PPCDIR="mpc6xx"	# Tell Makefile.powerpc what dir to use
+options 	INTSTK=0x2000
+options 	SPILLSTK=0x800

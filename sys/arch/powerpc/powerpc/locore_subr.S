@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.7 2003/01/18 06:23:33 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.8 2003/02/02 20:43:24 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -141,16 +141,10 @@ ASENTRY(Idle)
  */
 ENTRY(switch_exit)
 /* First switch to the idle pcb/kernel stack */
-#if defined(MULTIPROCESSOR)
 	GET_CPUINFO(7)
 	lwz	6,CI_IDLE_PCB(7)
 	stw	6,CI_CURPCB(7)
-#else
-	lis	6,idle_u@ha
-	lwz	6,idle_u@l(6)
-	lis	7,_C_LABEL(curpcb)@ha
-	stw	6,_C_LABEL(curpcb)@l(7)
-#endif
+
 	/*
 	 * Adjust the stack to provide space for the callee to save LR.
 	 */
@@ -206,11 +200,10 @@ ENTRY_NOPROFILE(cpu_switch)
 	lwz	3,CI_CPL(7)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
-	lis	3,_C_LABEL(curlwp)@ha
+	GET_CPUINFO(3)
 	xor	31,31,31
-	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
-	lis	3,_C_LABEL(curpcb)@ha
-	lwz	31,_C_LABEL(curpcb)@l(3)
+	stw	31,CI_CURLWP(3)		/* Zero to not accumulate cpu time */
+	lwz	31,CI_CURPCB(3)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -269,23 +262,12 @@ switch_common:
 1:
 	/* just did this resched thing */
 	xor	3,3,3
-#if defined(MULTIPROCESSOR)
 	GET_CPUINFO(4)
 	stw	3,CI_WANT_RESCHED(4)
-#else
-	lis	4,_C_LABEL(want_resched)@ha
-	stw	3,_C_LABEL(want_resched)@l(4)
-#endif
-
 	stw	3,L_BACK(31)		/* probably superfluous */
 
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(4)
+#ifdef MULTIPROCESSOR
 	stw	4,L_CPU(31)		/* l->l_cpu = curcpu() */
-#else
-	lis	4,_C_LABEL(cpu_info_store)@ha
-	addi	4,4,_C_LABEL(cpu_info_store)@l
-	stw	4,L_CPU(31)		/* l->l_cpu = &cpu_info_store */
 #endif
 
 	/* Process now running on a processor. */
@@ -293,12 +275,7 @@ switch_common:
 	stw	3,L_STAT(31)
 
 	/* record new process */
-#if defined(MULTIPROCESSOR)
 	stw	31,CI_CURLWP(4)
-#else
-	lis	4,_C_LABEL(curlwp)@ha
-	stw	31,_C_LABEL(curlwp)@l(4)
-#endif
 	lwz	4,L_ADDR(31)
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
@@ -325,22 +302,12 @@ switch_exited:
 #endif
 
 	/* indicate new pcb */
-#if defined(MULTIPROCESSOR)
 	GET_CPUINFO(6)
 	stw	4,CI_CURPCB(6)
-#else
-	lis	5,_C_LABEL(curpcb)@ha
-	stw	4,_C_LABEL(curpcb)@l(5)
-#endif
 
 	/* save real pmap pointer for spill fill */
 	lwz	5,PCB_PMR(4)
-#if defined(MULTIPROCESSOR)
 	stwu	5,CI_CURPM(6)
-#else
-	lis	6,_C_LABEL(curpm)@ha
-	stwu	5,_C_LABEL(curpm)@l(6)
-#endif
 	stwcx.	5,0,6			/* clear possible reservation */
 	isync
 
@@ -382,8 +349,8 @@ switch_return:
 
 #if defined(PPC_IBM4XX)
 0:
-	lis	3,_C_LABEL(curpm)@ha
-	addi	3,3,_C_LABEL(curpm)@l	/* Do we need a context? */
+	GET_CPUINFO(3)
+	lwz	3,CI_CURPM(3)		/* Do we need a context? */
 	lwz	4,PM_CTX(3)
 	cmpwi	4,0
 #	mtspr	SPR_SPR0,4		/* Always keep the current ctx here */
@@ -443,17 +410,16 @@ ENTRY(cpu_switchto)
 
 1:
 	xor	31,31,31
-	stw	31,CI_CURLWP(7)	/* Zero to not accumulate cpu time */
+	stw	31,CI_CURLWP(7)		/* Zero to not accumulate cpu time */
 	lwz	31,CI_CURPCB(7)
 
 	lwz	3,CI_CPL(7)
 	stw	3,PCB_SPL(31)		/* save spl */
 #else
-	lis	3,_C_LABEL(curlwp)@ha
+	GET_CPUINFO(3)
 	xor	31,31,31
-	stw	31,_C_LABEL(curlwp)@l(3) /* Zero to not accumulate cpu time */
-	lis	3,_C_LABEL(curpcb)@ha
-	lwz	31,_C_LABEL(curpcb)@l(3)
+	stw	31,CI_CURLWP(3)		/* Zero to not accumulate cpu time */
+	lwz	31,CI_CURPCB(3)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -505,30 +471,3 @@ _C_LABEL(fork_trampoline):
 	mr	3,30
 	blrl				/* jump indirect to r31 */
 	b	trapexit
-
-/*
- * int setfault()
- *
- * Similar to setjmp to setup for handling faults on accesses to user memory.
- * Any routine using this may only call bcopy, either the form below,
- * or the (currently used) C code optimized, so it doesn't use any non-volatile
- * registers.
- */
-	.globl	_C_LABEL(setfault)
-_C_LABEL(setfault):
-	mflr	0
-	mfcr	12
-#if defined(MULTIPROCESSOR)
-	GET_CPUINFO(4)
-	lwz	4,CI_CURPCB(4)
-#else
-	lis	4,_C_LABEL(curpcb)@ha
-	lwz	4,_C_LABEL(curpcb)@l(4)
-#endif
-	stw	3,PCB_FAULT(4)
-	stw	0,0(3)
-	stw	1,4(3)
-	stw	2,8(3)
-	stmw	12,12(3)
-	xor	3,3,3
-	blr

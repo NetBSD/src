@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.3 2001/10/23 02:59:09 thorpej Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.4 2003/02/02 20:43:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
  */
 #include <machine/psl.h>
 #include <machine/trap.h>
+#define _NOREGNAMES
 #include <machine/asm.h>
 
 #define	CACHELINE	32		/* Note that this value is really
@@ -69,76 +70,76 @@ ofentry:
 	.comm	clsave,SVSIZE,8
 
 ENTRY(ofwr_init)
-	mflr	31			/* save return address */
+	mflr	%r31			/* save return address */
 
-	mr	13,6			/* save args */
-	mr	12,7			/* save argslen */
-	lis	8,ofentry@ha
-	stw	5,ofentry@l(8)		/* save virtual mode firmware entry */
+	mr	%r13,%r6			/* save args */
+	mr	%r12,%r7			/* save argslen */
+	lis	%r8,ofentry@ha
+	stw	%r5,ofentry@l(%r8)		/* save virtual mode firmware entry */
 
-	lis	3,fwsave@ha		/* save the mmu values of the
+	lis	%r3,fwsave@ha		/* save the mmu values of the
 					   firmware */
-	addi	3,3,fwsave@l
+	addi	%r3,%r3,fwsave@l
 	bl	savemmu
 
-	lis	5,fwentry@ha		/* get new firmware entry */
-	addi	5,5,fwentry@l
+	lis	%r5,fwentry@ha		/* get new firmware entry */
+	addi	%r5,%r5,fwentry@l
 
-	mr	6,13			/* restore args pointer */
-	mr	7,12			/* restore args length */
-	mtlr	31			/* restore return address */
+	mr	%r6,%r13			/* restore args pointer */
+	mr	%r7,%r12			/* restore args length */
+	mtlr	%r31			/* restore return address */
 	blr
 
 /*
  * Emulated firmware entry.
  */
 fwentry:
-	mflr	0			/* save return address */
-	stw	0,4(1)
-	stwu	1,-16(1)		/* setup stack frame */
-	stw	3,8(1)			/* save arg */
+	mflr	%r0			/* save return address */
+	stw	%r0,4(1)
+	stwu	%r1,-16(1)		/* setup stack frame */
+	stw	%r3,8(1)			/* save arg */
 
-	lis	3,clsave@ha		/* save mmu values of client */
-	addi	3,3,clsave@l
+	lis	%r3,clsave@ha		/* save mmu values of client */
+	addi	%r3,%r3,clsave@l
 	bl	savemmu
 
-	lis	3,fwsave@ha		/* restore mmu values of firmware */
-	addi	3,3,fwsave@l
+	lis	%r3,fwsave@ha		/* restore mmu values of firmware */
+	addi	%r3,%r3,fwsave@l
 	bl	restoremmu
 
-	lis	3,ofentry@ha
-	lwz	3,ofentry@l(3)		/* get actual firmware entry */
-	mtlr	3
+	lis	%r3,ofentry@ha
+	lwz	%r3,ofentry@l(%r3)		/* get actual firmware entry */
+	mtlr	%r3
 
-	mfmsr	4
-	ori	4,4,PSL_IR|PSL_DR	/* turn on MMU */
-	mtmsr	4
+	mfmsr	%r4
+	ori	%r4,%r4,PSL_IR|PSL_DR	/* turn on MMU */
+	mtmsr	%r4
 	isync
 
-	lwz	3,8(1)			/* restore arg */
+	lwz	%r3,8(%r1)			/* restore arg */
 	blrl				/* do actual firmware call */
 
-	stw	3,8(1)			/* save return value */
+	stw	%r3,8(%r1)			/* save return value */
 
-	mfmsr	4
-	lis	3,(PSL_IR|PSL_DR)@h	/* turn off MMU */
-	ori	3,3,(PSL_IR|PSL_DR)@l
-	andc	4,4,3
-	mtmsr	4
+	mfmsr	%r4
+	lis	%r3,(PSL_IR|PSL_DR)@h	/* turn off MMU */
+	ori	%r3,%r3,(PSL_IR|PSL_DR)@l
+	andc	%r4,%r4,%r3
+	mtmsr	%r4
 	isync
 
-	lis	3,fwsave@ha		/* save mmu values of firmare */
-	addi	3,3,fwsave@l		/* (might not be necessary, but... */
+	lis	%r3,fwsave@ha		/* save mmu values of firmare */
+	addi	%r3,%r3,fwsave@l		/* (might not be necessary, but... */
 	bl	savemmu
 
-	lis	3,clsave@ha		/* restore mmu values of client */
-	addi	3,3,clsave@l
+	lis	%r3,clsave@ha		/* restore mmu values of client */
+	addi	%r3,%r3,clsave@l
 	bl	restoremmu
 
-	lwz	3,8(1)			/* restore return value */
-	lwz	1,0(1)			/* and return */
-	lwz	0,4(1)
-	mtlr	0
+	lwz	%r3,8(%r1)			/* restore return value */
+	lwz	%r1,0(%r1)			/* and return */
+	lwz	%r0,4(%r1)
+	mtlr	%r0
 	blr
 
 /*
@@ -146,97 +147,97 @@ fwentry:
  */
 savemmu:
 
-	mfibatl	4,0			/* save BATs */
-	stw	4,0(3)
-	mfibatu	4,0
-	stw	4,4(3)
-	mfibatl	4,1
-	stw	4,8(3)
-	mfibatu	4,1
-	stw	4,12(3)
-	mfibatl	4,2
-	stw	4,16(3)
-	mfibatu	4,2
-	stw	4,20(3)
-	mfibatl	4,3
-	stw	4,24(3)
-	mfibatu	4,3
-	stw	4,28(3)
-	mfdbatl	4,0
-	stw	4,32(3)
-	mfdbatu	4,0
-	stw	4,36(3)
-	mfdbatl	4,1
-	stw	4,40(3)
-	mfdbatu	4,1
-	stw	4,44(3)
-	mfdbatl	4,2
-	stw	4,48(3)
-	mfdbatu	4,2
-	stw	4,52(3)
-	mfdbatl	4,3
-	stw	4,56(3)
-	mfdbatu	4,3
-	stwu	4,60(3)
+	mfibatl	%r4,0			/* save BATs */
+	stw	%r4,0(%r3)
+	mfibatu	%r4,0
+	stw	%r4,4(%r3)
+	mfibatl	%r4,1
+	stw	%r4,8(%r3)
+	mfibatu	%r4,1
+	stw	%r4,12(%r3)
+	mfibatl	%r4,2
+	stw	%r4,16(%r3)
+	mfibatu	%r4,2
+	stw	%r4,20(%r3)
+	mfibatl	%r4,3
+	stw	%r4,24(%r3)
+	mfibatu	%r4,3
+	stw	%r4,28(%r3)
+	mfdbatl	%r4,0
+	stw	%r4,32(%r3)
+	mfdbatu	%r4,0
+	stw	%r4,36(%r3)
+	mfdbatl	%r4,1
+	stw	%r4,40(%r3)
+	mfdbatu	%r4,1
+	stw	%r4,44(%r3)
+	mfdbatl	%r4,2
+	stw	%r4,48(%r3)
+	mfdbatu	%r4,2
+	stw	%r4,52(%r3)
+	mfdbatl	%r4,3
+	stw	%r4,56(%r3)
+	mfdbatu	%r4,3
+	stwu	%r4,60(%r3)
 
-	li	4,0			/* save SRs */
+	li	%r4,0			/* save SRs */
 1:
-	addis	4,4,-0x10000000@ha
-	or.	4,4,4
-	mfsrin	5,4
-	stwu	5,4(3)
+	addis	%r4,%r4,-0x10000000@ha
+	or.	%r4,%r4,%r4
+	mfsrin	%r5,%r4
+	stwu	%r5,4(%r3)
 	bne	1b
 
-	mfsprg	4,0			/* save SPRGs */
-	stw	4,4(3)
-	mfsprg	4,1
-	stw	4,8(3)
-	mfsprg	4,2
-	stw	4,12(3)
-	mfsprg	4,3
-	stw	4,16(3)
+	mfsprg	%r4,0			/* save SPRGs */
+	stw	%r4,4(%r3)
+	mfsprg	%r4,1
+	stw	%r4,8(%r3)
+	mfsprg	%r4,2
+	stw	%r4,12(%r3)
+	mfsprg	%r4,3
+	stw	%r4,16(%r3)
 
-	mfsdr1	4			/* save SDR1 */
-	stw	4,20(3)
+	mfsdr1	%r4			/* save SDR1 */
+	stw	%r4,20(%r3)
 
-	addi	4,3,24
-	mflr	11
-	li	3,EXC_DSI		/* save DSI/ISI trap vectors */
-	li	5,SI1SIZE
+	addi	%r4,%r3,24
+	mflr	%r11
+	li	%r3,EXC_DSI		/* save DSI/ISI trap vectors */
+	li	%r5,SI1SIZE
 	bl	copy
 
-	mtlr	11
-	li	3,EXC_IMISS		/* save MISS trap vectors */
-	li	5,SI2SIZE
+	mtlr	%r11
+	li	%r3,EXC_IMISS		/* save MISS trap vectors */
+	li	%r5,SI2SIZE
 
 copy:
-	li	6,CACHELINE
+	li	%r6,CACHELINE
 1:
-	lwz	7,0(3)
-	lwz	8,4(3)
-	lwz	9,8(3)
-	lwz	10,12(3)
-	stw	7,0(4)
-	stw	8,4(4)
-	stw	9,8(4)
-	stw	10,12(4)
-	lwz	7,16(3)
-	lwz	8,20(3)
-	lwz	9,24(3)
-	lwz	10,28(3)
-	stw	7,16(4)
-	stw	8,20(4)
-	stw	9,24(4)
-	stw	10,28(4)
-	dcbst	0,4
-	icbi	0,4
-	add	3,3,6
-	add	4,4,6
-	subf.	5,6,5
+	lwz	%r7,0(%r3)
+	lwz	%r8,4(%r3)
+	lwz	%r9,8(%r3)
+	lwz	%r10,12(%r3)
+	stw	%r7,0(%r4)
+	stw	%r8,4(%r4)
+	stw	%r9,8(%r4)
+	stw	%r10,12(%r4)
+	lwz	%r7,16(%r3)
+	lwz	%r8,20(%r3)
+	lwz	%r9,24(%r3)
+	lwz	%r10,28(%r3)
+	stw	%r7,16(%r4)
+	stw	%r8,20(%r4)
+	stw	%r9,24(%r4)
+	stw	%r10,28(%r4)
+	dcbst	%r0,%r4
+	icbi	%r0,%r4
+	add	%r3,%r3,%r6
+	add	%r4,%r4,%r6
+	subf.	%r5,%r6,%r5
 	bgt	1b
 
-	dcbst	0,4
-	icbi	0,4
+	dcbst	%r0,%r4
+	icbi	%r0,%r4
 
 	sync
 	isync
@@ -248,104 +249,104 @@ copy:
  */
 restoremmu:
 
-	li	4,0			/* first, invalidate BATs */
-	mtibatu	0,4
-	mtibatu	1,4
-	mtibatu	2,4
-	mtibatu	3,4
-	mtdbatu	0,4
-	mtdbatu	1,4
-	mtdbatu	2,4
-	mtdbatu	3,4
+	li	%r4,0			/* first, invalidate BATs */
+	mtibatu	0,%r4
+	mtibatu	1,%r4
+	mtibatu	2,%r4
+	mtibatu	3,%r4
+	mtdbatu	0,%r4
+	mtdbatu	1,%r4
+	mtdbatu	2,%r4
+	mtdbatu	3,%r4
 
-	lwz	4,0(3)
-	mtibatl	0,4			/* restore BATs */
-	lwz	4,4(3)
-	mtibatu	0,4
-	lwz	4,8(3)
-	mtibatl	1,4
-	lwz	4,12(3)
-	mtibatu	1,4
-	lwz	4,16(3)
-	mtibatl	2,4
-	lwz	4,20(3)
-	mtibatu	2,4
-	lwz	4,24(3)
-	mtibatl	3,4
-	lwz	4,28(3)
-	mtibatu	3,4
-	lwz	4,32(3)
-	mtdbatl	0,4
-	lwz	4,36(3)
-	mtdbatu	0,4
-	lwz	4,40(3)
-	mtdbatl	1,4
-	lwz	4,44(3)
-	mtdbatu	1,4
-	lwz	4,48(3)
-	mtdbatl	2,4
-	lwz	4,52(3)
-	mtdbatu	2,4
-	lwz	4,56(3)
-	mtdbatl	3,4
-	lwzu	4,60(3)
-	mtdbatu	3,4
+	lwz	%r4,0(%r3)
+	mtibatl	0,%r4			/* restore BATs */
+	lwz	%r4,%r4(%r3)
+	mtibatu	0,%r4
+	lwz	%r4,8(%r3)
+	mtibatl	1,%r4
+	lwz	%r4,12(%r3)
+	mtibatu	1,%r4
+	lwz	%r4,16(%r3)
+	mtibatl	2,%r4
+	lwz	%r4,20(%r3)
+	mtibatu	2,%r4
+	lwz	%r4,24(%r3)
+	mtibatl	3,%r4
+	lwz	%r4,28(%r3)
+	mtibatu	3,%r4
+	lwz	%r4,32(%r3)
+	mtdbatl	0,%r4
+	lwz	%r4,36(%r3)
+	mtdbatu	0,%r4
+	lwz	%r4,40(%r3)
+	mtdbatl	1,%r4
+	lwz	%r4,44(%r3)
+	mtdbatu	1,%r4
+	lwz	%r4,48(%r3)
+	mtdbatl	2,%r4
+	lwz	%r4,52(%r3)
+	mtdbatu	2,%r4
+	lwz	%r4,56(%r3)
+	mtdbatl	3,%r4
+	lwzu	%r4,60(%r3)
+	mtdbatu	3,%r4
 
-	li	4,0			/* restore SRs */
+	li	%r4,0			/* restore SRs */
 1:
-	lwzu	5,4(3)
-	addis	4,4,-0x10000000@ha
-	or.	4,4,4
-	mtsrin	5,4
+	lwzu	%r5,4(%r3)
+	addis	%r4,%r4,-0x10000000@ha
+	or.	%r4,%r4,%r4
+	mtsrin	%r5,%r4
 	bne	1b
 
-	lwz	4,4(3)
-	mtsprg	0,4			/* restore SPRGs */
-	lwz	4,8(3)
-	mtsprg	1,4
-	lwz	4,12(3)
-	mtsprg	2,4
-	lwz	4,16(3)
-	mtsprg	3,4
+	lwz	%r4,4(%r3)
+	mtsprg	0,%r4			/* restore SPRGs */
+	lwz	%r4,8(%r3)
+	mtsprg	1,%r4
+	lwz	%r4,12(%r3)
+	mtsprg	2,%r4
+	lwz	%r4,16(%r3)
+	mtsprg	3,%r4
 
 	sync				/* remove everything from tlb */
-	lis	4,0x40000@ha
-	li	5,0x1000
+	lis	%r4,0x40000@ha
+	li	%r5,0x1000
 1:
-	subf.	4,5,4
-	tlbie	4
+	subf.	%r4,%r5,%r4
+	tlbie	%r4
 	bne	1b
 
 	sync
 	tlbsync
 	sync
 
-	lwz	4,20(3)
+	lwz	%r4,20(%r3)
 	sync
-	mtsdr1	4			/* restore SDR1 */
+	mtsdr1	%r4			/* restore SDR1 */
 
-	addi	3,3,24
-	mflr	11
-	li	4,EXC_DSI		/* restore DSI/ISI trap vectors */
-	li	5,SI1SIZE
+	addi	%r3,%r3,24
+	mflr	%r11
+	li	%r4,EXC_DSI		/* restore DSI/ISI trap vectors */
+	li	%r5,SI1SIZE
 	bl	copy
 
-	li	4,EXC_IMISS		/* restore MISS trap vectors */
-	li	5,SI2SIZE
+	li	%r4,EXC_IMISS		/* restore MISS trap vectors */
+	li	%r5,SI2SIZE
 	bl	copy
 
 	/* tlbia */
 	sync
-	li	3,0x40
-	mtctr	3
-	li	4,0
+	li	%r3,0x40
+	mtctr	%r3
+	li	%r4,0
     1:
-	tlbie	4
-	addi	4,4,0x1000
+	tlbie	%r4
+	addi	%r4,%r4,0x1000
 	bdnz	1b
 	sync
 	tlbsync
 	sync
 
-	mtlr	11
+	mtlr	%r11
 	blr

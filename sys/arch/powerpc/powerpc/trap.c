@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2003/01/19 02:43:12 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 2003/02/02 20:43:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,17 +60,11 @@
 #include <powerpc/spr.h>
 #include <powerpc/userret.h>
 
-#ifndef MULTIPROCESSOR
-volatile int astpending;
-volatile int want_resched;
-#endif
-
 static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 static inline vaddr_t setusr __P((vaddr_t, size_t *));
 static inline void unsetusr __P((void));
 
 void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
-int setfault __P((faultbuf));		/* defined in locore.S */
 /* Why are these not defined in a header? */
 int badaddr __P((void *, size_t));
 int badaddr_read __P((void *, size_t, int *));
@@ -109,7 +103,7 @@ trap(struct trapframe *frame)
 		KERNEL_PROC_UNLOCK(l);
 		break;
 	case EXC_DSI: {
-		faultbuf *fb;
+		struct faultbuf *fb;
 		vaddr_t va = frame->dar;
 		ci->ci_ev_kdsi.ev_count++;
 
@@ -128,7 +122,7 @@ trap(struct trapframe *frame)
 		/*
 		 * Only query UVM if no interrupts are active.
 		 */
-		if (intr_depth < 0) {
+		if (ci->ci_intrdepth < 0) {
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			if ((va >> ADDR_SR_SHFT) == pcb->pcb_kmapsr) {
 				va &= ADDR_PIDX | ADDR_POFF;
@@ -175,13 +169,13 @@ trap(struct trapframe *frame)
 			rv = EFAULT;
 		}
 		if ((fb = pcb->pcb_onfault) != NULL) {
-			frame->srr0 = (*fb)[0];
-			frame->fixreg[1] = (*fb)[1];
-			frame->fixreg[2] = (*fb)[2];
+			frame->srr0 = fb->fb_pc;
+			frame->fixreg[1] = fb->fb_sp;
+			frame->fixreg[2] = fb->fb_r2;
 			frame->fixreg[3] = rv;
-			frame->cr = (*fb)[3];
-			memcpy(&frame->fixreg[13], &(*fb)[4],
-				      19 * sizeof(register_t));
+			frame->cr = fb->fb_cr;
+			memcpy(&frame->fixreg[13], fb->fb_fixreg,
+			    sizeof(fb->fb_fixreg));
 			return;
 		}
 		printf("trap: kernel %s DSI @ %#lx by %#lx (DSISR %#x, err"
@@ -285,7 +279,7 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_AST|EXC_USER:
-		astpending = 0;		/* we are about to do it */
+		ci->ci_astpending = 0;		/* we are about to do it */
 		KERNEL_PROC_LOCK(l);
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
@@ -293,7 +287,7 @@ trap(struct trapframe *frame)
 			ADDUPROF(p);
 		}
 		/* Check whether we are being preempted. */
-		if (want_resched)
+		if (ci->ci_want_resched)
 			preempt(0);
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -363,16 +357,16 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_MCHK: {
-		faultbuf *fb;
+		struct faultbuf *fb;
 
 		if ((fb = pcb->pcb_onfault) != NULL) {
-			frame->srr0 = (*fb)[0];
-			frame->fixreg[1] = (*fb)[1];
-			frame->fixreg[2] = (*fb)[2];
+			frame->srr0 = fb->fb_pc;
+			frame->fixreg[1] = fb->fb_sp;
+			frame->fixreg[2] = fb->fb_r2;
 			frame->fixreg[3] = EFAULT;
-			frame->cr = (*fb)[3];
-			memcpy(&frame->fixreg[13], &(*fb)[4],
-			      19 * sizeof(register_t));
+			frame->cr = fb->fb_cr;
+			memcpy(&frame->fixreg[13], fb->fb_fixreg,
+			    sizeof(fb->fb_fixreg));
 			return;
 		}
 		goto brain_damage;
@@ -442,10 +436,10 @@ copyin(udaddr, kaddr, len)
 {
 	vaddr_t uva = (vaddr_t) udaddr;
 	char *kp = kaddr;
-	faultbuf env;
+	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(env)) != 0)
+	if ((rv = setfault(&env)) != 0)
 		goto out;
 
 	while (len > 0) {
@@ -473,10 +467,10 @@ copyout(kaddr, udaddr, len)
 {
 	const char *kp = kaddr;
 	vaddr_t uva = (vaddr_t) udaddr;
-	faultbuf env;
+	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(env)) != 0)
+	if ((rv = setfault(&env)) != 0)
 		goto out;
 
 	while (len > 0) {
@@ -512,12 +506,12 @@ kcopy(src, dst, len)
 	void *dst;
 	size_t len;
 {
-	faultbuf env, *oldfault;
+	struct faultbuf env, *oldfault;
 	int rv;
 
 	oldfault = curpcb->pcb_onfault;
 
-	if ((rv = setfault(env)) == 0)
+	if ((rv = setfault(&env)) == 0)
 		memcpy(dst, src, len);
 
 	curpcb->pcb_onfault = oldfault;
@@ -538,13 +532,13 @@ badaddr_read(addr, size, rptr)
 	size_t size;
 	int *rptr;
 {
-	faultbuf env;
+	struct faultbuf env;
 	int x;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
 	__asm __volatile ("sync; isync");
 
-	if (setfault(env)) {
+	if (setfault(&env)) {
 		curpcb->pcb_onfault = 0;
 		__asm __volatile ("sync");
 		return 1;
@@ -654,10 +648,10 @@ copyinstr(udaddr, kaddr, len, done)
 {
 	vaddr_t uva = (vaddr_t) udaddr;
 	char *kp = kaddr;
-	faultbuf env;
+	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(env)) != 0)
+	if ((rv = setfault(&env)) != 0)
 		goto out2;
 
 	while (len > 0) {
@@ -693,10 +687,10 @@ copyoutstr(kaddr, udaddr, len, done)
 {
 	const char *kp = kaddr;
 	vaddr_t uva = (vaddr_t) udaddr;
-	faultbuf env;
+	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(env)) != 0)
+	if ((rv = setfault(&env)) != 0)
 		goto out2;
 
 	while (len > 0) {
