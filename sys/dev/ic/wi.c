@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.25 2001/09/22 17:22:25 explorer Exp $	*/
+/*	$NetBSD: wi.c,v 1.26 2001/10/13 15:00:23 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -703,6 +703,20 @@ wi_reset(sc)
 
 	/* Calibrate timer. */
 	WI_SETVAL(WI_RID_TICK_TIME, 8);
+
+	return;
+}
+
+void
+wi_pci_reset(sc)
+	struct wi_softc		*sc;
+{
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x80);
+	DELAY(100*1000); /* 100 m sec */
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
+	DELAY(100*1000); /* 100 m sec */
 
 	return;
 }
@@ -1889,6 +1903,10 @@ wi_get_id(sc)
 		break;
 	case WI_NIC_PRISM2_5:
 		printf("RF:PRISM2.5 MAC:ISL3873");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_3874A:
+		printf("RF:PRISM2.5 MAC:ISL3874A(PCI)");
 		sc->sc_prism2 = 1;
 		break;
 	default:

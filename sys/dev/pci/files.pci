@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.140 2001/09/16 00:11:42 eeh Exp $
+#	$NetBSD: files.pci,v 1.141 2001/10/13 15:00:23 ichiro Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -448,6 +448,9 @@ file	dev/pci/hifn7751.c		hifn
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
 
+# Intersil Prism2.5 Mini-PCI
+attach	wi at pci with wi_pci
+file	dev/pci/if_wi_pci.c		wi_pci
 
 # ISDN devices
 attach	isic at pci with isic_pci

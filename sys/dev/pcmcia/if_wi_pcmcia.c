@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.7 2001/09/17 09:21:58 ichiro Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.8 2001/10/13 15:00:24 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -352,6 +352,7 @@ wi_pcmcia_attach(parent, self, aux)
 	if (pp == NULL)
 		panic("wi_pcmcia_attach: impossible");
 
+	sc->sc_pci = 0;
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;
