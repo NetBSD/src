@@ -1,3 +1,5 @@
+/*	$NetBSD: getsubopt.c,v 1.2 1998/01/31 20:41:43 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +33,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
-#endif /* not lint */
+#else
+__RCSID("$NetBSD: getsubopt.c,v 1.2 1998/01/31 20:41:43 thorpej Exp $");
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -46,6 +53,7 @@ static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
  */
 char *suboptarg;
 
+int
 getsubopt(optionp, tokens, valuep)
 	register char **optionp, **valuep;
 	register char * const *tokens;
