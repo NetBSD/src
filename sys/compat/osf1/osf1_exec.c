@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.5 1999/04/28 02:49:38 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.6 1999/04/30 01:46:09 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -71,7 +71,7 @@ extern struct sysent osf1_sysent[];
 extern char *osf1_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long));
-extern char sigcode[], esigcode[];
+extern char osf1_sigcode[], osf1_esigcode[];
 
 struct emul emul_osf1 = {
 	"osf1",
@@ -85,8 +85,8 @@ struct emul emul_osf1 = {
 	    2 * (MAXPATHLEN + 1),		/* exec name & loader name */
 	osf1_copyargs,
 	cpu_exec_ecoff_setregs,
-	sigcode,
-	esigcode,
+	osf1_sigcode,
+	osf1_esigcode,
 };
 
 int
