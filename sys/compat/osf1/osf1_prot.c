@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.6 2003/03/05 18:47:39 dsl Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.7 2003/03/08 01:20:21 he Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.6 2003/03/05 18:47:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.7 2003/03/08 01:20:21 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ osf1_sys_setgid(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setgid_args *uap = v;
-	struct proc *p = l->l_proc;
 	gid_t gid = SCARG(uap, gid);
 	int error;
 
@@ -116,7 +115,6 @@ osf1_sys_setuid(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setuid_args *uap = v;
-	struct proc *p = l->l_proc;
 	uid_t uid = SCARG(uap, uid);
 	int error;
 
