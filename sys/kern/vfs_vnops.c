@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.28 1998/03/01 02:22:36 fvdl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.29 1998/06/30 05:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -347,21 +347,24 @@ unionread:
  * File table vnode read routine.
  */
 int
-vn_read(fp, uio, cred)
+vn_read(fp, offset, uio, cred, flags)
 	struct file *fp;
+	off_t *offset;
 	struct uio *uio;
 	struct ucred *cred;
+	int flags;
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	uio->uio_offset = fp->f_offset;
+	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 		cred);
-	fp->f_offset += count - uio->uio_resid;
+	if (flags & FOF_UPDATE_OFFSET)
+		*offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -370,10 +373,12 @@ vn_read(fp, uio, cred)
  * File table vnode write routine.
  */
 int
-vn_write(fp, uio, cred)
+vn_write(fp, offset, uio, cred, flags)
 	struct file *fp;
+	off_t *offset;
 	struct uio *uio;
 	struct ucred *cred;
+	int flags;
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag = IO_UNIT;
@@ -387,13 +392,15 @@ vn_write(fp, uio, cred)
 		ioflag |= IO_SYNC;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	uio->uio_offset = fp->f_offset;
+	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
-	if (ioflag & IO_APPEND)
-		fp->f_offset = uio->uio_offset;
-	else
-		fp->f_offset += count - uio->uio_resid;
+	if (flags & FOF_UPDATE_OFFSET) {
+		if (ioflag & IO_APPEND)
+			*offset = uio->uio_offset;
+		else
+			*offset += count - uio->uio_resid;
+	}
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }

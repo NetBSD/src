@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.29 1998/06/25 21:17:16 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.30 1998/06/30 05:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -594,7 +594,8 @@ ktrwrite(p, v, kth)
 	if (p->p_traceflag & KTRFAC_FD) {
 		struct file *fp = v;
 
-		error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+		error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio,
+		    fp->f_cred, FOF_UPDATE_OFFSET);
 	}
 	else {
 		struct vnode *vp = v;
