@@ -11,7 +11,7 @@ crontab.0: crontab.5.0
 
 .if !defined(NOMAN)
 afterinstall:
-	install -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} crontab.5.0 \
+	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} crontab.5.0 \
             ${DESTDIR}${MANDIR}5/crontab.0
 .endif
 
