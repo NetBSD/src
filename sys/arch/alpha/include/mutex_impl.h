@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.1 2002/03/10 21:41:33 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/11 06:30:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -101,12 +101,29 @@ do {									\
 #define	MUTEX_HAS_WAITERS(mtx)	(((mtx)->m_owner & MUTEX_WAITERS) != 0)
 
 #define	MUTEX_SET_WAITERS(mtx)						\
-	atomic_setbits_ulong(&(mtx)->m_owner, MUTEX_WAITERS)
+do {									\
+	unsigned long _tmp_;						\
+									\
+	__asm __volatile(						\
+		"# BEGIN MUTEX_SET_WAITERS\n"				\
+		"1:	ldq_l	%0, %3		\n"			\
+		"	beq	%0, 3f		\n"			\
+		"	or	%0, %2, %0	\n"			\
+		"	stq_c	%0, %1		\n"			\
+		"	beq	%0, 2f		\n"			\
+		"	mb			\n"			\
+		"	br	3f		\n"			\
+		"2:	br	1b		\n"			\
+		"3:				\n"			\
+		: "=&r" (_tmp_), "=m" ((mtx)->m_owner)			\
+		: "i" (MUTEX_WAITERS), "m" ((mtx)->m_owner)		\
+		: "memory");						\
+} while (/*CONSTCOND*/0)
 
 #define	MUTEX_RELEASE(mtx)						\
 do {									\
-	(mtx)->m_owner = 0;						\
 	alpha_mb();							\
+	(mtx)->m_owner = 0;						\
 } while (/*CONSTCOND*/0)
 
 #endif /* _ALPHA_MUTEX_IMPL_H_ */
