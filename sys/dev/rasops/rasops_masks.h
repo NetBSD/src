@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_masks.h,v 1.5 2000/06/13 13:37:01 ad Exp $	*/
+/* 	$NetBSD: rasops_masks.h,v 1.6 2001/01/12 23:03:52 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@
 } while(0);
 
 /* rasops_masks.c */
-extern int32_t	rasops_lmask[32+1];
-extern int32_t	rasops_rmask[32+1];
-extern int32_t	rasops_pmask[32][32];
+extern const int32_t	rasops_lmask[32+1];
+extern const int32_t	rasops_rmask[32+1];
+extern const int32_t	rasops_pmask[32][32];
 
 #endif /* _RASOPS_MASKS_H_ */
