@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.8 1997/06/16 23:41:43 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.9 1997/06/19 06:31:14 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -32,6 +32,8 @@
  *	MachTLBWriteIndexed
  *	wbflush
  *	proc_trampoline()
+ *	switch_exit()
+ *	cpu_switch_resume()
  *
  * We currently provide support for:
  *
@@ -61,6 +63,8 @@ extern void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
 					    u_int low));
 extern void mips1_wbflush __P((void));
 extern void mips1_proc_trampoline __P((void));
+extern void mips1_switch_exit __P((struct proc *));
+extern void mips1_cpu_switch_resume __P((void));
 
 extern void mips3_ConfigCache __P((void));
 extern void mips3_FlushCache  __P((void));
@@ -78,6 +82,8 @@ extern void mips3_TLBWriteIndexed __P((u_int index, u_int high,
 					   u_int lo0, u_int lo1));
 extern void mips3_wbflush __P((void));
 extern void mips3_proc_trampoline __P((void));
+extern void mips3_switch_exit __P((struct proc *));
+extern void mips3_cpu_switch_resume __P((void));
 
 extern void MachHitFlushDCache __P((caddr_t, int));
 extern void mips3_SetWIRED __P((int));
@@ -106,6 +112,8 @@ typedef struct  {
 #endif
 	void (*wbflush) __P((void));
 	void (*proc_trampoline) __P((void));
+	void (*mips_switch_exit) __P((struct proc *));
+	void (*cpu_switch_resume) __P((void));
 } mips_locore_jumpvec_t;
 
 
@@ -129,6 +137,8 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBWriteIndexed	(*(mips_locore_jumpvec.tlbWriteIndexed))
 #define wbflush			(*(mips_locore_jumpvec.wbflush))
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
+#define switch_exit		(*(mips_locore_jumpvec.mips_switch_exit))
+/* cpu_switch_resume not called directly */
 
 
 /*
@@ -161,15 +171,13 @@ union cpuprid {
 extern union	cpuprid cpu_id;
 extern union	cpuprid fpu_id;
 extern int	cpu_arch;
-extern u_int	machDataCacheSize;
-extern u_int	machInstCacheSize;
-extern u_int	machPrimaryDataCacheSize;
-extern u_int	machPrimaryInstCacheSize;
-extern u_int	machPrimaryDataCacheLSize;
-extern u_int	machPrimaryInstCacheLSize;
-extern u_int	machSecondaryCacheSize;
-extern u_int	machSecondaryCacheLSize;
-extern u_int	machCacheAliasMask;
+extern u_int	mips_L1DataCacheSize;
+extern u_int	mips_L1InstCacheSize;
+extern u_int	mips_L1DataCacheLSize;
+extern u_int	mips_L1InstCacheLSize;
+extern u_int	mips_L2CacheSize;
+extern u_int	mips_L2CacheLSize;
+extern u_int	mips_CacheAliasMask;
 extern	struct intr_tab intr_tab[];
 #endif
 

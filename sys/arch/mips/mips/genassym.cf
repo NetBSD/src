@@ -48,6 +48,7 @@ include <sys/user.h>
 
 include <machine/reg.h>
 
+include <mips/locore.h>
 
 define  P_FORW			offsetof(struct proc, p_forw)
 define  P_BACK			offsetof(struct proc, p_back)
@@ -70,3 +71,7 @@ define  V_SWTCH			offsetof(struct vmmeter, v_swtch)
 
 define	SIGILL			SIGILL
 define	SIGFPE		 	SIGFPE
+
+define	MIPSX_FLUSHICACHE	offsetof(mips_locore_jumpvec_t, flushICache)
+define	MIPSX_SWITCH_EXIT	offsetof(mips_locore_jumpvec_t, mips_switch_exit)
+define	MIPSX_CPU_SWITCH_RESUME	offsetof(mips_locore_jumpvec_t, cpu_switch_resume)
