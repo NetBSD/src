@@ -1,8 +1,8 @@
-/*	$NetBSD: lstAtEnd.c,v 1.4 1995/06/14 15:20:46 christos Exp $	*/
+/*	$NetBSD: lstAtEnd.c,v 1.4.6.1 1997/01/26 05:52:05 rat Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstAtEnd.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lstAtEnd.c,v 1.4 1995/06/14 15:20:46 christos Exp $";
+static char rcsid[] = "$NetBSD: lstAtEnd.c,v 1.4.6.1 1997/01/26 05:52:05 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$NetBSD: lstAtEnd.c,v 1.4 1995/06/14 15:20:46 christos Ex
  */
 
 #include	"lstInt.h"
-	
+
 /*-
  *-----------------------------------------------------------------------
  * Lst_AtEnd --
@@ -70,7 +70,7 @@ Lst_AtEnd (l, d)
     ClientData	d;	/* Datum to add */
 {
     register LstNode	end;
-    
+
     end = Lst_Last (l);
     return (Lst_Append (l, end, d));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.6 1996/02/04 22:20:46 christos Exp $	*/
+/*	$NetBSD: lst.h,v 1.6.4.1 1997/01/26 05:51:42 rat Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lst.h	5.3 (Berkeley) 6/1/90
+ *	from: @(#)lst.h	8.1 (Berkeley) 6/6/93
  */
 
 /*-
@@ -120,12 +120,12 @@ ClientData	Lst_Datum __P((LstNode));
  * Functions for entire lists
  */
 /* Find an element in a list */
-LstNode		Lst_Find __P((Lst, ClientData, 
+LstNode		Lst_Find __P((Lst, ClientData,
 			      int (*)(ClientData, ClientData)));
 /* Find an element starting from somewhere */
 LstNode		Lst_FindFrom __P((Lst, LstNode, ClientData,
 				  int (*cProc)(ClientData, ClientData)));
-/* 
+/*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */

@@ -1,8 +1,8 @@
-/*	$NetBSD: lstDupl.c,v 1.5 1995/06/14 15:21:02 christos Exp $	*/
+/*	$NetBSD: lstDupl.c,v 1.5.6.1 1997/01/26 05:52:10 rat Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstDupl.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lstDupl.c,v 1.5 1995/06/14 15:21:02 christos Exp $";
+static char rcsid[] = "$NetBSD: lstDupl.c,v 1.5.6.1 1997/01/26 05:52:10 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ Lst_Duplicate (l, copyProc)
     register Lst 	nl;
     register ListNode  	ln;
     register List 	list = (List)l;
-    
+
     if (!LstValid (l)) {
 	return (NILLST);
     }
@@ -100,6 +100,6 @@ Lst_Duplicate (l, copyProc)
 	    ln = ln->nextPtr;
 	}
     }
-	
+
     return (nl);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.6 1995/06/14 15:18:58 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.6.6.1 1997/01/26 05:51:33 rat Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cond.c	5.6 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: cond.c,v 1.6 1995/06/14 15:18:58 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.6.6.1 1997/01/26 05:51:33 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,7 @@ typedef enum {
  * Structures to handle elegantly the different forms of #if's. The
  * last two fields are stored in condInvert and condDefProc, respectively.
  */
+static void CondPushBack __P((Token));
 static int CondGetArg __P((char **, char **, char *, Boolean));
 static Boolean CondDoDefined __P((int, char *));
 static int CondStrMatch __P((ClientData, ClientData));
@@ -116,18 +117,19 @@ static struct If {
     char	*form;	      /* Form of if */
     int		formlen;      /* Length of form */
     Boolean	doNot;	      /* TRUE if default function should be negated */
-    Boolean	(*defProc)(); /* Default function to apply */
+    Boolean	(*defProc) __P((int, char *)); /* Default function to apply */
 } ifs[] = {
     { "ifdef",	  5,	  FALSE,  CondDoDefined },
     { "ifndef",	  6,	  TRUE,	  CondDoDefined },
     { "ifmake",	  6,	  FALSE,  CondDoMake },
     { "ifnmake",  7,	  TRUE,	  CondDoMake },
     { "if",	  2,	  FALSE,  CondDoDefined },
-    { (char *)0,  0,	  FALSE,  (Boolean (*)())0 }
+    { NULL,	  0,	  FALSE,  NULL }
 };
 
 static Boolean	  condInvert;	    	/* Invert the default function */
-static Boolean	  (*condDefProc)(); 	/* Default function to apply */
+static Boolean	  (*condDefProc)	/* Default function to apply */
+		    __P((int, char *));
 static char 	  *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=None;	/* Single push-back token used in
 					 * parsing */
@@ -216,7 +218,7 @@ CondGetArg (linePtr, argPtr, func, parens)
      * long. Why 16? Why not?
      */
     buf = Buf_Init(16);
-    
+
     while ((strchr(" \t)&|", *cp) == (char *)NULL) && (*cp != '\0')) {
 	if (*cp == '$') {
 	    /*
@@ -259,7 +261,7 @@ CondGetArg (linePtr, argPtr, func, parens)
 	 */
 	cp++;
     }
-    
+
     *linePtr = cp;
     return (argLen);
 }
@@ -433,7 +435,7 @@ CondDoTarget (argLen, arg)
  *
  * Side Effects:
  *	Can change 'value' even if string is not a valid number.
- *	
+ *
  *
  *-----------------------------------------------------------------------
  */
@@ -623,10 +625,10 @@ do_string_compare:
 
 		    buf = Buf_Init(0);
 		    qt = *rhs == '"' ? 1 : 0;
-		    
-		    for (cp = &rhs[qt]; 
-			 ((qt && (*cp != '"')) || 
-			  (!qt && strchr(" \t)", *cp) == NULL)) && 
+
+		    for (cp = &rhs[qt];
+			 ((qt && (*cp != '"')) ||
+			  (!qt && strchr(" \t)", *cp) == NULL)) &&
 			 (*cp != '\0'); cp++) {
 			if ((*cp == '\\') && (cp[1] != '\0')) {
 			    /*
@@ -638,7 +640,7 @@ do_string_compare:
 			} else if (*cp == '$') {
 			    int	len;
 			    Boolean freeIt;
-			    
+
 			    cp2 = Var_Parse(cp, VAR_CMD, doEval,&len, &freeIt);
 			    if (cp2 != var_Error) {
 				Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
@@ -692,7 +694,7 @@ do_string_compare:
 		    if (*rhs == '$') {
 			int 	len;
 			Boolean	freeIt;
-			
+
 			string = Var_Parse(rhs, VAR_CMD, doEval,&len,&freeIt);
 			if (string == var_Error) {
 			    right = 0.0;
@@ -720,7 +722,7 @@ do_string_compare:
 			    }
 			}
 		    }
-		    
+
 		    if (DEBUG(COND)) {
 			printf("left = %f, right = %f, op = %.2s\n", left,
 			       right, op);
@@ -764,11 +766,11 @@ error:
 		break;
 	    }
 	    default: {
-		Boolean (*evalProc)();
+		Boolean (*evalProc) __P((int, char *));
 		Boolean invert = FALSE;
 		char	*arg;
 		int	arglen;
-		
+
 		if (strncmp (condExpr, "defined", 7) == 0) {
 		    /*
 		     * Use CondDoDefined to evaluate the argument and
@@ -830,8 +832,8 @@ error:
 			if (val == var_Error) {
 			    t = Err;
 			} else {
-			    /* 
-			     * A variable is empty when it just contains 
+			    /*
+			     * A variable is empty when it just contains
 			     * spaces... 4/15/92, christos
 			     */
 			    char *p;
@@ -1113,7 +1115,7 @@ Cond_Eval (line)
     } else {
 	isElse = FALSE;
     }
-    
+
     /*
      * Figure out what sort of conditional it is -- what its default
      * function is, etc. -- by looking in the table of valid "ifs"
@@ -1173,16 +1175,16 @@ Cond_Eval (line)
 	 */
 	condDefProc = ifp->defProc;
 	condInvert = ifp->doNot;
-	
+
 	line += ifp->formlen;
-	
+
 	while (*line == ' ' || *line == '\t') {
 	    line++;
 	}
-	
+
 	condExpr = line;
 	condPushBack = None;
-	
+
 	switch (CondE(TRUE)) {
 	    case True:
 		if (CondToken(TRUE) == EndOfFile) {
