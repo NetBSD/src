@@ -1,4 +1,4 @@
-/*	$NetBSD: com3.c,v 1.10 2000/09/23 19:23:58 jsm Exp $	*/
+/*	$NetBSD: com3.c,v 1.11 2000/09/24 09:46:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com3.c,v 1.10 2000/09/23 19:23:58 jsm Exp $");
+__RCSID("$NetBSD: com3.c,v 1.11 2000/09/24 09:46:57 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -211,7 +211,7 @@ shoot()
 				if (value == BOMB)
 					die();
 			} else
-				printf("I dont see any %s around here.\n", objsht[value]);
+				printf("I don't see any %s around here.\n", objsht[value]);
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else

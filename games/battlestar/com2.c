@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.16 2000/09/23 19:45:07 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.17 2000/09/24 09:46:57 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.16 2000/09/23 19:45:07 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.17 2000/09/24 09:46:57 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -227,7 +227,7 @@ murder()
 					if (wintime)
 						live();
 				} else
-					puts("I dont see her anywhere.");
+					puts("I don't see her anywhere.");
 			break;
 		case TIMER:
 			if (testbit(location[position].objects, TIMER)) {
