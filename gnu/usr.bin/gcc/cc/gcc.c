@@ -53,6 +53,7 @@ int __spawnvp ();
 #include <varargs.h>
 #endif
 #include <stdio.h>
+#include <unistd.h>
 
 /* Include multi-lib information.  */
 #include "multilib.h"
@@ -2099,7 +2100,7 @@ pexecute (search_flag, program, argv, not_last)
       /* Exec the program.  */
       (*func) (program, argv);
       perror_exec (program);
-      exit (-1);
+      _exit (-1);
       /* NOTREACHED */
       return 0;
 
