@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.9 1994/06/29 06:48:40 cgd Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.10 1994/10/29 07:35:22 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -131,7 +131,7 @@ extern int		page_shift;
  *	No rounding is used.
  */
 #ifdef KERNEL
-#define	atop(x)		(((unsigned)(x)) >> PAGE_SHIFT)
+#define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
 #define	ptoa(x)		((vm_offset_t)((x) << PAGE_SHIFT))
 
 /*

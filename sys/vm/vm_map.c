@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.19 1994/06/29 06:48:05 cgd Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.20 1994/10/29 07:35:12 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1871,7 +1871,7 @@ vm_map_copy(dst_map, src_map,
 	if (src_map == dst_map) {
 		vm_map_lock(src_map);
 	}
-	else if ((int) src_map < (int) dst_map) {
+	else if ((long) src_map < (long) dst_map) {
 	 	vm_map_lock(src_map);
 		vm_map_lock(dst_map);
 	} else {
@@ -2595,9 +2595,9 @@ _vm_map_print(map, full, pr)
 	register vm_map_entry_t	entry;
 	extern int indent;
 
-	iprintf(pr, "%s map 0x%x: pmap=0x%x,ref=%d,nentries=%d,version=%d\n",
+	iprintf(pr, "%s map 0x%lx: pmap=0x%lx,ref=%d,nentries=%d,version=%d\n",
 		(map->is_main_map ? "Task" : "Share"),
- 		(int) map, (int) (map->pmap), map->ref_count, map->nentries,
+ 		(long) map, (long) (map->pmap), map->ref_count, map->nentries,
 		map->timestamp);
 
 	if (!full && indent)
@@ -2606,8 +2606,8 @@ _vm_map_print(map, full, pr)
 	indent += 2;
 	for (entry = map->header.next; entry != &map->header;
 				entry = entry->next) {
-		iprintf(pr, "map entry 0x%x: start=0x%x, end=0x%x, ",
-			(int) entry, (int) entry->start, (int) entry->end);
+		iprintf(pr, "map entry 0x%lx: start=0x%lx, end=0x%lx, ",
+			(long) entry, (long) entry->start, (long) entry->end);
 		if (map->is_main_map) {
 		     	static char *inheritance_name[4] =
 				{ "share", "copy", "none", "donate_copy"};
@@ -2620,9 +2620,9 @@ _vm_map_print(map, full, pr)
 		}
 
 		if (entry->is_a_map || entry->is_sub_map) {
-		 	(*pr)("share=0x%x, offset=0x%x\n",
-                                  (int) entry->object.share_map,
-                                  (int) entry->offset);
+		 	(*pr)("share=0x%lx, offset=0x%lx\n",
+                                  (long) entry->object.share_map,
+                                  (long) entry->offset);
 			if ((entry->prev == &map->header) ||
 			    (!entry->prev->is_a_map) ||
 			    (entry->prev->object.share_map !=
@@ -2634,9 +2634,9 @@ _vm_map_print(map, full, pr)
 				
 		}
 		else {
-			(*pr)("object=0x%x, offset=0x%x",
-                                  (int) entry->object.vm_object,
-                                  (int) entry->offset);
+			(*pr)("object=0x%lx, offset=0x%lx",
+                                  (long) entry->object.vm_object,
+                                  (long) entry->offset);
 			if (entry->copy_on_write)
 				(*pr)(", copy (%s)",
                                           entry->needs_copy ? "needed" : "done");
