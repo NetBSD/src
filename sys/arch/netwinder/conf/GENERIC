@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2004/11/10 17:54:06 christos Exp $
+# $NetBSD: GENERIC,v 1.55 2005/01/28 03:19:50 rumble Exp $
 #
 # GENERIC machine description file
 # 
@@ -73,6 +73,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
 
