@@ -1,4 +1,4 @@
-/*	$NetBSD: dzcons.c,v 1.4 1997/03/15 16:36:20 ragge Exp $	*/
+/*	$NetBSD: dzcons.c,v 1.5 1997/03/22 12:51:01 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -97,15 +97,6 @@ dzcngetc(dev)
 	return (c);
 }
 
-int dzcons_vminit ()
-{
-      dz = (void*)uvax_phys2virt ((int) dz);
-      ka410_intreq = (void*)uvax_phys2virt ((int)ka410_intreq);
-      ka410_intclr = (void*)uvax_phys2virt ((int)ka410_intclr);
-      ka410_intmsk = (void*)uvax_phys2virt ((int)ka410_intmsk);
-}
-
-
 struct	tty *dzcn_tty[1];
 
 int	dzcnparam();
@@ -124,6 +115,9 @@ dzcnopen(dev, flag, mode, p)
 
         unit = minor(dev);
         if (unit) return ENXIO;
+
+	if (dzcn_tty[0] == NULL)
+		dzcn_tty[0] = ttymalloc();
 
 	tp = dzcn_tty[0];
 
@@ -304,6 +298,7 @@ dzcnprobe(cndev)
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
+	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 		break;
 
@@ -326,6 +321,11 @@ int
 dzcninit(cndev)
 	struct	consdev *cndev;
 {
+	dz = (void*)uvax_phys2virt ((int) dz);
+	ka410_intreq = (void*)uvax_phys2virt ((int)ka410_intreq);
+	ka410_intclr = (void*)uvax_phys2virt ((int)ka410_intclr);
+	ka410_intmsk = (void*)uvax_phys2virt ((int)ka410_intmsk);
+
 	dz->csr = 0;    /* Disable scanning until initting is done */
 	dz->rbuf = 0;   /* Turn off line 0's receiver */
 	dz->rbuf = 1;   /* Turn off line 1's receiver */
@@ -335,10 +335,6 @@ dzcninit(cndev)
 	dz->csr = 0x20; /* Turn scanning back on */
 }
 
-dzcnslask()
-{
-	dzcn_tty[0] = ttymalloc();
-}
 
 void
 dzcnputc(dev,ch)
