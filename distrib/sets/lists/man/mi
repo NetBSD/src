@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.447 2002/02/25 12:07:45 lukem Exp $
+# $NetBSD: mi,v 1.448 2002/03/01 11:26:49 ad Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -276,6 +276,8 @@
 ./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman
+./usr/share/man/cat1/pgrep.0			man-util-catman
+./usr/share/man/cat1/pkill.0			man-util-catman
 ./usr/share/man/cat1/pmc.0			man-util-catman
 ./usr/share/man/cat1/popd.0			man-util-catman
 ./usr/share/man/cat1/postalias.0		man-postfix-catman
@@ -1948,6 +1950,8 @@
 ./usr/share/man/man1/pkg_create.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_delete.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_info.1			man-pkgutil-man
+./usr/share/man/man1/pgrep.1			man-util-man
+./usr/share/man/man1/pkill.1			man-util-man
 ./usr/share/man/man1/pmc.1			man-util-man
 ./usr/share/man/man1/popd.1			man-util-man
 ./usr/share/man/man1/postalias.1		man-postfix-man
