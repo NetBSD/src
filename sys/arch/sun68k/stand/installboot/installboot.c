@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 2001/06/14 12:57:13 fredette Exp $ */
+/*	$NetBSD: installboot.c,v 1.2 2001/12/15 23:09:51 fredette Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,41 +43,31 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 #include <err.h>
 #include <fcntl.h>
-#include <nlist.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "loadfile.h"
+#include "byteorder.h"
+#include "bbinfo.h"
 
-int	verbose, nowrite, hflag;
+int	verbose, nowrite;
 char	*boot, *proto, *dev;
 
-struct nlist nl[] = {
-#define X_BLOCK_SIZE	0
-	{ "block_size" },
-#define X_BLOCK_COUNT	1
-	{ "block_count" },
-#define X_BLOCK_TABLE	2
-	{ "block_table" },
-	{ NULL }
-};
+struct bbinfo *bbinfop;		/* bbinfo in prototype image */
 
-int *block_size_p;		/* block size var. in prototype image */
-int *block_count_p;		/* block count var. in prototype image */
-daddr_t	*block_table;	/* block number array in prototype image */
-int	maxblocknum;		/* size of this array */
-
+int32_t	max_block_count;
 
 char		*loadprotoblocks __P((char *, size_t *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
-
 
 static void
 usage()
@@ -101,7 +91,7 @@ main(argc, argv)
 		switch (c) {
 		case 'h':
 			/* Don't strip a.out header */
-			hflag = 1;
+			warnx("-h option is obsolete");
 			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -154,7 +144,7 @@ main(argc, argv)
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
 
-	if ((devfd = open(dev, O_RDWR)) < 0)
+	if ((devfd = open(dev, O_RDWR, 0)) < 0)
 		err(1, "open: %s", dev);
 
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
@@ -174,47 +164,56 @@ loadprotoblocks(fname, size)
 	char *fname;
 	size_t *size;
 {
-	int	fd;
-	u_long	marks[MARK_MAX], offs;
-	char	*bp;
-
-	fd = -1;
-
-	/* Locate block number array in proto file */
-	if (nlist(fname, nl) != 0) {
-		warnx("nlist: %s: symbols not found", fname);
-		return NULL;
-	}
+	int	fd, sz;
+	u_long	ap, bp, st, en, bbi;
+	u_long	marks[MARK_MAX];
 
 	marks[MARK_START] = 0;
 	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
 		return NULL;
 	(void)close(fd);
 
-	*size = roundup(marks[MARK_END] - marks[MARK_START], DEV_BSIZE);
-	bp = malloc(*size);
+	sz = (marks[MARK_END] - marks[MARK_START]);
+	sz = roundup(sz, DEV_BSIZE);
+	st = marks[MARK_START];
+	en = marks[MARK_ENTRY];
 
-	offs = marks[MARK_START];
-	marks[MARK_START] = (u_long)bp - offs;
+	if ((ap = (u_long)malloc(sz)) == NULL) {
+		warn("malloc: %s", "");
+		return NULL;
+	}
 
+	bp = ap;
+	marks[MARK_START] = bp - st;
 	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
 		return NULL;
 	(void)close(fd);
 
-	/* Calculate the symbols' locations within the proto file */
-	block_size_p  =   (int *) (bp + (nl[X_BLOCK_SIZE ].n_value - offs));
-	block_count_p =   (int *) (bp + (nl[X_BLOCK_COUNT].n_value - offs));
-	block_table = (daddr_t *) (bp + (nl[X_BLOCK_TABLE].n_value - offs));
-	maxblocknum = *block_count_p;
-
-	if (verbose) {
-		printf("%s: entry point %#lx\n", fname, marks[MARK_ENTRY]);
-		printf("proto bootblock size %d\n", *size);
-		printf("room for %d filesystem blocks at %#lx\n",
-			maxblocknum, nl[X_BLOCK_TABLE].n_value);
+	/* Look for the bbinfo structure. */
+	for (bbi = bp; bbi < (bp + sz); bbi += sizeof(uint32_t)) {
+		bbinfop = (void *) bbi;
+		if (memcmp(bbinfop->bbi_magic, BBINFO_MAGIC,
+			    BBINFO_MAGICSIZE) == 0)
+		break;
+	}
+	if (bbi >= (bp + sz)) {
+		warn("%s: unable to locate bbinfo structure\n", fname);
+		free((void *)ap);
+		return NULL;
 	}
 
-	return bp;
+	max_block_count = sa_be32toh(bbinfop->bbi_block_count);
+
+	if (verbose) {
+		printf("%s: entry point %#lx\n", fname, en);
+		printf("proto bootblock size %d\n", sz);
+		printf("room for %d filesystem blocks at %#lx\n",
+			max_block_count,
+			bbi - bp + offsetof(struct bbinfo, bbi_block_table));
+	}
+
+	*size = sz;
+	return (char *)ap;
 }
 
 static void
@@ -247,6 +246,7 @@ int	devfd;
 	daddr_t		blk, *ap;
 	struct dinode	*ip;
 	int		ndb;
+	int		needswap;
 
 	/*
 	 * Open 2nd-level boot program and record the block numbers
@@ -263,7 +263,7 @@ int	devfd;
 		err(1, "statfs: %s", boot);
 
 	if (strncmp(statfsbuf.f_fstypename, "ffs", MFSNAMELEN) &&
-	    strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN) ) {
+	    strncmp(statfsbuf.f_fstypename, "ufs", MFSNAMELEN)) {
 		errx(1, "%s: must be on an FFS filesystem", boot);
 	}
 
@@ -278,6 +278,9 @@ int	devfd;
 	/* Read superblock */
 	devread(devfd, sblock, SBLOCK, SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
+	needswap = (sa_be32toh(fs->fs_magic) == FS_MAGIC);
+	if (needswap)
+		ffs_sb_swap(fs, fs);
 
 	/* Sanity-check super-block. */
 	if (fs->fs_magic != FS_MAGIC)
@@ -292,15 +295,17 @@ int	devfd;
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 	devread(devfd, buf, blk, fs->fs_bsize, "inode");
 	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	if (needswap)
+		ffs_dinode_swap(ip, ip);
 
 	/*
 	 * Have the inode.  Figure out how many blocks we need.
 	 */
 	ndb = howmany(ip->di_size, fs->fs_bsize);
-	if (ndb > maxblocknum)
-		errx(1, "Too many blocks");
-	*block_count_p = ndb;
-	*block_size_p = fs->fs_bsize;
+	if (ndb > max_block_count)
+		errx(1, "%s: Too many blocks", boot);
+	bbinfop->bbi_block_count = sa_htobe32(ndb);
+	bbinfop->bbi_block_size = sa_htobe32(fs->fs_bsize);
 	if (verbose)
 		printf("Will load %d blocks of size %d each.\n",
 			   ndb, fs->fs_bsize);
@@ -310,10 +315,12 @@ int	devfd;
 	 */
 	ap = ip->di_db;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
+		if (needswap)
+			*ap = bswap32(*ap);
 		blk = fsbtodb(fs, *ap);
+		bbinfop->bbi_block_table[i] = sa_htobe32(blk);
 		if (verbose)
 			printf("%d: %d\n", i, blk);
-		block_table[i] = blk;
 	}
 	if (ndb == 0)
 		return 0;
@@ -322,14 +329,18 @@ int	devfd;
 	 * Just one level of indirections; there isn't much room
 	 * for more in the 1st-level bootblocks anyway.
 	 */
+	if (needswap)
+		ip->di_ib[0] = bswap32(ip->di_ib[0]);
 	blk = fsbtodb(fs, ip->di_ib[0]);
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
 	ap = (daddr_t *)buf;
 	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
+		if (needswap)
+			*ap = bswap32(*ap);
 		blk = fsbtodb(fs, *ap);
+		bbinfop->bbi_block_table[i] = sa_htobe32(blk);
 		if (verbose)
 			printf("%d: %d\n", i, blk);
-		block_table[i] = blk;
 	}
 
 	return 0;
