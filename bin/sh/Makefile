@@ -6,7 +6,8 @@ SRCS=	alias.c builtins.c cd.c echo.c error.c eval.c exec.c expand.c \
 	mystring.c nodes.c options.c parser.c redir.c show.c \
 	syntax.c trap.c output.c var.c
 OBJS+=	init.o arith.o arith_lex.o
-LDADD=	-ll -ledit -ltermcap -lcompat
+LDADD+=	-ll -ledit -ltermcap
+DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
 CFLAGS+=-DSHELL -I. -I${.CURDIR}
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
