@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: main.c,v 1.3 1994/06/29 05:09:34 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1995/05/02 01:40:16 mycroft Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -275,16 +275,19 @@ hdrstop(signo)
 void
 setscreensize()
 {
-	struct sgttyb tbuf;
+	struct termios tbuf;
 	struct winsize ws;
+	speed_t ospeed;
 
 	if (ioctl(1, TIOCGWINSZ, (char *) &ws) < 0)
 		ws.ws_col = ws.ws_row = 0;
-	if (ioctl(1, TIOCGETP, &tbuf) < 0)
-		tbuf.sg_ospeed = B9600;
-	if (tbuf.sg_ospeed < B1200)
+	if (tcgetattr(1, &tbuf) < 0)
+		ospeed = 9600;
+	else
+		ospeed = cfgetospeed(&tbuf);
+	if (ospeed < 1200)
 		screenheight = 9;
-	else if (tbuf.sg_ospeed == B1200)
+	else if (ospeed == 1200)
 		screenheight = 14;
 	else if (ws.ws_row != 0)
 		screenheight = ws.ws_row;

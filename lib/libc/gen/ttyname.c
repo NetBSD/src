@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.8 1995/02/27 05:54:57 cgd Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.9 1995/05/02 01:45:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-static char rcsid[] = "$NetBSD: ttyname.c,v 1.8 1995/02/27 05:54:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: ttyname.c,v 1.9 1995/05/02 01:45:33 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,7 +45,7 @@ static char rcsid[] = "$NetBSD: ttyname.c,v 1.8 1995/02/27 05:54:57 cgd Exp $";
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <sgtty.h>
+#include <termios.h>
 #include <db.h>
 #include <string.h>
 #include <unistd.h>
@@ -59,7 +59,7 @@ ttyname(fd)
 	int fd;
 {
 	struct stat sb;
-	struct sgttyb ttyb;
+	struct termios ttyb;
 	DB *db;
 	DBT data, key;
 	struct {
@@ -68,7 +68,7 @@ ttyname(fd)
 	} bkey;
 
 	/* Must be a terminal. */
-	if (ioctl(fd, TIOCGETP, &ttyb) < 0)
+	if (tcgetattr(fd, &ttyb) < 0)
 		return (NULL);
 	/* Must be a character device. */
 	if (fstat(fd, &sb) || !S_ISCHR(sb.st_mode))
