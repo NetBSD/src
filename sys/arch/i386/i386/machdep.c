@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 1995/05/18 18:59:16 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 1995/06/05 03:47:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1408,9 +1408,9 @@ cpu_reset()
 
 	/* Toggle the hardware reset line on the keyboard controller. */
 	outb(KBCMDP, KBC_PULSE0);
-	delay(20);
+	delay(20000);
 	outb(KBCMDP, KBC_PULSE0);
-	delay(20);
+	delay(20000);
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by setting the
