@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.7 2000/06/09 10:31:07 haya Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.7.2.1 2000/10/20 17:29:13 tv Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -126,6 +126,11 @@ _i386_memio_unmap(t, bsh, size, adrp)
 
 
 
+#ifndef RBUS_MIN_START
+#define RBUS_MIN_START 0x40000000	/* 1GB */
+#endif
+bus_addr_t rbus_min_start = RBUS_MIN_START;
+
 /*
  * rbus_tag_t rbus_fakeparent_mem(struct pci_attach_args *pa)
  *
@@ -159,9 +164,8 @@ rbus_pccbb_parent_mem(pa)
 	 * which do not recognised by the kernel are already reserved.
 	 */
 
-	if (start < 0x40000000) {
-		start = 0x40000000;	/* 1GB */
-	}
+	if (start < rbus_min_start) 
+		start = rbus_min_start;
 
 	size = ex->ex_end - start;
 	offset = 0;
