@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.h,v 1.7 1999/09/08 21:45:29 jsm Exp $	*/
+/*	$NetBSD: phantglobs.h,v 1.8 2001/02/05 01:01:27 christos Exp $	*/
 
 /*
  * phantglobs.h - global declarations for Phantasia
@@ -115,7 +115,6 @@ void	procmain __P((void));
 void	purgeoldplayers __P((void));
 void	readmessage __P((void));
 void	readrecord __P((struct player *, long));
-long	recallplayer __P((void));
 long	recallplayer __P((void));
 long	rollnewplayer __P((void));
 void	scorelist __P((void));
