@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.27 2003/07/21 22:17:14 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.28 2003/07/21 22:24:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.27 2003/07/21 22:17:14 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.28 2003/07/21 22:24:09 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -247,6 +247,7 @@ pthread__initthread(pthread_t self, pthread_t t)
 	t->pt_type = PT_THREAD_NORMAL;
 	t->pt_state = PT_STATE_RUNNABLE;
 	pthread_lockinit(&t->pt_statelock);
+	pthread_lockinit(&t->pt_flaglock);
 	t->pt_spinlocks = 0;
 	t->pt_next = NULL;
 	t->pt_exitval = NULL;
@@ -396,6 +397,7 @@ pthread__idle(void)
 	 */
 	pthread_spinlock(self, &pthread__deadqueue_lock);
 	PTQ_INSERT_TAIL(&pthread__reidlequeue, self, pt_runq);
+	/* Don't need a flag lock; nothing else has a handle on this thread */
 	self->pt_flags |= PT_FLAG_IDLED;
 	pthread_spinunlock(self, &pthread__deadqueue_lock);
 
@@ -420,14 +422,17 @@ pthread_exit(void *retval)
 	pthread_t self;
 	struct pt_clean_t *cleanup;
 	char *name;
-	int nt;
+	int nt, flags;
 
 	self = pthread__self();
-	SDPRINTF(("(pthread_exit %p) Exiting.\n", self));
+	SDPRINTF(("(pthread_exit %p) Exiting (status %p, flags %x, cancel %d).\n", self, retval, self->pt_flags, self->pt_cancel));
 
 	/* Disable cancellability. */
+	pthread_spinlock(self, &self->pt_flaglock);
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
+	flags = self->pt_flags;
 	self->pt_cancel = 0;
+	pthread_spinunlock(self, &self->pt_flaglock);
 
 	/* Call any cancellation cleanup handlers */
 	while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
@@ -441,11 +446,9 @@ pthread_exit(void *retval)
 
 	self->pt_exitval = retval;
 
-	pthread_spinlock(self, &self->pt_join_lock);
-	if (self->pt_flags & PT_FLAG_DETACHED) {
+	if (flags & PT_FLAG_DETACHED) {
 		name = self->pt_name;
 		self->pt_name = NULL;
-		pthread_spinunlock(self, &self->pt_join_lock);
 
 		if (name != NULL)
 			free(name);
@@ -468,6 +471,7 @@ pthread_exit(void *retval)
 		pthread__block(self, &pthread__deadqueue_lock);
 	} else {
 		/* Note: name will be freed by the joiner. */
+		pthread_spinlock(self, &self->pt_join_lock);
 		pthread_spinlock(self, &pthread__allqueue_lock);
 		nthreads--;
 		nt = nthreads;
@@ -510,14 +514,15 @@ pthread_join(pthread_t thread, void **valptr)
 	if (thread == self)
 		return EDEADLK;
 
-	pthread_spinlock(self, &thread->pt_join_lock);
+	pthread_spinlock(self, &thread->pt_flaglock);
 
 	if (thread->pt_flags & PT_FLAG_DETACHED) {
-		pthread_spinunlock(self, &thread->pt_join_lock);
+		pthread_spinunlock(self, &thread->pt_flaglock);
 		return EINVAL;
 	}
 
 	num = thread->pt_num;
+	pthread_spinlock(self, &thread->pt_join_lock);
 	while (thread->pt_state != PT_STATE_ZOMBIE) {
 		if ((thread->pt_state == PT_STATE_DEAD) ||
 		    (thread->pt_flags & PT_FLAG_DETACHED) ||
@@ -529,12 +534,14 @@ pthread_join(pthread_t thread, void **valptr)
 			 * another chance to run.
 			 */
 			pthread_spinunlock(self, &thread->pt_join_lock);
+			pthread_spinunlock(self, &thread->pt_flaglock);
 			return ESRCH;
 		}
 		/*
 		 * "I'm not dead yet!"
 		 * "You will be soon enough."
 		 */
+		pthread_spinunlock(self, &thread->pt_flaglock);
 		pthread_spinlock(self, &self->pt_statelock);
 		if (self->pt_cancel) {
 			pthread_spinunlock(self, &self->pt_statelock);
@@ -549,6 +556,7 @@ pthread_join(pthread_t thread, void **valptr)
 
 		PTQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
 		pthread__block(self, &thread->pt_join_lock);
+		pthread_spinlock(self, &thread->pt_flaglock);
 		pthread_spinlock(self, &thread->pt_join_lock);
 	}
 
@@ -557,6 +565,7 @@ pthread_join(pthread_t thread, void **valptr)
 	name = thread->pt_name;
 	thread->pt_name = NULL;
 	pthread_spinunlock(self, &thread->pt_join_lock);
+	pthread_spinunlock(self, &thread->pt_flaglock);
 
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
@@ -601,10 +610,12 @@ pthread_detach(pthread_t thread)
 	if (thread->pt_magic != PT_MAGIC)
 		return EINVAL;
 
+	pthread_spinlock(self, &thread->pt_flaglock);
 	pthread_spinlock(self, &thread->pt_join_lock);
 
 	if (thread->pt_flags & PT_FLAG_DETACHED) {
 		pthread_spinunlock(self, &thread->pt_join_lock);
+		pthread_spinunlock(self, &thread->pt_flaglock);
 		return EINVAL;
 	}
 
@@ -614,6 +625,7 @@ pthread_detach(pthread_t thread)
 	pthread__sched_sleepers(self, &thread->pt_joiners);
 
 	pthread_spinunlock(self, &thread->pt_join_lock);
+	pthread_spinunlock(self, &thread->pt_flaglock);
 
 	return 0;
 }
@@ -701,7 +713,6 @@ int
 pthread_cancel(pthread_t thread)
 {
 	pthread_t self;
-	int flags;
 
 	if (!(thread->pt_state == PT_STATE_RUNNING ||
 	    thread->pt_state == PT_STATE_RUNNABLE ||
@@ -710,11 +721,12 @@ pthread_cancel(pthread_t thread)
 		return ESRCH;
 
 	self = pthread__self();
-	flags = thread->pt_flags;
 
-	flags |= PT_FLAG_CS_PENDING;
-	if ((flags & PT_FLAG_CS_DISABLED) == 0) {
+	pthread_spinlock(self, &thread->pt_flaglock);
+	thread->pt_flags |= PT_FLAG_CS_PENDING;
+	if ((thread->pt_flags & PT_FLAG_CS_DISABLED) == 0) {
 		thread->pt_cancel = 1;
+		pthread_spinunlock(self, &thread->pt_flaglock);
 		pthread_spinlock(self, &thread->pt_statelock);
 		if (thread->pt_state == PT_STATE_BLOCKED_SYS) {
 			/*
@@ -746,9 +758,8 @@ pthread_cancel(pthread_t thread)
 			 */
 		}
 		pthread_spinunlock(self, &thread->pt_statelock);
-	}
-
-	thread->pt_flags = flags;
+	} else
+		pthread_spinunlock(self, &thread->pt_flaglock);
 
 	return 0;
 }
@@ -758,39 +769,45 @@ int
 pthread_setcancelstate(int state, int *oldstate)
 {
 	pthread_t self;
-	int flags;
+	int retval;
 
 	self = pthread__self();
-	flags = self->pt_flags;
+	retval = 0;
 
+	pthread_spinlock(self, &self->pt_flaglock);
 	if (oldstate != NULL) {
-		if (flags & PT_FLAG_CS_DISABLED)
+		if (self->pt_flags & PT_FLAG_CS_DISABLED)
 			*oldstate = PTHREAD_CANCEL_DISABLE;
 		else
 			*oldstate = PTHREAD_CANCEL_ENABLE;
 	}
 
-	if (state == PTHREAD_CANCEL_DISABLE)
-		flags |= PT_FLAG_CS_DISABLED;
-	else if (state == PTHREAD_CANCEL_ENABLE) {
-		flags &= ~PT_FLAG_CS_DISABLED;
+	if (state == PTHREAD_CANCEL_DISABLE) {
+		self->pt_flags |= PT_FLAG_CS_DISABLED;
+		if (self->pt_cancel) {
+			self->pt_flags |= PT_FLAG_CS_PENDING;
+			self->pt_cancel = 0;
+		}
+	} else if (state == PTHREAD_CANCEL_ENABLE) {
+		self->pt_flags &= ~PT_FLAG_CS_DISABLED;
 		/*
 		 * If a cancellation was requested while cancellation
 		 * was disabled, note that fact for future
 		 * cancellation tests.
 		 */
-		if (flags & PT_FLAG_CS_PENDING) {
+		if (self->pt_flags & PT_FLAG_CS_PENDING) {
 			self->pt_cancel = 1;
 			/* This is not a deferred cancellation point. */
-			if (flags & PT_FLAG_CS_ASYNC)
+			if (self->pt_flags & PT_FLAG_CS_ASYNC) {
+				pthread_spinunlock(self, &self->pt_flaglock);
 				pthread_exit(PTHREAD_CANCELED);
+			}
 		}
 	} else
-		return EINVAL;
+		retval = EINVAL;
 
-	self->pt_flags = flags;
-
-	return 0;
+	pthread_spinunlock(self, &self->pt_flaglock);
+	return retval;
 }
 
 
@@ -798,30 +815,33 @@ int
 pthread_setcanceltype(int type, int *oldtype)
 {
 	pthread_t self;
-	int flags;
+	int retval;
 
 	self = pthread__self();
-	flags = self->pt_flags;
+	retval = 0;
+
+	pthread_spinlock(self, &self->pt_flaglock);
 
 	if (oldtype != NULL) {
-		if (flags & PT_FLAG_CS_ASYNC)
+		if (self->pt_flags & PT_FLAG_CS_ASYNC)
 			*oldtype = PTHREAD_CANCEL_ASYNCHRONOUS;
 		else
 			*oldtype = PTHREAD_CANCEL_DEFERRED;
 	}
 
 	if (type == PTHREAD_CANCEL_ASYNCHRONOUS) {
-		flags |= PT_FLAG_CS_ASYNC;
-		if (self->pt_cancel)
+		self->pt_flags |= PT_FLAG_CS_ASYNC;
+		if (self->pt_cancel) {
+			pthread_spinunlock(self, &self->pt_flaglock);
 			pthread_exit(PTHREAD_CANCELED);
+		}
 	} else if (type == PTHREAD_CANCEL_DEFERRED)
-		flags &= ~PT_FLAG_CS_ASYNC;
+		self->pt_flags &= ~PT_FLAG_CS_ASYNC;
 	else
-		return EINVAL;
+		retval = EINVAL;
 
-	self->pt_flags = flags;
-
-	return 0;
+	pthread_spinunlock(self, &self->pt_flaglock);
+	return retval;
 }
 
 
