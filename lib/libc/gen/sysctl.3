@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.59 2000/06/27 09:10:25 mrg Exp $
+.\"	$NetBSD: sysctl.3,v 1.60 2000/07/03 06:23:33 enami Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1290,7 +1290,7 @@ identifiers, and user level identifiers
 definitions for second level network identifiers
 .It Pa <sys/gmon.h>
 definitions for third level profiling identifiers
-.It Pa <vm/vm_param.h>
+.It Pa <uvm/uvm_param.h>
 definitions for second level virtual memory identifiers
 .It Pa <netinet/in.h>
 definitions for third level IPv4/v6 identifiers and
@@ -1309,8 +1309,8 @@ definitions for fourth level IPv6 UDP identifiers
 definitions for fourth level IPsec identifiers
 .El
 .Sh SEE ALSO
-.Xr sysctl 8 ,
-.Xr ipsec 4
+.Xr ipsec 4 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
