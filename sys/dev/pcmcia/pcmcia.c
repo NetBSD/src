@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.5 1998/02/01 23:49:02 marc Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.6 1998/03/07 17:58:17 christos Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -576,8 +576,6 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 		int s, ihcnt, hiipl, reg;
 		struct pcmcia_function *pf2;
 
-		/* XXX splraise() use needs to go away! */
-
 		/*
 		 * mask all the ipl's which are already used by this card,
 		 * and find the highest ipl number (lowest priority)
@@ -613,11 +611,12 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 		 */
 
 		if (ihcnt == 0) {
-			int reg;
 #ifdef DIAGNOSTIC
 			if (pf->sc->ih != NULL)
 				panic("card has intr handler, but no function does");
 #endif
+			s = splhigh();
+
 			/* set up the handler for the new function */
 
 			pf->ih_fct = ih_fct;
@@ -626,10 +625,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
 			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
-
-			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
-			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
-			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+			splx(s);
 		} else if (ipl > hiipl) {
 #ifdef DIAGNOSTIC
 			if (pf->sc->ih == NULL)
@@ -639,14 +635,14 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			/* XXX need #ifdef for splserial on x86 */
 			s = splhigh();
 
-			/* set up the handler for the new function */
+			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
+						      pf->sc->ih);
 
+			/* set up the handler for the new function */
 			pf->ih_fct = ih_fct;
 			pf->ih_arg = ih_arg;
 			pf->ih_ipl = ipl;
 
-			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
-						      pf->sc->ih);
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
 			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
 
@@ -793,10 +789,10 @@ pcmcia_card_intr(arg)
 	    pf = pf->pf_list.sqe_next) {
 #if 0
 		printf("%s: intr flags=%x fct=%d physaddr=%lx cor=%02x csr=%02x pin=%02x",
-		       sc->dev.dv_xname, pf->flags, pf->number,
+		       sc->dev.dv_xname, pf->pf_flags, pf->number,
 		       pmap_extract(pmap_kernel(),
-		           (vm_offset_t) pf->ccrh) + pf->ccr_offset,
-		       pcmcia_ccr_read(pf, PCMCIA_CCCR_OPTION),
+		           (vm_offset_t) pf->pf_ccrh) + pf->pf_ccr_offset,
+		       pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
 #endif
