@@ -1,4 +1,4 @@
-.\"	$NetBSD: uk.4,v 1.3 1996/10/20 23:15:26 explorer Exp $
+.\"	$NetBSD: uk.4,v 1.4 1997/05/11 08:21:28 mikel Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -47,7 +47,6 @@ before this driver makes sense.
 If an count is given that number of
 .Nm 
 devices will be configured into the kernel.
-
 .Pp
 .Sh IOCTLS
 The 
@@ -56,13 +55,13 @@ driver has no ioctls of its own but rather acts as a medium for the
 generic 
 .Xr scsi 4
 ioctls. These are described in
-.Em sys/scsiio.h.
-
-
+.Pa Aq sys/scsiio.h .
 .Sh FILES
-.Bl -tag -width /dev/uk0XXX -compact
+.Bl -tag -width /dev/uk[0-255] -compact
 .It Pa /dev/uk[0-255]
-uk{x} is the  'xth'unknown device found.
+unknown
+.Tn SCSI
+devices.
 .El
 .Sh DIAGNOSTICS
 All
@@ -71,13 +70,13 @@ debug ioctls work on
 .Nm
 devices.
 .Sh SEE ALSO
-.Xr sd 4
+.Xr cd 4 ,
+.Xr ch 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr ss 4 ,
 .Xr st 4
-.Xr cd 4
-.Xr ch 4
-.Xr su 4
-.Xr scsi 4
 .Sh HISTORY
 The
 .Nm
-driver appeared in 386BSD 0.1
+driver appeared in 386BSD 0.1.
