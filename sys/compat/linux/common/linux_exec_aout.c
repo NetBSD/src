@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.18 1996/09/27 18:14:25 cgd Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.19 1996/09/30 23:56:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -401,7 +401,7 @@ linux_elf32_signature(p, epp, eh)
 		 * Header cannot have a load address, or flags and
 		 * it must be large enough.
 		 */
-		if (s->sh_type != Elf32_sht_progbits ||
+		if (s->sh_type != Elf_sht_progbits ||
 		    s->sh_addr != 0 ||
 		    s->sh_flags != 0 ||
 		    s->sh_size < sizeof(signature) - 1)
