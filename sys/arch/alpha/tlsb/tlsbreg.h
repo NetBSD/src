@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbreg.h,v 1.3 1997/04/06 20:08:40 cgd Exp $ */
+/* $NetBSD: tlsbreg.h,v 1.4 1998/07/08 00:45:52 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -61,7 +61,7 @@
 
 #define TLSB_NODE_BASE		0x000000ff88000000	/* Dense */
 #define TLSB_NODE_SIZE		0x00400000
-#define TLSB_NODE_MAX		8
+#define TLSB_NODE_MAX		8	/* inclusive */
 
 /* Translate a node number to an address. */
 #define TLSB_NODE_ADDR(_node)					\
@@ -135,6 +135,11 @@
 #define TLCPUMASK	0x0b00		/* I: CPU Interrupt Mask Register */
 #define TLMBPTR		0x0c00		/* I: Mailbox Pointer Register */
 #define	TLEPAERR	0x1500		/* C: ADG error register */
+#define	TLEPDERR	0x1540		/* C: DIGA error register */
+#define	TLEPMERR	0x1580		/* C: MMG error register */
+#define	TLDMCMD		0x1600		/* C: Data Mover Command */
+#define	TLDMADRA	0x1680		/* C: Data Mover Source */
+#define	TLDMADRB	0x16C0		/* C: Data Mover Destination */
 
 /*
  * Registers shared between TurboLaser nodes, offsets from the
@@ -316,3 +321,61 @@
  *	indicate the validity of a given field.
  */
 
+
+
+/*
+ * (some of) TurboLaser CPU ADG error register defines.
+ */
+#define	TLEPAERR_IBOX_TMO	0x1800	/* window space read failed */
+#define	TLEPAERR_WSPC_RD	0x0600	/* window space read failed */
+
+/*
+ * (some of) TurboLaser CPU DIGA error register defines.
+ */
+#define	TLEPDERR_GBTMO		0x4	/* GBus timeout */
+
+/*
+ * Platform specific uncorrectable machine check logout frame.
+ */
+struct tlsb_mchk_fatal {
+	u_int64_t	rsvdheader;
+	u_int32_t	tldev;             
+	u_int32_t	tlber;
+	u_int32_t	tlcnr;             
+	u_int32_t	tlvid;
+	u_int32_t	tlesr0;            
+	u_int32_t	tlesr1;
+	u_int32_t	tlesr2;            
+	u_int32_t	tlesr3;
+	u_int32_t	tlepaerr;
+	u_int32_t	tlmodconfig;
+	u_int32_t	tlepmerr;
+	u_int32_t	tlepderr; 
+	u_int32_t	tlintrmask0;
+	u_int32_t	tlintrmask1;
+	u_int32_t	tlintrsum0;
+	u_int32_t	tlintrsum1;
+	u_int32_t	tlep_vmg;
+	u_int32_t	spare[5];
+};
+/*
+ * Magic values from Digital Unix- if these bits are set in these
+ * registers in the fatal mcheck frame, then we *don't* take a look
+ * at system TLSB registers.
+ */
+#define	AERR_NO_TLSBSNAP	0x7B	/* errors on bits TLEPAERR <6:3,1,0>  */
+#define	DERR_NO_TLSBSNAP	0x07	/* errors on bits TLEPDERR <2:0>  */
+#define	MERR_NO_TLSBSNAP	0x3F	/* errors on bits TLEPMERR <5:0>  */
+
+/*
+ * Platform specific correctable machine check logout frame.
+ */
+struct tlsb_mchk_soft {
+	u_int64_t	rsvdheader;
+	u_int32_t	tldev;             
+	u_int32_t	tlber;
+	u_int32_t	tlesr0;            
+	u_int32_t	tlesr1;
+	u_int32_t	tlesr2;            
+	u_int32_t	tlesr3;
+};
