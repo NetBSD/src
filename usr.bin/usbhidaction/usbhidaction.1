@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.2 2000/12/30 16:18:13 augustss Exp $
+.\" $NetBSD: usbhidaction.1,v 1.3 2001/12/08 19:20:41 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,6 +98,9 @@ command line, `$V' will be replaced by the numeric value
 of the HID item, `$N' will be replaced by the name
 of the control, and `$H' will be replaced by the name
 of the HID device.
+.Sh FILES
+.Pa /usr/share/misc/usb_hid_usages
+The HID usage table.
 .Sh EXAMPLES
 The following configuration file can be used to control a pair
 of Philips USB speakers with the HID controls on the speakers.
@@ -119,9 +122,6 @@ A sample invokation using this configuration would be
 .Bd -literal -offset indent
 usbhidaction -f /dev/uhid1 -c conf /dev/mixer1
 .Ed
-.Sh FILES
-.Pa /usr/share/misc/usb_hid_usages
-The HID usage table.
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,
 .Xr usb 3 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: unifdef.1,v 1.6 1999/03/22 18:16:45 garbled Exp $
+.\"	$NetBSD: unifdef.1,v 1.7 2001/12/08 19:20:18 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,8 +146,6 @@ works nicely with the
 option added to
 .Xr diff 1
 as of the 4.1 Berkeley Software Distribution.
-.Sh SEE ALSO
-.Xr diff 1
 .Sh DIAGNOSTICS
 Inappropriate else or endif.
 .br
@@ -156,12 +154,14 @@ Premature
 with line numbers of the unterminated #ifdefs.
 .Pp
 Exit status is 0 if output is exact copy of input, 1 if not, 2 if trouble.
-.Sh BUGS
-Should try to deal with ``#if'' lines.
-.Pp
-Doesn't work correctly if input contains null characters.
+.Sh SEE ALSO
+.Xr diff 1
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.3 .
+.Sh BUGS
+Should try to deal with ``#if'' lines.
+.Pp
+Doesn't work correctly if input contains null characters.
