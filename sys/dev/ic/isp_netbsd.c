@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.26 2000/07/05 22:23:05 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.27 2000/07/07 03:14:53 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -33,7 +33,24 @@
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
 
-#define	_XT(xs)	((((xs)->timeout + 999)/1000) + (2 * hz))
+
+/*
+ * Set a timeout for the watchdogging of a command.
+ *
+ * The dimensional analysis is
+ *
+ *	milliseconds * (seconds/millisecond) * (ticks/second) = ticks
+ *
+ *			=
+ *
+ *	(milliseconds / 1000) * hz = ticks
+ *
+ *
+ * For timeouts less than 1 second, we'll get zero. Because of this, and
+ * because we want to establish *our* timeout to be longer than what the
+ * firmware might do, we just add 3 seconds at the back end.
+ */
+#define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
 static void ispminphys __P((struct buf *));
 static int32_t ispcmd_slow __P((ISP_SCSI_XFER_T *));
