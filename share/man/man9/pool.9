@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.22 2002/08/11 11:20:48 soren Exp $
+.\"	$NetBSD: pool.9,v 1.23 2002/08/11 12:12:23 soren Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,10 +56,7 @@
 .Fa "u_int align_offset"
 .Fa "int nitems"
 .Fa "char *wchan"
-.Fa "u_int pagesz"
-.Fa "void *(*palloc)(unsigned long sz, int flags, int tag)"
-.Fa "void (*prelease)(void *v, unsigned long sz, int tag)"
-.Fa "int mtag"
+.Fa "struct pool_allocator *palloc"
 .Fc
 .Ft void
 .Fn pool_destroy "struct pool *pp"
@@ -82,21 +79,13 @@ This can be used by applications to guarantee the availability of a minimum
 amount of memory needed to continue operation independent of the memory
 resources currently available from the system-wide memory allocator
 .Pq Xr malloc 9 .
-The pool manager can optionally obtain temporary memory by calling the
-.Fn palloc
-function passed to
-.Fn pool_init ,
-for extra pool items in case the number of allocations exceeds
-the nominal number of pool items managed by a pool resource.
-This temporary memory will be automatically returned to the system
-at a later time.
 .Ss INITIALIZING A POOL
 The function
 .Fn pool_init
 initializes a resource pool.
 The arguments are:
 .Pp
-.Bl -tag -offset indent -width "prelease"
+.Bl -tag -offset indent -width "align_offset"
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa size
@@ -126,47 +115,17 @@ passed on to
 if
 .Fn pool_get
 must wait for items to be returned to the pool.
-.It Fa pagesz
-The unit which is used to allocate additional memory to the pool.
-It must be a power of two.
 .It Fa palloc
-is called to add additional memory if the pool is depleted.
-It must return
-.Fa pagesz
-aligned memory.
-The argument
-.Fa sz
-shall be a multiple of
-.Fa pagesz .
-.It Fa prelease
-is called to release pages back to the system.
-.Fn palloc
-and
-.Fn prelease
-may be
-.Dv NULL ,
-in which case the pool manager uses
-.Xr uvm_km_kmemalloc 9
-and
-.Xr uvm_km_free 9
-to allocate and release memory using the
-.Em kernel_map
-.Po
-see
-.Xr uvm 9
-.Pc .
-.It Fa mtag
-The memory tag passed to
-.Fn palloc
-and
-.Fn prelease
-when allocating or releasing memory pages.
+can be set to
+.Dv NULL
+or
+.Dv pool_allocator_kmem ,
+in which case the default kernel memory allocator will be used.
+It can also be set to
+.Dv pool_allocator_nointr
+when the pool will never be accessed from interrupt context.
 .El
 .Pp
-.\"The macro
-.\".Fn POOL_STORAGE_SIZE "size" "nitems"
-.\"can be used to determine the amount of storage needed to setup a pool,
-.\"given the size and number of the pool items.
 .Ss DESTROYING A POOL
 The function
 .Fn pool_destroy
@@ -228,8 +187,7 @@ If the number of available items in the pool exceeds the maximum pool
 size set by
 .Fn pool_sethiwat
 and there are no outstanding requests for pool items,
-the excess items will be returned to the system by calling
-.Fn prelease .
+the excess items will be returned to the system.
 The arguments to
 .Fn pool_put
 are:
@@ -255,7 +213,7 @@ parameter.
 The arguments to
 .Fn pool_prime
 are:
-.Bl -tag -offset indent -width "nitems"
+.Bl -tag -offset indent -width "storage"
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa nitems
@@ -292,8 +250,7 @@ The handle identifying the pool resource instance.
 The maximum number of items to keep in the pool.
 As items are returned and the total number of pages in the pool is larger
 than the maximum set by this function,
-any completely unused pages are released immediately
-.Pq by calling Fn prelease .
+any completely unused pages are released immediately.
 If this function is not used to specify a maximum number of items,
 the pages will remain associated with the pool until the system runs low
 on memory,
