@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.42 2005/01/19 17:33:58 xtraeme Exp $	*/
+/*	$NetBSD: dir.c,v 1.43 2005/01/20 15:29:40 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.42 2005/01/19 17:33:58 xtraeme Exp $");
+__RCSID("$NetBSD: dir.c,v 1.43 2005/01/20 15:29:40 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,15 +67,15 @@ struct	odirtemplate odirhead = {
 	0, DIRBLKSIZ - 12, 2, ".."
 };
 
-static int chgino (struct  inodesc *);
-static int dircheck (struct inodesc *, struct direct *);
-static int expanddir (union dinode *, char *);
-static void freedir (ino_t, ino_t);
-static struct direct *fsck_readdir (struct inodesc *);
-static struct bufarea *getdirblk (daddr_t, long);
-static int lftempname (char *, ino_t);
-static int mkentry (struct inodesc *);
-void reparent (ino_t, ino_t);
+static int chgino(struct  inodesc *);
+static int dircheck(struct inodesc *, struct direct *);
+static int expanddir(union dinode *, char *);
+static void freedir(ino_t, ino_t);
+static struct direct *fsck_readdir(struct inodesc *);
+static struct bufarea *getdirblk(daddr_t, long);
+static int lftempname(char *, ino_t);
+static int mkentry(struct inodesc *);
+void reparent(ino_t, ino_t);
 
 /*
  * Propagate connected state through the tree.
