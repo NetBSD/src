@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.133 2004/06/01 05:06:56 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.134 2004/07/06 04:30:27 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.133 2004/06/01 05:06:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.134 2004/07/06 04:30:27 minoura Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1325,7 +1325,8 @@ ip_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = optval;
 			break;
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if 0	/* defined(IPSEC) || defined(FAST_IPSEC) */
+		/* XXX: code broken */
 		case IP_IPSEC_POLICY:
 		{
 			caddr_t req = NULL;

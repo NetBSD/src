@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.83 2004/06/11 04:10:10 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.84 2004/07/06 04:30:29 minoura Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.83 2004/06/11 04:10:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.84 2004/07/06 04:30:29 minoura Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1611,7 +1611,8 @@ do { \
 				error = ip6_getmoptions(optname, in6p->in6p_moptions, mp);
 				break;
 
-#ifdef IPSEC
+#if 0	/* defined(IPSEC) */
+			/* XXX: code broken */
 			case IPV6_IPSEC_POLICY:
 			{
 				caddr_t req = NULL;
