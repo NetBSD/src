@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.5 1993/10/09 10:01:20 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.6 1993/10/09 10:34:13 mycroft Exp $
  */
 
 /*
@@ -97,13 +97,11 @@ vec:
 	.long	INTRLOCAL(vec15)
 
 #define	FASTSPL(mask) \
-	movl	mask,_cpl ; \
-	SHOW_CPL
+	movl	mask,_cpl
 
 #define	FASTSPL_VARMASK(varmask) \
 	movl	varmask,%eax ; \
-	movl	%eax,_cpl ; \
-	SHOW_CPL
+	movl	%eax,_cpl
 
 	.text
 
@@ -113,7 +111,6 @@ INTRLOCAL(unpend_v):
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_v_next) # some intr cleared the in-memory bit
-	SHOW_IPENDING
 	movl    Vresume(,%eax,4),%eax
 	testl   %eax,%eax
 	je      INTRLOCAL(noresume)
@@ -150,7 +147,6 @@ doreti:
  * a waste of time.
  */
 	movl	%eax,_cpl
-	SHOW_CPL
 	movl	%eax,%edx
 	notl	%eax
 	andl	_ipending,%eax
@@ -265,7 +261,6 @@ in_splnone:
 	jz	INTRLOCAL(over_net_stuff_for_splnone)
 	movl	_netmask,%eax	# mask off those network devices
 	movl	%eax,_cpl	# set new priority
-	SHOW_CPL
 	DONET(NETISR_RAW, _rawintr, 20)
 #ifdef INET
 	DONET(NETISR_IP, _ipintr, 21)
@@ -281,7 +276,6 @@ in_splnone:
 #endif
 INTRLOCAL(over_net_stuff_for_splnone):
 	movl	$0,_cpl	# set new priority
-	SHOW_CPL
 	movl	_ipending,%eax
 	testl   %eax,%eax
 	jne	INTRLOCAL(unpend_V)
@@ -298,7 +292,6 @@ _splx:
 	COUNT_EVENT(_intrcnt_spl, 23)
 	pushl	_cpl
 	movl	%eax,_cpl	# set new priority
-	SHOW_CPL
 	notl	%eax
 	andl	_ipending,%eax
 	jne	INTRLOCAL(unpend_V)
@@ -311,7 +304,6 @@ INTRLOCAL(unpend_V):
 	bsfl    %eax,%eax
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_V_next)
-	SHOW_IPENDING
 	movl    Vresume(,%eax,4),%edx
 	testl   %edx,%edx
 	je      INTRLOCAL(noresumeV)
