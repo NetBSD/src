@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.33 2001/12/11 21:13:35 tv Exp $
+#  $NetBSD: build.sh,v 1.34 2001/12/11 23:57:49 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -89,7 +89,7 @@ resolvepath () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-bdoru] [-a arch] [-j njob] -m mach [-w wrapper]"
+	echo "$0 [-bdoru] [-a arch] [-j njob] [-m mach] [-w wrapper]"
 	echo "   [-D dest] [-O obj] [-R release] [-T tools]"
 	echo ""
 	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
@@ -343,7 +343,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.33 2001/12/11 21:13:35 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.34 2001/12/11 23:57:49 lukem Exp $
 #
 
 EOF
