@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.10 1993/12/11 03:53:23 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.11 1994/01/05 19:02:09 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -157,6 +157,16 @@ s_sym(fn, fd, ep, sp)
 	 */
 	neweof = (char *)ep + N_TRELOFF(*ep);
 
+#if 0
+	/*
+	 * Unfortunately, this can't work correctly without changing the way
+	 * the loader works.  We could cap it at one page, or even fiddle with
+	 * a_data and a_bss, but this only works for CLBYTES == NBPG.  If we
+	 * are on a system where, e.g., CLBYTES is 8k and NBPG is 4k, and we
+	 * happen to remove 4.5k, we will lose.  And we really don't want to
+	 * fiddle with pages, because that breaks binary compatibility.  Lose.
+	 */
+
 	if (zmagic) {
 		/*
 		 * Get rid of unneeded zeroes at the end of the data segment
@@ -166,6 +176,7 @@ s_sym(fn, fd, ep, sp)
 		while (neweof > mineof && neweof[-1] == '\0')
 			neweof--;
 	}
+#endif
 
 	/* Set symbol size and relocation info values to 0. */
 	ep->a_syms = ep->a_trsize = ep->a_drsize = 0;
