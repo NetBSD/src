@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.2 2000/06/26 06:33:03 kleink Exp $	*/
+/*	$NetBSD: fork.S,v 1.3 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)fork.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: fork.S,v 1.2 2000/06/26 06:33:03 kleink Exp $")
+	RCSID("$NetBSD: fork.S,v 1.3 2000/07/25 15:14:46 mycroft Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -55,6 +55,6 @@ WEAK_ALIAS(fork, _fork)
 #endif
 
 _SYSCALL(_fork,fork)
-	dec	%o1		! from 1 to 0 in child, 0 to -1 in parent
+	dec	%o1		/* from 1 to 0 in child, 0 to -1 in parent */
 	retl
-	 and	%o0, %o1, %o0	! return 0 in child, pid in parent
+	 and	%o0, %o1, %o0	/* return 0 in child, pid in parent */
