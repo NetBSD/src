@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_hook.3,v 1.6 2002/02/20 11:47:56 wiz Exp $
+.\"	$NetBSD: menu_hook.3,v 1.7 2002/10/01 19:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -67,9 +67,11 @@ The
 .Fn item_init
 function returns a pointer to the function that will be called
 whenever the menu is posted and also just after the current item
-changes.  This is set by the
+changes.
+This is set by the
 .Fn set_item_init
-call.  The
+call.
+The
 .Fn item_term
 function returns a pointer to the function that will be called before
 the menu is unposted and just before the current item changes, this
@@ -79,7 +81,8 @@ call.
 The
 .Fn menu_init
 functions returns a pointer to the function that will be called just
-before the menu is posted to the screen.  This pointer is set by the
+before the menu is posted to the screen.
+This pointer is set by the
 .Fn set_menu_init
 function call.
 The

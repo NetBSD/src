@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_post.3,v 1.7 2002/07/29 13:30:14 wiz Exp $
+.\"	$NetBSD: menu_post.3,v 1.8 2002/10/01 19:27:00 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -47,17 +47,18 @@
 .Sh DESCRIPTION
 The
 .Fn post_menu
-function causes the menu to be drawn on the screen.  Any functions
-defined by either
+function causes the menu to be drawn on the screen.
+Any functions defined by either
 .Fn set_menu_init
 or
 .Fn set_item_init
 (see
 .Xr menu_hook 3 )
-are called before the menu is placed on the screen.  The
+are called before the menu is placed on the screen.
+The
 .Fn unpost_menu
-does the opposite, it removes a menu from the screen.  Any functions
-defined by both
+does the opposite, it removes a menu from the screen.
+Any functions defined by both
 .Fn set_menu_term
 and
 .Fn set_item_term
