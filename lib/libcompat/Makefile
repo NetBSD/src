@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/22 23:33:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 1998/03/19 17:51:04 tv Exp $
 
 LIB=	compat
 CPPFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -28,7 +28,7 @@ MLINKS+=stty.3 gtty.3
 # compat 4.3 sources
 # missing: ecvt.c gcvt.c sibuf.c sobuf.c strout.c
 SRCS+=	cfree.c lsearch.c regex.c rexec.c
-SRCS+=	insque.c remque.c
+SRCS+=	insque.c remque.c ruserpass.c
 
 # missing: ecvt.0
 MAN+=	insque.3 lsearch.3 re_comp.3 rexec.3
