@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.3 1998/02/01 23:38:44 marc Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.4 1998/03/22 04:07:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -161,6 +161,11 @@
 #define	PCMCIA_CISTPL_MANFID			0x20
 #define	PCMCIA_CISTPL_FUNCID			0x21
 #define	PCMCIA_CISTPL_FUNCE			0x22
+#define	PCMCIA_TPLFE_TYPE_LAN_TECH			0x01
+#define	PCMCIA_TPLFE_TYPE_LAN_SPEED			0x02
+#define	PCMCIA_TPLFE_TYPE_LAN_MEDIA			0x03
+#define	PCMCIA_TPLFE_TYPE_LAN_NID			0x04
+#define	PCMCIA_TPLFE_TYPE_LAN_CONN			0x05
 #define	PCMCIA_CISTPL_SWIL			0x23
 /* #define	PCMCIA_CISTPL_RESERVED		0x24-0x3F */
 #define	PCMCIA_CISTPL_VERS_2			0x40
