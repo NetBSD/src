@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.30 2002/01/23 17:21:53 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.31 2002/01/23 19:06:41 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1376,7 +1376,7 @@ lib/libcrypt/Makefile				1.10
 lib/libcrypt/crypt.3				1.9-1.10
 lib/libcrypt/crypt.c				1.16-1.17
 lib/libcrypt/md5crypt.c				1.1-1.4 (new)
-include/pwd.h					1.21
+include/pwd.h					1.21-1.22
 
   Add minimal support for MD5-hashed passwords.
 
@@ -1397,3 +1397,8 @@ sys/dev/pci/pccbb.c				1.57
 sys/dev/sbus/qe.c				1.16
 
   Make all debugging messages conditional on sc->sc_debug.
+
+libexec/makewhatis/makewhatis.c			1.18-1.19 via patch
+
+  Cleanup and enhance error handling.  Handle ``.Xr'' commands with
+  text after the section number properly.  Fixes PR#15253.
