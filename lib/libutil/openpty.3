@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 14, 1995
+.Dd November 4, 1996
 .Dt OPENPTY 3
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nd tty utility functions
 .Sh SYNOPSIS
 .Fd #include <util.h>
-.Ft void
+.Ft int
 .Fn openpty "int *amaster" "int *aslave" "char *name" "struct termios *termp" "struct winsize *winp"
 .Ft int
 .Fn login_tty "int fd"
@@ -54,7 +54,7 @@ The
 .Fn openpty ,
 .Fn login_tty ,
 and
-.Fn login_tty
+.Fn forkpty
 functions perform manipulations on ttys and pseudo-ttys.
 .Pp
 The
@@ -116,10 +116,17 @@ If a call to
 .Fn openpty ,
 .Fn login_tty ,
 or
-.fn forkpty
+.Fn forkpty
 is not successful, -1 is returned and
 .Va errno
-is set to indicate the error.  Otherwise, they return 0.
+is set to indicate the error.  Otherwise,
+.Fn openpty ,
+.Fn login_tty ,
+and the child process of
+.Fn forkpty
+return 0, and the parent process of
+.Fn forkpty
+returns the process ID of the child process.
 .Sh ERRORS
 .Fn openpty
 will fail if:
@@ -144,6 +151,8 @@ fails.
 .Bl -tag -width /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef] -compact
 .It Pa /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef]
 .El
+.Sh SEE ALSO
+.Xr fork 2
 .Sh BUGS
 The names of the virtual consoles for the i386 PCVT console driver
 conflict with what would be the seventh group of pseudo-ttys, so
