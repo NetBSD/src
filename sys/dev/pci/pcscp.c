@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.5.2.1 1999/10/19 17:50:22 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.5.2.2 1999/10/20 20:43:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -566,13 +566,19 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 		return 0;
 
 	error = bus_dmamap_load(esc->sc_dmat, dmap, *esc->sc_dmaaddr,
-				*esc->sc_dmalen, NULL,
-				sc->sc_nexus->xs->xs_control & XS_CTL_NOSLEEP ?
-				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-	if (error) {
+				*esc->sc_dmalen, NULL, BUS_DMA_NOWAIT);
+	switch (error) {
+	case 0:
+		break;
+
+	default:
 		printf("%s: unable to load dmamap, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
-		return error;
+		    sc->sc_dev.dv_xname, error);
+		/* FALLTHROUGH */
+
+	case ENOMEM:
+	case EAGAIN:
+		return (error);
 	}
 
 	/* set transfer length */

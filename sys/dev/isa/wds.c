@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.39.2.1 1999/10/19 17:49:05 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.39.2.2 1999/10/20 20:42:10 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -185,7 +185,7 @@ int     wdsintr __P((void *));
 integrate void wds_reset_scb __P((struct wds_softc *, struct wds_scb *));
 void    wds_free_scb __P((struct wds_softc *, struct wds_scb *));
 integrate int wds_init_scb __P((struct wds_softc *, struct wds_scb *));
-struct	wds_scb *wds_get_scb __P((struct wds_softc *, int));
+struct	wds_scb *wds_get_scb __P((struct wds_softc *));
 struct	wds_scb *wds_scb_phys_kv __P((struct wds_softc *, u_long));
 void	wds_queue_scb __P((struct wds_softc *, struct wds_scb *));
 void	wds_collect_mbo __P((struct wds_softc *));
@@ -522,17 +522,8 @@ wds_free_scb(sc, scb)
 	int s;
 
 	s = splbio();
-
 	wds_reset_scb(sc, scb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_scb, scb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (scb->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_scb);
-
 	splx(s);
 }
 
@@ -658,47 +649,18 @@ wds_create_scbs(sc, mem, size)
  * the hash table too otherwise either return an error or sleep.
  */
 struct wds_scb *
-wds_get_scb(sc, flags)
+wds_get_scb(sc)
 	struct wds_softc *sc;
-	int flags;
 {
 	struct wds_scb *scb;
 	int s;
 
 	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		scb = sc->sc_free_scb.tqh_first;
-		if (scb) {
-			TAILQ_REMOVE(&sc->sc_free_scb, scb, chain);
-			break;
-		}
-		if (sc->sc_numscbs < WDS_SCB_MAX) {
-			/*
-			 * wds_create_scbs() might have managed to create
-			 * one before it failed.  If so, don't abort,
-			 * just grab it and continue to hobble along.
-			 */
-			if (wds_create_scbs(sc, NULL, 0) != 0 &&
-			    sc->sc_free_scb.tqh_first == NULL) {
-				printf("%s: can't allocate scbs\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			continue;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_scb, PRIBIO, "wdsscb", 0);
+	scb = TAILQ_FIRST(&sc->sc_free_scb);
+	if (scb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_scb, scb, chain);
+		scb->flags |= SCB_ALLOC;
 	}
-
-	scb->flags |= SCB_ALLOC;
-
-out:
 	splx(s);
 	return (scb);
 }
@@ -1086,7 +1048,7 @@ wds_inquire_setup_information(sc)
 
 	sc->sc_maxsegs = 1;
 
-	scb = wds_get_scb(sc, XS_CTL_NOSLEEP);
+	scb = wds_get_scb(sc);
 	if (scb == 0)
 		panic("wds_inquire_setup_information: no scb available");
 
@@ -1190,7 +1152,7 @@ wds_scsipi_request(chan, req, arg)
 		flags = xs->xs_control;
 
 		/* Get an SCB to use. */
-		scb = wds_get_scb(sc, flags);
+		scb = wds_get_scb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources
@@ -1230,30 +1192,30 @@ wds_scsipi_request(chan, req, arg)
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat,
 				    scb->dmamap_xfer, (struct uio *)xs->data,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
+				    BUS_DMA_NOWAIT);
 			} else
 #endif /* TFS */
 			{
 				error = bus_dmamap_load(dmat,
 				    scb->dmamap_xfer, xs->data, xs->datalen,
-				    NULL, (flags & XS_CTL_NOSLEEP) ?
-				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+				    NULL, BUS_DMA_NOWAIT);
 			}
 
-			if (error) {
-				if (error == EFBIG) {
-					printf("%s: wds_scsi_cmd, more than %d"
-					    " dma segments\n",
-					    sc->sc_dev.dv_xname,
-					    sc->sc_maxsegs);
-				} else {
-					printf("%s: wds_scsi_cmd, error %d "
-					    "loading dma map\n",
-					    sc->sc_dev.dv_xname, error);
-				}
-				wds_free_scb(sc, scb);
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
+				printf("%s: error %d loading DMA map\n",
+				    sc->sc_dev.dv_xname, error);
+ out_bad:
+				wds_free_scb(sc, scb);
 				scsipi_done(xs);
 				return;
 			}

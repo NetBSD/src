@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28.2.1 1999/10/19 17:44:55 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28.2.2 1999/10/20 20:42:42 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -130,7 +130,7 @@ void	ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
 void	ahb_send_immed __P((struct ahb_softc *, u_long, struct ahb_ecb *));
 int	ahbintr __P((void *));
 void	ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
-struct	ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
+struct	ahb_ecb *ahb_get_ecb __P((struct ahb_softc *));
 struct	ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
 void	ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
 int	ahb_find __P((bus_space_tag_t, bus_space_handle_t, struct ahb_probe_data *));
@@ -452,17 +452,8 @@ ahb_free_ecb(sc, ecb)
 	int s;
 
 	s = splbio();
-
 	ahb_reset_ecb(sc, ecb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ecb, ecb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (ecb->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_ecb);
-
 	splx(s);
 }
 
@@ -531,35 +522,20 @@ ahb_create_ecbs(sc, ecbstore, count)
  * hash table too otherwise either return an error or sleep.
  */
 struct ahb_ecb *
-ahb_get_ecb(sc, flags)
+ahb_get_ecb(sc)
 	struct ahb_softc *sc;
-	int flags;
 {
 	struct ahb_ecb *ecb;
 	int s;
 
 	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		ecb = sc->sc_free_ecb.tqh_first;
-		if (ecb) {
-			TAILQ_REMOVE(&sc->sc_free_ecb, ecb, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_ecb, PRIBIO, "ahbecb", 0);
+	ecb = TAILQ_FIRST(&sc->sc_free_ecb);
+	if (ecb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ecb, ecb, chain);
+		ecb->flags |= ECB_ALLOC;
 	}
-
-	ecb->flags |= ECB_ALLOC;
-
-out:
 	splx(s);
-	return ecb;
+	return (ecb);
 }
 
 /*
@@ -852,7 +828,7 @@ ahb_scsipi_request(chan, req, arg)
 		SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsipi_request\n"));
 
 		/* Get an ECB to use. */
-		ecb = ahb_get_ecb(sc, flags);
+		ecb = ahb_get_ecb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources
@@ -923,29 +899,30 @@ ahb_scsipi_request(chan, req, arg)
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(sc->sc_dmat,
 				    ecb->dmamap_xfer, (struct uio *)xs->data,
-				    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				    BUS_DMA_WAITOK);
+				    BUS_DMA_NOWAIT);
 			} else
 #endif /* TFS */
 			{
 				error = bus_dmamap_load(sc->sc_dmat,
 				    ecb->dmamap_xfer, xs->data, xs->datalen,
-				    NULL, (flags & XS_CTL_NOSLEEP) ?
-				    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+				    NULL, BUS_DMA_NOWAIT);
 			}
 
-			if (error) {
-				if (error == EFBIG) {
-					printf("%s: ahb_scsipi_request, more "
-					    "than %d dma segments\n",
-					    sc->sc_dev.dv_xname, AHB_NSEG);
-				} else {
-					printf("%s: ahb_scsipi_request, error "
-					    "%d loading dma map\n",
-					    sc->sc_dev.dv_xname, error);
-				}
-				ahb_free_ecb(sc, ecb);
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
 				xs->error = XS_DRIVER_STUFFUP;
+				printf("%s: error %d loading DMA map\n",
+				    sc->sc_dev.dv_xname, error);
+ out_bad:
+				ahb_free_ecb(sc, ecb);
 				scsipi_done(xs);
 				return;
 			}
