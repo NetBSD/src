@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.10 2003/12/20 17:38:19 fredb Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.11 2004/10/05 03:34:38 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1381,9 +1381,13 @@ sendpkt(
 	if (debug > 1)
 	    printf("%ssendpkt(fd=%d dst=%s, src=%s, ttl=%d, len=%d)\n",
 		   (ttl >= 0) ? "\tMCAST\t*****" : "",
-		   inter->fd, stoa(dest),
-		   stoa(&inter->sin), ttl, len);
+		   inter ? inter->fd : -1, stoa(dest),
+		   inter ? stoa(&inter->sin) : "null", ttl, len);
 #endif
+	if (inter == NULL) {
+		errno = EAFNOSUPPORT;
+		goto nointerface;
+	}
 
 #ifdef MCAST
 
@@ -1468,6 +1472,7 @@ sendpkt(
 #endif
 	{
 		inter->notsent++;
+nointerface:
 		packets_notsent++;
 #if defined(HAVE_IO_COMPLETION_PORT)
 		err = WSAGetLastError();

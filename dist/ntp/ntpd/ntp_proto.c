@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.3 2003/12/04 17:22:31 drochner Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.4 2004/10/05 03:34:38 christos Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -2368,7 +2368,8 @@ peer_xmit(
 #ifdef DEBUG
 		if (debug)
 			printf("transmit: at %ld %s->%s mode %d\n",
-			    current_time, stoa(&peer->dstadr->sin),
+			    current_time, peer->dstadr ?
+			    stoa(&peer->dstadr->sin) : "null",
 			    stoa(&peer->srcadr), peer->hmode);
 #endif
 		return;
