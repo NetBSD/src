@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.48 1997/05/30 15:11:03 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.49 1997/05/30 21:46:02 cjs Exp $
 
 # This file may be included multiple times without harm.
 
@@ -59,22 +59,6 @@ OBJDIR=	${BSDOBJDIR}
 .undef OBJDIR
 .endif
 
-# BUILDDIR is where we install libraries, include files, etc. that
-# are used during the build. If no build tree (OBJDIR) is available,
-# this is DESTDIR or just nothing at all (root of current system).
-.if ! defined(BUILDDIR)
-.if exists(${OBJDIR})
-.if defined(OBJMACHINE) && !defined(USR_OBJMACHINE)
-BUILDDIR= ${OBJDIR}/build.${MACHINE}
-.else
-BUILDDIR= ${OBJDIR}/build
-.endif	# defined(OBJMACHINE)
-.else
-BUILDDIR= ${DESTDIR}
-.undef OBJDIR		# we are really building against DESTDIR, not BUILDDIR
-.endif	# exists(OBJDIR)
-.endif # ! defined(BUILDDIR)
-
 # Don't use a build directory at all if we're not under BSDSRCDIR. This is
 # a bit of a hack; we should possibly generalise object directories so that
 # they can be used outside the BSD tree.
@@ -93,6 +77,22 @@ insrcdir != \
 .else
 .undef OBJDIR
 .endif
+
+# BUILDDIR is where we install libraries, include files, etc. that
+# are used during the build. If no build tree (OBJDIR) is available,
+# this is DESTDIR or just nothing at all (root of current system).
+.if ! defined(BUILDDIR)
+.if defined(OBJDIR) && exists(${OBJDIR})
+.if defined(OBJMACHINE) && !defined(USR_OBJMACHINE)
+BUILDDIR= ${OBJDIR}/build.${MACHINE}
+.else
+BUILDDIR= ${OBJDIR}/build
+.endif	# defined(OBJMACHINE)
+.else
+BUILDDIR= ${DESTDIR}
+.undef OBJDIR		# we are really building against DESTDIR, not BUILDDIR
+.endif	# defined(OBJDIR) && exists(${OBJDIR})
+.endif # ! defined(BUILDDIR)
 
 BINGRP?=	bin
 BINOWN?=	bin
