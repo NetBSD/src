@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.6 1996/02/09 22:41:00 christos Exp $	*/
+/*	$NetBSD: umap.h,v 1.7 1997/10/06 09:32:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ extern struct vnode *umap_checkvp __P((struct vnode *vp, char *fil, int lno));
 #endif
 
 extern int (**umap_vnodeop_p) __P((void *));
-extern struct vfsops umap_vfsops;
+extern struct vfsops umapfs_vfsops;
 
 void umapfs_init __P((void));
 

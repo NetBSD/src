@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.8 1996/10/13 02:21:44 christos Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.9 1997/10/06 09:32:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 
 	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
 };
-struct vnodeopv_desc umap_vnodeop_opv_desc =
+struct vnodeopv_desc umapfs_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };
 
 /*
