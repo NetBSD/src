@@ -35,7 +35,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)mkbuiltins	8.1 (Berkeley) 5/31/93
-#	$Id: mkbuiltins,v 1.8 1994/06/11 16:12:12 mycroft Exp $
+#	$Id: mkbuiltins,v 1.9 1994/06/24 07:33:19 jtc Exp $
 
 temp=/tmp/ka$$
 havejobs=0
@@ -59,7 +59,7 @@ cat <<\!
 
 !
 awk '/^[^#]/ {if(('$havejobs' || $2 != "-j") && ('$havehist' || $2 != "-h")) \
-    print $0}' builtins | sed 's/-j//' > $temp
+    print $0}' builtins.def | sed 's/-j//' > $temp
 awk '{	printf "int %s();\n", $1}' $temp
 echo '
 int (*const builtinfunc[])() = {'
