@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.19 1994/10/20 04:23:01 cgd Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.20 1994/11/23 22:36:59 dean Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -141,7 +141,8 @@ compat_43_quota(p, uap, retval)
 }
 #endif /* COMPAT_43 */
 
-#if defined(COMPAT_09) || defined(COMPAT_SUNOS) || defined(COMPAT_HPUX)
+#if defined(COMPAT_09) || defined(COMPAT_SUNOS) ||defined(COMPAT_HPUX) \
+  || defined(COMPAT_ULTRIX)
 /* ARGSUSED */
 int
 compat_09_getdomainname(p, uap, retval)
@@ -178,7 +179,7 @@ compat_09_setdomainname(p, uap, retval)
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
 	    SCARG(uap, len)));
 }
-#endif /* COMPAT_09 || COMPAT_SUNOS || COMPAT_HPUX */
+#endif /* COMPAT_09 || COMPAT_SUNOS || COMPAT_HPUX || COMPAT_ULTRIX */
 
 #ifdef COMPAT_09
 struct outsname {
