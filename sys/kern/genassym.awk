@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.awk,v 1.3 1997/10/04 16:56:49 gwr Exp $
+#	$NetBSD: genassym.awk,v 1.3.4.1 1997/10/28 04:06:35 gwr Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ BEGIN {
 	next;
 }
 
-/^\t\.(long|quad)/ {
+/^\t\.(long|quad|word)/ {
 	if (!translate)
 		next;
 	printf("%s\n", $2);
