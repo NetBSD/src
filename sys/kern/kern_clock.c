@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.42 1997/05/21 19:55:45 gwr Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.43 1998/01/31 10:42:11 ross Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -332,6 +332,7 @@ initclocks()
 	case 512:
 		shifthz = SHIFT_SCALE - 9;
 		break;
+	case 1000:
 	case 1024:
 		shifthz = SHIFT_SCALE - 10;
 		break;
@@ -627,6 +628,16 @@ hardclock(frame)
 				time_adj -= -time_adj >> 4;
 			else
 				time_adj += time_adj >> 4;
+			break;
+		case 1000:
+			 /*
+			  * Do this the simple way; we're on an alpha, are
+			  * the shift police going to come and get us? We
+			  * would get a residual error of only .82% with
+			  * a 5 bit right shift, but we also have 64 bits
+			  * in time_adj to work with for fixed point scaling.
+			  */
+			time_adj = (time_adj * 1024) / 1000;
 			break;
 		}
 
