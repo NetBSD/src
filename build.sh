@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.116 2003/09/20 10:14:41 jmmv Exp $
+#	$NetBSD: build.sh,v 1.117 2003/09/24 00:24:53 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -142,7 +142,6 @@ initdefaults()
 
 	# Set source directories
 	#
-	setmakeenv BSDSRCDIR "${TOP}"
 	setmakeenv NETBSDSRCDIR "${TOP}"
 }
 
@@ -807,7 +806,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.116 2003/09/20 10:14:41 jmmv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.117 2003/09/24 00:24:53 lukem Exp $
 #
 
 EOF
