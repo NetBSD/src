@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.15 1999/03/07 11:58:28 mycroft Exp $
+.\" $NetBSD: pkg_info.1,v 1.16 1999/03/22 05:02:41 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -47,8 +47,13 @@ command.
 .Pp
 The
 .Ar pkg-name
-may be the name of an installed package, the pathname to a package
-distribution file, a filename belonging to an installed package (if -F
+may be the name of an installed package, a pattern matching several
+installed packages (see the
+.Fl e
+switch for a description of possible patterns), the pathname to a
+package distribution file, a filename belonging to an installed
+package (if
+.Fl F
 is also given), or a URL to an ftp-available package.
 .Pp
 The following command-line options are supported:
@@ -203,6 +208,7 @@ of pkg_info
 .Fl aF .
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
+.Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr mktemp 3 ,

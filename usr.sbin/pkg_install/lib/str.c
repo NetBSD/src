@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.13 1999/03/06 02:16:25 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.14 1999/03/22 05:02:41 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.13 1999/03/06 02:16:25 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.14 1999/03/22 05:02:41 hubertf Exp $");
 #endif
 #endif
 
@@ -261,6 +261,7 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 		if (pmatch(pattern, dp->d_name)) {
 			if (match) {
 				match(dp->d_name, data);
+				/* return value ignored for now */
 			}
 			found = 1;
 		}
