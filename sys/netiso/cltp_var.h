@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cltp_var.h	7.3 (Berkeley) 6/28/90
+ *	from: @(#)cltp_var.h	7.3 (Berkeley) 6/28/90
+ *	$Id: cltp_var.h,v 1.3 1993/05/20 05:27:01 cgd Exp $
  */
 
 #ifndef _NETISO_CLTP_VAR_H_

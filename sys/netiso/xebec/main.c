@@ -1,5 +1,4 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/main.c,v 1.1 1993/04/09 12:02:09 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/main.c,v $ */
+/* $Id: main.c,v 1.2 1993/05/20 05:28:24 cgd Exp $ */
 /*
  * TODO:
  * rewrite the command line stuff altogether - it's kludged beyond

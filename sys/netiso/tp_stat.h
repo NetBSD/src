@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_stat.h	7.5 (Berkeley) 6/27/91
+ *	from: @(#)tp_stat.h	7.5 (Berkeley) 6/27/91
+ *	$Id: tp_stat.h,v 1.3 1993/05/20 05:27:53 cgd Exp $
  */
 
 #ifndef _NETISO_TP_STAT_H_
@@ -64,9 +65,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_stat.h,v 1.2 1993/04/19 03:45:58 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_stat.h,v $
  *
  * Here are the data structures in which the global
  * statistics(counters) are gathered.

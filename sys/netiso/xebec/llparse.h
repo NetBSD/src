@@ -1,5 +1,4 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/llparse.h,v 1.1 1993/04/09 12:02:07 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/llparse.h,v $ */
+/* $Id: llparse.h,v 1.2 1993/05/20 05:28:22 cgd Exp $ */
 
 	/************************************************************
 		attributes stack garbage

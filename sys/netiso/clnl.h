@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clnl.h	7.3 (Berkeley) 5/6/91
+ *	from: @(#)clnl.h	7.3 (Berkeley) 5/6/91
+ *	$Id: clnl.h,v 1.3 1993/05/20 05:26:44 cgd Exp $
  */
 
 #ifndef _NETISO_CLNL_H_

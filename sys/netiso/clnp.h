@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clnp.h	7.8 (Berkeley) 5/6/91
+ *	from: @(#)clnp.h	7.8 (Berkeley) 5/6/91
+ *	$Id: clnp.h,v 1.3 1993/05/20 05:26:45 cgd Exp $
  */
 
 #ifndef _NETISO_CLNP_H_
@@ -62,8 +63,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/clnp.h,v 1.2 1993/04/19 03:45:37 mycroft Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/clnp.h,v $ */
 
 #ifndef BYTE_ORDER
 /*

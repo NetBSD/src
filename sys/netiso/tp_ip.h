@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_ip.h	7.3 (Berkeley) 5/6/91
+ *	from: @(#)tp_ip.h	7.3 (Berkeley) 5/6/91
+ *	$Id: tp_ip.h,v 1.3 1993/05/20 05:27:42 cgd Exp $
  */
 
 #ifndef _NETISO_TP_IP_H_
@@ -64,9 +65,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_ip.h,v 1.2 1993/04/19 03:45:51 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_ip.h,v $
  *
  * internet IP-dependent structures and include files
  *

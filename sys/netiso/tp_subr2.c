@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_subr2.c	7.10 (Berkeley) 6/27/91
+ *	from: @(#)tp_subr2.c	7.10 (Berkeley) 6/27/91
+ *	$Id: tp_subr2.c,v 1.2 1993/05/20 05:27:59 cgd Exp $
  */
 
 /***********************************************************
@@ -61,9 +62,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_subr2.c,v 1.1 1993/04/09 12:01:51 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_subr2.c,v $
  *
  * Some auxiliary routines:
  * 	tp_protocol_error: required by xebec- called when a combo of state,

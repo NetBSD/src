@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_cons.c	7.10 (Berkeley) 5/29/91
+ *	from: @(#)if_cons.c	7.10 (Berkeley) 5/29/91
+ *	$Id: if_cons.c,v 1.2 1993/05/20 05:27:10 cgd Exp $
  */
 
 /***********************************************************
@@ -60,9 +61,6 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- * $Header: /cvsroot/src/sys/netiso/Attic/if_cons.c,v 1.1 1993/04/09 12:01:10 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/if_cons.c,v $
- *
  * cons.c - Connection Oriented Network Service:
  * including support for a) user transport-level service, 
  *	b) COSNS below CLNP, and c) CONS below TP.

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_iso.c	7.11 (Berkeley) 5/6/91
+ *	from: @(#)tp_iso.c	7.11 (Berkeley) 5/6/91
+ *	$Id: tp_iso.c,v 1.2 1993/05/20 05:27:44 cgd Exp $
  */
 
 /***********************************************************
@@ -61,8 +62,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_iso.c,v 1.1 1993/04/09 12:01:37 cgd Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_iso.c,v $
  *
  * Here is where you find the iso-dependent code.  We've tried
  * keep all net-level and (primarily) address-family-dependent stuff

@@ -1,8 +1,5 @@
-/* $Header: /cvsroot/src/sys/netiso/Attic/tp_driver.c,v 1.1 1993/04/09 12:01:30 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/Attic/tp_driver.c,v $ */
-#ifndef lint
-static char *rcsid = "$Header/**/$";
-#endif lint
+/* $Id: tp_driver.c,v 1.2 1993/05/20 05:27:34 cgd Exp $ */
+
 #define _XEBEC_PG static
 
 #include "tp_states.h"
@@ -14,7 +11,6 @@ static struct act_ent {
 #include "tp_states.init"
 };
 
-/*	%W% (Berkeley) %G% */
 #include "param.h"
 #include "socket.h"
 #include "socketvar.h"

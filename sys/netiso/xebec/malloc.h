@@ -1,4 +1,3 @@
-/* $Header: /cvsroot/src/sys/netiso/xebec/Attic/malloc.h,v 1.1 1993/04/09 12:02:12 cgd Exp $ */
-/* $Source: /cvsroot/src/sys/netiso/xebec/Attic/malloc.h,v $ */
+/* $Id: malloc.h,v 1.2 1993/05/20 05:28:28 cgd Exp $ */
 
 char *Malloc();

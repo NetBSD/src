@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_seq.h	7.5 (Berkeley) 5/6/91
+ *	from: @(#)tp_seq.h	7.5 (Berkeley) 5/6/91
+ *	$Id: tp_seq.h,v 1.3 1993/05/20 05:27:52 cgd Exp $
  */
 
 #ifndef _NETISO_TP_SEQ_H_
@@ -64,9 +65,6 @@ SOFTWARE.
  */
 /* 
  * ARGO TP
- *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_seq.h,v 1.2 1993/04/19 03:45:57 mycroft Exp $
- * $Source: /cvsroot/src/sys/netiso/Attic/tp_seq.h,v $
  *
  * These macros perform sequence number arithmetic modulo (2**7 or 2**31).
  * The relevant fields in the tpcb are:
