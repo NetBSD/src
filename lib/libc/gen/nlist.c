@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.9 1996/09/30 23:49:27 cgd Exp $	*/
+/*	$NetBSD: nlist.c,v 1.10 1996/10/01 00:27:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: nlist.c,v 1.9 1996/09/30 23:49:27 cgd Exp $";
+static char rcsid[] = "$NetBSD: nlist.c,v 1.10 1996/10/01 00:27:38 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,10 +92,10 @@ __fdnlist(fd, list)
 	int fd;
 	struct nlist *list;
 {
-	int i;
+	int i, rv;
 
 	for (i = 0; i < sizeof(fdnlist_fmts) / sizeof(fdnlist_fmts[0]); i++)
-		if ((*fdnlist_fmts[i].fdnlist)(fd, list) != -1)
-			return;
+		if ((rv = (*fdnlist_fmts[i].fdnlist)(fd, list)) != -1)
+			return rv;
 	return -1;
 }
