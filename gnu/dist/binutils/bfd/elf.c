@@ -4105,7 +4105,11 @@ get_program_header_size (abfd)
 	  && strncmp (s->name, ".note", 5) == 0)
 	{
 	  /* We need a PT_NOTE segment.  */
-	  ++segs;
+	  /*
+	   * XXX: we allocate 2 here, because we can get 2 elf_segment_map's
+	   * from it.
+	   */
+	  segs += 2;
 	}
     }
 
