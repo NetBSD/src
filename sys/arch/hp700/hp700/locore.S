@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2004/07/27 14:25:34 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2004/08/07 21:40:05 chs Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -802,8 +802,7 @@ idle_loop:
 
 #if defined(LOCKDEBUG)
 	/* Release sched_lock */ 
-	.call
-	bl	sched_unlock_idle, %rp
+	CALL(sched_unlock_idle, %r1)
 	nop
 #endif  
 
@@ -822,8 +821,7 @@ idle_loop:
 
 #if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
-	.call
-	bl	sched_lock_idle, %rp
+	CALL(sched_lock_idle, %r1)
 	nop
 #endif
 
@@ -1129,8 +1127,7 @@ ENTRY(switch_exit,0)
 
 #if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
-	.call
-	bl	sched_lock_idle, %rp
+	CALL(sched_lock_idle, %r1)
 	nop
 #endif
 
