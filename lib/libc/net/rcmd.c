@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.21 1997/07/13 19:57:58 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.22 1997/12/21 17:14:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.21 1997/07/13 19:57:58 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.22 1997/12/21 17:14:24 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -679,13 +679,13 @@ __icheckhost(raddr, lhost)
 	u_int32_t raddr;
 	const char *lhost;
 {
-	register struct hostent *hp;
-	register u_int32_t laddr;
-	register char **pp;
+	struct hostent *hp;
+	struct in_addr laddr;
+	char **pp;
 
 	/* Try for raw ip address first. */
-	if (isdigit(*lhost) && (int32_t)(laddr = inet_addr(lhost)) != -1)
-		return (raddr == laddr);
+	if (isdigit(*lhost) && inet_aton(lhost, &laddr) != 0)
+		return (raddr == laddr.s_addr);
 
 	/* Better be a hostname. */
 	if ((hp = gethostbyname(lhost)) == NULL)
