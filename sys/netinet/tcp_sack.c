@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.8 2005/03/08 11:27:14 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.9 2005/03/16 00:38:27 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.8 2005/03/08 11:27:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.9 2005/03/16 00:38:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -191,7 +191,6 @@ tcp_update_sack_list(struct tcpcb *tp)
 	if (tp->rcv_sack_flags & TCPSACK_HAVED) {
 		tp->rcv_sack_block[0].left = tp->rcv_dsack_block.left;
 		tp->rcv_sack_block[0].right = tp->rcv_dsack_block.right;
-		tp->rcv_sack_flags &= ~TCPSACK_HAVED;
 		i++;
 	}
 
@@ -552,4 +551,15 @@ tcp_sack_adjust(struct tcpcb *tp)
 	tp->snd_nxt = tp->rcv_lastsack;
 
 	return;
+}
+
+int
+tcp_sack_optlen(struct tcpcb *tp)
+{
+
+	if (!TCP_SACK_ENABLED(tp) || tp->rcv_sack_num == 0) {
+		return 0;
+	}
+
+	return tp->rcv_sack_num * 8 + 2 + 2;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.121 2005/03/09 04:51:56 atatat Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.122 2005/03/16 00:38:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -852,6 +852,7 @@ void	 tcp_free_sackholes(struct tcpcb *);
 void	 tcp_sack_adjust(struct tcpcb *tp);
 struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
 void	 tcp_sack_newack(struct tcpcb *, struct tcphdr *);
+int	 tcp_sack_optlen(struct tcpcb *);
 
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
