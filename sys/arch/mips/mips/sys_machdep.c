@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.25 2003/08/07 16:28:33 agc Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.26 2004/10/21 03:15:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.25 2003/08/07 16:28:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.26 2004/10/21 03:15:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,12 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 	 * invalidating the PA.
 	 */
 	for (base = (void*) addr; nbytes > 0; base += len, nbytes -= len) {
-		/* XXX vm_fault?  */
+		/*
+		 * XXX: still to be done:
+		 *   Check that base is user-space.
+		 *   Check that we have a mapping, calculate physaddr.
+		 *   Flush relevent cache(s).
+		 */
 		if (whichcache & ICACHE) {
 			MachFlushCache(uncached_physaddr, len);
 		}
