@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.10 1994/02/13 21:13:30 chopps Exp $
+ *	$Id: trap.c,v 1.11 1994/04/04 07:32:50 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -50,6 +50,7 @@
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
+#include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -64,10 +65,6 @@
 #include <vm/vm.h>
 #include <vm/pmap.h>
 #include <sys/vmmeter.h>
-
-#ifdef COMPAT_SUNOS
-#include <compat/sunos/sun_syscall.h>
-#endif
 
 struct	sysent	sysent[];
 int	nsysent;
@@ -116,6 +113,54 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
+
+static void
+userret(p, pc, oticks)
+	struct proc *p;
+	int pc;
+	struct timeval oticks;
+{
+	int sig, s;
+
+	while ((sig = CURSIG(p)) != 0)
+		psig(sig);
+
+	p->p_pri = p->p_usrpri;
+
+	if (want_resched) {
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we setrq ourselves but before we
+		 * swtch()'ed, we might not be on the queue indicated by
+		 * our priority.
+		 */
+		s = splclock();
+		setrq(p);
+		p->p_stats->p_ru.ru_nivcsw++;
+		swtch();
+		splx(s);
+		while ((sig = CURSIG(p)) != 0)
+			psig(sig);
+	}
+	if (p->p_stats->p_prof.pr_scale) {
+		int ticks;
+		struct timeval *tv = &p->p_stime;
+
+		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
+		    (tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
+		if (ticks) {
+#ifdef PROFTIMER
+			extern int profscale;
+			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
+#else
+			addupc(pc, &p->p_stats->p_prof, ticks);
+#endif
+		}
+	}
+	curpri = p->p_pri;
+}
 
 /*
  * Trap is called from locore to handle most types of processor traps,
@@ -518,43 +563,7 @@ if (mmudebug & 2)	/* Panic if bit 1 of mmudebug set */
 	if ((type & T_USER) == 0)
 		return;
 out:
-	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		s = splclock();
-		setrq(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		splx(s);
-		while (i = CURSIG(p))
-			psig(i);
-	}
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(frame.f_pc, &p->p_stats->p_prof,
-			    ticks * profscale);
-#else
-			addupc(frame.f_pc, &p->p_stats->p_prof, ticks);
-#endif
-		}
-	}
-	curpri = p->p_pri;
+	userret(p, frame.f_pc, syst); 
 }
 
 /*
@@ -564,119 +573,116 @@ syscall(code, frame)
 	volatile int code;
 	struct frame frame;
 {
-	register caddr_t params;
-	register int i;
-	register struct sysent *callp;
-	register struct proc *p = curproc;
-	int error, opc, numsys, s;
-	struct args {
-		int i[8];
-	} args;
-	int rval[2];
 	struct timeval syst;
+	struct sysent *callp;
 	struct sysent *systab;
+	int rval[2], args[8], error, opc, numsys, s, i;
+	caddr_t params;
+	struct proc *p;
 
-	cnt.v_syscall++;
-	syst = p->p_stime;
-	if (!USERMODE(frame.f_sr))
+	if (USERMODE(frame.f_sr) == 0)
 		panic("syscall");
+	
+	cnt.v_syscall++;
+	
+	p = curproc;
 	p->p_regs = frame.f_regs;
-	opc = frame.f_pc - 2;
 	p->p_md.md_flags &= ~MDP_STACKADJ;
-	switch (p->p_emul)
-	  {
+	syst = p->p_stime;
+	opc = frame.f_pc - 2;
+	error = 0;
+
+	switch (p->p_emul) {
 #ifdef COMPAT_SUNOS
-	  case EMUL_SUNOS:
-	    systab = sun_sysent;
-	    numsys = nsun_sysent;
+	case EMUL_SUNOS:
+		systab = sun_sysent;
+		numsys = nsun_sysent;
 
-	    /* SunOS passes the syscall-number on the stack, whereas
-	       BSD passes it in D0. So, we have to get the real "code"
-	       from the stack, and clean up the stack, as SunOS glue
-	       code assumes the kernel pops the syscall argument the
-	       glue pushed on the stack. Sigh... */
-	    code = fuword ((caddr_t) frame.f_regs[SP]);
-	    /* XXX don't do this for sun_sigreturn, as there's no
-	       XXX stored pc on the stack to skip, the argument follows
-	       XXX the syscall number without a gap. */
-	    if (code != SYS_sigreturn)
-	      {
-		frame.f_regs[SP] += sizeof (int);
-		/* remember that we adjusted the SP, might have to undo
-		   this if the system call returns ERESTART. */
-		p->p_md.md_flags |= MDP_STACKADJ;
-	      }
-	    break;
+		/*
+		 * SunOS passes the syscall-number on the stack, whereas
+		 * BSD passes it in D0. So, we have to get the real "code"
+		 * from the stack, and clean up the stack, as SunOS glue
+		 * code assumes the kernel pops the syscall argument the
+		 * glue pushed on the stack. Sigh...
+		 */
+		code = fuword ((caddr_t) frame.f_regs[SP]);
+
+		/*
+		 * XXX don't do this for sun_sigreturn, as there's no
+		 * XXX stored pc on the stack to skip, the argument follows
+		 * XXX the syscall number without a gap.
+		 */
+		if (code != 139 /* sun SYS_sigreturn */) {
+			frame.f_regs[SP] += sizeof (int);
+			/*
+			 * remember that we adjusted the SP, 
+			 * might have to undo this if the system call
+			 * returns ERESTART.
+			 */
+			p->p_md.md_flags |= MDP_STACKADJ;
+		}
+		break;
 #endif
+	case EMUL_NETBSD:
+	default:
+		systab = sysent;
+		numsys = nsysent;
+		break;
+	}
 
-	  case EMUL_NETBSD:
-	  default:
-	    systab = sysent;
-	    numsys = nsysent;
-	    break;
-	  }
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
-	if (code == 0) {			/* indir */
+
+	switch (code) {
+	case SYS_syscall:
 		code = fuword(params);
 		params += sizeof(int);
+		break;
+	case SYS___syscall:
+		if (systab != sysent)
+			break;
+		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		params += sizeof(quad_t);
+		break;
+	default:
+		break;
 	}
-	if (code >= numsys)
+
+	if (code < 0 || code >= numsys)
 		callp = &systab[0];		/* indir (illegal) */
 	else
 		callp = &systab[code];
-	if ((i = callp->sy_narg * sizeof (int)) &&
-	    (error = copyin(params, (caddr_t)&args, (u_int)i))) {
-		frame.f_regs[D0] = error;
-		frame.f_sr |= PSL_C;	/* carry bit */
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
-#endif
-		goto done;
-	}
+
+	i = callp->sy_narg * sizeof(int);
+	if (i != 0)
+		error = copyin(params, (caddr_t)args, (u_int)i);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, args);
 #endif
-
-	rval[0] = 0;
-	rval[1] = frame.f_regs[D1];
-#if 0
-if (p->p_emul == EMUL_SUNOS)
-  {
-    int arg;
-    extern char *sun_syscallnames[];
-    printf("{%d [%d]%s} ", p->p_pid, code, sun_syscallnames[code]);
-  }
-#endif
-	error = (*callp->sy_call)(p, &args, rval);
-#if 0
-if (p->p_emul == EMUL_SUNOS)
-  {
-    int arg;
-    extern char *sun_syscallnames[];
-    printf("%d:[%d]%s (", p->p_pid, code, sun_syscallnames[code]);
-    for (arg = 0; arg < callp->sy_narg; arg++)
-      printf ("%s0x%x", arg ? ", " : "", args.i[arg]);
-    printf(") = %d/%d [%d]\n", rval[0], rval[1], error);
-  }
-#endif
-	if (error == ERESTART)
-		frame.f_pc = opc;
-	else if (error != EJUSTRETURN) {
-		if (error) {
-			frame.f_regs[D0] = error;
-			frame.f_sr |= PSL_C;	/* carry bit */
-		} else {
-			frame.f_regs[D0] = rval[0];
-			frame.f_regs[D1] = rval[1];
-			frame.f_sr &= ~PSL_C;
-		}
+	
+	if (error == 0) {
+		rval[0] = 0;
+		rval[1] = frame.f_regs[D1];
+		error = (*callp->sy_call)(p, &args, rval);
 	}
-	/* else if (error == EJUSTRETURN) */
-		/* nothing to do */
 
-done:
+	switch (error) {
+	case 0:
+		frame.f_regs[D0] = rval[0];
+		frame.f_regs[D1] = rval[1];
+		frame.f_sr &= ~PSL_C;
+		break;
+	case ERESTART:
+		frame.f_pc = opc;
+		break;
+	case EJUSTRETURN:
+		break;
+	default:
+		frame.f_regs[D0] = error;
+		frame.f_sr |= PSL_C;	/* carry bit */
+		break;	
+	}
 	/*
 	 * Reinitialize proc pointer `p' as it may be different
 	 * if this is a child returning from fork syscall.
@@ -684,49 +690,12 @@ done:
 	p = curproc;
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
-	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
-	  {
-	    frame.f_regs[SP] -= sizeof (int);
-	    p->p_md.md_flags &= ~MDP_STACKADJ;
-	  }
-#endif
-	while (i = CURSIG(p))
-		psig(i);
-	p->p_pri = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
-		 */
-		s = splclock();
-		setrq(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
-		splx(s);
-		while (i = CURSIG(p))
-			psig(i);
+	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ)) {
+		frame.f_regs[SP] -= sizeof (int);
+		p->p_md.md_flags &= ~MDP_STACKADJ;
 	}
-	if (p->p_stats->p_prof.pr_scale) {
-		int ticks;
-		struct timeval *tv = &p->p_stime;
-
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
-		if (ticks) {
-#ifdef PROFTIMER
-			extern int profscale;
-			addupc(frame.f_pc, &p->p_stats->p_prof,
-			    ticks * profscale);
-#else
-			addupc(frame.f_pc, &p->p_stats->p_prof, ticks);
 #endif
-		}
-	}
-	curpri = p->p_pri;
+	userret(p, frame.f_pc, syst);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -738,19 +707,19 @@ done:
  */
 
 _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
-u_int wb;	/* writeback type: 1, 2, or 3 */
-u_int wb_sts;	/* writeback status information */
-u_int wb_data;	/* data to writeback */
-u_int wb_addr;	/* address to writeback to */
-vm_map_t wb_map;
+	u_int wb;	/* writeback type: 1, 2, or 3 */
+	u_int wb_sts;	/* writeback status information */
+	u_int wb_data;	/* data to writeback */
+	u_int wb_addr;	/* address to writeback to */
+	vm_map_t wb_map;
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;
 	void _wb_fault ();	/* fault handler for write back */
 
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb%d valid: %x %x %x\n",wb,wb_sts,wb_addr,wb_data);
+	if (mmudebug)
+		printf("wb%d valid: %x %x %x\n",wb,wb_sts,wb_addr,wb_data);
 #endif
 
 	/* See if we're going to span two pages (for word or long transfers) */
@@ -769,25 +738,27 @@ if (mmudebug)
 	 * if it's writeback 3, we need to check the first page
 	 */
 	if (wb == 3) {
-
 		mmusr = probeva(wb_addr, wb_sts & WBS_TMMASK);
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb3: probeva(%x,%x) = %x\n",wb_addr+wb_extra_page,wb_sts & WBS_TMMASK,mmusr);
+	if (mmudebug)
+		printf("wb3: probeva(%x,%x) = %x\n",
+		    wb_addr + wb_extra_page, wb_sts & WBS_TMMASK, mmusr);
 #endif
 
 		if(!(mmusr & MMUSR_R)) {
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb3: need to bring in first page\n");
+			if (mmudebug)
+				printf("wb3: need to bring in first page\n");
 #endif
-			wb_rc = vm_fault(wb_map, trunc_page((vm_offset_t)wb_addr), VM_PROT_READ | VM_PROT_WRITE, FALSE);
+			wb_rc = vm_fault(wb_map, 
+			    trunc_page((vm_offset_t)wb_addr), 
+			    VM_PROT_READ | VM_PROT_WRITE, FALSE);
 
 			if(wb_rc != KERN_SUCCESS)
 				return (wb_rc);
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb3: first page brought in.\n");
+			if (mmudebug)
+				printf("wb3: first page brought in.\n");
 #endif
 		}
 	}
@@ -799,24 +770,29 @@ if (mmudebug)
 
 		mmusr = probeva(wb_addr+wb_extra_page, wb_sts & WBS_TMMASK);
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb%d: probeva %x %x = %x\n",wb,wb_addr+wb_extra_page,wb_sts & WBS_TMMASK,mmusr);
+		if (mmudebug)
+			printf("wb%d: probeva %x %x = %x\n",
+			    wb, wb_addr + wb_extra_page, 
+			    wb_sts & WBS_TMMASK,mmusr);
 #endif
 
 		if(!(mmusr & MMUSR_R)) {
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb%d: page boundary crossed.  Bringing in extra page.\n",wb);
+			if (mmudebug)
+				printf("wb%d: page boundary crossed."
+				    "  Bringing in extra page.\n",wb);
 #endif
 
-			wb_rc = vm_fault(wb_map, trunc_page((vm_offset_t)wb_addr+wb_extra_page),VM_PROT_READ | VM_PROT_WRITE,FALSE);
+			wb_rc = vm_fault(wb_map, 
+			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
+			    VM_PROT_READ | VM_PROT_WRITE,FALSE);
 
 			if(wb_rc != KERN_SUCCESS)
 				return (wb_rc);
 		}
 #ifdef DEBUG
-if (mmudebug)
-  printf("wb%d: extra page brought in okay.\n", wb);
+		if (mmudebug)
+			printf("wb%d: extra page brought in okay.\n", wb);
 #endif
 	}
 
