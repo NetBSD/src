@@ -678,7 +678,7 @@ extern int arm_arch4;
   if (flag_pic)						\
     {							\
       fixed_regs[PIC_OFFSET_TABLE_REGNUM] = 1;		\
-      call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 0;	\
+      call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;	\
     }							\
 }
 
@@ -1182,10 +1182,10 @@ do {									\
       if (! volatile_func)						\
         {								\
           for (regno = 0; regno <= 10; regno++)				\
-	    if (regs_ever_live[regno] && ! call_used_regs[regno])	\
+	    if (regs_ever_live[regno] && arm_preserved_register (regno))\
 	      saved_hard_reg = 1, offset += 4;				\
           for (regno = 16; regno <=23; regno++)				\
-	    if (regs_ever_live[regno] && ! call_used_regs[regno])	\
+	    if (regs_ever_live[regno] && arm_preserved_register (regno))\
 	      offset += 12;						\
 	}								\
       if ((FROM) == FRAME_POINTER_REGNUM)				\
@@ -2013,6 +2013,7 @@ do {									\
 /* Prototypes for arm.c -- actually, they aren't since the types aren't 
    fully defined yet.  */
 
+int arm_preserved_register (/* int */);
 void arm_override_options (/* void */);
 int use_return_insn (/* void */);
 int const_ok_for_arm (/* HOST_WIDE_INT */);

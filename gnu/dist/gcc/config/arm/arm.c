@@ -213,6 +213,16 @@ static struct processors all_procs[] =
   {NULL, 0, 0}
 };
 
+int
+arm_preserved_register (regno)
+     int regno;
+{
+  if (flag_pic && regno == PIC_OFFSET_TABLE_REGNUM)
+    return 1;
+       
+  return ! call_used_regs[regno];
+}
+
 /* Fix up any incompatible options that the user has specified.
    This has now turned into a maze.  */
 void
@@ -376,13 +386,13 @@ use_return_insn ()
      stacked */
   if (TARGET_THUMB_INTERWORK)
     for (regno = 0; regno < 16; regno++)
-      if (regs_ever_live[regno] && ! call_used_regs[regno])
+      if (regs_ever_live[regno] && arm_preserved_register (regno))
 	return 0;
       
   /* Can't be done if any of the FPU regs are pushed, since this also
      requires an insn */
   for (regno = 16; regno < 24; regno++)
-    if (regs_ever_live[regno] && ! call_used_regs[regno])
+    if (regs_ever_live[regno] && arm_preserved_register (regno))
       return 0;
 
   /* If a function is naked, don't use the "return" insn.  */
@@ -3585,8 +3595,10 @@ find_barrier (from, max_count)
 
   while (from && count < max_count)
     {
+      rtx tmp;
+
       if (GET_CODE (from) == BARRIER)
-	return from;
+	found_barrier = from;
 
       /* Count the length of this insn */
       if (GET_CODE (from) == INSN
@@ -3594,6 +3606,24 @@ find_barrier (from, max_count)
 	  && CONSTANT_P (SET_SRC (PATTERN (from)))
 	  && CONSTANT_POOL_ADDRESS_P (SET_SRC (PATTERN (from))))
 	count += 8;
+      /* Handle table jumps as a single entity.  */
+      else if (GET_CODE (from) == JUMP_INSN
+	       && JUMP_LABEL (from) != 0
+	       && ((tmp = next_real_insn (JUMP_LABEL (from)))
+		   == next_real_insn (from))
+	       && tmp != NULL
+	       && GET_CODE (tmp) == JUMP_INSN
+	       && (GET_CODE (PATTERN (tmp)) == ADDR_VEC
+		   || GET_CODE (PATTERN (tmp)) == ADDR_DIFF_VEC))
+	{
+	  int elt = GET_CODE (PATTERN (tmp)) == ADDR_DIFF_VEC ? 1 : 0;
+	  count += (get_attr_length (from)
+		    + GET_MODE_SIZE (SImode) * XVECLEN (PATTERN (tmp), elt));
+	  /* Continue after the dispatch table.  */
+	  last = from;
+	  from = NEXT_INSN (tmp);
+	  continue;
+	}
       else
 	count += get_attr_length (from);
 
@@ -4749,7 +4779,7 @@ output_return_instruction (operand, really_return, reverse)
     abort();
     
   for (reg = 0; reg <= 10; reg++)
-    if (regs_ever_live[reg] && ! call_used_regs[reg])
+    if (regs_ever_live[reg] && arm_preserved_register (reg))
       live_regs++;
 
   if (live_regs || (regs_ever_live[14] && ! lr_save_eliminated))
@@ -4771,7 +4801,7 @@ output_return_instruction (operand, really_return, reverse)
 		reverse ? "ldm%?%D0fd\t%|sp!, {" : "ldm%?%d0fd\t%|sp!, {");
 
       for (reg = 0; reg <= 10; reg++)
-        if (regs_ever_live[reg] && ! call_used_regs[reg])
+        if (regs_ever_live[reg] && arm_preserved_register (reg))
           {
 	    strcat (instr, "%|");
             strcat (instr, reg_names[reg]);
@@ -4868,7 +4898,7 @@ output_func_prologue (f, frame_size)
     store_arg_regs = 1;
 
   for (reg = 0; reg <= 10; reg++)
-    if (regs_ever_live[reg] && ! call_used_regs[reg])
+    if (regs_ever_live[reg] && arm_preserved_register (reg))
       live_regs_mask |= (1 << reg);
 
   if (frame_pointer_needed)
@@ -4940,7 +4970,7 @@ output_func_epilogue (f, frame_size)
     }
 
   for (reg = 0; reg <= 10; reg++)
-    if (regs_ever_live[reg] && ! call_used_regs[reg])
+    if (regs_ever_live[reg] && arm_preserved_register (reg))
       {
         live_regs_mask |= (1 << reg);
 	floats_offset += 4;
@@ -4951,7 +4981,7 @@ output_func_epilogue (f, frame_size)
       if (arm_fpu_arch == FP_SOFT2)
 	{
 	  for (reg = 23; reg > 15; reg--)
-	    if (regs_ever_live[reg] && ! call_used_regs[reg])
+	    if (regs_ever_live[reg] && arm_preserved_register (reg))
 	      {
 		floats_offset += 12;
 		fprintf (f, "\tldfe\t%s%s, [%sfp, #-%d]\n", REGISTER_PREFIX,
@@ -4964,7 +4994,7 @@ output_func_epilogue (f, frame_size)
 
 	  for (reg = 23; reg > 15; reg--)
 	    {
-	      if (regs_ever_live[reg] && ! call_used_regs[reg])
+	      if (regs_ever_live[reg] && arm_preserved_register (reg))
 		{
 		  floats_offset += 12;
 		  /* We can't unstack more than four registers at once */
@@ -5021,7 +5051,7 @@ output_func_epilogue (f, frame_size)
       if (arm_fpu_arch == FP_SOFT2)
 	{
 	  for (reg = 16; reg < 24; reg++)
-	    if (regs_ever_live[reg] && ! call_used_regs[reg])
+	    if (regs_ever_live[reg] && arm_preserved_register (reg))
 	      fprintf (f, "\tldfe\t%s%s, [%ssp], #12\n", REGISTER_PREFIX,
 		       reg_names[reg], REGISTER_PREFIX);
 	}
@@ -5031,7 +5061,7 @@ output_func_epilogue (f, frame_size)
 
 	  for (reg = 16; reg < 24; reg++)
 	    {
-	      if (regs_ever_live[reg] && ! call_used_regs[reg])
+	      if (regs_ever_live[reg] && arm_preserved_register (reg))
 		{
 		  if (reg - start_reg == 3)
 		    {
@@ -5201,7 +5231,7 @@ arm_expand_prologue ()
 
   if (! volatile_func)
     for (reg = 0; reg <= 10; reg++)
-      if (regs_ever_live[reg] && ! call_used_regs[reg])
+      if (regs_ever_live[reg] && arm_preserved_register (reg))
 	live_regs_mask |= 1 << reg;
 
   if (! volatile_func && regs_ever_live[14])
@@ -5239,7 +5269,7 @@ arm_expand_prologue ()
       if (arm_fpu_arch == FP_SOFT2)
 	{
 	  for (reg = 23; reg > 15; reg--)
-	    if (regs_ever_live[reg] && ! call_used_regs[reg])
+	    if (regs_ever_live[reg] && arm_preserved_register (reg))
 	      emit_insn (gen_rtx (SET, VOIDmode, 
 				  gen_rtx (MEM, XFmode, 
 					   gen_rtx (PRE_DEC, XFmode,
@@ -5252,7 +5282,7 @@ arm_expand_prologue ()
 
 	  for (reg = 23; reg > 15; reg--)
 	    {
-	      if (regs_ever_live[reg] && ! call_used_regs[reg])
+	      if (regs_ever_live[reg] && arm_preserved_register (reg))
 		{
 		  if (start_reg - reg == 3)
 		    {
