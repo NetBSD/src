@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1996/01/13 03:11:18 chuck Exp $ */
+/*	$NetBSD: machdep.c,v 1.57 1996/02/13 23:59:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -617,8 +617,14 @@ boot(howto)
 {
 	int i;
 	static char str[4];	/* room for "-sd\0" */
+	extern int cold;
 	extern volatile void romhalt(void);
 	extern volatile void romboot(char *);
+
+	if (cold) {
+		printf("halted\n\n");
+		romhalt();
+	}
 
 	fb_unblank();
 	boothowto = howto;
