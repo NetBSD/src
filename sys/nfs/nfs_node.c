@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.3 2001/09/21 22:36:56 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.4 2001/09/25 16:28:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -222,7 +222,7 @@ loop:
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
-	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->_ucred, 
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->p_ucred, 
 	    curproc->l_proc);
 	if (error) {
 		vgone(vp);
