@@ -1,4 +1,4 @@
-/*	$NetBSD: nis_sv.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: nis_sv.c,v 1.1.1.1.10.1 2002/06/28 11:53:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis_sv.c,v 1.14 1999/01/18 07:46:59 vixie Exp";
+static const char rcsid[] = "Id: nis_sv.c,v 1.15 2001/05/29 05:49:19 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -207,6 +207,7 @@ sv_next(struct irs_sv *this) {
 
 static void
 sv_minimize(struct irs_sv *this) {
+	UNUSED(this);
 	/* NOOP */
 }
 
@@ -244,7 +245,7 @@ makeservent(struct irs_sv *this) {
 	pvt->serv.s_port = htons((u_short) atoi(p));
 	pvt->serv.s_proto = NULL;
 	
-	while (*p && !isspace(*p))
+	while (*p && !isspace((unsigned char)*p))
 		if (*p++ == '/')
 			pvt->serv.s_proto = p;
 	if (!pvt->serv.s_proto)
