@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.5 2001/06/26 02:11:55 hubertf Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.6 2001/06/26 02:28:47 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,31 +103,31 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
-.Xr s\&t 4
+.Xr \&st 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar wd#
 IDE disk drives, see
-.Xr w\&d 4
+.Xr \&wd 4
 . It Ar sd#
 SCSI or ATAPI disk drives, see
-.Xr s\&d 4
+.Xr \&sd 4
 . It Ar cd#
 SCSI or ATAPI CD-ROM, see
-.Xr c\&d 4
+.Xr \&cd 4
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr c\&cd 4
+.Xr \&ccd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr m\&d 4
+.Xr \&md 4
 . It Ar vnd#
 File pseudo-disks, see
-.Xr v\&nd 4
+.Xr \&vnd 4
 . It Ar raid#
 RAIDframe disk devices, see
-.Xr r\&aid 4
+.Xr \&raid 4
 . El
 .It Terminals:
 . Bl -tag -width 0123456789 -compact
@@ -135,16 +135,16 @@ RAIDframe disk devices, see
 Workstation console (``wscons'') glass-tty emulators
 . It Ar com#
 Standard PC COM ports, see
-.Xr c\&om 4
+.Xr \&com 4
 . It Ar tty#
 Alias for PC COM ports, this is what the system really wants, see
-.Xr t\&ty 4
+.Xr \&tty 4
 . El
 .It Pseudo terminals:
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr p\&ty 4
+.Xr \&pty 4
 . El
 .It Printers:
 . Bl -tag -width 0123456789 -compact
@@ -161,15 +161,15 @@ Archimedes parallel port
 File descriptors (/dev/fd/*)
 . It Ar bpf#
 Berkeley packet filter devices, see
-.Xr b\&pf 4
+.Xr \&bpf 4
 . It Ar ipl
 IP filter
 . It Ar random
 Random number generator, see
-.Xr r\&nd 4
+.Xr \&rnd 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr t\&un 4
+.Xr \&tun 4
 . It Ar cfs#
 Coda file system device
 . El
