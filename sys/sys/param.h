@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.188.2.4 2004/10/01 03:56:23 jmc Exp $	*/
+/*	$NetBSD: param.h,v 1.188.2.5 2004/10/04 05:25:37 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,24 +50,23 @@
  *	#define __NetBSD_Version__ MMmmrrpp00
  *
  *	M = major version
- *	m = minor version
- *	r = release ["",A-Z,Z[A-Z] but numeric]
+ *	m = minor version; a minor number of 99 indicates current.
+ *	r = 0 (*)
  *	p = patchlevel
- *
- *	So:
- *	     NetBSD-1.2D  = 102040000
- *	And:
- *	     NetBSD-1.2.1 = 102000100
- *
- *
- * The version name in comment must be kept in sync with the numeric
- * value, conf/osrelease.sh uses the value as the current kernel version.
  *
  * When new releases are made, src/gnu/usr.bin/groff/tmac/mdoc.local
  * needs to be updated and the changes sent back to the groff maintainers.
+ *
+ * (*)	Up to 2.0I "release" used to be "",A-Z,Z[A-Z] but numeric
+ *	    	e.g. NetBSD-1.2D  = 102040000 ('D' == 4)
+ *	NetBSD-2.0H 	(200080000) was changed on 20041001 to:
+ *	2.99.9		(299000900)
  */
 
 #define	__NetBSD_Version__	200000000	/* NetBSD 2.0_RC2 */
+
+#define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
+    (m) * 1000000) + (p) * 100) >= __NetBSD_Version__)
 
 /*
  * Historical NetBSD #define
