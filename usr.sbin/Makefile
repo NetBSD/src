@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122 1999/07/17 14:06:24 itojun Exp $
+#	$NetBSD: Makefile,v 1.123 1999/07/19 09:11:25 kleink Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -11,7 +11,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	chown chroot chrtbl config cron dbsym dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom eshconfig greconfig \
 	grfconfig grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
-	kvm_mkdb lastlogin lpr mailwrapper map-mbone mbrlabel \
+	kvm_mkdb lastlogin link lpr mailwrapper map-mbone mbrlabel \
 	mdconfig mdsetimage \
 	memswitch mopd mountd mrinfo mrouted mtrace mtree \
 	netgroup_mkdb nfsd nfsiod pkg_install portmap pppd pstat \
@@ -19,7 +19,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpc.yppasswdd rwhod sa screenblank \
 	sliplogin slstats spray sup sysctl syslogd tcpdchk \
-	tcpdmatch tcpdump timed traceroute trpt trsp update \
+	tcpdmatch tcpdump timed traceroute trpt trsp unlink update \
 	usbdevs videomode vipw vnconfig wiconfig wsconscfg wsfontload xntp \
 	ypbind yppoll ypserv ypset \
 	zdump zic
