@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.2 2001/11/30 16:00:28 fredette Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.2.10.1 2002/05/28 23:11:38 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,12 @@
 /* Avoid conflicts on these: */
 #define get_pte sun3x_get_pte
 #define set_pte sun3x_set_pte
+
+/*
+ * We need to get the sun3x NBSG definition, even if we're
+ * building this with a different sun68k target.
+ */
+#include <arch/sun3/include/param3x.h>
 
 #include <sys/param.h>
 #include <machine/mon.h>
