@@ -1,2 +1,13 @@
-# $NetBSD: md.i386,v 1.1.2.2 2003/02/15 11:16:29 he Exp $
+# $NetBSD: md.i386,v 1.1.2.3 2003/06/20 10:07:15 grant Exp $
 ./usr/X11R6/man/cat1/scanpci.0
+./usr/X11R6/bin/gtf
+./usr/X11R6/bin/inb
+./usr/X11R6/bin/inl
+./usr/X11R6/bin/inw
+./usr/X11R6/bin/ioport
+./usr/X11R6/bin/mmapr
+./usr/X11R6/bin/mmapw
+./usr/X11R6/bin/outb
+./usr/X11R6/bin/outl
+./usr/X11R6/bin/outw
+./usr/X11R6/man/cat1/gtf.0
