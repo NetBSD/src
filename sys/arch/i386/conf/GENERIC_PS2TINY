@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.23 2003/04/10 22:06:58 christos Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.24 2004/02/16 17:11:26 wiz Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -25,8 +25,6 @@ options 	I586_CPU
 options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
