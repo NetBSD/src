@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2002/04/26 15:50:23 lukem Exp $
+#	$NetBSD: list,v 1.10.2.1 2002/06/05 11:26:06 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -74,7 +74,7 @@ COPY	${CURDIR}/termcap.vt100			usr/share/misc/termcap
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
-#COPY	${CURDIR}/inst.sh			usr/local/sbin/inst
+#COPY	${CURDIR}/inst.sh			usr/local/sbin/inst	555
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile		.profile
