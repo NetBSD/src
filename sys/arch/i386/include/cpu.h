@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.87 2002/10/06 20:40:27 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88 2002/11/02 07:15:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -244,7 +244,7 @@ do {									\
 	struct cpu_info *__ci = (ci);					\
 	__ci->ci_want_resched = 1;					\
 	aston(__ci);							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define aston(ci)		(curcpu()->ci_astpending = 1)
 
