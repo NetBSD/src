@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1996/12/17 21:11:31 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1997/01/18 19:32:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -123,7 +123,8 @@ L_high_code:
 | Note curpcb was already set in sun3_bootstrap.
 | Will do fpu initialization during autoconfig (see fpu.c)
 | The interrupt vector table and stack are now ready.
-	movw	#PSL_LOWIPL,sr		| lower SPL
+| Interrupts will be enabled later, AFTER  autoconfiguration
+| is finished, to avoid spurrious interrupts.
 
 /*
  * Final preparation for calling main.

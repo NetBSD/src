@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 1996/12/17 21:11:14 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 1997/01/18 19:32:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,12 +69,13 @@ int cold;
 
 void configure()
 {
-	struct device *mainbus;
 
 	/* General device autoconfiguration. */
-	mainbus = config_rootfound("mainbus", NULL);
-	if (mainbus == NULL)
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not found");
+
+	printf("enabling interrupts\n");
+	(void)spl0();
 
 	/* Choose root and swap devices. */
 	swapgeneric();
