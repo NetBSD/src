@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.50 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.51 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -195,3 +195,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	fparseln(3): migrated from libutil to libc.  [lukem 20021130]
 	x68k: add bmd(4), memory disk driver for Nereid bank memory.
 		[isaki 20021201]
+	i386: biosboot bootblocks now support booting off 2.88MB drive
+		using 1.44MB floppy disk [jdolecek 20021204]
