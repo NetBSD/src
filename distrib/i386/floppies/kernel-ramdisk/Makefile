@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/21 18:19:26 he Exp $
+#	$NetBSD: Makefile,v 1.4 2000/11/13 21:10:57 fvdl Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,7 +63,7 @@ all: ${KERNELS}
 
 release:
 	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp -p ${KERNELS} ${RELEASEDIR}/binary/kernel
+	cp -p ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
 clean cleandir distclean:
 	rm -f *.core ${KERNELS} ${KERNELSYMS}
