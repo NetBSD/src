@@ -1,4 +1,4 @@
-/*	$NetBSD: headersize.c,v 1.2 1996/05/09 23:54:07 cgd Exp $	*/
+/*	$NetBSD: headersize.c,v 1.3 1996/05/10 00:15:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -44,5 +44,5 @@ main()
 	}
 	execp = (struct ecoff_exechdr *)buf;
 
-	printf("%d\n", ECOFF_TXTOFF(&execp->f, &execp->a));
+	printf("%d\n", ECOFF_TXTOFF(execp));
 }
