@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.10 1998/09/02 14:58:01 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.11 1998/09/21 22:54:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -290,7 +290,6 @@ bus_dmamap_load_uio(t, map, uio, flags)
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
 	struct iovec *iov;
-	off_t offset;
 	caddr_t addr;
 
 	/*
@@ -299,7 +298,6 @@ bus_dmamap_load_uio(t, map, uio, flags)
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-	offset = uio->uio_offset;
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
@@ -315,26 +313,17 @@ bus_dmamap_load_uio(t, map, uio, flags)
 	seg = 0;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
-		/* Find the beginning iovec. */
-		if (offset >= iov[i].iov_len) {
-			offset -= iov[i].iov_len;
-			continue;
-		}
-
 		/*
 		 * Now at the first iovec to load.  Load each iovec
 		 * until we have exhausted the residual count.
 		 */
-		minlen = resid < iov[i].iov_len - offset ?
-		    resid : iov[i].iov_len - offset;
-
-		addr = (caddr_t)iov[i].iov_base + offset;
+		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
+		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    p, flags, &lastaddr, &seg, first);
 		first = 0;
 
-		offset = 0;
 		resid -= minlen;
 	}
 	if (error == 0) {
