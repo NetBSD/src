@@ -398,6 +398,8 @@
 ./usr/X11R6/lib/X11/fonts/75dpi/timR14.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/timR18.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/timR24.pcf.gz
+./usr/X11R6/lib/X11/fonts/PEX/Roman.phont
+./usr/X11R6/lib/X11/fonts/PEX/Roman_M.phont
 ./usr/X11R6/lib/X11/fonts/Speedo/font0419.spd
 ./usr/X11R6/lib/X11/fonts/Speedo/font0582.spd
 ./usr/X11R6/lib/X11/fonts/Speedo/font0583.spd
