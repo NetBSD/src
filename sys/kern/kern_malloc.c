@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.78 2003/02/14 21:51:36 pk Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.79 2003/05/06 18:07:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.78 2003/02/14 21:51:36 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79 2003/05/06 18:07:57 fvdl Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -497,6 +497,10 @@ free(void *addr, struct malloc_type *ksp)
 		if (ksp->ks_memuse + size >= ksp->ks_limit &&
 		    ksp->ks_memuse < ksp->ks_limit)
 			wakeup((caddr_t)ksp);
+#ifdef DIAGNOSTIC
+		if (ksp->ks_inuse == 0)
+			panic("free 1: inuse 0, probable double free");
+#endif
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 #endif
@@ -553,6 +557,10 @@ free(void *addr, struct malloc_type *ksp)
 	if (ksp->ks_memuse + size >= ksp->ks_limit &&
 	    ksp->ks_memuse < ksp->ks_limit)
 		wakeup((caddr_t)ksp);
+#ifdef DIAGNOSTIC
+	if (ksp->ks_inuse == 0)
+		panic("free 2: inuse 0, probable double free");
+#endif
 	ksp->ks_inuse--;
 #endif
 	if (kbp->kb_next == NULL)
