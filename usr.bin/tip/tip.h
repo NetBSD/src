@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.15 2003/08/07 11:16:19 agc Exp $	*/
+/*	$NetBSD: tip.h,v 1.16 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -98,11 +98,11 @@ char	DC;			/* this host is directly connected. */
  */
 typedef
 	struct {
-		char	*v_name;	/* whose name is it */
+		const char *v_name;	/* whose name is it */
 		char	v_type;		/* for interpreting set's */
 		char	v_access;	/* protection of touchy ones */
-		char	*v_abrev;	/* possible abreviation */
-		char	*v_value;	/* casted to a union later */
+		const char *v_abrev;	/* possible abreviation */
+		char *v_value;		/* casted to a union later */
 				/*
 				 * XXX:	this assumes that the storage space 
 				 *	of a pointer >= that of a long
@@ -136,7 +136,7 @@ typedef
  */
 typedef
 	struct {
-		char	*acu_name;
+		const char *acu_name;
 		int	(*acu_dialer) __P((char *, char *));
 		void	(*acu_disconnect) __P((void));
 		void	(*acu_abort) __P((void));
@@ -174,7 +174,7 @@ typedef
 	struct {
 		char	e_char;			/* char to match on */
 		char	e_flags;		/* experimental, privileged */
-		char	*e_help;		/* help string */
+		const char *e_help;		/* help string */
 		void 	(*e_func) __P((char));	/* command */
 	}
 	esctable_t;
@@ -270,17 +270,17 @@ extern esctable_t	etable[];
 extern unsigned char	evenpartab[];
 
 void	alrmtimeout __P((int));
-int	any __P((char, char *));
+int	any __P((char, const char *));
 void	chdirectory __P((char));
 void	cleanup __P((int));
-char   *connect __P((void));
+const char   *connect __P((void));
 void	consh __P((char));
 char   *ctrl __P((char));
 int	cumain __P((int, char **));
 void	cu_put __P((char));
 void	cu_take __P((char));
 void	daemon_uid __P((void));
-void	disconnect __P((char *));
+void	disconnect __P((const char *));
 char   *expand __P((char *));
 void	finish __P((char));
 void	genbrk __P((char));
@@ -288,24 +288,24 @@ void	getfl __P((char));
 char   *getremote __P((char *));
 void	help __P((char));
 int	hunt __P((char *));
-char   *interp __P((char *));
-void	logent __P((char *, char *, char *, char *));
+char   *interp __P((const char *));
+void	logent __P((const char *, const char *, const char *, const char *));
 void	loginit __P((void));
 void	pipefile __P((char));
 void	pipeout __P((char));
-int	prompt __P((char *, char *, size_t));
+int	prompt __P((const char *, char *, size_t));
 void	xpwrite __P((int, char *, int));
 void	raw __P((void));
 void	send __P((char));
 void	sendfile __P((char));
-void	setparity __P((char *));
+void	setparity __P((const char *));
 void	setscript __P((void));
 void	shell __P((char));
 void	shell_uid __P((void));
 int	speed __P((int));
 void	suspend __P((char));
-void	tandem __P((char *));
-void	tipabort __P((char *));
+void	tandem __P((const char *));
+void	tipabort __P((const char *));
 void	tipout __P((void));
 void	ttysetup __P((int));
 void	unraw __P((void));
@@ -316,7 +316,7 @@ void	variable __P((char));
 void	vinit __P((void));
 char   *vinterp __P((char *, char));
 void	vlex __P((char *));
-int	vstring __P((char *, char *));
+int	vstring __P((const char *, char *));
 
 void	biz22_abort __P((void));
 void	biz22_disconnect __P((void));

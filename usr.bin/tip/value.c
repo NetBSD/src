@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.10 2003/08/07 11:16:20 agc Exp $	*/
+/*	$NetBSD: value.c,v 1.11 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.10 2003/08/07 11:16:20 agc Exp $");
+__RCSID("$NetBSD: value.c,v 1.11 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -45,7 +45,7 @@ static int col = 0;
 
 static	int	vaccess __P((unsigned, unsigned));
 static	void	vassign __P((value_t *, char *));
-static	value_t *vlookup __P((char *));
+static	value_t *vlookup __P((const char *));
 static	void	vprint __P((value_t *));
 static	void	vtoken __P((char *));
 
@@ -223,6 +223,7 @@ vprint(p)
 		printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
+/*###226 [cc] warning: passing arg 1 of `interp' discards qualifiers from pointer target type%%%*/
 			cp = interp(p->v_value);
 			col += strlen(cp);
 			printf("%s", cp);
@@ -266,7 +267,7 @@ vaccess(mode, rw)
 
 static value_t *
 vlookup(s)
-	char *s;
+	const char *s;
 {
 	value_t *p;
 
@@ -277,14 +278,14 @@ vlookup(s)
 }
 
 char *
-vinterp(s, stop)
+vinterp(s, stp)
 	char *s;
-	char stop;
+	char stp;
 {
 	char *p = s, c;
 	int num;
 
-	while ((c = *s++) && c != stop)
+	while ((c = *s++) && c != stp)
 		switch (c) {
 
 		case '^':
@@ -300,7 +301,7 @@ vinterp(s, stop)
 			if (c >= '0' && c <= '7')
 				num = (num<<3)+(c-'0');
 			else {
-				char *q = "n\nr\rt\tb\bf\f";
+				const char *q = "n\nr\rt\tb\bf\f";
 
 				for (; *q; q++)
 					if (c == *q++) {
@@ -326,7 +327,7 @@ vinterp(s, stop)
 			*p++ = c;
 		}
 	*p = '\0';
-	return (c == stop ? s-1 : NULL);
+	return (c == stp ? s-1 : NULL);
 }
 
 /*
@@ -335,7 +336,7 @@ vinterp(s, stop)
 
 int
 vstring(s,v)
-	char *s;
+	const char *s;
 	char *v;
 {
 	value_t *p;

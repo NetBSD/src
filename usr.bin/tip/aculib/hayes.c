@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.9 2003/08/07 11:16:22 agc Exp $	*/
+/*	$NetBSD: hayes.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.9 2003/08/07 11:16:22 agc Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ static char dumbuf[DUMBUFLEN];
 static	int state = IDLE;
 
 static	void	error_rep __P((char));
-static	char	gobble __P((char *));
+static	char	gobble __P((const char *));
 static	void	goodbye __P((void));
 static	int	hay_sync __P((void));
 static	void	sigALRM __P((int));
@@ -173,7 +173,7 @@ sigALRM(dummy)
 
 static char
 gobble(match)
-	char *match;
+	const char *match;
 {
 	char c;
 	sig_t f;

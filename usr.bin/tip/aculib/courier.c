@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.12 2003/08/07 11:16:21 agc Exp $	*/
+/*	$NetBSD: courier.c,v 1.13 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: courier.c,v 1.12 2003/08/07 11:16:21 agc Exp $");
+__RCSID("$NetBSD: courier.c,v 1.13 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -52,12 +52,12 @@ static	jmp_buf timeoutbuf;
 static	int	cour_connect __P((void));
 static	void	cour_nap __P((void));
 static	void	cour_napx __P((int));
-static	int	cour_swallow __P((char *));
+static	int	cour_swallow __P((const char *));
 static	int	coursync __P((void));
 #ifdef DEBUG
 static	void	cour_verbose_read __P((void));
 #endif
-static	void	cour_write __P((int, char *, int));
+static	void	cour_write __P((int, const char *, int));
 static	void	sigALRM __P((int));
 
 int
@@ -150,7 +150,7 @@ sigALRM(dummy)
 
 static int
 cour_swallow(match)
-	char *match;
+	const char *match;
 {
 	sig_t f;
 	char c;
@@ -188,7 +188,7 @@ cour_swallow(match)
 }
 
 struct baud_msg {
-	char *msg;
+	const char *msg;
 	int baud;
 } baud_msg[] = {
 	{ "",		B300 },
@@ -321,7 +321,7 @@ coursync()
 static void
 cour_write(fd, cp, n)
 	int fd;
-	char *cp;
+	const char *cp;
 	int n;
 {
 
