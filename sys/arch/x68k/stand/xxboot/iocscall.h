@@ -1,4 +1,4 @@
-/*	$NetBSD: iocscall.h,v 1.1 1998/09/01 20:02:34 itohy Exp $	*/
+/*	$NetBSD: iocscall.h,v 1.2 2001/06/12 16:57:28 minoura Exp $	*/
 
 /*
  *	IOCS call macros for X680x0
@@ -14,7 +14,7 @@
 #endif
 
 #define IOCS(n)	\
-	moveq	IMM n,d0;\
+	moveq	IMM n,%d0;\
 	trap	IMM 15
 
 #define __B_KEYINP	0x00
@@ -34,7 +34,7 @@
 #define __SCSIDRV	0xFFFFFFF5
 
 #define SCSIIOCS(s)	\
-	moveq	IMM s,d1;\
+	moveq	IMM s,%d1;\
 	IOCS(__SCSIDRV)
 
 #define __S_READ	0x21

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/02/01 05:25:50 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2001/06/12 16:57:28 minoura Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -18,6 +18,7 @@ SCRIPTS=	installboot.sh
 MKMAN=		no
 
 STRIP?=		strip
+OBJCOPY?=	objcopy
 
 SRCS=	xxboot.S bootufs.c unzip.c
 .PATH:	${.CURDIR}/gunzip
@@ -29,7 +30,7 @@ CFLAGS+= -DGZIP -DSCSI_ADHOC_BOOTPART
 CFLAGS+= -DTITLE_IMAGE -DIMAGE_EXTRA=100
 #CFLAGS+= -DBOOT_DEBUG
 AFLAGS=	${CFLAGS:M-[ID]*}
-LDFLAGS=-n -Bstatic -T $(TEXT)
+LDFLAGS=-N -Bstatic -Ttext $(TEXT) -e top
 #LDADD=	-lc
 
 CLEANFILES=	$(BOOT).x s.x x.s x.o
@@ -57,7 +58,7 @@ $(BOOT): $(OBJS)
 	then	echo '$(BOOT): text+data is too large'; exit 1; fi
 	@cp $(BOOT).x s.x
 	@$(STRIP) s.x
-	@dd bs=32 skip=1 count=256 if=s.x of=$(BOOT) 2>/dev/null
+	@$(OBJCOPY) -O binary s.x $(BOOT)
 	@rm s.x
 
 bootufs.o unzip.o: ej2sjesc

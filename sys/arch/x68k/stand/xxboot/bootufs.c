@@ -1,4 +1,4 @@
-/*	$NetBSD: bootufs.c,v 1.1 1998/09/01 20:02:34 itohy Exp $	*/
+/*	$NetBSD: bootufs.c,v 1.2 2001/06/12 16:57:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -759,7 +759,7 @@ bootufs()
 		 * ここから先は割り込み禁止である。
 		 * 気をつけてくれ。
 		 */
-		asm("oriw #0x0700,sr");
+		asm("oriw #0x0700,%sr");
 
 		/* 実行 */
 		exec_kernel(&execinfo);
