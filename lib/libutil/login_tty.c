@@ -1,4 +1,4 @@
-/*	$NetBSD: login_tty.c,v 1.6 1997/06/29 18:44:06 christos Exp $	*/
+/*	$NetBSD: login_tty.c,v 1.7 1999/01/11 23:10:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login_tty.c,v 1.6 1997/06/29 18:44:06 christos Exp $");
+__RCSID("$NetBSD: login_tty.c,v 1.7 1999/01/11 23:10:26 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ login_tty(fd)
 	(void) dup2(fd, 0);
 	(void) dup2(fd, 1);
 	(void) dup2(fd, 2);
-	if (fd > 2)
+	if (fd > STDERR_FILENO)
 		(void) close(fd);
 	return (0);
 }
