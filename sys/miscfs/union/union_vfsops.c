@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union_vfsops.c	8.7 (Berkeley) 3/5/94
- *	$Id: union_vfsops.c,v 1.1 1994/06/08 11:34:02 mycroft Exp $
+ *	from: @(#)union_vfsops.c	8.10 (Berkeley) 5/24/94
+ *	$Id: union_vfsops.c,v 1.2 1994/06/15 23:08:02 mycroft Exp $
  */
 
 /*
@@ -236,10 +236,10 @@ union_mount(mp, path, data, ndp, p)
 
 	switch (um->um_op) {
 	case UNMNT_ABOVE:
-		cp = "<above>";
+		cp = "<above>:";
 		break;
 	case UNMNT_BELOW:
-		cp = "<below>";
+		cp = "<below>:";
 		break;
 	case UNMNT_REPLACE:
 		cp = "";
@@ -362,12 +362,6 @@ union_root(mp, vpp)
 	int error;
 	int loselock;
 
-#ifdef UNION_DIAGNOSTIC
-	printf("union_root(mp = %x, lvp = %x, uvp = %x)\n", mp,
-			um->um_lowervp,
-			um->um_uppervp);
-#endif
-
 	/*
 	 * Return locked reference to root.
 	 */
@@ -395,7 +389,6 @@ union_root(mp, vpp)
 		if (um->um_lowervp)
 			vrele(um->um_lowervp);
 	} else {
-		(*vpp)->v_flag |= VROOT;
 		if (loselock)
 			VTOUNION(*vpp)->un_flags &= ~UN_ULOCK;
 	}

@@ -4,4 +4,5 @@ in this directory.  The replacement version of opendir() automatically
 removes duplicate names when a union stack is encountered.  You will
 then need to rebuild the C library and all commands.
 
-@(#)README	8.1 (Berkeley) 2/15/94
+from: @(#)README	8.1 (Berkeley) 2/15/94
+$Id: README,v 1.2 1994/06/15 23:07:54 mycroft Exp $
