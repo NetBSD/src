@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.14 2002/09/14 17:53:59 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.15 2002/09/19 23:23:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.14 2002/09/14 17:53:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.15 2002/09/19 23:23:19 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -121,8 +121,10 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 		    (int) raidAddress);
 		return (NULL);
 	}
+#if RF_DEBUG_MAP
 	if (rf_mapDebug)
 		rf_PrintRaidAddressInfo(raidPtr, raidAddress, numBlocks);
+#endif
 	for (; raidAddress < endAddress;) {
 		/* make the next stripe structure */
 		RF_ASSERT(asmList);
@@ -244,8 +246,10 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 	asm_hdr->numStripes = numStripes;
 	asm_hdr->stripeMap = asm_list;
 
+#if RF_DEBUG_MAP
 	if (rf_mapDebug)
 		rf_PrintAccessStripeMap(asm_hdr);
+#endif
 	return (asm_hdr);
 }
 /*****************************************************************************************
@@ -692,6 +696,7 @@ rf_PrintFullAccessStripeMap(asm_h, prbuf)
 	}
 }
 
+#if RF_MAP_DEBUG
 void 
 rf_PrintRaidAddressInfo(raidPtr, raidAddr, numBlocks)
 	RF_Raid_t *raidPtr;
@@ -710,6 +715,7 @@ rf_PrintRaidAddressInfo(raidPtr, raidAddr, numBlocks)
 	    (int) (raidAddr % layoutPtr->sectorsPerStripeUnit),
 	    (int) (raidAddr % layoutPtr->sectorsPerStripeUnit));
 }
+#endif
 /*
    given a parity descriptor and the starting address within a stripe,
    range restrict the parity descriptor to touch only the correct stuff.
@@ -796,18 +802,21 @@ rf_ASMCheckStatus(
 	} else
 		if (dstatus == rf_ds_dist_spared) {
 			/* ditto if disk has been spared to dist spare space */
+#if RF_DEBUG_MAP
 			RF_RowCol_t or = pda_p->row, oc = pda_p->col;
 			RF_SectorNum_t oo = pda_p->startSector;
-
+#endif
 			if (pda_p->type == RF_PDA_TYPE_DATA)
 				raidPtr->Layout.map->MapSector(raidPtr, pda_p->raidAddress, &pda_p->row, &pda_p->col, &pda_p->startSector, RF_REMAP);
 			else
 				raidPtr->Layout.map->MapParity(raidPtr, pda_p->raidAddress, &pda_p->row, &pda_p->col, &pda_p->startSector, RF_REMAP);
 
+#if RF_DEBUG_MAP
 			if (rf_mapDebug) {
 				printf("Redirected r %d c %d o %d -> r%d c %d o %d\n", or, oc, (int) oo,
 				    pda_p->row, pda_p->col, (int) pda_p->startSector);
 			}
+#endif
 		} else
 			if (RF_DEAD_DISK(dstatus)) {
 				/* if the disk is inaccessible, mark the
