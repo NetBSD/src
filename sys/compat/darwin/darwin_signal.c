@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.15 2003/12/24 22:53:59 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.16 2003/12/24 22:57:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.15 2003/12/24 22:53:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.16 2003/12/24 22:57:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,8 +137,8 @@ darwin_trapsignal(l, ksi)
 }
 
 int
-darwin_tracesig(l, signo)
-	struct lwp *l;
+darwin_tracesig(p, signo)
+	struct proc *l;
 	int signo;
 {
 	struct proc *p = l->l_proc;
