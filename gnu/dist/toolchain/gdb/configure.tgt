@@ -171,6 +171,8 @@ m88*-motorola-*)	gdb_target=delta88 ;;
 m88*-*-*)		gdb_target=m88k ;;
 
 mcore*-*-*)		gdb_target=mcore ;;
+
+mips*-*-netbsd*)	gdb_target=nbsd ;;
 mips64*-big-*)		gdb_target=bigmips64 ;;
 mips*-big-*)		gdb_target=bigmips ;;
 mips*-dec-mach3*)	gdb_target=mach3 ;;
