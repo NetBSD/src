@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1997/06/14 18:56:11 perry Exp $
+#	$NetBSD: dot.profile,v 1.2 1997/08/22 18:23:08 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -37,6 +37,8 @@ export TERM
 
 umask 022
 
+ROOTDEV=/dev/md0a
+
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
@@ -47,6 +49,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# run update, so that installed software is written as it goes.
 	update
+
+	# mount the ramdisk read write
+	mount -u $ROOTDEV /
 
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern
