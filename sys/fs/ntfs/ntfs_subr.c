@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.12 2005/02/13 11:55:40 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.13 2005/02/13 11:57:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.12 2005/02/13 11:55:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.13 2005/02/13 11:57:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1193,7 +1193,7 @@ ntfs_ntreaddir(
 	if (fp->f_dirblbuf == NULL) {
 		fp->f_dirblsz = vap->va_a_iroot->ir_size;
 		fp->f_dirblbuf = (caddr_t) malloc(
-		       max(vap->va_datalen,fp->f_dirblsz), M_NTFSDIR, M_WAITOK);
+		       MAX(vap->va_datalen,fp->f_dirblsz), M_NTFSDIR, M_WAITOK);
 	}
 
 	blsize = fp->f_dirblsz;
@@ -1434,7 +1434,7 @@ ntfs_writeattr_plain(
 					ntfs_btocn(off), &vap);
 		if (error)
 			return (error);
-		towrite = min(left, ntfs_cntob(vap->va_vcnend + 1) - off);
+		towrite = MIN(left, ntfs_cntob(vap->va_vcnend + 1) - off);
 		ddprintf(("ntfs_writeattr_plain: o: %d, s: %d (%d - %d)\n",
 			 (u_int32_t) off, (u_int32_t) towrite,
 			 (u_int32_t) vap->va_vcnstart,
@@ -1529,7 +1529,7 @@ ntfs_writentvattr_plain(
 			 * blocks at the same disk offsets to avoid
 			 * confusing the buffer cache.
 			 */
-			tocopy = min(left, ntfs_cntob(1) - off);
+			tocopy = MIN(left, ntfs_cntob(1) - off);
 			cl = ntfs_btocl(tocopy + off);
 			KASSERT(cl == 1 && tocopy <= ntfs_cntob(1));
 			ddprintf(("ntfs_writentvattr_plain: write: " \
@@ -1634,7 +1634,7 @@ ntfs_readntvattr_plain(
 					 * same disk offsets to avoid
 					 * confusing the buffer cache.
 					 */
-					tocopy = min(left,
+					tocopy = MIN(left,
 					    ntfs_cntob(1) - off);
 					cl = ntfs_btocl(tocopy + off);
 					KASSERT(cl == 1 &&
@@ -1672,7 +1672,7 @@ ntfs_readntvattr_plain(
 					ccl -= cl;
 				}
 			} else {
-				tocopy = min(left, ntfs_cntob(ccl) - off);
+				tocopy = MIN(left, ntfs_cntob(ccl) - off);
 				ddprintf(("ntfs_readntvattr_plain: "
 					"hole: ccn: 0x%x ccl: %d, off: %d, " \
 					" len: %d, left: %d\n", 
@@ -1734,7 +1734,7 @@ ntfs_readattr_plain(
 					ntfs_btocn(off), &vap);
 		if (error)
 			return (error);
-		toread = min(left, ntfs_cntob(vap->va_vcnend + 1) - off);
+		toread = MIN(left, ntfs_cntob(vap->va_vcnend + 1) - off);
 		ddprintf(("ntfs_readattr_plain: o: %d, s: %d (%d - %d)\n",
 			 (u_int32_t) off, (u_int32_t) toread,
 			 (u_int32_t) vap->va_vcnstart,
@@ -1821,7 +1821,7 @@ ntfs_readattr(
 			if (error)
 				break;
 
-			tocopy = min(left, ntfs_cntob(NTFS_COMPUNIT_CL) - off);
+			tocopy = MIN(left, ntfs_cntob(NTFS_COMPUNIT_CL) - off);
 
 			if (init == ntfs_cntob(NTFS_COMPUNIT_CL)) {
 				if (uio)
