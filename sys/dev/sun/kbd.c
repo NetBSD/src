@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.27 2000/09/21 23:40:47 eeh Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28 2001/06/08 12:51:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -246,7 +246,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	case KIOCGETKEY:	/* Get keymap entry (old format) */
 		error = kbd_oldkeymap(ks, cmd, (struct okiockey *)data);
 		break;
-#endif	KIOCGETKEY */
+#endif	/* KIOCGETKEY */
 
 	case KIOCSKEY:  	/* Set keymap entry */
 		/* fallthrough */

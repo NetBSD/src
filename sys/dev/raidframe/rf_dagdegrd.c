@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.7 2001/01/26 14:06:16 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.8 2001/06/08 12:51:17 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -645,7 +645,7 @@ rf_CreateRaidCDegradedReadDAG(
 	termNode->antecedents[0] = commitNode;
 	termNode->antType[0] = rf_control;
 }
-#endif (RF_INCLUDE_CHAINDECLUSTER > 0)
+#endif /* (RF_INCLUDE_CHAINDECLUSTER > 0) */
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0)
 /*
