@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23 2001/07/08 18:06:44 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.24 2001/09/05 13:27:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -324,7 +324,7 @@ fdprint(aux, fdc)
 	void *aux;
 	const char *fdc;
 {
-	register struct fdc_attach_args *fa = aux;
+	struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
 		printf(" drive %d", fa->fa_drive);
@@ -360,7 +360,7 @@ fdcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	struct fdc_softc *fdc = (void *)self;
 	struct fdc_attach_args fa;
 	int pri, vec;
@@ -586,7 +586,7 @@ fd_dev_to_type(fd, dev)
 
 void
 fdstrategy(bp)
-	register struct buf *bp;	/* IO operation to perform */
+	struct buf *bp;			/* IO operation to perform */
 {
 	struct fd_softc *fd;
 	int unit = FDUNIT(bp->b_dev);
@@ -1045,7 +1045,7 @@ fdchwintr(arg)
 	}
 
 	for (;;) {
-		register int msr;
+		int msr;
 
 		msr = *fdc->sc_reg_msr;
 

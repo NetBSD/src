@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.35 2000/11/15 01:02:14 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.36 2001/09/05 13:27:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -464,7 +464,7 @@ ie_intr(arg)
 	void *arg;
 {
 	struct ie_softc *sc = arg;
-	register u_short status;
+	u_short status;
 	int loopcnt;
 
 	/*
@@ -671,9 +671,9 @@ static inline u_short
 ether_cmp(one, two)
 	u_char *one, *two;
 {
-	register u_short *a = (u_short *) one;
-	register u_short *b = (u_short *) two;
-	register u_short diff;
+	u_short *a = (u_short *) one;
+	u_short *b = (u_short *) two;
+	u_short diff;
 
 	diff  = *a++ - *b++;
 	diff |= *a++ - *b++;
@@ -727,7 +727,7 @@ ie_buflen(sc, head)
 	struct ie_softc *sc;
 	int head;
 {
-	register int len;
+	int len;
 
 	len = SWAP(sc->rbuffs[head]->ie_rbd_actual);
 	len &= (IE_RBUF_SIZE | (IE_RBUF_SIZE - 1));
@@ -1548,7 +1548,7 @@ iestop(sc)
 
 static int
 ieioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
