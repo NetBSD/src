@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.4 1996/02/04 02:02:14 christos Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.5 1996/02/21 00:10:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -60,10 +60,11 @@ compat_09_sys_getdomainname(p, v, retval)
 		syscallarg(int) len;
 	} */ *uap = v;
 	int name;
+	size_t sz;
 
 	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, SCARG(uap, domainname),
-			    &SCARG(uap, len), 0, 0, p));
+	sz = SCARG(uap,len);
+	return (kern_sysctl(&name, 1, SCARG(uap, domainname), &sz, 0, 0, p));
 }
 
 
