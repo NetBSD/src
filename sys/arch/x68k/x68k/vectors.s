@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.7.6.3 1999/02/02 23:47:36 minoura Exp $
+|	$NetBSD: vectors.s,v 1.7.6.4 1999/02/13 18:04:55 minoura Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -172,18 +172,13 @@ _vectab:
 	.long	_partrap	/* 99: parallel port */
 	.long	_intiotrap	/* 100: FDC DMA */
 	.long	_intiotrap	/* 101: FDC DMA (error) */
-#ifdef SCSIDMA
-	.long	_spcdmatrap	/* 102: SCSI DMA */
-	.long	_spcdmaerrtrap	/* 103: SCSI DMA (error) */
-#else
 	.long	_intiotrap	/* 102: unassigned, reserved */
 	.long	_intiotrap	/* 103: unassigned, reserved */
-#endif
 	.long	_intiotrap	/* 104: unassigned, reserved */
 	.long	_intiotrap	/* 105: unassigned, reserved */
 	.long	_intiotrap	/* 106: ADPCM DMA */
 	.long	_intiotrap	/* 107: ADPCM DMA */
-	.long	_spctrap	/* 108: internal SPC */
+	.long	_intiotrap	/* 108: internal SPC */
 	.long	_intiotrap	/* 109: unassigned, reserved */
 	.long	_intiotrap	/* 110: unassigned, reserved */
 	.long	_intiotrap	/* 111: unassigned, reserved */
