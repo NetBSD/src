@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.19 1998/08/22 20:25:02 thorpej Exp $	*/
+/*	$NetBSD: uio.h,v 1.20 1999/03/28 17:47:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -38,12 +38,14 @@
 #ifndef _SYS_UIO_H_
 #define	_SYS_UIO_H_
 
+#include <sys/featuretest.h>
+
 struct iovec {
 	void	*iov_base;	/* Base address. */
 	size_t	 iov_len;	/* Length. */
 };
 
-#if !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 enum	uio_rw { UIO_READ, UIO_WRITE };
 
 /* Segment flag values. */
@@ -67,17 +69,20 @@ struct uio {
  */
 /* Deprecated: use IOV_MAX from <limits.h> instead. */
 #define UIO_MAXIOV	1024		/* max 1K of iov's */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#ifdef _KERNEL
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
-#endif /* ! _XOPEN_SOURCE */
+#endif
 
 #ifndef	_KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 ssize_t preadv __P((int, const struct iovec *, int, off_t));
 ssize_t pwritev __P((int, const struct iovec *, int, off_t));
-#endif /* ! _XOPEN_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS
