@@ -1,4 +1,4 @@
-/*	$NetBSD: com5.c,v 1.9 1998/08/30 09:19:36 veego Exp $	*/
+/*	$NetBSD: com5.c,v 1.10 1999/07/14 17:42:13 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com5.c,v 1.9 1998/08/30 09:19:36 veego Exp $");
+__RCSID("$NetBSD: com5.c,v 1.10 1999/07/14 17:42:13 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,7 +94,7 @@ love()
 	if (wordtype[wordnumber] == NOUNS && testbit(location[position].objects, wordvalue[wordnumber])) {
 		if (wordvalue[wordnumber] == NORMGOD && !loved) {
 			if (godready >= 2) {
-				puts("She cuddles up to you, and her mouth starts to work:\n'That was my sister's amulet.  The lovely goddess, Purl, was she.  The Empire\ncaptured her just after the Darkness came.  My other sister, Vert, was killed\nby the Dark Lord himself.  He took her amulet and warped its power.\nYour quest was foretold by my father before he died, but to get the Dark Lord's\namulet you must use cunning and skill.  I will leave you my amulet.");
+				puts("She cuddles up to you, and her mouth starts to work:\n'That was my sister's amulet.  The lovely goddess, Purl, was she.  The Empire\ncaptured her just after the Darkness came.  My other sister, Vert, was killed\nby the Dark Lord himself.  He took her amulet and warped its power.\nYour quest was foretold by my father before he died, but to get the Dark Lord's\namulet you must use cunning and skill.  I will leave you my amulet,");
 				puts("which you may use as you wish.  As for me, I am the last goddess of the\nwaters.  My father was the Island King, and the rule is rightfully mine.'\n\nShe pulls the throne out into a large bed.");
 				power++;
 				pleasure += 15;
@@ -118,7 +118,7 @@ love()
 			}
 		}
 		if (wordvalue[wordnumber] == NATIVE) {
-			puts("The girl is easy prey.  She peals off her sarong and indulges you.");
+			puts("The girl is easy prey.  She peels off her sarong and indulges you.");
 			power++;
 			pleasure += 5;
 			printf("Girl:\n");
@@ -306,13 +306,13 @@ give()
 				power -= 5;
 				if (win >= 3) {
 					puts("The powers of the earth are now legitimate.  You have destroyed the Darkness");
-					puts("and restored the goddess to her thrown.  The entire island celebrates with");
+					puts("and restored the goddess to her throne.  The entire island celebrates with");
 					puts("dancing and spring feasts.  As a measure of her gratitude, the goddess weds you");
 					puts("in the late summer and crowns you Prince Liverwort, Lord of Fungus.");
 					puts("\nBut, as the year wears on and autumn comes along, you become restless and");
 					puts("yearn for adventure.  The goddess, too, realizes that the marriage can't last.");
 					puts("She becomes bored and takes several more natives as husbands.  One evening,");
-					puts("after having been out drinking with the girls, she kicks the throne particulary");
+					puts("after having been out drinking with the girls, she kicks the throne particularly");
 					puts("hard and wakes you up.  (If you want to win this game, you're going to have to\nshoot her!)");
 					clearbit(location[position].objects, MEDALION);
 					wintime = ourtime;
