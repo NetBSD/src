@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.16 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: dpti.c,v 1.17 2003/12/09 19:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.16 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.17 2003/12/09 19:51:23 ad Exp $");
 
 #include "opt_i2o.h"
 
@@ -226,6 +226,7 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	sc = device_lookup(&dpti_cd, minor(dev));
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	rv = 0;
 
 	if (cmd == PTIOCLINUX) {
 		pt = (struct ioctl_pt *)data;
@@ -244,30 +245,35 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (size > sizeof(dpti_sig))
 			size = sizeof(dpti_sig);
 		memcpy(data, &dpti_sig, size);
-		return (0);
+		break;
 
 	case DPT_CTRLINFO:
-		return (dpti_ctlrinfo(sc, size, data));
+		rv = dpti_ctlrinfo(sc, size, data);
+		break;
 
 	case DPT_SYSINFO:
-		return (dpti_sysinfo(sc, size, data));
+		rv = dpti_sysinfo(sc, size, data);
+		break;
 
 	case DPT_BLINKLED:
 		if ((i = dpti_blinkled(sc)) == -1)
 			i = 0;
 
-		if (size == 0)
-			return (copyout(&i, *(caddr_t *)data, sizeof(i)));
+		if (size == 0) {
+			rv = copyout(&i, *(caddr_t *)data, sizeof(i));
+			break;
+		}
 
 		*(int *)data = i;
-		return (0);
+		break;
 
 	case DPT_TARGET_BUSY:
 		/*
 		 * XXX This is here to stop linux_machdepioctl() from
 		 * whining about an unknown ioctl.
 		 */
-		return (EIO);
+		rv = EIO;
+		break;
 
 	case DPT_I2OUSRCMD:
 		if (sc->sc_nactive++ >= 2)
@@ -280,19 +286,27 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		sc->sc_nactive--;
 		wakeup_one(&sc->sc_nactive);
-		return (rv);
+		break;
 
 	case DPT_I2ORESETCMD:
 		printf("%s: I2ORESETCMD not implemented\n",
 		    sc->sc_dv.dv_xname);
-		return (EOPNOTSUPP);
+		rv = EOPNOTSUPP;
+		break;
 
 	case DPT_I2ORESCANCMD:
-		return (iop_reconfigure(iop, 0));
+		if ((rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL)) != 0)
+			break;
+		rv = iop_reconfigure(iop, 0);
+		lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
+		break;
 
 	default:
-		return (ENOTTY);
+		rv = ENOTTY;
+		break;
 	}
+
+	return (rv);
 }
 
 int
