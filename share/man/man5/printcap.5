@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.4 1994/11/30 19:31:26 jtc Exp $
+.\"	$NetBSD: printcap.5,v 1.5 1996/01/15 02:04:05 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,6 +96,7 @@ format
 .It "lf	str" Ta Pa /dev/console Ta No "error logging file name"
 .It "lo	str" Ta Pa lock Ta No "name of lock file"
 .It "lp	str" Ta Pa /dev/lp Ta No "device name to open for output"
+.It "ms	str" Ta Dv NULL Ta No "list of terminal modes to set or clear"
 .It "mx	num	1000	maximum file size (in"
 .Dv BUFSIZ
 blocks), zero = unlimited
