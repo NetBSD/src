@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.31 1997/10/04 19:46:20 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.32 1997/12/02 19:48:45 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -241,16 +241,10 @@ save_prom_mappings __P((void))
 					i = pa >> SAVE_SHIFT;
 					if (prom_mappings[i] == NULL) {
 						prom_mappings[i] = (caddr_t)pgva;
-#ifdef	DEBUG
-						mon_printf("obio: found pa=0x%x\n", pa);
-#endif
 					}
 				}
 				/* Make sure it has the right permissions. */
 				if ((pte & PGBITS) != PGBITS) {
-#ifdef	DEBUG
-					mon_printf("obio: fixing pte=0x%x\n", pte);
-#endif
 					pte |= PGBITS;
 					set_pte(pgva, pte);
 				}
