@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.477 2002/08/29 14:52:09 itojun Exp $
+#	$NetBSD: mi,v 1.478 2002/08/31 10:46:42 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -548,7 +548,6 @@
 ./usr/include/openssl/dh.h		comp-c-include
 ./usr/include/openssl/dsa.h		comp-c-include
 ./usr/include/openssl/dso.h		comp-c-include
-./usr/include/openssl/e_os.h		comp-c-include
 ./usr/include/openssl/e_os2.h		comp-c-include
 ./usr/include/openssl/ebcdic.h		comp-c-include
 ./usr/include/openssl/err.h		comp-c-include

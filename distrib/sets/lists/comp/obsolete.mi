@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.74 2002/08/29 14:52:10 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.75 2002/08/31 10:46:43 itojun Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -539,6 +539,7 @@
 /usr/include/ntfs/ntfs_vfsops.h
 /usr/include/null.h
 /usr/include/objc/list.h
+/usr/include/openssl/e_os.h
 /usr/include/readline.h
 /usr/include/smbfs
 /usr/include/sys/bootinfo.h
