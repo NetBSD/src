@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.134 2003/04/12 01:07:43 perry Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.135 2003/05/17 00:48:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.134 2003/04/12 01:07:43 perry Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.135 2003/05/17 00:48:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -785,7 +785,7 @@ printall(ifname)
 
 		if (getinfo(&paifr) < 0)
 			continue;
-		if (bflag && (ifa->ifa_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)))
+		if (bflag && (ifa->ifa_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (dflag && (ifa->ifa_flags & IFF_UP) != 0)
 			continue;
