@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.37 2000/02/03 04:09:17 nisimura Exp $	*/
+/*	$NetBSD: sfb.c,v 1.38 2001/09/19 19:04:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@
 #include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>
 
@@ -253,7 +253,7 @@ sfbinit(fi, base, unit, silent)
 	fi->fi_blanked = 0;
 
 	/* Fill in Frame Buffer Type struct. */
-	fi->fi_type.fb_boardtype = PMAX_FBTYPE_SFB;
+	fi->fi_type.fb_type = PMAX_FBTYPE_SFB;
 	fi->fi_type.fb_width = 	x_pixels;
 	fi->fi_type.fb_height = y_pixels;
 	fi->fi_type.fb_depth = 8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.21 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: bt459.c,v 1.22 2001/09/19 19:04:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.21 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.22 2001/09/19 19:04:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.21 2001/07/07 14:21:00 simonb Exp $");
 
 #include <machine/pmioctl.h>
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/bt459.h>			/* chipset definitions */
@@ -384,7 +384,7 @@ bt459PosCursor(fi, x, y)
 	fbu->scrInfo.cursor.y = y;		/* position, indep. of mouse */
 
 	/* XXX is this a linear function of x-dimension screen size? */
-	if (fi->fi_type.fb_boardtype == PMAX_FBTYPE_SFB) {
+	if (fi->fi_type.fb_type == PMAX_FBTYPE_SFB) {
 		x += fi->fi_type.fb_width == 1280 ? 368 : 220;
 		y += fi->fi_type.fb_height == 1024 ? 38 : 35;
 	} else {
