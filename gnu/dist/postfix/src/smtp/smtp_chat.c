@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_chat.c,v 1.1.1.5 2004/05/31 00:24:46 heas Exp $	*/
+/*	$NetBSD: smtp_chat.c,v 1.1.1.6 2004/11/13 05:05:53 heas Exp $	*/
 
 /*++
 /* NAME
@@ -153,6 +153,13 @@ void    smtp_chat_cmd(SMTP_STATE *state, char *fmt,...)
     smtp_fputs(STR(state->buffer), LEN(state->buffer), session->stream);
 
     /*
+     * This code is in the wrong place and can run before an I/O error
+     * handler is set up. To make matters worse, this code pre-empts better
+     * output flushing code that sits in the smtp_xfer() routine.
+     */
+#if 0
+
+    /*
      * Flush unsent data to avoid timeouts after slow DNS lookups.
      */
     if (time((time_t *) 0) - vstream_ftime(session->stream) > 10)
@@ -165,6 +172,7 @@ void    smtp_chat_cmd(SMTP_STATE *state, char *fmt,...)
 	vstream_longjmp(session->stream, SMTP_ERR_TIME);
     if (vstream_ferror(session->stream))
 	vstream_longjmp(session->stream, SMTP_ERR_EOF);
+#endif
 }
 
 /* smtp_chat_resp - read and process SMTP server response */
