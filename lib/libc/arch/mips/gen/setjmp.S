@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.6 1996/09/17 01:32:27 jonathan Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.7 1997/12/05 02:10:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setjmp.S,v 1.6 1996/09/17 01:32:27 jonathan Exp $")
+	ASMSTR("$NetBSD: setjmp.S,v 1.7 1997/12/05 02:10:47 thorpej Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -81,7 +81,7 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	sw	v0, (1 * 4)(v1)			# save sc_mask = sigblock(0)
 	move	a0, zero
 	addu	a1, sp, STAND_FRAME_SIZE	# pointer to struct sigaltstack
-	jal	_C_LABEL(sigaltstack)
+	jal	_C_LABEL(__sigaltstack14)
 	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore jmpbuf
 	lw	v1, STAND_FRAME_SIZE+8(sp)	# get old ss_onstack
 	and	v1, v1, 1			# extract onstack flag
