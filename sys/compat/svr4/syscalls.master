@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 1996/09/07 14:22:02 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.20 1996/12/06 03:25:07 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -44,6 +44,7 @@
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_statvfs.h>
+#include <compat/svr4/svr4_acl.h>
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
@@ -75,7 +76,7 @@
 26	UNIMPL		ptrace
 27	STD		{ int svr4_sys_alarm(unsigned sec); }
 28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
-29	UNIMPL		pause
+29	STD		{ int svr4_sys_pause(void); }
 30	STD		{ int svr4_sys_utime(char *path, \
 					     struct svr4_utimbuf *ubuf); }
 31	UNIMPL		was stty
@@ -219,7 +220,9 @@
 129	STD		{ int svr4_sys_getrlimit(int which, \
 			    struct ogetrlimit *rlp); }
 130	UNIMPL		lchown
-131	UNIMPL		memcntl
+131	STD		{ int svr4_sys_memcntl(svr4_caddr_t addr, \
+			    svr4_size_t len, int cmd, svr4_caddr_t arg, \
+			    int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
 134	NOARGS		{ int sys_rename(char *from, char *to); }
@@ -279,7 +282,8 @@
 182	UNIMPL
 183	UNIMPL
 184	UNIMPL		tsolsys
-185	UNIMPL		acl
+185	STD		{ int svr4_sys_acl(char *path, int cmd, int num, \
+			    struct svr4_aclent *buf); }
 186	UNIMPL		auditsys
 187	UNIMPL		processor_bind
 188	UNIMPL		processor_info
@@ -294,10 +298,11 @@
 197	UNIMPL		timer_gettime
 198	UNIMPL		timer_getoverrun
 199	UNIMPL		nanosleep
-200	UNIMPL		facl
+200	STD		{ int svr4_sys_facl(int fd, int cmd, int num, \
+			    struct svr4_aclent *buf); }
 201	UNIMPL		door
-202	UNIMPL		setreuid
-203	UNIMPL		setregid
+202	NOARGS		{ int sys_setreuid(int ruid, int euid); }
+203	NOARGS		{ int sys_setregid(int rgid, int egid); }
 204	UNIMPL
 205	UNIMPL
 206	UNIMPL
