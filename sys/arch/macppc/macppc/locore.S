@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 2000/11/16 05:34:03 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 2000/11/25 15:49:43 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -182,7 +182,7 @@ __start:
 	mr	4,1			/* end of mem reserved for kernel */
 	xor	0,0,0
 	stwu	0,-16(1)		/* end of stack chain */
-	
+
 	lis	8,openfirmware_entry@ha
 	stw	5,openfirmware_entry@l(8) /* save client interface handler */
 	lis	3,__start@ha
@@ -315,7 +315,7 @@ ENTRY(ofw_stack)
 					   new stack */
 	stw	6,-4(7)			/* setup return pointer */
 	stwu	1,-8(7)
-	
+
 	stw	7,-8(4)
 
 	addi	3,1,8
@@ -329,7 +329,7 @@ ofw_back:
 
 	lwz	0,4(1)			/* get saved msr from abused slot */
 	mtmsr	0
-	
+
 	lwz	1,0(1)			/* return */
 	lwz	0,4(1)
 	mtlr	0
@@ -347,7 +347,7 @@ ASENTRY(Idle)
 
 	or.	9,9,9
 	bne-	.Lsw1			/* at least one queue non-empty */
-	
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
@@ -464,7 +464,7 @@ ENTRY(cpu_switch)
 	addi	4,4,_C_LABEL(sched_qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
-	
+
 	lwz	31,P_FORW(3)		/* unlink first proc from queue */
 	lwz	4,P_FORW(31)
 	stw	4,P_FORW(3)
@@ -599,6 +599,9 @@ switch_return:
  */
 	.globl	_C_LABEL(fork_trampoline)
 _C_LABEL(fork_trampoline):
+#if defined(MULTIPROCESSOR)
+	bl	_C_LABEL(proc_trampoline_mp)
+#endif
 	xor	3,3,3
 	bl	_C_LABEL(lcsplx)
 	mtlr	31
