@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.17 2001/10/07 09:47:45 jdolecek Exp $
+.\"	$NetBSD: sleep.9,v 1.18 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -198,6 +198,10 @@ If
 .Fn ltsleep
 returns because of a timeout it returns
 .Er EWOULDBLOCK .
+.Sh SEE ALSO
+.Xr sigaction 2 ,
+.Xr hz 9 ,
+.Xr lock 9
 .Sh HISTORY
 The sleep/wakeup process synchronization mechanism is very old.  It
 appeared in a very early version of Unix.
@@ -207,7 +211,3 @@ appeared in
 .Fn ltsleep
 appeared in
 .Nx 1.5 .
-.Sh SEE ALSO
-.Xr sigaction 2 ,
-.Xr hz 9 ,
-.Xr lock 9
