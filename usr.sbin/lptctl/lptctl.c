@@ -1,4 +1,4 @@
-/* $NetBSD: lptctl.c,v 1.9 2004/02/03 21:32:02 jdolecek Exp $ */
+/* $NetBSD: lptctl.c,v 1.10 2004/02/03 21:46:39 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lptctl.c,v 1.9 2004/02/03 21:32:02 jdolecek Exp $");
+__RCSID("$NetBSD: lptctl.c,v 1.10 2004/02/03 21:46:39 jdolecek Exp $");
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -81,9 +81,9 @@ main(const int argc, const char * const * argv) {
 	/* Get command and arg pairs (if any) and do an ioctl for each */
 	for(i = 2; i < argc; i += 2) {
 		if (strcmp("dma", argv[i]) == 0) {
-			if (strcmp("on", argv[i + 1]) == 0)
+			if (strcmp("yes", argv[i + 1]) == 0)
 				flags |= LPT_DMA;
-			else if (strcmp("off", argv[i + 1]) == 0)
+			else if (strcmp("no", argv[i + 1]) == 0)
 				flags &= ~LPT_DMA;
 			else {
 				errx(2, "invalid '%s' command argument '%s'",
@@ -167,8 +167,6 @@ main(const int argc, const char * const * argv) {
 
 static void 
 print_lpt_info(int mode, int flags) {
-	printf("dma=%s ", (flags & LPT_DMA) ? "yes" : "no");
-		
 	printf("mode=");
 	switch(mode) {
 	case mode_standard:
@@ -193,7 +191,8 @@ print_lpt_info(int mode, int flags) {
 		printf("<unknown> ");
 		break;
 	}
-		
+
+	printf("dma=%s ", (flags & LPT_DMA) ? "yes" : "no");
 	printf("ieee=%s ", (flags & LPT_IEEE) ? "yes" : "no");
 	printf("intr=%s ", (flags & LPT_INTR) ? "yes" : "no");
 	printf("prime=%s ", (flags & LPT_PRIME) ? "yes" : "no");
@@ -206,9 +205,9 @@ static void
 usage(int status) {
 	printf("usage:\t%s /dev/device [[command arg] ...]\n"
 		"\tcommands are:\n"
-		"\t\tdma [on|off]\n"
-		"\t\tieee [yes|no]\n"
 		"\t\tmode [standard|ps2|nibble|fast|ecp|epp]\n"
+		"\t\tdma [yes|no]\n"
+		"\t\tieee [yes|no]\n"
 		"\t\tintr [yes|no]\n"
 		"\t\tprime [yes|no]\n"
 		"\t\tautolf [yes|no]\n",
