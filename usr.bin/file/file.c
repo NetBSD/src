@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.11 1997/01/28 00:49:40 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.12 1997/10/18 14:49:41 lukem Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -28,7 +28,7 @@
  */
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$NetBSD: file.c,v 1.11 1997/01/28 00:49:40 christos Exp $";
+	"@(#)$NetBSD: file.c,v 1.12 1997/10/18 14:49:41 lukem Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ char *argv[];
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = MAGIC;
 
-	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != EOF)
+	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != -1)
 		switch (c) {
 		case 'v':
 			(void) fprintf(stdout, "%s-%d.%d\n", progname,
