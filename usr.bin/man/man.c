@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1987, 1993
+ * Copyright (c) 1987, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -400,7 +400,7 @@ manual(page, tag, pg)
 			 */
 			(void)snprintf(buf, sizeof(buf), "*/%s.0", page);
 			if (!fnmatch(buf, pg->gl_pathv[cnt], 0))
-				goto easy;
+				goto next;
 
 			e_sufp = (sufp = getlist("_suffix")) == NULL ?
 			    NULL : sufp->list.tqh_first;
@@ -413,12 +413,8 @@ manual(page, tag, pg)
 					break;
 				}
 			}
-			if (found) {
-easy:				anyfound = 1;
-				if (!f_all)
-					break;
-				continue;
-			}
+			if (found)
+				goto next;
 
 			/* Try the _build key words next. */
 			e_sufp = (sufp = getlist("_build")) == NULL ?
@@ -443,9 +439,13 @@ easy:				anyfound = 1;
 				*p = ' ';
 			}
 			if (found) {
-				anyfound = 1;
-				if (!f_all)
+next:				anyfound = 1;
+				if (!f_all) {
+					/* Delete any other matches. */
+					while (++cnt< pg->gl_pathc)
+						pg->gl_pathv[cnt] = "";
 					break;
+				}
 				continue;
 			}
 
