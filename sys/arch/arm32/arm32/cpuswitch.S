@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.16 1997/02/10 03:57:42 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.17 1997/07/31 00:03:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -104,6 +104,12 @@ _setrunqueue:
  * 	r3 = temp
  *	r4 = whichqs
  */
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	stmfd	sp!, {r4}
 
 #ifdef DIAGNOSTIC
@@ -186,6 +192,12 @@ _remrunqueue:
  *	r3 = scratch
  *	r4 = whichqs
  */
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	stmfd	sp!, {r4}
 
 /* Get the priority of the queue */
@@ -235,11 +247,12 @@ _remrunqueue:
 Lcurproc:
 	.word	_curproc
 
+	.data
 	.global	_curpcb
-
 _curpcb:
 	.word	0x00000000
 
+	.text
 Lcurpcb:
 	.word	_curpcb
 
@@ -260,12 +273,14 @@ idle:
 
 	IRQenable
 
-	/* XXX - r1 needs to be preserved for cpu_switch */
+	/* Try to sleep */
 
+	/* XXX - r1 needs to be preserved for cpu_switch - messy */
 	mov	r7, r1
-	ldr	r0, Lcpufuncs
+	ldr	r3, Lcpufuncs
+	mov	r0, #0
 	add	lr, pc, #Lidl_slept - . - 8
-	ldr	pc, [r0, #CF_SLEEP]
+	ldr	pc, [r3, #CF_SLEEP]
 
 Lidl_slept:
 	mov	r1, r7
@@ -278,7 +293,7 @@ Lidl_slept:
 	teq	r3, #0x00000000
 	bne	sw1
 
-/* All processes are still asleep so idle a while longer */
+/* All processes are still a sleep so idle a while longer */
 
 	b	idle
 
@@ -300,6 +315,12 @@ _cpu_switch:
  * r6 = newproc
  * r7 = scratch
  */
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	stmfd	sp!, {r4-r7, lr}
 
 /*
@@ -658,6 +679,12 @@ Lkernel_map:
 	.global	_switch_exit
 
 _switch_exit:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 
 /*
  * r0 = proc
@@ -757,6 +784,13 @@ Lcurrent_spl_level:
  
 	.global	_savectx
 _savectx:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+
 /*
  * r0 = pcb
  */
