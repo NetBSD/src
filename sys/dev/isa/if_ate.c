@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.22 1998/06/09 07:25:00 thorpej Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.23 1998/10/07 04:58:06 enami Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -122,7 +122,7 @@ ate_match(parent, match, aux)
 		if (ate_iomap[i] == ia->ia_iobase)
 			break;
 	if (i == NATE_IOMAP) {
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 		printf("ate_match: unknown iobase 0x%x\n", ia->ia_iobase);
 #endif
 		return (0);
@@ -130,7 +130,7 @@ ate_match(parent, match, aux)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, ATE_NPORTS, 0, &ioh)) {
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 		printf("ate_match: couldn't map iospace 0x%x\n",
 		    ia->ia_iobase);
 #endif
@@ -138,14 +138,14 @@ ate_match(parent, match, aux)
 	}
 
 	if (ate_find(iot, ioh, &iobase, &irq) == 0) {
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 		printf("ate_match: ate_find failed\n");
 #endif
 		goto out;
 	}
 
 	if (iobase != ia->ia_iobase) {
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 		printf("ate_match: unexpected iobase in board: 0x%x\n",
 		    ia->ia_iobase);
 #endif
@@ -153,7 +153,7 @@ ate_match(parent, match, aux)
 	}
 
 	if (ate_detect(iot, ioh, myea) == 0) { /* XXX necessary? */
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 		printf("ate_match: ate_detect failed\n");
 #endif
 		goto out;
@@ -193,7 +193,7 @@ fe_simple_probe (iot, ioh, sp)
 	for (p = sp; p->mask != 0; p++) {
 		val = bus_space_read_1(iot, ioh, p->port);
 		if ((val & p->mask) != p->bits) {
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 			printf("fe_simple_probe: %x & %x != %x\n",
 			    val, p->mask, p->bits);
 #endif
@@ -283,7 +283,7 @@ ate_read_eeprom(iot, ioh, data)
 	bus_space_write_1(iot, ioh, FE_BMPR16, 0);
 	bus_space_write_1(iot, ioh, FE_BMPR17, 0);
 
-#if FE_DEBUG >= 3
+#if ATE_DEBUG >= 3
 	/* Report what we got. */
 	data -= FE_EEPROM_SIZE;
 	log(LOG_INFO, "ate_read_eeprom: EEPROM at %04x:"
@@ -336,7 +336,7 @@ ate_find(iot, ioh, iobase, irq)
 		{ 0 }
 	};
 
-#if FE_DEBUG >= 4
+#if ATE_DEBUG >= 4
 	log(LOG_INFO, "ate_find: probe (0x%x) for ATI\n", iobase);
 #if 0
 	fe_dump(LOG_INFO, sc);
@@ -424,7 +424,7 @@ ate_detect(iot, ioh, enaddr)
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
-#ifdef DIAGNOSTIC
+#ifdef ATE_DEBUG
 		printf("fmv_detect: invalid ethernet address\n");
 #endif
 		return (0);
