@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.29 2002/09/13 17:07:12 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.30 2002/09/13 17:36:00 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -245,13 +245,16 @@ _rtld_relocate_nonplt_objects(obj, self)
 
 		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
 		    sym->st_value != 0)
+			/* The symbol table contains the address of the PLT
+			   slot.  However, sometimes a PLT slot is not
+			   allocated, so we have to check st_value first. */
 			*got = sym->st_value + (Elf_Addr)obj->relocbase;
 		else if (ELF_ST_TYPE(sym->st_info) == STT_SECTION &&
 		    ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
-			if (sym->st_shndx == SHN_ABS)
+			/* Symbols with index SHN_ABS are not relocated. */
+			if (sym->st_shndx != SHN_ABS)
 				*got = sym->st_value +
 				    (Elf_Addr)obj->relocbase;
-			/* else SGI stuff ignored */
 		} else {
 			def = _rtld_find_symdef(i, obj, &defobj, true);
 			if (def == NULL)
