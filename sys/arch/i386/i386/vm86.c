@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.22.24.1 2001/06/16 19:48:49 he Exp $	*/
+/*	$NetBSD: vm86.c,v 1.22.24.2 2001/06/17 20:41:31 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ vm86_return(p, retval)
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
-	} else if (sigismember(&p->p_sigctx.ps_sigignore, SIGURG)) {
+	} else if (sigismember(&p->p_sigignore, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG ignored)\n",
 		    p->p_pid);
