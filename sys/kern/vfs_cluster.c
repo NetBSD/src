@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.13 1996/10/10 22:46:37 christos Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.14 1996/10/13 02:32:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -706,9 +706,9 @@ redo:
 
 		/* Move memory from children to parent */
 		if (tbp->b_blkno != (bp->b_blkno + btodb(bp->b_bufsize))) {
-			kprintf("Clustered Block: %d addr %x bufsize: %ld\n",
+			printf("Clustered Block: %d addr %x bufsize: %ld\n",
 			    bp->b_lblkno, bp->b_blkno, bp->b_bufsize);
-			kprintf("Child Block: %d addr: %x\n", tbp->b_lblkno,
+			printf("Child Block: %d addr: %x\n", tbp->b_lblkno,
 			    tbp->b_blkno);
 			panic("Clustered write to wrong blocks");
 		}

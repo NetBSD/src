@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.20 1996/10/10 22:43:21 christos Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.21 1996/10/13 02:32:42 christos Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -33,7 +33,7 @@
 #undef MSG_DEBUG_OK
 
 #ifdef MSG_DEBUG_OK
-#define MSG_PRINTF(a)	kprintf a
+#define MSG_PRINTF(a)	printf a
 #else
 #define MSG_PRINTF(a)
 #endif

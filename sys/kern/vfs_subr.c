@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.56 1996/10/10 22:46:41 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.57 1996/10/13 02:32:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -590,7 +590,7 @@ reassignbuf(bp, newvp)
 	register struct buflists *listheadp;
 
 	if (newvp == NULL) {
-		kprintf("reassignbuf: NULL");
+		printf("reassignbuf: NULL");
 		return;
 	}
 	/*
@@ -1189,8 +1189,8 @@ vprint(label, vp)
 	char buf[64];
 
 	if (label != NULL)
-		kprintf("%s: ", label);
-	kprintf("type %s, usecount %d, writecount %d, refcount %ld,",
+		printf("%s: ", label);
+	printf("type %s, usecount %d, writecount %d, refcount %ld,",
 	    typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 	    vp->v_holdcnt);
 	buf[0] = '\0';
@@ -1209,11 +1209,11 @@ vprint(label, vp)
 	if (vp->v_flag & VALIASED)
 		strcat(buf, "|VALIASED");
 	if (buf[0] != '\0')
-		kprintf(" flags (%s)", &buf[1]);
+		printf(" flags (%s)", &buf[1]);
 	if (vp->v_data == NULL) {
-		kprintf("\n");
+		printf("\n");
 	} else {
-		kprintf("\n\t");
+		printf("\n\t");
 		VOP_PRINT(vp);
 	}
 }
@@ -1229,7 +1229,7 @@ printlockedvnodes()
 	register struct mount *mp;
 	register struct vnode *vp;
 
-	kprintf("Locked vnodes\n");
+	printf("Locked vnodes\n");
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	     mp = mp->mnt_list.cqe_next) {
 		for (vp = mp->mnt_vnodelist.lh_first;
@@ -1284,7 +1284,7 @@ again:
 			 */
 			if (vp->v_mount != mp) {
 				if (kinfo_vdebug)
-					kprintf("kinfo: vp changed\n");
+					printf("kinfo: vp changed\n");
 				bp = savebp;
 				goto again;
 			}
@@ -1558,17 +1558,17 @@ vfs_unmountall()
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
 #ifdef DEBUG
-		kprintf("unmounting %s (%s)...\n",
+		printf("unmounting %s (%s)...\n",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
 		if ((error = dounmount(mp, MNT_FORCE, &proc0)) != 0) {
-			kprintf("unmount of %s failed with error %d\n",
+			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
 			allerror = 1;
 		}
 	}
 	if (allerror)
-		kprintf("WARNING: some file systems would not unmount\n");
+		printf("WARNING: some file systems would not unmount\n");
 }
 
 /*
@@ -1583,7 +1583,7 @@ vfs_shutdown()
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 
-	kprintf("syncing disks... ");
+	printf("syncing disks... ");
 
 	if (panicstr == 0) {
 		/* Release inodes held by texts before update. */
@@ -1610,11 +1610,11 @@ vfs_shutdown()
 				nbusy++;
 		if (nbusy == 0)
 			break;
-		kprintf("%d ", nbusy);
+		printf("%d ", nbusy);
 		DELAY(40000 * iter);
 	}
 	if (nbusy)
-		kprintf("giving up\n");
+		printf("giving up\n");
 	else
-		kprintf("done\n");
+		printf("done\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.14 1996/10/10 22:46:34 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.15 1996/10/13 02:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -487,7 +487,7 @@ sbcheck(sb)
 			panic("sbcheck nextpkt");
 	}
 	if (len != sb->sb_cc || mbcnt != sb->sb_mbcnt) {
-		kprintf("cc %d != %d || mbcnt %d != %d\n", len, sb->sb_cc,
+		printf("cc %d != %d || mbcnt %d != %d\n", len, sb->sb_cc,
 		    mbcnt, sb->sb_mbcnt);
 		panic("sbcheck");
 	}
@@ -699,7 +699,7 @@ sbcompress(sb, m, n)
 		if (n)
 			n->m_flags |= eor;
 		else
-			kprintf("semi-panic: sbcompress\n");
+			printf("semi-panic: sbcompress\n");
 	}
 }
 
