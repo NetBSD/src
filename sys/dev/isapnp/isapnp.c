@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.25 1998/07/31 05:29:48 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.26 1998/07/31 05:37:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -914,7 +914,7 @@ isapnp_callback(self)
 	 * Look for cards.  If none are found, we say so and just return.
 	 */
 	if (isapnp_find(sc, 1) == 0) {
-		printf("%s: no ISA Plug 'n Play cards found\n",
+		printf("%s: no ISA Plug 'n Play devices found\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
