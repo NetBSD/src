@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: arp.c,v 1.8 1995/02/27 22:00:14 chopps Exp $";
+static char *rcsid = "$Id: arp.c,v 1.9 1995/02/28 22:51:16 chopps Exp $";
 #endif /* not lint */
 
 /*
@@ -529,7 +529,7 @@ getinetaddr(host, inap)
 	struct hostent *hp;
 	u_long addr;
 
-	if ((inap->s_addr = inet_addr(host)) != INADDR_NONE) 
+	if (inet_aton(host, inap) == 1)
 		return (0);
 	if ((hp = gethostbyname(host)) == NULL) {
 		(void)fprintf(stderr, "%s: %s: ", __progname, host);
