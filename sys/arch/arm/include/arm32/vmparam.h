@@ -1,7 +1,7 @@
-/*	$NetBSD: vmparam.h,v 1.4 2002/02/05 21:14:37 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2002/02/06 17:41:44 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -44,8 +44,8 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
-#include <sys/lock.h>		/* struct simplelock */ 
-#include <arm/arm32/pte.h>	/* pt_entry_t */
+/* for pt_entry_t definition */
+#include <arm/arm32/pte.h>
 
 #define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -106,21 +106,16 @@
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
 /*
- * pmap-specific data store in the vm_page structure.
+ * define structure pmap_physseg: there is one of these structures
+ * for each chunk of noncontig RAM you have.
  */
-#define	__HAVE_VM_PAGE_MD
-struct vm_page_md {
-	struct pv_entry *pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
-	int pvh_attrs;				/* page attributes */
-};
 
-#define	VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
-	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
-	(pg)->mdpage.pvh_attrs = 0;					\
-} while (/*CONSTCOND*/0)
+#define	__HAVE_PMAP_PHYSSEG
+
+struct pmap_physseg {
+	struct pv_head *pvhead;		/* pv_entry array */
+	char *attrs;			/* attrs array */
+};
 
 #endif /* _KERNEL */
 
