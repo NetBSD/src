@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.62 1995/02/28 23:09:01 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.63 1995/03/08 01:23:00 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -217,7 +217,8 @@ execve(p, uap, retval)
 	struct ucred *cred = p->p_ucred;
 	char *argp;
 	char **cpp, *dp, *sp, *np;
-	int argc, envc, len;
+	long argc, envc;
+	u_long len;
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm = p->p_vmspace;
@@ -303,7 +304,7 @@ execve(p, uap, retval)
 			goto bad;
 		if (!sp)
 			break;
-		if (error = copyinstr(sp, dp, len, (u_int *) & len)) {
+		if (error = copyinstr(sp, dp, len, &len)) {
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
 			goto bad;
@@ -321,7 +322,7 @@ execve(p, uap, retval)
 				goto bad;
 			if (!sp)
 				break;
-			if (error = copyinstr(sp, dp, len, (u_int *) & len)) {
+			if (error = copyinstr(sp, dp, len, &len)) {
 				if (error == ENAMETOOLONG)
 					error = E2BIG;
 				goto bad;
@@ -336,7 +337,7 @@ execve(p, uap, retval)
 
 	/* Now check if args & environ fit into new stack */
 	len = ((argc + envc + 2 + pack.ep_setup_arglen) * sizeof(char *) +
-	    sizeof(int) + dp + STACKGAPLEN + szsigcode +
+	    sizeof(long) + dp + STACKGAPLEN + szsigcode +
 	    sizeof(struct ps_strings)) - argp;
 #ifdef COMPAT_LINUX
 	/* XXXX need this for envp and argv on stack */
