@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.62 2000/09/23 04:27:17 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.63 2000/10/14 12:36:05 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -256,7 +256,7 @@ urio*)
 uscanner*)
 	unit=${i#uscanner}
 	uscanner=uscanner$unit
-	major=62
+	major=63
 	rm -f $uscanner
 	mknod $uscanner c $major $unit
 	chown root.wheel $uscanner
