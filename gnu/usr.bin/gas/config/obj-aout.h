@@ -17,7 +17,7 @@
    License along with GAS; see the file COPYING.  If not, write
    to the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   $Id: obj-aout.h,v 1.3 1994/06/22 15:14:30 pk Exp $
+   $Id: obj-aout.h,v 1.4 1994/06/24 13:35:22 pk Exp $
  */
 
 
@@ -42,6 +42,7 @@
 
 extern const short seg_N_TYPE[];
 extern const segT  N_TYPE_seg[];
+#define N_REGISTER		0x12	/* Fake register type */
 
 #ifndef DEFAULT_MAGIC_NUMBER_FOR_OBJECT_FILE
 #define DEFAULT_MAGIC_NUMBER_FOR_OBJECT_FILE	(OMAGIC)
