@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.1 1995/10/10 23:36:34 ragge Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.2 1997/10/20 14:11:49 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)asincos.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /* ASIN(X)
@@ -94,7 +96,7 @@ double
 asin(x)
 	double x;
 {
-	double s,t,copysign(),atan2(),sqrt(),one=1.0;
+	double s,t,one=1.0;
 #if !defined(vax)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
 #endif	/* !defined(vax)&&!defined(tahoe) */
@@ -162,7 +164,7 @@ double
 acos(x)
 	double x;
 {
-	double t,copysign(),atan2(),sqrt(),one=1.0;
+	double t,one=1.0;
 #if !defined(vax)&&!defined(tahoe)
 	if(x!=x) return(x);
 #endif	/* !defined(vax)&&!defined(tahoe) */

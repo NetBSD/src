@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log.c,v 1.1 1995/10/10 23:36:57 ragge Exp $ */
+/*      $NetBSD: n_log.c,v 1.2 1997/10/20 14:13:05 ragge Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
+#endif
 #endif /* not lint */
 
 #include <math.h>
@@ -449,7 +451,7 @@ __log__D(x) double x;
 #endif
 {
 	int m, j;
-	double F, f, g, q, u, v, u2, one = 1.0;
+	double F, f, g, q, u, v, u2;
 	volatile double u1;
 	struct Double r;
 

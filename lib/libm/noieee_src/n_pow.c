@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $ */
+/*      $NetBSD: n_pow.c,v 1.2 1997/10/20 14:13:23 ragge Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /* POW(X,Y)  
@@ -174,8 +176,8 @@ pow_P(double x, double y)
 pow_P(x, y) double x, y;
 #endif
 {
-	struct Double s, t, __log__D();
-	double  __exp__D(), huge = 1e300, tiny = 1e-300;
+	struct Double s, t;
+	double  huge = 1e300, tiny = 1e-300;
 
 	if (x == zero)
 		if (y > zero)
