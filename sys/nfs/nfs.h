@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.14 1997/05/12 23:36:04 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.15 1997/06/24 23:28:15 fvdl Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -453,6 +453,29 @@ int nfsd_head_flag;
  	 !bcmp((caddr_t)&(o)->nd_cr, (caddr_t)&(n)->nd_cr, \
 		sizeof (struct ucred)))
 
+/*
+ * Defines for WebNFS
+ */
+
+#define WEBNFS_ESC_CHAR		'%'
+#define WEBNFS_SPECCHAR_START	0x80
+
+#define WEBNFS_NATIVE_CHAR	0x80
+/*
+ * ..
+ * Possibly more here in the future.
+ */
+
+/*
+ * Macro for converting escape characters in WebNFS pathnames.
+ * Should really be in libkern.
+ */
+
+#define HEXTOC(c) \
+	((c) >= 'a' ? ((c) - ('a' - 10)) : \
+	    ((c) >= 'A' ? ((c) - ('A' - 10)) : ((c) - '0')))
+#define HEXSTRTOI(p) \
+	((HEXTOC(p[0]) << 4) + HEXTOC(p[1]))
 #endif	/* _KERNEL */
 
 #endif /* _NFS_NFS_H */
