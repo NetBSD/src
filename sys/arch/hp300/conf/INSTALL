@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.1 2002/02/10 01:07:55 gmcgarry Exp $
+# $NetBSD: INSTALL,v 1.2 2002/02/23 21:47:07 gmcgarry Exp $
 #
 # INSTALL machine description file
 #
@@ -56,7 +56,6 @@ maxusers	32
 #options 	KTRACE		# system call tracing support
 #options 	LKM		# Loadable kernel modules
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Filesystems
 file-system	FFS		# fast filesystem
@@ -178,7 +177,7 @@ hpibbus*	at fhpib?
 rd*		at hpibbus? slave ? punit ?	# HP-IB disks
 ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
-ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
+#ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
 oscsi*		at dio? scode ?		# Old HP SCSI
 
