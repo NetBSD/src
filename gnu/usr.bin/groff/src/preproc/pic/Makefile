@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2003/07/01 12:38:10 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2003/08/01 10:36:43 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/pic/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -14,6 +14,7 @@ LDADD+=		${LIBGROFF} -lm
 YFLAGS=		-d
 CLEANFILES=	${MAN} pic.cpp pic_tab.h y.tab.c y.tab.h
 
+pic.cpp: pic.y
 pic_tab.h: pic.cpp
 lex.cpp: pic_tab.h
 
