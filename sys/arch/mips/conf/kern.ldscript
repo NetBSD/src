@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript,v 1.1 1997/05/23 22:21:06 jonathan Exp $ */
+/* $NetBSD: kern.ldscript,v 1.2 1997/06/23 02:40:28 jonathan Exp $ */
 
 /*  ldscript for NetBSD/mips kernels */
 OUTPUT_FORMAT("elf32-littlemips", "elf32-bigmips",
@@ -11,8 +11,8 @@ SEARCH_DIR(/lib);
 _DYNAMIC_LINK = 0;
 SECTIONS
 {
-  /* Read-only sections, merged into text segment: */
-  . = 0x80030000;
+  /*  Read-only sections, merged into text segment.  Assumes the
+      kernel Makefile sets the start address via -Ttext.  */
   .text      :
   {
     _ftext = . ;
