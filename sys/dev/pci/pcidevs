@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.14 1996/08/26 20:12:16 cgd Exp $
+$NetBSD: pcidevs,v 1.15 1996/08/29 21:34:22 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -498,6 +498,9 @@ product EFFICIENTNETS ENI155P	0x0002	155P-MF1 ATM
 
 /* Hewlett-Packard products */
 product HP J2585A	0x1030	J2585A
+
+/* IBM products */
+product IBM 82351	0x0022	82351 PCI-PCI Bridge
 
 /* Integrated Micro Solutions products */
 product IMS 8849	0x8849	8849
