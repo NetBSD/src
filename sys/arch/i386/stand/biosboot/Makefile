@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/09/28 11:47:30 drochner Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1997/11/12 01:39:50 mellon Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -18,8 +18,8 @@ CPPFLAGS+= -DCOMPAT_OLDBOOT
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 #increase MAXFLENTRIES if "installboot" complains about
-# "not enough fragment space in bootcode" (default: 5)
-#CPPFLAGS+= -DMAXFLENTRIES=10
+# "not enough fragment space in bootcode" (default: 10)
+#CPPFLAGS+= -DMAXFLENTRIES=15
 #set PRIM_LOADSZ to <=9 to make a 720k boot floppy (default: 15)
 #CPPFLAGS+= -DPRIM_LOADSZ=9
 
