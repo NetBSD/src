@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.3.2.2 2002/08/10 00:42:45 itojun Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.3.2.3 2002/08/10 00:50:39 itojun Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -329,7 +329,6 @@ menu fdok, title "Nacisnij enter aby kontynuowac";
 menu crypttype, title "Kodowanie hasel";
 	option "DES", exit, action { yesno = 1; };
 	option "MD5", exit, action { yesno = 2; };
-	option "bcrypt,2^7", exit, action { yesno = 3; };
 	option "nie zmieniaj", exit, action { yesno = 0; };
 
 menu cdromsource, title "Zmien";
