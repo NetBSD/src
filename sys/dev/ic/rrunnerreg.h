@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnerreg.h,v 1.2 1998/05/17 16:46:28 kml Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.3 1998/11/20 04:12:58 kml Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
 #define RR_CC_DISABLE_RING	0x09
 #define RR_CC_ENABLE_RING	0x0a
 #define RR_CC_DISCARD_PKT	0x0b
-#define RR_CC_FLUSH_RECV_RING	0x0c
+#define RR_CC_FLUSH_RECV_RING	0x0c  /* unimplemented */
 #define RR_CC_CONN_MGT		0x0d
 
 
@@ -310,7 +310,7 @@
 /* Operating Mode and Status */
 
 #define RR_MS_LOOPBACK	  0x0001  /* loopback through the GLink hardware */
-#define RR_MS_MODE	  0x0002  /* set for PH, clear for FP */
+#define RR_MS_PH_MODE	  0x0002  /* set for PH, clear for FP */
 #define RR_MS_LONG_PTRS	  0x0004  /* set indicates 64-bit pointers */
 #define RR_MS_WORD_SWAP	  0x0008  /* set to swap words in 64-bit pointers */
 #define RR_MS_WARNINGS	  0x0010  /* set to enable warning events */
@@ -493,7 +493,7 @@ struct rr_ring_ctl {
 	u_int16_t	rr_mode;
 	/* XXX:  Picture in docs is right, description is wrong */
 #define RR_RR_CHARACTER	0x01	/* character mode interface */
-#define RR_RR_SEPERATE	0x02	/* separate headers from data */
+#define RR_RR_SEPARATE	0x02	/* separate headers from data */
 #define RR_RR_CHECKSUM	0x04	/* doing IP checksums (requires IP on) */
 #define RR_RR_IP	0x08	/* receiving IP packets to this ring */
 };
@@ -509,7 +509,7 @@ struct rr_stats {
  */
 
 struct rr_gen_info {
-	struct rr_stats	ri_stats;
+	struct rr_stats		ri_stats;
 	struct rr_ring_ctl	ri_event_ring_ctl;
 	struct rr_ring_ctl	ri_cmd_ring_ctl;
 	struct rr_ring_ctl	ri_send_ring_ctl;
@@ -529,13 +529,16 @@ struct rr_gen_info {
 
 /* NB:  All of the ring sizes have to be powers of two */
 
+#define RR_MAX_RECV_RING	32	/* maximum number of receive rings */
 #define RR_MAX_DESCR		256	/* maximum number of possible 
 					   descriptors.  XXX:  increase
 					   with caution, as this allocates
 					   static space! */
 #define RR_EVENT_RING_SIZE	128	/* why not go for it? */
 #define RR_SEND_RING_SIZE	32	/* firmware restriction! */
-#define RR_SNAP_RECV_RING_SIZE	32	/* firmware restriction! */
+
+#define RR_SNAP_RECV_RING_SIZE	32	/* seems to work */
+#define RR_FP_RECV_RING_SIZE	32	/* seems to work */
 
 #define RR2_SEND_RING_SIZE	16	/* firmware restriction! */
 #define RR2_SNAP_RECV_RING_SIZE	16	/* firmware restriction! */

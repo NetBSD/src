@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.256 1998/11/13 01:16:19 thorpej Exp $
+#	$NetBSD: files,v 1.257 1998/11/20 04:12:57 kml Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -288,7 +288,7 @@ define  i2c_eeprom
 
 # Essential Communications Corp. HIPPI Interface
 device  esh: hippi, ifnet
-file    dev/ic/rrunner.c        esh
+file    dev/ic/rrunner.c        esh needs-flag
 
 # SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
 device  bah: ifnet, arc, arp

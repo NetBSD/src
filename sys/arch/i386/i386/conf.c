@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.107 1998/11/13 06:11:42 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.108 1998/11/20 04:12:57 kml Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,7 +232,8 @@ cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
-
+#include "esh.h"
+cdev_decl(esh_fp);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
@@ -362,9 +363,12 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
 	cdev_midi_init(NMIDI,midi),	/* 58: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 59: sequencer I/O */
+	cdev_vc_nb_init(NVCODA,vc_nb_), /* 60: coda file system psdev */
+	cdev_scsibus_init(NSCSIBUS,scsibus), /* 61: SCSI bus */
 	cdev_vc_nb_init(NVCODA,vc_nb_),  /* 60: coda file system psdev */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 61: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 62: RAIDframe disk driver */
+	cdev_esh_init(NESH, esh_fp),	/* 63: HIPPI (esh) raw device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -469,6 +473,7 @@ static int chrtoblktbl[] = {
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
 	/* 62 */	18,
+	/* 63 */	NODEV,
 };
 
 /*
