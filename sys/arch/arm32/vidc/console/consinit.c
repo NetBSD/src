@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2001/06/11 11:56:58 rearnsha Exp $ */
+/*	$NetBSD: consinit.c,v 1.2 2001/06/23 16:47:42 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -49,6 +49,8 @@
 
 #include <machine/bus.h>
 
+#include <dev/cons.h>
+
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/dev/rpckbdvar.h>
 #include <machine/vidc.h>
@@ -95,6 +97,10 @@ consinit(void)
 
 	rpckbd_cnattach((struct device *) ksc);
 	vidcvideo_cnattach(videomemory.vidm_vbase);
+	return;
+#else
+	/* XXX For old VIDC console. */
+	cninit();
 	return;
 #endif
 	panic("No console");	/* Will we ever see this?  */
