@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.270 2002/11/02 07:41:30 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.271 2002/11/04 06:24:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
