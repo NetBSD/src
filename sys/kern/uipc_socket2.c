@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.17 1996/11/26 23:24:04 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.18 1996/12/09 23:50:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -396,7 +396,7 @@ sbreserve(sb, cc)
 	u_long cc;
 {
 
-	if (cc > sb_max * MCLBYTES / (MSIZE + MCLBYTES))
+	if (cc == 0 || cc > sb_max * MCLBYTES / (MSIZE + MCLBYTES))
 		return (0);
 	sb->sb_hiwat = cc;
 	sb->sb_mbmax = min(cc * 2, sb_max);
