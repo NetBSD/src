@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.40 2005/01/13 15:22:35 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.41 2005/01/13 19:56:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -41,9 +41,9 @@
 #include <stdio.h>
 #include <machine/bswap.h>
 
-#ifndef SMALL
+#ifdef PROGRESS
 #include "progress.h"
-#endif /* ! SMALL */
+#endif /* PROGRESS */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
 #define	MAXBAD		10	/* limit on bad blks (per inode) */

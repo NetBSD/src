@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2005/01/13 15:22:35 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2005/01/13 19:56:02 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -11,6 +11,9 @@ SRCS=	dir.c inode.c main.c pass1.c pass1b.c pass2.c pass3.c pass4.c \
 
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 CPPFLAGS+=-I${FSCK}
+.ifndef  SMALLPROG
+CPPFLAGS+=-DPROGRESS
+.endif
 SRCS+=	progress.c
 .PATH:	${FSCK}
 
