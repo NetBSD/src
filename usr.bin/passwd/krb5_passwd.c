@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_passwd.c,v 1.3 1997/01/07 04:08:15 tls Exp $	*/
+/*	$NetBSD: krb5_passwd.c,v 1.4 1997/02/11 09:35:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: krb5_passwd.c,v 1.3 1997/01/07 04:08:15 tls Exp $";
+static char rcsid[] = "$NetBSD: krb5_passwd.c,v 1.4 1997/02/11 09:35:56 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ krb_passwd()
 	/* Search passwd file for client */
 	pw = getpwuid((int) getuid());
 	if (pw) {
-	    (void) strcpy(default_name, pw->pw_name);
+	    (void)strncpy(default_name, pw->pw_name, sizeof(default_name) - 1);
 	}
 	else {
 	    fprintf(stderr, 
@@ -248,7 +248,8 @@ krb_passwd()
     }
 
     /* Create credential cache for changepw */
-    (void) sprintf(cache_name, "FILE:/tmp/tkt_cpw_%d", getpid());
+    (void)snprintf(cache_name, sizeof cache_name, "FILE:/tmp/tkt_cpw_%d",
+	getpid());
 
     if ((retval = krb5_cc_resolve(cache_name, &cache))) {
 	fprintf(stderr, "passwd: Unable to Resolve Cache: %s\n", cache_name);
@@ -724,7 +725,7 @@ print_and_choose_password(new_password, decodable_pwd_string)
 	    next_passwd_phrase_element++;
 	}
 
-	sprintf(prompt, 
+	(void)snprintf(prompt, sizeof prompt,
 		"\nEnter Password Selection or a <CR> to get new list: ");
 
 	new_passwd_length = ADM_MAX_PW_LENGTH+1;
@@ -923,10 +924,11 @@ char *username,*tmpname;
 				|| (strncmp((ut).ut_line, "pty", 3) == 0))
 
     /* Check to see if getlogin returns proper name */
-    if ( (tmpname = (char *) getlogin()) == (char *) 0) return(1);
-    username = (char *) malloc(strlen(tmpname) + 1);
-    if ( username == (char *) 0) return(1);
-    strcpy(username,tmpname);
+    if ( (tmpname = (char *) getlogin()) == (char *) 0)
+	return(1);
+    username = strdup(tmpname);
+    if (username == (char *) 0)
+	return(1);
     
     /* Obtain tty device for controlling tty of current process.*/
     strncpy(utmpent.ut_line,ttyname(0) + strlen("/dev/"),
