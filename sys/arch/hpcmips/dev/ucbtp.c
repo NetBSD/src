@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.2 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.3 2000/03/04 19:36:34 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -81,7 +81,7 @@ enum ucbts_stat {
 #define UCBTS_POSY	2
 #define UCBTS_PRESS	3
 
-#define UCBTS_PRESS_THRESHOLD	100
+#define UCBTS_PRESS_THRESHOLD	80
 #define UCBTS_TAP_THRESHOLD	5
 
 enum ucbadc_state {
@@ -131,6 +131,7 @@ struct ucbtp_softc {
 	int		sm_addr; /* UCB1200 register address */
 	u_int32_t	sm_reg;  /* UCB1200 register data & TX39 SIB header */
 	int		sm_tmpreg;
+#define UCBADC_RETRY_DEFAULT		200
 	int		sm_retry; /* retry counter */
 
 	enum ucbadc_state sm_state;
@@ -485,7 +486,7 @@ ucbtp_adc_async(arg)
 		REGWRITE(UCB1200_ADCCTRL_REG, 
 			 sc->sm_tmpreg,
 			 UCBADC_ADC_DATAREAD);
-		sc->sm_retry = 100;
+		sc->sm_retry = UCBADC_RETRY_DEFAULT;
 		break;
 
 	case UCBADC_ADC_DATAREAD:
@@ -567,7 +568,7 @@ ucbtp_adc_async(arg)
 		case TXSIB_REGREAD_INIT:
 			reg = TX39_SIBSF0_REGADDR_SET(0, sc->sm_addr);
 			tx_conf_write(tc, TX39_SIBSF0CTRL_REG, reg);
-			sc->sm_rw_retry = 100;
+			sc->sm_rw_retry = UCBADC_RETRY_DEFAULT;
 			sc->sm_read_state = TXSIB_REGREAD_READ;
 			break;
 		case TXSIB_REGREAD_READ:
@@ -632,19 +633,21 @@ ucbtp_input(sc)
 {
 	int x, y;
 
-	if (!sc->sc_calibrated) { /* XXX definitely no problem */
+	if (!sc->sc_calibrated) {
+		DPRINTFN(2, ("x=%d y=%d p=%d\n", 
+			     sc->sc_x, sc->sc_y, sc->sc_p));
 		printf("ucbtp_input: no calibration data\n");
-		return 1;
+		return 0;
 	}
 
 	tpcalib_trans(&sc->sc_tpcalib, sc->sc_x, sc->sc_y, &x, &y);
-	DPRINTFN(1, ("x: %d->%d y: %d->%d pressure=%d\n", 
+	DPRINTFN(2, ("x: %d->%d y: %d->%d pressure=%d\n", 
 		     sc->sc_x, x, sc->sc_y, y, sc->sc_p));
 
 	if (sc->sc_p < UCBTS_PRESS_THRESHOLD) {
 		sc->sc_stat = UCBTS_STAT_RELEASE;
 		if (sc->sc_polling < UCBTS_TAP_THRESHOLD) {
-			DPRINTFN(1, ("TAP!\n"));
+			DPRINTFN(2, ("TAP!\n"));
 			/* button 0 DOWN */
 			wsmouse_input(sc->sc_wsmousedev, 1, 0, 0, 0, 0);
 			/* button 0 UP */
@@ -655,7 +658,7 @@ ucbtp_input(sc)
 				      WSMOUSE_INPUT_ABSOLUTE_X |
 				      WSMOUSE_INPUT_ABSOLUTE_Y);
 
-			DPRINTFN(1, ("RELEASE\n"));
+			DPRINTFN(2, ("RELEASE\n"));
 		}
 		sc->sc_polling = 0;
 
