@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1996/09/05 15:46:43 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1996/11/08 22:00:42 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -100,9 +100,17 @@ cdev_decl(fd);
 #include "zstty.h"
 cdev_decl(zs);
 
-cdev_decl(sd);
 cdev_decl(cd);
+#include "ch.h"
+cdev_decl(ch);
+cdev_decl(sd);
+#include "ss.h"
+cdev_decl(ss);
 cdev_decl(st);
+#include "uk.h"
+cdev_decl(uk);
+
+cdev_decl(rd);
 cdev_decl(vnd);
 cdev_decl(ccd);
 
@@ -147,6 +155,11 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 28 */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
+	cdev_ch_init(NCH,ch),		/* 31: SCSI autochanger */
+	cdev_disk_init(NRD,rd),		/* 32: ram disk driver */
+	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
+
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -184,46 +197,19 @@ iszerodev(dev)
 	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
-/*
- * Returns true if dev is a disk device.
- */
-isdisk(dev, type)
-	dev_t dev;
-	int type;
-{
-
-	/* XXXX This needs to be dynamic for LKMs. */
-	switch (major(dev)) {
-	case 1:
-	case 2:
-	case 4:
-	case 6:
-	case 15:
-		return (type == VBLK);
-	case 8:
-	case 9:
-	case 10:
-	case 17:
-	case 19:
-		return (type == VCHR);
-	default:
-		return (0);
-	}
-}
-
 static int chrtoblktbl[] = {
 	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,
 	/*  2 */	NODEV,
-	/*  3 */	NODEV,
+	/*  3 */	3,		/* sw */
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
-	/*  8 */	4,
-	/*  9 */	7,
+	/*  8 */	4,		/* sd */
+	/*  9 */	NODEV,
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -231,12 +217,22 @@ static int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	15,
-	/* 18 */	NODEV,
-	/* 19 */	6,
-	/* 20 */	NODEV,
+	/* 17 */	5,		/* ccd */
+	/* 18 */	8,		/* cd */
+	/* 19 */	6,		/* vnd */
+	/* 20 */	7,		/* st */
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	9,		/* rd */
 };
 
 /*
@@ -247,7 +243,8 @@ chrtoblk(dev)
 {
 	int blkmaj;
 
-	if (major(dev) >= nchrdev)
+	if (major(dev) >= nchrdev 
+	  || major(dev) >= (sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0])))
 		return (NODEV);
 	blkmaj = chrtoblktbl[major(dev)];
 	if (blkmaj == NODEV)
