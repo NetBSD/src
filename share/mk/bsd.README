@@ -115,6 +115,12 @@ STRIP		The flag passed to the install program to cause the binary
 		own install script so that the entire system can be made
 		stripped/not-stripped using a single nob.
 
+COPY		The flag passed to the install program to cause the binary
+		to be copied rather than moved.  This is to be used when
+		building our own install script so that the entire system
+		can either be installed with copies, or with moves using
+		a single nob.
+
 MANDIR		Base path for manual installation.
 
 MANGRP		Manual group.

@@ -91,7 +91,7 @@ cleandir:
 .if !target(depend)
 depend: .depend
 .depend: ${SRCS}
-	mkdep ${CFLAGS:M-[ID]*} ${AINC} ${.ALLSRC}
+	mkdep ${CFLAGS:M-[ID+]*} ${AINC} ${.ALLSRC}
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o:/\1.o \1.po:/' < .depend > $$TMP; \
 	    mv $$TMP .depend)
@@ -112,14 +112,14 @@ beforeinstall:
 
 realinstall: beforeinstall
 	ranlib lib${LIB}.a
-	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 	ranlib lib${LIB}_p.a
-	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-#	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+#	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 #	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .if defined(LINKS) && !empty(LINKS)
 	@set ${LINKS}; \
