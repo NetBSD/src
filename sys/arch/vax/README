@@ -1,29 +1,23 @@
-	$NetBSD: README,v 1.6 1995/02/13 00:40:36 ragge Exp $
-
-Some information and status of VAX port:
-
-It now runs multi-user on 11/750 without problem, but still requires
-4.3BSD Reno binaries (nothing in userspace fixed yet). Hopefully
-most bugs in memory and trap handling are found, I haven't had a
-crash for nearly a month... 
-Note: VAX port is still for unix hackers only.
+	$NetBSD: README,v 1.7 1995/03/30 21:36:46 ragge Exp $
 
 Devices supported in kernel and _known_ to work:
-VAX 11/750 CPU with 2-14MB of memory.
-One or more DEUNA/DELUA Ethernet cards.
-One or more UDA50 MSCP disk controllers.
-RA81, RA82 or RA90 disks on UDA50.
+CPU:	VAX 11/750 with 2-14MB of memory.
+	KA630 (MicroVAX II) with 2-?? MB memory.
 
-Things _not_ written in kernel yet:
-User level profiling & debugging support.
-Kernel profiling.
-sysctl() calls.
-Kernel debugger support, DDB (But that is not so important).
-Autoconfiguration of Unibus devices is working, but it's a mess
-internally. I will clean this up someday when I get docs on UDA50/MSCP.
+Net:	DEUNA/DELUA Unibus ethernet cards.
+	DEQNA/DELQA Q22 bus ethernet cards.
 
-/boot program is written, but it only supports Massbuss disks
-so far. UDA routines will be written soon, boot blocks also.
+Disks:	UDA50 Unibus MSCP controller.
+	KDA50/RQDX3 Q22 bus MSCP controller.
+		RA??-disks on UDA50 or KDA50.
+		RD??-disks on RQDX3. (known as RA?? by system).
+
+Tapes:	Exabyte on qbus dilog board. (TMSCP emulating)
+	TK50 (TMSCP) on Q22 bus.
+		Other TMSCP ctlrs may also work, but haven't tried.
+
+
+NOTE: NetBSD/VAX is still a developers-only port.
 
 I have only included relevant files from old berkeley VAX distributions.
 If you want to look at other files get them from nearest ftp site with
@@ -33,7 +27,10 @@ We who have done parts of this is:
 	Joachim Isaksson, first pmap and lots of help with gcc functionality.
 	Mattias Gr|nlund, locore assembler and interrupt handling.
 	Mattias ]slund, lots of help and ideas everywhere.
-	Anders Magnusson, that's me, who put things together and wrote the rest.
+	Bertram Barth, bootblocks and boot routines for uVAX.
+	Rick Macklem, fixed all uVAXII, tmscp and deqna support.
+	Anders Magnusson (ragge), that's me, who put things together
+		and wrote the rest.
 
 /ragge@ludd.luth.se
 
