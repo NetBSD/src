@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.32 2003/08/07 16:42:49 agc Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.33 2005/01/06 00:07:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.32 2003/08/07 16:42:49 agc Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.33 2005/01/06 00:07:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -222,7 +222,7 @@ getcwd(pt, size)
 	ino_t root_ino;
 	size_t ptsize, upsize;
 	int save_errno;
-	char *ept, *eup, *up;
+	char *ept, *eup, *up, *nup;
 	size_t dlen;
 
 	/*
@@ -246,13 +246,13 @@ getcwd(pt, size)
 	*bpt = '\0';
 
 	/*
-	 * Allocate bytes (1024 - malloc space) for the string of "../"'s.
+	 * Allocate bytes for the string of "../"'s.
 	 * Should always be enough (it's 340 levels).  If it's not, allocate
 	 * as necessary.  Special case the first stat, it's ".", not "..".
 	 */
-	if ((up = malloc(upsize = 1024 - 4)) == NULL)
+	if ((up = malloc(upsize = MAXPATHLEN)) == NULL)
 		goto err;
-	eup = up + MAXPATHLEN;
+	eup = up + upsize;
 	bup = up;
 	up[0] = '.';
 	up[1] = '\0';
@@ -292,10 +292,11 @@ getcwd(pt, size)
 		 * as necessary.  Max length is 3 for "../", the largest
 		 * possible component name, plus a trailing NULL.
 		 */
-		if (bup + 3  + MAXNAMLEN + 1 >= eup) {
-			if ((up = realloc(up, upsize *= 2)) == NULL)
+		if (bup + 3 + MAXNAMLEN + 1 >= eup) {
+			if ((nup = realloc(up, upsize *= 2)) == NULL)
 				goto err;
-			bup = up;
+			bup = nup + (buf - up);
+			up = nup;
 			eup = up + upsize;
 		}
 		*bup++ = '.';
