@@ -106,23 +106,32 @@
  */
 #if 0
 /*
- * Move the SR# to the top 4 bits to make the lower 19bits entirely random
+ * Move the SR# to the top 4 bits to make the lower 20 bits entirely random
  * so to give better PTE distribution.
  */
 #define	VSID_MAKE(sr, hash)	(((sr) << (ADDR_SR_SHFT-4))|((hash) & 0xfffff))
 #define	VSID_TO_SR(vsid)	(((vsid) >> (ADDR_SR_SHFT-4)) & 0xF)
 #define	VSID_TO_HASH(vsid)	((vsid) & 0xfffff)
+#define	VSID_SR_INCREMENT	0x00100000
 #else
 #define	VSID_MAKE(sr, hash)	((sr) | (((hash) & 0xfffff) << 4))
 #define	VSID_TO_SR(vsid)	((vsid) & 0xF)
 #define	VSID_TO_HASH(vsid)	(((vsid) >> 4) & 0xfffff)
+#define	VSID_SR_INCREMENT	0x00000001
 #endif
 
 /*
  * Fixed segments
  */
+#ifdef OLDPMAP
 #define	USER_SR			13
 #define	KERNEL_SR		14
+#else
+#define	USER_SR			12
+#define	KERNEL_SR		13
+#define	KERNEL2_SR		14
+#define	KERNEL2_SEGMENT		VSID_MAKE(KERNEL2_SR, KERNEL_VSIDBITS)
+#endif
 #define	KERNEL_VSIDBITS		0xfffff
 #define	KERNEL_SEGMENT		VSID_MAKE(KERNEL_SR, KERNEL_VSIDBITS)
 #define	EMPTY_SEGMENT		VSID_MAKE(0, KERNEL_VSIDBITS)
@@ -144,7 +153,11 @@
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) 0x7ffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) (KERNEL_SR << ADDR_SR_SHFT))
+#ifndef OLDPMAP
+#define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + 2*SEGMENT_LENGTH)
+#else
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + SEGMENT_LENGTH)
+#endif
 
 #ifndef VM_PHYSSEG_MAX
 #define	VM_PHYSSEG_MAX		16
