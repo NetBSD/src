@@ -34,17 +34,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tail.c,v 1.4 1994/11/23 07:42:16 jtc Exp $";
+__RCSID("$NetBSD: tail.c,v 1.5 1997/10/19 23:45:11 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$NetBSD: tail.c,v 1.4 1994/11/23 07:42:16 jtc Exp $";
 int fflag, rflag, rval;
 char *fname;
 
+int	main __P((int, char **));
 static void obsolete __P((char **));
 static void usage __P((void));
 
@@ -74,6 +75,7 @@ main(argc, argv)
 	int ch, first;
 	char *p;
 
+	off = 0;
 	/*
 	 * Tail's options are weird.  First, -n10 is the same as -n-10, not
 	 * -n+10.  Second, the number options are 1 based and not offsets,
@@ -109,7 +111,7 @@ main(argc, argv)
 
 	obsolete(argv);
 	style = NOTSET;
-	while ((ch = getopt(argc, argv, "b:c:fn:r")) != EOF)
+	while ((ch = getopt(argc, argv, "b:c:fn:r")) != -1)
 		switch(ch) {
 		case 'b':
 			ARG(512, FBYTES, RBYTES);
@@ -163,7 +165,7 @@ main(argc, argv)
 		}
 
 	if (*argv)
-		for (first = 1; fname = *argv++;) {
+		for (first = 1; (fname = *argv++) != NULL;) {
 			if ((fp = fopen(fname, "r")) == NULL ||
 			    fstat(fileno(fp), &sb)) {
 				ierr();
@@ -217,11 +219,11 @@ static void
 obsolete(argv)
 	char *argv[];
 {
-	register char *ap, *p, *t;
+	char *ap, *p, *t;
 	int len;
 	char *start;
 
-	while (ap = *++argv) {
+	while ((ap = *++argv) != NULL) {
 		/* Return if "--" or not an option of any form. */
 		if (ap[0] != '-') {
 			if (ap[0] != '+')
