@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.24 1999/09/05 14:26:32 jdolecek Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.25 1999/09/20 07:29:27 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -67,7 +67,7 @@ adosfs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *sp = v;
-	int nameiop, last, lockp, wantp, flags, error, vpid, nocache, i;
+	int nameiop, last, lockp, wantp, flags, error, nocache, i;
 	struct componentname *cnp;
 	struct vnode **vpp;	/* place to store result */
 	struct anode *ap;	/* anode to find */
