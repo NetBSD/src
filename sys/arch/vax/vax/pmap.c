@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1997/03/22 12:50:56 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.36 1997/07/06 22:38:24 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -75,6 +75,7 @@ pv_entry_t	pv_table;		/* array of entries,
 					   one per LOGICAL page */
 unsigned *pte_cmap;
 void	*scratch;
+struct	pmap p0pmap;
 
 #ifdef PMAPDEBUG
 int	startpmapdebug = 0;
@@ -129,9 +130,8 @@ pmap_bootstrap()
 	unsigned int junk, sysptsize, istack;
 	extern	unsigned int proc0paddr, etext;
 	extern	struct vmspace vmspace0;
-	struct	pmap *p0pmap;
 
-	p0pmap = &vmspace0.vm_pmap;
+	vmspace0.vm_map.pmap = &p0pmap;
 
 	/*
 	 * Machines older than MicroVAX II have their boot blocks
@@ -253,12 +253,13 @@ pmap_bootstrap()
 	/* Init kernel pmap */
 	pmap_kernel()->ref_count = 1;
 	simple_lock_init(&pmap_kernel()->pm_lock);
-	p0pmap->pm_pcb = (struct pcb *)proc0paddr;
 
-	p0pmap->pm_pcb->P1BR = (void *)0x80000000;
-	p0pmap->pm_pcb->P0BR = (void *)0x80000000;
-	p0pmap->pm_pcb->P1LR = 0x200000;
-	p0pmap->pm_pcb->P0LR = AST_PCB;
+	p0pmap.pm_pcb = (struct pcb *)proc0paddr;
+	p0pmap.pm_pcb->P1BR = (void *)0x80000000;
+	p0pmap.pm_pcb->P0BR = (void *)0x80000000;
+	p0pmap.pm_pcb->P1LR = 0x200000;
+	p0pmap.pm_pcb->P0LR = AST_PCB;
+
 	mtpr(0x80000000, PR_P1BR);
 	mtpr(0x80000000, PR_P0BR);
 	mtpr(0x200000, PR_P1LR);
@@ -305,6 +306,7 @@ if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
 		return NULL;
 
 	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
+	bzero(pmap, sizeof(struct pmap));
 	pmap_pinit(pmap); 
 
 	return (pmap);
@@ -331,8 +333,6 @@ if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
 	if (pmap->pm_pcb->P1BR)
 		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_stack,
 		    (0x200000 - pmap->pm_pcb->P1LR) * 4);
-
-	bzero(pmap, sizeof(struct pmap));
 }
 
 
@@ -359,7 +359,7 @@ if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
 	count = --pmap->ref_count;
 	simple_unlock(&pmap->pm_lock);
   
-	if (!count) {
+	if (count == 0) {
 		pmap_release(pmap);
 		free((caddr_t)pmap, M_VMPMAP);
 	}
