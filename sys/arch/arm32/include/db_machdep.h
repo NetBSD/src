@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.4 1996/11/23 03:20:18 mark Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.5 1997/02/04 07:15:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -35,7 +35,6 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
-
 #include <vm/vm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
@@ -43,7 +42,7 @@
 /* end of mangling */
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct {
 	trapframe_t	ddb_tf;
@@ -78,6 +77,6 @@ db_regs_t		ddb_regs;	/* register state */
 
 #define SOFTWARE_SSTEP
 
-u_int branch_taken __P((u_int insn, u_int pc, u_int reg, db_regs_t *db_regs));
+u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
 
 #endif	/* _ARM32_DB_MACHDEP_H_ */
