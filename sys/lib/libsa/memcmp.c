@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.6 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.7 2003/08/27 22:53:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -47,11 +47,4 @@
 /*
  * Cheezy memcmp(), as a wrapper around bcmp()
  */
-int
-memcmp(b1, b2, len)
-	const void *b1, *b2;
-	size_t len;
-{
-
-	return (bcmp(b1, b2, len));
-}
+__strong_alias(bcmp, memcmp)
