@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/17 20:27:39 fredette Exp $
+#	$NetBSD: Makefile,v 1.4 2002/03/06 12:14:26 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
-# This include just sets REV=XX
+# This include just sets DISTRIBREV=XX
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	miniroot
@@ -69,7 +69,7 @@ unconfig:
 .PRECIOUS: ${IMAGE}.gz
 
 install.sub : ${TOP}/../miniroot/install.sub
-	sed -e "/^VERSION=/s/=.*/=${REV}/" < $? > $@
+	sed -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
 
 clean cleandir distclean:
 	-rm -f a.out core *.core *.o
