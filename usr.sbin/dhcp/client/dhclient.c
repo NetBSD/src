@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.23 1999/08/24 03:25:31 enami Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.24 1999/11/15 15:50:16 mjl Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -547,9 +547,13 @@ void dhcpack (packet)
 	cancel_timeout (send_request, ip);
 
 	/* Figure out the lease time. */
-	ip -> client -> new -> expiry =
-		getULong (ip -> client ->
-			  new -> options [DHO_DHCP_LEASE_TIME].data);
+	if (ip -> client -> new -> options [DHO_DHCP_LEASE_TIME].len > 0)
+		ip -> client -> new -> expiry =
+			getULong (ip -> client ->
+			 	  new -> options [DHO_DHCP_LEASE_TIME].data);
+	else
+		ip -> client -> new -> expiry = TIME_MAX;
+ 
 	/* A number that looks negative here is really just very large,
 	   because the lease expiry offset is unsigned. */
 	if (ip -> client -> new -> expiry < 0)
