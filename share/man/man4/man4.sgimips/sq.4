@@ -1,4 +1,4 @@
-.\"	$NetBSD: sq.4,v 1.1 2004/08/15 17:38:07 rumble Exp $
+.\"	$NetBSD: sq.4,v 1.2 2004/08/17 13:53:09 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,28 +38,29 @@
 .Dt SQ 4 sgimips
 .Os
 .Sh NAME
-.Nm sq 
-.Nd SEEQ 8003/80c03 Ethernet driver 
+.Nm sq
+.Nd SEEQ 8003/80c03 Ethernet driver
 .Sh SYNOPSIS
 .Cd "sq* at hpc? offset ?"
 .Sh DESCRIPTION
 The
 .Nm
 interface provides access to a Ethernet network via the SEEQ 8003
-and 80c03 (aka SGI EDLC) chip sets. DMA is provided by
+and 80c03 (aka SGI EDLC) chip sets.
+DMA is provided by
 .Xr hpc 4 .
 .Pp
 The
 .Nm
-is found in the Personal Iris 4D/3x, Indigo, Indy and Indigo2
-machines, as well as the SGI E++ GIO32bis ethernet adapter.
+is found in the Personal Iris 4D/3x, Indigo, Indy, and Indigo2
+machines, as well as the SGI E++ GIO32bis Ethernet adapter.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr hpc 4 ,
-.Xr ifconfig 4 ,
 .Xr ifmedia 4 ,
 .Xr mii 4 ,
-.Xr netintro 4
+.Xr netintro 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
@@ -67,5 +68,6 @@ driver first appeared in
 .Nx 1.6
 with support for
 .Xr hpc 4
-revision 3. Revision 1 and 1.5 support was added in
+revision 3.
+Revision 1 and 1.5 support was added in
 .Nx 2.0 .
