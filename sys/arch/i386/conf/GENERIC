@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.595.2.10 2004/07/23 23:33:20 he Exp $
+# $NetBSD: GENERIC,v 1.595.2.11 2004/08/30 09:52:37 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.595.2.10 $"
+#ident 		"GENERIC-$Revision: 1.595.2.11 $"
 
 maxusers	32		# estimated number of users
 
@@ -538,6 +538,7 @@ iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*	at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
@@ -580,6 +581,7 @@ wds1	at isa? port 0x358 irq 11 drq 5
 # CardBus SCSI cards
 #adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 #ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+#njs*	at cardbus? dev ? function ?	# Workbit NinjaSCSI-32
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
