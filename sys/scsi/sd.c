@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.15 1993/06/27 06:59:20 andrew Exp $
+ *	$Id: sd.c,v 1.16 1993/07/04 07:09:59 andrew Exp $
  */
 
 #include "sd.h"
@@ -366,6 +366,12 @@ sdstrategy(struct buf *bp)
 	if(scsi_debug & SHOWREQUESTS)
 		printf("sd%d: %d bytes @ blk%d\n",
 			unit, bp->b_bcount, bp->b_blkno);
+
+	/* Reject non block-aligned transfers */
+	if (bp->b_bcount % SECSIZE) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 
 	sdminphys(bp);
 
@@ -750,7 +756,7 @@ sdgetdisklabel(u_char unit)
 	sd->disklabel.d_partitions[RAW_PART].p_offset = 0;
 	sd->disklabel.d_partitions[RAW_PART].p_size = sd->params.disksize;
 	sd->disklabel.d_npartitions = MAXPARTITIONS;
-	sd->disklabel.d_secsize = 512; /* as long as it's not 0 */
+	sd->disklabel.d_secsize = SECSIZE; /* as long as it's not 0 */
 	sd->disklabel.d_ntracks = sd->params.heads;
 	sd->disklabel.d_nsectors = sd->params.sectors;
 	sd->disklabel.d_ncylinders = sd->params.cyls;
