@@ -1,3 +1,4 @@
+/* $NetBSD: cancel2.c,v 1.3 2004/03/05 15:07:22 wiz Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -7,7 +8,7 @@ int
 main(void)
 {
 	char str1[] = "You should see this.\n";
-	char str2[] = "You shoukd not see this.\n";
+	char str2[] = "You should not see this.\n";
 
 	printf("Cancellation test 2: Self-cancellation and disabling.\n");
 
