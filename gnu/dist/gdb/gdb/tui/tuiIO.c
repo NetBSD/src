@@ -507,11 +507,11 @@ tui_setup_io (int mode)
       rl_redisplay_function = tui_redisplay_readline;
       rl_deprep_term_function = tui_deprep_terminal;
       rl_prep_term_function = tui_prep_terminal;
-      rl_getc_function = tui_getc;
+      rl_getc_function = (Function *)tui_getc;
       readline_echoing_p = 0;
       rl_outstream = tui_rl_outstream;
       rl_prompt = 0;
-      rl_completion_display_matches_hook = tui_rl_display_match_list;
+      rl_completion_display_matches_hook = (VFunction *)tui_rl_display_match_list;
       rl_already_prompted = 0;
 
       /* Keep track of previous gdb output.  */
