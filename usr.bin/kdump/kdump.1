@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: kdump.1,v 1.2 1994/10/06 15:44:33 mycroft Exp $
+.\"	$Id: kdump.1,v 1.3 1995/07/19 15:11:19 christos Exp $
 .\"
 .Dd June 6, 1993
 .Dt KDUMP 1
@@ -41,9 +41,10 @@
 .Sh SYNOPSIS
 .Nm kdump
 .Op Fl dnlRT
+.Op Fl e Ar emulation
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
-.Op Fl t Op cnis
+.Op Fl t Op cenis
 .Sh DESCRIPTION
 .Nm Kdump
 displays the kernel trace files produced with
@@ -57,6 +58,8 @@ The options are as follows:
 .Bl -tag -width Fl
 .It Fl d
 Display all numbers in decimal.
+.It Fl e Ar emulation
+Interpret system call maps assuming the named emulation instead of "netbsd".
 .It Fl f Ar file 
 Display the specified file instead of
 .Pa ktrace.out .
