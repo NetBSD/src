@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.18 1998/06/09 14:38:59 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.19 1998/06/09 16:10:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -650,28 +650,29 @@ cg4b_ldcmap(sc)
 	 * retrace interrupt handler do the work.
 	 */
 	bt->bt_addr = 0;
+
+#ifdef	_SUN3_
+	/* Sun3/60 wants 32-bit access, packed. */
 	if (sc->sc_video_on) {
 		/* Update H/W colormap. */
-#ifdef	_SUN3_
-		/* Sun3/60 wants 32-bit access, packed. */
 		for (i = 0; i < (256 * 3 / 4); i++)
 			bt->bt_cmap = btcm->btcm_int[i];
-#else	/* SUN3 */
-		/* Sun3/80 wants 8-bits in the high byte. */
-		for (i = 0; i < (256 * 3); i++)
-			bt->bt_cmap = btcm->btcm_char[i] << 24;
-#endif	/* SUN3 */
 	} else {
 		/* Clear H/W colormap. */
-#ifdef	_SUN3_
-		/* Sun3/60 wants 32-bit access, packed. */
 		for (i = 0; i < (256 * 3 / 4); i++)
 			bt->bt_cmap = 0;
+	}
 #else	/* SUN3 */
-		/* Sun3/80 wants 8-bit access, high byte. */
+	/* Sun3/80 wants 8-bits in the high byte. */
+	if (sc->sc_video_on) {
+		/* Update H/W colormap. */
+		for (i = 0; i < (256 * 3); i++)
+			bt->bt_cmap = btcm->btcm_char[i] << 24;
+	} else {
+		/* Clear H/W colormap. */
 		for (i = 0; i < (256 * 3); i++)
 			bt->bt_cmap = 0;
-#endif	/* SUN3 */
 	}
+#endif	/* SUN3 */
 }
 
