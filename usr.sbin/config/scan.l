@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.19 1998/02/16 22:05:36 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.20 1998/02/19 00:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,7 @@ attach		return ATTACH;
 build		return BUILD;
 compile-with	return COMPILE_WITH;
 config		return CONFIG;
+deffs		return DEFFS;
 define		return DEFINE;
 defopt		return DEFOPT;
 devclass	return DEVCLASS;

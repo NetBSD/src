@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.36 1998/02/16 22:05:35 thorpej Exp $	*/
+/*	$NetBSD: config.h,v 1.37 1998/02/19 00:27:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -309,6 +309,7 @@ struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
 struct	hashtab *defopttab;	/* options that have been "defopt"'d */
+struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
 
@@ -358,6 +359,7 @@ int	ht_enumerate __P((struct hashtab *, ht_callback, void *));
 void	addoption __P((const char *name, const char *value));
 void	addfsoption __P((const char *name));
 void	addmkoption __P((const char *name, const char *value));
+void	deffilesystem __P((const char *fname, struct nvlist *fses));
 void	defoption __P((const char *fname, struct nvlist *opts));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));

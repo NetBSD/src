@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.21 1998/02/16 22:05:36 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.22 1998/02/19 00:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ static	void	check_maxpart __P((void));
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE
+%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT DEVICE
 %token	DEVCLASS DUMPS ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE
 %token	XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
@@ -127,6 +127,9 @@ static	void	check_maxpart __P((void));
 %type	<str>	value
 %type	<val>	major_minor signed_number npseudo
 %type	<val>	flags_opt
+%type	<str>	deffs
+%type	<list>	deffses
+%type	<str>	fsoptfile_opt
 %type	<str>	defopt
 %type	<list>	defopts
 %type	<str>	optfile_opt
@@ -233,6 +236,7 @@ one_def:
 	object |
 	include |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, 1); } |
+	DEFFS fsoptfile_opt deffses	{ deffilesystem($2, $3); } |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3, 0); } |
 	DEFOPT optfile_opt defopts	{ defoption($2, $3); } |
 	DEVICE devbase interface_opt attrs_opt
@@ -252,12 +256,19 @@ atname:
 	WORD				{ $$ = $1; } |
 	ROOT				{ $$ = NULL; };
 
+deffses:
+	deffses deffs			{ $$ = new_nx($2, $1); } |
+	deffs				{ $$ = new_n($1); };
+
+deffs:
+	WORD				{ $$ = $1; };
+
 defopts:
 	defopts defopt			{ $$ = new_nx($2, $1); } |
-	defopt				{ $$ = new_n($1); }
+	defopt				{ $$ = new_n($1); };
 
 defopt:
-	WORD				{ $$ = $1; }
+	WORD				{ $$ = $1; };
 
 devbase:
 	WORD				{ $$ = getdevbase($1); };
@@ -287,6 +298,10 @@ locdef:
 
 locdefault:
 	'=' value			{ $$ = $2; };
+
+fsoptfile_opt:
+	PATHNAME			{ $$ = $1; } |
+	/* empty */			{ $$ = NULL; };
 
 optfile_opt:
 	PATHNAME			{ $$ = $1; } |

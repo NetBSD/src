@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1998/01/12 07:37:42 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.29 1998/02/19 00:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,6 +173,7 @@ usage:
 	opttab = ht_new();
 	mkopttab = ht_new();
 	fsopttab = ht_new();
+	deffstab = ht_new();
 	defopttab = ht_new();
 	optfiletab = ht_new();
 	nextopt = &options;
@@ -299,6 +300,57 @@ stop()
 }
 
 /*
+ * Define one or more file systems.  If file system options file name is
+ * specified, a preprocessor #define for that file system will be placed
+ * in that file.  In this case, only one file system may be specified.
+ * Otherwise, no preprocessor #defines will be generated.
+ */
+void
+deffilesystem(fname, fses)
+	const char *fname;
+	struct nvlist *fses;
+{
+	struct nvlist *nv;
+
+	/*
+	 * Mark these options as ones to skip when creating the Makefile.
+	 */
+	for (nv = fses; nv != NULL; nv = nv->nv_next) {
+		if (ht_insert(defopttab, nv->nv_name, nv)) {
+			error("file system or option `%s' already defined",
+			    nv->nv_name);
+			return;
+		}
+
+		/*
+		 * Also mark it as a valid file system, which may be
+		 * used in "file-system" directives in the config
+		 * file.
+		 */
+		if (ht_insert(deffstab, nv->nv_name, nv))
+			panic("file system `%s' already in table?!",
+			    nv->nv_name);
+
+		if (fname != NULL) {
+			/*
+			 * Only one file system allowed in this case.
+			 */
+			if (nv->nv_next != NULL) {
+				error("only one file system per option "
+				    "file may be specified");
+				return;
+			}
+
+			if (ht_insert(optfiletab, fname, nv)) {
+				error("option file `%s' already exists",
+				    fname);
+				return;
+			}
+		}
+	}
+}
+
+/*
  * Define one or more standard options.  If an option file name is specified,
  * place all options in one file with the specified name.  Otherwise, create
  * an option file for each option.
@@ -319,7 +371,8 @@ defoption(fname, opts)
 	for (nv = opts; nv != NULL; nv = nextnv) {
 		nextnv = nv->nv_next;
 		if (ht_insert(defopttab, nv->nv_name, nv)) {
-			error("option `%s' already defined", nv->nv_name);
+			error("file system or option `%s' already defined",
+			    nv->nv_name);
 			return;
 		}
 
@@ -412,6 +465,12 @@ addfsoption(name)
 	const char *n; 
 	char *p, c;
 	char buf[500];
+
+	/* Make sure this is a defined file system. */
+	if (ht_lookup(deffstab, name) == NULL) {
+		error("`%s' is not a defined file system", name);
+		return;
+	}
 
 	/* Convert to lowercase. */
 	for (n = name, p = buf; (c = *n) != '\0'; n++)
