@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2 2002/05/30 09:08:51 augustss Exp $
+#	$NetBSD: INSTALL,v 1.3 2002/05/31 10:46:33 augustss Exp $
 #
 #	INSTALL
 #
@@ -10,7 +10,7 @@ include		"arch/pmppc/conf/std.pmppc"
 ident 		"INSTALL"
 
 #options 	BOOTHOWTO=RB_SINGLE
-options 	TLP_DEBUG
+options 	BOOTHOWTO=0
 
 maxusers	32
 
@@ -109,7 +109,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI devices
@@ -142,15 +142,6 @@ com1	at cpc0 addr 0xff600400
 # CPC700 integrated PCI bridge
 pci*	at cpc0
 pchb*	at pci?
-
-pci*	at pchb?
-pci*	at ppb? bus ?
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-
-#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-
 
 #pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	md		1	# memory disk device
