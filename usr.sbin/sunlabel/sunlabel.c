@@ -26,7 +26,7 @@
 const char *__progname;
 int main(int, char **);
 int main_(int, char **);
-int main(int ac, char **av) { __progname = av[0]; main_(ac,av); }
+int main(int ac, char **av) { __progname = av[0]; return main_(ac,av); }
 #define main main_
 
 #endif
@@ -35,6 +35,7 @@ int main(int ac, char **av) { __progname = av[0]; main_(ac,av); }
 #if !defined(S_COMMAND) && !defined(NO_S_COMMAND)
 #ifdef __NetBSD__
 #define S_COMMAND
+#include <util.h>
 #endif
 #endif
 
@@ -286,6 +287,18 @@ static void setdisk(const char *s)
  exit(1);
 }
 
+static void usage(void)
+{
+ fprintf(stderr,"Usage: %s [options] [disk]\n",__progname);
+ fprintf(stderr,"Options:\n");
+ fprintf(stderr,"\t-disk <disk>   Use disk <disk>.\n");
+ fprintf(stderr,"\t-fixmagic      Allow broken magic numbers.\n");
+ fprintf(stderr,"\t-fixsum        Allow broken check sums.\n");
+ fprintf(stderr,"\t-new           Ignore currently label.\n");
+ fprintf(stderr,"\t-q             Quiet mode.\n");
+ fprintf(stderr,"\t-h             Print this help.\n");
+}
+
 /*
  * Handle command-line arguments.  We can have at most one non-flag
  *  argument, which is the disk name; we can also have flags
@@ -316,6 +329,9 @@ static void setdisk(const char *s)
  *		Turns on quiet, which suppresses printing of prompts
  *		and other irrelevant chatter.  If you're trying to use
  *		sunlabel in an automated way, you probably want this.
+ *
+ *	-h
+ *		Print a usage message.
  */
 static void handleargs(int ac, char **av)
 {
@@ -371,6 +387,10 @@ needarg:;
     if (!strcmp(*av,"-q"))
      { quiet = 1;
        continue;
+     }
+    if (!strcmp(*av,"-h"))
+     { usage();
+       exit(0);
      }
 #undef WANTARG
     fprintf(stderr,"%s: unrecognized option `%s'\n",__progname,*av);
@@ -1182,9 +1202,9 @@ static void setlabel(void)
  u.l.d_secpercyl = label.nsect * label.nhead;
  u.l.d_rpm = label.rpm;
  u.l.d_interleave = label.intrlv;
- u.l.d_npartitions = 16;
- bzero(&u.l.d_partitions[0],16*sizeof(struct partition));
- for (i=0;i<16;i++)
+ u.l.d_npartitions = getmaxpartitions();
+ bzero(&u.l.d_partitions[0],u.l.d_npartitions*sizeof(struct partition));
+ for (i=0;i<u.l.d_npartitions;i++)
   { u.l.d_partitions[i].p_size = label.partitions[i].nblk;
     u.l.d_partitions[i].p_offset = label.partitions[i].startcyl * label.nsect * label.nhead;
     u.l.d_partitions[i].p_fsize = 0;
