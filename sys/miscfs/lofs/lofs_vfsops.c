@@ -37,7 +37,7 @@
  * From:
  *	Id: lofs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: lofs_vfsops.c,v 1.1 1994/01/05 14:15:36 cgd Exp $
+ *	$Id: lofs_vfsops.c,v 1.2 1994/01/05 15:11:51 cgd Exp $
  */
 
 /*
@@ -349,7 +349,7 @@ lofs_sync(mp, waitfor)
 struct mount *mp;
 int waitfor;
 {
-	return VFS_SYNC(VFSTOLOFS(mp)->looped_vfs, waitfor);
+	return (0);
 }
 
 lofs_fhtovp(mp, fhp, vpp)
