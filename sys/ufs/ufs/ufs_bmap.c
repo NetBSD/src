@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_bmap.c	8.7 (Berkeley) 3/21/95
+ *	@(#)ufs_bmap.c	8.8 (Berkeley) 8/11/95
  */
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct vnode *devvp;
-	struct indir a[NIADDR], *xap;
+	struct indir a[NIADDR + 1], *xap;
 	ufs_daddr_t daddr;
 	long metalbn;
 	int error, maxrun, num;

@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)union_vnops.c	8.32 (Berkeley) 6/23/95
+ *	@(#)union_vnops.c	8.33 (Berkeley) 7/31/95
  */
 
 #include <sys/param.h>
@@ -953,8 +953,8 @@ union_remove(ap)
 int
 union_link(ap)
 	struct vop_link_args /* {
-		struct vnode *a_vp;
 		struct vnode *a_tdvp;
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
@@ -1002,7 +1002,7 @@ union_link(ap)
 	un->un_flags |= UN_KLOCK;
 	vput(ap->a_tdvp);
 
-	return (VOP_LINK(vp, tdvp, cnp));
+	return (VOP_LINK(tdvp, vp, cnp));
 }
 
 int

@@ -30,7 +30,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)vnode_if.src	8.12 (Berkeley) 5/14/95
+#	@(#)vnode_if.src	8.14 (Berkeley) 8/6/95
 #
 
 #
@@ -255,8 +255,8 @@ vop_remove {
 #% link		tdvp	L U U
 #
 vop_link {
-	IN WILLRELE struct vnode *vp;
-	IN struct vnode *tdvp;
+	IN WILLRELE struct vnode *tdvp;
+	IN struct vnode *vp;
 	IN struct componentname *cnp;
 };
 
