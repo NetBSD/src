@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.5.4.2 2000/07/03 02:20:19 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.5.4.3 2001/10/24 15:02:21 jhawk Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.10 2000/06/28 15:09:12 roger Exp */
 
@@ -1574,7 +1574,7 @@ bktr_open(dev_t dev, int flags, int fmt, struct proc *p)
 	unit = UNIT(dev);
 
 	/* unit out of range */
-	if ((unit > bktr_cd.cd_ndevs) || (bktr_cd.cd_devs[unit] == NULL))
+	if ((unit >= bktr_cd.cd_ndevs) || (bktr_cd.cd_devs[unit] == NULL))
 		return(ENXIO);
 
 	bktr = bktr_cd.cd_devs[unit];
