@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.66 1994/10/11 09:26:01 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.67 1994/10/18 06:28:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -319,6 +319,11 @@ static char *initpaths[] = {
 	NULL,
 };
 
+#ifdef DEBUG
+/* Print things out while trying to start init if startinit_verbose != 0. */
+int startinit_verbose = 0;
+#endif
+
 /*
  * Start the initial user process; try exec'ing each pathname in "initpaths".
  * The program is invoked with one argument containing the boot flags.
@@ -382,7 +387,9 @@ start_init(p, framep)
 			*flagsp++ = '\0';
 			i = flagsp - flags;
 #ifdef DEBUG
-			printf("init: copying out flags `%s' %d\n", flags, i);
+			if (startinit_verbose)
+				printf("init: copying out flags `%s' %d\n",
+				    flags, i);
 #endif
 			(void)copyout((caddr_t)flags, (caddr_t)(ucp -= i), i);
 			arg1 = ucp;
@@ -393,7 +400,8 @@ start_init(p, framep)
 		 */
 		i = strlen(path) + 1;
 #ifdef DEBUG
-		printf("init: copying out path `%s' %d\n", path, i);
+		if (startinit_verbose)
+			printf("init: copying out path `%s' %d\n", path, i);
 #endif
 		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
 		arg0 = ucp;
@@ -420,7 +428,11 @@ start_init(p, framep)
 		 */
 		if ((error = execve(p, &args, retval)) == 0)
 			return;
+#ifdef DEBUG
+		if (error != ENOENT || startinit_verbose)
+#else
 		if (error != ENOENT)
+#endif
 			printf("exec %s: error %d\n", path, error);
 	}
 	printf("init: not found\n");
