@@ -18,7 +18,7 @@
  *	OMEN US HORN OMIT BACK AHOY
  *	>
  *
- * $Id: skey.c,v 1.1 1994/05/24 06:48:02 deraadt Exp $
+ * $Id: skey.c,v 1.2 1994/12/28 23:17:52 cgd Exp $
  */
 
 #include <stdio.h>
@@ -59,36 +59,30 @@ main(argc, argv)
 
 	if (argc <= optind + 1) {
 		/* look for / in it */
-		if (argc <= optind) {
+		if (argc <= optind)
 			usage(argv[0]);
-			exit(1);
-		}
 		slash = strchr(argv[optind], '/');
-		if (slash == NULL) {
+		if (slash == NULL)
 			usage(argv[0]);
-			exit(1);
-		}
 		*slash++ = '\0';
 		seed = slash;
 
 		if ((n = atoi(argv[optind])) < 0) {
-			printf("%s not positive\n", argv[optind]);
+			fprintf(stderr, "%s not positive\n", argv[optind]);
 			usage(argv[0]);
-			exit(1);
 		}
 	} else {
 
 		if ((n = atoi(argv[optind])) < 0) {
-			printf("%s not positive\n", argv[optind]);
+			fprintf(stderr, "%s not positive\n", argv[optind]);
 			usage(argv[0]);
-			exit(1);
 		}
 		seed = argv[++optind];
 	}
 
 	/* Get user's secret password */
 	if (!pass) {
-		printf("Enter secret password: ");
+		fprintf(stderr, "Enter secret password: ");
 		readpass(passwd, sizeof(passwd));
 	}
 	rip(passwd);
@@ -124,5 +118,8 @@ void
 usage(s)
 	char   *s;
 {
-	printf("Usage: %s [-n count] [-p password ] sequence# [/] key\n", s);
+
+	fprintf(stderr,
+	    "Usage: %s [-n count] [-p password ] sequence# [/] key\n", s);
+	exit(1);
 }
