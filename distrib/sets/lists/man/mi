@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.183 1999/12/16 02:27:40 lukem Exp $
+# $NetBSD: mi,v 1.184 1999/12/16 07:08:10 lukem Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -553,6 +553,7 @@
 ./usr/share/man/cat5/fs.0
 ./usr/share/man/cat5/fstab.0
 ./usr/share/man/cat5/ftpd.conf.0
+./usr/share/man/cat5/ftpchroot.0
 ./usr/share/man/cat5/ftpusers.0
 ./usr/share/man/cat5/genassym.cf.0
 ./usr/share/man/cat5/gettytab.0
@@ -1464,6 +1465,7 @@
 ./usr/share/man/man5/fs.5
 ./usr/share/man/man5/fstab.5
 ./usr/share/man/man5/ftpd.conf.5
+./usr/share/man/man5/ftpchroot.5
 ./usr/share/man/man5/ftpusers.5
 ./usr/share/man/man5/genassym.cf.5
 ./usr/share/man/man5/gettytab.5
