@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/12 07:47:35 oki Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/24 15:01:57 kent Exp $
 
 .if ${MACHINE} == "i386"
-SUBDIR+=	freebsd_aout freebsd_elf linux_elf svr4_elf
+SUBDIR+=	freebsd_aout freebsd_elf linux_elf svr4_elf pecoff
 .endif
 
 .if ${MACHINE_ARCH} == "sparc64"
@@ -22,7 +22,7 @@ SUBDIR+=	hpux_aout
 .endif
 
 .if ${MACHINE} == "i386"
-SUBDIR+=	aout ibcs2_coff ibcs2_elf ibcs2_xout linux_aout pecoff
+SUBDIR+=	aout ibcs2_coff ibcs2_elf ibcs2_xout linux_aout
 .endif
 
 .if ${MACHINE_ARCH} == "m68k"
