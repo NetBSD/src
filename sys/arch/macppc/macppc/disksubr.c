@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2003/11/01 17:35:42 jdolecek Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33 2004/11/07 04:24:33 mbw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2003/11/01 17:35:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2004/11/07 04:24:33 mbw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ whichType(struct part_map_entry *part, u_int8_t *fstype, int *clust)
 		*clust = bzb->bzbCluster;
 		if (bzb->bzbMagic != BZB_MAGIC) {
 			type = 0;
-		} else if (bzb->bzbFlags & BZB_ROOTFS) {
+		} else if (bzb->bzbFlags & (BZB_ROOTFS | BZB_ROOTFS_NEW)) {
 			type = ROOT_PART;
 			*fstype = FS_BSDFFS;
 		} else if (bzb->bzbFlags & (BZB_USRFS | BZB_USRFS_NEW)) {
