@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.3 1995/05/20 19:59:52 pk Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.4 1995/06/28 04:31:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -40,7 +40,7 @@
  */
 
 /* uses NEC765 controller */
-#include <dev/ic/nec765.h>
+#include <dev/ic/nec765reg.h>
 
 #ifndef LOCORE
 struct fdreg_77 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30 1995/06/26 21:45:31 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.31 1995/06/28 04:31:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #include <sparc/sparc/auxreg.h>
 
 #include <machine/kbd.h>
-#include <dev/ic/z8530.h>
+#include <dev/ic/z8530reg.h>
 #include <sparc/dev/zsvar.h>
 
 #ifdef KGDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.12 1995/06/27 13:13:38 chopps Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.13 1995/06/28 04:30:38 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -55,7 +55,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
-#include <dev/ic/dp8390.h>
+#include <dev/ic/dp8390reg.h>
 #include <amiga/dev/if_edreg.h>
 #include <amiga/amiga/cia.h>		/* XXX? */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.7 1995/06/28 01:06:35 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.8 1995/06/28 04:30:34 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -93,7 +93,7 @@
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/pdma.h>
-#include <dev/ic/z8530.h>
+#include <dev/ic/z8530reg.h>
 #include <alpha/tc/sccreg.h>
 #include <alpha/tc/sccvar.h>
 #include <pmax/dev/fbreg.h>
