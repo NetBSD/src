@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.408 2000/11/05 22:10:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.409 2000/11/09 17:34:51 kim Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1803,11 +1803,11 @@ init386(first_avail)
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0) {
-#if 0
+#if DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
 		for (x = 0; x < bim->num; x++) {
-#if 0
+#if DEBUG_MEMLOAD
 			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
 			    bim->entry[x].addr,
 			    bim->entry[x].size,
@@ -2008,7 +2008,7 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end;
-#if 0
+#if DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 				    seg_start, tmp,
 				    atop(seg_start), atop(tmp));
@@ -2020,7 +2020,7 @@ init386(first_avail)
 				if (seg_start == seg_end)
 					continue;
 			}
-#if 0
+#if DEBUG_MEMLOAD
 			printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 			    seg_start, seg_end,
 			    atop(seg_start), atop(seg_end));
@@ -2040,7 +2040,7 @@ init386(first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end1;
-#if 0
+#if DEBUG_MEMLOAD
 				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 				    seg_start1, tmp,
 				    atop(seg_start1), atop(tmp));
@@ -2052,7 +2052,7 @@ init386(first_avail)
 				if (seg_start1 == seg_end1)
 					continue;
 			}
-#if 0
+#if DEBUG_MEMLOAD
 			printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
 			    seg_start1, seg_end1,
 			    atop(seg_start1), atop(seg_end1));
@@ -2077,7 +2077,7 @@ init386(first_avail)
 				break;
 		}
 		if (x == vm_nphysseg)
-			panic("init386: can't find end of memory");
+			panic("init386: can't find end of memory (increase VM_PHYSSEG_MAX?)");
 
 		/* Shrink so it'll fit in the last segment. */
 		if ((vps->avail_end - vps->avail_start) < atop(sz))
