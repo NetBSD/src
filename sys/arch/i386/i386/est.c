@@ -1,3 +1,4 @@
+/*	$NetBSD: est.c,v 1.2 2004/04/30 02:05:43 lukem Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -24,14 +25,45 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+/*-
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
- * This is a driver for Intel's Enhanced SpeedStep, as implemented in
- * Pentium M processors.
+ * This is a driver for Intel's Enhanced SpeedStep Technology (EST),
+ * as implemented in Pentium M processors.
  *
  * Reference documentation:
- *   
+ *
  * - IA-32 Intel Architecture Software Developer's Manual, Volume 3:
  *   System Programming Guide.
  *   Section 13.14, Enhanced Intel SpeedStep technology.
@@ -46,10 +78,15 @@
  *   Encoding of MSR_PERF_CTL and MSR_PERF_STATUS.
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
- 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.2 2004/04/30 02:05:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/sysctl.h>
+
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 
@@ -144,7 +181,7 @@ static const struct fq_info pentium_m_1700[] = {
 
 struct fqlist {
 	const char *brand_tag;
-	int n;
+	size_t tablec;
 	const struct fq_info *table;
 };
 
@@ -166,7 +203,7 @@ static const struct fqlist pentium_m[] = {
 struct est_cpu {
 	const char *brand_prefix;
 	const char *brand_suffix;
-	int n;
+	size_t listc;
 	const struct fqlist *list;
 };
 
@@ -178,25 +215,72 @@ static const struct est_cpu est_cpus[] = {
 	},
 };
 
-#define NCPUS	  (sizeof(est_cpus) / sizeof(est_cpus[0]))
+#define NESTCPUS  (sizeof(est_cpus) / sizeof(est_cpus[0]))
 
 
 #define MSRVALUE(mhz, mv)	((((mhz) / 100) << 8) | (((mv) - 700) / 16))
 #define MSR2MHZ(msr)		((((int) (msr) >> 8) & 0xff) * 100)
 #define MSR2MV(msr)		(((int) (msr) & 0xff) * 16 + 700)
 
-static const struct fqlist *est_fqlist;
+static const struct fqlist *est_fqlist;	/* not NULL if functional */
+static int	est_node_target, est_node_current;
+
+static const char est_desc[] = "Enhanced SpeedStep";
+
+static int
+est_sysctl_helper(SYSCTLFN_ARGS)
+{
+	struct sysctlnode	node;
+	int			fq, oldfq, error;
+
+	if (est_fqlist == NULL)
+		return (EOPNOTSUPP);
+
+	node = *rnode;
+	node.sysctl_data = &fq;
+
+	oldfq = 0;
+	if (rnode->sysctl_num == est_node_target)
+		fq = oldfq = MSR2MHZ(rdmsr(MSR_PERF_CTL));
+	else if (rnode->sysctl_num == est_node_current)
+		fq = MSR2MHZ(rdmsr(MSR_PERF_STATUS));
+	else
+		return (EOPNOTSUPP);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+		/* support writing to ...frequency.target */
+	if (rnode->sysctl_num == est_node_target && fq != oldfq) {
+		int		i;
+		u_int64_t	msr;
+
+		for (i = est_fqlist->tablec - 1; i > 0; i--)
+			if (est_fqlist->table[i].mhz >= fq)
+				break;
+		fq = est_fqlist->table[i].mhz;
+		msr = (rdmsr(MSR_PERF_CTL) & ~0xffffULL) |
+		    MSRVALUE(est_fqlist->table[i].mhz,
+			     est_fqlist->table[i].mv);
+		wrmsr(MSR_PERF_CTL, msr);
+	}
+
+	return (0);
+}
 
 
 void
-est_init(ci)
-	struct cpu_info *ci;
+est_init(struct cpu_info *ci)
 {
-	int i, j, n, mhz, mv;
-	const struct est_cpu *cpu;
-	u_int64_t msr;
-	char *tag;
-	const struct fqlist *fql;
+	const struct est_cpu	*cpu;
+	const struct fqlist	*fql;
+	struct sysctlnode	*node, *estnode, *freqnode;
+	u_int64_t		msr;
+	int			i, j, rc;
+	int			mhz, mv;
+	size_t			len, freq_len;
+	char			*tag, *freq_names;
 
 	if ((cpu_feature2 & CPUID2_EST) == 0)
 		return;
@@ -204,106 +288,104 @@ est_init(ci)
 	msr = rdmsr(MSR_PERF_STATUS);
 	mhz = MSR2MHZ(msr);
 	mv = MSR2MV(msr);
-	printf("%s: Enhanced SpeedStep running at %d MHz (%d mV)\n",
-	       ci->ci_dev->dv_xname, mhz, mv);
+	aprint_normal("%s: %s running at %d MHz (%d mV)\n",
+	       ci->ci_dev->dv_xname, est_desc, mhz, mv);
 
 	/*
 	 * Look for a CPU matching cpu_brand_string.
 	 */
-	for (i = 0; est_fqlist == NULL && i < NCPUS; i++) {
+	for (i = 0; est_fqlist == NULL && i < NESTCPUS; i++) {
 		cpu = &est_cpus[i];
-		n = strlen(cpu->brand_prefix);
-		if (strncmp(cpu->brand_prefix, cpu_brand_string, n) != 0)
+		len = strlen(cpu->brand_prefix);
+		if (strncmp(cpu->brand_prefix, cpu_brand_string, len) != 0)
 			continue;
-		tag = cpu_brand_string + n;
-		for (j = 0; j < cpu->n; j++) {
+		tag = cpu_brand_string + len;
+		for (j = 0; j < cpu->listc; j++) {
 			fql = &cpu->list[j];
-			n = strlen(fql->brand_tag);
-			if (!strncmp(fql->brand_tag, tag, n) &&
-			    !strcmp(cpu->brand_suffix, tag + n)) {
+			len = strlen(fql->brand_tag);
+			if (!strncmp(fql->brand_tag, tag, len) &&
+			    !strcmp(cpu->brand_suffix, tag + len)) {
 				est_fqlist = fql;
 				break;
 			}
 		}
 	}
 	if (est_fqlist == NULL) {
-		printf("%s: unknown EST cpu\n", ci->ci_dev->dv_xname);
+		aprint_normal("%s: unknown %s CPU\n",
+		    ci->ci_dev->dv_xname, est_desc);
 		return;
 	}
 
 	/*
 	 * Check that the current operating point is in our list.
 	 */
-	for (i = est_fqlist->n - 1; i >= 0; i--)
+	for (i = est_fqlist->tablec - 1; i >= 0; i--)
 		if (est_fqlist->table[i].mhz == mhz &&
 		    est_fqlist->table[i].mv == mv)
 			break;
 	if (i < 0) {
-		printf("%s: EST operating point not in table\n",
-		    ci->ci_dev->dv_xname);
+		aprint_normal("%s: %s operating point not in table\n",
+		    ci->ci_dev->dv_xname, est_desc);
+		est_fqlist = NULL;	/* flag as not functional */
 		return;
 	}
 
 	/*
-	 * OK, set the flag and tell the user the available frequencies.
+	 * OK, tell the user the available frequencies.
 	 */
-	i386_has_est = 1;
-	printf("%s: available speeds: ", ci->ci_dev->dv_xname);
-	for (i = 0; i < est_fqlist->n; i++)
-		printf("%d%s", est_fqlist->table[i].mhz,
-		    i < est_fqlist->n - 1 ? ", " : " MHz\n");
-}
+	freq_len = est_fqlist->tablec * (sizeof("9999 ")-1) + 1;
+	freq_names = malloc(freq_len, M_SYSCTLDATA, M_WAITOK);
+	freq_names[0] = '\0';
+	len = 0;
+	for (i = 0; i < est_fqlist->tablec; i++) {
+		len += snprintf(freq_names + len, freq_len - len, "%d%s",
+		    est_fqlist->table[i].mhz,
+		    i < est_fqlist->tablec - 1 ? " " : "");
+	}
+	aprint_normal("%s: %s frequencies available (MHz): %s\n",
+	    ci->ci_dev->dv_xname, est_desc, freq_names);
 
+	/*
+	 * Setup the sysctl sub-tree machdep.est.*
+	 */
+	if ((rc = sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL)) != 0)
+		goto err;
 
-int
-est_get_target_fq()
-{
-	return MSR2MHZ(rdmsr(MSR_PERF_CTL));
-}
+	if ((rc = sysctl_createv(NULL, 0, &node, &estnode,
+	    0, CTLTYPE_NODE, "est", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 
+	if ((rc = sysctl_createv(NULL, 0, &estnode, &node,
+	    0, CTLTYPE_STRING, "cpu_brand", NULL,
+	    NULL, 0, &cpu_brand_string, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 
-int
-est_set_target_fq(fq)
-	int fq;
-{
-	int i;
-	u_int64_t msr;
+	if ((rc = sysctl_createv(NULL, 0, &estnode, &freqnode,
+	    0, CTLTYPE_NODE, "frequency", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 
-	if (est_fqlist == NULL)
-		return EOPNOTSUPP;
+	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
+	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	est_node_target = node->sysctl_num;
 
-	for (i = est_fqlist->n - 1; i > 0; i--)
-		if (est_fqlist->table[i].mhz >= fq)
-			break;
-	fq = est_fqlist->table[i].mhz;
-	msr = (rdmsr(MSR_PERF_CTL) & ~0xffffULL) |
-	    MSRVALUE(est_fqlist->table[i].mhz, est_fqlist->table[i].mv);
-	wrmsr(MSR_PERF_CTL, msr);
-	
-	return 0;
-}
+	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+	    0, CTLTYPE_INT, "current", NULL,
+	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	est_node_current = node->sysctl_num;
 
+	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+	    0, CTLTYPE_STRING, "available", NULL,
+	    NULL, 0, freq_names, freq_len, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 
-int
-est_get_current_fq()
-{
-	return MSR2MHZ(rdmsr(MSR_PERF_STATUS));
-}
-
-
-int
-est_get_min_fq()
-{
-	if (est_fqlist == NULL)
-		return 0;
-	return est_fqlist->table[est_fqlist->n - 1].mhz;
-}
-
-
-int
-est_get_max_fq()
-{
-	if (est_fqlist == NULL)
-		return 0;
-	return est_fqlist->table[0].mhz;
+	return;
+ err:
+	aprint_normal("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
