@@ -38,24 +38,24 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.10 1994/03/18 03:11:47 cgd Exp $
+ *	$Id: mem.c,v 1.11 1994/03/18 19:08:28 mycroft Exp $
  */
 
 /*
  * Memory special file
  */
 
-#include "param.h"
-#include "conf.h"
-#include "buf.h"
-#include "systm.h"
-#include "uio.h"
-#include "malloc.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm.h"
+#include <vm/vm.h>
 
 extern        char *vmmap;            /* poor name! */
 /*ARGSUSED*/
