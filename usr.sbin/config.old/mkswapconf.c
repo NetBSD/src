@@ -74,7 +74,7 @@ do_swap(fl)
 	register struct file_list *swap;
 	dev_t dev;
 
-	if (eq(fl->f_fn, "generic")) {
+	if (eq(fl->f_fn, "generic") || eq(fl->f_fn, "nfs")) {
 		fl = fl->f_next;
 		return (fl->f_next);
 	}
@@ -111,7 +111,11 @@ do_swap(fl)
 		swap = swap->f_next;
 	} while (swap && swap->f_type == SWAPSPEC);
 	fprintf(fp, "\t{ 0, 0, 0 }\n");
-	fprintf(fp, "};\n");
+	fprintf(fp, "};\n\n");
+	fprintf(fp, "extern int ufs_mountroot();\n");
+	fprintf(fp, "int (*mountroot)() = ufs_mountroot;\n\n");
+	/* to support boot via net: */
+	fprintf(fp, "int nfs_diskless = -1;\n");
 	fclose(fp);
 	return (swap);
 }

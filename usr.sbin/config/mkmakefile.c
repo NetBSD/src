@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.9 1993/06/17 08:21:42 andrew Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.10 1993/07/07 10:47:05 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -329,6 +329,8 @@ do_cfiles(fp)
 			if (eq(fl->f_fn, "generic"))
 				fprintf(fp, "$S/arch/%s/%s/%s ",
 				    machinename, machinename, swapname);
+			else if (eq(fl->f_fn, "nfs"))
+				fprintf(fp, "$S/nfs/%s ", swapname);
 			else
 				fprintf(fp, "%s ", swapname);
 			lpos += len + 1;
@@ -451,11 +453,13 @@ do_swapspec(f, name)
 	register char *name;
 {
 
-	if (!eq(name, "generic"))
-		fprintf(f, "swap%s.o: swap%s.c\n", name, name);
-	else
+	if (eq(name, "generic"))
 		fprintf(f, "swapgeneric.o: ../../%s/swapgeneric.c\n",
 			machinename);
+	else if (eq(name, "nfs"))
+		fprintf(f, "swapnfs.o: ../../../../nfs/swapnfs.c\n");
+	else
+		fprintf(f, "swap%s.o: swap%s.c\n", name, name);
 	fprintf(f, "\t${NORMAL_C}\n\n");
 }
 
