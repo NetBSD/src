@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.5 1996/12/23 08:36:40 matthias Exp $
+#	$NetBSD: SALMON,v 1.6 1997/01/31 01:57:11 thorpej Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -11,7 +11,6 @@ maxusers	10			# estimated number of users
 
 #options	ACCOUNTING		# process accounting
 options		KTRACE			# system call tracing, a la ktrace(1)
-options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	"SHMMAXPGS=1024"
 #options	LKM			# loadable kernel modules
@@ -25,16 +24,18 @@ options 	COMPAT_11
 options 	COMPAT_12
 
 # file system options
+file-system 	FFS			# Berkeley fast file system
+#file-system	MFS			# memory file system; uses RAM and swap
+file-system 	NFS			# Network File System client
+#file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
+#file-system	MSDOSFS			# MS-DOS FAT file system
+file-system 	FDESC			# /dev/fd
+file-system 	KERNFS			# kernel file system; recommended
+
+options		FIFO			# fifos; recommended
 #options	QUOTA			# file system quotas
-options		FFS			# Berkeley fast file system
-#options	FASTLINKS		# fast symbolic links in FFS
-#options	MFS			# memory file system; uses RAM and swap
 options		NFSSERVER		# Network File System server
-options		NFSCLIENT		# Network File System client
-#options	ISOFS			# ISO 9660 CD-ROM file system, with RR
-#options	MSDOSFS			# MS-DOS FAT file system
-options		FDESC			# /dev/fd
-options		KERNFS			# kernel file system; recommended
+#options	FASTLINKS		# fast symbolic links in FFS
 
 # networking options
 #options	GATEWAY			# packet forwarding
@@ -51,7 +52,7 @@ options		INET			# IP
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 options		"DEV_RTC"		# /dev/rtc access to hardware clock
 
-config		"netbsd"	root on sd0 swap on sd0 and sd1 and vnd0a
+config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and vnd0a
 
 #rd0 at mainbus?
 
