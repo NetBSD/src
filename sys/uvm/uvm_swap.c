@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.21 1998/11/08 19:37:12 mycroft Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.22 1998/11/08 19:41:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1832,7 +1832,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * now dispose of the swap buffer
 	 */
 	s = splbio();
-	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY);
+	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY|B_NOCACHE);
 	if (bp->b_vp)
 		brelvp(bp);
 
@@ -1869,7 +1869,7 @@ uvm_swap_bufdone(bp)
 	/*
 	 * drop buffers reference to the vnode and its flags.
 	 */
-	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY);
+	bp->b_flags &= ~(B_BUSY|B_WANTED|B_PHYS|B_PAGET|B_UAREA|B_DIRTY|B_NOCACHE);
 	if (bp->b_vp)
 		brelvp(bp);
 
