@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.9.12.1 2005/01/28 10:33:59 yamt Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.9.12.2 2005/02/11 13:27:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.9.12.1 2005/01/28 10:33:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.9.12.2 2005/02/11 13:27:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ footbridge_mem_bs_unmap(t, bsh, size)
 	startva = trunc_page(bsh);
 	endva = round_page(bsh + size);
 
-	pmap_remove(pmap_kernel(), startva, endva - startve);
+	pmap_remove(pmap_kernel(), startva, endva);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, startva, endva - startva, UVM_KMF_VAONLY);
 }
