@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.4 1997/10/20 06:13:39 phil Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.4.2.1 1997/10/27 19:36:28 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,6 +62,9 @@ void do_upgrade(void)
 
 	if (!fsck_disks())
 		return;
+
+	/* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
+	run_prog ("/bin/mv /mnt/etc /mnt/etc.old");
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
