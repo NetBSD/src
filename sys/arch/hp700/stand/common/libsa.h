@@ -1,4 +1,4 @@
-/*	$NetBSD: libsa.h,v 1.3 2003/10/11 03:57:32 matt Exp $	*/
+/*	$NetBSD: libsa.h,v 1.4 2003/10/21 12:19:24 itohy Exp $	*/
 
 /*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 
@@ -47,8 +47,11 @@ extern dev_t bootdev;
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
 int	cngetc(void);
+int	tcngetc(void);
 void	cnputc(int);
 void	cninit(void);
+time_t	getsecs(void);
+int	tgetchar(void);
 
 void pdc_init(void);
 struct pz_device;
@@ -93,4 +96,3 @@ int	som_ldsym(int, struct x_param *);
 extern int debug;
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
 		bootprog_maker[];
-
