@@ -1,3 +1,5 @@
+/*	$NetBSD: fpsetround.c,v 1.2 1996/09/16 18:10:51 jonathan Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 11, 1995
  * Public domain.
