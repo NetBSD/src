@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/02/09 13:56:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/02/18 03:38:01 shin Exp $
 
 .include "../Makefile.inc"
 
@@ -34,7 +34,7 @@ release:
 .for instkern in ${INSTKERNELS}
 	rm -f netbsd netbsd.gz
 	cp ${KERNOBJDIR}/INSTALL_${instkern}/netbsd .
-	mdsetimage netbsd ${MINIROOTOBJ}/miniroot.fs
+	${MDSETIMAGE} netbsd ${MINIROOTOBJ}/miniroot.fs
 	gzip -9 netbsd
 	${IINST} netbsd.gz ${ITARGET}/netbsd.${instkern}.gz
 .endfor
