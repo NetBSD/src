@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.10 2004/05/05 17:56:14 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.11 2004/05/25 20:42:41 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.10 2004/05/05 17:56:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.11 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -236,6 +236,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 			goto bad;
 		}
 	}
+	wdc_init_shadow_regs(wdc_cp);
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_iohs[0];
 	pciide_map_compat_intr(pa, cp, compatchan);
@@ -326,6 +327,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 			goto bad;
 		}
 	}
+	wdc_init_shadow_regs(wdc_cp);
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_iohs[0];
 	return;

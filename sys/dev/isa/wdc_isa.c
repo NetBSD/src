@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.40 2004/01/03 22:56:53 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.41 2004/05/25 20:42:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.40 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.41 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ wdc_isa_probe(parent, match, aux)
 		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
+	wdc_init_shadow_regs(&ch);
 
 	ch.ctl_iot = ia->ia_iot;
 	if (bus_space_map(ch.ctl_iot, ia->ia_io[0].ir_addr +
@@ -177,6 +178,7 @@ wdc_isa_attach(parent, self, aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
