@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.4 2001/04/15 17:19:32 toshii Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.5 2001/04/17 15:49:02 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -77,7 +77,7 @@ static struct saost_softc *saost_sc = NULL;
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
 #ifndef STATHZ
-#define STATHZ	128
+#define STATHZ	64
 #endif
 
 struct cfattach saost_ca = {
