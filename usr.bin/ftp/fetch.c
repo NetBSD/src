@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.81 1999/09/30 12:18:03 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.82 1999/09/30 23:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.81 1999/09/30 12:18:03 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.82 1999/09/30 23:51:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -87,7 +87,8 @@ static int	go_fetch __P((const char *));
 static int	fetch_ftp __P((const char *));
 static int	fetch_url __P((const char *, const char *, char *, char *));
 static int	parse_url __P((const char *, const char *, url_t *, char **,
-				char **, char **, char **, char **));
+				char **, char **, char **, in_port_t *,
+				char **));
 static void	url_decode __P((char *));
 
 static int	redirect_loop;
@@ -115,9 +116,9 @@ auth_url(challenge, response, guser, gpass)
 	const char	 *gpass;
 {
 	char		*cp, *ep, *clear, *line, *realm, *scheme;
-	char		user[BUFSIZ], *pass;
-	int		rval;
-	size_t		len, clen, rlen;
+	char		 user[BUFSIZ], *pass;
+	int		 rval;
+	size_t		 len, clen, rlen;
 
 	*response = NULL;
 	clear = realm = scheme = NULL;
@@ -206,8 +207,8 @@ base64_encode(clear, len, encoded)
 {
 	static const char enc[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	char *cp;
-	int i;
+	char	*cp;
+	int	 i;
 
 	cp = encoded;
 	for (i = 0; i < len; i += 3) {
@@ -282,7 +283,7 @@ url_decode(url)
  *	"ftp://host//dir/file"		"/dir/file"
  */
 static int
-parse_url(url, desc, type, user, pass, host, port, path)
+parse_url(url, desc, type, user, pass, host, port, portnum, path)
 	const char	 *url;
 	const char	 *desc;
 	url_t		 *type;
@@ -290,26 +291,33 @@ parse_url(url, desc, type, user, pass, host, port, path)
 	char		**pass;
 	char		**host;
 	char		**port;
+	in_port_t	 *portnum;
 	char		**path;
 {
-	char *cp, *ep, *thost, *tport;
-	size_t len;
+	const char	*origurl;
+	char		*cp, *ep, *thost, *tport;
+	size_t		 len;
 
 	if (url == NULL || desc == NULL || type == NULL || user == NULL
-	    || pass == NULL || host == NULL || port == NULL || path == NULL)
+	    || pass == NULL || host == NULL || port == NULL || portnum == NULL
+	    || path == NULL)
 		errx(1, "parse_url: invoked with NULL argument!");
 
+	origurl = url;
 	*type = UNKNOWN_URL_T;
 	*user = *pass = *host = *port = *path = NULL;
+	*portnum = 0;
 	tport = NULL;
 
 	if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		url += sizeof(HTTP_URL) - 1;
 		*type = HTTP_URL_T;
+		*portnum = HTTP_PORT;
 		tport = httpport;
 	} else if (strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		url += sizeof(FTP_URL) - 1;
 		*type = FTP_URL_T;
+		*portnum = FTP_PORT;
 		tport = ftpport;
 	} else if (strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
 		url += sizeof(FILE_URL) - 1;
@@ -366,7 +374,7 @@ cleanup_parse_url:
 		if ((ep = strchr(cp, ']')) == NULL ||
 		    (ep[1] != '\0' && ep[1] != '\0')) {
 			warnx("Invalid address `%s' in %s `%s'",
-			    thost, desc, url);
+			    thost, desc, origurl);
 			goto cleanup_parse_url;
 		}
 		len = ep - cp;		/* change `[xxx]' -> `xxx' */
@@ -374,7 +382,7 @@ cleanup_parse_url:
 		thost[len] = '\0';
 		if (! isipv6addr(thost)) {
 			warnx("Invalid IPv6 address `%s' in %s `%s'",
-			    thost, desc, url);
+			    thost, desc, origurl);
 			goto cleanup_parse_url;
 		}
 		cp = ep + 1;
@@ -390,15 +398,28 @@ cleanup_parse_url:
 
 			/* look for [:port] */
 	if (cp != NULL) {
-		long nport;
+		long	nport;
 
 		nport = strtol(cp, &ep, 10);
-		if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
-			warnx("Invalid port `%s' in %s `%s'", cp, desc, url);
+		if (*ep != '\0' && ep == cp) {
+			struct servent	*svp;
+
+			svp = getservbyname(cp, "tcp");
+			if (svp == NULL) {
+				warnx("Unknown port `%s' in %s `%s'",
+				    cp, desc, origurl);
+				goto cleanup_parse_url;
+			} else
+				nport = ntohs(svp->s_port);
+		} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
+			warnx("Invalid port `%s' in %s `%s'", cp, desc,
+			    origurl);
 			goto cleanup_parse_url;
 		}
+		*portnum = nport;
 		tport = cp;
 	}
+
 	if (tport != NULL);
 		*port = xstrdup(tport);
 	if (*path == NULL)
@@ -406,14 +427,13 @@ cleanup_parse_url:
 
 	if (debug)
 		fprintf(ttyout,
-		    "parse_url: user `%s' pass `%s' host %s:%s path `%s'\n",
+		    "parse_url: user `%s' pass `%s' host %s:%s(%d) path `%s'\n",
 		    *user ? *user : "<null>", *pass ? *pass : "<null>",
 		    *host ? *host : "<null>", *port ? *port : "<null>",
-		    *path ? *path : "<null>");
+		    *portnum ? *portnum : -1, *path ? *path : "<null>");
 
 	return (0);
 }
-
 
 jmp_buf	httpabort;
 
@@ -481,15 +501,9 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	(void)&decodedpath;
 #endif
 
-	if (parse_url(url, "URL", &urltype, &user, &pass, &host, &port, &path)
-	    == -1)
+	if (parse_url(url, "URL", &urltype, &user, &pass, &host, &port,
+	    &portnum, &path) == -1)
 		goto cleanup_fetch_url;
-	portnum = strtol(port, &ep, 10);
-	if (*ep || port == ep) {
-		struct servent *svp = getservbyname(port, "tcp");
-		if (svp != NULL)
-			portnum = ntohs(svp->s_port);
-	}
 
 	if (urltype == FILE_URL_T && ! EMPTYSTRING(host)
 	    && strcasecmp(host, "localhost") != 0) {
@@ -584,8 +598,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 						    strtol(np + 1, &ep, 10);
 						if (*ep != '\0')
 							continue;
-						if (portnum !=
-						    htons((in_port_t)np_port))
+						if (np_port != portnum)
 							continue;
 					}
 					plen = strlen(cp);
@@ -600,8 +613,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 			if (isproxy) {
 				if (parse_url(proxyenv, "proxy URL", &purltype,
-				    &puser, &ppass, &phost, &pport, &ppath)
-				    == -1)
+				    &puser, &ppass, &phost, &pport, &portnum,
+				    &ppath) == -1)
 					goto cleanup_fetch_url;
 
 				if ((purltype != HTTP_URL_T
@@ -650,18 +663,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				hp->h_length = sizeof(sin.sin_addr);
 			memcpy(&sin.sin_addr, hp->h_addr, hp->h_length);
 		}
-
-		if (port == NULL) {
-			warnx("Unknown port for URL `%s'", url);
-			goto cleanup_fetch_url;
-		}
-		portnum = strtol(port, &ep, 10);
-		if (*ep || port == ep) {
-			struct servent *svp = getservbyname(port, "tcp");
-			if (svp != NULL)
-				portnum = ntohs(svp->s_port);
-		}
-		sin.sin_port = portnum;
+		sin.sin_port = htons(portnum);
 
 		s = socket(AF_INET, SOCK_STREAM, 0);
 		if (s == -1) {
@@ -1232,8 +1234,9 @@ fetch_ftp(url)
 	char		*cp, *xargv[5], rempath[MAXPATHLEN];
 	char		*host, *path, *dir, *file, *user, *pass;
 	char		*port;
-	int		dirhasglob, filehasglob, oautologin, rval, type, xargc;
-	url_t		urltype;
+	int		 dirhasglob, filehasglob, oautologin, rval, type, xargc;
+	in_port_t	 portnum;
+	url_t		 urltype;
 
 	host = path = dir = file = user = pass = NULL;
 	port = NULL;
@@ -1242,7 +1245,7 @@ fetch_ftp(url)
 
 	if (strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 		if ((parse_url(url, "URL", &urltype, &user, &pass,
-		    &host, &port, &path) == -1) ||
+		    &host, &port, &portnum, &path) == -1) ||
 		    (user != NULL && *user == '\0') ||
 		    (pass != NULL && *pass == '\0') ||
 		    EMPTYSTRING(host)) {
