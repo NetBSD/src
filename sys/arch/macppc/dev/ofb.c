@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.6 1999/01/11 21:54:23 drochner Exp $	*/
+/*	$NetBSD: ofb.c,v 1.7 1999/02/02 16:48:17 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,7 +45,6 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-#include <machine/bat.h>
 #include <machine/bus.h>
 #include <machine/grfioctl.h>
 
@@ -174,9 +173,6 @@ ofbattach(parent, self, aux)
 	a.accessops = &ofb_accessops;
 	a.accesscookie = sc;
 
-#ifdef DEBUG
-	asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1" :: "r"(0), "r"(0));
-#endif
 	config_found(self, &a, wsemuldisplaydevprint);
 }
 
@@ -193,10 +189,6 @@ ofb_common_init(node, dc)
 
 	OF_getprop(node, "assigned-addresses", regs, sizeof(regs));
 	addr = regs[2] & 0xf0000000;
-
-	/* Map the framebuffer using BAT3. (va == pa) */
-	asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1; isync"
-		:: "r"(BATL(addr, BAT_I)), "r"(BATU(addr)));
 
 	if (dc->dc_ih == 0) {
 		char name[64];
@@ -403,7 +395,7 @@ putcmap(sc, cm)
 	struct ofb_devconfig *dc = sc->sc_dc;
 	int index = cm->index;
 	int count = cm->count;
-	int i, s;
+	int i;
 	u_char *r, *g, *b;
 
 	if (cm->index >= 256 || cm->count > 256 ||
@@ -428,15 +420,10 @@ putcmap(sc, cm)
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
 
-	s = splhigh();
-	asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
-		:: "r"(BATL(dc->dc_paddr, BAT_I)), "r"(BATU(dc->dc_paddr)));
-
 	for (i = 0; i < count; i++) {
 		OF_call_method_1("color!", dc->dc_ih, 4, *r, *g, *b, index);
 		r++, g++, b++, index++;
 	}
-	splx(s);
 
 	return 0;
 }
