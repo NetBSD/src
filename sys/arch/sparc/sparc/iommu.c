@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.56 2001/09/26 15:05:49 eeh Exp $ */
+/*	$NetBSD: iommu.c,v 1.57 2001/09/26 20:53:08 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -197,7 +197,7 @@ iommu_attach(parent, self, aux)
 	 * implicit iommu and attach that sbus node under it.
 	 */
 	node = ma->ma_node;
-	if (strcmp(getpropstring(node, "name"), "sbus") == 0)
+	if (strcmp(PROM_getpropstring(node, "name"), "sbus") == 0)
 		js1_implicit_iommu = 1;
 	else
 		js1_implicit_iommu = 0;
@@ -230,7 +230,7 @@ iommu_attach(parent, self, aux)
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = js1_implicit_iommu ? NBPG
-				: getpropint(node, "page-size", NBPG),
+				: PROM_getpropint(node, "page-size", NBPG),
 
 	/*
 	 * Allocate memory for I/O pagetables.
@@ -335,7 +335,7 @@ iommu_attach(parent, self, aux)
 		struct iommu_attach_args ia;
 
 		bzero(&ia, sizeof ia);
-		ia.iom_name = getpropstring(node, "name");
+		ia.iom_name = PROM_getpropstring(node, "name");
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
@@ -344,7 +344,7 @@ iommu_attach(parent, self, aux)
 		ia.iom_node = node;
 
 		ia.iom_reg = NULL;
-		getprop(node, "reg", sizeof(struct sbus_reg),
+		PROM_getprop(node, "reg", sizeof(struct sbus_reg),
 			&ia.iom_nreg, (void **)&ia.iom_reg);
 
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.19 2001/06/11 13:34:51 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.20 2001/09/26 20:53:05 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ kd_init(kd)
 	case PROM_OPENFIRM:
 
 		if (kd->rows == 0 &&
-		    (prop = getpropstring(optionsnode, "screen-#rows"))) {
+		    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
 			int i = 0;
 
 			while (*prop != '\0')
@@ -155,7 +155,7 @@ kd_init(kd)
 			kd->rows = (unsigned short)i;
 		}
 		if (kd->cols == 0 &&
-		    (prop = getpropstring(optionsnode, "screen-#columns"))) {
+		    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
 			int i = 0;
 
 			while (*prop != '\0')
@@ -641,7 +641,7 @@ prom_get_device_args(prop, args, sz)
 {
 	char *cp, buffer[128];
 
-	cp = getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
+	cp = PROM_getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
 
 	/*
 	 * Extract device-specific arguments from a PROM device path (if any)
