@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.17 1996/10/28 08:46:37 fvdl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.18 1996/12/06 03:24:32 christos Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -1223,7 +1223,19 @@ svr4_stream_ioctl(fp, p, retval, fd, cmd, dat)
 
 	case SVR4_I_SETSIG:
 		DPRINTF(("I_SETSIG\n"));
-		return 0;
+		/* 
+		 * This is the best we can do for now; we cannot generate
+		 * signals only for specific events so the signal mask gets
+		 * ignored
+		 */
+		{
+			struct sys_fcntl_args fa;
+
+			SCARG(&fa, fd) = fd;
+			SCARG(&fa, cmd) = F_SETOWN;
+			SCARG(&fa, arg) = (void *) p->p_pid;
+			return sys_fcntl(p, &fa, retval);
+		}
 
 	case SVR4_I_GETSIG:
 		DPRINTF(("I_GETSIG\n"));
