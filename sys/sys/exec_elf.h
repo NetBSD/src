@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.10 1997/03/21 05:34:40 cgd Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.11 1997/06/10 06:42:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -232,6 +232,14 @@ typedef struct {
 	Elf64_Word	sh_addralign;	/* memory alignment */
 	Elf64_Word	sh_entsize;	/* table entry size */
 } Elf64_Shdr;
+
+/*
+ * Bits for sh_flags
+ */
+#define	SHF_WRITE	0x1		/* section contains writable data */
+#define	SHF_ALLOC	0x2		/* section occupies memory */
+#define	SHF_EXECINSTR	0x4		/* section contains executable insns */
+#define	SHF_MASKPROC	0xf0000000	/* processor-specific mask */
 
 /*
  * Symbol Definitions
