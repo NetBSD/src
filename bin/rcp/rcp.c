@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.33 2003/08/07 09:05:27 agc Exp $	*/
+/*	$NetBSD: rcp.c,v 1.34 2004/03/28 08:18:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.33 2003/08/07 09:05:27 agc Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.34 2004/03/28 08:18:25 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,9 +312,9 @@ toremote(targ, argc, argv)
 					    tuser ? tuser : pwname);
 				else
 #endif
-					rem = rcmd(&host, port, pwname,
+					rem = rcmd_af(&host, port, pwname,
 					    tuser ? tuser : pwname,
-					    bp, 0);
+					    bp, NULL, PF_UNSPEC);
 				if (rem < 0)
 					exit(1);
 				if (response() < 0)
@@ -371,7 +371,7 @@ tolocal(argc, argv)
 		    use_kerberos ? 
 			kerberos(&host, bp, pwname, suser) : 
 #endif
-			rcmd(&host, port, pwname, suser, bp, 0);
+			rcmd_af(&host, port, pwname, suser, bp, NULL,PF_UNSPEC);
 		(void)free(bp);
 		if (rem < 0) {
 			++errs;
@@ -831,7 +831,7 @@ again:
 			errx(1,
 			   "the -x option requires Kerberos authentication");
 #endif
-		rem = rcmd(host, port, locuser, user, bp, 0);
+		rem = rcmd_af(host, port, locuser, user, bp, NULL, PF_UNSPEC);
 	}
 	return (rem);
 }
