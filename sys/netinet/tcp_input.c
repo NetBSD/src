@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.99 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.100 1999/12/15 06:28:43 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3428,7 +3428,8 @@ syn_cache_respond(sc, m)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ip6->ip6_vfc = IPV6_VERSION;
+		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+		ip6->ip6_vfc |= IPV6_VERSION;
 		ip6->ip6_plen = htons(tlen - hlen);
 		/* ip6_hlim will be initialized afterwards */
 		/* XXX flowlabel? */
