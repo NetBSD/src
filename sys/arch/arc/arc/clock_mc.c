@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.11 2001/02/17 04:27:53 tsutsui Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.12 2001/05/09 16:44:44 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -260,7 +260,11 @@ mcclock_set(csc, ct)
 
 	s = splclock();
 	MC146818_GETTOD(csc, &regs);
-printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
+#ifdef DEBUG
+	printf("mcclock_set: %04d-%02d-%02d %02d:%02d:%02d\n",
+	    regs[MC_YEAR] + 1980, regs[MC_MONTH], regs[MC_DOM],
+	    regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
+#endif
 
 	regs[MC_SEC] = ct->sec;
 	regs[MC_MIN] = ct->min;
@@ -280,7 +284,11 @@ printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs
 
 	MC146818_PUTTOD(csc, &regs);
 	MC146818_GETTOD(csc, &regs);
-printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
+#ifdef DEBUG
+	printf("mcclock_set: %04d-%02d-%02d %02d:%02d:%02d\n",
+	    regs[MC_YEAR] + 1980, regs[MC_MONTH], regs[MC_DOM],
+	    regs[MC_HOUR], regs[MC_MIN], regs[MC_SEC]);
+#endif
 	splx(s);
 }
 
