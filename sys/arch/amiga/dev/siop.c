@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.35 1996/10/13 03:07:34 christos Exp $	*/
+/*	$NetBSD: siop.c,v 1.36 1997/07/26 22:07:54 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -260,7 +260,7 @@ siop_poll(sc, acb)
 	for (;;) {
 		/* use cmd_wait values? */
 		i = 50000;
-		spl0();
+		/* XXX spl0(); */
 		while (((istat = rp->siop_istat) &
 		    (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0) {
 			if (--i <= 0) {
