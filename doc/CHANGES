@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.179 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.180 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -428,3 +428,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		MKUPDATE=yes, MKUNPRIVED=yes respectively.  [lukem 20030718]
 	ipsec: support hmac-sha2 for AH/ESP auth.  [itojun 20030722]
 	sparc: Update sparc port to use XFree86 4.x base.  [mrg 20030722]
+	libcrypto: upgrade to 0.9.7b. [itojun 20030724]
