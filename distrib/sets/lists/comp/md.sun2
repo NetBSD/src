@@ -1,6 +1,7 @@
-# $NetBSD: md.sun2,v 1.8 2003/10/24 18:32:16 mycroft Exp $
+# $NetBSD: md.sun2,v 1.9 2003/10/25 22:34:03 mycroft Exp $
 ./usr/include/ieeefp.h		comp-c-include
 ./usr/include/sun2		comp-c-include
+./usr/include/sun2/_G_config.h	comp-c-include
 ./usr/include/sun2/ansi.h	comp-c-include
 ./usr/include/sun2/aout_machdep.h	comp-c-include
 ./usr/include/sun2/asm.h	comp-c-include
