@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.6.2.3 2004/09/21 13:38:46 skrll Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.6.2.4 2005/02/17 07:10:37 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -60,9 +60,7 @@ struct ksyms_gsymbol {
  * Prototypes
  */
 int ksyms_getname(const char **, char **, vaddr_t, int);
-int ksyms_getval(const char *, char *, unsigned long *, int, int);
-#define	ksyms_getval_from_kernel(a,b,c,d)	ksyms_getval(a,b,c,d,0)
-#define	ksyms_getval_from_userland(a,b,c,d)	ksyms_getval(a,b,c,d,1)
+int ksyms_getval(const char *, char *, unsigned long *, int);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
 int ksyms_delsymtab(const char *);
 int ksyms_rensymtab(const char *, const char*);
