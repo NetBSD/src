@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.115 2002/11/03 13:59:12 nisimura Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.116 2002/12/20 05:43:09 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.115 2002/11/03 13:59:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.116 2002/12/20 05:43:09 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -715,26 +715,6 @@ wakeup_one(void *ident)
 			awaken(p);
 	}
 	SCHED_UNLOCK(s);
-}
-
-/*
- * General yield call.  Puts the current process back on its run queue and
- * performs a voluntary context switch.
- */
-void
-yield(void)
-{
-	struct proc *p = curproc;
-	int s;
-
-	SCHED_LOCK(s);
-	p->p_priority = p->p_usrpri;
-	p->p_stat = SRUN;
-	setrunqueue(p);
-	p->p_stats->p_ru.ru_nvcsw++;
-	mi_switch(p, NULL);
-	SCHED_ASSERT_UNLOCKED();
-	splx(s);
 }
 
 /*
