@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_simple.c,v 1.1 1993/10/07 07:30:18 cgd Exp $";
+static char *rcsid = "$Id: svc_simple.c,v 1.2 1994/12/04 01:13:28 cgd Exp $";
 #endif
 
 /* 
@@ -41,6 +41,7 @@ static char *rcsid = "$Id: svc_simple.c,v 1.1 1993/10/07 07:30:18 cgd Exp $";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -109,7 +110,7 @@ universal(rqstp, transp)
 	 * enforce "procnum 0 is echo" convention
 	 */
 	if (rqstp->rq_proc == NULLPROC) {
-		if (svc_sendreply(transp, xdr_void, (char *)NULL) == FALSE) {
+		if (svc_sendreply(transp, xdr_void, NULL) == FALSE) {
 			(void) fprintf(stderr, "xxx\n");
 			exit(1);
 		}
@@ -126,7 +127,8 @@ universal(rqstp, transp)
 				return;
 			}
 			outdata = (*(pl->p_progname))(xdrbuf);
-			if (outdata == NULL && pl->p_outproc != xdr_void)
+			if (outdata == NULL &&
+			    pl->p_outproc != xdr_void)
 				/* there was an error */
 				return;
 			if (!svc_sendreply(transp, pl->p_outproc, outdata)) {

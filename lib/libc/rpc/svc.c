@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc.c	2.4 88/08/11 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc.c,v 1.3 1994/08/23 18:42:11 deraadt Exp $";
+static char *rcsid = "$Id: svc.c,v 1.4 1994/12/04 01:13:23 cgd Exp $";
 #endif
 
 /*
@@ -43,11 +43,11 @@ static char *rcsid = "$Id: svc.c,v 1.3 1994/08/23 18:42:11 deraadt Exp $";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include <stdlib.h>
+
 #include <sys/errno.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
-
-extern int errno;
 
 static SVCXPRT **xports;
 
@@ -377,9 +377,8 @@ svc_getreqset(readfds)
 	u_long high_vers;
 	struct svc_req r;
 	register SVCXPRT *xprt;
-	register u_long mask;
 	register int bit;
-	register u_long *maskp;
+	register u_int32_t mask, *maskp;
 	register int sock;
 	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	msg.rm_call.cb_cred.oa_base = cred_area;
@@ -387,7 +386,7 @@ svc_getreqset(readfds)
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
 
-	maskp = (u_long *)readfds->fds_bits;
+	maskp = readfds->fds_bits;
 	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {
 	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
