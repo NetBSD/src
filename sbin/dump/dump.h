@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.27 2001/05/28 01:09:55 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.28 2001/08/14 05:44:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -45,7 +45,7 @@
  * between ffs, lfs, and maybe ext2fs and others as well.
  */
 struct ufsi {
-	int64_t ufs_dsize;	/* filesystem size, in sectors */
+	int64_t ufs_dsize;	/* file system size, in sectors */
 	int32_t ufs_bsize;	/* block size */
 	int32_t ufs_bshift;	/* log2(ufs_bsize) */
 	int32_t ufs_fsize;	/* fragment size */
