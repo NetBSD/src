@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.14 1997/08/27 11:24:51 bouyer Exp $	*/
+/*	$NetBSD: bha.c,v 1.15 1997/10/28 19:13:36 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -137,7 +137,7 @@ void bhaminphys __P((struct buf *));
 int bha_scsi_cmd __P((struct scsipi_xfer *));
 int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
 void bha_timeout __P((void *arg));
-int bha_create_ccbs __P((struct bha_softc *, void *, size_t));
+int bha_create_ccbs __P((struct bha_softc *, void *, size_t, int));
 
 struct scsipi_adapter bha_switch = {
 	bha_scsi_cmd,
@@ -558,10 +558,11 @@ bha_init_ccb(sc, ccb)
  * Create a set of ccbs and add them to the free list.
  */
 int
-bha_create_ccbs(sc, mem, size)
+bha_create_ccbs(sc, mem, size, max_ccbs)
 	struct bha_softc *sc;
 	void *mem;
 	size_t size;
+	int max_ccbs;
 {
 	bus_dma_segment_t seg;
 	struct bha_ccb *ccb;
@@ -569,6 +570,9 @@ bha_create_ccbs(sc, mem, size)
 
 	if (sc->sc_numccbs >= BHA_CCB_MAX)
 		return (0);
+
+	if (max_ccbs > BHA_CCB_MAX)
+		max_ccbs = BHA_CCB_MAX;
 
 	if ((ccb = mem) != NULL)
 		goto have_mem;
@@ -588,14 +592,12 @@ bha_create_ccbs(sc, mem, size)
 
  have_mem:
 	bzero(ccb, size);
-	while (size > sizeof(struct bha_ccb)) {
+	while (size > sizeof(struct bha_ccb) && sc->sc_numccbs < max_ccbs) {
 		bha_init_ccb(sc, ccb);
-		sc->sc_numccbs++;
-		if (sc->sc_numccbs >= BHA_CCB_MAX)
-			break;
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
 		(caddr_t)ccb += ALIGN(sizeof(struct bha_ccb));
 		size -= ALIGN(sizeof(struct bha_ccb));
+		sc->sc_numccbs++;
 	}
 
 	return (0);
@@ -628,7 +630,7 @@ bha_get_ccb(sc, flags)
 			break;
 		}
 		if (sc->sc_numccbs < BHA_CCB_MAX) {
-			if (bha_create_ccbs(sc, NULL, 0)) {
+			if (bha_create_ccbs(sc, NULL, 0, BHA_CCB_MAX)) {
 				printf("%s: can't allocate ccbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
@@ -1049,7 +1051,7 @@ bha_init(sc)
 	struct bha_setup setup;
 	struct bha_mailbox mailbox;
 	struct bha_period period;
-	int i, rlen, rseg;
+	int i, j, initial_ccbs, rlen, rseg;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
 	if (strcmp(sc->sc_firmware, "3.31") >= 0) {
@@ -1074,6 +1076,15 @@ bha_init(sc)
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
+	/* Count installed units. */
+	initial_ccbs = 0;
+	for (i = 0; i < 8; i++) {
+		for (j = 0; j < 8; j++) {
+			if (((devices.reply.lun_map[i] >> j) & 1) == 1)
+				initial_ccbs++;
+		}
+	}
+
 	/*
 	 * Poll targets 8 - 15 if we have a wide bus.
 	 */
@@ -1082,7 +1093,16 @@ bha_init(sc)
 		bha_cmd(iot, ioh, sc,
 		    sizeof(devices.cmd), (u_char *)&devices.cmd,
 		    sizeof(devices.reply), (u_char *)&devices.reply);
+
+		for (i = 0; i < 8; i++) {
+			for (j = 0; j < 8; j++) {
+				if (((devices.reply.lun_map[i] >> j) & 1) == 1)
+					initial_ccbs++;
+			}
+		}
 	}
+
+	initial_ccbs *= sc->sc_link.openings;
 
 	/* Obtain setup information from. */
 	rlen = sizeof(setup.reply) +
@@ -1153,7 +1173,7 @@ bha_init(sc)
 	 */
 	if (bha_create_ccbs(sc, ((caddr_t)wmbx) +
 	    ALIGN(sizeof(struct bha_mbx)),
-	    NBPG - ALIGN(sizeof(struct bha_mbx))))
+	    NBPG - ALIGN(sizeof(struct bha_mbx)), initial_ccbs))
 		panic("bha_init: can't create ccbs");
 
 	/*
