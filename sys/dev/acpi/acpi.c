@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.37 2003/07/02 11:54:43 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.38 2003/07/02 12:23:25 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.37 2003/07/02 11:54:43 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.38 2003/07/02 12:23:25 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -819,7 +819,8 @@ done:
 /*
  * acpi_eval_struct:
  *
- *	Evaluate a more complex structure.  Caller must free buf.Pointer.
+ *	Evaluate a more complex structure.
+ *	Caller must free buf.Pointer by AcpiOsFree().
  */
 ACPI_STATUS
 acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
@@ -841,24 +842,14 @@ acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
  * acpi_get:
  *
  *	Fetch data info the specified (empty) ACPI buffer.
+ *	Caller must free buf.Pointer by AcpiOsFree().
  */
 ACPI_STATUS
 acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
     ACPI_STATUS (*getit)(ACPI_HANDLE, ACPI_BUFFER *))
 {
-	ACPI_STATUS rv;
-
 	buf->Pointer = NULL;
-	buf->Length = 0;
-
-	rv = (*getit)(handle, buf);
-	if (rv != AE_BUFFER_OVERFLOW)
-		return (rv);
-
-	buf->Pointer = AcpiOsAllocate(buf->Length);
-	if (buf->Pointer == NULL)
-		return (AE_NO_MEMORY);
-	memset(buf->Pointer, 0, buf->Length);
+	buf->Length = ACPI_ALLOCATE_BUFFER;
 
 	return ((*getit)(handle, buf));
 }
@@ -1071,7 +1062,7 @@ acpi_get_intr(ACPI_HANDLE handle)
 			break;
 		}
 	}
-	free(ret.Pointer, M_ACPI);
+	AcpiOsFree(ret.Pointer);
 	return (intr);
 }
 
@@ -1211,7 +1202,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 
 	sc->sc_pci_bus++;
 
-	free(buf.Pointer, M_ACPI);
+	AcpiOsFree(buf.Pointer);
 	return (AE_OK);
 }
 #endif /* ACPI_PCI_FIXUP */
@@ -1295,9 +1286,9 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 out3:
 	free(bufn.Pointer, M_ACPI);
 out2:
-	free(bufc.Pointer, M_ACPI);
+	AcpiOsFree(bufc.Pointer);
 out1:
-	free(bufp.Pointer, M_ACPI);
+	AcpiOsFree(bufp.Pointer);
 out:
 	return rv;
 }
