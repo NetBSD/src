@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.237 2004/09/02 02:02:38 tacha Exp $
+#	$NetBSD: Makefile,v 1.238 2005/01/01 10:32:39 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -68,10 +68,10 @@
 #   includes:        installs include files.
 #   do-tools-compat: builds the "libnbcompat" library; needed for some
 #                    random host tool programs in the source tree.
+#   do-lib-csu:      builds and installs prerequisites from lib/csu.
 #   do-gnu-lib-crtstuff3: builds and installs prerequisites from
 #			  gnu/lib/crtstuff3
 #   do-gnu-lib-libgcc3: builds and installs prerequisites from gnu/lib/libgcc3
-#   do-lib-csu:      builds and installs prerequisites from lib/csu.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
