@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.10 1997/12/05 14:12:38 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.11 1997/12/10 07:46:45 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@
 #define NUMSEC(size,sizemult,cylsize) \
 	((size == -1) ? -1 : (sizemult == 1) ? (size) : \
 	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize))
-   
+
 /* Types */
 typedef struct distinfo {
 	char *name;
@@ -133,10 +133,10 @@ EXTERN int swapadj INIT(0);
 /* Information for the NetBSD disklabel */
 EXTERN char *fstype[]
 #ifdef MAIN
-= {"unused", "swap", "4.2BSD", "msdos", "ados"}
+= {"unused", "swap", "4.2BSD", "msdos", "ados", "boot"}
 #endif
 ;
-enum DTYPE {T_UNUSED, T_SWAP, T_42BSD, T_MSDOS, T_ADOS};
+enum DTYPE {T_UNUSED, T_SWAP, T_42BSD, T_MSDOS, T_ADOS, T_BOOT};
 enum DINFO {D_SIZE, D_OFFSET, D_FSTYPE, D_BSIZE, D_FSIZE};
 enum DLTR {A,B,C,D,E,F,G,H};
 EXTERN char partname[] INIT("abcdefgh");
