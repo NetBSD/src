@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.9 1998/08/08 22:33:28 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.10 1998/12/01 12:03:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Erez Zadok
@@ -530,7 +530,7 @@ main(int argc, char *argv[])
    */
   error = mount_automounter(ppid);
   if (error && ppid)
-    kill(SIGALRM, ppid);
+    kill(ppid, SIGALRM);
   going_down(error);
 
   abort();
