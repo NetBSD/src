@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.38 1997/07/07 03:54:33 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.39 1997/07/20 19:48:13 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1655,8 +1655,11 @@ END(mips1_switch_exit)
  * UADDR to the u-area.  Then the following TLB entries are used to
  * map the current u-area.  Also, any current mapping for the u-area
  * address space needs to be flushed as well.
+ *
+ * NB: cannot be profiled due to weird argument-assing convention.
+ *     mcount would trash v0, t0, t1.
  */
-LEAF(mips1_cpu_switch_resume)
+NLEAF(mips1_cpu_switch_resume)
 	sll	v0, v0, MIPS1_TLB_PID_SHIFT	# v0 = aligned PID
 	or	v0, v0, UADDR			# v0 = first HI entry
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# set the index register
