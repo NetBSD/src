@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.1 2002/11/11 01:18:44 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.2 2002/11/12 05:18:31 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,8 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.1 2002/11/11 01:18:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.2 2002/11/12 05:18:31 manu Exp $");
 
+#include <sys/types.h>
+#include <sys/systm.h>
+
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
 #include <compat/mach/mach_errno.h>
 
 int native_to_mach_errno[] = {
@@ -129,3 +134,23 @@ int native_to_mach_errno[] = {
 	MACH_KERN_FAILURE,			/* EOVERFLOW */
 	MACH_KERN_FAILURE,			/* EILSEQ */	/* 85 */
 };
+
+int
+mach_msg_error(msgh, req, rep, error)
+	mach_msg_header_t *msgh;
+	mach_msg_header_t *req;
+	mach_error_reply_t *rep;
+	int error;
+{	
+	bzero(rep, sizeof(*rep));
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->msgh_local_port;
+	rep->rep_msgh.msgh_id = req->msgh_id + 100;
+	rep->rep_retval = native_to_mach_errno[error];
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	return copyout(rep, msgh, sizeof(*rep));
+}
