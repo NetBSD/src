@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.43 2001/04/24 20:11:53 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.44 2001/04/24 20:14:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@ struct pmap {
 	int			pm_count;	/* pmap reference count */
 	struct simplelock	pm_slock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	long			pm_nlev2;	/* level 2 pt page count */
-	long			pm_nlev3;	/* level 3 pt page count */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
 	struct pmap_asn_info	pm_asni[1];	/* ASN information */
