@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.7 2004/11/15 20:19:06 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.8 2004/12/04 18:40:45 peter Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -209,7 +209,7 @@ static int	ethfoo_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
  * Here are the bits needed for a clonable interface.
  */
 static int	ethfoo_clone_create(struct if_clone *, int);
-static void	ethfoo_clone_destroy(struct ifnet *);
+static int	ethfoo_clone_destroy(struct ifnet *);
 
 struct if_clone ethfoo_cloners = IF_CLONE_INITIALIZER("ethfoo",
 					ethfoo_clone_create,
@@ -689,7 +689,7 @@ ethfoo_clone_create(struct if_clone *ifc, int unit)
  * really straightforward.  The second argument of config_detach
  * means neither QUIET not FORCED.
  */
-static void
+static int
 ethfoo_clone_destroy(struct ifnet *ifp)
 {
 	struct device *dev = (struct device *)ifp->if_softc;
@@ -699,6 +699,8 @@ ethfoo_clone_destroy(struct ifnet *ifp)
 		aprint_error("%s: unable to detach instance\n",
 		    dev->dv_xname);
 	free(cf, M_DEVBUF);
+
+	return (0);
 }
 
 static int
