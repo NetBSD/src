@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.11 2004/09/13 12:55:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,9 +43,8 @@
 #define CLR(t, f)       (t) &= ~(f)
 #define ISSET(t, f)     ((t) & (f))
 
-#include "locators.h"
-#define ucomcf_portno cf_loc[UCOMBUSCF_PORTNO]
-#define UCOM_UNK_PORTNO UCOMBUSCF_PORTNO_DEFAULT
+/* just for ucom_attach_args, not in the config namespace */
+#define UCOM_UNK_PORTNO (-1)
 
 struct	ucom_softc;
 
@@ -107,5 +106,6 @@ struct ucom_attach_args {
 };
 
 int ucomprint(void *aux, const char *pnp);
-int ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux);
+int ucomsubmatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *, void *aux);
 void ucom_status_change(struct ucom_softc *);

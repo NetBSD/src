@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.9 2002/01/25 16:10:36 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.10 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #ifndef _IC_CACVAR_H_
 #define	_IC_CACVAR_H_
-
-#include "locators.h"
 
 #define	CAC_MAX_CCBS	20
 #define	CAC_MAX_XFER	(0xffff * 512)
@@ -124,8 +122,6 @@ struct cac_softc {
 struct cac_attach_args {
 	int		caca_unit;
 };
-
-#define	cacacf_unit	cf_loc[CACCF_UNIT]
 
 int	cac_cmd(struct cac_softc *, int, void *, int, int, int, int, 
 		struct cac_context *);

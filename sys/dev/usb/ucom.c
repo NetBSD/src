@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.52 2003/11/24 19:47:07 nathanw Exp $	*/
+/*	$NetBSD: ucom.c,v 1.53 2004/09/13 12:55:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.52 2003/11/24 19:47:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.53 2004/09/13 12:55:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.52 2003/11/24 19:47:07 nathanw Exp $");
 #include <dev/usb/ucomvar.h>
 
 #include "ucom.h"
+
+#include "locators.h"
 
 #if NUCOM > 0
 
@@ -1137,13 +1139,14 @@ ucomprint(void *aux, const char *pnp)
 }
 
 int
-ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux)
+ucomsubmatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 
 	if (uca->portno != UCOM_UNK_PORTNO &&
-	    cf->ucomcf_portno != UCOM_UNK_PORTNO &&
-	    cf->ucomcf_portno != uca->portno)
+	    cf->cf_loc[UCOMBUSCF_PORTNO] != UCOMBUSCF_PORTNO_DEFAULT &&
+	    cf->cf_loc[UCOMBUSCF_PORTNO] != uca->portno)
 		return (0);
 	return (config_match(parent, cf, aux));
 }

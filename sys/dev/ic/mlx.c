@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.29 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: mlx.c,v 1.30 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.29 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.30 2004/09/13 12:55:47 drochner Exp $");
 
 #include "ld.h"
 
@@ -101,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.29 2004/04/22 00:17:11 itojun Exp $");
 #include <dev/ic/mlxreg.h>
 #include <dev/ic/mlxio.h>
 #include <dev/ic/mlxvar.h>
+
+#include "locators.h"
 
 #define	MLX_TIMEOUT	60
 
@@ -130,7 +132,8 @@ static void	mlx_periodic_thread(void *);
 static int	mlx_print(void *, const char *);
 static int	mlx_rebuild(struct mlx_softc *, int, int);
 static void	mlx_shutdown(void *);
-static int	mlx_submatch(struct device *, struct cfdata *, void *);
+static int	mlx_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
 static __inline__ time_t	mlx_curtime(void);
@@ -573,6 +576,8 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	struct mlx_attach_args mlxa;
 	int i, nunits;
 	u_int size;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	mlx->mlx_flags |= MLXF_RESCANNING;
 
@@ -636,7 +641,11 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		 * Attach a new device.
 		 */
 		mlxa.mlxa_unit = i;
-		ms->ms_dv = config_found_sm(&mlx->mlx_dv, &mlxa, mlx_print,
+
+		ldesc->len = 1;
+		ldesc->locs[MLXCF_UNIT] = i;
+
+		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", NULL, &mlxa, mlx_print,
 		    mlx_submatch);
 		nunits += (ms->ms_dv != NULL);
 	}
@@ -670,14 +679,12 @@ mlx_print(void *aux, const char *pnp)
  * Match a sub-device.
  */
 static int
-mlx_submatch(struct device *parent, struct cfdata *cf, void *aux)
+mlx_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
-	struct mlx_attach_args *mlxa;
 
-	mlxa = (struct mlx_attach_args *)aux;
-
-	if (cf->mlxacf_unit != MLXCF_UNIT_DEFAULT &&
-	    cf->mlxacf_unit != mlxa->mlxa_unit)
+	if (cf->cf_loc[MLXCF_UNIT] != MLXCF_UNIT_DEFAULT &&
+	    cf->cf_loc[MLXCF_UNIT] != ldesc->locs[MLXCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

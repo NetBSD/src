@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.22 2004/08/26 18:07:12 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.23 2004/09/13 12:55:48 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.22 2004/08/26 18:07:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.23 2004/09/13 12:55:48 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -194,7 +194,8 @@ zs_ioasic_get_chan_addr(zsaddr, channel)
 int	zs_ioasic_match __P((struct device *, struct cfdata *, void *));
 void	zs_ioasic_attach __P((struct device *, struct device *, void *));
 int	zs_ioasic_print __P((void *, const char *name));
-int	zs_ioasic_submatch __P((struct device *, struct cfdata *, void *));
+int	zs_ioasic_submatch __P((struct device *, struct cfdata *,
+				const locdesc_t *, void *));
 
 CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
     zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
@@ -248,6 +249,8 @@ zs_ioasic_attach(parent, self, aux)
 	struct zshan *zc;
 	int s, channel;
 	u_long zflg;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	printf("\n");
 
@@ -316,11 +319,14 @@ zs_ioasic_attach(parent, self, aux)
 		else
 			cs->cs_ctl_chan = NULL;
 
+		ldesc->len = 1;
+		ldesc->locs[ZSCCF_CHANNEL] = channel;
+
 		/*
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (config_found_sm(self, (void *)&zs_args,
+		if (config_found_sm_loc(self, "zsc", ldesc, (void *)&zs_args,
 				zs_ioasic_print, zs_ioasic_submatch) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
@@ -380,9 +386,10 @@ zs_ioasic_print(aux, name)
 }
 
 int
-zs_ioasic_submatch(parent, cf, aux)
+zs_ioasic_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct zsc_softc *zs = (void *)parent;
@@ -390,8 +397,9 @@ zs_ioasic_submatch(parent, cf, aux)
 	char *defname = "";
 
 	if (cf->cf_loc[ZSCCF_CHANNEL] != ZSCCF_CHANNEL_DEFAULT &&
-	    cf->cf_loc[ZSCCF_CHANNEL] != pa->channel)
+	    cf->cf_loc[ZSCCF_CHANNEL] != ldesc->locs[ZSCCF_CHANNEL])
 		return (0);
+
 	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT) {
 		if (pa->channel == 0) {
 #if defined(pmax)
