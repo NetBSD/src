@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.105 2000/07/02 04:40:46 cgd Exp $	 */
+/* $NetBSD: machdep.c,v 1.106 2000/07/26 11:55:55 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -83,6 +83,7 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 #include <machine/db_machdep.h>
+#include <machine/scb.h>
 #include <vax/vax/gencons.h>
 
 #ifdef DDB
@@ -761,3 +762,15 @@ softintr_disestablish(void *arg)
 	LIST_REMOVE(sh, sh_link);
 	free(sh, M_SOFTINTR);
 }
+
+#include <dev/bi/bivar.h>
+/*
+ * This should be somewhere else.
+ */
+void
+bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg, 
+	struct evcnt *ev) 
+{  
+	scb_vecalloc(vec, func, arg, SCB_ISTACK, ev);
+}
+
