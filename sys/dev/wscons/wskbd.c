@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.54 2001/10/27 00:39:29 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.55 2001/10/27 13:52:57 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.54 2001/10/27 00:39:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.55 2001/10/27 13:52:57 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,7 +358,8 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #if NWSMUX > 0
 	mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
-	if (sc->sc_isconsole && mux >= 0) {
+	if (ap->console) {
+		/* Ignore mux for console; it always goes to the console mux. */
 		/* printf(" (mux %d ignored for console)", mux); */
 		mux = -1;
 	}
@@ -1117,7 +1118,7 @@ wskbd_set_display(struct device *dv, struct wsevsrc *me)
 	struct device *odisplaydv;
 	int error;
 
-	DPRINTF(("wskbd_set_display: %s me=%p disp=%p odisp=%p cons=%d\n",
+	DPRINTF(("wskbd_set_display: %s me=%p odisp=%p disp=%p cons=%d\n",
 		 dv->dv_xname, me, sc->sc_base.me_dispdv, displaydv, 
 		 sc->sc_isconsole));
 
