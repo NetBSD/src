@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.6 1993/12/18 00:51:19 mycroft Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.7 1994/01/20 09:46:40 pk Exp $
  */
 
 #include <sys/param.h>
@@ -183,7 +183,7 @@ mountmsdosfs(devvp, mp, p)
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	dev_t dev = devvp->v_rdev;
 	union bootsector *bsp;
-	struct msdosfsmount *pmp;
+	struct msdosfsmount *pmp = NULL;
 	struct buf *bp0 = NULL;
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
