@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.4 2001/11/15 23:25:09 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.5 2001/11/16 01:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ typedef struct ehci_softc {
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	u_int sc_ncomp;
+	u_int sc_npcomp;
 	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
 
 	usb_dma_t sc_fldma;
@@ -60,8 +61,13 @@ typedef struct ehci_softc {
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
 	usbd_xfer_handle sc_intrxfer;
+	char sc_isreset;
+
+	u_int32_t sc_eintrs;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+
+	usb_callout_t sc_tmo_pcd;
 
 	device_ptr_t sc_child;		/* /dev/usb# device */
 

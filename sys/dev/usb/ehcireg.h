@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.5 2001/11/15 23:25:09 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.6 2001/11/16 01:57:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,12 +91,20 @@
 /* EHCI operational registers.  Offset given by EHCI_CAPLENGTH register */
 #define EHCI_USBCMD		0x00	/* RO, RW, WO Command register */
 #define  EHCI_CMD_ITC_M		0x00ff0000 /* RW interrupt threshold ctrl */
+#define   EHCI_CMD_ITC_1	0x00010000
+#define   EHCI_CMD_ITC_2	0x00020000
+#define   EHCI_CMD_ITC_4	0x00040000
+#define   EHCI_CMD_ITC_8	0x00080000
+#define   EHCI_CMD_ITC_16	0x00100000
+#define   EHCI_CMD_ITC_32	0x00200000
+#define   EHCI_CMD_ITC_64	0x00400000
 #define  EHCI_CMD_ASPME		0x00000800 /* RW/RO async park enable */
 #define  EHCI_CMD_ASPMC		0x00000300 /* RW/RO async park count */
 #define  EHCI_CMD_LHCR		0x00000080 /* RW light host ctrl reset */
 #define  EHCI_CMD_IAAD		0x00000040 /* RW intr on async adv door bell */
 #define  EHCI_CMD_ASE		0x00000020 /* RW async sched enable */
 #define  EHCI_CMD_PSE		0x00000010 /* RW periodic sched enable */
+#define  EHCI_CMD_FLS_M		0x0000000c /* RW/RO frame list size */
 #define  EHCI_CMD_FLS(x)	(((x) >> 2) & 3) /* RW/RO frame list size */
 #define  EHCI_CMD_HCRESET	0x00000002 /* RW reset */
 #define  EHCI_CMD_RS		0x00000001 /* RW run/stop */
@@ -112,6 +120,9 @@
 #define  EHCI_STS_PCD		0x00000004 /* RWC port change detect */
 #define  EHCI_STS_ERRINT	0x00000002 /* RWC error interrupt */
 #define  EHCI_STS_INT		0x00000001 /* RWC interrupt */
+#define  EHCI_STS_INTRS(x)	((x) & 0x2f)
+
+#define EHCI_NORMAL_INTRS (EHCI_STS_IAA | EHCI_STS_HSE | EHCI_STS_PCD | EHCI_STS_ERRINT | EHCI_STS_INT)
 
 #define EHCI_USBINTR		0x08	/* RW Interrupt register */
 #define EHCI_INTR_IAAE		0x00000020 /* interrupt on async advance ena */
@@ -140,6 +151,7 @@
 #define  EHCI_PS_PO		0x00002000 /* RW port owner */
 #define  EHCI_PS_PP		0x00001000 /* RW,RO port power */
 #define  EHCI_PS_LS		0x00000c00 /* RO line status */
+#define  EHCI_PS_IS_LOWSPEED(x)	(((x) & EHCI_PS_LS) == 0x00000400)
 #define  EHCI_PS_PR		0x00000100 /* RW port reset */
 #define  EHCI_PS_SUSP		0x00000080 /* RW suspend */
 #define  EHCI_PS_FPR		0x00000040 /* RW force port resume */
