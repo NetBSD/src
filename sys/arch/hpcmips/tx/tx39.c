@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.17 2000/05/21 11:24:45 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.18 2000/05/22 17:17:44 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -403,6 +403,18 @@ tx_conf_register_ioman(t, iomant)
 	}
 
 	tx_chipset.tc_iomant = iomant;
+}
+
+void
+tx_conf_register_video(t, videot)
+	tx_chipset_tag_t t;
+	void *videot;
+{
+	if (t != &tx_chipset) {
+		panic("bogus tx_chipset_tag");
+	}
+
+	tx_chipset.tc_videot = videot;
 }
 
 #ifdef TX39_PREFER_FUNCTION

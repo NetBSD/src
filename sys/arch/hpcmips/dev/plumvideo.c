@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.10 2000/05/21 11:22:25 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.11 2000/05/22 17:17:44 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -25,6 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#define PLUMVIDEODEBUG
 
 #include "opt_tx39_debug.h"
 
@@ -57,7 +58,6 @@
 #include <arch/hpcmips/dev/hpcfbvar.h>
 #include <arch/hpcmips/dev/hpcfbio.h>
 
-
 #ifdef PLUMVIDEODEBUG
 int	plumvideo_debug = 1;
 #define	DPRINTF(arg) if (plumvideo_debug) printf arg;
@@ -69,8 +69,9 @@ int	plumvideo_debug = 1;
 
 struct plumvideo_softc {
 	struct device sc_dev;
-
+	tx_chipset_tag_t sc_tc;
 	plum_chipset_tag_t sc_pc;
+
 	/* control register */
 	bus_space_tag_t sc_regt;
 	bus_space_handle_t sc_regh;
@@ -84,10 +85,7 @@ struct plumvideo_softc {
 	bus_space_tag_t sc_bitbltt;
 	bus_space_handle_t sc_bitblth;
 
-	int sc_width;
-	int sc_height;
-	int sc_depth;
-
+	struct video_chip sc_chip;
 	struct hpcfb_fbconf sc_fbconf;
 	struct hpcfb_dspconf sc_dspconf;
 };
@@ -199,12 +197,16 @@ plumvideo_attach(parent, self, aux)
 
 	printf("\n");
 
-#ifdef PLUMVIDEODEBUG
-	if (plumvideo_debug)
-		plumvideo_dump(sc);
-#endif
 	/* Attach frame buffer device */
 	plumvideo_hpcfbinit(sc);
+
+#ifdef PLUMVIDEODEBUG
+	if (plumvideo_debug > 1)
+		plumvideo_dump(sc);
+	/* attach debug draw routine (debugging use) */
+	video_attach_drawfunc(&sc->sc_chip);
+	tx_conf_register_video(sc->sc_pc->pc_tc, &sc->sc_chip);
+#endif /* PLUMVIDEODEBUG */
 
 	console = cn_tab ? 0 : 1;
 	if(console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
@@ -229,7 +231,11 @@ plumvideo_hpcfbinit(sc)
 	struct plumvideo_softc *sc;
 {
 	struct hpcfb_fbconf *fb = &sc->sc_fbconf;
+	struct video_chip *chip = &sc->sc_chip;
 	vaddr_t fbvaddr = (vaddr_t)sc->sc_fbioh;
+	int height = chip->vc_fbheight;
+	int width = chip->vc_fbwidth;
+	int depth = chip->vc_fbdepth;
 	
 	memset(fb, 0, sizeof(struct hpcfb_fbconf));
 	
@@ -239,20 +245,20 @@ plumvideo_hpcfbinit(sc)
 	/* frame buffer name		*/
 	strncpy(fb->hf_conf_name, "LCD", HPCFB_MAXNAMELEN);
 	/* configuration name		*/
-	fb->hf_height		= sc->sc_height;
-	fb->hf_width		= sc->sc_width;
+	fb->hf_height		= height;
+	fb->hf_width		= width;
 	fb->hf_baseaddr		= mips_ptob(mips_btop(fbvaddr));
 	fb->hf_offset		= (u_long)fbvaddr - fb->hf_baseaddr;
 	/* frame buffer start offset   	*/
-	fb->hf_bytes_per_line	= (sc->sc_width * sc->sc_depth) / NBBY;
+	fb->hf_bytes_per_line	= (width * depth) / NBBY;
 	fb->hf_nplanes		= 1;
-	fb->hf_bytes_per_plane	= sc->sc_height * fb->hf_bytes_per_line;
+	fb->hf_bytes_per_plane	= height * fb->hf_bytes_per_line;
 
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
 
-	switch (sc->sc_depth) {
+	switch (depth) {
 	default:
 		panic("plumvideo_hpcfbinit: not supported color depth\n");
 		/* NOTREACHED */
@@ -298,7 +304,10 @@ plumvideo_init(sc)
 	bus_space_handle_t regh = sc->sc_regh;
 	plumreg_t reg;
 	size_t vram_size;
-	int bpp, vram_pitch;
+	int bpp, width, height, vram_pitch;
+	struct video_chip *chip = &sc->sc_chip;
+
+	chip->vc_v = sc->sc_pc->pc_tc;
 #if notyet
 	/* map BitBlt area */
 	if (bus_space_map(sc->sc_bitbltt,
@@ -334,23 +343,23 @@ plumvideo_init(sc)
 		bpp = 8;
 		break;
 	}
-	sc->sc_depth = bpp;
+	chip->vc_fbdepth = bpp;
 
 	/*
 	 * Get display size from WindowsCE setted.
 	 */
-	sc->sc_width = bootinfo->fb_width = 
+	chip->vc_fbwidth = width = bootinfo->fb_width = 
 		plum_conf_read(regt, regh, PLUM_VIDEO_PLHPX_REG) + 1;
-	sc->sc_height = bootinfo->fb_height = 
+	chip->vc_fbheight = height = bootinfo->fb_height = 
 		plum_conf_read(regt, regh, PLUM_VIDEO_PLVT_REG) -
 		plum_conf_read(regt, regh, PLUM_VIDEO_PLVDS_REG);
 
 	/*
 	 * set line byte length to bootinfo and LCD controller.
 	 */
-	bootinfo->fb_line_bytes = (sc->sc_width * bpp) / NBBY;
+	bootinfo->fb_line_bytes = (width * bpp) / NBBY;
 
-	vram_pitch = sc->sc_width / (8 / bpp);
+	vram_pitch = width / (8 / bpp);
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT1_REG, vram_pitch);
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT2_REG,
 			vram_pitch & PLUM_VIDEO_PLPIT2_MASK);
@@ -386,8 +395,9 @@ plumvideo_init(sc)
 	 * calcurate frame buffer size.
 	 */
 	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
-	vram_size = (sc->sc_width * sc->sc_height * bpp) / NBBY;
+	vram_size = (width * height * bpp) / NBBY;
 	vram_size = mips_round_page(vram_size);
+	chip->vc_fbsize = vram_size;
 
 	/*
 	 * map V-RAM area.
@@ -399,6 +409,8 @@ plumvideo_init(sc)
 	}
 
 	bootinfo->fb_addr = (unsigned char *)sc->sc_fbioh;
+	chip->vc_fbvaddr = (vaddr_t)sc->sc_fbioh;
+	chip->vc_fbpaddr = PLUM_VIDEO_VRAM_IOBASE_PHYSICAL;
 
 	return (0);
 }

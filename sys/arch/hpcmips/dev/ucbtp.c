@@ -1,29 +1,29 @@
-/*	$NetBSD: ucbtp.c,v 1.3 2000/03/04 19:36:34 uch Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.4 2000/05/22 17:17:45 uch Exp $ */
 
-/*
- * Copyright (c) 2000, by UCHIYAMA Yasushi
- * All rights reserved.
+/*-
+ * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -53,16 +53,14 @@
 #include <hpcmips/tx/tx39sibreg.h>
 #include <hpcmips/tx/tx39icureg.h>
 
-#ifdef TX391X
-#include <hpcmips/tx/tx3912videovar.h> /* debug */
-#endif
 #include <hpcmips/dev/ucb1200var.h>
 #include <hpcmips/dev/ucb1200reg.h>
 
 #include <hpcmips/tx/txsnd.h>
+#include <hpcmips/dev/video_subr.h> /* debug */
 
 #ifdef UCBTPDEBUG
-int	ucbtp_debug = 1;
+int	ucbtp_debug = 0;
 #define	DPRINTF(arg) if (ucbtp_debug) printf arg;
 #define	DPRINTFN(n, arg) if (ucbtp_debug > (n)) printf arg;
 #else
@@ -106,10 +104,10 @@ enum ucbadc_state {
 };
 
 struct ucbtp_softc {
-	struct device		sc_dev;
-	struct device		*sc_sib; /* parent (TX39 SIB module) */
-	struct device		*sc_ucb; /* parent (UCB1200 module) */
-	tx_chipset_tag_t	sc_tc;
+	struct device sc_dev;
+	struct device *sc_sib; /* parent (TX39 SIB module) */
+	struct device *sc_ucb; /* parent (UCB1200 module) */
+	tx_chipset_tag_t sc_tc;
 
 	enum ucbts_stat sc_stat;
 	int sc_polling;
@@ -122,30 +120,31 @@ struct ucbtp_softc {
 	/* measurement value */
 	int sc_x, sc_y, sc_p;
 	int sc_ox, sc_oy;
+	int sc_xy_reverse; /* some platform pin connect interchanged */
 
 	/* 
 	 * touch panel state machine 
 	 */
-	void		*sm_ih; /* TX39 SIB subframe 0 interrupt handler */
+	void *sm_ih; /* TX39 SIB subframe 0 interrupt handler */
 
-	int		sm_addr; /* UCB1200 register address */
-	u_int32_t	sm_reg;  /* UCB1200 register data & TX39 SIB header */
-	int		sm_tmpreg;
+	int sm_addr; /* UCB1200 register address */
+	u_int32_t sm_reg;  /* UCB1200 register data & TX39 SIB header */
+	int sm_tmpreg;
 #define UCBADC_RETRY_DEFAULT		200
-	int		sm_retry; /* retry counter */
+	int sm_retry; /* retry counter */
 
 	enum ucbadc_state sm_state;
 	int		sm_measurement; /* X, Y, Pressure */
 #define	UCBADC_MEASUREMENT_X		0
 #define	UCBADC_MEASUREMENT_Y		1
 #define	UCBADC_MEASUREMENT_PRESSURE	2
-	int		sm_returnstate;
+	int sm_returnstate;
 
-	int		sm_read_state, sm_write_state;
-	int		sm_writing;	/* writing state flag */
-	u_int32_t	sm_write_val;	/* temporary buffer */
+	int sm_read_state, sm_write_state;
+	int sm_writing;	/* writing state flag */
+	u_int32_t sm_write_val;	/* temporary buffer */
 
-	int		sm_rw_retry; /* retry counter for r/w */
+	int sm_rw_retry; /* retry counter for r/w */
 
 	/* wsmouse */
 	struct device *sc_wsmousedev;
@@ -210,6 +209,14 @@ struct calibration_sample_table {
 	    { 241, 115, 600, 200 },
 	    { 747, 101, 600,  40 }}}},
 	
+	{{{PLATID_WILD, PLATID_MACH_SHARP_TELIOS_HCAJ1}}, /* uch machine */
+	 { 0, 0, 799, 479, 5,
+	   {{ 850, 150,   1,   1 },
+	    { 850, 880,   1, 479 },
+	    { 850, 880,   1, 479 },
+	    {  85, 880, 799, 479 },
+	    {  85, 150, 799,   1 }}}},
+
 	{{{PLATID_UNKNOWN, PLATID_UNKNOWN}}, 
 	 { 0, 0, 639, 239, 5,
 	   {{0, 0, 0, 0}, 
@@ -231,11 +238,11 @@ calibration_sample_lookup()
 		mask = PLATID_DEREF(&tab->cst_platform);		
 		
 		if (platid_match(&platid, &mask)) {
-			return &tab->cst_sample;
+			return (&tab->cst_sample);
 		}
 	}
 	
-	return 0;
+	return (0);
 }
 
 int
@@ -243,14 +250,15 @@ ucbtp_calibration(sc)
 	struct ucbtp_softc *sc;
 {
 	struct wsmouse_calibcoords *cs;
-#ifdef TX391X
-	tx3912video_calibration_pattern(); /* debug */
-#endif
+
+	if (sc->sc_tc->tc_videot)
+		video_calibration_pattern(sc->sc_tc->tc_videot); /* debug */
+
 	tpcalib_init(&sc->sc_tpcalib);
 
 	if (!(cs = calibration_sample_lookup())) {
-		printf("no calibration data");
-		return 1;
+		DPRINTF(("no calibration data"));
+		return (1);
 	}
 
 	sc->sc_calibrated = 
@@ -261,7 +269,7 @@ ucbtp_calibration(sc)
 		printf("not ");
 	printf("calibrated");
 
-	return 0;
+	return (0);
 }
 
 int
@@ -270,7 +278,7 @@ ucbtp_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -295,7 +303,10 @@ ucbtp_attach(parent, self, aux)
 	
 	/* attempt to calibrate touch panel */
 	ucbtp_calibration(sc);
-	
+#ifdef TX392X /* hack for Telios HC-VJ1C */
+	sc->sc_xy_reverse = 1;
+#endif	
+
 	printf("\n");
 
 	wsmaa.accessops = &ucbtp_accessops;
@@ -315,7 +326,7 @@ ucbtp_busy(arg)
 {
 	struct ucbtp_softc *sc = arg;
 	
-	return sc->sm_state != UCBADC_IDLE;
+	return (sc->sm_state != UCBADC_IDLE);
 }
 
 int
@@ -325,18 +336,18 @@ ucbtp_poll(arg)
 	struct ucbtp_softc *sc = arg;	
 	
 	if (!ucb1200_state_idle(sc->sc_ucb)) /* subframe0 busy */
-		return POLL_CONT;
+		return (POLL_CONT);
 
 	if (sc->sc_polling_finish) {
 		sc->sc_polling_finish = 0;
-		return POLL_END;
+		return (POLL_END);
 	}
 	
 	/* execute A-D converter */
 	sc->sm_state = UCBADC_ADC_INIT;
 	ucbtp_adc_async(sc);
 
-	return POLL_CONT;
+	return (POLL_CONT);
 }
 
 int
@@ -361,17 +372,17 @@ ucbtp_sibintr(arg)
 
 	/* don't acknoledge interrupt until polling finish */
 	
-	return 0;
+	return (0);
 }
 
-#define REGWRITE(addr, reg, ret) ( \
-	sc->sm_addr = (addr), \
-	sc->sm_reg = (reg), \
-	sc->sm_returnstate = (ret),\
+#define REGWRITE(addr, reg, ret) (					\
+	sc->sm_addr = (addr),						\
+	sc->sm_reg = (reg),						\
+	sc->sm_returnstate = (ret),					\
 	sc->sm_state = UCBADC_REGWRITE)	
-#define REGREAD(addr, ret) ( \
-	sc->sm_addr = (addr), \
-	sc->sm_returnstate = (ret), \
+#define REGREAD(addr, ret) (						\
+	sc->sm_addr = (addr),						\
+	sc->sm_returnstate = (ret),					\
 	sc->sm_state = UCBADC_REGREAD)
 
 int
@@ -575,7 +586,6 @@ ucbtp_adc_async(arg)
 			reg = tx_conf_read(tc, TX39_SIBSF0STAT_REG);
 			if ((TX39_SIBSF0_REGADDR(reg) != sc->sm_addr) &&
 			    --sc->sm_rw_retry > 0) {
-				printf("retry!\n");
 				break;
 			}
 
@@ -624,27 +634,26 @@ ucbtp_adc_async(arg)
 		break;
 	}
 
-	return 0;
+	return (0);
 }
 
 int
 ucbtp_input(sc)
 	struct ucbtp_softc *sc;
 {
-	int x, y;
+	int rx, ry, x, y, p;
+
+	rx = sc->sc_x;
+	ry = sc->sc_y;
+	p = sc->sc_p;
 
 	if (!sc->sc_calibrated) {
-		DPRINTFN(2, ("x=%d y=%d p=%d\n", 
-			     sc->sc_x, sc->sc_y, sc->sc_p));
-		printf("ucbtp_input: no calibration data\n");
-		return 0;
+		DPRINTFN(2, ("x=%4d y=%4d p=%4d\n", rx, ry, p));
+		DPRINTF(("ucbtp_input: no calibration data\n"));
 	}
 
-	tpcalib_trans(&sc->sc_tpcalib, sc->sc_x, sc->sc_y, &x, &y);
-	DPRINTFN(2, ("x: %d->%d y: %d->%d pressure=%d\n", 
-		     sc->sc_x, x, sc->sc_y, y, sc->sc_p));
-
-	if (sc->sc_p < UCBTS_PRESS_THRESHOLD) {
+	if (p < UCBTS_PRESS_THRESHOLD || rx == 0x3ff || ry == 0x3ff ||
+	    rx == 0 || ry == 0) {
 		sc->sc_stat = UCBTS_STAT_RELEASE;
 		if (sc->sc_polling < UCBTS_TAP_THRESHOLD) {
 			DPRINTFN(2, ("TAP!\n"));
@@ -662,20 +671,32 @@ ucbtp_input(sc)
 		}
 		sc->sc_polling = 0;
 
-		return 1;
+		return (1);
 	}
 
-#ifdef TX391X /* debug */	
-	if (sc->sc_polling == 1)
-		tx3912video_dot(x, y);
-	else 
-		tx3912video_line(sc->sc_ox, sc->sc_oy, x, y);
+	if (sc->sc_xy_reverse)
+		tpcalib_trans(&sc->sc_tpcalib, ry, rx, &x, &y);
+	else
+		tpcalib_trans(&sc->sc_tpcalib, rx, ry, &x, &y);
+		
+	DPRINTFN(2, ("x: %4d->%4d y: %4d->%4d pressure=%4d\n",
+		     rx, x, ry, y, p));
+
+	/* debug draw */	
+	if (sc->sc_tc->tc_videot) {
+		if (sc->sc_polling == 1)
+			video_dot(sc->sc_tc->tc_videot, x, y);
+		else 
+			video_line(sc->sc_tc->tc_videot, sc->sc_ox,
+				   sc->sc_oy, x, y);
+	}
+
 	sc->sc_ox = x, sc->sc_oy = y;
-#endif	
+
 	wsmouse_input(sc->sc_wsmousedev, 1, x, y, 0, 
 		      WSMOUSE_INPUT_ABSOLUTE_X | WSMOUSE_INPUT_ABSOLUTE_Y);
 	
-	return 0;
+	return (0);
 }
 
 /*
@@ -687,7 +708,7 @@ ucbtp_enable(v)
 	void *v;
 {
 	/* not yet */
-	return 0;
+	return (0);
 }
 
 void
@@ -726,5 +747,6 @@ ucbtp_ioctl(v, cmd, data, flag, p)
 	default:
 		return (-1);
 	}
+
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.h,v 1.2 2000/05/13 03:12:56 uch Exp $	*/
+/*	$NetBSD: video_subr.h,v 1.3 2000/05/22 17:17:44 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -31,11 +31,30 @@
 				 (((g) << 8) & 0x0000ff00) |		\
 				 (((b)) & 0x000000ff))
 
-int	cmap_work_alloc __P((u_int8_t **, u_int8_t **, u_int8_t **,
-			     u_int32_t **, int));
-void	cmap_work_free __P((u_int8_t *, u_int8_t *, u_int8_t *,
-			    u_int32_t *));
-void	rgb24_compose __P((u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *,
-			   int)); 
-void	rgb24_decompose __P((u_int32_t *, u_int8_t *, u_int8_t *,
-			     u_int8_t *, int));
+int cmap_work_alloc __P((u_int8_t **, u_int8_t **, u_int8_t **, u_int32_t **,
+			 int));
+void cmap_work_free __P((u_int8_t *, u_int8_t *, u_int8_t *, u_int32_t *));
+void rgb24_compose __P((u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *, int)); 
+void rgb24_decompose __P((u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *,
+			  int));
+
+/* debug function for TX. VR will need `line bytes' */
+struct video_chip;
+struct video_chip {
+	void *vc_v; /* CPU/chipset dependent goo */
+
+	vaddr_t vc_fbvaddr;
+	paddr_t vc_fbpaddr;
+	size_t vc_fbsize;
+	int vc_fbdepth;
+	int vc_fbwidth;
+	int vc_fbheight;
+
+	void (*vc_drawline) __P((struct video_chip *, int, int, int, int));
+	void (*vc_drawdot) __P((struct video_chip *, int, int));
+};
+
+void video_attach_drawfunc __P((struct video_chip *));
+void video_line __P((struct video_chip *, int, int, int, int));
+void video_dot __P((struct video_chip *, int, int));
+void video_calibration_pattern __P((struct video_chip *));
