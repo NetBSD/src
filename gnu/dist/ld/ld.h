@@ -117,6 +117,9 @@ typedef struct
   /* If true, doing a dynamic link.  */
   boolean dynamic_link;
 
+  /* If true, do not use SEARCH_DIR directives from the linker script.  */
+  boolean no_std_path;
+
   /* If true, build constructors.  */
   boolean build_constructors;
 

@@ -111,6 +111,7 @@ int parsing_defsym = 0;
 #define OPTION_WHOLE_ARCHIVE		(OPTION_SPLIT_BY_FILE + 1)
 #define OPTION_WRAP			(OPTION_WHOLE_ARCHIVE + 1)
 #define OPTION_FORCE_EXE_SUFFIX		(OPTION_WRAP + 1)
+#define OPTION_NO_STD_PATH		(OPTION_FORCE_EXE_SUFFIX + 16)
 
 /* The long options.  This structure is used for both the option
    parsing and the help text.  */
@@ -266,6 +267,8 @@ static const struct ld_option ld_options[] =
       '\0', NULL, "Create an output file even if errors occur", TWO_DASHES },
   { {"noinhibit_exec", no_argument, NULL, OPTION_NOINHIBIT_EXEC},
       '\0', NULL, NULL, NO_HELP },
+  { {"nostdlib", no_argument, NULL, OPTION_NO_STD_PATH}, /* NetBSD.  */
+      '\0', NULL, "Do not use default library search path", ONE_DASH },
   { {"oformat", required_argument, NULL, OPTION_OFORMAT},
       '\0', "TARGET", "Specify target of output file", TWO_DASHES },
   { {"qmagic", no_argument, NULL, OPTION_IGNORE},
@@ -283,7 +286,7 @@ static const struct ld_option ld_options[] =
       '\0', "PATH", "Set link time shared library search path", ONE_DASH },
   { {"shared", no_argument, NULL, OPTION_SHARED},
       '\0', NULL, "Create a shared library", ONE_DASH },
-  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD.  */
+  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD, NetBSD.  */
       '\0', NULL, NULL, ONE_DASH },
   { {"sort-common", no_argument, NULL, OPTION_SORT_COMMON},
       '\0', NULL, "Sort common symbols by size", TWO_DASHES },
@@ -327,7 +330,7 @@ static const struct ld_option ld_options[] =
       TWO_DASHES },
   { {"whole-archive", no_argument, NULL, OPTION_WHOLE_ARCHIVE},
       '\0', NULL, "Include all objects from following archives", TWO_DASHES },
-  { {"Bforcearchive", no_argument, NULL, OPTION_WHOLE_ARCHIVE }, /* NetBSD. */
+  { {"Bforcearchive", no_argument, NULL, OPTION_WHOLE_ARCHIVE }, /* NetBSD.  */
       '\0', NULL, NULL, ONE_DASH },
   { {"wrap", required_argument, NULL, OPTION_WRAP},
       '\0', "SYMBOL", "Use wrapper functions for SYMBOL", TWO_DASHES }
@@ -582,6 +585,9 @@ parse_args (argc, argv)
 	  break;
 	case OPTION_NO_KEEP_MEMORY:
 	  link_info.keep_memory = false;
+	  break;
+	case OPTION_NO_STD_PATH:
+	  config.no_std_path = true;
 	  break;
 	case OPTION_NO_WARN_MISMATCH:
 	  command_line.warn_mismatch = false;

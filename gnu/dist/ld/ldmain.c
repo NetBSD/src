@@ -188,6 +188,7 @@ main (argc, argv)
   whole_archive = false;
   config.build_constructors = true;
   config.dynamic_link = false;
+  config.no_std_path = (getenv("LD_NOSTD_PATH") ? true : false);
   command_line.force_common_definition = false;
   command_line.interpreter = NULL;
   command_line.rpath = NULL;
