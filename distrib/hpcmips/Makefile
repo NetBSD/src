@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/11/18 12:39:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2003/01/03 15:34:33 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -21,13 +21,13 @@ HPCBOOT=	${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
 release:: check_RELEASEDIR .WAIT ${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
-	(cd ${RELEASEDIR}/installation; ${UUDECODE} ${PBSDBOOT1}; \
+	(cd ${RELEASEDIR}/${MACHINE}/installation; ${UUDECODE} ${PBSDBOOT1}; \
 	    chmod ${NONBINMODE} pbsdboot1.exe)
-	(cd ${RELEASEDIR}/installation; ${UUDECODE} ${PBSDBOOT}; \
+	(cd ${RELEASEDIR}/${MACHINE}/installation; ${UUDECODE} ${PBSDBOOT}; \
 	    chmod ${NONBINMODE} pbsdboot.exe)
-	(cd ${RELEASEDIR}/installation; rm -f hpcboot.exe; \
+	(cd ${RELEASEDIR}/${MACHINE}/installation; rm -f hpcboot.exe; \
 	    ${UUDECODE} -p ${HPCBOOT} >hpcboot.exe ; \
 	    chmod ${NONBINMODE} hpcboot.exe)
-	${MAKESUMS} -t ${RELEASEDIR}/installation '*.gz' '*.exe'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation '*.gz' '*.exe'
 
 .include <bsd.prog.mk>

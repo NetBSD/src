@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/12/02 13:31:16 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/01/03 15:34:37 lukem Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
@@ -11,5 +11,5 @@ INSTALLATION_DIRS+=	installation/kernel	\
 			installation/misc
 
 snap_md_post:
-	${MAKESUMS} -t ${RELEASEDIR}/installation/kernel '*.gz'
-	${MAKESUMS} -t ${RELEASEDIR}/installation/misc '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/kernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.gz'

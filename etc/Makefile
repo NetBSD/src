@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.240 2003/01/03 14:27:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.241 2003/01/03 15:34:36 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -27,8 +27,9 @@
 #    distrib-dirs: creates an empty NetBSD directory tree in DESTDIR.
 #	Called by distribution.
 #    snapshot: calls distribution, above, and then tars up the files
-#	into a release(7) format in RELEASEDIR. Any port-dependent
-#	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
+#	into a release(7) format in RELEASEDIR/${MACHINE}.
+#	Any port-dependent stuff for this target is found in
+#	etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
 
 # setting NOOBJ prevents "make obj" from doing anything;
@@ -59,7 +60,7 @@ MKISOFS_FLAGS+= -J -l \
 		-r -T -v \
 		-V ${ISO_VOLID} \
 		-P "The NetBSD Project" \
-		-m "${RELEASEDIR}/installation/cdrom"
+		-m "${RELEASEDIR}/${MACHINE}/installation/cdrom"
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "=".
@@ -67,8 +68,8 @@ BIN1=
 BIN2=
 BIN3=
 
-# Directories to build in ${RELEASEDIR}.   MD Makefile.inc files can
-# add to this.
+# Directories to build in ${RELEASEDIR}/${MACHINE}.
+# MD Makefile.inc files can add to this.
 # NOTE: Parent directories must be listed before subdirectories.
 INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 
@@ -285,7 +286,7 @@ release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
 		    snap_pre .WAIT snap_kern .WAIT \
 		    snap_post .WAIT snap_md_post
 	(cd ${NETBSDSRCDIR}/distrib/sets; ${MAKE} sets)
-	${MAKESUMS} -t ${RELEASEDIR}/binary/kernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/kernel '*.gz'
 
 # Standalone target to create a CDROM image after the release
 # was composed. Should be run after "make build" in both src and xsrc
@@ -294,16 +295,17 @@ iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_post
 
 iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
 	@if ${MKISOFS} --version; then \
-		mkdir -p ${RELEASEDIR}/installation/cdrom ; \
+		mkdir -p ${RELEASEDIR}/${MACHINE}/installation/cdrom ; \
 		${MKISOFS} ${MKISOFS_FLAGS} \
-		    -o ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
-		    ${RELEASEDIR} ; \
-		${MAKESUMS} -t ${RELEASEDIR}/installation/cdrom '*.iso' ; \
+		    -o ${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso \
+		    ${RELEASEDIR}/${MACHINE} ; \
+		${MAKESUMS} -t \
+		    ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso' ; \
 	else \
 		echo "install pkgsrc/sysutils/cdrecord and type 'make iso-image'." ; \
 	fi
 
-# Setup the $RELEASEDIR to produce a bootable CD image:
+# Setup the ${RELEASEDIR}/${MACHINE} to produce a bootable CD image:
 iso-image_md_pre: check_DESTDIR check_RELEASEDIR
 #	nothing here -- look in the machine-dependent Makefile.inc
 
@@ -312,13 +314,14 @@ iso-image_md_post: check_DESTDIR check_RELEASEDIR .WAIT iso-image_mi
 #	nothing here -- look in the machine-dependent Makefile.inc
 
 snap_pre: check_DESTDIR check_RELEASEDIR
+	${INSTALL} -d -m 755 ${RELEASEDIR}
 .ifndef UPDATE
 # Could be a mount point, ignore the errors
-	-/bin/rm -rf ${RELEASEDIR}
+	-/bin/rm -rf ${RELEASEDIR}/${MACHINE}
 .endif
-	${INSTALL} -d -m 755 ${RELEASEDIR}
+	${INSTALL} -d -m 755 ${RELEASEDIR}/${MACHINE}
 .for dir in ${INSTALLATION_DIRS}
-	${INSTALL} -d -m 755 ${RELEASEDIR}/${dir}
+	${INSTALL} -d -m 755 ${RELEASEDIR}/${MACHINE}/${dir}
 .endfor
 
 snap_post: check_DESTDIR check_RELEASEDIR
@@ -389,7 +392,8 @@ kern-${configfile}:
 build_kernels: ${_KERNELS_TO_BUILD}
 
 # build_kernelsets --
-#	Create kernel sets from ${KERNEL_SETS} into ${RELEASEDIR}/binary/sets
+#	Create kernel sets from ${KERNEL_SETS} into
+#	${RELEASEDIR}/${MACHINE}/binary/sets
 #
 .for configfile in ${KERNEL_SETS}					# {
 _KERNELSETS_TO_BUILD+=kernset-${configfile}
@@ -409,14 +413,14 @@ kernset-${configfile}:
 			done; \
 		done ) | GZIP=-9 ${PAX} -O -zw \
 		    -M -N ${NETBSDSRCDIR}/etc \
-		    -f ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
+		    -f ${RELEASEDIR}/${MACHINE}/binary/sets/kern-${configfile}.tgz
 .endfor	# KERNEL_SETS							# }
 
 build_kernelsets: ${_KERNELSETS_TO_BUILD}
 
 # build_releasekernels --
 #	Build kernel.gz from ${KERNEL_SETS} ${EXTRA_KERNELS} into
-#	${RELEASEDIR}/binary/kernel
+#	${RELEASEDIR}/${MACHINE}/binary/kernel
 #
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
 _RELEASEKERNELS_TO_BUILD+=releasekern-${configfile}
@@ -435,7 +439,7 @@ releasekern-${configfile}:
 		done`; \
 		for kernel in $${gziplist} ; do \
 		gzip -c -9 < $${kernel} > \
-		    ${RELEASEDIR}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
+		    ${RELEASEDIR}/${MACHINE}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
 
 build_releasekernels: ${_RELEASEKERNELS_TO_BUILD}
