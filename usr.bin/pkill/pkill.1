@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.1 2002/03/01 11:21:58 ad Exp $
+.\"	$NetBSD: pkill.1,v 1.2 2002/03/01 11:42:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,15 +78,15 @@ processes that match the criteria given on the command line.
 The following options are available:
 .Bl -tag -width binladen
 .It Fl G Ar gid
-Restrict matches to processes with a real group ID in the comma-seperated
+Restrict matches to processes with a real group ID in the comma-separated
 list
 .Ar gid .
 .It Fl P Ar ppid
 Restrict matches to processes with a parent process ID in the
-comma-seperated list
+comma-separated list
 .Ar ppid .
 .It Fl U Ar uid
-Restrict matches to processes with a real user ID in the comma-seperated
+Restrict matches to processes with a real user ID in the comma-separated
 list
 .Ar uid .
 .It Fl d Ar delim
@@ -99,7 +99,7 @@ command.
 Match against full argument lists.
 The default is to match against process names.
 .It Fl g Ar pgrp
-Restrict matches to processes with a process group ID in the comma-seperated
+Restrict matches to processes with a process group ID in the comma-separated
 list
 .Ar pgrp .
 The value zero is taken to mean the process group ID of the running
@@ -120,7 +120,7 @@ command.
 .It Fl n
 Match only the most recently created process, if any.
 .It Fl s Ar sid
-Restrict matches to processes with a session ID in the comma-seperated
+Restrict matches to processes with a session ID in the comma-separated
 list
 .Ar sid .
 The value zero is taken to mean the session ID of the running
@@ -130,18 +130,23 @@ or
 command.
 .It Fl t Ar tty
 Restrict matches to processes associated with a terminal in the
-comma-seperated list
+comma-separated list
 .Ar tty .
-Terminal names may be of the form `ttyxx' or the shortened form `xx'.
+Terminal names may be of the form
+.Sq ttyxx
+or the shortened form
+.Sq xx .
 .It Fl u Ar euid
 Restrict matches to processes with an effective user ID in the
-comma-seperated list
+comma-separated list
 .Ar euid .
 .It Fl v
 Reverse the sense of the matching; display processes that do not match the
 given criteria.
 .It Fl x
-Require an exact match of the process name, or argument list if -f is given. 
+Require an exact match of the process name, or argument list if
+.Fl f
+is given.
 The default is to match any substring.
 .It Fl signal
 A non-negative decimal number or symbolic signal name specifying the signal
@@ -179,4 +184,4 @@ An internal error occurred.
 .Xr signal 7
 .Sh AUTHORS
 .An Andrew Doran
-.Aq ad@netbsd.org .
+.Aq ad@netbsd.org
