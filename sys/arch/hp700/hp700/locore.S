@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2004/06/15 16:28:37 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2004/07/18 20:27:11 chs Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -904,7 +904,7 @@ sw_qnempty:
 	comb,=,n %arg1, %arg2, kstack_ok
 	ldw	L_MD_REGS(%arg1), %t1
 	ldw	L_ADDR(%arg1), %arg0
-	ldw	TF_R30(%t1), %t1
+	ldw	PCB_KSP(%arg0), %t1
 	ldo	NBPG(%arg0), %arg0
 	comb,>>,n %arg0, %t1, switch_error
 	copy	%arg1, %t2
@@ -918,6 +918,7 @@ kstack_ok:
 	ldi	LSONPROC, %t1
 	stw	%t1, L_STAT(%arg1)
 	ldil	L%curlwp, %t1
+
 	/*
 	 * Disable interrupts while we're doing the real
 	 * switch.  Is this just being paranoid?
@@ -940,11 +941,11 @@ kstack_ok:
 	ldw	L_MD(%arg2), %t1
 	copy	%sp, %t2
 	ldo	HPPA_FRAME_SIZE+16*4(%sp), %sp
-	ldw	TF_R30(%t1), %t3
 	stw	%t2, HPPA_FRAME_PSP(%sp)
 	stw	%rp, HPPA_FRAME_CRP(%sp)
-	stw	%t3, HPPA_FRAME_ARG(0)(%sp)
-	stw	%sp, TF_R30(%t1)
+	ldw	L_ADDR(%arg2), %t3
+	stw	%sp, PCB_KSP(%t3)
+	fdc	%r0(%t3)
 	fdc	%r0(%t1)
 	/* save callee-save registers */
 	stw	%r3,   0*4(%t2)
@@ -973,14 +974,14 @@ switch_exited:
 	 */
 	ldw	L_MD(%arg1), %t1
 	ldw	TF_CR30(%t1), %t2
-	ldw	TF_R30(%t1), %sp
+	ldw	L_ADDR(%arg1), %t3
+	ldw	PCB_KSP(%t3), %sp
+	fdc	%r0(%t3)
 	ldw	TF_CR9(%t1), %t3
 	mtctl	%t3, %pidr2
 	mtctl	%t2, %cr30
-	ldw	HPPA_FRAME_ARG(0)(%sp), %t3
 	ldw	HPPA_FRAME_CRP(%sp), %rp
 	ldw	HPPA_FRAME_PSP(%sp), %t2
-	stw	%t3, TF_R30(%t1)
 	fdc	%r0(%t1)
 	ldw	HPPA_FRAME_ARG(1)(%sp), %t3 /* in case we're in trampoline */
 	ldw	HPPA_FRAME_ARG(2)(%sp), %arg0

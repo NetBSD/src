@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 2004/07/18 20:27:11 chs Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2004/01/04 11:33:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10 2004/07/18 20:27:11 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,13 +210,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	osp = sp;
 	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
-	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) =
-		(register_t)switch_trampoline;
-	tf->tf_sp = sp;
+	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)switch_trampoline;
+	pcbp->pcb_ksp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
 }
 
