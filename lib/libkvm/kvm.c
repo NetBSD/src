@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.79 2003/01/18 10:40:41 thorpej Exp $	*/
+/*	$NetBSD: kvm.c,v 1.80 2003/05/11 13:37:34 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.79 2003/01/18 10:40:41 thorpej Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.80 2003/05/11 13:37:34 ragge Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,13 +57,13 @@ __RCSID("$NetBSD: kvm.c,v 1.79 2003/01/18 10:40:41 thorpej Exp $");
 #include <sys/core.h>
 #include <sys/exec_aout.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 
 #include <ctype.h>
-#include <db.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <nlist.h>
@@ -77,7 +77,6 @@ __RCSID("$NetBSD: kvm.c,v 1.79 2003/01/18 10:40:41 thorpej Exp $");
 
 #include "kvm_private.h"
 
-static int	kvm_dbopen __P((kvm_t *));
 static int	_kvm_get_header __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
@@ -229,7 +228,6 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	struct stat st;
 	int ufgiven;
 
-	kd->db = 0;
 	kd->pmfd = -1;
 	kd->vmfd = -1;
 	kd->swfd = -1;
@@ -333,16 +331,16 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 			goto failed;
 		}
 		/*
-		 * Open kvm nlist database.  We only try to use
-		 * the pre-built database if the namelist file name
-		 * pointer is NULL.  If the database cannot or should
-		 * not be opened, open the namelist argument so we
-		 * revert to slow nlist() calls.
+		 * Open the kernel namelist.  If /dev/ksyms doesn't 
+		 * exist, open the current kernel.
 		 */
-		if ((ufgiven || kvm_dbopen(kd) < 0) &&
-		    (kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
-			_kvm_syserr(kd, kd->program, "%s", uf);
-			goto failed;
+		if (ufgiven == 0)
+			kd->nlfd = open_cloexec(_PATH_KSYMS, O_RDONLY, 0);
+		if (kd->nlfd < 0) {
+			if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
+				_kvm_syserr(kd, kd->program, "%s", uf);
+				goto failed;
+			}
 		}
 	} else {
 		/*
@@ -708,8 +706,6 @@ kvm_close(kd)
 		error |= close(kd->nlfd);
 	if (kd->swfd >= 0)
 		error |= close(kd->swfd);
-	if (kd->db != 0)
-		error |= (kd->db->close)(kd->db);
 	if (kd->vmst)
 		_kvm_freevtop(kd);
 	kd->cpu_dsize = 0;
@@ -736,130 +732,20 @@ kvm_close(kd)
 	return (0);
 }
 
-/*
- * Set up state necessary to do queries on the kernel namelist
- * data base.  If the data base is out-of-data/incompatible with
- * given executable, set up things so we revert to standard nlist call.
- * Only called for live kernels.  Return 0 on success, -1 on failure.
- */
-static int
-kvm_dbopen(kd)
-	kvm_t *kd;
-{
-	DBT rec;
-	size_t dbversionlen;
-	struct nlist nitem;
-	char dbversion[_POSIX2_LINE_MAX];
-	char kversion[_POSIX2_LINE_MAX];
-	int fd;
-
-	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
-	if (kd->db == 0)
-		return (-1);
-	if ((fd = (*kd->db->fd)(kd->db)) >= 0) {
-		if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		       (*kd->db->close)(kd->db);
-		       return (-1);
-		}
-	}
-	/*
-	 * read version out of database
-	 */
-	rec.data = VRS_KEY;
-	rec.size = sizeof(VRS_KEY) - 1;
-	if ((kd->db->get)(kd->db, (DBT *)&rec, (DBT *)&rec, 0))
-		goto close;
-	if (rec.data == 0 || rec.size > sizeof(dbversion))
-		goto close;
-
-	memcpy(dbversion, rec.data, rec.size);
-	dbversionlen = rec.size;
-	/*
-	 * Read version string from kernel memory.
-	 * Since we are dealing with a live kernel, we can call kvm_read()
-	 * at this point.
-	 */
-	rec.data = VRS_SYM;
-	rec.size = sizeof(VRS_SYM) - 1;
-	if ((kd->db->get)(kd->db, (DBT *)&rec, (DBT *)&rec, 0))
-		goto close;
-	if (rec.data == 0 || rec.size != sizeof(struct nlist))
-		goto close;
-	memcpy(&nitem, rec.data, sizeof(nitem));
-	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) !=
-	    dbversionlen)
-		goto close;
-	/*
-	 * If they match, we win - otherwise clear out kd->db so
-	 * we revert to slow nlist().
-	 */
-	if (memcmp(dbversion, kversion, dbversionlen) == 0)
-		return (0);
-close:
-	(void)(kd->db->close)(kd->db);
-	kd->db = 0;
-
-	return (-1);
-}
-
 int
 kvm_nlist(kd, nl)
 	kvm_t *kd;
 	struct nlist *nl;
 {
-	struct nlist *p;
-	int nvalid, rv;
+	int rv;
 
 	/*
-	 * If we can't use the data base, revert to the
-	 * slow library call.
+	 * Call the nlist(3) routines to retrieve the given namelist.
 	 */
-	if (kd->db == 0) {
-		rv = __fdnlist(kd->nlfd, nl);
-		if (rv == -1)
-			_kvm_err(kd, 0, "bad namelist");
-		return (rv);
-	}
-
-	/*
-	 * We can use the kvm data base.  Go through each nlist entry
-	 * and look it up with a db query.
-	 */
-	nvalid = 0;
-	for (p = nl; p->n_name && p->n_name[0]; ++p) {
-		int len;
-		DBT rec;
-
-		if ((len = strlen(p->n_name)) > 4096) {
-			/* sanity */
-			_kvm_err(kd, kd->program, "symbol too large");
-			return (-1);
-		}
-		rec.data = (char *)p->n_name;
-		rec.size = len;
-
-		/*
-		 * Make sure that n_value = 0 when the symbol isn't found
-		 */
-		p->n_value = 0;
-
-		if ((kd->db->get)(kd->db, (DBT *)&rec, (DBT *)&rec, 0))
-			continue;
-		if (rec.data == 0 || rec.size != sizeof(struct nlist))
-			continue;
-		++nvalid;
-		/*
-		 * Avoid alignment issues.
-		 */
-		(void)memcpy(&p->n_type, &((struct nlist *)rec.data)->n_type,
-		      sizeof(p->n_type));
-		(void)memcpy(&p->n_value, &((struct nlist *)rec.data)->n_value,
-		      sizeof(p->n_value));
-	}
-	/*
-	 * Return the number of entries that weren't found.
-	 */
-	return ((p - nl) - nvalid);
+	rv = __fdnlist(kd->nlfd, nl);
+	if (rv == -1)
+		_kvm_err(kd, 0, "bad namelist");
+	return (rv);
 }
 
 int kvm_dump_inval(kd)
