@@ -1,27 +1,27 @@
-/*	$NetBSD: db_interface.c,v 1.9 1996/03/30 21:13:03 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.10 1996/03/31 23:38:32 pk Exp $ */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -177,15 +177,33 @@ db_read_bytes(addr, size, data)
 /*
  * XXX - stolen from pmap.c
  */
-#define	getpte(va)		lda(va, ASI_PTE)
-#define	setpte(va, pte)		sta(va, ASI_PTE, pte)
+#if defined(SUN4M)
+#define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
+				    ASI_SRMMUFP)
+void	setpte4m __P((vm_offset_t va, int pte));
+
+#endif
+#define	getpte4(va)		lda(va, ASI_PTE)
+#define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
+#if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+#define getpte			getpte4m
+#define setpte 			setpte4m
+#elif defined(SUN4M)
+#define getpte(va) 		(cputyp==CPU_SUN4M ? getpte4m(va) : getpte4(va))
+#define setpte(va, pte)		(cputyp==CPU_SUN4M ? setpte4m(va, pte) \
+				    : setpte4(va,pte))
+#else
+#define getpte 			getpte4
+#define setpte 			setpte4
+#endif
+
 #define	splpmap() splimp()
 
 static void
 db_write_text(dst, ch)
 	unsigned char *dst;
 	int ch;
-{        
+{
 	int s, pte0, pte;
 	vm_offset_t va;
 
@@ -193,7 +211,25 @@ db_write_text(dst, ch)
 	va = (unsigned long)dst & (~PGOFSET);
 	pte0 = getpte(va);
 
-	if ((pte0 & PG_V) == 0) { 
+#if defined(SUN4M)
+#if defined(SUN4) || defined(SUN4C)
+	if (cputyp == CPU_SUN4M) {
+#endif
+	if ((pte0 & SRMMU_TETYPE) != SRMMU_TEPTE) {
+		db_printf(" address 0x%x not a valid page\n", dst);
+		splx(s);
+		return;
+	}
+
+	pte = pte0 | PPROT_WRITE;
+	setpte(va, pte);
+
+#if defined(SUN4) || defined(SUN4C)
+	} else {
+#endif
+#endif /* 4m */
+#if defined(SUN4) || defined(SUN4C)
+	if ((pte0 & PG_V) == 0) {
 		db_printf(" address %p not a valid page\n", dst);
 		splx(s);
 		return;
@@ -201,6 +237,10 @@ db_write_text(dst, ch)
 
 	pte = pte0 | PG_W;
 	setpte(va, pte);
+#if defined(SUN4M)
+	}
+#endif
+#endif /* 4/4c */
 
 	*dst = (unsigned char)ch;
 
