@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.5 1997/10/19 23:45:09 lukem Exp $	*/
+/*	$NetBSD: read.c,v 1.6 1998/11/03 14:27:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.5 1997/10/19 23:45:09 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.6 1998/11/03 14:27:09 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,6 +149,8 @@ lines(fp, off)
 	p = NULL;
 	if ((lines = malloc(off * sizeof(*lines))) == NULL)
 		err(1, "%s", strerror(errno));
+
+	memset(lines, 0, sizeof(*lines) * off);
 
 	sp = NULL;
 	blen = cnt = recno = wrap = 0;
