@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.4 1998/10/15 18:37:15 drochner Exp $
+#	$NetBSD: Makefile.macppc,v 1.5 1999/01/08 19:26:13 augustss Exp $
 #
 # Makefile for NetBSD
 #
@@ -48,7 +48,7 @@ HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmacppc
-CWARNFLAGS?=	-Werror -Wreturn-type
+CWARNFLAGS?=	-Werror -Wreturn-type -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
