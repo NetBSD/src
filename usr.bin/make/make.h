@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.40 2002/02/03 21:41:44 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.41 2002/02/04 17:24:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -213,8 +213,8 @@ typedef struct GNode {
 				     * state of the -n or -t flags */
 #define OP_JOIN 	0x00000400  /* Target is out-of-date only if any of its
 				     * children was out-of-date */
-#define	OP_MADE		0x00000800  /* Assume the node is already made; even if
-				     * it really is out of date */
+#define	OP_MADE		0x00000800  /* Assume the children of the node have
+				     * been already made */
 #define	OP_USEBEFORE	0x00002000  /* Like .USE, only prepend commands */
 #define OP_INVISIBLE	0x00004000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's
@@ -223,7 +223,6 @@ typedef struct GNode {
 				     * target' processing in parse.c */
 #define OP_PHONY	0x00010000  /* Not a file target; run always */
 #define OP_NOPATH	0x00020000  /* Don't search for file in the path */
-#define OP_NOSUFF	0x00040000  /* Don't apply suffix rules to it */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */

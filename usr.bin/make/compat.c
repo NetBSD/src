@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.38 2002/02/03 19:58:15 pk Exp $	*/
+/*	$NetBSD: compat.c,v 1.39 2002/02/04 17:24:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.38 2002/02/03 19:58:15 pk Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.39 2002/02/04 17:24:56 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.38 2002/02/03 19:58:15 pk Exp $");
+__RCSID("$NetBSD: compat.c,v 1.39 2002/02/04 17:24:56 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -374,7 +374,7 @@ CompatMake (gnp, pgnp)
     GNode *gn = (GNode *) gnp;
     GNode *pgn = (GNode *) pgnp;
 
-    if (pgn->type & OP_MADE) {
+    if (gn != pgn && pgn->type & OP_MADE) {
 	(void) Dir_MTime(gn);
 	gn->made = UPTODATE;
     }
