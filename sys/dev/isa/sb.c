@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.18 1995/02/28 21:47:42 brezak Exp $	*/
+/*	$NetBSD: sb.c,v 1.19 1995/03/08 18:27:35 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.18 1995/02/28 21:47:42 brezak Exp $
+ *	$Id: sb.c,v 1.19 1995/03/08 18:27:35 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -151,6 +151,9 @@ sbprobe(parent, self, aux)
 	register struct sb_softc *sc = (void *)self;
 	register struct isa_attach_args *ia = aux;
 	register u_short iobase = ia->ia_iobase;
+	static u_char irq_conf[11] = {
+	    -1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
+	};
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
 		printf("sb: configured iobase %d invalid\n", ia->ia_iobase);
@@ -169,6 +172,10 @@ sbprobe(parent, self, aux)
 		if (!SBP_DRQ_VALID(ia->ia_drq)) {
 			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
 			return 0;
+		}
+		if (ISSB16CLASS(&sc->sc_sbdsp)) {
+			sbdsp_mix_write(&sc->sc_sbdsp, SBP_SET_DRQ, 
+					1 << ia->ia_drq);
 		}
 	}
 	else {
@@ -203,6 +210,10 @@ sbprobe(parent, self, aux)
 		if (!SBP_IRQ_VALID(ia->ia_irq)) {
 			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
+		}
+		if (ISSB16CLASS(&sc->sc_sbdsp)) {
+			sbdsp_mix_write(&sc->sc_sbdsp, SBP_SET_IRQ, 
+					irq_conf[ia->ia_irq]);
 		}
 	}
 	else {
