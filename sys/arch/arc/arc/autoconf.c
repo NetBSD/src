@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2002/09/27 02:24:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2003/05/25 14:00:11 tsutsui Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -91,6 +91,9 @@ struct bootdev_data *bootdev_data;
 void
 cpu_configure()
 {
+
+	softintr_init();
+
 	(void)splhigh();	/* To be really sure.. */
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");

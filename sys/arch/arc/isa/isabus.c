@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.19 2003/04/27 17:05:58 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.20 2003/05/25 14:00:15 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -133,6 +133,7 @@ void	intr_calculatemasks __P((void));
 int	fakeintr __P((void *a));
 
 struct isabr_config *isabr_conf = NULL;
+u_int32_t imask[_IPL_N];	/* XXX */
 
 void
 isabrattach(sc)
@@ -217,39 +218,47 @@ intr_calculatemasks()
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
+	for (level = 0; level < _IPL_N; level++) {
 		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SIR_ALLMASK;
+		imask[level] = irqs;
 	}
 
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_NONE] = 0;
+
+	imask[IPL_SOFT] |= imask[IPL_NONE];
+	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTNET];
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_BIO] |= imask[IPL_SOFTSERIAL];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET];
 
 	/*
-	 * These are pseudo-levels.
+	 * Since run queues may be manipulated by both the statclock and tty,
+	 * network, and diskdrivers, clock > tty.
 	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
+	imask[IPL_CLOCK] |= imask[IPL_TTY];
+	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
+
+	/*
+	 * IPL_HIGH must block everything that can manipulate a run queue.
+	 */
+	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SIR_ALLMASK;
+		intrmask[irq] = irqs;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */

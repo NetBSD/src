@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8 2000/06/09 05:07:32 soda Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.9 2003/05/25 14:00:12 tsutsui Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -392,19 +392,14 @@ END(mips3_TLBWriteIndexedVPS)
 
 
 /*
- * Interrupt counters for vmstat.
+ * Symbols that vmstat -i wants, even though they're not used.
  */
 	.data
 	.globl _C_LABEL(intrcnt)
 	.globl _C_LABEL(eintrcnt)
 	.globl _C_LABEL(intrnames)
 	.globl _C_LABEL(eintrnames)
-_C_LABEL(intrnames):
-	.asciiz	"softclock"
-	.asciiz	"softnet"
-	.asciiz	"fpu"
-_C_LABEL(eintrnames):
-	.align	3
 _C_LABEL(intrcnt):
-	.word	0,0,0
 _C_LABEL(eintrcnt):
+_C_LABEL(intrnames):
+_C_LABEL(eintrnames):
