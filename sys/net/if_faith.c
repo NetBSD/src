@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.11 2000/03/30 09:45:35 augustss Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.12 2000/07/04 20:02:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,6 +54,8 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/queue.h>
+
 #include <machine/cpu.h>
 
 #include <net/if.h>
@@ -81,6 +83,11 @@
 
 #include <net/net_osdep.h>
 
+struct faith_softc {
+	struct ifnet sc_if;	/* must be first */
+	LIST_ENTRY(faith_softc) sc_list;
+};
+
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
 int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *));
@@ -88,39 +95,70 @@ static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
 void faithattach __P((int));
 
-static struct ifnet faithif[NFAITH];
+LIST_HEAD(, faith_softc) faith_softc_list;
+
+int	faith_clone_create __P((struct if_clone *, int));
+void	faith_clone_destroy __P((struct ifnet *));
+
+struct if_clone faith_cloner =
+    IF_CLONE_INITIALIZER("faith", faith_clone_create, faith_clone_destroy);
 
 #define	FAITHMTU	1500
 
 /* ARGSUSED */
 void
-faithattach(faith)
-	int faith;
+faithattach(count)
+	int count;
 {
-	struct ifnet *ifp;
-	int i;
 
-	for (i = 0; i < NFAITH; i++) {
-		ifp = &faithif[i];
-		bzero(ifp, sizeof(faithif[i]));
-		sprintf(ifp->if_xname, "faith%d", i);
-		ifp->if_mtu = FAITHMTU;
-		/* Change to BROADCAST experimentaly to announce its prefix. */
-		ifp->if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
-		ifp->if_ioctl = faithioctl;
-		ifp->if_output = faithoutput;
-		ifp->if_type = IFT_FAITH;
-		ifp->if_hdrlen = 0;
-		ifp->if_addrlen = 0;
-		if_attach(ifp);
+	LIST_INIT(&faith_softc_list);
+	if_clone_attach(&faith_cloner);
+}
+
+int
+faith_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct faith_softc *sc;
+
+	sc = malloc(sizeof(struct faith_softc), M_DEVBUF, M_WAITOK);
+	bzero(sc, sizeof(struct faith_softc));
+
+	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+
+	sc->sc_if.if_mtu = FAITHMTU;
+	/* Change to BROADCAST experimentaly to announce its prefix. */
+	sc->sc_if.if_flags = /* IFF_LOOPBACK */ IFF_BROADCAST | IFF_MULTICAST;
+	sc->sc_if.if_ioctl = faithioctl;
+	sc->sc_if.if_output = faithoutput;
+	sc->sc_if.if_type = IFT_FAITH;
+	sc->sc_if.if_hdrlen = 0;
+	sc->sc_if.if_addrlen = 0;
+	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 #ifdef HAVE_OLD_BPF
-		bpfattach(ifp, DLT_NULL, sizeof(u_int));
+	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif
 #endif
-	}
+	LIST_INSERT_HEAD(&faith_softc_list, sc, sc_list);
+	return (0);
+}
+
+void
+faith_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct faith_softc *sc = (void *) ifp;
+
+	LIST_REMOVE(sc, sc_list);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+	free(sc, M_DEVBUF);
 }
 
 int
