@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.134 2000/01/20 17:10:18 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.135 2000/03/13 09:56:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -657,6 +657,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-12       ", "V2.1"}, SDEV_NOLUNS},
+	{{T_SCANNER, T_FIXED,
+	 "ULTIMA  ", "A6000C          ", ""}, SDEV_NOLUNS},
 
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
