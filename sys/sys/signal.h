@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.22 1997/02/07 07:29:38 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -110,6 +110,10 @@
 #define	SIG_ERR		(void (*)())-1
 #endif
 
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+#endif
+
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
 
@@ -145,9 +149,6 @@ struct	sigaction {
 #define	SIG_SETMASK	3	/* set specified signal set */
 
 #ifndef _POSIX_SOURCE
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-#endif
 typedef	void (*sig_t) __P((int));	/* type of signal function */
 
 /*
