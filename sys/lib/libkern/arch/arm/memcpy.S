@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.3 2002/08/15 18:30:36 briggs Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.4 2003/04/05 23:27:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,11 +75,7 @@ ENTRY_NP(memmove)
 	cmp	r1, r0
 
 	moveq	r0, #0			/* Quick abort for len=0 */
-#ifdef __APCS_26__
-	moveqs	pc, lr
-#else
 	moveq	pc, lr
-#endif
 
 	/* save leaf functions having to store this away */
 	stmdb	sp!, {r0, lr}		/* memcpy() returns dest addr */
@@ -155,11 +151,7 @@ ENTRY_NP(memmove)
 	strgeb	r3, [r0], #1
 	ldrgtb	r3, [r1], #1
 	strgtb	r3, [r0], #1
-#ifdef __APCS_26__
-	ldmia	sp!, {r0, pc}^
-#else
 	ldmia	sp!, {r0, pc}
-#endif
 
 	/* erg - unaligned destination */
 .Lmemcpy_fdestul:
@@ -343,11 +335,7 @@ ENTRY_NP(memmove)
 .Lmemcpy_bl4:
 	/* less than 4 bytes to go */
 	adds	r2, r2, #4
-#ifdef __APCS_26__
-	ldmeqia	sp!, {r0, pc}^
-#else
 	ldmeqia	sp!, {r0, pc}
-#endif
 
 	/* copy the crud byte at a time */
 	cmp	r2, #2
@@ -357,11 +345,7 @@ ENTRY_NP(memmove)
 	strgeb	r3, [r0, #-1]!
 	ldrgtb	r3, [r1, #-1]!
 	strgtb	r3, [r0, #-1]!
-#ifdef __APCS_26__
-	ldmia	sp!, {r0, pc}^
-#else
 	ldmia	sp!, {r0, pc}
-#endif
 
 	/* erg - unaligned destination */
 .Lmemcpy_bdestul:
