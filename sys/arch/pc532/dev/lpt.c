@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.22 1997/04/04 09:51:26 matthias Exp $	*/
+/*	$NetBSD: lpt.c,v 1.23 1997/04/21 16:16:10 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -118,11 +118,11 @@
 #endif
 
 #ifndef PLIPMXSPIN1		/* DELAY factor for the plip# interfaces */
-#define	PLIPMXSPIN1	2000	/* Spinning for remote intr to happen */
+#define	PLIPMXSPIN1	50000	/* Spinning for remote intr to happen */
 #endif
 
 #ifndef PLIPMXSPIN2		/* DELAY factor for the plip# interfaces */
-#define	PLIPMXSPIN2	6000	/* Spinning for remote handshake to happen */
+#define	PLIPMXSPIN2	50000	/* Spinning for remote handshake to happen */
 #endif
 
 #ifndef PLIPMXERRS		/* Max errors before !RUNNING */
@@ -181,12 +181,21 @@ static int pushbytes __P((struct lpt_softc *));
 
 #if defined(INET) && defined(PLIP)
 /* Functions for the plip# interface */
-static void plipattach __P((struct lpt_softc *,int));
-static int plipioctl __P((struct ifnet *, u_long, caddr_t));
-static void plipsoftint __P((void *));
-static void plipinput __P((struct lpt_softc *));
-static void plipstart __P((struct ifnet *));
-static void plipoutput __P((void *));
+static void	plipattach __P((struct lpt_softc *,int));
+static void	plipinput __P((struct lpt_softc *));
+static int	plipioctl __P((struct ifnet *, u_long, caddr_t));
+static void	plipoutput __P((void *));
+#ifndef __OPTIMIZE__
+static
+#endif
+	int	plipreceive __P((volatile struct i8255 *, u_char *, int));
+static void	pliprxenable __P((void *));
+static void	plipsoftint __P((void *));
+static void	plipstart __P((struct ifnet *));
+#ifndef __OPTIMIZE__
+static
+#endif
+	int	pliptransmit __P((volatile struct i8255 *, u_char *, int));
 #endif
 
 struct cfattach lpt_ca = {
@@ -262,7 +271,7 @@ lptattach(parent, self, aux)
 	plipattach(sc, self->dv_unit);
 #endif
 	intr_establish(sc->sc_irq, lptintr, sc, sc->sc_dev.dv_xname,
-			IPL_ZERO, IPL_ZERO, FALLING_EDGE);
+			IPL_ZERO, IPL_ZERO, LOW_LEVEL);
 }
 
 /*
@@ -651,9 +660,10 @@ plipsoftint(arg)
 }
 
 #ifdef __OPTIMIZE__
-int plipreceive(volatile struct i8255 *i8255, u_char *buf, int len);
-asm("
-_plipreceive:
+int plipreceive __P((volatile struct i8255 *, u_char *, int))
+	__asm("plipreceive");
+__asm("
+plipreceive:
 	enter	[r3,r4,r5,r6,r7],0
 	movqd	0,r0
 	movd	8(fp),r1
@@ -663,7 +673,7 @@ _plipreceive:
 	beq	5f
 
 	movqd	0,r7
-	movd	20000,r4
+	movd	50000,r4
 
 	.align	2,0xa2
 0:	movb	8,r5
@@ -731,6 +741,15 @@ plipreceive(i8255, buf, len)
 #endif
 
 static void
+pliprxenable(arg)
+	void *arg;
+{
+	struct lpt_softc *sc = arg;
+	volatile struct i8255 *i8255 = sc->sc_i8255;
+	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
+}
+
+static void
 plipinput(sc)
 	struct lpt_softc *sc;
 {
@@ -748,6 +767,9 @@ plipinput(sc)
 	}
 	i8255->port_b = 0x01;
 	i8255->port_a &= ~(LPA_ACKENABLE | LPA_ACTIVE);
+
+	if (sc->sc_ifierrs)
+		untimeout(pliprxenable, sc);
 
 #if defined(COMPAT_PLIP10)
 	if (ifp->if_flags & IFF_LINK0) {
@@ -825,13 +847,16 @@ err:
 	if (sc->sc_ifierrs < PLIPMXERRS) {
 		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	} else {
-		/* We are not able to send or receive anything for now,
+		/*
+		 * We are not able to send or receive anything for now,
 		 * so stop wasting our time and leave the interrupt
 		 * disabled.
 		 */
 		if (sc->sc_ifierrs == PLIPMXERRS)
 			log(LOG_NOTICE, "%s: rx hard error\n", ifp->if_xname);
 		i8255->port_a |= LPA_ACTIVE;
+		/* But we will retry from time to time. */
+		timeout(pliprxenable, sc, PLIPRETRY * 10);
 	}
 	ifp->if_ierrors++;
 	sc->sc_ifierrs++;
@@ -839,9 +864,10 @@ err:
 }
 
 #ifdef __OPTIMIZE__
-int pliptransmit(volatile struct i8255 *i8255, u_char *buf, int len);
-asm("
-_pliptransmit:
+int pliptransmit __P((volatile struct i8255 *, u_char *, int))
+	__asm("pliptransmit");
+__asm("
+pliptransmit:
 	enter	[r3,r4,r5,r6,r7],0
 	movqd	0,r0
 	movd	8(fp),r1
@@ -851,7 +877,7 @@ _pliptransmit:
 	beq	5f
 
 	movqd	0,r7
-	movd	20000,r4
+	movd	50000,r4
 
 	.align	2,0xa2
 0:	movb	8,r5
@@ -1032,15 +1058,14 @@ retry:
 		s = splimp();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
-		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 		timeout(plipoutput, sc, PLIPRETRY);
 	} else {
 		if (sc->sc_ifoerrs == PLIPMXRETRY) {
 			log(LOG_NOTICE, "%s: tx hard error\n", ifp->if_xname);
 		}
 		m_freem(m0);
-		i8255->port_a |= LPA_ACTIVE;
 	}
+	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	sc->sc_ifoerrs++;
 }
 
