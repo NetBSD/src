@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.h,v 1.1 2001/01/05 01:28:36 garbled Exp $       */
+/*      $NetBSD: functions.h,v 1.2 2001/01/05 18:57:25 thorpej Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,8 +48,8 @@ char **script_do(char *what);
 char **log_do(char *what);
 char **ftp_pkglist(char *);
 
-#define LOGFILE_NAME	"smit.log"
-#define SCRIPTFILE_NAME	"smit.script"
-#define TMPFILE_NAME	"/var/tmp/smit.XXXXXX"
+#define LOGFILE_NAME	"sushi.log"
+#define SCRIPTFILE_NAME	"sushi.script"
+#define TMPFILE_NAME	"/var/tmp/sushi.XXXXXX"
 
 #endif	/* _FUNCTIONS_H_ */
