@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.27 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.28 2003/02/23 23:40:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -330,7 +330,7 @@ cpu_startup()
 	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)(pmap_kernel())->pm_pdir,
-	    (paddr_t *)&curpcb->pcb_pagedir);
+	    &curpcb->pcb_pagedir);
 
         curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
