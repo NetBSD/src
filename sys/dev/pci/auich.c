@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3.2.9 2002/10/18 02:42:54 nathanw Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.2.10 2003/01/15 18:44:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.9 2002/10/18 02:42:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.10 2003/01/15 18:44:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ int	auich_allocmem(struct auich_softc *, size_t, size_t,
 int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void	auich_powerhook(int, void *);
-int	auich_set_rate(struct auich_softc *, int, u_long*);
+int	auich_set_rate(struct auich_softc *, int, u_long);
 void	auich_calibrate(struct device *);
 
 
@@ -649,13 +649,15 @@ auich_query_encoding(void *v, struct audio_encoding *aep)
 }
 
 int
-auich_set_rate(struct auich_softc *sc, int mode, u_long* srate)
+auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 {
 	int reg;
+	u_long ratetmp;
 
+	ratetmp = srate;
 	reg = mode == AUMODE_PLAY
 		? AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
-	return sc->codec_if->vtbl->set_rate(sc->codec_if, reg, srate);
+	return sc->codec_if->vtbl->set_rate(sc->codec_if, reg, &ratetmp);
 }
 
 int
@@ -774,7 +776,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			p->hw_sample_rate = AC97_SINGLE_RATE;
 			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
-			if (auich_set_rate(sc, mode, &p->sample_rate))
+			if (auich_set_rate(sc, mode, p->sample_rate))
 				return EINVAL;
 		}
 	}

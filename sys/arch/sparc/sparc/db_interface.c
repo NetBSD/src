@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43.8.7 2003/01/07 21:21:27 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43.8.8 2003/01/15 18:40:15 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -336,6 +336,7 @@ kdb_trap(type, tf)
 	*(struct frame *)tf->tf_out[6] = dbregs.db_fr;
 	*tf = dbregs.db_tf;
 	curcpu()->ci_ddb_regs = ddb_regp = 0;
+	ddb_cpuinfo = NULL;
 
 #ifdef MULTIPROCESSOR
 	db_resume_others();
@@ -358,18 +359,22 @@ db_proc_cmd(addr, have_addr, count, modif)
 	if (have_addr) 
 		l = (struct lwp *) addr;
 
-	p = l->l_proc;
-
 	if (l == NULL) {
 		db_printf("no current process\n");
 		return;
 	}
-	db_printf("process %p:", l);
-	db_printf("pid:%d cpu:%d vmspace:%p ",
-		  p->p_pid, l->l_cpu->ci_cpuid, p->p_vmspace);
-	db_printf("pmap:%p ctx:%p wchan:%p pri:%d upri:%d\n",
+
+	p = l->l_proc;
+
+	db_printf("LWP %p: ", l);
+	db_printf("pid:%d.%d cpu:%d stat:%d vmspace:%p", p->p_pid,
+	    l->l_lid, l->l_cpu->ci_cpuid, l->l_stat, p->p_vmspace);
+	if (p->p_stat != SZOMB && p->p_stat != SDEAD)
+		db_printf(" ctx: %p cpuset %x",
+			  p->p_vmspace->vm_map.pmap->pm_ctx,
+			  p->p_vmspace->vm_map.pmap->pm_cpuset);
+	db_printf("\npmap:%p wchan:%p pri:%d upri:%d\n",
 		  p->p_vmspace->vm_map.pmap, 
-		  p->p_vmspace->vm_map.pmap->pm_ctx,
 		  l->l_wchan, l->l_priority, l->l_usrpri);
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 

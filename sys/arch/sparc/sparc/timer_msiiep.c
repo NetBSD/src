@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.1.2.6 2003/01/06 22:12:34 martin Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.1.2.7 2003/01/15 18:40:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,6 +122,7 @@ clockintr_msiiep(void *cap)
 static int
 statintr_msiiep(void *cap)
 {
+	struct clockframe *frame = cap;
 	volatile int discard;
 	u_long newint;
 
@@ -129,7 +130,9 @@ statintr_msiiep(void *cap)
 	discard = msiiep->pcic_pclr;
 	if (timerok == 0) {
 		/* Stop the clock */
+#ifdef DIAGNOSTIC
 		printf("note: counter running!\n");
+#endif
 		/*
 		 * Turn interrupting processor counter
 		 * into non-interrupting user timer.
@@ -139,7 +142,7 @@ statintr_msiiep(void *cap)
 		return (1);
 	}
 
-	statclock((struct clockframe *)cap);
+	statclock(frame);
 
 	/*
 	 * Compute new randomized interval.
@@ -157,8 +160,19 @@ statintr_msiiep(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
-		softintr_schedule(sched_cookie);
+	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+		if (CLKF_LOPRI(frame, IPL_SCHED)) {
+			/* No need to schedule a soft interrupt */
+			spllowerschedclock();
+			schedintr(cap);
+		} else {
+			/*
+			 * We're interrupting a thread that may have the
+			 * scheduler lock; run schedintr() later.
+			 */
+			softintr_schedule(sched_cookie);
+		}
+	}
 
 	return (1);
 }

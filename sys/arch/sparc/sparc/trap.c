@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.25 2003/01/07 22:12:37 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.26 2003/01/15 18:40:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -222,15 +222,15 @@ userret(l, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	l->l_priority = l->l_usrpri;
-	if (want_ast) {
-		want_ast = 0;
+	l->p_priority = l->p_usrpri;
+	if (cpuinfo.want_ast) {
+		cpuinfo.want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
 	}
-	if (want_resched) {
+	if (cpuinfo.want_resched) {
 		/*
 		 * We are being preempted.
 		 */
@@ -312,7 +312,7 @@ trap(type, psr, pc, tf)
 	struct proc *p;
 	struct lwp *l;
 	struct pcb *pcb;
-	int n;
+	int n, s;
 	char bits[64];
 	u_quad_t sticks;
 	int sig;
@@ -363,10 +363,11 @@ trap(type, psr, pc, tf)
 			 * from kernel space. For now, just flush the
 			 * entire I-cache.
 			 */
-			(*cpuinfo.pure_vcache_flush)();
 #if defined(MULTIPROCESSOR)
-			/* Broadcast to other CPUs */
-			/* e.g. XCALL0(cpuinfo.pure_vcache_flush, CPUSET_ALL);*/
+			/* Broadcast to all CPUs */
+			XCALL0(*cpuinfo.pure_vcache_flush, CPUSET_ALL);
+#else
+			(*cpuinfo.pure_vcache_flush)();
 #endif
 			ADVANCE;
 			return;
@@ -513,7 +514,8 @@ badtrap:
 #if 1
 		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			struct cpu_info *cpi;
-			FPU_LOCK();
+
+			FPU_LOCK(s);
 			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
 				cpuinfo.fplwp->l_md.md_fpu = NULL;
@@ -561,8 +563,8 @@ badtrap:
 			}
 			loadfpstate(fs);
 			cpuinfo.fplwp = l;		/* now we do have it */
-			l->l_md.md_fpumid = cpuinfo.mid;
-			FPU_UNLOCK();
+			l->l_md.md_fpu = curcpu();
+			FPU_UNLOCK(s);
 		}
 #endif
 		tf->tf_psr |= PSR_EF;
@@ -665,11 +667,11 @@ badtrap:
 		KERNEL_PROC_LOCK(l);
 		if (l != cpuinfo.fplwp)
 			panic("fpe without being the FP user");
-		FPU_LOCK();
+		FPU_LOCK(s);
 		savefpstate(l->l_md.md_fpstate);
 		cpuinfo.fplwp = NULL;
 		l->l_md.md_fpu = NULL;
-		FPU_UNLOCK();
+		FPU_UNLOCK(s);
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(l, l->l_md.md_fpstate);
 		KERNEL_PROC_UNLOCK(l);

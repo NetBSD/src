@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.25 2003/01/06 22:12:30 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.26 2003/01/15 18:40:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -412,12 +412,13 @@ setregs(l, pack, stack)
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
 	if ((fs = l->l_md.md_fpstate) != NULL) {
 		struct cpu_info *cpi;
+		int s;
 		/*
 		 * We hold an FPU state.  If we own *some* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		FPU_LOCK();
+		FPU_LOCK(s);
 		if ((cpi = l->l_md.md_fpu) != NULL) {
 			if (cpi->fplwp != l)
 				panic("FPU(%d): fplwp %p",
@@ -431,7 +432,7 @@ setregs(l, pack, stack)
 			cpi->fplwp = NULL;
 		}
 		l->l_md.md_fpu = NULL;
-		FPU_UNLOCK();
+		FPU_UNLOCK(s);
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
@@ -924,6 +925,27 @@ cpu_setmcontext(l, mcp, flags)
 	return (0);
 }
 
+#if defined(MULTIPROCESSOR)
+/*
+ * xcall function to stop this cpu completely; used by cpu_reboot and DDB.
+ */
+static void
+cpu_halt(void)
+{
+
+	/*
+	 * This CPU is no longer available, mark it so.  We do this before
+	 * posting GOTMSG so that we can never ever get another xcall().
+	 */
+	cpuinfo.flags &= ~CPUFLG_READY;
+	cpuinfo.flags |= CPUFLG_GOTMSG;
+
+	printf("cpu%d halted\n", cpu_number());
+
+	spl0();
+	prom_cpustop(0);
+}
+#endif /* MULTIPROCESSOR */
 
 int	waittime = -1;
 
@@ -966,8 +988,17 @@ cpu_reboot(howto, user_boot_string)
 			resettodr();
 	}
 
-	/* Disable interrupts. */
-	(void) splhigh();
+	/* Disable interrupts. But still allow IPI on MP systems */
+	if (ncpu > 1)
+		(void)splsched();
+	else
+		(void)splhigh();
+
+#if defined(MULTIPROCESSOR)
+	/* Direct system interrupts to this CPU, since dump uses polled I/O */
+	if (CPU_ISSUN4M)
+		*((u_int *)ICR_ITR) = cpuinfo.mid - 8;
+#endif
 
 	/* If rebooting and a dump is requested, do it. */
 #if 0
@@ -981,6 +1012,11 @@ cpu_reboot(howto, user_boot_string)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+#if defined(MULTIPROCESSOR)
+	XCALL0(cpu_halt, CPUSET_ALL & ~(1 << cpu_number()));
+	delay(100);
+#endif /* MULTIPROCESSOR */
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -999,7 +1035,11 @@ cpu_reboot(howto, user_boot_string)
 	}
 
 	if (howto & RB_HALT) {
+#if defined(MULTIPROCESSOR)
+		printf("cpu%d halted\n\n", cpu_number());
+#else
 		printf("halted\n\n");
+#endif
 		prom_halt();
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.17.2.7 2002/12/29 20:49:30 thorpej Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.17.2.8 2003/01/15 18:44:22 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.17.2.7 2002/12/29 20:49:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.17.2.8 2003/01/15 18:44:22 thorpej Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -1326,7 +1326,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		return EINVAL;
 	    }
 
-	    for (i = 0; i < BT848_MAX_CLIP_NODE - 1 ; i++) {
+	    for (i = 0; i < BT848_MAX_CLIP_NODE - 1; i++) {
 		if (bktr->clip_list[i].y_min == 0 &&
 		    bktr->clip_list[i].y_max == 0) {
 		    break;
@@ -2104,7 +2104,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 /* lr 970528 luma notch etc - 3 high bits of e_control/o_control */
 
 	case BT848_SLNOTCH:	/* set luma notch */
-		tmp_int = (*(int *)arg & 0x7) << 5 ;
+		tmp_int = (*(int *)arg & 0x7) << 5;
 		OUTB(bktr, BKTR_E_CONTROL, INB(bktr, BKTR_E_CONTROL) & ~0xe0);
 		OUTB(bktr, BKTR_O_CONTROL, INB(bktr, BKTR_O_CONTROL) & ~0xe0);
 		OUTB(bktr, BKTR_E_CONTROL, INB(bktr, BKTR_E_CONTROL) | tmp_int);
@@ -2112,7 +2112,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		break;
 
 	case BT848_GLNOTCH:	/* get luma notch */
-		*(int *)arg = (int) ( (INB(bktr, BKTR_E_CONTROL) & 0xe0) >> 5) ;
+		*(int *)arg = (int) ( (INB(bktr, BKTR_E_CONTROL) & 0xe0) >> 5);
 		break;
 
 
@@ -2259,10 +2259,10 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 	/* Luigi's I2CWR ioctl */ 
 	case BT848_I2CWR:
 		par = *(u_long *)arg;
-		write = (par >> 24) & 0xff ;
-		i2c_addr = (par >> 16) & 0xff ;
-		i2c_port = (par >> 8) & 0xff ;
-		data = (par) & 0xff ;
+		write = (par >> 24) & 0xff;
+		i2c_addr = (par >> 16) & 0xff;
+		i2c_port = (par >> 8) & 0xff;
+		data = (par) & 0xff;
  
 		if (write) { 
 			i2cWrite( bktr, i2c_addr, i2c_port, data);
@@ -2584,7 +2584,7 @@ static bool_t notclipped (bktr_reg_t * bktr, int x, int width) {
 
 static bool_t getline(bktr_reg_t *bktr, int x ) {
     int i, j;
-    bktr_clip_t * clip_node ;
+    bktr_clip_t * clip_node;
     
     if (bktr->line_length == 0 || 
 	bktr->current_col >= bktr->line_length) return FALSE;
@@ -2612,7 +2612,7 @@ static bool_t getline(bktr_reg_t *bktr, int x ) {
 			    bktr->last_y = bktr->yclip2;
 			    bktr->clip_start = j;
 			}	
-		    } else break  ;
+		    } else break;
 		}	
 		return TRUE;
 	    }	
@@ -2641,8 +2641,8 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
   start_skip = 0;
   if (( pf->type == METEOR_PIXTYPE_RGB ) && ( pf->Bpp == 3 ))
 	  switch ( ((uintptr_t) (volatile void *) *target_buffer) % 4 ) {
-	  case 2 : start_skip = 4 ; break;
-	  case 1 : start_skip = 8 ; break;
+	  case 2 : start_skip = 4; break;
+	  case 1 : start_skip = 8; break;
 	  }
 
  if ((width * pixel_width) < DMA_BT848_SPLIT ) {
@@ -2656,14 +2656,15 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
 
      skip = 0;
      if (( flag & OP_SOL ) && ( start_skip > 0 )) {
-	     *(*dma_prog)++ = OP_SKIP | OP_SOL | start_skip;
+	     *(*dma_prog)++ = htole32(OP_SKIP | OP_SOL | start_skip);
 	     flag &= ~OP_SOL;
 	     skip = start_skip;
      }
 
-     *(*dma_prog)++ = operation | flag  | (width * pixel_width - skip);
+     *(*dma_prog)++ = htole32(operation | flag  |
+    	(width * pixel_width - skip));
      if (operation != OP_SKIP ) 
-	 *(*dma_prog)++ = (uintptr_t) (volatile void *) *target_buffer;
+	 *(*dma_prog)++ = htole32((uintptr_t) (volatile void *) *target_buffer);
 
      *target_buffer += width * pixel_width;
      bktr->current_col += width;
@@ -2671,7 +2672,7 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
  } else {
 
 	if (bktr->current_col == 0 && width == cols) {
-	    flag = OP_SOL ;
+	    flag = OP_SOL;
 	    flag2 = OP_EOL;
         } else if (bktr->current_col == 0 ) {
 	    flag = OP_SOL;
@@ -2686,22 +2687,22 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
 
 	skip = 0;
 	if (( flag & OP_SOL ) && ( start_skip > 0 )) {
-		*(*dma_prog)++ = OP_SKIP | OP_SOL | start_skip;
+		*(*dma_prog)++ = htole32(OP_SKIP | OP_SOL | start_skip);
 		flag &= ~OP_SOL;
 		skip = start_skip;
 	}
 
-	*(*dma_prog)++ = operation  | flag |
-	      (width * pixel_width / 2 - skip);
+	*(*dma_prog)++ = htole32(operation  | flag |
+	      (width * pixel_width / 2 - skip));
 	if (operation != OP_SKIP ) 
-	      *(*dma_prog)++ = (uintptr_t) (volatile void *) *target_buffer ;
-	*target_buffer +=  (width * pixel_width / 2) ;
+	      *(*dma_prog)++ = htole32((uintptr_t) (volatile void *) *target_buffer);
+	*target_buffer +=  (width * pixel_width / 2);
 
 	if ( operation == OP_WRITE )
 		operation = OP_WRITEC;
-	*(*dma_prog)++ = operation | flag2 |
-	    (width * pixel_width / 2);
-	*target_buffer +=  (width * pixel_width / 2) ;
+	*(*dma_prog)++ = htole32(operation | flag2 |
+	    (width * pixel_width / 2));
+	*target_buffer +=  (width * pixel_width / 2);
 	  bktr->current_col += width;
 
     }
@@ -2774,26 +2775,26 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	/* Wait for the VRE sync marking the end of the Even and
 	 * the start of the Odd field. Resync here.
 	 */
-	*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_VRE;
-	*dma_prog++ = 0;
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_VRE);
+	*dma_prog++ = htole32(0);
 
 	loop_point = dma_prog;
 
 	/* store the VBI data */
 	/* look for sync with packed data */
-	*dma_prog++ = OP_SYNC | BKTR_FM1;
-	*dma_prog++ = 0;
+	*dma_prog++ = htole32(OP_SYNC | BKTR_FM1);
+	*dma_prog++ = htole32(0);
 	for(i = 0; i < vbilines; i++) {
-		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys(bktr->vbidata +
-					(i * VBI_LINE_SIZE));
+		*dma_prog++ = htole32(OP_WRITE | OP_SOL | OP_EOL | vbisamples);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->vbidata +
+					(i * VBI_LINE_SIZE)));
 	}
 
 	if ( (i_flag == 2/*Odd*/) || (i_flag==3) /*interlaced*/ ) { 
 		/* store the Odd field video image */
 		/* look for sync with packed data */
-		*dma_prog++ = OP_SYNC  | BKTR_FM1;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC  | BKTR_FM1);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 		width = cols;
 		for (i = 0; i < (rows/interlace); i++) {
 		    target = target_buffer;
@@ -2827,17 +2828,17 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 
 	/* Grab the Even field */
 	/* Look for the VRO, end of Odd field, marker */
-	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO;
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 
 	/* store the VBI data */
 	/* look for sync with packed data */
-	*dma_prog++ = OP_SYNC | BKTR_FM1;
-	*dma_prog++ = 0;
+	*dma_prog++ = htole32(OP_SYNC | BKTR_FM1);
+	*dma_prog++ = htole32(0);
 	for(i = 0; i < vbilines; i++) {
-		*dma_prog++ = OP_WRITE | OP_SOL | OP_EOL | vbisamples;
-		*dma_prog++ = (u_long) vtophys(bktr->vbidata +
-				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
+		*dma_prog++ = htole32(OP_WRITE | OP_SOL | OP_EOL | vbisamples);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->vbidata +
+				((i+MAX_VBI_LINES) * VBI_LINE_SIZE)));
 	}
 
 	/* store the video image */
@@ -2849,8 +2850,8 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 
 	if ((i_flag == 1) /*Even Only*/ || (i_flag==3) /*interlaced*/) {
 		/* look for sync with packed data */
-		*dma_prog++ = OP_SYNC | BKTR_FM1;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_FM1);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 		width = cols;
 		for (i = 0; i < (rows/interlace); i++) {
 		    target = target_buffer;
@@ -2882,12 +2883,12 @@ rgb_vbi_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	}
 
 	/* Look for end of 'Even Field' */
-	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE;
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 
-	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys((vaddr_t)loop_point) ;
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_JUMP);
+	*dma_prog++ = htole32((u_long) vtophys((vaddr_t)loop_point));
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 
 }
 
@@ -2944,10 +2945,10 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	buffer = target_buffer;
 
 	/* contruct sync : for video packet format */
-	*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM1;
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 
 	/* sync, mode indicator packed data */
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 	width = cols;
 	for (i = 0; i < (rows/interlace); i++) {
 	    target = target_buffer;
@@ -2980,28 +2981,28 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	switch (i_flag) {
 	case 1:
 		/* sync vre */
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 2:
 		/* sync vro */
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 3:
 		/* sync vro */
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO;
-		*dma_prog++ = 0;  /* NULL WORD */
-		*dma_prog++ = OP_JUMP; ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->odd_dma_prog));
 		break;
 	}
 
@@ -3012,8 +3013,8 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		dma_prog = (u_long *) bktr->odd_dma_prog;
 
 		/* sync vre IRQ bit */
-		*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM1;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
                 width = cols;
 		for (i = 0; i < (rows/interlace); i++) {
 		    target = target_buffer;
@@ -3045,11 +3046,11 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	}
 
 	/* sync vre IRQ bit */
-	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE;
-	*dma_prog++ = 0;  /* NULL WORD */
-	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
+	*dma_prog++ = htole32(0);  /* NULL WORD */
+	*dma_prog++ = htole32(OP_JUMP);
+	*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 }
 
 
@@ -3097,43 +3098,43 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 	/* contruct sync : for video packet format */
 	/* sync, mode indicator packed data */
-	*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM1;
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 
 	b = cols;
 
 	for (i = 0; i < (rows/interlace); i++) {
-		*dma_prog++ = inst;
-		*dma_prog++ = target_buffer;
-		*dma_prog++ = inst3;
-		*dma_prog++ = target_buffer + b; 
+		*dma_prog++ = htole32(inst);
+		*dma_prog++ = htole32(target_buffer);
+		*dma_prog++ = htole32(inst3);
+		*dma_prog++ = htole32(target_buffer + b); 
 		target_buffer += interlace*(cols * 2);
 	}
 
 	switch (i_flag) {
 	case 1:
 		/* sync vre */
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 2:
 		/* sync vro */
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO;
-		*dma_prog++ = 0;  /* NULL WORD */
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 3:
 		/* sync vro */
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO;
-		*dma_prog++ = 0;  /* NULL WORD */
-		*dma_prog++ = OP_JUMP  ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->odd_dma_prog));
 		break;
 	}
 
@@ -3144,27 +3145,27 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		dma_prog = (u_long * ) bktr->odd_dma_prog;
 
 		/* sync vre */
-		*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM1;
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		for (i = 0; i < (rows/interlace) ; i++) {
-			*dma_prog++ = inst;
-			*dma_prog++ = target_buffer;
-			*dma_prog++ = inst3;
-			*dma_prog++ = target_buffer + b;
+		for (i = 0; i < (rows/interlace); i++) {
+			*dma_prog++ = htole32(inst);
+			*dma_prog++ = htole32(target_buffer);
+			*dma_prog++ = htole32(inst3);
+			*dma_prog++ = htole32(target_buffer + b);
 			target_buffer += interlace * ( cols*2);
 		}
 	}
 
 	/* sync vro IRQ bit */
-	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE;
-	*dma_prog++ = 0;  /* NULL WORD */
-	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
+	*dma_prog++ = htole32(0);  /* NULL WORD */
+	*dma_prog++ = htole32(OP_JUMP);
+	*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 
-	*dma_prog++ = OP_JUMP;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_JUMP);
+	*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 }
 
 
@@ -3216,41 +3217,41 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 	t1 = buffer;
 
 	/* contruct sync : for video packet format */
-	*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM3; /*sync, mode indicator packed data*/
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3); /*sync, mode indicator packed data*/
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 
-	for (i = 0; i < (rows/interlace ) ; i++) {
-		*dma_prog++ = inst;
-		*dma_prog++ = cols/2 | cols/2 << 16;
-		*dma_prog++ = target_buffer;
-		*dma_prog++ = t1 + (cols*rows) + i*cols/2 * interlace;
-		*dma_prog++ = t1 + (cols*rows) + (cols*rows/2) + i*cols/2 * interlace;
+	for (i = 0; i < (rows/interlace ); i++) {
+		*dma_prog++ = htole32(inst);
+		*dma_prog++ = htole32(cols/2 | cols/2 << 16);
+		*dma_prog++ = htole32(target_buffer);
+		*dma_prog++ = htole32(t1 + (cols*rows) + i*cols/2 * interlace);
+		*dma_prog++ = htole32(t1 + (cols*rows) + (cols*rows/2) + i*cols/2 * interlace);
 		target_buffer += interlace*cols;
 	}
 
 	switch (i_flag) {
 	case 1:
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE;  /*sync vre*/
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);  /*sync vre*/
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP ;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 2:
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO;  /*sync vre*/
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);  /*sync vre*/
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 3:
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO; 
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO); 
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP  ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->odd_dma_prog));
 		break;
 	}
 
@@ -3260,24 +3261,24 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 
 		target_buffer  = (u_long) buffer + cols;
 		t1 = buffer + cols/2;
-		*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM3; 
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3); 
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		for (i = 0; i < (rows/interlace )  ; i++) {
-			*dma_prog++ = inst;
-			*dma_prog++ = cols/2 | cols/2 << 16;
-			*dma_prog++ = target_buffer;
-			*dma_prog++ = t1 + (cols*rows) + i*cols/2 * interlace;
-			*dma_prog++ = t1 + (cols*rows) + (cols*rows/2) + i*cols/2 * interlace;
+		for (i = 0; i < (rows/interlace ); i++) {
+			*dma_prog++ = htole32(inst);
+			*dma_prog++ = htole32(cols/2 | cols/2 << 16);
+			*dma_prog++ = htole32(target_buffer);
+			*dma_prog++ = htole32(t1 + (cols*rows) + i*cols/2 * interlace);
+			*dma_prog++ = htole32(t1 + (cols*rows) + (cols*rows/2) + i*cols/2 * interlace);
 			target_buffer += interlace*cols;
 		}
 	}
     
-	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE; 
-	*dma_prog++ = 0;  /* NULL WORD */
-	*dma_prog++ = OP_JUMP ;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE); 
+	*dma_prog++ = htole32(0);  /* NULL WORD */
+	*dma_prog++ = htole32(OP_JUMP);
+	*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 }
 
 
@@ -3315,45 +3316,45 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	buffer = target_buffer;
 	t1 = buffer;
  
-	*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM3; /*sync, mode indicator packed data*/
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3); /*sync, mode indicator packed data*/
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 	       
-	for (i = 0; i < (rows/interlace )/2 ; i++) {
-		*dma_prog++ = inst;
-		*dma_prog++ = cols/2 | (cols/2 << 16);
-		*dma_prog++ = target_buffer;
-		*dma_prog++ = t1 + (cols*rows) + i*cols/2 * interlace;
-		*dma_prog++ = t1 + (cols*rows) + (cols*rows/4) + i*cols/2 * interlace;
+	for (i = 0; i < (rows/interlace )/2; i++) {
+		*dma_prog++ = htole32(inst);
+		*dma_prog++ = htole32(cols/2 | (cols/2 << 16));
+		*dma_prog++ = htole32(target_buffer);
+		*dma_prog++ = htole32(t1 + (cols*rows) + i*cols/2 * interlace);
+		*dma_prog++ = htole32(t1 + (cols*rows) + (cols*rows/4) + i*cols/2 * interlace);
 		target_buffer += interlace*cols;
-		*dma_prog++ = inst1;
-		*dma_prog++ = cols/2 | (cols/2 << 16);
-		*dma_prog++ = target_buffer;
+		*dma_prog++ = htole32(inst1);
+		*dma_prog++ = htole32(cols/2 | (cols/2 << 16));
+		*dma_prog++ = htole32(target_buffer);
 		target_buffer += interlace*cols;
  
 	}
  
 	switch (i_flag) {
 	case 1:
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE;  /*sync vre*/
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRE);  /*sync vre*/
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
 
 	case 2:
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO;  /*sync vro*/
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_VRO);  /*sync vro*/
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		*dma_prog++ = OP_JUMP;
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 		return;
  
 	case 3:
-		*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO;
-		*dma_prog++ = 0;  /* NULL WORD */
-		*dma_prog++ = OP_JUMP ;
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRO);
+		*dma_prog++ = htole32(0);  /* NULL WORD */
+		*dma_prog++ = htole32(OP_JUMP);
+		*dma_prog++ = htole32((u_long) vtophys(bktr->odd_dma_prog));
 		break;
 	}
 
@@ -3363,19 +3364,19 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 
 		target_buffer  = (u_long) buffer + cols;
 		t1 = buffer + cols/2;
-		*dma_prog++ = OP_SYNC | BKTR_RESYNC | BKTR_FM3; 
-		*dma_prog++ = 0;  /* NULL WORD */
+		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3); 
+		*dma_prog++ = htole32(0);  /* NULL WORD */
 
-		for (i = 0; i < ((rows/interlace )/2 ) ; i++) {
-		    *dma_prog++ = inst;
-		    *dma_prog++ = cols/2 | (cols/2 << 16);
-		    *dma_prog++ = target_buffer;
-		    *dma_prog++ = t1 + (cols*rows) + i*cols/2 * interlace;
-		    *dma_prog++ = t1 + (cols*rows) + (cols*rows/4) + i*cols/2 * interlace;
+		for (i = 0; i < ((rows/interlace )/2 ); i++) {
+		    *dma_prog++ = htole32(inst);
+		    *dma_prog++ = htole32(cols/2 | (cols/2 << 16));
+		    *dma_prog++ = htole32(target_buffer);
+		    *dma_prog++ = htole32(t1 + (cols*rows) + i*cols/2 * interlace);
+		    *dma_prog++ = htole32(t1 + (cols*rows) + (cols*rows/4) + i*cols/2 * interlace);
 		    target_buffer += interlace*cols;
-		    *dma_prog++ = inst1;
-		    *dma_prog++ = cols/2 | (cols/2 << 16);
-		    *dma_prog++ = target_buffer;
+		    *dma_prog++ = htole32(inst1);
+		    *dma_prog++ = htole32(cols/2 | (cols/2 << 16));
+		    *dma_prog++ = htole32(target_buffer);
 		    target_buffer += interlace*cols;
 
 		}	
@@ -3383,11 +3384,11 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	
 	}
     
-	*dma_prog++ = OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE;
-	*dma_prog++ = 0;  /* NULL WORD */
-	*dma_prog++ = OP_JUMP;
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
-	*dma_prog++ = 0;  /* NULL WORD */
+	*dma_prog++ = htole32(OP_SYNC | BKTR_GEN_IRQ | BKTR_RESYNC | BKTR_VRE);
+	*dma_prog++ = htole32(0);  /* NULL WORD */
+	*dma_prog++ = htole32(OP_JUMP);
+	*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
+	*dma_prog++ = htole32(0);  /* NULL WORD */
 }
   
 
@@ -3720,19 +3721,26 @@ static u_int pixfmt_swap_flags( int pixfmt )
 {
 	const struct meteor_pixfmt *pf = &pixfmt_table[ pixfmt ].public;
 	u_int		      swapf = 0;
-
+    	int swap_bytes, swap_shorts;
+   
+#if BYTE_ORDER == LITTLE_ENDIAN
+    	swap_bytes = pf->swap_bytes;
+    	swap_shorts = pf->swap_shorts;
+#else
+    	swap_bytes = !pf->swap_bytes;
+    	swap_shorts = !pf->swap_shorts;
+#endif
 	switch ( pf->Bpp ) {
-	case 2 : swapf = ( pf->swap_bytes ? 0 : BSWAP );
+	case 2 : swapf = ( swap_bytes ? 0 : BSWAP );
 		 break;
 
 	case 3 : /* no swaps supported for 3bpp - makes no sense w/ bt848 */
 		 break;
 		 
-	case 4 : if ( pf->swap_bytes )
-			swapf = pf->swap_shorts ? 0 : WSWAP;
-		 else
-			swapf = pf->swap_shorts ? BSWAP : (BSWAP | WSWAP);
-		 break;
+	case 4 :
+    	    	swapf  = swap_bytes  ? 0 : BSWAP;
+    	    	swapf |= swap_shorts ? 0 : WSWAP;
+    	    	break;
 	}
 	return swapf;
 }
@@ -3852,7 +3860,7 @@ i2cRead( bktr_ptr_t bktr, int addr )
 void
 msp_dpl_write(bktr_ptr_t bktr, int i2c_addr,  unsigned char dev, unsigned int addr, unsigned int data)
 {
-	unsigned char addr_l, addr_h, data_h, data_l ;
+	unsigned char addr_l, addr_h, data_h, data_l;
 
 	addr_h = (addr >>8) & 0xff;
 	addr_l = addr & 0xff;
@@ -4115,7 +4123,7 @@ static int i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last ) {
 void msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev, unsigned int addr,
 		    unsigned int data){
 	unsigned int msp_w_addr = i2c_addr;
-	unsigned char addr_l, addr_h, data_h, data_l ;
+	unsigned char addr_l, addr_h, data_h, data_l;
 	addr_h = (addr >>8) & 0xff;
 	addr_l = addr & 0xff;
 	data_h = (data >>8) & 0xff;
@@ -4134,7 +4142,7 @@ void msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev, unsigned i
 /* Read from the MSP or DPL registers */
 unsigned int msp_dpl_read(bktr_ptr_t bktr, int i2c_addr, unsigned char dev, unsigned int addr){
 	unsigned int data;
-	unsigned char addr_l, addr_h, data_1, data_2, dev_r ;
+	unsigned char addr_l, addr_h, data_1, data_2, dev_r;
 	addr_h = (addr >>8) & 0xff;
 	addr_l = addr & 0xff;
 	dev_r = dev+1;

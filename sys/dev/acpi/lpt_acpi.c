@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.1.2.2 2002/12/29 20:45:31 thorpej Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.1.2.3 2003/01/15 18:44:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.1.2.2 2002/12/29 20:45:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.1.2.3 2003/01/15 18:44:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,7 @@ lpt_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq, 0,
-				       IPL_TTY, lptintr, sc);
+	sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
+	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
+	    IPL_TTY, lptintr, sc);
 }

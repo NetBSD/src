@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.1.6.3 2003/01/07 21:34:06 thorpej Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.1.6.4 2003/01/15 18:44:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,13 +37,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct btframe_buffer;
+
+struct btframe_channel {
+	/*
+	 * Allocate and transmit a buffer for transmission to
+	 * Bluetooth device
+	 */
+	u_int8_t* (*bt_alloc)(void*, size_t, struct btframe_buffer**);
+	int (*bt_send)(void*, struct btframe_buffer*, size_t);
+};
+
 struct btframe_methods {
 	int (*bt_open)(void *h, int flag, int mode, struct proc *p);
 	int (*bt_close)(void *h, int flag, int mode, struct proc *p);
 
-	int (*bt_control)(void *h, u_int8_t *data, size_t len);
-	int (*bt_sendacldata)(void *h, u_int8_t *data, size_t len);
-	int (*bt_sendscodata)(void *h, u_int8_t *data, size_t len);
+	/* HCI channels */
+	struct btframe_channel bt_control;
+	struct btframe_channel bt_acldata;
+	struct btframe_channel bt_scodata;
 
 	int (*bt_splraise)(void);
 

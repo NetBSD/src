@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.9.2.3 2002/04/01 07:46:47 nathanw Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.9.2.4 2003/01/15 18:44:21 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.9.2.3 2002/04/01 07:46:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.9.2.4 2003/01/15 18:44:21 thorpej Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -616,7 +616,9 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		bktr->card.eepromAddr = eeprom_i2c_address;
 		bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
 
-	        readEEProm(bktr, 0, 256, (u_char *) &eeprom );
+	        if(readEEProm(bktr, 0, 256, (u_char *) &eeprom))
+		    printf("%s: error reading EEPROM\n", bktr_name(bktr));
+
                 byte_252 = (unsigned int)eeprom[252];
                 byte_253 = (unsigned int)eeprom[253];
                 byte_254 = (unsigned int)eeprom[254];
@@ -679,6 +681,13 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
+
+    	    	if (subsystem_vendor_id == PCI_VENDOR_TERRATEC) {
+    	    	    bktr->card = cards[ (card = CARD_TERRATVPLUS) ];
+    	    	    bktr->card.eepromAddr = eeprom_i2c_address;
+    	    	    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+    	    	    goto checkTuner;
+    	    	}
 
                 /* Vendor is unknown. We will use the standard probe code */
 		/* which may not give best results */
@@ -976,6 +985,7 @@ checkTuner:
 
                   case 0x12:
 	          case 0x17:
+	          case 0x21: /* Hauppauge WinTV-GO-FM (model 00191) */
 		    select_tuner( bktr, PHILIPS_FR1236_NTSC );
 		    goto checkDBX;
 

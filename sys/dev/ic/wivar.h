@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.2.17 2003/01/03 17:07:44 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.2.18 2003/01/15 18:44:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -95,6 +95,8 @@ struct wi_softc	{
 	int 			sc_naps;
 
 	int			sc_false_syns;
+
+	u_int16_t		sc_txbuf[IEEE80211_MAX_LEN/2];
 };
 
 #define	sc_if			sc_ic.ic_if

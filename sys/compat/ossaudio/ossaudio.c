@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33.2.5 2002/05/29 21:32:55 nathanw Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.2.6 2003/01/15 18:42:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.33.2.5 2002/05/29 21:32:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.33.2.6 2003/01/15 18:42:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -508,10 +508,13 @@ oss_ioctl_audio(p, uap, retval)
 		if (error)
 			goto out;
 		break;
+	case OSS_SNDCTL_DSP_SETDUPLEX:
+		idat = 1;
+		error = ioctlf(fp, AUDIO_SETFD, (caddr_t)&idat, p);
+		goto out;
 	case OSS_SNDCTL_DSP_MAPINBUF:
 	case OSS_SNDCTL_DSP_MAPOUTBUF:
 	case OSS_SNDCTL_DSP_SETSYNCRO:
-	case OSS_SNDCTL_DSP_SETDUPLEX:
 	case OSS_SNDCTL_DSP_PROFILE:
 		error = EINVAL;
 		goto out;

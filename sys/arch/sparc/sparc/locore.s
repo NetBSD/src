@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.23 2003/01/07 21:21:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.24 2003/01/15 18:40:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -163,8 +163,12 @@ _EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
  * virtual address for the same structure.  It must be stored in p->p_cpu
  * upon context switch.
  */
-_CISELFP = CPUINFO_VA + CPUINFO_SELF
-_CIFLAGS = CPUINFO_VA + CPUINFO_FLAGS
+_CISELFP	= CPUINFO_VA + CPUINFO_SELF
+_CIFLAGS	= CPUINFO_VA + CPUINFO_FLAGS
+
+/* Per-cpu AST and reschedule requests */
+_WANT_AST	= CPUINFO_VA + CPUINFO_WANT_AST
+_WANT_RESCHED	= CPUINFO_VA + CPUINFO_WANT_RESCHED
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -2447,7 +2451,7 @@ softintr_sun44c:
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_SOFT)	! cnt.v_intr++; (clobbers %o0,%o1)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -3298,8 +3302,8 @@ rft_kernel:
  * If returning to a valid window, just set psr and return.
  */
 rft_user:
-!	sethi	%hi(_C_LABEL(want_ast)), %l7	! (done below)
-	ld	[%l7 + %lo(_C_LABEL(want_ast))], %l7
+!	sethi	%hi(_WANT_AST)), %l7	! (done below)
+	ld	[%l7 + %lo(_WANT_AST)], %l7
 	tst	%l7			! want AST trap?
 	bne,a	softtrap		! yes, re-enter trap with type T_AST
 	 mov	T_AST, %o0
@@ -3410,7 +3414,7 @@ rft_user_or_recover_pcb_windows:
 	ld	[%l6 + PCB_NSAVED], %l7
 	tst	%l7
 	bz,a	rft_user
-	 sethi	%hi(_C_LABEL(want_ast)), %l7	! first instr of rft_user
+	 sethi	%hi(_WANT_AST), %l7	! first instr of rft_user
 
 	bg,a	softtrap		! if (pcb_nsaved > 0)
 	 mov	T_WINOF, %o0		!	trap(T_WINOF);
@@ -4245,20 +4249,19 @@ _C_LABEL(cpu_hatch):
 
 	/* Set up a stack */
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
-	sethi	%hi(_C_LABEL(cpu_hatchstack)), %o0
-	ld	[%o0+%lo(_C_LABEL(cpu_hatchstack))], %o0
+	sethi	%hi(IDLE_UP), %o0
+	ld	[%o0 + %lo(IDLE_UP)], %o0
 	set	USPACE - CCFSZ - 80, %sp
 	add	%sp, %o0, %sp
 
 	/* Enable traps */
 	rd	%psr, %l0
 	wr	%l0, PSR_ET, %psr
-	nop; nop; nop
+	nop; nop
 
 	/* Call C code */
-	sethi	%hi(_C_LABEL(cpu_hatch_sc)), %o0
 	call	_C_LABEL(cpu_setup)
-	 ld	[%o0+%lo(_C_LABEL(cpu_hatch_sc))], %o0
+	 nop				! 3rd from above
 
 	/* Enable interrupts */
 	rd	%psr, %l0
@@ -4532,8 +4535,6 @@ ENTRY(write_user_windows)
 	 nop
 
 
-	.comm	_C_LABEL(want_resched),4
-	.comm	_C_LABEL(want_ast),4
 /*
  * Masterpaddr is the p->p_addr of the last process on the processor.
  * XXX masterpaddr is almost the same as cpcb
@@ -4619,7 +4620,9 @@ ENTRY(switchexit)
 
 	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
+#if !defined(MULTIPROCESSOR)
 	clr	%l4			! lastproc = NULL;
+#endif
 	sethi	%hi(cpcb), %l6
 	sethi	%hi(curlwp), %l7
 	b	idle_enter
@@ -4635,9 +4638,15 @@ idle:
 	! unlock scheduler lock
 	call	_C_LABEL(sched_unlock_idle)
 	 nop
+	! flush this process's context & tlb
+	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
+	 mov	%l4, %o0
 #endif
 
 idle_enter:
+#if defined(MULTIPROCESSOR)
+	clr	%l4			! lastproc = NULL;
+#endif
 	wr	%l1, 0, %psr		! (void) spl0();
 1:					! spin reading whichqs until nonzero
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
@@ -4872,12 +4881,12 @@ Lsw_load:
 	st	%o0, [%l3 + L_CPU]
 #endif
 
-	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
+	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Done with the run queues; release the scheduler lock */
 	call	_C_LABEL(sched_unlock_idle)
 #endif
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]! delay slot
+	st	%g0, [%o0 + %lo(_WANT_RESCHED)]! delay slot
 	ld	[%l3 + L_ADDR], %g5		! newpcb = p->p_addr;
 	st	%g0, [%l3 + 4]			! p->p_back = NULL;
 	st	%l3, [%l7 + %lo(curlwp)]	! curlwp = p;
@@ -4940,6 +4949,11 @@ Lsw_load:
 	/* finally, enable traps and continue at splsched() */
 	wr	%g2, IPL_SCHED << 8 , %psr	! psr = newpsr;
 
+#if defined(MULTIPROCESSOR)
+	call	_C_LABEL(pmap_deactivate)	! pmap_deactive(lastproc);
+	 mov	%g4, %o0
+#endif
+
 	/*
 	 * Now running p.  Make sure it has a context so that it
 	 * can talk about user space stuff.  (Its pcb_uw is currently
@@ -4958,6 +4972,15 @@ Lsw_load:
 	ld	[%g3 + L_PROC], %o2	! p = l->l_proc;
 	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
+#if defined(MULTIPROCESSOR)
+	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
+	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
+	mov	1, %o2
+	ld	[%o3 + PMAP_CPUSET], %o0
+	sll	%o2, %o1, %o2
+	or	%o0, %o2, %o0		! pm->pm_cpuset |= cpu_number();
+	st	%o0, [%o3 + PMAP_CPUSET]
+#endif
 	ld	[%o3 + PMAP_CTX], %o0	! if (pm->pm_ctx != NULL)
 	tst	%o0
 	bnz,a	Lsw_havectx		!	goto havecontext;
@@ -5429,8 +5452,8 @@ cpu_switch0:
 	st	%o0, [%g3 + L_CPU]
 #endif
 
-	sethi	%hi(_C_LABEL(want_resched)), %o0	! want_resched = 0;
-	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]
+	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
+	st	%g0, [%o0 + %lo(_WANT_RESCHED)]
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Done with the run queues; release the scheduler lock */
 	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)

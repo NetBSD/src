@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.1.2.5 2002/12/29 20:49:19 thorpej Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.1.2.6 2003/01/15 18:44:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.1.2.5 2002/12/29 20:49:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.1.2.6 2003/01/15 18:44:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1309,7 +1309,7 @@ sbp2_alloc_addr(struct sbp2 *sbp2)
 	
 #ifdef DIAGNOSTIC
 	if (sbp2->map->addrmap[byte] & bit)
-		panic("Already allocated address 0x%016qx\n", addr);
+		panic("Already allocated address 0x%016" PRIx64, addr);
 #endif
 	sbp2->map->addrmap[byte] |= bit;
 
@@ -1366,8 +1366,8 @@ sbp2_free_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map)
 			bit = 0x1 << (bitpos + startbit);
 #ifdef DIAGNOSTIC
 			if (!(sbp2->map->datamap[startbyte] & bit))
-				panic("Freeing addr not allocated: 0x%016qx",
-				    map->fwaddr);
+				panic("Freeing addr not allocated: 0x%016"
+				    PRIx64, map->fwaddr);
 #endif
 			bit = ~bit;
 			size--;
@@ -1381,8 +1381,8 @@ sbp2_free_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map)
 		for (byte = startbyte; byte < count; byte++) {
 #ifdef DIAGNOSTIC
 			if (!(sbp2->map->datamap[byte]))
-				panic("Freeing addr not allocated: 0x%016qx", 
-				    map->fwaddr);
+				panic("Freeing addr not allocated: 0x%016"
+				    PRIx64, map->fwaddr);
 #endif
 			size -= CHAR_BIT;
 			sbp2->map->datamap[byte] = 0;
@@ -1398,7 +1398,7 @@ sbp2_free_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map)
 #ifdef DIAGNOSTIC
 				if (!(sbp2->map->datamap[byte] & bit))
 					panic("Freeing addr not allocated: "
-					    "0x%016qx", map->fwaddr);
+					    "0x%016" PRIx64, map->fwaddr);
 #endif
 				bit = ~bit;
 				sbp2->map->datamap[byte] &= bit;
@@ -1428,7 +1428,7 @@ sbp2_free_addr(struct sbp2 *sbp2, u_int64_t addr)
 	simple_lock(&sbp2->map->maplock);
 #ifdef DIAGNOSTIC
 	if (!(sbp2->map->addrmap[byte] & bit))
-		panic("Freeing addr not allocated: 0x%016qx\n", addr);
+		panic("Freeing addr not allocated: 0x%016" PRIx64, addr);
 #endif
 	bit = ~bit;
 	sbp2->map->addrmap[byte] &= bit;

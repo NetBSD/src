@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.44.2.10 2002/12/29 20:49:21 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.44.2.11 2003/01/15 18:44:18 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.10 2002/12/29 20:49:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.11 2003/01/15 18:44:18 thorpej Exp $");
 
 #include "midi.h"
 
@@ -99,6 +99,7 @@ int	eapdebug = 0;
 
 int	eap_match(struct device *, struct cfdata *, void *);
 void	eap_attach(struct device *, struct device *, void *);
+int	eap_detach(struct device *, int);
 int	eap_intr(void *);
 
 struct eap_dma {
@@ -127,6 +128,7 @@ struct eap_instance {
 
 	void	(*ei_pintr)(void *);	/* dma completion intr handler */
 	void	*ei_parg;		/* arg for ei_intr() */
+	struct device *ei_audiodev;		/* audio device, for detach */
 #ifdef DIAGNOSTIC
 	char	ei_prun;
 #endif
@@ -137,6 +139,7 @@ struct eap_softc {
 	void *sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_size_t iosz;
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 
 	struct eap_dma *sc_dmas;
@@ -151,6 +154,7 @@ struct eap_softc {
 	void	(*sc_iintr)(void *, int); /* midi input ready handler */
 	void	(*sc_ointr)(void *);	/* midi output ready handler */
 	void	*sc_arg;
+	struct device *sc_mididev;
 #endif
 
 	u_short	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
@@ -163,6 +167,8 @@ struct eap_softc {
 	struct ac97_host_if host_if;	
 
 	struct eap_instance sc_ei[2];
+
+	pci_chipset_tag_t sc_pc;	/* For detach */
 };
 
 int	eap_allocmem(struct eap_softc *, size_t, size_t, struct eap_dma *);
@@ -176,7 +182,7 @@ int	eap_freemem(struct eap_softc *, struct eap_dma *);
 #define EREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 
 CFATTACH_DECL(eap, sizeof(struct eap_softc),
-    eap_match, eap_attach, NULL, NULL);
+    eap_match, eap_attach, eap_detach, NULL);
 
 int	eap_open(void *, int);
 void	eap_close(void *);
@@ -580,6 +586,9 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	int revision, ct5880;
 	const char *revstr = "";
 
+	/* Stash this away for detach */
+	sc->sc_pc = pc;
+
 	/* Flag if we're "creative" */
 	sc->sc_1371 = !(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENSONIQ &&
 			PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_AUDIOPCI);
@@ -615,7 +624,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-	      &sc->iot, &sc->ioh, NULL, NULL)) {
+	      &sc->iot, &sc->ioh, NULL, &sc->iosz)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -623,8 +632,8 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
@@ -769,16 +778,40 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 	}
 
-	audio_attach_mi(eap_hw_if, &sc->sc_ei[EAP_I1], &sc->sc_dev);
+	sc->sc_ei[EAP_I1].ei_audiodev =
+	    audio_attach_mi(eap_hw_if, &sc->sc_ei[EAP_I1], &sc->sc_dev);
 
 #ifdef EAP_USE_BOTH_DACS
 	printf("%s: attaching secondary DAC\n", sc->sc_dev.dv_xname);
-	audio_attach_mi(eap_hw_if, &sc->sc_ei[EAP_I2], &sc->sc_dev);
+	sc->sc_ei[EAP_I2].ei_audiodev =
+	    audio_attach_mi(eap_hw_if, &sc->sc_ei[EAP_I2], &sc->sc_dev);
 #endif
 
 #if NMIDI > 0
-	midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
+	sc->sc_mididev = midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
 #endif
+}
+
+int
+eap_detach(struct device *self, int flags)
+{
+	struct eap_softc *sc = (struct eap_softc *) self;
+
+#if NMIDI > 0
+	if (sc->sc_mididev != NULL)
+		config_detach(sc->sc_mididev, 0);
+#endif
+#ifdef EAP_USE_BOTH_DACS
+	if (sc->sc_ei[EAP_I2].ei_audiodev != NULL)
+		config_detach(sc->sc_ei[EAP_I2].ei_audiodev, 0);
+#endif
+	if (sc->sc_ei[EAP_I1].ei_audiodev != NULL)
+		config_detach(sc->sc_ei[EAP_I1].ei_audiodev, 0);
+
+	bus_space_unmap(sc->iot, sc->ioh, sc->iosz);
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.1.2.2 2002/12/29 19:55:29 thorpej Exp $	*/
+/*	$NetBSD: advnops.c,v 1.1.2.3 2003/01/15 18:49:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.1.2.2 2002/12/29 19:55:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.1.2.3 2003/01/15 18:49:41 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -312,8 +312,7 @@ adosfs_read(v)
 		 * but not much as ados makes little attempt to 
 		 * make things contigous
 		 */
-		error = bread(sp->a_vp, lbn * amp->bsize / DEV_BSIZE,
-			      amp->bsize, NOCRED, &bp);
+		error = bread(sp->a_vp, lbn, amp->bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
 			goto reterr;
@@ -482,7 +481,7 @@ adosfs_bmap(v)
 	advopprint(sp);
 #endif
 	ap = VTOA(sp->a_vp);
-	bn = sp->a_bn / (ap->amp->bsize / DEV_BSIZE);
+	bn = sp->a_bn;
 	bnp = sp->a_bnp;
 	if (sp->a_runp) {
 		*sp->a_runp = 0;
@@ -573,7 +572,7 @@ adosfs_bmap(v)
 	} else {
 #ifdef DIAGNOSTIC
 		printf("flblk offset %ld too large in lblk %ld blk %d\n", 
-		    flblkoff, bn / (ap->amp->bsize / DEV_BSIZE), flbp->b_blkno);
+		    flblkoff, (long)bn, flbp->b_blkno);
 #endif
 		error = EINVAL;
 	}
@@ -582,7 +581,7 @@ reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	if (error == 0 && bnp)
 		printf(" %d => %d", bn, *bnp);
-	printf(" %d)", error);
+	printf(" %d)\n", error);
 #endif
 	return(error);
 }
