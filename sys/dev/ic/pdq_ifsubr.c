@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.4 1997/02/27 19:17:26 is Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.5 1997/03/09 21:44:14 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -73,7 +73,11 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#if defined(__NetBSD__)
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #endif
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
