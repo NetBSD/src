@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.44 2001/04/05 09:48:43 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.45 2001/04/06 02:04:13 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1949,6 +1949,7 @@ sys/dev/pci/if_ex_pci.c				1.14 via patch
 sys/dev/pci/pcidevs				1.260 via patch
 sys/dev/pci/pcidevs.h				regenerate
 sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/cardbus/if_ex_cardbus.c			1.18 via patch
 
   Add support for the 3Com 3c555, 3c556 and 3c556B MiniPCI Ethernet
   cards.
@@ -2478,9 +2479,1164 @@ usr.sbin/dhcp/server/stables.c			1.1.1.6
 
 dist/ntp/ntpd/ntp_control.c			1.2
 
-  Fix a DoS attack (and possibly, but not confirmed, a root exploit) in
-  ntpd.
-  Fix from Poul-Henning Kamp and Dima Ruban from the FreeBSD tree,
-  with changes from Jason Thorpe to not overrun the end of the static
-  buffer and with syslog()ing the bad packets disabled so as not to
-  DoS syslog.
+  Fix a DoS attack (and possibly, but not confirmed, a root exploit)
+  in ntpd.
+
+sbin/route/route.c				1.40
+
+  Remove use of uninitialized route (struct ortentry).
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.105
+
+  In order to improve FFS layout, use a value of "4 * number_of_columns"
+  instead of "1" for the number of tracks/cylinder in the disklabel.
+
+sys/arch/next68k/dev/bus_dma.c			1.17,1.19
+
+  Purge/flush by pages when possible instead of just cache lines.
+  Purge cache on BUS_DMASYNC_PREREAD instead of BUS_DMASYNC_POSTREAD.
+
+sys/arch/next68k/dev/dev/mb8795.c		patch
+
+  Truncate oversize packets caused by ethernet dma overruns.
+
+sbin/route/route.c				1.41
+sbin/route/show.c				1.16
+
+  Support RTF_BLACKHOLE routes.
+
+sbin/route/route.c				1.42
+sbin/route/show.c				1.17
+usr.bin/netstat/netstat.1			1.28
+usr.bin/netstat/route.c				1.52
+share/man/man4/route.4				1.9
+sys/net/route.c 				1.40 via patch
+sys/net/route.h 				1.25 via patch
+
+  Mark cloned routes with RTF_CLONED.  Present it in ``netstat -r''
+  output by ``c''.
+
+  Let static routes overwrite cloned routes, as cloned routes can
+  come back again if necessary.  Should fix PR#11916 and maybe some
+  other PRs with ARP behavior.
+
+sys/net/route.c 				1.41 via patch
+sys/net/route.h					1.26 via patch
+
+  Cleanup cloned route when parent route (RTF_CLONING) goes away.
+  Adds rt_parent to link parent from child (like NRL did, ours do
+  refcnt rt_refcnt properly).
+
+sys/netinet/ip_ftp_pxy.c			patch
+
+  Fix machine hangs with FTP from behind a NetBSD box configured
+  to do NAT and FTP proxying.  Fixes PR#12443.
+
+crypto/dist/heimdal/ChangeLog			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/ChangeLog.1998		1.1 (new)
+crypto/dist/heimdal/ChangeLog.1999		1.1 (new)
+crypto/dist/heimdal/ChangeLog.2000		1.1 (new)
+crypto/dist/heimdal/Makefile.am			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/Makefile.am.common		1.1.1.2
+crypto/dist/heimdal/Makefile.in			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/NEWS			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/README			1.1 (new)
+crypto/dist/heimdal/TODO			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/acconfig.h			1.1.1.2
+crypto/dist/heimdal/acinclude.m4		1.1.1.2
+crypto/dist/heimdal/aclocal.m4			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/admin/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/admin/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/admin/add.c			1.1.1.2
+crypto/dist/heimdal/admin/change.c		1.1.1.2
+crypto/dist/heimdal/admin/copy.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/admin/get.c			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/admin/ktutil.8		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/admin/ktutil.c		1.2-1.3
+crypto/dist/heimdal/admin/ktutil_locl.h		1.1.1.2
+crypto/dist/heimdal/admin/list.c		1.1.1.2
+crypto/dist/heimdal/admin/purge.c		1.1.1.2
+crypto/dist/heimdal/admin/remove.c		1.1.1.2
+crypto/dist/heimdal/admin/srvconvert.c		deleted
+crypto/dist/heimdal/admin/srvcreate.c		deleted
+crypto/dist/heimdal/appl/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/afsutil/ChangeLog	1.1.1.2
+crypto/dist/heimdal/appl/afsutil/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/afsutil/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/afsutil/afslog.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/afsutil/pagsh.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/dceutils/ChangeLog	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/appl/dceutils/Makefile.am	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/appl/dceutils/Makefile.in	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/appl/dceutils/README.dcedfs	1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/README.original 1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/compile	1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/dfspag.exp	1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/dpagaix.c	1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/k5dce.h	1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/k5dcecon.c	1.1.1.1 (new)
+crypto/dist/heimdal/appl/dceutils/testpag.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/appl/ftp/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/Makefile.am	1.1.1.2
+crypto/dist/heimdal/appl/ftp/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/common/Makefile.am	1.1.1.2
+crypto/dist/heimdal/appl/ftp/common/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/common/buffer.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/common/common.h	1.1.1.2
+crypto/dist/heimdal/appl/ftp/common/sockbuf.c	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/cmds.c		1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/domacro.c	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/extern.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/ftp.1		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/ftp.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/ftp_locl.h	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/ftp_var.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/globals.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/gssapi.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/kauth.c	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/krb4.c		1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/main.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/ruserpass.c	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftp/security.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftp/security.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/extern.h	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftpd/ftpcmd.y	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/ftpd.8	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/ftpd.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/ftpd_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/ftpusers.5	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/gss_userok.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/kauth.c	1.1.1.2
+crypto/dist/heimdal/appl/ftp/ftpd/logwtmp.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/ls.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/ftp/ftpd/popen.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kf/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kf/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kf/kf.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kf/kf_locl.h		1.1.1.2
+crypto/dist/heimdal/appl/kf/kfd.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/common.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/context.c		1.1.1.2
+crypto/dist/heimdal/appl/kx/krb4.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/krb5.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/kx.1		1.1.1.2
+crypto/dist/heimdal/appl/kx/kx.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/kx.h		1.1.1.2
+crypto/dist/heimdal/appl/kx/kxd.8		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/kxd.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/rxtelnet.1		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/kx/rxtelnet.in		1.1.1.2
+crypto/dist/heimdal/appl/kx/rxterm.1		1.1.1.2
+crypto/dist/heimdal/appl/kx/rxterm.in		1.1.1.2
+crypto/dist/heimdal/appl/kx/tenletxr.1		1.1.1.2
+crypto/dist/heimdal/appl/kx/tenletxr.in		1.1.1.2
+crypto/dist/heimdal/appl/kx/writeauth.c		1.1.1.2
+crypto/dist/heimdal/appl/login/ChangeLog	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/login/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/login/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/login/conf.c		1.1.1.2
+crypto/dist/heimdal/appl/login/env.c		1.1 (new)
+crypto/dist/heimdal/appl/login/login.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/login/login_access.c	1.1.1.2
+crypto/dist/heimdal/appl/login/login_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/login/login_protos.h	1.1.1.2
+crypto/dist/heimdal/appl/login/osfc2.c		1.1.1.2
+crypto/dist/heimdal/appl/login/read_string.c	1.1.1.2
+crypto/dist/heimdal/appl/login/shadow.c		1.1.1.2
+crypto/dist/heimdal/appl/login/stty_default.c	1.1.1.2
+crypto/dist/heimdal/appl/login/tty.c		1.1.1.2
+crypto/dist/heimdal/appl/login/utmp_login.c	1.1.1.2
+crypto/dist/heimdal/appl/login/utmpx_login.c	1.1.1.2
+crypto/dist/heimdal/appl/otp/ChangeLog		1.1.1.2
+crypto/dist/heimdal/appl/otp/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/otp/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/otp/otp.1		1.1 (new)
+crypto/dist/heimdal/appl/otp/otp.c		1.1.1.2
+crypto/dist/heimdal/appl/otp/otp_locl.h		1.1.1.2
+crypto/dist/heimdal/appl/otp/otpprint.1		1.1 (new)
+crypto/dist/heimdal/appl/otp/otpprint.c		1.1.1.2
+crypto/dist/heimdal/appl/popper/ChangeLog	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/popper/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/popper/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/popper/maildir.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_auth.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_debug.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/popper/pop_dele.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_dropcopy.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_dropinfo.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_get_command.c 1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_init.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/popper/pop_last.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_list.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_log.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_msg.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_parse.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_pass.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_quit.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_rset.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_send.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_stat.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_uidl.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_updt.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_user.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/pop_xover.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/popper.c	1.1.1.2
+crypto/dist/heimdal/appl/popper/popper.h	1.1.1.2
+crypto/dist/heimdal/appl/popper/version.h	1.1.1.2
+crypto/dist/heimdal/appl/push/ChangeLog		1.1.1.2
+crypto/dist/heimdal/appl/push/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/push/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/push/pfrom.1		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/push/pfrom.in		1.1.1.2
+crypto/dist/heimdal/appl/push/push.8		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/push/push.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/push/push_locl.h	1.1.1.2
+crypto/dist/heimdal/appl/rcp/ChangeLog		1.1 (new)
+crypto/dist/heimdal/appl/rcp/Makefile.am	1.1 (new)
+crypto/dist/heimdal/appl/rcp/Makefile.in	1.1 (new)
+crypto/dist/heimdal/appl/rcp/extern.h		1.1 (new)
+crypto/dist/heimdal/appl/rcp/rcp.c		1.1 (new)
+crypto/dist/heimdal/appl/rcp/rcp_locl.h		1.1 (new)
+crypto/dist/heimdal/appl/rcp/util.c		1.1 (new)
+crypto/dist/heimdal/appl/rsh/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/rsh/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/rsh/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/rsh/common.c		1.1.1.2
+crypto/dist/heimdal/appl/rsh/rsh.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/rsh/rsh_locl.h		1.1.1.2
+crypto/dist/heimdal/appl/rsh/rshd.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/su/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/su/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/su/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/su/su.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/ChangeLog	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/Makefile.am	1.1.1.2
+crypto/dist/heimdal/appl/telnet/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/libtelnet/Makefile.am 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/Makefile.in 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/libtelnet/auth-proto.h 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/auth.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/auth.h 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/enc-proto.h 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/enc_des.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/encrypt.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/encrypt.h 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/genget.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/kerberos.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/libtelnet/kerberos5.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/libtelnet/krb4encpwd.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/misc-proto.h 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/libtelnet/misc.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/rsaencpwd.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/libtelnet/spx.c	1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnet/Makefile.am 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/Makefile.in 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/authenc.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/commands.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/externs.h 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/main.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/network.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/ring.c	1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnet/ring.h	1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnet/sys_bsd.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/telnet.1	1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnet/telnet.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnet/telnet_locl.h 1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnet/terminal.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnet/utilities.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/Makefile.am 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/Makefile.in 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/authenc.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/ext.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/global.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnetd/slc.c	1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnetd/state.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/sys_term.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/telnetd.8 1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnetd/telnetd.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/telnet/telnetd/telnetd.h 1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnetd/termstat.c 1.1.1.2
+crypto/dist/heimdal/appl/telnet/telnetd/utility.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/common.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/gss_common.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/gss_common.h	1.1.1.2
+crypto/dist/heimdal/appl/test/gssapi_client.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/gssapi_server.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/nt_gss_client.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/nt_gss_common.c	1.1.1.2
+crypto/dist/heimdal/appl/test/nt_gss_common.h	1.1.1.2
+crypto/dist/heimdal/appl/test/nt_gss_server.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/tcp_client.c	1.1.1.2
+crypto/dist/heimdal/appl/test/tcp_server.c	1.1.1.2
+crypto/dist/heimdal/appl/test/test_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/uu_client.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/test/uu_server.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/xnlock/ChangeLog	1.1.1.2
+crypto/dist/heimdal/appl/xnlock/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/xnlock/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/appl/xnlock/xnlock.1	1.1 (new)
+crypto/dist/heimdal/appl/xnlock/xnlock.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/Makefile.am.common	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/aix.m4			1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/cf/auth-modules.m4		1.1.1.2
+crypto/dist/heimdal/cf/broken-getnameinfo.m4	1.1 (new)
+crypto/dist/heimdal/cf/broken-glob.m4		1.1.1.2
+crypto/dist/heimdal/cf/broken-realloc.m4	1.1 (new)
+crypto/dist/heimdal/cf/broken-snprintf.m4	1.1.1.2
+crypto/dist/heimdal/cf/broken.m4		1.1.1.2
+crypto/dist/heimdal/cf/broken2.m4		1.1 (new)
+crypto/dist/heimdal/cf/c-attribute.m4		1.1.1.2
+crypto/dist/heimdal/cf/c-function.m4		1.1.1.2
+crypto/dist/heimdal/cf/capabilities.m4		1.1.1.2
+crypto/dist/heimdal/cf/check-declaration.m4	1.1.1.2
+crypto/dist/heimdal/cf/check-getpwnam_r-posix.m4 1.1.1.2
+crypto/dist/heimdal/cf/check-man.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/check-netinet-ip-and-tcp.m4 1.1.1.2
+crypto/dist/heimdal/cf/check-type-extra.m4	1.1.1.2
+crypto/dist/heimdal/cf/check-var.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/check-x.m4		1.1.1.2
+crypto/dist/heimdal/cf/check-xau.m4		1.1.1.2
+crypto/dist/heimdal/cf/db.m4			1.1 (new)
+crypto/dist/heimdal/cf/find-func-no-libs.m4	1.1.1.2
+crypto/dist/heimdal/cf/find-func-no-libs2.m4	1.1.1.2
+crypto/dist/heimdal/cf/find-func.m4		1.1.1.2
+crypto/dist/heimdal/cf/find-if-not-broken.m4	1.1.1.2
+crypto/dist/heimdal/cf/grok-type.m4		1.1.1.2
+crypto/dist/heimdal/cf/have-pragma-weak.m4	1.1.1.2
+crypto/dist/heimdal/cf/have-struct-field.m4	1.1.1.2
+crypto/dist/heimdal/cf/have-type.m4		1.1.1.2
+crypto/dist/heimdal/cf/have-types.m4		1.1.1.2
+crypto/dist/heimdal/cf/install-catman.sh	1.1 (new)
+crypto/dist/heimdal/cf/krb-bigendian.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/krb-find-db.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/krb-func-getcwd-broken.m4 1.1.1.2
+crypto/dist/heimdal/cf/krb-func-getlogin.m4	1.1.1.2
+crypto/dist/heimdal/cf/krb-ipv6.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/krb-irix.m4		1.1 (new)
+crypto/dist/heimdal/cf/krb-prog-ln-s.m4		1.1.1.2
+crypto/dist/heimdal/cf/krb-prog-ranlib.m4	1.1.1.2
+crypto/dist/heimdal/cf/krb-prog-yacc.m4		1.1.1.2
+crypto/dist/heimdal/cf/krb-readline.m4		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/cf/krb-struct-spwd.m4	1.1.1.2
+crypto/dist/heimdal/cf/krb-struct-winsize.m4	1.1.1.2
+crypto/dist/heimdal/cf/krb-sys-aix.m4		1.1.1.2
+crypto/dist/heimdal/cf/krb-sys-nextstep.m4	1.1.1.2
+crypto/dist/heimdal/cf/krb-version.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/make-proto.pl		1.1.1.2
+crypto/dist/heimdal/cf/mips-abi.m4		1.1.1.2
+crypto/dist/heimdal/cf/misc.m4			1.1.1.2
+crypto/dist/heimdal/cf/need-proto.m4		1.1.1.2
+crypto/dist/heimdal/cf/osfc2.m4			1.1.1.2
+crypto/dist/heimdal/cf/proto-compat.m4		1.1.1.2
+crypto/dist/heimdal/cf/retsigtype.m4		1.1 (new)
+crypto/dist/heimdal/cf/roken-frag.m4		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/cf/roken.m4			1.1 (new)
+crypto/dist/heimdal/cf/shared-libs.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/test-package.m4		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/cf/wflags.m4		1.1.1.2
+crypto/dist/heimdal/config.guess		1.1.1.2
+crypto/dist/heimdal/config.sub			1.1.1.2
+crypto/dist/heimdal/configure			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/configure.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/doc/Makefile.am		1.1.1.2
+crypto/dist/heimdal/doc/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/doc/ack.texi		1.1.1.2
+crypto/dist/heimdal/doc/heimdal.texi		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/doc/install.texi		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/doc/intro.texi		1.1.1.2
+crypto/dist/heimdal/doc/kerberos4.texi		1.1.1.2
+crypto/dist/heimdal/doc/migration.texi		1.1 (new)
+crypto/dist/heimdal/doc/misc.texi		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/doc/setup.texi		1.1.1.2-1.1.1.3 via patch
+crypto/dist/heimdal/doc/standardisation/draft-brezak-win2k-krb-rc4-hmac-02.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-brezak-win2k-krb-rc4-hmac-03.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-hornstein-dhc-kerbauth-02.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-ietf-cat-iakerb-04.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-ietf-cat-kerberos-pk-init-12.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-ietf-cat-kerberos-pk-tapp-03.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-ietf-cat-kerberos-revisions-06.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-raeburn-cat-gssapi-krb5-3des-00.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-raeburn-krb-gssapi-krb5-3des-01.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-smedvinsky-dhc-kerbauth-01.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-swift-win2k-krb-referrals-01.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-swift-win2k-krb-user2user-01.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-thomas-snmpv3-kerbusm-00.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-trostle-win2k-cat-kerberos-set-passwd-00.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/draft-tso-telnet-krb5-04.txt 1.1 (new)
+crypto/dist/heimdal/doc/standardisation/rc4-hmac.txt 1.1 (new)
+crypto/dist/heimdal/doc/whatis.texi		1.1.1.2
+crypto/dist/heimdal/doc/win2k.texi		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/etc/services.append		1.1.1.2
+crypto/dist/heimdal/include/Makefile.am		1.1.1.2
+crypto/dist/heimdal/include/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/include/bits.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/include/config.h.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/include/kadm5/Makefile.am	1.1.1.2
+crypto/dist/heimdal/include/kadm5/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/add-random-users.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/kadmin/ank.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/cpw.c		1.1.1.2
+crypto/dist/heimdal/kadmin/del.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/del_enctype.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/dump.c		1.1.1.2
+crypto/dist/heimdal/kadmin/ext.c		1.1.1.2
+crypto/dist/heimdal/kadmin/get.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/init.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/kadm_conn.c		1.1-1.4 (new)
+crypto/dist/heimdal/kadmin/kadmin.8		1.1-1.2 (new)
+crypto/dist/heimdal/kadmin/kadmin.c		1.2-1.3
+crypto/dist/heimdal/kadmin/kadmin_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/kadmind.8		1.1 (new)
+crypto/dist/heimdal/kadmin/kadmind.c		1.2-1.5
+crypto/dist/heimdal/kadmin/load.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/mod.c		1.1.1.2
+crypto/dist/heimdal/kadmin/random_password.c	1.1.1.2
+crypto/dist/heimdal/kadmin/rename.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/server.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/util.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kadmin/version4.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/524.c			1.3
+crypto/dist/heimdal/kdc/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/config.c		1.3-1.4 via patch
+crypto/dist/heimdal/kdc/connect.c		1.3,1.5
+crypto/dist/heimdal/kdc/headers.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/hprop-common.c		deleted
+crypto/dist/heimdal/kdc/hprop.8			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/hprop.c			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/hprop.h			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/hpropd.8		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/hpropd.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/kadb.h			1.1.1.2
+crypto/dist/heimdal/kdc/kaserver.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/kdc.8			1.4
+crypto/dist/heimdal/kdc/kdc_locl.h		1.3,1.5 via patch
+crypto/dist/heimdal/kdc/kerberos4.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/kerberos4.h		1.1.1.2
+crypto/dist/heimdal/kdc/kerberos5.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/kstash.8		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/kstash.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/log.c			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/main.c			1.3-1.4
+crypto/dist/heimdal/kdc/misc.c			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kdc/mit_dump.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/kdc/rx.h			1.1.1.2
+crypto/dist/heimdal/kdc/string2key.8		1.1.1.2
+crypto/dist/heimdal/kdc/string2key.c		1.1.1.2
+crypto/dist/heimdal/kdc/v4_dump.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/kpasswd/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kpasswd/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kpasswd/kpasswd-generator.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/kpasswd/kpasswd.1		1.1.1.2
+crypto/dist/heimdal/kpasswd/kpasswd.c		1.2-1.3
+crypto/dist/heimdal/kpasswd/kpasswd_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kpasswd/kpasswdd.8		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kpasswd/kpasswdd.c		1.3 via patch
+crypto/dist/heimdal/kuser/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/generate-requests.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/kuser/kauth_options.c	1.1.1.2
+crypto/dist/heimdal/kuser/kdecode_ticket.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/kdestroy.1		1.1.1.2
+crypto/dist/heimdal/kuser/kdestroy.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/kgetcred.1		1.1.1.2
+crypto/dist/heimdal/kuser/kgetcred.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/kinit.1		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/kinit.c		patch
+crypto/dist/heimdal/kuser/kinit_options.c	1.1.1.2
+crypto/dist/heimdal/kuser/klist.1		1.1.1.2
+crypto/dist/heimdal/kuser/klist.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/kuser/kuser_locl.h		1.1.1.2
+crypto/dist/heimdal/kuser/kverify.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/45/Makefile.am		1.1.1.2
+crypto/dist/heimdal/lib/45/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/45/get_ad_tkt.c		1.1.1.2
+crypto/dist/heimdal/lib/45/mk_req.c		1.1.1.2
+crypto/dist/heimdal/lib/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/asn1-common.h	1.1.1.2
+crypto/dist/heimdal/lib/asn1/asn1_err.et	1.1.1.2
+crypto/dist/heimdal/lib/asn1/asn1_print.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/check-der.c	1.1.1.2
+crypto/dist/heimdal/lib/asn1/der.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/der_copy.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/der_free.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/der_get.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/der_length.c	1.1.1.2
+crypto/dist/heimdal/lib/asn1/der_locl.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/der_put.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/gen.c		1.2
+crypto/dist/heimdal/lib/asn1/gen.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/gen_copy.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/gen_decode.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/gen_encode.c	1.1.1.2
+crypto/dist/heimdal/lib/asn1/gen_free.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/gen_glue.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/gen_length.c	1.1.1.2
+crypto/dist/heimdal/lib/asn1/gen_locl.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/hash.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/hash.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/k5.asn1		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/asn1/lex.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/lex.l		1.1.1.2
+crypto/dist/heimdal/lib/asn1/libasn1.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/main.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/parse.y		1.1.1.2
+crypto/dist/heimdal/lib/asn1/symbol.c		1.1.1.2
+crypto/dist/heimdal/lib/asn1/symbol.h		1.1.1.2
+crypto/dist/heimdal/lib/asn1/timegm.c		1.1.1.2
+crypto/dist/heimdal/lib/auth/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/Makefile.am	1.1.1.2
+crypto/dist/heimdal/lib/auth/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/afskauthlib/Makefile.am 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/afskauthlib/Makefile.in 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/afskauthlib/verify.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/pam/Makefile.am	1.1.1.2
+crypto/dist/heimdal/lib/auth/pam/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/pam/pam.c		1.2-1.3
+crypto/dist/heimdal/lib/auth/pam/pam.conf.add	1.1.1.2
+crypto/dist/heimdal/lib/auth/sia/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/sia/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/sia/krb4+c2_matrix.conf 1.1.1.2
+crypto/dist/heimdal/lib/auth/sia/krb4_matrix.conf 1.1.1.2
+crypto/dist/heimdal/lib/auth/sia/krb5+c2_matrix.conf 1.1.1.2
+crypto/dist/heimdal/lib/auth/sia/krb5_matrix.conf 1.1.1.2
+crypto/dist/heimdal/lib/auth/sia/posix_getpw.c	1.1.1.2
+crypto/dist/heimdal/lib/auth/sia/sia.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/auth/sia/sia_locl.h	1.1.1.2
+crypto/dist/heimdal/lib/com_err/ChangeLog	1.1.1.2
+crypto/dist/heimdal/lib/com_err/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/com_err/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/com_err/com_err.c	1.2
+crypto/dist/heimdal/lib/com_err/com_err.h	1.1.1.2
+crypto/dist/heimdal/lib/com_err/com_right.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/com_err/compile_et.c	1.1.1.2
+crypto/dist/heimdal/lib/com_err/compile_et.h	1.1.1.2
+crypto/dist/heimdal/lib/com_err/error.c		1.1.1.2
+crypto/dist/heimdal/lib/com_err/lex.h		1.1 (new)
+crypto/dist/heimdal/lib/com_err/lex.l		1.1.1.2
+crypto/dist/heimdal/lib/com_err/parse.y		1.1.1.2
+crypto/dist/heimdal/lib/com_err/roken_rename.h	1.1.1.2
+crypto/dist/heimdal/lib/des/ChangeLog		1.1.1.2
+crypto/dist/heimdal/lib/des/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/des.h		1.1.1.2
+crypto/dist/heimdal/lib/des/des_crypt.3		1.1.1.2
+crypto/dist/heimdal/lib/des/des_locl.h		1.1.1.2
+crypto/dist/heimdal/lib/des/dllmain.c		1.1.1.2
+crypto/dist/heimdal/lib/des/enc_read.c		1.1.1.2
+crypto/dist/heimdal/lib/des/enc_writ.c		1.1.1.2
+crypto/dist/heimdal/lib/des/fcrypt.c		1.1.1.2
+crypto/dist/heimdal/lib/des/hash.h		1.1.1.2
+crypto/dist/heimdal/lib/des/md4.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/md4.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/md5.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/md5.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/md5crypt_test.c	1.1.1.2
+crypto/dist/heimdal/lib/des/mdtest.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/passwd_dlg.c	1.1.1.2
+crypto/dist/heimdal/lib/des/passwd_dlg.h	1.1.1.2
+crypto/dist/heimdal/lib/des/rc4.h		1.1.1.2
+crypto/dist/heimdal/lib/des/rc4_enc.c		1.1.1.2
+crypto/dist/heimdal/lib/des/rc4_skey.c		1.1.1.2
+crypto/dist/heimdal/lib/des/rnd_keys.c		1.2
+crypto/dist/heimdal/lib/des/rpw.c		1.1.1.2
+crypto/dist/heimdal/lib/des/sha.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/sha.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/des/speed.c		1.1.1.2
+crypto/dist/heimdal/lib/des/supp.c		1.1.1.2
+crypto/dist/heimdal/lib/editline/ChangeLog	1.1.1.2
+crypto/dist/heimdal/lib/editline/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/editline/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/editline/README		1.1.1.2
+crypto/dist/heimdal/lib/editline/complete.c	1.1.1.2
+crypto/dist/heimdal/lib/editline/edit_compat.c	1.1.1.2
+crypto/dist/heimdal/lib/editline/editline.3	1.1.1.2
+crypto/dist/heimdal/lib/editline/editline.c	1.1.1.2
+crypto/dist/heimdal/lib/editline/editline.h	1.1.1.2
+crypto/dist/heimdal/lib/editline/roken_rename.h	1.1.1.2
+crypto/dist/heimdal/lib/editline/sysunix.c	1.1.1.2
+crypto/dist/heimdal/lib/editline/testit.c	1.1.1.2
+crypto/dist/heimdal/lib/editline/unix.h		1.1.1.2
+crypto/dist/heimdal/lib/gssapi/8003.c		1.2-1.3
+crypto/dist/heimdal/lib/gssapi/ChangeLog	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/accept_sec_context.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/acquire_cred.c	1.4-1.5
+crypto/dist/heimdal/lib/gssapi/add_oid_set_member.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/address_to_krb5addr.c 1.1 (new)
+crypto/dist/heimdal/lib/gssapi/canonicalize_name.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/compare_name.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/context_time.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/copy_ccache.c	1.1 (new)
+crypto/dist/heimdal/lib/gssapi/create_emtpy_oid_set.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/decapsulate.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/delete_sec_context.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/display_name.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/display_status.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/duplicate_name.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/encapsulate.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/export_name.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/export_sec_context.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/external.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/get_mic.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/gssapi.h		1.2-1.4 via patch
+crypto/dist/heimdal/lib/gssapi/gssapi_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/import_name.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/import_sec_context.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/indicate_mechs.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/init.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/gssapi/init_sec_context.c	1.3-1.4 via patch
+crypto/dist/heimdal/lib/gssapi/inquire_context.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/inquire_cred.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/release_buffer.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/release_cred.c	1.2
+crypto/dist/heimdal/lib/gssapi/release_name.c	1.1.1.2
+crypto/dist/heimdal/lib/gssapi/release_oid_set.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/test_oid_set_member.c 1.1.1.2
+crypto/dist/heimdal/lib/gssapi/unwrap.c		1.2-1.3
+crypto/dist/heimdal/lib/gssapi/v1.c		1.1.1.2
+crypto/dist/heimdal/lib/gssapi/verify_mic.c	1.2-1.3
+crypto/dist/heimdal/lib/gssapi/wrap.c		1.2-1.3
+crypto/dist/heimdal/lib/hdb/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/common.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/convert_db.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/db.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/db3.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/hdb/hdb-ldap.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/hdb-private.h	1.2
+crypto/dist/heimdal/lib/hdb/hdb-protos.h	1.2-1.3
+crypto/dist/heimdal/lib/hdb/hdb.asn1		1.1.1.2
+crypto/dist/heimdal/lib/hdb/hdb.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/hdb.h		1.1.1.2
+crypto/dist/heimdal/lib/hdb/hdb_err.et		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/hdb_locl.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/keytab.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/libasn1.h		1.1.1.2
+crypto/dist/heimdal/lib/hdb/mkey.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/hdb/ndbm.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/hdb/print.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/acl.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/admin.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/bump_pw_expire.c	1.1 (new)
+crypto/dist/heimdal/lib/kadm5/chpass_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/chpass_s.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/client_glue.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/common_glue.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/context_s.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/create_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/create_s.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/delete_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/delete_s.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/destroy_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/destroy_s.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/dump_log.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/ent_setup.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/error.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/flush.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/flush_c.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/flush_s.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/free.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/get_c.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/get_princs_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/get_princs_s.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/get_s.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/init_c.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/init_s.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/iprop.h		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/ipropd_master.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/ipropd_slave.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/kadm5-private.h	1.1 (new)
+crypto/dist/heimdal/lib/kadm5/kadm5-protos.h	1.1 (new)
+crypto/dist/heimdal/lib/kadm5/kadm5_err.et	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/kadm5_locl.h	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/keys.c		1.1 (new)
+crypto/dist/heimdal/lib/kadm5/log.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/marshall.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/modify_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/modify_s.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/password_quality.c 1.1.1.2
+crypto/dist/heimdal/lib/kadm5/private.h		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/privs_c.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/privs_s.c		1.1.1.2
+crypto/dist/heimdal/lib/kadm5/randkey_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/randkey_s.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/rename_c.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/rename_s.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/replay_log.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/sample_passwd_check.c 1.1.1.2
+crypto/dist/heimdal/lib/kadm5/send_recv.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/server_glue.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/set_keys.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kadm5/set_modifier.c	1.1.1.2
+crypto/dist/heimdal/lib/kadm5/truncate_log.c	1.1 (new)
+crypto/dist/heimdal/lib/kafs/ChangeLog		1.1.1.2
+crypto/dist/heimdal/lib/kafs/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kafs/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kafs/afskrb.c		1.1.1.2
+crypto/dist/heimdal/lib/kafs/afskrb5.c		1.1.1.2
+crypto/dist/heimdal/lib/kafs/afslib.c		1.1.1.2
+crypto/dist/heimdal/lib/kafs/afssys.c		1.1.1.2
+crypto/dist/heimdal/lib/kafs/afssysdefs.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kafs/common.c		1.1.1.2
+crypto/dist/heimdal/lib/kafs/dlfcn.c		1.1.1.2
+crypto/dist/heimdal/lib/kafs/kafs.3		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/kafs/kafs.h		1.1.1.2
+crypto/dist/heimdal/lib/kafs/kafs_locl.h	1.1.1.2
+crypto/dist/heimdal/lib/kdfs/ChangeLog		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/kdfs/Makefile.am	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/kdfs/Makefile.in	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/kdfs/k5dfspag.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/krb5/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/acl.c		1.1 (new)
+crypto/dist/heimdal/lib/krb5/add_et_list.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/addr_families.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/address.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/aname_to_localname.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/appdefault.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/krb5/asn1_glue.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/auth_context.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/build_ap_req.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/build_auth.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/cache.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/changepw.c		1.2-1.4
+crypto/dist/heimdal/lib/krb5/codec.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/config_file.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/config_file_netinfo.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/constants.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/context.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/convert_creds.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/copy_host_realm.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/crc.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/creds.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/crypto.c		1.2-1.4
+crypto/dist/heimdal/lib/krb5/data.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/dump_config.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/eai_to_heim_errno.c 1.1 (new)
+crypto/dist/heimdal/lib/krb5/expand_hostname.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/fcache.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/free.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/free_host_realm.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/generate_seq_number.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/generate_subkey.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_addrs.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/get_cred.c		1.2
+crypto/dist/heimdal/lib/krb5/get_default_principal.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_default_realm.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_for_creds.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/get_host_realm.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_in_tkt.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/get_in_tkt_pw.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_in_tkt_with_keytab.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_in_tkt_with_skey.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/get_port.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/heim_err.et	1.1.1.2
+crypto/dist/heimdal/lib/krb5/init_creds.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/init_creds_pw.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/kerberos.8		1.1-1.4 (new)
+crypto/dist/heimdal/lib/krb5/keyblock.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/keytab.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/keytab_file.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/keytab_keyfile.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/keytab_krb4.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/keytab_memory.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/krb5-private.h	1.1.1.2
+crypto/dist/heimdal/lib/krb5/krb5-protos.h	1.2-1.3
+crypto/dist/heimdal/lib/krb5/krb5.conf.5	1.2-1.5
+crypto/dist/heimdal/lib/krb5/krb5.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_425_conv_principal.3 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_appdefault.3	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/krb5/krb5_auth_context.3 1.1 (new)
+crypto/dist/heimdal/lib/krb5/krb5_build_principal.3 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_config.3	1.1 (new)
+crypto/dist/heimdal/lib/krb5/krb5_context.3	1.1 (new)
+crypto/dist/heimdal/lib/krb5/krb5_create_checksum.3 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_crypto_init.3	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_encrypt.3	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_err.et	1.1.1.2
+crypto/dist/heimdal/lib/krb5/krb5_free_principal.3 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_init_context.3 1.1 (new)
+crypto/dist/heimdal/lib/krb5/krb5_locl.h	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_openlog.3	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_parse_name.3	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_sname_to_principal.3 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_unparse_name.3 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krb5_warn.3	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/krbhst.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/kuserok.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/log.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/mcache.c		patch
+crypto/dist/heimdal/lib/krb5/misc.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/mk_error.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/mk_priv.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/mk_rep.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/mk_req.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/mk_req_ext.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/mk_safe.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/n-fold-test.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/n-fold.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/net_read.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/net_write.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/padata.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/principal.c	1.2-1.3
+crypto/dist/heimdal/lib/krb5/prog_setup.c	1.2-1.3
+crypto/dist/heimdal/lib/krb5/prompter_posix.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/rd_cred.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/rd_error.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/rd_priv.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/rd_rep.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/rd_req.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/rd_safe.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/read_message.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/recvauth.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/replay.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/send_to_kdc.c	1.2-1.3
+crypto/dist/heimdal/lib/krb5/sendauth.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/set_default_realm.c 1.1.1.2
+crypto/dist/heimdal/lib/krb5/sock_principal.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/store.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/store_emem.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/store_fd.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/store_mem.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/string-to-key-test.c 1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/test_get_addrs.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/krb5/ticket.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/time.c		1.1.1.2
+crypto/dist/heimdal/lib/krb5/transited.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/verify_init.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/verify_krb5_conf.8	1.1.1.2
+crypto/dist/heimdal/lib/krb5/verify_krb5_conf.c	1.1.1.2
+crypto/dist/heimdal/lib/krb5/verify_user.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/krb5/warn.c		1.2-1.3
+crypto/dist/heimdal/lib/krb5/write_message.c	1.1.1.2
+crypto/dist/heimdal/lib/otp/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/otp/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/otp/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/otp/otp.c		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp.h		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_challenge.c	1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_db.c		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_locl.h		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_md.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/otp/otp_md.h		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_parse.c		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_print.c		1.1.1.2
+crypto/dist/heimdal/lib/otp/otp_verify.c	1.1.1.2
+crypto/dist/heimdal/lib/otp/otptest.c		1.1.1.2
+crypto/dist/heimdal/lib/otp/roken_rename.h	1.1.1.2
+crypto/dist/heimdal/lib/roken/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/Makefile.am	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/Makefile.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/acconfig.h	1.1 (new)
+crypto/dist/heimdal/lib/roken/acinclude.m4	1.1 (new)
+crypto/dist/heimdal/lib/roken/base64.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/base64.h		1.1.1.2
+crypto/dist/heimdal/lib/roken/chown.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/concat.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/config.h.in	1.1 (new)
+crypto/dist/heimdal/lib/roken/copyhostent.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/daemon.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/emalloc.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/environment.c	1.1 (new)
+crypto/dist/heimdal/lib/roken/eread.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/erealloc.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/err.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/err.h		1.2
+crypto/dist/heimdal/lib/roken/err.hin		1.1 (new)
+crypto/dist/heimdal/lib/roken/errx.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/esetenv.c		1.1 (new)
+crypto/dist/heimdal/lib/roken/estrdup.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/ewrite.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/fchown.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/flock.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/fnmatch.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/fnmatch.h		1.1.1.2
+crypto/dist/heimdal/lib/roken/fnmatch.hin	1.1 (new)
+crypto/dist/heimdal/lib/roken/freeaddrinfo.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/freehostent.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/gai_strerror.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/get_default_username.c 1.1.1.2
+crypto/dist/heimdal/lib/roken/get_window_size.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getaddrinfo-test.c 1.1.1.2
+crypto/dist/heimdal/lib/roken/getaddrinfo.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getaddrinfo_hostspec.c	1.1.1.2 via patch
+crypto/dist/heimdal/lib/roken/getarg.3		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/getarg.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/getarg.h		1.1.1.2
+crypto/dist/heimdal/lib/roken/getcap.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/getcwd.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/getdtablesize.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getegid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/geteuid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/getgid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/getifaddrs.c	1.1 (new)
+crypto/dist/heimdal/lib/roken/getipnodebyaddr.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getipnodebyname.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getnameinfo.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getnameinfo_verified.c 1.1.1.2
+crypto/dist/heimdal/lib/roken/gettimeofday.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/getuid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/getusershell.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/glob.hin		1.1 (new)
+crypto/dist/heimdal/lib/roken/hstrerror.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/ifaddrs.hin	1.1 (new)
+crypto/dist/heimdal/lib/roken/inet_aton.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/inet_ntop.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/inet_pton.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/initgroups.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/innetgr.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/install-sh	1.1 (new)
+crypto/dist/heimdal/lib/roken/iruserok.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/issuid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/k_getpwnam.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/k_getpwuid.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/lstat.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/make-print-version.c 1.3
+crypto/dist/heimdal/lib/roken/memmove.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/mini_inetd.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/missing		1.1 (new)
+crypto/dist/heimdal/lib/roken/mkinstalldirs	1.1 (new)
+crypto/dist/heimdal/lib/roken/mkstemp.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/net_read.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/net_write.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_bytes-test.c 1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_bytes.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_bytes.h	1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_time.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_time.h	1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_units.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/parse_units.h	1.1.1.2
+crypto/dist/heimdal/lib/roken/print_version.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/putenv.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/rcmd.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/readv.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/recvmsg.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/resolve.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/resolve.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/roken-common.h	1.2-1.3
+crypto/dist/heimdal/lib/roken/roken.awk		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/roken.h.in	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/roken_gethostby.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/rtbl.c		1.1 (new)
+crypto/dist/heimdal/lib/roken/rtbl.h		1.1 (new)
+crypto/dist/heimdal/lib/roken/sendmsg.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/setegid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/setenv.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/seteuid.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/signal.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/simple_exec.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/snprintf.c	1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/socket.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/strcasecmp.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strcollect.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strdup.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/strerror.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strftime.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strlcat.c		1.2
+crypto/dist/heimdal/lib/roken/strlcpy.c		1.2
+crypto/dist/heimdal/lib/roken/strlwr.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/strncasecmp.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strndup.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/strnlen.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/strpftime-test.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strptime.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strsep.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/strsep_copy.c	1.1 (new)
+crypto/dist/heimdal/lib/roken/strtok_r.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/strupr.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/swab.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/timeval.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/tm2time.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/unsetenv.c	1.1.1.2
+crypto/dist/heimdal/lib/roken/unvis.c		1.1 (new)
+crypto/dist/heimdal/lib/roken/verify.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/verr.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/verrx.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/vis.c		1.1 (new)
+crypto/dist/heimdal/lib/roken/vis.hin		1.1 (new)
+crypto/dist/heimdal/lib/roken/vsyslog.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/vwarn.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/vwarnx.c		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/roken/warn.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/warnerr.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/warnx.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/write_pid.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/roken/writev.c		1.1.1.2
+crypto/dist/heimdal/lib/roken/xdbm.h		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/sl/ChangeLog		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/sl/Makefile.am		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/sl/Makefile.in		1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/sl/lex.l		1.2-1.3
+crypto/dist/heimdal/lib/sl/make_cmds.c		1.1.1.2
+crypto/dist/heimdal/lib/sl/make_cmds.h		1.1.1.2
+crypto/dist/heimdal/lib/sl/parse.y		1.1.1.2
+crypto/dist/heimdal/lib/sl/roken_rename.h	1.1.1.2
+crypto/dist/heimdal/lib/sl/sl.c			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/sl/sl.h			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/lib/sl/sl_locl.h		1.1.1.2
+crypto/dist/heimdal/lib/sl/ss.c			1.1.1.2
+crypto/dist/heimdal/lib/sl/ss.h			1.1.1.2
+crypto/dist/heimdal/lib/vers/ChangeLog		1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/vers/Makefile.am	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/vers/Makefile.in	1.1.1.1-1.1.1.2 (new)
+crypto/dist/heimdal/lib/vers/make-print-version.c 1.1 (new)
+crypto/dist/heimdal/lib/vers/print_version.c	1.1 (new)
+crypto/dist/heimdal/lib/vers/vers.h		1.1 (new)
+crypto/dist/heimdal/ltconfig			1.1.1.2-1.1.1.3
+crypto/dist/heimdal/ltmain.sh			1.1.1.2
+crypto/dist/heimdal/missing			1.1.1.2
+crypto/dist/heimdal/mkinstalldirs		1.1.1.2
+crypto/dist/heimdal/tools/Makefile.am		1.1 (new)
+crypto/dist/heimdal/tools/Makefile.in		1.1 (new)
+crypto/dist/heimdal/tools/krb5-config.1		1.1 (new)
+crypto/dist/heimdal/tools/krb5-config.in	1.1 (new)
+etc/mtree/NetBSD.dist				patch
+include/heimdal/config.h			patch
+include/heimdal/roken.h				patch
+include/heimdal/version.h			patch
+lib/Makefile					patch
+lib/libasn1/Makefile				1.3-1.9
+lib/libasn1/asn1_compile/Makefile		1.3-1.7
+lib/libasn1/shlib_version			1.2-1.3
+lib/libcom_err/Makefile				1.3
+lib/libcom_err/compile_et/Makefile		1.3-1.8
+lib/libcom_err/shlib_version			1.3
+lib/libgssapi/Makefile				1.3-1.5
+lib/libgssapi/shlib_version			1.2-1.3
+lib/libhdb/Makefile				1.3-1.6
+lib/libhdb/shlib_version			1.2-1.3
+lib/libkadm/Makefile				1.3-1.4
+lib/libkadm5/Makefile				1.3-1.7
+lib/libkadm5clnt/Makefile			1.4-1.8
+lib/libkadm5clnt/shlib_version			1.2-1.3
+lib/libkadm5srv/Makefile			1.4-1.8 via patch
+lib/libkadm5srv/shlib_version			1.2-1.3
+lib/libkafs/shlib_version			1.3
+lib/libkrb/Makefile				1.7-1.8
+lib/libkrb5/Makefile				1.4-1.10
+lib/libkrb5/shlib_version			1.2-1.4
+lib/libroken/Makefile				1.7-1.9
+lib/libroken/shlib_version			1.2-1.3
+lib/libsl/shlib_version				1.2
+lib/libss/shlib_version				1.3
+lib/libtelnet/auth-proto.h			1.9
+lib/libtelnet/enc_des.c				1.5
+lib/libtelnet/encrypt.c				1.8
+lib/libtelnet/kerberos.c			1.5
+lib/libtelnet/kerberos5.c			1.6-1.7
+lib/libtelnet/shlib_version			1.7
+lib/libvers/Makefile				1.1-1.2
+libexec/hpropd/Makefile				1.2-1.3 via patch
+libexec/hpropd/Makefile				1.3-1.6
+libexec/kadmind/Makefile			1.3-1.8
+libexec/kfd/Makefile				1.4-1.7
+libexec/kpasswdd/Makefile			1.3-1.4,1.6-1.8
+share/mk/bsd.own.mk				1.145,1.147 via patch
+usr.bin/compile_et/Makefile			1.3-1.7
+usr.bin/kdestroy/Makefile			1.3-1.7
+usr.bin/kf/Makefile				1.4-1.8
+usr.bin/kinit/Makefile				1.3-1.7
+usr.bin/klist/Makefile				1.3-1.7
+usr.bin/kpasswd/Makefile			1.3-1.7
+usr.bin/mk_cmds/Makefile			1.3-1.7
+usr.bin/string2key/Makefile			1.3-1.7
+usr.sbin/hprop/Makefile				1.2-1.3
+usr.sbin/kadmin/Makefile			1.3-1.8
+usr.sbin/kdc/Makefile				1.2-1.3 via patch
+usr.sbin/kstash/Makefile			1.3-1.7
+usr.sbin/ktutil/Makefile			1.3-1.9
+
+  Upgrade Heimdal to version 0.3e.
+
+share/man/man4/man4.i386/ie.4			delete
+share/man/man4/man4.i386/Makefile		patch
+
+  Let this manual page die; it's subsumed by ef(4), ix(4) and ai(4).
+
+usr.bin/whois/whois.c				patch
+
+  Fix merge error.
+
+sys/nfs/nfs_subs.c				1.93
+sys/isofs/cd9660/cd9660_vfsops.c		1.53
+sys/ufs/ext2fs/ext2fs_vnops.c			1.33
+sys/ufs/ufs/ufs_vnops.c				1.77
+
+  Explicitly VOP_UNLOCK before setting v_op to spec_vnode_ops_p.
+  Works around a lock leak and eventual kernel panic.
+
+usr.sbin/dhcp/client/dhclient.8			1.12-1.13
+
+  Correct reference to dhclient.conf(5).  Remove documentation for
+  SIGHUP (no longer present in code).  Fixes PR#11062.
+
+sys/netinet/ip_icmp.c				1.58
+sys/netinet/ip_input.c				1.127 via patch
+sys/netinet/ip_mroute.c				1.52
+sys/netinet/ip_output.c				1.82 via patch
+sys/netinet/raw_ip.c				1.54
+sys/netinet/tcp_input.c				1.122
+sys/netinet/tcp_output.c			1.63
+sys/netinet/tcp_subr.c				1.106 via patch
+sys/netinet/udp_usrreq.c			1.75
+sys/netinet6/ah_input.c				1.24
+sys/netinet6/esp_input.c			1.14
+sys/netinet6/icmp6.c				1.52
+sys/netinet6/ip6_input.c			1.39
+sys/netinet6/ip6_output.c			1.28
+sys/netinet6/ipcomp_input.c			1.15
+sys/netinet6/ipsec.c				1.32
+sys/netinet6/ipsec.h				1.19
+sys/netinet6/nd6_nbr.c				1.25
+sys/netinet6/raw_ip6.c				1.26 via patch
+sys/netinet6/udp6_usrreq.c			1.37
+
+  Record IPsec packet history in m_aux structure.  Let ipfilter
+  look at wire-format packet only (not the decapsulated ones), so
+  that VPN setting can work with NAT/ipfilter settings.
+
+sys/netinet6/ipsec.c				1.33 via patch
+
+  Remove IPSEC_SRCSEL which does not do the right thing.
+  Adjust state->ro if the tunnel endpoint is offlink.
+
+sys/nfs/nfs.h					1.26-1.27
+sys/arch/i386/include/param.h			1.44
+
+  Adjust default NFS operation size back to 8KB on all systems
+  except on i386.
+
+etc/inetd.conf					patch
+
+  Correct a few INET6 and Kerberos entries.
+
+distrib/notes/common/main			patch
+
+  Add sections ``Upgrade path to NetBSD 1.5.1'' and
+  ``Major Changes Between 1.5 and 1.5.1''.
+
+sys/conf/osrelease.sh				patch
+
+  Bump version information to 1.5.1_BETA.
