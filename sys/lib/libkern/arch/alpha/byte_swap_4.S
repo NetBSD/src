@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.4 1999/01/15 20:34:31 thorpej Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.5 1999/01/22 11:01:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,11 +37,10 @@
 LEAF(bswap32, 1)		/* a0 contains 0x01234567 */
 XLEAF(htonl, 1)
 XLEAF(ntohl, 1)
-	extbl	a0, 0, t0	/* t0 = 0x      67 */
+	insbl	a0, 3, t0	/* t0 = 0x67       */
 	extbl	a0, 1, t1	/* t1 = 0x      45 */
 	extbl	a0, 2, t2	/* t2 = 0x      23 */
 	extbl	a0, 3, t3	/* t3 = 0x      01 */
-	sll	t0, 24, t0	/* t0 = 0x67       */
 	sll	t1, 16, t1	/* t1 = 0x  45     */
 	sll	t2, 8, t2	/* t2 = 0x    23   */
 	or	t3, t0, v0	/* v0 = 0x67    01 */
