@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.13 2001/09/08 01:34:43 wiz Exp $
+.\" $NetBSD: installboot.8,v 1.14 2001/12/26 02:17:20 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -163,7 +163,6 @@ secondary bootstrap
 secondary bootstrap (installed)
 .El
 .Sh EXAMPLES
-.Pp
 .if t .ne 4
 Install the primary bootstrap to disk sd0:
 .D1 Ic /usr/mdec/installboot /dev/rsd0c /usr/mdec/bootxx
@@ -189,8 +188,7 @@ and the secondary bootstrap
 .Dl Li ...
 .Dl Ic /usr/mdec/installboot -i 48 /tmp/cd-image /usr/mdec/bootxx
 .Sh SEE ALSO
-.Xr boot 8 ,
-.Xr mkbootimage 8
+.Xr boot 8
 .Sh HISTORY
 The
 .Nx Ns Tn /vax
