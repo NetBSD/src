@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.49 2002/09/17 22:13:38 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.50 2002/09/18 07:52:24 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1408,7 +1408,7 @@ usr.bin/getconf/getconf.c			1.17-1.18
 sys/kern/tty.c					1.139
 
   Make sure repeated TIOCSCTTY doesn't corrupt session hold count.
-  Fixes PR#17382.  Fixes SA#2002-007.
+  Fixes PR#17382 and SA#2002-007.
 
 sys/uvm/uvm_amap_i.h				1.18 via patch
 
@@ -1468,7 +1468,7 @@ usr.bin/join/join.c				1.21
 
 sys/netinet/tcp_input.c				1.154 via patch
 
-  Always consult SS_CANTRCVMORE.  PR#18185.  Fixes SA#2002-017.
+  Always consult SS_CANTRCVMORE.  Fixes PR#18185 and SA#2002-017.
 
 usr.bin/patch/pch.c				1.13 via patch
 
