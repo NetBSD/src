@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.23 2004/11/22 17:28:58 peter Exp $");
+__RCSID("$NetBSD: id.c,v 1.24 2004/11/22 17:31:38 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ current(void)
 	struct group *gr;
 	struct passwd *pw;
 	int cnt, id, eid, lastid, ngroups;
-	char *fmt;
+	const char *fmt;
 
 	id = getuid();
 	(void)printf("uid=%u", id);
@@ -246,7 +246,7 @@ static void
 user(struct passwd *pw)
 {
 	struct group *gr;
-	char *fmt;
+	const char *fmt;
 	int cnt, id, lastid, ngroups;
 
 	id = pw->pw_uid;
@@ -273,7 +273,7 @@ group(struct passwd *pw, int nflag)
 {
 	struct group *gr;
 	int cnt, id, lastid, ngroups;
-	char *fmt;
+	const char *fmt;
 
 	if (pw) {
 		ngroups = maxgroups;
@@ -302,7 +302,7 @@ group(struct passwd *pw, int nflag)
 	(void)printf("\n");
 }
 
-struct passwd *
+static struct passwd *
 who(char *u)
 {
 	struct passwd *pw;
@@ -323,7 +323,7 @@ who(char *u)
 	return NULL;
 }
 
-void
+static void
 usage(void)
 {
 
