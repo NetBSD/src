@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.9 2001/04/29 05:54:29 thorpej Exp $ */
+/* $NetBSD: in_cksum.c,v 1.10 2001/05/19 00:30:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.9 2001/04/29 05:54:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10 2001/05/19 00:30:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -211,20 +211,22 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	union l_util l_util; 
 	struct ipovly ipov;
 
-	/* pseudo header */
-	if (off < sizeof(struct ipovly))
-		panic("in4_cksum: offset too short");
-	if (m->m_len < sizeof(struct ip))
-		panic("in4_cksum: bad mbuf chain");
+	if (nxt == 0) {
+		/* pseudo header */
+		if (off < sizeof(struct ipovly))
+			panic("in4_cksum: offset too short");
+		if (m->m_len < sizeof(struct ip))
+			panic("in4_cksum: bad mbuf chain");
 
-	memset(&ipov, 0, sizeof(ipov));
+		memset(&ipov, 0, sizeof(ipov));
 
-	ipov.ih_len = htons(len);
-	ipov.ih_pr = nxt;
-	ipov.ih_src = mtod(m, struct ip *)->ip_src;
-	ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt;
+		ipov.ih_src = mtod(m, struct ip *)->ip_src;
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
 
-	sum += in_cksumdata((caddr_t) &ipov, sizeof(ipov));
+		sum += in_cksumdata((caddr_t) &ipov, sizeof(ipov));
+	}
 
 	/* skip over unnecessary part */
 	while (m != NULL && off > 0) {
