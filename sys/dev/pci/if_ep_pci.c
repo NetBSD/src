@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.35 2001/07/08 18:02:28 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.36 2001/11/13 07:48:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.36 2001/11/13 07:48:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

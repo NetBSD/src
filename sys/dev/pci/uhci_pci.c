@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.20 2001/11/06 03:17:36 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.21 2001/11/13 07:48:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.21 2001/11/13 07:48:49 lukem Exp $");
 
 #include "ehci.h"
 

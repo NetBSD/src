@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.5 2001/08/14 11:55:38 mrg Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.6 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -35,6 +35,9 @@
  * <explorer@flame.org>.  To learn more about Vixie Enterprises, see
  * ``http://www.vix.com''.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.6 2001/11/13 07:48:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

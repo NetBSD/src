@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.9 2001/07/18 01:10:09 thorpej Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.10 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -84,6 +84,9 @@
  * the 8139 lets you directly access the on-board PHY registers. We need
  * to select which interface to use depending on the chip type.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.10 2001/11/13 07:48:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

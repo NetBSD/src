@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.20 2001/07/08 18:02:28 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.21 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.21 2001/11/13 07:48:44 lukem Exp $");
 
 #include "opt_ipkdb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.3 2001/11/11 05:28:55 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.4 2001/11/13 07:48:49 lukem Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -39,6 +39,9 @@
  * Provided by
  *   (C)Copyright 1995-1999 Tekram Technology Co., Ltd. All rights reserved.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.4 2001/11/13 07:48:49 lukem Exp $");
 
 /* #define TRM_DEBUG */
 

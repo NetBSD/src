@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.10 2001/10/03 00:04:52 augustss Exp $	*/
+/*	$NetBSD: fms.c,v 1.11 2001/11/13 07:48:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Forte Media FM801 Audio Device Driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.11 2001/11/13 07:48:42 lukem Exp $");
 
 #include "mpu.h"
 

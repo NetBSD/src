@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.11 2001/10/01 21:54:48 fvdl Exp $	*/
+/*	$NetBSD: agp.c,v 1.12 2001/11/13 07:48:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -63,6 +63,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.12 2001/11/13 07:48:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
