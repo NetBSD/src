@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.2 1997/10/13 11:23:55 lukem Exp $
+.\"	$NetBSD: scc.4,v 1.2.2.1 1997/11/03 19:30:06 mellon Exp $
 .\"
 .Dd August 6, 1996
 .Dt SCC 4 pmax
@@ -55,6 +55,29 @@ Input and output for each line may set to one of following baud rates;
 Speeds up to 230400 are supported by the chip and the motherboard,
 but speeds  higher than 57600 do not work reliably without an external
 clock signal.
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /dev/ttya
+.It Pa /dev/ttyb
+.It Pa /dev/ttyc
+.It Pa /dev/ttyd
+.El
+.Pp
+The mapping from units to serial-hardware  outlets is idiosyncratic.
+the even ports are wired serial connectors and the odd-numbered ports
+are reserved for mouse and keyboard.
+On mahines with one port like
+.Tn "Personal Decstations" ,
+the single device is
+.Pa ttya .
+On the 
+.Tn "5000/1xx" 
+and
+.Tn "5000/2xx" ,
+the first serial port (default serial console) is
+.Pa ttyc
+and the second port is 
+.Pa ttya .
 .Sh HISTORY
 The
 .Nm
@@ -65,3 +88,20 @@ The IOCTL asic provides internal DMA channels that can be programmed
 to transfer  up to 4096 bytes of data into, or out, of an SCC without
 further software intervention.  This feature of the ioctl asic is not
 yet supported.
+.Pp
+
+The mapping from device-special files (major and minor number) to chip
+and port is arguably backwards.
+.Tn Ultrix
+tries to hide the hardware  mapping, but
+.Nx
+does not.  Users wanting to use
+.Tn "Ultrix"
+compatible tty names 
+.Pa /dev/tty0
+and
+.Pa /dev/tty1
+for the
+.Nm
+comm-port lines should make links or device-special files which match
+their hardware setup.
