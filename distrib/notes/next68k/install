@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.4 2000/10/29 14:08:08 lukem Exp $
+.\"	$NetBSD: install,v 1.5 2002/05/03 05:21:39 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,55 +31,5 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-Begin by creating an area in the server's file system for the
-.Nx*M
-image.  This area must be exported read-write to the NeXT
-workstation.  In the simplest form of installation, the entire image is
-exported as a single partition, mounted on
-.Pa /
-(by the target.  This
-corresponds to a local disk install with just one partition.  It is also
-possible to export
-.Pa /usr or other partitions separately.
-.Pa /usr
-can be exported read-only, and multiple machines can all share the same
-.Pa /usr
-partition.
 .Pp
-To extract the sets into the exported area:
-.Pp
-.Dl # Ic "cd /path/to/exported/file-system"
-.Dl # Ic "pax -zrvpe -f /path/to/base.tgz"
-.Pp
-and repeat for any other sets you wish to install.  You'll almost
-certainly need the etc.tgz set.
-.Pp
-Edit the files in the etc directory to reflect reality.  rc.conf and
-fstab will certainly need to be edited.
-.Pp
-cd into the dev directory in the exported area and run
-.Pp
-.Dl # Ic "sh ./MAKEDEV all"
-.Pp
-to create the various device nodes.
-.Pp
-Create an empty swap file, and place it somewhere where it can also
-be exported to the target.
-.Pp
-Edit the server's
-.Pa /etc/exports
-file to export the root
-.Pq Pa /
-and swap partitions to the target.
-Both must be read-write, and allow full root privileges.
-.Pp
-You'll also need to set up a tftp server and bootp server to enable
-netbooting.  These services don't have to run on the same machine that
-exports the target image, but it is often convenient to do so.  More
-information on configuring these services can be found at
-.Lk http://www.netbsd.org/Documentation/network/netboot/
-Note that your bootptab requires the tag
-.Sq Li "vm=auto"
-for
-.Ic bootpd
-to work with the NeXT.
+.so ../common/netboot
