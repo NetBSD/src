@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.21 2004/03/15 04:48:58 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.22 2004/03/15 04:59:31 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -123,3 +123,10 @@ etc/namedb/root.cache			1.10
 
 	Update to 2004012900 version
 	[taca, ticket #1603]
+
+sys/uvm/uvm_mmap.c			1.66
+
+	#if 0 the call to uvm_map_checkprot() in sys_munmap() -- it's not 
+	documented, and programs do not expect it.  Also fixes memory leaks 
+	in dlopen()/dlclose().
+	[skrll, ticket #1607]
