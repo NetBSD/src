@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.9 1998/02/03 18:25:08 perry Exp $	*/
+/*	$NetBSD: mcount.c,v 1.10 1998/03/26 23:52:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -33,12 +33,15 @@
  * SUCH DAMAGE.
  */
 
+/* If building a standalone libkern, don't include mcount. */
+#ifndef _STANDALONE
+
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.9 1998/02/03 18:25:08 perry Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.10 1998/03/26 23:52:38 cgd Exp $");
 #endif
 #endif
 
@@ -190,3 +193,5 @@ overflow:
  * which is included by <sys/gmon.h>.
  */
 MCOUNT
+
+#endif /* !_STANDALONE */
