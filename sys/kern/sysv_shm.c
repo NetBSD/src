@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.27 1994/12/22 13:30:40 cgd Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.28 1995/05/10 16:53:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -82,7 +82,7 @@ struct shmmap_state {
 
 static void shm_deallocate_segment __P((struct shmid_ds *));
 static int shm_find_segment_by_key __P((key_t));
-static struct shmid_ds *shm_find_segment_by_shmid __P((int));
+struct shmid_ds *shm_find_segment_by_shmid __P((int));
 static int shm_delete_mapping __P((struct proc *, struct shmmap_state *));
 
 static int
@@ -98,7 +98,7 @@ shm_find_segment_by_key(key)
 	return -1;
 }
 
-static struct shmid_ds *
+struct shmid_ds *
 shm_find_segment_by_shmid(shmid)
 	int shmid;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.25 1995/03/09 12:05:43 mycroft Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.26 1995/05/10 16:52:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -384,7 +384,8 @@ setgroups(p, uap, retval)
 	return (0);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+    defined(COMPAT_HPUX)
 /* ARGSUSED */
 compat_43_setreuid(p, uap, retval)
 	register struct proc *p;
@@ -452,7 +453,7 @@ compat_43_setregid(p, uap, retval)
 	SCARG(&sgidargs, gid) = SCARG(uap, rgid);	/* N, N and N, M */
 	return (setgid(p, &sgidargs, retval));
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_LINUX */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_LINUX || COMPAT_HPUX */
 
 /*
  * Check if gid is a member of the group set.

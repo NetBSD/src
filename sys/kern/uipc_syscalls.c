@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.11 1995/03/05 08:52:21 fvdl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.12 1995/05/10 16:53:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -56,7 +56,8 @@
 /*
  * System call interface to the socket abstraction.
  */
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+    defined(COMPAT_HPUX)
 #define COMPAT_OLDSOCK
 #endif
 
