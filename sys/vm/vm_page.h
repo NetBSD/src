@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.4 1993/07/29 21:45:41 jtc Exp $
+ *	$Id: vm_page.h,v 1.5 1993/08/27 23:46:43 brezak Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -138,12 +138,21 @@ struct vm_page {
 typedef struct vm_page	*vm_page_t;
 
 #if	VM_PAGE_DEBUG
+#ifdef	MACHINE_NONCONTIG
+#define	VM_PAGE_CHECK(mem) { \
+		if ( (((unsigned int) mem) < ((unsigned int) &vm_page_array[0])) || \
+		     (((unsigned int) mem) > ((unsigned int) &vm_page_array[vm_page_count])) || \
+		     (mem->active && mem->inactive) \
+		    ) panic("vm_page_check: not valid!"); \
+		}
+#else	/* MACHINE_NONCONTIG */
 #define	VM_PAGE_CHECK(mem) { \
 		if ( (((unsigned int) mem) < ((unsigned int) &vm_page_array[0])) || \
 		     (((unsigned int) mem) > ((unsigned int) &vm_page_array[last_page-first_page])) || \
 		     (mem->active && mem->inactive) \
 		    ) panic("vm_page_check: not valid!"); \
 		}
+#endif	/* MACHINE_NONCONTIG */
 #else	/* VM_PAGE_DEBUG */
 #define	VM_PAGE_CHECK(mem)
 #endif	/* VM_PAGE_DEBUG */
@@ -174,17 +183,25 @@ queue_head_t	vm_page_queue_inactive;	/* inactive memory queue */
 
 extern
 vm_page_t	vm_page_array;		/* First resident page in table */
+
+#ifndef MACHINE_NONCONTIG
 extern
 long		first_page;		/* first physical page number */
 					/* ... represented in vm_page_array */
 extern
 long		last_page;		/* last physical page number */
-					/* ... represented in vm_page_array */
-					/* [INCLUSIVE] */
+
 extern
 vm_offset_t	first_phys_addr;	/* physical address for first_page */
 extern
 vm_offset_t	last_phys_addr;		/* physical address for last_page */
+#else	/* MACHINE_NONCONTIG */
+extern
+u_long		first_page;		/* first physical page number */
+extern
+int		vm_page_count;		/* How many pages do we manage? */
+#endif	/* MACHINE_NONCONTIG */
+					/* ... represented in vm_page_array */
 
 extern
 int	vm_page_free_count;	/* How many pages are free? */
@@ -207,11 +224,18 @@ int	vm_page_laundry_count;	/* How many pages being laundered? */
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 
+#ifndef MACHINE_NONCONTIG
 #define IS_VM_PHYSADDR(pa) \
 		((pa) >= first_phys_addr && (pa) <= last_phys_addr)
 
 #define PHYS_TO_VM_PAGE(pa) \
 		(&vm_page_array[atop(pa) - first_page ])
+#else
+#define	IS_VM_PHYSADDR(pa) \
+		(pmap_page_index(pa) >= 0)
+#define	PHYS_TO_VM_PAGE(pa) \
+		(&vm_page_array[pmap_page_index(pa) - first_page])
+#endif /* MACHINE_NONCONTIG */
 
 extern
 simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive

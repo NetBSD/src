@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_init.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_init.c,v 1.2 1993/05/20 03:59:24 cgd Exp $
+ *	$Id: vm_init.c,v 1.3 1993/08/27 23:47:38 brezak Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -82,22 +82,35 @@
 
 void vm_mem_init()
 {
+#ifndef MACHINE_NONCONTIG
 	extern vm_offset_t	avail_start, avail_end;
 	extern vm_offset_t	virtual_avail, virtual_end;
-
+#else
+	vm_offset_t	start, end;
+#endif
+        
 	/*
 	 *	Initializes resident memory structures.
 	 *	From here on, all physical memory is accounted for,
 	 *	and we use only virtual addresses.
 	 */
 
+#ifndef MACHINE_NONCONTIG
 	virtual_avail = vm_page_startup(avail_start, avail_end, virtual_avail);
+#else
+	vm_page_bootstrap(&start, &end);
+#endif
 	/*
 	 * Initialize other VM packages
 	 */
 	vm_object_init();
 	vm_map_startup();
+#ifndef MACHINE_NONCONTIG
 	kmem_init(virtual_avail, virtual_end);
 	pmap_init(avail_start, avail_end);
+#else
+	kmem_init(start, end);
+	pmap_init();
+#endif
 	vm_pager_init();
 }
