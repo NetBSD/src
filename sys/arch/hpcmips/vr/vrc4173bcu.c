@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.14 2003/07/15 02:29:35 lukem Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.15 2004/04/24 15:49:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.14 2003/07/15 02:29:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.15 2004/04/24 15:49:00 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	char buf[80];
 #endif
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 #if 0
