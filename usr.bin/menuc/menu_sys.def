@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.17 1999/06/19 06:38:49 cgd Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.18 1999/06/20 01:20:14 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -228,23 +228,27 @@ static int menucmd (WINDOW *w)
 
 static void init_menu (struct menudesc *m)
 {
-	int max;
-	int add, exitadd;
+	int wmax;
+	int hadd, wadd, exithadd;
 	int i;
 
-	add = ((m->mopt & MC_NOBOX) ? 2 : 4);
-	exitadd = ((m->mopt & MC_NOEXITOPT) ? 0 : 1);
-	max = strlen(m->title);
+	hadd = ((m->mopt & MC_NOBOX) ? 0 : 2);
+	wadd = ((m->mopt & MC_NOBOX) ? 2 : 4);
+
+	hadd += strlen(m->title) != 0 ? 2 : 0;
+	exithadd = ((m->mopt & MC_NOEXITOPT) ? 0 : 1);
+
+	wmax = strlen(m->title);
 
 	/* Calculate h? h == number of visible options. */
 	if (m->h == 0) {
-		m->h = m->numopts + exitadd;
-		if (m->h + m->y + add >= max_lines && (m->mopt & MC_SCROLL))
-			m->h = max_lines - m->y - add ;
+		m->h = m->numopts + exithadd;
+		if (m->h + m->y + hadd >= max_lines && (m->mopt & MC_SCROLL))
+			m->h = max_lines - m->y - hadd ;
 	}
 
 	/* Check window heights and set scrolling */
-	if (m->h < m->numopts + exitadd) {
+	if (m->h < m->numopts + exithadd) {
 		if (!(m->mopt & MC_SCROLL) || m->h < 3) {
 			endwin();
 			(void) fprintf (stderr,
@@ -256,7 +260,7 @@ static void init_menu (struct menudesc *m)
 		m->mopt &= ~MC_SCROLL;
 
 	/* check for screen fit */
-	if (m->y + m->h + add > max_lines) {
+	if (m->y + m->h + hadd > max_lines) {
 		endwin();
 		(void) fprintf (stderr,
 			"Screen too short for menu \"%s\"\n", m->title);
@@ -267,31 +271,30 @@ static void init_menu (struct menudesc *m)
 	/* Calculate w? */
 	if (m->w == 0) {
 		if (m->mopt & MC_SCROLL)
-			max = strlen(scrolltext);
+			wmax = MAX(wmax,strlen(scrolltext));
 		for (i=0; i < m->numopts; i++ )
-			max = MAX(max,strlen(m->opts[i].opt_name)+3);
-		m->w = max;
+			wmax = MAX(wmax,strlen(m->opts[i].opt_name)+3);
+		m->w = wmax;
 	}
 
 	/* check and adjust for screen fit */
-	if (m->w + add > max_cols) {
+	if (m->w + wadd > max_cols) {
 		endwin();
 		(void) fprintf (stderr,
 			"Screen too narrow for menu \"%s\"\n", m->title);
 		exit(1);
 
 	}
-	if (m->x + m->w + add > max_cols)
-		m->x = max_cols - (m->w + add);
+	if (m->x + m->w + wadd > max_cols)
+		m->x = max_cols - (m->w + wadd);
 
 	/* Get the windows. */
-	m->mw = newwin(m->h+add, m->w+add, m->y, m->x);
+	m->mw = newwin(m->h+hadd, m->w+wadd, m->y, m->x);
 
 	if (m->mw == NULL) {
 		endwin();
 		(void) fprintf (stderr,
-			"Could not create window for window with title "
-			" \"%s\"\n", m->title);
+			"Could not create window for menu \"%s\"\n", m->title);
 		exit(1);
 	} 
 }
@@ -330,7 +333,8 @@ static void post_menu (struct menudesc *m)
 	tadd = strlen(m->title) ? 2 : 0;
 
 	if (tadd) {
-		mvwaddstr(m->mw, cury, cury, m->title);
+		mvwaddstr(m->mw, cury, cury, " ");
+		mvwaddstr(m->mw, cury, cury + 1, m->title);
 		cury += 2;
 		maxy += 2;
 	}
