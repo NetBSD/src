@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.2 2001/09/24 13:22:28 wiz Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.3 2002/03/18 20:31:02 bjh21 Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -791,6 +791,7 @@ isc_result_t dhcp_failover_link_get_value (omapi_object_t *h,
 					   omapi_value_t **value)
 {
 	dhcp_failover_link_t *link;
+	int tmp;
 
 	if (h -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
@@ -800,7 +801,7 @@ isc_result_t dhcp_failover_link_get_value (omapi_object_t *h,
 		return omapi_make_int_value (value, name,
 					     (int)link -> peer_port, MDL);
 	} else if (!omapi_ds_strcmp (name, "link-state")) {
-		if (link -> state < 0 ||
+		if ((tmp = link -> state) < 0 ||
 		    link -> state >= dhcp_flink_state_max)
 			return omapi_make_string_value (value, name,
 							"invalid link state",
@@ -843,6 +844,7 @@ isc_result_t dhcp_failover_link_stuff_values (omapi_object_t *c,
 {
 	dhcp_failover_link_t *link;
 	isc_result_t status;
+	int tmp;
 
 	if (l -> type != dhcp_type_failover_link)
 		return ISC_R_INVALIDARG;
@@ -861,7 +863,7 @@ isc_result_t dhcp_failover_link_stuff_values (omapi_object_t *c,
 	status = omapi_connection_put_name (c, "link-state");
 	if (status != ISC_R_SUCCESS)
 		return status;
-	if (link -> state < 0 ||
+	if ((tmp = link -> state) < 0 ||
 	    link -> state >= dhcp_flink_state_max)
 		status = omapi_connection_put_string (c, "invalid link state");
 	else

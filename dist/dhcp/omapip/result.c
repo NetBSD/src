@@ -119,7 +119,9 @@ static const char *text[ISC_R_NRESULTS] = {
 
 const char *isc_result_totext (isc_result_t result)
 {
-	if (result >= ISC_R_SUCCESS && result < ISC_R_NRESULTS)
+	int tmp;
+
+	if ((tmp = result) >= ISC_R_SUCCESS && result < ISC_R_NRESULTS)
 		return text [result];
 	return "unknown error.";
 }
