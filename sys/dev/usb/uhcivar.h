@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.37 2004/12/21 16:41:24 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -183,6 +183,9 @@ typedef struct uhci_softc {
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	device_ptr_t sc_child;		/* /dev/usb# device */
+#ifdef __NetBSD__
+	struct usb_dma_reserve sc_dma_reserve;
+#endif
 } uhci_softc_t;
 
 usbd_status	uhci_init(uhci_softc_t *);
