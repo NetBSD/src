@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.35 1998/11/20 04:12:57 kml Exp $ */
+/* $NetBSD: conf.c,v 1.36 1998/11/29 06:57:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.35 1998/11/20 04:12:57 kml Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.36 1998/11/29 06:57:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,15 @@ cdev_decl(scsibus);
 #include "esh.h"
 cdev_decl(esh_fp);
 
+#include "usb.h"
+cdev_decl(usb); 
+#include "uhid.h"
+cdev_decl(uhid);
+#include "ugen.h"
+cdev_decl(ugen);
+#include "ulpt.h"
+cdev_decl(ulpt);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -233,6 +242,9 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 42: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 43: RAIDframe disk driver */
 	cdev_esh_init(NESH, esh_fp),	/* 44: HIPPI (esh) raw device */
+	cdev_usb_init(NUSB,usb),	/* 45: USB controller */
+	cdev_usbdev_init(NUHID,uhid),	/* 46: USB generic HID */
+	cdev_lpt_init(NULPT,ulpt),	/* 47: USB printer */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -319,6 +331,9 @@ static int chrtoblktbl[] = {
 	/* 42 */	NODEV,
 	/* 43 */	16,
 	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
 };
 
 /*
