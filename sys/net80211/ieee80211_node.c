@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.36 2004/10/04 07:35:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.37 2005/01/04 00:56:52 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.36 2004/10/04 07:35:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.37 2005/01/04 00:56:52 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -258,7 +258,6 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	struct ieee80211_node *ni;
 
 	ni = ic->ic_bss;
-	IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN, ("creating ibss\n"));
 	ic->ic_flags |= IEEE80211_F_SIBSS;
 	ni->ni_chan = chan;
 	ni->ni_rates = ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
@@ -270,6 +269,7 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		else
 			ni->ni_bssid[0] |= 0x02;	/* local bit for IBSS */
 	}
+	if_printf(&ic->ic_if, "creating bss %s\n", ether_sprintf(ni->ni_bssid));
 	ni->ni_esslen = ic->ic_des_esslen;
 	memcpy(ni->ni_essid, ic->ic_des_essid, ni->ni_esslen);
 	ni->ni_rssi = 0;
@@ -432,8 +432,8 @@ ieee80211_end_scan(struct ieee80211com *ic)
 	}
 	if (selbs == NULL)
 		goto notfound;
-	ieee80211_node_newstate(selbs, IEEE80211_STA_BSS);
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
+	ieee80211_node_newstate(ic->ic_bss, IEEE80211_STA_BSS);
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		ieee80211_fix_rate(ic, ic->ic_bss, IEEE80211_F_DOFRATE |
 		    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
