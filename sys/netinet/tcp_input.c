@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.172 2003/07/02 19:33:20 ragge Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.173 2003/07/20 16:35:07 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.172 2003/07/02 19:33:20 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.173 2003/07/20 16:35:07 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2799,7 +2799,10 @@ do {									\
 		(void) m_free((sc)->sc_ipopts);				\
 	if ((sc)->sc_route4.ro_rt != NULL)				\
 		RTFREE((sc)->sc_route4.ro_rt);				\
-	pool_put(&syn_cache_pool, (sc));				\
+	if (callout_invoking(&(sc)->sc_timer))				\
+		(sc)->sc_flags |= SCF_DEAD;				\
+	else								\
+		pool_put(&syn_cache_pool, (sc));			\
 } while (/*CONSTCOND*/0)
 
 struct pool syn_cache_pool;
@@ -2946,6 +2949,14 @@ syn_cache_timer(void *arg)
 	int s;
 
 	s = splsoftnet();
+	callout_ack(&sc->sc_timer);
+
+	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
+		tcpstat.tcps_sc_delayed_free++;
+		pool_put(&syn_cache_pool, sc);
+		splx(s);
+		return;
+	}
 
 	if (__predict_false(sc->sc_rxtshift == TCP_MAXRXTSHIFT)) {
 		/* Drop it -- too many retransmissions. */
