@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2001/06/22 11:36:05 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -539,9 +539,11 @@ cpu_reboot(int howto, char *what)
 
 		goto reboot;	/* XXX for now... */
 
+#ifdef DDB
 		printf("dropping to debugger\n");
 		while(1)
 			Debugger();
+#endif
 	}
 
 	printf("rebooting\n\n");
@@ -570,8 +572,13 @@ cpu_reboot(int howto, char *what)
 	ppc4xx_reset();
 
 	printf("ppc4xx_reset() failed!\n");
+#ifdef DDB
 	while(1)
 		Debugger();
+#else
+	while (1)
+		/* nothing */;
+#endif
 }
 
 int
