@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2003/05/03 18:25:29 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 2003/05/21 17:37:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -51,9 +51,6 @@
 #define	KERNEL_BASE		0xf0000000
 
 /* Various constants used by the MD code*/
-#ifndef ARM32_PMAP_NEW
-#define	APTE_BASE		(KERNEL_BASE + 0x00c00000)
-#endif
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 /*
  * The Kernel VM Size varies depending on the machine depending on how
