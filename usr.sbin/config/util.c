@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2003/11/24 21:44:37 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2003/11/25 19:34:06 rafal Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,6 +223,7 @@ void
 nvfree(struct nvlist *nv)
 {
 
+	memset(nv, 0, sizeof(*nv));
 	nv->nv_next = nvfreelist;
 	nvfreelist = nv;
 }
@@ -237,6 +238,7 @@ nvfreel(struct nvlist *nv)
 
 	for (; nv != NULL; nv = next) {
 		next = nv->nv_next;
+		memset(nv, 0, sizeof(*nv));
 		nv->nv_next = nvfreelist;
 		nvfreelist = nv;
 	}
