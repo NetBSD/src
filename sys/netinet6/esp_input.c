@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.3 2000/08/16 14:14:17 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.28 2000/07/30 04:28:55 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.4 2000/09/29 06:42:42 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,23 +290,10 @@ noreplaycheck:
 
 	/*
 	 * pre-compute and cache intermediate key
-	 * XXX should improve code sharing
 	 */
-	if (!sav->sched && sav->schedlen == 0) {
-		if (algo->schedule && algo->schedlen) {
-			sav->sched = malloc(algo->schedlen, M_SECA, M_DONTWAIT);
-			sav->schedlen = algo->schedlen;
-			if (sav->sched == NULL ||
-			    esp_schedule(algo, sav) != 0) {
-				if (sav->sched) {
-					free(sav->sched, M_SECA);
-					sav->sched = NULL;
-				}
-				sav->schedlen = 0;
-				ipsecstat.in_inval++;
-				goto bad;
-			}
-		}
+	if (esp_schedule(algo, sav) != 0) {
+		ipsecstat.in_inval++;
+		goto bad;
 	}
 
 	/*
@@ -315,8 +302,10 @@ noreplaycheck:
 	if (!algo->decrypt)
 		panic("internal error: no decrypt function");
 	if ((*algo->decrypt)(m, off, sav, algo, ivlen)) {
-		ipseclog((LOG_ERR, "decrypt fail in IPv4 ESP input: %s %s\n",
-		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
+		/* m is already freed */
+		m = NULL;
+		ipseclog((LOG_ERR, "decrypt fail in IPv4 ESP input: %s\n",
+		    ipsec_logsastr(sav)));
 		ipsecstat.in_inval++;
 		goto bad;
 	}
@@ -653,23 +642,10 @@ noreplaycheck:
 
 	/*
 	 * pre-compute and cache intermediate key
-	 * XXX should improve code sharing
 	 */
-	if (!sav->sched && sav->schedlen == 0) {
-		if (algo->schedule && algo->schedlen) {
-			sav->sched = malloc(algo->schedlen, M_SECA, M_DONTWAIT);
-			sav->schedlen = algo->schedlen;
-			if (sav->sched == NULL ||
-			    esp_schedule(algo, sav) != 0) {
-				if (sav->sched) {
-					free(sav->sched, M_SECA);
-					sav->sched = NULL;
-				}
-				sav->schedlen = 0;
-				ipsec6stat.in_inval++;
-				goto bad;
-			}
-		}
+	if (esp_schedule(algo, sav) != 0) {
+		ipsecstat.in_inval++;
+		goto bad;
 	}
 
 	/*
@@ -678,8 +654,10 @@ noreplaycheck:
 	if (!algo->decrypt)
 		panic("internal error: no decrypt function");
 	if ((*algo->decrypt)(m, off, sav, algo, ivlen)) {
-		ipseclog((LOG_ERR, "decrypt fail in IPv6 ESP input: %s %s\n",
-		    ipsec6_logpacketstr(ip6, spi), ipsec_logsastr(sav)));
+		/* m is already freed */
+		m = NULL;
+		ipseclog((LOG_ERR, "decrypt fail in IPv6 ESP input: %s\n",
+		    ipsec_logsastr(sav)));
 		ipsec6stat.in_inval++;
 		goto bad;
 	}
@@ -810,6 +788,52 @@ noreplaycheck:
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
 		}
+
+#ifndef PULLDOWN_TEST
+		/*
+		 * KAME requires that the packet to be contiguous on the
+		 * mbuf.  We need to make that sure.
+		 * this kind of code should be avoided.
+		 * XXX other conditions to avoid running this part?
+		 */
+		if (m->m_len != m->m_pkthdr.len) {
+			struct mbuf *n = NULL;
+			int maxlen;
+
+			MGETHDR(n, M_DONTWAIT, MT_HEADER);
+			maxlen = MHLEN;
+			if (n)
+				M_COPY_PKTHDR(n, m);
+			if (n && m->m_pkthdr.len > maxlen) {
+				MCLGET(n, M_DONTWAIT);
+				maxlen = MCLBYTES;
+				if ((n->m_flags & M_EXT) == 0) {
+					m_free(n);
+					n = NULL;
+				}
+			}
+			if (!n) {
+				printf("esp6_input: mbuf allocation failed\n");
+				goto bad;
+			}
+
+			if (m->m_pkthdr.len <= maxlen) {
+				m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
+				n->m_len = m->m_pkthdr.len;
+				n->m_pkthdr.len = m->m_pkthdr.len;
+				n->m_next = NULL;
+				m_freem(m);
+			} else {
+				m_copydata(m, 0, maxlen, mtod(n, caddr_t));
+				m_adj(m, maxlen);
+				n->m_len = maxlen;
+				n->m_pkthdr.len = m->m_pkthdr.len;
+				n->m_next = m;
+				m->m_flags &= ~M_PKTHDR;
+			}
+			m = n;
+		}
+#endif
 
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);

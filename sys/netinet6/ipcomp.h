@@ -1,9 +1,10 @@
-/*	$NetBSD: ipcomp.h,v 1.7 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.7.4.1 2000/09/29 06:42:42 itojun Exp $	*/
+/*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -62,7 +63,7 @@ struct ipcomp_algorithm {
 };
 
 struct ipsecrequest;
-extern struct ipcomp_algorithm ipcomp_algorithms[];
+extern const struct ipcomp_algorithm *ipcomp_algorithm_lookup __P((int));
 extern void ipcomp4_input __P((struct mbuf *, ...));
 extern int ipcomp4_output __P((struct mbuf *, struct ipsecrequest *));
 #ifdef INET6

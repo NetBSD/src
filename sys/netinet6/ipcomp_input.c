@@ -1,9 +1,10 @@
-/*	$NetBSD: ipcomp_input.c,v 1.10 2000/02/17 10:59:39 darrenr Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.10.4.1 2000/09/29 06:42:42 itojun Exp $	*/
+/*	$KAME: ipcomp_input.c,v 1.18 2000/09/26 07:55:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -69,7 +70,6 @@
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
-#include <netkey/key_debug.h>
 
 #include <machine/stdarg.h>
 
@@ -87,9 +87,10 @@ ipcomp4_input(m, va_alist)
 	va_dcl
 #endif
 {
+	struct mbuf *md;
 	struct ip *ip;
 	struct ipcomp *ipcomp;
-	struct ipcomp_algorithm *algo;
+	const struct ipcomp_algorithm *algo;
 	u_int16_t cpi;	/* host order */
 	u_int16_t nxt;
 	size_t hlen;
@@ -104,42 +105,23 @@ ipcomp4_input(m, va_alist)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-	if (off + sizeof(struct ipcomp) > MHLEN) {
-		/*XXX the restriction should be relaxed*/
+	if (m->m_pkthdr.len < off + sizeof(struct ipcomp)) {
 		ipseclog((LOG_DEBUG, "IPv4 IPComp input: assumption failed "
-		    "(header too long)\n"));
+		    "(packet too short)\n"));
 		ipsecstat.in_inval++;
 		goto fail;
 	}
-	if (m->m_len < off + sizeof(struct ipcomp)) {
-		m = m_pullup(m, off + sizeof(struct ipcomp));
-		if (!m) {
-			ipseclog((LOG_DEBUG, "IPv4 IPComp input: can't pullup;"
-				"dropping the packet for simplicity\n"));
-			ipsecstat.in_nomem++;
-			goto fail;
-		}
-	} else if (m->m_len > off + sizeof(struct ipcomp)) {
-		/* chop header part from the packet header chain */
-		struct mbuf *n;
-		MGETHDR(n, M_DONTWAIT, MT_HEADER);
-		if (!n) {
-			ipsecstat.in_nomem++;
-			goto fail;
-		}
-		M_COPY_PKTHDR(n, m);
-		MH_ALIGN(n, off + sizeof(struct ipcomp));
-		n->m_len = off + sizeof(struct ipcomp);
-		bcopy(mtod(m, caddr_t), mtod(n, caddr_t),
-			off + sizeof(struct ipcomp));
-		m_adj(m, off + sizeof(struct ipcomp));
-		m->m_flags &= ~M_PKTHDR;
-		n->m_next = m;
-		m = n;
-	}
 
+	md = m_pulldown(m, off, sizeof(*ipcomp), NULL);
+	if (!m) {
+		m = NULL;	/*already freed*/
+		ipseclog((LOG_DEBUG, "IPv4 IPComp input: assumption failed "
+		    "(pulldown failure)\n"));
+		ipsecstat.in_inval++;
+		goto fail;
+	}
+	ipcomp = mtod(md, struct ipcomp *);
 	ip = mtod(m, struct ip *);
-	ipcomp = (struct ipcomp *)(((caddr_t)ip) + off);
 	nxt = ipcomp->comp_nxt;
 #ifdef _IP_VHL
 	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
@@ -159,10 +141,7 @@ ipcomp4_input(m, va_alist)
 			/* other parameters to look at? */
 		}
 	}
-	if (cpi < IPCOMP_MAX && ipcomp_algorithms[cpi].decompress != NULL)
-		algo = &ipcomp_algorithms[cpi];
-	else
-		algo = NULL;
+	algo = ipcomp_algorithm_lookup(cpi);
 	if (!algo) {
 		ipseclog((LOG_WARNING, "IPv4 IPComp input: unknown cpi %u\n",
 			cpi));
@@ -172,7 +151,8 @@ ipcomp4_input(m, va_alist)
 
 	/* chop ipcomp header */
 	ipcomp = NULL;
-	m->m_len -= sizeof(struct ipcomp);
+	md->m_data += sizeof(struct ipcomp);
+	md->m_len -= sizeof(struct ipcomp);
 	m->m_pkthdr.len -= sizeof(struct ipcomp);
 #ifdef IPLEN_FLIPPED
 	ip->ip_len -= sizeof(struct ipcomp);
@@ -260,66 +240,30 @@ ipcomp6_input(mp, offp, proto)
 	struct mbuf *m, *md;
 	int off;
 	struct ip6_hdr *ip6;
-	struct mbuf *ipcompm;
 	struct ipcomp *ipcomp;
-	struct ipcomp_algorithm *algo;
+	const struct ipcomp_algorithm *algo;
 	u_int16_t cpi;	/* host order */
 	u_int16_t nxt;
 	int error;
 	size_t newlen;
 	struct secasvar *sav = NULL;
+	char *prvnxtp;
 
 	m = *mp;
 	off = *offp;
 
-	IP6_EXTHDR_CHECK(m, off, sizeof(struct ipcomp), IPPROTO_DONE);
-
-    {
-	int skip;
-	struct mbuf *n;
-	struct mbuf *p, *q;
-	size_t l;
-
-	skip = off;
-	for (n = m; n && skip > 0; n = n->m_next) {
-		if (n->m_len <= skip) {
-			skip -= n->m_len;
-			continue;
-		}
-		break;
-	}
-	if (!n) {
-		ipseclog((LOG_DEBUG, "IPv6 IPComp input: wrong mbuf chain\n"));
+	md = m_pulldown(m, off, sizeof(*ipcomp), NULL);
+	if (!m) {
+		m = NULL;	/*already freed*/
+		ipseclog((LOG_DEBUG, "IPv6 IPComp input: assumption failed "
+		    "(pulldown failure)\n"));
 		ipsecstat.in_inval++;
 		goto fail;
 	}
-	if (n->m_len < skip + sizeof(struct ipcomp)) {
-		ipseclog((LOG_DEBUG, "IPv6 IPComp input: wrong mbuf chain\n"));
-		ipsecstat.in_inval++;
-		goto fail;
-	}
+	ipcomp = mtod(md, struct ipcomp *);
 	ip6 = mtod(m, struct ip6_hdr *);
-	ipcompm = n;
-	ipcomp = (struct ipcomp *)(mtod(n, caddr_t) + skip);
-	if (n->m_len > skip + sizeof(struct ipcomp)) {
-		/* split mbuf to ease the following steps*/
-		l = n->m_len - (skip + sizeof(struct ipcomp));
-		p = m_copym(n, skip + sizeof(struct ipcomp), l , M_DONTWAIT);
-		if (!p) {
-			ipsecstat.in_nomem++;
-			goto fail;
-		}
-		for (q = p; q && q->m_next; q = q->m_next)
-			;
-		q->m_next = n->m_next;
-		n->m_next = p;
-		n->m_len -= l;
-		md = p;
-	} else
-		md = n->m_next;
-    }
-
 	nxt = ipcomp->comp_nxt;
+
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
@@ -332,10 +276,7 @@ ipcomp6_input(mp, offp, proto)
 			/* other parameters to look at? */
 		}
 	}
-	if (cpi < IPCOMP_MAX && ipcomp_algorithms[cpi].decompress != NULL)
-		algo = &ipcomp_algorithms[cpi];
-	else
-		algo = NULL;
+	algo = ipcomp_algorithm_lookup(cpi);
 	if (!algo) {
 		ipseclog((LOG_WARNING, "IPv6 IPComp input: unknown cpi %u; "
 			"dropping the packet for simplicity\n", cpi));
@@ -343,7 +284,13 @@ ipcomp6_input(mp, offp, proto)
 		goto fail;
 	}
 
-	newlen = m->m_pkthdr.len - off - sizeof(struct ipcomp);
+	/* chop ipcomp header */
+	ipcomp = NULL;
+	md->m_data += sizeof(struct ipcomp);
+	md->m_len -= sizeof(struct ipcomp);
+	m->m_pkthdr.len -= sizeof(struct ipcomp);
+
+	newlen = m->m_pkthdr.len - off;
 	error = (*algo->decompress)(m, md, &newlen);
 	if (error != 0) {
 		if (error == EINVAL)
@@ -354,7 +301,7 @@ ipcomp6_input(mp, offp, proto)
 		goto fail;
 	}
 	ipsec6stat.in_comphist[cpi]++;
-	m->m_pkthdr.len = off + sizeof(struct ipcomp) + newlen;
+	m->m_pkthdr.len = off + newlen;
 
 	/*
 	 * returning decompressed packet onto icmp is meaningless.
@@ -362,22 +309,14 @@ ipcomp6_input(mp, offp, proto)
 	 */
 	m->m_flags |= M_DECRYPTED;
 
-    {
-	char *prvnxtp;
-
-	/* chop IPComp header */
+	/* update next header field */
 	prvnxtp = ip6_get_prevhdr(m, off);
 	*prvnxtp = nxt;
-	ipcompm->m_len -= sizeof(struct ipcomp);
-	ipcompm->m_pkthdr.len -= sizeof(struct ipcomp);
 
-	/* adjust payload length */
-	ip6 = mtod(m, struct ip6_hdr *);
-	if (((m->m_pkthdr.len - sizeof(struct ip6_hdr)) & ~0xffff) != 0)
-		ip6->ip6_plen = 0;	/*now a jumbogram*/
-	else
-		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-    }
+	/*
+	 * no need to adjust payload length, as all the IPv6 protocols
+	 * look at m->m_pkthdr.len
+	 */
 
 	if (sav) {
 		key_sa_recordxfer(sav, m);

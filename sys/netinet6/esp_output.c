@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.1.1.1.2.3 2000/07/30 05:38:49 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.25 2000/07/30 04:28:55 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.1.1.1.2.4 2000/09/29 06:42:42 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.33 2000/09/19 15:15:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -137,12 +137,12 @@ esp_hdrsiz(isr)
 	/*
 	 * ASSUMING:
 	 *	sizeof(struct newesp) > sizeof(struct esp).
-	 *	8 = ivlen for CBC mode (RFC2451).
+	 *	esp_max_ivlen() = max ivlen for CBC mode
 	 *	9 = (maximum padding length without random padding length)
 	 *	   + (Pad Length field) + (Next Header field).
 	 *	16 = maximum ICV we support.
 	 */
-	return sizeof(struct newesp) + 8 + 9 + 16;
+	return sizeof(struct newesp) + esp_max_ivlen() + 9 + 16;
 }
 
 /*
@@ -328,7 +328,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	 * before: IP ... payload
 	 * after:  IP ... ESP IV payload
 	 */
-	if (M_LEADINGSPACE(md) < esphlen) {
+	if (M_LEADINGSPACE(md) < esphlen || (md->m_flags & M_EXT) != 0) {
 		MGET(n, M_DONTWAIT, MT_DATA);
 		if (!n) {
 			m_freem(m);
@@ -497,37 +497,12 @@ esp_output(m, nexthdrp, md, isr, af)
 
 	/*
 	 * pre-compute and cache intermediate key
-	 * XXX should improve code sharing
 	 */
-	if (!sav->sched && sav->schedlen == 0) {
-		if (algo->schedule && algo->schedlen) {
-			sav->sched = malloc(algo->schedlen, M_SECA,
-			    M_DONTWAIT);
-			sav->schedlen = algo->schedlen;
-			if (sav->sched == NULL ||
-			    esp_schedule(algo, sav) != 0) {
-				if (sav->sched) {
-					free(sav->sched, M_SECA);
-					sav->sched = NULL;
-				}
-				sav->schedlen = 0;
-				m_freem(m);
-				switch (af) {
-#ifdef INET
-				case AF_INET:
-					ipsecstat.out_inval++;
-					break;
-#endif
-#ifdef INET6
-				case AF_INET6:
-					ipsec6stat.out_inval++;
-					break;
-#endif
-				}
-				error = EINVAL;
-				goto fail;
-			}
-		}
+	error = esp_schedule(algo, sav);
+	if (error) {
+		m_freem(m);
+		ipsecstat.in_inval++;
+		goto fail;
 	}
 
 	/*
@@ -537,8 +512,8 @@ esp_output(m, nexthdrp, md, isr, af)
 	if (!algo->encrypt)
 		panic("internal error: no encrypt function");
 	if ((*algo->encrypt)(m, espoff, plen + extendsiz, sav, algo, ivlen)) {
+		/* m is already freed */
 		ipseclog((LOG_ERR, "packet encryption failure\n"));
-		m_freem(m);
 		switch (af) {
 #ifdef INET
 		case AF_INET:
