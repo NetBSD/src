@@ -63,8 +63,10 @@
 #define DP_S_PHASE	0x08
 #define DP_S_IRQ	0x10
 #define DP_S_DRQ	0x40
+#define DP_TCMD_EDMA	0x80		/* true end of dma in tcmd */
 #define DP_M_DMA	0x02
 #define DP_M_BSY	0x04
+#define DP_M_EDMA	0x08
 #define DP_ENABLE_DB	0x01
 #define DP_EMODE	0x40		/* enhanced mode */
 #define DP_EF_NOP	0x00		/* enhanced functions */
@@ -76,7 +78,8 @@
 #define DP_ISR_BSYERR	0x04
 #define DP_ISR_APHS	0x08
 #define DP_ISR_DPHS	0x10
-#define DP_INT_MASK	(~(DP_ISR_APHS | DP_ISR_BSYERR))
+#define DP_ISR_EDMA	0x20
+#define DP_INT_MASK	(~(DP_ISR_APHS | DP_ISR_BSYERR | DP_ISR_EDMA))
 
 #define DP_PHASE_DATAO	0	/* Data out */
 #define DP_PHASE_DATAI	1	/* Data in */
@@ -94,7 +97,8 @@
 #define DP_DVR_CMD	3
 #define DP_DVR_DATA	4
 #define DP_DVR_STAT	5
-#define DP_DVR_SENSE	6
+#define DP_DVR_MSGI	6
+#define DP_DVR_SENSE	7
 
 #define dp_clear_isr()			/* clear 8490 interrupts */	\
       WR_ADR (u_char, DP_EMR_ISR, DP_EF_RESETIP);			\
