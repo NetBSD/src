@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.8 1995/08/18 16:21:40 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.9 1995/09/30 08:39:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -64,8 +64,8 @@ static struct aconfdata aconftab[] = {
 	/* Ameristar */
 	{ "le",		1053,	1 },
 	{ "es",		1053,	10 },
-	/* Univeristy lowell */
-	{ "ulwl",	1030,	0 },
+	/* Univeristy of lowell */
+	{ "grful",	1030,	0 },
 	/* Macrosystems */
 	{ "grfrt",	18260,	6 },
 	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
