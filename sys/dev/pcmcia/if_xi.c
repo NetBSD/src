@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.15 2001/09/26 09:01:30 chris Exp $ */
+/*	$NetBSD: if_xi.c,v 1.16 2001/10/25 20:20:24 bouyer Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -246,6 +246,9 @@ const struct xi_pcmcia_product {
 	{ PCMCIA_VENDOR_INTEL,		0x0143,
 	  0,				XIFLAGS_MOHAWK | XIFLAGS_MODEM,
 	  PCMCIA_STR_INTEL_EEPRO100 },
+	{ PCMCIA_VENDOR_XIRCOM,		0x110a,
+	  0,				XIFLAGS_MOHAWK | XIFLAGS_DINGO | XIFLAGS_MODEM,
+	  PCMCIA_STR_XIRCOM_REM56 },
 #ifdef NOT_SUPPORTED
 	{ PCMCIA_VENDOR_XIRCOM,		0x1141,
 	  0,				XIFLAGS_MODEM,
@@ -349,6 +352,9 @@ xi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	
+	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
+	    pa->product == 0x110a)
+		return (2); /* prevent attach to com_pcmcia */
 	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
 		return (0);
 
@@ -629,19 +635,19 @@ xi_pcmcia_enable(psc)
 
 	DPRINTF(XID_CONFIG,("xi_pcmcia_enable()\n"));
 
+	if (pcmcia_function_enable(psc->sc_pf))
+		return (1);
+	psc->sc_resource |= XI_RES_PCIC;
+
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, xi_intr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
+		pcmcia_function_disable(psc->sc_pf);
+		psc->sc_resource &= ~XI_RES_PCIC;
 		return (1);
 	}
-
-	if (pcmcia_function_enable(psc->sc_pf)) {
-		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-		return (1);
-	}
-	psc->sc_resource |= XI_RES_PCIC;
 
 	xi_full_reset(sc);
 
@@ -656,8 +662,8 @@ xi_pcmcia_disable(psc)
 	DPRINTF(XID_CONFIG,("xi_pcmcia_disable()\n"));
 
 	if (psc->sc_resource & XI_RES_PCIC) {
-		pcmcia_function_disable(psc->sc_pf);
 		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		pcmcia_function_disable(psc->sc_pf);
 		psc->sc_resource &= ~XI_RES_PCIC;
 	}
 }
