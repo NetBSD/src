@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.5 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.6 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -652,8 +652,11 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	ipf(8): updated to version 4.1.1. [martti 20040328]
 	libcurses: add *echochar() functions. [jdc 20040328]
 	sgimips: Add IP12 support.  [pooka 20040411]
+	cvs(1): update to 1.11.15.  [itojun 20040416]
+	cvs: cvs-1.11.16 via patch [christos 20040519]
 	wscons(4): Added scrolling support [christos 20040531]
 	acorn32: Generate sparkive with new bootloader for install
 		[gavan/abs 20040608]
+	cvs: cvs upgraded to 1.11.17 [christos 20040616]
 	sgimips: Add support for on-board MACE MAC-110 Ethernet on O2.
 		[tsutsui 20040711]

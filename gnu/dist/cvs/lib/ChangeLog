@@ -1,3 +1,8 @@
+2004-05-28  Derek Price  <derek@ximbiot.com>
+
+	* xsize.h: New file from GNULIB.
+	* Makefile.am (libcvs_a_SOURCES): Add xsize.h.
+
 2004-05-15  Derek Price  <derek@ximbiot.com>
 
 	* libcvs.dsp: Header file list updated.
