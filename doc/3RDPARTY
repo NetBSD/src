@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.120 2003/07/12 10:29:17 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.121 2003/07/12 10:31:10 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -77,7 +77,7 @@ Mailing List:
 Responsible:	vixie
 Notes:
 Mostly imported with cvs import.  Makefile's, etc, are not.
-Upgrade to BIND8 resolver can only happen with libc major bump (otherwise
+upgrade to BIND8 resolver can only happen with libc major bump (otherwise
 it needs too much effort).  Reasons: (1) need to support binaries that use
 BIND4 resolver API (res_init), and need to support BIND8 API.  we practically
 need to maintain both BIND4 _res and BIND8 _res.  (2) amount of local changes.
@@ -531,8 +531,8 @@ to tech-security.
 crypto/dist/openssl/openssl-unifdef.pl strips off most of #if in headers
 (should be done after the import - for some of the past imports done before
 import by mistake).
-upgrade to 0.9.7 seems difficult for several reasons - (1) des API changes,
-(2) incompatibity w/ heimdal.
+upgrade to 0.9.7 seems difficult for several reasons - (1) DES API changes,
+(2) incompatibility w/ heimdal.
 
 Package:	pdisk
 Version:	0.8a2
