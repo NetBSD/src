@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.48 1999/11/19 03:14:22 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.49 1999/11/28 06:06:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.48 1999/11/19 03:14:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.49 1999/11/28 06:06:21 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -956,7 +956,7 @@ rzgetinfo(dev)
 	/*
 	 * If this is an installation diskimage, the label geometry
 	 * is from a vnd(4) diskimage, not the real SCSI disk, and so
-	 the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
+	 * the RAW_PART info is wrong.  Fake up an entry for RAW_PART.
 	 */
 	if (msg == NULL &&
 	    strncmp(lp->d_typename, "install diskimag", 16) == 0 &&
