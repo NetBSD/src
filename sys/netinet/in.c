@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.60 2000/04/03 03:50:05 enami Exp $	*/
+/*	$NetBSD: in.c,v 1.61 2000/05/06 02:41:32 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -296,8 +296,6 @@ in_len2mask(mask, len)
 		p[i] = (0xff00 >> (len % 8)) & 0xff;
 }
 
-int	in_interfaces;		/* number of external internet interfaces */
-
 /*
  * Generic internet control operations (ioctl's).
  * Ifp is 0 if not an interface-specific ioctl.
@@ -407,9 +405,6 @@ in_control(so, cmd, data, ifp, p)
 			}
 			ia->ia_ifp = ifp;
 			LIST_INIT(&ia->ia_multiaddrs);
-			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-				in_interfaces++;
-
 			newifaddr = 1;
 		} else
 			newifaddr = 0;
@@ -490,8 +485,6 @@ in_control(so, cmd, data, ifp, p)
 			IFAFREE(&ia->ia_ifa);
 			TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 			IFAFREE(&ia->ia_ifa);
-			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-				in_interfaces--;
 		}
 #endif
 		return error;
