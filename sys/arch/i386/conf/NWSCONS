@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.14 1998/11/06 20:29:52 tron Exp $
+#	$NetBSD: NWSCONS,v 1.15 1998/11/12 00:57:29 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -347,7 +347,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-#pciide* at pci ? dev ? function ? flags 0x0000
+pciide* at pci ? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp? 
@@ -361,11 +361,11 @@ wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
 wd*	at wdc? channel ? drive ?
-#wd*	at pciide? channel ? drive ?
+wd*	at pciide? channel ? drive ?
 
 # ATAPI bus support
 atapibus* at wdc? channel ?
-#atapibus* at pciide? channel ?
+atapibus* at pciide? channel ?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
