@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sbrk.S,v 1.8 2001/05/05 17:56:58 kleink Exp $"
+	.asciz "$NetBSD: sbrk.S,v 1.9 2002/02/24 01:06:21 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -54,14 +54,14 @@ CURBRK:
 	.text
 
 ENTRY(_sbrk, 0)
-	addl3	CURBRK,4(ap),-(sp)
+	addl3	CURBRK,4(%ap),-(%sp)
 	pushl	$1
-	movl	ap,r3
-	movl	sp,ap
+	movl	%ap,%r3
+	movl	%sp,%ap
 	chmk	$ SYS_break
 	jcs 	err
-	movl	CURBRK,r0
-	addl2	4(r3),CURBRK
+	movl	CURBRK,%r0
+	addl2	4(%r3),CURBRK
 	ret
 err:
 	jmp	CERROR+2

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigsuspend.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigsuspend.S,v 1.6 2000/06/30 23:46:37 matt Exp $"
+	.asciz "$NetBSD: sigsuspend.S,v 1.7 2002/02/24 01:06:21 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -42,9 +42,9 @@ WARN_REFERENCES(sigsuspend, \
     "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend, 0)
-	movl	*4(ap),4(ap)		# indirect to mask arg
+	movl	*4(%ap),4(%ap)		# indirect to mask arg
 	chmk	$ SYS_compat_13_sigsuspend13
 	jcc	1f
 	jmp	CERROR+2
-1:	clrl	r0			# shouldnt happen
+1:	clrl	%r0			# shouldnt happen
 	ret
