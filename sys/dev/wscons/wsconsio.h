@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.46 2001/12/02 01:17:51 gmcgarry Exp $ */
+/* $NetBSD: wsconsio.h,v 1.47 2001/12/04 04:30:22 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -89,7 +89,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 #define		WSKBD_TYPE_RISCPC	10	/* RiscPC keyboard, resembling AT codes */
 #define		WSKBD_TYPE_ADB		11	/* ADB */
-#define		WSKBD_TYPE_HP_HIL	12	/* HP HIL keyboard */
+#define		WSKBD_TYPE_HIL		12	/* HIL keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -170,7 +170,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
 #define 	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
-#define		WSMOUSE_TYPE_HP_HIL	9	/* HP HIL mouse */
+#define		WSMOUSE_TYPE_HIL	9	/* HIL mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
