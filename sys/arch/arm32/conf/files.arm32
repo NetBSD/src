@@ -41,16 +41,14 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Standard parallel driver
-device	lpt: tty
-file	arch/arm32/dev/lpt.c			lpt needs-flag
+device	lpt
+file	dev/ic/lpt.c				lpt needs-flag
 major   {lpt = 8}
 
 attach  lpt at pioc with lpt_pioc
 file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
 
 # Standard serial driver
-device  com: tty
-file    arch/arm32/dev/com.c			com needs-flag
 major   {com = 12}
 
 attach	com at pioc with com_pioc
