@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2001/05/06 10:04:58 wiz Exp $
+# $NetBSD: mi,v 1.67 2001/05/29 04:18:32 itojun Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -522,6 +522,7 @@
 ./usr/share/sendmail/ostype/dgux.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/domainos.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/dynix3.2.m4			misc-sendmail-share
+./usr/share/sendmail/ostype/freebsd4.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/gnu.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/hpux10.m4			misc-sendmail-share
 ./usr/share/sendmail/ostype/hpux11.m4			misc-sendmail-share
