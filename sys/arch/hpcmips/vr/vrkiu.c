@@ -1,8 +1,8 @@
-/*	$NetBSD: vrkiu.c,v 1.24 2000/08/05 05:55:27 shin Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.25 2000/09/21 14:17:35 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
- * Copyright (c) 1999 TAKEMRUA, Shin All rights reserved.
+ * Copyright (c) 1999,2000 TAKEMRUA, Shin All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@
 #include <hpcmips/vr/vrkiuvar.h>
 #include <hpcmips/vr/vrkiureg.h>
 #include <hpcmips/vr/icureg.h>
+#include <hpcmips/dev/hpckbdvar.h>
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_pckbd_layout.h"
@@ -81,27 +82,16 @@ struct vrkiu_chip {
 	bus_space_tag_t kc_iot;
 	bus_space_handle_t kc_ioh;
 	unsigned short kc_scandata[KIU_NSCANLINE/2];
-	int kc_polling;
-#define NEVENTQ 32
-	struct {
-		u_int kc_type;
-		int kc_data;
-	} kc_eventq[NEVENTQ], *kc_head, *kc_tail;
-	int kc_nevents;
-
+	int kc_enabled;
 	struct vrkiu_softc* kc_sc;	/* back link */
+	struct hpckbd_ic_if	kc_if;
+	struct hpckbd_if	*kc_hpckbd;
 };
 
 struct vrkiu_softc {
 	struct device sc_dev;
 	struct vrkiu_chip *sc_chip;
 	struct vrkiu_chip sc_chip_body;
-	int sc_enabled;
-	struct device *sc_wskbddev;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	int sc_rawkbd;
-#endif
-
 	void *sc_handler;
 };
 
@@ -117,20 +107,11 @@ static int vrkiu_init(struct vrkiu_chip*, bus_space_tag_t, bus_space_handle_t);
 static void vrkiu_write __P((struct vrkiu_chip *, int, unsigned short));
 static unsigned short vrkiu_read __P((struct vrkiu_chip *, int));
 static int vrkiu_is_console(bus_space_tag_t, bus_space_handle_t);
-static int detect_key __P((struct vrkiu_chip *));
-static int vrkiu_getevent __P((struct vrkiu_chip*, u_int*, int*));
-static int vrkiu_putevent __P((struct vrkiu_chip*, u_int, int));
+static void vrkiu_scan __P((struct vrkiu_chip *));
 static int countbits(int);
 static void eliminate_phantom_keys(struct vrkiu_chip*, unsigned short *);
-
-/* wskbd accessopts */
-int vrkiu_enable __P((void *, int));
-void vrkiu_set_leds __P((void *, int));
-int vrkiu_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-
-/* consopts */
-void vrkiu_cngetc __P((void*, u_int*, int*));
-void vrkiu_cnpollc __P((void *, int));
+static int vrkiu_poll __P((void*));
+static int vrkiu_input_establish __P((void*, struct hpckbd_if*));
 
 /*
  * global/static data
@@ -139,172 +120,7 @@ struct cfattach vrkiu_ca = {
 	sizeof(struct vrkiu_softc), vrkiumatch, vrkiuattach
 };
 
-const struct wskbd_accessops vrkiu_accessops = {
-	vrkiu_enable,
-	vrkiu_set_leds,
-	vrkiu_ioctl,
-};
-
-const struct wskbd_consops vrkiu_consops = {
-	vrkiu_cngetc,
-	vrkiu_cnpollc,
-};
-
-struct wskbd_mapdata vrkiu_keymapdata = {
-	pckbd_keydesctab,
-#ifdef PCKBD_LAYOUT
-	PCKBD_LAYOUT,
-#else
-	KB_US,
-#endif
-};
-
 struct vrkiu_chip *vrkiu_consdata = NULL;
-
-#define UNK	-1	/* unknown */
-#define IGN	-2	/* ignore */
-
-static char default_keytrans[] = {
-/*00*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*08*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*10*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*18*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*20*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*28*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*30*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*38*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*40*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*48*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*50*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-/*58*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
-};
-
-/* NEC MobileGearII MCR series (Japan) */
-static char mcr_jp_keytrans[] = {
-/*00*/  77,  28,  25,  52,  21,  48,  44,  57, /* right ent p . y b z space */
-/*08*/  80,  53,  24,  51,  20,  47,  30, 123, /* down / o , t v a nfer */
-/*10*/  75, 115,  23,  50,  19,  46,  17, 221, /* left \ i m r c w menu */
-/*18*/  13, IGN,  22, IGN,  18,  45,  16,   2, /* ^ - u - e x q 1 */
-/*20*/  81,  41,  11,  38,  40,  34,  15,  59, /* pgdn h/z 0 l : g tab f1 */
-/*28*/ 121,  39,  10,  49,   6,  33,   3,  37, /* xfer ; 9 n 5 f 2 k */
-/*30*/  72,  27,   9,  36,   5,  32,   7, IGN, /* up [ 8 j 4 d 6 - */
-/*38*/  12,  26,   8,  35,   4,  43,  31, IGN, /* - @ 7 h 3 ] s - */
-/*40*/  58, IGN, IGN, IGN,  14, IGN,  66,  61, /* caps - - - bs - f8 f3 */
-/*48*/ IGN,  56, IGN, IGN, 125, 112,  65,  62, /* - alt - - | k/h f7 f4 */
-/*50*/ IGN, IGN,  29, IGN,  68,  73,  64,  60, /* - - ctrl - f10 pgup f6 f2 */
-/*58*/ IGN, IGN, IGN,  42,  14,  67,  63,   1, /* - - - shift del f9 f5 esc */
-};
-
-/* IBM WorkPad z50 */
-static char z50_keytrans[] = {
-/*00*/  59,  61,  63,  65,  67, IGN, IGN,  87,	/* f1 f3 f5 f7 f9 - - f11 */
-/*08*/  60,  62,  64,  66,  68, IGN, IGN,  88,	/* f2 f4 f6 f8 f10 - - f12 */
-/*10*/  40,  26,  12,  11,  25,  39,  72,  53,	/* ' [ - 0 p ; up / */
-/*18*/ IGN, IGN, IGN,  10,  24,  38,  52, IGN,	/* - - - 9 o l . - */
-/*20*/  75,  27,  13,   9,  23,  37,  51, IGN,	/* left ] = 8 i k , - */
-/*28*/  35,  21,   7,   8,  22,  36,  50,  49,	/* h y 6 7 u j m n */
-/*30*/ IGN,  14,  69,  14, IGN,  43,  28,  57,	/* - bs num del - \ ent sp */
-/*38*/  34,  20,   6,   5,  19,  33,  47,  48,	/* g t 5 4 r f v b */
-/*40*/ IGN, IGN, IGN,   4,  18,  32,  46,  77,	/* - - - 3 e d c right */
-/*48*/ IGN, IGN, IGN,   3,  17,  31,  45,  80,	/* - - - 2 w s x down */
-/*50*/   1,  15,  41,   2,  16,  30,  44, IGN,	/* esc tab ~ 1 q a z - */
-/*58*/ 221,  42,  29,  29,  56,  56,  54, IGN,	/* menu Ls Lc Rc La Ra Rs - */
-};
-
-/* Sharp Tripad PV6000 and VADEM CLIO */
-static char tripad_keytrans[] = {
-/*00*/  42,  15,  41,  16,   1,   2, 104, 221,	/* lsh tab ` q esc 1 WIN - */
-/*08*/  29,  44,  45,  30,  31,  17,  18,   3,	/* ctrl z x a s w e 2 */
-/*10*/  56,  57,  46,  47,  32,  33,  19,   4,	/* lalt sp c v d f r 3 */
-/*18*/  48,  49,  34,  35,  20,  21,   5,   6,	/* b n g h t y 4 5 */
-/*20*/  50,  51,  36,  37,  22,  23,   7,   8,	/* m , j k u i 6 7 */
-/*28*/ 105,  58,  38,  24,  25,   9,  10,  11,	/* Fn caps l o p 8 9 0 */
-/*30*/  26,  27,  75,  52,  53,  39,  12,  13,	/* [ ] la . / ; - = */
-/*38*/  54,  77,  72,  80,  40,  28,  43,  14,  /* rsh ra ua da ' ent \ del */
-/*40*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
-/*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
-/*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
-/*58*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
-};
-
-/* NEC Mobile Gear MCCS series */
-static char mccs_keytrans[] = {
-/*00*/  58,  28,  77,  25,  52,  21,  48,  44,  /* caps cr rar p . y b z */
-/*08*/  56,  27,  80,  24,  51,  20,  47,  30,  /* alt [ dar o , t v a */
-/*10*/  41,  26,  75,  23,  50,  19,  46,  17,  /* zen @ lar i m r c w */
-/*18*/  29,  39,  72,  22,  49,  18,  45,  16,  /* lctrl ; uar u n e x q */
-/*20*/  42,  14, 115,  11,  38,   7,  34,  15,  /* lshft bs \ 0 l 6 g tab */
-/*28*/ 123, 125,  53,  10,  37,   6,  33,   3,  /* nconv | / 9 k 5 f 2 */
-/*30*/ 121,  13,  43,   9,  36,   5,  32,   2,  /* conv = ] 8 j 4 d 1 */
-/*38*/ 112,  12,  40,   8,  35,   4,  31,   1,  /* hira - ' 7 h 3 s esc */
-/*40*/ IGN,  57, IGN, IGN, IGN, IGN, IGN, IGN,  /* - sp - - - - - - */
-/*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
-/*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
-/*58*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
-};
-
-static char mobilepro_keytrans[] = {
-/*00*/  57,  27,  43,  53,  75,  80,  28,  38,  /* space ] \ / - - enter l */
-/*08*/ IGN,  26,  40,  39,  77,  72,  52,  24,  /* - [ ' ; - - . o */
-/*10*/ IGN, IGN, IGN, 221,  47,  46,  45,  44,  /* - - - Windows v c x z */
-/*18*/ IGN,  13,  12,  41,  33,  32,  31,  30,  /* - = \- ` f d s a */
-/*20*/   9,   8,   7,   6,  19,  18,  17,  16,  /* 8 7 6 5 r e w q */
-/*28*/  51,  50,  49,  48, IGN, IGN,  11,  10,  /* , m n b - - 0 9 */
-/*30*/  37,  36,  35,  34,   5,   4,   3,   2,  /* k j h g 4 3 2 1 */
-/*38*/  23,  22,  21,  20, IGN,  58,  14,   1,  /* i u y t - caps del esc */
-/*40*/ 184, IGN, IGN, IGN,  14,  25,  15, IGN,  /* alt_R - - - BS p TAB Fn */
-/*48*/ IGN,  56, IGN, IGN,  88,  87,  68,  67,  /* - alt_L - - f12 f11 f10 f9*/
-/*50*/ IGN, IGN,  29, IGN,  66,  65,  64,  63,  /* - - ctrl - f8 f7 f6 f5 */
-/*58*/ IGN, IGN, IGN,  42,  62,  61,  60,  59,  /* - - - shift f4 f3 f2 f1 */
-};
-
-/* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
-static char mobilepro750c_keytrans[] = {
-/*00*/  77,  43,  25,  52,  21,  48,  44,  57, /* right \ p . y b z space */
-/*08*/  80,  53,  24,  51,  20,  47,  30, IGN, /* down / o , t v a  - */
-/*10*/  75,  28,  23,  50,  19,  46,  17, 221, /* left enter i m r c w Win */
-/*18*/  69,  27,  22,  49,  18,  45,  16,  58, /* num ] u n e x q caps */
-/*20*/  81,  IGN, 11,  38,   7,  34,  15,   1, /* pgdn - 0 l : g tab esc */
-/*28*/ IGN,  39,  10,  37,   6,  33,   3,  41, /* - ; 9 k 5 f 2 ` */
-/*30*/  72,  26,   9,  36,   5,  32,   2,  40, /* up [ 8 j 4 d 1 ' */
-/*38*/  12,  26,   8,  35,   4,  31,  83, IGN, /* - @ 7 h 3 s del - */
-/*40*/  42, IGN, IGN, IGN,  14,  88,  66,  62, /* shift - - - bs f12 f8 f4 */
-/*48*/ IGN,  56, IGN, IGN, 125,  87,  65,  61, /* - alt - - | f11 f7 f3 */
-/*50*/ IGN, IGN,  29, IGN,  68,  68,  64,  60, /* - - ctrl - f10 f10 f6 f2 */
-/*58*/ IGN, IGN, IGN,  42,  13,  67,  63,  59, /* - - - shift del f9 f5 f1 */
-};
-
-/* FUJITSU INTERTOP CX300 */
-static char intertop_keytrans[] = {
-  57,  60,   2,  15,  28,  58,  75,  41,
- 112,  59,   3,  16, IGN,  30,  56,   1,
- 210,  17,   4,  31,  83,  43,  80,  45,
-  44,  18,   5,  32,  68, 125,  77,  46,
- 115,  19,  39,  33,  67,  26,  13,  47,
-  53,  20,   6,  34,  66,  25,  12,  48,
-  52,  21,   7,  35,  65,  38,  11,  49,
- IGN,  22,   8,  36,  63,  24,  14,  50,
- IGN,  61,   9,  62, IGN,  23,  37,  51,
-  69,  40,  10,  27,  64, IGN,  72, IGN,
- IGN, IGN, IGN, IGN,  42, IGN, IGN,  54,
-  29, 221, 123, 121, 184, IGN, IGN, IGN,
-};
-/*
-space   a2      1       tab     enter   caps    left    zenkaku
-hiraga  a1      2       q       -       a       fnc     esc
-ins     w       3       s       del     ]       down    x
-z       e       4       d       a10     \       right   c
-backsla r       ;       f       a9      @       ^       v
-/       t       5       g       a8      p       -       b
-.       y       6       h       a7      l       0       n
--       u       7       j       a5      o       bs      m
--       a3      8       a4      -       i       k       ,
-num     :       9       [       a6      -       up      -
--       -       -       -       shift_L -       -       shift_R
-ctrl    win     muhenka henkan  alt     -       -       -
-*/
-
-static char *keytrans = default_keytrans;
 
 /*
  * utilities
@@ -340,53 +156,6 @@ vrkiu_is_console(iot, ioh)
 	}
 }
 
-static void
-vrkiu_initkeymap(void)
-{
-	int i;
-	static struct {
-		platid_mask_t *mask;
-		char *keytrans;
-		kbd_t layout;
-	} table[] = {
-		{ &platid_mask_MACH_NEC_MCR_500A,
-		  mobilepro750c_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCR_520A,
-		  mobilepro_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCR_530A,
-		  mobilepro_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCR_700A,
-		  mobilepro_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCR_730A,
-		  mobilepro_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCR_MPRO700,
-		  mobilepro_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCR,
-		  mcr_jp_keytrans, KB_JP },
-		{ &platid_mask_MACH_IBM_WORKPAD_Z50,
-		  z50_keytrans, KB_US },
-		{ &platid_mask_MACH_SHARP_TRIPAD,
-		  tripad_keytrans, KB_US },
-		{ &platid_mask_MACH_VADEM_CLIO_C,
-		  tripad_keytrans, KB_US },
-		{ &platid_mask_MACH_NEC_MCCS,
-		  mccs_keytrans, KB_JP },
-		{ &platid_mask_MACH_FUJITSU_INTERTOP,
-		  intertop_keytrans, KB_JP },
-		{ NULL } /* end mark */
-	};
-
-	for (i = 0; table[i].mask; i++) {
-		if (platid_match(&platid, table[i].mask)) {
-			keytrans = table[i].keytrans;
-#if !defined(PCKBD_LAYOUT)
-			vrkiu_keymapdata.layout = table[i].layout;
-#endif
-			break;
-		}
-	}
-}
-
 /*
  * initialize device
  */
@@ -399,9 +168,11 @@ vrkiu_init(chip, iot, ioh)
 	memset(chip, 0, sizeof(struct vrkiu_chip));
 	chip->kc_iot = iot;
 	chip->kc_ioh = ioh;
-	chip->kc_polling = 0;
-	chip->kc_head = chip->kc_tail = chip->kc_eventq;
-	chip->kc_nevents = 0;
+	chip->kc_enabled = 0;
+
+	chip->kc_if.hii_ctx		= chip;
+	chip->kc_if.hii_establish	= vrkiu_input_establish;
+	chip->kc_if.hii_poll		= vrkiu_poll;
 
 	/* set KIU */
 	vrkiu_write(chip, KIURST, 1);   /* reset */
@@ -410,50 +181,8 @@ vrkiu_init(chip, iot, ioh)
 	vrkiu_write(chip, KIUWKI, 450);
 	vrkiu_write(chip, KIUSCANREP, 0x8023);
 				/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
-	vrkiu_initkeymap();
+
 	return 0;
-}
-
-/*
- * put key event
- */
-static int
-vrkiu_putevent(chip, type, data)
-	struct vrkiu_chip* chip;
-	u_int type;
-	int data;
-{
-	if (chip->kc_nevents == NEVENTQ) {
-	  return (0);
-	}
-	chip->kc_nevents++;
-	chip->kc_tail->kc_type = type;
-	chip->kc_tail->kc_data = data;
-	if (&chip->kc_eventq[NEVENTQ] <= ++chip->kc_tail) {
-		chip->kc_tail = chip->kc_eventq;
-	}
-	return (1);
-}
-
-/*
- * gut key event
- */
-static int
-vrkiu_getevent(chip, type, data)
-	struct vrkiu_chip* chip;
-	u_int *type;
-	int *data;
-{
-	if (chip->kc_nevents == 0) {
-	  return (0);
-	}
-	*type = chip->kc_head->kc_type;
-	*data = chip->kc_head->kc_data;
-	chip->kc_nevents--;
-	if (&chip->kc_eventq[NEVENTQ] <= ++chip->kc_head) {
-		chip->kc_head = chip->kc_eventq;
-	}
-	return (1);
 }
 
 /*
@@ -479,7 +208,7 @@ vrkiuattach(parent, self, aux)
 {
 	struct vrkiu_softc *sc = (struct vrkiu_softc *)self;
 	struct vrip_attach_args *va = aux;
-	struct wskbddev_attach_args wa;
+	struct hpckbd_attach_args haa;
 	int isconsole;
 
 	bus_space_tag_t iot = va->va_iot;
@@ -510,12 +239,9 @@ vrkiuattach(parent, self, aux)
 
 	printf("\n");
 
-	wa.console = isconsole;
-	wa.keymap = &vrkiu_keymapdata;
-	wa.accessops = &vrkiu_accessops;
-	wa.accesscookie = sc;
-
-	sc->sc_wskbddev = config_found(self, &wa, wskbddevprint);
+	/* attach hpckbd */
+	haa.haa_ic = &sc->sc_chip->kc_if;
+	config_found(self, &haa, hpckbd_print);
 }
 
 int
@@ -525,20 +251,29 @@ vrkiu_intr(arg)
         struct vrkiu_softc *sc = arg;
 
 	/* When key scan finisshed, this entry is called. */
-	DPRINTF(("%s(%d): vrkiu_intr: %d\n",
-		 __FILE__, __LINE__,
-		 vrkiu_read(sc->sc_chip, KIUINT) & 7));
+#if 0
+	DPRINTF(("vrkiu_intr: intr=%x scan=%x\n",
+		 vrkiu_read(sc->sc_chip, KIUINT) & 7,
+		 vrkiu_read(sc->sc_chip, KIUSCANS) & KIUSCANS_SSTAT_MASK));
+#endif
 
 	/*
 	 * First, we must clear the interrupt register because
-	 * detect_key() may takes long time if a bitmap screen
+	 * vrkiu_scan() may takes long time if a bitmap screen
 	 * scrolls up and it makes us to miss some key release
 	 * event.
 	 */
 	vrkiu_write(sc->sc_chip, KIUINT, 0x7); /* Clear all interrupt */
-	detect_key(sc->sc_chip);
 
-	return 0;
+#if 1
+	/* just return if kiu is scanning keyboard. */
+	if ((vrkiu_read(sc->sc_chip, KIUSCANS) & KIUSCANS_SSTAT_MASK) ==
+	       KIUSCANS_SSTAT_SCANNING)
+		return (0);
+#endif
+	vrkiu_scan(sc->sc_chip);
+
+	return (0);
 }
 
 static int
@@ -558,40 +293,57 @@ eliminate_phantom_keys(chip, scandata)
 	struct vrkiu_chip* chip;
 	unsigned short *scandata;
 {
-	unsigned char *p, *s;
-	int i, j, mask;
+	unsigned char inkey[KIU_NSCANLINE], *prevkey, *reskey;
+	int i, j;
+#ifdef VRKIUDEBUG
+	int modified = 0;
+	static int prevmod = 0;
+#endif
 
-	p = (unsigned char *)scandata;
-	s = (unsigned char *)chip->kc_scandata;
+	reskey = (unsigned char *)scandata;
+	for (i = 0; i < KIU_NSCANLINE; i++)
+		inkey[i] = reskey[i];
+	prevkey = (unsigned char *)chip->kc_scandata;
 
-	for (i = 0; i < KIU_NSCANLINE - 1; i++) {
-		if (countbits(p[i]) > 1) {
-			for (j = i + 1; j < KIU_NSCANLINE; j++) {
-				if ((mask = p[i] & p[j]) != 0) {
-					s[i] |= (p[i] & mask) ^ s[i];
-					s[j] |= (p[j] & mask) ^ s[j];
-				}
-			}
+	for (i = 0; i < KIU_NSCANLINE; i++) {
+	    if (countbits(inkey[i]) > 1) {
+		for (j = 0; j < KIU_NSCANLINE; j++) {
+		    if (i != j && (inkey[i] & inkey[j])) {
+#ifdef VRKIUDEBUG
+			    modified = 1;
+			    if (!prevmod) {
+				DPRINTF(("vrkiu_scan: %x:%02x->%02x",
+					 i, inkey[i], prevkey[i]));
+				DPRINTF(("  %x:%02x->%02x\n",
+					 j, inkey[j], prevkey[j]));
+			    }
+#endif
+			    reskey[i] = prevkey[i];
+			    reskey[j] = prevkey[j];
+		    }
 		}
+	    }
 	}
+#ifdef VRKIUDEBUG
+	prevmod = modified;
+#endif
 }
 
-static int
-detect_key(chip)
+static void
+vrkiu_scan(chip)
 	struct vrkiu_chip* chip;
 {
 	int i, j, modified, mask;
-	int detected;
 	unsigned short scandata[KIU_NSCANLINE/2];
+
+	if (!chip->kc_enabled)
+		return;
 
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
 		scandata[i] = vrkiu_read(chip, KIUDATP + i * 2);
 	}
 	eliminate_phantom_keys(chip, scandata);
 
-	DPRINTF(("%s(%d): detect_key():", __FILE__, __LINE__));
-
-	detected = 0;
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
 		modified = scandata[i] ^ chip->kc_scandata[i];
 		chip->kc_scandata[i] = scandata[i];
@@ -602,45 +354,15 @@ detect_key(chip)
 			 * the one with the lowest bit index first.
 			 */
 			if (modified & mask) {
-				int key, type;
-				key = i * 16 + j;
-				if (keytrans[key] == UNK) {
-	                                printf("vrkiu: Unknown scan code 0x%02x\n", key);
-	                                continue;
-				} else if (keytrans[key] == IGN) {
-					continue;
-				}
-				type = (scandata[i] & mask) ? 
-					WSCONS_EVENT_KEY_DOWN :
-					WSCONS_EVENT_KEY_UP;
-				DPRINTF(("(%d,%d)=%s%d ", i, j,
-					 (scandata[i] & mask) ? "v" : "^",
-					 keytrans[key]));
-				detected++;
-				if (chip->kc_polling) {
-					if (vrkiu_putevent(chip, type,
-							   keytrans[key]) == 0)
-						printf("vrkiu: queue over flow");
-				} else {
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-					if (chip->kc_sc->sc_rawkbd) {
-						int n;
-						u_char data[16];
-						n = pckbd_encode(type,
-						    keytrans[key], data);
-						wskbd_rawinput(chip->kc_sc->sc_wskbddev, data, n);
-					} else
-#endif
-					wskbd_input(chip->kc_sc->sc_wskbddev,
-						    type,
-						    keytrans[key]);
-				}
+				int key = i * 16 + j;
+				DPRINTF(("vrkiu_scan: %s(%d,%d)\n",
+					 (scandata[i] & mask) ? "down" : "up",
+					 i, j));
+				hpckbd_input(chip->kc_hpckbd,
+					     (scandata[i] & mask), key);
 			}
 		}
 	}
-	DPRINTF(("\n"));
-
-	return (detected);
 }
 
 /* called from bicons.c */
@@ -660,74 +382,44 @@ vrkiu_getc()
 	return 0;
 }
 
+/*
+ * hpckbd interface routines
+ */
 int
-vrkiu_enable(scx, on)
-	void *scx;
-	int on;
+vrkiu_input_establish(ic, kbdif)
+	void *ic;
+	struct hpckbd_if *kbdif;
 {
-	struct vrkiu_softc *sc = scx;
+	struct vrkiu_chip *kc = ic;
 
-	if (on) {
-		if (sc->sc_enabled)
-			return (EBUSY);
-		sc->sc_enabled = 1;
-	} else {
-		if (sc->sc_chip == vrkiu_consdata)
-			return (EBUSY);
-		sc->sc_enabled = 0;
-	}
+	/* save hpckbd interface */
+	kc->kc_hpckbd = kbdif;
+	
+	kc->kc_enabled = 1;
 
-	return (0);
-}
-
-void
-vrkiu_set_leds(scx, leds)
-	void *scx;
-	int leds;
-{
-	/*struct pckbd_softc *sc = scx;
-	 */
-
-	DPRINTF(("%s(%d): vrkiu_set_leds() not implemented\n",
-		 __FILE__, __LINE__));
+	return 0;
 }
 
 int
-vrkiu_ioctl(scx, cmd, data, flag, p)
-	void *scx;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+vrkiu_poll(ic)
+	void *ic;
 {
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	struct vrkiu_softc *sc = scx;
+	struct vrkiu_chip *kc = ic;
+
+#if 1
+	/* wait until kiu completes keyboard scan. */
+	while ((vrkiu_read(kc, KIUSCANS) & KIUSCANS_SSTAT_MASK) ==
+	       KIUSCANS_SSTAT_SCANNING)
+		/* wait until kiu completes keyboard scan */;
 #endif
 
-	switch (cmd) {
-	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_HPC_KBD;
-		return 0;
-	case WSKBDIO_SETLEDS:
-		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
-		return 0;
-	case WSKBDIO_GETLEDS:
-		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
-		*(int *)data = 0;
-		return (0);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	    case WSKBDIO_SETMODE:
-		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
-		DPRINTF(("%s(%d): rawkbd is %s\n", __FILE__, __LINE__,
-			 sc->sc_rawkbd ? "on" : "off"));
-		return (0);
-#endif
-	}
-	return (-1);
+	vrkiu_scan(kc);
+
+	return 0;
 }
 
 /*
- * console support routines
+ * console support routine
  */
 int
 vrkiu_cnattach(iot, iobase)
@@ -751,48 +443,7 @@ vrkiu_cnattach(iot, iobase)
 	}
 	vrkiu_consdata = &vrkiu_consdata_body;
 
-	wskbd_cnattach(&vrkiu_consops, vrkiu_consdata, &vrkiu_keymapdata);
+	hpckbd_cnattach(&vrkiu_consdata_body.kc_if);
 
 	return (0);
-}
-
-void
-vrkiu_cngetc(chipx, type, data)
-	void *chipx;
-	u_int *type;
-	int *data;
-{
-	struct vrkiu_chip* chip = chipx;
-	int s;
-
-	if (!chip->kc_polling) {
-		printf("%s(%d): kiu is not polled\n", __FILE__, __LINE__);
-		/*
-		 * Don't call panic() because it may call this routine
-		 * recursively.
-		 */
-		printf("halt\n");
-		while (1);
-	}
-
-	s = splimp();
-	while (vrkiu_getevent(chip, type, data) == 0) /* busy loop */
-		detect_key(chip);
-	splx(s);
-}
-
-void
-vrkiu_cnpollc(chipx, on)
-	void *chipx;
-        int on;
-{
-	struct vrkiu_chip* chip = chipx;
-	int s = splimp();
-
-	chip->kc_polling = on;
-
-	splx(s);
-
-	DPRINTF(("%s(%d): vrkiu polling %s\n",
-		 __FILE__, __LINE__, on ? "ON" : "OFF"));
 }

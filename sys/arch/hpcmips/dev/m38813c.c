@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.2 2000/01/03 18:24:03 uch Exp $ */
+/*	$NetBSD: m38813c.c,v 1.3 2000/09/21 14:17:29 takemura Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -44,7 +44,7 @@
 #include <hpcmips/tx/txcsbusvar.h>
 
 #include <hpcmips/dev/m38813cvar.h>
-#include <hpcmips/dev/skbdvar.h>
+#include <hpcmips/dev/hpckbdvar.h>
 
 struct m38813c_chip {
 	bus_space_tag_t		scc_cst;
@@ -54,7 +54,8 @@ struct m38813c_chip {
 	int t_extended;
 	int t_extended1;
 
-	struct skbd_controller	scc_controller;
+	struct hpckbd_ic_if	scc_if;
+	struct hpckbd_if	*scc_hpckbd;
 };
 
 struct m38813c_softc {
@@ -69,9 +70,7 @@ void	m38813c_attach __P((struct device*, struct device*, void*));
 int	m38813c_intr __P((void*));
 int	m38813c_poll __P((void*));
 void	m38813c_ifsetup __P((struct m38813c_chip*));
-
-int	m38813c_input_establish __P((void*, int (*) __P((void*, int, int)),
-				     void (*) __P((void*)), void*));
+int	m38813c_input_establish __P((void*, struct hpckbd_if*));
 
 struct m38813c_chip m38813c_chip;
 
@@ -96,7 +95,7 @@ m38813c_attach(parent, self, aux)
 {
 	struct cs_attach_args *ca = aux;
 	struct m38813c_softc *sc = (void*)self;
-	struct skbd_attach_args saa;
+	struct hpckbd_attach_args haa;
 
 	sc->sc_tc = ca->ca_tc;
 	sc->sc_chip = &m38813c_chip;
@@ -121,19 +120,19 @@ m38813c_attach(parent, self, aux)
 	/* setup upper interface */
 	m38813c_ifsetup(sc->sc_chip);
 
-	saa.saa_ic = &sc->sc_chip->scc_controller;
+	haa.haa_ic = &sc->sc_chip->scc_if;
 
-	config_found(self, &saa, skbd_print);
+	config_found(self, &haa, hpckbd_print);
 }
 
 void
 m38813c_ifsetup(scc)
 	struct m38813c_chip *scc;
 {
-	scc->scc_controller.skif_v		= scc;
+	scc->scc_if.hii_ctx		= scc;
 
-	scc->scc_controller.skif_establish	= m38813c_input_establish;
-	scc->scc_controller.skif_poll		= m38813c_intr;
+	scc->scc_if.hii_establish	= m38813c_input_establish;
+	scc->scc_if.hii_poll		= m38813c_intr;
 }
 
 int
@@ -146,26 +145,20 @@ m38813c_cnattach(addr)
 
 	m38813c_ifsetup(scc);
 
-	skbd_cnattach(&scc->scc_controller);
+	hpckbd_cnattach(&scc->scc_if);
 
 	return 0;
 }
 
 int
-m38813c_input_establish(ic, inputfunc, inputhookfunc, arg)
+m38813c_input_establish(ic, kbdif)
 	void *ic;
-	int (*inputfunc) __P((void*, int, int));
-	void (*inputhookfunc) __P((void*));
-	void *arg;
+	struct hpckbd_if *kbdif;
 {
 	struct m38813c_chip *scc = ic;
 
-	/* setup lower interface */
-
-	scc->scc_controller.sk_v = arg;
-
-	scc->scc_controller.sk_input = inputfunc;
-	scc->scc_controller.sk_input_hook = inputhookfunc;
+	/* save lower interface */
+	scc->scc_hpckbd = kbdif;
 
 	scc->scc_enabled = 1;
 
@@ -199,7 +192,7 @@ m38813c_poll(arg)
 
 	datain= bus_space_read_1(t, h, 0);
 	
-	skbd_input_hook(&scc->scc_controller);
+	hpckbd_input_hook(scc->scc_hpckbd);
 
 	if (datain == KBR_EXTENDED0) {
 		scc->t_extended = 1;
@@ -239,7 +232,7 @@ m38813c_poll(arg)
 		type = 1;
 	}
 
-	skbd_input(&scc->scc_controller, type, key);
+	hpckbd_input(scc->scc_hpckbd, type, key);
 
 	return 0;
 }
