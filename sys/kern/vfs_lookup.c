@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.44 2003/02/01 06:23:45 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.45 2003/04/10 07:26:52 erh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.44 2003/02/01 06:23:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.45 2003/04/10 07:26:52 erh Exp $");
 
 #include "opt_ktrace.h"
 
@@ -157,6 +157,12 @@ namei(ndp)
 		VREF(dp);
 	}
 	for (;;) {
+		if (!dp->v_mount)
+		{
+			/* Give up if the directory is no longer mounted */
+			PNBUF_PUT(cnp->cn_pnbuf);
+			return (ENOENT);
+		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
 		if ((error = lookup(ndp)) != 0) {
