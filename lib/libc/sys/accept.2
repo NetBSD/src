@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)accept.2	6.6 (Berkeley) 4/29/91
-.\"	$Id: accept.2,v 1.3 1993/11/25 00:38:19 jtc Exp $
+.\"	$Id: accept.2,v 1.4 1993/11/29 21:24:57 jtc Exp $
 .\"
 .Dd April 29, 1991
 .Dt ACCEPT 2
@@ -137,7 +137,7 @@ integer that is a descriptor for the accepted socket.
 The
 .Fn accept
 will fail if:
-.Bl -tag -width EWOULDBLOCK
+.Bl -tag -width Er
 .It Bq Er EBADF
 The descriptor is invalid.
 .It Bq Er ENOTSOCK

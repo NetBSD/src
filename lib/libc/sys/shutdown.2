@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)shutdown.2	6.4 (Berkeley) 3/10/91
-.\"	$Id: shutdown.2,v 1.3 1993/11/25 00:39:41 jtc Exp $
+.\"	$Id: shutdown.2,v 1.4 1993/11/29 21:25:38 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SHUTDOWN 2
@@ -62,7 +62,7 @@ is 2, further sends and receives will be disallowed.
 A 0 is returned if the call succeeds, -1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
-.Bl -tag -width ENOTCONNAA
+.Bl -tag -width Er
 .It Bq Er EBADF
 .Fa S
 is not a valid descriptor.

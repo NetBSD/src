@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)sigprocmask.2	6.4 (Berkeley) 7/23/91
-.\"	$Id: sigprocmask.2,v 1.3 1993/11/25 00:39:42 jtc Exp $
+.\"	$Id: sigprocmask.2,v 1.4 1993/11/29 21:25:39 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt SIGPROCMASK 2
@@ -104,10 +104,11 @@ The
 .Fn sigprocmask
 call will fail and the signal mask will be unchanged if one
 of the following occurs:
-.Bl -tag -width Bq Er EINVAL
+.Bl -tag -width Er
 .It Bq Er EINVAL
 .Fa how
 has a value other than those listed here.
+.El
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
