@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.21 2003/04/06 10:11:54 jdolecek Exp $
+#	$NetBSD: RESPONSIBLE,v 1.22 2003/04/06 14:27:50 tsutsui Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -100,15 +100,20 @@ eap		pooka
 network device drivers:
 
 gsip		thorpej
+mb86960		tsutsui
 seeq8005	bjh21
 tl		bouyer
 ti		bouyer
 
 scsi device drivers:
 
-siop		bouyer
 esiop		bouyer
-
+iha		tsutsui
+oosiop		tsutsui
+osiop		tsutsui
+pcscp		tsutsui
+siop		bouyer
+trm		tsutsui
 
 file systems:
 
