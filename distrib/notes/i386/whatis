@@ -1,13 +1,13 @@
-For the i386, NetBSD 1.1 brings greatly improved performance,
-stability, and device support. Emulation for several UN*X and UN*X
-like operating systems, including Linux and FreeBSD, has been added.
-Many new PCI devices are supported, such as cards based on the AMD
-PCnet-PCI Ethernet chip, the Digital DC21x4x family of Ethernet chips,
-and the Adaptec AIC7870 SCSI host adapter chip.  Some drivers such as
-"ccd" which previously only worked on other ports of NetBSD now work
-on the i386 port.  Though still not known to be entirely stable, the
-"ncr" driver for 53c8xx-series SCSI adapters has had substantial bugs
-and performance issues resolved.
+For the i386, NetBSD 1.2 brings a number of new device drivers, many
+bug fixes, improvements in Linux emulation (including support for sound)
+and the other emulations (SVR4, IBCS2, FreeBSD), and enhancements to
+a number of existing device drivers such as the "ahc" driver for Adaptec
+AHC-2X4X and AIC-7XXX-based SCSI host adapters and the "bt" driver for Bus
+Logic SCSI host adapters.  Support for PCI-PCI bridges allows the use of cards
+such as Cogent and SMC multiple-port Ethernet cards and Adaptec 3940
+multichannel SCSI host adapters with preexisting device drivers.
 
-NetBSD 1.1 on i386 is also fully backward compatible with old NetBSD
-i386 binaries, so you don't need to recompile all your local programs.
+FDDI is now supported; drivers are in the generic (but not install) kernels.
+
+NetBSD 1.2 on i386 is, as usual, also fully backward compatible with old
+NetBSD i386 binaries, so you don't need to recompile all your local programs.

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.sh,v 1.4 1996/08/30 17:37:32 thorpej Exp $
+#	$NetBSD: install.sh,v 1.5 1996/10/09 00:13:36 jtc Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -30,6 +30,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+#	$Id: install.sh,v 1.5 1996/10/09 00:13:36 jtc Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable

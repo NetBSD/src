@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1995/11/28 23:58:56 jtc Exp $ 
+#	$NetBSD: Makefile.inc,v 1.6 1996/10/09 00:13:36 jtc Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -39,11 +39,17 @@ all: netbsd
 
 inject.fs: ${CBIN} ${LISTS} netbsd.gz 
 	(cd ${PWDSRC}; ${MAKE})
-	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o
+	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o -lutil
+.ifndef SD
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -v -c ${VND_DEV} ${.TARGET}
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
 	mount ${VND_DEV} ${MOUNT_POINT}
+.else
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 -s 4096 \
+		-t 1 -u 256 /dev/r${SD}
+	mount /dev/${SD} ${MOUNT_POINT}
+.endif
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
@@ -51,7 +57,11 @@ inject.fs: ${CBIN} ${LISTS} netbsd.gz
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
+.ifndef SD
 	vnconfig -u ${VND_DEV}
+.else
+	dd if=/dev/${SD} of=${.TARGET} bs=128k count=16
+.endif
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -59,7 +69,6 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	(cd ${COMMONDIR}; ${MAKE} download.o)
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
