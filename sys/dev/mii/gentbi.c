@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.1 2001/07/12 18:49:38 thorpej Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.2 2001/07/25 22:00:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -278,14 +278,14 @@ gentbi_status(sc)
 		}
 
 		/*
-		 * The media is always 1000baseSX.
-		 * Check the ANLPAR to see if we're
-		 * doing full-duplex.
+		 * The media is always 1000baseSX.  Check the ANLPAR to
+		 * see if we're doing full-duplex.
 		 */
 		mii->mii_media_active |= IFM_1000_SX;
 
-		anlpar = PHY_READ(sc, MII_ANAR) & PHY_READ(sc, MII_ANLPAR);
-		if (anlpar & ANLPAR_TX_FD)
+		anlpar = PHY_READ(sc, MII_ANLPAR);
+		if ((sc->mii_extcapabilities & EXTSR_1000XFDX) != 0 &&
+		    (anlpar & ANLPAR_X_FD) != 0)
 			mii->mii_media_active |= IFM_FDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
