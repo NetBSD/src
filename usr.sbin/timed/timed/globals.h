@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.7 2001/09/02 00:13:06 reinoud Exp $	*/
+/*	$NetBSD: globals.h,v 1.8 2002/09/19 00:01:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

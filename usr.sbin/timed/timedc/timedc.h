@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.h,v 1.8 2002/07/06 22:01:41 wiz Exp $	*/
+/*	$NetBSD: timedc.h,v 1.9 2002/09/19 00:01:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,6 +38,8 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.11 2002/07/06 22:01:40 wiz Exp $	*/
+/*	$NetBSD: cmds.c,v 1.12 2002/09/19 00:01:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.11 2002/07/06 22:01:40 wiz Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.12 2002/09/19 00:01:33 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,16 +85,18 @@ daydiff(char *hostname)
 {
 	int i;
 	int trials;
-	struct timeval tout, now;
-	fd_set ready;
+	int tout;
+	struct timeval now;
+	struct pollfd set[1];
 	struct sockaddr from;
 	int fromlen;
 	unsigned long sec;
 
 
 	/* wait 2 seconds between 10 tries */
-	tout.tv_sec = 2;
-	tout.tv_usec = 0;
+	tout = 2000;
+	set[0].fd = sock;
+	set[0].events = POLLIN;
 	for (trials = 0; trials < 10; trials++) {
 		/* ask for the time */
 		sec = 0;
@@ -105,14 +107,11 @@ daydiff(char *hostname)
 		}
 
 		for (;;) {
-			FD_ZERO(&ready);
-			FD_SET(sock, &ready);
-			i = select(sock+1, &ready, (fd_set *)0,
-				   (fd_set *)0, &tout);
+			i = poll(set, 1, tout);
 			if (i < 0) {
 				if (errno == EINTR)
 					continue;
-				perror("select(date read)");
+				perror("poll(date read)");
 				return 0;
 			}
 			if (0 == i)
@@ -269,11 +268,11 @@ void
 msite(int argc, char *argv[])
 {
 	int cc;
-	fd_set ready;
+	struct pollfd set[1];
 	struct sockaddr_in dest;
 	int i, length;
 	struct sockaddr from;
-	struct timeval tout;
+	int tout;
 	struct tsp msg;
 	struct servent *srvp;
 	char *tgtname;
@@ -293,6 +292,9 @@ msite(int argc, char *argv[])
 
 	(void)gethostname(myname, sizeof(myname));
 	i = 1;
+	tout = 15000;
+	set[0].fd = sock;
+	set[0].events = POLLIN;
 	do {
 		tgtname = (i >= argc) ? myname : argv[i];
 		hp = gethostbyname(tgtname);
@@ -314,12 +316,7 @@ msite(int argc, char *argv[])
 			continue;
 		}
 
-		tout.tv_sec = 15;
-		tout.tv_usec = 0;
-		FD_ZERO(&ready);
-		FD_SET(sock, &ready);
-		if (select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0,
-			   &tout)) {
+		if (poll(set, 1, tout)) {
 			length = sizeof(struct sockaddr);
 			cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 				      &from, &length);
@@ -410,10 +407,10 @@ tracing(int argc, char *argv[])
 	int onflag;
 	int length;
 	int cc;
-	fd_set ready;
+	struct pollfd set[1];
 	struct sockaddr_in dest;
 	struct sockaddr from;
-	struct timeval tout;
+	int tout;
 	struct tsp msg;
 	struct servent *srvp;
 
@@ -451,11 +448,10 @@ tracing(int argc, char *argv[])
 		return;
 	}
 
-	tout.tv_sec = 5;
-	tout.tv_usec = 0;
-	FD_ZERO(&ready);
-	FD_SET(sock, &ready);
-	if (select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0, &tout)) {
+	tout = 5000;
+	set[0].fd = sock;
+	set[0].events = POLLIN;
+	if (poll(set, 1, tout)) {
 		length = sizeof(struct sockaddr);
 		cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 			      &from, &length);
