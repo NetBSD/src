@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.129 2000/12/13 03:16:38 mycroft Exp $
+# $NetBSD: files.alpha,v 1.130 2000/12/14 18:06:14 mycroft Exp $
 #
 # alpha-specific configuration info
 
@@ -523,13 +523,14 @@ file	arch/alpha/alpha/compat_13_machdep.c	compat_13
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
-file	arch/alpha/alpha/osf1_locore.s		compat_osf1
+file	arch/alpha/alpha/osf1_sigcode.s		compat_osf1
 file	arch/alpha/alpha/osf1_syscall.c		compat_osf1
 
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/alpha/files.linux_alpha"
 file	arch/alpha/alpha/linux_sigcode.s	compat_linux
+file	arch/alpha/alpha/linux_syscall.c	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
