@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2004/01/19 03:26:14 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2004/03/06 07:50:56 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2004/01/19 03:26:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2004/03/06 07:50:56 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -755,9 +755,9 @@ unimpl_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 }
 
 static void
-unimpl_intr(u_int32_t a, u_int32_t b, u_int32_t c, u_int32_t d)
+unimpl_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
-	panic("target init didn't set unimpl_intr");
+	printf("spurious interrupt, ipending %x\n", ipending);
 }
 
 static unsigned long
