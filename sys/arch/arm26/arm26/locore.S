@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.21 2001/12/20 01:20:24 thorpej Exp $ */
+/* $NetBSD: locore.S,v 1.22 2001/12/20 16:22:14 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -345,11 +345,6 @@ ENTRY(set_r13_irq)
 	MODE_CHANGE_NOP
 	movs	r15, lr
 
-	/*
-	 * These are grotty, and very non-APCS.  The CPU interrupt status
-	 * is part of the state that's restored on function exit, so the
-	 * effect of these only persists until then.
-	 */
 /* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
 	bics	r15, r14, #(R15_IRQ_DISABLE)
@@ -373,11 +368,6 @@ ENTRY(fiq_off)
 ENTRY(fiq_on)
 	bics	r15, r14, #(R15_FIQ_DISABLE)
 
-	/*
-	 * These are grotty, and very non-APCS.  The CPU interrupt status
-	 * is part of the state that's restored on function exit, so the
-	 * effect of these only persists until then.
-	 */
 ENTRY_NP(set_r15)
 	mov	r3, r14			/* get caller's IRQ state */
 	bic	r2, r3, r0
@@ -463,4 +453,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.21 2001/12/20 01:20:24 thorpej Exp $")
+RCSID("$NetBSD: locore.S,v 1.22 2001/12/20 16:22:14 bjh21 Exp $")
