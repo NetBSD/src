@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.21 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.22 2003/01/04 13:17:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.21 2002/12/17 18:42:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.22 2003/01/04 13:17:07 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -442,8 +442,8 @@ mach_vm_inherit(args)
 
 	SCARG(&cup, addr) = (void *)req->req_addr;
 	SCARG(&cup, len) = req->req_size;
-	/* Flags map well between Mach and NetBSD, just a 8 bit shift */
-	SCARG(&cup, inherit) = req->req_inh << 8;
+	/* Flags map well between Mach and NetBSD */
+	SCARG(&cup, inherit) = req->req_inh;
 
 	if ((error = sys_minherit(p, &cup, &retval)) != 0)
 		return mach_msg_error(args, error);
