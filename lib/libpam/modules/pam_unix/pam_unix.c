@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.5 2005/02/26 02:57:32 thorpej Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.5.2.1 2005/03/19 17:53:16 tron Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.5 2005/02/26 02:57:32 thorpej Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.5.2.1 2005/03/19 17:53:16 tron Exp $");
 #endif
 
 
@@ -540,6 +540,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 		/* Get the new password. */
 		for (tries = 0;;) {
+			pam_set_item(pamh, PAM_AUTHTOK, NULL);
 			retval = pam_get_authtok(pamh, PAM_AUTHTOK, &new_pass,
 			    NULL);
 			if (retval == PAM_TRY_AGAIN) {
