@@ -111,6 +111,7 @@ execve(p, uap, retval)
 	struct vmspace *vs;
 	caddr_t newframe;
 	char shellname[MAXINTERP];			/* 05 Aug 92*/
+	char arguments[MAXINTERP];
 	long magic;
 	union {
 		char	ex_shell[MAXINTERP];	/* #! and interpreter name */
@@ -210,7 +211,17 @@ again:							/* 05 Aug 92*/
 			*sp++ = *cp++;
 		*sp = '\0';
 
-		indir = 1;              /* indicate this is a script file */
+		while (*cp == ' ')
+			cp++;
+		if (*cp) { /* extra argument */
+			sp = arguments;
+			while (*cp)
+				*sp++ = *cp++;
+			*sp = '\0';
+			indir = 2;
+		}
+		else
+			indir = 1;      /* indicate this is a script file */
 		vput(ndp->ni_vp);
 		FREE(ndp->ni_pnbuf, M_NAMEI);
 
@@ -283,7 +294,7 @@ again:							/* 05 Aug 92*/
 	/* first, do (shell name if any then) args */
 	if (indir)  {
 		ep = shellname;
-twice:
+thrice:
 		if (ep) {
 			/* did we outgrow initial argbuf, if so, die */
 			if (argbufp >= (char **)stringbuf) {
@@ -303,11 +314,16 @@ twice:
 			limitonargs -= stringlen;
 		}
 
-		if (indir) {
+		if (indir == 2) {
+			indir = 1;
+			ep = arguments;
+			goto thrice;
+		}
+		if (indir == 1) {
 			indir = 0;
 			/* orginal executable is 1st argument with scripts */
 			ep = uap->fname;
-			goto twice;
+			goto thrice;
 		}
 		/* terminate in case no more args to script */
 		suword(argbufp, 0);
