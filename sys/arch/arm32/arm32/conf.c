@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1998/06/12 23:59:22 tv Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1998/06/19 18:29:31 tv Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -370,11 +370,10 @@ struct consdev constab[] = {
 #endif
 #if (NVT + NRPC > 0)
 	cons_init(rpcconsole),
+#elif (NPC > 0)
+	cons_init(pc),
 #elif (NOFCONS > 0)			/* XXX should work together */
 	cons_init(ofcons_),
-#endif
-#if (NPC > 0)
-	cons_init(pc),
 #endif
 	{ 0 },
 };
