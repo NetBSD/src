@@ -64,11 +64,10 @@ static char     *__ypcurrent, *__ypdomain;
 static int      __ypcurrentlen, __ypmode=0;
 static char	line[1024];
 
-int
-__ypparse(pw, s, l)
+static int
+__ypparse(pw, s)
 struct passwd *pw;
 char *s;
-int l;
 {
 	char *bp, *cp;
 
@@ -239,7 +238,9 @@ getpwnam(name)
 				__ypcurrent = NULL;
 				continue;
 			}
-			if(__ypparse(&_pw_passwd, __ypcurrent, __ypcurrentlen))
+			bcopy(__ypcurrent, line, __ypcurrentlen);
+			line[__ypcurrentlen] = '\0';
+			if(__ypparse(&_pw_passwd, line))
 				continue;
 		}
 		if( strcmp(_pw_passwd.pw_name, name) == 0) {
@@ -324,7 +325,9 @@ getpwuid(uid)
 				__ypcurrent = NULL;
 				continue;
 			}
-			if(__ypparse(&_pw_passwd, __ypcurrent, __ypcurrentlen))
+			bcopy(__ypcurrent, line, __ypcurrentlen);
+			line[__ypcurrentlen] = '\0';
+			if(__ypparse(&_pw_passwd, line))
 				continue;
 		}
 		if( _pw_passwd.pw_uid == uid) {
