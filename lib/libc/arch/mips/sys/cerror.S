@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.9.2.2 2002/11/11 22:21:44 nathanw Exp $	*/
+/*	$NetBSD: cerror.S,v 1.9.2.3 2002/11/20 09:41:02 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,27 +40,27 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
-	ASMSTR("$NetBSD: cerror.S,v 1.9.2.2 2002/11/11 22:21:44 nathanw Exp $")
+	ASMSTR("$NetBSD: cerror.S,v 1.9.2.3 2002/11/20 09:41:02 wdk Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _REENTRANT
 	.globl	_C_LABEL(__errno)
 NESTED_NOPROFILE(__cerror, CALLFRAME_SIZ, ra)
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(__cerror, t9)
 	subu	sp, sp, CALLFRAME_SIZ
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)
-	sw	v0, CALLFRAME_SIZ(sp)	# stash away errno value
+	sw	v0, 12(sp)		# save errno value
 
 	la	t9, _C_LABEL(__errno)	# locate address of errno
 	jalr	t9
 	nop
 
-	lw	t0, CALLFRAME_SIZ(sp)	# restore errno value
+	lw	t0, 12(sp)
 	lw	ra, CALLFRAME_RA(sp)
 	sw	t0, 0(v0)		# update errno value
-	li	v0, -1
 	addiu	sp, sp, CALLFRAME_SIZ
+	li	v0, -1
 	j	ra
 	move	v1, v0			# -BDSlot
 END(__cerror)
