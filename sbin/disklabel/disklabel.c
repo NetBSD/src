@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.111 2002/12/12 11:34:46 scw Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.112 2003/01/06 20:30:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.111 2002/12/12 11:34:46 scw Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.112 2003/01/06 20:30:30 wiz Exp $");
 #endif
 #endif	/* not lint */
 
@@ -128,7 +128,7 @@ static char	boot1[MAXPATHLEN];
 #endif	/* NUMBOOT > 0 */
 
 static enum	{
-	UNSPEC, EDIT, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT, INTERACT
+	UNSPEC, EDIT, READ, RESTORE, SETWRITABLE, WRITE, WRITEBOOT, INTERACT
 } op = UNSPEC;
 
 static	int	rflag;
@@ -185,7 +185,7 @@ main(int argc, char *argv[])
 {
 	struct disklabel *lp;
 	FILE	*t;
-	int	 ch, f, writeable, error;
+	int	 ch, f, writable, error;
 
 	error = 0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
@@ -212,8 +212,8 @@ main(int argc, char *argv[])
 		case 'N':
 			if (op != UNSPEC)
 				usage();
-			writeable = 0;
-			op = SETWRITEABLE;
+			writable = 0;
+			op = SETWRITABLE;
 			break;
 		case 'R':
 			if (op != UNSPEC)
@@ -223,8 +223,8 @@ main(int argc, char *argv[])
 		case 'W':
 			if (op != UNSPEC)
 				usage();
-			writeable = 1;
-			op = SETWRITEABLE;
+			writable = 1;
+			op = SETWRITABLE;
 			break;
 		case 'e':
 			if (op != UNSPEC)
@@ -365,8 +365,8 @@ main(int argc, char *argv[])
 			error = writelabel(f, bootarea, lp);
 		break;
 
-	case SETWRITEABLE:
-		if (ioctl(f, DIOCWLABEL, (char *)&writeable) < 0)
+	case SETWRITABLE:
+		if (ioctl(f, DIOCWLABEL, (char *)&writable) < 0)
 			err(4, "ioctl DIOCWLABEL");
 		break;
 
@@ -477,7 +477,7 @@ confirm(const char *txt)
 int
 writelabel(int f, char *boot, struct disklabel *lp)
 {
-	int	writeable;
+	int	writable;
 	off_t	sectoffset;
 
 	sectoffset = 0;
@@ -547,8 +547,8 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * write enable label sector before write (if necessary),
 		 * disable after writing.
 		 */
-		writeable = 1;
-		if (ioctl(f, DIOCWLABEL, &writeable) < 0)
+		writable = 1;
+		if (ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
 
 #ifdef __alpha__
@@ -579,8 +579,8 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		}
 #endif	/* NUMBOOT > 0 */
 
-		writeable = 0;
-		if (ioctl(f, DIOCWLABEL, &writeable) < 0)
+		writable = 0;
+		if (ioctl(f, DIOCWLABEL, &writable) < 0)
 			perror("ioctl DIOCWLABEL");
 	} else {
 		if (ioctl(f, DIOCWDINFO, lp) < 0) {

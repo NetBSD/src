@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.33 2002/10/23 09:14:23 jdolecek Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.34 2003/01/06 20:30:38 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.33 2002/10/23 09:14:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.34 2003/01/06 20:30:38 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ soo_poll(fp, events, p)
 			revents |= events & (POLLIN | POLLRDNORM);
 
 	if (events & (POLLOUT | POLLWRNORM))
-		if (sowriteable(so))
+		if (sowritable(so))
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (events & (POLLPRI | POLLRDBAND))

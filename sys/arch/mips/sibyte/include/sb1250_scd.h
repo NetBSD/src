@@ -183,7 +183,7 @@
 #define V_SYS_CONFIG(x)             _SB_MAKEVALUE(x,S_SYS_CONFIG)
 #define G_SYS_CONFIG(x)             _SB_GETVALUE(x,S_SYS_CONFIG,M_SYS_CONFIG)
 
-/* The following bits are writeable by JTAG only. */
+/* The following bits are writable by JTAG only. */
 
 #define M_SYS_CLKSTOP               _SB_MAKEMASK1(32)
 #define M_SYS_CLKSTEP               _SB_MAKEMASK1(33)

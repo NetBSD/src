@@ -1,4 +1,4 @@
-# $NetBSD: rc.hack,v 1.4 1997/04/18 18:05:26 cgd Exp $
+# $NetBSD: rc.hack,v 1.5 2003/01/06 20:30:42 wiz Exp $
 
 # Hackish /etc/rc to do basic setup for a distribution rz25 image to
 # make it slightly easier to use.
@@ -41,7 +41,7 @@ cd|sd|wd)
 	;;
 esac
 
-# If /tmp is already writeable, we've already been run...  punt!
+# If /tmp is already writable, we've already been run...  punt!
 if [ -w /tmp ]; then
 	echo ""
 	case $root_dev_base in
