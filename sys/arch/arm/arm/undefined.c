@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.18 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.19 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.18 2003/10/05 19:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.19 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -132,7 +132,8 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 	if (insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) {
 		if (code == FAULT_USER) {
 			ksiginfo_t ksi;
-			(void)memset(&ksi, 0, sizeof(ksi));
+
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_code = TRAP_BRKPT;
 			ksi.ksi_addr = (u_int32_t *)addr;
@@ -281,7 +282,7 @@ undefinedinstruction(trapframe_t *frame)
 			Debugger();
 #endif
 		}
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)fault_pc;

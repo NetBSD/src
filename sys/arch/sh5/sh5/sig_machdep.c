@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.17 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.18 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2003/10/05 09:57:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.18 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -95,7 +95,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	ssp = (struct sigframe_siginfo *)((caddr_t)ssp - ((fsize + 15) & ~15));
 
 	/* Build stack frame for signal trampoline. */
-	kss.sf_si._info = *ksi;
+	kss.sf_si._info = ksi->ksi_info;
 	kss.sf_uc.uc_flags = _UC_SIGMASK;
 	kss.sf_uc.uc_sigmask = *returnmask;
 	kss.sf_uc.uc_link = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2003/09/22 14:27:11 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2003/09/22 14:27:11 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -342,7 +342,7 @@ trap(type, code, v, frame)
 	uvmexp.traps++;
 	l = curlwp;
 
-	(void)memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
 	/* I have verified that this DOES happen! -gwr */
