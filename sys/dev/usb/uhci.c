@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.107 2000/03/29 18:24:53 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.108 2000/03/29 18:55:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -179,8 +179,6 @@ Static void		uhci_idone __P((uhci_intr_info_t *));
 
 Static void		uhci_abort_xfer __P((usbd_xfer_handle,
 			    usbd_status status));
-Static void		uhci_abort_unlink_qh __P((struct uhci_pipe *));
-Static void		uhci_abort_relink_qh __P((struct uhci_pipe *));
 
 Static void		uhci_timeout __P((void *));
 Static void		uhci_add_ctrl __P((uhci_softc_t *, uhci_soft_qh_t *));
