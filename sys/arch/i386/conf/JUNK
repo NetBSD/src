@@ -1,4 +1,4 @@
-#	$NetBSD: JUNK,v 1.4 1996/03/04 03:26:00 cgd Exp $
+#	$NetBSD: JUNK,v 1.5 1996/03/05 01:32:21 thorpej Exp $
 #
 #	JUNK -- Adam's Compaq SLT 386/20
 #
@@ -9,6 +9,11 @@ options		I386_CPU
 options		MATH_EMULATE
 
 options		MACHINE_NONCONTIG
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=... # size of extended memory
 
 maxusers	3		# estimated number of users
 options		TIMEZONE=480	# time zone to adjust RTC time by
