@@ -1,6 +1,6 @@
 # Makefile.dist
 #
-# Copyright (c) 1996-1999 Internet Software Consortium.
+# Copyright (c) 1996-2001 Internet Software Consortium.
 # Use is subject to license terms which appear in the file named
 # ISC-LICENSE that should have accompanied this file when you
 # received it.   If a file named ISC-LICENSE did not accompany this
@@ -21,20 +21,20 @@ CATMANPAGES = omapi.cat3
 SEDMANPAGES = omapi.man3
 SRC    = protocol.c buffer.c alloc.c result.c connection.c errwarn.c \
 	 listener.c dispatch.c generic.c support.c handle.c message.c \
-	 convert.c hash.c auth.c inet_addr.c
+	 convert.c hash.c auth.c inet_addr.c array.c trace.c mrtrace.c
 OBJ    = protocol.o buffer.o alloc.o result.o connection.o errwarn.o \
 	 listener.o dispatch.o generic.o support.o handle.o message.o \
-	 convert.o hash.o auth.o inet_addr.o
+	 convert.o hash.o auth.o inet_addr.o array.o trace.o mrtrace.o
 MAN    = omapi.3
 
-DEBUG  = -g
 INCLUDES = $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
 all:	libomapi.a svtest $(CATMANPAGES)
 
-svtest:	test.o libomapi.a $(BINDLIB)
-	$(CC) $(DEBUG) $(LFLAGS) -o svtest test.o libomapi.a $(BINDLIB) $(LIBS)
+svtest:	test.o libomapi.a $(BINDLIB) ../dst/libdst.a
+	$(CC) $(DEBUG) $(LFLAGS) -o svtest test.o $(BINDLIB) \
+			libomapi.a ../dst/libdst.a $(LIBS)
 
 libomapi.a:	$(OBJ)
 	rm -f libomapi.a

@@ -1,35 +1,17 @@
 # Makefile.dist
-#
-# Copyright (c) 1996-2000 Internet Software Consortium.
-# Use is subject to license terms which appear in the file named
-# ISC-LICENSE that should have accompanied this file when you
-# received it.   If a file named ISC-LICENSE did not accompany this
-# file, or you are not sure the one you have is correct, you may
-# obtain an applicable copy of the license at:
-#
-#             http://www.isc.org/isc-license-1.0.html. 
-#
-# This file is part of the ISC DHCP distribution.   The documentation
-# associated with this file is listed in the file DOCUMENTATION,
-# included in the top-level directory of this release.
-#
-# Support and other services are available for ISC products - see
-# http://www.isc.org for more information.
-#
 
 CATMANPAGES = dhcp-options.cat5 dhcp-contrib.cat5 dhcp-eval.cat5
 SEDMANPAGES = dhcp-options.man5 dhcp-contrib.man5 dhcp-eval.man5
 SRC    = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 	 lpf.c dlpi.c packet.c tr.c ethernet.c memory.c print.c options.c \
-	 inet.c tree.c tables.c alloc.c fddi.c \
+	 inet.c tree.c tables.c alloc.c fddi.c ctrace.c \
 	 dns.c resolv.c execute.c discover.c comapi.c
 OBJ    = raw.o parse.o nit.o icmp.o dispatch.o conflex.o upf.o bpf.o socket.o \
 	 lpf.o dlpi.o packet.o tr.o ethernet.o memory.o print.o options.o \
-	 inet.o tree.o tables.o alloc.o fddi.o \
+	 inet.o tree.o tables.o alloc.o fddi.o ctrace.o \
 	 dns.o resolv.o execute.o discover.o comapi.o
 MAN    = dhcp-options.5 dhcp-contrib.5 dhcp-eval.5
 
-DEBUG  = -g
 INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
@@ -65,7 +47,7 @@ clean:
 	-rm -f $(OBJ)
 
 realclean: clean
-	-rm -f libdhcp.a *~ $(CATMANPAGES) $(SEDMANPAGES)
+	-rm -f libdhcp.a $(CATMANPAGES) $(SEDMANPAGES) *~ #*
 
 distclean: realclean
 	-rm -f Makefile

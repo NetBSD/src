@@ -20,15 +20,14 @@
 CATMANPAGES = dhcpd.cat8 dhcpd.conf.cat5 dhcpd.leases.cat5
 SEDMANPAGES = dhcpd.man8 dhcpd.conf.man5 dhcpd.leases.man5
 SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c class.c failover.c \
-	 omapi.c mdb.c stables.c salloc.c
+	 omapi.c mdb.c stables.c salloc.c ddns.c
 OBJS   = dhcpd.o dhcp.o bootp.o confpars.o db.o class.o failover.o \
-	 omapi.o mdb.o stables.o salloc.o
+	 omapi.o mdb.o stables.o salloc.o ddns.o
 PROG   = dhcpd
 MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 
-DEBUG  = -g
 INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
-DHCPLIB = ../common/libdhcp.a ../omapip/libomapi.a $(BINDLIB)
+DHCPLIB = ../common/libdhcp.a $(BINDLIB) ../omapip/libomapi.a ../dst/libdst.a
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
 all:	$(PROG) $(CATMANPAGES)

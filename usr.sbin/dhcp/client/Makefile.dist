@@ -26,9 +26,8 @@ OBJS   = dhclient.o clparse.o
 PROG   = dhclient
 MAN    = dhclient.8 dhclient.conf.5 dhclient-script.8 dhclient.leases.5
 
-DEBUG  = -g
 INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
-DHCPLIB = ../common/libdhcp.a ../omapip/libomapi.a $(BINDLIB)
+DHCPLIB = ../common/libdhcp.a $(BINDLIB) ../omapip/libomapi.a ../dst/libdst.a
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS) \
 		-DCLIENT_PATH=${CLIENT_PATH}
 
@@ -52,8 +51,8 @@ install: all
 	  echo "No client script available."; \
 	else \
 	  $(INSTALL) $(TOP)/client/scripts/$(SCRIPT)\
-					$(DESTDIR)$(ETC)/dhclient-script; \
-	  $(CHMOD) 700 $(DESTDIR)$(ETC)/dhclient-script; \
+				$(DESTDIR)$(CLIENTBINDIR)/dhclient-script; \
+	  $(CHMOD) 700 $(DESTDIR)$(CLIENTBINDIR)/dhclient-script; \
 	fi
 	$(MANINSTALL) $(MANFROM) dhclient.$(MANCAT)8 $(MANTO) \
 			$(DESTDIR)$(ADMMANDIR)/dhclient$(ADMMANEXT)
@@ -93,6 +92,7 @@ dhclient.cat8:	dhclient.man8
 
 dhclient.man8: dhclient.8
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#CLIENTBINDIR#$(CLIENTBINDIR)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.8 >dhclient.man8
 
 dhclient-script.cat8:	dhclient-script.man8
@@ -100,11 +100,13 @@ dhclient-script.cat8:	dhclient-script.man8
 
 dhclient-script.man8:	dhclient-script.8
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#CLIENTBINDIR#$(CLIENTBINDIR)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhclient-script.8 \
 						>dhclient-script.man8
 
 dhclient.conf.man5:	dhclient.conf.5
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#CLIENTBINDIR#$(CLIENTBINDIR)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.conf.5 \
 						>dhclient.conf.man5
 
@@ -113,6 +115,7 @@ dhclient.conf.cat5:	dhclient.conf.man5
 
 dhclient.leases.man5:	dhclient.leases.5
 	sed -e "s#ETCDIR#$(ETC)#g" -e "s#DBDIR#$(VARDB)#g" \
+		-e "s#CLIENTBINDIR#$(CLIENTBINDIR)#g" \
 		-e "s#RUNDIR#$(VARRUN)#g" < dhclient.leases.5 \
 						>dhclient.leases.man5
 

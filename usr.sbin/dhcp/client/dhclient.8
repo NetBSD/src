@@ -34,7 +34,10 @@ dhclient - Dynamic Host Configuration Protocol Client
 .B -q
 ]
 [
-.B -c
+.B -1
+]
+[
+.B -r
 ]
 [
 .B -lf
@@ -47,6 +50,10 @@ dhclient - Dynamic Host Configuration Protocol Client
 [
 .B -cf
 .I config-file
+]
+[
+.B -sf
+.I script-file
 ]
 [
 .B -s
@@ -174,17 +181,32 @@ facility.   The
 flag prevents any messages other than errors from being printed to the
 standard error descriptor.
 .PP
+The client normally doesn't release the current lease as it is not
+required by the DHCP protocol.  Some cable ISPs require their clients
+to notify the server if they wish to release an assigned IP address.
+The
+.B -r
+flag explicitly releases the current lease.
+.PP
+The
+.B -1
+flag cause dhclient to try once to get a lease.  If it fails, dhclient exits
+with exit code two.
+.PP
 The DHCP client normally gets its configuration information from
 .B ETCDIR/dhclient.conf,
 its lease database from
-.B DBDIR/dhclient.leases
-and stores its process ID in a file called
-.B RUNDIR/dhclient.pid.
+.B DBDIR/dhclient.leases,
+stores its process ID in a file called
+.B RUNDIR/dhclient.pid,
+and configures the network interface using
+.B CLIENTBINDIR/dhclient-script
 To specify different names and/or locations for these files, use the
 .B -cf,
-.B -lf
-and
+.B -lf,
 .B -pf
+and
+.B -sf
 flags, respectively, followed by the name of the file.   This can be
 particularly useful if, for example,
 .B DBDIR
@@ -206,10 +228,12 @@ address on that interface.
 .SH CONFIGURATION
 The syntax of the dhclient.conf(8) file is discussed seperately.
 .SH FILES
+.B CLIENTBINDIR/dhclient-script,
 .B ETCDIR/dhclient.conf, DBDIR/dhclient.leases, RUNDIR/dhclient.pid,
 .B DBDIR/dhclient.leases~.
 .SH SEE ALSO
-dhcpd(8), dhcrelay(8), dhclient.conf(5), dhclient.leases(5)
+dhcpd(8), dhcrelay(8), dhclient-script (8), dhclient.conf(5),
+dhclient.leases(5).
 .SH AUTHOR
 .B dhclient(8)
 has been written for the Internet Software Consortium

@@ -24,9 +24,8 @@ OBJS   = dhcrelay.o
 PROG   = dhcrelay
 MAN    = dhcrelay.8
 
-DEBUG  = -g
 INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
-DHCPLIB = ../common/libdhcp.a ../omapip/libomapi.a $(BINDLIB)
+DHCPLIB = ../common/libdhcp.a $(BINDLIB) ../omapip/libomapi.a ../dst/libdst.a
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
 all:	$(PROG) $(CATMANPAGES)

@@ -24,19 +24,18 @@ OBJ    = dhcpctl.o callback.o remote.o
 MAN    = dhcpctl.3
 HDRS   = dhcpctl.h
 
-DEBUG  = -g
 INCLUDES = $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
+DHCPCTLLIBS = libdhcpctl.a ../common/libdhcp.a $(BINDLIB) \
+		../omapip/libomapi.a ../dst/libdst.a
 
-all:	libdhcpctl.a svtest cltest $(CATMANPAGES)
+all:	libdhcpctl.a omshell cltest $(CATMANPAGES)
 
-svtest:	test.o libdhcpctl.a ../omapip/libomapi.a $(BINDLIB)
-	$(CC) $(DEBUG) $(LFLAGS) -o svtest test.o libdhcpctl.a \
-			../omapip/libomapi.a $(BINDLIB) $(LIBS)
+omshell:	omshell.o $(DHCPCTLLIBS)
+	$(CC) $(DEBUG) $(LFLAGS) -o omshell omshell.o $(DHCPCTLLIBS) $(LIBS)
 
-cltest:	cltest.o libdhcpctl.a ../omapip/libomapi.a $(BINDLIB)
-	$(CC) $(DEBUG) $(LFLAGS) -o cltest cltest.o libdhcpctl.a \
-			../omapip/libomapi.a $(BINDLIB) $(LIBS)
+cltest:	cltest.o $(DHCPCTLLIBS)
+	$(CC) $(DEBUG) $(LFLAGS) -o cltest cltest.o $(DHCPCTLLIBS) $(LIBS)
 
 libdhcpctl.a:	$(OBJ)
 	rm -f libdhcpctl.a
@@ -78,7 +77,7 @@ distclean: realclean
 	-rm -f Makefile
 
 links:
-	@for foo in $(SRC) $(MAN) test.c cltest.c $(HDRS); do \
+	@for foo in $(SRC) $(MAN) omshell.c cltest.c $(HDRS); do \
 	  if [ ! -b $$foo ]; then \
 	    rm -f $$foo; \
 	  fi; \

@@ -3,7 +3,7 @@
    Private master include file for the OMAPI library. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,6 +75,7 @@
 #include <omapip/convert.h>
 #include <omapip/hash.h>
 #include <omapip/omapip.h>
+#include <omapip/trace.h>
 
 /* OMAPI protocol header, version 1.00 */
 typedef struct {
@@ -172,6 +173,7 @@ typedef struct {
 typedef struct __omapi_listener_object {
 	OMAPI_OBJECT_PREAMBLE;
 	int socket;		/* Connection socket. */
+	int index;
 	struct sockaddr_in address;
 	isc_result_t (*verify_addr) (omapi_object_t *, omapi_addr_t *);
 } omapi_listener_object_t;
@@ -179,6 +181,7 @@ typedef struct __omapi_listener_object {
 typedef struct __omapi_connection_object {
 	OMAPI_OBJECT_PREAMBLE;
 	int socket;		/* Connection socket. */
+	int32_t index;
 	omapi_connection_state_t state;
 	struct sockaddr_in remote_addr;
 	struct sockaddr_in local_addr;
@@ -261,6 +264,19 @@ isc_result_t omapi_connection_sign_data (int mode,
 					 const unsigned char *data,
 					 const unsigned len,
 					 omapi_typed_data_t **result);
+isc_result_t omapi_listener_connect (omapi_connection_object_t **obj,
+				     omapi_listener_object_t *listener,
+				     int socket,
+				     struct sockaddr_in *remote_addr);
+void omapi_listener_trace_setup (void);
+void omapi_connection_trace_setup (void);
+void omapi_buffer_trace_setup (void);
+void omapi_connection_register (omapi_connection_object_t *,
+				const char *, int);
+void trace_mr_init (void);
+
+OMAPI_ARRAY_TYPE_DECL(omapi_listener, omapi_listener_object_t);
+OMAPI_ARRAY_TYPE_DECL(omapi_connection, omapi_connection_object_t);
 
 extern int log_priority;
 extern int log_perror;

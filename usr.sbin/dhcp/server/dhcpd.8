@@ -1,20 +1,39 @@
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 1996-1999 Internet Software Consortium.
-.\" Use is subject to license terms which appear in the file named
-.\" ISC-LICENSE that should have accompanied this file when you
-.\" received it.   If a file named ISC-LICENSE did not accompany this
-.\" file, or you are not sure the one you have is correct, you may
-.\" obtain an applicable copy of the license at:
+.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" This file is part of the ISC DHCP distribution.   The documentation
-.\" associated with this file is listed in the file DOCUMENTATION,
-.\" included in the top-level directory of this release.
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
-.\" Support and other services are available for ISC products - see
-.\" http://www.isc.org for more information.
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about the Internet Software Consortium, see
+.\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
 .TH dhcpd 8
 .SH NAME
 dhcpd - Dynamic Host Configuration Protocol Server
@@ -45,6 +64,14 @@ dhcpd - Dynamic Host Configuration Protocol Server
 [
 .B -lf
 .I lease-file
+]
+[
+.B -tf
+.I trace-output-file
+]
+[
+.B -play
+.I trace-playback-file
 ]
 [
 .I if0
@@ -190,6 +217,21 @@ automatically before installing it.
 The
 .B -T
 flag can be used to test the lease database file in a similar way.
+.PP
+The \fB-tf\fR and \fB-play\fR options allow you to specify a file into
+which the entire startup state of the server and all the transactions
+it processes are either logged or played back from.  This can be
+useful in submitting bug reports - if you are getting a core dump
+every so often, you can start the server with the \fB-tf\fR option and
+then, when the server dumps core, the trace file will contain all the
+transactions that led up to it dumping core, so that the problem can
+be easily debugged with \fB-play\fR.
+.PP
+The \fB-play\fR option must be specified with an alternate lease file,
+using the \fB-lf\fR switch, so that the DHCP server doesn't wipe out
+your existing lease file with its test data.  The DHCP server will
+refuse to operate in playback mode unless you specify an alternate
+lease file.
 .SH CONFIGURATION
 The syntax of the dhcpd.conf(5) file is discussed seperately.   This
 section should be used as an overview of the configuration process,

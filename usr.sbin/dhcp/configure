@@ -74,14 +74,17 @@ if [ "$sysname" = "" ]; then
 	  set `which gcc`
 	  if [ $# = 1 ]; then
 	    sysname=sunos5-gcc
+	    sysname_print=sunos5
 	  else
 	    sysname=sunos5-cc
+	    sysname_print=sunos5
 	  fi;;
       esac;;
     NetBSD)
       hw=`uname -m`
       case $hw in
-	arm32) sysname=netbsd-arm32;;
+	arm32) sysname=netbsd-nocast;;
+	alpha) sysname=netbsd-nocast;;
 	*) sysname=netbsd;;
       esac;;
     OpenBSD)
@@ -89,9 +92,23 @@ if [ "$sysname" = "" ]; then
     FreeBSD)
       sysname=freebsd;;
     hpux)
-      sysname=hpux;;
+      set `which gcc`
+	if [ $# = 1 ]; then
+	  sysname=hpux-gcc
+	  sysname_print=hpux
+	else
+	  sysname=hpux-cc
+	  sysname_print=hpux
+	fi;;
     HP-UX)
-      sysname=hpux;;
+      set `which gcc`
+	if [ $# = 1 ]; then
+	  sysname=hpux-gcc
+	  sysname_print=hpux
+	else
+	  sysname=hpux-cc
+	  sysname_print=hpux
+	fi;;
     QNX)
       sysname=qnx;;
     NEXTSTEP)
@@ -131,8 +148,18 @@ if [ "$sysname" = "" ]; then
 fi
 
 if [ x$print_sysname = xyes ]; then
-  echo $sysname
+  if [ x$sysname_print != x ]; then
+    echo $sysname_print
+  else
+    echo $sysname
+  fi
   exit 0
+fi
+
+if [ x$sysname_print != x ]; then
+  workname=work.${sysname_print}
+else
+  workname=work.${sysname}
 fi
 
 echo "System Type: $sysname"
@@ -142,19 +169,19 @@ if [ x$major != x ] && [ x$minor != x ]; then
   minversubst="-e /^##--minver--/,/^##--minver--/s/MinorVersion/$minor/"
 fi
 
-if [ ! -d work.${sysname} ]; then
-  mkdir work.$sysname
+if [ ! -d $workname ]; then
+  mkdir $workname
 fi
 
-for foo in . client server relay common omapip dhcpctl minires; do
-	if [ ! -d work.${sysname}/$foo ]; then
-	  mkdir work.${sysname}/$foo
+for foo in . client server relay common omapip dhcpctl minires dst; do
+	if [ ! -d ${workname}/$foo ]; then
+	  mkdir ${workname}/$foo
 	fi
 	(sed $majversubst $minversubst \
 	      -e "/^##--${sysname}--/,/^##--${sysname}--/s/^#//" \
 		<Makefile.conf; cat site.conf; \
 		echo "TOP = ../.."; cat $foo/Makefile.dist)	\
-				>work.${sysname}/$foo/Makefile
+				>${workname}/$foo/Makefile
 done
 
 # Make the link tree in which to actually build.
