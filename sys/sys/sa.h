@@ -1,4 +1,4 @@
-/*	$Id: sa.h,v 1.1.2.3 2001/08/24 04:20:10 nathanw Exp $	*/
+/*	$Id: sa.h,v 1.1.2.4 2001/11/17 01:04:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,15 +48,16 @@ struct sa_t {
 };
 
 typedef void (*sa_upcall_t)(int type, struct sa_t *sas[], int events, 
-    int interrupted, int sig, u_long code, void *arg);
+    int interrupted, void *arg);
 
 #define SA_UPCALL_NEWPROC		0
 #define SA_UPCALL_PREEMPTED		1
 #define SA_UPCALL_BLOCKED		2
 #define SA_UPCALL_UNBLOCKED		3
 #define SA_UPCALL_SIGNAL		4
-#define SA_UPCALL_USER 			5
-#define SA_UPCALL_NUPCALLS		6
+#define SA_UPCALL_SIGEV			5
+#define SA_UPCALL_USER 			6
+#define SA_UPCALL_NUPCALLS		7
 
 
 #endif /* !_SYS_SA_H */

@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.5 2001/11/15 07:54:25 thorpej Exp $	*/
+/*	$Id: savar.h,v 1.1.2.6 2001/11/17 01:04:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,31 +47,25 @@
 #include <sys/queue.h>
 
 struct sadata_upcall {
-	LIST_ENTRY(sadata_upcall) sau_next;
-	int sau_type;
-	int sau_sig;
-	u_long sau_code;
-	void *sau_arg;
-	stack_t sau_stack;
-	struct lwp *sau_event;
-	struct lwp *sau_interrupted;
+	LIST_ENTRY(sadata_upcall)	sau_next;
+	int	sau_type;
+	size_t	sau_argsize;
+	void	*sau_arg;
+	stack_t	sau_stack;
+	struct lwp	*sau_event;
+	struct lwp	*sau_interrupted;
 };
 
 struct sadata {
-
-	struct simplelock sa_lock; /* Lock on fields of this structure. */
-
-	sa_upcall_t sa_upcall;	/* The upcall entry point for this process */
-	
-	LIST_HEAD(, lwp) sa_lwpcache;
-	int sa_ncached;
-
-	stack_t *sa_stacks;	/* Pointer to array of upcall stacks */
-	int sa_nstackentries;	/* Size of the array */
-	int sa_nstacks;		/* Number of entries with valid stacks */
-	LIST_HEAD(, sadata_upcall) sa_upcalls; /* Pending upcalls */
-
-	int sa_concurrency;	/* Desired concurrency */
+	struct simplelock sa_lock;	/* lock on these fields */
+	sa_upcall_t	sa_upcall;	/* upcall entry point */
+	int	sa_concurrency;		/* desired concurrency */
+	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
+	int	sa_ncached;		/* list length */
+	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
+	int	sa_nstackentries;	/* size of the array */
+	int	sa_nstacks;		/* number of valid stacks */
+	LIST_HEAD(, sadata_upcall)	sa_upcalls; /* pending upcalls */
 };
 
 extern struct pool sadata_pool;		/* memory pool for sadata structures */
@@ -81,7 +75,7 @@ extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 
 void	sa_switch(struct lwp *, int);
 void	sa_switchcall(void *);
-int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, int, u_long, void *);
+int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
 void	cpu_upcall(struct lwp *);
 ucontext_t *cpu_stashcontext(struct lwp *);
 
