@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.2 2000/04/30 12:00:40 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.3 2000/05/01 15:08:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -89,7 +89,6 @@ struct rl_softc {
 	bus_space_tag_t		rl_btag;	/* bus space tag */
 	u_int8_t		rl_type;
 	struct rl_chain_data	rl_cdata;
-	void *sc_ih;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t recv_dmamap, snd_dmamap[RL_TX_LIST_CNT];
 };
@@ -130,8 +129,6 @@ struct rl_softc {
 #define RL_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-void	rl_attach __P((struct rl_softc *, const u_int8_t *));
+void	rl_attach __P((struct rl_softc *));
 int	rl_intr __P((void *));
-u_int16_t rl_read_eeprom __P((struct rl_softc *, int, int));
-void	rl_reset __P((struct rl_softc *));
 #endif /* _KERNEL */

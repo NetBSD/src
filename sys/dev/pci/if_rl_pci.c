@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.6 2000/04/30 12:00:41 tsutsui Exp $ */
+/* $NetBSD: if_rl_pci.c,v 1.7 2000/05/01 15:08:55 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -217,18 +217,24 @@ rl_pci_attach(parent, self, aux)
 	void *aux;
 {
 	int			s, pmreg;
-	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		command;
 	struct rl_pci_softc *psc = (struct rl_pci_softc *)self;
 	struct rl_softc *sc = &psc->sc_rl;
-	u_int16_t		rl_did, val;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	const struct rl_type *t;
 
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
+
+	t = rl_pci_lookup(pa);
+	if (t == NULL) {
+		printf("\n");
+		panic("rl_pci_attach: impossible");
+	}
+	printf(": %s\n", t->rl_name);
 
 	s = splimp();
 
@@ -244,7 +250,8 @@ rl_pci_attach(parent, self, aux)
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOIO);
 			membase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, PCI_PRODUCT_DELTA_8139);
+			irq = pci_conf_read(pc, pa->pa_tag,
+					    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
 			printf("%s: chip is is in D%d power mode "
@@ -256,7 +263,8 @@ rl_pci_attach(parent, self, aux)
 			/* Restore PCI config data. */
 			pci_conf_write(pc, pa->pa_tag, RL_PCI_LOIO, iobase);
 			pci_conf_write(pc, pa->pa_tag, RL_PCI_LOMEM, membase);
-			pci_conf_write(pc, pa->pa_tag, PCI_PRODUCT_DELTA_8139, irq);
+			pci_conf_write(pc, pa->pa_tag,
+				       PCI_PRODUCT_DELTA_8139, irq);
 		}
 	}
 
@@ -266,13 +274,13 @@ rl_pci_attach(parent, self, aux)
 #ifdef RL_USEIOSPACE
 	if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, NULL, NULL)) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 #else
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, NULL, NULL)) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 #endif
@@ -294,57 +302,25 @@ rl_pci_attach(parent, self, aux)
 		goto fail;
 	}
 
-	/* Reset the adapter. */
-	rl_reset(sc);
-
-	/*
-	 * Now read the exact device type from the EEPROM to find
-	 * out if it's an 8129 or 8139.
-	 */
-	rl_did = rl_read_eeprom(sc, RL_EE_PCI_DID, RL_EEADDR_LEN0);
-
-	if (rl_did == PCI_PRODUCT_REALTEK_RT8139 ||
-	    rl_did == PCI_PRODUCT_ACCTON_MPX5030 ||
-	    rl_did == PCI_PRODUCT_DELTA_8139 ||
-	    rl_did == PCI_PRODUCT_ADDTRON_8139
+	if (t->rl_did == PCI_PRODUCT_REALTEK_RT8139 ||
+	    t->rl_did == PCI_PRODUCT_ACCTON_MPX5030 ||
+	    t->rl_did == PCI_PRODUCT_DELTA_8139 ||
+	    t->rl_did == PCI_PRODUCT_ADDTRON_8139
 #if 0
-	    || rl_did == SIS_DEVICEID_8139
+	    || t->rl_did == SIS_DEVICEID_8139
 #endif
 	    ) {
-		printf(": RealTek 8139 Ethernet (id 0x%x)\n", rl_did);
 		sc->rl_type = RL_8139;
-	} else if (rl_did == PCI_PRODUCT_REALTEK_RT8129) {
-		printf(": RealTek 8129 Ethernet (id 0x%x)\n", rl_did);
+	} else if (t->rl_did == PCI_PRODUCT_REALTEK_RT8129) {
 		sc->rl_type = RL_8129;
 	} else {
-		printf(": unknown device ID: 0x%x\n", rl_did);
-		free(sc, M_DEVBUF);
 		goto fail;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	val = rl_read_eeprom(sc, RL_EE_EADDR0, RL_EEADDR_LEN0);
-	eaddr[0] = val & 0xff;
-	eaddr[1] = val >> 8;
-	val = rl_read_eeprom(sc, RL_EE_EADDR1, RL_EEADDR_LEN0);
-	eaddr[2] = val & 0xff;
-	eaddr[3] = val >> 8;
-	val = rl_read_eeprom(sc, RL_EE_EADDR2, RL_EEADDR_LEN0);
-	eaddr[4] = val & 0xff;
-	eaddr[5] = val >> 8;
-
-	/*
-	 * A RealTek chip was detected. Inform the world.
-	 */
-	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
-	       ether_sprintf(eaddr));
-
 	sc->sc_dmat = pa->pa_dmat;
 	
-	rl_attach(sc, eaddr);
+	rl_attach(sc);
 fail:
 	splx(s);
 	return;

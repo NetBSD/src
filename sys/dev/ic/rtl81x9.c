@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.5 2000/04/30 12:00:40 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.6 2000/05/01 15:08:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -145,6 +145,7 @@
 #define STATIC static
 #endif
 
+STATIC void rl_reset		__P((struct rl_softc *));
 STATIC void rl_rxeof		__P((struct rl_softc *));
 STATIC void rl_txeof		__P((struct rl_softc *));
 STATIC void rl_start		__P((struct ifnet *));
@@ -156,6 +157,7 @@ STATIC void rl_shutdown		__P((void *));
 STATIC int rl_ifmedia_upd	__P((struct ifnet *));
 STATIC void rl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
+STATIC u_int16_t rl_read_eeprom __P((struct rl_softc *, int, int));
 STATIC void rl_eeprom_putbyte	__P((struct rl_softc *, int, int));
 STATIC void rl_mii_sync		__P((struct rl_softc *));
 STATIC void rl_mii_send		__P((struct rl_softc *, u_int32_t, int));
@@ -256,11 +258,11 @@ u_int16_t rl_read_eeprom(sc, addr, addr_len)
  */
 #define MII_SET(x)					\
 	CSR_WRITE_1(sc, RL_MII,				\
-		CSR_READ_1(sc, RL_MII) | x)
+		CSR_READ_1(sc, RL_MII) | (x))
 
 #define MII_CLR(x)					\
 	CSR_WRITE_1(sc, RL_MII,				\
-		CSR_READ_1(sc, RL_MII) & ~x)
+		CSR_READ_1(sc, RL_MII) & ~(x))
 
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
@@ -658,17 +660,39 @@ void rl_reset(sc)
  * setup and ethernet/BPF attach.
  */
 void
-rl_attach(sc, eaddr)
+rl_attach(sc)
 	struct rl_softc *sc;
-	const u_int8_t *eaddr;
 {
 
 	struct ifnet *ifp;
+	u_int16_t val;
+	u_int8_t eaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t dmaseg;
 	int error,dmanseg;
-	int i;
+	int i,addr_len;
 
 	callout_init(&sc->rl_tick_ch);
+
+	/*
+	 * Check EEPROM type 9346 or 9356.
+	 */
+	if (rl_read_eeprom(sc, RL_EE_ID, RL_EEADDR_LEN1) == 0x8129)
+		addr_len = RL_EEADDR_LEN1;
+	else
+		addr_len = RL_EEADDR_LEN0;
+
+	/*
+	 * Get station address.
+	 */
+	val = rl_read_eeprom(sc, RL_EE_EADDR0, addr_len);
+	eaddr[0] = val & 0xff;
+	eaddr[1] = val >> 8;
+	val = rl_read_eeprom(sc, RL_EE_EADDR1, addr_len);
+	eaddr[2] = val & 0xff;
+	eaddr[3] = val >> 8;
+	val = rl_read_eeprom(sc, RL_EE_EADDR2, addr_len);
+	eaddr[4] = val & 0xff;
+	eaddr[5] = val >> 8;
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    RL_RXBUFLEN + 32, NBPG, 0, &dmaseg, 1, &dmanseg,
@@ -709,13 +733,18 @@ rl_attach(sc, eaddr)
 
 	for (i = 0; i < RL_TX_LIST_CNT; i++)
 		if ((error = bus_dmamap_create(sc->sc_dmat,
-		    MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    MCLBYTES, 1, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->snd_dmamap[i])) != 0) {
 			printf("%s: can't create snd buffer DMA map,"
 			    " error = %d\n", sc->sc_dev.dv_xname, error);
 		    goto fail;
 		}
+
+	/* Reset the adapter. */
+	rl_reset(sc);
+
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	       ether_sprintf(eaddr));
 
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
@@ -914,7 +943,8 @@ STATIC void rl_rxeof(sc)
 			break;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
-		    cur_rx + sizeof(u_int32_t), total_len, BUS_DMASYNC_POSTREAD);
+		    cur_rx + sizeof(u_int32_t), total_len,
+		    BUS_DMASYNC_POSTREAD);
 
 		rxbufpos = sc->rl_cdata.rl_rx_buf +
 			((cur_rx + sizeof(u_int32_t)) % RL_RXBUFLEN);
@@ -930,7 +960,8 @@ STATIC void rl_rxeof(sc)
 			if (m == NULL) {
 				ifp->if_ierrors++;
 				printf("%s: out of mbufs, tried to "
-					"copy %d bytes\n", sc->sc_dev.dv_xname, wrap);
+				    "copy %d bytes\n", sc->sc_dev.dv_xname,
+				    wrap);
 			}
 			else {
 				m_adj(m, RL_ETHER_ALIGN);
@@ -944,7 +975,8 @@ STATIC void rl_rxeof(sc)
 			if (m == NULL) {
 				ifp->if_ierrors++;
 				printf("%s: out of mbufs, tried to "
-				"copy %d bytes\n", sc->sc_dev.dv_xname, total_len);
+				    "copy %d bytes\n", sc->sc_dev.dv_xname,
+				    total_len);
 			} else
 				m_adj(m, RL_ETHER_ALIGN);
 			cur_rx += total_len + 4 + ETHER_CRC_LEN;

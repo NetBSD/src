@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rl_cardbus.c,v 1.7 2000/04/30 12:00:41 tsutsui Exp $	*/
+/*	$NetBSD: if_rl_cardbus.c,v 1.8 2000/05/01 15:08:50 tsutsui Exp $	*/
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -137,8 +137,8 @@ rl_cardbus_lookup(ca)
 	struct rl_type		*t;
 
 	for (t = rl_cardbus_devs; t->rl_name != NULL; t++){ 	
-		if (PCI_VENDOR(ca->ca_id) == t->rl_vid &&
-		    PCI_PRODUCT(ca->ca_id)  == t->rl_did) {
+		if (CARDBUS_VENDOR(ca->ca_id) == t->rl_vid &&
+		    CARDBUS_PRODUCT(ca->ca_id)  == t->rl_did) {
 			return (t);
 		}
 	}
@@ -164,9 +164,7 @@ rl_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int addr_len, s, pmreg;
-	u_int16_t val;
-	u_char eaddr[ETHER_ADDR_LEN];
+	int s, pmreg;
 	pcireg_t command;
 	struct rl_cardbus_softc *csc = (struct rl_cardbus_softc *)self;
 	struct rl_softc *sc = &csc->sc_rl;
@@ -194,134 +192,121 @@ rl_cardbus_attach(parent, self, aux)
 	/*
 	 * Handle power management nonsense.
 	 */
-	if (cardbus_get_capability(cc, cf, csc->sc_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+	if (cardbus_get_capability(cc, cf, csc->sc_tag,
+	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		command = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4);
 		if (command & RL_PSTATE_MASK) {
 			pcireg_t		iobase, membase, irq;
 
 			/* Save important PCI config data. */
-			iobase = cardbus_conf_read(cc, cf, csc->sc_tag, RL_PCI_LOIO);
-			membase = cardbus_conf_read(cc, cf,csc->sc_tag, RL_PCI_LOMEM);
-			irq = cardbus_conf_read(cc, cf,csc->sc_tag, PCI_PRODUCT_DELTA_8139);
+			iobase = cardbus_conf_read(cc, cf, csc->sc_tag,
+			    RL_PCI_LOIO);
+			membase = cardbus_conf_read(cc, cf,csc->sc_tag,
+			    RL_PCI_LOMEM);
+			irq = cardbus_conf_read(cc, cf,csc->sc_tag,
+			    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
 			printf("%s: chip is is in D%d power mode "
-			"-- setting to D0\n", sc->sc_dev.dv_xname,
-			       command & RL_PSTATE_MASK);
+			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			    command & RL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
-			cardbus_conf_write(cc, cf, csc->sc_tag, pmreg + 4, command);
+			cardbus_conf_write(cc, cf, csc->sc_tag,
+			    pmreg + 4, command);
 
 			/* Restore PCI config data. */
-			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_LOIO, iobase);
-			cardbus_conf_write(cc, cf, csc->sc_tag, RL_PCI_LOMEM, membase);
-			cardbus_conf_write(cc, cf, csc->sc_tag, PCI_PRODUCT_DELTA_8139, irq);
+			cardbus_conf_write(cc, cf, csc->sc_tag,
+			    RL_PCI_LOIO, iobase);
+			cardbus_conf_write(cc, cf, csc->sc_tag,
+			    RL_PCI_LOMEM, membase);
+			cardbus_conf_write(cc, cf, csc->sc_tag,
+			    PCI_PRODUCT_DELTA_8139, irq);
 		}
 	}
 	/*
 	 * Map control/status registers.
 	 */
 #ifdef RL_USEIOSPACE
-	if (Cardbus_mapreg_map(ct, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	if (Cardbus_mapreg_map(ct, RL_PCI_LOIO, CARDBUS_MAPREG_TYPE_IO, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
-		(*ct->ct_cf->carbus_io_open)(cc,0,adr, adr+csc->sc_mapsize);
+		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
 		csc->sc_cben = CARDBUS_IO_ENABLE;
-		csc->sc_csr |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE);
+		csc->sc_csr |=
+		    (CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MASTER_ENABLE);
 		csc->sc_bar_reg = RL_PCI_LOIO;
-		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
+		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 	}
 #else
-	if (Cardbus_mapreg_map(ct, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	if (Cardbus_mapreg_map(ct, RL_PCI_LOMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
-		(*ct->ct_cf->carbus_mem_open)(cc,0,adr, adr+csc->sc_mapsize);
+		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
 		csc->sc_cben = CARDBUS_MEM_ENABLE;
-		csc->sc_csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE);
+		csc->sc_csr |=
+		    (CARDBUS_COMMAND_MEM_ENABLE|CARDBUS_COMMAND_MASTER_ENABLE);
 		csc->sc_bar_reg = RL_PCI_LOMEM;
-		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
+		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
 	}
 #endif
 	else {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc,csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc,CARDBUS_BM_ENABLE);
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Program the BAR */
 	cardbus_conf_write(cc, cf, csc->sc_tag,
 		csc->sc_bar_reg, csc->sc_bar_val);
 
-	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);
-	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
+	/* Enable the appropriate bits in the CARDBUS CSR. */
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag, 
+	    CARDBUS_COMMAND_STATUS_REG);
+	reg &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG,reg);
+	cardbus_conf_write(cc, cf, csc->sc_tag, 
+	    CARDBUS_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
-	if (PCI_LATTIMER(reg) < 0x20) {
-		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
+	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
+	if (CARDBUS_LATTIMER(reg) < 0x20) {
+		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
+		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
 	}
-
-	/* Reset the adapter. */
-	rl_reset(sc);
-
-	/*
-	 * Now read the exact device type from the EEPROM to find
-	 * out if it's an 8129 or 8139.
-	 */
 
 	if (t->rl_did == CARDBUS_PRODUCT_ACCTON_MPX5030 ||
 		t->rl_did == CARDBUS_PRODUCT_REALTEK_RT8138){
 		sc->rl_type = RL_8139;
 
-		/*
-		 * Check EEPROM type 9346 or 9356
-		 */
-		if (rl_read_eeprom(sc, RL_EE_ID, RL_EEADDR_LEN1) == 0x8129)
-			addr_len = RL_EEADDR_LEN1;
-		else
-			addr_len = RL_EEADDR_LEN0;
-
-		val = rl_read_eeprom(sc, RL_EE_EADDR0, addr_len);
-		eaddr[0] = val & 0xff;
-		eaddr[1] = val >> 8;
-		val = rl_read_eeprom(sc, RL_EE_EADDR1, addr_len);
-		eaddr[2] = val & 0xff;
-		eaddr[3] = val >> 8;
-		val = rl_read_eeprom(sc, RL_EE_EADDR2, addr_len);
-		eaddr[4] = val & 0xff;
-		eaddr[5] = val >> 8;
 	} else {
-		printf(": unknown device ID: 0x%x\n", t->rl_did);
+		printf("%s: unknown device ID: 0x%x\n",
+		    sc->sc_dev.dv_xname, t->rl_did);
 		goto fail;
 	}
-	printf("%s: Ethernet address: %s\n", sc->sc_dev.dv_xname,
-	       ether_sprintf(eaddr));
 
 	/* Allocate interrupt */
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname, csc->sc_intrline);
+	printf("%s: interrupting at %d\n",
+	    sc->sc_dev.dv_xname, csc->sc_intrline);
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET, 
-		rl_intr, sc);
+	    rl_intr, sc);
 	if (csc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname,csc->sc_intrline);
+		    sc->sc_dev.dv_xname, csc->sc_intrline);
 		printf("\n");
 		goto fail;
 	}
 
-	rl_attach(sc, eaddr);
+	rl_attach(sc);
 
 fail:
 	splx(s);
