@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.13 1997/01/01 23:40:15 pk Exp $ */
+/* $NetBSD: stubs.c,v 1.14 1997/01/05 18:57:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -80,7 +80,7 @@ extern videomemory_t videomemory;
 #ifdef GENERIC
 
 #include "fdc.h" 
-#include "rd.h" 
+#include "md.h" 
 
 extern dev_t rootdev;
 extern int ffs_mountroot();
@@ -118,7 +118,7 @@ do_mountroot()
  * loading the boot memory disc which is unit 0.
  */
 
-	if (major(rootdev) == 18 && bootrd) {
+	if (major(rootdev) == 18 && bootmd) {
 		if (load_memory_disc_from_floppy(bootmd, makedev(17, minor(rootdev))) != 0)
 			panic("Failed to load memory disc\n");
 		boothowto |= RB_SINGLE;
@@ -347,7 +347,8 @@ dumpsys()
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
 	                pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
-			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, blkno, (caddr_t) dumpspace, NBPG);
+			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev,
+			    blkno, (caddr_t) dumpspace, NBPG);
 			if (error) break;
 			blkno += btodb(NBPG);
 			len += NBPG;
@@ -361,7 +362,8 @@ dumpsys()
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
 			pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
-			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, blkno, (caddr_t) dumpspace, NBPG);
+			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev,
+			    blkno, (caddr_t) dumpspace, NBPG);
 			if (error) break;
 			blkno += btodb(NBPG);
 			len += NBPG;
@@ -416,8 +418,6 @@ beep_generate()
 #endif /* NBEEP */
 
 
-extern u_int spl_mask;
-
 int current_spl_level = SPL_0;
 u_int spl_masks[SPL_LEVELS];
 
@@ -440,9 +440,11 @@ void
 dump_spl_masks()
 {
 	printf("spl0=%08x splsoft=%08x splbio=%08x splnet=%08x\n",
-	    spl_masks[SPL_0], spl_masks[SPL_SOFT], spl_masks[SPL_BIO], spl_masks[SPL_NET]);
+	    spl_masks[SPL_0], spl_masks[SPL_SOFT], spl_masks[SPL_BIO],
+	    spl_masks[SPL_NET]);
 	printf("spltty=%08x splclock=%08x splimp=%08x splhigh=%08x\n",
-	    spl_masks[SPL_TTY], spl_masks[SPL_CLOCK], spl_masks[SPL_IMP], spl_masks[SPL_HIGH]);
+	    spl_masks[SPL_TTY], spl_masks[SPL_CLOCK], spl_masks[SPL_IMP],
+	    spl_masks[SPL_HIGH]);
 }
 
 /* End of stubs.c */

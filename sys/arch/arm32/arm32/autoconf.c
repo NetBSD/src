@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.11 1996/10/15 21:32:10 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.12 1997/01/05 18:57:04 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -55,7 +55,7 @@
 
 #include "wdc.h"
 #include "fdc.h"
-#include "rd.h"
+#include "md.h"
 #include "sd.h"
 #include "cd.h"
 #include "podulebus.h"
@@ -85,8 +85,8 @@ struct {
 #if NFDC > 0
 	{ "fd", 0x11 },
 #endif
-#if NRD > 0
-	{ "rd", 0x12 },
+#if NMD > 0
+	{ "md", 0x12 },
 #endif
 #if NSD > 0
 	{ "sd", 0x18 },
@@ -293,9 +293,11 @@ configure()
 
 	/* Debugging information */
 
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x ipl_none=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_CLOCK], irqmasks[IPL_IMP], irqmasks[IPL_NONE]);
+	    irqmasks[IPL_CLOCK]);
+	printf(" ipl_imp=%08x ipl_none=%08x\n", irqmasks[IPL_IMP],
+	    irqmasks[IPL_NONE]);
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
          
