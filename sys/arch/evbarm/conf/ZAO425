@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.11 2003/10/08 14:55:04 scw Exp $
+#	$NetBSD: ZAO425,v 1.12 2003/10/23 10:50:01 scw Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -28,6 +28,7 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 # Board Type
 makeoptions	BOARDTYPE="zao425"
+options 	EVBARM_BOARDTYPE=zao425
 
 # File systems
 
