@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2001/08/22 08:23:09 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2001/08/27 02:00:16 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -128,14 +128,12 @@ extern u_long intrcnt[];
 #define	SERIAL1_INTR	1
 #define	LANCE_INTR	2
 #define	SCSI_INTR	3
-#define	ERROR_INTR	4
-#define	SLOT0_INTR	5
-#define	SLOT1_INTR	6
-#define	SLOT2_INTR	7
-#define	DTOP_INTR	8
-#define	ISDN_INTR	9
-#define	FLOPPY_INTR	10
-#define	STRAY_INTR	11
+#define	SLOT0_INTR	4
+#define	SLOT1_INTR	5
+#define	SLOT2_INTR	6
+#define	DTOP_INTR	7
+#define	ISDN_INTR	8
+#define	FLOPPY_INTR	9
 
 struct intrhand {
 	int	(*ih_func) __P((void *));
@@ -154,7 +152,8 @@ extern struct intrhand intrtab[];
 #define SYS_DEV_OPT1	SLOT1_INTR
 #define SYS_DEV_OPT2	SLOT2_INTR
 #define SYS_DEV_BOGUS	-1
-#define MAX_DEV_NCOOKIES 12
+#define MAX_DEV_NCOOKIES 10
+
 
 struct pmax_intrhand {
 	LIST_ENTRY(pmax_intrhand) ih_q;
@@ -212,6 +211,7 @@ extern struct pmax_soft_intrhand *softnet_intrhand;
 
 extern struct evcnt pmax_clock_evcnt;
 extern struct evcnt pmax_fpu_evcnt;
+extern struct evcnt pmax_memerr_evcnt;
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

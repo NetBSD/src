@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.47 2001/08/24 15:33:16 mhitch Exp $ */
+/* $NetBSD: dec_3min.c,v 1.48 2001/08/27 02:00:18 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.47 2001/08/24 15:33:16 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.48 2001/08/27 02:00:18 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,8 +362,10 @@ dec_3min_intr(status, cause, pc, ipending)
 		if (turnoff)
 			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
 
-		if (intr & KMIN_INTR_TIMEOUT)
+		if (intr & KMIN_INTR_TIMEOUT) {
 			kn02ba_errintr();
+			pmax_memerr_evcnt.ev_count++;
+		}
 
 		if (intr & KMIN_INTR_CLOCK) {
 			struct clockframe cf;
