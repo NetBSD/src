@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.6 2002/01/14 23:14:43 bjh21 Exp $ */
+/* $NetBSD: linux_time.c,v 1.7 2002/01/17 15:10:26 rjs Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.6 2002/01/14 23:14:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.7 2002/01/17 15:10:26 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -122,4 +122,4 @@ int linux_sys_settimeofday(p, v, retval)
 	return (0);
 }
 
-#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ */
+#endif /* __i386__ || __m68k__ || __powerpc__ || __mips__ || __arm__ */
