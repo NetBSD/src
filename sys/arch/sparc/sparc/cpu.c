@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.159 2003/01/13 15:01:16 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.160 2003/01/13 15:50:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -125,7 +125,7 @@ static void cpu_attach(struct cpu_softc *, int, int);
 
 static char *fsrtoname __P((int, int, int));
 void cache_print __P((struct cpu_softc *));
-void cpu_setup __P((struct cpu_softc *));
+void cpu_setup __P((void));
 void fpu_init __P((struct cpu_info *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
@@ -471,9 +471,6 @@ static	struct cpu_softc *bootcpu;
 	cpi->ci_cpuid = cpu_instance++;
 	cpi->mid = mid;
 	cpi->node = node;
-#if 0
-	simple_lock_init(&cpi->msg.lock);
-#endif
 
 	if (ncpu > 1) {
 		printf(": mid %d", mid);
@@ -485,7 +482,7 @@ static	struct cpu_softc *bootcpu;
 	if (cpi->master) {
 		char buf[100];
 
-		cpu_setup(sc);
+		cpu_setup();
 		snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
 			cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
 		printf(": %s\n", buf);
@@ -574,18 +571,12 @@ cpu_boot_secondary_processors()
 }
 #endif /* MULTIPROCESSOR */
 
-/* */
-void *cpu_hatchstack = 0;
-void *cpu_hatch_sc = 0;
-volatile int cpu_hatched = 0;
-
 /*
  * Finish CPU attach.
  * Must be run by the CPU which is being attached.
  */
 void
-cpu_setup(sc)
-	struct cpu_softc *sc;
+cpu_setup()
 {
 
 	if (cpuinfo.hotfix)
@@ -597,11 +588,7 @@ cpu_setup(sc)
 	/* Enable the cache */
 	cpuinfo.cache_enable();
 
-	cpu_hatched = 1;
-#if 0
-	/* Flush cache line */
-	cpuinfo.sp_cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
-#endif
+	cpuinfo.flags |= CPUFLG_HATCHED;
 }
 
 #if defined(MULTIPROCESSOR)
@@ -621,9 +608,7 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	/* Setup CPU-specific MMU tables */
 	pmap_alloc_cpu(cpi);
 
-	cpu_hatched = 0;
-	cpu_hatchstack = cpi->idle_u;
-	cpu_hatch_sc = sc;
+	cpi->flags &= ~CPUFLG_HATCHED;
 
 	/*
 	 * The physical address of the context table is passed to
@@ -644,11 +629,9 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 	 * Wait for this CPU to spin up.
 	 */
 	for (n = 10000; n != 0; n--) {
-		cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
-		if (cpu_hatched != 0) {
-			cpi->flags |= CPUFLG_HATCHED;
+		cache_flush((caddr_t)&cpi->flags, sizeof(cpi->flags));
+		if (cpi->flags & CPUFLG_HATCHED)
 			return;
-		}
 		delay(100);
 	}
 	printf("CPU did not spin up\n");
@@ -706,9 +689,6 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
 
-#if 0
-		simple_lock(&cpi->msg.lock);
-#endif
 		cpi->msg.tag = XPMSG_FUNC;
 		cpi->flags &= ~CPUFLG_GOTMSG;
 		p = &cpi->msg.u.xpmsg_func;
@@ -764,9 +744,6 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
 
-#if 0
-		simple_unlock(&cpi->msg.lock);
-#endif
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
 			printf(" cpu%d", cpi->ci_cpuid);
 	}

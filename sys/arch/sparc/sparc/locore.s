@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.181 2003/01/12 06:11:01 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.182 2003/01/13 15:50:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4249,20 +4249,19 @@ _C_LABEL(cpu_hatch):
 
 	/* Set up a stack */
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
-	sethi	%hi(_C_LABEL(cpu_hatchstack)), %o0
-	ld	[%o0+%lo(_C_LABEL(cpu_hatchstack))], %o0
+	sethi	%hi(IDLE_UP), %o0
+	ld	[%o0 + %lo(IDLE_UP)], %o0
 	set	USPACE - CCFSZ - 80, %sp
 	add	%sp, %o0, %sp
 
 	/* Enable traps */
 	rd	%psr, %l0
 	wr	%l0, PSR_ET, %psr
-	nop; nop; nop
+	nop; nop
 
 	/* Call C code */
-	sethi	%hi(_C_LABEL(cpu_hatch_sc)), %o0
 	call	_C_LABEL(cpu_setup)
-	 ld	[%o0+%lo(_C_LABEL(cpu_hatch_sc))], %o0
+	 nop				! 3rd from above
 
 	/* Enable interrupts */
 	rd	%psr, %l0
