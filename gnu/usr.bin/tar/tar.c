@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: tar.c,v 1.7 1996/03/21 18:35:51 jtc Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.8 1997/02/07 03:54:35 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -1135,7 +1135,7 @@ again:
   if (nlp->fake)
     {
       if (nlp->change_dir && chdir (nlp->change_dir))
-	msg_perror ("Can't change to directory %d", nlp->change_dir);
+	msg_perror ("Can't change to directory %s", nlp->change_dir);
       namelist = 0;
       return 1;
     }
