@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.11 2003/10/31 01:25:54 ross Exp $	*/
+/*	$NetBSD: support.c,v 1.12 2004/10/30 20:44:39 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.11 2003/10/31 01:25:54 ross Exp $");
+__RCSID("$NetBSD: support.c,v 1.12 2004/10/30 20:44:39 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,10 +235,7 @@ istrcpy(char *dest, char *src)
 {
 
 	do {
-		if (isupper((unsigned char)*src))
-			*dest++ = tolower(*src);
-		else
-			*dest++ = *src;
+		*dest++ = tolower((unsigned char)*src);
 	} while (*src++ != 0);
 }
 
