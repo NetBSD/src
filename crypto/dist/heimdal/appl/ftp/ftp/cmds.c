@@ -36,7 +36,8 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$Id: cmds.c,v 1.1.1.4 2001/09/17 12:24:42 assar Exp $");
+__RCSID("$Heimdal: cmds.c,v 1.44 2001/08/05 06:39:14 assar Exp $"
+        "$NetBSD: cmds.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
 
 typedef void (*sighand)(int);
 

@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: data.c,v 1.1.1.3 2001/06/19 22:08:20 assar Exp $");
+__RCSID("$Heimdal: data.c,v 1.16 2001/05/14 06:14:46 assar Exp $"
+        "$NetBSD: data.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
 
 void
 krb5_data_zero(krb5_data *p)

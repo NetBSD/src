@@ -38,7 +38,8 @@
 
 #ifndef HAVE_GETGID
 
-RCSID("$Id: getgid.c,v 1.1.1.2 2000/08/02 19:59:49 assar Exp $");
+__RCSID("$Heimdal: getgid.c,v 1.2 1999/12/02 16:58:46 joda Exp $"
+        "$NetBSD: getgid.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
 
 int getgid(void)
 {

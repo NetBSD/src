@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kafs.h,v 1.1.1.3 2001/09/17 12:25:12 assar Exp $ */
+/* $Heimdal: kafs.h,v 1.35 2001/09/10 16:05:31 assar Exp $
+   $NetBSD: kafs.h,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $ */
 
 #ifndef __KAFS_H
 #define __KAFS_H
@@ -190,6 +191,11 @@ krb5_error_code krb5_realm_of_cell __P((const char *cell, char **realm));
 #define _PATH_OPENAFS_DEBIAN_THISCELL		_PATH_OPENAFS_DEBIAN_VICE "ThisCell"
 #define _PATH_OPENAFS_DEBIAN_CELLSERVDB 	_PATH_OPENAFS_DEBIAN_VICE "CellServDB"
 #define _PATH_OPENAFS_DEBIAN_THESECELLS		_PATH_OPENAFS_DEBIAN_VICE "TheseCells"
+
+#define _PATH_ARLA_DEBIAN_VICE			"/etc/arla/"
+#define _PATH_ARLA_DEBIAN_THISCELL		_PATH_ARLA_DEBIAN_VICE "ThisCell"
+#define _PATH_ARLA_DEBIAN_CELLSERVDB		_PATH_ARLA_DEBIAN_VICE "CellServDB"
+#define _PATH_ARLA_DEBIAN_THESECELLS		_PATH_ARLA_DEBIAN_VICE "TheseCells"
 
 extern int _kafs_debug;
 

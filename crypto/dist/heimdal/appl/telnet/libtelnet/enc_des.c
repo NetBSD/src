@@ -33,7 +33,8 @@
 
 #include <config.h>
 
-RCSID("$Id: enc_des.c,v 1.1.1.4 2001/09/17 12:24:37 assar Exp $");
+__RCSID("$Heimdal: enc_des.c,v 1.21 2002/09/10 20:03:47 joda Exp $"
+        "$NetBSD: enc_des.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
 
 #if	defined(AUTHENTICATION) && defined(ENCRYPTION) && defined(DES_ENCRYPTION)
 #include <arpa/telnet.h>
@@ -50,11 +51,7 @@ RCSID("$Id: enc_des.c,v 1.1.1.4 2001/09/17 12:24:37 assar Exp $");
 #include "encrypt.h"
 #include "misc-proto.h"
 
-#ifdef HAVE_OPENSSL
-#include <openssl/des.h>
-#else
-#include <des.h>
-#endif
+#include "crypto-headers.h"
 
 extern int encrypt_debug_mode;
 

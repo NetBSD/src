@@ -1,4 +1,5 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:34 assar Exp $
+# $Heimdal: Makefile.am,v 1.9 1999/07/28 21:15:06 assar Exp $
+# $NetBSD: Makefile.am,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $
 
 include $(top_srcdir)/Makefile.am.common
 

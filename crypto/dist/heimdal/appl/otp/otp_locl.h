@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp_locl.h,v 1.1.1.4 2001/09/17 12:24:37 assar Exp $ */
+/* $Heimdal: otp_locl.h,v 1.10 2002/09/10 20:03:46 joda Exp $
+   $NetBSD: otp_locl.h,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -52,9 +53,5 @@
 #endif
 #include <roken.h>
 #include <err.h>
-#ifdef HAVE_OPENSSL
-#include <openssl/des.h>
-#else
-#include <des.h>
-#endif
+#include "crypto-headers.h" /* for des_read_pw_string */
 #include <otp.h>

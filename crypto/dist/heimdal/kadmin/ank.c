@@ -33,7 +33,8 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: ank.c,v 1.1.1.4 2001/09/17 12:24:57 assar Exp $");
+__RCSID("$Heimdal: ank.c,v 1.23 2002/06/07 19:05:38 nectar Exp $"
+        "$NetBSD: ank.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 /*
  * fetch the default principal corresponding to `princ'
@@ -149,7 +150,8 @@ add_one_principal (const char *name,
 	}
 	for(i = 0; i < n_keys; i++)
 	    krb5_free_keyblock_contents(context, &new_keys[i]);
-	free(new_keys);
+	if (n_keys > 0)
+	    free(new_keys);
 	kadm5_get_principal(kadm_handle, princ_ent, &princ, 
 			    KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $Id: ss.h,v 1.1.1.2 2000/08/02 20:00:19 assar Exp $ */
+/* $Heimdal: ss.h,v 1.3 2000/05/25 00:15:21 assar Exp $
+   $NetBSD: ss.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
 
 /* SS compatibility for SL */
 

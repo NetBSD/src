@@ -33,7 +33,8 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: cpw.c,v 1.1.1.4 2001/09/17 12:24:57 assar Exp $");
+__RCSID("$Heimdal: cpw.c,v 1.13 2001/08/10 08:05:35 joda Exp $"
+        "$NetBSD: cpw.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 struct cpw_entry_data {
     int random_key;

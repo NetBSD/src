@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,13 +31,18 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: krb5.h,v 1.1.1.5 2001/09/17 12:25:04 assar Exp $ */
+/* $Heimdal: krb5.h,v 1.205 2002/09/03 17:31:47 joda Exp $
+   $NetBSD: krb5.h,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__
 
 #include <time.h>
-#include <krb5-types.h>
+#include <sys/types.h>
+#include <inttypes.h>
+#include <sys/socket.h>
+typedef socklen_t krb5_socklen_t;
+typedef ssize_t krb5_ssize_t;
 
 #include <asn1_err.h>
 #include <krb5_err.h>
@@ -45,6 +50,11 @@
 #include <k524_err.h>
 
 #include <krb5_asn1.h>
+
+/* name confusion with MIT */
+#ifndef KRB5KDC_ERR_KEY_EXP
+#define KRB5KDC_ERR_KEY_EXP KRB5KDC_ERR_KEY_EXPIRED
+#endif
 
 /* simple constants */
 
@@ -94,7 +104,6 @@ enum {
     ENCTYPE_DES3_CBC_NONE	= ETYPE_DES3_CBC_NONE,
     ENCTYPE_DES_CFB64_NONE	= ETYPE_DES_CFB64_NONE,
     ENCTYPE_DES_PCBC_NONE	= ETYPE_DES_PCBC_NONE,
-    ENCTYPE_DES3_CBC_NONE_IVEC	= ETYPE_DES3_CBC_NONE_IVEC
 };
 
 typedef PADATA_TYPE krb5_preauthtype;
@@ -203,7 +212,8 @@ typedef enum krb5_address_type {
 
 enum {
   AP_OPTS_USE_SESSION_KEY = 1,
-  AP_OPTS_MUTUAL_REQUIRED = 2
+  AP_OPTS_MUTUAL_REQUIRED = 2,
+  AP_OPTS_USE_SUBKEY = 4		/* library internal */
 };
 
 typedef HostAddress krb5_address;
@@ -316,8 +326,8 @@ typedef struct krb5_creds {
 } krb5_creds;
 
 typedef struct krb5_cc_ops {
-    char *prefix;
-    char* (*get_name)(krb5_context, krb5_ccache);
+    const char *prefix;
+    const char* (*get_name)(krb5_context, krb5_ccache);
     krb5_error_code (*resolve)(krb5_context, krb5_ccache *, const char *);
     krb5_error_code (*gen_new)(krb5_context, krb5_ccache *);
     krb5_error_code (*init)(krb5_context, krb5_ccache, krb5_principal);
@@ -411,14 +421,8 @@ typedef Authenticator krb5_donot_replay;
 #define KRB5_STORAGE_BYTEORDER_LE			0x20
 #define KRB5_STORAGE_BYTEORDER_HOST			0x40
 
-typedef struct krb5_storage {
-    void *data;
-    ssize_t (*fetch)(struct krb5_storage*, void*, size_t);
-    ssize_t (*store)(struct krb5_storage*, const void*, size_t);
-    off_t (*seek)(struct krb5_storage*, off_t, int);
-    void (*free)(struct krb5_storage*);
-    krb5_flags flags;
-} krb5_storage;
+struct krb5_storage_data;
+typedef struct krb5_storage_data krb5_storage;
 
 typedef struct krb5_keytab_entry {
     krb5_principal principal;
@@ -438,7 +442,7 @@ struct krb5_keytab_data;
 typedef struct krb5_keytab_data *krb5_keytab;
 
 struct krb5_keytab_data {
-    char *prefix;
+    const char *prefix;
     krb5_error_code (*resolve)(krb5_context, const char*, krb5_keytab);
     krb5_error_code (*get_name)(krb5_context, krb5_keytab, char*, size_t);
     krb5_error_code (*close)(krb5_context, krb5_keytab);
@@ -539,8 +543,8 @@ typedef EncAPRepPart krb5_ap_rep_enc_part;
 
 /* variables */
 
-extern const char krb5_config_file[];
-extern const char krb5_defkeyname[];
+extern const char *krb5_config_file;
+extern const char *krb5_defkeyname;
 
 typedef enum {
     KRB5_PROMPT_TYPE_PASSWORD		= 0x1,
@@ -550,7 +554,7 @@ typedef enum {
 } krb5_prompt_type;
 
 typedef struct _krb5_prompt {
-    char *prompt;
+    const char *prompt;
     int hidden;
     krb5_data *reply;
     krb5_prompt_type type;
@@ -634,10 +638,10 @@ extern const krb5_kt_ops krb5_srvtab_fkt_ops;
 extern const krb5_kt_ops krb5_any_ops;
 
 #define KRB5_KPASSWD_SUCCESS	0
-#define KRB5_KPASSWD_MALFORMED	0
-#define KRB5_KPASSWD_HARDERROR	0
-#define KRB5_KPASSWD_AUTHERROR	0
-#define KRB5_KPASSWD_SOFTERROR	0
+#define KRB5_KPASSWD_MALFORMED	1
+#define KRB5_KPASSWD_HARDERROR	2
+#define KRB5_KPASSWD_AUTHERROR	3
+#define KRB5_KPASSWD_SOFTERROR	4
 
 #define KPASSWD_PORT 464
 
@@ -664,7 +668,6 @@ typedef struct krb5_krbhst_info {
 
 struct credentials; /* this is to keep the compiler happy */
 struct getargs;
-
 struct sockaddr;
 
 #include <krb5-protos.h>

@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: hprop.h,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $ */
+/* $Heimdal: hprop.h,v 1.13 2001/01/26 15:54:19 joda Exp $
+   $NetBSD: hprop.h,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $ */
 
 #ifndef __HPROP_H__
 #define __HPROP_H__

@@ -33,7 +33,8 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: create_emtpy_oid_set.c,v 1.1.1.3 2001/06/19 22:08:14 assar Exp $");
+__RCSID("$Heimdal: create_emtpy_oid_set.c,v 1.4 2001/02/18 03:39:08 assar Exp $"
+        "$NetBSD: create_emtpy_oid_set.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
 
 OM_uint32 gss_create_empty_oid_set (
             OM_uint32 * minor_status,

@@ -34,7 +34,8 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$Id: get.c,v 1.1.1.4 2001/06/19 22:08:08 assar Exp $");
+__RCSID("$Heimdal: get.c,v 1.13 2001/05/07 05:31:43 assar Exp $"
+        "$NetBSD: get.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
 
 struct get_entry_data {
     void (*header)(void);

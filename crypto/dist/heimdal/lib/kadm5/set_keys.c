@@ -33,7 +33,8 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: set_keys.c,v 1.1.1.4 2001/09/17 12:25:02 assar Exp $");
+__RCSID("$Heimdal: set_keys.c,v 1.25 2001/08/13 15:12:16 joda Exp $"
+        "$NetBSD: set_keys.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
 
 /*
  * the known and used DES enctypes

@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.1.1.1 2001/02/11 13:51:47 assar Exp $	*/
+/*	$NetBSD: unvis.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -36,7 +36,8 @@
 #if 1
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: unvis.c,v 1.1.1.1 2001/02/11 13:51:47 assar Exp $");
+__RCSID("$Heimdal: unvis.c,v 1.2 2000/12/06 21:41:46 joda Exp $"
+        "$NetBSD: unvis.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $");
 #endif
 #include <roken.h>
 #ifndef _DIAGASSERT
@@ -48,7 +49,7 @@ RCSID("$Id: unvis.c,v 1.1.1.1 2001/02/11 13:51:47 assar Exp $");
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.1.1.1 2001/02/11 13:51:47 assar Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

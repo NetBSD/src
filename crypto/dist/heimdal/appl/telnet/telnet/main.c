@@ -38,12 +38,8 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-RCSID("$Id: main.c,v 1.1.1.4 2001/09/17 12:24:38 assar Exp $");
-
-/* These values need to be the same as defined in libtelnet/kerberos5.c */
-/* Either define them in both places, or put in some common header file. */
-#define OPTS_FORWARD_CREDS	0x00000002
-#define OPTS_FORWARDABLE_CREDS	0x00000001
+__RCSID("$Heimdal: main.c,v 1.38 2002/08/28 21:05:22 joda Exp $"
+        "$NetBSD: main.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
 
 #if KRB5
 #define FORWARD
@@ -91,9 +87,30 @@ usage(void)
 
 
 #ifdef	FORWARD
-extern int forward_flags;
-static int default_forward=0;
+int forward_option = 0; /* forward flags set from command line */
 #endif	/* FORWARD */
+void
+set_forward_options(void)
+{
+#ifdef FORWARD
+	switch(forward_option) {
+	case 'f':
+		kerberos5_set_forward(1);
+		kerberos5_set_forwardable(0);
+		break;
+	case 'F':
+		kerberos5_set_forward(1);
+		kerberos5_set_forwardable(1);
+		break;
+	case 'G':
+		kerberos5_set_forward(0);
+		kerberos5_set_forwardable(0);
+		break;
+	default:
+		break;
+	}
+#endif
+}
 
 #ifdef KRB5
 /* XXX ugly hack to setup dns-proxy stuff */
@@ -112,13 +129,11 @@ krb5_init(void)
 #if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
     if (krb5_config_get_bool (context, NULL,
          "libdefaults", "forward", NULL)) {
-           forward_flags |= OPTS_FORWARD_CREDS;
-           default_forward=1;
+	    kerberos5_set_forward(1);
     }
     if (krb5_config_get_bool (context, NULL,
          "libdefaults", "forwardable", NULL)) {
-           forward_flags |= OPTS_FORWARDABLE_CREDS;
-           default_forward=1;
+	    kerberos5_set_forwardable(1);
     }
 #endif
 #ifdef  ENCRYPTION
@@ -126,6 +141,7 @@ krb5_init(void)
         "libdefaults", "encrypt", NULL)) {
           encrypt_auto(1);
           decrypt_auto(1); 
+	  wantencryption = 1;
           EncryptVerbose(1);
         }
 #endif
@@ -168,6 +184,11 @@ main(int argc, char **argv)
 	 * passed 
 	 */
 	autologin = -1;
+
+	if (argc == 2 && strcmp(argv[1], "--version") == 0) {
+	    print_version(NULL);
+	    exit(0);
+	}
 
 	while((ch = getopt(argc, argv,
 			   "78DEKLS:X:abcde:fFk:l:n:rxG")) != -1) {
@@ -234,36 +255,20 @@ main(int argc, char **argv)
 			set_escape_char(optarg);
 			break;
 		case 'f':
-#if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
-			if ((forward_flags & OPTS_FORWARD_CREDS) &&
-			    !default_forward) {
-			    fprintf(stderr,
-				    "%s: Only one of -f and -F allowed.\n",
-				    prompt);
-			    usage();
-			}
-			forward_flags |= OPTS_FORWARD_CREDS;
-#else
-			fprintf(stderr,
-			 "%s: Warning: -f ignored, no Kerberos V5 support.\n",
-				prompt);
-#endif
-			break;
 		case 'F':
+		case 'G':
 #if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
-			if ((forward_flags & OPTS_FORWARD_CREDS) &&
-			    !default_forward) {
+			if (forward_option) {
 			    fprintf(stderr,
-				    "%s: Only one of -f and -F allowed.\n",
+				    "%s: Only one of -f, -F and -G allowed.\n",
 				    prompt);
 			    usage();
 			}
-			forward_flags |= OPTS_FORWARD_CREDS;
-			forward_flags |= OPTS_FORWARDABLE_CREDS;
+			forward_option = ch;
 #else
 			fprintf(stderr,
-			 "%s: Warning: -F ignored, no Kerberos V5 support.\n",
-				prompt);
+			 "%s: Warning: -%c ignored, no Kerberos V5 support.\n",
+				prompt, ch);
 #endif
 			break;
 		case 'k':
@@ -295,6 +300,7 @@ main(int argc, char **argv)
 #ifdef	ENCRYPTION
 			encrypt_auto(1);
 			decrypt_auto(1);
+			wantencryption = 1;
 			EncryptVerbose(1);
 #else
 			fprintf(stderr,
@@ -302,16 +308,6 @@ main(int argc, char **argv)
 								prompt);
 #endif
 			break;
-		case 'G':
-#if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
-                        forward_flags ^= OPTS_FORWARD_CREDS;
-                        forward_flags ^= OPTS_FORWARDABLE_CREDS;
-#else
-                        fprintf(stderr,
-                         "%s: Warning: -G ignored, no Kerberos V5 support.\n",
-                                prompt);
-#endif
-                        break;
 
 		case '?':
 		default:
@@ -327,6 +323,7 @@ main(int argc, char **argv)
 #if defined(ENCRYPTION)
 		encrypt_auto(1);
 		decrypt_auto(1);
+		wantencryption = -1;
 #endif
 	}
 

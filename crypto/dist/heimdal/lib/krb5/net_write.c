@@ -33,9 +33,10 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: net_write.c,v 1.1.1.2 2000/08/02 19:59:37 assar Exp $");
+__RCSID("$Heimdal: net_write.c,v 1.7 2002/08/21 09:08:07 joda Exp $"
+        "$NetBSD: net_write.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
-ssize_t
+krb5_ssize_t
 krb5_net_write (krb5_context context,
 		void *p_fd,
 		const void *buf,

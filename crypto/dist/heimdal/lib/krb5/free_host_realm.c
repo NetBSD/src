@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: free_host_realm.c,v 1.1.1.2 2000/08/02 19:59:27 assar Exp $");
+__RCSID("$Heimdal: free_host_realm.c,v 1.4 1999/12/02 17:05:09 joda Exp $"
+        "$NetBSD: free_host_realm.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
 
 /*
  * Free all memory allocated by `realmlist'
