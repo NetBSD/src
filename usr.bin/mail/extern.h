@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/07/07 22:57:53 phil Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.6 1997/07/07 22:57:53 phil Exp $
+ *	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $
  */
 
 struct name;
@@ -158,6 +158,7 @@ int	 ignore1 __P((char *[], struct ignoretab *, char *));
 int	 igshow __P((struct ignoretab *, char *));
 void	 intr __P((int));
 int	 inc __P((void *));
+int	 incfile __P((void));
 int	 isdate __P((char []));
 int	 isdir __P((char []));
 int	 isfileaddr __P((char *));
