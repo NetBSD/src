@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.26 2003/11/19 15:48:21 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.27 2003/11/19 16:43:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.26 2003/11/19 15:48:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.27 2003/11/19 16:43:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.26 2003/11/19 15:48:21 christo
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
+#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
@@ -359,6 +360,8 @@ compat_43_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
 	struct iovec aiov, kiov;
 	struct dirent *dp, *edp;
 	caddr_t dirbuf;
+	size_t count = min(MAXBSIZE, (size_t)SCARG(uap, count));
+
 	int error, eofflag, readcnt;
 	long loff;
 
@@ -376,13 +379,13 @@ unionread:
 		goto out;
 	}
 	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, count);
+	aiov.iov_len = count;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	auio.uio_resid = SCARG(uap, count);
+	auio.uio_resid = count;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
@@ -396,14 +399,14 @@ unionread:
 		kuio = auio;
 		kuio.uio_iov = &kiov;
 		kuio.uio_segflg = UIO_SYSSPACE;
-		kiov.iov_len = SCARG(uap, count);
-		MALLOC(dirbuf, caddr_t, SCARG(uap, count), M_TEMP, M_WAITOK);
+		kiov.iov_len = count;
+		dirbuf = malloc(count, M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
 			    (off_t **)0, (int *)0);
 		fp->f_offset = kuio.uio_offset;
 		if (error == 0) {
-			readcnt = SCARG(uap, count) - kuio.uio_resid;
+			readcnt = count - kuio.uio_resid;
 			edp = (struct dirent *)&dirbuf[readcnt];
 			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 #				if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -434,7 +437,7 @@ unionread:
 			if (dp >= edp)
 				error = uiomove(dirbuf, readcnt, &auio);
 		}
-		FREE(dirbuf, M_TEMP);
+		free(dirbuf, M_TEMP);
 	}
 	VOP_UNLOCK(vp, 0);
 	if (error)
@@ -445,7 +448,7 @@ unionread:
 	extern int (**union_vnodeop_p) __P((void *));
 	extern struct vnode *union_dircache __P((struct vnode *));
 
-	if ((SCARG(uap, count) == auio.uio_resid) &&
+	if ((count == auio.uio_resid) &&
 	    (vp->v_op == union_vnodeop_p)) {
 		struct vnode *lvp;
 
@@ -484,7 +487,7 @@ unionread:
 }
 #endif /* UNION */
 
-	if ((SCARG(uap, count) == auio.uio_resid) &&
+	if ((count == auio.uio_resid) &&
 	    (vp->v_flag & VROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
@@ -497,7 +500,7 @@ unionread:
 	}
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
 	    sizeof(long));
-	*retval = SCARG(uap, count) - auio.uio_resid;
+	*retval = count - auio.uio_resid;
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
