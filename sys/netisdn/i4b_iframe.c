@@ -27,7 +27,7 @@
  *	i4b_iframe.c - i frame handling routines
  *	------------------------------------------
  *
- *	$Id: i4b_iframe.c,v 1.2.2.2 2001/11/14 19:18:17 nathanw Exp $ 
+ *	$Id: i4b_iframe.c,v 1.2.2.3 2002/04/01 07:48:54 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.2.2.2 2001/11/14 19:18:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.2.2.3 2002/04/01 07:48:54 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -67,11 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.2.2.2 2001/11/14 19:18:17 nathanw E
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
 /*---------------------------------------------------------------------------*

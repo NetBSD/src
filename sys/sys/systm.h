@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.10 2001/12/03 05:00:14 gmcgarry Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.11 2002/04/01 07:49:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -286,10 +286,11 @@ void	dopowerhooks __P((int));
 #define PWR_SOFTSTANDBY	5
 
 /*
- * Mountroot hooks.  Device drivers establish these to be executed
- * just before (*mountroot)() if the passed device is selected
- * as the root device.
+ * Mountroot hooks (and mountroot declaration).  Device drivers establish
+ * these to be executed just before (*mountroot)() if the passed device is
+ * selected as the root device.
  */
+extern int (*mountroot)(void);
 void	*mountroothook_establish __P((void (*)(struct device *),
 	    struct device *));
 void	mountroothook_disestablish __P((void *));
@@ -303,6 +304,13 @@ void	domountroothook __P((void));
 void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
 void	exechook_disestablish __P((void *));
 void	doexechooks __P((struct proc *));
+
+/*
+ * Exit hooks. Subsystems may want to do cleanup when a process exits.
+ */
+void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
+void	exithook_disestablish __P((void *));
+void	doexithooks __P((struct proc *));
 
 int	uiomove __P((void *, int, struct uio *));
 
@@ -388,6 +396,8 @@ void	cpu_Debugger __P((void));
  */
 extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #define console_debugger() if (db_fromconsole) Debugger()
+#elif defined(Debugger)
+#define console_debugger() Debugger()
 #else
 #define console_debugger() do {} while (/* CONSTCOND */ 0) /* NOP */
 #endif

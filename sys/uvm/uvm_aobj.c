@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.39.2.5 2001/11/14 19:19:04 nathanw Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.39.2.6 2002/04/01 07:49:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.39.2.5 2001/11/14 19:19:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.39.2.6 2002/04/01 07:49:20 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -584,10 +584,9 @@ uao_init(void)
 	 */
 
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
-	    0, 0, 0, "uaoeltpl", 0, NULL, NULL, M_UVMAOBJ);
+	    0, 0, 0, "uaoeltpl", NULL);
 	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0,
-	    "aobjpl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAOBJ);
+	    "aobjpl", &pool_allocator_nointr);
 }
 
 /*

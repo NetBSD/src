@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.26 2000/07/14 21:39:56 tv Exp $	*/
+/*	$NetBSD: errno.h,v 1.26.2.1 2002/04/01 07:49:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -184,8 +184,9 @@
 
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */
-#define	ERESTART	-1		/* restart syscall */
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
+#define	ERESTART	-3		/* restart syscall */
+#define	EPASSTHROUGH	-4		/* ioctl not handled by this layer */
 #endif
 
 #endif /* !_SYS_ERRNO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.19.2.1 2001/06/21 20:10:48 nathanw Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.19.2.2 2002/04/01 07:49:24 nathanw Exp $	*/
 
 /*
  *
@@ -151,6 +151,8 @@ LIST_HEAD(uvm_history_head, uvm_history);
 #define UVMHIST_FUNC(FNAME)
 #define uvmhist_dump(NAME)
 #else
+#include <sys/kernel.h>		/* for "cold" variable */
+
 extern	struct uvm_history_head uvm_histories;
 
 #define UVMHIST_DECL(NAME) struct uvm_history NAME
@@ -180,8 +182,6 @@ do { \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
-
-extern int cold;
 
 #if defined(UVMHIST_PRINT)
 extern int uvmhist_print_enabled;

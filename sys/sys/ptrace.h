@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.21.42.4 2002/01/09 02:55:36 nathanw Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.21.42.5 2002/04/01 07:49:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -47,9 +47,26 @@
 #define	PT_KILL		8	/* kill the child process */
 #define	PT_ATTACH	9	/* attach to running process */
 #define	PT_DETACH	10	/* detach from running process */
+#define	PT_IO		11	/* do I/O to/from the stopped process */
 
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
+
+/*
+ * Argument structure for PT_IO.
+ */
+struct ptrace_io_desc {
+	int	piod_op;	/* I/O operation (see below) */
+	void	*piod_offs;	/* child offset */
+	void	*piod_addr;	/* parent offset */
+	size_t	piod_len;	/* request length (in)/actual count (out) */
+};
+
+/* piod_op */
+#define	PIOD_READ_D	1	/* read from D space */
+#define	PIOD_WRITE_D	2	/* write to D spcae */
+#define	PIOD_READ_I	3	/* read from I space */
+#define	PIOD_WRITE_I	4	/* write to I space */
 
 #ifdef _KERNEL
 

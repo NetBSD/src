@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.77.2.5 2002/02/28 04:15:13 nathanw Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.77.2.6 2002/04/01 07:48:46 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -691,6 +691,9 @@ struct tcpcb *
 void	 tcp_dooptions __P((struct tcpcb *,
 	    u_char *, int, struct tcphdr *, struct tcp_opt_info *));
 void	 tcp_drain __P((void));
+#ifdef INET6
+void	 tcp6_drain __P((void));
+#endif
 void	 tcp_established __P((struct tcpcb *));
 void	 tcp_init __P((void));
 #ifdef INET6

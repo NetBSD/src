@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.1.1.1.4.2 2001/11/14 19:18:18 nathanw Exp $ 
+ *	$Id: i4b_l2if.c,v 1.1.1.1.4.3 2002/04/01 07:48:57 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.1.1.1.4.2 2001/11/14 19:18:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.1.1.1.4.3 2002/04/01 07:48:57 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.1.1.1.4.2 2001/11/14 19:18:18 nathanw
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 
-#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l3fsm.h>
 #include <netisdn/i4b_q931.h>
@@ -133,7 +133,8 @@ make_q931_cause(cause_t cause)
 int
 i4b_get_dl_stat(call_desc_t *cd)
 {
-	return(ctrl_desc[cd->bri].dl_est);
+	const struct isdn_l3_driver * drv = isdn_find_l3_by_bri(cd->bri);
+	return drv->dl_est;
 }
 
 /*---------------------------------------------------------------------------*
@@ -143,17 +144,18 @@ int
 i4b_dl_establish_ind(int bri)
 {
 	int i, found;
+	struct isdn_l3_driver * drv = isdn_find_l3_by_bri(bri);
 	NDBGL2(L2_PRIM, "DL-ESTABLISH-IND bri %d", bri);
 
 	/* first set DL up in controller descriptor */
 	NDBGL3(L3_MSG, "unit=%d DL established!", bri);
-	ctrl_desc[bri].dl_est = DL_UP;
+	drv->dl_est = DL_UP;
 	
 	found = 0;
 
 	/* second, inform all (!) active call of the event */
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if( (call_desc[i].cdid != 0) && call_desc[i].bri == bri) {
 			next_l3state(&call_desc[i], EV_DLESTIN);
@@ -180,13 +182,14 @@ i4b_dl_establish_cnf(int bri)
 {
 	int i;
 	int found = 0;
+	struct isdn_l3_driver * drv = isdn_find_l3_by_bri(bri);
 
 	NDBGL2(L2_PRIM, "DL-ESTABLISH-CONF bri %d", bri);
-	
-	for(i=0; i < N_CALL_DESC; i++)
+
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid != 0 && call_desc[i].bri == bri) {
-			ctrl_desc[bri].dl_est = DL_UP;
+			drv->dl_est = DL_UP;
 			next_l3state(&call_desc[i], EV_DLESTCF);
 			found++;
 		}
@@ -211,18 +214,19 @@ i4b_dl_release_ind(int bri)
 {
 	int i;
 	int found = 0;
+	struct isdn_l3_driver * drv = isdn_find_l3_by_bri(bri);
 
 	NDBGL2(L2_PRIM, "DL-RELEASE-IND bri %d", bri);
 	
 	/* first set controller to down */
 	
-	ctrl_desc[bri].dl_est = DL_DOWN;
+	drv->dl_est = DL_DOWN;
 	
 	found = 0;
 
 	/* second, inform all (!) active calls of the event */
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid != 0 && call_desc[i].bri == bri) {
 			next_l3state(&call_desc[i], EV_DLRELIN);
@@ -244,9 +248,11 @@ i4b_dl_release_ind(int bri)
 int
 i4b_dl_release_cnf(int bri)
 {
+	struct isdn_l3_driver * drv = isdn_find_l3_by_bri(bri);
+
 	NDBGL2(L2_PRIM, "DL-RELEASE-CONF unit %d", bri);
 	
-	ctrl_desc[bri].dl_est = DL_DOWN;
+	drv->dl_est = DL_DOWN;
 	return(0);
 }
 
@@ -278,7 +284,7 @@ i4b_dl_unit_data_ind(int bri, struct mbuf *m)
 void
 i4b_l3_tx_connect(call_desc_t *cd)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
@@ -303,7 +309,7 @@ i4b_l3_tx_connect(call_desc_t *cd)
 void
 i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_COMPLETE_LEN;
@@ -347,7 +353,7 @@ i4b_l3_tx_release_complete(call_desc_t *cd, int send_cause_flag)
 void
 i4b_l3_tx_disconnect(call_desc_t *cd)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
@@ -377,7 +383,7 @@ i4b_l3_tx_disconnect(call_desc_t *cd)
 void
 i4b_l3_tx_setup(call_desc_t *cd)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 	int slen = strlen(cd->src_telno);
@@ -477,7 +483,7 @@ i4b_l3_tx_setup(call_desc_t *cd)
 void
 i4b_l3_tx_connect_ack(call_desc_t *cd)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
@@ -502,7 +508,7 @@ i4b_l3_tx_connect_ack(call_desc_t *cd)
 void
 i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 
@@ -536,7 +542,7 @@ i4b_l3_tx_status(call_desc_t *cd, u_char q850cause)
 void
 i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 	int len = I_FRAME_HDRLEN + MSG_RELEASE_LEN;
@@ -573,7 +579,7 @@ i4b_l3_tx_release(call_desc_t *cd, int send_cause_flag)
 void
 i4b_l3_tx_alert(call_desc_t *cd)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc *l2sc = (l2_softc_t*)isdn_find_softc_by_bri(cd->bri);
 	struct mbuf *m;
 	u_char *ptr;
 

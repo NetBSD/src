@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.8 2002/01/08 00:35:04 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.9 2002/04/01 07:49:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.8 2002/01/08 00:35:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.9 2002/04/01 07:49:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,11 +343,11 @@ sys_mmap(l, v, retval)
 
 		if (VM_MAXUSER_ADDRESS > 0 &&
 		    (addr + size) > VM_MAXUSER_ADDRESS)
-			return (EINVAL);
+			return (EFBIG);
 		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
 		if (addr > addr + size)
-			return (EINVAL);		/* no wrapping! */
+			return (EOVERFLOW);		/* no wrapping! */
 
 	} else {
 

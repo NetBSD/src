@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11.2.4 2002/02/28 04:15:17 nathanw Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.2.5 2002/04/01 07:49:04 nathanw Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.4 2002/02/28 04:15:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.2.5 2002/04/01 07:49:04 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -71,30 +71,18 @@ struct pfkeystat pfkeystat;
  * key_usrreq()
  * derived from net/rtsock.c:route_usrreq()
  */
-#ifndef __NetBSD__
-int
-key_usrreq(so, req, m, nam, control)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-#else
 int
 key_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
-#endif /*__NetBSD__*/
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
 		so->so_pcb = (caddr_t)kp;
@@ -194,11 +182,7 @@ key_output(m, va_alist)
 	}
 
 	/*XXX giant lock*/
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	error = key_parse(m, so);
 	m = NULL;
 	splx(s);
@@ -227,7 +211,6 @@ key_sendup0(rp, m, promisc)
 			m = m_pullup(m, sizeof(struct sadb_msg));
 		if (!m) {
 			pfkeystat.in_nomem++;
-			m_freem(m);
 			return ENOBUFS;
 		}
 		m->m_pkthdr.len += sizeof(*pmsg);
@@ -253,91 +236,6 @@ key_sendup0(rp, m, promisc)
 	return error;
 }
 
-/* XXX this interface should be obsoleted. */
-int
-key_sendup(so, msg, len, target)
-	struct socket *so;
-	struct sadb_msg *msg;
-	u_int len;
-	int target;	/*target of the resulting message*/
-{
-	struct mbuf *m, *n, *mprev;
-	int tlen;
-
-	/* sanity check */
-	if (so == 0 || msg == 0)
-		panic("key_sendup: NULL pointer was passed.\n");
-
-	KEYDEBUG(KEYDEBUG_KEY_DUMP,
-		printf("key_sendup: \n");
-		kdebug_sadb(msg));
-
-	/*
-	 * we increment statistics here, just in case we have ENOBUFS
-	 * in this function.
-	 */
-	pfkeystat.in_total++;
-	pfkeystat.in_bytes += len;
-	pfkeystat.in_msgtype[msg->sadb_msg_type]++;
-
-	/*
-	 * Get mbuf chain whenever possible (not clusters),
-	 * to save socket buffer.  We'll be generating many SADB_ACQUIRE
-	 * messages to listening key sockets.  If we simply allocate clusters,
-	 * sbappendaddr() will raise ENOBUFS due to too little sbspace().
-	 * sbspace() computes # of actual data bytes AND mbuf region.
-	 *
-	 * TODO: SADB_ACQUIRE filters should be implemented.
-	 */
-	tlen = len;
-	m = mprev = NULL;
-	while (tlen > 0) {
-		if (tlen == len) {
-			MGETHDR(n, M_DONTWAIT, MT_DATA);
-			n->m_len = MHLEN;
-		} else {
-			MGET(n, M_DONTWAIT, MT_DATA);
-			n->m_len = MLEN;
-		}
-		if (!n) {
-			pfkeystat.in_nomem++;
-			return ENOBUFS;
-		}
-		if (tlen >= MCLBYTES) {	/*XXX better threshold? */
-			MCLGET(n, M_DONTWAIT);
-			if ((n->m_flags & M_EXT) == 0) {
-				m_free(n);
-				m_freem(m);
-				pfkeystat.in_nomem++;
-				return ENOBUFS;
-			}
-			n->m_len = MCLBYTES;
-		}
-
-		if (tlen < n->m_len)
-			n->m_len = tlen;
-		n->m_next = NULL;
-		if (m == NULL)
-			m = mprev = n;
-		else {
-			mprev->m_next = n;
-			mprev = n;
-		}
-		tlen -= n->m_len;
-		n = NULL;
-	}
-	m->m_pkthdr.len = len;
-	m->m_pkthdr.rcvif = NULL;
-	m_copyback(m, 0, len, (caddr_t)msg);
-
-	/* avoid duplicated statistics */
-	pfkeystat.in_total--;
-	pfkeystat.in_bytes -= len;
-	pfkeystat.in_msgtype[msg->sadb_msg_type]--;
-
-	return key_sendup_mbuf(so, m, target);
-}
-
 /* so can be NULL if target != KEY_SENDUP_ONE */
 int
 key_sendup_mbuf(so, m, target)
@@ -359,15 +257,11 @@ key_sendup_mbuf(so, m, target)
 	pfkeystat.in_total++;
 	pfkeystat.in_bytes += m->m_pkthdr.len;
 	if (m->m_len < sizeof(struct sadb_msg)) {
-#if 1
 		m = m_pullup(m, sizeof(struct sadb_msg));
 		if (m == NULL) {
 			pfkeystat.in_nomem++;
 			return ENOBUFS;
 		}
-#else
-		/* don't bother pulling it up just for stats */
-#endif
 	}
 	if (m->m_len >= sizeof(struct sadb_msg)) {
 		struct sadb_msg *msg;

@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.1.1.1.4.1 2001/04/09 01:58:48 nathanw Exp $
+ *	$Id: i4b_l3l4.h,v 1.1.1.1.4.2 2002/04/01 07:48:58 nathanw Exp $
  *
  * $FreeBSD$
  *
@@ -46,9 +46,6 @@
 #define T313VAL	(hz*4)			/* 4 seconds timeout		*/
 #define T400DEF	(hz*10)			/* 10 seconds timeout		*/
 
-#define N_CALL_DESC (MAX_CONTROLLERS*2)	/* no of call descriptors */
-
-extern int nctrl;		/* number of controllers detected in system */
 
 typedef struct bchan_statistics {
 	int outbytes;
@@ -62,58 +59,13 @@ typedef struct bchan_statistics {
 typedef struct i4b_isdn_bchan_linktab {
 	void* l1token;
 	int channel;
-	void (*bch_config)(void*, int channel, int bprot, int updown);
-	void (*bch_tx_start)(void*, int channel);
-	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
+	const struct isdn_l4_bchannel_functions *bchannel_driver;
 	struct ifqueue *tx_queue;
 	struct ifqueue *rx_queue;	/* data xfer for NON-HDLC traffic   */
 	struct mbuf **rx_mbuf;		/* data xfer for HDLC based traffic */
 } isdn_link_t;
 
-/*---------------------------------------------------------------------------*
- * table of things the b channel handler needs to know  about
- * the driver it is connected to for data transfer
- *---------------------------------------------------------------------------*/
-typedef struct i4b_driver_bchan_linktab {
-	int unit;
-	void (*bch_rx_data_ready)(int);
-	void (*bch_tx_queue_empty)(int);
-	void (*bch_activity)(int, int rxtx);
-#define ACT_RX 0
-#define ACT_TX 1
-	void (*line_connected)(int, void *cde);
-	void (*line_disconnected)(int, void *cde);
-	void (*dial_response)(int, int stat, cause_t cause);
-	void (*updown_ind)(int, int updown);		
-} drvr_link_t;
-
-/* global linktab functions for controller types (aka hardware drivers) */
-struct ctrl_type_desc {
-	isdn_link_t* (*get_linktab)(void*, int channel);
-	void (*set_linktab)(void*, int channel, drvr_link_t *dlt);
-};
-extern struct ctrl_type_desc ctrl_types[];
-
-/* global linktab functions for RBCH userland driver */
-
-drvr_link_t *rbch_ret_linktab(int unit);
-void rbch_set_linktab(int unit, isdn_link_t *ilt);
-
-/* global linktab functions for IPR network driver */
-
-drvr_link_t *ipr_ret_linktab(int);
-void ipr_set_linktab(int, isdn_link_t *ilt);
-
-/* global linktab functions for TEL userland driver */
-
-drvr_link_t *tel_ret_linktab(int);
-void tel_set_linktab(int, isdn_link_t *ilt);
-
-/* global linktab functions for ISPPP userland driver */
-
-drvr_link_t *i4bisppp_ret_linktab(int);
-void i4bisppp_set_linktab(int, isdn_link_t *ilt);
-
+struct isdn_l4_driver_functions;
 
 /*---------------------------------------------------------------------------*
  *	this structure describes one call/connection on one B-channel
@@ -134,8 +86,8 @@ typedef struct
 
 	int	bprot;			/* B channel protocol BPROT_XXX */
 
-	int	driver;			/* driver to use for B channel	*/
-	int	driver_unit;		/* unit for above driver number	*/
+	int	bchan_driver_index;	/* driver to use for B channel	*/
+	int	bchan_driver_unit;	/* unit for above driver number	*/
 	
 	cause_t	cause_in;		/* cause value from NT	*/
 	cause_t	cause_out;		/* cause value to NT	*/
@@ -169,8 +121,9 @@ typedef struct
 
 	int	T400;			/* L4 timeout */
 
-	isdn_link_t	*ilt;		/* isdn B channel linktab	*/
-	drvr_link_t	*dlt;		/* driver linktab		*/
+	isdn_link_t	*ilt;		/* isdn B channel driver/state	*/
+	const struct isdn_l4_driver_functions *l4_driver;		/* layer 4 driver		*/
+	void	*l4_driver_softc;					/* layer 4 driver instance	*/
 
 	int	dir;			/* outgoing or incoming call	*/
 #define DIR_OUTGOING	0
@@ -216,21 +169,89 @@ typedef struct
 	char	datetime[DATETIME_MAX];	/* date/time information element*/	
 } call_desc_t;
 
-extern call_desc_t call_desc[N_CALL_DESC];
+extern call_desc_t call_desc[];
+extern int num_call_desc;
+
+/*
+ * Set of functions layer 4 drivers calls to manipulate the B channel
+ * they are using.
+ */
+struct isdn_l4_bchannel_functions {
+	void (*bch_config)(void*, int channel, int bprot, int updown);
+	void (*bch_tx_start)(void*, int channel);
+	void (*bch_stat)(void*, int channel, bchan_statistics_t *bsp);	
+};
+
+/*
+ * Functions a layer 4 application driver exports
+ */
+struct isdn_l4_driver_functions {
+	/*
+	 * Functions for use by the B channel driver
+	 */
+	void (*bch_rx_data_ready)(void *softc);
+	void (*bch_tx_queue_empty)(void *softc);
+	void (*bch_activity)(void *softc, int rxtx);
+#define ACT_RX 0
+#define ACT_TX 1
+	void (*line_connected)(void *softc, void *cde);
+	void (*line_disconnected)(void *softc, void *cde);
+	void (*dial_response)(void *softc, int stat, cause_t cause);
+	void (*updown_ind)(void *softc, int updown);
+	/*
+	 * Functions used by the ISDN management system
+	 */
+	void* (*get_softc)(int unit);
+	void (*set_linktab)(void *softc, isdn_link_t *ilt);
+	/*
+	 * Optional accounting function
+	 */
+	time_t (*get_idletime)(void* softc);
+};
+
+/* global registry of layer 4 drivers */
+int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driver_functions *driver);
+int isdn_l4_driver_detatch(const char *name);
+int isdn_l4_find_driverid(const char *name);
+const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit);
+const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit);
 
 /* forward decl. */
 struct isdn_diagnostic_request;
 struct isdn_dr_prot;
 
+/*
+ * functions exported by a layer 3 driver to layer 4
+ */
+struct isdn_l3_driver_functions {
+	isdn_link_t* (*get_linktab)(void*, int channel);
+	void (*set_l4_driver)(void*, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
+	
+	void	(*N_CONNECT_REQUEST)	(unsigned int);	
+	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
+	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
+	void	(*N_ALERT_REQUEST)	(unsigned int);
+	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
+	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
+	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
+};
+
 /*---------------------------------------------------------------------------*
- *	this structure "describes" one controller
+ *	this structure "describes" one BRI (typically identical to one
+ *	controller, but when one controller drives multiple BRIs, this
+ *	is just one of those BRIs)
  *---------------------------------------------------------------------------*/
-typedef struct
-{
-	void*	l1_token;		/* softc of hardware driver	*/
-	int	bri;
-	int	ctrl_type;		/* controller type   (CTRL_XXX)	*/
-	int	card_type;		/* card manufacturer (CARD_XXX) */
+struct isdn_l3_driver {
+	SLIST_ENTRY(isdn_l3_driver) l3drvq;
+	void*	l1_token;		/* softc of hardware driver, actually
+					 * this is the l2_softc (!!) for
+					 * passive cards, and something else
+					 * for active cards (maybe actually
+					 * the softc there) */
+	int	bri;			/* BRI id assigned to this */
+	char *devname;			/* pointer to autoconf identifier */
+					/* e.g. "isic0" or "daic0 port 2" */
+	char *card_name;		/* type of card */
 
 	int	protocol;		/* D-channel protocol type */
 
@@ -246,18 +267,14 @@ typedef struct
 	int	tei;			/* current tei or -1 if invalid */
 
 	/* pointers to functions to be called from L4 */
-	
-	void	(*N_CONNECT_REQUEST)	(unsigned int);	
-	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
-	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
-	void	(*N_ALERT_REQUEST)	(unsigned int);
-#if 0
-	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
-	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
-#endif
-	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
-} ctrl_desc_t;
+	const struct isdn_l3_driver_functions * l3driver;
+};
 
-extern ctrl_desc_t ctrl_desc[MAX_CONTROLLERS];
+struct isdn_l3_driver * isdn_attach_bri(const char *devname,
+    const char *cardname, void *l1_token, 
+    const struct isdn_l3_driver_functions * l3driver);
+int isdn_detach_bri(struct isdn_l3_driver *);
+struct isdn_l3_driver *isdn_find_l3_by_bri(int bri);
+int isdn_count_bri(int *maxbri);
 
 #endif /* _I4B_Q931_H_ */

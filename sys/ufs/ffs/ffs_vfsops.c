@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.6 2002/01/08 00:34:48 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.7 2002/04/01 07:49:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.6 2002/01/08 00:34:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.7 2002/04/01 07:49:17 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -692,6 +692,21 @@ ffs_mountfs(devvp, mp, p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
+
+	/*
+	 * verify that we can access the last block in the fs.
+	 */
+
+	error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize, cred,
+	    &bp);
+	if (bp->b_bcount != fs->fs_fsize)
+		error = EINVAL;
+	bp->b_flags |= B_INVAL;
+	if (error)
+		goto out;
+	brelse(bp);
+	bp = NULL;
+
 	fs->fs_ronly = ronly;
 	if (ronly == 0) {
 		fs->fs_clean <<= 1;
@@ -955,8 +970,7 @@ ffs_statfs(mp, sbp, p)
 		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
-	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree) +
-	    (u_int64_t) dbtofsb(fs, fs->fs_pendingblocks));
+	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	if (sbp != &mp->mnt_stat) {
@@ -1251,7 +1265,7 @@ ffs_init()
 	ufs_init();
 
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
+	    &pool_allocator_nointr);
 }
 
 void

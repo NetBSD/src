@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.10 2002/02/28 20:51:58 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.11 2002/04/01 07:49:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.10 2002/02/28 20:51:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.11 2002/04/01 07:49:05 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -650,8 +650,7 @@ nfs_write(v)
 			error = VOP_PUTPAGES(vp,
 			    trunc_page(oldoff & ~(nmp->nm_wsize - 1)),
 			    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
-				       ~(nmp->nm_wsize - 1)),
-			    PGO_CLEANIT | PGO_WEAK);
+				       ~(nmp->nm_wsize - 1)), PGO_CLEANIT);
 		}
 	} while (uio->uio_resid > 0);
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
@@ -976,7 +975,7 @@ nfs_doio(bp, p)
 	    struct vm_page *pgs[npages];
 	    boolean_t needcommit = TRUE;
 
-	    if ((bp->b_flags & B_ASYNC) != 0) {
+	    if ((bp->b_flags & B_ASYNC) != 0 && NFS_ISV3(vp)) {
 		    iomode = NFSV3WRITE_UNSTABLE;
 	    } else {
 		    iomode = NFSV3WRITE_FILESYNC;
@@ -1136,7 +1135,34 @@ nfs_getpages(v)
 
 	npages = *ap->a_count;
 	error = genfs_getpages(v);
-	if (error || !write || !v3) {
+	if (error) {
+		return error;
+	}
+
+	/*
+	 * for read faults where the nfs node is not yet marked NMODIFIED,
+	 * set PG_RDONLY on the pages so that we come back here if someone
+	 * tries to modify later via the mapping that will be entered for
+	 * this fault.
+	 */
+
+	pgs = ap->a_m;
+	if (!write && (np->n_flag & NMODIFIED) == 0 && pgs != NULL) {
+		if (!locked) {
+			simple_lock(&uobj->vmobjlock);
+		}
+		for (i = 0; i < npages; i++) {
+			pg = pgs[i];
+			if (pg == NULL || pg == PGO_DONTCARE) {
+				continue;
+			}
+			pg->flags |= PG_RDONLY;
+		}
+		if (!locked) {
+			simple_unlock(&uobj->vmobjlock);
+		}
+	}
+	if (!write) {
 		return error;
 	}
 
@@ -1144,13 +1170,15 @@ nfs_getpages(v)
 	 * this is a write fault, update the commit info.
 	 */
 
-	pgs = ap->a_m;
 	origoffset = ap->a_offset;
 	len = npages << PAGE_SHIFT;
 
-	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
-	nfs_del_committed_range(vp, origoffset, len);
-	nfs_del_tobecommitted_range(vp, origoffset, len);
+	np->n_flag |= NMODIFIED;
+	if (v3) {
+		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		nfs_del_committed_range(vp, origoffset, len);
+		nfs_del_tobecommitted_range(vp, origoffset, len);
+	}
 	if (!locked) {
 		simple_lock(&uobj->vmobjlock);
 	}
@@ -1164,6 +1192,8 @@ nfs_getpages(v)
 	if (!locked) {
 		simple_unlock(&uobj->vmobjlock);
 	}
-	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+	if (v3) {
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+	}
 	return 0;
 }

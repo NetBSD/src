@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.8 2002/02/28 04:15:16 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.9 2002/04/01 07:49:02 nathanw Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.8 2002/02/28 04:15:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.9 2002/04/01 07:49:02 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2290,7 +2290,7 @@ key_delsah(sah)
 		}
 	}
 
-	/* don't delete sah only if there are savs. */
+	/* delete sah only if there's no sav. */
 	if (zombie) {
 		splx(s);
 		return;
@@ -6155,6 +6155,7 @@ key_expire(sav)
 	mtod(result, struct sadb_msg *)->sadb_msg_len =
 	    PFKEY_UNIT64(result->m_pkthdr.len);
 
+	splx(s);
 	return key_sendup_mbuf(NULL, result, KEY_SENDUP_REGISTERED);
 
  fail:
