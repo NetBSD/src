@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.43 2002/03/26 22:58:17 fredette Exp $
+# $NetBSD: makeflist,v 1.44 2002/04/08 17:18:22 tron Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -16,20 +16,7 @@ tc=`${MAKE} print_use_new_toolchain`
 x11_version=`${MAKE} print_x11_version`
 setd=`pwd`
 nlists="base comp etc games man misc text"
-xlists=
-for xlist in xbase xcomp xcontrib xfont xserver xmisc
-do
- if [ -z "$xlists" ]
- then
-  xlists=$xlist
- else
-  xlists="$xlists $xlist"
- fi
- if [ -d "$setd/lists/$xlist${x11_version}" ]
- then
-  xlists="$xlists $xlist${x11_version}"
- fi
-done
+xlists="xbase xcomp xcontrib xfont xserver xmisc"
 lists=$nlists
 
 # handle args
@@ -93,6 +80,23 @@ if [ "$machine" = "sparc64" -o "$machine_cpu" = "sh3" -o \
      "$machine_arch" = "m68000" ]; then
 	lintlibs=no
 fi
+
+# Automatically add XFree86 version specific sets
+for list in $lists
+do
+ if [ -z "$_lists" ]
+ then
+  _lists=$list
+ else
+  _lists="$_lists $list"
+ fi
+ if [ -d "$setd/lists/$list${x11_version}" ]
+ then
+  _lists="$_lists $list${x11_version}"
+ fi
+done
+lists=$_lists
+unset _lists
 
 for setname in $lists; do
 	cat $setd/lists/$setname/mi
