@@ -5,7 +5,7 @@
  * Modified 1991 by Donn Seeley at UUNET Technologies, Inc.
  *
  *	from: @(#)i386-opcode.h	6.3 (Berkeley) 5/8/91
- *	$Id: i386-opcode.h,v 1.3 1993/08/04 00:21:42 jtc Exp $
+ *	$Id: i386-opcode.h,v 1.4 1993/09/24 17:19:16 jtc Exp $
  */
 
 /* i386-opcode.h -- Intel 80386 opcode table
@@ -58,7 +58,7 @@ template i386_optab[] = {
 {"push", 1, 0x50, _, ShortForm, WordReg,0,0 },
 {"push", 1, 0xff, 0x6,  Modrm, WordReg|WordMem, 0, 0 },
 {"push", 1, 0x6a, _, NoModrm, Imm8S, 0, 0},
-{"push", 1, 0x68, _, NoModrm, Imm32, 0, 0},
+{"push", 1, 0x68, _, NoModrm, Imm16|Imm32, 0, 0},
 {"push", 1, 0x06, _,  Seg2ShortForm, SReg2,0,0 },
 {"push", 1, 0x0fa0, _, Seg3ShortForm, SReg3,0,0 },
 /* push all */
