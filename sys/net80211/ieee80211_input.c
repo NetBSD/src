@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.21 2004/02/11 10:19:32 mrg Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.22 2004/04/30 23:58:08 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.12 2003/10/17 23:59:11 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.21 2004/02/11 10:19:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.22 2004/04/30 23:58:08 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -140,7 +140,6 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		if (ifp->if_flags & IFF_DEBUG)
 			if_printf(ifp, "receive packet with wrong version: %x\n",
 			    wh->i_fc[0]);
-		ieee80211_unref_node(&ni);
 		ic->ic_stats.is_rx_badversion++;
 		goto err;
 	}
@@ -352,7 +351,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 						m1 = m;
 						m = NULL;
 					}
-					ieee80211_unref_node(&ni);
+					ieee80211_free_node(ic, ni);
 				}
 			}
 			if (m1 != NULL) {
@@ -890,7 +889,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_node *ni,
 	int subtype, int rssi, u_int32_t rstamp)
 {
-#define	ISPROBE(_st)	((_st) == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
@@ -906,12 +904,14 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		u_int8_t *tstamp, *bintval, *capinfo, *country;
 		u_int8_t chan, bchan, fhindex, erp;
 		u_int16_t fhdwell;
+		int isprobe;
 
 		if (ic->ic_opmode != IEEE80211_M_IBSS &&
 		    ic->ic_state != IEEE80211_S_SCAN) {
 			/* XXX: may be useful for background scan */
 			return;
 		}
+		isprobe = (subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP);
 
 		/*
 		 * beacon/probe response frame format
@@ -963,6 +963,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				break;
 			case IEEE80211_ELEMID_TIM:
 				break;
+			case IEEE80211_ELEMID_IBSSPARMS:
+				break;
 			case IEEE80211_ELEMID_XRATES:
 				xrates = frm;
 				break;
@@ -993,7 +995,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    isclr(ic->ic_chan_active, chan)) {
 			IEEE80211_DPRINTF(("%s: ignore %s with invalid channel "
 				"%u\n", __func__,
-				ISPROBE(subtype) ? "probe response" : "beacon",
+				isprobe ? "probe response" : "beacon",
 				chan));
 			ic->ic_stats.is_rx_badchan++;
 			return;
@@ -1011,7 +1013,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			 */
 			IEEE80211_DPRINTF(("%s: ignore %s on channel %u marked "
 				"for channel %u\n", __func__,
-				ISPROBE(subtype) ? "probe response" : "beacon",
+				isprobe ? "probe response" : "beacon",
 				bchan, chan));
 			ic->ic_stats.is_rx_chanmismatch++;
 			return;
@@ -1034,7 +1036,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN)) {
 			printf("%s: %s%s on chan %u (bss chan %u) ",
 			    __func__, (ni == NULL ? "new " : ""),
-			    ISPROBE(subtype) ? "probe response" : "beacon",
+			    isprobe ? "probe response" : "beacon",
 			    chan, bchan);
 			ieee80211_print_essid(ssid + 2, ssid[1]);
 			printf(" from %s\n", ether_sprintf(wh->i_addr2));
@@ -1052,14 +1054,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 #endif
 		if (ni == NULL) {
 			ni = ieee80211_alloc_node(ic, wh->i_addr2);
-			if (ni == NULL) {
-				ic->ic_stats.is_rx_nodealloc++;
+			if (ni == NULL)
 				return;
-			}
 			ni->ni_esslen = ssid[1];
 			memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 			memcpy(ni->ni_essid, ssid + 2, ssid[1]);
-		} else if (subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP) {
+			allocbs = 1;
+		} else if (ssid[1] != 0 && isprobe) {
 			/*
 			 * Update ESSID at probe response to adopt hidden AP by
 			 * Lucent/Cisco, which announces null ESSID in beacon.
@@ -1067,7 +1068,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ni->ni_esslen = ssid[1];
 			memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 			memcpy(ni->ni_essid, ssid + 2, ssid[1]);
-		}
+			allocbs = 0;
+		} else
+			allocbs = 0;
 		IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
@@ -1081,7 +1084,29 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_erp = erp;
 		/* NB: must be after ni_chan is setup */
 		ieee80211_setup_rates(ic, ni, rates, xrates, IEEE80211_F_DOSORT);
-		ieee80211_unref_node(&ni);
+		/*
+		 * When scanning we record results (nodes) with a zero
+		 * refcnt.  Otherwise we want to hold the reference for
+		 * ibss neighbors so the nodes don't get released prematurely.
+		 * Anything else can be discarded (XXX and should be handled
+		 * above so we don't do so much work). 
+		 */
+		if (ic->ic_state == IEEE80211_S_SCAN)
+			ieee80211_unref_node(&ni);	/* NB: do not free */
+		else if (ic->ic_opmode == IEEE80211_M_IBSS &&
+		    allocbs && isprobe) {
+			/*
+			 * Fake an association so the driver can setup it's
+			 * private state.  The rate set has been setup above;
+			 * there is no handshake as in ap/station operation.
+			 */
+			if (ic->ic_newassoc)
+				(*ic->ic_newassoc)(ic, ni, 1);
+			/* NB: hold reference */
+		} else {
+			/* XXX optimize to avoid work done above */
+			ieee80211_free_node(ic, ni);
+		}
 		break;
 	}
 
@@ -1132,10 +1157,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 
 		if (ni == ic->ic_bss) {
 			ni = ieee80211_dup_bss(ic, wh->i_addr2);
-			if (ni == NULL) {
-				ic->ic_stats.is_rx_nodealloc++;
+			if (ni == NULL)
 				return;
-			}
 			IEEE80211_DPRINTF(("%s: new req from %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
 			allocbs = 1;
@@ -1153,13 +1176,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_SEND_MGMT(ic, ni,
 				IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 		}
-		if (allocbs) {
-			/* XXX just use free? */
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-				ieee80211_free_node(ic, ni);
-			else
-				ieee80211_unref_node(&ni);
-		}
+		if (allocbs)
+			ieee80211_free_node(ic, ni);
 		break;
 	}
 
@@ -1191,7 +1209,78 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				__func__, algo, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_auth_unsupported++;
 			return;
-		} 
+		}
+		switch (ic->ic_opmode) {
+		case IEEE80211_M_IBSS:
+			if (ic->ic_state != IEEE80211_S_RUN || seq != 1) {
+				IEEE80211_DPRINTF(("%s: discard auth from %s; "
+					"state %u, seq %u\n", __func__,
+					ether_sprintf(wh->i_addr2),
+					ic->ic_state, seq));
+				ic->ic_stats.is_rx_bad_auth++;
+				break;
+			}
+			ieee80211_new_state(ic, IEEE80211_S_AUTH,
+			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+			break;
+
+		case IEEE80211_M_AHDEMO:
+			/* should not come here */
+			break;
+
+		case IEEE80211_M_HOSTAP:
+			if (ic->ic_state != IEEE80211_S_RUN || seq != 1) {
+				IEEE80211_DPRINTF(("%s: discard auth from %s; "
+					"state %u, seq %u\n", __func__,
+					ether_sprintf(wh->i_addr2),
+					ic->ic_state, seq));
+				ic->ic_stats.is_rx_bad_auth++;
+				break;
+			}
+			if (ni == ic->ic_bss) {
+				ni = ieee80211_alloc_node(ic, wh->i_addr2);
+				if (ni == NULL)
+					return;
+				IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
+				ni->ni_rssi = rssi;
+				ni->ni_rstamp = rstamp;
+				ni->ni_chan = ic->ic_bss->ni_chan;
+				allocbs = 1;
+			} else
+				allocbs = 0;
+			IEEE80211_SEND_MGMT(ic, ni,
+				IEEE80211_FC0_SUBTYPE_AUTH, 2);
+			if (ifp->if_flags & IFF_DEBUG)
+				if_printf(ifp, "station %s %s authenticated\n",
+				    (allocbs ? "newly" : "already"),
+				    ether_sprintf(ni->ni_macaddr));
+			break;
+
+		case IEEE80211_M_STA:
+			if (ic->ic_state != IEEE80211_S_AUTH || seq != 2) {
+				IEEE80211_DPRINTF(("%s: discard auth from %s; "
+					"state %u, seq %u\n", __func__,
+					ether_sprintf(wh->i_addr2),
+					ic->ic_state, seq));
+				ic->ic_stats.is_rx_bad_auth++;
+				break;
+			}
+			if (status != 0) {
+				if_printf(&ic->ic_if,
+				    "authentication failed (reason %d) for %s\n",
+				    status,
+				    ether_sprintf(wh->i_addr3));
+				if (ni != ic->ic_bss)
+					ni->ni_fails++;
+				ic->ic_stats.is_rx_auth_fail++;
+				return;
+			}
+			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+			break;
+		case IEEE80211_M_MONITOR:
+			break;
+		}
 		break;
 	}
 
@@ -1478,7 +1567,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ic->ic_stats.is_rx_badsubtype++;
 		break;
 	}
-#undef ISPROBE
 }
 
 static void
