@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.99 2001/11/10 22:48:09 perry Exp $	*/
+/*	$NetBSD: elink3.c,v 1.100 2001/11/13 13:14:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.100 2001/11/13 13:14:37 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

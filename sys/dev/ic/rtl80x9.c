@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.7 2001/07/08 17:52:02 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.8 2001/11/13 13:14:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.8 2001/11/13 13:14:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -27,11 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.2 2001/03/24 12:40:29 martin Exp $ 
+ *	$Id: isic.c,v 1.3 2001/11/13 13:14:39 lukem Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.3 2001/11/13 13:14:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.24 2001/10/22 16:47:43 mrg Exp $	*/
+/*	$NetBSD: hme.c,v 1.25 2001/11/13 13:14:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * HME Ethernet module driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.25 2001/11/13 13:14:37 lukem Exp $");
 
 #define HMEDEBUG
 

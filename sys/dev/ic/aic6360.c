@@ -1,11 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.75 2001/11/04 12:05:41 tsutsui Exp $	*/
-
-#include "opt_ddb.h"
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: aic6360.c,v 1.76 2001/11/13 13:14:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -63,6 +56,16 @@
  * 3) Get the synch stuff working.
  * 4) Rewrite it to use malloc for the acb structs instead of static alloc.?
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.76 2001/11/13 13:14:33 lukem Exp $");
+
+#include "opt_ddb.h"
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 /*
  * A few customizable items:

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.36 2001/10/02 19:17:07 pooka Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.37 2001/11/13 13:14:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  * Memory allocation interrupt logic is drived from an SMC 91C90 driver
  * written for NetBSD/amiga by Michael Hitch.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.37 2001/11/13 13:14:44 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"

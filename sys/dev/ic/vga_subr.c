@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.6 2000/01/25 02:44:03 ad Exp $ */
+/* $NetBSD: vga_subr.c,v 1.7 2001/11/13 13:14:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.7 2001/11/13 13:14:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

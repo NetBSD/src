@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.28 2001/11/11 00:16:07 christos Exp $	*/
+/*	$NetBSD: wi.c,v 1.29 2001/11/13 13:14:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,6 +68,9 @@
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.29 2001/11/13 13:14:46 lukem Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */

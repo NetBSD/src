@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.39 2001/08/20 11:57:02 wiz Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.40 2001/11/13 13:14:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -84,6 +84,9 @@
  * the 8139 lets you directly access the on-board PHY registers. We need
  * to select which interface to use depending on the chip type.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.40 2001/11/13 13:14:43 lukem Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.36 2001/07/19 16:25:25 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.37 2001/11/13 13:14:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,6 +33,9 @@
  *	This module provide bus independent BSD specific O/S functions.
  *	(ie. it provides an ifnet interface to the rest of the system)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.37 2001/11/13 13:14:43 lukem Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"

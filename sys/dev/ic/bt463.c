@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.5 2001/09/18 18:15:52 wiz Exp $ */
+/* $NetBSD: bt463.c,v 1.6 2001/11/13 13:14:35 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  /* This code was derived from and originally located in sys/dev/pci/
   *	 NetBSD: tga_bt463.c,v 1.5 2000/03/04 10:27:59 elric Exp 
   */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.6 2001/11/13 13:14:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.4 2001/10/16 04:36:56 minoura Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.5 2001/11/13 13:14:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * OKI MSM6258 ADPCM voice synthesizer codec.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.5 2001/11/13 13:14:42 lukem Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>

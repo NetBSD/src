@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.15 2001/07/07 15:53:22 thorpej Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.16 2001/11/13 13:14:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,6 +51,9 @@
  * This file contains the machine-independent parts of the
  * driver common to tty and keyboard/mouse sub-drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.16 2001/11/13 13:14:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.38 2001/07/07 15:57:53 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.39 2001/11/13 13:14:44 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Chip core driver for the SMC90c26 / SMC90c56 (and SMC90c66 in '56
  * compatibility mode) boards
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.39 2001/11/13 13:14:44 lukem Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/

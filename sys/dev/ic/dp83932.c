@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.4 2001/07/23 16:33:48 tsutsui Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.5 2001/11/13 13:14:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for the National Semiconductor DP83932
  * Systems-Oriented Network Interface Controller (SONIC).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.5 2001/11/13 13:14:36 lukem Exp $");
 
 #include "bpfilter.h"
 

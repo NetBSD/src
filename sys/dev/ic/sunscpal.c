@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.8 2001/11/04 12:05:42 tsutsui Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.9 2001/11/13 13:14:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -74,6 +74,9 @@
  * John Ruschmeyer (jruschme@exit109.com) for i386 'nca' driver.
  * Thank you all.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.9 2001/11/13 13:14:45 lukem Exp $");
 
 #include "opt_ddb.h"
 

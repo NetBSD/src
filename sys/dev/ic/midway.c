@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.54 2001/09/28 11:59:54 chs Exp $	*/
+/*	$NetBSD: midway.c,v 1.55 2001/11/13 13:14:41 lukem Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -66,6 +66,9 @@
  *	- remove WMAYBE related code.  ENI WMAYBE DMA doen't work.
  *	- remove updating if_lastchange for every packet.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.55 2001/11/13 13:14:41 lukem Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */

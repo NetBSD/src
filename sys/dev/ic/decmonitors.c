@@ -1,4 +1,4 @@
-/* $NetBSD: decmonitors.c,v 1.1 2000/03/04 10:25:07 elric Exp $ */
+/* $NetBSD: decmonitors.c,v 1.2 2001/11/13 13:14:36 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: decmonitors.c,v 1.2 2001/11/13 13:14:36 lukem Exp $");
 
 #include <sys/types.h>
 #include <dev/ic/monitors.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.49 2001/09/16 16:34:37 wiz Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.50 2001/11/13 13:14:41 lukem Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,6 +30,9 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.50 2001/11/13 13:14:41 lukem Exp $");
 
 #define FE_VERSION "if_fe.c ver. 0.8"
 

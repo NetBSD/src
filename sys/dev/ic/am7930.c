@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.43 2000/05/02 06:30:51 augustss Exp $	*/
+/*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -34,6 +34,9 @@
  * Front-end attachment independent layer for AMD 79c30
  * audio driver.  No ISDN support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

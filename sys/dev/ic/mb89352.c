@@ -1,11 +1,5 @@
-/*	$NetBSD: mb89352.c,v 1.9 2001/11/04 12:05:42 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.10 2001/11/13 13:14:41 lukem Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
-
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	__inline static
-#endif
 
 /*-
  * Copyright (c) 1996,97,98,99 The NetBSD Foundation, Inc.
@@ -74,6 +68,15 @@
  * 3) Get the synch stuff working.
  * 4) Rewrite it to use malloc for the acb structs instead of static alloc.?
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.10 2001/11/13 13:14:41 lukem Exp $");
+
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	__inline static
+#endif
 
 /*
  * A few customizable items:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.100 2001/11/10 22:48:10 perry Exp $	*/
+/*	$NetBSD: tulip.c,v 1.101 2001/11/13 13:14:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Device driver for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family, and a variety of clone chips.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.101 2001/11/13 13:14:45 lukem Exp $");
 
 #include "bpfilter.h"
 

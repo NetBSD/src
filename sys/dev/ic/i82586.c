@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.40 2001/11/13 13:01:22 lukem Exp $	*/
+/*	$NetBSD: i82586.c,v 1.41 2001/11/13 13:14:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,10 +143,13 @@ Mode of operation:
    the synchronization.
 */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.41 2001/11/13 13:14:38 lukem Exp $");
+
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.40 2001/11/13 13:01:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.41 2001/11/13 13:14:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

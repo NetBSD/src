@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.40 2001/09/20 13:54:44 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.41 2001/11/13 13:14:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@
  * Then the driver module completely rewritten to support cards with DS phy
  * and to support adhoc mode by Atsushi Onoe <onoe@netbsd.org>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.41 2001/11/13 13:14:35 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.18 2001/07/19 16:25:24 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.19 2001/11/13 13:14:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Driver for Compaq array controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.19 2001/11/13 13:14:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

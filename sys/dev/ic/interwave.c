@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.13 2000/06/26 04:56:18 simonb Exp $	*/
+/*	$NetBSD: interwave.c,v 1.14 2001/11/13 13:14:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.14 2001/11/13 13:14:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
