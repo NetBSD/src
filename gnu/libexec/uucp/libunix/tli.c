@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char tli_rcsid[] = "$Id: tli.c,v 1.2 1994/10/24 22:17:29 jtc Exp $";
+const char tli_rcsid[] = "$Id: tli.c,v 1.1 1995/08/24 05:20:25 jtc Exp $";
 #endif
 
 #if HAVE_TLI
@@ -249,6 +249,8 @@ ftli_open (qconn, ibaud, fwait)
   char *zfreedev;
   const char *zservaddr;
   char *zfreeaddr;
+  uid_t ieuid;
+  boolean fswap;
   struct t_bind *qtbind;
   struct t_call *qtcall;
 
@@ -270,9 +272,26 @@ ftli_open (qconn, ibaud, fwait)
       zdevice = zfreedev;
     }
 
+  /* If we are acting as a server, swap to our real user ID before
+     calling t_open.  This will permit the server to use privileged
+     TCP ports when invoked by root.  We only swap if our effective
+     user ID is not root, so that the program can also be made suid
+     root in order to get privileged ports when invoked by anybody.  */
+  fswap = fwait && geteuid () != 0;
+  if (fswap)
+    {
+      if (! fsuser_perms (&ieuid))
+	{
+	  ubuffree (zfreedev);
+	  return FALSE;
+	}
+    }
+
   qsysdep->o = t_open (zdevice, O_RDWR, (struct t_info *) NULL);
   if (qsysdep->o < 0)
     {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
       ulog (LOG_ERROR, "t_open (%s): %s", zdevice, ztlierror ());
       ubuffree (zfreedev);
       return FALSE;
@@ -281,6 +300,8 @@ ftli_open (qconn, ibaud, fwait)
   if (fcntl (qsysdep->o, F_SETFD,
 	     fcntl (qsysdep->o, F_GETFD, 0) | FD_CLOEXEC) < 0)
     {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
       ulog (LOG_ERROR, "fcntl (FD_CLOEXEC): %s", strerror (errno));
       ubuffree (zfreedev);
       (void) t_close (qsysdep->o);
@@ -291,6 +312,8 @@ ftli_open (qconn, ibaud, fwait)
   qsysdep->iflags = fcntl (qsysdep->o, F_GETFL, 0);
   if (qsysdep->iflags < 0)
     {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
       ulog (LOG_ERROR, "fcntl: %s", strerror (errno));
       ubuffree (zfreedev);
       (void) t_close (qsysdep->o);
@@ -306,6 +329,7 @@ ftli_open (qconn, ibaud, fwait)
      address, and then we're finished.  */
   if (! fwait)
     {
+      /* fswap is known to be FALSE here.  */
       ubuffree (zfreedev);
       if (t_bind (qsysdep->o, (struct t_bind *) NULL,
 		  (struct t_bind *) NULL) < 0)
@@ -325,24 +349,46 @@ ftli_open (qconn, ibaud, fwait)
      to respawn the server if it fails; someday.  */
   qtbind = (struct t_bind *) t_alloc (qsysdep->o, T_BIND, T_ALL);
   if (qtbind == NULL)
-    ulog (LOG_FATAL, "t_alloc (T_BIND): %s", ztlierror ());
+    {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
+      ulog (LOG_FATAL, "t_alloc (T_BIND): %s", ztlierror ());
+    }
 
   zservaddr = qconn->qport->uuconf_u.uuconf_stli.uuconf_zservaddr;
   if (zservaddr == NULL)
-    ulog (LOG_FATAL, "Can't run as TLI server; no server address");
-      
+    {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
+      ulog (LOG_FATAL, "Can't run as TLI server; no server address");
+    }
+
   zfreeaddr = zbufcpy (zservaddr);
   qtbind->addr.len = cescape (zfreeaddr);
   if (qtbind->addr.len > qtbind->addr.maxlen)
-    ulog (LOG_FATAL, "%s: TLI server address too long (max %d)",
-	  zservaddr, qtbind->addr.maxlen);
+    {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
+      ulog (LOG_FATAL, "%s: TLI server address too long (max %d)",
+	    zservaddr, qtbind->addr.maxlen);
+    }
   memcpy (qtbind->addr.buf, zfreeaddr, qtbind->addr.len);
   ubuffree (zfreeaddr);
 
   qtbind->qlen = 5;
 
   if (t_bind (qsysdep->o, qtbind, (struct t_bind *) NULL) < 0)
-    ulog (LOG_FATAL, "t_bind (%s): %s", zservaddr, ztlierror ());
+    {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
+      ulog (LOG_FATAL, "t_bind (%s): %s", zservaddr, ztlierror ());
+    }
+
+  if (fswap)
+    {
+      if (! fsuucp_perms ((long) ieuid))
+	ulog (LOG_FATAL, "Could not swap back to UUCP user permissions");
+    }
 
   (void) t_free ((pointer) qtbind, T_BIND);
 

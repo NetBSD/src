@@ -1,7 +1,7 @@
 /* uuconv.c
    Convert one type of UUCP configuration file to another.
 
-   Copyright (C) 1991, 1992, 1993, 1994 Ian Lance Taylor
+   Copyright (C) 1991, 1992, 1993, 1994, 1995 Ian Lance Taylor
 
    This file is part of the Taylor UUCP package.
 
@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char uuconv_rcsid[] = "$Id: uuconv.c,v 1.2 1994/10/24 22:28:45 jtc Exp $";
+const char uuconv_rcsid[] = "$Id: uuconv.c,v 1.3 1995/08/24 05:23:16 jtc Exp $";
 #endif
 
 #include "getopt.h"
@@ -158,7 +158,7 @@ main (argc, argv)
 	  /* Print version and exit.  */
 	  fprintf
 	    (stderr,
-	     "%s: Taylor UUCP %s, copyright (C) 1991, 1992, 1993, 1994 Ian Lance Taylor\n",
+	     "%s: Taylor UUCP %s, copyright (C) 1991, 92, 93, 94, 1995 Ian Lance Taylor\n",
 	     zProgram, VERSION);
 	  exit (EXIT_SUCCESS);
 	  /*NOTREACHED*/
@@ -524,7 +524,7 @@ static void
 uvhelp ()
 {
   fprintf (stderr,
-	   "Taylor UUCP %s, copyright (C) 1991, 1992, 1993, 1994 Ian Lance Taylor\n",
+	   "Taylor UUCP %s, copyright (C) 1991, 92, 93, 94, 1995 Ian Lance Taylor\n",
 	   VERSION);
   fprintf (stderr, "Converts UUCP configuration files from one format to another.\n");
   fprintf (stderr,
@@ -844,6 +844,20 @@ uvwrite_taylor_system (e, q)
 	       qtime = qtime->uuconf_qnext)
 	    {
 	      fprintf (e, "call-timegrade %c ", (char) qtime->uuconf_ival);
+	      uvwrite_time (e, qtime);
+	      fprintf (e, "\n");
+	    }
+	}
+
+      if (CHANGED (uuconf_qcalledtimegrade)
+	  && (q->uuconf_qcalledtimegrade
+	      != (struct uuconf_timespan *) &_uuconf_unset))
+	{
+	  for (qtime = q->uuconf_qcalledtimegrade;
+	       qtime != NULL;
+	       qtime = qtime->uuconf_qnext)
+	    {
+	      fprintf (e, "called-timegrade %c ", (char) qtime->uuconf_ival);
 	      uvwrite_time (e, qtime);
 	      fprintf (e, "\n");
 	    }
@@ -1739,7 +1753,7 @@ uvwrite_taylor_port (e, qport, zprefix)
 	    else
 	      {
 		sprintf (ab, "%sdialer-sequence", zprefix);
-		uvwrite_string_array (e, qm->uuconf_pzdialer, zprefix);
+		uvwrite_string_array (e, qm->uuconf_pzdialer, ab);
 	      }
 	  }
 	if (qm->uuconf_qdialer != NULL)

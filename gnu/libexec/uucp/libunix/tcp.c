@@ -1,7 +1,7 @@
 /* tcp.c
    Code to handle TCP connections.
 
-   Copyright (C) 1991, 1992, 1993 Ian Lance Taylor
+   Copyright (C) 1991, 1992, 1993, 1995 Ian Lance Taylor
 
    This file is part of the Taylor UUCP package.
 
@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char tcp_rcsid[] = "$Id: tcp.c,v 1.3 1995/06/03 22:26:24 mycroft Exp $";
+const char tcp_rcsid[] = "$Id: tcp.c,v 1.1 1995/08/24 05:20:24 jtc Exp $";
 #endif
 
 #if HAVE_TCP
@@ -45,6 +45,7 @@ const char tcp_rcsid[] = "$Id: tcp.c,v 1.3 1995/06/03 22:26:24 mycroft Exp $";
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #if HAVE_FCNTL_H
 #include <fcntl.h>
@@ -144,7 +145,8 @@ ftcp_open (qconn, ibaud, fwait)
   struct ssysdep_conn *qsysdep;
   struct sockaddr_in s;
   const char *zport;
-  uid_t iuid, ieuid;
+  uid_t ieuid;
+  boolean fswap;
 
   ulog_device ("TCP");
 
@@ -189,7 +191,6 @@ ftcp_open (qconn, ibaud, fwait)
      return if we have received a connection.  It would be more robust
      to respawn the server if it fails; someday.  */
   bzero ((pointer) &s, sizeof s);
-  s.sin_len = sizeof(struct sockaddr_in);
   s.sin_family = AF_INET;
   zport = qconn->qport->uuconf_u.uuconf_stcp.uuconf_zport;
   s.sin_port = itcp_port_number (zport);
@@ -200,75 +201,29 @@ ftcp_open (qconn, ibaud, fwait)
      root.  We only swap if our effective user ID is not root, so that
      the program can also be made suid root in order to get privileged
      ports when invoked by anybody.  */
-  iuid = getuid ();
-  ieuid = geteuid ();
-  if (ieuid != 0)
+  fswap = geteuid () != 0;
+  if (fswap)
     {
-#if HAVE_SETREUID
-      /* Swap the effective user id and the real user id.  We can then
-	 swap them back again when we want to return to the uucp
-	 user's permissions.  */
-      if (setreuid (ieuid, iuid) < 0)
+      if (! fsuser_perms (&ieuid))
 	{
-	  ulog (LOG_ERROR, "setreuid (%ld, %ld): %s",
-		(long) ieuid, (long) iuid, strerror (errno));
 	  (void) close (qsysdep->o);
 	  qsysdep->o = -1;
 	  return FALSE;
 	}
-#else /* ! HAVE_SETREUID */
-#if HAVE_SAVED_SETUID
-      /* Set the effective user id to the real user id.  Since the
-	 effective user id is the saved setuid we will able to set
-	 back to it later.  If the real user id is root we will not be
-	 able to switch back and forth, but that doesn't matter since
-	 we only want to switch once.  */
-      if (setuid (iuid) < 0)
-	{
-	  ulog (LOG_ERROR, "setuid (%ld): %s", (long) iuid,
-		strerror (errno));
-	  (void) close (qsysdep->o);
-	  qsysdep->o = -1;
-	  return FALSE;
-	}
-#else /* ! HAVE_SAVED_SETUID */
-      /* There's no way to switch between real permissions and
-	 effective permissions.  Just try the bind with the uucp
-	 permissions.  */
-#endif /* ! HAVE_SAVED_SETUID */
-#endif /* ! HAVE_SETREUID */
     }
 
   if (bind (qsysdep->o, (struct sockaddr *) &s, sizeof s) < 0)
-    ulog (LOG_FATAL, "bind: %s", strerror (errno));
+    {
+      if (fswap)
+	(void) fsuucp_perms ((long) ieuid);
+      ulog (LOG_FATAL, "bind: %s", strerror (errno));
+    }
 
   /* Now swap back to the uucp user ID.  */
-  if (ieuid != 0)
+  if (fswap)
     {
-#if HAVE_SETREUID
-      if (setreuid (iuid, ieuid) < 0)
-	{
-	  ulog (LOG_ERROR, "setreuid (%ld, %ld): %s",
-		(long) iuid, (long) ieuid, strerror (errno));
-	  (void) close (qsysdep->o);
-	  qsysdep->o = -1;
-	  return FALSE;
-	}
-#else /* ! HAVE_SETREUID */
-#if HAVE_SAVED_SETUID
-      /* Set ourselves back to our original effective user id.  */
-      if (setuid ((uid_t) ieuid) < 0)
-	{
-	  ulog (LOG_ERROR, "setuid (%ld): %s", (long) ieuid,
-		strerror (errno));
-	  (void) close (qsysdep->o);
-	  qsysdep->o = -1;
-	  return FALSE;
-	}
-#else /* ! HAVE_SAVED_SETUID */
-      /* We didn't switch, no need to switch back.  */
-#endif /* ! HAVE_SAVED_SETUID */
-#endif /* ! HAVE_SETREUID */
+      if (! fsuucp_perms ((long) ieuid))
+	ulog (LOG_FATAL, "Could not swap back to UUCP user permissions");
     }
 
   if (listen (qsysdep->o, 5) < 0)
@@ -400,18 +355,28 @@ ftcp_dial (qconn, puuconf, qsys, zphone, qdialer, ptdialer)
 
   errno = 0;
   q = gethostbyname ((char *) zhost);
-  if (q == NULL)
+  if (q != NULL)
     {
-      if (errno == 0)
-	ulog (LOG_ERROR, "%s: unknown host name", zhost);
-      else
-	ulog (LOG_ERROR, "gethostbyname (%s): %s", zhost, strerror (errno));
-      return FALSE;
+      s.sin_family = q->h_addrtype;
+      memcpy (&s.sin_addr.s_addr, q->h_addr, (size_t) q->h_length);
+    }
+  else
+    {
+      if (errno != 0)
+	{
+	  ulog (LOG_ERROR, "gethostbyname (%s): %s", zhost, strerror (errno));
+	  return FALSE;
+	}
+
+      s.sin_family = AF_INET;
+      s.sin_addr.s_addr = inet_addr ((char *) zhost);
+      if ((long) s.sin_addr.s_addr == (long) -1)
+	{
+	  ulog (LOG_ERROR, "%s: unknown host name", zhost);
+	  return FALSE;
+	}
     }
 
-  s.sin_len = sizeof(struct sockaddr_in);
-  s.sin_family = q->h_addrtype;
-  memcpy (&s.sin_addr.s_addr, q->h_addr, (size_t) q->h_length);
   zport = qconn->qport->uuconf_u.uuconf_stcp.uuconf_zport;
   s.sin_port = itcp_port_number (zport);
 

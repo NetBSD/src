@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char spool_rcsid[] = "$Id: spool.c,v 1.2 1994/10/24 22:19:37 jtc Exp $";
+const char spool_rcsid[] = "$Id: spool.c,v 1.3 1995/08/24 05:20:19 jtc Exp $";
 #endif
 
 #include "uudefs.h"
@@ -41,7 +41,7 @@ const char spool_rcsid[] = "$Id: spool.c,v 1.2 1994/10/24 22:19:37 jtc Exp $";
    Command files
    These contain instructions for uucico indicating what files to transfer
    to and from what systems.  Each line of a work file is a command
-   beginning with S, R or X.
+   beginning with S, R, X, or E.
    #if ! SPOOLDIR_TAYLOR
    They are named C.ssssssgqqqq, where ssssss is the system name to
    transfer to or from, g is the grade and qqqq is the sequence number.
@@ -55,15 +55,17 @@ const char spool_rcsid[] = "$Id: spool.c,v 1.2 1994/10/24 22:19:37 jtc Exp $";
    #elif SPOOLDIR_ULTRIX
    If the directory sys/ssssss exists, they are put in the directory
    sys/ssssss/C; otherwise, they are put in the directory sys/DEFAULT/C.
-   #endif
    #elif SPOOLDIR_SVR4
    They are put in the directory sys/g, where sys is the system name
    and g is the grade.
    #endif
    #else SPOOLDIR_TAYLOR
-   They are named C.gqqqq, where g is the grade and qqqq is the sequence
-   number, and are placed in the directory ssssss/C. where ssssss is
-   the system name to transfer to or from.
+   They are named C.gqqqq, where g is the grade and qqqq is the
+   sequence number, and are placed in the directory ssssss/C. where
+   ssssss is the system name to transfer to or from.  The sequence
+   number for a C. file is actually a long string; it is not based on
+   the sequence number file, but is generated via a process which
+   attempts to produce a unique string each time it is run.
    #endif
 
    Data files

@@ -1,7 +1,7 @@
 /* cusub.c
    System dependent routines for cu.
 
-   Copyright (C) 1992, 1993 Ian Lance Taylor
+   Copyright (C) 1992, 1993, 1995 Ian Lance Taylor
 
    This file is part of the Taylor UUCP package.
 
@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cusub_rcsid[] = "$Id: cusub.c,v 1.2 1994/10/24 22:18:29 jtc Exp $";
+const char cusub_rcsid[] = "$Id: cusub.c,v 1.3 1995/08/24 05:19:37 jtc Exp $";
 #endif
 
 #include "uudefs.h"
@@ -330,7 +330,7 @@ fsysdep_cu (qconn, pbcmd, zlocalname)
       if (c <= 0)
 	break;
 
-      if (fstart && b == *zCuvar_escape)
+      if (fstart && b == *zCuvar_escape && b != '\0')
 	{
 	  c = cscu_escape (pbcmd, zlocalname);
 	  if (c <= 0)
@@ -1114,7 +1114,14 @@ fsysdep_shell (qconn, zcmd, tcmd)
   int aidescs[3];
   pid_t ipid;
 
-  azargs[0] = "/bin/sh";
+  if (tcmd != SHELL_NORMAL)
+    azargs[0] = "/bin/sh";
+  else
+    {
+      azargs[0] = getenv ("SHELL");
+      if (azargs[0] == NULL)
+	azargs[0] = "/bin/sh";
+    }
   if (zcmd == NULL || *zcmd == '\0')
     azargs[1] = NULL;
   else

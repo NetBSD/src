@@ -1,7 +1,7 @@
 /* tstuu.c
    Test the uucp package on a UNIX system.
 
-   Copyright (C) 1991, 1992, 1993, 1994 Ian Lance Taylor
+   Copyright (C) 1991, 1992, 1993, 1994, 1995 Ian Lance Taylor
 
    This file is part of the Taylor UUCP package.
 
@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char tstuu_rcsid[] = "$Id: tstuu.c,v 1.3 1994/10/24 22:16:22 jtc Exp $";
+const char tstuu_rcsid[] = "$Id: tstuu.c,v 1.4 1995/08/24 05:18:42 jtc Exp $";
 #endif
 
 #include "sysdep.h"
@@ -230,6 +230,12 @@ main (argc, argv)
   char abpty2[sizeof "/dev/ptyp0"];
   struct sbuf *qbuf1, *qbuf2;
 
+#if ! HAVE_TAYLOR_CONFIG
+  fprintf (stderr, "%s: only works when compiled with HAVE_TAYLOR_CONFIG\n",
+	   argv[0]);
+  exit (1);
+#endif
+
   zcmd1 = NULL;
   zcmd2 = NULL;
   zsys = "test2";
@@ -268,7 +274,7 @@ main (argc, argv)
 	  break;
 	default:
 	  fprintf (stderr,
-		   "Taylor UUCP %s, copyright (C) 1991, 1992, 1993, 1994 Ian Lance Taylor\n",
+		   "Taylor UUCP %s, copyright (C) 1991, 92, 93, 94, 1995 Ian Lance Taylor\n",
 		   VERSION);
 	  fprintf (stderr,
 		   "Usage: tstuu [-xn] [-t #] [-u] [-1 cmd] [-2 cmd]\n");

@@ -181,7 +181,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char protz_rcsid[] = "$Id: protz.c,v 1.2 1994/10/24 22:27:56 jtc Exp $";
+const char protz_rcsid[] = "$Id: protz.c,v 1.3 1995/08/24 05:23:01 jtc Exp $";
 #endif
 
 #include <errno.h>

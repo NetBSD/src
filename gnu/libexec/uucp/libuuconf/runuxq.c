@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU Library General Public
    License along with this library; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_runuxq_rcsid[] = "$Id: runuxq.c,v 1.1 1994/10/24 22:24:23 jtc Exp $";
+const char _uuconf_runuxq_rcsid[] = "$Id: runuxq.c,v 1.2 1995/08/24 05:21:51 jtc Exp $";
 #endif
 
 /* Return how often to spawn a uuxqt process.  This is either a

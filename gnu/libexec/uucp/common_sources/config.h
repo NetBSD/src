@@ -1,4 +1,4 @@
-/* conf.h.  Generated automatically by configure.  */
+/* config.h.  Generated automatically by configure.  */
 /* Configuration header file for Taylor UUCP.  -*- C -*-  */
 
 /* If your compiler does not use const correctly, then undefine it
@@ -28,6 +28,7 @@
 #define HAVE_SYS_IOCTL_H 1 /* <sys/ioctl.h> */
 #define HAVE_DIRENT_H 1 /* <dirent.h> */
 #define HAVE_MEMORY_H 1 /* <memory.h> */
+#define HAVE_TERMIOS_H 1 /* <termios.h> */
 #define HAVE_SYS_PARAM_H 1 /* <sys/param.h> */
 #define HAVE_UTIME_H 1 /* <utime.h> */
 #define HAVE_FCNTL_H 1 /* <fcntl.h> */
@@ -45,6 +46,14 @@
 #define HAVE_GLOB_H 1 /* <glob.h> */
 #define HAVE_SYS_SELECT_H 0 /* <sys/select.h> */
 #define HAVE_SYS_TYPES_TCP_H 0 /* <sys/types.tcp.h> */
+#define HAVE_SYS_MOUNT_H 1 /* <sys/mount.h> */
+#define HAVE_SYS_VFS_H 0 /* <sys/vfs.h> */
+#define HAVE_SYS_FILSYS_H 0 /* <sys/filsys.h> */
+#define HAVE_SYS_STATFS_H 0 /* <sys/statfs.h> */
+#define HAVE_SYS_DUSTAT_H 0 /* <sys/dustat.h> */
+#define HAVE_SYS_FS_TYPES_H 0 /* <sys/fs_types.h> */
+#define HAVE_USTAT_H 0 /* <ustat.h> */
+#define HAVE_SYS_STATVFS_H 0 /* <sys/statvfs.h> */
 
 /* If major and minor are not defined in <sys/types.h>, but are in
    <sys/mkdev.h>, set MAJOR_IN_MKDEV to 1.  If they are in
@@ -177,19 +186,19 @@
    another instance of Taylor UUCP.
 
    STAT_STATVFS          statvfs function
+   STAT_STATFS3_OSF1	 three argument statfs function (OSF/1)
    STAT_STATFS2_BSIZE    two argument statfs function with f_bsize field
    STAT_STATFS2_FSIZE    two argument statfs function with f_fsize field
    STAT_STATFS2_FS_DATA  two argument statfs function with fd_req field
    STAT_STATFS4          four argument statfs function
-   STAT_DUSTAT		 dustat function (AIX PS/2)
    STAT_DISK_SPACE	 disk_space function (QNX)
    STAT_USTAT            the ustat function with 512 byte blocks.  */
 #define STAT_STATVFS 0
-#define STAT_STATFS2_BSIZE 0
-#define STAT_STATFS2_FSIZE 1
+#define STAT_STATFS3_OSF1 0
+#define STAT_STATFS2_BSIZE 1
+#define STAT_STATFS2_FSIZE 0
 #define STAT_STATFS2_FS_DATA 0
 #define STAT_STATFS4 0
-#define STAT_DUSTAT 0
 #define STAT_DISK_SPACE 0
 #define STAT_USTAT 0
 
@@ -221,7 +230,8 @@
 #define HAVE_WAITPID 1
 #define HAVE_WAIT4 1
 #define HAVE_GLOB 1
-#define HAVE_SETREUID 0			/* deprecated */
+#define HAVE_SETREUID 1
+#define HAVE_SETEUID 1
 
 /* There are several functions which are replaced in the subdirectory
    lib.  If they are missing, the configure script will automatically
@@ -241,6 +251,7 @@
 #define HAVE_STRDUP 1 /* strdup.o */
 #define HAVE_STRSTR 1 /* strstr.o */
 #define HAVE_STRTOL 1 /* strtol.o */
+#define HAVE_STRTOUL 1 /* strtou.o */
 
 /* If neither of these functions exists, you should add bzero.o to
    lib/Makefile.  */
@@ -327,7 +338,7 @@
    setjmp.  These functions will only be used if your system restarts
    system calls after interrupts (see HAVE_RESTARTABLE_SYSCALLS,
    below).  */
-#define HAVE_SIGSETJMP 0
+#define HAVE_SIGSETJMP 1
 #define HAVE_SETRET 0
 
 /* The code needs to know what function to use to set a signal
@@ -357,7 +368,7 @@
    Otherwise, the code will use OPEN_MAX if defined, then NOFILE if
    defined, then 20.  */
 #define HAVE_GETDTABLESIZE 1
-#define HAVE_SYSCONF 0
+#define HAVE_SYSCONF 1
 
 /* The code will use one of the following functions when detaching
    from a terminal.  One of these must exist.  */
@@ -369,7 +380,7 @@
    in turn.  If neither is available, you must specify the local node
    name in the configuration file.  */
 #define HAVE_GETHOSTNAME 1
-#define HAVE_UNAME 0
+#define HAVE_UNAME 1
 
 /* The code will try to use each of the following functions in turn to
    determine the current time.  If none are available, it will use
@@ -426,7 +437,7 @@
 /* extern struct passwd *getpwnam (); */
 #define GETPWNAM_DECLARATION_OK 1
 /* extern struct passwd *getpwuid (); */
-#define GETPWUID_DECLARATION_OK 0
+#define GETPWUID_DECLARATION_OK 1
 /* extern struct group *getgrent (); */
 #define GETGRENT_DECLARATION_OK 1
 
