@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 1995/04/10 06:55:56 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 1995/04/10 17:20:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -347,16 +347,16 @@ cons_decl(kd);
 cons_decl(prom);
 #define	zscnpollc	nullcnpollc
 cons_decl(zs);
-dev_decl(zs,cnprobe_a);
-dev_decl(zs,cnprobe_b);
+dev_type_cnprobe(zscnprobe_a);
+dev_type_cnprobe(zscnprobe_b);
 
 struct	consdev constab[] = {
 #if NZS > 1
 	cons_init(kd),
 #endif
 #if NZS > 0
-	{ zscnprobe_a, zscninit, zscngetc, zscnputc, nullcnpollc },
-	{ zscnprobe_b, zscninit, zscngetc, zscnputc, nullcnpollc },
+	{ zscnprobe_a, zscninit, zscngetc, zscnputc, zscnpollc },
+	{ zscnprobe_b, zscninit, zscngetc, zscnputc, zscnpollc },
 #endif
 #if NPROM
 	cons_init(prom),
