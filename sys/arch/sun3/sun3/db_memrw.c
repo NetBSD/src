@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.10 1996/02/16 23:32:00 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11 1996/02/20 02:42:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -76,8 +76,10 @@ db_read_bytes(addr, size, data)
 		return;
 	}
 
-	while (--size >= 0)
+	while (size > 0) {
+		--size;
 		*data++ = *src++;
+	}
 }
 
 /*
@@ -177,7 +179,9 @@ db_write_bytes(addr, size, data)
 		return;
 	}
 
-	while (--size >= 0)
+	while (size > 0) {
+		--size;
 		*dst++ = *data++;
+	}
 }
 
