@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.56 2004/10/10 21:58:46 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.57 2004/10/10 22:00:36 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.56 2004/10/10 21:58:46 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.57 2004/10/10 22:00:36 enami Exp $");
 
 #include "opt_cardbus.h"
 
@@ -239,9 +239,13 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			SIMPLEQ_FOREACH(p, &rom_image, next) {
 				if (p->rom_image ==
 				    CARDBUS_CIS_ASI_ROM_IMAGE(cis_ptr)) {
+					if (p->image_size > len)
+						panic("image too large: "
+						    "%d > %d",
+						    p->image_size, len);
 					bus_space_read_region_1(p->romt,
 					    p->romh, CARDBUS_CIS_ADDR(cis_ptr),
-					    tuples, 256);
+					    tuples, p->image_size);
 					found++;
 				}
 				break;
@@ -260,9 +264,12 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			cardbus_conf_write(cc, cf, tag,
 			    CARDBUS_COMMAND_STATUS_REG,
 			    command | CARDBUS_COMMAND_MEM_ENABLE);
+			if (bar_size > len)
+				panic("bar_size too large: %d > %d",
+				    (int)bar_size, len);
 			/* XXX byte order? */
 			bus_space_read_region_1(ca->ca_memt, bar_memh,
-			    cis_ptr, tuples, 256);
+			    cis_ptr, tuples, bar_size);
 			found++;
 		}
 		command = cardbus_conf_read(cc, cf, tag,
@@ -578,13 +585,17 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		ca.ca_intrline = sc->sc_intrline;
 
 		if (cis_ptr != 0) {
-			if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
-				printf("cardbus_attach_card: failed to read CIS\n");
+			if (cardbus_read_tuples(&ca, cis_ptr,
+			    tuple, sizeof(tuple))) {
+				printf("cardbus_attach_card: "
+				    "failed to read CIS\n");
 			} else {
 #ifdef CARDBUS_DEBUG
-				decode_tuples(tuple, 2048, print_tuple, NULL);
+				decode_tuples(tuple, sizeof(tuple),
+				    print_tuple, NULL);
 #endif
-				decode_tuples(tuple, 2048, parse_tuple, &ca.ca_cis);
+				decode_tuples(tuple, sizeof(tuple),
+				    parse_tuple, &ca.ca_cis);
 			}
 		}
 
@@ -875,7 +886,7 @@ cardbus_get_capability(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
  */
 
 static u_int8_t *
-decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data);
+decode_tuple(u_int8_t *, u_int8_t *, tuple_decode_func, void *);
 
 static int
 decode_tuples(u_int8_t *tuple, int buflen, tuple_decode_func func, void *data)
@@ -887,17 +898,15 @@ decode_tuples(u_int8_t *tuple, int buflen, tuple_decode_func func, void *data)
 		return (0);
 	}
 
-	while (NULL != (tp = decode_tuple(tp, func, data))) {
-		if (tuple + buflen < tp) {
-			break;
-		}
-	}
+	while ((tp = decode_tuple(tp, tuple + buflen, func, data)) != NULL)
+		;
 
 	return (1);
 }
 
 static u_int8_t *
-decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data)
+decode_tuple(u_int8_t *tuple, u_int8_t *end,
+    tuple_decode_func func, void *data)
 {
 	u_int8_t type;
 	u_int8_t len;
@@ -905,11 +914,13 @@ decode_tuple(u_int8_t *tuple, tuple_decode_func func, void *data)
 	type = tuple[0];
 	len = tuple[1] + 2;
 
+	if (tuple + len > end)
+		return (NULL);
+
 	(*func)(tuple, len, data);
 
-	if (type == PCMCIA_CISTPL_END) {
+	if (type == PCMCIA_CISTPL_END)
 		return (NULL);
-	}
 
 	return (tuple + len);
 }
