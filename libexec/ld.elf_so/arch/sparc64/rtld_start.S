@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.14 2002/09/26 02:25:57 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.15 2003/02/27 05:39:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -62,12 +62,6 @@
 	
 	.section	".text"
 	.align	4
-.LLGETPC0:
-	retl
-	add	%o7,%l7,%l7
-
-	.section	".text"
-	.align	4
 	.global	_rtld_start
 	.type	_rtld_start,@function
 _rtld_start:
@@ -76,16 +70,21 @@ _rtld_start:
 	sub	%sp, 48+16, %sp		/* Make room for return args */
 
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
-	call	.LLGETPC0
+	call	0f
 	 add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
-	ldx	[%l7+_DYNAMIC], %o0
-	ldx	[%l7+_GLOBAL_OFFSET_TABLE_], %l0
+	call	_DYNAMIC+8
+0:	add	%l7, %o7, %l7		/* real &_GLOBAL_OFFSET_TABLE_ */
+	ld	[%o7+8], %o0		/* load stub call instruction */
+	ldx	[%l7], %l0		/* base-relative &_DYNAMIC */
+	sll	%o0, 2, %o0		/* extract PC offset */
+	sra	%o0, 0, %o0		/* sign-extend */
 
-	sub	%l7, %l0, %o1		/* relocbase */
+	add	%o0, %o7, %o0		/* real &_DYNAMIC */
+	sub	%o0, %l0, %l0		/* relocbase */
 	call	_rtld_relocate_nonplt_self
-	 add	%o0, %o1, %o0		/* &_DYNAMIC */
+	 mov	%l0, %o1		/* relocbase */
 
-	sub	%l7, %l0, %o1		/* relocbase */
+	mov	%l0, %o1		/* relocbase */
 	call	_rtld
 	 add	%sp, BIAS + ARGC, %o0	/* &argc - 16 */
 
