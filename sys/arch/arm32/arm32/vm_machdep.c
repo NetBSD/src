@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1998/07/06 02:40:43 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 1998/07/08 00:12:33 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -296,20 +296,19 @@ pagemove(from, to, size)
 
 	/*
 	 * Make sure the cache does not have dirty data for the
-	 * pages we are moving.
+	 * pages we are moving. Pages in the buffers are only
+	 * ever moved with pagemove, so we only need to clean
+	 * the 'from' area.
 	 */
-	if (size <= 0x1000) {
-		cpu_cache_purgeID_rng((u_int)from, size);
-		cpu_cache_purgeID_rng((u_int)to, size);
-	} else 
-		cpu_cache_purgeID();
+
+	cpu_cache_purgeD_rng((u_int)from, size);
 
 	while (size > 0) {
 		*tpte++ = *fpte;
 		*fpte++ = 0;
 		size -= NBPG;
 	}
-	cpu_tlb_flushID();
+	cpu_tlb_flushD();
 }
 
 extern vm_map_t phys_map;
