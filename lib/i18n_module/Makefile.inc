@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/03/17 22:14:13 tshiozak Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/08/19 09:41:27 lukem Exp $
 
 NOLINT=		# defined
 NOPICINSTALL=	# defined
@@ -6,14 +6,14 @@ NOPROFILE=	# defined
 
 .include <bsd.own.mk>
 
-SHLIB_VERSION_FILE=	${.CURDIR}/../shlib_version
+SHLIB_VERSION_FILE=	${NETBSDSRCDIR}/lib/i18n_module/shlib_version
 LIBDIR=		/usr/lib/i18n
 SHLIBDIR=	/usr/lib/i18n
 INTERNALLIB=	yes
-CPPFLAGS+=	-I${.CURDIR}/../../libc/citrus
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/citrus
 CPPFLAGS+=	-DLOCALEMOD_MAJOR=${SHLIB_MAJOR}
 BASENAME!=	basename ${.CURDIR}
 LIB=		${BASENAME}
 SRCS!=		echo ${SRCPRE}${BASENAME}.c | tr A-Z a-z
 
-.PATH:	${.CURDIR}/../../libc/citrus/modules
+.PATH:	${NETBSDSRCDIR}/lib/libc/citrus/modules

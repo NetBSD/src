@@ -1,12 +1,15 @@
-# $NetBSD: Makefile,v 1.14 2001/12/12 00:51:00 tv Exp $
+# $NetBSD: Makefile,v 1.15 2002/08/19 09:41:27 lukem Exp $
 
-DIST=		${.CURDIR}/../../../crypto/dist
+NOLINT=		# defined
+NOMAN=		# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
 PROG=		asn1_compile
 
-NOLINT=		# defined
-NOMAN=		# defined
 WARNS?=		1
 
 asn1_compile_SRCS = 				\
@@ -39,14 +42,14 @@ YHEADER=	# defined
 #	 -I${LIBROKEN}				\
 
 HOST_CPPFLAGS+= -I.				\
-	 -I${.CURDIR}/../../../include/heimdal	\
+	 -I${NETBSDSRCDIR}/include/heimdal	\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
 DPSRCS=		print_version.h
 
-make-print-version.lo: ${.CURDIR}/../../../include/heimdal/version.h
+make-print-version.lo: ${NETBSDSRCDIR}/include/heimdal/version.h
 
 make-print-version: make-print-version.lo
 	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}

@@ -1,10 +1,13 @@
-# $NetBSD: Makefile,v 1.11 2001/12/12 00:51:05 tv Exp $
+# $NetBSD: Makefile,v 1.12 2002/08/19 09:41:34 lukem Exp $
 
-DIST=		${.CURDIR}/../../crypto/dist
-.PATH:		${DIST}/heimdal/lib/roken ${.CURDIR}/../../include/heimdal
+NOLINT=		# defined
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/crypto/dist
+.PATH:		${DIST}/heimdal/lib/roken ${NETBSDSRCDIR}/include/heimdal
 
 WARNS?=		1
-NOLINT=		# defined
 
 LIB=		roken
 
@@ -59,10 +62,10 @@ INCS=		base64.h getarg.h parse_bytes.h parse_time.h parse_units.h \
 INCSDIR=	/usr/include/krb5
 
 CPPFLAGS+= -I. \
-	-I${.CURDIR}/../../include/heimdal \
+	-I${NETBSDSRCDIR}/include/heimdal \
 	-I${DIST}/heimdal/lib/roken \
 	-DHAVE_CONFIG_H
 
-HOST_CPPFLAGS+=	-I${.CURDIR}/../../include/heimdal -DHAVE_CONFIG_H
+HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/include/heimdal -DHAVE_CONFIG_H
 
 .include <bsd.lib.mk>
