@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.29 1998/09/04 19:54:40 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.30 1998/12/10 17:06:13 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -570,10 +570,11 @@ svr4_sys_systeminfo(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_systeminfo_args *uap = v;
-	char *str;
+	char *str = NULL;
 	int name;
 	int error;
-	long len;
+	size_t len;
+	char buf[256];
 	extern char ostype[], hostname[], osrelease[],
 		    version[], machine[], domainname[];
 
@@ -617,10 +618,12 @@ svr4_sys_systeminfo(p, v, retval)
 		break;
 
 	case SVR4_SI_PLATFORM:
-#if 0
+#ifdef __i386__
+		str = "i86pc";
+#elif __sparc__
 		str = "SUNW,SPARCstation-10";	/* XXX */
 #else
-		return 0;
+		str = "unknown";
 #endif
 		break;
 
@@ -632,13 +635,13 @@ svr4_sys_systeminfo(p, v, retval)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return error;
 		name = KERN_HOSTNAME;
-		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen, p);
+		break;
 
 	case SVR4_SI_SET_SRPC_DOMAIN:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return error;
 		name = KERN_DOMAINNAME;
-		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen, p);
+		break;
 
 	case SVR4_SI_SET_KERB_REALM:
 		return 0;
@@ -648,11 +651,31 @@ svr4_sys_systeminfo(p, v, retval)
 		return ENOSYS;
 	}
 
-	len = strlen(str) + 1;
-	if (len > rlen)
-		len = rlen;
+	if (str) {
+		len = strlen(str) + 1;
+		if (len > rlen)
+			len = rlen;
 
-	return copyout(str, SCARG(uap, buf), len);
+		if (SCARG(uap, buf)) {
+			error = copyout(str, SCARG(uap, buf), len);
+			if (error)
+				return error;
+			/* make sure we are NULL terminated */
+			buf[0] = '\0';
+			error = copyout(buf, &(SCARG(uap, buf)[len - 1]), 1);
+		}
+		else
+			error = 0;
+	}
+	else {
+		error = copyinstr(SCARG(uap, buf), buf, sizeof(buf), &len);
+		if (error)
+			return error;
+		error = kern_sysctl(&name, 1, 0, 0, buf, len, p);
+	}
+
+	*retval = len;
+	return error;
 }
 
 
