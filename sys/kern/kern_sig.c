@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.126 2002/10/23 09:14:20 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.127 2002/11/24 11:37:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.126 2002/10/23 09:14:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.127 2002/11/24 11:37:55 scw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -768,7 +768,7 @@ void
 psignal1(struct proc *p, int signum,
 	int dolock)		/* XXXSMP: works, but icky */
 {
-	int	s, prop;
+	int	s = 0, prop;
 	sig_t	action;
 
 #ifdef DIAGNOSTIC
@@ -1049,7 +1049,7 @@ firstsig(const sigset_t *ss)
 int
 issignal(struct proc *p)
 {
-	int		s, signum, prop;
+	int		s = 0, signum, prop;
 	int		dolock = (p->p_flag & P_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
 
