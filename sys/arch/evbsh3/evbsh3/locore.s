@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 2000/01/12 14:41:45 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 2000/02/24 19:01:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -264,6 +264,8 @@ start:
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 
+	ECLI
+
 	/* Set Register Bank to Bank 0 */
 	mov.l	SR_init, r0
 	ldc	r0, sr
@@ -373,6 +375,7 @@ NENTRY(proc_trampoline)
 	jsr	@r12
 	nop
 	add	#4, r15		/* pop tf_trapno */
+	CLI
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -459,8 +462,8 @@ ENTRY(longjmp)
  */
 
 ENTRY(idle)
-	CLI
 	ECLI
+	STI
 	mov.l	XXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
@@ -644,16 +647,16 @@ switch_search:
 	 * First phase: find new process.
 	 *
 	 * Registers:
-	 *   %eax - queue head, scratch, then zero
-	 *   %ebx - queue number
-	 *   %ecx - cached value of whichqs
-	 *   %edx - next process in queue
-	 *   %esi - old process
-	 *   %edi - new process
+	 *   r0  - queue head, scratch, then zero
+	 *   r13 - queue number
+	 *   r14 - cached value of whichqs
+	 *   r9  - next process in queue
+	 *   r12 - old process
+	 *   r8  - new process
 	 */
 
 	/* Wait for new process. */
-	CLI				/* splhigh doesn't do a cli */
+	ECLI				/* splhigh doesn't do a cli */
 	mov.l	XXXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
@@ -853,10 +856,7 @@ XL_switch_error:
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	ESTI
 
 	/* Skip context switch if same process. */
 	mov	r12, r0		/* r12 = oldCurproc */
@@ -898,7 +898,7 @@ switch_exited:
 	 */
 
 	/* No interrupts while loading new state. */
-	CLI
+	ECLI
 	mov	r8, r4		/* r8 = qs[i]->p_forw */
 	mov.l	XLP_ADDR, r1
 	add	r1, r4
@@ -949,10 +949,7 @@ switch_restored:
 	mov.l	r12, @r0
 
 	/* Interrupts are okay again. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	ESTI
 
 switch_return:
 	/*
@@ -1000,7 +997,7 @@ ENTRY(switch_exit)
 	mov.l	r0, @r1
 
 	/* Restore proc0's context. */
-	CLI
+	ECLI
 	mov	r9, r0
 	mov.l	XXLP_ADDR, r1
 	add	r1, r0
@@ -1031,10 +1028,7 @@ ENTRY(switch_exit)
 	mov.l	r10, @r0
 
 	/* Interrupts are okay again. */
-#if 1 /* 1998.10.19 */
-	ECLI
-#endif
-	STI
+	ESTI
 
 	mov	r8, r4
 	mov.l	XLexit2, r0
@@ -1126,7 +1120,7 @@ NENTRY(exphandler)
 	mov	#SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
-	ECLI
+	ESTI
 	STI
 	mov.l	XL_trap, r0
 	jsr	@r0
@@ -1135,8 +1129,7 @@ NENTRY(exphandler)
 	nop
 
 2:	/* Check for ASTs on exit to user mode. */
-	CLI
-	ESTI
+	ECLI
 	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
@@ -1156,8 +1149,9 @@ NENTRY(exphandler)
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
-	ECLI
-	STI
+
+	ESTI
+
 	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XL_trap, r0
@@ -1239,9 +1233,9 @@ _C_LABEL(MonTrap600):
 	.long	_ihandler
 _MonTrap600_end:
 
-/************************************************************************/
-/*	Immediate Data							*/
-/************************************************************************/
+/*
+ * Immediate Data
+ */
 		.align	2
 
 XL_curpcb:	.long	_C_LABEL(curpcb)
@@ -1340,8 +1334,8 @@ XL_splimit_low2:	.long	0x80000000
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
-	ECLI		/* disable external interrupt */
-	STI		/* enable exception for TLB handling */
+	ECLI			/* disable external interrupt */
+	STI			/* enable exception for TLB handling */
 	mov.l	XL_intrhandler, r0
 	jsr	@r0
 	nop
@@ -1361,7 +1355,7 @@ XL_splimit_low2:	.long	0x80000000
 	nop
 
 2:	/* Check for ASTs on exit to user mode. */
-	CLI
+	ECLI
 	mov.l	XXL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
@@ -1381,7 +1375,7 @@ XL_splimit_low2:	.long	0x80000000
 5:	xor	r0, r0
 	mov.l	XXL_astpending, r1
 	mov.l	r0, @r1
-	STI
+	ESTI
 	mov.l	XXLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XXL_trap, r0
@@ -1390,7 +1384,9 @@ XL_splimit_low2:	.long	0x80000000
 	add	#4, r15
 	bra	2b
 	nop
-1:	INTRFASTEXIT
+1:
+	CLI
+	INTRFASTEXIT
 
 	.align	2
 XL_intrhandler:		.long	_C_LABEL(intrhandler)
@@ -1399,11 +1395,33 @@ XXLT_ASTFLT:		.long	T_ASTFLT
 XXL_trap:		.long	_C_LABEL(trap)
 XL_check_ipending:	.long	_C_LABEL(check_ipending)
 
+ENTRY(enable_interrupt)
+	ESTI
+	rts
+	nop
+
+ENTRY(disable_interrupt)
+	ECLI
+	rts
+	nop
+
+ENTRY(enable_ext_intr)
+	ESTI
+	rts
+	nop
+
+ENTRY(disable_ext_intr)
+	ECLI
+	rts
+	nop
+
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
 	mov.l	r1, @-r15
 
 Xrestart:
+	ECLI
+	STI
 	mov.l	XXL_check_ipending, r0
 	jsr	@r0
 	nop
@@ -1418,11 +1436,11 @@ Xrestart:
 	nop
 
 1:
+	ESTI
 	mov.l	@r15+, r1
 	lds.l	@r15+, pr
 	rts
 	nop
-
 
 	.align	2
 XXL_check_ipending:

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 2000/01/12 14:41:44 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 2000/02/24 19:01:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -268,6 +268,8 @@ start:
 	/* Set SP to initial position */
 	mov.l	XLtmpstk, r15
 
+	ECLI
+
 	/* Set Register Bank to Bank 0 */
 	mov.l	SR_init, r0
 	ldc	r0, sr
@@ -377,6 +379,7 @@ NENTRY(proc_trampoline)
 	jsr	@r12
 	nop
 	add	#4, r15		/* pop tf_trapno */
+	CLI
 	INTRFASTEXIT
 	/* NOTREACHED */
 
@@ -464,6 +467,7 @@ ENTRY(longjmp)
 
 ENTRY(idle)
 	ECLI
+	STI
 	mov.l	XLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
@@ -769,7 +773,7 @@ XL_switch_error:
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
-	/* ESTI */
+	ESTI
 
 	/* Skip context switch if same process. */
 					/* r12 = oldCurproc */
@@ -837,7 +841,7 @@ switch_restored:
 	mov.l	r12, @r0
 
 	/* Interrupts are okay again. */
-	/* ESTI */
+	ESTI
 
 switch_return:
 	/*
@@ -908,7 +912,7 @@ ENTRY(switch_exit)
 	mov.l	r10, @r0
 
 	/* Interrupts are okay again. */
-	/* ESTI */
+	ESTI
 
 	mov	r8, r4
 	mov.l	XLexit2, r0
@@ -995,7 +999,7 @@ NENTRY(exphandler)
 	mov	#SHREG_EXPEVT, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
-	ECLI
+	ESTI
 	STI
 	mov.l	XL_trap, r0
 	jsr	@r0
@@ -1004,8 +1008,7 @@ NENTRY(exphandler)
 	nop
 
 2:	/* Check for ASTs on exit to user mode. */
-	CLI
-	ESTI
+	ECLI
 	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
@@ -1022,8 +1025,7 @@ NENTRY(exphandler)
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
-	ECLI
-	STI
+	ESTI
 	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XL_trap, r0
@@ -1032,7 +1034,9 @@ NENTRY(exphandler)
 	add	#4, r15
 	bra	2b
 	nop
-1:	INTRFASTEXIT
+1:
+	CLI
+	INTRFASTEXIT
 
 	.align	2
 XL_TLBPROTWR:
@@ -1102,9 +1106,9 @@ _C_LABEL(MonTrap600):
 1:	.long	_C_LABEL(ihandler)
 _C_LABEL(MonTrap600_end):
 
-/************************************************************************/
-/*	Immediate Data							*/
-/************************************************************************/
+/*
+ * Immediate Data
+ */
 		.align	2
 
 XL_curpcb:	.long	_C_LABEL(curpcb)
@@ -1199,8 +1203,8 @@ XL_splimit_low2:	.long	0x80000000
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
-	ECLI		/* disable external interrupt */
-	STI		/* enable exception for TLB handling */
+	ECLI			/* disable external interrupt */
+	STI			/* enable exception for TLB handling */
 	mov.l	XL_intrhandler, r0
 	jsr	@r0
 	nop
@@ -1217,7 +1221,7 @@ XL_splimit_low2:	.long	0x80000000
 	bf	7b
 
 2:	/* Check for ASTs on exit to user mode. */
-	CLI
+	ECLI
 	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
@@ -1233,7 +1237,9 @@ XL_splimit_low2:	.long	0x80000000
 5:	xor	r0, r0
 	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
-	STI
+
+	ESTI
+
 	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
 	mov.l	XL_trap, r0
@@ -1242,7 +1248,10 @@ XL_splimit_low2:	.long	0x80000000
 	add	#4, r15
 	bra	2b
 	nop
-1:	INTRFASTEXIT
+
+1:
+	CLI
+	INTRFASTEXIT
 
 	.align	2
 XL_intrhandler:		.long	_C_LABEL(intrhandler)
@@ -1250,11 +1259,33 @@ XL_astpending:		.long	_C_LABEL(astpending)
 XLT_ASTFLT:		.long	T_ASTFLT
 XL_trap:		.long	_C_LABEL(trap)
 
+ENTRY(enable_interrupt)
+	ESTI
+	rts
+	nop
+
+ENTRY(disable_interrupt)
+	ECLI
+	rts
+	nop
+
+ENTRY(enable_ext_intr)
+	ESTI
+	rts
+	nop
+
+ENTRY(disable_ext_intr)
+	ECLI
+	rts
+	nop
+
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
 	mov.l	r1, @-r15
 
 Xrestart:
+	ECLI
+	STI
 	mov.l	XL_check_ipending, r0
 	jsr	@r0
 	nop
@@ -1268,6 +1299,7 @@ Xrestart:
 	nop
 
 1:
+	ESTI
 	mov.l	@r15+, r1
 	lds.l	@r15+, pr
 	rts
