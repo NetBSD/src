@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.31 1999/05/28 20:49:51 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.32 1999/06/02 23:26:21 thorpej Exp $	*/
 
 /*
  *
@@ -613,6 +613,17 @@ ReFault:
 		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
 		return (KERN_PROTECTION_FAILURE);
+	}
+
+	/*
+	 * if the map is not a pageable map, a page fault always fails.
+	 */
+
+	if ((ufi.map->flags & VM_MAP_PAGEABLE) == 0) {
+		UVMHIST_LOG(maphist,
+		    "<- map %p not pageable", ufi.map, 0, 0, 0);
+		uvmfault_unlockmaps(&ufi, FALSE);
+		return (KERN_FAILURE);
 	}
 
 	/*
