@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.11.10.4 2002/02/07 20:38:21 nathanw Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.11.10.5 2002/05/02 17:07:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sscanf.c,v 1.11.10.4 2002/02/07 20:38:21 nathanw Exp $");
+__RCSID("$NetBSD: sscanf.c,v 1.11.10.5 2002/05/02 17:07:39 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,7 +101,7 @@ sscanf(str, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = __svfscanf(&f, fmt, ap);
+	ret = __svfscanf_unlocked(&f, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
