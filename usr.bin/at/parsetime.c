@@ -1,3 +1,5 @@
+/*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
+
 /* 
  * parsetime.c - parse time for at(1)
  * Copyright (C) 1993  Thomas Koenig
@@ -116,7 +118,9 @@ static char *sc_token;	/* scanner - token buffer */
 static size_t sc_len;   /* scanner - lenght of token buffer */
 static int sc_tokid;	/* scanner - token id */
 
-static char rcsid[] = "$Id: parsetime.c,v 1.2 1994/03/08 23:49:19 cgd Exp $";
+#ifndef lint
+static char rcsid[] = "$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $";
+#endif
 
 /* Local functions */
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1993/09/23 21:04:15 jtc Exp $
+#	$NetBSD: Makefile,v 1.2 1995/03/25 18:04:51 glass Exp $
 
 PROG=	asa
 
