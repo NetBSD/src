@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.397 2000/10/19 14:26:41 ad Exp $
+#	$NetBSD: files,v 1.398 2000/11/05 04:08:10 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -198,8 +198,11 @@ device	lsu: disk
 file	dev/lsu/lsu.c			lsu	needs-flag
 
 # Central clearing house for system monitoring.
-define	sysmon
-file	dev/sysmon/sysmon.c		sysmon	needs-flag
+define	sysmon_envsys
+define	sysmon_wdog
+file	dev/sysmon/sysmon_envsys.c	sysmon_envsys	needs-flag
+file	dev/sysmon/sysmon_wdog.c	sysmon_wdog	needs-flag
+file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -413,7 +416,7 @@ define  i2c
 define  i2c_eeprom
 
 # National Semiconductor LM7[89]
-device  lm: sysmon
+device  lm: sysmon_envsys
 file	dev/ic/nslm7x.c		lm	needs-flag
 
 # Essential Communications Corp. HIPPI Interface
