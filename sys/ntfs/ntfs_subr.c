@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.21 1999/10/25 19:08:26 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.22 1999/10/25 21:17:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -228,7 +228,7 @@ ntfs_ntvattrget(
 		/* this is not a main record, so we can't use just plain
 		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
-				NTFS_A_DATA, NULL, LK_EXCLUSIVE | LK_RETRY,
+				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
 				VG_EXT, curproc, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
@@ -956,8 +956,7 @@ ntfs_ntlookupfile(
 			/* vget node, but don't load it */
 			error = ntfs_vgetex(ntmp->ntm_mountp,
 				   iep->ie_number, attrtype, attrname,
-				   LK_EXCLUSIVE | LK_RETRY,
-				   VG_DONTLOADIN | VG_DONTVALIDFN,
+				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
 				   curproc, &nvp);
 			if (error)
 				goto fail;
