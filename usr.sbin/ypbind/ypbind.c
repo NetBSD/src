@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.47 2002/07/06 21:44:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.47 2002/07/06 21:44:40 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,11 +52,7 @@ __RCSID("$NetBSD: ypbind.c,v 1.46 2001/02/19 23:22:50 cgd Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <syslog.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <ctype.h>
 #include <dirent.h>
 #include <netdb.h>
@@ -131,33 +127,33 @@ static bool_t rmtcr_outval;
 static u_long rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
 
-int	_yp_invalid_domain __P((const char *));		/* from libc */
-int	main __P((int, char *[]));
+int	_yp_invalid_domain(const char *);		/* from libc */
+int	main(int, char *[]);
 
-static void usage __P((void));
-static void yp_log __P((int, const char *, ...))
+static void usage(void);
+static void yp_log(int, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
-static struct _dom_binding *makebinding __P((const char *));
-static int makelock __P((struct _dom_binding *));
-static void removelock __P((struct _dom_binding *));
-static void *ypbindproc_null_2 __P((SVCXPRT *, void *));
-static void *ypbindproc_domain_2 __P((SVCXPRT *, void *));
-static void *ypbindproc_setdom_2 __P((SVCXPRT *, void *));
-static void ypbindprog_2 __P((struct svc_req *, SVCXPRT *));
-static void checkwork __P((void));
-static int ping __P((struct _dom_binding *));
-static int nag_servers __P((struct _dom_binding *));
-static enum clnt_stat handle_replies __P((void));
-static enum clnt_stat handle_ping __P((void));
-static void rpc_received __P((char *, struct sockaddr_in *, int));
-static struct _dom_binding *xid2ypdb __P((u_int32_t));
-static u_int32_t unique_xid __P((struct _dom_binding *));
-static int broadcast __P((char *, int));
-static int direct __P((char *, int));
-static int direct_set __P((char *, int, struct _dom_binding *));
+static struct _dom_binding *makebinding(const char *);
+static int makelock(struct _dom_binding *);
+static void removelock(struct _dom_binding *);
+static void *ypbindproc_null_2(SVCXPRT *, void *);
+static void *ypbindproc_domain_2(SVCXPRT *, void *);
+static void *ypbindproc_setdom_2(SVCXPRT *, void *);
+static void ypbindprog_2(struct svc_req *, SVCXPRT *);
+static void checkwork(void);
+static int ping(struct _dom_binding *);
+static int nag_servers(struct _dom_binding *);
+static enum clnt_stat handle_replies(void);
+static enum clnt_stat handle_ping(void);
+static void rpc_received(char *, struct sockaddr_in *, int);
+static struct _dom_binding *xid2ypdb(u_int32_t);
+static u_int32_t unique_xid(struct _dom_binding *);
+static int broadcast(char *, int);
+static int direct(char *, int);
+static int direct_set(char *, int, struct _dom_binding *);
 
 static void
-usage()
+usage(void)
 {
 	char *opt = "";
 #ifdef DEBUG
@@ -171,22 +167,11 @@ usage()
 }
 
 static void
-#if __STDC__
 yp_log(int pri, const char *fmt, ...)
-#else
-yp_log(pri, fmt, va_alist)
-	int pri;
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
 #if defined(DEBUG)
 	if (debug)
@@ -198,8 +183,7 @@ yp_log(pri, fmt, va_alist)
 }
 
 static struct _dom_binding *
-makebinding(dm)
-	const char *dm;
+makebinding(const char *dm)
 {
 	struct _dom_binding *ypdb;
 
@@ -215,8 +199,7 @@ makebinding(dm)
 }
 
 static int
-makelock(ypdb)
-	struct _dom_binding *ypdb;
+makelock(struct _dom_binding *ypdb)
 {
 	int fd;
 	char path[MAXPATHLEN];
@@ -237,8 +220,7 @@ makelock(ypdb)
 }
 
 static void
-removelock(ypdb)
-	struct _dom_binding *ypdb;
+removelock(struct _dom_binding *ypdb)
 {
 	char path[MAXPATHLEN];
 
@@ -248,9 +230,7 @@ removelock(ypdb)
 }
 
 static void *
-ypbindproc_null_2(transp, argp)
-	SVCXPRT *transp;
-	void *argp;
+ypbindproc_null_2(SVCXPRT *transp, void *argp)
 {
 	static char res;
 
@@ -263,9 +243,7 @@ ypbindproc_null_2(transp, argp)
 }
 
 static void *
-ypbindproc_domain_2(transp, argp)
-	SVCXPRT *transp;
-	void *argp;
+ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 {
 	static struct ypbind_resp res;
 	struct _dom_binding *ypdb;
@@ -349,9 +327,7 @@ ypbindproc_domain_2(transp, argp)
 }
 
 static void *
-ypbindproc_setdom_2(transp, argp)
-	SVCXPRT *transp;
-	void *argp;
+ypbindproc_setdom_2(SVCXPRT *transp, void *argp)
 {
 	struct ypbind_setdom *sd = argp;
 	struct sockaddr_in *fromsin, bindsin;
@@ -422,9 +398,7 @@ ypbindproc_setdom_2(transp, argp)
 }
 
 static void
-ypbindprog_2(rqstp, transp)
-	struct svc_req *rqstp;
-	register SVCXPRT *transp;
+ypbindprog_2(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
 		char ypbindproc_domain_2_arg[YPMAXDOMAIN + 1];
@@ -433,7 +407,7 @@ ypbindprog_2(rqstp, transp)
 	struct authunix_parms *creds;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
-	void *(*local) __P((SVCXPRT *, void *));
+	void *(*local)(SVCXPRT *, void *);
 
 	switch (rqstp->rq_proc) {
 	case YPBINDPROC_NULL:
@@ -484,9 +458,7 @@ ypbindprog_2(rqstp, transp)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct timeval tv;
 	fd_set fdsr;
@@ -654,7 +626,7 @@ main(argc, argv)
  * checking	answer		--			binding		60 sec
  */
 void
-checkwork()
+checkwork(void)
 {
 	struct _dom_binding *ypdb;
 	time_t t;
@@ -675,8 +647,7 @@ checkwork()
 }
 
 int
-ping(ypdb)
-	struct _dom_binding *ypdb;
+ping(struct _dom_binding *ypdb)
 {
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg msg;
@@ -737,8 +708,7 @@ ping(ypdb)
 }
 
 static int
-nag_servers(ypdb)
-	struct _dom_binding *ypdb;
+nag_servers(struct _dom_binding *ypdb)
 {
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg msg;
@@ -834,9 +804,7 @@ nag_servers(ypdb)
 }
 
 static int
-broadcast(buf, outlen)
-	char *buf;
-	int outlen;
+broadcast(char *buf, int outlen)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in bindsin;
@@ -882,9 +850,7 @@ broadcast(buf, outlen)
 }
 
 static int
-direct(buf, outlen)
-	char *buf;
-	int outlen;
+direct(char *buf, int outlen)
 {
 	static FILE *df;
 	static char ypservers_path[MAXPATHLEN];
@@ -953,10 +919,7 @@ direct(buf, outlen)
 }
 
 static int
-direct_set(buf, outlen, ypdb)
-	char *buf;
-	int outlen;
-	struct _dom_binding *ypdb;
+direct_set(char *buf, int outlen, struct _dom_binding *ypdb)
 {
 	struct sockaddr_in bindsin;
 	char path[MAXPATHLEN];
@@ -1010,7 +973,7 @@ direct_set(buf, outlen, ypdb)
 }
 
 static enum clnt_stat
-handle_replies()
+handle_replies(void)
 {
 	char buf[BUFSIZE];
 	int fromlen, inlen;
@@ -1060,7 +1023,7 @@ try_again:
 }
 
 static enum clnt_stat
-handle_ping()
+handle_ping(void)
 {
 	char buf[BUFSIZE];
 	int fromlen, inlen;
@@ -1113,10 +1076,7 @@ try_again:
  * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
  */
 void
-rpc_received(dom, raddrp, force)
-	char *dom;
-	struct sockaddr_in *raddrp;
-	int force;
+rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 {
 	struct _dom_binding *ypdb;
 	struct iovec iov[2];
@@ -1204,8 +1164,7 @@ rpc_received(dom, raddrp, force)
 }
 
 static struct _dom_binding *
-xid2ypdb(xid)
-	u_int32_t xid;
+xid2ypdb(u_int32_t xid)
 {
 	struct _dom_binding *ypdb;
 
@@ -1216,8 +1175,7 @@ xid2ypdb(xid)
 }
 
 static u_int32_t
-unique_xid(ypdb)
-	struct _dom_binding *ypdb;
+unique_xid(struct _dom_binding *ypdb)
 {
 	u_int32_t tmp_xid;
 
