@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.3 2003/05/08 18:39:09 petrov Exp $ */
+/* $NetBSD: lfs.c,v 1.4 2003/07/12 11:47:05 yamt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -476,7 +476,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int debug)
 	}
 	error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, &bp);
 	fs = (struct lfs *) malloc(sizeof(*fs));
-	*fs = *((struct lfs *) bp->b_data);
+	memset(fs, 0, sizeof(*fs));
+	fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 	fs->lfs_unlockvp = devvp;
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -484,8 +485,9 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int debug)
 	if (tryalt) {
 		error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
 		    LFS_SBPAD, NOCRED, &bp);
-		altfs = (struct lfs *) malloc(sizeof(*fs));
-		*altfs = *((struct lfs *) bp->b_data);
+		altfs = (struct lfs *) malloc(sizeof(*altfs));
+		memset(altfs, 0, sizeof(*altfs));
+		altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		altfs->lfs_unlockvp = devvp;
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
