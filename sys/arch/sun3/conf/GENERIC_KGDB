@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_KGDB,v 1.5 1996/11/19 21:04:48 gwr Exp $
+#	$NetBSD: GENERIC_KGDB,v 1.6 1996/12/28 23:27:29 pk Exp $
 
 #
 # GENERIC_KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -156,8 +156,8 @@ cd* at scsibus? target ? lun ?
 
 #ch* at scsibus? target ? lun ?
 
-# RAM-disk drivers
-pseudo-device	rd	2
+# Memory-disk drivers
+pseudo-device	md	2
 
 # Misc.
 pseudo-device	loop	1		# network loopback
