@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.4 2004/01/22 01:21:41 bjh21 Exp $ */
+/* $NetBSD: atppc.c,v 1.5 2004/01/22 14:22:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -555,6 +555,10 @@ atppc_detect_fifo(struct atppc_softc * atppc)
 
 	/* Change direction */
 	atppc_w_ctr(atppc, (ctr_sav & ~IRQENABLE) & ~PCD);
+	atppc_barrier_w(atppc);
+ 
+	/* Clear the serviceIntr bit we've already set in the above loop */
+	atppc_w_ecr(atppc, ATPPC_ECR_TST);
 	atppc_barrier_w(atppc);
 
 	/* Determine writeIntrThreshold - empty FIFO until serviceIntr is set */
