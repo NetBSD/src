@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2001/07/17 10:56:53 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2001/08/08 16:49:54 david Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2001/07/17 10:56:53 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2001/08/08 16:49:54 david Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: main.c,v 1.36 2001/07/17 10:56:53 mrg Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
+gid_t	egid;			/* Retain tty privs for notification */
 int	notify;			/* notify operator flag */
 int	blockswritten;		/* number of blocks written on current tape */
 int	tapeno;			/* current tape number */
@@ -117,6 +118,10 @@ main(int argc, char *argv[])
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
+
+	/* Save setgid bit for use later */
+	egid = getegid();
+	setegid(getgid());
 
 	tsize = 0;	/* Default later, based on 'c' option for cart tapes */
 	if ((tape = getenv("TAPE")) == NULL)
@@ -336,28 +341,8 @@ main(int argc, char *argv[])
 		tape = strchr(host, ':');
 		*tape++ = '\0';
 #ifdef RDUMP
-	{
-		gid_t gid, egid;
-		uid_t uid, euid;
-
-		gid = getgid();
-		egid = getegid();
-		uid = getuid();
-		euid = geteuid();
-
-		if (gid != egid)
-			setegid(gid);
-		if (uid != euid)
-			seteuid(uid);
-
 		if (rmthost(host) == 0)
 			exit(X_ABORT);
-
-		if (gid != egid)
-			setegid(egid);
-		if (uid != euid)
-			seteuid(euid);
-	}
 #else
 		(void)fprintf(stderr, "remote dump not enabled\n");
 		exit(X_ABORT);
