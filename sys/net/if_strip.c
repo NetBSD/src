@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.12 1997/11/17 23:01:44 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.13 1997/11/17 23:35:28 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -21,9 +21,9 @@
  * Metricom MAC addresses is done via local link-level routes.
  * The link-level addresses are entered as an 8-digit packed BCD number.
  * To add a route for a radio at IP address 10.1.2.3, with radio
- * address '1234-5678', reachable via interface st0, use the command 
+ * address '1234-5678', reachable via interface strip0, use the command 
  *
- *	route add -host 10.1.2.3  -link st0:12:34:56:78
+ *	route add -host 10.1.2.3  -link strip0:12:34:56:78
  */
 
 
@@ -220,13 +220,13 @@ typedef char ttychar_t;
 #define	ABT_COUNT	3	/* count of escapes for abort */
 #define	ABT_WINDOW	(ABT_COUNT*2+2)	/* in seconds - time to count */
 
-struct st_softc st_softc[NSTRIP];
+struct strip_softc strip_softc[NSTRIP];
 
 #define STRIP_FRAME_END		0x0D		/* carriage return */
 
 
-static int stripinit __P((struct st_softc *));
-static 	struct mbuf *strip_btom __P((struct st_softc *, int));
+static int stripinit __P((struct strip_softc *));
+static 	struct mbuf *strip_btom __P((struct strip_softc *, int));
 
 /*
  * STRIP header: '*' + modem address (dddd-dddd) + '*' + mactype ('SIP0')
@@ -261,15 +261,15 @@ static u_char* UnStuffData __P((u_char *src, u_char *end, u_char
 static u_char* StuffData __P((u_char *src, u_long length, u_char *dest,
 			      u_char **code_ptr_ptr));
 
-static void RecvErr __P((char *msg, struct st_softc *sc));
-static void RecvErr_Message __P((struct st_softc *strip_info,
+static void RecvErr __P((char *msg, struct strip_softc *sc));
+static void RecvErr_Message __P((struct strip_softc *strip_info,
 				u_char *sendername, u_char *msg));
-void	strip_resetradio __P((struct st_softc *sc, struct tty *tp));
-void	strip_proberadio __P((struct st_softc *sc, struct tty *tp));
+void	strip_resetradio __P((struct strip_softc *sc, struct tty *tp));
+void	strip_proberadio __P((struct strip_softc *sc, struct tty *tp));
 void	strip_watchdog __P((struct ifnet *ifp));
-void	strip_sendbody __P((struct st_softc *sc, struct mbuf *m));
-int	strip_newpacket __P((struct st_softc *sc, u_char *ptr, u_char *end));
-struct mbuf * strip_send __P((struct st_softc *sc, struct mbuf *m0));
+void	strip_sendbody __P((struct strip_softc *sc, struct mbuf *m));
+int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
+struct mbuf * strip_send __P((struct strip_softc *sc, struct mbuf *m0));
 
 static void strip_timeout __P((void *x));
 
@@ -341,12 +341,12 @@ void
 stripattach(n)
 	int n;
 {
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 	register int i = 0;
 
-	for (sc = st_softc; i < NSTRIP; sc++) {
+	for (sc = strip_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "st%d", i++);
+		sprintf(sc->sc_if.if_xname, "strip%d", i++);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags = 0;
@@ -371,7 +371,7 @@ stripattach(n)
 
 static int
 stripinit(sc)
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 {
 	register u_char *p;
 
@@ -439,7 +439,7 @@ stripopen(dev, tp)
 	register struct tty *tp;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 	register int nstrip;
 	int error;
 #ifdef __NetBSD__
@@ -452,7 +452,7 @@ stripopen(dev, tp)
 	if (tp->t_line == STRIPDISC)
 		return (0);
 
-	for (nstrip = NSTRIP, sc = st_softc; --nstrip >= 0; sc++)
+	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++)
 		if (sc->sc_ttyp == NULL) {
 			if (stripinit(sc) == 0)
 				return (ENOBUFS);
@@ -501,14 +501,14 @@ void
 stripclose(tp)
 	struct tty *tp;
 {
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 	int s;
 
 	ttywflush(tp);
 
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
 	tp->t_line = 0;
-	sc = (struct st_softc *)tp->t_sc;
+	sc = (struct strip_softc *)tp->t_sc;
 	if (sc != NULL) {
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
@@ -551,7 +551,7 @@ striptioctl(tp, cmd, data, flag)
 	caddr_t data;
 	int flag;
 {
-	struct st_softc *sc = (struct st_softc *)tp->t_sc;
+	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 
 	switch (cmd) {
 	case SLIOCGUNIT:
@@ -570,7 +570,7 @@ striptioctl(tp, cmd, data, flag)
  */
 void
 strip_sendbody(sc, m)
-	struct st_softc  *sc;
+	struct strip_softc  *sc;
 	struct mbuf *m;
 {
 	register struct tty *tp = sc->sc_ttyp;
@@ -624,7 +624,7 @@ bad:
  */
 struct mbuf *
 strip_send(sc, m0)
-    struct st_softc *sc;
+    struct strip_softc *sc;
     struct mbuf *m0;
 {
 	register struct tty *tp = sc->sc_ttyp;
@@ -708,7 +708,7 @@ stripoutput(ifp, m, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;
 {
-	register struct st_softc *sc = ifp->if_softc;
+	register struct strip_softc *sc = ifp->if_softc;
 	register struct ip *ip;
 	register struct ifqueue *ifq;
 	register struct st_header *shp;
@@ -876,7 +876,7 @@ void
 stripstart(tp)
 	register struct tty *tp;
 {
-	register struct st_softc *sc = (struct st_softc *)tp->t_sc;
+	register struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
 	register struct mbuf *m;
 	register struct ip *ip;
 	int s;
@@ -1053,7 +1053,7 @@ stripstart(tp)
  */
 static struct mbuf *
 strip_btom(sc, len)
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 	register int len;
 {
 	register struct mbuf *m;
@@ -1110,7 +1110,7 @@ stripinput(c, tp)
 	register int c;
 	register struct tty *tp;
 {
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 	register struct mbuf *m;
 	register int len;
 	int s;
@@ -1119,7 +1119,7 @@ stripinput(c, tp)
 #endif
 
 	tk_nin++;
-	sc = (struct st_softc *)tp->t_sc;
+	sc = (struct strip_softc *)tp->t_sc;
 	if (sc == NULL)
 		return;
 	if (c & TTY_ERRORMASK || ((tp->t_state & TS_CARR_ON) == 0 &&
@@ -1343,7 +1343,7 @@ stripioctl(ifp, cmd, data)
  */
 void
 strip_resetradio(sc, tp)
-	struct st_softc *sc;
+	struct strip_softc *sc;
 	struct tty *tp;
 {
 #if 0
@@ -1393,7 +1393,7 @@ strip_resetradio(sc, tp)
  */
 void
 strip_proberadio(sc, tp)
-	register struct st_softc *sc;
+	register struct strip_softc *sc;
 	register struct tty *tp;
 {
 
@@ -1435,7 +1435,7 @@ static void
 strip_timeout(x)
     void *x;
 {
-    struct st_softc *sc = (struct st_softc *) x;
+    struct strip_softc *sc = (struct strip_softc *) x;
     struct tty *tp =  sc->sc_ttyp;
     int s;
 
@@ -1471,7 +1471,7 @@ void
 strip_watchdog(ifp)
 	struct ifnet *ifp;
 {
-	register struct st_softc *sc = ifp->if_softc;
+	register struct strip_softc *sc = ifp->if_softc;
 	struct tty *tp =  sc->sc_ttyp;
 
 #ifdef DEBUG
@@ -1557,7 +1557,7 @@ strip_watchdog(ifp)
  */
 int
 strip_newpacket(sc, ptr, end)
-	struct st_softc *sc;
+	struct strip_softc *sc;
 	register u_char *ptr, *end;
 {
 	register int len = ptr - end;
@@ -1905,7 +1905,7 @@ UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 static void
 RecvErr(msg, sc)
 	char *msg;
-	struct st_softc *sc;
+	struct strip_softc *sc;
 {
 	static const int MAX_RecErr = 80;
 	u_char *ptr = sc->sc_buf;
@@ -1938,7 +1938,7 @@ RecvErr(msg, sc)
  */
 static void
 RecvErr_Message(strip_info, sendername, msg)
-	struct st_softc *strip_info;
+	struct strip_softc *strip_info;
 	u_char *sendername;
 	/*const*/ u_char *msg;
 {
