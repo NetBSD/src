@@ -1,5 +1,5 @@
 #	from : @(#)Makefile	8.2 (Berkeley) 4/4/94
-#	$Id: Makefile,v 1.9 1994/06/29 01:49:37 deraadt Exp $
+#	$Id: Makefile,v 1.10 1994/07/25 18:48:40 brezak Exp $
 
 PROG=	ftpd
 CFLAGS+=-DHASSETPROCTITLE -DSKEY
@@ -12,6 +12,7 @@ LDADD+= -lcrypt -lskey
 DPADD+= ${LIBCRYPT} ${LIBSKEY}
 
 .if defined(KERBEROS)
+SRCS+= klogin.c
 CFLAGS+= -DKERBEROS
 LDADD+= -lkrb -ldes
 DPADD+= ${LIBKRB} ${LIBDES}
