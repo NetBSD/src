@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.4 2002/09/27 15:35:41 provos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.5 2003/06/14 07:58:16 tsutsui Exp $	*/
 /*	$OpenBSD: isapnp_machdep.c,v 1.1 1997/12/27 12:13:11 niklas Exp $	*/
 /*	NetBSD: isapnp_machdep.c,v 1.5 1997/10/04 17:32:30 thorpej Exp 	*/
 
@@ -8,7 +8,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center and by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,35 +40,6 @@
  */
 
 /*
- * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Christos Zoulas.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
  * Machine-dependent portions of ISA PnP bus autoconfiguration.
  *
  * N.B. This file exists mostly to get around some lameness surrounding
@@ -82,6 +53,9 @@
  * assumptions about bus.h's guts.  Beware!
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.5 2003/06/14 07:58:16 tsutsui Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -89,9 +63,10 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isapnpreg.h>
-
 #include <dev/isa/isavar.h>
+
+#include <dev/isapnp/isapnpreg.h>
+#include <dev/isapnp/isapnpvar.h>
 
 /* isapnp_map():
  *	Map I/O regions used by PnP
@@ -100,16 +75,12 @@ int
 isapnp_map(sc)
 	struct isapnp_softc *sc;
 {
-	int error;
+	bus_space_tag_t bst;
 
-	error = bus_space_map(sc->sc_iot, ISAPNP_ADDR, 1, &sc->sc_addr_ioh);
-	if (error != 0)
-		panic("isapnp_map: ISAPNP_ADDR map error %d", error);
-	error = bus_space_map(sc->sc_iot, ISAPNP_WRDATA, 1,
-	    &sc->sc->sc_wrdata_ioh);
-	if (error != 0)
-		panic("isapnp_map: ISAPNP_WRDATA map error %d", error);
-	return (0);
+	bst = sc->sc_iot;
+	sc->sc_addr_ioh = bst->bs_vbase + ISAPNP_ADDR - bst->bs_start;
+	sc->sc_wrdata_ioh = bst->bs_vbase + ISAPNP_WRDATA - bst->bs_start;
+	return 0;
 }
 
 /* isapnp_unmap():
@@ -119,6 +90,7 @@ void
 isapnp_unmap(sc)
 	struct isapnp_softc *sc;
 {
+
 	/* Do nothing. */
 }
 
@@ -134,7 +106,9 @@ isapnp_map_readport(sc)
 {
 #ifdef _KERNEL
 	int error;
+#endif
 
+#ifdef _KERNEL
 	/* Check if some other device has already claimed this port. */
 	if ((error = bus_space_map(sc->sc_iot, sc->sc_read_port, 1, 0,
 	    &sc->sc_read_ioh)) != 0)
@@ -157,5 +131,6 @@ void
 isapnp_unmap_readport(sc)
 	struct isapnp_softc *sc;
 {
-	/* Do nothing */
+
+	/* Do nothing. */
 }
