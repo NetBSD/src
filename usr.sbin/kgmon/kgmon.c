@@ -1,3 +1,5 @@
+/*	$NetBSD: kgmon.c,v 1.8 1997/10/18 17:31:38 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,37 +33,42 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$NetBSD: kgmon.c,v 1.7 1997/10/18 04:37:34 lukem Exp $";
+#if 0
+static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: kgmon.c,v 1.8 1997/10/18 17:31:38 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/sysctl.h>
 #include <sys/gmon.h>
+
+#include <ctype.h>
 #include <errno.h>
 #include <kvm.h>
 #include <limits.h>
+#include <nlist.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <nlist.h>
-#include <ctype.h>
-#include <paths.h>
+#include <unistd.h>
 
 struct nlist nl[] = {
 #define	N_GMONPARAM	0
 	{ "__gmonparam" },
 #define	N_PROFHZ	1
 	{ "_profhz" },
-	0,
+	{ 0, }
 };
 
 struct kvmvars {
@@ -74,12 +81,14 @@ int	debug = 0;
 void	setprof __P((struct kvmvars *kvp, int state));
 void	dumpstate __P((struct kvmvars *kvp));
 void	reset __P((struct kvmvars *kvp));
+int	openfiles __P((char *, char *, struct kvmvars *));
+int	getprof __P((struct kvmvars *));
+void	kern_readonly __P((int));
+int	getprofhz __P(( struct kvmvars *));
 
 int
 main(int argc, char **argv)
 {
-	extern char *optarg;
-	extern int optind;
 	int ch, mode, disp, accessmode;
 	struct kvmvars kvmvars;
 	char *system, *kmemf;
@@ -158,6 +167,7 @@ main(int argc, char **argv)
 /*
  * Check that profiling is enabled and open any ncessary files.
  */
+int
 openfiles(system, kmemf, kvp)
 	char *system;
 	char *kmemf;
@@ -217,6 +227,7 @@ openfiles(system, kmemf, kvp)
 /*
  * Suppress options that require a writable kernel.
  */
+void
 kern_readonly(mode)
 	int mode;
 {
@@ -236,6 +247,7 @@ kern_readonly(mode)
 /*
  * Get the state of kernel profiling.
  */
+int
 getprof(kvp)
 	struct kvmvars *kvp;
 {
@@ -306,7 +318,7 @@ dumpstate(kvp)
 	register FILE *fp;
 	struct rawarc rawarc;
 	struct tostruct *tos;
-	u_long frompc, addr;
+	u_long frompc;
 	u_short *froms, *tickbuf;
 	int mib[3];
 	size_t i;
@@ -350,7 +362,7 @@ dumpstate(kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.kcountsize) {
-		(void)fprintf(stderr, "kgmon: read ticks: read %u, got %d: %s",
+		(void)fprintf(stderr, "kgmon: read ticks: read %lu, got %d: %s",
 		    kvp->gpm.kcountsize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 		exit(6);
@@ -378,7 +390,7 @@ dumpstate(kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.fromssize) {
-		(void)fprintf(stderr, "kgmon: read froms: read %u, got %d: %s",
+		(void)fprintf(stderr, "kgmon: read froms: read %lu, got %d: %s",
 		    kvp->gpm.fromssize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 		exit(9);
@@ -397,13 +409,13 @@ dumpstate(kvp)
 			i = 0;
 	}
 	if (i != kvp->gpm.tossize) {
-		(void)fprintf(stderr, "kgmon: read tos: read %u, got %d: %s",
+		(void)fprintf(stderr, "kgmon: read tos: read %lu, got %d: %s",
 		    kvp->gpm.tossize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 		exit(11);
 	}
 	if (debug)
-		(void)fprintf(stderr, "kgmon: lowpc 0x%x, textsize 0x%x\n",
+		(void)fprintf(stderr, "kgmon: lowpc 0x%lx, textsize 0x%lx\n",
 			      kvp->gpm.lowpc, kvp->gpm.textsize);
 	endfrom = kvp->gpm.fromssize / sizeof(*froms);
 	for (fromindex = 0; fromindex < endfrom; ++fromindex) {
@@ -415,7 +427,7 @@ dumpstate(kvp)
 		   toindex = tos[toindex].link) {
 			if (debug)
 			    (void)fprintf(stderr,
-			    "%s: [mcleanup] frompc 0x%x selfpc 0x%x count %d\n",
+			    "%s: [mcleanup] frompc 0x%lx selfpc 0x%lx count %ld\n",
 			    "kgmon", frompc, tos[toindex].selfpc,
 			    tos[toindex].count);
 			rawarc.raw_frompc = frompc;
