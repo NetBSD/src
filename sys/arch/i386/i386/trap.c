@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.54 1994/10/26 01:32:51 mycroft Exp $
+ *	$Id: trap.c,v 1.55 1994/10/26 17:38:44 mycroft Exp $
  */
 
 /*
@@ -70,10 +70,6 @@
 #endif
 
 #include "npx.h"
-
-struct	sysent sysent[];
-int	nsysent;
-extern int cpl;
 
 /*
  * Define the code needed before returning to user mode, for
@@ -163,7 +159,7 @@ trap(frame)
 {
 	register struct proc *p;
 	register struct pcb *pcb;
-	int type, code;
+	int type;
 	u_quad_t sticks;
 	extern char fusubail[];
 
@@ -187,24 +183,11 @@ trap(frame)
 	   anyway */
 	pcb = &p->p_addr->u_pcb;
 
-	if (pcb == 0)
-		goto we_re_toast;
-
-	/* fusubail is used by [fs]uswintr to avoid page faulting */
-	if (pcb->pcb_onfault &&
-	    (type != T_PAGEFLT || pcb->pcb_onfault == fusubail)) {
-	    copyfault:
-		frame.tf_eip = (int)pcb->pcb_onfault;
-		return;
-	}
-
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = (int *)&frame;
 	}
-
-	code = frame.tf_err;
 
 	switch (type) {
 
@@ -225,10 +208,18 @@ trap(frame)
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
+		    type, frame.tf_err, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
 
 		panic("trap");
 		/*NOTREACHED*/
+
+	case T_PROTFLT:
+	case T_ALIGNFLT:
+		if (pcb->pcb_onfault == 0)
+			goto we_re_toast;
+	copyfault:
+		frame.tf_eip = (int)pcb->pcb_onfault;
+		break;
 
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
@@ -280,17 +271,19 @@ trap(frame)
 		break;
 
 	case T_ARITHTRAP|T_USER:
-		trapsignal(p, SIGFPE, code);
+		trapsignal(p, SIGFPE, frame.tf_err);
 		break;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+		if (pcb->pcb_onfault == fusubail)
+			goto copyfault;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
-		if (code & PGEX_P)
+		if (frame.tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
+		/* FALLTHROUGH */
 
-		/*FALLTHROUGH*/
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
@@ -313,7 +306,7 @@ trap(frame)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
-		if (code & PGEX_W)
+		if (frame.tf_err & PGEX_W)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
@@ -361,6 +354,7 @@ trap(frame)
 				return;
 			goto out;
 		}
+
 	nogo:
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault)
