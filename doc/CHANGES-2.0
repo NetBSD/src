@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.433 2004/09/10 03:02:58 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.434 2004/09/10 03:04:03 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7123,3 +7123,9 @@ sys/arch/amiga/dev/ite_et.c			1.7
 	While in graphics mode, short-circuit text-mode functions that would 
 	destroy graphics state. PR#26788
 	[is, ticket #816]
+
+distrib/notes/amiga/hardware			1.45
+
+	Clarify Apollo-accelerator-modifed-mainboard-SCSI vs.
+	Apollo-accelerator-provided-SCSI support status.
+	[is, ticket #817]
