@@ -1,3 +1,5 @@
+/*	$NetBSD: quit.c,v 1.5 1996/06/08 19:48:37 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)quit.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: quit.c,v 1.4 1994/11/28 20:03:37 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)quit.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: quit.c,v 1.5 1996/06/08 19:48:37 christos Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -50,7 +55,8 @@ static char rcsid[] = "$Id: quit.c,v 1.4 1994/11/28 20:03:37 jtc Exp $";
  * The "quit" command.
  */
 int
-quitcmd()
+quitcmd(v)
+	void *v;
 {
 	/*
 	 * If we are sourcing, then return 1 so execute() can handle it.
@@ -70,7 +76,7 @@ void
 quit()
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
-	FILE *ibuf, *obuf, *fbuf, *rbuf, *readstat, *abuf;
+	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
 	register struct message *mp;
 	register int c;
 	extern char *tempQuit, *tempResid;
@@ -105,7 +111,14 @@ quit()
 	fbuf = Fopen(mailname, "r");
 	if (fbuf == NULL)
 		goto newmail;
-	flock(fileno(fbuf), LOCK_EX);
+	if (flock(fileno(fbuf), LOCK_EX) == -1) {
+nolock:
+		perror("Unable to lock mailbox");
+		Fclose(fbuf);
+		return;
+	}
+	if (dot_lock(mailname, 1, stdout, ".") == -1)
+		goto nolock;
 	rbuf = NULL;
 	if (fstat(fileno(fbuf), &minfo) >= 0 && minfo.st_size > mailsize) {
 		printf("New mail has arrived.\n");
@@ -178,12 +191,14 @@ quit()
 		printf("Held %d message%s in %s\n",
 			p, p == 1 ? "" : "s", mailname);
 		Fclose(fbuf);
+		dot_unlock(mailname);
 		return;
 	}
 	if (c == 0) {
 		if (p != 0) {
 			writeback(rbuf);
 			Fclose(fbuf);
+			dot_unlock(mailname);
 			return;
 		}
 		goto cream;
@@ -202,6 +217,7 @@ quit()
 		if ((obuf = Fopen(tempQuit, "w")) == NULL) {
 			perror(tempQuit);
 			Fclose(fbuf);
+			dot_unlock(mailname);
 			return;
 		}
 		if ((ibuf = Fopen(tempQuit, "r")) == NULL) {
@@ -209,6 +225,7 @@ quit()
 			rm(tempQuit);
 			Fclose(obuf);
 			Fclose(fbuf);
+			dot_unlock(mailname);
 			return;
 		}
 		rm(tempQuit);
@@ -222,6 +239,7 @@ quit()
 			Fclose(ibuf);
 			Fclose(obuf);
 			Fclose(fbuf);
+			dot_unlock(mailname);
 			return;
 		}
 		Fclose(obuf);
@@ -230,13 +248,15 @@ quit()
 			perror(mbox);
 			Fclose(ibuf);
 			Fclose(fbuf);
+			dot_unlock(mailname);
 			return;
 		}
 	}
-	if (value("append") != NOSTR) {
+	else {
 		if ((obuf = Fopen(mbox, "a")) == NULL) {
 			perror(mbox);
 			Fclose(fbuf);
+			dot_unlock(mailname);
 			return;
 		}
 		fchmod(fileno(obuf), 0600);
@@ -248,6 +268,7 @@ quit()
 				Fclose(ibuf);
 				Fclose(obuf);
 				Fclose(fbuf);
+				dot_unlock(mailname);
 				return;
 			}
 
@@ -274,6 +295,7 @@ quit()
 		perror(mbox);
 		Fclose(obuf);
 		Fclose(fbuf);
+		dot_unlock(mailname);
 		return;
 	}
 	Fclose(obuf);
@@ -290,6 +312,7 @@ quit()
 	if (p != 0) {
 		writeback(rbuf);
 		Fclose(fbuf);
+		dot_unlock(mailname);
 		return;
 	}
 
@@ -310,16 +333,20 @@ cream:
 		Fclose(abuf);
 		alter(mailname);
 		Fclose(fbuf);
+		dot_unlock(mailname);
 		return;
 	}
 	demail();
 	Fclose(fbuf);
+	dot_unlock(mailname);
 	return;
 
 newmail:
 	printf("Thou hast new mail.\n");
-	if (fbuf != NULL)
+	if (fbuf != NULL) {
 		Fclose(fbuf);
+		dot_unlock(mailname);
+	}
 }
 
 /*
@@ -388,7 +415,7 @@ edstop()
 	extern char *tmpdir;
 	register int gotcha, c;
 	register struct message *mp;
-	FILE *obuf, *ibuf, *readstat;
+	FILE *obuf, *ibuf, *readstat = NULL;
 	struct stat statb;
 	char *tempname;
 

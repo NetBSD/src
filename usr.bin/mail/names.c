@@ -1,3 +1,5 @@
+/*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)names.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: names.c,v 1.4 1994/11/28 20:03:34 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -220,8 +225,8 @@ outof(names, fo, hp)
 {
 	register int c;
 	register struct name *np, *top;
-	time_t now, time();
-	char *date, *fname, *ctime();
+	time_t now;
+	char *date, *fname;
 	FILE *fout, *fin;
 	int ispipe;
 	extern char *tempEdit;
@@ -282,6 +287,7 @@ outof(names, fo, hp)
 		if (ispipe) {
 			int pid;
 			char *shell;
+			sigset_t nset;
 
 			/*
 			 * XXX
@@ -292,8 +298,11 @@ outof(names, fo, hp)
 			 */
 			if ((shell = value("SHELL")) == NOSTR)
 				shell = _PATH_CSHELL;
-			pid = start_command(shell, sigmask(SIGHUP)|
-					sigmask(SIGINT)|sigmask(SIGQUIT),
+			sigemptyset(&nset);
+			sigaddset(&nset, SIGHUP);
+			sigaddset(&nset, SIGINT);
+			sigaddset(&nset, SIGQUIT);
+			pid = start_command(shell, &nset,
 				image, -1, "-c", fname, NOSTR);
 			if (pid < 0) {
 				senderr++;

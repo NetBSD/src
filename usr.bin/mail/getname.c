@@ -1,3 +1,5 @@
+/*	$NetBSD: getname.c,v 1.4 1996/06/08 19:48:23 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)getname.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: getname.c,v 1.3 1994/06/29 05:09:24 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)getname.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: getname.c,v 1.4 1996/06/08 19:48:23 christos Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -43,8 +48,7 @@ static char rcsid[] = "$Id: getname.c,v 1.3 1994/06/29 05:09:24 deraadt Exp $";
 /* Getname / getuserid for those with hashed passwd data base). */
 
 /*
- * Search the passwd file for a uid.  Return name through ref parameter
- * if found, indicating success with 0 return.  Return -1 on error.
+ * Search the passwd file for a uid.  Return name on success, NOSTR on failure
  */
 char *
 getname(uid)
