@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.24 1997/04/26 22:24:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -292,7 +292,11 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	switch (cmd) {
 	case SCIOCIDENTIFY:
 		break;
-
+	case SCIOCCOMMAND:
+		if ((((scsireq_t *)addr)->flags & SCCMD_READ) == 0 &&
+		    (flag & FWRITE) == 0)
+			return EBADF;
+		break;
 	default:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
