@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pim.c,v 1.2 1999/07/02 11:31:35 itojun Exp $	*/
+/*	$NetBSD: print-pim.c,v 1.3 1999/07/25 04:23:21 explorer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-pim.c,v 1.7 96/09/26 23:36:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.2 1999/07/02 11:31:35 itojun Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.3 1999/07/25 04:23:21 explorer Exp $");
 #endif
 #endif
 
@@ -147,11 +147,11 @@ pim_print(register const u_char *bp, register u_int len)
 
 	switch(pim->pim_ver) {
 	 case 2:		/* avoid hardcoding? */
-		(void)printf("v2");
+		(void)printf("PIMv2");
 		pimv2_print(bp, len);
 		break;
 	 default:
-		(void)printf("v%d", pim->pim_ver);
+		(void)printf("PIMv%d", pim->pim_ver);
 		break;
 	}
 	return;
