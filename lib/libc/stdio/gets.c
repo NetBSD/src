@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.10 1998/02/03 18:41:17 perry Exp $	*/
+/*	$NetBSD: gets.c,v 1.11 1998/11/20 14:49:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)gets.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gets.c,v 1.10 1998/02/03 18:41:17 perry Exp $");
+__RCSID("$NetBSD: gets.c,v 1.11 1998/11/20 14:49:19 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "reentrant.h"
 
 __warn_references(gets, "warning: this program uses gets(), which is unsafe.")
 
@@ -56,14 +57,20 @@ gets(buf)
 	int c;
 	char *s;
 
-	for (s = buf; (c = getchar()) != '\n';)
-		if (c == EOF)
-			if (s == buf)
+	FLOCKFILE(stdin);
+	for (s = buf; (c = getchar_unlocked()) != '\n'; ) {
+		if (c == EOF) {
+			if (s == buf) {
+				FUNLOCKFILE(stdin);
 				return (NULL);
-			else
+			} else {
 				break;
-		else
+			}
+		} else {
 			*s++ = c;
+		}
+	}
 	*s = 0;
+	FUNLOCKFILE(stdin);
 	return (buf);
 }
