@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.39 2003/07/03 14:37:34 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.40 2003/07/06 04:03:22 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.39 2003/07/03 14:37:34 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.40 2003/07/06 04:03:22 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -60,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.39 2003/07/03 14:37:34 kochi Exp $");
 #include <dev/acpi/acpidevs_data.h>
 #endif
 
-#ifndef ACPI_ACTIVATE_DEV
-#define ACPI_ACTIVATE_DEV 0
-#endif
-
 #ifdef ACPI_PCI_FIXUP
 #include <dev/acpi/acpica/Subsystem/acnamesp.h> /* AcpiNsGetNodeByPath() */
 #include <dev/pci/pcidevs.h>
@@ -73,9 +69,7 @@ MALLOC_DECLARE(M_ACPI);
 
 #include <machine/acpi_machdep.h>
 
-#undef ENABLE_DEBUGGER
-
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 #define	ACPI_DBGR_INIT		0x01
 #define	ACPI_DBGR_TABLES	0x02
 #define	ACPI_DBGR_ENABLE	0x04
@@ -126,7 +120,7 @@ void		acpi_enable_fixed_events(struct acpi_softc *);
 #ifdef ACPI_PCI_FIXUP
 void		acpi_pci_fixup(struct acpi_softc *);
 #endif
-#if defined(ACPI_PCI_FIXUP) || ACPI_ACTIVATE_DEV
+#if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
 #endif
 
@@ -155,7 +149,7 @@ acpi_probe(void)
 	/*
 	 * Start up ACPICA.
 	 */
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_INIT)
 		acpi_osd_debugger();
 #endif
@@ -166,7 +160,7 @@ acpi_probe(void)
 		return (0);
 	}
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_TABLES)
 		acpi_osd_debugger();
 #endif
@@ -284,7 +278,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX We need to arrange for the object init pass after we have
 	 * XXX attached all of our children.
 	 */
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_ENABLE)
 		acpi_osd_debugger();
 #endif
@@ -319,7 +313,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Scan the namespace and build our device tree.
 	 */
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
@@ -336,7 +330,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: unable to register shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
 		acpi_osd_debugger();
 #endif
@@ -468,7 +462,7 @@ acpi_build_tree(struct acpi_softc *sc)
 	}
 }
 
-#if ACPI_ACTIVATE_DEV
+#ifdef ACPI_ACTIVATE_DEV
 static void
 acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
 {
@@ -525,7 +519,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 
 		switch (type) {
 		case ACPI_TYPE_DEVICE:
-#if ACPI_ACTIVATE_DEV
+#ifdef ACPI_ACTIVATE_DEV
 			if ((devinfo.Valid & ACPI_VALID_STA) &&
 			    (devinfo.CurrentStatus &
 			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED)) ==
@@ -1209,7 +1203,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 }
 #endif /* ACPI_PCI_FIXUP */
 
-#if defined(ACPI_PCI_FIXUP) || ACPI_ACTIVATE_DEV
+#if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 /* XXX This very incomplete */
 ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
