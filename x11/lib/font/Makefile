@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:53 lukem Exp $
 
 XTODO=	SUBDIR=*/module
 
@@ -123,6 +123,6 @@ SRCS=	${SRCS.bitmap} ${SRCS.fontfile} ${SRCS.fc} ${SRCS.fontcache} \
 
 SUBDIR=	stubs
 
+.include <bsd.x11.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>

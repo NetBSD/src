@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -14,5 +14,5 @@ LNFILES=glwcreatemdrawingarea.gl GLwCreateMDrawingArea.man \
 
 .PATH:  ${X11SRCDIR.xc}/extras/ogl-sample/main/doc/man/manglw
 
-.include <bsd.man.mk>
 .include <bsd.x11.mk>
+.include <bsd.man.mk>

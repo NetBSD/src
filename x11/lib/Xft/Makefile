@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:50:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:47 lukem Exp $
 
 #XTODO	xft.pc
 #XTODO	xft-config
@@ -20,5 +20,5 @@ MAN=	Xft.3
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}/${X11INCDIR}/freetype2
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

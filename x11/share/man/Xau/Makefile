@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:05 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,5 +10,5 @@ MLINKS=	Xau.3 XauFileName.3 Xau.3 XauReadAuth.3 Xau.3 XauLockAuth.3 \
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/Xau
 
-.include <bsd.man.mk>
 .include <bsd.x11.mk>
+.include <bsd.man.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:38:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:08 lukem Exp $
 
 NOMAN=		1
 
@@ -29,5 +29,5 @@ SRCS+=		atom.c fontaccel.c miscutil.c private.c utilbitmap.c
 
 LDADD+=		-lz
 
-.include <bsd.hostprog.mk>
 .include <bsd.x11.mk>
+.include <bsd.hostprog.mk>

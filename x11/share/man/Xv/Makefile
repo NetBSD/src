@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:06 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,5 @@ MAN=	Xv.3 XvFreeAdaptorInfo.3 XvFreeEncodingInfo.3 XvGetPortAttribute.3 \
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/Xv
 
-.include <bsd.man.mk>
 .include <bsd.x11.mk>
+.include <bsd.man.mk>

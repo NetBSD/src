@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:00 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -30,5 +30,5 @@ BDFFILES+=	crox1c.bdf crox1cb.bdf crox1cbo.bdf crox1co.bdf \
 
 .include "../Makefile.bdf"
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

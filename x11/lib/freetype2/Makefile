@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:50:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:56 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -39,6 +39,6 @@ CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/freetype2
 .PATH:	${FREETYPESRC}/type42
 .PATH:	${FREETYPESRC}/winfonts
 
+.include <bsd.x11.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>

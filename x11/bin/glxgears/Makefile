@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:45:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,5 @@ DPADD+=	${LIBGL} ${LIBXEXT} ${LIBX11} ${LIBPTHREAD} ${LIBM}
 
 .PATH:	${X11SRCDIR.xc}/programs/${PROG}
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

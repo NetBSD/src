@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:56:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:54 lukem Exp $
 
 NOPIC=	1
 
@@ -16,5 +16,5 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/lib/font/include \
 		${X11FLAGS.SERVER}
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

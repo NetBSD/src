@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:40 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -12,5 +12,5 @@ INCS=	ColorSB.h ColorSBP.h DPSScrollW.h DPSScrollWP.h FontCreatP.h \
 	dpsXpreview.h dpsXshare.h dpsXuserpath.h dpsclient.h dpsconfig.h \
 	dpsexcept.h dpsfriends.h
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

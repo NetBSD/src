@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:01 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,5 +10,5 @@ GZFILES=big5.eten-0.enc.gz gb2312.1980-0.enc.gz gbk-0.enc.gz \
 
 .include "../Makefile.enc"
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

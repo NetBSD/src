@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:17:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,6 @@ XTODO=	afb miext/shadow miext/layer hw/xfree86
 .PATH:	${X11SRCDIR.xc}/programs/Xserver
 MAN=	Xserver.1
 
+.include <bsd.x11.mk>
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>

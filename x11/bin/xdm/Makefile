@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:15 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,6 @@ SUBDIR=		chooser config sessreg
 
 .include "Makefile.xdm"
 
+.include <bsd.x11.mk>
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>

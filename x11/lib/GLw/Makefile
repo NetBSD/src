@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:43 lukem Exp $
 
 NOPIC=	1
 
@@ -16,5 +16,5 @@ INCSDIR=${X11INCDIR}/GL
 CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/${LIB} \
 		-I${X11SRCDIR.xc}/extras/ogl-sample/main/gfx/lib/glw
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

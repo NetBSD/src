@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,5 +7,5 @@ LIB=	psres
 
 SRCS=	PSres.c
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

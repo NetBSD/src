@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:58 lukem Exp $
 
 NOPIC=	1
 
@@ -36,6 +36,6 @@ CLEANFILES+=	g3states.h
 
 dfaxg42d.c: g3states.h
 
+.include <bsd.x11.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:42 lukem Exp $
 
 NOPIC=	1
 
@@ -27,5 +27,5 @@ CPPFLAGS.FSOpenServ.c=	$(CONN_DEFINES)
 CPPFLAGS.FSConnServ.c=	$(CONN_DEFINES) $(SOCK_DEFINES)
 CPPFLAGS.transport.c=	$(CONN_DEFINES) $(SOCK_DEFINES)
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>
