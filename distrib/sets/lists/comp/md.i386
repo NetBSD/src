@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.61 2002/08/09 00:15:58 thorpej Exp $
+# $NetBSD: md.i386,v 1.62 2002/08/13 11:18:34 wiz Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -80,5 +80,6 @@
 ./usr/lib/libpmc_p.a		comp-c-proflib
 ./usr/lib/libpmc_pic.a		comp-c-piclib
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib
+./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib
 ./usr/include/ieeefp.h		comp-c-include
 ./usr/include/pmc.h		comp-c-include
