@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.30 1999/05/20 05:35:28 cgd Exp $	*/
+/*	$NetBSD: param.c,v 1.31 1999/05/20 06:03:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -169,12 +169,6 @@ struct	msginfo msginfo = {
 #endif
 
 /*
- * These are initialized at bootstrap time
- * to values dependent on memory size
- */
-int	nbuf, nswbuf;
-
-/*
  * These have to be allocated somewhere; allocating
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
@@ -188,17 +182,16 @@ char	*buffers;
  * amount of CPU time expires.  AUTONICETIME is in seconds.
  * AUTONICEVAL is NOT offset by NZERO, i.e. it's between PRIO_MIN and PRIO_MAX.
  */
-#ifdef AUTONICETIME
-int autonicetime = AUTONICETIME;
-#else
-int autonicetime = (60 * 10);	/* 10 minutes */
+#ifndef AUTONICETIME
+#define AUTONICETIME (60 * 10)	/* 10 minutes */
 #endif
 
-#ifdef AUTONICEVAL
-int autoniceval = AUTONICEVAL;
-#else
-int autoniceval = 4;		/* default + 4 */
+#ifndef AUTONICEVAL
+#define AUTONICEVAL 4		/* default + 4 */
 #endif
+
+int autonicetime = AUTONICETIME;
+int autoniceval = AUTONICEVAL;
 
 /*
  * Actual network mbuf sizes (read-only), for netstat.
