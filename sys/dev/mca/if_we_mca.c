@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.9 2004/01/20 19:59:59 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.10 2004/09/08 17:44:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.9 2004/01/20 19:59:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_mca.c,v 1.10 2004/09/08 17:44:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ static const struct we_mca_product {
 static const int we_mca_irq[] = {
 	3, 4, 10, 15,
 };
-	
+
 /* memory position and shared RAM sizes for WD8013-type of cards */
 static const struct {
 	u_int8_t id;
@@ -156,7 +156,6 @@ static const struct {
 	{ 0, 0, 0 },
 };
 
-	
 static const struct we_mca_product *we_mca_lookup __P((int));
 
 static const struct we_mca_product *
@@ -205,15 +204,15 @@ we_mca_attach(parent, self, aux)
 	/*
 	 * POS registers differ a lot between 8003 and 8013, so they are
 	 * divided to two sections.
-	 * 
+	 *
 	 * 8003: POS register 2: (adf pos0)
 	 * 7 6 5 4 3 2 1 0
-	 * 0 0 1  \___/  \__ enable: 0=adapter disabled, 1=adapter enabled
-	 *            \_____ Adapter IO Space: 0x200-0x29F + XX*0x20
+	 * 0 0 1 \_____/ \__ enable: 0=adapter disabled, 1=adapter enabled
+	 *             \____ Adapter I/O Space: 0x200-0x21F + XX*0x20
 	 *
 	 * 8003: POS register 3: (adf pos1)
 	 * 7 6 5 4 3 2 1 0
-	 * 1 1 0  \__/ 1 X
+	 * 1 1 0 \___/ 1 X
 	 *           \______ Shared Ram Space (16K Bytes):
 	 *                     0xC0000-0xC3FFF + XX * 0x4000
 	 *
@@ -273,7 +272,7 @@ we_mca_attach(parent, self, aux)
 				sc->sc_dev.dv_xname);
 			return;
 		}
-				
+
 		maddr = we_mca_elite_mem[i].maddr;
 		sc->mem_size = we_mca_elite_mem[i].memsize;
 	}
