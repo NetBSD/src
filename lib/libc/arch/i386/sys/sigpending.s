@@ -32,12 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
+ *	$Id: sigpending.s,v 1.2 1993/10/21 02:19:38 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90"*/
-	.asciz "$Id: sigpending.s,v 1.1 1993/10/07 00:19:53 cgd Exp $"
+	.asciz "$Id: sigpending.s,v 1.2 1993/10/21 02:19:38 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

@@ -32,12 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)sbrk.s	5.1 (Berkeley) 4/23/90
+ *	$Id: sbrk.s,v 1.2 1993/10/21 02:19:36 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)sbrk.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: sbrk.s,v 1.1 1993/10/07 00:19:51 cgd Exp $"
+	.asciz "$Id: sbrk.s,v 1.2 1993/10/21 02:19:36 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
