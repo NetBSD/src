@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.69 1996/08/10 06:09:00 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.70 1996/08/10 08:40:53 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -173,6 +173,3 @@ locore.o: ${I386}/i386/locore.s assym.h
 	${NORMAL_S}
 
 %RULES
-
-### add microcode dependencies
-.include "$S/dev/microcode/Makefile.inc"
