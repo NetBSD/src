@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.1 2001/02/19 07:35:43 wdk Exp $
+# $NetBSD: md.mipsco,v 1.2 2001/02/25 03:38:17 wdk Exp $
 ./usr/include/mipsco	comp-c-include
 ./usr/include/mipsco/_G_config.h	comp-c-include
 ./usr/include/mipsco/ansi.h	comp-c-include
@@ -19,7 +19,6 @@
 ./usr/include/mipsco/endian.h	comp-c-include
 ./usr/include/mipsco/endian_machdep.h	comp-c-include
 ./usr/include/mipsco/float.h	comp-c-include
-./usr/include/mipsco/frame.h	comp-c-include
 ./usr/include/mipsco/ieee.h	comp-c-include
 ./usr/include/mipsco/ieeefp.h	comp-c-include
 ./usr/include/mipsco/int_types.h	comp-c-include
