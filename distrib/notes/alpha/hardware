@@ -1,5 +1,6 @@
-	$NetBSD: hardware,v 1.5 1998/05/15 17:20:00 matt Exp $	
+	$NetBSD: hardware,v 1.6 1998/07/07 02:38:18 ross Exp $	
 
+#if 0	/* XXX XXX XXX */
 NetBSD/alpha _VER runs on the following DEC Alpha platforms:
 
      DEC 3000/500-family systems 
@@ -174,3 +175,12 @@ DEC DE203,204,205 EtherWORKS III ISA Ethernet boards
 You should enter the following SRM console command to enable the device:
 
 >>> add_de205
+#else		/* XXX XXX XXX */
+
+	[ This section has been removed from the snapshot instructions.
+	  Supported hardware is changing rapidly in -current. Running
+	  -current requires monitoring the port-alpha mailing list for
+	  information on platform and device support. Email "subscribe
+	  port-alpha" to majordomo@netbsd.org. ]
+
+#endif		/* XXX XXX XXX */
