@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.8 2003/12/15 16:11:34 manu Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.9 2003/12/19 12:16:36 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.8 2003/12/15 16:11:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.9 2003/12/19 12:16:36 manu Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -212,10 +212,15 @@ static const keysym_t j720kbd_keydesc_pt[] = {
     KC(73),  KS_period,	KS_greater,	KS_guillemotright,
     KC(74),  KS_semicolon,	KS_colon,
     KC(75),  KS_dead_tilde,	KS_dead_circumflex,
-    KC(83),  KS_Shift_L,	KS_Caps_Lock,
+    KC(83),  KS_Shift_L,	KS_Shift_L,     KS_Caps_Lock,
     KC(102), KS_apostrophe,	KS_quotedbl,
     KC(113), KS_slash,		KS_bar,		KS_backslash,
     KC(120), KS_Mode_switch,	KS_Multi_key,
+
+    KC(90),  KS_Up,             KS_Up,          KS_Prior,
+    KC(105), KS_Left,           KS_Left,        KS_Home,
+    KC(107), KS_Right,          KS_Right,       KS_End,
+    KC(106), KS_Down,           KS_Down,        KS_Next,
 };
 
 #define KBD_MAP(name, base, map) \
