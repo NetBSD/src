@@ -156,3 +156,12 @@ LIST:tw:C/ /,/g="one two three four five six"
 LIST:tw:C/ /,/1g="one two three four five six"
 LIST:tw:tW:C/ /,/="one,two three four five six"
 LIST:tW:tw:C/ /,/="one two three four five six"
+The answer is unknown
+The answer is unknown
+The answer is empty
+The answer is known
+The answer is 
+The answer is empty
+The answer is known
+The answer is 42
+The answer is 42

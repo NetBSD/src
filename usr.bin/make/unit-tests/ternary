@@ -1,0 +1,5 @@
+
+all:
+	@echo "The answer is ${A:?known:unknown}"
+	@echo "The answer is ${A:?$A:unknown}"
+	@echo "The answer is ${empty(A):?empty:$A}"
