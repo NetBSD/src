@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.27 2003/08/25 09:24:53 drochner Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.28 2003/08/25 10:05:46 drochner Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.27 2003/08/25 09:24:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.28 2003/08/25 10:05:46 drochner Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -278,6 +278,7 @@ coda_start(vfsp, flags, p)
     struct proc *p;
 {
     ENTRY;
+    vftomi(vfsp)->mi_started = 1;
     return (0);
 }
 
@@ -304,6 +305,8 @@ coda_unmount(vfsp, mntflags, p)
 #ifdef	DEBUG
 	printf("coda_unmount: ROOT: vp %p, cp %p\n", mi->mi_rootvp, VTOC(mi->mi_rootvp));
 #endif
+	mi->mi_started = 0;
+
 	vrele(mi->mi_rootvp);
 
 	active = coda_kill(vfsp, NOT_DOWNCALL);
