@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.371 2004/03/15 11:16:23 augustss Exp $
+$NetBSD: usbdevs,v 1.371.2.1 2004/07/10 13:29:48 tron Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -347,7 +347,7 @@ vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
-vendor GREENHOUSE2	0x0bda	GREENHOUSE
+vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
@@ -784,7 +784,6 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 
 /* GREENHOUSE products */
 product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
-product GREENHOUSE2 USBKR100	0x8150	USB Ethernet Adapter GH-USB100B
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
@@ -1362,6 +1361,9 @@ product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 
 /* Rainbow Technologies products */
 product	RAINBOW IKEY2000	0x1200	i-Key 2000  
+
+/* Realtek products */
+product REALTEK RTL8150L	0x8150	Realtek RTL8150L USB-Ethernet Bridge
 
 /* Roland products */
 product ROLAND UA100		0x0000	UA-100 USB Audio I/F
