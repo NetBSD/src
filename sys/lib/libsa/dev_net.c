@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.16 1999/05/07 14:49:53 drochner Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.17 1999/11/11 20:23:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,8 +60,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#include <lib/libkern/libkern.h>
 
 #include "stand.h"
 #include "net.h"
