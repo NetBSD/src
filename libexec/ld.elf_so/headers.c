@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.6 1999/11/07 00:21:12 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.7 2000/07/18 22:33:55 eeh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -118,12 +118,19 @@ _rtld_digest_dynamic(obj)
 			plttype = dynp->d_un.d_val;
 			assert(plttype == DT_REL ||
 			    plttype == DT_RELA);
+#if !defined(__sparc__) && !defined(__archv9__)
+			/* 
+			 * sparc v9 has both DT_PLTREL and DT_JMPREL.
+			 * But they point to different things.
+			 * We want the DT_JMPREL which points to our jump table.
+			 */
 			if (plttype == DT_RELA) {
 				obj->pltrela = (const Elf_RelA *) obj->pltrel;
 				obj->pltrel = NULL;
 				pltrelasz = pltrelsz;
 				pltrelsz = 0;
 			}
+#endif
 			break;
 
 		case DT_SYMTAB:
