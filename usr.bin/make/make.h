@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.28 2000/06/10 22:28:33 mycroft Exp $	*/
+/*	$NetBSD: make.h,v 1.29 2000/06/11 07:39:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -230,6 +230,7 @@ typedef struct GNode {
 				     * commands for a target */
 #define OP_SAVE_CMDS	0x04000000  /* Saving commands on .END (Compat) */
 #define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
+#define	OP_MARK		0x01000000  /* Node found while expanding .ALLSRC */
 
 /*
  * OP_NOP will return TRUE if the node with the given type was not the
