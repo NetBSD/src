@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.29 1997/08/27 07:10:01 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.29.4.1 1998/01/30 19:24:12 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -79,6 +79,8 @@ socreate(dom, aso, type, proto)
 		return (EPROTOTYPE);
 	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_WAIT);
 	bzero((caddr_t)so, sizeof(*so));
+	TAILQ_INIT(&so->so_q0);
+	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
 	so->so_proto = prp;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
@@ -127,7 +129,7 @@ solisten(so, backlog)
 		splx(s);
 		return (error);
 	}
-	if (so->so_q == 0)
+	if (so->so_q.tqh_first == NULL)
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
@@ -166,10 +168,10 @@ soclose(so)
 	int error = 0;
 
 	if (so->so_options & SO_ACCEPTCONN) {
-		while (so->so_q0)
-			(void) soabort(so->so_q0);
-		while (so->so_q)
-			(void) soabort(so->so_q);
+		while (so->so_q0.tqh_first)
+			(void) soabort(so->so_q0.tqh_first);
+		while (so->so_q.tqh_first)
+			(void) soabort(so->so_q.tqh_first);
 	}
 	if (so->so_pcb == 0)
 		goto discard;
@@ -186,7 +188,7 @@ soclose(so)
 			while (so->so_state & SS_ISCONNECTED) {
 				error = tsleep((caddr_t)&so->so_timeo,
 					       PSOCK | PCATCH, netcls,
-					       so->so_linger);
+					       so->so_linger * hz);
 				if (error)
 					break;
 			}
