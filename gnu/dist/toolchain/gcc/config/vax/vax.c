@@ -28,7 +28,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insn-codes.h"
 #include "conditions.h"
 #include "insn-flags.h"
-#include "function.h"
+/*#include "function.h"*/
 #include "output.h"
 #include "insn-attr.h"
 #ifdef VMS_TARGET
@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #include "reload.h"
 #include "recog.h"
-#include "tm_p.h"
+/*#include "tm_p.h"*/
 
 /* This is like nonimmediate_operand with a restriction on the type of MEM.  */
 
@@ -879,7 +879,6 @@ legitimate_address_p(mode, xbar, strict)
 	    goto win;
 	  GO_IF_REG_PLUS_INDEX (XEXP (xbar, 0), mode, win, strict);
 	}
-     }
   }
   return 0;
 
