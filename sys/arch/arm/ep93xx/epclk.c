@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.2 2004/12/27 02:46:22 joff Exp $	*/
+/*	$NetBSD: epclk.c,v 1.3 2005/01/06 16:11:54 joff Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.2 2004/12/27 02:46:22 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.3 2005/01/06 16:11:54 joff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,7 +326,7 @@ inittodr(time_t base)
 	int badbase;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
+		printf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = (MINYEAR - 1970) * SECYR;
 		badbase = 1;
