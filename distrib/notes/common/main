@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.37 1999/12/08 03:57:30 lukem Exp $
+.\" $NetBSD: main,v 1.38 1999/12/15 18:50:01 ws Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -770,7 +770,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG Ta Sy mac68k
 .It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.ORG Ta Sy bebox
-.It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.ORG Ta Sy powerpc
+.It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.ORG Ta Sy ofppc
 .It Ta Jonathan Stone Ta Mt jonathan@NetBSD.ORG Ta Sy pmax
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.ORG Ta Sy hpcmips
 .It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG Ta Sy hp300
