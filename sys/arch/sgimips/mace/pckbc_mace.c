@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.3 2004/02/14 14:33:29 bjh21 Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.4 2004/09/29 04:06:52 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.3 2004/02/14 14:33:29 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.4 2004/09/29 04:06:52 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,19 +69,13 @@ CFATTACH_DECL(pckbc_mace, sizeof(struct pckbc_mace_softc),
     pckbc_mace_match, pckbc_mace_attach, NULL, NULL);
 
 static int
-pckbc_mace_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pckbc_mace_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 static void
-pckbc_mace_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pckbc_mace_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbc_mace_softc *msc = (void *)self;
 	struct pckbc_softc *sc = &msc->sc_pckbc;
@@ -119,9 +113,7 @@ pckbc_mace_attach(parent, self, aux)
 }
 
 void
-pckbc_mace_intr_establish(sc, slot)
-	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
+pckbc_mace_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 
 	cpu_intr_establish(5, 0, pckbcintr, sc);
