@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.264 2005/01/25 00:53:03 rumble Exp $
+.\"	$NetBSD: options.4,v 1.265 2005/01/25 01:59:07 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 22, 2005
+.Dd January 24, 2005
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -493,6 +493,8 @@ binaries otherwise.
 Beware - if this option is on, the kernel would run
 .Em any
 unknown ELF binaries as if they were
+.Nx
+binaries.
 .It Cd options P1003_1B_SEMAPHORE
 Includes kernel support for the standard C library
 .Pq libc
@@ -969,7 +971,7 @@ Enable kernel support for soft-dependencies in FFS filesystems.
 Softdep improves write performance by aggregating and properly
 ordering disk metadata writes, achieving near-asynchronous write
 performance while maintaining the filesystem consistency of
-synchronous writes. 
+synchronous writes.
 Soft-dependencies are enabled on a per-mount basis.
 See
 .Xr mount 8
