@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
+/*	$NetBSD: ld.c,v 1.52.2.1 1998/06/10 22:20:29 tv Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -2904,8 +2904,18 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 				relocation = addend +
 					data_relocation - text_relocation;
 			} else
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+			{
+			long temp;
+/*				relocation = addend +
+					claim_rrs_jmpslot(entry, r, sp, addend);*/
+				temp=	claim_rrs_jmpslot(entry, r, sp, addend);
+				relocation = addend + temp;
+			}
+#else
 				relocation = addend +
 					claim_rrs_jmpslot(entry, r, sp, addend);
+#endif
 
 		} else if (RELOC_BASEREL_P(r)) {
 
@@ -3270,6 +3280,10 @@ copdatrel(entry)
 
 		symindex = RELOC_SYMBOL(r);
 		sp = entry->symbols[symindex].symbol;
+#if defined(__arm32__) && 1 /* XXX MAGIC! */
+		if (sp == 0)
+			continue;
+#endif
 
 		if (symindex >= entry->header.a_syms)
 			errx(1, "%s: relocation symbolnum out of range",

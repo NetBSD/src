@@ -1,7 +1,0 @@
-
-#------------------------------------------------------------------------------
-# Localstuff:  file(1) magic for locally observed files
-#
-#	$NetBSD: Localstuff,v 1.4 1997/01/09 20:19:03 tls Exp $
-# Add any locally observed files here.  Remember:
-# text if readable, executable if runnable binary, data if unreadable.
