@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.3 2000/01/10 14:08:04 takemura Exp $	*/
+/*	$NetBSD: tpcalibvar.h,v 1.1 2000/01/10 14:08:00 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -27,21 +27,17 @@
  *
  */
 
-enum vrpiu_stat {
-	VRPIU_STAT_DISABLE,
-	VRPIU_STAT_RELEASE,
-	VRPIU_STAT_TOUCH,
+struct tpcalib_softc {
+	int sc_minx, sc_miny;
+	int sc_maxx, sc_maxy;
+	int sc_ax, sc_bx, sc_cx;
+	int sc_ay, sc_by, sc_cy;
+
+	struct wsmouse_calibcoords sc_saved;
 };
 
-struct vrpiu_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	void *sc_handler;
-	vrip_chipset_tag_t *sc_vrip;
-
-	enum vrpiu_stat sc_stat;
-	struct device *sc_wsmousedev;
-
-	struct tpcalib_softc sc_tpcalib;
-};
+int	tpcalib_init __P((struct tpcalib_softc *sc));
+void	tpcalib_reset __P((struct tpcalib_softc *sc));
+void	tpcalib_trans __P((struct tpcalib_softc*, int, int, int*, int*));
+int	tpcalib_ioctl __P((struct tpcalib_softc *, u_long, caddr_t,
+			   int, struct proc*));
