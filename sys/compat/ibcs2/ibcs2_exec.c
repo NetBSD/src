@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.8 1995/04/22 19:48:23 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.9 1995/05/01 19:01:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -72,6 +72,7 @@ extern int bsd2ibcs_errno[];
 extern struct sysent ibcs2_sysent[];
 extern char *ibcs2_syscallnames[];
 extern void ibcs2_sendsig __P((sig_t, int, int, u_long));
+extern char sigcode[], esigcode[];
 
 struct emul emul_ibcs2 = {
 	"ibcs2",
