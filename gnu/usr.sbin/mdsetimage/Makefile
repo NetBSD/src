@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/11/27 14:36:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2003/12/04 09:29:35 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,14 +6,8 @@
      (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBFD} != "no"
 TOP=		${NETBSDSRCDIR}/gnu
-.if ${HAVE_BINUTILS214} == "yes"
 DIST=		${TOP}/dist/binutils
-BFDSUBDIR=	usr.bin/binutils
-.else
-DIST=		${.CURDIR}/../../../dist/toolchain
-DIST=		${TOP}/dist/toolchain
 BFDSUBDIR=	lib
-.endif
 
 PROG=		mdsetimage
 MAN=		mdsetimage.8
