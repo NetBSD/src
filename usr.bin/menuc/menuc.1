@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.18 2003/06/09 18:48:41 dsl Exp $
+.\"	$NetBSD: menuc.1,v 1.19 2003/07/27 07:21:58 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -248,7 +248,7 @@ is appears as
 (Capitalization is important.)
 This is important, because the menu is displayed and processed by
 calling the function
-.Dl process_menu (MENU_foo) ;
+.Dl process_menu (MENU_foo, arg) ;
 .Pp
 The options are a comma separated list of options as in the
 .Dq default
@@ -339,7 +339,7 @@ struct menu_ent {
         const char  *opt_name;
         int         opt_menu;
         int         opt_flags;
-        int         (*opt_action)(struct menudesc *);
+        int         (*opt_action)(struct menudesc *, void *);
 } menu_ent ;
 
 /* For opt_menu */
@@ -374,10 +374,12 @@ struct menudesc {
 #define MC_NOSHORTCUT 8
 #define MC_NOCLEAR 16
 
-int new_menu (char * title, menu_ent * opts, int numopts,
+int new_menu(const char *title, menu_ent *opts, int numopts,
         int x, int y, int h, int w, int mopt,
         void (*post_act)(struct menudesc *, void *),
-        void (*exit_act)(struct menudesc *, void *), char *help);
+        void (*draw_line)(struct menudesc *, int, void *),
+        void (*exit_act)(struct menudesc *, void *),
+	const char *help, const char *exitstr);
 
 void free_menu (int menu_no);
 .Ed
@@ -414,14 +416,19 @@ The options
 .Ar post_act ,
 and
 .Ar exit_act
-are function pointers to the the display action and the exit
-action.
+are function pointers to the the display action and the exit action.
 If they are
 .Dv NULL ,
 no call will be made.
-And finally,
+.Ar draw_line
+will be called to display the menu line if the correspondint opt_name
+field is NULL.
 .Ar help
 is the text to display in a help screen.
+And finally,
+.Ar exitstr
+is the text for the 'exit' line of the menu.
+If NULL "Exit" is used.
 A
 .Dv NULL
 help pointer will disable the help feature for the menu.
@@ -456,7 +463,7 @@ distribution in a subdirectory called
 int
 main()
   {
-    process_menu (MENU_main);
+    process_menu (MENU_main, NULL);
     endwin();
     return 0;
   }

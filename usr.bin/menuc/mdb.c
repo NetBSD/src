@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.37 2003/07/25 07:22:05 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.38 2003/07/27 07:21:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.37 2003/07/25 07:22:05 dsl Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.38 2003/07/27 07:21:57 dsl Exp $");
 #endif
 
 
@@ -182,7 +182,7 @@ write_menu_file (char *initcode)
 		"	const char	*opt_name;\n"
 		"	int		opt_menu;\n"
 		"	int		opt_flags;\n"
-		"	int		(*opt_action)(menudesc *, menu_ent *, void *);\n"
+		"	int		(*opt_action)(menudesc *, void *);\n"
 		"};\n\n"
 		"#define OPT_SUB	1\n"
 		"#define OPT_ENDWIN	2\n"
@@ -298,7 +298,7 @@ write_menu_file (char *initcode)
 
 			(void) fprintf (out_file,
 				"/*ARGSUSED*/\n"
-				"static int opt_act_%d_%d(menudesc *m, menu_ent *opt, void *arg)\n"
+				"static int opt_act_%d_%d(menudesc *m, void *arg)\n"
 				"{\n\t%s\n\treturn %s;\n}\n\n",
 				i, j, toptn->optact.code,
 				(toptn->doexit ? "1" : "0"));
