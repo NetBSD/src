@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.h,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $	*/
+/*	$OpenBSD: deattack.h,v 1.5 2001/01/29 01:58:15 niklas Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - Header file

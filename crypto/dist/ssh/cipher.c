@@ -1,5 +1,3 @@
-/*	$NetBSD: cipher.c,v 1.1.1.2 2001/01/14 04:50:13 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,38 +34,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: cipher.c,v 1.41 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: cipher.c,v 1.1.1.2 2001/01/14 04:50:13 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: cipher.c,v 1.43 2001/02/04 15:32:23 stevesk Exp $");
 
-#include "ssh.h"
 #include "xmalloc.h"
+#include "log.h"
+#include "cipher.h"
 
 #include <openssl/md5.h>
 
 
 /* no encryption */
-static void
+void
 none_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 }
-static void
+void
 none_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
 }
-static void
+void
 none_crypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	memcpy(dest, src, len);
 }
 
 /* DES */
-static void
+void
 des_ssh1_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	static int dowarn = 1;
@@ -78,18 +71,18 @@ des_ssh1_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 	}
 	des_set_key((void *)key, cc->u.des.key);
 }
-static void
+void
 des_ssh1_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
 	memset(cc->u.des.iv, 0, sizeof(cc->u.des.iv));
 }
-static void
+void
 des_ssh1_encrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	des_ncbc_encrypt(src, dest, len, cc->u.des.key, &cc->u.des.iv,
 	    DES_ENCRYPT);
 }
-static void
+void
 des_ssh1_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	des_ncbc_encrypt(src, dest, len, cc->u.des.key, &cc->u.des.iv,
@@ -97,14 +90,14 @@ des_ssh1_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 }
 
 /* 3DES */
-static void
+void
 des3_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	des_set_key((void *) key, cc->u.des3.key1);
 	des_set_key((void *) (key+8), cc->u.des3.key2);
 	des_set_key((void *) (key+16), cc->u.des3.key3);
 }
-static void
+void
 des3_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
 	memset(cc->u.des3.iv2, 0, sizeof(cc->u.des3.iv2));
@@ -113,14 +106,14 @@ des3_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 		return;
 	memcpy(cc->u.des3.iv3, (char *)iv, 8);
 }
-static void
+void
 des3_cbc_encrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	des_ede3_cbc_encrypt(src, dest, len,
 	    cc->u.des3.key1, cc->u.des3.key2, cc->u.des3.key3,
 	    &cc->u.des3.iv3, DES_ENCRYPT);
 }
-static void
+void
 des3_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	des_ede3_cbc_encrypt(src, dest, len,
@@ -142,7 +135,7 @@ des3_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
  * result of that there is no longer any known iv1 to use when
  * choosing the X block.
  */
-static void
+void
 des3_ssh1_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	des_set_key((void *) key, cc->u.des3.key1);
@@ -152,7 +145,7 @@ des3_ssh1_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 	else
 		des_set_key((void *) (key+16), cc->u.des3.key3);
 }
-static void
+void
 des3_ssh1_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
     u_int len)
 {
@@ -166,7 +159,7 @@ des3_ssh1_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
 	des_ncbc_encrypt(dest, dest, len, cc->u.des3.key2, iv2, DES_DECRYPT);
 	des_ncbc_encrypt(dest, dest, len, cc->u.des3.key3, iv3, DES_ENCRYPT);
 }
-static void
+void
 des3_ssh1_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
     u_int len)
 {
@@ -182,12 +175,12 @@ des3_ssh1_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
 }
 
 /* Blowfish */
-static void
+void
 blowfish_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	BF_set_key(&cc->u.bf.key, keylen, (u_char *)key);
 }
-static void
+void
 blowfish_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
 	if (iv == NULL)
@@ -195,14 +188,14 @@ blowfish_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 	else
 		memcpy(cc->u.bf.iv, (char *)iv, 8);
 }
-static void
+void
 blowfish_cbc_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
      u_int len)
 {
 	BF_cbc_encrypt((void *)src, dest, len, &cc->u.bf.key, cc->u.bf.iv,
 	    BF_ENCRYPT);
 }
-static void
+void
 blowfish_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
      u_int len)
 {
@@ -233,7 +226,7 @@ swap_bytes(const u_char *src, u_char *dst, int n)
 	}
 }
 
-static void
+void
 blowfish_ssh1_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
     u_int len)
 {
@@ -242,7 +235,7 @@ blowfish_ssh1_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
 	    BF_ENCRYPT);
 	swap_bytes(dest, dest, len);
 }
-static void
+void
 blowfish_ssh1_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
     u_int len)
 {
@@ -253,37 +246,37 @@ blowfish_ssh1_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
 }
 
 /* alleged rc4 */
-static void
+void
 arcfour_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	RC4_set_key(&cc->u.rc4, keylen, (u_char *)key);
 }
-static void
+void
 arcfour_crypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	RC4(&cc->u.rc4, len, (u_char *)src, dest);
 }
 
 /* CAST */
-static void
+void
 cast_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	CAST_set_key(&cc->u.cast.key, keylen, (u_char *) key);
 }
-static void
+void
 cast_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
-	if (iv == NULL) 
+	if (iv == NULL)
 		fatal("no IV for %s.", cc->cipher->name);
 	memcpy(cc->u.cast.iv, (char *)iv, 8);
 }
-static void
+void
 cast_cbc_encrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	CAST_cbc_encrypt(src, dest, len, &cc->u.cast.key, cc->u.cast.iv,
 	    CAST_ENCRYPT);
 }
-static void
+void
 cast_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 {
 	CAST_cbc_encrypt(src, dest, len, &cc->u.cast.key, cc->u.cast.iv,
@@ -293,20 +286,20 @@ cast_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 /* RIJNDAEL */
 
 #define RIJNDAEL_BLOCKSIZE 16
-static void
+void
 rijndael_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
 	rijndael_set_key(&cc->u.rijndael.enc, (u4byte *)key, 8*keylen, 1);
 	rijndael_set_key(&cc->u.rijndael.dec, (u4byte *)key, 8*keylen, 0);
 }
-static void
+void
 rijndael_setiv(CipherContext *cc, const u_char *iv, u_int ivlen)
 {
-	if (iv == NULL) 
+	if (iv == NULL)
 		fatal("no IV for %s.", cc->cipher->name);
 	memcpy((u_char *)cc->u.rijndael.iv, iv, RIJNDAEL_BLOCKSIZE);
 }
-static void
+void
 rijndael_cbc_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
     u_int len)
 {
@@ -333,7 +326,7 @@ rijndael_cbc_encrypt(CipherContext *cc, u_char *dest, const u_char *src,
 	memcpy(iv, cprev, RIJNDAEL_BLOCKSIZE);
 }
 
-static void
+void
 rijndael_cbc_decrypt(CipherContext *cc, u_char *dest, const u_char *src,
     u_int len)
 {
@@ -422,7 +415,7 @@ Cipher ciphers[] = {
 		SSH_CIPHER_SSH2, 16, 32,
 		rijndael_setkey, rijndael_setiv,
 		rijndael_cbc_encrypt, rijndael_cbc_decrypt },
-        { NULL, SSH_CIPHER_ILLEGAL, 0, 0, NULL, NULL, NULL, NULL }
+	{ NULL, SSH_CIPHER_ILLEGAL, 0, 0, NULL, NULL, NULL, NULL }
 };
 
 /*--*/

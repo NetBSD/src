@@ -1,5 +1,3 @@
-/*	$NetBSD: sshconnect2.c,v 1.1.1.2 2001/01/14 04:50:57 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,32 +22,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: sshconnect2.c,v 1.35 2001/01/04 22:21:26 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: sshconnect2.c,v 1.1.1.2 2001/01/14 04:50:57 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: sshconnect2.c,v 1.42 2001/02/06 22:26:17 markus Exp $");
 
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 #include <openssl/hmac.h>
 
 #include "ssh.h"
+#include "ssh2.h"
 #include "xmalloc.h"
 #include "rsa.h"
 #include "buffer.h"
 #include "packet.h"
 #include "uidswap.h"
 #include "compat.h"
-#include "readconf.h"
 #include "bufaux.h"
-#include "ssh2.h"
+#include "cipher.h"
 #include "kex.h"
 #include "myproposal.h"
 #include "key.h"
@@ -58,6 +48,9 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.1.1.2 2001/01/14 04:50:57 itojun Exp $");
 #include "cli.h"
 #include "dispatch.h"
 #include "authfd.h"
+#include "log.h"
+#include "readconf.h"
+#include "readpass.h"
 
 void ssh_dh1_client(Kex *, char *, struct sockaddr *, Buffer *, Buffer *);
 void ssh_dhgex_client(Kex *, char *, struct sockaddr *, Buffer *, Buffer *);
@@ -152,7 +145,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 /* diffie-hellman-group1-sha1 */
 
 void
-ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr, 
+ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	       Buffer *client_kexinit, Buffer *server_kexinit)
 {
 #ifdef DEBUG_KEXDH
@@ -255,6 +248,7 @@ ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	);
 	xfree(server_host_key_blob);
 	DH_free(dh);
+	BN_free(dh_server_pub);
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "hash == ");
 	for (i = 0; i< 20; i++)
@@ -264,8 +258,10 @@ ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	if (key_verify(server_host_key, (u_char *)signature, slen, hash, 20) != 1)
 		fatal("key_verify failed for server_host_key");
 	key_free(server_host_key);
+	xfree(signature);
 
 	kex_derive_keys(kex, hash, shared_secret);
+	BN_clear_free(shared_secret);
 	packet_set_kex(kex);
 
 	/* save session id */
@@ -282,10 +278,10 @@ ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr,
  * with:  O(exp(1.9223 * (ln q)^(1/3) (ln ln q)^(2/3)))
  */
 
-static int
+int
 dh_estimate(int bits)
 {
-	
+
 	if (bits < 64)
 		return (512);	/* O(2**63) */
 	if (bits < 128)
@@ -340,8 +336,7 @@ ssh_dhgex_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	if ((g = BN_new()) == NULL)
 		fatal("BN_new");
 	packet_get_bignum2(g, &dlen);
-	if ((dh = dh_new_group(g, p)) == NULL)
-		fatal("dh_new_group");
+	dh = dh_new_group(g, p);
 
 	dh_gen_key(dh);
 
@@ -421,13 +416,14 @@ ssh_dhgex_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	    buffer_ptr(client_kexinit), buffer_len(client_kexinit),
 	    buffer_ptr(server_kexinit), buffer_len(server_kexinit),
 	    server_host_key_blob, sbloblen,
-	    nbits, dh->p, dh->g, 
+	    nbits, dh->p, dh->g,
 	    dh->pub_key,
 	    dh_server_pub,
 	    shared_secret
 	);
 	xfree(server_host_key_blob);
 	DH_free(dh);
+	BN_free(dh_server_pub);
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "hash == ");
 	for (i = 0; i< 20; i++)
@@ -437,8 +433,10 @@ ssh_dhgex_client(Kex *kex, char *host, struct sockaddr *hostaddr,
 	if (key_verify(server_host_key, (u_char *)signature, slen, hash, 20) != 1)
 		fatal("key_verify failed for server_host_key");
 	key_free(server_host_key);
+	xfree(signature);
 
 	kex_derive_keys(kex, hash, shared_secret);
+	BN_clear_free(shared_secret);
 	packet_set_kex(kex);
 
 	/* save session id */
@@ -515,6 +513,9 @@ ssh_userauth2(const char *server_user, char *host)
 	int type;
 	int plen;
 
+	if (options.challenge_reponse_authentication)
+		options.kbd_interactive_authentication = 1;
+
 	debug("send SSH2_MSG_SERVICE_REQUEST");
 	packet_start(SSH2_MSG_SERVICE_REQUEST);
 	packet_put_cstring("ssh-userauth");
@@ -528,7 +529,6 @@ ssh_userauth2(const char *server_user, char *host)
 		char *reply = packet_get_string(&plen);
 		debug("service_accept: %s", reply);
 		xfree(reply);
-		packet_done();
 	} else {
 		debug("buggy server: service_accept w/o service");
 	}
@@ -607,7 +607,7 @@ input_userauth_failure(int type, int plen, void *ctxt)
 	for (;;) {
 		method = authmethod_get(authlist);
 		if (method == NULL)
-                        fatal("Unable to find an authentication method");
+			fatal("Unable to find an authentication method");
 		authctxt->method = method;
 		if (method->userauth(authctxt) != 0) {
 			debug2("we sent a %s packet, wait for reply", method->name);
@@ -616,7 +616,7 @@ input_userauth_failure(int type, int plen, void *ctxt)
 			debug2("we did not send a packet, disable method");
 			method->enabled = NULL;
 		}
-	}	
+	}
 	xfree(authlist);
 }
 
@@ -662,7 +662,7 @@ userauth_passwd(Authctxt *authctxt)
 	return 1;
 }
 
-static int
+int
 sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 {
 	Buffer b;
@@ -682,7 +682,7 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 	buffer_init(&b);
 	if (datafellows & SSH_OLD_SESSIONID) {
 		buffer_append(&b, session_id2, session_id2_len);
-		skip = session_id2_len; 
+		skip = session_id2_len;
 	} else {
 		buffer_put_string(&b, session_id2, session_id2_len);
 		skip = buffer_len(&b);
@@ -698,7 +698,7 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 	} else {
 		buffer_put_cstring(&b, authctxt->method->name);
 		buffer_put_char(&b, have_sig);
-		buffer_put_cstring(&b, key_ssh_name(k)); 
+		buffer_put_cstring(&b, key_ssh_name(k));
 	}
 	buffer_put_string(&b, blob, bloblen);
 
@@ -721,7 +721,7 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 		buffer_put_cstring(&b, authctxt->method->name);
 		buffer_put_char(&b, have_sig);
 		if (!(datafellows & SSH_BUG_PKAUTH))
-			buffer_put_cstring(&b, key_ssh_name(k)); 
+			buffer_put_cstring(&b, key_ssh_name(k));
 		buffer_put_string(&b, blob, bloblen);
 	}
 	xfree(blob);
@@ -747,18 +747,20 @@ sign_and_send_pubkey(Authctxt *authctxt, Key *k, sign_cb_fn *sign_callback)
 }
 
 /* sign callback */
-static int key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+int key_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return key_sign(key, sigp, lenp, data, datalen);
 }
 
-static int
+int
 userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 {
 	Key *k;
-	int i, ret, try_next;
+	int i, ret, try_next, success = 0;
 	struct stat st;
+	char *passphrase;
+	char prompt[300];
 
 	if (stat(filename, &st) != 0) {
 		debug("key does not exist: %s", filename);
@@ -768,9 +770,10 @@ userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 
 	k = key_new(KEY_UNSPEC);
 	if (!load_private_key(filename, "", k, NULL)) {
-		int success = 0;
-		char *passphrase;
-		char prompt[300];
+		if (options.batch_mode) {
+			key_free(k);
+			return 0;
+		}
 		snprintf(prompt, sizeof prompt,
 		     "Enter passphrase for key '%.100s': ", filename);
 		for (i = 0; i < options.number_of_password_prompts; i++) {
@@ -799,13 +802,13 @@ userauth_pubkey_identity(Authctxt *authctxt, char *filename)
 }
 
 /* sign callback */
-static int agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
+int agent_sign_cb(Authctxt *authctxt, Key *key, u_char **sigp, int *lenp,
     u_char *data, int datalen)
 {
 	return ssh_agent_sign(authctxt->agent, key, sigp, lenp, data, datalen);
 }
 
-static int
+int
 userauth_pubkey_agent(Authctxt *authctxt)
 {
 	static int called = 0;
@@ -978,7 +981,7 @@ authmethod_clear(void)
  * given auth method name, if configurable options permit this method fill
  * in auth_ident field and return true, otherwise return false.
  */
-static int
+int
 authmethod_is_enabled(Authmethod *method)
 {
 	if (method == NULL)
@@ -1010,14 +1013,14 @@ authmethod_lookup(const char *name)
  * use a built-in default list.  If the server sends a nil list after
  * previously sending a valid list, continue using the list originally
  * sent.
- */ 
+ */
 
 Authmethod *
 authmethod_get(char *authlist)
 {
 	char *name = NULL, *authname_old;
 	Authmethod *method = NULL;
-	
+
 	/* Use a suitable default if we're passed a nil list.  */
 	if (authlist == NULL || strlen(authlist) == 0)
 		authlist = def_authlist;

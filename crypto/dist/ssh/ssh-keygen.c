@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh-keygen.c,v 1.1.1.2 2001/01/14 04:50:45 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,30 +11,21 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: ssh-keygen.c,v 1.38 2000/12/28 18:58:39 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-keygen.c,v 1.1.1.2 2001/01/14 04:50:45 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: ssh-keygen.c,v 1.42 2001/02/04 15:32:26 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 
-#include "ssh.h"
-#include "pathnames.h"
 #include "xmalloc.h"
 #include "key.h"
-#include "rsa.h"
 #include "authfile.h"
 #include "uuencode.h"
-
 #include "buffer.h"
 #include "bufaux.h"
+#include "pathnames.h"
+#include "log.h"
+#include "readpass.h"
 
 /* Number of bits in the RSA/DSA key.  This value can be changed on the command line. */
 int bits = 1024;
@@ -84,7 +73,7 @@ extern char *__progname;
 
 char hostname[MAXHOSTNAMELEN];
 
-static void
+void
 ask_filename(struct passwd *pw, const char *prompt)
 {
 	char buf[1024];
@@ -117,7 +106,7 @@ ask_filename(struct passwd *pw, const char *prompt)
 	have_identity = 1;
 }
 
-static int
+int
 try_load_key(char *filename, Key *k)
 {
 	int success = 1;
@@ -135,9 +124,9 @@ try_load_key(char *filename, Key *k)
 #define SSH_COM_PUBLIC_BEGIN		"---- BEGIN SSH2 PUBLIC KEY ----"
 #define SSH_COM_PUBLIC_END  		"---- END SSH2 PUBLIC KEY ----"
 #define SSH_COM_PRIVATE_BEGIN		"---- BEGIN SSH2 ENCRYPTED PRIVATE KEY ----"
-#define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb                                          
+#define	SSH_COM_PRIVATE_KEY_MAGIC	0x3f6ff9eb
 
-static void
+void
 do_convert_to_ssh2(struct passwd *pw)
 {
 	Key *k;
@@ -169,7 +158,7 @@ do_convert_to_ssh2(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 buffer_get_bignum_bits(Buffer *b, BIGNUM *value)
 {
 	int bits = buffer_get_int(b);
@@ -180,7 +169,7 @@ buffer_get_bignum_bits(Buffer *b, BIGNUM *value)
 	buffer_consume(b, bytes);
 }
 
-static Key *
+Key *
 do_convert_private_ssh2_from_blob(char *blob, int blen)
 {
 	Buffer b;
@@ -234,7 +223,7 @@ do_convert_private_ssh2_from_blob(char *blob, int blen)
 	return key;
 }
 
-static void
+void
 do_convert_from_ssh2(struct passwd *pw)
 {
 	Key *k;
@@ -305,7 +294,7 @@ do_convert_from_ssh2(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 do_print_public(struct passwd *pw)
 {
 	Key *k;
@@ -329,7 +318,7 @@ do_print_public(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 do_fingerprint(struct passwd *pw)
 {
 
@@ -429,7 +418,7 @@ do_fingerprint(struct passwd *pw)
  * Perform changing a passphrase.  The argument is the passwd structure
  * for the current user.
  */
-static void
+void
 do_change_passphrase(struct passwd *pw)
 {
 	char *comment;
@@ -516,7 +505,7 @@ do_change_passphrase(struct passwd *pw)
 /*
  * Change the comment of a private key file.
  */
-static void
+void
 do_change_comment(struct passwd *pw)
 {
 	char new_comment[1024], *comment;
@@ -608,7 +597,7 @@ do_change_comment(struct passwd *pw)
 	exit(0);
 }
 
-static void
+void
 usage(void)
 {
 	printf("Usage: %s [-lpqxXyc] [-t type] [-b bits] [-f file] [-C comment] [-N new-pass] [-P pass]\n", __progname);
@@ -645,7 +634,7 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	while ((opt = getopt(ac, av, "dqpclRxXyb:f:t:P:N:C:")) != EOF) {
+	while ((opt = getopt(ac, av, "dqpclRxXyb:f:t:P:N:C:")) != -1) {
 		switch (opt) {
 		case 'b':
 			bits = atoi(optarg);
@@ -739,7 +728,7 @@ main(int ac, char **av)
 	if (print_public)
 		do_print_public(pw);
 
-	ssh_random_stir();
+	arc4random_stir();
 
 	type = key_type_from_name(key_type_name);
 	if (type == KEY_UNSPEC) {
@@ -823,7 +812,7 @@ passphrase_again:
 
 	/* Clear the private key and the random number generator. */
 	key_free(private);
-	ssh_random_stir();
+	arc4random_stir();
 
 	if (!quiet)
 		printf("Your identification has been saved in %s.\n", identity_file);

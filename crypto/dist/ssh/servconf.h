@@ -1,5 +1,3 @@
-/*	$NetBSD: servconf.h,v 1.1.1.2 2001/01/14 04:50:36 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: servconf.h,v 1.32 2000/12/19 23:17:58 markus Exp */
+/* RCSID("$OpenBSD: servconf.h,v 1.36 2001/02/03 10:08:37 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -41,10 +39,7 @@ typedef struct {
 					 * (sec). */
 	int     key_regeneration_time;	/* Server key lifetime (seconds). */
 	int     permit_root_login;	/* If true, permit root login. */
-	int     ignore_rhosts;		/* Ignore .rhosts and .shosts. */
-	int     ignore_root_rhosts;	/* Ignore .rhosts and .shosts for root;
-					   defaults to ignore_rhosts if not
-					   given. */
+	int     ignore_rhosts;	/* Ignore .rhosts and .shosts. */
 	int     ignore_user_known_hosts;	/* Ignore ~/.ssh/known_hosts
 						 * for RhostsRsaAuth */
 	int     print_motd;	/* If true, print /etc/motd. */
@@ -85,10 +80,7 @@ typedef struct {
 	int     password_authentication;	/* If true, permit password
 						 * authentication. */
 	int     kbd_interactive_authentication;	/* If true, permit */
-#ifdef SKEY
-	int     skey_authentication;	/* If true, permit s/key
-					 * authentication. */
-#endif
+	int     challenge_reponse_authentication;
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     use_login;	/* If true, login(1) is used */
@@ -109,6 +101,8 @@ typedef struct {
 	int	max_startups_begin;
 	int	max_startups_rate;
 	int	max_startups;
+	char   *banner;			/* SSH-2 banner message */
+	int	reverse_mapping_check;	/* cross-check ip and dns */
 
 }       ServerOptions;
 /*

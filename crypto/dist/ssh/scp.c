@@ -1,5 +1,3 @@
-/*	$NetBSD: scp.c,v 1.1.1.2 2001/01/14 04:50:34 itojun Exp $	*/
-
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -76,18 +74,13 @@
  *
  */
 
-/* from OpenBSD: scp.c,v 1.48 2001/01/01 14:52:49 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: scp.c,v 1.1.1.2 2001/01/14 04:50:34 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: scp.c,v 1.53 2001/02/04 23:56:22 deraadt Exp $");
 
-#include "ssh.h"
-#include "pathnames.h"
 #include "xmalloc.h"
+#include "atomicio.h"
+#include "pathnames.h"
+#include "log.h"
 
 /* For progressmeter() -- number of seconds before xfer considered "stalled" */
 #define STALLTIME	5
@@ -121,8 +114,7 @@ int verbose_mode = 0;
 int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
-
-char *ssh_program = _PATH_SSH;
+char *ssh_program = _PATH_SSH_PROGRAM;
 
 /* This is the list of arguments that scp passes to ssh */
 struct {
@@ -202,8 +194,7 @@ char *colon(char *);
 void lostconn(int);
 void nospace(void);
 int okname(char *);
-void run_err(const char *,...)
-     __attribute__((__format__(__printf__,1,2)));
+void run_err(const char *,...);
 void verifydir(char *);
 
 struct passwd *pwd;
@@ -221,7 +212,6 @@ void source(int, char *[]);
 void tolocal(int, char *[]);
 void toremote(char *, int, char *[]);
 void usage(void);
-int main(int, char *[]);
 
 int
 main(argc, argv)
@@ -239,7 +229,7 @@ main(argc, argv)
 	addargs("-oFallBackToRsh no");
 
 	fflag = tflag = 0;
-	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46S:o:")) != EOF)
+	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46S:o:")) != -1)
 		switch (ch) {
 		/* User-visible flags. */
 		case '4':
@@ -302,7 +292,7 @@ main(argc, argv)
 	remin = STDIN_FILENO;
 	remout = STDOUT_FILENO;
 
-	if (fflag) {	
+	if (fflag) {
 		/* Follow "protocol", send data. */
 		(void) response();
 		source(argc, argv);
@@ -336,8 +326,9 @@ main(argc, argv)
 	exit(errs != 0);
 }
 
-static char *
-cleanhostname(char *host)
+char *
+cleanhostname(host)
+	char *host;
 {
 	if (*host == '[' && host[strlen(host) - 1] == ']') {
 		host[strlen(host) - 1] = '\0';
@@ -527,7 +518,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			(void) sprintf(buf, "T%lu 0 %lu 0\n",
 			    (u_long) stb.st_mtime,
 			    (u_long) stb.st_atime);
-			(void) atomic_write(remout, buf, strlen(buf));
+			(void) atomicio(write, remout, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
 		}
@@ -539,7 +530,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			fprintf(stderr, "Sending file modes: %s", buf);
 			fflush(stderr);
 		}
-		(void) atomic_write(remout, buf, strlen(buf));
+		(void) atomicio(write, remout, buf, strlen(buf));
 		if (response() < 0)
 			goto next;
 		if ((bp = allocbuf(&buffer, fd, 2048)) == NULL) {
@@ -556,14 +547,14 @@ next:			(void) close(fd);
 			if (i + amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
-				result = atomic_read(fd, bp->buf, amt);
+				result = atomicio(read, fd, bp->buf, amt);
 				if (result != amt)
 					haderr = result >= 0 ? EIO : errno;
 			}
 			if (haderr)
-				(void) atomic_write(remout, bp->buf, amt);
+				(void) atomicio(write, remout, bp->buf, amt);
 			else {
-				result = atomic_write(remout, bp->buf, amt);
+				result = atomicio(write, remout, bp->buf, amt);
 				if (result != amt)
 					haderr = result >= 0 ? EIO : errno;
 				statbytes += result;
@@ -575,7 +566,7 @@ next:			(void) close(fd);
 		if (close(fd) < 0 && !haderr)
 			haderr = errno;
 		if (!haderr)
-			(void) atomic_write(remout, "", 1);
+			(void) atomicio(write, remout, "", 1);
 		else
 			run_err("%s: %s", name, strerror(haderr));
 		(void) response();
@@ -604,7 +595,7 @@ rsource(name, statp)
 		(void) sprintf(path, "T%lu 0 %lu 0\n",
 		    (u_long) statp->st_mtime,
 		    (u_long) statp->st_atime);
-		(void) atomic_write(remout, path, strlen(path));
+		(void) atomicio(write, remout, path, strlen(path));
 		if (response() < 0) {
 			closedir(dirp);
 			return;
@@ -614,7 +605,7 @@ rsource(name, statp)
 	    (u_int) (statp->st_mode & FILEMODEMASK), 0, last);
 	if (verbose_mode)
 		fprintf(stderr, "Entering directory: %s", path);
-	(void) atomic_write(remout, path, strlen(path));
+	(void) atomicio(write, remout, path, strlen(path));
 	if (response() < 0) {
 		closedir(dirp);
 		return;
@@ -633,7 +624,7 @@ rsource(name, statp)
 		source(1, vect);
 	}
 	(void) closedir(dirp);
-	(void) atomic_write(remout, "E\n", 2);
+	(void) atomicio(write, remout, "E\n", 2);
 	(void) response();
 }
 
@@ -670,17 +661,17 @@ sink(argc, argv)
 	if (targetshouldbedirectory)
 		verifydir(targ);
 
-	(void) atomic_write(remout, "", 1);
+	(void) atomicio(write, remout, "", 1);
 	if (stat(targ, &stb) == 0 && S_ISDIR(stb.st_mode))
 		targisdir = 1;
 	for (first = 1;; first = 0) {
 		cp = buf;
-		if (atomic_read(remin, cp, 1) <= 0)
+		if (atomicio(read, remin, cp, 1) <= 0)
 			return;
 		if (*cp++ == '\n')
 			SCREWUP("unexpected <newline>");
 		do {
-			if (atomic_read(remin, &ch, sizeof(ch)) != sizeof(ch))
+			if (atomicio(read, remin, &ch, sizeof(ch)) != sizeof(ch))
 				SCREWUP("lost connection");
 			*cp++ = ch;
 		} while (cp < &buf[sizeof(buf) - 1] && ch != '\n');
@@ -688,7 +679,7 @@ sink(argc, argv)
 
 		if (buf[0] == '\01' || buf[0] == '\02') {
 			if (iamremote == 0)
-				(void) atomic_write(STDERR_FILENO,
+				(void) atomicio(write, STDERR_FILENO,
 				    buf + 1, strlen(buf + 1));
 			if (buf[0] == '\02')
 				exit(1);
@@ -696,7 +687,7 @@ sink(argc, argv)
 			continue;
 		}
 		if (buf[0] == 'E') {
-			(void) atomic_write(remout, "", 1);
+			(void) atomicio(write, remout, "", 1);
 			return;
 		}
 		if (ch == '\n')
@@ -722,7 +713,7 @@ sink(argc, argv)
 			tv[0].tv_usec = 0;
 			if (*cp++ != '\0')
 				SCREWUP("atime.usec not delimited");
-			(void) atomic_write(remout, "", 1);
+			(void) atomicio(write, remout, "", 1);
 			continue;
 		}
 		if (*cp != 'C' && *cp != 'D') {
@@ -801,7 +792,7 @@ sink(argc, argv)
 bad:			run_err("%s: %s", np, strerror(errno));
 			continue;
 		}
-		(void) atomic_write(remout, "", 1);
+		(void) atomicio(write, remout, "", 1);
 		if ((bp = allocbuf(&buffer, ofd, 4096)) == NULL) {
 			(void) close(ofd);
 			continue;
@@ -820,7 +811,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 				amt = size - i;
 			count += amt;
 			do {
-				j = atomic_read(remin, cp, amt);
+				j = read(remin, cp, amt);
 				if (j == -1 && (errno == EINTR || errno == EAGAIN)) {
 					continue;
 				} else if (j <= 0) {
@@ -835,7 +826,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			if (count == bp->cnt) {
 				/* Keep reading so we stay sync'd up. */
 				if (wrerr == NO) {
-					j = atomic_write(ofd, bp->buf, count);
+					j = atomicio(write, ofd, bp->buf, count);
 					if (j != count) {
 						wrerr = YES;
 						wrerrno = j >= 0 ? EIO : errno;
@@ -848,7 +839,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		if (showprogress)
 			progressmeter(1);
 		if (count != 0 && wrerr == NO &&
-		    (j = atomic_write(ofd, bp->buf, count)) != count) {
+		    (j = atomicio(write, ofd, bp->buf, count)) != count) {
 			wrerr = YES;
 			wrerrno = j >= 0 ? EIO : errno;
 		}
@@ -887,7 +878,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			run_err("%s: %s", np, strerror(wrerrno));
 			break;
 		case NO:
-			(void) atomic_write(remout, "", 1);
+			(void) atomicio(write, remout, "", 1);
 			break;
 		case DISPLAYED:
 			break;
@@ -903,7 +894,7 @@ response()
 {
 	char ch, *cp, resp, rbuf[2048];
 
-	if (atomic_read(remin, &resp, sizeof(resp)) != sizeof(resp))
+	if (atomicio(read, remin, &resp, sizeof(resp)) != sizeof(resp))
 		lostconn(0);
 
 	cp = rbuf;
@@ -916,13 +907,13 @@ response()
 	case 1:		/* error, followed by error msg */
 	case 2:		/* fatal error, "" */
 		do {
-			if (atomic_read(remin, &ch, sizeof(ch)) != sizeof(ch))
+			if (atomicio(read, remin, &ch, sizeof(ch)) != sizeof(ch))
 				lostconn(0);
 			*cp++ = ch;
 		} while (cp < &rbuf[sizeof(rbuf) - 1] && ch != '\n');
 
 		if (!iamremote)
-			(void) atomic_write(STDERR_FILENO, rbuf, cp - rbuf);
+			(void) atomicio(write, STDERR_FILENO, rbuf, cp - rbuf);
 		++errs;
 		if (resp == 1)
 			return (-1);
@@ -1061,7 +1052,7 @@ lostconn(signo)
 }
 
 
-static void
+void
 alarmtimer(int wait)
 {
 	struct itimerval itv;
@@ -1072,7 +1063,7 @@ alarmtimer(int wait)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-static void
+void
 updateprogressmeter(int ignore)
 {
 	int save_errno = errno;
@@ -1081,8 +1072,8 @@ updateprogressmeter(int ignore)
 	errno = save_errno;
 }
 
-static int
-foregroundproc(void)
+int
+foregroundproc()
 {
 	static pid_t pgrp = -1;
 	int ctty_pgrp;
@@ -1140,8 +1131,9 @@ progressmeter(int flag)
 		i++;
 		abbrevsize >>= 10;
 	}
-	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %5lld %c%c ",
-	    (long long) abbrevsize, prefixes[i], prefixes[i] == ' ' ? ' ' : 'B');
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %5qd %c%c ",
+	    (unsigned long long) abbrevsize, prefixes[i],
+	    prefixes[i] == ' ' ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {
@@ -1182,14 +1174,14 @@ progressmeter(int flag)
 		    "%02d:%02d%s", i / 60, i % 60,
 		    (flag != 1) ? " ETA" : "    ");
 	}
-	atomic_write(fileno(stdout), buf, strlen(buf));
+	atomicio(write, fileno(stdout), buf, strlen(buf));
 
 	if (flag == -1) {
 		signal(SIGALRM, updateprogressmeter);
 		alarmtimer(1);
 	} else if (flag == 1) {
 		alarmtimer(0);
-		atomic_write(fileno(stdout), "\n", 1);
+		atomicio(write, fileno(stdout), "\n", 1);
 		statbytes = 0;
 	}
 }

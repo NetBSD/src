@@ -1,5 +1,3 @@
-/*	$NetBSD: packet.c,v 1.1.1.2 2001/01/14 04:50:28 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,20 +36,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: packet.c,v 1.41 2001/01/02 20:41:02 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: packet.c,v 1.1.1.2 2001/01/14 04:50:28 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: packet.c,v 1.48 2001/02/04 15:32:24 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
 #include "packet.h"
 #include "bufaux.h"
-#include "ssh.h"
 #include "crc32.h"
 #include "getput.h"
 
@@ -60,16 +51,17 @@ __RCSID("$NetBSD: packet.c,v 1.1.1.2 2001/01/14 04:50:28 itojun Exp $");
 #include "channels.h"
 
 #include "compat.h"
+#include "ssh1.h"
 #include "ssh2.h"
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/hmac.h>
-#include <openssl/rand.h>
-#include "buffer.h"
 #include "cipher.h"
 #include "kex.h"
 #include "hmac.h"
+#include "log.h"
+#include "canohost.h"
 
 #ifdef PACKET_DEBUG
 #define DBG(x) x
@@ -146,7 +138,7 @@ packet_set_kex(Kex *k)
 		fatal("bad KEX");
 	kex = k;
 }
-static void
+void
 clear_enc_keys(Enc *enc, int len)
 {
 	memset(enc->iv,  0, len);
@@ -325,7 +317,7 @@ packet_start_compression(int level)
  * known to be a multiple of 8.
  */
 
-static void
+void
 packet_encrypt(CipherContext * cc, void *dest, void *src,
     u_int bytes)
 {
@@ -337,7 +329,7 @@ packet_encrypt(CipherContext * cc, void *dest, void *src,
  * known to be a multiple of 8.
  */
 
-static void
+void
 packet_decrypt(CipherContext *context, void *dest, void *src, u_int bytes)
 {
 	/*
@@ -373,7 +365,7 @@ packet_set_encryption_key(const u_char *key, u_int keylen,
 
 /* Starts constructing a packet to send. */
 
-static void
+void
 packet_start1(int type)
 {
 	char buf[9];
@@ -384,7 +376,7 @@ packet_start1(int type)
 	buffer_append(&outgoing_packet, buf, 9);
 }
 
-static void
+void
 packet_start2(int type)
 {
 	char buf[4+1+1];
@@ -462,8 +454,8 @@ packet_put_bignum2(BIGNUM * value)
  * encrypts the packet before sending.
  */
 
-static void
-packet_send1(void)
+void
+packet_send1()
 {
 	char buf[8], *cp;
 	int i, padding, len;
@@ -493,11 +485,8 @@ packet_send1(void)
 	if (cipher_type != SSH_CIPHER_NONE) {
 		cp = buffer_ptr(&outgoing_packet);
 		for (i = 0; i < padding; i++) {
-			if (i % 4 == 0) {
-				/* XXXthorpej */
-				RAND_pseudo_bytes((u_char *)&rand,
-				    sizeof(rand));
-			}
+			if (i % 4 == 0)
+				rand = arc4random();
 			cp[7 - i] = rand & 0xff;
 			rand >>= 8;
 		}
@@ -539,8 +528,8 @@ packet_send1(void)
 /*
  * Finalize packet in SSH2 format (compress, mac, encrypt, enqueue)
  */
-static void
-packet_send2(void)
+void
+packet_send2()
 {
 	u_char *macbuf = NULL;
 	char *cp;
@@ -597,11 +586,8 @@ packet_send2(void)
 	if (enc && enc->cipher->number != SSH_CIPHER_NONE) {
 		/* random padding */
 		for (i = 0; i < padlen; i++) {
-			if (i % 4 == 0) {
-				/* XXXthorpej */
-				RAND_pseudo_bytes((u_char *)&rand,
-				    sizeof(rand));
-			}
+			if (i % 4 == 0)
+				rand = arc4random();
 			cp[i] = rand & 0xff;
 			rand <<= 8;
 		}
@@ -754,7 +740,7 @@ packet_read_expect(int *payload_len_ptr, int expected_type)
  * 	Check bytes
  */
 
-static int
+int
 packet_read_poll1(int *payload_len_ptr)
 {
 	u_int len, padded_len;
@@ -829,7 +815,7 @@ packet_read_poll1(int *payload_len_ptr)
 	return (u_char) buf[0];
 }
 
-static int
+int
 packet_read_poll2(int *payload_len_ptr)
 {
 	u_int padlen, need;
@@ -1002,7 +988,7 @@ packet_read_poll(int *payload_len_ptr)
 			default:
 				return type;
 				break;
-			}	
+			}
 		} else {
 			switch(type) {
 			case SSH_MSG_IGNORE:
@@ -1024,7 +1010,7 @@ packet_read_poll(int *payload_len_ptr)
 					DBG(debug("received packet type %d", type));
 				return type;
 				break;
-			}	
+			}
 		}
 	}
 }
@@ -1245,9 +1231,16 @@ packet_not_very_much_data_to_write()
 /* Informs that the current session is interactive.  Sets IP flags for that. */
 
 void
-packet_set_interactive(int interactive, int keepalives)
+packet_set_interactive(int interactive)
 {
+	static int called = 0;
+	int lowdelay = IPTOS_LOWDELAY;
+	int throughput = IPTOS_THROUGHPUT;
 	int on = 1;
+
+	if (called)
+		return;
+	called = 1;
 
 	/* Record that we are in interactive mode. */
 	interactive_mode = interactive;
@@ -1255,12 +1248,6 @@ packet_set_interactive(int interactive, int keepalives)
 	/* Only set socket options if using a socket.  */
 	if (!packet_connection_is_on_socket())
 		return;
-	if (keepalives) {
-		/* Set keepalives if requested. */
-		if (setsockopt(connection_in, SOL_SOCKET, SO_KEEPALIVE, (void *) &on,
-		    sizeof(on)) < 0)
-			error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
-	}
 	/*
 	 * IPTOS_LOWDELAY and IPTOS_THROUGHPUT are IPv4 only
 	 */
@@ -1270,7 +1257,6 @@ packet_set_interactive(int interactive, int keepalives)
 		 * IPTOS_LOWDELAY and TCP_NODELAY.
 		 */
 		if (packet_connection_is_ipv4()) {
-			int lowdelay = IPTOS_LOWDELAY;
 			if (setsockopt(connection_in, IPPROTO_IP, IP_TOS,
 			    (void *) &lowdelay, sizeof(lowdelay)) < 0)
 				error("setsockopt IPTOS_LOWDELAY: %.100s",
@@ -1284,7 +1270,6 @@ packet_set_interactive(int interactive, int keepalives)
 		 * Set IP options for a non-interactive connection.  Use
 		 * IPTOS_THROUGHPUT.
 		 */
-		int throughput = IPTOS_THROUGHPUT;
 		if (setsockopt(connection_in, IPPROTO_IP, IP_TOS, (void *) &throughput,
 		    sizeof(throughput)) < 0)
 			error("setsockopt IPTOS_THROUGHPUT: %.100s", strerror(errno));

@@ -1,5 +1,3 @@
-/*	$NetBSD: buffer.h,v 1.1.1.2 2001/01/14 04:50:06 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: buffer.h,v 1.7 2000/12/19 23:17:55 markus Exp */
+/* RCSID("$OpenBSD: buffer.h,v 1.7 2000/12/19 23:17:55 markus Exp $"); */
 
 #ifndef BUFFER_H
 #define BUFFER_H
