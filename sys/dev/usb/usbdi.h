@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.51 2001/04/13 11:19:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.52 2001/05/01 16:43:44 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ typedef enum {		/* keep in sync with usbd_status_msgs */
 	USBD_STALLED,
 	USBD_INTERRUPTED,
 
-	USBD_ERROR_MAX,		/* must be last */
+	USBD_ERROR_MAX		/* must be last */
 } usbd_status;
 
 typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
