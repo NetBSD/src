@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.72 1994/10/30 21:44:12 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.73 1994/11/04 01:02:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -112,9 +112,9 @@ static struct video_state {
 	char	so_at;		/* standout attributes */
 } vs;
 
-int pcprobe();
-void pcattach();
-int pcrint();
+int pcprobe __P((struct device *, void *, void *));
+void pcattach __P((struct device *, struct device *, void *));
+int pcintr __P((void *));
 
 struct cfdriver pccd = {
 	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct device)
@@ -445,7 +445,7 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	pchand.ih_fun = pcrint;
+	pchand.ih_fun = pcintr;
 	pchand.ih_arg = 0;
 	pchand.ih_level = IPL_TTY;
 	intr_establish(ia->ia_irq, &pchand);
@@ -532,7 +532,7 @@ pcwrite(dev, uio, flag)
  * Catch the character, and see who it goes to.
  */
 int
-pcrint()
+pcintr()
 {
 	register struct tty *tp = pc_tty[0];	/* XXX */
 	u_char *cp;
@@ -730,7 +730,7 @@ pccnpollc(dev, on)
 		 * won't get any further interrupts.
 		 */
 		s = spltty();
-		pcrint();
+		pcintr();
 		splx(s);
 	}
 }	
