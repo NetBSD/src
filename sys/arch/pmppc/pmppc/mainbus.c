@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2002/10/02 04:11:37 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2003/01/01 02:01:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,11 +88,11 @@ mainbus_print(void *aux, const char *pnp)
 	struct mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mb_name, pnp);
+		aprint_normal("%s at %s", mba->mb_name, pnp);
 	if (mba->mb_addr != MAINBUSCF_ADDR_DEFAULT)
-		printf(" addr 0x%08lx", mba->mb_addr);
+		aprint_normal(" addr 0x%08lx", mba->mb_addr);
 	if (mba->mb_irq != MAINBUSCF_IRQ_DEFAULT)
-		printf(" irq %d", mba->mb_irq);
+		aprint_normal(" irq %d", mba->mb_irq);
 	return (UNCONF);
 }
 

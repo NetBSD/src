@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.5 2002/10/02 15:52:31 thorpej Exp $ */
+/* $NetBSD: zbbus.c,v 1.6 2003/01/01 02:06:04 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -98,9 +98,9 @@ zbbus_print(void *aux, const char *pnp)
 	struct zbbus_attach_args *zap = aux;
 
 	if (pnp)
-		printf("%s at %s",
-	zbbus_entity_type_name(zap->za_locs.za_type), pnp);
-	printf(" busid %d", zap->za_locs.za_busid);
+		aprint_normal("%s at %s",
+		    zbbus_entity_type_name(zap->za_locs.za_type), pnp);
+	aprint_normal(" busid %d", zap->za_locs.za_busid);
 	return (UNCONF);
 }
 
