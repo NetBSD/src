@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 1997/09/12 07:00:30 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 1997/09/12 08:08:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -493,7 +493,6 @@ setregs(p, pack, stack)
 	frame->f_regs[A6] = 0;
 	frame->f_regs[SP] = stack;
 
-#ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 #ifdef FPU_EMULATE
@@ -502,7 +501,6 @@ setregs(p, pack, stack)
 	else
 #endif
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-#endif
 }
 
 /*
@@ -767,16 +765,16 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 			    p->p_pid, exframesize[ft], ft);
 #endif
 	}
-#ifdef FPCOPROC
-	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	if (fputype)
+
+	if (fputype) {
+		kfp->sf_state.ss_flags |= SS_FPSTATE;
 		m68881_save(&kfp->sf_state.ss_fpstate);
+	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %p\n",
 		    p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		    &kfp->sf_state.ss_fpstate);
-#endif
 #endif
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -923,24 +921,17 @@ sys_sigreturn(p, v, retval)
 			    p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
-#ifdef FPCOPROC
+
 	/*
 	 * Finally we restore the original FP context
 	 */
-#ifdef FPU_EMULATE
-	if ((flags & SS_FPSTATE) && fputype)
-#else
-	if (fputype)
-#endif
+	if (fputype && (flags & SS_FPSTATE))
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
 		    p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
-#endif
-#endif
-#ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
