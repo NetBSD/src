@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2003/08/07 16:28:36 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2003/10/25 16:15:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/08/07 16:28:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/10/25 16:15:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-dev_t	bootdev = NULL;
+dev_t	bootdev = 0;
 char	boot_class;
 int	boot_id, boot_lun, boot_part;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.13 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: mace.c,v 1.14 2003/10/25 16:15:07 chs Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.13 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.14 2003/10/25 16:15:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ mace_attach(parent, self, aux)
 	sc->iot = SGIMIPS_BUS_SPACE_MACE;
 	sc->dmat = &sgimips_default_bus_dma_tag;
 
-	if (bus_space_map(sc->iot, ma->ma_addr, NULL,
+	if (bus_space_map(sc->iot, ma->ma_addr, 0,
 	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
 		panic("mace_attach: could not allocate memory\n");
 
