@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.3 2002/01/04 02:39:44 deberg Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.4 2003/02/24 19:32:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -55,11 +55,11 @@
 #include <netsmb/smb_tran.h>
 
 struct smb_dialect {
-	int		d_id;
-	const char *	d_name;
+	int		 d_id;
+	const char	*d_name;
 };
 
-static struct smb_dialect smb_dialects[] = {
+static const struct smb_dialect smb_dialects[] = {
 	{SMB_DIALECT_CORE,	"PC NETWORK PROGRAM 1.0"},
 	{SMB_DIALECT_COREPLUS,	"MICROSOFT NETWORKS 1.03"},
 	{SMB_DIALECT_LANMAN1_0,	"MICROSOFT NETWORKS 3.0"},
@@ -85,7 +85,7 @@ smb_smb_nomux(struct smb_vc *vcp, struct smb_cred *scred, const char *name)
 int
 smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 {
-	struct smb_dialect *dp;
+	const struct smb_dialect *dp;
 	struct smb_sopt *sp = NULL;
 	struct smb_rq *rqp;
 	struct mbchain *mbp;
@@ -234,7 +234,8 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 /*	u_int8_t wc;
 	u_int16_t tw, tw1;*/
-	smb_uniptr unipp, ntencpass = NULL;
+	const smb_unichar *unipp;
+	smb_uniptr ntencpass = NULL;
 	char *pp, *up, *pbuf, *encpass;
 	int error, plen, uniplen, ulen;
 

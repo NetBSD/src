@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.9 2003/02/21 19:55:14 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.10 2003/02/24 19:32:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -53,7 +53,7 @@
 #include <netsmb/smb_rq.h>
 #include <netsmb/smb_subr.h>
 
-smb_unichar smb_unieol = 0;
+const smb_unichar smb_unieol = 0;
 
 static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
 MALLOC_DEFINE(M_SMBTEMP, "smbtemp", "Temp netsmb data");
