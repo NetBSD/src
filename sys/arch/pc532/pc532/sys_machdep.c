@@ -35,7 +35,7 @@
  *
  *	@(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
  *
- *	$Id: sys_machdep.c,v 1.1.1.1 1993/09/09 23:53:50 phil Exp $
+ *	$Id: sys_machdep.c,v 1.2 1994/10/20 05:27:03 cgd Exp $
  */
 
 #include "param.h"
@@ -55,39 +55,40 @@ int	nvualarm;
 
 vtrace(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		int	request;
-		int	value;
-	} *uap;
-	int *retval;
+	register struct vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap;
+	register_t *retval;
 {
 	int vdoualarm();
 
-	switch (uap->request) {
+	switch (SCARG(uap, request)) {
 
 	case VTR_DISABLE:		/* disable a trace point */
 	case VTR_ENABLE:		/* enable a trace point */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
-		traceflags[uap->value] = uap->request;
+		*retval = traceflags[SCARG(uap, value)];
+		traceflags[SCARG(uap, value)] = SCARG(uap, request);
 		break;
 
 	case VTR_VALUE:		/* return a trace point setting */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
+		*retval = traceflags[SCARG(uap, value)];
 		break;
 
 	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
+		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
+		    nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
+		timeout(vdoualarm, (caddr_t)p->p_pid, SCARG(uap, value));
 		break;
 
 	case VTR_STAMP:
-		trace(TR_STAMP, uap->value, p->p_pid);
+		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
 		break;
 	}
 	return (0);
