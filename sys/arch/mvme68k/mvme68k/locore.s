@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2000/11/29 09:11:53 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 2000/12/10 18:43:02 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1221,6 +1221,19 @@ Ldorte:
 	rte				| real return
 
 /*
+ * Set processor priority level calls.  Most are implemented with
+ * inline asm expansions.  However, spl0 requires special handling
+ * as we need to check for our emulated software interrupts.
+ */
+
+ENTRY(mvme68k_dossir)
+	subql	#4,%sp			| make room for RTE frame
+	movl	%sp@(4),%sp@(2)		| position return address
+	clrw	%sp@(6)			| set frame type 0
+	movw	#PSL_LOWIPL,%sp@	| and new SR
+	jra	Lgotsir			| go handle it
+
+/*
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
@@ -1609,26 +1622,6 @@ ENTRY(ploadw)
 	ploadw	#1,%a0@			| pre-load translation
 Lploadwskp:
 #endif
-	rts
-
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
-
-ENTRY(spl0)
-	moveq	#0,%d0
-	movw	%sr,%d0			| get old SR for return
-	movw	#PSL_LOWIPL,%sr		| restore new SR
-	tstb	_C_LABEL(ssir)		| software interrupt pending?
-	jne	Lspldone		| no, all done
-	subql	#4,%sp			| make room for RTE frame
-	movl	%sp@(4),%sp@(2)		| position return address
-	clrw	%sp@(6)			| set frame type 0
-	movw	#PSL_LOWIPL,%sp@	| and new SR
-	jra	Lgotsir			| go handle it
-Lspldone:
 	rts
 
 ENTRY(getsr)
