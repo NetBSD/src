@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2003/10/20 00:54:37 lukem Exp $
+# $NetBSD: Makefile,v 1.19 2003/10/21 10:01:20 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/tmac/Makefile,v 1.41 2003/05/01 13:22:21 ru Exp $
 
@@ -56,8 +56,7 @@ realall: ${MDOCFILES:S/$/-s/} ${STRIPFILES:S/$/-s/} ${SPECIALFILES:S/$/-s/}
 FILES+= $f-s
 FILESNAME_$f-s=mdoc/$f
 $f-s: $f
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -f ${DIST_DIR}/strip.sed ${.ALLSRC} > ${.TARGET}
 .endfor
 
@@ -65,8 +64,7 @@ $f-s: $f
 FILES+= $f-s
 FILESNAME_$f-s=$f
 $f-s: $f
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -f ${DIST_DIR}/strip.sed ${.ALLSRC} > ${.TARGET}
 .endfor
 
@@ -74,8 +72,7 @@ $f-s: $f
 FILES+= $f-s
 FILESNAME_$f-s=$f
 $f-s: $f
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e "s;@TMAC_AN_PREFIX@;${tmac_an_prefix};g" \
 	    -e "s;@TMAC_S_PREFIX@;${tmac_s_prefix};g" \
 	    -e "s;@PNMTOPS_NOSETPAGE@;pnmtops -nosetpage;g" \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2003/10/20 00:54:36 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2003/10/21 10:01:20 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/devlbp/Makefile,v 1.2 2002/10/11 08:58:13 ru Exp $
 
@@ -12,8 +12,7 @@ DEVFILES=	DESC HB HBI HI HR HNB HNBI HNI HNR \
 CLEANFILES+=	DESC
 
 DESC:	DESC.in
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(\
 	    cat ${.ALLSRC}; \
 	    if test "${PAGE}" = A4; then \

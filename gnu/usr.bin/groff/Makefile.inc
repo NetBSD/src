@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2003/10/20 00:54:36 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.9 2003/10/21 10:01:20 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -98,10 +98,8 @@ CLEANFILES+=	${GROFFYSRCS:.y=.cpp} ${GROFFYSRCS:.y=_tab.h}
 .endif
 
 .y.cpp:
-	${_MKMSGYACC}
-	${_MKCMD}\
+	${_MKTARGET_YACC}
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
-	${_MKCMD}\
 	mv -f ${.PREFIX}.h ${.PREFIX}_tab.h
 
 
@@ -111,10 +109,8 @@ version=`cat $(GROFF_DIST)/VERSION`
 revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 
 .man.8 .man.7 .man.6 .man.5 .man.4 .man.3 .man.2 .man.1:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	rm -f $@
-	${_MKCMD}\
 	sed -e "s;@BINDIR@;${BINDIR};g" \
 	-e "s;@FONTDIR@;$(fontdir);g" \
 	-e "s;@LOCALFONTDIR@;$(localfontdir);g" \
@@ -147,10 +143,8 @@ revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 .SUFFIXES: .sh .pl
 
 .sh .pl:
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	rm -f $@
-	${_MKCMD}\
 	sed -e "s|@BINDIR@|${BINDIR}|g" \
 	     -e "s;@FONTDIR@;$(fontdir);g" \
 	     -e "s|@SEP@|:|g" \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2003/10/20 00:54:36 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2003/10/21 10:01:20 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/font/devlj4/Makefile,v 1.1 2001/04/17 12:36:48 ru Exp $
 
@@ -16,8 +16,7 @@ DEVFILES=	DESC \
 CLEANFILES+=	DESC
 
 DESC: DESC.in
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	(\
 	    echo "res ${LJ4RES}"; \
 	    echo "unitwidth `expr 7620000 / ${LJ4RES}`"; \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/10/20 01:15:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2003/10/21 10:01:20 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -55,8 +55,7 @@ CLEANFILES=	send-pr send-pr.1 send-pr.el install-sid
 realall:	send-pr send-pr.1 send-pr.el install-sid
 
 send-pr:	send-pr.sh Makefile
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e 's,xVERSIONx,$(VERSION),' \
             -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
             -e 's,xGNATS_ADDRx,$(GNATS_ADDR),' \
@@ -68,24 +67,18 @@ send-pr:	send-pr.sh Makefile
 	    -e 's%xDEFAULT_ORGANIZATIONx%$(DEFAULT_ORGANIZATION)%' \
 	    -e 's,xDEFAULT_RELEASEx,$(DEFAULT_RELEASE),' \
 	    -e 's,xDATADIRx,$(datadir),' $(srcdir)/send-pr.sh > $@-t
-	${_MKCMD}\
 	mv -f $@-t $@
-	${_MKCMD}\
 	chmod 755 $@
 
 install-sid:	install-sid.sh Makefile
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e 's,xBINDIRx,$(bindir),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/install-sid.sh > $@-t
-	${_MKCMD}\
 	mv -f $@-t $@
-	${_MKCMD}\
 	chmod 755 $@
 
 send-pr.el:	send-pr-el.in Makefile
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e 's,xVERSIONx,$(VERSION),' \
             -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
             -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
@@ -94,15 +87,12 @@ send-pr.el:	send-pr-el.in Makefile
             -e 's,xDEFAULT_RELEASEx,$(DEFAULT_RELEASE),' \
 		$(srcdir)/send-pr-el.in \
             > $@-t
-	${_MKCMD}\
 	mv -f $@-t $@
 
 send-pr.1:	send-pr.man Makefile
-	${_MKMSGCREATE}
-	${_MKCMD}\
+	${_MKTARGET_CREATE}
 	sed -e 's,xGNATS_ROOTx,$(GNATS_ROOT),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/send-pr.man > $@-t
-	${_MKCMD}\
 	mv -f $@-t $@
 
 FILES=send-pr install-sid
