@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.22 2000/11/15 01:02:15 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.23 2000/11/15 18:15:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 	ifv->ifv_p = p;
 	ifv->ifv_if.if_mtu = p->if_mtu - ifv->ifv_mtufudge;
 	ifv->ifv_if.if_flags = p->if_flags &
-	    (IFF_UP | IFF_BROADCAST | IFF_RUNNING | IFF_ALLMULTI | IFF_SIMPLEX);
+	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
 
 	/*
 	 * Inherit the if_type from the parent.  This allows us
@@ -738,9 +738,9 @@ vlan_start(struct ifnet *ifp)
 		}
 	
 		IF_ENQUEUE(&p->if_snd, m);
+		ifp->if_opackets++;
 		if ((p->if_flags & IFF_OACTIVE) == 0) {
 			(*p->if_start)(p);
-			ifp->if_opackets++;
 		}
 	}
 
@@ -809,7 +809,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	 * header has already been fixed up above.
 	 */
 	memmove(mtod(m, caddr_t) + ifv->ifv_encaplen, mtod(m, caddr_t),
-	    ifv->ifv_encaplen);
+	    sizeof(struct ether_header));
 	m_adj(m, ifv->ifv_encaplen);
 
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
