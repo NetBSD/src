@@ -197,7 +197,7 @@ AcpiNsDumpPathname (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiNsDumpOneObject (
     ACPI_HANDLE             ObjHandle,
     UINT32                  Level,
@@ -541,7 +541,7 @@ AcpiNsDumpObjects (
  *
  ******************************************************************************/
 
-ACPI_STATUS
+static ACPI_STATUS
 AcpiNsDumpOneDevice (
     ACPI_HANDLE             ObjHandle,
     UINT32                  Level,
