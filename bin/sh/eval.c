@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.41 1998/02/04 06:25:55 mikel Exp $	*/
+/*	$NetBSD: eval.c,v 1.42 1998/02/05 08:34:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.41 1998/02/04 06:25:55 mikel Exp $");
+__RCSID("$NetBSD: eval.c,v 1.42 1998/02/05 08:34:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,7 +333,7 @@ evalfor(n)
 	arglist.lastp = &arglist.list;
 	for (argp = n->nfor.args ; argp ; argp = argp->narg.next) {
 		oexitstatus = exitstatus;
-		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE);
+		expandarg(argp, &arglist, EXP_FULL | EXP_TILDE | EXP_RECORD);
 		if (evalskip)
 			goto out;
 	}
