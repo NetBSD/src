@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1995/05/31 20:45:14 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1995/06/28 02:45:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -80,6 +80,8 @@
 
 vm_map_t buffer_map;
 
+void dumpsys __P((void));
+
 /*
  * Declare these as initialized data so we can patch them.
  */
@@ -96,8 +98,14 @@ int	bufpages = 0;
 #endif
 int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
-int	physmem;		/* amount of physical memory in system */
+
+int	totalphysmem;		/* total amount of physical memory in system */
+int	physmem;		/* physical memory used by NetBSD + some rsvd */
+int	firstusablepage;	/* first usable memory page */
+int	lastusablepage;		/* last usable memory page */
 int	resvmem;		/* amount of memory reserved for PROM */
+int	unusedmem;		/* amount of memory for OS that we don't use */
+int	unknownmem;		/* amount of memory with an unknown use */
 
 int	cputype;		/* system type, from the RPB */
 
@@ -124,7 +132,7 @@ char	*model_names[] = {
 	"AXPvme 64",
 	"AXPpci 33 (\"NoName\")",
 	"UNKNOWN (12)",
-	"DEC 2100/A50 (\"Avanti\")",
+	"DEC 2100/A50 (\"Avanti\") family",
 	"Mustang",
 	"DEC 1000 (\"Mikasa\")",
 };
@@ -142,6 +150,9 @@ caddr_t		esp_iomem;		/* XXX iomem for SCSI DMA */
 /* Interrupt vectors (in locore) */
 extern int XentInt(), XentArith(), XentMM(), XentIF(), XentUna(), XentSys();
 
+/* number of cpus in the box.  really! */
+int		ncpus;
+
 int
 alpha_init(pfn, ptb, argc, argv, envp)
 	u_long pfn;		/* first free PFN number */
@@ -152,7 +163,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	extern char _end[];
 	caddr_t start, v;
 	struct mddt *mddtp;
-	int i;
+	int i, mddtweird;
 	char *p;
 
 	/*
@@ -172,9 +183,9 @@ alpha_init(pfn, ptb, argc, argv, envp)
 
 	/*
 	 * Remember how many cycles there are per microsecond, 
-	 * so that we can use delay()
+	 * so that we can use delay().  Round up, for safety.
 	 */
-	cycles_per_usec = hwrpb->rpb_cc_freq / 1000000;
+	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
 
 	/*
 	 * Init the PROM interface, so we can use printf
@@ -194,18 +205,51 @@ alpha_init(pfn, ptb, argc, argv, envp)
 
 	/*
 	 * Find out how much memory is available, by looking at
-	 * the memory cluster descriptors.
+	 * the memory cluster descriptors.  This also tries to do
+	 * its best to detect things things that have never been seen
+	 * before...
+	 *
 	 * XXX Assumes that the first "system" cluster is the
-	 * only one we can use.  Can there be more than two clusters?
-	 * Is the second (etc.) system cluster guaranteed to be
-	 * discontiguous?
+	 * only one we can use. Is the second (etc.) system cluster
+	 * (if one happens to exist) guaranteed to be contiguous?  or...?
 	 */
 	mddtp = (struct mddt *)(((caddr_t)hwrpb) + hwrpb->rpb_memdat_off);
-	physmem = 0;
-	if (mddtp->mddt_cluster_cnt != 2) {
-		printf("warning: strange number of memory clusters (%d).\n",
-		    mddtp->mddt_cluster_cnt);
-		printf("memory cluster information:\n");
+
+	/*
+	 * BEGIN MDDT WEIRDNESS CHECKING
+	 */
+	mddtweird = 0;
+
+#define cnt	 mddtp->mddt_cluster_cnt
+#define	usage(n) mddtp->mddt_clusters[(n)].mddt_usage
+	if (cnt != 2 && cnt != 3) {
+		printf("WARNING: weird number (%d) of mem clusters\n", cnt);
+		mddtweird = 1;
+	} else if (usage(0) != MDDT_PALCODE ||
+		   usage(1) != MDDT_SYSTEM ||
+	           (cnt == 3 && usage(2) != MDDT_PALCODE)) {
+		mddtweird = 1;
+		printf("WARNING: %d mem clusters, but weird config\n", cnt);
+	}
+
+	for (i = 0; i < cnt; i++) {
+		if ((usage(i) & MDDT_mbz) != 0) {
+			printf("WARNING: mem cluster %d has weird usage %lx\n",
+			    i, usage(i));
+			mddtweird = 1;
+		}
+		if (mddtp->mddt_clusters[i].mddt_pg_cnt == 0) {
+			printf("WARNING: mem cluster %d has pg cnt == 0\n", i);
+			mddtweird = 1;
+		}
+		/* XXX other things to check? */
+	}
+#undef cnt
+#undef usage
+
+	if (mddtweird) {
+		printf("\n");
+		printf("complete memory cluster information:\n");
 		for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
 			printf("mddt %d:\n", i);
 			printf("\tpfn %lx\n",
@@ -223,20 +267,49 @@ alpha_init(pfn, ptb, argc, argv, envp)
 			printf("\tusage %lx\n",
 			    mddtp->mddt_clusters[i].mddt_usage);
 		}
+		printf("\n");
 	}
+	/*
+	 * END MDDT WEIRDNESS CHECKING
+	 */
 
-	physmem = 0;
 	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
-		/* add up physmem, stopping on first OS-available space. */
-		physmem += mddtp->mddt_clusters[i].mddt_pg_cnt;
-		if ((mddtp->mddt_clusters[i].mddt_usage & 0x01) == 0)
-			break;
-		else
-			resvmem += mddtp->mddt_clusters[i].mddt_pg_cnt;
+		totalphysmem += mddtp->mddt_clusters[i].mddt_pg_cnt;
+#define	usage(n) mddtp->mddt_clusters[(n)].mddt_usage
+#define	pgcnt(n) mddtp->mddt_clusters[(n)].mddt_pg_cnt
+		if ((usage(i) & MDDT_mbz) != 0)
+			unknownmem += pgcnt(i);
+		else if ((usage(i) & ~MDDT_mbz) == MDDT_PALCODE)
+			resvmem += pgcnt(i);
+		else if ((usage(i) & ~MDDT_mbz) == MDDT_SYSTEM) {
+			/*
+			 * assumes that the system cluster listed is
+			 * one we're in...
+			 */
+			if (physmem != resvmem) {
+				physmem += pgcnt(i);
+				firstusablepage =
+				    mddtp->mddt_clusters[i].mddt_pfn;
+				lastusablepage = firstusablepage + pgcnt(i) - 1;
+			} else
+				unusedmem += pgcnt(i);
+		}
+#undef usage
+#undef pgcnt
 	}
-	if (physmem == 0)
+	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
 	maxmem = physmem;
+
+#if 0
+	printf("totalphysmem = %d\n", totalphysmem);
+	printf("physmem = %d\n", physmem);
+	printf("firstusablepage = %d\n", firstusablepage);
+	printf("lastusablepage = %d\n", lastusablepage);
+	printf("resvmem = %d\n", resvmem);
+	printf("unusedmem = %d\n", unusedmem);
+	printf("unknownmem = %d\n", unknownmem);
+#endif
 
 	/*
 	 * find out this CPU's page size
@@ -369,9 +442,28 @@ systype_flamingo:
 
 #ifdef DEC_2100_A50
 	case ST_DEC_2100_A50:
-		/* XXX */
-		printf("unknown system variation %lx\n",
-		    hwrpb->rpb_variation & SV_ST_MASK);
+		switch (hwrpb->rpb_variation & SV_ST_MASK) {
+		case SV_ST_AVANTI:
+		case SV_ST_AVANTI_XXX:		/* XXX apparently the same? */
+			cpu_model = "AlphaStation 400 4/233 (\"Avanti\")";
+			break;
+
+		case SV_ST_MUSTANG2_4_166:
+			cpu_model = "AlphaStation 200 4/166 (\"Mustang II\")";
+			break;
+
+		case SV_ST_MUSTANG2_4_233:
+			cpu_model = "AlphaStation 200 4/233 (\"Mustang II\")";
+			break;
+
+		case SV_ST_MUSTANG2_4_100:
+			cpu_model = "AlphaStation 200 4/100 (\"Mustang II\")";
+			break;
+
+		default:
+			printf("unknown system variation %lx\n",
+			    hwrpb->rpb_variation & SV_ST_MASK);
+		}
 		break;
 #endif
 
@@ -403,8 +495,8 @@ systype_flamingo:
 	 */
 	if (cputype == ST_DEC_3000_500 ||
 	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
-		maxmem -= btoc(128 * 1024);
-		le_iomem = (caddr_t)phystok0seg(maxmem << PGSHIFT);
+		lastusablepage -= btoc(128 * 1024);
+		le_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
 	}
 #endif /* NLE */
 #if NESP > 0
@@ -416,16 +508,16 @@ systype_flamingo:
 	 */
 	if (cputype == ST_DEC_3000_500 ||
 	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
-		maxmem -= btoc(NESP * 8192);
-		esp_iomem = (caddr_t)phystok0seg(maxmem << PGSHIFT);
+		lastusablepage -= btoc(NESP * 8192);
+		esp_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
 	}
 #endif /* NESP */
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	maxmem -= btoc(sizeof (struct msgbuf));
-	msgbufp = (struct msgbuf *)phystok0seg(maxmem << PGSHIFT);
+	lastusablepage -= btoc(sizeof (struct msgbuf));
+	msgbufp = (struct msgbuf *)phystok0seg(ctob(lastusablepage + 1));
 	msgbufmapped = 1;
 
 	/*
@@ -470,7 +562,7 @@ systype_flamingo:
 	 * headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = (btoc(2 * 1024 * 1024) + (physmem - resvmem)) /
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) /
 		    (20 * CLSIZE);
 	if (nbuf == 0) {
 		nbuf = bufpages;
@@ -534,10 +626,12 @@ systype_flamingo:
 	boothowto |= RB_KDB;
 #endif
 
+#if 0
 	printf("argc = %d\n", argc);
 	printf("argv = %lx\n", argv);
 	for (i = 0; i < argc; i++)
 		printf("argv[%d] = (%lx) \"%s\"\n", i, argv[i], argv[i]);
+#endif
 
 	if (argc > 1) {
 		/* we have arguments. argv[1] is the flags. */
@@ -564,6 +658,19 @@ systype_flamingo:
 				boothowto &= ~RB_ASKNAME;
 			}
 		}
+	}
+
+	/*
+	 * Figure out the number of cpus in the box, from RPB fields.
+	 * Really.  We mean it.
+	 */
+	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+		struct pcs *pcsp;
+
+		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
+		    (i * hwrpb->rpb_pcs_size));
+		if ((pcsp->pcs_flags & PCS_PP) != 0)
+			ncpus++;
 	}
 
 	return (0);
@@ -604,8 +711,13 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d (%d reserved for PROM)\n", ctob(physmem),
-	    ctob(resvmem));
+	printf("real mem = %d (%d reserved for PROM, %d used by NetBSD)\n",
+	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
+	if (unusedmem)
+		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
+	if (unknownmem)
+		printf("WARNING: %d bytes of memory with unknown purpose\n",
+		    ctob(unknownmem));
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -688,30 +800,31 @@ cpu_startup()
 identifycpu()
 {
 
-	/* most of the work here is taken care of in alpha_init(). */
-	printf("%s, serial number 0x%lx 0x%lx\n", cpu_model,
+	/*
+	 * print out CPU identification information.
+	 */
+	printf("%s, %dMHz\n", cpu_model,
+	    hwrpb->rpb_cc_freq / 1000000);	/* XXX true for 21164? */
+	printf("%d byte page size, %d processor%s.\n",
+	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
+#if 0
+	/* this isn't defined for any systems that we run on? */
+	printf("serial number 0x%lx 0x%lx\n",
 	    ((long *)hwrpb->rpb_ssn)[0], ((long *)hwrpb->rpb_ssn)[1]);
+
+	/* and these aren't particularly useful! */
 	printf("variation: 0x%lx, revision 0x%lx\n",
 	    hwrpb->rpb_variation, *(long *)hwrpb->rpb_revision);
-	printf("%d byte page size, %d processor%s.\n", hwrpb->rpb_page_size,
-	    hwrpb->rpb_pcs_cnt, hwrpb->rpb_pcs_cnt == 1 ? "" : "s");
+#endif
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 boot(howto)
 	int howto;
 {
 	extern int cold;
-
-	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx(curproc->p_addr, 0);
-
-#ifdef HALTLOOP
-	while (1)
-		;
-#endif
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -719,64 +832,136 @@ boot(howto)
 		goto haltsys;
 	}
 
-	/* Sync the disks, if appropriate */
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0 && 0 /* XXX */) {
-		register struct buf *bp;
-		int iter, nbusy;
-
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-#ifdef notdef /* XXX */
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-
-		sync(&proc0, (void *)NULL, (int *)NULL);
-
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			DELAY(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-#endif
-			printf("done\n");
-#ifdef notdef /* XXX */
+		vfs_shutdown();
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
 		 */
 		resettodr();
-#endif
 	}
 
 	/* Disable interrupts. */
 	splhigh();
 
-#ifdef notdef /* XXX */
-	/* If rebooting and a dump is requested do the dump. */
-	if ((howto & (RB_DUMP|RB_HALT)) == RB_DUMP)
+	/* If rebooting and a dump is requested do it. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
+		savectx(&dumppcb, 0);
 		dumpsys();
-#endif
+	}
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
 haltsys:
+
+#ifdef BOOTKEY
+	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
+	cngetc();
+	printf("\n");
+#endif
+
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT);
 	/*NOTREACHED*/
+}
+
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
+
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
+dumpconf()
+{
+	int nblks;	/* size of dump area */
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	/* XXX XXX XXX STARTING MEMORY LOCATION */
+	dumpsize = physmem;
+
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
+}
+
+/*
+ * Doadump comes here after turning off memory management and
+ * getting on the dump stack, either when called above, or by
+ * the auto-restart code.
+ */
+void
+dumpsys()
+{
+
+	msgbufmapped = 0;
+	if (dumpdev == NODEV)
+		return;
+	if (dumpsize == 0) {
+		dumpconf();
+		if (dumpsize == 0)
+			return;
+	}
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
+	printf("dump ");
+	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+
+	case ENXIO:
+		printf("device bad\n");
+		break;
+
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+
+	case EINVAL:
+		printf("area improper\n");
+		break;
+
+	case EIO:
+		printf("i/o error\n");
+		break;
+
+	case EINTR:
+		printf("aborted from console\n");
+		break;
+
+	default:
+		printf("succeeded\n");
+		break;
+	}
+	printf("\n\n");
+	delay(1000);
 }
 
 void
@@ -1142,7 +1327,8 @@ setregs(p, pack, stack, retval)
 	tfp->tf_a2 = 0;
 #endif
 	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
-
+#define FP_RN 2 /* XXX */
+	p->p_addr->u_pcb.pcb_fp.fpr_cr = (long)FP_RN << 58;
 	tfp->tf_regs[FRAME_SP] = stack;	/* restored to usp in trap return */
 	tfp->tf_ps = PSL_USERSET;
 	tfp->tf_pc = pack->ep_entry & ~3;
@@ -1359,3 +1545,24 @@ cpu_exec_ecoff_hook(p, epp, eap)
 	return 0;
 }
 #endif
+
+vm_offset_t
+vtophys(vaddr)
+	vm_offset_t vaddr;
+{
+	vm_offset_t paddr;
+
+	if (vaddr < K0SEG_BEGIN) {
+		printf("vtophys: invalid vaddr 0x%lx", vaddr);
+		paddr = vaddr;
+	} else if (vaddr < K0SEG_END)
+		paddr = k0segtophys(vaddr);
+	else
+		paddr = vatopa(vaddr);
+
+#if 0
+	printf("vtophys(0x%lx) -> %lx\n", vaddr, paddr);
+#endif
+
+	return (paddr);
+}

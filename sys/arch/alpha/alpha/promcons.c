@@ -1,4 +1,4 @@
-/*	$NetBSD: promcons.c,v 1.1 1995/02/13 23:07:11 cgd Exp $	*/
+/*	$NetBSD: promcons.c,v 1.2 1995/06/28 02:45:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-struct  tty *prom_tty[1];
+static struct  tty *prom_tty[1];
 
 void promstart(), promtimeout();
 int promparam();
@@ -215,4 +215,15 @@ promtimeout(tp)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
 	timeout(promtimeout, tp, 1);
+}
+
+struct tty *
+promtty(dev)
+	dev_t dev;
+{
+
+	if (minor(dev) != 0)
+		panic("promtty: bogus");
+
+	return prom_tty[0];
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1995/04/10 12:41:29 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 1995/06/28 02:45:15 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -286,7 +286,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	register int i;
 	vm_offset_t start;
 	pt_entry_t pte;
-	extern int maxmem, physmem;
+	extern int firstusablepage, lastusablepage;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
@@ -350,8 +350,9 @@ pmap_bootstrap(firstaddr, ptaddr)
 
 	/*
 	 * Allocate memory for page attributes.
+	 * allocates a few more entries than we need, but that's safe.
 	 */
-	valloc(pmap_attributes, char, physmem);
+	valloc(pmap_attributes, char, 1 + lastusablepage - firstusablepage);
 
 	/*
 	 * Allocate memory for pv_table.
@@ -360,7 +361,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - alpha_btop(k0segtophys(firstaddr));
+	i = 1 + lastusablepage - alpha_btop(k0segtophys(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
@@ -409,7 +410,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 	/* Nothing to do; it's already zero'd */
 
 	avail_start = k0segtophys(firstaddr);
-	avail_end = alpha_ptob(maxmem);
+	avail_end = alpha_ptob(1 + lastusablepage);
 	mem_size = avail_end - avail_start;
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
