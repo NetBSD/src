@@ -1,9 +1,6 @@
-$NetBSD: README,v 1.1.1.1 1997/03/14 02:40:29 perry Exp $
+$NetBSD: README,v 1.2 1998/05/14 18:34:11 drochner Exp $
 
 [This is Matthias Drochner's original README, very lightly edited.]
-
-libsa-based bootcode for i386
-should work with -current libsa (I used 97/02/06.)
 
 contents:
 ./libsa: additions to sys/lib/libsa, not i386 specific
@@ -21,13 +18,12 @@ perhaps adjust "S" to location of kernel sources
 
 notes:
 -to install bootsect:
-  mount /dev/XdNa /somewhere
   installboot biosboot.sym /dev/rXdNa
 -netboot ethernet cards:
   select with USE_NETIF
   for wd80x3, BASEREG and BASEMEM must be set properly
   for pcnet_isapnp, ISAPNPID must be set properly
--text+data+bss+stack <= 64k, heap can be above
+-text+data+bss+stack <= 64k, heap is above
 
 Please report all errors!
 
