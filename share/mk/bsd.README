@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.95 2002/04/10 15:05:45 lukem Exp $
+#	$NetBSD: bsd.README,v 1.96 2002/04/16 03:47:32 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -281,8 +281,6 @@ bsd.own.mk):
 
 MKCRYPTO	If set to "no", no cryptography support will be built
 		into the system.  Defaults to "yes".
-
-NOCRYPTO	If set, it is equivalent to setting MKCRYPTO to "no".
 
 MKCRYPTO_IDEA	If set to "yes", IDEA support will be built into
 		libcrypto_idea.a.  Defaults to "no".
