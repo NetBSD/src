@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.so.conf.5,v 1.14 2001/09/08 01:29:06 wiz Exp $
+.\"	$NetBSD: ld.so.conf.5,v 1.15 2001/09/11 01:01:57 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -72,6 +72,8 @@ library directives:
 .fi
 .sp
 If there is no match, the standard action is taken.
+.Sh FILES
+.Pa /etc/ld.so.conf
 .Sh EXAMPLES
 .sp
 .nf
@@ -81,19 +83,12 @@ libm.so.0	machdep.fpu_present	1:libm387.so.0,libm.so.0
 The above line loads both libm387 and libm when the
 .Xr sysctl 3
 variable fpu_present has the value 1.
-.Sh FILES
-.Pa /etc/ld.so.conf
 .Sh SEE ALSO
 .\" .Xr ld.elf_so 1
-.\" .Xr ld.aout_so 1
-.Xr a.out 5
-.\" .Xr elf 5
+.Xr ld.aout_so 1 ,
+.Xr a.out 5 ,
+.Xr elf 5 ,
 .Xr ldconfig 8
-.Sh BUGS
-Directory names containing the comment character
-.Pq Dq #
-and/or leading or trailing whitespace cannot be included.  (Embedded blanks
-are allowed, however.)
 .Sh HISTORY
 The
 .Nm
@@ -101,3 +96,8 @@ file appeared in
 .Nx 1.3 .
 The ELF support for it was added in
 .Nx 1.5 .
+.Sh BUGS
+Directory names containing the comment character
+.Pq Dq #
+and/or leading or trailing whitespace cannot be included.  (Embedded blanks
+are allowed, however.)
