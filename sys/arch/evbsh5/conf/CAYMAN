@@ -1,4 +1,4 @@
-#	$NetBSD: CAYMAN,v 1.9 2002/10/07 08:20:07 scw Exp $
+#	$NetBSD: CAYMAN,v 1.10 2002/10/22 15:21:24 scw Exp $
 
 #
 # Config file for SuperH "CAYMAN" SH-5 Evaluation board
@@ -6,11 +6,11 @@
 
 include 	"arch/evbsh5/conf/std.evbsh5.el"
 
-maxusers	2
+maxusers	8
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"CAYMAN-$Revision: 1.9 $"
+#ident		"CAYMAN-$Revision: 1.10 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -22,6 +22,7 @@ options 	SYMTAB_SPACE=0x40000
 options 	DIAGNOSTIC
 options 	DEBUG
 options 	DDB
+#options 	PORTMASTER
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
 
@@ -115,6 +116,8 @@ audio*		at audiobus?
 
 # PCI Network Interfaces
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
+gsip*		at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+options 	NMBCLUSTERS=8192
 
 # PCI SCSI Interfaces
 ahc*		at pci? dev ? function ?	# Adaptec 7850 SCSI Controller
@@ -129,7 +132,9 @@ ahc*		at pci? dev ? function ?	# Adaptec 7850 SCSI Controller
 #
 superio0	at sysfpga0			# SMC Super I/O Device
 isa0		at superio0			# The ISAbus attachment.
-sm0		at superio0 offset 0x1000 irq 10 # SMC91C100 LAN controller
+
+# Onboard SMC91C100 LAN controller
+sm0		at superio0
 
 #
 # These are the devices Cayman uses
@@ -149,8 +154,11 @@ lpt0	at isa0 port 0x378 irq 7		# Parallel printer port
 #atapibus*	at wdc0 channel ?
 #cd*		at atapibus? drive ? flags 0x0000
 
-# The MII device on the LAN controller
+# The PHY device on the onboard LAN controller
 sqphy*	at mii? phy ?
+
+# The PHY on the gsip
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 
 #
 # The DTF debug interface.
