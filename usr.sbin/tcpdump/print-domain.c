@@ -1,4 +1,4 @@
-/*	$NetBSD: print-domain.c,v 1.6 1999/07/02 11:31:31 itojun Exp $	*/
+/*	$NetBSD: print-domain.c,v 1.7 1999/07/06 13:05:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-domain.c,v 1.39 97/06/13 12:56:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.6 1999/07/02 11:31:31 itojun Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.7 1999/07/06 13:05:14 itojun Exp $");
 #endif
 #endif
 
@@ -64,6 +64,7 @@ struct rtentry;
 #include <arpa/nameser.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf6.c,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+/*	$NetBSD: print-ospf6.c,v 1.3 1999/07/06 13:05:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-ospf6.c,v 1.2 1999/07/04 02:57:51 itojun Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-ospf6.c,v 1.3 1999/07/06 13:05:14 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@ static const char rcsid[] =
 
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.3 1999/07/06 13:05:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -374,8 +374,9 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 				else
 					printf(",TTL=%ld", ttl);
 				if (buf[12] != ep - buf - 13) {
-					(void)printf(",invalid namelen:%d/%d",
-						buf[12], ep - buf - 13);
+					(void)printf(",invalid namelen:%d/%u",
+						buf[12],
+						(unsigned int)(ep - buf - 13));
 				}
 			}
 		}
