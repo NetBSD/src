@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.18 2002/06/12 20:33:20 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.19 2002/08/02 23:02:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.18 2002/06/12 20:33:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.19 2002/08/02 23:02:51 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.18 2002/06/12 20:33:20 manu Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lock.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
@@ -254,9 +255,14 @@ irix_e_proc_init(p, vmspace)
 	struct proc *p;
 	struct vmspace *vmspace;
 {
+	struct irix_emuldata *ied;
+
 	if (!p->p_emuldata)
-		MALLOC(p->p_emuldata, void *, sizeof(struct irix_emuldata),
-			M_EMULDATA, M_WAITOK | M_ZERO);
+		p->p_emuldata = malloc(sizeof(struct irix_emuldata), 
+		    M_EMULDATA, M_WAITOK | M_ZERO);
+
+	ied = p->p_emuldata;
+	ied->ied_p = p;
 }  
 
 /* 
@@ -275,7 +281,7 @@ irix_e_proc_exec(p, epp)
 	error = irix_prda_init(p);
 #ifdef DEBUG_IRIX
 	if (error != 0)
-		printf("irix_e_proc_init(): PRDA map failed ");
+		printf("irix_e_proc_exec(): PRDA map failed ");
 #endif
 }
 
@@ -288,18 +294,48 @@ irix_e_proc_exit(p)
 {
 	struct proc *pp;
 	struct irix_emuldata *ied;
+	struct irix_share_group *isg;
 
+	/* 
+	 * Send SIGHUP to child process as requested using prctl(2)
+	 */
+	proclist_lock_read();
 	LIST_FOREACH(pp, &allproc, p_list) {
 		/* Select IRIX processes */
 		if (irix_check_exec(pp) == 0)
 			continue;
 
 		ied = (struct irix_emuldata *)(pp->p_emuldata);
-		if (ied->ied_pptr == p)
+		if (ied->ied_termchild && pp->p_pptr == p)
 			psignal(pp, native_to_svr4_signo[SIGHUP]);
 	}
+	proclist_unlock_read();
 
-	FREE(p->p_emuldata, M_EMULDATA);
+	/*
+	 * Remove the process from share group processes list, if revelant.
+	 */
+	ied = (struct irix_emuldata *)(p->p_emuldata);
+
+	if ((isg = ied->ied_share_group) != NULL) {
+		lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
+		LIST_REMOVE(ied, ied_sglist);
+		isg->isg_refcount--;
+	
+		/* 
+		 * If the list is now empty, free the share group structure 
+		 * We don't need to release the lock: there is nobody left
+		 * in the share group. 
+		 */
+		if (isg->isg_refcount == 0) {
+			free(isg, M_EMULDATA);
+			ied->ied_share_group = NULL;
+		} else {
+			lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
+		}
+	
+	}
+
+	free(p->p_emuldata, M_EMULDATA);
 	p->p_emuldata = NULL;
 }
 
