@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.16 2003/07/20 07:08:45 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.16.2.1 2004/05/22 16:59:37 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -162,7 +162,7 @@ void init_datastructures(void) {
 	/* reserve some space for heap etc... 512 might be bigish though */
 	memory_image_size = (int) HIMEM - 512*1024;
 	if (memory_image_size <= 256*1024)
-		panic("I need more memory to boot up; increase Wimp slot");
+		panic("Insufficient memory");
 
 	memory_image = alloc(memory_image_size);
 	if (!memory_image)
@@ -540,9 +540,9 @@ void get_memory_map(void) {
 	};
 	printf("\n\n");
 	if (first_mapped_PODRAM_page_index < 0) {
-		if (PODRAM_addr[0]) panic("Found no (S)DRAM mapped in the bootloader ... increase Wimpslot!");
+		if (PODRAM_addr[0]) panic("Found no (S)DRAM mapped in the bootloader");
 	};
-	if (first_mapped_DRAM_page_index < 0) panic("No DRAM  mapped in the bootloader ... increase Wimpslot!");
+	if (first_mapped_DRAM_page_index < 0) panic("No DRAM mapped in the bootloader");
 }
 
 
@@ -875,7 +875,7 @@ struct page_info *get_relocated_page(u_long destination, int size) {
 
 	/* get a page for a fragment */
 	page = free_relocation_page;
-	if (free_relocation_page->pagenumber < 0) panic("\n\nOut of pages; increase Wimpslot and try again");
+	if (free_relocation_page->pagenumber < 0) panic("\n\nOut of pages");
 	reloc_entries++;
 	if (reloc_entries >= MAX_RELOCPAGES) panic("\n\nToo many relocations! What are you loading ??");
 
