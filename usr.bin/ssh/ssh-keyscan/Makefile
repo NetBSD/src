@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2001/09/27 03:24:01 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2002/06/24 06:11:12 itojun Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh-keyscan
-MAN=	ssh-keyscan.1
 
 SRCS=	ssh-keyscan.c
+
+MAN=	ssh-keyscan.1
 
 .include <bsd.prog.mk>
 
