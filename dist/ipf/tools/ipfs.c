@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.5 2005/02/08 07:01:54 martti Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.5.2.1 2005/04/04 18:25:44 tron Exp $	*/
 
 /*
  * Copyright (C) 1999-2001, 2003 by Darren Reed.
@@ -587,16 +587,12 @@ char *file;
 			return 1;
 		}
 
-		if (ipn.ipn_dsize > 0) {
-			n = ipn.ipn_dsize;
+		in = (nat_save_t *)malloc(ipn.ipn_dsize);
+		if (!in)
+			break;
 
-			if (n > sizeof(ipn.ipn_data))
-				n -= sizeof(ipn.ipn_data);
-			else
-				n = 0;
-			in = malloc(sizeof(*in) + n);
-			if (!in)
-				break;
+		if (ipn.ipn_dsize > sizeof(ipn)) {
+			n = ipn.ipn_dsize - sizeof(ipn);
 			if (n > 0) {
 				s = in->ipn_data + sizeof(in->ipn_data);
  				i = read(nfd, s, n);
@@ -610,9 +606,6 @@ char *file;
 					return 1;
 				}
 			}
-		} else {
-			ipn.ipn_dsize = 0;
-			in = (nat_save_t *)malloc(sizeof(*in));
 		}
 		bcopy((char *)&ipn, (char *)in, sizeof(ipn));
 
@@ -751,7 +744,7 @@ char *file;
 		if (opts & OPT_VERBOSE)
 			printf("Got nat next %p ipn_dsize %d ng_sz %d\n",
 				ipnp->ipn_next, ipnp->ipn_dsize, ng.ng_sz);
-		if (write(nfd, ipnp, ng.ng_sz) != ng.ng_sz) {
+		if (write(nfd, ipnp, ipnp->ipn_dsize) != ipnp->ipn_dsize) {
 			perror("nat:write");
 			close(nfd);
 			free(ipnp);
