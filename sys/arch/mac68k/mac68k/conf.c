@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.2 1993/11/29 00:40:41 briggs Exp $
+ *	$Id: conf.c,v 1.3 1993/12/15 03:27:52 briggs Exp $
  */
 /*
    ALICE
@@ -344,7 +344,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 9: was hpib disk */
 	cdev_grf_init(1,grf),		/* 10: was frame buffer */
 	cdev_notdef(),			/* 11: was printer/plotter interface */
-	cdev_tty_init(NSER,ser),	/* 12: 2 macII serial ports -- BG*/
+	cdev_tty_init(NSER,ser),	/* 12: 2 mac serial ports -- BG*/
 	cdev_notdef(),			/* 13: was built-in single-port serial*/
 	cdev_notdef(),			/* 14: was console terminal emulator */
 	cdev_kbd_init(0,kbd),		/* 15: ADB keyboard -- BG -- BARF*/

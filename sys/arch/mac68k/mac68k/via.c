@@ -73,7 +73,8 @@ long (*via2itab[7])()={
  };	/* VIA2 interrupt handler table */
 
 
-int via_inited=0;
+static int	via_inited=0;
+int		mac68k_trip_debugger=0;
 
 /* nubus slot interrupt routines */
 int (*slotitab[6])() = {
@@ -166,6 +167,7 @@ void via1_intr(struct frame *fp)
 
 	bitmsk = 1;
 	bitnum = 0;
+	mac68k_trip_debugger = 0;
 	while(bitnum < 7){
 		if(intbits & bitmsk){
 			intpend |= bitmsk;	/* don't process this twice */
@@ -186,6 +188,7 @@ void via1_intr(struct frame *fp)
 		bitnum++;
 		bitmsk <<= 1;
 	}
+   	if (mac68k_trip_debugger) Debugger();
 }
 
 
