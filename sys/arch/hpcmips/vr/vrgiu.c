@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.10 2000/04/03 03:40:00 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.10.4.1 2001/05/09 20:30:54 he Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -38,9 +38,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#define TAILQ_FOREACH(var, head, field)					\
-	for (var = TAILQ_FIRST(head); var; var = TAILQ_NEXT(var, field))
-#define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
