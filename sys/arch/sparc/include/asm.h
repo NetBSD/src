@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1998/12/02 00:58:43 thorpej Exp $ */
+/*	$NetBSD: asm.h,v 1.9 1998/12/02 21:16:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -106,14 +106,15 @@
 #define RCSID(name)		.asciz name
 
 #ifdef __STDC__
+#define	__STRING(x)			#x
 #define	WARN_REFERENCES(sym,msg)					\
-	.stabs \" ## msg ## \",30,0,0,0 ;				\
-	.stabs \"_ ## sym ## \",1,0,0,0
+	.stabs msg ## ,30,0,0,0 ;					\
+	.stabs __STRING(_ ## sym) ## ,1,0,0,0
 #else
-#define	WARN_REFERENCES_STRING(x)	"x"
+#define	__STRING(x)			"x"
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
-	.stabs WARN_REFERENCES_STRING(_/**/sym),1,0,0,0
+	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
 
 #endif /* _ASM_H_ */
