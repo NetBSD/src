@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.8 1995/02/28 21:47:47 brezak Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.9 1995/03/08 18:27:42 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	From: Header: sbreg.h,v 1.3 93/07/18 14:07:28 mccanne Exp (LBL)
- *	$Id: sbreg.h,v 1.8 1995/02/28 21:47:47 brezak Exp $
+ *	$Id: sbreg.h,v 1.9 1995/03/08 18:27:42 brezak Exp $
  */
 
 /*
@@ -82,6 +82,9 @@
 #define SBP_SPEAKER_VOL		0x42
 #define SBP_TREBLE_EQ		0x44
 #define SBP_BASS_EQ		0x46
+
+#define SBP_SET_IRQ		0x80	/* Soft-configured irq (SB16-) */
+#define SBP_SET_DRQ		0x81	/* Soft-configured drq (SB16-) */
 
 #define	SBP_RECORD_SOURCE	0x0C
 #define	SBP_STEREO		0x0E

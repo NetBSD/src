@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.1 1995/02/21 02:28:09 brezak Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.2 1995/03/08 18:27:40 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdspvar.h,v 1.1 1995/02/21 02:28:09 brezak Exp $
+ *	$Id: sbdspvar.h,v 1.2 1995/03/08 18:27:40 brezak Exp $
  */
 
 #define SB_MIC_PORT	0
@@ -124,6 +124,10 @@ struct sbdsp_softc {
 
 #define ISSBPROCLASS(sc) \
 	(SBVER_MAJOR((sc)->sc_model) > 2)
+
+#define ISSB16CLASS(sc) \
+      (SBVER_MAJOR((sc)->sc_model) > 3)
+
 
 #ifdef KERNEL
 int	sbdsp_open __P((struct sbdsp_softc *, dev_t, int));
