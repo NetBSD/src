@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.91 2004/06/23 22:48:56 matt Exp $
+#	$NetBSD: termcap.src,v 1.92 2005/03/07 18:18:41 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -2076,7 +2076,7 @@ mgr-linux|Mgr window with Linux keyboard:\
 
 # Eterm: the enlightenment terminal emulator
 Eterm|Eterm Terminal Emulator (X11 Window System):\
-	:am:bw:eo:km:mi:ms:xn:xo:\
+	:am:bs:bw:eo:km:mi:ms:xn:xo:\
 	:co#80:it#8:li#24:lm#0:pa#64:Co#8:AF=\E[3%dm:AB=\E[4%dm:op=\E[39m\E[49m:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\E[7~:K2=\EOu:K3=\E[5~:K4=\E[8~:K5=\E[6~:LE=\E[%dD:\
