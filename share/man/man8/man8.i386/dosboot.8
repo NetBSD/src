@@ -1,18 +1,16 @@
-.\"	$NetBSD: dosboot.8,v 1.4 1998/02/06 06:14:59 perry Exp $
+.\"	$NetBSD: dosboot.8,v 1.5 1998/02/06 19:07:54 perry Exp $
 .Dd June 20, 1997
-.Os
+.Os NetBSD
 .Dt DOSBOOT 8 i386
 .Sh NAME
 .Nm dosboot
 .Nd boot NetBSD/i386 from DOS
-
 .Sh SYNOPSIS
-.Nm dosboot
+.Nm
 .Op Fl u
 .Op Fl c Ar <command>
 .Op Fl i
 .Op Ar path Op Fl bootopts
-
 .Sh DESCRIPTION
 .Nm
 is an MS-DOS program.  It is a boot loader for the i386 version of
@@ -81,7 +79,6 @@ Set the default device and partition for subsequent filesystem operations.
 Without an operand, print the current setting.
 This setting doesn't apply to MS-DOS mode.
 .El
-
 .Sh EXAMPLES
 To boot a
 .Nx
@@ -96,11 +93,15 @@ floppy into single user mode, type eg:
 .Bd -literal -offset indent
 dosboot -u fd0a:netbsd -s
 .Ed
-
 .Sh BUGS
 .Nm
 assumes that the processor is in real mode at startup. It does not work
 well in the presence of MS-DOS extenders and memory managers.
+.Pp
+.Nm
+does not run directly under Windows 95. See
+.Xr w95boot 8
+for a method of starting NetBSD from Windows 95 using dosboot.
 .Pp
 In UFS mode, files can only be loaded from devices known to the BIOS.
 The device names do not necessarily comply with the names later
@@ -112,6 +113,9 @@ In MS-DOS mode, no useful boot device specification is passed to
 .Nx .
 It is necessary to have the root device hardwired into the kernel
 configuration or to enter it manually.
+.Sh SEE ALSO
+.Xr boot 8,
+.Xr w95boot 8
 .Sh HISTORY
 The
 .Nx Ns Tn /i386
