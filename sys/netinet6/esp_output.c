@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.1.1.1.2.5 2000/10/02 23:41:32 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.34 2000/10/01 12:37:19 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.1.1.1.2.6 2000/10/05 14:51:57 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.35 2000/10/05 03:25:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -455,8 +455,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	}
 	switch (sav->flags & SADB_X_EXT_PMASK) {
 	case SADB_X_EXT_PRAND:
-		for (i = 0; i < extendsiz; i++)
-			extend[i] = random() & 0xff;
+		key_randomfill(extend, extendsiz);
 		break;
 	case SADB_X_EXT_PZERO:
 		bzero(extend, extendsiz);

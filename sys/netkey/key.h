@@ -1,5 +1,5 @@
-/*	$NetBSD: key.h,v 1.6 2000/06/12 10:40:47 itojun Exp $	*/
-/*	$KAME: key.h,v 1.17 2000/06/12 07:01:13 itojun Exp $	*/
+/*	$NetBSD: key.h,v 1.6.2.1 2000/10/05 14:51:59 itojun Exp $	*/
+/*	$KAME: key.h,v 1.19 2000/10/05 04:02:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,6 +61,8 @@ extern struct mbuf *key_sp2msg __P((struct secpolicy *));
 extern int key_ismyaddr __P((struct sockaddr *));
 extern int key_spdacquire __P((struct secpolicy *));
 extern void key_timehandler __P((void));
+extern u_long key_random __P((void));
+extern void key_randomfill __P((void *, size_t));
 extern void key_freereg __P((struct socket *));
 extern int key_parse __P((struct mbuf *, struct socket *));
 extern void key_init __P((void));
@@ -68,6 +70,7 @@ extern int key_checktunnelsanity __P((struct secasvar *, u_int,
 					caddr_t, caddr_t));
 extern void key_sa_recordxfer __P((struct secasvar *, struct mbuf *));
 extern void key_sa_routechange __P((struct sockaddr *));
+extern void key_sa_stir_iv __P((struct secasvar *));
 
 extern int key_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
