@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.129 1999/01/28 12:43:13 drochner Exp $
+#	$NetBSD: files.i386,v 1.130 1999/02/07 17:25:31 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -142,6 +142,7 @@ file	arch/i386/isa/isa_machdep.c	isa
 
 # PC clock
 file	arch/i386/isa/clock.c		isa
+file	dev/clock_subr.c		isa
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
@@ -226,6 +227,11 @@ file	arch/i386/isa/isapnp_machdep.c	isapnp
 
 attach	joy at isapnp with joy_isapnp
 file	arch/i386/isa/joy_isapnp.c	joy_isapnp
+
+#
+# VME support
+#
+include "dev/vme/files.vme"
 
 #
 # Other mainbus-attached devices
