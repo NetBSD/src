@@ -1,7 +1,7 @@
-# $NetBSD: master,v 1.4 1998/06/21 16:43:31 tron Exp $
+# $NetBSD: master,v 1.5 2000/08/11 11:59:14 soda Exp $
 #
 # Main config file, see amd(8).
 #
 -w 900
+/net		/etc/amd/net
 /cd		/etc/amd/cd
-/mnt		/etc/amd/mnt
