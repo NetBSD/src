@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.4 2003/12/04 17:10:34 drochner Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1011,7 +1011,8 @@ oncore_init_shmem(
 		return;
 	}
 
-	sprintf(Msg, "SHMEM (size = %d) is CONFIGURED and available as %s", shmem_length, instance->shmem_fname);
+	sprintf(Msg, "SHMEM (size = %ld) is CONFIGURED and available as %s",
+	  (long)shmem_length, instance->shmem_fname);
 	record_clock_stats(&(instance->peer->srcadr), Msg);
 }
 #endif /* ONCORE_SHMEM_STATUS */
@@ -3262,7 +3263,7 @@ oncore_load_almanac(
 				kk = buf_w32(cp + 23);
 {
 char Msg[160];
-sprintf(Msg, "SHMEM posn = %d (%d, %d, %d)", cp-instance->shmem, ii, jj, kk);
+sprintf(Msg, "SHMEM posn = %ld (%d, %d, %d)", (long)(cp-instance->shmem), ii, jj, kk);
 record_clock_stats(&(instance->peer->srcadr), Msg);
 }
 				if (ii != 0 || jj != 0 || kk != 0) { /* phk asked for this test */
