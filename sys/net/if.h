@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.27 1997/03/17 02:55:14 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.28 1997/04/08 21:29:26 chuck Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)if.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_IF_H_
+#define _NET_IF_H_
 
 #include <sys/queue.h>
 
@@ -377,3 +380,4 @@ int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
 void	lortrequest __P((int, struct rtentry *, struct sockaddr *));
 #endif /* _KERNEL */
+#endif /* !_NET_IF_H_ */
