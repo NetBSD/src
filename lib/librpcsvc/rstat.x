@@ -44,10 +44,11 @@
 
 #else
 
+%#include <sys/cdefs.h>
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rstat.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rstat.x	2.2 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$NetBSD: rstat.x,v 1.2 1996/09/26 23:45:27 thorpej Exp $";
+%__RCSID("$NetBSD: rstat.x,v 1.3 1997/10/09 14:21:25 lukem Exp $");
 %#endif /* not lint */
 
 #endif /* def RPC_HDR */

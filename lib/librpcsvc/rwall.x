@@ -34,8 +34,9 @@
  */
 
 #ifndef RPC_HDR
+%#include <sys/cdefs.h>
 %#ifndef lint
-%static char rcsid[] = "$NetBSD: rwall.x,v 1.2 1996/09/26 23:45:28 thorpej Exp $";
+%__RCSID("$NetBSD: rwall.x,v 1.3 1997/10/09 14:21:26 lukem Exp $");
 %#endif /* not lint */
 #endif
 

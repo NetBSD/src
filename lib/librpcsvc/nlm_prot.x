@@ -9,10 +9,11 @@
 %#define LM_MAXSTRLEN	1024
 %#define MAXNAMELEN	LM_MAXSTRLEN+1
 #else
+%#include <sys/cdefs.h>
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$NetBSD: nlm_prot.x,v 1.2 1996/09/26 23:45:24 thorpej Exp $";
+%__RCSID("$NetBSD: nlm_prot.x,v 1.3 1997/10/09 14:21:22 lukem Exp $");
 %#endif /* not lint */
 #endif
 
