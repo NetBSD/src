@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.10 1994/10/29 07:35:22 cgd Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.11 1995/01/09 02:47:23 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -152,7 +152,8 @@ extern vm_offset_t	last_addr;	/* last physical page */
 #else
 /* out-of-kernel versions of round_page and trunc_page */
 #define	round_page(x) \
-	((((vm_offset_t)(x) + (vm_page_size - 1)) / vm_page_size) * vm_page_size)
+	((((vm_offset_t)(x) + (vm_page_size - 1)) / vm_page_size) * \
+	    vm_page_size)
 #define	trunc_page(x) \
 	((((vm_offset_t)(x)) / vm_page_size) * vm_page_size)
 
