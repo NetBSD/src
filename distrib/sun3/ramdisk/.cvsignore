@@ -1,6 +1,0 @@
-*_stub.c
-*.lo
-ramdisk.fs
-rd_bin
-rd_bin.*
-rdsetroot
