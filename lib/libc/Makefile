@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.31 1995/01/06 00:09:19 cgd Exp $
+#	$Id: Makefile,v 1.32 1995/01/30 12:21:41 cgd Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -71,5 +71,5 @@ rm-from-libkern:
 .if defined(KMSRCS) && !empty(KMSRCS)
 	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_ARCH}/$$i; done
 .endif
-	
+
 .include <bsd.lib.mk>
