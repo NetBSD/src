@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.11 2001/06/30 17:53:59 bjh21 Exp $ */
+/* $NetBSD: if_tireg.h,v 1.12 2003/05/14 13:03:36 wiz Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -540,7 +540,7 @@ struct ti_stats {
 	volatile u_int32_t nicInterrupts;			/* 82 */
 	volatile u_int32_t nicAvoidedInterrupts;		/* 83 */
 	/*
-	 * BD Coalessing Thresholds
+	 * BD Coalescing Thresholds
 	 */
 	volatile u_int32_t nicEventThresholdHit;		/* 84 */
 	volatile u_int32_t nicSendThresholdHit;			/* 85 */
