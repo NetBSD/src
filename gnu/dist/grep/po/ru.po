@@ -1,0 +1,412 @@
+# Локализация для grep.
+# Copyright (C) 1997, 1998 Free Software Foundation, Inc.
+# Denis Y. Pershin <dyp@siblug.org>, 1998.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GNU grep 2.1.1b\n"
+"POT-Creation-Date: 1999-02-03 13:09-0500\n"
+"PO-Revision-Date: 1998-05-23 15:26\n"
+"Last-Translator: Denis Y. Pershin <dyp@siblug.org>\n"
+"Language-Team: Russian <ru@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=koi8-r\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:858
+msgid "Memory exhausted"
+msgstr "Память исчерпана"
+
+#: src/dfa.c:452
+msgid "Unfinished \\ escape"
+msgstr "Незавершенная \\ последовательность"
+
+#. Cases:
+#. {M} - exact count
+#. {M,} - minimum count, maximum is infinity
+#. {,M} - 0 through M
+#. {M,N} - M through N
+#: src/dfa.c:564 src/dfa.c:570 src/dfa.c:581 src/dfa.c:592
+msgid "unfinished repeat count"
+msgstr "незавершенное количество повторений"
+
+#: src/dfa.c:577 src/dfa.c:591 src/dfa.c:595
+msgid "malformed repeat count"
+msgstr "некорректно указано количество повторений"
+
+#: src/dfa.c:660 src/dfa.c:663 src/dfa.c:690 src/dfa.c:694 src/dfa.c:695
+#: src/dfa.c:698 src/dfa.c:711 src/dfa.c:712
+msgid "Unbalanced ["
+msgstr "Несбалансированная ["
+
+#: src/dfa.c:849
+msgid "Unbalanced ("
+msgstr "Несбалансированная ("
+
+#: src/dfa.c:970
+msgid "No syntax specified"
+msgstr "Не указано синтаксиса"
+
+#: src/dfa.c:978
+msgid "Unbalanced )"
+msgstr "Несбалансированная )"
+
+#: src/dfa.c:1998
+msgid "out of memory"
+msgstr "закончилась память"
+
+#: src/getopt.c:628
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr "%s: опция '%s' неоднозначна\n"
+
+#: src/getopt.c:652
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr "%s: опция `--%s' не разрешает аргумента\n"
+
+#: src/getopt.c:657
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr "%s: опция `%c%s' не разрешает аргумента\n"
+
+#: src/getopt.c:674 src/getopt.c:847
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr "%s: опция `%s' требует аргумент\n"
+
+#. --option
+#: src/getopt.c:703
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr "%s: неизвестная опция `--%s'\n"
+
+#. +option or -option
+#: src/getopt.c:707
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr "%s: неизвестная опция `%c%s'\n"
+
+#. 1003.2 specifies the format of this message.
+#: src/getopt.c:733
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr "%s: неверная опция -- %c\n"
+
+#: src/getopt.c:736
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr "%s: неверная опция -- %c\n"
+
+#. 1003.2 specifies the format of this message.
+#: src/getopt.c:766 src/getopt.c:896
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr "%s: опция требует аргумент -- %c\n"
+
+#: src/getopt.c:813
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr "%s: опция `-W %s' неоднозначна\n"
+
+#: src/getopt.c:831
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr "%s: опция `-W %s' не разрешает аргумента\n"
+
+#: src/getopt1.c:132
+#, c-format
+msgid "option %s"
+msgstr "опция %s"
+
+#: src/getopt1.c:134
+#, c-format
+msgid " with arg %s"
+msgstr " с аргументом %s"
+
+#: src/getopt1.c:149
+msgid "digits occur in two different argv-elements.\n"
+msgstr "цифры попадаются в двух разных элементах argv.\n"
+
+#: src/getopt1.c:151
+#, c-format
+msgid "option %c\n"
+msgstr "опция %c\n"
+
+#: src/getopt1.c:155
+msgid "option a\n"
+msgstr "опция a\n"
+
+#: src/getopt1.c:159
+msgid "option b\n"
+msgstr "опция b\n"
+
+#: src/getopt1.c:163
+#, c-format
+msgid "option c with value `%s'\n"
+msgstr "опция c со значением `%s'\n"
+
+#: src/getopt1.c:167
+#, c-format
+msgid "option d with value `%s'\n"
+msgstr "опция d со значением `%s'\n"
+
+#: src/getopt1.c:174
+#, c-format
+msgid "?? getopt returned character code 0%o ??\n"
+msgstr "?? gotopt вернул символ с кодом 0%o ??\n"
+
+#: src/getopt1.c:180
+msgid "non-option ARGV-elements: "
+msgstr "ARGV-элементы - не опции: "
+
+#: src/grep.c:169 src/grep.c:186 src/grep.c:288 src/grep.c:344 src/kwset.c:184
+#: src/kwset.c:190
+msgid "memory exhausted"
+msgstr "память исчерпана"
+
+#: src/grep.c:372 src/grep.c:843
+#, c-format
+msgid "%s: warning: %s: %s\n"
+msgstr "%s: предупреждение: %s: %s\n"
+
+#: src/grep.c:497 src/grep.c:1318
+msgid "writing output"
+msgstr "записываю выходные данные"
+
+#: src/grep.c:726
+#, c-format
+msgid "Binary file %s matches\n"
+msgstr ""
+
+#: src/grep.c:742
+msgid "(standard input)"
+msgstr "(стандартный ввод)"
+
+#: src/grep.c:844
+msgid "recursive directory loop"
+msgstr ""
+
+#: src/grep.c:895
+#, c-format
+msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
+msgstr "Использование: %s [OPTION]... PATTERN [FILE]...\n"
+
+#: src/grep.c:896
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Попробуйте `%s --help' для получения более подробного описания.\n"
+
+#: src/grep.c:900
+#, c-format
+msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
+msgstr "Использование: %s [OPTION]... PATTERN [FILE] ...\n"
+
+#: src/grep.c:901
+msgid ""
+"Search for PATTERN in each FILE or standard input.\n"
+"\n"
+"Regexp selection and interpretation:\n"
+"  -E, --extended-regexp     PATTERN is an extended regular expression\n"
+"  -F, --fixed-regexp        PATTERN is a fixed string separated by newlines\n"
+"  -G, --basic-regexp        PATTERN is a basic regular expression\n"
+"  -e, --regexp=PATTERN      use PATTERN as a regular expression\n"
+"  -f, --file=FILE           obtain PATTERN from FILE\n"
+"  -i, --ignore-case         ignore case distinctions\n"
+"  -w, --word-regexp         force PATTERN to match only whole words\n"
+"  -x, --line-regexp         force PATTERN to match only whole lines\n"
+msgstr ""
+"Ищет PATTERN в каждом FILE'е или стандартном вводе.\n"
+"\n"
+"Выбор типа регулярного выражения и интерпретации:\n"
+"  -E, --extended-regexp     PATTERN - расширенное регулярное выражение\n"
+"  -F, --fixed-regexp        PATTERN фиксированная строчка, разделенная\n"
+"                              концами строк\n"
+"  -G, --basic-regexp        PATTERN простой регулярное выражение\n"
+"  -e, --regexp=PATTERN      использовать PATTERN как регулярное выражение\n"
+"  -f, --file=FILE           брать PATTERN из FILE'а\n"
+"  -i, --ignore-case         игнорировать раличие регистров\n"
+"  -w, --word-regexp         PATTERN должен подходить ко всему слову\n"
+"  -x, --line-regexp         PATTERN должен подходить ко всей строке\n"
+
+#: src/grep.c:913
+msgid ""
+"\n"
+"Miscellaneous:\n"
+"  -s, --no-messages         suppress error messages\n"
+"  -v, --revert-match        select non-matching lines\n"
+"  -V, --version             print version information and exit\n"
+"      --help                display this help and exit\n"
+msgstr ""
+"\n"
+"Разноообразные:\n"
+"  -s, --no-messages         подавлять сообщения об ошибках\n"
+"  -v, --revert-match        выбирать не подходящие строки\n"
+"  -V, --version             напечатать информацию о версии и выйти\n"
+"      --help                показать помощь и выйти\n"
+
+#: src/grep.c:920
+#, fuzzy
+msgid ""
+"\n"
+"Output control:\n"
+"  -b, --byte-offset         print the byte offset with output lines\n"
+"  -n, --line-number         print line number with output lines\n"
+"  -H, --with-filename       print the filename for each match\n"
+"  -h, --no-filename         suppress the prefixing filename on output\n"
+"  -q, --quiet, --silent     suppress all normal output\n"
+"  -a, --text                do not suppress binary output\n"
+"  -d, --directories=ACTION  how to handle directories\n"
+"                            ACTION is 'read', 'recurse', or 'skip'.\n"
+"  -r, --recursive           equivalent to --directories=recurse.\n"
+"  -L, --files-without-match only print FILE names containing no match\n"
+"  -l, --files-with-matches  only print FILE names containing matches\n"
+"  -c, --count               only print a count of matching lines per FILE\n"
+msgstr ""
+"\n"
+"Управление выводом:\n"
+"  -b, --byte-offset         печатать вместе с выходными строчками смещение "
+"в\n"
+"                            байтах\n"
+"  -n, --line-number         печатать номер строки вместе с выходными "
+"строчками\n"
+"  -H, --with-filename       печатать имя файла для каждого совпадения\n"
+"  -h, --no-filename         подавить вывод имени файла на выходе\n"
+"  -q, --quiet, --silent     подавить весь обычный вывод\n"
+"  -L, --files-without-match печатать только имена файлов без совпадений\n"
+"  -l, --files-with-matches  печатать только имена файлов с совпадениями\n"
+"  -c, --count               печатать только количество совпадающих строк на "
+"файл\n"
+
+#: src/grep.c:935
+#, fuzzy
+msgid ""
+"\n"
+"Context control:\n"
+"  -B, --before-context=NUM  print NUM lines of leading context\n"
+"  -A, --after-context=NUM   print NUM lines of trailing context\n"
+"  -C, --context[=NUM]       print NUM (default 2) lines of output context\n"
+"                            unless overriden by -A or -B\n"
+"  -NUM                      same as --context=NUM\n"
+"  -U, --binary              do not strip CR characters at EOL (MSDOS)\n"
+"  -u, --unix-byte-offsets   report offsets as if CRs were not there (MSDOS)\n"
+"\n"
+"If no -[GEF], then `egrep' assumes -E, `fgrep' -F, else -G.\n"
+"With no FILE, or when FILE is -, read standard input. If less than\n"
+"two FILEs given, assume -h. Exit with 0 if matches, with 1 if none.\n"
+"Exit with 2 if syntax errors or system errors.\n"
+msgstr ""
+"\n"
+"Управление контекстом:\n"
+"  -B, --before-context=NUM  печатать NUM строк предшествующего контекста\n"
+"  -A, --after-context=NUM   печатать NUM строк последующего контекста\n"
+"  -NUM                      то же, что -B NUM и -A NUM\n"
+"  -C, --context             то же, что и -2\n"
+"  -U, --binary              не удалять сиволы CR в конце строки (MSDOS)\n"
+"  -u, --unix-byte-offsets   выдавать смещение, как-будто нет CR-ов (MSDOS)\n"
+"\n"
+"Если не указано -[GEF], тогда `egrep' предполагает -E, `fgrep' -F, иначе "
+"-G.\n"
+"Когда нет FILE'а, или когда FILE это -, читает стандартный ввод. Если "
+"задано\n"
+"меньше, чем два файла, предполагает -h. Выходит с 0 если найдены "
+"совпадения,\n"
+"с 1, если нет. Выходит с 2, если есть синтаксическио или системные ошибки.\n"
+
+#: src/grep.c:950
+msgid ""
+"\n"
+"Report bugs to <bug-gnu-utils@gnu.org>.\n"
+msgstr ""
+"\n"
+"Об ошибках сообщайте <bug-gnu-utils@gnu.org>.\n"
+
+#: src/grep.c:1093 src/grep.c:1100 src/grep.c:1109
+msgid "invalid context length argument"
+msgstr ""
+
+#: src/grep.c:1116 src/grep.c:1121 src/grep.c:1126
+msgid "you may specify only one of -E, -F, or -G"
+msgstr "вы должны указать только одну из -E, -F или -G"
+
+#: src/grep.c:1145
+msgid "matcher already specified"
+msgstr "образец уже задан"
+
+#: src/grep.c:1166
+msgid "unknown directories method"
+msgstr ""
+
+#: src/grep.c:1252
+#, c-format
+msgid "grep (GNU grep) %s\n"
+msgstr ""
+
+#: src/grep.c:1254
+msgid "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
+msgstr ""
+
+#: src/grep.c:1256
+msgid ""
+"This is free software; see the source for copying conditions. There is NO\n"
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+msgstr ""
+"Это свободно распространяемое программное обеспечение; смотрите исходные\n"
+"тексты для условий копирования. НЕ дается никакой гарантии, даже о\n"
+"ПОДХОДИМОСТИ ДЛЯ ОПРЕДЕЛЕННЫХ ЦЕЛЕЙ.\n"
+
+#
+#: src/obstack.c:467
+msgid "memory exhausted\n"
+msgstr "память исчерпана\n"
+
+#~ msgid "(standard input)\n"
+#~ msgstr "(стандартный ввод)\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "In REGEXPs, most characters stand for themselves, save for all the\n"
+#~ "following cases:\n"
+#~ "\n"
+#~ "  ^             empty string at beginning of line\n"
+#~ "  $             empty string at end of line\n"
+#~ "  \\<            empty string at beginning of word\n"
+#~ "  \\>            empty string at end of word\n"
+#~ "  \\b            empty string at edge of word\n"
+#~ "  \\B            empty string not at edge of word\n"
+#~ "  .             match any character\n"
+#~ "  \\w            same as [[:alnum:]]\n"
+#~ "  \\W            same as [^[:alnum:]]\n"
+#~ "  [RANGE...]    accept character in any of RANGEs\n"
+#~ "  [^RANGE...]   accept character in none of RANGEs\n"
+#~ "  \\NUM          match text matched by NUM'th parenthesized\n"
+#~ "                previous expression (counting from 1)\n"
+#~ "\n"
+#~ "Each RANGE is one of [:CLASS:], CHAR1-CHAR2 or CHAR.  CLASS is one of\n"
+#~ "the words alnum, alpha, cntrl, digit, graph, lower, print, punct,\n"
+#~ "space, upper or xdigit.  In a list of RANGEs, place ] first, - last\n"
+#~ "and ^ anywhere but first.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "В регулярных выражениях большинство символов означают самих себя, за\n"
+#~ "исключением следующих случаев:\n"
+#~ "\n"
+#~ "  ^             пустая строка в начале строки\n"
+#~ "  $             пустая строка в конце строки\n"
+#~ "  \\<            пустая строка в начале словаe\n"
+#~ "  \\>            пустая строка в конце слова\n"
+#~ "  \\b            пустая строка по краям слова\n"
+#~ "  \\B            пустая строка не по краям слова\n"
+#~ "  .             совпадение с любым из символов:\n"
+#~ "  \\w            таким же, как [[:alnum:]]\n"
+#~ "  \\W            таким же, как [^[:alnum:]]\n"
+#~ "  [RANGE...]    допускается любой символ из промежутков\n"
+#~ "  [^RANGE...]   допускается любой символ не из промежутков\n"
+#~ "  \\NUM          текст, совпадает с NUM скобок\n"
+#~ "                предыдущее выражение (начиная с 1)\n"
+#~ "\n"
+#~ "Каждый RANGE(промежуток) принадлежит к одному из [:CLASS:], CHAR1-CHAR2\n"
+#~ "или CHAR.  CLASS одино из слов alnum, alpha, cntrl, digit, graph, lower,\n"
+#~ "print, punct, space, upper или xdigit.  В списке промежутков помещайте\n"
+#~ "] первым, - последним и ^ везде, кроме первого.\n"

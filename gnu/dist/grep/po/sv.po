@@ -1,0 +1,366 @@
+# Swedish messages for GNU Grep version 2.2
+# Copyright (C) 1996 Free Software Foundation, Inc.
+# Thomas Olsson <d95to@efd.lth.se>, 1996.
+# Daniel Bergstrom <daniel@bergstrom.net>, 1998.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: GNU grep 2.2\n"
+"POT-Creation-Date: 1999-02-03 13:09-0500\n"
+"PO-Revision-Date: 1998-08-31 16:02-0200\n"
+"Last-Translator: Daniel Bergstrom <daniel@bergstrom.net>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: src/dfa.c:155 src/dfa.c:167 src/dfa.c:180 src/grep.c:858
+msgid "Memory exhausted"
+msgstr "Minnet slut"
+
+#: src/dfa.c:452
+msgid "Unfinished \\ escape"
+msgstr "Oavslutad \\-sekvens"
+
+#. Cases:
+#. {M} - exact count
+#. {M,} - minimum count, maximum is infinity
+#. {,M} - 0 through M
+#. {M,N} - M through N
+#: src/dfa.c:564 src/dfa.c:570 src/dfa.c:581 src/dfa.c:592
+msgid "unfinished repeat count"
+msgstr "oavslutad repetitionsräknare"
+
+#: src/dfa.c:577 src/dfa.c:591 src/dfa.c:595
+msgid "malformed repeat count"
+msgstr "felformaterad repetionsräknare"
+
+#: src/dfa.c:660 src/dfa.c:663 src/dfa.c:690 src/dfa.c:694 src/dfa.c:695
+#: src/dfa.c:698 src/dfa.c:711 src/dfa.c:712
+msgid "Unbalanced ["
+msgstr "Obalanserad ["
+
+#: src/dfa.c:849
+msgid "Unbalanced ("
+msgstr "Obalanserad ("
+
+#: src/dfa.c:970
+msgid "No syntax specified"
+msgstr "Ingen specifierad syntax"
+
+#: src/dfa.c:978
+msgid "Unbalanced )"
+msgstr "Obalanserad )"
+
+#: src/dfa.c:1998
+msgid "out of memory"
+msgstr "minnet slut"
+
+#: src/getopt.c:628
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr "%s: flaggan \"%s\" är tvetydig\n"
+
+#: src/getopt.c:652
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr "%s: flaggan \"%s\" tar inget argument\n"
+
+#: src/getopt.c:657
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr "%s: flaggan \"%c%s\" tar inget argument\n"
+
+#: src/getopt.c:674 src/getopt.c:847
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr "%s: flaggan \"%s\" behöver ett argument\n"
+
+#. --option
+#: src/getopt.c:703
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr "%s: okänd flagga \"--%s\"\n"
+
+#. +option or -option
+#: src/getopt.c:707
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr "%s: okänd flagga \"%c%s\"\n"
+
+#. 1003.2 specifies the format of this message.
+#: src/getopt.c:733
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr "%s: otillåten flagga -- %c\n"
+
+#: src/getopt.c:736
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr "%s: otillåten flagga -- %c\n"
+
+#. 1003.2 specifies the format of this message.
+#: src/getopt.c:766 src/getopt.c:896
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr "%s: flagga behöver ett argument -- %c\n"
+
+#: src/getopt.c:813
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr "%s: flaggan \"-W %s\" är tvetydig\n"
+
+#: src/getopt.c:831
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr "%s: flaggan \"-W %s\" tillåter inget targument\n"
+
+#: src/getopt1.c:132
+#, c-format
+msgid "option %s"
+msgstr "flagga %s"
+
+#: src/getopt1.c:134
+#, c-format
+msgid " with arg %s"
+msgstr " med argument %s"
+
+#: src/getopt1.c:149
+msgid "digits occur in two different argv-elements.\n"
+msgstr "siffror förekommer i två olika argv-element.\n"
+
+#: src/getopt1.c:151
+#, c-format
+msgid "option %c\n"
+msgstr "flagga %c\n"
+
+#: src/getopt1.c:155
+msgid "option a\n"
+msgstr "flagga a\n"
+
+#: src/getopt1.c:159
+msgid "option b\n"
+msgstr "flagga b\n"
+
+#: src/getopt1.c:163
+#, c-format
+msgid "option c with value `%s'\n"
+msgstr "flagga c med värde \"%s\"\n"
+
+#: src/getopt1.c:167
+#, c-format
+msgid "option d with value `%s'\n"
+msgstr "flagga d med värde \"%s\"\n"
+
+#: src/getopt1.c:174
+#, c-format
+msgid "?? getopt returned character code 0%o ??\n"
+msgstr "?? getopt returnerade teckenkod 0%o ??\n"
+
+#: src/getopt1.c:180
+msgid "non-option ARGV-elements: "
+msgstr "ARGV-element är inte flaggor: "
+
+#: src/grep.c:169 src/grep.c:186 src/grep.c:288 src/grep.c:344 src/kwset.c:184
+#: src/kwset.c:190
+msgid "memory exhausted"
+msgstr "minnet slut"
+
+#: src/grep.c:372 src/grep.c:843
+#, c-format
+msgid "%s: warning: %s: %s\n"
+msgstr "%s: varning: %s: %s\n"
+
+#: src/grep.c:497 src/grep.c:1318
+msgid "writing output"
+msgstr "skriver utdata"
+
+#: src/grep.c:726
+#, c-format
+msgid "Binary file %s matches\n"
+msgstr ""
+
+#: src/grep.c:742
+msgid "(standard input)"
+msgstr "(standard in)"
+
+#: src/grep.c:844
+msgid "recursive directory loop"
+msgstr ""
+
+#: src/grep.c:895
+#, c-format
+msgid "Usage: %s [OPTION]... PATTERN [FILE]...\n"
+msgstr "Användning: %s [FLAGGA]... MÖNSTER [FIL]...\n"
+
+#: src/grep.c:896
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Försök med \"%s --help\" för mer information\n"
+
+#: src/grep.c:900
+#, c-format
+msgid "Usage: %s [OPTION]... PATTERN [FILE] ...\n"
+msgstr "Användning: %s [FLAGGA]... MÖNSTER [FIL]...\n"
+
+#: src/grep.c:901
+msgid ""
+"Search for PATTERN in each FILE or standard input.\n"
+"\n"
+"Regexp selection and interpretation:\n"
+"  -E, --extended-regexp     PATTERN is an extended regular expression\n"
+"  -F, --fixed-regexp        PATTERN is a fixed string separated by newlines\n"
+"  -G, --basic-regexp        PATTERN is a basic regular expression\n"
+"  -e, --regexp=PATTERN      use PATTERN as a regular expression\n"
+"  -f, --file=FILE           obtain PATTERN from FILE\n"
+"  -i, --ignore-case         ignore case distinctions\n"
+"  -w, --word-regexp         force PATTERN to match only whole words\n"
+"  -x, --line-regexp         force PATTERN to match only whole lines\n"
+msgstr ""
+"Sök efter MÖNSTER i varje FIL eller standard in.\n"
+"\n"
+"Val och tolkning av reguljära uttryck:\n"
+" -E, --extended-regexp      MÖNSTER är ett utökat reguljärt uttryck\n"
+" -F, --fixed-regexp         MÖNSTER är en fixerad sträng separerad med "
+"nyrad\n"
+" -G, --basic-regexp         MÖNSTER är ett enkelt reguljärt uttryck\n"
+" -e, --regexp=MÖNSTER       använd MÖNSTER som ett reguljärt uttryck\n"
+" -f, --file=FIL             hämta MÖNSTER från FIL\n"
+" -i, --ignore-case          skilj ej på gemener och versaler\n"
+" -w, --word-regexp          tvinga MÖNSTER att endast matcha hela ord\n"
+" -x, --line-regexp          tvinga MÖNSTER att endast matcha hela rader\n"
+
+#: src/grep.c:913
+msgid ""
+"\n"
+"Miscellaneous:\n"
+"  -s, --no-messages         suppress error messages\n"
+"  -v, --revert-match        select non-matching lines\n"
+"  -V, --version             print version information and exit\n"
+"      --help                display this help and exit\n"
+msgstr ""
+"\n"
+"Diverse:\n"
+"  -s, --no-messages         visa inga felmeddelanden\n"
+"  -v, --revert-match        välj rader som utan träffar\n"
+"  -V, --version             visa versionsinformation och avsluta\n"
+"      --help                visa detta hjälpmeddelande och avsluta\n"
+
+#: src/grep.c:920
+#, fuzzy
+msgid ""
+"\n"
+"Output control:\n"
+"  -b, --byte-offset         print the byte offset with output lines\n"
+"  -n, --line-number         print line number with output lines\n"
+"  -H, --with-filename       print the filename for each match\n"
+"  -h, --no-filename         suppress the prefixing filename on output\n"
+"  -q, --quiet, --silent     suppress all normal output\n"
+"  -a, --text                do not suppress binary output\n"
+"  -d, --directories=ACTION  how to handle directories\n"
+"                            ACTION is 'read', 'recurse', or 'skip'.\n"
+"  -r, --recursive           equivalent to --directories=recurse.\n"
+"  -L, --files-without-match only print FILE names containing no match\n"
+"  -l, --files-with-matches  only print FILE names containing matches\n"
+"  -c, --count               only print a count of matching lines per FILE\n"
+msgstr ""
+"\n"
+"Styrning av utskrift:\n"
+"  -b, --byte-offset         skriv position med visade rader\n"
+"  -n, --line-number         skriv radnummer med visade rader\n"
+"  -H, --with-filename       skriv filnamn vid varje träff\n"
+"  -h, --no-filename         skriv inte filnamn vid varje visad rad\n"
+"  -q, --quiet, --silent     undvik all normal utskrift\n"
+"  -L, --files-without-match skriv bara ut FILnamn utan träffar\n"
+"  -l, --files-with-matches  skriv bara ut FILnamn med träffar\n"
+"  -c, --count               skriv för varje FIL bara ut antal träffade "
+"rader\n"
+
+#: src/grep.c:935
+#, fuzzy
+msgid ""
+"\n"
+"Context control:\n"
+"  -B, --before-context=NUM  print NUM lines of leading context\n"
+"  -A, --after-context=NUM   print NUM lines of trailing context\n"
+"  -C, --context[=NUM]       print NUM (default 2) lines of output context\n"
+"                            unless overriden by -A or -B\n"
+"  -NUM                      same as --context=NUM\n"
+"  -U, --binary              do not strip CR characters at EOL (MSDOS)\n"
+"  -u, --unix-byte-offsets   report offsets as if CRs were not there (MSDOS)\n"
+"\n"
+"If no -[GEF], then `egrep' assumes -E, `fgrep' -F, else -G.\n"
+"With no FILE, or when FILE is -, read standard input. If less than\n"
+"two FILEs given, assume -h. Exit with 0 if matches, with 1 if none.\n"
+"Exit with 2 if syntax errors or system errors.\n"
+msgstr ""
+"\n"
+"Kontroll av sammanhang:\n"
+"  -B, --before-context=NUM  skriv NUM rader före träffad rad\n"
+"  -A, --after-context=NUM   skriv NUM rader efter träffad rad\n"
+"  -NUM                      motsvarar både -B NUM och -A NUM\n"
+"  -C, --context             motsvarar -2\n"
+"  -U, --binary              ta inte bort CR-tecken vid radslut (MSDOS)\n"
+"  -u, --unix-byte-offsets   skriv offset som om CR-tecken inte förekommit\n"
+"\n"
+"Om flaggorna -[GEF] ej används, och programmet anropas som \"egrep\" sätts\n"
+"flaggan -E. Anropas programmet som \"fgrep\" sätts -F, annars sätts -G.\n"
+"Utan FIL, eller om FIL är -, läser programmet från standard in. Om färre än\n"
+"två FILer är angivna, sätts flaggan -h. Programmet returnerar 0 om något\n"
+"matchar, 1 om inget matchade och 2 vid syntaxfel eller systemrelaterade fel\n"
+
+#: src/grep.c:950
+msgid ""
+"\n"
+"Report bugs to <bug-gnu-utils@gnu.org>.\n"
+msgstr ""
+"\n"
+"Rapportera buggar till <bug-gnu-utils@gnu.org>.\n"
+"Skicka anmärkningar på översättningar till <sv@li.org>\n"
+
+#: src/grep.c:1093 src/grep.c:1100 src/grep.c:1109
+msgid "invalid context length argument"
+msgstr "ogiltigt argument till -A, -B eller -C"
+
+#: src/grep.c:1116 src/grep.c:1121 src/grep.c:1126
+msgid "you may specify only one of -E, -F, or -G"
+msgstr ""
+
+#: src/grep.c:1145
+msgid "matcher already specified"
+msgstr "söksträng redan specificerad"
+
+#: src/grep.c:1166
+msgid "unknown directories method"
+msgstr ""
+
+#: src/grep.c:1252
+#, c-format
+msgid "grep (GNU grep) %s\n"
+msgstr "grep (GNU grep) %s\n"
+
+#: src/grep.c:1254
+#, fuzzy
+msgid "Copyright (C) 1988, 1992-1997, 1998 Free Software Foundation, Inc.\n"
+msgstr ""
+"Copyright (C) 1988, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.\n"
+
+#: src/grep.c:1256
+msgid ""
+"This is free software; see the source for copying conditions. There is NO\n"
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+msgstr ""
+"Detta program är fri programvara, se källkoden för kopieringsvilkor. Det\n"
+"finns INGEN garanti, inte ens för SÄLJBARHET eller LÄMPLIGHET FÖR NÅGOT\n"
+"SPECIELLT ÄNDAMÅL.\n"
+
+#: src/obstack.c:467
+msgid "memory exhausted\n"
+msgstr "minnet slut\n"
+
+#, fuzzy
+#~ msgid "infalid context length argument"
+#~ msgstr "ogiltigt argument till -A, -B eller -C"
+
+#~ msgid "(standard input)\n"
+#~ msgstr "(standard in)\n"
