@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.18 2004/01/05 23:23:37 jmmv Exp $ */
+/* $NetBSD: ac.c,v 1.19 2004/01/06 13:28:20 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.18 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: ac.c,v 1.19 2004/01/06 13:28:20 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -306,7 +306,7 @@ main(argc, argv)
 	int c;
 
 	fp = NULL;
-	while ((c = getopt(argc, argv, "Dc:dpt:w:")) != -1) {
+	while ((c = getopt(argc, argv, "Ddpt:w:")) != -1) {
 		switch (c) {
 #ifdef DEBUG
 		case 'D':
@@ -328,7 +328,6 @@ main(argc, argv)
 		case '?':
 		default:
 			usage();
-			break;
 		}
 	}
 
