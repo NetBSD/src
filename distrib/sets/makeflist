@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.2.4.1 1997/10/28 23:31:53 mellon Exp $
+# $NetBSD: makeflist,v 1.2.4.2 1997/10/29 00:14:19 mellon Exp $
 #
 # Print out the files in some or all lists.  Usage:
 # makeflist [-arch arch] [-setd setsdir] [-x11] [setname ...]
@@ -10,7 +10,7 @@
 arch=`uname -m`
 setd=`pwd`
 lists="base comp etc games man misc text"
-xlists="xbase xcomp xfont xserver"
+xlists="xbase xcomp xcontrib xfont xserver"
 
 # handle args
 while :
