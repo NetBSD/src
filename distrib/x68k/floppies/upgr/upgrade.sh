@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1 1996/05/18 01:51:54 oki Exp $
+#	$Id: upgrade.sh,v 1.1.4.1 1996/06/27 14:32:28 oki Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -61,7 +61,7 @@ echo	"program can cause SIGNIFICANT data loss, and you are advised"
 echo	"to make sure your hard drive is backed up before beginning the"
 echo	"upgrade process."
 echo	""
-echo	"Default answers are displyed in brackets after the questions."
+echo	"Default answers are displayed in brackets after the questions."
 echo	"You can hit Control-C at any time to quit, but if you do so at a"
 echo	"prompt, you may have to hit return.  Also, quitting in the middle of"
 echo	"the upgrade may leave your system in an inconsistent (and unusable)"
