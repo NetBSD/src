@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.20 1997/10/18 07:32:17 lukem Exp $ */
+/*	$NetBSD: arp.c,v 1.20.2.1 1997/11/18 00:54:26 mellon Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.20 1997/10/18 07:32:17 lukem Exp $");
+__RCSID("$NetBSD: arp.c,v 1.20.2.1 1997/11/18 00:54:26 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ tryagain:
 		    (rtm->rtm_flags & RTF_LLINFO) &&
 		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
 		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
+		case IFT_ISO88024: case IFT_ISO88025: case IFT_ARCNET:
 			goto overwrite;
 		}
 		if (doing_proxy == 0) {
@@ -350,7 +350,7 @@ tryagain:
 		    (rtm->rtm_flags & RTF_LLINFO) &&
 		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
 		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
+		case IFT_ISO88024: case IFT_ISO88025: case IFT_ARCNET:
 			goto delete;
 		}
 	}
