@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.13 2001/06/18 19:01:51 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.14 2001/06/23 00:10:06 christos Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -165,8 +165,13 @@ int read_client_conf_file (const char *name, struct interface_info *ip,
 	int token;
 	isc_result_t status;
 	
-	if ((file = open (name, O_RDONLY)) < 0)
+	if ((file = open (name, O_RDONLY)) < 0) {
+#ifndef SMALL
 		return uerr2isc (errno);
+#else
+		return errno == ENOENT ? ISC_R_NOTFOUND : ISC_R_NOPERM;
+#endif
+	}
 
 	cfile = (struct parse *)0;
 	new_parse (&cfile, file, (char *)0, 0, path_dhclient_conf, 0);
