@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 1996/05/27 01:12:44 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.44 1996/06/13 22:26:21 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -285,6 +285,17 @@ trap(type, psr, pc, tf)
 				ADVANCE;
 				return;
 			}
+		}
+#endif
+#ifdef DIAGNOSTIC
+		/*
+		 * Currently, we allow DIAGNOSTIC kernel code to
+		 * flush the windows to record stack traces.
+		 */
+		if (type == T_FLUSHWIN) {
+			write_all_windows();
+			ADVANCE;
+			return;
 		}
 #endif
 		/*
