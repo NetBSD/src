@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.38 2000/01/31 10:23:03 itojun Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.39 2000/02/18 04:16:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.38 2000/01/31 10:23:03 itojun Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.39 2000/02/18 04:16:54 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -221,6 +221,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 	int s, lport, timo;
 	int pollr;
 	char c;
+	int refused;
 
 	_DIAGASSERT(res != NULL);
 	_DIAGASSERT(ahost != NULL);
@@ -230,6 +231,7 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 	/* fd2p may be NULL */
 
 	r = res;
+	refused = 0;
 	pid = getpid();
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGURG);
@@ -257,12 +259,8 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 		if (errno == EADDRINUSE) {
 			lport--;
 			continue;
-		}
-		if (errno == ECONNREFUSED && timo <= 16) {
-			(void)sleep((unsigned int)timo);
-			timo *= 2;
-			continue;
-		}
+		} else if (errno == ECONNREFUSED)
+			refused++;
 		if (r->ai_next) {
 			int oerrno = errno;
 			char hbuf[NI_MAXHOST];
@@ -285,6 +283,13 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
 				strcpy(hbuf, "(invalid)");
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
+			continue;
+		}
+		if (refused && timo <= 16) {
+			(void)sleep((unsigned int)timo);
+			timo *= 2;
+			r = res;
+			refused = 0;
 			continue;
 		}
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
