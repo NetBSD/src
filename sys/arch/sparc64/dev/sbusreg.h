@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.4 1999/05/22 20:33:56 eeh Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.5 1999/05/23 07:24:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,23 +119,7 @@ struct sysioreg {
 
 	u_int64_t	pad3[117];
 
-	struct iommureg {
-		u_int64_t	iommu_cr;	/* IOMMU control register */		/* 1fe.0000.2400 */
-#define IOMMUCR_TSB1K		0x000000000000000000LL	/* Nummber of entries in IOTSB */
-#define IOMMUCR_TSB2K		0x000000000000010000LL
-#define IOMMUCR_TSB4K		0x000000000000020000LL
-#define IOMMUCR_TSB8K		0x000000000000030000LL
-#define IOMMUCR_TSB16K		0x000000000000040000LL
-#define IOMMUCR_TSB32K		0x000000000000050000LL
-#define IOMMUCR_TSB64K		0x000000000000060000LL
-#define IOMMUCR_TSB128K		0x000000000000070000LL
-#define IOMMUCR_8KPG		0x000000000000000000LL	/* 8K iommu page size */
-#define IOMMUCR_64KPG		0x000000000000000004LL	/* 64K iommu page size */
-#define IOMMUCR_DE		0x000000000000000002LL	/* Diag enable */
-#define IOMMUCR_EN		0x000000000000000001LL	/* Enable IOMMU */
-		u_int64_t	iommu_tsb;	/* IOMMU TSB base register */		/* 1fe.0000.2408 */
-		u_int64_t	iommu_flush;	/* IOMMU flush register */		/* 1fe.0000.2410 */
-	} sys_iommu;
+	struct iommureg sys_iommu;							/* 1fe.0000.2400,2410 */
 
 	u_int64_t	pad4[125];
 
@@ -237,47 +221,3 @@ struct sysioreg {
 	u_int64_t	pad16[16];
 	u_int64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */	/* 1fe.0000.5900-5978 */
 };
-
-/* 
- * sun4u iommu stuff.  Probably belongs elsewhere.
- */
-
-#define	IOTTE_V		0x8000000000000000LL	/* Entry valid */
-#define IOTTE_64K	0x2000000000000000LL	/* 8K or 64K page? */
-#define IOTTE_8K	0x0000000000000000LL
-#define IOTTE_STREAM	0x1000000000000000LL	/* Is page streamable? */
-#define	IOTTE_LOCAL	0x0800000000000000LL	/* Accesses to same bus segment? */
-#define IOTTE_PAMASK	0x000001ffffffe000LL	/* Let's assume this is correct */
-#define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
-#define IOTTE_W		0x0000000000000002LL	/* Writeable */
-
-#define IOTSB_VEND	0xffffe000
-#define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << (PGSHIFT + (sz))) 
-
-#define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
-#if 0
-/* This version generates a pointer to a int64_t */
-#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-((vaddr_t)IOTSB_VSTART(sz))))>>(PGSHIFT-3))&(~7))
-#else
-/* Here we just try to create an array index */
-#define IOTSBSLOT(va,sz)	((u_int)((((((vaddr_t)(va))-((vaddr_t)IOTSB_VSTART(sz))))>>(PGSHIFT))))
-#endif
-
-/*
- * intr map stuff.  Probably belongs elsewhere.
- */
-
-#define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
-#define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
-#define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no. */
-#define INTMAP_INO	0x00000003fLL	/* Interrupt number */
-#define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
-#define INTMAP_SLOT	0x000000018LL	/* SBUS slot # */
-#define INTMAP_OBIO	0x000000020LL	/* Onboard device */
-#define INTMAP_LSHIFT	11		/* Encode level in vector */
-#define	INTLEVENCODE(x)	(((x)&0x0f)<<INTMAP_LSHIFT)
-#define INTLEV(x)	(((x)>>INTMAP_LSHIFT)&0x0f)
-#define INTVEC(x)	((x)&INTMAP_INR)
-#define INTSLOT(x)	(((x)>>3)&0x7)
-#define	INTPRI(x)	((x)&0x7)
-
