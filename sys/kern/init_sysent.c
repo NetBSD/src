@@ -158,6 +158,8 @@ int	async_daemon();
 int	getfh();
 #else
 #endif
+int	getdomainname();
+int	setdomainname();
 #ifdef SYSVSHM
 int	shmsys();
 #else
