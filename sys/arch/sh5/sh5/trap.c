@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 2002/07/12 19:52:21 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 2002/08/26 10:14:02 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -76,6 +76,8 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -87,6 +89,14 @@
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
+
+
+static void dump_trapframe(struct trapframe *);
+static void print_a_reg(const char *, register_t, int);
 
 
 /* Used to trap faults while probing */
@@ -136,7 +146,7 @@ trap(struct proc *p, struct trapframe *tf)
 	default:
 	dopanic:
 		(void) splhigh();
-		printf("trap: %s in %s mode\n",
+		printf("\ntrap: %s in %s mode\n",
 		    trap_type(traptype), USERMODE(tf) ? "user" : "kernel");
 		printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n",
 			(u_int)tf->tf_state.sf_ssr,
@@ -152,6 +162,7 @@ trap(struct proc *p, struct trapframe *tf)
 #if defined(DDB)
 		kdb_trap(traptype, tf);
 #else
+		dump_trapframe(tf);
 		panic("trap");
 #endif
 		/* NOTREACHED */
@@ -322,16 +333,30 @@ void
 trapa(struct proc *p, struct trapframe *tf)
 {
 	u_int trapcode;
-
 #ifdef DIAGNOSTIC
 	const char *pstr;
+#endif
 
+#ifdef DDB
+	if (!USERMODE(tf) && tf->tf_state.sf_tra == 0) {
+		if (kdb_trap(T_BREAK, tf))
+			return;
+	}
+#endif
+
+#ifdef DIAGNOSTIC
 	if (!USERMODE(tf)) {
 		pstr = "trapa: TRAPA in kernel mode!";
 trapa_panic:
+		if (p != NULL)
+			printf("pid=%d cmd=%s, usp=0x%lx ",
+			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
+		else
+			printf("curproc == NULL ");
 		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x\n\n",
 		    (uintptr_t)tf->tf_state.sf_spc,
 		    (u_int)tf->tf_state.sf_ssr, (u_int)tf->tf_state.sf_tra);
+		dump_trapframe(tf);
 		panic(pstr);
 		/*NOTREACHED*/
 	}
@@ -361,23 +386,22 @@ trapa_panic:
 	userret(p);
 }
 
-/* We can't deal with these yet; they're invoked with the MMU disabled ... */
-#if 0
 void
-panic_trap(struct cpu_info *ci, struct trapframe *tf)
+panic_trap(struct cpu_info *ci, struct trapframe *tf,
+    register_t pssr, register_t pspc)
 {
 
 	printf("PANIC trap: %s in %s mode\n",
 	    trap_type((int)tf->tf_state.sf_expevt),
 	    USERMODE(tf) ? "user" : "kernel");
 
+	printf("PSSR=0x%x, PSPC=0x%lx\n", (u_int)pssr, (u_int)pspc);
 	printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n\n",
 	    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
 	    (uintptr_t)tf->tf_state.sf_tea, (u_int)tf->tf_state.sf_tra);
 
 	panic("panic_trap");
 }
-#endif
 
 const char *
 trap_type(int traptype)
@@ -454,4 +478,110 @@ trap_type(int traptype)
 	}
 
 	return (t);
+}
+
+static void
+dump_trapframe(struct trapframe *tf)
+{
+	print_a_reg(" r0", tf->tf_caller.r0, 0);
+	print_a_reg(" r1", tf->tf_caller.r1, 0);
+	print_a_reg(" r2", tf->tf_caller.r2, 1);
+
+	print_a_reg(" r3", tf->tf_caller.r3, 0);
+	print_a_reg(" r4", tf->tf_caller.r4, 0);
+	print_a_reg(" r5", tf->tf_caller.r5, 1);
+
+	print_a_reg(" r6", tf->tf_caller.r6, 0);
+	print_a_reg(" r7", tf->tf_caller.r7, 0);
+	print_a_reg(" r8", tf->tf_caller.r8, 1);
+
+	print_a_reg(" r9", tf->tf_caller.r9, 0);
+	print_a_reg("r10", tf->tf_callee.r10, 0);
+	print_a_reg("r11", tf->tf_callee.r11, 1);
+
+	print_a_reg("r12", tf->tf_callee.r12, 0);
+	print_a_reg("r13", tf->tf_callee.r13, 0);
+	print_a_reg("r14", tf->tf_caller.r14, 1);
+
+	print_a_reg("r15", tf->tf_caller.r15, 0);
+	print_a_reg("r16", tf->tf_caller.r16, 0);
+	print_a_reg("r17", tf->tf_caller.r17, 1);
+
+	print_a_reg("r18", tf->tf_caller.r18, 0);
+	print_a_reg("r19", tf->tf_caller.r19, 0);
+	print_a_reg("r20", tf->tf_caller.r20, 1);
+
+	print_a_reg("r21", tf->tf_caller.r21, 0);
+	print_a_reg("r22", tf->tf_caller.r22, 0);
+	print_a_reg("r23", tf->tf_caller.r23, 1);
+
+	print_a_reg("r24", 0, 0);
+	print_a_reg("r25", tf->tf_caller.r25, 0);
+	print_a_reg("r26", tf->tf_caller.r26, 1);
+
+	print_a_reg("r27", tf->tf_caller.r27, 0);
+	print_a_reg("r28", tf->tf_callee.r28, 0);
+	print_a_reg("r29", tf->tf_callee.r29, 1);
+
+	print_a_reg("r30", tf->tf_callee.r30, 0);
+	print_a_reg("r31", tf->tf_callee.r31, 0);
+	print_a_reg("r32", tf->tf_callee.r32, 1);
+
+	print_a_reg("r33", tf->tf_callee.r33, 0);
+	print_a_reg("r34", tf->tf_callee.r34, 0);
+	print_a_reg("r35", tf->tf_callee.r35, 1);
+
+	print_a_reg("r36", tf->tf_caller.r36, 0);
+	print_a_reg("r37", tf->tf_caller.r37, 0);
+	print_a_reg("r38", tf->tf_caller.r38, 1);
+
+	print_a_reg("r39", tf->tf_caller.r39, 0);
+	print_a_reg("r40", tf->tf_caller.r40, 0);
+	print_a_reg("r41", tf->tf_caller.r41, 1);
+
+	print_a_reg("r42", tf->tf_caller.r42, 0);
+	print_a_reg("r43", tf->tf_caller.r43, 0);
+	print_a_reg("r44", tf->tf_callee.r44, 1);
+
+	print_a_reg("r45", tf->tf_callee.r45, 0);
+	print_a_reg("r46", tf->tf_callee.r46, 0);
+	print_a_reg("r47", tf->tf_callee.r47, 1);
+
+	print_a_reg("r48", tf->tf_callee.r48, 0);
+	print_a_reg("r49", tf->tf_callee.r49, 0);
+	print_a_reg("r50", tf->tf_callee.r50, 1);
+
+	print_a_reg("r51", tf->tf_callee.r51, 0);
+	print_a_reg("r52", tf->tf_callee.r52, 0);
+	print_a_reg("r53", tf->tf_callee.r53, 1);
+
+	print_a_reg("r54", tf->tf_callee.r54, 0);
+	print_a_reg("r55", tf->tf_callee.r55, 0);
+	print_a_reg("r56", tf->tf_callee.r56, 1);
+
+	print_a_reg("r57", tf->tf_callee.r57, 0);
+	print_a_reg("r58", tf->tf_callee.r58, 0);
+	print_a_reg("r59", tf->tf_callee.r59, 1);
+
+	print_a_reg("r60", tf->tf_caller.r60, 0);
+	print_a_reg("r61", tf->tf_caller.r61, 0);
+	print_a_reg("r62", tf->tf_caller.r62, 1);
+
+	print_a_reg("\ntr0", tf->tf_caller.tr0, 0);
+	print_a_reg("tr1", tf->tf_caller.tr1, 0);
+	print_a_reg("tr2", tf->tf_caller.tr2, 1);
+
+	print_a_reg("tr3", tf->tf_caller.tr3, 0);
+	print_a_reg("tr4", tf->tf_caller.tr4, 0);
+	print_a_reg("tr5", tf->tf_callee.tr5, 1);
+
+	print_a_reg("tr6", tf->tf_callee.tr6, 0);
+	print_a_reg("tr7", tf->tf_callee.tr7, 1);
+}
+
+static void
+print_a_reg(const char *reg, register_t v, int nl)
+{
+	printf("%s=0x%08x%08x%s", reg,
+	    (u_int)(v >> 32), (u_int)v, nl ? "\n" : ", ");
 }
