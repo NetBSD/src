@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 1999/03/24 05:51:09 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 1999/03/24 12:59:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 1999/03/24 05:51:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 1999/03/24 12:59:15 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -151,7 +151,7 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[40];	 
 
-char	*bootinfo;			/* pointer to bootinfo structure */
+char	*bootinfo = NULL;		/* pointer to bootinfo structure */
 
 /*  maps for VM objects */
 
@@ -699,7 +699,11 @@ lookup_bootinfo(type)
 	int type;
 {
 	struct btinfo_common *bt;
-	char *help = (char *)bootinfo;
+	char *help = bootinfo;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
 
 	do {
 		bt = (struct btinfo_common *)help;
