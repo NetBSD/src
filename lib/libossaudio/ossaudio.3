@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.13 2002/02/07 07:00:50 ross Exp $
+.\"	$NetBSD: ossaudio.3,v 1.14 2002/02/20 11:38:02 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,16 +55,21 @@ library only for porting programs.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr midi 4
+.Sh HISTORY
+The
+.Nm
+library first appeared in
+.Nx 1.3 .
 .Sh BUGS
-The emulation uses an #define for
-.Va ioctl()
+The emulation uses a #define for
+.Fn ioctl
 so some obscure programs
 can fail to compile.
 .Pp
 The emulation is incomplete.
 .Pp
 The emulation only covers
-.Va ioctl() ,
+.Fn ioctl ,
 there are other differences as well.  E.g., on a write
 that would block in non-blocking mode Linux returns
 .Dv EINTR
@@ -72,8 +77,3 @@ whereas
 .Nx 1.3
 returns
 .Dv EAGAIN .
-.Sh HISTORY
-The
-.Nm
-library first appeared in
-.Nx 1.3 .
