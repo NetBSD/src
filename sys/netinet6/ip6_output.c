@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.57 2002/09/11 02:46:45 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.58 2002/09/23 13:28:55 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.57 2002/09/11 02:46:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.58 2002/09/23 13:28:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1096,7 +1096,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			mopt->m_len += JUMBOOPTLEN;
 		}
 		optbuf[0] = IP6OPT_PADN;
-		optbuf[1] = 1;
+		optbuf[1] = 0;
 
 		/*
 		 * Adjust the header length according to the pad and
