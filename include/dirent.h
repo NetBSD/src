@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
+/*	$NetBSD: dirent.h,v 1.10 1995/12/05 03:09:19 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _DIRENT_H_
 #define _DIRENT_H_
+
+#include <sys/types.h>
 
 /*
  * The kernel defines the format of directory entries returned by 
