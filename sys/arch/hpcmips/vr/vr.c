@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.14 2000/02/25 11:20:20 shin Exp $	*/
+/*	$NetBSD: vr.c,v 1.15 2000/03/12 05:04:47 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -87,18 +87,18 @@
 #endif
 #endif
 
-#include "fb.h"
+#include "hpcfb.h"
 #include "vrkiu.h"
-#if NFB > 0 || NVRKIU > 0
-#include <dev/rcons/raster.h>
+#if NVRKIU > 0
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 #endif
 
-#if NFB > 0
-#include <arch/hpcmips/dev/fbvar.h>
+#if NHPCFB > 0
+#include <arch/hpcmips/dev/hpcfbvar.h>
 #endif
 
-#if NFB > 0
+#if NVRKIU > 0
 #include <arch/hpcmips/vr/vrkiuvar.h>
 #endif
 
@@ -297,7 +297,7 @@ vr_bus_reset()
 void
 vr_cons_init()
 {
-#if NCOM > 0 || NFB > 0 || NVRKIU > 0
+#if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
 	extern bus_space_tag_t system_bus_iot;
 	extern bus_space_tag_t mb_bus_space_init __P((void));
 #endif
@@ -316,9 +316,9 @@ vr_cons_init()
 	}
 #endif
 
-#if NFB > 0
+#if NHPCFB > 0
 	mb_bus_space_init(); /* At this time, not initialized yet */
-	if(fb_cnattach(system_bus_iot, 0x0c000000, 0, 0)) {
+	if(hpcfb_cnattach(system_bus_iot, 0x0c000000, 0, 0)) {
 		printf("%s(%d): can't init fb console", __FILE__, __LINE__);
 	} else {
 		goto find_keyboard;
