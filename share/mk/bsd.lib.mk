@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.131 1998/04/12 21:22:20 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.132 1998/04/15 01:38:27 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -176,7 +176,7 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if !defined(NOSTATICLIB) || defined(NOPIC) || defined(LDSTATIC)
+.if !defined(NOSTATICLIB) || defined(NOPIC) || (${LDSTATIC} != "")
 _LIBS=lib${LIB}.a
 .else
 _LIBS=
@@ -260,7 +260,7 @@ afterdepend: .depend
 .endif
 
 .if !target(libinstall)
-.if !defined(NOSTATICLIB) || defined(NOPIC) || defined(LDSTATIC)
+.if !defined(NOSTATICLIB) || defined(NOPIC) || (${LDSTATIC} != "")
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
