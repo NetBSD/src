@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103 2001/03/21 09:01:16 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.104 2001/03/26 21:58:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -494,8 +494,10 @@ badtrap:
 	}
 
 	case T_WINOF:
+		KERNEL_PROC_LOCK(p);
 		if (rwindow_save(p))
 			sigexit(p, SIGILL);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 #define read_rw(src, dst) \
