@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.56 2003/01/24 21:55:26 fvdl Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.57 2003/02/05 21:38:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.56 2003/01/24 21:55:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.57 2003/02/05 21:38:45 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,10 +641,11 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size)
 	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
+	simple_lock_init(&bp->b_interlock);
 	s = splbio();
 	bgetvp(vp, bp);
 	splx(s);
-	
+
 	bp->b_saveaddr = (caddr_t)fs;
 	bp->b_bufsize = size;
 	bp->b_bcount = size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.43 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.44 2003/02/05 21:38:43 pk Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.43 2003/02/01 06:23:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.44 2003/02/05 21:38:43 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5226,14 +5226,17 @@ drain_output(vp, islocked)
 	
 	if (!islocked)
 		ACQUIRE_LOCK(&lk);
+	simple_lock(&global_v_numoutput_slock);
 	while (vp->v_numoutput) {
 		int s;
 		
 		vp->v_flag |= VBWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0);
+		ltsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
+			&global_v_numoutput_slock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
+	simple_unlock(&global_v_numoutput_slock);
 	if (!islocked)
 		FREE_LOCK(&lk);
 }
