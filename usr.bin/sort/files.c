@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.7 2001/01/08 19:16:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.7 2001/01/08 19:16:50 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -355,4 +355,18 @@ geteasy(flno, filelist, nfiles, rec, end, dummy2)
 	}
 	fread(rec->data, rec->length, 1, fp);
 	return (0);
+}
+
+/*
+ * Return pointer to an open file stream, err out on failure.
+ */
+FILE *
+ftmp(void)
+{
+	FILE *fp = tmpfile();
+
+	if (fp == NULL)
+		err(2, "tmpfile()");
+
+	return fp;
 }
