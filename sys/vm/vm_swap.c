@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.28 1995/07/19 13:04:02 cgd Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.29 1995/09/18 21:21:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -169,17 +169,6 @@ swstrategy(bp)
 	register struct swdevt *sp;
 	struct vnode *vp;
 
-#ifdef GENERIC
-	/*
-	 * A mini-root gets copied into the front of the swap
-	 * and we run over top of the swap area just long
-	 * enough for us to do a mkfs and restor of the real
-	 * root (sure beats rewriting standalone restor).
-	 */
-#define	MINIROOTSIZE	4096
-	if (rootdev == dumpdev)
-		bp->b_blkno += MINIROOTSIZE;
-#endif
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	if (bp->b_blkno + sz > nswap) {
 		bp->b_error = EINVAL;
@@ -367,8 +356,11 @@ swfree(p, index)
 
 	sp = &swdevt[index];
 	vp = sp->sw_vp;
-	if (error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p))
-		return (error);
+	/* If root on swap, then the skip open/close operations. */
+	if (vp != rootvp) {
+		if (error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p))
+			return (error);
+	}
 	sp->sw_flags |= SW_FREED;
 	nblks = sp->sw_nblks;
 	/*
@@ -381,7 +373,8 @@ swfree(p, index)
 
 		if (bdevsw[major(dev)].d_psize == 0 ||
 		    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
-			(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+			if (vp != rootvp)
+				(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
 			sp->sw_flags &= ~SW_FREED;
 			return (ENXIO);
 		}
@@ -403,7 +396,8 @@ swfree(p, index)
 		sp->sw_nblks = nblks;
 	}
 	if (nblks == 0) {
-		(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+		if (vp != rootvp)
+			(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
 		sp->sw_flags &= ~SW_FREED;
 		return (0);	/* XXX error? */
 	}
@@ -447,5 +441,39 @@ swfree(p, index)
 		} else
 			rmfree(swapmap, blk, vsbase);
 	}
+
+	/*
+	 * Preserve the mini-root if appropriate:
+	 * Note: this requires !SEQSWAP && nswdev==1
+	 *
+	 * A mini-root gets copied into the front of the swap
+	 * and we run over top of the swap area just long
+	 * enough for us to do a mkfs and restor of the real
+	 * root (sure beats rewriting standalone restor).
+	 */
+	if (vp == rootvp) {
+		struct mount *mp;
+		struct statfs *sp;
+		long firstblk;
+		int rootblks;
+
+#ifdef	MINIROOTSIZE
+		rootblks = MINIROOTSIZE;
+#else
+		/* Get size from root FS (mountroot did statfs) */
+		mp = rootvnode->v_mount;
+		sp = &mp->mnt_stat;
+		rootblks = sp->f_blocks * (sp->f_bsize / DEV_BSIZE);
+#endif
+		if (rootblks > nblks)
+			panic("swfree miniroot size");
+		/* First ctod(CLSIZE) blocks are not in the map. */
+		firstblk = rmalloc(swapmap, rootblks - ctod(CLSIZE));
+		if (firstblk != ctod(CLSIZE))
+			panic("swfree miniroot save");
+		printf("Preserved %d blocks of miniroot leaving %d pages of swap\n",
+		       rootblks, dtoc(nblks - rootblks));
+	}
+
 	return (0);
 }
