@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.1 1993/11/25 23:22:43 paulus Exp $
+ *	$Id: crt0.c,v 1.2 1994/01/28 21:53:20 pk Exp $
  */
 
 
@@ -59,6 +59,7 @@ int _callmain();
 #include <link.h>
 
 extern struct link_dynamic _DYNAMIC;
+static struct ld_entry	*ld_entry;
 static void	__do_dynamic_link ();
 static char	*_getenv();
 static int	_strncmp();
@@ -144,6 +145,12 @@ start()
 		--targv;
 	environ = targv;
 
+	if (argv[0])
+		if ((__progname = _strrchr(argv[0], '/')) == NULL)
+			__progname = argv[0];
+		else
+			++__progname;
+
 #ifdef DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
 #ifdef stupid_gcc
@@ -162,11 +169,7 @@ asm("eprol:");
 	atexit(_mcleanup);
 	monstartup(&eprol, &etext);
 #endif MCRT0
-	if (argv[0])
-		if ((__progname = _strrchr(argv[0], '/')) == NULL)
-			__progname = argv[0];
-		else
-			++__progname;
+
 asm ("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(kfp->kargc, argv, environ));
 }
@@ -179,7 +182,7 @@ __do_dynamic_link ()
 	struct exec	hdr;
 	char		*ldso;
 	int		dupzfd;
-	void		(*entry)();
+	int		(*entry)();
 
 #ifdef DEBUG
 	/* Provision for alternate ld.so - security risk! */
@@ -257,12 +260,14 @@ __do_dynamic_link ()
 	crt.crt_dp = &_DYNAMIC;
 	crt.crt_ep = environ;
 	crt.crt_bp = (caddr_t)_callmain;
+	crt.crt_prog = __progname;
 
 	entry = (void (*)())(crt.crt_ba + sizeof hdr);
 #ifdef SUN_COMPAT
-	(*entry)(CRT_VERSION_SUN, &crt);
+	(void)(*entry)(CRT_VERSION_SUN, &crt);
 #else
-	(*entry)(CRT_VERSION_BSD, &crt);
+	if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1)
+		_FATAL("ld.so failed\n");
 #endif
 
 #if defined(sun) && defined(DUPZFD)
@@ -271,7 +276,56 @@ __do_dynamic_link ()
 	}
 	(void)close(dupzfd);
 #endif
+
+	ld_entry = _DYNAMIC.d_entry;
 	return;
+}
+
+/*
+ * DL stubs
+ */
+
+void *
+dlopen(name, mode)
+char	*name;
+int	mode;
+{
+	if (ld_entry == NULL)
+		return NULL;
+
+	return (ld_entry->dlopen)(name, mode);
+}
+
+int
+dlclose(fd)
+void	*fd;
+{
+	if (ld_entry == NULL)
+		return -1;
+
+	return (ld_entry->dlclose)(fd);
+}
+
+void *
+dlsym(fd, name)
+void	*fd;
+char	*name;
+{
+	if (ld_entry == NULL)
+		return NULL;
+
+	return (ld_entry->dlsym)(fd, name);
+}
+
+int
+dlctl(fd, cmd, arg)
+void	*fd, *arg;
+int	cmd;
+{
+	if (ld_entry == NULL)
+		return -1;
+
+	return (ld_entry->dlctl)(fd, cmd, arg);
 }
 
 /*
