@@ -86,6 +86,7 @@ pam_strerror(pam_handle_t *pamh,
 {
 	static char unknown[16];
 
+	/*LINTED unused*/
 	(void)pamh;
 
 	switch (error_number) {
