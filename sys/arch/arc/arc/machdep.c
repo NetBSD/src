@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2000/04/15 22:05:51 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2000/04/29 21:45:27 soren Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -93,8 +93,6 @@
 #include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
-
-#include <sys/exec_ecoff.h>
 
 #include <dev/cons.h>
 
