@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.25.2.9 2000/07/31 18:19:02 he Exp $	*/
+/*	$NetBSD: file.c,v 1.25.2.10 2000/10/12 21:26:20 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.25.2.9 2000/07/31 18:19:02 he Exp $");
+__RCSID("$NetBSD: file.c,v 1.25.2.10 2000/10/12 21:26:20 he Exp $");
 #endif
 #endif
 
@@ -405,10 +405,11 @@ fileFindByPath(char *base, char *fname)
 	}
 
 	cp = getenv("PKG_PATH");
-	while (cp) {
+	while (cp && *cp) {
 		char   *cp2 = strsep(&cp, ";");
 
-		printf("trying PKG_PATH %s\n", cp2?cp2:cp);
+		if (Verbose)
+			printf("trying PKG_PATH %s\n", cp2?cp2:cp);
 
 		if (strstr(fname, ".tgz")) {
 			/* There's already a ".tgz" present, probably typed on the command line */
@@ -429,7 +430,8 @@ fileFindByPath(char *base, char *fname)
 /*			printf("HF: expandURL('%s')'ing #3\n", url);*//*HF*/
 			rc = expandURL(tmp, url);
 			if (rc >= 0) {
-				printf("fileFindByPath: success, expandURL('%s') returns '%s'\n", url, tmp);
+				if (Verbose)
+					printf("fileFindByPath: success, expandURL('%s') returns '%s'\n", url, tmp);
 				return tmp;
 			}
 
@@ -597,7 +599,7 @@ copy_file(char *dir, char *fname, char *to)
 		(void) snprintf(cmd, sizeof(cmd), "cp -r %s %s", fname, to);
 	else
 		(void) snprintf(cmd, sizeof(cmd), "cp -r %s/%s %s", dir, fname, to);
-	if (vsystem(cmd)) {
+	if (vsystem("%s", cmd)) {
 		cleanup(0);
 		errx(2, "could not perform '%s'", cmd);
 	}
@@ -612,7 +614,7 @@ move_file(char *dir, char *fname, char *to)
 		(void) snprintf(cmd, sizeof(cmd), "mv %s %s", fname, to);
 	else
 		(void) snprintf(cmd, sizeof(cmd), "mv %s/%s %s", dir, fname, to);
-	if (vsystem(cmd)) {
+	if (vsystem("%s", cmd)) {
 		cleanup(0);
 		errx(2, "could not perform '%s'", cmd);
 	}
