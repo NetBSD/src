@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.38 1999/09/25 09:47:13 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.39 1999/09/27 23:19:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -87,6 +87,8 @@ struct ne2000dev {
     int function;
     int enet_maddr;
     unsigned char enet_vendor[3];
+    int flags;
+#define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
 } ne2000devs[] = {
     { PCMCIA_STR_AMBICOM_AMB8002T,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -132,6 +134,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SVEC_LANCARD,
       0, 0x7f0, { 0x00, 0xc0, 0x6c } },
+
+    { PCMCIA_STR_PLANEX_FNW3600T,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_PLANEX_FNW3600T,
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
 
     /*
      * You have to add new entries which contains
@@ -372,6 +379,7 @@ ne_pcmcia_attach(parent, self, aux)
 	    int *, int *));
 	int *media, nmedia, defmedia;
 	const char *typestr = "";
+	u_int8_t sum;
 
 	npp_init_media = NULL;
 	media = NULL;
@@ -495,6 +503,24 @@ ne_pcmcia_attach(parent, self, aux)
 			}
 			break;
 		}
+	}
+
+	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
+#define PAR0	0x04
+		for (i = 0, sum = 0; i < 8; i++)
+			sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
+			    PAR0 + i);
+		if (sum != 0xff) {
+			printf("%s: sum(0x%x) should be 0xff\n",
+			    dsc->sc_dev.dv_xname, sum);
+			return;
+		}
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			myea[i] = bus_space_read_1(nsc->sc_asict,
+			    nsc->sc_asich, PAR0 + i);
+		enaddr = myea;
+		nsc->sc_type = NE2000_TYPE_DL10019;
+#undef PAR0
 	}
 
 	if (enaddr != NULL) {
