@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.9 1998/05/17 16:29:45 veego Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.10 1998/05/29 20:14:16 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.2 1998/04/08 14:31:16 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.3 1998/05/23 19:20:32 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -64,7 +64,7 @@ struct	ipread	iptext = { text_open, text_close, text_readip };
 static	FILE	*tfp = NULL;
 static	int	tfd = -1;
 
-static	u_long	tx_hostnum __P((char *, int *));
+static	u_32_t	tx_hostnum __P((char *, int *));
 static	u_short	tx_portnum __P((char *));
 
 
@@ -72,7 +72,7 @@ static	u_short	tx_portnum __P((char *));
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-static	u_long	tx_hostnum(host, resolved)
+static	u_32_t	tx_hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
