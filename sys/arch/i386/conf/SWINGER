@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.62 2005/02/25 13:46:50 simonb Exp $
+#	$NetBSD: SWINGER,v 1.63 2005/03/25 23:28:44 cube Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.62 $"
+#ident 		"SWINGER-$Revision: 1.63 $"
 
 maxusers	64		# estimated number of users
 
@@ -292,6 +292,7 @@ wsdisplay*	at vga? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.81 2005/02/25 13:46:49 simonb Exp $
+#	$NetBSD: GENERIC_TINY,v 1.82 2005/03/25 23:28:44 cube Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -273,6 +273,7 @@ wskbd* 		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
 
+#attimer0	at isa?
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
 

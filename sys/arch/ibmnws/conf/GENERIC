@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2005/02/18 21:05:52 dsl Exp $
+#	$NetBSD: GENERIC,v 1.12 2005/03/25 23:28:44 cube Exp $
 #
 #
 
@@ -137,6 +137,7 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 # wskbd*		at pckbd? console ?
 # wsmouse*	at pms? mux 0
 
+# attimer0	at isa?
 # pcppi0	at isa?				# PC prog. periph. interface
 # isabeep0 at pcppi?			# "keyboard" beep
 

@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.18 2005/02/18 21:05:52 dsl Exp $
+# $NetBSD: VIRTUALPC,v 1.19 2005/03/25 23:28:44 cube Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.18 $"
+#ident 		"VIRTUALPC-$Revision: 1.19 $"
 
 maxusers	32		# estimated number of users
 
@@ -361,6 +361,7 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2005/02/25 13:46:48 simonb Exp $
+# $NetBSD: GENERIC,v 1.81 2005/03/25 23:28:44 cube Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 maxusers	32
 
@@ -221,6 +221,7 @@ ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 
+#attimer0	at isa?
 #pcppi0 at isa?
 #spkr0	at pcppi?
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.50 2005/02/25 13:46:49 simonb Exp $
+#	$NetBSD: DELPHI,v 1.51 2005/03/25 23:28:44 cube Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.50 $"
+ident 		"DELPHI-$Revision: 1.51 $"
 
 maxusers	64		# estimated number of users
 
@@ -295,6 +295,7 @@ wsdisplay*	at pcdisplay? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

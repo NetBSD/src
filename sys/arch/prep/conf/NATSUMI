@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.33 2005/02/25 13:46:51 simonb Exp $
+#	$NetBSD: NATSUMI,v 1.34 2005/03/25 23:28:44 cube Exp $
 #
 #	for development
 #
@@ -181,6 +181,7 @@ wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?			# AT Timer
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 
