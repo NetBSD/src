@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.6 2003/08/08 18:57:04 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.7 2003/08/21 15:08:25 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #define LINUX_ELF_AUX_ARGSIZ 	\
 	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
 
+#ifdef _KERNEL
 int linux_exec_setup_stack(struct proc *, struct exec_package *);
+#endif
 
 #endif /* !_I386_LINUX_EXEC_H */
