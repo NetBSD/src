@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 1995/01/18 06:38:57 mellon Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 1996/03/25 02:50:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,8 +55,8 @@
  *	v 1.2 89/08/15 18:28:24 rab Exp  SPRITE (DECWRL)
  */
 
-#ifndef _MACHASMDEFS
-#define _MACHASMDEFS
+#ifndef _MIPS_ASM_H
+#define _MIPS_ASM_H
 
 #include <machine/regdef.h>
 
@@ -179,4 +179,4 @@ _C_LABEL(x): ; \
 	.asciiz str; \
 	.align	2
 
-#endif /* _MACHASMDEFS */
+#endif /* _MIPS_ASM_H */
