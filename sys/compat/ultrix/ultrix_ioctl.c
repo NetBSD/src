@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.10 1997/05/25 10:38:00 jonathan Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.11 1998/06/25 23:29:15 thorpej Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -26,6 +26,8 @@
  *
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
  */
+
+#include "opt_compat_ultrix.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

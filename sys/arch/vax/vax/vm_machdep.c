@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 1998/03/02 17:00:01 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.39 1998/06/25 23:28:56 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_compat_ultrix.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

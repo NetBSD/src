@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.39 1998/06/25 23:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,13 +39,16 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.39 1998/06/25 23:28:38 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
  * NOTE: The name was changed from "sd" to "rz" for DEC naming compatibility.
  * I guess I can't avoid confusion someplace.
  */
+
+#include "opt_compat_ultrix.h"
+
 #include "rz.h"
 #include "rnd.h"		/* is random device-driver configured? */
 
