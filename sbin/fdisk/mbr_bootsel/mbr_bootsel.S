@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr_bootsel.S,v 1.1 1999/04/15 22:31:23 fvdl Exp $	*/
+/*	$NetBSD: mbr_bootsel.S,v 1.2 1999/04/17 01:38:00 fvdl Exp $	*/
 
 
 /*-
@@ -114,6 +114,7 @@
  */
 #define call16(label)		.byte 0xe8 ; .word label - . - 2
 #define jmp16(label)		.byte 0xe9 ; .word label - . - 2
+#define jznear16(label)		.byte 0x0f ; .byte 0x84 ; .word label - . - 2
 #define jmpfar(segval,addr)	.byte 0xea ; .word addr ; .word segval
 
 #define movb_mem_al(mem)	.byte 0xa0 ; .word mem
@@ -151,6 +152,9 @@
 
 #define cmpb_imm_iregoff(imm,reg,off) \
 	.byte 0x80 ; .byte 0x78 + reg ; .byte off ; .byte imm
+
+#define cmpb_imm_ireg0_bx(imm,reg) \
+	.byte 0x80 ; .byte 0x34 + reg ; .byte imm
 
 #define cmpb_mem_reg(mem,reg) .byte 0x3a ; .byte 0x06 | (reg << 3) ; .word mem
 #define cmpw_imm_reg(imm,reg) .byte 0x81 ; .byte 0xf8 + reg ; .word imm
@@ -231,7 +235,7 @@ ENTRY(start)
 bootsel:
 	movb_mem_al(flags)
 	testb	$BFL_SELACTIVE,%al
-	jz	getactive
+	jznear16(getactive)
 /*
  * The bootselector is active. Walk through the selector (name) table,
  * printing used entries.
@@ -319,14 +323,19 @@ default:
 	jmp	boot2
 5:
 /*
- * Check if the requested entry is actually active in the select table.
- * If not, just do nothing.
+ * Check if the requested entry is actually active in the partition and
+ * bootmenu table. If not, just do nothing.
  */
 	movw_imm_reg(parttab,SI)
 	and_imm_ax(0xff)
+	movl	%eax,%ebx
 	shll	$4,%eax
 	add	%eax,%esi
 	cmpb_imm_iregoff(0,SI_INDEX,4)
+	je	4b
+	movw_imm_reg(nametab,DI)
+	imul	$TABENTRYSIZE,%ebx
+	cmpb_imm_ireg0_bx(0,DI_INDEX)
 	je	4b
 	jmp	boot
 
