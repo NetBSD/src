@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.65 2003/10/27 07:07:34 chs Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.66 2003/10/31 14:04:36 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.65 2003/10/27 07:07:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.66 2003/10/31 14:04:36 drochner Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -294,7 +294,7 @@ ELFNAME2(linux,signature)(p, epp, eh, itp)
 	}
 
 	/* Check for certain intepreter names. */
-	if (itp[0]) {
+	if (itp) {
 		if (!strncmp(itp, "/lib/ld-linux", 13) ||
 		    !strncmp(itp, "/lib/ld.so.", 11))
 			error = 0;
@@ -329,12 +329,11 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	    1) 
 			return error;
 
-	if (itp[0]) {
+	if (itp) {
 		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
 		    itp)))
 			return (error);
 	}
-	*pos = ELF_NO_ADDR;
 	DPRINTF(("linux_probe: returning 0\n"));
 	return 0;
 }
