@@ -775,6 +775,15 @@ sys_stk_chk:
 END(mips_r4000_TLBMissException)
 
 
+/*
+ *  Mark where code entreed from exception hander jumptable
+ * ends, for stack traceback code.
+ */
+	.globl	_C_LABEL(mips3_exceptionentry_end)
+_C_LABEL(mips3_exceptionentry_end):
+
+
+
 /*--------------------------------------------------------------------------
  *
  * mips_r4000_TLBWriteIndexed --
