@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.7 2002/03/02 22:01:35 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.8 2003/12/18 00:00:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -210,8 +210,10 @@ hpcboot(void *arg)
 
 	// jump to kernel entry.
 	if (HPC_PREFERENCE.pause_before_boot) {
-		if (MessageBox(menu._root->_window, TEXT("Push OK to boot."),
-		    TEXT("Last chance..."), MB_YESNO) != IDYES)
+		if (MessageBox(menu._root->_window, TEXT("Push YES to boot."),
+		    TEXT("Last chance..."),
+		    MB_ICONEXCLAMATION | MB_YESNO) != IDYES)
+			error_message = TEXT("Cancelled by user.\n");
 			goto failed_exit;
 	}
 
@@ -224,7 +226,7 @@ hpcboot(void *arg)
 	f._file->close();
  failed_exit:
 	MessageBox(menu._root->_window, error_message,
-	    TEXT("BOOT FAILED"), 0);
+	    TEXT("BOOT FAILED"), MB_ICONERROR | MB_OK);
 }
 
 //
