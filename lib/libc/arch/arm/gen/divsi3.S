@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1 2000/12/29 20:13:47 bjh21 Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.2 2001/07/16 05:50:05 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -39,7 +39,7 @@ ENTRY(__modsi3)
 L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 	mov	r0, #8			/* SIGFPE */
-	bl	_C_LABEL(raise)		/* raise it */
+	bl	PIC_SYM(_C_LABEL(raise), PLT)	/* raise it */
 	mov	r0, #0
 #else
 	/* XXX should cause a fatal error */
