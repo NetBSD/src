@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: toolchain2netbsd,v 1.11 2001/08/14 05:11:50 tv Exp $
+#	$NetBSD: toolchain2netbsd,v 1.12 2001/08/14 05:17:59 tv Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -39,7 +39,7 @@ write_mk () {
 }
 
 writefile () {
-	sed 's,netbsd\(elf\)*[0-9\.]*,netbsd\1,' >>$1.tmp
+	sed 's,netbsd\(elf\)*1[0-9\.]*,netbsd\1,' >>$1.tmp
 	# will not overwrite a file that has the same content
 	if cmp $1.tmp $1 >/dev/null 2>&1; then
 		echo >&2 "$1 is unchanged"
