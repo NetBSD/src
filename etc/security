@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.17 1997/03/10 09:45:58 mycroft Exp $
+#	$NetBSD: security,v 1.18 1997/04/17 07:42:07 mikel Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -236,8 +236,8 @@ fi
 
 # Uudecode should not be in the /etc/aliases file.
 if [ "$check_aliases" = YES ]; then
-	if egrep 'uudecode|decode' /etc/aliases; then
-		printf "\nThere is an entry for uudecode in the /etc/aliases file.\n"
+	if egrep '^[^#]*(uudecode|decode).*\|' /etc/aliases; then
+		printf "\nEntry for uudecode in /etc/aliases file.\n"
 	fi
 fi
 
