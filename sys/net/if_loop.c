@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.53 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.54 2004/12/05 15:02:30 peter Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.53 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.54 2004/12/05 15:02:30 peter Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -232,14 +232,11 @@ loop_clone_destroy(struct ifnet *ifp)
 }
 
 int
-looutput(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+looutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
 	int s, isr;
-	struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = NULL;
 
 	MCLAIM(m, ifp->if_mowner);
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -429,15 +426,11 @@ lostart(struct ifnet *ifp)
 
 /* ARGSUSED */
 void
-lortrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+lortrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 
 	if (rt)
 		rt->rt_rmx.rmx_mtu = lo0ifp->if_mtu;
-
 }
 
 /*
@@ -445,10 +438,7 @@ lortrequest(cmd, rt, info)
  */
 /* ARGSUSED */
 int
-loioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+loioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -459,7 +449,7 @@ loioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		ifa = (struct ifaddr *)data;
-		if (ifa != 0 /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
+		if (ifa != NULL /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
 			ifa->ifa_rtrequest = lortrequest;
 		/*
 		 * Everything else is done at a higher level.
@@ -479,7 +469,7 @@ loioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		ifr = (struct ifreq *)data;
-		if (ifr == 0) {
+		if (ifr == NULL) {
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
