@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ssh-add.1,v 1.21 2001/02/08 19:22:38 itojun Exp $
+.\"	$NetBSD: ssh-add.1,v 1.1.1.1.2.3 2001/12/10 23:54:00 he Exp $
+.\"	$OpenBSD: ssh-add.1,v 1.27 2001/08/23 18:08:59 stevesk Exp $
 .\"
 .\"  -*- nroff -*-
 .\"
@@ -13,9 +14,9 @@
 .\" called by a name other than "ssh" or "Secure Shell".
 .\"
 .\"
-.\" Copyright (c) 1999,2000 Markus Friedl. All rights reserved.
-.\" Copyright (c) 1999 Aaron Campbell. All rights reserved.
-.\" Copyright (c) 1999 Theo de Raadt. All rights reserved.
+.\" Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+.\" Copyright (c) 1999 Aaron Campbell.  All rights reserved.
+.\" Copyright (c) 1999 Theo de Raadt.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -42,11 +43,15 @@
 .Os
 .Sh NAME
 .Nm ssh-add
-.Nd adds RSA or DSA identities for the authentication agent
+.Nd adds RSA or DSA identities to the authentication agent
 .Sh SYNOPSIS
 .Nm ssh-add
 .Op Fl lLdD
 .Op Ar
+.Nm ssh-add
+.Fl s Ar reader
+.Nm ssh-add
+.Fl e Ar reader
 .Sh DESCRIPTION
 .Nm
 adds RSA or DSA identities to the authentication agent,
@@ -57,7 +62,9 @@ Alternative file names can be given on the command line.
 If any file requires a passphrase,
 .Nm
 asks for the passphrase from the user.
-The Passphrase it is read from the user's tty.
+The passphrase is read from the user's tty.
+.Nm
+retries the last passphrase if multiple identity files are given.
 .Pp
 The authentication agent must be running and must be an ancestor of
 the current process for
@@ -74,11 +81,17 @@ Lists public key parameters of all identities currently represented by the agent
 Instead of adding the identity, removes the identity from the agent.
 .It Fl D
 Deletes all identities from the agent.
+.It Fl s Ar reader
+Add key in smartcard
+.Ar reader .
+.It Fl e Ar reader
+Remove key in smartcard
+.Ar reader .
 .El
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa $HOME/.ssh/identity
-Contains the RSA authentication identity of the user.
+Contains the protocol version 1 RSA authentication identity of the user.
 This file should not be readable by anyone but the user.
 Note that
 .Nm
@@ -90,7 +103,9 @@ This is the default file added by
 .Nm
 when no other files have been specified.
 .It Pa $HOME/.ssh/id_dsa
-Contains the DSA authentication identity of the user.
+Contains the protocol version 2 DSA authentication identity of the user.
+.It Pa $HOME/.ssh/id_rsa
+Contains the protocol version 2 RSA authentication identity of the user.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width Ds

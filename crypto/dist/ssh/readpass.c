@@ -1,3 +1,4 @@
+/*	$NetBSD: readpass.c,v 1.1.1.1.2.3 2001/12/10 23:54:00 he Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -32,24 +33,98 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readpass.c,v 1.14 2001/02/08 19:30:52 itojun Exp $");
+RCSID("$OpenBSD: readpass.c,v 1.23 2001/11/08 10:51:08 markus Exp $");
+
+#include <readpassphrase.h>
 
 #include "xmalloc.h"
-#include "cli.h"
 #include "readpass.h"
+#include "pathnames.h"
+#include "log.h"
+#include "ssh.h"
+
+static char *
+ssh_askpass(char *askpass, const char *msg)
+{
+	pid_t pid;
+	size_t len;
+	char *pass;
+	int p[2], status;
+	char buf[1024];
+
+	if (fflush(stdout) != 0)
+		error("ssh_askpass: fflush: %s", strerror(errno));
+	if (askpass == NULL)
+		fatal("internal error: askpass undefined");
+	if (pipe(p) < 0) {
+		error("ssh_askpass: pipe: %s", strerror(errno));
+		return xstrdup("");
+	}
+	if ((pid = fork()) < 0) {
+		error("ssh_askpass: fork: %s", strerror(errno));
+		return xstrdup("");
+	}
+	if (pid == 0) {
+		seteuid(getuid());
+		setuid(getuid());
+		close(p[0]);
+		if (dup2(p[1], STDOUT_FILENO) < 0)
+			fatal("ssh_askpass: dup2: %s", strerror(errno));
+		execlp(askpass, askpass, msg, (char *) 0);
+		fatal("ssh_askpass: exec(%s): %s", askpass, strerror(errno));
+	}
+	close(p[1]);
+	len = read(p[0], buf, sizeof buf -1);
+	close(p[0]);
+	while (waitpid(pid, &status, 0) < 0)
+		if (errno != EINTR)
+			break;
+	if (len <= 1)
+		return xstrdup("");
+	buf[len] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
+	pass = xstrdup(buf);
+	memset(buf, 0, sizeof(buf));
+	return pass;
+}
 
 /*
- * Reads a passphrase from /dev/tty with echo turned off.  Returns the
- * passphrase (allocated with xmalloc), being very careful to ensure that
- * no other userland buffer is storing the password.
- */
-/*
- * Note:  the funcationallity of this routing has been moved to
- * cli_read_passphrase().  This routing remains to maintain
- * compatibility with existing code.
+ * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
+ * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
+ * RP_ALLOW_STDIN is set, the passphrase will be read from stdin if no
+ * tty is available
  */
 char *
-read_passphrase(char *prompt, int from_stdin)
+read_passphrase(const char *prompt, int flags)
 {
-	return cli_read_passphrase(prompt, from_stdin, 0);
+	char *askpass = NULL, *ret, buf[1024];
+	int rppflags, use_askpass = 0, ttyfd;
+
+	rppflags = (flags & RP_ECHO) ? RPP_ECHO_ON : RPP_ECHO_OFF;
+	if (flags & RP_ALLOW_STDIN) {
+		if (!isatty(STDIN_FILENO))
+			use_askpass = 1;
+	} else {
+		rppflags |= RPP_REQUIRE_TTY;
+		ttyfd = open("/dev/tty", O_RDWR);
+		if (ttyfd >= 0)
+			close(ttyfd);
+		else
+			use_askpass = 1;
+	}
+
+	if (use_askpass && getenv("DISPLAY")) {
+		if (getenv(SSH_ASKPASS_ENV))
+			askpass = getenv(SSH_ASKPASS_ENV);
+		else
+			askpass = _PATH_SSH_ASKPASS_DEFAULT;
+		return ssh_askpass(askpass, prompt);
+	}
+
+	if (readpassphrase(prompt, buf, sizeof buf, rppflags) == NULL)
+		return xstrdup("");
+
+	ret = xstrdup(buf);
+	memset(buf, 'x', sizeof buf);
+	return ret;
 }
