@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211 2002/09/07 18:51:05 tsutsui Exp $ */
+/*	$NetBSD: pmap.c,v 1.212 2002/09/08 05:35:42 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5371,7 +5371,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 		}
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
-			struct pvlist *pv;
+			struct pvlist *opv;
 			u_int pfn;
 
 			/*
@@ -5381,8 +5381,8 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 			 */
 
 			pfn = tpte & PG_PFNUM;
-			if ((pv = pvhead(pfn)) != NULL)
-				pv_unlink4_4c(pv, pm, va);
+			if ((opv = pvhead(pfn)) != NULL)
+				pv_unlink4_4c(opv, pm, va);
 			if ((tpte & PG_NC) == 0) {
 				setcontext4(0);	/* ??? */
 				cache_flush_page((int)va);
@@ -5587,10 +5587,10 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 				curproc->p_comm, curproc->p_pid, va);
 #endif
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
-				struct pvlist *pv;
+				struct pvlist *opv;
 				u_int pfn = tpte & PG_PFNUM;
-				if ((pv = pvhead(pfn)) != NULL)
-					pv_unlink4_4c(pv, pm, va);
+				if ((opv = pvhead(pfn)) != NULL)
+					pv_unlink4_4c(opv, pm, va);
 				if (doflush && (tpte & PG_NC) == 0)
 					cache_flush_page((int)va);
 			}
@@ -5956,7 +5956,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 		}
 
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
-			struct pvlist *pv;
+			struct pvlist *opv;
 			u_int pfn = (tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT;
 #ifdef DEBUG
 printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
@@ -5967,8 +5967,8 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			if ((pv = pvhead(pfn)) != NULL)
-				pv_unlink4m(pv, pm, va);
+			if ((opv = pvhead(pfn)) != NULL)
+				pv_unlink4m(opv, pm, va);
 			if (tpte & SRMMU_PG_C) {
 				setcontext4m(0);	/* ??? */
 				cache_flush_page((int)va);
@@ -6153,12 +6153,12 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 					(int)va, tpte, pteproto);
 #endif
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
-				struct pvlist *pv;
+				struct pvlist *opv;
 				u_int pfn =
 				    (tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT;
-				if ((pv = pvhead(pfn)) != NULL) {
-					pv->pv_flags |= MR4M(tpte);
-					pv_unlink4m(pv, pm, va);
+				if ((opv = pvhead(pfn)) != NULL) {
+					opv->pv_flags |= MR4M(tpte);
+					pv_unlink4m(opv, pm, va);
 				}
 				if (pm->pm_ctx && (tpte & SRMMU_PG_C))
 					cache_flush_page((int)va);
