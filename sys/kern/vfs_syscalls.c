@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.32 1994/08/13 07:05:53 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.33 1994/08/15 22:06:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1041,7 +1041,7 @@ out1:
 	return (error);
 }
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2)
 /*
  * Get file status; this version follows links.
  */
@@ -1129,7 +1129,7 @@ cvtstat(st, ost)
 	ost->st_flags = st->st_flags;
 	ost->st_gen = st->st_gen;
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_43 || COMPAT_SUNOS || COMPAT_IBCS2 */
 
 /*
  * Get file status; this version follows links.
