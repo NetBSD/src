@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.22 1999/07/18 13:47:50 mrg Exp $
+$NetBSD: acronyms,v 1.23 1999/07/21 01:14:49 lukem Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -16,6 +16,7 @@ DTWT	do the wrong thing
 DWIM	do what I mean
 FWIW	for what it's worth
 FYI	for your information
+IIRC	if I recall correctly
 IMO	in my opinion
 IMHO	in my humble opinion
 IMNSHO	in my not so humble opinion
