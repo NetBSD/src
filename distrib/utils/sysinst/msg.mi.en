@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.116 2003/07/27 07:45:08 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.117 2003/07/31 13:50:05 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -752,7 +752,7 @@ that the network is working?  (No aborts the install process.)
 }
 
 message makedev
-{Making device files ...
+{Making device nodes ...
 }
 
 message badfs
