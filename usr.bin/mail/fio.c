@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.20 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: fio.c,v 1.21 2002/03/29 15:07:52 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.20 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: fio.c,v 1.21 2002/03/29 15:07:52 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ setptr(FILE *ibuf, off_t offset)
 	this.m_flag = MUSED|MNEW;
 	this.m_size = 0;
 	this.m_lines = 0;
+	this.m_blines = 0;
 	this.m_block = 0;
 	this.m_offset = 0;
 	for (;;) {
@@ -133,6 +134,7 @@ setptr(FILE *ibuf, off_t offset)
 			this.m_flag = MUSED|MNEW;
 			this.m_size = 0;
 			this.m_lines = 0;
+			this.m_blines = 0;
 			this.m_block = blockof(offset);
 			this.m_offset = offsetof(offset);
 			inhead = 1;
@@ -160,6 +162,17 @@ setptr(FILE *ibuf, off_t offset)
 		offset += len;
 		this.m_size += len;
 		this.m_lines++;
+		if (!inhead) {
+			int lines_plus_wraps = 1;
+			int linelen = strlen(linebuf);
+
+			if (linelen > screenwidth) {
+				lines_plus_wraps = linelen / screenwidth;
+				if (linelen % screenwidth != 0)
+					++lines_plus_wraps;
+			}
+			this.m_blines += lines_plus_wraps;
+		}
 		maybe = linebuf[0] == 0;
 	}
 }
@@ -242,6 +255,7 @@ makemessage(FILE *f, int omsgCount)
 		errx(1, "Message temporary file corrupted");
 	message[msgCount].m_size = 0;
 	message[msgCount].m_lines = 0;
+	message[msgCount].m_blines = 0;
 	Fclose(f);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.14 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: def.h,v 1.15 2002/03/29 15:07:52 ross Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.14 2002/03/04 03:16:10 wiz Exp $
+ *	$NetBSD: def.h,v 1.15 2002/03/29 15:07:52 ross Exp $
  */
 
 /*
@@ -83,6 +83,7 @@ struct message {
 	short	m_offset;		/* offset in block of message */
 	long	m_size;			/* Bytes in the message */
 	long	m_lines;		/* Lines in the message */
+	long	m_blines;		/* Body (non-header) lines */
 };
 
 /*

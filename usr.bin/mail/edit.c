@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.14 2002/03/06 13:45:51 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.15 2002/03/29 15:07:52 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.14 2002/03/06 13:45:51 wiz Exp $");
+__RCSID("$NetBSD: edit.c,v 1.15 2002/03/29 15:07:52 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,11 +120,22 @@ edit1(int *msgvec, int editortype)
 			mp->m_offset = offsetof(size);
 			mp->m_size = fsize(fp);
 			mp->m_lines = 0;
+			mp->m_blines = 0;
 			mp->m_flag |= MODIFY;
 			rewind(fp);
 			while ((c = getc(fp)) != EOF) {
-				if (c == '\n')
+				//
+				// XXX. if you edit a message, we treat
+				// header lines as body lines in the recount.
+				// This is because the original message copy
+				// and the edit reread use different code to
+				// count the lines, and this one here is
+				// simple-minded.
+				//
+				if (c == '\n') {
 					mp->m_lines++;
+					mp->m_blines++;
+				}
 				if (putc(c, otf) == EOF)
 					break;
 			}
