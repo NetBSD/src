@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.13 1994/07/04 19:37:51 chopps Exp $
+ *	$Id: disksubr.c,v 1.14 1994/07/06 20:51:14 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -230,7 +230,6 @@ readdisklabel(dev, strat, lp, clp)
 			continue;
 		}
 
-
 		/*
 		 * XXXX should be ">" however some vendors don't know
 		 * what a table size is so, we hack for them.
@@ -248,61 +247,39 @@ readdisklabel(dev, strat, lp, clp)
 		case ADT_NETBSDROOT:
 			pp = &lp->d_partitions[0];
 			if (pp->p_size) {
-				printf("WARNING more than one root "
-				    "partition..ignoring\n");
-				/*
-				 * invalidate cpu label
-				 */
-				clp->rdblock = RDBNULL;
+				printf("WARN: more than one root, ignoring\n");
+				clp->rdblock = RDBNULL;	/* invlidate cpulab */
 				continue;
 			}
-			trypart = 0;
 			break;
 		case ADT_NETBSDSWAP:
 			pp = &lp->d_partitions[1];
 			if (pp->p_size) {
-				printf("WARNING more than one swap " 
-				    "partition..ignoring\n");
-				/*
-				 * invalidate cpu label
-				 */
-				clp->rdblock = RDBNULL;
+				printf("WARN: more than one swap, ignoring\n");
+				clp->rdblock = RDBNULL;	/* invlidate cpulab */
 				continue;
 			}
-			trypart = 1;
 			break;
 		case ADT_NETBSDUSER:
-			trypart = RAW_PART + 1;
-			break;
 		case ADT_AMIGADOS:
-			trypart = 8;
-			break;
 		case ADT_AMIX:
-			trypart = 8;
-			break;
 		case ADT_UNKNOWN:
-			trypart = 8;
+			pp = &lp->d_partitions[lp->d_npartitions];
 			break;
 		}
-
-		for (i = trypart; i < MAXPARTITIONS; i++) {
-			pp = &lp->d_partitions[i];
-			if (pp->p_size == 0)
+		/*
+		 * insert sort in increasing offset order
+		 */
+		while ((pp - lp->d_partitions) > RAW_PART + 1) {
+			daddr_t boff;
+			
+			boff = pbp->e.lowcyl * lp->d_secpercyl;
+			if (boff > (pp - 1)->p_offset)
 				break;
+			*pp = *(pp - 1);	/* struct copy */
+			pp--;
 		}
-		if (i == MAXPARTITIONS) {
-			for (i = MAXPARTITIONS - 1; i > RAW_PART; i--) {
-				pp = &lp->d_partitions[i];
-				if (pp->p_size == 0)
-					break;
-			}
-			if (i == RAW_PART) {
-				printf("more than %d (limit) partitions\n",
-					MAXPARTITIONS - 1);
-				goto done;
-			}
-		}
-
+		i = (pp - lp->d_partitions);
 		if (nopname || i == 1) {
 			/*
 			 * either we have no packname yet or we found 
@@ -344,29 +321,7 @@ readdisklabel(dev, strat, lp, clp)
 		 * store this partitions block number
 		 */
 		clp->pblist[clp->pbindex[i] = cindex++];
-
 	}
-	/*
-	 * bring them together. (starting at first user part)
-	 */
-	for (i = 3; i < lp->d_npartitions; i++) {
-		int j;
-		if (lp->d_partitions[i].p_size != 0)
-			continue;
-		for (j = i + 1; j < lp->d_npartitions; j++) {
-			if (lp->d_partitions[j].p_size == 0)
-				continue;
-			bcopy(&lp->d_partitions[j], &lp->d_partitions[i],
-				sizeof(struct partition));
-			bzero(&lp->d_partitions[j], sizeof(struct partition));
-			break;
-		}
-	}
-	for (i = 3; i < lp->d_npartitions; i++)
-		if (lp->d_partitions[i].p_size == 0)
-			break;
-	lp->d_npartitions = i;
-
 	/*
 	 * calulate new checksum.
 	 */
