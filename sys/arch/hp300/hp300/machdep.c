@@ -37,50 +37,56 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.32 1994/05/05 10:11:27 mycroft Exp $
+ *	$Id: machdep.c,v 1.33 1994/05/07 06:23:12 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "signalvar.h"
-#include "kernel.h"
-#include "map.h"
-#include "proc.h"
-#include "buf.h"
-#include "reboot.h"
-#include "conf.h"
-#include "file.h"
-#include "clist.h"
-#include "callout.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "msgbuf.h"
-#include "user.h"
-#include "exec.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/clist.h>
+#include <sys/callout.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/mount.h>
+#include <sys/user.h>
+#include <sys/exec.h>
+#include <sys/sysctl.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
 #ifdef SYSVSHM
-#include "shm.h"
+#include <sys/shm.h>
 #endif
 #ifdef COMPAT_HPUX
-#include "../hpux/hpux.h"
+#include <hp300/hpux/hpux.h>
 #endif
 
-#include "sys/exec.h"
-#include "sys/vnode.h"
-
-#include "../include/cpu.h"
-#include "../include/reg.h"
-#include "../include/psl.h"
-#include "../include/pte.h"
-#include "isr.h"
-#include "net/netisr.h"
+#include <hp300/include/cpu.h>
+#include <hp300/include/reg.h>
+#include <hp300/include/psl.h>
+#include <dev/cons.h>
+#include <hp300/hp300/isr.h>
+#include <hp300/include/pte.h>
+#include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
-#include "vm/vm_object.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
+#include <vm/vm_kern.h>
+
+/* the following is used externally (sysctl_hw) */
+char machine[] = "hp300";		/* cpu "architecture" */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
@@ -225,6 +231,18 @@ again:
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 	
 	/*
@@ -397,70 +415,101 @@ setregs(p, entry, stack, retval)
 #endif
 }
 
+/*
+ * Info for CTL_HW
+ */
+char	cpu_model[120];
+extern	char version[];
+
 identifycpu()
 {
 
-	printf("HP9000/");
+	strcpy(cpu_model, "HP9000/");
 	switch (machineid) {
 	case HP_320:
-		printf("320 (16.67Mhz");
+		strcat(cpu_model, "320 (16.67");
 		break;
 	case HP_330:
-		printf("318/319/330 (16.67Mhz");
+		strcat(cpu_model, "318/319/330 (16.67");
 		break;
 	case HP_340:
-		printf("340 (16.67Mhz");
+		strcat(cpu_model, "340 (16.67");
 		break;
 	case HP_350:
-		printf("350 (25Mhz");
+		strcat(cpu_model, "350 (25");
 		break;
 	case HP_360:
-		printf("360 (25Mhz");
+		strcat(cpu_model, "360 (25");
 		break;
 	case HP_370:
-		printf("370 (33.33Mhz");
+		strcat(cpu_model, "370 (33.33");
 		break;
 	case HP_375:
-		printf("345/375 (50Mhz");
+		strcat(cpu_model, "345/375 (50");
 		break;
 	default:
-		printf("\nunknown machine type %d\n", machineid);
+		printf("unknown machine type %d\n", machineid);
 		panic("startup");
 	}
-	printf(" MC680%s CPU", mmutype == MMU_68030 ? "30" : "20");
 	switch (mmutype) {
 	case MMU_68030:
-		printf("+MMU");
+		strcat(cpu_model, "Mhz MC68030 CPU+MMU, ");
 		break;
 	case MMU_68851:
-		printf(", MC68851 MMU");
+		strcat(cpu_model, "Mhz MC68020 CPU, MC68851 MMU, ");
 		break;
 	case MMU_HP:
-		printf(", HP MMU");
+		strcat(cpu_model, "Mhz MC68020 CPU, HP MMU, ");
 		break;
 	default:
-		printf("\nunknown MMU type %d\n", mmutype);
+		printf("unknown MMU type %d\n", mmutype);
 		panic("startup");
 	}
+	switch (machineid) {
+	case HP_320:
+	case HP_330:
+	case HP_340:
+		strcat(cpu_model, "16.67");
+		break;
+	case HP_350:
+		strcat(cpu_model, "20");
+		break;
+	case HP_360:
+		strcat(cpu_model, "25");
+		break;
+	case HP_370:
+		strcat(cpu_model, "33.33");
+		break;
+	case HP_375:
+		strcat(cpu_model, "50");
+		break;
+	}
 	if (mmutype == MMU_68030)
-		printf(", %sMhz MC68882 FPU",
-		       machineid == HP_340 ? "16.67" :
-		       (machineid == HP_360 ? "25" :
-			(machineid == HP_370 ? "33.33" : "50")));
+		strcat(cpu_model, "Mhz MC68882 FPU, ");
 	else
-		printf(", %sMhz MC68881 FPU",
-		       machineid == HP_350 ? "20" : "16.67");
+		strcat(cpu_model, "Mhz MC68881 FPU, ");
+	switch (machineid) {
+	case HP_320:
+		strcat(cpu_model, "16K");
+		break;
+	default:
+		strcat(cpu_model, "32K");
+		break;
+	case HP_370:
+		strcat(cpu_model, "64K");
+		break;
+	}
 	switch (ectype) {
 	case EC_VIRT:
-		printf(", %dK virtual-address cache",
+		strcat(cpu_model, " virtual-address cache)",
 		       machineid == HP_320 ? 16 : 32);
 		break;
 	case EC_PHYS:
-		printf(", %dK physical-address cache",
+		strcat(cpu_model, " physical-address cache)",
 		       machineid == HP_370 ? 64 : 32);
 		break;
 	}
-	printf(")\n");
+	printf("%s\n", cpu_model);
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -483,6 +532,38 @@ identifycpu()
 	default:
 		break;
 	}
+}
+
+/*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 #ifdef COMPAT_HPUX
@@ -577,7 +658,7 @@ sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
 	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
+	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
 	extern short exframesize[];
@@ -585,7 +666,7 @@ sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -599,9 +680,11 @@ sendsig(catcher, sig, mask, code)
 	else
 #endif
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+					 psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -800,8 +883,10 @@ sigreturn(p, uap, retval)
 		    (scp = hscp->hsc_realsc) == 0 ||
 		    useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 		    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc)) {
-			p->p_sigacts->ps_sigstk.ss_onstack =
-			    hscp->hsc_onstack & 01;
+			if (hscp->hsc_onstack & 01)
+				p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+			else
+				p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 			p->p_sigmask = hscp->hsc_mask &~ sigcantmask;
 			frame = (struct frame *) p->p_md.md_regs;
 			frame->f_regs[SP] = hscp->hsc_sp;
@@ -833,7 +918,10 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
