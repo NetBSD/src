@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.3 1996/10/13 01:38:38 christos Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.3.6.1 1997/02/27 19:39:19 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/device.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -87,8 +88,8 @@ dec_le_common_attach(sc, eap)
 	/*
 	 * Get the ethernet address out of rom
 	 */
-	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++) {
-		sc->sc_arpcom.ac_enaddr[i] = *eap;
+	for (i = 0; i < sizeof(sc->sc_enaddr); i++) {
+		sc->sc_enaddr[i] = *eap;
 		eap += 4;
 	}
 
