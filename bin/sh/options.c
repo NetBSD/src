@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.33 2003/01/22 20:36:04 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.34 2003/04/15 07:40:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.33 2003/01/22 20:36:04 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.34 2003/04/15 07:40:56 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -406,7 +406,7 @@ getopts(char *optstr, char *optvar, char **optfirst, char ***optnext, char **opt
 	int done = 0;
 	int ind = 0;
 	int err = 0;
-	char s[10];
+	char s[12];
 
 	if ((p = *optpptr) == NULL || *p == '\0') {
 		/* Current word is done, advance */
