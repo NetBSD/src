@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.4 1998/06/19 22:04:25 leo Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.5 1998/06/23 08:07:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -374,14 +374,30 @@ again:
 		}
 		/* send packet command */
 		/* Commands are 12 or 16 bytes long. It's 32-bit aligned */
-		if (drvp->drive_flags & DRIVE_CAP32) {
-			bus_space_write_multi_stream_4(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data, (u_int32_t *)sc_xfer->cmd,
-			    sc_xfer->cmdlen >> 2);
+		if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
+			if (drvp->drive_flags & DRIVE_CAP32) {
+				bus_space_write_multi_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    (u_int32_t *)sc_xfer->cmd,
+				    sc_xfer->cmdlen >> 2);
+			} else {
+				bus_space_write_multi_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    (u_int16_t *)sc_xfer->cmd,
+				    sc_xfer->cmdlen >> 1);
+			}
 		} else {
-			bus_space_write_multi_stream_2(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data, (u_int16_t *)sc_xfer->cmd,
-			    sc_xfer->cmdlen >> 1);
+			if (drvp->drive_flags & DRIVE_CAP32) {
+				bus_space_write_multi_stream_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    (u_int32_t *)sc_xfer->cmd,
+				    sc_xfer->cmdlen >> 2);
+			} else {
+				bus_space_write_multi_stream_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    (u_int16_t *)sc_xfer->cmd,
+				    sc_xfer->cmdlen >> 1);
+			}
 		}
 		/* Start the DMA channel if necessary */
 		if ((drvp->drive_flags & DRIVE_DMA) &&
@@ -410,10 +426,17 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			bus_space_write_multi_stream_2(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount >> 1);
+			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
+				bus_space_write_multi_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    xfer->c_bcount >> 1);
+			} else {
+				bus_space_write_multi_stream_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    xfer->c_bcount >> 1);
+			}
 			for (i = xfer->c_bcount; i < len; i += 2)
 				bus_space_write_2(chp->cmd_iot, chp->cmd_ioh,
 				    wd_data, 0);
@@ -421,19 +444,30 @@ again:
 			xfer->c_bcount = 0;
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
+			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
+				bus_space_write_multi_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip, len >> 2);
+			    else
 				bus_space_write_multi_stream_4(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
 				    xfer->databuf + xfer->c_skip, len >> 2);
-				xfer->c_skip += len & 0xfffffffc;
-				xfer->c_bcount -= len & 0xfffffffc;
-				len = len & 0x03;
+
+			    xfer->c_skip += len & 0xfffffffc;
+			    xfer->c_bcount -= len & 0xfffffffc;
+			    len = len & 0x03;
 			}
 			if (len > 0) {
+			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
+				bus_space_write_multi_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip, len >> 1);
+			    else
 				bus_space_write_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
 				    xfer->databuf + xfer->c_skip, len >> 1);
-				xfer->c_skip += len;
-				xfer->c_bcount -= len;
+			    xfer->c_skip += len;
+			    xfer->c_bcount -= len;
 			}
 		}
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {
@@ -453,27 +487,44 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			bus_space_read_multi_stream_2(chp->cmd_iot,
+			if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)) {
+			    bus_space_read_multi_2(chp->cmd_iot,
 			    chp->cmd_ioh, wd_data,
 			    xfer->databuf + xfer->c_skip, xfer->c_bcount >> 1);
+			} else {
+			    bus_space_read_multi_stream_2(chp->cmd_iot,
+			    chp->cmd_ioh, wd_data,
+			    xfer->databuf + xfer->c_skip, xfer->c_bcount >> 1);
+			}
 			wdcbit_bucket(chp, len - xfer->c_bcount);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
+			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
+				bus_space_read_multi_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip, len >> 2);
+			    else
 				bus_space_read_multi_stream_4(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
 				    xfer->databuf + xfer->c_skip, len >> 2);
-				xfer->c_skip += len & 0xfffffffc;
-				xfer->c_bcount -= len & 0xfffffffc;
-				len = len & 0x03;
+				
+			    xfer->c_skip += len & 0xfffffffc;
+			    xfer->c_bcount -= len & 0xfffffffc;
+			    len = len & 0x03;
 			}
 			if (len > 0) {
+			    if ((chp->wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM))
+				bus_space_read_multi_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip, len >> 1);
+			    else
 				bus_space_read_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
 				    xfer->databuf + xfer->c_skip, len >> 1);
-				xfer->c_skip += len;
-				xfer->c_bcount -=len;
+			    xfer->c_skip += len;
+			    xfer->c_bcount -=len;
 			}
 		}
 		if ((sc_xfer->flags & SCSI_POLL) == 0) {

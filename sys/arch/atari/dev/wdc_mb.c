@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.1.2.2 1998/06/05 08:38:56 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.1.2.3 1998/06/23 08:07:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -59,6 +59,10 @@
  */
 static int	claim_hw __P((void *, int));
 static void	free_hw __P((void *));
+static void	read_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int16_t *, bus_size_t));
+static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int16_t *, bus_size_t));
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
@@ -143,6 +147,8 @@ wdc_mb_attach(parent, self, aux)
 	    mb_alloc_bus_space_tag();
 	sc->wdc_channel.cmd_iot->stride = 2;
 	sc->wdc_channel.cmd_iot->wo_1   = 1;
+	sc->wdc_channel.cmd_iot->abs_rms_2 = read_multi_2_swap;
+	sc->wdc_channel.cmd_iot->abs_wms_2 = write_multi_2_swap;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, 0xfff00000, 0x40, 0,
 			  &sc->wdc_channel.cmd_ioh)) {
 		printf("%s: couldn't map registers\n",
@@ -160,7 +166,7 @@ wdc_mb_attach(parent, self, aux)
 	 */
 	MFP->mf_ierb &= ~IB_DINT;
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_HWLOCK;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_HWLOCK|WDC_CAPABILITY_ATA_NOSTREAM;
 	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
 	sc->sc_wdcdev.free_hw  = &free_hw;
@@ -224,4 +230,41 @@ void *softc;
 	 */
 /*	if (machineid & ATARI_FALCON) */
 		st_dmafree(softc, &wd_lock);
+}
+
+/*
+ * XXX
+ * This piece of uglyness is caused by the fact that the byte lanes of
+ * the data-register are swapped on the atari. This works OK for an IDE
+ * disk, but turns into a nightmare when used on atapi devices.
+ */
+#define calc_addr(base, off, stride, wm)	\
+	((u_long)(base) + ((off) << (stride)) + (wm))
+
+static void
+read_multi_2_swap(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int16_t		*a;
+{
+	u_int16_t	*ba;
+
+	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	for (; c; a++, c--)
+		*a = bswap16(*ba);
+}
+
+static void
+write_multi_2_swap(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int16_t		*a;
+{
+	u_int16_t	*ba;
+
+	ba = (u_int16_t *)calc_addr(h, o, t->stride, t->wo_2);
+	for (; c; a++, c--)
+		*ba = bswap16(*a);
 }
