@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.18 2005/01/01 11:30:27 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.19 2005/01/01 12:46:00 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.18 2005/01/01 11:30:27 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.19 2005/01/01 12:46:00 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1714,7 +1714,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		s = splaudio();
 		/* figure out where next DMA will start */
 		stamp = sc->sc_rr.stamp;
-		offs = sc->sc_rr.s.inp - sc->sc_rr.s.start;
+		offs = sc->sc_rustream->inp - sc->sc_rustream->start;
 		splx(s);
 		ao->samples = stamp;
 		ao->deltablks =
@@ -1729,14 +1729,15 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		s = splaudio();
 		/* figure out where next DMA will start */
 		stamp = sc->sc_pr.stamp;
-		offs = sc->sc_pr.s.outp - sc->sc_pr.s.start + sc->sc_pr.blksize;
+		offs = sc->sc_pustream->outp - sc->sc_pustream->start
+			+ sc->sc_pr.blksize;
 		splx(s);
 		ao->samples = stamp;
 		ao->deltablks =
 		  (stamp / sc->sc_pr.blksize) -
 		  (sc->sc_pr.stamp_last / sc->sc_pr.blksize);
 		sc->sc_pr.stamp_last = stamp;
-		if (sc->sc_pr.s.start + offs >= sc->sc_pr.s.end)
+		if (sc->sc_pustream->start + offs >= sc->sc_pustream->end)
 			offs = 0;
 		ao->offset = offs;
 		break;
@@ -3217,8 +3218,8 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 	p->active = sc->sc_pbus;
 	r->active = sc->sc_rbus;
 
-	p->buffer_size = sc->sc_pr.s.bufsize;
-	r->buffer_size = sc->sc_rr.s.bufsize;
+	p->buffer_size = sc->sc_pustream->bufsize;
+	r->buffer_size = sc->sc_pustream->bufsize;
 
 	ai->blocksize = sc->sc_pr.blksize;
 	ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
