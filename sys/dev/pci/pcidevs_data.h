@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.644 2004/08/05 16:26:41 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.645 2004/08/05 21:44:01 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.645 2004/08/05 16:26:05 cube Exp 
+ *	NetBSD: pcidevs,v 1.646 2004/08/05 21:43:46 mycroft Exp 
  */
 
 /*
@@ -2309,7 +2309,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
-	    "3c556 V.90 MiniPCI Modem",
+	    "3c556 V.90 Mini-PCI Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940,
@@ -2349,15 +2349,15 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
-	    "3c555 10/100 MiniPCI Ethernet",
+	    "3c555 10/100 Mini-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
-	    "3c556 10/100 MiniPCI Ethernet",
+	    "3c556 10/100 Mini-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B,
-	    "3c556B 10/100 MiniPCI Ethernet",
+	    "3c556B 10/100 Mini-PCI Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_E,
@@ -2932,12 +2932,12 @@ const struct pci_product pci_products[] = {
 	    "PC4500/PC4800 Wireless LAN Adapter",
 	},
 	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_350,
-	    "350 Wireless LAN Adapter",
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCI350,
+	    "PCI350 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_MPI350,
-	    "350 miniPCI Wireless LAN Adapter",
+	    "MPI350 Mini-PCI Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
@@ -5369,7 +5369,7 @@ const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100,
-	    "PRO/Wireless LAN 2100 3B Mini PCI Adapter",
+	    "PRO/Wireless LAN 2100 3B Mini-PCI Adapter",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX,
