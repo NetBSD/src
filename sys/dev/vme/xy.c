@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.53 2003/08/28 16:36:22 mrg Exp $	*/
+/*	$NetBSD: xy.c,v 1.54 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.53 2003/08/28 16:36:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.54 2003/09/29 09:50:22 wiz Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1525,7 +1525,7 @@ xyc_startbuf(xycsc, xysc, bp)
  * [2] we can only be blocked if there is a WAIT type I/O request being
  * run.   since this can only happen when we are crashing, we wait a sec
  * and then steal the IOPB.  for case [3] the process can sleep
- * on the iorq free list until some iopbs are avaliable.
+ * on the iorq free list until some iopbs are available.
  */
 
 

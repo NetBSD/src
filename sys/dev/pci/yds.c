@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.17 2003/03/12 13:36:22 minoura Exp $	*/
+/*	$NetBSD: yds.c,v 1.18 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.17 2003/03/12 13:36:22 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.18 2003/09/29 09:50:22 wiz Exp $");
 
 #include "mpu.h"
 
@@ -788,7 +788,7 @@ yds_attach(parent, self, aux)
 		delay(1);
 	}
 	if (to == AC97_TIMEOUT) {
-		printf("%s: no AC97 avaliable\n", sc->sc_dev.dv_xname);
+		printf("%s: no AC97 available\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
