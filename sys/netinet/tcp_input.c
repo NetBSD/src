@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.46 1998/03/31 22:49:09 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.47 1998/03/31 23:44:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,13 +149,11 @@ extern u_long sb_max;
 
 /*
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
- * the other side PUSH'd or we have already delayed an ACK (must send
- * an ACK every two segments).
+ * we have already delayed an ACK (must send an ACK every two segments).
  */
 #define	TCP_SETUP_ACK(tp, ti) \
 do { \
-	if ((ti)->ti_flags & TH_PUSH || \
-	    (tp)->t_flags & TF_DELACK) \
+	if ((tp)->t_flags & TF_DELACK) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
 		TCP_SET_DELACK(tp); \
