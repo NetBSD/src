@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.23 1998/07/04 06:52:07 ross Exp $
+.\"	$NetBSD: sh.1,v 1.24 1998/10/29 23:23:36 garbled Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1211,7 +1211,7 @@ FCEDIT
 Name of the editor to use.
 .TP 2
 HISTSIZE
-The number of previous commands that are accessable.
+The number of previous commands that are accessible.
 .RE
 .TP
 fg [ job ]
@@ -1219,15 +1219,75 @@ Move the specified job or the current job to the
 foreground.
 .TP
 getopts optstring var
-The POSIX getopts command.
-The getopts command deprecates the older getopt command.
-The first argument should be a series of letters, each possibly
-followed by a colon which indicates that the option takes an argument.
-The specified variable is set to the parsed option.  The index of
-the next argument is placed into the shell variable OPTIND.
-If an option takes an argument, it is placed into the shell variable
-OPTARG.  If an invalid option is encountered, var is set to '?'.
-It returns a false value (1) when it encounters the end of the options.
+The POSIX 
+.I getopts
+command, not to be confused with the
+.B Bell Labs
+-derived
+.IR getopt(1) .
+.sp
+The first argument should be a series of letters, each of which may be
+optionally followed by a colon to indicate that the option requires an
+argument.  The variable specified is set to the parsed option.
+.sp
+The 
+.I getopts
+command deprecates the older
+.IR getopt(1)
+utility due to its handling
+of arguments containing whitespace.
+.sp
+The
+.I getopts
+builtin may be used to obtain options and their arguments
+from a list of parameters.  When invoked,
+.I getopts
+places the value of the next option from the option string 
+in the list in the shell variable specified by
+.B var
+and it's index in the shell variable
+.BR OPTIND .
+When the shell is invoked,
+.BR OPTIND
+is initialized to 1.  For each option that requires an argument, the
+.I getopts
+builtin will place it in the shell variable
+.BR OPTARG .
+If an option is not allowed for in the
+.BR optstring ,
+then
+.B OPTARG
+will be unset.
+.sp
+.BR optstring
+is a string of recognized option letters (see
+.IR getopt(3) ).
+If a letter
+is followed by a colon, the option is expected to have an argument which
+may or may not be separated from it by white space.  If an option character
+is not found where expected,
+.I getopts
+will set the variable
+.B var
+to a
+.BR ? ;
+.I getopts
+will then unset
+.B OPTARG
+and and write output to standard error.  By specifying a colon as the
+first character of
+.B optstring
+all errors will be ignored.
+.sp
+A nonzero value is returned when the last option is reached.
+If there are no remaining arguments, getopt will set
+.B var
+to the special option,
+.BR -- ,
+otherwise, it will set
+.B var
+to
+.BR ? .
 .TP
 hash -rv command...
 The shell maintains a hash table which remembers the
@@ -1346,7 +1406,7 @@ Inquire about or set the hard or soft limits on processes or
 set new limits.
 The choice between hard limit (which no process is allowed to
 violate, and which may not be raised once it has been lowered)
-and soft limit (which causes processes to be signalled but not
+and soft limit (which causes processes to be signaled but not
 necessarily killed, and which may be raised) is made with these flags:
 .RS +.5i
 .TP 2
