@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.1 1996/01/31 23:18:30 mark Exp $ */
+/* $NetBSD: start.S,v 1.2 1996/06/03 21:25:01 mark Exp $ */
 
 /* Copyright (c) 1994 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
@@ -40,11 +40,8 @@
  * Kernel entry/exit code
  *
  * Created      : 12/09/94
- * Last updated : 12/09/94
  *
  * Based on kate/boot/_main.s
- *
- *	$Id: start.S,v 1.1 1996/01/31 23:18:30 mark Exp $
  */
 
 #include "regs.h"

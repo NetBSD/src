@@ -1,4 +1,4 @@
-/* $NetBSD: bsdbooter.c,v 1.1 1996/01/31 23:18:08 mark Exp $ */
+/* $NetBSD: bsdbooter.c,v 1.2 1996/06/03 21:24:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -40,11 +40,8 @@
  * RiscBSD boot loader
  *
  * Created      : 12/09/94
- * Last updated : 08/03/95
  *
  * Based on kate/boot/boot.c
- *
- *    $Id: bsdbooter.c,v 1.1 1996/01/31 23:18:08 mark Exp $
  */
 
 /* Include standard header files */

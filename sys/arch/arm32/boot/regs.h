@@ -1,4 +1,4 @@
-/* $NetBSD: regs.h,v 1.1 1996/01/31 23:18:21 mark Exp $ */
+/* $NetBSD: regs.h,v 1.2 1996/06/03 21:24:59 mark Exp $ */
 
 /* Copyright (c) 1994,1995 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
@@ -40,9 +40,6 @@
  * Assembly register definitions
  *
  * Created      : 14/01/96
- * Last updated : 14/01/96
- *
- *	$Id: regs.h,v 1.1 1996/01/31 23:18:21 mark Exp $
  */
 
 fp	.req	r11

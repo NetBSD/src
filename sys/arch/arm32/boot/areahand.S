@@ -1,4 +1,4 @@
-/* $NetBSD: areahand.S,v 1.1 1996/01/31 23:18:01 mark Exp $ */
+/* $NetBSD: areahand.S,v 1.2 1996/06/03 21:24:50 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -38,12 +38,7 @@
  *
  * areahand.s
  *
- *
- *
  * Created      : 12/09/94
- * Last updated : 12/09/94
- *
- *    $Id: areahand.S,v 1.1 1996/01/31 23:18:01 mark Exp $
  */
 
 #include "regs.h"

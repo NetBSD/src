@@ -1,4 +1,4 @@
-/* $NetBSD: memset.S,v 1.1 1996/01/31 23:18:19 mark Exp $ */
+/* $NetBSD: memset.S,v 1.2 1996/06/03 21:24:58 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * optimized memset function
  *
  * Created      : 16/05/95
- * Last updated : 16/05/95
- *
- *    $Id: memset.S,v 1.1 1996/01/31 23:18:19 mark Exp $
  */
 
 sp	.req	r13

@@ -1,4 +1,4 @@
-/* $NetBSD: _bsdboot.S,v 1.1 1996/01/31 23:17:52 mark Exp $ */
+/* $NetBSD: _bsdboot.S,v 1.2 1996/06/03 21:24:48 mark Exp $ */
 
 /* Copyright (c) 1994 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
@@ -40,11 +40,8 @@
  * Kernel entry/exit code
  *
  * Created      : 12/09/94
- * Last updated : 12/09/94
  *
  * Based on kate/boot/_boot.s
- *
- *	$Id: _bsdboot.S,v 1.1 1996/01/31 23:17:52 mark Exp $
  */
 
 #include "regs.h"

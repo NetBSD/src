@@ -1,4 +1,4 @@
-/* $NetBSD: enteros.S,v 1.1 1996/01/31 23:18:11 mark Exp $ */
+/* $NetBSD: enteros.S,v 1.2 1996/06/03 21:24:53 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,11 +39,8 @@
  * enteros.s
  *
  * Created      : 12/09/94
- * Last updated : 12/09/94
  *
  * Based on kate/library/enteros.s
- *
- *    $Id: enteros.S,v 1.1 1996/01/31 23:18:11 mark Exp $
  */
 
 #include "regs.h"

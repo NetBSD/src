@@ -1,4 +1,4 @@
-/* $NetBSD: bcopyinout.S,v 1.3 1996/02/02 18:05:47 mycroft Exp $ */
+/* $NetBSD: bcopyinout.S,v 1.4 1996/06/03 21:21:32 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * optimized and fault protected copyinout function
  *
  * Created      : 16/05/95
- * Last updated : 16/05/95
- *
- *    $Id: bcopyinout.S,v 1.3 1996/02/02 18:05:47 mycroft Exp $
  */
 
 #include "assym.h"

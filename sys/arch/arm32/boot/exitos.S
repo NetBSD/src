@@ -1,4 +1,4 @@
-/* $NetBSD: exitos.S,v 1.1 1996/01/31 23:18:16 mark Exp $ */
+/* $NetBSD: exitos.S,v 1.2 1996/06/03 21:24:55 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,11 +41,8 @@
  *
  *
  * Created      : 12/09/94
- * Last updated : 12/09/94
  *
  * Based on kate/library/exitos.s
- *
- *    $Id: exitos.S,v 1.1 1996/01/31 23:18:16 mark Exp $
  *
  */
 
