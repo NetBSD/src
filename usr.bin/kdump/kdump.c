@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.72 2004/01/15 14:42:09 mrg Exp $	*/
+/*	$NetBSD: kdump.c,v 1.73 2004/02/02 06:27:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.72 2004/01/15 14:42:09 mrg Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.73 2004/02/02 06:27:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ struct ktr_header ktr_header;
 int emul_changed = 0;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
+#define small(v)	(((long)(v) >= 0) && ((long)(v) < 10))
 
 static const char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
@@ -441,7 +442,7 @@ ktrsyscall(ktr)
 
 		} else if (strcmp(sys_name, "ioctl") == 0 && argcount >= 2) {
 			(void)putchar('(');
-			output_long((long)*ap, (decimal || *ap <= 9));
+			output_long((long)*ap, !(decimal || small(*ap)));
 			ap++;
 			argcount--;
 			if ((cp = ioctlname(*ap)) != NULL)
@@ -454,7 +455,7 @@ ktrsyscall(ktr)
 
 		} else if (strcmp(sys_name, "kill") == 0 && argcount >= 2) {
 			putchar('(');
-			output_long((long)ap[0], (decimal || *ap <= 9));
+			output_long((long)ap[0], !(decimal || small(*ap)));
 			(void)printf(", SIG%s", signame(ap[1], 1));
 			ap += 2;
 			argcount -= 2;
@@ -484,7 +485,7 @@ ktrsyscall(ktr)
 		}
 		while (argcount > 0) {
 			putchar(c);
-			output_long((long)*ap, (decimal || *ap <= 9));
+			output_long((long)*ap, !(decimal || small(*ap)));
 			ap++;
 			argcount--;
 			c = ',';
@@ -538,10 +539,10 @@ rprint(register_t ret)
 {
 	if (!plain) {
 		(void)printf("%ld", (long)ret);
-		if (ret < 0 || ret > 9)
+		if (!small(ret))
 			(void)printf("/%#lx", (long)ret);
 	} else {
-		if (decimal || ret <= 9)
+		if (decimal || small(ret))
 			(void)printf("%ld", (long)ret);
 		else
 			(void)printf("%#lx", (long)ret);
