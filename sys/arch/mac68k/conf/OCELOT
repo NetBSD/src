@@ -1,4 +1,4 @@
-#	$NetBSD: OCELOT,v 1.8 1996/05/05 06:16:02 briggs Exp $
+#	$NetBSD: OCELOT,v 1.9 1996/05/06 03:33:07 briggs Exp $
 #
 # OCELOT
 
@@ -49,10 +49,11 @@ options		MACHINE_NONCONTIG
 
 config		netbsd	swap generic
 
+grf0		at obio?	# Graphics devices might be internal or NuBUS
+
 nubus0		at mainbus?
 
 ae*	at nubus?
-grf0	at nubus?
 grf*	at nubus?
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
