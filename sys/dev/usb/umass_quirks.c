@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.49 2003/09/08 19:31:00 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.50 2003/09/08 19:57:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.49 2003/09/08 19:31:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.50 2003/09/08 19:57:33 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,22 +118,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
-	{ { USB_VENDOR_NEODIO, USB_PRODUCT_NEODIO_ND3050 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
-	  PQUIRK_FORCELUNS,
-	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
-	},
-
-	{ { USB_VENDOR_NEODIO, USB_PRODUCT_NEODIO_ND5010 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
-	  PQUIRK_FORCELUNS,
-	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
-	},
-
 	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C1 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_WRONG_CSWSIG,
@@ -145,16 +129,8 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_PEN, USB_PRODUCT_PEN_MOBILEDRIVE },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  PQUIRK_NODOORLOCK | PQUIRK_FORCELUNS,
+	  PQUIRK_NODOORLOCK,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
-	  NULL, NULL
-	},
-
-	{ { USB_VENDOR_PILOTECH, USB_PRODUCT_PILOTECH_CRW600 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
-	  PQUIRK_FORCELUNS,
-	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 
@@ -162,14 +138,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
-	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
-	},
-
-	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_SDDR86 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
-	  PQUIRK_FORCELUNS,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
