@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.h,v 1.5 2000/10/04 17:40:59 itojun Exp $	*/
+/*	$KAME: grabmyaddr.h,v 1.6 2001/12/12 15:29:12 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,4 +44,4 @@ extern struct myaddrs *newmyaddr __P((void));
 extern void insmyaddr __P((struct myaddrs *, struct myaddrs **));
 extern void delmyaddr __P((struct myaddrs *));
 extern int initmyaddr __P((void));
-
+extern int getsockmyaddr __P((struct sockaddr *));

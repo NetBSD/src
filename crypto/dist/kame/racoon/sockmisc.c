@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.c,v 1.29 2001/08/16 14:37:29 itojun Exp $	*/
+/*	$KAME: sockmisc.c,v 1.36 2002/04/15 06:20:08 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -58,11 +58,7 @@
 #include "debug.h"
 #include "gcmalloc.h"
 
-#ifdef NI_WITHSCOPEID
-const int niflags = NI_WITHSCOPEID;
-#else
 const int niflags = 0;
-#endif
 
 /*
  * compare two sockaddr without port number.
@@ -112,6 +108,7 @@ cmpsaddrwop(addr1, addr2)
 
 /*
  * compare two sockaddr with port, taking care wildcard.
+ * addr1 is a subject address, addr2 is in a database entry.
  * OUT:	0: equal.
  *	1: not equal.
  */
@@ -138,7 +135,9 @@ cmpsaddrwild(addr1, addr2)
 		sa2 = (caddr_t)&((struct sockaddr_in *)addr2)->sin_addr;
 		port1 = ((struct sockaddr_in *)addr1)->sin_port;
 		port2 = ((struct sockaddr_in *)addr2)->sin_port;
-		if (!(port1 == 0 || port2 == 0 || port1 == port2))
+		if (!(port1 == IPSEC_PORT_ANY ||
+		      port2 == IPSEC_PORT_ANY ||
+		      port1 == port2))
 			return 1;
 		if (memcmp(sa1, sa2, sizeof(struct in_addr)) != 0)
 			return 1;
@@ -149,7 +148,9 @@ cmpsaddrwild(addr1, addr2)
 		sa2 = (caddr_t)&((struct sockaddr_in6 *)addr2)->sin6_addr;
 		port1 = ((struct sockaddr_in6 *)addr1)->sin6_port;
 		port2 = ((struct sockaddr_in6 *)addr2)->sin6_port;
-		if (!(port1 == 0 || port2 == 0 || port1 == port2))
+		if (!(port1 == IPSEC_PORT_ANY ||
+		      port2 == IPSEC_PORT_ANY ||
+		      port1 == port2))
 			return 1;
 		if (memcmp(sa1, sa2, sizeof(struct in6_addr)) != 0)
 			return 1;
@@ -393,8 +394,8 @@ recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
 
 /* send packet, with fixing src/dst address pair. */
 int
-sendfromto(s, buf, buflen, src, dst)
-	int s;
+sendfromto(s, buf, buflen, src, dst, cnt)
+	int s, cnt;
 	const void *buf;
 	size_t buflen;
 	struct sockaddr *src;
@@ -402,6 +403,7 @@ sendfromto(s, buf, buflen, src, dst)
 {
 	struct sockaddr_storage ss;
 	int len;
+	int i;
 
 	if (src->sa_family != dst->sa_family) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -485,12 +487,20 @@ sendfromto(s, buf, buflen, src, dst)
 			saddr2str((struct sockaddr *)&dst6),
 			dst6.sin6_scope_id);
 
-		len = sendmsg(s, &m, 0 /*MSG_DONTROUTE*/);
-		if (len < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"sendmsg (%s)\n", strerror(errno));
-			return -1;
+		for (i = 0; i < cnt; i++) {
+			len = sendmsg(s, &m, 0 /*MSG_DONTROUTE*/);
+			if (len < 0) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"sendmsg (%s)\n", strerror(errno));
+				return -1;
+			}
+			plog(LLV_DEBUG, LOCATION, NULL,
+				"%d times of %d bytes message will be sent "
+				"to %s\n",
+				i + 1, len, saddr2str(src));
 		}
+		plogdump(LLV_DEBUG, (char *)buf, buflen);
+
 		return len;
 	    }
 #endif
@@ -521,6 +531,7 @@ sendfromto(s, buf, buflen, src, dst)
 				       (void *)&yes, sizeof(yes)) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"setsockopt (%s)\n", strerror(errno));
+				close(sendsock);
 				return -1;
 			}
 #ifdef IPV6_USE_MIN_MTU
@@ -529,26 +540,39 @@ sendfromto(s, buf, buflen, src, dst)
 			    (void *)&yes, sizeof(yes)) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"setsockopt (%s)\n", strerror(errno));
+				close(sendsock);
 				return -1;
 			}
 #endif
-			if (setsockopt_bypass(sendsock, src->sa_family) < 0)
+			if (setsockopt_bypass(sendsock, src->sa_family) < 0) {
+				close(sendsock);
 				return -1;
+			}
 
 			if (bind(sendsock, (struct sockaddr *)src, src->sa_len) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"bind 1 (%s)\n", strerror(errno));
+				close(sendsock);
 				return -1;
 			}
 			needclose = 1;
 		}
 
-		len = sendto(sendsock, buf, buflen, 0, dst, dst->sa_len);
-		if (len < 0) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"sendto (%s)\n", strerror(errno));
-			return len;
+		for (i = 0; i < cnt; i++) {
+			len = sendto(sendsock, buf, buflen, 0, dst, dst->sa_len);
+			if (len < 0) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"sendto (%s)\n", strerror(errno));
+				if (needclose)
+					close(sendsock);
+				return len;
+			}
+			plog(LLV_DEBUG, LOCATION, NULL,
+				"%d times of %d bytes message will be sent "
+				"to %s\n",
+				i + 1, len, saddr2str(src));
 		}
+		plogdump(LLV_DEBUG, (char *)buf, buflen);
 
 		if (needclose)
 			close(sendsock);
@@ -766,4 +790,3 @@ mask_sockaddr(a, b, l)
 	for (i = l / 8 + 1; i < alen; i++)
 		p[i] = 0x00;
 }
-
