@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.16 1999/05/27 21:50:03 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.17 1999/06/03 00:05:45 thorpej Exp $	*/
 
 /*
  *
@@ -224,6 +224,11 @@ uvm_loan(map, start, len, result, flags)
 	struct uvm_faultinfo ufi;
 	void **output;
 	int rv;
+
+#ifdef DIAGNOSTIC
+	if (map->flags & VM_MAP_INTRSAFE)
+		panic("uvm_loan: intrsafe map");
+#endif
 
 	/*
 	 * ensure that one and only one of the flags is set
