@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_fat.c,v 1.1 1993/04/09 19:38:06 cgd Exp $
+ *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_fat.c,v 1.2 1993/04/29 22:54:30 cgd Exp $
  *
  */
 
@@ -100,9 +100,9 @@ static void fatblock (pmp, ofs, bnp, sizep, bop)
 int
 pcbmap(dep, findcn, bnp, cnp)
 	struct denode *dep;
-	u_long findcn;	/* file relative cluster to get		*/
+	u_long findcn;		/* file relative cluster to get		*/
 	daddr_t *bnp;		/* returned filesys relative blk number	*/
-	u_long *cnp;	/* returned cluster number		*/
+	u_long *cnp;		/* returned cluster number		*/
 {
 	int error;
 	u_long i;
@@ -179,8 +179,10 @@ pcbmap(dep, findcn, bnp, cnp)
 			if (bp)
 				brelse(bp);
 			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
-			if (error)
+			if (error) {
+				brelse(bp);
 				return error;
+			}
 			bp_bn = bn;
 		}
 		prevcn = cn;
@@ -446,6 +448,10 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+	if (error) {
+		brelse(bp);
+		return error;
+	}
 	if (function & FAT_GET) {
 		readcn = getushort(&bp->b_un.b_addr[bo]);
 		if (FAT12(pmp)) {
@@ -598,8 +604,10 @@ fillinusemap(pmp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
 			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
-			if (error)
+			if (error) {
+				brelse(bp);
 				return error;
+			}
 		}
 		readcn = getushort(&bp->b_un.b_addr[bo]);
 		if (fat12) {
@@ -699,14 +707,16 @@ extendfile(dep, bpp, ncp)
 /*
  *  Get the buf header for the new block of the file.
  */
-	if (dep->de_Attributes & ATTR_DIRECTORY) {
+	if (dep->de_Attributes & ATTR_DIRECTORY)
 		*bpp = getblk(pmp->pm_devvp, cntobn(pmp, cn),
 			pmp->pm_bpcluster);
-	} else {
-		*bpp = getblk(DETOV(dep), frcn,
-			pmp->pm_bpcluster);
-	}
+	else
+		*bpp = getblk(DETOV(dep), frcn, pmp->pm_bpcluster);
 	clrbuf(*bpp);
+
+	if (dep->de_Attributes & ATTR_DIRECTORY)
+		/* If we extend a directory, me must record the new size */
+		dep->de_FileSize = (frcn + 1) * pmp->pm_bpcluster;
 
 /*
  *  Give them the filesystem relative cluster number
