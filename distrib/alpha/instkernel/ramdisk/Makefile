@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/03/04 20:32:18 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.5 1999/04/29 18:57:31 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,6 +30,10 @@ all: ${CBIN}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
+	@echo chdir '$${.CURDIR}/../../../notes/alpha; make INSTALL.more'
+	@chdir ${.CURDIR}/../../../notes/alpha; make INSTALL.more
+	cp `chdir ${.CURDIR}/../../../notes/alpha; make echomore`	\
+		${MOUNT_POINT}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
