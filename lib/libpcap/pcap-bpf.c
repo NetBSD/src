@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.2 1995/03/06 11:38:39 mycroft Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.3 1995/04/29 05:42:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -39,6 +39,9 @@ static  char rcsid[] =
 #include <net/bpf.h>
 #include <net/if.h>
 #include <string.h>
+#ifdef __NetBSD__
+#include <stdlib.h>
+#endif
 
 #include "pcap-int.h"
 
