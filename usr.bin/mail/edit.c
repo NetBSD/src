@@ -1,3 +1,5 @@
+/*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)edit.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: edit.c,v 1.4 1994/11/28 20:03:32 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -50,9 +55,10 @@ static char rcsid[] = "$Id: edit.c,v 1.4 1994/11/28 20:03:32 jtc Exp $";
  * Edit a message list.
  */
 int
-editor(msgvec)
-	int *msgvec;
+editor(v)
+	void *v;
 {
+	int *msgvec = v;
 
 	return edit1(msgvec, 'e');
 }
@@ -61,9 +67,10 @@ editor(msgvec)
  * Invoke the visual editor on a message list.
  */
 int
-visual(msgvec)
-	int *msgvec;
+visual(v)
+	void *v;
 {
+	int *msgvec = v;
 
 	return edit1(msgvec, 'v');
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: head.c,v 1.5 1996/06/08 19:48:26 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)head.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: head.c,v 1.4 1994/12/18 23:33:48 glass Exp $";
+#if 0
+static char sccsid[] = "@(#)head.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: head.c,v 1.5 1996/06/08 19:48:26 christos Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -140,7 +145,7 @@ copyin(src, space)
 	char *top;
 
 	top = cp = *space;
-	while (*cp++ = *src++)
+	while ((*cp++ = *src++) != '\0')
 		;
 	*space = cp;
 	return (top);
