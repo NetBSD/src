@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.55 1994/12/14 18:55:16 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.56 1994/12/16 04:19:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -563,27 +563,45 @@ chrtoblk(dev)
 }
 
 /*
- * constab is the console configuration for this type of machine.
- * XXX - it should probably all be configured automatically.
+ * This entire table could be autoconfig()ed but that would mean that
+ * the kernel's idea of the console would be out of sync with that of
+ * the standalone boot.  I think it best that they both use the same
+ * known algorithm unless we see a pressing need otherwise.
  */
 #include <dev/cons.h>
 
-/* XXX - all this could be autoconfig()ed */
-#if NPC > 0 || NVT > 0
-int pccnprobe(), pccninit(), pccngetc(), pccnputc();
-void pccnpollc();
-#endif
-#if NCOM > 0
-int comcnprobe(), comcninit(), comcngetc(), comcnputc();
-void comcnpollc();
+/* console-specific types */
+#if 0 /* XXX */
+#define	dev_type_cnprobe(n)	void n __P((struct consdev *))
+#define	dev_type_cninit(n)	void n __P((struct consdev *))
+#define	dev_type_cngetc(n)	int n __P((dev_t))
+#define	dev_type_cnputc(n)	void n __P((dev_t, int))
+#define	dev_type_cnpollc(n)	void n __P((dev_t, int))
+#else
+#define	dev_type_cnprobe(n)	int n()
+#define	dev_type_cninit(n)	int n()
+#define	dev_type_cngetc(n)	int n()
+#define	dev_type_cnputc(n)	int n()
+#define	dev_type_cnpollc(n)	void n()
 #endif
 
+#define	cons_decl(n) \
+	dev_decl(n,cnprobe); dev_decl(n,cninit); dev_decl(n,cngetc); \
+	dev_decl(n,cnputc); dev_decl(n,cnpollc)
+
+#define	cons_init(n) { \
+	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
+	dev_init(1,n,cnputc), dev_init(1,n,cnpollc) }
+
+cons_decl(pc);
+cons_decl(com);
+
 struct	consdev constab[] = {
-#if NPC > 0 || NVT > 0
-	{ pccnprobe,	pccninit,	pccngetc,	pccnputc,	pccnpollc },
+#if NPC + NVT > 0
+	cons_init(pc),
 #endif
 #if NCOM > 0
-	{ comcnprobe,	comcninit,	comcngetc,	comcnputc,	comcnpollc },
+	cons_init(com),
 #endif
 	{ 0 },
 };
