@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 1998/04/10 02:56:56 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 1998/04/24 05:08:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -654,7 +654,7 @@ cpu_init_kcore_hdr()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	int i, j, k;
+	int i;
 	extern char end[];
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
@@ -704,47 +704,9 @@ cpu_init_kcore_hdr()
 	/*
 	 * mac68k has multiple RAM segments on some models.
 	 */
-	m->ram_segs[0].start = low[0];
-	m->ram_segs[0].size  = high[0] - low[0];
-	for (i = 1; i < numranges; i++) {
-		if ((high[i] - low[i]) == 0)
-			continue;	/* shouldn't happen, but be safe */
-
-		/*
-		 * Sort and coalesce RAM segments, as required by libkvm.  
-		 */
-		for (j = 0; m->ram_segs[j].size; j++) {
-			if (low[i] < m->ram_segs[j].start)
-				break;	/* Insert before this segment */
-			if (low[i] <=
-			    (m->ram_segs[j].start + m->ram_segs[j].size))
-				break;	/* Overlapping or adjoining */
-		}
-
-		if (m->ram_segs[j].size) {
-			if (low[i] < m->ram_segs[j].start) {
-				/* Make room for new segment. */
-				for (k = j; m->ram_segs[k].size; k++)
-					/* counting... */;
-				for (; k > j; k--) {
-					m->ram_segs[k].start =
-					    m->ram_segs[k - 1].start;
-					m->ram_segs[k].size =
-					    m->ram_segs[k - 1].size;
-				}
-			} else if (low[i] <=
-			    (m->ram_segs[j].start + m->ram_segs[j].size)) {
-				/* Coalesce segments. */
-				if (high[i] > (m->ram_segs[j].start +
-				    m->ram_segs[j].size))
-					m->ram_segs[j].size =
-					    high[i] - m->ram_segs[j].start;
-				continue;
-			}
-		}
-
-		m->ram_segs[j].start = low[i];
-		m->ram_segs[j].size  = high[i] - low[i];
+	for (i = 0; i < numranges; i++) {
+		m->ram_segs[i].start = low[i];
+		m->ram_segs[i].size  = high[i] - low[i];
 	}
 }
 
@@ -2573,7 +2535,7 @@ check_video(id, limit, maxm)
 u_int
 get_mapping(void)
 {
-	int i, same;
+	int i, last, same;
 	u_long addr, lastpage, phys, len;
 
 	numranges = 0;
@@ -2586,14 +2548,58 @@ get_mapping(void)
 
 	get_physical(0, &load_addr);
 
+	last = 0;
 	for (addr = 0; addr <= lastpage && get_physical(addr, &phys);
 	    addr += NBPG) {
-		if (numranges > 0 && phys == high[numranges - 1]) {
-			high[numranges - 1] += NBPG;
+		if (numranges > 0 && phys != high[last]) {
+			/*
+			 * Attempt to find if this page is already
+			 * accounted for in an existing physical segment.
+			 */
+			for (i = 0; i < numranges; i++) {
+				if (low[i] <= phys && phys <= high[i]) {
+					last = i;
+					break;
+				}
+			}
+			if (i >= numranges)
+				last = numranges - 1;
+
+			if (low[last] <= phys && phys < high[last])
+				continue;	/* Skip pages we've seen. */
+		}
+
+		if (numranges > 0 && phys == high[last]) {
+			/* Common case:  extend existing segment on high end */
+			high[last] += NBPG;
 		} else {
+			/* This is a new physical segment. */
+			for (last = 0; last < numranges; last++)
+				if (phys < low[last])
+					break;
+
+			/* Create space for segment, if necessary */
+			if (last < numranges && phys < low[last]) {
+				for (i = numranges; i > last; i--) {
+					low[i] = low[i - 1];
+					high[i] = high[i - 1];
+				}
+			}
+
 			numranges++;
-			low[numranges - 1] = phys;
-			high[numranges - 1] = phys + NBPG;
+			low[last] = phys;
+			high[last] = phys + NBPG;
+		}
+
+		/* Coalesce adjoining segments as appropriate */
+		if (last < (numranges - 1) && high[last] == low[last + 1] &&
+		    low[last + 1] != load_addr) {
+			high[last] = high[last + 1];
+			for (i = last + 1; i < numranges; i++) {
+				low[i] = low[i + 1];
+				high[i] = high[i + 1];
+			}
+			--numranges;
 		}
 	}
 #if 1
@@ -2732,7 +2738,7 @@ get_mapping(void)
 		}
 	}
 
-	return low[0];		/* Return physical address of logical 0 */
+	return load_addr;	/* Return physical address of logical 0 */
 }
 
 /*
