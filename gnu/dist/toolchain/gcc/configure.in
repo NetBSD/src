@@ -3021,6 +3021,12 @@ changequote([,])dnl
 		tmake_file=sparc/t-sparcbare
 		tm_file="sparc/aout.h libgloss.h"
 		;;
+	sparc-*-netbsd*elf*)
+		tm_file=sparc/netbsdelf.h
+		xm_file=sparc/xm-netbsd.h
+		tmake_file=t-netbsd
+		use_collect2=yes
+		;;
 	sparc-*-netbsd*)
 		tm_file=sparc/netbsd.h
 		tmake_file=t-netbsd
@@ -3215,6 +3221,12 @@ changequote([,])dnl
 		xmake_file=x-linux
 		extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
 		gnu_ld=yes
+		;;
+        sparc64-*-netbsd*)
+		tm_file=sparc/netbsd64.h
+		xm_file=sparc/xm-netbsd64.h
+		tmake_file=t-netbsd
+		use_collect2=yes
 		;;
 # This hasn't been upgraded to GCC 2.
 #	tahoe-harris-*)			# Harris tahoe, using COFF.
