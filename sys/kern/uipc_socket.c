@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.97 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.97.2.1 2004/05/26 20:14:40 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97.2.1 2004/05/26 20:14:40 he Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1764,7 +1764,9 @@ SYSCTL_SETUP(sysctl_kern_somaxkva_setup, "sysctl kern.somaxkva setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "somaxkva", NULL,
+		       CTLTYPE_INT, "somaxkva",
+		       SYSCTL_DESCR("Maximum amount of kernel memory to be "
+				    "used for socket buffers"),
 		       sysctl_kern_somaxkva, 0, NULL, 0,
 		       CTL_KERN, KERN_SOMAXKVA, CTL_EOL);
 }
