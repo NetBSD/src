@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.8 1998/08/31 18:43:28 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.9 1998/10/18 18:47:18 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -141,6 +141,7 @@ bi_attach(parent, self, aux)
 
 		ba.ba_node = &binode[nodenr];
 		ba.ba_nodenr = nodenr;
+		ba.ba_busnr = 0; /* XXX */
 		config_found(self, &ba, bi_print);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.10 1998/05/22 09:26:33 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.11 1998/10/18 18:53:38 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -119,9 +119,14 @@ ka820_steal_pages()
 	 * and the console RX50 register. We also map in the BI nodespace
 	 * for all possible (16) nodes. It would only be needed with
 	 * the existent nodes, but we only loose 1K so...
+	 * Another waste of memory is the 8K block after SCB, which is
+	 * used for (eventually) DWBUA and KLESI interrupt vectors.
+	 * This is only needed for the existing devices, but is allocated
+	 * for all possible devices.
 	 */
 	sb = (void *)avail_start;
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
+	MAPPHYS(junk, NNODEBI, VM_PROT_READ|VM_PROT_WRITE); /* BI ivec's */
 	clk_adrshift = 0;	/* clk regs are addressed at short's */
 	clk_tweak = 1; 		/* ...but not exactly in each short */
 	MAPVIRT(clk_page, 1);
@@ -137,8 +142,8 @@ ka820_steal_pages()
 	    KA820_RX50ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(bi_nodebase, NNODEBI * (sizeof(struct bi_node) / NBPG));
-	pmap_map((vm_offset_t)bi_nodebase, (vm_offset_t)BI_BASE(0),
-	    BI_BASE(0) + sizeof(struct bi_node) * NNODEBI,
+	pmap_map((vm_offset_t)bi_nodebase, (vm_offset_t)BI_BASE(0,0),
+	    BI_BASE(0,0) + sizeof(struct bi_node) * NNODEBI,
 	    VM_PROT_READ|VM_PROT_WRITE);
 	bcopy(&idsptch, &nollhanterare, sizeof(struct ivec_dsp));
 	nollhanterare.hoppaddr = hant;
