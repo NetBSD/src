@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.64 1997/03/13 15:58:56 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.65 1997/04/28 22:06:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -95,6 +95,13 @@ int mmutype = 2;	/* MMU_SUN */
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_vme = 0;
+
+/*
+ * XXX - Should empirically estimate the divisor...
+ * Note that the value of delay_divisor is roughly
+ * 2048 / cpuclock	(where cpuclock is in MHz).
+ */
+int delay_divisor = 82;		/* assume the fastest (3/260) */
 
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
@@ -234,7 +241,6 @@ _save_symtab(kehp)
 	/*
 	 * First, sanity-check the exec header.
 	 */
-	mon_printf("_save_symtab: ");
 	if ((kehp->a_midmag & 0xFFF0) != 0x0100) {
 		errdesc = "magic";
 		goto err;
@@ -269,7 +275,7 @@ _save_symtab(kehp)
 	endp += sizeof(int);	/* past length word */
 	endp += *symsz;			/* past nlist array */
 
-	/* Check the string table length. */
+	/* Sanity-check the string table length. */
 	strsz = (int*)endp;
 	if ((*strsz < 4) || (*strsz > 0x80000)) {
 		errdesc = "strsize";
@@ -279,11 +285,10 @@ _save_symtab(kehp)
 	/* Success!  We have a valid symbol table! */
 	endp += *strsz;			/* past strings */
 	esym = endp;
-	mon_printf(" found %d + %d\n", *symsz, *strsz);
 	return;
 
  err:
-	mon_printf(" no symbols (bad %s)\n", errdesc);
+	mon_printf("_save_symtab: bad %s\n", errdesc);
 }
 #endif	/* DDB && !SYMTAB_SPACE */
 
@@ -293,10 +298,7 @@ _save_symtab(kehp)
  * to allow the VM system to run normally.  This involves
  * allocating some physical pages and virtual space for
  * special purposes, etc. by advancing avail_start and
- * virtual_avail past the "stolen" pages.  Note that
- * the kernel should never take a fault on any page
- * between [ KERNBASE .. virtual_avail ] and this is
- * checked in trap.c for kernel-mode MMU faults.
+ * virtual_avail past the "stolen" pages.
  */
 static void
 _vm_init(kehp)
@@ -538,16 +540,16 @@ _vm_init(kehp)
 
 	/* Finally, duplicate the mappings into all contexts. */
 	sun3_context_equiv();
+
+	pmap_bootstrap();	/* bootstrap pmap module */
 }
 
-
 /*
- * XXX - Should empirically estimate the divisor...
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuclock	(where cpuclock is in MHz).
+ * Determine which Sun3 model we are running on.
+ * We have to do this very early on the Sun3 because
+ * pmap_bootstrap() needs to know if it should avoid
+ * the video memory on the Sun3/50.
  */
-int delay_divisor = 82;		/* assume the fastest (3/260) */
-
 static void
 _verify_hardware()
 {
@@ -635,15 +637,20 @@ _bootstrap(keh)
 	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 
-	sunmon_init();  	/* set v_handler, get boothowto */
+	/* Set v_handler, get boothowto. */
+	sunmon_init();
 
-	_verify_hardware();	/* get CPU type, etc. */
+	/* Determine the Sun3 model. */
+	_verify_hardware();
 
-	_vm_init(&keh);		/* handle kernel mapping, etc. */
+	/* handle kernel mapping, pmap_bootstrap(), etc. */
+	_vm_init(&keh);
 
-	pmap_bootstrap();	/* bootstrap pmap module */
-
-	obio_init();    	/* stuff that can't wait for configure() */
+	/*
+	 * Find and save OBIO mappings needed early,
+	 * and call some init functions.
+	 */
+	obio_init();
 
 	/*
 	 * Point interrupts/exceptions to our vector table.
@@ -652,6 +659,7 @@ _bootstrap(keh)
 	 * This is done after obio_init() / intreg_init() finds
 	 * the interrupt register and disables the NMI clock so
 	 * it will not cause "spurrious level 7" complaints.
+	 * Done after _vm_init so the PROM can debug that.
 	 */
 	setvbr((void **)vector_table);
 
