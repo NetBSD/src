@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.3 2001/12/20 01:20:22 thorpej Exp $	*/
+/*	$NetBSD: exception.S,v 1.4 2002/01/14 23:21:06 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -126,11 +126,6 @@ Lreset_panicmsg:
  */
 ASENTRY_NP(swi_entry)
 	PUSHFRAME
-
- 	sub	r0, lr, #0x00000004	/* Get the address of the SWI */
-	ldr	r4, [r0]		/* Get the instruction */
-
-	bic	r1, r4, #0xff000000	/* Extract the comment field */
 
 	mov	r0, sp			/* Pass the frame to any function */
 
