@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.15 1996/03/17 01:46:39 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.16 1996/05/19 00:58:03 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <machine/conf.h>
 #include <sys/device.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
@@ -88,6 +89,8 @@
 #include <pmax/dev/lk201.h>
 
 #include "dcvar.h"
+
+#include <pmax/dev/lk201var.h>		/* XXX KbdReset band friends */
 
 extern int pmax_boardtype;
 
@@ -156,21 +159,21 @@ int	dc_timer;		/* true if timer started */
 struct	pdma dcpdma[NDCLINE];
 
 struct speedtab dcspeedtab[] = {
-	0,	0,
-	50,	LPR_B50,
-	75,	LPR_B75,
-	110,	LPR_B110,
-	134,	LPR_B134,
-	150,	LPR_B150,
-	300,	LPR_B300,
-	600,	LPR_B600,
-	1200,	LPR_B1200,
-	1800,	LPR_B1800,
-	2400,	LPR_B2400,
-	4800,	LPR_B4800,
-	9600,	LPR_B9600,
-	19200,	LPR_B19200,
-	-1,	-1
+	{ 0,	0,	},
+	{ 50,	LPR_B50    },
+	{ 75,	LPR_B75    },
+	{ 110,	LPR_B110   },
+	{ 134,	LPR_B134   },
+	{ 150,	LPR_B150   },
+	{ 300,	LPR_B300   },
+	{ 600,	LPR_B600   },
+	{ 1200,	LPR_B1200  },
+	{ 1800,	LPR_B1800  },
+	{ 2400,	LPR_B2400  },
+	{ 4800,	LPR_B4800  },
+	{ 9600,	LPR_B9600  },
+	{ 19200,LPR_B19200 },
+	{ -1,	-1 }
 };
 
 #ifndef	PORTSELECTOR
@@ -182,6 +185,15 @@ struct speedtab dcspeedtab[] = {
 #endif
 
 /*
+ * Forward declarations
+ */
+struct tty *dctty __P((dev_t  dev));
+void dcrint __P((int));
+int dcmctl __P((dev_t dev, int bits, int how));
+
+
+
+/*
  * Match driver based on name
  */
 int
@@ -190,7 +202,6 @@ dcmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	static int nunits = 0;
@@ -236,6 +247,8 @@ dcattach(parent, self, aux)
  * XXX used for ugly special-cased console input that should be redone
  * more cleanly.
  */
+static inline int raster_console __P((void));
+
 static inline int
 raster_console()
 {
@@ -275,7 +288,7 @@ dc_doprobe(addr, unit, flags, priority)
 	/* reset chip */
 	dcaddr = (dcregs *)addr;
 	dcaddr->dc_csr = CSR_CLR;
-	MachEmptyWriteBuffer();
+	wbflush();
 	while (dcaddr->dc_csr & CSR_CLR)
 		;
 	dcaddr->dc_csr = CSR_MSE | CSR_TIE | CSR_RIE;
@@ -305,10 +318,10 @@ dc_doprobe(addr, unit, flags, priority)
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(1000);
 			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
@@ -317,7 +330,7 @@ dc_doprobe(addr, unit, flags, priority)
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B9600 | minor(cn_tab->cn_dev);
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(1000);
 			/*cn_tab.cn_disabled = 0;*/ /* FIXME */
 			splx(s);
@@ -327,6 +340,7 @@ dc_doprobe(addr, unit, flags, priority)
 	return (1);
 }
 
+int
 dcopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -370,8 +384,8 @@ dcopen(dev, flag, mode, p)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
+		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+				      TTIPRI | PCATCH, ttopen, 0)) != 0)
 			break;
 	}
 	splx(s);
@@ -381,6 +395,7 @@ dcopen(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 dcclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -403,6 +418,7 @@ dcclose(dev, flag, mode, p)
 	return (ttyclose(tp));
 }
 
+int
 dcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -413,6 +429,7 @@ dcread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
+int
 dcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -432,9 +449,10 @@ dctty(dev)
 }
 
 /*ARGSUSED*/
+int
 dcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -494,6 +512,7 @@ dcioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+int
 dcparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -523,18 +542,18 @@ dcparam(tp, t)
 		if (unit == DCKBD_PORT) {
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			return (0);
 		} else if (unit == DCMOUSE_PORT) {
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			return (0);
 		}
 	} else if (tp->t_dev == cn_tab->cn_dev) {
 		dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 			LPR_B9600 | unit;
-		MachEmptyWriteBuffer();
+		wbflush();
 		return (0);
 	}
 	if (ospeed == 0) {
@@ -553,7 +572,7 @@ dcparam(tp, t)
 	if (cflag & CSTOPB)
 		lpr |= LPR_2_STOP;
 	dcaddr->dc_lpr = lpr;
-	MachEmptyWriteBuffer();
+	wbflush();
 	DELAY(10);
 	return (0);
 }
@@ -583,6 +602,7 @@ dcintr(xxxunit)
 	return 0;
 }
 
+void
 dcrint(unit)
 	register int unit;
 {
@@ -650,7 +670,7 @@ dcxint(tp)
 	if (dp->p_mem < dp->p_end) {
 		dcaddr = (dcregs *)dp->p_addr;
 		dcaddr->dc_tdr = dc_brk[unit >> 2] | *dp->p_mem++; 
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 		return;
 	}
@@ -668,7 +688,7 @@ dcxint(tp)
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 		dcaddr = (dcregs *)dp->p_addr;
 		dcaddr->dc_tcr &= ~(1 << (unit & 03));
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 	}
 }
@@ -723,7 +743,7 @@ dcstart(tp)
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
 	dcaddr->dc_tcr |= 1 << (minor(tp->t_dev) & 03);
-	MachEmptyWriteBuffer();
+	wbflush();
 out:
 	splx(s);
 }
@@ -732,6 +752,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
+int
 dcstop(tp, flag)
 	register struct tty *tp;
 {
@@ -746,8 +767,11 @@ dcstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+
+	return (0);
 }
 
+int
 dcmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
@@ -920,7 +944,7 @@ dcPutc(dev, c)
 	dcaddr = (dcregs *)dcpdma[minor(dev)].p_addr;
 	tcr = dcaddr->dc_tcr;
 	dcaddr->dc_tcr = tcr | (1 << minor(dev));
-	MachEmptyWriteBuffer();
+	wbflush();
 	DELAY(10);
 	while (1) {
 		/*
@@ -940,7 +964,7 @@ dcPutc(dev, c)
 		if (line != minor(dev)) {
 			tcr |= 1 << line;
 			dcaddr->dc_tcr &= ~(1 << line);
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(10);
 			continue;
 		}
@@ -948,7 +972,7 @@ dcPutc(dev, c)
 		 * Start sending the character.
 		 */
 		dcaddr->dc_tdr = dc_brk[0] | (c & 0xff);
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 		/*
 		 * Wait for character to be sent.
@@ -966,12 +990,12 @@ dcPutc(dev, c)
 			if (line != minor(dev)) {
 				tcr |= 1 << line;
 				dcaddr->dc_tcr &= ~(1 << line);
-				MachEmptyWriteBuffer();
+				wbflush();
 				DELAY(10);
 				continue;
 			}
 			dcaddr->dc_tcr &= ~(1 << minor(dev));
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(10);
 			break;
 		}
@@ -982,7 +1006,7 @@ dcPutc(dev, c)
 	 */
 	if (tcr & 0xF) {
 		dcaddr->dc_tcr = tcr;
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 	}
 
