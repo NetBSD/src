@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/03/30 08:01:13 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17 2003/04/19 07:34:15 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -14,9 +14,6 @@ SRCS= locore.S boot.c devopen.c
 SRCS+= romcalls.S getchar.c putchar.c
 STRIPFLAG=
 BINMODE= 444
-
-SIZE?= size
-STRIP?= strip
 
 S= ${.CURDIR}/../../../..
 
