@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.7 1999/03/22 19:45:07 garbled Exp $
+.\"	$NetBSD: ptrace.2,v 1.8 1999/03/26 23:37:27 sommerfe Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -158,6 +158,14 @@ not be executing a setuid or setgid executable.  (If the tracing
 process is running as root, these restrictions do not apply.)  The
 tracing process will see the newly-traced process stop and may then
 control it as if it had been traced all along.
+.Pp
+Two other restrictions apply to all tracing processes, even those
+running as root.  First, no process may trace the process running
+.Xr init 8 .
+Second, if a process has its root directory set with
+.Xr chroot 2 ,
+it may not trace another process unless that process's root directory
+is at or below the tracing process's root.
 .It Dv PT_DETACH
 This request is like PT_CONTINUE, except that it does not allow
 specifying an alternative place to continue execution, and after it
