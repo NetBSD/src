@@ -118,7 +118,7 @@ int	socketpair();
 int	mkdir();
 int	rmdir();
 int	utimes();
-int	sigreturn();
+int	sunos_sigreturn();
 int	adjtime();
 int	compat_43_getpeername();
 int	compat_43_gethostid();
@@ -522,8 +522,8 @@ struct sysent sunos_sysent[] = {
 	    rmdir },				/* 137 = rmdir */
 	{ 2, s(struct utimes_args),
 	    utimes },				/* 138 = utimes */
-	{ 1, s(struct sigreturn_args),
-	    sigreturn },			/* 139 = sigreturn */
+	{ 1, s(struct sunos_sigreturn_args),
+	    sunos_sigreturn },			/* 139 = sunos_sigreturn */
 	{ 2, s(struct adjtime_args),
 	    adjtime },				/* 140 = adjtime */
 	{ 3, s(struct compat_43_getpeername_args),
@@ -653,4 +653,3 @@ struct sysent sunos_sysent[] = {
 	    sunos_uname },			/* 189 = sunos_uname */
 };
 
-int	nsunos_sysent= sizeof(sunos_sysent) / sizeof(sunos_sysent[0]);

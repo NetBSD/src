@@ -111,3 +111,4 @@
 #define	OSF1_SYS_osf1_getsid	234
 #define	OSF1_SYS_osf1_usleep_thread	251
 #define	OSF1_SYS_osf1_setsysinfo	257
+#define	OSF1_SYS_MAXSYSCALL	261

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 1994/12/06 00:17:06 deraadt Exp $
+	$NetBSD: syscalls.master,v 1.25 1995/04/22 19:48:52 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -195,7 +195,7 @@
 136	NOARGS		{ int mkdir(char *path, int mode); }
 137	NOARGS		{ int rmdir(char *path); }
 138	NOARGS		{ int utimes(char *path, struct timeval *tptr); }
-139	NOARGS		{ int sigreturn(struct sigcontext *sigcntxp); }
+139	STD		{ int sunos_sigreturn(struct sigcontext *sigcntxp); }
 140	NOARGS		{ int adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	NOARGS		{ int compat_43_getpeername(int fdes, caddr_t asa, int *alen); }
