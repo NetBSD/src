@@ -1,5 +1,5 @@
-/*	$NetBSD: ah.h,v 1.16 2001/05/30 12:04:54 mrg Exp $	*/
-/*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.17 2001/10/15 03:55:37 itojun Exp $	*/
+/*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,7 +63,7 @@ struct secasvar;
 
 struct ah_algorithm_state {
 	struct secasvar *sav;
-	void* foo;	/*per algorithm data - maybe*/
+	void* foo;	/* per algorithm data - maybe */
 };
 
 struct ah_algorithm {
@@ -102,6 +102,6 @@ extern int ah6_calccksum __P((struct mbuf *, caddr_t, size_t,
 extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
 #endif /* INET6 */
 
-#endif /*_KERNEL*/
+#endif /* _KERNEL */
 
-#endif /*_NETINET6_AH_H_*/
+#endif /* _NETINET6_AH_H_ */
