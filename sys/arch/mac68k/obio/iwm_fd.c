@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.6 2000/02/07 20:16:52 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.7 2000/02/24 05:02:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -286,7 +286,8 @@ iwm_match(parent, match, auxp)
 		 * We know next to nothing about the SWIM.
 		 */
 		matched = 0;
-		printf("IWM or SWIM not found: Unknown location (SWIM II?).\n");
+		if (TRACE_CONFIG)
+			printf("IWM or SWIM not found: Unknown location (SWIM II?).\n");
 	} else {
 		matched = 1;
 		if (TRACE_CONFIG) {
@@ -399,7 +400,8 @@ map_iwm_base(base)
 		 * Neither IIfx/Q9[05]0 style IOP controllers nor 
 		 * Q[68]40AV DMA based controllers are supported. 
 		 */
-		printf("Unknown floppy controller chip.\n");
+		if (TRACE_CONFIG)
+			printf("Unknown floppy controller chip.\n");
 		IWMBase = 0L;
 		known = 0;
 		break;
