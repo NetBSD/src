@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.8 1999/09/19 19:06:19 chs Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.9 2001/09/05 12:15:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct c_tmgr_struct {
 #define	MMU_SHORT_PTE_WIRED	MMU_SHORT_PTE_UN1
 #define MMU_PTE_WIRED		((*pte)->attr.raw & MMU_SHORT_PTE_WIRED)
 	pmap_t		ct_pmap;    /* pmap currently using this table  */
-	vm_offset_t	ct_va;      /* starting va that this table maps */
+	vaddr_t		ct_va;      /* starting va that this table maps */
 };
 
 /* The Mach VM code requires that the pmap module be able to apply 
@@ -158,8 +158,8 @@ typedef struct pv_elem_struct pv_elem_t;
  * segment with its base address and its size.
  */
 struct pmap_physmem_struct {
-	vm_offset_t	pmem_start;  /* Starting physical address      */
-	vm_offset_t	pmem_end;    /* First byte outside of range    */
+	paddr_t		pmem_start;  /* Starting physical address      */
+	paddr_t		pmem_end;    /* First byte outside of range    */
 	int             pmem_pvbase; /* Offset within the pv list      */
 	struct pmap_physmem_struct *pmem_next; /* Next block of memory */
 };
@@ -179,27 +179,29 @@ void   pmap_init_a_tables __P((void));
 void   pmap_init_b_tables __P((void));
 void   pmap_init_c_tables __P((void));
 void   pmap_init_pv __P((void));
-void   pmap_clear_pv __P((vm_offset_t, int));
-boolean_t pmap_remove_a __P((a_tmgr_t *, vm_offset_t, vm_offset_t));
-boolean_t pmap_remove_b __P((b_tmgr_t *, vm_offset_t, vm_offset_t));
-boolean_t pmap_remove_c __P((c_tmgr_t *, vm_offset_t, vm_offset_t));
+void   pmap_clear_pv __P((paddr_t, int));
+boolean_t pmap_remove_a __P((a_tmgr_t *, vaddr_t, vaddr_t));
+boolean_t pmap_remove_b __P((b_tmgr_t *, vaddr_t, vaddr_t));
+boolean_t pmap_remove_c __P((c_tmgr_t *, vaddr_t, vaddr_t));
 void   pmap_remove_pte __P((mmu_short_pte_t *));
-void   pmap_enter_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
-void   pmap_remove_kernel __P((vm_offset_t, vm_offset_t));
-void   pmap_protect_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
+void   pmap_enter_kernel __P((vaddr_t, paddr_t, vm_prot_t));
+void   pmap_remove_kernel __P((vaddr_t, vaddr_t));
+void   pmap_protect_kernel __P((vaddr_t, vaddr_t, vm_prot_t));
 boolean_t pmap_extract_kernel __P((vaddr_t, paddr_t *));
-vm_offset_t pmap_get_pteinfo __P((u_int, pmap_t *, c_tmgr_t **));
+vaddr_t pmap_get_pteinfo __P((u_int, pmap_t *, c_tmgr_t **));
 void   pmap_pinit __P((pmap_t));
 int    pmap_dereference __P((pmap_t));
-boolean_t is_managed __P((vm_offset_t));
-boolean_t pmap_stroll __P((pmap_t, vm_offset_t, a_tmgr_t **, b_tmgr_t **,\
+boolean_t is_managed __P((paddr_t));
+boolean_t pmap_stroll __P((pmap_t, vaddr_t, a_tmgr_t **, b_tmgr_t **,\
 	c_tmgr_t **, mmu_short_pte_t **, int *, int *, int *));
 void  pmap_bootstrap_copyprom __P((void));
 void  pmap_takeover_mmu __P((void));
 void  pmap_bootstrap_setprom __P((void));
 
+#ifdef PMAP_DEBUG
 /* Debugging function definitions */
-void  pv_list __P((vm_offset_t, int));
+void  pv_list __P((paddr_t, int));
+#endif /* PMAP_DEBUG */
 
 /* These are defined in pmap.c */
 extern struct pmap_physmem_struct avail_mem[];
