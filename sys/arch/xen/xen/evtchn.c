@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.3 2005/03/11 15:48:40 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.4 2005/03/17 15:32:38 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3 2005/03/11 15:48:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.4 2005/03/17 15:32:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -134,11 +134,13 @@ init_events()
 	int irq;
 
 	irq = bind_virq_to_irq(VIRQ_DEBUG);
+	aprint_verbose("debug events interrupting at irq %d\n", irq);
 	event_set_handler(irq, &xen_debug_handler, NULL, IPL_DEBUG);
 	hypervisor_enable_irq(irq);
 
 	irq = bind_virq_to_irq(VIRQ_MISDIRECT);
 	event_set_handler(irq, &xen_misdirect_handler, NULL, IPL_DIE);
+	aprint_verbose("misdirect events interrupting at irq %d\n", irq);
 	hypervisor_enable_irq(irq);
 
 	/* This needs to be done early, but after the IRQ subsystem is
@@ -259,8 +261,9 @@ int
 bind_virq_to_irq(int virq)
 {
 	evtchn_op_t op;
-	int evtchn, irq;
+	int evtchn, irq, s;
 
+	s = splhigh();
 	simple_lock(&irq_mapping_update_lock);
 
 	irq = virq_to_irq[virq];
@@ -274,13 +277,13 @@ bind_virq_to_irq(int virq)
 		irq = find_unbound_irq();
 		evtchn_to_irq[evtchn] = irq;
 		irq_to_evtchn[irq] = evtchn;
-
 		virq_to_irq[virq] = irq;
 	}
 
 	irq_bindcount[irq]++;
 
 	simple_unlock(&irq_mapping_update_lock);
+	splx(s);
     
 	return irq;
 }
@@ -291,6 +294,7 @@ unbind_virq_from_irq(int virq)
 	evtchn_op_t op;
 	int irq = virq_to_irq[virq];
 	int evtchn = irq_to_evtchn[irq];
+	int s = splhigh();
 
 	simple_lock(&irq_mapping_update_lock);
 
@@ -308,6 +312,7 @@ unbind_virq_from_irq(int virq)
 	}
 
 	simple_unlock(&irq_mapping_update_lock);
+	splx(s);
 }
 
 #ifdef DOM0OPS
@@ -315,11 +320,13 @@ int
 bind_pirq_to_irq(int pirq)
 {
 	evtchn_op_t op;
-	int evtchn, irq;
+	int evtchn, irq, s;
 
 	if (pirq >= NR_PIRQS) {
 		panic("pirq %d out of bound, increase NR_PIRQS", pirq);
 	}
+
+	s = splhigh();
 	simple_lock(&irq_mapping_update_lock);
 
 	irq = pirq_to_irq[pirq];
@@ -337,13 +344,13 @@ bind_pirq_to_irq(int pirq)
 #endif
 		evtchn_to_irq[evtchn] = irq;
 		irq_to_evtchn[irq] = evtchn;
-
 		pirq_to_irq[pirq] = irq;
 	}
 
 	irq_bindcount[irq]++;
 
 	simple_unlock(&irq_mapping_update_lock);
+	splx(s);
     
 	return irq;
 }
@@ -354,6 +361,7 @@ unbind_pirq_from_irq(int pirq)
 	evtchn_op_t op;
 	int irq = pirq_to_irq[pirq];
 	int evtchn = irq_to_evtchn[irq];
+	int s = splhigh();
 
 	simple_lock(&irq_mapping_update_lock);
 
@@ -371,6 +379,7 @@ unbind_pirq_from_irq(int pirq)
 	}
 
 	simple_unlock(&irq_mapping_update_lock);
+	splx(s);
 }
 
 struct pintrhand *
@@ -442,6 +451,7 @@ int
 bind_evtchn_to_irq(int evtchn)
 {
 	int irq;
+	int s = splhigh();
 
 	simple_lock(&irq_mapping_update_lock);
 
@@ -455,6 +465,7 @@ bind_evtchn_to_irq(int evtchn)
 	irq_bindcount[irq]++;
 
 	simple_unlock(&irq_mapping_update_lock);
+	splx(s);
     
 	return irq;
 }
@@ -463,11 +474,14 @@ int
 unbind_evtchn_to_irq(int evtchn)
 {
 	int irq;
+	int s = splhigh();
 
 	simple_lock(&irq_mapping_update_lock);
 
 	irq = evtchn_to_irq[evtchn];
 	if (irq == -1) {
+		simple_unlock(&irq_mapping_update_lock);
+		splx(s);
 		return ENOENT;
 	}
 	irq_bindcount[irq]--;
@@ -477,6 +491,7 @@ unbind_evtchn_to_irq(int evtchn)
 	}
 
 	simple_unlock(&irq_mapping_update_lock);
+	splx(s);
     
 	return irq;
 }
@@ -487,6 +502,7 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	struct intrsource *isp;
 	struct intrhand *ih;
 	struct cpu_info *ci;
+	int s;
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", irq, handler);
@@ -515,6 +531,7 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	ih->ih_next = NULL;
 
 	ci = &cpu_info_primary;
+	s = splhigh();
 	if (ci->ci_isources[irq] == NULL) {
 		MALLOC(isp, struct intrsource *, sizeof (struct intrsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
@@ -535,6 +552,7 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	}
 
 	intr_calculatemasks(ci);
+	splx(s);
 
 	return 0;
 }
