@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.65 2000/11/30 15:59:47 jdolecek Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.66 2000/12/03 05:56:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1560,10 +1560,6 @@ lfs_writeseg(fs, sp)
 				if(vn)
 					reassignbuf(bp, vn);
 				brelse(bp);
-			}
-			if(bp->b_flags & B_NEEDCOMMIT) { /* XXX */
-				bp->b_flags &= ~B_NEEDCOMMIT;
-				wakeup(bp);
 			}
 
 			bpp++;
