@@ -1,4 +1,4 @@
-.\"	$NetBSD: rshd.8,v 1.6 1997/10/20 02:53:32 enami Exp $
+.\"	$NetBSD: rshd.8,v 1.7 1998/04/29 08:33:12 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -178,8 +178,8 @@ list (as configured into the system).
 No password file entry for the user name existed.
 .It Sy Remote directory.
 The 
-.Xr chdir
-command to the home directory failed.
+.Xr chdir 2
+to the home directory failed.
 .It Sy Permission denied.
 The authentication procedure described above failed.
 .It Sy Can't make pipe.
@@ -188,7 +188,7 @@ The pipe needed for the
 wasn't created.
 .It Sy Can't fork; try again. 
 A
-.Xr fork
+.Xr fork 2
 by the server failed.
 .It Sy <shellname>: ...
 The user's login shell could not be started.  This message is returned
