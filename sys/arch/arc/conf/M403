@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.5 2000/03/22 00:58:18 cgd Exp $
+#	$NetBSD: M403,v 1.6 2000/06/09 05:33:02 soda Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -135,6 +135,7 @@ pica*		at mainbus0	# ACER Pica systems local bus.
 aclock0 	at pica?
 #pc0		at pica?
 #opms0		at pica?
+options		COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
 com0		at pica?
 com1		at pica?
 lpt0		at pica?
