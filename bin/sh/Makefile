@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1996/10/16 14:23:51 christos Exp $
+#	$NetBSD: Makefile,v 1.25 1996/10/22 13:22:19 cgd Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -42,4 +42,4 @@ parser.o: token.h
 
 .include <bsd.prog.mk>
 
-${OBJS} : nodes.h syntax.h
+${OBJS}: builtins.h nodes.h syntax.h
