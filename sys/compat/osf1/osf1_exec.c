@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.9 1999/05/05 01:51:32 cgd Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.10 1999/05/28 04:39:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -253,7 +253,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
 	    emul_arg->loader_name, p);
 	if ((error = namei(&nd)) != 0)
-		goto bad;
+		goto bad_no_vp;
 	ldr_vp = nd.ni_vp;
 
 	/*
@@ -341,5 +341,6 @@ badunlock:
 	VOP_UNLOCK(ldr_vp, 0);
 bad:
 	vrele(ldr_vp);
+bad_no_vp:
 	return (error);
 }
