@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.6 1996/03/14 21:09:21 christos Exp $ */
+/*	$NetBSD: openprom.c,v 1.7 1996/03/30 21:11:33 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,12 +50,12 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <machine/bsd_openprom.h>
 #include <machine/openpromio.h>
 #include <machine/autoconf.h>
-
-#include <sparc/sparc/sparc_conf.h>
+#include <machine/conf.h>
 
 static	int lastnode;			/* speed hack */
 extern	int optionsnode;		/* node ID of ROM's options */
