@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.331 2001/06/11 21:13:50 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.332 2001/06/13 06:04:26 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.327 2001/06/11 21:12:29 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.328 2001/06/13 06:01:45 simonb Exp 
  */
 
 /*
@@ -2410,6 +2410,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Turboways 25 ATM",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP,
+	    0,
+	    "IBM",
+	    "IBM 405GP PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
 	    0,
 	    "IBM",
@@ -2804,6 +2810,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82439HX System Controller (TXC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
+	    0,
+	    "Intel",
+	    "ROB-in i960RP Microprocessor",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
