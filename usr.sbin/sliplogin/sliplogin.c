@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.14 1997/10/17 13:36:53 lukem Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.15 1998/01/12 08:59:56 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.14 1997/10/17 13:36:53 lukem Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.15 1998/01/12 08:59:56 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: sliplogin.c,v 1.14 1997/10/17 13:36:53 lukem Exp $");
 #include <netdb.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 
 #if BSD >= 199006
 #define POSIX
@@ -223,6 +224,8 @@ main(argc, argv)
 #endif
 	char logincmd[2*BUFSIZ+32];
 
+	if (strlen(argv[0]) > MAXLOGNAME)
+		errx(1, "login %s too long", argv[0]);
 	if ((name = strrchr(argv[0], '/')) == NULL)
 		name = argv[0];
 	s = getdtablesize();
