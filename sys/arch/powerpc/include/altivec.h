@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.1.10.1 2002/08/01 02:43:02 nathanw Exp $	*/
+/*	$NetBSD: altivec.h,v 1.1.10.2 2002/08/01 04:03:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@
 #ifdef _KERNEL
 void enable_vec(void);
 void save_vec_cpu(void);
-void save_vec_proc(struct proc *);
+void save_vec_lwp(struct lwp *);
 #ifdef MULTIPROCESSOR
-void mp_save_vec_proc(struct proc *);
+void mp_save_vec_lwp(struct lwp *);
 #endif
 void init_vec(void);
 void vzeropage(paddr_t);
