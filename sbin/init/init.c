@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init.c	6.22 (Berkeley) 6/2/93";*/
-static char rcsid[] = "$Id: init.c,v 1.13 1994/04/18 07:59:40 cgd Exp $";
+static char rcsid[] = "$Id: init.c,v 1.14 1994/04/26 19:56:22 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1215,9 +1215,6 @@ clean_ttys()
 	register struct ttyent *typ;
 	register int session_index = 0;
 	register int devlen;
-
-	if (! sessions)
-		return (state_func_t) multi_user;
 
 	devlen = sizeof(_PATH_DEV) - 1;
 	while (typ = getttyent()) {
