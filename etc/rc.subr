@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.28 2000/11/06 00:08:30 lukem Exp $
+# $NetBSD: rc.subr,v 1.29 2000/11/17 03:47:43 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -267,7 +267,9 @@ run_rc_command()
 	force*)				# "force prefix; always start
 		_arg=${_arg#force}
 		_rc_force_run=YES
-		eval ${rcvar}=YES
+		if [ -n "${rcvar}" ]; then
+			eval ${rcvar}=YES
+		fi
 		;;
 	esac
 
@@ -302,10 +304,12 @@ run_rc_command()
 	eval _group=\$${name}_group
 	eval _groups=\$${name}_groups
 
-					# if ${rcvar} is set and we're not
-					# running `rcvar', then check it
+					# if ${rcvar} is set, and $1 is not
+					# "rcvar" or "status", then run
+					#	checkyesno ${rcvar}
+					# and return if that failed
 					#
-	if [ -n "${rcvar}" -a "$_arg" != "rcvar" ]; then
+	if [ -n "${rcvar}" -a "$_arg" != "rcvar" -a "$_arg" != "status" ]; then
 		if ! checkyesno ${rcvar}; then
 			return 0
 		fi
@@ -393,6 +397,7 @@ run_rc_command()
 
 
 					# setup the command to run, and run it
+					#
 			echo "Starting ${name}."
 			if [ -n "$_chroot" ]; then
 				_doit="\
@@ -453,6 +458,13 @@ ${_user:+\"'}"
 			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
 				return 1
 			fi
+					# prevent restart being called more
+					# than once by any given script
+					#
+			if [ -n "$_rc_restart_done" ]; then
+				return 0
+			fi
+			_rc_restart_done=YES
 			( $0 ${_rc_force_run:+force}stop )
 			sleep 1
 			$0 ${_rc_force_run:+force}start
