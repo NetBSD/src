@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.11 2000/12/19 02:50:11 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.12 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -110,7 +110,7 @@ akbdmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void   *aux;
 {
-	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 
 	if (aa_args->origaddr == ADBADDR_KBD)
 		return 1;
@@ -125,7 +125,7 @@ akbdattach(parent, self, aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = (struct akbd_softc *)self;
-	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 	int error, kbd_done;
 	short cmd;
 	u_char buffer[9];
