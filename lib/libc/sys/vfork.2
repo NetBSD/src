@@ -1,4 +1,4 @@
-.\"	$NetBSD: vfork.2,v 1.7 1997/06/30 18:42:51 phil Exp $
+.\"	$NetBSD: vfork.2,v 1.8 1997/07/10 07:54:13 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ differs from
 in that the parent is suspended until the child makes a call to
 .Xr execve 2
 or an exit (either by a call to
-.Xr exit 2
+.Xr _exit 2
 or abnormally.)
 .Pp
 .Fn Vfork
@@ -75,7 +75,7 @@ the parent's context.
 .Xr wait 2 ,
 .Sh DIAGNOSTICS
 Same as for
-.Xr fork .
+.Xr fork 2 .
 .Sh BUGS
 .Pp
 To avoid a possible deadlock situation,
