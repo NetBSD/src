@@ -1,31 +1,62 @@
-	$NetBSD: install,v 1.5 1998/04/15 02:27:07 jeremy Exp $	
-
+.\"	$NetBSD: install,v 1.6 1999/01/13 07:30:09 ross Exp $	
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.
 Installing NetBSD is a relatively complex process, but if you have
 this document in hand it should not be too difficult.
-
-There are several ways to install NetBSD onto your disk.  If your
+.Pp
+There are several ways to install NetBSD onto your disk. If your
 machine has a tape drive the easiest way is "Installing from tape"
-(details below).  If your machine is on a network with a suitable
+(details below). If your machine is on a network with a suitable
 NFS server, then "Installing from NFS" is the next best method.
 Otherwise, if you have another Sun machine running SunOS you can
 initialize the disk on that machine and then move the disk.
 (Installing from SunOS is not recommended.)
-
-
-* Installing from tape:
-
+.
+.Ss2 Installing from tape
+.
 Create the NetBSD/sun3 _VER boot tape as described in the section
-entitled "Preparing a boot tape" and boot the tape.  At the PROM
+entitled "Preparing a boot tape" and boot the tape. At the PROM
 monitor prompt, use one of the commands:
-	>b st()
-	>b st(0,8,0)
+.Dl \*> Ns Ic "b st()
+.Dl \*> Ns Ic "b st(0,8,0)
 The first example will use the tape on SCSI target 4, where the
-second will use SCSI target 5.  The '>' is the monitor prompt.
-
+second will use SCSI target 5. The '\*>' is the monitor prompt.
+.Pp
 After the tape loads, you should see many lines of configuration
 messages, and then the following "welcome" screen:
-
-	Welcome to the NetBSD/sun3 RAMDISK root!
+.Bd -literal -offset indent
+        Welcome to the NetBSD/sun3 RAMDISK root!
 
 This environment is designed to do only three things:
 1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
@@ -37,162 +68,149 @@ the source of the miniroot image to be on any of these:
     boot tape,  NFS server, TFTP server, rsh server
 
 The easiest is loading from tape, which is done as follows:
-	mt -f /dev/nrst0 rewind
-	mt -f /dev/nrst0 fsf 2
-	dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
+        mt -f /dev/nrst0 rewind
+        mt -f /dev/nrst0 fsf 2
+        dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
 (For help with other methods, please see the install notes.)
 
 To reboot using the swap partition, first use "halt",
 then at the PROM monitor prompt use a command like:
-	b sd(,,1) -s
+        b sd(,,1) -s
 
 To view this message again, type:  cat /.welcome
-
-[ End of "welcome" screen. ]
-
+.Ed
+.Pp
 Copy the miniroot as described in the welcome message, and
-reboot from that just installed miniroot.  See the section
-entitled "Booting the miniroot" for details.
-
-
-* Installing from NFS:
-
+reboot from that just installed miniroot. See the section
+entitled
+.Sx Booting the miniroot
+for details.
+.
+.Ss2 Installing from NFS
+.
 Before you can install from NFS, you must have already configured
 your NFS server to support your machine as a diskless client.
 Instructions for configuring the server are found in the section
 entitled "Getting the NetBSD System onto Useful Media" above.
-
+.Pp
 First, at the Sun PROM monitor prompt, enter a boot command
-using the network interface as the boot device.  On desktop
-machines this is "le", and "ie" on the others.  Examples:
-
-	>b le() -s
-	>b ie() -s
-
+using the network interface as the boot device. On desktop
+machines this is "le", and "ie" on the others. Examples:
+.Dl \*> Ns Ic "b le() -s
+.Dl \*> Ns Ic "b ie() -s
 After the boot program loads the RAMDISK kernel, you should
-see the welcome screen as shown in the "tape boot" section
-above.  You must configure the network interface before you
-can use any network resources.  For example the command:
-
-	ssh> ifconfig le0 inet 192.233.20.198 up
-
-will bring up the network interface with that address.  The next
-step is to copy the miniroot from your server.  This can be done
-using either NFS or remote shell.  (In the examples that follow,
-the server has IP address 192.233.20.195)  You may then need to
+see the welcome screen as shown in the
+.Sx Installing from tape
+section above. You must configure the network interface before you
+can use any network resources. For example the command:
+.Dl ssh\*> Ic "ifconfig le0 inet 192.233.20.198 up
+will bring up the network interface with that address. The next
+step is to copy the miniroot from your server. This can be done
+using either NFS or remote shell. (In the examples that follow,
+the server has IP address 192.233.20.195.) You may then need to
 add a default route if the server is on a different subnet:
-
-	ssh> route add default 192.233.20.255  1
-
+.Dl ssh\*> Ic route add default 192.233.20.255 1
 You can look at the route table using:
-
-	ssh> route show
-
+.Dl ssh\*> Ic route show
+.Pp
 Now mount the NFS filesystem containing the miniroot image:
-
-	ssh> mount -r 192.233.20.195:/server/path /mnt
-
+.Dl ssh\*> Ic "mount -r 192.233.20.195:/server/path /mnt
 The procedure is simpler if you have space for an expanded
-(not compressed) copy of the miniroot image.  In that case:
-
-	ssh> dd if=/mnt/miniroot of=/dev/rsd0b bs=8k
-
+(not compressed) copy of the miniroot image. In that case:
+.Dl ssh\*> Ic "dd if=/mnt/miniroot of=/dev/rsd0b bs=8k
 Otherwise, you will need to use "zcat" to expand the miniroot
-image while copying.  This is tricky because the "ssh" program
-(small shell) does not handle sh(1) pipeline syntax.  Instead,
+image while copying. This is tricky because the "ssh" program
+(small shell) does not handle sh(1) pipeline syntax. Instead,
 you first run the reader in the background with its input set
 to /dev/pipe and then run the other program in the foreground
-with its output to /dev/pipe.  The result looks like this:
-
-	ssh> run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k
-	ssh> run -o /dev/pipe zcat /mnt/install/miniroot.gz
-
+with its output to /dev/pipe. The result looks like this:
+.Dl ssh\*> Ic "run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k
+.Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.gz
 To load the miniroot using rsh to the server, you would use a
-pair of commands similar to the above.  Here is another example:
-
-	ssh> run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k
-	ssh> run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz
-
-
-* Installing from SunOS
-
+pair of commands similar to the above. Here is another example:
+.Dl ssh\*> Ic "run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k
+.Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz
+.
+.Ss2 Installing from SunOS
+.
 To install NetBSD/sun3 onto a machine already running SunOS, you
 will need the miniroot image (miniroot.gz) and some means to
 decompress it.
-
+.Pp
 First, boot SunOS and place the miniroot file onto the hard drive.
 If you do not have gzip for SunOS, you will need to decompress
 the image elsewhere before you can use it.
-
+.Pp
 Next, bring SunOS down to single user mode to insure that nothing
-will be using the swap space on your drive.  To be extra safe, reboot
+will be using the swap space on your drive. To be extra safe, reboot
 the machine into single-user mode rather than using the ``shutdown''
 command.
-
+.Pp
 Now copy the miniroot image onto your swap device (here /dev/rsd0b)
 with the command
-
-  gzip -dc miniroot.gz | dd of=/dev/rsd0b obs=32k
-
+.D1 Ic gzip -dc miniroot.gz | dd of=/dev/rsd0b obs=32k
 or if you have already decompressed the miniroot
-
-  dd if=miniroot.gz of=/dev/rsd0b obs=32k
-
+.D1 Ic dd if=miniroot.gz of=/dev/rsd0b obs=32k
+.Pp
 Finally, reboot the machine and instruct the ROM to boot from
 the swap device as described in the next section.
-
-
-* Booting the miniroot:
-
+.
+.Ss2 Booting the Miniroot
+.
 If the miniroot was installed on partition 'b' of the disk with
 SCSI target ID=0 then the PROM boot command would be:
-	>b sd(0,0,1) -s
+.Dl \*> Ns Ic "b sd(0,0,1) -s
 With SCSI target ID=2, the the PROM is:
-	>b sd(0,10,1) -s
-
+.Dl \*> Ns Ic "b sd(0,10,1) -s
 The numbers in parentheses above are:
-	controller (usually zero)
-	unit number (SCSI ID * 8, in hexadecimal)
-	partition number
-
-Miniroot install program:
-------------------------
-
-The miniroot's install program is very simple to use.  It will guide
-you through the entire process, and is well automated.  Additional
+.Bl -enum -compact -offset indent
+.	It
+controller (usually zero)
+.	It
+unit number (SCSI ID * 8, in hexadecimal)
+.	It
+partition number
+.El
+.
+.Ss2 Miniroot Install Program
+.
+The miniroot's install program is very simple to use. It will guide
+you through the entire process, and is well automated. Additional
 improvements are planned for future releases.
-
+.Pp
 The miniroot's install program will:
-
-	* Allow you to place disklabels on additional disks.
-	  The disk we are installing on should already have
-	  been partitioned using the RAMDISK kernel.
-
-	* Create filesystems on target partitions.
-
-	* Allow you to set up your system's network configuration.
-	  Remember to specify host names without the domain name
-	  appended to the end.  For example use `foo' instead of
-	  `foo.bar.org'.  If, during the process of configuring
-	  the network interfaces, you make a mistake, you will
-	  be able to re-configure that interface by simply selecting
-	  it for configuration again.
-
-	* Mount target filesystems.  You will be given the opportunity
-	  to manually edit the resulting /etc/fstab.
-
-	* Extract binary sets from the media of your choice.
-
-	* Copy configuration information gathered during the
-	  installation process to your root filesystem.
-
-	* Make device nodes in your root filesystem.
-
-	* Copy a new kernel onto your root partition.
-
-	* Install a new boot block.
-
-	* Check your filesystems for integrity.
-
+.Bl -bullet -offset indent
+.It
+Allow you to place disklabels on additional disks.
+The disk we are installing on should already have
+been partitioned using the RAMDISK kernel.
+.It
+Create filesystems on target partitions.
+.It
+Allow you to set up your system's network configuration.
+Remember to specify host names without the domain name
+appended to the end. For example use `foo' instead of
+`foo.bar.org'. If, during the process of configuring
+the network interfaces, you make a mistake, you will
+be able to re-configure that interface by simply selecting
+it for configuration again.
+.It
+Mount target filesystems. You will be given the opportunity
+to manually edit the resulting /etc/fstab.
+.It
+Extract binary sets from the media of your choice.
+.It
+Copy configuration information gathered during the
+installation process to your root filesystem.
+.It
+Make device nodes in your root filesystem.
+.It
+Copy a new kernel onto your root partition.
+.It
+Install a new boot block.
+.It
+Check your filesystems for integrity.
+.El
+.Pp
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.

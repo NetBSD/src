@@ -1,16 +1,16 @@
-	$NetBSD: whatis,v 1.3 1998/01/09 18:45:39 perry Exp $	
-
+.\"	$NetBSD: whatis,v 1.4 1999/01/13 07:30:02 ross Exp $	
 There have been many, many Alpha-specific enchancements since the
 1.2 release. These include:
-
-    * Supporting more system types (including the 8200/8400).
-
-    * Making many more device drivers (mostly from the i386 port)
-    work on the alpha.
-
-    * Changing the object file format from COFF to ELF, and adding
-    shared library support
-
-NetBSD 1.3 on alpha is, as usual, also fully backward compatible
+.Bl -bullet
+.It
+Supporting more system types (including the 8200/8400).
+.It
+Making many more device drivers (mostly from the i386 port)
+work on the alpha.
+.It
+Changing the object file format from COFF to ELF, and adding
+shared library support
+.El
+NetBSD \*V on alpha is, as usual, also fully backward compatible
 with old NetBSD/alpha binaries, so you don't need to recompile all
 your local programs.

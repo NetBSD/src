@@ -1,17 +1,25 @@
-	$NetBSD: whatis,v 1.6 1998/01/09 18:46:35 perry Exp $	
-
+.\"	$NetBSD: whatis,v 1.7 1999/01/13 07:30:05 ross Exp $	
+.Pp
 i386-specific enhancements include a number of new device drivers, such
 as the Intel Etherexpress FE drivers, ATAPI support, and others.
 See the hardware compatibility list for supported devices.
-
+.Pp
 Other (but not all) i386-specific improvements are:
-	* APM support
-	* bounce-buffer support so that busmaster ISA controllers
-	  work for machines with > 16M
-	* floppy formatting support
-	* improved detection of the amount of memory present in the
-	  machine
-	* support for FAT32 filesystems
-
-NetBSD 1.3 on i386 is, as usual, also fully backward compatible with old
-NetBSD i386 binaries, so you don't need to recompile all your local programs.
+.Bl -bullet
+.It
+APM support
+.It
+bounce-buffer support so that busmaster ISA controllers work
+for machines with \*> 16MB
+.It
+floppy formatting support
+.It
+improved detection of the amount of memory present in the machine
+.It
+support for FAT32 filesystems
+.El
+.Pp
+.Nx 1.3
+on i386 is, as usual, also fully backward compatible with old
+.Nx
+i386 binaries, so you don't need to recompile all your local programs.

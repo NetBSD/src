@@ -1,75 +1,17 @@
-	$NetBSD: legal,v 1.7 1998/01/09 18:46:41 perry Exp $	
+.\"	$NetBSD: legal,v 1.8 1999/01/13 07:30:06 ross Exp $	
 
-	This product includes software developed by the Alice Group.
+This product includes software developed by the Alice Group.
 
-	This product includes software developed by Allen Briggs.
+This product includes software developed by Allen Briggs.
 
-	This product includes software developed by Christopher G. Demetriou.
+This product includes software developed by Christopher G. Demetriou.
 
-	This product includes software developed by Bradley A. Grantham.
+This product includes software developed by Bradley A. Grantham.
 
-	This product includes software developed by Takashi Hamada.
+This product includes software developed by Takashi Hamada.
 
-	This product includes software developed by Christian E. Hopps.
+This product includes software developed by Christian E. Hopps.
 
-	This product includes software developed by Scott Reynolds.
+This product includes software developed by Scott Reynolds.
 
-	This product includes software developed by John P. Wittkoski.
-
-Contributions:
--------------
-
-The following people have made contributions of various sorts specifically
-for the Macintosh port (in alphabetical order):
-
-	All of the users who have supplied us with good bug reports and
-		moral support.
-	The Alice Group (Allen K. Briggs, Chris P. Caputo, Michael L. Finch,
-		Bradley A. Grantham, and Lawrence A. Kesteloot), without
-		whom there would be no NetBSD port for the Macintosh.
-	Steven R. Allen for keeping our snapshot distributions up-to-date.
-	Stephen C. Brown for maintaining the Installer application.
-	Denton Gentry and Yanagisawa Takeshi for their work on the SONIC
-		Ethernet driver.
-	Paul Goyette, Taras Ivanenko, Ken Nakata, and Michael R. Zucca
-		for invaluable work towards supporting color X.
-	Takashi Hamada and John Wittkoski beating the direct ADB hardware
-		driver into submission.
-	David Huang for getting MACE Ethernet and basic DMA working on the
-		AV Macs. 
-	Scott Jann for acquiring a IIx and a IIci, used for building and
-		testing release sets.
-	Scott Kaplan for lending his IIci and Kensington Turbo Mouse for
-		IIci/IIsi banked memory and internal video as well as
-		non-Apple ADB devices.
-	Noah M. Kieserman for lending a PowerBook 520C for tracking
-		down several bugs on that platform.
-	Markus Krummenacker for monetary donations.
-	Glan Lalonde for an invaluable IIci page table dump.
-	Bob Nestor for (unofficially) maintaining the Mkfs utility,
-		and providing a lot of useful information about the ROM
-		vectors used by different systems.
-	Brad Parker for serial and Ethernet drivers/improvements.
-	Brian R. Gaeke and Nigel Pearson for tweaking and polishing the
-		Booter application.
-	Scott Redman for lending Brad Grantham a PowerBook 160.
-	Craig Ruff for assembling an '030 "pmove ttx" instruction.
-	Brad Salai for lending an Ethernet card to help resolve
-		interrupt conflicts.
-	Larry Samuels for monetary donations.
-	Peter Siebold for lending his IIvx in support of ADB and IIvx
-		internal video.
-	Glen Stewart for lending a Carrera040 accelerator which, while
-		still unsupported, helped to track down memory management
-		bugs for '030-based machines.
-	Bill Studenmund for providing a stable front end to the machine-
-		independent serial driver.
-	Schuyler Stultz for the loan of his Macintosh II when we
-		desperately needed another machine on which to compile
-		and test during the '93 Xmas vacation.
-	Tenon Intersystems for monetary donations, MachTen, and Brad's
-		access to several machines and documentation after hours.
-	Virginia Tech English Department for loan of a IIci w/ NuBus
-		video and 32MB of RAM--the first IIci to run NetBSD/Mac68k.
-	Colin Wood for maintaining a host of NetBSD/mac68k documentation,
-		including the FAQ, Meta-FAQ, and OS Info documents.
+This product includes software developed by John P. Wittkoski.

@@ -1,25 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 1998/08/23 12:42:17 hubertf Exp $
+#	$NetBSD: Makefile,v 1.10 1999/01/13 07:30:01 ross Exp $
 
-NOPROG=	notreally
+.ifndef ALLNOTES
+SUBDIR = ${MACHINE}
+.else
+SUBDIR = alpha amiga arm32 atari hp300 i386 mac68k
+SUBDIR+= mvme68k pc532 pmax sparc sun3 sun3x vax x68k
+.endif
 
-M?=	${MACHINE}
-V!=	/bin/sh ${.CURDIR}/../../sys/conf/osrelease.sh
-V_S!=	/bin/sh ${.CURDIR}/../../sys/conf/osrelease.sh -s
-
-TARG=	INSTALL.$M
-SRC=	${.CURDIR}/INSTALL
-DEP=	${SRC} ${.CURDIR}/mirrors ${.CURDIR}/$M/whatis ${.CURDIR}/$M/contents \
-	${.CURDIR}/$M/hardware ${.CURDIR}/$M/xfer ${.CURDIR}/$M/prep \
-	${.CURDIR}/$M/install ${.CURDIR}/$M/upgrade ${.CURDIR}/donations \
-	${.CURDIR}/legal.common ${.CURDIR}/$M/legal ${.CURDIR}/postinstall
-
-CLEANFILES+=${TARG}
-
-all:	${TARG}
-
-${TARG}: ${DEP}
-	cpp -I${.CURDIR}/$M -D_MACH=$M -D_VER=$V -Uunix -U$M -C -P ${SRC} \
-		| sed -e 's/_SVER_S/'${V_S}'/g ' \
-		      -e 's/[\t ]*[$$]NetBSD:..*[$$]//g' > $@
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>

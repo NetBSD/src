@@ -1,18 +1,24 @@
-	$NetBSD: prep,v 1.2 1998/01/09 18:45:59 perry Exp $	
+.\"	$NetBSD: prep,v 1.3 1999/01/13 07:30:03 ross Exp $	
 
-First and foremost, before beginning the installation process, MAKE
-SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
-wish to keep.  Repartitioning your hard disk is an excellent way to
+First and foremost, before beginning the installation process,
+.Em make sure you have a reliable backup
+of any data on your hard disk that you
+wish to keep. Repartitioning your hard disk is an excellent way to
 destroy important data.
 
-Second, read and perform the instructions in "arm32/<platform>/prep"
-specific to your platform for partitioning and booting (even if you're
+Second, read and perform the instructions in
+.Pa arm32/ Ns Ar platform Ns Pa /prep
+that are specific to your platform for partitioning and booting (even if you're
 dedicating a device to NetBSD).
 
-Finally, when you are happy with your NetBSD installation, do whatever
+Finally, when you are happy with your
+.Nx
+installation, do whatever
 is necessary to restore order to the partition you took space away from.
 This will most likely involve restoring files, but might involve some
-other "house-work".
+other
+.Dq house-work .
 
-Your hard disk is now prepared to have NetBSD installed on it, and
-you should proceed with the installation instructions.
+Your hard disk is now prepared to have
+.Nx
+installed on it, and you should proceed with the installation instructions.

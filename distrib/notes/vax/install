@@ -1,139 +1,206 @@
-	$NetBSD: install,v 1.3 1998/08/23 12:42:20 hubertf Exp $	
-
+.\" $NetBSD: install,v 1.4 1999/01/13 07:30:09 ross Exp $	
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.
 Installing NetBSD/vax may be a little bit complex, but it shouldn't be too
 hard if you have this document available.
-
-Device conventions.
-NetBSD standalone system addresses devices like
-'devicename(adapter, controller, unit, partition)'
-Known devicenames are:
-        mt  -  MSCP tape. (TK50, TU81, ...)
-        ts  -  TSV05/TS11 tape.
-        ra  -  RA??/RD?? disks/floppies.
-        hp  -  RP??/RM?? disks.
-        rd  -  RD?? disks on MicroVAX 2000.
-        sd  -  SCSI disks.
-        st  -  SCSI tapes.
-        le  -  LANCE ethernet controller.
-
-You can omit parameters; ra(0,0) refers to disk 0 partition a
-on default controller. On tapes partition refers to file #
+.
+.Ss2 Device conventions.
+.
+The
+.Nx
+standalone system addresses devices like
+.Ar devicename Ns Ic ( 
+.Ar adapter,\ controller,\ unit,\ partition Ns Ic )
+.No The Ar devicename No values are:
+.Pp
+.Dl mt  No \-  MSCP tape. (TK50, TU81, ...)
+.Dl ts  No \-  TSV05/TS11 tape.
+.Dl ra  No \-  RA??/RD?? disks/floppies.
+.Dl hp  No \-  RP??/RM?? disks.
+.Dl rd  No \-  RD?? disks on MicroVAX 2000.
+.Dl sd  No \-  SCSI disks.
+.Dl st  No \-  SCSI tapes.
+.Dl le  No \-  LANCE ethernet controller.
+.Pp
+You can omit parameters;
+.Ic ra(0,0)
+refers to disk
+.Ic 0
+partition
+.Ic a
+on the default controller. On tapes partition it refers to the file #
 on the tape.
-
-Example: DUB1 (DEC syntax) swap partition will be referred as
-        ra(1,0,1), DRA2 root partition is hp(2,0).
-
-
+.(tag Example:
+The DUB1 (DEC syntax) swap partition will be specified as
+.Ic ra(1,0,1) ;
+the DRA2 root partition is
+.Ic hp(2,0) .
+.tag)
+.Pp
 The installation principle is to label the root disk, copy a miniroot
 filesystem onto the swap partition, boot up from that miniroot filesystem,
 then create root and the other wanted partitions and put system to it.
-You will have to deal with 2 different "units", one is just a boot
-filesystem containing 3 files: boot, copy and edlabel, the other is an
-image of a miniroot filesystem and can be split into several pieces
-depending of what you are going to install from.
-
-
-Installation from tape: (MicroVAX II/III)
+You will have to deal with 2 different
+.Em units ,
+one is just a boot
+filesystem containing 3 files:
+.Li boot, copy No and Li edlabel ,
+the other is an image of a miniroot filesystem and can be split
+into several pieces depending of what you are going to install from.
+.
+.Ss2 Installation from tape: (MicroVAX II/III)
+.
 Take your newly created boot tape and just boot from it:
+.Dl \*>\*>\*> Ic B/3 MUA0
+This means that you will bring up boot to ask for a boot file from the
+TK50. (MUA0 is the DEC name.) It will come up with something like
+.Bd -literal -offset indent
 
-        >>> B/3 MUA0
+2..1..0..
 
-This means that you will bring upp boot to aks for boot file from TK50.
-(MUA0 is DEC naming). It will come up something like
+howto 0x3, bdev 0x12, booting...done. (31248+22252)
 
-          2..1..0..
+\*>\*> NetBSD/vax boot [970610 23:44] \*<\*<
+: 
 
-
-        howto 0x3, bdev 0x12, booting...done. (31248+22252)
-
-	>> NetBSD/vax boot [970610 23:44] <<
-        : 
-
-
-At the prompt you type edlabel to label the disk, see below about
+.Ed
+.Pp
+At the prompt you type
+.Ic edlabel
+to label the disk, see below about
 how to use edlabel.
 When labeling is finished, halt the computer, bring up the boot program
 again and this time load copy, see below about how to use copy.
 Remember that you must copy from the second file (1) on the tape.
-
+.Pp
 Now go to step 3.
-
-
-Installation from RX33/RX50. (MicroVAX II/III)
-The difference between RX33 and RX50 is its size. RX50 is 400k and
-RX33 is 1200k.
-
+.
+.Ss2 Installation from RX33/RX50. (MicroVAX II/III)
+.
+The difference between RX33 and RX50 is its size. An RX50 is 400k and
+an RX33 is 1200k.
+.Pp
 To boot from floppy type:
-
-        >>> B/3 DUxy
-
-where x is the controller number and y is device number.
-You will now get up a prompt like
-
-        >> NetBSD/vax boot [970610 23:44] <<
-        :
-
-At the prompt you type edlabel to label the disk, see below about
+.Dl \*>\*>\*> Ic B/3 DU Ns Ar xy
+.No where Ar x
+is the controller number and
+.Ar y No is the device number.
+.Pp
+You will now get a prompt like
+.Dl \*>\*> NetBSD/vax boot [970610 23:44] \*<\*<
+.Dl :
+At the prompt you type
+.Ic edlabel
+to label the disk, see below about
 how to use it.
 When labeling is finished, halt the computer, bring up the boot program
 again and this time load copy, see below about how to use it.
 Remember that you are will copy from partition 0 when using floppies.
-
+.Pp
 Now go to step 3.
-
-
-Installing over network:
-
-
+.
+.Ss2 Installing Over a Network
+.
 You can use the same flags when booting over the net as when
-booting from local disks; like: ">>>B/3 ESA0" will load boot
+booting from local disks; like: "\*>\*>\*>B/3 ESA0" will load boot
 in ask state. From here you can load any file you want, even
 copy and edlabel if they are located in the exported root fs.
-
-Note 1: Netbooting of MicroVAX II/III systems with DEQNA/DELUA
-    ethernet does not work does not work yet because lack of standalone
-    drivers. Mounting of root and swap over NFS works goos though.
-Note 2: Mopd won't work on VAXen with de/qe ethernet, due to the
-    lack of bpf support for those interfaces.
-
-Booting up miniroot.
-When copying is ready, bring the boot program up a third
+.(Note
+Netbooting of MicroVAX II/III systems with DEQNA/DELUA
+ethernet does not work does not work yet because lack of standalone
+drivers. Mounting of root and swap over NFS works well though.
+.Note)
+.(Note
+Mopd won't work on VAXen with de/qe ethernet, due to the
+lack of bpf support for those interfaces.
+.Note)
+.
+.Ss2 Booting up the miniroot
+.
+When copying is complete, bring the boot program up a third
 time, and this time bring up a real system by telling
-boot where you put your miniroot _and_ also the generic
-kernel name. Example: ra(0,1)gennetbsd,  boots gennetbsd
-from swap partition on ra0.
-
-When kernel is loaded, you will after a while get a
-question about Root device?. Respond to this with
-xx?*, where xx is the device name, ? is the unit
-number and * tells that the system shall use the swap
+boot where you put your miniroot
+.Em and
+also the generic
+kernel name. Example:
+.Ic ra(0,1)gennetbsd
+boots
+.Pa gennetbsd
+from the swap partition on
+.Li ra0 .
+.Pp
+When the kernel is loaded, you will after a while get a
+question about
+.Li Root device?
+Respond to this with
+.Ar xx?* ,
+where
+.Ar xx
+is the device name,
+.Ar ?
+is the unit
+number and * specifies that the system shall use the swap
 partition as root partition. Example:
-
-        Root device? ra0*
-
+.Dl Root device? Ic ra0*
+.Pp
 After that a second question:
-
-        Enter pathname of shell or RETURN for sh:
-
+.Dl Enter pathname of shell or RETURN for sh:
 Just type return. Now you will be in a normal single-user
-shell, and it's just to newfs your partitions, and start installation.
-
-A few things that you must remember to do from miniroot:
-disklabel -B <diskname>  to install boot blocks.
-MAKEDEV devices in the newly created root filesystem.
-Copy gennetbsd and boot from miniroot filesystem
+shell, needing only to
+newfs your partitions, and start installation.
+.Pp
+A few things that you must remember to do from the miniroot:
+.D1 Ic disklabel -B Ar diskname
+will install boot blocks.
+.Pa MAKEDEV
+your devices in the newly created root filesystem.
+Copy
+.Pa gennetbsd No and Pa boot
+from the miniroot filesystem
 to the newly created root filesystem.
-
-How to use edlabel:
+.
+.Ss2 How to use edlabel
+.
 Edlabel is a program to edit disklabels on any disks in a standalone
 environment. Mostly it is used to set labels when doing initial
 installation procedure. It is started from boot program prompt.
 You will here be guided through a session, things with ^^^^ under
-is typed in by the user, comments are within /* */.
-
-	>> NetBSD/vax boot [970610 23:44] <<
-	: edlabel
-	  ^^^^^^^
+are typed in by the user, comments are within /* */.
+.Bd -literal -offset indent
+\*>\*> NetBSD/vax boot [970610 23:44] \*<\*<
+: edlabel
+  ^^^^^^^
 With this program you can modify everything in the on-disk
 disklabel. To do something useful you must know the exact
 geometry of your disk, and have ideas about how you want
@@ -241,12 +308,12 @@ h:   0,    0
 
 This program does not (yet) write bootblocks, only disklabel.
 Remember to write the bootblocks from the miniroot later with the
-command "disklabel -B <diskname>".
+command "disklabel -B \*<diskname\*>".
 (E)dit, (S)how, (D)efaults, (W)rite, (Q)uit) : q
-
-
-How to use copy:
-
+.Ed
+.
+.Ss2 How to use copy
+.
 Copy is a standalone program that can copy multiple volumes
 from disk/tape to disk/tape. Mostly it is used to copy the 
 miniroot filesystem onto the swap partition during initial
@@ -254,11 +321,10 @@ installation.
 You will here be guided through a session, things with ^^^^ under
 is typed in by the user, comments are within /* */.
 This is an installation from TK50.
-
-
-	>> NetBSD/vax boot [970610 23:44] <<
-	: copy
-	  ^^^^
+.Bd -literal -offset indent
+\*>\*> NetBSD/vax boot [970610 23:44] \*<\*<
+: copy
+  ^^^^
 
 copy: 
 This program will read miniroot from tape/floppy/disk 
@@ -289,12 +355,12 @@ Then type 'g' to Go or 'a' to Abort.
 OK to go on ? [g/a] g   /* g == go, a == abort */
                     ^
 Reading ... Reading of miniroot done. (4096 blocks read)
-
-
+.Ed
+.Pp
 Now specify the device to write miniroot to as xx(N,1)
 where xx is the drive type and N is the drive number.
 For example: ra(0,1) refers to MSCP drive #0, b partition
-
+.Bd -literal -offset indent
 Root disk ? : ra(0,1) /* Actually DUA0, partition b (swap) */
               ^^^^^^^^^
 Initializing partition ... done.
@@ -307,4 +373,5 @@ giving second partition as part to mount as root. Ex:
 Halt/Reboot the machine NOW.
 ?02 EXT HLT
     PC = 001005F3
->>> 
+\*>\*>\*> 
+.Ed

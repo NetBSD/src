@@ -1,14 +1,14 @@
-	$NetBSD: prep,v 1.2 1998/01/09 18:47:57 perry Exp $	
-
+.\" $NetBSD: prep,v 1.3 1999/01/13 07:30:10 ross Exp $	
+.
 VAX machines usually need little or no preparation before installing
 NetBSD, other than the usual, well advised precaution of BACKING UP
 ALL DATA on any attached storage devices.
-
+.Pp
 You will need to know the CSR address of your disk controller(s) if
 they are on a Qbus/Unibus. The disk controllers must then be at
 either 772150 (DUA) or 760334 (DUB). These two addresses are the
 only recognized by the kernel and boot programs.
-
+.Pp
 Also; if you are installing on a VAXstation, you must have a serial
 console. The builtin graphic console are not yet supported.
 
