@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/01/05 08:48:53 nisimura Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:35 lukem Exp $
 
 # Makefile for luna68k tags file
 
@@ -26,6 +26,6 @@ links:
 	-for i in ${DLUNA68K}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-SUBDIR=	include
+SUBDIR=	compile include
 
 .include <bsd.subdir.mk>

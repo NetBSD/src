@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/12/09 12:15:48 scw Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:28 lukem Exp $
 
 ETAGS?= etags
-
-SUBDIR=	include
 
 # XXX Fix this to deal with multiple "evbppc" ports.
 SEVBPPC=	evbppc/*.[ch] include/*.h
@@ -29,5 +27,8 @@ TAGS: ${SEVBPPC} ${COMM} ${SPPC} ${COMM} ${ASPARC64}
 		"--regex=/^_C_LABEL(\(.*\)):/\1/" "--regex=/^\(.*\):/\1/" \
 		"--regex=/^ENTRY(\(.*\)):/\1/" "--regex=/^ASENTRY(\(.*\)):/\1/" \
 		${APPC} ${AEVBPPC}
+
+
+SUBDIR=	compile include
 
 .include <bsd.subdir.mk>
