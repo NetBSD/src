@@ -25,14 +25,13 @@
  *
  * 	Author: Richard P. Draves, Carnegie Mellon University
  *	Date:	10/90
- *	$Id: db_watch.c,v 1.3 1993/12/18 04:46:43 mycroft Exp $
+ *	$Id: db_watch.c,v 1.4 1994/01/08 01:01:51 mycroft Exp $
  */
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_map.h>
 
 #include <machine/db_machdep.h>
 
