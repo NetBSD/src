@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.72 1998/04/24 18:18:42 thorpej Exp $
+# $NetBSD: files.alpha,v 1.73 1998/04/26 05:18:50 mjacob Exp $
 #
 # alpha-specific configuration info
 
@@ -288,7 +288,7 @@ file	arch/alpha/pci/pci_a12.c	avalon_a12
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 file	arch/alpha/pci/pci_eb164.c	dec_eb164
 file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
-file	arch/alpha/pci/pci_eb64plus.c	dec_eb64plus
+#file	arch/alpha/pci/pci_eb64plus.c	dec_eb64plus
 file	arch/alpha/pci/pci_eb64plus_intr.s dec_eb64plus
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 file	arch/alpha/pci/pci_kn8ae.c	dec_kn8ae
