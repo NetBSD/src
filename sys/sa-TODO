@@ -96,7 +96,7 @@ Platform status:
 
 - pc532: Not yet branched.
 
-- platstation2: unknown.
+- playstation2: unknown.
 
 - pmax: Works.
 
@@ -126,7 +126,7 @@ Platform status:
 
 - vax: GENERIC compiles, otherwise untested.
 
-- walnut: WALNET compiles, otherwise untested.
+- walnut: WALNUT compiles, otherwise untested.
 
 - x68k: GENERIC compiles, otherwise untested.
 
@@ -147,7 +147,7 @@ Wishlist:
   processes requires a whole new kind of scheduling. Implementing such a thing
   (such as an "equal-space" scheduler) is a major project unto itself.
 
-- Adopt gmcgarry's new context switch model here.  Would greatly simplifiy
+- Adopt gmcgarry's new context switch model here.  Would greatly simplify
   the SA code path, and also eliminate the need to have both cpu_switch()
   and cpu_preempt().
 
