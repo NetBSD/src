@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30 1999/02/11 15:28:03 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.31 2000/03/29 14:19:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -234,8 +234,11 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	if(strcmp("zs", auxp) || cfp->cf_unit != 0)
+	static int	zs_matched = 0;
+
+	if(strcmp("zs", auxp) || zs_matched)
 		return(0);
+	zs_matched = 1;
 	return(1);
 }
 

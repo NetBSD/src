@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.16 2000/03/23 06:36:04 thorpej Exp $ */
+/*	$NetBSD: lpt.c,v 1.17 2000/03/29 14:19:23 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -140,9 +140,13 @@ struct	device	*pdp;
 struct	cfdata	*cfp;
 void		*auxp;
 {
-	if (!strcmp((char *)auxp, "lpt") && cfp->cf_unit == 0)
-		return (1);
-	return (0);
+	static int	lpt_matched = 1;
+
+	/* Match at most 1 lpt unit */
+	if (strcmp((char *)auxp, "lpt") || lpt_matched)
+		return 0;
+	lpt_matched = 1;
+	return (1);
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.20 2000/03/23 06:36:04 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.21 2000/03/29 14:19:22 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -283,10 +283,11 @@ fdcprobe(parent, cfp, aux)
 	struct cfdata	*cfp;
 	void		*aux;
 {
-	int		rv   = 0;
+	static int	fdc_matched = 0;
 	bus_space_tag_t mb_tag;
 
-	if(strcmp("fdc", aux) || cfp->cf_unit != 0)
+	/* Match only once */
+	if(strcmp("fdc", aux) || fdc_matched)
 		return(0);
 
 	if (!atari_realconfig)
@@ -317,15 +318,15 @@ fdcprobe(parent, cfp, aux)
 	out_fdc(0xdf);
 	out_fdc(7);
 
-	rv = 1;
+	fdc_matched = 1;
 
  out:
-	if (rv == 0) {
+	if (fdc_matched == 0) {
 		bus_space_unmap(mb_tag, (caddr_t)fdio_addr, FD_IOSIZE);
 		mb_free_bus_space_tag(mb_tag);
 	}
 
-	return rv;
+	return fdc_matched;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.10 2000/03/23 06:36:04 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.11 2000/03/29 14:19:23 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -256,9 +256,14 @@ struct	device	*pdp;
 struct	cfdata	*cfp;
 void		*auxp;
 {
-	if (!strcmp((char *)auxp, "ser") && cfp->cf_unit == 0)
-		return (1);
-	return (0);
+	static int	ser_matched = 0;
+
+	/* Match at most one ser unit */
+	if (strcmp((char *)auxp, "ser") || ser_matched)
+		return 0;
+
+	ser_matched = 1;
+	return 1;
 }
 
 /*ARGSUSED*/
