@@ -1,8 +1,9 @@
-.\"	$NetBSD: upgrade,v 1.16.10.2 2000/11/14 16:10:24 tv Exp $
+.\"	$NetBSD: upgrade,v 1.16.10.3 2000/11/16 17:13:21 tv Exp $
 .
 .so ../common/upgrade
 .Pp
-.Nx /i386 has switched its executable format from the old a.out format
+.Nx*M
+has switched its executable format from the old a.out format
 to ELF, the now more commonly used and supported format. Your old
 binaries will continue to work just fine. The installation procedure
 will try to take the necessary steps to accomplish this. The most
