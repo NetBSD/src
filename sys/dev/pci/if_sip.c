@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.29 2001/05/18 02:03:53 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.30 2001/05/18 04:38:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,12 +147,12 @@
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
- * enough descriptors for 64 pending transmissions, and 16 segments
+ * enough descriptors for 128 pending transmissions, and 8 segments
  * per packet.  This MUST work out to a power of 2.
  */
-#define	SIP_NTXSEGS		16
+#define	SIP_NTXSEGS		8
 
-#define	SIP_TXQUEUELEN		64
+#define	SIP_TXQUEUELEN		256
 #define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
@@ -161,7 +161,7 @@
  * Receive descriptor list size.  We have one Rx buffer per incoming
  * packet, so this logic is a little simpler.
  */
-#define	SIP_NRXDESC		64
+#define	SIP_NRXDESC		128
 #define	SIP_NRXDESC_MASK	(SIP_NRXDESC - 1)
 #define	SIP_NEXTRX(x)		(((x) + 1) & SIP_NRXDESC_MASK)
 
@@ -242,6 +242,16 @@ struct sip_softc {
 #define	sc_txdescs	sc_control_data->scd_txdescs
 #define	sc_rxdescs	sc_control_data->scd_rxdescs
 
+#ifdef SIP_EVENT_COUNTERS
+	/*
+	 * Event counters.
+	 */
+	struct evcnt sc_ev_txsstall;	/* Tx stalled due to no txs */
+	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
+	struct evcnt sc_ev_txintr;	/* Tx interrupts */
+	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+#endif /* SIP_EVENT_COUNTERS */
+
 	u_int32_t sc_txcfg;		/* prototype TXCFG register */
 	u_int32_t sc_rxcfg;		/* prototype RXCFG register */
 	u_int32_t sc_imr;		/* prototype IMR register */
@@ -271,6 +281,12 @@ struct sip_softc {
 
 /* sc_flags */
 #define	SIPF_PAUSED	0x00000001	/* paused (802.3x flow control) */
+
+#ifdef SIP_EVENT_COUNTERS
+#define	SIP_EVCNT_INCR(ev)	(ev)->ev_count++
+#else
+#define	SIP_EVCNT_INCR(ev)	/* nothing */
+#endif
 
 #define	SIP_CDTXADDR(sc, x)	((sc)->sc_cddma + SIP_CDTXOFF((x)))
 #define	SIP_CDRXADDR(sc, x)	((sc)->sc_cddma + SIP_CDRXOFF((x)))
@@ -784,6 +800,20 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
+#ifdef SIP_EVENT_COUNTERS
+	/*
+	 * Attach event counters.
+	 */
+	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txsstall");
+	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txdstall");
+	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "txintr");
+	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "rxintr");
+#endif /* SIP_EVENT_COUNTERS */
+
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
@@ -869,8 +899,13 @@ SIP_DECL(start)(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
-	       sc->sc_txfree != 0) {
+	for (;;) {
+		/* Get a work queue entry. */
+		if ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) == NULL) {
+			SIP_EVCNT_INCR(&sc->sc_ev_txsstall);
+			break;
+		}
+
 		/*
 		 * Grab a packet off the queue.
 		 */
@@ -917,9 +952,11 @@ SIP_DECL(start)(struct ifnet *ifp)
 
 		/*
 		 * Ensure we have enough descriptors free to describe
-		 * the packet.
+		 * the packet.  Note, we always reserve one descriptor
+		 * at the end of the ring as a termination point, to
+		 * prevent wrap-around.
 		 */
-		if (dmamap->dm_nsegs > sc->sc_txfree) {
+		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed anything yet,
@@ -934,6 +971,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			if (m != NULL)
 				m_freem(m);
+			SIP_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
 		}
 
@@ -1041,13 +1079,31 @@ SIP_DECL(start)(struct ifnet *ifp)
 		SIP_CDTXSYNC(sc, firsttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-		/* Start the transmit process. */
+		/*
+		 * Start the transmit process.  Note, the manual says
+		 * that if there are no pending transmissions in the
+		 * chip's internal queue (indicated by TXE being clear),
+		 * then the driver software must set the TXDP to the
+		 * first descriptor to be transmitted.  However, if we
+		 * do this, it causes serious performance degredation on
+		 * the DP83820 under load, not setting TXDP doesn't seem
+		 * to adversely affect the SiS 900 or DP83815.
+		 *
+		 * Well, I guess it wouldn't be the first time a manual
+		 * has lied -- and they could be speaking of the NULL-
+		 * terminated descriptor list case, rather than OWN-
+		 * terminated rings.
+		 */
+#if 0
 		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CR) &
 		     CR_TXE) == 0) {
 			bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXDP,
 			    SIP_CDTXADDR(sc, firsttx));
 			bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CR, CR_TXE);
 		}
+#else
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CR, CR_TXE);
+#endif
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1148,6 +1204,8 @@ SIP_DECL(intr)(void *arg)
 		handled = 1;
 
 		if (isr & (ISR_RXORN|ISR_RXIDLE|ISR_RXDESC)) {
+			SIP_EVCNT_INCR(&sc->sc_ev_rxintr);
+
 			/* Grab any new packets. */
 			SIP_DECL(rxintr)(sc);
 
@@ -1171,6 +1229,8 @@ SIP_DECL(intr)(void *arg)
 		}
 
 		if (isr & (ISR_TXURN|ISR_TXDESC)) {
+			SIP_EVCNT_INCR(&sc->sc_ev_txintr);
+
 			/* Sweep up transmit descriptors. */
 			SIP_DECL(txintr)(sc);
 
