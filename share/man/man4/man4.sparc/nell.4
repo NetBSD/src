@@ -1,4 +1,4 @@
-.\"	$NetBSD: nell.4,v 1.4 2002/10/10 22:32:08 martin Exp $
+.\"	$NetBSD: nell.4,v 1.5 2003/01/03 13:15:16 martin Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,8 @@
 .Nm nell
 .Nd sbus pcmcia bridge
 .Sh SYNOPSIS
+# only needed for 32bit sparcs (remove the options line on sparc64):
+.Cd "options FULL_SPARC_BUS_SPACE"
 .Cd "nell* at sbus? slot ? offset ? flags 0"
 .Cd "pcmcia* at nell? controller ? socket ?"
 .Sh DESCRIPTION
@@ -59,18 +61,10 @@ prefer the driver to use either the first (use flags value 0) or the second
 .Xr pcmcia 4 ,
 .Xr sbus 4
 .Sh BUGS
-The driver provides a big-endian pcmcia bus, which is wrong in the
-.Nx
-context. Due to missing/incomplete documentation of the chipset it is not
-known for sure if the hardware has any byteswapping mode. For sparc64 systems
-this can easily be worked around in software, so this will be fixed. For
-sparc systems, the fix might impose a serious performance degration and is
-subject of further research.
-.Pp
-This means that currently some cards will work (because they are using 8 bit
-access only), including com and ray cards. Most cards will not work. For
-the wi driver, there is a hack to make it accept a big-endian bus. Be sure to
-only use it if this is the only wi card in your system:
+The driver is currently broken for sparc64 systems; it only provides a
+big endian pcmcia bus. To work around this for the
+.Xr wi 4
+driver, use
 .Pp
 .Cd "options WI_AT_BIGENDIAN_BUS_HACK"
 .Cd "wi* at pcmcia? function ?"
