@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.417 2003/07/03 15:18:54 wiz Exp $
+# $NetBSD: mi,v 1.418 2003/07/04 05:41:50 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -282,6 +282,7 @@
 ./usr/bin/lessecho	base-util-bin
 ./usr/bin/lesskey	base-util-bin
 ./usr/bin/locate	base-util-bin
+./usr/bin/locale	base-locale-bin
 ./usr/bin/lock		base-util-bin
 ./usr/bin/logger	base-util-bin
 ./usr/bin/login		base-util-bin
