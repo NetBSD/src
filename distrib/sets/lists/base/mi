@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.314 2002/03/24 22:21:02 bjh21 Exp $
+# $NetBSD: mi,v 1.315 2002/04/04 23:13:59 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -644,6 +644,7 @@
 ./usr/sbin/ifmcstat		base-netutil-bin
 ./usr/sbin/ifwatchd		base-netutil-bin
 ./usr/sbin/inetd		base-netutil-bin
+./usr/sbin/installboot		base-sysutil-bin
 ./usr/sbin/iopctl		base-sysutil-bin
 ./usr/sbin/iostat		base-sysutil-bin
 ./usr/sbin/ipfs			base-netutil-bin
