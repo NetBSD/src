@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2002/10/18 20:02:23 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2002/10/22 04:34:13 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -202,7 +202,7 @@ static struct pool_allocator pmap_pool_uallocator = {
 };
 
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
-void pmap_pte_print(volatile pte_t *pt);
+void pmap_pte_print(volatile pte_t *);
 #endif
 
 #ifdef DDB
@@ -237,7 +237,7 @@ STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
 STATIC void tlbia(void);
 
-STATIC void pmap_release (pmap_t);
+STATIC void pmap_release(pmap_t);
 STATIC void *pmap_boot_find_memory(psize_t, psize_t, int);
 
 #define	VSID_NBPW	(sizeof(uint32_t) * 8)
@@ -700,6 +700,7 @@ pmap_pte_change(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
  *
  * Note: both the destination and source PTEs must not have PTE_VALID set.
  */
+
 STATIC int
 pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
 {
@@ -720,6 +721,7 @@ pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
 			return i;
 		}
 	}
+
 	/*
 	 * Now try secondary hash.
 	 */
@@ -746,9 +748,9 @@ pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
 int
 pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 {
-	struct pvo_entry *source_pvo, *victim_pvo;
+	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
 	struct pvo_entry *pvo;
-	struct pvo_tqhead *pvoh;
+	struct pvo_tqhead *pvoh, *vpvoh;
 	int ptegidx, i, j;
 	sr_t sr;
 	volatile pteg_t *pteg;
@@ -770,10 +772,12 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 	victim_pvo = NULL;
 	pvoh = &pmap_pvo_table[ptegidx];
 	TAILQ_FOREACH(pvo, pvoh, pvo_olink) {
+
 		/*
 		 * We need to find pvo entry for this address...
 		 */
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
+
 		/*
 		 * If we haven't found the source and we come to a PVO with
 		 * a valid PTE, then we know we can't find it because all
@@ -782,7 +786,9 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 		if (source_pvo == NULL && (pvo->pvo_pte.pte_hi & PTE_VALID))
 			break;
 		if (source_pvo == NULL &&
-		    pmap_pte_match(&pvo->pvo_pte, sr, addr, pvo->pvo_pte.pte_hi & PTE_HID)) {
+		    pmap_pte_match(&pvo->pvo_pte, sr, addr,
+				   pvo->pvo_pte.pte_hi & PTE_HID)) {
+
 			/*
 			 * Now we have found the entry to be spilled into the
 			 * pteg.  Attempt to insert it into the page table.
@@ -796,21 +802,23 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
 				    ? pmap_evcnt_ptes_secondary
 				    : pmap_evcnt_ptes_primary)[j]);
+
 				/*
 				 * Since we keep the evicted entries at the
 				 * from of the PVO list, we need move this
 				 * (now resident) PVO after the evicted
 				 * entries.
 				 */
-				victim_pvo = TAILQ_NEXT(pvo, pvo_olink);
+				next_pvo = TAILQ_NEXT(pvo, pvo_olink);
+
 				/*
 				 * If we don't have to move (either we were
 				 * the last entry or the next entry was valid,
 				 * don't change our position.  Otherwise 
 				 * move ourselves to the tail of the queue.
 				 */
-				if (victim_pvo != NULL &&
-				    !(victim_pvo->pvo_pte.pte_hi & PTE_VALID)) {
+				if (next_pvo != NULL &&
+				    !(next_pvo->pvo_pte.pte_hi & PTE_VALID)) {
 					TAILQ_REMOVE(pvoh, pvo, pvo_olink);
 					TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
 				}
@@ -820,12 +828,14 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 			if (victim_pvo != NULL)
 				break;
 		}
+
 		/*
 		 * We also need the pvo entry of the victim we are replacing
 		 * so save the R & C bits of the PTE.
 		 */
 		if ((pt->pte_hi & PTE_HID) == 0 && victim_pvo == NULL &&
 		    pmap_pte_compare(pt, &pvo->pvo_pte)) {
+			vpvoh = pvoh;
 			victim_pvo = pvo;
 			if (source_pvo != NULL)
 				break;
@@ -841,13 +851,15 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 		if ((pt->pte_hi & PTE_HID) == 0)
 			panic("pmap_pte_spill: victim p-pte (%p) has "
 			    "no pvo entry!", pt);
+
 		/*
 		 * If this is a secondary PTE, we need to search
 		 * its primary pvo bucket for the matching PVO.
 		 */
-		TAILQ_FOREACH(pvo, &pmap_pvo_table[ptegidx ^ pmap_pteg_mask],
-		    pvo_olink) {
+		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask];
+		TAILQ_FOREACH(pvo, vpvoh, pvo_olink) {
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
+
 			/*
 			 * We also need the pvo entry of the victim we are
 			 * replacing so save the R & C bits of the PTE.
@@ -870,15 +882,17 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 	 */
 	source_pvo->pvo_pte.pte_hi &= ~PTE_HID;
 
-	/* Move the source PVO from list of evicted PVO's to
-	 * after the current position of the victim PVO.  Then
-	 * move the victim PVO to the head of the list so
-	 * the evicted PVOs are all at the front of the list.
+	/*
+	 * To enforce the PVO list ordering constraint that all
+	 * evicted entries should come before all valid entries,
+	 * move the source PVO to the tail of its list and the
+	 * victim PVO to the head of its list (which might not be
+	 * the same list, if the victim was using the secondary hash).
 	 */
 	TAILQ_REMOVE(pvoh, source_pvo, pvo_olink);
-	TAILQ_REMOVE(pvoh, victim_pvo, pvo_olink);
 	TAILQ_INSERT_TAIL(pvoh, source_pvo, pvo_olink);
-	TAILQ_INSERT_HEAD(pvoh, victim_pvo, pvo_olink);
+	TAILQ_REMOVE(vpvoh, victim_pvo, pvo_olink);
+	TAILQ_INSERT_HEAD(vpvoh, victim_pvo, pvo_olink);
 	pmap_pte_unset(pt, &victim_pvo->pvo_pte, victim_pvo->pvo_vaddr);
 	pmap_pte_set(pt, &source_pvo->pvo_pte);
 	victim_pvo->pvo_pmap->pm_evictions++;
@@ -1338,28 +1352,32 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 	pt = pmap_pvo_to_pte(pvo, -1);
 	if (pt == NULL) {
 		if (pvo->pvo_pte.pte_hi & PTE_VALID) {
-			printf("pmap_pvo_check: pvo %p: pte_hi VALID but no PTE\n", pvo);
+			printf("pmap_pvo_check: pvo %p: pte_hi VALID but "
+			    "no PTE\n", pvo);
 			failed = 1;
 		}
 	} else {
-		if ((uintptr_t) pt < (uintptr_t) &pmap_pteg_table ||
-		    (uintptr_t) pt >= (uintptr_t) &pmap_pteg_table[pmap_pteg_cnt]) {
-			printf("pmap_pvo_check: pvo %p: pte %p not in pteg table\n", pvo, pt);
+		if ((uintptr_t) pt < (uintptr_t) &pmap_pteg_table[0] ||
+		    (uintptr_t) pt >=
+		    (uintptr_t) &pmap_pteg_table[pmap_pteg_cnt]) {
+			printf("pmap_pvo_check: pvo %p: pte %p not in "
+			    "pteg table\n", pvo, pt);
 			failed = 1;
 		}
 		if (((((uintptr_t) pt) >> 3) & 7) != PVO_PTEGIDX_GET(pvo)) {
-			printf("pmap_pvo_check: pvo %p: pte_hi VALID but no PTE\n", pvo);
+			printf("pmap_pvo_check: pvo %p: pte_hi VALID but "
+			    "no PTE\n", pvo);
 			failed = 1;
 		}
 		if (pvo->pvo_pte.pte_hi != pt->pte_hi) {
-			printf("pmap_pvo_check: pvo %p: pte_hi differ: %#x/%#x\n", pvo,
-			    pvo->pvo_pte.pte_hi, pt->pte_hi);
+			printf("pmap_pvo_check: pvo %p: pte_hi differ: "
+			    "%#x/%#x\n", pvo, pvo->pvo_pte.pte_hi, pt->pte_hi);
 			failed = 1;
 		}
 		if (((pvo->pvo_pte.pte_lo ^ pt->pte_lo) &
 		    (PTE_PP|PTE_WIMG|PTE_RPGN)) != 0) {
-			printf("pmap_pvo_check: pvo %p: pte_lo differ: %#x/%#x\n",
-			    pvo,
+			printf("pmap_pvo_check: pvo %p: pte_lo differ: "
+			    "%#x/%#x\n", pvo,
 			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN),
 			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
 			failed = 1;
@@ -1486,6 +1504,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		    ("pmap_pvo_enter: pvo %p: pm %p va %#lx pa %#lx\n",
 		    pvo, pm, va, pa));
 #endif
+
 	/*
 	 * We hope this succeeds but it isn't required.
 	 */
@@ -1497,6 +1516,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 		TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
 	} else {
+
 		/*
 		 * Since we didn't have room for this entry (which makes it
 		 * and evicted entry), place it at the head of the list.
@@ -1504,10 +1524,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		TAILQ_INSERT_HEAD(pvoh, pvo, pvo_olink);
 		PMAPCOUNT(ptes_evicted);
 		pm->pm_evictions++;
-#if 0
-		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) != VM_PROT_NONE)
-			pmap_pte_evict(pvo, ptegidx, MFTB() & 7);
-#endif
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -1537,9 +1553,11 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 		pteidx = pmap_pvo_pte_index(pvo, ptegidx);
 	} else {
 		ptegidx = pteidx >> 3;
+		if (pvo->pvo_pte.pte_hi & PTE_HID)
+			ptegidx ^= pmap_pteg_mask;
 	}
-
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
+
 	/* 
 	 * If there is an active pte entry, we need to deactivate it
 	 * (and save the ref & chg bits).
@@ -1565,9 +1583,11 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	 * Save the REF/CHG bits into their cache if the page is managed.
 	 */
 	if (pvo->pvo_vaddr & PVO_MANAGED) {
-		struct vm_page *pg = PHYS_TO_VM_PAGE(pvo->pvo_pte.pte_lo & PTE_RPGN);
+		u_int ptelo = pvo->pvo_pte.pte_lo;
+		struct vm_page *pg = PHYS_TO_VM_PAGE(ptelo & PTE_RPGN);
+
 		if (pg != NULL) {
-			pmap_attr_save(pg, pvo->pvo_pte.pte_lo & (PTE_REF|PTE_CHG));
+			pmap_attr_save(pg, ptelo & (PTE_REF|PTE_CHG));
 		}
 		PMAPCOUNT(unmappings);
 	} else {
@@ -1575,20 +1595,12 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	}
 
 	/*
-	 * Remove this PVO from the PV list
+	 * Remove the PVO from its lists and return it to the pool.
 	 */
 	LIST_REMOVE(pvo, pvo_vlink);
-
-	/*
-	 * Remove this from the Overflow list and return it to the pool...
-	 * ... if we aren't going to reuse it.
-	 */
 	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
-
 	pool_put(pvo->pvo_vaddr & PVO_MANAGED
-	    ? &pmap_mpvo_pool
-	    : &pmap_upvo_pool,
-	    pvo);
+	    ? &pmap_mpvo_pool : &pmap_upvo_pool, pvo);
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
 #endif
