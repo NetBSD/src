@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2003/07/15 02:46:32 lukem Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/07/15 02:46:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/10/08 04:25:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/07/15 02:46:32 lukem Exp $");
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -161,16 +161,16 @@ mbr_to_label(dev_t dev, void (*strat)(struct buf *), daddr_t bno,
 	if (biowait(bp))
 		goto done;
 
-	if (get_short(bp->b_data + MBR_MAGICOFF) != MBR_MAGIC)
+	if (get_short(bp->b_data + MBR_MAGIC_OFFSET) != MBR_MAGIC)
 		goto done;
 
 	/* Extract info from MBR partition table */
-	mp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
-	for (i = 0; i < NMBRPART; i++, mp++) {
+	mp = (struct mbr_partition *)(bp->b_data + MBR_PART_OFFSET);
+	for (i = 0; i < MBR_PART_COUNT; i++, mp++) {
 		if (get_long(&mp->mbrp_size) == 0) {
 			continue;
 		}
-		switch (mp->mbrp_typ) {
+		switch (mp->mbrp_type) {
 		case MBR_PTYPE_EXT:
 			if (*pnpart < MAXPARTITIONS) {
 				pp = lp->d_partitions + *pnpart;

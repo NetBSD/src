@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.17 2003/07/25 08:26:22 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.18 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@
 
 /* constants and defines */
 
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*      
  * XXX  I (dsl) haven't the foggiest idea what the MBR extended chain
@@ -60,14 +60,14 @@
 
 typedef struct mbr_info_t mbr_info_t;
 struct mbr_info_t {
-	mbr_sector_t	mbr;
+	struct mbr_sector	mbr;
 #ifdef BOOTSEL
-	char		nametab[NMBRPART][PARTNAMESIZE + 1];
+	char		nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
 #endif
 	uint		sector;		/* where we read this from */
 	mbr_info_t	*extended;	/* next in extended partition list */
 	mbr_info_t	*prev_ext;	/* and back ptr */
-	const char	*last_mounted[NMBRPART];
+	const char	*last_mounted[MBR_PART_COUNT];
 	/* only in first item... */
 	int		opt;		/* entry being edited */
 	uint		install;	/* start sector of install partition */
@@ -83,7 +83,19 @@ EXTERN mbr_info_t mbr;
 
 #ifdef BOOTSEL
 struct mbr_bootsel *mbs;
-#endif
+
+	/* sync with src/sbin/fdisk/fdisk.c */
+#define	DEFAULT_BOOTDIR		"/usr/mdec"
+#define	DEFAULT_BOOTCODE	"mbr"
+#define	DEFAULT_BOOTSELCODE	"mbr_bootsel"
+#define	DEFAULT_BOOTEXTCODE	"mbr_ext"
+
+/* Scan values for the various keys we use, as returned by the BIOS */
+#define	SCAN_ENTER	0x1c
+#define	SCAN_F1		0x3b
+#define	SCAN_1		0x2
+
+#endif /* BOOTSEL */
 
 /* from mbr.c */
 void	set_fdisk_geom(void);	/* edit incore BIOS geometry */
@@ -98,7 +110,7 @@ int 	partsoverlap(struct mbr_partition *, int, int);
  
 int     read_mbr(const char *, mbr_info_t *);
 int     write_mbr(const char *, mbr_info_t *, int);
-int     valid_mbr(mbr_sector_t *);
+int     valid_mbr(struct mbr_sector *);
 int	guess_biosgeom_from_mbr(mbr_info_t *, int *, int *, int *);
 int	md_bios_info(char *);
 void	set_bios_geom(int, int, int);
