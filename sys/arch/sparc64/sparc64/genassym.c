@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.17 2000/07/03 17:56:08 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.18 2000/07/14 21:04:16 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,9 +153,6 @@ main()
 	off("CI_SPINUP", struct cpu_info, ci_spinup);
 	off("CI_INITSTACK", struct cpu_info, ci_initstack);
 	off("CI_PADDR", struct cpu_info, ci_paddr);
-	def("CURPROC", (CPUINFO_VA+CI_CURPROC));
-	def("CPCB", (CPUINFO_VA+CI_CPCB));
-	def("FPPROC", (CPUINFO_VA+CI_FPPROC));
 
 	/* FPU state */
 	off("FS_REGS", struct fpstate64, fs_regs);
