@@ -227,6 +227,7 @@ sbclose()
 		unlink(sfn);
 	}
 	sfseek = seek_write = 0;
+	return 0;
 }
 
 

@@ -524,6 +524,7 @@ doglob()
 #define SGR 004		/* use last regex instead of last subpat */
 #define SGF 010		/* newline found */
 
+long ucurln = -1;	/* if >= 0, undo enabled */
 int usw = 0;		/* if set, undo last undo */
 int patlock = 0;	/* if set, pattern not released by optpat() */
 
@@ -646,6 +647,7 @@ docmd(glob)
 			return ERR;
 		ureset();
 		modified = FALSE;
+		ucurln = -1;
 		break;
 	case 'f':
 		if (nlines > 0) {
@@ -692,7 +694,7 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
-		if (join(line1, line2) < 0)
+		if (line1 != line2 && join(line1, line2) < 0)
 			return ERR;
 		break;
 	case 'k':
@@ -717,9 +719,6 @@ docmd(glob)
 		gflag = 0;
 		break;
 	case 'm':
-		/*  Clean but inefficient move.
-		    The inefficiency is outweighed since the requeue
-		    alternative requires special handling by undo(). */
 		if (deflt(curln, curln) < 0)
 			return ERR;
 		GETLINE3(num);
@@ -729,13 +728,14 @@ docmd(glob)
 		}
 		VRFYCMD();
 		if (!glob) ureset();
-		if (transfer(num) < 0)
+		if (num == prevln(line1, lastln) || num == line2)
+			curln = line2;
+		else if (move(num) < 0)
 			return ERR;
-		c = (num > line1) ? 0 : line2 - line1 + 1;
-		if (del(line1 + c, line2 + c) < 0)
-			return ERR;
-		curln =  num + c;
-		modified = TRUE;
+		else {
+			curln = num + ((num > line1) ? 0 : line2 - line1 + 1);
+			modified = TRUE;
+		}
 		break;
 	case 'n':
 		if (deflt(curln, curln) < 0)
@@ -792,7 +792,7 @@ docmd(glob)
 		if (*fnp == '\0' && *fptr != '!') strcpy(fnp, fptr);
 		if ((num = doread(line2, *fptr ? fptr : fnp)) < 0)
 			return ERR;
-		else if (num != lastln)
+		else if (num && num != lastln)
 			modified = TRUE;
 		break;
 	case 's':
@@ -1102,9 +1102,12 @@ append(n, glob)
 		if (puttxt(lp) == (char *) ERR) {
 			spl0();
 			return ERR;
+		} else if (up)
+			up->t = getptr(curln);
+		else if ((up = upush(UADD, curln, curln)) == NULL) {
+			spl0();
+			return ERR;
 		}
-		if (up)	up->t = getptr(curln);
-		else	up = getuptr(UADD, curln, curln);
 		spl0();
 		modified = 1;
 	}
@@ -1135,14 +1138,17 @@ subst(pat, sub, gflag)
 			   overloading the undo structure, since only two
 			   undo nodes are needed for the whole substitution;
 			   the cost is high, but the less than if undo is
-			   overloaded. */
+			   overloaded on a Sun. */
 			if ((np = lpdup(bp)) == NULL)
 				return ERR;
 			spl1();
 			lpqueue(np);
 			if (up)
 				up->t = getptr(curln);
-			else	up = getuptr(UADD, curln, curln);
+			else if ((up = upush(UADD, curln, curln)) == NULL) {
+				spl0();
+				return ERR;
+			}
 			spl0();
 		} else {
 			spl1();
@@ -1150,10 +1156,12 @@ subst(pat, sub, gflag)
 				if ((new = puttxt(new)) == (char *) ERR) {
 					spl0();
 					return ERR;
-				}
-				if (up)
+				} else if (up)
 					up->t = getptr(curln);
-				else	up = getuptr(UADD, curln, curln);
+				else if ((up = upush(UADD, curln, curln)) == NULL) {
+					spl0();
+					return ERR;
+				}
 			} while (new != NULL);
 			spl0();
 			nsubs++;
@@ -1200,9 +1208,12 @@ subst(pat, sub, gflag)
 				if ((new = puttxt(new)) == (char *) ERR) {
 					spl0();
 					return ERR;
+				} else if (up)
+					up->t = getptr(curln);
+				else if ((up = upush(UADD, curln, curln)) == NULL) {
+					spl0();
+					return ERR;
 				}
-				if (up)	up->t = getptr(curln);
-				else	up = getuptr(UADD, curln, curln);
 			} while (new != NULL);
 			spl0();
 			nsubs++;
@@ -1289,8 +1300,6 @@ join(from, to)
 	int size = 0;
 	line_t *bp, *ep;
 
-	if (from == to)
-		return 0;
 	ep = getptr(nextln(to, lastln));
 	for (bp = getptr(from); bp != ep; bp = bp->next, size += len) {
 		if ((s = gettxt(bp)) == (char *) ERR)
@@ -1305,13 +1314,40 @@ join(from, to)
 	del(from, to);
 	curln = from - 1;
 	spl1();
-	if (puttxt(buf) == (char *) ERR) {
+	if (puttxt(buf) == (char *) ERR
+	 || upush(UADD, curln, curln) == NULL) {
 		spl0();
 		return ERR;
 	}
-	getuptr(UADD, curln, curln);
 	spl0();
 	modified = TRUE;
+	return 0;
+}
+
+
+/* move: move a range of lines */
+move(num)
+	long num;
+{
+	line_t *b1, *a1, *b2, *a2;
+	long n = nextln(line2, lastln);
+	long p = prevln(line1, lastln);
+
+	spl1();
+	if (upush(UMOV, p, n) == NULL
+	 || upush(UMOV, num, nextln(num, lastln)) == NULL) {
+	 	spl0();
+	 	return ERR;
+	}
+	a1 = getptr(n);
+	if (num < line1)
+		b1 = getptr(p), b2 = getptr(num);	/* this getptr last! */
+	else	b2 = getptr(num), b1 = getptr(p);	/* this getptr last! */
+	a2 = b2->next;
+	requeue(b2, b1->next);
+	requeue(a1->prev, a2);
+	requeue(b1, a1);
+	spl0();
 	return 0;
 }
 
@@ -1333,8 +1369,12 @@ transfer(num)
 			return ERR;
 		}
 		lpqueue(lp);
-		if (up)	up->t = lp;
-		else	up = getuptr(UADD, curln, curln);
+		if (up)
+			up->t = lp;
+		else if ((up = upush(UADD, curln, curln)) == NULL) {
+			spl0();
+			return ERR;
+		}
 		spl0();
 	}
 	for (nl += nt, lc = line2 + nt; nl <= lc; nl += 2, lc++) {
@@ -1344,8 +1384,12 @@ transfer(num)
 			return ERR;
 		}
 		lpqueue(lp);
-		if (up)	up->t = lp;
-		else	up = getuptr(UADD, curln, curln);
+		if (up)
+			up->t = lp;
+		else if ((up = upush(UADD, curln, curln)) == NULL) {
+			spl0();
+			return ERR;
+		}
 		spl0();
 	}
 	return 0;
@@ -1357,16 +1401,16 @@ del(from, to)
 	long from, to;
 {
 	line_t *before, *after;
-	long range = to - from + 1;
-	long n;
-	int i;
 
 	spl1();
-	getuptr(UDEL, from, to);
+	if (upush(UDEL, from, to) == NULL) {
+		spl0();
+		return ERR;
+	}
 	after = getptr(nextln(to, lastln));
 	before = getptr(prevln(from, lastln));	/* this getptr last! */
 	requeue(before, after);
-	lastln -= range;
+	lastln -= to - from + 1;
 	curln = prevln(from, lastln);
 	spl0();
 	return 0;
@@ -1420,6 +1464,10 @@ doprnt(from, to, gflag)
 	line_t *ep;
 	char *s;
 
+	if (!from) {
+		sprintf(errmsg, "invalid address");
+		return ERR;
+	}
 	ep = getptr(nextln(to, lastln));
 	for (bp = getptr(from); bp != ep; bp = bp->next) {
 		if ((s = gettxt(bp)) == (char *) ERR)
@@ -1521,8 +1569,12 @@ doread(n, fn)
 			return ERR;
 		}
 		lp = lp->next;
-		if (up)	up->t = lp;
-		else	up = getuptr(UADD, curln, curln);
+		if (up)
+			up->t = lp;
+		else if ((up = upush(UADD, curln, curln)) == NULL) {
+			spl0();
+			return ERR;
+		}
 		spl0();
 	}
 	if (ferror(fp) || ((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
@@ -1604,12 +1656,11 @@ dowrite(n, m, fn, mode)
 undo_t *ustack = NULL;				/* undo stack */
 long usize = 0;					/* stack size variable */
 long u_p = 0;					/* undo stack pointer */
-long ucurln;
 
 
-/* getuptr: return pointer to intialized undo node */
+/* upush: return pointer to intialized undo node */
 undo_t *
-getuptr(type, from, to)
+upush(type, from, to)
 	int type;
 	long from;
 	long to;
@@ -1651,23 +1702,30 @@ undo()
 	long j = u_p;
 	long ocurln = curln;
 
-	if (u_p == 0) {
-		sprintf(errmsg, "file unmodified");
+	if (ucurln == -1) {
+		sprintf(errmsg, "nothing to undo");
 		return ERR;
-	}
+	} else if (u_p)
+		modified = TRUE;
+	getptr(0);				/* this getptr last! */
 	spl1();
-	for (; j--; n += i)
+	for (; j-- > 0; n += i)
 		switch(ustack[n].type ^ usw) {
 		case UADD:
-			getptr(0);		/* this getptr last! */
 			requeue(ustack[n].h->prev, ustack[n].t->next);
 			lastln -= getrange(ustack[n].h, ustack[n].t);
 			break;
 		case UDEL:
-			getptr(0);		/* this getptr last! */
 			requeue(ustack[n].h->prev, ustack[n].h);
 			requeue(ustack[n].t, ustack[n].t->next);
 			lastln += getrange(ustack[n].h, ustack[n].t);
+			break;
+		case UMOV:
+		case VMOV:
+			requeue(ustack[n + i].h, ustack[n].h->next);
+			requeue(ustack[n].t->prev, ustack[n + i].t);
+			requeue(ustack[n].h, ustack[n].t);
+			n += i, j--;
 			break;
 		default:
 			/*NOTREACHED*/
@@ -1722,10 +1780,12 @@ sgetline(buf, size, fp)
 
 	if (!des)
 		while (cp - buf < size - 1 && (c = getc(fp)) != EOF && c != '\n')
-			c && (*cp++ = c) || (nullchar = 1);
+			if (c)	*cp++ = c; 
+			else 	nullchar = 1;
 	else
 		while (cp - buf < size - 1 && (c = desgetc(fp)) != EOF && c != '\n')
-			c && (*cp++ = c) || (nullchar = 1);
+			if (c)	*cp++ = c; 
+			else 	nullchar = 1;
 	if (c == '\n')
 		*cp++ = c;
 	else if (c == EOF) {

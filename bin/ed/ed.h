@@ -90,6 +90,8 @@ typedef struct undo {
 /* type of undo nodes */
 #define UADD	0
 #define UDEL 	1
+#define UMOV	2
+#define VMOV	3
 
 	int type;			/* command type */
 	line_t	*h;			/* head of list */
@@ -135,6 +137,10 @@ if (--mutex == 0) { \
 /* remqueue: remove elem from circular queue */
 #define remqueue(elem) requeue((elem)->prev, (elem)->next);
 
+#ifndef strerror
+# define strerror(n) sys_errlist[n]
+#endif
+
 #ifndef __P
 # ifndef __STDC__
 #  define __P(proto) ()
@@ -155,7 +161,9 @@ int desgetc __P((FILE *));
 FILE *desopen __P((char *, char *));
 int desputc __P((int, FILE *));
 int docmd __P((int));
+int err __P((char *));
 char *ccl __P((int, char *));
+int cvtkey __P((char *, char *));
 long doglob __P((void));
 void dohup __P((int));
 void dointr __P((int));
@@ -179,12 +187,12 @@ line_t *getptr __P((long));
 long getrange __P((line_t *, line_t *));
 int getrhs __P((char *, int));
 char *gettxt __P((line_t *));
-undo_t *getuptr __P((int, long, long));
 int join __P((long, long));
 line_t *lpdup __P((line_t *));
 void lpqueue __P((line_t *));
+int makekey __P((char *));
 char *makesub __P((char *, int, int));
-int move __P((long, int));
+int move __P((long));
 int oddesc __P((char *, char *));
 void onhup __P((int));
 void onintr __P((int));
@@ -198,6 +206,10 @@ int sbopen __P((void));
 int sgetline __P((char *, int, FILE *));
 char *subcat __P((char *, regmatch_t *, char *, char *, char *));
 int subst __P((pattern_t *, char *, int));
+int tobinhex __P((int, int));
 int transfer __P((long));
 int undo __P((void));
+undo_t *upush __P((int, long, long));
 void ureset __P((void));
+
+extern char *sys_errlist[];
