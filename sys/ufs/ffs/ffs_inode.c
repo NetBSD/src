@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.39 2001/01/01 05:17:26 matt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.40 2001/01/27 04:23:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -251,7 +251,6 @@ ffs_truncate(v)
 	lockmgr(&ovp->v_glock, LK_EXCLUSIVE, NULL);
 
 	if (DOINGSOFTDEP(ovp)) {
-		uvm_vnp_setsize(ovp, length);
 		if (length > 0) {
 			/*
 			 * If a file is only partially truncated, then
@@ -268,6 +267,7 @@ ffs_truncate(v)
 				return (error);
 			}
 		} else {
+			uvm_vnp_setsize(ovp, length);
 #ifdef QUOTA
  			(void) chkdq(oip, -oip->i_ffs_blocks, NOCRED, 0);
 #endif
