@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113 2003/01/16 11:55:28 martti Exp $
+# $NetBSD: mi,v 1.114 2003/02/20 11:40:30 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -54,6 +54,13 @@
 ./etc/newsyslog.conf			etc-sysutil-etc
 ./etc/nsswitch.conf			etc-net-etc
 ./etc/ntp.conf				etc-ntp-etc
+./etc/obsolete/base			etc-sys-etc
+./etc/obsolete/comp			etc-sys-etc
+./etc/obsolete/etc			etc-sys-etc
+./etc/obsolete/games			etc-sys-etc
+./etc/obsolete/man			etc-sys-etc
+./etc/obsolete/misc			etc-sys-etc
+./etc/obsolete/text			etc-sys-etc
 ./etc/passwd				etc-sys-etc
 ./etc/passwd.conf			etc-sys-etc
 ./etc/phones				etc-uucp-etc

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.245 2003/02/16 00:22:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.246 2003/02/20 11:40:28 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -134,6 +134,8 @@ TARGET_ENDIANNESS=	-B
 TARGET_ENDIANNESS=
 .endif
 .endif	# install-etc-files						# }
+OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
+OBSOLETE.files=		base comp etc games man misc text
 
 
 # distribution --
@@ -171,9 +173,9 @@ install-etc-files: check_DESTDIR
 	    ${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
 	( \
-	    echo "./etc/passwd type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
-	    echo "./etc/pwd.db type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
-	    echo "./etc/spwd.db type=file mode=0600 uname=root gname=wheel tags=etc_pkg"; \
+		for metaent in passwd pwd.db spwd.db; do \
+	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+		done; \
 	) | ${METALOG.add}
 .endif	# UNPRIVED
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
@@ -279,6 +281,12 @@ install-etc-files: check_DESTDIR
 .if !defined(NO_SENDMAIL) || ${NO_SENDMAIL} == "no"
 	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
+	mkdir -p ${OBSOLETE.dir}
+	(cd ${NETBSDSRCDIR}/distrib/sets; sh ./makeobsolete -t ${OBSOLETE.dir})
+.for file in ${OBSOLETE.files}
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${OBSOLETE.dir}/${file} ${DESTDIR}/etc/obsolete
+.endfor
 
 
 # distrib-dirs --
@@ -503,6 +511,6 @@ snap_md_post: check_DESTDIR check_RELEASEDIR
 
 
 clean:
-	-rm -rf ${CDROM.dir} ${CDROM.pathlist}
+	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
 .include <bsd.prog.mk>

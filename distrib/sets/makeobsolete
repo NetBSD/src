@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.16 2002/11/26 06:22:23 lukem Exp $
+# $NetBSD: makeobsolete,v 1.17 2003/02/20 11:40:29 lukem Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -86,7 +86,7 @@ lists=$_lists
 unset _lists
 
 for setname in $lists; do
-	file=$target/${setname}_obsolete
+	file=$target/${setname}
 	(
 	if [ -f $setd/lists/$setname/obsolete.mi ]; then
 		awk -- '{print $1}' $setd/lists/$setname/obsolete.mi
