@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/12 01:49:56 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2002/05/18 13:54:39 isaki Exp $
 
 BASE=	loadbsd
 PROG=	${BASE}.x	# Human68k ".x" executable
@@ -34,7 +34,7 @@ ${PROG}: ${BASE}1 ${BASE}2
 
 .for i in 1 2
 ${BASE}${i}:	${OBJS} ${LIBDOS}/libdos.a ${LIBIOCS}/libiocs.a
-	${CC} -o ${.TARGET} ${LDFLAGS} -Wl,-Ttext -Wl,${i}${i}000 ${OBJS} ${LDLIBS}
+	${CC} -o ${.TARGET} ${LDFLAGS} -Wl,-Ttext,${i}${i}000 ${OBJS} ${LDLIBS}
 .endfor
 
 .ifdef RELEASEDIR
