@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.57 2000/02/03 08:13:46 nisimura Exp $	*/
+/*	$NetBSD: asc.c,v 1.58 2000/03/14 08:23:29 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -118,9 +118,6 @@
  *   by the scripts to cope with strange but well identified sequences
  *
  */
-
-#include <asc.h>
-#if NASC > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2151,5 +2148,3 @@ asc_DumpLog(str)
 	} while (lp != asc_logp);
 }
 #endif /*DEBUG*/
-
-#endif	/* NASC > 0 */
