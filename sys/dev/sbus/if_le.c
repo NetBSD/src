@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.15 2000/10/20 05:57:50 mrg Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16 2000/10/20 06:08:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ leattach_sbus(parent, self, aux)
 
 		/* Load DMA buffer */
 		if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
-					MEMSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
+		    MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 			printf("%s: DMA buffer map load error %d\n",
 				self->dv_xname, error);
 			bus_dmamem_free(dmatag, &seg, rseg);
