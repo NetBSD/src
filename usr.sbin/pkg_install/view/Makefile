@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.1.2.1 2002/07/22 16:47:34 agc Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2003/07/13 12:48:07 jlam Exp $
 
 SCRIPTS= linkfarm.sh pkg_view.sh
+MAN=     linkfarm.1
 
 .include <bsd.prog.mk>
