@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.3 1999/03/27 17:46:00 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.4 1999/03/27 18:16:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -361,6 +361,19 @@ usage()
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-iaqVh] [-v vol] [-b bal] [-c channels] [-p port] [-d dev] [-C ctl]\n\t{file|-}\n", __progname);
+	fprintf(stderr, "Usage: %s [-afhqV] [options] {files ...|-}\n", __progname);
+	fprintf(stderr, "Options:\n\t"
+	    "-C audio control device\n\t"
+	    "-b balance (0-63)\n\t"
+	    "-c channels\n\t"
+	    "-d audio device\n\t"
+	    "-e encoding\n\t"
+	    "-i header information\n\t"
+	    "-m monitor volume\n\t"
+	    "-P precision bits (8, 16, 24 or 32)\n\t"
+	    "-p input port\n\t"
+	    "-s sample rate\n\t"
+	    "-t recording time\n\t"
+	    "-v volume\n");
 	exit(0);
 }
