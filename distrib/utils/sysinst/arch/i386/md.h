@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.2 1997/10/15 04:36:42 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,8 @@ EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
 EXTERN char ftp_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN char *ftp_list[]
 #ifdef MAIN
-= { "kern", "base", "comp", "etc", "games", "man", "misc", "text", NULL }
+= { "kern%s%s", "base%s%s", "comp%s%s", "etc%s%s", "games%s%s", "man%s%s",
+    "misc%s%s", "text%s%s", "CKSUMS", NULL }
 #endif
 ;
 
