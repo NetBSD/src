@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.1 1995/04/03 04:38:07 mellon Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.2 1995/04/10 04:47:47 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,8 +116,8 @@ cpu_exec_aout_makecmds(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
-}
 #endif
+}
 
 #ifdef COMPAT_ULTRIX
 exec_setup_fcn cpu_exec_setup;	/* make sure  function has correct type */
