@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.7 2001/01/24 07:23:51 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.8 2001/01/24 07:46:23 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -466,8 +466,8 @@ my_driver(FORM * form, int c, char *path)
 		if (list == NULL)
 			break;
 		for (i=0, y=0; list[i] != NULL; i++)
-			if (strlen(list[i]) > y)
-				y = strlen(list[i]);
+			if ((strlen(list[i]) + 1) > y)
+				y = strlen(list[i]) + 1;
 		if (field_buffer(curfield, 1) == NULL || 
 		    field_buffer(curfield, 0) == NULL)
 			return(FALSE);
@@ -1248,6 +1248,7 @@ handle_form(char *basedir, char *path, char **args)
 	set_form_sub(menuform, formwin);
 	post_form(menuform);
 	wrefresh(stdscr);
+	wrefresh(boxwin);
 	form_status(menuform);
 	while (!done) {
 		switch (form_driver(menuform, c = get_request(formwin))) {

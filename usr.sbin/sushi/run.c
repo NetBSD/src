@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.2 2001/01/10 03:05:48 garbled Exp $       */
+/*      $NetBSD: run.c,v 1.3 2001/01/24 07:46:23 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -481,7 +481,7 @@ run_prog(int display, char **args)
 			wrefresh(actionwin);
 			break;
 		case KEY_DOWN:
-			if (curline + win.ws_row >= numlines)
+			if (curline + win.ws_row - 1 >= numlines)
 				break;
 			wclear(actionwin);
 			curline++;
