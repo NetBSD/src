@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 1998/06/09 01:57:41 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 1998/07/03 22:21:42 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -223,7 +223,7 @@ consinit()
 
 #if defined (DDB)
 	{
-		extern int end;
+		extern int end[];
 		extern int *esym;
 
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
@@ -715,7 +715,7 @@ cpu_dumpconf()
 	int nblks;
 	int i;
 	extern u_int Sysseg_pa;
-	extern char end[];
+	extern int end[];
 
 	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
 
@@ -759,7 +759,7 @@ cpu_dumpconf()
 	/*
 	 * Define the end of the relocatable range.
 	 */
-	m->relocend = (u_int32_t)end;
+	m->relocend = (u_int32_t)&end;
 
 	/* XXX new corefile format, single segment + chipmem */
 	dumpsize = physmem;
