@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.16 2002/01/04 14:50:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.16 2002/01/04 14:50:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,17 +80,14 @@ static GIDC **gidtb = NULL;	/* gid to name cache */
 static UIDC **usrtb = NULL;	/* user name to uid cache */
 static GIDC **grptb = NULL;	/* group name to gid cache */
 
-static u_int st_hash __P((const char *, size_t, int));
-static int uidtb_start __P((void));
-static int gidtb_start __P((void));
-static int usrtb_start __P((void));
-static int grptb_start __P((void));
+static u_int st_hash(const char *, size_t, int);
+static int uidtb_start(void);
+static int gidtb_start(void);
+static int usrtb_start(void);
+static int grptb_start(void);
 
 static u_int
-st_hash(name, len, tabsz)
-	const char *name;
-	size_t len;
-	int tabsz;
+st_hash(const char *name, size_t len, int tabsz)
 {
 	u_int key = 0;
 
@@ -111,13 +108,8 @@ st_hash(name, len, tabsz)
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 static int
 uidtb_start(void)
-#else
-static int
-uidtb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -139,13 +131,8 @@ uidtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 gidtb_start(void)
-#else
-int
-gidtb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -167,13 +154,8 @@ gidtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 usrtb_start(void)
-#else
-int
-usrtb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -195,13 +177,8 @@ usrtb_start()
  *	0 if ok, -1 otherwise
  */
 
-#if __STDC__
 int
 grptb_start(void)
-#else
-int
-grptb_start()
-#endif
 {
 	static int fail = 0;
 
@@ -218,21 +195,15 @@ grptb_start()
 
 /*
  * user_from_uid()
- *	caches the name (if any) for the uid. If noname clear, we always return the
- *	the stored name (if valid or invalid match). We use a simple hash table.
+ *	caches the name (if any) for the uid. If noname clear, we always
+ *	return the the stored name (if valid or invalid match).
+ *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
  */
 
-#if __STDC__
 const char *
 user_from_uid(uid_t uid, int noname)
-#else
-const char *
-user_from_uid(uid, noname)
-	uid_t uid;
-	int noname;
-#endif
 {
 	struct passwd *pw;
 	UIDC *ptr, **pptr;
@@ -274,11 +245,7 @@ user_from_uid(uid, noname)
 		if (ptr == NULL)
 			return (NULL);
 		ptr->uid = uid;
-#		ifdef NET2_STAT
-		(void)snprintf(ptr->name, UNMLEN, "%u", uid);
-#		else
 		(void)snprintf(ptr->name, UNMLEN, "%lu", (long) uid);
-#		endif
 		ptr->valid = INVALID;
 		if (noname)
 			return (NULL);
@@ -298,21 +265,15 @@ user_from_uid(uid, noname)
 
 /*
  * group_from_gid()
- *	caches the name (if any) for the gid. If noname clear, we always return the
- *	the stored name (if valid or invalid match). We use a simple hash table.
+ *	caches the name (if any) for the gid. If noname clear, we always
+ *	return the the stored name (if valid or invalid match).
+ *	We use a simple hash table.
  * Return
  *	Pointer to stored name (or a empty string)
  */
 
-#if __STDC__
 const char *
 group_from_gid(gid_t gid, int noname)
-#else
-const char *
-group_from_gid(gid, noname)
-	gid_t gid;
-	int noname;
-#endif
 {
 	struct group *gr;
 	GIDC *ptr, **pptr;
@@ -354,11 +315,7 @@ group_from_gid(gid, noname)
 		if (ptr == NULL)
 			return (NULL);
 		ptr->gid = gid;
-#		ifdef NET2_STAT
-		(void)snprintf(ptr->name, GNMLEN, "%u", gid);
-#		else
 		(void)snprintf(ptr->name, GNMLEN, "%lu", (long) gid);
-#		endif
 		ptr->valid = INVALID;
 		if (noname)
 			return (NULL);
@@ -383,15 +340,8 @@ group_from_gid(gid, noname)
  *	the uid (if any) for a user name, or a -1 if no match can be found
  */
 
-#if __STDC__
 int
 uid_from_user(const char *name, uid_t *uid)
-#else
-int
-uid_from_user(name, uid)
-	const char *name;
-	uid_t *uid;
-#endif
 {
 	struct passwd *pw;
 	UIDC *ptr, **pptr;
@@ -455,15 +405,8 @@ uid_from_user(name, uid)
  *	the gid (if any) for a group name, or a -1 if no match can be found
  */
 
-#if __STDC__
 int
 gid_from_group(const char *name, gid_t *gid)
-#else
-int
-gid_from_group(name, gid)
-	const char *name;
-	gid_t *gid;
-#endif
 {
 	struct group *gr;
 	GIDC *ptr, **pptr;
