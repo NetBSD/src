@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2002/10/10 09:47:18 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2002/11/23 09:25:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -88,15 +88,19 @@
  * User VM space stretches to fill what's left.
  */
 #ifdef _LP64
-#define	VM_MIN_KERNEL_ADDRESS	(0xffffffffc0000000UL)
+#define	VM_MIN_KERNEL_ADDRESS	(0xffffffffe0000000UL)
 #define	VM_MAX_KERNEL_ADDRESS	(0xfffffffffffff000UL)
 #else
-#define	VM_MIN_KERNEL_ADDRESS	(0xc0000000UL)
+#define	VM_MIN_KERNEL_ADDRESS	(0xe0000000UL)
 #define	VM_MAX_KERNEL_ADDRESS	(0xfffff000UL)
 #endif
 
 #define	VM_MIN_ADDRESS		(0)
-#define	VM_MAXUSER_ADDRESS	(VM_MIN_KERNEL_ADDRESS - NBPG)
+#ifdef _LP64
+#define	VM_MAXUSER_ADDRESS	(0xffffffffc0000000UL - NBPG)
+#else
+#define	VM_MAXUSER_ADDRESS	(0xc0000000UL - NBPG)
+#endif
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 /*

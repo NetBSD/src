@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 2002/10/23 09:11:59 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 2002/11/23 09:25:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4 2002/10/23 09:11:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5 2002/11/23 09:25:55 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -124,8 +124,10 @@ mmrw(dev, uio, flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+			if ((v >= VM_MIN_KERNEL_ADDRESS &&
+			    !uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) ||
+			    v < SH5_KSEG0_BASE)
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
 			break;

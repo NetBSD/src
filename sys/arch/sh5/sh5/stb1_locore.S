@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.8 2002/10/07 14:48:14 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.9 2002/11/23 09:25:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -156,70 +156,30 @@ Lsh5_stb1_init:
 
 /******************************************************************************/
 
-#define	TLBCOOKIE_IDX_SHIFT_D	0
-#define	TLBCOOKIE_IDX_SHIFT_I	5
-
-#define	TLBCOOKIE_IDX_MASK	0x0f
-#define	TLBCOOKIE_IDX_VALID	0x10
-
-
-/******************************************************************************
+/*
+ * TLB cookies are used to keep track of which TLB slot a particular mapping
+ * was inserted into. This provides a quick way to invalidate the mapping
+ * since we don't need to search the TLB (The sh5 cpu provides no h/w
+ * assistance for invalidating specific mappings).
  *
- * void _sh5_stb1_tlbinv(pteh_t pteh, pteh_t mask)
+ * There are 16-bits available in the cookie. We split that into two 8-bit
+ * fields; one for the instruction TLB, the other for the data TLB.
  *
- * Search the TLB for an entry which matches the constraints passed in
- * in `pteh' and `mask'.
- *
- * If found, invalidate the TLB entry.
+ * Each field is comprised of a "valid" bit and a TLB "index". The index
+ * can range from 0-127. Since this cpu has only 64 TLB slots, values from
+ * 64-127 are not used.
  */
-ENTRY_NOPROFILE(_sh5_stb1_tlbinv)
-	getcon	sr, r5
-	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
-	ori	r3, SH5_PTEH_V, r3
-	addz.l	r2, r63, r2		/* Zero-extend PTEH */
-	addz.l	r3, r63, r3		/* Zero-extend PTEL */
-	ori	r5, SH5_CONREG_SR_IMASK_ALL, r4		/* Block interrupts */
-	putcon	r4, sr
 
-	ptabs/u	r18, tr1		/* Get return address to tr1 */
+#define	TLBCOOKIE_IDX_SHIFT_D	0
+#define	TLBCOOKIE_IDX_SHIFT_I	8
 
-	/* Check the DTLB first */
-	pta/l	1f, tr0
-	LDC32(STB1_DTLB(1), r0)		/* DTLB Base */
-	movi	STB1_TLB_NSLOTS - 1, r1
-
-1:	getcfg	r0, 0, r6		/* Fetch DTLB.PTEH entry */
-	and	r6, r3, r7		/* Keep interesting bits in r7 */
-	xor	r7, r2, r7		/* r7 <- 0 if we found a match */
-	cmveq	r7, r63, r6		/* r6 <- 0 if we found a match */
-	putcfg	r0, 0, r6		/* If matched, zap the DTLB entry */
-	cmveq	r7, r63, r1		/* If matched, terminate loop early */
-	addi	r1, -1, r1		/* Decrement loop counter */
-	addi	r0, STB1_TLB_IDX_STEP, r0	/* Next DTLB entry */
-	bge/l	r1, r63, tr0		/* Back if not done and not found */
-
-	/* Now check the ITLB */
-	pta/l	2f, tr0
-	movi	STB1_ITLB(1), r1	/* ITLB Base */
-	movi	STB1_TLB_NSLOTS - 1, r1
-
-2:	getcfg	r0, 0, r6		/* Fetch ITLB.PTEH */
-	and	r6, r3, r7		/* Keep interesting bits */
-	xor	r7, r2, r7		/* r7 <- 0 if we found a match */
-	cmveq	r7, r63, r6		/* Ditto for r6 */
-	putcfg	r0, 0, r6		/* If matched, zap the ITLB entry */
-	cmveq	r7, r63, r1		/* If matched, terminate loop early */
-	addi	r1, -1, r1		/* Decrement loop counter */
-	addi	r0, STB1_TLB_IDX_STEP, r0	/* Next ITLB entry */
-	bge/l	r1, r63, tr0		/* Back if not done and not found */
-
-	putcon	r5, sr			/* Restore interrupt mask */
-	blink	tr1, r63
+#define	TLBCOOKIE_IDX_MASK	0x3f
+#define	TLBCOOKIE_IDX_VALID	0x80
 
 
 /******************************************************************************
  *
- * void _sh5_stb1_tlbinv_cookie(pteh_t pteh, u_int tlbcookie)
+ * void _sh5_stb1_tlbinv_cookie(pteh_t pteh, tlbcookie_t tlbcookie)
  *
  * Callable from C code.
  *
@@ -231,57 +191,35 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv)
  * may be.
  */
 ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
-	ptabs/l	r18, tr0		/* Get return address to tr0 */
-	beq/l	r3, r63, tr0		/* Just return if pteh isn't in TLB */
-
-	/*
-	 * Looks like the PTEH may be stashed somewhere in the TLB.
-	 * Fortunately, we have a hint which narrows it down
-	 * to one of four TLB entries in both instruction and data
-	 * TLBs. This avoids searching all 64 entries in both TLBs.
-	 */
+	ptabs/u	r18, tr0		/* Get return address to tr0 */
 	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
 	addz.l	r2, r63, r2		/* Zero-extend the PTEH */
 
 	pta/u	1f, tr1			/* Pre-load jump targets */
 	pta/u	2f, tr2
-	pta/u	4f, tr3
-	pta/u	5f, tr4
+	pta/u	3f, tr3
 
 	/* Data TLB index valid?  */
 	andi	r3, TLBCOOKIE_IDX_VALID, r0
-	beq/u	r0, r63, tr4		/* Nope. Go check instruction TLB */
+	beq/u	r0, r63, tr3		/* Nope. Go check instruction TLB */
 
 	/* Yup. Shoot it down */
 	andi	r3, TLBCOOKIE_IDX_MASK, r0
-	shlli	r0, STB1_TLB_IDX_SHIFT + 2, r0	/* Convert to TLB index */
+	shlli	r0, STB1_TLB_IDX_SHIFT, r0	/* Convert to TLB index */
 	LDC32(STB1_DTLB(0), r1)		/* DTLB base */
 	add	r0, r1, r0		/* Point to required group of four */
 
-1:	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry #0 */
-	beq/u	r1, r2, tr2		/* Jump if we found it */
-	addi	r0, STB1_TLB_IDX_STEP, r0
-	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry #1 */
-	beq/u	r1, r2, tr2		/* Jump if we found it */
-	addi	r0, STB1_TLB_IDX_STEP, r0
-	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry #2 */
-	beq/u	r1, r2, tr2		/* Jump if we found it */
-	addi	r0, STB1_TLB_IDX_STEP, r0
-	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry #3 */
-	beq/u	r1, r2, tr2		/* Jump if we found it */
-
-	/*
-	 * Huh. It wasn't there after all...
-	 * Perhaps it was evicted by the TLB miss code.
-	 */
-	blink	tr4, r63
+1:	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry */
+	bne/u	r1, r2, tr3		/* Jump if it wasn't there anyway */
 
 	/* Found the required TLB entry. Disable interrupts and check again */
-2:	getcon	sr, r4			/* Grab SR */
+	getcon	sr, r4			/* Grab SR */
 	ori	r4, SH5_CONREG_SR_IMASK_ALL, r1
 	putcon	r1, sr			/* Disable ALL exceptions */
+	synci
+	synco
 	getcfg	r0, 0, r1		/* Fetch TLB.PTEH entry again */
-	bne/u	r1, r2, tr3		/* It changed under our noses */
+	bne/u	r1, r2, tr2		/* It changed under our noses */
 
 	/*
 	 * Ok, we're about to invalidate a TLB entry.
@@ -302,21 +240,25 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
 	 */
 
 	putcfg	r0, 0, r63		/* Invalidate it */
+	synci
+	synco
 
-4:	putcon	r4, sr			/* Re-enable exceptions */
-	blink	tr4, r63
+2:	putcon	r4, sr			/* Re-enable exceptions */
+	blink	tr3, r63
+	nop
 
 	/*
 	 * Check the instruction TLB if necessary
 	 */
-5:	shlri	r3, TLBCOOKIE_IDX_SHIFT_I, r3
+3:	ptabs/l	r18, tr3		/* Return to caller when done */
+	shlri	r3, TLBCOOKIE_IDX_SHIFT_I, r3
 	andi	r3, TLBCOOKIE_IDX_VALID, r0
-	beq/u	r0, r63, tr0		/* Nope. Just return. */
+	beq/l	r0, r63, tr3		/* Nope. Just return. */
 
 	/* Yup. Shoot it down */
 	andi	r3, TLBCOOKIE_IDX_MASK, r0 /* Fetch ITLB index */
-	shlli	r0, STB1_TLB_IDX_SHIFT + 2, r0	/* Point to reqd. group of 4 */
-	ptabs/l	r18, tr4		/* Return to caller when done */
+	shlli	r0, STB1_TLB_IDX_SHIFT, r0	/* Point to reqd. group of 4 */
+	blink	tr1, r63
 
 
 /******************************************************************************
@@ -328,41 +270,47 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
  * Invalidate all instruction and data TLB entries with non-zero ASIDs.
  */
 ENTRY_NOPROFILE(_sh5_stb1_tlbinv_all)
+	getcon	sr, r5
 	pta/u	1f, tr0			/* Pre-load branches */
+	pta/u	2f, tr2			/* Pre-load branches */
+	pta/u	3f, tr3			/* Pre-load branches */
 	ptabs/u	r18, tr1		/* Get return address to tr1 */
+	ori	r5, SH5_CONREG_SR_IMASK_ALL, r4
 	LDC32(STB1_DTLB(STB1_TLB_NSLOTS - 1), r0)	/* DTLB Top */
+	putcon	r4, sr
 	movi	STB1_ITLB(STB1_TLB_NSLOTS - 1), r1	/* ITLB Top */
 	movi	(SH5_PTEH_ASID_MASK << SH5_PTEH_ASID_SHIFT), r2
 
 1:	getcfg	r0, 0, r3		/* Fetch DTLB entry */
 	and	r3, r2, r4		/* Keep ASID */
-	cmvne	r4, r63, r3		/* If ASID != 0, clear r3 */
-	putcfg	r0, 0, r3		/* Invalidate DTLB entry */
-	addi	r0, -STB1_TLB_IDX_STEP, r0	/* Next DTLB slot */
+	beq/l	r4, r63, tr2		/* Jump if ASID is zero */
+	putcfg	r0, 0, r63		/* Invalidate DTLB entry */
+2:	addi	r0, -STB1_TLB_IDX_STEP, r0	/* Next DTLB slot */
 
 	getcfg	r1, 0, r3		/* Fetch ITLB entry */
 	and	r3, r2, r4		/* Keep asid */
-	cmvne	r4, r63, r3		/* If ASID != 0, clear r3 */
+	beq/l	r4, r63, tr3		/* Jump if ASID is zero */
 	putcfg	r1, 0, r63		/* Invalidate ITLB entry */
-	addi	r1, -STB1_TLB_IDX_STEP, r1	/* Next ITLB slot */
+3:	addi	r1, -STB1_TLB_IDX_STEP, r1	/* Next ITLB slot */
 
 	bne/l	r1, r63, tr0		/* Back until all checked */
+	putcon	r5, sr
 	blink	tr1, r63
 
 
 /******************************************************************************
  *
- * __sh5_stb1_tlbload(r0 = PTEH, r1 = PTEL, r2 = Return Address)
+ * __sh5_stb1_tlbload(r0 = PTEH, r1 = PTEL, r2 = Return Address,
+ *                    r4 = Pointer to pte/kpte)
  *
  * Load the appropriate TLB with the PTEL and PTEH values.
  *
  * r3, tr0, and tr1 are available.
  * r1 and r2 need not be preserved.
  *
- * Can return an optional 10-bit "cookie" in r0, which will be passed to
- * the TLB invalidate function, above, when the PTE is to be purged from
- * the TLB. The cookie need not be returned if the ASID field of PTEH is
- * zero.
+ * Returns a 16-bit "cookie" in r0, which will be passed to the TLB
+ * invalidate function, above, when the PTE is to be purged from the
+ * TLB.
  *
  * NOT callable by C code (despite the use of ENTRY_NOPROFILE()).
  *
@@ -438,23 +386,24 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
 	/* r2 == pseudo-random [ID]TLB index */
 
 	putcfg	r2, 0, r63		/* Make sure PTEH.V is clear */
+	synci
 	putcfg	r2, 1, r1		/* Store PTEL */
 	putcfg	r2, 0, r0		/* Store PTEH */
 
-	/* Generate TLB cookie, if necessary */
+	/* Generate TLB cookie */
 
-	movi	(SH5_PTEH_ASID_MASK << SH5_PTEH_ASID_SHIFT), r3
-	and	r0, r3, r3
-	beq/u	r3, r63, tr1
-
-	shlri	r2, STB1_TLB_IDX_SHIFT + 2, r0	/* Get TLB index/4 */
-	andi	r0, TLBCOOKIE_IDX_MASK, r0	/* Ditch unwanted bits */
+	shlri	r2, STB1_TLB_IDX_SHIFT, r0	/* Get TLB index */
+	movi	TLBCOOKIE_IDX_MASK, r1
+	shlri	r0, 16, r2
+	and	r0, r1, r0			/* Ditch unwanted bits */
+	xori	r2, 8, r2			/* Magic! r2 = shift count */
 	ori	r0, TLBCOOKIE_IDX_VALID, r0	/* Mark it as valid */
-	movi	0, r3				/* Test which TLB was used */
-	shori	65535, r3
-	andc	r2, r3, r3
-	bne/l	r3, r63, tr1			/* Just return if DTLB */
-	shlli	r0, TLBCOOKIE_IDX_SHIFT_I, r0	/* Convert to ITLB cookie */
+	shlld	r0, r2, r0
+	shlld	r1, r2, r1
+	ld.w	r4, SH5_PTE_TLBCOOKIE, r2
+	andc	r2, r1, r2
+	or	r2, r0, r2
+	st.w	r4, SH5_PTE_TLBCOOKIE, r2
 	blink	tr1, r63
 
 
@@ -678,7 +627,13 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_purge_all)
  *  tr1 = Return address.
  */
 Lstb1_cacheop_switch_asid:
+#ifndef _LP64
+	add.l	r2, r4, r4		/* r4 == end of region to purge/inv */
+	add.l	r2, r63, r2
+#else
 	add	r2, r4, r4		/* r4 == end of region to purge/inv */
+#endif
+	getcon	sr, r19
 
 	/*
 	 * There's no need to do this dance if the region is in KSEG0.
@@ -703,7 +658,12 @@ Lstb1_cacheop_switch_asid:
 	 * Just call the cacheop handler directly and arrange for it
 	 * to return directly to the original caller.
 	 */
-	ptabs/u	r18, tr1
+	pta/u	99f, tr1
+	ori	r19, SH5_CONREG_SR_IMASK_ALL, r0
+	putcon	r0, sr
+	blink	tr0, r63
+99:	ptabs/l	r18, tr0
+	putcon	r19, sr
 	blink	tr0, r63
 
 	/*
@@ -715,7 +675,6 @@ Lstb1_cacheop_switch_asid:
 	 * First, block all exceptions. r19 is a handy caller-saved
 	 * register which we'll use to restore SR when done.
 	 */
-	getcon	sr, r19
 	LDC32(SH5_CONREG_SR_BL, r1)
 	or	r19, r1, r0
 	putcon	r0, sr			/* Exceptions are now blocked */
@@ -742,9 +701,13 @@ Lstb1_cacheop_switch_asid:
 	movi	STB1_ITLB(STB1_TLB_NSLOTS - 1), r1	/* Top of ITLB */
 	getcfg	r0, 0, r20		/* Save Data PTEH */
 	getcfg	r0, 1, r21		/* Save Data PTEL */
+	add.l	r20, r63, r20
+	add.l	r21, r63, r21
 	putcfg	r0, 0, r63		/* Invalidate the slot */
 	getcfg	r1, 0, r22		/* Save Insn PTEH */
 	getcfg	r1, 1, r23		/* Save Insn PTEL */
+	add.l	r22, r63, r22
+	add.l	r23, r63, r23
 	putcfg	r1, 0, r63		/* Invalidate the slot */
 
 	/*
@@ -762,12 +725,15 @@ Lstb1_cacheop_switch_asid:
 	/* Fix up the appropriate PTEL for the DTLB, and load it */
 	movi	SH5_PTEL_CB_WRITEBACK | SH5_PTEL_SZ_4KB | SH5_PTEL_PR_R | SH5_PTEL_PR_W, r6
 	or	r3, r6, r6		/* DTLB PTEL is now complete in r6 */
+	add.l	r6, r63, r6
+	add.l	r5, r63, r5
 	putcfg	r0, 1, r6		/* Load DTLB.PTEL */
 	putcfg	r0, 0, r5		/* Load DTLB.PTEH */
 
 	/* Fix up the appropriate PTEL for the ITLB, and load it */
 	movi	SH5_PTEL_CB_WRITEBACK | SH5_PTEL_SZ_4KB | SH5_PTEL_PR_X, r6
 	or	r3, r6, r6		/* ITLB PTEL is now complete in r6 */
+	add.l	r6, r63, r6
 	putcfg	r1, 1, r6		/* Load ITLB.PTEL */
 	putcfg	r1, 0, r5		/* Load ITLB.PTEH */
 

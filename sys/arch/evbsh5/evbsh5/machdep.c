@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2002/10/22 09:30:27 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2002/11/23 09:25:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -143,7 +143,6 @@ evbsh5_init(vaddr_t endkernel)
 	/*
 	 * Fix up the cpu-specific TLB/cache manipulation functions
 	 */
-	__cpu_tlbinv = _sh5_stb1_tlbinv;
 	__cpu_tlbinv_cookie = _sh5_stb1_tlbinv_cookie;
 	__cpu_tlbinv_all = _sh5_stb1_tlbinv_all;
 	__cpu_tlbload = _sh5_stb1_tlbload;
