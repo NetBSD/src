@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.25 1998/03/01 02:22:28 fvdl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.26 1998/03/29 05:19:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -82,9 +82,9 @@ ktrsyscall(vp, code, argsize, args)
 {
 	struct	ktr_header *kth;
 	struct	ktr_syscall *ktp;
-	register len = sizeof(struct ktr_syscall) + argsize;
 	struct proc *p = curproc;	/* XXX */
 	register_t *argp;
+	int	len = sizeof(struct ktr_syscall) + argsize;
 	int i;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
