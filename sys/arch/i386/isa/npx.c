@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.48 1995/08/06 19:31:49 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.49 1995/08/06 19:48:58 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -102,7 +102,6 @@
 
 int npxdna __P((struct proc *));
 void npxexit __P((void));
-void npxinit __P((struct proc *));
 int npxintr __P((void *));
 static int npxprobe1 __P((struct isa_attach_args *));
 void npxsave __P((void));
@@ -496,46 +495,60 @@ int
 npxdna(p)
 	struct proc *p;
 {
+	static u_short control = __INITIAL_NPXCW__;
 
 	if (npx_type == NPX_NONE) {
 		iprintf(("Emul"));
 		return (0);
 	}
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		iprintf(("Init"));
-		npxinit(p);
-		return (1);
-	}
-
 #ifdef DIAGNOSTIC
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxdna: masked");
 #endif
+
 	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
-	if (npxproc != 0) {
+
+	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+		p->p_md.md_flags |= MDP_USEDFPU;
+		iprintf(("Init"));
+		if (npxproc != 0 && npxproc != p)
+			npxsave1();
+		else {
+			npx_nointr = 1;
+			fninit();
+			fwait();
+			npx_nointr = 0;
+		}
+		npxproc = p;
+		fldcw(&control);
+	} else {
+		if (npxproc != 0) {
 #ifdef DIAGNOSTIC
-		if (npxproc == p)
-			panic("npxdna: same process");
+			if (npxproc == p)
+				panic("npxdna: same process");
 #endif
-		iprintf(("Save"));
-		npxsave1();
+			iprintf(("Save"));
+			npxsave1();
+		}
+		npxproc = p;
+		/*
+		 * The following frstor may cause an IRQ13 when the state being
+		 * restored has a pending error.  The error will appear to have
+		 * been triggered by the current (npx) user instruction even
+		 * when that instruction is a no-wait instruction that should
+		 * not trigger an error (e.g., fnclex).  On at least one 486
+		 * system all of the no-wait instructions are broken the same
+		 * as frstor, so our treatment does not amplify the breakage.
+		 * On at least one 386/Cyrix 387 system, fnclex works correctly
+		 * while frstor and fnsave are broken, so our treatment breaks
+		 * fnclex if it is the first FPU instruction after a context
+		 * switch.
+		 */
+		frstor(&p->p_addr->u_pcb.pcb_savefpu);
 	}
-	/*
-	 * The following frstor may cause an IRQ13 when the state being
-	 * restored has a pending error.  The error will appear to have been
-	 * triggered by the current (npx) user instruction even when that
-	 * instruction is a no-wait instruction that should not trigger an
-	 * error (e.g., fnclex).  On at least one 486 system all of the
-	 * no-wait instructions are broken the same as frstor, so our
-	 * treatment does not amplify the breakage.  On at least one
-	 * 386/Cyrix 387 system, fnclex works correctly while frstor and
-	 * fnsave are broken, so our treatment breaks fnclex if it is the
-	 * first FPU instruction after a context switch.
-	 */
-	npxproc = p;
-	frstor(&p->p_addr->u_pcb.pcb_savefpu);
+
 	return (1);
 }
 
@@ -571,38 +584,6 @@ npxsave()
 	iprintf(("Fork"));
 	clts();
 	npxsave1();
-	if (npxproc == curproc)
-		stts();
+	stts();
 	npxproc = 0;
-}
-
-/*
- * Initialize floating point unit.
- *
- * This is normally called at spl0, so NPX interrupts will be caught and
- * ignored.
- */
-void
-npxinit(p)
-	struct proc *p;
-{
-	static u_short control = __INITIAL_NPXCW__;
-
-#ifdef DIAGNOSTIC
-	if (cpl != 0 || npx_nointr != 0)
-		panic("npxinit: masked");
-#endif
-	p->p_md.md_flags |= MDP_USEDFPU;
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
-	clts();
-	if (npxproc != 0 && npxproc != p)
-		npxsave1();
-	else {
-		npx_nointr = 1;
-		fninit();
-		fwait();
-		npx_nointr = 0;
-	}
-	npxproc = p;
-	fldcw(&control);
 }
