@@ -1,8 +1,11 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.30 1998/09/11 12:50:08 mycroft Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.31 1998/10/01 03:11:33 erh Exp $	*/
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Eric Haszlakiewicz.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Christos Zoulas.
@@ -17,8 +20,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -65,8 +68,6 @@
  * based on exec_aout.c, sunos_exec.c and svr4_exec.c
  */
 
-#define	ELFSIZE		32				/* XXX should die */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -85,27 +86,23 @@
 #include <vm/vm_param.h>
 #include <vm/vm_map.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_signal.h>
+#include <compat/linux/linux_siginfo.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_exec.h>
-#include <machine/linux_machdep.h>
+
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <compat/linux/linux_machdep.h>
 
 static void *linux_aout_copyargs __P((struct exec_package *,
     struct ps_strings *, void *, void *));
-static int linux_elf32_signature __P((struct proc *p, struct exec_package *,
-    Elf32_Ehdr *));
 
 #define	LINUX_AOUT_AUX_ARGSIZ	2
-#define LINUX_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
 
-
-const char linux_emul_path[] = "/emul/linux";
 extern int linux_error[];
 extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
@@ -130,22 +127,6 @@ struct emul emul_linux_aout = {
 	linux_sigcode,
 	linux_esigcode,
 };
-
-struct emul emul_linux_elf = {
-	"linux",
-	linux_error,
-	linux_sendsig,
-	LINUX_SYS_syscall,
-	LINUX_SYS_MAXSYSCALL,
-	linux_sysent,
-	linux_syscallnames,
-	LINUX_ELF_AUX_ARGSIZ,
-	elf32_copyargs,
-	linux_setregs,
-	linux_sigcode,
-	linux_esigcode,
-};
-
 
 static void *
 linux_aout_copyargs(pack, arginfo, stack, argp)
@@ -402,90 +383,6 @@ exec_linux_aout_prep_qmagic(p, epp)
 }
 
 /*
- * Take advantage of the fact that all the linux binaries are compiled
- * with gcc, and gcc sticks in the comment field a signature. Note that
- * on SVR4 binaries, the gcc signature will follow the OS name signature,
- * that will not be a problem. We don't bother to read in the string table,
- * but we check all the progbits headers.
- */
-static int
-linux_elf32_signature(p, epp, eh)
-	struct proc *p;
-	struct exec_package *epp;
-	Elf32_Ehdr *eh;
-{
-	size_t shsize = sizeof(Elf32_Shdr) * eh->e_shnum;
-	size_t i;
-	static const char signature[] = "\0GCC: (GNU) ";
-	char buf[sizeof(signature) - 1];
-	Elf32_Shdr *sh;
-	int error;
-
-	sh = (Elf32_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-
-	if ((error = elf32_read_from(p, epp->ep_vp, eh->e_shoff,
-	    (caddr_t) sh, shsize)) != 0)
-		goto out;
-
-	for (i = 0; i < eh->e_shnum; i++) {
-		Elf32_Shdr *s = &sh[i];
-
-		/*
-		 * Identify candidates for the comment header;
-		 * Header cannot have a load address, or flags and
-		 * it must be large enough.
-		 */
-		if (s->sh_type != Elf_sht_progbits ||
-		    s->sh_addr != 0 ||
-		    s->sh_flags != 0 ||
-		    s->sh_size < sizeof(signature) - 1)
-			continue;
-
-		if ((error = elf32_read_from(p, epp->ep_vp, s->sh_offset,
-		    (caddr_t) buf, sizeof(signature) - 1)) != 0)
-			goto out;
-
-		/*
-		 * error is 0, if the signatures match we are done.
-		 */
-		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
-			goto out;
-	}
-	error = EFTYPE;
-
-out:
-	free(sh, M_TEMP);
-	return error;
-}
-
-int
-linux_elf32_probe(p, epp, eh, itp, pos)
-	struct proc *p;
-	struct exec_package *epp;
-	Elf32_Ehdr *eh;
-	char *itp;
-	Elf32_Addr *pos;
-{
-	char *bp;
-	int error;
-	size_t len;
-
-	if ((error = linux_elf32_signature(p, epp, eh)) != 0)
-		return error;
-
-	if (itp[0]) {
-		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
-			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free(bp, M_TEMP);
-	}
-	epp->ep_emul = &emul_linux_elf;
-	*pos = ELF32_NO_ADDR;
-	return 0;
-}
-
-/*
  * The Linux system call to load shared libraries, a.out version. The
  * a.out shared libs are just files that are mapped onto a fixed
  * address in the process' address space. The address is given in
@@ -585,32 +482,4 @@ linux_sys_uselib(p, v, retval)
 	vrele(vp);
 
 	return error;
-}
-
-/*
- * Execve(2). Just check the alternate emulation path, and pass it on
- * to the NetBSD execve().
- */
-int
-linux_sys_execve(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_execve_args /* {
-		syscallarg(char *) path;
-		syscallarg(char **) argv;
-		syscallarg(char **) envp;
-	} */ *uap = v;
-	struct sys_execve_args ap;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = SCARG(uap, envp);
-
-	return sys_execve(p, &ap, retval);
 }
