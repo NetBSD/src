@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.6 1998/07/14 23:38:49 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.7 1998/07/15 00:01:17 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -400,13 +400,18 @@ csProbe(parent, cf, aux)
 	    EISA_NUM_CRYSTAL)
 		goto out;
 
-	/* Verify that it's a CS8900. */
-	if ((CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_PRODUCT_ID) & PROD_ID_MASK)
-	    != PROD_ID_CS8900)
-		goto out;
-
-	/* It's a CS8900. */
-	rv = 1;
+	/*
+	 * Verify that it's a supported chip.
+	 */
+	switch (CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_PRODUCT_ID) &
+	    PROD_ID_MASK) {
+	case PROD_ID_CS8900:
+#ifdef notyet			/* XXX why not? */
+	case PROD_ID_CS8920:
+	case PROD_ID_CS892X:
+#endif
+		rv = 1;
+	}
 
  out:
 	if (have_io)
@@ -429,6 +434,8 @@ csAttach(parent, self, aux)
 	struct cs_softc *sc = (struct cs_softc *) self;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	const char *chipname;
+	u_int16_t reg;
 
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_iot = ia->ia_iot;
@@ -438,16 +445,32 @@ csAttach(parent, self, aux)
 	sc->sc_drq = ia->ia_drq;
 	sc->sc_int = ia->ia_irq;
 
-	printf(": CS8900 Ethernet\n");
-
 	/*
 	 * Map the device.
 	 */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize,
 	    0, &sc->sc_ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		printf("\n%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	reg = CS_READ_PACKET_PAGE_IO(sc->sc_iot, sc->sc_ioh, PKTPG_PRODUCT_ID);
+
+	switch (reg & PROD_ID_MASK) {
+	case PROD_ID_CS8900:
+		chipname = "CS8900";
+		break;
+	case PROD_ID_CS8920:
+		chipname = "CS8920";
+		break;
+	case PROD_ID_CS892X:
+		chipname = "CS892x";
+		break;
+	default:
+		panic("csAttach: impossible");
+	}
+
+	printf(": %s, rev. %d\n", chipname, (reg & PROD_REV_MASK) >> 8);
 
 	/*
 	 * XXX We only support the memory-mapped mode of operation right
