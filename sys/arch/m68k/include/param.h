@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2000/06/30 17:55:14 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2001/05/03 20:59:55 fredette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,9 +47,13 @@
 /*
  * Machine independent constants for m68k
  */
+#ifndef	MACHINE_ARCH
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
+#endif
+#ifndef	MID_MACHINE
 #define	MID_MACHINE	MID_M68K
+#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
