@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.20 1995/07/04 07:18:27 mycroft Exp $	*/
+/*	$NetBSD: vnd.c,v 1.21 1995/10/05 06:20:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -228,7 +228,9 @@ vndstrategy(bp)
 		int off, s, nra;
 
 		nra = 0;
+		VOP_LOCK(vnd->sc_vp);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
+		VOP_UNLOCK(vnd->sc_vp);
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
 #ifdef DEBUG
@@ -508,7 +510,9 @@ vndsetcred(vnd, cred)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
+	VOP_LOCK(vnd->sc_vp);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
+	VOP_UNLOCK(vnd->sc_vp);
 
 	free(tmpbuf, M_TEMP);
 	return (error);
