@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5.4.1 1998/10/15 03:16:46 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5.4.2 1998/10/21 11:27:45 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -299,8 +299,8 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 
 		for (i = 0; i < MIPS1_TLB_NUM_TLB_ENTRIES; i++) {
 			mips1_TLBRead(i, &tlb);
-			db_printf("TLB%c%2d vad 0x%08d %0x08x",
-				(tlb.tlb_lo & MIPS1_PG_V) ? '*' : ' ',
+			db_printf("TLB%c%2d vad 0x%08x 0x%08x",
+				(tlb.tlb_lo & MIPS1_PG_V) ? ' ' : '*',
 				i, tlb.tlb_hi,
 				tlb.tlb_lo & MIPS1_PG_FRAME);
 			db_printf("%c%c%c\n",
@@ -318,7 +318,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 		for (i = 0; i < MIPS3_TLB_NUM_TLB_ENTRIES; i++) {
 			mips3_TLBRead(i, &tlb);
 			db_printf("TLB%c%2d vad 0%x08x ",
-			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? '*' : ' ',
+			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
 			db_printf("0=0x%08x %c%c attr %x",
 				(unsigned)pfn_to_vad(tlb.tlb_lo0),
