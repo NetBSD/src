@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.11 1999/03/10 19:54:52 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.12 1999/11/03 15:55:29 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -958,9 +958,9 @@ wsemul_vt100_output(cookie, data, count, kernel)
 		panic("wsemul_vt100_output: kernel output, not console");
 #endif
 
-	/* XXX */
-	(*edp->emulops->cursor)(edp->emulcookie, 0,
-				edp->crow, edp->ccol << edp->dw);
+	if (edp->flags & VTFL_CURSORON)
+		(*edp->emulops->cursor)(edp->emulcookie, 0,
+					edp->crow, edp->ccol << edp->dw);
 	for (; count > 0; data++, count--) {
 		if ((*data & 0x7f) < 0x20) {
 			wsemul_vt100_output_c0c1(edp, *data, kernel);
@@ -976,7 +976,7 @@ wsemul_vt100_output(cookie, data, count, kernel)
 #endif
 		edp->state = vt100_output[edp->state - 1](edp, *data);
 	}
-	/* XXX */
-	(*edp->emulops->cursor)(edp->emulcookie, edp->flags & VTFL_CURSORON,
-				edp->crow, edp->ccol << edp->dw);
+	if (edp->flags & VTFL_CURSORON)
+		(*edp->emulops->cursor)(edp->emulcookie, 1,
+					edp->crow, edp->ccol << edp->dw);
 }
