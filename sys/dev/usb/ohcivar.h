@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.4 1998/12/26 12:53:01 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.5 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@ typedef struct ohci_soft_td {
 	/*ohci_soft_ed_t *sed;*/
 	usbd_request_handle reqh;
 	u_int16_t len;
+	u_int16_t flags;
+#define OHCI_CALL_DONE	0x0001
+#define OHCI_SET_LEN	0x0002
 } ohci_soft_td_t;
 #define OHCI_TD_CHUNK 256
 
@@ -96,7 +99,9 @@ typedef struct ohci_softc {
 	usbd_request_handle sc_intrreqh;
 
 	int sc_intrs;
+
 	char sc_vendor[16];
+	int sc_id_vendor;
 } ohci_softc_t;
 
 usbd_status	ohci_init __P((ohci_softc_t *));
