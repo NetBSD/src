@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.54 2002/02/25 04:23:20 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.55 2002/03/01 16:52:04 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -241,6 +241,15 @@ that run users job, are started.
 If set to nothing, the default action is taken, as described in
 .Xr init 8 ,
 which contains definitive information about the system securelevel.
+Note that setting
+.Sy securelevel
+to 0 in
+.Nm
+will actually result in the system booting with securelevel set to 1, as
+.Xr init 8
+will raise the level when
+.Pa /etc/rc
+finishes.
 .El
 .Ss Networking startup
 .Bl -tag -width net_interfaces
