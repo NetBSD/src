@@ -1,3 +1,4 @@
+\	$NetBSD: bootblk.fth,v 1.4 1999/02/15 04:54:35 hubertf Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \

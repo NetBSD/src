@@ -1,3 +1,4 @@
+/*	$NetBSD: essreg.h,v 1.7 1999/02/15 04:54:35 hubertf Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -32,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.6 $ (SHARK) $Date: 1998/08/09 02:54:50 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.7 $ (SHARK) $Date: 1999/02/15 04:54:35 $
 **
 **++
 **

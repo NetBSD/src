@@ -1,3 +1,4 @@
+/*	$NetBSD: locore.s,v 1.29 1999/02/15 04:54:34 hubertf Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg

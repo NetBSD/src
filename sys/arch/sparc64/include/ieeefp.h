@@ -1,3 +1,4 @@
+/*	$NetBSD: ieeefp.h,v 1.2 1999/02/15 04:54:34 hubertf Exp $	*/
 /*
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.

@@ -1,3 +1,4 @@
+/*	$NetBSD: zlib.c,v 1.8 1999/02/15 04:54:36 hubertf Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -10,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.7 1998/05/02 14:34:25 christos Exp $
+ * $Id: zlib.c,v 1.8 1999/02/15 04:54:36 hubertf Exp $
  */
 
 /* 

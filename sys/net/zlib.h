@@ -1,4 +1,4 @@
-/*	$Id: zlib.h,v 1.4 1998/05/02 14:34:25 christos Exp $	*/
+/*	$NetBSD: zlib.h,v 1.5 1999/02/15 04:54:36 hubertf Exp $	*/
 
 /*
  * This file is derived from zlib.h and zconf.h from the zlib-1.0.4

@@ -1,3 +1,4 @@
+/*	$NetBSD: essvar.h,v 1.10 1999/02/15 04:54:35 hubertf Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -32,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.9 $ (SHARK) $Date: 1998/08/11 12:16:22 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.10 $ (SHARK) $Date: 1999/02/15 04:54:35 $
 **
 **++
 **

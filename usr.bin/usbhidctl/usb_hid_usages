@@ -1,3 +1,4 @@
+# $NetBSD: usb_hid_usages,v 1.4 1999/02/15 04:54:37 hubertf Exp $
 #
 # USB HID usage table
 # Syntax:

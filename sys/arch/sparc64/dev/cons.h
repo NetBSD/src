@@ -1,3 +1,4 @@
+/*	$NetBSD: cons.h,v 1.2 1999/02/15 04:54:34 hubertf Exp $	*/
 
 struct consdev;
 struct zs_chanstate;
