@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.7 1996/02/01 00:03:32 phil Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8 1996/04/04 06:36:47 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,21 +48,9 @@
  *
  */
 
-/* The registers as pushed from a trap/interrupt with the 
-   exception of USP and SB, and they are placed by software. */
-struct on_stack {
-    long    pcb_reg[8];	/* R7 - R0 from enter */
-    long    pcb_usp;	/* User stack pointer, by software. */
-    long    pcb_sb;	/* Static Base pointer, by software. */
-    long    pcb_fp;	/* From enter */
-    long    pcb_pc;	/* From the trap/interrupt */
-    u_short pcb_mod;	/*  in direct exception mode. */
-    u_short pcb_psr;
-};
-
 struct pcb {
 	/* Put in a pointer to the trap/interrupt frame. */
-	struct on_stack *pcb_onstack;
+	struct reg *pcb_onstack;
 
 	/* Floating point stuff */
 	long   pcb_fsr;		/* fpu status reg */

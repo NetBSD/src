@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14 1996/03/28 04:53:17 phil Exp $	*/
+/*	$NetBSD: types.h,v 1.15 1996/04/04 06:36:55 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@ typedef struct _physadr {
 } *physadr;
 
 typedef struct label_t {
-	int val[6];
+	int val[8];
 } label_t;
 #endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.20 1996/03/17 01:38:52 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.21 1996/04/04 06:36:08 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -18,9 +18,9 @@ attach	rd at membus
 file	arch/pc532/dev/rd.c		rd needs-count
 major	{rd = 3}
 
-#device	timer
+#device timer
 #attach timer at membus
-#device	clock
+#device clock
 #attach clock at membus
 file	arch/pc532/pc532/clock.c	# clock timer
 
@@ -28,9 +28,9 @@ device	scn: tty
 attach	scn at membus
 file	arch/pc532/dev/scn.c		scn needs-flag
 
-device  lpt: ether, ifnet
+device	lpt: ether, ifnet
 attach	lpt at membus
-file    arch/pc532/dev/lpt.c            lpt needs-count
+file	arch/pc532/dev/lpt.c		lpt needs-count
 
 include "../../../scsi/files.scsi"
 major	{sd = 0}
@@ -42,7 +42,7 @@ attach	ncr at membus
 file	arch/pc532/dev/ncr.c		ncr needs-count
 device	oldncr: scsi
 attach	oldncr at membus
-file	arch/pc532/dev/oldncr.c		oldncr needs-count
+file	arch/pc532/dev/oldncr.c 	oldncr needs-count
 device	dp: scsi
 attach	dp at membus
 file	arch/pc532/dev/dp.c		dp needs-count
@@ -50,12 +50,18 @@ device	aic: scsi
 attach	aic at membus
 file	arch/pc532/dev/aic.c		aic needs-count
 
+file	arch/pc532/fpu/ieee_dze.c
+file	arch/pc532/fpu/ieee_handler.c
+file	arch/pc532/fpu/ieee_invop.c
+file	arch/pc532/fpu/ieee_ovfl.c
+file	arch/pc532/fpu/ieee_subnormal.c
+
 file	dev/cons.c
 file	dev/cninit.c
 file	arch/pc532/pc532/autoconf.c
 file	arch/pc532/pc532/conf.c
 file	arch/pc532/pc532/db_disasm.c	ddb
-file	arch/pc532/pc532/db_interface.c	ddb
+file	arch/pc532/pc532/db_interface.c ddb
 file	arch/pc532/pc532/db_trace.c	ddb
 file	arch/pc532/pc532/disksubr.c	disk
 file	arch/pc532/pc532/icuinit.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.35 1996/03/28 05:00:06 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.36 1996/04/04 06:37:02 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -31,8 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *	locore.s
- *
- *	locore.s,v 1.2 1993/09/13 07:26:47 phil Exp
  */
 
 /*
@@ -57,6 +55,7 @@
 #include <machine/pte.h>
 #include <machine/trap.h>
 #include <machine/cpufunc.h>
+#include <machine/jmpbuf.h>
 
 /*
  * PTmap is recursive pagemap at top of virtual address space.
@@ -138,7 +137,7 @@ ENTRY(proc_trampoline)
 	cmpqd	0,tos
 	br	rei
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * Burn N microseconds in a delay loop.
@@ -160,7 +159,7 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 	acbd	-1,r0,1b	/* 	5 cycles; 200 ns */
 2:	ret	0		/* 	4 cycles; 160 ns */
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * Signal trampoline; copied to top of user stack.
@@ -177,7 +176,7 @@ ENTRY(sigcode)
 	.globl	_esigcode
 _esigcode:
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * The following primitives are used to fill and copy regions of memory.
@@ -283,7 +282,7 @@ ENTRY(bzero)
 	acbd	-1,r0,7b
 	br	3b
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * The following primitives are used to copy data in and out of the user's
@@ -610,7 +609,49 @@ ENTRY(fusubail)
 	movqd	-1,r0
 	ret	0
 
-/*****************************************************************************/
+/***************************************************************************/
+
+/*
+ * setjmp(label_t *);
+ * longjmp(label_t *);
+ *
+ * The kernel versions of setjmp and longjmp.
+ * r0-r2 and sb are not saved.
+ */
+
+ENTRY(setjmp)
+	movd	S_ARG0,r0
+
+	sprd	sp,0(r0)		/* save stackpointer */
+	sprd	fp,4(r0)		/* save framepointer */
+	movd	0(sp),8(r0)		/* save return address */
+
+	movd	r3,12(r0)		/* save registers r3-r7 */
+	movd	r4,16(r0)
+	movd	r5,20(r0)
+	movd	r6,24(r0)
+	movd	r7,28(r0)
+
+	movqd	0,r0			/* return(0) */
+	ret	0
+
+ENTRY(longjmp)
+	movd	S_ARG0,r0
+
+	lprd	sp,0(r0)		/* restore stackpointer */
+	lprd	fp,4(r0)		/* restore framepointer */
+	movd	8(r0),0(sp)		/* modify return address */
+
+	movd	12(r0),r3		/* restore registers r3-r7 */
+	movd	16(r0),r4
+	movd	20(r0),r5
+	movd	24(r0),r6
+	movd	28(r0),r7
+
+	movqd	1,r0			/* return(1) */
+	ret	0
+
+/****************************************************************************/
 
 /*
  * The following primitives manipulate the run queues.
@@ -840,7 +881,7 @@ switch_return:
 	exit	[r3,r4,r5,r6,r7]
 	ret	0
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * FPU handling.
@@ -898,7 +939,7 @@ ENTRY(restore_fpu_context)
 	movl	PCB_F7(r0),f7
 9:	ret	0
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * Trap and fault vector routines
@@ -1094,7 +1135,7 @@ _inttab:
 	.long trap_dbg
 	.long trap_reserved
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * void *ram_size(void *start);
@@ -1239,7 +1280,7 @@ highagain:
 /* Include all other .s files. */
 #include "bcopy.s"
 
-/*****************************************************************************/
+/****************************************************************************/
 
 /*
  * vmstat -i uses the following labels and trap_int even increments the

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 1996/02/01 00:03:27 phil Exp $	*/
+/*	$NetBSD: frame.h,v 1.6 1996/04/04 06:36:43 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,8 +38,8 @@
  *	@(#)frame.h	5.2 (Berkeley) 1/18/91
  */
 
-#ifndef _MACHINE_FRAME_H_
-#define _MACHINE_FRAME_H_
+#ifndef _NS532_FRAME_H_
+#define _NS532_FRAME_H_
 
 #include <sys/signal.h>
 #include <machine/reg.h>
@@ -56,14 +56,7 @@ struct trapframe {
 	long	tf_msr;		/* For abt.  0 for others. */
 	long	tf_tear;	/* For abt.  0 for others. */
 	long	tf_trapno;
-	long    tf_reg[8];	/* R7 - R0 from enter */
-	long	tf_usp;
-	long	tf_sb;
-	long    tf_fp;		/* From enter */
-	/* below portion defined in 532 hardware */
-	long	tf_pc;
-	u_short	tf_mod;		/* Not used in direct excption mode. */
-	u_short	tf_psr;
+	struct reg tf_regs;
 };
 
 /* Interrupt stack frame */
@@ -71,14 +64,7 @@ struct trapframe {
 struct intrframe {
 	long	if_vec;
 	long	if_pl;		/* the "processor level" for clock. */
-	long    if_reg[8];	/* R7 - R0 from enter */
-	long	if_usp;
-	long	if_sb;
-	long    if_fp;		/* From enter */
-	/* below portion defined in 532 hardware */
-	long	if_pc;
-	u_short	if_mod;		/* Not used in direct excption mode. */
-	u_short	if_psr;
+	struct reg if_regs;
 };
 
 /*
@@ -86,14 +72,7 @@ struct intrframe {
  */
 
 struct syscframe {
-	long    sf_reg[8];	/* R7 - R0 from enter */
-	long	sf_usp;
-	long	sf_sb;
-	long    sf_fp;		/* From enter */
-	/* below portion defined in 532 hardware */
-	long	sf_pc;
-	u_short	sf_mod;		/* Not used in direct excption mode. */
-	u_short	sf_psr;
+	struct reg sf_regs;
 };
 
 /*
@@ -101,7 +80,11 @@ struct syscframe {
  */
 struct switchframe {
 	long	sf_pl;
-	long	sf_reg[5];
+	long	sf_r7;
+	long	sf_r6;
+	long	sf_r5;
+	long	sf_r4;
+	long	sf_r3;
 	long	sf_fp;
 	int	sf_pc;
 };
@@ -117,4 +100,4 @@ struct sigframe {
 	struct	sigcontext sf_sc;
 };
 
-#endif
+#endif /* _NS532_FRAME_H_ */
