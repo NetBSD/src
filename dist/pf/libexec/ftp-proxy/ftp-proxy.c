@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.9 2004/12/16 02:08:29 yamt Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.10 2005/02/22 14:40:01 peter Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.37 2004/07/11 01:54:36 brad Exp $ */
 
 /*
@@ -1000,7 +1000,11 @@ main(int argc, char *argv[])
 	int use_tcpwrapper = 0;
 #endif /* LIBWRAP */
 
+#ifdef WITH_IPF
 	while ((ch = getopt(argc, argv, "a:D:g:m:M:R:S:t:u:AinpVwr")) != -1) {
+#else
+	while ((ch = getopt(argc, argv, "a:D:g:m:M:R:S:t:u:AnpVwr")) != -1) {
+#endif
 		char *p;
 		switch (ch) {
 		case 'a':
@@ -1023,11 +1027,13 @@ main(int argc, char *argv[])
 		case 'g':
 			Group = optarg;
 			break;
+#ifdef WITH_IPF
 		case 'i' :
 			if (pf)
 				usage();
 			ipf = 1;
 			break;
+#endif
 		case 'm':
 			min_port = strtol(optarg, &p, 10);
 			if (!*optarg || *p)
@@ -1133,9 +1139,11 @@ main(int argc, char *argv[])
 	if (pf && get_proxy_env(0, &real_server_sa, &client_iob.sa,
 	    &proxy_sa) == -1)
 		exit(EX_PROTOCOL);
+#ifdef WITH_IPF
 	if (ipf && ipf_get_proxy_env(0, &real_server_sa, &client_iob.sa,
 	    &proxy_sa) == -1)
 		exit(EX_PROTOCOL);
+#endif
 
 	/*
 	 * We may now drop root privs, as we have done our ioctl for
