@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.14 1999/01/20 11:37:35 lukem Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.15 1999/05/03 15:32:13 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.14 1999/01/20 11:37:35 lukem Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.15 1999/05/03 15:32:13 christos Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ bindresvport(sd, sin)
 {
 	int res, old;
 	struct sockaddr_in myaddr;
-	int sinlen = sizeof(struct sockaddr_in);
+	socklen_t sinlen = sizeof(struct sockaddr_in);
 
 	if (sin == NULL) {
 		sin = &myaddr;
@@ -83,7 +83,8 @@ bindresvport(sd, sin)
 	}
 
 	if (sin->sin_port == 0) {
-		int on, oldlen = sizeof(old);
+		int on;
+		socklen_t oldlen = sizeof(old);
 
 		res = getsockopt(sd, IPPROTO_IP, IP_PORTRANGE, &old, &oldlen);
 		if (res < 0)
