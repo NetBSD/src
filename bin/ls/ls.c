@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	5.69 (Berkeley) 10/17/92";*/
-static char rcsid[] = "$Id: ls.c,v 1.10 1994/04/04 19:29:42 chopps Exp $";
+static char rcsid[] = "$Id: ls.c,v 1.11 1994/04/08 02:06:45 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -326,10 +326,6 @@ traverse(argc, argv, options)
 		case FTS_DC:
 			warnx("%s: directory causes a cycle", p->fts_name);
 			break;
-		case FTS_DNR:
-		case FTS_ERR:
-			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
-			break;
 		case FTS_D:
 			if (p->fts_level != FTS_ROOTLEVEL &&
 			    p->fts_name[0] == '.' && !f_listdot)
@@ -379,12 +375,17 @@ display(p, list)
 	/*
 	 * If list is NULL there are two possibilities: that the parent
 	 * directory p has no children, or that fts_children() returned an
-	 * error.  We ignore the error case since it will be replicated
-	 * on the next call to fts_read() on the post-order visit to the
-	 * directory p, and will be signalled in traverse().
+	 * error.  
 	 */
-	if (list == NULL)
+	if (list == NULL) {
+		/*
+		 * We don't have to check if p == NULL, since it will
+		 * never be if list is NULL.
+		 */
+		if (errno)
+			warnx("%s: %s", p->fts_name, strerror(errno));
 		return;
+	}
 
 	needstats = f_inode || f_longform || f_size;
 	flen = 0;
