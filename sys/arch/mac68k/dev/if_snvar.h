@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.13 1998/12/22 08:47:05 scottr Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.14 1999/09/29 06:04:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -17,6 +17,7 @@
 #define	SN_VENDOR_APPLE		0x00	/* Apple Computer/compatible */
 #define	SN_VENDOR_DAYNA		0x01	/* Dayna/Kinetics EtherPort */
 #define	SN_VENDOR_APPLE16	0x02	/* Apple Twisted Pair NB */
+#define	SN_VENDOR_ASANTELC	0x09	/* Asante Macintosh LC Ethernet */
 
 /*
  * Memory access macros. Since we handle SONIC in 16 bit mode (PB5X0)
