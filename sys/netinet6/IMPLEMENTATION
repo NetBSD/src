@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.7 2000/02/09 12:27:03 itojun Exp $
+$NetBSD: IMPLEMENTATION,v 1.8 2000/02/25 07:29:47 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $NetBSD: IMPLEMENTATION,v 1.7 2000/02/09 12:27:03 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			Date: 2000/01/30 09:35:41
+			Date: 2000/02/24 16:53:19
 
 1. IPv6
 
@@ -100,11 +100,11 @@ draft-ietf-dhc-dhcpv6-14.txt: DHCPv6
 draft-ietf-dhc-v6exts-11.txt: Extensions for DHCPv6
     * kame/dhcp6 has test implementation, which will not be compiled in
       default compilation.
-draft-itojun-ipv6-tcp-to-anycast-00:
+draft-itojun-ipv6-tcp-to-anycast-00.txt:
 	Disconnecting TCP connection toward IPv6 anycast address
-draft-yamamoto-wideipv6-comm-model-00
+draft-yamamoto-wideipv6-comm-model-00.txt
     * See 1.6 in this document for details.
-draft-ietf-ipngwg-scopedaddr-format-00.txt:
+draft-ietf-ipngwg-scopedaddr-format-??.txt:
 	An Extension of Format for IPv6 Scoped Addresses
 draft-ietf-ngtrans-tcpudp-relay-00.txt:
 	An IPv6-to-IPv4 transport relay translator
@@ -218,7 +218,7 @@ in kernels anyway.
 getaddrinfo(3) and getnameinfo(3) are modified to support extended numeric
 IPv6 syntax, as documented in draft-ietf-ipngwg-scopedaddr-format-??.txt.
 You can specify outgoing link, by using name of the outgoing interface
-like "ne0%fe80::1".  This way you will be able to specify link-local scoped
+like "fe80::1%ne0".  This way you will be able to specify link-local scoped
 address without much trouble.
 To use this extension in your program, you'll need to use getaddrinfo(3),
 and getnameinfo(3) with NI_WITHSCOPEID.
@@ -233,7 +233,7 @@ scope identifier.
 Some of the userland tools support extended numeric IPv6 syntax, as
 documented in draft-ietf-ipngwg-scopedaddr-format-??.txt.  In this case,
 you can specify outgoing link, by using name of the outgoing interface like
-"ne0%fe80::1".
+"fe80::1%ne0".
 
 When you specify scoped address to the command line, NEVER write the
 embedded form (such as ff02:1::1 or fe80:2::fedc).  This is not supposed
@@ -245,8 +245,8 @@ This may seem to be opposite from IPv6's premise to support "dentist office"
 situation.  We believe that specifications need some improvements for this.
 
 The only exception to the above rule would be when you configure routing table
-manually by route(8).  Gateway portion of IPv6 routing entry must be an
-link-local address (otherwise ICMPv6 redirect will not work), and in this
+manually by route(8), or ndp(8).  Gateway portion of IPv6 routing entry must
+be an link-local address (otherwise ICMPv6 redirect will not work), and in this
 case you'll need to configure it by putting interface index into the address:
 	# route add -inet6 default fe80:2::9876:5432:1234:5678
 	(when interface index for outgoing interface = 2)
@@ -274,8 +274,8 @@ Here is an output of netstat command:
 
 Internet6:
 Destination                   Gateway                   Flags      Netif Expire
-ed0%fe80::/64                 link#1                    UC           ed0
-ep0%fe80::/64                 link#2                    UC           ep0
+fe80::%ed0/64                 link#1                    UC           ed0
+fe80::%ep0/64                 link#2                    UC           ep0
 
 Interfaces that has no IEEE802 address (pseudo interfaces like tunnel
 interfaces, or ppp interfaces) will borrow IEEE802 address from other
@@ -994,7 +994,7 @@ Here is a list of FreeBSD 3.x-RELEASE drivers and its conditions:
 	---	---		---		---
 	(Ethernet)
 	fe	ok		ok		yes
-	fxp	ok		ok		yes
+	fxp	?(**)
 	wi	ok		ok		yes
 	lnc	?		ok		-
 	cnw	ok		ok		-(*)
@@ -1005,6 +1005,7 @@ Here is a list of FreeBSD 3.x-RELEASE drivers and its conditions:
 
 (*) These drivers are distributed with PAO as PAO3
     (http://www.jp.freebsd.org/PAO/).
+(**) there are trouble reports with multicast filter initialization.
 
 More drivers will just simply work on KAME FreeBSD 3.x-RELEASE but have not
 been checked yet.
@@ -1086,7 +1087,7 @@ For more details, consult kame/kame/faithd/README.
 
 3.2 IPv6-to-IPv4 header translator
 
-(to be written)
+# removed since it is not imported to NetBSD-current
 
 4. IPsec
 
@@ -1099,8 +1100,6 @@ IPsec is implemented as the following three components.
 Note that KAME/OpenBSD does NOT include support for KAME IPsec code,
 as OpenBSD team has their home-brew IPsec stack and they have no plan
 to replace it.  IPv6 support for IPsec is, therefore, lacking on KAME/OpenBSD.
-KAME/BSDI4 lacks IPsec at this moment (both NRL and KAME).  In the near
-future we will be adding KAME IPSec code support into KAME/BSDI4.
 
 4.1 Policy Management
 
@@ -1316,9 +1315,10 @@ others) may have modified their implementation, so use the following
 list just for reference purposes.
 	Altiga, Ashley-laurent (vpcom.com), Data Fellows (F-Secure),
 	BlueSteel, CISCO, Ericsson, ACC, Fitel, FreeS/WAN, HITACHI, IBM
-	AIX, IIJ, Intel, Microsoft WinNT, NIST (linux IPsec + plutoplus),
-	Netscreen, OpenBSD, Radguard, RedCreek, Routerware, SSH, Secure
-	Computing, Soliton, Toshiba, TIS/NAI Gauntret, VPNet, Yamaha RT100i
+	AIX, IIJ, Intel, Microsoft WinNT, NAI PGPnet,
+	NIST (linux IPsec + plutoplus), Netscreen, OpenBSD, Radguard,
+	RedCreek, Routerware, SSH, Secure Computing, Soliton, Toshiba,
+	TIS/NAI Gauntret, VPNet, Yamaha RT100i
 
 Here are (some of) platforms we have tested IPComp/IKE interoperability
 in the past, in no particular order.
@@ -1326,27 +1326,10 @@ in the past, in no particular order.
 
 5. ALTQ
 
-KAME kit includes ALTQ 2.1 code, which supports FreeBSD2, FreeBSD3,
-NetBSD and OpenBSD.  For BSD/OS, ALTQ does not work.
-ALTQ in KAME supports (or tries to support) IPv6.
-(actually, ALTQ is developed on KAME repository since ALTQ 2.1 - Jan 2000)
+# removed since it is not imported to NetBSD-current
 
-ALTQ occupies single character device number.  For FreeBSD, it is officially
-allocated.  For OpenBSD and NetBSD, we use the number which is not
-currently allocated (will eventually get an official number).
-The character device is enabled for i386 architecture only.  To enable and
-compile ALTQ-ready kernel for other archititectures, take the following steps:
-- assume that your architecture is FOOBAA.
-- modify sys/arch/FOOBAA/FOOBAA/conf.c (or somewhere that defines cdevsw),
-  to include a line for ALTQ.  look at sys/arch/i386/i386/conf.c for
-  example.  The major number must be same as i386 case.
-- copy kernel configuration file (like ALTQ.v6 or GENERIC.v6) from i386,
-  and modify accordingly.
-- build a kernel.
-- before building userland, change netbsd/{lib,usr.sbin,usr.bin}/Makefile
-  (or openbsd/foobaa) so that it will visit altq-related sub directories.
+6. mobile-ip6
 
-At this moment part of ALTQ code is not 64bit friendly (specifically,
-libaltq).  So ALTQ cannot be used on {Net,Open}BSD/alpha.
+# removed since it is not imported to NetBSD-current
 
 						 <end of IMPLEMENTATION>
