@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.19 2003/03/17 08:16:10 wiz Exp $
+.\"	$NetBSD: iostat.8,v 1.20 2003/05/01 15:10:58 jmmv Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,8 @@ statistics
 .Nm
 displays kernel
 .Tn I/O
-statistics on terminal, disk and CPU operations.  By default,
+statistics on terminal, disk and CPU operations.
+By default,
 .Nm
 displays one line of statistics averaged over the machine's run time.
 The use of
@@ -76,7 +77,7 @@ is used.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl c
+.It Fl c Ar count
 Repeat the display
 .Ar count
 times.
@@ -88,7 +89,8 @@ If no
 .Ar wait
 interval is specified, the default is 1 second.
 .It Fl C
-Show CPU statistics.  This is enabled by default unless the
+Show CPU statistics.
+This is enabled by default unless the
 .Fl d ,
 .Fl D ,
 .Fl T ,
@@ -96,30 +98,34 @@ or
 .Fl x
 flags are used.
 .It Fl d
-Show disk statistics.  This is the default.  Displays kilobytes per
-transfer, number of transfers, and megabytes transferred.  Use of this
-flag disables display of CPU and tty statistics.
+Show disk statistics.
+This is the default.
+Displays kilobytes per
+transfer, number of transfers, and megabytes transferred.
+Use of this flag disables display of CPU and tty statistics.
 .It Fl D
-Show alternative disk statistics.  Displays kilobytes transferred, number of
-transfers, and time spent in transfers.  Use of this flag disables the
-default display.
+Show alternative disk statistics.
+Displays kilobytes transferred, number of
+transfers, and time spent in transfers.
+Use of this flag disables the default display.
 .It Fl I
 Show the running total values, rather than an average.
-.It Fl M
+.It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the default
 .Dq Pa /dev/mem .
-.It Fl N
+.It Fl N Ar system
 Extract the name list from the specified system instead of the default
 .Dq Pa /netbsd .
 .It Fl T
-Show tty statistics.  This is enabled by default unless the
+Show tty statistics.
+This is enabled by default unless the
 .Fl C ,
 .Fl d ,
 or
 .Fl D
 flags are used.
-.It Fl w
+.It Fl w Ar wait
 Pause
 .Ar wait
 seconds between each display.
