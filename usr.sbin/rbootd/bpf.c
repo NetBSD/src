@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.14 2003/08/07 11:25:40 agc Exp $	*/
+/*	$NetBSD: bpf.c,v 1.15 2003/08/19 22:22:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.14 2003/08/07 11:25:40 agc Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.15 2003/08/19 22:22:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,8 +306,7 @@ BpfGetIntfName(errmsg)
 		return(NULL);
 	}
 
-	(void) strncpy(device, p->ifa_name, sizeof(device));
-	device[sizeof(device) - 1] = '\0';
+	(void) strlcpy(device, p->ifa_name, sizeof(device));
 	freeifaddrs(ifap);
 	return(device);
 }
