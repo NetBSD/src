@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.7.2.1 1997/05/13 03:38:49 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.7.2.2 1997/05/18 17:26:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,11 @@
 
 #define	UHA_ISA_IOSIZE	16
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	uha_isa_probe __P((struct device *, void *, void *));
+#else
+int	uha_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void	uha_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uha_isa_ca = {
@@ -77,7 +81,12 @@ void	u14_init __P((struct uha_softc *));
 int
 uha_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
