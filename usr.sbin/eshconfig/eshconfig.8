@@ -1,4 +1,4 @@
-.\"	$NetBSD: eshconfig.8,v 1.4 1999/03/22 18:43:52 garbled Exp $
+.\"	$NetBSD: eshconfig.8,v 1.5 2002/01/19 03:12:18 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Sh SYNOPSIS
 .Nm eshconfig
 .Op Fl b Ar bytes
-.Op Fl c Ar bytes 
+.Op Fl c Ar bytes
 .Op Fl d Ar filename
 .Op Fl e
 .Op Fl m Ar bytes
@@ -60,8 +60,8 @@
 is used to configure device-specific parameters and download new firmware
 to the Essential Communications RoadRunner-based HIPPI network interface.
 The interface is very sensitive to the DMA performance characteristics
-of the host, and so requires careful tuning to achieve reasonable 
-performance.  
+of the host, and so requires careful tuning to achieve reasonable
+performance.
 In addition, firmware is likely to change frequently, which necessitates
 a reasonably easy way to update that firmware.
 .Pp
@@ -73,12 +73,12 @@ Adjust the burst size for read (by NIC of host memory) DMA.
 .It Fl c
 Adjust the burst size for write (by NIC of host memory) DMA.
 .It Fl d
-Filename for file to download into NIC firmware.  
+Filename for file to download into NIC firmware.
 This must be a file in the standard Essential format, with :04 preceding
 every line, and a tag line at the end indicating the characteristics
-of the firmware file. 
+of the firmware file.
 .It Fl e
-Write data to EEPROM.  
+Write data to EEPROM.
 Normally, setting tuning parameters will only persist until the
 system is rebooted.
 Setting this parameter ensures that the changes will be written to
@@ -93,12 +93,12 @@ Bytes before DMA starts for read (from host to NIC).
 This controls how soon the DMA is triggered;  until this many bytes
 are requested, the DMA will not begin.
 .It Fl s
-Show statistics for the HIPPI NIC.  
+Show statistics for the HIPPI NIC.
 Repeat the option to suppress non-zero statistics.
 .It Fl t
 Show current tuning parameters on the host.
 .It Fl u
-Name of file to which the NIC firmware should be uploaded.  
+Name of file to which the NIC firmware should be uploaded.
 Not currently supported.
 .It Fl w
 Number of bytes required before write (from NIC to host) DMA
@@ -117,10 +117,10 @@ Messages indicating the specified interface does not exist
 or the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
-.Xr ifconfig 8 ,
-.Xr esh 4
+.Xr esh 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
 command first appeared in
-.Nx 1.4.
+.Nx 1.4 .
