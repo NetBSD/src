@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.33 1999/02/09 19:11:46 perry Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.34 1999/04/17 01:38:00 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.33 1999/02/09 19:11:46 perry Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.34 1999/04/17 01:38:00 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,12 @@ __RCSID("$NetBSD: fdisk.c,v 1.33 1999/02/09 19:11:46 perry Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#ifdef __i386__
+#include <ctype.h>
+#include <machine/cpu.h>
+#include <sys/sysctl.h>
+#endif
 
 #define LBUF 100
 static char lbuf[LBUF];
@@ -74,7 +80,27 @@ struct mboot {
 struct mboot mboot;
 
 #ifdef	__i386__
+
+struct mbr_bootsel {
+	u_int8_t defkey;
+	u_int8_t flags;
+	u_int16_t timeo;
+	char nametab[4][9];
+	u_int16_t magic;
+} __attribute__((packed));
+
+#define BFL_SELACTIVE   0x01
+
+#define SCAN_ENTER      0x1c
+#define SCAN_F1         0x3b
+
+#define MBR_BOOTSELOFF	(MBR_PARTOFF - sizeof (struct mbr_bootsel))
+
 #define	DEFAULT_BOOTCODE	"/usr/mdec/mbr"
+#define DEFAULT_BOOTSELCODE	"/usr/mdec/mbr_bootsel"
+#define OPTIONS			"0123BSafius:b:c:"
+#else
+#define OPTIONS			"0123Safius:b:c:"
 #endif
 
 #define ACTIVE 0x80
@@ -97,9 +123,12 @@ int sh_flag;		/* Output data as shell defines */
 int f_flag;		/* force --not interactive */
 int s_flag;		/* set id,offset,size */
 int b_flag;		/* Set cyl, heads, secs (as c/h/s) */
+int B_flag;		/* Edit/install bootselect code */
 int b_cyl, b_head, b_sec;  /* b_flag values. */
+int bootsel_modified;
 
 unsigned char bootcode[8192];	/* maximum size of bootcode */
+unsigned char tempcode[8192];
 int bootsize;		/* actual size of bootcode */
 
 
@@ -226,9 +255,11 @@ struct part_type {
 void	usage __P((void));
 void	print_s0 __P((int));
 void	print_part __P((int));
-void	read_boot __P((char *));
+int	read_boot __P((char *, char *, size_t));
 void	init_sector0 __P((int, int));
 void	intuit_translated_geometry __P((void));
+void	get_geometry __P((void));
+void	get_diskname __P((char *, char *, size_t));
 int	try_heads __P((quad_t, quad_t, quad_t, quad_t, quad_t, quad_t, quad_t,
 		       quad_t));
 int	try_sectors __P((quad_t, quad_t, quad_t, quad_t, quad_t));
@@ -248,6 +279,9 @@ void	decimal __P((char *, int *));
 int	type_match __P((const void *, const void *));
 char	*get_type __P((int));
 int	get_mapping __P((int, int *, int *, int *, long *));
+#ifdef __i386__
+void	configure_bootsel __P((void));
+#endif
 
 static inline unsigned short getshort __P((void *));
 static inline void putshort __P((void *p, unsigned short));
@@ -269,7 +303,7 @@ main(argc, argv)
 
 	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	csysid = cstart = csize = 0;
-	while ((ch = getopt(argc, argv, "0123Safius:b:c:")) != -1)
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
 		switch (ch) {
 		case '0':
 			partition = 0;
@@ -283,6 +317,11 @@ main(argc, argv)
 		case '3':
 			partition = 3;
 			break;
+#ifdef __i386__
+		case 'B':
+			B_flag = 1;
+			break;
+#endif
 		case 'S':
 			sh_flag = 1;
 			break;
@@ -321,7 +360,7 @@ main(argc, argv)
 				b_cyl = MAXCYL;
 			break;
 		case 'c':
-			read_boot(optarg);
+			bootsize = read_boot(optarg, bootcode, sizeof bootcode);
 			break;
 		default:
 			usage();
@@ -330,6 +369,9 @@ main(argc, argv)
 	argv += optind;
 
 	if (sh_flag && (a_flag || i_flag || u_flag || f_flag || s_flag))
+		usage();
+
+	if (B_flag && (a_flag || i_flag || u_flag || f_flag || s_flag))
 		usage();
 
 	if (partition == -1 && s_flag) {
@@ -341,16 +383,17 @@ main(argc, argv)
 	if (argc > 0)
 		disk = argv[0];
 
-	if (open_disk(a_flag || i_flag || u_flag) < 0)
+	if (open_disk(B_flag || a_flag || i_flag || u_flag) < 0)
 		exit(1);
 
 	if (read_s0())
 		init_sector0(sectors > 63 ? 63 : sectors, 1);
 
+#ifdef __i386__
+	get_geometry();
+#else
 	intuit_translated_geometry();
-
-	if (!sh_flag && !f_flag)
-		printf("******* Working on device %s *******\n", disk);
+#endif
 
 
 	if ((i_flag || u_flag) && (!f_flag || b_flag))
@@ -359,14 +402,11 @@ main(argc, argv)
 	if (i_flag)
 		init_sector0(dos_sectors > 63 ? 63 : dos_sectors, 0);
 
-	if (!sh_flag && !f_flag)
-		printf("Warning: BIOS sector numbering starts with sector 1\n");
-
 	/* Do the update stuff! */
 	if (u_flag) {
 		if (!f_flag)
-			printf("Information from DOS bootblock is:\n");
-		if (partition == -1) 
+			printf("Partition table:\n");
+		if (partition == -1)
 			for (part = 0; part < NMBRPART; part++)
 				change_part(part,-1, -1, -1);
 		else
@@ -378,9 +418,17 @@ main(argc, argv)
 	if (a_flag)
 		change_active(partition);
 
+#ifdef __i386__
+	if (B_flag) {
+		configure_bootsel();
+		if (B_flag && bootsel_modified)
+			write_s0();
+	}
+#endif
+
 	if (u_flag || a_flag || i_flag) {
 		if (!f_flag) {
-			printf("\nWe haven't changed the partition table "
+			printf("\nWe haven't written the MBR back to disk "
 			       "yet.  This is your last chance.\n");
 			print_s0(-1);
 			if (yesno("Should we write new partition table?"))
@@ -408,7 +456,7 @@ print_s0(which)
 
 	print_params();
 	if (!sh_flag)
-		printf("Information from DOS bootblock is:\n");
+		printf("Partition table:\n");
 	if (which == -1) {
 		for (part = 0; part < NMBRPART; part++) {
 			if (!sh_flag)
@@ -418,8 +466,6 @@ print_s0(which)
 	} else
 		print_part(which);
 }
-
-static struct mbr_partition mtpart = { 0 };
 
 static inline unsigned short
 getshort(p)
@@ -471,7 +517,7 @@ print_part(part)
 	int empty;
 
 	partp = &mboot.parts[part];
-	empty = !memcmp(partp, &mtpart, sizeof(struct mbr_partition));
+	empty = (partp->mbrp_typ == 0);
 
 	if (sh_flag) {
 		if (empty) {
@@ -511,33 +557,36 @@ print_part(part)
 	    partp->mbrp_ehd, MBR_PSECT(partp->mbrp_esect));
 }
 
-void
-read_boot(name)
+int
+read_boot(name, buf, len)
 	char *name;
+	char *buf;
+	size_t len;
 {
-	int fd;
+	int bfd, ret;
 	struct stat st;
 
-	if ((fd = open(name, O_RDONLY)) < 0)
+	if ((bfd = open(name, O_RDONLY)) < 0)
 		err(1, "%s", name);
-	if (fstat(fd, &st) == -1)
+	if (fstat(bfd, &st) == -1)
 		err(1, "%s", name);
-	if (st.st_size > sizeof(bootcode))
+	if (st.st_size > len)
 		errx(1, "%s: bootcode too large", name);
-	bootsize = st.st_size;
-	if (bootsize < 0x200)
+	ret = st.st_size;
+	if (ret < 0x200)
 		errx(1, "%s: bootcode too small", name);
-	if (read(fd, bootcode, bootsize) != bootsize)
+	if (read(bfd, buf, len) != ret)
 		err(1, "%s", name);
-	close(fd);
+	close(bfd);
 
 	/*
 	 * Do some sanity checking here
 	 */
 	if (getshort(bootcode + MBR_MAGICOFF) != MBR_MAGIC)
 		errx(1, "%s: invalid magic", name);
-	bootsize = (bootsize + 0x1ff) / 0x200;
-	bootsize *= 0x200;
+	ret = (ret + 0x1ff) / 0x200;
+	ret *= 0x200;
+	return ret;
 }
 
 void
@@ -548,17 +597,279 @@ init_sector0(start, dopart)
 
 #ifdef	DEFAULT_BOOTCODE
 	if (!bootsize)
-		read_boot(DEFAULT_BOOTCODE);
+		bootsize = read_boot(DEFAULT_BOOTCODE, bootcode,
+		    sizeof bootcode);
 #endif
 
 	memcpy(mboot.bootinst, bootcode, sizeof(mboot.bootinst));
 	putshort(&mboot.signature, MBR_MAGIC);
 	
 	if (dopart)
-		for (i=0; i<3; i++) 
-			memset (&mboot.parts[i], 0, sizeof(struct mbr_partition));
+		for (i=0; i<4; i++) 
+			memset(&mboot.parts[i], 0, sizeof(struct mbr_partition));
 
 }
+
+#ifdef __i386__
+
+void	    
+get_diskname(fullname, diskname, size)
+	char *fullname; 
+	char *diskname;
+	size_t size;    
+{	       
+	char *p;
+	char *p2;
+	size_t len;
+
+	p = strrchr(fullname, '/');
+	if (p == NULL)
+		p = fullname;
+	else
+		p++;
+
+	if (*p == 0) {
+		strncpy(diskname, fullname, size - 1);
+		diskname[size - 1] = '\0';
+		return;
+	}
+
+	if (*p == 'r')
+		p++;
+
+	for (p2 = p; *p2 != 0; p2++)
+		if (isdigit(*p2))
+			break;
+	if (*p2 == 0) {
+		/* XXX invalid diskname? */
+		strncpy(diskname, fullname, size - 1);
+		diskname[size - 1] = '\0';
+		return;
+	}
+	while (isdigit(*p2))
+		p2++; 
+
+	len = p2 - p;
+	if (len > size) {
+		/* XXX */
+		strncpy(diskname, fullname, size - 1);
+		diskname[size - 1] = '\0';
+		return;
+	}
+ 
+	strncpy(diskname, p, len);
+	diskname[len] = 0;
+}
+
+void
+get_geometry()
+{
+	int mib[2], i;
+	size_t len;
+	struct disklist *dl;
+	struct biosdisk_info *bip;
+	struct nativedisk_info *nip;
+	char diskname[8];
+
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_DISKINFO;
+	if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
+		intuit_translated_geometry();
+		return;
+	}
+	dl = (struct disklist *) malloc(len);
+	sysctl(mib, 2, dl, &len, NULL, 0);
+
+	get_diskname(disk, diskname, sizeof diskname);
+
+	for (i = 0; i < dl->dl_nnativedisks; i++) {
+		nip = &dl->dl_nativedisks[i];
+		if (strcmp(diskname, nip->ni_devname))
+			continue;
+		/*
+		 * XXX listing possible matches is better. This is ok
+		 * for now because the user has a chance to change
+		 * it later.
+		 */
+		if (nip->ni_nmatches != 0) {
+			bip = &dl->dl_biosdisks[nip->ni_biosmatches[0]];
+			dos_cylinders = bip->bi_cyl;
+			dos_heads = bip->bi_head;
+			dos_sectors = bip->bi_sec;
+			dos_cylindersectors = bip->bi_head * bip->bi_sec;
+			return;
+		}
+	}
+	/* Allright, allright, make a stupid guess.. */
+	intuit_translated_geometry();
+}
+
+void
+configure_bootsel()
+{
+	struct mbr_bootsel *mbs =
+	    (struct mbr_bootsel *)&mboot.bootinst[MBR_BOOTSELOFF];
+	int i, nused, firstpart = -1, item;
+	char desc[10], *p;
+	int timo, entry_changed = 0;
+
+	for (i = nused = 0; i < NMBRPART; i++) {
+		if (mboot.parts[i].mbrp_typ != 0) {
+			if (firstpart == -1)
+				firstpart = i;
+			nused++;
+		}
+	}
+
+	if (nused == 0) {
+		printf("No used partitions found. Partition the disk first.\n");
+		return;
+	}
+
+	if (mbs->magic != MBR_MAGIC) {
+		if (!yesno("Bootselector not yet installed. Install it now?")) {
+			printf("Bootselector not installed.\n");
+			return;
+		}
+		bootsize = read_boot(DEFAULT_BOOTSELCODE, bootcode,
+		    sizeof bootcode);
+		memcpy(mboot.bootinst, bootcode, sizeof(mboot.bootinst));
+		bootsel_modified = 1;
+		mbs->flags |= BFL_SELACTIVE;
+	} else {
+		if (mbs->flags & BFL_SELACTIVE) {
+			printf("The bootselector is installed and active.\n");
+			if (!yesno("Do you want to change its settings?")) {
+				if (yesno("Do you want to deactivate it?")) {
+					mbs->flags &= ~BFL_SELACTIVE;
+					bootsel_modified = 1;
+					goto done;
+				}
+				return;
+			}
+		} else {
+			printf("The bootselector is installed but not active.\n");
+			if (yesno("Do you want to activate it?")) {
+				mbs->flags |= BFL_SELACTIVE;
+				bootsel_modified = 1;
+			}
+			if (!yesno("Do you want to change its settings?"))
+				goto done;
+		}
+	}
+
+	printf("\n\nPartition table:\n");
+	for (i = 0; i < NMBRPART; i++) {
+		printf("%d: ", i);
+		print_part(i);
+	}
+
+	printf("\n\nCurrent boot selection menu option names:\n");
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbs->nametab[i][0] != 0)
+			printf("%d: %s\n", i, &mbs->nametab[i][0]);
+		else
+			printf("%d: Unused\n", i);
+	}
+	printf("\n");
+
+	item = firstpart;
+
+editentries:
+	while (1) {
+		decimal("Change which entry (-1 quits)?", &item);
+		if (item == -1)
+			break;
+		if (item < 0 || item >= NMBRPART) {
+			printf("Invalid entry number\n");
+			continue;
+		}
+		if (mboot.parts[item].mbrp_typ == 0) {
+			printf("The matching partition entry is unused\n");
+			continue;
+		}
+
+		printf("Enter descriptions (max. 8 characters): ");
+		rewind(stdin);
+		fgets(desc, 10, stdin);
+		p = strchr(desc, '\n');
+		if (p != NULL)
+			*p = 0;
+		else
+			desc[9] = 0;
+		strcpy(&mbs->nametab[item][0], desc);
+		entry_changed = bootsel_modified = 1;
+	}
+
+	if (entry_changed)
+		printf("Boot selection menu option names are now:\n");
+
+	firstpart = -1;
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbs->nametab[i][0] != 0) {
+			firstpart = i;
+			if (entry_changed)
+				printf("%d: %s\n", i, &mbs->nametab[i][0]);
+		} else {
+			if (entry_changed)
+				printf("%d: Unused\n", i);
+		}
+	}
+	if (entry_changed)
+		printf("\n");
+
+	if (firstpart == -1) {
+		printf("All menu entries are now inactive.\n");
+		if (!yesno("Are you sure about this?"))
+			goto editentries;
+	} else {
+		if (!(mbs->flags & BFL_SELACTIVE)) {
+			printf("The bootselector is not yet active.\n");
+			if (yesno("Activate it now?"))
+				mbs->flags |= BFL_SELACTIVE;
+		}
+	}
+
+	/* The timeout value is in ticks, 18.2 Hz. Avoid using floats. */
+	timo = ((1000 * mbs->timeo) / 18200);
+	do {
+		decimal("Timeout value", &timo);
+	} while (timo < 0 || timo > 3600);
+	mbs->timeo = (u_int16_t)((timo * 18200) / 1000);
+
+	printf("Select the default boot option. Options are:\n\n");
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbs->nametab[i][0] != 0)
+			printf("%d: %s\n", i, &mbs->nametab[i][0]);
+	}
+	for (i = 4; i < 10; i++)
+		printf("%d: Harddisk %d\n", i, i - 4);
+	printf("10: The first active partition\n");
+
+	if (mbs->defkey == SCAN_ENTER)
+		item = 10;
+	else
+		item = mbs->defkey - SCAN_F1;
+
+	if (item < 0 || item > 10 || mbs->nametab[item][0] == 0)
+		item = 10;
+
+	do {
+		decimal("Default boot option", &item);
+	} while (item < 0 || item > 10 ||
+		    (item <= 3 && mbs->nametab[item][0] == 0));
+
+	if (item == 10)
+		mbs->defkey = SCAN_ENTER;
+	else
+		mbs->defkey = SCAN_F1 + item;
+
+done:
+	if (!yesno("Update the bootselector?"))
+		bootsel_modified = 0;
+}
+#endif
+
 
 /* Prerequisite: the disklabel parameters and master boot record must
  *		 have been read (i.e. dos_* and mboot are meaningful).
@@ -780,13 +1091,11 @@ print_params()
 	}
 
 	/* Not sh_flag */
-	printf("parameters extracted from in-core disklabel are:\n");
-	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
+	printf("NetBSD disklabel disk geometry:\n");
+	printf("cylinders: %d heads: %d sectors/track: %d (%d sectors/cylinder)\n\n",
 	    cylinders, heads, sectors, cylindersectors);
-	if (dos_sectors > 63 || dos_heads > 255)
-		printf("Figures below won't work with BIOS for partitions not in cylinder 1\n");
-	printf("parameters to be used for BIOS calculations are:\n");
-	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
+	printf("BIOS disk geometry:\n");
+	printf("cylinders: %d heads: %d sectors/track: %d (%d sectors/cylinder)\n\n",
 	    dos_cylinders, dos_heads, dos_sectors, dos_cylindersectors);
 }
 
@@ -1022,7 +1331,7 @@ decimal(str, num)
 	char *cp;
 
 	for (;; printf("%s is not a valid decimal number.\n", lbuf)) {
-		printf("Supply a decimal value for \"%s\" [%d] ", str, *num);
+		printf("%s: [%d] ", str, *num);
 
 		fgets(lbuf, LBUF, stdin);
 		lbuf[strlen(lbuf)-1] = '\0';
@@ -1032,7 +1341,7 @@ decimal(str, num)
 		if (*cp == '\0')
 			return;
 
-		if (!isdigit(*cp))
+		if (!isdigit(*cp) && *cp != '-')
 			continue;
 		acc = strtol(lbuf, &cp, 10);
 
