@@ -4250,7 +4250,7 @@ fi
 
 for ac_func in asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
-	isblank lchmod lchown lutimes pread pwcache_userdb \
+	isblank lchmod lchown lutimes mkdtemp pread pwcache_userdb \
 	pwrite setenv setgroupent setprogname setpassent \
 	snprintf strlcat strlcpy strsep vasprintf vasnprintf vsnprintf
 do
