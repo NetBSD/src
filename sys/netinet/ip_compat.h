@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.3 1997/03/29 00:54:57 thorpej Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.4 1997/04/15 00:42:54 christos Exp $	*/
 
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_compat.h,v 1.3 1997/03/29 00:54:57 thorpej Exp $
+ * $Id: ip_compat.h,v 1.4 1997/04/15 00:42:54 christos Exp $
  */
 
 #ifndef	__IP_COMPAT_H_
@@ -221,8 +221,9 @@ extern	vm_map_t	kmem_map;
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 # endif /* BSD */
-# if defined(NetBSD1_0) && (NetBSD1_0 > 1)
+# if defined(NetBSD) && NetBSD <= 1991011 && NetBSD >= 199407
 #  define	SPLNET(x)	x = splsoftnet()
+#  define	SPLX(x)		(void) splx(x)
 # else
 #  if !SOLARIS
 #   define	SPLNET(x)	x = splnet()
