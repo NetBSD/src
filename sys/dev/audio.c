@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.16 2004/12/30 16:02:26 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.17 2005/01/01 11:28:26 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.16 2004/12/30 16:02:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.17 2005/01/01 11:28:26 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -190,9 +190,10 @@ int	au_portof(struct audio_softc *, char *, int);
 typedef struct uio_fetcher {
 	stream_fetcher_t base;
 	struct uio *uio;
+	int usedhigh;
 } uio_fetcher_t;
 
-static void	uio_fetcher_ctor(uio_fetcher_t *, struct uio *);
+static void	uio_fetcher_ctor(uio_fetcher_t *, struct uio *, int);
 static int	uio_fetcher_fetch_to(stream_fetcher_t *,
 				     audio_stream_t *, int);
 static int	null_fetcher_fetch_to(stream_fetcher_t *,
@@ -516,7 +517,8 @@ audio_printsc(struct audio_softc *sc)
 	printf("open 0x%x mode 0x%x\n", sc->sc_open, sc->sc_mode);
 	printf("rchan 0x%x wchan 0x%x ", sc->sc_rchan, sc->sc_wchan);
 	printf("rring used 0x%x pring used=%d\n",
-	       sc->sc_rr.used, sc->sc_pr.used);
+	       audio_stream_get_used(&sc->sc_rr.s),
+	       audio_stream_get_used(&sc->sc_pr.s);
 	printf("rbus 0x%x pbus 0x%x ", sc->sc_rbus, sc->sc_pbus);
 	printf("blksize %d", sc->sc_pr.blksize);
 	printf("hiwat %d lowat %d\n", sc->sc_pr.usedhigh, sc->sc_pr.usedlow);
@@ -874,7 +876,6 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
 	DPRINTF(("audio_init_ringbuffer: blksize=%d\n", blksize));
 	rp->blksize = blksize;
 	rp->maxblks = nblks;
-	rp->used = 0;
 	rp->s.end = rp->s.start + nblks * blksize;
 	rp->s.outp = rp->s.inp = rp->s.start;
 	rp->stamp = 0;
@@ -913,7 +914,7 @@ audio_initbufs(struct audio_softc *sc)
 #define double u_long
 	sc->sc_pnintr = 0;
 	sc->sc_pblktime = (u_long)(
-	    (double)sc->sc_pr.blksize * 100000 /
+man	    (double)sc->sc_pr.blksize * 100000 /
 	    (double)(sc->sc_pparams.precision / NBBY *
 		     sc->sc_pparams.channels *
 		     sc->sc_pparams.sample_rate)) * 10;
@@ -936,12 +937,15 @@ audio_initbufs(struct audio_softc *sc)
 void
 audio_calcwater(struct audio_softc *sc)
 {
-	sc->sc_pr.usedhigh = sc->sc_pr.s.end - sc->sc_pr.s.start;
-	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;	/* set low at 75% */
+	/* set high at 100% */
+	sc->sc_pr.usedhigh = sc->sc_pustream->end - sc->sc_pustream->start;
+	/* set low at 75% of usedhigh */
+	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;
 	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
 		sc->sc_pr.usedlow -= sc->sc_pr.blksize;
-	sc->sc_rr.usedhigh =
-		sc->sc_rr.s.end - sc->sc_rr.s.start - sc->sc_rr.blksize;
+
+	sc->sc_rr.usedhigh = sc->sc_rustream->end - sc->sc_rustream->start
+		- sc->sc_rr.blksize;
 	sc->sc_rr.usedlow = 0;
 }
 
@@ -1107,11 +1111,21 @@ audio_drain(struct audio_softc *sc)
 	int error, drops;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	int s;
+	int i, used;
 
-	DPRINTF(("audio_drain: enter busy=%d used=%d\n",
-		 sc->sc_pbus, sc->sc_pr.used));
-	if (sc->sc_pr.mmapped || sc->sc_pr.used <= 0)
+	DPRINTF(("audio_drain: enter busy=%d\n", sc->sc_pbus));
+
+	if (sc->sc_pr.mmapped)
 		return 0;
+
+	used = audio_stream_get_used(&sc->sc_pr.s);
+	s = splaudio();
+	for (i = 0; i < sc->sc_npfilters; i++)
+		used += audio_stream_get_used(&sc->sc_pstreams[i]);
+	splx(s);
+	if (used <= 0)
+		return 0;
+
 	if (!sc->sc_pbus) {
 		/* We've never started playing, probably because the
 		 * block was too short.  Pad it and start now.
@@ -1125,7 +1139,6 @@ audio_drain(struct audio_softc *sc)
 		if (inp >= cb->s.end)
 			inp = cb->s.start;
 		s = splaudio();
-		cb->used += cc;
 		cb->s.inp = inp;
 		error = audiostartp(sc);
 		splx(s);
@@ -1149,7 +1162,7 @@ audio_drain(struct audio_softc *sc)
 	s = splaudio();
 	while (cb->drops == drops && !error) {
 		DPRINTF(("audio_drain: used=%d, drops=%ld\n",
-			 sc->sc_pr.used, cb->drops));
+			 audio_stream_get_used(&sc->sc_pr.s), cb->drops));
 		/*
 		 * When the process is exiting, it ignores all signals and
 		 * we can't interrupt this sleep, so we set a timeout
@@ -1228,7 +1241,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	struct audio_ringbuffer *cb;
 	const uint8_t *outp;
 	uint8_t *inp;
-	audio_stream_t *last_stream;
 	int error, s, used, cc, n;
 
 	cb = &sc->sc_rr;
@@ -1276,13 +1288,9 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		return error;
 	}
 
-	last_stream = sc->sc_nrfilters > 0
-		? &sc->sc_rstreams[sc->sc_nrfilters - 1]
-		: &cb->s;
-
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
-		while ((used = audio_stream_get_used(last_stream)) <= 0) {
+		while ((used = audio_stream_get_used(sc->sc_rustream)) <= 0) {
 			if (!sc->sc_rbus) {
 				error = audiostartr(sc);
 				if (error) {
@@ -1304,8 +1312,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			}
 		}
 
-		outp = last_stream->outp;
-		inp = last_stream->inp;
+		outp = sc->sc_rustream->outp;
+		inp = sc->sc_rustream->inp;
 		cb->copying = TRUE;
 		splx(s);
 
@@ -1313,7 +1321,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * cc is the amount of data in the last_stream excluding
 		 * wrapped data
 		 */
-		cc = outp <= inp ? inp - outp : last_stream->end - outp;
+		cc = outp <= inp ? inp - outp :sc->sc_rustream->end - outp;
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
 
 		n = uio->uio_resid;
@@ -1324,9 +1332,8 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (outp >= cb->s.end)
 			outp = cb->s.start;
 		s = splaudio();
-		last_stream->outp = outp;
+		sc->sc_rustream->outp = outp;
 		cb->copying = FALSE;
-		cb->used = audio_stream_get_used(last_stream);
 		splx(s);
 	}
 	return error;
@@ -1455,7 +1462,7 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 
 static int
 uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
-		     int max_written)
+		     int max_used)
 {
 	uio_fetcher_t *this;
 	int size;
@@ -1463,10 +1470,17 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 	int error;
 
 	this = (uio_fetcher_t *)self;
-	size = min(this->uio->uio_resid, max_written);
+	if (audio_stream_get_used(p) >= this->usedhigh)
+		return 0;
+	/*
+	 * uio_fetcher ignores max_used and move the data as
+	 * much as possible in order to return the correct value
+	 * for audio_prinfo::seek and kfilters.
+	 */
 	stream_space = audio_stream_get_space(p);
-	if (stream_space < size)
-		size = stream_space;
+	size = min(this->uio->uio_resid, stream_space);
+
+	/* the first fragment of the space */
 	stream_space = p->end - p->inp;
 	if (stream_space >= size) {
 		error = uiomove(p->inp, size, this->uio);
@@ -1487,16 +1501,17 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 
 static int
 null_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
-		      int max_written)
+		      int max_used)
 {
 	return 0;
 }
 
 static void
-uio_fetcher_ctor(uio_fetcher_t *this, struct uio *u)
+uio_fetcher_ctor(uio_fetcher_t *this, struct uio *u, int h)
 {
 	this->base.fetch_to = uio_fetcher_fetch_to;
 	this->uio = u;
+	this->usedhigh = h;
 }
 
 int
@@ -1510,8 +1525,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	stream_filter_t *filter;
 	audio_stream_t tmp_stream;
 
-	DPRINTFN(2,("audio_write: sc=%p count=%lu used=%d(hi=%d)\n",
-		    sc, (unsigned long)uio->uio_resid, sc->sc_pr.used,
+	DPRINTFN(2,("audio_write: sc=%p count=%zu used=%d(hi=%d)\n",
+		    sc, uio->uio_resid, audio_stream_get_used(sc->sc_pustream),
 		    sc->sc_pr.usedhigh));
 
 	if (cb->mmapped)
@@ -1546,7 +1561,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	/**
 	 * setup filter pipeline
 	 */
-	uio_fetcher_ctor(&ufetcher, uio);
+	uio_fetcher_ctor(&ufetcher, uio, cb->usedhigh);
 	last_fetcher = &ufetcher.base;
 	if (sc->sc_npfilters > 0) {
 		filter = sc->sc_pfilters[0];
@@ -1557,10 +1572,11 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
-		while (cb->used >= cb->usedhigh) {
+		/* wait if the first buffer is occupied */
+		while ((used = audio_stream_get_used(sc->sc_pustream)) >= cb->usedhigh) {
 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d "
-				     "hiwat=%d\n",
-				     cb->used, cb->usedlow, cb->usedhigh));
+				     "hiwat=%d\n", used,
+				     cb->usedlow, cb->usedhigh));
 			if (ioflag & IO_NDELAY) {
 				splx(s);
 				return EWOULDBLOCK;
@@ -1573,26 +1589,21 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 				return error;
 			}
 		}
-		used = cb->used;
 		inp = cb->s.inp;
 		cb->copying = TRUE;
 		splx(s);
-		cc = cb->usedhigh - used;	/* maximum to write */
-		/* cc may be greater than the size of the ring buffer */
-		if (cc > cb->s.end - cb->s.start)
-			cc = cb->s.end - cb->s.start;
 
 		/*
-		 * write to the cb as possible
+		 * write to the cb as much as possible
 		 *
 		 * work with a temporary audio_stream_t to narrow
 		 * splaudio() enclosure
 		 */
 		tmp_stream = cb->s;
+		cc = tmp_stream.end - tmp_stream.start;
 		error = last_fetcher->fetch_to(last_fetcher, &tmp_stream, cc);
 		s = splaudio();
 		cb->s = tmp_stream;
-		cb->used = audio_stream_get_used(&cb->s);
 		einp = cb->s.inp;
 
 		/*
@@ -1639,7 +1650,6 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 {
 	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
-	audio_stream_t *last_stream;
 	int error = 0, s, offs, fd;
 	u_long stamp;
 	boolean_t rbus, pbus;
@@ -1652,10 +1662,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case FIONREAD:
-		last_stream = sc->sc_nrfilters > 0
-			? &sc->sc_rstreams[sc->sc_nrfilters - 1]
-			: &sc->sc_rr.s;
-		*(int *)addr = audio_stream_get_used(last_stream);
+		*(int *)addr = audio_stream_get_used(sc->sc_rustream);
 		break;
 
 	case FIOASYNC:
@@ -1739,10 +1746,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	 * sample of what we write next?
 	 */
 	case AUDIO_WSEEK:
-		last_stream = sc->sc_nrfilters > 0
-			? &sc->sc_rstreams[sc->sc_nrfilters - 1]
-			: &sc->sc_rr.s;
-		*(u_long *)addr = audio_stream_get_used(last_stream);
+		*(u_long *)addr = audio_stream_get_used(sc->sc_rustream);
 		break;
 
 	case AUDIO_SETINFO:
@@ -1820,10 +1824,12 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 {
 	int revents = 0;
 	int s = splaudio();
+	int used;
 
 	DPRINTF(("audio_poll: events=0x%x mode=%d\n", events, sc->sc_mode));
 
 	if (events & (POLLIN | POLLRDNORM)) {
+		used = audio_stream_get_used(sc->sc_rustream);
 		/*
 		 * If half duplex and playing, audio_read() will generate
 		 * silence at the play rate; poll for silence being
@@ -1831,11 +1837,12 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 		 */
 		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_PLAY)) ?
 		    sc->sc_pr.stamp > sc->sc_wstamp :
-		    sc->sc_rr.used > sc->sc_rr.usedlow)
+		    used > sc->sc_rr.usedlow)
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
 
 	if (events & (POLLOUT | POLLWRNORM)) {
+		used = audio_stream_get_used(sc->sc_pustream);
 		/*
 		 * If half duplex and recording, audio_write() will throw
 		 * away play data, which means we are always ready to write.
@@ -1843,7 +1850,7 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 		 * mark.
 		 */
 		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||
-		    sc->sc_pr.used <= sc->sc_pr.usedlow)
+		    used <= sc->sc_pr.usedlow)
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
 
@@ -1876,13 +1883,9 @@ filt_audioread(struct knote *kn, long hint)
 	struct audio_softc *sc = kn->kn_hook;
 	int s;
 
-	/* XXXLUKEM (thorpej): please make sure this is right */
-
 	s = splaudio();
-	if (sc->sc_mode & AUMODE_PLAY)
-		kn->kn_data = sc->sc_pr.stamp - sc->sc_wstamp;
-	else
-		kn->kn_data = sc->sc_rr.used - sc->sc_rr.usedlow;
+	kn->kn_data = audio_stream_get_used(sc->sc_rustream)
+		- sc->sc_rr.usedlow;
 	splx(s);
 
 	return kn->kn_data > 0;
@@ -1906,12 +1909,13 @@ static int
 filt_audiowrite(struct knote *kn, long hint)
 {
 	struct audio_softc *sc = kn->kn_hook;
+	audio_stream_t *stream;
 	int s;
 
-	/* XXXLUKEM (thorpej): please make sure this is right */
-
 	s = splaudio();
-	kn->kn_data = sc->sc_pr.usedlow - sc->sc_pr.used;
+	stream = sc->sc_pustream;
+	kn->kn_data = (stream->end - stream->start)
+		- audio_stream_get_used(stream);
 	splx(s);
 
 	return kn->kn_data > 0;
@@ -2013,8 +2017,8 @@ audiostartr(struct audio_softc *sc)
 	int error;
 
 	DPRINTF(("audiostartr: start=%p used=%d(hi=%d) mmapped=%d\n",
-		 sc->sc_rr.s.start, sc->sc_rr.used, sc->sc_rr.usedhigh,
-		 sc->sc_rr.mmapped));
+		 sc->sc_rr.s.start, audio_stream_get_used(&sc->sc.rr.s),
+		 sc->sc_rr.usedhigh, sc->sc_rr.mmapped));
 
 	if (sc->hw_if->trigger_input)
 		error = sc->hw_if->trigger_input(sc->hw_hdl, sc->sc_rr.s.start,
@@ -2035,12 +2039,14 @@ int
 audiostartp(struct audio_softc *sc)
 {
 	int error;
+	int used;
 
+	used = audio_stream_get_used(&sc->sc_pr.s);
 	DPRINTF(("audiostartp: start=%p used=%d(hi=%d) mmapped=%d\n",
-		 sc->sc_pr.s.start, sc->sc_pr.used, sc->sc_pr.usedhigh,
+		 sc->sc_pr.s.start, used, sc->sc_pr.usedhigh,
 		 sc->sc_pr.mmapped));
 
-	if (!sc->sc_pr.mmapped && sc->sc_pr.used < sc->sc_pr.blksize) {
+	if (!sc->sc_pr.mmapped && used < sc->sc_pr.blksize) {
 		wakeup(&sc->sc_wchan);
 		return 0;
 	}
@@ -2123,8 +2129,10 @@ audio_pint(void *v)
 	struct audio_softc *sc = v;
 	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
+	stream_fetcher_t null_fetcher;
+	stream_fetcher_t *fetcher;
 	uint8_t *inp;
-	int cc;
+	int cc, used;
 	int blksize;
 	int error;
 
@@ -2177,8 +2185,18 @@ audio_pint(void *v)
 	}
 #endif
 
-	cb->used -= blksize;
-	if (cb->used < blksize) {
+	used = audio_stream_get_used(&cb->s);
+	if (used < blksize && !cb->copying && sc->sc_npfilters > 0) {
+		/* we might have data in filter pipeline */
+		null_fetcher.fetch_to = null_fetcher_fetch_to;
+		fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
+		sc->sc_pfilters[0]->set_fetcher(sc->sc_pfilters[0],
+						&null_fetcher);
+		cc = cb->s.end - cb->s.start;
+		fetcher->fetch_to(fetcher, &cb->s, cc);
+		used = audio_stream_get_used(&cb->s);
+	}
+	if (used < blksize) {
 		/* we don't have a full block to use */
 		if (cb->copying) {
 			/* writer is in progress, don't disturb */
@@ -2198,10 +2216,10 @@ audio_pint(void *v)
 			if (inp >= cb->s.end)
 				inp = cb->s.start;
 			cb->s.inp = inp;
-			cb->used += cc;
 
 			/* Clear next block so we keep ahead of the DMA. */
-			if (cb->used + cc < cb->usedhigh)
+			used = audio_stream_get_used(&cb->s);
+			if (used + cc < cb->s.end - cb->s.start)
 				audio_pint_silence(sc, cb, inp, blksize);
 		}
 	}
@@ -2218,9 +2236,10 @@ audio_pint(void *v)
 	}
 
 	DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
-		     sc->sc_mode, cb->pause, cb->used, cb->usedlow));
+		     sc->sc_mode, cb->pause,
+		     audio_stream_get_used(sc->sc_pustream), cb->usedlow));
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
-		if (cb->used <= cb->usedlow) {
+		if (audio_stream_get_used(sc->sc_pustream) <= cb->usedlow) {
 			audio_wakeup(&sc->sc_wchan);
 			selnotify(&sc->sc_wsel, 0);
 			if (sc->sc_async_audio) {
@@ -2253,7 +2272,6 @@ audio_rint(void *v)
 	struct audio_ringbuffer *cb;
 	stream_fetcher_t null_fetcher;
 	stream_fetcher_t *last_fetcher;
-	audio_stream_t *last_stream;
 	int cc;
 	int used;
 	int blksize;
@@ -2311,6 +2329,16 @@ audio_rint(void *v)
 	}
 #endif
 
+	if (!cb->pause && sc->sc_nrfilters > 0) {
+		null_fetcher.fetch_to = null_fetcher_fetch_to;
+		last_fetcher = &sc->sc_rfilters[sc->sc_nrfilters - 1]->base;
+		sc->sc_rfilters[0]->set_fetcher(sc->sc_rfilters[0],
+						&null_fetcher);
+		cc = sc->sc_rustream->end - sc->sc_rustream->start;
+		error = last_fetcher->fetch_to
+			(last_fetcher, sc->sc_rustream, cc);
+		/* XXX what should do for error? */
+	}
 	used = audio_stream_get_used(&sc->sc_rr.s);
 	if (cb->pause) {
 		DPRINTFN(1, ("audio_rint: pdrops %lu\n", cb->pdrops));
@@ -2318,24 +2346,12 @@ audio_rint(void *v)
 		cb->s.outp += blksize;
 		if (cb->s.outp >= cb->s.end)
 			cb->s.outp = cb->s.start;
-	} else if (used + blksize >= cb->usedhigh && !cb->copying) {
+	} else if (used + blksize > cb->s.end - cb->s.start && !cb->copying) {
 		DPRINTFN(1, ("audio_rint: drops %lu\n", cb->drops));
 		cb->drops += blksize;
 		cb->s.outp += blksize;
 		if (cb->s.outp >= cb->s.end)
 			cb->s.outp = cb->s.start;
-	}
-
-	if (sc->sc_nrfilters > 0) {
-		null_fetcher.fetch_to = null_fetcher_fetch_to;
-		last_stream = &sc->sc_rstreams[sc->sc_nrfilters - 1];
-		last_fetcher = &sc->sc_rfilters[sc->sc_nrfilters - 1]->base;
-		sc->sc_rfilters[0]->set_fetcher(sc->sc_rfilters[0],
-						&null_fetcher);
-		cc = audio_stream_get_space(last_stream);
-		error = last_fetcher->fetch_to(last_fetcher, last_stream, cc);
-		/* XXX what should do for error? */
-		cb->used = audio_stream_get_used(last_stream);
 	}
 
 	DPRINTFN(2, ("audio_rint: inp=%p cc=%d\n", cb->inp, blksize));
@@ -2948,11 +2964,24 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		/* userland formats */
 		sc->sc_pparams = pp;
 		sc->sc_rparams = rp;
-		/* hardware formats */
-		sc->sc_pr.s.param = pfilters.req_size <= 0
-			? pp : pfilters.filters[pfilters.req_size - 1].param;
-		sc->sc_rr.s.param = rfilters.req_size <= 0
-			? rp : rfilters.filters[0].param;
+
+		/* hardware format and the buffer near to userland */
+		if (pfilters.req_size <= 0) {
+			sc->sc_pr.s.param = pp;
+			sc->sc_pustream = &sc->sc_pr.s;
+		} else {
+			sc->sc_pr.s.param
+				= pfilters.filters[pfilters.req_size - 1].param;
+			sc->sc_pustream = &sc->sc_pstreams[0];
+		}
+		if (rfilters.req_size <= 0) {
+			sc->sc_rr.s.param = rp;
+			sc->sc_rustream = &sc->sc_rr.s;
+		} else {
+			sc->sc_rr.s.param = rfilters.filters[0].param;
+			sc->sc_rustream
+				= &sc->sc_rstreams[rfilters.req_size - 1];
+		}
 	}
 
 	oldpblksize = sc->sc_pr.blksize;
@@ -3125,6 +3154,7 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	const struct audio_hw_if *hw = sc->hw_if;
+	audio_stream_t *stream;
 
 	if (hw == 0)		/* HW has not attached */
 		return ENXIO;
@@ -3161,8 +3191,11 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 	} else
 		ai->monitor_gain = 0;
 
-	p->seek = sc->sc_pr.used;
-	r->seek = sc->sc_rr.used;
+	stream = sc->sc_npfilters > 0 ? &sc->sc_pstreams[0] : &sc->sc_pr.s;
+	p->seek = audio_stream_get_used(stream);
+	stream = sc->sc_nrfilters > 0
+		? &sc->sc_rstreams[sc->sc_nrfilters - 1] : &sc->sc_rr.s;
+	r->seek = audio_stream_get_used(stream);
 
 	p->samples = sc->sc_pr.stamp - sc->sc_pr.drops;
 	r->samples = sc->sc_rr.stamp - sc->sc_rr.drops;

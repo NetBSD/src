@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.7 2004/12/29 19:55:16 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.8 2005/01/01 11:28:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ struct audio_ringbuffer {
 	audio_stream_t s;
 	int	blksize;	/* I/O block size (bytes) */
 	int	maxblks;	/* no of blocks in ring */
-	int	used;		/* no of used bytes */
 	int	usedlow;	/* start writer when used falls below this */
 	int	usedhigh;	/* stop writer when used goes above this */
 	u_long	stamp;		/* bytes transferred */
@@ -158,7 +157,7 @@ struct audio_softc {
 	/**
 	 *  userland
 	 *	|  write(2) & uiomove(9)
-	 *  sc_pstreams[0]	<sc_pparams>
+	 *  sc_pstreams[0]	<sc_pparams> == sc_pustream;
 	 *      |  sc_pfilters[0]
 	 *  sc_pstreams[1]	<list_t::filters[0].param>
 	 *      :
@@ -169,6 +168,7 @@ struct audio_softc {
 	 *  hardware
 	 */
 	audio_params_t		sc_pparams;	/* play encoding parameters */
+	audio_stream_t		*sc_pustream;	/* the first buffer */
 	int			sc_npfilters;	/* number of filters */
 	audio_stream_t		sc_pstreams[AUDIO_MAX_FILTERS];
 	stream_filter_t		*sc_pfilters[AUDIO_MAX_FILTERS];
@@ -184,7 +184,7 @@ struct audio_softc {
 	 *  sc_rstreams[1]	<list_t::filters[2].param>
 	 *      :
 	 *	|  sc_rfilters[n-1]
-	 *  sc_rstreams[n-1]	<sc_rparams>
+	 *  sc_rstreams[n-1]	<sc_rparams> == sc_rustream
 	 *      |  uiomove(9) & read(2)
 	 *  userland
 	 */
@@ -192,6 +192,7 @@ struct audio_softc {
 	int			sc_nrfilters;	/* number of filters */
 	stream_filter_t		*sc_rfilters[AUDIO_MAX_FILTERS];
 	audio_stream_t		sc_rstreams[AUDIO_MAX_FILTERS];
+	audio_stream_t		*sc_rustream;	/* the last buffer */
 	audio_params_t		sc_rparams;	/* record encoding parameters */
 
 	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
