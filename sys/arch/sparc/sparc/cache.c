@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.53 2000/06/08 14:45:18 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.54 2001/06/08 09:40:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -937,7 +937,7 @@ smp_vcache_flush_page(va)
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_PAGE;
 		p->ctx = getcontext4m();
 		p->va = va;
-		raise_ipi(cpi);
+		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
 }
@@ -960,7 +960,7 @@ smp_vcache_flush_segment(vr, vs)
 		p->ctx = getcontext4m();
 		p->vr = vr;
 		p->vs = vs;
-		raise_ipi(cpi);
+		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
 }
@@ -982,7 +982,7 @@ smp_vcache_flush_region(vr)
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_REGION;
 		p->ctx = getcontext4m();
 		p->vr = vr;
-		raise_ipi(cpi);
+		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
 }
@@ -1002,7 +1002,7 @@ smp_vcache_flush_context()
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_VCACHE_FLUSH_CONTEXT;
 		p->ctx = getcontext4m();
-		raise_ipi(cpi);
+		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
 }
@@ -1026,7 +1026,7 @@ smp_cache_flush(va, size)
 		p->ctx = getcontext4m();
 		p->va = va;
 		p->size = size;
-		raise_ipi(cpi);
+		raise_ipi_wait_and_unlock(cpi);
 		splx(s);
 	}
 }
