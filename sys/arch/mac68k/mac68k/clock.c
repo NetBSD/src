@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 1996/03/12 19:18:49 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.27 1996/03/12 21:34:57 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,7 +149,7 @@ cpu_initclocks()
 }
 
 void
-setstatclockrate()
+setstatclockrate(rateinhz)
 	int rateinhz;
 {
 }
