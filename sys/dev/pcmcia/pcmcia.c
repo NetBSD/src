@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.17 2000/02/05 20:02:43 nathanw Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.18 2000/02/07 09:35:29 augustss Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -302,24 +302,34 @@ pcmcia_print(arg, pnp)
 	struct pcmcia_attach_args *pa = arg;
 	struct pcmcia_softc *sc = pa->pf->sc;
 	struct pcmcia_card *card = &sc->card;
-	int i;
+	char devinfo[256];
 
 	if (pnp) {
-		for (i = 0; i < 4; i++) {
-			if (card->cis1_info[i] == NULL)
-				break;
-			if (i)
-				printf(", ");
-			printf("%s", card->cis1_info[i]);
-		}
-		if (i)
-			printf(" ");
-		printf("(manufacturer 0x%x, product 0x%x)", card->manufacturer,
-		       card->product);
+		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
+		printf("%s", devinfo);
 	}
 	printf(" function %d", pa->pf->number);
 
 	return (UNCONF);
+}
+
+void
+pcmcia_devinfo(card, showhex, cp, cplen)
+	struct pcmcia_card *card;
+	char *cp;
+	int cplen;
+{
+	int i, n;
+
+	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 0; i++) {
+		n = snprintf(cp, cplen, "%s%s", i ? ", " : "",
+		        card->cis1_info[i]);
+		cp += n;
+		cplen -= n;
+	}
+	if (showhex && cplen > 0)
+		snprintf(cp, cplen, "%s(manufacturer 0x%04x, product 0x%04x)",
+		    i ? " " : "", card->manufacturer, card->product);
 }
 
 const struct pcmcia_product *
