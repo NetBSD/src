@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2002/01/02 00:51:37 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2002/02/11 18:05:17 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -509,7 +509,7 @@ pmap_map_ptes(pmap)
 	/* need to load a new alternate pt space into curpmap? */
 	opde = *APDP_PDE;
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
-		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V | PG_N | PG_4K | PG_M);
+		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_KW | PG_V | PG_N | PG_4K | PG_M);
 		if (pmap_valid_entry(opde))
 			TLBFLUSH();
 	}
@@ -560,7 +560,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	pte = vtopte(va);
 	opte = *pte;
-	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
+	*pte = pa | ((prot & VM_PROT_WRITE)? PG_KW : PG_KR) |
 		PG_V | PG_N | PG_4K | PG_M | pmap_pg_g;	/* zap! */
 	if (pmap_valid_entry(opte))
 		pmap_update_pg(va);
@@ -659,13 +659,13 @@ pmap_bootstrap(kva_start)
 	 */
 
 	protection_codes[VM_PROT_NONE] = 0;  			/* --- */
-	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO;			/* -r- */
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW;		/* w-- */
-	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;/* w-x */
-	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW;	/* wr- */
-	protection_codes[VM_PROT_ALL] = PG_RW;			/* wrx */
+	protection_codes[VM_PROT_EXECUTE] = PG_KR;		/* --x */
+	protection_codes[VM_PROT_READ] = PG_KR;			/* -r- */
+	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_KR;	/* -rx */
+	protection_codes[VM_PROT_WRITE] = PG_KW;		/* w-- */
+	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_KW;/* w-x */
+	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_KW;	/* wr- */
+	protection_codes[VM_PROT_ALL] = PG_KW;			/* wrx */
 
 	/*
 	 * now we init the kernel's pmap
@@ -1383,7 +1383,7 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 	ptp->flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
 	pmap->pm_pdir[pde_index] =
-		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V | PG_N | PG_4K | PG_M);
+		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_URKR | PG_KW | PG_V | PG_N | PG_4K | PG_M);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
 	pmap->pm_ptphint = ptp;
 	return(ptp);
@@ -2441,7 +2441,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			/* XXX: needed if we hold head->map lock? */
 			simple_lock(&pvh->pvh_lock);
 
-			pmap_changebit(pvh, 0, ~PG_RW);
+			pmap_changebit(pvh, 0, ~PG_KW);
 
 			simple_unlock(&pvh->pvh_lock);
 			PMAP_HEAD_TO_MAP_UNLOCK();
@@ -2515,10 +2515,10 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 		md_prot = protection_codes[prot];
 		if (sva < VM_MAXUSER_ADDRESS)
-			md_prot |= PG_u;
+			md_prot |= PG_URKR;
 		else if (sva < VM_MAX_ADDRESS)
 			/* XXX: write-prot our PTES? never! */
-			md_prot |= (PG_u | PG_RW);
+			md_prot |= (PG_URKR | PG_KW);
 
 		spte = &ptes[sh3_btop(sva)];
 		epte = &ptes[sh3_btop(blockend)];
@@ -2528,7 +2528,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 			if (!pmap_valid_entry(*spte))	/* no mapping? */
 				continue;
 
-			npte = (*spte & ~PG_PROT) | md_prot;
+			npte = (*spte & ~PG_UW) | md_prot;
 
 			if (npte != *spte) {
 				*spte = npte;		/* zap! */
@@ -2934,7 +2934,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
 	 */
 
 	if (dstl->addr < VM_MAX_ADDRESS)
-		dstproto = PG_u;		/* "user" page */
+		dstproto = PG_URKR;		/* "user" page */
 	else
 		dstproto = pmap_pg_g;	/* kernel page */
 
@@ -3069,7 +3069,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
 			if (opte & PG_W)
 				srcpmap->pm_stats.wired_count--;
 		}
-		*dstl->pte = (opte & ~(PG_u|PG_U|PG_M|PG_G|PG_W)) | dstproto;
+		*dstl->pte = (opte & ~(PG_URKR|PG_U|PG_M|PG_G|PG_W)) | dstproto;
 		dstpmap->pm_stats.resident_count++;
 		if (dstl->ptp)
 			dstl->ptp->wire_count++;
@@ -3308,9 +3308,9 @@ enter_now:
 	if (wired)
 		npte |= PG_W;
 	if (va < VM_MAXUSER_ADDRESS)
-		npte |= PG_u;
+		npte |= PG_URKR;
 	else if (va < VM_MAX_ADDRESS)
-		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
+		npte |= (PG_URKR | PG_KW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 
@@ -3371,7 +3371,7 @@ pmap_growkernel(maxkvaddr)
 			pmap_zero_page(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
-				ptaddr | PG_RW | PG_V | PG_N | PG_4K | PG_M;
+				ptaddr | PG_KW | PG_V | PG_N | PG_4K | PG_M;
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
@@ -3388,8 +3388,8 @@ pmap_growkernel(maxkvaddr)
 			panic("pmap_growkernel: alloc ptp failed");
 		}
 
-		/* PG_u not for kernel */
-		kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_u;
+		/* PG_URKR not for kernel */
+		kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_URKR;
 
 		/* distribute new kernel PTP to all active pmaps */
 		simple_lock(&pmaps_lock);
