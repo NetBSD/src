@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.9 2005/01/11 07:01:38 simonb Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10 2005/01/11 08:05:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.9 2005/01/11 07:01:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2005/01/11 08:05:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,6 +66,29 @@ struct evcnt pmax_memerr_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
 
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
+
+static const char * const intrnames[] = {
+	"serial0",
+	"serial1",
+	"ether",
+	"scsi",
+	"optslot0",
+	"optslot1",
+	"optslot2",
+	"dtop",
+	"isdn",
+	"floppy"
+};
+
+void
+intr_init(void)
+{
+	int i;
+
+	for (i = 0; i < MAX_DEV_NCOOKIES; i++)
+		evcnt_attach_dynamic(&intrtab[i].ih_count, EVCNT_TYPE_INTR,
+		    NULL, "pmax", intrnames[i]);
+}
 
 /*
  * pmax uses standard mips1 convention, wiring FPU to hard interrupt 5.
