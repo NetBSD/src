@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.7 1997/06/23 17:34:20 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.8 1997/07/07 19:12:29 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -1290,7 +1290,8 @@ arguments, or on localhost by default. If no request options are given,
 will attempt to read commands from the standard input
 and execute these on the NTP server running on the first host given on
 the command line, again defaulting to localhost when no other host is
-specified. .Nm
+specified.
+.Nm
 will prompt for commands if the standard
 input is a terminal device.
 .Pp
@@ -1573,7 +1574,7 @@ discarded by the clustering algorithm;
 .Cd "+"
 included in the final selection set; 
 .Cd "#"
-selected for synchronizatio;n but distance exceeds
+selected for synchronization but distance exceeds
 maximum; 
 .Cd "*"
 selected for synchronization; and
