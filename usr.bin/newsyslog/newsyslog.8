@@ -3,7 +3,7 @@
 .\" This file contains changes from the Open Software Foundation.
 .\"
 .\"	from: @(#)newsyslog.8
-.\"	$NetBSD: newsyslog.8,v 1.8 1996/11/10 23:58:22 lukem Exp $
+.\"	$NetBSD: newsyslog.8,v 1.9 1999/10/05 12:11:27 ad Exp $
 .\"
 .\" Copyright 1988, 1989 by the Massachusetts Institute of Technology
 .\" 
@@ -66,7 +66,7 @@ follows:
 .br
 	logfile name
 .br
-	owner.group of archives (optional)
+	owner:group of archives (optional)
 .br
 	mode of logfile & archives
 .br
@@ -83,9 +83,9 @@ The
 entry is the name of the system log file to be archived.
 .PP
 The optional
-.I owner.group
+.I owner:group
 entry specifies an ownership and group for the archive file.
-The "." is essential, even if the 
+The ":" is essential, even if the 
 .I owner
 or
 .I group
@@ -94,6 +94,8 @@ fields may be numeric, or a name which is looked up in
 .I /etc/passwd
 or 
 .IR /etc/group .
+For backward compatibility, "." is useable in lieu of ":", however
+use of this feature is discouraged.
 .PP
 The
 .I number of archives

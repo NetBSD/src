@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.18 1999/09/30 12:35:53 soren Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.19 1999/10/05 12:11:28 ad Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.18 1999/09/30 12:35:53 soren Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.19 1999/10/05 12:11:28 ad Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -281,7 +281,7 @@ parse_file()
 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
-                if ((group = strchr(q, '.')) != NULL) {
+                if ((group = strchr(q, ':')) != NULL || (group = strchr(q, '.')) != NULL) {
                     *group++ = '\0';
                     if (*q) {
                         if (!(isnumber(q))) {
