@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-sparc.c,v 1.6 1994/02/11 00:20:33 pk Exp $";
+static char rcsid[] = "$Id: tc-sparc.c,v 1.7 1994/08/24 20:00:54 pk Exp $";
 #endif
 
 #define cypress 1234
@@ -129,6 +129,34 @@ static void print_insn();
 #endif
 static int getExpression();
 #endif /* not __STDC__ */
+
+static char *Reloc[] = {
+	"RELOC_8",
+	"RELOC_16",
+	"RELOC_32",
+	"RELOC_DISP8",
+	"RELOC_DISP16",
+	"RELOC_DISP32",
+	"RELOC_WDISP30",
+	"RELOC_WDISP22",
+	"RELOC_HI22",
+	"RELOC_22",
+	"RELOC_13",
+	"RELOC_LO10",
+	"RELOC_SFA_BASE",
+	"RELOC_SFA_OFF13",
+	"RELOC_BASE10",
+	"RELOC_BASE13",
+	"RELOC_BASE22",
+	"RELOC_PC10",
+	"RELOC_PC22",
+	"RELOC_JMP_TBL",
+	"RELOC_SEGOFF16",
+	"RELOC_GLOB_DAT",
+	"RELOC_JMP_SLOT",
+	"RELOC_RELATIVE",
+	"NO_RELOC"
+};
 
 static char *expr_end;
 static int special_case;
@@ -1208,17 +1236,33 @@ int n;
 	return;
 } /* md_number_to_chars() */
 
-static void reloc_check(val, bits)
+static int reloc_check(val, bits, fixP)
 long val;
 int bits;
+fixS *fixP	/* For reporting errors */;
 {
 	if (((val & (-1 << bits)) != 0)
 	    && ((val & (-1 << bits)) != (-1 << (bits - 0)))) {
-		as_warn("Relocation overflow.  Value truncated.");
+
+		long addr = fixP->fx_where + fixP->fx_frag->fr_address;
+		int ln;
+		char *fname;
+
+		if (fixP->fx_frag->line) {
+			fname = fixP->fx_frag->line->file->filename;
+			ln = fixP->fx_frag->line->line;
+		} else {
+			fname = "";
+			ln = -1;
+		}
+
+		as_warn_where(fname, ln,
+			"Relocation (%s) overflow at %#x, value truncated.",
+			Reloc[fixP->fx_r_type], addr);
 	} /* on overflow */
 
-	return;
 } /* reloc_check() */
+
 
 /* Apply a fixS to the frags, now that we know the value it ought to
    hold. */
@@ -1228,20 +1272,9 @@ fixS *fixP;
 long val;
 {
 	char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-	
+	long addr = fixP->fx_where + fixP->fx_frag->fr_address;
+
 #if DEBUG_SPARC
-	static char *Reloc[] = {
-		"RELOC_8", "RELOC_16", "RELOC_32",
-		"RELOC_DISP8", "RELOC_DISP16", "RELOC_DISP32",
-		"RELOC_WDISP30", "RELOC_WDISP22",
-		"RELOC_HI22",
-		"RELOC_22", "RELOC_13",
-		"RELOC_LO10", "RELOC_SFA_BASE", "RELOC_SFA_OFF13",
-		"RELOC_BASE10", "RELOC_BASE13", "RELOC_BASE22", "RELOC_PC10",
-		"RELOC_PC22", "RELOC_JMP_TBL", "RELOC_SEGOFF16",
-		"RELOC_GLOB_DAT", "RELOC_JMP_SLOT", "RELOC_RELATIVE",
-		"NO_RELOC"
-	    };
 	if (flagseen['D'])
 		fprintf(stderr, "md_apply_fix: \"%s\" \"%s\", val %d -- %s\n",
 				((fixP->fx_addsy != NULL)
@@ -1301,8 +1334,8 @@ long val;
 	case RELOC_JMP_TBL:
 		if (!fixP->fx_addsy) {
 			val = (val >>= 2) + 1;
-			reloc_check(val, 30);
-						  
+			reloc_check(val, 30, fixP);
+
 			buf[0] |= (val >> 24) & 0x3f;
 			buf[1]= (val >> 16);
 			buf[2] = val >> 8;
@@ -1312,7 +1345,7 @@ long val;
 
 	case RELOC_WDISP30:
 		val = (val >>= 2) + 1;
-		reloc_check(val, 30);
+		reloc_check(val, 30, fixP);
 						  
 		buf[0] |= (val >> 24) & 0x3f;
 		buf[1]= (val >> 16);
@@ -1322,7 +1355,7 @@ long val;
 		
 	case RELOC_WDISP22:
 		val = (val >>= 2) + 1;
-		reloc_check(val, 22);
+		reloc_check(val, 22, fixP);
 
 		buf[1] |= (val >> 16) & 0x3f;
 		buf[2] = val >> 8;
@@ -1338,7 +1371,7 @@ long val;
 	 */
 	case RELOC_22:
 		if (!fixP->fx_addsy) {
-			reloc_check(val, 22);
+			reloc_check(val, 22, fixP);
 
 			buf[1] |= (val >> 16) & 0x3f;
 			buf[2] = val >> 8;
@@ -1364,7 +1397,7 @@ long val;
 	case RELOC_13:
 	case RELOC_BASE13:
 		if (!fixP->fx_addsy) {
-			reloc_check(val, 13);
+			reloc_check(val, 13, fixP);
 			buf[2] |= (val >> 8) & 0x1f;
 			buf[3] = val;
 		} else {
@@ -1549,33 +1582,6 @@ segT segtype;
 static void print_insn(insn)
 struct sparc_it *insn;
 {
-	static char *Reloc[] = {
-		"RELOC_8",
-		"RELOC_16",
-		"RELOC_32",
-		"RELOC_DISP8",
-		"RELOC_DISP16",
-		"RELOC_DISP32",
-		"RELOC_WDISP30",
-		"RELOC_WDISP22",
-		"RELOC_HI22",
-		"RELOC_22",
-		"RELOC_13",
-		"RELOC_LO10",
-		"RELOC_SFA_BASE",
-		"RELOC_SFA_OFF13",
-		"RELOC_BASE10",
-		"RELOC_BASE13",
-		"RELOC_BASE22",
-		"RELOC_PC10",
-		"RELOC_PC22",
-		"RELOC_JMP_TBL",
-		"RELOC_SEGOFF16",
-		"RELOC_GLOB_DAT",
-		"RELOC_JMP_SLOT",
-		"RELOC_RELATIVE",
-		"NO_RELOC"
-	    };
 	
 	if (insn->error) {
 		fprintf(stderr, "ERROR: %s\n", insn->error);
