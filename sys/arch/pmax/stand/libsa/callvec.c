@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.10 1999/01/29 05:37:46 simonb Exp $	*/
+/*	$NetBSD: callvec.c,v 1.11 1999/03/01 04:05:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@ const struct callback callvec = {
 	(void (*) __P((void)))0,
 	(void (*) __P((int delay)))0,
 	(void (*) __P((int value)))0,
-	(void (*) __P((void)))0,
+	(void (*) __P((char *addr, int len)))DEC_PROM_CLEARCACHE,
 	(int (*) __P((void)))0,
 	(int (*) __P((memmap *map)))0,
 	(int (*) __P((int sn)))0,
