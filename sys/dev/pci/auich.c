@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.69 2004/10/31 18:30:52 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.70 2004/10/31 19:28:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.69 2004/10/31 18:30:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.70 2004/10/31 19:28:31 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ struct auich_softc {
 	pcitag_t sc_pt;
 #endif
 	/* SiS 7012 hack */
-	int  sc_sample_size;
+	int  sc_sample_shift;
 	int  sc_sts_reg;
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
@@ -499,10 +499,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (d->vendor == PCI_VENDOR_SIS
 	    && d->product == PCI_PRODUCT_SIS_7012_AC) {
 		sc->sc_sts_reg = ICH_PICB;
-		sc->sc_sample_size = 1;
+		sc->sc_sample_shift = 0;
 	} else {
 		sc->sc_sts_reg = ICH_STS;
-		sc->sc_sample_size = 2;
+		sc->sc_sample_shift = 1;
 	}
 
 	/* Workaround for a 440MX B-stepping erratum */
@@ -1168,12 +1168,11 @@ auich_intr(void *v)
 				q = &sc->dmalist_pcmo[qptr];
 
 				q->base = sc->pcmo_p;
-				q->len = (blksize / sc->sc_sample_size) |
+				q->len = (blksize >> sc->sc_sample_shift) |
 				    ICH_DMAF_IOC;
 				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
-				    &sc->dmalist_pcmo[i], q, blksize / 2,
-				    sc->pcmo_p));
+				    &sc->dmalist_pcmo[i], q, q->len, q->base));
 
 				sc->pcmo_p += blksize;
 				if (sc->pcmo_p >= sc->pcmo_end)
@@ -1220,12 +1219,11 @@ auich_intr(void *v)
 				q = &sc->dmalist_pcmi[qptr];
 
 				q->base = sc->pcmi_p;
-				q->len = (blksize / sc->sc_sample_size) |
+				q->len = (blksize >> sc->sc_sample_shift) |
 				    ICH_DMAF_IOC;
 				DPRINTF(ICH_DEBUG_INTR,
 				    ("auich_intr: %p, %p = %x @ 0x%x\n",
-				    &sc->dmalist_pcmi[i], q, blksize / 2,
-				    sc->pcmi_p));
+				    &sc->dmalist_pcmi[i], q, q->len, q->base));
 
 				sc->pcmi_p += blksize;
 				if (sc->pcmi_p >= sc->pcmi_end)
@@ -1314,7 +1312,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 		q = &sc->dmalist_pcmo[qptr];
 
 		q->base = sc->pcmo_p;
-		q->len = (blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
+		q->len = (blksize >> sc->sc_sample_shift) | ICH_DMAF_IOC;
 
 		sc->pcmo_p += blksize;
 		if (sc->pcmo_p >= sc->pcmo_end)
@@ -1388,7 +1386,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 		q = &sc->dmalist_pcmi[qptr];
 
 		q->base = sc->pcmi_p;
-		q->len = (blksize / sc->sc_sample_size) | ICH_DMAF_IOC;
+		q->len = (blksize >> sc->sc_sample_shift) | ICH_DMAF_IOC;
 
 		sc->pcmi_p += blksize;
 		if (sc->pcmi_p >= sc->pcmi_end)
@@ -1585,7 +1583,7 @@ auich_calibrate(struct auich_softc *sc)
 		return;
 	}
 	sc->dmalist_pcmi[0].base = DMAADDR(p);
-	sc->dmalist_pcmi[0].len = (bytes / sc->sc_sample_size);
+	sc->dmalist_pcmi[0].len = (bytes >> sc->sc_sample_shift);
 
 	/*
 	 * our data format is stereo, 16 bit so each sample is 4 bytes.
