@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.4 2003/04/01 20:59:15 briggs Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.5 2003/04/26 04:44:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.4 2003/04/01 20:59:15 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.5 2003/04/26 04:44:18 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -235,7 +235,7 @@ dmover_backend_alloc(struct dmover_session *dses, const char *type)
 	dses->__dses_assignment.das_backend = best_dmb;
 	dses->__dses_assignment.das_algdesc = best_algdesc;
 
-	dses->dses_ninputs = algdesc->dad_ninputs;
+	dses->dses_ninputs = best_algdesc->dad_ninputs;
 
 	LIST_INSERT_HEAD(&best_dmb->dmb_sessions, dses, __dses_list);
 	best_dmb->dmb_nsessions++;
