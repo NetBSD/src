@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.5 2001/11/12 23:14:22 lukem Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.6 2003/09/05 22:43:03 itojun Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.5 2001/11/12 23:14:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.6 2003/09/05 22:43:03 itojun Exp $");
 
 #ident "@(#)rm_class.c  1.48     97/12/05 SMI"
 
@@ -1828,7 +1828,7 @@ _getq_random(q)
 	} else {
 		struct mbuf *prev = NULL;
 		
-		n = random() % qlen(q) + 1;
+		n = arc4random() % qlen(q) + 1;
 		for (i = 0; i < n; i++) {
 			prev = m;
 			m = m->m_nextpkt;
