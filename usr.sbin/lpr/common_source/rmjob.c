@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.19 2003/08/07 11:25:25 agc Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.20 2004/10/30 08:44:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.19 2003/08/07 11:25:25 agc Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.20 2004/10/30 08:44:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,7 @@ chk(char *file)
 	/*
 	 * Check the request list
 	 */
-	for (n = 0, cp = file+3; isdigit(*cp); )
+	for (n = 0, cp = file+3; isdigit((unsigned char)*cp); )
 		n = n * 10 + (*cp++ - '0');
 	for (r = requ; r < &requ[requests]; r++)
 		if (*r == n && isowner(line+1, file))
