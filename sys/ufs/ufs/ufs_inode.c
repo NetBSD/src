@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.20 2001/02/18 20:13:29 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.21 2001/02/18 20:17:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -89,7 +89,9 @@ ufs_inactive(v)
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
-		error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+		if (ip->i_ffs_size != 0) {
+			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+		}
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
