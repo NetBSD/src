@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.26 1999/03/29 22:13:07 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.26.2.1 1999/04/13 21:33:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -218,6 +218,9 @@ lfs_markv(p, v, retval)
 	lastino = LFS_UNUSED_INUM;
 	for (blkp = start; cnt--; ++blkp)
 	{
+		if(blkp->bi_daddr == LFS_FORCE_WRITE)
+			printf("lfs_markv: warning: force-writing ino %d lbn %d\n",
+			       blkp->bi_inode, blkp->bi_lbn);
 #ifdef LFS_TRACK_IOS
 		/*
 		 * If there is I/O on this segment that is not yet complete,
@@ -297,7 +300,7 @@ lfs_markv(p, v, retval)
 			}
 			if(error) {
 #ifdef DIAGNOSTIC
-				printf("lfs_markv: VFS_VGET failed with %d (ino %d, segment %d)\n", 
+				printf("lfs_markv: lfs_fastvget failed with %d (ino %d, segment %d)\n", 
 				       error, blkp->bi_inode,
 				       datosn(fs, blkp->bi_daddr));
 #endif /* DIAGNOSTIC */
@@ -366,7 +369,7 @@ lfs_markv(p, v, retval)
 				if(datosn(fs,b_daddr)
 				   == datosn(fs,blkp->bi_daddr))
 				{
-					printf("Wrong da same seg: %x vs %x\n",
+					printf("lfs_markv: wrong da same seg: %x vs %x\n",
 					       blkp->bi_daddr, b_daddr);
 				}
 				continue;
@@ -468,7 +471,7 @@ lfs_markv(p, v, retval)
 	return 0;
 	
  err2:
-	printf("markv err2\n");
+	printf("lfs_markv err2\n");
 	lfs_vunref(vp);
 	/* Free up fakebuffers -- have to take these from the LOCKED list */
  again:
@@ -493,7 +496,7 @@ lfs_markv(p, v, retval)
 	return (error);
 	
  err1:	
-	printf("markv err1\n");
+	printf("lfs_markv err1\n");
 	free(start, M_SEGMENT);
 	return (error);
 }
@@ -567,7 +570,7 @@ lfs_bmapv(p, v, retval)
 	{
 #ifdef DEBUG
 		if (datosn(fs, fs->lfs_curseg) == datosn(fs, blkp->bi_daddr)) {
-			printf("Hm, attempt to clean current segment? (#%d)\n",
+			printf("lfs_bmapv: attempt to clean current segment? (#%d)\n",
 			       datosn(fs, fs->lfs_curseg));
 			free(start,M_SEGMENT);
 			return (EBUSY);
@@ -633,7 +636,7 @@ lfs_bmapv(p, v, retval)
 			if (vp != NULL && !(vp->v_flag & VXLOCK)) {
 				ip = VTOI(vp);
 				if(VOP_ISLOCKED(vp)) {
-					/* printf("inode %d inlocked in bmapv\n",ip->i_number); */
+					/* printf("lfs_bmapv: inode %d inlocked\n",ip->i_number); */
 					need_unlock = 0;
 				} else {
 					VOP_LOCK(vp,LK_EXCLUSIVE);
@@ -875,9 +878,7 @@ lfs_segwait(p, v, retval)
  * In either case we lfs_vref, and it is the caller's responsibility to
  * lfs_vunref and VOP_UNLOCK (if necessary) when finished.
  */
-#ifdef USE_UFS_HASHLOCK
 extern struct lock ufs_hashlock;
-#endif
 
 int
 lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
@@ -903,24 +904,19 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 * locked, in which case they are going to be distinctly unhappy
 	 * if we trash something.
 	 */
-#ifdef USE_UFS_HASHLOCK
 	do {
-#endif
 		if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
-			lfs_vref(*vpp);
 			if ((*vpp)->v_flag & VXLOCK) {
-				printf("vnode VXLOCKed for ino %d\n",ino);
+				printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",ino);
 				clean_vnlocked++;
 #ifdef LFS_EAGAIN_FAIL
-#if 0 /* XXXX KS */
-				lfs_vunref(*vpp);
-#endif
 				return EAGAIN;
 #endif
 			}
 			ip = VTOI(*vpp);
+			lfs_vref(*vpp);
 			if (VOP_ISLOCKED(*vpp)) {
-				printf("ino %d inlocked by pid %d\n",ip->i_number,
+				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
 				       ip->i_lock.lk_lockholder);
 				clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
@@ -933,16 +929,12 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			}
 			return (0);
 		}
-#ifdef USE_UFS_HASHLOCK
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-#endif
 
 	/* Allocate new vnode/inode. */
 	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
 		*vpp = NULL;
-#ifdef USE_UFS_HASHLOCK
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 		return (error);
 	}
 	/*
@@ -953,9 +945,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-#ifdef USE_UFS_HASHLOCK
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 	
 	/*
 	 * XXX
@@ -973,6 +963,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
+			lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
 			*vpp = NULL;
 			return (error);
@@ -983,7 +974,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 		error = bread(ump->um_devvp, daddr,
 			      (int)ump->um_lfs->lfs_bsize, NOCRED, &bp);
 		if (error) {
-			printf("error != 0 at %s:%d\n",__FILE__,__LINE__);
+			printf("lfs_fastvget: bread failed with %d\n",error);
 			/*
 			 * The inode does not contain anything useful, so it
 			 * would be misleading to leave it on its hash chain.
@@ -992,6 +983,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			ufs_ihashrem(ip);
 			
 			/* Unlock and discard unneeded inode. */
+			lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
 			brelse(bp);
 			*vpp = NULL;
@@ -1008,7 +1000,9 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	 */
 	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 	if (error) {
-		printf("ufs_vinit returned %d for ino %d\n", error, ino);
+		/* This CANNOT happen (see ufs_vinit) */
+		printf("lfs_fastvget: ufs_vinit returned %d for ino %d\n", error, ino);
+		lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
 		lfs_vunref(vp);
 		*vpp = NULL;
 		return (error);
