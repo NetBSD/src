@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.2 1995/08/20 18:20:54 leo Exp $
+#	$NetBSD: FALCON,v 1.3 1995/09/30 12:48:15 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -33,6 +33,7 @@ options		PROCFS		# Process filesystem
 options		KERNFS		# Kernel parameter filesystem
 options		NULLFS		# Loopback filesystem
 options		MSDOSFS		# MSDOS filesystem
+options		CD9660		# ISO 9660 filesystem with Rock Ridge
 
 options		FIFO		# FIFO operations on vnodes
 
