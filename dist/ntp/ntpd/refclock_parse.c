@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.2 2002/12/06 15:09:38 thorpej Exp $	*/
 
 /*
  * /src/NTP/ntp-4/ntpd/refclock_parse.c,v 4.36 1999/11/28 17:18:20 kardel RELEASE_19991128_A
@@ -3754,20 +3754,20 @@ gps16x_message(
 								CLK_UNIT(parse->peer), p);
 						
 						p += strlen(p);
-						mbg_tm_str((unsigned char **)&p, &antinfo.tm_disconn);
+						mbg_tm_str((void *)&p, &antinfo.tm_disconn);
 						*p = '\0';
 						break;
 		    
 					case ANT_RECONN:
 						strcat(p, "RECONNECTED on ");
 						p += strlen(p);
-						mbg_tm_str((unsigned char **)&p, &antinfo.tm_reconn);
+						mbg_tm_str((void *)&p, &antinfo.tm_reconn);
 						sprintf(p, ", reconnect clockoffset %c%ld.%07ld s, disconnect time ",
 							(antinfo.delta_t < 0) ? '-' : '+',
 							ABS(antinfo.delta_t) / 10000,
 							ABS(antinfo.delta_t) % 10000);
 						p += strlen(p);
-						mbg_tm_str((unsigned char **)&p, &antinfo.tm_disconn);
+						mbg_tm_str((void *)&p, &antinfo.tm_disconn);
 						*p = '\0';
 						break;
 		    
@@ -3801,7 +3801,7 @@ gps16x_message(
 						p = buffer;
 						strcpy(buffer, "gps_tot_51=\"");
 						p += strlen(p);
-						mbg_tgps_str((unsigned char **)&p, &cfgh.tot_51);
+						mbg_tgps_str((void *)&p, &cfgh.tot_51);
 						*p++ = '"';
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
@@ -3809,7 +3809,7 @@ gps16x_message(
 						p = buffer;
 						strcpy(buffer, "gps_tot_63=\"");
 						p += strlen(p);
-						mbg_tgps_str((unsigned char **)&p, &cfgh.tot_63);
+						mbg_tgps_str((void *)&p, &cfgh.tot_63);
 						*p++ = '"';
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
@@ -3817,7 +3817,7 @@ gps16x_message(
 						p = buffer;
 						strcpy(buffer, "gps_t0a=\"");
 						p += strlen(p);
-						mbg_tgps_str((unsigned char **)&p, &cfgh.t0a);
+						mbg_tgps_str((void *)&p, &cfgh.t0a);
 						*p++ = '"';
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
