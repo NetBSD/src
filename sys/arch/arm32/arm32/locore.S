@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37 2001/02/18 12:42:31 reinoud Exp $	*/
+/*	$NetBSD: locore.S,v 1.38 2001/02/18 22:32:32 simonb Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -188,7 +188,8 @@ ENTRY_NP(cpu_reset)
 Lboot_cache_purged:
 
 	/*
-	 * load the cpu_reset_needs_v4_MMU_disable flag to determine if its nessisary
+	 * Load the cpu_reset_needs_v4_MMU_disable flag to determine if it's
+	 * necessary.
 	 */
 
 	ldr	r1, Lcpu_reset_needs_v4_MMU_disable
