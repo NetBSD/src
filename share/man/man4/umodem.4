@@ -1,4 +1,4 @@
-.\" $NetBSD: umodem.4,v 1.6 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: umodem.4,v 1.7 2004/09/16 09:45:44 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ These modems are basically standard serial line modems, but they are
 accessed via USB instead.  They support a regular AT command set.
 The commands can either be multiplexed with the data stream
 or handled through separate pipes.  In the latter case the AT
-commands have to be given on device separate from the data device.
+commands have to be given on a device separate from the data device.
 .Pp
 The device is accessed through the
 .Xr ucom 4
