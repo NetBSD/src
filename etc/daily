@@ -87,6 +87,14 @@ echo ""
 echo "Running calendar:"
 calendar -a
 
+if [ -d /usr/share/man -a -f /usr/share/man/makewhatis.sed ]; then
+echo ""
+echo "Updating 'whatis' database:"
+cd /usr/share/man
+cat cat?/*.0 cat?/`machine`/*.0 | sed -f /usr/share/man/makewhatis.sed > /usr/share/man/whatis.db
+cd /
+fi
+
 echo ""
 echo "Rotating mail log:"
 cd /var/log
