@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.77 2001/11/15 09:48:16 lukem Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.78 2004/08/05 19:45:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.77 2001/11/15 09:48:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.78 2004/08/05 19:45:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,10 +159,4 @@ void
 scsi_kill_pending(periph)
 	struct scsipi_periph *periph;
 {
-	struct scsipi_xfer *xs;
-
-	while ((xs = TAILQ_FIRST(&periph->periph_xferq)) != NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		scsipi_done(xs);
-	}
 }
