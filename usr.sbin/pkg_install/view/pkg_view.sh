@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.3 2003/07/14 11:54:15 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.4 2003/07/14 11:58:13 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -84,6 +84,9 @@ esac
 shift
 
 depot_pkg_dbdir=${prefix}/packages
+
+# XXX Only support the standard view.
+view=""
 
 # if standard view, put package info into ${dflt_pkg_dbdir}
 # if not standard view, put package info into view's pkgdb
