@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.14 1994/12/10 11:46:31 pk Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.15 1995/03/26 20:39:12 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -132,7 +132,7 @@ vm_object_t	kmem_object;
 
 #define	vm_object_cache_lock()		simple_lock(&vm_cache_lock)
 #define	vm_object_cache_unlock()	simple_unlock(&vm_cache_lock)
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #define	vm_object_lock_init(object)	simple_lock_init(&(object)->Lock)
 #define	vm_object_lock(object)		simple_lock(&(object)->Lock)
@@ -141,7 +141,7 @@ vm_object_t	kmem_object;
 #define	vm_object_sleep(event, object, interruptible) \
 			thread_sleep((event), &(object)->Lock, (interruptible))
 
-#ifdef KERNEL
+#ifdef _KERNEL
 vm_object_t	 vm_object_allocate __P((vm_size_t));
 void		 vm_object_cache_clear __P((void));
 void		 vm_object_cache_trim __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.12 1995/01/09 02:45:29 cgd Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.13 1995/03/26 20:39:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@ struct vnode;
 void		 chgkprot __P((caddr_t, int, int));
 #endif
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifdef TYPEDEF_FOR_UAP
 int		 compat_43_getpagesize __P((struct proc *p, void *, int *));
 int		 madvise __P((struct proc *, void *, int *));

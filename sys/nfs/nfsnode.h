@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.13 1994/12/13 17:17:05 mycroft Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.14 1995/03/26 20:37:32 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,7 +105,7 @@ struct nfsnode {
  */
 TAILQ_HEAD(, buf) nfs_bufq;
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Prototypes for NFS vnode operations
  */
@@ -164,4 +164,4 @@ int	nfs_vfree __P((struct vop_vfree_args *));
 int	nfs_truncate __P((struct vop_truncate_args *));
 int	nfs_update __P((struct vop_update_args *));
 int	nfs_bwrite __P((struct vop_bwrite_args *));
-#endif /* KERNEL */
+#endif /* _KERNEL */

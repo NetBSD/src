@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.6 1994/06/29 06:39:05 cgd Exp $	*/
+/*	$NetBSD: clnp.h,v 1.7 1995/03/26 20:35:13 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -346,7 +346,7 @@ struct clnp_optidx {
 #define CLNP_ERRORS		22
 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int clnp_er_index();
 #endif
 
@@ -388,7 +388,7 @@ struct troll {
 	rt->rt_rmx.rmx_mtu : clnp_badmtu(ifp, rt, __LINE__, __FILE__))\
 		- trollctl.tr_mtu_adj)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern float troll_random;
 #endif
 
@@ -460,4 +460,4 @@ struct mbuf		*clnp_reass();
 #ifdef	TROLL
 struct troll	trollctl;
 #endif	/* TROLL */
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
