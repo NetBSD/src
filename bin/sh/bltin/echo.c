@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.7 1995/03/21 09:10:49 cgd Exp $	*/
+/*	$NetBSD: echo.c,v 1.8 1996/11/02 18:26:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,6 +48,7 @@
 
 /* #define eflag 1 */
 
+int
 main(argc, argv)  char **argv; {
 	register char **ap;
 	register char *p;

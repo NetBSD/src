@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.11 1996/10/16 15:45:21 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.12 1996/11/02 18:26:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -130,3 +130,4 @@ void poplocalvars __P((void));
 int setvarcmd __P((int, char **));
 int unsetcmd __P((int, char **));
 int unsetvar __P((char *));
+int setvarsafe __P((char *, char *, int));
