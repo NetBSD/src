@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14.2.1 2000/08/18 10:47:39 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.14.2.2 2001/10/08 18:54:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -185,11 +185,7 @@ trap(p1, p2, p3, p4, frame)
 	}
 #endif
 
-#if 1
-	if (!KERNELMODE(frame.tf_r15)) {
-#else
-	if (!KERNELMODE(frame.tf_spc, frame.tf_ssr)) {
-#endif
+	if (!KERNELMODE(frame.tf_r15, frame.tf_ssr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame;
@@ -422,11 +418,7 @@ syscall(frame)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;
-#if 1
-	if (KERNELMODE(frame->tf_r15))
-#else
-	if (!USERMODE(frame->tf_spc, frame->tf_ssr))
-#endif
+	if (KERNELMODE(frame->tf_r15, frame->tf_ssr))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
@@ -660,6 +652,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 #define PTEL_VALIDBITS 0x1ffffd7e
 #endif
 #ifdef SH4
+#ifdef SH4_PCMCIA
 			if (pte & PG_PCMCIA) {
 				int pcmtype;
 				unsigned long ptea = 0;
@@ -682,7 +675,9 @@ tlb_handler(p1, p2, p3, p4, frame)
 					& ~PG_N;
 
 				SHREG_PTEA = ptea;
-			} else {
+			} else
+#endif
+			{
 				if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
 					SHREG_PTEL = (pte & PTEL_VALIDBITS)
 						| PG_WT;
@@ -711,11 +706,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 		rv = KERN_FAILURE;
 		goto nogo;
 	} else {
-#if 1
-		if (!KERNELMODE(frame.tf_r15)) {
-#else
-		if (!KERNELMODE(frame.tf_spc, frame.tf_ssr)) {
-#endif
+		if (!KERNELMODE(frame.tf_r15, frame.tf_ssr)) {
 			type = T_USER;
 			sticks = p->p_sticks;
 			p->p_md.md_regs = &frame;
@@ -814,6 +805,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 #endif
 
 #ifdef SH4
+#ifdef SH4_PCMCIA
 				if (pte & PG_PCMCIA) {
 					int pcmtype;
 					unsigned long ptea = 0;
@@ -836,7 +828,9 @@ tlb_handler(p1, p2, p3, p4, frame)
 						& ~PG_N;
 
 					SHREG_PTEA = ptea;
-				} else {
+				} else
+#endif
+				{
 					if ( /*1 ||*/ (va >= SH3_P1SEG_BASE)) {
 						SHREG_PTEL = 
 							(pte & PTEL_VALIDBITS)
