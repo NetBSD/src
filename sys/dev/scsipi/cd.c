@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.146 2001/04/28 04:11:31 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.147 2001/04/28 09:33:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -712,6 +712,8 @@ cdstart(periph)
 		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
 		if (bp->b_flags & B_READ)
 			flags |= XS_CTL_DATA_IN;
+		else
+			flags |= XS_CTL_DATA_OUT;
 		if (bp->b_flags & B_ORDERED)
 			flags |= XS_CTL_ORDERED_TAG;
 		else
