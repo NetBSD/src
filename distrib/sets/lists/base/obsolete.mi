@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.14 2000/12/05 15:09:38 is Exp $
+# $NetBSD: obsolete.mi,v 1.15 2000/12/11 15:49:07 is Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -14,6 +14,7 @@
 /usr/lib/libntp.so.0.0
 /usr/libexec/hprop
 /usr/libexec/kdc
+/usr/libexec/uucp/uuchk
 /usr/sbin/dig
 /usr/sbin/dnsquery
 /usr/sbin/gettable
