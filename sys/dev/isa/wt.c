@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.14 1994/05/05 05:37:09 cgd Exp $
+ *	$Id: wt.c,v 1.15 1994/05/05 08:31:44 mycroft Exp $
  */
 
 /*
@@ -880,7 +880,7 @@ wtclock(sc)
 	 * Some controllers seem to lose dma interrupts too often.  To make the
 	 * tape stream we need 1 tick timeout.
 	 */
-	timeout(wttimer, (caddr_t)sc, (sc->flags & TPACTIVE) ? 1 : hz);
+	timeout(wttimer, sc, (sc->flags & TPACTIVE) ? 1 : hz);
 }
 
 /*
