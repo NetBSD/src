@@ -30,7 +30,8 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_DEFAULT				\
   (ARM_FLAG_APCS_32				\
    | ARM_FLAG_SOFT_FLOAT			\
-   | ARM_FLAG_ATPCS_STACK_ALIGN)
+   | ARM_FLAG_ATPCS_STACK_ALIGN			\
+   | ARM_FLAG_SHORT_BYTE)
 
 /* APCS-32 is the default for ELF anyway. */
 /* Unsigned chars are the default anyway. */
