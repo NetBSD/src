@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.69 1998/06/08 06:55:55 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.70 1998/06/21 10:32:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4447,11 +4447,13 @@ tulip_txput(
 	    sc->tulip_intrmask |= TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	}
+#if 0 /* this isn't working right yet */
     } else if ((sc->tulip_flags & TULIP_PROMISC) == 0) {
 	if (sc->tulip_intrmask & TULIP_STS_TXINTR) {
 	    sc->tulip_intrmask &= ~TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	}
+#endif
     }
     TULIP_PERFEND(txput);
     return m;
