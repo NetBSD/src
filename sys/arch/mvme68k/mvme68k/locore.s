@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9.4.2 1996/12/10 18:34:39 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.9.4.3 1996/12/10 18:40:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,7 +140,8 @@ Lstart1:
 	movc	d0,dfc			|   and destination of transfers
 /* initialize memory sizes (for pmap_bootstrap) */
 	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
-	movl	0xfffe0778,_myea	| XXXCDC -- ethernet addr
+	RELOC(_myea, a0)
+	movl	0xfffe0778,a0@		| XXXCDC -- ethernet addr
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
 	RELOC(_maxmem, a0)
