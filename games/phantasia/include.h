@@ -1,15 +1,15 @@
-/*	$NetBSD: include.h,v 1.4 1997/10/13 02:18:19 lukem Exp $	*/
+/*	$NetBSD: include.h,v 1.5 2004/04/07 17:46:47 ross Exp $	*/
 
 /*
  * include.h - includes all important files for Phantasia
  */
 
 #include <ctype.h>
-#include <curses.h>
 #include <errno.h>
 #include <math.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
