@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2002/11/30 22:22:53 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 2002/12/01 00:15:36 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -639,6 +639,18 @@ i386_intunlock(struct intrframe iframe)
 {
 	if (iframe.if_ppl < IPL_SCHED)
 		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+}
+
+void
+i386_softintlock(void)
+{
+	spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
+}
+
+void
+i386_softintunlock(void)
+{
+	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
 }
 #endif
 
