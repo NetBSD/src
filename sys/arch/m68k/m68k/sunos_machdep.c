@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.11 1996/10/11 00:11:16 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,13 +144,13 @@ sunos_sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sunos_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
+		printf("sunos_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			kprintf("sunos_sendsig(%d): useracc failed on sig %d\n",
+			printf("sunos_sendsig(%d): useracc failed on sig %d\n",
 			       p->p_pid, sig);
 #endif
 		/*
@@ -194,7 +194,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("sunos_sendsig(%d): sig %d scp %p sc_sp %x\n",
+		printf("sunos_sendsig(%d): sig %d scp %p sc_sp %x\n",
 		       p->p_pid, sig, &fp->sf_sc,kfp.sf_sc.sc_sp);
 #endif
 
@@ -203,7 +203,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	frame->f_pc = (u_int) catcher;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sunos_sendsig(%d): sig %d returns\n",
+		printf("sunos_sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 }
@@ -233,7 +233,7 @@ sunos_sys_sigreturn(p, v, retval)
 	scp = (struct sunos_sigcontext *) SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("sunos_sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+		printf("sunos_sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
