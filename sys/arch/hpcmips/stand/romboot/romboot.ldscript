@@ -1,3 +1,5 @@
+/*	$NetBSD: romboot.ldscript,v 1.2 2002/02/21 08:23:31 enami Exp $	*/
+
 OUTPUT_ARCH(mips)
 ENTRY(_start)
 SECTIONS
