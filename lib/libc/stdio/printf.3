@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.10 1998/06/08 23:45:37 jeremy Exp $
+.\"	$NetBSD: printf.3,v 1.11 1998/08/28 22:21:23 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,10 +45,12 @@
 .Nm fprintf ,
 .Nm sprintf ,
 .Nm snprintf ,
+.Nm asprintf ,
 .Nm vprintf ,
 .Nm vfprintf,
 .Nm vsprintf ,
-.Nm vsnprintf
+.Nm vsnprintf ,
+.Nm vasprintf
 .Nd formatted output conversion
 .Sh LIBRARY
 .Lb libc
@@ -62,19 +64,19 @@
 .Fn sprintf "char *str" "const char *format" ...
 .Ft int
 .Fn snprintf "char *str" "size_t size" "const char *format" ...
-.\" .Ft int
-.\" .Fn smprintf "const char *format" ...
+.Ft int
+.Fn asprintf "char **ret" "const char *format" ...
 .Fd #include <stdarg.h>
 .Ft int
 .Fn vprintf "const char *format" "va_list ap"
 .Ft int
 .Fn vfprintf "FILE *stream" "const char *format" "va_list ap"
 .Ft int
-.Fn vsprintf "char *str" "char *format" "va_list ap"
+.Fn vsprintf "char *str" "const char *format" "va_list ap"
 .Ft int
 .Fn vsnprintf "char *str" "size_t size" "const char *format" "va_list ap"
-.\" .Ft int
-.\" .Fn vsmprintf "const char *format" "va_list ap"
+.Ft int
+.Fn vasprintf "char **ret" "const char *format" "va_list ap"
 .Sh DESCRIPTION
 The
 .Fn printf
@@ -98,45 +100,41 @@ write output to the given output
 and
 .Fn vsnprintf
 write to the character string
-.Fa str .
-.\" .IR str ;
-.\" and
-.\" .I smprintf
-.\" and
-.\" .I vsmprintf
-.\" dynamically allocate a new string with
-.\" .IR malloc .
+.Fa str ;
+.Fn asprintf
+and
+.Fn vasprintf
+write to a dynamically allocated string that is stored in
+.Fa ret .
+.Pp
 These functions write the output under the control of a
 .Fa format
 string that specifies how subsequent arguments
 (or arguments accessed via the variable-length argument facilities of
 .Xr stdarg 3 )
 are converted for output.
-.\" Except for
-.\" .I smprintf
-.\" and
-.\" .IR vsmprintf ,
-.\" all of these functions return
+.Pp
 These functions return
 the number of characters printed
 (not including the trailing
 .Ql \e0
 used to end output to strings).
-.\" .I Smprintf
-.\" and
-.\" .I vsmprintf
-.\" return a pointer to a string of an appropriate length;
-.\" this pointer should be passed to
-.\" .I free
-.\" to release the associated storage
-.\" when it is no longer needed.
-.\" If sufficient space is not avaliable,
-.\" .I smprintf
-.\" and
-.\" .I vsmprintf
-.\" will return
-.\" .SM
-.\" .BR
+.Pp
+.Fn Asprintf
+and
+.Fn vasprintf
+return a pointer to a buffer sufficiently large to hold the
+string in the
+.Fa ret
+argument.
+This pointer should be passed to
+.Xr free 3
+to release the allocated storage when it is no longer needed.
+If sufficient space cannot be allocated, these functions
+will return -1 and set
+.Fa ret
+to be a NULL pointer.
+.Pp
 .Fn Snprintf
 and
 .Fn vsnprintf
@@ -151,6 +149,7 @@ if the return value is greater than or equal to the
 .Fa size
 argument, the string was too short
 and some of the printed characters were discarded.
+.Pp
 .Fn Sprintf
 and
 .Fn vsprintf
@@ -182,7 +181,7 @@ A
 .Cm #
 character
 specifying that the value should be converted to an ``alternative form''.
-For 
+For
 .Cm c ,
 .Cm d ,
 .Cm i ,
@@ -192,7 +191,7 @@ For
 and
 .Cm u ,
 conversions, this option has no effect.
-For 
+For
 .Cm o
 conversions, the precision of the number is increased to force the first
 character of the output string to a zero (except if a zero value is printed
@@ -232,7 +231,7 @@ For all conversions except
 .Cm n ,
 the converted value is padded on the left with zeros rather than blanks.
 If a precision is given with a numeric conversion
-.Pf ( Mc d ,
+.Pf ( Cm d ,
 .Cm i ,
 .Cm o ,
 .Cm u ,
@@ -605,6 +604,11 @@ and
 .Fn vsnprintf
 first appeared in
 .Bx 4.4 .
+The functions
+.Fn asprintf
+and
+.Fn vasprintf
+are modeled on the ones that first appeared in the GNU C library.
 .Sh BUGS
 The conversion formats
 .Cm \&%D ,
@@ -633,9 +637,14 @@ and
 .Fn vsprintf
 assume an infinitely long string, callers must be careful not to
 overflow the actual space; this is often impossible to assure.
-For safety, programmers should use
+For safety, programmers should use the
 .Fn snprintf
-or
-.Fn vsnprintf
-instead.
-Unfortunately, this interface is not portable.
+and
+.Fn asprintf
+family of interfaces instead.
+Unfortunately, the
+.Fn snprintf
+interfaces are not available on older
+systems and the
+.Fn asprintf
+interfaces are not yet portable.
