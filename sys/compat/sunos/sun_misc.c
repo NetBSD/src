@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.20 1994/05/05 02:46:58 cgd Exp $
+ * $Id: sun_misc.c,v 1.21 1994/05/05 09:36:23 deraadt Exp $
  */
 
 /*
@@ -270,7 +270,7 @@ sun_sigpending(p, uap, retval)
 	struct sun_sigpending_args *uap;
 	int *retval;
 {
-	int mask = p->p_sig & p->p_sigmask;
+	int mask = p->p_siglist & p->p_sigmask;
 
 	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
 }
