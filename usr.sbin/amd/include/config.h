@@ -1,5 +1,7 @@
+/* $NetBSD: config.h,v 1.1.1.9 2000/11/20 00:16:17 wiz Exp $ */
+
 /* config.h.  Generated automatically by configure.  */
-/* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
 /*
  * Start of am-utils-6.x config.h file.
  * Erez Zadok <ezk@cs.columbia.edu>
@@ -17,40 +19,40 @@
  */
 
 /* Define if have automount filesystem */
-#define HAVE_AM_FS_AUTO 1
+#define HAVE_AMU_FS_AUTO 1
 
 /* Define if have direct automount filesystem */
-#define HAVE_AM_FS_DIRECT 1
+#define HAVE_AMU_FS_DIRECT 1
 
 /* Define if have "top-level" filesystem */
-#define HAVE_AM_FS_TOPLVL 1
+#define HAVE_AMU_FS_TOPLVL 1
 
 /* Define if have error filesystem */
-#define HAVE_AM_FS_ERROR 1
+#define HAVE_AMU_FS_ERROR 1
 
 /* Define if have inheritance filesystem */
-#define HAVE_AM_FS_INHERIT 1
+#define HAVE_AMU_FS_INHERIT 1
 
 /* Define if have program filesystem */
-#define HAVE_AM_FS_PROGRAM 1
+#define HAVE_AMU_FS_PROGRAM 1
 
 /* Define if have symbolic-link filesystem */
-#define HAVE_AM_FS_LINK 1
+#define HAVE_AMU_FS_LINK 1
 
 /* Define if have symlink with existence check filesystem */
-#define HAVE_AM_FS_LINKX 1
+#define HAVE_AMU_FS_LINKX 1
 
 /* Define if have NFS host-tree filesystem */
-#define HAVE_AM_FS_HOST 1
+#define HAVE_AMU_FS_HOST 1
 
 /* Define if have nfsl (NFS with local link check) filesystem */
-#define HAVE_AM_FS_NFSL 1
+#define HAVE_AMU_FS_NFSL 1
 
 /* Define if have multi-NFS filesystem */
-#define HAVE_AM_FS_NFSX 1
+#define HAVE_AMU_FS_NFSX 1
 
 /* Define if have union filesystem */
-#define HAVE_AM_FS_UNION 1
+#define HAVE_AMU_FS_UNION 1
 
 
 /*
@@ -192,7 +194,7 @@
 /* #undef MOUNT_TYPE_CACHEFS */
 
 /* Mount(2) type/name for IGNORE filesystem (not real just ignore for df) */
-/* #undef MOUNT_TYPE_IGNORE */
+#define MOUNT_TYPE_IGNORE MNT_IGNORE
 
 /* Mount(2) type/name for NULLFS (loopback on bsd44) filesystem */
 #define MOUNT_TYPE_NULLFS MOUNT_NULL
@@ -437,6 +439,9 @@
 /* asynchronous filesystem access */
 #define MNT2_GEN_OPT_ASYNC 0x40
 
+/* automounter filesystem (ignore) flag, used in bsdi-4.1 */
+/* #undef MNT2_GEN_OPT_AUTOMNTFS */
+
 /* cache (what?) */
 /* #undef MNT2_GEN_OPT_CACHE */
 
@@ -447,7 +452,7 @@
 /* #undef MNT2_GEN_OPT_FSS */
 
 /* ignore mount entry in df output */
-/* #undef MNT2_GEN_OPT_IGNORE */
+#define MNT2_GEN_OPT_IGNORE 0x100000
 
 /* journaling filesystem (AIX's UFS/FFS) */
 /* #undef MNT2_GEN_OPT_JFS */
@@ -484,6 +489,9 @@
 
 /* Return ENAMETOOLONG for long filenames */
 /* #undef MNT2_GEN_OPT_NOTRUNC */
+
+/* Pass mount option string to kernel */
+/* #undef MNT2_GEN_OPT_OPTIONSTR */
 
 /* allow overlay mounts */
 /* #undef MNT2_GEN_OPT_OVERLAY */
@@ -535,7 +543,7 @@
 /* #undef MNT2_NFS_OPT_AUTHERR */
 
 /* set dead server retry thresh */
-#define MNT2_NFS_OPT_DEADTHRESH 0x4000
+/* #undef MNT2_NFS_OPT_DEADTHRESH */
 
 /* Dismount in progress */
 /* #undef MNT2_NFS_OPT_DISMINPROG */
@@ -544,7 +552,7 @@
 /* #undef MNT2_NFS_OPT_DISMNT */
 
 /* Don't estimate rtt dynamically */
-#define MNT2_NFS_OPT_DUMBTIMR 0x800
+/* #undef MNT2_NFS_OPT_DUMBTIMR */
 
 /* System V-style gid inheritance */
 /* #undef MNT2_NFS_OPT_GRPID */
@@ -562,7 +570,10 @@
 /* #undef MNT2_NFS_OPT_IGNORE */
 
 /* allow interrupts on hard mount */
-#define MNT2_NFS_OPT_INT 0x40
+/* #undef MNT2_NFS_OPT_INT */
+
+/* allow interrupts on hard mount */
+/* #undef MNT2_NFS_OPT_INTR */
 
 /* Bits set internally */
 /* #undef MNT2_NFS_OPT_INTERNAL */
@@ -577,13 +588,13 @@
 /* #undef MNT2_NFS_OPT_KNCONF */
 
 /* set lease term (nqnfs) */
-#define MNT2_NFS_OPT_LEASETERM 0x1000
+/* #undef MNT2_NFS_OPT_LEASETERM */
 
 /* Local locking (no lock manager) */
 /* #undef MNT2_NFS_OPT_LLOCK */
 
 /* set maximum grouplist size */
-#define MNT2_NFS_OPT_MAXGRPS 0x20
+/* #undef MNT2_NFS_OPT_MAXGRPS */
 
 /* Mnt server for mnt point */
 /* #undef MNT2_NFS_OPT_MNTD */
@@ -592,13 +603,13 @@
 /* #undef MNT2_NFS_OPT_MYWRITE */
 
 /* mount NFS Version 3 */
-#define MNT2_NFS_OPT_NFSV3 0x200
+/* #undef MNT2_NFS_OPT_NFSV3 */
 
 /* don't cache attributes */
 /* #undef MNT2_NFS_OPT_NOAC */
 
 /* Don't Connect the socket */
-#define MNT2_NFS_OPT_NOCONN 0x80
+/* #undef MNT2_NFS_OPT_NOCONN */
 
 /* no close-to-open consistency */
 /* #undef MNT2_NFS_OPT_NOCTO */
@@ -610,7 +621,7 @@
 /* #undef MNT2_NFS_OPT_NQLOOKLEASE */
 
 /* Use Nqnfs protocol */
-#define MNT2_NFS_OPT_NQNFS 0x100
+/* #undef MNT2_NFS_OPT_NQNFS */
 
 /* static pathconf kludge info */
 /* #undef MNT2_NFS_OPT_POSIX */
@@ -622,13 +633,13 @@
 /* #undef MNT2_NFS_OPT_RDIRALOOK */
 
 /* set read ahead */
-#define MNT2_NFS_OPT_READAHEAD 0x2000
+/* #undef MNT2_NFS_OPT_READAHEAD */
 
 /* Allocate a reserved port */
-#define MNT2_NFS_OPT_RESVPORT 0x8000
+/* #undef MNT2_NFS_OPT_RESVPORT */
 
 /* set number of request retries */
-#define MNT2_NFS_OPT_RETRANS 0x10
+/* #undef MNT2_NFS_OPT_RETRANS */
 
 /* read only */
 /* #undef MNT2_NFS_OPT_RONLY */
@@ -637,7 +648,7 @@
 /* #undef MNT2_NFS_OPT_RPCTIMESYNC */
 
 /* set read size */
-#define MNT2_NFS_OPT_RSIZE 0x4
+/* #undef MNT2_NFS_OPT_RSIZE */
 
 /* secure mount */
 /* #undef MNT2_NFS_OPT_SECURE */
@@ -652,10 +663,13 @@
 /* #undef MNT2_NFS_OPT_SPONGY */
 
 /* set initial timeout */
-#define MNT2_NFS_OPT_TIMEO 0x8
+/* #undef MNT2_NFS_OPT_TIMEO */
 
 /* use TCP for mounts */
 /* #undef MNT2_NFS_OPT_TCP */
+
+/* linux NFSv3 */
+/* #undef MNT2_NFS_OPT_VER3 */
 
 /* Wait for authentication */
 /* #undef MNT2_NFS_OPT_WAITAUTH */
@@ -670,7 +684,7 @@
 /* #undef MNT2_NFS_OPT_WANTSND */
 
 /* set write size */
-#define MNT2_NFS_OPT_WSIZE 0x2
+/* #undef MNT2_NFS_OPT_WSIZE */
 
 /* set symlink cache time-to-live */
 /* #undef MNT2_NFS_OPT_SYMTTL */
@@ -807,10 +821,13 @@
 #define HAVE_FIELD_NFS_ARGS_T_SOTYPE 1
 
 /* does struct nfs_args have a version field? */
-#define HAVE_FIELD_NFS_ARGS_T_VERSION 1
+#define HAVE_FIELD_NFS_ARGS_T_VERSION 
 
 /* does struct ifreq have field ifr_addr? */
 #define HAVE_FIELD_STRUCT_IFREQ_IFR_ADDR 1
+
+/* does struct ifaddrs have field ifa_next? */
+#define HAVE_FIELD_STRUCT_IFADDRS_IFA_NEXT 1
 
 /* does struct sockaddr have field sa_len? */
 #define HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN 1
@@ -825,6 +842,167 @@
 /* should signal handlers be reinstalled? */
 /* #undef REINSTALL_SIGNAL_HANDLER */
 
+/*
+ * More definitions that depend on configure options.
+ */
+
+/* Turn off general debugging by default */
+/* #undef DEBUG */
+
+/* Turn off memory debugging by default */
+/* #undef DEBUG_MEM */
+
+/* Enable "amq -M" remote mount code (insecure due to IP spoofing) */
+/* #undef ENABLE_AMQ_MOUNT */
+
+/* Define package name (must be defined by configure.in) */
+#define PACKAGE "am-utils"
+
+/* Define version of package (must be defined by configure.in) */
+#define VERSION "6.0.4"
+
+/* Define name of host machine's cpu (eg. sparc) */
+#define HOST_CPU MACHINE
+
+/* Define name of host machine's architecture (eg. sun4) */
+#define HOST_ARCH MACHINE_ARCH
+
+/* Define name of host machine's vendor (eg. sun) */
+#define HOST_VENDOR "unknown"
+
+#include <config_local.h>
+#if 0
+/* Define name and version of host machine (eg. solaris2.5.1) */
+#define HOST_OS "netbsd1.5H"
+
+/* Define only name of host machine OS (eg. solaris2) */
+#define HOST_OS_NAME "netbsd1"
+
+/* Define only version of host machine (eg. 2.5.1) */
+#define HOST_OS_VERSION "1.5H"
+
+/* Define the header version of (linux) hosts (eg. 2.2.10) */
+#define HOST_HEADER_VERSION "1.5H"
+
+/* Define name of host */
+#define HOST_NAME "hiro"
+
+/* Define user name */
+#define USER_NAME "wiz"
+
+/* Define configuration date */
+#define CONFIG_DATE "Thu Nov  9 00:50:20 CET 2000"
+#endif
+
+/* what type of network transport type is in use?  TLI or sockets? */
+/* #undef HAVE_TRANSPORT_TYPE_TLI */
+
+/* Define to `long' if <sys/types.h> doesn't define time_t */
+/* #undef time_t */
+
+/* Define to "void *" if compiler can handle, otherwise "char *" */
+#define voidp void *
+
+/* Define a type/structure for an NFS V2 filehandle */
+#define am_nfs_fh nfs_fh
+
+/* Define a type/structure for an NFS V3 filehandle */
+#define am_nfs_fh3 nfs_fh3
+
+/* define if the host has NFS protocol headers in system headers */
+/* #undef HAVE_NFS_PROT_HEADERS */
+
+/* define name of am-utils' NFS protocol header */
+#define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_4.h"
+
+/* Define a type for the nfs_args structure */
+#define nfs_args_t struct nfs_args
+
+/* Define the field name for the filehandle within nfs_args_t */
+#define NFS_FH_FIELD fh
+
+/* Define if plain fhandle type exists */
+#define HAVE_FHANDLE 1
+
+/* Define the type of the 3rd argument ('in') to svc_getargs() */
+#define SVC_IN_ARG_TYPE caddr_t
+
+/* Define to the type of xdr procedure type */
+#define XDRPROC_T_TYPE xdrproc_t
+
+/* Define if mount table is on file, undefine if in kernel */
+/* #undef MOUNT_TABLE_ON_FILE */
+
+/* Define if have struct mntent in one of the standard headers */
+/* #undef HAVE_STRUCT_MNTENT */
+
+/* Define if have struct mnttab in one of the standard headers */
+/* #undef HAVE_STRUCT_MNTTAB */
+
+/* Define if have struct nfs_args in one of the standard nfs headers */
+#define HAVE_STRUCT_NFS_ARGS 1
+
+/* Define if have struct nfs_gfs_mount in one of the standard nfs headers */
+/* #undef HAVE_STRUCT_NFS_GFS_MOUNT */
+
+/* Type of the 3rd argument to yp_order() */
+#define YP_ORDER_OUTORDER_TYPE int
+
+/* Type of the 6th argument to recvfrom() */
+#define RECVFROM_FROMLEN_TYPE int
+
+/* Type of the 5rd argument to authunix_create() */
+#define AUTH_CREATE_GIDLIST_TYPE gid_t
+
+/* The string used in printf to print the mount-type field of mount(2) */
+#define MTYPE_PRINTF_TYPE "%s"
+
+/* Type of the mount-type field in the mount() system call */
+#define MTYPE_TYPE char *
+
+/* Define a type for the pcfs_args structure */
+#define pcfs_args_t struct msdosfs_args
+
+/* Define a type for the autofs_args structure */
+/* #undef autofs_args_t */
+
+/* Define a type for the cachefs_args structure */
+/* #undef cachefs_args_t */
+
+/* Define a type for the tmpfs_args structure */
+/* #undef tmpfs_args_t */
+
+/* Define a type for the ufs_args structure */
+#define ufs_args_t struct ufs_args
+
+/* Define a type for the efs_args structure */
+/* #undef efs_args_t */
+
+/* Define a type for the xfs_args structure */
+/* #undef xfs_args_t */
+
+/* Define a type for the lofs_args structure */
+/* #undef lofs_args_t */
+
+/* Define a type for the cdfs_args structure */
+#define cdfs_args_t struct iso_args
+
+/* Define a type for the mfs_args structure */
+#define mfs_args_t struct mfs_args
+
+/* Define a type for the rfs_args structure */
+/* #undef rfs_args_t */
+
+/* define if have a bad version of memcmp() */
+/* #undef HAVE_BAD_MEMCMP */
+
+/* define if have a bad version of yp_all() */
+/* #undef HAVE_BAD_YP_ALL */
+
+/* define if must use NFS "noconn" option */
+/* #undef USE_UNCONNECTED_NFS_SOCKETS */
+/* define if must NOT use NFS "noconn" option */
+/* #undef USE_CONNECTED_NFS_SOCKETS */
 
 /**************************************************************************/
 /*** Everything above this line is part of the "TOP" of acconfig.h.	***/
@@ -867,9 +1045,6 @@
 /* Define if system calls automatically restart after interruption
    by a signal.  */
 #define HAVE_RESTARTABLE_SYSCALLS 1
-
-/* Define if your struct stat has st_rdev.  */
-#define HAVE_ST_RDEV 1
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #define HAVE_SYS_WAIT_H 1
@@ -935,143 +1110,6 @@
 /* Define if lex declares yytext as a char * by default, not a char[].  */
 #define YYTEXT_POINTER 1
 
-/* Turn off general debugging by default */
-/* #undef DEBUG */
-
-/* Turn off memory debugging by default */
-/* #undef DEBUG_MEM */
-
-/* Enable "amq -M" remote mount code (insecure due to IP spoofing) */
-/* #undef ENABLE_AMQ_MOUNT */
-
-/* Define package name (must be defined by configure.in) */
-#define PACKAGE "am-utils"
-
-/* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0.1s11"
-
-/* Define name of host machine's cpu (eg. sparc) */
-#define HOST_CPU MACHINE
-
-/* Define name of host machine's architecture (eg. sun4) */
-#define HOST_ARCH MACHINE_ARCH
-
-/* Define name of host machine's vendor (eg. sun) */
-#define HOST_VENDOR "unknown"
-
-/* We pick some parameters from our local config file */
-#include <config_local.h>
-
-/* what type of network transport type is in use?  TLI or sockets? */
-/* #undef HAVE_TRANSPORT_TYPE_TLI */
-
-/* Define to `long' if <sys/types.h> doesn't define time_t */
-/* #undef time_t */
-
-/* Define to "void *" if compiler can handle, otherwise "char *" */
-#define voidp void *
-
-/* Define a type/structure for an NFS V2 filehandle */
-#define am_nfs_fh nfs_fh
-
-/* Define a type/structure for an NFS V3 filehandle */
-#define am_nfs_fh3 nfs_fh3
-
-/* define name of am-utils' NFS protocol header */
-#define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_4.h"
-
-/* Define a type for the nfs_args structure */
-#define nfs_args_t struct nfs_args
-
-/* Define the field name for the filehandle within nfs_args_t */
-#define NFS_FH_FIELD fh
-
-/* Define if plain fhandle type exists */
-#define HAVE_FHANDLE 1
-
-/* Define the type of the 3rd argument ('in') to svc_getargs() */
-#define SVC_IN_ARG_TYPE caddr_t
-
-/* Define to the type of xdr procedure type */
-#define XDRPROC_T_TYPE xdrproc_t
-
-/* Define if mount table is on file, undefine if in kernel */
-/* #undef MOUNT_TABLE_ON_FILE */
-
-/* Define if have struct mntent in one of the standard headers */
-/* #undef HAVE_STRUCT_MNTENT */
-
-/* Define if have struct mnttab in one of the standard headers */
-/* #undef HAVE_STRUCT_MNTTAB */
-
-/* Define if have struct nfs_args in one of the standard nfs headers */
-#define HAVE_STRUCT_NFS_ARGS 1
-
-/* Define if have struct nfs_mount_data in one of the standard nfs headers */
-/* #undef HAVE_STRUCT_NFS_MOUNT_DATA */
-
-/* Define if have struct nfs_gfs_mount in one of the standard nfs headers */
-/* #undef HAVE_STRUCT_NFS_GFS_MOUNT */
-
-/* Type of the 3rd argument to yp_order() */
-#define YP_ORDER_OUTORDER_TYPE int
-
-/* Type of the 6th argument to recvfrom() */
-#define RECVFROM_FROMLEN_TYPE int
-
-/* Type of the 5rd argument to authunix_create() */
-#define AUTH_CREATE_GIDLIST_TYPE gid_t
-
-/* The string used in printf to print the mount-type field of mount(2) */
-#define MTYPE_PRINTF_TYPE "%s"
-
-/* Type of the mount-type field in the mount() system call */
-#define MTYPE_TYPE char *
-
-/* Define a type for the pcfs_args structure */
-#define pcfs_args_t struct msdosfs_args
-
-/* Define a type for the autofs_args structure */
-/* #undef autofs_args_t */
-
-/* Define a type for the cachefs_args structure */
-/* #undef cachefs_args_t */
-
-/* Define a type for the tmpfs_args structure */
-/* #undef tmpfs_args_t */
-
-/* Define a type for the ufs_args structure */
-#define ufs_args_t struct ufs_args
-
-/* Define a type for the efs_args structure */
-/* #undef efs_args_t */
-
-/* Define a type for the xfs_args structure */
-/* #undef xfs_args_t */
-
-/* Define a type for the lofs_args structure */
-/* #undef lofs_args_t */
-
-/* Define a type for the cdfs_args structure */
-#define cdfs_args_t struct iso_args
-
-/* Define a type for the mfs_args structure */
-#define mfs_args_t struct mfs_args
-
-/* Define a type for the rfs_args structure */
-/* #undef rfs_args_t */
-
-/* define if have a bad version of memcmp() */
-/* #undef HAVE_BAD_MEMCMP */
-
-/* define if have a bad version of yp_all() */
-/* #undef HAVE_BAD_YP_ALL */
-
-/* define if must use NFS "noconn" option */
-/* #undef USE_UNCONNECTED_NFS_SOCKETS */
-/* define if must NOT use NFS "noconn" option */
-/* #undef USE_CONNECTED_NFS_SOCKETS */
-
 /* Define if you have the __seterr_reply function.  */
 /* #undef HAVE___SETERR_REPLY */
 
@@ -1098,6 +1136,9 @@
 
 /* Define if you have the clnt_sperrno function.  */
 #define HAVE_CLNT_SPERRNO 1
+
+/* Define if you have the clock_gettime function.  */
+#define HAVE_CLOCK_GETTIME 1
 
 /* Define if you have the cnodeid function.  */
 /* #undef HAVE_CNODEID */
@@ -1136,7 +1177,7 @@
 #define HAVE_GETHOSTNAME 1
 
 /* Define if you have the getifaddrs function.  */
-/* #undef HAVE_GETIFADDRS */
+#define HAVE_GETIFADDRS 1
 
 /* Define if you have the getmntinfo function.  */
 #define HAVE_GETMNTINFO 1
@@ -1222,6 +1263,9 @@
 /* Define if you have the seteuid function.  */
 #define HAVE_SETEUID 1
 
+/* Define if you have the setitimer function.  */
+/* #undef HAVE_SETITIMER */
+
 /* Define if you have the setresuid function.  */
 /* #undef HAVE_SETRESUID */
 
@@ -1293,6 +1337,9 @@
 
 /* Define if you have the vmount function.  */
 /* #undef HAVE_VMOUNT */
+
+/* Define if you have the vsnprintf function.  */
+#define HAVE_VSNPRINTF 1
 
 /* Define if you have the wait3 function.  */
 #define HAVE_WAIT3 1
@@ -1487,7 +1534,7 @@
 /* #undef HAVE_HSFS_HSFS_H */
 
 /* Define if you have the <ifaddrs.h> header file.  */
-/* #undef HAVE_IFADDRS_H */
+#define HAVE_IFADDRS_H 1
 
 /* Define if you have the <irs.h> header file.  */
 /* #undef HAVE_IRS_H */
@@ -1509,6 +1556,12 @@
 
 /* Define if you have the <linux/fs.h> header file.  */
 /* #undef HAVE_LINUX_FS_H */
+
+/* Define if you have the <linux/kdev_t.h> header file.  */
+/* #undef HAVE_LINUX_KDEV_T_H */
+
+/* Define if you have the <linux/list.h> header file.  */
+/* #undef HAVE_LINUX_LIST_H */
 
 /* Define if you have the <linux/nfs.h> header file.  */
 /* #undef HAVE_LINUX_NFS_H */
@@ -1559,7 +1612,7 @@
 #define HAVE_NET_ROUTE_H 1
 
 /* Define if you have the <netconfig.h> header file.  */
-/* #undef HAVE_NETCONFIG_H */
+#define HAVE_NETCONFIG_H 1
 
 /* Define if you have the <netdb.h> header file.  */
 #define HAVE_NETDB_H 1
@@ -1879,11 +1932,14 @@
 /* Define if you have the rpcsvc library (-lrpcsvc).  */
 #define HAVE_LIBRPCSVC 1
 
+/* Define if you have the rt library (-lrt).  */
+/* #undef HAVE_LIBRT */
+
 /* Name of package */
 #define PACKAGE "am-utils"
 
 /* Version number of package */
-#define VERSION "6.0.1s11"
+#define VERSION "6.0.4"
 
 
 /**************************************************************************/
@@ -1894,70 +1950,76 @@
  * Existence of external definitions.
  */
 
-/* does sys_errlist[] exist? */
+/* does extern definition for sys_errlist[] exist? */
 #define HAVE_EXTERN_SYS_ERRLIST 1
 
-/* does optarg exist? */
+/* does extern definition for optarg exist? */
 #define HAVE_EXTERN_OPTARG 1
 
-/* does clnt_spcreateerror() exist? */
+/* does extern definition for clnt_spcreateerror() exist? */
 #define HAVE_EXTERN_CLNT_SPCREATEERROR 1
 
-/* does clnt_sperrno() exist? */
+/* does extern definition for clnt_sperrno() exist? */
 #define HAVE_EXTERN_CLNT_SPERRNO 1
 
-/* does free() exist? */
+/* does extern definition for free() exist? */
 #define HAVE_EXTERN_FREE 1
 
-/* does get_myaddress() exist? */
+/* does extern definition for get_myaddress() exist? */
 #define HAVE_EXTERN_GET_MYADDRESS 1
 
-/* does getccent() (hpux) exist? */
+/* does extern definition for getccent() (hpux) exist? */
 /* #undef HAVE_EXTERN_GETCCENT */
 
-/* does getdomainname() exist? */
+/* does extern definition for getdomainname() exist? */
 #define HAVE_EXTERN_GETDOMAINNAME 1
 
-/* does gethostname() exist? */
+/* does extern definition for gethostname() exist? */
 #define HAVE_EXTERN_GETHOSTNAME 1
 
-/* does getlogin() exist? */
+/* does extern definition for getlogin() exist? */
 #define HAVE_EXTERN_GETLOGIN 1
 
-/* does gettablesize() exist? */
+/* does extern definition for gettablesize() exist? */
 /* #undef HAVE_EXTERN_GETTABLESIZE */
 
-/* does getpagesize() exist? */
+/* does extern definition for getpagesize() exist? */
 #define HAVE_EXTERN_GETPAGESIZE 1
 
-/* does innetgr() exist? */
+/* does extern definition for innetgr() exist? */
 /* #undef HAVE_EXTERN_INNETGR */
 
-/* does mkstemp() exist? */
+/* does extern definition for mkstemp() exist? */
 #define HAVE_EXTERN_MKSTEMP 1
 
-/* does sbrk() exist? */
+/* does extern definition for sbrk() exist? */
 #define HAVE_EXTERN_SBRK 1
 
-/* does seteuid() exist? */
+/* does extern definition for seteuid() exist? */
 #define HAVE_EXTERN_SETEUID 1
 
-/* does strcasecmp() exist? */
+/* does extern definition for setitimer() exist? */
+/* #undef HAVE_EXTERN_SETITIMER */
+
+/* does extern definition for strcasecmp() exist? */
 #define HAVE_EXTERN_STRCASECMP 1
 
-/* does strdup() exist? */
+/* does extern definition for strdup() exist? */
 #define HAVE_EXTERN_STRDUP 1
 
-/* does strstr() exist? */
+/* does extern definition for strstr() exist? */
 #define HAVE_EXTERN_STRSTR 1
 
-/* does usleep() exist? */
+/* does extern definition for usleep() exist? */
 #define HAVE_EXTERN_USLEEP 1
 
-/* does wait3() exist? */
+/* does extern definition for wait3() exist? */
 #define HAVE_EXTERN_WAIT3 1
 
-/* does xdr_opaque_auth() exist? */
+/* does extern definition for vsnprintf() exist? */
+#define HAVE_EXTERN_VSNPRINTF 1
+
+/* does extern definition for xdr_opaque_auth() exist? */
 #define HAVE_EXTERN_XDR_OPAQUE_AUTH 1
 
 /****************************************************************************/
