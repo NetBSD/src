@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 2002/03/17 14:02:03 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 2002/03/17 17:55:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -102,7 +102,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	struct switchframe *sf;
 	vaddr_t spbase;
 
-#define P1ADDR(x)	((vtophys((vaddr_t)(x)) & 0x1fffffff) | 0x80000000)
+	/* XXX vtophys don't return physical addresss */
+#define P1ADDR(x)							\
+	((vtophys((vaddr_t)(x)) & SH3_PHYS_MASK) | SH3_P1SEG_BASE)
 #ifdef DIAGNOSTIC
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
@@ -177,7 +179,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 /*
  * void cpu_exit(sturct proc *p):
  *	+ Change kernel context to proc0's one.
- *	+ Schedule process 'p' resources.
+ *	+ Schedule freeing process 'p' resources.
  *	+ switch to another process.
  */
 void

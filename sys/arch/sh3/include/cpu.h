@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2002/03/17 14:06:38 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 2002/03/17 17:55:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 /*
- * SH3 Version
+ * SH3/SH4 support.
  *
  *  T.Horiuchi    Brains Corp.   5/22/98
  */
@@ -52,13 +52,10 @@
 #include "opt_lockdebug.h"
 #endif
 
-/*
- * Definitions unique to sh3 cpu support.
- */
-#include <machine/psl.h>
-#include <machine/frame.h>
-
 #include <sys/sched.h>
+#include <sh3/psl.h>
+#include <sh3/frame.h>
+
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
@@ -147,27 +144,26 @@ extern int want_resched;		/* need_resched() was called */
 #define	DELAY(x)		delay(x)
 
 /*
- * Logical address space of SH3 CPU.
+ * Logical address space of SH3/SH4 CPU.
  */
+#define SH3_PHYS_MASK	0x1fffffff
+
 #define SH3_P0SEG_BASE	0x00000000	/* TLB mapped, also U0SEG */
 #define SH3_P0SEG_END	0x7fffffff
 #define SH3_P1SEG_BASE	0x80000000	/* pa == va */
 #define SH3_P1SEG_END	0x9fffffff
 #define SH3_P2SEG_BASE	0xa0000000	/* pa == va, non-cacheable */
 #define SH3_P2SEG_END	0xbfffffff
-#define SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, supervisor mode */
+#define SH3_P3SEG_BASE	0xc0000000	/* TLB mapped, kernel mode */
 #define SH3_P3SEG_END	0xdfffffff
 #define SH3_P4SEG_BASE	0xe0000000	/* peripheral space */
 #define SH3_P4SEG_END	0xffffffff
 
-#define SH3_PHYS_MASK	0x1fffffff
-#define SH3_P1234SEG_SIZE	0x20000000
-
-#define SH3_P1SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
-#define SH3_P2SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
-#define SH3_PHYS_TO_P1SEG(x)	((unsigned)(x) | SH3_P1SEG_BASE)
-#define SH3_PHYS_TO_P2SEG(x)	((unsigned)(x) | SH3_P2SEG_BASE)
-#define SH3_P1SEG_TO_P2SEG(x)	((unsigned)(x) | SH3_P1234SEG_SIZE)
+#define SH3_P1SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
+#define SH3_P2SEG_TO_PHYS(x)	((u_int32_t)(x) & SH3_PHYS_MASK)
+#define SH3_PHYS_TO_P1SEG(x)	((u_int32_t)(x) | SH3_P1SEG_BASE)
+#define SH3_PHYS_TO_P2SEG(x)	((u_int32_t)(x) | SH3_P2SEG_BASE)
+#define SH3_P1SEG_TO_P2SEG(x)	((u_int32_t)(x) | 0x20000000)
 
 /* run on P2 */
 #define RUN_P2								\
@@ -193,17 +189,6 @@ do {									\
  */
 #include <machine/cputypes.h>
 
-#ifdef _KERNEL
-void sh_cpu_init(int, int);
-void delay(int);
-void _cpu_spin(u_int32_t);	/* for delay loop. */
-void cpu_reset(void);		/* Soft reset */
-void sh3_startup(void);
-struct pcb;
-void savectx(struct pcb *);
-void dumpsys(void);
-#endif /* _KERNEL */
-
 /*
  * CTL_MACHDEP definitions.
  */
@@ -217,4 +202,15 @@ void dumpsys(void);
 	{ "load_and_reset",	CTLTYPE_INT },				\
 }
 
+#ifdef _KERNEL
+void sh_cpu_init(int, int);
+void sh_startup(void);
+void cpu_reset(void);		/* Soft reset */
+void _cpu_spin(u_int32_t);	/* for delay loop. */
+void delay(int);
+struct pcb;
+void savectx(struct pcb *);
+void dumpsys(void);
+#endif /* _KERNEL */
 #endif /* !_SH3_CPU_H_ */
+

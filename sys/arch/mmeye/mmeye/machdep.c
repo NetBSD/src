@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2002/03/17 14:05:12 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2002/03/17 17:55:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ void
 cpu_startup()
 {
 
-	sh3_startup();
+	sh_startup();
 }
 
 /*
