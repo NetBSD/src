@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.25 2001/11/09 06:55:56 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.26 2002/01/24 03:20:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.25 2001/11/09 06:55:56 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.26 2002/01/24 03:20:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ main(int argc, char **argv)
 	dir = NULL;
 	init_excludes();
 
-	while ((ch = getopt(argc, argv, "cdDeE:f:I:ik:K:lLmp:PrR:s:tuUWxX:"))
+	while ((ch = getopt(argc, argv, "cdDeE:f:I:ik:K:lLmN:p:PrR:s:tuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -127,6 +127,12 @@ main(int argc, char **argv)
 			break;
 		case 'm':
 			mflag = 1;
+			break;
+		case 'N':
+			if (! setup_getid(optarg))
+				mtree_err(
+			    "Unable to use user and group databases in `%s'",
+				    optarg);
 			break;
 		case 'p':
 			dir = optarg;
@@ -211,9 +217,10 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: mtree [-cdDelLPruUWx] [-i|-m] [-f spec]"
-	    " [-k key] [-K addkey] [-R removekey]\n"
-	    "\t\t[-I inctags] [-E exctags] [-X excludes]"
-	    " [-p path] [-s seed]\n");
+	fprintf(stderr,
+	    "usage: %s [-cdDelLPruUWx] [-i|-m] [-f spec] [-k key]\n"
+	    "\t\t[-K addkey] [-R removekey] [-I inctags] [-E exctags]\n"
+	    "\t\t[-N userdbdir] [-X exclude-file] [-p path] [-s seed]\n",
+	    getprogname());
 	exit(1);
 }
