@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.10 1993/11/13 01:44:59 jtc Exp $
+ *	$Id: stdlib.h,v 1.11 1994/01/24 23:15:24 cgd Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -113,6 +113,18 @@ void  *alloca __P((int));     /* built-in for gcc */
 #else 
 void  *alloca __P((size_t)); 
 #endif /* __GNUC__ */ 
+
+char	*getbsize __P((int *, long *));
+char	*cgetcap __P((char *, char *, int));
+int	 cgetclose __P((void));
+int	 cgetent __P((char **, char **, char *));
+int	 cgetfirst __P((char **, char **));
+int	 cgetmatch __P((char *, char *));
+int	 cgetnext __P((char **, char **));
+int	 cgetnum __P((char *, char *, long *));
+int	 cgetset __P((char *));
+int	 cgetstr __P((char *, char *, char **));
+int	 cgetustr __P((char *, char *, char **));
 
 long	 a64l __P((const char *));
 char	*l64a __P((long));
