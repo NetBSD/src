@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.20 1998/01/13 02:10:03 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.21 1998/01/18 04:16:06 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -145,6 +145,7 @@ extern int console_scrollforward	__P((void));
 #ifdef PMAP_DEBUG
 extern void pmap_debug		__P((int level));
 #endif
+extern void halt		__P((void));
 
 extern struct cfdriver kbd_cd;
 
