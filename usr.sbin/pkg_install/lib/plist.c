@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.40 2003/09/02 07:35:04 jlam Exp $	*/
+/*	$NetBSD: plist.c,v 1.41 2003/09/23 09:36:07 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.40 2003/09/02 07:35:04 jlam Exp $");
+__RCSID("$NetBSD: plist.c,v 1.41 2003/09/23 09:36:07 wiz Exp $");
 #endif
 #endif
 
@@ -455,8 +455,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 }
 
 #ifdef DEBUG
-#define RMDIR(dir) vsystem("%s %s", RMDIR_CMD, dir)
-#define REMOVE(dir,ie) vsystem("%s %s%s", REMOVE_CMD, (ie ? "-f " : ""), dir)
+#define RMDIR(dir) fexec(RMDIR_CMD, dir, NULL)
+#define REMOVE(dir,ie) fexec_skipemtpy(REMOVE_CMD, (ie) ? "-f " : "", dir, NULL)
 #else
 #define RMDIR rmdir
 #define	REMOVE(file,ie) (remove(file) && !(ie))
@@ -478,7 +478,7 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 			    isdir(dir) ? "directory" : "file", dir);
 		return !ign_err;
 	} else if (nukedirs) {
-		if (vsystem("%s -r%s %s", REMOVE_CMD, (ign_err ? "f" : ""), dir))
+		if (fexec_skipempty(REMOVE_CMD, "-r", ign_err ? "-f" : "", dir, NULL))
 			return 1;
 	} else if (isdir(dir)) {
 		if (RMDIR(dir) && !ign_err)

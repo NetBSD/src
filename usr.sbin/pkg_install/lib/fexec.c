@@ -47,13 +47,13 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.4 2003/09/02 07:35:00 jlam Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.5 2003/09/23 09:36:06 wiz Exp $");
 #endif
 
-static int	vfcexec(const char *, const char *, va_list);
+static int	vfcexec(const char *, int, const char *, va_list);
 
 static int
-vfcexec(const char *path, const char *arg, va_list ap)
+vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 {
 	static unsigned int	max = 4;
 	static const char	**argv = NULL;
@@ -87,6 +87,8 @@ vfcexec(const char *path, const char *arg, va_list ap)
 			max = new;
 		}
 		arg = va_arg(ap, const char *);
+		if (skipempty && arg && strlen(arg) == 0)
+		    continue;
 		argv[argc++] = arg;
 	} while (arg != NULL);
 
@@ -121,7 +123,20 @@ fexec(const char *arg, ...)
 	int	result;
 
 	va_start(ap, arg);
-	result = vfcexec(NULL, arg, ap);
+	result = vfcexec(NULL, 0, arg, ap);
+	va_end(ap);
+
+	return result;
+}
+
+int
+fexec_skipempty(const char *arg, ...)
+{
+	va_list	ap;
+	int	result;
+
+	va_start(ap, arg);
+	result = vfcexec(NULL, 1, arg, ap);
 	va_end(ap);
 
 	return result;
@@ -134,7 +149,7 @@ fcexec(const char *path, const char *arg, ...)
 	int	result;
 
 	va_start(ap, arg);
-	result = vfcexec(path, arg, ap);
+	result = vfcexec(path, 0, arg, ap);
 	va_end(ap);
 
 	return result;

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.88 2003/09/23 06:19:46 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.89 2003/09/23 09:36:04 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.88 2003/09/23 06:19:46 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.89 2003/09/23 09:36:04 wiz Exp $");
 #endif
 #endif
 
@@ -66,26 +66,21 @@ sanity_check(const char *pkg)
 static int
 installprereq(const char *name, int *errc)
 {
-	int	ret;
+	int ret;
 	ret = 0;
 
 	if (Verbose)
 		printf("Loading it from %s.\n", name);
 	path_setenv("PKG_PATH");
-	if (vsystem("%s/pkg_add -K %s -s %s %s%s%s %s%s %s%s%s %s%s",
-			BINDIR,
-			_pkgdb_getPKGDB_DIR(),
-			get_verification(),
-			NoView ? "-L " : "",
-			View ? "-w " : "",
-			View ? View : "",
-			Viewbase ? "-W " : "",
-			Viewbase ? Viewbase : "",
-			Force ? "-f " : "",
-			Prefix ? "-p " : "",
-			Prefix ? Prefix : "",
-			Verbose ? "-v " : "",
-			name)) {
+
+	if (fexec_skipempty(BINDIR "/pkg_add", "-K", _pkgdb_getPKGDB_DIR(),
+			    "-s", get_verification(),
+			    NoView ? "-L" : "",
+			    View ? "-w" : "", View ? View : "",
+			    Viewbase ? "-W" : "", Viewbase ? Viewbase : "",
+			    Force ? "-f" : "",
+			    Prefix ? "-p" : "", Prefix ? Prefix : "",
+			    Verbose ? "-v" : "", name, NULL)) {
 		warnx("autoload of dependency `%s' failed%s",
 			name, Force ? " (proceeding anyway)" : "!");
 		if (!Force)
@@ -105,14 +100,13 @@ static int
 pkg_do(const char *pkg)
 {
 	char    playpen[FILENAME_MAX];
-	char    extract_contents[FILENAME_MAX];
 	char    replace_from[FILENAME_MAX];
 	char    replace_via[FILENAME_MAX];
 	char    replace_to[FILENAME_MAX];
 	int	replacing = 0;
-	char   *where_to, *extract;
+	char   *where_to;
 	char   dbdir[FILENAME_MAX];
-	const char *exact;
+	const char *exact, *extra1, *extra2;
 	FILE   *cfile;
 	int     errc;
 	plist_t *p;
@@ -177,11 +171,11 @@ pkg_do(const char *pkg)
 						goto bomb;
 					}
 				}
-				(void) snprintf(extract_contents, sizeof(extract_contents), "--fast-read %s", CONTENTS_FNAME);
-				extract = extract_contents;
+				extra1 = "--fast-read";
+				extra2 = CONTENTS_FNAME;
 			} else {
 			        /* some values for stdin */
-				extract = NULL;
+				extra1 = extra2 = NULL;
 				sb.st_size = 100000;	/* Make up a plausible average size */
 			}
 			Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
@@ -189,7 +183,7 @@ pkg_do(const char *pkg)
 				warnx("unable to make playpen for %ld bytes",
 				      (long) (sb.st_size * 4));
 			where_to = Home;
-			if (unpack(pkg, extract)) {
+			if (unpack(pkg, extra1, extra2)) {
 				warnx("unable to extract table of contents file from `%s' - not a package?",
 				      pkg);
 				goto bomb;
@@ -250,7 +244,7 @@ pkg_do(const char *pkg)
 				goto success;
 
 			/* Finally unpack the whole mess */
-			if (unpack(pkg, NULL)) {
+			if (unpack(pkg, NULL, NULL)) {
 				warnx("unable to extract `%s'!", pkg);
 				goto bomb;
 			}
@@ -451,11 +445,7 @@ ignore_replace_depends_check:
 							dbdir,
 							installed);
 					}
-					vsystem("%s/pkg_delete -K %s '%s'\n",
-						BINDIR,
-						dbdir,
-						installed);
-
+					fexec(BINDIR "/pkg_delete", "-K", dbdir, installed, NULL);
 				} else {
 					warnx("other version '%s' already installed", installed);
 
@@ -598,7 +588,7 @@ ignore_replace_depends_check:
 		(void) fexec(CHMOD_CMD, "+x", REQUIRE_FNAME, NULL);	/* be sure */
 		if (Verbose)
 			printf("Running requirements file first for %s.\n", PkgName);
-		if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
+		if (!Fake && fexec("./" REQUIRE_FNAME, PkgName, "INSTALL", NULL)) {
 			warnx("package %s fails requirements %s", pkg,
 			    Force ? "installing anyway" : "- not installed");
 			if (!Force) {
@@ -613,7 +603,7 @@ ignore_replace_depends_check:
 		(void) fexec(CHMOD_CMD, "+x", INSTALL_FNAME, NULL);	/* make sure */
 		if (Verbose)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
-		if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
+		if (!Fake && fexec("./" INSTALL_FNAME, PkgName, "PRE-INSTALL", NULL)) {
 			warnx("install script returned error status");
 			errc = 1;
 			goto success;	/* nothing to uninstall yet */
@@ -640,7 +630,8 @@ ignore_replace_depends_check:
 		if (Verbose)
 			printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
 		if (!Fake) {
-			if (vsystem("%s -U -f %s -d -e -p %s", MTREE_CMD, MTREE_FNAME, p ? p->name : "/"))
+			if (fexec(MTREE_CMD, "-U", "-f", MTREE_FNAME, "-d", "-e", "-p",
+				  p ? p->name : "/", NULL))
 				warnx("mtree returned a non-zero status - continuing");
 		}
 		unlink(MTREE_FNAME); /* remove this line to tar up pkg later  - HF */
@@ -650,7 +641,7 @@ ignore_replace_depends_check:
 	if (!NoInstall && fexists(INSTALL_FNAME)) {
 		if (Verbose)
 			printf("Running install with POST-INSTALL for %s.\n", PkgName);
-		if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
+		if (!Fake && fexec("./" INSTALL_FNAME, PkgName, "POST-INSTALL", NULL)) {
 			warnx("install script returned error status");
 			errc = 1;
 			goto fail;
@@ -778,24 +769,16 @@ ignore_replace_depends_check:
 	if (!Fake && !NoView && is_depoted_pkg) {
 		if (Verbose) {
 			printf("%s/pkg_view -d %s %s%s %s%s %sadd %s\n",
-				BINDIR,
-				dbdir,
-				View ? "-w " : "",
-				View ? View : "",
-				Viewbase ? "-W " : "",
-				Viewbase ? Viewbase : "",
-				Verbose ? "-v " : "",
-				PkgName);
+				BINDIR, dbdir,
+				View ? "-w " : "", View ? View : "",
+				Viewbase ? "-W " : "", Viewbase ? Viewbase : "",
+				Verbose ? "-v " : "", PkgName);
 		}
-		vsystem("%s/pkg_view -d %s %s%s %s%s %sadd %s",
-				BINDIR,
-				dbdir,
-				View ? "-w " : "",
-				View ? View : "",
-				Viewbase ? "-W " : "",
-				Viewbase ? Viewbase : "",
-				Verbose ? "-v " : "",
-				PkgName);
+
+		fexec_skipempty(BINDIR "/pkg_view", "-d", dbdir,
+				View ? "-w " : "", View ? View : "",
+				Viewbase ? "-W " : "", Viewbase ? Viewbase : "",
+				Verbose ? "-v " : "", "add", PkgName, NULL);
 	}
 
 	goto success;
