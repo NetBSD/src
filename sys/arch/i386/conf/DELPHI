@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.34 2004/02/16 17:11:26 wiz Exp $
+#	$NetBSD: DELPHI,v 1.35 2004/06/14 01:27:59 lukem Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.34 $"
+ident 		"DELPHI-$Revision: 1.35 $"
 
 maxusers	64		# estimated number of users
 
@@ -61,7 +61,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.62 2004/05/22 03:16:26 grant Exp $
+#	$NetBSD: GENERIC_TINY,v 1.63 2004/06/14 01:28:00 lukem Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -62,7 +62,7 @@ options 	NMBCLUSTERS=256
 #options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -133,7 +133,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
-#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

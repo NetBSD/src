@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.FAST_IPSEC,v 1.1 2004/01/23 02:16:38 jonathan Exp $
+#	$NetBSD: GENERIC.FAST_IPSEC,v 1.2 2004/06/14 01:28:00 lukem Exp $
 #
 #	GENERIC.FAST_IPSEC -- Generic, plus enable fast-ipsec support.
 #	To prevent recurrence of bitrot between sys/netipsec and KAME ipsec.
@@ -6,4 +6,4 @@
 
 include "arch/i386/conf/GENERIC"
 
-options		FAST_IPSEC
+options 	FAST_IPSEC
