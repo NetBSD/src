@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.24 2003/09/04 09:17:07 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.24.2.1 2004/06/14 18:00:41 tron Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -131,9 +131,11 @@ struct	in6pcb {
 #if 0 /* obsoleted */
 #define IN6P_BINDV6ONLY		0x10000000 /* do not grab IPv4 traffic */
 #endif
+#define IN6P_MINMTU		0x20000000 /* use minimum MTU */
 
 #define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
-				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS)
+				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
+				 IN6P_MINMTU)
 
 /* compute hash value for foreign and local in6_addr and port */
 #define IN6_HASH(faddr, fport, laddr, lport) 			\
