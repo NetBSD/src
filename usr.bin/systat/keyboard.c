@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.7 1999/11/15 06:16:56 simonb Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.8 1999/12/20 20:49:06 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.7 1999/11/15 06:16:56 simonb Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.8 1999/12/20 20:49:06 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,8 @@ keyboard()
 	for (;;) {
 		col = 0;
 		move(CMDLINE, 0);
-		do {
+
+		while (col == 0 || (ch != '\r' && ch != '\n')) {
 			refresh();
 			ch = getch() & 0177;
 			if (ch == 0177 && ferror(stdin)) {
@@ -80,33 +81,40 @@ keyboard()
 				continue;
 			}
 			rch = ch;
-			if (ch >= 'A' && ch <= 'Z')
-				ch += 'a' - 'A';
+			ch = tolower(ch);
 			if (col == 0) {
-				if (ch == CTRL('l')) {
+				switch(ch) {
+				    case '\n':
+				    case '\r':
+				    case ' ':
+					display(0);
+					break;
+				    case CTRL('l'):
 					sigprocmask(SIG_BLOCK, &set, NULL);
 					wrefresh(curscr);
 					sigprocmask(SIG_UNBLOCK, &set, NULL);
-					continue;
-				}
-				if (ch == CTRL('g')) {
+					break;
+				    case CTRL('g'):
 					sigprocmask(SIG_BLOCK, &set, NULL);
 					status();
 					sigprocmask(SIG_UNBLOCK, &set, NULL);
-					continue;
-				}
-				if (ch == '?' || ch == 'h') {
+					break;
+				    case '?':
+				    case 'h':
 					command("help");
 					move(CMDLINE, 0);
-					continue;
+					break;
+				    case ':':
+					move(CMDLINE, 0);
+					clrtoeol();
+					addch(':');
+					col++;
+					break;
 				}
-				if (ch != ':')
-					continue;
-				move(CMDLINE, 0);
-				clrtoeol();
+				continue;
 			}
 			if (ch == erasechar() && col > 0) {
-				if (col == 1 && line[0] == ':')
+				if (col == 1)
 					continue;
 				col--;
 				goto doerase;
@@ -115,34 +123,30 @@ keyboard()
 				while (--col >= 0 && isspace(line[col]));
 				col++;
 				while (--col >= 0 && !isspace(line[col]))
-					if (col == 0 && line[0] == ':')
+					if (col == 0)
 						break;
 				col++;
 				goto doerase;
 			}
 			if (ch == killchar() && col > 0) {
-				if (line[0] == ':')
-					col = 1;
-				else
-					col = 0;
+				col = 1;
 		doerase:
 				move(CMDLINE, col);
 				clrtoeol();
 				continue;
 			}
-			if (isprint(rch) || ch == ' ') {
+			if (isprint(rch) || rch == ' ') {
 				if (col < linesz) {
 					line[col] = rch;
 					mvaddch(CMDLINE, col, rch);
 					col++;
 				}
 			}
-		} while (col == 0 || (ch != '\r' && ch != '\n'));
+		}
 		line[col] = '\0';
 		/* pass commands as lowercase */
-		for (i = 1; i < col && line[i] != ' '; i++)
-		    if (line[i] >= 'A' && line[i] <= 'Z')
-			line[i] += 'a' - 'A';
+		for (i = 1; i < col ; i++)
+			line[i] = tolower(line[i]);
 		sigprocmask(SIG_BLOCK, &set, NULL);
 		command(line + 1);
 		sigprocmask(SIG_UNBLOCK, &set, NULL);
