@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.13 2001/12/14 08:34:27 gmcgarry Exp $	*/
+/*	$NetBSD: apci.c,v 1.14 2002/03/15 05:55:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@
  * XXX more code could be shared.  (Currently, no code is shared.)
  * XXX FIXME!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.14 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

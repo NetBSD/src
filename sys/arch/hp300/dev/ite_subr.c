@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.8 1997/03/31 07:37:26 scottr Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.9 2002/03/15 05:55:36 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)ite_subr.c	8.2 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite_subr.c,v 1.9 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/conf.h>

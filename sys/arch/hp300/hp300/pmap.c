@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2002/03/08 20:48:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2002/03/15 05:55:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,9 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2002/03/15 05:55:38 gmcgarry Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
