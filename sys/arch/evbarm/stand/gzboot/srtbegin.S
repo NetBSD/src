@@ -1,4 +1,4 @@
-/*	$NetBSD: srtbegin.S,v 1.3 2002/02/24 20:29:44 thorpej Exp $	*/
+/*	$NetBSD: srtbegin.S,v 1.4 2002/02/24 20:44:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ ENTRY(start)
 	 */
 	add	r1, pc, #(Ltext - . - 8)
 	ldmia	r1, {r1-r3}
-	cmp	r1, r2			/* RELOC == &start? */
+	cmp	r1, r2			/* __text_store == &start? */
 	beq	relocated		/* yes, in RAM */
 
 	/* Copy text segment from ROM to RAM */
@@ -85,7 +85,7 @@ relocated:
 	 */
 	add	r1, pc, #(Ldata - . - 8)
 	ldmia	r1, {r1-r3}
-	cmp	r1, r2			/* &_etext == &__data_start? */
+	cmp	r1, r2			/* __data_store == __data_start? */
 	beq	2f			/* yes, in RAM */
 
 	/* Copy data segment from ROM to RAM */
