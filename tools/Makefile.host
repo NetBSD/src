@@ -1,9 +1,16 @@
-#	$NetBSD: Makefile.host,v 1.17 2002/01/29 10:20:31 tv Exp $
+#	$NetBSD: Makefile.host,v 1.18 2003/03/13 04:43:37 thorpej Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
 
 .include <bsd.own.mk>
+
+BUILD_OSTYPE!=	uname -s
+
+# Disable use of pre-compiled headers on Darwin.
+.if ${BUILD_OSTYPE} == "Darwin"
+HOST_CPPFLAGS+=	-no-cpp-precomp
+.endif
 
 .ifndef NOCOMPATLIB
 COMPATOBJ!=	cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
