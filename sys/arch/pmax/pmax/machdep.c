@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 1999/04/25 03:20:45 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 1999/04/26 09:23:26 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,12 +43,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 1999/04/25 03:20:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 1999/04/26 09:23:26 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
+#include "le_ioasic.h"		/* XXX will go XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,23 +66,19 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 1999/04/25 03:20:45 simonb Exp $")
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/device.h>
 #include <sys/user.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 
-#include <dev/cons.h>
-
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
-
 #include <uvm/uvm_extern.h>
 
-#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
+#include <sys/sysctl.h>
+#include <dev/cons.h>
 
+#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -91,8 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 1999/04/25 03:20:45 simonb Exp $")
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
-#include <mips/locore.h>		/* wbflush() */
-#include <mips/mips/mips_mcclock.h>	/* mclock CPU setimation */
+#include <machine/locore.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -100,20 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 1999/04/25 03:20:45 simonb Exp $")
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#include <ddb/db_extern.h>
 #endif
 
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/maxine.h>
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicreg.h>		/* cycl-counter on kn03 stepping */
-#include <dev/tc/ioasicvar.h>
 #include <pmax/dev/promiovar.h>		/* prom console I/O vector */
-
-#include <pmax/pmax/machdep.h>		/*  splXXX() function pointer hack */
-
-#include "le_ioasic.h"
+#include <pmax/pmax/machdep.h>		/* splXXX() function pointer hack */
 
 /* Motherboard or system-specific initialization vector */
 void		unimpl_os_init __P((void));
@@ -132,7 +120,6 @@ void	 	unimpl_iointr __P ((void *, u_long));
 void 		unimpl_clockintr __P ((void *));
 void	 	unimpl_errintr __P ((void));
 
-
 struct platform  platform = {
 	"iobus not set",
 	unimpl_os_init,
@@ -143,36 +130,56 @@ struct platform  platform = {
 	unimpl_clockintr
 };
 
-
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[40];
 
-char	*bootinfo = NULL;		/* pointer to bootinfo structure */
-
-/*  maps for VM objects */
-
+/* maps for VM objects */
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
+char	*bootinfo = NULL;	/* pointer to bootinfo structure */
+int	systype;		/* Mother board type */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
-int	systype;		/* Mother board type */
-u_long	le_iomem;		/* 128K for lance chip via. ASIC */
-
-
+int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ * Used as an argument to splx().
+ * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
+ * disables mips1 FPU interrupts.
+ */
+int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
+
+unsigned (*clkread) __P((void)); /* high resolution timer if available */
+
+void	mach_init __P((int, char *[], int, int, u_int, char *));
+int	initcpu __P((void));
+unsigned nullclkread __P((void));
+int	atoi __P((const char *cp));
+void	prom_haltbutton __P((void));
+void	prom_halt __P((int, char *)) __attribute__((__noreturn__));
+int	prom_systype __P((void));
+
+extern caddr_t esym;
+
+/* locore callback-vector setup */
+extern void mips_vector_init  __P((void));
+
+/* XXX XXX XXX */
+u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 
 /* Old 4.4bsd/pmax-derived interrupt-enable method */
 
 void	(*tc_enable_interrupt)
      __P ((u_int slotno, int (*handler) __P((void *sc)),
           void *sc, int onoff));
-
 
 /*
  * pmax still doesnt have code to build spl masks for both CPU hard-interrupt
@@ -188,45 +195,14 @@ int	(*Mach_splimp)__P((void)) = splhigh;
 int	(*Mach_splclock)__P((void)) = splhigh;
 int	(*Mach_splstatclock)__P((void)) = splhigh;
 volatile struct chiptime *mcclock_addr;
-
-
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
-
-
-/*
- *  Local functions.
- */
-extern	int	atoi __P((const char *cp));
-int	initcpu __P((void));
-
-
-/* initialize bss, etc. from kernel start, before main() is called. */
-extern	void
-mach_init __P((int argc, char *argv[], u_int code,
-    const struct callback *cv, u_int bim, char *bip));
-
-
-void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
+/* XXX XXX XXX */
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
 extern void stacktrace __P((void)); /*XXX*/
 #endif
-
-extern caddr_t esym;
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.  Used as an argument to splx().
- * XXX disables interrupt 5 to disable mips3 on-chip clock, which also
- * disables mips1 FPU interrupts.
- */
-int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-
-/* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
-
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -237,8 +213,7 @@ void
 mach_init(argc, argv, code, cv, bim, bip)
 	int argc;
 	char *argv[];
-	u_int code;
-	const struct callback *cv;
+	int code, cv;
 	u_int bim;
 	char *bip;
 {
@@ -282,7 +257,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		ssym = (caddr_t)bi_syms->ssym;
 		esym = (caddr_t)bi_syms->esym;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	}
 	/* XXX: Backwards compatibility with old bootblocks - this should
 	 * go soon...
@@ -294,20 +269,16 @@ mach_init(argc, argv, code, cv, bim, bip)
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;
 		kernend = (caddr_t)mips_round_page(esym);
-		bzero(edata, end - edata);
+		memset(edata, 0, end - edata);
 	} else
 #endif
 	{
 		kernend = (caddr_t)mips_round_page(end);
-		bzero(edata, kernend - edata);
+		memset(edata, 0, kernend - edata);
 	}
 
 	/* Initialize callv so we can do PROM output... */
-	if (code == DEC_PROM_MAGIC) {
-		callv = cv;
-	} else {
-		callv = &callvec;
-	}
+	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
 
 	/* Use PROM console output until we initialize a console driver. */
 	cn_tab = &promcd;
@@ -404,23 +375,12 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/*
 	 * Determine what model of computer we are running on.
 	 */
-	if (code == DEC_PROM_MAGIC) {
-		i = (*cv->_getsysid)();
-		cp = "";
-	} else {
-		cp = (*callv->_getenv)("systype");
-		if (cp)
-			i = atoi(cp);
-		else {
-			cp = "";
-			i = 0;
-		}
-	}
+	i = prom_systype();
 
 	/* Check for MIPS based platform */
 	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
 	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
-		printf("Unknown System type '%s' 0x%x\n", cp, i);
+		printf("Unknown system type '%08x'\n", i);
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
@@ -430,13 +390,10 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
-	/* check what model platform we are running on */
-	systype = ((i >> 16) & 0xff);
-
-
 	/*
 	 * Find out what hardware we're on, and do basic initialization.
 	 */
+	systype = ((i >> 16) & 0xff);
 	if (systype >= nsysinit) {
 		platform_not_supported();
 		/* NOTREACHED */
@@ -512,8 +469,8 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 
 /*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * Machine-dependent startup code.
+ * allocate memory for variable-sized tables, initialize cpu.
  */
 void
 cpu_startup()
@@ -533,9 +490,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
-
 	printf("%s\n", cpu_model);
-
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -660,7 +615,7 @@ cpu_startup()
 
 
 /*
- * machine dependent system variables.
+ * Machine dependent system variables.
  */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -685,7 +640,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_BOOTED_KERNEL:
 	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
 	        if(!bibp)
-			return(ENOENT); /* ??? */
+			return (ENOENT); /* ??? */
 		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
 	default:
 		return (EOPNOTSUPP);
@@ -729,9 +684,8 @@ prom_haltbutton()
 	(*callv->_halt)((int *)0, 0);
 }
 
-
 /*
- * call PROM to halt or reboot.
+ * Call PROM to halt or reboot.
  */
 volatile void
 prom_halt(howto, bootstr)
@@ -739,25 +693,35 @@ prom_halt(howto, bootstr)
 	char *bootstr;
 
 {
-	if (callv != &callvec) {
-		if (howto & RB_HALT)
-			(*callv->_rex)('h');
-		else {
-			(*callv->_rex)('b');
-		}
-	} else if (howto & RB_HALT) {
-		volatile void (*f) __P((void)) =
-		    (volatile void (*) __P((void))) DEC_PROM_REINIT;
+	if (callv != &callvec)
+		(*callv->_rex)((howto & RB_HALT) ? 'h' : 'b');
+	else {
+		volatile void (*f) __P((void));
 
-		(*f)();	/* jump back to prom monitor */
-	} else {
-		volatile void (*f) __P((void)) =
-		    (volatile void (*) __P((void)))DEC_PROM_AUTOBOOT;
-		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
+		f = (howto & RB_HALT)
+			? (void *)DEC_PROM_REINIT
+			: (void *)DEC_PROM_AUTOBOOT;
+		(*f)();
 	}
 
 	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
+}
+
+/*
+ * Get 32bit system type of Digital hardware.
+ *	From highest order byte to lowest;
+ *	'cputype,' 'systype,' 'firmware revision' and 'hardware revision.'
+ */
+int
+prom_systype()
+{
+	char *cp;
+
+	if (callv != &callvec)
+		return (*callv->_getsysid)();
+	cp = (*callv->_getenv)("systype");
+	return (cp != NULL) ? atoi(cp) : 0;
 }
 
 void
@@ -816,129 +780,21 @@ haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
-
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 	/*NOTREACHED*/
 }
 
-
-/*
- * Read a high-resolution clock, if one is available, and return
- * the current microsecond offset from time-of-day.
- */
-
-/* XXX clock hacks */
-#include "opt_dec_3maxplus.h"
 #include "opt_dec_3min.h"
 #include "opt_dec_maxine.h"
-
-#if !(defined(DEC_3MAXPLUS) || defined(DEC_MAXINE) ||defined(DEC_3MIN))
-#define	clkread()	(0)
-#else /* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
-
-static __inline u_long clkread __P((void));	/* get usec-resolution clock */
+#include "opt_dec_3maxplus.h"
 
 /*
- * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
- * [Or free-running microsecond counter on Maxine.]
- *
- * XXXjrs needs better MI hardware tier support.
- */
-u_long latched_cycle_cnt;
-
-/*
- * On a Decstation 5000/240,  use the turbochannel bus-cycle counter
- * to interpolate micro-seconds since the  last RTC clock tick.
- * The interpolation base is the copy of the bus cycle-counter taken
- * by the RTC interrupt handler.
- * On XINE, use the microsecond free-running counter.
- *
- */
-static __inline u_long
-clkread()
-{
-
-#ifdef DEC_3MAXPLUS
-	u_long usec, cycles;	/* really 32 bits? */
-#endif
-
-#if defined(DEC_3MIN)
-	if (systype == DS_3MIN && CPUISMIPS3) {
-		extern u_int32_t mips3_cycle_count __P((void));
-		u_int32_t mips3_cycles =
-		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
-		/* XXX divides take 78 cycles: approximate with * 41/2048  */
-#if 0
-		return (mips3_cycles / cpu_mhz);
-#else
-		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
-		       (mips3_cycles >> 11));
-#endif
-	} else
-#endif
-#ifdef DEC_MAXINE
-	if (systype == DS_MAXINE)
-		return (*(u_long*)(MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR)) -
-		    latched_cycle_cnt);
-	else
-#endif
-#ifdef DEC_3MAXPLUS
-	if (systype == DS_3MAXPLUS)
-		/* 5k/240 TC bus counter */
-		cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
-	else
-#endif
-		return (0);
-
-#ifdef DEC_3MAXPLUS
-	/* Compute difference in cycle count from last hardclock() to now */
-#if 1
-	/* my code, using u_ints */
-	cycles = cycles - latched_cycle_cnt;
-#else
-	/* Mills code, using (signed) ints */
-	if (cycles >= latched_cycle_cnt)
-		cycles = cycles - latched_cycle_cnt;
-	else
-		cycles = latched_cycle_cnt - cycles;
-#endif
-
-	/*
-	 * Scale from 40ns to microseconds.
-	 * Avoid a kernel FP divide (by 25) using the approximation
-	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
-	 */
-	usec = cycles + (cycles << 3) + (cycles << 5);
-	usec = usec >> 10;
-
-#ifdef CLOCK_DEBUG
-	if (usec > 3906 +4) {
-		 addlog("clkread: usec %d, counter=%lx\n",
-			 usec, latched_cycle_cnt);
-		stacktrace();
-	}
-#endif /*CLOCK_DEBUG*/
-	return usec;
-#endif /* DEC_3MAXPLUS */
-}
-
-#if 0
-void
-microset()
-{
-	latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
-}
-#endif	/* 0 */
-#endif	/* (defined(DEC_3MAXPLUS) || defined(DEC_MAXINE)) */
-
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
+ * Return the best possible estimate of the time in the timeval to
+ * which tvp points.  We guarantee that the time will be greater than
+ * the value obtained by a previous call.  Some models of DECstations
+ * provide a high resolution timer circuit.
  */
 void
 microtime(tvp)
@@ -948,7 +804,9 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec += clkread();
+#if (DEC_3MIN + DEC_3MAXPLUS + DEC_MAXINE) > 1
+	tvp->tv_usec += (*clkread)();
+#endif
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
@@ -1069,7 +927,6 @@ out:
 /*
  *  Ensure all  platform vectors are always initialized.
  */
-
 void
 unimpl_os_init()
 {
@@ -1144,3 +1001,9 @@ unimpl_errintr()
 {
 	panic("sysconf.init didnt set errintr_name\n");
 }
+
+unsigned
+nullclkread()
+{
+	return (0);
+}       

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 1998/03/25 06:22:20 jonathan Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 1999/04/26 09:23:23 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,11 +33,6 @@
 /* the following is used externally (sysctl_hw) */
 extern char machine[];
 extern char cpu_model[];
-
-
-/* XXX ioasic hardware initialization. */
-void	ioasic_init __P((int flags));	/* chip revision flag */
-
 
 /*
  * Interrupt-blocking functions defined in locore. These names aren't used
