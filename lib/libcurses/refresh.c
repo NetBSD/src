@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.13 1999/06/28 13:27:24 simonb Exp $	*/
+/*	$NetBSD: refresh.c,v 1.14 1999/09/17 14:21:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.13 1999/06/28 13:27:24 simonb Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.14 1999/09/17 14:21:04 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -137,8 +137,9 @@ wrefresh(win)
 			for (j = 0; j < curscr->maxx; j++)
 				__CTRACE("%c", curscr->lines[i]->line[j].ch);
 			__CTRACE("\n");
+			__CTRACE(" attr:");
 			for (j = 0; j < curscr->maxx; j++)
-				__CTRACE("%x", curscr->lines[i]->line[j].attr);
+				__CTRACE(" %x", curscr->lines[i]->line[j].attr);
 			__CTRACE("\n");
 			__CTRACE("W: %d:", i);
 			__CTRACE(" 0x%x \n", win->lines[i]->hash);
@@ -146,8 +147,9 @@ wrefresh(win)
 			for (j = 0; j < win->maxx; j++)
 				__CTRACE("%c", win->lines[i]->line[j].ch);
 			__CTRACE("\n");
+			__CTRACE(" attr:");
 			for (j = 0; j < win->maxx; j++)
-				__CTRACE("%x", win->lines[i]->line[j].attr);
+				__CTRACE(" %x", win->lines[i]->line[j].attr);
 			__CTRACE("\n");
 		}
 	}
@@ -747,8 +749,9 @@ done:
 		for (j = 0; j < curscr->maxx; j++)
 			__CTRACE("%c", curscr->lines[i]->line[j].ch);
 		__CTRACE("\n");
+		__CTRACE(" attr:");
 		for (j = 0; j < curscr->maxx; j++)
-			__CTRACE("%x", curscr->lines[i]->line[j].attr);
+			__CTRACE(" %x", curscr->lines[i]->line[j].attr);
 		__CTRACE("\n");
 		__CTRACE("W: %d:", i);
 		__CTRACE(" 0x%x \n", win->lines[i]->hash);
@@ -756,8 +759,9 @@ done:
 		for (j = 0; j < win->maxx; j++)
 			__CTRACE("%c", win->lines[i]->line[j].ch);
 		__CTRACE("\n");
+		__CTRACE(" attr:");
 		for (j = 0; j < win->maxx; j++)
-			__CTRACE("%x", win->lines[i]->line[j].attr);
+			__CTRACE(" %x", win->lines[i]->line[j].attr);
 		__CTRACE("\n");
 	}
 #endif
