@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.70 2003/12/20 03:31:56 grant Exp $	*/
+/*	$NetBSD: file.c,v 1.71 2003/12/20 10:09:20 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.70 2003/12/20 03:31:56 grant Exp $");
+__RCSID("$NetBSD: file.c,v 1.71 2003/12/20 10:09:20 grant Exp $");
 #endif
 #endif
 
@@ -562,7 +562,7 @@ unpack(const char *pkg, const char *flist)
 {
 	char args[10] = "-";
 	char cmd[FILENAME_MAX];
-	const char *decompress_cmd;
+	const char *decompress_cmd = NULL;
 	const char *suf;
 
 	if (!IS_STDIN(pkg)) {
