@@ -1,0 +1,26 @@
+#	$NetBSD: Makefile.parselist,v 1.1 2002/04/12 01:59:45 lukem Exp $
+#
+# Makefile snippet to setup parselist.awk related variables:
+#	PARSELISTENV	environment variables to pass to parselist.awk
+#			(may be appended to by caller)
+#	PARSELISTDEP	dependency on parselist.awk
+#	PARSELIST	run  ${PARSELISTENV} awk -f ${PARSELISTDEP}
+#
+
+.if !defined(_PARSELIST_MK_)
+_PARSELIST_MK_=1
+
+
+PARSELISTENV+=	_SRC_TOP_=${_SRC_TOP_:Q} \
+		CRUNCHBIN=${CRUNCHBIN:Q} \
+		CURDIR=${.CURDIR:Q} \
+		DESTDIR=${DESTDIR:Q} \
+		DISTRIBDIR=${DISTRIBDIR:Q} \
+		MACHINE=${MACHINE:Q} \
+		MACHINE_ARCH=${MACHINE_ARCH:Q} \
+		OBJDIR=${.OBJDIR:Q}
+
+PARSELISTDEP=	${DISTRIBDIR}/common/parselist.awk
+PARSELIST=	${PARSELISTENV} awk -f ${PARSELISTDEP}
+
+.endif	# _PARSELIST_MK_

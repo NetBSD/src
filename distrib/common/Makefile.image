@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.6 2002/03/14 22:26:09 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.7 2002/04/12 01:59:45 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -26,35 +26,26 @@ WORKDIR?=	work
 WORKSPEC?=	work.spec
 WORKBUILT?=	work.built
 
-PARSELISTENV+=	_SRC_TOP_=${_SRC_TOP_:Q} \
-		CRUNCHBIN=${CRUNCHBIN:Q} \
-		CURDIR=${.CURDIR:Q} \
-		DESTDIR=${DESTDIR:Q} \
-		MACHINE=${MACHINE:Q} \
-		MACHINE_ARCH=${MACHINE_ARCH:Q} \
-		OBJDIR=${.OBJDIR:Q} \
-		TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
+.include "${DISTRIBDIR}/common/Makefile.parselist"
 
-_PARSELIST=	${_SRC_TOP_}/distrib/common/parselist.awk
+PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
 
 
-${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${_PARSELIST} ${LISTS}
+${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 	@echo "Building tree into ${WORKDIR}"
 	-rm -rf ${WORKDIR} ${WORKBUILT}
 	mkdir -m 755 ${WORKDIR}
 	${MTREE} -def ${WORKSPEC} -p ${WORKDIR}/ -UW
-	${PARSELISTENV} awk -f ${_PARSELIST} -v mode=populate \
-	    ${LISTS} | sh -e ${POPULATE_DEBUG} \
+	${PARSELIST} -v mode=populate ${LISTS} | sh -e ${POPULATE_DEBUG} \
 	&& touch ${WORKBUILT}
 
-${WORKSPEC}: ${MTREECONF} ${LISTS} ${_PARSELIST}
+${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	( for i in ${MTREECONF}; do	\
 		cat $$i ;		\
 		echo "/unset all" ;	\
 	done ) >> ${.TARGET}.tmp
-	${PARSELISTENV} awk -f ${_PARSELIST} -v mode=mtree \
-	    ${LISTS} >> ${.TARGET}.tmp \
+	${PARSELIST} -v mode=mtree ${LISTS} >> ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
 ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}

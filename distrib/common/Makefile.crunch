@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.6 2002/04/02 05:36:23 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.7 2002/04/12 01:59:45 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -15,15 +15,7 @@
 #	PARSELISTENV	environment variables to set for parselist.awk
 #
 
-PARSELISTENV+=	_SRC_TOP_=${_SRC_TOP_:Q} \
-		CRUNCHBIN=${CRUNCHBIN:Q} \
-		CURDIR=${.CURDIR:Q} \
-		DESTDIR=${DESTDIR:Q} \
-		MACHINE=${MACHINE:Q} \
-		MACHINE_ARCH=${MACHINE_ARCH:Q} \
-		OBJDIR=${.OBJDIR:Q}
-
-_PARSELIST=	${_SRC_TOP_}/distrib/common/parselist.awk
+.include "${DISTRIBDIR}/common/Makefile.parselist"
 
 ${CRUNCHBIN}: ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c
 	env SMALLPROG=1 ${MAKE} -f ${CRUNCHBIN}.mk all
@@ -33,10 +25,9 @@ ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c: ${CRUNCHBIN}.conf
 	    ${CRUNCHGEN} -f -D ${_SRC_TOP_} -L ${DESTDIR}/usr/lib \
 			${CRUNCHGEN_FLAGS} ${.ALLSRC}
 
-${CRUNCHBIN}.conf: ${LISTS} ${_PARSELIST}
+${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
-	${PARSELISTENV} awk -f ${_PARSELIST} -v mode=crunch \
-	    ${LISTS} > ${.TARGET}.tmp \
+	${PARSELIST} -v mode=crunch ${LISTS} > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
 CLEANFILES+=	${CRUNCHBIN} ${CRUNCHBIN}.conf ${CRUNCHBIN}.conf.tmp \
