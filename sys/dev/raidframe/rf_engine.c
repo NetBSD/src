@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.33 2004/03/01 23:30:59 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.34 2004/03/09 03:10:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.33 2004/03/01 23:30:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.34 2004/03/09 03:10:26 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -133,9 +133,11 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	/* we create the execution thread only once per system boot. no need
 	 * to check return code b/c the kernel panics if it can't create the
 	 * thread. */
+#if RF_DEBUG_ENGINE
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
 	}
+#endif
 	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_thread, 
 				    DAGExecutionThread, raidPtr,
 				    "raid%d", raidPtr->raidid)) {
@@ -150,14 +152,18 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		       raidPtr->raidid);
 		return (ENOMEM);
 	}
+#if RF_DEBUG_ENGINE
 	if (rf_engineDebug) {
 		printf("raid%d: Created engine thread\n", raidPtr->raidid);
 	}
+#endif
 
 	/* engine thread is now running and waiting for work */
+#if RF_DEBUG_ENGINE
 	if (rf_engineDebug) {
 		printf("raid%d: Engine thread running and waiting for events\n", raidPtr->raidid);
 	}
+#endif
 	rf_ShutdownCreate(listp, rf_ShutdownEngine, raidPtr);
 
 	return (0);
@@ -250,11 +256,13 @@ FireNode(RF_DagNode_t *node)
 	switch (node->status) {
 	case rf_fired:
 		/* fire the do function of a node */
+#if RF_DEBUG_ENGINE
 		if (rf_engineDebug) {
 			printf("raid%d: Firing node 0x%lx (%s)\n", 
 			       node->dagHdr->raidPtr->raidid, 
 			       (unsigned long) node, node->name);
 		}
+#endif
 		if (node->flags & RF_DAGNODE_FLAG_YIELD) {
 #if defined(__NetBSD__) && defined(_KERNEL)
 			/* thread_block(); */
@@ -269,11 +277,13 @@ FireNode(RF_DagNode_t *node)
 		break;
 	case rf_recover:
 		/* fire the undo function of a node */
+#if RF_DEBUG_ENGINE
 		if (rf_engineDebug) {
 			printf("raid%d: Firing (undo) node 0x%lx (%s)\n", 
 			       node->dagHdr->raidPtr->raidid,
 			       (unsigned long) node, node->name);
 		}
+#endif
 		if (node->flags & RF_DAGNODE_FLAG_YIELD)
 #if defined(__NetBSD__) && defined(_KERNEL)
 			/* thread_block(); */
@@ -620,15 +630,19 @@ ProcessNode(RF_DagNode_t *node, int context)
 		    (node->dagHdr->numCommitNodes == 0)) {
 			/* crossed commit barrier */
 			node->dagHdr->status = rf_rollForward;	
+#if RF_DEBUG_ENGINE
 			if (rf_engineDebug) {
 				printf("raid%d: node (%s) returned fail, rolling forward\n", raidPtr->raidid, node->name);
 			}
+#endif
 		} else {
 			/* never reached commit barrier */
 			node->dagHdr->status = rf_rollBackward;	
+#if RF_DEBUG_ENGINE
 			if (rf_engineDebug) {
 				printf("raid%d: node (%s) returned fail, rolling backward\n", raidPtr->raidid, node->name);
 			}
+#endif
 		}
 		break;
 	case rf_undone:
@@ -697,9 +711,11 @@ rf_DispatchDAG(RF_DagHeader_t *dag, void (*cbFunc) (void *),
 	}
 #endif
 #endif
+#if RF_DEBUG_ENGINE
 	if (rf_engineDebug) {
 		printf("raid%d: Entering DispatchDAG\n", raidPtr->raidid);
 	}
+#endif
 	raidPtr->dags_in_flight++;	/* debug only:  blow off proper
 					 * locking */
 	dag->cbFunc = cbFunc;
@@ -727,10 +743,11 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 
+#if RF_DEBUG_ENGINE
 	if (rf_engineDebug) {
 		printf("raid%d: Engine thread is running\n", raidPtr->raidid);
 	}
-
+#endif
 	s = splbio();
 
 	DO_LOCK(raidPtr);
