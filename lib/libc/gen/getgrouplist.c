@@ -1,3 +1,5 @@
+/*	$NetBSD: getgrouplist.c,v 1.4 1995/02/25 13:41:09 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.4 1995/02/25 13:41:09 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

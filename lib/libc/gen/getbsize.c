@@ -1,6 +1,8 @@
+/*	$NetBSD: getbsize.c,v 1.6 1995/02/25 13:41:34 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)getbsize.c	5.3 (Berkeley) 3/9/92";*/
-static char rcsid[] = "$Id: getbsize.c,v 1.5 1994/12/12 22:42:08 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: getbsize.c,v 1.6 1995/02/25 13:41:34 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <err.h>

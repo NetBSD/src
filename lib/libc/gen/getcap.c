@@ -1,6 +1,8 @@
+/*	$NetBSD: getcap.c,v 1.9 1995/02/25 13:41:26 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Casey Leedom of Lawrence Livermore National Laboratory.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getcap.c	5.15 (Berkeley) 3/19/93";*/
-static char *rcsid = "$Id: getcap.c,v 1.8 1994/03/26 02:51:45 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
+#else
+static char rcsid[] = "$NetBSD: getcap.c,v 1.9 1995/02/25 13:41:26 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -254,7 +259,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 				if (retval < 0) {
 					/* no record available */
 					(void)capdbp->close(capdbp);
-					return (retval); 
+					return (retval);
 				}
 				/* save the data; close frees it */
 				clen = strlen(record);
