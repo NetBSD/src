@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.65 1998/08/25 08:00:15 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.66 1998/08/25 09:00:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 1998/08/25 08:00:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 1998/08/25 09:00:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,6 +440,10 @@ void	pmap_lev1map_create __P((pmap_t));
 void	pmap_lev1map_destroy __P((pmap_t));
 void	pmap_ptpage_alloc __P((pmap_t, pt_entry_t *, int));
 void	pmap_ptpage_free __P((pmap_t, pt_entry_t *));
+void	pmap_l3pt_delref __P((pmap_t, vaddr_t, pt_entry_t *, pt_entry_t *,
+	    pt_entry_t *));
+void	pmap_l2pt_delref __P((pmap_t, pt_entry_t *, pt_entry_t *));
+void	pmap_l1pt_delref __P((pmap_t, pt_entry_t *));
 
 /*
  * PV table management functions.
@@ -2534,63 +2538,11 @@ pmap_remove_mapping(pmap, va, pte, dolock)
 		l2pte = pmap_l2pte(pmap, va, l1pte);
 
 		/*
-		 * Delete the reference on the level 3 table.
+		 * Delete the reference on the level 3 table.  It will
+		 * delete references on the level 2 and 1 tables as
+		 * appropriate.
 		 */
-		if (pmap_physpage_delref(pte) == 0) {
-			/*
-			 * No more mappings; we can free the level 3 table.
-			 */
-#ifdef DEBUG
-			if (pmapdebug & PDB_PTPAGE)
-				printf("pmap_remove_mapping: freeing level 3 "
-				    "table at 0x%lx\n", pmap_pte_pa(l2pte));
-#endif
-			pmap_ptpage_free(pmap, l2pte);
-			pmap->pm_nlev3--;
-
-			/*
-			 * We've freed a level 3 table, so we must
-			 * invalidate the TLB entry for that PT page
-			 * in the Virtual Page Table VA range, because
-			 * otherwise the PALcode will service a TLB
-			 * miss using the stale VPT TLB entry it entered
-			 * behind our back to shortcut to the VA's PTE.
-			 */
-			PMAP_INVALIDATE_TLB(pmap,
-			    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
-			    PMAP_ISACTIVE(pmap));
-
-			/*
-			 * We've freed a level 3 table, so delete the
-			 * reference on the level 2 table.
-			 */
-			if (pmap_physpage_delref(l2pte) == 0) {
-				/*
-				 * No more mappings in this segment; we
-				 * can free the level 2 table.
-				 */
-#ifdef DEBUG
-				if (pmapdebug & PDB_PTPAGE)
-					printf("pmap_remove_mapping: freeing "
-					    "level 2 table at 0x%lx\n",
-					    pmap_pte_pa(l1pte));
-#endif
-				pmap_ptpage_free(pmap, l1pte);
-				pmap->pm_nlev2--;
-
-				/*
-				 * We've freed a level 2 table, so delete
-				 * the reference on the level 1 table.
-				 */
-				if (pmap_physpage_delref(l1pte) == 0) {
-					/*
-					 * No more level 2 tables left,
-					 * go back to global kernel_lev1map.
-					 */
-					pmap_lev1map_destroy(pmap);
-				}
-			}
-		}
+		pmap_l3pt_delref(pmap, va, l1pte, l2pte, pte);
 	}
 
 	/*
@@ -3522,6 +3474,126 @@ pmap_ptpage_free(pmap, pte)
 	 * Free the page table page.
 	 */
 	pmap_physpage_free(ptpa);
+}
+
+/*
+ * pmap_l3pt_delref:
+ *
+ *	Delete a reference on a level 3 PT page.  If the reference drops
+ *	to zero, free it.
+ *
+ *	Note: the pmap must already be locked.
+ */
+void
+pmap_l3pt_delref(pmap, va, l1pte, l2pte, l3pte)
+	pmap_t pmap;
+	vaddr_t va;
+	pt_entry_t *l1pte, *l2pte, *l3pte;
+{
+
+#ifdef DIAGNOSTIC
+	if (pmap == pmap_kernel())
+		panic("pmap_l3pt_delref: kernel pmap");
+#endif
+
+	if (pmap_physpage_delref(l3pte) == 0) {
+		/*
+		 * No more mappings; we can free the level 3 table.
+		 */
+#ifdef DEBUG
+		if (pmapdebug & PDB_PTPAGE)
+			printf("pmap_l3pt_delref: freeing level 3 table at "
+			    "0x%lx\n", pmap_pte_pa(l2pte));
+#endif
+		pmap_ptpage_free(pmap, l2pte);
+		pmap->pm_nlev3--;
+
+		/*
+		 * We've freed a level 3 table, so we must
+		 * invalidate the TLB entry for that PT page
+		 * in the Virtual Page Table VA range, because
+		 * otherwise the PALcode will service a TLB
+		 * miss using the stale VPT TLB entry it entered
+		 * behind our back to shortcut to the VA's PTE.
+		 */
+		PMAP_INVALIDATE_TLB(pmap,
+		    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
+		    PMAP_ISACTIVE(pmap));
+
+		/*
+		 * We've freed a level 3 table, so delete the reference
+		 * on the level 2 table.
+		 */
+		pmap_l2pt_delref(pmap, l1pte, l2pte);
+	}
+}
+
+/*
+ * pmap_l2pt_delref:
+ *
+ *	Delete a reference on a level 2 PT page.  If the reference drops
+ *	to zero, free it.
+ *
+ *	Note: the pmap must already be locked.
+ */
+void
+pmap_l2pt_delref(pmap, l1pte, l2pte)
+	pmap_t pmap;
+	pt_entry_t *l1pte, *l2pte;
+{
+
+#ifdef DIAGNOSTIC
+	if (pmap == pmap_kernel())
+		panic("pmap_l2pt_delref: kernel pmap");
+#endif
+
+	if (pmap_physpage_delref(l2pte) == 0) {
+		/*
+		 * No more mappings in this segment; we can free the
+		 * level 2 table.
+		 */
+#ifdef DEBUG
+		if (pmapdebug & PDB_PTPAGE)
+			printf("pmap_l2pt_delref: freeing level 2 table at "
+			    "0x%lx\n", pmap_pte_pa(l1pte));
+#endif
+		pmap_ptpage_free(pmap, l1pte);
+		pmap->pm_nlev2--;
+
+		/*
+		 * We've freed a level 2 table, so delete the reference
+		 * on the level 1 table.
+		 */
+		pmap_l1pt_delref(pmap, l1pte);
+	}
+}
+
+/*
+ * pmap_l1pt_delref:
+ *
+ *	Delete a reference on a level 1 PT page.  If the reference drops
+ *	to zero, free it.
+ *
+ *	Note: the pmap must already be locked.
+ */
+void
+pmap_l1pt_delref(pmap, l1pte)
+	pmap_t pmap;
+	pt_entry_t *l1pte;
+{
+
+#ifdef DIAGNOSTIC
+	if (pmap == pmap_kernel())
+		panic("pmap_l1pt_delref: kernel pmap");
+#endif
+
+	if (pmap_physpage_delref(l1pte) == 0) {
+		/*
+		 * No more level 2 tables left, go back to the global
+		 * kernel_lev1map.
+		 */
+		pmap_lev1map_destroy(pmap);
+	}
 }
 
 /******************** Address Space Number management ********************/
