@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.48 1998/07/08 19:31:33 kleink Exp $	*/
+/*	$NetBSD: param.h,v 1.49 1998/07/23 18:15:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -156,8 +156,15 @@
  * page sizes is done here.  The paging subsystem deals with units of
  * CLSIZE pte's describing NBPG (from machine/param.h) pages each.
  */
+
+#ifdef _KERNEL
 #define	CLBYTES		(CLSIZE*NBPG)
 #define	CLOFSET		(CLSIZE*NBPG-1)	/* for clusters, like PGOFSET */
+#else
+#include <unistd.h>
+#define	CLBYTES		(getpagesize())
+#define	CLOFSET		(getpagesize()-1) /* for clusters, like PGOFSET */
+#endif
 #define	claligned(x)	((((int)(x))&CLOFSET)==0)
 #define	CLOFF		CLOFSET
 #define	CLSHIFT		(PGSHIFT+CLSIZELOG2)
