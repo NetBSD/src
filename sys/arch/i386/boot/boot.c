@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.27 1995/01/18 17:28:10 mycroft Exp $	*/
+/*	$NetBSD: boot.c,v 1.28 1995/03/12 00:10:57 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -82,7 +82,7 @@ int drive;
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
 		version);
-	gateA20();
+	gateA20(1);
 loadstart:
 	/***************************************************************\
 	* As a default set it to the first partition of the first	*

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.16 1995/02/21 06:34:58 mycroft Exp $	*/
+/*	$NetBSD: io.c,v 1.17 1995/03/12 00:11:00 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -48,20 +48,28 @@
 /*
  * Gate A20 for high memory
  */
-unsigned char	x_20 = KB_A20;
-gateA20()
+gateA20(on)
+	int on;
 {
 #ifdef	IBM_L40
 	outb(0x92, 0x2);
 #else	IBM_L40
 	while (inb(K_STATUS) & K_IBUF_FUL);
+
 	while (inb(K_STATUS) & K_OBUF_FUL)
 		(void)inb(K_RDWR);
 
 	outb(K_CMD, KC_CMD_WOUT);
 	while (inb(K_STATUS) & K_IBUF_FUL);
-	outb(K_RDWR, x_20);
+
+	if (on)
+		outb(K_RDWR, 0xdf);
+	else
+		outb(K_RDWR, 0xcd);
 	while (inb(K_STATUS) & K_IBUF_FUL);
+
+	while (inb(K_STATUS) & K_OBUF_FUL)
+		(void)inb(K_RDWR);
 #endif	IBM_L40
 }
 
