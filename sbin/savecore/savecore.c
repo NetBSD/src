@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.37 1998/07/23 19:05:59 sommerfe Exp $	*/
+/*	$NetBSD: savecore.c,v 1.38 1999/02/27 20:40:30 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.37 1998/07/23 19:05:59 sommerfe Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.38 1999/02/27 20:40:30 sommerfe Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,7 +404,7 @@ save_core()
 	 * Get the current number and update the bounds file.  Do the update
 	 * now, because may fail later and don't want to overwrite anything.
 	 */
-	umask(002);
+	umask(066);
 	(void)snprintf(path, sizeof(path), "%s/bounds", dirname);
 	if ((fp = fopen(path, "r")) == NULL)
 		goto err1;
@@ -496,7 +496,7 @@ err2:			syslog(LOG_WARNING,
 			exit(1);
 		}
 	} else
-		ofd = Create(path, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		ofd = Create(path, S_IRUSR | S_IWUSR);
 	syslog(LOG_NOTICE, "writing %skernel to %s",
 	    compress ? "compressed " : "", path);
 	while ((nr = read(ifd, buf, sizeof(buf))) > 0) {
