@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.6 1999/05/03 07:32:50 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.7 2001/05/20 20:38:24 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,13 +157,21 @@ notimplemented()
 		(*sun4pvec->fbWriteStr)(str, n);
 	} else
 #endif
-	if (obpvec->pv_romvec_vers < 2) {
-		(*obpvec->pv_putstr)(str, n);
-	} else {
-		int fd = *obpvec->pv_v2bootargs.v2_fd1;
-		(*obpvec->pv_v2devops.v2_write)(fd, str, n);
+	if (obpvec->pv_magic == OBP_MAGIC) {
+		if (obpvec->pv_romvec_vers < 2) {
+			(*obpvec->pv_putstr)(str, n);
+		} else {
+			int fd = *obpvec->pv_v2bootargs.v2_fd1;
+			(*obpvec->pv_v2devops.v2_write)(fd, str, n);
+		}
+	} else {	/* assume OFW */
+		static int stdout_node;
+		if (stdout_node == 0) {
+			int chosen = findchosen();
+			OF_getprop(chosen, "stdout", &stdout_node, sizeof(int));
+		}
+		OF_write(stdout_node, str, n);
 	}
-
 }
 
 
@@ -753,15 +761,10 @@ opf_nextprop(node, prop)
 	int node;
 	char *prop;
 {
-#if 0
-	if (OF_nextprop(node, prop, buf) != 0)
-		return (NULL);
-
+#define OF_NEXTPROP_BUF_SIZE 32	/* specified by the standard */
+	static char buf[OF_NEXTPROP_BUF_SIZE];
+	OF_nextprop(node, prop, buf);
 	return (buf);
-#else
-	printf("opf_nextprop not implemented yet\n");
-	return (NULL);
-#endif
 }
 
 static void prom_init_oldmon __P((void));
@@ -943,6 +946,7 @@ prom_init_opf()
 	promops.po_putchar = obp_v2_putchar;
 	promops.po_getchar = obp_v2_getchar;
 	promops.po_peekchar = obp_v2_peekchar;
+	promops.po_putstr = obp_v2_putstr;
 
 	promops.po_open = OF_open;
 	promops.po_close = OF_close;
