@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.6 2000/07/09 20:57:46 pk Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.7 2000/07/15 19:57:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 struct com_obio_softc {
 	struct com_softc osc_com;	/* real "com" softc */
 
+	int osc_tadpole;		/* is this on a tadpole */
 	/* OBIO-specific goo. */
 	struct evcnt osc_intrcnt;	/* interrupt counting */
 };
@@ -118,19 +119,35 @@ com_obio_match(parent, cf, aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	int tadpole = 0;
+	int need_probe = 0;
+	int rv = 0;
+	u_int8_t auxregval;
 
 	if (uoba->uoba_isobio4 != 0) {
 		return (0);
 	}
 
 	/* Tadpole 3GX/3GS uses "modem" for a 16450 port
+	 * (We need to enable it before probing)
 	 */
 	if (strcmp("modem", sa->sa_name) == 0) {
-		bus_space_handle_t ioh;
-		int rv = 0;
-		u_int8_t auxregval = *AUXIO4M_REG;
-		 *AUXIO4M_REG = auxregval | (AUXIO4M_LED|AUXIO4M_LTE);
+		auxregval = *AUXIO4M_REG;
+		*AUXIO4M_REG = auxregval | (AUXIO4M_LED|AUXIO4M_LTE);
 		DELAY(100);
+		tadpole = 1;
+		need_probe = 1;
+	}
+
+	/* Sun JavaStation 1 uses "su" for a 16550 port
+	 */
+	if (strcmp("su", sa->sa_name) == 0) {
+		need_probe = 1;
+	}
+
+	if (need_probe) {
+		bus_space_handle_t ioh;
+
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 				 sa->sa_offset, sa->sa_size,
 				 BUS_SPACE_MAP_LINEAR, 0,
@@ -143,10 +160,13 @@ com_obio_match(parent, cf, aux)
 #endif
 			bus_space_unmap(sa->sa_bustag, ioh, sa->sa_size);
 		}
-		*AUXIO4M_REG = auxregval;
-		return (rv);
 	}
-	return (0);
+
+	/* Disable the com port if tadpole */
+	if (tadpole)
+		*AUXIO4M_REG = auxregval;
+
+	return (rv);
 }
 
 static void
@@ -158,6 +178,10 @@ com_obio_attach(parent, self, aux)
 	struct com_softc *sc = &osc->osc_com;
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+
+	if (strcmp("modem", sa->sa_name) == 0) {
+		osc->osc_tadpole = 1;
+	}
 
 	/*
 	 * We're living on an obio that looks like an sbus slot.
@@ -173,15 +197,17 @@ com_obio_attach(parent, self, aux)
 		return;
 	}
 
-	*AUXIO4M_REG |= (AUXIO4M_LED|AUXIO4M_LTE);
-	do {
-		DELAY(100);
-	} while (!comprobe1(sc->sc_iot, sc->sc_ioh));
+	if (osc->osc_tadpole) {
+		*AUXIO4M_REG |= (AUXIO4M_LED|AUXIO4M_LTE);
+		do {
+			DELAY(100);
+		} while (!comprobe1(sc->sc_iot, sc->sc_ioh));
 #if 0
-	printf("modem: attach: lcr=0x%02x iir=0x%02x\n",
-		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3),
-		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 2));
+		printf("modem: attach: lcr=0x%02x iir=0x%02x\n",
+			bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3),
+			bus_space_read_1(sc->sc_iot, sc->sc_ioh, 2));
 #endif
+	}
 
 	sc->sc_frequency = COM_FREQ;
 	com_attach_subr(sc);
