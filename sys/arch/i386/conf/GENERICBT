@@ -1,7 +1,7 @@
 #
 # GENERICBT -- Generic machine w/bt driver -- distribution floppy
 #
-#	$Id: GENERICBT,v 1.12.2.3 1994/08/09 22:32:45 mycroft Exp $
+#	$Id: GENERICBT,v 1.12.2.4 1994/10/17 21:51:34 cgd Exp $
 #
 
 machine		"i386"
@@ -112,7 +112,7 @@ device ed2 at isa? port 0x300 irq 10 iomem 0xcc000
 #device el0 at isa? port 0x300 irq 9
 device ep0 at isa? port ? irq ?
 device ie0 at isa? port 0x360 irq 7 iomem 0xd0000
-device le0 at isa? port 0x320 irq 10 drq 7
+#device le0 at isa? port 0x320 irq 10 drq 7
 
 device		npx0	at isa? port "IO_NPX" irq 13
 
