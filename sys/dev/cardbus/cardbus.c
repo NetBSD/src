@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.16 1999/12/11 00:29:11 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.17 2000/01/13 10:27:31 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -367,9 +367,9 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 	bar_index--;
 	cis->bar[bar_index].flags = tuple[2];
 	cis->bar[bar_index].size = (tuple[4] << 0) |
-				   (tuple[5] << 8) |
-				   (tuple[6] << 16) |
-				   (tuple[7] << 24);
+				    (tuple[5] << 8) |
+				    (tuple[6] << 16) |
+				    (tuple[7] << 24);
 	break;
     case PCMCIA_CISTPL_FUNCID:
 	cis->funcid = tuple[2];
@@ -506,6 +506,8 @@ cardbus_attach_card(sc)
     ct->ct_sc = sc;
     ct->ct_next = NULL;
     *previous_next = ct;
+
+    memset(&ca, 0, sizeof(ca));
 
     ca.ca_unit = sc->sc_dev.dv_unit;
     ca.ca_ct = ct;
