@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1997/04/16 22:10:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,8 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
+#include <machine/cpu.h>
+
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
@@ -68,11 +70,9 @@ void
 decr_intr(frame)
 	struct clockframe *frame;
 {
-	int msr;
 	u_long tb;
 	long tick;
 	int nticks;
-	int pri;
 
 	/*
 	 * Check whether we are initialized.
@@ -94,30 +94,7 @@ decr_intr(frame)
 	 */
 	lasttb = tb + tick - ticks_per_intr;
 
-	pri = cpl;
-	
-	if (pri & SPLCLOCK)
-		clockpending += nticks;
-	else {
-		cpl = pri | SPLCLOCK | SPLSOFTCLOCK | SPLSOFTNET;
-
-		/*
-		 * Reenable interrupts
-		 */
-		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-		
-		/*
-		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
-		 */
-		frame->pri = pri | SPLSOFTCLOCK;
-		while (--nticks > 0)
-			hardclock(frame);
-		frame->pri = pri;
-		hardclock(frame);
-	}
-	intr_return(pri);
+	clock_return(frame, nticks);
 }
 
 void
@@ -165,8 +142,8 @@ mftb()
 	u_long scratch;
 	u_quad_t tb;
 	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
-	     : "=r"(tb), "=r"(scratch));
+	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
+	    : "=r"(tb), "=r"(scratch));
 	return tb;
 }
 
