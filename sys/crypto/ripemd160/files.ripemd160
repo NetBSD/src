@@ -1,0 +1,5 @@
+#	$NetBSD: files.ripemd160,v 1.1 2003/07/25 09:46:05 itojun Exp $
+
+define	ripemd160
+
+file	crypto/ripemd160/rmd160.c	ripemd160
