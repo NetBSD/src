@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.38 2000/05/26 16:38:14 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39 2000/05/27 19:42:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -822,16 +822,25 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
-		if (tlp_isv_srom_enaddr(sc, enaddr)) {
-			printf("%s: SROM not in ISV format\n",
-			    sc->sc_dev.dv_xname);
-			goto cant_cope;
-		}
+		/*
+		 * Some boards with the Davicom chip have an ISV
+		 * SROM (mostly DM9102A boards -- trying to describe
+		 * the HomePNA PHY, probably) although the data in
+		 * them is generally wrong.  Check for ISV format
+		 * and grab the Ethernet address that way, and if
+		 * that fails, fall back on grabbing it from an
+		 * observed offset of 20 (which is where it would
+		 * be in an ISV SROM anyhow, tho ISV can cope with
+		 * multi-port boards).
+		 */
+		if (tlp_isv_srom_enaddr(sc, enaddr))
+			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
 
 		/*
 		 * Davicom chips all have an internal MII interface
-		 * and a built-in PHY.  DM9102A also has a HomePNA
-		 * interface on an external MII interface.
+		 * and a built-in PHY.  DM9102A also has a an external
+		 * MII interface, usually with a HomePNA PHY attached
+		 * to it.
 		 */
 		sc->sc_mediasw = &tlp_dm9102_mediasw;
 		break;
