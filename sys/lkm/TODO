@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.3 2000/11/30 16:01:44 jdolecek Exp $
+$NetBSD: TODO,v 1.4 2000/12/08 23:08:35 jdolecek Exp $
 
 Always a lot to do.  :)
 
@@ -6,9 +6,10 @@ o  Learn how loadable devices can configure themselves, like the interrupt,
    dma, probing, attaching, etc.  Then start adding some of those to the
    lkm tree.
 
-o  Figgure out if binary emulation (freebsd, linux, ultrix, etc) can be
-   made loadable or not.  [They can be.  I have some kernel mods which
-   will make freebsd and linux loadable at least]
+o  Test compat and exec modules on more platforms, make necessary MD
+   changes to sys/arch/ or sys/compat/ code to make those modules actually
+   usable.
+   Currently, only Linux/ELF on i386 is easily loadable.
 
 o  decide if it is even useful to make ffs into a loadable module.
    [for diskless boots, sure, why not]
