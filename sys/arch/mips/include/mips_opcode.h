@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.7 2000/07/11 06:27:58 jeffs Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.8 2001/08/13 18:48:48 soda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -273,7 +273,6 @@ typedef union {
 #define OP_TEQI		014		/* MIPS-II, for r4000 port */
 #define OP_TNEI		016		/* MIPS-II, for r4000 port */
 
-#define OP_BLTZAL	020
 #define OP_BLTZAL	020		/* MIPS-II, for r4000 port */
 #define OP_BGEZAL	021
 #define OP_BLTZALL	022
