@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.18 1999/06/20 01:23:35 cgd Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.19 1999/06/20 05:44:27 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,7 @@
 
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
-menu fullpart, x=20, y=15, title  "Faite votre choix";
+menu fullpart, y=15, title  "Faite votre choix";
 	option "Utilisation d'une partie du disque", exit, action  {usefull = 0;};
 	option "Utilisation de tout le disque", 	    exit, action  {usefull = 1;};
 
@@ -180,7 +180,7 @@ menu editfsparts, y=13, exit;
 	option "Changer d'unité", action { reask_sizemult(); };
  
 
-menu md_distcustom, x=30, y=3, exit, title "Sélection des composants";
+menu md_distcustom, y=3, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
 	option  "Outils de développement ", 	 action { toggle_getit (3); };
 	option  "Jeux", 		 action { toggle_getit (4); };
