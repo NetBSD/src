@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.15 2000/02/02 17:09:45 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.16 2000/02/02 17:50:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ sqphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = sqphy_service;
+	sc->mii_status = sqphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -243,7 +244,7 @@ sqphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	sqphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
