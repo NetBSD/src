@@ -1,13 +1,13 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.1 1997/09/21 16:49:48 veego Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.1.4.1 1997/10/30 07:13:48 mrg Exp $	*/
 
 /*
- * (C)opyright 1997 by Darren Reed.
+ * Copyright (C) 1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.0.2.6 1997/09/10 13:08:18 darrenr Exp 
+ * Id: ip_log.c,v 2.0.2.13 1997/10/29 12:14:11 darrenr Exp 
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
@@ -46,7 +46,7 @@
 # endif
 # include <sys/uio.h>
 # if !SOLARIS
-#  if NetBSD > 199609
+#  if (NetBSD > 199609) || (OpenBSD > 199603)
 #   include <sys/dirent.h>
 #  else
 #   include <sys/dir.h>
@@ -75,7 +75,15 @@
 # endif
 # include <net/route.h>
 # include <netinet/in.h>
+#ifdef __sgi
+#include <sys/ddi.h>
+# ifdef IFF_DRVRLOCK /* IRIX6 */
+#include <sys/hashing.h>
+# endif
+#endif
+#if !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /* IRIX < 6 */
 # include <netinet/in_var.h>
+#endif
 # include <netinet/in_systm.h>
 # include <netinet/ip.h>
 # include <netinet/ip_var.h>
@@ -98,9 +106,11 @@
 # endif
 
 
-#if SOLARIS
+#if SOLARIS || defined(__sgi)
 extern	kmutex_t	ipl_mutex;
+# if SOLARIS
 extern	kcondvar_t	iplwait;
+# endif
 #endif
 
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
@@ -123,7 +133,7 @@ void ipflog_init()
 		iplh[i] = &iplt[i];
 		iplused[i] = 0;
 	}
-# if BSD >= 199306 || defined(__FreeBSD__)
+# if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
 	microtime(&tv);
 # else
 	uniqtime(&tv);
@@ -162,8 +172,10 @@ mb_t *m;
 	 * calculate header size.
 	 */
 	hlen = fin->fin_hlen;
-	if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP)
+	if (ip->ip_p == IPPROTO_TCP)
 		hlen += MIN(sizeof(tcphdr_t), fin->fin_dlen);
+	else if (ip->ip_p == IPPROTO_UDP)
+		hlen += MIN(sizeof(udphdr_t), fin->fin_dlen);
 	else if (ip->ip_p == IPPROTO_ICMP) {
 		struct	icmp	*icmp = (struct icmp *)((char *)ip + hlen);
  
@@ -194,7 +206,8 @@ mb_t *m;
 	bcopy(ifp->ill_name, ipfl.fl_ifname, MIN(ifp->ill_name_length, 4));
 	mlen = (flags & FR_LOGBODY) ? MIN(msgdsize(m) - hlen, 128) : 0;
 # else
-#  if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
+#  if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
+	(defined(OpenBSD) && (OpenBSD >= 199603))
 	strncpy(ipfl.fl_ifname, ifp->if_xname, IFNAMSIZ);
 #  else
 	ipfl.fl_unit = (u_char)ifp->if_unit;
@@ -292,6 +305,7 @@ int *types, cnt;
 	 * amount of space we're going to use.
 	 */
 	ipl = (iplog_t *)buf;
+	ipl->ipl_magic = IPL_MAGIC;
 	ipl->ipl_count = 1;
 	ipl->ipl_next = NULL;
 	ipl->ipl_dsize = len;
@@ -301,7 +315,7 @@ int *types, cnt;
 #  ifdef	sun
 	uniqtime((struct timeval *)&ipl->ipl_sec);
 #  endif
-#  if BSD >= 199306 || defined(__FreeBSD__)
+#  if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
 	microtime((struct timeval *)&ipl->ipl_sec);
 #  endif
 # endif
@@ -329,7 +343,8 @@ int *types, cnt;
 	cv_signal(&iplwait);
 	mutex_exit(&ipl_mutex);
 # else
-	wakeup(iplh[dev]);
+	MUTEX_EXIT(&ipl_mutex);
+	wakeup(&iplh[dev]);
 # endif
 	return 1;
 }
@@ -361,24 +376,25 @@ struct uio *uio;
 	 * Lock the log so we can snapshot the variables.  Wait for a signal
 	 * if the log is empty.
 	 */
-	SPLNET(s);
+	SPL_NET(s);
 	MUTEX_ENTER(&ipl_mutex);
 
+	while (!iplused[unit] || !iplt[unit]) {
 # if SOLARIS && defined(_KERNEL)
-	while (!iplused[unit])
 		if (!cv_wait_sig(&iplwait, &ipl_mutex)) {
 			MUTEX_EXIT(&ipl_mutex);
 			return EINTR;
 		}
 # else
-	while (!iplused[unit]) {
-		SPLX(s);
-		error = SLEEP(iplh[unit], "ipl sleep");
+		MUTEX_EXIT(&ipl_mutex);
+		SPL_X(s);
+		error = SLEEP(&iplh[unit], "ipl sleep");
 		if (error)
 			return error;
-		SPLNET(s);
-	}
+		SPL_NET(s);
+		MUTEX_ENTER(&ipl_mutex);
 # endif
+	}
 
 # if BSD >= 199306 || defined(__FreeBSD__)
 	uio->uio_rw = UIO_READ;
@@ -393,21 +409,23 @@ struct uio *uio;
 		 */
 		iplt[unit] = ipl->ipl_next;
 		MUTEX_EXIT(&ipl_mutex);
-		SPLX(s);
+		SPL_X(s);
 		error = UIOMOVE((caddr_t)ipl, ipl->ipl_dsize, UIO_READ, uio);
 		KFREES((caddr_t)ipl, ipl->ipl_dsize);
 		if (error)
 			break;
-		SPLNET(s);
+		SPL_NET(s);
 		MUTEX_ENTER(&ipl_mutex);
 		iplused[unit] -= dlen;
 	}
-	if (!ipl)
+	if (!ipl) {
+		iplused[unit] = 0;
 		iplh[unit] = &iplt[unit];
+	}
 
 	if (!error) {
 		MUTEX_EXIT(&ipl_mutex);
-		SPLX(s);
+		SPL_X(s);
 	}
 	return error;
 }

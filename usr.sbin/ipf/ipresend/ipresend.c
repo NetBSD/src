@@ -1,4 +1,4 @@
-/*	$NetBSD: ipresend.c,v 1.1.1.3 1997/09/21 16:49:04 veego Exp $	*/
+/*	$NetBSD: ipresend.c,v 1.1.1.3.2.1 1997/10/30 07:17:02 mrg Exp $	*/
 
 /*
  * ipresend.c (C) 1995-1997 Darren Reed
@@ -12,8 +12,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipresend.c,v 2.0.2.9 1997/10/12 09:48:37 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +57,11 @@ char	default_device[] = "ln0";
 #    ifdef	__bsdi__
 char	default_device[] = "ef0";
 #    else
+#     ifdef	__sgi
+char	default_device[] = "ec0";
+#     else
 char	default_device[] = "lan0";
+#     endif
 #    endif
 #   endif
 #  endif

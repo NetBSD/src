@@ -1,7 +1,7 @@
-/*	$NetBSD: ipnat.c,v 1.9 1997/09/21 18:01:55 veego Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.9.2.1 1997/10/30 07:16:57 mrg Exp $	*/
 
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -21,12 +21,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
 #include <stdlib.h>
@@ -54,11 +54,11 @@
 #include "netinet/ip_nat.h"
 #include "kmem.h"
 
-
-#if !defined(lint) && defined(LIBC_SCCS)
-static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "Id: ipnat.c,v 2.0.2.17 1997/09/10 13:08:21 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 2.0.2.21 1997/10/29 12:16:32 darrenr Exp ";
 #endif
+
 
 #if	SOLARIS
 #define	bzero(a,b)	memset(a,0,b)
@@ -240,7 +240,7 @@ void *ptr;
 		else
 			printf("%s", inet_ntoa(np->in_out[1]));
 		if (*np->in_plabel) {
-			printf(" proxy");
+			printf(" proxy port");
 			if (np->in_dport)
 				printf(" %hu", ntohs(np->in_dport));
 			printf(" %.*s/%d", (int)sizeof(np->in_plabel),
@@ -755,9 +755,12 @@ int opts;
 	FILE	*fp;
 	int	linenum = 1;
 
-	if (strcmp(file, "-"))
-		fp = fopen(file, "r");
-	else
+	if (strcmp(file, "-")) {
+		if (!(fp = fopen(file, "r"))) {
+			perror(file);
+			exit(1);
+		}
+	} else
 		fp = stdin;
 
 	while (fgets(line, sizeof(line) - 1, fp)) {
@@ -779,7 +782,8 @@ int opts;
 		}
 		linenum++;
 	}
-	fclose(stdin);
+	if (fp != stdin)
+		fclose(fp);
 }
 
 

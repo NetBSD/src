@@ -1,13 +1,13 @@
-/*	$NetBSD: ip_auth.h,v 1.1.1.2 1997/09/21 16:49:28 veego Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.1.1.2.2.1 1997/10/30 07:13:41 mrg Exp $	*/
 
 /*
- * (C)opyright 1997 by Darren Reed & Guido Van Rooij.
+ * Copyright (C) 1997 by Darren Reed & Guido Van Rooij.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_auth.h,v 2.0.2.8 1997/06/23 04:52:53 darrenr Exp 
+ * Id: ip_auth.h,v 2.0.2.10 1997/10/29 12:14:07 darrenr Exp 
  *
  */
 #ifndef	__IP_AUTH_H__
@@ -60,7 +60,7 @@ extern	int	fr_newauth __P((mb_t *, fr_info_t *, ip_t *, qif_t *));
 #else
 extern	int	fr_newauth __P((mb_t *, fr_info_t *, ip_t *));
 #endif
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 extern	int	fr_auth_ioctl __P((caddr_t, u_long, frentry_t *, frentry_t **));
 #else
 extern	int	fr_auth_ioctl __P((caddr_t, int, frentry_t *, frentry_t **));

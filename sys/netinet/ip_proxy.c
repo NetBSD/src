@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_proxy.c,v 1.6 1997/09/21 18:03:28 veego Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.6.2.1 1997/10/30 07:13:51 mrg Exp $	*/
 
 /*
- * (C)opyright 1997 by Darren Reed.
+ * Copyright (C) 1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "Id: ip_proxy.c,v 2.0.2.6 1997/07/27 07:24:54 darrenr Exp ";
+#if !defined(lint)
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11 1997/10/23 11:40:35 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -139,6 +139,12 @@ tcphdr_t *tcp;
 	return aps;
 }
 
+
+/*
+ * Allocate a new application proxy structure and fill it in with the
+ * relevant details.  call the init function once complete, prior to
+ * returning.
+ */
 static ap_session_t *ap_new_session(apr, ip, tcp, fin, nat)
 aproxy_t *apr;
 ip_t *ip;
@@ -168,20 +174,13 @@ nat_t *nat;
 	KMALLOC(aps, ap_session_t *, sizeof(*aps));
 	if (!aps)
 		return NULL;
-	bzero((char *)aps, sizeof(aps));
-	apr->apr_ref++;
+	bzero((char *)aps, sizeof(*aps));
 	aps->aps_apr = apr;
 	aps->aps_src = ip->ip_src;
 	aps->aps_dst = ip->ip_dst;
 	aps->aps_p = ip->ip_p;
 	aps->aps_tout = 1200;	/* XXX */
 	if (tcp) {
-		if (ip->ip_p == IPPROTO_TCP) {
-			aps->aps_seqoff = 0;
-			aps->aps_ackoff = 0;
-			aps->aps_state[0] = 0;
-			aps->aps_state[1] = 0;
-		}
 		aps->aps_sport = tcp->th_sport;
 		aps->aps_dport = tcp->th_dport;
 	}
@@ -194,6 +193,10 @@ nat_t *nat;
 }
 
 
+/*
+ * check to see if a packet should be passed through an active proxy routine
+ * if one has been setup for it.
+ */
 int ap_check(ip, tcp, fin, nat)
 ip_t *ip;
 tcphdr_t *tcp;
@@ -209,9 +212,18 @@ nat_t *nat;
 
 	if ((aps = ap_find(ip, tcp)) ||
 	    (aps = ap_new_session(nat->nat_ptr->in_apr, ip, tcp, fin, nat))) {
-		if (ip->ip_p == IPPROTO_TCP)
+		if (ip->ip_p == IPPROTO_TCP) {
+			/*
+			 * verify that the checksum is correct.  If not, then
+			 * don't do anything with this packet.
+			 */
+			if (tcp->th_sum != fr_tcpsum(*(mb_t **)fin->fin_mp,
+						     ip, tcp))
+				return -1;
 			fr_tcp_age(&aps->aps_tout, aps->aps_state, ip, fin,
 				   tcp->th_sport == aps->aps_sport);
+		}
+
 		apr = aps->aps_apr;
 		err = 0;
 		if (fin->fin_out) {
@@ -224,7 +236,7 @@ nat_t *nat;
 							aps, nat);
 		}
 		if (err == 2) {
-			tcp->th_sum = fr_tcpsum(fin->fin_mp, ip, tcp);
+			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip, tcp);
 			err = 0;
 		}
 		return err;
@@ -233,16 +245,22 @@ nat_t *nat;
 }
 
 
+#ifdef __STDC__
+aproxy_t *ap_match(u_char pr, char *name)
+#else
 aproxy_t *ap_match(pr, name)
 u_char pr;
 char *name;
+#endif
 {
 	aproxy_t *ap;
 
 	for (ap = ap_proxies; ap->apr_p; ap++)
 		if ((ap->apr_p == pr) &&
-		    !strncmp(name, ap->apr_label, sizeof(ap->apr_label)))
+		    !strncmp(name, ap->apr_label, sizeof(ap->apr_label))) {
+			ap->apr_ref++;
 			return ap;
+		}
 	return NULL;
 }
 
@@ -250,7 +268,7 @@ char *name;
 void ap_free(ap)
 aproxy_t *ap;
 {
-	KFREE(ap);
+	ap->apr_ref--;
 }
 
 

@@ -1,14 +1,15 @@
-/*	$NetBSD: iptests.c,v 1.4 1997/09/21 18:02:24 veego Exp $	*/
+/*	$NetBSD: iptests.c,v 1.4.2.1 1997/10/30 07:17:40 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.0.2.13 1997/10/23 11:42:45 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>
@@ -17,7 +18,7 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
-#if !defined(solaris)
+#if !defined(solaris) && !defined(linux) && !defined(__sgi)
 # define _KERNEL
 # define KERNEL
 # include <sys/file.h>
@@ -27,8 +28,12 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 # include <sys/user.h>
 # include <sys/proc.h>
 #endif
-#include <kvm.h>
-#include <sys/socket.h>
+#if !defined(ultrix) && !defined(hpux) && !defined(linux) && !defined(__sgi)
+# include <kvm.h>
+#endif
+#ifndef	ultrix
+# include <sys/socket.h>
+#endif
 #if defined(solaris)
 # include <sys/stream.h>
 #endif
@@ -38,28 +43,37 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #include <sys/session.h>
 #endif
 #if BSD >= 199103
-#include <sys/sysctl.h>
-#include <sys/filedesc.h>
-#include <paths.h>
+# include <sys/sysctl.h>
+# include <sys/filedesc.h>
+# include <paths.h>
 #endif
 #include <netinet/in_systm.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <net/route.h>
+#if defined(linux) && (LINUX >= 0200)
+# include <asm/atomic.h>
+#endif
+#if !defined(linux)
+# include <net/route.h>
+#else
+# define __KERNEL__	/* because there's a macro not wrapped by this */
+# include <net/route.h>	/* in this file :-/ */
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip_var.h>
-#include <netinet/in_pcb.h>
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
-# if defined(__SVR4) || defined(__svr4__)
-#include <sys/sysmacros.h>
-# endif
+#ifndef linux
+# include <netinet/ip_var.h>
+# include <netinet/in_pcb.h>
+# include <netinet/tcp_timer.h>
+# include <netinet/tcp_var.h>
+#endif
+#if defined(__SVR4) || defined(__svr4__) || defined(__sgi)
+# include <sys/sysmacros.h>
+#endif
 #include "ipsend.h"
 
 
@@ -707,7 +721,7 @@ struct	in_addr	gwip;
 int	ptest;
 {
 	struct	timeval	tv;
-	struct	udphdr	*u;
+	udphdr_t	*u;
 	int	nfd, i;
 
 
@@ -840,8 +854,8 @@ int	ptest;
 
 	if (!ptest || (ptest == 5)) {
 		/*
-		 * Test 5: sizeof(struct ip) <= MTU <= sizeof(struct udphdr) +
-		 * sizeof(struct ip)
+		 * Test 5: sizeof(ip_t) <= MTU <= sizeof(udphdr_t) +
+		 * sizeof(ip_t)
 		 */
 		printf("4.5 UDP 20 <= MTU <= 32\n");
 		for (i = sizeof(*ip); i <= u->uh_ulen; i++) {
@@ -869,7 +883,9 @@ int	ptest;
 	int	nfd, i;
 
 	t = (tcphdr_t *)((char *)ip + (ip->ip_hl << 2));
+#ifndef	linux
 	t->th_x2 = 0;
+#endif
 	t->th_off = 0;
 	t->th_sport = 1;
 	t->th_dport = 1;
@@ -1007,7 +1023,7 @@ int	ptest;
 		PAUSE();
 	}
 
-#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__)
+#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__) && !defined(__sgi)
 	{
 	struct tcpcb *t, tcb;
 	struct tcpiphdr ti;

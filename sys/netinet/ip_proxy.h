@@ -1,13 +1,13 @@
-/*	$NetBSD: ip_proxy.h,v 1.7 1997/09/21 18:03:30 veego Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.7.2.1 1997/10/30 07:13:52 mrg Exp $	*/
 
 /*
- * (C)opyright 1997 by Darren Reed.
+ * Copyright (C) 1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_proxy.h,v 2.0.2.7 1997/07/05 04:38:48 darrenr Exp 
+ * Id: ip_proxy.h,v 2.0.2.10 1997/10/19 15:39:23 darrenr Exp 
  */
 
 #ifndef	__IP_PROXY_H__
@@ -28,10 +28,10 @@ struct	ipnat;
 typedef	struct	ap_tcp {
 	u_short	apt_sport;	/* source port */
 	u_short	apt_dport;	/* destination port */
-	short	apt_seqoff;	/* sequence # difference */
-	short	apt_ackoff;	/* ack # difference */
-	tcp_seq	apt_after;	/* don't change seq-off until after this */
-	char	apt_state[2];	/* connection state */
+	short	apt_sel;	/* seqoff/after set selector */
+	short	apt_seqoff[2];	/* sequence # difference */
+	tcp_seq	apt_after[2];	/* don't change seq-off until after this */
+	u_char	apt_state[2];	/* connection state */
 } ap_tcp_t;
 
 typedef	struct	ap_udp {
@@ -59,11 +59,10 @@ typedef	struct ap_session {
 
 #define	aps_sport	aps_un.apu_tcp.apt_sport
 #define	aps_dport	aps_un.apu_tcp.apt_dport
+#define	aps_sel		aps_un.apu_tcp.apt_sel
 #define	aps_seqoff	aps_un.apu_tcp.apt_seqoff
-#define	aps_ackoff	aps_un.apu_tcp.apt_ackoff
-#define	aps_sumoff	aps_un.apu_tcp.apt_sumoff
-#define	aps_state	aps_un.apu_tcp.apt_state
 #define	aps_after	aps_un.apu_tcp.apt_after
+#define	aps_state	aps_un.apu_tcp.apt_state
 
 
 typedef	struct	aproxy	{

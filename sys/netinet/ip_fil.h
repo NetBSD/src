@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_fil.h,v 1.20 1997/09/21 18:03:15 veego Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.20.2.1 1997/10/30 07:13:45 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.0.2.34 1997/09/10 13:08:17 darrenr Exp 
+ * Id: ip_fil.h,v 2.0.2.39 1997/10/29 12:14:10 darrenr Exp 
  */
 
 #ifndef	__IP_FIL_H__
@@ -278,6 +278,7 @@ typedef	struct	friostat	{
 	struct	frentry		*f_acctin[2];
 	struct	frentry		*f_acctout[2];
 	struct	frentry		*f_auth;
+	u_long	f_froute[2];
 	int	f_active;
 } friostat_t;
 
@@ -304,6 +305,7 @@ typedef	struct frgroup {
  * structure which is then followed by any packet data.
  */
 typedef	struct iplog	{
+	u_long	ipl_magic;
 	u_long	ipl_sec;
 	u_long	ipl_usec;
 	u_int	ipl_len;
@@ -312,9 +314,11 @@ typedef	struct iplog	{
 	struct	iplog	*ipl_next;
 } iplog_t;
 
+#define IPL_MAGIC 0x49504c4d /* 'IPLM' */
 
 typedef	struct	ipflog	{
-#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
+        (defined(OpenBSD) && (OpenBSD >= 199603))
 	u_char	fl_ifname[IFNAMSIZ];
 #else
 	u_int	fl_unit;
@@ -376,7 +380,7 @@ extern	int	ipf_log __P((void));
 extern	void	ipfr_fastroute __P((struct ip *, fr_info_t *, frdest_t *));
 extern	struct	ifnet *get_unit __P((char *));
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
-# ifdef	__NetBSD__
+# if defined(__NetBSD__) || defined(__OpenBSD__)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
 # else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
@@ -422,28 +426,45 @@ extern	int	fr_check __P((struct ip *, int, void *, int, mb_t **));
 extern	int	(*fr_checkp) __P((struct ip *, int, void *, int, mb_t **));
 extern	int	send_reset __P((struct tcpiphdr *));
 extern	void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
-#  ifdef	IPFILTER_LKM
+extern	size_t	mbufchainlen __P((struct mbuf *));
+#  ifdef	__sgi
+#   include <sys/cred.h>
+extern	int	iplioctl __P((dev_t, int, caddr_t, int, cred_t *, int *));
+extern	int	iplopen __P((dev_t *, int, int, cred_t *));
+extern	int	iplclose __P((dev_t, int, int, cred_t *));
+extern	int	iplread __P((dev_t, struct uio *, cred_t *));
+extern	int	ipfsync __P((void));
+extern	int	ipfilter_sgi_attach __P((void));
+extern	void	ipfilter_sgi_detach __P((void));
+extern	void	ipfilter_sgi_intfsync __P((void));
+#  else
+#   ifdef	IPFILTER_LKM
 extern	int	iplidentify __P((char *));
-#  endif
-#  if (_BSDI_VERSION >= 199510) || (__FreeBSD_version >= 220000) || \
-      (NetBSD >= 199511)
-#   ifdef	__NetBSD__
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-#   else
-extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
 #   endif
+#   if (_BSDI_VERSION >= 199510) || (__FreeBSD_version >= 220000) || \
+      (NetBSD >= 199511)
+#    ifdef	__NetBSD__
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+#    else
+extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
+#    endif
 extern	int	iplopen __P((dev_t, int, int, struct proc *));
 extern	int	iplclose __P((dev_t, int, int, struct proc *));
-#  else
+#   else
+#    if defined(__OpenBSD__)
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
+#    else /* __OpenBSD__ */
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+#    endif /* __OpenBSD__ */
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
-#  endif /* (_BSDI_VERSION >= 199510) */
-#  if	BSD >= 199306
+#   endif /* (_BSDI_VERSION >= 199510) */
+#   if	BSD >= 199306
 extern	int	iplread __P((dev_t, struct uio *, int));
-#  else
+#   else
 extern	int	iplread __P((dev_t, struct uio *));
-#  endif /* BSD >= 199306 */
+#   endif /* BSD >= 199306 */
+#  endif /* __ sgi */
 # endif /* SOLARIS */
 #endif /* #ifndef _KERNEL */
 
