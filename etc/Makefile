@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.310 2005/03/25 20:15:20 tron Exp $
+#	$NetBSD: Makefile,v 1.311 2005/03/28 03:13:39 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -339,14 +339,7 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
 .if ${MKX11} != "no"
-OBSOLETE.files+=	xbase xcomp xfont
-.if ${MACHINE} == "amd64" ||	\
-    ${MACHINE} == "cats" ||	\
-    ${MACHINE} == "i386" ||	\
-    ${MACHINE} == "macppc" ||	\
-    ${MACHINE} == "sgimips"
-OBSOLETE.files+=	xserver
-.endif
+OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
 install-obsolete-lists: .PHONY
