@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.19 1999/11/15 19:22:22 fvdl Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.20 2000/06/15 22:37:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.19 1999/11/15 19:22:22 fvdl Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.20 2000/06/15 22:37:17 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *cp, *name, *action;
+	char *cp, *name;
+#ifdef TUNEFS_SOFTDEP
+	char *action;
+#endif
 	const char *special;
 	struct stat st;
 	int i;
@@ -197,6 +200,7 @@ again:
 				    sblock.fs_optim == FS_OPTTIME)
 					warnx(OPTWARN, "space", "<", MINFREE);
 				continue;
+#ifdef TUNEFS_SOFTDEP
 			case 'n':
 				name = "soft dependencies";
 				if (argc < 1)
@@ -214,6 +218,7 @@ again:
 				}
 				warnx("%s %s", name, action);
 				continue;
+#endif
 
 			case 'o':
 				name = "optimization preference";
@@ -275,8 +280,10 @@ again:
 		    sblock.fs_maxbpg);
 		fprintf(stdout, "\tminimum percentage of free space %d%%\n",
 		    sblock.fs_minfree);
+#ifdef TUNEFS_SOFTDEP
 		fprintf(stdout, "\tsoft dependencies: %s\n",
 		    (sblock.fs_flags & FS_DOSOFTDEP) ? "on" : "off");
+#endif
 		fprintf(stdout, "\toptimization preference: %s\n",
 		    chg[sblock.fs_optim]);
 		fprintf(stdout, "\ttrack skew %d sectors\n",
@@ -310,7 +317,9 @@ usage()
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
+#ifdef TUNEFS_SOFTDEP
 	fprintf(stderr, "\t-n soft dependencies (`enable' or `disable')\n");
+#endif
 	fprintf(stderr, "\t-t track skew in sectors\n");
 	exit(2);
 }
