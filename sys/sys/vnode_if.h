@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.12 1998/06/05 19:41:21 kleink Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.13 1998/07/30 00:46:45 mycroft Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.14 1998/06/05 19:38:56 kleink Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.16 1998/03/01 02:22:37 fvdl Exp 
+ *	NetBSD: vnode_if.sh,v 1.17 1998/07/30 00:46:01 mycroft Exp 
  */
 
 /*
@@ -57,7 +57,7 @@ struct vop_lookup_args {
 };
 extern struct vnodeop_desc vop_lookup_desc;
 static __inline int VOP_LOOKUP __P((struct vnode *, struct vnode **, 
-    struct componentname *)) __attribute__ ((unused));
+    struct componentname *)) __attribute__((__unused__));
 static __inline int VOP_LOOKUP(dvp, vpp, cnp)
 	struct vnode *dvp;
 	struct vnode **vpp;
@@ -80,7 +80,7 @@ struct vop_create_args {
 };
 extern struct vnodeop_desc vop_create_desc;
 static __inline int VOP_CREATE __P((struct vnode *, struct vnode **, 
-    struct componentname *, struct vattr *)) __attribute__ ((unused));
+    struct componentname *, struct vattr *)) __attribute__((__unused__));
 static __inline int VOP_CREATE(dvp, vpp, cnp, vap)
 	struct vnode *dvp;
 	struct vnode **vpp;
@@ -105,7 +105,7 @@ struct vop_mknod_args {
 };
 extern struct vnodeop_desc vop_mknod_desc;
 static __inline int VOP_MKNOD __P((struct vnode *, struct vnode **, 
-    struct componentname *, struct vattr *)) __attribute__ ((unused));
+    struct componentname *, struct vattr *)) __attribute__((__unused__));
 static __inline int VOP_MKNOD(dvp, vpp, cnp, vap)
 	struct vnode *dvp;
 	struct vnode **vpp;
@@ -130,7 +130,7 @@ struct vop_open_args {
 };
 extern struct vnodeop_desc vop_open_desc;
 static __inline int VOP_OPEN __P((struct vnode *, int, struct ucred *, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_OPEN(vp, mode, cred, p)
 	struct vnode *vp;
 	int mode;
@@ -155,7 +155,7 @@ struct vop_close_args {
 };
 extern struct vnodeop_desc vop_close_desc;
 static __inline int VOP_CLOSE __P((struct vnode *, int, struct ucred *, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_CLOSE(vp, fflag, cred, p)
 	struct vnode *vp;
 	int fflag;
@@ -180,7 +180,7 @@ struct vop_access_args {
 };
 extern struct vnodeop_desc vop_access_desc;
 static __inline int VOP_ACCESS __P((struct vnode *, int, struct ucred *, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_ACCESS(vp, mode, cred, p)
 	struct vnode *vp;
 	int mode;
@@ -205,7 +205,7 @@ struct vop_getattr_args {
 };
 extern struct vnodeop_desc vop_getattr_desc;
 static __inline int VOP_GETATTR __P((struct vnode *, struct vattr *, 
-    struct ucred *, struct proc *)) __attribute__ ((unused));
+    struct ucred *, struct proc *)) __attribute__((__unused__));
 static __inline int VOP_GETATTR(vp, vap, cred, p)
 	struct vnode *vp;
 	struct vattr *vap;
@@ -230,7 +230,7 @@ struct vop_setattr_args {
 };
 extern struct vnodeop_desc vop_setattr_desc;
 static __inline int VOP_SETATTR __P((struct vnode *, struct vattr *, 
-    struct ucred *, struct proc *)) __attribute__ ((unused));
+    struct ucred *, struct proc *)) __attribute__((__unused__));
 static __inline int VOP_SETATTR(vp, vap, cred, p)
 	struct vnode *vp;
 	struct vattr *vap;
@@ -255,7 +255,7 @@ struct vop_read_args {
 };
 extern struct vnodeop_desc vop_read_desc;
 static __inline int VOP_READ __P((struct vnode *, struct uio *, int, 
-    struct ucred *)) __attribute__ ((unused));
+    struct ucred *)) __attribute__((__unused__));
 static __inline int VOP_READ(vp, uio, ioflag, cred)
 	struct vnode *vp;
 	struct uio *uio;
@@ -280,7 +280,7 @@ struct vop_write_args {
 };
 extern struct vnodeop_desc vop_write_desc;
 static __inline int VOP_WRITE __P((struct vnode *, struct uio *, int, 
-    struct ucred *)) __attribute__ ((unused));
+    struct ucred *)) __attribute__((__unused__));
 static __inline int VOP_WRITE(vp, uio, ioflag, cred)
 	struct vnode *vp;
 	struct uio *uio;
@@ -307,7 +307,7 @@ struct vop_ioctl_args {
 };
 extern struct vnodeop_desc vop_ioctl_desc;
 static __inline int VOP_IOCTL __P((struct vnode *, u_long, caddr_t, int, 
-    struct ucred *, struct proc *)) __attribute__ ((unused));
+    struct ucred *, struct proc *)) __attribute__((__unused__));
 static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	struct vnode *vp;
 	u_long command;
@@ -335,7 +335,7 @@ struct vop_poll_args {
 };
 extern struct vnodeop_desc vop_poll_desc;
 static __inline int VOP_POLL __P((struct vnode *, int, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_POLL(vp, events, p)
 	struct vnode *vp;
 	int events;
@@ -356,7 +356,7 @@ struct vop_revoke_args {
 };
 extern struct vnodeop_desc vop_revoke_desc;
 static __inline int VOP_REVOKE __P((struct vnode *, 
-    int)) __attribute__ ((unused));
+    int)) __attribute__((__unused__));
 static __inline int VOP_REVOKE(vp, flags)
 	struct vnode *vp;
 	int flags;
@@ -377,7 +377,7 @@ struct vop_mmap_args {
 };
 extern struct vnodeop_desc vop_mmap_desc;
 static __inline int VOP_MMAP __P((struct vnode *, int, struct ucred *, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_MMAP(vp, fflags, cred, p)
 	struct vnode *vp;
 	int fflags;
@@ -402,7 +402,7 @@ struct vop_fsync_args {
 };
 extern struct vnodeop_desc vop_fsync_desc;
 static __inline int VOP_FSYNC __P((struct vnode *, struct ucred *, int, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_FSYNC(vp, cred, flags, p)
 	struct vnode *vp;
 	struct ucred *cred;
@@ -427,7 +427,7 @@ struct vop_seek_args {
 };
 extern struct vnodeop_desc vop_seek_desc;
 static __inline int VOP_SEEK __P((struct vnode *, off_t, off_t, 
-    struct ucred *)) __attribute__ ((unused));
+    struct ucred *)) __attribute__((__unused__));
 static __inline int VOP_SEEK(vp, oldoff, newoff, cred)
 	struct vnode *vp;
 	off_t oldoff;
@@ -451,7 +451,7 @@ struct vop_remove_args {
 };
 extern struct vnodeop_desc vop_remove_desc;
 static __inline int VOP_REMOVE __P((struct vnode *, struct vnode *, 
-    struct componentname *)) __attribute__ ((unused));
+    struct componentname *)) __attribute__((__unused__));
 static __inline int VOP_REMOVE(dvp, vp, cnp)
 	struct vnode *dvp;
 	struct vnode *vp;
@@ -473,7 +473,7 @@ struct vop_link_args {
 };
 extern struct vnodeop_desc vop_link_desc;
 static __inline int VOP_LINK __P((struct vnode *, struct vnode *, 
-    struct componentname *)) __attribute__ ((unused));
+    struct componentname *)) __attribute__((__unused__));
 static __inline int VOP_LINK(dvp, vp, cnp)
 	struct vnode *dvp;
 	struct vnode *vp;
@@ -499,7 +499,7 @@ struct vop_rename_args {
 extern struct vnodeop_desc vop_rename_desc;
 static __inline int VOP_RENAME __P((struct vnode *, struct vnode *, 
     struct componentname *, struct vnode *, struct vnode *, 
-    struct componentname *)) __attribute__ ((unused));
+    struct componentname *)) __attribute__((__unused__));
 static __inline int VOP_RENAME(fdvp, fvp, fcnp, tdvp, tvp, tcnp)
 	struct vnode *fdvp;
 	struct vnode *fvp;
@@ -528,7 +528,7 @@ struct vop_mkdir_args {
 };
 extern struct vnodeop_desc vop_mkdir_desc;
 static __inline int VOP_MKDIR __P((struct vnode *, struct vnode **, 
-    struct componentname *, struct vattr *)) __attribute__ ((unused));
+    struct componentname *, struct vattr *)) __attribute__((__unused__));
 static __inline int VOP_MKDIR(dvp, vpp, cnp, vap)
 	struct vnode *dvp;
 	struct vnode **vpp;
@@ -552,7 +552,7 @@ struct vop_rmdir_args {
 };
 extern struct vnodeop_desc vop_rmdir_desc;
 static __inline int VOP_RMDIR __P((struct vnode *, struct vnode *, 
-    struct componentname *)) __attribute__ ((unused));
+    struct componentname *)) __attribute__((__unused__));
 static __inline int VOP_RMDIR(dvp, vp, cnp)
 	struct vnode *dvp;
 	struct vnode *vp;
@@ -576,7 +576,8 @@ struct vop_symlink_args {
 };
 extern struct vnodeop_desc vop_symlink_desc;
 static __inline int VOP_SYMLINK __P((struct vnode *, struct vnode **, 
-    struct componentname *, struct vattr *, char *)) __attribute__ ((unused));
+    struct componentname *, struct vattr *, 
+    char *)) __attribute__((__unused__));
 static __inline int VOP_SYMLINK(dvp, vpp, cnp, vap, target)
 	struct vnode *dvp;
 	struct vnode **vpp;
@@ -605,7 +606,7 @@ struct vop_readdir_args {
 };
 extern struct vnodeop_desc vop_readdir_desc;
 static __inline int VOP_READDIR __P((struct vnode *, struct uio *, 
-    struct ucred *, int *, off_t **, int *)) __attribute__ ((unused));
+    struct ucred *, int *, off_t **, int *)) __attribute__((__unused__));
 static __inline int VOP_READDIR(vp, uio, cred, eofflag, cookies, ncookies)
 	struct vnode *vp;
 	struct uio *uio;
@@ -633,7 +634,7 @@ struct vop_readlink_args {
 };
 extern struct vnodeop_desc vop_readlink_desc;
 static __inline int VOP_READLINK __P((struct vnode *, struct uio *, 
-    struct ucred *)) __attribute__ ((unused));
+    struct ucred *)) __attribute__((__unused__));
 static __inline int VOP_READLINK(vp, uio, cred)
 	struct vnode *vp;
 	struct uio *uio;
@@ -654,7 +655,7 @@ struct vop_abortop_args {
 };
 extern struct vnodeop_desc vop_abortop_desc;
 static __inline int VOP_ABORTOP __P((struct vnode *, 
-    struct componentname *)) __attribute__ ((unused));
+    struct componentname *)) __attribute__((__unused__));
 static __inline int VOP_ABORTOP(dvp, cnp)
 	struct vnode *dvp;
 	struct componentname *cnp;
@@ -673,7 +674,7 @@ struct vop_inactive_args {
 };
 extern struct vnodeop_desc vop_inactive_desc;
 static __inline int VOP_INACTIVE __P((struct vnode *, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_INACTIVE(vp, p)
 	struct vnode *vp;
 	struct proc *p;
@@ -692,7 +693,7 @@ struct vop_reclaim_args {
 };
 extern struct vnodeop_desc vop_reclaim_desc;
 static __inline int VOP_RECLAIM __P((struct vnode *, 
-    struct proc *)) __attribute__ ((unused));
+    struct proc *)) __attribute__((__unused__));
 static __inline int VOP_RECLAIM(vp, p)
 	struct vnode *vp;
 	struct proc *p;
@@ -711,7 +712,7 @@ struct vop_lock_args {
 };
 extern struct vnodeop_desc vop_lock_desc;
 static __inline int VOP_LOCK __P((struct vnode *, 
-    int)) __attribute__ ((unused));
+    int)) __attribute__((__unused__));
 static __inline int VOP_LOCK(vp, flags)
 	struct vnode *vp;
 	int flags;
@@ -730,7 +731,7 @@ struct vop_unlock_args {
 };
 extern struct vnodeop_desc vop_unlock_desc;
 static __inline int VOP_UNLOCK __P((struct vnode *, 
-    int)) __attribute__ ((unused));
+    int)) __attribute__((__unused__));
 static __inline int VOP_UNLOCK(vp, flags)
 	struct vnode *vp;
 	int flags;
@@ -752,7 +753,7 @@ struct vop_bmap_args {
 };
 extern struct vnodeop_desc vop_bmap_desc;
 static __inline int VOP_BMAP __P((struct vnode *, daddr_t, struct vnode **, 
-    daddr_t *, int *)) __attribute__ ((unused));
+    daddr_t *, int *)) __attribute__((__unused__));
 static __inline int VOP_BMAP(vp, bn, vpp, bnp, runp)
 	struct vnode *vp;
 	daddr_t bn;
@@ -775,7 +776,7 @@ struct vop_print_args {
 	struct vnode *a_vp;
 };
 extern struct vnodeop_desc vop_print_desc;
-static __inline int VOP_PRINT __P((struct vnode *)) __attribute__ ((unused));
+static __inline int VOP_PRINT __P((struct vnode *)) __attribute__((__unused__));
 static __inline int VOP_PRINT(vp)
 	struct vnode *vp;
 {
@@ -790,7 +791,8 @@ struct vop_islocked_args {
 	struct vnode *a_vp;
 };
 extern struct vnodeop_desc vop_islocked_desc;
-static __inline int VOP_ISLOCKED __P((struct vnode *)) __attribute__ ((unused));
+static __inline int VOP_ISLOCKED __P((
+    struct vnode *)) __attribute__((__unused__));
 static __inline int VOP_ISLOCKED(vp)
 	struct vnode *vp;
 {
@@ -808,7 +810,7 @@ struct vop_pathconf_args {
 };
 extern struct vnodeop_desc vop_pathconf_desc;
 static __inline int VOP_PATHCONF __P((struct vnode *, int, 
-    register_t *)) __attribute__ ((unused));
+    register_t *)) __attribute__((__unused__));
 static __inline int VOP_PATHCONF(vp, name, retval)
 	struct vnode *vp;
 	int name;
@@ -832,7 +834,7 @@ struct vop_advlock_args {
 };
 extern struct vnodeop_desc vop_advlock_desc;
 static __inline int VOP_ADVLOCK __P((struct vnode *, caddr_t, int, 
-    struct flock *, int)) __attribute__ ((unused));
+    struct flock *, int)) __attribute__((__unused__));
 static __inline int VOP_ADVLOCK(vp, id, op, fl, flags)
 	struct vnode *vp;
 	caddr_t id;
@@ -859,7 +861,7 @@ struct vop_blkatoff_args {
 };
 extern struct vnodeop_desc vop_blkatoff_desc;
 static __inline int VOP_BLKATOFF __P((struct vnode *, off_t, char **, 
-    struct buf **)) __attribute__ ((unused));
+    struct buf **)) __attribute__((__unused__));
 static __inline int VOP_BLKATOFF(vp, offset, res, bpp)
 	struct vnode *vp;
 	off_t offset;
@@ -884,7 +886,7 @@ struct vop_valloc_args {
 };
 extern struct vnodeop_desc vop_valloc_desc;
 static __inline int VOP_VALLOC __P((struct vnode *, int, struct ucred *, 
-    struct vnode **)) __attribute__ ((unused));
+    struct vnode **)) __attribute__((__unused__));
 static __inline int VOP_VALLOC(pvp, mode, cred, vpp)
 	struct vnode *pvp;
 	int mode;
@@ -907,7 +909,7 @@ struct vop_reallocblks_args {
 };
 extern struct vnodeop_desc vop_reallocblks_desc;
 static __inline int VOP_REALLOCBLKS __P((struct vnode *, 
-    struct cluster_save *)) __attribute__ ((unused));
+    struct cluster_save *)) __attribute__((__unused__));
 static __inline int VOP_REALLOCBLKS(vp, buflist)
 	struct vnode *vp;
 	struct cluster_save *buflist;
@@ -927,7 +929,7 @@ struct vop_vfree_args {
 };
 extern struct vnodeop_desc vop_vfree_desc;
 static __inline int VOP_VFREE __P((struct vnode *, ino_t, 
-    int)) __attribute__ ((unused));
+    int)) __attribute__((__unused__));
 static __inline int VOP_VFREE(pvp, ino, mode)
 	struct vnode *pvp;
 	ino_t ino;
@@ -951,7 +953,7 @@ struct vop_truncate_args {
 };
 extern struct vnodeop_desc vop_truncate_desc;
 static __inline int VOP_TRUNCATE __P((struct vnode *, off_t, int, 
-    struct ucred *, struct proc *)) __attribute__ ((unused));
+    struct ucred *, struct proc *)) __attribute__((__unused__));
 static __inline int VOP_TRUNCATE(vp, length, flags, cred, p)
 	struct vnode *vp;
 	off_t length;
@@ -978,7 +980,7 @@ struct vop_update_args {
 };
 extern struct vnodeop_desc vop_update_desc;
 static __inline int VOP_UPDATE __P((struct vnode *, struct timespec *, 
-    struct timespec *, int)) __attribute__ ((unused));
+    struct timespec *, int)) __attribute__((__unused__));
 static __inline int VOP_UPDATE(vp, access, modify, waitfor)
 	struct vnode *vp;
 	struct timespec *access;
@@ -1003,7 +1005,7 @@ struct vop_lease_args {
 };
 extern struct vnodeop_desc vop_lease_desc;
 static __inline int VOP_LEASE __P((struct vnode *, struct proc *, 
-    struct ucred *, int)) __attribute__ ((unused));
+    struct ucred *, int)) __attribute__((__unused__));
 static __inline int VOP_LEASE(vp, p, cred, flag)
 	struct vnode *vp;
 	struct proc *p;
@@ -1027,7 +1029,7 @@ struct vop_whiteout_args {
 };
 extern struct vnodeop_desc vop_whiteout_desc;
 static __inline int VOP_WHITEOUT __P((struct vnode *, 
-    struct componentname *, int)) __attribute__ ((unused));
+    struct componentname *, int)) __attribute__((__unused__));
 static __inline int VOP_WHITEOUT(dvp, cnp, flags)
 	struct vnode *dvp;
 	struct componentname *cnp;
@@ -1049,7 +1051,8 @@ struct vop_strategy_args {
 	struct buf *a_bp;
 };
 extern struct vnodeop_desc vop_strategy_desc;
-static __inline int VOP_STRATEGY __P((struct buf *)) __attribute__ ((unused));
+static __inline int VOP_STRATEGY __P((
+    struct buf *)) __attribute__((__unused__));
 static __inline int VOP_STRATEGY(bp)
 	struct buf *bp;
 {
@@ -1064,7 +1067,7 @@ struct vop_bwrite_args {
 	struct buf *a_bp;
 };
 extern struct vnodeop_desc vop_bwrite_desc;
-static __inline int VOP_BWRITE __P((struct buf *)) __attribute__ ((unused));
+static __inline int VOP_BWRITE __P((struct buf *)) __attribute__((__unused__));
 static __inline int VOP_BWRITE(bp)
 	struct buf *bp;
 {
