@@ -54,7 +54,7 @@ static char sccsid[] = "@(#)xargs.c	5.11 (Berkeley) 6/19/91";
 #include <limits.h>
 #include "pathnames.h"
 
-int fflag, tflag;
+int tflag;
 void err __P((const char *, ...));
 void run(), usage();
 
@@ -85,11 +85,8 @@ main(argc, argv)
 	nargs = 5000;
 	nline = ARG_MAX - 4 * 1024;
 	nflag = xflag = 0;
-	while ((ch = getopt(argc, argv, "fn:s:tx")) != EOF)
+	while ((ch = getopt(argc, argv, "n:s:tx")) != EOF)
 		switch(ch) {
-		case 'f':
-			fflag = 1;
-			break;
 		case 'n':
 			nflag = 1;
 			if ((nargs = atoi(optarg)) <= 0)
@@ -288,15 +285,13 @@ run(argv)
 	 */
 	if (noinvoke || !WIFEXITED(status) || WIFSIGNALED(status))
 		exit(127);
-	if (!fflag && WEXITSTATUS(status))
-		exit(WEXITSTATUS(status));
 }
 
 void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: xargs [-ft] [[-x] -n number] [-s size] [utility [argument ...]]\n");
+"usage: xargs [-t] [[-x] -n number] [-s size] [utility [argument ...]]\n");
 	exit(1);
 }
 
