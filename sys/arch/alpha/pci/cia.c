@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.42 1998/06/05 19:25:19 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.43 1998/06/06 01:33:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.42 1998/06/05 19:25:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.43 1998/06/06 01:33:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,8 +218,6 @@ cia_init(ccp, mallocsafe)
 
 	cia_pci_init(&ccp->cc_pc, ccp);
 
-	cia_dma_init(ccp);
-
 	ccp->cc_initted = 1;
 }
 
@@ -232,6 +230,8 @@ ciaattach(parent, self, aux)
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
 	char bits[64];
+	const char *name;
+	int pass;
 
 	/* note that we've attached the chipset; can't have 2 CIAs. */
 	ciafound = 1;
@@ -244,9 +244,16 @@ ciaattach(parent, self, aux)
 	ccp = sc->sc_ccp = &cia_configuration;
 	cia_init(ccp, 1);
 
+	if (ccp->cc_flags & CCF_ISPYXIS) {
+		name = "Pyxis";
+		pass = ccp->cc_rev;
+	} else {
+		name = "ALCOR/ALCOR2";
+		pass = ccp->cc_rev + 1;
+	}
+
 	printf(": DECchip 2117x Core Logic Chipset (%s), pass %d\n",
-	    (ccp->cc_flags & CCF_ISPYXIS) ? "Pyxis" : "ALCOR/ALCOR2",
-	    ccp->cc_rev + 1);
+	    name, pass);
 	if (ccp->cc_cnfg)
 		printf("%s: extended capabilities: %s\n", self->dv_xname,
 		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
@@ -291,6 +298,8 @@ ciaattach(parent, self, aux)
 		alpha_mb();
 	}
 #endif /* DEC_550 */
+
+	cia_dma_init(ccp);
 
 	switch (hwrpb->rpb_type) {
 #ifdef DEC_KN20AA
