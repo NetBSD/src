@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.9 1995/06/14 15:18:46 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.10 1995/11/02 23:54:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.9 1995/06/14 15:18:46 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.10 1995/11/02 23:54:35 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -492,7 +492,7 @@ ArchStatMember (archive, member, hash)
 		strncpy(copy, member, AR_MAX_NAME_LEN);
 		copy[AR_MAX_NAME_LEN] = '\0';
 	    }
-	    if (he = Hash_FindEntry (&ar->members, copy))
+	    if ((he = Hash_FindEntry (&ar->members, copy)) != NULL)
 		return ((struct ar_hdr *) Hash_GetValue (he));
 	    return ((struct ar_hdr *) NULL);
 	}

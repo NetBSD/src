@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.11 1995/09/27 18:44:38 jtc Exp $	*/
+/*	$NetBSD: compat.c,v 1.12 1995/11/02 23:54:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.11 1995/09/27 18:44:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.12 1995/11/02 23:54:43 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,10 +111,8 @@ CompatInterrupt (signo)
     if ((curTarg != NILGNODE) && !Targ_Precious (curTarg)) {
 	char	  *p1;
 	char 	  *file = Var_Value (TARGET, curTarg, &p1);
-	struct stat st;
 
-	if (!noExecute && lstat(file, &st) != -1 && !S_ISDIR(st.st_mode) && 
-	    unlink(file) != -1) {
+	if (!noExecute && eunlink(file) != -1) {
 	    printf ("*** %s removed\n", file);
 	}
 	if (p1)
