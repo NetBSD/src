@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.21 2000/04/14 06:26:53 simonb Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.21.6.1 2003/01/26 09:02:18 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ int	main __P((int, char **));
 void	usage __P((void));
 int	getentry __P((char *, int));
 struct quotause *
-	getprivs __P((long, int));
+	getprivs __P((long, int, char *));
 void	putprivs __P((long, int, struct quotause *));
 int	editit __P((char *));
 int	writeprivs __P((struct quotause *, int, char *, int));
@@ -110,6 +110,8 @@ main(argc, argv)
 	long id, protoid;
 	int quotatype, tmpfd;
 	char *protoname;
+	char *soft = NULL, *hard = NULL;
+	char *fs = NULL;
 	int ch;
 	int tflag = 0, pflag = 0;
 
@@ -119,7 +121,7 @@ main(argc, argv)
 		errx(1, "permission denied");
 	protoname = NULL;
 	quotatype = USRQUOTA;
-	while ((ch = getopt(argc, argv, "ugtp:")) != -1) {
+	while ((ch = getopt(argc, argv, "ugtp:s:h:f:")) != -1) {
 		switch(ch) {
 		case 'p':
 			protoname = optarg;
@@ -134,6 +136,15 @@ main(argc, argv)
 		case 't':
 			tflag++;
 			break;
+		case 's':
+			soft = optarg;
+			break;
+		case 'h':
+			hard = optarg;
+			break;
+		case 'f':
+			fs = optarg;
+			break;
 		default:
 			usage();
 		}
@@ -141,9 +152,11 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 	if (pflag) {
+		if (soft || hard)
+			usage();
 		if ((protoid = getentry(protoname, quotatype)) == -1)
 			exit(1);
-		protoprivs = getprivs(protoid, quotatype);
+		protoprivs = getprivs(protoid, quotatype, fs);
 		for (qup = protoprivs; qup; qup = qup->next) {
 			qup->dqblk.dqb_btime = 0;
 			qup->dqblk.dqb_itime = 0;
@@ -155,10 +168,58 @@ main(argc, argv)
 		}
 		exit(0);
 	}
+	if (soft || hard) {
+		struct quotause *qup;
+		u_int32_t softb, hardb, softi, hardi;
+		if (tflag)
+			usage();
+		if (soft) {
+			if (sscanf(soft, "%d/%d", &softb, &softi) != 2)
+				usage();
+			softb = btodb((u_quad_t)softb * 1024);
+		}
+		if (hard) {
+			if (sscanf(hard, "%d/%d", &hardb, &hardi) != 2)
+				usage();
+			hardb = btodb((u_quad_t)hardb * 1024);
+		}
+		for ( ; argc > 0; argc--, argv++) {
+			if ((id = getentry(*argv, quotatype)) == -1)
+				continue;
+			curprivs = getprivs(id, quotatype, fs);
+			for (qup = curprivs; qup; qup = qup->next) {
+				if (soft) {
+					if (softb &&
+					    qup->dqblk.dqb_curblocks >= softb &&
+					    (qup->dqblk.dqb_bsoftlimit == 0 ||
+					    qup->dqblk.dqb_curblocks <
+					    qup->dqblk.dqb_bsoftlimit))
+						qup->dqblk.dqb_btime = 0;
+					if (softi &&
+					    qup->dqblk.dqb_curinodes >= softi &&
+					    (qup->dqblk.dqb_isoftlimit == 0 ||
+					    qup->dqblk.dqb_curinodes <
+					    qup->dqblk.dqb_isoftlimit))
+						qup->dqblk.dqb_itime = 0;
+					qup->dqblk.dqb_bsoftlimit = softb;
+					qup->dqblk.dqb_isoftlimit = softi;
+				}
+				if (hard) {
+					qup->dqblk.dqb_bhardlimit = hardb;
+					qup->dqblk.dqb_ihardlimit = hardi;
+				}
+			}
+			putprivs(id, quotatype, curprivs);
+			freeprivs(curprivs);
+		}
+		exit(0);
+	}
 	tmpfd = mkstemp(tmpfil);
 	fchown(tmpfd, getuid(), getgid());
 	if (tflag) {
-		protoprivs = getprivs(0, quotatype);
+		if (soft || hard)
+			usage();
+		protoprivs = getprivs(0, quotatype, fs);
 		if (writetimes(protoprivs, tmpfd, quotatype) == 0)
 			exit(1);
 		if (editit(tmpfil) && readtimes(protoprivs, tmpfd))
@@ -169,7 +230,7 @@ main(argc, argv)
 	for ( ; argc > 0; argc--, argv++) {
 		if ((id = getentry(*argv, quotatype)) == -1)
 			continue;
-		curprivs = getprivs(id, quotatype);
+		curprivs = getprivs(id, quotatype, fs);
 		if (writeprivs(curprivs, tmpfd, *argv, quotatype) == 0)
 			continue;
 		if (editit(tmpfil) && readprivs(curprivs, tmpfd))
@@ -184,10 +245,14 @@ main(argc, argv)
 void
 usage()
 {
-	fprintf(stderr, "%s%s%s%s",
-		"Usage: edquota [-u] [-p username] username ...\n",
-		"\tedquota -g [-p groupname] groupname ...\n",
-		"\tedquota [-u] -t\n", "\tedquota -g -t\n");
+	fprintf(stderr,
+	    "Usage: edquota [-u] [-p username] [-f filesystem] username ...\n"
+	    "\tedquota -g [-p groupname] [-f filesystem] groupname ...\n"
+	    "\tedquota [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] username ...\n"
+	    "\tedquota -g [-f filesystem] [-s b#/i#] [-h b#/i#] groupname ...\n"
+	    "\tedquota [-u] [-f filesystem] -t\n"
+	    "\tedquota -g [-f filesystem] -t\n"
+	    );
 	exit(1);
 }
 
@@ -229,9 +294,10 @@ getentry(name, quotatype)
  * Collect the requested quota information.
  */
 struct quotause *
-getprivs(id, quotatype)
+getprivs(id, quotatype, filesys)
 	long id;
 	int quotatype;
+	char *filesys;
 {
 	struct fstab *fs;
 	struct quotause *qup, *quptail;
@@ -246,6 +312,9 @@ getprivs(id, quotatype)
 	qcmd = QCMD(Q_GETQUOTA, quotatype);
 	while ((fs = getfsent()) != NULL) {
 		if (strcmp(fs->fs_vfstype, "ffs"))
+			continue;
+		if (filesys && strcmp(fs->fs_spec, filesys) != 0 &&
+		    strcmp(fs->fs_file, filesys) != 0)
 			continue;
 		if (!hasquota(fs, quotatype, &qfpathname))
 			continue;
