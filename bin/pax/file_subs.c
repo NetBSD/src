@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.16 2000/02/17 03:06:13 itohy Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.16 2000/02/17 03:06:13 itohy Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ file_creat(arcn)
 	 * detect this, we use O_EXCL. For example when trying to create a
 	 * file and a character device or fifo exists with the same name, we
 	 * can accidently open the device by mistake (or block waiting to open)
-	 * If we find that the open has failed, then figure spend the effore to
+	 * If we find that the open has failed, then figure spend the effort to
 	 * figure out why. This strategy was found to have better average
 	 * performance in common use than checking the file (and the path)
 	 * first with lstat.
@@ -165,7 +165,7 @@ file_close(arcn, fd)
 	/*
 	 * set owner/groups first as this may strip off mode bits we want
 	 * then set file permission modes. Then set file access and
-	 * modification times. 
+	 * modification times.
 	 */
 	if (pids)
 		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
@@ -188,7 +188,7 @@ file_close(arcn, fd)
 /*
  * lnk_creat()
  *	Create a hard link to arcn->ln_name from arcn->name. arcn->ln_name
- *	must exist; 
+ *	must exist;
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -243,9 +243,9 @@ cross_lnk(arcn)
 #endif
 {
 	/*
-	 * try to make a link to orginal file (-l flag in copy mode). make sure
-	 * we do not try to link to directories in case we are running as root
-	 * (and it might succeed).
+	 * try to make a link to original file (-l flag in copy mode). make
+	 * sure we do not try to link to directories in case we are running as
+	 * root (and it might succeed).
 	 */
 	if (arcn->type == PAX_DIR)
 		return(1);
@@ -274,7 +274,7 @@ chk_same(arcn)
 {
 	struct stat sb;
 
-	/* 
+	/*
 	 * if file does not exist, return. if file exists and -k, skip it
 	 * quietly
 	 */
@@ -579,7 +579,7 @@ unlnk_exist(name, type)
 		 */
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
-				return(1); 
+				return(1);
 			syswarn(1,errno,"Unable to remove directory %s", name);
 			return(-1);
 		}
@@ -633,7 +633,8 @@ chk_path(name, st_uid, st_gid)
 
 	for(;;) {
 		/*
-		 * work foward from the first / and check each part of the path
+		 * work forward from the first / and check each part of
+		 * the path
 		 */
 		spt = strchr(spt, '/');
 		if (spt == NULL)
@@ -830,11 +831,11 @@ set_chflags(fnm, flags)
  *	uses lseek whenever it detects the input data is all 0 within that
  *	file block. In more detail, the strategy is as follows:
  *	While the input is all zero keep doing an lseek. Keep track of when we
- *	pass over file block boundries. Only write when we hit a non zero
+ *	pass over file block boundaries. Only write when we hit a non zero
  *	input. once we have written a file block, we continue to write it to
  *	the end (we stop looking at the input). When we reach the start of the
  *	next file block, start checking for zero blocks again. Working on file
- *	block boundries significantly reduces the overhead when copying files
+ *	block boundaries significantly reduces the overhead when copying files
  *	that are NOT very sparse. This overhead (when compared to a write) is
  *	almost below the measurement resolution on many systems. Without it,
  *	files with holes cannot be safely copied. It does has a side effect as
@@ -879,7 +880,7 @@ file_write(fd, str, cnt, rem, isempt, sz, name)
 	char *end;
 	int wcnt;
 	char *st = str;
-	
+
 	/*
 	 * while we have data to process
 	 */

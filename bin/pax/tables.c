@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.11 2000/02/17 03:06:13 itohy Exp $	*/
+/*	$NetBSD: tables.c,v 1.12 2000/02/17 03:12:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.11 2000/02/17 03:06:13 itohy Exp $");
+__RCSID("$NetBSD: tables.c,v 1.12 2000/02/17 03:12:26 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static DEVT *chk_dev __P((dev_t, int));
 /*
  * hard link table routines
  *
- * The hard link table tries to detect hard links to files using the device and 
+ * The hard link table tries to detect hard links to files using the device and
  * inode values. We do this when writing an archive, so we can tell the format
  * write routine that this file is a hard link to another file. The format
  * write routine then can store this file in whatever way it wants (as a hard
@@ -121,10 +121,10 @@ lnk_start()
 {
 	if (ltab != NULL)
 		return(0);
- 	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
-                tty_warn(1, "Cannot allocate memory for hard link table");
-                return(-1);
-        }
+	if ((ltab = (HRDLNK **)calloc(L_TAB_SZ, sizeof(HRDLNK *))) == NULL) {
+		tty_warn(1, "Cannot allocate memory for hard link table");
+		return(-1);
+	}
 	return(0);
 }
 
@@ -339,10 +339,10 @@ lnk_end()
  * that this is one HUGE database. To save memory space, the actual file names
  * are stored in a scatch file and indexed by an in memory hash table. The
  * hash table is indexed by hashing the file path. The nodes in the table store
- * the length of the filename and the lseek offset within the scratch file 
+ * the length of the filename and the lseek offset within the scratch file
  * where the actual name is stored. Since there are never any deletions to this
  * table, fragmentation of the scratch file is never a issue. Lookups seem to
- * not exhibit any locality at all (files in the database are rarely 
+ * not exhibit any locality at all (files in the database are rarely
  * looked up more than once...). So caching is just a waste of memory. The
  * only limitation is the amount of scatch file space available to store the
  * path names.
@@ -370,10 +370,10 @@ ftime_start()
 
 	if (ftab != NULL)
 		return(0);
- 	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
-                tty_warn(1, "Cannot allocate memory for file time table");
-                return(-1);
-        }
+	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
+		tty_warn(1, "Cannot allocate memory for file time table");
+		return(-1);
+	}
 
 	/*
 	 * get random name and create temporary scratch file, unlink name
@@ -475,7 +475,7 @@ chk_ftime(arcn)
 				 */
 				pt->mtime = arcn->sb.st_mtime;
 				return(0);
-			} 
+			}
 			/*
 			 * file is older
 			 */
@@ -500,7 +500,7 @@ chk_ftime(arcn)
 				return(0);
 			}
 			syswarn(1, errno, "Failed write to file time table");
-		} else 
+		} else
 			syswarn(1, errno, "Failed seek on file time table");
 	} else
 		tty_warn(1, "File time table ran out of memory");
@@ -514,7 +514,7 @@ chk_ftime(arcn)
  * Interactive rename table routines
  *
  * The interactive rename table keeps track of the new names that the user
- * assignes to files from tty input. Since this map is unique for each file
+ * assigns to files from tty input. Since this map is unique for each file
  * we must store it in case there is a reference to the file later in archive
  * (a link). Otherwise we will be unable to find the file we know was
  * extracted. The remapping of these files is stored in a memory based hash
@@ -539,11 +539,11 @@ name_start()
 {
 	if (ntab != NULL)
 		return(0);
- 	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
-                tty_warn(1,
+	if ((ntab = (NAMT **)calloc(N_TAB_SZ, sizeof(NAMT *))) == NULL) {
+		tty_warn(1,
 		    "Cannot allocate memory for interactive rename table");
-                return(-1);
-        }
+		return(-1);
+	}
 	return(0);
 }
 
@@ -575,7 +575,7 @@ add_name(oname, onamelen, nname)
 		 * should never happen
 		 */
 		tty_warn(0, "No interactive rename table, links may fail\n");
-		return(0); 
+		return(0);
 	}
 
 	/*
@@ -674,7 +674,7 @@ sub_name(oname, onamelen)
 	 */
 	return;
 }
-    
+
 /*
  * device/inode mapping table routines
  * (used with formats that store device and inodes fields)
@@ -732,10 +732,10 @@ dev_start()
 {
 	if (dtab != NULL)
 		return(0);
- 	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
-                tty_warn(1, "Cannot allocate memory for device mapping table");
-                return(-1);
-        }
+	if ((dtab = (DEVT **)calloc(D_TAB_SZ, sizeof(DEVT *))) == NULL) {
+		tty_warn(1, "Cannot allocate memory for device mapping table");
+		return(-1);
+	}
 	return(0);
 }
 
@@ -768,7 +768,7 @@ add_dev(arcn)
  *	check for a device value in the device table. If not found and the add
  *	flag is set, it is added. This does NOT assign any mapping values, just
  *	adds the device number as one that need to be remapped. If this device
- *	is alread mapped, just return with a pointer to that entry.
+ *	is already mapped, just return with a pointer to that entry.
  * Return:
  *	pointer to the entry for this device in the device map table. Null
  *	if the add flag is not set and the device is not in the table (it is
@@ -864,7 +864,7 @@ map_dev(arcn, dev_mask, ino_mask)
 		return(0);
 	/*
 	 * check for device and inode truncation, and extract the truncated
-	 * bit pattern. 
+	 * bit pattern.
 	 */
 	if ((arcn->sb.st_dev & (dev_t)dev_mask) != arcn->sb.st_dev)
 		++trc_dev;
@@ -1002,11 +1002,11 @@ atdir_start()
 {
 	if (atab != NULL)
 		return(0);
- 	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
-                tty_warn(1,
+	if ((atab = (ATDIR **)calloc(A_TAB_SZ, sizeof(ATDIR *))) == NULL) {
+		tty_warn(1,
 		    "Cannot allocate space for directory access time table");
-                return(-1);
-        }
+		return(-1);
+	}
 	return(0);
 }
 
@@ -1074,7 +1074,7 @@ add_atdir(fname, dev, ino, mtime, atime)
 		return;
 
 	/*
-	 * make sure this directory is not already in the table, if so just 
+	 * make sure this directory is not already in the table, if so just
 	 * return (the older entry always has the correct time). The only
 	 * way this will happen is when the same subtree can be traversed by
 	 * different args to pax and the -n option is aborting fts out of a
@@ -1245,7 +1245,7 @@ dir_start()
  *	name is name of the directory, psb the stat buffer with the data in it,
  *	frc_mode is a flag that says whether to force the setting of the mode
  *	(ignoring the user set values for preserving file mode). Frc_mode is
- *	for the case where we created a file and found that the resulting 
+ *	for the case where we created a file and found that the resulting
  *	directory was not writeable and the user asked for file modes to NOT
  *	be preserved. (we have to preserve what was created by default, so we
  *	have to force the setting at the end. this is stated explicitly in the
@@ -1327,15 +1327,15 @@ proc_dir()
 		 * read the trailer, then the file name, if this fails
 		 * just give up.
 		 */
-		if (lseek(dirfd, -((off_t)sizeof(dblk)), SEEK_CUR) < 0) 
+		if (lseek(dirfd, -((off_t)sizeof(dblk)), SEEK_CUR) < 0)
 			break;
 		if (xread(dirfd,(char *)&dblk, sizeof(dblk)) != sizeof(dblk))
 			break;
-		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0) 
+		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0)
 			break;
 		if (xread(dirfd, name, dblk.nlen) != dblk.nlen)
 			break;
-		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0) 
+		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0)
 			break;
 
 		/*
@@ -1402,7 +1402,7 @@ st_hash(name, len, tabsz)
 	 * spread out the keys)
 	 */
 	if (len > MAXKEYLEN) {
-                pt = &(name[len - MAXKEYLEN]);
+		pt = &(name[len - MAXKEYLEN]);
 		len = MAXKEYLEN;
 	} else
 		pt = name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.h,v 1.4 1999/11/01 01:35:59 mrg Exp $	*/
+/*	$NetBSD: tables.h,v 1.5 2000/02/17 03:12:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -107,7 +107,7 @@ typedef struct namt {
  * this table. (When the inode field in the archive header are too small, we
  * remap the dev on writes to remove accidental collisions).
  *
- * The list is hashed by device number using chain collision resolution. Off of 
+ * The list is hashed by device number using chain collision resolution. Off of
  * each DEVT are linked the various remaps for this device based on those bits
  * in the inode which were truncated. For example if we are just remapping to
  * avoid a device number during an update append, off the DEVT we would have

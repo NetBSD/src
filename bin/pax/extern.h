@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2000/02/17 03:06:13 itohy Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2000/02/17 03:12:23 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -182,7 +182,7 @@ int uqd_asc __P((u_quad_t, char *, int, int));
 #endif
 int check_Aflag __P((void));
 
-/* 
+/*
  * getoldopt.c
  */
 int getoldopt __P((int, char **, char *));

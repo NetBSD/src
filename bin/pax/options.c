@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.25 1999/11/07 15:57:31 mycroft Exp $	*/
+/*	$NetBSD: options.c,v 1.26 2000/02/17 03:12:25 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.25 1999/11/07 15:57:31 mycroft Exp $");
+__RCSID("$NetBSD: options.c,v 1.26 2000/02/17 03:12:25 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static void checkpositionalminusC __P((char ***, int (*)(char *, int)));
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
  *	(see pax.h for description of each function)
  *
- * 	name, blksz, hdsz, udev, hlk, blkagn, inhead, id, st_read,
+ *	name, blksz, hdsz, udev, hlk, blkagn, inhead, id, st_read,
  *	read, end_read, st_write, write, end_write, trail,
  *	rd_data, wr_data, options
  */
@@ -202,7 +202,7 @@ pax_options(argc, argv)
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
 	char *pt;
-        FSUB tmp;
+	FSUB tmp;
 	extern char *optarg;
 	extern int optind;
 
@@ -629,7 +629,7 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:hlmoprutvwxzBC:LPX:Z014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:hlmoprutvwxzBC:LPX:Z014578"))
 	    != -1)  {
 		switch(c) {
 		case 'b':
@@ -868,7 +868,7 @@ cpio_options(argc, argv)
 	char **argv;
 #endif
 {
-        FSUB tmp;
+	FSUB tmp;
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
 	int c, i;
@@ -1160,11 +1160,11 @@ c_frmt(const void *a, const void *b)
 #else
 static int
 c_frmt(a, b)
-        void *a;
-        void *b;
+	void *a;
+	void *b;
 #endif
 {
-        return(strcmp(((FSUB *)a)->name, ((FSUB *)b)->name));
+	return(strcmp(((FSUB *)a)->name, ((FSUB *)b)->name));
 }
 
 /*
@@ -1222,7 +1222,7 @@ bad_opt()
  * opt_add()
  *	breaks the value supplied to -o into a option name and value. options
  *	are given to -o in the form -o name-value,name=value
- *	mulltiple -o may be specified.
+ *	multiple -o may be specified.
  * Return:
  *	0 if format in name=value format, -1 if -o is passed junk
  */
@@ -1284,7 +1284,7 @@ opt_add(str)
 /*
  * str_offt()
  *	Convert an expression of the following forms to an off_t > 0.
- * 	1) A positive decimal number.
+ *	1) A positive decimal number.
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
  *	4) A positive decimal number followed by a m (mult by 512).
@@ -1483,7 +1483,7 @@ cpio_usage()
 /*
  * opt_chdir
  *	call ftree_add or pat_add, depending on archive type.
- *	
+ *
  * Returns: -1 for listing, else what ftree_add or pat_add returned.
  */
 

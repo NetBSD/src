@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.11 1998/11/04 19:38:12 christos Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.12 2000/02/17 03:12:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.11 1998/11/04 19:38:12 christos Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.12 2000/02/17 03:12:26 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,10 +138,10 @@ usr_add(str)
 	if ((str == NULL) || (*str == '\0'))
 		return(-1);
 	if ((usrtb == NULL) &&
- 	    ((usrtb = (USRT **)calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
-                tty_warn(1,
+	    ((usrtb = (USRT **)calloc(USR_TB_SZ, sizeof(USRT *))) == NULL)) {
+		tty_warn(1,
 		    "Unable to allocate memory for user selection table");
-                return(-1);
+		return(-1);
 	}
 
 	/*
@@ -154,11 +154,11 @@ usr_add(str)
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
 		if ((pw = getpwnam(str)) == NULL) {
-                	tty_warn(1, "Unable to find uid for user: %s", str);
-                	return(-1);
+			tty_warn(1, "Unable to find uid for user: %s", str);
+			return(-1);
 		}
 		uid = (uid_t)pw->pw_uid;
-        } else
+	} else
 #		ifdef NET2_STAT
 		uid = (uid_t)atoi(str+1);
 #		else
@@ -171,11 +171,11 @@ usr_add(str)
 	 */
 	indx = ((unsigned)uid) % USR_TB_SZ;
 	if ((pt = usrtb[indx]) != NULL) {
-                while (pt != NULL) {
-                        if (pt->uid == uid)
+		while (pt != NULL) {
+			if (pt->uid == uid)
 				return(0);
-                        pt = pt->fow;
-                }
+			pt = pt->fow;
+		}
 	}
 
 	/*
@@ -187,8 +187,8 @@ usr_add(str)
 		usrtb[indx] = pt;
 		return(0);
 	}
-        tty_warn(1, "User selection table out of memory");
-        return(-1);
+	tty_warn(1, "User selection table out of memory");
+	return(-1);
 }
 
 /*
@@ -252,10 +252,10 @@ grp_add(str)
 	if ((str == NULL) || (*str == '\0'))
 		return(-1);
 	if ((grptb == NULL) &&
- 	    ((grptb = (GRPT **)calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
-                tty_warn(1,
+	    ((grptb = (GRPT **)calloc(GRP_TB_SZ, sizeof(GRPT *))) == NULL)) {
+		tty_warn(1,
 		    "Unable to allocate memory fo group selection table");
-                return(-1);
+		return(-1);
 	}
 
 	/*
@@ -268,12 +268,12 @@ grp_add(str)
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
 		if ((gr = getgrnam(str)) == NULL) {
-                	tty_warn(1,
+			tty_warn(1,
 			    "Cannot determine gid for group name: %s", str);
-                	return(-1);
+			return(-1);
 		}
 		gid = (gid_t)gr->gr_gid;
-        } else
+	} else
 #		ifdef NET2_STAT
 		gid = (gid_t)atoi(str+1);
 #		else
@@ -286,11 +286,11 @@ grp_add(str)
 	 */
 	indx = ((unsigned)gid) % GRP_TB_SZ;
 	if ((pt = grptb[indx]) != NULL) {
-                while (pt != NULL) {
-                        if (pt->gid == gid)
+		while (pt != NULL) {
+			if (pt->gid == gid)
 				return(0);
-                        pt = pt->fow;
-                }
+			pt = pt->fow;
+		}
 	}
 
 	/*
@@ -302,8 +302,8 @@ grp_add(str)
 		grptb[indx] = pt;
 		return(0);
 	}
-        tty_warn(1, "Group selection table out of memory");
-        return(-1);
+	tty_warn(1, "Group selection table out of memory");
+	return(-1);
 }
 
 /*

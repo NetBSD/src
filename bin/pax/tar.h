@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.4 1999/10/22 10:43:12 mrg Exp $	*/
+/*	$NetBSD: tar.h,v 1.5 2000/02/17 03:12:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -99,8 +99,8 @@
  */
 typedef struct {
 	char name[TNMSZ];		/* name of entry */
-	char mode[8]; 			/* mode */
-	char uid[8]; 			/* uid */
+	char mode[8];			/* mode */
+	char uid[8];			/* uid */
 	char gid[8];			/* gid */
 	char size[12];			/* size */
 	char mtime[12];			/* modification time */
@@ -138,8 +138,8 @@ typedef struct {
 
 typedef struct {
 	char name[TNMSZ];		/* name of entry */
-	char mode[8]; 			/* mode */
-	char uid[8]; 			/* uid */
+	char mode[8];			/* mode */
+	char uid[8];			/* uid */
 	char gid[8];			/* gid */
 	char size[12];			/* size */
 	char mtime[12];			/* modification time */

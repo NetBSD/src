@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.7 1997/07/20 20:32:49 christos Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.8 2000/02/17 03:12:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.7 1997/07/20 20:32:49 christos Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.8 2000/02/17 03:12:27 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: tty_subs.c,v 1.7 1997/07/20 20:32:49 christos Exp $");
  * routines that deal with I/O to and from the user
  */
 
-#define DEVTTY          "/dev/tty"      /* device for interactive i/o */
+#define DEVTTY		"/dev/tty"	/* device for interactive i/o */
 static FILE *ttyoutf = NULL;		/* output pointing at control tty */
 static FILE *ttyinf = NULL;		/* input pointing at control tty */
 
@@ -89,7 +89,7 @@ tty_init()
 {
 	int ttyfd;
 
-        if ((ttyfd = open(DEVTTY, O_RDWR)) >= 0) {
+	if ((ttyfd = open(DEVTTY, O_RDWR)) >= 0) {
 		if ((ttyoutf = fdopen(ttyfd, "w")) != NULL) {
 			if ((ttyinf = fdopen(ttyfd, "r")) != NULL)
 				return(0);

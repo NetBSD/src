@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.17 2000/01/19 18:41:23 mycroft Exp $	*/
+/*	$NetBSD: tar.c,v 1.18 2000/02/17 03:12:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.17 2000/01/19 18:41:23 mycroft Exp $");
+__RCSID("$NetBSD: tar.c,v 1.18 2000/02/17 03:12:26 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ ul_oct(val, str, len, term)
 #endif
 {
 	char *pt;
-	
+
 	/*
 	 * term selects the appropriate character(s) for the end of the string
 	 */
@@ -258,7 +258,7 @@ uqd_oct(val, str, len, term)
 #endif
 {
 	char *pt;
-	
+
 	/*
 	 * term selects the appropriate character(s) for the end of the string
 	 */
@@ -301,7 +301,7 @@ uqd_oct(val, str, len, term)
 /*
  * tar_chksm()
  *	calculate the checksum for a tar block counting the checksum field as
- *	all blanks (BLNKSUM is that value pre-calculated, the sume of 8 blanks).
+ *	all blanks (BLNKSUM is that value pre-calculated, the sum of 8 blanks).
  *	NOTE: we use len to short circuit summing 0's on write since we ALWAYS
  *	pad headers with 0.
  * Return:
@@ -320,15 +320,15 @@ tar_chksm(blk, len)
 {
 	char *stop;
 	char *pt;
-	u_long chksm = BLNKSUM;	/* inital value is checksum field sum */
+	u_long chksm = BLNKSUM;	/* initial value is checksum field sum */
 
 	/*
 	 * add the part of the block before the checksum field
 	 */
 	pt = blk;
 	stop = blk + CHK_OFFSET;
-	while (pt < stop)	
-		chksm += (u_long)(*pt++ & 0xff);	
+	while (pt < stop)
+		chksm += (u_long)(*pt++ & 0xff);
 	/*
 	 * move past the checksum field and keep going, spec counts the
 	 * checksum field as the sum of 8 blanks (which is pre-computed as
@@ -339,7 +339,7 @@ tar_chksm(blk, len)
 	pt += CHK_LEN;
 	stop = blk + len;
 	while (pt < stop)
-		chksm += (u_long)(*pt++ & 0xff);	
+		chksm += (u_long)(*pt++ & 0xff);
 	return(chksm);
 }
 
@@ -561,7 +561,7 @@ tar_rd(arcn, buf)
 		} else {
 			/*
 			 * have a file that will be followed by data. Set the
-			 * skip value to the size field and caluculate the size
+			 * skip value to the size field and calculate the size
 			 * of the padding.
 			 */
 			arcn->type = PAX_REG;
@@ -576,7 +576,7 @@ tar_rd(arcn, buf)
 	 * strip off any trailing slash.
 	 */
 	if (*pt == '/') {
-		*pt = '\0'; 
+		*pt = '\0';
 		--arcn->nlen;
 	}
 	return(0);
@@ -1064,7 +1064,7 @@ ustar_wr(arcn)
 	 */
 	zf_strncpy(hd->name, pt, sizeof(hd->name));
 
-	/* 
+	/*
 	 * set the fields in the header that are type dependent
 	 */
 	switch(arcn->type) {
@@ -1173,7 +1173,7 @@ ustar_wr(arcn)
 	return(1);
 
     out:
-    	/*
+	/*
 	 * header field is out of range
 	 */
 	tty_warn(1, "Ustar header field is too small for %s", arcn->org_name);
@@ -1215,7 +1215,7 @@ name_split(name, len)
 
 	/*
 	 * we start looking at the biggest sized piece that fits in the name
-	 * field. We walk foward looking for a slash to split at. The idea is
+	 * field. We walk forward looking for a slash to split at. The idea is
 	 * to find the biggest piece to fit in the name field (or the smallest
 	 * prefix we can find) (the -1 is correct the biggest piece would
 	 * include the slash between the two parts that gets thrown away)

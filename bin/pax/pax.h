@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.8 1999/10/22 20:59:09 is Exp $	*/
+/*	$NetBSD: pax.h,v 1.9 2000/02/17 03:12:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -50,7 +50,7 @@
 				/* Don't even think of changing this */
 #define DEVBLK		8192	/* default read blksize for devices */
 #define FILEBLK		10240	/* default read blksize for files */
-#define PAXPATHLEN	3072	/* maximium path length for pax. MUST be */
+#define PAXPATHLEN	3072	/* maximum path length for pax. MUST be */
 				/* longer than the system MAXPATHLEN */
 
 /*
@@ -64,7 +64,7 @@
 #define DEFOP		LIST	/* if no flags default is to LIST */
 
 /*
- * Device type of the current archive volume 
+ * Device type of the current archive volume
  */
 #define ISREG		0	/* regular file */
 #define ISCHR		1	/* character device */
@@ -125,9 +125,9 @@ typedef struct {
 #define PAX_FIF		7		/* fifo */
 #define PAX_HLK		8		/* hard link */
 #define PAX_HRG		9		/* hard link to a regular file */
-#define PAX_CTG		10		/* high performance file */ 
-#define PAX_GLL		11		/* GNU long symlink */ 
-#define PAX_GLF		12		/* GNU long file */ 
+#define PAX_CTG		10		/* high performance file */
+#define PAX_GLL		11		/* GNU long symlink */
+#define PAX_GLF		12		/* GNU long file */
 } ARCHD;
 
 /*
@@ -135,7 +135,7 @@ typedef struct {
  *
  * The format specific routine table allows new archive formats to be quickly
  * added. Overall pax operation is independent of the actual format used to
- * form the archive. Only those routines which deal directly with the archive 
+ * form the archive. Only those routines which deal directly with the archive
  * are tailored to the oddities of the specifc format. All other routines are
  * independent of the archive format. Data flow in and out of the format
  * dependent routines pass pointers to ARCHD structure (described below).
@@ -162,14 +162,14 @@ typedef struct {
 	int hlk;		/* does archive store hard links info? if */
 				/* not, we do not bother to look for them */
 				/* during archive write operations */
-	int blkalgn;		/* writes must be aligned to blkalgn boundry */
+	int blkalgn;		/* writes must be aligned to blkalgn boundary */
 	int inhead;		/* is the trailer encoded in a valid header? */
 				/* if not, trailers are assumed to be found */
 				/* in invalid headers (i.e like tar) */
 	int (*id)		/* checks if a buffer is a valid header */
 		__P((char *, int)); /* returns 1 if it is, o.w. returns a 0 */
 	int (*st_rd)		/* initialize routine for read. so format */
-		__P((void)); 	/* can set up tables etc before it starts */
+		__P((void));	/* can set up tables etc before it starts */
 				/* reading an archive */
 	int (*rd)		/* read header routine. passed a pointer to */
 		__P((ARCHD *, char *)); /* ARCHD. It must extract the info */
