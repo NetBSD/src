@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.16 2001/04/10 21:00:00 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.17 2001/11/23 13:18:54 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.16 2001/04/10 21:00:00 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.17 2001/11/23 13:18:54 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -510,7 +510,6 @@ nroff(gzFile *in)
 	if ((bytes < 0) ||
             (lseek(tempfd, 0, SEEK_SET) < 0) ||
             (pipe(pipefd) < 0)) {
-		perror(getprogname());
 		(void)close(tempfd);
 		(void)unlink(tempname);
 		return NULL;
