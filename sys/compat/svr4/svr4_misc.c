@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.71 1998/11/28 21:53:02 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.72 1998/12/16 10:36:50 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -124,12 +124,14 @@ svr4_sys_wait(p, v, retval)
 	struct sys_wait4_args w4;
 	int error;
 	size_t sz = sizeof(*SCARG(&w4, status));
+	int st, sig;
 
 	SCARG(&w4, rusage) = NULL;
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
 		caddr_t sg = stackgap_init(p->p_emul);
+
 		SCARG(&w4, status) = stackgap_alloc(&sg, sz);
 	}
 	else
@@ -139,13 +141,31 @@ svr4_sys_wait(p, v, retval)
 
 	if ((error = sys_wait4(p, &w4, retval)) != 0)
 		return error;
+	
+	if ((error = copyin(SCARG(&w4, status), &st, sizeof(st))) != 0)
+		return error;
+
+	if (WIFSIGNALED(st)) {
+		sig = WTERMSIG(st);
+		if (sig >= 0 && sig < NSIG)
+			st = (st & ~0177) | native_to_svr4_sig[sig];
+	} else if (WIFSTOPPED(st)) {
+		sig = WSTOPSIG(st);
+		if (sig >= 0 && sig < NSIG)
+			st = (st & ~0xff00) | (native_to_svr4_sig[sig] << 8);
+	}
 
 	/*
 	 * It looks like wait(2) on svr4/solaris/2.4 returns
 	 * the status in retval[1], and the pid on retval[0].
-	 * NB: this can break if register_t stops being an int.
 	 */
-	return copyin(SCARG(&w4, status), &retval[1], sz);
+	retval[1] = st;
+
+	if (SCARG(uap, status))
+		if ((error = copyout(&st, SCARG(uap, status), sizeof(st))) != 0)
+			return error;
+
+	return 0;
 }
 
 
@@ -1077,6 +1097,7 @@ svr4_setinfo(p, st, s)
 	svr4_siginfo_t *s;
 {
 	svr4_siginfo_t i;
+	int sig;
 
 	memset(&i, 0, sizeof(i));
 
@@ -1099,14 +1120,18 @@ svr4_setinfo(p, st, s)
 		i.si_status = WEXITSTATUS(st);
 		i.si_code = SVR4_CLD_EXITED;
 	} else if (WIFSTOPPED(st)) {
-		i.si_status = native_to_svr4_sig[WSTOPSIG(st)];
+		sig = WSTOPSIG(st);
+		if (sig >= 0 && sig < NSIG)
+			i.si_status = native_to_svr4_sig[sig];
 
 		if (i.si_status == SVR4_SIGCONT)
 			i.si_code = SVR4_CLD_CONTINUED;
 		else
 			i.si_code = SVR4_CLD_STOPPED;
 	} else {
-		i.si_status = native_to_svr4_sig[WTERMSIG(st)];
+		sig = WTERMSIG(st);
+		if (sig >= 0 && sig < NSIG)
+			i.si_status = native_to_svr4_sig[sig];
 
 		if (WCOREDUMP(st))
 			i.si_code = SVR4_CLD_DUMPED;
