@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.10 2001/09/11 22:52:52 wiz Exp $
+.\"	$NetBSD: cardbus.4,v 1.11 2001/09/12 18:19:16 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,6 @@
 .Cd "cardbus*  at cardslot?"
 .Cd "pcmcia*   at cardslot?"
 .Cd "XX*       at cardbus? dev ? function ?"
-.Pp
 .Sh INTRODUCTION
 .Nx
 provides machine-independent bus support and
@@ -66,12 +65,10 @@ card, which are attached with the
 or
 .Cm pcmcia
 devices, respectively.
-.Pp
 .Sh SUPPORTED DEVICES
 .Nx
 includes the following machine-independent CardBus
 drivers, sorted by function and driver name:
-.Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ex
@@ -83,22 +80,16 @@ RealTek 8129/8139
 .It tlp
 DECchip 21143
 .El
-.\"
-.Pp
 .Ss Serial interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It com
 Modems and serial cards
 .El
-.\"
-.Pp
 .Ss SCSI controllers
 .Bl -tag -width speaker -offset indent -compact
 .It ahc
 Adaptec ADP-1480
 .El
-.\"
-.Pp
 .Ss USB controllers
 .Bl -tag -width speaker -offset indent -compact
 .It ohci
