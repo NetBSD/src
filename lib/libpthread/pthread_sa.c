@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.8 2003/05/26 19:41:03 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.9 2003/05/27 15:24:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.8 2003/05/26 19:41:03 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.9 2003/05/27 15:24:24 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -193,8 +193,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	case SA_UPCALL_USER:
 		/* We don't send ourselves one of these. */
 	default:
-		/*CONSTCOND*/
-		pthread__assert(0);
+		pthread__abort();
 	}
 
 	/*
@@ -207,8 +206,8 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
 	    self, next, next->pt_uc, pthread__uc_pc(next->pt_uc)));
 	pthread__upcall_switch(self, next);
-	/*NOTREACHED*//*CONSTCOND*/
-	pthread__assert(0);
+	/*NOTREACHED*/
+	pthread__abort();
 }
 
 /*
@@ -306,7 +305,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 					
 			}
 		}
-		pthread__assert (victim != self);
+		pthread__assert(victim != self);
 		victim->pt_parent = self;
 		victim->pt_next = next;
 		next = victim;

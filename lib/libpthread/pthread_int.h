@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.11 2003/04/23 19:35:47 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.12 2003/05/27 15:24:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -339,17 +339,20 @@ void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
 
 #define pthread__self() (pthread__id(pthread__sp()))
 
+#define pthread__abort()						\
+	pthread__assertfunc(__FILE__, __LINE__, __func__, "unreachable")
+
 #define pthread__assert(e) do {						\
 	if (__predict_false(!(e)))					\
        	       pthread__assertfunc(__FILE__, __LINE__, __func__, #e);	\
-        } while (0)
+        } while (/*CONSTCOND*/0)
 
 #define pthread__error(err, msg, e) do {				\
 	if (__predict_false(!(e))) {					\
        	       pthread__errorfunc(__FILE__, __LINE__, __func__, msg);	\
 	       return (err);						\
 	} 								\
-        } while (0)
+        } while (/*CONSTCOND*/0)
 
 
 

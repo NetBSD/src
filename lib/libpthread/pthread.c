@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.18 2003/04/28 17:46:30 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.19 2003/05/27 15:24:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.18 2003/04/28 17:46:30 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.19 2003/05/27 15:24:24 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -357,8 +357,8 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 
 	pthread_exit(retval);
 
-	/*NOTREACHED*//*CONSTCOND*/
-	pthread__assert(0);
+	/*NOTREACHED*/
+	pthread__abort();
 }
 
 
@@ -396,8 +396,7 @@ pthread__idle(void)
 	/* NOTREACHED */
 	self->pt_spinlocks++; /* XXX make sure we get to finish the assert! */
 	SDPRINTF(("(pthread__idle %p) Returned! Error.\n", self));
-	/* CONSTCOND */
-	pthread__assert(0);
+	pthread__abort();
 }
 
 
@@ -472,8 +471,8 @@ pthread_exit(void *retval)
 		pthread__block(self, &self->pt_join_lock);
 	}
 
-	/*NOTREACHED*//*CONSTCOND*/
-	pthread__assert(0);
+	/*NOTREACHED*/
+	pthread__abort();
 	exit(1);
 }
 
@@ -1069,7 +1068,7 @@ pthread__assertfunc(char *file, int line, char *function, char *expr)
 	    function ? function : "",
 	    function ? "\"" : "");
 
-	write(STDERR_FILENO, buf, len);
+	write(STDERR_FILENO, buf, (size_t)len);
 	(void)kill(getpid(), SIGABRT);
 
 	_exit(1);
@@ -1097,7 +1096,7 @@ pthread__errorfunc(char *file, int line, char *function, char *msg)
 	    function ? "\"" : "",
 	    msg);
 
-	write(STDERR_FILENO, buf, len);
+	write(STDERR_FILENO, buf, (size_t)len);
 	if (pthread__errormode == PTHREAD_ERRORMODE_ABORT) {
 		(void)kill(getpid(), SIGABRT);
 
