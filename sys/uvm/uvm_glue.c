@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.63 2003/01/22 12:52:17 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.64 2003/02/14 16:25:12 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.63 2003/01/22 12:52:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.64 2003/02/14 16:25:12 atatat Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -722,8 +722,16 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 
 	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
-	for (entry = map->header.next; entry != &map->header;
-	     entry = entry->next) {  
+	entry = NULL;
+	vm_map_lock_read(map);
+	for (;;) {
+		if (entry == NULL)
+			entry = map->header.next;
+		else if (!uvm_map_lookup_entry(map, state.end, &entry))
+			entry = entry->next;
+		if (entry == &map->header)
+			break;
+
 		/* Should never happen for a user process. */
 		if (UVM_ET_ISSUBMAP(entry))
 			panic("uvm_coredump_walkmap: user process with "
@@ -756,10 +764,13 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		    entry->object.uvm_obj->pgops == &uvm_deviceops)
 			state.flags |= UVM_COREDUMP_NODUMP;
 
+		vm_map_unlock_read(map);
 		error = (*func)(p, vp, cred, &state);
 		if (error)
 			return (error);
+		vm_map_lock_read(map);
 	}
+	vm_map_unlock_read(map);
 
 	return (0);
 }
