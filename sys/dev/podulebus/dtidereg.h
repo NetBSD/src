@@ -1,4 +1,4 @@
-/* $NetBSD: dtidereg.h,v 1.1 2001/06/08 20:13:24 bjh21 Exp $ */
+/* $NetBSD: dtidereg.h,v 1.2 2001/06/13 18:29:41 bjh21 Exp $ */
 
 /* This file is in the public domain */
 
@@ -10,6 +10,8 @@
  * This is mostly reverse-engineered by Ben Harris from the driver that
  * comes with the board and the board itself.  Treat with caution.
  */
+
+#define DTIDE_NCHANNELS	2
 
 #define DTIDE_MAGICBASE	0x2000
 
