@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.4 1994/07/18 13:08:09 pk Exp $
+ *	$Id: ufs.c,v 1.5 1994/07/27 07:37:35 cgd Exp $
  */
 
 /*
@@ -342,12 +342,10 @@ search_directory(name, f, inumber_p)
 		while (dp < edp) {
 			if (dp->d_ino == (ino_t)0)
 				goto next;
-#if 0
 #if BYTE_ORDER == LITTLE_ENDIAN
 			if (fp->f_fs->fs_maxsymlinklen <= 0)
 				namlen = dp->d_type;
 			else
-#endif
 #endif
 				namlen = dp->d_namlen;
 			if (namlen == length &&
