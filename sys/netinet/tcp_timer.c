@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.8 1994/06/29 06:38:48 cgd Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.9 1994/10/14 16:01:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -270,7 +270,7 @@ tcp_timers(tp, timer)
 	 */
 	case TCPT_KEEP:
 		tcpstat.tcps_keeptimeo++;
-		if (tp->t_state < TCPS_ESTABLISHED)
+		if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 			goto dropit;
 		if (tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE &&
 		    tp->t_state <= TCPS_CLOSE_WAIT) {

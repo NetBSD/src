@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.10 1994/06/29 06:38:40 cgd Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.11 1994/10/14 16:01:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -188,7 +188,7 @@ present:
 	 * Present data to user, advancing rcv_nxt through
 	 * completed sequence space.
 	 */
-	if (TCPS_HAVERCVDSYN(tp->t_state) == 0)
+	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		return (0);
 	ti = tp->seg_next;
 	if (ti == (struct tcpiphdr *)tp || ti->ti_seq != tp->rcv_nxt)

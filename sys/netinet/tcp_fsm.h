@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.5 1994/06/29 06:38:39 cgd Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.6 1994/10/14 16:01:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -58,6 +58,7 @@
 #define	TCPS_TIME_WAIT		10	/* in 2*msl quiet wait after close */
 
 #define	TCPS_HAVERCVDSYN(s)	((s) >= TCPS_SYN_RECEIVED)
+#define	TCPS_HAVEESTABLISHED(s)	((s) >= TCPS_ESTABLISHED)
 #define	TCPS_HAVERCVDFIN(s)	((s) >= TCPS_TIME_WAIT)
 
 #ifdef	TCPOUTFLAGS
