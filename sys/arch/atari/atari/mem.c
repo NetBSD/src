@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1996/02/22 10:10:53 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 1996/04/26 06:59:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 dev_type_open(mmopen);
 dev_type_close(mmclose);
 dev_type_mmap(mmmmap);
+dev_type_read(mmrw);
 
 extern u_int lowram;
 caddr_t zeropage;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.3 1996/04/18 08:52:09 leo Exp $	*/
+/*	$NetBSD: md_root.c,v 1.4 1996/04/26 06:59:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -44,6 +44,7 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
+#include <dev/cons.h>
 #include <dev/ramdisk.h>
 
 /*

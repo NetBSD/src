@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1996/04/18 08:51:23 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 1996/04/26 06:59:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,6 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/core.h>
-#include <sys/cpu.h>
 #include <sys/exec_aout.h>
 #include <m68k/reg.h>
 
@@ -114,7 +113,7 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc	*p;
-	void		(*pc)(struct proc *);
+	void		(*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;

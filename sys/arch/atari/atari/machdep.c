@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 1996/04/18 08:51:15 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 1996/04/26 06:59:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,13 @@
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
 #include <kern/kern_extern.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
@@ -802,6 +808,7 @@ boot(howto)
 		doboot();
 		/*NOTREACHED*/
 	}
+	panic("Boot() should never come here");
 	/*NOTREACHED*/
 }
 

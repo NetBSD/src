@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 1996/03/17 01:26:44 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 1996/04/26 06:59:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,6 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/cpu.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/iomap.h>
@@ -360,7 +359,8 @@ time_t base;
 	}
   
 	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
+	time.tv_sec  = timbuf;
+	time.tv_usec = 0;
 }
 
 void

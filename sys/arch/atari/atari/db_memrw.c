@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 1996/01/19 13:51:11 leo Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 1996/04/26 06:59:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,7 +43,14 @@
 #include <vm/vm.h>
 
 #include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
+
 #include <machine/pte.h>
+#include <machine/cpu.h>
+
+static int	db_check __P((char *, u_int));
+static void	db_write_text __P((u_int8_t *, u_int8_t));
 
 /*
  * Check if access is allowed to 'addr'. Mask should contain
@@ -72,7 +79,7 @@ db_check(addr, mask)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register int	size;
+	register size_t	size;
 	register char	*data;
 {
 	u_int8_t	*src, *dst, *limit;
@@ -117,12 +124,12 @@ db_write_text(dst, ch)
 
 /*printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);*/
 	*pte &= ~PG_RO;
-	TBIS(dst);
+	TBIS((vm_offset_t)dst);
 
 	*dst = ch;
 
 	*pte = oldpte;
-	TBIS(dst);
+	TBIS((vm_offset_t)dst);
 	cachectl (4, dst, 1);
 }
 
@@ -132,7 +139,7 @@ db_write_text(dst, ch)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	int		size;
+	size_t		size;
 	char		*data;
 {
 	extern char	etext[] ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.5 1996/03/19 13:16:47 leo Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.6 1996/04/26 06:59:34 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -40,11 +40,13 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <machine/disklabel.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>		/* XXXX and all that uses it */
 #include <sys/proc.h>		/* XXXX and all that uses it */
 #include <sys/disk.h>
+#include <dev/cons.h>
+
+#include <machine/cpu.h>
 
 #include "rd.h"
 #include "fd.h"
@@ -54,8 +56,8 @@
 /*
  * Only boot on ufs. (XXX?)
  */
-int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+#include <ufs/ffs/ffs_extern.h>
+int (*mountroot) __P((void)) = ffs_mountroot;
 
 /*
  * Generic configuration;  all in one
