@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.26 1997/03/20 20:18:43 chuck Exp 
+ *	NetBSD: pcidevs,v 1.27 1997/04/04 00:22:00 augustss Exp 
  */
 
 /*
@@ -600,6 +600,7 @@
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
 #define	PCI_PRODUCT_CHIPS_65545	0x00d8		/* 65545 */
 #define	PCI_PRODUCT_CHIPS_65548	0x00dc		/* 65548 */
+#define	PCI_PRODUCT_CHIPS_65550	0x00e0		/* 65550 */
 
 /* Cirrus Logic products */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7548	0x0038		/* CL-GD7548 */
@@ -854,6 +855,9 @@
 /* Tekram Technology products (2nd PCI Vendor ID) */
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
 
+/* Texas Instruments products */
+#define	PCI_PRODUCT_TI_CT1130	0xac12		/* CT1130 */
+  
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x102f		/* R4x00 Host-PCI Bridge */
 
