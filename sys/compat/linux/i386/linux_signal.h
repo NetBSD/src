@@ -1,6 +1,7 @@
-/* 	$NetBSD: linux_signal.h,v 1.5 1998/09/11 12:50:09 mycroft Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.6 1998/10/01 00:57:30 erh Exp $	*/
 
 /*
+ * Copyright (c) 1998 Eric Haszlakiewicz
  * Copyright (c) 1995 Frank van der Linden
  * All rights reserved.
  *
@@ -31,8 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SIGNAL_H
-#define _LINUX_SIGNAL_H
+#ifndef _I386_LINUX_SIGNAL_H
+#define _I386_LINUX_SIGNAL_H
 
 #define LINUX_SIGHUP	 1
 #define LINUX_SIGINT	 2
@@ -68,32 +69,58 @@
 #define LINUX_SIGUNUSED	31
 #define LINUX_NSIG	32
 
+/*
+ * XXX We don't really support linux real-time (>32) signals
+ * XXX we now have >32 signals.  FIXME!
+ * XXX old linux_sigset_t are assumed to be the same size.
+ */
+#if 0
+#define LINUX__NSIG 		64
+#else
+#define LINUX__NSIG		32
+#endif
+#define LINUX__NSIG_BPW		32
+#define LINUX__NSIG_WORDS	(LINUX__NSIG / LINUX__NSIG_BPW)
+
 #define LINUX_SIG_BLOCK		0
 #define LINUX_SIG_UNBLOCK	1
 #define LINUX_SIG_SETMASK	2
 
-typedef u_long	linux_sigset_t;
-typedef void	(*linux_handler_t) __P((int));
-
-struct linux_sigaction {
-	linux_handler_t	sa_handler;
-	linux_sigset_t	sa_mask;
-	u_long		sa_flags;
-	void		(*sa_restorer) __P((void));
-};
-
 /* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
+#define LINUX_SA_SIGINFO	0x00000004
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
 #define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
-#define	LINUX_SA_ALLBITS	0xf8000001
+#define LINUX_SA_ALLBITS	0xf8000001
 
-extern int native_to_linux_sig[];
-extern int linux_to_native_sig[];
-void linux_to_native_sigset __P((const linux_sigset_t *, sigset_t *));
-void native_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
+typedef void	(*linux_handler_t) __P((int));
 
-#endif /* !_LINUX_SIGNAL_H */
+typedef u_long	linux_old_sigset_t;
+typedef struct {
+	u_long sig[LINUX__NSIG_WORDS];
+} linux_sigset_t;
+
+struct linux_old_sigaction {
+	linux_handler_t		sa_handler;
+	linux_old_sigset_t	sa_mask;
+	u_long			sa_flags;
+	void			(*sa_restorer) __P((void));
+};
+
+/* Used in rt_* calls */
+struct linux_sigaction {
+	linux_handler_t		sa_handler;
+	u_long			sa_flags;
+	void			(*sa_restorer) __P((void));
+	linux_sigset_t		sa_mask;
+};
+
+struct linux_k_sigaction {
+	struct linux_sigaction sa;
+#define k_sa_restorer	sa.sa_restorer
+};
+
+#endif /* !_I386_LINUX_SIGNAL_H */
