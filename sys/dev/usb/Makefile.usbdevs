@@ -1,4 +1,12 @@
-#	$NetBSD: Makefile.usbdevs,v 1.3 2000/01/31 21:08:11 augustss Exp $
+#	$NetBSD: Makefile.usbdevs,v 1.4 2002/04/12 17:56:14 heinz Exp $
+
+#	The header files depend on the correct version of usbdevs.
+#
+#	Thus, the procedure is:
+#	  1) change usbdevs
+#	  2) commit usbdevs
+#	  3) _then_ genereate header files
+#	  4) commit them
 
 AWK=	awk
 UNAME=	uname
