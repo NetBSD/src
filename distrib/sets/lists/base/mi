@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.492 2004/07/12 23:56:57 wiz Exp $
+# $NetBSD: mi,v 1.493 2004/07/16 03:13:48 dyoung Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1153,6 +1153,7 @@
 ./usr/sbin/vnconfig				base-sysutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
 ./usr/sbin/wire-test				base-netutil-bin
+./usr/sbin/wlanctl				base-sysutil-bin
 ./usr/sbin/wsconscfg				base-sysutil-bin
 ./usr/sbin/wsfontload				base-sysutil-bin
 ./usr/sbin/wsmoused				base-sysutil-bin
