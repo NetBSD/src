@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.52.2.2 2000/09/29 09:07:47 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.52.2.3 2002/04/22 22:01:35 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #define inet_pton	_inet_pton
 #define pipe		_pipe
 #define sbrk		_sbrk
+#define strlcat		_strlcat
+#define strlcpy		_strlcpy
 #define strtoll		_strtoll
 #define strtoull	_strtoull
 #define sys_errlist	_sys_errlist
