@@ -3185,6 +3185,7 @@
 ./usr/share/mk/bsd.doc.mk
 ./usr/share/mk/bsd.files.mk
 ./usr/share/mk/bsd.inc.mk
+./usr/share/mk/bsd.info.mk
 ./usr/share/mk/bsd.kinc.mk
 ./usr/share/mk/bsd.kmod.mk
 ./usr/share/mk/bsd.lib.mk

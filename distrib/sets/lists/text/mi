@@ -307,9 +307,11 @@
 ./usr/share/me/sh.me
 ./usr/share/me/tbl.me
 ./usr/share/me/thesis.me
+./usr/share/misc/epsf.tex
 ./usr/share/misc/eqnchar
 ./usr/share/misc/man.template
 ./usr/share/misc/mdoc.template
+./usr/share/misc/texinfo.tex
 ./usr/share/misc/vgrindefs
 ./usr/share/tmac/eqnrc
 ./usr/share/tmac/hyphen.us
