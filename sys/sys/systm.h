@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.35 1995/05/31 20:41:55 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.36 1995/06/26 10:39:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -161,6 +161,8 @@ void	softclock __P((void));
 void	statclock __P((struct clockframe *frame));
 
 void	initclocks __P((void));
+void	inittodr __P((time_t));
+void	resettodr __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
