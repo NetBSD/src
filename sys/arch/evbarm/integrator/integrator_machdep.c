@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.38 2003/05/17 23:47:00 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.39 2003/05/21 22:48:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -109,6 +109,7 @@ void ifpga_reset(void) __attribute__((noreturn));
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.
