@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.9 1999/03/19 18:25:57 kleink Exp $	 */
+/*	$NetBSD: rtld.h,v 1.9.2.1 1999/06/23 15:08:34 perry Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -194,6 +194,7 @@ Obj_Entry *_rtld_digest_phdr __P((const Elf_Phdr *, int, caddr_t));
 /* load.c */
 Obj_Entry *_rtld_load_object __P((char *, bool));
 int _rtld_load_needed_objects __P((Obj_Entry *));
+int _rtld_preload __P((const char *, bool));
 
 /* path.c */
 void _rtld_add_paths __P((Search_Path **, const char *, bool));
