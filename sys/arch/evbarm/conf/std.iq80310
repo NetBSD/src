@@ -1,4 +1,4 @@
-#	$NetBSD: std.iq80310,v 1.6 2001/11/07 00:33:22 thorpej Exp $
+#	$NetBSD: std.iq80310,v 1.7 2001/11/09 20:59:39 thorpej Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
@@ -17,3 +17,6 @@ options		ARM32
 
 makeoptions	LOADADDRESS="0xa0200000"
 makeoptions	BOARDTYPE="iq80310"
+
+# We need to configure the PCI bus.
+options 	PCI_NETBSD_CONFIGURE
