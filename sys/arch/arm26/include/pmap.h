@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.2 2000/09/23 11:10:58 bjh21 Exp $ */
+/* $NetBSD: pmap.h,v 1.3 2000/12/27 18:38:50 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -46,8 +46,6 @@ extern void pmap_bootstrap __P((int, paddr_t));
 extern struct pmap kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
-
-extern boolean_t pmap_confess(vaddr_t, vm_prot_t);
 
 extern boolean_t pmap_fault(pmap_t, vaddr_t, vm_prot_t);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.11 2000/12/27 16:50:12 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.12 2000/12/27 18:38:50 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -86,7 +86,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2000/12/27 16:50:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2000/12/27 18:38:50 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -982,30 +982,6 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 		*vstartp = VM_MIN_KERNEL_ADDRESS;
 	if (vendp != NULL)
 		*vendp = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
-}
-
-/*
- * Check if the given access should have aborted.  Used in various abort
- * handlers to work out what happened.
- */
-boolean_t
-pmap_confess(vaddr_t va, vm_prot_t atype)
-{
-	pmap_t pmap;
-	struct pv_entry *pv;
-	UVMHIST_FUNC("pmap_confess");
-
-	UVMHIST_CALLED(pmaphist);
-	/* XXX Assume access was from user mode (or equiv). */
-	pmap = va < VM_MIN_KERNEL_ADDRESS ? active_pmap : pmap_kernel();
-	pv = pmap->pm_entries[atop(va)];
-	if (pv == NULL)
-		return TRUE;
-	if (pv->pv_ppl == MEMC_PPL_NOACCESS)
-		return TRUE;
-	if (pv->pv_ppl == MEMC_PPL_RDONLY && (atype & VM_PROT_WRITE))
-		return TRUE;
-	return FALSE;
 }
 
 #ifdef DDB
