@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/03/06 12:04:50 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/03/25 07:43:39 lukem Exp $
 
 IMAGESIZE=	1080k
 IMAGEENDIAN=	be
@@ -8,5 +8,6 @@ IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
 
 HACKSRC= ${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+HACKOBJS+=	gethost.o
 
 ${CRUNCHBIN}: libhack.o
