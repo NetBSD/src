@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.8 2000/06/21 23:29:10 itojun Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.9 2001/04/04 11:21:13 wiz Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -41,13 +41,13 @@
 supports running
 .Fx
 binaries.
-Most binaries should work, except programs that use 
+Most binaries should work, except programs that use
 .Fx Ns -specific
 features.
 These include i386-specific calls, such as syscons utilities.
 The
 .Fx
-compatibility feature is active for kernels compiled 
+compatibility feature is active for kernels compiled
 with the
 .Dv COMPAT_FREEBSD
 option enabled.
@@ -237,7 +237,7 @@ Run the
 .Fx
 ldconfig program with directory arguments in which the
 .Fx
-runtime linker should look for shared libs. 
+runtime linker should look for shared libs.
 .Pa /usr/lib
 are standard, you could run like the following:
 .Pp
@@ -247,7 +247,7 @@ are standard, you could run like the following:
 .It me@netbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
 .El
 .Pp
-Note that argument directories of ldconfig are 
+Note that argument directories of ldconfig are
 mapped to
 .Pa /emul/freebsd/XXXX
 by
@@ -255,16 +255,16 @@ by
 compat code, and should exist as such on your system.
 Make sure
 .Pa /emul/freebsd/var/run/ld.so.hints
-is existing when you run 
+is existing when you run
 .Fx Ns 's
 ldconfig, if not, you may lose
 .Nx Ns 's
-.Pa /var/run/ld.so.hints.
+.Pa /var/run/ld.so.hints .
 .Fx
 ldconfig should be statically
 linked, so it doesn't need any shared libraries by itself.
 It will create the file
-.Pa /emul/freebsd/var/run/ld.so.hints.
+.Pa /emul/freebsd/var/run/ld.so.hints .
 You should rerun the
 .Fx
 version of the ldconfig program each time you add a new shared library.
@@ -339,8 +339,8 @@ or to similar device file which provides
 .Xr pcvt 4
 ioctls.
 .El
-.Ss Finding the necessary files.
-.Em Note:
+.Ss Finding the necessary files
+.Em Note :
 the information below is valid as of the time this
 document was written (June, 1995), but certain details
 such as names of ftp sites, directories and distribution names
@@ -386,7 +386,7 @@ libXt.so.6.0           XFree86-3.1.1/X311bin.tgz
 .\" libXt.so.3             oldlibs
 .Ed
 .Pp
-The Files called ``bindist.??'' are tar-ed, gzipped and split, 
+The Files called ``bindist.??'' are tar-ed, gzipped and split,
 so you can extract contents by ``cat bindist.?? | tar zpxf -''.
 .Pp
 Extract the files from these gzipped tarfiles in your
