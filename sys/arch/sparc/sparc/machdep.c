@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 2003/01/13 15:50:52 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.219 2003/01/13 16:59:17 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -798,7 +798,6 @@ cpu_reboot(howto, user_boot_string)
 	doshutdownhooks();
 
 #if defined(MULTIPROCESSOR)
-	UNLOCK_XPMSG();	/* XXX - in case we paniced in xcall() */
 	XCALL0(cpu_halt, CPUSET_ALL & ~(1 << cpu_number()));
 	delay(100);
 #endif /* MULTIPROCESSOR */
