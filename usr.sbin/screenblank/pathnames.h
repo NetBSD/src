@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1998/12/18 01:15:45 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 1999/06/06 03:35:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define _PATH_SCREENBLANKPID	"/var/run/screenblank.pid"
 
 #ifdef HAVE_FBIO
 #define	_PATH_KEYBOARD		"/dev/kbd"

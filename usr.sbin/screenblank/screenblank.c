@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.9 1998/12/18 01:15:45 thorpej Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.10 1999/06/06 03:35:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.9 1998/12/18 01:15:45 thorpej Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.10 1999/06/06 03:35:36 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: screenblank.c,v 1.9 1998/12/18 01:15:45 thorpej Exp $");
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <dev/wscons/wsconsio.h>
 
@@ -93,7 +94,6 @@ int	main __P((int, char *[]));
 static	void add_dev __P((const char *, int));
 static	void change_state __P((int));
 static	void cvt_arg __P((char *, struct timeval *));
-static	void logpid __P((void));
 static	void sighandler __P((int));
 static	void usage __P((void));
 
@@ -219,7 +219,7 @@ main(argc, argv)
 	/* Detach. */
 	if (daemon(0, 0))
 		err(1, "daemon");
-	logpid();
+	pidfile(NULL);
 
 	/* Start the state machine. */
 	for (;;) {
@@ -308,7 +308,6 @@ sighandler(sig)
 {
 
 	/* Kill the pid file and re-enable the framebuffer before exit. */
-	(void)unlink(_PATH_SCREENBLANKPID);
 	change_state(videoon);
 	exit(0);
 }
@@ -371,17 +370,6 @@ cvt_arg(arg, tvp)
 		microseconds *= factor;
 		
 	tvp->tv_usec = microseconds;
-}
-
-static void
-logpid()
-{
-	FILE *fp;
-
-	if ((fp = fopen(_PATH_SCREENBLANKPID, "w")) != NULL) {
-		fprintf(fp, "%u\n", getpid());
-		(void)fclose(fp);
-	}
 }
 
 static void
