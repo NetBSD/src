@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.S,v 1.7 1996/10/18 05:36:54 thorpej Exp $	*/
+/*	$NetBSD: crt0.S,v 1.8 1999/03/19 01:17:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,8 +38,7 @@
  *	from: @(#)crt0.s	8.2 (Berkeley) 3/21/94
  */
 
-#include <machine/regdef.h>
-#include <machine/machAsmDefs.h>
+#include <mips/asm.h>
 
 	.comm	_C_LABEL(environ), 4
 	.comm	_C_LABEL(__progname), 4
