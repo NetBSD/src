@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.1 2000/04/12 21:43:09 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.2 2000/04/14 17:37:15 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ attr_t	__nca;
 #define COLOR_TEK	3	/* Tektronix-style colour manipulation */
 int	__color_type = COLOR_NONE;
 
+static void
+__change_pair __P((short));
 /*
  * has_colors --
  *	Check if terminal has colours.
@@ -260,15 +262,7 @@ init_pair(pair, fore, back)
 	/* XXX: need to initialise HP style (iP) */
 
 	if (changed) {
-		int	 y, x;
-
-		/* Reset colour attribute on curscr */
-		for (y = 0; y < curscr->maxy; y++)
-			for (x = 0; x < curscr->maxx; x++)
-				if ((curscr->lines[y]->line[x].attr &
-				    __COLOR) == COLOR_PAIR(pair))
-					curscr->lines[y]->line[x].attr &=
-					    ~__COLOR;
+		__change_pair (pair);
 	}
 	return(OK);
 }
@@ -374,4 +368,68 @@ __restore_colors()
 			/* XXX: need to re-initialise Tek style (iC) */
 			break;
 		}
+}
+
+/*
+ * __change_pair --
+ *	Mark dirty all positions using pair.
+ */
+void
+__change_pair(pair)
+	short	pair;
+{
+	struct __winlist	*wlp;
+	WINDOW			*win;
+	int			 y, x;
+
+	
+	for (wlp = __winlistp; wlp != NULL; wlp = wlp->nextp) {
+#ifdef DEBUG
+		__CTRACE("__change_pair: win = %0.2o\n", wlp->winp);
+#endif
+		if (wlp->winp == curscr) {
+			/* Reset colour attribute on curscr */
+#ifdef DEBUG
+			__CTRACE("__change_pair: win == curscr\n");
+#endif
+			for (y = 0; y < curscr->maxy; y++)
+				for (x = 0; x < curscr->maxx; x++)
+					if ((curscr->lines[y]->line[x].attr &
+					    __COLOR) == COLOR_PAIR(pair))
+						curscr->lines[y]->line[x].attr
+						    &= ~__COLOR;
+		} else {
+			/* Mark dirty those positions with color pair "pair" */
+			win = wlp->winp;
+			for (y = 0; y < win->maxy; y++) {
+				for (x = 0; x < win->maxx; x++)
+					if ((win->lines[y]->line[x].attr &
+					    __COLOR) == COLOR_PAIR(pair)) {
+						if (!(win->lines[y]->flags &
+						    __ISDIRTY)) {
+							win->lines[y]->flags |=
+							    __ISDIRTY;
+							*win->lines[y]->firstchp
+							    = x;
+							*win->lines[y]->lastchp
+							    = x;
+						} else {
+							if (*win->lines[y]->
+							    firstchp > x)
+								*win->lines[y]->
+								    firstchp =
+								    x;
+							if (*win->lines[y]->
+							    lastchp < x)
+								*win->lines[y]->
+								    lastchp = x;
+						}
+					}
+#ifdef DEBUG
+				if ((win->lines[y]->flags & __ISDIRTY)
+					__CTRACE("__change_pair: first = %d, last = %d\n", *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+#endif
+			}
+		}
+	}
 }
