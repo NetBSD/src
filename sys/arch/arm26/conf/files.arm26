@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.22 2001/03/04 14:38:29 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.23 2001/03/04 20:47:03 matt Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -212,10 +212,6 @@ file	dev/cninit.c
 file	arch/arm26/arm26/db_interface.c		ddb
 file	arch/arm26/arm26/db_machdep.c		ddb
 file	arch/arm26/arm26/db_trace.c		ddb
-
-file	arch/arm26/arm26/disksubr.c		disk
-file	arch/arm26/arm26/disksubr_mbr.c		disk
-file	arch/arm26/arm26/disksubr_acorn.c	disk
 
 file	arch/arm26/arm26/start.c
 file	arch/arm26/arm26/autoconf.c
