@@ -262,7 +262,7 @@ lance_probe(sc)
 	/*
 	 * Which bits are settable will depend on the type of chip.
 	 */
-	iswrcsr(sc, 3, 0xffff);
+	iswrcsr(sc, 3, PROBE_MASK);
 
 	switch (isrdcsr(sc, 3)) {
 	case LANCE_MASK:
