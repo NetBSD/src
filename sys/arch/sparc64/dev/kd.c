@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.3 1999/05/22 20:34:56 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.4 1999/05/23 02:45:19 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,6 +119,9 @@ kd_init(unit)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
+	int i;
+	char *prop;
+	
 
 	if (unit != 0)
 		return;
@@ -150,36 +153,20 @@ kd_init(unit)
 #endif
 	}
 
-	if (CPU_ISSUN4COR4M) {
-		int i;
-		char *prop;
-
-		if (kd->rows == 0 &&
-		    (prop = getpropstring(optionsnode, "screen-#rows"))) {
-			i = 0;
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->rows = (unsigned short)i;
-		}
-		if (kd->cols == 0 &&
-		    (prop = getpropstring(optionsnode, "screen-#columns"))) {
-			i = 0;
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->cols = (unsigned short)i;
-		}
+	if (kd->rows == 0 &&
+	    (prop = getpropstring(optionsnode, "screen-#rows"))) {
+		i = 0;
+		while (*prop != '\0')
+			i = i * 10 + *prop++ - '0';
+		kd->rows = (unsigned short)i;
 	}
-	if (CPU_ISSUN4) {
-		struct eeprom *ep = (struct eeprom *)eeprom_va;
-
-		if (ep) {
-			if (kd->rows == 0)
-				kd->rows = (u_short)ep->eeTtyRows;
-			if (kd->cols == 0)
-				kd->cols = (u_short)ep->eeTtyCols;
-		}
+	if (kd->cols == 0 &&
+	    (prop = getpropstring(optionsnode, "screen-#columns"))) {
+		i = 0;
+		while (*prop != '\0')
+			i = i * 10 + *prop++ - '0';
+		kd->cols = (unsigned short)i;
 	}
-
 	return;
 }
 
@@ -478,6 +465,9 @@ static int  kdcngetc __P((dev_t));
 static void kdcnputc __P((dev_t, int));
 static void kdcnpollc __P((dev_t, int));
 
+/* The keyboard driver uses cn_hw to access the real console driver */
+extern struct consdev consdev_prom;
+struct consdev *cn_hw = &consdev_prom;
 struct consdev consdev_kd = {
 	kdcnprobe,
 	kdcninit,
@@ -517,45 +507,35 @@ kdcngetc(dev)
 	struct kbd_state *ks = &kdcn_state;
 	int code, class, data, keysym;
 
-	if (!zs_conschan) {
-		char c0;
-
-		while ((code = OF_read(OF_stdin(), &c0, sizeof(c0))) != sizeof(c0)) {
-			if (code != -2 && code != 0)
-				return -1;
-		}
-		return (c0);
-	} else {
-		for (;;) {
-			code = zs_getc(zs_conschan);
-			keysym = kbd_code_to_keysym(ks, code);
-			class = KEYSYM_CLASS(keysym);
+	for (;;) {
+		code = (*cn_hw->cn_getc)(dev);
+		keysym = kbd_code_to_keysym(ks, code);
+		class = KEYSYM_CLASS(keysym);
+		
+		switch (class) {
+		case KEYSYM_ASCII:
+			goto out;
 			
-			switch (class) {
-			case KEYSYM_ASCII:
-				goto out;
-				
-			case KEYSYM_CLRMOD:
-			case KEYSYM_SETMOD:
-				data = (keysym & 0x1F);
-				/* Only allow ctrl or shift. */
-				if (data > KBMOD_SHIFT_R)
-					break;
-				data = 1 << data;
-				if (class == KEYSYM_SETMOD)
-					ks->kbd_modbits |= data;
-				else
-					ks->kbd_modbits &= ~data;
+		case KEYSYM_CLRMOD:
+		case KEYSYM_SETMOD:
+			data = (keysym & 0x1F);
+			/* Only allow ctrl or shift. */
+			if (data > KBMOD_SHIFT_R)
 				break;
-				
-			case KEYSYM_ALL_UP:
-				/* No toggle keys here. */
-				ks->kbd_modbits = 0;
-				break;
-				
-			default:	/* ignore all other keysyms */
-				break;
-			}
+			data = 1 << data;
+			if (class == KEYSYM_SETMOD)
+				ks->kbd_modbits |= data;
+			else
+				ks->kbd_modbits &= ~data;
+			break;
+			
+		case KEYSYM_ALL_UP:
+			/* No toggle keys here. */
+			ks->kbd_modbits = 0;
+			break;
+			
+		default:	/* ignore all other keysyms */
+			break;
 		}
 	}
 out:
@@ -567,9 +547,12 @@ kdcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
+	int s;
 	char c0 = (c & 0x7f);
 
-	OF_write(OF_stdout(), &c0, sizeof(c0));
+	s = splhigh();
+	OF_write(OF_stdout(), &c0, 1);
+	splx(s);
 }
 
 static void
@@ -589,5 +572,6 @@ kdcnpollc(dev, on)
 	} else {
 		/* Resuming kernel. */
 	}
+	(*cn_hw->cn_pollc)(dev, on);
 }
 

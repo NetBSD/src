@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1999/05/22 20:33:55 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.16 1999/05/23 02:45:20 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -95,9 +95,8 @@ int printspl = 0;
  * the machine.
  */
 int	cold;		/* if 1, still working on cold-start */
-int	fbnode;		/* node ID of ROM's framebuffer XXXX deprecated */
 int	stdinnode;	/* node ID of ROM's console input device */
-int	stdoutnode;	/* node ID of ROM's console output device */
+int	fbnode;		/* node ID of ROM's console output device */
 int	optionsnode;	/* node ID of ROM's options */
 
 #ifdef KGDB
