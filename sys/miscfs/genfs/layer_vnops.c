@@ -1,11 +1,11 @@
-/*	$NetBSD: layer_vnops.c,v 1.5 2000/12/21 03:51:02 enami Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.6 2001/06/07 13:32:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.5 2000/12/21 03:51:02 enami Exp $
+ *	$Id: layer_vnops.c,v 1.6 2001/06/07 13:32:47 wiz Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
