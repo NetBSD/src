@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.2 2000/11/20 03:19:34 wiz Exp $	*/
+/*	$NetBSD: opts.c,v 1.3 2001/05/13 18:06:57 veego Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: opts.c,v 1.8.2.1 2000/06/21 04:01:59 ezk Exp
+ * Id: opts.c,v 1.8.2.4 2001/01/10 03:23:11 ezk Exp
  *
  */
 
@@ -159,8 +159,6 @@ static struct opt opt_fields[] = {
 	&fs_static.opt_dev,	0,		0,		FALSE	},
   { S("pref"),
 	&fs_static.opt_pref,	0,		0,		FALSE	},
-  { S("autopref"),
-	&fs_static.opt_autopref,0,		0,		FALSE	},
   { S("path"),
 	0,			&opt_path,	0,		FALSE	},
   { S("autodir"),
@@ -205,6 +203,7 @@ static struct opt opt_fields[] = {
 	0,			&opt_dkey,	0,		FALSE	},
   { S("key."),
 	0,			&opt_keyd,	0,		FALSE	},
+  /* XXX: should maptype really be a variable? I think selector. -Erez */
   { S("maptype"),
 	&fs_static.opt_maptype,	0,		0,		FALSE	},
   { S("cachedir"),
@@ -319,7 +318,7 @@ backslash(char **p)
   if (**p == '\\') {
     (*p)++;
     switch (**p) {
-    case 'a':
+    case 'g':
       c = '\007';		/* Bell */
       break;
     case 'b':
