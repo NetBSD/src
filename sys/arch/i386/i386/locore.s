@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.69 1994/05/24 07:21:02 deraadt Exp $
+ *	$Id: locore.s,v 1.70 1994/05/24 10:41:52 mycroft Exp $
  */
 
 /*
@@ -167,7 +167,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	%eax
 	popfl
 
-	/* Try to toggle alignment check flag; does not exist on 386. */
+try386:	/* Try to toggle alignment check flag; does not exist on 386. */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
@@ -182,11 +182,11 @@ start:	movw	$0x1234,0x472			# warm boot
 	popfl
 
 	testl	%eax,%eax
-	jnz	1f
+	jnz	try486
 	movl	$CPU_386,_cpu-KERNBASE
 	jmp	2f
 
-1:	/* Try to toggle identification flag; does not exist on early 486s. */
+try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
@@ -201,27 +201,8 @@ start:	movw	$0x1234,0x472			# warm boot
 	popfl
 
 	testl	%eax,%eax
-	jnz	1f
-	movl	$CPU_486,_cpu-KERNBASE
-	jmp	2f
-
-1:	/* Use the `cpuid' instruction. */
-	xorl	%eax,%eax
-	.byte	0x0f,0xa2		# cpuid 0
-	movl	%ebx,_cpu_vendor	# store vendor string
-	movl	%edx,_cpu_vendor+4
-	movl	%ecx,_cpu_vendor+8
-	movb	$0,_cpu_vendor+12
-
-	movl	$1,%eax
-	.byte	0x0f,0xa2		# cpuid 1
-	rorl	$8,%eax			# extract family type
-	andl	$15,%eax
-	cmpl	$5,%eax
-	jae	1f
-
-	/* less than Pentium; must be 486 */
-	movl	$CPU_486,_cpu-KERNBASE
+	jnz	try586
+is486:	movl	$CPU_486,_cpu-KERNBASE
 
 	/* check for Cyrix 486DLC -- based on check routine  */
 	/* documented in "Cx486SLC/e SMM Programmer's Guide" */
@@ -238,12 +219,29 @@ start:	movw	$0x1234,0x472			# warm boot
 	andw	$0x08d5,%cx
 	cmpw	%ax,%cx
 	jnz	2f			# if flags changed, Intel chip
+
 	movl	$CPU_486DLC,_cpu-KERNBASE # set CPU value for Cyrix
+	movl	$0x69727943,_cpu_vendor
+	movw	$0x0078,_cup_vendor+4
 	jmp	2f
 
-1:	movl	$CPU_586,_cpu-KERNBASE
-2:
+try586:	/* Use the `cpuid' instruction. */
+	xorl	%eax,%eax
+	.byte	0x0f,0xa2		# cpuid 0
+	movl	%ebx,_cpu_vendor	# store vendor string
+	movl	%edx,_cpu_vendor+4
+	movl	%ecx,_cpu_vendor+8
+	movb	$0,_cpu_vendor+12
 
+	movl	$1,%eax
+	.byte	0x0f,0xa2		# cpuid 1
+	rorl	$8,%eax			# extract family type
+	andl	$15,%eax
+	cmpl	$5,%eax
+	jb	is486			# less than a Pentium
+	movl	$CPU_586,_cpu-KERNBASE
+
+2:
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
 	 * can trace this code without having to worry about the trace trap
