@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.13 1997/10/05 15:12:13 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.14 1997/10/09 07:58:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.13 1997/10/05 15:12:13 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.14 1997/10/09 07:58:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,13 +138,16 @@ main(argc, argv)
 	name = argv[0];
 
 	errs = 0;
-	while ((i = getopt(argc, argv, "dl")) != -1)
+	while ((i = getopt(argc, argv, "dls")) != -1)
 		switch (i) {
 		case 'd':
 			options |= SO_DEBUG;
 			break;
 		case 'l':
 			lflag++;
+			break;
+		case 's':
+			sflag++;
 			break;
 		default:
 			errs++;
