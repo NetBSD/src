@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.7 2000/03/23 07:01:32 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.8 2000/05/27 04:46:24 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -88,7 +88,6 @@ void	tr_xint __P((struct tr_softc *));
 void	tr_oldxint __P((struct tr_softc *));
 struct	mbuf *tr_get __P((struct tr_softc *, int, struct ifnet *));
 void	tr_opensap __P((struct tr_softc *, u_char));
-void	tr_timeout __P((void *));
 int	tr_mbcopy __P((struct tr_softc *, bus_size_t, struct mbuf *));
 void	tr_bcopy __P((struct tr_softc *, u_char *, int));
 void	tr_start __P((struct ifnet *));
@@ -442,7 +441,6 @@ tr_attach(sc)
 	bpfattach(&ifp->if_bpf, ifp, DLT_IEEE802, sizeof(struct token_header));
 #endif
 
-	callout_init(&sc->sc_timeout_callout);
 	callout_init(&sc->sc_init_callout);
 	callout_init(&sc->sc_reinit_callout);
 
@@ -894,7 +892,6 @@ tr_intr(arg)
 						    sc->sc_xmit_buffers);
 #endif
 						sc->sc_xmit_correlator = 0;
-						callout_stop(&sc->sc_timeout_callout);
 						wakeup(&sc->tr_sleepevent);
 					}
 					else
@@ -924,12 +921,10 @@ tr_intr(arg)
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
 					ifp->if_flags &= ~IFF_OACTIVE;
-					callout_stop(&sc->sc_timeout_callout);
 					wakeup(&sc->tr_sleepevent);
 				}
 				break;
 			case DIR_SET_DEFAULT_RING_SPEED:
-				callout_stop(&sc->sc_timeout_callout);
 				wakeup(&sc->tr_sleepevent);
 				break;
 
@@ -942,7 +937,6 @@ tr_intr(arg)
 					        SRB_OPNSAP_STATIONID);
 				printf("%s: Token Ring opened\n",
 				    sc->sc_dev.dv_xname);
-				callout_stop(&sc->sc_timeout_callout);
 				wakeup(&sc->tr_sleepevent);
 				break;
 /* XXX DLC_CLOSE_SAP not needed ? */
@@ -1717,8 +1711,11 @@ void
 tr_sleep(sc)
 struct tr_softc *sc;
 {
-	callout_reset(&sc->sc_timeout_callout, hz * 30, tr_timeout, sc);
-	sleep(&sc->tr_sleepevent, 1);
+	int error;
+
+	error = tsleep(&sc->tr_sleepevent, 1, "trsleep", hz * 30);
+	if (error == EWOULDBLOCK)
+		printf("%s: sleep event timeout\n", sc->sc_dev.dv_xname);
 }
 
 void
@@ -1731,17 +1728,4 @@ struct ifnet	*ifp;
 	++ifp->if_oerrors;
 
 	tr_reset(sc);
-}
-
-/*
- *  tr_timeout - timeout routine if adapter does not open in 30 seconds
- */
-void
-tr_timeout(arg)
-void	*arg;
-{
-	struct tr_softc *sc = arg;
-
-	printf("Token Ring timeout\n");
-	wakeup(&sc->tr_sleepevent);
 }
