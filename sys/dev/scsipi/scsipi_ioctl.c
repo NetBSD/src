@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.16 1994/12/28 19:43:05 mycroft Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.17 1995/01/23 17:56:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -283,14 +283,6 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 
 	switch(cmd) {
 	case SCIOCCOMMAND: {
-		/*
-		 * You won't believe this, but the arg copied in
- 		 * from the user space, is on the kernel stack
-		 * for this process, so we can't write
-		 * to it at interrupt time..
-		 * we need to copy it in and out!
-		 * Make a static copy using malloc!
-		 */
 		scsireq_t *screq = (scsireq_t *)addr;
 		struct scsi_ioctl *si;
 		int len;
