@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuffer.c,v 1.4 1995/02/02 02:10:32 jtc Exp $	*/
+/*	$NetBSD: setbuffer.c,v 1.4.6.1 1996/09/20 17:00:53 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,10 +40,16 @@
 #if 0
 static char sccsid[] = "@(#)setbuffer.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: setbuffer.c,v 1.4 1995/02/02 02:10:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: setbuffer.c,v 1.4.6.1 1996/09/20 17:00:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(setbuffer,_setbuffer);
+__weak_alias(setlinebuf,_setlinebuf);
+#endif
 
 void
 setbuffer(fp, buf, size)
@@ -51,7 +57,6 @@ setbuffer(fp, buf, size)
 	char *buf;
 	int size;
 {
-
 	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, size);
 }
 
@@ -62,6 +67,5 @@ int
 setlinebuf(fp)
 	FILE *fp;
 {
-
 	return (setvbuf(fp, (char *)NULL, _IOLBF, (size_t)0));
 }

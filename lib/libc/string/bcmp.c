@@ -33,13 +33,18 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bcmp.c,v 1.5 1996/04/18 02:30:07 cgd Exp $";
+static char *rcsid = "$Id: bcmp.c,v 1.5.2.1 1996/09/20 17:00:56 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
-#include <string.h>
-#else
+#ifdef _KERNEL
 #include <lib/libkern/libkern.h>
+#else
+#include "namespace.h"
+#include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(bcmp,_bcmp);
+#endif
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: putw.c,v 1.5 1996/03/29 23:29:17 jtc Exp $	*/
+/*	$NetBSD: putw.c,v 1.5.2.1 1996/09/20 17:00:52 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,11 +40,16 @@
 #if 0
 static char sccsid[] = "@(#)putw.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: putw.c,v 1.5 1996/03/29 23:29:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: putw.c,v 1.5.2.1 1996/09/20 17:00:52 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
 #include "fvwrite.h"
+
+#ifdef __weak_alias
+__weak_alias(putw,_putw);
+#endif
 
 int
 putw(w, fp)

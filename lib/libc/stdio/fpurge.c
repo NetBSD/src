@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.4 1995/02/02 02:09:29 jtc Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.4.6.1 1996/09/20 17:00:50 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,13 +40,18 @@
 #if 0
 static char sccsid[] = "@(#)fpurge.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: fpurge.c,v 1.4 1995/02/02 02:09:29 jtc Exp $";
+static char rcsid[] = "$NetBSD: fpurge.c,v 1.4.6.1 1996/09/20 17:00:50 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
+
+#ifdef __weak_alias
+__weak_alias(fpurge,_fpurge);
+#endif
 
 /*
  * fpurge: like fflush, but without writing anything: leave the

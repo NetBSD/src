@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycroft Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.13.4.1 1996/09/20 17:00:24 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,10 +58,11 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycroft Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.13.4.1 1996/09/20 17:00:24 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -77,6 +78,11 @@ static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycro
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(gethostbyaddr,_gethostbyaddr);
+__weak_alias(gethostbyname,_gethostbyname);
 #endif
 
 #define	MAXALIASES	35
@@ -498,7 +504,7 @@ _gethtbyaddr(addr, len, type)
 
 	_sethtent(0);
 	while (p = _gethtent())
-		if (p->h_addrtype == type && !bcmp(p->h_addr, addr, len))
+		if (p->h_addrtype == type && !memcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
 	if (p==NULL)

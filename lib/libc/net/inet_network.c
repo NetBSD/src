@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.5.2.1 1996/09/20 17:00:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $";
+static char rcsid[] = "$NetBSD: inet_network.c,v 1.5.2.1 1996/09/20 17:00:36 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
+
+#ifdef __weak_alias
+__weak_alias(inet_network,_inet_network);
+#endif
 
 /*
  * Internet network address interpretation routine.

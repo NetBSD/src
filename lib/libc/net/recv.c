@@ -1,4 +1,4 @@
-/*	$NetBSD: recv.c,v 1.6 1995/02/25 06:20:54 cgd Exp $	*/
+/*	$NetBSD: recv.c,v 1.6.4.1 1996/09/20 17:00:42 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,14 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)recv.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: recv.c,v 1.6 1995/02/25 06:20:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: recv.c,v 1.6.4.1 1996/09/20 17:00:42 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <stddef.h>
+
+#ifdef __weak_alias
+__weak_alias(recv,_recv);
+#endif
 
 ssize_t
 recv(s, buf, len, flags)

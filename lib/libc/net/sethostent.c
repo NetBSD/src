@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostent.c,v 1.5 1996/02/02 15:22:39 mrg Exp $	*/
+/*	$NetBSD: sethostent.c,v 1.5.2.1 1996/09/20 17:00:48 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,15 +38,21 @@
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: sethostent.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: sethostent.c,v 1.5 1996/02/02 15:22:39 mrg Exp $";
+static char rcsid[] = "$NetBSD: sethostent.c,v 1.5.2.1 1996/09/20 17:00:48 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <netdb.h>
 #include <resolv.h>
+
+#ifdef __weak_alias
+__weak_alias(endhostent,_endhostent);
+__weak_alias(sethostent,_sethostent);
+#endif
 
 void
 sethostent(stayopen)

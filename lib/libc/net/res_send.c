@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $	*/
+/*	$NetBSD: res_send.c,v 1.5.2.1 1996/09/20 17:00:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -48,7 +48,7 @@
  * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+res_close * SOFTWARE.
  * -
  * --Copyright--
  */
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_send.c,v 8.7 1995/12/03 08:31:17 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_send.c,v 1.5.2.1 1996/09/20 17:00:47 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,6 +73,7 @@ static char rcsid[] = "$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $";
  * Send query to name server and wait for reply.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -95,6 +96,12 @@ static char rcsid[] = "$NetBSD: res_send.c,v 1.5 1996/02/02 15:22:36 mrg Exp $";
 
 #if defined(USE_OPTIONS_H)
 # include <../conf/options.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(res_send,_res_send);
+__weak_alias(res_send_setqhook,_res_send_setqhook);
+__weak_alias(res_send_setrhook,_res_send_setrhook);
 #endif
 
 void _res_close __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport.c,v 1.4 1995/02/25 06:20:37 cgd Exp $	*/
+/*	$NetBSD: getservbyport.c,v 1.4.4.1 1996/09/20 17:00:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,12 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getservbyport.c,v 1.4 1995/02/25 06:20:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: getservbyport.c,v 1.4.4.1 1996/09/20 17:00:31 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <netdb.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(getservbyport,_getservbyport);
+#endif
 
 extern int _serv_stayopen;
 

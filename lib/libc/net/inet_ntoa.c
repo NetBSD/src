@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntoa.c,v 1.4 1995/02/25 06:20:46 cgd Exp $	*/
+/*	$NetBSD: inet_ntoa.c,v 1.4.4.1 1996/09/20 17:00:37 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: inet_ntoa.c,v 1.4 1995/02/25 06:20:46 cgd Exp $";
+static char rcsid[] = "$NetBSD: inet_ntoa.c,v 1.4.4.1 1996/09/20 17:00:37 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,10 +45,15 @@ static char rcsid[] = "$NetBSD: inet_ntoa.c,v 1.4 1995/02/25 06:20:46 cgd Exp $"
  * Convert network-format internet address
  * to base 256 d.d.d.d representation.
  */
+#include "namespace.h"
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(inet_ntoa,_inet_ntoa);
+#endif
 
 char *
 inet_ntoa(in)

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.9.2.1 1996/09/20 17:00:44 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -58,10 +58,11 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$Id: res_init.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.9.2.1 1996/09/20 17:00:44 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -72,6 +73,10 @@ static char rcsid[] = "$NetBSD: res_init.c,v 1.9 1996/02/02 15:22:30 mrg Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(res_init,_res_init);
+#endif
 
 static void res_setoptions __P((char *, char *));
 static u_int32_t net_mask __P((struct in_addr));
@@ -199,7 +204,7 @@ res_init()
 		if (!strncmp(buf, "lookup", sizeof("lookup") -1)) {
 		    char *sp = NULL;
 
-		    bzero(_res.lookups, sizeof _res.lookups);
+		    memset(_res.lookups, 0, sizeof _res.lookups);
 		    cp = buf + sizeof("lookup") - 1;
 		    for (n = 0;; cp++) {
 		    	    if (n == MAXDNSLUS)

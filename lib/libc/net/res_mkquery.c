@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.6 1996/02/02 15:22:32 mrg Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.6.2.1 1996/09/20 17:00:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -58,16 +58,21 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_mkquery.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: res_mkquery.c,v 1.6 1996/02/02 15:22:32 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_mkquery.c,v 1.6.2.1 1996/09/20 17:00:45 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(res_mkquery,_res_mkquery);
+#endif
 
 /*
  * Form all types of queries.
@@ -100,7 +105,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	 */
 	if ((buf == NULL) || (buflen < sizeof(HEADER)))
 		return(-1);
-	bzero(buf, sizeof(HEADER));
+	memset(buf, 0, sizeof(HEADER));
 	hp = (HEADER *) buf;
 	hp->id = htons(++_res.id);
 	hp->opcode = op;

@@ -36,15 +36,22 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94"; */
-static char *rcsid = "$Id: bm.c,v 1.4 1996/02/04 23:44:03 jtc Exp $";
+static char *rcsid = "$Id: bm.c,v 1.4.2.1 1996/09/20 17:00:58 jtc Exp $";
 #endif /* LIBC_SCCS && not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <bm.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(bm_comp,_bm_comp);
+__weak_alias(bm_exec,_bm_exec);
+__weak_alias(bm_free,_bm_free);
+#endif
 
 /* 
  * XXX

@@ -36,10 +36,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcopy.c	5.11 (Berkeley) 6/21/91";*/
-static char *rcsid = "$Id: bcopy.c,v 1.5 1995/06/15 00:07:16 jtc Exp $";
+static char *rcsid = "$Id: bcopy.c,v 1.5.4.1 1996/09/20 17:00:57 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(bcopy,_bcopy);
+#endif
 
 /*
  * sizeof(word) MUST BE A POWER OF TWO

@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.6 1996/02/02 15:22:22 mrg Exp $	*/
+/*	$NetBSD: herror.c,v 1.6.2.1 1996/09/20 17:00:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -58,15 +58,23 @@
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: herror.c,v 8.2 1995/06/19 08:35:01 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: herror.c,v 1.6 1996/02/02 15:22:22 mrg Exp $";
+static char rcsid[] = "$NetBSD: herror.c,v 1.6.2.1 1996/09/20 17:00:32 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(h_errlist,_h_errlist);
+__weak_alias(h_nerr,_h_nerr);
+__weak_alias(herror,_herror);
+__weak_alias(hstrerror,_hstrerror);
+#endif
 
 const char	*h_errlist[] = {
 	"Resolver Error 0 (no error)",

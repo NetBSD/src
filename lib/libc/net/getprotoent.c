@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent.c,v 1.4 1995/02/25 06:20:35 cgd Exp $	*/
+/*	$NetBSD: getprotoent.c,v 1.4.4.1 1996/09/20 17:00:28 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,16 +37,23 @@
 #if 0
 static char sccsid[] = "@(#)getprotoent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getprotoent.c,v 1.4 1995/02/25 06:20:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: getprotoent.c,v 1.4.4.1 1996/09/20 17:00:28 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(endprotoent,_endprotoent);
+__weak_alias(getprotoent,_getprotoent);
+__weak_alias(setprotoent,_setprotoent);
+#endif
 
 #define	MAXALIASES	35
 

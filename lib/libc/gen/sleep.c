@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.15.2.1 1996/09/19 20:03:53 jtc Exp $	*/
+/*	$NetBSD: sleep.c,v 1.15.2.2 1996/09/20 17:00:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: sleep.c,v 1.15.2.1 1996/09/19 20:03:53 jtc Exp $";
+static char rcsid[] = "$NetBSD: sleep.c,v 1.15.2.2 1996/09/20 17:00:18 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,10 @@ static char rcsid[] = "$NetBSD: sleep.c,v 1.15.2.1 1996/09/19 20:03:53 jtc Exp $
 #include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(sleep,_sleep);
+#endif
 
 static volatile int ringring;
 

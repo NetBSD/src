@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.6.2.1 1996/09/20 17:00:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -37,14 +37,20 @@
 #if 0
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: inet_addr.c,v 1.6 1996/02/02 15:22:23 mrg Exp $";
+static char rcsid[] = "$NetBSD: inet_addr.c,v 1.6.2.1 1996/09/20 17:00:33 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
+
+#ifdef __weak_alias
+__weak_alias(inet_addr,_inet_addr);
+__weak_alias(inet_aton,_inet_aton);
+#endif
 
 /*
  * Ascii internet address interpretation routine.
