@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.66 2004/06/28 21:07:47 bouyer Exp $
+# $NetBSD: GENERIC,v 1.67 2004/07/15 03:53:45 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -161,6 +161,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PMAP_STATIC_L1S=128
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # if set defines a keycode for the fcom console to break into ddb.
 # 0x40 == @, see man ascii(7)

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.26 2004/04/15 14:58:30 tv Exp $
+# 	$NetBSD: MPC303,v 1.27 2004/07/15 03:53:46 atatat Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -9,7 +9,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	16
 
@@ -31,6 +31,7 @@ options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=16384	# dmesg buffer size
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 ## UVM options.
 #options 	UVM_PAGE_TRKOWN

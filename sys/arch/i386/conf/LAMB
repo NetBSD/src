@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.36 2004/07/06 22:53:37 mycroft Exp $
+#	$NetBSD: LAMB,v 1.37 2004/07/15 03:53:49 atatat Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -66,6 +66,7 @@ options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 options 	TIMER_FREQ=1189200	# LAMB uses nonstandard timer freq
 

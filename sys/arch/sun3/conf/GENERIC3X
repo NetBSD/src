@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.63 2004/06/28 21:07:49 bouyer Exp $
+# $NetBSD: GENERIC3X,v 1.64 2004/07/15 03:53:52 atatat Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -30,6 +30,7 @@ options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

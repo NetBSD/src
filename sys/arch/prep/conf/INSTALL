@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27 2004/03/12 15:18:33 nonaka Exp $
+#	$NetBSD: INSTALL,v 1.28 2004/07/15 03:53:51 atatat Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -48,6 +48,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Networking options

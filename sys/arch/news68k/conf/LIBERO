@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.22 2003/11/08 12:17:53 tsutsui Exp $
+# 	$NetBSD: LIBERO,v 1.23 2004/07/15 03:53:50 atatat Exp $
 
 #	NEWS1750 config file;
 #
@@ -25,6 +25,7 @@ options 	SYSVSHM			# System V shared memory
 options 	LKM			# loadable kernel modules
 #options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.18 2004/04/15 14:58:30 tv Exp $
+# $NetBSD: VR41XX,v 1.19 2004/07/15 03:53:46 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.18 $"
+#ident 		"GENERIC-$Revision: 1.19 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -44,6 +44,7 @@ options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options		KLOADER_DEBUG
 

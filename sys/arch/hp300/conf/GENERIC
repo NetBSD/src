@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2004/06/28 21:07:47 bouyer Exp $
+# $NetBSD: GENERIC,v 1.103 2004/07/15 03:53:46 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	32		# estimated number of users
 
@@ -49,6 +49,7 @@ options 	LKM		# Loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 options 	SYSVSHM		# System V-style shared memory

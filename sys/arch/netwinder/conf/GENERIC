@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2004/06/28 21:07:48 bouyer Exp $
+# $NetBSD: GENERIC,v 1.51 2004/07/15 03:53:50 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -158,6 +158,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 

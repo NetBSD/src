@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.25 2002/09/18 02:44:06 lukem Exp $
+#	$NetBSD: KLONDIKE,v 1.26 2004/07/15 03:53:50 atatat Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -29,6 +29,7 @@ options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	SCSIVERBOSE		# verbose SCSI error messages
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # compatibility options
 options 	COMPAT_10		# NetBSD 1.0,

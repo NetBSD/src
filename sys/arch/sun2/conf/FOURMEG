@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.17 2003/10/30 05:31:17 mycroft Exp $
+# $NetBSD: FOURMEG,v 1.18 2004/07/15 03:53:52 atatat Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.17 $"
+#ident 		"FOURMEG-$Revision: 1.18 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -25,6 +25,7 @@ options 	KTRACE		# system call tracing
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Which kernel debugger?  Uncomment either this:
