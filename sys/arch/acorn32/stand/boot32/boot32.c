@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.1 2002/12/28 23:57:37 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.2 2002/12/29 00:30:40 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -99,11 +99,11 @@ u_long	 total_podram_pages, total_dram_pages, total_vram_pages;/* for bootconfig
 int	 dram_blocks, podram_blocks;				/* number of mem. objects/type  */
 int	 vram_blocks, rom_blocks, io_blocks;
 
-u_long	 DRAM_addr[DRAM_BLOCKS],  DRAM_pages[DRAM_BLOCKS];
+u_long	 DRAM_addr[DRAM_BLOCKS],     DRAM_pages[DRAM_BLOCKS];
 u_long	 PODRAM_addr[PODRAM_BLOCKS], PODRAM_pages[PODRAM_BLOCKS];	/* processor only RAM	*/
-u_long	 VRAM_addr[VRAM_BLOCKS],  VRAM_pages[VRAM_BLOCKS];
-u_long	 ROM_addr[ROM_BLOCKS],    ROM_pages[ROM_BLOCKS];
-u_long	 IO_addr[IO_BLOCKS],      IO_pages[IO_BLOCKS];
+u_long	 VRAM_addr[VRAM_BLOCKS],     VRAM_pages[VRAM_BLOCKS];
+u_long	 ROM_addr[ROM_BLOCKS],       ROM_pages[ROM_BLOCKS];
+u_long	 IO_addr[IO_BLOCKS],         IO_pages[IO_BLOCKS];
 
 
 /* RISC OS memory pages we claimed */
@@ -526,7 +526,7 @@ void add_initvectors(void) {
 
 
 void create_configuration(int argc, char **argv, int start_args) {
-	int i, root_specified;
+	int i, root_specified, id_low, id_high;
 
 	bconfig_new_phys = kernel_free_vm_start - pv_offset;
 	bconfig_page = get_relocated_page(bconfig_new_phys, nbpp);
@@ -537,12 +537,15 @@ void create_configuration(int argc, char **argv, int start_args) {
 	os_readsysinfo_monitor_info(NULL, &monitor_type, &monitor_sync);
 	os_readsysinfo_chip_presence(&ioeb_flags, &superio_flags, &lcd_flags);
 	os_readsysinfo_superio_features(&superio_flags_basic, &superio_flags_extra);
+	os_readsysinfo_unique_id(&id_low, &id_high);
 
 	/* fill in the bootconfig *bconfig structure : generic version II */
 	memset(bconfig, 0, sizeof(bconfig));
 	bconfig->magic			= BOOTCONFIG_MAGIC;
 	bconfig->version		= BOOTCONFIG_VERSION;
 	strcpy(bconfig->kernelname, booted_file);
+
+	memcpy(&(bconfig->machine_id), &id_low, 4);
 
 	root_specified = 0;
 	strcpy(bconfig->args, "");
