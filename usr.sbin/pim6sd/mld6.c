@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.4 2000/05/19 10:43:48 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.5 2000/07/23 23:00:54 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -326,7 +326,7 @@ int recvlen;
 	}
 
 	/* TODO: too noisy. Remove it? */
-//#define NOSUCHDEF
+#undef NOSUCHDEF
 #ifdef NOSUCHDEF
 	IF_DEBUG(DEBUG_PKT | debug_kind(IPPROTO_ICMPV6, mldh->mld6_type,
 					mldh->mld6_code))
