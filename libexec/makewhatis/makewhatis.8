@@ -1,4 +1,4 @@
-.\"	$NetBSD: makewhatis.8,v 1.7 2002/03/08 21:59:07 jdolecek Exp $
+.\"	$NetBSD: makewhatis.8,v 1.8 2002/03/08 22:10:00 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,9 +53,9 @@ pages and creates
 a whatis.db database
 for use in
 .Xr apropos 1 ,
-.Xr whatis 1 
+.Xr whatis 1
 or with
-.Xr man 1 's
+.Xr man 1 Ns 's
 .Fl k
 option.
 Man pages compressed with
@@ -76,20 +76,22 @@ is not provided,
 .Nm
 parses
 .Pa /etc/man.conf
-and regenerates whatis database files specified there. Each
-database file is assumed to reside on root of appropriate
+and regenerates the whatis database files specified there.
+Each database file is assumed to reside in the root of the appropriate
 man page hierarchy.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl C
-Use different
-.Xr man.conf(5)
-configuration file instead of the default,
+.It Fl C Ar file
+Use
+.Ar file
+(in
+.Xr man.conf 5
+format) as configuration file instead of the default,
 .Pa /etc/man.conf .
 .It Fl f
-Don't spawn child process to generate individual database files,
-do all work synchronously on foreground.
+Don't spawn child processes to generate the individual database files,
+but do all the work synchronously in the foreground.
 .El
 .Sh FILES
 .Bl -tag -compact -width /etc/man.conf1
@@ -97,7 +99,7 @@ do all work synchronously on foreground.
 name of the whatis database
 .It Pa /etc/man.conf
 .Xr man 1
-configuration file, used to get location of whatis databases when
+configuration file, used to get the location of the whatis databases when
 .Nm
 is called without arguments
 .El
@@ -114,7 +116,7 @@ as a shell script written by
 .An J.T. Conklin Aq jtc@netbsd.org
 and
 .An  Thorsten Frueauf Aq frueauf@ira.uka.de .
-Further work was done by 
+Further work was done by
 Matthew Green, Luke Mewburn and
 Chris Demetriou.
 .Pp
