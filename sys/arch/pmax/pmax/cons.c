@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.5 1994/11/22 18:59:57 dean Exp $	*/
+/*	$NetBSD: cons.c,v 1.6 1995/01/23 18:39:30 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,16 +72,15 @@ struct consdev cn_tab = {
 	(struct tty *)0,
 };
 
-cnopen(dev, flag, mode, p, fp)
+cnopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
-	struct file *fp;
 {
 	if (cn_tab.cn_dev == NODEV)
 		return (0);
 	dev = cn_tab.cn_dev;
-	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p, fp));
+	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
  
 cnclose(dev, flag, mode, p)
