@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.5 2003/11/01 17:35:42 jdolecek Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.6 2003/11/18 13:01:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.5 2003/11/01 17:35:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.6 2003/11/18 13:01:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h> 
@@ -320,8 +320,8 @@ check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
           case FINGERPRINT_INDIRECT: /* fingerprint ok but need to check
                                         for direct execution */
                   if (direct_exec == 1) {
-                          printf("Attempt to execute %s (dev %lu, inode %lu) dir
-ectly by pid %u (ppid %u, gppid %u)\n",
+                          printf("Attempt to execute %s (dev %lu, inode %lu) "
+				 "dir ectly by pid %u (ppid %u, gppid %u)\n",
                                  epp->ep_name, epp->ep_vap->va_fsid,
                                  epp->ep_vap->va_fileid, p->p_pid,
                                  p->p_pptr->p_pid, p->p_pptr->p_pptr->p_pid);
@@ -331,8 +331,8 @@ ectly by pid %u (ppid %u, gppid %u)\n",
                   break;
 
           case FINGERPRINT_NOMATCH: /* does not match - whine about it */
-                  printf("Fingerprint for %s (dev %lu, inode %lu) does not match
- loaded value\n",
+                  printf("Fingerprint for %s (dev %lu, inode %lu) does not "
+			 "match loaded value\n",
                          epp->ep_name, epp->ep_vap->va_fsid,
                          epp->ep_vap->va_fileid);
                   if (securelevel > 1)
