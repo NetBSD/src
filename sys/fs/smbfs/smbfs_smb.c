@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.18 2003/10/25 18:33:37 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.19 2004/03/21 16:04:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.18 2003/10/25 18:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.19 2004/03/21 16:04:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1249,7 +1249,7 @@ smbfs_findnext(struct smbfs_fctx *ctx, int limit, struct smb_cred *scred)
 	if (limit == 0)
 		limit = 1000000;
 	else if (limit > 1)
-		limit *= 4;	/* imperical */
+		limit *= 4;	/* empirical */
 	ctx->f_scred = scred;
 	for (;;) {
 		if (ctx->f_flags & SMBFS_RDD_USESEARCH) {
@@ -1317,6 +1317,14 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 		*fap = ctx->f_attr;
 		if (name == NULL)
 			fap->fa_ino = dnp->n_ino;
+
+		/*
+		 * Check the returned file name case exactly
+		 * matches requested file name. ctx->f_nmlen is
+		 * guaranteed to always match nmlen.
+		 */
+		if (nmlen > 0 && strncmp(name, ctx->f_name, nmlen) != 0)
+			error = ENOENT;
 	}
 	smbfs_findclose(ctx, scred);
 	return error;
