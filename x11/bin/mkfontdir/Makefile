@@ -1,16 +1,14 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/06 03:09:36 rtr Exp $
 
 .include <bsd.own.mk>
 
-PROG=	mkfontdir
+.PATH:	${X11SRCDIR.xc}/programs/mkfontdir
 
-CPPFLAGS+=-DX_GZIP_FONT_COMPRESSION
-CPPFLAGS+=-I${X11SRCDIR.xc}/include/fonts -I${X11SRCDIR.xc}/lib/font/include
+MAN=	mkfontdir.1
 
-LDADD+=	-lXfont -lfntstubs -lm -lz
-DPADD+=	${LIBXFONT} ${LIBFNTSTUBS} ${LIBM} ${LIBZ}
-
-.PATH:	${X11SRCDIR.xc}/programs/${PROG}
+CPPSCRIPTS=	mkfontdir
+CPPSCRIPTFLAGS=	-DBINDIR=${X11BINDIR}
+SCRIPTS=	mkfontdir
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
