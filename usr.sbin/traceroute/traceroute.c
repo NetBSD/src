@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.27 1999/02/16 20:47:24 cjs Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.28 1999/02/16 23:18:40 cjs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.27 1999/02/16 20:47:24 cjs Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.28 1999/02/16 23:18:40 cjs Exp $");
 #endif
 #endif
 
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 	int tos = 0, settos = 0, ttl_flag = 0;
 	register int lsrr = 0;
 	register u_short off = 0;
-	struct ifaddrlist *al;
+	struct ifaddrlist *al, *al2;
 	char errbuf[132];
 
 	if ((cp = strrchr(argv[0], '/')) != NULL)
@@ -700,6 +700,7 @@ main(int argc, char **argv)
 
 	/* Get the interface address list */
 	n = ifaddrlist(&al, errbuf, sizeof errbuf);
+	al2 = al;
 	if (n < 0) {
 		Fprintf(stderr, "%s: ifaddrlist: %s\n", prog, errbuf);
 		exit(1);
@@ -712,8 +713,8 @@ main(int argc, char **argv)
 
 	/* Look for a specific device */
 	if (device != NULL) {
-		for (i = n; i > 0; --i, ++al)
-			if (strcmp(device, al->device) == 0)
+		for (i = n; i > 0; --i, ++al2)
+			if (strcmp(device, al2->device) == 0)
 				break;
 		if (i <= 0) {
 			Fprintf(stderr, "%s: Can't find interface %s\n",
@@ -729,11 +730,11 @@ main(int argc, char **argv)
 		 * Otherwise, use the first interface found.
 		 * Warn if there are more than one.
 		 */
-		setsin(from, al->addr);
+		setsin(from, al2->addr);
 		if (n > 1 && device == NULL && !find_local_ip(from, to)) {
 			Fprintf(stderr,
 		    "%s: Warning: Multiple interfaces found; using %s @ %s\n",
-			    prog, inet_ntoa(from->sin_addr), al->device);
+			    prog, inet_ntoa(from->sin_addr), al2->device);
 		}
 	} else {
 		hi = gethostinfo(source);
@@ -755,7 +756,7 @@ main(int argc, char **argv)
 			 * interface address.
 			 */
 			for (i = hi->n, ap = hi->addrs; i > 0; --i, ++ap)
-				if (*ap == al->addr)
+				if (*ap == al2->addr)
 					break;
 			if (i <= 0) {
 				Fprintf(stderr,
@@ -767,6 +768,25 @@ main(int argc, char **argv)
 		}
 		freehostinfo(hi);
 	}
+
+	/* 
+	 * If not root, make sure source address matches a local interface.
+	 * (The list of addresses produced by ifaddrlist() automatically
+	 * excludes interfaces that are marked down and/or loopback.)
+	 */
+	if (getuid())  {
+		al2 = al;
+		for (i = n; i > 0; --i, ++al2)
+			if (from->sin_addr.s_addr == al2->addr)
+			    break;
+		if (i <= 0) {
+			Fprintf(stderr, "%s: %s is not a valid local address "
+			    "and you are not superuser.\n", prog,
+			    inet_ntoa(from->sin_addr));
+			exit(1);
+		}
+	}
+
 	outip->ip_src = from->sin_addr;
 #ifndef IP_HDRINCL
 	if (bind(sndsock, (struct sockaddr *)from, sizeof(*from)) < 0) {
