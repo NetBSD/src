@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 1998/02/10 14:12:00 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.27 1998/05/04 06:09:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -162,8 +162,8 @@
  */
 #if defined(PMAP_NEW)
 struct pmap_physseg {
-  struct pv_head *pvhead;	/* pv_head array */
-  char *attrs;			/* attrs array */
+	struct pv_head *pvhead;		/* pv_head array */
+	char *attrs;			/* attrs array */
 };
 #else
 struct pmap_physseg {
