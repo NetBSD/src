@@ -1,4 +1,4 @@
-# $NetBSD: XEN-INSTALL,v 1.2 2005/03/09 22:39:19 bouyer Exp $
+# $NetBSD: XEN-INSTALL,v 1.3 2005/03/09 23:24:50 xtraeme Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -149,9 +149,6 @@ xbd*		at hypervisor?		# Xen virtual block device
 #wskbd*		at pckbd? console ?
 #wsdisplay*	at vga? console ?
 #wsmouse*	at pms? mux 0
-
-
-include	"arch/xen/conf/GENERIC.local"
 
 
 pseudo-device	ccd		4	# concatenated/striped disk devices
