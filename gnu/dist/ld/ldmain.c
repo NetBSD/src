@@ -396,7 +396,7 @@ main (argc, argv)
 		    }
 		}
 	      fclose (src);
-	      if (!fclose (dst))
+	      if (fclose (dst) == EOF)
 		{
 		  einfo ("%P: Error closing file `%s'\n", dst_name);
 		}

@@ -510,7 +510,7 @@ break exception.
 
 @menu
 * Manual::                      Structure of this Manual
-* GNU Assembler::               @value{AS}, the GNU Assembler
+* GNU Assembler::               The GNU Assembler
 * Object Formats::              Object File Formats
 * Command Line::                Command Line
 * Input Files::                 Input Files
@@ -591,7 +591,7 @@ computer-readable series of instructions.  Different versions of
 @c directives).
 
 @node GNU Assembler
-@section @value{AS}, the GNU Assembler
+@section The GNU Assembler
 
 @sc{gnu} @code{as} is really a family of assemblers.
 @ifclear GENERIC
@@ -604,7 +604,7 @@ architecture.  Each version has much in common with the others,
 including object file formats, most assembler directives (often called
 @dfn{pseudo-ops}) and assembler syntax.@refill
 
-@cindex purpose of @sc{gnu} @code{@value{AS}}
+@cindex purpose of @sc{gnu} assembler
 @code{@value{AS}} is primarily intended to assemble the output of the
 @sc{gnu} C compiler @code{@value{GCC}} for use by the linker
 @code{@value{LD}}.  Nevertheless, we've tried to make @code{@value{AS}}
@@ -779,7 +779,7 @@ information for the debugger.
 
 @cindex error messsages
 @cindex warning messages
-@cindex messages from @code{@value{AS}}
+@cindex messages from assembler
 @code{@value{AS}} may write warnings and error messages to the standard error
 file (usually your terminal).  This should not happen when  a compiler
 runs @code{@value{AS}} automatically.  Warnings report an assumption made so
@@ -827,7 +827,7 @@ because many of them aren't supposed to happen.
 @node Invoking
 @chapter Command-Line Options
 
-@cindex options, all versions of @code{@value{AS}}
+@cindex options, all versions of assembler
 This chapter describes command-line options available in @emph{all}
 versions of the @sc{gnu} assembler; @pxref{Machine Dependencies}, for options specific
 @ifclear GENERIC
@@ -1214,8 +1214,8 @@ seconds).
 
 @kindex -v
 @kindex -version
-@cindex @code{@value{AS}} version
-@cindex version of @code{@value{AS}}
+@cindex assembler version
+@cindex version of assembler
 You can find out what version of as is running by including the
 option @samp{-v} (which you can also spell as @samp{-version}) on the
 command line.
@@ -1907,8 +1907,8 @@ The directives @code{.byte}, @code{.hword}, @code{.int}, @code{.long},
 
 @menu
 * Secs Background::             Background
-* Ld Sections::                 @value{LD} Sections
-* As Sections::                 @value{AS} Internal Sections
+* Ld Sections::                 Linker Sections
+* As Sections::                 Assembler Internal Sections
 * Sub-Sections::                Sub-Sections
 * bss::                         bss Section
 @end menu
@@ -1944,7 +1944,7 @@ and for the Hitachi SH,
 ensure they end on a word (sixteen bit) boundary.
 @end ifset
 
-@cindex standard @code{@value{AS}} sections
+@cindex standard assembler sections
 An object file written by @code{@value{AS}} has at least three sections, any
 of which may be empty.  These are named @dfn{text}, @dfn{data} and
 @dfn{bss} sections.
@@ -2052,7 +2052,7 @@ Some sections are manipulated by @code{@value{LD}}; others are invented for
 use of @code{@value{AS}} and have no meaning except during assembly.
 
 @node Ld Sections
-@section @value{LD} Sections
+@section Linker Sections
 @code{@value{LD}} deals with just four kinds of sections, summarized below.
 
 @table @strong
@@ -2157,9 +2157,9 @@ DDDD}\boxit{2cm}{\tt 00000}\ \dots\hfil}
 @c END TEXI2ROFF-KILL
 
 @node As Sections
-@section @value{AS} Internal Sections
+@section Assembler Internal Sections
 
-@cindex internal @code{@value{AS}} sections
+@cindex internal assembler sections
 @cindex sections in messages, internal
 These sections are meant only for the internal use of @code{@value{AS}}.  They
 have no meaning at run-time.  You do not really need to know about these
@@ -4668,8 +4668,8 @@ family.
 
 @node Reporting Bugs
 @chapter Reporting Bugs
-@cindex bugs in @code{@value{AS}}
-@cindex reporting bugs in @code{@value{AS}}
+@cindex bugs in assembler
+@cindex reporting bugs in assembler
 
 Your bug reports play an essential role in making @code{@value{AS}} reliable.
 
@@ -4718,7 +4718,7 @@ of @code{@value{AS}} are welcome in any case.
 @node Bug Reporting
 @section How to report bugs
 @cindex bug reports
-@cindex @code{@value{AS}} bugs, reporting
+@cindex assembler bugs, reporting
 
 A number of companies and individuals offer support for @sc{gnu} products.  If
 you obtained @code{@value{AS}} from a support organization, we recommend you

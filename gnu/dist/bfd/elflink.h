@@ -695,6 +695,7 @@ elf_link_add_object_symbols (abfd, info)
       boolean definition;
       boolean size_change_ok, type_change_ok;
       boolean new_weakdef;
+      unsigned int old_alignment;
 
       elf_swap_symbol_in (abfd, esym, &sym);
 
@@ -782,6 +783,7 @@ elf_link_add_object_symbols (abfd, info)
 
       size_change_ok = false;
       type_change_ok = get_elf_backend_data (abfd)->type_change_ok;
+      old_alignment = 0;
       if (info->hash->creator->flavour == bfd_target_elf_flavour)
 	{
 	  Elf_Internal_Versym iver;
@@ -860,6 +862,9 @@ elf_link_add_object_symbols (abfd, info)
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
+	  /* FIXME: There are too many cases here, and it's too
+             confusing.  This code needs to be reorganized somehow.  */
+
 	  /* It's OK to change the type if it used to be a weak
              definition, or if the current definition is weak (and
              hence might be ignored).  */
@@ -874,6 +879,9 @@ elf_link_add_object_symbols (abfd, info)
 	  if (type_change_ok
 	      || h->root.type == bfd_link_hash_undefined)
 	    size_change_ok = true;
+
+	  if (h->root.type == bfd_link_hash_common)
+	    old_alignment = h->root.u.c.p->alignment_power;
 
 	  override = false;
 
@@ -896,6 +904,39 @@ elf_link_add_object_symbols (abfd, info)
 		      && (bind == STB_WEAK
 			  || ELF_ST_TYPE (sym.st_info) == STT_FUNC)))
 		{
+		  /* In the special case of two symbols which look
+                     like common symbols in a dynamic object, set the
+                     size of the symbol to the larger of the two.  */
+		  if ((sec->flags & SEC_ALLOC) != 0
+		      && (sec->flags & SEC_LOAD) == 0
+		      && sym.st_size > 0
+		      && bind != STB_WEAK
+		      && ELF_ST_TYPE (sym.st_info) != STT_FUNC
+		      && h->root.type == bfd_link_hash_defined
+		      && (h->elf_link_hash_flags
+			  & ELF_LINK_HASH_DEF_DYNAMIC) != 0
+		      && (h->root.u.def.section->owner->flags & DYNAMIC) != 0
+		      && (h->root.u.def.section->flags & SEC_ALLOC) != 0
+		      && (h->root.u.def.section->flags & SEC_LOAD) == 0
+		      && h->size > 0
+		      && h->type != STT_FUNC
+		      && sym.st_size != h->size)
+		    {
+		      /* Note that we only warn if the size is
+                         different.  If the size is the same, then we
+                         simply let the first shared library override
+                         the second.  */
+		      if (! ((*info->callbacks->multiple_common)
+			     (info, h->root.root.string,
+			      h->root.u.def.section->owner,
+			      bfd_link_hash_common,
+			      h->size, abfd, bfd_link_hash_common,
+			      sym.st_size)))
+			goto error_return;
+		      if (sym.st_size > h->size)
+			h->size = sym.st_size;
+		    }
+
 		  override = true;
 		  sec = bfd_und_section_ptr;
 		  definition = false;
@@ -913,34 +954,24 @@ elf_link_add_object_symbols (abfd, info)
 	      && definition
 	      && h->root.type == bfd_link_hash_common
 	      && (sec->flags & SEC_ALLOC) != 0
-	      && (sec->flags & SEC_LOAD) == 0)
+	      && (sec->flags & SEC_LOAD) == 0
+	      && sym.st_size > 0
+	      && bind != STB_WEAK
+	      && ELF_ST_TYPE (sym.st_info) != STT_FUNC)
 	    {
-	      if (! ((*info->callbacks->multiple_common)
-		     (info, h->root.root.string,
-		      h->root.u.c.p->section->owner, bfd_link_hash_common,
-		      h->root.u.c.size, abfd, bfd_link_hash_common,
-		      sym.st_size)))
-		goto error_return;
-
-	      /* If the symbol in the shared library is smaller than
-                 the one we already have, then override it to stick
-                 with the larger symbol.  Set SIZE_CHANGE_OK because
-                 we only want to warn if requested with --warn-common.  */
-	      if (sym.st_size < h->size)
-		{
-		  override = true;
-		  sec = bfd_und_section_ptr;
-		  definition = false;
-		  size_change_ok = true;
-		}
+	      override = true;
+	      sec = bfd_com_section_ptr;
+	      definition = false;
+	      value = sym.st_size;
+	      size_change_ok = true;
 	    }
 
-	  /* Similarly, if we are not looking at a dynamic object, and
-	     we have a definition, we want to override any definition
-	     we may have from a dynamic object.  Symbols from regular
-	     files always take precedence over symbols from dynamic
-	     objects, even if they are defined after the dynamic
-	     object in the link.  */
+	  /* If we are not looking at a dynamic object, and we have a
+	     definition, we want to override any definition we may
+	     have from a dynamic object.  Symbols from regular files
+	     always take precedence over symbols from dynamic objects,
+	     even if they are defined after the dynamic object in the
+	     link.  */
 	  if (! dynamic
 	      && (definition
 		  || (bfd_is_com_section (sec)
@@ -965,6 +996,49 @@ elf_link_add_object_symbols (abfd, info)
                  symbol was seen in a dynamic object.  We must force
                  the union to be NULL, so that it is correct for a
                  regular symbol.  */
+	      h->verinfo.vertree = NULL;
+	    }
+
+	  /* If we are not looking at a shared library and we have a
+             common symbol, and the symbol in the shared library is in
+             an uninitialized section, then treat the shared library
+             symbol as a common symbol.  This will not always be
+             correct, but it should do little harm.  Note that the
+             above condition already handled cases in which a common
+             symbol should simply override the definition in the
+             shared library.  */
+	  if (! dynamic
+	      && ! override
+	      && bfd_is_com_section (sec)
+	      && h->root.type == bfd_link_hash_defined
+	      && (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_DYNAMIC) != 0
+	      && (h->root.u.def.section->owner->flags & DYNAMIC) != 0
+	      && (h->root.u.def.section->flags & SEC_ALLOC) != 0
+	      && (h->root.u.def.section->flags & SEC_LOAD) == 0
+	      && h->size > 0
+	      && h->type != STT_FUNC)
+	    {
+	      /* It would be best if we could set the hash table entry
+                 to a common symbol, but we don't know what to use for
+                 the section or the alignment.  */
+	      if (! ((*info->callbacks->multiple_common)
+		     (info, h->root.root.string,
+		      h->root.u.def.section->owner, bfd_link_hash_common,
+		      h->size, abfd, bfd_link_hash_common, value)))
+		goto error_return;
+
+	      if (h->size > value)
+		value = h->size;
+
+	      /* FIXME: We no longer know the alignment required by
+		 the symbol in the shared library, so we just wind up
+		 using the one from the regular object.  */
+
+	      override = true;
+	      h->root.type = bfd_link_hash_undefined;
+	      h->root.u.undef.abfd = h->root.u.def.section->owner;
+	      size_change_ok = true;
+	      type_change_ok = true;
 	      h->verinfo.vertree = NULL;
 	    }
 
@@ -1011,10 +1085,16 @@ elf_link_add_object_symbols (abfd, info)
 	  new_weakdef = true;
 	}
 
-      /* Get the alignment of a common symbol.  */
+      /* Set the alignment of a common symbol.  */
       if (sym.st_shndx == SHN_COMMON
 	  && h->root.type == bfd_link_hash_common)
-	h->root.u.c.p->alignment_power = bfd_log2 (sym.st_value);
+	{
+	  unsigned int align;
+
+	  align = bfd_log2 (sym.st_value);
+	  if (align > old_alignment)
+	    h->root.u.c.p->alignment_power = align;
+	}
 
       if (info->hash->creator->flavour == bfd_target_elf_flavour)
 	{
@@ -1034,6 +1114,15 @@ elf_link_add_object_symbols (abfd, info)
 
 	      h->size = sym.st_size;
 	    }
+
+	  /* If this is a common symbol, then we always want H->SIZE
+             to be the size of the common symbol.  The code just above
+             won't fix the size if a common symbol becomes larger.  We
+             don't warn about a size change here, because that is
+             covered by --warn-common.  */
+	  if (h->root.type == bfd_link_hash_common)
+	    h->size = h->root.u.c.size;
+
 	  if (ELF_ST_TYPE (sym.st_info) != STT_NOTYPE
 	      && (definition || h->type == STT_NOTYPE))
 	    {

@@ -431,6 +431,13 @@ sort_by_file_name (a, b)
 {
   lang_statement_union_type **ra = a;
   lang_statement_union_type **rb = b;
+  int i;
+
+  i = strcmp ((*ra)->input_section.ifile->the_bfd->my_archive->filename,
+	      (*rb)->input_section.ifile->the_bfd->my_archive->filename);
+  if (i != 0)
+    return i;
+
   return strcmp ((*ra)->input_section.ifile->filename,
 		 (*rb)->input_section.ifile->filename);
 }
@@ -514,12 +521,12 @@ sort_sections (s)
 	  if (s->wild_statement.section_name != NULL
 	      && strncmp (s->wild_statement.section_name, ".idata", 6) == 0)
 	    {
-	      /* Sort any children in the same archive.  Run through all
-		 the children of this wild statement, when an
-		 input_section in an archive is found, scan forward to
-		 find all input_sections which are in the same archive.
-		 Sort them by their filename and then re-thread the
-		 pointer chain. */
+	      /* Sort the children.  We want to sort any objects in
+                 the same archive.  In order to handle the case of
+                 including a single archive multiple times, we sort
+                 all the children by archive name and then by object
+                 name.  After sorting them, we re-thread the pointer
+                 chain.  */
 
 	      while (*p)
 		{
@@ -533,9 +540,7 @@ sort_sections (s)
 		      int count;
 
 		      for (end = start, count = 0;
-			   end && end->header.type == lang_input_section_enum
-			   && (end->input_section.ifile->the_bfd->my_archive
-			       == start->input_section.ifile->the_bfd->my_archive);
+			   end && end->header.type == lang_input_section_enum;
 			   end = end->next)
 			count++;
 
