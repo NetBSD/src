@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23 2000/03/13 22:37:14 soren Exp $	
+.\"	$NetBSD: install,v 1.24 2000/08/22 13:44:45 abs Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,16 +163,17 @@ filesets. However, the easiest way is to put the
 files you want
 to install into the root directory for your client on the server.
 .Pp
-Next, unpack `base.tar.gz' and `etc.tar.gz' on the server in the root 
-directory for your machine. If you elect to use a separately NFS-mounted
-filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base.tar.gz end up in the correct location. One way to do this is
-to temporarily use a loopback mount on the server, re-routing
+Next, unpack `base.tar.gz', `etc.tar.gz', and 'kern.tgz' on the server in
+the root directory for your machine. If you elect to use a separately
+NFS-mounted filesystem for `/usr' with your diskless setup, make sure the
+"./usr" base files in base.tar.gz end up in the correct location. One way
+to do this is to temporarily use a loopback mount on the server, re-routing
 .Ar root Ns Pa /usr
 to your server's exported NetBSD
 .Pa /usr
-directory. Also put the kernel and the
-install/upgrade scripts into the root directory.
+directory. Also put 'install.*' and 'upgrade.sh' from the
+.Pa installation/netboot/
+directory into the root directory.
 .Pp
 A few configuration files need to be edited:
 .Bl -tag -width indent
@@ -190,7 +191,7 @@ For example:
 .Dl server:/export/exec/sun4.netbsd  /usr  nfs  rw 0 0
 .El
 .Pp
-Now you must populate the `/dev' directory for your client. If yoarserver
+Now you must populate the `/dev' directory for your client. If your server
 runs SunOS 4.x, you can simply change your working directory to
 .Ar root Ns Pa /dev
 and run the MAKEDEV script:
