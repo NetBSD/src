@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $	*/
+/*	$NetBSD: rccide.c,v 1.4 2003/12/02 12:20:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.4 2003/12/02 12:20:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $");
 void serverworks_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void serverworks_setup_channel(struct channel_softc *);
 int  serverworks_pci_intr(void *);
+int  serverworkscsb6_pci_intr(void *);
 
 int  rccide_match(struct device *, struct cfdata *, void *);
 void rccide_attach(struct device *, struct device *, void *);
@@ -150,8 +151,16 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    serverworks_pci_intr);
+		switch (sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_SERVERWORKS_CSB6_IDE:
+		case PCI_PRODUCT_SERVERWORKS_CSB6_RAID:
+			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			    serverworkscsb6_pci_intr);
+			break;
+		default:
+			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			    serverworks_pci_intr);
+		}
 	}
 
 	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
@@ -258,6 +267,33 @@ serverworks_pci_intr(arg)
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else
+			rv = 1;
+	}
+	return rv;
+}
+
+int
+serverworkscsb6_pci_intr(arg)
+	void *arg;
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	int rv = 0;
+	int i, crv;
+
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+		/*
+		 * The CSB6 doesn't assert IDEDMA_CTL_INTR for non-DMA commands.
+		 * Until we find a way to know if the controller posted an
+		 * interrupt, always call wdcintr(), which will try to guess
+		 * if the interrupt was for us or not (and checks
+		 * IDEDMA_CTL_INTR for DMA commands only).
+		 */
+		crv = wdcintr(wdc_cp);
+		if (crv != 0)
 			rv = 1;
 	}
 	return rv;
