@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.1 1996/06/11 08:30:14 thorpej Exp $
+#	$NetBSD: install.md,v 1.2 1996/06/26 21:11:07 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -419,6 +419,12 @@ __md_prep_disklabel_4
 	while [ "X$resp" != X"done" ]; do
 		labelmoredisks
 	done
+}
+
+md_copy_kernel() {
+	echo -n "Copying kernel..."
+	cp -p /netbsd /mnt/netbsd
+	echo "done."
 }
 
 	# Note, while they might not seem machine-dependent, the
