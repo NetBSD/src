@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1998/05/24 20:10:33 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1998/05/24 20:55:01 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -620,7 +620,7 @@ pmap_init()
 	 * use the va's?
 	 */
 #ifdef M68060
-	if (machineid & AMIGA_68060) {
+	if (cputype == CPU_68060) {
 		kptp = kpt_free_list;
 		while (kptp) {
 			pmap_changebit(kptp->kpt_pa, PG_CCB, 0);
@@ -1695,7 +1695,9 @@ void pmap_update()
 		printf("pmap_update()\n");
 #endif
 #if defined(M68060)
-	if (machineid & AMIGA_68060)
+#if defined(M68040) || defined(M68030) || defined(M68020)
+	if (cputype == CPU_68060)
+#endif
 		DCIA();
 #endif
 	TBIA();
@@ -2242,7 +2244,7 @@ pmap_enter_ptpage(pmap, va)
 		if (mmutype == MMU_68040) {
 #if defined(M68060)
 			stpa = (u_int)pmap->pm_stpa;
-			if (machineid & AMIGA_68060) {
+			if (cputype == CPU_68060) {
 				while (stpa < (u_int)pmap->pm_stpa + 
 				    AMIGA_STSIZE) {
 					pmap_changebit(stpa, PG_CCB, 0);
@@ -2288,7 +2290,7 @@ pmap_enter_ptpage(pmap, va)
 			addr = (caddr_t)&pmap->pm_stpa[ix * SG4_LEV2SIZE];
 			*ste = (u_int) addr | SG_RW | SG_U | SG_V;
 #if 0 /* XXX should be superfluous here: defined(M68060) */
-			if (machineid & AMIGA_68060) {
+			if (cputype == CPU_68060) {
 				pmap_changebit(addr, PG_CCB, 0);
 				pmap_changebit(addr, PG_CI, 1);
 				DCIS(); /* XXX */
@@ -2351,7 +2353,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((char *)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
 #if defined(M68060)
-		if (machineid & AMIGA_68060) {
+		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);
 			pmap_changebit(ptpa, PG_CI, 1);
 			DCIS();
@@ -2390,7 +2392,7 @@ pmap_enter_ptpage(pmap, va)
 	}
 
 #ifdef M68060
-	if (machineid & AMIGA_68060) {
+	if (cputype == CPU_68060) {
 		pmap_changebit(ptpa, PG_CCB, 0);
 		pmap_changebit(ptpa, PG_CI, 1);
 		DCIS();
