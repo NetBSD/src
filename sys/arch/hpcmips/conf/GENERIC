@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142 2003/10/25 13:21:13 simonb Exp $
+# $NetBSD: GENERIC,v 1.143 2003/12/27 07:29:56 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 maxusers	16
 
@@ -153,6 +153,9 @@ vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_730
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_730A
 
 #
 # hpcmips isa? bus irq locator means:
