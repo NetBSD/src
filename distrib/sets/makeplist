@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Print out the files in some or all lists.
-# Usage: makeflist [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
+# Usage: makeplist [-a arch] [-m machine] [-s setsdir] [-p prefix] setname pkgname
 #
 
 # set defaults
