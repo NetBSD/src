@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.2 1998/01/09 18:47:42 perry Exp $	
+
 NetBSD/sun3x _VER runs on most Sun3x machines, including:
 	3/80
 	3/460/470/480

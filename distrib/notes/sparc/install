@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.16 1998/01/09 18:47:23 perry Exp $	
+
 Installing NetBSD is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 

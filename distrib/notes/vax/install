@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.2 1998/01/09 18:47:54 perry Exp $	
+
 Installing NetBSD/vax may be a little bit complex, but it shouldn't be too
 hard if you have this document available.
 

@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.12 1998/01/09 18:46:39 perry Exp $	
+
 NetBSD/mac68k _VER runs on several of the older Macintosh computers.
 About 4MB of RAM should be sufficient to boot, and the system can probably
 be squeezed onto a 40MB hard disk by leaving off an unnecessary set or two.
