@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.1 1995/02/10 17:50:23 cgd Exp $	*/
+/*	$NetBSD: infinity.c,v 1.2 1998/07/26 14:14:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,4 +30,4 @@
 #include <math.h>
 
 /* bytes for +Infinity on an Alpha (IEEE double format) */
-char __infinity[] = { 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
+const char __infinity[] = { 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
