@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.2 1997/01/11 06:48:01 lukem Exp $	*/
+/*	$NetBSD: map.h,v 1.3 1998/07/29 02:26:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ protected void	map_end			__P((EditLine *));
 protected void	map_init_vi		__P((EditLine *));
 protected void	map_init_emacs		__P((EditLine *));
 protected int	map_set_editor		__P((EditLine *, char *));
+protected int	map_get_editor		__P((EditLine *, const char **));
 protected int	map_addfunc		__P((EditLine *, const char *, 
 					     const char *, el_func_t));
 
