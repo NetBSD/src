@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.23 1996/03/16 23:17:10 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.24 1996/03/30 22:25:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -107,7 +107,6 @@ panic(fmt, va_alist)
 {
 	int bootopt;
 	va_list ap;
-	static const char fm[] = "panic: %r\n";
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
 	if (panicstr)
@@ -116,7 +115,7 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	printf(fm, fmt, ap);
+	printf("panic: %:\n", fmt, ap);
 	va_end(ap);
 
 #ifdef KGDB
@@ -356,14 +355,14 @@ printf(fmt, va_alist)
  *
  *	reg=3<BITTWO,BITONE>
  *
- * The format %r passes an additional format string and argument list
+ * The format %: passes an additional format string and argument list
  * recursively.  Its usage is:
  *
  * fn(char *fmt, ...)
  * {
  *	va_list ap;
  *	va_start(ap, fmt);
- *	printf("prefix: %r: suffix\n", fmt, ap);
+ *	printf("prefix: %: suffix\n", fmt, ap);
  *	va_end(ap);
  * }
  *
@@ -433,7 +432,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'c':
 			putchar(va_arg(ap, int), flags, tp);
 			break;
-		case 'r':
+		case ':':
 			p = va_arg(ap, char *);
 			kprintf(p, flags, tp, va_arg(ap, va_list));
 			break;
