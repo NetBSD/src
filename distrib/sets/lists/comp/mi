@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.248 2000/07/26 23:00:23 pk Exp $
+#	$NetBSD: mi,v 1.249 2000/07/27 23:16:45 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -320,6 +320,8 @@
 ./usr/include/dev/tc/sfbreg.h		comp-c-include
 ./usr/include/dev/tc/tcdevs.h		comp-c-include
 ./usr/include/dev/tc/tcdevs_data.h		comp-c-include
+./usr/include/dev/tc/tcdsreg.h		comp-c-include
+./usr/include/dev/tc/tcdsvar.h		comp-c-include
 ./usr/include/dev/tc/tcreg.h		comp-c-include
 ./usr/include/dev/tc/tcvar.h		comp-c-include
 ./usr/include/dev/usb/usb.h		comp-c-include
