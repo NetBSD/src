@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.44 1999/03/09 00:37:01 mrg Exp $	*/
+/*	$NetBSD: rz.c,v 1.45 1999/04/08 13:55:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.44 1999/03/09 00:37:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.45 1999/04/08 13:55:37 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -961,7 +961,8 @@ rzgetinfo(dev)
 	    strlen(lp->d_packname) == 0 &&
 	    lp->d_npartitions == RAW_PART+1 &&
 	    lp->d_partitions[0].p_offset == 0 &&
-	    lp->d_partitions[0].p_size == 65536 &&
+	    (lp->d_partitions[0].p_size == 4096 ||
+	     lp->d_partitions[0].p_size == 65536 ) &&
 #if 0
 	    lp->d_partitions[0].p_size == lp->d_partitions[RAW_PART].p_size &&
 #endif
