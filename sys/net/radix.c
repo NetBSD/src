@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.16 2001/01/04 00:17:52 enami Exp $	*/
+/*	$NetBSD: radix.c,v 1.17 2001/01/10 01:16:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -299,7 +299,7 @@ on1:
 					while (x && x->rn_mask != m->rm_mask)
 						x = x->rn_dupedkey;
 					if (x && rn_satisfies_leaf(v, x, off))
-						    return x;
+						return x;
 				}
 				m = m->rm_mklist;
 			} while (m);
@@ -797,7 +797,7 @@ on1:
 				}
 			if (m)
 				log(LOG_ERR, "%s %p at %p\n",
-					    "rn_delete: Orphaned Mask", m, x);
+				    "rn_delete: Orphaned Mask", m, x);
 		}
 	}
 	/*
