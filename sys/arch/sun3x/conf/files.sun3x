@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.1.1.1 1997/01/14 20:57:01 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.2 1997/01/18 20:38:03 gwr Exp $
 
 #
 # sun3x-specific configuration info
@@ -12,22 +12,22 @@ maxusers 2 8 64
 # Standard stuff
 file arch/sun3x/sun3x/_startup.c
 file arch/sun3x/sun3x/autoconf.c
-file arch/sun3x/sun3x/conf.c
+file arch/sun3/sun3/conf.c
 file arch/sun3x/sun3x/db_machdep.c		ddb
 file arch/sun3x/sun3x/db_memrw.c		ddb | kgdb
-file arch/sun3x/sun3x/disksubr.c
+file arch/sun3/sun3/disksubr.c
 file arch/sun3x/sun3x/dvma.c
 file arch/sun3x/sun3x/fpu.c
-file arch/sun3x/sun3x/isr.c
-file arch/sun3x/sun3x/kgdb_stub.c 		kgdb
+file arch/sun3/sun3/isr.c
+file arch/sun3/sun3/kgdb_stub.c 		kgdb
 file arch/sun3x/sun3x/machdep.c
 file arch/sun3x/sun3x/mem.c
 file arch/sun3x/sun3x/pmap.c
 file arch/sun3x/sun3x/stub.c
-file arch/sun3x/sun3x/sys_machdep.c
+file arch/sun3/sun3/sys_machdep.c
 file arch/sun3x/sun3x/trap.c
 file arch/sun3x/sun3x/vector.c
-file arch/sun3x/sun3x/vm_machdep.c
+file arch/sun3/sun3/vm_machdep.c
 
 file arch/sun3x/dev/idprom.c
 
@@ -44,7 +44,7 @@ file dev/cons.c
 
 device mainbus {}
 attach mainbus at root
-file	arch/sun3x/sun3x/mainbus.c	mainbus
+file	arch/sun3/sun3/mainbus.c	mainbus
 
 # On-board I/O space
 device obio {addr = -1, [ipl = -1]}
@@ -76,7 +76,7 @@ include "../../../scsi/files.scsi"
 #
 device zsc {channel = -1}
 attach zsc at obio
-file arch/sun3x/dev/zs.c 		zsc needs-flag
+file arch/sun3/dev/zs.c 		zsc needs-flag
 file dev/ic/z8530sc.c			zsc
 
 device eeprom
@@ -148,7 +148,7 @@ file	arch/sun3x/dev/xy.c		xy needs-flag
 device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c			zstty needs-flag
-file arch/sun3x/dev/zs_kgdb.c		kgdb
+file arch/sun3/dev/zs_kgdb.c		kgdb
 
 define zsevent
 file dev/sun/event.c			zsevent
@@ -157,24 +157,24 @@ device kbd: zsevent
 attach kbd at zsc
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
-file arch/sun3x/dev/kd.c 		kbd
+file arch/sun3/dev/kd.c 		kbd
 
 device ms: zsevent
 attach ms at zsc
 file dev/sun/ms.c			ms needs-flag
 
 
-# RAM Disk for boot tape
-pseudo-device rd
-file dev/ramdisk.c			rd needs-flag
-file arch/sun3x/dev/rd_root.c		ramdisk_hooks
+# Memory Disk for boot tape
+pseudo-device md
+file dev/md.c				md needs-flag
+file arch/sun3/dev/md_root.c		memory_disk_hooks
 
 # Major numbers for root/swap device configuration
 major	{xy=3}	# Xylogics 450 and 451
 major	{vnd=5}	# vnode pseudo-device
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
-major	{rd=13}	# RAM disk (for mini-kernel)
+major	{md=13}	# Memory disk (for mini-kernel)
 
 # Compatibility modules
 
