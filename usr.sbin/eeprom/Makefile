@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$NetBSD: Makefile,v 1.9 2000/11/28 22:31:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2002/07/19 02:26:40 mrg Exp $
 
 .if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x" || ${MACHINE} == "sparc" \
 	|| ${MACHINE} == "sparc64"
@@ -12,7 +12,7 @@ SRCS=	getdate.y main.c
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 SRCS+=	ophandlers.c
 .endif
-.if ${MACHINE} != "sparc64"
+.if ${MACHINE_ARCH} != "sparc64"
 SRCS+=	eehandlers.c
 .endif
 
