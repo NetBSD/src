@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/06/03 02:28:12 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2003/09/09 03:56:23 itojun Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
@@ -14,7 +14,7 @@ SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 	svc.c svc_auth.c svc_dg.c svc_auth_unix.c svc_generic.c svc_raw.c \
 	svc_run.c svc_simple.c svc_vc.c \
 	xdr.c xdr_array.c xdr_float.c xdr_mem.c xdr_rec.c xdr_reference.c \
-	xdr_stdio.c
+	xdr_stdio.c __rpc_getxid.c
 
 CPPFLAGS+=	-DPORTMAP
 
