@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 1996/10/13 03:00:48 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.48 1996/11/13 06:13:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -268,6 +268,7 @@ trap(type, psr, pc, tf)
 	register struct proc *p;
 	register struct pcb *pcb;
 	register int n;
+	char bits[64];
 	u_quad_t sticks;
 
 	/* This steps the PC over the trap. */
@@ -326,8 +327,9 @@ trap(type, psr, pc, tf)
 #endif
 		if (type < 0x80) {
 dopanic:
-			printf("trap type 0x%x: pc=%x npc=%x psr=%b\n",
-			       type, pc, tf->tf_npc, psr, PSR_BITS);
+			printf("trap type 0x%x: pc=%x npc=%x psr=%s\n",
+			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
+			       PSR_BITS, bits, sizeof(bits)));
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 			/* NOTREACHED */
 		}
@@ -640,6 +642,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	vm_prot_t ftype;
 	int onfault;
 	u_quad_t sticks;
+	char bits[64];
 
 	cnt.v_trap++;
 	if ((p = curproc) == NULL)	/* safety check */
@@ -665,8 +668,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x ser=%b\n", pc,
-				ser, SER_BITS);
+			printf("text fault: pc=%x ser=%s\n", pc,
+			  bitmask_snprintf(ser, SER_BITS, bits, sizeof(bits)));
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -744,8 +747,9 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x ser=%b\n",
-					pc, v, ser, SER_BITS);
+				printf("data fault: pc=%x addr=%x ser=%s\n",
+				    pc, v, bitmask_snprintf(ser, SER_BITS,
+				    bits, sizeof(bits)));
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -788,6 +792,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	vm_prot_t ftype;
 	int onfault;
 	u_quad_t sticks;
+	char bits[64];
 #if DEBUG
 static int lastdouble;
 #endif
@@ -941,8 +946,9 @@ static int lastdouble;
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=%x sfsr=%b sfva=%x\n", pc,
-			       sfsr, SFSR_BITS, sfva);
+			printf("text fault: pc=%x sfsr=%s sfva=%x\n", pc,
+			    bitmask_snprintf(sfsr, SFSR_BITS, bits,
+			    sizeof(bits)), sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -1016,8 +1022,9 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=%x addr=%x sfsr=%b\n",
-				    pc, sfva, sfsr, SFSR_BITS);
+				printf("data fault: pc=%x addr=%x sfsr=%s\n",
+				    pc, sfva, bitmask_snprintf(sfsr, SFSR_BITS,
+				    bits, sizeof(bits)));
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
