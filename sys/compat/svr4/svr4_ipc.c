@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.8 1999/08/25 04:53:25 thorpej Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.9 1999/09/07 18:20:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_ipc.h>

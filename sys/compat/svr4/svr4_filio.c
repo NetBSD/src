@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.6 1998/09/04 19:54:38 christos Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.7 1999/09/07 18:20:18 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ioctl.h>
