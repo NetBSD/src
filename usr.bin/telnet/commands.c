@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.37 2000/01/31 14:25:42 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.38 2000/02/05 17:44:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.37 2000/01/31 14:25:42 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.38 2000/02/05 17:44:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2164,20 +2164,18 @@ static const char *
 sockaddr_ntop(sa)
     struct sockaddr *sa;
 {
-    void *addr;
-    static char addrbuf[INET6_ADDRSTRLEN];
+    static char addrbuf[NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+    const int niflags = NI_NUMERICHOST;
+#endif
 
-    switch (sa->sa_family) {
-    case AF_INET:
-	addr = &((struct sockaddr_in *)sa)->sin_addr;
-	break;
-    case AF_INET6:
-	addr = &((struct sockaddr_in6 *)sa)->sin6_addr;
-	break;
-    default:
+    if (getnameinfo(sa, sa->sa_len, addrbuf, sizeof(addrbuf),
+	    NULL, 0, niflags) == 0)
+	return addrbuf;
+    else
 	return NULL;
-    }
-    return (char *)inet_ntop(sa->sa_family, addr, addrbuf, sizeof(addrbuf));
 }
 
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
