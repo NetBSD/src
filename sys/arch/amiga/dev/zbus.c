@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.48 2002/09/27 20:30:20 thorpej Exp $ */
+/*	$NetBSD: zbus.c,v 1.49 2002/10/02 04:55:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.48 2002/09/27 20:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.49 2002/10/02 04:55:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -241,9 +241,8 @@ aconflookup(int mid, int pid)
  * mainbus driver
  */
 
-const struct cfattach zbus_ca = {
-	sizeof(struct device), zbusmatch, zbusattach
-};
+CFATTACH_DECL(zbus, sizeof(struct device),
+    zbusmatch, zbusattach, NULL, NULL);
 
 static struct cfdata *early_cfdata;
 

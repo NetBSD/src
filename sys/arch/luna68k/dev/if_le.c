@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
+/* $NetBSD: if_le.c,v 1.2 2002/10/02 05:31:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.2 2002/10/02 05:31:46 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -95,9 +95,8 @@ struct	le_softc {
 static int  le_match __P((struct device *, struct cfdata  *, void *));
 static void le_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach le_ca = {
-	sizeof(struct le_softc), le_match, le_attach
-};
+CFATTACH_DECL(le, sizeof(struct le_softc),
+    le_match, le_attach, NULL, NULL);
 extern struct cfdriver le_cd;
 
 static void lesrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));

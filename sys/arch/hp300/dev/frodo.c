@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.12 2002/09/27 20:31:45 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.13 2002/10/02 05:15:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.12 2002/09/27 20:31:45 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.13 2002/10/02 05:15:49 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -114,9 +114,8 @@ int	frodointr __P((void *));
 
 void	frodo_imask __P((struct frodo_softc *, u_int16_t, u_int16_t));
 
-const struct cfattach frodo_ca = {
-	sizeof(struct frodo_softc), frodomatch, frodoattach
-};
+CFATTACH_DECL(frodo, sizeof(struct frodo_softc),
+    frodomatch, frodoattach, NULL, NULL);
 
 struct frodo_attach_args frodo_subdevs[] = {
 	{ "dnkbd",	FRODO_APCI_OFFSET(0),	FRODO_INTR_APCI0 },

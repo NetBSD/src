@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.11 2002/09/27 20:32:26 thorpej Exp $ */
+/*	$NetBSD: tx39power.c,v 1.12 2002/10/02 05:26:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@ struct tx39power_softc {
 	txreg_t sc_icu_state[TX39_INTRSET_MAX + 1];
 };
 
-const struct cfattach tx39power_ca = {
-	sizeof(struct tx39power_softc), tx39power_match, tx39power_attach
-};
+CFATTACH_DECL(tx39power, sizeof(struct tx39power_softc),
+    tx39power_match, tx39power_attach, NULL, NULL);
 
 void tx39power_suspend_cpu(void); /* automatic hardware resume */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.3 2002/09/27 20:33:42 thorpej Exp $ */
+/* $NetBSD: aubus.c,v 1.4 2002/10/02 05:13:39 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -157,9 +157,8 @@ static void	aubus_attach(struct device *, struct device *, void *);
 static int	aubus_submatch(struct device *, struct cfdata *, void *);
 static int	aubus_print(void *, const char *);
 
-const struct cfattach aubus_ca = {
-	sizeof(struct device), aubus_match, aubus_attach
-};
+CFATTACH_DECL(aubus, sizeof(struct device),
+    aubus_match, aubus_attach, NULL, NULL);
 
 bus_space_tag_t	aubus_st;		/* XXX */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.32 2002/09/27 20:32:22 thorpej Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.33 2002/10/02 05:26:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -115,10 +115,8 @@ void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int,
 static int __get_color8(int);
 static int __get_color4(int);
 
-const struct cfattach tx3912video_ca = {
-	sizeof(struct tx3912video_softc), tx3912video_match, 
-	tx3912video_attach
-};
+CFATTACH_DECL(tx3912video, sizeof(struct tx3912video_softc),
+    tx3912video_match, tx3912video_attach, NULL, NULL);
 
 struct hpcfb_accessops tx3912video_ha = {
 	tx3912video_ioctl, tx3912video_mmap, 0, 0, 0, 0,

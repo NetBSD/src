@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.84 2002/09/30 17:36:35 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.85 2002/10/02 04:55:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2002/09/30 17:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.85 2002/10/02 04:55:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,9 +225,8 @@ config_console()
 /*
  * mainbus driver
  */
-const struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbmatch, mbattach, NULL, NULL);
 
 int
 mbmatch(pdp, cfp, auxp)

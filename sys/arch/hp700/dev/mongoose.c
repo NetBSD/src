@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.3 2002/09/27 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.4 2002/10/02 05:17:48 thorpej Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
 
@@ -241,9 +241,8 @@ int	mgmatch __P((struct device *, struct cfdata *, void *));
 void	mgattach __P((struct device *, struct device *, void *));
 int	mgprint __P((void *aux, const char *pnp));
 
-const struct cfattach mongoose_ca = {
-	sizeof(struct mongoose_softc), mgmatch, mgattach
-};
+CFATTACH_DECL(mongoose, sizeof(struct mongoose_softc),
+    mgmatch, mgattach, NULL, NULL);
 
 /* TODO: DMA guts */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.11 2002/09/27 20:29:44 thorpej Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.12 2002/10/02 04:55:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.11 2002/09/27 20:29:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.12 2002/10/02 04:55:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.11 2002/09/27 20:29:44 thorpej Exp $")
 int a34kbbc_match(struct device *, struct cfdata *, void *);
 void a34kbbc_attach(struct device *, struct device *, void *);
 
-const struct cfattach a34kbbc_ca = {
-	sizeof(struct device), a34kbbc_match, a34kbbc_attach
-};
+CFATTACH_DECL(a34kbbc, sizeof(struct device),
+    a34kbbc_match, a34kbbc_attach, NULL, NULL);
 
 void *a34kclockaddr;
 int a34kugettod(struct timeval *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.34 2002/09/27 20:31:55 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.35 2002/10/02 05:15:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.34 2002/09/27 20:31:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.35 2002/10/02 05:15:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,9 +211,8 @@ static void	sterror __P((struct st_softc *, int));
 static int	stmatch __P((struct device *, struct cfdata *, void *));
 static void	stattach __P((struct device *, struct device *, void *));
 
-const struct cfattach st_ca = {
-	sizeof(struct st_softc), stmatch, stattach
-};
+CFATTACH_DECL(st, sizeof(struct st_softc),
+    stmatch, stattach, NULL, NULL);
 
 extern struct cfdriver st_cd;
 

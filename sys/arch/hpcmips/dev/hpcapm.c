@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.13 2002/09/27 20:32:10 thorpej Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.14 2002/10/02 05:26:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -94,9 +94,8 @@ struct apmhpc_softc {
 	int minutes_left;
 };
 
-const struct cfattach hpcapm_ca = {
-	sizeof (struct apmhpc_softc), hpcapm_match, hpcapm_attach
-};
+CFATTACH_DECL(hpcapm, sizeof (struct apmhpc_softc),
+    hpcapm_match, hpcapm_attach, NULL, NULL);
 
 struct apm_accessops hpcapm_accessops = {
 	hpcapm_disconnect,

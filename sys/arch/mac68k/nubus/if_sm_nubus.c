@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.3 2002/09/27 20:33:22 thorpej Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.4 2002/10/02 05:36:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -55,9 +55,8 @@
 static int	sm_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	sm_nubus_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach sm_nubus_ca = {
-	sizeof(struct smc91cxx_softc), sm_nubus_match, sm_nubus_attach
-};
+CFATTACH_DECL(sm_nubus, sizeof(struct smc91cxx_softc),
+    sm_nubus_match, sm_nubus_attach, NULL, NULL);
 
 static int
 sm_nubus_match(parent, cf, aux)

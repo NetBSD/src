@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.53 2002/09/27 20:31:42 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.54 2002/10/02 05:15:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.53 2002/09/27 20:31:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.54 2002/10/02 05:15:49 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -298,9 +298,8 @@ void	dcmcnputc __P((dev_t, int));
 int	dcmmatch __P((struct device *, struct cfdata *, void *));
 void	dcmattach __P((struct device *, struct device *, void *));
 
-const struct cfattach dcm_ca = {
-	sizeof(struct dcm_softc), dcmmatch, dcmattach
-};
+CFATTACH_DECL(dcm, sizeof(struct dcm_softc),
+    dcmmatch, dcmattach, NULL, NULL);
 
 /*
  * Stuff for DCM console support.  This could probably be done a little

@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.8 2002/09/27 03:17:57 thorpej Exp $ */
+/* $NetBSD: lunaws.c,v 1.9 2002/10/02 05:31:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.8 2002/09/27 03:17:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.9 2002/10/02 05:31:46 thorpej Exp $");
 
 #include "wsmouse.h"
 
@@ -124,9 +124,8 @@ static int  ws_submatch_kbd __P((struct device *, struct cfdata *, void *));
 static int  ws_submatch_mouse __P((struct device *, struct cfdata *, void *));
 #endif
 
-const struct cfattach ws_ca = {
-	sizeof(struct ws_softc), wsmatch, wsattach
-};
+CFATTACH_DECL(ws, sizeof(struct ws_softc),
+    wsmatch, wsattach, NULL, NULL);
 extern struct cfdriver ws_cd;
 
 extern int  syscngetc __P((dev_t));

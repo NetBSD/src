@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.7 2002/09/27 20:34:03 thorpej Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.8 2002/10/02 05:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@
 static int	zsc_pcctwo_match(struct device *, struct cfdata *, void *);
 static void	zsc_pcctwo_attach(struct device *, struct device *, void *);
 
-const struct cfattach zsc_pcctwo_ca = {
-	sizeof(struct zsc_softc), zsc_pcctwo_match, zsc_pcctwo_attach
-};
+CFATTACH_DECL(zsc_pcctwo, sizeof(struct zsc_softc),
+    zsc_pcctwo_match, zsc_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 

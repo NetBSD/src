@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.27 2002/09/27 20:30:20 thorpej Exp $ */
+/*	$NetBSD: wstsc.c,v 1.28 2002/10/02 04:55:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.27 2002/09/27 20:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.28 2002/10/02 04:55:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,8 @@ extern int sci_data_wait;
 
 int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
-const struct cfattach wstsc_ca = {
-	sizeof(struct sci_softc), wstscmatch, wstscattach
-};
+CFATTACH_DECL(wstsc, sizeof(struct sci_softc),
+    wstscmatch, wstscattach, NULL, NULL);
 
 /*
  * if this a Supra WordSync board

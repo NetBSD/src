@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.15 2002/09/27 20:33:28 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.16 2002/10/02 05:36:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -236,18 +236,12 @@ extern struct cfdriver fd_cd;
 #endif /* defined _LKM */
 
 /* IWM floppy disk controller */
-const struct cfattach iwm_ca = {
-	sizeof(iwm_softc_t),	/* Size of device data for malloc()	 */
-	iwm_match,		/* Probe device and return match level	 */
-	iwm_attach		/* Initialize and attach device		 */
-};
+CFATTACH_DECL(iwm, sizeof(iwm_softc_t),
+    iwm_match, iwm_attach, NULL, NULL);
 
 /* Attached floppy disk drives */
-const struct cfattach fd_ca = {
-	sizeof(fd_softc_t),
-	fd_match,
-	fd_attach
-};
+CFATTACH_DECL(fd, sizeof(fd_softc_t),
+    fd_match, fd_attach, NULL, NULL);
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);

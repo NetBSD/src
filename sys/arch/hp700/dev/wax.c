@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.2 2002/09/27 20:32:00 thorpej Exp $	*/
+/*	$NetBSD: wax.c,v 1.3 2002/10/02 05:17:48 thorpej Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -49,9 +49,8 @@ struct wax_softc {
 int	waxmatch __P((struct device *, void *, void *));
 void	waxattach __P((struct device *, struct device *, void *));
 
-const struct cfattach wax_ca = {
-	sizeof(struct wax_softc), waxmatch, waxattach
-};
+CFATTACH_DECL(wax, sizeof(struct wax_softc),
+    waxmatch, waxattach, NULL, NULL);
 
 int
 waxmatch(parent, cfdata, aux)   

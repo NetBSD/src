@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.2 2002/09/27 20:31:31 thorpej Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.3 2002/10/02 05:10:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,9 +67,8 @@ struct nappinr_softc {
 	struct callout		sc_co;
 };
 
-const struct cfattach nappinr_ca = {
-	sizeof(struct nappinr_softc), nappinr_match, nappinr_attach
-};
+CFATTACH_DECL(nappinr, sizeof(struct nappinr_softc),
+    nappinr_match, nappinr_attach, NULL, NULL);
 
 static int
 nappinr_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.45 2002/09/27 20:31:45 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.46 2002/10/02 05:15:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.45 2002/09/27 20:31:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2002/10/02 05:15:50 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -93,9 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.45 2002/09/27 20:31:45 thorpej Exp $");
 int	grfmatch __P((struct device *, struct cfdata *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
-const struct cfattach grf_ca = {
-	sizeof(struct grf_softc), grfmatch, grfattach
-};
+CFATTACH_DECL(grf, sizeof(struct grf_softc),
+    grfmatch, grfattach, NULL, NULL);
 
 extern struct cfdriver grf_cd;
 

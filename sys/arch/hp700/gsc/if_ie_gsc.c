@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.6 2002/09/27 20:32:02 thorpej Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.7 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -121,9 +121,8 @@ struct ie_gsc_softc {
 int	ie_gsc_probe __P((struct device *, struct cfdata *, void *));
 void	ie_gsc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach ie_gsc_ca = {
-	sizeof(struct ie_gsc_softc), ie_gsc_probe, ie_gsc_attach
-};
+CFATTACH_DECL(ie_gsc, sizeof(struct ie_gsc_softc),
+    ie_gsc_probe, ie_gsc_attach, NULL, NULL);
 
 static int ie_gsc_media[] = {
 	IFM_ETHER | IFM_10_2,

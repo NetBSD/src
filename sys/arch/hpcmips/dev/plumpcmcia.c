@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.13 2002/09/27 20:32:13 thorpej Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.14 2002/10/02 05:26:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -195,9 +195,8 @@ static void __memareadump(plumreg_t) __DEBUG_FUNC;
 static void plumpcmcia_dump(struct plumpcmcia_softc *) __DEBUG_FUNC;
 #endif /* PLUMPCMCIA_DEBUG */
 
-const struct cfattach plumpcmcia_ca = {
-	sizeof(struct plumpcmcia_softc), plumpcmcia_match, plumpcmcia_attach
-};
+CFATTACH_DECL(plumpcmcia, sizeof(struct plumpcmcia_softc),
+    plumpcmcia_match, plumpcmcia_attach, NULL, NULL);
 
 int
 plumpcmcia_match(struct device *parent, struct cfdata *cf, void *aux)

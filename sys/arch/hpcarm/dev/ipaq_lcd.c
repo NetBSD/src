@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.9 2002/09/27 20:32:06 thorpej Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.10 2002/10/02 05:18:51 thorpej Exp $	*/
 #define IPAQ_LCD_DEBUG
 
 /*
@@ -84,9 +84,8 @@ static paddr_t	ipaqlcd_mmap(void *, off_t offset, int);
 #error "define btop, ptob."
 #endif
 
-const struct cfattach ipaqlcd_ca = {
-	sizeof(struct ipaqlcd_softc), ipaqlcd_match, ipaqlcd_attach
-};
+CFATTACH_DECL(ipaqlcd, sizeof(struct ipaqlcd_softc),
+    ipaqlcd_match, ipaqlcd_attach, NULL, NULL);
 
 struct hpcfb_accessops ipaqlcd_ha = {
 	ipaqlcd_ioctl, ipaqlcd_mmap

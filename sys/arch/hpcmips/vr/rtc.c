@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.17 2002/09/27 20:32:32 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.18 2002/10/02 05:26:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -93,9 +93,8 @@ void	vrrtc_attach(struct device *, struct device *, void *);
 int	vrrtc_intr(void*, u_int32_t, u_int32_t);
 void	vrrtc_dump_regs(struct vrrtc_softc *);
 
-const struct cfattach vrrtc_ca = {
-	sizeof(struct vrrtc_softc), vrrtc_match, vrrtc_attach
-};
+CFATTACH_DECL(vrrtc, sizeof(struct vrrtc_softc),
+    vrrtc_match, vrrtc_attach, NULL, NULL);
 
 static __inline__ void vrrtc_write(struct vrrtc_softc *, int, u_int16_t);
 static __inline__ u_int16_t vrrtc_read(struct vrrtc_softc *, int);

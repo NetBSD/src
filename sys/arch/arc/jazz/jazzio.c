@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.6 2002/09/27 20:30:31 thorpej Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.7 2002/10/02 04:59:49 thorpej Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -59,9 +59,8 @@ int	jazziomatch(struct device *, struct cfdata *, void *);
 void	jazzioattach(struct device *, struct device *, void *);
 int	jazzioprint(void *, const char *);
 
-const struct cfattach jazzio_ca = {
-	sizeof(struct jazzio_softc), jazziomatch, jazzioattach
-};
+CFATTACH_DECL(jazzio, sizeof(struct jazzio_softc),
+    jazziomatch, jazzioattach, NULL, NULL);
 extern struct cfdriver jazzio_cd;
 
 void	jazzio_intr_establish(int, int (*)(void *), void *);

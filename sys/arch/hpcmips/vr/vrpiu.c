@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.24 2002/09/27 20:32:39 thorpej Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.25 2002/10/02 05:26:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -128,9 +128,8 @@ int mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s,
 /*
  * static or global variables
  */
-const struct cfattach vrpiu_ca = {
-	sizeof(struct vrpiu_softc), vrpiumatch, vrpiuattach
-};
+CFATTACH_DECL(vrpiu, sizeof(struct vrpiu_softc),
+    vrpiumatch, vrpiuattach, NULL, NULL);
 
 const struct wsmouse_accessops vrpiu_accessops = {
 	vrpiu_tp_enable,

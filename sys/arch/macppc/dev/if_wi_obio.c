@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.2 2002/09/27 20:33:35 thorpej Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.3 2002/10/02 05:30:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -61,9 +61,8 @@ struct wi_obio_softc {
 	void *sc_sdhook;
 };
 
-const struct cfattach wi_obio_ca = {
-	sizeof(struct wi_obio_softc), wi_obio_match, wi_obio_attach
-};
+CFATTACH_DECL(wi_obio, sizeof(struct wi_obio_softc),
+    wi_obio_match, wi_obio_attach, NULL, NULL);
 
 int
 wi_obio_match(parent, match, aux)

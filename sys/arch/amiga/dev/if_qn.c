@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.23 2002/09/27 20:30:09 thorpej Exp $ */
+/*	$NetBSD: if_qn.c,v 1.24 2002/10/02 04:55:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.23 2002/09/27 20:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.24 2002/10/02 04:55:51 thorpej Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -179,9 +179,8 @@ static	void qn_get_packet(struct qn_softc *, u_short);
 static	void qn_dump(struct qn_softc *);
 #endif
 
-const struct cfattach qn_ca = {
-	sizeof(struct qn_softc), qnmatch, qnattach
-};
+CFATTACH_DECL(qn, sizeof(struct qn_softc),
+    qnmatch, qnattach, NULL, NULL);
 
 int
 qnmatch(struct device *parent, struct cfdata *cfp, void *aux)

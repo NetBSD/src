@@ -49,9 +49,8 @@ struct vrdmaau_softc {
 int vrdmaau_match(struct device *, struct cfdata *, void *);
 void vrdmaau_attach(struct device *, struct device *, void *);
 
-const struct cfattach vrdmaau_ca = {
-	sizeof(struct vrdmaau_softc), vrdmaau_match, vrdmaau_attach
-};
+CFATTACH_DECL(vrdmaau, sizeof(struct vrdmaau_softc),
+    vrdmaau_match, vrdmaau_attach, NULL, NULL);
 
 int vrdmaau_set_aiuin(vrdmaau_chipset_tag_t, void *);
 int vrdmaau_set_aiuout(vrdmaau_chipset_tag_t, void *);

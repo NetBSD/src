@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.11 2002/09/27 20:32:26 thorpej Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.12 2002/10/02 05:26:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,9 +137,8 @@ __inline int	__txsibsf0_ready(tx_chipset_tag_t);
 void	tx39sib_dump(struct tx39sib_softc *);
 #endif
 
-const struct cfattach tx39sib_ca = {
-	sizeof(struct tx39sib_softc), tx39sib_match, tx39sib_attach
-};
+CFATTACH_DECL(tx39sib, sizeof(struct tx39sib_softc),
+    tx39sib_match, tx39sib_attach, NULL, NULL);
 
 int
 tx39sib_match(struct device *parent, struct cfdata *cf, void *aux)

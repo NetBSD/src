@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.32 2002/09/27 20:29:47 thorpej Exp $ */
+/*	$NetBSD: atzsc.c,v 1.33 2002/10/02 04:55:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.32 2002/09/27 20:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.33 2002/10/02 04:55:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,8 @@ void atzsc_dump(void);
 int	atzsc_dmadebug = 0;
 #endif
 
-const struct cfattach atzsc_ca = {
-	sizeof(struct sbic_softc), atzscmatch, atzscattach
-};
+CFATTACH_DECL(atzsc, sizeof(struct sbic_softc),
+    atzscmatch, atzscattach, NULL, NULL);
 
 /*
  * if we are an A3000 we are here.

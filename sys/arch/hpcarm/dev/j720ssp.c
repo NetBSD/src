@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.13 2002/09/29 13:16:22 bsh Exp $ */
+/* $NetBSD: j720ssp.c,v 1.14 2002/10/02 05:18:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -155,9 +155,8 @@ int  j720kbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 int  hpcarm_apm_getpower __P((struct apm_power_info *, void *));
 
-const struct cfattach j720ssp_ca = {
-	sizeof(struct j720ssp_softc), j720sspprobe, j720sspattach,
-};
+CFATTACH_DECL(j720ssp, sizeof(struct j720ssp_softc),
+    j720sspprobe, j720sspattach, NULL, NULL);
 
 const struct wskbd_accessops j720kbd_accessops = {
 	j720kbd_enable,

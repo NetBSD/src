@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.14 2002/09/27 20:30:05 thorpej Exp $ */
+/*	$NetBSD: hyper.c,v 1.15 2002/10/02 04:55:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.14 2002/09/27 20:30:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.15 2002/10/02 04:55:51 thorpej Exp $");
 
 /*
  * zbus HyperCom driver
@@ -70,9 +70,8 @@ int hypermatch(struct device *, struct cfdata *, void *);
 void hyperattach(struct device *, struct device *, void *);
 int hyperprint(void *auxp, const char *);
 
-const struct cfattach hyper_ca = {
-	sizeof(struct hyper_softc), hypermatch, hyperattach
-};
+CFATTACH_DECL(hyper, sizeof(struct hyper_softc),
+    hypermatch, hyperattach, NULL, NULL);
 
 struct hyper_prods {
 	char *name;

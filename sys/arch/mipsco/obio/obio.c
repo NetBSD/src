@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2002/09/27 20:33:50 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2002/10/02 05:38:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,9 +52,8 @@ static int	obio_print __P((void *, const char *));
 static void	obio_intr_establish  __P((bus_space_tag_t, int, int, int,
 					  int (*)(void *), void *));
 
-const struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 extern struct cfdriver obio_cd;
 

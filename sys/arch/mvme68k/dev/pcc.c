@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.21 2002/09/27 20:33:59 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.22 2002/10/02 05:28:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -91,9 +91,8 @@ void pccattach __P((struct device *, struct device *, void *));
 int pccmatch __P((struct device *, struct cfdata *, void *));
 int pccprint __P((void *, const char *));
 
-const struct cfattach pcc_ca = {
-	sizeof(struct pcc_softc), pccmatch, pccattach
-};
+CFATTACH_DECL(pcc, sizeof(struct pcc_softc),
+    pccmatch, pccattach, NULL, NULL);
 
 extern struct cfdriver pcc_cd;
 static int pccintr __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.8 2002/09/28 12:50:27 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.9 2002/10/02 05:33:54 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,9 +78,8 @@ static void superioattach(struct device *, struct device *, void *);
 static int superiosubmatch(struct device *, struct cfdata *, void *);
 static int superioprint(void *, const char *);
 
-const struct cfattach superio_ca = {
-	sizeof(struct superio_softc), superiomatch, superioattach
-};
+CFATTACH_DECL(superio, sizeof(struct superio_softc),
+    superiomatch, superioattach, NULL, NULL);
 extern struct cfdriver superio_cd;
 
 

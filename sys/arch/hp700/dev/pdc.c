@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.6 2002/09/27 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: pdc.c,v 1.7 2002/10/02 05:17:48 thorpej Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -66,9 +66,8 @@ int CONADDR;
 int pdcmatch __P((struct device *, struct cfdata *, void*));
 void pdcattach __P((struct device *, struct device *, void *));
 
-const struct cfattach pdc_ca = {
-	sizeof(pdcsoftc_t), pdcmatch, pdcattach
-};
+CFATTACH_DECL(pdc, sizeof(pdcsoftc_t),
+    pdcmatch, pdcattach, NULL, NULL);
 
 extern struct cfdriver pdc_cd;
 

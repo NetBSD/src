@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.9 2002/09/27 20:32:17 thorpej Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.10 2002/10/02 05:26:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -171,9 +171,8 @@ int	ucbtp_enable(void *);
 int	ucbtp_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	ucbtp_disable(void *);
 
-const struct cfattach ucbtp_ca = {
-	sizeof(struct ucbtp_softc), ucbtp_match, ucbtp_attach
-};
+CFATTACH_DECL(ucbtp, sizeof(struct ucbtp_softc),
+    ucbtp_match, ucbtp_attach, NULL, NULL);
 
 const struct wsmouse_accessops ucbtp_accessops = {
 	ucbtp_enable,

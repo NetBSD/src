@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.8 2002/09/27 20:32:41 thorpej Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.9 2002/10/02 05:32:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -85,9 +85,8 @@ STATIC const struct {
 	{ &platid_mask_MACH_HITACHI	, pfckbd_callout_hitachi }
 };
 
-const struct cfattach pfckbd_ca = {
-	sizeof(struct device), pfckbd_match, pfckbd_attach
-};
+CFATTACH_DECL(pfckbd, sizeof(struct device),
+    pfckbd_match, pfckbd_attach, NULL, NULL);
 
 STATIC int pfckbd_poll(void *);
 STATIC void pfckbd_ifsetup(struct pfckbd_core *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.32 2002/09/27 20:30:07 thorpej Exp $ */
+/*	$NetBSD: if_es.c,v 1.33 2002/10/02 04:55:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.32 2002/09/27 20:30:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.33 2002/10/02 04:55:51 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -135,9 +135,8 @@ void esmediastatus(struct ifnet *, struct ifmediareq *);
 int esmatch(struct device *, struct cfdata *, void *);
 void esattach(struct device *, struct device *, void *);
 
-const struct cfattach es_ca = {
-	sizeof(struct es_softc), esmatch, esattach
-};
+CFATTACH_DECL(es, sizeof(struct es_softc),
+    esmatch, esattach, NULL, NULL);
 
 int
 esmatch(struct device *parent, struct cfdata *cfp, void *aux)

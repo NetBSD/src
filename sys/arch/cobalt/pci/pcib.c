@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2002/09/27 20:31:19 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2002/10/02 05:07:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -47,9 +47,8 @@ static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
 static int	icu_intr(void *);
 
-const struct cfattach pcib_ca = {
-	sizeof(struct device), pcib_match, pcib_attach
-};
+CFATTACH_DECL(pcib, sizeof(struct device),
+    pcib_match, pcib_attach, NULL, NULL);
 
 static struct cobalt_intr icu[IO_ICUSIZE];
 

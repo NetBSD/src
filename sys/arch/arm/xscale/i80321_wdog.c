@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.3 2002/09/27 20:30:52 thorpej Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.4 2002/10/02 05:02:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -136,6 +136,5 @@ iopwdog_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 }
 
-const struct cfattach iopwdog_ca = {
-	sizeof(struct iopwdog_softc), iopwdog_match, iopwdog_attach,
-};
+CFATTACH_DECL(iopwdog, sizeof(struct iopwdog_softc),
+    iopwdog_match, iopwdog_attach, NULL, NULL);

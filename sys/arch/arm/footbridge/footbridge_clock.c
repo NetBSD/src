@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.9 2002/09/28 15:44:29 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.10 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -63,9 +63,8 @@ static int load_timer __P((int, int));
 static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
 static void clockattach	__P((struct device *parent, struct device *self, void *aux));
 
-const struct cfattach footbridge_clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
+CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
+    clockmatch, clockattach, NULL, NULL);
 
 /*
  * int clockmatch(struct device *parent, void *match, void *aux)

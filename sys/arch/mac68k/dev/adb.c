@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.42 2002/09/27 20:33:12 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.43 2002/10/02 05:36:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -75,9 +75,8 @@ extern char	*adbHardwareDescr[];
 /*
  * Driver definition.
  */
-const struct cfattach adb_ca = {
-	sizeof(struct device), adbmatch, adbattach
-};
+CFATTACH_DECL(adb, sizeof(struct device),
+    adbmatch, adbattach, NULL, NULL);
 
 static int
 adbmatch(parent, cf, aux)

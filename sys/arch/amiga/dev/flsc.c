@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.30 2002/09/27 20:29:55 thorpej Exp $ */
+/*	$NetBSD: flsc.c,v 1.31 2002/10/02 04:55:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.30 2002/09/27 20:29:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.31 2002/10/02 04:55:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,9 +77,8 @@ void	flscattach(struct device *, struct device *, void *);
 int	flscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
-const struct cfattach flsc_ca = {
-	sizeof(struct flsc_softc), flscmatch, flscattach
-};
+CFATTACH_DECL(flsc, sizeof(struct flsc_softc),
+    flscmatch, flscattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

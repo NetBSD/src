@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.5 2002/09/27 20:32:12 thorpej Exp $ */
+/*	$NetBSD: plum.c,v 1.6 2002/10/02 05:26:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@ struct plum_softc {
 	int			sc_pri;
 };
 
-const struct cfattach plum_ca = {
-	sizeof(struct plum_softc), plum_match, plum_attach
-};
+CFATTACH_DECL(plum, sizeof(struct plum_softc),
+    plum_match, plum_attach, NULL, NULL);
 
 plumreg_t plum_idcheck(bus_space_tag_t);
 

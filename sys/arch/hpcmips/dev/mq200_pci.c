@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_pci.c,v 1.3 2002/09/27 20:32:12 thorpej Exp $	*/
+/*	$NetBSD: mq200_pci.c,v 1.4 2002/10/02 05:26:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.3 2002/09/27 20:32:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.4 2002/10/02 05:26:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,8 @@ struct mq200_pci_softc {
 int	mq200_pci_match(struct device *, struct cfdata *, void *);
 void	mq200_pci_attach(struct device *, struct device *, void *);
 
-const struct cfattach mqvideo_pci_ca = {
-	sizeof(struct mq200_pci_softc), 
-	mq200_pci_match, 
-	mq200_pci_attach,
-};
+CFATTACH_DECL(mqvideo_pci, sizeof(struct mq200_pci_softc),
+    mq200_pci_match, mq200_pci_attach, NULL, NULL);
 
 int
 mq200_pci_match(struct device *parent, struct cfdata *match, void *aux)

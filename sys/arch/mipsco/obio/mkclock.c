@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.3 2002/09/27 20:33:50 thorpej Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.4 2002/10/02 05:38:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,9 +60,8 @@ struct	mkclock_softc {
 static int mkclock_match (struct device *, struct cfdata *, void *);
 static void mkclock_attach (struct device *, struct device *, void *);
 
-const struct cfattach mkclock_ca = {
-	sizeof(struct mkclock_softc), mkclock_match, mkclock_attach
-};
+CFATTACH_DECL(mkclock, sizeof(struct mkclock_softc),
+    mkclock_match, mkclock_attach, NULL, NULL);
 
 static struct mkclock_softc *mk0; 
 

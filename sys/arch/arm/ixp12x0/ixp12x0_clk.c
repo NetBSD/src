@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.4 2002/09/27 20:30:46 thorpej Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.5 2002/10/02 05:02:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -118,9 +118,8 @@ static struct ixpclk_softc *ixpclk_sc = NULL;
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
-const struct cfattach ixpclk_ca = {
-	sizeof(struct ixpclk_softc), ixpclk_match, ixpclk_attach
-};
+CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
+    ixpclk_match, ixpclk_attach, NULL, NULL);
 
 #define GET_TIMER_VALUE(sc)	(bus_space_read_4((sc)->sc_iot,		\
 						  (sc)->sc_ioh,		\

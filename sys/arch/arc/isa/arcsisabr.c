@@ -1,4 +1,4 @@
-/*	$NetBSD: arcsisabr.c,v 1.2 2002/09/27 20:30:25 thorpej Exp $	*/
+/*	$NetBSD: arcsisabr.c,v 1.3 2002/10/02 04:59:48 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -59,9 +59,8 @@ int	arcsisabrmatch(struct device *, struct cfdata *, void *);
 void	arcsisabrattach(struct device *, struct device *, void *);
 int	arcsisabr_iointr(unsigned mask, struct clockframe *cf);
 
-const struct cfattach arcsisabr_ca = {
-	sizeof(struct isabr_softc), arcsisabrmatch, arcsisabrattach
-};
+CFATTACH_DECL(arcsisabr, sizeof(struct isabr_softc),
+    arcsisabrmatch, arcsisabrattach, NULL, NULL);
 extern struct cfdriver arcsisabr_cd;
 
 int

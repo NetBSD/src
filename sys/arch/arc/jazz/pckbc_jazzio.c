@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.5 2002/09/27 20:30:33 thorpej Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.6 2002/10/02 04:59:49 thorpej Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -64,10 +64,8 @@ struct pckbc_jazzio_softc {
 	int sc_intr[PCKBC_NSLOTS];
 };
 
-const struct cfattach pckbc_jazzio_ca = {
-	sizeof(struct pckbc_jazzio_softc),
-	pckbc_jazzio_match, pckbc_jazzio_attach,
-};
+CFATTACH_DECL(pckbc_jazzio, sizeof(struct pckbc_jazzio_softc),
+    pckbc_jazzio_match, pckbc_jazzio_attach, NULL, NULL);
 
 int
 pckbc_jazzio_match(parent, match, aux)

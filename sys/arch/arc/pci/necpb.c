@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.12 2002/09/27 20:30:35 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.13 2002/10/02 04:59:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -117,9 +117,8 @@ void		necpb_intr_disestablish __P((pci_chipset_tag_t, void *));
 int		necpb_intr(unsigned, struct clockframe *);
 
 
-const struct cfattach necpb_ca = {
-	sizeof(struct necpb_softc), necpbmatch, necpbattach,
-};
+CFATTACH_DECL(necpb, sizeof(struct necpb_softc),
+    necpbmatch, necpbattach, NULL, NULL);
 
 extern struct cfdriver necpb_cd;
 

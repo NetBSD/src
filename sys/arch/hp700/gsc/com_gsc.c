@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.4 2002/09/27 20:32:01 thorpej Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.5 2002/10/02 05:17:49 thorpej Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -71,9 +71,8 @@ struct com_gsc_softc {
 int	com_gsc_probe __P((struct device *, struct cfdata *, void *));
 void	com_gsc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach com_gsc_ca = {
-	sizeof(struct com_gsc_softc), com_gsc_probe, com_gsc_attach
-};
+CFATTACH_DECL(com_gsc, sizeof(struct com_gsc_softc),
+    com_gsc_probe, com_gsc_attach, NULL, NULL);
 
 int
 com_gsc_probe(parent, match, aux)

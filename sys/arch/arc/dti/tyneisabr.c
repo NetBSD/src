@@ -1,4 +1,4 @@
-/*	$NetBSD: tyneisabr.c,v 1.2 2002/09/27 20:30:24 thorpej Exp $	*/
+/*	$NetBSD: tyneisabr.c,v 1.3 2002/10/02 04:59:48 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -59,9 +59,8 @@ int	tyneisabrmatch(struct device *, struct cfdata *, void *);
 void	tyneisabrattach(struct device *, struct device *, void *);
 int	tyneisabr_iointr(unsigned mask, struct clockframe *cf);
 
-const struct cfattach tyneisabr_ca = {
-	sizeof(struct isabr_softc), tyneisabrmatch, tyneisabrattach
-};
+CFATTACH_DECL(tyneisabr, sizeof(struct isabr_softc),
+    tyneisabrmatch, tyneisabrattach, NULL, NULL);
 extern struct cfdriver tyneisabr_cd;
 
 int

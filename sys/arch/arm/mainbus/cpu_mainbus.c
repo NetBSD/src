@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.5 2002/09/27 20:30:47 thorpej Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.6 2002/10/02 05:02:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -94,6 +94,5 @@ cpu_mainbus_attach(parent, self, aux)
 	cpu_attach(self);
 }
 
-const struct cfattach cpu_mainbus_ca = {
-	sizeof(struct device), cpu_mainbus_match, cpu_mainbus_attach
-};
+CFATTACH_DECL(cpu_mainbus, sizeof(struct device),
+    cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.66 2002/10/01 12:17:09 aymeric Exp $ */
+/*	$NetBSD: ser.c,v 1.67 2002/10/02 04:55:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.66 2002/10/01 12:17:09 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.67 2002/10/02 04:55:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,8 @@ struct ser_softc {
 	struct tty *ser_tty;
 };
 
-const struct cfattach ser_ca = {
-	sizeof(struct ser_softc), sermatch, serattach
-};
+CFATTACH_DECL(ser, sizeof(struct ser_softc),
+    sermatch, serattach, NULL, NULL);
 
 extern struct cfdriver ser_cd;
 

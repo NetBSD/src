@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2002/09/27 20:31:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2002/10/02 05:06:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -61,9 +61,8 @@ int	mainbusmatch __P((struct device *, struct cfdata *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
 int	mainbussearch __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbusmatch, mainbusattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbusmatch, mainbusattach, NULL, NULL);
 
 int
 mainbusmatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.14 2002/09/27 20:32:24 thorpej Exp $ */
+/*	$NetBSD: tx39io.c,v 1.15 2002/10/02 05:26:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -59,9 +59,8 @@
 int	tx39io_match(struct device *, struct cfdata *, void *);
 void	tx39io_attach(struct device *, struct device *, void *);
 
-const struct cfattach tx39io_ca = {
-	sizeof(struct tx39io_softc), tx39io_match, tx39io_attach
-};
+CFATTACH_DECL(tx39io, sizeof(struct tx39io_softc),
+    tx39io_match, tx39io_attach, NULL, NULL);
 
 /* IO/MFIO common */
 static void port_intr_disestablish(hpcio_chip_t, hpcio_intr_handle_t);

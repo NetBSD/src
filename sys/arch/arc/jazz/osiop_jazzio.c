@@ -1,4 +1,4 @@
-/* $NetBSD: osiop_jazzio.c,v 1.2 2002/09/27 20:30:33 thorpej Exp $ */
+/* $NetBSD: osiop_jazzio.c,v 1.3 2002/10/02 04:59:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -49,9 +49,8 @@ int osiop_jazzio_match(struct device *, struct cfdata *, void *);
 void osiop_jazzio_attach(struct device *, struct device *, void *);
 int osiop_jazzio_intr(void *);
 
-const struct cfattach osiop_jazzio_ca = {
-	sizeof(struct osiop_softc), osiop_jazzio_match, osiop_jazzio_attach
-};
+CFATTACH_DECL(osiop_jazzio, sizeof(struct osiop_softc),
+    osiop_jazzio_match, osiop_jazzio_attach, NULL, NULL);
 
 int
 osiop_jazzio_match(parent, match, aux)
