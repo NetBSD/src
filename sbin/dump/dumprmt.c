@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.23 2001/05/26 07:48:15 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.24 2001/05/27 14:17:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.23 2001/05/26 07:48:15 lukem Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.24 2001/05/27 14:17:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,22 +85,21 @@ static	int rmtstate = TS_CLOSED;
 static	int rmtape;
 static	char *rmtpeer;
 
-static	int	okname __P((char *));
-static	int	rmtcall __P((char *, char *));
-static	void	rmtconnaborted __P((int));
-static	int	rmtgetb __P((void));
-static	void	rmtgetconn __P((void));
-static	void	rmtgets __P((char *, int));
-	int	rmtioctl __P((int, int));
-	int	rmtread __P((char *, int));
-static	int	rmtreply __P((char *));
-	int	rmtseek __P((int, int));
+static	int	okname(char *);
+static	int	rmtcall(char *, char *);
+static	void	rmtconnaborted(int);
+static	int	rmtgetb(void);
+static	void	rmtgetconn(void);
+static	void	rmtgets(char *, int);
+	int	rmtioctl(int, int);
+	int	rmtread(char *, int);
+static	int	rmtreply(char *);
+	int	rmtseek(int, int);
 
 extern	int ntrec;		/* blocking factor on tape */
 
 int
-rmthost(host)
-	char *host;
+rmthost(char *host)
 {
 
 	if ((rmtpeer = strdup(host)) == NULL)
@@ -113,15 +112,14 @@ rmthost(host)
 }
 
 static void
-rmtconnaborted(dummy)
-	int dummy;
+rmtconnaborted(int dummy)
 {
 
 	errx(1, "Lost connection to remote host.");
 }
 
 void
-rmtgetconn()
+rmtgetconn(void)
 {
 	char *cp;
 	static struct servent *sp = NULL;
@@ -172,8 +170,7 @@ rmtgetconn()
 }
 
 static int
-okname(cp0)
-	char *cp0;
+okname(char *cp0)
 {
 	char *cp;
 	int c;
@@ -189,9 +186,7 @@ okname(cp0)
 }
 
 int
-rmtopen(tape, mode)
-	char *tape;
-	int mode;
+rmtopen(char *tape, int mode)
 {
 	char buf[256];
 
@@ -201,7 +196,7 @@ rmtopen(tape, mode)
 }
 
 void
-rmtclose()
+rmtclose(void)
 {
 
 	if (rmtstate != TS_OPEN)
@@ -211,9 +206,7 @@ rmtclose()
 }
 
 int
-rmtread(buf, count)
-	char *buf;
-	int count;
+rmtread(char *buf, int count)
 {
 	char line[30];
 	int n, i, cc;
@@ -234,9 +227,7 @@ rmtread(buf, count)
 }
 
 int
-rmtwrite(buf, count)
-	char *buf;
-	int count;
+rmtwrite(char *buf, int count)
 {
 	char line[30];
 
@@ -248,8 +239,7 @@ rmtwrite(buf, count)
 
 #if 0		/* XXX unused? */
 void
-rmtwrite0(count)
-	int count;
+rmtwrite0(int count)
 {
 	char line[30];
 
@@ -258,16 +248,14 @@ rmtwrite0(count)
 }
 
 void
-rmtwrite1(buf, count)
-	char *buf;
-	int count;
+rmtwrite1(char *buf, int count)
 {
 
 	write(rmtape, buf, count);
 }
 
 int
-rmtwrite2()
+rmtwrite2(void)
 {
 
 	return (rmtreply("write"));
@@ -275,8 +263,7 @@ rmtwrite2()
 #endif
 
 int
-rmtseek(offset, pos)
-	int offset, pos;
+rmtseek(int offset, int pos)
 {
 	char line[80];
 
@@ -287,7 +274,7 @@ rmtseek(offset, pos)
 
 #if 0		/* XXX unused? */
 struct mtget *
-rmtstatus()
+rmtstatus(void)
 {
 	struct	mtget mts;
 	int i;
@@ -303,8 +290,7 @@ rmtstatus()
 #endif
 
 int
-rmtioctl(cmd, count)
-	int cmd, count;
+rmtioctl(int cmd, int count)
 {
 	char buf[256];
 
@@ -315,8 +301,7 @@ rmtioctl(cmd, count)
 }
 
 static int
-rmtcall(cmd, buf)
-	char *cmd, *buf;
+rmtcall(char *cmd, char *buf)
 {
 
 	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
@@ -325,8 +310,7 @@ rmtcall(cmd, buf)
 }
 
 static int
-rmtreply(cmd)
-	char *cmd;
+rmtreply(char *cmd)
 {
 	char *cp;
 	char code[30], emsg[BUFSIZ];
@@ -355,7 +339,7 @@ rmtreply(cmd)
 }
 
 int
-rmtgetb()
+rmtgetb(void)
 {
 	char c;
 
@@ -366,9 +350,7 @@ rmtgetb()
 
 /* Get a line (guaranteed to have a trailing newline). */
 void
-rmtgets(line, len)
-	char *line;
-	int len;
+rmtgets(char *line, int len)
 {
 	char *cp = line;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: unctime.c,v 1.12 1998/02/04 14:49:11 christos Exp $	*/
+/*	$NetBSD: unctime.c,v 1.13 2001/05/27 14:17:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unctime.c	8.2 (Berkeley) 6/14/94";
 #else
-__RCSID("$NetBSD: unctime.c,v 1.12 1998/02/04 14:49:11 christos Exp $");
+__RCSID("$NetBSD: unctime.c,v 1.13 2001/05/27 14:17:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,7 @@ __RCSID("$NetBSD: unctime.c,v 1.12 1998/02/04 14:49:11 christos Exp $");
  */
 
 time_t
-unctime(str)
-	char *str;
+unctime(char *str)
 {
 	struct tm then;
 
