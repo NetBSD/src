@@ -1,3 +1,5 @@
+/*	$NetBSD: lookup.c,v 1.3.8.1 1996/07/16 02:16:50 jtc Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: lookup.c,v 1.3 1994/03/07 05:05:33 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93";
+#else
+static char *rcsid = "$NetBSD: lookup.c,v 1.3.8.1 1996/07/16 02:16:50 jtc Exp $";
+#endif
 #endif /* not lint */
 
 #include "defs.h"
@@ -142,7 +147,8 @@ lookup(name, action, value)
 			continue;
 		if (action != LOOKUP) {
 			if (action != INSERT || s->s_type != CONST) {
-				(void)sprintf(buf, "%s redefined", name);
+				(void)snprintf(buf, sizeof(buf),
+				    "%s redefined", name);
 				yyerror(buf);
 			}
 		}
@@ -150,7 +156,7 @@ lookup(name, action, value)
 	}
 
 	if (action == LOOKUP) {
-		(void)sprintf(buf, "%s undefined", name);
+		(void)snprintf(buf, sizeof(buf), "%s undefined", name);
 		yyerror(buf);
 		return(NULL);
 	}

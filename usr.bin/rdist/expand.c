@@ -1,3 +1,5 @@
+/*	$NetBSD: expand.c,v 1.5.8.1 1996/07/16 02:16:39 jtc Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: expand.c,v 1.5 1994/03/07 05:05:28 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
+#else
+static char *rcsid = "$NetBSD: expand.c,v 1.5.8.1 1996/07/16 02:16:39 jtc Exp $";
+#endif
 #endif /* not lint */
 
 #include "defs.h"
@@ -181,12 +186,13 @@ expstr(s)
 			*tail = savec;
 		if (tp != NULL) {
 			for (; tp != NULL; tp = tp->n_next) {
-				sprintf(buf, "%s%s%s", s, tp->n_name, tail);
+				snprintf(buf, sizeof(buf), "%s%s%s", s,
+				    tp->n_name, tail);
 				expstr(buf);
 			}
 			return;
 		}
-		sprintf(buf, "%s%s", s, tail);
+		snprintf(buf, sizeof(buf), "%s%s", s, tail);
 		expstr(buf);
 		return;
 	}
