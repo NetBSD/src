@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.47 2002/05/28 10:07:52 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.48 2002/05/28 11:10:53 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.47 2002/05/28 10:07:52 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.48 2002/05/28 11:10:53 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -834,22 +834,18 @@ in6_pcbrtentry(in6p)
 	ro = &in6p->in6p_route;
 	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 
-	if (ro->ro_rt == NULL || (ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    dst6->sin6_family != AF_INET6) {
-		/*
-		 * No route yet, so try to acquire one.
-		 */
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-			if (ro->ro_rt) {
-				RTFREE(ro->ro_rt);
-				ro->ro_rt = (struct rtentry *)NULL;
-			}
-			bzero(dst6, sizeof(*dst6));
-			dst6->sin6_family = AF_INET6;
-			dst6->sin6_len = sizeof(struct sockaddr_in6);
-			dst6->sin6_addr = in6p->in6p_faddr;
-			rtalloc((struct route *)ro);
-		}
+	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	    !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &in6p->in6p_faddr))) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = (struct rtentry *)NULL;
+	}
+	if (ro->ro_rt == (struct rtentry *)NULL &&
+	    !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
+		bzero(dst6, sizeof(*dst6));
+		dst6->sin6_family = AF_INET6;
+		dst6->sin6_len = sizeof(struct sockaddr_in6);
+		dst6->sin6_addr = in6p->in6p_faddr;
+		rtalloc((struct route *)ro);
 	}
 	return (ro->ro_rt);
 }
