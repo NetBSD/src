@@ -6007,7 +6007,7 @@ Apologies for any names omitted.
 	file.  Based on code by LaMont Jones, HP.  File:
 	postmap/postmap.c.
 
-20020124
+20020123
 
 	Portability: some Linux systems install libnsl.so without
 	libnsl.a file, causing an yp_match undefined reference
@@ -6030,6 +6030,27 @@ Apologies for any names omitted.
 
 	Documentation: the postmap manual page described an out of
 	date input file format.
+
+20020129
+
+	Workaround: SCO version 3.2 can't ioctl(FIONREAD) a pipe.
+	Therefore, input mail flow control is disabled by default.
+	Files:  makedefs, global/mail_params.h, conf/main.cf.
+	Problem reported by Kurt Andersen, Agilent.
+
+20020201
+
+	Workaround: changed the default smtpd_null_access_lookup_key
+	setting to <>, because some Bezerkeloid DB implementations
+	can't handle null-length lookup keys.  File: global/mail_params.h.
+
+	Bugfix: backed out a null-length address panic call by
+	ignoring the problem, like Postfix did in the past.  File:
+	global/resolve_local.c.
+
+	Safety: "postfix check" will now warn if /usr/lib/sendmail
+	and /usr/sbin/sendmail differ, and will propose to replace
+	one by a symlink to the other. File: conf/postfix-script.
 
 Open problems:
 
