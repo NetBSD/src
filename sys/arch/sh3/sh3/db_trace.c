@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 2000/09/08 10:15:24 tsubai Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.5 2000/11/02 13:08:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -163,9 +163,27 @@ db_nextframe(pc, fp, pr)
 			depth += -n/4;
 			continue;
 		}
-		/* XXX  "mov #n,r3; add r3,r15" */
+		if ((inst & 0xf000) == 0x9000) {
+			if (db_get_value(pc, 2, FALSE) == 0x3f38) {
+				/* "mov #n,r3; sub r3,r15" */
+				unsigned int disp = (int)(inst & 0xff);
+				int r3;
 
-		/* printf("unknown instrunction in prologue\n"); */
+				r3 = (int)*(unsigned short *)(pc + (4 - 2)
+				    + (disp << 1));
+				if ((r3 & 0x00008000) == 0)
+					r3 &= 0x0000ffff;
+				else
+					r3 |= 0xffff0000;
+				depth += (r3 / 4);
+
+				pc += 2;
+				continue;
+			}
+		}
+
+		printf("unknown instrunction in prologue\n");
+		db_disasm(pc - 2, 0);
 	}
 
 out:
