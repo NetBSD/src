@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.8 2004/04/27 05:07:46 heas Exp $
+#	$NetBSD: master.cf,v 1.9 2004/05/20 22:06:52 dan Exp $
 #
 #
 # Postfix master process configuration file.  Each logical line 
@@ -83,9 +83,9 @@
 #submission inet n      -       n       -       -       smtpd
 #	-o smtpd_etrn_restrictions=reject
 #628      inet  n       -       n       -       -       qmqpd
-pickup    fifo  n       -       n       60      1       pickup
+pickup    unix  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
-qmgr      fifo  n       -       n       300     1       qmgr
+qmgr      unix  n       -       n       300     1       qmgr
 #qmgr     fifo  n       -       n       300     1       oqmgr
 rewrite   unix  -       -       n       -       -       trivial-rewrite
 bounce    unix  -       -       n       -       0       bounce
