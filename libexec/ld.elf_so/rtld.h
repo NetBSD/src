@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.17 1999/11/07 00:21:14 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.18 1999/11/07 06:48:22 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -275,8 +275,8 @@ caddr_t _rtld_bind_mips __P((Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr));
 
 #if defined(__powerpc__)
 /* ppc_reloc.c */
-caddr_t _rtld_bind_powerpc __P((const Obj_Entry *, Elf_Word));
-int _rtld_reloc_powerpc_plt __P((const Obj_Entry *, const Elf_RelA *, bool));
+caddr_t _rtld_bind_powerpc __P((Obj_Entry *, Elf_Word));
+int _rtld_reloc_powerpc_plt __P((Obj_Entry *, const Elf_RelA *, bool));
 void _rtld_setup_powerpc_plt __P((const Obj_Entry *));
 #endif
 
