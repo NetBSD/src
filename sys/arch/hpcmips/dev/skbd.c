@@ -1,29 +1,29 @@
-/*	$NetBSD: skbd.c,v 1.3 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: skbd.c,v 1.4 2000/04/30 18:43:37 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
- * All rights reserved.
+/*-
+ * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_tx39xx.h"
 
@@ -120,7 +120,7 @@ skbd_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -168,7 +168,7 @@ skbd_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	return pnp ? QUIET : UNCONF;
+	return (pnp ? QUIET : UNCONF);
 }
 
 int
@@ -187,7 +187,7 @@ skbd_keymap_lookup(sk)
 			sk->sk_special = tab->st_special;
 			skbd_keymapdata.layout = tab->st_layout;
 
-			return 0;
+			return (0);
 		}
 	}
 
@@ -197,7 +197,7 @@ skbd_keymap_lookup(sk)
 	sk->sk_special = default_special_keymap;
 	skbd_keymapdata.layout = KB_US;
 
-	return 1;
+	return (1);
 }
 
 void
@@ -232,16 +232,16 @@ __skbd_input(arg, flag, scancode)
 	if ((key = sk->sk_keymap[scancode]) == UNK) {
 		printf("skbd: unknown scan code %#x\n", scancode);
 
-		return 0;
+		return (0);
 	}
 
 	if (key == IGN) {
-		return 0;
+		return (0);
 	}
 
 	if (key == SPL) {
 		if (!flag)
-			return 0;
+			return (0);
 		
 		if (scancode == sk->sk_special[KEY_SPECIAL_OFF])
 			printf("off button\n");
@@ -252,7 +252,7 @@ __skbd_input(arg, flag, scancode)
 		else 
 			printf("unknown special key %d\n", scancode);
 		
-		return 0;
+		return (0);
 	}
 
 	if (sk->sk_polling) {
@@ -263,7 +263,7 @@ __skbd_input(arg, flag, scancode)
 			    sk->sk_keymap[scancode]);
 	}
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -286,7 +286,7 @@ skbd_cnattach(ic)
 
 	wskbd_cnattach(&skbd_consops, sk, &skbd_keymapdata);
 	
-	return 0;
+	return (0);
 }
 
 void
@@ -339,20 +339,20 @@ skbd_enable(arg, on)
 
 	if (on) {
 		if (sk->sk_enabled) {
-			return EBUSY;
+			return (EBUSY);
 		}
 
 		sk->sk_enabled = 1;
 	} else {
 		if (sk->sk_console) {
-			return EBUSY;
+			return (EBUSY);
 		}
 
 		sk->sk_enabled = 0;
 	}
 
 
-	return 0;
+	return (0);
 }
 
 void
@@ -372,6 +372,5 @@ skbd_ioctl(arg, cmd, data, flag, p)
 	struct proc *p;
 {
 	/* No ioctls */
-
-	return 0;
+	return (-1);
 }
