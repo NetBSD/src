@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2003/03/22 14:26:42 simonb Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
 /*	NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp 	*/
 
@@ -38,19 +38,19 @@
 
 struct confargs;
 
-typedef int (*intr_handler_t) __P((void *));
+typedef int (*intr_handler_t)(void *);
 
 struct abus {
 	struct	device *ab_dv;		/* back-pointer to device */
 	int	ab_type;		/* bus type (see below) */
 	void	(*ab_intr_establish)	/* bus's set-handler function */
-		    __P((struct confargs *, intr_handler_t, void *));
+		   (struct confargs *, intr_handler_t, void *);
 	void	(*ab_intr_disestablish)	/* bus's unset-handler function */
-		    __P((struct confargs *));
+		   (struct confargs *);
 	caddr_t	(*ab_cvtaddr)		/* convert slot/offset to address */
-		    __P((struct confargs *));
+		   (struct confargs *);
 	int	(*ab_matchname)		/* see if name matches driver */
-		    __P((struct confargs *, char *));
+		   (struct confargs *, char *);
 };
 
 #define	BUS_MAIN	1		/* mainbus */
@@ -73,7 +73,7 @@ struct confargs {
 	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
-void	makebootdev __P((char *cp));
+void	makebootdev(char *cp);
 
 /* serial console related variables */
 extern int com_freq;

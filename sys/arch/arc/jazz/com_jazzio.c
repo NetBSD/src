@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.6 2003/08/07 16:26:50 agc Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.6 2003/08/07 16:26:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,17 +91,14 @@ __KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.6 2003/08/07 16:26:50 agc Exp $");
 
 extern int com_freq;
 
-int	com_jazzio_probe __P((struct device *, struct cfdata *, void *));
-void	com_jazzio_attach __P((struct device *, struct device *, void *));
+int	com_jazzio_probe(struct device *, struct cfdata *, void *);
+void	com_jazzio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_jazzio, sizeof(struct com_softc),
     com_jazzio_probe, com_jazzio_attach, NULL, NULL);
 
 int
-com_jazzio_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_jazzio_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot;
@@ -111,7 +108,7 @@ com_jazzio_probe(parent, match, aux)
 
 	if (strcmp(ja->ja_name, "COM1") != 0 &&
 	    strcmp(ja->ja_name, "COM2") != 0)
-		return (0);
+		return 0;
 
 	iot = ja->ja_bust;
 	iobase = ja->ja_addr;
@@ -124,13 +121,11 @@ com_jazzio_probe(parent, match, aux)
 		rv = comprobe1(iot, ioh);
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 	}
-	return (rv);
+	return rv;
 }
 
 void
-com_jazzio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	struct com_softc *sc = (void *)self;

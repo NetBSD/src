@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.6 2005/01/01 04:00:25 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.6 2005/01/01 04:00:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ extern int cpu_int_mask;
  * chipset-dependent timer routine.
  */
 
-int timer_nec_jazz_intr __P((u_int, struct clockframe *));
-void timer_nec_jazz_init __P((int));
+int timer_nec_jazz_intr(u_int, struct clockframe *);
+void timer_nec_jazz_init(int);
 
 struct timer_jazzio_config timer_nec_jazz_conf = {
 	MIPS_INT_MASK_3,
@@ -64,9 +64,7 @@ struct timer_jazzio_config timer_nec_jazz_conf = {
 
 /* handle jazzio bus clock interrupt */
 int
-timer_nec_jazz_intr(mask, cf)
-	u_int mask;
-	struct clockframe *cf;
+timer_nec_jazz_intr(u_int mask, struct clockframe *cf)
 {
 	int temp;
 
@@ -76,13 +74,13 @@ timer_nec_jazz_intr(mask, cf)
 	/* Re-enable clock interrupts */
 	splx(MIPS_INT_MASK_3 | MIPS_SR_INT_IE);
 
-	return (~MIPS_INT_MASK_3); /* Keep clock interrupts enabled */
+	return ~MIPS_INT_MASK_3; /* Keep clock interrupts enabled */
 }
 
 void
-timer_nec_jazz_init(interval)
-	int interval; /* milliseconds */
+timer_nec_jazz_init(int interval)
 {
+
 	if (interval <= 0)
 		panic("timer_nec_jazz_init: invalid interval %d", interval);
 
@@ -113,11 +111,10 @@ struct pica_dev nec_rd94_cpu[] = {
 };
 
 void
-c_nec_jazz_set_intr(mask, int_hand, prio)
-	int	mask;
-	int	(*int_hand)(u_int, struct clockframe *);
-	int	prio;
+c_nec_jazz_set_intr(int mask, int (*int_hand)(u_int, struct clockframe *),
+    int prio)
 {
+
 	arc_set_intr(mask, int_hand, prio);
 
 	/* Update external interrupt mask but don't enable clock. */
@@ -128,7 +125,7 @@ c_nec_jazz_set_intr(mask, int_hand, prio)
  * common configuration between NEC EISA and PCI platforms
  */
 void
-c_nec_jazz_init()
+c_nec_jazz_init(void)
 {
 
 	/* chipset-dependent timer configuration */
