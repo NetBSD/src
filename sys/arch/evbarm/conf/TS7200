@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.4 2004/12/31 12:14:22 joff Exp $
+#	$NetBSD: TS7200,v 1.5 2005/01/08 02:58:03 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -176,6 +176,10 @@ com3		at isa? port 0x2e8 irq 6
 
 wdc1	at isa? port 0x1f0 irq 7 flags 0x00
 wdc2	at isa? port 0x170 irq 7 flags 0x00
+tscs0	at isa? port 0x300 iomem ? irq ? drq ?  # TS-ETH10 PC/104 ethernet
+tscs1	at isa? port 0x310 iomem ? irq ? drq ?
+tscs2	at isa? port 0x320 iomem ? irq ? drq ?
+tscs3	at isa? port 0x330 iomem ? irq ? drq ?
 
 # ATA (IDE) bus support
 atabus* at ata?
