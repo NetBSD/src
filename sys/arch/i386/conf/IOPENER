@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.28.2.2 2002/07/16 08:29:19 gehenna Exp $
+#	$NetBSD: IOPENER,v 1.28.2.3 2002/08/31 13:44:51 gehenna Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.28.2.2 $"
+#ident 		"IOPENER-$Revision: 1.28.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,7 +43,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 #options 	LKM		# loadable kernel modules
 

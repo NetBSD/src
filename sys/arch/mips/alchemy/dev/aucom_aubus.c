@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.4 2002/03/13 19:13:10 eeh Exp $	*/
+/* $NetBSD: aucom_aubus.c,v 1.1.4.2 2002/08/31 13:45:14 gehenna Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,64 +38,75 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
-#include <sys/systm.h>
 
-#include <lib/libkern/libkern.h>
-
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
+#include <mips/alchemy/include/aureg.h>
+#include <mips/alchemy/include/auvar.h>
+#include <mips/alchemy/include/aubusvar.h>
 
-struct com_mainbus_softc {
+#include <mips/alchemy/dev/aucomreg.h>
+#include <mips/alchemy/dev/aucomvar.h>
+
+struct aucom_aubus_softc {
 	struct com_softc sc_com;
 	void *sc_ih;
 };
 
-static int	com_mainbus_probe(struct device *, struct cfdata *, void *);
-static void	com_mainbus_attach(struct device *, struct device *, void *);
+static int	aucom_aubus_probe(struct device *, struct cfdata *, void *);
+static void	aucom_aubus_attach(struct device *, struct device *, void *);
 
-struct cfattach com_mainbus_ca = {
-	sizeof(struct com_mainbus_softc), com_mainbus_probe, com_mainbus_attach
+struct cfattach aucom_aubus_ca = {
+	sizeof(struct aucom_aubus_softc), aucom_aubus_probe, aucom_aubus_attach
 };
 
-int comfound = 0;
-
 int
-com_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
+aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct aubus_attach_args *aa = aux;
 
-	/* match only com devices */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
-		return 0;
+	/* match only aucom devices */
+	if (strcmp(aa->aa_name, cf->cf_driver->cd_name) == 0)
+		return (1);
 
-	return (comfound < 2);
+	return (0);
 }
 
-struct com_softc *com0; /* XXX */
-
 void
-com_mainbus_attach(struct device *parent, struct device *self, void *aux)
+aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct com_mainbus_softc *msc = (void *)self;
+	struct aucom_aubus_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
-	struct mainbus_attach_args *maa = aux;
-	int addr = maa->mb_addr;
-	int irq = maa->mb_irq;
+	struct aubus_attach_args *aa = aux;
+	void *ih;
+	int addr = aa->aa_addr;
+	int irq = aa->aa_irq[0];
 	
-	sc->sc_iot = galaxy_make_bus_space_tag(0, 0);
+	sc->sc_iot = aa->aa_st;
 	sc->sc_iobase = sc->sc_ioh = addr;
-	/* UART is clocked externally @ 11.0592MHz == COM_FREQ*6 */
-	sc->sc_frequency = COM_FREQ * 6;
 
-	comfound ++;
+	if (aucom_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
+	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
+			  &sc->sc_ioh) != 0) {
+		printf(": can't map i/o space\n");
+		return;
+	}
 
-	/* XXX console check */
-	/* XXX map */
+	/*
+	 * The input to the clock divider is the internal pbus clock (1/4 the
+	 * processor frequency).  The actual baud rate of the interface will
+	 * be pbus_freq / CLKDIV.
+	 */
+	sc->sc_frequency = curcpu()->ci_cpu_freq / 4;
 
-	com_attach_subr(sc);
+	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
 
-	intr_establish(irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
+	aucom_attach_subr(sc);
+
+	ih = au_intr_establish(irq, 0, IPL_SERIAL, IST_LEVEL, aucomintr, sc);
+	if (ih == NULL) {
+		printf("%s: unable to establish interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 }

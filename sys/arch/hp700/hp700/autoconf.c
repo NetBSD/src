@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.4.2 2002/07/14 17:46:24 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.3 2002/08/31 13:44:39 gehenna Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -59,6 +59,10 @@
 #include <sys/device.h>
 #include <sys/callout.h>
 
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 
@@ -79,8 +83,9 @@ register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
  * LED blinking thing
  */
 #ifdef USELEDS
-struct callout heartbeat_tmo;
-void heartbeat __P((void *));
+int _hp700_led_on_cycles[_HP700_LEDS_BLINKABLE];
+static struct callout hp700_led_callout;
+static void hp700_led_blinker __P((void *));
 extern int hz;
 #endif
 
@@ -96,14 +101,18 @@ cpu_configure()
 {
 
 	/*
- 	* Consider stopping for a debugger before
- 	* autoconfiguration.
- 	*/
-#ifdef	DDB
+	 * Consider stopping for a debugger before
+	 * autoconfiguration.
+	 */
 	if (boothowto & RB_KDB) {
+#ifdef KGDB
+		extern int hp700_kgdb_attached;
+		if (hp700_kgdb_attached)
+			kgdb_connect(1);
+#elif defined(DDB)
 		Debugger();
-	}
 #endif	/* DDB */
+	}
 
 	splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
@@ -120,41 +129,96 @@ cpu_configure()
 		(*cold_hook)();
 
 #ifdef USELEDS
-	callout_init(&heartbeat_tmo);
-	heartbeat((void*) 0);
+	memset(_hp700_led_on_cycles, 0, sizeof(_hp700_led_on_cycles));
+	callout_init(&hp700_led_callout);
+	hp700_led_blinker((void *) 0);
 #endif
 }
 
 #ifdef USELEDS
 /*
- * turn the heartbeat alive.
- * right thing would be to pass counter to each subsequent timeout
- * as an argument to heartbeat() incrementing every turn,
- * i.e. avoiding the static hbcnt, but doing timeout_set() on each
- * timeout_add() sounds ugly, guts of struct timeout looks ugly
- * to ponder in even more.
+ * This sets LEDs.
  */
 void
-heartbeat(arg)
+hp700_led_ctl(int off, int on, int toggle)
+{
+	int r;
+
+	if (machine_ledaddr == NULL)
+		return;
+
+	/* The mask is reversed when pushed out to the hardware. */
+	r = ~(machine_leds = ((machine_leds & ~off) | on) ^ toggle);
+
+	if (machine_ledword)
+		*machine_ledaddr = r;
+	else {
+#define	HP700_LED_DATA		0x01
+#define	HP700_LED_STROBE	0x02
+		register int b;
+		for (b = 0x80; b; b >>= 1) {
+			*machine_ledaddr = (r & b)? HP700_LED_DATA : 0;
+			DELAY(1);
+			*machine_ledaddr = ((r & b)? HP700_LED_DATA : 0) |
+			    HP700_LED_STROBE;
+		}
+#undef	HP700_LED_DATA
+#undef	HP700_LED_STROBE
+	}
+}
+
+/*
+ * This callout handler blinks LEDs.
+ */
+static void
+hp700_led_blinker(arg)
 	void *arg;
 {
-	u_int hbcnt = (u_int) arg;
+	u_int led_cycle = (u_int) arg;
+	int leds, led_i, led;
+	int load;
 
 	/*
-	 * do this:
+	 * Blink the heartbeat LED like this:
 	 *
 	 *   |~| |~|
 	 *  _| |_| |_,_,_,_
 	 *   0 1 2 3 4 6 7
 	 */
-	if (hbcnt < 4) {
-		ledctl(0, 0, PALED_HEARTBEAT);
-		callout_reset(&heartbeat_tmo, hz / 8, heartbeat, (void *) (hbcnt + 1));
-	} else {
-		callout_reset(&heartbeat_tmo, hz / 2, heartbeat, (void *) 0);
+#define HP700_HEARTBEAT_CYCLES	(_HP700_LED_FREQ / 8)
+	if (led_cycle == (0 * HP700_HEARTBEAT_CYCLES) ||
+	    led_cycle == (2 * HP700_HEARTBEAT_CYCLES)) {
+		_hp700_led_on_cycles[HP700_LED_HEARTBEAT] = 
+			HP700_HEARTBEAT_CYCLES;
 	}
+
+	/* Form the new LED mask. */
+	leds = 0;
+	for (led_i = 0, led = (1 << 0);
+	     led_i < _HP700_LEDS_BLINKABLE;
+	     led_i++, led <<= 1) {
+		if (_hp700_led_on_cycles[led_i] > 0)
+			leds |= led;
+		if (_hp700_led_on_cycles[led_i] >= 0)
+			_hp700_led_on_cycles[led_i]--;
+	}
+
+	/* Add in the system load. */
+	load = averunnable.ldavg[0] >> FSHIFT;
+	if (load >= (1 << (_HP700_LEDS_COUNT - _HP700_LEDS_BLINKABLE)))
+		load = (1 << (_HP700_LEDS_COUNT - _HP700_LEDS_BLINKABLE)) - 1;
+	leds |= (load << _HP700_LEDS_BLINKABLE);
+
+	/* Set the LEDs. */
+	hp700_led_ctl(-1, leds, 0);
+	
+	/* NB: this assumes _HP700_LED_FREQ is a power of two. */
+	led_cycle = (led_cycle + 1) & (_HP700_LED_FREQ - 1);
+	callout_reset(&hp700_led_callout, hz / _HP700_LED_FREQ,
+		hp700_led_blinker, (void *) led_cycle);
+	
 }
-#endif
+#endif /* USELEDS */
 
 /*
  * This is called by configure to set dumplo and dumpsize.
@@ -346,10 +410,10 @@ find_dev_byname(name)
 #endif
 
 void
-pdc_scanbus(self, ca, bus, maxmod)
+pdc_scanbus(self, bus, maxmod, callback)
 	struct device *self;
-	struct confargs *ca;
 	int bus, maxmod;
+	void (*callback) __P((struct device *, struct confargs *));
 {
 	struct pdc_memmap pdc_memmap;
 	struct device_path dp;
@@ -368,7 +432,6 @@ pdc_scanbus(self, ca, bus, maxmod)
 			     PDC_MEMMAP_HPA, &pdc_memmap, &dp) < 0)
 			continue;
 
-		nca = *ca;
 		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
 			     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
 			     &nca.ca_type, sizeof(nca.ca_type)) < 0)
@@ -376,12 +439,11 @@ pdc_scanbus(self, ca, bus, maxmod)
 
 		nca.ca_mod = i;
 		nca.ca_hpa = pdc_memmap.hpa;
-		nca.ca_irq = HPPACF_IRQ_UNDEF;
+		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 					    nca.ca_type.iodc_sv_model);
-
-		config_found_sm(self, &nca, mbprint, mbsubmatch);
+		(*callback)(self, &nca);
 	}
 }
 

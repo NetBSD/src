@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.11.16.1 2002/07/15 00:33:10 gehenna Exp $	*/
+/*	$NetBSD: ansi.h,v 1.11.16.2 2002/08/31 13:45:45 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,14 +51,24 @@
  *	#endif
  */
 #define	_BSD_CLOCK_T_		unsigned long	/* clock() */
+#ifdef _LP64
+#define	_BSD_PTRDIFF_T_		long		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
+#define	_BSD_SSIZE_T_		long		/* byte count or error */
+#define	_BSD_TIME_T_		int		/* time() */
+#else
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		long		/* time() */
+#endif
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
+#ifdef _LP64
+#define	_BSD_VA_LIST_		__builtin_va_list /* GCC builtin type */
+#else
 #define	_BSD_VA_LIST_		__va_list	/* va_list */
 typedef struct {
 #if __GNUC_PREREQ__(3, 0)
@@ -66,6 +76,7 @@ typedef struct {
 #else
 	char __gpr, __fpr, __pad[2];
 	char *__stack, *__base;
+#endif
 #endif
 } __va_list;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.21.2.1 2002/07/16 13:10:00 gehenna Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.21.2.2 2002/08/31 13:45:49 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,19 +40,14 @@
 #include "opt_altivec.h"
 
 #ifdef ALTIVEC
-#define DSSALL			/* assumes PSL is in cr registers */ \
-	bc+	4,6,86f;	/* branch is PSL_VEC is false */	\
-	dssall;			/* stop datastreams */			\
-86:
-#define	SAVE_VRSAVE(tf,b) \
+#define	SAVE_VRSAVE(tf,b) 						\
 	mfspr	b,SPR_VRSAVE;						\
 	stw	b,FRAME_VRSAVE+8(tf);
 
-#define RESTORE_VRSAVE(tf,b) \
+#define RESTORE_VRSAVE(tf,b)						\
 	lwz	b,FRAME_VRSAVE+8(tf);					\
 	mtspr	SPR_VRSAVE,b;
 #else
-#define DSSALL			86:
 #define SAVE_VRSAVE(tf,b)
 #define RESTORE_VRSAVE(tf,b)
 #endif
@@ -352,7 +347,6 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
  * (Code essentially from the 603e User Manual, Chapter 5, but
  * corrected a lot.)
  */
-
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
 #ifdef PMAPDEBUG
@@ -571,7 +565,7 @@ _C_LABEL(ddblow):
 	addi	1,1,ddbstk+INTSTK@l
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
-#endif	/* DDB | KGDB */
+#endif	/* DDB || KGDB */
 
 #ifdef IPKDB
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
@@ -692,7 +686,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Decide whether we return to user mode: */				\
 	lwz	3,savearea+4(0);					\
 	mtcr	3;							\
-	bc	4,17,1f;	/* branch if PSL_PR is false */		\
+	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	CPU601_KERN_LEAVE(2,3);						\
 	RESTORE_USER_SRS(2,3);						\
@@ -716,8 +710,8 @@ disitrap:
 	mfdar	30
 	mfdsisr	31
 	stmw	30,tempsave+16(0)
-	.globl	trapstart
-trapstart:
+	.globl	_C_LABEL(trapstart)
+_C_LABEL(trapstart):
 realtrap:
 /* Test whether we already had PR set */
 	mfsrr1	1
@@ -726,7 +720,6 @@ realtrap:
 					   overwritten) */
 s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
-	DSSALL				/* stop AltiVec data streams */
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
@@ -740,17 +733,17 @@ s_trap:
 
 k_trap:
 	FRAME_SETUP(tempsave)
+trapagain:
 /* Now we can recover interrupts again: */
 	mfmsr	7
 	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
 	mtmsr	7
 	isync
 /* Call C trap code: */
-trapagain:
 	addi	3,1,8
 	bl	_C_LABEL(trap)
-	.globl	_C_LABEL(trapexit)
-_C_LABEL(trapexit):
+	.globl	trapexit
+trapexit:
 /* Disable interrupts: */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l
@@ -759,6 +752,54 @@ _C_LABEL(trapexit):
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
+	lis	3,_C_LABEL(astpending)@ha
+	lwz	4,_C_LABEL(astpending)@l(3)
+	andi.	4,4,1
+	beq	1f
+	li	6,EXC_AST
+	stw	6,FRAME_EXC+8(1)
+	b	trapagain
+1:
+	FRAME_LEAVE(tempsave)
+	rfi
+
+/* 
+ * Trap handler for syscalls (EXC_SC)
+ */
+
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+_C_LABEL(sctrap):
+	mtsprg	1,1			/* save SP */
+	stmw	28,tempsave(0)		/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+	bla	s_sctrap
+	_C_LABEL(scsize) = .-_C_LABEL(sctrap)
+
+s_sctrap:
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
+	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
+	CPU601_KERN_ENTRY(30,31)
+	FRAME_SETUP(tempsave)
+/* Now we can recover interrupts again: */
+	mfmsr	7
+	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
+	mtmsr	7
+	isync
+	addi	3,1,8
+/* Call the appropriate syscall handler: */
+	lis	4,_C_LABEL(curproc)@ha
+	lwz	4,_C_LABEL(curproc)@l(4)
+	lwz	4,P_MD_SYSCALL@l(4)
+	mtctr	4
+	bctrl
+/* Disable interrupts: */
+	mfmsr	3
+	andi.	3,3,~PSL_EE@l
+	mtmsr	3
+/* Test AST pending: */
 	lis	3,_C_LABEL(astpending)@ha
 	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
@@ -797,7 +838,7 @@ s_dsitrap:
 	mfctr	31			/* & CTR */
 	mfdar	3
 s_pte_spill:
-	bl	_C_LABEL(pmap_pte_spill)	/* try a spill */
+	bl	_C_LABEL(pmap_pte_spill) /* try a spill */
 	or.	3,3,3
 	mtctr	31			/* restore CTR */
 	mtlr	30			/* and trap type */
@@ -885,7 +926,6 @@ s_isitrap:
 	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
-	DSSALL;			/* stop AltiVec datastreams */		\
 /* interrupts are recoverable here, and enable translation */		\
 	RESTORE_KERN_SRS(3,4);						\
 	CPU601_KERN_ENTRY(3,4);						\
@@ -956,9 +996,9 @@ intr_exit:
 	mtlr	6
 	lwz	6,IFRAME_R6(1)
 	lwz	5,IFRAME_R5(1)
-	lis	3,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
+	lis	3,_C_LABEL(intr_depth)@ha
 	lwz	4,_C_LABEL(intr_depth)@l(3)
-	addi	4,4,-1
+	addi	4,4,-1			/* adjust reentrancy count */
 	stw	4,_C_LABEL(intr_depth)@l(3)
 	lwz	4,IFRAME_R4(1)
 	lwz	3,IFRAME_R3(1)
@@ -975,7 +1015,7 @@ decrintr:
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 
-#if defined(DDB)
+#ifdef DDB
 /*
  * Deliberate entry to ddbtrap
  */
@@ -1130,8 +1170,8 @@ _C_LABEL(ipkdbsbyte):
 	stw	5,0(9)			/* restore previous fault handler */
 	dcbst	0,9			/* and flush data... */
 	sync
-	icbi	0,9			/* and instruction caches */	
+	icbi	0,9			/* and instruction caches */
 	blr
 #endif	/* IPKDB */
-	.globl	trapend
-trapend:
+	.globl	_C_LABEL(trapend)
+_C_LABEL(trapend):

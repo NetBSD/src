@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.40.2.2 2002/07/16 08:29:14 gehenna Exp $
+#	$NetBSD: GENERIC_TINY,v 1.40.2.3 2002/08/31 13:44:50 gehenna Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -43,7 +43,7 @@ options 	MATH_EMULATE	# floating point emulation
 # Standard system options
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
@@ -53,7 +53,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
 
 options 	NMBCLUSTERS=256
 
@@ -61,6 +61,7 @@ options 	NMBCLUSTERS=256
 
 #options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE	# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
