@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.48 1998/03/07 03:15:43 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.49 1998/03/07 03:37:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.48 1998/03/07 03:15:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.49 1998/03/07 03:37:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1397,18 +1397,17 @@ pmap_change_wiring(pmap, va, wired)
 }
 
 /*
- *	Routine:	pmap_extract
- *	Function:
- *		Extract the physical page address associated
- *		with the given map/virtual_address pair.
+ * pmap_extract:
+ *
+ *	Extract the physical address associated with the given
+ *	pmap/virtual address pair.
  */
-
 vm_offset_t
 pmap_extract(pmap, va)
 	register pmap_t	pmap;
 	vm_offset_t va;
 {
-	pt_entry_t pte;
+	pt_entry_t *pte;
 	register vm_offset_t pa;
 
 #ifdef DEBUG
@@ -1416,17 +1415,24 @@ pmap_extract(pmap, va)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
 	pa = 0;
-	if (pmap && pmap_pte_v(pmap_l2pte(pmap, va))) {
-		pte = *pmap_l3pte(pmap, va);
-		if (pte & PG_V)
-			pa = ctob(PG_PFNUM(pte)) | (va & PGOFSET);
-	}
 
+	if (pmap_pte_v(pmap_l1pte(pmap, va)) == 0)
+		goto out;
+	if (pmap_pte_v(pmap_l2pte(pmap, va)) == 0)
+		goto out;
+
+	pte = pmap_l3pte(pmap, va);
+	if (pmap_pte_v(pte) == 0)
+		goto out;
+
+	pa = pmap_pte_pa(pte) | (va & PGOFSET);
+
+ out:
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("%lx\n", pa);
+		printf("0x%lx\n", pa);
 #endif
-	return(pa);
+	return (pa);
 }
 
 /*
@@ -2363,6 +2369,12 @@ pmap_check_wiring(str, va)
 }
 #endif
  
+/*
+ * vtophys:
+ *
+ *	Return the physical address corresponding to the K0SEG or
+ *	K1SEG address provided.
+ */
 vm_offset_t
 vtophys(vaddr)
 	vm_offset_t vaddr;
@@ -2375,11 +2387,10 @@ vtophys(vaddr)
 	} else if (vaddr <= ALPHA_K0SEG_END)
 		paddr = ALPHA_K0SEG_TO_PHYS(vaddr);
 	else
-		paddr = pmap_pte_pa(pmap_l3pte(pmap_kernel(), vaddr)) |
-		    (vaddr & PGOFSET);
+		paddr = pmap_extract(pmap_kernel(), vaddr);
 
 #if 0
-	printf("vtophys(0x%lx) -> %lx\n", vaddr, paddr);
+	printf("vtophys(0x%lx) -> 0x%lx\n", vaddr, paddr);
 #endif
 
 	return (paddr);
