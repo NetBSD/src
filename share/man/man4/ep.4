@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.17 1997/10/20 21:11:05 thorpej Exp $
+.\"	$NetBSD: ep.4,v 1.18 1997/11/11 05:11:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -156,20 +156,16 @@ driver does not yet re-autosense the active media at boot time.
 If the EEPROM autosense bit is set, the driver simply uses the media
 type sensed and saved when the configuration utility was run.
 .Sh DIAGNOSTICS
-ep0: reset (status: %x)
-.in +4
+.Bl -diag
+.It "ep0: reset (status: %x)"
 the driver has encountered a FIFO underrun or overrun. The driver will reset
 the card and the packet will be lost. This is not fatal.
-.in -4
-ep0: eeprom failed to come ready
-.in +4
+.It "ep0: eeprom failed to come ready"
 The eeprom failed to come ready.  This probably means the card is wedged.
-.in -4
-ep0: 3c509 in test mode. Erase pencil mark!
-.in +4
+.It "ep0: 3c509 in test mode. Erase pencil mark!"
 This means that someone has scribbled with pencil in the test area on the
 card.  Erase the pencil mark and reboot.  (This is not a joke).
-.in -4
+.El
 .Sh BUGS
 Support for autosensing the active media should be added to the driver.
 .Sh SEE ALSO
