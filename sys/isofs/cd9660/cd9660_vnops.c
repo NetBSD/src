@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.69 2001/09/22 22:49:32 sommerfeld Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.70 2001/11/12 15:29:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,9 @@
  *
  *	@(#)cd9660_vnops.c	8.15 (Berkeley) 5/27/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.70 2001/11/12 15:29:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
