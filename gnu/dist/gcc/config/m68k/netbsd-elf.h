@@ -345,16 +345,16 @@ do {									 \
 #define JUMP_TABLES_IN_TEXT_SECTION 1
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
-   for profiling a function entry.  XXX should have _mcount.  */
+   for profiling a function entry. */
 
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO) \
 do {									\
   asm_fprintf (FILE, "\tlea (%LLP%d,%Rpc),%Ra1\n", (LABELNO));		\
   if (flag_pic)								\
-    fprintf (FILE, "\tbsr.l mcount@PLTPC\n");				\
+    fprintf (FILE, "\tbsr.l __mcount@PLTPC\n");				\
   else									\
-    fprintf (FILE, "\tjbsr mcount\n");					\
+    fprintf (FILE, "\tjbsr __mcount\n");				\
 } while (0)
 
 /* Register in which address to store a structure value is passed to a
