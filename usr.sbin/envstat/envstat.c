@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.9 2003/01/05 01:56:42 chris Exp $ */
+/*	$NetBSD: envstat.c,v 1.10 2003/01/05 22:16:22 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.9 2003/01/05 01:56:42 chris Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.10 2003/01/05 22:16:22 christos Exp $");
 #endif
 
 #include <fcntl.h>
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 
 			printf("\n");
 		}
-		exit(1);
+		exit(0);
 	}
 
 
