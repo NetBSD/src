@@ -1,4 +1,4 @@
-/* $NetBSD: support.c,v 1.7 1997/09/02 13:18:37 thorpej Exp $ */
+/* $NetBSD: support.c,v 1.8 2001/01/03 22:15:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: support.c,v 1.7 1997/09/02 13:18:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: support.c,v 1.8 2001/01/03 22:15:38 thorpej Exp $");
 
 /*
  * Some C support functions that aren't (yet) in libkern or assembly.
@@ -44,9 +44,7 @@ struct qelem {
 };
 
 void
-_insque(entry, pred)
-	void *entry;
-	void *pred;
+_insque(void *entry, void *pred)
 {
 	struct qelem *e = (struct qelem *) entry;
 	struct qelem *p = (struct qelem *) pred;
@@ -58,8 +56,7 @@ _insque(entry, pred)
 }
 
 void
-_remque(element)
-	void *element;
+_remque(void *element)
 {
 	struct qelem *e = (struct qelem *) element;
 	e->q_forw->q_back = e->q_back;

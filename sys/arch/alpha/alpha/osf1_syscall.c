@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.3 2000/12/14 18:44:20 mycroft Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.4 2001/01/03 22:15:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.3 2000/12/14 18:44:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.4 2001/01/03 22:15:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,19 +118,18 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.3 2000/12/14 18:44:20 mycroft Exp
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
+#include <machine/userret.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_cvt.h>
 #include <compat/osf1/osf1_syscall.h>
 
-void	userret __P((struct proc *));
-void	osf1_syscall_intern __P((struct proc *));
-void	osf1_syscall_plain __P((struct proc *, u_int64_t, struct trapframe *));
-void	osf1_syscall_fancy __P((struct proc *, u_int64_t, struct trapframe *));
+void	osf1_syscall_intern(struct proc *);
+void	osf1_syscall_plain(struct proc *, u_int64_t, struct trapframe *);
+void	osf1_syscall_fancy(struct proc *, u_int64_t, struct trapframe *);
 
 void
-osf1_syscall_intern(p)
-	struct proc *p;
+osf1_syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
@@ -155,10 +154,7 @@ osf1_syscall_intern(p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-osf1_syscall_plain(p, code, framep)
-	struct proc *p;
-	u_int64_t code;
-	struct trapframe *framep;
+osf1_syscall_plain(struct proc *p, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
@@ -249,10 +245,7 @@ osf1_syscall_plain(p, code, framep)
 }
 
 void
-osf1_syscall_fancy(p, code, framep)
-	struct proc *p;
-	u_int64_t code;
-	struct trapframe *framep;
+osf1_syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
