@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.9 2005/02/19 21:30:24 martti Exp $	*/
+/*	$NetBSD: ipf.h,v 1.9.2.1 2005/04/04 18:25:11 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.71.2.5 2005/02/01 02:44:34 darrenr Exp
+ * Id: ipf.h,v 2.71.2.6 2005/02/21 05:05:29 darrenr Exp
  */
 
 #ifndef	__IPF_H__
@@ -196,7 +196,7 @@ extern char *fac_toname __P((int));
 extern int fac_findname __P((char *));
 extern void fill6bits __P((int, u_int *));
 extern int gethost __P((char *, u_32_t *));
-extern int getport __P((struct frentry *, char *));
+extern int getport __P((struct frentry *, char *, u_short *));
 extern int getportproto __P((char *, int));
 extern int getproto __P((char *));
 extern char *getline __P((char *, size_t, FILE *, int *));
