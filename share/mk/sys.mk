@@ -1,10 +1,9 @@
-#	$NetBSD: sys.mk,v 1.78 2003/09/19 16:32:12 martin Exp $
+#	$NetBSD: sys.mk,v 1.79 2003/11/08 05:33:37 lukem Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
 
-.SUFFIXES: .out .a .ln .o .s .S .c .cc .cpp .cxx .C .F .f .r .y .l .cl .p .h
-.SUFFIXES: .sh .m4
+.SUFFIXES: .a .o .ln .c .cc .cpp .cxx .C .f .F .r .p .s .S .l .y .sh
 
 .LIBS:		.a
 
@@ -67,12 +66,12 @@ LINK.r?=	${FC} ${FFLAGS} ${RFLAGS} ${LDFLAGS}
 
 INSTALL?=	install
 
+LD?=		ld
+LDFLAGS?=
+
 LEX?=		lex
 LFLAGS?=
 LEX.l?=		${LEX} ${LFLAGS}
-
-LD?=		ld
-LDFLAGS?=
 
 LINT?=		lint
 LINTFLAGS?=	-chapbxzF
@@ -206,3 +205,4 @@ YACC.y?=	${YACC} ${YFLAGS}
 .sh:
 	rm -f ${.TARGET}
 	cp ${.IMPSRC} ${.TARGET}
+	chmod a+x ${.TARGET}
