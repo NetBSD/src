@@ -1,5 +1,5 @@
 .\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
-.\"	$NetBSD: bindresvport.3,v 1.3 1997/07/01 06:28:22 mikel Exp $
+.\"	$NetBSD: bindresvport.3,v 1.4 1998/01/14 11:04:17 lukem Exp $
 .\"
 .Dd November 22, 1987
 .Dt BINDRESVPORT 3
@@ -11,7 +11,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <netinet/in.h>
 .Ft int
-.Fn bindresvport "int sd" "struct sockaddr_in **sin"
+.Fn bindresvport "int sd" "struct sockaddr_in *sin"
 .Sh DESCRIPTION
 .Fn bindresvport
 is used to bind a socket descriptor to a privileged
@@ -23,5 +23,60 @@ otherwise -1 is returned and
 .Va errno
 set to reflect the cause of the error.
 .Pp
+If
+.Fa sin
+is a pointer to a
+.Ft "struct sockaddr_in"
+then the appropriate fields in the structure should be defined.
+If
+.Fa sin.sin_port
+is
+.Sq 0
+then an anonymous port (in the range 600-1023) will be
+chosen, and if
+.Xr bind 2
+is successful, the
+.Fa sin.sin_port
+will be updated to contain the allocated port.
+.Pp
+If
+.Fa sin
+is the
+.Dv NULL
+pointer,
+an anonymous port will be allocated (as above).
+However, there is no way for
+.Fn bindresvport
+to return the allocated port in this case.
+.Pp
 Only root can bind to a privileged port; this call will fail for any
 other users.
+.Sh RETURN VALUES
+If the bind is successful, a 0 value is returned.
+A return value of -1 indicates an error, which is
+further specified in the global
+.Va errno .
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er EPFNOSUPPORT
+If
+.Fa sin
+was supplied, and
+.Fa sin.sin_family
+isn't
+.Dv AF_INET .
+.El
+.Pp
+.Fn bindresvport
+may also fail and set
+.Va errno
+for any of the errors specified for the calls
+.Xr bind 2 ,
+.Xr getsockopt 2 ,
+or 
+.Xr setsockopt 2 .
+.Sh SEE ALSO
+.Xr bind 2 ,
+.Xr getsockopt 2 ,
+.Xr setsockopt 2 ,
+.Xr ip 4 .

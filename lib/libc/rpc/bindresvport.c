@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.8 1997/07/21 14:08:21 jtc Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.9 1998/01/14 11:04:18 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.8 1997/07/21 14:08:21 jtc Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.9 1998/01/14 11:04:18 lukem Exp $");
 #endif
 #endif
 
@@ -64,36 +64,50 @@ bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	int res;
-	static short port;
+	int res, old;
 	struct sockaddr_in myaddr;
-	int i;
+	int sinlen = sizeof(struct sockaddr_in);
 
-#define STARTPORT 600
-#define ENDPORT (IPPORT_RESERVED - 1)
-#define NPORTS	(ENDPORT - STARTPORT + 1)
-
-	if (sin == (struct sockaddr_in *)0) {
+	if (sin == NULL) {
 		sin = &myaddr;
-		memset(sin, 0, sizeof (*sin));
-		sin->sin_len = sizeof(struct sockaddr_in);
+		memset(sin, 0, sinlen);
+		sin->sin_len = sinlen;
 		sin->sin_family = AF_INET;
 	} else if (sin->sin_family != AF_INET) {
 		errno = EPFNOSUPPORT;
 		return (-1);
 	}
-	if (port == 0) {
-		port = (getpid() % NPORTS) + STARTPORT;
+
+	if (sin->sin_port == 0) {
+		int on, oldlen = sizeof(old);
+
+		res = getsockopt(sd, IPPROTO_IP, IP_PORTRANGE, &old, &oldlen);
+		if (res < 0)
+			return(res);
+		on = IP_PORTRANGE_LOW;
+		res = setsockopt(sd, IPPROTO_IP, IP_PORTRANGE, &on, sizeof(on));
+		if (res < 0)
+			return(res);
 	}
-	res = -1;
-	errno = EADDRINUSE;
-	for (i = 0; i < NPORTS && res < 0 && errno == EADDRINUSE; i++) {
-		sin->sin_port = htons(port++);
-		if (port > ENDPORT) {
-			port = STARTPORT;
+
+	res = bind(sd, (struct sockaddr *)sin, sinlen);
+
+	if (sin->sin_port == 0) {
+		int saved_errno = errno;
+
+		if (res < 0) {
+			if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
+			    &old, sizeof(old)) < 0)
+				errno = saved_errno;
+			return (res);
 		}
-		res = bind(sd,
-		    (struct sockaddr *)sin, sizeof(struct sockaddr_in));
+
+		if (sin != &myaddr) {	/* What did the kernel assign? */
+			if (getsockname(sd, (struct sockaddr *)sin, &sinlen)
+			    < 0)
+				errno = saved_errno;
+			return (res);
+		}
 	}
 	return (res);
 }
