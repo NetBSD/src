@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.1,v 1.3 1997/06/08 08:47:25 jeremy Exp $
+.\"	$NetBSD: rcmd.1,v 1.4 1997/06/09 09:15:49 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green.
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -153,6 +153,11 @@ command appeared in
 .Nx 1.3 .
 It is mostly derived from
 .Xr rsh 1 .
+It's purpose was to create a backend driver for
+.Xr rcmd 3
+that would allow the users of
+.Xr rcmd 3
+to no longer require super-user privileges.
 .Sh BUGS
 If you are using
 .Xr csh  1
