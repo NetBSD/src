@@ -1,3 +1,5 @@
+/*	$NetBSD: ntfs_vfsops.h,v 1.2 1999/05/06 15:43:20 christos Exp $	*/
+
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
  * All rights reserved.
