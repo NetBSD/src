@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.163 2003/10/07 17:04:19 skd Exp $
+# $NetBSD: files.alpha,v 1.164 2003/10/08 17:29:59 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -274,7 +274,7 @@ file	arch/alpha/jensenio/pckbc_jensenio.c	pckbc_jensenio
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-file	arch/alpha/pci/pciide_machdep.c		pciide
+file	arch/alpha/pci/pciide_machdep.c		pciide_common
 
 define	alpha_pci_sgmap_pte32
 file	arch/alpha/pci/pci_sgmap_pte32.c	alpha_pci_sgmap_pte32
