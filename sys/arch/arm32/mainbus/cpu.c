@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 1998/01/13 02:10:17 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 1998/05/01 15:33:42 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -58,29 +58,32 @@
 #include <machine/cpu.h>
 #include <machine/cpus.h>
 #include <machine/undefined.h>
+#ifdef ARMFPE
+#include <arm32/fpe-arm/armfpe.h>
+#endif	/* ARMFPE */
 
 #include "cpu.h"
 #if NCPU != 1
 #error Need 1 CPU configured
 #endif
 
-/* Array of cpu structures, one per possible cpu */
+struct cpu_softc {
+	struct	device sc_device;
+	int	sc_open;
+};
 
+/* Array of cpu structures, one per possible cpu */
 cpu_t cpus[MAX_CPUS];
 
 char cpu_model[48];
 volatile int undefined_test;	/* Used for FPA test */
 extern int cpuctrl;		/* cpu control register value */
 
-/* Declare prototypes */
-
 /* Prototypes */
-
 void identify_master_cpu __P((int cpu_number, char *dev_name));
 void identify_arm_cpu	__P((int cpu_number));
 void identify_arm_fpu	__P((int cpu_number));
 
-extern int initialise_arm_fpe	__P((cpu_t *cpu));
 extern int initialise_fpe	__P((cpu_t *cpu));
 
 
