@@ -1,4 +1,4 @@
-#	$NetBSD: SIMULATOR,v 1.4 2002/07/12 20:41:55 scw Exp $
+#	$NetBSD: SIMULATOR,v 1.5 2002/07/12 20:43:12 scw Exp $
 
 # NetBSD/sh5 on the simple `chess' based simulator.
 #
@@ -11,7 +11,7 @@ maxusers	2
 
 options 	INCLUDE_CONFIG_FILE
 
-#ident		"SIMULATOR-$Revision: 1.4 $"
+#ident		"SIMULATOR-$Revision: 1.5 $"
 
 options 	CPU_STB1
 
@@ -22,7 +22,8 @@ options 	DIAGNOSTIC
 options 	DEBUG
 #options 	DDB
 
-options 	KTRACE
+options 	KTRACE		# system call tracing via ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 file-system 	FFS
 file-system 	NFS
