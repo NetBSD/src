@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.26 1998/09/24 17:49:48 itohy Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.27 1998/09/26 19:28:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.26 1998/09/24 17:49:48 itohy Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.27 1998/09/26 19:28:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.26 1998/09/24 17:49:48 itohy Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #include "shell.h"
