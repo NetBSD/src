@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.14 2001/04/21 21:36:45 he Exp $
+#	$NetBSD: mi,v 1.231.2.15 2001/04/22 18:19:28 he Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -523,6 +523,7 @@
 ./usr/include/kadm5/admin.h	comp-c-include
 ./usr/include/kadm5/kadm5-private.h	comp-c-include
 ./usr/include/kadm5/kadm5-protos.h	comp-c-include
+./usr/include/kadm5/kadm5_err.h	comp-c-include
 ./usr/include/kadm5/private.h	comp-c-include
 ./usr/include/kerberosIV/des.h	comp-c-include
 ./usr/include/kerberosIV/kadm.h	comp-c-include
@@ -560,6 +561,7 @@
 ./usr/include/krb5/resolve.h	comp-c-include
 ./usr/include/krb5/roken-common.h	comp-c-include
 ./usr/include/krb5/roken.h	comp-c-include
+./usr/include/krb5/rtbl.h	comp-c-include
 ./usr/include/krb5/sl.h	comp-c-include
 ./usr/include/krb5/ss.h	comp-c-include
 ./usr/include/kvm.h		comp-c-include
