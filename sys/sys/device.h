@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.67 2003/11/17 10:07:58 keihan Exp $ */
+/* $NetBSD: device.h,v 1.68 2004/04/30 23:00:03 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -167,7 +167,8 @@ TAILQ_HEAD(evcntlist, evcnt);
  * NOTE: "ev" should not be a pointer to the object, but rather a direct
  * reference to the object itself.
  */
-#define	EVCNT_ATTACH_STATIC(ev)	__link_set_add_data(evcnts, ev)
+#define	EVCNT_ATTACH_STATIC(ev)		__link_set_add_data(evcnts, ev)
+#define	EVCNT_ATTACH_STATIC2(ev, n)	__link_set_add_data2(evcnts, ev, n)
 
 /*
  * Description of a configuration parent.  Each device attachment attaches
