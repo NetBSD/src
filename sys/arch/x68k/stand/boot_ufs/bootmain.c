@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.3 2001/10/15 16:23:01 minoura Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.4 2001/11/24 16:22:54 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -289,7 +289,10 @@ bootufs(void)
 		int part, ha;
 
 #ifdef SCSI_ADHOC_BOOTPART
-		part = get_scsi_part();
+		if (SCSI_PARTTOP == 0)
+			part = 0;
+		else
+			part = get_scsi_part();
 #else
 		part = 0;			/* sd?a only */
 #endif

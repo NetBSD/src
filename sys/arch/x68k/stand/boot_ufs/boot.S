@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         Yasha(itohy@netbsd.org)
 |
-| $NetBSD: boot.S,v 1.3 2001/09/28 15:12:01 minoura Exp $
+| $NetBSD: boot.S,v 1.4 2001/11/24 16:22:54 minoura Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -175,8 +175,11 @@ boot_SCSI:
 		|
 		| ROM firmware:
 		|	pass read pos (in block #) in d2
+		|	Human68k-style partition table does not exist
+		|	d2 is 4 at the maximum
 		| SCSI IPLs (genuine and SxSI):
 		|	pass read pos (in kilobytes) in d2
+		|	d2 is bigger than 0x20
 		|	partition table on the memory is destroyed
 		| BOOT MENU Ver.2.22:
 		|	passes partition table entry address in a0
@@ -192,12 +195,16 @@ sc1:		cmpl	#0x20,%d2
 		lsll	#8,%d2		| clear MSByte
 		lsrl	#6,%d2		|
 		lsrl	%d5,%d2		| in sector
-sc2:		movel	%d2,RELOC(SCSI_PARTTOP)
-
+sc2:
 		| read entire boot
 		moveq	#8192/256,%d3	| size is 8KB
 		lsrl	%d5,%d3		| in sector
 		jbsr	scsiread	| read at  %a1
+
+		cmpil	#5,%d2
+		bcc	sc3
+		movql	#0,%d2
+sc3:		movel	%d2,RELOC(SCSI_PARTTOP)
 #else
 		moveq	#1,%d5		| 512bytes/sec
 		movel	%d5,%sp@-
