@@ -1,31 +1,29 @@
 #
-#  Tested on Dynix 3.2.0.
+#  This Makefile is designed to work on the old "make" program.  It does
+#  not use the obj subdirectory.  It also does not install documentation
+#  automatically -- think of it as a quick start for sites that have the
+#  old make program (I recommend that you get and port the new make if you
+#  are going to be doing any signficant work on sendmail).
 #
-#	From Jim Davis <jdavis@cs.arizona.edu>.
+#  This has been tested on DomainOS 10.3.5
 #
-#     ``There is no strtol in libc (well there is in the 'att universe'
-#	libc, but I couldn't figure out how to link that in), so I
-#	got the Chris Torek strtol.c from bsd-sources on uunet and
-#	compiled that.  There is no native ndbm either; I couldn't
-#	get db 1.72 to pass it's regression test, so I used gdbm-1.7
-#	instead.  I compiled it with gcc 1.40a.  The -lseq is to pick
-#	up getopt.''
+#	@(#)Makefile.DomainOS	8.5 (Berkeley) 4/12/94
 #
-#	@(#)Makefile.Dynix	8.3 (Berkeley) 4/11/94
 #
-
-CC= gcc
 
 # use O=-O (usual) or O=-g (debugging)
-O=	-O -g
+O=	-O
 
 # define the database mechanisms available for map & alias lookups:
 #	-DNDBM -- use new DBM
 #	-DNEWDB -- use new Berkeley DB
-#	-DNIS -- include NIS support
+#	-DNDBM -DNEWDB -DYPCOMPAT -- use both plus YP compatility
+#	-DNIS -- include client NIS support
 # The really old (V7) DBM library is no longer supported.
-# See READ_ME for a description of how these flags interact.
+# If YPCOMPAT is defined and /var/yp/Makefile exists, sendmail will build
+#   both the NEWDB and DBM libraries (the DBM just for YP).
 #
+
 DBMDEF=	-DNDBM
 
 # environment definitions (e.g., -D_AIX3)
@@ -43,7 +41,9 @@ LDOPTS=
 LIBDIRS=
 
 # libraries required on your system
-LIBS=	-lseq -lgdbm
+# You might want to use the BIND 4.9 resolver library here
+#LIBS=	-ldb -ldbm
+LIBS=	-ldbm -lresolv
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
 BINDIR=	${DESTDIR}/usr/lib
@@ -55,11 +55,14 @@ STDIR=	${DESTDIR}/usr/lib
 HFDIR=	${DESTDIR}/usr/lib
 
 # additional .o files needed
-OBJADD=strtol.o
+OBJADD=
+
+# additional pseudo-sources needed
+BEFORE=	unistd.h dirent.h
 
 ###################  end of user configuration flags  ######################
 
-CFLAGS=	-I. $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
+CFLAGS=	-I. -A nansi $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
 
 OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 	deliver.o domain.o envelope.o err.o headers.o macro.o main.o \
@@ -69,8 +72,8 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 
 LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
-BINGRP=	staff # no kmem group,
-BINMODE=4555  # so not setgid
+BINGRP=	kmem
+BINMODE=6555
 
 ALL=	sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
 
@@ -78,6 +81,13 @@ all: ${ALL}
 
 sendmail: ${BEFORE} ${OBJS}
 	${CC} -o sendmail ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+
+unistd.h:
+	cp /dev/null unistd.h
+
+dirent.h:
+	echo "#include <sys/dir.h>" > dirent.h
+	echo "#define dirent	direct" >> dirent.h
 
 NROFF=	nroff -h
 
