@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.82 2005/01/21 03:24:40 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.82.2.1 2005/01/25 12:58:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.82 2005/01/21 03:24:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.82.2.1 2005/01/25 12:58:28 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -319,7 +319,8 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 		return TRUE;
 	} else {
 		simple_unlock(&uvm_uareas_slock);
-		*uaddrp = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
+		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
+		    UVM_KMF_PAGEABLE);
 		return FALSE;
 	}
 }
@@ -358,7 +359,7 @@ uvm_uarea_drain(boolean_t empty)
 		uvm_uareas = *(void **)uvm_uareas;
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
-		uvm_km_free(kernel_map, uaddr, USPACE);
+		uvm_km_free(kernel_map, uaddr, USPACE, UVM_KMF_PAGEABLE);
 		simple_lock(&uvm_uareas_slock);
 	}
 	simple_unlock(&uvm_uareas_slock);
