@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.16 2001/01/10 07:45:42 jdolecek Exp $	*/
+/*	$NetBSD: refresh.c,v 1.17 2001/04/13 00:53:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.16 2001/01/10 07:45:42 jdolecek Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.17 2001/04/13 00:53:11 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -67,12 +67,13 @@ private void	re__copy_and_pad(char *, char *, size_t);
 #ifdef DEBUG_REFRESH
 private void	re_printstr(EditLine *, char *, char *, char *);
 #define	__F el->el_errfile
-#define	ELRE_DEBUG(a, b, c)	do 				\
+#define	ELRE_ASSERT(a, b, c)	do 				\
 				    if (a) {			\
 					(void) fprintf b;	\
 					c;			\
 				    }				\
 				while (0)
+#define	ELRE_DEBUG(a, b)	ELRE_ASSERT(a,b,;)
 
 /* re_printstr():
  *	Print a string on the debugging pty
@@ -81,13 +82,14 @@ private void
 re_printstr(EditLine *el, char *str, char *f, char *t)
 {
 
-	ELRE_DEBUG(1, (__F, "%s:\"", str),);
+	ELRE_DEBUG(1, (__F, "%s:\"", str));
 	while (f < t)
-		ELRE_DEBUG(1, (__F, "%c", *f++ & 0177),);
-	ELRE_DEBUG(1, (__F, "\"\r\n"),);
+		ELRE_DEBUG(1, (__F, "%c", *f++ & 0177));
+	ELRE_DEBUG(1, (__F, "\"\r\n"));
 }
 #else
-#define	ELRE_DEBUG(a, b, c)
+#define	ELRE_ASSERT(a, b, c)
+#define	ELRE_DEBUG(a, b)
 #endif
 
 
@@ -140,7 +142,7 @@ protected void
 re_putc(EditLine *el, int c, int shift)
 {
 
-	ELRE_DEBUG(1, (__F, "printing %3.3o '%c'\r\n", c, c),);
+	ELRE_DEBUG(1, (__F, "printing %3.3o '%c'\r\n", c, c));
 
 	el->el_vdisplay[el->el_refresh.r_cursor.v][el->el_refresh.r_cursor.h] = c;
 	if (!shift)
@@ -170,7 +172,7 @@ re_putc(EditLine *el, int c, int shift)
 		} else
 			el->el_refresh.r_cursor.v++;
 
-		ELRE_DEBUG(el->el_refresh.r_cursor.v >= el->el_term.t_size.v,
+		ELRE_ASSERT(el->el_refresh.r_cursor.v >= el->el_term.t_size.v,
 		    (__F, "\r\nre_putc: overflow! r_cursor.v == %d > %d\r\n",
 		    el->el_refresh.r_cursor.v, el->el_term.t_size.v),
 		    abort());
@@ -195,7 +197,7 @@ re_refresh(EditLine *el)
 #endif
 
 	ELRE_DEBUG(1, (__F, "el->el_line.buffer = :%s:\r\n",
-	    el->el_line.buffer),);
+	    el->el_line.buffer));
 
 	/* reset the Drawing cursor */
 	el->el_refresh.r_cursor.h = 0;
@@ -267,9 +269,9 @@ re_refresh(EditLine *el)
 	ELRE_DEBUG(1, (__F,
 		"term.h=%d vcur.h=%d vcur.v=%d vdisplay[0]=\r\n:%80.80s:\r\n",
 		el->el_term.t_size.h, el->el_refresh.r_cursor.h,
-		el->el_refresh.r_cursor.v, el->el_vdisplay[0]),);
+		el->el_refresh.r_cursor.v, el->el_vdisplay[0]));
 
-	ELRE_DEBUG(1, (__F, "updating %d lines.\r\n", el->el_refresh.r_newcv),);
+	ELRE_DEBUG(1, (__F, "updating %d lines.\r\n", el->el_refresh.r_newcv));
 	for (i = 0; i <= el->el_refresh.r_newcv; i++) {
 		/* NOTE THAT re_update_line MAY CHANGE el_display[i] */
 		re_update_line(el, el->el_display[i], el->el_vdisplay[i], i);
@@ -286,7 +288,7 @@ re_refresh(EditLine *el)
 	}
 	ELRE_DEBUG(1, (__F,
 	"\r\nel->el_refresh.r_cursor.v=%d,el->el_refresh.r_oldcv=%d i=%d\r\n",
-	    el->el_refresh.r_cursor.v, el->el_refresh.r_oldcv, i),);
+	    el->el_refresh.r_cursor.v, el->el_refresh.r_oldcv, i));
 
 	if (el->el_refresh.r_oldcv > el->el_refresh.r_newcv)
 		for (; i <= el->el_refresh.r_oldcv; i++) {
@@ -303,7 +305,7 @@ re_refresh(EditLine *el)
 	ELRE_DEBUG(1, (__F,
 	    "\r\ncursor.h = %d, cursor.v = %d, cur.h = %d, cur.v = %d\r\n",
 	    el->el_refresh.r_cursor.h, el->el_refresh.r_cursor.v,
-	    cur.h, cur.v),);
+	    cur.h, cur.v));
 	term_move_to_line(el, cur.v);	/* go to where the cursor is */
 	term_move_to_char(el, cur.h);
 }
@@ -341,8 +343,8 @@ re_insert(EditLine *el, char *d, int dat, int dlen, char *s, int num)
 
 	ELRE_DEBUG(1,
 	    (__F, "re_insert() starting: %d at %d max %d, d == \"%s\"\n",
-	    num, dat, dlen, d),);
-	ELRE_DEBUG(1, (__F, "s == \"%s\"n", s),);
+	    num, dat, dlen, d));
+	ELRE_DEBUG(1, (__F, "s == \"%s\"n", s));
 
 	/* open up the space for num chars */
 	if (num > 0) {
@@ -354,8 +356,8 @@ re_insert(EditLine *el, char *d, int dat, int dlen, char *s, int num)
 	}
 	ELRE_DEBUG(1, (__F,
 		"re_insert() after insert: %d at %d max %d, d == \"%s\"\n",
-		num, dat, dlen, d),);
-	ELRE_DEBUG(1, (__F, "s == \"%s\"n", s),);
+		num, dat, dlen, d));
+	ELRE_DEBUG(1, (__F, "s == \"%s\"n", s));
 
 	/* copy the characters */
 	for (a = d + dat; (a < d + dlen) && (num > 0); num--)
@@ -363,8 +365,8 @@ re_insert(EditLine *el, char *d, int dat, int dlen, char *s, int num)
 
 	ELRE_DEBUG(1,
 	    (__F, "re_insert() after copy: %d at %d max %d, %s == \"%s\"\n",
-	    num, dat, dlen, d, s),);
-	ELRE_DEBUG(1, (__F, "s == \"%s\"n", s),);
+	    num, dat, dlen, d, s));
+	ELRE_DEBUG(1, (__F, "s == \"%s\"n", s));
 }
 
 
@@ -385,7 +387,7 @@ re_delete(EditLine *el, char *d, int dat, int dlen, int num)
 	}
 	ELRE_DEBUG(1,
 	    (__F, "re_delete() starting: %d at %d max %d, d == \"%s\"\n",
-	    num, dat, dlen, d),);
+	    num, dat, dlen, d));
 
 	/* open up the space for num chars */
 	if (num > 0) {
@@ -397,7 +399,7 @@ re_delete(EditLine *el, char *d, int dat, int dlen, int num)
 	}
 	ELRE_DEBUG(1,
 	    (__F, "re_delete() after delete: %d at %d max %d, d == \"%s\"\n",
-	    num, dat, dlen, d),);
+	    num, dat, dlen, d));
 }
 
 
@@ -486,7 +488,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
          * if no diff, continue to next line of redraw
          */
 	if (*ofd == '\0' && *nfd == '\0') {
-		ELRE_DEBUG(1, (__F, "no difference.\r\n"),);
+		ELRE_DEBUG(1, (__F, "no difference.\r\n"));
 		return;
 	}
 	/*
@@ -627,15 +629,15 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 	fx = (nsb - nfd) - (osb - ofd);
 	sx = (nls - nse) - (ols - ose);
 
-	ELRE_DEBUG(1, (__F, "\n"),);
+	ELRE_DEBUG(1, (__F, "\n"));
 	ELRE_DEBUG(1, (__F, "ofd %d, osb %d, ose %d, ols %d, oe %d\n",
-		ofd - old, osb - old, ose - old, ols - old, oe - old),);
+		ofd - old, osb - old, ose - old, ols - old, oe - old));
 	ELRE_DEBUG(1, (__F, "nfd %d, nsb %d, nse %d, nls %d, ne %d\n",
-		nfd - new, nsb - new, nse - new, nls - new, ne - new),);
+		nfd - new, nsb - new, nse - new, nls - new, ne - new));
 	ELRE_DEBUG(1, (__F,
-		"xxx-xxx:\"00000000001111111111222222222233333333334\"\r\n"),);
+		"xxx-xxx:\"00000000001111111111222222222233333333334\"\r\n"));
 	ELRE_DEBUG(1, (__F,
-		"xxx-xxx:\"01234567890123456789012345678901234567890\"\r\n"),);
+		"xxx-xxx:\"01234567890123456789012345678901234567890\"\r\n"));
 #ifdef DEBUG_REFRESH
 	re_printstr(el, "old- oe", old, oe);
 	re_printstr(el, "new- ne", new, ne);
@@ -704,7 +706,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 	if ((nsb != nfd) && fx > 0 &&
 	    ((p - old) + fx <= el->el_term.t_size.h)) {
 		ELRE_DEBUG(1,
-		    (__F, "first diff insert at %d...\r\n", nfd - new),);
+		    (__F, "first diff insert at %d...\r\n", nfd - new));
 		/*
 		 * Move to the first char to insert, where the first diff is.
 		 */
@@ -713,13 +715,13 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		 * Check if we have stuff to keep at end
 		 */
 		if (nsb != ne) {
-			ELRE_DEBUG(1, (__F, "with stuff to keep at end\r\n"),);
+			ELRE_DEBUG(1, (__F, "with stuff to keep at end\r\n"));
 			/*
 		         * insert fx chars of new starting at nfd
 		         */
 			if (fx > 0) {
 				ELRE_DEBUG(!EL_CAN_INSERT, (__F,
-				"ERROR: cannot insert in early first diff\n"),);
+				"ERROR: cannot insert in early first diff\n"));
 				term_insertwrite(el, nfd, fx);
 				re_insert(el, old, ofd - old,
 				    el->el_term.t_size.h, nfd, fx);
@@ -732,7 +734,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			re__strncopy(ofd + fx, nfd + fx,
 			    (size_t) ((nsb - nfd) - fx));
 		} else {
-			ELRE_DEBUG(1, (__F, "without anything to save\r\n"),);
+			ELRE_DEBUG(1, (__F, "without anything to save\r\n"));
 			term_overwrite(el, nfd, (nsb - nfd));
 			re__strncopy(ofd, nfd, (size_t) (nsb - nfd));
 			/*
@@ -742,7 +744,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		}
 	} else if (fx < 0) {
 		ELRE_DEBUG(1,
-		    (__F, "first diff delete at %d...\r\n", ofd - old),);
+		    (__F, "first diff delete at %d...\r\n", ofd - old));
 		/*
 		 * move to the first char to delete where the first diff is
 		 */
@@ -751,14 +753,14 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		 * Check if we have stuff to save
 		 */
 		if (osb != oe) {
-			ELRE_DEBUG(1, (__F, "with stuff to save at end\r\n"),);
+			ELRE_DEBUG(1, (__F, "with stuff to save at end\r\n"));
 			/*
 		         * fx is less than zero *always* here but we check
 		         * for code symmetry
 		         */
 			if (fx < 0) {
 				ELRE_DEBUG(!EL_CAN_DELETE, (__F,
-				    "ERROR: cannot delete in first diff\n"),);
+				    "ERROR: cannot delete in first diff\n"));
 				term_deletechars(el, -fx);
 				re_delete(el, old, ofd - old,
 				    el->el_term.t_size.h, -fx);
@@ -771,13 +773,13 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 
 		} else {
 			ELRE_DEBUG(1, (__F,
-			    "but with nothing left to save\r\n"),);
+			    "but with nothing left to save\r\n"));
 			/*
 		         * write (nsb-nfd) chars of new starting at nfd
 		         */
 			term_overwrite(el, nfd, (nsb - nfd));
 			ELRE_DEBUG(1, (__F,
-			    "cleareol %d\n", (oe - old) - (ne - new)),);
+			    "cleareol %d\n", (oe - old) - (ne - new)));
 			term_clear_EOL(el, (oe - old) - (ne - new));
 			/*
 		         * Done
@@ -789,7 +791,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 
 	if (sx < 0 && (ose - old) + fx < el->el_term.t_size.h) {
 		ELRE_DEBUG(1, (__F,
-		    "second diff delete at %d...\r\n", (ose - old) + fx),);
+		    "second diff delete at %d...\r\n", (ose - old) + fx));
 		/*
 		 * Check if we have stuff to delete
 		 */
@@ -802,13 +804,13 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		 * Check if we have stuff to save
 		 */
 		if (ols != oe) {
-			ELRE_DEBUG(1, (__F, "with stuff to save at end\r\n"),);
+			ELRE_DEBUG(1, (__F, "with stuff to save at end\r\n"));
 			/*
 		         * Again a duplicate test.
 		         */
 			if (sx < 0) {
 				ELRE_DEBUG(!EL_CAN_DELETE, (__F,
-				    "ERROR: cannot delete in second diff\n"),);
+				    "ERROR: cannot delete in second diff\n"));
 				term_deletechars(el, -sx);
 			}
 			/*
@@ -817,10 +819,10 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			term_overwrite(el, nse, (nls - nse));
 		} else {
 			ELRE_DEBUG(1, (__F,
-			    "but with nothing left to save\r\n"),);
+			    "but with nothing left to save\r\n"));
 			term_overwrite(el, nse, (nls - nse));
 			ELRE_DEBUG(1, (__F,
-			    "cleareol %d\n", (oe - old) - (ne - new)),);
+			    "cleareol %d\n", (oe - old) - (ne - new)));
 			if ((oe - old) - (ne - new) != 0)
 				term_clear_EOL(el, (oe - old) - (ne - new));
 		}
@@ -830,14 +832,14 @@ re_update_line(EditLine *el, char *old, char *new, int i)
          */
 	if ((nsb != nfd) && (osb - ofd) <= (nsb - nfd) && (fx == 0)) {
 		ELRE_DEBUG(1, (__F, "late first diff insert at %d...\r\n",
-		    nfd - new),);
+		    nfd - new));
 
 		term_move_to_char(el, nfd - new);
 		/*
 		 * Check if we have stuff to keep at the end
 		 */
 		if (nsb != ne) {
-			ELRE_DEBUG(1, (__F, "with stuff to keep at end\r\n"),);
+			ELRE_DEBUG(1, (__F, "with stuff to keep at end\r\n"));
 			/*
 		         * We have to recalculate fx here because we set it
 		         * to zero above as a flag saying that we hadn't done
@@ -849,7 +851,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 				 * insert fx chars of new starting at nfd
 				 */
 				ELRE_DEBUG(!EL_CAN_INSERT, (__F,
-				 "ERROR: cannot insert in late first diff\n"),);
+				 "ERROR: cannot insert in late first diff\n"));
 				term_insertwrite(el, nfd, fx);
 				re_insert(el, old, ofd - old,
 				    el->el_term.t_size.h, nfd, fx);
@@ -862,7 +864,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 			re__strncopy(ofd + fx, nfd + fx,
 			    (size_t) ((nsb - nfd) - fx));
 		} else {
-			ELRE_DEBUG(1, (__F, "without anything to save\r\n"),);
+			ELRE_DEBUG(1, (__F, "without anything to save\r\n"));
 			term_overwrite(el, nfd, (nsb - nfd));
 			re__strncopy(ofd, nfd, (size_t) (nsb - nfd));
 		}
@@ -872,14 +874,14 @@ re_update_line(EditLine *el, char *old, char *new, int i)
          */
 	if (sx >= 0) {
 		ELRE_DEBUG(1, (__F,
-		    "second diff insert at %d...\r\n", nse - new),);
+		    "second diff insert at %d...\r\n", nse - new));
 		term_move_to_char(el, nse - new);
 		if (ols != oe) {
-			ELRE_DEBUG(1, (__F, "with stuff to keep at end\r\n"),);
+			ELRE_DEBUG(1, (__F, "with stuff to keep at end\r\n"));
 			if (sx > 0) {
 				/* insert sx chars of new starting at nse */
 				ELRE_DEBUG(!EL_CAN_INSERT, (__F,
-				    "ERROR: cannot insert in second diff\n"),);
+				    "ERROR: cannot insert in second diff\n"));
 				term_insertwrite(el, nse, sx);
 			}
 			/*
@@ -888,7 +890,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		         */
 			term_overwrite(el, nse + sx, (nls - nse) - sx);
 		} else {
-			ELRE_DEBUG(1, (__F, "without anything to save\r\n"),);
+			ELRE_DEBUG(1, (__F, "without anything to save\r\n"));
 			term_overwrite(el, nse, (nls - nse));
 
 			/*
@@ -898,7 +900,7 @@ re_update_line(EditLine *el, char *old, char *new, int i)
 		         */
 		}
 	}
-	ELRE_DEBUG(1, (__F, "done.\r\n"),);
+	ELRE_DEBUG(1, (__F, "done.\r\n"));
 }
 
 
