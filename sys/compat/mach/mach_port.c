@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.25 2002/12/30 18:44:33 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.26 2002/12/30 19:32:16 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.25 2002/12/30 18:44:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.26 2002/12/30 19:32:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -397,6 +397,7 @@ mach_port_move_member(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
+	mach_debug_port();
 	*msglen = sizeof(*rep);
 	return 0;
 }
@@ -652,7 +653,7 @@ mach_debug_port(void)
 
 		med = p->p_emuldata;
 		LIST_FOREACH(mr, &med->med_right, mr_list) {		
-			if (mr->mr_sethead == mr) {
+			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				printf("pid %d: %p(%x)=>%p", 
 				    p->p_pid, mr, mr->mr_type, mr->mr_port);
 				if (mr->mr_port != NULL) 
