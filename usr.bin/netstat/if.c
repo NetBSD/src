@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.37 2000/01/25 16:07:13 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.38 2000/02/05 17:39:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.37 2000/01/25 16:07:13 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.38 2000/02/05 17:39:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,6 +240,18 @@ intpr(interval, ifnetaddr, pfunc)
 #ifdef INET6
 			case AF_INET6:
 				sin6 = (struct sockaddr_in6 *)sa;
+#ifdef KAME_SCOPEID
+				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+					sin6->sin6_scope_id =
+						ntohs(*(u_int16_t *)
+						  &sin6->sin6_addr.s6_addr[2]);
+					/* too little width */
+					if (!vflag)
+						sin6->sin6_scope_id = 0;
+					sin6->sin6_addr.s6_addr[2] = 0;
+					sin6->sin6_addr.s6_addr[3] = 0;
+				}
+#endif
 				cp = netname6(&ifaddr.in6.ia_addr,
 					&ifaddr.in6.ia_prefixmask.sin6_addr);
 				if (vflag)
@@ -247,15 +259,6 @@ intpr(interval, ifnetaddr, pfunc)
 				else
 					n = 13;
 				printf("%-*.*s ", n, n, cp);
-#if 0 /* KAME_SCOPEID: don't do it twice */
-				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-					sin6->sin6_scope_id =
-						ntohs(*(u_int16_t *)
-						  &sin6->sin6_addr.s6_addr[2]);
-					sin6->sin6_addr.s6_addr[2] = 0;
-					sin6->sin6_addr.s6_addr[3] = 0;
-				}
-#endif
 				if (getnameinfo((struct sockaddr *)sin6,
 						sin6->sin6_len,
 						hbuf, sizeof(hbuf), NULL, 0,
