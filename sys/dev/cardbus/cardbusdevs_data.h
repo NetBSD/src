@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.24.2.1 2004/07/23 22:08:27 he Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.24.2.2 2004/08/30 09:32:11 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.27.2.1 2004/07/23 22:07:46 he Exp 
+ *	NetBSD: cardbusdevs,v 1.27.2.2 2004/08/30 09:31:08 tron Exp 
  */
 
 /*
@@ -146,6 +146,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "CBIDE2 IDE controller",
 	},
 	{
+	    CARDBUS_VENDOR_IODATA, CARDBUS_PRODUCT_IODATA_CBSCII,
+	    0,
+	    "IO Data",
+	    "CBSCII NinjaSCSI-32Bi SCSI",
+	},
+	{
 	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
 	    0,
 	    "Accton Technology",
@@ -266,6 +272,24 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "AR5001 Wireless LAN 802.11a/b/g CardBus Card",
 	},
 	{
+	    CARDBUS_VENDOR_WORKBIT, CARDBUS_PRODUCT_WORKBIT_NJSC32BI,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32Bi SCSI",
+	},
+	{
+	    CARDBUS_VENDOR_WORKBIT, CARDBUS_PRODUCT_WORKBIT_NJSC32UDE,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32UDE SCSI",
+	},
+	{
+	    CARDBUS_VENDOR_WORKBIT, CARDBUS_PRODUCT_WORKBIT_NJSC32BI_KME,
+	    0,
+	    "Workbit",
+	    "NinjaSCSI-32Bi SCSI (KME)",
+	},
+	{
 	    CARDBUS_VENDOR_DEC, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Digital Equipment",
@@ -311,6 +335,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ACCTON, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Accton Technology",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_WORKBIT, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Workbit",
 	    NULL,
 	},
 	{
