@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.8 1994/01/28 20:56:24 pk Exp $
+ *	$Id: ld.h,v 1.9 1994/04/07 19:41:21 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -31,6 +31,10 @@
 #define alloca __builtin_alloca
 #endif
 
+#ifdef __FreeBSD__
+#define FreeBSD
+#endif
+
 #include "md.h"
 #include "link.h"
 
@@ -53,6 +57,7 @@ char	*progname;
 #ifndef DEFAULT_MAGIC
 #ifdef FreeBSD
 #define DEFAULT_MAGIC QMAGIC
+extern int	netzmagic;
 #else
 #define DEFAULT_MAGIC ZMAGIC
 #endif
