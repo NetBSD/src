@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.18 1999/03/25 16:17:36 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.19 1999/04/01 21:46:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -117,9 +117,9 @@ int wdcdebug_wd_mask = 0;
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
-int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *));
+int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_ata_bio_done   __P((struct channel_softc *, struct wdc_xfer *)); 
-int   wdc_ata_ctrl_intr __P((struct channel_softc *, struct wdc_xfer *));
+int   wdc_ata_ctrl_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
@@ -199,8 +199,8 @@ wdc_ata_bio_start(chp, xfer)
 			    ATA_DELAY / 1000 * hz);
 		} else {
 			/* Wait for at last 400ns for status bit to be valid */
-			delay(1);
-			wdc_ata_ctrl_intr(chp, xfer);
+			DELAY(1);
+			wdc_ata_ctrl_intr(chp, xfer, 0);
 		}
 		return;
 	}
@@ -372,7 +372,7 @@ intr:	/* Wait for IRQ (either real or polled) */
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
-		wdc_ata_bio_intr(chp, xfer);
+		wdc_ata_bio_intr(chp, xfer, 0);
 		if ((ata_bio->flags & ATA_ITSDONE) == 0)
 			goto again;
 	}
@@ -388,9 +388,10 @@ timeout:
 }
 
 int
-wdc_ata_bio_intr(chp, xfer)
+wdc_ata_bio_intr(chp, xfer, irq)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
+	int irq;
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
@@ -417,9 +418,8 @@ wdc_ata_bio_intr(chp, xfer)
 
 	/* Ack interrupt done by wait_for_unbusy */
 	if (wait_for_unbusy(chp,
-	    (ata_bio->flags & ATA_POLL) ? ATA_DELAY : 0) < 0) {
-		if ((ata_bio->flags & ATA_POLL) == 0 &&
-		    (xfer->c_flags & C_TIMEOU) == 0)
+	    (irq == 0) ? ATA_DELAY : 0) < 0) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -585,14 +585,15 @@ wdc_ata_bio_done(chp, xfer)
  * Implement operations needed before read/write.
  */
 int
-wdc_ata_ctrl_intr(chp, xfer)
+wdc_ata_ctrl_intr(chp, xfer, irq)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
+	int irq;
 {
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
-	int delay = (ata_bio->flags & ATA_POLL) ? ATA_DELAY : 0;
+	int delay = (irq == 0) ? ATA_DELAY : 0;
 
 	WDCDEBUG_PRINT(("wdc_ata_ctrl_intr: state %d\n", drvp->state),
 	    DEBUG_FUNCS);
@@ -708,7 +709,7 @@ again:
 	return 1;
 
 timeout:
-	if ((xfer->c_flags & C_TIMEOU) == 0 && delay == 0) {
+	if (irq && (xfer->c_flags & C_TIMEOU) == 0) {
 		return 0; /* IRQ was not for us */
 	}
 	printf("%s:%d:%d: %s timed out\n",
