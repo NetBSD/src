@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.3 2002/09/28 12:49:17 scw Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.4 2002/10/19 08:43:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -69,6 +69,7 @@
 static bus_space_tag_t comtag;
 static bus_addr_t comaddr;
 cons_decl(com);
+#define	COM_SPEED	38400
 #endif
 
 
@@ -148,7 +149,7 @@ comcnprobe(struct consdev *cn)
 		goto done;
 
 	cn->cn_dev = makedev(cdevsw_lookup_major(&com_cdevsw), 0);
-	pri = CN_NORMAL;
+	pri = CN_REMOTE;
 
 done:
 	cn->cn_pri = pri;
@@ -158,7 +159,7 @@ void
 comcninit(struct consdev *cn)
 {
 
-	comcnattach(comtag, comaddr, TTYDEF_SPEED, COM_FREQ, TTYDEF_CFLAG);
+	comcnattach(comtag, comaddr, COM_SPEED, COM_FREQ, TTYDEF_CFLAG);
 }
 #endif /* NCOM > 0 */
 
