@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.109 2000/06/09 14:28:00 fvdl Exp $
+#	$NetBSD: NetBSD.dist,v 1.110 2000/06/11 15:36:26 mycroft Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -2106,6 +2106,11 @@ larn		uname=games gname=games mode=0775
 # ./var/games/phantasia
 phantasia	uname=games gname=games mode=0775
 # ./var/games/phantasia
+..
+
+# ./var/games/sail
+sail		uname=games gname=games mode=0775
+# ./var/games/sail
 ..
 
 # ./var/games
