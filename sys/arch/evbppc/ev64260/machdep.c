@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2003/03/07 18:24:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2003/03/16 07:07:19 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/extent.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
@@ -106,30 +107,61 @@ void isa_intr_init(void);
  */
 extern struct user *proc0paddr;
 
-struct bat battable[16];
-
 #define	PMONMEMREGIONS	32
 struct mem_region physmemr[PMONMEMREGIONS], availmemr[PMONMEMREGIONS];
 
 char *bootpath;
-
-paddr_t msgbuf_paddr;
-vaddr_t msgbuf_vaddr;
 
 paddr_t avail_end;			/* XXX temporary */
 
 void initppc(u_int, u_int, u_int, void *); /* Called from locore */
 void strayintr(int);
 int lcsplx(int);
+void gt_bus_space_init(void);
+extern void return_to_dink(int);
 
+struct powerpc_bus_space gt_pci0_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0x00000000, 0x00000000,
+};
+struct powerpc_bus_space gt_pci0_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x00000000, 0x00000000, 0x00000000,
+};
+struct powerpc_bus_space gt_pci1_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0x00000000, 0x00000000,
+};
+struct powerpc_bus_space gt_pci1_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x00000000, 0x00000000, 0x00000000,
+};
+struct powerpc_bus_space gt_obio2_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE|2,
+	0x00000000, 0x00000000, 0x00000000,
+};
+struct powerpc_bus_space gt_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	GT_BASE, 0x00000000, 0x00010000,
+};
+
+bus_space_handle_t gt_memh;
+
+bus_space_tag_t obio_bs_tags[5] = {
+	NULL, NULL, &gt_obio2_bs_tag, NULL, NULL
+};
+
+static char ex_storage[6][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+
+#if 0
 cons_decl(gtmpsc);
 
 struct consdev constab[] = {
 	cons_init_halt(gtmpsc),
 	{ 0 }
 };
-
-extern void return_to_dink(int);
+#endif
 
 void
 initppc(startkernel, endkernel, args, btinfo)
@@ -139,32 +171,6 @@ initppc(startkernel, endkernel, args, btinfo)
 #ifdef DDB
 	extern void *startsym, *endsym;
 #endif
-	extern vaddr_t gtbase;
-	volatile u_int32_t *gt = (volatile u_int32_t *) gtbase;
-
-#if 1
-	{
-		extern unsigned char edata[], end[];
-		struct cpu_info tmp = cpu_info[0];
-		memset(edata, 0, end - edata);
-		cpu_info[0] = tmp;
-	}
-#endif
-
-	/*
-	 * Relocate Discovery to desired address.
-	 */
-	if (gtbase != GT_BASE) {
-		u_int32_t v = inlrb(gt + GT_Internal_Decode);
-		outlrb(gt + GT_Internal_Decode,
-		     (GT_BASE >> 20) | (v & ~0xffff));
-		gtbase = GT_BASE;
-	}
-	{
-		extern struct powerpc_bus_space gt_mem_bs_tag;
-		gt_mem_bs_tag.pbs_base = GT_BASE;
-		gt_mem_bs_tag.pbs_limit = GT_BASE + 4096;
-	}
 
 	/*
 	 * Hardcode 32MB for now--we should probe for this or get it
@@ -174,7 +180,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	{	/* XXX AKB */
 		u_int32_t	physmemsize;
 
-		physmemsize = 64 * 1024 * 1024;
+		physmemsize = 92 * 1024 * 1024;
 		physmemr[0].start = 0;
 		physmemr[0].size = physmemsize;
 		physmemr[1].size = 0;
@@ -199,17 +205,12 @@ initppc(startkernel, endkernel, args, btinfo)
 		calc_delayconst();
 	}
 
-	/*
-	 * boothowto
-	 */
-	boothowto = RB_SINGLE;
-
-	bus_space_init();
-
-	oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M);
+	oea_batinit(0xf0000000, BAT_BL_256M);
 	oea_init((void (*)(void))ext_intr);
 
-	cninit();
+	gt_bus_space_init();
+
+	consinit();
 
 #if (NISA > 0)
 	isa_intr_init();
@@ -277,7 +278,13 @@ cpu_startup()
 void
 consinit()
 {
+#if 1
+	/* PPCBOOT using COM1 @ 57600 */
+	comcnattach(&gt_obio2_bs_tag, 0, 57600, COM_FREQ*2, 
+	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
+#else
 	cninit();
+#endif
 }
 
 #if (NPCKBC > 0) && (NPCKBD == 0)
@@ -383,3 +390,171 @@ gtget_macaddr(struct gt_softc *gt, int macno, char *enaddr)
 
 	return 0;
 }
+
+void
+gt_bus_space_init(void)
+{
+	bus_space_tag_t gt_memt = &gt_mem_bs_tag;
+	uint32_t datal, datah;
+	int error;
+
+	error = bus_space_init(&gt_mem_bs_tag, "gtmem",
+	    ex_storage[1], sizeof(ex_storage[0]));
+
+
+	error = bus_space_map(gt_memt, 0, 4096, 0, &gt_memh);
+
+	datal = bus_space_read_4(gt_memt, gt_memh, GT_CS2_Low_Decode);
+	datah = bus_space_read_4(gt_memt, gt_memh, GT_CS2_High_Decode);
+	gt_obio2_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
+	gt_obio2_bs_tag.pbs_limit  = GT_HighAddr_GET(datah) + 1 -
+	    gt_obio2_bs_tag.pbs_offset;
+
+	error = bus_space_init(&gt_obio2_bs_tag, "obio2",
+	    ex_storage[1], sizeof(ex_storage[1]));
+
+	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_Mem0_Low_Decode);
+	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_Mem0_High_Decode);
+	gt_pci0_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	gt_pci0_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
+
+	error = bus_space_init(&gt_pci0_mem_bs_tag, "pci0-mem",
+	    ex_storage[2], sizeof(ex_storage[2]));
+
+	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_Low_Decode);
+	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_High_Decode);
+	gt_pci0_io_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	gt_pci0_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
+	    gt_pci0_io_bs_tag.pbs_offset;
+
+	error = bus_space_init(&gt_pci0_io_bs_tag, "pci0-ioport",
+	    ex_storage[3], sizeof(ex_storage[3]));
+
+#if 0
+	error = extent_alloc_region(gt_pci0_io_bs_tag.pbs_extent,
+	    0x10000, 0x7F0000, EX_NOWAIT);
+	if (error)
+		panic("gt_bus_space_init: can't block out reserved "
+		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
+#endif
+
+	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_Mem0_Low_Decode);
+	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_Mem0_High_Decode);
+	gt_pci1_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	gt_pci1_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
+
+	error = bus_space_init(&gt_pci1_mem_bs_tag, "pci1-mem",
+	    ex_storage[4], sizeof(ex_storage[4]));
+
+	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_Low_Decode);
+	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_High_Decode);
+	gt_pci1_io_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	gt_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
+
+	error = bus_space_init(&gt_pci1_io_bs_tag, "pci1-ioport",
+	    ex_storage[5], sizeof(ex_storage[5]));
+
+#if 0
+	error = extent_alloc_region(gt_pci1_io_bs_tag.pbs_extent,
+	     0x10000, 0x7F0000, EX_NOWAIT);
+	if (error)
+		panic("gt_bus_space_init: can't block out reserved "
+		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
+#endif
+}
+#if 1
+#define ISSET(t, f)    ((t) & (f))
+
+#define KCOM_BASE	0xfd000000	/* XXX COM1 */
+#define KCOM_REGSIZE	0x00001000	/* XXX */
+
+unsigned char *kcombase = (unsigned char *)KCOM_BASE;
+
+void kcomcninit(struct consdev *);
+int kcomcngetc(dev_t);
+void kcomcnpollc(dev_t, int);
+void kcomcnputc(dev_t, int);
+
+static unsigned char kcom_reg_read(int);
+static void kcom_reg_write(int, unsigned char);
+
+/*
+ * The following functions are polled getc and putc routines,
+ * the core of the "kludge" in the Kludge Com driver :-)
+ */
+
+static inline unsigned char 
+kcom_reg_read(int off)
+{
+	unsigned char rv;
+
+	__asm __volatile ("eieio; lbzx %0,%1,%2; eieio;"
+		: "=r"(rv) : "b"(off << 2), "r"(kcombase));
+	return rv;
+}
+
+static __inline void
+kcom_reg_write(int off, unsigned char val)
+{
+	__asm __volatile ("eieio; stbx %0,%1,%2; eieio;"
+		:: "r"(val), "b"(off << 2), "r"(kcombase));
+
+}
+
+void
+kcomcninit(struct consdev *cd)
+{
+	kcom_reg_write(com_ier, 0);
+	kcom_reg_write(com_mcr, MCR_RTS|MCR_DTR);
+}
+
+int
+kcomcngetc(dev_t dev)
+{
+	u_char stat, c;
+
+	/* block until a character becomes available */
+	while (!ISSET(stat = kcom_reg_read(com_lsr), LSR_RXRDY))
+		;
+
+	c = kcom_reg_read(com_data);
+	stat = kcom_reg_read(com_iir);
+	return (int)c;
+}
+
+void
+kcomcnputc(dev_t dev, int c)
+{
+	int timo;
+
+	/* wait for any pending transmission to finish */
+	timo = 150000;
+	while ((!ISSET(kcom_reg_read(com_lsr), LSR_TXRDY)) && --timo)
+		continue;
+
+	kcom_reg_write(com_data, c);
+
+	/* wait for this transmission to complete */
+	timo = 150000;
+	while ((!ISSET(kcom_reg_read(com_lsr), LSR_TXRDY)) && --timo)
+		continue;
+}
+
+void
+kcomcnpollc(dev_t dev, int on)
+{
+}
+
+struct consdev consdev_kcom = {
+	NULL,
+	kcomcninit,
+	kcomcngetc,
+	kcomcnputc,
+	kcomcnpollc,
+	NULL,
+};
+
+#if 1
+struct consdev *cn_tab = &consdev_kcom;
+#endif
+#endif

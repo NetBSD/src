@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.3 2003/03/07 18:24:01 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.4 2003/03/16 07:07:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -83,17 +83,18 @@ static void	gt_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(gt, sizeof(struct gt_softc), gt_match, gt_attach, NULL, NULL);
 
 extern struct cfdriver gt_cd;
+extern bus_space_handle_t gt_memh;
 
 static int gt_found;
 
-vaddr_t gtbase = 0x14000000;	/* default address */
+vaddr_t gtbase = 0xf8000000;	/* default address */
 
 int
 gt_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	const char *busname = aux;
+	const char **busname = aux;
 
-	if (strcmp(busname, gt_cd.cd_name) != 0)
+	if (strcmp(*busname, gt_cd.cd_name) != 0)
 		return 0;
 
 	if (gt_found)
@@ -107,7 +108,6 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gt_softc *gt = (struct gt_softc *) self;
 
-	gt->gt_vbase = GT_BASE;
 	gt->gt_dmat = &gt_bus_dma_tag;
 	gt->gt_memt = &gt_mem_bs_tag;
 	gt->gt_pci0_memt = &gt_pci0_io_bs_tag;
@@ -115,12 +115,8 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	gt->gt_pci1_memt = &gt_pci1_io_bs_tag;
 	gt->gt_pci1_iot =  &gt_pci1_mem_bs_tag;
 
-	gt_attach_common(gt);
-}
+	gt->gt_memh = gt_memh;
 
-void
-gt_setup(struct device *gt)
-{
 #if 1
 	GT_DecodeAddr_SET(gt, GT_PCI0_IO_Low_Decode,
 	    gt_pci0_io_bs_tag.pbs_offset + gt_pci0_io_bs_tag.pbs_base);
@@ -142,12 +138,15 @@ gt_setup(struct device *gt)
 	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_High_Decode,
 	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_limit - 1);
 #endif
+
+	gt_attach_common(gt);
 }
 
 void
 gtpci_config_bus(struct pci_chipset *pc, int busno)
 {
 #ifdef PCI_NETBSD_CONFIGURE
+	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
 	struct extent *ioext, *memext;
 	uint32_t data;
 	pcitag_t tag;
@@ -180,20 +179,20 @@ gtpci_config_bus(struct pci_chipset *pc, int busno)
 	extent_destroy(ioext);
 	extent_destroy(memext);
 
-	gtpci_write(pc, PCI_BASE_ADDR_REGISTERS_ENABLE(pc->pc_md.mdpc_busno),
+	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
 		    0xffffffff);
 
 	tag = gtpci_make_tag(pc, 0, 0, 0);
 	data = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, 0);
 	gtpci_conf_write(pc, tag, 0x10, 0x00000000);
-	gtpci_write(pc, PCI_SCS0_BAR_SIZE(busno), 0x0fffffff);
+	gtpci_write(gtpc, PCI_SCS0_BAR_SIZE(busno), 0x0fffffff);
 	gtpci_conf_write(pc, tag, 0x14, 0x04000000);
-	gtpci_write(pc, PCI_SCS1_BAR_SIZE(busno), 0x03ffffff);
+	gtpci_write(gtpc, PCI_SCS1_BAR_SIZE(busno), 0x03ffffff);
 	gtpci_conf_write(pc, tag, 0x18, 0x10000000);
-	gtpci_write(pc, PCI_SCS2_BAR_SIZE(busno), 0x0fffffff);
+	gtpci_write(gtpc, PCI_SCS2_BAR_SIZE(busno), 0x0fffffff);
 	gtpci_conf_write(pc, tag, 0x1c, 0x0c000000);
-	gtpci_write(pc, PCI_SCS3_BAR_SIZE(busno), 0x03ffffff);
+	gtpci_write(gtpc, PCI_SCS3_BAR_SIZE(busno), 0x03ffffff);
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, data);
 
 #if 0
@@ -201,28 +200,28 @@ gtpci_config_bus(struct pci_chipset *pc, int busno)
 	data = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, 0);
 	gtpci_conf_write(pc, tag, 0x10, 0xfff00000);
-	gtpci_write(pc, PCI_CS0_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_CS0_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x14, 0xfff00000);
-	gtpci_write(pc, PCI_CS1_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_CS1_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x18, 0xfff00000);
-	gtpci_write(pc, PCI_CS2_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_CS2_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x1c, 0xfff00000);
-	gtpci_write(pc, PCI_CS3_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_CS3_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x20, 0xfff00000);
-	gtpci_write(pc, PCI_BOOTCS_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_BOOTCS_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, data);
 
 	tag = gtpci_make_tag(pc, 0, 0, 2);
 	data = gtpci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, 0);
 	gtpci_conf_write(pc, tag, 0x10, 0xfff00000);
-	gtpci_write(pc, PCI_P2P_MEM0_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_P2P_MEM0_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x14, 0xfff00000);
-	gtpci_write(pc, PCI_P2P_MEM1_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_P2P_MEM1_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x18, 0xfff00000);
-	gtpci_write(pc, PCI_P2P_IO_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_P2P_IO_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, 0x1c, 0xfff00000);
-	gtpci_write(pc, PCI_CPU_BAR_SIZE(busno), 0x00000000);
+	gtpci_write(gtpc, PCI_CPU_BAR_SIZE(busno), 0x00000000);
 	gtpci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, data);
 
 	for (i=4; i<8; i++) {
@@ -271,7 +270,7 @@ gtpci_config_bus(struct pci_chipset *pc, int busno)
 	data = ~(PCI_BARE_SCS0En | /* PCI_BARE_SCS1En | */ \
 		 PCI_BARE_SCS2En | /* PCI_BARE_SCS3En | */ \
 		 PCI_BARE_IntMemEn | PCI_BARE_IntIOEn);
-	gtpci_write(pc, PCI_BASE_ADDR_REGISTERS_ENABLE(pc->pc_md.mdpc_busno), data);
+	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno), data);
 #endif /* PCI_NETBSD_CONFIGURE */
 }
 
@@ -280,6 +279,11 @@ gtpci_md_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 	int swiz, int *iline)
 {
 #ifdef PCI_NETBSD_CONFIGURE
+	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
+	if (gtpc->gtpc_busno == 0)
+		*iline = IRQ_GPP_BASE + 27;
+	else
+		*iline = IRQ_GPP_BASE + 29;
 #endif /* PCI_NETBSD_CONFIGURE */
 }
 
@@ -300,7 +304,7 @@ gtpci_md_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
 	if (bus == 0 && dev == 0)
 		return 0;
 
-	return 1;
+	return PCI_CONF_MAP_MEM|PCI_CONF_ENABLE_MEM;
 }
 
 int

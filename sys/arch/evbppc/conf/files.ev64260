@@ -1,11 +1,11 @@
-#	$NetBSD: files.ev64260,v 1.1 2003/03/05 22:08:25 matt Exp $
+#	$NetBSD: files.ev64260,v 1.2 2003/03/16 07:07:17 matt Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
-file	dev/cninit.c
+#file	dev/cninit.c
 
 file	arch/evbppc/ev64260/autoconf.c
-file	arch/evbppc/ev64260/bus_space.c
+#file	arch/evbppc/ev64260/bus_space.c
 file	arch/evbppc/ev64260/clock.c
 file	arch/evbppc/ev64260/machdep.c
 #file	arch/evbppc/ev64260/pci_machdep.c
@@ -13,6 +13,7 @@ file	arch/evbppc/ev64260/machdep.c
 #file	arch/powerpc/marvell/bus_dma.c
 file	arch/powerpc/marvell/extintr.c
 file	arch/powerpc/powerpc/bus_dma.c
+file	arch/powerpc/powerpc/bus_space.c
 
 include "dev/marvell/files.discovery"
 
@@ -51,6 +52,10 @@ file	arch/evbppc/ev64260/gt_mainbus.c	gt
 
 device	cpu
 attach	cpu at mainbus
+
+# com port
+attach	com at obio with com_obio
+file	arch/evbppc/ev64260/com_obio.c		com_obio
 
 #
 # PCI-only drivers

@@ -1,4 +1,4 @@
-#	$NetBSD: std.ev64260,v 1.1 2003/03/05 22:08:25 matt Exp $
+#	$NetBSD: std.ev64260,v 1.2 2003/03/16 07:07:18 matt Exp $
 #
 # standard, required NetBSD/evbppc 'options'
 
@@ -11,7 +11,7 @@ makeoptions 	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
-makeoptions	TEXTADDR=0x120000
+makeoptions	TEXTADDR=0x3000
 makeoptions	NEED_SREC=yes
 makeoptions	BOARDTYPE="ev64260"
 options 	INTSTK=16384	
