@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.69 2003/01/01 00:10:19 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.70 2003/01/05 08:03:45 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.69 2003/01/01 00:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.70 2003/01/05 08:03:45 jmc Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2431,8 +2431,6 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (ndesc > OHCI_DESC_MAX)
 		return ENOBUFS;
 
-	if (fc->fc_bufcnt > 50)			/*XXX*/
-		return ENOBUFS;
 	fb = malloc(sizeof(*fb), M_DEVBUF, M_WAITOK);
 	if (ndesc > 2) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, 
