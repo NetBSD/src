@@ -38,18 +38,16 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.2 1994/07/09 06:49:36 briggs Exp $
+ *	$Id: ite.c,v 1.3 1994/07/21 06:35:49 lkestel Exp $
  */
 
 /*
  * ite.c
  *
- * $Id: ite.c,v 1.2 1994/07/09 06:49:36 briggs Exp $
- *
  * The ite module handles the system console; that is, stuff printed
  * by the kernel and by user programs while "desktop" and X aren't
- * running.  Some parts are based on hp300's 4.4 ite.c, hence the above
- * copyright.
+ * running.  Some (very small) parts are based on hp300's 4.4 ite.c,
+ * hence the above copyright.
  *
  *   -- Brad and Lawrence, June 26th, 1994
  *
@@ -68,6 +66,7 @@
 #include "../mac68k/via.h"
 #include <machine/frame.h>
 
+#define KEYBOARD_ARRAY
 #include "keyboard.h"
 #include "adbsys.h"
 
@@ -76,6 +75,24 @@
 #define CHARHEIGHT	10
 
 #define dprintf if (0) printf
+
+#define ATTR_NONE	0
+#define ATTR_BOLD	1
+#define ATTR_UNDER	2
+#define ATTR_REVERSE	4
+
+enum vt100state_e {
+	ESnormal,       /* Nothing yet                                  */
+	ESesc,          /* Got ESC                                      */
+	ESsquare,	/* Got ESC [					*/
+	ESgetpars,      /* About to get or getting the parameters       */
+	ESgotpars,      /* Finished getting the parameters              */
+	ESfunckey,      /* Function key                                 */
+	EShash,         /* DEC-specific stuff (screen align, etc.)      */
+	ESsetG0,        /* Specify the G0 character set                 */
+	ESsetG1,        /* Specify the G1 character set                 */
+	ESignore        /* Ignore this sequence                         */
+} vt100state = ESnormal;
 
 /* Received from MacBSDBoot, stored by Locore: */
 long		videoaddr;
@@ -86,9 +103,13 @@ char		serial_boot_echo = 0;
 
 /* Calculated in itecninit(): */
 static int	width, height, scrrows, scrcols;
+static void	(*putpixel)(int x, int y, int *c, int num);
+static void	(*reversepixel)(int x, int y, int num);
 
-/* Cursor location: */
-static int	x = 0, y = 0;
+/* VT100 state: */
+#define MAXPARS	16
+static int	x = 0, y = 0, savex, savey;
+static int	par[MAXPARS], numpars, hanging_cursor, attr;
 
 /* Our tty: */
 struct tty	*ite_tty;
@@ -98,161 +119,467 @@ static int polledkey;
 extern int adb_polling;
 
 /* Misc */
-void	itestart();
+void		itestart();
+static void	ite_putchar (char ch);
 
 /*
  * Bitmap handling functions
  */
 
-static void putpixel(int xx, int yy, int c)
+static inline void putpixel1(int xx, int yy, int *c, int num)
 {
-	unsigned int	mask, i;
+	unsigned int	i, mask;
 	unsigned char	*sc;
 
 	sc = (unsigned char *)videoaddr;
 
-	mask = (1 << videobitdepth) - 1;
-	c &= mask; /* Not right -- should shift */
-	switch (videobitdepth) {
-		case 1: i = 7 - (xx & 7);
-			c <<= i;
-			mask <<= i;
-			i = yy * videorowbytes + (xx >> 3);
-			sc[i] &= ~mask;
-			sc[i] |= c;
-			break;
-		case 2: i = 6 - ((xx & 3) << 1);
-			c <<= i;
-			mask <<= i;
-			i = yy * videorowbytes + (xx >> 2);
-			sc[i] &= ~mask;
-			sc[i] |= c;
-			break;
-		case 4: i = 4 - ((xx & 1) << 2);
-			c <<= i;
-			mask <<= i;
-			i = yy * videorowbytes + (xx >> 1);
-			sc[i] &= ~mask;
-			sc[i] |= c;
-			break;
-		case 8: sc[yy * videorowbytes + xx] = c; 
-			break;
+	i = 7 - (xx & 7);
+	mask = ~(1 << i);
+	sc += yy * videorowbytes + (xx >> 3);
+	while (num--) {
+		*sc &= mask;
+		*sc |= (*c++ & 1) << i;
+		sc += videorowbytes;
 	}
 }
 
-static void writechar (char ch, int x, int y)
+static void putpixel2(int xx, int yy, int *c, int num)
 {
-	int		i, j, mask;
+	unsigned int	i, mask;
+	unsigned char	*sc;
+
+	sc = (unsigned char *)videoaddr;
+
+	i = 6 - ((xx & 3) << 1);
+	mask = ~(3 << i);
+	sc += yy * videorowbytes + (xx >> 2);
+	while (num--) {
+		*sc &= mask;
+		*sc |= (*c++ & 3) << i;
+		sc += videorowbytes;
+	}
+}
+
+static void putpixel4(int xx, int yy, int *c, int num)
+{
+	unsigned int	i, mask;
+	unsigned char	*sc;
+
+	sc = (unsigned char *)videoaddr;
+
+	i = 4 - ((xx & 1) << 2);
+	mask = ~(15 << i);
+	sc += yy * videorowbytes + (xx >> 1);
+	while (num--) {
+		*sc &= mask;
+		*sc |= (*c++ & 15) << i;
+		sc += videorowbytes;
+	}
+}
+
+static void putpixel8(int xx, int yy, int *c, int num)
+{
+	unsigned char	*sc;
+
+	sc = (unsigned char *)videoaddr;
+
+	sc += yy * videorowbytes + xx;
+	while (num--) {
+		*sc = *c++ & 0xff; 
+		sc += videorowbytes;
+	}
+}
+
+static void reversepixel1(int xx, int yy, int num)
+{
+	unsigned int	mask;
+	unsigned char	*sc;
+
+	sc = (unsigned char *)videoaddr;
+
+	switch (videobitdepth) {
+		case 1:	mask = 1 << (7 - (xx & 7));
+			sc += yy * videorowbytes + (xx >> 3);
+			break;
+		case 2: mask = 3 << (6 - ((xx & 3) << 1));
+			sc += yy * videorowbytes + (xx >> 2);
+			break;
+		case 4: mask = 15 << (4 - ((xx & 1) << 2));
+			sc += yy * videorowbytes + (xx >> 1);
+			break;
+		case 8: mask = 255;
+			sc += yy * videorowbytes + xx;
+			break;
+	}
+
+	while (num--) {
+		*sc ^= mask;
+		sc += videorowbytes;
+	}
+}
+
+static void writechar (char ch, int x, int y, int attr)
+{
+	int		i, j, mask, rev, col[CHARHEIGHT];
 	unsigned char	*c;
 
 	ch &= 0x7F;
 	x *= CHARWIDTH;
 	y *= CHARHEIGHT;
 
+	rev = (attr & ATTR_REVERSE) ? 255 : 0;
+
 	c = &Font6x10[ch * CHARHEIGHT];
 
-	for (i = 0; i < CHARHEIGHT; i++) {
-		mask = 1 << (CHARWIDTH - 1);
-		for (j = 0; j < CHARWIDTH; j++) {
-			if (*c & mask) {
-				putpixel (x + j, y + i, 255);
-			} else {
-				putpixel (x + j, y + i, 0);
-			}
-			mask >>= 1;
+	switch (videobitdepth) {
+	case 1:
+	for (j = 0; j < CHARWIDTH; j++) {
+		mask = 1 << (CHARWIDTH - 1 - j);
+		for (i = 0; i < CHARHEIGHT; i++) {
+			col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
 		}
-		c++;
+		putpixel1 (x + j, y, col, CHARHEIGHT);
+	}
+	if (attr & ATTR_UNDER) {
+		col[0] = 255;
+		for (j = 0; j < CHARWIDTH; j++) {
+			putpixel1 (x + j, y + CHARHEIGHT - 1, col, 1);
+		}
+	}
+	break;
+	case 2:
+	case 4:
+	case 8:
+	for (j = 0; j < CHARWIDTH; j++) {
+		mask = 1 << (CHARWIDTH - 1 - j);
+		for (i = 0; i < CHARHEIGHT; i++) {
+			col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
+		}
+		putpixel (x + j, y, col, CHARHEIGHT);
+	}
+	if (attr & ATTR_UNDER) {
+		col[0] = 255;
+		for (j = 0; j < CHARWIDTH; j++) {
+			putpixel (x + j, y + CHARHEIGHT - 1, col, 1);
+		}
+	}
+	break;
 	}
 }
 
 static void drawcursor (void)
 {
-	int	i, j, X, Y;
+	int	j, X, Y;
 
 	X = x * CHARWIDTH;
 	Y = y * CHARHEIGHT;
 
-	for (i = 0; i < CHARHEIGHT; i++) {
-		for (j = 0; j < CHARWIDTH; j++) {
-			putpixel (X + j, Y + i, 255);
-		}
+	for (j = 0; j < CHARWIDTH; j++) {
+		reversepixel (X + j, Y, CHARHEIGHT);
 	}
 }
 
 static void erasecursor (void)
 {
-	int	i, j, X, Y;
+	int	j, X, Y;
 
 	X = x * CHARWIDTH;
 	Y = y * CHARHEIGHT;
 
-	for (i = 0; i < CHARHEIGHT; i++) {
-		for (j = 0; j < CHARWIDTH; j++) {
-			putpixel (X + j, Y + i, 0);
-		}
+	for (j = 0; j < CHARWIDTH; j++) {
+		reversepixel (X + j, Y, CHARHEIGHT);
 	}
 }
 
 static void scrollup (void)
 {
 	unsigned long	*from, *to;
-	int		i;
+	int		i, linelongs;
+
+	linelongs = videorowbytes * CHARHEIGHT / 4;
 
 	to = (unsigned long *)videoaddr;
-	from = to + videorowbytes * CHARHEIGHT / 4;
+	from = to + linelongs;
 
-	for (i = (scrrows - 1) * videorowbytes * CHARHEIGHT / 4; i > 0; i--) {
-		*to++ = *from++;
+	bcopy (from, to, (scrrows - 1) * linelongs * sizeof (long));
+	bzero (to + (scrrows - 1) * linelongs, linelongs * sizeof (long));
+}
+
+static void scrolldown (void)
+{
+	unsigned long	*from, *to;
+	int		i, linelongs;
+
+	linelongs = videorowbytes * CHARHEIGHT / 4;
+
+	to = (unsigned long *)videoaddr + linelongs * scrrows;
+	from = to - linelongs;
+
+	for (i = (scrrows - 1) * linelongs; i > 0; i--) {
+		*--to = *--from;
 	}
-	for (i = videorowbytes * CHARHEIGHT / 4; i > 0; i--) {
-		*to++ = 0;
+	for (i = linelongs; i > 0; i--) {
+		*--to = 0;
 	}
 }
 
-static void clearscreen (void)
+static void clear_screen (int which)
 {
 	unsigned long	*p;
-	int		i;
+	int		i, linelongs;
 
 	p = (unsigned long *)videoaddr;
+	linelongs = videorowbytes * CHARHEIGHT / 4;
 
-	for (i = scrrows * videorowbytes * CHARHEIGHT / 4; i > 0; i--) {
-		*p++ = 0;
+	switch (which) {
+		case 0:				/* To end of screen	*/
+			p += y * linelongs;
+			i = (scrrows - y) * linelongs;
+			break;
+		case 1:				/* To start of screen	*/
+			i = y * linelongs;
+			break;
+		case 2:				/* Whole screen		*/
+			i = scrrows * linelongs;
+			break;
 	}
+
+	bzero (p, i * sizeof (long));
+}
+
+static void clear_line (int which)
+{
+	int	start, end, i;
+
+	/*
+	 * This routine runs extremely slowly.  I don't think it's
+	 * used all that often, except for To end of line.  I'll go
+	 * back and speed this up when I speed up the whole ite
+	 * module. --LK
+	 */
+
+	switch (which) {
+		case 0:				/* To end of line	*/
+			start = x;
+			end = scrcols;
+			break;
+		case 1:				/* To start of line	*/
+			start = 0;
+			end = x;
+			break;
+		case 2:				/* Whole line		*/
+			start = 0;
+			end = scrcols;
+			break;
+	}
+
+	for (i = start; i < end; i++) {
+		writechar (' ', i, y, ATTR_NONE);
+	}
+}
+
+static void putc_normal (char ch)
+{
+	switch (ch) {
+		case '\a':			/* Beep			*/
+			break;
+		case 127:			/* Delete		*/
+		case '\b':			/* Backspace		*/
+			if (hanging_cursor) {
+				hanging_cursor = 0;
+			} else if (x > 0) {
+				x--;
+			}
+			break;
+		case '\t':			/* Tab			*/
+			do {
+				ite_putchar (' ');
+			} while (x % 8 != 0);
+			break;
+		case '\n':			/* Line feed		*/
+			y++;
+			if (y >= scrrows) {
+				scrollup ();
+				y = scrrows - 1;
+			}
+			break;
+		case '\r':			/* Carriage return	*/
+			x = 0;
+			hanging_cursor = 0;
+			break;
+		case '\e':			/* Escape		*/
+			vt100state = ESesc;
+			hanging_cursor = 0;
+			break;
+		default:
+			if (ch >= ' ') {
+				if (hanging_cursor) {
+					x = 0;
+					y++;
+					if (y >= scrrows) {
+						scrollup ();
+						y = scrrows - 1;
+					}
+					hanging_cursor = 0;
+				}
+				writechar (ch, x, y, attr);
+				if (x == scrcols - 1) {
+					hanging_cursor = 1;
+				} else {
+					x++;
+				}
+				if (x >= scrcols) {
+					x = 0;
+					y++;
+				}
+			}
+			break;
+	}
+}
+
+static void putc_esc (char ch)
+{
+	vt100state = ESnormal;
+
+	switch (ch) {
+		case '[':
+			vt100state = ESsquare;
+			break;
+		case 'D':			/* Line feed		*/
+			y++;
+			break;
+		case 'H':			/* Set tab stop		*/
+			/* Not supported */
+			break;
+		case 'M':			/* Cursor up		*/
+			if (y == 0) {
+				scrolldown ();
+			} else {
+				y--;
+			}
+			break;
+		case '7':			/* Save cursor		*/
+			savex = x;
+			savey = y;
+			break;
+		case '8':			/* Restore cursor	*/
+			x = savex;
+			y = savey;
+			break;
+		default:
+			/* Rest not supported */
+			break;
+	}
+}
+
+static void putc_gotpars (char ch)
+{
+	int	i;
+
+	vt100state = ESnormal;
+	switch (ch) {
+		case 'A':			/* Up			*/
+			y--;
+			break;
+		case 'B':			/* Down			*/
+			y++;
+			break;
+		case 'C':			/* Right		*/
+			x++;
+			break;
+		case 'D':			/* Left			*/
+			x--;
+			break;
+		case 'H':			/* Set cursor position	*/
+			x = par[1] - 1;
+			y = par[0] - 1;
+			hanging_cursor = 0;
+			break;
+		case 'J':			/* Clear part of screen	*/
+			clear_screen (par[0]);
+			break;
+		case 'K':			/* Clear part of line	*/
+			clear_line (par[0]);
+			break;
+		case 'g':			/* Clear tab stops	*/
+			/* Not supported */
+			break;
+		case 'm':			/* Set attribute	*/
+			for (i = 0; i < numpars; i++) {
+				switch (par[i]) {
+					case 0: attr = ATTR_NONE; break;
+					case 1: attr |= ATTR_BOLD; break;
+					case 4: attr |= ATTR_UNDER; break;
+					case 7: attr |= ATTR_REVERSE; break;
+				}
+			}
+			break;
+		case 'r':			/* Set scroll region	*/
+			/* Not supported */
+			break;
+	}
+}
+
+static void putc_getpars (char ch)
+{
+	if (ch == '?') {
+		/* Not supported */
+		return;
+	}
+	if (ch == '[') {
+		vt100state = ESnormal;
+		/* Not supported */
+		return;
+	}
+
+	if (ch == ';' && numpars < MAXPARS - 1) {
+		numpars++;
+	} else if (ch >= '0' && ch <= '9') {
+		par[numpars] *= 10;
+		par[numpars] += ch - '0';
+	} else {
+		numpars++;
+		vt100state = ESgotpars;
+		putc_gotpars (ch);
+	}
+}
+
+static void putc_square (char ch)
+{
+	int	i;
+
+	for (i = 0; i < MAXPARS; i++) {
+		par[i] = 0;
+	}
+
+	numpars = 0;
+	vt100state = ESgetpars;
+
+	putc_getpars (ch);
 }
 
 static void ite_putchar (char ch)
 {
-	switch (ch) {
-		case 7: /* Beep */
-			break;
-		case 127:			/* Delete		*/
-		case 8: if (x > 0) {		/* Backspace		*/
-				x--;
-			}
-			break;
-		case 9:	do {		 	/* Tab			*/
-				ite_putchar (' ');
-			} while (x % 8 != 0);
-			break;
-		case 10: y++;			/* Line feed		*/
-			break;
-		case 13: x = 0;			/* Carriage return	*/
-			break;
-		default:
-			if (ch >= ' ') {
-				writechar (ch, x, y);
-				x++;
-			}
-			break;
+	switch (vt100state) {
+		default:	vt100state = ESnormal; /* FALLTHROUGH */
+		case ESnormal:	putc_normal (ch); break;
+		case ESesc:	putc_esc (ch); break;
+		case ESsquare:	putc_square (ch); break;
+		case ESgetpars:	putc_getpars (ch); break;
+		case ESgotpars:	putc_gotpars (ch); break;
 	}
+
 	if (x >= scrcols) {
+		x = scrcols - 1;
+	}
+	if (x < 0) {
 		x = 0;
-		y++;
 	}
 	if (y >= scrrows) {
-		scrollup ();
-		y--;
+		y = scrrows - 1;
+	}
+	if (y < 0) {
+		y = 0;
 	}
 }
 
@@ -408,12 +735,14 @@ void itestart (register struct tty *tp)
 	tp->t_state |= TS_BUSY;
 
 	cc = tp->t_outq.c_cc;
+	splx(s);
 	erasecursor ();
 	while (cc-- > 0) {
 		ite_putchar (getc (&tp->t_outq));
 	}
 	drawcursor ();
 
+	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	splx(s);
 }
@@ -434,7 +763,8 @@ void itestop (struct tty *tp, int flag)
 ite_intr (adb_event_t *event)
 {
 	static	int	shift = 0, control = 0;
-	int		key, press, val, state, ch;
+	int		key, press, val, state;
+	char		str[10], *s;
 
 	key = event->u.k.key;
 	press = ADBK_PRESS (key);
@@ -445,19 +775,48 @@ ite_intr (adb_event_t *event)
 	} else if (val == ADBK_CONTROL) {
 		control = press;
 	} else if (press) {
-		state = 0;
-		if (shift) {
-			state = 1;
+		switch (val) {
+			case ADBK_UP:
+				str[0] = '\e';
+				str[1] = 'O';
+				str[2] = 'A';
+				str[3] = '\0';
+				break;
+			case ADBK_DOWN:
+				str[0] = '\e';
+				str[1] = 'O';
+				str[2] = 'B';
+				str[3] = '\0';
+				break;
+			case ADBK_RIGHT:
+				str[0] = '\e';
+				str[1] = 'O';
+				str[2] = 'C';
+				str[3] = '\0';
+				break;
+			case ADBK_LEFT:
+				str[0] = '\e';
+				str[1] = 'O';
+				str[2] = 'D';
+				str[3] = '\0';
+				break;
+			default:
+				state = 0;
+				if (shift) {
+					state = 1;
+				}
+				if (control) {
+					state = 2;
+				}
+				str[0] = keyboard[val][state];
+				str[1] = '\0';
+				break;
 		}
-		if (control) {
-			state = 2;
-		}
-		ch = keyboard[val][state];
-		if (ch != '\0') {
-			if (adb_polling) {
-				polledkey = ch;
-			} else {
-				(*linesw[ite_tty->t_line].l_rint)(ch, ite_tty);
+		if (adb_polling) {
+			polledkey = str[0];
+		} else {
+			for (s = str; *s; s++) {
+				(*linesw[ite_tty->t_line].l_rint)(*s, ite_tty);
 			}
 		}
 	}
@@ -496,7 +855,24 @@ itecninit(struct consdev *cp)
 	scrrows = height / CHARHEIGHT;
 	scrcols = width / CHARWIDTH;
 
-	clearscreen ();
+	switch (videobitdepth) {
+		default:
+		case 1:	putpixel = putpixel2;
+			reversepixel = reversepixel1;
+			break;
+		case 2:	putpixel = putpixel2;
+			reversepixel = reversepixel1;
+			break;
+		case 4:	putpixel = putpixel4;
+			reversepixel = reversepixel1;
+			break;
+		case 8:	putpixel = putpixel8;
+			reversepixel = reversepixel1;
+			break;
+	}
+
+	clear_screen (2);
+	drawcursor ();
 }
 
 itecngetc(dev_t dev)
@@ -517,11 +893,11 @@ itecnputc(dev_t dev, int c)
 #endif
 	}
 
-	s = splhigh ();
+/* 	s = splhigh (); */
 
 	erasecursor ();
 	ite_putchar (c);
 	drawcursor ();
 
-	splx (s);
+/* 	splx (s); */
 }
