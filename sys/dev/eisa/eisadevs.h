@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.16 1998/01/09 06:46:47 thorpej Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.17 1998/07/01 21:59:20 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp 
+ *	NetBSD: eisadevs,v 1.15 1998/07/01 21:57:32 kleink Exp 
  */
 
 /*
@@ -70,6 +70,9 @@
 #define	EISA_PRODUCT_FSI2001	"FORE Systems ESA-200 ATM"
 #define	EISA_PRODUCT_FSI2002	"FORE Systems ESA-200A ATM"
 #define	EISA_PRODUCT_FSI2003	"FORE Systems ESA-200E ATM"
+
+/* Interphase products */
+#define	EISA_PRODUCT_INP25D0	"Interphase Seahawk 4811 FDDI Controller"
 
 /* Intel products */
 #define	EISA_PRODUCT_INT1010	"Intel EtherExpress 32 Flash Ethernet"
