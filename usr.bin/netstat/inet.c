@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.41 2000/08/15 20:24:58 jhawk Exp $	*/
+/*	$NetBSD: inet.c,v 1.42 2000/10/18 19:20:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.41 2000/08/15 20:24:58 jhawk Exp $");
+__RCSID("$NetBSD: inet.c,v 1.42 2000/10/18 19:20:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,6 +469,7 @@ icmp_stats(off, name)
 				(unsigned long long)icmpstat.icps_inhist[i]);
 		}
 	p(icps_reflect, "\t%llu message response%s generated\n");
+	p(icps_pmtuchg, "\t%llu path MTU change%s\n");
 #undef p
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.17 2000/07/28 04:06:52 itojun Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.18 2000/10/18 19:20:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -55,6 +55,7 @@ struct	icmpstat {
 	u_quad_t icps_badlen;		/* calculated bound mismatch */
 	u_quad_t icps_reflect;		/* number of responses */
 	u_quad_t icps_inhist[ICMP_MAXTYPE + 1];
+	u_quad_t icps_pmtuchg;		/* path MTU changes */
 };
 
 /*
