@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.37 1999/06/09 06:59:53 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,6 +100,7 @@ int	clock_debug = 0;
 #endif
 
 void	rtclock_intr __P((void));
+int	_delay __P((u_int));
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -425,45 +426,42 @@ volatile int	delay_flag = 1;
 
 /*
  * delay(usec)
- *	Delay usec microseconds.
+ *	Delay at least usec microseconds.
  *
  * The delay_factor is scaled up by a factor of 128 to avoid loss
- * of precision for small delays.  As a result of this, note that
- * delays larger that LARGE_DELAY will be up to 128 usec too short,
- * due to adjustments for calculations involving 32 bit values.
+ * of precision for small delays.
  */
 void
 delay(usec)
-	unsigned usec;
+	u_int usec;
 {
-	volatile unsigned int cycles;
+	volatile u_int cycles;
 
 	if (usec > LARGE_DELAY)
-		cycles = (usec >> 7) * delay_factor;
+		cycles = ((usec + 127) >> 7) * delay_factor;
 	else
 		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while ((cycles-- > 0) && delay_flag);
+	(void)_delay(cycles);
 }
 
-static unsigned	dummy_delay __P((unsigned));
+static u_int	dummy_delay __P((u_int));
 /*
  * Dummy delay calibration.  Functionally identical to delay(), but
  * returns the number of times through the loop.
  */
-static unsigned
+static u_int
 dummy_delay(usec)
-	unsigned usec;
+	u_int usec;
 {
-	volatile unsigned int cycles;
+	volatile u_int cycles;
 
 	if (usec > LARGE_DELAY)
-		cycles = (usec >> 7) * delay_factor;
+		cycles = ((usec + 127) >> 7) * delay_factor;
 	else
 		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while ((cycles-- > 0) && delay_flag);
-
+	cycles = _delay(cycles);
 	return ((delay_factor >> 7) - cycles);
 }
 
@@ -482,8 +480,7 @@ delay_timer1_irq(dummy)
 void
 mac68k_calibrate_delay()
 {
-	int n;
-	unsigned sum;
+	u_int sum, n;
 
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
