@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.40 1999/05/01 04:47:00 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.41 1999/05/01 04:57:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -481,52 +481,6 @@ osf1_sys_fcntl(p, v, retval)
 	}
 
 	return error;
-}
-
-int
-osf1_sys_socket(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_socket_args *uap = v;
-	struct sys_socket_args a;
-
-	/* XXX TRANSLATE */
-
-	if (SCARG(uap, type) > AF_LINK)
-		return (EINVAL);	/* XXX After AF_LINK, divergence. */
-
-	SCARG(&a, domain) = SCARG(uap, domain);
-	SCARG(&a, type) = SCARG(uap, type);
-	SCARG(&a, protocol) = SCARG(uap, protocol);
-
-	return sys_socket(p, &a, retval);
-}
-
-int
-osf1_sys_sendto(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_sendto_args *uap = v;
-	struct sys_sendto_args a;
-	unsigned long leftovers;
-
-	SCARG(&a, s) = SCARG(uap, s);
-	SCARG(&a, buf) = SCARG(uap, buf);
-	SCARG(&a, len) = SCARG(uap, len);
-	SCARG(&a, to) = SCARG(uap, to);
-	SCARG(&a, tolen) = SCARG(uap, tolen);
-
-	/* translate flags */
-	SCARG(&a, flags) = emul_flags_translate(osf1_sendrecv_msg_flags_xtab,
-	    SCARG(uap, flags), &leftovers);
-	if (leftovers != 0)
-		return (EINVAL);
-
-	return sys_sendto(p, &a, retval);
 }
 
 int
