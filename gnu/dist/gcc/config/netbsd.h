@@ -34,14 +34,6 @@
 
 #endif
 
-
-/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we provide
-   support for the special GCC option -static.  */
-
-#undef STARTFILE_SPEC
-#define STARTFILE_SPEC \
-  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}}"
-
 /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
    the GCC option `-posix'.  */
 
@@ -63,12 +55,23 @@
   "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
    %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
 
-/* Provide a LINK_SPEC appropriate for NetBSD.  Here we provide support
-   for the special GCC options -static, -assert, and -nostdlib.  */
+/* #ifdef NETBSD_AOUT */
+
+/* Provide a STARTFILE_SPEC appropriate for NetBSD a.out.  Here we
+   provide support for the special GCC option -static.  */
+
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC \
+  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}}"
+
+/* Provide a LINK_SPEC appropriate for NetBSD a.out.  Here we provide
+   support for the special GCC options -static, -assert, and -nostdlib.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+
+/* #endif NETBSD_AOUT */
 
 /* This defines which switch letters take arguments. */
 #undef SWITCH_TAKES_ARG
@@ -215,3 +218,46 @@ do {									 \
 	putc ('\n', FILE);						\
       }									\
   } while (0)
+
+/* ELF ports */
+
+#ifdef NETBSD_ELF
+
+/* Provide a STARTFILE_SPEC appropriate for NetBSD ELF targets.  Here we
+   provide support for the special GCC option -static.  On ELF targets,
+   we also add the crtbegin.o file which provides part of the support
+   for getting C++ file-scope static objects constructed before entering
+   `main'. */
+
+#undef STARTFILE_SPEC
+#define	STARTFILE_SPEC \
+ "%{!shared: \
+     %{pg:gcrt0%O%s} \
+     %{!pg: \
+        %{p:gcrt0%O%s} \
+        %{!p:crt0%O%s}}} \
+   %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}"
+
+/* Provide an ENDFILE_SPEC approrpiate for NetBSD ELF targets.  Here we
+   add crtend.o, which provides part of the support for getting C++
+   file-scope static objects deconstructed after exiting `main'. */
+
+#undef ENDFILE_SPEC
+#define	ENDFILE_SPEC \
+ "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+
+/* Provide a LINK_SPEC appropriate for a NetBSD ELF target.  */
+
+#undef LINK_SPEC
+#define	LINK_SPEC \
+ "%{assert*} \
+  %{shared:-shared} \
+  %{!shared: \
+    -dc -dp \
+    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
+    %{!static:
+      %{rdynamic:-export-dynamic} \
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
+
+#endif /* NETBSD_ELF */
