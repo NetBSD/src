@@ -1,10 +1,12 @@
-# $NetBSD: GENERIC,v 1.23 2000/01/20 19:12:33 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.24 2000/01/23 23:46:16 hubertf Exp $
 #
 # GENERIC next68k
 #
 #
 
 include "arch/next68k/conf/std.next68k"
+
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16

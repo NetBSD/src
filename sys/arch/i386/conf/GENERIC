@@ -1,9 +1,11 @@
-#	$NetBSD: GENERIC,v 1.292 2000/01/20 19:12:31 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.293 2000/01/23 23:46:12 hubertf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
+
+#ident 		"GENERIC-$Revision: 1.293 $"
 
 maxusers	32		# estimated number of users
 
