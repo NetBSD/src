@@ -1,5 +1,4 @@
-# $NetBSD: md.sgimips,v 1.8.4.2 2005/04/06 22:17:12 tron Exp $
-./var/db/obsolete/xserver			xbase-sys-root
+# $NetBSD: md.sgimips,v 1.8.4.3 2005/04/06 22:27:38 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
