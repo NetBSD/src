@@ -1,6 +1,7 @@
-/*	$NetBSD: bktr_card.h,v 1.1.1.2 2000/07/01 01:30:42 wiz Exp $	*/
+/* $SourceForge: bktr_card.h,v 1.3 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp */
+/*	$NetBSD: bktr_card.h,v 1.1.1.3 2003/03/12 00:02:23 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp$ */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -60,7 +61,7 @@
  *
  * where <card type> is one of the following card defines.
  */
- 
+
 #define CARD_UNKNOWN		0
 #define CARD_MIRO		1
 #define CARD_HAUPPAUGE		2
@@ -81,9 +82,9 @@
 #define Bt848_MAX_CARD		17
 
 
-int	signCard( bktr_ptr_t bktr, int offset, int count, u_char* sig );
-void	probeCard( bktr_ptr_t bktr, int verbose, int unit);
+int	signCard(bktr_ptr_t bktr, int offset, int count, u_char* sig);
+void	probeCard(bktr_ptr_t bktr, int verbose, int unit);
 
-int	writeEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data );
-int	readEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data );
+int	writeEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data);
+int	readEEProm(bktr_ptr_t bktr, int offset, int count, u_char *data);
 
