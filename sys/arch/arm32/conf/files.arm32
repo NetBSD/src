@@ -23,10 +23,12 @@ attach	pioc at mainbus
 file	arch/arm32/mainbus/pioc.c		pioc
 
 # Standard NetBSD wd driver
-device  wdc {drive = -1}
+define ata {drive=-1}
+device  wdc: atapi, ata
 device  wd: disk
-attach	wd at wdc
-file    arch/arm32/dev/wd.c			wdc needs-flag
+attach  wd at ata
+file    arch/arm32/dev/wdc.c           wdc needs-flag
+file    arch/arm32/dev/wd.c            wd needs-flag
 major   {wd = 16}
 
 attach	wdc at pioc with wdc_pioc
