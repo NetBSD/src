@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.2 1995/03/28 06:35:47 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.3 1995/05/21 10:56:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -300,6 +300,7 @@ struct proc		*p;
 		if(ite_newsize(ip, is))
 			error = ENOMEM;
 		else {
+			view         = ip->grf->g_view;
 			ws.ws_row    = ip->rows;
 			ws.ws_col    = ip->cols;
 			ws.ws_xpixel = view->display.width;
@@ -442,15 +443,18 @@ putc8(struct ite_softc *ip, int c, int dy, int dx, int mode)
 
 	eor_mask = (mode & ATTR_INV) ? 0xff : 0x00;
 	bl       = (mode & ATTR_BOLD) ? 1 : 0;
-	ul       = fh - cci->underline;
-	while(fh--) {
-		tmp = *ft++ ^ eor_mask;
-		if(bl)
-			*pl = tmp | (tmp >> 1);
-		else *pl = tmp;
-		if(fh == ul)
-			*pl = 0xff;
-		pl += ro;
+	ul       = (mode & ATTR_UL) ? fh - cci->underline : fh;
+	for(; fh--; pl += ro) {
+		if(fh != ul) {
+			tmp = *ft++;
+			if(bl)
+				tmp |= (tmp >> 1);
+			*pl = tmp ^ eor_mask;
+		}
+		else {
+			*pl = 0xff ^ eor_mask;
+			ft++;
+		}
 	}
 }
 
