@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.7 2002/11/08 14:58:25 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.8 2003/01/25 04:21:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ void sh4_dcache_inv_range(vaddr_t, vsize_t);
 void sh4_dcache_wb_range(vaddr_t, vsize_t);
 
 /* must be inlined. */
-extern __inline__ void cache_sh4_op_line_32(vaddr_t, vaddr_t, u_int32_t,
+static __inline__ void cache_sh4_op_line_32(vaddr_t, vaddr_t, u_int32_t,
     u_int32_t);
-extern __inline__ void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, u_int32_t,
+static __inline__ void cache_sh4_op_8lines_32(vaddr_t, vaddr_t, u_int32_t,
     u_int32_t);
 
 void
@@ -111,7 +111,7 @@ sh4_cache_config()
  *	Clear the specified bits on single 32-byte cache line.
  *
  */
-void
+static __inline__ void
 cache_sh4_op_line_32(vaddr_t va, vaddr_t base, u_int32_t mask, u_int32_t bits)
 {
 	vaddr_t cca;
@@ -126,7 +126,7 @@ cache_sh4_op_line_32(vaddr_t va, vaddr_t base, u_int32_t mask, u_int32_t bits)
  *	Clear the specified bits on 8 32-byte cache lines.
  *
  */
-void
+static __inline__ void
 cache_sh4_op_8lines_32(vaddr_t va, vaddr_t base, u_int32_t mask, u_int32_t bits)
 {
 	__volatile__ u_int32_t *cca = (__volatile__ u_int32_t *)

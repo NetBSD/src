@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.7 2002/11/08 14:58:25 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.8 2003/01/25 04:21:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ sh3_cache_config()
  *	Clear the specified bits on single 16-byte cache line. n-ways.
  *
  */
-void
+static __inline__ void
 cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
 {
 	vaddr_t cca;
@@ -160,7 +160,7 @@ cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
  *	Clear the specified bits on 8 16-byte cache lines, n-ways.
  *
  */
-void
+static __inline__ void
 cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
 {
 	__volatile__ u_int32_t *cca;
