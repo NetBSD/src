@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.6 1998/08/01 18:16:19 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.7 1998/08/02 22:30:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,18 +168,21 @@ struct usbd_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_transfer,
 	ohci_root_ctrl_abort,
 	ohci_root_ctrl_close,
+	0,
 };
 
 struct usbd_methods ohci_root_intr_methods = {	
 	ohci_root_intr_transfer,
 	ohci_root_intr_abort,
 	ohci_root_intr_close,
+	0,
 };
 
 struct usbd_methods ohci_device_ctrl_methods = {	
 	ohci_device_ctrl_transfer,
 	ohci_device_ctrl_abort,
 	ohci_device_ctrl_close,
+	0,
 };
 
 struct usbd_methods ohci_device_intr_methods = {	
@@ -192,6 +195,7 @@ struct usbd_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_transfer,
 	ohci_device_bulk_abort,
 	ohci_device_bulk_close,
+	0,
 };
 
 ohci_soft_ed_t *
