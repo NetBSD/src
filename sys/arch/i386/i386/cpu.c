@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.14 2000/09/23 17:30:06 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.15 2000/11/18 22:53:20 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,8 @@ void    cpu_attach __P((struct device *, struct device *, void *));
 static struct cpu_info dummy_cpu_info; /* XXX */
 struct cpu_info *cpu_info[I386_MAXPROCS] = { &dummy_cpu_info };
 
+struct cpu_info *i386_boot_cpu;
+
 u_int32_t cpus_running = 0;
 
 void    	cpu_hatch __P((void *));
@@ -180,7 +182,8 @@ cpu_attach(parent, self, aux)
 			    " instead of at expected %d\n",
 			    self->dv_xname, cpu_number(), cpunum);
 		}
-			
+		i386_boot_cpu = ci;
+		ci->ci_next = NULL;
 		/* special-case boot CPU */			    /* XXX */
 		if (cpu_info[cpunum] == &dummy_cpu_info) {	    /* XXX */
 			ci->ci_curproc = dummy_cpu_info.ci_curproc; /* XXX */
@@ -265,6 +268,8 @@ cpu_attach(parent, self, aux)
 		printf("application processor");
 		printf(")\n");
 		identifycpu(ci);
+		ci->ci_next = i386_boot_cpu->ci_next;
+		i386_boot_cpu->ci_next = ci;
 		break;
 		
 	default:
