@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.31 2004/07/01 22:58:13 kleink Exp $	*/
+/*	$NetBSD: macros.h,v 1.32 2005/01/26 15:53:52 he Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -81,7 +81,7 @@ memcpy(void *to, const void *from, size_t len)
 	} else {
 		__asm__ __volatile ("movc3 %0,%1,%2"
 			:
-			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
+			: "g" (len), "m" (*(const char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 	return to;
@@ -94,7 +94,7 @@ memmove(void *to, const void *from, size_t len)
 	} else {
 		__asm__ __volatile ("movc3 %0,%1,%2"
 			:
-			: "g" (len), "m" (*(char *)from), "m" (*(char *)to)
+			: "g" (len), "m" (*(const char *)from), "m" (*(char *)to)
 			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 	return to;
