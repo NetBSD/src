@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.140 2004/03/27 12:40:46 dsl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.141 2004/04/18 03:30:23 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.140 2004/03/27 12:40:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.141 2004/04/18 03:30:23 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -461,6 +461,7 @@ ffs_reload(mountp, cred, p)
 	int i, blks, size, error;
 	int32_t *lp;
 	struct ufsmount *ump;
+	daddr_t sblockloc;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -483,6 +484,7 @@ ffs_reload(mountp, cred, p)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
+	/* XXX we don't handle possibility that superblock moved. */
 	error = bread(devvp, fs->fs_sblockloc / size, fs->fs_sbsize,
 		      NOCRED, &bp);
 	if (error) {
@@ -506,6 +508,8 @@ ffs_reload(mountp, cred, p)
 		free(newfs, M_UFSMNT);
 		return (EIO);		/* XXX needs translation */
 	}
+	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
+	sblockloc = fs->fs_sblockloc;
 	/* 
 	 * Copy pointer fields back into superblock before copying in	XXX
 	 * new superblock. These should really be in the ufsmount.	XXX
@@ -558,7 +562,7 @@ ffs_reload(mountp, cred, p)
 		/* see comment about NeXT below */
 		mountp->mnt_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
 	}
-	ffs_oldfscompat_read(fs, VFSTOUFS(mountp), fs->fs_sblockloc);
+	ffs_oldfscompat_read(fs, VFSTOUFS(mountp), sblockloc);
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
