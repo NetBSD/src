@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.82 2004/11/17 15:19:30 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.83 2004/12/11 17:48:56 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.82 2004/11/17 15:19:30 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.83 2004/12/11 17:48:56 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,6 +491,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (d->id == PCIID_SIS7012) {
 		sc->sc_sts_reg = ICH_PICB;
 		sc->sc_sample_shift = 0;
+		/* Un-mute output. From Linux. */
+		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL,
+		    bus_space_read_4(sc->iot, sc->aud_ioh, ICH_SIS_NV_CTL) |
+		    ICH_SIS_CTL_UNMUTE);
 	} else {
 		sc->sc_sts_reg = ICH_STS;
 		sc->sc_sample_shift = 1;
