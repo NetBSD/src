@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.3 1995/06/09 20:00:14 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.4 1995/06/25 19:05:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -81,11 +81,12 @@ struct kbd_softc {
 
 static struct kbd_softc kbd_softc;
 
+void	kbd_write __P((u_char *, int));
+
 static void kbdsoft __P((void));
 static void kbdattach __P((struct device *, struct device *, void *));
 static int  kbdmatch __P((struct device *, struct cfdata *, void *));
-static int  kbd_wite_poll __P((u_char *, int));
-static void kbd_write __P((u_char *, int));
+static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
 struct cfdriver kbdcd = {
@@ -112,7 +113,8 @@ struct	device *pdp, *dp;
 void	*auxp;
 {
 	int	timeout;
-	u_char	rst[] = { 0x80, 0x01 };
+	u_char	kbd_rst[]  = { 0x80, 0x01 };
+	u_char	kbd_icmd[] = { 0x12, 0x15 };
 
 	/*
 	 * Disable keyboard interrupts from MFP
@@ -136,7 +138,7 @@ void	*auxp;
 	/*
 	 * Now send the reset string, and read+ignore it's response
 	 */
-	if (!kbd_wite_poll(rst, 2))
+	if (!kbd_write_poll(kbd_rst, 2))
 		printf("kbd: error cannot reset keyboard\n");
 	for (timeout = 1000; timeout > 0; timeout--) {
 		if (KBD->ac_cs & (A_IRQ|A_RXRDY)) {
@@ -145,6 +147,10 @@ void	*auxp;
 		}
 		delay(100);
 	}
+	/*
+	 * Send init command: disable mice & joysticks
+	 */
+	kbd_write_poll(kbd_icmd, sizeof(kbd_icmd));
 
 	printf("\n");
 }
@@ -158,7 +164,6 @@ void
 kbdenable()
 {
 	int	s, code;
-	u_char	kbd_icmd[] = { 0x12, 0x15 };
 
 	s = spltty();
 
@@ -178,11 +183,6 @@ kbdenable()
 	kbd_softc.k_events.ev_io = 0;
 	kbd_softc.k_pkg_size     = 0;
 	splx(s);
-
-	/*
-	 * Send init command: disable mice & joysticks
-	 */
-	kbd_write(kbd_icmd, sizeof(kbd_icmd));
 }
 
 int kbdopen(dev_t dev, int flags, int mode, struct proc *p)
@@ -355,10 +355,9 @@ kbdsoft()
 				    k->k_pkg_size = 0;
 				    /*
 				     * Package is complete, we can now
-				     * send it to (the not yet present)
-				     * mouse driver...
+				     * send it to the mouse driver...
 				     */
-				    /* mouse_soft(k->k_package,k->k_pkg_size);*/
+				    mouse_soft(k->k_package, k->k_pkg_size);
 				}
 				continue;
 			}
@@ -427,11 +426,16 @@ int
 kbdgetcn()
 {
 	u_char	code;
-	int		s = spltty();
+	int	s = spltty();
+	int	ints_active;
 
-	MFP->mf_imrb &= ~IB_AINT;
+	ints_active = 0;
+	if (MFP->mf_imrb & IB_AINT) {
+		ints_active   = 1;
+		MFP->mf_imrb &= ~IB_AINT;
+	}
 	for (;;) {
-		while (!(KBD->ac_cs & (A_IRQ|A_RXRDY)))
+		while (!((KBD->ac_cs & (A_IRQ|A_RXRDY)) == (A_IRQ|A_RXRDY)))
 			;	/* Wait for key	*/
 		if (KBD->ac_cs & (A_OE|A_PE)) {
 			code = KBD->ac_da;	/* Silently ignore errors */
@@ -440,10 +444,12 @@ kbdgetcn()
 		break;
 	}
 
-	MFP->mf_iprb &= ~IB_AINT;
-	MFP->mf_imrb |=  IB_AINT;
-
 	code = KBD->ac_da;
+	if (ints_active) {
+		MFP->mf_iprb &= ~IB_AINT;
+		MFP->mf_imrb |=  IB_AINT;
+	}
+
 	splx (s);
 	return code;
 }
@@ -452,7 +458,7 @@ kbdgetcn()
  * Write a command to the keyboard in 'polled' mode.
  */
 static int
-kbd_wite_poll(cmd, len)
+kbd_write_poll(cmd, len)
 u_char	*cmd;
 int	len;
 {
@@ -471,7 +477,7 @@ int	len;
 /*
  * Write a command to the keyboard. Return when command is send.
  */
-static void
+void
 kbd_write(cmd, len)
 u_char	*cmd;
 int	len;

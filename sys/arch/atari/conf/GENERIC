@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.3 1995/06/09 19:49:27 leo Exp $
+#	$NetBSD: GENERIC,v 1.4 1995/06/25 19:07:06 leo Exp $
 #
 # Maximal ATARI-TT
 #
@@ -89,6 +89,7 @@ options		GENERIC			# Mini-root boot support
 #
 config		netbsd swap on generic
 
+pseudo-device	mouse	1	# mouse
 pseudo-device	view	2	# View (graphics mapping)
 pseudo-device	sl		# Slip
 pseudo-device	ppp		# ppp

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.1.1.1 1995/03/26 07:12:12 leo Exp $	*/
+/*	$NetBSD: event.c,v 1.2 1995/06/25 19:05:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,8 +57,8 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
-#include <amiga/dev/vuid_event.h>
-#include <amiga/dev/event_var.h>
+#include <atari/dev/vuid_event.h>
+#include <atari/dev/event_var.h>
 
 /*
  * Initialize a firm_event queue.

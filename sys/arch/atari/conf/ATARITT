@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.2 1995/05/28 19:56:14 leo Exp $
+#	$NetBSD: ATARITT,v 1.3 1995/06/25 19:07:04 leo Exp $
 #
 # ATARI-TT
 #
@@ -73,13 +73,13 @@ options		KTRACE			# Add kernel tracing system call
 options		DIAGNOSTIC		# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 options		GENERIC			# Mini-root boot support
-#options	KFONT_8x8		# Use 8x8 font instead of 8x16
 
 #
 # Build one kernel that can boot from any disk.
 #
 config		netbsd swap on generic
 
+pseudo-device	mouse	1	# mouse
 pseudo-device	view	2	# View (graphics mapping)
 pseudo-device	sl		# Slip
 pseudo-device	ppp		# ppp
