@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1995/11/16 22:38:16 cgd Exp $
+#	$NetBSD: Makefile,v 1.22 1996/06/18 06:05:44 mycroft Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -46,7 +46,7 @@ CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 # start.o should be first
 OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 
-boot:	${OBJS}
+boot: ${OBJS}
 	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS}
 	cp boot boot.sym
 	@strip boot
@@ -54,45 +54,28 @@ boot:	${OBJS}
 	@mv -f boot.tmp boot
 	@ls -l boot
 
-biosboot:	boot
+biosboot: boot
 	dd if=boot of=biosboot count=1
 
-bootbios:	boot
+bootbios: boot
 	dd if=boot of=bootbios skip=1
 
-${DESTDIR}/usr/mdec/bootsd:	bootbios
-	cp bootbios ${DESTDIR}/usr/mdec/bootsd
-
-${DESTDIR}/usr/mdec/sdboot:	biosboot
+install: biosboot bootbios
 	cp biosboot ${DESTDIR}/usr/mdec/sdboot
-
-${DESTDIR}/usr/mdec/bootwd:	${DESTDIR}/usr/mdec/bootsd
-	rm -f ${DESTDIR}/usr/mdec/bootwd
-	ln ${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/bootwd
-
-${DESTDIR}/usr/mdec/wdboot:	${DESTDIR}/usr/mdec/sdboot
+	cp bootbios ${DESTDIR}/usr/mdec/bootsd
 	rm -f ${DESTDIR}/usr/mdec/wdboot
 	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/wdboot
-
-${DESTDIR}/usr/mdec/bootfd:	${DESTDIR}/usr/mdec/bootsd
+	rm -f ${DESTDIR}/usr/mdec/bootwd
+	ln ${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/bootwd
+	rm -f ${DESTDIR}/usr/mdec/fdboot
+	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/fdboot
 	rm -f ${DESTDIR}/usr/mdec/bootfd
 	ln ${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/bootfd
 
-${DESTDIR}/usr/mdec/fdboot:	${DESTDIR}/usr/mdec/sdboot
-	rm -f ${DESTDIR}/usr/mdec/fdboot
-	ln ${DESTDIR}/usr/mdec/sdboot ${DESTDIR}/usr/mdec/fdboot
-
-sd:	${DESTDIR}/usr/mdec/bootsd ${DESTDIR}/usr/mdec/sdboot
-wd:	${DESTDIR}/usr/mdec/bootwd ${DESTDIR}/usr/mdec/wdboot
-fd:	${DESTDIR}/usr/mdec/bootfd ${DESTDIR}/usr/mdec/fdboot
-
-install: wd sd fd
-
-CLEANFILES+=bootbios boot biosboot boot.sym machine ${MACHINE_ARCH}
+CLEANFILES+=biosboot bootbios boot boot.sym machine ${MACHINE_ARCH}
 
 clean::
 	rm -f a.out [Ee]rrs mklog core *.core
 	rm -f ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
-
 
 .include <bsd.prog.mk>
