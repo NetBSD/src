@@ -1,3 +1,5 @@
+/*	$NetBSD: freebsd_syscallargs.h,v 1.16 1998/01/09 06:10:56 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *
