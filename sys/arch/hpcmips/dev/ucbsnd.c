@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.3 2000/03/03 19:54:34 uch Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.4 2000/03/04 19:35:36 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -59,6 +59,7 @@
 
 #define AUDIOUNIT(x)		(minor(x)&0x0f)
 #define AUDIODEV(x)		(minor(x)&0xf0)
+#define	splaudio	splbio	/* XXX */
 
 #ifdef UCBSNDDEBUG
 int	ucbsnd_debug = 1;
@@ -127,7 +128,6 @@ struct ucbsnd_softc {
 #define UCBSND_DEFAULT_ATTENUATION	0	/* Full volume */
 	int		sa_snd_rate; /* passed down from SIB module */
 	int		sa_tel_rate;
-	int		sa_enabled;
 	void*		sa_sf0ih;
 	void*		sa_sndih;
 	int		sa_retry;
@@ -374,7 +374,6 @@ ucbsnd_exec_output(arg)
 		sc->sa_sndih = tx_intr_establish(
 			tc, MAKEINTR(1, TX39_INTRSTATUS1_SNDININT),
 			IST_EDGE, IPL_TTY, ucbsnd_exec_output, sc);
-		sc->sa_enabled = 1;
 
 		sc->sa_state = UCBSND_PIO;
 		sc->sa_cnt = 0;
@@ -394,7 +393,6 @@ ucbsnd_exec_output(arg)
 	}
 	case UCBSND_TRANSITION_DISABLE:
 		/* change interrupt source */
-		sc->sa_enabled = 0;
 		if (sc->sa_sndih) {
 			tx_intr_disestablish(tc, sc->sa_sndih);
 			sc->sa_sndih = 0;
@@ -519,10 +517,15 @@ ucbsndopen(dev, flags, ifmt, p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
+	int s;
 	
 	if (unit >= ucbsnd_cd.cd_ndevs ||
 	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+	
+	s = splaudio();
+	ringbuf_reset(&sc->sc_rb);
+	splx(s);
 
 	return (0);
 }
@@ -540,8 +543,6 @@ ucbsndclose(dev, flags, ifmt, p)
 	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	DPRINTF(("ucbsndclose\n"));
-	
 	return (0);
 }
 
@@ -582,7 +583,7 @@ ucbsndwrite_subr(sc, buf, bufsize, uio)
 	
 	ringbuf_producer_return(&sc->sc_rb, bufsize);
 
-	s = splhigh();
+	s = splaudio();
 	if (sc->sa_state == UCBSND_IDLE && ringbuf_full(&sc->sc_rb)) {
 		sc->sa_transfer_mode = UCBSND_TRANSFERMODE_DMA;
 		sc->sa_state = UCBSND_INIT;
@@ -602,7 +603,7 @@ ucbsndwrite(dev, uio, ioflag)
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
 	int len, error = 0;
-	int i, n, rest;
+	int i, n, s, rest;
 	void *buf;
 	
 	if (unit >= ucbsnd_cd.cd_ndevs ||
@@ -617,22 +618,34 @@ ucbsndwrite(dev, uio, ioflag)
 		--n;
 
 	for (i = 0; i < n; i++) {
-		while (!(buf = ringbuf_producer_get(&sc->sc_rb)))
-			tsleep(&sc->sc_rb, PRIBIO, "ucbsnd", 0);
-		
+		while (!(buf = ringbuf_producer_get(&sc->sc_rb))) {
+			error = tsleep(&sc->sc_rb, PRIBIO, "ucbsnd", 1000);
+			if (error)
+				goto errout;
+		}
+
 		error = ucbsndwrite_subr(sc, buf, TX39_SIBDMA_SIZE, uio);
 		if (error)
 			goto out;
 	}
 
 	if (rest) {
-		while (!(buf = ringbuf_producer_get(&sc->sc_rb)))
-			tsleep(&sc->sc_rb, PRIBIO, "ucbsnd", 0);
+		while (!(buf = ringbuf_producer_get(&sc->sc_rb))) {
+			error = tsleep(&sc->sc_rb, PRIBIO, "ucbsnd", 1000);
+			if (error)
+				goto errout;
+		}
 		
 		error = ucbsndwrite_subr(sc, buf, rest, uio);
 	}
 
  out:
+	return (error);
+ errout:
+	printf("%s: timeout. reset ring-buffer.\n", sc->sc_dev.dv_xname);
+	s = splaudio();
+	ringbuf_reset(&sc->sc_rb);
+	splx(s);
 
 	return (error);
 }
@@ -752,7 +765,7 @@ ringbuf_producer_get(rb)
 	u_int32_t ret;
 	int s;
 
-	s = splhigh();
+	s = splaudio();
 	ret = ringbuf_full(rb) ? 0 : 
 		rb->rb_buf + rb->rb_inp * rb->rb_blksize;
 	splx(s);
@@ -769,7 +782,7 @@ ringbuf_producer_return(rb, cnt)
 
 	assert(cnt <= rb->rb_blksize);
 
-	s = splhigh();
+	s = splaudio();
 	rb->rb_outp++;
 	
 	rb->rb_bufcnt[rb->rb_inp] = cnt;
