@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.7 2001/10/01 01:46:57 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.8 2001/11/30 18:06:55 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ _prom_swap_ptes(swapout, swapin)
 	u_int *swapout, *swapin;
 {
 	int pte_number;
-	vm_offset_t va;
+	vaddr_t va;
 
 	for(pte_number = 0, va = 0; pte_number < 4; pte_number++, va += NBPG) {
 		swapout[pte_number] = get_pte(va);

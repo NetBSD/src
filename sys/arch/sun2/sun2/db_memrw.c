@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 2001/04/18 03:19:21 fredette Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 2001/11/30 18:06:55 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,11 +79,11 @@ static void db_write_text __P((char *, size_t size, char *));
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	db_addr_t	addr;
+	size_t	size;
+	char	*data;
 {
-	register char	*src = (char*)addr;
+	char	*src = (char*)addr;
 
 	if (size == 4) {
 		*((int*)data) = *((int*)src);
@@ -107,12 +107,12 @@ db_read_bytes(addr, size, data)
  */
 static void
 db_write_text(dst, size, data)
-	register char *dst;
-	register size_t	size;
-	register char	*data;
+	char *dst;
+	size_t	size;
+	char	*data;
 {
 	int		oldpte, tmppte;
-	vm_offset_t pgva, prevpg;
+	vaddr_t pgva, prevpg;
 	int		old_ctx;
 
 	/* Prevent restoring a garbage PTE. */
@@ -173,11 +173,11 @@ db_write_text(dst, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	db_addr_t	addr;
+	size_t	size;
+	char	*data;
 {
-	register char	*dst = (char *)addr;
+	char	*dst = (char *)addr;
 
 	/* If any part is in kernel text, use db_write_text() */
 	if ((dst < etext) && ((dst + size) > kernel_text)) {
