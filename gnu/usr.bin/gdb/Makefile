@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 1998/07/27 02:35:13 tv Exp $
+# $NetBSD: Makefile,v 1.19 1998/08/22 20:43:56 tv Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -10,11 +10,8 @@ srcdir= $(dist)/gdb
 
 PROG=	gdb
 
-# Override this to build a cross-debugger.
-TARGET_ARCH?=$(MACHINE_ARCH:S/^mips$/mipsel/)
-
-# Debugging?
-# CPPFLAGS=-g
+BFDOBJ!=cd ${TOP}/lib/bfd; \
+        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 # Note: nm.h, tm.h are in $(.OBJDIR),
 # and config.h, xm.h are in $(.CURDIR)
@@ -27,7 +24,7 @@ INCLS+= -I$(srcdir) -I$(srcdir)/config
 INCLS+= -I$(dist)/readline
 
 # BFD_CFLAGS: Make sure we get the installed bfd.h
-INCLS+= -I$(TOP)/lib/bfd
+INCLS+= -I${BFDOBJ}
 INCLS+= -I$(dist)/bfd
 INCLS+= -I$(dist)/include
 
@@ -37,7 +34,7 @@ DEFS= -DNO_MMALLOC
 
 CPPFLAGS+= $(INCLS) $(DEFS)
 
-.include "_$(TARGET_ARCH).mk"
+.include "_${MACHINE_ARCH}.mk"
 
 # Any NetBSD: (i386 m68k ns32k sparc vax)
 NDEP_CMN?= infptrace.c inftarg.c fork-child.c corelow.c kcore-nbsd.c
@@ -70,8 +67,8 @@ OBJS=	init.o
 LDADD+= -ledit
 DPADD+= $(LIBEDIT)
 
-LDADD+= -lbfd
-DPADD+= $(LIBBFD)
+LDADD+= -L${BFDOBJ} -lbfd
+DPADD+= ${BFDOBJ}/libbfd.a
 
 LDADD+= -lkvm
 DPADD+= $(LIBKVM)
@@ -109,6 +106,6 @@ tm.h : $(srcdir)/$(TM_FILE)
 
 version.o : version.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) \
-	  -DHOST_NAME=\"${MACHINE_GNU_ARCH}-netbsd\" \
-	  -DTARGET_NAME=\"${GNU_ARCH.${TARGET_ARCH}}-netbsd\" \
+	  -DHOST_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
+	  -DTARGET_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
 	  -c $(.IMPSRC)
