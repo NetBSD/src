@@ -7,6 +7,5 @@
 
 ENTRY(fpgetround)
 	fmovel fpcr,d0
-	lsrl #4,d0
-	andl #3,d0
+	bfextu d0{#26:#2},d0
 	rts
