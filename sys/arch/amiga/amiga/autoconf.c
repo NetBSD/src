@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.8 1994/02/11 06:59:20 chopps Exp $
+ *	$Id: autoconf.c,v 1.9 1994/02/13 21:13:10 chopps Exp $
  */
 
 /*
@@ -49,21 +49,21 @@
  * and the drivers are initialized.
  */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/dkstat.h"
-#include "sys/conf.h"
-#include "sys/dmap.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
+#include <sys/reboot.h>
 
-#include "machine/vmparam.h"
-#include "machine/cpu.h"
-#include "pte.h"
-#include "../dev/device.h"
+#include <machine/vmparam.h>
+#include <machine/cpu.h>
+#include <machine/pte.h>
+#include <amiga/dev/device.h>
 
-#include "configdev.h"
-#include "custom.h"
+#include <amiga/amiga/configdev.h>
+#include <amiga/amiga/custom.h>
 
 /*
  * The following several variables are related to
@@ -861,7 +861,7 @@ iounmap(kva, size)
 #endif
 
 #if NCD > 0
-#include "../dev/cdvar.h"
+#include <amiga/dev/cdvar.h>
 
 find_cdevices()
 {
