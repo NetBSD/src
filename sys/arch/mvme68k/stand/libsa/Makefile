@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/07/24 18:39:42 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12 2000/07/27 21:06:54 scw Exp $
 
 LIB=sa
 
@@ -38,5 +38,5 @@ CLEANFILES+= SRT0.o
 libinstall::
 
 all: lib${LIB}.a SRT0.o
-
+beforedepend: machine m68k
 .include <bsd.lib.mk>
