@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: function.c,v 1.11 1994/01/21 02:59:38 jtc Exp $";
+static char rcsid[] = "$Id: function.c,v 1.12 1994/02/16 03:59:52 andrew Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -704,7 +704,7 @@ f_nogroup(plan, entry)
 {
 	char *group_from_gid();
 
-	return (group_from_gid(entry->fts_statp->st_gid, 1) ? 1 : 0);
+	return (group_from_gid(entry->fts_statp->st_gid, 1) ? 0 : 1);
 }
  
 PLAN *
@@ -728,7 +728,7 @@ f_nouser(plan, entry)
 {
 	char *user_from_uid();
 
-	return (user_from_uid(entry->fts_statp->st_uid, 1) ? 1 : 0);
+	return (user_from_uid(entry->fts_statp->st_uid, 1) ? 0 : 1);
 }
  
 PLAN *
