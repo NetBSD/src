@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.8 1994/05/12 05:56:59 chopps Exp $
+#	$Id: GENERIC,v 1.9 1994/05/16 04:50:03 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -111,7 +111,7 @@ options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
 options		"COMPAT_NOMID"	# Support to run nonvalid machine id executables
 
 # Support for System V IPC facilities.
-options		SYSVSHM		# System V-like shared memory
+#options		SYSVSHM		# System V-like shared memory
 options		SYSVMSG		# System V-like messages
 options		SYSVSEM		# System V-like semaphores
 
