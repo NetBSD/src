@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.74 2004/11/24 20:49:23 bouyer Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.75 2004/12/01 22:27:46 grant Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -361,6 +361,7 @@ cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 #geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
