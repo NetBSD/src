@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.111 2003/12/30 12:33:22 pk Exp $	*/
+/*	$NetBSD: cpu.h,v 1.112 2004/01/04 11:44:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -367,7 +367,6 @@ void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);
-void	switch_exit(struct lwp *, void (*)(struct lwp *));
 void	proc_trampoline(void);
 
 /* clock.c */
