@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.47 2002/03/20 18:10:31 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.48 2002/03/21 11:34:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.47 2002/03/20 18:10:31 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.48 2002/03/21 11:34:17 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.47 2002/03/20 18:10:31 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.48 2002/03/21 11:34:17 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -692,10 +692,12 @@ Make_Update (cgn)
      * it means we need to place it in the queue as it restrained itself
      * before.
      */
-    for (ln = Lst_First(cgn->successors); ln != NILLNODE; ln = Lst_Succ(ln)) {
+    for (ln = Lst_First(centurion->successors); ln != NILLNODE;
+	 ln = Lst_Succ(ln)) {
 	GNode	*succ = (GNode *)Lst_Datum(ln);
 
-	if ((succ->flags & REMAKE) && succ->unmade == 0 && succ->made == UNMADE &&
+	if ((succ->flags & REMAKE) != 0 && succ->unmade == 0 &&
+	    succ->made == UNMADE &&
 	    Lst_Member(toBeMade, (ClientData)succ) == NILLNODE)
 	{
 	    (void)Lst_EnQueue(toBeMade, (ClientData)succ);
@@ -882,8 +884,9 @@ MakeStartJobs ()
 {
     GNode	*gn;
 
+extern ClientData Lst_DeQueue_Last (Lst);
     while (!Lst_IsEmpty (toBeMade)) {
-	gn = (GNode *) Lst_DeQueue (toBeMade);
+	gn = (GNode *) Lst_DeQueue_Last (toBeMade);
 	if (DEBUG(MAKE)) {
 	    printf ("Examining %s...", gn->name);
 	}
@@ -897,7 +900,8 @@ MakeStartJobs ()
 	    for (ln = Lst_First(gn->preds); ln != NILLNODE; ln = Lst_Succ(ln)){
 		GNode	*pgn = (GNode *)Lst_Datum(ln);
 
-		if ((pgn->flags & REMAKE) && pgn->made == UNMADE) {
+		if ((pgn->flags & REMAKE) &&
+		    (pgn->made == UNMADE || pgn->unmade_cohorts != 0)) {
 		    if (DEBUG(MAKE)) {
 			printf("predecessor %s not made yet.\n", pgn->name);
 		    }
