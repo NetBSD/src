@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.12 2003/05/14 06:47:46 itojun Exp $	*/
+/*	$NetBSD: route6.c,v 1.13 2003/06/06 08:13:44 itojun Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.12 2003/05/14 06:47:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.13 2003/06/06 08:13:44 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -105,6 +105,9 @@ route6_input(mp, offp, proto)
 
 /*
  * Type0 routing header processing
+ *
+ * RFC2292 backward compatibility warning: no support for strict/loose bitmap,
+ * as it was dropped between RFC1883 and RFC2460.
  */
 static int
 ip6_rthdr0(m, ip6, rh0)
@@ -143,7 +146,7 @@ ip6_rthdr0(m, ip6, rh0)
 
 	index = addrs - rh0->ip6r0_segleft;
 	rh0->ip6r0_segleft--;
-	nextaddr = rh0->ip6r0_addr + index;
+	nextaddr = ((struct in6_addr *)(rh0 + 1)) + index;
 
 	/*
 	 * reject invalid addresses.  be proactive about malicious use of
@@ -155,16 +158,14 @@ ip6_rthdr0(m, ip6, rh0)
 	    IN6_IS_ADDR_V4MAPPED(nextaddr) ||
 	    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
 		ip6stat.ip6s_badoptions++;
-		m_freem(m);
-		return (-1);
+		goto bad;
 	}
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badoptions++;
-		m_freem(m);
-		return (-1);
+		goto bad;
 	}
 
 	/*
@@ -188,4 +189,8 @@ ip6_rthdr0(m, ip6, rh0)
 #endif
 
 	return (-1);			/* m would be freed in ip6_forward() */
+
+  bad:
+	m_freem(m);
+	return (-1);
 }
