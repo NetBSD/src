@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.71 2001/12/12 14:24:53 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.72 2001/12/12 15:23:58 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.71 2001/12/12 14:24:53 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.72 2001/12/12 15:23:58 augustss Exp $");
 
 #include "atapibus.h"
 
@@ -211,8 +211,6 @@ Static void umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer,
 				int buflen, int printlen);
 #endif
 
-
-void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe);	/* XXXXX */
 
 /*
  * USB device probe/attach/detach

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.90 2001/12/03 01:47:12 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.91 2001/12/12 15:23:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.90 2001/12/03 01:47:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.91 2001/12/12 15:23:59 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,6 @@ usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
 	return (err);
 }
 
-void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe); /* XXXXX */
 void
 usbd_clear_endpoint_toggle(usbd_pipe_handle pipe)
 {
