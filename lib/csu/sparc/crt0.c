@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.3 1994/01/29 01:59:10 jtc Exp $
+ *	$Id: crt0.c,v 1.4 1994/02/25 15:02:58 pk Exp $
  */
 
 
@@ -58,8 +58,10 @@ int _callmain();
 #endif
 #include <link.h>
 
-extern struct link_dynamic _DYNAMIC;
+extern struct _dynamic _DYNAMIC;
+static struct ld_entry	*ld_entry;
 static void	__do_dynamic_link ();
+static void	__set_progname ();
 static char	*_getenv();
 static int	_strncmp();
 
@@ -132,6 +134,11 @@ asm ("	st	%l2, [%l3+%lo(_environ)]");	/* *environ = l2 */
 asm ("	andn	%sp, 7,	%sp");
 asm ("	sub	%sp, 24, %sp");
 
+/* Set __progname */
+asm ("	mov	%l0, %o0");		/**/
+asm ("	call	___set_progname");	/**/
+asm ("	mov	%l1, %o1");		/**/
+
 #ifdef DYNAMIC
 /* Resolve symbols in dynamic libraries */
 asm ("	call	___do_dynamic_link");
@@ -173,6 +180,18 @@ __do_mcrt ()
 }
 #endif
 
+static void
+__set_progname(argc, argv)
+int	argc;
+char	*argv[];
+{
+	if (argv[0])
+		if ((__progname = _strrchr(argv[0], '/')) == NULL)
+			__progname = argv[0];
+		else
+			++__progname;
+}
+
 #ifdef DYNAMIC
 static void
 __do_dynamic_link ()
@@ -181,10 +200,10 @@ __do_dynamic_link ()
 	struct exec	hdr;
 	char		*ldso;
 	int		dupzfd;
-	void		(*entry)();
+	int		(*entry)();
 
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-	if (&_DYNAMIC == (struct link_dynamic *)0)
+	if (&_DYNAMIC == (struct _dynamic *)0)
 		return;
 
 	/* Provision for alternate ld.so - security risk! */
@@ -200,7 +219,7 @@ __do_dynamic_link ()
 	if (read(crt.crt_ldfd, &hdr, sizeof hdr) < sizeof hdr) {
 		_FATAL("Failure reading ld.so\n");
 	}
-	if (N_GETMAGIC(hdr) != ZMAGIC) {
+	if (N_GETMAGIC(hdr) != ZMAGIC && N_GETMAGIC(hdr) != QMAGIC) {
 		_FATAL("Bad magic: ld.so\n");
 	}
 
@@ -244,7 +263,7 @@ __do_dynamic_link ()
 
 	/* Map in data segment of ld.so writable */
 	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
-			PROT_READ|PROT_EXEC|PROT_WRITE,
+			PROT_READ|PROT_WRITE,
 			MAP_FIXED|MAP_FILE|MAP_COPY,
 			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
 		_FATAL("Cannot map ld.so\n");
@@ -252,7 +271,7 @@ __do_dynamic_link ()
 
 	/* Map bss segment of ld.so zero */
 	if (hdr.a_bss && mmap(crt.crt_ba+N_BSSADDR(hdr), hdr.a_bss,
-			PROT_READ|PROT_EXEC|PROT_WRITE,
+			PROT_READ|PROT_WRITE,
 			MAP_FIXED|MAP_ANON|MAP_COPY,
 			crt.crt_dzfd, 0) == -1) {
 		_FATAL("Cannot map ld.so\n");
@@ -261,13 +280,17 @@ __do_dynamic_link ()
 	crt.crt_dp = &_DYNAMIC;
 	crt.crt_ep = environ;
 	crt.crt_bp = (caddr_t)_callmain;
+	crt.crt_prog = __progname;
 
-#if defined(sun) && defined(sparc)
+#ifdef sun
 	/* Call Sun's ld.so entry point: version 1, offset crt */
 	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
 #else
-	entry = (void (*)())(crt.crt_ba + sizeof hdr);
-	(*entry)(CRT_VERSION_BSD, &crt);
+	entry = (int (*)())(crt.crt_ba + sizeof hdr);
+	if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
+		_FATAL("ld.so failed\n");
+	}
+	ld_entry = _DYNAMIC.d_entry;
 #endif
 
 #if defined(sun) && defined(DUPZFD)
@@ -300,6 +323,53 @@ __call()
 #endif
 }
 #endif
+
+/*
+ * DL stubs
+ */
+
+void *
+dlopen(name, mode)
+char	*name;
+int	mode;
+{
+	if (ld_entry == NULL)
+		return NULL;
+
+	return (ld_entry->dlopen)(name, mode);
+}
+
+int
+dlclose(fd)
+void	*fd;
+{
+	if (ld_entry == NULL)
+		return -1;
+
+	return (ld_entry->dlclose)(fd);
+}
+
+void *
+dlsym(fd, name)
+void	*fd;
+char	*name;
+{
+	if (ld_entry == NULL)
+		return NULL;
+
+	return (ld_entry->dlsym)(fd, name);
+}
+
+int
+dlctl(fd, cmd, arg)
+void	*fd, *arg;
+int	cmd;
+{
+	if (ld_entry == NULL)
+		return -1;
+
+	return (ld_entry->dlctl)(fd, cmd, arg);
+}
 
 /*
  * Support routines
