@@ -460,6 +460,7 @@ obj_aout_type (ignore)
   int c;
   symbolS *sym;
 
+  SKIP_WHITESPACE ();
   name = input_line_pointer;
   c = get_symbol_end ();
   sym = symbol_find_or_make (name);
