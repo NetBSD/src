@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyin.c,v 1.1.1.2 1997/04/22 13:45:39 mrg Exp $	*/
+/*	$NetBSD: ttyin.c,v 1.1.1.3 1997/09/21 12:23:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -39,6 +39,7 @@ static DWORD console_mode;
 #endif
 
 static int tty;
+extern int sigs;
 
 /*
  * Open keyboard for input.
@@ -52,12 +53,12 @@ open_getchr()
 	memset(&sa, 0, sizeof(SECURITY_ATTRIBUTES));
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.bInheritHandle = TRUE;
-	tty = (int) CreateFile("CONIN$", GENERIC_READ, 
-			FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, 
+	tty = (int) CreateFile("CONIN$", GENERIC_READ,
+			FILE_SHARE_READ, &sa, 
 			OPEN_EXISTING, 0L, NULL);
 	GetConsoleMode((HANDLE)tty, &console_mode);
 	/* Make sure we get Ctrl+C events. */
-	SetConsoleMode((HANDLE)tty, 0); /* doesn't work for some reason --jdp */
+	SetConsoleMode((HANDLE)tty, ENABLE_PROCESSED_INPUT);
 #else
 #if MSDOS_COMPILER || OS2
 	extern int fd0;
@@ -67,7 +68,14 @@ open_getchr()
 	 */
 	 fd0 = dup(0);
 	 close(0);
-	 tty = OPEN_TTYIN();
+	 tty = open("CON", OPEN_READ);
+#if MSDOS_COMPILER==DJGPPC
+	/*
+	 * Setting stdin to binary causes Ctrl-C to not
+	 * raise SIGINT.  We must undo that side-effect.
+	 */
+	(void) __djgpp_set_ctrl_c(1);
+#endif
 #else
 	/*
 	 * Try /dev/tty.
@@ -75,7 +83,7 @@ open_getchr()
 	 * which in Unix is usually attached to the screen,
 	 * but also usually lets you read from the keyboard.
 	 */
-	tty = OPEN_TTYIN();
+	tty = open("/dev/tty", OPEN_READ);
 	if (tty < 0)
 		tty = 2;
 #endif
@@ -105,12 +113,14 @@ getchr()
 
 	do
 	{
-#if MSDOS_COMPILER
+#if MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC
 		/*
 		 * In raw read, we don't see ^C so look here for it.
 		 */
 		flush();
 #if MSDOS_COMPILER==WIN32C
+		if (ABORT_SIGS())
+			return (READ_INTR);
 		c = WIN32getch(tty);
 #else
 		c = getch();

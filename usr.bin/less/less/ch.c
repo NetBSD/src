@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.1.1.2 1997/04/22 13:45:13 mrg Exp $	*/
+/*	$NetBSD: ch.c,v 1.1.1.3 1997/09/21 12:22:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -36,6 +36,7 @@
 #include "less.h"
 #if MSDOS_COMPILER==WIN32C
 #include <errno.h>
+#include <windows.h>
 #endif
 
 public int ignore_eoi;
@@ -250,6 +251,10 @@ fch_get()
 				ierror("Waiting for data", NULL_PARG);
 #if !MSDOS_COMPILER
 	 		sleep(1);
+#else
+#if MSDOS_COMPILER==WIN32C
+			Sleep(1000);
+#endif
 #endif
 			slept = TRUE;
 		}
@@ -672,6 +677,17 @@ ch_delbufs()
 seekable(f)
 	int f;
 {
+#if MSDOS_COMPILER
+	extern int fd0;
+	if (f == fd0 && !isatty(fd0))
+	{
+		/*
+		 * In MS-DOS, pipes are seekable.  Check for
+		 * standard input, and pretend it is not seekable.
+		 */
+		return (0);
+	}
+#endif
 	return (lseek(f, (off_t)1, 0) != BAD_LSEEK);
 }
 
@@ -707,8 +723,8 @@ ch_init(f, flags)
 		/*
 		 * Try to seek; set CH_CANSEEK if it works.
 		 */
-		if (!(flags & CH_HELPFILE) && seekable(f))
-			ch_flags |= CH_CANSEEK;
+		if ((flags & CH_CANSEEK) && !seekable(f))
+			ch_flags &= ~CH_CANSEEK;
 		set_filestate(curr_ifile, (void *) thisfile);
 	}
 	if (thisfile->file == -1)

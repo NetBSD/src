@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.h,v 1.1.1.2 1997/04/22 13:45:56 mrg Exp $	*/
+/*	$NetBSD: lesskey.h,v 1.1.1.3 1997/09/21 12:23:25 mrg Exp $	*/
 
 /*
  * Format of a lesskey file:

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1.1.2 1997/04/22 13:45:37 mrg Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.3 1997/09/21 12:23:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -125,9 +125,9 @@ cvt_text(odst, osrc, ops)
 
 	for (src = osrc, dst = odst;  *src != '\0';  src++, dst++)
 	{
-		if ((ops & CVT_TO_LC) && isupper(*src))
+		if ((ops & CVT_TO_LC) && isupper((unsigned char) *src))
 			/* Convert uppercase to lowercase. */
-			*dst = tolower(*src);
+			*dst = tolower((unsigned char) *src);
 		else if ((ops & CVT_BS) && *src == '\b' && dst > odst)
 			/* Delete BS and preceding char. */
 			dst -= 2;
@@ -148,7 +148,7 @@ is_ucase(s)
 	register char *p;
 
 	for (p = s;  *p != '\0';  p++)
-		if (isupper(*p))
+		if (isupper((unsigned char) *p))
 			return (1);
 	return (0);
 }
@@ -159,6 +159,8 @@ is_ucase(s)
 	static int
 prev_pattern()
 {
+	if (last_search_type & SRCH_NO_REGEX)
+		return (last_pattern != NULL);
 #if HAVE_POSIX_REGCOMP
 	return (regpattern != NULL);
 #endif
@@ -256,51 +258,55 @@ compile_pattern(pattern, search_type)
 	char *pattern;
 	int search_type;
 {
-#if HAVE_POSIX_REGCOMP
-	regex_t *s = (regex_t *) ecalloc(1, sizeof(regex_t));
-	if (regcomp(s, pattern, REGCOMP_FLAG))
+	if ((search_type & SRCH_NO_REGEX) == 0)
 	{
-		free(s);
-		error("Invalid pattern", NULL_PARG);
-		return (-1);
-	}
-	if (regpattern != NULL)
-		regfree(regpattern);
-	regpattern = s;
+#if HAVE_POSIX_REGCOMP
+		regex_t *s = (regex_t *) ecalloc(1, sizeof(regex_t));
+		if (regcomp(s, pattern, REGCOMP_FLAG))
+		{
+			free(s);
+			error("Invalid pattern", NULL_PARG);
+			return (-1);
+		}
+		if (regpattern != NULL)
+			regfree(regpattern);
+		regpattern = s;
 #endif
 #if HAVE_RE_COMP
-	PARG parg;
-	if ((parg.p_string = re_comp(pattern)) != NULL)
-	{
-		error("%s", &parg);
-		return (-1);
-	}
-	re_pattern = 1;
+		PARG parg;
+		if ((parg.p_string = re_comp(pattern)) != NULL)
+		{
+			error("%s", &parg);
+			return (-1);
+		}
+		re_pattern = 1;
 #endif
 #if HAVE_REGCMP
-	char *s;
-	if ((s = regcmp(pattern, 0)) == NULL)
-	{
-		error("Invalid pattern", NULL_PARG);
-		return (-1);
-	}
-	if (cpattern != NULL)
-		free(cpattern);
-	cpattern = s;
+		char *s;
+		if ((s = regcmp(pattern, 0)) == NULL)
+		{
+			error("Invalid pattern", NULL_PARG);
+			return (-1);
+		}
+		if (cpattern != NULL)
+			free(cpattern);
+		cpattern = s;
 #endif
 #if HAVE_V8_REGCOMP
-	struct regexp *s;
-	if ((s = regcomp(pattern)) == NULL)
-	{
-		/*
-		 * regcomp has already printed error message via regerror().
-		 */
-		return (-1);
-	}
-	if (regpattern != NULL)
-		free(regpattern);
-	regpattern = s;
+		struct regexp *s;
+		if ((s = regcomp(pattern)) == NULL)
+		{
+			/*
+			 * regcomp has already printed an error message 
+			 * via regerror().
+			 */
+			return (-1);
+		}
+		if (regpattern != NULL)
+			free(regpattern);
+		regpattern = s;
 #endif
+	}
 
 	if (last_pattern != NULL)
 		free(last_pattern);
@@ -336,9 +342,7 @@ uncompile_pattern()
 		free(regpattern);
 	regpattern = NULL;
 #endif
-#if NO_REGEX
 	last_pattern = NULL;
-#endif
 }
 
 /*

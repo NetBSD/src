@@ -1,10 +1,14 @@
-.TH LESS 1 "Version 321: 18 Jul 96"
+.TH LESS 1 "Version 332: 22 Apr 97"
 .SH NAME
 less \- opposite of more
 .SH SYNOPSIS
 .B "less -?"
 .br
+.B "less --help"
+.br
 .B "less -V"
+.br
+.B "less --version"
 .br
 .B "less [-[+]aBcCdeEfgGiImMnNqQrsSuUVwX]"
 .br
@@ -79,11 +83,14 @@ Warning: some systems use ^Y as a special job control character.
 Scroll backward N lines, default one half of the screen size.
 If N is specified, it becomes the new default for 
 subsequent d and u commands.
-.IP "ESC-["
-Scroll horizontally left N characters, default 8.
-This behaves best if you also set the -S option (chop lines).
-.IP "ESC-]"
+.IP "ESC-) or RIGHTARROW"
 Scroll horizontally right N characters, default 8.
+This behaves best if you also set the -S option (chop lines).
+Note that if you wish to enter a number N, you must use ESC-), not RIGHTARROW,
+because the arrow is taken to be a line editing command
+(see the LINE EDITING section).
+.IP "ESC-( or LEFTARROW"
+Scroll horizontally left N characters, default 8.
 .IP "r or ^R or ^L"
 Repaint the screen.
 .IP R
@@ -257,6 +264,9 @@ The filename is inserted into the command line list of files
 so that it can be seen by subsequent :n and :p commands.
 If the filename consists of several files, they are all inserted into
 the list of files and the first one is examined.
+If the filename contains one or more spaces,
+the entire filename should be enclosed in double quotes
+(also see the -" option).
 .IP "^X^V or E"
 Same as :e.
 Warning: some systems use ^V as a special literalization character.
@@ -370,6 +380,9 @@ or if you use
 .sp
 LESS="-options"; export LESS
 .sp
+On MS-DOS, you don't need the quotes, but you should replace any 
+percent signs in the options string by double percent signs.
+.sp
 The environment variable is parsed before the command line,
 so command line options override the LESS environment variable.
 If an option appears in the LESS variable, it can be reset
@@ -384,6 +397,8 @@ This option displays a summary of the commands accepted by
 (the same as the h command).
 (Depending on how your shell interprets the question mark,
 it may be necessary to quote the question mark, thus: "-\\?".)
+.IP --help
+Same as -?.
 .IP -a
 Causes searches to start after the last line
 displayed on the screen, 
@@ -647,6 +662,8 @@ if neither -u nor -U is in effect.
 .IP -V
 Displays the version number of 
 .I less.
+.IP --version
+Same as -V.
 .IP -w
 Causes blank lines to be used to represent lines
 past the end of the file.
@@ -681,6 +698,20 @@ lines less than the current screen size.
 For example, if the screen is 24 lines, \fI-z-4\fP sets the 
 scrolling window to 20 lines.  If the screen is resized to 40 lines,
 the scrolling window automatically changes to 36 lines.
+.IP -"
+Changes the filename quoting character.
+This may be necessary if you are trying to name a file
+which contains both spaces and quote characters.
+Followed by a single character, this changes the quote character to that
+character.
+Filenames containing a space should then be surrounded by that character
+rather than by double quotes.
+Followed by two characters, changes the open quote to the first character,
+and the close quote to the second character.
+Filenames containing a space should then be preceded by the open quote
+character and followed by the close quote character.
+Note that even after the quote characters are changed, this option
+remains -" (a dash followed by a double quote).
 .IP --
 A command line argument of "--" marks the end of option arguments.
 Any arguments following this are interpreted as filenames.
@@ -746,6 +777,10 @@ Complete the partial filename to the left of the cursor.
 If it matches more than one filename, the first match
 is entered into the command line.
 Repeated TABs will cycle thru the other matching filenames.
+If the completed filename is a directory, a "/" is appended to the filename.
+(On MS-DOS systems, a "\\" is appended.)
+The environment variable LESSSEPARATOR can be used to specify a 
+different character to append to a directory name.
 .IP "BACKTAB [ ESC-TAB ]"
 Like, TAB, but cycles in the reverse direction thru the matching filenames.
 .IP "^L"
@@ -904,7 +939,7 @@ previous example scripts:
 .PP
 lesspipe.sh:
 .br
-	!# /bin/sh
+	#! /bin/sh
 .br
 	case "$1" in
 .br
@@ -1205,9 +1240,6 @@ as usual, or in a
 .IP COLUMNS
 Sets the number of columns on the screen.
 Takes precedence over the number of columns specified by the TERM variable.
-(But if you have a windowing system which supports TIOCGWINSZ or WIOCGETD,
-the window system's idea of the screen size takes precedence over the
-LINES and COLUMNS environment variables.)
 .IP EDITOR
 The name of the editor (used for the v command).
 .IP HOME
@@ -1230,16 +1262,29 @@ Defines a character set.
 Selects a predefined character set.
 .IP LESSCLOSE
 Command line to invoke the (optional) input-postprocessor.
+.IP LESSECHO
+Name of the lessecho program (default "lessecho").
+The lessecho program is needed to expand metacharacters, such as * and ?,
+in filenames on Unix systems.
 .IP LESSEDIT
 Editor prototype string (used for the v command).
 See discussion under PROMPTS.
 .IP LESSKEY
 Name of the default lesskey(1) file.
+.IP LESSMETACHARS
+List of characters which are considered "metacharacters" by the shell.
+.IP LESSMETAESCAPE
+Prefix which less will add before each metacharacter in a
+command sent to the shell.
+If LESSMETAESCAPE is an empty string, commands containing
+metacharacters will not be passed to the shell.
 .IP LESSOPEN
 Command line to invoke the (optional) input-preprocessor.
 .IP LESSSECURE
 Runs less in "secure" mode.
 See discussion under SECURITY.
+.IP LESSSEPARATOR
+String to be appended to a directory name in filename completion.
 .IP LINES
 Sets the number of lines on the screen.
 Takes precedence over the number of lines specified by the TERM variable.
@@ -1278,7 +1323,7 @@ more text than the matching string may be highlighted.
 .PP
 On some systems,
 .I setlocale
-claims that characters 0 thru 31 are control characters 
+claims that ASCII characters 0 thru 31 are control characters 
 rather than binary characters.
 This causes 
 .I less 
@@ -1289,5 +1334,5 @@ LESSCHARSET to "ascii" (or whatever character set is appropriate).
 .SH COPYRIGHT
 Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
 .br
-Comments to: markn@3do.com
+Comments to: markn@fog.net
 

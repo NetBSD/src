@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.1.1.2 1997/04/22 13:45:44 mrg Exp $	*/
+/*	$NetBSD: decode.c,v 1.1.1.3 1997/09/21 12:23:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -102,6 +102,8 @@ static unsigned char cmdtable[] =
 	'%',0,				A_PERCENT,
 	ESC,'[',0,			A_LSHIFT,
 	ESC,']',0,			A_RSHIFT,
+	ESC,'(',0,			A_LSHIFT,
+	ESC,')',0,			A_RSHIFT,
 	'{',0,				A_F_BRACKET|A_EXTRA,	'{','}',0,
 	'}',0,				A_B_BRACKET|A_EXTRA,	'{','}',0,
 	'(',0,				A_F_BRACKET|A_EXTRA,	'(',')',0,
@@ -547,7 +549,9 @@ lesskey(filename)
 	/*
 	 * Try to open the lesskey file.
 	 */
+	filename = unquote_file(filename);
 	f = open(filename, OPEN_READ);
+	free(filename);
 	if (f < 0)
 		return (1);
 
@@ -606,7 +610,9 @@ add_hometable()
 	char *filename;
 	PARG parg;
 
-	if ((filename = lgetenv("LESSKEY")) == NULL)
+	if ((filename = lgetenv("LESSKEY")) != NULL)
+		filename = save(filename);
+	else
 		filename = homefile(LESSKEYFILE);
 	if (filename == NULL)
 		return;
