@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.2 1998/07/08 07:56:13 thorpej Exp $	*/
+/*	$NetBSD: pio.h,v 1.3 1998/07/08 07:56:47 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -42,10 +42,5 @@ extern struct bus_space isa_io_bs_tag;
 
 #define	inb(port)	 bus_space_read_1( &isa_io_bs_tag, (bus_space_handle_t)isa_io_bs_tag.bs_cookie, (port))
 #define	outb(port, byte) bus_space_write_1(&isa_io_bs_tag, (bus_space_handle_t)isa_io_bs_tag.bs_cookie, (port), (byte))
-
-/* dma range check is here because pio.h is the only machine dependent
-   file included by isadma.c */
-#define ISA_MACHDEP_DMARANGECHECK
-int isa_machdep_dmarangecheck(vm_offset_t, vm_size_t);
 
 #endif /* _ARM32_PIO_H_ */
