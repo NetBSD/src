@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)look.c	5.1 (Berkeley) 7/21/91";*/
-static char rcsid[] = "$Id: look.c,v 1.4 1993/10/13 18:34:30 jtc Exp $";
+static char rcsid[] = "$Id: look.c,v 1.5 1994/03/28 02:16:57 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -128,7 +128,7 @@ main(argc, argv)
 	}
 
 	if ((fd = open(file, O_RDONLY, 0)) < 0 || fstat(fd, &sb) ||
-	    (front = mmap(NULL, sb.st_size, PROT_READ, MAP_FILE, fd,
+	    (front = mmap(NULL, sb.st_size, PROT_READ, 0, fd,
 	    (off_t)0)) == NULL)
 		err("%s: %s", file, strerror(errno));
 	back = front + sb.st_size;
