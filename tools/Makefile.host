@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.22 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile.host,v 1.23 2003/11/16 18:06:01 dsl Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -56,7 +56,7 @@ ${HOST_BINDIR}/${HOSTPROGNAME}:: ${HOSTPROG}
 	mkdir -p ${HOST_BINDIR}
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .PHONY:		${HOST_BINDIR}/${HOSTPROGNAME}
 .endif
 
@@ -68,7 +68,7 @@ ${HOST_FILESDIR}/${F}: ${F}
 	mkdir -p ${HOST_FILESDIR}
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 .PHONY:		${HOST_FILESDIR}/${F}
 .endif
 .endfor
