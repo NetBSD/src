@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.62.2.1 2002/12/11 17:59:23 he Exp $	*/
+/*	$NetBSD: siop.c,v 1.62.2.2 2005/03/17 17:43:38 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62.2.1 2002/12/11 17:59:23 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.62.2.2 2005/03/17 17:43:38 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,13 @@ siop_intr(v)
 				 * and the command should terminate.
 				 */
 					INCSTAT(siop_stat_intr_shortxfer);
-					if ((dstat & DSTAT_DFE) == 0)
+					/*
+					 * sdp not needed here, but this
+					 * will cause xs->resid to be adjusted
+					 */
+					if (scratcha0 & A_flag_data)
+						siop_sdp(&siop_cmd->cmd_c);
+					else if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(&sc->sc_c);
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_status);
@@ -892,6 +898,15 @@ scintr:
 			 * Don't call memmove in this case.
 			 */
 			if (offset < SIOP_NSG) {
+				int i;
+				/*
+				 * adjust xs->resid for already-transfered
+				 * data
+				 */
+				for (i = 0; i < offset; i++)
+					xs->resid -= le32toh(
+					    siop_cmd->cmd_tables->data[i].count
+					    );
 				memmove(&siop_cmd->cmd_tables->data[0],
 				    &siop_cmd->cmd_tables->data[offset],
 				    (SIOP_NSG - offset) * sizeof(scr_table_t));
@@ -921,6 +936,22 @@ scintr:
 			    le32toh(siop_cmd->cmd_tables->status));
 #endif
 			INCSTAT(siop_stat_intr_done);
+			/*
+			 * update resid. If we completed a xfer with
+			 * some data transfers, offset will be at last 1.
+			 * If it's 0 then either no data was transfered at
+			 * all, or resid was already adjusted by a save
+			 * data pointer, or a phase mismatch.
+			 */
+			offset = bus_space_read_1(sc->sc_c.sc_rt,
+			    sc->sc_c.sc_rh, SIOP_SCRATCHA + 1);
+			{
+				int i;
+				for (i = 0; i < offset; i++)
+					xs->resid -= le32toh(
+					    siop_cmd->cmd_tables->data[i].count
+					    );
+			}
 			siop_cmd->cmd_c.status = CMDST_DONE;
 			goto end;
 		default:
@@ -1020,7 +1051,6 @@ siop_scsicmd_end(siop_cmd)
 	callout_stop(&siop_cmd->cmd_c.xs->xs_callout);
 	siop_cmd->cmd_c.status = CMDST_FREE;
 	TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
-	xs->resid = 0;
 	scsipi_done (xs);
 }
 
