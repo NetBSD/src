@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 1995/06/28 02:43:41 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.24 1995/08/13 00:20:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -207,10 +207,11 @@ extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
 #define splnone()	spl0()
 #define splsoftclock()	spl1()
-#define splnet()	spl1()
+#define splsoftnet()	spl1()
 #define splbio()	spl3()
-#define splimp()	spl3()
+#define splnet()	spl3()
 #define spltty()	spl4()
+#define splimp()	spl4()
 #ifndef LEV6_DEFER
 #define splclock()	spl6()
 #define splstatclock()	spl6()
