@@ -1,4 +1,5 @@
-/*	$OpenBSD: sshconnect.h,v 1.6 2001/02/15 23:19:59 markus Exp $	*/
+/*	$NetBSD: sshconnect.h,v 1.1.1.1.2.3 2001/12/10 23:52:36 he Exp $	*/
+/*	$OpenBSD: sshconnect.h,v 1.13 2001/10/08 19:05:05 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,47 +26,22 @@
  */
 #ifndef SSHCONNECT_H
 #define SSHCONNECT_H
-/*
- * Opens a TCP/IP connection to the remote server on the given host.  If port
- * is 0, the default port will be used.  If anonymous is zero, a privileged
- * port will be allocated to make the connection. This requires super-user
- * privileges if anonymous is false. Connection_attempts specifies the
- * maximum number of tries, one per second.  This returns true on success,
- * and zero on failure.  If the connection is successful, this calls
- * packet_set_connection for the connection.
- */
+
 int
-ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
-    u_short port, int connection_attempts,
-    int anonymous, uid_t original_real_uid,
-    const char *proxy_command);
-
-/*
- * Starts a dialog with the server, and authenticates the current user on the
- * server.  This does not need any extra privileges.  The basic connection to
- * the server must already have been established before this is called. If
- * login fails, this function prints an error and never returns. This
- * initializes the random state, and leaves it initialized (it will also have
- * references from the packet module).
- */
+ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
+    int, struct passwd *, const char *);
 
 void
-ssh_login(int host_key_valid, RSA * host_key, const char *host,
-    struct sockaddr * hostaddr, uid_t original_real_uid);
+ssh_login(Key **, int, const char *, struct sockaddr *, struct passwd *);
 
+int	 verify_host_key(char *, struct sockaddr *, Key *);
 
-void
-check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
-    const char *user_hostfile, const char *system_hostfile);
+void	 ssh_kex(char *, struct sockaddr *);
+void	 ssh_kex2(char *, struct sockaddr *);
 
-void	ssh_kex(char *host, struct sockaddr *hostaddr);
-void
-ssh_userauth(const char * local_user, const char * server_user, char *host,
-    int host_key_valid, RSA *own_host_key);
+void	 ssh_userauth1(const char *, const char *, char *, Key **, int);
+void	 ssh_userauth2(const char *, const char *, char *, Key **, int);
 
-void	ssh_kex2(char *host, struct sockaddr *hostaddr);
-void	ssh_userauth2(const char *server_user, char *host);
-
-void	ssh_put_password(char *password);
+void	 ssh_put_password(char *);
 
 #endif
