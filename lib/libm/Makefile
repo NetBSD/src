@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.61 2004/07/01 16:09:21 drochner Exp $
+#  $NetBSD: Makefile,v 1.62 2004/07/01 17:33:16 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -62,7 +62,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    s_finite.S s_finitef.S s_floor.S s_floorf.S s_ilogb.S s_ilogbf.S \
 	    s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_rint.S s_rintf.S \
 	    s_scalbn.S s_scalbnf.S s_significand.S s_significandf.S s_sin.S \
-	    s_sinf.S s_tan.S s_tanf.S
+	    s_sinf.S s_tan.S s_tanf.S lrint.S
 .else
 SUBDIR=arch/i387
 .endif
@@ -159,7 +159,7 @@ SRCS+= ${ARCH_ADDS}
 
 # Substitute common sources with any arch specific sources
 .for i in ${ARCH_SRCS} ${NOIEEE_ARCH}
-    SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
+    SRCS:=${SRCS:S/^${i:S/.S/.c/}/$i/}
 .endfor
 
 .if (${MACHINE_ARCH} == "vax") # XXX until POLYD is written.
