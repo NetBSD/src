@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.18 1997/03/22 08:29:50 matthias Exp $
+#	$NetBSD: STEELHEAD,v 1.19 1997/06/01 18:15:12 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -27,7 +27,7 @@ options 	COMPAT_12
 file-system 	FFS			# Berkeley fast file system
 #file-system	MFS			# memory file system; uses RAM and swap
 file-system	NFS			# Network File System client
-#file-system	ISOFS			# ISO 9660 CD-ROM file system, with RR
+file-system	ISOFS			# ISO 9660 CD-ROM file system, with RR
 #file-system	MSDOSFS			# MS-DOS FAT file system
 file-system	FDESC			# /dev/fd
 file-system	KERNFS			# kernel file system; recommended
@@ -52,6 +52,8 @@ options		"CONSOLE_SPEED=B19200"	# default baud on the console (tty00)
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 
 config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and vnd0a
+
+ncr0	at mainbus0 flags 0x2000
 
 sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
