@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.222 2002/02/02 06:00:56 gehenna Exp $
+$NetBSD: usbdevs,v 1.223 2002/02/07 13:00:13 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ vendor MICROTECH	0x07af	Microtech
 vendor OLYMPUS		0x07b4	Olympus
 vendor ABOCOM		0x07b8	AboCom Systems
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken
+vendor ONSPEC		0x07c4	OnSpec
 vendor APG		0x07c5	APG Cash Drawer
 vendor BUG		0x07c8	B.U.G.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
@@ -882,6 +883,9 @@ product OLYMPUS C700		0x0105	C-700 Ultra Zoom
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
+
+/* OnSpec Electronic, Inc. */
+product ONSPEC MD2		0x0103	disk
 
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
