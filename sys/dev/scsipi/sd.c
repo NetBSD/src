@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.191 2002/11/01 11:32:00 mrg Exp $	*/
+/*	$NetBSD: sd.c,v 1.192 2002/12/15 01:55:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.191 2002/11/01 11:32:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.192 2002/12/15 01:55:44 fvdl Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -908,9 +908,9 @@ sdioctl(dev, cmd, addr, flag, p)
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
-	int error;
+	int error = 0;
 #ifdef __HAVE_OLD_DISKLABEL
-	struct disklabel newlabel;
+	struct disklabel *newlabel = NULL;
 #endif
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdioctl 0x%lx ", cmd));
@@ -950,11 +950,16 @@ sdioctl(dev, cmd, addr, flag, p)
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
-		newlabel = *(sd->sc_dk.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		return (0);
+		newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
+		if (newlabel == NULL)
+			return EIO;
+		memcpy(newlabel, sd->sc_dk.dk_label, sizeof (*newlabel));
+		if (newlabel->d_npartitions <= OLDMAXPARTITIONS)
+			memcpy(addr, newlabel, sizeof (struct olddisklabel));
+		else
+			error = ENOTTY;
+		free(newlabel, M_TEMP);
+		return error;
 #endif
 
 	case DIOCGPART:
@@ -972,20 +977,23 @@ sdioctl(dev, cmd, addr, flag, p)
 	{
 		struct disklabel *lp;
 
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
 #ifdef __HAVE_OLD_DISKLABEL
  		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
-			memset(&newlabel, 0, sizeof newlabel);
-			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
-			lp = &newlabel;
+			newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
+			if (newlabel == NULL)
+				return EIO;
+			memset(newlabel, 0, sizeof newlabel);
+			memcpy(newlabel, addr, sizeof (struct olddisklabel));
+			lp = newlabel;
 		} else
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
 		if ((error = sdlock(sd)) != 0)
-			return (error);
+			goto bad;
 		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sd->sc_dk.dk_label,
@@ -1004,6 +1012,11 @@ sdioctl(dev, cmd, addr, flag, p)
 
 		sd->flags &= ~SDF_LABELLING;
 		sdunlock(sd);
+bad:
+#ifdef __HAVE_OLD_DISKLABEL
+		if (newlabel != NULL)
+			free(newlabel, M_TEMP);
+#endif
 		return (error);
 	}
 
@@ -1057,11 +1070,16 @@ sdioctl(dev, cmd, addr, flag, p)
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDEFLABEL:
-		sdgetdefaultlabel(sd, &newlabel);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		return (0);
+		newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
+		if (newlabel == NULL)
+			return EIO;
+		sdgetdefaultlabel(sd, newlabel);
+		if (newlabel->d_npartitions <= OLDMAXPARTITIONS)
+			memcpy(addr, newlabel, sizeof (struct olddisklabel));
+		else
+			error = ENOTTY;
+		free(newlabel, M_TEMP);
+		return error;
 #endif
 
 	case DIOCGCACHE:
