@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2001/10/23 01:36:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2001/10/29 19:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,28 +94,21 @@ vaddr_t msgbuf_vaddr;
 
 int	lcsplx(int);			/* called from locore.S */
 
-static int fake_spl __P((void));
-static int fake_splx __P((int));
-static void fake_setsoft __P((void));
+static int fake_spl __P((int));
+static void fake_splx __P((int));
+static void fake_setsoft __P((int));
 static void fake_clock_return __P((struct clockframe *, int));
-static void fake_irq_establish __P((int, int, void (*)(void *), void *));
+static void *fake_intr_establish __P((int, int, int, int (*)(void *), void *));
+static void fake_intr_disestablish __P((void *));
 
 struct machvec machine_interface = {
 	fake_spl,
 	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
 	fake_splx,
 	fake_setsoft,
-	fake_setsoft,
 	fake_clock_return,
-	fake_irq_establish,
+	fake_intr_establish,
+	fake_intr_disestablish,
 };
 
 void	ofppc_bootstrap_console(void);
@@ -142,28 +135,8 @@ initppc(startkernel, endkernel, args)
 #endif
 	int exc, scratch;
 
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
-
-	curpcb = &proc0paddr->u_pcb;
-
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
 	/* Initialize the bootstrap console. */
 	ofppc_bootstrap_console();
-
-	/* Initialize the platform structure. */
-	platform_init();
-
-	/*
-	 * Now that we know what platform we're running on, initialize
-	 * the console.
-	 */
-	(*platform.cons_init)();
-
-#ifdef __notyet__	/* Needs some rethinking regarding real/virtual OFW */
-	OF_set_callback(callback);
-#endif
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -196,6 +169,23 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+
+	/*
+	 * Initialize the platform structure.  This may add entries
+	 * to the BAT table.
+	 */
+	platform_init();
+
+	proc0.p_addr = proc0paddr;
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
+
+	curpcb = &proc0paddr->u_pcb;
+
+	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+
+#ifdef __notyet__	/* Needs some rethinking regarding real/virtual OFW */
+	OF_set_callback(callback);
+#endif
 
 	/*
 	 * Set up trap vectors
@@ -251,6 +241,12 @@ initppc(startkernel, endkernel, args)
 	 */
 	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
+	/*
+	 * Now that translation is enabled (and we can access bus space),
+	 * initialize the console.
+	 */
+	(*platform.cons_init)();
 
 	/*
 	 * Parse arg string.
@@ -615,14 +611,14 @@ int
 lcsplx(int ipl)
 {
 
-	return (splx(ipl));
+	return (_spllower(ipl));
 }
 
 /*
  * Initial Machine Interface.
  */
 static int
-fake_spl()
+fake_spl(int new)
 {
 	int scratch;
 
@@ -632,16 +628,17 @@ fake_spl()
 }
 
 static void
-fake_setsoft()
+fake_setsoft(int ipl)
 {
 	/* Do nothing */
 }
 
-static int
+static void
 fake_splx(new)
 	int new;
 {
-	return (fake_spl());
+
+	(void) fake_spl(0);
 }
 
 static void
@@ -652,11 +649,20 @@ fake_clock_return(frame, nticks)
 	/* Do nothing */
 }
 
-static void
-fake_irq_establish(irq, level, handler, arg)
-	int irq, level;
-	void (*handler) __P((void *));
+static void *
+fake_intr_establish(irq, level, ist, handler, arg)
+	int irq, level, ist;
+	int (*handler) __P((void *));
 	void *arg;
 {
-	panic("fake_irq_establish");
+
+	panic("fake_intr_establish");
+}
+
+static void
+fake_intr_disestablish(cookie)
+	void *cookie;
+{
+
+	panic("fake_intr_disestablish");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgenvar.h,v 1.1 2001/10/22 23:01:19 thorpej Exp $	*/
+/*	$NetBSD: ofwgenvar.h,v 1.2 2001/10/29 19:04:27 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,6 @@
 #ifndef _OFPPC_OFWGEN_OFWGENVAR_H_
 #define	_OFPPC_OFWGEN_OFWGENVAR_H_
 
-extern struct machvec ofwgen_machvec;
+void	ofwgen_intr_init(void);
 
 #endif /* _OFPPC_OFWGEN_OFWGENVAR_H_ */

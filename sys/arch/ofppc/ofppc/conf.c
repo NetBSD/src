@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 2001/03/26 12:33:25 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 2001/10/29 19:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,10 +45,30 @@ bdev_decl(sw);
 #include "raid.h"
 bdev_decl(raid);
 
+#include "cd.h"
+bdev_decl(cd);
+
+#include "sd.h"
+bdev_decl(sd);
+
+#include "wd.h"
+bdev_decl(wd);
+
+#include "md.h"
+bdev_decl(md);
+
+#include "ld.h"
+bdev_decl(ld);
+
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NOFDISK,ofdisk_),/* 0: Openfirmware disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo device */
-	bdev_disk_init(NRAID,raid),	/* 3: RAIDframe disk driver */
+	bdev_disk_init(NRAID,raid),	/* 2: RAIDframe disk driver */
+	bdev_disk_init(NCD,cd),		/* 3: CD-ROM driver */
+	bdev_disk_init(NSD,sd),		/* 4: SCSI disk driver */
+	bdev_disk_init(NWD,wd),		/* 5: ATA disk driver */
+	bdev_disk_init(NMD,md),		/* 6: memory disk driver */
+	bdev_disk_init(NLD,ld),		/* 7: logical disks */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
@@ -78,6 +98,11 @@ cdev_decl(bpf);
 cdev_decl(openfirm);
 
 cdev_decl(raid);
+cdev_decl(cd);
+cdev_decl(sd);
+cdev_decl(wd);
+cdev_decl(md);
+cdev_decl(ld);
 
 /* open, close, read, write */
 #define	cdev_rtc_init(c,n)	cdev__ocrw_init(c,n)
@@ -97,6 +122,11 @@ struct cdevsw cdevsw[] = {
 	cdev_rnd_init(NRND,rnd),	/* 11: random source pseudo-device */
 	cdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
 	cdev_openfirm_init(NOPENFIRM,openfirm),/* 13: OpenFirmware pseudo-device */
+	cdev_disk_init(NCD,cd),		/* 14: CD-ROM driver */
+	cdev_disk_init(NSD,sd),		/* 15: SCSI disk driver */
+	cdev_disk_init(NWD,wd),		/* 16: ATA disk driver */
+	cdev_disk_init(NMD,md),		/* 17: memory disk driver */
+	cdev_disk_init(NLD,ld),		/* 18: logical disks */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -142,8 +172,13 @@ static int chrtoblktbl[] = {
 	/*  9 */	NODEV,
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
-	/* 12 */	3,
+	/* 12 */	2,
 	/* 13 */	NODEV,
+	/* 14 */	3,
+	/* 15 */	4,
+	/* 16 */	5,
+	/* 17 */	6,
+	/* 18 */	7,
 };
 
 /*
