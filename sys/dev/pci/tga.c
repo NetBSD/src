@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.11 1999/01/11 21:35:55 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.12 1999/01/11 22:11:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -370,7 +370,7 @@ tga_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->width = sc->sc_dc->dc_wid;
 		wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
 		wsd_fbip->cmsize = 256;		/* XXX ??? */
-#undef fbt
+#undef wsd_fbip
 		return (0);
 
 	case WSDISPLAYIO_GETCMAP:
@@ -381,14 +381,14 @@ tga_ioctl(v, cmd, data, flag, p)
 		return (*tgar->tgar_set_cmap)(dc,
 		    (struct wsdisplay_cmap *)data);
 
-	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_SVIDEO:
 		if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF)
 			tga_blank(sc->sc_dc);
 		else
 			tga_unblank(sc->sc_dc);
 		return (0);
 
-	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = dc->dc_blanked ?
 		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
 		return (0);
