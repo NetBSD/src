@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.64 2000/09/30 00:23:28 itojun Exp $
+#	$NetBSD: Makefile,v 1.65 2000/10/31 10:46:34 itojun Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
 SUBDIR=	csu libarch libbz2 libc libcompat libcrypt libcurses libedit \
-	libkvm libl libm libmenu libossaudio libpcap libposix \
+	libintl libkvm libl libm libmenu libossaudio libpcap libposix \
 	libresolv librmt librpcsvc libskey libterm libusb libutil libwrap \
 	liby libz
 
