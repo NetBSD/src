@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)df.1	6.9 (Berkeley) 6/17/91
+.\"     @(#)df.1	8.3 (Berkeley) 5/8/95
 .\"
-.Dd June 17, 1991
+.Dd May 8, 1995
 .Dt DF 1
 .Os BSD 4
 .Sh NAME
@@ -39,7 +39,8 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm df
-.Op Fl ikn
+.Op Fl in
+.Op Fl t Ar type
 .Op Ar file | Ar filesystem ...
 .Sh DESCRIPTION
 .Nm Df
@@ -48,18 +49,17 @@ displays statistics about the amount of free disk space on the specified
 or on the filesystem of which
 .Ar file
 is a part.
+Values are displayed in 512-byte per block block counts.
 If neither a file or a filesystem operand is specified,
-statistics for all mounted filesystems are displayed.
+statistics for all mounted filesystems are displayed
+(subject to the
+.Fl t
+option below).
 .Pp
 The following options are available:
 .Bl -tag -width Ds
 .It Fl i
 Include statistics on the number of free inodes.
-.It Fl k
-By default, all sizes are reported in 512-byte block counts.
-The
-.Fl k
-option causes the numbers to be reported in kilobyte counts.
 .It Fl n
 Print out the previously obtained statistics from the filesystems.
 This option should be used if it is possible that one or more
@@ -69,11 +69,46 @@ When this option is specified,
 .Nm df
 will not request new statistics from the filesystems, but will respond
 with the possibly stale statistics that were previously obtained.
+.It Fl t
+Only print out statistics for filesystems of the specified types.
+More than one type may be specified in a comma separated list.
+The list of filesystem types can be prefixed with
+.Dq no
+to specify the filesystem types for which action should
+.Em not
+be taken.
+For example, the
+.Nm df
+command:
+.Bd -literal -offset indent
+df -t nonfs,mfs
+.Ed
+.Pp
+lists all filesystems except those of type
+.Tn NFS
+and
+.Tn MFS .
+The
+.Xr sysctl 8
+command can be used to find out the types of filesystems
+that are available on the system:
+.Bd -literal -offset indent
+sysctl vfs
+.Ed
+.El
+.Sh ENVIRONMENTAL VARIABLES
+.Bl -tag -width BLOCKSIZE
+.It Ev BLOCKSIZE
+If the environmental variable
+.Ev BLOCKSIZE
+is set, the block counts will be displayed in units of that size block.
 .El
 .Sh BUGS
 The
 .Fl n
-flag is ignored if a file or filesystem is specified.
+and
+.Fl t
+flags are ignored if a file or filesystem is specified.
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr statfs 2 ,
@@ -82,7 +117,8 @@ flag is ignored if a file or filesystem is specified.
 .Xr getmntinfo 3 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
-.Xr quot 8
+.Xr quot 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 A
 .Nm df
