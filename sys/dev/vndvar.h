@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.5 2000/01/21 23:39:57 thorpej Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.6 2000/03/20 13:17:47 jdolecek Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ struct vnd_ioctl {
 /* vnd_flags */
 #define	VNDIOF_HASGEOM	0x01		/* use specified geometry */
 
+#ifdef _KERNEL
+
 struct vnode;
 struct ucred;
 
@@ -124,6 +126,7 @@ struct vnd_softc {
 	struct pool	 sc_vxpool;	/* vndxfer pool */
 	struct pool	 sc_vbpool;	/* vndbuf pool */
 };
+#endif
 
 /* sc_flags */
 #define	VNF_INITED	0x01	/* unit has been initialized */
