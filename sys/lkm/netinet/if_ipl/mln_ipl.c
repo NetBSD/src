@@ -68,7 +68,7 @@
 
 extern	int	lkmenodev(), lkmexists(), lkmdispatch();
 
-extern	int	iplattach(), iplopen(), iplclose(), iplioctl(), ipldetach();
+extern	int	ipfilterattach(), iplopen(), iplclose(), iplioctl(), ipfilterdetach();
 #ifdef NETBSD_PF
 #include <net/pfil.h>
 #endif
@@ -191,7 +191,7 @@ static int ipl_unload()
 {
 	int error;
 
-	error = ipldetach();
+	error = ipfilterdetach();
 #ifdef NETBSD_PF
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #endif
@@ -207,7 +207,7 @@ static int ipl_load()
 	struct vattr vattr;
 	int error, fmode = S_IFCHR|0600;
 
-	error = iplattach();
+	error = ipfilterattach();
 #ifdef NETBSD_PF
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #endif
