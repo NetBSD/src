@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.100 2000/03/20 11:52:34 pk Exp $
+.\"	$NetBSD: options.4,v 1.101 2000/03/31 05:49:59 tsarna Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -142,7 +142,11 @@ This allows some old
 .Xr ioctl 2
 on
 .Xr wscons 4
-to be performed.
+to be performed, and allows the
+.Dv NFSSVC_BIOD
+mode of the
+.Xr nfssvc 2
+system call to be used for compatibility with the deprecated nfsiod program.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
