@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.20 2001/03/19 02:25:33 simonb Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.21 2001/05/06 04:32:09 ross Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,38 +77,36 @@ sys_obreak(p, v, retval)
 	} */ *uap = v;
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
-	ssize_t diff;
 	int error;
 
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)
 		return (ENOMEM);
 
 	old = round_page(old + ptoa(vm->vm_dsize));
-	diff = new - old;
 
-	if (diff == 0)
+	if (new == old)
 		return (0);
 
 	/*
 	 * grow or shrink?
 	 */
-	if (diff > 0) {
-		error = uvm_map(&vm->vm_map, &old, diff, NULL,
+	if (new > old) {
+		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
 		if (error) {
 			uprintf("sbrk: grow %ld failed, error = %d\n",
-				(long)diff, error);
+				new - old, error);
 			return error;
 		}
-		vm->vm_dsize += atop(diff);
+		vm->vm_dsize += atop(new - old);
 	} else {
-		uvm_deallocate(&vm->vm_map, new, -diff);
-		vm->vm_dsize -= atop(-diff);
+		uvm_deallocate(&vm->vm_map, new, old - new);
+		vm->vm_dsize -= atop(old - new);
 	}
 	return 0;
 }
