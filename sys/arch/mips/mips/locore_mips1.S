@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.9 1999/05/19 07:08:43 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.10 1999/05/21 06:01:14 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -764,7 +764,7 @@ LEAF_NOPROFILE(mips1_TLBModException)
 	tlbp					# find the TLB entry
 	mfc0	k0, MIPS_COP_0_TLB_LOW		# get the physical address
 	mfc0	k1, MIPS_COP_0_TLB_INDEX	# check to be sure its valid
-	or	k0, k0, MIPS1_TLB_MOD_BIT	# update TLB
+	or	k0, k0, MIPS1_TLB_DIRTY_BIT	# update TLB
 	blt	k1, zero, 4f			# not found!!!
 	mtc0	k0, MIPS_COP_0_TLB_LOW
 	li	k1, MIPS_KSEG0_START
@@ -1017,7 +1017,6 @@ LEAF(mips1_TLBFlushPID)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBFlushPID)
-#endif
 
 /*--------------------------------------------------------------------------
  *
@@ -1099,7 +1098,6 @@ LEAF(mips1_TLBUpdate)
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBUpdate)
 
-#if 0
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBFind --
@@ -1512,21 +1510,20 @@ LEAF(mips1_FlushDCache)
 	nop
 END(mips1_FlushDCache)
 
-/*----------------------------------------------------------------------------
+/*
+ * void mips1_wbflush(void)
  *
- * mips1_wbflush --
+ * Drain processor's write buffer, normally used to ensure any I/O
+ * register write operations are done before subsequent manipulations.
  *
- *	Return when the write buffer is empty.
+ * Some hardware implementations have a WB chip indenpendent from CPU
+ * core, and CU0 (Coprocessor Usability #0) bit of CP0 status register
+ * is wired to indicate writebuffer condition.  This does busy-loop
+ * while CU0 bit indicates false condition.
  *
- *	mips1_wbflush()
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
+ * For other hardwares which have the writebuffer logic is implemented
+ * in a system controler ASIC chip, wbflush operation would done
+ * differently.
  */
 LEAF(mips1_wbflush)
 	nop
@@ -1540,11 +1537,15 @@ LEAF(mips1_wbflush)
 END(mips1_wbflush)
 
 /*
- * mips1_proc_trampoline()
+ * mips1_proc_trampoline
  *
- * Arrange for a function to be invoked neatly, after a cpu_switch().
- * Call the service function with one argument, specified by the s0
- * and s1 respectively.  There is no need register save operation.
+ * Special arrangement for a process about to go user mode right after
+ * fork() system call.  When the first CPU tick is scheduled to the
+ * forked child, it starts running from here.  Then, a service function
+ * is called with one argument suppied to complete final preparations,
+ * and the child process returns to user mode as if the fork() system
+ * call is handled in a normal way.  No need to save any registers
+ * although this calls another.
  */
 LEAF(mips1_proc_trampoline)
 	jal	ra, s0
@@ -1662,6 +1663,114 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	nop
 END(mips1_cpu_switch_resume)
 
+/*
+ * void mips1_purge_perprocess_tlb(void)
+ *
+ * Purge all TLB entries belong to per process user spaces.  Entries for
+ * kernel space are preserved.
+ */
+LEAF(mips1_purge_perprocess_tlb)
+ALEAF(mips1_TLBFlush)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
+	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
+	li	v0, MIPS_KSEG0_START
+
+	# Align the starting value (t1) and the upper bound (t2)
+1:
+	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
+	nop
+	tlbr					# obtain an entry
+	mfc0	t0, MIPS_COP_0_TLB_LOW
+	nop
+	andi	t0, v0, MIPS1_PG_G		# check PG_G bit
+	bnez	t0, 2f
+	mtc0	v0, MIPS_COP_0_TLB_HI		# mark entryhi as invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entrylo
+	nop
+	tlbwi					# invalidate the TLB entry
+2:
+	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# increment index
+	bne	t1, t2, 1b
+	nop
+
+	j	ra				# new TLBPID will be set soon
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+END(mips1_purge_perprocess_tlb)
+
+/*
+ * mips1_purge_single_tlb(vaddr_t)
+ *
+ * Purge a single TLB entry contains specified VPN if exists.
+ */
+LEAF(mips1_purge_single_tlb)
+ALEAF(mips1_TLBFlushAddr)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	mfc0	v0, MIPS_COP_0_TLB_HI		# pick current TLBPID
+	srl	a0, 12
+	sll	a0, 12				# obtain VPN
+	andi	t0, v0, 0xfc0
+	or	a0, a0, t0			# VPN with current TLBPID
+	mtc0	a0, MIPS_COP_0_TLB_HI		# set it to entryhi
+	nop
+	tlbp					# probe looking for the entry
+	mfc0	t0, MIPS_COP_0_TLB_INDEX	# see what we got
+	nop
+	bltz	t0, 1f				# index < 0 => !found
+	li	t0, MIPS_KSEG0_START
+	mtc0	t0, MIPS_COP_0_TLB_HI		# mark entryhi as invalid
+	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entrylo
+	nop
+	tlbwi					# invalidate the entry
+	nop
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# restore current TLBPID
+1:
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+END(mips1_purge_single_tlb)
+
+/*
+ * void mips1_update_tlb(vaddr, unsigned)
+ *
+ * Replace an entry which has the same VPN with the same TLBPID or
+ * global bit, if any.  If no such entry exists, add the new entry
+ * into TLB victimizing a ramdomly choosen one.
+ */
+LEAF(mips1_update_tlb)
+ALEAF(mips1_TLBUpdate)
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+
+	mfc0	v0, MIPS_COP_0_TLB_HI		# pick current TLBPID
+	srl	a0, 12
+	sll	a0, 12				# obtain VPN
+	andi	t0, v0, 0xfc0
+	or	a0, a0, t0			# VPN with current TLBPID
+	mtc0	a0, MIPS_COP_0_TLB_HI		# set it to entryhi
+	nop
+	tlbp					# probe looking for the entry
+	mfc0	t0, MIPS_COP_0_TLB_INDEX	# see what we got
+	mtc0	a1, MIPS_COP_0_TLB_LOW
+	bltz	t0, 1f				# index < 0 => !found
+	nop
+	b	2f
+	tlbwi					# update an entry found
+1:
+	tlbwr					# add vicitimizing another
+2:
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+END(mips1_update_tlb)
+
+/*
+ * void mips1_clean_tlb(void)
+ *
+ * Clense the entire TLB at early stage of processor initialization.
+ */
 LEAF(mips1_clean_tlb)
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
@@ -1682,39 +1791,6 @@ LEAF(mips1_clean_tlb)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(mips1_clean_tlb)
-
-/*
- * void mips1_purge_perprocess_tlb(void)
- *
- * Purge all TLB entries belong to user spaces.  Entries for kernel space
- * are marked PG_G.
- */
-LEAF(mips1_TLBFlush)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
-
-	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
-	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
-1:
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
-	nop
-	tlbr					# obtain an entry
-	mfc0	v0, MIPS_COP_0_TLB_LOW
-	andi	v0, v0, MIPS1_PG_G		# check PG_G bit
-	bnez	v0, 2f
-	li	v0, MIPS_KSEG0_START
-	mtc0	v0, MIPS_COP_0_TLB_HI		# mark entryhi as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entrylo
-	nop
-	tlbwi					# invalidate the TLB entry
-2:
-	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# increment index
-	bne	t1, t2, 1b
-	nop
-
-	j	ra				# new TLBPID will be set soon
-	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_TLBFlush)
 
 	.data
 mips1_excausesw:
