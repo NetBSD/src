@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.8 2004/03/24 20:17:59 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.9 2004/03/24 20:20:44 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
  */
 
 #include <sys/param.h>
-#define __USE_NEW_SYSCTL
 #include <sys/sysctl.h>
 
 #include <errno.h>
