@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 1997/09/11 14:01:07 chopps Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 1998/03/22 23:12:49 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,9 @@
 
 /* Sun settings. Still hope, that I might get sun3 binaries to work... */
 #define	USRTEXT		0x2000
+#ifndef USRSTACK
 #define	USRSTACK	0x0E000000
+#endif
 #define	LOWPAGES	btoc(USRTEXT)
 #define KUSER_AREA	(-UPAGES*NBPG)
 /*
@@ -153,6 +155,23 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+/*
+ * Our bootloader currently passes up to 16 segments (but this is variable)
+ * Normally, the biggest of them is used for the kernel, and the kernel
+ * segment is given to VM first.
+ */
+#define VM_PHYSSEG_MAX		(16)
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define VM_PHYSSEG_NOADD	/* XXX this should be done right later */
+
+/* 
+ * pmap-specific data stored in the vm_physmem[] array.
+ */   
+struct pmap_physseg { 
+	struct pv_entry *pvent;         /* pv table for this seg */
+	char *attrs;                    /* page attributes for this seg */
+}; 
 
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
