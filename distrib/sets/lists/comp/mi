@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.151 1999/08/21 05:29:24 simonb Exp $
+# $NetBSD: mi,v 1.152 1999/08/22 12:45:28 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1711,7 +1711,6 @@
 ./usr/share/man/cat3/getprotobyname.0
 ./usr/share/man/cat3/getprotobynumber.0
 ./usr/share/man/cat3/getprotoent.0
-./usr/share/man/cat3/getpw.0
 ./usr/share/man/cat3/getpwent.0
 ./usr/share/man/cat3/getpwnam.0
 ./usr/share/man/cat3/getpwuid.0
@@ -2220,14 +2219,12 @@
 ./usr/share/man/cat3/vfprintf.0
 ./usr/share/man/cat3/vfscanf.0
 ./usr/share/man/cat3/vis.0
-./usr/share/man/cat3/vlimit.0
 ./usr/share/man/cat3/vprintf.0
 ./usr/share/man/cat3/vscanf.0
 ./usr/share/man/cat3/vsnprintf.0
 ./usr/share/man/cat3/vsprintf.0
 ./usr/share/man/cat3/vsscanf.0
 ./usr/share/man/cat3/vsyslog.0
-./usr/share/man/cat3/vtimes.0
 ./usr/share/man/cat3/vwarn.0
 ./usr/share/man/cat3/vwarnx.0
 ./usr/share/man/cat3/warn.0
@@ -2808,7 +2805,6 @@
 ./usr/share/man/man3/getprotobyname.3
 ./usr/share/man/man3/getprotobynumber.3
 ./usr/share/man/man3/getprotoent.3
-./usr/share/man/man3/getpw.3
 ./usr/share/man/man3/getpwent.3
 ./usr/share/man/man3/getpwnam.3
 ./usr/share/man/man3/getpwuid.3
@@ -3316,14 +3312,12 @@
 ./usr/share/man/man3/vfprintf.3
 ./usr/share/man/man3/vfscanf.3
 ./usr/share/man/man3/vis.3
-./usr/share/man/man3/vlimit.3
 ./usr/share/man/man3/vprintf.3
 ./usr/share/man/man3/vscanf.3
 ./usr/share/man/man3/vsnprintf.3
 ./usr/share/man/man3/vsprintf.3
 ./usr/share/man/man3/vsscanf.3
 ./usr/share/man/man3/vsyslog.3
-./usr/share/man/man3/vtimes.3
 ./usr/share/man/man3/vwarn.3
 ./usr/share/man/man3/vwarnx.3
 ./usr/share/man/man3/warn.3
