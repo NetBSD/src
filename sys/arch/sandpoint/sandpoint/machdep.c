@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2001/06/02 18:09:20 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2001/06/10 03:16:31 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,7 +63,7 @@
 
 #include <net/netisr.h>
 
-#include <machine/bat.h>
+#include <powerpc/mpc6xx/bat.h>
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <machine/intr.h>
@@ -216,6 +216,12 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * boothowto
 	 */
 	boothowto = RB_SINGLE;
+
+	sandpoint_bus_space_init();
+consinit();
+printf("avail_end %x\n", (unsigned) avail_end);
+printf("availmemr[0].start %x\n", (unsigned) availmemr[0].start);
+printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -495,11 +501,20 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, FALSE, NULL);
 
+#ifndef PMAP_MAP_POOLPAGE
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
 	 * are allocated via the pool allocator, and we use direct-mapped
 	 * pool pages.
 	 */
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
+#endif
+
+	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	sandpoint_bus_space_mallocok();
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -540,7 +555,7 @@ consinit()
 	initted = 1;
 
 #if (NCOM > 0)
-	tag = SANDPOINT_BUS_SPACE_IO;
+	tag = &sandpoint_isa_io_bs_tag;
 
 	if(comcnattach(tag, 0x3F8, 38400, COM_FREQ,
 	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
