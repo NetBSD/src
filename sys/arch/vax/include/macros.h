@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.16 1998/08/08 11:18:33 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.17 1998/11/07 17:22:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,7 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_)
+#if !defined(_VAX_MACROS_H_) && !defined(lint)
 #define _VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */
@@ -130,7 +130,7 @@ bzero(void *block, u_int len)
 static __inline__ int
 memcmp(const void *b1, const void *b2, size_t len)
 {
-	register ret;
+	register int ret;
 
 	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
 			: "=r" (ret)
@@ -142,7 +142,7 @@ memcmp(const void *b1, const void *b2, size_t len)
 static __inline__ int
 bcmp(const void *b1, const void *b2, size_t len)
 {
-	register ret;
+	register int ret;
 
 	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
 			: "=r" (ret)
@@ -155,7 +155,7 @@ bcmp(const void *b1, const void *b2, size_t len)
 static __inline__ size_t
 strlen(const char *cp)
 {
-        register ret;
+        register size_t ret;
 
         __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,%0"
                         : "=r" (ret)
@@ -222,7 +222,7 @@ memchr(const void *cp, int c, size_t len)
 static __inline__ int
 strcmp(const char *cp, const char *c2)
 {
-        register ret;
+        register int ret;
         __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r0;incl r0;
                             cmpc3 r0,(%1),(%2);beql 1f;movl $1,r2;
                             cmpb (r1),(r3);bcc 1f;movl $-1,r2;1:movl r2,%0"
@@ -248,7 +248,7 @@ static __inline__ int locc(int mask, char *cp,u_int size){
 static __inline__ int
 scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 {
-	register ret;
+	register int ret;
 
 	__asm__ __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"
 			: "=g"(ret)
@@ -260,7 +260,7 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 static __inline__ int
 skpc(int mask, size_t size, u_char *cp)
 {
-	register ret;
+	register int ret;
 
 	__asm__ __volatile("skpc %1,%2,(%3);movl r0,%0"
 			: "=g"(ret)
