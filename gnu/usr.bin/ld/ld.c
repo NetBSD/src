@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.16 1993/12/20 22:44:35 pk Exp $
+ *	$Id: ld.c,v 1.17 1994/01/05 16:24:53 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -144,6 +144,7 @@ static void	digest_pass1 __P((void)), digest_pass2 __P((void));
 static void	consider_file_section_lengths __P((struct file_entry *));
 static void	relocate_file_addresses __P((struct file_entry *));
 static void	consider_relocation __P((struct file_entry *, int));
+static void	consider_local_symbols __P((struct file_entry *));
 static void	perform_relocation __P((char *, int,
 						struct relocation_info *, int,
 						struct file_entry *, int));
@@ -1069,7 +1070,7 @@ read_file_symbols (entry)
 	md_swapin_exec_hdr(&hdr);
 
 	if (!N_BADMAG (hdr)) {
-		if (N_IS_DYNAMIC(hdr)) {
+		if (N_IS_DYNAMIC(hdr) && !entry->just_syms_flag) {
 			if (relocatable_output) {
 				fatal_with_file(
 			"-r and shared objects currently not supported ",
@@ -1416,6 +1417,8 @@ digest_symbols ()
 	/* Pass 1: check and define symbols */
 	defined_global_sym_count = 0;
 	digest_pass1();
+
+	each_file(consider_local_symbols, 0);
 
 	each_full_file(consider_relocation, 0);	/* Text */
 	each_full_file(consider_relocation, 1); /* Data */
@@ -2004,8 +2007,6 @@ static void
 consider_file_section_lengths (entry)
      register struct file_entry *entry;
 {
-	if (entry->just_syms_flag)
-		return;
 
 	entry->text_start_address = text_size;
 	/* If there were any vectors, we need to chop them off */
@@ -2022,9 +2023,7 @@ consider_file_section_lengths (entry)
 /*
  * Determine where the sections of ENTRY go into the output file,
  * whose total section sizes are already known.
- * Also relocate the addresses of the file's local and debugger symbols
- * and determine which of the local symbols will make it into the
- * output symbol table.
+ * Also relocate the addresses of the file's local and debugger symbols.
  */
 static void
 relocate_file_addresses (entry)
@@ -2081,9 +2080,29 @@ printf("%s: datastart: %#x, bss %#x\n", get_file_name(entry),
 		break;
 		}
 
-		/*
-		 * See if this symbol should be in the output symbol table.
-		 */
+	}
+
+}
+
+static void
+consider_local_symbols(entry)
+     register struct file_entry *entry;
+{
+	register struct localsymbol	*lsp, *lspend;
+
+	if (entry->is_dynamic)
+		return;
+
+	lspend = entry->symbols + entry->nsymbols;
+
+	/*
+	 * For each symbol determine whether it should go
+	 * in the output symbol table.
+	 */
+
+	for (lsp = entry->symbols; lsp < lspend; lsp++) {
+		register struct nlist *p = &lsp->nzlist.nlist;
+		register int type = p->n_type;
 
 		if (type == N_WARNING)
 			continue;
@@ -2127,11 +2146,12 @@ printf("%s: datastart: %#x, bss %#x\n", get_file_name(entry),
 	 */
 	if (discard_locals != DISCARD_ALL)
 		local_sym_count++;
-
 }
-
-/* Write the output file */
 
+
+/* -------------------------------------------------------------------*/
+
+/* Write the output file */
 void
 write_output ()
 {
