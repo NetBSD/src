@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.10 2004/01/28 15:07:52 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.11 2005/01/15 11:01:46 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -255,7 +255,7 @@ struct an_rid_genconfig {
 	u_int8_t		an_magic_packet_action;	/* 0x98 */
 	u_int8_t		an_magic_packet_ctl;	/* 0x99 */
 	u_int16_t		an_rsvd9;
-	u_int16_t               an_spare[16];
+	u_int16_t               an_spare[24];
 } __attribute__((__packed__));
 
 #define AN_OPMODE_IBSS_ADHOC			0x0000
