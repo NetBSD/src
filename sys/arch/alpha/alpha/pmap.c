@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.100 1999/05/24 20:11:58 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.101 1999/05/25 20:32:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 1999/05/24 20:11:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 1999/05/25 20:32:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,10 +481,6 @@ void	alpha_protection_init __P((void));
 boolean_t pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *,
 	    boolean_t, long, struct pv_entry **));
 void	pmap_changebit __P((paddr_t, pt_entry_t, pt_entry_t, long));
-#ifndef PMAP_NEW
-/* It's an interface function if PMAP_NEW. */
-void	pmap_kremove __P((vaddr_t, vsize_t));
-#endif
 
 /*
  * PT page management functions.
@@ -1276,11 +1272,42 @@ pmap_remove(pmap, sva, eva)
 		return;
 
 	/*
-	 * If this is the kernel pmap, use a faster routine that
-	 * can make some assumptions.
+	 * If this is the kernel pmap, we can use a faster method
+	 * for accessing the PTEs (since the PT pages are always
+	 * resident).
+	 *
+	 * Note that this routine should NEVER be called from an
+	 * interrupt context; pmap_kremove() is used for that.
 	 */
 	if (pmap == pmap_kernel()) {
-		pmap_kremove(sva, eva - sva);
+		PMAP_MAP_TO_HEAD_LOCK();
+		PMAP_LOCK(pmap, ps);
+
+		while (sva < eva) {
+			l3pte = PMAP_KERNEL_PTE(sva);
+			if (pmap_pte_v(l3pte)) {
+#ifdef DIAGNOSTIC
+				if (PAGE_IS_MANAGED(pmap_pte_pa(l3pte)) &&
+				    pmap_pte_pv(l3pte) == 0)
+					panic("pmap_remove: managed page "
+					    "without PG_PVLIST for 0x%lx",
+					    sva);
+#endif
+				needisync |= pmap_remove_mapping(pmap, sva,
+				    l3pte, TRUE, cpu_id, NULL);
+			}
+			sva += PAGE_SIZE;
+		}
+
+		PMAP_UNLOCK(pmap, ps);
+		PMAP_MAP_TO_HEAD_UNLOCK();
+
+		if (needisync) {
+			alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+			alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+		}
 		return;
 	}
 
@@ -1880,9 +1907,9 @@ pmap_kenter_pa(va, pa, prot)
 	 * Invalidate the TLB entry for this VA and any appropriate
 	 * caches.
 	 */
-	PMAP_INVALIDATE_TLB(pmap_kernel(), va, TRUE, TRUE, cpu_id);
+	PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
 #if defined(MULTIPROCESSOR) && 0
-	pmap_tlb_shootdown(pmap_kernel(), va, PG_ASM);
+	pmap_tlb_shootdown(pmap, va, PG_ASM);
 #endif
 	if (needisync) {
 		alpha_pal_imb();
@@ -1920,15 +1947,12 @@ pmap_kenter_pgs(va, pgs, npgs)
 		    VM_PAGE_TO_PHYS(pgs[i]),
 		    VM_PROT_READ|VM_PROT_WRITE);
 }
-#endif /* PMAP_NEW */
 
 /*
  * pmap_kremove:		[ INTERFACE ]
  *
  *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
  *	starting at va, for size bytes (assumed to be page rounded).
- *
- *	NOTE: THIS IS AN INTERNAL FUNCTION IF NOT PMAP_NEW.
  */
 void
 pmap_kremove(va, size)
@@ -1939,7 +1963,7 @@ pmap_kremove(va, size)
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
 	pmap_t pmap = pmap_kernel();
-	int s;
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1952,29 +1976,41 @@ pmap_kremove(va, size)
 		panic("pmap_kremove: user address");
 #endif
 
-	/*
-	 * XXX WE MUST FIND AND FIX WHY WE ARE CALLED TO REMOVE MAPPINGS
-	 * XXX WITH PG_PVENT SET!
-	 */
-
-	s = splimp();
-	PMAP_MAP_TO_HEAD_LOCK();
-	simple_lock(&pmap->pm_slock);
+	PMAP_LOCK(pmap, ps);
 
 	for (; size != 0; size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pte = PMAP_KERNEL_PTE(va);
-		if (pmap_pte_v(pte))
-			needisync |= pmap_remove_mapping(pmap, va, pte,
-			    TRUE, cpu_id, NULL);
+		if (pmap_pte_v(pte)) {
+#ifdef DIAGNOSTIC
+			if (pmap_pte_pv(pte))
+				panic("pmap_kremove: PG_PVLIST mapping for "
+				    "0x%lx", va);
+#endif
+			if (pmap_pte_exec(pte))
+				needisync = TRUE;
+
+			/* Zap the mapping. */
+			*pte = PG_NV;
+			PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
+#if defined(MULTIPROCESSOR) && 0
+			pmap_tlb_shootdown(pmap, va, PG_ASM);
+#endif
+			/* Update stats. */
+			pmap->pm_stats.resident_count--;
+			pmap->pm_stats.wired_count--;
+		}
 	}
 
-	if (needisync)
-		alpha_pal_imb();
+	PMAP_UNLOCK(pmap, ps);
 
-	simple_unlock(&pmap->pm_slock);
-	PMAP_MAP_TO_HEAD_UNLOCK();
-	splx(s);
+	if (needisync) {
+		alpha_pal_imb();
+#if defined(MULTIPROCESSOR) && 0
+		alpha_broadcast_ipi(ALPHA_IPI_IMB);
+#endif
+	}
 }
+#endif /* PMAP_NEW */
 
 /*
  * pmap_change_wiring:		[ INTERFACE ]
