@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.70 2000/03/30 02:20:14 simonb Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.71 2000/06/28 02:44:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -57,7 +57,7 @@
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 
-#include <vm/vm.h>	/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <machine/reg.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.24 2000/06/26 14:21:15 mrg Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.25 2000/06/28 02:44:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -53,8 +53,6 @@
 #include <sys/vnode.h>
 
 #include <miscfs/procfs/procfs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

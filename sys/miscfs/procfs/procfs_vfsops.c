@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.34 2000/06/10 18:27:03 assar Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.35 2000/06/28 02:44:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -58,8 +58,10 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+
 #include <miscfs/procfs/procfs.h>
-#include <vm/vm.h>			/* for PAGE_SIZE */
+
+#include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
 void	procfs_init __P((void));
 void	procfs_done __P((void));
