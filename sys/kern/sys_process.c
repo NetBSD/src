@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.14 2002/06/20 03:47:22 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.15 2002/06/20 23:04:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.14 2002/06/20 03:47:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.15 2002/06/20 23:04:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,9 +467,9 @@ sys_ptrace(l, v, retval)
 }
 
 int
-process_doregs(curp, p, uio)
+process_doregs(curp, l, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
@@ -478,7 +478,7 @@ process_doregs(curp, p, uio)
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return error;
 
 	kl = sizeof(r);
@@ -489,22 +489,22 @@ process_doregs(curp, p, uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(p);
+	PHOLD(l);
 
 	if (kl < 0)
 		error = EINVAL;
 	else
-		error = process_read_regs(p, &r);
+		error = process_read_regs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
-			error = process_write_regs(p, &r);
+			error = process_write_regs(l, &r);
 	}
 
-	PRELE(p);
+	PRELE(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -514,21 +514,21 @@ process_doregs(curp, p, uio)
 }
 
 int
-process_validregs(p)
-	struct proc *p;
+process_validregs(l)
+	struct lwp *l;
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
 }
 
 int
-process_dofpregs(curp, p, uio)
+process_dofpregs(curp, l, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
@@ -537,7 +537,7 @@ process_dofpregs(curp, p, uio)
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);
@@ -548,22 +548,22 @@ process_dofpregs(curp, p, uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(p);
+	PHOLD(l);
 
 	if (kl < 0)
 		error = EINVAL;
 	else
-		error = process_read_fpregs(p, &r);
+		error = process_read_fpregs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
-			error = process_write_fpregs(p, &r);
+			error = process_write_fpregs(l, &r);
 	}
 
-	PRELE(p);
+	PRELE(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -573,12 +573,12 @@ process_dofpregs(curp, p, uio)
 }
 
 int
-process_validfpregs(p)
-	struct proc *p;
+process_validfpregs(l)
+	struct lwp *l;
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
