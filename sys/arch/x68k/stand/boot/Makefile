@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/09/28 15:10:39 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 2001/09/29 01:42:09 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,7 @@ COMMONDIR=	$M/stand/common
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
 CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
+CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CFLAGS=		-Wno-main -Os -m68020-60
@@ -52,6 +53,6 @@ ${BOOT}:	${OBJS}
 	${LD} ${LDFLAGS} -o ${BOOT}.sym ${OBJS} ${LDLIBS}
 	${STRIP} -F ${BFDNAME} -o ${BOOT} ${BOOT}.sym
 
-CLEANFILES+=	${BOOT}.nosymbol
+CLEANFILES+=	${BOOT}.sym
 
 .include <bsd.prog.mk>
