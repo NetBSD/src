@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.105 2003/10/19 20:17:31 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.106 2003/11/15 12:53:34 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -240,10 +240,10 @@ EXTERN char ftp_proxy[STRSIZE] INIT("");
 EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
-EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
+EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0a");
 EXTERN char cdrom_dir[STRSIZE] INIT(SYSINST_CDROM_DIR);
 
-EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
+EXTERN char localfs_dev[SSTRSIZE] INIT("sd0a");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
 EXTERN char localfs_dir[STRSIZE] INIT("");
 
