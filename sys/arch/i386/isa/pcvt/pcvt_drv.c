@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.9 1994/12/13 13:42:53 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.10 1995/01/03 03:56:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -276,7 +276,7 @@ pcattach(struct isa_device *dev)
 	vthand.ih_fun = pcrint;
 	vthand.ih_arg = 0;
 	vthand.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, &vthand);
+	intr_establish(ia->ia_irq, IST_EDGE, &vthand);
 #else
 	return 1;
 #endif
