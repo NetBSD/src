@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.4 1997/10/16 00:55:05 hubertf Exp $
+.\" $NetBSD: pkg_add.1,v 1.4.2.1 1997/11/11 01:25:31 mellon Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -328,13 +328,19 @@ is installed, even if the user might change it with the
 flag to
 .Cm pkg_add .
 .Sh ENVIRONMENT
+.Ss PKG_PATH
 The value of the
 .Ev PKG_PATH
-is used if a given package can't be found.  The environment variable
+is used if a given package can't be found, it's usually set to
+.Pa /usr/pkgsrc/packages/All .
+The environment variable
 should be a series of entries seperated by colons.  Each entry
 consists of a directory name. The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period.
+.Ss PKG_DBDIR
+Where to register packages instead of
+.Pa /var/db/pkg .
 .Sh SEE ALSO
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
