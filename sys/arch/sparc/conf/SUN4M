@@ -1,4 +1,4 @@
-#	$NetBSD: SUN4M,v 1.5 1996/04/01 00:20:44 pk Exp $
+#	$NetBSD: SUN4M,v 1.6 1996/04/11 21:54:20 thorpej Exp $
 
 machine		sparc
 options		"SUN4M"
@@ -12,7 +12,7 @@ options		DEBUG, DIAGNOSTIC	# extra kernel debugging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
-options		RCONSOLE		# fast rasterop console
+options		RASTERCONSOLE		# fast rasterop console
 options		SYSVMSG,SYSVSEM,SYSVSHM
 options		"COMPAT_09", "COMPAT_10", "COMPAT_11"
 
