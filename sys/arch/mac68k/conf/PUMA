@@ -1,6 +1,6 @@
-#	$NetBSD: PUMA,v 1.1 1995/05/17 00:33:59 briggs Exp $
+#	$NetBSD: PUMA,v 1.2 1995/06/19 03:53:58 briggs Exp $
 #
-# OCELOT
+# PUMA
 
 include	"std.mac68k"
 
@@ -42,7 +42,6 @@ options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
-options		M68040
 options		M68030		# Includes the 020+851
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
@@ -50,7 +49,7 @@ options		COMPAT_09
 options		COMPAT_10
 options		MACHINE_NONCONTIG
 
-config		netbsd	swap generic
+config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
 ae0	at nubus0	slot -1   id ?   claimed 0
 ae1	at nubus0	slot -1   id ?   claimed 0
@@ -68,3 +67,4 @@ pseudo-device	pty		16
 pseudo-device	sl
 pseudo-device	bpfilter	4
 pseudo-device	ppp
+pseudo-device	vnd		4
