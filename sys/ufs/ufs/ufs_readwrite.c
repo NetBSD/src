@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.6 1995/03/24 15:33:31 cgd Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.7 1995/07/24 21:20:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -148,10 +148,6 @@ READ(ap)
 		if (error =
 		    uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio))
 			break;
-
-		if (S_ISREG(mode) && (xfersize + blkoffset == fs->fs_bsize ||
-		    uio->uio_offset == ip->i_size))
-			bp->b_flags |= B_AGE;
 		brelse(bp);
 	}
 	if (bp != NULL)
@@ -268,10 +264,8 @@ WRITE(ap)
 		else if (xfersize + blkoffset == fs->fs_bsize)
 			if (doclusterwrite)
 				cluster_write(bp, ip->i_size);
-			else {
-				bp->b_flags |= B_AGE;
+			else
 				bawrite(bp);
-			}
 		else
 			bdwrite(bp);
 #endif
