@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17 1995/04/07 04:43:25 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.18 1995/07/04 12:37:42 paulus Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -167,6 +167,12 @@ void netintr()
 #ifdef CCITT
 	if (n & (1 << NETISR_CCITT)) {
 		ccittintr();
+	}
+#endif
+#include "ppp.h"
+#if NPPP > 0
+	if (n & (1 << NETISR_PPP)) {
+		pppintr();
 	}
 #endif
 }
