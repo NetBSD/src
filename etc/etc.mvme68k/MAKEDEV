@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 1996/04/12 22:57:05 chuck Exp $
+#	$NetBSD: MAKEDEV,v 1.2 1996/05/20 01:35:48 chuck Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,26 +39,19 @@
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
-#	ct*	HP300 HP-IB cartridge tape
-#	mt*	(Magnetic) 9-track reel tape
 #	st*	Exabyte tape
 # Disks:
 #	ccd*	"concatenated" pseudo-disks
-#	rd*	HP300 HP-IB disks
+#	rd*	ram disk
 #	sd*	HP300 SCSI disks
 #	vnd*	"file" pseudo-disks
 # Terminal multiplexors:
-#	dca*	HP200/300 single port serial interface
-#	dcm*	HP200/300 4 port serial mux interface
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
 # Call units:
 # Special purpose devices:
 #	fd	file descriptors
-#	grf*	raw interface to HP300 graphics devices
-#	ite*	terminal emulator interface to HP300 graphics devices
-#	hil	HP300 HIL input devices
 #	bpf*	packet filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
@@ -102,11 +95,9 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ct*|mt*|st*)
+st*)
 	umask 0 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	ct*) name=ct; blk=0; chr=7;;
-	mt*) name=mt; blk=1; chr=16;;
 	st*) name=st; blk=6; chr=20;;
 	esac
 	case $unit in
@@ -152,10 +143,9 @@ tun*)
 	chown root.wheel tun$unit
 	;;
 
-ccd*|fd*|rd*|sd*|vnd*)
+ccd*|fd*|sd*|vnd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
-	rd*) name=rd; blk=2; chr=9;;
 	sd*) name=sd; blk=4; chr=8;;
 	ccd*) name=ccd; blk=5; chr=17;;
 	vnd*) name=vnd; blk=6; chr=19;;
@@ -190,89 +180,14 @@ ccd*|fd*|rd*|sd*|vnd*)
 	umask 77
 	;;
 
-dca*)
-	unit=`expr $i : 'dca\(.*\)'`
-	case $unit in
-	0)
-		mknod tty0 c 12 0
-		;;
-	*)
-		echo bad unit for dca in: $i
-		;;
-	esac
-	;;
-
-dcm*)
-	unit=`expr $i : 'dcm\(.*\)'`
-	case $unit in
-	0|1|2|3)
-		eval `echo $unit | awk ' { unit = $1; u = 4 * $1 } END {
-		for (i = 0; i < 4; i++)
-		printf("mknod tty0%x c 15 %d; ",u+i,u+i); }'`
-	;;
-	*)
-		echo bad unit for dcm in: $i
-		;;
-	esac
-	;;
-
-ite*)
-	unit=`expr $i : 'ite\(.*\)'`
-	case $unit in
-	0|1|2|3)
-		mknod ttye${unit} c 13 ${unit}
-		;;
-	*)
-		echo bad unit for ite in: $i
-		;;
-	esac
-	;;
-
-grf*)
-	unit=`expr $i : 'grf\(.*\)'`
-	case $unit in
-	0|1|2|3)
-		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
-#		echo "grf${unit}: use MAKEDEV.hpux to make HP-UX names for device"
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
-hil)
-	for unit in 0 1 2 3 4 5 6 7
-	do
-		mknod hil${unit} c 14 ${unit}
-		if [ -f /usr/sbin/hilinfo ]
-		then
-			case `/usr/sbin/hilinfo -t hil${unit}` in
-			mouse)
-				if [ ! -f locator ]
-				then
-					ln hil${unit} locator
-				fi
-				;;
-			keyboard)
-				if [ ! -f keyboard ]
-				then
-					ln hil${unit} keyboard
-				fi
-				;;
-			*)
-				;;
-			esac
-		fi
-	done
-	if [ ! -f /usr/sbin/hilinfo ]
-	then
-		ln hil1 keyboard
-		ln hil3 locator
-	fi
-	chmod 666 hil*
-#	echo "hil: use MAKEDEV.hpux to make HP-UX names for devices"
-	;;
+rd*)    
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod  rd$unit b 9 $unit
+#	mknod rrd$unit b ??? `expr $unit + 16` 
+	mknod rd${unit}c b 9 `expr $unit + 16`
+	chgrp operator rd$unit rd${unit}c
+	chmod 640 rd$unit rd${unit}c
+        ;;
 
 lkm)
 	rm -f lkm
