@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.57 2001/06/07 10:55:15 enami Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.58 2001/06/15 18:05:36 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -793,6 +793,11 @@ USB_DETACH(aue)
 
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 
+	if (!sc->aue_attached) {
+		/* Detached before attached finished, so just bail out. */
+		return (0);
+	}
+
 	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
@@ -802,12 +807,6 @@ USB_DETACH(aue)
 	usb_rem_task(sc->aue_udev, &sc->aue_stop_task);
 
 	s = splusb();
-
-	if (!sc->aue_attached) {
-		/* Detached before attached finished, so just bail out. */
-		splx(s);
-		return (0);
-	}
 
 	if (ifp->if_flags & IFF_RUNNING)
 		aue_stop(sc);
