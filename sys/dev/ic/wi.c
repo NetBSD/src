@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.96 2002/10/02 17:11:34 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.97 2002/10/03 22:32:37 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.96 2002/10/02 17:11:34 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.97 2002/10/03 22:32:37 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -527,12 +527,14 @@ wi_init(struct ifnet *ifp)
 	}
 
 	/* common 802.11 configuration */
+	ic->ic_flags &= ~IEEE80211_F_IBSSON;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_BSS);
 		break;
 	case IEEE80211_M_IBSS:
 		wi_write_val(sc, WI_RID_PORTTYPE, sc->sc_ibss_port);
+		ic->ic_flags |= IEEE80211_F_IBSSON;
 		break;
 	case IEEE80211_M_AHDEMO:
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_ADHOC);
@@ -620,10 +622,6 @@ wi_init(struct ifnet *ifp)
 		}
 	}
 	sc->sc_txcur = sc->sc_txnext = 0;
-	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		ic->ic_flags |= IEEE80211_F_IBSSON;
-	else
-		ic->ic_flags &= ~IEEE80211_F_IBSSON;
 
 	/* Enable port 0 */
 	wi_cmd(sc, WI_CMD_ENABLE | WI_PORT0, 0, 0, 0);
