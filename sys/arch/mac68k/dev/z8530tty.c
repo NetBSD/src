@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.1.4.2 1996/06/02 06:08:32 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.1.4.3 1996/06/03 05:32:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -199,7 +199,7 @@ zstty_attach(parent, self, aux)
 	tp->t_hwiflow = zshwiflow;
 	ttychars(tp);
 	bcopy(tp->t_cc, zst->zst_cc, sizeof(tp->t_cc));
-	/* tty_attach(tp);  * XXX - not yet */
+	tty_attach(tp);
 
 	zst->zst_tty = tp;
 	zst->zst_rbhiwat =  zstty_rbuf_size;	/* impossible value */
