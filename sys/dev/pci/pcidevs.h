@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.660 2004/10/22 15:01:32 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.661 2004/10/26 11:31:17 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.658 2004/10/22 15:00:50 cube Exp 
+ *	NetBSD: pcidevs,v 1.659 2004/10/26 11:30:52 augustss Exp 
  */
 
 /*
@@ -590,6 +590,7 @@
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst, Inc. */
+#define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
@@ -641,6 +642,7 @@
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595-T4 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595MII	0x5952		/* 3c595-MII 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C555	0x5055		/* 3c555 10/100 Mini-PCI Ethernet */
+#define	PCI_PRODUCT_3COM_3C154G72	0x6001		/* 3CRWE154G72 Wireless LAN adapter */
 #define	PCI_PRODUCT_3COM_3C556	0x6055		/* 3c556 10/100 Mini-PCI Ethernet */
 #define	PCI_PRODUCT_3COM_3C556B	0x6056		/* 3c556B 10/100 Mini-PCI Ethernet */
 #define	PCI_PRODUCT_3COM_3C656_E	0x6560		/* 3CCFEM656 10/100 Ethernet */
@@ -1856,7 +1858,8 @@
 
 /* Intersil products */
 #define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* PRISM2.5 Mini-PCI WLAN */
-#define	PCI_PRODUCT_INTERSIL_MINI_PCI_P54	0x3890		/* PRISM-54 Mini-PCI WLAN */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_3877	0x3877		/* PRISM Indigo Mini-PCI WLAN */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_3890	0x3890		/* PRISM Duette Mini-PCI WLAN */
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
