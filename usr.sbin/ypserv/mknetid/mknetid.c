@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.4 1997/10/08 00:11:51 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.5 1997/10/13 03:51:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mknetid.c,v 1.5 1997/10/13 03:51:58 lukem Exp $");
+#endif
 
 /*
  * Originally written by Mats O Jansson <moj@stacken.kth.se>
@@ -105,7 +110,7 @@ TAILQ_HEAD(user_list, user);
 struct user_list root;
 struct user_list hroot[HASHMAX];
 
-extern	char *__progname;		/* from crt0.s */
+extern	char *__progname;		/* from crt0.o */
 
 int
 main(argc, argv)
