@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1995/04/13 13:51:34 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.27 1995/04/13 16:46:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1268,7 +1268,7 @@ setroot()
 		}
 gotswap:
 		rootdev = nrootdev;
-		dumpdev = swapdev = nswapdev;
+		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
 	} else if (mountroot == NULL) {
@@ -1284,20 +1284,20 @@ gotswap:
 			 */
 			mindev = (bootdv->dv_unit << PARTITIONSHIFT) + 0;
 			rootdev = makedev(majdev, mindev);
-			swapdev = dumpdev = makedev(major(rootdev),
+			nswapdev = dumpdev = makedev(major(rootdev),
 			    (minor(rootdev) & ~ PARTITIONMASK) | 1);
 		} else {
 			/*
 			 * Root and swap are on a net.
 			 */
-			swapdev = dumpdev = NODEV;
+			nswapdev = dumpdev = NODEV;
 		}
-		swdevt[0].sw_dev = swapdev;
+		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
 	} else {
 		/*
-		 * `root DEV swap DEV': honour rootdev/swapdev.
-		 * rootdev/swapdev/mountroot already properly set.
+		 * `root DEV swap DEV': honour rootdev/swdevt.
+		 * rootdev/swdevt/mountroot already properly set.
 		 */
 		return;
 	}
