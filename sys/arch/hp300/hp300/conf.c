@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.8 1994/05/16 06:13:11 cgd Exp $
+ *	$Id: conf.c,v 1.9 1994/05/17 10:32:53 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -337,6 +337,26 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * provided as a character (raw) device.
  */
 dev_t	swapdev = makedev(3, 0);
+
+/*
+ * Returns true if dev is /dev/mem or /dev/kmem.
+ */
+iskmemdev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == mem_no && minor(dev) < 2);
+}
+
+/*
+ * Returns true if dev is /dev/zero.
+ */
+iszerodev(dev)
+	dev_t dev;
+{
+
+	return (major(dev) == mem_no && minor(dev) == 12);
+}
 
 /*
  * This entire table could be autoconfig()ed but that would mean that
