@@ -451,6 +451,9 @@
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
 
+/* ENI products */
+#define	PCI_PRODUCT_EFFICIENTNETS_ENI155P	0x0002		/* ENI-155P ATM */
+
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache and DRAM controller */
