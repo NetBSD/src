@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.8 2001/01/14 14:47:56 simonb Exp $
+#	$NetBSD: stests,v 1.9 2001/01/15 18:52:32 jdolecek Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -938,4 +938,45 @@ $s awk '
 	' out
 #---------------------------------------------------------------
 TEST=39; echo $TEST	# sort already sorted dictionary
-$s sort -f $dict | $s cmp - $dict >/dev/null || echo $TEST failed - sort -f $dict
+sort -f $dict | cmp -s - $dict || echo $TEST failed - sort -f $dict
+
+#---------------------------------------------------------------
+TEST=40; echo "$TEST (long)"	# long lines test
+
+line1="abcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghij"
+line2="bcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghijk"
+
+rm -f in out 
+
+# generate two out-of-order long lines (roughly 70 KB each), and try sort
+# them
+awk '
+BEGIN {
+	line1 = "'"${line1}"'"
+	line2 = "'"${line2}"'"
+	for(i=0; i<10; i++) {
+		line1 = line1 line1
+		line2 = line2 line2
+	}
+	print line2 > "in"
+	print line1 > "in"
+
+	print line1 > "out"
+	print line2 > "out"
+}'
+
+xsort "A"
+
+# generate already sorted file using $dict, only append space and
+# long string to each line to make lines longer than usual
+# use only first 200 lines (sort file approx. 14MB)
+cat $dict | awk '
+BEGIN {
+	line = "'"$line1"'"
+	for(i=0; i<10; i++)
+		line = line line
+	idx = 0
+}
+// { print $1 " " line; if (idx++ > 200) exit 0 }' > in
+cp in out
+xsort "B"
