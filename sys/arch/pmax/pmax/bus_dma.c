@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 1999/11/13 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2000/01/08 01:02:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ int	_bus_dmamap_load_buffer __P((bus_dmamap_t,
 	    void *, bus_size_t, struct proc *, int, vaddr_t *,
 	    int *, int));
 
-extern	paddr_t kvtophys __P((vaddr_t));	/* XXX */
+paddr_t	kvtophys __P((vaddr_t));	/* XXX */
 
 /*
  * The default DMA tag for all busses on the DECstation.

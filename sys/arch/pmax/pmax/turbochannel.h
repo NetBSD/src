@@ -1,4 +1,4 @@
-/*	$NetBSD: turbochannel.h,v 1.10 1999/11/15 09:50:19 nisimura Exp $	*/
+/*	$NetBSD: turbochannel.h,v 1.11 2000/01/08 01:02:39 simonb Exp $	*/
 
 
 /*-
@@ -125,16 +125,15 @@ typedef struct {
 	void	*sc;				/* Device softc */
 	char	module_name[TC_ROM_LLEN+1];	/* ROM name */
 	char	module_id[TC_ROM_LLEN * 2+1];	/* vendor and rev */
-	u_long		k1seg_address;		/* TC starting address */
-	char		*driver_name;		/* software name */
-	int		(*intr) __P((void*));	/* interrupt routine */
+	u_long	k1seg_address;			/* TC starting address */
+	char	*driver_name;			/* software name */
+	int	(*intr) __P((void*));		/* interrupt routine */
 } tc_option_t;
 
 
 #ifdef _KERNEL
 extern	tc_option_t	tc_slot_info[];
 
-extern void (*tc_enable_interrupt)  __P ((u_int slotno,
-					      int (*handler) __P ((void *)),
-					      void *sc, int onoff));
+extern	void (*tc_enable_interrupt) __P((u_int slotno,
+	    int (*handler) __P((void *)), void *sc, int onoff));
 #endif /* _KERNEL */

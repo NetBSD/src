@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.3 1999/12/06 11:52:36 simonb Exp $ */
+/* $NetBSD: ioasic.c,v 1.4 2000/01/08 01:02:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -93,8 +93,8 @@ static int kn03_builtin_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs) - 3;
 static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
 #endif
 
-static int  ioasicmatch __P((struct device *, struct cfdata *, void *));
-static void ioasicattach __P((struct device *, struct device *, void *));
+static int	ioasicmatch __P((struct device *, struct cfdata *, void *));
+static void	ioasicattach __P((struct device *, struct device *, void *));
 
 const struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach

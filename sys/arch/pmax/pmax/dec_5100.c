@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.14 1999/12/03 03:06:11 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.15 2000/01/08 01:02:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -62,19 +62,18 @@
 /*
  * Forward declarations
  */
-void		dec_5100_init __P((void));
-void		dec_5100_bus_reset __P((void));
+void	dec_5100_init __P((void));
+void	dec_5100_bus_reset __P((void));
 
-void		dec_5100_enable_intr
-		   __P ((unsigned slotno, int (*handler)(void *),
-			 void *sc, int onoff));
-int		dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
-void		dec_5100_cons_init __P((void));
-void		dec_5100_device_register __P((struct device *, void *));
+void	dec_5100_enable_intr __P((unsigned slotno,
+	    int (*handler)(void *), void *sc, int onoff));
+int	dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
+void	dec_5100_cons_init __P((void));
+void	dec_5100_device_register __P((struct device *, void *));
 
-void		dec_5100_memintr __P((void));
+void	dec_5100_memintr __P((void));
 
-extern void kn230_wbflush __P((void));
+void	kn230_wbflush __P((void));
 
 void
 dec_5100_init()

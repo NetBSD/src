@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.h,v 1.2 1999/08/16 13:13:00 simonb Exp $	*/
+/*	$NetBSD: memc.h,v 1.3 2000/01/08 01:02:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -37,6 +37,6 @@
 
 void	dec_mtasic_err __P((u_int32_t erradr, u_int32_t errsyn,
 	    u_int32_t bnk32m));
-void	kn02ba_errintr __P ((void));
+void	kn02ba_errintr __P((void));
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.31 1999/12/15 14:48:25 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.32 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,7 +113,7 @@
 /* qvss/pm compatible and old 4.4bsd/pmax driver functions */
 
 
-extern void fbScreenInit __P (( struct fbinfo *fi));
+void	fbScreenInit __P(( struct fbinfo *fi));
 
 
 #if NDC > 0
@@ -156,7 +156,7 @@ struct fbdev {
 static u_int	fbndevs;		/* number of devices */
 static u_char	cmap_bits[768];		/* colormap for console */
 
-void fbattach __P((int n));
+void	fbattach __P((int n));
 
 /*
  * attach routine: required for pseudo-device
