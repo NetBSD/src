@@ -1150,7 +1150,7 @@ isc_result_t omapi_protocol_send_status (omapi_object_t *po,
 	if (po -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
 
-	status = omapi_message_new ((omapi_object_t **)&message, MDL);
+	status = omapi_message_new ((void *)&message, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	mo = (omapi_object_t *)message;
@@ -1208,7 +1208,7 @@ isc_result_t omapi_protocol_send_open (omapi_object_t *po,
 	if (po -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
 
-	status = omapi_message_new ((omapi_object_t **)&message, MDL);
+	status = omapi_message_new ((void *)&message, MDL);
 	mo = (omapi_object_t *)message;
 
 	if (status == ISC_R_SUCCESS)
@@ -1267,7 +1267,7 @@ isc_result_t omapi_protocol_send_update (omapi_object_t *po,
 	if (po -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
 
-	status = omapi_message_new ((omapi_object_t **)&message, MDL);
+	status = omapi_message_new ((void *)&message, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	mo = (omapi_object_t *)message;
