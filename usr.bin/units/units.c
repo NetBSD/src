@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.11 2002/08/31 07:26:17 kristerw Exp $	*/
+/*	$NetBSD: units.c,v 1.12 2003/05/17 21:12:51 itojun Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -91,10 +91,9 @@ dupstr(char *str)
 {
 	char *ret;
 
-	ret = malloc(strlen(str) + 1);
+	ret = strdup(str);
 	if (!ret)
 		err(3, "Memory allocation error");
-	strcpy(ret, str);
 	return (ret);
 }
 
@@ -131,17 +130,20 @@ readunits(char *userfile)
 			env = getenv("PATH");
 			if (env) {
 				if (strchr(env, ';'))
-					strcpy(separator, ";");
+					strlcpy(separator, ";",
+					    sizeof(separator));
 				else
-					strcpy(separator, ":");
+					strlcpy(separator, ":",
+					    sizeof(separator));
 				direc = strtok(env, separator);
 				while (direc) {
-					strcpy(filename, "");
-					strncat(filename, direc, 999);
-					strncat(filename, "/",
-					    999 - strlen(filename));
-					strncat(filename, UNITSFILE,
-					    999 - strlen(filename));
+					strlcpy(filename, "", sizeof(filename));
+					strlcat(filename, direc,
+					    sizeof(filename));
+					strlcat(filename, "/",
+					    sizeof(filename));
+					strlcat(filename, UNITSFILE,
+					    sizeof(filename));
 					unitfile = fopen(filename, "rt");
 					if (unitfile)
 						break;
@@ -459,7 +461,7 @@ lookupunit(char *unit)
 		copy[strlen(copy) - 1] = 0;
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
-				strcpy(buffer, copy);
+				strlcpy(buffer, copy, sizeof(buffer));
 				free(copy);
 				return buffer;
 			}
@@ -471,7 +473,7 @@ lookupunit(char *unit)
 		copy[strlen(copy) - 1] = 0;
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
-				strcpy(buffer, copy);
+				strlcpy(buffer, copy, sizeof(buffer));
 				free(copy);
 				return buffer;
 			}
@@ -480,7 +482,7 @@ lookupunit(char *unit)
 			copy[strlen(copy) - 1] = 0;
 			for (i = 0; i < unitcount; i++) {
 				if (!strcmp(unittable[i].uname, copy)) {
-					strcpy(buffer, copy);
+					strlcpy(buffer, copy, sizeof(buffer));
 					free(copy);
 					return buffer;
 				}
@@ -493,9 +495,10 @@ lookupunit(char *unit)
 			strlen(prefixtable[i].prefixname))) {
 			unit += strlen(prefixtable[i].prefixname);
 			if (!strlen(unit) || lookupunit(unit)) {
-				strcpy(buffer, prefixtable[i].prefixval);
-				strcat(buffer, " ");
-				strcat(buffer, unit);
+				strlcpy(buffer, prefixtable[i].prefixval,
+				    sizeof(buffer));
+				strlcat(buffer, " ", sizeof(buffer));
+				strlcat(buffer, unit, sizeof(buffer));
 				return buffer;
 			}
 		}
@@ -682,17 +685,17 @@ main(int argc, char **argv)
 	readunits(userfile);
 
 	if (argc == 3) {
-		strcpy(havestr, argv[0]);
-		strcat(havestr, " ");
-		strcat(havestr, argv[1]);
+		strlcpy(havestr, argv[0], sizeof(havestr));
+		strlcat(havestr, " ", sizeof(havestr));
+		strlcat(havestr, argv[1], sizeof(havestr));
 		argc--;
 		argv++;
 		argv[0] = havestr;
 	}
 
 	if (argc == 2) {
-		strcpy(havestr, argv[0]);
-		strcpy(wantstr, argv[1]);
+		strlcpy(havestr, argv[0], sizeof(havestr));
+		strlcpy(wantstr, argv[1], sizeof(wantstr));
 		initializeunit(&have);
 		addunit(&have, havestr, 0);
 		completereduce(&have);
