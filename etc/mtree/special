@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.18 1998/01/10 00:06:25 perry Exp $
+#	$NetBSD: special,v 1.19 1998/10/28 09:23:24 mycroft Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -105,8 +105,6 @@ sbin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/sbin
 share		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/share
-src		type=dir mode=0775 uname=root gname=wsrc ignore optional
-..	#usr/src
 ..	#usr
 
 var		type=dir mode=0755 uname=root gname=wheel

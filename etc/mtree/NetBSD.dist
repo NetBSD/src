@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.69 1998/09/13 22:32:17 tv Exp $
+#	$NetBSD: NetBSD.dist,v 1.70 1998/10/28 09:23:23 mycroft Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -337,19 +337,9 @@ mdec
 # ./usr/mdec
 ..
 
-# ./usr/obj
-obj			ignore optional uname=root gname=wsrc mode=0775
-# ./usr/obj
-..
-
 # ./usr/pkg
 pkg			ignore optional
 # ./usr/pkg
-..
-
-# ./usr/pkgsrc
-pkgsrc			ignore optional uname=root gname=wsrc mode=0775
-# ./usr/pkgsrc
 ..
 
 # ./usr/sbin
@@ -1647,11 +1637,6 @@ zoneinfo
 ..
 
 # ./usr/share
-..
-
-# ./usr/src
-src		ignore optional uname=root gname=wsrc mode=0775
-# ./usr/src
 ..
 
 # ./usr
