@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.12 1997/07/04 09:14:52 kleink Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.13 1997/07/13 19:15:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,18 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: initgroups.c,v 1.12 1997/07/04 09:14:52 kleink Exp $";
+__RCSID("$NetBSD: initgroups.c,v 1.13 1997/07/13 19:15:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 
 #include <stdio.h>
 #include <unistd.h>
+#include <err.h>
 
 int
 initgroups(uname, agroup)
@@ -55,10 +58,10 @@ initgroups(uname, agroup)
 
 	ngroups = NGROUPS;
 	if (getgrouplist(uname, agroup, groups, &ngroups) < 0)
-		_warnx("%s is in too many groups, using first %d",
+		warnx("%s is in too many groups, using first %d",
 		    uname, ngroups);
 	if (setgroups(ngroups, groups) < 0) {
-		_warn("setgroups");
+		warn("setgroups");
 		return (-1);
 	}
 	return (0);
