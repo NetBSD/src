@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.99 2000/01/16 11:03:37 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.100 2000/01/16 18:01:20 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2545,6 +2545,7 @@ sys/arch/sparc/dev/zs.c				1.70
    o Default to first serial port if console property is absent.
 
 sys/arch/sparc/sparc/iommu.c			1.37
+sys/arch/sparc/sparc/vaddrs.h			1.10
 
   Allow old sbus cards with 24-bit devices (e.g. lance) to be
   configured correctly on sun4m machines.
@@ -2599,6 +2600,7 @@ sys/arch/x68k/dev/ms.c				1.9
   interrupt levels.
 
 sys/kern/init_main.c				1.161
+usr.bin/login/login.c				1.47
 
   Update the copyright notice to include 2000.
 
@@ -2640,3 +2642,14 @@ sys/arch/x68k/include/vmparam.h			1.12
   when big (>64MB) high memory is installed, i.e. in a situation
   where DMA reachable memory runs out because of the large buffer
   cache.
+
+sys/dev/scsipi/scsiconf.c			patch
+sys/dev/scsipi/scsipi_base.c			patch
+sys/dev/scsipi/scsipiconf.h			patch
+
+  When probing a SCSI target, do not report an error if the target
+  indicates that LUNs are not supported.
+
+sys/arch/i386/i386/db_interface.c		1.28
+
+  Make sure that DDB isn't invoked on bad traps when db_onpanic=0.
