@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.12 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.13 2003/10/05 20:54:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,6 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Manuel Bouyer.
- *	California, Berkeley and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -65,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.12 2003/10/05 17:48:49 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.13 2003/10/05 20:54:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
