@@ -1,8 +1,8 @@
-/*	$NetBSD: autoconf.c,v 1.54 1996/04/10 20:40:14 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.55 1996/05/16 15:57:07 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- *    The President and Fellows of Harvard University. All rights reserved.
+ *    The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

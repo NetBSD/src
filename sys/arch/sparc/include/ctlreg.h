@@ -1,8 +1,8 @@
-/*	$NetBSD: ctlreg.h,v 1.11 1996/05/15 02:13:45 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.12 1996/05/16 15:57:00 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- *	The President and Fellows of Harvard University. All rights reserved.
+ *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -48,7 +48,7 @@
  */
 
 /*
- * Sun4M support by Aaron Brown, Harvard University.
+ * Sun4m support by Aaron Brown, Harvard University.
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
  */

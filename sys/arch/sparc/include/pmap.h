@@ -1,8 +1,8 @@
-/*	$NetBSD: pmap.h,v 1.20 1996/03/31 22:09:16 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.21 1996/05/16 15:57:01 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard University. All rights reserved.
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -42,7 +42,7 @@
  *
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
- * $Id: pmap.h,v 1.20 1996/03/31 22:09:16 pk Exp $
+ * $Id: pmap.h,v 1.21 1996/05/16 15:57:01 abrown Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_

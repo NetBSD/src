@@ -1,10 +1,10 @@
-/*	$NetBSD: kgdb_proto.h,v 1.3 1996/03/31 23:38:34 pk Exp $ */
+/*	$NetBSD: kgdb_proto.h,v 1.4 1996/05/16 15:57:19 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1995
- *	The President and Fellows of Harvard University. All rights reserved.
+ *	The President and Fellows of Harvard College. All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and

@@ -1,8 +1,8 @@
-/*	$NetBSD: trap.c,v 1.41 1996/05/14 13:57:29 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.42 1996/05/16 15:57:26 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- *	The President and Fellows of Harvard University. All rights reserved.
+ *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

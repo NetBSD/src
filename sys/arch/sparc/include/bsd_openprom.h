@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.9 1996/05/15 02:13:39 mrg Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.10 1996/05/16 15:56:59 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 /*
- * Sun4M support by Aaron Brown, Harvard University.
+ * Sun4m support by Aaron Brown, Harvard University.
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
  */
