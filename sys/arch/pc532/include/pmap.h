@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 1995/04/10 12:42:13 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 1995/04/27 07:19:09 phil Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -201,7 +201,7 @@ typedef struct pmap	*pmap_t;
 #define PMAP_ACTIVATE(pmapp, pcbp) \
 	if ((pmapp) != NULL /*&& (pmapp)->pm_pdchanged */) {  \
 		(pcbp)->pcb_ptb = \
-		    pmap_extract(pmap_kernel(), (pmapp)->pm_pdir); \
+		  pmap_extract(pmap_kernel(),(vm_offset_t)(pmapp)->pm_pdir); \
 		if ((pmapp) == &curproc->p_vmspace->vm_pmap) \
 			_load_ptb0((pcbp)->pcb_ptb); \
 		(pmapp)->pm_pdchanged = FALSE; \
