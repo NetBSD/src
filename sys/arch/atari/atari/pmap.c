@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87.4.3 2005/01/31 12:19:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87.4.4 2005/02/18 14:38:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2164,11 +2164,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    printf("remove: free stab %p\n",
 					    ptpmap->pm_stab);
 #endif
-				pmap_remove(pmap_kernel(),
-				    (vaddr_t)ptpmap->pm_stab,
-				    (vaddr_t)ptpmap->pm_stab + ATARI_STSIZE);
-				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
-							     ptpmap->pm_stpa));
 				uvm_km_free(kernel_map,
 				    (vaddr_t)ptpmap->pm_stab, ATARI_STSIZE,
 				    UVM_KMF_WIRED);
