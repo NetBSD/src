@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.30 2001/10/30 15:32:01 thorpej Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.31 2002/03/05 14:15:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
-int	mips_elf_makecmds __P((struct proc *, struct exec_package *));
+int	mips_elf_makecmds(struct proc *, struct exec_package *);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.1 2001/11/28 11:54:15 manu Exp $ */
+/*	$NetBSD: svr4_machdep.h,v 1.2 2002/03/05 14:12:30 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ typedef struct svr4_mcontext {
 } svr4_mcontext_t;
 
 #ifdef _KERNEL
-int svr4_setmcontext __P((struct proc *, svr4_mcontext_t *, unsigned long));
-void *svr4_getmcontext __P((struct proc *, svr4_mcontext_t *, unsigned long *));
+int svr4_setmcontext(struct proc *, svr4_mcontext_t *, unsigned long);
+void *svr4_getmcontext(struct proc *, svr4_mcontext_t *, unsigned long *);
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.16 2002/02/05 07:12:20 thorpej Exp $	*/
+/*	$NetBSD: profile.h,v 1.17 2002/03/05 14:12:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,9 +46,9 @@
   *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
   *  see MCOUNT_ENTER and MCOUNT_EXIT.
   */
-#define	_KERNEL_MCOUNT_DECL			\
-	int _splraise_noprof __P((int));	\
-	int _splset_noprof __P((int));
+#define	_KERNEL_MCOUNT_DECL		\
+	int _splraise_noprof(int);	\
+	int _splset_noprof(int);
 #else   /* !_KERNEL */
 /* Make __mcount static. */
 #define	_KERNEL_MCOUNT_DECL	static
