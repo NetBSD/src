@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgget.2,v 1.8 2001/09/16 01:39:02 wiz Exp $
+.\"	$NetBSD: msgget.2,v 1.9 2001/09/16 02:13:29 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -57,7 +57,7 @@ or
 does not have a message queue identifier associated with it and the
 .Dv IPC_CREAT
 bit is set in
-.Fa msgflg.
+.Fa msgflg .
 .Pp
 If a new message queue is created, the data structure associated with it (the
 .Va msqid_ds
@@ -127,10 +127,10 @@ and no message queue associated with
 was found.
 .El
 .Sh SEE ALSO
-.Xr ftok 3 ,
 .Xr msgctl 2 ,
 .Xr msgrcv 2 ,
-.Xr msgsnd 2
+.Xr msgsnd 2 ,
+.Xr ftok 3
 .Sh STANDARDS
 The
 .Nm
