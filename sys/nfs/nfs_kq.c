@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.2 2002/10/23 09:14:49 jdolecek Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.3 2003/02/27 09:01:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.2 2002/10/23 09:14:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.3 2003/02/27 09:01:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ nfs_kqinit(void)
 
 /*
  * This quite simplistic routine periodically checks for server changes
- * of any of the watched files every NFS_MINATTRTIME/2 seconds.
+ * of any of the watched files every NFS_MINATTRTIMO/2 seconds.
  * Only changes in size, modification time, change time and nlinks
  * are being checked, everything else is ignored.
  * The routine only calls VOP_GETATTR() when it's likely it would get
