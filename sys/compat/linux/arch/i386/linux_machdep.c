@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.93 2003/08/09 14:16:44 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.94 2003/08/21 08:36:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.93 2003/08/09 14:16:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.94 2003/08/21 08:36:56 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -496,7 +496,7 @@ linux_restore_sigcontext(l, scp, retval)
 	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
 	if (scp->sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe));
+		void syscall_vm86 __P((struct trapframe *));
 
 		tf->tf_vm86_gs = scp->sc_gs;
 		tf->tf_vm86_fs = scp->sc_fs;
