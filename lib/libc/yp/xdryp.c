@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.13 1996/06/18 20:05:59 christos Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.14 1996/08/09 10:06:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: xdryp.c,v 1.13 1996/06/18 20:05:59 christos Exp $";
+static char *rcsid = "$NetBSD: xdryp.c,v 1.14 1996/08/09 10:06:09 thorpej Exp $";
 #endif
 
 /*
@@ -253,7 +253,7 @@ xdr_ypbind_setdom(xdrs, objp)
 	if (!xdr_ypbind_binding(xdrs, &objp->ypsetdom_binding))
 		return FALSE;
 
-	if (!xdr_u_short(xdrs, &objp->ypsetdom_vers))
+	if (!xdr_u_int(xdrs, &objp->ypsetdom_vers))
 		return FALSE;
 
 	return TRUE;
@@ -383,7 +383,7 @@ xdr_ypresp_order(xdrs, objp)
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
-	if (!xdr_u_long(xdrs, &objp->ordernum))
+	if (!xdr_u_int(xdrs, &objp->ordernum))
 		return FALSE;
 
 	return TRUE;
@@ -397,13 +397,13 @@ xdr_ypreq_xfr(xdrs, objp)
 	if (!xdr_ypmap_parms(xdrs, &objp->map_parms))
 		return FALSE;
 
-	if (!xdr_u_long(xdrs, &objp->transid))
+	if (!xdr_u_int(xdrs, &objp->transid))
 		return FALSE;
 
-	if (!xdr_u_long(xdrs, &objp->proto))
+	if (!xdr_u_int(xdrs, &objp->proto))
 		return FALSE;
 
-	if (!xdr_u_short(xdrs, &objp->port))
+	if (!xdr_u_int(xdrs, &objp->port))
 		return FALSE;
 
 	return TRUE;
@@ -420,7 +420,7 @@ xdr_ypmap_parms(xdrs, objp)
 	if (!xdr_ypmap_wrap_string(xdrs, (char **)objp->map))
 		return FALSE;
 
-	if (!xdr_u_long(xdrs, &objp->ordernum))
+	if (!xdr_u_int(xdrs, &objp->ordernum))
 		return FALSE;
 
 	if (!xdr_ypowner_wrap_string(xdrs, &objp->owner))
@@ -434,10 +434,10 @@ xdr_yppushresp_xfr(xdrs, objp)
 	XDR *xdrs;
 	struct yppushresp_xfr *objp;
 {
-	if (!xdr_u_long(xdrs, &objp->transid))
+	if (!xdr_u_int(xdrs, &objp->transid))
 		return FALSE;
 
-	if (!xdr_u_long(xdrs, &objp->status))
+	if (!xdr_enum(xdrs, (enum_t *)&objp->status))
 		return FALSE;
 
 	return TRUE;
