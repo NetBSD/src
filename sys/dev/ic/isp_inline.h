@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.4 2000/01/06 02:56:20 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.5 2000/02/19 01:51:43 mjacob Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -218,14 +218,12 @@ isp_print_qentry(isp, msg, idx, arg)
 {
 	int amt, i, j;
 	u_int8_t *ptr = arg;
-	PRINTF("%s %s index %d:\n   ", isp->isp_name, msg, idx);
+	PRINTF("%s %s index %d:\n", isp->isp_name, msg, idx);
 	for (amt = i = 0; i < 4; i++) {
 		for (j = 0; j < (QENTRY_LEN >> 2); j++) {
 			PRINTF(" %02x", ptr[amt++] & 0xff);
 		}
-		PRINTF("\n   ");
+		PRINTF("\n");
 	}
-	PRINTF("\n");
 }
-
 #endif	/* _ISP_INLINE_H */
