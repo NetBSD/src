@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.5 2002/03/22 11:52:07 martin Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.6 2002/04/04 17:41:09 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -173,8 +173,7 @@ cs4231_ebus_attach(parent, self, aux)
 	 */
 	if (bus_space_map(ea->ea_bustag, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 		ea->ea_reg[0].size, 0, &bh) != 0) {
-		printf("%s: unable to map registers\n",
-			self->dv_xname);
+		printf(": unable to map registers\n");
 		return;
 	}
 	
@@ -184,8 +183,7 @@ cs4231_ebus_attach(parent, self, aux)
 			  EBUS_DMAC_SIZE,
 			  0, &ebsc->sc_pdmareg) != 0)
 	{
-		printf("%s: unable to map playback DMA registers\n",
-		       self->dv_xname);
+		printf(": unable to map playback DMA registers\n");
 		return;
 	}
 
@@ -195,8 +193,7 @@ cs4231_ebus_attach(parent, self, aux)
 			  EBUS_DMAC_SIZE,
 			  0, &ebsc->sc_cdmareg) != 0)
 	{
-		printf("%s: unable to map capture DMA registers\n",
-		       self->dv_xname);
+		printf(": unable to map capture DMA registers\n");
 		return;
 	}
 
