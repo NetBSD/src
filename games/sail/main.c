@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2000/11/30 21:31:33 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2000/11/30 21:38:57 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 2000/11/30 21:31:33 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2000/11/30 21:38:57 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ int
 main(int argc, char **argv)
 {
 	char *p;
-	int i;
+	int a,i;
 	int fd;
 
 	gid = getgid();
@@ -73,18 +73,21 @@ main(int argc, char **argv)
 	close(fd);
 
 	srand(getpid());
+
 	if ((p = strrchr(*argv, '/')) != NULL)
 		p++;
 	else
 		p = *argv;
+
 	if (strcmp(p, "driver") == 0 || strcmp(p, "saildriver") == 0)
 		mode = MODE_DRIVER;
 	else if (strcmp(p, "sail.log") == 0)
 		mode = MODE_LOGGER;
 	else
 		mode = MODE_PLAYER;
-	while ((p = *++argv) && *p == '-')
-		switch (p[1]) {
+
+	while (a = getopt(argc, argv, "dsDxlb"))
+		switch (a) {
 		case 'd':
 			mode = MODE_DRIVER;
 			break;
@@ -107,12 +110,15 @@ main(int argc, char **argv)
 			fprintf(stderr, "SAIL: Unknown flag %s.\n", p);
 			exit(1);
 		}
+
 	if (*argv)
 		game = atoi(*argv);
 	else
 		game = -1;
+
 	if ((i = setjmp(restart)) != 0)
 		mode = i;
+
 	switch (mode) {
 	case MODE_PLAYER:
 		return pl_main();
