@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.24 2000/06/04 19:15:18 cgd Exp $	*/
+/*	$NetBSD: xy.c,v 1.25 2000/06/05 15:58:43 chs Exp $	*/
 
 /*
  *
@@ -79,7 +79,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>
 #endif
 
@@ -240,7 +240,7 @@ xygetdisklabel(xy, b)
 	void *b;
 {
 	char *err;
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	struct sun_disklabel *sdl;
 #endif
 
@@ -258,7 +258,7 @@ xygetdisklabel(xy, b)
 		return(XY_ERR_FAIL);
 	}
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xy->sc_dk.dk_cpulabel->cd_block;
 	if (sdl->sl_magic == SUN_DKMAGIC) {
