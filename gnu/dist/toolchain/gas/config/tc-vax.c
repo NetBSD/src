@@ -308,31 +308,17 @@ md_number_to_chars (con, value, nbytes)
    that they reference.  */
 
 #ifdef BFD_ASSEMBLER
+#ifndef OBJ_ELF
 int				/* Knows about order of bytes in address. */
 md_apply_fix (fixP, valP)
      fixS *fixP;
      valueT *valP;
 {
-  valueT val = *valP;
-#ifdef OBJ_ELF
-  if (fixP->fx_r_type == BFD_RELOC_32_GOT_PCREL || (fixP->fx_size == 4 && fixP->fx_pcrel))
-    {
-#if 0
-      printf("info: %s:%d: fixup: symbol=%s: %#lx (off=%#lx)\n",
-	     fixP->fx_frag->fr_file, fixP->fx_frag->fr_line,
-	     S_GET_NAME(fixP->fx_frag->fr_symbol
-		? fixP->fx_frag->fr_symbol
-		: fixP->fx_addsy),
-	     val, fixP->fx_offset);
-#endif
-      val -= fixP->fx_offset;
-    }
-  else
-#endif
   number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
-				val, fixP->fx_size);
+				(valueT) *valP, fixP->fx_size);
   return 0;
 }
+#endif
 #else
 void				/* Knows about order of bytes in address.  */
 md_apply_fix (fixP, value)
@@ -1312,7 +1298,7 @@ md_estimate_size_before_relax (fragP, segment)
 	      p[0] |= VAX_PC_RELATIVE_MODE;	/* Preserve @ bit.  */
 	      fragP->fr_fix += 1 + 4;
 	      fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
-		       fragP->fr_offset, 1, NO_RELOC);
+		       fragP->fr_offset, 1, reloc_type);
 	      break;
 
 	    case STATE_CONDITIONAL_BRANCH:
