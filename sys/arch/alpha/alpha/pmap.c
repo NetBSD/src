@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.26 1998/03/27 00:52:43 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.27 1998/03/27 19:18:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 1998/03/27 00:52:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 1998/03/27 19:18:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,6 +605,34 @@ do {									\
 		 * ASN will be allocated anyway.			\
 		 */							\
 } while (0)
+
+/*
+ * PMAP_KERNEL_PTE:
+ *
+ *	Get a kernel PTE.
+ *
+ *	If debugging, do a table walk.  If not debugging, just use
+ *	the Virtual Page Table, since all kernel page tables are
+ *	pre-allocated and mapped in.
+ */
+#ifdef DEBUG
+#define	PMAP_KERNEL_PTE(va)						\
+({									\
+	if (pmap_pte_v(pmap_l1pte(pmap_kernel(), va)) == 0) {		\
+		printf("kernel level 1 PTE not valid, va 0x%lx "	\
+		    "(line %ld)\n", (va), __LINE__);			\
+		panic("PMAP_KERNEL_PTE");				\
+	}								\
+	if (pmap_pte_v(pmap_l2pte(pmap_kernel(), va)) == 0) {		\
+		printf("kernel level 2 PTE not valid, va 0x%lx "	\
+		    "(line %ld)\n", (va), __LINE__);			\
+		panic("PMAP_KERNEL_PTE");				\
+	}								\
+	pmap_l3pte(pmap_kernel(), va);					\
+})
+#else
+#define	PMAP_KERNEL_PTE(va)	(&VPT[VPT_INDEX((va))])
+#endif
 
 /*
  * pmap_bootstrap:
@@ -1399,31 +1427,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		if (va < VM_MIN_KERNEL_ADDRESS)
 			panic("pmap_enter: kernel pmap, invalid va 0x%lx", va);
 #endif
-
-#ifdef DEBUG
-		/*
-		 * All kernel level 2 and 3 page tables are
-		 * pre-allocated and mapped in.  Therefore, the
-		 * level 1 and level 2 PTEs must already be valid.
-		 */
-		if (pmap_pte_v(pmap_l1pte(pmap, va)) == 0)
-			panic("pmap_enter: kernel level 1 PTE not valid");
-		if (pmap_pte_v(pmap_l2pte(pmap, va)) == 0)
-			panic("pmap_enter: kernel level 2 PTE not valid");
-
-		/*
-		 * Get the PTE that will map the page.
-		 */
-		pte = pmap_l3pte(pmap, va);
-#else
-		/*
-		 * All kernel level 2 and 3 page tables are
-		 * pre-allocated and mapped in, so we can use
-		 * the Virtual Page Table to get the PTE for
-		 * kernel mappings.
-		 */
-		pte = &VPT[VPT_INDEX(va)];
-#endif
+		pte = PMAP_KERNEL_PTE(va);
 	} else {
 		pt_entry_t *l1pte, *l2pte;
 
@@ -1674,30 +1678,7 @@ pmap_kenter_pa(va, pa, prot)
 			panic("pmap_enter: kernel pmap, invalid va 0x%lx", va);
 #endif
 
-#ifdef DEBUG
-	/*
-	 * All kernel level 2 and 3 page tables are
-	 * pre-allocated and mapped in.  Therefore, the
-	 * level 1 and level 2 PTEs must already be valid.
-	 */
-	if (pmap_pte_v(pmap_l1pte(pmap_kernel(), va)) == 0)
-		panic("pmap_kenter_pa: kernel level 1 PTE not valid");
-	if (pmap_pte_v(pmap_l2pte(pmap_kernel(), va)) == 0)
-		panic("pmap_kenter_pa: kernel level 2 PTE not valid");
-
-	/*
-	 * Get the PTE that will map the page.
-	 */
-	pte = pmap_l3pte(pmap_kernel(), va);
-#else
-	/*
-	 * All kernel level 2 and 3 page tables are
-	 * pre-allocated and mapped in, so we can use
-	 * the Virtual Page Table to get the PTE for
-	 * kernel mappings.
-	 */
-	pte = &VPT[VPT_INDEX(va)];
-#endif
+	pte = PMAP_KERNEL_PTE(va);
 
 	/*
 	 * Build the new PTE.
@@ -1765,30 +1746,7 @@ pmap_kremove(va, size)
 #endif
 
 	for (; size != 0; size -= PAGE_SIZE, va += PAGE_SIZE) {
-#ifdef DEBUG
-		/*
-		 * All kernel level 2 and 3 page tables are
-		 * pre-allocated and mapped in.  Therefore, the
-		 * level 1 and level 2 PTEs must already be valid.
-		 */
-		if (pmap_pte_v(pmap_l1pte(pmap_kernel(), va)) == 0)
-			panic("pmap_kremove: kernel level 1 PTE not valid");
-		if (pmap_pte_v(pmap_l2pte(pmap_kernel(), va)) == 0)
-			panic("pmap_kremove: kernel level 2 PTE not valid");
-
-		/*
-		 * Get the PTE that will map the page.
-		 */
-		pte = pmap_l3pte(pmap_kernel(), va);
-#else
-		/*
-		 * All kernel level 2 and 3 page tables are
-		 * pre-allocated and mapped in, so we can use
-		 * the Virtual Page Table to get the PTE for
-		 * kernel mappings.
-		 */
-		pte = &VPT[VPT_INDEX(va)];
-#endif
+		pte = PMAP_KERNEL_PTE(va);
 		if (pmap_pte_v(pte))
 			pmap_remove_mapping(pmap_kernel(), va, pte);
 	}
@@ -2615,11 +2573,7 @@ pmap_emulate_reference(p, v, user, write)
 	if (v >= VM_MIN_KERNEL_ADDRESS) {
 		if (user)
 			panic("pmap_emulate_reference: user ref to kernel");
-#ifdef DEBUG
-		pte = pmap_l3pte(pmap_kernel(), v);
-#else
-		pte = &VPT[VPT_INDEX(v)];
-#endif
+		pte = PMAP_KERNEL_PTE(v);
 	} else {
 #ifdef DIAGNOSTIC
 		if (p == NULL)
@@ -2732,15 +2686,18 @@ vm_offset_t
 vtophys(vaddr)
 	vm_offset_t vaddr;
 {
-	vm_offset_t paddr;
+	pt_entry_t *pte;
+	vm_offset_t paddr = 0;
 
-	if (vaddr < ALPHA_K0SEG_BASE) {
+	if (vaddr < ALPHA_K0SEG_BASE)
 		printf("vtophys: invalid vaddr 0x%lx", vaddr);
-		paddr = vaddr;
-	} else if (vaddr <= ALPHA_K0SEG_END)
+	else if (vaddr <= ALPHA_K0SEG_END)
 		paddr = ALPHA_K0SEG_TO_PHYS(vaddr);
-	else
-		paddr = pmap_extract(pmap_kernel(), vaddr);
+	else {
+		pte = PMAP_KERNEL_PTE(vaddr);
+		if (pmap_pte_v(pte))
+			paddr = pmap_pte_pa(pte) | (vaddr & PGOFSET);
+	}
 
 #if 0
 	printf("vtophys(0x%lx) -> 0x%lx\n", vaddr, paddr);
