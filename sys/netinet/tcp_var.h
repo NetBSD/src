@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.21 1997/07/28 22:18:49 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.22 1997/08/29 16:02:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -106,7 +106,7 @@ struct tcpcb {
 	tcp_seq	t_rtseq;		/* sequence number being timed */
 	short	t_srtt;			/* smoothed round-trip time */
 	short	t_rttvar;		/* variance in round-trip time */
-	u_short	t_rttmin;		/* minimum rtt allowed */
+	short	t_rttmin;		/* minimum rtt allowed */
 	u_long	max_sndwnd;		/* largest window peer has offered */
 
 /* out-of-band data */
