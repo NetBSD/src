@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 1999/12/04 21:21:43 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2000/01/19 20:05:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -55,7 +55,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -288,14 +287,6 @@ cpu_startup()
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

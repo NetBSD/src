@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2000/01/19 02:52:20 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 2000/01/19 20:05:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2000/01/19 02:52:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2000/01/19 20:05:47 thorpej Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2000/01/19 02:52:20 msaitoh Exp $"
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/callout.h>
 #include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
@@ -483,14 +482,6 @@ cpu_startup()
 	 * are allocated via the pool allocator, and we use KSEG to
 	 * map those pages.
 	 */
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

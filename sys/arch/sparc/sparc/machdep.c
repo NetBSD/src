@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 1999/12/15 08:03:43 garbled Exp $ */
+/*	$NetBSD: machdep.c,v 1.160 2000/01/19 20:05:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -291,14 +290,6 @@ cpu_startup()
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

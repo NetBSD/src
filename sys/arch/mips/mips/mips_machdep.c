@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.62 2000/01/09 08:01:54 shin Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.63 2000/01/19 20:05:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.62 2000/01/09 08:01:54 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.63 2000/01/19 20:05:43 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.62 2000/01/09 08:01:54 shin Exp $
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>

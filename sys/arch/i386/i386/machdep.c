@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.372 1999/12/21 12:34:11 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.373 2000/01/19 20:05:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -355,13 +354,6 @@ cpu_startup()
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
 
 	/*
 	 * XXX Buffer cache pages haven't yet been allocated, so
