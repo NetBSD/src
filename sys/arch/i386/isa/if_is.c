@@ -1,3 +1,4 @@
+#define ISDEBUG
 /*
  * Isolan AT 4141-0 Ethernet driver
  * Isolink 4110 
@@ -11,8 +12,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.13 1993/09/06 18:27:22 mycroft Exp $
- */
+*/
 
 /* TODO
 
@@ -25,7 +25,10 @@
 #include "is.h"
 #if NIS > 0
 
+#include "bpfilter.h"
+
 #include "param.h"
+#include "systm.h"
 #include "errno.h"
 #include "ioctl.h"
 #include "mbuf.h"
@@ -50,9 +53,7 @@
 #include "netns/ns_if.h"
 #endif
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
-#include "sys/select.h"
 #include "net/bpf.h"
 #include "net/bpfdesc.h"
 #endif
@@ -78,8 +79,9 @@
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	is_softc {
-	struct	arpcom arpcom;		/* Ethernet common part */
-	int iobase;			/* IO base address of card */
+	struct arpcom arpcom;             /* Ethernet common part */
+	int iobase;                       /* IO base address of card */
+	struct init_block  *init_block;   /* Lance initialisation block */
 	struct mds 	*rd;
 	struct mds	*td;
 	unsigned char	*rbuf;
@@ -87,11 +89,11 @@ struct	is_softc {
 	int	last_rd;
 	int	last_td;
 	int	no_td;
-        caddr_t bpf;            	/* BPF "magic cookie" */
+	caddr_t bpf;                      /* BPF "magic cookie" */
 
 } is_softc[NIS] ;
 
-struct init_block init_block[NIS];
+int is_debug;
 
 /* Function prototypes */
 int is_probe(),is_attach(),is_watchdog();
@@ -140,7 +142,7 @@ is_probe(isa_dev)
 
 	is->iobase = isa_dev->id_iobase;
 
-	/* Stop the lance chip, put it known state */	
+	/* Stop the lance chip, put it in known state */	
 	iswrcsr(unit,0,STOP);
 	DELAY(100);
 
@@ -164,15 +166,16 @@ is_probe(isa_dev)
 /*
  * Reset of interface.
  */
-int is_reset(int unit)
+int
+is_reset(int unit)
 {
 	int s;
+	struct is_softc *is = &is_softc[unit];
+
 	if (unit >= NIS)
 		return;
-	s = splnet();
 	printf("is%d: reset\n", unit);
 	is_init(unit);
-	splx(s);
 }
  
 /*
@@ -180,16 +183,15 @@ int is_reset(int unit)
  * record.  System will initialize the interface when it is ready
  * to accept packets.  We get the ethernet address here.
  */
-int is_attach(isa_dev)
+int
+is_attach(isa_dev)
 	struct isa_device *isa_dev;
 {
 	int unit = isa_dev->id_unit;
 	struct is_softc *is = &is_softc[unit];
 	struct ifnet *ifp = &is->arpcom.ac_if;
-        struct ifaddr *ifa;
-        struct sockaddr_dl *sdl;
-
-
+	struct ifaddr *ifa;
+	struct sockaddr_dl *sdl;
 
 	ifp->if_unit = unit;
 	ifp->if_name = isdriver.name ;
@@ -202,40 +204,75 @@ int is_attach(isa_dev)
 	ifp->if_reset = is_reset;
 	ifp->if_watchdog = is_watchdog;
 
+	/*
+	 * XXX -- not sure this is right place to do this
+	 * Allocate memory for use by Lance
+	 * Memory allocated for:
+	 * 	initialisation block,
+	 * 	ring descriptors,
+	 * 	transmit and receive buffers.
+	 */
+
+	/*
+	 * XXX - hopefully have better way to get dma'able memory later,
+	 * this code assumes that the physical memory address returned
+	 * from malloc will be below 16Mb. The Lance's address registers
+	 * are only 16 bits wide!
+	 */
+
+#define MAXMEM ((NRBUF+NTBUF)*(BUFSIZE) + (NRBUF+NTBUF)*sizeof(struct mds) \
+                 + sizeof(struct init_block) + 8)
+	is->init_block = (struct init_block *)malloc(MAXMEM,M_TEMP,M_NOWAIT);
+	if (!is->init_block) {
+		printf("is%d : Couldn't allocate memory for card\n",unit);
+	}
+	/* 
+	 * XXX -- should take corrective action if not
+	 * quadword alilgned, the 8 byte slew factor in MAXMEM
+	 * allows for this.
+	 */
+
+	if ((u_long)is->init_block & 0x3) 
+		printf("is%d: memory allocated not quadword aligned\n");
+
 	/* Set up DMA */
 	isa_dmacascade(isa_dev->id_drq);
 
 	if_attach(ifp);
 
-/*
-         * Search down the ifa address list looking for the AF_LINK type
-entry
-         */
-        ifa = ifp->if_addrlist;
-        while ((ifa != 0) && (ifa->ifa_addr != 0) &&
-            (ifa->ifa_addr->sa_family != AF_LINK))
-                ifa = ifa->ifa_next;
+	/*
+	 * Search down the ifa address list looking 
+	 * for the AF_LINK type entry
+	 */
 
-        /*
-         * If we find an AF_LINK type entry, we will fill
+	ifa = ifp->if_addrlist;
+	while ((ifa != 0) && (ifa->ifa_addr != 0) &&
+	  (ifa->ifa_addr->sa_family != AF_LINK))
+		ifa = ifa->ifa_next;
+
+	/*
+	 * If we find an AF_LINK type entry, we will fill
 	 * in the hardware address for this interface.
-         */
-        if ((ifa != 0) && (ifa->ifa_addr != 0)) {
-                /*
-                 * Fill in the link level address for this interface
-                 */
-                sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-                sdl->sdl_type = IFT_ETHER;
-                sdl->sdl_alen = ETHER_ADDR_LEN;
-                sdl->sdl_slen = 0;
-                bcopy(is->arpcom.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
-        }
+	 */
+
+	if ((ifa != 0) && (ifa->ifa_addr != 0)) {
+
+		/*
+		 * Fill in the link level address for this interface
+		 */
+
+		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		sdl->sdl_type = IFT_ETHER;
+		sdl->sdl_alen = ETHER_ADDR_LEN;
+		sdl->sdl_slen = 0;
+		bcopy(is->arpcom.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
+	}
 
 	printf ("is%d: address %s\n", unit,
 		ether_sprintf(is->arpcom.ac_enaddr)) ;
 
 #if NBPFILTER > 0
-        bpfattach(&is->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&is->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 }
 
@@ -244,7 +281,6 @@ is_watchdog(unit)
         int unit;
 {
         log(LOG_ERR, "is%d: device timeout\n", unit);
-
         is_reset(unit);
 }
 
@@ -254,34 +290,43 @@ init_mem(unit)
 	int unit;
 {
 	int i;
-	u_long temp;
+	void *temp;
 	struct is_softc *is = &is_softc[unit];
 
-	/* Allocate memory */
-/* Temporary hack, will use kmem_alloc in future */
-#define MAXMEM ((NRBUF+NTBUF)*(BUFSIZE) + (NRBUF+NTBUF)*sizeof(struct mds) + 8)
-static u_char lance_mem[NIS][MAXMEM];
+	/*
+	 * At this point we assume that the
+	 * memory allocated to the Lance is
+	 * quadword aligned. If it isn't
+	 * then the initialisation is going
+	 * fail later on.
+	 */
 
 
-	/* Align message descriptors on quad word boundary 
-		(this is essential) */
+	/* 
+	 * Set up lance initialisation block
+	 */
 
-	temp = (u_long) &lance_mem[unit];
-	temp = (temp+8) - (temp%8);
+	temp = (void *)is->init_block;
+	temp += sizeof(struct init_block);
 	is->rd = (struct mds *) temp;
 	is->td = (struct mds *) (temp + (NRBUF*sizeof(struct mds)));
 	temp += (NRBUF+NTBUF) * sizeof(struct mds);
 
-	init_block[unit].mode = 0;
-	
+	is->init_block->mode = 0;
+   for (i=0; i<ETHER_ADDR_LEN; i++) 
+      is->init_block->padr[i] = is->arpcom.ac_enaddr[i];
+	for (i = 0; i < 8; ++i)
+		is->init_block->ladrf[i] = MULTI_INIT_ADDR;
+	is->init_block->rdra = kvtop(is->rd);
+	is->init_block->rlen = ((kvtop(is->rd) >> 16) & 0xff) | (RLEN<<13);
+	is->init_block->tdra = kvtop(is->td);
+	is->init_block->tlen = ((kvtop(is->td) >> 16) & 0xff) | (TLEN<<13);
 
 
-	init_block[unit].rdra = kvtop(is->rd);
-	init_block[unit].rlen = ((kvtop(is->rd) >> 16) & 0xff) | (RLEN<<13);
-	init_block[unit].tdra = kvtop(is->td);
-	init_block[unit].tlen = ((kvtop(is->td) >> 16) & 0xff) | (TLEN<<13);
+	/* 
+	 * Set up receive ring descriptors
+	 */
 
-	/* Set up receive ring descriptors */
 	is->rbuf = (unsigned char *)temp;
 	for (i=0; i<NRBUF; i++) {
 		(is->rd+i)->addr = kvtop(temp);
@@ -291,11 +336,11 @@ static u_char lance_mem[NIS][MAXMEM];
 		temp += BUFSIZE;
 	}
 
-	/* Set up transmit ring descriptors */
+	/* 
+	 * Set up transmit ring descriptors
+	 */
+
 	is->tbuf = (unsigned char *)temp;
-#if ISDEBUG > 4
-	printf("rd = %x,td = %x, rbuf = %x, tbuf = %x,td+1=%x\n",is->rd,is->td,is->rbuf,is->tbuf,is->td+1);
-#endif
 	for (i=0; i<NTBUF; i++) {
 		(is->td+i)->addr = kvtop(temp);
 		(is->td+i)->flags= ((kvtop(temp) >> 16) & 0xff);
@@ -310,6 +355,7 @@ static u_char lance_mem[NIS][MAXMEM];
  * Initialization of interface; set up initialization block
  * and transmit/receive descriptor rings.
  */
+
 is_init(unit)
 	int unit;
 {
@@ -322,34 +368,25 @@ is_init(unit)
  	if (ifp->if_addrlist == (struct ifaddr *)0) return;
 
 	s = splnet();
+
+	/* 
+	 * Lance must be stopped
+	 * to access registers.
+	 */
+ 
+	iswrcsr(unit,0,STOP);
+
 	is->last_rd = is->last_td = is->no_td = 0;
 
 	/* Set up lance's memory area */
 	init_mem(unit);
 
-	/* Stop Lance to get access to other registers */
-	iswrcsr(unit,0,STOP);
-
-	/* Get ethernet address */
-	for (i=0; i<ETHER_ADDR_LEN; i++) 
-		init_block[unit].padr[i] = is->arpcom.ac_enaddr[i];
-
-#if NBPFILTER > 0
-        /*
-         * Initialize multicast address hashing registers to accept
-         *       all multicasts (only used when in promiscuous mode)
-         */
-        for (i = 0; i < 8; ++i)
-		init_block[unit].ladrf[i] = 0xff;
-#endif
-
-
-	/* I wish I knew what this was */
+	/* No byte swapping etc */
 	iswrcsr(unit,3,0);
 
 	/* Give lance the physical address of its memory area */
-	iswrcsr(unit,1,kvtop(&init_block[unit]));
-	iswrcsr(unit,2,(kvtop(&init_block[unit]) >> 16) & 0xff);
+	iswrcsr(unit,1,kvtop(is->init_block));
+	iswrcsr(unit,2,(kvtop(is->init_block) >> 16) & 0xff);
 
 	/* OK, let's try and initialise the Lance */
 	iswrcsr(unit,0,INIT);
@@ -492,8 +529,9 @@ is_start(ifp)
 		cdm->flags |= (OWN|STP|ENP);
 		cdm->bcnt = -len;
 		cdm->mcnt = 0;
-#if ISDEBUG > 3
-		xmit_print(unit,is->last_td);
+#ifdef ISDEBUG
+		if (is_debug)
+			xmit_print(unit,is->last_td);
 #endif
 		
 		iswrcsr(unit,0,TDMD|INEA);
@@ -502,8 +540,9 @@ is_start(ifp)
 		}while(++is->no_td < NTBUF);
 		is->no_td = NTBUF;
 		is->arpcom.ac_if.if_flags |= IFF_OACTIVE;	
-#if ISDEBUG >4
-	printf("no_td = %x, last_td = %x\n",is->no_td, is->last_td);
+#ifdef ISDEBUG
+		if (is_debug)	
+			printf("no_td = %x, last_td = %x\n",is->no_td, is->last_td);
 #endif
 		return(0);	
 }
@@ -575,8 +614,9 @@ istint(unit)
 		if ((i=is->last_td - is->no_td) < 0)
 			i+=NTBUF;
 		cdm = (is->td+i);
-#if ISDEBUG >4
-	printf("Trans cdm = %x\n",cdm);
+#ifdef ISDEBUG
+	if (is_debug)
+		printf("Trans cdm = %x\n",cdm);
 #endif
 		if (cdm->flags&OWN) {
 			if (loopcount)
@@ -637,8 +677,9 @@ static inline void is_rint(int unit)
 			}
 		}else
 			{
-#if ISDEBUG >2
-	recv_print(unit,is->last_rd);
+#ifdef ISDEBUG
+			if (is_debug)
+				recv_print(unit,is->last_rd);
 #endif
 			isread(is,is->rbuf+(BUFSIZE*rmd),(int)cdm->mcnt);
 			is->arpcom.ac_if.if_ipackets++;
@@ -647,8 +688,9 @@ static inline void is_rint(int unit)
 		cdm->flags |= OWN;
 		cdm->mcnt = 0;
 		NEXTRDS;
-#if ISDEBUG >4
-	printf("is->last_rd = %x, cdm = %x\n",is->last_rd,cdm);
+#ifdef ISDEBUG
+		if (is_debug)
+			printf("is->last_rd = %x, cdm = %x\n",is->last_rd,cdm);
 #endif
 	} /* while */
 	is->last_rd = rmd;
@@ -854,12 +896,15 @@ is_ioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(is->arpcom.ac_enaddr);
+				ina->x_host =
+					*(union ns_host *)(is->arpcom.ac_enaddr);
 			else {
 				/* 
+				 *
 				 */
 				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)is->arpcom.ac_enaddr, sizeof(is->arpcom.ac_enaddr));
+				    (caddr_t)is->arpcom.ac_enaddr,
+					sizeof(is->arpcom.ac_enaddr));
 			}
                         /*
                          * Set new address
@@ -889,7 +934,13 @@ is_ioctl(ifp, cmd, data)
 			if ((ifp->if_flags & IFF_UP) &&
 		    		(ifp->if_flags & IFF_RUNNING) == 0)
 			is_init(ifp->if_unit);
-                }
+		}
+#ifdef ISDEBUG
+		if (ifp->if_flags & IFF_DEBUG)
+			is_debug = 1;
+		else
+			is_debug = 0;
+#endif
 #if NBPFILTER > 0
                 if (ifp->if_flags & IFF_PROMISC) {
                         /*
@@ -899,7 +950,7 @@ is_ioctl(ifp, cmd, data)
                          *              hashing array. For now we assume that
                          *              this was done in is_init().
                          */
-			 init_block[unit].mode = PROM;	
+			 is->init_block->mode = PROM;	
                 } else
                         /*
                          * XXX - for multicasts to work, we would need to
@@ -924,6 +975,7 @@ is_ioctl(ifp, cmd, data)
 	return (error);
 }
 
+#ifdef ISDEBUG
 recv_print(unit,no)
 	int unit,no;
 {
@@ -970,5 +1022,6 @@ xmit_print(unit,no)
 	if (printed)
 		printf("\n");
 }
+#endif /* ISDEBUG */
 		
-#endif
+#endif /* NIS > 0 */
