@@ -1,4 +1,3 @@
-
 /* @(#)w_jn.c 5.1 93/09/24 */
 /*
  * ====================================================
@@ -10,6 +9,10 @@
  * is preserved.
  * ====================================================
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: w_jn.c,v 1.3 1994/02/18 02:27:45 jtc Exp $";
+#endif
 
 /*
  * wrapper jn(int n, double x), yn(int n, double x)
