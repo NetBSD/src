@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.5 1996/06/03 21:53:37 mark Exp $ */
+/* $NetBSD: fault.c,v 1.6 1996/06/12 20:15:28 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -180,7 +180,7 @@ data_abort_handler(frame)
 
 /* More debug stuff */
 
-	s = splhigh();
+	s = spltty();
 	if (pmap_debug_level >= 0) {
 		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff,
@@ -460,7 +460,7 @@ data_abort_handler(frame)
 			return;
 		if (pmap_modified_emulation(kernel_pmap, va))
 			return;
-		panic("no pcb ... we're toast !\n");
+		panic("data_abort_handler: no pcb ... we're toast !\n");
 	}
 
 	if (pcb != curpcb) {
@@ -614,10 +614,10 @@ copyfault:
 
 		if ((fault_code & FAULT_USER) == 0
 		    && (va >= KERNEL_BASE || va <= VM_MIN_ADDRESS)) {
- /* Was the fault due to the FPE ? */
+ /* Was the fault due to the FPE/KGDB ? */
  
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
-				printf("FPE Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+				printf("UND32 Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 				    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 				    fault_pc);
 				    postmortem(frame);
@@ -1039,15 +1039,16 @@ prefetch_abort_handler(frame)
 
 /* Debug code */
 
+#ifdef DIAGNOSTIC
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
-		s = splhigh();
+		s = spltty();
 		printf("fault being handled in non SVC32 mode\n");
 		postmortem(frame);
 		pmap_debug_level = 0;
 		(void)splx(s);
 		panic("Fault handler not in SVC mode\n");
 	}
-
+#endif
 
 /*
  * Enable IRQ's & FIQ's (disabled by the abort) This always comes
@@ -1078,7 +1079,7 @@ prefetch_abort_handler(frame)
 
 	pcb = &p->p_addr->u_pcb;
 	if (pcb == 0)
-		panic("no pcb ... we're toast !\n");
+		panic("prefetch_abort_handler: no pcb ... we're toast !\n");
 
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
@@ -1097,7 +1098,7 @@ prefetch_abort_handler(frame)
 	} else {
 /* All the kernel code pages are loaded at boot and do not get paged */
 
-		s = splhigh();
+		s = spltty();
 		printf("Prefetch address = %08x\n", frame->tf_pc);
  
 		postmortem(frame);
@@ -1108,15 +1109,7 @@ prefetch_abort_handler(frame)
 		printf("The system should now be considered very unstable :-)\n");
 		sigexit(curproc, SIGILL);
 /* Not reached */
-		(void)splx(s);
-#ifdef VALIDATE_TRAPFRAME
-		validate_trapframe(frame, 4);
-#endif
-		userret(p, frame->tf_pc, sticks);
-
-#ifdef VALIDATE_TRAPFRAME
-		validate_trapframe(frame, 4);
-#endif
+	        panic("prefetch_abort_handler: How did we get here ?\n");
 #else
 	        panic("Prefetch abort in SVC mode\n");
 #endif
@@ -1132,7 +1125,7 @@ prefetch_abort_handler(frame)
 /* Ok validate the address, can only execute in USER space */
 
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
-		s = splhigh();
+		s = spltty();
 		printf("prefetch: pc (%08x) not in user process space\n", fault_pc);
 		postmortem(frame);
 		trapsignal(p, SIGBUS, FAULT_PERM_P);
@@ -1144,23 +1137,25 @@ prefetch_abort_handler(frame)
 /* Ok read the fault address. This will fault the page in for us */
 
 	if (ReadWordWithChecks(fault_pc, &fault_instruction) != 0) {
-		s = splhigh();
+		s = spltty();
 		printf("prefetch: faultin failed for address %08x!!\n", fault_pc);
 		postmortem(frame);
 		trapsignal(p, SIGSEGV, fault_pc);
 		(void)splx(s);
 	} else {
 
+#ifdef DIAGNOSTIC
 /* More debug stuff */
 
 		if (pmap_debug_level >= 0) {
-			s = splhigh();
+			s = spltty();
 			printf("Instruction @V%08x = %08x\n", fault_pc, fault_instruction);
 			disassemble(fault_pc);
 			printf("return addr=%08x\n", frame->tf_pc);
 
 			(void)splx(s);
 		}
+#endif
 	}
 
 #ifdef VALIDATE_TRAPFRAME
