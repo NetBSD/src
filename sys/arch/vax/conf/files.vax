@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.95 2002/02/25 17:11:18 ad Exp $
+#	$NetBSD: files.vax,v 1.96 2002/03/13 15:18:21 ad Exp $
 #
 # new style config file for vax architecture
 #
@@ -151,7 +151,7 @@ attach	mem at xmi with mem_xmi
 attach	dz at vsbus with dz_vsbus
 file	arch/vax/vsa/dz_vsbus.c		dz_vsbus | smg
 
-device	lkkbd: wskbddev
+device	lkkbd: wskbddev, lkkbdmap
 attach	lkkbd at dz with dzkbd
 file	dev/dec/dzkbd.c			dzkbd needs-flag
 
