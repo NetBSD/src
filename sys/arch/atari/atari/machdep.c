@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 1999/11/13 00:30:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 1999/12/04 21:20:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <net/netisr.h>
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -234,7 +234,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -301,7 +301,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -538,11 +538,11 @@ cpu_dumpconf()
 	dumplo -= cpu_dumpsize();
 
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * Don't dump on the first NBPG (why NBPG?)
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(NBPG))
+		dumplo = btodb(NBPG);
 }
 
 /*

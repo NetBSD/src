@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.51 1999/11/13 00:27:21 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.52 1999/12/04 21:19:59 ragge Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 1999/11/13 00:27:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 1999/12/04 21:19:59 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ pagemove(from, to, size)
 	long fidx, tidx;
 	ssize_t todo;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 
 	todo = size;			/* if testing > 0, need sign... */

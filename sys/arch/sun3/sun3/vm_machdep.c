@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 1999/11/13 00:32:18 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 1999/12/04 21:21:45 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -316,7 +316,7 @@ pagemove(from, to, len)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (len & CLOFSET)
+	if (len & PGOFSET)
 		panic("pagemove");
 #endif
 	while (len > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 1999/06/17 00:22:42 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 1999/12/04 21:21:11 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,7 @@
  * Immediately after the user structure is the page table map, and then
  * kernal address space.
  */
-#define	USRTEXT		CLBYTES			/* For NetBSD... */
+#define	USRTEXT		NBPG			/* For NetBSD... */
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*
@@ -151,8 +151,8 @@
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 #define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
