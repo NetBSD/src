@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.4 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.4.10.1 2002/12/12 22:54:18 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -29,6 +29,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <uvm/uvm_param.h>
 
 #include <machine/bus.h>
 
@@ -99,6 +100,10 @@ vrdsu_reset()
 		splhigh();
 		vrdsu_write(the_dsu_sc, DSUSET_REG_W, 1); /* 1 sec */
 		vrdsu_write(the_dsu_sc, DSUCNT_REG_W, DSUCNT_DSWEN);
+		/*
+		 * wipe out all physical memory for clean WinCE boot.
+		 */
+		memset((void *)MIPS_PHYS_TO_KSEG1(0), 0, ptoa(physmem) - 0);
 		while (1);
 	} else {
 		printf("%s(%d): There is no DSU.", __FILE__, __LINE__);
