@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.46 2001/08/26 02:47:37 matt Exp $
+#	$NetBSD: files.macppc,v 1.47 2002/01/06 00:35:10 dbj Exp $
 #
 # macppc-specific configuration info
 
@@ -147,6 +147,7 @@ device zsc {channel = -1}
 attach zsc at obio
 file arch/macppc/dev/zs.c	 		zsc needs-flag
 file dev/ic/z8530sc.c				zsc
+file arch/macppc/dev/zs_kgdb.c			zsc & kgdb
 
 device zstty: tty
 attach zstty at zsc
