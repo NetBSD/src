@@ -9,3 +9,5 @@
 ./usr/mdec/loadbsd.x
 ./usr/mdec/sdboot
 ./usr/sbin/poffd
+./usr/share/keymaps/x68k/ascii_kmap
+./usr/share/keymaps/x68k/jis_kmap
