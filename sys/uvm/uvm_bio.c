@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.4.3 1999/07/04 04:41:10 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.4.4 1999/07/31 18:56:27 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -215,7 +215,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	int flags;
 {
 	struct uvm_object *uobj;
-	struct uvm_vnode *uvn;
+	struct vnode *vp;
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, umap_offset;
 	int i, rv, npages;
@@ -240,7 +240,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 		    va, ubc_offset, access_type,0);
 
 	umap = &ubc_object.umap[ubc_offset / UBC_WINSIZE];
-	umap_offset = ubc_offset & (UBC_WINSIZE - 1);
+	umap_offset = trunc_page(ubc_offset & (UBC_WINSIZE - 1));
 
 #ifdef DIAGNOSTIC
 	if (umap->refcount == 0) {
@@ -250,7 +250,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 
 	/* no umap locking needed since we have a ref on the umap */
 	uobj = umap->uobj;
-	uvn = (struct uvm_vnode *)uobj;
+	vp = (struct vnode *)uobj;
 #ifdef DIAGNOSTIC
 	if (uobj == NULL) {
 		panic("ubc_fault: umap %p has null uobj", umap);
@@ -272,33 +272,17 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	}
 
 again:
-	/*
-	 * XXX workaround for nfs.
-	 * if we're writing, make sure that the vm system's notion
-	 * of the vnode size is at least big enough to contain this write.
-	 * this is because of the problem with nfs mentioned below.
-	 * XXX this can happen for reading too, but there it really
-	 * requires a second client.
-	 */
-	if (access_type == VM_PROT_WRITE &&
-	    uvn->u_size < umap->writeoff + umap->writelen) {
-		printf("ubc_fault: bumping size vp %p newsize 0x%x\n",
-		       uobj, (int)(umap->writeoff + umap->writelen));
-		uvm_vnp_setsize((struct vnode *)uobj,
-				umap->writeoff + umap->writelen);
-	}
-
 	bzero(pages, sizeof pages);
 	simple_lock(&uobj->vmobjlock);
 
 	UVMHIST_LOG(ubchist, "umap_offset 0x%x writeoff 0x%x writelen 0x%x "
 		    "u_size 0x%x", (int)umap_offset, (int)umap->writeoff,
-		    (int)umap->writelen, (int)uvn->u_size);
+		    (int)umap->writelen, (int)vp->v_uvm.u_size);
 
 	if (access_type == VM_PROT_WRITE &&
 	    umap_offset >= umap->writeoff &&
 	    (umap_offset + PAGE_SIZE <= umap->writeoff + umap->writelen ||
-	     umap_offset + PAGE_SIZE >= uvn->u_size - umap->offset)) {
+	     umap_offset + PAGE_SIZE >= vp->v_uvm.u_size - umap->offset)) {
 		UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 		flags |= PGO_OVERWRITE;
 	}
@@ -308,16 +292,16 @@ again:
 	/*
 	 * XXX
 	 * ideally we'd like to pre-fault all of the pages we're overwriting.
-	 * so for PGO_OVERWRITE, we should call pgo_get() with all of the
+	 * so for PGO_OVERWRITE, we should call VOP_GETPAGES() with all of the
 	 * pages in [writeoff, writeoff+writesize] instead of just the one.
 	 */
 
-	UVMHIST_LOG(ubchist, "pgo_get vp %p offset 0x%x npages %d",
+	UVMHIST_LOG(ubchist, "getpages vp %p offset 0x%x npages %d",
 		    uobj, umap->offset + umap_offset, npages, 0);
 
-	rv = uobj->pgops->pgo_get(uobj, umap->offset + umap_offset,
-				  pages, &npages, 0, access_type, 0, flags);
-	UVMHIST_LOG(ubchist, "pgo_get rv %d npages %d", rv, npages,0,0);
+	rv = VOP_GETPAGES(vp, umap->offset + umap_offset, pages, &npages,
+			  0, access_type, 0, flags);
+	UVMHIST_LOG(ubchist, "getpages rv %d npages %d", rv, npages,0,0);
 
 	switch (rv) {
 	case VM_PAGER_OK:
@@ -325,7 +309,7 @@ again:
 
 #ifdef DIAGNOSTIC
 	case VM_PAGER_PEND:
-		panic("ubc_fault: pgo_get got PENDing on non-async I/O");
+		panic("ubc_fault: getpages got PENDing on non-async I/O");
 #endif
 
 	case VM_PAGER_AGAIN:
@@ -363,7 +347,7 @@ again:
 		 */
 #ifdef DIAGNOSTIC
 		if (pages[i]->flags & PG_RELEASED) {
-			panic("ubc_fault: pgo_get gave us a RELEASED page: "
+			panic("ubc_fault: getpages gave us a RELEASED page: "
 			      "vp %p pg %p", uobj, pages[i]);
 		}
 #endif
