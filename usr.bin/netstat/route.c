@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.56 2001/05/28 04:22:56 assar Exp $	*/
+/*	$NetBSD: route.c,v 1.57 2001/08/19 02:01:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.56 2001/05/28 04:22:56 assar Exp $");
+__RCSID("$NetBSD: route.c,v 1.57 2001/08/19 02:01:25 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,6 +423,7 @@ p_sockaddr(sa, mask, flags, width)
 	char workbuf[128], *cplim;
 	char *cp = workbuf;
 	char *ep = workbuf + sizeof(workbuf);
+	int n;
 
 	switch(sa->sa_family) {
 	case AF_INET:
@@ -511,8 +512,13 @@ p_sockaddr(sa, mask, flags, width)
 			cplim = "";
 			for (i = 0; i < alen; i++, lla++) {
 				/* XXX */
-				cp += snprintf(cp, ep - cp,
+				n = snprintf(cp, ep - cp,
 				    "%s%02x", cplim, *lla);
+				if (n < 0)
+					continue;
+				if (n >= ep - cp)
+					n = ep - cp - 1;
+				cp += n;
 				cplim = ":";
 			}
 			cp = workbuf;
@@ -531,11 +537,24 @@ p_sockaddr(sa, mask, flags, width)
 
 		slim =  sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
-		cp += snprintf(cp, ep - cp, "(%d)", sa->sa_family);
+		n = snprintf(cp, ep - cp, "(%d)", sa->sa_family);
+		if (n >= ep - cp)
+			n = ep - cp - 1;
+		if (n > 0)
+			cp += n;
 		while (s < slim && cp < cplim) {
-			cp += snprintf(cp, ep - cp, " %02x", *s++);
-			if (s < slim)
-			    cp += snprintf(cp, ep - cp, "%02x", *s++);
+			n = snprintf(cp, ep - cp, " %02x", *s++);
+			if (n >= ep - cp)
+				n = ep - cp - 1;
+			if (n > 0)
+				cp += n;
+			if (s < slim) {
+				n = snprintf(cp, ep - cp, "%02x", *s++);
+				if (n >= ep - cp)
+					n = ep - cp - 1;
+				if (n > 0)
+					cp += n;
+			}
 		}
 		cp = workbuf;
 	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.6 2000/10/11 14:46:14 is Exp $	*/
+/*	$NetBSD: atalk.c,v 1.7 2001/08/19 02:01:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.6 2000/10/11 14:46:14 is Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.7 2001/08/19 02:01:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ atalk_print2(sa, mask, what)
 	const struct sockaddr *mask;
 	int what;
 {
-	int             n;
+	size_t          n, l;
 	static char     buf[100];
 	struct sockaddr_at *sat1, *sat2;
 	struct sockaddr_at thesockaddr;
@@ -218,15 +218,28 @@ atalk_print2(sa, mask, what)
 	thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net &
 	    sat2->sat_addr.s_net;
 	n = snprintf(buf, sizeof(buf), "%s", atalk_print(sa2, 1 | (what & 8)));
+	if (n >= sizeof(buf))
+		n = sizeof(buf) - 1;
+	else if (n == -1)
+		n = 0;	/* What else can be done ? */
 	if (sat2->sat_addr.s_net != 0xFFFF) {
 		thesockaddr.sat_addr.s_net = sat1->sat_addr.s_net |
 		    ~sat2->sat_addr.s_net;
-		n += snprintf(buf + n, sizeof(buf) - n,
+		l = snprintf(buf + n, sizeof(buf) - n,
 		    "-%s", atalk_print(sa2, 1 | (what & 8)));
+		if (l >= sizeof(buf) - n)
+			l = sizeof(buf) - n - 1;
+		if (l > 0)
+			n += l;
 	}
-	if (what & 2)
-		n += snprintf(buf + n, sizeof(buf) - n, ".%s",
+	if (what & 2) {
+		l = snprintf(buf + n, sizeof(buf) - n, ".%s",
 		    atalk_print(sa, what & (~1)));
+		if (l >= sizeof(buf) - n)
+			l = sizeof(buf) - n - 1;
+		if (l > 0)
+			n += l;
+	}
 	return (buf);
 }
 
