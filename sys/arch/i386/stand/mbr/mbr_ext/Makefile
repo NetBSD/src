@@ -1,0 +1,8 @@
+#	$NetBSD: Makefile,v 1.1 2003/04/28 12:19:07 dsl Exp $
+
+PROG= mbr_ext
+AFLAGS+= -DBOOTSEL -DBOOT_EXTENDED
+AFLAGS+= -DTERSE_ERROR -DNO_CHS
+AFLAGS+= "-DBOOTSEL_FLAGS=BFL_SELACTIVE|BFL_EXTLBA"
+
+.include <../Makefile.mbr>
