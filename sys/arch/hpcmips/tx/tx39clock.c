@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.15 2003/09/26 15:34:11 simonb Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.16 2003/12/30 03:54:35 shin Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.15 2003/09/26 15:34:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.16 2003/12/30 03:54:35 shin Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -286,6 +286,8 @@ tx39clock_get(struct device *dev, time_t base, struct clock_ymdhms *t)
 		    (int)sec));
 
 		sc->sc_enabled = 1;
+		clock_secs_to_ymdhms(base, &dt);
+		sc->sc_epoch = dt;
 		base += sec;
 	} else {
 		dt.dt_year = sc->sc_year;
@@ -318,6 +320,8 @@ tx39clock_set(struct device *dev, struct clock_ymdhms *dt)
 
 	if (sc->sc_enabled) {
 		sc->sc_epoch = *dt;
+		__tx39timer_rtcreset(sc->sc_tc);
+		tx39clock_alarm_refill(sc->sc_tc);
 	}
 }
 
