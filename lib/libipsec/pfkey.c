@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.21 2004/04/25 22:25:05 jonathan Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.22 2004/10/13 23:46:46 abs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -733,7 +733,7 @@ pfkey_recv_register(so)
  * sadb_supported returned into ipsec_supported.
  * NOTE: sadb_msg_len must be host order.
  * IN:
- *	tlen: msg length, it's to makeing sure.
+ *	tlen: msg length, it's to making sure.
  * OUT:
  *	 0: success and return length sent.
  *	-1: error occurred, and set errno.
