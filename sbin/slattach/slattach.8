@@ -1,5 +1,5 @@
-.\" Copyright (c) 1986, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)slattach.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: slattach.8,v 1.10 1994/08/13 09:03:07 mycroft Exp $
+.\"     from: @(#)slattach.8	8.2 (Berkeley) 4/1/94
+.\"	$Id: slattach.8,v 1.11 1994/09/23 01:39:03 mycroft Exp $
 .\"
-.Dd April 4, 1993
+.Dd April 1, 1994
 .Dt SLATTACH 8
 .Os BSD 4.3
 .Sh NAME
@@ -40,10 +40,9 @@
 .Nd attach serial lines as network interfaces
 .Sh SYNOPSIS
 .Nm slattach
-.Op \-h
-.Op \-m
-.Op \-s baudrate
-.Ar ttyname 
+.Op Fl hm
+.Op Fl s Ar baudrate
+.Ar ttyname
 .Sh DESCRIPTION
 .Nm Slattach
 is used to assign a tty line to a network interface,
@@ -51,15 +50,13 @@ and to define the network source and destination addresses.
 The following operands are supported by
 .Nm slattach :
 .Bl -tag -width Ar
-.It Ar \-h
-Turn on CTS/RTS style flow control on the slip port, by default no flow
-control is done.
-.It Ar \-m
-Maintain modem control signals after closing the tty.  If not specified,
-HUPCL is set, causing DTR to be dropped on the last close of the tty
-device.
-.It Ar \-s baudrate
-Specifies the speed of the connection. If not specified, the
+.It Fl h
+Turn on RTS/CTS flow control.  By default, no flow control is done.
+.It Fl m
+Maintain modem control signals after closing the line.  Specifically,
+this disables HUPCL.
+.It Fl s Ar baudrate
+Specifies the speed of the connection.  If not specified, the
 default of 9600 is used.
 .It Ar ttyname
 Specifies the name of the tty device.
@@ -77,14 +74,14 @@ control various properties of the link:
 .It Ar link0
 Turn on Van Jacobsen header compression.
 .It Ar -link0
-Turn off Van Jacobsen header compression.
+Turn off header compression.
 .It Ar link1
 Don't pass through ICMP packets.
 .It Ar -link1
 Do pass through ICMP packets.
 .It Ar link2
 If a packet with a compressed header is received, automatically enable
-compression of transmitted packets.
+compression of outgoing packets.
 .It Ar -link2
 Don't auto-enable compression.
 .El
