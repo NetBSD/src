@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.5 2000/03/30 12:45:29 augustss Exp $	*/
+/*	$NetBSD: am79900.c,v 1.6 2000/09/24 18:37:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -365,7 +365,7 @@ am79900_intr(arg)
 
 	isr = (*sc->sc_rdcsr)(sc, LE_CSR0) | sc->sc_saved_csr0;
 	sc->sc_saved_csr0 = 0;
-#ifdef LEDEBUG
+#if defined(LEDEBUG) && LEDEBUG > 1
 	if (sc->sc_debug)
 		printf("%s: am79900_intr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
