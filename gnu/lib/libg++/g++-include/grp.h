@@ -1,4 +1,4 @@
-//	$Id: grp.h,v 1.2 1993/08/02 17:22:08 mycroft Exp $
+//	$Id: grp.h,v 1.3 1993/08/14 22:07:30 mycroft Exp $
 
 #ifndef grp_h
 
@@ -30,7 +30,7 @@ extern struct group* getgrent();
 extern struct group* fgetgrent(FILE*);
 extern struct group* getgrgid(int);
 extern struct group* getgrnam(const char*);
-#if defined(__OSF1__) || defined (__386BSD__)
+#if defined(__OSF1__) || defined (__NetBSD__)
 extern int	     setgrent();
 #else
 extern void          setgrent();

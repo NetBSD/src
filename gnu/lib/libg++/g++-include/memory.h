@@ -1,4 +1,4 @@
-//	$Id: memory.h,v 1.2 1993/08/02 17:22:10 mycroft Exp $
+//	$Id: memory.h,v 1.3 1993/08/14 22:07:31 mycroft Exp $
 
 #ifndef _memory_h
 #define _memory_h 1
@@ -16,7 +16,7 @@ void*     memcpy _G_ARGS((void*, const void*, _G_size_t));
 void*     memmove _G_ARGS((void*, const void*, _G_size_t));
 void*     memset _G_ARGS((void*, int, _G_size_t));
 int       ffs _G_ARGS((int));
-#if defined(__OSF1__) || defined(__386BSD__)
+#if defined(__OSF1__) || defined(__NetBSD__)
 int	  getpagesize _G_ARGS((void));
 #else
 _G_size_t    getpagesize _G_ARGS((void));

@@ -15,7 +15,7 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: signal.h,v 1.2 1993/08/02 17:22:14 mycroft Exp $
+	$Id: signal.h,v 1.3 1993/08/14 22:07:32 mycroft Exp $
 */
 
 #ifndef _signal_h
@@ -47,7 +47,7 @@ extern SignalHandler signal _G_ARGS((int sig, SignalHandler action));
 extern SSignalHandler ssignal _G_ARGS((int sig, SSignalHandler action));
 extern int           gsignal  _G_ARGS((int sig));
 extern int           kill  _G_ARGS((_G_pid_t pid, int sig));
-#ifndef __386BSD__
+#ifndef __NetBSD__
 extern int           killpg _G_ARGS((short int, int));
 #else
 extern int           killpg _G_ARGS((_G_pid_t, int));
