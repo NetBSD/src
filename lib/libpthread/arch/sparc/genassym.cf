@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.2 2002/11/29 16:01:01 uwe Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.3 2002/12/18 17:40:00 skrll Exp $
 
 
 include <ucontext.h>
@@ -20,8 +20,8 @@ define PT_HELDLOCK      offsetof(struct pthread_st, pt_heldlock)
 define PT_UC            offsetof(struct pthread_st, pt_uc)
 define CONTEXTSIZE      sizeof(ucontext_t)
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
-define UC_GREG		offsetof(ucontext_t, uc_mcontext.__greg)
-define UC_FPREG		offsetof(ucontext_t, uc_mcontext.__fpreg)
+define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
+define UC_FPREGS	offsetof(ucontext_t, uc_mcontext.__fpregs)
 define PT_STATE_RECYCLABLE      PT_STATE_RECYCLABLE
 define STACKSPACE       STACKSPACE
 define _UC_USER_BIT	_UC_USER_BIT
