@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.37 1998/02/15 01:07:46 thorpej Exp $
+#	$NetBSD: bsd.man.mk,v 1.38 1998/04/09 22:08:36 fair Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -116,10 +116,9 @@ catlinks: catpages
 		shift; \
 		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
 		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
-		if [ ! -f $$t -o -z "${UPDATE}" ]; then \
+		if [ -z "${UPDATE}" -o ! -f $$t ]; then \
 		    echo $$t -\> $$l; \
-		    rm -f $$t; \
-		    ln $$l $$t; \
+		    ln -f $$l $$t; \
 		fi; \
 	done
 .endif
@@ -136,10 +135,9 @@ manlinks: manpages
 		shift; \
 		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
 		t=$${dir}${MANSUBDIR}/$${name}${MCOMPRESSSUFFIX}; \
-		if [ ! -f $$t -o -z "${UPDATE}" ]; then \
+		if [ -z "${UPDATE}" -o ! -f $$t ]; then \
 		    echo $$t -\> $$l; \
-		    rm -f $$t; \
-		    ln $$l $$t; \
+		    ln -f $$l $$t; \
 		fi; \
 	done
 .endif
