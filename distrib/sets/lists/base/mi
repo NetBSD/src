@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.227 2001/02/07 17:05:37 itojun Exp $
+# $NetBSD: mi,v 1.228 2001/02/09 14:27:06 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -340,6 +340,7 @@
 ./usr/bin/sdiff		base-util-bin
 ./usr/bin/sed		base-util-bin
 ./usr/bin/send-pr	base-gnats-bin
+./usr/bin/sftp		base-secsh-bin
 ./usr/bin/shar		base-util-bin
 ./usr/bin/shlock	base-util-bin
 ./usr/bin/showmount	base-nfsclient-bin
@@ -728,7 +729,6 @@
 ./usr/sbin/sesd			base-sysutil-bin
 ./usr/sbin/setencstat		base-sysutil-bin
 ./usr/sbin/setobjstat		base-sysutil-bin
-./usr/sbin/sftp			base-secsh-bin
 ./usr/sbin/sliplogin		base-slip-bin
 ./usr/sbin/slstats		base-slip-bin
 ./usr/sbin/spray		base-netutil-bin
