@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 1997/11/15 04:00:34 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.56 1997/12/24 08:45:33 jeremy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 atalk.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 clnp.4 cltp.4 \
@@ -22,7 +22,7 @@ MLINKS+=netintro.4 networking.4
 
 SUBDIR=	man4.amiga man4.arm32 man4.atari man4.hp300 man4.i386 \
 	man4.mac68k man4.pc532 man4.pmax man4.sparc man4.sun3 \
-	man4.vax man4.x68k
+	man4.sun3x man4.vax man4.x68k
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
