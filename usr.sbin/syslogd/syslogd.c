@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.43 2001/02/19 23:22:48 cgd Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.44 2001/03/21 17:02:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.43 2001/02/19 23:22:48 cgd Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.44 2001/03/21 17:02:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1057,6 +1057,10 @@ init(signo)
 		case F_TTY:
 		case F_CONSOLE:
 			(void)close(f->f_file);
+			break;
+		case F_FORW:
+			if (f->f_un.f_forw.f_addr)
+				freeaddrinfo(f->f_un.f_forw.f_addr);
 			break;
 		}
 		next = f->f_next;
