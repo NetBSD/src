@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.37 1998/12/17 22:28:07 gibbs Exp $	*/
+/*	$NetBSD: ch.c,v 1.38 1999/04/04 12:20:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -650,7 +650,7 @@ ch_ielem(sc)
 		sc->sc_counts[CHET_ST] +
 		sc->sc_counts[CHET_IE] +
 		sc->sc_counts[CHET_DT];
-	tmo *= 5 * 1000;
+	tmo *= 5 * 60 * 1000;
 	tmo += (10 * 60 * 1000);
 
 	return (scsipi_command(sc->sc_link,
