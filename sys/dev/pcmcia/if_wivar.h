@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.13 2000/08/28 13:25:22 joda Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.14 2000/10/12 02:24:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -60,7 +60,6 @@ struct wi_softc	{
 	struct ifmedia		sc_media;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
-	int			wi_if_flags;
 	u_int16_t		wi_ptype;
 	u_int16_t		wi_portnum;
 	u_int16_t		wi_max_data_len;
