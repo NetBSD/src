@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.46 2001/04/30 01:13:20 lukem Exp $	*/
+/*	$NetBSD: buf.h,v 1.47 2001/06/10 18:43:25 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ struct buf {
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
 	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
-	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
+	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
 	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
 	long	b_bufsize;		/* Allocated buffer size. */
