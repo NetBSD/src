@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisapc.c,v 1.5 1999/03/19 04:58:45 cgd Exp $	*/
+/*	$NetBSD: ofisapc.c,v 1.6 2002/01/07 21:46:59 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -89,6 +89,8 @@ ofisapcattach(parent, dev, aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	static struct isa_attach_args ia;
+	struct isa_io ia_io[1];
+	struct isa_irq ia_irq[1];
 
 	printf("\n");
     
@@ -105,12 +107,19 @@ ofisapcattach(parent, dev, aux)
 	ia.ia_iot = &isa_io_bs_tag;
 	ia.ia_memt = &isa_mem_bs_tag;
 	ia.ia_ic = NULL;			/* not used */
-	ia.ia_iobase = BASE_KEYBOARD;
-	ia.ia_iosize = I8042_NPORTS;
-	ia.ia_irq = IRQ_KEYBOARD;
-	ia.ia_drq = DRQUNK;
-	ia.ia_maddr = MADDRUNK;
-	ia.ia_msize = 0;
+
+	ia.ia_nio = 1;
+	ia.ia_io = ia_io;
+	ia.ia_io[0].ir_addr = BASE_KEYBOARD;
+	ia.ia_io[0].ir_size = I8042_NPORTS;
+
+	ia.ia_nirq = 1;
+	ia.ia_irq = ia_irq;
+	ia.ia_irq[0].ir_irq = IRQ_KEYBOARD;
+
+	ia.ia_niomem = 0;
+	ia.ia_ndrq = 0;
+
 	ia.ia_aux = (void *)oba->oba_phandle;
 
 	config_found(dev, &ia, NULL);
