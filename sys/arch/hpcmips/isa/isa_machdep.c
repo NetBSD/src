@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 2000/09/25 01:56:56 sato Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 2000/09/25 09:03:32 sato Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -28,7 +28,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/boot_flag.h>
+#include <sys/reboot.h>
 
 #include <machine/bus.h>
 
