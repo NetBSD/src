@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.h,v 1.4 2002/07/18 11:59:06 wiz Exp $	*/
+/*	$NetBSD: altq_cbq.h,v 1.5 2003/08/20 23:32:25 itojun Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -99,6 +99,7 @@ typedef struct cbq_class_spec {
 #define	CBQCLF_CLASSMASK	0xf000	/* class mask */
 
 #define	CBQ_MAXQSIZE	200
+#define	CBQ_MAXPRI	RM_MAXPRIO
 
 struct cbq_add_class {
 	struct cbq_interface	cbq_iface;
