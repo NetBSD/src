@@ -25653,6 +25653,7 @@ done
 ${PROG} commit: Rebuilding administrative file database"
 	    cat >${CVSROOT_DIRNAME}/CVSROOT/passwd <<EOF
 testme:q6WV9d2t848B2:$username
+dontroot:q6WV9d2t848B2:root
 anonymous::$username
 $username:
 willfail:   :whocares
@@ -25701,6 +25702,16 @@ Ay::'d
 END AUTH REQUEST
 Root ${CVSROOT_DIRNAME}
 noop
+EOF
+
+	    dotest_fail pserver-4.2 \
+"${testcvs} --allow-root=${CVSROOT_DIRNAME} pserver" \
+"error 0: root not allowed" <<EOF
+BEGIN AUTH REQUEST
+${CVSROOT_DIRNAME}
+dontroot
+Ay::'d
+END AUTH REQUEST
 EOF
 
 	    dotest pserver-5 "${testcvs} --allow-root=${CVSROOT_DIRNAME} pserver" \
