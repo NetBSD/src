@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.85 1999/07/30 19:25:19 aidan Exp $
+#	$NetBSD: NetBSD.dist,v 1.86 1999/07/30 19:40:25 aidan Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -195,6 +195,11 @@ rpc
 # ./usr/include/kadm5
 kadm5
 # ./usr/include/kadm5
+..
+
+# ./usr/include/ss
+ss
+# ./usr/include/ss
 ..
 
 # ./usr/include/openssl
