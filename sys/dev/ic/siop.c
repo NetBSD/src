@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37.2.5 2000/12/15 07:48:32 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.37.2.6 2001/01/15 09:26:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -382,8 +382,7 @@ siop_intr(v)
 		tag = siop_cmd->tag;
 		siop_lun = siop_target->siop_lun[lun];
 #ifdef DIAGNOSTIC
-		if (siop_cmd->status != CMDST_ACTIVE &&
-		    siop_cmd->status != CMDST_SENSE_ACTIVE) {
+		if (siop_cmd->status != CMDST_ACTIVE) {
 			printf("siop_cmd (lun %d) not active (%d)\n",
 				lun, siop_cmd->status);
 			xs = NULL;
@@ -630,8 +629,7 @@ scintr:
 				    irqcode);
 				goto reset;
 			}
-			if (siop_cmd->status != CMDST_ACTIVE &&
-			    siop_cmd->status != CMDST_SENSE_ACTIVE) {
+			if (siop_cmd->status != CMDST_ACTIVE) {
 				printf("%s: command with invalid status "
 				    "(IRQ code 0x%x current status %d) !\n",
 				    sc->sc_dev.dv_xname,
@@ -915,10 +913,7 @@ scintr:
 			    le32toh(siop_cmd->siop_tables.status));
 #endif
 			INCSTAT(siop_stat_intr_done);
-			if (siop_cmd->status == CMDST_SENSE_ACTIVE)
-				siop_cmd->status = CMDST_SENSE_DONE;
-			else
-				siop_cmd->status = CMDST_DONE;
+			siop_cmd->status = CMDST_DONE;
 			goto end;
 		default:
 			printf("unknown irqcode %x\n", irqcode);
@@ -956,20 +951,13 @@ siop_scsicmd_end(siop_cmd)
 	xs->status = le32toh(siop_cmd->siop_tables.status);
 	switch(xs->status) {
 	case SCSI_OK:
-		xs->error = (siop_cmd->status == CMDST_DONE) ?
-		    XS_NOERROR : XS_SENSE;
+		xs->error = XS_NOERROR;
 		break;
 	case SCSI_BUSY:
 		xs->error = XS_BUSY;
 		break;
 	case SCSI_CHECK:
-		if (siop_cmd->status == CMDST_SENSE_DONE) {
-			/* request sense on a request sense ? */
-			printf("request sense failed\n");
-			xs->error = XS_DRIVER_STUFFUP;
-		} else {
-			siop_cmd->status = CMDST_SENSE;
-		}
+		xs->error = XS_BUSY;
 		break;
 	case SCSI_QUEUE_FULL:
 		INCSTAT(siop_stat_intr_qfull);
@@ -995,8 +983,7 @@ siop_scsicmd_end(siop_cmd)
 	default:
 		xs->error = XS_DRIVER_STUFFUP;
 	}
-	if (siop_cmd->status != CMDST_SENSE_DONE &&
-	    xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
+	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
 		    siop_cmd->dmamap_data->dm_mapsize,
 		    (xs->xs_control & XS_CTL_DATA_IN) ?
@@ -1004,49 +991,6 @@ siop_scsicmd_end(siop_cmd)
 		bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_data);
 	}
 	bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
-	if (siop_cmd->status == CMDST_SENSE) {
-		/* issue a request sense for this target */
-		int error;
-		siop_cmd->rs_cmd.opcode = REQUEST_SENSE;
-		siop_cmd->rs_cmd.byte2 = xs->xs_periph->periph_lun << 5;
-		siop_cmd->rs_cmd.unused[0] = siop_cmd->rs_cmd.unused[1] = 0;
-		siop_cmd->rs_cmd.length = sizeof(struct scsipi_sense_data);
-		siop_cmd->rs_cmd.control = 0;
-		siop_cmd->flags &= ~CMDFL_TAG;
-		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_cmd,
-		    &siop_cmd->rs_cmd, sizeof(struct scsipi_sense),
-		    NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: unable to load cmd DMA map: %d",
-			    sc->sc_dev.dv_xname, error);
-			xs->error = XS_DRIVER_STUFFUP;
-			goto out;
-		}
-		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_data,
-		    &xs->sense.scsi_sense, sizeof(struct  scsipi_sense_data),
-		    NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: unable to load sense DMA map: %d",
-			    sc->sc_dev.dv_xname, error);
-			xs->error = XS_DRIVER_STUFFUP;
-			bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
-			goto out;
-		}
-		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
-		    siop_cmd->dmamap_data->dm_mapsize, BUS_DMASYNC_PREREAD);
-		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_cmd, 0,
-		    siop_cmd->dmamap_cmd->dm_mapsize, BUS_DMASYNC_PREWRITE);
-
-		siop_setuptables(siop_cmd);
-		/* arrange for the cmd to be handled now */
-		TAILQ_INSERT_HEAD(&sc->urgent_list, siop_cmd, next);
-		return;
-	} else if (siop_cmd->status == CMDST_SENSE_DONE) {
-		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
-		    siop_cmd->dmamap_data->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_data);
-	}
-out:
 	callout_stop(&siop_cmd->xs->xs_callout);
 	siop_cmd->status = CMDST_FREE;
 	xs->resid = 0;
@@ -1176,15 +1120,12 @@ siop_handle_reset(sc)
 		siop_cmd->siop_tables.status = htole32(SCSI_SIOP_NOCHECK);
 		printf("cmd %p (status %d) about to be processed\n", siop_cmd,
 		    siop_cmd->status);
-		if (siop_cmd->status == CMDST_SENSE ||
-		    siop_cmd->status == CMDST_SENSE_ACTIVE) 
-			siop_cmd->status = CMDST_SENSE_DONE;
-		else
-			siop_cmd->status = CMDST_DONE;
+		siop_cmd->status = CMDST_DONE;
 		TAILQ_REMOVE(&reset_list, siop_cmd, next);
 		siop_scsicmd_end(siop_cmd);
 		TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 	}
+	scsipi_async_event(&sc->sc_chan, ASYNC_EVENT_RESET, NULL);
 }
 
 void
@@ -1411,8 +1352,7 @@ again:
 	for (; siop_cmd != NULL; siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
 #ifdef DIAGNOSTIC
-		if (siop_cmd->status != CMDST_READY &&
-		    siop_cmd->status != CMDST_SENSE)
+		if (siop_cmd->status != CMDST_READY)
 			panic("siop: non-ready cmd in ready list");
 #endif	
 		target = siop_cmd->xs->xs_periph->periph_target;
@@ -1475,8 +1415,6 @@ again:
 		/* mark command as active */
 		if (siop_cmd->status == CMDST_READY) {
 			siop_cmd->status = CMDST_ACTIVE;
-		} else if (siop_cmd->status == CMDST_SENSE) {
-			siop_cmd->status = CMDST_SENSE_ACTIVE;
 		} else
 			panic("siop_start: bad status");
 		if (doingready)

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.9.2.5 2000/12/15 07:48:33 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.9.2.6 2001/01/15 09:26:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -95,7 +95,6 @@ struct siop_cmd {
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
-	struct scsipi_sense rs_cmd; /* request sense command buffer */
 	int status;
 	int flags;
 	int reselslot; /* the reselect slot used */
@@ -115,10 +114,7 @@ struct siop_cbd {
 #define CMDST_FREE		0 /* cmd slot is free */
 #define CMDST_READY		1 /* cmd slot is waiting for processing */
 #define CMDST_ACTIVE		2 /* cmd slot is being processed */
-#define CMDST_SENSE		3 /* cmd slot is being requesting sense */
-#define CMDST_SENSE_ACTIVE	4 /* request sense active */
-#define CMDST_SENSE_DONE 	5 /* request sense done */
-#define CMDST_DONE		6 /* cmd slot has been processed */
+#define CMDST_DONE		3 /* cmd slot has been processed */
 /* flags defs */
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
 #define CMDFL_TAG	0x0002 /* tagged cmd */

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.11.2.4 2000/12/15 07:48:33 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.11.2.5 2001/01/15 09:26:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -147,8 +147,7 @@ siop_setuptables(siop_cmd)
 			siop_update_xfer_mode(sc, target);
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
-	    (sc->targets[target]->flags & TARF_TAG) &&
-	    siop_cmd->status != CMDST_SENSE && xs->xs_tag_type != 0) {
+	    (sc->targets[target]->flags & TARF_TAG) && xs->xs_tag_type != 0) {
 		siop_cmd->flags |= CMDFL_TAG;
 	}
 	siop_cmd->siop_tables.status =
@@ -158,8 +157,7 @@ siop_setuptables(siop_cmd)
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
 	siop_cmd->siop_tables.cmd.addr =
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_addr);
-	if ((xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) ||
-	    siop_cmd->status == CMDST_SENSE) {
+	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
 			siop_cmd->siop_tables.data[i].count =
 			    htole32(siop_cmd->dmamap_data->dm_segs[i].ds_len);
@@ -531,7 +529,7 @@ siop_modechange(sc)
 	for (retry = 0; retry < 5; retry++) {
 		/*
 		 * datasheet says to wait 100ms and re-read SIST1,
-		 * to check that DIFFSENSE is srable.
+		 * to check that DIFFSENSE is stable.
 		 * We may delay() 5 times for  100ms at interrupt time;
 		 * hopefully this will not happen often.
 		 */
