@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.1 2001/06/19 00:20:10 fvdl Exp $	*/
+/*	$NetBSD: fpu.h,v 1.2 2002/01/03 04:28:31 thorpej Exp $	*/
 
 #ifndef	_X86_64_FPU_H_
 #define	_X86_64_FPU_H_
@@ -10,18 +10,18 @@
  */
 
 struct fxsave64 {
-	u_int64_t	fx_fcw:16;
-	u_int64_t	fx_fsw:16;
-	u_int64_t	fx_unused1:8;
-	u_int64_t	fx_ftw:8;
-	u_int64_t	fx_fop:16;
-	u_int64_t	fx_rip;
-	u_int64_t	fx_dp;
-	u_int64_t	fx_mxcsr:32;
-	u_int64_t	fx_unused2:32;
-	u_int64_t	fx_st[8 * 2];	/* 8 normal FP regs */
-	u_int64_t	fx_xmm[16 * 2];	/* 16 SSE2 registers */
-	u_int8_t	fx_unused3[96];
+/*BITFIELDTYPE*/ u_int64_t	fx_fcw:16;
+/*BITFIELDTYPE*/ u_int64_t	fx_fsw:16;
+/*BITFIELDTYPE*/ u_int64_t	fx_unused1:8;
+/*BITFIELDTYPE*/ u_int64_t	fx_ftw:8;
+/*BITFIELDTYPE*/ u_int64_t	fx_fop:16;
+/*BITFIELDTYPE*/ u_int64_t	fx_rip;
+/*BITFIELDTYPE*/ u_int64_t	fx_dp;
+/*BITFIELDTYPE*/ u_int64_t	fx_mxcsr:32;
+/*BITFIELDTYPE*/ u_int64_t	fx_unused2:32;
+/*BITFIELDTYPE*/ u_int64_t	fx_st[8 * 2];	/* 8 normal FP regs */
+/*BITFIELDTYPE*/ u_int64_t	fx_xmm[16 * 2];	/* 16 SSE2 registers */
+/*BITFIELDTYPE*/ u_int8_t	fx_unused3[96];
 } __attribute__ ((aligned (16)));
 
 /*
