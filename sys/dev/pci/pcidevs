@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.568 2003/08/23 00:14:28 dogcow Exp $
+$NetBSD: pcidevs,v 1.569 2003/08/26 17:25:00 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1610,6 +1610,7 @@ product INTEL 82845G_AGP	0x2561	82845G/GL Host-to-AGP Bridge
 product INTEL 82845G_IGD	0x2562	82845G/GL Integrated Graphics Device
 product INTEL 82865_HB		0x2570	82865 Host
 product INTEL 82865_AGP		0x2571	82865 AGP
+product INTEL 82865_IGD		0x2572	82865G Integrated Graphics Device
 product INTEL 82801EB_HPB	0x2573	82801EB Hub-to-PCI Bridge
 product INTEL 82875P_HB		0x2578	82875P Host
 product INTEL 82875P_AGP	0x2579	82875P AGP
