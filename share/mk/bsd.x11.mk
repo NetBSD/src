@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.48 2005/03/26 10:31:51 martin Exp $
+#	$NetBSD: bsd.x11.mk,v 1.49 2005/04/06 08:32:11 martin Exp $
 
 .include <bsd.init.mk>
 
@@ -76,7 +76,8 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "sparc64"
 #	LOADABLE
-X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module
+X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
+			-fno-merge-constants
 .endif
 
 # Extract X11VERSION
