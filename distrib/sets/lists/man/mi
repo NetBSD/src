@@ -1,3 +1,4 @@
+./usr/share/info/am-utils.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -183,6 +184,7 @@
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
 ./usr/share/man/cat1/mkfilters.0
+./usr/share/man/cat1/mktemp.0
 ./usr/share/man/cat1/mopa.out.0
 ./usr/share/man/cat1/mopchk.0
 ./usr/share/man/cat1/mopprobe.0
@@ -1295,6 +1297,7 @@
 ./usr/share/man/man1/mkdir.1
 ./usr/share/man/man1/mkfifo.1
 ./usr/share/man/man1/mkfilters.1
+./usr/share/man/man1/mktemp.1
 ./usr/share/man/man1/mopa.out.1
 ./usr/share/man/man1/mopchk.1
 ./usr/share/man/man1/mopprobe.1
