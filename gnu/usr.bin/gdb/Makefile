@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 1999/03/17 00:46:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.30.2.1 2000/02/29 23:40:02 he Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -112,3 +112,10 @@ nm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/nm-nbsd.h
 tm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/tm-nbsd.h
 	@-rm -f $@
 	cp $> $@
+
+# Nasty hack to avoid internal gcc errors for 1.4.1
+#
+.if ${MACHINE} == "vax"
+infrun.o:
+	 ${CC} ${CPPFLAGS} -c ${.IMPSRC}
+.endif

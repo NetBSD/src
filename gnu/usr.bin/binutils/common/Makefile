@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2000/02/29 23:38:26 he Exp $
 
 LIB=		common
 
@@ -15,3 +15,10 @@ MKLINT=		no
 libinstall::
 
 .include <bsd.lib.mk>
+
+# Nasty hack to avoid internal gcc errors for 1.4.1
+#
+.if ${MACHINE} == "vax"
+ieee.o:
+	 ${CC} ${CPPFLAGS} -c ${.IMPSRC}
+.endif
