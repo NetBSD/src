@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.2 1993/11/28 11:14:36 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.3 1993/11/28 11:21:33 mycroft Exp $
  */
 
 /*
@@ -333,7 +333,6 @@ int bt_cmd();	/* XXX must be varargs to prototype */
 int btprobe __P((struct device *, struct cfdata *, void *));
 void btattach __P((struct device *, struct device *, void *));
 u_int bt_adapter_info __P((struct bt_data *));
-int bt_find __P((struct bt_data *));
 int btintr __P((void *));
 void bt_free_ccb __P((struct bt_data *, struct bt_ccb *, int));
 struct bt_ccb *bt_get_ccb __P((struct bt_data *, int));
@@ -344,7 +343,7 @@ int bt_find __P((struct bt_data *));
 void bt_init __P((struct bt_data *));
 void bt_inquire_setup_information __P((struct bt_data *));
 void btminphys __P((struct buf *));
-int bt_scsi_cmd __P((struct scsi_xfer *xs));
+int bt_scsi_cmd __P((struct scsi_xfer *));
 int bt_poll __P((struct bt_data *, struct scsi_xfer *, struct bt_ccb *));
 void bt_timeout __P((caddr_t));
 #ifdef UTEST
