@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2001/03/04 01:50:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 2001/03/04 19:05:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -106,11 +106,7 @@ struct cpu_info cpu_info_store;
 
 extern pt_entry_t msgbufpte;
 caddr_t	msgbufaddr;
-extern vm_offset_t msgbufphys;
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
+extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
 
@@ -122,26 +118,20 @@ char *booted_kernel;
 
 void consinit		__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
+void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
 			     int cacheable));
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_pagetable	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
+void map_entry		__P((vaddr_t pt, vaddr_t va, paddr_t pa));
+void map_entry_nc	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
+void map_entry_ro	__P((vaddr_t pt, vaddr_t va, paddr_t pa));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt));
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
-extern void pmap_postinit	__P((void));
 extern void dumpsys	__P((void));
-#ifdef PMAP_DEBUG
-extern void pmap_debug	__P((int level));
-#endif	/* PMAP_DEBUG */
 
 /*
  * Debug function just to park the CPU
@@ -188,9 +178,9 @@ bootsync(void)
 
 void
 map_section(pagetable, va, pa, cacheable)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 	int cacheable;
 {
 #ifdef	DIAGNOSTIC
@@ -209,9 +199,9 @@ map_section(pagetable, va, pa, cacheable)
 
 void
 map_pagetable(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 #ifdef	DIAGNOSTIC
 	if ((pa & 0xc00) != 0)
@@ -228,19 +218,19 @@ map_pagetable(pagetable, va, pa)
 	     L1_PTE((pa & PG_FRAME) + 0xc00);
 }
 
-vm_size_t
+vsize_t
 map_chunk(pd, pt, va, pa, size, acc, flg)
-	vm_offset_t pd;
-	vm_offset_t pt;
-	vm_offset_t va;
-	vm_offset_t pa;
-	vm_size_t size;
+	vaddr_t pd;
+	vaddr_t pt;
+	vaddr_t va;
+	paddr_t pa;
+	vsize_t size;
 	u_int acc;
 	u_int flg;
 {
 	pd_entry_t *l1pt = (pd_entry_t *)pd;
 	pt_entry_t *l2pt = (pt_entry_t *)pt;
-	vm_size_t remain;
+	vsize_t remain;
 	u_int loop;
 
 	remain = (size + (NBPG - 1)) & ~(NBPG - 1);
@@ -296,9 +286,9 @@ map_chunk(pd, pt, va, pa, size, acc, flg)
 
 void
 map_entry(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE((pa & PG_FRAME), AP_KRW);
@@ -307,9 +297,9 @@ map_entry(pagetable, va, pa)
 
 void
 map_entry_nc(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE_NC_NB((pa & PG_FRAME), AP_KRW);
@@ -318,9 +308,9 @@ map_entry_nc(pagetable, va, pa)
 
 void
 map_entry_ro(pagetable, va, pa)
-	vm_offset_t pagetable;
-	vm_offset_t va;
-	vm_offset_t pa;
+	vaddr_t pagetable;
+	vaddr_t va;
+	paddr_t pa;
 {
 	((pt_entry_t *)pagetable)[((va >> PGSHIFT) & 0x000003ff)] =
 	    L2_PTE((pa & PG_FRAME), AP_KR);
@@ -338,11 +328,11 @@ void
 cpu_startup()
 {
 	int loop;
-	vm_offset_t minaddr;
-	vm_offset_t maxaddr;
+	paddr_t minaddr;
+	paddr_t maxaddr;
 	caddr_t sysbase;
 	caddr_t size;
-	vm_size_t bufsize;
+	vsize_t bufsize;
 	int base, residual;
 	char pbuf[9];
 
@@ -371,7 +361,7 @@ cpu_startup()
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufaddr + loop * NBPG),
+		    (vaddr_t)msgbufaddr + loop * NBPG,
 		    msgbufphys + loop * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
@@ -403,12 +393,12 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	bufsize = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(bufsize),
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(bufsize),
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate UVM space for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
@@ -417,11 +407,11 @@ cpu_startup()
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (loop = 0; loop < nbuf; ++loop) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
-		curbuf = (vm_offset_t) buffers + (loop * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (loop * MAXBSIZE);
 		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
