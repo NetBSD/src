@@ -1205,6 +1205,7 @@ append(n, glob)
 {
 	int l;
 	char *lp = ibuf;
+	char *eot;
 	undo_t *up = NULL;
 
 	for (curln = n;;) {
@@ -1218,26 +1219,32 @@ append(n, glob)
 			lp = ibuf;
 		} else if (*(lp = ibufp) == '\0')
 			return 0;
-		else
+		else {
 			while (*ibufp++ != '\n')
 				;
-		if (lp[0] == '.' && lp[1] == '\n') {
+			l = ibufp - lp;
+		}
+		if (l == 2 && lp[0] == '.' && lp[1] == '\n') {
 			return 0;
 		}
+		eot = lp + l;
 		spl1();
-		if (puttxt(lp) == NULL) {
-			spl0();
-			return ERR;
-		} else if (up)
-			up->t = getlp(curln);
-		else if ((up = upush(UADD, curln, curln)) == NULL) {
-			spl0();
-			return ERR;
-		}
+		do {
+			if ((lp = puttxt(lp)) == NULL) {
+				spl0();
+				return ERR;
+			} else if (up)
+				up->t = getlp(curln);
+			else if ((up = upush(UADD, curln, curln)) == NULL) {
+				spl0();
+				return ERR;
+			}
+		} while (lp != eot);
 		spl0();
 		modified = 1;
 	}
 }
+
 
 #ifdef sun
 /* subst: change all text matching a pattern in a range of lines according to
