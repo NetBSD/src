@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2000/06/27 04:19:01 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 2000/06/29 08:04:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,8 +74,6 @@
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-
-#include <vm/vm.h>
 
 #include <m68k/cacheops.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2000/06/26 14:20:52 mrg Exp $        */
+/*	$NetBSD: pmap.c,v 1.24 2000/06/29 07:58:50 mrg Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -148,8 +148,6 @@
 
 #include <machine/vmparam.h>
 #include <machine/pte.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

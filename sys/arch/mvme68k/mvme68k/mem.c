@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2000/06/26 04:55:51 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 2000/06/29 08:04:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,8 +53,6 @@
 #include <sys/uio.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

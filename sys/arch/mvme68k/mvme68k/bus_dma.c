@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.5 2000/06/26 14:20:50 mrg Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.6 2000/06/29 08:04:04 mrg Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2000/06/26 14:20:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2000/06/29 08:04:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2000/06/26 14:20:50 mrg Exp $");
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/kcore.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

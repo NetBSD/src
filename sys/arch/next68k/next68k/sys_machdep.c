@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1999/11/28 20:31:00 is Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.11 2000/06/29 07:58:50 mrg Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -56,7 +56,7 @@
 #include <sys/trace.h>
 #include <sys/mount.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 

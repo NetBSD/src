@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2000/06/26 14:20:50 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2000/06/29 08:04:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,8 +68,6 @@
 #include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

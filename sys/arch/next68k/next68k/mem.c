@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 2000/06/26 04:55:53 simonb Exp $ */
+/*	$NetBSD: mem.c,v 1.12 2000/06/29 07:58:50 mrg Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -60,8 +60,6 @@
 #include <sys/uio.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

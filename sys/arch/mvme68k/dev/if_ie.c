@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.4 2000/03/18 22:33:02 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.5 2000/06/29 08:04:03 mrg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

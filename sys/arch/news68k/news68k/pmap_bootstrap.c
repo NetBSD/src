@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.2 2000/04/07 12:09:30 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3 2000/06/29 08:02:52 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 

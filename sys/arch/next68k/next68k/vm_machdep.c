@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 2000/06/26 14:20:52 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 2000/06/29 07:58:51 mrg Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -62,8 +62,6 @@
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

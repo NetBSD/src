@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 1999/01/13 09:25:59 abs Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 2000/06/29 07:58:50 mrg Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/db_memrw.c
@@ -66,7 +66,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/db_machdep.h>

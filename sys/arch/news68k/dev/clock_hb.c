@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.3 2000/04/07 12:09:31 tsutsui Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.4 2000/06/29 08:02:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>

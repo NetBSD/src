@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.11 2000/02/21 20:38:50 erh Exp $ */
+/*	$NetBSD: isr.c,v 1.12 2000/06/29 07:58:50 mrg Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -57,8 +57,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
