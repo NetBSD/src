@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.8 1997/10/09 15:19:48 mycroft Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.9 1997/10/09 16:31:12 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -447,12 +447,6 @@ emit_struct(def)
 	/* May cause lint to complain. but  ... */
 	f_print(fout, "\tregister int32_t *buf;\n");
 
-	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
-		if (dl->decl.rel == REL_VECTOR) {
-			f_print(fout, "\tint i;\n");
-			break;
-		}
-
 	flag = PUT;
 	f_print(fout, "\n\tif (xdrs->x_op == XDR_ENCODE) {\n");
 
@@ -661,7 +655,9 @@ emit_inline(decl, flag)
 		break;
 	case REL_VECTOR:
 		f_print(fout, "\t\t\t{\n");
+		f_print(fout, "\t\t\t\tregister int i;\n");
 		f_print(fout, "\t\t\t\tregister %s *genp;\n", decl->type);
+		f_print(fout, "\n");
 		f_print(fout, "\t\t\t\tfor (i = 0, genp = objp->%s;\n",
 		    decl->name);
 		f_print(fout, "\t\t\t\t    i < %s; i++) {\n\t\t",
