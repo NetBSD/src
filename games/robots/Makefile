@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/24 22:15:49 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/12 14:09:55 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	robots
@@ -10,7 +10,7 @@ DPADD=	${LIBCURSES} ${LIBTERM}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
 
-FILES=/dev/null
+FILES=	/dev/null
 FILESNAME=robots_roll
 FILESMODE=600
 FILESDIR=/var/games

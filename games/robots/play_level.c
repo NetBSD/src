@@ -1,4 +1,4 @@
-/*	$NetBSD: play_level.c,v 1.3 1995/04/22 10:09:03 cgd Exp $	*/
+/*	$NetBSD: play_level.c,v 1.4 1997/10/12 14:10:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)play_level.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: play_level.c,v 1.3 1995/04/22 10:09:03 cgd Exp $";
+__RCSID("$NetBSD: play_level.c,v 1.4 1997/10/12 14:10:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,10 +48,10 @@ static char rcsid[] = "$NetBSD: play_level.c,v 1.3 1995/04/22 10:09:03 cgd Exp $
  * play_level:
  *	Let the player play the current level
  */
+void
 play_level()
 {
-	register COORD	*cp;
-	register int	y, x, bonus;
+	COORD	*cp;
 
 	move(My_pos.y, My_pos.x);
 	addch(PLAYER);

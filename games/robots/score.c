@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
+/*	$NetBSD: score.c,v 1.4 1997/10/12 14:10:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,26 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $";
+__RCSID("$NetBSD: score.c,v 1.4 1997/10/12 14:10:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
-# include	<sys/types.h>
-# include	<pwd.h>
 # include	"pathnames.h"
-
-typedef struct {
-	int	s_uid;
-	int	s_score;
-	char	s_name[MAXNAME];
-} SCORE;
-
-typedef struct passwd	PASSWD;
 
 char	*Scorefile = _PATH_SCORE;
 
@@ -65,12 +56,13 @@ static SCORE	Top[MAXSCORES];
  *	Post the player's score, if reasonable, and then print out the
  *	top list.
  */
+void
 score()
 {
-	register int	inf;
-	register SCORE	*scp;
-	register int	uid;
-	register bool	done_show = FALSE;
+	int		inf;
+	SCORE		*scp;
+	int		uid;
+	bool		done_show = FALSE;
 	static int	numscores, max_uid;
 
 	Newscore = FALSE;
@@ -142,10 +134,11 @@ score()
 	close(inf);
 }
 
+void
 set_name(scp)
-register SCORE	*scp;
+	SCORE	*scp;
 {
-	register PASSWD	*pp;
+	PASSWD	*pp;
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
 		pp->pw_name = "???";
@@ -156,20 +149,22 @@ register SCORE	*scp;
  * cmp_sc:
  *	Compare two scores.
  */
+int
 cmp_sc(s1, s2)
-register SCORE	*s1, *s2;
+	const void *s1, *s2;
 {
-	return s2->s_score - s1->s_score;
+	return ((SCORE *)s2)->s_score - ((SCORE *)s1)->s_score;
 }
 
 /*
  * show_score:
  *	Show the score list for the '-s' option.
  */
+void
 show_score()
 {
-	register SCORE	*scp;
-	register int	inf;
+	SCORE		*scp;
+	int		inf;
 	static int	max_score;
 
 	if ((inf = open(Scorefile, 0)) < 0) {
@@ -186,5 +181,6 @@ show_score()
 	inf = 1;
 	for (scp = Top; scp < &Top[MAXSCORES]; scp++)
 		if (scp->s_score >= 0)
-			printf("%d\t%d\t%.*s\n", inf++, scp->s_score, sizeof scp->s_name, scp->s_name);
+			printf("%d\t%d\t%.*s\n", inf++, scp->s_score,
+			    (int)(sizeof(scp->s_name)), scp->s_name);
 }

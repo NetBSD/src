@@ -1,4 +1,4 @@
-/*	$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $	*/
+/*	$NetBSD: make_level.c,v 1.4 1997/10/12 14:09:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $";
+__RCSID("$NetBSD: make_level.c,v 1.4 1997/10/12 14:09:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,12 +48,12 @@ static char rcsid[] = "$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $
  * make_level:
  *	Make the current level
  */
+void
 make_level()
 {
-	register int	i;
-	register COORD	*cp;
-	register WINDOW	*wp;
-	register int	x, *endp;
+	int	i;
+	COORD	*cp;
+	int	x;
 
 	reset_count();
 	for (i = 1; i < Y_FIELDSIZE; i++)
