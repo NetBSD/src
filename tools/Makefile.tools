@@ -1,0 +1,53 @@
+#	$NetBSD: Makefile.tools,v 1.1 2001/08/14 11:01:57 tv Exp $
+#
+# Included Makefile fragment used by the top-level Makefile, and by
+# the Makefile.inc in the "tools" subdirectory.
+
+AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
+AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
+#BIB=		${TOOLDIR}/bin/bib
+CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+CONFIG=		${TOOLDIR}/bin/config
+CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
+#EQN=		${TOOLDIR}/bin/eqn
+FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
+GENCAT=		${TOOLDIR}/bin/gencat
+#GRIND=		${TOOLDIR}/bin/vgrind -f
+#GROFF=		${TOOLDIR}/bin/groff -Tascii
+#INDXBIB=	${TOOLDIR}/bin/indxbib
+INSTALL=	${TOOLDIR}/bin/binstall
+INSTALL_INFO=	${TOOLDIR}/bin/install-info
+LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
+LEX=		${TOOLDIR}/bin/lex
+LINT=		${TOOLDIR}/bin/lint
+#LORDER=	${TOOLDIR}/bin/lorder
+#MAKE=		${TOOLDIR}/bin/bmake
+MAKEINFO=	${TOOLDIR}/bin/makeinfo
+MKDEP=		${TOOLDIR}/bin/mkdep
+#MKLOCALE=	${TOOLDIR}/bin/mklocale
+NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
+#NROFF=		${TOOLDIR}/bin/nroff -Tascii
+OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
+OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
+#PIC=		${TOOLDIR}/bin/pic
+RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
+#REFER=		${TOOLDIR}/bin/refer
+#ROFF=		${TOOLDIR}/bin/groff -Tps
+RPCGEN=		${TOOLDIR}/bin/rpcgen
+SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
+#SOELIM=	${TOOLDIR}/bin/soelim
+STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
+#TBL=		${TOOLDIR}/bin/tbl
+TSORT=		${TOOLDIR}/bin/tsort
+YACC=		${TOOLDIR}/bin/yacc
+
+# Make sure DESTDIR is set, so that builds with these tools always
+# get appropriate -nostdinc, -nostdlib, etc. handling.  The value is
+# <empty string>, meaning start from /, the root directory.
+
+DESTDIR?=
+
+# Temporary switch for turning on the appropriate toolchain bits
+
+USE_NEW_TOOLCHAIN=1
