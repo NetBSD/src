@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.2 2001/11/26 21:36:24 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.3 2001/12/04 22:13:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,8 +43,10 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
+#define IRIX_ELF_AUX_ENTRIES 7
+
 #ifdef EXEC_ELF32
-#define IRIX_AUX_ARGSIZ howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
+#define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof (Elf32_Addr))
 
 int irix_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
@@ -55,7 +57,7 @@ int irix_elf32_probe __P((struct proc *, struct exec_package *, void *,
 #endif
 
 #ifdef EXEC_ELF64
-#define IRIX_AUX_ARGSIZ howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), \
+#define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * sizeof(Aux64Info), \
     sizeof (Elf64_Addr))
 
 int irix_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
