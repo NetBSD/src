@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.40 2002/02/28 21:00:23 christos Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.40.8.1 2002/05/16 03:45:49 gehenna Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.40 2002/02/28 21:00:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.40.8.1 2002/05/16 03:45:49 gehenna Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -120,6 +120,7 @@ udv_attach(arg, accessprot, off, size)
 {
 	dev_t device = *((dev_t *)arg);
 	struct uvm_device *udv, *lcv;
+	const struct cdevsw *cdev;
 	dev_type_mmap((*mapfn));
 
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
@@ -130,10 +131,11 @@ udv_attach(arg, accessprot, off, size)
 	 * before we do anything, ensure this device supports mmap
 	 */
 
-	mapfn = cdevsw[major(device)].d_mmap;
-	if (mapfn == NULL ||
-	    mapfn == (dev_type_mmap((*))) enodev ||
-	    mapfn == (dev_type_mmap((*))) nullop)
+	cdev = cdevsw_lookup(device);
+	if (cdev == NULL)
+		return (NULL);
+	mapfn = cdev->d_mmap;
+	if (mapfn == NULL || mapfn == nommap || mapfn == nullmmap)
 		return(NULL);
 
 	/*
@@ -365,6 +367,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct uvm_device *udv = (struct uvm_device *)uobj;
+	const struct cdevsw *cdev;
 	vaddr_t curr_va;
 	off_t curr_offset;
 	paddr_t paddr, mdpgno;
@@ -392,7 +395,12 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	 */
 
 	device = udv->u_device;
-	mapfn = cdevsw[major(device)].d_mmap;
+	cdev = cdevsw_lookup(device);
+	if (cdev == NULL) {
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		return (EIO);
+	}
+	mapfn = cdev->d_mmap;
 
 	/*
 	 * now we must determine the offset in udv to use and the VA to
