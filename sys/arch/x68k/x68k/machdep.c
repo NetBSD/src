@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2001/03/15 06:10:53 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2001/03/22 12:46:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,6 +74,10 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+
+#if defined(DDB) && defined(__ELF__)
+#include <sys/exec_elf.h>
+#endif
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
@@ -189,7 +193,12 @@ consinit()
 	zs_kgdb_init();			/* XXX */
 #endif
 #ifdef DDB
+#ifndef __ELF__
 	ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+	ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		 (void *)&end, esym);
+#endif
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
