@@ -1,12 +1,11 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.8 1993/10/21 00:41:56 jtc Exp $
+#	$Id: Makefile,v 1.9 1993/12/05 01:10:14 cgd Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.
-# national	- for those ieee machines whose floating point implementation
-#		  has similar byte ordering as the NATIONAL 32016 with 32081.
-# i386		- i387 NPX, currently the same as "national"
-# mips		- for MIPS achitecture machines
+# national	- NATIONAL 32016 with 32081.
+# i386		- i387 NPX
+# mips		- for MIPS achitecture machines (and also pmax)
 # tahoe		- for the tahoe double format.
 # vax		- for the vax D_floating format
 
@@ -14,9 +13,9 @@ LIB=	m
 CFLAGS+=-I${.CURDIR}/common_source
 NOPIC=	nopic
 
-.if (${MACHINE} == "ieee")
+.if (${MACHINE_ARCH} == "ieee")
 
-HARDWARE=${MACHINE}
+HARDWARE=${MACHINE_ARCH}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
@@ -27,7 +26,7 @@ SRCS+=	atan2.c sincos.c tan.c
 # ieee
 SRCS+=	cabs.c cbrt.c support.c
 
-.elif (${MACHINE} == "hp300" || ${MACHINE} == "luna68k")
+.elif (${MACHINE_ARCH} == "m68k")
 
 HARDWARE=mc68881
 .PATH:	${.CURDIR}/mc68881 ${.CURDIR}/common_source ${.CURDIR}/ieee
@@ -40,7 +39,7 @@ SRCS+=	asincos.s atan.s atan2.c atanh.s cosh.s exp.s expm1.s floor.s \
 # ieee
 SRCS+=	cabs.c cbrt.c
 
-.elif (${MACHINE} == "i386")
+.elif (${MACHINE_ARCH} == "i386")
 
 HARDWARE=i387
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
@@ -53,9 +52,9 @@ SRCS+=	atan2.c sincos.c tan.c
 # ieee
 SRCS+=	cabs.c cbrt.c support.c
 
-.elif (${MACHINE} == "mips")
+.elif (${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "pmax")
 
-HARDWARE=${MACHINE}
+HARDWARE=${MACHINE_ARCH}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
@@ -66,13 +65,8 @@ SRCS+=	atan2.c sincos.c tan.c
 # ieee
 SRCS+=	cabs.c cbrt.c support.c
 
-.elif (${MACHINE} == "national")
-
-HARDWARE=${MACHINE}
-.PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/national \
-.elif (${MACHINE} == "national")
-
-HARDWARE=${MACHINE}
+.elif (${MACHINE_ARCH} == "national" || ${MACHINE_ARCH} == "ns32k")
+HARDWARE=national
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/national \
 	${.CURDIR}/ieee
 # common_source
@@ -86,9 +80,9 @@ SRCS+=	sqrt.s support.s
 # ieee
 SRCS+=	cabs.c cbrt.c
 
-.elif (${MACHINE} == "sparc")
+.elif (${MACHINE_ARCH} == "sparc")
 
-HARDWARE=${MACHINE}
+HARDWARE=${MACHINE_ARCH}
 .PATH:  ${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/ieee
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
@@ -100,9 +94,9 @@ SRCS+=	atan2.c sincos.c tan.c
 # ieee
 SRCS+=	cabs.c cbrt.c support.c
 
-.elif (${MACHINE} == "tahoe")
+.elif (${MACHINE_ARCH} == "tahoe")
 
-HARDWARE=${MACHINE}
+HARDWARE=${MACHINE_ARCH}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/common ${.CURDIR}/tahoe \
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
@@ -113,9 +107,9 @@ SRCS+=	atan2.c sincos.c tan.c
 # tahoe
 SRCS+=	cabs.s cbrt.s sqrt.s support.s infnan.s
 
-.elif (${MACHINE} == "vax")
+.elif (${MACHINE_ARCH} == "vax")
 
-HARDWARE=${MACHINE}
+HARDWARE=${MACHINE_ARCH}
 .PATH:	${.CURDIR}/common_source ${.CURDIR}/vax
 # common_source
 SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
