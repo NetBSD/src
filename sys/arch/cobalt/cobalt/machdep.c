@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2000/04/28 17:23:40 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2000/04/29 21:47:59 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -451,22 +451,6 @@ delay(n)
 	while (--N > 0);
 }
 
-#ifdef EXEC_ECOFF
-#include <sys/exec_ecoff.h>
-
-int
-cpu_exec_ecoff_hook(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	extern struct emul emul_netbsd;
-
-	epp->ep_emul = &emul_netbsd;
-
-	return 0;
-}
-#endif /* EXEC_ECOFF */
-
 #define NINTR	6
 
 static struct {
@@ -493,7 +477,7 @@ cpu_intr_establish(level, ipl, func, arg)
 	return (void *)-1;
 }
 
-void cpu_intr (u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 void
 cpu_intr(status, cause, pc, ipending)
