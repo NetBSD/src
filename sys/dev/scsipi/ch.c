@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.63 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.64 2004/09/18 00:08:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.63 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.64 2004/09/18 00:08:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,9 +615,8 @@ ch_move(struct ch_softc *sc, struct changer_move_request *cm)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
-	    100000, NULL, 0));
+	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CHRETRIES, 100000, NULL, 0));
 }
 
 static int
@@ -670,9 +669,8 @@ ch_exchange(struct ch_softc *sc, struct changer_exchange_request *ce)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
-	    100000, NULL, 0));
+	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CHRETRIES, 100000, NULL, 0));
 }
 
 static int
@@ -707,9 +705,8 @@ ch_position(struct ch_softc *sc, struct changer_position_request *cp)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
-	    100000, NULL, 0));
+	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CHRETRIES, 100000, NULL, 0));
 }
 
 /*
@@ -1047,10 +1044,9 @@ ch_getelemstatus(struct ch_softc *sc, int first, int count, void *data,
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
-	    scsiflags | XS_CTL_DATA_IN));
+	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, datalen,
+	    CHRETRIES, 100000, NULL, scsiflags | XS_CTL_DATA_IN));
 }
 
 static int
@@ -1113,9 +1109,8 @@ ch_setvoltag(struct ch_softc *sc, struct changer_set_voltag_request *csvr)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
+	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, datalen, CHRETRIES, 100000, NULL,
 	    datalen ? XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK : 0));
 }
 
@@ -1150,9 +1145,8 @@ ch_ielem(struct ch_softc *sc)
 	tmo *= 5 * 60 * 1000;
 	tmo += (10 * 60 * 1000);
 
-	return (scsipi_command(sc->sc_periph,
-	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    NULL, 0, CHRETRIES, tmo, NULL, XS_CTL_IGNORE_ILLEGAL_REQUEST));
+	return (scsipi_command(sc->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    CHRETRIES, tmo, NULL, XS_CTL_IGNORE_ILLEGAL_REQUEST));
 }
 
 /*
