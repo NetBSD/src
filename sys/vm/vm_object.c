@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.29 1995/07/13 12:35:29 pk Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.30 1995/12/05 22:54:36 pk Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1419,7 +1419,7 @@ vm_object_prefer(object, offset, addr)
 	register vm_offset_t	paddr;
 
 	if (object == NULL)
-		return;
+		goto first_map;
 
 #ifdef PMAP_PREFER
 	vm_object_lock(object);
@@ -1436,8 +1436,19 @@ vm_object_prefer(object, offset, addr)
 		if (paddr == (vm_offset_t)-1)
 			continue;
 		*addr = paddr - (p->offset - offset);
-		break;
+		vm_object_unlock(object);
+		return;
 	}
+
+first_map:
+	/*
+	 * No physical page attached; ask for a preferred address based
+	 * only on the given virtual address.
+	 */
+	paddr = PMAP_PREFER((vm_offset_t)-1, *addr);
+	if (paddr != (vm_offset_t)-1)
+		*addr = paddr;
+
 	vm_object_unlock(object);
 #endif
 }
