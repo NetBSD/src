@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.81 1999/03/25 21:55:17 is Exp $
+#	$NetBSD: files.amiga,v 1.82 1999/03/25 23:16:14 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -8,6 +8,7 @@ maxusers 2 8 64
 defopt	opt_amigaccgrf.h	GRF_PAL:GRF_NTSC	# temporary workaround
 defopt	opt_amigaccgrf.h	GRF_NTSC
 defopt	opt_amigaccgrf.h	GRF_ECS GRF_AGA
+defopt	opt_amigaccgrf.h	GRF_A2024:GRF_ECS
 defopt	opt_amigaccgrf.h	GRF_AGA_VGA:GRF_AGA
 defopt	opt_amigaccgrf.h	GRF_SUPER72:GRF_AGA
 
