@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.9 1995/07/14 01:05:30 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.10 1995/07/24 19:36:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,8 @@
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
+
+#include <machine/pte.h>
 
 extern int splbio();
 extern void splx();
@@ -1095,11 +1097,10 @@ int
 rzdump(dev)
 	dev_t dev;
 {
-#ifdef notdef
 	int part = rzpart(dev);
 	int unit = rzunit(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
-	register struct scsi_device *sd = sc->sc_hd;
+	register struct scsi_device *sd = sc->sc_sd;
 	register daddr_t baddr;
 	register int maddr;
 	register int pages, i;
@@ -1118,37 +1119,52 @@ rzdump(dev)
 	if (unit >= NRZ || (sc->sc_flags & RZF_ALIVE) == 0)
 		return (ENXIO);
 	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= sc->sc_info.part[part].nblocks)
+	if (dumplo < 0 || dumplo >= sc->sc_label.d_partitions[part].p_size)
 		return (EINVAL);
-	if (dumplo + ctod(pages) > sc->sc_info.part[part].nblocks)
-		pages = dtoc(sc->sc_info.part[part].nblocks - dumplo);
+	if (dumplo + ctod(pages) > sc->sc_label.d_partitions[part].p_size)
+		pages = dtoc(sc->sc_label.d_partitions[part].p_size - dumplo);
 	maddr = lowram;
-	baddr = dumplo + sc->sc_info.part[part].strtblk;
+	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
+
+#ifdef notdef	/*XXX -- bogus code, from Mach perhaps? */
 	/* scsi bus idle? */
 	if (!scsireq(&sc->sc_dq)) {
 		scsireset(sd->sd_ctlr);
 		sc->sc_stats.rzresets++;
 		printf("[ drive %d reset ] ", unit);
 	}
+#else
+	if (!rzready(sc)) {
+		printf("[ drive %d did not reset ] ", unit);
+		return(ENXIO);
+	}
+#endif
+	printf("[..untested..] dumping %d pages\n", pages);
+
+
 	for (i = 0; i < pages; i++) {
 #define NPGMB	(1024*1024/NBPG)
 		/* print out how many Mbs we have dumped */
 		if (i && (i % NPGMB) == 0)
 			printf("%d ", i / NPGMB);
 #undef NPBMG
-		mapin(mmap, (u_int)vmmap, btop(maddr), PG_URKR|PG_CI|PG_V);
+#ifdef later
+	        /*XXX*/
+		/*mapin(mmap, (u_int)vmmap, btop(maddr), PG_URKR|PG_CI|PG_V);*/
+		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		   VM_PROT_READ, TRUE);
+
 		stat = scsi_tt_write(sd->sd_ctlr, sd->sd_drive, sd->sd_slave,
 				     vmmap, NBPG, baddr, sc->sc_bshift);
 		if (stat) {
 			printf("rzdump: scsi write error 0x%x\n", stat);
 			return (EIO);
 		}
+#endif
+
 		maddr += NBPG;
 		baddr += ctod(1);
 	}
 	return (0);
-#else /* notdef */
-	return (ENXIO);
-#endif /* notdef */
 }
 #endif
