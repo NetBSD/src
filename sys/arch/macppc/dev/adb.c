@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.16 2005/02/01 02:05:10 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.17 2005/02/01 02:46:00 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.16 2005/02/01 02:05:10 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.17 2005/02/01 02:46:00 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.16 2005/02/01 02:05:10 briggs Exp $");
 
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/akbdvar.h>
+#include <macppc/dev/pm_direct.h>
 #include <macppc/dev/viareg.h>
 
 #include <dev/ofw/openfirm.h>
@@ -134,6 +135,9 @@ adbattach(parent, self, aux)
 	ADBReInit();
 
 	intr_establish(irq, IST_LEVEL, IPL_HIGH, (int (*)(void *))adb_intr, sc);
+	if (adbHardware == ADB_HW_PMU) {
+		pm_init();
+	}
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
