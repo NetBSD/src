@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.36 2002/10/02 16:52:14 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.37 2003/02/23 04:15:02 simonb Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.36 2002/10/02 16:52:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.37 2003/02/23 04:15:02 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1947,11 +1947,9 @@ ray_ccs_done(sc, ccs)
 	struct ray_softc *sc;
 	bus_size_t ccs;
 {
-	struct ifnet *ifp;
 	ray_cmd_func_t rcmd;
 	u_int cmd, stat;
 
-	ifp = &sc->sc_if;
 	cmd = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_cmd);
 	stat = SRAM_READ_FIELD_1(sc, ccs, ray_cmd, c_status);
 
