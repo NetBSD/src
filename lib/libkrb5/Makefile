@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/08/03 03:53:39 assar Exp $
+# $NetBSD: Makefile,v 1.5 2000/08/09 02:12:48 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
 .PATH: ${DIST}/heimdal/lib/des
@@ -113,7 +113,6 @@ SRCS=						\
 	version.c				\
 	warn.c					\
 	write_message.c				\
-	rnd_keys.c				\
 	$(ERR_FILES)
 
 INCS=	krb5.h					\
