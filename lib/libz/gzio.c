@@ -1,13 +1,13 @@
-/* $NetBSD: gzio.c,v 1.11 2001/09/16 16:34:26 wiz Exp $ */
+/* $NetBSD: gzio.c,v 1.12 2002/03/11 23:40:17 fvdl Exp $ */
 
 /* gzio.c -- IO on .gz files
- * Copyright (C) 1995-1998 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  *
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) Id */
+/* @(#) $Id: gzio.c,v 1.12 2002/03/11 23:40:17 fvdl Exp $ */
 
 #include <stdio.h>
 
