@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.38 2003/11/18 15:57:13 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.39 2003/11/20 22:05:25 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.38 2003/11/18 15:57:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.39 2003/11/20 22:05:25 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -199,15 +199,30 @@ mach_e_proc_exec(p, epp)
 	return;
 }
 
-void 
+void
 mach_e_proc_fork(p, parent)
 	struct proc *p;
 	struct proc *parent;
 {
+	mach_e_proc_fork1(p, parent, 1);	
+	return;
+}
+
+void 
+mach_e_proc_fork1(p, parent, allocate)
+	struct proc *p;
+	struct proc *parent;
+	int allocate;
+{
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
 
-	p->p_emuldata = NULL;
+	/*
+	 * For Darwin binaries, p->p_emuldata has already been
+	 * allocated, no need to throw it away and allocate it again.
+	 */
+	if (allocate)
+		p->p_emuldata = NULL;
 
 	/* Use parent's vmspace because our vmspace may not be setup yet */
 	mach_e_proc_init(p, parent->p_vmspace);
@@ -238,13 +253,18 @@ mach_e_proc_init(p, vmspace)
 
 	/*
 	 * For Darwin binaries, p->p_emuldata is aways allocated:
-	 * from the previous programm if it had the same emulation,
+	 * from the previous program if it had the same emulation,
 	 * or from darwin_e_proc_exec(). In the latter situation, 
 	 * everything has been set to zero.
 	 */
-	if (!p->p_emuldata) 
+	if (!p->p_emuldata) {
+#ifdef DIAGNOSTIC
+		if (p->p_emul != &emul_mach)
+			printf("mach_emuldata allocated for non Mach binary\n");
+#endif
 		p->p_emuldata = malloc(sizeof(struct mach_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
+	}
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 
