@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.1 1995/02/13 23:07:38 cgd Exp $	*/
+/*	$NetBSD: float.h,v 1.2 1995/04/29 05:45:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,8 @@
  */
 
 #define FLT_RADIX	2		/* b */
-#define FLT_ROUNDS	1		/* FP addition rounds to nearest */
+#define FLT_ROUNDS	__flt_rounds()
+
 
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-07F	/* b**(1-p) */
