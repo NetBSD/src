@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.40 2004/05/08 23:40:01 christos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.41 2004/05/09 01:39:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.40 2004/05/08 23:40:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.41 2004/05/09 01:39:41 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -597,7 +597,6 @@ tlp_cardbus_setup(csc)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
-	int pmreg;
 
 	/*
 	 * Check to see if the device is in power-save mode, and
