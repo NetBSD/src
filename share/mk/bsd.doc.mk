@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.51 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.doc.mk,v 1.52 2001/08/14 10:38:27 tv Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -23,7 +23,7 @@ GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic
 REFER?=		refer
-ROFF?=		groff -M/usr/share/tmac ${MACROS} ${PAGES}
+ROFF?=		groff -Tps
 SOELIM?=	soelim
 TBL?=		tbl
 
@@ -37,7 +37,7 @@ realall:
 
 .if !target(paper.ps)
 paper.ps: ${SRCS}
-	${ROFF} ${.ALLSRC} > ${.TARGET}
+	${ROFF} ${MACROS} ${PAGES} ${.ALLSRC} > ${.TARGET}
 .endif
 
 .if !target(print)
