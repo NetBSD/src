@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.7 1996/04/29 16:23:11 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.8 1996/11/11 20:59:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,12 +57,20 @@ struct rpb {
 #define	ST_DEC_3000_300		7		/* "Pelican" (TC) */
 #define	ST_DEC_2100_A500	9		/* "Sable" (?) */
 #define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
-#define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA?) */
+#define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA) */
 #define	ST_DEC_21000		12		/* "TurboLaser" (?) */
 #define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
 #define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
 #define	ST_DEC_KN20AA		15		/* kn20aa (PCI/EISA) */
 #define	ST_DEC_1000		17		/* "Mikasa" (PCI/ISA?) */
+#define	ST_EB66			19		/* EB66 (PCI/ISA?) */
+#define	ST_EB64P		20		/* EB64+ (PCI/ISA?) */
+#define	ST_DEC_4100		22		/* "Rawhide" (?) */
+#define	ST_DEC_EV45_PBP		23		/* "Lego" (?) */
+#define	ST_DEC_2100A_A500	24		/* "Lynx" (?) */
+#define	ST_EB164		26		/* EB164 (PCI/ISA) */
+#define	ST_DEC_1000A		27		/* "Noritake" (?) */
+#define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
 
 	u_int64_t	rpb_type;		/*  50: */
 
@@ -210,10 +218,11 @@ struct pcs {
 #define	PCS_PROC_MAJORSHIFT	0
 #define	PCS_PROC_EV3		1			/* EV3 */
 #define	PCS_PROC_EV4		2			/* EV4: 21064 */
-#define	PCS_PROC_SIMULATOR	3			/* simulation */
+#define	PCS_PROC_SIMULATOR	3			/* simulator? */
 #define	PCS_PROC_LCA4		4			/* LCA4: 2106[68] */
 #define	PCS_PROC_EV5		5			/* EV5: 21164 */
-#define	PCS_PROC_EV45		6			/* EV45: 21064A */
+#define	PCS_PROC_EV45		6			/* EV4.5: 21064A */
+#define	PCS_PROC_EV56		7			/* EV5.6: 21164A */
 
 #define	PCS_PROC_MINOR		0xffffffff00000000
 #define	PCS_PROC_MINORSHIFT	32
