@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.11 2000/05/06 13:17:33 frueauf Exp $
+#	$NetBSD: dot.cshrc,v 1.12 2001/03/01 22:26:57 atatat Exp $
 
 set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
@@ -9,7 +9,7 @@ set cdpath=(/sys /usr/src/{bin,sbin,usr.{bin,sbin},lib,libexec,share,local,games
 setenv BLOCKSIZE 1k
 
 alias	h	history
-alias	hup	'kill -HUP `cat /var/run/\!$.pid`'
+alias	hup	'( set pid=$< ; kill -HUP $pid ) < /var/run/\!$.pid'
 alias	j	jobs -l
 alias	ll	ls -l
 
