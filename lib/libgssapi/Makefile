@@ -1,14 +1,15 @@
-# $NetBSD: Makefile,v 1.6 2001/09/17 12:34:41 assar Exp $
+# $NetBSD: Makefile,v 1.7 2001/12/12 00:51:02 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/gssapi
+.PATH:		${DIST}/heimdal/lib/gssapi
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-LIB=	gssapi
+LIB=		gssapi
 
 SRCS	 =		\
 	8003.c			\
@@ -50,12 +51,11 @@ SRCS	 =		\
 	wrap.c			\
 	address_to_krb5addr.c
 
-INCSDIR= /usr/include/gssapi
+INCS=		gssapi.h
+INCSDIR=	/usr/include/gssapi
 
-INCS=	gssapi.h
-
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/gssapi		\

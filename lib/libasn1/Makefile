@@ -1,14 +1,14 @@
-# $NetBSD: Makefile,v 1.18 2001/10/31 16:15:00 tv Exp $
+# $NetBSD: Makefile,v 1.19 2001/12/12 00:51:00 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/asn1
+.PATH:		${DIST}/heimdal/lib/asn1
 
-WARNS?=  1
-MKLINT= no
-
-LIB=	asn1
+WARNS?=		1
+LIB=		asn1
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -113,7 +113,7 @@ asn1_files: k5.asn1 ${ASN1_COMPILE}
 
 ${SRCS}: krb5_asn1.h
 
-CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files krb5_asn1.h krb5_asn1.hx
+CLEANFILES=	${BUILT_SOURCES} ${gen_files} asn1_files krb5_asn1.h krb5_asn1.hx
 
 .if ${USETOOLS} != "yes"
 SUBDIR=	asn1_compile

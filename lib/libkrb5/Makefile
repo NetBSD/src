@@ -1,15 +1,15 @@
-# $NetBSD: Makefile,v 1.19 2001/11/09 15:44:31 joda Exp $
+# $NetBSD: Makefile,v 1.20 2001/12/12 00:51:04 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/krb5
-.PATH: ${DIST}/heimdal/doc
+.PATH:		${DIST}/heimdal/lib/krb5 ${DIST}/heimdal/doc
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-LIB=	krb5
+LIB=		krb5
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -25,9 +25,8 @@ heim_err.c heim_err.h: heim_err.et
 k524_err.c k524_err.h: k524_err.et
 	${COMPILE_ET} ${DIST}/heimdal/lib/krb5/k524_err.et
 
-ERR_FILES= krb5_err.c heim_err.c k524_err.c
-
-DPSRCS=	krb5_err.h heim_err.h k524_err.h
+ERR_FILES=	krb5_err.c heim_err.c k524_err.c
+DPSRCS=		krb5_err.h heim_err.h k524_err.h
 
 SRCS=						\
 	acl.c					\
@@ -237,9 +236,9 @@ MLINKS=									 \
 krb5-types.h:
 	cp ${.CURDIR}/../../include/heimdal/$@ $@
 
-INCSDIR= /usr/include/krb5
+INCSDIR=	/usr/include/krb5
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/krb5		\
@@ -252,9 +251,9 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-CLEANFILES = $(ERR_FILES) krb5_err.h heim_err.h krb5-types.h k524_err.h
+CLEANFILES=	${ERR_FILES} krb5_err.h heim_err.h krb5-types.h k524_err.h
 
-$(SRCS:.c=.o): krb5_err.h heim_err.h k524_err.h
+${SRCS:.c=.o}: krb5_err.h heim_err.h k524_err.h
 
 TEXINFO=	heimdal.texi
 INFOFLAGS=	-I${DIST}/heimdal/doc
@@ -273,8 +272,8 @@ INFOFLAGS=	-I${DIST}/heimdal/doc
 .include <bsd.info.mk>
 
 .if ${MKSHARE} != "no"
-FILES=  ${DIST}/heimdal/krb5.conf
-FILESDIR=/usr/share/examples/kerberos
+FILES=		${DIST}/heimdal/krb5.conf
+FILESDIR=	/usr/share/examples/kerberos
 .endif
 
 .include <bsd.files.mk>

@@ -1,12 +1,12 @@
-# $NetBSD: Makefile,v 1.13 2001/11/15 22:02:42 tv Exp $
+# $NetBSD: Makefile,v 1.14 2001/12/12 00:51:00 tv Exp $
 
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
 PROG=		asn1_compile
 
-MKLINT=		no
-MKMAN=		no
+NOLINT=		# defined
+NOMAN=		# defined
 WARNS?=		1
 
 asn1_compile_SRCS = 				\
@@ -33,7 +33,7 @@ roken_SRCS =					\
 SRCS=	$(asn1_compile_SRCS)			\
 	$(roken_SRCS)
 
-YHEADER=
+YHEADER=	# defined
 
 #LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
 #	 -I${LIBROKEN}				\

@@ -1,14 +1,15 @@
-# $NetBSD: Makefile,v 1.8 2001/10/31 16:15:00 tv Exp $
+# $NetBSD: Makefile,v 1.9 2001/12/12 00:51:03 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/krb4/lib/kadm
+.PATH:		${DIST}/krb4/lib/kadm
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-LIB=	kadm
+LIB=		kadm
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -19,7 +20,6 @@ kadm_err.c kadm_err.h: kadm_err.et
 	${COMPILE_ET} ${DIST}/krb4/lib/kadm/kadm_err.et
 
 ERR_FILES=	kadm_err.c
-
 DPSRCS=		kadm_err.h
 
 SRCS=						\
@@ -29,10 +29,8 @@ SRCS=						\
 	kadm_supp.c				\
 	check_password.c
 
-INCSDIR= /usr/include/kerberosIV
-
-INCS=	kadm.h					\
-	kadm_err.h
+INCS=		kadm.h kadm_err.h
+INCSDIR=	/usr/include/kerberosIV
 
 LIBKRBINC!=	cd ${.CURDIR}/../libkrb && ${PRINTOBJDIR}
 
@@ -48,8 +46,8 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 
-CLEANFILES = $(ERR_FILES) kadm_err.h
+CLEANFILES=	${ERR_FILES} kadm_err.h
 
-$(SRCS:.c=.o): kadm_err.h
+${SRCS:.c=.o}: kadm_err.h
 
 .include <bsd.lib.mk>

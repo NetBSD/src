@@ -1,16 +1,17 @@
-# $NetBSD: Makefile,v 1.13 2001/10/31 16:15:01 tv Exp $
+# $NetBSD: Makefile,v 1.14 2001/12/12 00:51:03 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/kadm5
+.PATH:		${DIST}/heimdal/lib/kadm5
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
 .include <bsd.own.mk>
 
-LIB=	kadm5srv
+LIB=		kadm5srv
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -20,7 +21,7 @@ COMPILE_ET=	${COMPILEETOBJ}/compile_et
 kadm5_err.c kadm5_err.h: kadm5_err.et
 	${COMPILE_ET} ${DIST}/heimdal/lib/kadm5/kadm5_err.et
 
-ERR_FILES = kadm5_err.c
+ERR_FILES=	kadm5_err.c
 
 SRCS	 =					\
 	acl.c					\
@@ -64,9 +65,9 @@ SRCS	 =					\
 	set_modifier.c				\
 	$(ERR_FILES)
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
-HDB!=	cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
+ASN1!=		cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=		cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+HDB!=		cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${ASN1}				\
@@ -83,12 +84,12 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-.if defined(NOPIC)
+.if ${MKPIC} == "no"
 CPPFLAGS+=	-DNO_DLOPEN
 .endif
 
-$(SRCS:.c=.o): kadm5_err.h
+${SRCS:.c=.o}: kadm5_err.h
 
-CLEANFILES = kadm5_err.h kadm5_err.c
+CLEANFILES=	kadm5_err.h kadm5_err.c
 
 .include <bsd.lib.mk>

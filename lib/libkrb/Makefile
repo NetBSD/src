@@ -1,29 +1,28 @@
-# $NetBSD: Makefile,v 1.15 2001/10/31 16:15:01 tv Exp $
+# $NetBSD: Makefile,v 1.16 2001/12/12 00:51:04 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/krb4/lib/krb
-.PATH: ${DIST}/krb4/doc
-.PATH: ${DIST}/openssl/crypto/des
-.PATH: ${DIST}/krb4/man
+.PATH:		${DIST}/krb4/lib/krb ${DIST}/krb4/doc \
+		${DIST}/openssl/crypto/des ${DIST}/krb4/man
 
-MAN=	kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
-	krb.conf.5 krb.equiv.5 krb.extra.5 krb.realms.5
-MLINKS=	kerberos.3 krb_mk_req.3 kerberos.3 krb_rd_req.3 \
-	kerberos.3 krb_kntoln.3 kerberos.3 krb_set_key.3 \
-	kerberos.3 krb_get_cred.3 kerberos.3 krb_mk_priv.3 \
-	kerberos.3 krb_rd_priv.3 kerberos.3 krb_mk_safe.3 \
-	kerberos.3 krb_rd_safe.3 kerberos.3 krb_mk_err.3 \
-	kerberos.3 krb_rd_err.3 kerberos.3 krb_ck_repl.3 \
-	krb_realmofhost.3 krb_get_krbhst.3 \
-	krb_realmofhost.3 krb_get_lrealm.3 \
-	krb_realmofhost.3 krb_get_phost.3
+MAN=		kerberos.3 krb_realmofhost.3 krb_sendauth.3 krb_set_tkt_string.3 \
+		krb.conf.5 krb.equiv.5 krb.extra.5 krb.realms.5
+MLINKS=		kerberos.3 krb_mk_req.3 kerberos.3 krb_rd_req.3 \
+		kerberos.3 krb_kntoln.3 kerberos.3 krb_set_key.3 \
+		kerberos.3 krb_get_cred.3 kerberos.3 krb_mk_priv.3 \
+		kerberos.3 krb_rd_priv.3 kerberos.3 krb_mk_safe.3 \
+		kerberos.3 krb_rd_safe.3 kerberos.3 krb_mk_err.3 \
+		kerberos.3 krb_rd_err.3 kerberos.3 krb_ck_repl.3 \
+		krb_realmofhost.3 krb_get_krbhst.3 \
+		krb_realmofhost.3 krb_get_lrealm.3 \
+		krb_realmofhost.3 krb_get_phost.3
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-LIB=	krb
+LIB=		krb
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
@@ -110,7 +109,7 @@ SRCS=	\
 	verify_user.c \
 	krb_ip_realm.c
 
-INCSDIR= /usr/include/kerberosIV
+INCSDIR=	/usr/include/kerberosIV
 
 INCS=	krb.h					\
 	krb_err.h				\
@@ -130,7 +129,7 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 
-CLEANFILES = $(ERR_FILES) krb_err.h ktypes.h krb.h
+CLEANFILES=	${ERR_FILES} krb_err.h ktypes.h krb.h
 
 krb.h:	krb.h.in
 	sed 's,@DES_H@,openssl/des.h,' < ${.ALLSRC} > ${.TARGET}
@@ -138,7 +137,7 @@ krb.h:	krb.h.in
 ktypes.h:
 	cp ${.CURDIR}/../../include/heimdal/$@ $@
 
-$(SRCS:.c=.o): krb_err.h
+${SRCS:.c=.o}: krb_err.h
 
 TEXINFO=	kth-krb.texi
 INFOFLAGS=	-I${DIST}/krb4/doc
