@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: pim6dd.8,v 1.1 1999/07/17 14:06:25 itojun Exp $
+.\"	$NetBSD: pim6dd.8,v 1.2 1999/07/17 14:12:21 itojun Exp $
 .\"	KAME Id: pim6dd.8,v 1.1.2.3.4.2 1999/07/17 13:47:35 itojun Exp
 .\"
 .Dd Nov 17, 1998
@@ -52,7 +52,7 @@ Specify alternate location,
 .Ar configfile ,
 for configuration file.
 By default,
-.Pa /usr/local/v6/etc/pim6dd.conf
+.Pa /etc/pim6dd.conf
 is used.
 .It Fl d
 Specify debug levels. If this option is specified without any arguments,
@@ -73,12 +73,12 @@ interfaces, i.e., interfaces that have the IFF_MULTICAST flag set (excluding
 the "loopback interface").
 To override the default configuration,
 configuration commands may be placed in
-.Pa /usr/local/v6/etc/pim6dd.conf
+.Pa /etc/pim6dd.conf
 (or an alternative file, specified by the "\-c" option).
 .\"
 .Sh FILES
-.Bl -tag -width /usr/local/v6/etc/pim6dd.conf -compact
-.It Pa /usr/local/v6/etc/pim6dd.conf
+.Bl -tag -width /etc/pim6dd.conf -compact
+.It Pa /etc/pim6dd.conf
 The default configuration file.
 .El
 .Sh SEE ALSO
