@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.2 2002/10/12 21:02:18 elric Exp $ */
+/* $NetBSD: params.h,v 1.3 2002/12/04 05:02:29 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ int	params_setkeygen_method(struct params *, int);
 int	params_setkeygen_method_str(struct params *, const char *);
 int	params_setkeygen_salt(struct params *, const char *, int);
 int	params_setkeygen_salt_b64(struct params *, const char *);
+int	params_setkeygen_iterations(struct params *, int);
 int	params_setverify_method(struct params *, int);
 int	params_setverify_method_str(struct params *, const char *);
 int	params_setxor_key(struct params *, const char *, int);
