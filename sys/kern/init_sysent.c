@@ -173,6 +173,7 @@ int	ftruncate();
 int	__sysctl();
 int	mlock();
 int	munlock();
+int	undelete();
 #ifdef LKM
 int	lkmnosys();
 int	lkmnosys();
@@ -856,8 +857,8 @@ struct sysent sysent[] = {
 	    mlock },				/* 203 = mlock */
 	{ 2, s(struct munlock_args),
 	    munlock },				/* 204 = munlock */
-	{ 0, 0,
-	    nosys },				/* 205 = unimplemented */
+	{ 1, s(struct undelete_args),
+	    undelete },				/* 205 = undelete */
 	{ 0, 0,
 	    nosys },				/* 206 = unimplemented */
 	{ 0, 0,
