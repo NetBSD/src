@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.3 2000/12/14 18:51:10 thorpej Exp $	*/
 /*	$KAME: if_altq.h,v 1.5 2000/12/14 08:12:47 thorpej Exp $	*/
 
 /*
@@ -28,12 +28,6 @@
  */
 #ifndef _ALTQ_IF_ALTQ_H_
 #define	_ALTQ_IF_ALTQ_H_
-
-#ifdef KERNEL
-#ifndef _KERNEL
-#define	_KERNEL
-#endif
-#endif
 
 struct altq_pktattr; struct tb_regulator; struct top_cdnr;
 
