@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2003/02/22 17:45:04 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.12 2003/02/23 01:08:29 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.11 2003/02/22 17:45:04 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.12 2003/02/23 01:08:29 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -415,8 +415,8 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		       (vme->max_protection & VM_PROT_READ) ? 'r' : '-',
 		       (vme->max_protection & VM_PROT_WRITE) ? 'w' : '-',
 		       (vme->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
-		       (vme->etype & UVM_ET_COPYONWRITE) ? "COW" : "NCOW",
-		       (vme->etype & UVM_ET_NEEDSCOPY) ? "NC" : "NNC",
+		       UVM_ET_ISCOPYONWRITE(vme) ? "COW" : "NCOW",
+		       UVM_ET_ISNEEDSCOPY(vme) ? "NC" : "NNC",
 		       vme->inheritance, vme->wired_count,
 		       vme->advice);
 		if (verbose) {
@@ -437,7 +437,7 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
 		       (vme->protection & VM_PROT_WRITE) ? 'w' : '-',
 		       (vme->protection & VM_PROT_EXECUTE) ? 'x' : '-',
-		       (vme->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
+		       UVM_ET_ISCOPYONWRITE(vme) ? 'p' : 's',
 		       (int)sizeof(void *) * 2,
 		       vme->offset,
 		       major(dev), minor(dev), inode,
@@ -510,8 +510,8 @@ dump_vm_map_entry(kvm_t *kd, pid_t pid, struct kinfo_proc2 * proc,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
 		       (vme->protection & VM_PROT_WRITE) ? 'w' : '-',
 		       (vme->protection & VM_PROT_EXECUTE) ? 'x' : '-',
-		       (vme->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
-		       (vme->etype & UVM_ET_NEEDSCOPY) ? '+' : '-',
+		       UVM_ET_ISCOPYONWRITE(vme) ? 'p' : 's',
+		       UVM_ET_ISNEEDSCOPY(vme) ? '+' : '-',
 		       (vme->max_protection & VM_PROT_READ) ? 'r' : '-',
 		       (vme->max_protection & VM_PROT_WRITE) ? 'w' : '-',
 		       (vme->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
