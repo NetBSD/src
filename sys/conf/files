@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.465 2001/10/03 04:25:29 mrg Exp $
+#	$NetBSD: files,v 1.466 2001/10/04 19:05:32 eeh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -891,6 +891,7 @@ file	kern/subr_log.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
+file	kern/subr_prop.c
 file	kern/subr_rmap.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
