@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.33 1998/06/26 00:01:33 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.34 1998/07/04 22:18:14 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,10 +31,11 @@
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_compat_osf1.h"
+#include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 1998/06/26 00:01:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 1998/07/04 22:18:14 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

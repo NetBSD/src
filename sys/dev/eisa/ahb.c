@@ -1,4 +1,6 @@
-/*	$NetBSD: ahb.c,v 1.19 1998/06/08 07:04:46 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.20 1998/07/04 22:18:48 jonathan Exp $	*/
+
+#include "opt_ddb.h"
 
 #undef	AHBDEBUG
 #ifdef DDB

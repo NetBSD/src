@@ -55,6 +55,7 @@
 #undef TRAPS_USE_IG
 #undef LOCKED_PCB
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
 

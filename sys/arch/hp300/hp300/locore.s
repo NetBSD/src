@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 1998/05/24 19:32:40 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.87 1998/07/04 22:18:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,6 +43,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 
 #include "assym.h"

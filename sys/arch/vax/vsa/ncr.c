@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.12 1998/04/13 12:17:31 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.13 1998/07/04 22:18:45 jonathan Exp $	*/
 
 #define USE_VMAPBUF
 
@@ -75,6 +75,7 @@
  *
  * VS2000:
  */
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

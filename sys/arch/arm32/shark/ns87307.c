@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307.c,v 1.3 1998/05/01 21:18:40 cgd Exp $	*/
+/*	$NetBSD: ns87307.c,v 1.4 1998/07/04 22:18:20 jonathan Exp $	*/
 
 /*
  * Copyright 1997
@@ -55,6 +55,8 @@
 **
 **--
 */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

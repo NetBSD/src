@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.24 1997/12/12 22:44:26 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.25 1998/07/04 22:18:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -65,6 +65,8 @@
  *   Leo Weppelman (atari driver: ncr5380.c)
  * There are others too.  Thanks, everyone.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.31 1998/01/12 09:23:31 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.32 1998/07/04 22:18:50 jonathan Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -110,6 +110,10 @@
 
 #ifdef __FreeBSD__
 #include "en.h"
+#endif
+
+#ifdef __NetBSD__
+#include "opt_ddb.h"
 #endif
 
 #if NEN > 0 || !defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.73 1998/06/12 20:06:30 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.74 1998/07/04 22:18:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

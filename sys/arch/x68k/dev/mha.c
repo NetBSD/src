@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.4 1998/06/30 11:59:10 msaitoh Exp $	*/
+/*	$NetBSD: mha.c,v 1.5 1998/07/04 22:18:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -44,6 +44,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 /* Synchronous data transfers? */
 #define SPC_USE_SYNCHRONOUS	0

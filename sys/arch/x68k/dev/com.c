@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.11 1998/06/30 11:59:09 msaitoh Exp $	*/
+/*	$NetBSD: com.c,v 1.12 1998/07/04 22:18:46 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -41,6 +41,8 @@
  * COM driver, based on HP dca driver
  * uses National Semiconductor NS16450/NS16550AF UART
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

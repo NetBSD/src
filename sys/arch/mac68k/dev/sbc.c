@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.35 1998/01/17 09:27:03 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.36 1998/07/04 22:18:27 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -43,6 +43,7 @@
  * Thorpe all helped to refine this code, and were considerable sources
  * of moral support.
  */
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +68,22 @@
 
 #include <mac68k/dev/sbcreg.h>
 #include <mac68k/dev/sbcvar.h>
+
+/* SBC_DEBUG --  relies on DDB */
+#ifdef SBC_DEBUG
+# define	SBC_DB_INTR	0x01
+# define	SBC_DB_DMA	0x02
+# define	SBC_DB_REG	0x04
+# define	SBC_DB_BREAK	0x08
+# ifndef DDB
+#  define	Debugger()	printf("Debug: sbc.c:%d\n", __LINE__)
+# endif
+# define	SBC_BREAK \
+		do { if (sbc_debug & SBC_DB_BREAK) Debugger(); } while (0)
+#else
+# define	SBC_BREAK
+#endif
+
 
 int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;

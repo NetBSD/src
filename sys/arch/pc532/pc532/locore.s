@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.51 1998/04/21 20:12:18 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.52 1998/07/04 22:18:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -40,6 +40,7 @@
  *
  */
 
+#include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 
