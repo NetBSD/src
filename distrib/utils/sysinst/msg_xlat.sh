@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.3 2003/07/07 21:26:33 dsl Exp $
+#	$NetBSD: msg_xlat.sh,v 1.4 2003/10/29 09:13:51 dsl Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,12 @@
 
 nl="
 "
+msg_long="((msg)(long)"
+close_paren=")"
+open_brace="{"
+close_brace="}"
+star="*"
+slash="/"
 
 rval=0
 
@@ -52,9 +58,9 @@ do
 	[ "$define" = "#define" ] || continue
 	name="${MSG_name#MSG_}"
 	[ "$name" = "${MSG_name}" ] && continue
-	msg_number="${number#((msg)(long)}"
+	msg_number="${number#$msg_long}"
 	[ "$msg_number" = "$number" ] && continue
-	msg_number="${msg_number%)}"
+	msg_number="${msg_number%$close_paren}"
 
 	eval $MSG_name=$msg_number
 	eval MSGNUM_$msg_number=\$MSG_name
@@ -85,24 +91,24 @@ do
 			[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 			number=unknown
 		}
-		l=${line#*\{}
+		l=${line#*$open_brace}
 		[ "$l" = "$line" ] && continue
 		line="{$l"
 	}
 	[ -z "$msg" ] && {
-		l="${line#\{}"
+		l="${line#$open_brace}"
 		[ "$l" = "$line" ] && continue
 		msg="$line"
 	} || msg="$msg$nl$line"
-	m="${msg%\}}"
+	m="${msg%$close_brace}"
 	[ "$m" = "$msg" ] && {
 		# Allow <tab>*/* comment */ (eg XXX translate)
-		m="${msg%%\}*/\**\*/}"
+		m="${msg%%$close_brace*$slash$star*$star$slash}"
 		[ "$m" = "$msg" ] &&
 			continue
 	}
 	# We need the %b to expand the \n that exist in the message file
-	msg="$(printf "%bz" "${m#\{}")"
+	msg="$(printf "%bz" "${m#$open_brace}")"
 	msg="${msg%z}"
 	eval old=\"\$MSGTEXT_$number\"
 	[ -n "$old" -a "$number" != unknown ] && {
