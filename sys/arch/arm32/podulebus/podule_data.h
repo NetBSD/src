@@ -1,3 +1,5 @@
+/*	$NetBSD: podule_data.h,v 1.10 1998/01/09 06:58:04 thorpej Exp $	*/
+
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
