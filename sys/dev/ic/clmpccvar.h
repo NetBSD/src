@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.3 1999/08/01 09:35:05 scw Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.4 2000/03/19 10:38:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,6 +133,6 @@ extern int	clmpcc_cnattach	__P((struct clmpcc_softc *, int, int));
 extern int	clmpcc_rxintr	__P((void *));
 extern int	clmpcc_txintr	__P((void *));
 extern int	clmpcc_mdintr	__P((void *));
-extern int 	clmpcc_softintr	__P((void *));
+extern void 	clmpcc_softintr	__P((void *));
 
 #endif	/* __clmpccvar_h */

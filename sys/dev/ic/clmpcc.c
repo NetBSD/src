@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.9 1999/11/28 12:23:18 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.10 2000/03/19 10:38:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1388,7 +1388,7 @@ clmpcc_mdintr(arg)
 	return 1;
 }
 
-int
+void
 clmpcc_softintr(arg)
 	void *arg;
 {
@@ -1469,8 +1469,6 @@ clmpcc_softintr(arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 	}
-
-	return 0;
 }
 
 
