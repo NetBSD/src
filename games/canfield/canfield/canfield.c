@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.15 1999/09/12 09:02:20 jsm Exp $	*/
+/*	$NetBSD: canfield.c,v 1.15.6.1 2000/01/21 18:27:20 jdc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.15 1999/09/12 09:02:20 jsm Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.15.6.1 2000/01/21 18:27:20 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1588,7 +1588,7 @@ movecard()
 	} while (!done);
 }
 
-const char *const basicinstructions[] = {
+char *const basicinstructions[] = {
 	"Here are brief instuctions to the game of Canfield:\n\n",
 	"     If you have never played solitaire before, it is recom-\n",
 	"mended  that  you  consult  a solitaire instruction book. In\n",
@@ -1610,7 +1610,7 @@ const char *const basicinstructions[] = {
 	"push any key when you are finished: ",
 	0 };
 
-const char *const bettinginstructions[] = {
+char *const bettinginstructions[] = {
 	"     The rules for betting are  somewhat  less  strict  than\n",
 	"those  used in the official version of the game. The initial\n",
 	"deal costs $13. You may quit at this point  or  inspect  the\n",
@@ -1638,7 +1638,7 @@ const char *const bettinginstructions[] = {
 void
 instruct()
 {
-	const char *const *cp;
+	char *const *cp;
 
 	move(originrow, origincol);
 	printw("This is the game of solitaire called Canfield.  Do\n");

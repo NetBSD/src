@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.11 1999/09/30 18:01:32 jsm Exp $	*/
+/*	$NetBSD: mille.h,v 1.11.4.1 2000/01/21 18:27:30 jdc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -216,7 +216,8 @@ typedef struct {
 extern bool	Debug, Finished, Next, On_exit, Order, Saved;
 
 extern char	Initstr[];
-extern const char	*C_fmt, *const *C_name, *Fromfile;
+extern char		*C_fmt;
+extern const char	*const *C_name, *Fromfile;
 
 extern int	Card_no, End, Handstart, Movetype, Numgos,
 		Numneed[], Numseen[NUM_CARDS], Play, Window;
@@ -243,7 +244,7 @@ void	check_go __P((void));
 void	check_more __P((void));
 void	die __P((int)) __attribute__((__noreturn__));
 void	domove __P((void));
-bool	error __P((const char *, ...));
+bool	error __P((char *, ...));
 void	extrapolate __P((PLAY *));
 void	finalscore __P((PLAY *));
 CARD	getcard __P((void));

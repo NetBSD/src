@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 1999/12/28 18:05:24 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.13.2.1 2000/01/21 18:27:38 jdc Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -400,9 +400,9 @@ void loadplayer __P((void));
 void initscreen __P((void));
 void cleanupscreen __P((void));
 void newturn __P((int));
-void Signal __P((const char *, struct ship *, ...))
+void Signal __P((char *, struct ship *, ...))
 	 __attribute__((__format__(__printf__,1,3)));
-void Msg __P((const char *, ...))
+void Msg __P((char *, ...))
 	 __attribute__((__format__(__printf__,1,2)));
 void Scroll __P((void));
 void prompt __P((const char *, struct ship *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.13 1999/12/28 18:05:25 jsm Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.13.2.1 2000/01/21 18:27:39 jdc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.13 1999/12/28 18:05:25 jsm Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.13.2.1 2000/01/21 18:27:39 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,11 +175,11 @@ Signal(va_alist)
 	va_list ap;
 	char format[BUFSIZ];
 #ifndef __STDC__
-	const char *fmt;
+	char *fmt;
 	struct ship *ship;
 
 	va_start(ap);
-	fmt = va_arg(ap, const char *);
+	fmt = va_arg(ap, char *);
 	ship = va_arg(ap, struct ship *);
 #else
 	va_start(ap, ship);
@@ -197,7 +197,7 @@ Signal(va_alist)
 /*VARARGS2*/
 void
 #ifdef __STDC__
-Msg(const char *fmt, ...)
+Msg(char *fmt, ...)
 #else
 Msg(va_alist)
 	va_dcl
@@ -205,10 +205,10 @@ Msg(va_alist)
 {
 	va_list ap;
 #ifndef __STDC__
-	const char *fmt;
+	char *fmt;
 
 	va_start(ap);
-	fmt = va_arg(ap, const char *);
+	fmt = va_arg(ap, char *);
 #else
 	va_start(ap, fmt);
 #endif
