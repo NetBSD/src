@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.9 1996/02/28 04:14:20 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.10 1996/05/14 04:01:04 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -357,40 +357,33 @@ LRE_enter:
 
 
 
-	function(mrg_CountResources)
-	/* WRU: 960120
-	 * sp@(4)	u_int32_t  rsrc_type
-	 * sp@(8)	u_int16_t  nr_of_rsrcs
-	 */
+function(mrg_CountResources)
+/* Original from WRU: 960120
+ * sp@(4)	u_int32_t  rsrc_type
+ * sp@(8)	u_int16_t  nr_of_rsrcs
+ */
 	movl 	sp@(4), d0
   	movl	d0, sp@-
-	jbsr	_w_count_resources
-	addl	#4, sp			/* pop C params */
-	movw	d0, sp@(8)		/* store result */
-	movl	sp@+, a0		/* get PC 	*/
-	addl	#4, sp			/* pop params	*/
-	jra	a0@			/* return	*/
+	jbsr	_Count_Resources
+	addl	#4, sp			| pop C params
+	movw	d0, sp@(8)		| store result
+	pascalret(4)
 
-
-
-	function(mrg_GetIndResource)
-	/* WRU: 960120
-	 * sp@(4)	u_int16_t  rsrc_index
-	 * sp@(6)	u_int32_t  rsrc_type
-	 * sp@(10)	caddr_t   *rsrc_handle
-	 */
+function(mrg_GetIndResource)
+/* Original from WRU: 960120
+ * sp@(4)	u_int16_t  rsrc_index
+ * sp@(6)	u_int32_t  rsrc_type
+ * sp@(10)	caddr_t   *rsrc_handle
+ */
 	movl	sp@(6), a0
 	clrl	d0
 	movw	sp@(4), d0
   	movl	d0, sp@-
 	movl	a0, sp@-
-	jbsr	_w_get_ind_resource
-	addl	#8, sp			/* pop C params */
-	movl	d0, sp@(10)		/* store result */
-	movl	sp@+, a0		/* get PC 	*/
-	addl	#6, sp			/* pop params	*/
-	jra	a0@			/* return	*/
-
+	jbsr	_Get_Ind_Resource
+	addl	#8, sp		| pop C params
+	movl	d0, sp@(10)	| store result
+	pascalret(6)
 
 /*
  * I'd like to take a moment here to talk about the calling convention
