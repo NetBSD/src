@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.31 1997/10/18 19:50:57 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.32 1998/01/12 09:49:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -105,9 +105,7 @@ struct cfattach ch_ca = {
 	sizeof(struct ch_softc), chmatch, chattach
 };
 
-struct cfdriver ch_cd = {
-	NULL, "ch", DV_DULL
-};
+extern struct cfdriver ch_cd;
 
 struct scsipi_inquiry_pattern ch_patterns[] = {
 	{T_CHANGER, T_REMOV,

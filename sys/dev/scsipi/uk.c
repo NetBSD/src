@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.20 1997/10/01 01:19:26 enami Exp $	*/
+/*	$NetBSD: uk.c,v 1.21 1998/01/12 09:49:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,9 +66,7 @@ struct cfattach uk_ca = {
 	sizeof(struct uk_softc), ukmatch, ukattach
 };
 
-struct cfdriver uk_cd = {
-	NULL, "uk", DV_DULL
-};
+extern struct cfdriver uk_cd;
 
 /*
  * This driver is so simple it uses all the default services

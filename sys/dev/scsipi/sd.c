@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.122 1997/10/18 19:51:08 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.123 1998/01/12 09:49:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -140,9 +140,7 @@ struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach
 };
 
-struct cfdriver sd_cd = {
-	NULL, "sd", DV_DISK
-};
+extern struct cfdriver sd_cd;
 
 struct dkdriver sddkdriver = { sdstrategy };
 

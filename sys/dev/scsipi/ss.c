@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.18 1997/11/19 03:03:15 augustss Exp $	*/
+/*	$NetBSD: ss.c,v 1.19 1998/01/12 09:49:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -75,9 +75,7 @@ struct cfattach ss_ca = {
 	sizeof(struct ss_softc), ssmatch, ssattach
 };
 
-struct cfdriver ss_cd = {
-	NULL, "ss", DV_DULL
-};
+extern struct cfdriver ss_cd;
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.12 1997/10/18 19:50:58 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.13 1998/01/12 09:49:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -236,9 +236,7 @@ struct cfattach se_ca = {
 	sizeof(struct se_softc), sematch, seattach
 };
 
-struct cfdriver se_cd = {
-	NULL, "se", DV_IFNET
-};
+extern struct cfdriver se_cd;
 
 struct scsipi_device se_switch = {
 	NULL,			/* Use default error handler */
