@@ -1,4 +1,4 @@
-/*	$NetBSD: cmureg.h,v 1.2 2001/04/18 10:48:59 sato Exp $	*/
+/*	$NetBSD: cmureg.h,v 1.3 2001/05/17 05:04:30 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -36,18 +36,22 @@
 
 /*
  *	CMU (CLock MASK UNIT) Registers.
- *		start 0x0B000060 
+ *		start 0x0B000060 (Vr4102-4111)
+ *		start 0x0F000060 (Vr4122)
  */
 
 #define	CMUCLKMASK		0x000	/* CMU Clock Mask Register */
+#define		VR4122_CMUMSKPCIU	((1<<13)|(1<<7))	/* 1 supply PCICLK */
+#define		VR4122_CMUMSKSCSI	(1<<12)		/* 1 supply CSI 18.432MHz clock */
+#define		VR4122_CMUMSKDSIU	(1<<11)		/* 1 supply DSIU 18.432MHz clock */
 #define		CMUMSKFFIR		(1<<10)		/* 1 supply 48MHz to FIR */
-#define		CMUMSKSHSP		(1<<9)		/* 1 supply 18.432MHz to HSP */
+#define		CMUMSKSHSP		(1<<9)		/* 1 supply 18.432MHz to HSP */ /* 4102-4121 */
 #define		CMUMSKSSIU		(1<<8)		/* 1 supply 18.432MHz to SIU */
 #define		CMUMSKDSIU		(1<<5)		/* 1 supply Tclock to DSIU */
 #define		CMUMSKFIR		(1<<4)		/* 1 supply Tclock to FIR */
-#define		CMUMSKKIU		(1<<3)		/* 1 supply Tclock to KIU */
-#define		CMUMSKAIU		(1<<2)		/* 1 supply Tclock to AIU */
+#define		CMUMSKKIU		(1<<3)		/* 1 supply Tclock to KIU */ /* 4102-4121 */
+#define		CMUMSKAIU		(1<<2)		/* 1 supply Tclock to AIU */ /* 4102-4121 */
 #define		CMUMSKSIU		(1<<1)		/* 1 supply Tclock to SIU */
-#define		CMUMSKPIU		(1)		/* 1 supply Tclock to PIU */
+#define		CMUMSKPIU		(1)		/* 1 supply Tclock to PIU */ /* 4102-4121 */
 
 /* END cmureg.h */
