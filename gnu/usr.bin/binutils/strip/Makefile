@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1998/07/29 19:18:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1998/08/27 23:32:33 tv Exp $
 
-# XXX until our binutils is upgraded 
 .if (${MACHINE_ARCH} != "powerpc")
 PROG=	strip
 SRCS=	objcopy.c is-strip.c
@@ -9,3 +8,11 @@ SRCS=	objcopy.c is-strip.c
 MAN=	strip.1
 
 .include <bsd.prog.mk>
+
+# STRIPPROG is capable of stripping itself, so this is OK.
+.if (${STRIPFLAG} != "") && (${MACHINE_ARCH} != "powerpc")
+STRIPFLAG:=
+realinstall: __installstrip
+__installstrip:
+	${STRIPPROG} ${DESTDIR}/${BINDIR}/strip
+.endif
