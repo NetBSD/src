@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.h,v 1.12 1997/01/27 19:41:22 gwr Exp $	*/
+/*	$NetBSD: vector.h,v 1.13 1998/09/30 22:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ void trap1 __P((void));
 void trap12 __P((void));
 void trap15 __P((void));
 void trap2 __P((void));
+void trap3 __P((void));
 void trapvinst __P((void));
 void zerodiv __P((void));
 void fpfault __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.17 1997/01/27 19:41:21 gwr Exp $	*/
+/*	$NetBSD: vector.c,v 1.18 1998/09/30 22:14:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,10 +91,10 @@ void *vector_table[NVECTORS] = {
 	_isr_autovec,			/* 29: level 5 interrupt autovector */
 	_isr_autovec,			/* 30: level 6 interrupt autovector */
 	_isr_autovec,			/* 31: level 7 interrupt autovector */
-	trap0,				/* 32: syscalls (at least on hp300) */
-	trap1,				/* 33: sigreturn syscall */
+	trap0,				/* 32: syscalls */
+	trap1,				/* 33: compat_13_sigreturn */
 	trap2,				/* 34: HPUX breakpoint */
-	illinst,			/* 35: TRAP instruction vector */
+	trap3,				/* 35: special handling syscalls */
 	illinst,			/* 36: TRAP instruction vector */
 	illinst,			/* 37: TRAP instruction vector */
 	illinst,			/* 38: TRAP instruction vector */
