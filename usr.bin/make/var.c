@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.20 1997/07/07 19:06:17 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.21 1997/07/10 00:54:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.20 1997/07/07 19:06:17 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.21 1997/07/10 00:54:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1135,7 +1135,7 @@ VarRESubstitute(word, addSpace, buf, patternp)
 	xrv = REG_NOMATCH;
     else {
     tryagain:
-	xrv = regexec(&pat->re, wp, pat->nsub + 1, pat->matches, flags);
+	xrv = regexec(&pat->re, wp, pat->nsub, pat->matches, flags);
     }
 
     switch (xrv) {
