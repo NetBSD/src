@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.9 1997/04/06 08:41:26 cgd Exp $ */
+/* $NetBSD: if_prom.c,v 1.10 1997/09/06 14:08:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -38,10 +38,13 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
-#include "include/prom.h"
+#include <machine/prom.h>
 #include <lib/libkern/libkern.h>
 
+#include "stand/common/common.h"
 #include "stand/common/bbinfo.h"
 
 int prom_probe();
@@ -63,7 +66,7 @@ struct netif_stats prom_stats[NENTS(prom_ifs)];
 struct netbbinfo netbbinfo = {
 	0xfeedbabedeadbeef,			/* magic number */
 	0,					/* set */
-	0, 0, 0, 0, 0, 0,			/* ether address */
+	{0, 0, 0, 0, 0, 0},			/* ether address */
 	0,					/* force */
 	{ 0, },					/* pad2 */
 	0,					/* cksum */

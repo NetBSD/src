@@ -7,7 +7,7 @@ getsecs()
 {
 	static long tnsec;
 	static long lastpcc, wrapsecs;
-	long curpcc, pccdiff;
+	long curpcc;
 
 	if (tnsec == 0) {
 		tnsec = 1;

@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.2 1997/04/06 08:40:32 cgd Exp $ */
+/* $NetBSD: devopen.c,v 1.3 1997/09/06 14:08:27 drochner Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,11 +39,13 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * Decode the string 'fname', open the device and return the remaining
  * file name if any.
  */
+int
 devopen(f, fname, file)
 	struct open_file *f;
 	const char *fname;

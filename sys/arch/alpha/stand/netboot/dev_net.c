@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.5 1997/07/22 17:41:01 drochner Exp $ */
+/* $NetBSD: dev_net.c,v 1.6 1997/09/06 14:08:31 drochner Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -48,7 +48,7 @@
  * for use by the NFS open code (NFS/lookup).
  */
 
-#include <stdarg.h>
+#include <machine/stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -59,7 +59,12 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
+#include <lib/libsa/nfs.h>
 #include "dev_net.h"
+
+#ifndef SUN_BOOTPARAMS
+void bootp      __P((int));
+#endif
 
 extern int debug;
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
@@ -91,6 +96,8 @@ char domainname[FNAME_SIZE];
  */
 static int netdev_sock = -1;
 static int netdev_opens;
+
+int net_getparams __P((int));
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
