@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.12 1997/10/19 19:33:37 mycroft Exp $	*/
+/*	$NetBSD: wc.c,v 1.13 1997/10/20 02:40:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-static char rcsid[] = "$NetBSD: wc.c,v 1.12 1997/10/19 19:33:37 mycroft Exp $";
+__RCSID("$NetBSD: wc.c,v 1.13 1997/10/20 02:40:26 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,13 +75,14 @@ static int 	rval = 0;
 static void	cnt __P((char *));
 static void	print_counts __P((long, long, long, char *));
 static void	usage __P((void));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch;
+	int ch;
 
 	setlocale(LC_ALL, "");
 
@@ -129,10 +130,10 @@ static void
 cnt(file)
 	char *file;
 {
-	register u_char *C;
-	register short gotsp;
-	register int ch, len;
-	register u_long linect, wordct, charct;
+	u_char *C;
+	short gotsp;
+	int len;
+	u_long linect, wordct, charct;
 	struct stat sb;
 	int fd;
 	u_char buf[MAXBSIZE];

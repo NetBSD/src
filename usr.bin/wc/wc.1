@@ -1,4 +1,4 @@
-.\"	$NetBSD: wc.1,v 1.6 1997/10/18 16:48:35 mrg Exp $
+.\"	$NetBSD: wc.1,v 1.7 1997/10/20 02:40:25 mrg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm wc
+.Nm
 utility displays the number of lines, words, and bytes contained in each
 input
 .Ar file
@@ -82,7 +82,7 @@ is written to the standard output.
 .El
 .Pp
 When an option is specified,
-.Nm wc
+.Nm
 only
 reports the
 information requested by that option. The
@@ -109,13 +109,13 @@ lines	 words	bytes	file_name
 .Pp
 .Pp
 The
-.Nm wc
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr isspace 3
 .Sh COMPATIBILITY
 Historically, the
-.Nm wc
+.Nm
 utility was documented to define a word as a ``maximal string of
 characters delimited by <space>, <tab> or <newline> characters''.
 The implementation, however, didn't handle non-printing characters
@@ -129,6 +129,6 @@ function, as required by
 .St -p1003.2 .
 .Sh STANDARDS
 The
-.Nm wc
+.Nm
 utility conforms to
 .St -p1003.2-92 .
