@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.17 2000/07/21 01:21:31 mjl Exp $	*/
+/*	$NetBSD: vacation.c,v 1.18 2001/01/10 12:34:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.17 2000/07/21 01:21:31 mjl Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.18 2001/01/10 12:34:50 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -112,6 +112,7 @@ main(int argc, char **argv)
 
 	opterr = iflag = 0;
 	interval = -1;
+	openlog("vacation", 0, LOG_MAIL);
 	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
@@ -155,7 +156,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	if (chdir(pw->pw_dir)) {
-		syslog(LOG_NOTICE,
+		syslog(LOG_ERR,
 		    "vacation: no such directory %s.", pw->pw_dir);
 		exit(1);
 	}
@@ -163,7 +164,7 @@ main(int argc, char **argv)
 	db = dbopen(VDB, O_CREAT|O_RDWR | (iflag ? O_TRUNC : 0),
 	    S_IRUSR|S_IWUSR, DB_HASH, NULL);
 	if (!db) {
-		syslog(LOG_NOTICE, "vacation: %s: %m", VDB);
+		syslog(LOG_ERR, "vacation: %s: %m", VDB);
 		exit(1);
 	}
 
@@ -257,7 +258,7 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
 	if (!tome)
 		exit(0);
 	if (!*from) {
-		syslog(LOG_NOTICE, "vacation: no initial \"From\" line.");
+		syslog(LOG_ERR, "vacation: no initial \"From\" line.");
 		exit(1);
 	}
 }
@@ -404,7 +405,7 @@ sendmessage(const char *myname)
 
 	mfp = fopen(VMSG, "r");
 	if (mfp == NULL) {
-		syslog(LOG_NOTICE, "vacation: no ~%s/%s file.", myname, VMSG);
+		syslog(LOG_ERR, "vacation: no ~%s/%s file.", myname, VMSG);
 		exit(1);
 	}
 	if (pipe(pvect) < 0) {
@@ -440,7 +441,7 @@ void
 usage()
 {
 
-	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] login",
+	syslog(LOG_ERR, "uid %u: usage: vacation [-i] [-a alias] login",
 	    getuid());
 	exit(1);
 }
