@@ -15,9 +15,13 @@
 ./usr/X11R6/bin/XF86_I128
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
+./usr/X11R6/bin/Xwrapper
 ./usr/X11R6/lib/X11/XF86Config.eg
 ./usr/X11R6/lib/X11/doc/README
 ./usr/X11R6/lib/X11/doc/README.Config
+./usr/X11R6/lib/X11/doc/README.apm
+./usr/X11R6/lib/X11/doc/README.mouse
+./usr/X11R6/lib/X11/doc/VideoModes.doc
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/RELNOTES
 ./usr/X11R6/lib/X11/doc/README.NetBSD
