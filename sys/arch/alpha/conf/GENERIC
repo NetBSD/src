@@ -1,12 +1,29 @@
-# $NetBSD: GENERIC,v 1.198 2001/11/20 12:56:19 lukem Exp $
+# $NetBSD: GENERIC,v 1.199 2001/12/14 05:34:45 gmcgarry Exp $
 #
-# Generic Alpha kernel.  Enough to get booted, etc., but not much more.
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel on NetBSD/alpha does enough to get booted,
+# etc., but not much more.  For a more complete kernel see the ALPHA
+# machine description file.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
 # If you add stuff to this, please add it to the ALPHA configuration, too.
 
-include	"arch/alpha/conf/std.alpha"
+include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.198 $"
+#ident 		"GENERIC-$Revision: 1.199 $"
 
 maxusers 32
 
