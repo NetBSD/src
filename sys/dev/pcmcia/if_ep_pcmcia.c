@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.29 2000/02/04 01:27:12 cgd Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.30 2000/02/08 12:49:13 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ ep_pcmcia_enable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
+	int error;
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
@@ -204,7 +205,10 @@ ep_pcmcia_enable(sc)
 		return (1);
 	}
 
-	return (ep_pcmcia_enable1(sc));
+	error = ep_pcmcia_enable1(sc);
+	if (error != 0)
+		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	return (error);
 }
 
 int
@@ -243,9 +247,7 @@ ep_pcmcia_disable(sc)
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
 	ep_pcmcia_disable1(sc);
-	if (sc->sc_ih != NULL)
-		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
-	sc->sc_ih = NULL;
+	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 }
 
 void
@@ -276,18 +278,23 @@ ep_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (ep_pcmcia_enable1(sc))
+	if (ep_pcmcia_enable1(sc)) {
 		printf(": function enable failed\n");
-
+		goto enable_failed;
+	}
 	sc->enabled = 1;
 
-	if (cfe->num_memspace != 0)
+	if (cfe->num_memspace != 0) {
 		printf(": unexpected number of memory spaces %d should be 0\n",
 		    cfe->num_memspace);
+		goto ioalloc_failed;
+	}
 
-	if (cfe->num_iospace != 1)
+	if (cfe->num_iospace != 1) {
 		printf(": unexpected number of I/O spaces %d should be 1\n",
 		    cfe->num_iospace);
+		goto ioalloc_failed;
+	}
 
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
 		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
@@ -305,12 +312,14 @@ ep_pcmcia_attach(parent, self, aux)
 		}
 		if (i >= maxaddr) {
 			printf(": can't allocate i/o space\n");
-			return;
+			goto ioalloc_failed;
 		}
 	} else {
 		if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-		    cfe->iospace[0].length, &psc->sc_pcioh))
+		    cfe->iospace[0].length, &psc->sc_pcioh)) {
 			printf(": can't allocate i/o space\n");
+			goto ioalloc_failed;
+		}
 	}
 
 	sc->sc_iot = psc->sc_pcioh.iot;
@@ -320,7 +329,7 @@ ep_pcmcia_attach(parent, self, aux)
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
-		return;
+		goto iomap_failed;
 	}
 
 	switch (pa->product) {
@@ -355,11 +364,30 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->enable = ep_pcmcia_enable;
 	sc->disable = ep_pcmcia_disable;
 
-	epconfig(sc, epp->epp_chipset, enaddr);
+	if (epconfig(sc, epp->epp_chipset, enaddr)) {
+		printf("%s: couldn't configure controller\n",
+		    sc->sc_dev.dv_xname);
+		goto config_failed;
+	}
 
 	sc->enabled = 0;
-
 	ep_pcmcia_disable1(sc);
+	return;
+
+ config_failed:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+ iomap_failed:
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+ ioalloc_failed:
+	sc->enabled = 0;
+	ep_pcmcia_disable1(sc);
+
+ enable_failed:
+	psc->sc_io_window = -1;
 }
 
 int
@@ -370,8 +398,12 @@ ep_pcmcia_detach(self, flags)
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)self;
 	int rv;
 
+	if (psc->sc_io_window == -1)
+		/* Nothing to detach. */
+		return (0);
+
 	rv = ep_detach(self, flags);
-	if (rv)
+	if (rv != 0)
 		return (rv);
 
 	/* Unmap our i/o window. */
