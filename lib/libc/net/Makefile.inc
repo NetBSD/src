@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.19 1994/12/22 10:14:30 cgd Exp $
+#	$Id: Makefile.inc,v 1.20 1995/02/10 17:46:52 cgd Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -27,6 +27,9 @@ SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 SRCS+=	htonl.S htons.S ntohl.S ntohs.S
 .elif (${MACHINE_ARCH} == "mips")
 SRCS+=	htonl.S htons.S
+.elif (${MACHINE_ARCH} == "alpha")
+# XXX should be .S's
+SRCS+=	htonl.c htons.c ntohl.c ntohs.c
 .else 
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c
 .endif
