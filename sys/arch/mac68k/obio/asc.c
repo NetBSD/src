@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.44 2002/10/23 09:11:30 jdolecek Exp $	*/
+/*	$NetBSD: asc.c,v 1.45 2003/07/15 02:43:24 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -62,6 +62,9 @@
 /*
  * ASC driver code and console bell support
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.45 2003/07/15 02:43:24 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/cdefs.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.7 2003/06/29 22:28:35 fvdl Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.8 2003/07/15 02:43:35 lukem Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.8 2003/07/15 02:43:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

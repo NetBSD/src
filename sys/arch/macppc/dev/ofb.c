@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.35 2003/06/29 22:28:33 fvdl Exp $	*/
+/*	$NetBSD: ofb.c,v 1.36 2003/07/15 02:43:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.36 2003/07/15 02:43:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

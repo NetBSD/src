@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.19 2003/04/02 02:19:30 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.20 2003/07/15 02:43:50 lukem Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,6 +38,9 @@
  *
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.20 2003/07/15 02:43:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>

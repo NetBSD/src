@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.33 2003/04/02 00:44:23 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.34 2003/07/15 02:43:17 lukem Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -14,6 +14,9 @@
  *   Yanagisawa Takeshi <yanagisw@aa.ap.titech.ac.jp>
  * did the work to get this running on the Macintosh.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34 2003/07/15 02:43:17 lukem Exp $");
 
 #include "opt_inet.h"
 

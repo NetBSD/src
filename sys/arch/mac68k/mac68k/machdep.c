@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.290 2003/06/29 22:28:31 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.291 2003/07/15 02:43:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,9 @@
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.291 2003/07/15 02:43:20 lukem Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"

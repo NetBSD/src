@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.3 2001/10/29 22:28:38 thorpej Exp $	*/
+/*	$NetBSD: platform.c,v 1.4 2003/07/15 02:46:33 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Platform configuration support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.4 2003/07/15 02:46:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

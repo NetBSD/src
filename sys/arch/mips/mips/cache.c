@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.19 2003/03/08 05:18:25 rafal Exp $	*/
+/*	$NetBSD: cache.c,v 1.20 2003/07/15 02:43:36 lukem Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -66,6 +66,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.20 2003/07/15 02:43:36 lukem Exp $");
 
 #include "opt_cputype.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.5 2003/07/15 02:43:28 lukem Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -21,6 +21,9 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
  * 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.5 2003/07/15 02:43:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

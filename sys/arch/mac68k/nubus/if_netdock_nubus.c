@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.3 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.4 2003/07/15 02:43:23 lukem Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -41,6 +41,9 @@
  */
 
 /***********************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.4 2003/07/15 02:43:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
