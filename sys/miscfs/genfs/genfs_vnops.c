@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.34 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.35 2001/06/14 08:22:14 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -594,7 +594,8 @@ genfs_getpages(v)
 	 * find any additional pages needed to cover the expanded range.
 	 */
 
-	if (startoffset != origoffset) {
+	npages = (endoffset - startoffset) >> PAGE_SHIFT;
+	if (startoffset != origoffset || npages != orignpages) {
 
 		/*
 		 * XXXUBC we need to avoid deadlocks caused by locking
@@ -603,19 +604,18 @@ genfs_getpages(v)
 		 * start over.
 		 */
 
-		for (i = 0; i < npages; i++) {
+		for (i = 0; i < orignpages; i++) {
 			struct vm_page *pg = pgs[ridx + i];
 
 			if (pg->flags & PG_FAKE) {
 				pg->flags |= PG_RELEASED;
 			}
 		}
-		uvm_page_unbusy(&pgs[ridx], npages);
+		uvm_page_unbusy(&pgs[ridx], orignpages);
 		memset(pgs, 0, sizeof(pgs));
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
 			    startoffset, endoffset, 0,0);
-		npages = (endoffset - startoffset) >> PAGE_SHIFT;
 		npgs = npages;
 		uvn_findpages(uobj, startoffset, &npgs, pgs, UFP_ALL);
 	}
@@ -672,7 +672,7 @@ genfs_getpages(v)
 		 */
 
 		pidx = (offset - startoffset) >> PAGE_SHIFT;
-		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
+		while ((pgs[pidx]->flags & (PG_FAKE|PG_RDONLY)) == 0) {
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
@@ -727,6 +727,8 @@ genfs_getpages(v)
 		 */
 
 		if (blkno < 0) {
+			int holepages = (round_page(offset + iobytes) - 
+					 trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
 			sawhole = TRUE;
@@ -734,11 +736,10 @@ genfs_getpages(v)
 			       iobytes);
 			skipbytes += iobytes;
 
-			if (!write) {
-				int holepages =
-					(round_page(offset + iobytes) - 
-					 trunc_page(offset)) >> PAGE_SHIFT;
-				for (i = 0; i < holepages; i++) {
+			for (i = 0; i < holepages; i++) {
+				if (write) {
+					pgs[pidx + i]->flags &= ~PG_CLEAN;
+				} else {
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}
