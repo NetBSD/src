@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11.2.4 2000/01/15 17:27:52 he Exp $	*/
+/*	$NetBSD: run.c,v 1.11.2.5 2000/01/23 12:53:23 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,15 +117,11 @@ log_flip(void)
 		fflush(log);
 		fclose(log);
 	} else {
+		sprintf(log_text[0], "Logging: On");
+		logging = 1;
 		log = fopen("sysinst.log", "a");
-		if (log != NULL) {
-			sprintf(log_text[0], "Logging: On");
-			logging = 1;
-			fprintf(log, "Log started at: %s\n", asctime(localtime(&tloc)));
-			fflush(log);		
-		} else {
-			msg_display(MSG_openfail, "log file", strerror(errno));
-		}
+		fprintf(log, "Log started at: %s\n", asctime(localtime(&tloc)));
+		fflush(log);		
 	}
 	return(0);
 }
@@ -143,17 +139,12 @@ script_flip(void)
 		fflush(script);
 		fclose(script);
 	} else {
+		sprintf(log_text[1], "Scripting: On");
+		scripting = 1;
 		script = fopen("sysinst.sh", "w");
-		if (script != NULL) {
-			sprintf(log_text[1], "Scripting: On");
-			scripting = 1;
-			fprintf(script, "#!/bin/sh\n");
-			fprintf(script, "# Script started at: %s\n",
-			    asctime(localtime(&tloc)));
-			fflush(script);		
-		} else {
-			msg_display(MSG_openfail, "script file", strerror(errno));
-		}
+		fprintf(script, "#!/bin/sh\n");
+		fprintf(script, "# Script started at: %s\n", asctime(localtime(&tloc)));
+		fflush(script);		
 	}
 	return(0);
 }
