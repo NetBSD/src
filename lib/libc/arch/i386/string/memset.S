@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$Id: memset.S,v 1.7 1995/04/28 22:54:20 jtc Exp $")
+	RCSID("$NetBSD: memset.S,v 1.8 1995/04/28 22:58:05 jtc Exp $")
 #endif
 
 ENTRY(memset)
