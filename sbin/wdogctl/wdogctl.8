@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdogctl.8,v 1.5 2002/07/29 21:00:15 thorpej Exp $
+.\"	$NetBSD: wdogctl.8,v 1.6 2002/07/29 21:08:30 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -122,7 +122,8 @@ can not be disabled, an error message will be displayed and the
 timer will remain armed.
 .El
 .Sh FILES
-/dev/watchdog -- the system monitor watchdog timer device
+.Pa /dev/watchdog
+-- the system monitor watchdog timer device
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr envstat 8
