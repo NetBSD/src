@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_i386
-#define MACHTYPE_OK(mtype) ((mtype) == M_386_NETBSD || (mtype) == M_UNKNOWN)
+#define	DEFAULT_MID 	M_386_NETBSD
 
 #define MY(OP) CAT(i386netbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */

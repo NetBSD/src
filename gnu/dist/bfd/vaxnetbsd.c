@@ -1,5 +1,5 @@
-/* BFD back-end for NetBSD/m68k a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 1997 Free Software Foundation, Inc.
+/* BFD back-end for NetBSD/VAX a.out-ish binaries.
+   Copyright (C) 1990, 1991, 1992 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -15,20 +15,19 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-#define BYTES_IN_WORD	4
-#define TARGET_IS_BIG_ENDIAN_P
+#define	BYTES_IN_WORD	4
+#undef TARGET_IS_BIG_ENDIAN_P
 
-/* Our m68k ports use either 4K or 8K pages, but object files always
-   assume 8K page alignment so they will work on all m68k machines. */
-#define TARGET_PAGE_SIZE	0x2000
+#define	TARGET_PAGE_SIZE	1024
+#define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
-#define DEFAULT_ARCH	bfd_arch_m68k
-#define DEFAULT_MID 	M_68K_NETBSD
+#define	DEFAULT_ARCH	bfd_arch_vax
+#define	DEFAULT_MID 	M_VAX
 
-#define MY(OP) CAT(m68knetbsd_,OP)
+#define MY(OP) CAT(vaxnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
-#define TARGETNAME "a.out-m68k-netbsd"
+#define TARGETNAME "a.out-vax-netbsd"
 
 #include "netbsd.h"

@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_PAGE_SIZE 0x2000
 
 #define DEFAULT_ARCH	bfd_arch_sparc
-#define MACHTYPE_OK(mtype) ((mtype) == M_SPARC_NETBSD || (mtype) == M_UNKNOWN)
+#define DEFAULT_MID 	M_SPARC_NETBSD
 
 #define MY(OP) CAT(sparcnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
