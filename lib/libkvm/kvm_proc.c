@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.53 2003/03/28 14:01:32 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.54 2003/08/07 16:44:39 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.53 2003/03/28 14:01:32 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.54 2003/08/07 16:44:39 agc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
