@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.9 1998/05/15 16:38:53 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.10 1999/01/27 20:54:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -154,7 +154,7 @@ biosdiskopen(struct open_file *f, ...)
 	struct biosdisk *d;
 	int partition;
 #ifndef NO_DISKLABEL
-	struct dos_partition *dptr;
+	struct mbr_partition *dptr;
 	int sector, i;
 	struct disklabel *lp;
 #endif
@@ -202,21 +202,21 @@ biosdiskopen(struct open_file *f, ...)
 		goto out;
 	}
 	sector = -1;
-	dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
+	dptr = (struct mbr_partition *) & d->buf[MBR_PARTOFF];
 	/* Look for NetBSD partition ID */
-	for (i = 0; i < NDOSPART; i++, dptr++)
-		if (dptr->dp_typ == DOSPTYP_NETBSD) {
-			sector = dptr->dp_start;
+	for (i = 0; i < NMBRPART; i++, dptr++)
+		if (dptr->mbrp_typ == MBR_PTYPE_NETBSD) {
+			sector = dptr->mbrp_start;
 			break;
 		}
 #ifdef COMPAT_386BSD_MBRPART
 	if (sector == -1) {
 		/* If we didn't find one, look for 386BSD partition ID */
-		dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
-		for (i = 0; i < NDOSPART; i++, dptr++)
-			if (dptr->dp_typ == DOSPTYP_386BSD) {
+		dptr = (struct mbr_partition *) & d->buf[MBR_PARTOFF];
+		for (i = 0; i < NMBRPART; i++, dptr++)
+			if (dptr->mbrp_typ == MBR_PTYPE_386BSD) {
 				printf("old BSD partition ID!\n");
-				sector = dptr->dp_start;
+				sector = dptr->mbrp_start;
 				break;
 			}
 	}
