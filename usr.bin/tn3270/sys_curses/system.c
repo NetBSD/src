@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.11 1998/11/06 20:05:43 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.12 1999/08/24 09:16:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.11 1998/11/06 20:05:43 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.12 1999/08/24 09:16:36 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ extern uid_t geteuid();
 #endif	/* (!defined(sun)) || defined(BSD) && (BSD >= 43) */
 extern long random();
 #if	!defined(BSD4_4)
-extern char *mktemp();
+extern char *mktemp();		/* NetBSD: NOT USED */
 #endif	/* !defined(BSD4_4) */
 extern char *strcpy();
 extern char *getenv();
@@ -672,7 +672,7 @@ char	*argv[];
     do {
 	if (keyname != NULL)
 	    free(keyname);
-	keyname = mktemp(strdup("/tmp/apiXXXXXX"));
+	keyname = mktemp(strdup("/tmp/apiXXXXXX")); /* NetBSD: NOT USED */
 	fd = open(keyname, O_RDWR|O_CREAT|O_EXCL, IREAD|IWRITE);
     } while ((fd == -1) && (errno == EEXIST));
 #endif	/* defined(BSD4_4) */
