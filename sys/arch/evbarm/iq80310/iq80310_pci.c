@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.5 2002/02/07 21:34:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.6 2002/02/08 01:42:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -79,6 +79,7 @@ int
 iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct i80312_softc *sc = pa->pa_pc->pc_intr_v;
+	pcireg_t reg;
 	int sbus;
 
 	/*
@@ -93,7 +94,7 @@ iq80310_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	reg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
 	sbus = PPB_BUSINFO_SECONDARY(reg);
 
-	if (pa->pa_bus != pbus) {
+	if (pa->pa_bus != sbus) {
 		printf("iq80310_pci_intr_map: %d/%d/%d not on Secondary bus\n",
 		    pa->pa_bus, pa->pa_device, pa->pa_function);
 		return (1);
