@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 1997/01/09 20:22:37 tls Exp $
+#	$NetBSD: Makefile,v 1.17 1997/02/13 00:30:25 cgd Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 CFLAGS += -I${.CURDIR} -I.
-.if !defined(EXPORTABLE_SYSTEM) && exists(${.CURDIR}/../../../domestic/lib/libtelnet)
-LDADD += -lcurses -ltermcap -ltelnet -lkrb -ldes -lcrypt
-.else
-LDADD += -lcurses -ltermcap -ltelnet -lcrypt
-.endif
+LDADD += -lcurses -ltermcap -lcrypt
 DPADD += ${LIBCURSES} ${LIBTERMCAP} /usr/lib/libtelnet.a ${LIBCRYPT}
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
@@ -18,6 +14,7 @@ SRCS += api.c function.c inbound.c oia.c options.c outbound.c
 SRCS += genbsubs.c globals.c system.c termout.c
 SRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
 SRCS += tn3270.c utilities.c
+SRCS += genget.c
 
 # this and the dependency hacks below to make 'depend' target
 # work right...
@@ -30,6 +27,7 @@ DEPSRCS += api.c function.c inbound.c oia.c options.c outbound.c
 DEPSRCS += genbsubs.c globals.c system.c termout.c
 DEPSRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
 DEPSRCS += tn3270.c utilities.c
+DEPSRCS += genget.c
 
 PROG = tn3270
 
@@ -103,3 +101,5 @@ depend: .depend
 
 .PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii ${.CURDIR}/../ctlr
 .PATH: ${.CURDIR}/../general ${.CURDIR}/../sys_curses ${.CURDIR}/../../telnet
+.PATH: ${.CURDIR}/../../../lib/libtelnet
+
