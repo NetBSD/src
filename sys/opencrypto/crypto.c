@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.8 2003/12/31 16:44:26 jonathan Exp $ */
+/*	$NetBSD: crypto.c,v 1.9 2004/04/29 02:17:36 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.8 2003/12/31 16:44:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.9 2004/04/29 02:17:36 jonathan Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -117,7 +117,7 @@ int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
  * crypto_devallowsoft > 0:  Allow user requests only for transforms which
  *                               are hardware-accelerated.
  */
-int	crypto_devallowsoft = 0;	/* only use hardware crypto for asym */
+int	crypto_devallowsoft = 1;	/* only use hardware crypto */
 
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern, OID_AUTO, usercrypto, CTLFLAG_RW,
