@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.7 2003/05/21 10:05:20 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.8 2003/05/29 17:53:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,6 +141,7 @@ make_bsd_partitions(void)
 	struct disklabel l;
 	int varsz = 0, swapsz = 0;
 	int part_raw, part_bsd;
+	int partstart, partsize;
 	int ptend;
 
 	/*
@@ -149,6 +150,8 @@ make_bsd_partitions(void)
 	 */
 	if (ptsize == 0)
 		ptsize = dlsize - ptstart;
+
+	partstart = ptstart;
 	ptend = ptstart + ptsize;
 
 	/* Ask for layout type -- standard or special */
@@ -181,14 +184,36 @@ make_bsd_partitions(void)
 		part_bsd = C;
 		bsdlabel[C].pi_offset = ptstart;
 		bsdlabel[C].pi_size = ptsize;
-	} else
+	} else {
 		part_bsd = part_raw;
+#ifdef BOOT_SIZE
+		part_size = BOOT_SIZE;
+		if (part_size >= 1024) {
+			/* Treat big numbers as a byte count */
+			part_size = (part_size + dlcylsize * sectorsize - 1)
+					/ (dlcylsize * sectorsize);
+			part_size *= dlcylsize;
+		}
+		bsdlabel[D].pi_fstype = FS_BOOT;
+		bsdlabel[D].pi_size = part_size;
+#ifdef BOOT_HIGH
+		bsdlabel[D].pi_offset = ptend - part_size;
+		ptend -= part_size;
+#else
+		bsdlabel[D].pi_offset = ptstart;
+		ptstart += part_size;
+#endif
+#endif
+#ifdef PART_REST
+		bsdlabel[D].pi_offset = 0;
+		bsdlabel[D].pi_size = ptstart;
+#endif
+	}
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c "unused", PART_USR /usr */
 	case 2: /* standard X: as above, but with larger swap, and more
 		 * space in /usr */
-		partstart = ptstart;
 
 		/*
 		 * Defaults: 
@@ -301,7 +326,6 @@ make_bsd_partitions(void)
 	case 3: /* custom: ask user for all sizes */
 		ask_sizemult(dlcylsize);
 		/* root */
-		partstart = ptstart;
 		remain = ptend - partstart;
 		partsize = NUMSEC(DEFROOTSIZE, MEG/sectorsize, dlcylsize);
 		snprintf(isize, 20, "%d", partsize/sizemult);
