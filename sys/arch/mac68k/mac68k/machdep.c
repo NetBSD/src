@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.191 1998/04/24 06:12:29 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.192 1998/04/26 03:49:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,6 @@
 
 #include "opt_adb.h"
 #include "opt_uvm.h"
-#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,14 +274,14 @@ mac68k_init()
 	 */
 	for (i = 0; i < numranges; i++) {
 #if defined(UVM)
-		if (low[i] <= avail_start && avail_start <= high[i])
+		if (low[i] <= avail_start && avail_start < high[i])
 			uvm_page_physload(atop(avail_start), atop(high[i]),
 			    atop(avail_start), atop(high[i]));
 		else
 			uvm_page_physload(atop(low[i]), atop(high[i]),
 			    atop(low[i]), atop(high[i]));
 #else
-		if (low[i] <= avail_start && avail_start <= high[i])
+		if (low[i] <= avail_start && avail_start < high[i])
 			vm_page_physload(atop(avail_start), atop(high[i]),
 			    atop(avail_start), atop(high[i]));
 		else
@@ -325,9 +324,6 @@ consinit(void)
 
 	if (!init) {
 		cninit();
-#if NZSC > 0 && defined(KGDB)
-		zs_kgdb_init();
-#endif
 #ifdef  DDB
 		/*
 		 * Initialize kernel debugger, if compiled in.
