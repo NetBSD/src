@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: add-random-users.c,v 1.1.1.2 2001/02/11 13:51:32 assar Exp $");
+RCSID("$Id: add-random-users.c,v 1.1.1.3 2001/06/19 22:08:07 assar Exp $");
 
 #define WORDS_FILENAME "/usr/share/dict/words"
 
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 {
     int optind = 0;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
 	usage(1);
     if (help_flag)
