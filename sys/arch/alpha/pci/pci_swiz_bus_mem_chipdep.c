@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.35 2000/04/17 17:30:48 drochner Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.36 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,6 +118,9 @@ void		__C(CHIP,_mem_free) __P((void *, bus_space_handle_t,
 
 /* get kernel virtual address */
 void *		__C(CHIP,_mem_vaddr) __P((void *, bus_space_handle_t));
+
+/* mmap for user */
+paddr_t		__C(CHIP,_mem_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier) __P((void *, bus_space_handle_t,
@@ -268,6 +271,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 
 	/* get kernel virtual address */
 	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
+
+	/* mmap for user */
+	t->abs_mmap =		__C(CHIP,_mem_mmap);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
@@ -917,6 +923,40 @@ __C(CHIP,_mem_vaddr)(v, bsh)
 		return ((void *)bsh);
 #endif
 	return (0);
+}
+
+paddr_t
+__C(CHIP,_mem_mmap)(v, addr, off, prot, flags)
+	void *v;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	int haved = 0, haves = 0;
+
+#ifdef CHIP_D_MEM_W1_SYS_START
+	if (__C(CHIP,_xlate_addr_to_dense_handle)(v, addr + off, &dh)) {
+		haved = 1;
+		dh = ALPHA_K0SEG_TO_PHYS(dh);
+	}
+#endif
+	if (__C(CHIP,_xlate_addr_to_sparse_handle)(v, addr + off, &sh)) {
+		haves = 1;
+		sh = ALPHA_K0SEG_TO_PHYS(sh);
+	}
+
+	if (linear) {
+		if (haved == 0)
+			return (-1);
+		return (alpha_btop(dh));
+	}
+
+	if (haves == 0)
+		return (-1);
+	return (alpha_btop(sh));
 }
 
 inline void
