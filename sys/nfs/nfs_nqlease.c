@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.14.4.1 1997/03/04 18:06:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -455,9 +456,10 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 	struct mbuf *mreq, *mb, *mb2, *nam2, *mheadend;
 	struct socket *so;
 	struct sockaddr_in *saddr;
+	nfsfh_t nfh;
 	fhandle_t *fhp;
 	caddr_t bpos, cp;
-	u_int32_t xid;
+	u_int32_t xid, *tl;
 	int len = 1, ok = 1, i = 0;
 	int sotype, *solockp;
 
@@ -488,12 +490,12 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			else
 				solockp = (int *)0;
 			nfsm_reqhead((struct vnode *)0, NQNFSPROC_EVICTED,
-				NFSX_V3FH);
-			nfsm_build(cp, caddr_t, NFSX_V3FH);
-			bzero(cp, NFSX_V3FH);
-			fhp = (fhandle_t *)cp;
+				NFSX_V3FH + NFSX_UNSIGNED);
+			fhp = &nfh.fh_generic;
+			bzero((caddr_t)fhp, sizeof(nfh));
 			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 			VFS_VPTOFH(vp, &fhp->fh_fid);
+			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;
 			while (m) {
@@ -833,7 +835,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int cachable;
 	u_quad_t frev;
-	
+
 	nfsstats.rpccnt[NQNFSPROC_GETLEASE]++;
 	mb = mreq = nfsm_reqh(vp, NQNFSPROC_GETLEASE, NFSX_V3FH+2*NFSX_UNSIGNED,
 		 &bpos);
@@ -876,10 +878,10 @@ nqnfs_vacated(vp, cred)
 	struct mbuf *mreq, *mb, *mb2, *mheadend;
 	struct nfsmount *nmp;
 	struct nfsreq myrep;
-	
+
 	nmp = VFSTONFS(vp->v_mount);
 	nfsstats.rpccnt[NQNFSPROC_VACATED]++;
-	nfsm_reqhead(vp, NQNFSPROC_VACATED, NFSX_V3FH);
+	nfsm_reqhead(vp, NQNFSPROC_VACATED, NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	m = mreq;
 	i = 0;
@@ -1054,14 +1056,16 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			     if (vpid == vp->v_id) {
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 				np->n_timer.cqe_next = 0;
-				if ((np->n_flag & (NMODIFIED | NQNFSEVICTED))
-				    && vp->v_type == VREG) {
+				if (np->n_flag & (NMODIFIED | NQNFSEVICTED)) {
 					if (np->n_flag & NQNFSEVICTED) {
+						if (vp->v_type == VDIR)
+							nfs_invaldir(vp);
+						cache_purge(vp);
 						(void) nfs_vinvalbuf(vp,
 						       V_SAVE, cred, p, 0);
 						np->n_flag &= ~NQNFSEVICTED;
 						(void) nqnfs_vacated(vp, cred);
-					} else {
+					} else if (vp->v_type == VREG) {
 						(void) VOP_FSYNC(vp, cred,
 						    MNT_WAIT, p);
 						np->n_flag &= ~NMODIFIED;
