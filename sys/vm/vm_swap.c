@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.41 1997/06/16 20:21:55 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.42 1997/06/17 03:37:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -470,9 +470,7 @@ sys_swapctl(p, v, retval)
 		}
 		free((caddr_t)sdp, M_VMSWAP);
 #else
-#ifdef DIAGNOSTIC
-		printf("swap SWAP_OFF attempted\n");
-#endif
+		error = ENODEV;
 #endif
 		break;
 
