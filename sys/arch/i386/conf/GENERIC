@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.382 2000/12/11 23:16:51 onoe Exp $
+#	$NetBSD: GENERIC,v 1.383 2000/12/14 04:11:26 onoe Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.382 $"
+#ident 		"GENERIC-$Revision: 1.383 $"
 
 maxusers	32		# estimated number of users
 
@@ -542,6 +542,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x

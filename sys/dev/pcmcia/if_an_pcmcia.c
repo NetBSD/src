@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.4 2000/12/12 05:34:02 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.5 2000/12/14 04:11:26 onoe Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,12 +98,13 @@ static void an_pcmcia_disable __P((struct an_softc *));
 static void an_pcmcia_powerhook __P((int, void *));
 
 struct an_pcmcia_softc {
-	struct an_softc sc_an;		/* real "an" softc */
+	struct an_softc sc_an;			/* real "an" softc */
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
+	void *sc_ih;				/* interrupt handle */
 	void *sc_powerhook;			/* power hook descriptor */
 };
 
@@ -167,15 +168,15 @@ an_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 
 	/* establish the interrupt. */
-	sc->irq_handle = pcmcia_intr_establish(pf, IPL_NET, an_intr, sc);
-	if (sc->irq_handle == NULL) {
+	psc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, an_intr, sc);
+	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->an_dev.dv_xname);
 		return (1);
 	}
 
 	if (pcmcia_function_enable(pf)) {
-		pcmcia_intr_disestablish(pf, sc->irq_handle);
+		pcmcia_intr_disestablish(pf, psc->sc_ih);
 		return (1);
 	}
 	DELAY(1000);
@@ -191,7 +192,7 @@ an_pcmcia_disable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 
 	pcmcia_function_disable(pf);
-	pcmcia_intr_disestablish(pf, sc->irq_handle);
+	pcmcia_intr_disestablish(pf, psc->sc_ih);
 }
 
 static int
@@ -298,8 +299,8 @@ an_pcmcia_attach(parent, self, aux)
 	sc->sc_disable = an_pcmcia_disable;
 
 	/* establish the interrupt. */
-	sc->irq_handle = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc);
-	if (sc->irq_handle == NULL) {
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc);
+	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->an_dev.dv_xname);
 		goto no_interrupt;
@@ -318,7 +319,7 @@ an_pcmcia_attach(parent, self, aux)
 	return;
 
  attach_failed:
-	pcmcia_intr_disestablish(psc->sc_pf, sc->irq_handle);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 
  no_interrupt:
 	/* Unmap our i/o window and space */

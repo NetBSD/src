@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.6 2000/12/13 20:21:10 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.7 2000/12/14 04:11:26 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -195,16 +195,16 @@ int an_probe(sc)
 	an_reset(sc);
 
 	if (an_cmd(sc, AN_CMD_READCFG, 0))
-		return(0);
+		return ENXIO;
 
 	if (an_read_record(sc, (struct an_ltv_gen *)&ssid))
-		return(0);
+		return ENXIO;
 
 	/* See if the ssid matches what we expect ... but doesn't have to */
 	if (strcmp(ssid.an_ssid1, AN_DEF_SSID))
-		return(0);
+		return ENXIO;
 	
-	return(AN_IOSIZ);
+	return 0;
 }
 
 int an_attach(sc)

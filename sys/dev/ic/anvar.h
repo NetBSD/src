@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.2 2000/12/12 05:11:15 onoe Exp $	*/
+/*	$NetBSD: anvar.h,v 1.3 2000/12/14 04:11:26 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -145,8 +145,6 @@ struct an_softc	{
 	void			(*sc_disable) __P((struct an_softc *));
 	int			sc_enabled;
 	struct ifmedia		sc_media;
-
-	void*	irq_handle;	/* handle for irq handler */
 
 	bus_space_handle_t	an_bhandle;
 	bus_space_tag_t		an_btag;
