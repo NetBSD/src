@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.10 1997/07/31 04:08:35 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.11 1997/08/19 13:33:04 lukem Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -124,11 +124,11 @@ lkm)
 	chmod 640 lkm
 	;;
 
-rz*|vnd*|vn*|ccd*)
+rz*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[dz]\(.*\)'`
 	case $i in
 	rz*) name=rz; blk=21; chr=56;;
-	vn*) name=vnd; blk=2; chr=11;;
+	vnd*) name=vnd; blk=2; chr=11;;
 	ccd*) name=ccd; blk=24; chr=87;;
 	esac
 	case $unit in
