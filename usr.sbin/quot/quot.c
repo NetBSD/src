@@ -28,6 +28,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: quot.c,v 1.2 1994/02/11 00:23:42 cgd Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,12 +53,14 @@ static long blocksize;
 static char *header;
 static int headerlen;
 
-/* Original BSD quot doesn't round to number of frags/blocks,	*/
-/* doesn't account for indirection blocks and gets it totally	*/
-/* wrong if the	size is a multiple of the blocksize.		*/
-/* The new code always counts the number of 512 byte blocks	*/
-/* instead of the number of kilobytes and converts them	to	*/
-/* kByte when done (on request).				*/
+/*
+ * Original BSD quot doesn't round to number of frags/blocks,
+ * doesn't account for indirection blocks and gets it totally
+ * wrong if the	size is a multiple of the blocksize.
+ * The new code always counts the number of 512 byte blocks
+ * instead of the number of kilobytes and converts them	to
+ * kByte when done (on request).
+ */
 #ifdef	COMPAT
 #define	SIZE(n)	(n)
 #else
@@ -172,7 +179,8 @@ static inituser()
 	
 	if (!nusers) {
 		nusers = 8;
-		if (!(users = (struct user *)calloc(nusers,sizeof(struct user)))) {
+		if (!(users =
+		    (struct user *)calloc(nusers,sizeof(struct user)))) {
 			perror("allocate users");
 			exit(1);
 		}
@@ -197,7 +205,8 @@ static usrrehash()
 		exit(1);
 	}
 	for (usr = svusr, i = nusers >> 1; --i >= 0; usr++) {
-		for (usrn = users + (usr->uid&(nusers - 1)); usrn->name; usrn--) {
+		for (usrn = users + (usr->uid&(nusers - 1)); usrn->name;
+		    usrn--) {
 			if (usrn <= users)
 				usrn = users + nusers;
 		}
@@ -213,7 +222,8 @@ static struct user *user(uid)
 	struct passwd *pwd;
 	
 	while (1) {
-		for (usr = users + (uid&(nusers - 1)), i = nusers; --i >= 0; usr--) {
+		for (usr = users + (uid&(nusers - 1)), i = nusers; --i >= 0;
+		    usr--) {
 			if (!usr->name) {
 				usr->uid = uid;
 				
@@ -221,7 +231,8 @@ static struct user *user(uid)
 					if (usr->name = (char *)malloc(7))
 						sprintf(usr->name,"#%d",uid);
 				} else {
-					if (usr->name = (char *)malloc(strlen(pwd->pw_name) + 1))
+					if (usr->name = (char *)
+					    malloc(strlen(pwd->pw_name) + 1))
 						strcpy(usr->name,pwd->pw_name);
 				}
 				if (!usr->name) {
@@ -246,7 +257,9 @@ static cmpusers(u1,u2)
 {
 	return u2->space - u1->space;
 }
-#define	sortusers(users)	(qsort((users),nusers,sizeof(struct user),cmpusers))
+
+#define	sortusers(users)	(qsort((users),nusers,sizeof(struct user), \
+				    cmpusers))
 
 static uses(uid,blks,act)
 	uid_t uid;
@@ -323,7 +336,8 @@ static dofsizes(fd,super,name)
 		    && !isfree(ip)
 #endif	/* COMPAT */
 		    ) {
-			sz = estimate ? virtualblocks(super,ip) : actualblocks(super,ip);
+			sz = estimate ? virtualblocks(super,ip) :
+			    actualblocks(super,ip);
 #ifdef	COMPAT
 			if (sz >= FSZCNT) {
 				fsizes->fsz_count[FSZCNT-1]++;
@@ -339,7 +353,8 @@ static dofsizes(fd,super,name)
 					break;
 			}
 			if (!fp || ksz < fp->fsz_first) {
-				if (!(fp = (struct fsizes *)malloc(sizeof(struct fsizes)))) {
+				if (!(fp = (struct fsizes *)
+				    malloc(sizeof(struct fsizes)))) {
 					perror("alloc fsize structure");
 					exit(1);
 				}
@@ -365,7 +380,8 @@ static dofsizes(fd,super,name)
 		for (i = 0; i < FSZCNT; i++) {
 			if (fp->fsz_count[i])
 				printf("%d\t%d\t%d\n",fp->fsz_first + i,
-				       fp->fsz_count[i],SIZE(sz += fp->fsz_sz[i]));
+				    fp->fsz_count[i],
+				    SIZE(sz += fp->fsz_sz[i]));
 		}
 	}
 }
@@ -385,8 +401,9 @@ static douser(fd,super,name)
 		if ((ip = get_inode(fd,super,inode))
 		    && !isfree(ip))
 			uses(ip->di_uid,
-			     estimate ? virtualblocks(super,ip) : actualblocks(super,ip),
-			     ip->di_atime);
+			    estimate ? virtualblocks(super,ip) :
+				actualblocks(super,ip),
+			    ip->di_atime);
 		else if (errno) {
 			perror(name);
 			exit(1);
