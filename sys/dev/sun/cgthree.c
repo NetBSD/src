@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.2.6.1 2002/01/10 19:58:31 thorpej Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2.6.2 2002/06/28 07:50:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.1 2002/01/10 19:58:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.2.6.2 2002/06/28 07:50:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,31 @@ cgthreepoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_cgthreedetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cgthree_filtops =
+	{ 1, NULL, filt_cgthreedetach, filt_seltrue };
+
+int
+cgthreekqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cgthree_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

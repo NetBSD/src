@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.34.4.1 2001/08/25 06:15:51 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.34.4.2 2002/06/28 07:50:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -300,6 +300,31 @@ cgtwopoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_cgtwodetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cgtwo_filtops =
+	{ 1, NULL, filt_cgtwodetach, filt_seltrue };
+
+int
+cgtwokqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cgtwo_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

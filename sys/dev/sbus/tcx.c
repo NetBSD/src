@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.6.3 2002/06/23 17:48:42 jdolecek Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.6.4 2002/06/28 07:50:49 jdolecek Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.3 2002/06/23 17:48:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.4 2002/06/28 07:50:49 jdolecek Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -507,6 +507,31 @@ tcxpoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_tcxdetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops tcx_filtops =
+	{ 1, NULL, filt_tcxdetach, filt_seltrue };
+
+int
+tcxkqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &tcx_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

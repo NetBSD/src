@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.20.4.3 2002/06/23 17:41:43 jdolecek Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20.4.4 2002/06/28 07:50:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -621,6 +621,31 @@ cgfourteenpoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_cgfourteendetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cgfourteen_filtops =
+	{ 1, NULL, filt_cgfourteendetach, filt_seltrue };
+
+int
+cgfourteenkqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cgfourteen_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*
