@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.57 2001/05/02 16:05:09 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.58 2001/05/27 19:33:20 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -109,7 +109,7 @@ ASENTRY(start, 0)
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
 to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
-	cmpb	$3,(ap)				# symbols info present?
+	cmpb	(ap),$3				# symbols info present?
 	blssu	3f				# nope, skip
 	bisl3	$0x80000000,8(ap),_C_LABEL(symtab_start)
 						#   save start of symtab
