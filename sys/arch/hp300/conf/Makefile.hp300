@@ -68,7 +68,7 @@ SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o
 #SYSTEM_DEP=	Makefile symbols.sort ${SYSTEM_OBJ}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X; \
+SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X || true; \
 		${LD} $$strip -n -o $@ -e start ${SYSTEM_OBJ} vers.o
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
@@ -79,9 +79,9 @@ SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 
 %LOAD
 
-newvers:
-	sh $S/conf/newvers.sh
-	${CC} $(CFLAGS) -c vers.c
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh ${KERN_IDENT} ${IDENT}
+	${CC} ${CFLAGS} -c vers.c
 
 clean:
 	rm -f eddep *vmunix tags *.o locore.i [a-z]*.s \
