@@ -676,19 +676,19 @@ info_cb (th, s)
 	  printf_filtered ("<unknown state> ");
 	  break;
 	case TD_STATE_RUNNING:
-	  printf_filtered ("(running) ");
+	  printf_filtered ("running  ");
 	  break;
 	case TD_STATE_RUNNABLE:
-	  printf_filtered ("(active)  ");
+	  printf_filtered ("active   ");
 	  break;
 	case TD_STATE_BLOCKED:
-	  printf_filtered ("(blocked) ");
+	  printf_filtered ("in kernel");
 	  break;
 	case TD_STATE_SLEEPING:
-	  printf_filtered ("(asleep)  ");
+	  printf_filtered ("sleeping ");
 	  break;
 	case TD_STATE_ZOMBIE:
-	  printf_filtered ("(zombie)  ");
+	  printf_filtered ("zombie   ");
 	  break;
 	}
       
