@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.53 2001/01/12 04:22:11 jwise Exp $
+# $NetBSD: mi,v 1.54 2001/01/14 01:44:22 jmc Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -211,7 +211,7 @@
 ./usr/share/doc/smm/03.fsck_ffs/2.t		misc-smm-doc
 ./usr/share/doc/smm/03.fsck_ffs/3.t		misc-smm-doc
 ./usr/share/doc/smm/03.fsck_ffs/4.t		misc-smm-doc
-./usr/share/doc/smm/03.fsck_ffs/Makefil		misc-smm-doc
+./usr/share/doc/smm/03.fsck_ffs/Makefile	misc-smm-doc
 ./usr/share/doc/smm/04.quotas/Makefile		misc-smm-doc
 ./usr/share/doc/smm/04.quotas/quotas.ms		misc-smm-doc
 ./usr/share/doc/smm/05.fastfs/0.t		misc-smm-doc
@@ -452,7 +452,7 @@
 ./usr/share/sendmail/feature/local_procmail.m4		misc-sendmail-share
 ./usr/share/sendmail/feature/loose_relay_check.m4	misc-sendmail-share
 ./usr/share/sendmail/feature/mailertable.m4		misc-sendmail-share
-./usr/share/sendmail/feature/masquerade_entire_domain.m		misc-sendmail-share
+./usr/share/sendmail/feature/masquerade_entire_domain.m4		misc-sendmail-share
 ./usr/share/sendmail/feature/masquerade_envelope.m4	misc-sendmail-share
 ./usr/share/sendmail/feature/no_default_msa.m4		misc-sendmail-share
 ./usr/share/sendmail/feature/nocanonify.m4		misc-sendmail-share
