@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.8 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: support.c,v 1.9 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.8 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: support.c,v 1.9 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ source(void *v)
 	if ((cp = expand(*arglist)) == NULL)
 		return(1);
 	if ((fi = Fopen(cp, "r")) == NULL) {
-		perror(cp);
+		warn("%s", cp);
 		return(1);
 	}
 	if (ssp >= NOFILE - 1) {

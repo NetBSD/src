@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.15 2002/03/05 21:18:15 wiz Exp $	*/
+/*	$NetBSD: tty.c,v 1.16 2002/03/05 21:29:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.15 2002/03/05 21:18:15 wiz Exp $");
+__RCSID("$NetBSD: tty.c,v 1.16 2002/03/05 21:29:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ grabh(struct header *hp, int gflags)
 	ttyset = 0;
 #endif
 	if (tcgetattr(fileno(stdin), &ttybuf) < 0) {
-		perror("tcgetattr");
+		warn("tcgetattr");
 		return(-1);
 	}
 	c_erase = ttybuf.c_cc[VERASE];
@@ -114,7 +114,7 @@ grabh(struct header *hp, int gflags)
 	if (extproc) {
 		flag = 0;
 		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
-			perror("TIOCEXT: off");
+			warn("TIOCEXT: off");
 	}
 # endif	/* TIOCEXT */
 	if (setjmp(intjmp))
@@ -167,7 +167,7 @@ out:
 	if (extproc) {
 		flag = 1;
 		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
-			perror("TIOCEXT: on");
+			warn("TIOCEXT: on");
 	}
 # endif	/* TIOCEXT */
 #endif
