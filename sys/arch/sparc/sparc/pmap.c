@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 1998/02/05 07:58:01 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.111 1998/02/07 02:36:58 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2785,7 +2785,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(kernel_pmap_store.pm_lock);
+	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 #if defined(SUN4_MMU3L)
 	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
