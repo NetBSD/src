@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.30 1995/07/24 02:02:52 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.31 1995/07/24 02:08:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -90,6 +90,7 @@ void elreset __P((struct el_softc *));
 void elstop __P((struct el_softc *));
 static int el_xmit __P((struct el_softc *));
 void elread __P((struct el_softc *, int));
+struct mbuf *elget __P((struct el_softc *sc, int));
 static inline void el_hardreset __P((struct el_softc *));
 
 int elprobe __P((struct device *, void *, void *));
@@ -490,7 +491,7 @@ elintr(arg)
  */
 void
 elread(sc, len)
-	register struct le_softc *sc;
+	register struct el_softc *sc;
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -550,7 +551,7 @@ elread(sc, len)
  * header stripped.  We copy the data into mbufs.  When full cluster sized
  * units are present we copy into clusters.
  */
-static inline void
+struct mbuf *
 elget(sc, totlen)
 	struct el_softc *sc;
 	int totlen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.18 1995/07/24 02:02:45 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.19 1995/07/24 02:08:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -121,7 +121,7 @@ struct cfdriver egcd = {
 int egintr __P((void *));
 void eginit __P((struct eg_softc *));
 int egioctl __P((struct ifnet *, u_long, caddr_t));
-int egrecv __P((struct eg_softc *));
+void egrecv __P((struct eg_softc *));
 void egstart __P((struct ifnet *));
 void egwatchdog __P((int));
 void egreset __P((struct eg_softc *));
@@ -340,7 +340,7 @@ egprobe(parent, match, aux)
 	return 1;
 }
 
-static void
+void
 egattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
