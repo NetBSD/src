@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.664 2004/04/09 18:13:36 atatat Exp $
+#	$NetBSD: files,v 1.665 2004/04/09 19:01:38 atatat Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -162,7 +162,7 @@ defflag				USERCONF
 #
 defflag opt_sysctl.h		SYSCTL_DISALLOW_CREATE SYSCTL_DISALLOW_KWRITE
 				SYSCTL_DEBUG_SETUP SYSCTL_DEBUG_CREATE
-				SYSCTL_USE_DESCR
+				SYSCTL_INCLUDE_DESCR
 
 #
 # Not entirely MI, but present on multiple arch's
