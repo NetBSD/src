@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.3 1994/10/27 04:21:38 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.4 1994/11/03 22:15:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -40,22 +40,17 @@
 #include <i386/pci/pcivar.h>
 #include <i386/pci/pcireg.h>
 
-#if defined(i386) && !defined(NEWCONFIG)
-#include <i386/isa/isa_device.h>
-#endif
-
-int pciprobe();
-void pciattach();
+int pciprobe __P((struct device *, void *, void *));
+void pciattach __P((struct device *, struct device *, void *));
 
 struct cfdriver pcicd = {
 	NULL, "pci", pciprobe, pciattach, DV_DULL, sizeof(struct device)
 };
 
 int
-pciprobe(parent, cf, aux)
+pciprobe(parent, match, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *match, *aux;
 {
 
 #ifdef i386
@@ -135,23 +130,10 @@ pci_targmatch(cf, pa)
 	struct cfdata *cf;
 	struct pci_attach_args *pa;
 {
-#if !defined(i386) || defined(NEWCONFIG)
 
-#define	cf_bus		cf_loc[0]
-#define	cf_device	cf_loc[1]
-	if (cf->cf_bus != -1 && cf->cf_bus != pa->pa_bus)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_bus)
 		return 0;
-	if (cf->cf_device != -1 && cf->cf_device != pa->pa_device)
+	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != pa->pa_device)
 		return 0;
-#undef cf_device
-#undef cf_bus
-#else
-	struct isa_device *id = (void *)cf->cf_loc;
-
-	if (id->id_physid != -1 &&
-	    id->id_physid != (pa->pa_bus << 5) | pa->pa_device)
-		return 0;
-#endif
-
 	return 1;
 }

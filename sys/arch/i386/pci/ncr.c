@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.5 1994/10/27 04:21:32 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.6 1994/11/03 22:15:19 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1222,7 +1222,7 @@ static	void	ncr_usercmd	(ncb_p np);
 static  void    ncr_wakeup      (ncb_p np, u_long code);
 
 #ifdef __NetBSD__
-static	int	ncr_probe	(struct device *, struct device *, void *);
+static	int	ncr_probe	(struct device *, void *, void *);
 static	void	ncr_attach	(struct device *, struct device *, void *);
 static	int	ncr_intr	(ncb_p np);
 #else
@@ -1327,7 +1327,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.5 1994/10/27 04:21:32 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.6 1994/11/03 22:15:19 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3228,11 +3228,11 @@ U_INT32 ncr_info (int unit)
 #ifdef __NetBSD__
 
 int
-ncr_probe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ncr_probe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	if (!pci_targmatch(cf, pa))
@@ -3434,7 +3434,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.5 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.6 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
