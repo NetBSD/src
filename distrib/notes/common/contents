@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.40 2001/12/17 21:39:51 fredette Exp $
+.\"	$NetBSD: contents,v 1.41 2002/02/10 20:43:34 is Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,10 +66,6 @@ This kernel runs on Vr41xx CPU only.
 A somewhat smaller kernel, which you can use to boot the system
 using loadbsd for installation on memory-tight systems. This is the
 same kernel as present on the miniroot.
-.			It Pa netbsd.INSTWDCPCM.gz
-As above, but with the (still somewhat experimental) PCMCIA support, and
-with the wdc driver instead of the older idesc driver. If you install using
-this kernel on an A1200, you have to use it lateron, too!
 .\}
 .
 .if r_arm26 \{\

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.28 2001/02/11 11:30:54 is Exp $
+.\"	$NetBSD: install,v 1.29 2002/02/10 20:43:33 is Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -325,10 +325,6 @@ kern.tgz distribution set, this is an old kernel, and you should answer
 "y" to install a working (although restricted) INSTALL kernel.
 .Pp
 If you did install the kern.tgz kernel, you normally should answer "n".
-.Pp
-(In both cases, if you used the INSTWDCPCM kernel for the installation, you
-should replace the installed kernel by netbsd.INSTWDCPCM manually lateron,
-and you need to use netbsd.INSTWDCPCM to run the system.)
 .Pp
 Finally, the installer ask you if you want to install the bootblock
 code on your root disk. This is a matter of personal choice and can
