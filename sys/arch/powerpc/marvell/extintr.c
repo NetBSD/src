@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.1 2003/03/05 22:08:28 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.2 2003/03/06 00:20:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
  * creation	Tue Feb  6 17:27:18 PST 2001	cliff
  */
 
-#include "opt_gt.h"
+#include "opt_marvell.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
