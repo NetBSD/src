@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1995/07/05 18:52:32 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.48 1995/12/05 23:01:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -3619,23 +3619,31 @@ pmap_prefer(pa, va)
 	register struct pvlist	*pv;
 	register long		m, d;
 
-	if (cputyp == CPU_SUN4M)
-		/* does the sun4m have the cache alias problem? */
-		return va;
-
 	m = CACHE_ALIAS_DIST;
+	if (m == 0)		/* m=0 => no cache aliasing */
+		return (va);
+
+	if (pa == (vm_offset_t)-1) {
+		/*
+		 * Do not consider physical address. Just return
+		 * a cache aligned address.
+		 */     
+		if (VA_INHOLE(va))
+			va = MMU_HOLE_END;
+
+		/* XXX - knowledge about `exec' formats; can we get by without? */
+		va -= USRTEXT;
+		va = (va + m - 1) & ~(m - 1);
+		return (va + USRTEXT);
+	}
 
 	if ((pa & (PMAP_TNC & ~PMAP_NC)) || !managed(pa))
 		return va;
 
 	pv = pvhead(pa);
 	if (pv->pv_pmap == NULL) {
-#if 0
-		return ((va + m - 1) & ~(m - 1));
-#else
 		/* Unusable, tell caller to try another one */
 		return (vm_offset_t)-1;
-#endif
 	}
 
 	d = (long)(pv->pv_va & (m - 1)) - (long)(va & (m - 1));
