@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.16.4.3 2003/08/21 22:13:07 jlam Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.16.4.4 2003/08/25 20:17:09 jlam Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -57,8 +57,10 @@ Set
 as the package database directory.
 If this option isn't specified, then the package database directory is
 taken from the value of the environment variable
-.Ev PKG_DBDIR ,
-otherwise it defaults to
+.Ev PKG_REGISTRY
+if it's set, otherwise it's taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
 .It Fl V
 Print version number and exit.
@@ -142,13 +144,13 @@ Needs to be run as root.
 .Pp
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_DBDIR -compact
-.It Ev PKG_DBDIR
+.Bl -tag -width indent -compact
+.It Ev PKG_REGISTRY , Ev PKG_DBDIR
 If the
 .Fl K
-flag isn't given, then
-.Ev PKG_DBDIR
-notes where to register packages instead of
+flag isn't given, then these are tried in turn (if set) as the location
+of the package database directory.
+The default package database directory is
 .Pa /var/db/pkg .
 .El
 .Sh FILES
