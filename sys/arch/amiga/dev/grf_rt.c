@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.35 1997/07/29 17:52:09 veego Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.36 1998/01/12 10:39:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -784,10 +784,6 @@ struct cfattach grfrt_ca = {
 	sizeof(struct grf_softc), grfrtmatch, grfrtattach
 };
  
-struct cfdriver grfrt_cd = {
-	NULL, "grfrt", DV_DULL, NULL, 0
-};
-
 /*
  * only used in console init
  */

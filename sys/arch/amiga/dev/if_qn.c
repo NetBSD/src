@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.12 1997/03/17 18:04:40 is Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.13 1998/01/12 10:39:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -178,11 +178,6 @@ static	void qn_dump __P((struct qn_softc *));
 struct cfattach qn_ca = {
 	sizeof(struct qn_softc), qnmatch, qnattach
 };
-
-struct cfdriver qn_cd = {
-	NULL, "qn", DV_IFNET
-};
-
 
 int
 qnmatch(parent, cfp, aux)

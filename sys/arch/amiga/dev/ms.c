@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.14 1996/12/23 09:10:25 veego Exp $	*/
+/*	$NetBSD: ms.c,v 1.15 1998/01/12 10:40:04 thorpej Exp $	*/
 
 /*
  * based on:
@@ -96,9 +96,7 @@ struct cfattach ms_ca = {
 	sizeof(struct ms_softc), msmatch, msattach
 };
 
-struct cfdriver ms_cd = {
-	NULL, "ms", DV_DULL, NULL, 0
-};
+extern struct cfdriver ms_cd;
 
 int
 msmatch(pdp, cfp, auxp)

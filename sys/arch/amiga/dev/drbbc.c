@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.1 1997/07/17 23:29:30 is Exp $	*/
+/*	$NetBSD: drbbc.c,v 1.2 1998/01/12 10:39:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis.
@@ -72,10 +72,6 @@ struct cfattach drbbc_ca = {
 	drbbc_match,
 	drbbc_attach
 };
-
-struct cfdriver drbbc_cd = {  
-        NULL, "drbbc", DV_DULL, NULL, 0
-};      
 
 struct drbbc_softc *drbbc_sc;
 

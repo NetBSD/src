@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.4 1997/10/19 21:22:19 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.5 1998/01/12 10:39:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,10 +62,6 @@ void a2kbbc_attach __P((struct device *, struct device *, void *));
 struct cfattach a2kbbc_ca = {
         sizeof(struct device), a2kbbc_match, a2kbbc_attach
 };  
-
-struct cfdriver a2kbbc_cd = {
-        NULL, "a2kbbc", DV_DULL, NULL, 0
-};      
 
 void *a2kclockaddr;
 time_t a2gettod __P((void));
