@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.80 2002/08/11 21:54:19 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.81 2002/08/11 22:03:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.80 2002/08/11 21:54:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.81 2002/08/11 22:03:43 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -115,7 +115,7 @@ static void wi_txeof		__P((struct wi_softc *, int));
 static void wi_update_stats	__P((struct wi_softc *));
 static void wi_setmulti		__P((struct wi_softc *));
 
-static int wi_cmd		__P((struct wi_softc *, int, int));
+static int wi_cmd		__P((struct wi_softc *, int, int, int, int));
 static int wi_read_record	__P((struct wi_softc *, struct wi_ltv_gen *));
 static int wi_write_record	__P((struct wi_softc *, struct wi_ltv_gen *));
 static int wi_read_data		__P((struct wi_softc *, int,
@@ -620,7 +620,7 @@ void wi_inquire(xsc)
 		return;
 
 	s = splnet();
-	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
+	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS, 0, 0);
 	splx(s);
 }
 
@@ -648,7 +648,7 @@ void wi_wait_scan(xsc)
 	}
 
 	/* try INQUIRE */
-	result = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS);
+	result = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS, 0, 0);
 	if (result == ETIMEDOUT)
 		callout_reset(&sc->wi_scan_sh, hz * 1, wi_wait_scan, sc);
 
@@ -812,7 +812,8 @@ void wi_update_stats(sc)
 			break;
 		}
 		if (sc->sc_firmware_type == WI_SYMBOL && t == 4) {
-			wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_HOST_SCAN_RESULTS);
+			wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_HOST_SCAN_RESULTS,
+			    0, 0);
 			break;
 		}
 		/*
@@ -952,10 +953,12 @@ int wi_intr(arg)
 
 /* Must be called at proper protection level! */
 static int
-wi_cmd(sc, cmd, val)
+wi_cmd(sc, cmd, val0, val1, val2)
 	struct wi_softc		*sc;
 	int			cmd;
-	int			val;
+	int			val0;
+	int			val1;
+	int			val2;
 {
 	int			i, s = 0;
 
@@ -971,9 +974,9 @@ wi_cmd(sc, cmd, val)
 		return EIO;
 	}
 
-	CSR_WRITE_2(sc, WI_PARAM0, val);
-	CSR_WRITE_2(sc, WI_PARAM1, 0);
-	CSR_WRITE_2(sc, WI_PARAM2, 0);
+	CSR_WRITE_2(sc, WI_PARAM0, val0);
+	CSR_WRITE_2(sc, WI_PARAM1, val1);
+	CSR_WRITE_2(sc, WI_PARAM2, val2);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
 	/* wait for the cmd completed bit */
@@ -1006,7 +1009,7 @@ wi_reset(sc)
 {
 
 	DELAY(100*1000); /* 100 m sec */
-	if (wi_cmd(sc, WI_CMD_INI, 0))
+	if (wi_cmd(sc, WI_CMD_INI, 0, 0, 0))
 		printf("%s: init failed\n", sc->sc_dev.dv_xname);
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
@@ -1055,7 +1058,7 @@ static int wi_read_record(sc, ltv)
 	}
 
 	/* Tell the NIC to enter record read mode. */
-	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_READ, ltv->wi_type))
+	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_READ, ltv->wi_type, 0, 0))
 		return(EIO);
 
 	/* Seek to the record. */
@@ -1257,7 +1260,7 @@ static int wi_write_record(sc, ltv)
 	if (ltv->wi_len > 1)
 		CSR_WRITE_MULTI_STREAM_2(sc, WI_DATA1, ptr, ltv->wi_len - 1);
 
-	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type))
+	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type, 0, 0))
 		return(EIO);
 
 	return(0);
@@ -1376,7 +1379,7 @@ static int wi_alloc_nicmem(sc, len, id)
 {
 	int			i;
 
-	if (wi_cmd(sc, WI_CMD_ALLOC_MEM, len)) {
+	if (wi_cmd(sc, WI_CMD_ALLOC_MEM, len, 0, 0)) {
 		printf("%s: failed to allocate %d bytes on NIC\n",
 		    sc->sc_dev.dv_xname, len);
 		return(ENOMEM);
@@ -1998,7 +2001,7 @@ wi_init(ifp)
 	wi_setmulti(sc);
 
 	/* Enable desired port */
-	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0);
+	wi_cmd(sc, WI_CMD_ENABLE | sc->wi_portnum, 0, 0, 0);
 
 	/*  scanning variable is modal, therefore reinit to OFF, in case it was on. */
 	sc->wi_scanning=0;
@@ -2310,7 +2313,7 @@ wi_start(ifp)
 
 	m_freem(m0);
 
-	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id))
+	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id, 0, 0))
 		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
 
 	ifp->if_flags |= IFF_OACTIVE;
@@ -2353,7 +2356,7 @@ wi_mgmt_xmit(sc, data, len)
 	wi_write_data(sc, id, WI_802_11_OFFSET_RAW, dptr,
 	    (len - sizeof(struct wi_80211_hdr)) + 2);
 
-	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id)) {
+	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id, 0, 0)) {
 		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
 		return(EIO);
 	}
@@ -2370,7 +2373,7 @@ wi_stop(ifp, disable)
 	wihap_shutdown(sc);
 
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
-	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0);
+	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0, 0, 0);
 
 	callout_stop(&sc->wi_inquire_ch);
 	callout_stop(&sc->wi_scan_sh);
