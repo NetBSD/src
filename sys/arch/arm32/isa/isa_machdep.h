@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 1998/06/08 17:49:44 tv Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 1998/06/12 21:07:44 tv Exp $	*/
 
 #ifndef _ARM32_ISA_MACHDEP_H_
 #define _ARM32_ISA_MACHDEP_H_
@@ -7,6 +7,7 @@
  * Types provided to machine-independent ISA code.
  */
 typedef void *isa_chipset_tag_t;
+#define isa_dmainit(a,b,c,d) /* XXX - needs to change for MI ISADMA */
 
 struct device;			/* XXX */
 struct isabus_attach_args;	/* XXX */
