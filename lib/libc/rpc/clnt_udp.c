@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.13 1998/02/13 05:52:20 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.14 1998/07/26 11:47:38 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.13 1998/02/13 05:52:20 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.14 1998/07/26 11:47:38 mycroft Exp $");
 #endif
 #endif
 
@@ -78,7 +78,7 @@ static void clntudp_abort __P((CLIENT *));
 static bool_t clntudp_control __P((CLIENT *, u_int, char *));
 static void clntudp_destroy __P((CLIENT *));
 
-static struct clnt_ops udp_ops = {
+static const struct clnt_ops udp_ops = {
 	clntudp_call,
 	clntudp_abort,
 	clntudp_geterr,
