@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.330 2004/07/10 20:05:01 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.331 2004/07/12 21:00:04 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5353,3 +5353,25 @@ sys/nfs/nfs_vnops.c				1.204 via patch
 	reported by Mark Davies.  PR/26200
 	[yamt, ticket #636]
 
+usr.bin/locale/locale.c				1.4
+
+	Consistently quote all values printed in the summary of
+	the current locale environment (``locale'' without arguments).
+	[jdolecek, ticket #639]
+
+sys/dev/pci/if_wm.c				1.72
+
+	Make this build if WM_DEBUG is defined.
+	[tron, ticket #640]
+
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/mi			1.710-1.711
+lib/libc/shlib_version				patch
+include/string.h				1.26
+lib/libc/string/Makefile.inc			1.54
+lib/libc/string/strstr.3			1.9
+lib/libc/string/strcasestr.c			1.1 (new)
+
+	Add strcasestr(3), case insensitive version of strstr(3).
+	Add a tiny version number to libc (1).
+	[junyoung, ticket #638]
