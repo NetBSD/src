@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.13 2003/01/29 22:50:10 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.14 2003/01/30 02:52:40 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,7 +153,7 @@ Makefile semantics when building these programs for a native host.
 .It Sy distrib/ , etc/
 Sources for items used when making a full release snapshot, such as
 files installed in
-.Sy /etc
+.Sy DESTDIR Ns Pa /etc
 on the destination system, boot media, and release notes.
 .It Sy regress/
 Regression test harness.
@@ -324,7 +324,7 @@ Will not affect use of the standard low-security password encryption system,
 .It Sy MKDOC
 .YorN
 Indicates whether system documentation destined for
-.Sy /usr/share/doc
+.Sy DESTDIR Ns Pa /usr/share/doc
 will be installed during a build.
 .DFLTy
 .
@@ -358,7 +358,7 @@ will be run against portions of the
 .Nx
 source code during the build, and whether lint libraries will be
 installed into
-.Sy /usr/libdata/lint .
+.Sy DESTDIR Ns Pa /usr/libdata/lint .
 .DFLTy
 .
 .It Sy MKMAN
@@ -418,7 +418,7 @@ by default at times due to toolchain problems with profiled code.
 .It Sy MKSHARE
 .YorN
 Indicates whether files destined to reside in
-.Sy /usr/share
+.Sy DESTDIR Ns Pa /usr/share
 will be built and installed during a build.
 If set to
 .Dq no ,
@@ -707,11 +707,11 @@ Typically needed before any system libraries or programs can be built.
 Install programs, libraries, and documentation into
 .Sy DESTDIR .
 Few files will be installed to
-.Pa /dev ,
-.Pa /etc ,
-.Pa /root
+.Sy DESTDIR Ns Pa /dev ,
+.Sy DESTDIR Ns Pa /etc ,
+.Sy DESTDIR Ns Pa /root
 or
-.Pa /var
+.Sy DESTDIR Ns Pa /var
 in order to prevent user supplied configuration data from being overwritten.
 .It Sy lint
 Run
@@ -758,11 +758,11 @@ Do a
 and then install a full distribution into
 .Sy DESTDIR ,
 including files in
-.Pa /dev ,
-.Pa /etc ,
-.Pa /root
+.Sy DESTDIR Ns Pa /dev ,
+.Sy DESTDIR Ns Pa /etc ,
+.Sy DESTDIR Ns Pa /root
 and
-.Pa /var .
+.Sy DESTDIR Ns Pa /var .
 .
 .It Sy buildworld
 As per
@@ -789,7 +789,7 @@ before performing this operation.
 Create distribution sets from
 .Sy DESTDIR
 into
-.Sy RELEASEDIR Ns Pa /MACHINE/binary/sets .
+.Sy RELEASEDIR/MACHINE Ns Pa /binary/sets .
 Should be run after
 .Dq make distribution
 (as
@@ -1134,27 +1134,27 @@ or called with an absolute path.
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
 .
-.It Li "./build.sh -U -D /path/to/DESTDIR distribution"
+.It Li "./build.sh -U -D /path/to/destdir distribution"
 Using unprivileged mode,
 build a complete distribution in
-.Pa /path/to/DESTDIR .
+.Pa /path/to/destdir .
 .
-.It Li "# ./build.sh -U -D /path/to/DESTDIR installworld=/"
+.It Li "# ./build.sh -U -D /path/to/destdir installworld=/"
 As root, install the distribution that was built with unprivileged mode from
-.Pa /path/to/DESTDIR
+.Pa /path/to/destdir
 to
 .Pa / .
 (Even though this is run as root,
 .Fl U
 is required so that the permissions stored in
-.Pa /path/to/DESTDIR/METALOG
+.Pa /path/to/destdir/METALOG
 are correctly applied to the files as they're copied to
 .Pa / ) .
 .
-.It Li "./build.sh -U -D /path/to/DESTDIR -R /path/to/RELEASE release"
+.It Li "./build.sh -U -D /path/to/destdir -R /path/to/releasedir release"
 Using unprivileged mode,
 build a complete release in
-.Pa /path/to/dir/RELEASE .
+.Pa /path/to/dir/releasedir .
 .El
 .
 .Sh OBSOLETE VARIABLES

@@ -67,8 +67,8 @@ FILES
 
      distrib/, etc/
                     Sources for items used when making a full release snap-
-                    shot, such as files installed in /etc on the destination
-                    system, boot media, and release notes.
+                    shot, such as files installed in DESTDIR/etc on the desti-
+                    nation system, boot media, and release notes.
 
      regress/       Regression test harness.  Can be cross-compiled, but only
                     run natively.
@@ -151,8 +151,8 @@ CONFIGURATION
                  Default: ``yes''
 
      MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
-                 documentation destined for /usr/share/doc will be installed
-                 during a build.
+                 documentation destined for DESTDIR/usr/share/doc will be in-
+                 stalled during a build.
 
                  Default: ``yes''
 
@@ -176,7 +176,7 @@ CONFIGURATION
      MKLINT      Can be set to ``yes'' or ``no''.  Indicates whether lint(1)
                  will be run against portions of the NetBSD source code during
                  the build, and whether lint libraries will be installed into
-                 /usr/libdata/lint.
+                 DESTDIR/usr/libdata/lint.
 
                  Default: ``yes''
 
@@ -222,10 +222,10 @@ CONFIGURATION
                  code.
 
      MKSHARE     Can be set to ``yes'' or ``no''.  Indicates whether files
-                 destined to reside in /usr/share will be built and installed
-                 during a build.  If set to ``no'', then all of MKCATPAGES,
-                 MKDOC, MKINFO, MKMAN, and MKNLS will be set to ``no'' uncon-
-                 ditionally.
+                 destined to reside in DESTDIR/usr/share will be built and in-
+                 stalled during a build.  If set to ``no'', then all of
+                 MKCATPAGES, MKDOC, MKINFO, MKMAN, and MKNLS will be set to
+                 ``no'' unconditionally.
 
                  Default: ``yes''
 
@@ -388,9 +388,9 @@ BUILDING
                 fore any system libraries or programs can be built.
 
      install    Install programs, libraries, and documentation into DESTDIR.
-                Few files will be installed to /dev, /etc, /root or /var in
-                order to prevent user supplied configuration data from being
-                overwritten.
+                Few files will be installed to DESTDIR/dev, DESTDIR/etc,
+                DESTDIR/root or DESTDIR/var in order to prevent user supplied
+                configuration data from being overwritten.
 
      lint       Run lint(1) against the C source code, where appropriate, and
                 generate system-installed lint libraries.
@@ -410,8 +410,8 @@ BUILDING
                    the proper order.
 
      distribution  Do a ``make build'', and then install a full distribution
-                   into DESTDIR, including files in /dev, /etc, /root and
-                   /var.
+                   into DESTDIR, including files in DESTDIR/dev, DESTDIR/etc,
+                   DESTDIR/root and DESTDIR/var.
 
      buildworld    As per ``make distribution'', except that it ensures that
                    DESTDIR is not the root directory.
@@ -576,20 +576,20 @@ EXAMPLES
                Build a new toolchain, and use the new toolchain to configure
                and build a new GENERIC kernel.
 
-     ./build.sh -U -D /path/to/DESTDIR distribution
+     ./build.sh -U -D /path/to/destdir distribution
                Using unprivileged mode, build a complete distribution in
-               /path/to/DESTDIR.
+               /path/to/destdir.
 
-     # ./build.sh -U -D /path/to/DESTDIR installworld=/
+     # ./build.sh -U -D /path/to/destdir installworld=/
                As root, install the distribution that was built with unprivi-
-               leged mode from /path/to/DESTDIR to /.  (Even though this is
+               leged mode from /path/to/destdir to /.  (Even though this is
                run as root, -U is required so that the permissions stored in
-               /path/to/DESTDIR/METALOG are correctly applied to the files as
+               /path/to/destdir/METALOG are correctly applied to the files as
                they're copied to /).
 
-     ./build.sh -U -D /path/to/DESTDIR -R /path/to/RELEASE release
+     ./build.sh -U -D /path/to/destdir -R /path/to/releasedir release
                Using unprivileged mode, build a complete release in
-               /path/to/dir/RELEASE.
+               /path/to/dir/releasedir.
 
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j, instead.
