@@ -1,4 +1,5 @@
-/*	$NetBSD: fsdb.c,v 1.1.1.1 1995/10/08 23:08:36 thorpej Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.2 1995/10/08 23:18:10 thorpej Exp $	*/
+
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -25,43 +26,44 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdb.c,v 1.1.1.1 1995/10/08 23:08:36 thorpej Exp $";
+static char rcsid[] = "$NetBSD: fsdb.c,v 1.2 1995/10/08 23:18:10 thorpej Exp $";
 #endif /* not lint */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <ctype.h>
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <histedit.h>
+#include <limits.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
-#include <limits.h>
-#include <histedit.h>
-#include <pwd.h>
-#include <grp.h>
 
 #include "fsdb.h"
 #include "fsck.h"
 
-void usage __P((const char *));
-int cmdloop __P((const char *));
+extern char *__progname;	/* from crt0.o */
+
+void usage __P((void));
+int cmdloop __P((void));
 
 void 
-usage(const char *progname)
+usage()
 {
-	errx(1, "usage: %s [-d] -f <fsname>", progname);
+	errx(1, "usage: %s [-d] -f <fsname>", __progname);
 }
 
 int returntosingle = 0;
@@ -73,7 +75,9 @@ int returntosingle = 0;
  * the file system.
  */
 void
-main(int argc, char *argv[])
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	int ch, rval;
 	char *fsys = NULL;
@@ -88,16 +92,16 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		default:
-			usage(argv[0]);
+			usage();
 		}
 	}
 	if (fsys == NULL)
-		usage(argv[0]);
+		usage();
 	if (!setup(fsys))
 		errx(1, "cannot set up file system `%s'", fsys);
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
 	       sblock.fs_fsmnt);
-	rval = cmdloop(argv[0]);
+	rval = cmdloop();
 	sblock.fs_clean = 0;		/* mark it dirty */
 	sbdirty();
 	ckfini(0);
@@ -108,7 +112,9 @@ main(int argc, char *argv[])
 }
 
 #define CMDFUNC(func) int func __P((int argc, char *argv[]))
-#define CMDFUNCSTART(func) int func(int argc, char *argv[])
+#define CMDFUNCSTART(func) int func(argc, argv)		\
+				int argc;		\
+				char *argv[];
 
 CMDFUNC(helpfn);
 CMDFUNC(focus);				/* focus on inode */
@@ -170,7 +176,9 @@ struct cmdtable cmds[] = {
 };
 
 int
-helpfn(int argc, char *argv[])
+helpfn(argc, argv)
+	int argc;
+	char *argv[];
 {
     register struct cmdtable *cmdtp;
 
@@ -184,7 +192,8 @@ helpfn(int argc, char *argv[])
 }
 
 char *
-prompt(EditLine *el)
+prompt(el)
+	EditLine *el;
 {
     static char pstring[64];
     snprintf(pstring, sizeof(pstring), "fsdb (inum: %d)> ", curinum);
@@ -193,7 +202,7 @@ prompt(EditLine *el)
 
 
 int
-cmdloop(const char *progname)
+cmdloop()
 {
     char *line;
     const char *elline;
@@ -211,7 +220,7 @@ cmdloop(const char *progname)
     hist = history_init();
     history(hist, H_EVENT, 100);	/* 100 elt history buffer */
 
-    elptr = el_init(progname, stdin, stdout);
+    elptr = el_init(__progname, stdin, stdout);
     el_set(elptr, EL_EDITOR, "emacs");
     el_set(elptr, EL_PROMPT, prompt);
     el_set(elptr, EL_HIST, history, hist);
@@ -359,7 +368,8 @@ const char *typename[] = {
 int slot;
 
 int
-scannames(struct inodesc *idesc)
+scannames(idesc)
+	struct inodesc *idesc;
 {
 	register struct direct *dirp = idesc->id_dirp;
 
@@ -389,7 +399,8 @@ int findino __P((struct inodesc *idesc)); /* from fsck */
 static int dolookup __P((char *name));
 
 static int
-dolookup(char *name)
+dolookup(name)
+	char *name;
 {
     struct inodesc idesc;
 
@@ -480,7 +491,8 @@ CMDFUNCSTART(rm)
 long slotcount, desired;
 
 int
-chinumfunc(struct inodesc *idesc)
+chinumfunc(idesc)
+	struct inodesc *idesc;
 {
 	register struct direct *dirp = idesc->id_dirp;
 
@@ -524,7 +536,8 @@ CMDFUNCSTART(chinum)
 }
 
 int
-chnamefunc(struct inodesc *idesc)
+chnamefunc(idesc)
+	struct inodesc *idesc;
 {
 	register struct direct *dirp = idesc->id_dirp;
 	struct direct testdir;
@@ -768,7 +781,9 @@ CMDFUNCSTART(chgroup)
 }
 
 int
-dotime(char *name, int32_t *rsec, int32_t *rnsec)
+dotime(name, rsec, rnsec)
+	char *name;
+	int32_t *rsec, *rnsec;
 {
     char *p, *val;
     struct tm t;
