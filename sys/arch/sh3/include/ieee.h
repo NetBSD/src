@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.1 1999/09/13 10:31:18 itojun Exp $ */
+/*	$NetBSD: ieee.h,v 1.2 2000/08/02 11:32:42 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,11 +87,11 @@
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	112
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
+#ifndef _BYTE_ORDER
+#error Define _BYTE_ORDER!
 #endif
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 struct ieee_single {
 	u_int	sng_sign:1;
 	u_int	sng_exp:8;
@@ -114,7 +114,7 @@ struct ieee_ext {
 	u_int	ext_fracl;
 };
 #endif
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == LITTLE_ENDIAN
 struct ieee_single {
 	u_int	sng_frac:23;
 	u_int	sng_exp:8;
