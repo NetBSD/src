@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.600 2003/12/20 03:35:00 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.601 2004/01/05 19:31:08 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.604 2003/12/20 03:34:19 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.605 2004/01/05 19:30:51 matt Exp 
  */
 
 /*
@@ -866,6 +866,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced System Products",
 	    "ASB-3940U3W",
+	},
+	{
+	    PCI_VENDOR_AGILENT, PCI_PRODUCT_AGILENT_TACHYON_DX2,
+	    0,
+	    "Agilent Technologies",
+	    "Tachyon DX2 FC controller",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4xxx,
@@ -3740,6 +3746,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "A4977A Visualize EG",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_XL2,
+	    0,
+	    "Hewlett-Packard",
+	    "Tachyon XL2 FC controller",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
@@ -13441,6 +13453,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_BLUESTEEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Bluesteel Networks",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AGILENT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Agilent Technologies",
 	    NULL,
 	},
 	{
