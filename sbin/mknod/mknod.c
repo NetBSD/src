@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.7 1995/03/18 14:56:39 cgd Exp $	*/
+/*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: mknod.c,v 1.7 1995/03/18 14:56:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,20 +55,20 @@ static char rcsid[] = "$NetBSD: mknod.c,v 1.7 1995/03/18 14:56:39 cgd Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
+
+static void usage();
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno;
-	u_short mode;
-	char *strerror();
+	mode_t mode;
 
 	if (argc != 5) {
-		(void)fprintf(stderr,
-		    "usage: mknod name [b | c] major minor\n");
-		exit(1);
+		usage();
+		/* NOTREACHED */
 	}
 
 	mode = 0666;
@@ -77,15 +77,21 @@ main(argc, argv)
 	else if (argv[2][0] == 'b')
 		mode |= S_IFBLK;
 	else {
-		(void)fprintf(stderr,
-		    "mknod: node must be type 'b' or 'c'.\n");
-		exit(1);
+		errx(1, "node must be type 'b' or 'c'.");
+		/* NOTREACHED */
 	}
 
 	if (mknod(argv[1], mode, makedev(atoi(argv[3]), atoi(argv[4]))) < 0) {
-		(void)fprintf(stderr,
-		    "mknod: %s: %s\n", argv[1], strerror(errno));
-		exit(1);
+		err(1, "%s", argv[1]);
+		/* NOTREACHED */
 	}
+
 	exit(0);
+}
+
+void
+usage()
+{
+	fprintf(stderr, "usage: mknod name [b | c] major minor\n");
+	exit(1);
 }
