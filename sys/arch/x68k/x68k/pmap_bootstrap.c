@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.4 2005/02/23 10:07:48 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.5 2005/02/23 10:25:50 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.4 2005/02/23 10:07:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.5 2005/02/23 10:25:50 yamt Exp $");
 
 #include "opt_m680x0.h"
 
@@ -322,8 +322,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 #define	PTE2VA(pte)	m68k_ptob(pte - ((pt_entry_t *)kptpa))
 
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
-	RELOC(IODEVbase, char *) = (char *)PTE2VA(pte);
 	epte = &pte[IIOMAPSIZE];
+	RELOC(IODEVbase, char *) = (char *)PTE2VA(pte);
+	RELOC(intiobase, u_int8_t *) = RELOC(IODEVbase, u_int8_t *); /* XXX */
+	RELOC(intiolimit, char *) = (char *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -349,14 +351,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(Sysmap, pt_entry_t *) =
 	    (pt_entry_t *)m68k_ptob((NPTEPG - 1) * NPTEPG);
-	/*
-	 * IODEVbase, intiolimit: base and end of internal (DIO) IO space.
-	 * IIOMAPSIZE pages prior to external IO space at end of static
-	 * kernel page table.
-	 */
-	RELOC(intiobase, u_int8_t *) = RELOC(IODEVbase, u_int8_t *); /* XXX */
-	RELOC(intiolimit, char *) =
-	    RELOC(intiobase, u_int8_t *) + m68k_ptob(IIOMAPSIZE);
 
 	/*
 	 * Setup u-area for process 0.
