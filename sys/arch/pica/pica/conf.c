@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.1.1.1 1996/03/13 04:58:10 jonathan Exp $
+ *      $Id: conf.c,v 1.2 1996/03/14 22:18:02 christos Exp $
  */
 
 #include <sys/param.h>
@@ -144,6 +144,7 @@ cdev_decl(sd);
 cdev_decl(pc);
 cdev_decl(pms);
 cdev_decl(cd);
+dev_decl(filedesc,open);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -167,7 +168,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_disk_init(NCD,cd),		/* 8: SCSI CD */
 	cdev_disk_init(NSD,sd),		/* 9: SCSI disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
