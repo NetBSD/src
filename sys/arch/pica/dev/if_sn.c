@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.10 1997/06/16 08:44:30 jonathan Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.11 1997/06/23 02:56:43 jonathan Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -675,11 +675,11 @@ sonicput(sc, m0)
 	 * keeping the fragments in order. (read lazy programmer).
 	 */
 	for (m = m0; m; m = m->m_next) {
-		unsigned va = (unsigned) mtod(m, caddr_t);
+		vm_offset_t va = (unsigned) mtod(m, caddr_t);
 		int resid = m->m_len;
 
 		if(resid != 0) {
-			MachHitFlushDCache((char *)va, resid);
+			mips3_HitFlushDCache(va, resid);
 			DMA_MAP(sc->dma, (caddr_t)va, resid, fragoffset);
 		}
 		len += resid;

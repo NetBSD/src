@@ -1,4 +1,4 @@
-/*	$NetBSD: pica_trap.c,v 1.4 1996/10/13 03:31:51 christos Exp $	*/
+/*	$NetBSD: pica_trap.c,v 1.5 1997/06/23 02:56:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,8 +105,8 @@ pica_hardware_intr(mask, pc, statusReg, causeReg)
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
-	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
-		 MACH_SR_INT_ENAB);
+	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
+		 MIPS_SR_INT_ENAB);
 }
 
 
@@ -129,7 +129,7 @@ set_intr(mask, int_hand, prio)
 	/*
 	 *  Update external interrupt mask but dont enable clock.
 	 */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask & (~MACH_INT_MASK_4 >> 10));
+	out32(PICA_SYS_EXT_IMASK, cpu_int_mask & (~MIPS_INT_MASK_4 >> 10));
 }
 
 

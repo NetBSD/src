@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1997/04/03 17:14:39 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 1997/06/23 02:56:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -382,7 +382,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 
 	cnt.v_trap++;
-	type = (causeReg & MACH_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
+	type = (causeReg & MIPS_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT;
 	if (USERMODE(statusReg)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -393,7 +393,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	 * We only respond to software interrupts when returning to user mode.
 	 */
 	if (statusReg & MIPS_SR_INT_IE)
-		splx((statusReg & MACH_HARD_INT_MASK) | MIPS_SR_INT_IE);
+		splx((statusReg & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
 	case T_TLB_MOD:
@@ -776,7 +776,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			p->p_comm, p->p_pid, instr, pc,
 			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
-		if (p->p_md.md_ss_addr != va || instr != MACH_BREAK_SSTEP) {
+		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			i = SIGTRAP;
 			break;
 		}
@@ -810,14 +810,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 		break;
 
 	case T_COP_UNUSABLE+T_USER:
-		if ((causeReg & MACH_CR_COP_ERR) != 0x10000000) {
+		if ((causeReg & MIPS_CR_COP_ERR) != 0x10000000) {
 			i = SIGILL;	/* only FPU instructions allowed */
 			break;
 		}
 		MachSwitchFPState(machFPCurProcPtr,
 				  (struct user*)p->p_md.md_regs);
 		machFPCurProcPtr = p;
-		p->p_md.md_regs[PS] |= MACH_SR_COP_1_BIT;
+		p->p_md.md_regs[PS] |= MIPS_SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
 		goto out;
 
@@ -971,7 +971,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	splx(pica_hardware_intr(mask, pc, statusReg, causeReg));
 
 
-	if (mask & MACH_SOFT_INT_MASK_0) {
+	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		cnt.v_soft++;
 		softclock();
@@ -979,8 +979,8 @@ interrupt(statusReg, causeReg, pc, what, args)
 	/*
 	 *  Process network interrupt if we trapped or will very soon
 	 */
-	if ((mask & MACH_SOFT_INT_MASK_1) ||
-	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
+	if ((mask & MIPS_SOFT_INT_MASK_1) ||
+	    netisr && (statusReg & MIPS_SOFT_INT_MASK_1)) {
 		clearsoftnet();
 		cnt.v_soft++;
 		intrcnt[1]++;
@@ -1021,7 +1021,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 #endif
 	}
 
-	if (mask & MACH_SOFT_INT_MASK_0) {
+	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		intrcnt[0]++;
 		cnt.v_soft++;
@@ -1092,8 +1092,8 @@ trapDump(msg)
 		if (trp->cause == 0)
 			break;
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
-				MACH_CR_EXC_CODE_SHIFT],
+			trap_type[(trp->cause & MIPS_CR_EXC_CODE) >>
+				MIPS_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
@@ -1216,9 +1216,9 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		case OP_BCx:
 		case OP_BCy:
 			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
-				condition = fpcCSR & MACH_FPC_COND_BIT;
+				condition = fpcCSR & MIPS_FPU_COND_BIT;
 			else
-				condition = !(fpcCSR & MACH_FPC_COND_BIT);
+				condition = !(fpcCSR & MIPS_FPU_COND_BIT);
 			if (condition)
 				retAddr = GetBranchDest(instPC, inst);
 			else
@@ -1255,7 +1255,7 @@ cpu_singlestep(p)
 	register unsigned va;
 	register int *locr0 = p->p_md.md_regs;
 	int i;
-	int bpinstr = MACH_BREAK_SSTEP;
+	int bpinstr = MIPS_BREAK_SSTEP;
 	int curinstr;
 	struct uio uio;
 	struct iovec iov;

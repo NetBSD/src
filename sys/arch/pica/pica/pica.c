@@ -1,4 +1,4 @@
-/*	$NetBSD: pica.c,v 1.5 1996/10/13 03:31:50 christos Exp $	*/
+/*	$NetBSD: pica.c,v 1.6 1997/06/23 02:56:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
@@ -171,7 +172,7 @@ picaattach(parent, self, aux)
 	sc->sc_devs = pica_cpu_devs[cputype];
 
 	/* set up interrupt handlers */
-	set_intr(MACH_INT_MASK_1, pica_iointr, 2);
+	set_intr(MIPS_INT_MASK_1, pica_iointr, 2);
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_PICA;
@@ -205,7 +206,7 @@ picaprint(aux, pnp)
 
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
-        printf(" slot %ld offset 0x%lx", ca->ca_slot, ca->ca_offset);
+        printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
         return (UNCONF);
 }
 
@@ -231,7 +232,7 @@ pica_intr_establish(ca, handler, val)
 
 	slot = ca->ca_slot;
 	if(slot == 0) {		/* Slot 0 is special, clock */
-		set_intr(MACH_INT_MASK_4, pica_clkintr, 1);
+		set_intr(MIPS_INT_MASK_4, pica_clkintr, 1);
 	}
 
 	if(int_table[slot].int_mask != 0) {
@@ -255,7 +256,7 @@ pica_intr_disestablish(ca)
 	int slot;
 
 	slot = ca->ca_slot;
-	if(slot = 0) {		/* Slot 0 is special, clock */
+	if(slot == 0) {		/* Slot 0 is special, clock */
 	}
 	else {
 		local_int_mask &= ~int_table[slot].int_mask;
@@ -279,7 +280,7 @@ pica_intrnull(val)
 	void *val;
 {
 
-	panic("uncaught PICA intr for slot %d\n", val);
+	panic("uncaught PICA intr for slot %p\n", val);
 }
 
 /*
@@ -316,8 +317,8 @@ pica_clkintr(mask, pc, statusReg, causeReg)
 	hardclock(&cf);
 
 	/* Re-enable clock interrupts */
-	splx(MACH_INT_MASK_4 | MACH_SR_INT_ENAB);
+	splx(MIPS_INT_MASK_4 | MIPS_SR_INT_ENAB);
 
-	return(~MACH_INT_MASK_4); /* Keep clock interrupts enabled */
+	return(~MIPS_INT_MASK_4); /* Keep clock interrupts enabled */
 }
 

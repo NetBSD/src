@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.10 1997/06/16 08:41:15 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.11 1997/06/23 02:56:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -635,7 +635,7 @@ asc_scsi_cmd(xs)
 	 *  Flush caches for any data buffer
 	 */
 	if(xs->datalen != 0) {
-		MachHitFlushDCache(xs->data, xs->datalen);
+		mips3_HitFlushDCache(xs->data, xs->datalen);
 	}
 	/*
 	 *  The hack on the next few lines are to avoid buffers
@@ -1390,7 +1390,7 @@ asc_end(asc, status, ss, ir)
 			state->buf = (vm_offset_t)&scsicmd->sense;
 			state->buflen = sizeof(struct scsi_sense_data);
 			state->flags |= CHECK_SENSE;
-			MachHitFlushDCache(state->buf, state->buflen);
+			mips3_HitFlushDCache(state->buf, state->buflen);
 			asc->cmd[target] = scsicmd;
 			asc_startcmd(asc, target);
 			return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 1997/02/24 23:21:15 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.5 1997/06/23 02:56:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,15 +158,6 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-extern int (*Mach_splnet)(), (*Mach_splbio)(), (*Mach_splimp)(),
-	   (*Mach_spltty)(), (*Mach_splclock)(), (*Mach_splstatclock)();
-#define	splnet()	((*Mach_splnet)())
-#define	splbio()	((*Mach_splbio)())
-#define	splimp()	((*Mach_splimp)())
-#define	spltty()	((*Mach_spltty)())
-#define	splclock()	((*Mach_splclock)())
-#define	splstatclock()	((*Mach_splstatclock)())
-
 /*
  *   Delay is based on an assumtion that each time in the loop
  *   takes 3 clocks. Three is for branch and subtract in the delay slot.
