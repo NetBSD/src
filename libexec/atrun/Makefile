@@ -1,7 +1,9 @@
-#	$Id: Makefile,v 1.1 1993/12/05 11:35:48 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/12/05 12:26:10 cgd Exp $
 
 PROG=	atrun
 BINDIR=	/usr/libexec
+
+BINOWN=	root
 
 CFLAGS+= -I${.CURDIR}/../../usr.bin/at
 LDADD+=	-lutil
