@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.105 2003/08/13 13:36:02 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.106 2003/08/15 08:49:04 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1189,3 +1189,14 @@ sys/arch/i386/i386/pmap.c			1.144
 	>2GB KVA.
 	Symptom observed and verified fixed by tls.
 	[tls, ticket #1388]
+
+dist/ipf/fils.c					1.22
+
+	Fix IPv6 accounting (PR#18839 by FUKAUMI Naoki).
+	[martti, ticket #1410]
+
+sys/netinet/ip_fil.c				1.94
+
+	Fix return-rst for IPv6 (PR#22157 by Peter Postma).
+	[martti, ticket #1411]
+
