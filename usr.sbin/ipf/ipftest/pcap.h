@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.1.1.4 1997/10/30 05:28:18 mrg Exp $	*/
+/*	$NetBSD: pcap.h,v 1.1.1.5 1997/11/14 08:03:31 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
