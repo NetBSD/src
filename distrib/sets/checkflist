@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.14.2.1 2002/07/09 16:20:15 lukem Exp $
+#	$NetBSD: checkflist,v 1.14.2.2 2002/12/01 20:14:00 he Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -17,7 +17,6 @@ tmpname=/tmp/_CHECK.$$
 xargs=""
 dargs=""
 diffargs=""
-findargs=
 metalog=
 
 # handle args
@@ -60,8 +59,12 @@ done
 if [ -n "$metalog" ]; then
 	case "$metalog" in
 	${DESTDIR}/*)
-		findargs="! -path ./${metalog#${DESTDIR}/} -a"
+		# Metalog would be noticed, so make sure it gets
+		# ignored.
+		metalog="./${metalog#${DESTDIR}/}"
 		;;
+	*)
+		metalog=""
 	esac
 fi
 
@@ -70,7 +73,11 @@ sh makeflist $xargs $dargs > $tmpname
 
 (
 	cd $DESTDIR
-	find $origin $findargs \( -type d -o -type f -o -type l \)
+	find $origin \( -type d -o -type f -o -type l \)
+) | (
+	while read line; do
+		test "$metalog" = "$line" || echo $line
+	done
 ) | sort | diff $diffargs $tmpname -
 rv=$?
 
