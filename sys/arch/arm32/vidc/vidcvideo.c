@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.7 2001/04/14 02:25:43 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.8 2001/08/05 18:07:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.7 2001/04/14 02:25:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.8 2001/08/05 18:07:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,7 +773,7 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count, icount;
+	u_int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
