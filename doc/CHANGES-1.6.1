@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.79 2002/12/26 08:06:17 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.80 2003/01/01 17:26:13 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2760,4 +2760,12 @@ etc/daily					1.47
 	fix /etc/security stderr redirection.
 	from rad@twig.com in PR bin/19553.
 	[grant, ticket #1046]
+
+sys/sys/cdefs.h					1.46
+crypto/dist/krb4/lib/krb/krb.h.in		1.4
+
+	It is not valid C++ to have a semicolon after
+	   extern "C" {}
+	so remove it from __END_DECLS.
+	[kristerw, ticket #1052]
 
