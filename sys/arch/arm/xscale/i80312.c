@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.3 2001/11/10 23:14:51 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.4 2001/11/28 22:39:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -257,8 +257,9 @@ i80312_attach(struct i80312_softc *sc)
 	pba.pba_dmat = &sc->sc_pci_dmat;
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_bus = 1;	/* XXX for now */
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
+	/* XXX MRL/MRM/MWI seem to have problems, at the moment. */
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED /* |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY */;
 	(void) config_found(&sc->sc_dev, &pba, i80312_pcibus_print);
 }
 
