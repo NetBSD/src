@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.202 2000/03/09 09:53:03 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.203 2000/03/11 16:13:39 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.195 2000/03/09 09:50:49 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.196 2000/03/11 16:13:14 jdolecek Exp 
  */
 
 /*
@@ -670,6 +670,7 @@
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
+#define	PCI_PRODUCT_ALLIANCE_AT25	0x643d		/* AT25 */
 
 /* Alteon products */
 #define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* ACEnic Gigabit Ethernet */
