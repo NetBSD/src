@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.13 2002/10/02 16:51:25 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.14 2003/01/31 00:07:43 thorpej Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.13 2002/10/02 16:51:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.14 2003/01/31 00:07:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -127,8 +127,11 @@ gem_attach_pci(parent, self, aux)
 	char devinfo[256];
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
+	aprint_naive(": Ethernet controller\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_dmatag = pa->pa_dmat;
 
@@ -150,7 +153,7 @@ gem_attach_pci(parent, self, aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_bustag, &sc->sc_h, NULL, NULL) != 0)
 	{
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -171,7 +174,7 @@ gem_attach_pci(parent, self, aux)
 
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (node == 0) {
-			printf("%s: unable to locate OpenFirmware node\n",
+			aprint_error("%s: unable to locate OpenFirmware node\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
@@ -181,20 +184,21 @@ gem_attach_pci(parent, self, aux)
 #endif /* macppc */
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}	
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	gsc->gsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, gem_intr, sc);
 	if (gsc->gsc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
+		aprint_error("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Finish off the attach. */
 	gem_attach(sc, enaddr);

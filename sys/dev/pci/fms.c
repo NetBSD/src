@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.15 2002/10/02 16:51:14 thorpej Exp $	*/
+/*	$NetBSD: fms.c,v 1.16 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.15 2002/10/02 16:51:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.16 2003/01/31 00:07:42 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -250,31 +250,34 @@ fms_attach(parent, self, aux)
 	int i;
 	
 	u_int16_t k1;
-	
-	printf(": Forte Media FM-801\n");
+
+	aprint_naive(": Audio controller\n");
+	aprint_normal(": Forte Media FM-801\n");
 	
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, fms_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 	
 	sc->sc_dmat = pa->pa_dmat;
 	
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 	
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
 			   &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	

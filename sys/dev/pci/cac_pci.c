@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.16 2002/10/02 16:51:05 thorpej Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.16 2002/10/02 16:51:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,8 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg;
 	int memr, ior, i;
 
+	aprint_naive(": RAID controller\n");
+
 	sc = (struct cac_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
@@ -197,7 +199,8 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
 		    	ior = -1;
 	if (memr == -1 && ior == -1) {
-		printf("%s: can't map i/o or memory space\n", self->dv_xname);
+		aprint_error("%s: can't map i/o or memory space\n",
+		    self->dv_xname);
 		return;
 	}
 
@@ -210,20 +213,20 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("can't map interrupt\n");
+		aprint_error("can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, cac_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("can't establish interrupt");
+		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 
-	printf(": Compaq %s\n", ct->ct_typestr);
+	aprint_normal(": Compaq %s\n", ct->ct_typestr);
 
 	/* Now attach to the bus-independent code. */
 	memcpy(&sc->sc_cl, ct->ct_linkage, sizeof(sc->sc_cl));

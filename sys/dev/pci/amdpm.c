@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.4 2002/10/02 16:51:01 thorpej Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.4 2002/10/02 16:51:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.5 2003/01/31 00:07:40 thorpej Exp $");
 
 #include "opt_amdpm.h"
 
@@ -105,26 +105,29 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t pmreg;
 	int i;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
 
 #if 0
-	printf("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 #endif
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 	if ((reg & AMDPM_PMIOEN) == 0) {
-		printf("%s: PMxx space isn't enabled\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: PMxx space isn't enabled\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
 	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
 	    0, &sc->sc_ioh)) {
-		printf("%s: failed to map PMxx space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: failed to map PMxx space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -141,7 +144,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			delay(1);
 		}
 		if ((pmreg & AMDPM_RNGDONE) != 0) {
-			printf("%s: "
+			aprint_normal("%s: "
 			    "random number generator enabled (apprx. %dms)\n",
 			    sc->sc_dev.dv_xname, i);
 			callout_init(&sc->sc_rnd_ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.12 2003/01/06 13:05:14 wiz Exp $	*/
+/*	$NetBSD: autri.c,v 1.13 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -488,36 +488,40 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	int i, r;
 	u_int32_t reg;
 
+	aprint_naive(": Audio controller\n");
+
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, sc->sc_revision);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_revision);
 
 	/* map register to memory */
 	if (pci_mapreg_map(pa, AUTRI_PCI_MEMORY_BASE,
 	    PCI_MAPREG_TYPE_MEM, 0, &sc->memt, &sc->memh, NULL, NULL)) {
-		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map memory space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* map and establish the interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmatag = pa->pa_dmat;
 	sc->sc_pc = pc;
@@ -544,7 +548,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	codec->host_if.flags = autri_flags_codec;
 
 	if ((r = ac97_attach(&codec->host_if)) != 0) {
-		printf("%s: can't attach codec (error 0x%X)\n",
+		aprint_error("%s: can't attach codec (error 0x%X)\n",
 		    sc->sc_dev.dv_xname, r);
 		return;
 	}

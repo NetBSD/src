@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.28 2003/01/01 00:10:22 thorpej Exp $	*/
+/*	$NetBSD: eso.c,v 1.29 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.28 2003/01/01 00:10:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.29 2003/01/31 00:07:42 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -203,41 +203,47 @@ eso_attach(parent, self, aux)
 	int idx;
 	uint8_t a2mode, mvctl;
 
+	aprint_naive(": Audio controller\n");
+
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 
-	printf(": ESS Solo-1 PCI AudioDrive ");
+	aprint_normal(": ESS Solo-1 PCI AudioDrive ");
 	if (sc->sc_revision <
 	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
-		printf("%s\n", eso_rev2model[sc->sc_revision]);
+		aprint_normal("%s\n", eso_rev2model[sc->sc_revision]);
 	else
-		printf("(unknown rev. 0x%02x)\n", sc->sc_revision);
+		aprint_normal("(unknown rev. 0x%02x)\n", sc->sc_revision);
 
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_IO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_SB, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_sb_iot, &sc->sc_sb_ioh, NULL, NULL)) {
-		printf("%s: can't map SB I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map SB I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_VC, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_dmac_iot, &sc->sc_dmac_ioh, &vcbase, &sc->sc_vcsize)) {
-		printf("%s: can't map VC I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map VC I/O space\n",
+		    sc->sc_dev.dv_xname);
 		/* Don't bail out yet: we can map it later, see below. */
 		vcbase = 0;
 		sc->sc_vcsize = 0x10; /* From the data sheet. */
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL)) {
-		printf("%s: can't map MPU I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map MPU I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_GAME, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_game_iot, &sc->sc_game_ioh, NULL, NULL)) {
-		printf("%s: can't map Game I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map Game I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -252,7 +258,7 @@ eso_attach(parent, self, aux)
 
 	/* Reset the device; bail out upon failure. */
 	if (eso_reset(sc) != 0) {
-		printf("%s: can't reset\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't reset\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	
@@ -313,20 +319,22 @@ eso_attach(parent, self, aux)
 	
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstring != NULL)
-			printf(" at %s", intrstring);
-		printf("\n");
+			aprint_normal(" at %s", intrstring);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstring);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+	    intrstring);
 
 	/*
 	 * Set up the DDMA Control register; a suitable I/O region has been
@@ -349,7 +357,8 @@ eso_attach(parent, self, aux)
 		    vcbase | ESO_PCI_DDMAC_DE);
 		sc->sc_dmac_configured = 1;
 
-		printf("%s: mapping Audio 1 DMA using VC I/O space at 0x%lx\n",
+		aprint_normal(
+		    "%s: mapping Audio 1 DMA using VC I/O space at 0x%lx\n",
 		    sc->sc_dev.dv_xname, (unsigned long)vcbase);
 	} else {
 		DPRINTF(("%s: VC I/O space at 0x%lx not suitable, deferring\n",
@@ -390,7 +399,7 @@ eso_defer(self)
 	struct pci_attach_args *pa = &sc->sc_pa;
 	bus_addr_t addr, start;
 
-	printf("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 
 	/*
 	 * This is outright ugly, but since we must not make assumptions
@@ -409,13 +418,13 @@ eso_defer(self)
 		    addr | ESO_PCI_DDMAC_DE);
 		sc->sc_dmac_iot = sc->sc_iot;
 		sc->sc_dmac_configured = 1;
-		printf("mapping Audio 1 DMA using I/O space at 0x%lx\n",
+		aprint_normal("mapping Audio 1 DMA using I/O space at 0x%lx\n",
 		    (unsigned long)addr);
 
 		return;
 	}
 	
-	printf("can't map Audio 1 DMA into I/O space\n");
+	aprint_error("can't map Audio 1 DMA into I/O space\n");
 }
 
 /* ARGSUSED */

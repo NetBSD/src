@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.19 2002/12/31 13:10:59 fredette Exp $      */
+/*      $NetBSD: esm.c,v 1.20 2003/01/31 00:07:42 thorpej Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.19 2002/12/31 13:10:59 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.20 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1586,9 +1586,11 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	int revision;
 	char devinfo[256];
 
+	aprint_naive(": Audio controller\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
-	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -1598,7 +1600,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &ess->st, &ess->sh, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", ess->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", ess->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1617,19 +1619,21 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", ess->sc_dev.dv_xname);
+		aprint_error("%s: can't map interrupt\n", ess->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
 	if (ess->ih == NULL) {
-		printf("%s: can't establish interrupt", ess->sc_dev.dv_xname);
+		aprint_error("%s: can't establish interrupt",
+		    ess->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", ess->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n",
+	    ess->sc_dev.dv_xname, intrstr);
 
 	/*
 	 * Setup PCI config registers
@@ -1657,7 +1661,8 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	esm_read_codec(ess, 0, &codec_data);
 	if (codec_data == 0x80) {
-		printf("%s: PT101 codec detected!\n", ess->sc_dev.dv_xname);
+		aprint_error("%s: PT101 codec detected!\n",
+		    ess->sc_dev.dv_xname);
 		return;
 	}
 
@@ -1686,7 +1691,8 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	/* allocate our DMA region */
 	if (esm_allocmem(ess, MAESTRO_DMA_SZ, MAESTRO_DMA_ALIGN,
 		&ess->sc_dma)) {
-		printf("%s: couldn't allocate memory!\n", ess->sc_dev.dv_xname);
+		aprint_error("%s: couldn't allocate memory!\n",
+		    ess->sc_dev.dv_xname);
 		return;
 	}
 	ess->rings_alloced = 0;

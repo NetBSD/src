@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.6 2003/01/20 05:30:07 simonb Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.7 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.6 2003/01/20 05:30:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.7 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,8 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	icp = (struct icp_softc *)self;
 	icp->icp_class = icp_pci_find_class(pa);
 
-	printf(": ");
+	aprint_naive(": RAID controller\n");
+	aprint_normal(": ");
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX &&
 	    PCI_PRODUCT(pa->pa_id) >= ICP_PCI_PRODUCT_FC)
@@ -278,7 +279,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		    ICP_PCI_DPMEM,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M, 0,
 		    &dpmemt, &dpmemh, &dpmembase, &dpmemsize)) {
-			printf("cannot map DPMEM\n");
+			aprint_error("cannot map DPMEM\n");
 			goto bail_out;
 		}
 	}
@@ -294,14 +295,14 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (ICP_CLASS(icp) == ICP_PCINEW) {
 		if (pci_mapreg_map(pa, ICP_PCINEW_IOMEM, PCI_MAPREG_TYPE_MEM,
 		    0, &iomemt, &iomemh, &iomembase, &iomemsize)) {
-			printf("cannot map memory mapped I/O ports\n");
+			aprint_error("cannot map memory mapped I/O ports\n");
 			goto bail_out;
 		}
 		status |= IOMEM_MAPPED;
 
 		if (pci_mapreg_map(pa, ICP_PCINEW_IO, PCI_MAPREG_TYPE_IO, 0,
 		    &iot, &ioh, &iobase, &iosize)) {
-			printf("cannot map I/O ports\n");
+			aprint_error("cannot map I/O ports\n");
 			goto bail_out;
 		}
 		status |= IO_MAPPED;
@@ -315,7 +316,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_set_region_4(dpmemt, dpmemh, 0, 0,
 		    ICP_DPR_IF_SZ >> 2);
 		if (bus_space_read_1(dpmemt, dpmemh, 0) != 0) {
-			printf("cannot write to DPMEM\n");
+			aprint_error("cannot write to DPMEM\n");
 			goto bail_out;
 		}
 
@@ -387,7 +388,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_set_region_4(dpmemt, dpmemh, 0, 0,
 		    ICP_DPR_IF_SZ >> 2);
 		if (bus_space_read_1(dpmemt, dpmemh, 0) != 0) {
-			printf("cannot write to DPMEM\n");
+			aprint_error("cannot write to DPMEM\n");
 			goto bail_out;
 		}
 
@@ -462,7 +463,8 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_4(dpmemt, dpmemh, ICP_MPR_IC, ICP_MPR_MAGIC);
 		if (bus_space_read_4(dpmemt, dpmemh, ICP_MPR_IC) !=
 		    ICP_MPR_MAGIC) {
-			printf("cannot access DPMEM at 0x%lx (shadowed?)\n",
+			aprint_error(
+			    "cannot access DPMEM at 0x%lx (shadowed?)\n",
 			    (u_long)dpmembase);
 			goto bail_out;
 		}
@@ -497,7 +499,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		while (bus_space_read_1(dpmemt, dpmemh,
 		    ICP_MPR_IC + ICP_S_STATUS) != 0xff) {
 			if (--retries == 0) {
-				printf("DEINIT failed\n");
+				aprint_error("DEINIT failed\n");
 				goto bail_out;
 			}
 			DELAY(1);
@@ -508,7 +510,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_1(dpmemt, dpmemh, ICP_MPR_IC + ICP_S_STATUS,
 		    0);
 		if (protocol != ICP_PROTOCOL_VERSION) {
-		 	printf("unsupported protocol %d\n", protocol);
+		 	aprint_error("unsupported protocol %d\n", protocol);
 			goto bail_out;
 		}
 
@@ -529,7 +531,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 		while (bus_space_read_1(dpmemt, dpmemh,
 		    ICP_MPR_IC + ICP_S_STATUS) != 0xfe) {
 			if (--retries == 0) {
-				printf("initialization error\n");
+				aprint_error("initialization error\n");
 				goto bail_out;
 			}
 			DELAY(1);
@@ -548,24 +550,24 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("couldn't map interrupt\n");
+		aprint_error("couldn't map interrupt\n");
 		goto bail_out;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	icp->icp_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, icp_intr, icp);
 	if (icp->icp_ih == NULL) {
-		printf("couldn't establish interrupt");
+		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		goto bail_out;
 	}
 	status |= INTR_ESTABLISHED;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL)
-		printf("Intel Storage RAID controller\n");
+		aprint_normal("Intel Storage RAID controller\n");
 	else
-		printf("ICP-Vortex RAID controller\n");
+		aprint_normal("ICP-Vortex RAID controller\n");
 
 	if (icp_init(icp, intrstr))
 		goto bail_out;

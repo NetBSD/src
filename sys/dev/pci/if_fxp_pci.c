@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.30 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.31 2003/01/31 00:07:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.30 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.31 2003/01/31 00:07:43 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -255,6 +255,8 @@ fxp_pci_attach(parent, self, aux)
 	int flags;
  	int pci_pwrmgmt_cap_reg;
 
+	aprint_naive(": Ethernet controller\n");
+
 	/*
 	 * Map control/status registers.
 	 */
@@ -302,7 +304,7 @@ fxp_pci_attach(parent, self, aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf(": unable to map device registers\n");
+		aprint_error(": unable to map device registers\n");
 		return;
 	}
 
@@ -345,13 +347,13 @@ fxp_pci_attach(parent, self, aux)
 		if (sc->sc_rev >= FXP_REV_82559_A0)
 			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
 
-		printf(": %s, rev %d\n", chipname != NULL ? chipname :
+		aprint_normal(": %s, rev %d\n", chipname != NULL ? chipname :
 		    fpp->fpp_name, sc->sc_rev);
 		break;
 	    }
 
 	case PCI_PRODUCT_INTEL_82801BA_LAN:
-		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 
 		/*
 		 * The 82801BA Ethernet has a bug which requires us to send a
@@ -369,7 +371,7 @@ fxp_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
 	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 
 		/*
 		 * ICH3 chips apparently have problems with the enhanced
@@ -381,7 +383,7 @@ fxp_pci_attach(parent, self, aux)
 		break;
 	case PCI_PRODUCT_INTEL_82801E_LAN_1:
 	case PCI_PRODUCT_INTEL_82801E_LAN_2:
-		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+		aprint_normal(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
 
 		/*
 		 *  XXX We have to read the C-ICH's developer's manual
@@ -447,20 +449,21 @@ fxp_pci_attach(parent, self, aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Finish off the attach. */
 	fxp_attach(sc);
@@ -470,7 +473,8 @@ fxp_pci_attach(parent, self, aux)
 	/* Add a suspend hook to restore PCI config state */
 	psc->psc_powerhook = powerhook_establish(fxp_pci_power, psc);
 	if (psc->psc_powerhook == NULL)
-		printf ("%s: WARNING: unable to establish pci power hook\n",
+		aprint_error(
+		    "%s: WARNING: unable to establish pci power hook\n",
 		    sc->sc_dev.dv_xname);
 }
 

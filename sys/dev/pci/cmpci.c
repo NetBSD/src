@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.16 2002/10/02 16:51:05 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.16 2002/10/02 16:51:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -373,10 +373,13 @@ cmpci_attach(parent, self, aux)
 	char devinfo[256];
 	int i, v;
 
+	aprint_naive(": Audio controller\n");
+
 	sc->sc_id = pa->pa_id;
 	sc->sc_class = pa->pa_class;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(sc->sc_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(sc->sc_class));
 	switch (PCI_PRODUCT(sc->sc_id)) {
 	case PCI_PRODUCT_CMEDIA_CMI8338A:
 		/*FALLTHROUGH*/
@@ -393,26 +396,28 @@ cmpci_attach(parent, self, aux)
 	/* map I/O space */
 	if (pci_mapreg_map(pa, CMPCI_PCI_IOBASEREG, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		printf("%s: failed to map I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: failed to map I/O space\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: failed to map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	strintr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih=pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: failed to establish interrupt",
+		aprint_error("%s: failed to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (strintr != NULL)
-			printf(" at %s", strintr);
-		printf("\n");
+			aprint_normal(" at %s", strintr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, strintr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, strintr);
 
 	sc->sc_dmat = pa->pa_dmat;
 

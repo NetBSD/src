@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.11 2002/10/02 16:51:04 thorpej Exp $ */
+/* $NetBSD: btvmei.c,v 1.12 2003/01/31 00:07:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.11 2002/10/02 16:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.12 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,13 @@ b3_617_attach(parent, self, aux)
 	const char *intrstr;
 	struct vmebus_attach_args vaa;
 
+	aprint_naive(": VME bus adapter\n");
+
 	sc->sc_pc = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
 	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	printf(": BIT3 PCI-VME 617 rev %d\n", rev);
+	aprint_normal(": BIT3 PCI-VME 617 rev %d\n", rev);
 
 	/*
 	 * Map CSR and mapping table spaces.
@@ -118,28 +120,29 @@ b3_617_attach(parent, self, aux)
 	    pci_mapreg_map(pa, 0x10,
 			   PCI_MAPREG_TYPE_IO,
 			   0, &sc->csrt, &sc->csrh, NULL, NULL)) {
-		printf("%s: can't map CSR space\n", self->dv_xname);
+		aprint_error("%s: can't map CSR space\n", self->dv_xname);
 		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x18,
 			   PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			   0, &sc->mapt, &sc->maph, NULL, NULL)) {
-		printf("%s: can't map map space\n", self->dv_xname);
+		aprint_error("%s: can't map map space\n", self->dv_xname);
 		return;
 	}
 
 	if (pci_mapreg_info(pc, pa->pa_tag, 0x1c,
 			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			    &sc->vmepbase, 0, 0)) {
-		printf("%s: can't get VME range\n", self->dv_xname);
+		aprint_error("%s: can't get VME range\n", self->dv_xname);
 		return;
 	}
 	sc->sc_vmet = pa->pa_memt; /* XXX needed for VME mappings */
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -149,14 +152,14 @@ b3_617_attach(parent, self, aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, b3_617_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		       sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	if (b3_617_init(sc))
 		return;

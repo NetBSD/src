@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.12 2003/01/20 05:30:07 simonb Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.13 2003/01/31 00:07:42 thorpej Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.12 2003/01/20 05:30:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.13 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,51 +168,53 @@ hifn_attach(parent, self, aux)
 	int rseg;
 	caddr_t kva;
 
+	aprint_naive(": Crypto processor\n");
+
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
+		aprint_error(": failed to enable memory mapping\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
-		printf(": can't find mem space %d\n", 0);
+		aprint_error(": can't find mem space %d\n", 0);
 		return;
 	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR1, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1)) {
-		printf(": can't find mem space %d\n", 1);
+		aprint_error(": can't find mem space %d\n", 1);
 		goto fail_io0;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf(": can't alloc dma buffer\n");
+		aprint_error(": can't alloc dma buffer\n");
 		goto fail_io1;
         }
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
 	    BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%lu bytes)\n",
+		aprint_error(": can't map dma buffers (%lu bytes)\n",
 		    (u_long)sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
 	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
-		printf(": can't create dma map\n");
+		aprint_error(": can't create dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
 	    NULL, BUS_DMA_NOWAIT)) {
-		printf(": can't load dma map\n");
+		aprint_error(": can't load dma map\n");
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -224,7 +226,8 @@ hifn_attach(parent, self, aux)
 	hifn_reset_board(sc);
 
 	if (hifn_enable_crypto(sc, pa->pa_id) != 0) {
-		printf("%s: crypto enabling failed\n", sc->sc_dv.dv_xname);
+		aprint_error("%s: crypto enabling failed\n",
+		    sc->sc_dv.dv_xname);
 		goto fail_mem;
 	}
 
@@ -253,7 +256,7 @@ hifn_attach(parent, self, aux)
 	hifn_init_pci_registers(sc);
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		aprint_error(": couldn't map interrupt\n");
 		goto fail_mem;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -264,10 +267,10 @@ hifn_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n");
+		aprint_error(": couldn't establish interrupt\n");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		goto fail_mem;
 	}
 
@@ -279,7 +282,7 @@ hifn_attach(parent, self, aux)
 		rbase = 'M';
 		rseg /= 1024;
 	}
-	printf(", %d%cB %cram, %s\n", rseg, rbase,
+	aprint_normal(", %d%cB %cram, %s\n", rseg, rbase,
 	    sc->sc_drammodel ? 'd' : 's', intrstr);
 
 #ifdef __OpenBSD__
@@ -439,7 +442,7 @@ hifn_enable_crypto(sc, pciid)
 
 	if (offtbl == NULL) {
 #ifdef HIFN_DEBUG
-		printf("%s: Unknown card!\n", sc->sc_dv.dv_xname);
+		aprint_debug("%s: Unknown card!\n", sc->sc_dv.dv_xname);
 #endif
 		return (1);
 	}
@@ -461,7 +464,7 @@ hifn_enable_crypto(sc, pciid)
 	 */
 	if (encl == HIFN_PUSTAT_ENA_1 || encl == HIFN_PUSTAT_ENA_2) {
 #ifdef HIFN_DEBUG
-		printf("%s: Strong Crypto already enabled!\n",
+		aprint_debug("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
 #endif
 		WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
@@ -471,7 +474,8 @@ hifn_enable_crypto(sc, pciid)
 
 	if (encl != 0 && encl != HIFN_PUSTAT_ENA_0) {
 #ifdef HIFN_DEBUG
-		printf("%s: Unknown encryption level\n", sc->sc_dv.dv_xname);
+		aprint_debug("%s: Unknown encryption level\n",
+		    sc->sc_dv.dv_xname);
 #endif
 		return 1;
 	}
@@ -496,9 +500,9 @@ hifn_enable_crypto(sc, pciid)
 
 #ifdef HIFN_DEBUG
 	if (encl != HIFN_PUSTAT_ENA_1 && encl != HIFN_PUSTAT_ENA_2)
-		printf("Encryption engine is permanently locked until next system reset.");
+		aprint_debug("Encryption engine is permanently locked until next system reset.");
 	else
-		printf("Encryption engine enabled successfully!");
+		aprint_debug("Encryption engine enabled successfully!");
 #endif
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
@@ -506,16 +510,16 @@ hifn_enable_crypto(sc, pciid)
 
 	switch (encl) {
 	case HIFN_PUSTAT_ENA_0:
-		printf(": no encr/auth");
+		aprint_normal(": no encr/auth");
 		break;
 	case HIFN_PUSTAT_ENA_1:
-		printf(": DES enabled");
+		aprint_normal(": DES enabled");
 		break;
 	case HIFN_PUSTAT_ENA_2:
-		printf(": fully enabled");
+		aprint_normal(": fully enabled");
 		break;
 	default:
-		printf(": disabled");
+		aprint_normal(": disabled");
 		break;
 	}
 

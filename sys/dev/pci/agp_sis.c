@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_sis.c,v 1.3 2001/11/13 07:48:40 lukem Exp $	*/
+/*	$NetBSD: agp_sis.c,v 1.4 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.3 2001/11/13 07:48:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.4 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 
 	ssc = malloc(sizeof *ssc, M_AGP, M_NOWAIT);
 	if (ssc == NULL) {
-		printf(": can't allocate chipset-specific softc\n");
+		aprint_error(": can't allocate chipset-specific softc\n");
 		return ENOMEM;
 	}
 	sc->as_methods = &agp_sis_methods;
@@ -94,7 +94,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 	    NULL);
 
 	if (agp_map_aperture(pa, sc) != 0) {
-		printf(": can't map aperture\n");
+		aprint_error(": can't map aperture\n");
 		free(ssc, M_AGP);
 		return ENXIO;
 	}
@@ -112,7 +112,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			printf(": failed to set aperture\n");
+			aprint_error(": failed to set aperture\n");
 			return ENOMEM;
 		}
 	}

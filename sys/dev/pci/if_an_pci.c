@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.9 2002/10/02 16:51:18 thorpej Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.10 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.9 2002/10/02 16:51:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.10 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -126,13 +126,15 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	u_int32_t csr;
 
+	aprint_naive(": 802.11 controller\n");
+
         pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-        printf(": %s\n", devinfo);
+        aprint_normal(": %s\n", devinfo);
 
         /* Map I/O registers */
         if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->an_btag, &sc->an_bhandle, NULL, NULL) != 0) {
-                printf("%s: unable to map registers\n", self->dv_xname);
+                aprint_error("%s: unable to map registers\n", self->dv_xname);
                 return;
         }
 
@@ -143,23 +145,25 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-        	printf("%s: unable to map interrupt\n", self->dv_xname);
+        	aprint_error("%s: unable to map interrupt\n", self->dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, an_intr, sc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt", self->dv_xname);
+		aprint_error("%s: unable to establish interrupt",
+		    self->dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
 	sc->sc_enabled = 1;
 
 	if (an_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n", self->dv_xname);
+		aprint_error("%s: failed to attach controller\n",
+		    self->dv_xname);
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
 		bus_space_unmap(sc->an_btag, sc->an_bhandle, AN_IOSIZ);
 	}

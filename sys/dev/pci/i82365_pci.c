@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.16 2002/10/02 16:51:17 thorpej Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.17 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.16 2002/10/02 16:51:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.17 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,11 @@ pcic_pci_attach(parent, self, aux)
 	bus_space_handle_t memh;
 	char *model;
 
+	aprint_naive(": PCMCIA controller\n");
+
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->iot, &sc->ioh, NULL, NULL)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -166,7 +168,7 @@ pcic_pci_attach(parent, self, aux)
 		break;
 	}
 
-	printf(": %s\n", model);
+	aprint_normal(": %s\n", model);
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
@@ -185,7 +187,7 @@ pcic_pci_attach(parent, self, aux)
 		   PCIC_CIRRUS_EXT_CONTROL_1);
 	if ((pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
 	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK)) {
-		printf("%s: PCI interrupts not supported\n",
+		aprint_error("%s: PCI interrupts not supported\n",
 		       sc->dev.dv_xname);
 		return;
 	}
@@ -197,7 +199,7 @@ pcic_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
 	if (sc->ih == NULL) {
-		printf("%s: couldn't map interrupt\n", sc->dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n", sc->dev.dv_xname);
 		return;
 	}
 #endif

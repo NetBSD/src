@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.37 2003/01/20 05:30:06 simonb Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.38 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.37 2003/01/20 05:30:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.38 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,6 +631,8 @@ ahc_pci_attach(parent, self, aux)
 	const char *intrstr;
 	struct ahc_pci_busdata *bd;
 
+	aprint_naive(": SCSI controller\n");
+
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	entry = ahc_find_pci_device(pa->pa_id, subid);
@@ -666,11 +668,11 @@ ahc_pci_attach(parent, self, aux)
 		sh = memh;
 #endif
 	} else {
-		printf(": unable to map registers\n");
+		aprint_error(": unable to map registers\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 		
 
 	/* Ensure busmastering is enabled */
@@ -685,7 +687,7 @@ ahc_pci_attach(parent, self, aux)
 
 	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
 	if (bd == NULL) {
-		printf(": unable to allocate bus-specific data\n");
+		aprint_normal(": unable to allocate bus-specific data\n");
 		return;
 	}
 
@@ -722,7 +724,7 @@ ahc_pci_attach(parent, self, aux)
 		ahc_outb(ahc, SFUNCT, sfunct | ALT_MODE);
 		optionmode = ahc_inb(ahc, OPTIONMODE);
 #ifdef DEBUG
-		printf("%s: OptionMode = %x\n", ahc->sc_dev.dv_xname,
+		aprint_debug("%s: OptionMode = %x\n", ahc->sc_dev.dv_xname,
 		    optionmode);
 #endif
 		ahc_outb(ahc, OPTIONMODE, OPTIONMODE_DEFAULTS);
@@ -737,23 +739,24 @@ ahc_pci_attach(parent, self, aux)
 	}
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		ahc_free(ahc);
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
+		aprint_normal("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
 		       intrstr);
 
 	/*
@@ -805,8 +808,9 @@ ahc_pci_attach(parent, self, aux)
 			 */
 			/* See if someone else set us up already */
 			if (scsiseq != 0) {
-				printf("%s: Using left over BIOS settings\n",
-					ahc_name(ahc));
+				aprint_normal(
+				    "%s: Using left over BIOS settings\n",
+				    ahc_name(ahc));
 				ahc->flags &= ~AHC_USEDEFAULTS;
 			} else {
 				/*
@@ -830,7 +834,7 @@ ahc_pci_attach(parent, self, aux)
 	ahc_probe_ext_scbram(ahc);
 
 
-	printf("%s: %s ", ahc_name(ahc),
+	aprint_normal("%s: %s ", ahc_name(ahc),
 	       ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
 
 	/*
@@ -988,8 +992,8 @@ done:
 	/* Clear any latched parity error */
 	ahc_outb(ahc, CLRINT, CLRPARERR);
 	ahc_outb(ahc, CLRINT, CLRBRKADRINT);
-	if (bootverbose && enable) {
-		printf("%s: External SRAM, %s access%s\n",
+	if (enable) {
+		aprint_verbose("%s: External SRAM, %s access%s\n",
 		       ahc_name(ahc), fast ? "fast" : "slow", 
 		       pcheck ? ", parity checking enabled" : "");
 		       

@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.4 2001/11/13 07:48:49 lukem Exp $ */
+/* $NetBSD: universe_pci.c,v 1.5 2003/01/31 00:07:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.4 2001/11/13 07:48:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.5 2003/01/31 00:07:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,15 +134,15 @@ univ_pci_attach(d, pa, name, inthdl, intcookie)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	reg = read_csr_4(d, misc_ctl);
-	printf("%s: ", name);
+	aprint_normal("%s: ", name);
 	if (reg & 0x00020000) /* SYSCON */
-		printf("VME bus controller, ");
+		aprint_normal("VME bus controller, ");
 	reg = read_csr_4(d, mast_ctl);
-	printf("requesting at VME bus level %d\n", (reg >> 22) & 3);
+	aprint_normal("requesting at VME bus level %d\n", (reg >> 22) & 3);
 
 	/* Map and establish the PCI interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", name);
+		aprint_error("%s: couldn't map interrupt\n", name);
 		return (-1);
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -152,13 +152,13 @@ univ_pci_attach(d, pa, name, inthdl, intcookie)
 	 */
 	d->ih = pci_intr_establish(pc, ih, IPL_BIO, univ_pci_intr, d);
 	if (d->ih == NULL) {
-		printf("%s: couldn't establish interrupt", name);
+		aprint_error("%s: couldn't establish interrupt", name);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return (-1);
 	}
-	printf("%s: interrupting at %s\n", name, intrstr);
+	aprint_normal("%s: interrupting at %s\n", name, intrstr);
 
 	/* handle all VME interrupts (XXX should be configurable) */
 	d->vmeinthandler = inthdl;

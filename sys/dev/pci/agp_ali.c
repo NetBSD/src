@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.3 2001/11/13 07:48:40 lukem Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.4 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.3 2001/11/13 07:48:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4 2003/01/31 00:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,14 +87,14 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 
 	asc = malloc(sizeof *asc, M_AGP, M_NOWAIT);
 	if (asc == NULL) {
-		printf(": failed to allocate softc\n");
+		aprint_error(": failed to allocate softc\n");
 		return ENOMEM;
 	}
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_ali_methods;
 
 	if (agp_map_aperture(pa, sc) != 0) {
-		printf(": failed to map aperture\n");
+		aprint_error(": failed to map aperture\n");
 		free(asc, M_AGP);
 		return ENXIO;
 	}
@@ -115,7 +115,7 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			printf(": failed to set aperture\n");
+			aprint_error(": failed to set aperture\n");
 			return ENOMEM;
 		}
 	}

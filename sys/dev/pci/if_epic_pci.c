@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.25 2002/12/23 03:57:03 tsutsui Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.26 2003/01/31 00:07:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.25 2002/12/23 03:57:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.26 2003/01/31 00:07:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -184,20 +184,23 @@ epic_pci_attach(parent, self, aux)
 	pcireg_t reg;
 	int pmreg, ioh_valid, memh_valid;
 
+	aprint_naive(": Ethernet controller\n");
+
 	epp = epic_pci_lookup(pa);
 	if (epp == NULL) {
 		printf("\n");
 		panic("epic_pci_attach: impossible");
 	}
 
-	printf(": %s, rev. %d\n", epp->epp_name, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s, rev. %d\n", epp->epp_name,
+	    PCI_REVISION(pa->pa_class));
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
-			printf("%s: waking up from power state D%d\n",
+			aprint_normal("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
@@ -208,7 +211,8 @@ epic_pci_attach(parent, self, aux)
 			 * IO and MEM are disabled. We can't enable
 			 * the card because the BARs might be invalid.
 			 */
-			printf("%s: unable to wake up from power state D3, "
+			aprint_error(
+			    "%s: unable to wake up from power state D3, "
 			    "reboot required.\n", sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
@@ -234,7 +238,7 @@ epic_pci_attach(parent, self, aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -250,20 +254,21 @@ epic_pci_attach(parent, self, aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih); 
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, epic_intr, sc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
+		aprint_error("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	esp = epic_pci_subsys_lookup(pa);
 	if (esp)
