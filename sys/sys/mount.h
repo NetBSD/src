@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.23 1994/04/07 03:36:06 cgd Exp $
+ *	$Id: mount.h,v 1.24 1994/04/07 07:13:28 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -132,6 +132,7 @@ struct mount {
  */
 #define	MNT_LOCAL	0x00001000	/* filesystem is stored locally */
 #define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
+#define	MNT_USER	0x00008000	/* mounted by a user */
 
 /*
  * Mask of flags that are visible to statfs()
@@ -294,7 +295,7 @@ struct msdosfs_args {
 	char *fspec;		/* blocks special holding the fs to mount */
 	uid_t uid;		/* uid that owns msdosfs files */
 	gid_t gid;		/* gid that owns msdosfs files */
-	mode_t umask;		/* umask to be applied for msdosfs perms */
+	mode_t mask;		/* mask to be applied for msdosfs perms */
 };
 
 #ifdef KERNEL
