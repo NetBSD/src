@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.2 2003/02/28 05:29:48 matt Exp $	*/
+/*	$NetBSD: sem.c,v 1.3 2003/10/01 12:18:53 kleink Exp $	*/
 
 /*
  * Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
@@ -83,6 +83,8 @@ dosem(void)
 	unsigned i;
 	int val, status;
 	pid_t pid;
+
+	assert(-1 != sysconf(_SC_SEMAPHORES));
 
 	sem_b = create_sem("/sem_b");
 	assert(0 == sem_getvalue(sem_b, &val));
