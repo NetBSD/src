@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)screen.c	5.8 (Berkeley) 6/28/92"; */
-static char *rcsid = "$Id: screen.c,v 1.5 1994/12/24 17:17:13 cgd Exp $";
+static char *rcsid = "$Id: screen.c,v 1.6 1995/05/16 22:18:33 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -476,7 +476,13 @@ int putchr();
  */
 init()
 {
+	/* 
+	 * This loses for terminals with termcap entries with ti/te strings
+	 * that switch to/from an alternate screen. 
+	 */
+#if 0
 	tputs(sc_init, sc_height, putchr);
+#endif
 }
 
 /*
@@ -484,7 +490,9 @@ init()
  */
 deinit()
 {
+#if 0
 	tputs(sc_deinit, sc_height, putchr);
+#endif
 }
 
 /*
