@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.4.3 2002/09/19 21:18:43 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9.4.4 2002/10/07 03:04:36 thorpej Exp $
 
 # XXX - This gdb.new directory should be renamed to "gdb" after all platforms
 # have been migrated to the new toolchain.
@@ -21,8 +21,12 @@ CPPFLAGS=	-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		${G_CCFLAGS:M-DRL_*} \
 		-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH}
 
-LDADD=		-ltermcap -lintl -lm -lkvm -lpthread_dbg
+LDADD=		-ltermcap -lintl -lm -lkvm
 DPADD=		${LIBTERMCAP} ${LIBINTL} ${LIBM} ${LIBKVM}
+
+.if ${SRCS:Mnbsd-thread} != ""
+LDADD+=		-lpthread_dbg
+.endif
 
 TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
