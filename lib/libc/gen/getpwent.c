@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.29 1998/08/26 00:38:40 perry Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.30 1998/11/12 16:38:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.29 1998/08/26 00:38:40 perry Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.30 1998/11/12 16:38:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,7 +122,8 @@ static int
 __ypexclude_add(name)
 	const char *name;
 {
-	DBT key, data;
+	DBT key;
+	DBT data;
 
 	/* initialize the exclusion table if needed. */
 	if(__ypexclude == (DB *)NULL) {
@@ -132,8 +133,9 @@ __ypexclude_add(name)
 	}
 
 	/* set up the key */
-	key.data = (char *)name;
 	key.size = strlen(name);
+	/* LINTED key does not get modified */
+	key.data = (char *)name;
 
 	/* data is nothing. */
 	data.data = NULL;
@@ -150,14 +152,16 @@ static int
 __ypexclude_is(name)
 	const char *name;
 {
-	DBT key, data;
+	const DBT key;
+	DBT data;
 
 	if(__ypexclude == (DB *)NULL)
 		return(0);	/* nothing excluded */
 
 	/* set up the key */
-	key.data = (char *)name;
 	key.size = strlen(name);
+	/* LINTED key does not get modified */
+	key.data = (char *)name;
 
 	if((__ypexclude->get)(__ypexclude, &key, &data, 0) == 0)
 		return(1);	/* excluded */
@@ -172,15 +176,15 @@ __ypproto_set()
 	struct passwd *pw = &_pw_passwd;
 
 	/* make this the new prototype */
-	ptr = (char *)prbuf;
+	ptr = (char *)(void *)prbuf;
 
 	/* first allocate the struct. */
-	__ypproto = (struct passwd *)ptr;
+	__ypproto = (struct passwd *)(void *)ptr;
 	ptr += sizeof(struct passwd);
 
 	/* name */
 	if(pw->pw_name && (pw->pw_name)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_name, strlen(pw->pw_name) + 1);
 		__ypproto->pw_name = ptr;
 		ptr += (strlen(pw->pw_name) + 1);
@@ -189,7 +193,7 @@ __ypproto_set()
 	
 	/* password */
 	if(pw->pw_passwd && (pw->pw_passwd)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_passwd, strlen(pw->pw_passwd) + 1);
 		__ypproto->pw_passwd = ptr;
 		ptr += (strlen(pw->pw_passwd) + 1);
@@ -210,7 +214,7 @@ __ypproto_set()
 
 	/* gecos */
 	if(pw->pw_gecos && (pw->pw_gecos)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_gecos, strlen(pw->pw_gecos) + 1);
 		__ypproto->pw_gecos = ptr;
 		ptr += (strlen(pw->pw_gecos) + 1);
@@ -219,7 +223,7 @@ __ypproto_set()
 	
 	/* dir */
 	if(pw->pw_dir && (pw->pw_dir)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_dir, strlen(pw->pw_dir) + 1);
 		__ypproto->pw_dir = ptr;
 		ptr += (strlen(pw->pw_dir) + 1);
@@ -228,7 +232,7 @@ __ypproto_set()
 
 	/* shell */
 	if(pw->pw_shell && (pw->pw_shell)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_shell, strlen(pw->pw_shell) + 1);
 		__ypproto->pw_shell = ptr;
 		ptr += (strlen(pw->pw_shell) + 1);
@@ -322,10 +326,10 @@ __ypparse(pw, s)
 		int datalen;
 
 		if (yp_match(__ypdomain, "passwd.adjunct.byname", pw->pw_name,
-		    strlen(pw->pw_name), &data, &datalen) == 0) {
+		    (int)strlen(pw->pw_name), &data, &datalen) == 0) {
 			if (datalen > sizeof(adjunctpw) - 1)
 				datalen = sizeof(adjunctpw) - 1;
-			strncpy(adjunctpw, data, datalen);
+			strncpy(adjunctpw, data, (size_t)datalen);
 
 				/* skip name to get password */
 			if ((bp = strsep(&data, ":")) != NULL &&
@@ -340,7 +344,7 @@ __ypparse(pw, s)
 struct passwd *
 getpwent()
 {
-	DBT key;
+	DBT dbt;
 	char bf[sizeof(_pw_keynum) + 1];
 #ifdef YP
 	static char *name = (char *)NULL;
@@ -396,7 +400,7 @@ again:
 				data = NULL;
 				goto again;
 			}
-			memmove(line, data, datalen);
+			memmove(line, data, (size_t)datalen);
 			free(data);
 			data = NULL;
 			break;
@@ -410,7 +414,7 @@ again:
 			if(user && *user) {
 				data = NULL;
 				r = yp_match(__ypdomain, PASSWD_BYNAME,
-					user, strlen(user),
+					user, (int)strlen(user),
 					&data, &datalen);
 			} else
 				goto again;
@@ -423,7 +427,7 @@ again:
 					free(data);
 				goto again;
 			}
-			memmove(line, data, datalen);
+			memmove(line, data, (size_t)datalen);
 			free(data);
 			data = NULL;
 			break;
@@ -431,7 +435,7 @@ again:
 			if(name != (char *)NULL) {
 				data = NULL;
 				r = yp_match(__ypdomain, PASSWD_BYNAME,
-					name, strlen(name),
+					name, (int)strlen(name),
 					&data, &datalen);
 				__ypmode = YPMODE_NONE;
 				free(name);
@@ -441,7 +445,7 @@ again:
 						free(data);
 					goto again;
 				}
-				memmove(line, data, datalen);
+				memmove(line, data, (size_t)datalen);
 				free(data);
 				data = (char *)NULL;
 			} else {		/* XXX */
@@ -463,10 +467,10 @@ again:
 
 	++_pw_keynum;
 	bf[0] = _PW_KEYBYNUM;
-	memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
-	key.data = (u_char *)bf;
-	key.size = sizeof(_pw_keynum) + 1;
-	if(__hashpw(&key)) {
+	memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
+	dbt.data = (u_char *)bf;
+	dbt.size = sizeof(_pw_keynum) + 1;
+	if(__hashpw(&dbt)) {
 #ifdef YP
 		/* if we don't have YP at all, don't bother. */
 		if(has_yppw) {
@@ -528,8 +532,9 @@ __has_yppw()
 	DBT pkey, pdata;
 	char bf[MAXLOGNAME];
 
-	key.data = (u_char *)__yp_token;
 	key.size = strlen(__yp_token);
+	/* LINTED key does not get modified */
+	key.data = (u_char *)__yp_token;
 
 	/* Pre-token database support. */
 	bf[0] = _PW_KEYBYNAME;
@@ -567,7 +572,7 @@ getpwnam(name)
 
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
-			memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+			memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 			key.data = (u_char *)bf;
 			key.size = sizeof(_pw_keynum) + 1;
 			if(__hashpw(&key) == 0)
@@ -590,7 +595,7 @@ getpwnam(name)
 					}
 					r = yp_match(__ypdomain,
 						PASSWD_BYNAME,
-						name, strlen(name),
+						name, (int)strlen(name),
 						&__ypcurrent, &__ypcurrentlen);
 					if(r != 0) {
 						if(__ypcurrent)
@@ -616,7 +621,8 @@ pwnam_netgrp:
 						if(user && *user) {
 							r = yp_match(__ypdomain,
 							    PASSWD_BYNAME,
-							    user, strlen(user),
+							    user,
+							    (int)strlen(user),
 							    &__ypcurrent,
 							    &__ypcurrentlen);
 						} else
@@ -642,7 +648,7 @@ pwnam_netgrp:
 					user = _pw_passwd.pw_name + 1;
 					r = yp_match(__ypdomain,
 						PASSWD_BYNAME,
-						user, strlen(user),
+						user, (int)strlen(user),
 						&__ypcurrent,
 						&__ypcurrentlen);
 					if(r != 0) {
@@ -653,7 +659,8 @@ pwnam_netgrp:
 					}
 					break;
 				}
-				memmove(line, __ypcurrent, __ypcurrentlen);
+				memmove(line, __ypcurrent,
+				    (size_t)__ypcurrentlen);
 				line[__ypcurrentlen] = '\0';
 				if(__ypparse(&_pw_passwd, line)
 				   || __ypexclude_is(_pw_passwd.pw_name)) {
@@ -680,8 +687,6 @@ pwnam_netgrp:
 					break;
 				}
 				break;
-
-				continue;
 			}
 			if(strcmp(_pw_passwd.pw_name, name) == 0) {
 				if (!_pw_stayopen) {
@@ -715,7 +720,7 @@ pwnam_netgrp:
 	bf[0] = _PW_KEYBYNAME;
 	len = strlen(name);
 	len = MIN(len, MAXLOGNAME);
-	memmove(bf + 1, name, len);
+	memmove(bf + 1, name, (size_t)len);
 	key.data = (u_char *)bf;
 	key.size = len + 1;
 	rval = __hashpw(&key);
@@ -753,7 +758,7 @@ getpwuid(uid)
 		snprintf(uidbuf, sizeof(uidbuf), "%u", uid);
 		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
 			bf[0] = _PW_KEYBYNUM;
-			memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+			memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 			key.data = (u_char *)bf;
 			key.size = sizeof(_pw_keynum) + 1;
 			if(__hashpw(&key) == 0)
@@ -775,7 +780,7 @@ getpwuid(uid)
 						__ypcurrent = NULL;
 					}
 					r = yp_match(__ypdomain, PASSWD_BYUID,
-						uidbuf, strlen(uidbuf),
+						uidbuf, (int)strlen(uidbuf),
 						&__ypcurrent, &__ypcurrentlen);
 					if(r != 0) {
 						if(__ypcurrent)
@@ -801,7 +806,8 @@ pwuid_netgrp:
 						if(user && *user) {
 							r = yp_match(__ypdomain,
 							    PASSWD_BYNAME,
-							    user, strlen(user),
+							    user,
+							    (int)strlen(user),
 							    &__ypcurrent,
 							    &__ypcurrentlen);
 						} else
@@ -827,7 +833,7 @@ pwuid_netgrp:
 					user = _pw_passwd.pw_name + 1;
 					r = yp_match(__ypdomain,
 						PASSWD_BYNAME,
-						user, strlen(user),
+						user, (int)strlen(user),
 						&__ypcurrent,
 						&__ypcurrentlen);
 					if(r != 0) {
@@ -838,7 +844,8 @@ pwuid_netgrp:
 					}
 					break;
 				}
-				memmove(line, __ypcurrent, __ypcurrentlen);
+				memmove(line, __ypcurrent,
+				    (size_t)__ypcurrentlen);
 				line[__ypcurrentlen] = '\0';
 				if(__ypparse(&_pw_passwd, line)
 				   || __ypexclude_is(_pw_passwd.pw_name)) {
@@ -865,8 +872,6 @@ pwuid_netgrp:
 					break;
 				}
 				break;
-
-				continue;
 			}
 			if( _pw_passwd.pw_uid == uid) {
 				if (!_pw_stayopen) {
@@ -987,17 +992,17 @@ __hashpw(key)
 {
 	char *p, *t;
 	static u_int max;
-	static char *line;
+	static char *buf;
 	DBT data;
 
 	if ((_pw_db->get)(_pw_db, key, &data, 0))
 		return(0);
 	p = (char *)data.data;
-	if (data.size > max && !(line = realloc(line, (max += 1024))))
+	if (data.size > max && !(buf = realloc(buf, (max += 1024))))
 		return(0);
 
 	/* THIS CODE MUST MATCH THAT IN pwd_mkdb. */
-	t = line;
+	t = buf;
 #define	EXPAND(e)	e = t; while ((*t++ = *p++));
 #define	SCALAR(v)	memmove(&(v), p, sizeof v); p += sizeof v
 	EXPAND(_pw_passwd.pw_name);
