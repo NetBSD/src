@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.2 2001/01/03 19:16:00 thorpej Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.3 2001/07/19 18:50:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.2 2001/01/03 19:16:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.3 2001/07/19 18:50:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,9 @@ void	ttwoga_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
  */
 #define	TTWOGA_SGMAP_MAPPED_BASE	(8UL*1024UL*1024UL)
 #define	TTWOGA_SGMAP_MAPPED_SIZE	(8UL*1024UL*1024UL)
+
+/* T2 has a 256-byte out-bound DMA prefetch threshold. */
+#define	TTWOGA_SGMAP_PFTHRESH		256
 
 /*
  * Macro to flush the T2 Gate Array scatter/gather TLB.
@@ -142,6 +145,7 @@ ttwoga_dma_init(struct ttwoga_config *tcp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &tcp->tc_sgmap;
+	t->_pfthresh = TTWOGA_SGMAP_PFTHRESH;
 	t->_get_tag = ttwoga_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
