@@ -1,9 +1,9 @@
-#	$NetBSD: configure.ac,v 1.39 2003/07/25 03:21:15 atatat Exp $
+#	$NetBSD: configure.ac,v 1.40 2003/07/26 20:24:00 salo Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
 
-AC_INIT([libnbcompat], [noversion], [lib-bug-people@netbsd.org])
+AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES(defs.mk)
 

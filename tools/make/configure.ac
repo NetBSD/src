@@ -1,9 +1,9 @@
-#	$NetBSD: configure.ac,v 1.5 2002/10/04 22:21:57 thorpej Exp $
+#	$NetBSD: configure.ac,v 1.6 2003/07/26 20:24:01 salo Exp $
 #
 # Autoconf definition file for make.
 #
 
-AC_INIT([make], [noversion], [bin-bug-people@netbsd.org])
+AC_INIT([make], [noversion], [bin-bug-people@NetBSD.org])
 AC_CONFIG_FILES(buildmake.sh)
 
 AC_PATH_PROG(BSHELL, sh)

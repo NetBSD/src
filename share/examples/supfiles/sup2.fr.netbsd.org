@@ -1,16 +1,16 @@
-#	$NetBSD: sup2.fr.netbsd.org,v 1.1 2000/08/23 17:18:45 bouyer Exp $
+#	$NetBSD: sup2.fr.netbsd.org,v 1.2 2003/07/26 20:17:32 salo Exp $
 #
-# Example supfile for sup2.fr.netbsd.org.
+# Example supfile for sup2.fr.NetBSD.org.
 #
 
-current release=allsrc host=sup2.fr.netbsd.org hostbase=/home/sup/supserver \
+current release=allsrc host=sup2.fr.NetBSD.org hostbase=/home/sup/supserver \
 base=/usr prefix=/usr backup use-rel-suffix compress
 
-current release=doc host=sup2.fr.netbsd.org hostbase=/home/sup/supserver \
+current release=doc host=sup2.fr.NetBSD.org hostbase=/home/sup/supserver \
 base=/usr prefix=/usr backup use-rel-suffix compress
 
-current release=pkgsrc host=sup2.fr.netbsd.org hostbase=/home/sup/supserver \
+current release=pkgsrc host=sup2.fr.NetBSD.org hostbase=/home/sup/supserver \
 base=/usr prefix=/usr backup use-rel-suffix compress delete
 
-current release=xsrc host=sup2.fr.netbsd.org hostbase=/home/sup/supserver \
+current release=xsrc host=sup2.fr.NetBSD.org hostbase=/home/sup/supserver \
 base=/usr prefix=/usr backup use-rel-suffix compress
