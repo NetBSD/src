@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.188 2001/11/02 05:21:50 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.189 2001/11/02 07:25:58 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -344,9 +344,7 @@ __archivebuild: .USE
 __archiveinstall: .USE
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m 600 ${.ALLSRC} ${.TARGET}
 	${RANLIB} -t ${.TARGET}
-.if !defined(UNPRIVILEGED)
 	chmod ${LIBMODE} ${.TARGET}
-.endif
 
 DPSRCS+=	${SRCS:M*.[ly]:C/..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
