@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.38 1998/11/11 22:28:32 veego Exp $	*/
+/*	$NetBSD: zbus.c,v 1.39 1999/03/31 02:47:38 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -137,6 +137,7 @@ static struct aconfdata aconftab[] = {
 	{ "cbiisc", 	8512,	25},	/* Cyberstorm Mk II SCSI */
 	{ "grfcv",	8512,	34},	/* CyberVison 64 */
 	{ "grfcv3d",	8512,	67},	/* CyberVison 64/3D */
+	{ "cbiiisc", 	8512,	100},	/* Cyberstorm Mk III SCSI */
 	/* Hacker Inc. */
 	{ "mlhsc",	2011,	1 },
 	/* Resource Management Force */
