@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.44 2002/01/16 18:30:57 abs Exp $	*/
+/*	$NetBSD: init.c,v 1.45 2002/01/21 15:57:40 abs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.44 2002/01/16 18:30:57 abs Exp $");
+__RCSID("$NetBSD: init.c,v 1.45 2002/01/21 15:57:40 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,8 @@ void del_session(session_t *);
 session_t *find_session(pid_t);
 DB *session_db;
 
-#ifdef MSDOSFS_ROOT
-static void msdosfs_root(void);
+#ifdef MFS_DEV_IF_NO_CONSOLE
+static int mfs_dev(void);
 #endif
 
 /*
@@ -213,8 +213,9 @@ main(int argc, char **argv)
 		warn("setlogin() failed");
 
 
-#ifdef MSDOSFS_ROOT
-	msdosfs_root();
+#ifdef MFS_DEV_IF_NO_CONSOLE
+	if (mfs_dev() == -1)
+		requested_transition = single_user;
 #endif
 
 #ifndef LETS_GET_SMALL
@@ -1274,44 +1275,47 @@ death(void)
 }
 #endif /* LETS_GET_SMALL */
 
-#ifdef MSDOSFS_ROOT
+#ifdef MFS_DEV_IF_NO_CONSOLE
 
-static void
-msdosfs_root(void)
+static int
+mfs_dev(void)
 {
 	/*
 	 * We cannot print errors so we bail out silently...
 	 */
-	int fd = -1;
+	int fd;
 	struct stat st;
 	pid_t pid;
 	int status;
-	void *ptr;
-	struct statfs sfs;
+	void *makedev = 0;
+	void *makedev_local = 0;
+	off_t makedev_size;
+	off_t makedev_local_size;
+	dev_t dev;
 
-	if (statfs("/", &sfs) == -1)
-		return;
-
-	if (strcmp(sfs.f_fstypename, MOUNT_MSDOS) != 0)
-		return;
-
-	/* If we have devices, we cannot be on msdosfs */
+	/* If we have /dev/console, assume all is OK  */
 	if (access(_PATH_CONSOLE, F_OK) != -1)
-		return;
+		return(0);
 
 	/* Grab the contents of MAKEDEV */
-	if ((fd = open("/dev/MAKEDEV", O_RDONLY)) == -1)
-		return;
+	if ((fd = open("/dev/MAKEDEV", O_RDONLY)) != -1) {
+		if (fstat(fd, &st) != -1 && (makedev = mmap(0, st.st_size,
+		    PROT_READ, MAP_FILE|MAP_SHARED, fd, 0)) != (void *)-1)
+			makedev_size = st.st_size;
+		else
+			makedev = 0;
+		(void) close(fd);
+	}
 
-	if (fstat(fd, &st) == -1)
-		goto done;
-
-	if ((ptr = mmap(0,
-	    st.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0)) == (void *) -1)
-		goto done;
-
-	(void) close(fd);
-	fd = -1;
+	/* Grab the contents of MAKEDEV.local */
+	if ((fd = open("/dev/MAKEDEV.local", O_RDONLY)) != -1) {
+		if (fstat(fd, &st) != -1 && (makedev_local = mmap(0, st.st_size,
+		    PROT_READ, MAP_FILE|MAP_SHARED, fd, 0)) != (void *)-1)
+			makedev_local_size = st.st_size;
+		else
+			makedev_local = 0;
+		(void) close(fd);
+	}
 
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
@@ -1319,73 +1323,75 @@ msdosfs_root(void)
 		(void) execl("/sbin/mount_mfs", "mount_mfs", "-i", "192",
 		    "-s", "512", "-b", "4096", "-f", "512", "swap", "/dev",
 		    NULL);
-		goto done;
+		_exit(0);
 
 	case -1:
-		goto done;
+		return(-1);
 
 	default:
 		if (waitpid(pid, &status, 0) == -1)
-			goto done;
+			return(-1);
 		if (status != 0)
-			goto done;
+			return(-1);
 		break;
 	}
 
-	/* Create a MAKEDEV script in /dev */
-	if ((fd = open("/dev/MAKEDEV", O_WRONLY|O_CREAT|O_TRUNC, 0755)) == -1)
-		goto done;
-
-	if (write(fd, ptr, st.st_size) != st.st_size)
-		goto done;
-
-	(void) munmap(ptr, st.st_size);
-
-	(void) close(fd);
-	fd = -1;
-
-#ifdef DEBUG
-	{
-		mode_t mode = 0666 | S_IFCHR;
-		dev_t dev;
 #ifdef CPU_CONSDEV
-		int s = sizeof(dev);
-		static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
+	int s = sizeof(dev);
+	static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
 
-  		if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &s,
-		    NULL, 0) == -1)
-			goto done;
-#else
+	if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &s,
+	    NULL, 0) == -1)
 		dev = makedev(0, 0);
+#else
+	dev = makedev(0, 0);
 #endif
 
-		/* Make a console for us, so we can see things happening */
-		if (mknod(_PATH_CONSOLE, mode, dev) == -1)
-			goto done;
+	/* Make a console for us, so we can see things happening */
+	if (mknod(_PATH_CONSOLE, 0666 | S_IFCHR, dev) == -1)
+	    return(-1);
+
+	freopen(_PATH_CONSOLE, "a", stderr);
+
+	fprintf(stderr, "init: Creating mfs /dev\n");
+
+	/* Create a MAKEDEV script in the mfs /dev */
+	if (makedev && (fd = open("/dev/MAKEDEV", O_WRONLY|O_CREAT|O_TRUNC,
+	    0755)) != -1) {
+		(void) write(fd, makedev, makedev_size);
+		(void) munmap(makedev, makedev_size);
+		(void) close(fd);
 	}
-#endif
+
+	/* Create a MAKEDEV.local script in the mfs /dev */
+	if (makedev_local && (fd = open("/dev/MAKEDEV.local",
+	    O_WRONLY|O_CREAT|O_TRUNC, 0755)) != -1) {
+		(void) write(fd, makedev_local, makedev_local_size);
+		(void) munmap(makedev_local, makedev_local_size);
+		(void) close(fd);
+	}
 
 	/* Run the makedev script to create devices */
 	switch ((pid = fork())) {
 	case 0:
 		if (chdir("/dev") == -1)
-			goto done;
+			goto fail;
 		(void) execl("/bin/sh", "sh", "./MAKEDEV", "all", NULL); 
-		goto done;
+		goto fail;
 
 	case -1:
-		goto done;
+		goto fail;
 
 	default:
 		if (waitpid(pid, &status, 0) == -1)
-		    goto done;
+		    goto fail;
 		if (status != 0)
-			goto done;
+			goto fail;
 		break;
 	}
-
-done:
-	if (fd != -1)
-		(void) close(fd);
+	return(0);
+fail:
+	fprintf(stderr, "init: Unable to run MAKEDEV\n");
+	return(-1);
 }
 #endif
