@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2002/01/23 19:07:34 atatat Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2002/05/17 17:27:12 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2002/01/23 19:07:34 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2002/05/17 17:27:12 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ main(argc, argv)
 		default:
 		case '?':
 			(void)fprintf(stderr,
-"usage:\t%p script [-anE] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n",
+"usage:\t%s script [-anE] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n",
 			    getprogname());
 			exit(1);
 		}
