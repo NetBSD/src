@@ -225,6 +225,8 @@ shmat(p, uap, retval)
 		size = shminfo.shmseg * sizeof(struct shmmap_state);
 		shmmap_s = malloc(size, M_SHM, M_WAITOK);
 		bzero((caddr_t)shmmap_s, size);
+		for (i = 0; i < shminfo.shmseg; i++)
+			shmmap_s[i].shmid = -1;
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_s;
 	}
 	shmseg = shm_find_segment_by_shmid(uap->shmid);
