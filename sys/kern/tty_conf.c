@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.32 2001/05/02 10:32:08 scw Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.33 2001/05/24 10:33:08 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -266,7 +266,7 @@ ttyldisc_lookup(name)
 #define TTYLDISCINIT(s, v) \
 	do { \
 		if (ttyldisc_add(&(s), (v)) != (v)) \
-			panic(__CONCAT("ttyldisc_init: ", __STRING(s))); \
+			panic("ttyldisc_init: " __STRING(s)); \
 	} while (0)
 
 /*
