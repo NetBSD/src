@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.15 1997/09/19 00:50:04 thorpej Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.16 1998/01/20 17:39:14 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.15 1997/09/19 00:50:04 thorpej Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.16 1998/01/20 17:39:14 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -131,23 +131,23 @@ XqueryIdle(display)
 	(void) alarm(10);
 	if (!sigsetjmp(openAbort, 0)) {
 		if ((dpy = XOpenDisplay(display)) == NULL) {
-			syslog(LOG_ERR, "cannot open display %s", display);
+			syslog(LOG_DEBUG, "cannot open display %s", display);
 			return (-1);
 		}
 		if (XidleQueryExtension(dpy, &first_event, &first_error)) {
 			if (!XGetIdleTime(dpy, &IdleTime)) {
-				syslog(LOG_ERR, "%s: unable to get idle time",
+				syslog(LOG_DEBUG, "%s: unable to get idle time",
 				    display);
 				return (-1);
 			}
 		} else {
-			syslog(LOG_ERR, "%s: Xidle extension not loaded",
+			syslog(LOG_DEBUG, "%s: Xidle extension not loaded",
 			    display);
 			return (-1);
 		}
 		XCloseDisplay(dpy);
 	} else {
-		syslog(LOG_ERR, "%s: server grabbed for over 10 seconds",
+		syslog(LOG_DEBUG, "%s: server grabbed for over 10 seconds",
 		    display);
 		return (-1);
 	}
@@ -173,7 +173,8 @@ getidle(tty, display)
 	 * XIdle extension
 	 */
 #ifdef XIDLE
-	if (display && *display && (idle = XqueryIdle(display)) >= 0)
+	if (display && *display && strchr(display, ':') != NULL &&
+	    (idle = XqueryIdle(display)) >= 0)
 		return (idle);
 #endif
 	idle = 0;
