@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.21.4.2 1999/04/12 21:27:07 pk Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.21.4.3 1999/06/18 17:18:43 perry Exp $	*/
 
 /* 
  * Mach Operating System
@@ -90,7 +90,7 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 	register struct nlist	*sym_start, *sym_end;
 	register struct nlist	*sp;
 	register char *strtab;
-	register int slen;
+	register int slen, bad = 0;
 	char *estrtab;
 
 	if (ALIGNED_POINTER(vsymtab, long) == 0) {
@@ -128,11 +128,15 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 		    printf("[ %s has bad a.out string table index (0x%x) ]\n",
 		        name, strx);
 		    sp->n_un.n_name = 0;
+		    bad = 1;
 		    continue;
 		}
 		sp->n_un.n_name = strtab + strx;
 	    }
 	}
+
+	if (bad)
+		return (FALSE);
 
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    NULL) !=  -1) {
