@@ -1,5 +1,5 @@
-.\"	$NetBSD: getnameinfo.3,v 1.8 2000/06/04 08:52:21 itojun Exp $
 .\"	$KAME: getnameinfo.3,v 1.10 2000/05/11 03:02:45 itojun Exp $
+.\"	$KAME: getnameinfo.3,v 1.13 2000/06/22 20:25:50 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,7 +105,7 @@ or
 .Fa servlen
 arguments.
 Otherwise, the caller must provide buffers large enough to hold the
-nodename and the  service name, including the terminating null characters.
+nodename and the service name, including the terminating null characters.
 .Pp
 Unfortunately most systems do not provide constants that specify the
 maximum size of either a fully-qualified domain name or a service name.
@@ -205,7 +205,7 @@ struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
 if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
-		sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
+    sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV)) {
 	errx(1, "could not get numeric hostname");
 	/*NOTREACHED*/
 }
@@ -218,7 +218,7 @@ struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST];
 
 if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
-		NI_NAMEREQD)) {
+    NI_NAMEREQD)) {
 	errx(1, "could not resolve hostname");
 	/*NOTREACHED*/
 }
@@ -235,6 +235,29 @@ printf("host=%s\\n", hbuf);
 .Sh DIAGNOSTICS
 The function indicates successful completion by a zero return value;
 a non-zero return value indicates failure.
+Error codes are as below:
+.Bl -tag -width Er
+.It Bq Er EAI_AGAIN
+The name could not be resolved at this time.
+Future attempts may succeed.
+.It Bq Er EAI_BADFLAGS
+The flags had an invalid value.
+.It Bq Er EAI_FAIL
+A non-recoverable error occurred.
+.It Bq Er EAI_FAMILY
+The address family was not recognized or the address length was invalid
+for the specified family.
+.It Bq Er EAI_MEMORY
+There was a memory allocation failure.
+.It Bq Er EAI_NONAME
+The name does not resolve for the supplied parameters.
+.Dv NI_NAMEREQD
+is set and the host's name cannot be located,
+or both nodename and servname were null.
+.It Bq Er EAI_SYSTEM
+A system error occurred.
+The error code can be found in errno.
+.El
 .\"
 .Sh SEE ALSO
 .Xr getaddrinfo 3 ,
@@ -261,6 +284,12 @@ a non-zero return value indicates failure.
 .%R internet draft
 .%N draft-ietf-ipngwg-scopedaddr-format-01.txt
 .%O work in progress material
+.Re
+.Rs
+.%A Craig Metz
+.%T Protocol Independence Using the Sockets API
+.%B "Proceedings of the freenix track: 2000 USENIX annual technical conference"
+.%D June 2000
 .Re
 .\"
 .Sh HISTORY
