@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.296 1999/07/02 19:59:09 itojun Exp $
+#	$NetBSD: files,v 1.297 1999/07/05 11:38:35 mjacob Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -209,6 +209,9 @@ device	aha: scsi
 file	dev/ic/aha.c			aha
 
 # Qlogic ISP 10x0 SCSI Controllers
+defopt	opt_isp.h	ISP2100_FABRIC ISP2100_SCCLUN ISP_DISABLE_1020_SUPPORT
+			ISP_DISABLE_1080_SUPPORT ISP_DISABLE_2100_SUPPORT
+			ISP_DISABLE_2200_SUPPORT
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
