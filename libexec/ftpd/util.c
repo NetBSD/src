@@ -1,3 +1,5 @@
+/*	$NetBSD: util.c,v 1.3 1999/01/03 02:22:05 lukem Exp $	*/
+
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.2 1999/01/02 17:54:21 nathanw Exp $");
+__RCSID("$NetBSD: util.c,v 1.3 1999/01/03 02:22:05 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
