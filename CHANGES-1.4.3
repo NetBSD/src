@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.43 2000/07/13 21:25:08 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.44 2000/07/23 18:05:03 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -944,3 +944,53 @@ sys/arch/macppc/stand/Makefile.inc		patch
   Enhance the ``make release'' process:  
    o Make installation directories
    o Build and install the distrib and boot bits
+
+sys/arch/sparc/stand/common/dvma.c		1.7-1.8 via patch
+
+  Account for stack when computing base VA; fixes booting on sun4
+  systems.  Fixes PR#9906 and PR#10165
+
+share/man/man7/hier.7				1.27
+
+  Clarify purpose of manual page, and fix a few other minor problems.
+  Fixes PR#8980.
+
+sys/dev/isa/if_iy.c				1.40
+
+  Flush memory pipeline before installing the multicast list.
+  Fixes a problem causing a random address to be installed as
+  the last one in the multicast filter list.
+
+distrib/sun3/MakeBootTape			1.5-1.6
+distrib/sun3/miniroot/Makefile			1.18    
+
+  Fixes to release building machinery:
+   o ramdisk kernel names changed
+   o make installation/miniroot directory
+
+usr.sbin/dhcp/client/Makefile			patch
+usr.sbin/dhcp/client/clparse.c			patch
+usr.sbin/dhcp/client/dhclient.c			patch
+usr.sbin/dhcp/includes/dhcpd.h			patch
+
+  Instead of creating a temporary client script, put environment
+  settings in the environment before the real client script is
+  executed.
+
+sys/dev/pci/pciide.c				1.74
+share/man/man4/pciide.4				1.22 via patch
+distrib/notes/i386/hardware			1.74 via patch
+
+  Add support for the Promise Ultra/100 PCI IDE controller (in
+  Ultra/66 mode only).
+
+sys/dev/pci/pciide.c				1.79
+
+  Handle CMD PCI0646 interrupts as for the PCI0648; makes the
+  PCI0646 work in native mode with shared interrupts.
+
+sys/dev/pci/pcidevs				1.214,1.245
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcidevs.h				regenerate
+
+  Add product codes for various Yamaha audio chips.
