@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 2000/08/20 21:50:07 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 2001/02/13 13:16:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.6 2000/08/20 21:50:07 thorpej Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.7 2001/02/13 13:16:37 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -103,7 +103,7 @@ remrunqueue(struct proc *p)
 /*
  * Idle
  */
-static void
+void
 idle()
 {
 
