@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.68 2001/11/25 19:15:46 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.69 2001/12/12 13:17:03 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.68 2001/11/25 19:15:46 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.69 2001/12/12 13:17:03 gehenna Exp $");
 
 #include "atapibus.h"
 
@@ -1010,7 +1010,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	sc->cbw.bCBWFlags = (dir == DIR_IN? CBWFLAGS_IN:CBWFLAGS_OUT);
 	sc->cbw.bCBWLUN = lun;
 	sc->cbw.bCDBLength = cmdlen;
-	bcopy(cmd, sc->cbw.CBWCDB, cmdlen);
+	memcpy(sc->cbw.CBWCDB, cmd, cmdlen);
 
 	DIF(UDMASS_BBB, umass_bbb_dump_cbw(sc, &sc->cbw));
 
