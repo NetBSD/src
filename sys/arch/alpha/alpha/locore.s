@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.66 1999/11/01 19:59:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65 1999/09/17 19:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.66 1999/11/01 19:59:58 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -396,12 +396,12 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	ldq	t0, 0(t0)
 	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
 	cmpeq	t1, v0, t0
-	beq	t0, 4f				/* == 0: bail out now */
+	beq	t0, 5f				/* == 0: bail out now */
 #endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
-	bne	t0, 4f				/* != 0: can't do AST or SIR */
+	bne	t0, 5f				/* != 0: can't do AST or SIR */
 
 	/* see if we can do an SIR */
 	ldq	t1, ssir			/* SIR pending? */
@@ -411,25 +411,31 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	CALL(do_sir)				/* do the SIR; lowers IPL */
 
 	/* Check for AST */
-2:	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero*/
-	call_pal PAL_OSF1_swpipl
+2:	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
+	beq	t0, 5f				/* no: just return */
 
-	and	s1, ALPHA_PSL_USERMODE, t0	/* are we returning to user? */
-	beq	t0, 4f				/* no: just return */
-
-	ldq	t2, astpending			/* AST pending? */
-	beq	t2, 3f				/* no: return & deal with FP */
+3:	ldq	t2, astpending			/* AST pending? */
+	beq	t2, 4f				/* no: return & deal with FP */
 
 	/* We've got an AST.  Handle it. */
+	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
+	call_pal PAL_OSF1_swpipl
+	mov	v0, s2				/* remember old IPL */
+
 	mov	sp, a0				/* only arg is frame */
 	CALL(ast)
 
+	/* AST handled; raise IPL and check again */
+	mov	s2, a0
+	call_pal PAL_OSF1_swpipl
+	beq	zero, 3b
 
 	/*
-	 * enable FPU based on whether the current proc is fpcurproc.
-	 * Note: GET_*() clobbers v0, t0, t8...t11.
+	 * We are going back to usermode.  Enable the FPU based on whether
+	 * the current proc is fpcurproc.  Note: GET_*() clobbers v0, t0,
+	 * t8...t11.
 	 */
-3:	GET_CURPROC(t1)
+4:	GET_CURPROC(t1)
 	ldq	t1, 0(t1)
 	GET_FPCURPROC(t2)
 	ldq	t2, 0(t2)
@@ -438,7 +444,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	cmovne	t1, 1, a0
 	call_pal PAL_OSF1_wrfen
 
-4:	/* restore the registers, and return */
+5:	/* restore the registers, and return */
 	bsr	ra, exception_restore_regs	/* jmp/CALL trashes pv/t12 */
 	ldq	ra,(FRAME_RA*8)(sp)
 	.set noat
