@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2002/03/24 03:37:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2002/03/24 04:38:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -192,19 +192,25 @@ extern vaddr_t	pmap_curmaxkvaddr;
 #define vtophys(va) \
 	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
 
-#define	l2pte_valid(pte)		((pte) != 0)
+#define	l1pte_valid(pde)	((pde) != 0)
+#define	l1pte_section_p(pde)	(((pde) & L1_MASK) == L1_SECTION)
+#define	l1pte_page_p(pde)	(((pde) & L1_MASK) == L1_PAGE)
+#define	l1pte_fpage_p(pde)	(((pde) & L1_MASK) == L1_FPAGE)
+
+#define	l2pte_valid(pte)	((pte) != 0)
 #define	l2pte_pa(pte)		((pte) & PG_FRAME)
 
 /* L1 and L2 page table macros */
-#define pmap_pdei(v)	((v & PD_MASK) >> PDSHIFT)
-#define pmap_pde(m, v) (&((m)->pm_pdir[pmap_pdei(v)]))
-#define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
-#define pmap_pde_v(pde)		(*(pde) != 0)
-#define pmap_pde_section(pde)	((*(pde) & L1_MASK) == L1_SECTION)
-#define pmap_pde_page(pde)	((*(pde) & L1_MASK) == L1_PAGE)
-#define pmap_pde_fpage(pde)	((*(pde) & L1_MASK) == L1_FPAGE)
+#define pmap_pdei(v)		((v & PD_MASK) >> PDSHIFT)
+#define pmap_pde(m, v)		(&((m)->pm_pdir[pmap_pdei(v)]))
 
-#define pmap_pte_v(pte)		(*(pte) != 0)
+#define pmap_pde_v(pde)		l1pte_valid(*(pde))
+#define pmap_pde_section(pde)	l1pte_section_p(*(pde))
+#define pmap_pde_page(pde)	l1pte_page_p(*(pde))
+#define pmap_pde_fpage(pde)	l1pte_fpage_p(*(pde))
+
+#define	pmap_pte_v(pte)		l2pte_valid(*(pte))
+#define	pmap_pte_pa(pte)	l2pte_pa(*(pte))
 
 
 /* Size of the kernel part of the L1 page table */
