@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.1 1999/11/20 19:56:36 uch Exp $ */
+/*	$NetBSD: tx39power.c,v 1.2 1999/12/07 17:11:05 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -80,7 +80,7 @@ tx39power_attach(parent, self, aux)
 	txreg_t reg;
 	
 	tc = sc->sc_tc = ta->ta_tc;
-	printf("\n ");
+	printf("\n");
 #ifdef TX39POWERDEBUG
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	ISSETPRINT(reg, ONBUTN);
@@ -131,6 +131,13 @@ tx39power_attach(parent, self, aux)
 	reg &= ~TX39_POWERCTRL_ENSTPTIMER;
 	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
 #endif /* DISABLE_SPI_AND_DOZE */
+
+	/*
+	 * enable stop timer
+	 */
+	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
+	reg |= TX39_POWERCTRL_ENSTPTIMER;
+	tx_conf_write(tc, TX39_POWERCTRL_REG, reg);
 
 	tx_intr_establish(tc, MAKEINTR(5, TX39_INTRSTATUS5_POSPWRINT),
 			    IST_EDGE, IPL_CLOCK, 

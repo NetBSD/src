@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.1 1999/11/20 19:56:33 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.2 1999/12/07 17:11:05 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -197,8 +197,6 @@ tx39icu_attach(parent, self, aux)
 	printf("\n");
 	sc->sc_tc = ta->ta_tc;
 
-
-	printf("\t[Windows CE setting]\n");
 	sc->sc_regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
 	sc->sc_regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);
 	sc->sc_regs[2] = tx_conf_read(tc, TX39_INTRSTATUS2_REG);
@@ -209,7 +207,11 @@ tx39icu_attach(parent, self, aux)
 	sc->sc_regs[7] = tx_conf_read(tc, TX39_INTRSTATUS7_REG);
 	sc->sc_regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
 #endif
+#ifdef TX39ICUDEBUG
+	printf("\t[Windows CE setting]\n");
 	tx39_intr_dump(sc);
+#endif /* TX39ICUDEBUG */
+
 #ifdef WINCE_DEFAULT_SETTING
 #warning WINCE_DEFAULT_SETTING
 #else /* WINCE_DEFAULT_SETTING */
@@ -629,7 +631,12 @@ tx39_poll_establish(tc, interval, mode, level, ih_fun, ih_arg)
 		/* Hook VSync : TX39_INTRSTATUS1_LCDINT*/
 		if (!(sc->sc_poll_ih = 
 		      tx_intr_establish(
+#ifdef TX391X
 			      tc, MAKEINTR(1, TX39_INTRSTATUS1_LCDINT),
+#endif
+#ifdef TX392X
+			      tc, MAKEINTR(5, TX39_INTRSTATUS5_STPTIMERINT),
+#endif
 			      mode, level, tx39_poll_intr, sc)))  {
 			printf("tx39_poll_establish: can't hook\n");
 			return 0;
