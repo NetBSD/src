@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.8 1996/08/26 02:34:44 thorpej Exp $
+#	$NetBSD: install.md,v 1.9 1996/10/09 00:13:36 jtc Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,6 +51,25 @@ md_set_term() {
 	getresp "sun"
 	TERM="$resp"
 	export TERM
+}
+
+md_makerootwritable() {
+	# Was: do_mfs_mount "/tmp" "2048"
+	# /tmp is the mount point
+	# 2048 is the size in DEV_BIZE blocks
+
+	umount /tmp > /dev/null 2>&1
+	if ! mount_mfs -s 2048 swap /tmp ; then
+		cat << \__mfs_failed_1
+
+FATAL ERROR: Can't mount the memory filesystem.
+
+__mfs_failed_1
+		exit
+	fi
+
+	# Bleh.  Give mount_mfs a chance to DTRT.
+	sleep 2
 }
 
 md_get_diskdevs() {
@@ -197,7 +216,7 @@ program can cause SIGNIFICANT data loss, and you are advised
 to make sure your data is backed up before beginning the
 installation process.
 
-Default answers are displyed in brackets after the questions.
+Default answers are displayed in brackets after the questions.
 You can hit Control-C at any time to quit, but if you do so at a
 prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.

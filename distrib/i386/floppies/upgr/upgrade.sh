@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+#	$NetBSD: upgrade.sh,v 1.5 1996/10/09 00:13:36 jtc Exp $
+#
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 #
@@ -28,7 +30,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.4 1995/11/28 23:57:37 jtc Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +39,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -118,13 +119,17 @@ echo	""
 echo	"Root partition is on ${drivename}a."
 
 echo	""
+echo	"If (and only if!) you are upgrading from NetBSD 0.9 or below,"
+echo	"you should upgrade to the new file system format. Do not answer"
+echo	"yes if you are upgrading from NetBSD 1.0 or above."
 echo	"Would you like to upgrade your file systems to the new file system"
 echo -n	"format? [y] "
 getresp "y"
 case "$resp" in
 	n*|N*)
 		echo	""
-		echo	"You should upgrade your file systems with 'fsck -c 2'"
+		echo	"If you are upgrading from NetBSD 0.9 or above,"
+		echo	"you should upgrade your file systems with 'fsck -c 2'"
 		echo	"as soon as is feasible, because the new file system"
 		echo	"code is better-tested and more performant."
 		upgradefs=NO
