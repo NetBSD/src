@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 1999/12/28 10:46:55 simonb Exp $
+#	$NetBSD: list,v 1.7 2000/01/03 22:07:11 simonb Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -69,8 +69,8 @@ SPECIAL	cd dev; sh MAKEDEV minimal pty0
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot blocks /usr/mdec
-COPY	${DESTDIR}/usr/mdec/rzboot		usr/mdec/rzboot
-COPY	${DESTDIR}/usr/mdec/bootrz		usr/mdec/bootrz
+COPY	${DESTDIR}/usr/mdec/bootxx_ffs		usr/mdec/bootxx_ffs
+COPY	${DESTDIR}/usr/mdec/boot.pmax		usr/mdec/boot.pmax
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../etc/group		etc/group
