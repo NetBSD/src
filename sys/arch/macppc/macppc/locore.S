@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 1998/09/21 17:16:26 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 1999/01/11 08:49:58 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,11 +67,23 @@ GLOBAL(intrnames)
 	.asciz	"irq20", "irq21", "irq22", "irq23"
 	.asciz	"irq24", "irq25", "irq26", "irq27"
 	.asciz	"irq28", "irq29", "irq30", "irq31"
+	.asciz	"irq32", "irq33", "irq34", "irq35"
+	.asciz	"irq36", "irq37", "irq38", "irq39"
+	.asciz	"irq40", "irq41", "irq42", "irq43"
+	.asciz	"irq44", "irq45", "irq46", "irq47"
+	.asciz	"irq48", "irq49", "irq50", "irq51"
+	.asciz	"irq52", "irq53", "irq54", "irq55"
+	.asciz	"irq56", "irq57", "irq58", "irq59"
+	.asciz	"irq60", "irq61", "irq62", "irq63"
+	.asciz	"clock", "softclock", "softnet", "softserial"
 GLOBAL(eintrnames)
 	.align	4
 GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0
 GLOBAL(eintrcnt)
 
 GLOBAL(ofbat)
