@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.27 1997/04/24 02:25:37 mycroft Exp $	*/
+/*	$NetBSD: midway.c,v 1.28 1997/04/28 17:04:06 mycroft Exp $	*/
 /*	(sync'd to midway.c 1.67)	*/
 
 /*
@@ -594,6 +594,7 @@ u_int totlen, *drqneed;
     if (totlen >= MINCLSIZE) {
       MCLGET(m, M_DONTWAIT);
       if ((m->m_flags & M_EXT) == 0) {
+	m_free(m);
 	m_freem(top);
 	return(NULL);	/* out of mbuf clusters */
       }
