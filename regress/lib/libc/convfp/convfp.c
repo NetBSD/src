@@ -1,4 +1,4 @@
-/*	$NetBSD: convfp.c,v 1.2 2003/06/15 23:38:17 martin Exp $	*/
+/*	$NetBSD: convfp.c,v 1.3 2003/06/16 07:11:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@
 int
 main()
 {
-	unsigned long ul;
-	double d;
 	unsigned int ui;
+	unsigned long ul;
+	long double dt;
+	double d;
 
 	/* unsigned int test */
 	d = UINT_TESTVALUE;
@@ -63,8 +64,23 @@ main()
 		exit(1);
 	}
 
-	d = ULONG_TESTVALUE;
-	ul = (unsigned long)d;
+	/* unsigned long vs. {long} double test */
+	if (sizeof(d) > sizeof(ul)) {
+		d = ULONG_TESTVALUE;
+		ul = (unsigned long)d;
+		printf("testing double vs. long\n");
+	} else if (sizeof(dt) > sizeof(ul)) {
+		dt = ULONG_TESTVALUE;
+		ul = (unsigned long)dt;
+		printf("testing long double vs. long\n");
+	} else {
+		printf("no suitable {long} double type found, skipping "
+		    "\"unsigned long\" test\n");
+		printf("sizeof(long) = %d, sizeof(double) = %d, "
+		    "sizeof(long double) = %d\n", 
+		    sizeof(ul), sizeof(d), sizeof(dt));
+		goto done;
+	}
 
 	if (ul != ULONG_TESTVALUE) {
 		printf("FAILED: unsigned long %lu (0x%lx) != %lu (0x%lx)\n",
@@ -72,6 +88,7 @@ main()
 		exit(1);
 	}
 
+done:
 	printf("PASSED\n");
 
 	exit(0);
