@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.12 1999/04/09 10:24:39 bouyer Exp $	*/
+/*	$NetBSD: run.c,v 1.13 1999/04/11 22:40:21 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -480,9 +480,11 @@ run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
 			waddstr(statuswin, "Finished");
 		wstandend(statuswin);
 		wmove(statuswin, 2, 5);
-		waddstr(statuswin, "Press any key to continue");
+		if (ret != 0)
+			waddstr(statuswin, "Press any key to continue");
 		wrefresh(statuswin);
-		(void)getchar();
+		if (ret != 0)
+			(void)getchar();
 
 		/* clean things up */
 		wclear(actionwin);

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.25 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.26 1999/04/11 22:40:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,17 +134,10 @@ menu edfspart, title "  Change what? ", exit, y=15;
 	};
 	option "FS kind", sub menu  selfskind;
 	option "Offset/size", action  
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_offset, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+		{	int start, size;
+			start = getpartoff(MSG_offset, 0);
+			size = getpartsize(MSG_size, start, 0);
 			if (size == -1)
-				size = dlsize - start;
-			if (editpart == 1 && 
-			    bsdlabel[editpart].pi_fstype == FS_SWAP)
-				size -= swapadj;
-			if (start + size > dlsize)
 				size = dlsize - start;
 			bsdlabel[editpart].pi_offset = start;
 			bsdlabel[editpart].pi_size = size;
