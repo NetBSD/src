@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.6 1999/07/05 08:15:39 cjs Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.7 1999/07/06 12:23:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: key_debug.c,v 1.6 1999/07/05 08:15:39 cjs Exp $ */
+/* KAME Id: key_debug.c,v 1.1.6.2.4.3 1999/07/06 12:05:13 itojun Exp */
 
 #ifdef _KERNEL
 # define KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.89 1999/07/01 08:12:50 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.90 1999/07/06 12:23:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1638,14 +1638,14 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (error);
 	    }
 #endif
-#if NGIF > 0
-	case IPCTL_GIF_TTL:
-		return(sysctl_int(oldp, oldlenp, newp, newlen,
-				  &gif_ttl));
-#endif
 	case IPCTL_HOSTZEROBROADCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &hostzeroisbroadcast));
+#if NGIF > 0
+	case IPCTL_GIF_TTL:
+		return(sysctl_int(oldp, oldlenp, newp, newlen,
+				  &ip_gif_ttl));
+#endif
 
 	default:
 		return (EOPNOTSUPP);

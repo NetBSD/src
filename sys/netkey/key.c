@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.6 1999/07/04 02:01:16 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.7 1999/07/06 12:23:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.6 1999/07/04 02:01:16 itojun Exp $ */
+/* KAME Id: key.c,v 1.1.6.5.2.18 1999/07/04 02:06:37 itojun Exp */
 
 /*
  * This code is referd to RFC 2367,
@@ -615,6 +615,10 @@ key_do_allocsa_policy(saidx, proto, mode, state)
 		}
 
 		if (sa->type != proto)
+			continue;
+
+		/* check transport mode */
+		if (mode == IPSEC_MODE_TRANSPORT && sa->proxy != NULL)
 			continue;
 
 		/* check proxy address for tunnel mode */
@@ -2286,10 +2290,8 @@ key_setsaval(sa, mhp)
 #ifdef IPSEC_ESP
 	    {
 		struct esp_algorithm *algo;
-		int siz;
 
 		algo = &esp_algorithms[sa->alg_enc];
-		siz = (sa->flags & SADB_X_EXT_IV4B) ? 4 : 0;
 		if (algo && algo->ivlen)
 			sa->ivlen = (*algo->ivlen)(sa);
 		KMALLOC(sa->iv, caddr_t, sa->ivlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.37 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.38 1999/07/06 12:23:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -184,7 +184,7 @@ extern LIST_HEAD(ipqhead, ipq) ipq;	/* ip reass. queue */
 extern u_int16_t ip_id;			/* ip packet ctr, for ids */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
-extern int   gif_ttl;			/* default TTL for gif encap packet */
+extern int   ip_gif_ttl;		/* default TTL for gif encap packet */
 extern int   ip_mtudisc;		/* mtu discovery */
 extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
 extern int   anonportmin;		/* minimum ephemeral port */

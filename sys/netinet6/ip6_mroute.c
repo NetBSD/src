@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.5 1999/07/06 08:55:56 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.6 1999/07/06 12:23:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -922,13 +922,6 @@ ip6_mforward(ip6, ifp, m)
 		    ip6_sprintf(&ip6->ip6_src), ip6_sprintf(&ip6->ip6_dst),
 		    ifp->if_index);
 #endif
-	/*
-	 * If the packet is loop-backed, it should be for local listeners
-	 * and need not to be forwarded any more.
-	 * XXX: M_LOOP is an ad-hoc hack...
-	 */
-	if (m->m_flags & M_LOOP)
-		return 0;
 
 	/*
 	 * Don't forward a packet with Hop limit of zero or one,
@@ -1223,7 +1216,12 @@ ip6_mdq(m, ifp, rt)
 		if(mifi < nummifs) /* have to make sure this is a valid mif */
 			if(mif6table[mifi].m6_ifp)
 
-				if (pim6) {
+				if (pim6 && (m->m_flags & M_LOOP) == 0) {
+					/*
+					 * Check the M_LOOP flag to avoid an
+					 * unnecessary PIM assert.
+					 * XXX: M_LOOP is an ad-hoc hack...
+					 */
 					static struct sockaddr_in6 sin6 =
 					{ sizeof(sin6), AF_INET6 };
 
