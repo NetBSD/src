@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.24 2000/01/20 02:53:46 mycroft Exp $	*/
+/*	$NetBSD: setmode.c,v 1.25 2000/01/20 03:15:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.24 2000/01/20 02:53:46 mycroft Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.25 2000/01/20 03:15:04 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -164,18 +164,21 @@ common:			if (set->cmd2 & CMD2_CLR) {
 		}
 }
 
-#define	ADDCMD(a, b, c, d)						\
+#define	ADDCMD(a, b, c, d) do {						\
 	if (set >= endset) {						\
-		BITCMD *newset;				\
+		BITCMD *newset;						\
 		setlen += SET_LEN_INCR;					\
 		newset = realloc(saveset, sizeof(BITCMD) * setlen);	\
-		if (!saveset)						\
+		if (newset == NULL) {					\
+			free(saveset);					\
 			return (NULL);					\
+		}							\
 		set = newset + (set - saveset);				\
 		saveset = newset;					\
 		endset = newset + (setlen - 2);				\
 	}								\
-	set = addcmd(set, (a), (b), (c), (d))
+	set = addcmd(set, (a), (b), (c), (d));				\
+} while (0)
 
 #define	STANDARD_BITS	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
 
