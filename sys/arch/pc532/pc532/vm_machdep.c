@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1997/03/20 12:01:03 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1997/07/09 19:26:37 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -85,7 +85,7 @@ cpu_fork(p1, p2)
 	/* If p1 is holding the FPU, update the FPU context of p2. */
 	if (fpu_proc == p1)
 		save_fpu_context(pcb);
-	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
+	pmap_activate(p2->p_vmspace->vm_map.pmap, pcb);
 
 	/*
 	 * Copy the syscframe, and arrange for the child to return directly

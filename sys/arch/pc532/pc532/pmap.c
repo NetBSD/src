@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1997/04/01 16:32:58 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 1997/07/09 19:26:34 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -742,7 +742,7 @@ pmap_activate(pmap, pcb)
 	if (pmap /*&& pmap->pm_pdchanged */) {
 		pcb->pcb_ptb =
 		    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
-		if (pmap == &curproc->p_vmspace->vm_pmap)
+		if (pmap == curproc->p_vmspace->vm_map.pmap)
 			load_ptb(pcb->pcb_ptb);
 		pmap->pm_pdchanged = FALSE;
 	}
