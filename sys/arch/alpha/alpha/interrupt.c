@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 1995/06/28 02:45:02 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 1995/08/03 00:54:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -128,7 +128,7 @@ badaddr(addr, size)
 	mc_expected = 1;
 
 	/* Read from the test address, and make sure the read happens. */
-	MB();
+	wbflush();
 	switch (size) {
 	case sizeof (u_int8_t):
 		rcpt = *(u_int8_t *)addr;
@@ -149,7 +149,7 @@ badaddr(addr, size)
 	default:
 		panic("badaddr: invalid size (%ld)\n", size);
 	}
-	MB();
+	wbflush();
 	pal_draina();
 
 	/* disallow further machine checks */
