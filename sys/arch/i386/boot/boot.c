@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.16 1994/02/03 23:21:24 mycroft Exp $
+ *	$Id: boot.c,v 1.17 1994/02/04 00:02:42 mycroft Exp $
  */
 
 /*
@@ -137,7 +137,7 @@ loadprog(howto)
 	/********************************************************/
 	/* LOAD THE TEXT SEGMENT				*/
 	/********************************************************/
-	printf("text=0x%x ", head.a_text);
+	printf("%d", head.a_text);
 	xread(addr, head.a_text);
 	addr += head.a_text;
 
@@ -152,7 +152,7 @@ loadprog(howto)
 		}
 	}
 
-	printf("data=0x%x ", head.a_data);
+	printf("+%d", head.a_data);
 	xread(addr, head.a_data);
 	addr += head.a_data;
 
@@ -160,7 +160,7 @@ loadprog(howto)
 	/* Skip over the uninitialised data			*/
 	/* (but clear it)					*/
 	/********************************************************/
-	printf("bss=0x%x ", head.a_bss);
+	printf("+%d", head.a_bss);
 	pbzero(addr, head.a_bss);
 
 	argv[3] = (addr += head.a_bss);
@@ -174,7 +174,7 @@ loadprog(howto)
 	/********************************************************/
 	/* READ in the symbol table				*/
 	/********************************************************/
-	printf("symbols=[0x%x+", head.a_syms);
+	printf("+[%d", head.a_syms);
 	xread(addr, head.a_syms);
 	addr += head.a_syms;
 	
@@ -187,6 +187,7 @@ loadprog(howto)
 	if (i) {
 		i -= sizeof(int);
 		addr += sizeof(int);
+		printf("+%d", i);
 		xread(addr, i);
 		addr += i;
 	}
@@ -194,13 +195,13 @@ loadprog(howto)
 	/********************************************************/
 	/* and that many bytes of (debug symbols?)		*/
 	/********************************************************/
-	printf("0x%x] ", i);
+	printf("]");
 	argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
 
 	/********************************************************/
 	/* and note the end address of all this			*/
 	/********************************************************/
-	printf("total=0x%x ", argv[4]);
+	printf("=0x%x\n", addr);
 
 	/*
 	 *  We now pass the various bootstrap parameters to the loaded
@@ -236,7 +237,7 @@ loadprog(howto)
 	/****************************************************************/
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
-	printf("entry=0x%x\n", (int)startaddr);
+	printf("entry point at 0x%x\n", (int)startaddr);
 	startprog((int)startaddr, argv);
 }
 
