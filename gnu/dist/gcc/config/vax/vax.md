@@ -61,12 +61,36 @@
   ""
   "tstf %0")
 
-(define_insn "cmpsi"
+(define_expand "cmpsi"
   [(set (cc0)
 	(compare (match_operand:SI 0 "nonimmediate_operand" "g")
-		 (match_operand:SI 1 "general_operand" "g")))]
+		 (match_operand:SI 1 "compare_operand" "g")))]
   ""
-  "cmpl %0,%1")
+  "
+{
+  if ((TARGET_HALFPIC || flag_pic) && symbolic_operand (operands[1], SImode))
+    {
+      /* The source is an address which requires PIC relocation.
+         Call legitimize_pic_address with the source, mode, and a relocation
+         register (a new pseudo, or the final destination if reload_in_progress
+         is set).   Then fall through normally */
+      extern rtx legitimize_pic_address();
+      rtx temp = reload_in_progress ? operands[0] : gen_reg_rtx (Pmode);
+      operands[1] = legitimize_pic_address (operands[1], SImode, temp);
+    }
+}")
+
+(define_insn ""
+  [(set (cc0)
+	(compare (match_operand:SI 0 "nonimmediate_operand" "g")
+		 (match_operand:SI 1 "compare_operand" "g")))]
+  ""
+  "*
+{
+  if (!(/*TARGET_HALFPIC || */flag_pic) || GET_CODE (operands[1]) != SYMBOL_REF)
+      return \"cmpl %0,%1\";
+  return \"pushab %a1;cmpl %0,(sp)+\";
+}")
 
 (define_insn "cmphi"
   [(set (cc0)
@@ -178,6 +202,34 @@
    clrq %0
    movq %D1,%0")
 
+
+;; General case of fullword move.
+;;
+;; This is the main "hook" for PIC code.  When generating
+;; PIC, movsi is responsible for determining when the source address
+;; needs PIC relocation and appropriately calling legitimize_pic_address
+;; to perform the actual relocation.
+;;
+;; In both the PIC and non-PIC cases the patterns generated will
+;; matched by the next define_insn.
+(define_expand "movsi"
+  [(set (match_operand:SI 0 "general_operand" "")
+	(match_operand:SI 1 "general_operand" ""))]
+  ""
+  "
+{
+  if ((TARGET_HALFPIC || flag_pic) && symbolic_operand (operands[1], SImode))
+    {
+      /* The source is an address which requires PIC relocation.
+         Call legitimize_pic_address with the source, mode, and a relocation
+         register (a new pseudo, or the final destination if reload_in_progress
+         is set).   Then fall through normally */
+      extern rtx legitimize_pic_address();
+      rtx temp = reload_in_progress ? operands[0] : gen_reg_rtx (Pmode);
+      operands[1] = legitimize_pic_address (operands[1], SImode, temp);
+    }
+}")
+
 ;; The VAX move instructions have space-time tradeoffs.  On a microVAX
 ;; register-register mov instructions take 3 bytes and 2 CPU cycles.  clrl
 ;; takes 2 bytes and 3 cycles.  mov from constant to register takes 2 cycles
@@ -194,8 +246,7 @@
 
 ;;  Loads of constants between 64 and 128 used to be done with
 ;; "addl3 $63,#,dst" but this is slower than movzbl and takes as much space.
-
-(define_insn "movsi"
+(define_insn ""
   [(set (match_operand:SI 0 "general_operand" "=g")
 	(match_operand:SI 1 "general_operand" "g"))]
   ""
@@ -571,10 +622,18 @@
 	  && ((INTVAL (operands[2]) < 32767 && INTVAL (operands[2]) > -32768)
 	      || REGNO (operands[1]) > 11))
 	return \"movab %c2(%1),%0\";
+      if (GET_CODE (operands[2]) == SYMBOL_REF 
+	  && GET_CODE (operands[1]) == REG)
+	return \"movab %a2[%1],%0\";
       return \"addl2 %2,%0\";
     }
   if (rtx_equal_p (operands[0], operands[2]))
-    return \"addl2 %1,%0\";
+    {
+      if (GET_CODE (operands[1]) == SYMBOL_REF 
+	  && GET_CODE (operands[2]) == REG)
+	return \"movab %a1[%2],%0\";
+      return \"addl2 %1,%0\";
+    }
 
   if (GET_CODE (operands[2]) == CONST_INT
       && INTVAL (operands[2]) < 32767
@@ -594,10 +653,41 @@
 	  || REGNO (operands[1]) > 11))
     return \"movab %c2(%1),%0\";
 
-  /* Add this if using gcc on a VAX 3xxx:
-  if (REG_P (operands[1]) && REG_P (operands[2]))
+  if (TARGET_CVAX && REG_P (operands[1]) && REG_P (operands[2]))
     return \"movab (%1)[%2],%0\";
-  */
+
+  if ((TARGET_HALFPIC || flag_pic) && GET_CODE (operands[1]) == SYMBOL_REF)
+    {
+      if (push_operand(operands[0], SImode))
+	{
+	  if (REG_P (operands[2]))
+	    return \"pushab %a1[%2]\";
+	  return \"pushab %a1;addl2 %2,(sp)\";
+	}
+      if (GET_CODE (operands[2]) == REG)
+	return \"movab %a1[%2],%0\";
+      if (GET_CODE (operands[0]) != POST_INC
+	  && GET_CODE (operands[0]) != PRE_DEC)
+	return \"movab %a1,%0;addl2 %2,%0\";
+      return \"nop;addl3 %1,%2,%0\";
+    }
+
+  if ((TARGET_HALFPIC || flag_pic) && GET_CODE (operands[2]) == SYMBOL_REF)
+    {
+      if (push_operand(operands[0], SImode))
+	{
+	  if (REG_P (operands[1]))
+	    return \"pushab %a2[%1]\";
+	  return \"pushab %a2;addl2 %1,(sp)\";
+	}
+      if (GET_CODE (operands[1]) == REG)
+	return \"movab %a2[%1],%0\";
+      if (GET_CODE (operands[0]) != POST_INC
+	  && GET_CODE (operands[0]) != PRE_DEC)
+	return \"movab %a2,%0;addl2 %1,%0\";
+      return \"nop;addl3 %1,%2,%0\";
+    }
+
   return \"addl3 %1,%2,%0\";
 }")
 
@@ -1841,7 +1931,7 @@
 ;; a word.  Since the only time we actually use it in the call instruction
 ;; is when it is a constant, SImode (for addl2) is the proper mode.
 (define_insn "call_pop"
-  [(call (match_operand:QI 0 "memory_operand" "m")
+  [(call (match_operand:QI 0 "call_operand" "m")
 	 (match_operand:SI 1 "const_int_operand" "n"))
    (set (reg:SI 14) (plus:SI (reg:SI 14)
 			     (match_operand:SI 3 "immediate_operand" "i")))]
@@ -1856,7 +1946,7 @@
 
 (define_insn "call_value_pop"
   [(set (match_operand 0 "" "=g")
-	(call (match_operand:QI 1 "memory_operand" "m")
+	(call (match_operand:QI 1 "call_operand" "m")
 	      (match_operand:SI 2 "const_int_operand" "n")))
    (set (reg:SI 14) (plus:SI (reg:SI 14)
 			     (match_operand:SI 4 "immediate_operand" "i")))]
@@ -1872,7 +1962,7 @@
 ;; Define another set of these for the case of functions with no
 ;; operands.  In that case, combine may simplify the adjustment of sp.
 (define_insn ""
-  [(call (match_operand:QI 0 "memory_operand" "m")
+  [(call (match_operand:QI 0 "call_operand" "m")
 	 (match_operand:SI 1 "const_int_operand" "n"))
    (set (reg:SI 14) (reg:SI 14))]
   ""
@@ -1886,7 +1976,7 @@
 
 (define_insn ""
   [(set (match_operand 0 "" "=g")
-	(call (match_operand:QI 1 "memory_operand" "m")
+	(call (match_operand:QI 1 "call_operand" "m")
 	      (match_operand:SI 2 "const_int_operand" "n")))
    (set (reg:SI 14) (reg:SI 14))]
   ""

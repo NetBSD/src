@@ -59,6 +59,15 @@ extern int target_flags;
 /* Nonzero if compiling with `G'-format floating point */
 #define TARGET_G_FLOAT (target_flags & 4)
 
+/* Nonzero if compiling for a CVAX or later */
+#define TARGET_CVAX (target_flags & 8)
+
+/* Nonzero if compiling in half-pic mode */
+#define TARGET_HALFPIC (target_flags & 16)
+
+/* printout debugging info */
+#define TARGET_DEBUGADDR (target_flags & 32)
+
 /* Macro to define tables used to set the flags.
    This is a list in braces of pairs in braces,
    each pair being { "NAME", VALUE }
@@ -73,6 +82,10 @@ extern int target_flags;
     {"g-float", 4}, \
     {"d", -4},	\
     {"d-float", -4}, \
+    {"cvax", 8}, \
+    {"half-pic", 16}, \
+    {"no-pic", -16}, \
+    {"debug-addr", 32}, \
     { "", TARGET_DEFAULT}}
 
 /* Default target_flags if no switches specified.  */
@@ -614,6 +627,9 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 #define LEGITIMATE_CONSTANT_P(X) 1
 
+extern int legitimate_pic_operand_p();
+extern int legitimate_address_p();
+
 /* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
    and check its validity for a certain class.
    We have two alternate definitions for each of them.
@@ -632,153 +648,30 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 /* Nonzero if X is a hard reg that can be used as an index
    or if it is a pseudo reg.  */
 #define REG_OK_FOR_INDEX_P(X) 1
+
 /* Nonzero if X is a hard reg that can be used as a base reg
    or if it is a pseudo reg.  */
 #define REG_OK_FOR_BASE_P(X) 1
+
+#define LEGITIMATE_PIC_OPERAND_P(X) (legitimate_pic_operand_p (X, 0))
+
+#define GO_IF_LEGITIMATE_ADDRESS(ZMODE, XOP, LABEL)  \
+  { if (legitimate_address_p(ZMODE, XOP, 0)) goto LABEL; }
 
 #else
 
 /* Nonzero if X is a hard reg that can be used as an index.  */
 #define REG_OK_FOR_INDEX_P(X) REGNO_OK_FOR_INDEX_P (REGNO (X))
+
 /* Nonzero if X is a hard reg that can be used as a base reg.  */
 #define REG_OK_FOR_BASE_P(X) REGNO_OK_FOR_BASE_P (REGNO (X))
 
+#define LEGITIMATE_PIC_OPERAND_P(X) (legitimate_pic_operand_p (X, 1))
+
+#define GO_IF_LEGITIMATE_ADDRESS(ZMODE, XOP, LABEL)  \
+  { if (legitimate_address_p(ZMODE, XOP, 1)) goto LABEL; }
+
 #endif
-
-/* GO_IF_LEGITIMATE_ADDRESS recognizes an RTL expression
-   that is a valid memory address for an instruction.
-   The MODE argument is the machine mode for the MEM expression
-   that wants to use this address.
-
-   The other macros defined here are used only in GO_IF_LEGITIMATE_ADDRESS,
-   except for CONSTANT_ADDRESS_P which is actually machine-independent.  */
-
-#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
-
-/* Zero if this contains a (CONST (PLUS (SYMBOL_REF) (...))) and the
-   symbol in the SYMBOL_REF is an external symbol.  */
-
-#define INDIRECTABLE_CONSTANT_P(X) \
- (! (GET_CODE ((X)) == CONST					\
-     && GET_CODE (XEXP ((X), 0)) == PLUS			\
-     && GET_CODE (XEXP (XEXP ((X), 0), 0)) == SYMBOL_REF	\
-     && SYMBOL_REF_FLAG (XEXP (XEXP ((X), 0), 0))))
-
-/* Re-definition of CONSTANT_ADDRESS_P, which is true only when there
-   are no SYMBOL_REFs for external symbols present.  */
-
-#define INDIRECTABLE_CONSTANT_ADDRESS_P(X)   				\
-  (GET_CODE (X) == LABEL_REF 						\
-   || (GET_CODE (X) == SYMBOL_REF && !SYMBOL_REF_FLAG (X))		\
-   || (GET_CODE (X) == CONST && INDIRECTABLE_CONSTANT_P(X))		\
-   || GET_CODE (X) == CONST_INT)
-
-
-/* Non-zero if X is an address which can be indirected.  External symbols
-   could be in a sharable image library, so we disallow those.  */
-
-#define INDIRECTABLE_ADDRESS_P(X)  \
-  (INDIRECTABLE_CONSTANT_ADDRESS_P (X) 					\
-   || (GET_CODE (X) == REG && REG_OK_FOR_BASE_P (X))			\
-   || (GET_CODE (X) == PLUS						\
-       && GET_CODE (XEXP (X, 0)) == REG					\
-       && REG_OK_FOR_BASE_P (XEXP (X, 0))				\
-       && INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1))))
-
-#else /* not NO_EXTERNAL_INDIRECT_ADDRESS */
-
-#define INDIRECTABLE_CONSTANT_ADDRESS_P(X) CONSTANT_ADDRESS_P(X)
-
-/* Non-zero if X is an address which can be indirected.  */
-#define INDIRECTABLE_ADDRESS_P(X)  \
-  (CONSTANT_ADDRESS_P (X)						\
-   || (GET_CODE (X) == REG && REG_OK_FOR_BASE_P (X))			\
-   || (GET_CODE (X) == PLUS						\
-       && GET_CODE (XEXP (X, 0)) == REG					\
-       && REG_OK_FOR_BASE_P (XEXP (X, 0))				\
-       && CONSTANT_ADDRESS_P (XEXP (X, 1))))
-
-#endif /* not NO_EXTERNAL_INDIRECT_ADDRESS */
-
-/* Go to ADDR if X is a valid address not using indexing.
-   (This much is the easy part.)  */
-#define GO_IF_NONINDEXED_ADDRESS(X, ADDR)  \
-{ register rtx xfoob = (X);						\
-  if (GET_CODE (xfoob) == REG)						\
-    {									\
-      extern rtx *reg_equiv_mem;					\
-      if (! reload_in_progress						\
-	  || reg_equiv_mem[REGNO (xfoob)] == 0				\
-	  || INDIRECTABLE_ADDRESS_P (reg_equiv_mem[REGNO (xfoob)]))	\
-	goto ADDR;							\
-    }									\
-  if (CONSTANT_ADDRESS_P (xfoob)) goto ADDR;				\
-  if (INDIRECTABLE_ADDRESS_P (xfoob)) goto ADDR;			\
-  xfoob = XEXP (X, 0);							\
-  if (GET_CODE (X) == MEM && INDIRECTABLE_ADDRESS_P (xfoob))		\
-    goto ADDR;								\
-  if ((GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_INC)		\
-      && GET_CODE (xfoob) == REG && REG_OK_FOR_BASE_P (xfoob))		\
-    goto ADDR; }
-
-/* 1 if PROD is either a reg times size of mode MODE
-   or just a reg, if MODE is just one byte.
-   This macro's expansion uses the temporary variables xfoo0 and xfoo1
-   that must be declared in the surrounding context.  */
-#define INDEX_TERM_P(PROD, MODE)   \
-(GET_MODE_SIZE (MODE) == 1						\
- ? (GET_CODE (PROD) == REG && REG_OK_FOR_BASE_P (PROD))			\
- : (GET_CODE (PROD) == MULT						\
-    &&									\
-    (xfoo0 = XEXP (PROD, 0), xfoo1 = XEXP (PROD, 1),			\
-     ((GET_CODE (xfoo0) == CONST_INT					\
-       && INTVAL (xfoo0) == GET_MODE_SIZE (MODE)			\
-       && GET_CODE (xfoo1) == REG					\
-       && REG_OK_FOR_INDEX_P (xfoo1))					\
-      ||								\
-      (GET_CODE (xfoo1) == CONST_INT					\
-       && INTVAL (xfoo1) == GET_MODE_SIZE (MODE)			\
-       && GET_CODE (xfoo0) == REG					\
-       && REG_OK_FOR_INDEX_P (xfoo0))))))
-
-/* Go to ADDR if X is the sum of a register
-   and a valid index term for mode MODE.  */
-#define GO_IF_REG_PLUS_INDEX(X, MODE, ADDR)	\
-{ register rtx xfooa;							\
-  if (GET_CODE (X) == PLUS)						\
-    { if (GET_CODE (XEXP (X, 0)) == REG					\
-	  && REG_OK_FOR_BASE_P (XEXP (X, 0))				\
-	  && (xfooa = XEXP (X, 1),					\
-	      INDEX_TERM_P (xfooa, MODE)))				\
-	goto ADDR;							\
-      if (GET_CODE (XEXP (X, 1)) == REG					\
-	  && REG_OK_FOR_BASE_P (XEXP (X, 1))				\
-	  && (xfooa = XEXP (X, 0),					\
-	      INDEX_TERM_P (xfooa, MODE)))				\
-	goto ADDR; } }
-
-#define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)  \
-{ register rtx xfoo, xfoo0, xfoo1;					\
-  GO_IF_NONINDEXED_ADDRESS (X, ADDR);					\
-  if (GET_CODE (X) == PLUS)						\
-    { /* Handle <address>[index] represented with index-sum outermost */\
-      xfoo = XEXP (X, 0);						\
-      if (INDEX_TERM_P (xfoo, MODE))					\
-	{ GO_IF_NONINDEXED_ADDRESS (XEXP (X, 1), ADDR); }		\
-      xfoo = XEXP (X, 1);						\
-      if (INDEX_TERM_P (xfoo, MODE))					\
-	{ GO_IF_NONINDEXED_ADDRESS (XEXP (X, 0), ADDR); }		\
-      /* Handle offset(reg)[index] with offset added outermost */	\
-      if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 0)))		\
-	{ if (GET_CODE (XEXP (X, 1)) == REG				\
-	      && REG_OK_FOR_BASE_P (XEXP (X, 1)))			\
-	    goto ADDR;							\
-	  GO_IF_REG_PLUS_INDEX (XEXP (X, 1), MODE, ADDR); }		\
-      if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1)))		\
-	{ if (GET_CODE (XEXP (X, 0)) == REG				\
-	      && REG_OK_FOR_BASE_P (XEXP (X, 0)))			\
-	    goto ADDR;							\
-	  GO_IF_REG_PLUS_INDEX (XEXP (X, 0), MODE, ADDR); } } }
 
 /* Try machine-dependent ways of modifying an illegitimate address
    to be legitimate.  If we find one, return the new, valid address.

@@ -24,3 +24,6 @@
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
 #undef DWARF2_UNWIND_INFO
+
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT 16	/* default to half-pic mode */
