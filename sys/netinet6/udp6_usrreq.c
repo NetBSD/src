@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.42 2001/05/24 07:22:28 itojun Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.84 2001/02/07 07:38:25 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.43 2001/05/27 17:36:07 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -400,7 +400,6 @@ udp6_input(mp, offp, proto)
 	if (in6p == 0) {
 		udp6stat.udp6s_noport++;
 		if (m->m_flags & M_MCAST) {
-			printf("UDP6: M_MCAST is set in a unicast packet.\n");
 			udp6stat.udp6s_noportmcast++;
 			goto bad;
 		}
@@ -745,10 +744,8 @@ udp6_usrreq(so, req, m, addr6, control, p)
 	}
 
 release:
-	if (control) {
-		printf("udp control data unexpectedly retained\n");
+	if (control)
 		m_freem(control);
-	}
 	if (m)
 		m_freem(m);
 	return(error);
