@@ -1,4 +1,4 @@
-.\"	$NetBSD: iteconfig.8,v 1.6 1997/06/23 14:11:01 mrg Exp $
+.\"	$NetBSD: iteconfig.8,v 1.7 1997/06/23 14:15:34 mrg Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -51,9 +51,6 @@
 .Sh DESCRIPTION
 .Nm Iteconfig
 is used to modify or examine the attributes of the
-.Tn Amiga's
-or
-.Tn Atari's
 console bell and bitmapped console display.
 The console bell's volume, pitch, and count may be
 specified, as well as
@@ -160,3 +157,11 @@ is black, and a value of
 .Li 0x0
 is white.
 .El
+.Sh BUGS
+The
+.Nm
+command is only available on the
+.Tn amiga
+and
+.Tn atari
+ports.
