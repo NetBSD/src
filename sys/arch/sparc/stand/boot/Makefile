@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/05/03 18:59:08 pk Exp $
+#	$NetBSD: Makefile,v 1.15 1999/08/21 14:18:36 sommerfeld Exp $
 
 STRIPFLAG=
 PROG=		boot
@@ -16,6 +16,8 @@ RELOC=		0x300000
 
 .include <bsd.own.mk>
 
+OBJCOPY?=	objcopy
+
 LINKFLAGS=-N -Ttext ${RELOC} -e start
 
 all: ${FILES}
@@ -25,8 +27,8 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${COMPILE.c} vers.c
 	${LD} -o ${.TARGET}.tmp ${LINKFLAGS} ${OBJS} \
 	    vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
-	@size ${.TARGET}.tmp
-	@objcopy -O binary ${.TARGET}.tmp ${.TARGET}
+	@${SIZE} ${.TARGET}.tmp
+	@${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
 	@rm -f ${.TARGET}.tmp
  
 # conjure up a magic header that is accepted by all Sun PROMS;
