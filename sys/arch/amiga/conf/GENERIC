@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-# $Id: GENERIC,v 1.4 1994/04/18 00:25:18 chopps Exp $
+# $Id: GENERIC,v 1.5 1994/04/22 22:10:26 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -131,7 +131,10 @@ options		GENERIC		# Mini-root boot support
 #options	"PRF_INTERVAL=500"	# Clock ticks between profile interrupts
 options		"PPP_OUTQ_SIZE=4096"	# Size of large PPP output queue
 options		LKM		# Loadable kernel modules
-
+#options	"KFONT_8X11"	# if you would like 8x11 font for the
+				# cc console instead of 8x8
+#options	"KFONT_CUSTOM"	# if you would like to provide your own
+				# font in /sys/arch/amiga/dev/kf_custom.c
 #
 # Build one kernel that can boot from any disk.
 #
