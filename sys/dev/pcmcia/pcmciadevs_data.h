@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.11 1998/08/15 20:46:31 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.12 1998/08/15 21:29:25 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.10 1998/08/15 20:46:06 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.11 1998/08/15 21:28:26 thorpej Exp 
  */
 
 /*
@@ -264,6 +264,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "DEC DEPCM-BA"	},
 	},
 	{
+	    PCMCIA_VENDOR_NEWMEDIA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "NewMedia Corporation",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_IBM, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -303,6 +310,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "TDK Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SMC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Standard Microsystems Corporation",
 	    NULL,
 	},
 	{
@@ -352,27 +366,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_NEWMEDIA, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "NewMedia Corporation",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_SOCKET, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Socket Communications",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_SMC, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Standard Microsystems Corporation",
 	    NULL,
 	},
 	{
