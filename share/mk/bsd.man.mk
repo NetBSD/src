@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.38 1998/04/09 22:08:36 fair Exp $
+#	$NetBSD: bsd.man.mk,v 1.39 1998/08/09 14:46:19 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -15,7 +15,7 @@ __initialized__:
 .if !defined(NOMAN)
 realinstall:	${MANINSTALL}
 .endif
-cleandir:	cleanman
+cleandir distclean: cleanman
 
 TMACDIR?=	${DESTDIR}/usr/share/tmac
 CATDEPS?=	${TMACDIR}/tmac.andoc \
