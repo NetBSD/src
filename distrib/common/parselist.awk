@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.11 2002/05/29 03:01:55 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.12 2002/08/18 14:03:42 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,15 +43,21 @@
 #
 #	    crunch	crunchgen(1) config
 #
+#	    install	make(1) Makefile to install commands into ${TARGETDIR},
+#			with an `install' target.
+#			The following environment variables need to be set:
+#			    TARGETDIR	Directory to populate
+#
 #	    mtree	mtree(8) specfile
 #
 #	    populate	sh(1) commands to populate ${TARGETDIR} from ${CURDIR}
 #			The following environment variables need to be set:
-#			    CRUNCHBIN	Name of crunchgen(1) target binary
 #			    CURDIR	Source directory; make(1)'s ${.CURDIR}
-#			    OBJDIR	Object directory; make(1)'s ${.OBJDIR}
 #			    TARGETDIR	Directory to populate
 #
+#	The following environment variables need to be set for all modes:
+#	    CRUNCHBIN	Name of crunchgen(1) target binary
+#	    OBJDIR	Object directory; make(1)'s ${.OBJDIR}
 #
 # 	Each line of the input is either a comment (starts with `#'),
 #	or contains one of the following keywords and arguments.
@@ -65,6 +71,7 @@
 #	mode key	operation
 #	--------	---------
 #	C		crunch
+#	I		install
 #	M		mtree
 #	P		populate
 #
@@ -75,9 +82,9 @@
 #
 #	P	CMD	arg1 [...]	run CMD as a shell command
 #
-#	M P	COPY	src dest [perm]	copy src to dest. perm defaults to 0444
+#	IMP	COPY	src dest [perm]	copy src to dest. perm defaults to 0444
 #
-#	M P	COPYDIR	src dest	recursively copy files under src to
+#	IMP	COPYDIR	src dest	recursively copy files under src to
 #					dest.  for M, dest is listed first,
 #					followed by the subdirectories in src.
 #					copied directories have mode 0755.
@@ -85,12 +92,12 @@
 #
 #	C	LIBS	libspec ...	as per crunchgen(1) `libs'
 #
-#	M P	LINK	src d1 [d2 ...]	hard link src to d1, d2, ...
+#	IMP	LINK	src d1 [d2 ...]	hard link src to d1, d2, ...
 #
 #	M	MTREE	arg1 [...]	output arguments `as-is' to specfile
 #
-#	C M P	PROG	prog [links...]	program(s) to crunch/mtree/populate.
-#					for M and P, the first prog listed
+#	CIMP	PROG	prog [links...]	program(s) to crunch/mtree/populate.
+#					for I, M & P, the first prog listed
 #					is copied from ${OBJDIR}/${CRUNCHBIN}
 #					and then used as the name to link
 #					all other PROG entries to.
@@ -99,23 +106,28 @@
 #
 #	C	SRCDIRS	dirname ...	as per crunchgen(1) `srcdirs'
 #
-#	M P	SYMLINK src dest [...]	symlink src to dest, [...]
+#	IMP	SYMLINK src dest [...]	symlink src to dest, [...]
 #
 
 BEGIN \
 {
 	crunchprog = "";
 
-	if (mode != "crunch" && mode != "mtree" && mode != "populate")
+	if (mode != "crunch" && mode != "install" &&
+	    mode != "mtree" && mode != "populate")
 		errx("Unknown parselist mode '" mode "'");
 
-	if (mode == "populate") {
-		split("CRUNCHBIN CURDIR OBJDIR TARGETDIR", needvars);
-		for (nv in needvars) {
-			if (! (needvars[nv] in ENVIRON))
-				errx("Environment variable " \
-				    needvars[nv] " not defined");
-		}
+	needvars["CRUNCHBIN"]++
+	needvars["OBJDIR"]++
+	if (mode == "install") {
+		needvars["TARGETDIR"]++
+	}
+	else if (mode == "populate") {
+		needvars["CURDIR"]++
+	}
+	for (nv in needvars) {
+		if (! (nv in ENVIRON))
+			errx("Environment variable " nv " not defined");
 	}
 
 	print "#";
@@ -123,12 +135,15 @@ BEGIN \
 	print "#\tparselist mode=" mode;
 	print "#";
 	print "";
-	if (mode == "populate") {
-		print "cd " ENVIRON["CURDIR"];
-		print;
+	if (mode == "install") {
+		print ".include <bsd.own.mk>"
+		print "install:"
 	} else if (mode == "mtree") {
 		print "/unset\tall";
 		print "/set\ttype=file uname=root gname=wheel";
+		print;
+	} else if (mode == "populate") {
+		print "cd " ENVIRON["CURDIR"];
 		print;
 	}
 }
@@ -156,7 +171,7 @@ $1 == "COPY" \
 {
 	if (NF < 3 || NF > 4)
 		err("Usage: COPY src dest [perm]");
-	if (mode == "populate" || mode == "mtree")
+	if (mode == "install" || mode == "mtree" || mode == "populate")
 		copy($2, $3, $4);
 	next;
 }
@@ -178,7 +193,7 @@ $1 == "COPYDIR" \
 		}
 		close(command);
 	}
-	if (mode == "populate" || mode == "mtree") {
+	if (mode == "install" || mode == "mtree" || mode == "populate") {
 		command="cd " srcdir " && find . -type f -print"
 		while (command | getline srcfile) {
 			gsub(/^\.\//, "", srcfile);
@@ -238,7 +253,7 @@ $1 == "LINK" \
 {
 	if (NF < 3)
 		err("Usage: LINK prog link [...]");
-	if (mode == "populate" || mode == "mtree") {
+	if (mode == "install" || mode == "mtree" || mode == "populate") {
 		for (i = 3; i <= NF; i++)
 			link($2, $i);
 	}
@@ -249,7 +264,7 @@ $1 == "SYMLINK" \
 {
 	if (NF < 3)
 		err("Usage: SYMLINK prog link [...]");
-	if (mode == "populate" || mode == "mtree") {
+	if (mode == "install" || mode == "mtree" || mode == "populate") {
 		for (i = 3; i <= NF; i++)
 			symlink($2, $i);
 	}
@@ -296,7 +311,10 @@ function copy (src, dest, perm) \
 {
 	if (perm == "")
 		perm = 444;
-	if (mode == "mtree") {
+	if (mode == "install") {
+		printf("\t\${INSTALL_FILE} -o \${BINOWN} -g \${BINGRP} -m %s %s %s/%s\n",
+		    perm, src, ENVIRON["TARGETDIR"], dest)
+	} else if (mode == "mtree") {
 		printf("./%s mode=%s\n", dest, perm);
 	} else {
 		printf("rm -rf %s/%s\n", ENVIRON["TARGETDIR"], dest);
@@ -307,7 +325,10 @@ function copy (src, dest, perm) \
 
 function link (src, dest) \
 {
-	if (mode == "mtree") {
+	if (mode == "install") {
+		printf("\t\${INSTALL_LINK} %s/%s %s/%s\n",
+		    ENVIRON["TARGETDIR"], src, ENVIRON["TARGETDIR"], dest)
+	} else if (mode == "mtree") {
 		printf("./%s\n", dest);
 	} else {
 		printf("rm -rf %s/%s\n", ENVIRON["TARGETDIR"], dest);
@@ -318,7 +339,10 @@ function link (src, dest) \
 
 function symlink (src, dest) \
 {
-	if (mode == "mtree") {
+	if (mode == "install") {
+		printf("\t\${INSTALL_SYMLINK} %s/%s %s/%s\n",
+		    ENVIRON["TARGETDIR"], src, ENVIRON["TARGETDIR"], dest)
+	} else if (mode == "mtree") {
 		printf("./%s type=link link=%s\n", dest, src);
 	} else {
 		printf("rm -rf %s/%s\n", ENVIRON["TARGETDIR"], dest);
