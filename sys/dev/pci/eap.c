@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.61 2002/12/14 17:52:47 pooka Exp $	*/
+/*	$NetBSD: eap.c,v 1.62 2002/12/26 17:59:16 pooka Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.61 2002/12/14 17:52:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.62 2002/12/26 17:59:16 pooka Exp $");
 
 #include "midi.h"
 
@@ -1025,8 +1025,9 @@ eap_set_params(void *addr, int setmode, int usemode,
 
 	/*
 	 * The es1370 only has one clock, so make the sample rates match.
+	 * This only applies for ADC/DAC2. The FM DAC is handled below.
 	 */
-	if (!sc->sc_1371) {
+	if (!sc->sc_1371 && ei->index == EAP_DAC2) {
 	    if (play->sample_rate != rec->sample_rate &&
 		usemode == (AUMODE_PLAY | AUMODE_RECORD)) {
 	    	if (setmode == AUMODE_PLAY) {
@@ -1099,7 +1100,7 @@ eap_set_params(void *addr, int setmode, int usemode,
 	if (sc->sc_1371) {
 		eap1371_set_dac_rate(ei, play->sample_rate);
 		eap1371_set_adc_rate(sc, rec->sample_rate);
-	} else {
+	} else if (ei->index == EAP_DAC2) {
 		/* Set the speed */
 		DPRINTFN(2, ("eap_set_params: old ICSC = 0x%08x\n", 
 			     EREAD4(sc, EAP_ICSC)));
@@ -1124,6 +1125,26 @@ eap_set_params(void *addr, int setmode, int usemode,
 		 * we had better not enable them.
 		 */
 #endif
+		EWRITE4(sc, EAP_ICSC, div);
+		DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
+	} else {
+		/*
+		 * The FM DAC has only a few fixed-frequency choises, so
+		 * pick out the best candidate.
+		 */
+		div = EREAD4(sc, EAP_ICSC);
+		DPRINTFN(2, ("eap_set_params: old ICSC = 0x%08x\n", div));
+
+		div &= ~EAP_WTSRSEL;
+		if (play->sample_rate < 8268)
+			div |= EAP_WTSRSEL_5;
+		else if (play->sample_rate < 16537)
+			div |= EAP_WTSRSEL_11;
+		else if (play->sample_rate < 33075)
+			div |= EAP_WTSRSEL_22;
+		else
+			div |= EAP_WTSRSEL_44;
+
 		EWRITE4(sc, EAP_ICSC, div);
 		DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
 	}
