@@ -1857,6 +1857,12 @@ The 24-bit relocation is used in some Intel 960 configurations. */
   BFD_RELOC_68K_JMP_SLOT,
   BFD_RELOC_68K_RELATIVE,
 
+/* Relocations used by VAX ELF. */
+  BFD_RELOC_VAX_GLOB_DAT,
+  BFD_RELOC_VAX_GLOB_REF,
+  BFD_RELOC_VAX_JMP_SLOT,
+  BFD_RELOC_VAX_RELATIVE,
+
 /* Linkage-table relative. */
   BFD_RELOC_32_BASEREL,
   BFD_RELOC_16_BASEREL,
