@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.13 1995/04/10 13:10:10 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.14 1995/05/24 13:12:12 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.13 1995/04/10 13:10:10 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.14 1995/05/24 13:12:12 hpeyerl Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1036,25 +1036,25 @@ sdioctl(dev, cmd, data, flag, p)
 			&lp->d_partitions[sdpart(dev)];
 		return (0);
 
-        case DIOCWLABEL:
-                if ((flag & FWRITE) == 0)
-                        return (EBADF);
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+				return (EBADF);
 		if (*(int *)data)
 			sc->sc_flags |= SDF_WLABEL;
 		else
 			sc->sc_flags &= ~SDF_WLABEL;
 		return (0);
 
-        case DIOCSDINFO:
-                if ((flag & FWRITE) == 0)
-                        return (EBADF);
+	case DIOCSDINFO:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
 				     (sc->sc_flags & SDF_WLABEL) ? 0
 				     : sc->sc_info.si_open,
 				     (struct cpu_disklabel *)0);
 		return (error);
 
-        case DIOCWDINFO:
+	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
