@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.58 1997/09/06 02:03:11 thorpej Exp $
+# $NetBSD: files.alpha,v 1.59 1997/11/06 00:41:58 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -345,15 +345,15 @@ file	netns/ns_cksum.c			ns
 file	arch/alpha/alpha/promcons.c
 
 # CPU support
-file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
-file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
-file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
-file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
-file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
-file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
-file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
-file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
-file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae	needs-flag
+file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
+file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
+file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
+file	arch/alpha/alpha/dec_550.c		dec_550
+file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33
+file	arch/alpha/alpha/dec_eb164.c		dec_eb164
+file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus
+file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa
+file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae
 
 # Kernel debugger support
 file	arch/alpha/alpha/db_disasm.c		ddb
