@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.78 2004/05/06 22:51:38 matt Exp $	*/
+/*	$NetBSD: kdump.c,v 1.79 2004/08/23 20:49:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.78 2004/05/06 22:51:38 matt Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.79 2004/08/23 20:49:28 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,7 @@ main(argc, argv)
 			break;
 		default:
 			putchar('\n');
-			hexdump_buf(m, ktrlen, word_size);
+			hexdump_buf(m, ktrlen, word_size ? word_size : 1);
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -668,7 +668,7 @@ hexdump_buf(vdp, datalen, word_sz)
 		break;
 	}
 	width = 16 * bsize + (16 / (divmask + 1)) * gdelim;
-	if (word_size != 1)
+	if (word_sz != 1)
 		width += 2;
 
 	for (off = 0; dp < datalim; off += l) {
