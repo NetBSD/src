@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.8 2000/10/10 20:24:51 is Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.9 2001/02/19 22:56:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.8 2000/10/10 20:24:51 is Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.9 2001/02/19 22:56:19 cgd Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -58,8 +58,6 @@ __RCSID("$NetBSD: fsutil.c,v 1.8 2000/10/10 20:24:51 is Exp $");
 static const char *dev = NULL;
 static int hot = 0;
 static int preen = 0;
-
-extern char *__progname;
 
 static void vmsg __P((int, const char *, va_list))
      __attribute((__format__(__printf__,2,0)));
@@ -126,7 +124,7 @@ vmsg(fatal, fmt, ap)
 	if (fatal && preen) {
 		(void) printf(
 		    "%s: UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
-		    dev, __progname);
+		    dev, getprogname());
 		exit(8);
 	}
 }

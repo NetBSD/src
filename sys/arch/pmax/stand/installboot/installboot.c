@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.5 2000/10/17 01:54:30 dmcmahill Exp $ */
+/* $NetBSD: installboot.c,v 1.6 2001/02/19 22:48:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -82,8 +82,6 @@ static void clr_bootstrap(const char *disk);
 static void set_bootstrap(const char *disk, const char *bootstrap);
 static void set_sunsum(struct pmax_boot_block *bb);
 
-extern char *__progname;
-
 int verbose, nowrite, append, isoblock, sunsum;
 struct stat disksb;
 
@@ -91,8 +89,9 @@ static void
 usage()
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-nsv] [-i block | -a] disk bootstrap\n", __progname);
-	fprintf(stderr, "\t%s [-nsv] -c disk\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] [-i block | -a] disk bootstrap\n",
+	    getprogname());
+	fprintf(stderr, "\t%s [-nsv] -c disk\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
