@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.20 2003/05/17 02:30:14 nakayama Exp $
+#	$NetBSD: Makefile.buildboot,v 1.21 2003/07/30 15:58:38 mrg Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -35,7 +35,7 @@ CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DSUN4M -DSUN4D -DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CFLAGS=		-O2
-CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -ffreestanding
 
 ### find out what to use for libkern
 KERN_AS=	library

@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.14 2003/02/26 17:39:08 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.15 2003/07/30 15:58:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -45,7 +45,7 @@
 #include <machine/pte.h>
 
 #include <lib/libsa/stand.h>
-
+#include <lib/libkern/libkern.h>
 #include <sparc/stand/common/promdev.h>
 
 /* OBP V0-3 PROM vector */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/07/10 10:34:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/07/30 15:58:40 mrg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -16,18 +16,10 @@ CLEANFILES=	assym.fth.h assym.fth.h.tmp machine sparc \
 NOMAN=		# defined
 STRIPFLAG=
 
-# deal with Solaris vs. NetBSD build environments for now ..
-OS!=uname -s
-.if (${OS} == "NetBSD")
 USE_GENASSYM?=	no
-SVR4=
-.else
-USE_GENASSYM?=	yes
-SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
-.endif
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM ${SVR4}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_LKM
 
 #all:: bootblk.text bootblk
 
@@ -54,7 +46,7 @@ bootblk: bootblk.fth assym.fth.h
 	${TOOL_FGEN} -o bootblk ${.CURDIR}/bootblk.fth
 
 beforedepend:
-	@touch .depend
+	@touch .d
 
 #
 # The following are if you grab the fakeboot program from the Sun website
