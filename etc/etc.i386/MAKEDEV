@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.98 1999/12/18 03:09:47 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.99 2000/01/09 02:37:06 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -388,11 +388,18 @@ ccd*|fd*|sd*|vnd*|wd*|raid*)
 	;;
 
 com*|tty*)					# (XXX -- com should die)
-	unit=${i#???}
-	rm -f com$unit tty0$unit dty0$unit
-	mknod tty0$unit c 8 $(($unit + $dialin ))
-	mknod dty0$unit c 8 $(($unit + $dialout))
-	chown uucp.wheel tty0$unit dty0$unit
+	ounit=${i#???}
+	ounit=$(($ounit + 0))
+	if [ $ounit -lt 10 ]; then
+		unit=0$ounit
+		rm -f com$ounit
+	else
+		unit=$ounit
+	fi
+	rm -f tty$unit dty$unit
+	mknod tty$unit c 8 $(($ounit + $dialin ))
+	mknod dty$unit c 8 $(($ounit + $dialout))
+	chown uucp.wheel tty$unit dty$unit
 	;;
 
 pty*)
