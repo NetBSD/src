@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.55 2005/03/09 03:11:21 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -49,8 +49,8 @@ ftpd.o ftpcmd.o: version.h
 #DPADD+=	${LIBKRB}
 #LDADD+= -lkrb
 #
-#DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
-#LDADD+=	-lcrypto -lroken -lcom_err
+#DPADD+=	${LIBCRYPTO} ${{LIBCRYPT} ${LIBROKEN} ${LIBCOM_ERR}
+#LDADD+=	-lcrypto -lcrypt -lroken -lcom_err
 #
 #.endif
 

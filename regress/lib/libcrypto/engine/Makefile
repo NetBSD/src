@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/24 14:22:54 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2005/03/09 03:11:21 christos Exp $
 
 NOMAN=		# defined
 
 PROG=		enginetest
-DPADD+=		${LIBCRYPTO}
-LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
+LDADD+=		-lcrypto -lcrypt
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/02/13 22:42:24 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/09 03:11:21 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ CPPFLAGS+=	-I${SSHDIST}
 
 
 LIBDPLIBS=	crypto	${.CURDIR}/../libcrypto \
+		crypt	${.CURDIR}/../libcrypt \
 		z	${.CURDIR}/../libz
 
 .include <bsd.lib.mk>
