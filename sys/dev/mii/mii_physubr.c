@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.6 1999/11/03 22:30:32 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.7 1999/11/03 22:32:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -198,9 +198,11 @@ mii_add_media(sc)
 	if (sc->mii_capabilities & BMSR_10THDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
 		    MII_MEDIA_10_T);
+#if 0
 		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
 			    sc->mii_inst), MII_MEDIA_10_T);
+#endif
 		PRINT("10baseT");
 	}
 	if (sc->mii_capabilities & BMSR_10TFDX) {
@@ -211,9 +213,11 @@ mii_add_media(sc)
 	if (sc->mii_capabilities & BMSR_100TXHDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
 		    MII_MEDIA_100_TX);
+#if 0
 		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
 			    sc->mii_inst), MII_MEDIA_100_TX);
+#endif
 		PRINT("100baseTX");
 	}
 	if (sc->mii_capabilities & BMSR_100TXFDX) {
@@ -224,9 +228,11 @@ mii_add_media(sc)
 	if (sc->mii_capabilities & BMSR_100T4) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, sc->mii_inst),
 		    MII_MEDIA_100_T4);
+#if 0
 		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, IFM_LOOP,
 			    sc->mii_inst), MII_MEDIA_100_T4);
+#endif
 		PRINT("100baseT4");
 	}
 	if (sc->mii_capabilities & BMSR_ANEG) {
