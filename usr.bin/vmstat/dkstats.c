@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.9 2000/07/07 15:13:25 itojun Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.10 2000/11/30 23:59:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -97,10 +97,10 @@ char		**dr_name;
 #define timerset(tvp, uvp) ((uvp)->tv_sec = (tvp)->tv_sec);		\
 			   ((uvp)->tv_usec = (tvp)->tv_usec)
 
-void dkswap __P((void));
-void dkreadstats __P((void));
-int dkinit __P((int, gid_t));
-static void deref_kptr __P((void *, void *, size_t));
+void dkswap(void);
+void dkreadstats(void);
+int dkinit(int, gid_t);
+static void deref_kptr(void *, void *, size_t);
 
 /*
  * Take the delta between the present values and the last recorded
@@ -108,7 +108,7 @@ static void deref_kptr __P((void *, void *, size_t));
  * the delta values in the 'cur' structure.
  */
 void
-dkswap()
+dkswap(void)
 {
 	u_int64_t tmp;
 	int	i;
@@ -149,7 +149,7 @@ dkswap()
  * Also collect statistics for tty i/o and cpu ticks.
  */
 void
-dkreadstats()
+dkreadstats(void)
 {
 	struct disk	cur_disk, *p;
 	size_t		ssize;
@@ -190,9 +190,7 @@ dkreadstats()
  * track disk statistics.
  */
 int
-dkinit(select, egid)
-	int	select;
-	gid_t egid;
+dkinit(int select, gid_t egid)
 {
 	gid_t oldgid;
 	struct disklist_head disk_head;
@@ -283,9 +281,7 @@ dkinit(select, egid)
  * and the size of the copy passed in `len'.
  */
 static void
-deref_kptr(kptr, ptr, len)
-	void *kptr, *ptr;
-	size_t len;
+deref_kptr(void *kptr, void *ptr, size_t len)
 {
 	char buf[128];
 
