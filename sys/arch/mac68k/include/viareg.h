@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.1 1996/03/29 02:27:42 briggs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.2 1996/04/04 06:55:29 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -68,6 +68,7 @@
 	/* VIA2 data register A */
 #define DA2O_v2Ram1	0x80
 #define DA2O_v2Ram0	0x40
+#define DA2I_v2IRQ0	0x40
 #define DA2I_v2IRQE	0x20
 #define DA2I_v2IRQD	0x10
 #define DA2I_v2IRQC	0x08
