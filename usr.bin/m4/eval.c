@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.10 1997/10/19 04:39:51 lukem Exp $	*/
+/*	$NetBSD: eval.c,v 1.10.4.1 2000/10/19 16:31:45 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.10 1997/10/19 04:39:51 lukem Exp $");
+__RCSID("$NetBSD: eval.c,v 1.10.4.1 2000/10/19 16:31:45 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ eval(argv, argc, td)
 	}
 }
 
-char *dumpfmt = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
+const char dumpfmt[] = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
 
 /*
  * expand - user-defined macro expansion
