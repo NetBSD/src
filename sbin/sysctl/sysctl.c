@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.31 2000/04/21 02:49:37 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.32 2000/05/27 15:05:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.31 2000/04/21 02:49:37 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.32 2000/05/27 15:05:14 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,8 @@ int	Aflag, aflag, nflag, wflag;
 #define	CLOCK		0x00000001
 #define	BOOTTIME	0x00000002
 #define	CONSDEV		0x00000004
-#define DISKINFO	0x00000008
+#define	DISKINFO	0x00000008
+#define	CPTIME		0x00000010
 
 /*
  * A dummy type for limits, which requires special parsing
@@ -360,6 +361,7 @@ parse(string, flags)
 			warnx("Use pstat to view %s information", string);
 			return;
 		case KERN_PROC:
+		case KERN_PROC2:
 			if (flags == 0)
 				return;
 			warnx("Use ps to view %s information", string);
@@ -380,6 +382,9 @@ parse(string, flags)
 			len = sysctl_mbuf(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
+			break;
+		case KERN_CP_TIME:
+			special |= CPTIME;
 			break;
 		}
 		break;
@@ -574,6 +579,16 @@ parse(string, flags)
 	}
 	if (special & DISKINFO) {
 		/* Don't know a good way to deal with this i386 specific one */
+		return;
+	}
+	if (special & CPTIME) {
+		long *cp_time = (long *)buf;
+
+		if (!nflag)
+			fprintf(stdout, "%s: ", string);
+		fprintf(stdout,
+		    "user = %ld, nice = %ld, sys = %ld, intr = %ld, idle = %ld\n",
+		    cp_time[0], cp_time[1], cp_time[2], cp_time[3], cp_time[4]);
 		return;
 	}
 		
