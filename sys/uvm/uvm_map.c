@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.46 1999/05/26 23:53:48 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.47 1999/05/28 20:31:43 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -190,6 +190,39 @@ static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
 /*
  * local inlines
  */
+
+/* XXX Should not exist! */
+static __inline void vm_map_set_recursive __P((vm_map_t));
+static __inline void
+vm_map_set_recursive(map)
+	vm_map_t map;
+{
+
+#ifdef DIAGNOSTIC
+	if (map->flags & VM_MAP_INTRSAFE)
+		panic("vm_map_set_recursive: intrsafe map");
+#endif
+	simple_lock(&map->lock.lk_interlock);
+	map->lock.lk_flags |= LK_CANRECURSE;
+	simple_unlock(&map->lock.lk_interlock);
+}
+
+/* XXX Should not exist! */
+static __inline void vm_map_clear_recursive __P((vm_map_t));
+static __inline void
+vm_map_clear_recursive(map)
+	vm_map_t map;
+{
+
+#ifdef DIAGNOSTIC
+	if (map->flags & VM_MAP_INTRSAFE)
+		panic("vm_map_clear_recursive: intrsafe map");
+#endif
+	simple_lock(&map->lock.lk_interlock);
+	if (map->lock.lk_exclusivecount <= 1)
+		map->lock.lk_flags &= ~LK_CANRECURSE;
+	simple_unlock(&map->lock.lk_interlock);
+}
 
 /*
  * uvm_mapent_alloc: allocate a map entry
@@ -2149,7 +2182,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 	if (vm_map_pmap(map) == pmap_kernel()) {
 		vm_map_unlock(map);         /* trust me ... */
 	} else {
-		vm_map_set_recursive(&map->lock);
+		vm_map_set_recursive(map);
 		lockmgr(&map->lock, LK_DOWNGRADE, (void *)0);
 	}
 
@@ -2182,7 +2215,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 	if (vm_map_pmap(map) == pmap_kernel()) {
 		vm_map_lock(map);     /* relock */
 	} else {
-		vm_map_clear_recursive(&map->lock);
+		vm_map_clear_recursive(map);
 	} 
 
 	if (rv) {        /* failed? */
