@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.11 1997/04/07 05:19:32 cgd Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.12 1997/04/07 05:46:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
