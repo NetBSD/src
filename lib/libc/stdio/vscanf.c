@@ -1,4 +1,4 @@
-/*	$NetBSD: vscanf.c,v 1.9 1999/09/20 04:39:34 lukem Exp $	*/
+/*	$NetBSD: vscanf.c,v 1.10 2002/05/24 22:17:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)vscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vscanf.c,v 1.9 1999/09/20 04:39:34 lukem Exp $");
+__RCSID("$NetBSD: vscanf.c,v 1.10 2002/05/24 22:17:21 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+
+#include "local.h"
 
 int
 vscanf(fmt, ap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fscanf.c,v 1.8 1999/09/20 04:39:28 lukem Exp $	*/
+/*	$NetBSD: fscanf.c,v 1.9 2002/05/24 22:17:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fscanf.c,v 1.8 1999/09/20 04:39:28 lukem Exp $");
+__RCSID("$NetBSD: fscanf.c,v 1.9 2002/05/24 22:17:20 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: fscanf.c,v 1.8 1999/09/20 04:39:28 lukem Exp $");
 #else
 #include <varargs.h>
 #endif
+
+#include "local.h"
 
 int
 #if __STDC__

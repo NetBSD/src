@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.44 2002/05/24 21:07:44 thorpej Exp $	*/
+/*	$NetBSD: stdio.h,v 1.45 2002/05/24 22:17:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -371,19 +371,15 @@ int	 vasprintf __P((char ** __restrict, const char * __restrict,
 	    __attribute__((__format__(__printf__, 2, 0)));
 int	 vscanf __P((const char * __restrict, _BSD_VA_LIST_))
 	    __attribute__((__format__(__scanf__, 1, 0)));
+int	 vfscanf __P((FILE * __restrict, const char * __restrict,
+	    _BSD_VA_LIST_))
+	    __attribute__((__format__(__scanf__, 2, 0)));
 int	 vsscanf __P((const char * __restrict, const char * __restrict,
 	    _BSD_VA_LIST_))
 	    __attribute__((__format__(__scanf__, 2, 0)));
 __const char *fmtcheck __P((const char *, const char *))
 	    __attribute__((__format_arg__(2)));
 __END_DECLS
-
-/*
- * This is a #define because the function is used internally and
- * (unlike vfscanf) the name __svfscanf is guaranteed not to collide
- * with a user function when _ANSI_SOURCE or _POSIX_SOURCE is defined.
- */
-#define	 vfscanf(fp, fmt, va)	__svfscanf((fp), (fmt), (va))
 
 /*
  * Stdio function-access interface.
@@ -404,9 +400,6 @@ __END_DECLS
  */
 __BEGIN_DECLS
 int	__srget __P((FILE *));
-int	__svfscanf __P((FILE * __restrict, const char * __restrict,
-	    _BSD_VA_LIST_))
-	    __attribute__((__format__(__scanf__, 2, 0)));
 int	__swbuf __P((int, FILE *));
 __END_DECLS
 
