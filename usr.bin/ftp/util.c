@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.27 1998/07/10 04:39:04 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.28 1998/07/22 16:06:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.27 1998/07/10 04:39:04 thorpej Exp $");
+__RCSID("$NetBSD: util.c,v 1.28 1998/07/22 16:06:28 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -177,7 +177,7 @@ setpeer(argc, argv)
 		(void)strcpy(structname, "file"), stru = STRU_F;
 		(void)strcpy(bytename, "8"), bytesize = 8;
 		if (autologin)
-			(void)login(argv[1], NULL, NULL);
+			(void)ftp_login(argv[1], NULL, NULL);
 
 		overbose = verbose;
 		if (debug == 0)
@@ -236,7 +236,7 @@ setpeer(argc, argv)
  * login to remote host, using given username & password if supplied
  */
 int
-login(host, user, pass)
+ftp_login(host, user, pass)
 	const char *host;
 	char *user, *pass;
 {

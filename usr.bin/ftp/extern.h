@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 1998/07/10 04:39:04 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 1998/07/22 16:06:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -69,6 +69,7 @@ void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int     empty __P((struct fd_set *, int));
 int	foregroundproc __P((void));
+int	ftp_login __P((const char *, char *, char *));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
@@ -83,7 +84,6 @@ int     initconn __P((void));
 void	intr __P((void));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
-int	login __P((const char *, char *, char *));
 void	lostpeer __P((void));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
