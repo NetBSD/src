@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs.h,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs.h,v 1.3 2001/12/02 08:56:58 bp Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs.h,v 1.3 2001/12/02 08:56:58 bp Exp
  */
 #ifndef _SMBFS_SMBFS_H_
 #define _SMBFS_SMBFS_H_
@@ -96,10 +98,10 @@ struct smbmount {
 #define VTOVFS(vp)		((vp)->v_mount)
 #define	VTOSMBFS(vp)		(VFSTOSMBFS(VTOVFS(vp)))
 
-int smbfs_ioctl(struct vop_ioctl_args *ap);
-int smbfs_doio(struct buf *bp, struct ucred *cr, struct thread *td);
+int smbfs_ioctl(void *v);
+int smbfs_doio(struct buf *bp, struct ucred *cr, struct proc *p);
 int smbfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, 
-	struct thread *td, int intrflg);
+	struct proc *p, int intrflg);
 #endif	/* KERNEL */
 
 #endif /* _SMBFS_SMBFS_H_ */

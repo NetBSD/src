@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs_subr.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,17 +31,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs_subr.c,v 1.1 2001/04/10 07:59:05 bp Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs_subr.c,v 1.1 2001/04/10 07:59:05 bp Exp
  */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <machine/clock.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
-#include <sys/iconv.h>
+#include <netsmb/iconv.h>
 
 #include <netsmb/smb.h>
 #include <netsmb/smb_conn.h>
@@ -51,7 +52,9 @@
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
+#ifndef __NetBSD__
 MALLOC_DEFINE(M_SMBFSDATA, "SMBFS data", "SMBFS private data");
+#endif
 
 /* 
  * Time & date conversion routines taken from msdosfs. Although leap

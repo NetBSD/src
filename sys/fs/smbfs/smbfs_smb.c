@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs_smb.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs_smb.c,v 1.3 2001/12/10 08:09:46 obrien Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs_smb.c,v 1.3 2001/12/10 08:09:46 obrien Exp
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,6 +576,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	struct mbchain *mbp;
 	struct mdchain *mdp;
 	struct timespec ctime;
+	struct timeval tv;
 	u_int8_t wc;
 	u_int16_t fid;
 	u_long tm;
@@ -585,7 +588,8 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 	smb_rq_getrequest(rqp, &mbp);
 	smb_rq_wstart(rqp);
 	mb_put_uint16le(mbp, SMB_FA_ARCHIVE);		/* attributes  */
-	nanotime(&ctime);
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, &ctime);
 	smb_time_local2server(&ctime, SSTOVC(ssp)->vc_sopt.sv_tz, &tm);
 	mb_put_uint32le(mbp, tm);
 	smb_rq_wend(rqp);
