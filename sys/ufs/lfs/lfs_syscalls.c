@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.69 2002/07/06 01:30:14 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.70 2002/07/07 14:29:06 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.69 2002/07/06 01:30:14 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.70 2002/07/07 14:29:06 briggs Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -461,9 +461,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
 		}
 		if (obsize != blkp->bi_size) {
-			printf("lfs_markv: ino %d lbn %d wrong size (%d != %d), try again\n",
+			printf("lfs_markv: ino %d lbn %d wrong size (%ld != %d), try again\n",
 				blkp->bi_inode, blkp->bi_lbn,
-				obsize, blkp->bi_size);
+				(long) obsize, blkp->bi_size);
 			do_again++;
 			continue;
 		}
