@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.10 1995/11/10 05:05:18 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.11 1995/12/24 02:31:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -431,7 +431,7 @@ pasattach(parent, self, aux)
 	int err;
 	
 	sc->sc_iobase = iobase;
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO,
 				       sbdsp_intr, &sc->sc_sbdsp);
 
 	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model], sc->rev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.54 1995/11/10 04:41:58 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.55 1995/12/24 02:31:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -585,8 +585,8 @@ ahaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&aha->sc_id, &aha->sc_dev);
 #endif
-	aha->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    ahaintr, aha);
+	aha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, ahaintr,
+	    aha);
 
 	/*
 	 * ask the adapter what subunits are present

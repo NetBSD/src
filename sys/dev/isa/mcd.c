@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.42 1995/08/05 23:47:52 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.43 1995/12/24 02:31:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -222,8 +222,8 @@ mcdattach(parent, self, aux)
 
 	sc->sc_dk.dk_driver = &mcddkdriver;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    mcdintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, mcdintr,
+	    sc);
 }
 
 /*

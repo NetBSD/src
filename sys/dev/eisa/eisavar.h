@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.1 1995/04/17 12:08:23 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.2 1995/12/24 02:31:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -51,13 +51,3 @@
 #define eisadev			isadev				/* XXX */
 #define	eisa_intr_establish	isa_intr_establish		/* XXX */
 #define	eisa_intr_disestablish	isa_intr_disestablish		/* XXX */
-
-#define	EISA_IPL_NONE	ISA_IPL_NONE				/* XXX */
-#define	EISA_IPL_BIO	ISA_IPL_BIO				/* XXX */
-#define	EISA_IPL_NET	ISA_IPL_NET				/* XXX */
-#define	EISA_IPL_TTY	ISA_IPL_TTY				/* XXX */
-#define	EISA_IPL_CLOCK	ISA_IPL_CLOCK				/* XXX */
-
-#define	EISA_IST_PULSE	ISA_IST_PULSE				/* XXX */
-#define	EISA_IST_EDGE	ISA_IST_EDGE				/* XXX */
-#define	EISA_IST_LEVEL	ISA_IST_LEVEL				/* XXX */
