@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)printf.1	5.11 (Berkeley) 7/24/91
+.\"	@(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 24, 1991
+.Dd June 6, 1993
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -263,9 +263,9 @@ It is modeled
 after the standard library function,
 .Xr printf 3 .
 .Sh BUGS
-Since the number is translated from
+Since the floating point numbers are translated from
 .Tn ASCII
-to floating-point, and
+to floating-point and
 then back again, floating-point precision may be lost.
 .Pp
 .Tn ANSI
