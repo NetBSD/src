@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1999/09/13 10:30:26 itojun Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1999/09/13 16:26:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -40,8 +40,6 @@
 #include "wd.h"
 bdev_decl(wd);
 bdev_decl(sw);
-#include "fdc.h"
-bdev_decl(fd);
 #include "sd.h"
 bdev_decl(sd);
 #include "st.h"
@@ -61,7 +59,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
-	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
+	bdev_notdef(),			/* 2 (was floppy diskette) */
 	bdev_notdef(),			/* 3 (was QIC-02/QIC-36 tape) */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -148,7 +146,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
-	cdev_disk_init(NFDC,fd),	/* 9: floppy disk */
+	cdev_notdef(),			/* 9 (was floppy disk) */
 	cdev_tty_init(NSCIF,scif),	/* 10: serial with FIFO */
 	cdev_tty_init(NSCI,sci),	/* 11: serial */
 	cdev_notdef(),			/* 12: */
@@ -240,7 +238,7 @@ static int chrtoblktbl[] = {
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
 	/*  8 */	NODEV,
-	/*  9 */	2,
+	/*  9 */	NODEV,
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
