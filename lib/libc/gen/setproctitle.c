@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.5 1997/05/13 21:34:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $";
+static char rcsid[] = "$NetBSD: setproctitle.c,v 1.5 1997/05/13 21:34:26 gwr Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,17 @@ static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft
 #define	MAX_PROCTITLE	2048
 
 extern char *__progname;		/* Program name, from crt0. */
+
+#if 1 /* XXX: Remove this when the libc major version changes. */
+/*
+ * XXX: Temporary concession to old executables that were linked
+ * with an old crt0.o that did not have a __ps_strings variable.
+ * This "common" variable will be used ONLY by old executables.
+ */
+struct ps_strings *__ps_strings;	/* XXX */
+#define	OLD_PS_STRINGS \
+	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
+#endif /* XXX */
 
 void
 #if __STDC__
@@ -78,6 +89,11 @@ setproctitle(fmt, va_alist)
 	} else
 		(void)snprintf(buf, MAX_PROCTITLE, "%s", __progname);
 	va_end(ap);
+
+#if 1 /* XXX: Remove this when the libc major version changes. */
+	if (__ps_strings == 0)
+		__ps_strings = OLD_PS_STRINGS;
+#endif /* XXX */
 
 	PS_STRINGS->ps_nargvstr = 1;
 	PS_STRINGS->ps_argvstr = &bufp;
