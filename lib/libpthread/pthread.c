@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.3 2003/01/18 18:45:52 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.4 2003/01/19 16:03:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -547,7 +547,7 @@ pthread_attr_destroy(pthread_attr_t *attr)
 
 
 int
-pthread_attr_getdetachstate(pthread_attr_t *attr, int *detachstate)
+pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
 {
 
 	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
@@ -599,7 +599,8 @@ pthread_attr_setschedparam(pthread_attr_t *attr,
 
 
 int
-pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
+pthread_attr_getschedparam(const pthread_attr_t *attr,
+    struct sched_param *param)
 {
 
 	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
