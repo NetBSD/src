@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.9 1998/10/26 08:12:15 pk Exp $ */
+/*	$NetBSD: intreg.h,v 1.10 2002/12/06 17:45:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,3 +150,14 @@ struct icr_pi {
 				"f\0\7VME\0f\7\7SBUS\0b\16K\0b\17S\0b\20E\0"  \
 				"b\21A\0b\22SC\0b\23T\0b\24VI\0b\25MI\0"      \
 				"b\26F\0b\33V\0b\34M\0b\35I\0b\36ME\0b\37MA\0"
+
+/*
+ * Set & clear bits in the system interrupt register
+ */
+#define	icr_si_bis(bis) do {			\
+	*((u_int32_t *)ICR_SI_SET) = (bis);	\
+} while (0)
+
+#define	icr_si_bic(bic) do {			\
+	*((u_int32_t *)ICR_SI_CLR) = (bic);	\
+} while (0)
