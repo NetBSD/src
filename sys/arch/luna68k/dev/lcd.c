@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
+/* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $");
 
 /*
  * XXX
@@ -71,10 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $");
 #define LCD_LOCATE(X, Y)	(((Y) & 1 ? 0xc0 : 0x80) | ((X) & 0x0f))
 
 struct pio {
-	u_int8_t portA;
-	u_int8_t portB;
-	u_int8_t portC;
-	u_int8_t cntrl;
+	volatile u_int8_t portA;
+	volatile u_int8_t portB;
+	volatile u_int8_t portC;
+	volatile u_int8_t cntrl;
 };
 
 void lcdbusywait __P((void));

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
+/* $NetBSD: siotty.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $");
 
 #include "opt_ddb.h"
 
@@ -164,11 +164,6 @@ siottyintr(chan)
 	tp = sc->sc_tty;
 	sio = sc->sc_ctl;
 	rr = getsiocsr(sio);
-#if defined(DDB)
-	if ((rr && RR_BREAK) && tp != NULL && tp->t_dev == cn_tab->cn_dev)
-		cpu_Debugger();
-	else
-#endif
 	if (rr & RR_RXRDY) {
 		do {
 			code = sio->sio_data;
@@ -181,6 +176,11 @@ siottyintr(chan)
 			}
 			if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0)
 				continue;
+#if 0 && defined(DDB)
+			if ((rr && RR_BREAK) && tp->t_dev == cn_tab->cn_dev)
+				cpu_Debugger();
+			else
+#endif
 			(*linesw[tp->t_line].l_rint)(code, tp);
 		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
 	}

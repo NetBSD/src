@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2000/01/05 08:49:01 nisimura Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2000/01/07 05:13:08 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,19 +141,6 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 
 /*
- *	int mac68k_bus_space_probe __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t offset, int sz));
- *
- * Probe the bus at t/bsh/offset, using sz as the size of the load.
- *
- * This is a machine-dependent extension, and is not to be used by
- * machine-independent code.
- */
-
-int	mac68k_bus_space_probe __P((bus_space_tag_t t,
-	    bus_space_handle_t bsh, bus_size_t offset, int sz));
-
-/*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset));
  *
@@ -162,13 +149,13 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-    ((void) t, (*(volatile u_int8_t *)((h) + (o))))
+    ((void) t, (*(volatile u_int8_t *)((h) + 4*(o))))
 
 #define	bus_space_read_2(t, h, o)					\
-    ((void) t, (*(volatile u_int16_t *)((h) + (o))))
+    ((void) t, (*(volatile u_int16_t *)((h) + 4*(o))))
 
 #define	bus_space_read_4(t, h, o)					\
-    ((void) t, (*(volatile u_int32_t *)((h) + (o))))
+    ((void) t, (*(volatile u_int32_t *)((h) + 4*(o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -295,13 +282,13 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
  */
 
 #define	bus_space_write_1(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int8_t *)((h) + (o)) = (v))))
+    ((void) t, ((void)(*(volatile u_int8_t *)((h) + 4*(o)) = (v))))
 
 #define	bus_space_write_2(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int16_t *)((h) + (o)) = (v))))
+    ((void) t, ((void)(*(volatile u_int16_t *)((h) + 4*(o)) = (v))))
 
 #define	bus_space_write_4(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
+    ((void) t, ((void)(*(volatile u_int32_t *)((h) + 4*(o)) = (v))))
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
