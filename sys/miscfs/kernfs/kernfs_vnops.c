@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.10 1993/06/07 05:25:25 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.11 1993/08/02 23:00:57 mycroft Exp $
  */
 
 /*
@@ -629,6 +629,7 @@ kernfs_inactive(vp, p)
  * Print out the contents of a kernfs vnode.
  */
 /* ARGSUSED */
+void
 kernfs_print(vp)
 	struct vnode *vp;
 {
