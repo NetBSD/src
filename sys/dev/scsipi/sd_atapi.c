@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.17 2002/10/02 16:52:54 thorpej Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.18 2003/04/03 22:18:26 fvdl Exp $	*/
 
 /*
  * Copyright 1998
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.17 2002/10/02 16:52:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.18 2003/04/03 22:18:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,10 @@ sd_atapibus_get_parms(sd, dp, flags)
 
 	dp->disksize = _4btol(descp->nblks);
 	dp->blksize = _3btol(descp->blklen);
+	if (dp->blksize == 0)
+		dp->disksize512 = dp->disksize;
+	else
+		dp->disksize512 = (dp->disksize * dp->blksize) / DEV_BSIZE;
 
 	/*
 	 * First, set up standard fictitious geometry, a la sd_scsi.c.
