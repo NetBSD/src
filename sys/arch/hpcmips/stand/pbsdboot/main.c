@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2001/03/04 05:11:31 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2001/03/04 05:38:19 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.17.1 2001.02.25\r\n")
+	TEXT("Version 1.17.2 2001.03.04\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -265,6 +265,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("E-500"), BIFB_D16_FFFF,
 		240, 320, 512, 0xa200000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E500 },
+	{ TEXT("PocketPostPet"), BIFB_D16_FFFF,
+		320, 240, 1024, 0xa200000,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET },
 	{ TEXT("INTERTOP CX300"), BIFB_D8_00,
 		640, 480, 640, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300 },
