@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.10 1998/03/01 02:22:35 fvdl Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.11 1998/03/30 02:32:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct vnodeopv_desc *vfs_special_vnodeopv_descs[] = {
  */
 int vfs_opv_numops;
 
-typedef (*PFI) __P((void *));
+typedef int (*PFI) __P((void *));
 
 void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
 void vfs_opv_init_default __P((struct vnodeopv_desc *));
