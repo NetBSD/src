@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.22 1995/06/04 07:38:19 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.23 1995/06/12 03:05:12 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1098,9 +1098,12 @@ ip_mforward(m, ifp)
 	    }
 
 	    /* insert new entry at head of hash chain */
-	    rt->mfc_origin.s_addr     = ip->ip_src.s_addr;
-	    rt->mfc_mcastgrp.s_addr   = ip->ip_dst.s_addr;
-	    rt->mfc_expire	      = UPCALL_EXPIRE;
+	    rt->mfc_origin = ip->ip_src;
+	    rt->mfc_mcastgrp = ip->ip_dst;
+	    rt->mfc_pkt_cnt = 0;
+	    rt->mfc_byte_cnt = 0;
+	    rt->mfc_wrong_if = 0;
+	    rt->mfc_expire = UPCALL_EXPIRE;
 	    nexpire[hash]++;
 	    for (i = 0; i < numvifs; i++)
 		rt->mfc_ttls[i] = 0;
