@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.5 2001/11/13 00:57:06 lukem Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.6 2001/12/18 03:04:05 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.5 2001/11/13 00:57:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.6 2001/12/18 03:04:05 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -372,12 +372,12 @@ udp6_output(in6p, m, addr6, control, p)
 		bzero(ui->ui_x1, sizeof ui->ui_x1);
 		ui->ui_pr = IPPROTO_UDP;
 		ui->ui_len = htons(plen);
-		bcopy(&faddr->s6_addr[12], &ui->ui_dst, sizeof(ui->ui_dst));
+		bcopy(&laddr->s6_addr[12], &ui->ui_src, sizeof(ui->ui_src));
 		ui->ui_ulen = ui->ui_len;
 
 		flags = (in6p->in6p_socket->so_options &
 			 (SO_DONTROUTE | SO_BROADCAST));
-		bcopy(&laddr->s6_addr[12], &ui->ui_src, sizeof(ui->ui_src));
+		bcopy(&faddr->s6_addr[12], &ui->ui_dst, sizeof(ui->ui_dst));
 		udp6->uh_sum = in_cksum(m, hlen + plen);
 		if (udp6->uh_sum == 0)
 			udp6->uh_sum = 0xffff;

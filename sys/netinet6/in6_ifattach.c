@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.39 2001/11/13 00:56:59 lukem Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.40 2001/12/18 03:04:02 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.39 2001/11/13 00:56:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.40 2001/12/18 03:04:02 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static int in6_ifattach_loopback __P((struct ifnet *));
 static int
 get_rand_ifid(ifp, in6)
 	struct ifnet *ifp;
-	struct in6_addr *in6;	/*upper 64bits are preserved */
+	struct in6_addr *in6;	/* upper 64bits are preserved */
 {
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
@@ -129,7 +129,7 @@ get_rand_ifid(ifp, in6)
 static int
 get_hw_ifid(ifp, in6)
 	struct ifnet *ifp;
-	struct in6_addr *in6;	/*upper 64bits are preserved */
+	struct in6_addr *in6;	/* upper 64bits are preserved */
 {
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;

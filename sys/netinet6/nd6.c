@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.55 2001/11/13 00:57:04 lukem Exp $	*/
+/*	$NetBSD: nd6.c,v 1.56 2001/12/18 03:04:04 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.55 2001/11/13 00:57:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.56 2001/12/18 03:04:04 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,6 @@ nd6_timer(ignored_arg)
 	    nd6_timer, NULL);
 
 	ln = llinfo_nd6.ln_next;
-	/* XXX BSD/OS separates this code -- itojun */
 	while (ln && ln != &llinfo_nd6) {
 		struct rtentry *rt;
 		struct ifnet *ifp;
@@ -994,7 +993,7 @@ nd6_rtrequest(req, rt, info)
 	struct ifaddr *ifa;
 	long time_second = time.tv_sec;
 
-	if (rt->rt_flags & RTF_GATEWAY)
+	if ((rt->rt_flags & RTF_GATEWAY))
 		return;
 
 	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {
@@ -1041,7 +1040,7 @@ nd6_rtrequest(req, rt, info)
 				ln->ln_expire = 1;
 			}
 #endif
-			if (rt->rt_flags & RTF_CLONING)
+			if ((rt->rt_flags & RTF_CLONING))
 				break;
 		}
 		/*
@@ -1800,9 +1799,8 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 			/*
 			 * We skip link-layer address resolution and NUD
 			 * if the gateway is not a neighbor from ND point
-			 * of view, regardless the value of the
-			 * nd_ifinfo.flags.
-			 * The second condition is a bit tricky: we skip
+			 * of view, regardless the value of nd_ifinfo.flags.
+			 * The second condition is a bit tricky; we skip
 			 * if the gateway is our own address, which is
 			 * sometimes used to install a route to a p2p link.
 			 */
@@ -2003,7 +2001,8 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
 		/* this should be impossible, but we bark here for debugging */
-		printf("nd6_storelladdr: sdl_alen == 0\n");
+		printf("nd6_storelladdr: sdl_alen == 0, dst=%s, if=%s\n",
+		       ip6_sprintf(&SIN6(dst)->sin6_addr), if_name(ifp));
 		m_freem(m);
 		return(0);
 	}

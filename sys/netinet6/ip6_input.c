@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.48 2001/11/13 00:57:01 lukem Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.49 2001/12/18 03:04:03 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.48 2001/11/13 00:57:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.49 2001/12/18 03:04:03 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -246,10 +246,8 @@ ip6_input(m)
 	 * should the inner packet be considered authentic?
 	 * see comment in ah4_input().
 	 */
-	if (m) {
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-	}
+	m->m_flags &= ~M_AUTHIPHDR;
+	m->m_flags &= ~M_AUTHIPDGM;
 #endif
 
 	/*
@@ -605,7 +603,7 @@ ip6_input(m)
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		/*
-		 * if the payload length field is 0 and the next header field  
+		 * if the payload length field is 0 and the next header field
 		 * indicates Hop-by-Hop Options header, then a Jumbo Payload
 		 * option MUST be included.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.49 2001/11/13 00:56:58 lukem Exp $	*/
+/*	$NetBSD: in6.c,v 1.50 2001/12/18 03:04:02 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.49 2001/11/13 00:56:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.50 2001/12/18 03:04:02 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1721,7 +1721,7 @@ in6_addr2scopeid(ifp, addr)
 {
 	int scope = in6_addrscope(addr);
 		
-	switch(scope) {
+	switch (scope) {
 	case IPV6_ADDR_SCOPE_NODELOCAL:
 		return(-1);	/* XXX: is this an appropriate value? */
 
