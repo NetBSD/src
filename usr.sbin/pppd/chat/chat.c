@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.9 1997/05/17 21:23:06 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.10 1997/09/26 19:52:18 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -15,16 +15,50 @@
  *
  *	This software is in the public domain.
  *
- *	Please send all bug reports, requests for information, etc. to:
+ * -----------------
  *
- *		Al Longyear (longyear@netcom.com)
- *		(I was the last person to change this code.)
+ *	Added SAY keyword to send output to stderr.
+ *      This allows to turn ECHO OFF and to output specific, user selected,
+ *      text to give progress messages. This best works when stderr
+ *      exists (i.e.: pppd in nodetach mode).
+ *
+ * 	Added HANGUP directives to allow for us to be called
+ *      back. When HANGUP is set to NO, chat will not hangup at HUP signal.
+ *      We rely on timeouts in that case.
+ *
+ *      Added CLR_ABORT to clear previously set ABORT string. This has been
+ *      dictated by the HANGUP above as "NO CARRIER" (for example) must be
+ *      an ABORT condition until we know the other host is going to close
+ *      the connection for call back. As soon as we have completed the
+ *      first stage of the call back sequence, "NO CARRIER" is a valid, non
+ *      fatal string. As soon as we got called back (probably get "CONNECT"),
+ *      we should re-arm the ABORT "NO CARRIER". Hence the CLR_ABORT command.
+ *      Note that CLR_ABORT packs the abort_strings[] array so that we do not
+ *      have unused entries not being reclaimed.
+ *
+ *      In the same vein as above, added CLR_REPORT keyword.
+ *
+ *      Allow for comments. Line starting with '#' are comments and are
+ *      ignored. If a '#' is to be expected as the first character, the 
+ *      expect string must be quoted.
+ *
+ *
+ *		Francis Demierre <Francis@SwissMail.Com>
+ * 		Thu May 15 17:15:40 MET DST 1997
+ *
  *
  *      Added -r "report file" switch & REPORT keyword.
  *              Robert Geer <bgeer@xmission.com>
  *
+ *
  *	Added -e "echo" switch & ECHO keyword
  *		Dick Streefland <dicks@tasking.nl>
+ *
+ *
+ *	Considerable updates and modifications by
+ *		Al Longyear <longyear@pobox.com>
+ *		Paul Mackerras <paulus@cs.anu.edu.au>
+ *
  *
  *	The original author is:
  *
@@ -34,13 +68,15 @@
  *		Columbus, OH  43221
  *		(614)451-1883
  *
+ *
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chat.c,v 1.14 1997/04/30 05:40:50 paulus Exp ";
+static char rcsid[] = "Id: chat.c,v 1.15 1997/07/14 03:50:22 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: chat.c,v 1.9 1997/05/17 21:23:06 christos Exp $";
+__RCSID("$NetBSD: chat.c,v 1.10 1997/09/26 19:52:18 christos Exp $");
 #endif
 #endif
 
@@ -135,10 +171,14 @@ struct termios saved_tty_parameters;
 char *abort_string[MAX_ABORTS], *fail_reason = (char *)0,
 	fail_buffer[50];
 int n_aborts = 0, abort_next = 0, timeout_next = 0, echo_next = 0;
+int clear_abort_next = 0;
 
 char *report_string[MAX_REPORTS] ;
 char  report_buffer[50] ;
 int n_reports = 0, report_next = 0, report_gathering = 0 ; 
+int clear_report_next = 0;
+
+int say_next = 0, hup_next = 0;
 
 void *dup_mem __P((void *b, size_t c));
 void *copy_of __P((char *s));
@@ -170,6 +210,7 @@ char *clean __P((register char *s, int sending));
 void break_sequence __P((void));
 void terminate __P((int status));
 void die __P((void));
+void pack_array __P((char **array, int end));
 char *expect_strtok __P((char *, char *));
 
 int main __P((int, char *[]));
@@ -336,7 +377,7 @@ char **argv;
 void do_file (chat_file)
 char *chat_file;
     {
-    int linect, sendflg;
+    int linect, len, sendflg;
     char *sp, *arg, quote;
     char buf [STR_LEN];
     FILE *cfp;
@@ -361,6 +402,11 @@ char *chat_file;
 
 	linect++;
 	sp = buf;
+
+        /* lines starting with '#' are comments. If a real '#'
+           is to be expected, it should be quoted .... */
+        if ( *sp == '#' ) continue;
+
 	while (*sp != '\0')
 	    {
 	    if (*sp == ' ' || *sp == '\t')
@@ -430,7 +476,7 @@ Usage: %s [-e] [-v] [-t timeout] [-r report-file] {-f chat-file | chat-script}\n
     exit(1);
     }
 
-char line[128];
+char line[256];
 char *p;
 
 void logf (str)
@@ -875,15 +921,33 @@ char *s;
     char *expect;
     char *reply;
 
+    if (strcmp(s, "HANGUP") == 0)
+        {
+	++hup_next;
+        return;
+        }
+ 
     if (strcmp(s, "ABORT") == 0)
 	{
 	++abort_next;
 	return;
 	}
 
+    if (strcmp(s, "CLR_ABORT") == 0)
+	{
+	++clear_abort_next;
+	return;
+	}
+
     if (strcmp(s, "REPORT") == 0)
 	{
 	++report_next;
+	return;
+	}
+
+    if (strcmp(s, "CLR_REPORT") == 0)
+	{
+	++clear_report_next;
 	return;
 	}
 
@@ -896,6 +960,11 @@ char *s;
     if (strcmp(s, "ECHO") == 0)
 	{
 	++echo_next;
+	return;
+	}
+    if (strcmp(s, "SAY") == 0)
+	{
+	++say_next;
 	return;
 	}
 /*
@@ -983,6 +1052,23 @@ int c;
 void chat_send (s)
 register char *s;
     {
+    if (say_next)
+	{
+	say_next = 0;
+	s = clean(s,0);
+	write(2, s, strlen(s));
+        free(s);
+	return;
+	}
+    if (hup_next)
+        {
+        hup_next = 0;
+	if (strcmp(s, "OFF") == 0)
+           signal(SIGHUP, SIG_IGN);
+        else
+           signal(SIGHUP, sighup);
+        return;
+        }
     if (echo_next)
 	{
 	echo_next = 0;
@@ -1025,6 +1111,52 @@ register char *s;
 	return;
 	}
 
+    if (clear_abort_next)
+        {
+	char *s1;
+	char *s2 = s;
+	int   i;
+        int   old_max;
+	int   pack = 0;
+	
+	clear_abort_next = 0;
+	
+	s1 = clean(s, 0);
+	
+	if (strlen(s1) > strlen(s)
+	    || strlen(s1) + 1 > sizeof(fail_buffer))
+	    {
+	    syslog(LOG_WARNING, "Illegal or too-long CLR_ABORT string ('%s')", s);
+	    die();
+	    }
+
+        old_max = n_aborts;
+	for (i=0; i < n_aborts; i++)
+	    {
+		if ( strcmp(s1,abort_string[i]) == 0 )
+		    {
+                        free(abort_string[i]);
+			abort_string[i] = NULL;
+			pack++;
+                        n_aborts--;
+			if (verbose)
+	    		{
+	    		logf("clear abort on (");
+		
+	    		for (s2 = s; *s2; ++s2)
+	        		{
+				logf(character(*s2));
+	        		}
+		
+	    		logf(")\n");
+	    		}
+	    	    }
+	    }
+        free(s1);
+	if (pack) pack_array(abort_string,old_max);
+	return;
+	}
+
     if (report_next)
         {
 	char *s1;
@@ -1056,6 +1188,52 @@ register char *s;
 	        }
 	    logf(")\n");
 	    }
+	return;
+        }
+
+    if (clear_report_next)
+        {
+	char *s1;
+        char *s2 = s;
+	int   i;
+	int   old_max;
+	int   pack = 0;
+	
+	clear_report_next = 0;
+	
+	s1 = clean(s, 0);
+	
+	if (strlen(s1) > strlen(s) || strlen(s1) > sizeof fail_buffer - 1)
+	    {
+	    syslog(LOG_WARNING, "Illegal or too-long REPORT string ('%s')", s);
+	    die();
+	    }
+
+	old_max = n_reports;
+	for (i=0; i < n_reports; i++)
+	    {
+		if ( strcmp(s1,report_string[i]) == 0 )
+		    {
+			free(report_string[i]);
+			report_string[i] = NULL;
+			pack++;
+			n_reports--;
+			if (verbose)
+	    		{
+	    		logf("clear report (");
+		
+	    		for (s2 = s; *s2; ++s2)
+	        		{
+				logf(character(*s2));
+	        		}
+		
+	    		logf(")\n");
+	    		}
+	    	    }
+	    }
+        free(s1);
+        if (pack) pack_array(report_string,old_max);
+	
 	return;
         }
 
@@ -1492,3 +1670,22 @@ usleep( usec )				  /* returns 0 if ok, else -1 */
     return select( 0, (long *)0, (long *)0, (long *)0, &delay );
 }
 #endif
+
+void
+pack_array (array, end)
+    char **array; /* The address of the array of string pointers */
+    int    end;   /* The index of the next free entry before CLR_ */
+{
+    int i, j;
+
+    for (i = 0; i < end; i++) {
+	if (array[i] == NULL) {
+	    for (j = i+1; j < end; ++j)
+		if (array[j] != NULL)
+		    array[i++] = array[j];
+	    for (; i < end; ++i)
+		array[i] = NULL;
+	    break;
+	}
+    }
+}
