@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.2 1996/02/05 16:51:52 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.3 1996/02/15 22:45:32 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -40,7 +40,7 @@
  *
  * Created      : 22/10/95
  *
- *    $Id: armfpe_init.c,v 1.2 1996/02/05 16:51:52 mark Exp $
+ *    $Id: armfpe_init.c,v 1.3 1996/02/15 22:45:32 mark Exp $
  */
 
 /*#define DEBUG*/
@@ -64,6 +64,7 @@
 #include "armfpe.h"		/* Prototypes for things */
 
 extern int want_resched;
+extern u_int fpe_nexthandler;
 
 void undefinedinstruction_bounce __P(());
 void arm_fpe_exception_glue __P((int exception));
@@ -164,9 +165,6 @@ initialise_arm_fpe(cpu)
  * 3. Initialise the FPE
  */
 
-static u_int dummy1;
-static u_int dummy2;
-
 int
 arm_fpe_boot(void)
 {
@@ -190,22 +188,8 @@ arm_fpe_boot(void)
 
 	*arm_fpe_mod_hdr->main_ws_ptr_addr = workspace;
 
-/*
-	dummy1 = (u_int) undefined_handler_address;
-	dummy2 = (u_int) undefinedinstruction_bounce;
-
-	*arm_fpe_mod_hdr->local_handler_ptr_addr = (u_int)&dummy1;
-	*arm_fpe_mod_hdr->old_handler_ptr_addr = (u_int)&dummy2;
-*/
-
 	*arm_fpe_mod_hdr->local_handler_ptr_addr = (u_int)&undefined_handler_address;
 	*arm_fpe_mod_hdr->old_handler_ptr_addr = undefined_handler_address;
-
-/*
-	printf("Undefined handler address = %08x\n", *arm_fpe_mod_hdr->local_handler_ptr_addr);
-	printf("Old handler address = %08x\n", *arm_fpe_mod_hdr->old_handler_ptr_addr);
-	printf("undefinedinstruction_bounce = %08x\n", (u_int)undefinedinstruction_bounce);
-*/
 
 	/* Initialise out gloable workspace */
 
@@ -213,7 +197,7 @@ arm_fpe_boot(void)
 	printf("Initing workspace ");
 #endif
 
-	id = arm_fpe_core_initws(workspace, (u_int)arm_fpe_panic, (u_int)arm_fpe_panic);
+	id = arm_fpe_core_initws(workspace, (u_int)&fpe_nexthandler, (u_int)&fpe_nexthandler);
 
 #ifdef DEBUG
 	printf("id=%08x\n", id);
@@ -268,7 +252,6 @@ arm_fpe_postproc(fpframe, frame)
 /* take pending signals */
 
 	while ((sig = (CURSIG(p))) != 0) {
-		printf("fpe_postproc: posting signale %d\n", CURSIG(p));
 		postsig(sig);
 	}
 
@@ -292,7 +275,6 @@ arm_fpe_postproc(fpframe, frame)
 
 		(void)splx(s);
 		while ((sig = (CURSIG(p))) != 0) {
-			printf("fpe_postproc: posting signale %d\n", CURSIG(p));
 			postsig(sig);
 		}
 	}
