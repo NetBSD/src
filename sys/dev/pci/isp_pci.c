@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.2 1997/03/12 21:07:16 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.3 1997/03/13 01:56:06 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -45,18 +45,19 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <vm/vm.h>
 
 #include <dev/ic/ispreg.h>
 #include <dev/ic/ispvar.h>
 #include <dev/ic/ispmbox.h>
 #include <dev/microcode/isp/asm_pci.h>
-#ifdef	alpha	/* XXX */
+
+#ifdef	__alpha__	/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
 #undef vtophys
 #define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t) va)
 #endif
-#include <sys/kernel.h>
 #define	KVTOPHYS(x)	vtophys(x)
 
 
