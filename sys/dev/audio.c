@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.5 1995/05/05 22:36:14 brezak Exp $	*/
+/*	$NetBSD: audio.c,v 1.6 1995/05/08 16:06:38 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.5 1995/05/05 22:36:14 brezak Exp $
+ *	$Id: audio.c,v 1.6 1995/05/08 16:06:38 brezak Exp $
  */
 
 /*
@@ -1476,12 +1476,14 @@ audiosetinfo(sc, ai)
 	}
 	if (p->gain != ~0) {
 		ct.dev = hw->get_out_port(sc->hw_hdl);
+		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = p->gain;
 		hw->set_port(sc->hw_hdl, &ct);
 	}
 	if (r->gain != ~0) {
 		ct.dev = hw->get_in_port(sc->hw_hdl);
+		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = r->gain;
 		hw->set_port(sc->hw_hdl, &ct);
