@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.11 1996/10/13 03:05:47 christos Exp $ */
+/* $NetBSD: db_interface.c,v 1.12 1996/10/15 01:24:48 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -95,9 +95,6 @@ int db_access_svc_sp(vp, valp, rw)
 	return(0);
 }
 
-#if 0
-extern char *trap_type[];
-#endif
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -137,7 +134,7 @@ kdb_trap(type, tf)
 
 	*tf = ddb_regs.ddb_tf;
 
-	return (1);
+	return(1);
 }
 
 
@@ -192,15 +189,24 @@ db_write_text(dst, ch)
 		return;
 	}
 
+	/*
+	 * This code should purge the TLB and sync a single cache line
+	 */
+
 	pteo = ReadWord(ptep);
 	pte = pteo | PT_AP(AP_KRW);
 	WriteWord(ptep, pte);
-	tlbflush();
+	tlb_flush();
 
 	*dst = (unsigned char)ch;
 
+#ifdef CPU_SA110
+	/* make sure the caches and memory are in sync */
+	sync_caches();
+#endif	/* CPU_SA110 */
+
 	WriteWord(ptep, pteo);
-	tlbflush();
+	tlb_flush();
 	splx(s);
 }
 
@@ -224,6 +230,10 @@ db_write_bytes(addr, size, data)
 			*dst = *data;
 		dst++, data++;
 	}
+#ifdef CPU_SA110
+	/* make sure the caches and memory are in sync */
+	sync_caches();
+#endif
 }
 
 void
@@ -237,6 +247,7 @@ void db_show_fs_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *m
 void db_show_vnode_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_intrchain_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 struct db_command arm32_db_command_table[] = {
 	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
@@ -244,22 +255,24 @@ struct db_command arm32_db_command_table[] = {
 	{ "vnode",	db_show_vnode_cmd,	0, NULL },
 	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
 	{ "panic",	db_show_panic_cmd,	0, NULL },
+	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
 int
-db_trapper(addr, inst, frame)
+db_trapper(addr, inst, frame, fault_code)
 	u_int		addr;
 	u_int		inst;
 	trapframe_t	*frame;
+	int		fault_code;
 {
-	if ((frame->tf_spsr & PSR_MODE) != PSR_USR32_MODE) {
+	if (fault_code == 0) {
 		if (inst == BKPT_INST)
 			kdb_trap(1, frame);
 		else
 			panic("Undefined instruction 0x%08x @ 0x%08x in kernel\n", inst, addr);
 	} else
-		trapsignal(curproc, SIGTRAP, 0);
+		return(1);
 	return(0);
 }
 
