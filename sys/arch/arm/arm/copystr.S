@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.3 2002/08/12 20:37:31 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.4 2002/08/15 01:38:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,7 +41,7 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.3 2002/08/12 20:37:31 bjh21 Exp $")
+RCSID("$NetBSD: copystr.S,v 1.4 2002/08/15 01:38:16 briggs Exp $")
 
 #include <sys/errno.h>
 
@@ -112,10 +112,10 @@ ENTRY(copyinstr)
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	Lcopystrpcbfault
+	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #Lcopystrfault - . - 8
+	add	r5, pc, #.Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrbt	r5, [r0], #0x0001
@@ -159,10 +159,10 @@ ENTRY(copyoutstr)
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
-	beq	Lcopystrpcbfault
+	beq	.Lcopystrpcbfault
 #endif
 
-	add	r5, pc, #Lcopystrfault - . - 8
+	add	r5, pc, #.Lcopystrfault - . - 8
 	str	r5, [r4, #PCB_ONFAULT]
 
 1:	ldrb	r5, [r0], #0x0001
@@ -186,14 +186,14 @@ ENTRY(copyoutstr)
 	mov	pc, lr
 
 /* A fault occurred during the copy */
-Lcopystrfault:
+.Lcopystrfault:
 	mov	r1, #0x00000000
 	str	r1, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-Lcopystrpcbfault:
+.Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
