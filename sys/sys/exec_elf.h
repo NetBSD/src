@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.61 2002/06/14 09:05:21 ragge Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.62 2002/08/26 21:09:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -592,10 +592,10 @@ typedef struct {
 	/* Vendor specific */
 #define	AT_MIPS_NOTELF	10	/* XXX a_val != 0 -> MIPS XCOFF executable */
 
-#define	AT_SUN_UID	2000	/* euid */
-#define	AT_SUN_RUID	2001	/* ruid */
-#define	AT_SUN_GID	2002	/* egid */
-#define	AT_SUN_RGID	2003	/* rgid */
+#define	AT_EUID		2000	/* euid (solaris compatible numbers) */
+#define	AT_RUID		2001	/* ruid (solaris compatible numbers) */
+#define	AT_EGID		2002	/* egid (solaris compatible numbers) */
+#define	AT_RGID		2003	/* rgid (solaris compatible numbers) */
 
 	/* Solaris kernel specific */
 #define	AT_SUN_LDELF	2004	/* dynamic linker's ELF header */
@@ -763,7 +763,7 @@ struct netbsd_elfcore_procinfo {
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
+#define ELF_AUX_ENTRIES	12		/* Size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
 
@@ -803,7 +803,7 @@ struct elf_args {
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
-int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+int	elf32_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
     char **, void *));
 
 int	coredump_elf32 __P((struct proc *, struct vnode *, struct ucred *));
@@ -815,7 +815,7 @@ int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
 int	exec_elf64_makecmds __P((struct proc *, struct exec_package *));
 int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
     caddr_t, int));
-int	elf64_copyargs __P((struct exec_package *, struct ps_strings *,
+int	elf64_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
     char **, void *));
 
 int	coredump_elf64 __P((struct proc *, struct vnode *, struct ucred *));
