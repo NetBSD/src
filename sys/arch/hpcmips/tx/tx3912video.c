@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.19 2000/10/22 10:33:02 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.20 2000/10/22 12:49:27 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -260,6 +260,9 @@ tx3912video_hpcfbinit(sc)
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
+	if (video_reverse_color())
+		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
+
 
 	switch (chip->vc_fbdepth) {
 	default:
