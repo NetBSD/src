@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.125 2004/04/28 03:34:34 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.126 2004/04/28 03:37:17 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -653,19 +653,19 @@ sys/arch/sparc/sparc/cache.c			1.83
 	For now, disable Hypersparc instruction cache on MP machines.
 	[pk, ticket #97]
 
-src/sys/net/if_spppsubr.c			1.76
+sys/net/if_spppsubr.c			1.76
 
 	Be more paranoid about data a non-root user may query.
 	Fixes PR#25099 by Christian Biere.
 	[martin, ticket #98]
 
-src/usr.bin/vi/common/options.c			1.10
+usr.bin/vi/common/options.c			1.10
 
 	Fix copying and freeing of options.  Patch from yamt@ in PR#25050.
 	[aymeric, ticket #99]
 
-src/usr.bin/vi/common/exf.c			1.12
-src/usr.bin/vi/ex/version.h			1.14
+usr.bin/vi/common/exf.c			1.12
+usr.bin/vi/ex/version.h			1.14
 
 	Don't fail if asked to recover a file for which there is no recovery
 	file.  Just continue.
@@ -1223,63 +1223,63 @@ sbin/sysctl/sysctl.c				1.92
 	Addresses PR bin/25115.
 	[atatat, ticket #174]
 
-src/etc/MAKEDEV.awk				1.15
+etc/MAKEDEV.awk					1.15
 
 	The character position passed to substr() should have an origin of
 	1.  This fixes a bug that prevented MAKEDEV working with some awk
 	implementations (e.g., mawk 1.3.3).
 	[enami, ticket #175]
 
-src/x11/Xserver/xinput/Makefile			1.9
+x11/Xserver/xinput/Makefile			1.9
 
 	XINPUT is also needed by vax.  This fixes the vax build failure in
 	src/x11/Xserver/xinput.
 	[mhitch, ticket #176]
 
-src/x11/Xserver/Makefile.common			1.17
+x11/Xserver/Makefile.common			1.17
 
 	The Xprt build needs cfb, and the vax Xserver will soon need the cfb
 	stuff, so enable building cfb.  Fixes the Xprt build failure on vax
 	when building from src/x11.
 	[mhitch, ticket #177]
 
-src/sys/kern/vfs_subr.c				1.219
+sys/kern/vfs_subr.c				1.219
 
 	Pass LK_NOWAIT to vget() while holding the spechash spinlock in
 	checkalias().  This fixes a locking procedures violation on MP
 	kernels.
 	[pk, ticket #178]
 
-src/sys/arch/sparc/sparc/pmap.c			1.279-1.293
-src/sys/arch/sparc/sparc/cache.c		1.84-1.89
-src/sys/arch/sparc/include/pmap.h		1.72-1.73
-src/sys/arch/sparc/sparc/cpuvar.h		1.59-1.62
-src/sys/arch/sparc/sparc/emul.c			1.9
-src/sys/arch/sparc/sparc/trap.c			1.154
-src/sys/arch/sparc/sparc/cpu.c			1.183-1.185
-src/sys/arch/sparc/sparc/cache.h		1.29-1.31
-src/sys/arch/sparc/sparc/intr.c			1.84-1.85
-src/sys/arch/sparc/sparc/locore.s		1.199-1.207
-src/sys/arch/sparc/sparc/genassym.cf		1.42-1.43
-src/sys/arch/sparc/include/cpu.h		1.67
-src/sys/arch/sparc/include/lock.h		1.15-1.17
-src/sys/arch/sparc/conf/GENERIC.MP		1.3
+sys/arch/sparc/sparc/pmap.c			1.279-1.293
+sys/arch/sparc/sparc/cache.c			1.84-1.89
+sys/arch/sparc/include/pmap.h			1.72-1.73
+sys/arch/sparc/sparc/cpuvar.h			1.59-1.62
+sys/arch/sparc/sparc/emul.c			1.9
+sys/arch/sparc/sparc/trap.c			1.154
+sys/arch/sparc/sparc/cpu.c			1.183-1.185
+sys/arch/sparc/sparc/cache.h			1.29-1.31
+sys/arch/sparc/sparc/intr.c			1.84-1.85
+sys/arch/sparc/sparc/locore.s			1.199-1.207
+sys/arch/sparc/sparc/genassym.cf		1.42-1.43
+sys/arch/sparc/include/cpu.h			1.67
+sys/arch/sparc/include/lock.h			1.15-1.17
+sys/arch/sparc/conf/GENERIC.MP			1.3
 
 	Many fixes for issues with sparc multi-processor support (includes
 	fixes to make HyperSPARC MP work).
 	[pk, ticket #179]
 
-src/sys/sys/sysctl.h				1.123
+sys/sys/sysctl.h				1.123
 
 	Add extra parentheses to make the cast correct.
 	[atatat, ticket #180]
 
-src/sbin/sysctl/sysctl.c			1.93
+sbin/sysctl/sysctl.c				1.93
 
 	Allocate adjusted size, not fixed size.
 	[atatat, ticket #181]
 
-src/sys/arch/i386/stand/mbr/mbr.S		1.6
+sys/arch/i386/stand/mbr/mbr.S			1.6
 
 	Put the 'mbr has bootselect table' marker into all versions of the
 	mbr code.  Having the table in the 'standard' mbr allows fdisk to
@@ -1292,13 +1292,13 @@ src/sys/arch/i386/stand/mbr/mbr.S		1.6
 	PR#25235.
 	[dsl, ticket #182]
 
-src/sys/arch/vax/vax/machdep.c			1.146
+sys/arch/vax/vax/machdep.c			1.146
 
 	The second "console_device" node should really be called
 	"booted_device".
 	[atatat, ticket #183]
 
-src/sbin/newfs/mkfs.c				1.88
+sbin/newfs/mkfs.c				1.88
 
 	Fix support for creating APPLE_UFS filesystems with -v.
 	This includes most of the support for creating fs level 3
@@ -1307,23 +1307,23 @@ src/sbin/newfs/mkfs.c				1.88
 	PR#23924.
 	[dbj, ticket #184]
 
-src/sbin/fsck_ffs/utilities.c			1.46
-src/sbin/fsck_ffs/setup.c			1.72-1.73
-src/etc/rc.d/fixsb				1.1-1.10
-src/sys/ufs/ffs/ffs_alloc.c			1.75
-src/sys/ufs/ffs/ffs_vfsops.c			1.141-1.142
-src/etc/defaults/rc.conf			1.58
-src/distrib/sets/lists/etc/mi			1.141
-src/etc/postinstall				1.75
-src/etc/mtree/special				1.80
-src/etc/rc.d/Makefile				1.47
+sbin/fsck_ffs/utilities.c			1.46
+sbin/fsck_ffs/setup.c				1.72-1.73
+etc/rc.d/fixsb					1.1-1.10
+sys/ufs/ffs/ffs_alloc.c				1.75
+sys/ufs/ffs/ffs_vfsops.c			1.141-1.142
+etc/defaults/rc.conf				1.58
+distrib/sets/lists/etc/mi			1.141
+etc/postinstall					1.75
+etc/mtree/special				1.80
+etc/rc.d/Makefile				1.47
 
 	Fix problems related to superblock upgrade issues which may be
 	experienced by -current users from 2003.
 	PR#17910, PR#21283, PR#21404, PR#23925, PR#23926, PR#25138, 
 	[dbj, ticket #185]
 
-src/sys/dev/scsipi/cd.c				1.201
+sys/dev/scsipi/cd.c				1.201
 
 	Some older devices do not understand the `disable block descriptor'
 	bit in the mode sense request.  So fall back on mode sense data
@@ -1331,7 +1331,7 @@ src/sys/dev/scsipi/cd.c				1.201
 	PR#25210.
 	[pk, ticket #186]
 
-src/sys/netinet/ip_rules.c			1.2
+sys/netinet/ip_rules.c				1.2
 
 	Fix VAX kernel problem: always include <sys/param.h> first.
 	[matt, ticket #187]
