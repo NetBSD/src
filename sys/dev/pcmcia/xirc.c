@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.10 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.11 2004/08/10 18:43:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.10 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11 2004/08/10 18:43:50 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -192,7 +192,6 @@ xirc_attach(parent, self, aux)
 	int rv;
 	int error;
 
-	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
 
 	pcmcia_socket_enable(parent);

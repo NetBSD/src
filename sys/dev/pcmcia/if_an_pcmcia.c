@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.22 2004/08/10 18:39:08 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.23 2004/08/10 18:43:49 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.22 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.23 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,6 @@ an_pcmcia_attach(parent, self, aux)
 	struct an_softc *sc = &psc->sc_an;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-
-	aprint_normal("\n");
 
 	psc->sc_pf = pa->pf;
 	if ((cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head)) == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.51 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.52 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.51 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.52 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,6 @@ ep_pcmcia_attach(parent, self, aux)
 	int i;
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
 	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {

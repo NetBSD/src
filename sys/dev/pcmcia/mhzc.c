@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.27 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.28 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.27 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.28 2004/08/10 18:43:49 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -198,7 +198,6 @@ mhzc_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	int error;
 
-	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
 
 	sc->sc_product = pcmcia_product_lookup(pa, mhzc_products,

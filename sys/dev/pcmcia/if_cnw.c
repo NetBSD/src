@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.27 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.28 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.27 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.28 2004/08/10 18:43:49 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -510,7 +510,6 @@ cnw_attach(parent, self, aux)
 	int i;
 	bus_size_t memsize;
 
-	printf("\n");
 	sc->sc_resource = 0;
 
 	/* Enable the card */
