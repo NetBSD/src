@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/04/01 06:05:05 simonb Exp $
+#	$NetBSD: Makefile,v 1.14 1999/04/01 08:47:38 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -28,6 +28,10 @@ BOOTDEFADD+=	-DBOOTXX -DRELOC=0x${RELOC} \
 # -DLIBSA_SINGLE_DEVICE=rz -D"rzioctl(x,y,z)=EINVAL" -D"rzclose(f)=0"
 # -DLIBSA_FS_SINGLECOMPONENT
 # -DLIBSA_NO_DISKLABEL_MSGS
+# Also possible to save space:
+#  + Remove disklabel support.
+#  + Change alloc() to always allocate past "top", and don't worry
+#    about free().  At the moment, there's only about 50kB alloc()'d.
 
 
 ALL=	rzboot bootrz
