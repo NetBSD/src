@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.6 1998/01/12 21:13:47 thorpej Exp $	*/
+/*	$NetBSD: par.c,v 1.7 1998/08/07 16:16:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -57,8 +57,9 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 
+#include <machine/parioctl.h>
+
 #include <x68k/x68k/iodevice.h>
-#include <x68k/dev/parioctl.h>
 
 void partimo __P((void *));
 void parstart __P((void *);)
