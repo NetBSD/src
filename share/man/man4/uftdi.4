@@ -1,4 +1,4 @@
-.\" $NetBSD: uftdi.4,v 1.5 2002/02/07 03:15:08 ross Exp $
+.\" $NetBSD: uftdi.4,v 1.6 2002/05/08 18:11:28 scw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm uftdi
-.Nd USB support for serial adapters based on the FT8U100AX
+.Nd USB support for serial adapters based on the FT8U100AX and FT8U232AM
 .Sh SYNOPSIS
 .Cd "uftdi* at uhub?"
 .Cd "ucom*  at uftdi?"
@@ -51,12 +51,13 @@ driver supports the following adapters:
 .Bl -tag -width Dv -offset indent -compact
 .It Tn Inland UAS111
 .It Tn QVS USC-1000
+.It Tn HP USB-Serial adapter shipped with some HP laptops
 .El
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for various serial adapters based on the FTDI chip
-FT8U100AX.
+driver provides support for various serial adapters based on the FTDI
+FT8U100AX and FT8U232AM chips.
 .Pp
 The device is accessed through the
 .Xr ucom 4
