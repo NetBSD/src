@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.4 1995/04/30 12:02:03 leo Exp $	*/
+/*	$NetBSD: dma.h,v 1.5 1995/05/05 16:36:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -45,7 +45,7 @@ struct dma {
 	volatile u_short  dma_data;	/* controller data path		*/
 	volatile u_short  dma_mode;	/* mode register		*/
 	volatile u_char   dma_addr[6];	/* base address H/M/L		*/
-	volatile u_short  dma_drvmode;	/* floppy density settings	*/
+	volatile u_char   dma_drvmode;	/* floppy density settings	*/
 };
 
 #define	dma_nsec      dma_data		/* sector count			*/
