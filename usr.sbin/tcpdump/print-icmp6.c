@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.3 1999/07/06 13:05:14 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.4 1999/07/26 06:26:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -57,7 +57,7 @@ static const char rcsid[] =
 #include "interface.h"
 #include "addrtoname.h"
 
-void icmp6_opt_print(const u_char *);
+void icmp6_opt_print(const u_char *, int);
 void mld6_print(const u_char *);
 
 void
@@ -71,6 +71,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 	register int hlen, dport;
 	register const u_char *ep;
 	char buf[256];
+	int icmp6len;
 
 #if 0
 #define TCHECK(var) if ((u_char *)&(var) > ep - sizeof(var)) goto trunc
@@ -82,6 +83,11 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 	str = buf;
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;
+	if (ip->ip6_plen)
+		icmp6len = (ntohs(ip->ip6_plen) + sizeof(struct ip6_hdr) -
+			    (bp - bp2));
+	else			/* XXX: jumbo payload case... */
+		icmp6len = snapend - bp;
 
 #if 0
         (void)printf("%s > %s: ",
@@ -102,9 +108,14 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			printf("icmp6: %s unreachable prohibited",
 			       ip6addr_string(&oip->ip6_dst));
 			break;
+#ifdef ICMP6_DST_UNREACH_BEYONDSCOPE
+		case ICMP6_DST_UNREACH_BEYONDSCOPE:
+#else
 		case ICMP6_DST_UNREACH_NOTNEIGHBOR:
-			printf("icmp6: %s unreachable not a neighbor",
-				ip6addr_string(&oip->ip6_dst));
+#endif
+			printf("icmp6: %s beyond scope of source address %s",
+			       ip6addr_string(&oip->ip6_dst),
+			       ip6addr_string(&oip->ip6_src));
 			break;
 		case ICMP6_DST_UNREACH_ADDR:
 			printf("icmp6: %s unreachable address",
@@ -200,10 +211,11 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		mld6_print((const u_char *)dp);
 		break;
 	case ND_ROUTER_SOLICIT:
-		printf("icmp6: router solicitation");
+		printf("icmp6: router solicitation ");
 		if (vflag) {
 #define RTSOLLEN 8
-		        icmp6_opt_print((const u_char *)dp + RTSOLLEN);
+		        icmp6_opt_print((const u_char *)dp + RTSOLLEN,
+					icmp6len - RTSOLLEN);
 		}
 		break;
 	case ND_ROUTER_ADVERT:
@@ -225,7 +237,8 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			printf("retrans_time=%u)",
 				(u_int32_t)ntohl(p->nd_ra_retransmit));
 #define RTADVLEN 16
-		        icmp6_opt_print((const u_char *)dp + RTADVLEN);
+		        icmp6_opt_print((const u_char *)dp + RTADVLEN,
+					icmp6len - RTADVLEN);
 		}
 		break;
 	case ND_NEIGHBOR_SOLICIT:
@@ -237,7 +250,8 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			ip6addr_string(&p->nd_ns_target));
 		if (vflag) {
 #define NDSOLLEN 24
-		        icmp6_opt_print((const u_char *)dp + NDSOLLEN);
+		        icmp6_opt_print((const u_char *)dp + NDSOLLEN,
+					icmp6len - NDSOLLEN);
 		}
 	    }
 		break;
@@ -268,7 +282,8 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 				printf(")");
 			}
 #define NDADVLEN 24
-		        icmp6_opt_print((const u_char *)dp + NDADVLEN);
+		        icmp6_opt_print((const u_char *)dp + NDADVLEN,
+					icmp6len - NDADVLEN);
 		}
 	    }
 		break;
@@ -285,7 +300,8 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		printf("icmp6: redirect %s to %s", dstbuf, tgtbuf);
 #define REDIRECTLEN 40
 		if (vflag) {
-			icmp6_opt_print((const u_char *)dp + REDIRECTLEN);
+			icmp6_opt_print((const u_char *)dp + REDIRECTLEN,
+					icmp6len - REDIRECTLEN);
 		}
 		break;
 	}
@@ -397,7 +413,7 @@ trunc:
 }
 
 void
-icmp6_opt_print(register const u_char *bp)
+icmp6_opt_print(register const u_char *bp, int resid)
 {
 	register const struct nd_opt_hdr *op;
 	register const struct nd_opt_hdr *opl;	/* why there's no struct? */
@@ -430,6 +446,8 @@ icmp6_opt_print(register const u_char *bp)
 	ep = snapend;
 
 	ECHECK(op->nd_opt_len);
+	if (resid <= 0)
+		return;
 	switch(op->nd_opt_type) {
 	case ND_OPT_SOURCE_LINKADDR:
 		opl = (struct nd_opt_hdr *)op;
@@ -444,7 +462,8 @@ icmp6_opt_print(register const u_char *bp)
 		if (opl->nd_opt_len != 1)
 			printf("!");
 		printf(")");
-		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3));
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
 		break;
 	case ND_OPT_TARGET_LINKADDR:
 		opl = (struct nd_opt_hdr *)op;
@@ -459,7 +478,8 @@ icmp6_opt_print(register const u_char *bp)
 		if (opl->nd_opt_len != 1)
 			printf("!");
 		printf(")");
-		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3));
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
 		break;
 	case ND_OPT_PREFIX_INFORMATION:
 		opp = (struct nd_opt_prefix_info *)op;
@@ -489,13 +509,15 @@ icmp6_opt_print(register const u_char *bp)
 		if (opp->nd_opt_pi_len != 4)
 			printf("!");
 		printf(")");
-		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3));
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
 		break;
 	case ND_OPT_REDIRECTED_HEADER:
 		opr = (struct icmp6_opts_redirect *)op;
 		printf("(redirect)");
 		/* xxx */
-		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3));
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
 		break;
 	case ND_OPT_MTU:
 		opm = (struct nd_opt_mtu *)op;
@@ -505,15 +527,17 @@ icmp6_opt_print(register const u_char *bp)
 		if (opm->nd_opt_mtu_len != 1)
 			printf("!");
 		printf(")");
-		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3));
+		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
+				resid - (op->nd_opt_len << 3));
 		break;
 	default:
 		opts_len = op->nd_opt_len;
 		printf("(unknwon opt_type=%d, opt_len=%d)",
 		       op->nd_opt_type, opts_len);
 		if (opts_len == 0)
-			opts_len = 1;
-		icmp6_opt_print((const u_char *)op + (opts_len << 3));
+			opts_len = 1; /* XXX */
+		icmp6_opt_print((const u_char *)op + (opts_len << 3),
+				resid - (opts_len << 3));
 		break;
 	}
 	return;
