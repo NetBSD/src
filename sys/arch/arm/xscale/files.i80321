@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80321,v 1.10 2003/01/25 01:57:17 thorpej Exp $
+#	$NetBSD: files.i80321,v 1.11 2003/01/25 02:12:22 thorpej Exp $
 #
 # Configuration info for Intel i80321 XScale I/O Processor support
 #
@@ -21,12 +21,6 @@ device	iopaau: dmover_service
 attach	iopaau at iopxs
 file	arch/arm/xscale/i80321_aau.c		iopaau
 file	arch/arm/xscale/iopaau.c		iopaau
-
-# DMA controller unit
-device	iopdma: dmover_service
-attach	iopdma at iopxs
-file	arch/arm/xscale/i80321_dma.c		iopdma
-file	arch/arm/xscale/iopdma.c		iopdma
 
 # Watchdog timer
 device	iopwdog: sysmon_wdog
