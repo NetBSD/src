@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10.4.1 2000/07/18 16:23:24 mrg Exp $ */
+/*	$NetBSD: vmparam.h,v 1.10.4.2 2000/10/18 16:31:28 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,18 +45,27 @@
  */
 
 /*
- * Machine dependent constants for Sun-4c SPARC
+ * Machine dependent constants for Sun-4u SPARC
  */
+
+#ifndef VMPARAM_H
+#define VMPARAM_H
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.
  */
 #define	USRTEXT		0x2000			/* Start of user text */
-#define	USRSTACK	KERNBASE		/* Start of user stack */
+#ifdef __arch64__
+#define USRSTACK	0xffffffffffffe000L
+#else
+#define USRSTACK	0xffffe000L
+#endif
 
 /*
  * Virtual memory related constants, all in bytes
+ *
+ * XXXX -- These need to be updated to 64-bits.
  */
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(64*1024*1024)		/* max text size */
@@ -100,8 +109,9 @@
  * User/kernel map constants.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_ADDRESS		((vaddr_t)-1)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)-1)
+
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERNEND)
 
@@ -116,12 +126,15 @@
  * pmap specific data stored in the vm_physmem[] array
  */
 
+struct pv_entry;
+
 struct pmap_physseg {
-	/* NULL */
+	struct pv_entry *pvent;
 };
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;
 vaddr_t		dvma_mapin __P((struct vm_map *, vaddr_t, int, int));
 void		dvma_mapout __P((vaddr_t, vaddr_t, int));
+#endif
 #endif

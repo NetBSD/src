@@ -1,6 +1,6 @@
-/*	$NetBSD: locore.s,v 1.62.2.6 2000/08/26 00:55:14 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.62.2.7 2000/10/18 16:31:29 tv Exp $	*/
 /*
- * Copyright (c) 1996-1999 Eduardo Horvath
+ * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
  * 	The President and Fellows of Harvard College.
@@ -53,9 +53,9 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
-#define	DIAGNOSTIC
+#define INTRLIST
 
-#undef	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
+#define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
@@ -776,7 +776,9 @@ _C_LABEL(trapbase):
 	wrpr %g0, %o7, %cleanwin	!       Nucleus (trap&IRQ) code does not need clean windows
 
 	clr	%l0
-!	set	0xbadcafe, %l0		! DEBUG
+#ifdef DEBUG
+	set	0xbadcafe, %l0		! DEBUG -- compiler should not rely on zero-ed registers.
+#endif
 	mov %l0,%l1; mov %l0,%l2	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done
 	mov %l0,%l3; mov %l0,%l4
 #if 0
@@ -1057,7 +1059,9 @@ ktextfault:
 	TRAP(T_TAGOF)			! 023 = tag overflow
 	TRACEWIN			! DEBUG
 	clr	%l0
-!	set	0xbadbeef, %l0		! DEBUG
+#ifdef DEBUG
+	set	0xbadbeef, %l0		! DEBUG
+#endif
 	mov %l0, %l1; mov %l0, %l2	! 024-027 = clean window trap
 	rdpr %cleanwin, %o7		!	This handler is in-lined and cannot fault
 	inc %o7; mov %l0, %l3; mov %l0, %l4	!       Nucleus (trap&IRQ) code does not need clean windows
@@ -1849,7 +1853,7 @@ intr_setup_msg:
 	stx	%i6, [%sp + CC64FSZ + BIAS + TF_O + (6*8)]; \
 	\
 	stx	%i7, [%sp + CC64FSZ + BIAS + TF_O + (7*8)]; \
-	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
+/*	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
 	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
 	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
 	/* came from user mode -- switch to kernel mode stack */ \
@@ -1982,7 +1986,7 @@ intr_setup_msg:
 	stx	%i6, [%sp + CC64FSZ + STKB + TF_O + (6*8)]; \
 	\
 	stx	%i7, [%sp + CC64FSZ + STKB + TF_O + (7*8)]; \
-	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
+/*	rdpr	%wstate, %g7; sub %g7, WSTATE_KERN, %g7; /* DEBUG */ \
 	brz,pn	%g7, 1f;					/* If we were in kernel mode start saving globals */ \
 	 rdpr	%canrestore, %g5;				/* Fixup register window state registers */ \
 	/* came from user mode -- switch to kernel mode stack */ \
@@ -2182,12 +2186,15 @@ dmmu_write_fault:
 #ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
 	/* This should not be necessary */
+	sllx	%g3, 64-13, %g2				! Isolate context bits
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
-	set	0x0400000, %g2				! 4MB
+	brnz,pt	%g2, 0f					! Ignore context != 0
+	 set	0x0800000, %g2				! 8MB
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g2
 	tlu	%xcc, 1; nop
 	blu,pn	%xcc, winfix				! Next insn in delay slot is unimportant
+0:
 #endif
 
 	/* Need to check for and handle large pages. */
@@ -4015,7 +4022,7 @@ setup_sparcintr:
 #ifdef	INTR_INTERLOCK
 	add	%g5, IH_PEND, %g6
 	DLFLUSH(%g6, %g7)
-	ldstub	[%g5+IH_PEND], %g6	! Read pending flag
+	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
 	DLFLUSH2(%g7)
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 #endif
@@ -4029,6 +4036,15 @@ setup_sparcintr:
 	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
 	add	%g1, %g3, %g1
 1:
+#ifdef INTRLIST
+	LDPTR	[%g1], %g3		! Load list head
+	STPTR	%g3, [%g5+IH_PEND]	! Link our intrhand node in
+	mov	%g5, %g7
+	CASPTR	[%g1] ASI_N, %g3, %g7
+	cmp	%g7, %g3		! Did it work?
+	bne,pn	%xcc, 1b		! No, try again
+         nop
+#else	/* INTRLIST */
 #if 1
 	DLFLUSH(%g1, %g3)
 	mov	%g5, %g3
@@ -4081,6 +4097,7 @@ setup_sparcintr:
 	LOCTOGLOB
 	restore
 #endif
+#endif	/* INTRLIST */
 2:
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
@@ -4265,9 +4282,7 @@ _C_LABEL(sparc_interrupt):
 	 */
 	clr	%g4
 
-#ifdef DEBUG
-	flushw			! DEBUG
-#endif
+	flushw			! Do not remove this insn -- causes interrupt loss
 	rd	%y, %l6
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
 	rdpr	%tt, %l5		! Find out our current IPL
@@ -4314,6 +4329,36 @@ sparc_intr_retry:
 	add	%l2, %l4, %l4
 	mov	8, %l7
 
+#ifdef INTRLIST
+1:	
+	LDPTR	[%l4], %l2		! Check a slot
+	brz,pn	%l2, intrcmplt		! Empty list?
+	
+	 mov	%g0, %l7
+	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
+	cmp	%l7, %l2
+	bne,pn	%icc, 1b
+	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
+2:	
+	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
+	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
+	
+	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
+	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	LDPTR	[%l2 + IH_PEND], %l7	! Clear pending flag
+	LDPTR	[%l2 + IH_CLR], %l1
+	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
+	membar	#Sync
+	
+	brz,pn	%l1, 0f
+	 add	%l5, %o0, %l5
+	stx	%g0, [%l1]		! Clear intr source
+	membar	#Sync			! Should not be needed
+0:
+	brnz,pn	%l7, 2b			! 'Nother?
+	 mov	%l7, %l2
+
+#else /* INTRLIST */
 	/*
 	 * Register usage at this point:
 	 *	%l4 - current slot at intrpending[PIL]
@@ -4365,7 +4410,8 @@ sparc_intr_check_slot:
 	STPTR	%g0, [%l4]		! Clear the slot
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	clrb	[%l2 + IH_PEND]		! Clear pending flag
+	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
+	STPTR	%g0, [%l4]		! Clear the slot
 
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
@@ -4491,7 +4537,7 @@ sparc_intr_check_slot:
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
-	clrb	[%l4 + IH_PEND]		! Clear the pending bit
+	STPTR	%g0, [%l4 + IH_PEND]	! Clear the pending bit
 	LDPTR	[%l4 + IH_CLR], %l3
 	brz,pn	%l3, 2f			! Clear intr?
 	 nop
@@ -4508,7 +4554,7 @@ sparc_intr_check_slot:
 	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
 #endif /* UNUSED INTERRUPT CODE */
-
+#endif /* INTRLIST */
 intrcmplt:
 #ifdef VECTORED_INTERRUPTS
 	/*
@@ -5304,6 +5350,9 @@ print_dtlb:
 	.align	8
 dostart:
 	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register for now
+	mov	1, %g1
+	sllx	%g1, 63, %g1	
+	wr	%g1, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr as well
 	/*
 	 * Startup.
 	 *
@@ -5831,7 +5880,7 @@ _C_LABEL(cpu_initialize):
 	wrpr	%g0, 0, %tstate
 #endif
 
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	set	1f, %o0		! Debug printf
 	srax	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
@@ -6356,7 +6405,6 @@ _C_LABEL(cache_flush_phys):
 	membar	#Sync
 	retl
 	 nop
-
 
 #ifdef _LP64
 /*
@@ -7674,9 +7722,9 @@ idle:
 	brnz,a,pt	%o3, Lsw_scan
 	 wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
 	
-#if 1		/* Don't enable the zeroing code just yet. */
-	ba,a,pt %icc, 1b
-	nop
+#if 1
+	ba,a,pt	%icc, 1b
+	 nop
 #else
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
@@ -8019,12 +8067,14 @@ Lsw_load:
 !	wrpr	%g0, 0, %cleanwin	! DEBUG
 	dec	1, %l7					! NWINDOWS-1-1
 	wrpr	%l7, %cansave
+#ifdef DEBUG
 	wrpr	%g0, 4, %tl				! DEBUG -- force watchdog
 	flushw						! DEBUG
 	wrpr	%g0, 0, %tl				! DEBUG
 	/* load window */
 	restore				! The logic is just too complicated to handle here.  Let the traps deal with the problem
 !	flushw						! DEBUG
+#endif
 #ifdef SCHED_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
@@ -8067,6 +8117,13 @@ Lsw_load:
 	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
 	 mov	%o2, %o0
 
+	wr	%g0, ASI_DMMU, %asi		! This context has been recycled
+	set	0x030, %o1
+	stxa	%o0, [CTX_SECONDARY] %asi	! so we need to invalidate
+	membar	#Sync
+	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
+	stxa	%o1, [%o1] ASI_IMMU_DEMAP	! be left in the TLB
+	membar	#Sync
 #ifdef SCHED_DEBUG
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
@@ -8087,13 +8144,6 @@ Lsw_havectx:
 	 * We probably need to flush the cache here.
 	 */
 	wr	%g0, ASI_DMMU, %asi		! restore the user context
-	ldxa	[CTX_SECONDARY] %asi, %o1
-	brz,pn	%o1, 1f
-	 set	0x030, %o1
-	stxa	%o1, [%o1] ASI_DMMU_DEMAP
-	stxa	%o1, [%o1] ASI_IMMU_DEMAP
-	membar	#Sync
-1:
 	stxa	%o0, [CTX_SECONDARY] %asi	! Maybe we should invalidate the old context?
 	membar	#Sync				! Maybe we should use flush here?
 	flush	%sp
@@ -8691,7 +8741,7 @@ ENTRY(pmap_zero_page)
 	mov	%i2, %o2
 	mov	%i3, %o3
 	wr	%g0, FPRS_FEF, %fprs
-#else
+#else	/* NEW_FPSTATE */
 /*
  * New version, new scheme:
  *
@@ -8755,8 +8805,8 @@ ENTRY(pmap_zero_page)
 	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
 	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
 	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif
-#else
+#endif	/* NEW_FPSTATE */
+#else	/* PMAP_FPSTATE */
 	!!
 	!! Don't use FP regs if the kernel's already using them
 	!!
@@ -8769,7 +8819,7 @@ ENTRY(pmap_zero_page)
 	brz,pn	%o4, pmap_zero_phys		! No userland fpstate so do this the slow way
 1:
 	 wr	%o1, 0, %fprs			! Enable the FPU
-#endif
+#endif	/* PMAP_FPSTATE */
 
 #ifdef DEBUG
 	sethi	%hi(paginuse), %o4		! Prevent this from nesting
@@ -8854,7 +8904,7 @@ ENTRY(pmap_zero_page)
 	 wr	%l1, 0, %fprs
 	ret
 	 restore
-#else
+#else /* NEW_FPSTATE */
 #ifdef DEBUG
 	LDPTR	[%l1 + %lo(FPPROC)], %l7
 	cmp	%l7, %l5
@@ -8868,13 +8918,13 @@ ENTRY(pmap_zero_page)
 	wr	%g0, 0, %fprs				! Disable FPU
 	ret
 	 restore
-#endif
-#else
+#endif /* NEW_FPSTATE */
+#else /* PMAP_FPSTATE */
 	retl					! Any other mappings have inconsistent D$
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
-#endif
+#endif /* PMAP_FPSTATE */
 pmap_zero_phys:
-#endif
+#endif /* PMAP_PHYS_PAGE */
 #if 1
 	set	NBPG, %o2		! Loop count
 	clr	%o1
@@ -9221,7 +9271,7 @@ ENTRY(pmap_copy_page)
 	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
 #endif	/* PMAP_FPSTATE */
 pmap_copy_phys:
-#endif
+#endif	/* PMAP_PHYS_PAGE */
 #if 0
 	/* This is the short, slow, safe version that uses %g1 */
 
@@ -10673,7 +10723,7 @@ ENTRY(send_softint)
 #ifdef	VECTORED_INTERRUPTS
 	brz,pn	%o2, 1f
 	 set	intrpending, %o3
-	ldstub	[%o2 + IH_PEND], %o5
+	LDPTR	[%o2 + IH_PEND], %o5
 	mov	8, %o4			! Number of slots to search
 #ifdef INTR_INTERLOCK
 	brnz	%o5, 1f
@@ -10681,6 +10731,15 @@ ENTRY(send_softint)
 	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
+#ifdef INTRLIST
+	LDPTR	[%o3], %o5		! Load list head
+	STPTR	%o5, [%o2+IH_PEND]	! Link our intrhand node in
+	mov	%o2, %o4
+	CASPTR	[%o3] ASI_N, %o5, %o4
+	cmp	%o4, %o5		! Did it work?
+	bne,pn	%xcc, 2b		! No, try again
+	 nop
+#else	/* INTRLIST */
 #if 1
 	DLFLUSH(%o3, %o5)
 	mov	%o2, %o5
@@ -10701,6 +10760,7 @@ ENTRY(send_softint)
 	!! We'll resort to polling in this case.
 4:
 	 DLFLUSH(%o3, %o3)		! Prevent D$ pollution
+#endif /* INTRLIST */
 1:
 #endif	/* VECTORED_INTERRUPTS */
 	mov	1, %o3			! Change from level to bitmask
@@ -10872,27 +10932,37 @@ microtick:
 /*
  * The following code only works if %tick is synchronized with time.
  */
-	sethi	%hi(_C_LABEL(cpu_clockrate)), %o3
-	ldx	[%o3 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
-	rdpr	%tick, %o1
-	sethi	%hi(MICROPERSEC), %o2
+	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
+	rdpr	%tick, %o4					! Load usec timer value
+	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
+	cmp	%g1, %o2
+	bne	2b						! if time.tv_sec changed
+	 cmp	%g5, %o3
+	bne	2b						! if time.tv_usec changed
+
+	 sethi	%hi(_C_LABEL(cpu_clockrate)), %o1
+	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
+	sethi	%hi(MICROPERSEC), %o5
 	brnz,pt	%o4, 1f						! Already scaled?
-	 or	%o2, %lo(MICROPERSEC), %o2
+	 or	%o2, %lo(MICROPERSEC), %o5
 
 	!! Calculate ticks/usec
-	ldx	[%o3 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
-	udivx	%o4, %o2, %o4					! Hz / 10^6 = MHz
-	stx	%o4, [%o3 + %lo(_C_LABEL(cpu_clockrate))]	! Save it so we don't need to divide again
+	ldx	[%o1 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
+	udivx	%o4, %o5, %o4					! Hz / 10^6 = MHz
+	stx	%o4, [%o1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
 1:
 
-	udivx	%o1, %o4, %o1					! Scale it: ticks / MHz = usec
+	STPTR	%o2, [%o0]					! Store seconds.
+	udivx	%o4, %o1, %o4					! Scale it: ticks / MHz = usec
 
-	udivx	%o1, %o2, %o3					! Now %o3 has seconds
-	STPTR	%o3, [%o0]					! and store it
+	udivx	%o4, %o5, %o2					! Now %o2 has seconds
 
-	mulx	%o3, %o2, %o2					! Now calculate usecs -- damn no remainder insn
-	sub	%o1, %o2, %o1					! %o1 has the remainder
+	mulx	%o3, %o5, %o5					! Now calculate usecs -- damn no remainder insn
+	sub	%o2, %o5, %o1					! %o1 has the remainder
 
+	add	%o1, %o4, %o1
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
 #endif
@@ -11193,3 +11263,8 @@ _C_LABEL(eintrcnt):
 	.comm	_C_LABEL(curproc), PTRSZ
 	.comm	_C_LABEL(promvec), PTRSZ
 	.comm	_C_LABEL(nwindows), 4
+
+#ifdef DEBUG
+	.comm	_C_LABEL(trapdebug), 4
+	.comm	_C_LABEL(pmapdebug), 4
+#endif

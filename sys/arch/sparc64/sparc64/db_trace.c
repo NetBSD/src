@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15.2.2 2000/07/31 02:50:53 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.15.2.3 2000/10/18 16:31:29 tv Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,9 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/user.h>
 #include <machine/db_machdep.h>
+#include <machine/ctlreg.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -44,6 +46,8 @@ void db_print_window __P((u_int64_t));
 
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
 
+#define	KLOAD(x)	probeget((paddr_t)(long)&(x), ASI_PRIMARY, sizeof(x))	
+#define ULOAD(x)	probeget((paddr_t)(long)&(x), ASI_AIUS, sizeof(x))	
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
@@ -54,19 +58,39 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 {
 	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
+	boolean_t	trace_thread = FALSE;
+	char		c, *cp = modif;
 
-	{
-		register char c, *cp = modif;
-		while ((c = *cp++) != 0)
-			if (c == 'u')
-				kernel_only = FALSE;
+	while ((c = *cp++) != 0) {
+		if (c == 't')
+			trace_thread = TRUE;
+		if (c == 'u')
+			kernel_only = FALSE;
 	}
 
 	if (!have_addr)
 		frame = (vaddr_t)DDB_TF->tf_out[6];
-	else
-		frame = (vaddr_t)addr;
-
+	else {
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+			(*pr)("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				(*pr)("not found\n");
+				return;
+			}	
+			if ((p->p_flag & P_INMEM) == 0) {
+				(*pr)("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			frame = (vaddr_t)u->u_pcb.pcb_sp;
+			(*pr)("at %p\n", frame);
+		} else {
+			frame = (vaddr_t)addr;
+		}
+	}
 	while (count--) {
 			int		i;
 			db_expr_t	offset;
@@ -77,24 +101,22 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 			if (frame & 1) {
 				f64 = (struct frame64 *)(frame + BIAS);
-				pc = f64->fr_pc;
-				if (!INKERNEL(pc))
+				pc = KLOAD(f64->fr_pc);
+				if (pc == -1)
 					break;
 			
 				/*
 				 * Switch to frame that contains arguments
 				 */
-				frame = f64->fr_fp;
+				frame = KLOAD(f64->fr_fp);
 			} else {
 				f32 = (struct frame32 *)(frame);
-				pc = f32->fr_pc;
-				if (!INKERNEL(pc))
-					break;
+				pc = KLOAD(f32->fr_pc);
 			
 				/*
 				 * Switch to frame that contains arguments
 				 */
-				frame = (long)f32->fr_fp;
+				frame = (long)KLOAD(f32->fr_fp);
 			}
 			if (!INKERNEL(frame))
 				break;
@@ -112,8 +134,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				 * actual arguments somewhat...
 				 */
 				for (i=0; i < 5; i++)
-					(*pr)("%lx, ", (long)f64->fr_arg[i]);
-				(*pr)("%lx) at ", (long)f64->fr_arg[i]);
+					(*pr)("%lx, ", 
+						(long)KLOAD(f64->fr_arg[i]));
+				(*pr)("%lx) at ", (long)KLOAD(f64->fr_arg[i]));
 			} else {
 				f32 = (struct frame32 *)(frame);
 				/*
@@ -121,8 +144,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				 * actual arguments somewhat...
 				 */
 				for (i=0; i < 5; i++)
-					(*pr)("%x, ", f32->fr_arg[i]);
-				(*pr)("%x) at ", f32->fr_arg[i]);
+					(*pr)("%x, ", KLOAD(f32->fr_arg[i]));
+				(*pr)("%x) at ", KLOAD(f32->fr_arg[i]));
 			}
 			db_printsym(pc, DB_STGY_PROC, pr);
 			(*pr)("\n");
@@ -232,13 +255,11 @@ db_dump_stack(addr, have_addr, count, modif)
 	int		i;
 	u_int64_t	frame, oldframe;
 	boolean_t	kernel_only = TRUE;
+	char		c, *cp = modif;
 
-	{
-		register char c, *cp = modif;
-		while ((c = *cp++) != 0)
-			if (c == 'u')
-				kernel_only = FALSE;
-	}
+	while ((c = *cp++) != 0)
+		if (c == 'u')
+			kernel_only = FALSE;
 
 	if (count == -1)
 		count = 65535;
