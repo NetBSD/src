@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.9 2003/05/21 18:04:43 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.10 2003/10/13 21:46:39 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -49,6 +49,11 @@ struct pcb_arm32 {
 	pd_entry_t pcb32_l1vec;			/* Value to stuff on ctx sw */
 	u_int	pcb32_dacr;			/* Domain Access Control Reg */
 	void	*pcb32_cstate;			/* &pmap->pm_cstate */
+	/*
+	 * WARNING!
+	 * cpuswitch.S relies on pcb32_r8 being quad-aligned in struct pcb
+	 * (due to the use of "strd" when compiled for XSCALE)
+	 */
 	u_int	pcb32_r8;			/* used */
 	u_int	pcb32_r9;			/* used */
 	u_int	pcb32_r10;			/* used */
@@ -70,6 +75,10 @@ struct pcb_arm26 {
 };
 #define	pcb_sf	pcb_un.un_26.pcb26_sf
 
+/*
+ * WARNING!
+ * See warning for struct pcb_arm32, above, before changing struct pcb!
+ */
 struct pcb {
 	u_int	pcb_flags;
 #define	PCB_OWNFPU	0x00000001
