@@ -1,7 +1,5 @@
-/*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.96 1996/09/07 20:26:09 mycroft Exp $	*/
 
-#undef DEBUG
-#define DEBUG
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
