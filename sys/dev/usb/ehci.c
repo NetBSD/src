@@ -1,11 +1,11 @@
-/*	$NetBSD: ehci.c,v 1.60 2004/06/22 09:46:46 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.61 2004/06/22 18:05:18 mycroft Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net).
+ * by Lennart Augustsson (lennart@augustsson.net) and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.60 2004/06/22 09:46:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.61 2004/06/22 18:05:18 mycroft Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
