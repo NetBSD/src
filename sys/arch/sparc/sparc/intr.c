@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.44 2000/03/19 13:38:55 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.45 2000/05/09 20:29:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@
 #include <machine/instr.h>
 #include <machine/trap.h>
 #include <machine/promlib.h>
+#include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 
 #ifdef INET
