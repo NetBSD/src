@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.137 2003/06/29 22:31:24 fvdl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.138 2003/07/02 20:07:45 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.137 2003/06/29 22:31:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.138 2003/07/02 20:07:45 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -586,6 +586,18 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #endif
 	case KERN_MAXPHYS:
 		return (sysctl_rdint(oldp, oldlenp, newp, MAXPHYS));
+	case KERN_SOMAXKVA:
+	    {
+		int new_somaxkva = somaxkva;
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &new_somaxkva);
+		if (newp && !error) {
+			if (new_somaxkva < (16 * 1024 * 1024)) /* sanity */
+				return (EINVAL);
+			somaxkva = new_somaxkva;
+		}
+		return (error);
+	    }
 	case KERN_SBMAX:
 	    {
 		int new_sbmax = sb_max;
