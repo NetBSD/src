@@ -1,6 +1,8 @@
+/*	$NetBSD: move.c,v 1.8 1995/04/22 08:34:30 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)move.c	5.8 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: move.c,v 1.7 1994/04/05 22:56:56 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
+#else
+static char rcsid[] = "$NetBSD: move.c,v 1.8 1995/04/22 08:34:30 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*************************************************************************
@@ -92,7 +97,11 @@ static char rcsid[] = "$Id: move.c,v 1.7 1994/04/05 22:56:56 deraadt Exp $";
  *
  ******************************************************************************/
 
+#if __STDC__
 #include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 #include "snake.h"
 
 int CMlength;
@@ -408,6 +417,52 @@ pch(c)
 	}
 }
 
+void
+#if __STDC__
+apr(struct point *ps, const char *fmt, ...)
+#else
+apr(ps, fmt, va_alist)
+	struct point *ps;
+	char *fmt;
+	va_dcl
+#endif
+{
+	struct point p;
+	va_list ap;
+
+	p.line = ps->line+1; p.col = ps->col+1;
+	move(&p);
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)vsprintf(str, fmt, ap);
+	va_end(ap);
+	pstring(str);
+}
+
+void
+#if __STDC__
+pr(const char *fmt, ...)
+#else
+pr(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)vsprintf(str, fmt, ap);
+	va_end(ap);
+	pstring(str);
+}
+
 pstring(s)
 char *s;{
 	struct point z;
@@ -549,7 +604,7 @@ getcap()
 	struct point z;
 	void stop();
 #ifdef TIOCGWINSZ
-	struct winsize ws;
+	struct winsize win;
 #endif
 
 	term = getenv("TERM");
@@ -570,16 +625,14 @@ getcap()
 	ap = tcapbuf;
 
 #ifdef TIOCGWINSZ
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != -1 &&
-	    ws.ws_col && ws.ws_row) {
-		LINES = ws.ws_row;
-		COLUMNS = ws.ws_col;
-	} else
+	if (ioctl(0, TIOCGWINSZ, (char *) &win) < 0 ||
+	    (LINES = win.ws_row) == 0 || (COLUMNS = win.ws_col) == 0) {
 #endif
-	{
 		LINES = tgetnum("li");
 		COLUMNS = tgetnum("co");
+#ifdef TIOCGWINSZ
 	}
+#endif
 	if (!lcnt)
 		lcnt = LINES - 2;
 	if (!ccnt)
