@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 1996/05/29 04:27:11 chuck Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 1997/01/31 01:53:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -157,7 +157,7 @@ le_pcc_attach(parent, self, aux)
 
 	/* Are we the boot device? */
 	if (PCC_PADDR(pa->pa_offset) == bootaddr) 
-		bootdv = self;
+		booted_device = self;
 
 	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc);
 	sys_pcc->le_int = pa->pa_ipl | PCC_IENABLE;

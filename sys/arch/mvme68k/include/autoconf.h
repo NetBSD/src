@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1996/09/12 06:14:04 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 1997/01/31 01:53:32 thorpej Exp $	*/
 
 /*
  *
@@ -41,7 +41,7 @@ extern int	bootctrllun;	/* ctrl_lun of boot device */
 extern int	bootdevlun;	/* dev_lun of boot device */
 extern int	bootpart;	/* boot partition (disk) */
 
-struct	device *bootdv;	/* boot device */
+extern struct device *booted_device;	/* boot device */
 
 /* PARTITIONSHIFT from disklabel.h */
 #define	PARTITIONMASK	((1 << PARTITIONSHIFT) - 1) 
