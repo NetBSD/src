@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.110 2005/03/15 02:34:54 atatat Exp $
+# $NetBSD: mi,v 1.111 2005/03/15 16:05:04 peter Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -534,6 +534,15 @@
 ./usr/share/examples/openssl/CA.sh		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/der_chop		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	crypto,share
+./usr/share/examples/pf/ackpri			misc-netutil-examples	pf,share
+./usr/share/examples/pf/faq-example1		misc-netutil-examples	pf,share
+./usr/share/examples/pf/faq-example2		misc-netutil-examples	pf,share
+./usr/share/examples/pf/faq-example3		misc-netutil-examples	pf,share
+./usr/share/examples/pf/queue1			misc-netutil-examples	pf,share
+./usr/share/examples/pf/queue2			misc-netutil-examples	pf,share
+./usr/share/examples/pf/queue3			misc-netutil-examples	pf,share
+./usr/share/examples/pf/queue4			misc-netutil-examples	pf,share
+./usr/share/examples/pf/spamd			misc-netutil-examples	pf,share
 ./usr/share/examples/postfix/ADDRESS_CLASS_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_REWRITING_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_VERIFICATION_README	misc-postfix-examples	postfix,doc
