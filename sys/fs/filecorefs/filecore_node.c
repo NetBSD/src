@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.3 2004/03/27 04:43:43 atatat Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.4 2004/04/25 16:42:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.3 2004/03/27 04:43:43 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.4 2004/04/25 16:42:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,8 @@ u_long filecorehash;
 #define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & filecorehash)
 struct simplelock filecore_ihash_slock;
 
-struct pool filecore_node_pool;
+POOL_INIT(filecore_node_pool, sizeof(struct filecore_node), 0, 0, 0,
+    "filecrnopl", &pool_allocator_nointr);
 
 extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 
@@ -111,8 +112,6 @@ filecore_init()
 	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT,
 	    M_WAITOK, &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
-	pool_init(&filecore_node_pool, sizeof(struct filecore_node),
-	    0, 0, 0, "filecrnopl", &pool_allocator_nointr);
 }
 
 /*

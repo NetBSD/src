@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.5 2004/03/27 04:43:43 atatat Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.6 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.5 2004/03/27 04:43:43 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.6 2004/04/25 16:42:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,8 @@ u_long dehash;			/* size of hash table - 1 */
 
 struct simplelock msdosfs_ihash_slock;
 
-struct pool msdosfs_denode_pool;
+POOL_INIT(msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0, "msdosnopl",
+    &pool_allocator_nointr);
 
 extern int prtactive;
 
@@ -105,8 +106,6 @@ msdosfs_init()
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
 	    M_WAITOK, &dehash);
 	simple_lock_init(&msdosfs_ihash_slock);
-	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
-	    "msdosnopl", &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.165 2004/03/30 12:59:09 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.166 2004/04/25 16:42:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.165 2004/03/30 12:59:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.166 2004/04/25 16:42:45 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -113,14 +113,17 @@ const char vmmapbsy[] = "vmmapbsy";
  * pool for vmspace structures.
  */
 
-struct pool uvm_vmspace_pool;
+POOL_INIT(uvm_vmspace_pool, sizeof(struct vmspace), 0, 0, 0, "vmsppl",
+    &pool_allocator_nointr);
 
 /*
  * pool for dynamically-allocated map entries.
  */
 
-struct pool uvm_map_entry_pool;
-struct pool uvm_map_entry_kmem_pool;
+POOL_INIT(uvm_map_entry_pool, sizeof(struct vm_map_entry), 0, 0, 0, "vmmpepl",
+    &pool_allocator_nointr);
+POOL_INIT(uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry), 0, 0, 0,
+    "vmmpekpl", NULL);
 
 MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
 MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
@@ -554,16 +557,6 @@ uvm_map_init(void)
 		kernel_map_entry[lcv].next = uvm.kentry_free;
 		uvm.kentry_free = &kernel_map_entry[lcv];
 	}
-
-	/*
-	 * initialize the map-related pools.
-	 */
-	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace),
-	    0, 0, 0, "vmsppl", &pool_allocator_nointr);
-	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
-	    0, 0, 0, "vmmpepl", &pool_allocator_nointr);
-	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
-	    0, 0, 0, "vmmpekpl", NULL);
 }
 
 /*
