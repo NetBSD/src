@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.41 1998/01/12 20:23:56 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.42 1998/01/25 16:37:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -104,12 +104,15 @@
 
 #include <vm/vm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
+
+#include <dev/vme/vmevar.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -204,9 +207,14 @@ int sw_options = SI_ENABLE_DMA;
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 static int	si_match __P((struct device *, struct cfdata *, void *));
+static int	sw_match __P((struct device *, struct cfdata *, void *));
 static void	si_attach __P((struct device *, struct device *, void *));
+static void	sw_attach __P((struct device *, struct device *, void *));
+static void	si_attach_common __P((struct device *, struct si_softc *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
+static void	sw_reset_adapter __P((struct ncr5380_softc *));
+static void	(*reset_adapter) __P((struct ncr5380_softc *));
 static void	si_minphys __P((struct buf *));
 
 void si_dma_alloc __P((struct ncr5380_softc *));
@@ -253,8 +261,33 @@ struct cfattach si_ca = {
 
 /* The Sun "SCSI Weird" 4/100 obio controller. */
 struct cfattach sw_ca = {
-	sizeof(struct si_softc), si_match, si_attach
+	sizeof(struct si_softc), sw_match, sw_attach
 };
+
+static int
+sw_match(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
+
+	/* Nothing but a Sun 4/100 is going to have these devices. */
+	if (cpuinfo.cpu_type != CPUTYP_4_100)
+		return (0);
+
+	/*
+	 * Default interrupt priority always is 3.  At least, that's
+	 * what my board seems to be at.  --thorpej
+	 */
+	if (ra->ra_intr[0].int_pri == -1)
+		ra->ra_intr[0].int_pri = 3;
+
+
+	/* Make sure there is something there... */
+	return (probeget(ra->ra_vaddr + 1, 1) != -1);
+}
 
 static int
 si_match(parent, cf, aux)
@@ -265,12 +298,8 @@ si_match(parent, cf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/* Are we looking for the right thing? */
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
-		return (0);
-
 	/* Nothing but a Sun 4 is going to have these devices. */
-	if (!CPU_ISSUN4)
+	if (!CPU_ISSUN4 || cpuinfo.cpu_type == CPUTYP_4_100)
 		return (0);
 
 	/*
@@ -279,27 +308,6 @@ si_match(parent, cf, aux)
 	 */
 	if (ra->ra_intr[0].int_pri == -1)
 		ra->ra_intr[0].int_pri = 3;
-
-	/* Figure out the bus type and look for the appropriate adapter. */
-	switch (ca->ca_bustype) {
-	case BUS_VME16:
-		/* AFAIK, the `si' can only exist on the vmes. */
-		if (strcmp(ra->ra_name, "si") ||
-		    cpuinfo.cpu_type == CPUTYP_4_100)
-			return (0);
-		break;
-
-	case BUS_OBIO:
-		/* AFAIK, an `sw' can only exist on the obio. */
-		if (strcmp(ra->ra_name, "sw") ||
-		    cpuinfo.cpu_type != CPUTYP_4_100)
-			return (0);
-		break;
-
-	default:
-		/* Don't know what we ended up with ... */
-		return (0);
-	}
 
 	/* Make sure there is something there... */
 	if (probeget(ra->ra_vaddr + 1, 1) == -1)
@@ -311,24 +319,113 @@ si_match(parent, cf, aux)
 	 * be determined using the fact that the "sc" board occupies
 	 * 4K bytes in VME space but the "si" board occupies 2K bytes.
 	 */
-	if (strcmp(cf->cf_driver->cd_name, "si") == 0)
-		if (probeget(ra->ra_vaddr + 0x801, 1) != -1)
-			return(0);
-
-	return (1);
+	return (probeget(ra->ra_vaddr + 0x801, 1) == -1);
 }
 
 static void
-si_attach(parent, self, args)
+si_attach(parent, self, aux)
 	struct device	*parent, *self;
-	void		*args;
+	void		*aux;
+{
+	struct si_softc		*sc = (struct si_softc *) self;
+	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct vme_attach_args	*va = aux;
+	vme_chipset_tag_t	ct = va->vma_chipset_tag;
+	bus_space_tag_t		bt = va->vma_bustag;
+	bus_space_handle_t	bh;
+	vme_intr_handle_t	ih;
+	vme_mod_t		mod;
+
+	mod = VMEMOD_A24 | VMEMOD_D | VMEMOD_S;
+
+	if (vme_bus_map(ct, va->vma_reg[0], sizeof(struct si_regs),
+			mod, bt, &bh) != 0)
+		panic("%s: vme_bus_map", ncr_sc->sc_dev.dv_xname);
+
+	sc->sc_regs = (struct si_regs *)bh;
+
+	sc->sc_options = si_options;
+	reset_adapter = si_reset_adapter;
+
+	ncr_sc->sc_dma_setup = si_vme_dma_setup;
+	ncr_sc->sc_dma_start = si_vme_dma_start;
+	ncr_sc->sc_dma_eop   = si_vme_dma_stop;
+	ncr_sc->sc_dma_stop  = si_vme_dma_stop;
+
+	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
+	vme_intr_establish(ct, ih, si_intr, sc);
+
+	printf(" pri %d\n", va->vma_pri);
+
+	sc->sc_adapter_iv_am = (mod << 8) | (va->vma_vec & 0xFF);
+
+	si_attach_common(parent, sc);
+
+	if (sc->sc_options & SI_DO_RESELECT) {
+		/*
+		 * Need to enable interrupts (and DMA!)
+		 * on this H/W for reselect to work.
+		 */
+		ncr_sc->sc_intr_on   = si_vme_intr_on;
+		ncr_sc->sc_intr_off  = si_vme_intr_off;
+	}
+	bootpath_store(1, NULL);
+}
+
+static void
+sw_attach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
-	volatile struct si_regs *regs;
-	struct confargs *ca = args;
-	struct romaux *ra = &ca->ca_ra;
+	struct confargs *ca = aux;
+	struct romaux	*ra = &ca->ca_ra;
 	struct bootpath *bp;
+
+	/* Map the controller registers. */
+	sc->sc_regs = (struct si_regs *)
+		mapiodev(ra->ra_reg, 0, sizeof(struct si_regs));
+
+	sc->sc_options = sw_options;
+	sc->sc_adapter_type = ca->ca_bustype;
+	reset_adapter = sw_reset_adapter;
+
+	ncr_sc->sc_dma_setup = si_obio_dma_setup;
+	ncr_sc->sc_dma_start = si_obio_dma_start;
+	ncr_sc->sc_dma_eop   = si_obio_dma_stop;
+	ncr_sc->sc_dma_stop  = si_obio_dma_stop;
+	ncr_sc->sc_intr_on   = si_obio_intr_on;
+	ncr_sc->sc_intr_off  = si_obio_intr_off;
+
+	/* Establish the interrupt. */
+	sc->sc_ih.ih_fun = si_intr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih);
+
+	printf(" pri %d\n", ra->ra_intr[0].int_pri);
+
+	/*
+	 * If the boot path is "sw" or "si" at the moment and it's me, then
+	 * walk out pointer to the sub-device, ready for the config
+	 * below.
+	 */
+	bp = ra->ra_bp;
+	if (bp != NULL && strcmp(bp->name, ra->ra_name) == 0 &&
+	    bp->val[0] == -1 && bp->val[1] == ncr_sc->sc_dev.dv_unit)
+		bootpath_store(1, bp + 1);
+
+	si_attach_common(parent, sc);
+	bootpath_store(1, NULL);
+}
+
+static void
+si_attach_common(parent, sc)
+	struct device	*parent;
+	struct si_softc *sc;
+{
+	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	volatile struct si_regs *regs;
 	char bits[64];
 	int i;
 
@@ -339,13 +436,8 @@ si_attach(parent, self, args)
 	if ((ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK) != 0)
 		sc->sc_options =
 		    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SI_OPTIONS_MASK);
-	else
-		sc->sc_options =
-		    (ca->ca_bustype == BUS_OBIO) ? sw_options : si_options;
 
-	/* Map the controller registers. */
-	regs = (struct si_regs *)
-		mapiodev(ra->ra_reg, 0, sizeof(struct si_regs));
+	regs = sc->sc_regs;
 
 	/*
 	 * Fill in the prototype scsipi_link.
@@ -377,36 +469,6 @@ si_attach(parent, self, args)
 	ncr_sc->sc_dma_free  = si_dma_free;
 	ncr_sc->sc_dma_poll  = si_dma_poll;
 
-	switch (ca->ca_bustype) {
-	case BUS_VME16:
-		ncr_sc->sc_dma_setup = si_vme_dma_setup;
-		ncr_sc->sc_dma_start = si_vme_dma_start;
-		ncr_sc->sc_dma_eop   = si_vme_dma_stop;
-		ncr_sc->sc_dma_stop  = si_vme_dma_stop;
-		if (sc->sc_options & SI_DO_RESELECT) {
-			/*
-			 * Need to enable interrupts (and DMA!)
-			 * on this H/W for reselect to work.
-			 */
-			ncr_sc->sc_intr_on   = si_vme_intr_on;
-			ncr_sc->sc_intr_off  = si_vme_intr_off;
-		}
-		break;
-
-	case BUS_OBIO:
-		ncr_sc->sc_dma_setup = si_obio_dma_setup;
-		ncr_sc->sc_dma_start = si_obio_dma_start;
-		ncr_sc->sc_dma_eop   = si_obio_dma_stop;
-		ncr_sc->sc_dma_stop  = si_obio_dma_stop;
-		ncr_sc->sc_intr_on   = si_obio_intr_on;
-		ncr_sc->sc_intr_off  = si_obio_intr_off;
-		break;
-
-	default:
-		panic("\nsi_attach: impossible bus type 0x%x", ca->ca_bustype);
-		/* NOTREACHED */
-	}
-
 	ncr_sc->sc_flags = 0;
 	if ((sc->sc_options & SI_DO_RESELECT) == 0)
 		ncr_sc->sc_no_disconnect = 0xFF;
@@ -414,12 +476,6 @@ si_attach(parent, self, args)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
-	/*
-	 * Initialize fields used only here in the MD code.
-	 */
-	sc->sc_regs = regs;
-	sc->sc_adapter_type = ca->ca_bustype;
-	/*  sc_adapter_iv_am = (was set above) */
 
 	/*
 	 * Allocate DMA handles.
@@ -431,36 +487,7 @@ si_attach(parent, self, args)
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
-	sc->sc_regs = regs;
-	sc->sc_adapter_type = ca->ca_bustype;
 
-	/* Establish the interrupt. */
-	sc->sc_ih.ih_fun = si_intr;
-	sc->sc_ih.ih_arg = sc;
-
-	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-		/*
-		 * This will be an "sw" controller.
-		 */
-		intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih);
-		break;
-
-	case BUS_VME16:
-		/*
-		 * This will be an "si" controller.
-		 */
-		vmeintr_establish(ra->ra_intr[0].int_vec,
-		    ra->ra_intr[0].int_pri, &sc->sc_ih);
-		sc->sc_adapter_iv_am =
-		    VME_SUPV_DATA_24 | (ra->ra_intr[0].int_vec & 0xFF);
-		break;
-
-	default:
-		/* Impossible case handled above. */
-		break;
-	}
-	printf(" pri %d\n", ra->ra_intr[0].int_pri);
 	if (sc->sc_options) {
 		printf("%s: options=%s\n", ncr_sc->sc_dev.dv_xname,
 			bitmask_snprintf(sc->sc_options, SI_OPTIONS_BITS,
@@ -475,24 +502,12 @@ si_attach(parent, self, args)
 	/*
 	 *  Initialize si board itself.
 	 */
-	si_reset_adapter(ncr_sc);
+	reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
 
-	/*
-	 * If the boot path is "sw" or "si" at the moment and it's me, then
-	 * walk out pointer to the sub-device, ready for the config
-	 * below.
-	 */
-	bp = ra->ra_bp;
-	if (bp != NULL && strcmp(bp->name, ra->ra_name) == 0 &&
-	    bp->val[0] == -1 && bp->val[1] == ncr_sc->sc_dev.dv_unit)
-		bootpath_store(1, bp + 1);
-
 	/* Configure sub-devices */
-	config_found(self, &(ncr_sc->sc_link), scsiprint);
-
-	bootpath_store(1, NULL);
+	config_found(&ncr_sc->sc_dev, &ncr_sc->sc_link, scsiprint);
 }
 
 static void
@@ -580,31 +595,43 @@ si_reset_adapter(struct ncr5380_softc *ncr_sc)
 	 *
 	 * The reset bits in the CSR are active low.
 	 */
-	switch(sc->sc_adapter_type) {
-	case BUS_VME16:
-		si->si_csr = 0;
-		delay(10);
-		si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN;
-		delay(10);
-		si->fifo_count = 0;
-		si->dma_addrh = 0;
-		si->dma_addrl = 0;
-		si->dma_counth = 0;
-		si->dma_countl = 0;
-		si->si_iv_am = sc->sc_adapter_iv_am;
-		si->fifo_cnt_hi = 0;
-		break;
+	si->si_csr = 0;
+	delay(10);
+	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES | SI_CSR_INTR_EN;
+	delay(10);
+	si->fifo_count = 0;
+	si->dma_addrh = 0;
+	si->dma_addrl = 0;
+	si->dma_counth = 0;
+	si->dma_countl = 0;
+	si->si_iv_am = sc->sc_adapter_iv_am;
+	si->fifo_cnt_hi = 0;
 
-	case BUS_OBIO:
-		si->sw_csr = 0;
-		delay(10);
-		si->sw_csr = SI_CSR_SCSI_RES;
-		si->dma_addr = 0;
-		si->dma_count = 0;
-		delay(10);
-		si->sw_csr |= SI_CSR_INTR_EN;
-		break;
+	SCI_CLR_INTR(ncr_sc);
+}
+
+static void
+sw_reset_adapter(struct ncr5380_softc *ncr_sc)
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	volatile struct si_regs *si = sc->sc_regs;
+
+#ifdef	DEBUG
+	if (si_debug) {
+		printf("sw_reset_adapter\n");
 	}
+#endif
+
+	/*
+	 * The reset bits in the CSR are active low.
+	 */
+	si->sw_csr = 0;
+	delay(10);
+	si->sw_csr = SI_CSR_SCSI_RES;
+	si->dma_addr = 0;
+	si->dma_count = 0;
+	delay(10);
+	si->sw_csr |= SI_CSR_INTR_EN;
 
 	SCI_CLR_INTR(ncr_sc);
 }
