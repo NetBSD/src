@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.18 1994/01/24 00:17:20 deraadt Exp $
+ * $Id: if_ed.c,v 1.19 1994/02/01 17:22:22 ws Exp $
  */
 
 /*
@@ -241,6 +241,8 @@ ed_probe(isa_dev)
 
 	if (nports = ed_probe_Novell(isa_dev))
 		return (nports);
+
+	return 0;
 }
 
 /*
