@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.14 2002/10/01 14:16:53 junyoung Exp $	 */
+/*	$NetBSD: search.c,v 1.15 2002/10/05 11:59:04 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -77,8 +77,8 @@ _rtld_search_library_path(name, namelen, dir, dirlen, mode)
 
 	for (sp = _rtld_invalid_paths; sp != NULL; sp = sp->sp_next) {
 		if (sp->sp_pathlen == pathnamelen &&
-		    !strncmp(name, sp->sp_path + dirlen + 1, namelen) &&
-		    !strncmp(dir, sp->sp_path, dirlen)) {
+		    !memcmp(name, sp->sp_path + dirlen + 1, namelen) &&
+		    !memcmp(dir, sp->sp_path, dirlen)) {
 			return NULL;
 		}
 	}
