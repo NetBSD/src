@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 1996/04/29 21:08:37 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.41 1996/04/30 00:56:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -720,8 +720,6 @@ forward:
 	hardclock((struct clockframe *)cap);
 	if (rom_console_input && cnrom())
 		setsoftint();
-
-}
 
 	return (1);
 }
