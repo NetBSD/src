@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.17 2003/10/13 01:47:55 dyoung Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.18 2003/10/16 23:39:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.17 2003/10/13 01:47:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.18 2003/10/16 23:39:40 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -474,9 +474,11 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		    SCSI_CMD_LUN_SHIFT;
 		scbus->sc_sense_cmd.length = sizeof(xs->sense);
 
-		cmdlen = sizeof(scbus->sc_sense_cmd);
-		if (sc->sc_cmd == UMASS_CPROTO_UFI) /* XXX */
-			cmdlen = UFI_COMMAND_LENGTH;
+		if (sc->sc_cmd == UMASS_CPROTO_UFI ||
+		    sc->sc_cmd == UMASS_CPROTO_ATAPI)
+			cmdlen = UFI_COMMAND_LENGTH;	/* XXX */
+		else
+			cmdlen = sizeof(scbus->sc_sense_cmd);
 		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
 					  &scbus->sc_sense_cmd, cmdlen,
 					  &xs->sense, sizeof(xs->sense),
