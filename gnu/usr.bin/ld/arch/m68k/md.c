@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.5 1994/06/10 15:17:07 pk Exp $
+ *	$Id: md.c,v 1.6 1994/06/13 05:28:41 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -86,6 +86,9 @@ unsigned char		*addr;
 		errx(1, "Unsupported relocation size: %x",
 		     RELOC_TARGET_SIZE(rp));
 	}
+#ifdef RTLD
+	_cachectl (addr, RELOC_TARGET_SIZE(rp)); /* maintain cache coherency */
+#endif
 }
 
 /*
@@ -132,6 +135,9 @@ long		index;
 	sp->addr[0] = fudge >> 16;
 	sp->addr[1] = fudge;
 	sp->reloc_index = index;
+#ifdef RTLD
+	_cachectl (sp, 6);		/* maintain cache coherency */
+#endif
 }
 
 /*
@@ -153,6 +159,9 @@ u_long		addr;
 	sp->addr[0] = fudge >> 16;
 	sp->addr[1] = fudge;
 	sp->reloc_index = 0;
+#ifdef RTLD
+	_cachectl (sp, 6);		/* maintain cache coherency */
+#endif
 }
 
 /*
