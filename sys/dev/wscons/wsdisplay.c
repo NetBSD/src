@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.33 1999/12/06 18:52:23 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.34 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.33 1999/12/06 18:52:23 drochner Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.34 2000/01/05 11:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
