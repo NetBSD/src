@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mroute.c	8.1 (Berkeley) 6/6/93
- *	$Id: mroute.c,v 1.5 1994/06/09 16:08:46 brezak Exp $
+ *	$Id: mroute.c,v 1.6 1995/03/28 17:26:42 jtc Exp $
  */
 
 /*
@@ -51,9 +51,9 @@
 
 #include <netinet/in.h>
 #include <netinet/igmp.h>
-#define KERNEL 1
+#define _KERNEL
 #include <netinet/ip_mroute.h>
-#undef KERNEL
+#undef _KERNEL
 
 #include <stdio.h>
 #include <stdlib.h>

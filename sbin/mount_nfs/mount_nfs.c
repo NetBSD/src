@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.8 1995/03/18 14:57:42 cgd Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.9 1995/03/28 17:22:28 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.8 1995/03/18 14:57:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.9 1995/03/28 17:22:28 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.8 1995/03/18 14:57:42 cgd Exp $"
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
@@ -72,9 +72,9 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.8 1995/03/18 14:57:42 cgd Exp $"
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
-#define KERNEL
+#define _KERNEL
 #include <nfs/nfs.h>
-#undef KERNEL
+#undef _KERNEL
 #include <nfs/nqnfs.h>
 
 #include <arpa/inet.h>
