@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2000/07/06 19:42:55 dmcmahill Exp $
+#	$NetBSD: Makefile,v 1.13 2000/07/21 21:42:25 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
+SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float
@@ -42,7 +42,7 @@ COPTS=		-Os
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c vers.o ${PROG}.elf
+CLEANFILES+=	vers.c ${PROG}.elf
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
@@ -72,9 +72,11 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.PHONY: vers.c
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
+
 ${PROG}: ${OBJS} ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN} ${FIXCOFFTARG}
-	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.elf \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
