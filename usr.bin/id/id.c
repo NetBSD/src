@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.8 1997/10/19 02:45:48 lukem Exp $");
+__RCSID("$NetBSD: id.c,v 1.9 1997/10/19 03:18:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ main(argc, argv)
 	int Gflag, ch, gflag, id, nflag, pflag, rflag, uflag;
 
 	Gflag = gflag = nflag = pflag = rflag = uflag = 0;
-	while ((ch = getopt(argc, argv, "Ggnpru")) != EOF)
+	while ((ch = getopt(argc, argv, "Ggnpru")) != -1)
 		switch(ch) {
 		case 'G':
 			Gflag = 1;
