@@ -10,6 +10,7 @@ port-arm32
 port-atari
 port-bebox
 port-hp300
+port-hpcmips
 port-i386
 port-m68k
 port-mac68k
