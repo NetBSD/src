@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.160 2001/07/08 16:32:13 abs Exp $
+#	$NetBSD: GENERIC,v 1.161 2001/08/25 21:15:46 is Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.161 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -357,6 +357,9 @@ lpt0		at drsupio? port ?	# DraCo parallel
 melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
 #endif
+
+repulse*	at zbus0		# ALiENDESiGN Repulse
+audio*		at repulse?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
