@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.11 2000/02/28 12:08:24 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.12 2000/03/01 12:49:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -357,6 +357,9 @@ extern int ipsec6_tunnel_validate __P((struct ip6_hdr *, u_int,
 	struct secasvar *));
 #endif
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
+
+extern void ipsec_setsocket __P((struct mbuf *, struct socket *));
+extern struct socket *ipsec_getsocket __P((struct mbuf *));
 
 extern int ipsec_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 extern int ipsec6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));

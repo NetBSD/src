@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.17 2000/02/28 12:08:24 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.18 2000/03/01 12:49:49 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.28 2000/02/26 06:53:11 itojun Exp $	*/
 
 /*
@@ -58,6 +58,10 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#endif
 
 #include <net/net_osdep.h>
 
@@ -487,8 +491,9 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
+	/* Don't lookup socket */
+	ipsec_setsocket(m, NULL);
+#endif
 	ip6_output(m, NULL, NULL, dad ? IPV6_DADOUTPUT : 0, &im6o, &outif);
 	if (outif) {
 		icmp6_ifstat_inc(outif, ifs6_out_msg);
@@ -902,8 +907,9 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 		in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif /*IPSEC*/
+	/* Don't lookup socket */
+	ipsec_setsocket(m, NULL);
+#endif
 	ip6_output(m, NULL, NULL, 0, &im6o, &outif);
 	if (outif) {
 		icmp6_ifstat_inc(outif, ifs6_out_msg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.62 2000/02/29 16:21:56 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.63 2000/03/01 12:49:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1252,7 +1252,7 @@ udp_output(m, va_alist)
 	udpstat.udps_opackets++;
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = (struct ifnet *)inp->inp_socket;
+	ipsec_setsocket(m, inp->inp_socket);
 #endif /*IPSEC*/
 
 	return (ip_output(m, inp->inp_options, &inp->inp_route,

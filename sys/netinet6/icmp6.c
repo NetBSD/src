@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.25 2000/02/28 14:30:36 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.26 2000/03/01 12:49:44 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.71 2000/02/28 09:25:42 jinmei Exp $	*/
 
 /*
@@ -1579,7 +1579,8 @@ icmp6_reflect(m, off)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	/* Don't lookup socket */
+	ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 #ifdef COMPAT_RFC1885
@@ -2075,7 +2076,8 @@ noredhdropt:;
 
 	/* send the packet to outside... */
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	/* Don't lookup socket */
+	ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 	ip6_output(m, NULL, NULL, 0, NULL, &outif);
 	if (outif) {
