@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fs.h	7.12 (Berkeley) 5/8/91
- *	$Id: fs.h,v 1.3 1993/05/20 03:53:22 cgd Exp $
+ *	$Id: fs.h,v 1.4 1993/10/01 01:47:10 mycroft Exp $
  */
 
 #ifndef _UFS_FS_H_
@@ -138,6 +138,7 @@ struct csum {
  */
 #define	FS_MAGIC	0x011954
 #define	FSOKAY		0x7c269d38
+#define	FS_CLEANFREQ	10
 struct	fs
 {
 	struct	fs *fs_link;		/* linked list of file systems */
