@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2005/03/19 21:41:59 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2005/03/21 13:16:34 tron Exp $
 
 .include <bsd.own.mk>
 
 MAN=	X.7 XStandards.7 Xsecurity.7
-MLINKS= X.Org.7
 
 BUILDSYMLINKS=	Standards.man	XStandards.man	\
 		security.man	Xsecurity.man
