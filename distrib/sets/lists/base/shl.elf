@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.11 1999/05/13 10:34:42 veego Exp $
+# $NetBSD: shl.elf,v 1.12 1999/07/02 18:53:26 itojun Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbfd.so.3
 ./usr/lib/libbz2.so.0
@@ -13,7 +13,7 @@
 ./usr/lib/libntp.so.0
 ./usr/lib/libobjc.so.0
 ./usr/lib/libossaudio.so.0
-./usr/lib/libpcap.so.0
+./usr/lib/libpcap.so.1
 ./usr/lib/libposix.so.0
 ./usr/lib/libresolv.so.1
 ./usr/lib/libskey.so.0
