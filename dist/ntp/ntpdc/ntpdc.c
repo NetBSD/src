@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.2 2000/10/09 14:57:22 is Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.3 2000/10/10 12:43:42 itojun Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -447,13 +447,13 @@ openhost(
  
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd == INVALID_SOCKET) {
-		error("socket", "", "");
+		error("socket");
 		exit(-1);
 	}
 #else
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd == -1)
-	    error("socket", "", "");
+	    error("socket");
 #endif /* SYS_WINNT */
 
 	
@@ -464,14 +464,14 @@ openhost(
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
 			       &rbufsize, sizeof(int)) == -1)
-		    error("setsockopt", "", "");
+		    error("setsockopt");
 	}
 # endif
 #endif
 
 	if (connect(sockfd, (struct sockaddr *)&hostaddr,
 		    sizeof(hostaddr)) == -1)
-	    error("connect", "", "");
+	    error("connect");
 	
 	havehost = 1;
 	return 1;
@@ -489,7 +489,7 @@ sendpkt(
 	)
 {
 	if (send(sockfd, xdata, xdatalen, 0) == -1) {
-		warning("write to %s failed", currenthost, "");
+		warning("write to %s failed", currenthost);
 		return -1;
 	}
 
