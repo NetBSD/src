@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.62 2003/01/20 09:06:02 salo Exp $
+#	$NetBSD: services,v 1.63 2003/01/26 04:16:36 ross Exp $
 #
 # Network services, Internet style
 #
@@ -324,3 +324,9 @@ codasrv		2432/tcp		# not used
 codasrv		2432/udp		# server port
 codasrv-se	2433/tcp		# tcp side effects
 codasrv-se	2433/udp		# udp sftp side effect
+
+# Iana registered ports commonly found in security logs
+ms-sql-s        1433/tcp   		# Microsoft-SQL-Server
+ms-sql-s        1433/udp   		# Microsoft-SQL-Server
+ms-sql-m        1434/tcp   		# Microsoft-SQL-Monitor
+ms-sql-m        1434/udp   		# Microsoft-SQL-Monitor 
