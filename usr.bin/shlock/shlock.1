@@ -1,4 +1,4 @@
-.\"	$NetBSD: shlock.1,v 1.7 2002/10/02 10:02:01 wiz Exp $
+.\"	$NetBSD: shlock.1,v 1.8 2004/07/13 12:14:07 wiz Exp $
 .\"
 .Dd June 29, 1997
 .Dt SHLOCK 1
@@ -8,11 +8,10 @@
 .Nd create or verify a lock file for shell scripts
 .Sh SYNOPSIS
 .Nm
+.Op Fl du
+.Op Fl p Ar PID
 .Fl f
 .Ar lockfile
-.Op Fl p Ar PID
-.Op Fl u
-.Op Fl d
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,6 +45,12 @@ with a zero signal to check for the existence of the process that
 holds the lock.
 .Pp
 The
+.Fl d
+option causes
+.Nm
+to be verbose about what it is doing.
+.Pp
+The
 .Fl f
 argument with
 .Ar lockfile
@@ -65,12 +70,6 @@ option causes
 .Nm
 to read and write the PID as a binary pid_t, instead of as ASCII,
 to be compatible with the locks created by UUCP.
-.Pp
-The
-.Fl d
-option causes
-.Nm
-to be verbose about what it is doing.
 .Sh EXIT STATUS
 A zero exit code indicates a valid lock file.
 .Sh EXAMPLES
