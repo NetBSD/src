@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6.2.1 2002/06/29 22:41:47 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.6.2.2 2002/06/29 22:44:49 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,6 +94,7 @@
 #	isdntrc*	trace device
 #
 # Special purpose devices:
+#	audio*	audio devices
 #	clockctl clock control for non root users
 #	md	memory disk
 #	kbd	raw keyboard
