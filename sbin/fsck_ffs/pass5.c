@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
+/*	$NetBSD: pass5.c,v 1.17 1997/09/14 14:36:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $";
+__RCSID("$NetBSD: pass5.c,v 1.17 1997/09/14 14:36:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,17 +56,17 @@ static char rcsid[] = "$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp 
 void
 pass5()
 {
-	int c, blk, frags, basesize, sumsize, mapsize, savednrpos;
-	register struct fs *fs = &sblock;
-	register struct cg *cg = &cgrp;
+	int c, blk, frags, basesize, sumsize, mapsize, savednrpos = 0;
+	struct fs *fs = &sblock;
+	struct cg *cg = &cgrp;
 	daddr_t dbase, dmax;
-	register daddr_t d;
-	register long i, j;
+	daddr_t d;
+	long i, j;
 	struct csum *cs;
 	struct csum cstotal;
 	struct inodesc idesc[3];
 	char buf[MAXBSIZE];
-	register struct cg *newcg = (struct cg *)buf;
+	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
 
 	statemap[WINO] = USTATE;

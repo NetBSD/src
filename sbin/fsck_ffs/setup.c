@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.28 1997/09/14 14:36:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $";
+__RCSID("$NetBSD: setup.c,v 1.28 1997/09/14 14:36:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +210,7 @@ setup(dev)
 		}
 	}
 	if (sblock.fs_bmask != ~(sblock.fs_bsize - 1)) {
-		pwarn("INCORRECT BMASK=%x IN SUPERBLOCK",
+		pwarn("INCORRECT BMASK=0x%x IN SUPERBLOCK",
 			sblock.fs_bmask);
 		sblock.fs_bmask = ~(sblock.fs_bsize - 1);
 		if (preen)
@@ -220,7 +221,7 @@ setup(dev)
 		}
 	}
 	if (sblock.fs_fmask != ~(sblock.fs_fsize - 1)) {
-		pwarn("INCORRECT FMASK=%x IN SUPERBLOCK",
+		pwarn("INCORRECT FMASK=0x%x IN SUPERBLOCK",
 			sblock.fs_fmask);
 		sblock.fs_fmask = ~(sblock.fs_fsize - 1);
 		if (preen)
@@ -514,11 +515,11 @@ int
 calcsb(dev, devfd, fs)
 	char *dev;
 	int devfd;
-	register struct fs *fs;
+	struct fs *fs;
 {
-	register struct disklabel *lp;
-	register struct partition *pp;
-	register char *cp;
+	struct disklabel *lp;
+	struct partition *pp;
+	char *cp;
 	int i;
 
 	cp = strchr(dev, '\0') - 1;
