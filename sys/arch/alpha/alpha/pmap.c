@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.25 1998/03/26 22:18:36 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.26 1998/03/27 00:52:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 1998/03/26 22:18:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 1998/03/27 00:52:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3021,22 +3021,50 @@ pmap_alloc_physpage()
 {
 	struct vm_page *pg;
 	vm_offset_t pa;
+	pmap_t pmap;
+	int try;
 
+	try = 0;	/* try a few times, but give up eventually */
+
+	do {
 #if defined(UVM)
-	if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL)
+		pg = uvm_pagealloc(NULL, 0, NULL);
 #else
-	if ((pg = vm_page_alloc1()) == NULL)
+		pg = vm_page_alloc1();
 #endif
-		/*
-		 * XXX This is lame.  We can probably wait for the
-		 * XXX memory to become available, or steal a PT
-		 * XXX page from another pmap.
-		 */
-		panic("pmap_alloc_physpage: no pages available");
+		if (pg != NULL) {
+			pa = VM_PAGE_TO_PHYS(pg);
+			pmap_zero_page(pa);
+			return (pa);
+		}
 
-	pa = VM_PAGE_TO_PHYS(pg);
-	pmap_zero_page(pa);
-	return (pa);
+		/*
+		 * We are in an extreme low memory condition.
+		 * Find any inactive pmap and forget all of
+		 * the physical mappings (the upper-layer
+		 * VM code will rebuild them the next time
+		 * the pmap is activated).
+		 */
+		for (pmap = LIST_FIRST(&pmap_all_pmaps); pmap != NULL;
+		     pmap = LIST_NEXT(pmap, pm_list)) {
+			/*
+			 * Don't garbage-collect pmaps that reference
+			 * Lev1map.  They don't have any user PT pages
+			 * to free.
+			 */
+			if (pmap->pm_lev1map != Lev1map &&
+			    pmap->pm_cpus == 0) {
+				pmap_collect(pmap);
+				break;
+			}
+		}
+	} while (try++ < 5);
+
+	/*
+	 * If we couldn't get any more pages after 5 tries, just
+	 * give up.
+	 */
+	panic("pmap_alloc_physpage: no pages available after 5 tries");
 }
 
 /*
