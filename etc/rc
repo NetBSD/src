@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.46 1994/06/24 07:51:59 deraadt Exp $
+#	$Id: rc,v 1.47 1994/06/27 21:14:19 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -128,10 +128,10 @@ if [ -d /var/crash ]; then
 	savecore /var/crash
 fi
 
-#				echo -n 'checking quotas:'
-#quotacheck -a
-#				echo ' done.'
-#quotaon -a
+				echo -n 'checking quotas:'
+quotacheck -a
+				echo ' done.'
+quotaon -a
 
 # build ps databases
 echo 'building databases...'
