@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.4 2001/11/18 08:16:16 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.5 2001/11/20 17:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -34,11 +34,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * TODO:
- *    Support for 2nd SCSI controller
  */
 
 #include <sys/param.h>
