@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dump.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_dump.c,v 1.1.1.1.8.1 2000/10/17 19:50:33 tv Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_dump.c	4.33 (Berkeley) 3/3/91";
@@ -615,7 +615,7 @@ db_dump(struct hashbuf *htp, FILE *fp, int zone, char *origin) {
 				getname(np, dname, sizeof(dname));
 				when = db_lame_find(dname, dp);
 				if (when != 0 && when > tt.tv_sec) {
-					fprintf(fp, "%sLAME=%d",
+					fprintf(fp, "%sLAME=%ld",
 						sep, when - tt.tv_sec);
 					sep = " ";
 				}

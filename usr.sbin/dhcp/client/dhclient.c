@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.26.2.5 2000/07/27 00:17:18 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.26.2.6 2000/10/17 19:50:21 tv Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -71,11 +71,11 @@ struct binding_scope global_scope;
    assert (state_is == state_shouldbe). */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
-static char copyright[] = "Copyright 1995-2000 Internet Software Consortium.";
-static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Client";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static const char copyright[] = "Copyright 1995-2000 Internet Software Consortium.";
+static const char arr [] = "All rights reserved.";
+static const char message [] = "Internet Software Consortium DHCP Client";
+static const char contrib [] = "\nPlease contribute if you find this software useful.";
+static const char url [] = "For info, please visit http://www.isc.org/products/DHCP";
 
 u_int16_t local_port;
 u_int16_t remote_port;

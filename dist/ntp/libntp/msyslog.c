@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.1.1.1.4.1 2000/10/17 19:50:44 tv Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -127,8 +127,9 @@ void msyslog(int level, const char *fmt, ...)
 #endif /* VMS */
 	    *n++ = '\n';
 	*n = '\0';
-
-	vsprintf(buf, nfmt, ap);
+	
+	fmt = nfmt;
+	vsprintf(buf, fmt, ap);
 #if !defined(VMS) && !defined (SYS_VXWORKS)
 	if (syslogit)
 #ifndef SYS_WINNT
