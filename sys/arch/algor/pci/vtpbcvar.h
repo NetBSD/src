@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbcvar.h,v 1.2 2001/06/14 17:57:27 thorpej Exp $	*/
+/*	$NetBSD: vtpbcvar.h,v 1.3 2001/06/14 18:52:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct vtpbc_config {
 	 * map used by boards with older firmware (mostly on P-4032
 	 * boards).
 	 */
+	bus_addr_t	vt_pci_iobase;	/* PCI I/O space base */
 	bus_addr_t	vt_pci_membase;	/* PCI memory space base */
 	bus_addr_t	vt_dma_winbase;	/* DMA window base */
 };

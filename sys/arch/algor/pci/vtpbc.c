@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc.c,v 1.2 2001/06/14 17:57:26 thorpej Exp $	*/
+/*	$NetBSD: vtpbc.c,v 1.3 2001/06/14 18:52:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,6 +99,24 @@ vtpbc_init(pci_chipset_tag_t pc, struct vtpbc_config *vt)
 	pc->pc_conf_write = vtpbc_conf_write;
 
 	vt->vt_rev = V96X_PCI_CC_REV(vt) & V96X_PCI_CC_REV_VREV;
+
+	/*
+	 * Determine the PCI I/O space base that our PCI
+	 * I/O window maps to.  NOTE: We disable this on
+	 * PBC rev < B2.
+	 *
+	 * Also note that PMON has disabled the I/O space
+	 * if the old-style PCI address map is in-use.
+	 */
+	if (vt->vt_rev < V96X_VREV_B2)
+		vt->vt_pci_iobase = (bus_addr_t) -1;
+	else {
+		if ((V96X_LB_BASE2(vt) & V96X_LB_BASEx_ENABLE) == 0)
+			vt->vt_pci_iobase = (bus_addr_t) -1;
+		else
+			vt->vt_pci_iobase =
+			    (V96X_LB_MAP2(vt) & V96X_LB_MAPx_MAP_ADR) << 16;
+	}
 
 	/*
 	 * Determine the PCI memory space base that our PCI
