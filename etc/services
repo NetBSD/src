@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.26 1997/10/15 08:12:48 fair Exp $
+#	$NetBSD: services,v 1.27 1998/06/27 20:29:47 wrstuden Exp $
 #
 # Network services, Internet style
 #
@@ -141,6 +141,8 @@ netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 rdist		541/tcp		rdistd		# rdist daemon
+afpovertcp	548/tcp				# AppleshareIP protocol
+afpovertcp	548/udp				# AppleshareIP protocol
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 #
 webster		765/tcp				# Network dictionary
