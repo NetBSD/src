@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_hopf6021.c,v 1.2 1998/01/09 06:06:29 perry Exp $	*/
+/*	$NetBSD: clk_hopf6021.c,v 1.3 1998/01/15 22:58:28 cgd Exp $	*/
 
 /*
  *
@@ -142,7 +142,7 @@ cvt_hopf6021(buffer, size, format, clock)
     register struct format *format;
     register clocktime_t   *clock;
 {
-    char status,weekday;
+    int status,weekday;
 
     if (!Strok(buffer, format->fixed_string))
     {
