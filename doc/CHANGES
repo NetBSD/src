@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.36 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.37 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -166,3 +166,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	eap(4): Add support for second DAC [pooka 20021104]
 	Added two sysctl(8) flags to stop process just after creation by
 		fork(2) or exec(2).  [manu 20021106]
+	mtd(4): Add driver for Myson Technologies MTD803 3-in-1 Fast Ethernet
+		cards from Peter Bex. [martin 20021107]
