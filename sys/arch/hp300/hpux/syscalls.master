@@ -1,0 +1,285 @@
+ 	$Id: syscalls.master,v 1.1 1994/01/07 00:44:10 mycroft Exp $
+; System call name/number master file.
+; Processed to created init_sysent.c, syscalls.c and syscall.h.
+
+; Columns: number type nargs name altname/comments
+;	number	system call number, must be in order
+;	type	one of STD, OBSOL, UNIMPL, NODEF, COMPAT
+;	nargs	number of arguments
+;	name	name of syscall routine
+;	altname	name of system call if different
+;		for UNIMPL/OBSOL, name continues with comments
+
+; types:
+;	STD	always included
+;	COMPAT	included on COMPAT #ifdef
+;	LIBCOMPAT included on COMPAT #ifdef, and placed in syscall.h
+;	OBSOL	obsolete, not included in system, only specifies name
+;	NODEF	do everything except include in syscall.h
+;	UNIMPL	not implemented, placeholder only
+
+; #ifdef's, etc. may be included, and are copied to the output files.
+
+0	STD	0 nosys
+1	STD	1 rexit exit
+2	STD	0 fork
+3	STD	3 hpux_read
+4	STD	3 hpux_write
+5	STD	3 hpux_open
+6	STD	1 close
+7	STD	1 hpux_wait
+8	STD	2 ocreat creat
+9	STD	2 link
+10	STD	1 unlink
+11	STD	2 hpux_execv execv
+12	STD	1 chdir
+13	COMPAT	1 hpux_time
+14	STD	3 mknod
+15	STD	2 chmod
+16	STD	3 chown
+17	STD	1 obreak break
+18	COMPAT	2 hpux_stat
+19	STD	3 lseek
+20	STD	0 getpid
+21	STD	3 notimp mount
+22	STD	1 notimp umount
+23	STD	1 setuid
+24	STD	0 getuid
+25	COMPAT	1 hpux_stime
+26	STD	4 hpux_ptrace
+27	COMPAT	1 hpux_alarm
+28	COMPAT	2 hpux_fstat
+29	COMPAT	0 hpux_pause
+30	COMPAT	2 hpux_utime
+31	COMPAT	2 hpux_stty
+32	COMPAT	2 hpux_gtty
+33	STD	2 saccess access
+34	COMPAT	1 hpux_nice
+35	COMPAT	1 hpux_ftime
+36	STD	0 sync
+37	STD	2 hpux_kill
+38	STD	2 hpux_stat
+39	COMPAT	1 hpux_setpgrp
+40	STD	2 hpux_lstat
+41	STD	1 hpux_dup
+42	STD	0 pipe
+43	COMPAT	1 hpux_times
+44	STD	4 profil
+45	STD	4 notimp ki_syscall
+46	STD	1 setgid
+47	STD	0 getgid
+48	COMPAT	2 hpux_ssig
+49	UNIMPL	0 reserved
+50	UNIMPL	0 reserved
+51	STD	1 notimp acct
+52	UNIMPL	0 old set phys addr
+53	UNIMPL	0 old lock in core
+54	STD	3 hpux_ioctl
+55	STD	4 notimp reboot
+56	STD	2 symlink
+57	STD	3 hpux_utssys
+58	STD	3 readlink
+59	STD	3 execve
+60	STD	1 umask
+61	STD	1 chroot
+62	STD	3 hpux_fcntl
+63	STD	2 hpux_ulimit
+64	STD	0 nosys
+65	STD	0 nosys
+66	STD	0 vfork
+67	STD	0 hpux_read
+68	STD	0 hpux_write
+69	STD	0 nosys
+70	STD	0 nosys
+71	STD	0 nosys
+72	STD	0 nosys
+73	STD	0 nosys
+74	STD	3 notimp mprotect
+75	STD	0 nosys
+76	STD	0 nosys
+77	STD	0 nosys
+78	STD	0 nosys
+79	STD	2 getgroups
+80	STD	2 setgroups
+81	STD	1 hpux_getpgrp2
+82	STD	2 hpux_setpgrp2
+83	STD	3 setitimer
+84	STD	3 hpux_wait3
+85	STD	1 notimp swapon
+86	STD	2 getitimer
+87	STD	0 nosys
+88	STD	0 nosys
+89	STD	0 nosys
+90	STD	2 dup2
+91	STD	2 nosys
+92	STD	2 hpux_fstat
+93	STD	5 select
+94	STD	0 nosys
+95	STD	1 fsync
+96	STD	0 nosys
+97	STD	3 nosys
+98	STD	2 nosys
+99	STD	2 nosys
+100	STD	0 nosys
+101	STD	0 nosys
+102	STD	0 nosys
+103	STD	1 sigreturn
+104	STD	2 nosys
+105	STD	0 nosys
+106	STD	0 nosys
+107	STD	0 nosys
+108	STD	3 hpux_sigvec
+109	STD	1 hpux_sigblock 
+110	STD	1 hpux_sigsetmask
+111	STD	1 hpux_sigpause
+112	STD	2 sigstack
+113	STD	0 nosys
+114	STD	0 nosys
+115	STD	0 nosys
+116	STD	2 gettimeofday
+117	STD	0 nosys
+118	STD	0 nosys
+119	STD	3 notimp hpib_io_stub
+120	STD	3 hpux_readv
+121	STD	3 hpux_writev
+122	STD	2 settimeofday
+123	STD	3 fchown
+124	STD	2 fchmod
+125	STD	0 nosys
+126	STD	3 hpux_setresuid
+127	STD	3 hpux_setresgid
+128	STD	2 rename
+129	STD	2 truncate
+130	STD	2 ftruncate
+131	STD	0 nosys
+132	STD	1 notimp sysconf
+133	STD	0 nosys
+134	STD	0 nosys
+135	STD	0 nosys
+136	STD	2 mkdir
+137	STD	1 rmdir
+138	STD	0 nosys
+139	STD	0 sigreturn
+140	STD	0 nosys
+141	STD	0 nosys
+142	STD	0 nosys
+143	STD	0 nosys
+144	STD	0 nosys
+145	STD	0 nosys
+146	STD	0 nosys
+147	STD	0 nosys
+148	STD	0 nosys
+149	STD	0 nosys
+150	STD	0 nosys
+151	STD	3 notimp privgrp
+152	STD	2 hpux_rtprio rtprio
+153	STD	1 notimp plock
+154	STD	2 hpux_netioctl
+155	STD	4 hpux_lockf
+#ifdef SYSVSEM
+156	STD	3 semget
+157	STD	4 semctl
+158	STD	3 semop
+#else
+156	STD	3 notimp semget
+157	STD	4 notimp semctl
+158	STD	3 notimp semop
+#endif
+#ifdef SYSVMSG
+159	STD	2 msgget
+160	STD	3 msgctl
+161	STD	4 msgsnd
+162	STD	5 msgrcv
+#else
+159	STD	2 notimp msgget
+160	STD	3 notimp msgctl
+161	STD	4 notimp msgsnd
+162	STD	5 notimp msgrcv
+#endif
+#ifdef SYSVSHM
+163	STD	3 shmget
+164	STD	3 shmctl
+165	STD	3 shmat
+166	STD	1 shmdt
+#else
+163	STD	3 notimp shmget
+164	STD	3 notimp shmctl
+165	STD	3 notimp shmat
+166	STD	1 notimp shmdt
+#endif
+167	STD	1 hpux_advise
+168	STD	0 notimp dux_notconfigured
+169	STD	3 notimp cluster
+170	STD	4 notimp mkrnod
+171	STD	0 nosys
+172	STD	0 notimp dux_notconfigured
+173	STD	0 nosys
+174	STD	3 hpux_getcontext
+175	STD	0 nosys
+176	STD	0 nosys
+177	STD	0 nosys
+178	STD	0 notimp lsync
+179	STD	0 nosys
+180	STD	0 notimp mysite
+181	STD	0 notimp returnzero
+182	STD	0 nosys
+183	STD	0 nosys
+184	STD	0 nosys
+185	STD	0 nosys
+186	STD	3 notimp setacl
+187	STD	3 notimp fsetacl
+188	STD	3 notimp getacl
+189	STD	3 notimp fgetacl
+190	STD	6 hpux_getaccess
+191	STD	0 notimp getaudid
+192	STD	1 notimp setaudid
+193	STD	0 notimp getaudproc
+194	STD	1 notimp setaudproc
+195	STD	2 notimp getevent
+196	STD	2 notimp setevent
+197	STD	1 notimp audwrite
+198	STD	1 notimp audswitch
+199	STD	4 notimp audctl
+200	STD	3 hpux_waitpid
+201	STD	0 nosys
+202	STD	2 notimp netioctl
+203	STD	6 nosys
+204	STD	0 nosys
+205	STD	0 nosys
+206	STD	9 nosys
+207	STD	0 nosys
+208	STD	0 nosys
+209	STD	6 nosys
+210	STD	5 nosys
+211	STD	0 nosys
+212	STD	0 nosys
+213	STD	0 nosys
+214	STD	0 nosys
+215	STD	0 nosys
+216	STD	0 nosys
+217	STD	0 nosys
+218	STD	0 nosys
+219	STD	0 nosys
+220	STD	4 nosys
+221	STD	10 nosys
+222	STD	0 nosys
+223	STD	0 nosys
+224	STD	0 nosys
+225	STD	2 notimp pathconf
+226	STD	2 notimp fpathconf
+227	STD	0 nosys
+228	STD	0 nosys
+229	STD	0 notimp async_daemon
+230	STD	3 notimp nfs_fcntl
+231	STD	4 getdirentries
+232	STD	2 getdomainname
+233	STD	2 notimp nfs_getfh
+234	STD	4 notimp vfsmount
+235	STD	1 notimp nfs_svc
+236	STD	2 setdomainname
+237	STD	0 notimp statfs
+238	STD	0 notimp fstatfs
+239	STD	3 hpux_sigaction
+240	STD	3 hpux_sigprocmask
+241	STD	1 hpux_sigpending
+242	STD	1 hpux_sigsuspend

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_tty.c 1.1 90/07/09
  *	from: @(#)hpux_tty.c	7.9 (Berkeley) 5/30/91
- *	$Id: hpux_tty.c,v 1.3 1993/08/01 19:24:58 mycroft Exp $
+ *	$Id: hpux_tty.c,v 1.4 1994/01/07 00:44:05 mycroft Exp $
  */
 
 /*
@@ -62,23 +62,23 @@
 /*
  * Map BSD/POSIX style termios info to and from SYS5 style termio stuff.
  */
-hpuxtermio(fp, com, data, p)
+hpux_termio(fp, com, data, p)
 	struct file *fp;
 	caddr_t data;
 	struct proc *p;
 {
 	struct termios tios;
 	int line, error, (*ioctlrout)();
-	register struct hpuxtermio *tiop;
+	register struct hpux_termio *tiop;
 
 	ioctlrout = fp->f_ops->fo_ioctl;
-	tiop = (struct hpuxtermio *)data;
+	tiop = (struct hpux_termio *)data;
 	switch (com) {
 	case HPUXTCGETA:
 		/*
 		 * Get BSD terminal state
 		 */
-		bzero(data, sizeof(struct hpuxtermio));
+		bzero(data, sizeof(struct hpux_termio));
 		if (error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p))
 			break;
 		/*
@@ -344,24 +344,28 @@ hpuxtobsdbaud(hpuxspeed)
 }
 
 /* #ifdef COMPAT */
-ohpuxgtty(p, uap, retval)
+struct ohpux_gtty_args {
+	int	fdes;
+	caddr_t	cmarg;
+};
+
+ohpux_gtty(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	fdes;
-		caddr_t	cmarg;
-	} *uap;
+	struct ohpux_gtty_args *uap;
 	int *retval;
 {
 
 	return (getsettty(p, uap->fdes, HPUXTIOCGETP, uap->cmarg));
 }
 
-ohpuxstty(p, uap, retval)
+struct ohpux_stty_args {
+	int	fdes;
+	caddr_t	cmarg;
+};
+
+ohpux_stty(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	fdes;
-		caddr_t	cmarg;
-	} *uap;
+	struct ohpux_stty_args *uap;
 	int *retval;
 {
 
@@ -379,7 +383,7 @@ getsettty(p, fdes, com, cmarg)
 {
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
-	struct hpuxsgttyb hsb;
+	struct hpux_sgttyb hsb;
 	struct sgttyb sb;
 	int error;
 

@@ -37,14 +37,14 @@
  *
  *	from: Utah Hdr: hpux.h 1.18 91/02/09
  *	from: @(#)hpux.h	7.4 (Berkeley) 5/7/91
- *	$Id: hpux.h,v 1.3 1993/08/01 19:24:52 mycroft Exp $
+ *	$Id: hpux.h,v 1.4 1994/01/07 00:43:39 mycroft Exp $
  */
 
 #include "hpux_exec.h"
 
 /* HP-UX style UTSNAME struct used by uname syscall */
 
-struct hpuxutsname {
+struct hpux_utsname {
 	char	sysname[9];
 	char	nodename[9];
 	char	release[9];
@@ -55,7 +55,7 @@ struct hpuxutsname {
 
 /* HP-UX style "old" IOCTLs */
 
-struct hpuxsgttyb {
+struct hpux_sgttyb {
 	char	sg_ispeed;
 	char	sg_ospeed;
 	char	sg_erase;
@@ -67,8 +67,8 @@ struct hpuxsgttyb {
 #define V7_XTABS	00002
 #define V7_NOAL		04000
 
-#define	HPUXTIOCGETP	_IOR('t', 8, struct hpuxsgttyb)
-#define	HPUXTIOCSETP	_IOW('t', 9, struct hpuxsgttyb)
+#define	HPUXTIOCGETP	_IOR('t', 8, struct hpux_sgttyb)
+#define	HPUXTIOCSETP	_IOW('t', 9, struct hpux_sgttyb)
 
 /* 6.5 job control related ioctls which need to be mapped */
 
@@ -90,7 +90,7 @@ struct hpuxsgttyb {
 
 #define bsdtohpuxdev(d)	((major(d) << 24) | minor(d))
 
-struct	hpuxstat {
+struct	hpux_stat {
 	long	hst_dev;
 	u_long	hst_ino;
 	u_short	hst_mode;
@@ -141,7 +141,7 @@ struct	hpuxstat {
 #define HU_PAD3	(HU_EDOFF-HU_TSOFF-12)
 #define HU_PAD4	(HU_FPOFF-HU_EDOFF-sizeof(struct hpux_exec))
 
-struct hpuxuser {
+struct hpux_user {
 	u_char	whocares1[HU_PAD1];	/* +0x000 */
 	int	*hpuxu_ar0;		/* +0x004 */
 	u_char	whocares2[HU_PAD2];	/* +0x008 */
@@ -197,10 +197,10 @@ struct hpuxuser {
 #define	HPUX_FPE_INTDIV_TRAP	5	/* T_ZERODIV+USER */
 
 /* HP-UX POSIX signal stuff implementation */
-typedef struct __hpuxsigset_t { long sigset[8]; } hpuxsigset_t;
-struct hpuxsigaction {
+typedef struct __hpux_sigset_t { long sigset[8]; } hpux_sigset_t;
+struct hpux_sigaction {
 	void		(*sa_handler)();
-	hpuxsigset_t	sa_mask;
+	hpux_sigset_t	sa_mask;
 	int		sa_flags;
 };
 #define HPUXSA_ONSTACK		1
