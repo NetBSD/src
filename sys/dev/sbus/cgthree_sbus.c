@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.11 2002/10/02 16:52:34 thorpej Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.12 2003/04/24 05:06:33 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.11 2002/10/02 16:52:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.12 2003/04/24 05:06:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ cgthreeattach_sbus(parent, self, args)
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fbc = (struct fbcontrol *)bh;
+	sc->sc_fbc = (struct fbcontrol *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	isconsole = fb_is_console(node);
 	name = PROM_getpropstring(node, "model");
@@ -203,7 +203,7 @@ cgthreeattach_sbus(parent, self, args)
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
-		fb->fb_pixels = (char *)bh;
+		fb->fb_pixels = (char *)bus_space_vaddr(sa->sa_bustag, bh);
 	}
 
 	sbus_establish(sd, &sc->sc_dev);
