@@ -1,4 +1,4 @@
-/*	$NetBSD: tgavar.h,v 1.6 1996/10/23 04:12:36 cgd Exp $	*/
+/*	$NetBSD: tgavar.h,v 1.6.2.1 1997/01/25 01:33:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <machine/tgareg.h>
 #include <dev/rcons/raster.h>
-#include <alpha/wscons/wsconsvar.h>
+#include <machine/wsconsio.h>
 #include <alpha/wscons/wscons_raster.h>
 
 struct tga_devconfig;
@@ -42,19 +42,19 @@ struct tga_ramdac_conf {
 	void	(*tgar_init) __P((struct tga_devconfig *, int));
 	int	(*tgar_intr) __P((void *));
 	int	(*tgar_set_cmap) __P((struct tga_devconfig *,
-		    struct fbcmap *));
+		    struct wsdisplay_cmap *));
 	int	(*tgar_get_cmap) __P((struct tga_devconfig *,
-		    struct fbcmap *));
+		    struct wsdisplay_cmap *));
 	int	(*tgar_set_cursor) __P((struct tga_devconfig *,
-		    struct fbcursor *));
+		    struct wsdisplay_cursor *));
 	int	(*tgar_get_cursor) __P((struct tga_devconfig *,
-		    struct fbcursor *));
+		    struct wsdisplay_cursor *));
 	int	(*tgar_set_curpos) __P((struct tga_devconfig *,
-		    struct fbcurpos *));
+		    struct wsdisplay_curpos *));
 	int	(*tgar_get_curpos) __P((struct tga_devconfig *,
-		    struct fbcurpos *));
+		    struct wsdisplay_curpos *));
 	int	(*tgar_get_curmax) __P((struct tga_devconfig *,
-		    struct fbcurpos *));
+		    struct wsdisplay_curpos *));
 };
 
 struct tga_conf {
@@ -133,8 +133,13 @@ const struct tga_conf *tga_getconf __P((int));
 extern const struct tga_ramdac_conf tga_ramdac_bt463;
 extern const struct tga_ramdac_conf tga_ramdac_bt485;
 
-int     tga_builtin_set_cursor __P((struct tga_devconfig *, struct fbcursor *));
-int     tga_builtin_get_cursor __P((struct tga_devconfig *, struct fbcursor *));
-int     tga_builtin_set_curpos __P((struct tga_devconfig *, struct fbcurpos *));
-int     tga_builtin_get_curpos __P((struct tga_devconfig *, struct fbcurpos *));
-int     tga_builtin_get_curmax __P((struct tga_devconfig *, struct fbcurpos *));
+int     tga_builtin_set_cursor __P((struct tga_devconfig *,
+	    struct wsdisplay_cursor *));
+int     tga_builtin_get_cursor __P((struct tga_devconfig *,
+	    struct wsdisplay_cursor *));
+int     tga_builtin_set_curpos __P((struct tga_devconfig *,
+	    struct wsdisplay_curpos *));
+int     tga_builtin_get_curpos __P((struct tga_devconfig *,
+	    struct wsdisplay_curpos *));
+int     tga_builtin_get_curmax __P((struct tga_devconfig *,
+	    struct wsdisplay_curpos *));
