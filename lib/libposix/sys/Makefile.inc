@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1997/10/23 02:59:00 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/11/05 05:46:21 thorpej Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -7,11 +7,8 @@
 PSEUDO=	rename.o
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
-LPSEUDO=${PSEUDO:.o=.ln}
 
 OBJS+=	${PSEUDO}
-LOBJS+=	${LPSEUDO}
-
 
 ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
@@ -39,7 +36,26 @@ ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LPSEUDO}: ${DESTDIR}/usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
+# Lint stubs for all automatically-generated assembly stubs (GENERATED)
+LSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+DPSRCS+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+
+CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+
+LintSysNormal.c: ${.CURDIR}/../libc/sys/makelintstub \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/posix_//} ${.PREFIX} | \
-	    ${LINT} -z ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i -o ${.TARGET} -
+	@${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
+
+LintSysNoerr.c: ${.CURDIR}/../libc/sys/makelintstub \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -n \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
+
+LintSysPseudo.c: ${.CURDIR}/../libc/sys/makelintstub \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -p \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO}
