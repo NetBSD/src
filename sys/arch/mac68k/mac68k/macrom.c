@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.11 1995/09/03 20:47:21 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.12 1995/09/04 05:05:11 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -682,7 +682,7 @@ mrg_initadbintr()
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
-		if (mac68k_machine.class == MACH_CLASSIIsi) {
+		if (current_mac_model->class == MACH_CLASSIIsi) {
 			printf("Caution: No HwCfgFlags from Booter, using "
 				"defaults for IIsi.\n");
 
@@ -690,7 +690,7 @@ mrg_initadbintr()
 			HwCfgFlags = 0xfc00;	
 			HwCfgFlags2 = 0x0000773F;
 			HwCfgFlags3 = 0x000001a6;
-		} else if (mac68k_machine.class == MACH_CLASSQ) {
+		} else if (current_mac_model->class == MACH_CLASSQ) {
 			printf("Caution: No HwCfgFlags from Booter, using "
 				"defaults for Q700.\n");
 
