@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.19 1994/06/29 06:32:19 cgd Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.20 1994/09/18 21:56:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -522,8 +522,9 @@ sysctl_clockrate(where, sizep)
 	/*
 	 * Construct clockinfo structure.
 	 */
-	clkinfo.hz = hz;
 	clkinfo.tick = tick;
+	clkinfo.tickadj = tickadj;
+	clkinfo.hz = hz;
 	clkinfo.profhz = profhz;
 	clkinfo.stathz = stathz ? stathz : hz;
 	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));

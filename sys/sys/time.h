@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.8 1994/06/29 06:45:44 cgd Exp $	*/
+/*	$NetBSD: time.h,v 1.9 1994/09/18 21:55:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -101,8 +101,9 @@ struct	itimerval {
  * Getkerninfo clock information structure
  */
 struct clockinfo {
-	int	hz;		/* clock frequency */
 	int	tick;		/* micro-seconds per hz tick */
+	int	tickadj;	/* clock skew rate for adjtime() */
+	int	hz;		/* clock frequency */
 	int	stathz;		/* statistics clock frequency */
 	int	profhz;		/* profiling clock frequency */
 };
