@@ -72,17 +72,17 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
-#include <news/dev/screg_1185.h>
-#include <news/dev/scsic.h>
+#include <newsmips/dev/screg_1185.h>
+#include <newsmips/dev/scsic.h>
 
 #ifdef news3400
-# include <news/dev/dmac_0448.h>
+# include <newsmips/dev/dmac_0448.h>
 # ifndef NDMACMAP
 # define NDMACMAP	144
 # endif
 #endif
 
-#include <news/dev/scsireg.h>
+#include <newsmips/dev/scsireg.h>
 
 #include <machine/locore.h>
 #include <machine/machConst.h>

@@ -1,5 +1,5 @@
 
-machine news mips
+machine newsmips mips
 
 options	SWAPPAGER	# paging
 options VNODEPAGER	# mmap() of files

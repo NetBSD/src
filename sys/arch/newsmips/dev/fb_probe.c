@@ -49,7 +49,7 @@
 #include <sys/exec.h>
 #endif
 
-#include <news/dev/fbdefs.h>
+#include <newsmips/dev/fbdefs.h>
 
 extern int badaddr();
 
