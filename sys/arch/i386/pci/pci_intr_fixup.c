@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.27 2003/10/27 04:10:43 christos Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.27.2.1 2004/04/28 05:19:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.27 2003/10/27 04:10:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.27.2.1 2004/04/28 05:19:04 jmc Exp $");
 
 #include "opt_pcibios.h"
 
@@ -137,14 +137,24 @@ const struct pciintr_icu_table {
 	  piix_init },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371SB_ISA,
 	  piix_init },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AA_LPC,
+	  piix_init },			/* ICH */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AB_LPC,
+	  piix_init },			/* ICH0 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BA_LPC,
-	  piix_init },
+	  ich_init },			/* ICH2 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801BAM_LPC,
-	  piix_init },
+	  ich_init },			/* ICH2M */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801CA_LPC,
+	  ich_init },			/* ICH3S */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801CAM_LPC,
+	  ich_init },			/* ICH3M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_LPC,
-	  piix_init },
+	  ich_init },			/* ICH4 */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801DB_ISA,
+	  ich_init },			/* ICH4M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801EB_LPC,
-	  piix_init },
+	  ich_init },			/* ICH5 */
 
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C558,
 	  opti82c558_init },
@@ -746,17 +756,15 @@ pci_intr_fixup(pc, iot, pciirq)
 		icutag = pci_make_tag(pc, pcibios_pir_header.router_bus,
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
-		icuid = pcibios_pir_header.compat_router;
-		if (icuid == 0 ||
-		    (piit = pciintr_icu_lookup(icuid)) == NULL) {
+		icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
+		if ((piit = pciintr_icu_lookup(icuid)) == NULL) {
 			/*
-			 * No compat ID, or don't know the compat ID?  Read
-			 * it from the configuration header.
+			 * if we fail to look up an ICU at given
+			 * PCI address, try compat ID next.
 			 */
-			icuid = pci_conf_read(pc, icutag, PCI_ID_REG);
-		}
-		if (piit == NULL)
+			icuid = pcibios_pir_header.compat_router;
 			piit = pciintr_icu_lookup(icuid);
+		}
 	} else {
 		int device, maxdevs = pci_bus_maxdevs(pc, 0);
 
