@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.11 2002/04/10 18:19:09 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.12 2002/11/01 20:23:23 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -525,3 +525,4 @@
 #define	LINUX_SYS_fcntl64	220
 
 #define	LINUX_SYS_MAXSYSCALL	221
+#define	LINUX_SYS_NSYSENT	256
