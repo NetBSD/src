@@ -159,7 +159,7 @@ main(argc, argv)
 # ifndef LOG_MAIL
 	openlog("smrsh", 0);
 # else /* ! LOG_MAIL */
-	openlog("smrsh", LOG_ODELAY|LOG_CONS, LOG_MAIL);
+	openlog("smrsh", 0, LOG_MAIL);
 # endif /* ! LOG_MAIL */
 #endif /* ! DEBUG */
 
