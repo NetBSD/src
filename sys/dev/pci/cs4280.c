@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.3 2000/05/15 01:27:46 thorpej Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.4 2000/05/15 01:35:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -83,6 +83,8 @@ int cs4280debug = 0;
 #include <dev/midi_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
+
+#include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
 #include <machine/bus.h>
