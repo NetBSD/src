@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.86 2003/10/03 20:56:11 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.87 2003/10/03 22:08:26 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.86 2003/10/03 20:56:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.87 2003/10/03 22:08:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3341,7 +3341,6 @@ ipsec_copypkt(m)
 					}
 #endif
 					M_COPY_PKTHDR(mnew, n);
-					mnew->m_flags = n->m_flags & M_COPYFLAGS;
 				}
 				else {
 					MGET(mnew, M_DONTWAIT, MT_DATA);
