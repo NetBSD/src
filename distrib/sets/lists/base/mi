@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.317 2002/04/16 18:39:13 kleink Exp $
+# $NetBSD: mi,v 1.318 2002/04/27 19:17:16 atatat Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -372,6 +372,7 @@
 ./usr/bin/ssh-agent	base-secsh-bin
 ./usr/bin/ssh-keygen	base-secsh-bin
 ./usr/bin/ssh-keyscan	base-secsh-bin
+./usr/bin/stat		base-util-bin
 ./usr/bin/string2key	base-krb5-bin
 ./usr/bin/su		base-util-bin
 ./usr/bin/sum		base-util-bin
