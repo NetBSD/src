@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.1 2001/07/26 22:11:09 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.2 2001/07/27 00:37:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -70,14 +70,25 @@ extern int os_readc(void);
 
 /* OS_Args */
 
-#define OSArgs_ReadPtr	0
-#define OSArgs_SetPtr	1
-#define OSArgs_ReadExt	2
+#define OSArgs_ReadPtr		0
+#define OSArgs_SetPtr		1
+#define OSArgs_ReadExt		2
+#define OSArgs_SetExt		3
+#define OSArgs_ReadAllocation	4
+#define OSArgs_ReadEOFStatus	5
 
 #ifndef __ASSEMBLER__
-extern os_error *xosargs_read_ptr(int, int *);
-extern os_error *xosargs_set_ptr(int, int);
-extern os_error *xosargs_read_ext(int, int *);
+extern os_error *xosargs_read(int, int, int *);
+extern os_error *xosargs_set(int, int, int);
+
+#define xosargs_read_ptr(f, vp)	xosargs_read(OSArgs_ReadPtr, (f), (vp))
+#define xosargs_set_ptr(f, v)	xosargs_set(OSArgs_SetPtr, (f), (v))
+#define xosargs_read_ext(f, vp)	xosargs_read(OSArgs_ReadExt, (f), (vp))
+#define xosargs_set_ext(f, v)	xosargs_set(OSArgs_SetExt, (f), (v))
+#define xosargs_read_allocation(f, vp) \
+				xosargs_read(OSArgs_ReadAllocation, (f), (vp))
+#define xosargs_read_eof_status(f, vp) \
+				xosargs_read(OSArgs_ReadEOFStatus, (f), (vp))
 #endif
 
 /* OS_GBPB */

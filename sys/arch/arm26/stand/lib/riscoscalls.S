@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.2 2001/07/27 00:00:25 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.3 2001/07/27 00:37:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -51,13 +51,11 @@ ENTRY(os_readc)
 	swi	OS_ReadC
 	ldmdb	fp, {fp, sp, pc}
 
-ENTRY(xosargs_read_ptr)
+ENTRY(xosargs_read)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r3, r1
-	mov	r1, r0
-	mov	r0, #OSArgs_ReadPtr
+	mov	r3, r2
 	swi	OS_Args
 	ldmvsdb	fp, {fp, sp, pc}
 	teq	r3, #0
@@ -65,29 +63,12 @@ ENTRY(xosargs_read_ptr)
 	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
-ENTRY(xosargs_set_ptr)
+ENTRY(xosargs_set)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r2, r1
-	mov	r1, r0
-	mov	r0, #OSArgs_SetPtr
 	swi	OS_Args
 	movvc	r0, #0
-	ldmdb	fp, {fp, sp, pc}
-
-ENTRY(xosargs_read_ext)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	sub	fp, ip, #4
-	mov	r3, r1
-	mov	r1, r0
-	mov	r0, #OSArgs_ReadExt
-	swi	OS_Args
-	ldmvsdb	fp, {fp, sp, pc}
-	teq	r3, #0
-	strne	r2, [r3]
-	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(xosgbpb_write)
