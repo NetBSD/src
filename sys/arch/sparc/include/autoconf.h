@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 1995/08/18 10:47:46 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.11 1995/12/11 12:31:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,33 @@ struct confargs {
 extern int bt2pmt[];
 
 /*
+ * mapiodev maps an I/O device to a virtual address, returning the address.
+ * mapdev does the real work: you can supply a special virtual address and
+ * it will use that instead of creating one, but you must only do this if
+ * you get it from ../sparc/vaddrs.h.
+ */
+void	*mapdev __P((struct rom_reg *pa, int va,
+		     int offset, int size, int bustype));
+#define	mapiodev(pa, offset, size, bustype) \
+	mapdev(pa, 0, offset, size, bustype)
+#ifdef notyet
+/*
+ * REG2PHYS is provided for drivers with a `d_mmap' function.
+ */
+#define REG2PHYS(rr, offset, bt)				\
+	(((u_int)(rr)->rr_paddr + (offset)) |			\
+		((cputyp == CPU_SUN4M)				\
+			? ((rr)->rr_iospace << PMAP_SHFT4M)	\
+			: bt2pmt[bt])				\
+	)
+#else
+#define REG2PHYS(rr, offset, bt)				\
+	(((u_int)(rr)->rr_paddr + (offset)) | (bt2pmt[bt])	\
+	)
+#endif
+
+
+/*
  * The various getprop* functions obtain `properties' from the ROMs.
  * getprop() obtains a property as a byte-sequence, and returns its
  * length; the others convert or make some other guarantee.
@@ -129,15 +156,6 @@ int	matchbyname __P((struct device *, void *cf, void *aux));
  * (this is just a frill).
  */
 char	*clockfreq __P((int freq));
-
-/*
- * mapiodev maps an I/O device to a virtual address, returning the address.
- * mapdev does the real work: you can supply a special virtual address and
- * it will use that instead of creating one, but you must only do this if
- * you get it from ../sparc/vaddrs.h.
- */
-void	*mapdev __P((void *pa, int va, int size, int bustype));
-#define	mapiodev(pa, size, bustype)	mapdev(pa, 0, size, bustype)
 
 /*
  * Memory description arrays.  Shared between pmap.c and autoconf.c; no
