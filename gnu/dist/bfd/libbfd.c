@@ -455,6 +455,7 @@ bfd_get_file_window (abfd, offset, size, windowp, writable)
       i->size = real_size;
       windowp->data = (PTR) ((bfd_byte *) i->data + offset2);
       windowp->size = size;
+      i->refcount = 1;
       i->mapped = 1;
       return true;
     }
