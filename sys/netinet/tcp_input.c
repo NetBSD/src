@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.78 1999/04/09 22:01:07 kml Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.79 1999/04/22 01:32:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@
 
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
-
-extern u_long sb_max;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
