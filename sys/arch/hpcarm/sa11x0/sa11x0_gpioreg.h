@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.3 2001/03/10 13:34:35 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -39,29 +39,31 @@
  * SA-11x0 GPIO Register 
  */
 
+#define SAGPIO_NPORTS	8
+
 /* GPIO pin-level register */
-#define SAGPIO_PLR	0
+#define SAGPIO_PLR	0x00
 
 /* GPIO pin direction register */
-#define SAGPIO_PDR	1
+#define SAGPIO_PDR	0x04
 
 /* GPIO pin output set register */
-#define SAGPIO_PSR	2
+#define SAGPIO_PSR	0x08
 
 /* GPIO pin output clear register */
-#define SAGPIO_PCR	3
+#define SAGPIO_PCR	0x0C
 
 /* GPIO rising-edge detect register */
-#define SAGPIO_RER	4
+#define SAGPIO_RER	0x10
 
 /* GPIO falling-edge detect register */
-#define SAGPIO_FER	5
+#define SAGPIO_FER	0x14
 
 /* GPIO edge-detect status register */
-#define SAGPIO_EDR	6
+#define SAGPIO_EDR	0x18
 
 /* GPIO alternate function register */
-#define SAGPIO_AFR	7
+#define SAGPIO_AFR	0x1C
 
 /*
  * iPAQ H3600 specific parameter
