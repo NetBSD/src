@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.141.2.4 2002/07/20 11:35:13 gehenna Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141.2.5 2002/08/29 00:56:47 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.2.4 2002/07/20 11:35:13 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.2.5 2002/08/29 00:56:47 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -274,6 +274,17 @@ do {									\
 	NTOHL((th)->th_ack);						\
 	NTOHS((th)->th_win);						\
 	NTOHS((th)->th_urp);						\
+} while (0)
+
+/*
+ * ... and reverse the above.
+ */
+#define	TCP_FIELDS_TO_NET(th)						\
+do {									\
+	HTONL((th)->th_seq);						\
+	HTONL((th)->th_ack);						\
+	HTONS((th)->th_win);						\
+	HTONS((th)->th_urp);						\
 } while (0)
 
 #ifdef TCP_CSUM_COUNTERS
@@ -853,7 +864,7 @@ tcp_input(m, va_alist)
 		}
 #endif
 		/* We do the checksum after PCB lookup... */
-		len = ip->ip_len;
+		len = ntohs(ip->ip_len);
 		tlen = len - toff;
 		break;
 #endif
@@ -1357,6 +1368,53 @@ findpcb:
 				 * Received a SYN.
 				 */
 
+#ifdef INET6
+				/*
+				 * If deprecated address is forbidden, we do
+				 * not accept SYN to deprecated interface
+				 * address to prevent any new inbound
+				 * connection from getting established.
+				 * When we do not accept SYN, we send a TCP
+				 * RST, with deprecated source address (instead
+				 * of dropping it).  We compromise it as it is
+				 * much better for peer to send a RST, and
+				 * RST will be the final packet for the
+				 * exchange.
+				 *
+				 * If we do not forbid deprecated addresses, we
+				 * accept the SYN packet.  RFC2462 does not
+				 * suggest dropping SYN in this case.
+				 * If we decipher RFC2462 5.5.4, it says like
+				 * this:
+				 * 1. use of deprecated addr with existing
+				 *    communication is okay - "SHOULD continue
+				 *    to be used"
+				 * 2. use of it with new communication:
+				 *   (2a) "SHOULD NOT be used if alternate
+				 *        address with sufficient scope is
+				 *        available"
+				 *   (2b) nothing mentioned otherwise. 
+				 * Here we fall into (2b) case as we have no
+				 * choice in our source address selection - we
+				 * must obey the peer.
+				 *
+				 * The wording in RFC2462 is confusing, and
+				 * there are multiple description text for
+				 * deprecated address handling - worse, they
+				 * are not exactly the same.  I believe 5.5.4
+				 * is the best one, so we follow 5.5.4.
+				 */
+				if (af == AF_INET6 && !ip6_use_deprecated) {
+					struct in6_ifaddr *ia6;
+					if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif,
+					    &ip6->ip6_dst)) &&
+					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
+						tp = NULL;
+						goto dropwithreset;
+					}
+				}
+#endif
+
 				/*
 				 * LISTEN socket received a SYN
 				 * from itself?  This can't possibly
@@ -1781,12 +1839,20 @@ after_listen:
 			 * while in TIME_WAIT, drop the old connection
 			 * and start over if the sequence numbers
 			 * are above the previous ones.
+			 *
+			 * NOTE: We will checksum the packet again, and
+			 * so we need to put the header fields back into
+			 * network order!
+			 * XXX This kind of sucks, but we don't expect
+			 * XXX this to happen very often, so maybe it
+			 * XXX doesn't matter so much.
 			 */
 			if (tiflags & TH_SYN &&
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
 				iss = tcp_new_iss(tp, tp->snd_nxt);
 				tp = tcp_close(tp);
+				TCP_FIELDS_TO_NET(th);
 				goto findpcb;
 			}
 			/*
@@ -3746,7 +3812,7 @@ syn_cache_respond(sc, m)
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		ip->ip_len = tlen;
+		ip->ip_len = htons(tlen);
 		ip->ip_ttl = ip_defttl;
 		/* XXX tos? */
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.74.4.1 2002/07/15 10:37:18 gehenna Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.74.4.2 2002/08/29 00:57:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -687,11 +687,11 @@ int sysctl_int(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
 int sysctl_quad(void *, size_t *, void *, size_t, quad_t *);
 int sysctl_rdquad(void *, size_t *, void *, quad_t);
-int sysctl_string(void *, size_t *, void *, size_t, char *, int);
+int sysctl_string(void *, size_t *, void *, size_t, char *, size_t);
 int sysctl_rdstring(void *, size_t *, void *, const char *);
-int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
-int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
-int sysctl_rdminstruct(void *, size_t *, void *, const void *, int);
+int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
+int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
+int sysctl_rdminstruct(void *, size_t *, void *, const void *, size_t);
 int sysctl_clockrate(void *, size_t *);
 int sysctl_disknames(void *, size_t *);
 int sysctl_diskstats(int *, u_int, void *, size_t *);

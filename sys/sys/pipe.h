@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.11 2002/03/13 20:51:37 jdolecek Exp $ */
+/* $NetBSD: pipe.h,v 1.11.4.1 2002/08/29 00:56:59 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -137,7 +137,7 @@ struct pipe {
 	struct	timeval pipe_atime;	/* time of last access */
 	struct	timeval pipe_mtime;	/* time of last modify */
 	struct	timeval pipe_ctime;	/* time of status change */
-	gid_t	pipe_pgid;		/* process group for sigio */
+	pid_t	pipe_pgid;		/* process group for sigio */
 	struct	lock pipe_lock;		/* pipe lock */
 #endif
 	struct	pipe *pipe_peer;	/* link with other direction */

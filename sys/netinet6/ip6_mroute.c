@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.28.2.3 2002/07/15 10:37:06 gehenna Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.28.2.4 2002/08/29 00:56:52 gehenna Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.2.3 2002/07/15 10:37:06 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.28.2.4 2002/08/29 00:56:52 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -1477,7 +1477,7 @@ phyint_send(ip6, mifp, m)
 	 * if it would fit in the MTU of the interface.
 	 */
 	linkmtu = IN6_LINKMTU(ifp);
-	if (mb_copy->m_pkthdr.len < linkmtu || linkmtu < IPV6_MMTU) {
+	if (mb_copy->m_pkthdr.len <= linkmtu || linkmtu < IPV6_MMTU) {
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.75.6.3 2002/07/15 10:37:04 gehenna Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.75.6.4 2002/08/29 00:56:50 gehenna Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.6.3 2002/07/15 10:37:04 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.6.4 2002/08/29 00:56:50 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2277,7 +2277,7 @@ icmp6_redirect_input(m, off)
 	struct in6_addr reddst6;
 	union nd_opts ndopts;
 
-	if (!m || !ifp)
+	if (!ifp)
 		return;
 
 	/* XXX if we are router, we don't update route by icmp6 redirect */
