@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.12 1997/11/11 14:40:14 mrg Exp $
+.\"	$NetBSD: mail.1,v 1.13 1999/02/17 20:48:48 mjl Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -705,6 +705,10 @@ by the option
 .Bl -tag -width Ds
 .It Ic \&~! Ns Ar command
 Execute the indicated shell command, then return to the message.
+.It Ic \&~a
+Inserts the autograph string from the sign= option into the message.
+.It Ic \&~A 
+Inserts the autograph string from the Sign= option into the message.
 .It Ic \&~b Ns Ar name ...
 Add the given names to the list of carbon copy recipients but do not make
 the names visible in the Cc: line ("blind" carbon copy).
@@ -736,6 +740,8 @@ except all message headers are included.
 Edit the message header fields by typing each one in turn and allowing
 the user to append text to the end or modify the field by using the
 current terminal erase and kill characters.
+.It Ic \&~i Ns Ar string
+Inserts the value of the named option into the text of the message.
 .It Ic \&~m Ns Ar messages
 Read the named messages into the message being sent, indented by a
 tab or by the value of
@@ -760,8 +766,14 @@ Abort the message being sent, copying the message to
 in your home directory if
 .Ic save
 is set.
+.It Ic \&~x
+Exits as with \&~q, except the message is not saved in dead.letter.
 .It Ic \&~r Ns Ar filename
-Read the named file into the message.
+.It Ic \&~< Ns Ar filename
+Reads the named file into the message.
+If the argument begins with !,
+the rest of the string is taken as an arbitrary system command and is
+executed, with the standard output inserted into the message.
 .It Ic \&~s Ns Ar string
 Cause the named string to become the current subject field.
 .It Ic \&~\&t Ns Ar name ...
