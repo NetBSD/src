@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.22 2002/08/02 00:59:35 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.23 2002/08/03 04:03:56 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -780,7 +780,7 @@ nvi 1.79
 .It
 OpenSSH 3.4
 .It
-OpenSSL 0.9.6d
+OpenSSL 0.9.6e
 .It
 Postfix 1.1.11
 .It
