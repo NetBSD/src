@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.52 1997/10/13 00:47:39 explorer Exp $	*/
+/*	$NetBSD: if_de.c,v 1.53 1997/10/15 19:06:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -313,6 +313,7 @@ tulip_media_set(
 	TULIP_CSR_WRITE(sc, csr_sia_tx_rx,        mi->mi_sia_tx_rx);
 	if (sc->tulip_features & TULIP_HAVE_SIAGP) {
 	    TULIP_CSR_WRITE(sc, csr_sia_general,  mi->mi_sia_gp_control|mi->mi_sia_general|TULIP_SIAGEN_WATCHDOG);
+	    DELAY(50);
 	    TULIP_CSR_WRITE(sc, csr_sia_general,  mi->mi_sia_gp_data|mi->mi_sia_general|TULIP_SIAGEN_WATCHDOG);
 	} else {
 	    TULIP_CSR_WRITE(sc, csr_sia_general,  mi->mi_sia_general|TULIP_SIAGEN_WATCHDOG);
@@ -429,11 +430,16 @@ tulip_linkup(
     sc->tulip_probe_timeout = 3000;
     sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
     sc->tulip_flags &= ~(TULIP_TXPROBE_ACTIVE|TULIP_TRYNWAY);
-    if (sc->tulip_flags & TULIP_INRESET) {
-	tulip_media_set(sc, sc->tulip_media);
-    } else {
-	tulip_reset(sc);
-	tulip_init(sc);
+    if (sc->tulip_probe_media != sc->tulip_media) {
+	/*
+	 * No reason to change media if we have the right media.
+	 */
+	if (sc->tulip_flags & TULIP_INRESET) {
+	    tulip_media_set(sc, sc->tulip_media);
+	} else {
+	    tulip_reset(sc);
+	    tulip_init(sc);
+	}
     }
 }
 
@@ -600,6 +606,10 @@ tulip_media_link_monitor(
 	    return TULIP_LINK_UNKNOWN;
 	if ((TULIP_CSR_READ(sc, csr_sia_status) & TULIP_SIASTS_LINKFAIL) == 0)
 	    linkup = TULIP_LINK_UP;
+#if defined(TULIP_DEBUG)
+	if (sc->tulip_probe_timeout <= 0)
+	    printf(TULIP_PRINTF_FMT ": sia status = 0x%08x\n", TULIP_PRINTF_ARGS, TULIP_CSR_READ(sc, csr_sia_status));
+#endif
     } else if (mi->mi_type == TULIP_MEDIAINFO_SYM) {
 	return TULIP_LINK_UNKNOWN;
     }
@@ -897,6 +907,7 @@ tulip_media_poll(
 	}
 	case TULIP_MEDIAINFO_RESET:
 	case TULIP_MEDIAINFO_SYM:
+	case TULIP_MEDIAINFO_NONE:
 	case TULIP_MEDIAINFO_GPR: {
 	    break;
 	}
@@ -4971,6 +4982,9 @@ tulip_pci_attach(
 	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 #endif /* __NetBSD__ */
+#if defined(__alpha__)
+    tulip_media_t media = TULIP_MEDIA_UNKNOWN;
+#endif
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
 #if !defined(TULIP_IOMAPPED) && defined(__FreeBSD__)
@@ -5063,6 +5077,8 @@ tulip_pci_attach(
 	    sc->tulip_features |= TULIP_HAVE_SIANWAY;
 	if (chipid != TULIP_21041)
 	    sc->tulip_features |= TULIP_HAVE_SIAGP|TULIP_HAVE_RXBADOVRFLW|TULIP_HAVE_STOREFWD;
+	if (chipid != TULIP_21041 && sc->tulip_revinfo >= 0x20)
+	    sc->tulip_features |= TULIP_HAVE_SIA100;
     }
 
     if (sc->tulip_features & TULIP_HAVE_POWERMGMT
@@ -5071,7 +5087,7 @@ tulip_pci_attach(
 	PCI_CONF_WRITE(PCI_CFDA, cfdainfo);
 	DELAY(11*1000);
     }
-#if defined(__alpha__)
+#if defined(__alpha__) && defined(__NetBSD__)
     /*
      * The Alpha SRM console encodes a console set media in the driver
      * part of the CFDA register.  Note that the Multia presents a
@@ -5079,14 +5095,14 @@ tulip_pci_attach(
      * force a probe.
      */
     switch ((cfdainfo >> 8) & 0xff) {
-    case 1: sc->tulip_media = chipid > TULIP_DE425 ?
+    case 1: media = chipid > TULIP_DE425 ?
         TULIP_MEDIA_AUI : TULIP_MEDIA_AUIBNC; break;
-    case 2: sc->tulip_media = chipid > TULIP_DE425 ?
+    case 2: media = chipid > TULIP_DE425 ?
         TULIP_MEDIA_BNC : TULIP_MEDIA_UNKNOWN; break;
-    case 3: sc->tulip_media = TULIP_MEDIA_10BASET; break;
-    case 4: sc->tulip_media = TULIP_MEDIA_10BASET_FD; break;
-    case 5: sc->tulip_media = TULIP_MEDIA_100BASETX; break;
-    case 6: sc->tulip_media = TULIP_MEDIA_100BASETX_FD; break;
+    case 3: media = TULIP_MEDIA_10BASET; break;
+    case 4: media = TULIP_MEDIA_10BASET_FD; break;
+    case 5: media = TULIP_MEDIA_100BASETX; break;
+    case 6: media = TULIP_MEDIA_100BASETX_FD; break;
     }
 #endif
 
@@ -5241,6 +5257,10 @@ tulip_pci_attach(
 	s = TULIP_RAISESPL();
 	tulip_reset(sc);
 	tulip_attach(sc);
+#if defined(__alpha__) && defined(__NetBSD__)
+	if (media != TULIP_MEDIA_UNKNOWN)
+	    tulip_linkup(sc, media);
+#endif
 	TULIP_RESTORESPL(s);
     }
 }
