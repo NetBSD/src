@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.6 1996/02/13 22:09:18 christos Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.7 1996/09/08 14:28:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -113,9 +113,6 @@ struct sockaddr_eon eon_template = {
 
 #define DOWNBITS ( EON_ESLINK_DOWN | EON_ISLINK_DOWN )
 #define UPBITS ( EON_ESLINK_UP | EON_ISLINK_UP )
-
-#define	SIOCSEONCORE _IOWR('i',10, struct iso_ifreq)	/* EON core member */
-#define	SIOCGEONCORE _IOWR('i',11, struct iso_ifreq)	/* EON core member */
 
 struct eon_hdr {
 	u_char          eonh_vers;	/* value 1 */
