@@ -23,6 +23,7 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/inetd.conf
+./etc/ld.so.conf
 ./etc/lkm.conf
 ./etc/localtime
 ./etc/mail.rc
