@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.21 1998/10/15 10:22:24 kleink Exp $	*/
+/*	$NetBSD: res_init.c,v 1.22 1998/11/13 15:46:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.21 1998/10/15 10:22:24 kleink Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.22 1998/11/13 15:46:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -395,6 +395,7 @@ res_init()
 	return (0);
 }
 
+/* ARGSUSED */
 static void
 res_setoptions(options, source)
 	char *options, *source;
@@ -462,5 +463,5 @@ res_randomid()
 	struct timeval now;
 
 	gettimeofday(&now, NULL);
-	return (0xffff & (now.tv_sec ^ now.tv_usec ^ getpid()));
+	return (u_int)(0xffff & (now.tv_sec ^ now.tv_usec ^ getpid()));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: localeconv.c,v 1.8 1997/07/13 19:54:55 christos Exp $	*/
+/*	$NetBSD: localeconv.c,v 1.9 1998/11/13 15:49:03 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeconv.c,v 1.8 1997/07/13 19:54:55 christos Exp $");
+__RCSID("$NetBSD: localeconv.c,v 1.9 1998/11/13 15:49:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -55,8 +55,11 @@ localeconv()
 
     if (__nlocale_changed) {
 	/* LC_NUMERIC */
+	/* LINTED const castaway */
 	ret.decimal_point	= (char *) _CurrentNumericLocale->decimal_point;
+	/* LINTED const castaway */
 	ret.thousands_sep	= (char *) _CurrentNumericLocale->thousands_sep;
+	/* LINTED const castaway */
 	ret.grouping		= (char *) _CurrentNumericLocale->grouping;
 	__nlocale_changed = 0;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.7 1997/07/18 04:55:57 thorpej Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.7 1997/07/18 04:55:57 thorpej Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.8 1998/11/13 15:46:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ ns_addr(name)
 	socketname = strchr(hostname, separator);
 	if (socketname) {
 		*socketname++ = 0;
-		Field(socketname, (u_int8_t *)&addr.x_port, 2);
+		Field(socketname, (u_int8_t *)(void *)&addr.x_port, 2);
 	}
 
 	Field(hostname, addr.x_host.c_host, 6);
@@ -172,7 +172,7 @@ Field(buf, out, len)
 
 	case 'h': case 'H':
 		base16 = 1;
-		/* fall into */
+		/* FALLTHROUGH */
 
 	default:
 		*--bp = 0; /* Ends Loop */
@@ -224,10 +224,11 @@ cvtbase(oldbase,newbase,input,inlen,result,reslen)
 		while (d < inlen) {
 			sum = sum*oldbase + (long) input[d];
 			e += (sum > 0);
-			input[d++] = sum / newbase;
+			input[d++] = (int) (sum / newbase);
 			sum %= newbase;
 		}
-		result[--reslen] = sum;	/* accumulate remainder */
+		/* accumulate remainder */
+		result[--reslen] = (unsigned char)sum;
 	}
 	for (d=0; d < reslen; d++)
 		result[d] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_neta.c,v 1.7 1998/01/06 05:01:22 perry Exp $	*/
+/*	$NetBSD: inet_neta.c,v 1.8 1998/11/13 15:46:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_neta.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_neta.c,v 1.7 1998/01/06 05:01:22 perry Exp $");
+__RCSID("$NetBSD: inet_neta.c,v 1.8 1998/11/13 15:46:54 christos Exp $");
 #endif
 #endif
 
@@ -67,7 +67,7 @@ inet_neta(src, dst, size)
 	char *tp;
 
 	while (src & 0xffffffff) {
-		u_char b = (src & 0xff000000) >> 24;
+		u_char b = (u_char)((src & 0xff000000) >> 24);
 
 		src <<= 8;
 		if (b) {

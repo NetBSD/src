@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.6 1998/10/20 17:04:45 kleink Exp $	*/
+/*	$NetBSD: md5c.c,v 1.7 1998/11/13 15:48:29 christos Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -192,10 +192,10 @@ MD5Update(context, input, inputLen)
 	const unsigned char *input;	/* input block */
 	unsigned int inputLen;		/* length of input block */
 {
-	unsigned int i, index, partLen;
+	unsigned int i, idx, partLen;
 
 	/* Compute number of bytes mod 64 */
-	index = (unsigned int)((context->count[0] >> 3) & 0x3F);
+	idx = (unsigned int)((context->count[0] >> 3) & 0x3F);
 
 	/* Update number of bits */
 	if ((context->count[0] += ((UINT4)inputLen << 3))
@@ -203,24 +203,22 @@ MD5Update(context, input, inputLen)
 		context->count[1]++;
 	context->count[1] += ((UINT4)inputLen >> 29);
 
-	partLen = 64 - index;
+	partLen = 64 - idx;
 
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
-		memcpy((POINTER)&context->buffer[index],
-		    (POINTER)input, partLen);
+		memcpy(&context->buffer[idx], input, partLen);
 		MD5Transform(context->state, context->buffer);
 
 		for (i = partLen; i + 63 < inputLen; i += 64)
 			MD5Transform(context->state, &input[i]);
 
-		index = 0;
+		idx = 0;
 	} else
 		i = 0;
 
 	/* Buffer remaining input */
-	memcpy((POINTER)&context->buffer[index], (POINTER)&input[i],
-	    inputLen - i);
+	memcpy(&context->buffer[idx], &input[i], inputLen - i);
 }
 
 /*
@@ -233,14 +231,14 @@ MD5Final(digest, context)
 	MD5_CTX *context;		/* context */
 {
 	unsigned char bits[8];
-	unsigned int index, padLen;
+	unsigned int idx, padLen;
 
 	/* Save number of bits */
 	Encode(bits, context->count, 8);
 
 	/* Pad out to 56 mod 64. */
-	index = (unsigned int)((context->count[0] >> 3) & 0x3f);
-	padLen = (index < 56) ? (56 - index) : (120 - index);
+	idx = (unsigned int)((context->count[0] >> 3) & 0x3f);
+	padLen = (idx < 56) ? (56 - idx) : (120 - idx);
 	MD5Update (context, PADDING, padLen);
 
 	/* Append length (before padding) */
@@ -250,7 +248,7 @@ MD5Final(digest, context)
 	Encode(digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)context, sizeof(*context));
+	ZEROIZE(context, sizeof(*context));
 }
 
 /*
@@ -343,5 +341,5 @@ MD5Transform(state, block)
 	state[3] += d;
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)x, sizeof (x));
+	ZEROIZE(x, sizeof (x));
 }

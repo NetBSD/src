@@ -1,4 +1,4 @@
-/*	$NetBSD: ctypeio.c,v 1.1 1997/06/02 09:52:47 kleink Exp $	*/
+/*	$NetBSD: ctypeio.c,v 1.2 1998/11/13 15:49:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -96,14 +96,20 @@ __loadctype(name)
 #endif
 
 	(void) fclose(fp);
-	if (_ctype_ != _C_ctype_)
+	if (_ctype_ != _C_ctype_) {
+		/* LINTED const castaway ok */
 		free((void *) _ctype_);
+	}
 	_ctype_ = new_ctype;
-	if (_toupper_tab_ != _C_toupper_)
+	if (_toupper_tab_ != _C_toupper_) {
+		/* LINTED const castaway ok */
 		free((void *) _toupper_tab_);
+	}
 	_toupper_tab_ = new_toupper;
-	if (_tolower_tab_ != _C_tolower_)
+	if (_tolower_tab_ != _C_tolower_) {
+		/* LINTED const castaway ok */
 		free((void *) _tolower_tab_);
+	}
 	_tolower_tab_ = new_tolower;
 
 	return 1;

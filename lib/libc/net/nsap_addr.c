@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.6 1998/01/06 05:01:24 perry Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.7 1998/11/13 15:46:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,7 +53,7 @@
 #if 0
 static char rcsid[] = "Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.6 1998/01/06 05:01:24 perry Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.7 1998/11/13 15:46:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -143,7 +143,7 @@ inet_nsap_ntoa(binlen, binary, ascii)
 		binlen = 255;
 
 	for (i = 0; i < binlen; i++) {
-		nib = *binary >> 4;
+		nib = (u_int32_t)*binary >> 4;
 		*ascii++ = nib + (nib < 10 ? '0' : '7');
 		nib = *binary++ & 0x0f;
 		*ascii++ = nib + (nib < 10 ? '0' : '7');
