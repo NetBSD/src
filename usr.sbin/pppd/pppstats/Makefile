@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1997/03/12 20:18:38 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1997/05/11 05:27:10 mikel Exp $
 
 PROG=	pppstats
-SRCS=	pppstats.c
 MAN=	pppstats.8
-BINDIR=	/usr/sbin
-CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Dlint
+#CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes -Dlint
 
+.include "../../Makefile.inc"
 .include <bsd.prog.mk>
