@@ -1,4 +1,4 @@
-.\"	$NetBSD: eject.1,v 1.6 1999/02/08 16:35:33 bouyer Exp $
+.\"	$NetBSD $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,10 +65,8 @@ will attempt to unmount the filesystem before ejecting.
 .Pp
 The following options are available:
 .Bl -tag -width xxx
-.It Fl d Ar raw-device
-An alternative way to specify a raw device path name.
-It need not start with
-.Pa /dev/ .
+.It Fl d
+Deprecated.
 .It Fl f
 Force the eject operation without attempting to unmount any filesystems first.
 .It Fl l
