@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.19 1997/06/26 19:11:55 drochner Exp $	*/
+/*	$NetBSD: ufs.c,v 1.20 1998/03/01 07:15:39 ross Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -68,9 +68,9 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
 #else
