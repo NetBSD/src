@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.8 2000/03/23 06:39:56 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.9 2000/04/05 11:37:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -59,6 +59,9 @@
 #include <mac68k/obio/iwmreg.h>
 #include <mac68k/obio/iwm_fdvar.h>
 
+#ifdef _LKM
+#include "iwm_mod.h"
+#endif
 
 /**
  **	Private functions
@@ -90,6 +93,8 @@ static void invalidateCylinderCache __P((fd_softc_t *fd));
 
 #ifdef _LKM
 static int probe_fd __P((void));
+int fd_mod_init __P((void));
+int fd_mod_free __P((void));
 #endif
 
 static int fdstart_Init __P((fd_softc_t *fd));
@@ -567,9 +572,9 @@ fd_mod_free(void)
 		if (iwm->fd[unit] != NULL) {
 			/* 
 			 * Let's hope there is only one task per drive,
-			 * see timeout(9). 
+			 * see callout(9). 
 			 */
-			callout_stop(&iwm->fd[unit].motor_ch);
+			callout_stop(&iwm->fd[unit]->motor_ch);
 			disk_detach(&iwm->fd[unit]->diskInfo);
 			free(iwm->fd[unit], M_DEVBUF);
 			iwm->fd[unit] = NULL;
