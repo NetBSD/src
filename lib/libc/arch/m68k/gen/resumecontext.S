@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.2 2003/01/18 11:09:36 thorpej Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.3 2003/01/26 17:58:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.2 2003/01/18 11:09:36 thorpej Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.3 2003/01/26 17:58:55 kleink Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -49,7 +49,7 @@
  */
 
 ENTRY(_resumecontext)
-	subl	#(4 + 1024),%sp		| retattr preservation + ucontext_t
+	subl	#(4 + 1024),%sp		/* retaddr preservation + ucontext_t */
 	lea	%sp@,%a0
 	movl	%a0,%sp@-
 	jbsr	PIC_PLT(_C_LABEL(_getcontext))
