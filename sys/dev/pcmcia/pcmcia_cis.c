@@ -258,72 +258,87 @@ pcmcia_scan_cis(dev, fct, arg)
 	    tuple.ptr += 2+tuple.length;
 	}
 	/* the chain is done.  Clean up and move onto the next one, if
-           any. */
+	   any.  The loop is here in the case that there is an MFC
+	   card with no longlink (which defaults to existing, == 0).
+	   In general, this means that if one pointer fails, it will
+	   try the next one, instead of just bailing. */
 
-	pcmcia_chip_mem_unmap(pct, pch, window);
+	while (1) {
+	    pcmcia_chip_mem_unmap(pct, pch, window);
 
-	if (longlink_present) {
-	    /* if the longlink is to attribute memory, then it is
-	       unindexed.  That is, if the link value is 0x100, then the
-	       actual memory address is 0x200.  This means that we need to
-	       multiply by 2 before calling mem_map, and then divide the
-	       resulting ptr by 2 after. */
+	    if (longlink_present) {
+		/* if the longlink is to attribute memory, then it is
+		   unindexed.  That is, if the link value is 0x100, then the
+		   actual memory address is 0x200.  This means that we need to
+		   multiply by 2 before calling mem_map, and then divide the
+		   resulting ptr by 2 after. */
 
-	    if (!longlink_common)
-		longlink_addr *= 2;
+		if (!longlink_common)
+		    longlink_addr *= 2;
 
-	    pcmcia_chip_mem_map(pct, pch, longlink_common ?
-				PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
-				longlink_addr, PCMCIA_CIS_SIZE,
-				&pcmh, &tuple.ptr, &window);
+		pcmcia_chip_mem_map(pct, pch, longlink_common ?
+				    PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				    longlink_addr, PCMCIA_CIS_SIZE,
+				    &pcmh, &tuple.ptr, &window);
 
-	    if (!longlink_common)
-		tuple.ptr /= 2;
+		if (!longlink_common)
+		    tuple.ptr /= 2;
 
-	    DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
+		DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
 
-	    tuple.mult = longlink_common?1:2;
-	    longlink_present = 0;
-	    longlink_common = 1;
-	    longlink_addr = 0;
-	} else if (mfc_count && (mfc_index < mfc_count)) {
-	    if (!mfc[mfc_index].common)
-		mfc[mfc_index].addr *= 2;
+		tuple.mult = longlink_common?1:2;
+		longlink_present = 0;
+		longlink_common = 1;
+		longlink_addr = 0;
+	    } else if (mfc_count && (mfc_index < mfc_count)) {
+		if (!mfc[mfc_index].common)
+		    mfc[mfc_index].addr *= 2;
 
-	    pcmcia_chip_mem_map(pct, pch, mfc[mfc_index].common ?
-				PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
-				mfc[mfc_index].addr, PCMCIA_CIS_SIZE,
-				&pcmh, &tuple.ptr, &window);
+		pcmcia_chip_mem_map(pct, pch, mfc[mfc_index].common ?
+				    PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				    mfc[mfc_index].addr, PCMCIA_CIS_SIZE,
+				    &pcmh, &tuple.ptr, &window);
 
-	    if (!mfc[mfc_index].common)
-		tuple.ptr /= 2;
+		if (!mfc[mfc_index].common)
+		    tuple.ptr /= 2;
 
-	    DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
+		DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
 
-	    /* set parse state, and point at the next one */
+		/* set parse state, and point at the next one */
 
-	    tuple.mult = mfc[mfc_index].common?1:2;
+		tuple.mult = mfc[mfc_index].common?1:2;
 
-	    mfc_index++;
-	} else {
-	    goto done;
+		mfc_index++;
+	    } else {
+		goto done;
+	    }
+
+	    /* make sure that the link is valid */
+	    tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
+	    if (tuple.code != PCMCIA_CISTPL_LINKTARGET) {
+		DPRINTF(("CISTPL_LINKTARGET expected, code %02x observed\n",
+			 tuple.code));
+		continue;
+	    }
+	    tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr+1);
+	    if (tuple.length < 3) {
+		DPRINTF(("CISTPL_LINKTARGET too short %d\n", tuple.length));
+		continue;
+	    }
+	    if ((pcmcia_tuple_read_1(&tuple, 0) != 'C') ||
+		(pcmcia_tuple_read_1(&tuple, 1) != 'I') ||
+		(pcmcia_tuple_read_1(&tuple, 2) != 'S')) {
+		DPRINTF(("CISTPL_LINKTARGET magic %02x%02x%02x incorrect\n",
+			 pcmcia_tuple_read_1(&tuple, 0),
+			 pcmcia_tuple_read_1(&tuple, 1),
+			 pcmcia_tuple_read_1(&tuple, 2)));
+		continue;
+	    }
+
+	    tuple.ptr += 2+tuple.length;
+
+	    break;
 	}
-
-	/* make sure that the link is valid */
-	tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
-	if (tuple.code != PCMCIA_CISTPL_LINKTARGET)
-	    break;
-	tuple.length = pcmcia_cis_read_1(&tuple, tuple.ptr+1);
-	if (tuple.length < 3) {
-	    DPRINTF(("CISTPL_LINKTARGET too short %d", tuple.length));
-	    break;
-	}
-	if ((pcmcia_tuple_read_1(&tuple, 0) != 'C') ||
-	    (pcmcia_tuple_read_1(&tuple, 1) != 'I') ||
-	    (pcmcia_tuple_read_1(&tuple, 2) != 'S'))
-	    break;
-
-	tuple.ptr += 2+tuple.length;
     }
 
     pcmcia_chip_mem_unmap(pct, pch, window);
