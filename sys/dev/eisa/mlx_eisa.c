@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.11 2002/10/02 16:33:48 thorpej Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.12 2003/05/03 14:57:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.11 2002/10/02 16:33:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.12 2003/05/03 14:57:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,18 @@ __KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.11 2002/10/02 16:33:48 thorpej Exp $"
 #include <dev/ic/mlxio.h>
 #include <dev/ic/mlxvar.h>
 
-#define MLX_EISA_SLOT_OFFSET		0x0c80
-#define MLX_EISA_IOSIZE			(0x0ce0 - MLX_EISA_SLOT_OFFSET)
-#define MLX_EISA_IOCONF1		(0x0cc1 - MLX_EISA_SLOT_OFFSET)
-#define MLX_EISA_IOCONF2		(0x0cc3 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_SLOT_OFFSET		0x0c80
+#define	MLX_EISA_IOSIZE			(0x0ce0 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG01			(0x0cc0 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG02			(0x0cc1 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG03			(0x0cc3 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG04			(0x0c8d - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG05			(0x0c90 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG06			(0x0c91 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG07			(0x0c92 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG08			(0x0c93 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG09			(0x0c94 - MLX_EISA_SLOT_OFFSET)
+#define	MLX_EISA_CFG10			(0x0c95 - MLX_EISA_SLOT_OFFSET)
 
 static void	mlx_eisa_attach(struct device *, struct device *, void *);
 static int	mlx_eisa_match(struct device *, struct cfdata *, void *);
@@ -115,13 +123,13 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	struct mlx_softc *mlx;
 	bus_space_tag_t iot;
 	const char *intrstr;
-	int irq, le, i;
-	
+	int irq, i, icfg;
+
 	ea = aux;
 	mlx = (struct mlx_softc *)self;
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
-	
+
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    MLX_EISA_SLOT_OFFSET, MLX_EISA_IOSIZE, 0, &ioh)) {
 		printf("can't map i/o space\n");
@@ -135,7 +143,9 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	/* 
 	 * Map and establish the interrupt.
 	 */
-	switch (bus_space_read_1(iot, ioh, MLX_EISA_IOCONF1) & 0xf0) {
+	icfg = bus_space_read_1(iot, ioh, MLX_EISA_CFG03);
+
+	switch (icfg & 0xf0) {
 	case 0xa0:
 		irq = 11;
 		break;
@@ -158,13 +168,10 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((bus_space_read_1(iot, ioh, MLX_EISA_IOCONF1) & 0x08) != 0)
-		le = IST_LEVEL;
-	else
-		le = IST_EDGE;
-
 	intrstr = eisa_intr_string(ec, ih);
-	mlx->mlx_ih = eisa_intr_establish(ec, ih, le, IPL_BIO, mlx_intr, mlx);
+	mlx->mlx_ih = eisa_intr_establish(ec, ih,
+	    ((icfg & 0x08) != 0 ? IST_LEVEL : IST_EDGE),
+	    IPL_BIO, mlx_intr, mlx);
 	if (mlx->mlx_ih == NULL) {
 		printf("can't establish interrupt");
 		if (intrstr != NULL)
