@@ -1,4 +1,4 @@
-.\"	$NetBSD: ppp.4,v 1.6 2001/09/22 15:58:14 wiz Exp $
+.\"	$NetBSD: ppp.4,v 1.7 2002/09/27 22:40:58 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,15 +33,18 @@
 .\"
 .\"     From:	@(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd August 10, 1996
+.Dd September 27, 2002
 .Dt PPP 4
 .Os
 .Sh NAME
 .Nm ppp
 .Nd point to point protocol network interface
 .Sh SYNOPSIS
-.Nm pseudo-device ppp
-.Op Ar count
+.Cd options PPP_BSDCOMP
+.Cd options PPP_DEFLATE
+.Cd options PPP_FILTER
+.Pp
+.Cd pseudo-device ppp Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,6 +57,23 @@ interface can use various types of compression and has many features
 over the SLIP protocol used by the
 .Xr sl 4
 interface.
+.Pp
+Supported options are:
+.Bl -tag -width 20n -compact
+.It Cd options PPP_BSDCOMP
+Enable support for BSD-compress (`bsdcomp') compression in ppp.
+.It Cd options PPP_DEFLATE
+Enable support for deflate compression in ppp.
+.It Cd options PPP_FILTER
+This option turns on
+.Xr pcap 3
+based filtering for ppp connections.
+This option is used by
+.Xr pppd 8
+which needs to be compiled with
+.Em PPP_FILTER
+defined (the current default).
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It ppp%d: af%d not supported .
