@@ -12,6 +12,11 @@
 /*	INET_ADDR_LIST *own_inet_addr_list()
 /*
 /*	INET_ADDR_LIST *own_inet_mask_list()
+/*
+/*	int	proxy_inet_addr(addr)
+/*	struct in_addr *addr;
+/*
+/*	INET_ADDR_LIST *proxy_inet_addr_list()
 /* DESCRIPTION
 /*	own_inet_addr() determines if the specified IP address belongs
 /*	to this mail system instance, i.e. if this mail system instance
@@ -22,6 +27,12 @@
 /*
 /*	own_inet_mask_list() returns the list of all corresponding
 /*	netmasks.
+/*
+/*	proxy_inet_addr() determines if the specified IP address is
+/*	listed with the proxy_interfaces configuration parameter.
+/*
+/*	proxy_inet_addr_list() returns the list of all addresses that
+/*	belong to proxy network interfaces.
 /* LICENSE
 /* .ad
 /* .fi
@@ -62,6 +73,7 @@
 
 static INET_ADDR_LIST addr_list;
 static INET_ADDR_LIST mask_list;
+static INET_ADDR_LIST proxy_list;
 
 /* own_inet_addr_init - initialize my own address list */
 
@@ -170,4 +182,59 @@ INET_ADDR_LIST *own_inet_mask_list(void)
 	own_inet_addr_init(&addr_list, &mask_list);
 
     return (&mask_list);
+}
+
+/* proxy_inet_addr_init - initialize my proxy interface list */
+
+static void proxy_inet_addr_init(INET_ADDR_LIST *addr_list)
+{
+    char   *hosts;
+    char   *host;
+    char   *sep = " \t,";
+    char   *bufp;
+
+    /*
+     * Parse the proxy_interfaces parameter, and expand any symbolic
+     * hostnames into IP addresses.
+     */
+    inet_addr_list_init(addr_list);
+    bufp = hosts = mystrdup(var_proxy_interfaces);
+    while ((host = mystrtok(&bufp, sep)) != 0)
+	if (inet_addr_host(addr_list, host) == 0)
+	    msg_fatal("config variable %s: host not found: %s",
+		      VAR_PROXY_INTERFACES, host);
+    myfree(hosts);
+
+    /*
+     * Weed out duplicate IP addresses.
+     */
+    inet_addr_list_uniq(addr_list);
+}
+
+/* proxy_inet_addr - is this my proxy internet address */
+
+int     proxy_inet_addr(struct in_addr * addr)
+{
+    int     i;
+
+    if (*var_proxy_interfaces == 0)
+	return (0);
+
+    if (proxy_list.used == 0)
+	proxy_inet_addr_init(&proxy_list);
+
+    for (i = 0; i < proxy_list.used; i++)
+	if (addr->s_addr == proxy_list.addrs[i].s_addr)
+	    return (1);
+    return (0);
+}
+
+/* proxy_inet_addr_list - return list of addresses */
+
+INET_ADDR_LIST *proxy_inet_addr_list(void)
+{
+    if (*var_proxy_interfaces != 0 && proxy_list.used == 0)
+	proxy_inet_addr_init(&proxy_list);
+
+    return (&proxy_list);
 }
