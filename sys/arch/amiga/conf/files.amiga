@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.77 1998/10/08 21:46:39 is Exp $
+#	$NetBSD: files.amiga,v 1.78 1998/11/11 22:26:27 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -146,6 +146,11 @@ file	arch/amiga/dev/ite_cv3d.c	grfcv3d & ite
 # A2065, Ameristar, Ariadne ethernet cards
 attach	le at zbus with le_zbus: le24
 file	arch/amiga/dev/if_le.c		le_zbus needs-flag
+
+# AriadneII ethernet card
+# device defined in sys/conf/files
+attach	ne at zbus with ne_zbus: rtl80x9
+file	arch/amiga/dev/if_ne_zbus.c	ne_zbus needs-flag
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
