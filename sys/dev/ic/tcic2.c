@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.15 2004/06/20 18:09:46 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.16 2004/08/11 06:56:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.15 2004/06/20 18:09:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.16 2004/08/11 06:56:57 mycroft Exp $");
 
 #undef	TCICDEBUG
 
@@ -1011,15 +1011,13 @@ tcic_chip_mem_unmap(pch, window)
 	int window;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
-	int reg, hwwin;
+	int hwwin;
 
 	if (window >= h->memwins)
 		panic("tcic_chip_mem_unmap: window out of range");
 
 	hwwin = (window << 1) + h->sock;
-	reg = tcic_read_ind_2(h, TCIC_WR_MCTL_N(hwwin));
-	reg &= ~TCIC_MCTL_ENA;
-	tcic_write_ind_2(h, TCIC_WR_MCTL_N(hwwin), reg);
+	tcic_write_ind_2(h, TCIC_WR_MCTL_N(hwwin), 0);
 
 	h->memalloc &= ~(1 << window);
 }
@@ -1228,15 +1226,13 @@ tcic_chip_io_unmap(pch, window)
 	int window;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
-	int reg, hwwin;
+	int hwwin;
 
 	if (window >= TCIC_IO_WINS)
 		panic("tcic_chip_io_unmap: window out of range");
 
 	hwwin = (window << 1) + h->sock;
-	reg = tcic_read_ind_2(h, TCIC_WR_ICTL_N(hwwin));
-	reg &= ~TCIC_ICTL_ENA;
-	tcic_write_ind_2(h, TCIC_WR_ICTL_N(hwwin), reg);
+	tcic_write_ind_2(h, TCIC_WR_ICTL_N(hwwin), 0);
 
 	h->ioalloc &= ~(1 << window);
 }
@@ -1246,7 +1242,7 @@ tcic_chip_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
-	int cardtype, reg, win;
+	int reg, win;
 
 	tcic_sel_sock(h);
 
@@ -1261,6 +1257,18 @@ tcic_chip_socket_enable(pch)
 	reg &= ~(TCIC_ILOCK_CRESET|TCIC_ILOCK_CRESENA);
 	tcic_write_aux_2(h->sc->iot, h->sc->ioh, TCIC_AR_ILOCK, reg);
 	tcic_write_1(h, TCIC_R_SCTRL, 0);	/* clear TCIC_SCTRL_ENA */
+
+	/* zero out the address windows */
+
+	tcic_write_ind_2(h, TCIC_IR_SCF1_N(h->sock), 0);
+	/* writing to WR_MBASE_N disables the window */
+	for (win = 0; win < h->memwins; win++) {
+		tcic_write_ind_2(h, TCIC_WR_MBASE_N((win << 1) + h->sock), 0);
+	}
+	/* writing to WR_IBASE_N disables the window */
+	for (win = 0; win < TCIC_IO_WINS; win++) {
+		tcic_write_ind_2(h, TCIC_WR_IBASE_N((win << 1) + h->sock), 0);
+	}
 
 	/* power up the socket */
 
@@ -1294,36 +1302,6 @@ tcic_chip_socket_enable(pch)
 	tcic_wait_ready(h);
 
 	/* WWW */
-	/* zero out the address windows */
-
-	/* writing to WR_MBASE_N disables the window */
-	for (win = 0; win < h->memwins; win++) {
-		tcic_write_ind_2(h, TCIC_WR_MBASE_N((win<<1)+h->sock), 0);
-	}
-	/* writing to WR_IBASE_N disables the window */
-	for (win = 0; win < TCIC_IO_WINS; win++) {
-		tcic_write_ind_2(h, TCIC_WR_IBASE_N((win<<1)+h->sock), 0);
-	}
-
-	/* set the card type */
-
-	cardtype = pcmcia_card_gettype(h->pcmcia);
-
-#if 0
-	reg = tcic_read_ind_2(h, TCIC_IR_SCF1_N(h->sock));
-	reg &= ~TCIC_SCF1_IRQ_MASK;
-#else
-	reg = 0;
-#endif
-	reg |= ((cardtype == PCMCIA_IFTYPE_IO) ?
-		TCIC_SCF1_IOSTS : 0);
-	reg |= tcic_irqmap[h->ih_irq];		/* enable interrupts */
-	reg &= ~TCIC_SCF1_IRQOD;
-	tcic_write_ind_2(h, TCIC_IR_SCF1_N(h->sock), reg);
-
-	DPRINTF(("%s: tcic_chip_socket_enable %d cardtype %s 0x%02x\n",
-	    h->sc->dev.dv_xname, h->sock,
-	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
 
 	/* reinstall all the memory and io mappings */
 
@@ -1334,6 +1312,30 @@ tcic_chip_socket_enable(pch)
 	for (win = 0; win < TCIC_IO_WINS; win++)
 		if (h->ioalloc & (1 << win))
 			tcic_chip_do_io_map(h, win);
+}
+
+void
+tcic_chip_socket_settype(pch, type)
+	pcmcia_chipset_handle_t pch;
+	int type;
+{
+	struct tcic_handle *h = (struct tcic_handle *) pch;
+	int reg;
+
+	tcic_sel_sock(h);
+
+	/* set the card type */
+
+	reg = 0;
+	if (type == PCMCIA_IFTYPE_IO) {
+		reg |= TCIC_SCF1_IOSTS;
+		reg |= tcic_irqmap[h->ih_irq];		/* enable interrupts */
+	}
+	tcic_write_ind_2(h, TCIC_IR_SCF1_N(h->sock), reg);
+
+	DPRINTF(("%s: tcic_chip_socket_enable %d cardtype %s 0x%02x\n",
+	    h->sc->dev.dv_xname, h->sock,
+	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
 }
 
 void
