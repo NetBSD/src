@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.44 1994/04/28 04:53:09 mycroft Exp $
+ *	$Id: if_ed.c,v 1.45 1994/05/05 02:20:44 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1032,6 +1032,8 @@ edattach(parent, self, aux)
 			ifp->if_flags |= IFF_LINK0;
 		break;
 	case ED_VENDOR_WD_SMC:
+		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
+			break;
 		if ((inb(sc->asic_addr + ED_WD_IRR) & ED_WD_IRR_OUT2) == 0)
 			ifp->if_flags |= IFF_LINK0;
 		break;
@@ -1072,8 +1074,10 @@ edattach(parent, self, aux)
 	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
 
 	switch (sc->vendor) {
-	case ED_VENDOR_3COM:
 	case ED_VENDOR_WD_SMC:
+		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
+			break;
+	case ED_VENDOR_3COM:
 		if (ifp->if_flags & IFF_LINK0)
 			printf(" aui");
 		else
@@ -1272,6 +1276,8 @@ ed_init(sc)
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 		break;
 	case ED_VENDOR_WD_SMC:
+		if ((sc->type & ED_WD_SOFTCONFIG) == 0)
+			break;
 		x = inb(sc->asic_addr + ED_WD_IRR);
 		if (ifp->if_flags & IFF_LINK0)
 			x &= ~ED_WD_IRR_OUT2;
