@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.48 2000/11/28 09:11:36 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.49 2000/12/08 10:24:14 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -365,8 +365,16 @@ pccbb_shutdown(void *arg)
 
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
 
-	/* turn off power */
-	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	/*
+	 * turn off power
+	 *
+	 * XXX - do not turn off power if chipset is TI 113X because
+	 * only TI 1130 with PowerMac 2400 hangs in pccbb_power().
+	 */
+	if (sc->sc_chipset != CB_TI113X) {
+		pccbb_power((cardbus_chipset_tag_t)sc,
+		    CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+	}
 
 	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK,
 	    0);
