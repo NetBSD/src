@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.56 1995/06/01 21:26:51 jtc Exp $	*/
+/*	$NetBSD: com.c,v 1.57 1995/06/04 20:39:22 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -62,12 +62,18 @@
 #include <dev/isa/comreg.h>
 #include <dev/ic/ns16550.h>
 
+#define	COM_IBUFSIZE	(2 * 256)
+#define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
+
 struct com_softc {
 	struct device sc_dev;
 	void *sc_ih;
 	struct tty *sc_tty;
 
 	int sc_overflows;
+	int sc_floods;
+	int sc_errors;
+
 	int sc_iobase;
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
@@ -79,6 +85,10 @@ struct com_softc {
 #define	COM_SW_CRTSCTS	0x04
 #define	COM_SW_MDMBUF	0x08
 	u_char sc_msr, sc_mcr;
+	u_char sc_dtr;
+
+	u_char *sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
+	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
 int comprobe __P((struct device *, void *, void *));
@@ -87,6 +97,7 @@ int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
 void comdiag __P((void *));
 int comintr __P((void *));
+void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
@@ -102,6 +113,8 @@ int	comconsole = -1;
 #endif
 int	comconsinit;
 int	commajor;
+int	comsopen = 0;
+int	comevents = 0;
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -262,8 +275,6 @@ comopen(dev, flag, mode, p)
 	if (!sc)
 		return ENXIO;
 
-	s = spltty();
-
 	if (!sc->sc_tty)
 		tp = sc->sc_tty = ttymalloc();
 	else
@@ -286,8 +297,18 @@ comopen(dev, flag, mode, p)
 			tp->t_cflag |= MDMBUF;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
+
+		s = spltty();
+
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
+
+		if (comsopen++ == 0)
+			timeout(compoll, NULL, 1);
+
+		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
+		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
+		sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
 
 		iobase = sc->sc_iobase;
 		/* Set the FIFO threshold based on the receive speed. */
@@ -296,8 +317,8 @@ comopen(dev, flag, mode, p)
 			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 		/* flush any pending I/O */
-		(void) inb(iobase + com_lsr);
-		(void) inb(iobase + com_data);
+		while (inb(iobase + com_lsr) & LSR_RXRDY)
+			(void) inb(iobase + com_data);
 		/* you turn me on, baby */
 		sc->sc_mcr = MCR_DTR | MCR_RTS;
 		if (!(sc->sc_hwflags & COM_HW_NOIEN))
@@ -313,9 +334,9 @@ comopen(dev, flag, mode, p)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
-		splx(s);
 		return EBUSY;
-	}
+	} else
+		s = spltty();
 
 	/* wait for carrier if necessary */
 	if ((flag & O_NONBLOCK) == 0)
@@ -346,20 +367,25 @@ comclose(dev, flag, mode, p)
 	struct com_softc *sc = comcd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
+	int s;
+
+	/* XXX This is for cons.c. */
+	if ((tp->t_state & TS_ISOPEN) == 0)
+		return 0;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
-#ifdef KGDB
-	/* do not disable interrupts if debugging */
-	if (kgdb_dev != makedev(commajor, unit))
-#endif
-	{
-		bic(iobase + com_cfcr, CFCR_SBREAK);
-		outb(iobase + com_ier, 0);
-		if (tp->t_cflag & HUPCL &&
-		    (sc->sc_swflags & COM_SW_SOFTCAR) == 0)
-			/* XXX perhaps only clear DTR */
-			outb(iobase + com_mcr, 0);
+	s = spltty();
+	bic(iobase + com_cfcr, CFCR_SBREAK);
+	outb(iobase + com_ier, 0);
+	if (tp->t_cflag & HUPCL &&
+	    (sc->sc_swflags & COM_SW_SOFTCAR) == 0) {
+		/* XXX perhaps only clear DTR */
+		outb(iobase + com_mcr, 0);
 	}
+	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
+	if (--comsopen == 0)
+		untimeout(compoll, NULL);
+	splx(s);
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
 	if (unit != comconsole) {
@@ -446,10 +472,10 @@ comioctl(dev, cmd, data, flag, p)
 		bic(iobase + com_cfcr, CFCR_SBREAK);
 		break;
 	case TIOCSDTR:
-		outb(iobase + com_mcr, sc->sc_mcr |= (MCR_DTR | MCR_RTS));
+		outb(iobase + com_mcr, sc->sc_mcr |= sc->sc_dtr);
 		break;
 	case TIOCCDTR:
-		outb(iobase + com_mcr, sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
+		outb(iobase + com_mcr, sc->sc_mcr &= ~sc->sc_dtr);
 		break;
 	case TIOCMSET:
 		sc->sc_mcr &= ~(MCR_DTR | MCR_RTS);
@@ -536,6 +562,7 @@ comparam(tp, t)
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char cfcr;
+	tcflag_t oldcflag;
 	int s;
 
 	/* check requested parameters */
@@ -572,25 +599,22 @@ comparam(tp, t)
 	/*
 	 * Set the FIFO threshold based on the receive speed, if we are
 	 * changing it.
-	 *
-	 * XXX
-	 * It would be better if we waited for the FIFO to empty, so we don't
-	 * lose any in-transit characters.
 	 */
 	if (tp->t_ispeed != t->c_ispeed) {
 		if (sc->sc_hwflags & COM_HW_FIFO)
 			outb(iobase + com_fifo,
-			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+			    FIFO_ENABLE |
 			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 	}
 
-	outb(iobase + com_cfcr, cfcr | CFCR_DLAB);
-	outb(iobase + com_dlbl, ospeed);
-	outb(iobase + com_dlbh, ospeed>>8);
-	outb(iobase + com_cfcr, cfcr);
-
-	if (ospeed != 0)
+	if (ospeed != 0) {
+		outb(iobase + com_cfcr, cfcr | CFCR_DLAB);
+		outb(iobase + com_dlbl, ospeed);
+		outb(iobase + com_dlbh, ospeed >> 8);
+		outb(iobase + com_cfcr, cfcr);
 		outb(iobase + com_mcr, sc->sc_mcr |= MCR_DTR);
+	} else
+		outb(iobase + com_cfcr, cfcr);
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	if ((t->c_cflag & CRTSCTS) == 0) {
@@ -601,39 +625,26 @@ comparam(tp, t)
 			if (sc->sc_mcr & MCR_RTS)
 				outb(iobase + com_mcr, sc->sc_mcr &= ~MCR_RTS);
 		}
-	}
-
-	/*
-	 * If CTS is off and CRTSCTS is changed, we must toggle TS_TTSTOP.
-	 * XXX should be done at tty layer.
-	 */
-	if ((sc->sc_msr & MSR_CTS) == 0 &&
-	    (tp->t_cflag & CRTSCTS) != (t->c_cflag & CRTSCTS)) {
-		if ((t->c_cflag & CRTSCTS) == 0) {
-			tp->t_state &= ~TS_TTSTOP;
-			(*linesw[tp->t_line].l_start)(tp);
-		} else
-			tp->t_state |= TS_TTSTOP;
-	}
-
-	/*
-	 * If DCD is off and MDMBUF is changed, we must toggle TS_TTSTOP.
-	 * XXX should be done at tty layer.
-	 */
-	if ((sc->sc_swflags & COM_SW_SOFTCAR) == 0 &&
-	    (sc->sc_msr & MSR_DCD) == 0 &&
-	    (tp->t_cflag & MDMBUF) != (t->c_cflag & MDMBUF)) {
-		if ((t->c_cflag & MDMBUF) == 0) {
-			tp->t_state &= ~TS_TTSTOP;
-			(*linesw[tp->t_line].l_start)(tp);
-		} else
-			tp->t_state |= TS_TTSTOP;
-	}
+		sc->sc_dtr = MCR_DTR | MCR_RTS;
+	} else
+		sc->sc_dtr = MCR_DTR;
 
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
+	oldcflag = tp->t_cflag;
 	tp->t_cflag = t->c_cflag;
+
+	/*
+	 * If DCD is off and MDMBUF is changed, ask the tty layer if we should
+	 * stop the device.
+	 */
+	if ((sc->sc_msr & MSR_DCD) == 0 &&
+	    (sc->sc_swflags & COM_SW_SOFTCAR) == 0 &&
+	    (oldcflag & MDMBUF) != (tp->t_cflag & MDMBUF) &&
+	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+		outb(iobase + com_mcr, sc->sc_mcr &= ~sc->sc_dtr);
+	}
 
 	splx(s);
 	return 0;
@@ -650,10 +661,8 @@ comstart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-#if 0 /* XXXX I think this is handled adequately by commint() and comparam(). */
 	if (tp->t_cflag & CRTSCTS && (sc->sc_mcr & MSR_CTS) == 0)
 		goto out;
-#endif
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
@@ -692,59 +701,97 @@ comstop(tp, flag)
 	splx(s);
 }
 
-static inline void
-comeint(sc, stat)
-	struct com_softc *sc;
-	int stat;
-{
-	struct tty *tp = sc->sc_tty;
-	int iobase = sc->sc_iobase;
-	int c;
-
-	c = inb(iobase + com_data);
-#ifdef DDB
-	if ((stat & LSR_BI) && (sc->sc_dev.dv_unit == comconsole)) {
-		Debugger();
-		return;
-	}
-#endif
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-#ifdef KGDB
-		/* we don't care about parity errors */
-		if (((stat & (LSR_BI | LSR_FE | LSR_PE)) == LSR_PE) &&
-		    kgdb_dev == makedev(commajor, unit) && c == FRAME_END)
-			kgdb_connect(0); /* trap into kgdb */
-#endif
-		return;
-	}
-	if (stat & (LSR_BI | LSR_FE))
-		c |= TTY_FE;
-	else if (stat & LSR_PE)
-		c |= TTY_PE;
-	if (stat & LSR_OE) {
-		if (sc->sc_overflows++ == 0)
-			timeout(comdiag, sc, 60 * hz);
-	}
-	/* XXXX put in FIFO and process later */
-	(*linesw[tp->t_line].l_rint)(c, tp);
-}
- 
 void
 comdiag(arg)
 	void *arg;
 {
 	struct com_softc *sc = arg;
-	int overflows;
+	int overflows, floods;
 	int s;
 
 	s = spltty();
+	sc->sc_errors = 0;
 	overflows = sc->sc_overflows;
 	sc->sc_overflows = 0;
+	floods = sc->sc_floods;
+	sc->sc_floods = 0;
 	splx(s);
 
-	if (overflows)
-		log(LOG_WARNING, "%s: %d silo overflow%s\n",
-		    sc->sc_dev.dv_xname, overflows, overflows == 1 ? "" : "s");
+	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s\n",
+	    sc->sc_dev.dv_xname,
+	    overflows, overflows == 1 ? "" : "s",
+	    floods, floods == 1 ? "" : "s");
+}
+
+void
+compoll(arg)
+	void *arg;
+{
+	int unit;
+	struct com_softc *sc;
+	struct tty *tp;
+	register u_char *ibufp;
+	u_char *ibufend;
+	register int c;
+	int s;
+	static int lsrmap[8] = {
+		0,      TTY_PE,
+		TTY_FE, TTY_PE|TTY_FE,
+		TTY_FE, TTY_PE|TTY_FE,
+		TTY_FE, TTY_PE|TTY_FE
+	};
+
+	s = spltty();
+	if (comevents == 0) {
+		splx(s);
+		goto out;
+	}
+	comevents = 0;
+	splx(s);
+
+	for (unit = 0; unit < comcd.cd_ndevs; unit++) {
+		sc = comcd.cd_devs[unit];
+		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
+			continue;
+
+		tp = sc->sc_tty;
+
+		s = spltty();
+
+		ibufp = sc->sc_ibuf;
+		ibufend = sc->sc_ibufp;
+
+		sc->sc_ibufp = sc->sc_ibuf = (ibufp == sc->sc_ibufs[0]) ?
+					     sc->sc_ibufs[1] : sc->sc_ibufs[0];
+		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
+		sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
+
+		if (tp == 0 || (tp->t_state & TS_ISOPEN) == 0) {
+			splx(s);
+			continue;
+		}
+
+		if ((tp->t_cflag & CRTSCTS) != 0 &&
+		    (sc->sc_mcr & MCR_RTS) == 0)
+			outb(sc->sc_iobase + com_mcr, sc->sc_mcr |= MCR_RTS);
+
+		splx(s);
+
+		while (ibufp < ibufend) {
+			c = *ibufp++;
+			if (*ibufp & LSR_OE) {
+				sc->sc_overflows++;
+				if (sc->sc_errors++ == 0)
+					timeout(comdiag, sc, 60 * hz);
+			}
+			/* This is ugly, but fast. */
+			c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
+			(*linesw[tp->t_line].l_rint)(c, tp);
+		}
+	}
+
+out:
+	timeout(compoll, NULL, 1);
 }
 
 int
@@ -765,24 +812,35 @@ comintr(arg)
 		lsr = inb(iobase + com_lsr);
 
 		if (lsr & LSR_RCV_MASK) {
-			/* XXXX put in FIFO and process later */
+			register u_char *p = sc->sc_ibufp;
+
+			comevents = 1;
 			do {
-				if (lsr & (LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-					comeint(sc, lsr);
-				else {
-					data = inb(iobase + com_data);
-					if (tp->t_state & TS_ISOPEN)
-						(*linesw[tp->t_line].l_rint)(data, tp);
-#ifdef KGDB
-					else {
-						if (kgdb_dev == makedev(commajor, unit) &&
-						    data == FRAME_END)
-							kgdb_connect(0);
-					}
-#endif
+#ifdef DDB
+				if ((lsr & LSR_BI) != 0 &&
+				    sc->sc_dev.dv_unit == comconsole) {
+					Debugger();
+					goto next;
 				}
+#endif
+				data = inb(iobase + com_data);
+				if (p >= sc->sc_ibufend) {
+					sc->sc_floods++;
+					if (sc->sc_errors++ == 0)
+						timeout(comdiag, sc, 60 * hz);
+				} else {
+					*p++ = data;
+					*p++ = lsr;
+					if (p == sc->sc_ibufhigh &&
+					    (tp->t_cflag & CRTSCTS) != 0)
+						outb(iobase + com_mcr,
+						     sc->sc_mcr &= ~MCR_RTS);
+				}
+			next:
 				lsr = inb(iobase + com_lsr);
 			} while (lsr & LSR_RCV_MASK);
+
+			sc->sc_ibufp = p;
 		}
 
 		if (lsr & LSR_TXRDY && (tp->t_state & TS_BUSY) != 0) {
@@ -801,20 +859,15 @@ comintr(arg)
 		if (msr != sc->sc_msr) {
 			delta = msr ^ sc->sc_msr;
 			sc->sc_msr = msr;
-			if (delta & MSR_DCD && (sc->sc_swflags & COM_SW_SOFTCAR) == 0) {
-				if (msr & MSR_DCD)
-					(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-				else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
-					outb(iobase + com_mcr,
-					     sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
+			if ((delta & MSR_DCD) != 0 &&
+			    (sc->sc_swflags & COM_SW_SOFTCAR) == 0 &&
+			    (*linesw[tp->t_line].l_modem)(tp, (msr & MSR_DCD) != 0) == 0) {
+				outb(iobase + com_mcr, sc->sc_mcr &= ~sc->sc_dtr);
 			}
-			if (delta & MSR_CTS && (tp->t_cflag & CRTSCTS) != 0) {
+			if ((delta & msr & MSR_CTS) != 0 &&
+			    (tp->t_cflag & CRTSCTS) != 0) {
 				/* the line is up and we want to do rts/cts flow control */
-				if (msr & MSR_CTS) {
-					tp->t_state &= ~TS_TTSTOP;
-					(*linesw[tp->t_line].l_start)(tp);
-				} else
-					tp->t_state |= TS_TTSTOP;
+				(*linesw[tp->t_line].l_start)(tp);
 			}
 		}
 
