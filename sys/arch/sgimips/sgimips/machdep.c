@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2004/01/19 00:12:31 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2004/01/19 00:19:36 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2004/01/19 00:12:31 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2004/01/19 00:19:36 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -153,7 +153,6 @@ extern unsigned long mips3_clkread(void);
 
 
 void	mach_init(int, char **, int, struct btinfo_common *);
-void	unconfigured_system_type(int);
 
 void	sgimips_count_cpus(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
@@ -434,7 +433,7 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 		platform.clkread = mips3_clkread;
 		break;
 	default:
-		panic("IP%d architecture not configured", mach_type);
+		panic("IP%d architecture not supported", mach_type);
 		break;
 	}
 
@@ -774,17 +773,6 @@ nullvoid()
 {
 	printf("nullvoid\n");
 	return;
-}
-
-void unconfigured_system_type(int ipnum)
-{
-	printf("Kernel not configured for IP%d support.  Add options `IP%d'\n",
-								ipnum, ipnum);
-	printf("to kernel configuration file to enable IP%d support!\n",
-								ipnum);
-	printf("\n");
-
-	panic("Kernel not configured for current hardware!");
 }
 
 void *
