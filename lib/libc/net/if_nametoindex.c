@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nametoindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $	*/
+/*	$NetBSD: if_nametoindex.c,v 1.3 2000/07/06 02:56:25 christos Exp $	*/
 /*	$KAME: if_nametoindex.c,v 1.4 2000/04/24 10:08:41 itojun Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nametoindex.c,v 1.2 2000/04/24 10:40:25 itojun Exp $");
+__RCSID("$NetBSD: if_nametoindex.c,v 1.3 2000/07/06 02:56:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -74,7 +74,8 @@ if_nametoindex(const char *ifname)
 		if (ifa->ifa_addr &&
 		    ifa->ifa_addr->sa_family == AF_LINK &&
 		    strcmp(ifa->ifa_name, ifname) == 0) {
-			ni = ((struct sockaddr_dl*)ifa->ifa_addr)->sdl_index;
+			ni = ((struct sockaddr_dl*)
+			    (void *)ifa->ifa_addr)->sdl_index;
 			break;
 		}
 	}
