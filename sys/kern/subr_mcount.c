@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)subr_mcount.c	7.10 (Berkeley) 5/7/91
- *	$Id: subr_mcount.c,v 1.7 1994/02/24 01:10:11 cgd Exp $
+ *	$Id: subr_mcount.c,v 1.8 1994/03/18 08:35:56 pk Exp $
  */
 
 #ifdef GPROF
@@ -107,10 +107,24 @@ kmstartup()
 	kcount = (u_short *)(((int)sbuf) + sizeof (struct phdr));
 }
 
+#ifdef sparc
+asm ("	.text");
+asm ("	.global mcount");
+asm ("mcount:");
+asm ("	add	%o7, 8, %o0");
+asm ("	ba	___mcount");
+asm ("	add	%i7, 8, %o1");
+
+static __mcount(selfpc, frompcindex)
+	register char *selfpc;
+	register u_short *frompcindex;
+{
+#else
 mcount()
 {
 	register char *selfpc;			/* r11 => r5 */
 	register u_short *frompcindex;		/* r10 => r4 */
+#endif
 	register struct tostruct *top;		/* r9  => r3 */
 	register struct tostruct *prevtop;	/* r8  => r2 */
 	register long toindex;			/* r7  => r1 */
