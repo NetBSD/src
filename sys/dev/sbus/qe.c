@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.24 2002/08/23 02:53:10 thorpej Exp $	*/
+/*	$NetBSD: qe.c,v 1.25 2002/09/27 02:24:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.24 2002/08/23 02:53:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.25 2002/09/27 02:24:33 thorpej Exp $");
 
 #define QEDEBUG
 
@@ -199,7 +199,7 @@ qematch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void

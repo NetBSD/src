@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.2 2001/07/12 23:25:40 thorpej Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.2 2001/07/12 23:25:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ pckbc_sableio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct sableio_attach_args *sa = aux;
 
 	/* Always present. */
-	if (strcmp(sa->sa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(sa->sa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

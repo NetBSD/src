@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.5 2002/08/13 06:15:15 simonb Exp $ */
+/* $NetBSD: opb.c,v 1.6 2002/09/27 02:24:21 thorpej Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -113,7 +113,7 @@ opb_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct opb_attach_args *oaa = aux;
 
 	/* match only opb devices */ 
-	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
 		return (0);
 
 	return (1);

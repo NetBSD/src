@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.4 2002/08/30 10:57:05 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.5 2002/09/27 02:24:13 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -209,7 +209,7 @@ superiosubmatch(struct device *parent, struct cfdata *cf, void *args)
 	 * This works for the isabus_attach_args, as it also has
 	 * a "char *name" as the first member.
 	 */
-	if (strcmp(cf->cf_driver->cd_name, saa->saa_name) == 0)
+	if (strcmp(cf->cf_name, saa->saa_name) == 0)
 		return ((*cf->cf_attach->ca_match)(parent, cf, args));
 
 	return (0);

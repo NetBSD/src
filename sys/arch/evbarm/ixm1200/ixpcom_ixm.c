@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.3 2002/09/27 02:24:12 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -66,7 +66,7 @@ ixpcom_ixm_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	if (strcmp(match->cf_driver->cd_name, "ixpcom") == 0)
+	if (strcmp(match->cf_name, "ixpcom") == 0)
 		return 1;
 	return 0;
 }

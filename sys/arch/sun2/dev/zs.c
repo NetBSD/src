@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 2002/09/27 02:24:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
-		extern struct cfdriver zstty_cd; /* in ioconf.c */
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -248,7 +247,8 @@ zs_attach(zsc, zsd, pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (child->dv_cfdata->cf_driver == &zstty_cd)) {
+		    && (!strcmp(child->dv_cfdata->cf_name,
+		    		"zstty"))) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
 				/* The following are the only fields we need here */

@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.2 2002/05/16 01:01:32 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.2 2002/05/16 01:01:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ ttwogamatch(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure that we're looking for a T2 Gate Array. */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name) != 0)
+	if (strcmp(ma->ma_name, match->cf_name) != 0)
 		return (0);
 
 	if (ttwogafound)
@@ -217,7 +217,7 @@ ttwopcimatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (strcmp(pba->pba_busname, match->cf_driver->cd_name) != 0)
+	if (strcmp(pba->pba_busname, match->cf_name) != 0)
 		return (0);
 
 	if (match->cf_loc[PCIBUSCF_BUS] != PCIBUSCF_BUS_DEFAULT &&

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.53 2002/05/18 00:48:11 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.54 2002/09/27 02:24:32 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.53 2002/05/18 00:48:11 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.54 2002/09/27 02:24:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ isp_match(struct device *parent, struct cfdata *cf, void *aux)
 #endif
 	struct sbus_attach_args *sa = aux;
 
-	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	rv = (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 		strcmp("PTI,ptisp", sa->sa_name) == 0 ||
 		strcmp("ptisp", sa->sa_name) == 0 ||
 		strcmp("SUNW,isp", sa->sa_name) == 0 ||

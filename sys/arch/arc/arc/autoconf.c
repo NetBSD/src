@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2002/09/26 20:18:24 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2002/09/27 02:24:09 thorpej Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_driver->cd_name;
+	const char *name = cf->cf_name;
 
 	static int found = 0, initted = 0, scsiboot = 0;
 	static struct device *scsibusdev = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.4 2002/05/03 21:28:11 rjs Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.5 2002/09/27 02:24:23 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -381,7 +381,7 @@ ofw_device_register(struct device *dev, void *aux)
 #endif
 	static char *boot_component;
 	struct ofbus_attach_args *oba;
-	const char *cd_name = dev->dv_cfdata->cf_driver->cd_name;
+	const char *cd_name = dev->dv_cfdata->cf_name;
 	char name[64];
 	int i;
 
@@ -409,12 +409,12 @@ ofw_device_register(struct device *dev, void *aux)
 	} else if (parent == NULL) {
 		return;
 	} else if (parent == dev->dv_parent
-		   && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisa")) {
+		   && !strcmp(parent->dv_cfdata->cf_name, "ofisa")) {
 		struct ofisa_attach_args *aa = aux;
 		oba = &aa->oba;
 #if NWD > 0 || NSD > 0 || NCD > 0
 	} else if (parent == dev->dv_parent
-		   && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "wdc")) {
+		   && !strcmp(parent->dv_cfdata->cf_name, "wdc")) {
 #if NSD > 0 || NCD > 0
 		if (!strcmp(cd_name, "atapibus")) {
 			scsipidev = dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.8 2002/09/10 00:52:37 simonb Exp $	*/
+/*	$NetBSD: pchb.c,v 1.9 2002/09/27 02:24:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 	int class, id;
 
 	/* match only pchb devices */
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return 0;
 
 	pci_machdep_init();

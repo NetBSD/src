@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.4 2001/11/13 06:17:08 lukem Exp $ */
+/* $NetBSD: vme.c,v 1.5 2002/09/27 02:24:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.4 2001/11/13 06:17:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.5 2002/09/27 02:24:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ vmesubmatch1(bus, dev, aux)
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
 
-	if (strcmp(dev->cf_driver->cd_name, VME_SLAVE_DUMMYDRV))
+	if (strcmp(dev->cf_name, VME_SLAVE_DUMMYDRV))
 		return (0);
 
 	vme_extractlocators(dev->cf_loc, &v);
@@ -154,7 +154,7 @@ vmesubmatch(bus, dev, aux)
 	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
 	struct vme_attach_args v;
 
-	if (!strcmp(dev->cf_driver->cd_name, VME_SLAVE_DUMMYDRV))
+	if (!strcmp(dev->cf_name, VME_SLAVE_DUMMYDRV))
 		return (0);
 
 	vme_extractlocators(dev->cf_loc, &v);
