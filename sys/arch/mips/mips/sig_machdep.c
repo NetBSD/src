@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.3.2.3 2002/11/20 11:04:18 wdk Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.3.2.4 2002/12/03 05:31:10 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3.2.3 2002/11/20 11:04:18 wdk Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3.2.4 2002/12/03 05:31:10 gmcgarry Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -138,7 +138,7 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 	}
 #else
-	*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
+	*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 #endif
 
 	/* Save signal stack. */
