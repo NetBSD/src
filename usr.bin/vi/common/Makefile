@@ -55,7 +55,7 @@ SPECHDR=compat.h excmd.h options.h
 CLEANFILES+=${SPECHDR}
 LINKS=	${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 
-${PROG}: compat.h options.h excmd.h
+${PROG}: ${SPECHDR}
 
 compat.h:
 	:> compat.h
