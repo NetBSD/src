@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.23 2004/05/06 02:56:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.23 2004/05/06 02:56:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1071,7 +1071,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 			memcpy(ni->ni_essid, ssid + 2, ssid[1]);
 			allocbs = 1;
-		} else if (ssid[1] != 0 && isprobe) {
+		} else if (ssid[1] != 0 && (isprobe || ni->ni_esslen == 0)) {
 			/*
 			 * Update ESSID at probe response to adopt hidden AP by
 			 * Lucent/Cisco, which announces null ESSID in beacon.
