@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.4 1994/01/09 20:10:51 cgd Exp $
+ *	$Id: procfs_ctl.c,v 1.5 1994/01/09 20:17:06 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -115,17 +115,14 @@ procfs_control(curp, p, op)
 		/* check whether already being traced */
 		if (p->p_flag & STRC)
 			return (EBUSY);
-#ifdef DIAGNOSTIC
-		if (p->p_flag & SWTED)
-			panic("procfs: want a trace, but already have one");
-#endif
 
 		/* can't trace yourself! */
 		if (p->p_pid == curp->p_pid)
 			return (EINVAL);
 
 		/*
-		 * Go ahead and set the trace flag.
+		 * Go ahead and set the trace flag, and note that,
+		 *   if we wanted one, we've got it.
 		 * Save the old parent (it's reset in
 		 *   _DETACH, and also in kern_exit.c:wait4()
 		 * Reparent the process so that the tracing
@@ -133,6 +130,7 @@ procfs_control(curp, p, op)
 		 * Stop the target.
 		 */
 		p->p_flag |= STRC;
+		p->p_flag &= ~SWTED;
 		if (p->p_pptr != curp) {
 			p->p_oppid = p->p_pptr->p_pid;
 			proc_reparent(p, curp);
