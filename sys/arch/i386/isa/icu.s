@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.66 2002/10/01 12:57:11 fvdl Exp $	*/
+/*	$NetBSD: icu.s,v 1.67 2002/11/10 14:28:10 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,9 +43,6 @@
 	.data
 	.globl	_C_LABEL(imen),_C_LABEL(ipending)
 	.globl	_C_LABEL(netisr)
-#ifndef MULTIPROCESSOR
-	.globl	_C_LABEL(astpending)
-#endif
 _C_LABEL(imen):
 	.long	0xffff		# interrupt mask enable (all off)
 
