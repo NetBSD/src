@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.55 1999/10/28 19:59:31 sommerfeld Exp $
+$NetBSD: pcmciadevs,v 1.56 1999/11/06 00:58:32 enami Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ product IBM PORTABLE_CDROM_DRIVE 0x002d PCMCIA Portable CD-ROM Drive
 product IBM ETHERJET_PCCARD	0x003f IBM EtherJet Ethernet PC Card
 
 /* I-O DATA */
-product IODATA PCLAT		0x2216 I-O DATA PCLA/T
+product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 
 /* Linksys corporation */
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
@@ -207,3 +207,4 @@ product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX
 product SVEC COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
 product SVEC LANCARD	{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
+product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL } IO-DATA PCLA/T
