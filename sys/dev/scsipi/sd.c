@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.140 1999/01/26 13:59:44 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.141 1999/01/29 11:17:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -297,7 +297,7 @@ sdopen(dev, flag, fmt, p)
 		 * disallow further opens of non-raw partition
 		 */
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
-		    part != RAW_PART) {
+		    (part != RAW_PART || fmt != S_IFCHR)) {
 			error = EIO;
 			goto bad3;
 		}
@@ -318,7 +318,7 @@ sdopen(dev, flag, fmt, p)
 		    SCSI_IGNORE_ILLEGAL_REQUEST |
 		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 		if (error) {
-			if (part != RAW_PART)
+			if (part != RAW_PART || fmt != S_IFCHR)
 				goto bad3;
 			else
 				goto out;
@@ -469,7 +469,10 @@ sdstrategy(bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		bp->b_error = EIO;
+		if (sd->sc_link->flags & SDEV_OPEN)
+			bp->b_error = EIO;
+		else
+			bp->b_error = ENODEV;
 		goto bad;
 	}
 	/*
@@ -762,7 +765,10 @@ sdioctl(dev, cmd, addr, flag, p)
 				break;
 		/* FALLTHROUGH */
 		default:
-			return (EIO);
+			if ((sd->sc_link->flags & SDEV_OPEN) == 0)
+				return (ENODEV);
+			else
+				return (EIO);
 		}
 	}
 
