@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.78 2000/09/10 17:29:50 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.79 2000/09/11 18:45:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1805,7 +1805,7 @@ sysctl_pty(oldp, oldlenp, newp, newlen)
 	int oldmax = 0, newmax = 0;
 
 	/* get current value of maxptys */
-	oldmax = pty_maxptys(0, NULL);
+	oldmax = pty_maxptys(0, 0);
 
 	SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, &oldmax, int)
 
