@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.558 2003/07/29 19:47:45 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.559 2003/08/01 00:07:32 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.559 2003/07/29 19:46:56 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.560 2003/08/01 00:05:27 jonathan Exp 
  */
 
 /*
@@ -7862,6 +7862,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems, Inc.",
 	    "Simba PCI bridge",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821,
+	    0,
+	    "Sun Microsystems, Inc.",
+	    "Sun bcm5821",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K,
+	    0,
+	    "Sun Microsystems, Inc.",
+	    "Crypto Accelerator 1000",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO,
