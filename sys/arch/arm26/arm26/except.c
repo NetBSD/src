@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.43 2002/02/14 11:49:15 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.44 2002/02/14 11:54:16 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.43 2002/02/14 11:49:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.44 2002/02/14 11:54:16 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -390,7 +390,7 @@ data_abort_atype(struct trapframe *tf)
 #if defined(CPU_ARM250) || defined(CPU_ARM3)
 	/* SWP instruction ? */
 	else if ((insn & 0x0fb00ff0) == 0x01000090)
-		return VM_PROT_WRITE;
+		return VM_PROT_READ | VM_PROT_WRITE;
 #endif
 	return VM_PROT_READ;
 }
