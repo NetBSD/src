@@ -1,4 +1,4 @@
-/* $NetBSD: delete.h,v 1.6 1999/08/24 00:48:39 hubertf Exp $ */
+/* $NetBSD: delete.h,v 1.7 2002/06/09 13:23:45 yamt Exp $ */
 
 /* from FreeBSD Id: delete.h,v 1.4 1997/02/22 16:09:35 peter Exp */
 
@@ -32,7 +32,6 @@ extern Boolean CleanDirs;
 extern Boolean Force;
 extern Boolean Recurse_up;
 extern Boolean Recurse_down;
-
-extern int find_fn(const char *pkg, char *data);
+extern lpkg_head_t pkgs;
 
 #endif				/* _INST_DELETE_H_INCLUDE */

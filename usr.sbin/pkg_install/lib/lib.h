@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.39 2002/06/09 03:50:13 yamt Exp $ */
+/* $NetBSD: lib.h,v 1.40 2002/06/09 13:23:46 yamt Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -164,7 +164,7 @@ typedef struct _lpkg_head_t lpkg_head_t;
 
 /* Type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
-typedef int (*matchfn) (const char *found, char *data);
+typedef int (*matchfn) (const char *, void *);
 
 /* If URLlength()>0, then there is a ftp:// or http:// in the string,
  * and this must be an URL. Hide this behind a more obvious name. */
@@ -189,12 +189,17 @@ void    str_lowercase(char *);
 char   *basename_of(char *);
 char   *dirname_of(const char *);
 int     pmatch(const char *, const char *);
-int     findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong to "strings" */
-int	findbestmatchingname_fn(const char *pkg, char *data);	/* neither */
+int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
 char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
 void	strip_txz(char *buf, char *sfx, const char *fname);
+
+/* callback functions for findmatchingname */
+int     findbestmatchingname_fn(const char *, void *);	/* neither */
+int     note_whats_installed(const char *, void *);
+int     add_to_list_fn(const char *, void *);
+
 
 /* File */
 Boolean fexists(char *);
