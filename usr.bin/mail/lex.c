@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.11 1997/10/19 05:03:29 lukem Exp $	*/
+/*	$NetBSD: lex.c,v 1.12 1998/12/19 16:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.11 1997/10/19 05:03:29 lukem Exp $");
+__RCSID("$NetBSD: lex.c,v 1.12 1998/12/19 16:33:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -307,7 +307,7 @@ execute(linebuf, contxt)
 	 * lexical conventions.
 	 */
 
-	for (cp = linebuf; isspace(*cp); cp++)
+	for (cp = linebuf; isspace((unsigned char)*cp); cp++)
 		;
 	if (*cp == '!') {
 		if (sourcing) {
@@ -318,7 +318,7 @@ execute(linebuf, contxt)
 		return(0);
 	}
 	cp2 = word;
-	while (*cp && index(" \t0123456789$^.:/-+*'\"", *cp) == NOSTR)
+	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NOSTR)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 
@@ -416,7 +416,7 @@ execute(linebuf, contxt)
 		 * Just the straight string, with
 		 * leading blanks removed.
 		 */
-		while (isspace(*cp))
+		while (isspace((unsigned char)*cp))
 			cp++;
 		e = (*com->c_func)(cp);
 		break;
