@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.1 1997/04/03 04:46:45 christos Exp $	*/
+/*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$NetBSD: atalk.c,v 1.1 1997/04/03 04:46:45 christos Exp $";
+static char rcsid[] = "$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ atalkprotopr(off, name)
 	ddpcb = cb;
 	prev = (struct ddpcb *) off;
 	for (next = initial; next != NULL; prev = next) {
-		u_long          ppcb;
+		u_long          ppcb = (u_long) next;
 
 		if (kread((u_long) next, (char *) &ddpcb, sizeof(ddpcb)) < 0)
 			return;
@@ -274,7 +274,7 @@ atalkprotopr(off, name)
 			first = 0;
 		}
 		if (Aflag)
-			printf("0x%lx ", ppcb);
+			printf("%8lx ", ppcb);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 		       sockb.so_snd.sb_cc);
 		printf(Aflag ? " %-18.18s" : " %-22.22s", atalk_print(
