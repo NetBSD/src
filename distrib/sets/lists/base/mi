@@ -253,6 +253,7 @@
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
+./usr/bin/mktemp
 ./usr/bin/modstat
 ./usr/bin/more
 ./usr/bin/mset
