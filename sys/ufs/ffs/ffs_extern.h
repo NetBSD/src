@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.12.4.2 1999/06/21 15:50:10 thorpej Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.12.4.3 1999/07/04 01:51:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -87,9 +87,7 @@ int ffs_vfree __P((void *));
 void ffs_clusteracct __P((int, struct fs *, struct cg *, ufs_daddr_t, int));
 
 /* ffs_balloc.c */
-int ffs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
-		    struct buf **, daddr_t *, int));
-int ffs_balloc_range __P((struct inode *, off_t, off_t, struct ucred *, int));
+int ffs_balloc __P((void *));
 
 /* ffs_bswap.c */
 void ffs_sb_swap __P((struct fs*, struct fs *, int));
@@ -135,8 +133,8 @@ int ffs_read __P((void *));
 int ffs_write __P((void *));
 #define ffs_fsync genfs_fsync
 int ffs_reclaim __P((void *));
-int ffs_getpages __P((void *));
-int ffs_putpages __P((void *));
+#define ffs_getpages genfs_getpages
+#define ffs_putpages genfs_putpages
 __END_DECLS
 
 extern int (**ffs_vnodeop_p) __P((void *));
