@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.25 1993/08/30 07:08:01 deraadt Exp $
+#	$Id: SUN_LAMP,v 1.26 1993/09/13 14:22:53 brezak Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -18,6 +18,7 @@ options		FDESC,KERNFS
 options		KTRACE
 options		SCSI
 options		"COMPAT_NOMID"
+options		"MACHINE_NONCONTIG"
 
 options		DDB
 options		"SYMTAB_SPACE=72000"
