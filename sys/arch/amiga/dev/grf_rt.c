@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.39.6.3 2002/04/01 07:38:58 nathanw Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.39.6.4 2002/08/13 02:17:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.39.6.3 2002/04/01 07:38:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.39.6.4 2002/08/13 02:17:44 nathanw Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -1128,7 +1128,7 @@ rt_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	ba = gfp->g_regkva;
@@ -1164,7 +1164,7 @@ rt_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return 0;
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first copy the colors into kernelspace */

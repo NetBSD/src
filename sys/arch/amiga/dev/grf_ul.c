@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.28.26.2 2002/04/01 07:38:58 nathanw Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.28.26.3 2002/08/13 02:17:44 nathanw Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.28.26.2 2002/04/01 07:38:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.28.26.3 2002/08/13 02:17:44 nathanw Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -798,7 +798,7 @@ ul_getcmap (gp, cmap, dev)
 	if (cmap->count == 0 || cmap->index >= mxidx)
 		return 0;
 
-	if (cmap->index + cmap->count > mxidx)
+	if (cmap->count > mxidx - cmap->index)
 		cmap->count = mxidx - cmap->index;
 
 	/* just copyout from the shadow color map */
@@ -841,7 +841,7 @@ ul_putcmap (gp, cmap, dev)
 	if (cmap->count == 0 || cmap->index >= mxidx)
 		return 0;
 
-	if (cmap->index + cmap->count > mxidx)
+	if (cmap->count > mxidx - cmap->index)
 		cmap->count = mxidx - cmap->index;
 
 	/* first copyin to our shadow color map */

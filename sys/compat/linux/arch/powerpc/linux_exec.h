@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2.4.3 2002/02/28 04:12:53 nathanw Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.2.4.4 2002/08/13 02:19:16 nathanw Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 #include <sys/exec_aout.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>
-#include <sys/systm.h>
 
 /*
  * From Linux's include/asm-ppc/elf.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.4.6.3 2001/11/14 19:15:51 nathanw Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.4.6.4 2002/08/13 02:19:55 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.4.6.3 2001/11/14 19:15:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.4.6.4 2002/08/13 02:19:55 nathanw Exp $");
 
 #include "rf_archs.h"
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.4.6.3 2001/11/14 19:15:51
 #include "rf_dagfuncs.h"
 #include "rf_debugMem.h"
 #include "rf_paritylog.h"
-#include "rf_memchunk.h"
 #include "rf_general.h"
 
 #include "rf_parityloggingdags.h"

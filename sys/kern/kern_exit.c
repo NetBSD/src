@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.18 2002/08/01 02:46:18 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.19 2002/08/13 02:20:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.18 2002/08/01 02:46:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.19 2002/08/13 02:20:05 nathanw Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_perfctrs.h"
 #include "opt_systrace.h"
 #include "opt_sysv.h"
 
@@ -103,6 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.18 2002/08/01 02:46:18 nathanw 
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
+#if defined(PERFCTRS)
+#include <sys/pmc.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
@@ -320,6 +324,17 @@ exit1(struct lwp *l, int rv)
 	calcru(p, &p->p_ru->ru_utime, &p->p_ru->ru_stime, NULL);
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
+#if PERFCTRS
+	/*
+	 * Save final PMC information in parent process & clean up.
+	 */
+	if (PMC_ENABLED(p)) {
+		pmc_save_context(p);
+		pmc_accumulate(p->p_pptr, p);
+		pmc_process_exit(p);
+	}
+#endif
+
 	/*
 	 * Notify parent that we're gone.  If parent has the P_NOCLDWAIT
 	 * flag set, notify init instead (and hope it will handle
@@ -343,6 +358,12 @@ exit1(struct lwp *l, int rv)
 	sigactsfree(p);
 
 	/*
+	 * If emulation has process exit hook, call it now.
+	 */
+	if (p->p_emul->e_proc_exit)
+		(*p->p_emul->e_proc_exit)(p);
+
+	/*
 	 * Clear curlwp after we've done all operations
 	 * that could block, and before tearing down the rest
 	 * of the process state that might be used from clock, etc.
@@ -356,12 +377,6 @@ exit1(struct lwp *l, int rv)
 	limfree(p->p_limit);
 	pstatsfree(p->p_stats);
 	p->p_limit = NULL;
-
-	/*
-	 * If emulation has process exit hook, call it now.
-	 */
-	if (p->p_emul->e_proc_exit)
-		(*p->p_emul->e_proc_exit)(p);
 
 	/* This process no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);

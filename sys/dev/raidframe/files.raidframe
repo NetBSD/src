@@ -1,4 +1,4 @@
-#	$NetBSD: files.raidframe,v 1.1.6.2 2002/06/20 03:46:25 nathanw Exp $
+#	$NetBSD: files.raidframe,v 1.1.6.3 2002/08/13 02:19:48 nathanw Exp $
 
 defflag			RAID_AUTOCONFIG
 defflag			RAID_DIAGNOSTIC
@@ -35,7 +35,6 @@ file	dev/raidframe/rf_invertq.c		raid
 file	dev/raidframe/rf_layout.c		raid
 file	dev/raidframe/rf_map.c			raid
 file	dev/raidframe/rf_mcpair.c		raid
-file	dev/raidframe/rf_memchunk.c		raid
 file	dev/raidframe/rf_netbsdkintf.c		raid
 file	dev/raidframe/rf_nwayxor.c		raid
 file	dev/raidframe/rf_options.c		raid

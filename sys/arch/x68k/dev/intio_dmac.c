@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.11.8.2 2002/01/08 00:28:39 nathanw Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.11.8.3 2002/08/13 02:19:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
 #include <arch/x68k/dev/dmacvar.h>
 
 #ifdef DMAC_DEBUG
-#define DPRINTF(n,x)	if (dmacdebug>(n)&0x0f) printf x
-#define DDUMPREGS(n,x)	if (dmacdebug>(n)&0x0f) {printf x; dmac_dump_regs();}
+#define DPRINTF(n,x)	if (dmacdebug>((n)&0x0f)) printf x
+#define DDUMPREGS(n,x)	if (dmacdebug>((n)&0x0f)) {printf x; dmac_dump_regs();}
 int dmacdebug = 0;
 #else
 #define DPRINTF(n,x)
@@ -419,7 +419,7 @@ dmac_start_xfer_offset(self, xf, offset, size)
 	if ((offset >= dmamap->dm_mapsize) ||
 	    (offset + size > dmamap->dm_mapsize))
 		panic ("dmac_start_xfer_offset: invalid offset: "
-			"offset=%d, size=%d, mapsize=%d",
+			"offset=%d, size=%d, mapsize=%ld",
 		       offset, size, dmamap->dm_mapsize);
 #endif
 	/* program DMAC in single block mode or array chainning mode */
@@ -645,7 +645,8 @@ dmac_dump_regs(void)
 	struct dmac_channel_stat *chan = debugchan;
 	struct dmac_softc *sc;
 
-	if ((chan == 0) || (dmacdebug & 0xf0)) return;
+	if ((chan == 0) || (dmacdebug & 0xf0))
+		return 0;
 	sc = (void*) chan->ch_softc;
 
 	printf ("DMAC channel %d registers\n", chan->ch_channel);

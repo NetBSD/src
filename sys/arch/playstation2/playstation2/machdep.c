@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.4.4 2002/06/24 22:06:49 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.4.5 2002/08/13 02:18:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,9 +43,10 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
-#include <sys/sysctl.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -68,10 +69,8 @@
 #include <playstation2/playstation2/kloader.h>
 #endif
 
-/* For sysctl. */
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[] = "SONY PlayStation 2";
+/* For sysctl_hw */
+extern char cpu_model[];
 
 struct cpu_info cpu_info_store;
 
@@ -145,6 +144,8 @@ mach_init()
 	printf("load memory %#lx, %#x\n", start, size);
 	uvm_page_physload(atop(start), atop(start + size),
 	    atop(start), atop(start + size), VM_FREELIST_DEFAULT);
+
+	strcpy(cpu_model, "SONY PlayStation 2");
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -269,27 +270,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-/*
- * Machine dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 void

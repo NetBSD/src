@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.119.2.10 2002/08/01 02:46:25 nathanw Exp $ */
+/* $NetBSD: syscalls.c,v 1.119.2.11 2002/08/13 02:20:08 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.10 2002/08/01 02:46:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.119.2.11 2002/08/13 02:20:08 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -462,4 +462,6 @@ const char *const syscallnames[] = {
 	"#338 (unimplemented)",		/* 338 = unimplemented */
 	"#339 (unimplemented)",		/* 339 = unimplemented */
 	"__sigaction_sigtramp",			/* 340 = __sigaction_sigtramp */
+	"pmc_get_info",			/* 341 = pmc_get_info */
+	"pmc_control",			/* 342 = pmc_control */
 };

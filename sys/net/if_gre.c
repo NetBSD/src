@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.8 2002/07/12 01:40:28 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.9 2002/08/13 02:20:12 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.8 2002/07/12 01:40:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.9 2002/08/13 02:20:12 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -187,7 +187,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	int error = 0;
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
-	struct ip *inp;
+	struct ip *ip;
 	u_char osrc;
 	u_short etype = 0;
 	struct mobile_h mob_h;
@@ -200,7 +200,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 
 	gh = NULL;
-	inp = NULL;
+	ip = NULL;
 	osrc = 0;
 
 #if NBPFILTER >0
@@ -224,24 +224,24 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			struct mbuf *m0;
 			int msiz;
 
-			inp = mtod(m, struct ip *);
+			ip = mtod(m, struct ip *);
 
 			memset(&mob_h, 0, MOB_H_SIZ_L);
-			mob_h.proto = (inp->ip_p) << 8;
-			mob_h.odst = inp->ip_dst.s_addr;
-			inp->ip_dst.s_addr = sc->g_dst.s_addr;
+			mob_h.proto = (ip->ip_p) << 8;
+			mob_h.odst = ip->ip_dst.s_addr;
+			ip->ip_dst.s_addr = sc->g_dst.s_addr;
 
 			/*
 			 * If the packet comes from our host, we only change
 			 * the destination address in the IP header.
 			 * Else we also need to save and change the source
 			 */
-			if (in_hosteq(inp->ip_src, sc->g_src)) {
+			if (in_hosteq(ip->ip_src, sc->g_src)) {
 				msiz = MOB_H_SIZ_S;
 			} else {
 				mob_h.proto |= MOB_H_SBIT;
-				mob_h.osrc = inp->ip_src.s_addr;
-				inp->ip_src.s_addr = sc->g_src.s_addr;
+				mob_h.osrc = ip->ip_src.s_addr;
+				ip->ip_src.s_addr = sc->g_src.s_addr;
 				msiz = MOB_H_SIZ_L;
 			}
 			HTONS(mob_h.proto);
@@ -262,20 +262,20 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				m0->m_pkthdr.len = m->m_pkthdr.len + msiz;
 				m0->m_len = msiz + sizeof(struct ip);
 				m0->m_data += max_linkhdr;
-				memcpy(mtod(m0, caddr_t), (caddr_t)inp,
+				memcpy(mtod(m0, caddr_t), (caddr_t)ip,
 				       sizeof(struct ip));
 				m = m0;
 			} else {  /* we have some space left in the old one */
 				m->m_data -= msiz;
 				m->m_len += msiz;
 				m->m_pkthdr.len += msiz;
-				memmove(mtod(m, caddr_t), inp,
+				memmove(mtod(m, caddr_t), ip,
 					sizeof(struct ip));
 			}
-			inp = mtod(m, struct ip *);
-			memcpy((caddr_t)(inp + 1), &mob_h, (unsigned)msiz);
-			NTOHS(inp->ip_len);
-			inp->ip_len += msiz;
+			ip = mtod(m, struct ip *);
+			memcpy((caddr_t)(ip + 1), &mob_h, (unsigned)msiz);
+			NTOHS(ip->ip_len);
+			ip->ip_len += msiz;
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
@@ -285,7 +285,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	} else if (sc->g_proto == IPPROTO_GRE) {
 		switch (dst->sa_family) {
 		case AF_INET:
-			inp = mtod(m, struct ip *);
+			ip = mtod(m, struct ip *);
 			etype = ETHERTYPE_IP;
 			break;
 #ifdef NETATALK
@@ -332,7 +332,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		gh->gi_dst = sc->g_dst;
 		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2;
 		((struct ip*)gh)->ip_ttl = ip_gre_ttl;
-		((struct ip*)gh)->ip_tos = inp->ip_tos;
+		((struct ip*)gh)->ip_tos = ip->ip_tos;
 		gh->gi_len = m->m_pkthdr.len;
 	}
 

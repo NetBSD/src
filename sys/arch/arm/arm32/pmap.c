@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.11 2002/08/01 02:41:13 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.12 2002/08/13 02:17:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.11 2002/08/01 02:41:13 nathanw Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.12 2002/08/13 02:17:51 nathanw Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -756,6 +756,22 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, struct pmap *pmap,
 	simple_unlock(&pg->mdpage.pvh_slock);	/* unlock, done! */
 	if (pve->pv_flags & PVF_WIRED)
 		++pmap->pm_stats.wired_count;
+#ifdef PMAP_ALIAS_DEBUG
+    {
+	int s = splhigh();
+	if (pve->pv_flags & PVF_WRITE)
+		pg->mdpage.rw_mappings++;
+	else
+		pg->mdpage.ro_mappings++;
+	if (pg->mdpage.rw_mappings != 0 &&
+	    (pg->mdpage.kro_mappings != 0 || pg->mdpage.krw_mappings != 0)) {
+		printf("pmap_enter_pv: rw %u, kro %u, krw %u\n",
+		    pg->mdpage.rw_mappings, pg->mdpage.kro_mappings,
+		    pg->mdpage.krw_mappings);
+	}
+	splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 }
 
 /*
@@ -781,6 +797,19 @@ pmap_remove_pv(struct vm_page *pg, struct pmap *pmap, vaddr_t va)
 			*prevptr = pve->pv_next;		/* remove it! */
 			if (pve->pv_flags & PVF_WIRED)
 			    --pmap->pm_stats.wired_count;
+#ifdef PMAP_ALIAS_DEBUG
+    {
+			int s = splhigh();
+			if (pve->pv_flags & PVF_WRITE) {
+				KASSERT(pg->mdpage.rw_mappings != 0);
+				pg->mdpage.rw_mappings--;
+			} else {
+				KASSERT(pg->mdpage.ro_mappings != 0);
+				pg->mdpage.ro_mappings--;
+			}
+			splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 			break;
 		}
 		prevptr = &pve->pv_next;		/* previous pointer */
@@ -824,6 +853,31 @@ pmap_modify_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg,
 				else
 					--pmap->pm_stats.wired_count;
 			}
+#ifdef PMAP_ALIAS_DEBUG
+    {
+			int s = splhigh();
+			if ((flags ^ oflags) & PVF_WRITE) {
+				if (flags & PVF_WRITE) {
+					pg->mdpage.rw_mappings++;
+					pg->mdpage.ro_mappings--;
+					if (pg->mdpage.rw_mappings != 0 &&
+					    (pg->mdpage.kro_mappings != 0 ||
+					     pg->mdpage.krw_mappings != 0)) {
+						printf("pmap_modify_pv: rw %u, "
+						    "kro %u, krw %u\n",
+						    pg->mdpage.rw_mappings,
+						    pg->mdpage.kro_mappings,
+						    pg->mdpage.krw_mappings);
+					}
+				} else {
+					KASSERT(pg->mdpage.rw_mappings != 0);
+					pg->mdpage.rw_mappings--;
+					pg->mdpage.ro_mappings++;
+				}
+			}
+			splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 			return (oflags);
 		}
 	}
@@ -1239,6 +1293,13 @@ pmap_alloc_ptpt(struct pmap *pmap)
 
 	*pte = L2_S_PROTO | pmap->pm_pptpt |
 	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
+#ifdef PMAP_ALIAS_DEBUG
+    {
+	int s = splhigh();
+	pg->mdpage.krw_mappings++;
+	splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 
 	return (0);
 }
@@ -1592,11 +1653,13 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 	int cache_needs_cleaning = 0;
 	vaddr_t page_to_clean = 0;
 
-	if (pv == NULL)
+	if (pv == NULL) {
 		/* nothing mapped in so nothing to flush */
 		return (0);
+	}
 
-	/* Since we flush the cache each time we change curlwp, we
+	/*
+	 * Since we flush the cache each time we change curlwp, we
 	 * only need to flush the page if it is in the current pmap.
 	 */
 	if (curproc)
@@ -1606,38 +1669,36 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 
 	for (npv = pv; npv; npv = npv->pv_next) {
 		if (npv->pv_pmap == pmap) {
-			/* The page is mapped non-cacheable in 
+			/*
+			 * The page is mapped non-cacheable in 
 			 * this map.  No need to flush the cache.
 			 */
 			if (npv->pv_flags & PVF_NC) {
 #ifdef DIAGNOSTIC
 				if (cache_needs_cleaning)
 					panic("pmap_clean_page: "
-							"cache inconsistency");
+					    "cache inconsistency");
 #endif
 				break;
-			}
-#if 0
-			/*
-			 * XXX Can't do this because pmap_protect doesn't
-			 * XXX clean the page when it does a write-protect.
-			 */
-			else if (is_src && (npv->pv_flags & PVF_WRITE) == 0)
+			} else if (is_src && (npv->pv_flags & PVF_WRITE) == 0)
 				continue;
-#endif
-			if (cache_needs_cleaning){
+			if (cache_needs_cleaning) {
 				page_to_clean = 0;
 				break;
-			}
-			else
+			} else
 				page_to_clean = npv->pv_va;
 			cache_needs_cleaning = 1;
 		}
 	}
 
-	if (page_to_clean)
+	if (page_to_clean) {
+		/*
+		 * XXX If is_src, we really only need to write-back,
+		 * XXX not invalidate, too.  Investigate further.
+		 * XXX --thorpej@netbsd.org
+		 */
 		cpu_idcache_wbinv_range(page_to_clean, NBPG);
-	else if (cache_needs_cleaning) {
+	} else if (cache_needs_cleaning) {
 		cpu_idcache_wbinv_all();
 		return (1);
 	}
@@ -2284,7 +2345,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		pte++;
 	}
 
-	pmap_unmap_ptes(pmap);
 	/*
 	 * Now, if we've fallen through down to here, chances are that there
 	 * are less than PMAP_REMOVE_CLEAN_LIST_SIZE mappings left.
@@ -2303,6 +2363,9 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			pmap_pte_delref(pmap, cleanlist[cnt].va);
 		}
 	}
+
+	pmap_unmap_ptes(pmap);
+
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
 
@@ -2397,18 +2460,17 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *pte = NULL, *ptes;
 	struct vm_page *pg;
-	int armprot;
 	int flush = 0;
-	paddr_t pa;
 
 	PDEBUG(0, printf("pmap_protect: pmap=%p %08lx->%08lx %x\n",
 	    pmap, sva, eva, prot));
 
 	if (~prot & VM_PROT_READ) {
-		/* Just remove the mappings. */
+		/*
+		 * Just remove the mappings.  pmap_update() is not required
+		 * here since the caller should do it.
+		 */
 		pmap_remove(pmap, sva, eva);
-		/* pmap_update not needed as it should be called by the caller
-		 * of pmap_protect */
 		return;
 	}
 	if (prot & VM_PROT_WRITE) {
@@ -2459,26 +2521,17 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		flush = 1;
 
-		armprot = 0;
-		if (sva < VM_MAXUSER_ADDRESS)
-			armprot |= L2_S_PROT_U;
-		else if (sva < VM_MAX_ADDRESS)
-			armprot |= L2_S_PROT_W;  /* XXX Ekk what is this ? */
-		*pte = (*pte & 0xfffff00f) | armprot;
-
-		pa = pmap_pte_pa(pte);
-
-		/* Get the physical page index */
+		*pte &= ~L2_S_PROT_W;		/* clear write bit */
 
 		/* Clear write flag */
-		if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
+		if ((pg = PHYS_TO_VM_PAGE(pmap_pte_pa(pte))) != NULL) {
 			simple_lock(&pg->mdpage.pvh_slock);
 			(void) pmap_modify_pv(pmap, sva, pg, PVF_WRITE, 0);
 			pmap_vac_me_harder(pmap, pg, ptes, FALSE);
 			simple_unlock(&pg->mdpage.pvh_slock);
 		}
 
-next:
+ next:
 		sva += NBPG;
 		pte++;
 	}
@@ -2580,6 +2633,14 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 		/* Are we mapping the same page ? */
 		if (opa == pa) {
+			/* Check to see if we're doing rw->ro. */
+			if ((opte & L2_S_PROT_W) != 0 &&
+			    (prot & VM_PROT_WRITE) == 0) {
+				/* Yup, flush the cache if current pmap. */
+				if (pmap_is_curpmap(pmap))
+					cpu_dcache_wb_range(va, NBPG);
+			}
+
 			/* Has the wiring changed ? */
 			if (pg != NULL) {
 				simple_lock(&pg->mdpage.pvh_slock);
@@ -2697,9 +2758,43 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte;
- 
+
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
+
+#ifdef PMAP_ALIAS_DEBUG
+    {
+	struct vm_page *pg;
+	int s;
+
+	pg = PHYS_TO_VM_PAGE(pa);
+	if (pg != NULL) {
+		s = splhigh();
+		if (pg->mdpage.ro_mappings == 0 &&
+		    pg->mdpage.rw_mappings == 0 &&
+		    pg->mdpage.kro_mappings == 0 &&
+		    pg->mdpage.krw_mappings == 0) {
+			/* This case is okay. */
+		} else if (pg->mdpage.rw_mappings == 0 &&
+			   pg->mdpage.krw_mappings == 0 &&
+			   (prot & VM_PROT_WRITE) == 0) {
+			/* This case is okay. */
+		} else {
+			/* Something is awry. */
+			printf("pmap_kenter_pa: ro %u, rw %u, kro %u, krw %u "
+			    "prot 0x%x\n", pg->mdpage.ro_mappings,
+			    pg->mdpage.rw_mappings, pg->mdpage.kro_mappings,
+			    pg->mdpage.krw_mappings, prot);
+			Debugger();
+		}
+		if (prot & VM_PROT_WRITE)
+			pg->mdpage.krw_mappings++;
+		else
+			pg->mdpage.kro_mappings++;
+		splx(s);
+	}
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 
 	*pte = L2_S_PROTO | pa |
 	    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
@@ -2719,6 +2814,25 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 		KASSERT(pmap_pde_page(pmap_pde(pmap_kernel(), va)));
 		pte = vtopte(va);
+#ifdef PMAP_ALIAS_DEBUG
+    {
+		struct vm_page *pg;
+		int s;
+
+		if ((*pte & L2_TYPE_MASK) != L2_TYPE_INV &&
+		    (pg = PHYS_TO_VM_PAGE(*pte & L2_S_FRAME)) != NULL) {
+			s = splhigh();
+			if (*pte & L2_S_PROT_W) {
+				KASSERT(pg->mdpage.krw_mappings != 0);
+				pg->mdpage.krw_mappings--;
+			} else {
+				KASSERT(pg->mdpage.kro_mappings != 0);
+				pg->mdpage.kro_mappings--;
+			}
+			splx(s);
+		}
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 		cpu_idcache_wbinv_range(va, PAGE_SIZE);
 		*pte = 0;
 		cpu_tlb_flushID_SE(va);
@@ -2956,7 +3070,7 @@ static void
 pmap_clearbit(struct vm_page *pg, u_int maskbits)
 {
 	struct pv_entry *pv;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, npte, opte;
 	vaddr_t va;
 	int tlbentry;
 
@@ -2983,10 +3097,23 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 	 * Loop over all current mappings setting/clearing as appropos
 	 */
 	for (pv = pg->mdpage.pvh_list; pv; pv = pv->pv_next) {
+#ifdef PMAP_ALIAS_DEBUG
+    {
+		int s = splhigh();
+		if ((maskbits & PVF_WRITE) != 0 &&
+		    (pv->pv_flags & PVF_WRITE) != 0) {
+			KASSERT(pg->mdpage.rw_mappings != 0);
+			pg->mdpage.rw_mappings--;
+			pg->mdpage.ro_mappings++;
+		}
+		splx(s);
+    }
+#endif /* PMAP_ALIAS_DEBUG */
 		va = pv->pv_va;
 		pv->pv_flags &= ~maskbits;
 		ptes = pmap_map_ptes(pv->pv_pmap);	/* locks pmap */
 		KASSERT(pmap_pde_v(pmap_pde(pv->pv_pmap, va)));
+		npte = opte = ptes[arm_btop(va)];
 		if (maskbits & (PVF_WRITE|PVF_MOD)) {
 			if ((pv->pv_flags & PVF_NC)) {
 				/* 
@@ -3006,8 +3133,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 *
 				 */
 				if (maskbits & PVF_WRITE) {
-					ptes[arm_btop(va)] |=
-					    pte_l2_s_cache_mode;
+					npte |= pte_l2_s_cache_mode;
 					pv->pv_flags &= ~PVF_NC;
 				}
 			} else if (pmap_is_curpmap(pv->pv_pmap)) {
@@ -3020,22 +3146,40 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 			}
 
 			/* make the pte read only */
-			ptes[arm_btop(va)] &= ~L2_S_PROT_W;
+			npte &= ~L2_S_PROT_W;
 		}
 
-		if (maskbits & PVF_REF)
-			ptes[arm_btop(va)] =
-			    (ptes[arm_btop(va)] & ~L2_TYPE_MASK) | L2_TYPE_INV;
+		if (maskbits & PVF_REF) {
+			if (pmap_is_curpmap(pv->pv_pmap) &&
+			    (pv->pv_flags & PVF_NC) == 0) {
+				/*
+				 * Check npte here; we may have already
+				 * done the wbinv above, and the validity
+				 * of the PTE is the same for opte and
+				 * npte.
+				 */
+				if (npte & L2_S_PROT_W) {
+					cpu_idcache_wbinv_range(pv->pv_va,
+					    NBPG);
+				} else if ((npte & L2_TYPE_MASK)
+					   != L2_TYPE_INV) {
+					/* XXXJRT need idcache_inv_range */
+					cpu_idcache_wbinv_range(pv->pv_va,
+					    NBPG);
+				}
+			}
 
-		if (pmap_is_curpmap(pv->pv_pmap)) {
-			/* 
-			 * if we had cacheable pte's we'd clean the
-			 * pte out to memory here
-			 *
-			 * flush tlb entry as it's in the current pmap
-			 */
-			cpu_tlb_flushID_SE(pv->pv_va); 
+			/* make the pte invalid */
+			npte = (npte & ~L2_TYPE_MASK) | L2_TYPE_INV;
 		}
+
+		if (npte != opte) {
+			ptes[arm_btop(va)] = npte;
+			/* Flush the TLB entry if a current pmap. */
+			if (pmap_is_curpmap(pv->pv_pmap))
+				cpu_tlb_flushID_SE(pv->pv_va);
+		}
+
 		pmap_unmap_ptes(pv->pv_pmap);		/* unlocks pmap */
 	}
 	cpu_cpwait();
@@ -3693,6 +3837,25 @@ pmap_pte_init_xscale(void)
 
 	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
+
+#ifdef XSCALE_CACHE_READ_WRITE_ALLOCATE
+	/*
+	 * The XScale core has an enhanced mode where writes that
+	 * miss the cache cause a cache line to be allocated.  This
+	 * is significantly faster than the traditional, write-through
+	 * behavior of this case.
+	 *
+	 * However, there is a bug lurking in this pmap module, or in
+	 * other parts of the VM system, or both, which causes corruption
+	 * of NFS-backed files when this cache mode is used.  We have
+	 * an ugly work-around for this problem (disable r/w-allocate
+	 * for managed kernel mappings), but the bug is still evil enough
+	 * to consider this cache mode "experimental".
+	 */
+	pte_l1_s_cache_mode |= L1_S_XSCALE_TEX(TEX_XSCALE_X);
+	pte_l2_l_cache_mode |= L2_XSCALE_L_TEX(TEX_XSCALE_X);
+	pte_l2_s_cache_mode |= L2_XSCALE_T_TEX(TEX_XSCALE_X);
+#endif /* XSCALE_CACHE_READ_WRITE_ALLOCATE */
 
 #ifdef XSCALE_CACHE_WRITE_THROUGH
 	/*

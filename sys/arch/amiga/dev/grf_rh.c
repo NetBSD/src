@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.31.6.3 2002/04/01 07:38:57 nathanw Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.31.6.4 2002/08/13 02:17:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.31.6.3 2002/04/01 07:38:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.31.6.4 2002/08/13 02:17:43 nathanw Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1803,7 +1803,7 @@ rh_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return 0;
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	ba = gfp->g_regkva;
@@ -1838,7 +1838,7 @@ rh_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return(0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first copy the colors into kernelspace */

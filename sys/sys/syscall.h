@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.118.2.9 2002/08/01 02:46:59 nathanw Exp $ */
+/* $NetBSD: syscall.h,v 1.118.2.10 2002/08/13 02:20:24 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -780,5 +780,11 @@
 /* syscall: "__sigaction_sigtramp" ret: "int" args: "int" "const struct sigaction *" "struct sigaction *" "void *" "int" */
 #define	SYS___sigaction_sigtramp	340
 
-#define	SYS_MAXSYSCALL	341
+/* syscall: "pmc_get_info" ret: "int" args: "int" "int" "void *" */
+#define	SYS_pmc_get_info	341
+
+/* syscall: "pmc_control" ret: "int" args: "int" "int" "void *" */
+#define	SYS_pmc_control	342
+
+#define	SYS_MAXSYSCALL	343
 #define	SYS_NSYSENT	512

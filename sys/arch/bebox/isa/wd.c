@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.5 1998/08/13 02:10:38 eeh Exp $	*/
+/*	$NetBSD: wd.c,v 1.5.26.1 2002/08/13 02:18:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.8 2002/06/24 22:03:57 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.9 2002/08/13 02:17:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,6 +45,7 @@
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/pmc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
@@ -74,7 +76,6 @@ int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct lwp *l, struct lwp *l0));
 void	switch_lwp_exit	__P((struct lwp *l, struct lwp *l0));
-
 extern void proc_trampoline	__P((void));
 
 /*
@@ -125,6 +126,15 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
+	}
+#endif
+
+#if defined(PERFCTRS)
+	if (PMC_ENABLED(p1))
+		pmc_md_fork(p1, p2);
+	else {
+		p2->p_md.pmc_enabled = 0;
+		p2->p_md.pmc_state = NULL;
 	}
 #endif
 
@@ -233,7 +243,6 @@ cpu_exit(struct lwp *l, int proc)
 	}
 #endif	/* STACKCHECKS */
 	uvmexp.swtch++;
-
 	if (proc)
 		switch_exit(l, &lwp0);
 	else

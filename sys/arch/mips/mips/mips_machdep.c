@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.18 2002/08/02 09:27:31 gmcgarry Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.19 2002/08/13 02:18:30 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.18 2002/08/02 09:27:31 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.19 2002/08/13 02:18:30 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -134,31 +134,35 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.18 2002/08/02 09:27:31 gmcg
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/buf.h>
 #include <sys/clist.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
-
-#include <sys/sa.h>
-#include <sys/savar.h>
-
-#include <sys/syscallargs.h>
-
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <mips/cache.h>
 #include <mips/frame.h>
 #include <mips/regnum.h>
+
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
 #include <mips/userret.h>
+
+#ifdef __HAVE_BOOTINFO_H
+#include <machine/bootinfo.h>
+#endif
 
 #if defined(MIPS32) || defined(MIPS64)
 #include <mips/mipsNN.h>		/* MIPS32/MIPS64 registers */
@@ -217,6 +221,11 @@ caddr_t	msgbufaddr;
 int	default_pg_mask = 0x00001800;
 #endif
 
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	cpu_model[128];
+
 struct pridtab {
 	int	cpu_cid;
 	int	cpu_pid;
@@ -246,11 +255,11 @@ static const struct pridtab *mycpu;
 
 static const struct pridtab cputab[] = {
 	{ 0, MIPS_R2000, -1, -1,		CPU_ARCH_MIPS1, 64,
-	  0,					"MIPS R2000 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"MIPS R2000 CPU"	},
 	{ 0, MIPS_R3000, MIPS_REV_R3000, -1,	CPU_ARCH_MIPS1, 64,
-	  0,					"MIPS R3000 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"MIPS R3000 CPU"	},
 	{ 0, MIPS_R3000, MIPS_REV_R3000A, -1,	CPU_ARCH_MIPS1, 64,
-	  0,					"MIPS R3000A CPU"	},
+	  CPU_MIPS_NO_LLSC,			"MIPS R3000A CPU"	},
 	{ 0, MIPS_R6000, -1, -1,		CPU_ARCH_MIPS2, 32,
 	  MIPS_NOT_SUPP,			"MIPS R6000 CPU"	},
 
@@ -312,11 +321,11 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R4650, 0, -1,			CPU_ARCH_MIPS3, -1,
 	  MIPS_NOT_SUPP /* no MMU! */,		"QED R4650 CPU"	},
 	{ 0, MIPS_TX3900, MIPS_REV_TX3912, -1,	CPU_ARCH_MIPS1, 32,
-	  0,					"Toshiba TX3912 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"Toshiba TX3912 CPU"	},
 	{ 0, MIPS_TX3900, MIPS_REV_TX3922, -1,	CPU_ARCH_MIPS1, 64,
-	  0,					"Toshiba TX3922 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"Toshiba TX3922 CPU"	},
 	{ 0, MIPS_TX3900, MIPS_REV_TX3927, -1,	CPU_ARCH_MIPS1, 64,
-	  0,					"Toshiba TX3927 CPU"	},
+	  CPU_MIPS_NO_LLSC,			"Toshiba TX3927 CPU"	},
 	{ 0, MIPS_R5000, -1, -1,		CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,			
 						"MIPS R5000 CPU"	},
@@ -353,7 +362,7 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R5400, -1, -1,		CPU_ARCH_MIPSx, -1,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"NEC VR5400 CPU"	},
 	{ 0, MIPS_R5900, -1, -1,		CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"Toshiba R5900 CPU"	},
+	  CPU_MIPS_NO_LLSC | CPU_MIPS_R4K_MMU,	"Toshiba R5900 CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
 	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
@@ -826,7 +835,7 @@ mips_vector_init(void)
 	 */
 	mips_cpu_flags = mycpu->cpu_flags;
 	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
-	mips_has_llsc = !(mips_cpu_flags & CPU_MIPS_NO_LLSC);
+	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
 
 	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
@@ -1088,6 +1097,60 @@ setregs(l, pack, stack)
 	l->l_md.md_flags &= ~MDP_FPUSED;
 	l->l_md.md_ss_addr = 0;
 }
+
+/*
+ * Machine dependent system variables.
+ */
+int
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+#ifdef __HAVE_BOOTINFO_H
+	struct btinfo_bootpath *bibp;
+#endif
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+#ifdef __HAVE_BOOTINFO_H
+	case CPU_BOOTED_KERNEL:
+		bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+		if (!bibp)
+			return (ENOENT); /* ??? */
+		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
+#endif
+	case CPU_LLSC:
+		return (sysctl_rdint(oldp, oldlenp, newp, MIPS_HAS_LLSC));
+	case CPU_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp,
+		    root_device->dv_xname));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+
+
+struct sigframe {
+	struct	sigcontext sf_sc;	/* actual context */
+};
 
 #ifdef DEBUG
 int sigdebug = 0;

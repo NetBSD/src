@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.18.4.3 2002/04/17 00:03:07 nathanw Exp $	*/
+/*	$NetBSD: mq200.c,v 1.18.4.4 2002/08/13 02:18:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -479,7 +479,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    256 <= cmap->index ||
-		    256 < (cmap->index + cmap->count))
+		    256 - cmap->index < cmap->count)
 			return (EINVAL);
 
 #if 0

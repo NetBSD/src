@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.2.10.1 2001/11/14 21:00:12 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.2.10.2 2002/08/13 02:17:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -40,7 +40,10 @@
  */
 
 struct mdlwp {
-	int	md_dummy;  /* Zero-sized structs are bad, apparently. */
+	struct trapframe *__spare0;
+	int		__spare1;
+	int		pmc_enabled;	/* bitfield of enabled counters */
+	void		*pmc_state;	/* port-specific pmc state */
 };
 
 struct mdproc {

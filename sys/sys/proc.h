@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.21 2002/08/01 03:24:04 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.22 2002/08/13 02:20:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -343,6 +343,7 @@ do {									\
 #define	FORK_SHAREFILES	0x08		/* Share file descriptors */
 #define	FORK_SHARESIGS	0x10		/* Share signal actions */
 #define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
+#define	FORK_CLEANFILES	0x40		/* Start with a clean descriptor set */
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.2.2 2002/04/17 00:04:44 nathanw Exp $	*/
+/* $NetBSD: autoconf.c,v 1.2.2.3 2002/08/13 02:19:06 nathanw Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,31 +34,20 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
 #include <sys/systm.h>
 
-#include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/pio.h>
-#include <machine/stdarg.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 
-#include <dev/ofw/openfirm.h>
-#include <dev/pci/pcivar.h>
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
-#include <dev/ata/atavar.h>
-#include <dev/ic/wdcvar.h>
+struct device *booted_device;
+int booted_partition;
 
-void canonicalize_bootpath(void);
-int OF_interpret(char *cmd, int nreturns, ...);
-
-extern char bootpath[256];
-char cbootpath[256];
-struct device *booted_device;	/* boot device */
-int booted_partition;		/* ...and partition on that device */
-
-u_int *heathrow_FCR = NULL;
+/*
+ * List of port-specific devices to attach to the processor local bus.
+ */
+static const struct plb_dev local_plb_devs [] = {
+	{ "pbus", },
+	{ NULL }
+};
 
 /*
  * Determine device configuration for a machine.
@@ -70,12 +59,11 @@ cpu_configure(void)
 	intr_init();
 	calc_delayconst();
 
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("configure: mainbus not configured");
+	if (config_rootfound("plb", &local_plb_devs) == NULL)
+		panic("configure: plb not configured");
 
-        printf("biomask %x netmask %x ttymask %x\n",
-	       (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	       (u_short)imask[IPL_TTY]);
+	printf("biomask %x netmask %x ttymask %x\n", (u_short)imask[IPL_BIO],
+	    (u_short)imask[IPL_NET], (u_short)imask[IPL_TTY]);
 	
 	(void)spl0();
 
@@ -92,9 +80,6 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
-	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
-

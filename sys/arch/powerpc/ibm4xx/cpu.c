@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.6.3 2002/08/01 02:43:00 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.6.4 2002/08/13 02:18:42 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,9 +40,9 @@
 #include <sys/device.h>
 #include <sys/properties.h>
 
-#include <machine/autoconf.h>
 #include <machine/dcr.h>
 #include <machine/cpu.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
 
 struct cputab {
 	int version;
@@ -86,10 +86,10 @@ int cpufound = 0;
 static int
 cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct plb_attach_args *paa = aux;
 
 	/* make sure that we're looking for a CPU */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
 		return (0);
 
 	return !cpufound;

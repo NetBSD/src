@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.10.2.7 2002/06/20 03:44:51 nathanw Exp $ */
+/* $NetBSD: isp_target.h,v 1.10.2.8 2002/08/13 02:19:27 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -551,8 +551,8 @@ int isp_target_notify(struct ispsoftc *, void *, u_int16_t *);
  * Enable/Disable/Modify a logical unit.
  * (softc, cmd, bus, tgt, lun, cmd_cnt, inotify_cnt, opaque)
  */
-#define	DFLT_CMND_CNT	32
-#define	DFLT_INOT_CNT	4
+#define	DFLT_CMND_CNT	0xfe	/* unmonitored */
+#define	DFLT_INOT_CNT	16
 int isp_lun_cmd(struct ispsoftc *, int, int, int, int, int, int, u_int32_t);
 
 /*

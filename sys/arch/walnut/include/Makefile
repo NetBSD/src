@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.8.2 2001/11/05 19:46:21 briggs Exp $
+#	$NetBSD: Makefile,v 1.1.8.3 2002/08/13 02:19:05 nathanw Exp $
 
 KDIR=	/sys/arch/walnut/include
 INCSDIR= /usr/include/walnut
@@ -14,7 +14,8 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h \
-	param.h pcb.h pio.h pmap.h powerpc.h proc.h profile.h psl.h pte.h \
+	param.h pcb.h pio.h pmap.h pmc.h powerpc.h \
+	proc.h profile.h psl.h pte.h \
 	ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h stdarg.h \

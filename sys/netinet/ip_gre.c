@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.15.2.3 2002/06/20 03:48:42 nathanw Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.15.2.4 2002/08/13 02:20:15 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.15.2.3 2002/06/20 03:48:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.15.2.4 2002/08/13 02:20:15 nathanw Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -121,21 +121,22 @@ gre_input(m, va_alist)
         va_dcl
 #endif
 {
-	int hlen,ret;
+	int off, ret, proto;
 	va_list ap;
 
 	va_start(ap, m);
-	hlen = va_arg(ap, int);
+	off = va_arg(ap, int);
+	proto = va_arg(ap, int);
 	va_end(ap);
 
-	ret = gre_input2(m,hlen,IPPROTO_GRE);
+	ret = gre_input2(m, off, proto);
 	/*
-	 * ret == 0 : packet not processed, but input from here
-	 * means no matching tunnel that is up is found,
-	 * so we can just free the mbuf and return
+	 * ret == 0 : packet not processed, meaning that 
+	 * no matching tunnel that is up is found.
+	 * we inject it to raw ip socket to see if anyone picks it up.
 	 */
 	if (ret == 0)
-		m_freem(m);
+		rip_input(m, off, proto);
 }
 
 /*
@@ -148,7 +149,7 @@ gre_input(m, va_alist)
  */
 
 int
-gre_input2(struct mbuf *m ,int hlen,u_char proto)
+gre_input2(struct mbuf *m ,int hlen, u_char proto)
 {
 	struct greip *gip = mtod(m, struct greip *);
 	int s;

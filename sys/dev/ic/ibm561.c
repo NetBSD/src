@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.1.2.3 2002/02/28 04:13:22 nathanw Exp $ */
+/* $NetBSD: ibm561.c,v 1.1.2.4 2002/08/13 02:19:23 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -273,12 +273,11 @@ ibm561_set_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct ibm561data *data = (struct ibm561data *)rc;
-	int count;
-	int index;
+	u_int count, index;
 	int s;
 
-	if ((u_int)cmapp->index >= IBM561_NCMAP_ENTRIES ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > IBM561_NCMAP_ENTRIES)
+	if (cmapp->index >= IBM561_NCMAP_ENTRIES ||
+	    cmapp->count > IBM561_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
@@ -303,12 +302,11 @@ ibm561_get_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct ibm561data *data = (struct ibm561data *)rc;
+	u_int count, index;
 	int error;
-	int count;
-	int index;
 
-	if ((u_int)cmapp->index >= IBM561_NCMAP_ENTRIES ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > IBM561_NCMAP_ENTRIES)
+	if (cmapp->index >= IBM561_NCMAP_ENTRIES ||
+	    cmapp->count > IBM561_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 	count = cmapp->count;
 	index = cmapp->index;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.26.6.4 2002/06/20 03:37:52 nathanw Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.26.6.5 2002/08/13 02:17:40 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.26.6.4 2002/06/20 03:37:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.26.6.5 2002/08/13 02:17:40 nathanw Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -1100,7 +1100,7 @@ cl_getcmap(gfp, cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return 0;
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	ba = gfp->g_regkva;
@@ -1168,7 +1168,7 @@ cl_putcmap(gfp, cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first copy the colors into kernelspace */

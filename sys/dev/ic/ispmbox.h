@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.31.2.9 2002/06/20 03:44:51 nathanw Exp $ */
+/* $NetBSD: ispmbox.h,v 1.31.2.10 2002/08/13 02:19:27 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -834,6 +834,7 @@ typedef struct {
 
 #define	FC4_IP		5 /* ISO/EEC 8802-2 LLC/SNAP "Out of Order Delivery" */
 #define	FC4_SCSI	8 /* SCSI-3 via Fivre Channel Protocol (FCP) */
+#define	FC4_FC_SVC	0x20	/* Fibre Channel Services */
 
 #define	SNS_GA_NXT	0x100
 #define	SNS_GPN_ID	0x112

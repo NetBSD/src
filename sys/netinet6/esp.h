@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.h,v 1.16.2.2 2001/10/22 20:41:59 nathanw Exp $	*/
+/*	$NetBSD: esp.h,v 1.16.2.3 2002/08/13 02:20:16 nathanw Exp $	*/
 /*	$KAME: esp.h,v 1.19 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -48,7 +48,6 @@ struct esp {
 	/* variable size */		/* padding */
 	/* 8bit */			/* pad size */
 	/* 8bit */			/* next header */
-	/* 8bit */			/* next header */
 	/* variable size, 32bit bound */ /* Authentication data (new IPsec) */
 };
 
@@ -58,7 +57,6 @@ struct newesp {
 	/* variable size */		/* (IV and) Payload data */
 	/* variable size */		/* padding */
 	/* 8bit */			/* pad size */
-	/* 8bit */			/* next header */
 	/* 8bit */			/* next header */
 	/* variable size, 32bit bound *//* Authentication data */
 };
@@ -94,6 +92,7 @@ struct esp_algorithm {
 };
 
 extern const struct esp_algorithm *esp_algorithm_lookup __P((int));
+extern int esp_max_padbound __P((void));
 extern int esp_max_ivlen __P((void));
 
 /* crypt routines */
