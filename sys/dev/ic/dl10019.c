@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.4 2001/07/05 05:36:02 thorpej Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.5 2001/07/08 17:52:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
