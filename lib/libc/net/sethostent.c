@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostent.c,v 1.5 1996/02/02 15:22:39 mrg Exp $	*/
+/*	$NetBSD: sethostent.c,v 1.6 1997/04/13 10:30:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -36,9 +36,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: sethostent.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
+static char rcsid[] = "Id: sethostent.c,v 8.5 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: sethostent.c,v 1.5 1996/02/02 15:22:39 mrg Exp $";
+static char rcsid[] = "$NetBSD: sethostent.c,v 1.6 1997/04/13 10:30:53 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ static char rcsid[] = "$NetBSD: sethostent.c,v 1.5 1996/02/02 15:22:39 mrg Exp $
 #include <arpa/nameser.h>
 #include <netdb.h>
 #include <resolv.h>
+
+void	_res_close __P((void));
 
 void
 sethostent(stayopen)
@@ -63,5 +65,5 @@ void
 endhostent()
 {
 	_res.options &= ~(RES_STAYOPEN | RES_USEVC);
-	_res_close();
+	res_close();
 }

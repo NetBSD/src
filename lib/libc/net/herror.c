@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.6 1996/02/02 15:22:22 mrg Exp $	*/
+/*	$NetBSD: herror.c,v 1.7 1997/04/13 10:30:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -56,9 +56,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: herror.c,v 8.2 1995/06/19 08:35:01 vixie Exp ";
+static char rcsid[] = "Id: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: herror.c,v 1.6 1996/02/02 15:22:22 mrg Exp $";
+static char rcsid[] = "$NetBSD: herror.c,v 1.7 1997/04/13 10:30:39 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

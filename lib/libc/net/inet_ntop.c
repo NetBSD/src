@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_ntop.c,v 1.2 1997/04/13 10:30:45 mrg Exp $	*/
+
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +17,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: inet_ntop.c,v 1.1.1.1 1997/04/13 09:12:15 mrg Exp $";
+#if 0
+static char rcsid[] = "Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp";
+#else
+static char rcsid[] = "$NetBSD: inet_ntop.c,v 1.2 1997/04/13 10:30:45 mrg Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -24,10 +30,10 @@ static char rcsid[] = "$Id: inet_ntop.c,v 1.1.1.1 1997/04/13 09:12:15 mrg Exp $"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
-#include "../conf/portability.h"
 
 #ifdef SPRINTF_CHAR
 # define SPRINTF(x) strlen(sprintf/**/x)

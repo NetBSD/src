@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.6 1996/02/02 15:22:32 mrg Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.7 1997/04/13 10:30:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -56,15 +56,17 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_mkquery.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
+static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_mkquery.c,v 1.6 1996/02/02 15:22:32 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_mkquery.c,v 1.7 1997/04/13 10:30:50 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+
+#include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,9 +89,12 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	register HEADER *hp;
 	register u_char *cp;
 	register int n;
-	struct rrec *newrr = (struct rrec *) newrr_in;
-	u_char *dnptrs[10], **dpp, **lastdnptr;
+	u_char *dnptrs[20], **dpp, **lastdnptr;
 
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+		h_errno = NETDB_INTERNAL;
+		return (-1);
+	}
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
 		printf(";; res_mkquery(%d, %s, %d, %d)\n",
@@ -104,7 +109,6 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	hp = (HEADER *) buf;
 	hp->id = htons(++_res.id);
 	hp->opcode = op;
-	hp->pr = (_res.options & RES_PRIMARY) != 0;
 	hp->rd = (_res.options & RES_RECURSE) != 0;
 	hp->rcode = NOERROR;
 	cp = buf + sizeof(HEADER);
@@ -112,12 +116,12 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	dpp = dnptrs;
 	*dpp++ = buf;
 	*dpp++ = NULL;
-	lastdnptr = dnptrs + sizeof(dnptrs)/sizeof(dnptrs[0]);
+	lastdnptr = dnptrs + sizeof(dnptrs) / sizeof(dnptrs[0]);
 	/*
 	 * perform opcode specific processing
 	 */
 	switch (op) {
-	case QUERY:
+	case QUERY:		/*FALLTHROUGH*/
 	case NS_NOTIFY_OP:
 		if ((buflen -= QFIXEDSZ) < 0)
 			return(-1);
@@ -173,64 +177,6 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		hp->ancount = htons(1);
 		break;
 
-#ifdef ALLOW_UPDATES
-	/*
-	 * For UPDATEM/UPDATEMA, do UPDATED/UPDATEDA followed by UPDATEA
-	 * (Record to be modified is followed by its replacement in msg.)
-	 */
-	case UPDATEM:
-	case UPDATEMA:
-
-	case UPDATED:
-		/*
-		 * The res code for UPDATED and UPDATEDA is the same; user
-		 * calls them differently: specifies data for UPDATED; server
-		 * ignores data if specified for UPDATEDA.
-		 */
-	case UPDATEDA:
-		buflen -= RRFIXEDSZ + datalen;
-		if ((n = dn_comp(dname, cp, buflen, dnptrs, lastdnptr)) < 0)
-			return (-1);
-		cp += n;
-		__putshort(type, cp);
-                cp += sizeof(u_int16_t);
-                __putshort(class, cp);
-                cp += sizeof(u_int16_t);
-		__putlong(0, cp);
-		cp += sizeof(u_int32_t);
-		__putshort(datalen, cp);
-                cp += sizeof(u_int16_t);
-		if (datalen) {
-			bcopy(data, cp, datalen);
-			cp += datalen;
-		}
-		if ( (op == UPDATED) || (op == UPDATEDA) ) {
-			hp->ancount = htons(0);
-			break;
-		}
-		/* Else UPDATEM/UPDATEMA, so drop into code for UPDATEA */
-
-	case UPDATEA:	/* Add new resource record */
-		buflen -= RRFIXEDSZ + datalen;
-		if ((n = dn_comp(dname, cp, buflen, dnptrs, lastdnptr)) < 0)
-			return (-1);
-		cp += n;
-		__putshort(newrr->r_type, cp);
-                cp += sizeof(u_int16_t);
-                __putshort(newrr->r_class, cp);
-                cp += sizeof(u_int16_t);
-		__putlong(0, cp);
-		cp += sizeof(u_int32_t);
-		__putshort(newrr->r_size, cp);
-                cp += sizeof(u_int16_t);
-		if (newrr->r_size) {
-			bcopy(newrr->r_data, cp, newrr->r_size);
-			cp += newrr->r_size;
-		}
-		hp->ancount = htons(0);
-		break;
-
-#endif /* ALLOW_UPDATES */
 	default:
 		return (-1);
 	}
