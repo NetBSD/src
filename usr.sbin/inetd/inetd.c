@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.98 2004/10/29 21:27:34 dsl Exp $	*/
+/*	$NetBSD: inetd.c,v 1.99 2004/11/28 05:40:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.98 2004/10/29 21:27:34 dsl Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.99 2004/11/28 05:40:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1762,7 +1762,7 @@ nextline(FILE *fd)
 static char *
 newstr(char *cp)
 {
-	if ((cp = strdup((cp !=NULL )? cp : "")) != NULL)
+	if ((cp = strdup((cp != NULL) ? cp : "")) != NULL)
 		return (cp);
 	syslog(LOG_ERR, "strdup: %m");
 	exit(1);
@@ -1773,15 +1773,14 @@ inetd_setproctitle(char *a, int s)
 {
 	socklen_t size;
 	struct sockaddr_storage ss;
-	char hbuf[NI_MAXHOST];
+	char hbuf[NI_MAXHOST], *hp;
 
 	size = sizeof(ss);
 	if (getpeername(s, (struct sockaddr *)&ss, &size) == 0) {
-		if (getnameinfo((struct sockaddr *)&ss, size, hbuf,
-		    sizeof(hbuf), NULL, 0, niflags) == 0)
-			setproctitle("-%s [%s]", a, hbuf);
-		else
-			setproctitle("-%s [?]", a);
+		if (getnameinfo((struct sockaddr *)&ss, size, hp = hbuf,
+		    sizeof(hbuf), NULL, 0, niflags) != 0)
+			hp = "?";
+		setproctitle("-%s [%s]", a, hp);
 	} else
 		setproctitle("-%s", a);
 }
