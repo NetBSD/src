@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.10 2001/11/24 01:44:55 mrg Exp $
+.\"	$NetBSD: installboot.8,v 1.11 2001/11/24 01:52:02 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,6 +172,13 @@ as the second-level boot program:
 The following command will perform the same, but for an UltraSPARC machine.
 .Bd -literal -offset indent
 /usr/mdec/installboot /boot /usr/mdec/bootxx /dev/rsd0a
+.Ed
+.Pp
+The following command will install the first-stage bootblocks for a
+SPARC machine, whether run on a SPARC or UltraSPARC machine
+.Bd -literal -offset indent
+/usr/mdec/installboot -U /boot /usr/mdec/bootxx /dev/rsd0a
+.Ed
 .Sh BUGS
 .Nm
 requires simultaneous access to the mounted file system and
