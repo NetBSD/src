@@ -1,6 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.1 2000/03/19 21:54:01 mycroft Exp $	*/
-
-#define ESP_PCMCIA_POLL
+/*	$NetBSD: esp_pcmcia.c,v 1.2 2000/03/20 00:53:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -242,11 +240,15 @@ esp_pcmcia_init(esc)
 	sc->sc_rev = NCR_VARIANT_ESP406;
 	sc->sc_id = 7;
 	sc->sc_freq = 40;
+	/* try -PARENB -SLOW */
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB | NCRCFG1_SLOW;
+	/* try +FE */
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
-	sc->sc_cfg3 = bus_space_read_1(iot, ioh, NCR_ESPCFG3) |
-	    NCRESPCFG3_FCLK | NCRESPCFG3_IDM | NCRESPCFG3_FSCSI;
+	/* try -IDM -FSCSI -FCLK */
+	sc->sc_cfg3 = NCRESPCFG3_CDB | NCRESPCFG3_FCLK | NCRESPCFG3_IDM |
+	    NCRESPCFG3_FSCSI;
 	sc->sc_cfg4 = NCRCFG4_ACTNEG;
+	/* try +INTP */
 	sc->sc_cfg5 = NCRCFG5_CRS1 | NCRCFG5_AADDR | NCRCFG5_PTRINC;
 	sc->sc_minsync = 0;
 	sc->sc_maxxfer = 64 * 1024;
