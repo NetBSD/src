@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.97 2000/05/06 18:28:01 augustss Exp $
+$NetBSD: usbdevs,v 1.98 2000/05/14 15:18:16 soren Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -455,14 +455,18 @@ product LINKSYS USB10TA		0x2206	USB10TA Ethernet
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
-product LOGITECH QUICKCAM	0x0801	QuickCam
+product LOGITECH PAGESCAN	0x040f	PageScan
+product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
+product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
+product LOGITECH QUICKCAM	0x0850	QuickCam
 product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
+product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
 
 /* Lucent products */
 product LUCENT EVALKIT		0x1001	USS-720 evaluation kit
@@ -510,6 +514,7 @@ product NETGEAR EA101		0x1001	Ethernet adapter
 
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
+product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
 
 /* Palm Computing, Inc. */
 product PALM SERIAL		0x0080	USB Serial Adaptor
@@ -593,7 +598,7 @@ product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* Vision products */
-product VISION VC6452V002	0x0002	VC6452V002 Camera
+product VISION VC6452V002	0x0002	CPiA Camera
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
