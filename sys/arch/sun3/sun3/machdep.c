@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 1997/01/27 17:45:50 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 1997/01/27 21:59:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -94,8 +94,6 @@
 #include <machine/kcore.h>
 #include <machine/db_machdep.h>
 #include <machine/machdep.h>
-
-#include <sun3/sun3/sunmon.h>
 
 extern char *cpu_string;
 extern char version[];

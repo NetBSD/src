@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.17 1997/01/27 20:35:58 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.18 1997/01/27 21:57:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,9 +48,8 @@
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/idprom.h>
+#include <machine/machdep.h>
 #include <machine/mon.h>
-
-#include <sun3/sun3/sunmon.h>
 
 /*
  * This structure is what this driver is all about.
