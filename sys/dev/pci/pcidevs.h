@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.464 2002/08/02 19:36:26 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.465 2002/08/03 17:12:42 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.460 2002/08/02 19:35:43 soren Exp 
+ *	NetBSD: pcidevs,v 1.461 2002/08/03 17:10:35 kent Exp 
  */
 
 /*
@@ -802,6 +802,7 @@
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
+#define	PCI_PRODUCT_AMD_PBC8111_AC	0x764d		/* AMD8111 AC97 Audio */
 #define	PCI_PRODUCT_AMD_PBC8111_IDE	0x7469		/* AMD8111 IDE Controller */
 
 /* American Megatrends products */
@@ -1743,6 +1744,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2DDR	0x0151		/* GeForce2 GTS (DDR) */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2BR	0x0152		/* GeForce2 GTS */
 #define	PCI_PRODUCT_NVIDIA_QUADRO2	0x0153		/* Quadro2 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC	0x01b1		/* nForce MCP AC-97 */
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
@@ -1935,6 +1937,7 @@
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
+#define	PCI_PRODUCT_SIS_7012_AC	0x7012		/* SiS 7012 AC-97 Sound */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* SiS 7016 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* SiS 7018 Sound */
 

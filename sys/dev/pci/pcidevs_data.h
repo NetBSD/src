@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.462 2002/08/02 19:36:28 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.463 2002/08/03 17:12:43 kent Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.460 2002/08/02 19:35:43 soren Exp 
+ *	NetBSD: pcidevs,v 1.461 2002/08/03 17:10:35 kent Exp 
  */
 
 /*
@@ -1028,6 +1028,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD768 USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 AC97 Audio",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
@@ -5314,6 +5320,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Quadro2",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce MCP AC-97",
+	},
+	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
 	    0,
 	    "Nvidia Corporation & SGS Thomson Microelectric",
@@ -6122,6 +6134,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7012 AC-97 Sound",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
