@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.8 1996/02/04 22:20:53 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.9 1996/03/06 00:15:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -325,6 +325,8 @@ extern time_t 	now;	    	/* The time at the start of this whole
 				 * process */
 
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
+
+extern Lst	sysIncPath;	/* The system include path. */
 
 /*
  * debug control:

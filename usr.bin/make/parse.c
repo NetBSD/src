@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.20 1996/02/17 13:28:09 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.21 1996/03/06 00:15:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.20 1996/02/17 13:28:09 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.21 1996/03/06 00:15:23 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -2645,30 +2645,11 @@ Parse_File(name, stream)
 void
 Parse_Init ()
 {
-	char *cp = NULL, *start;
-					/* avoid faults on read-only strings */
-	static char syspath[] = _PATH_DEFSYSPATH;
-    
     mainNode = NILGNODE;
     parseIncPath = Lst_Init (FALSE);
     sysIncPath = Lst_Init (FALSE);
     includes = Lst_Init (FALSE);
     targCmds = Lst_Init (FALSE);
-
-    /*
-     * Add the directories from the DEFSYSPATH (more than one may be given
-     * as dir1:...:dirn) to the system include path.
-     */
-    for (start = syspath; *start != '\0'; start = cp) {
-	for (cp = start; *cp != '\0' && *cp != ':'; cp++) 
-	    continue;
-	if (*cp == '\0') {
-	    Dir_AddDir(sysIncPath, start);
-	} else {
-	    *cp++ = '\0';
-	    Dir_AddDir(sysIncPath, start);
-	}
-    }
 }
 
 void
