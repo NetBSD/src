@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26 2001/09/24 23:49:31 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.27 2001/12/15 12:39:55 soren Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -356,6 +356,11 @@ int bus_space_probe __P((
 #define	bus_space_read_8(t, h, o)					\
 	    ((void)t, *(volatile u_int64_t *)((h) + (o)))
 
+#define bus_space_read_stream_1 bus_space_read_1
+#define bus_space_read_stream_2 bus_space_read_2
+#define bus_space_read_stream_4 bus_space_read_4
+#define bus_space_read_stream_8 bus_space_read_8
+
 
 /*
  *	void bus_space_write_N __P((bus_space_tag_t tag,
@@ -381,6 +386,11 @@ int bus_space_probe __P((
 #define	bus_space_write_8(t, h, o, v)	do {				\
 	((void)t, (void)(*(volatile u_int64_t *)((h) + (o)) = (v)));	\
 } while (0)
+
+#define bus_space_write_stream_1 bus_space_write_1
+#define bus_space_write_stream_2 bus_space_write_2
+#define bus_space_write_stream_4 bus_space_write_4
+#define bus_space_write_stream_8 bus_space_write_8
 
 
 /*
@@ -460,6 +470,11 @@ bus_space_read_multi_8(t, h, o, a, c)
 		*a++ = bus_space_read_8(t, h, o);
 }
 
+#define bus_space_read_multi_stream_1 bus_space_read_multi_1
+#define bus_space_read_multi_stream_2 bus_space_read_multi_2
+#define bus_space_read_multi_stream_4 bus_space_read_multi_4
+#define bus_space_read_multi_stream_8 bus_space_read_multi_8
+
 
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
@@ -532,6 +547,12 @@ bus_space_write_multi_8(t, h, o, a, c)
 	while (c-- > 0)
 		bus_space_write_8(t, h, o, *a++);
 }
+
+#define bus_space_write_multi_stream_1 bus_space_write_multi_1
+#define bus_space_write_multi_stream_2 bus_space_write_multi_2
+#define bus_space_write_multi_stream_4 bus_space_write_multi_4
+#define bus_space_write_multi_stream_8 bus_space_write_multi_8
+
 
 /*
  *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
