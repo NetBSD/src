@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.9 2001/12/17 20:38:40 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.10 2001/12/28 05:49:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,9 @@ struct sadata_upcall {
 	void	*sau_arg;
 	stack_t	sau_stack;
 	struct sa_t	sau_event;
+	ucontext_t	sau_e_ctx;
 	struct sa_t	sau_interrupted;
+	ucontext_t	sau_i_ctx;
 };
 
 struct sadata {
