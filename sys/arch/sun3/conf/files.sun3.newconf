@@ -1,4 +1,4 @@
-# $Id: files.sun3.newconf,v 1.9 1994/02/23 08:28:24 glass Exp $
+# $Id: files.sun3.newconf,v 1.10 1994/03/01 08:24:04 glass Exp $
 # sun3-specific configuration info
 
 maxusers 2 8 64
@@ -18,7 +18,7 @@ device le at obio: ifnet, ether
 file arch/sun3/dev/if_le.c		le
 file arch/sun3/dev/if_le_subr.c		le
 
-device zs at obio: tty, lame_zs
+device zs at obio: tty
 file arch/sun3/dev/zs.c			zs needs-count
 
 device clock at obio

@@ -1,4 +1,4 @@
-# $Id: Makefile.sun3,v 1.14 1994/02/23 08:28:21 glass Exp $
+# $Id: Makefile.sun3,v 1.15 1994/03/01 08:24:01 glass Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -119,7 +119,7 @@ locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile
 
-sun3_startup.o: Makefile
+sun3_startup.o pmap.o kern_xxx.o: Makefile
 
 # depend on network configuration
 af.o uipc_proto.o locore.o: Makefile
