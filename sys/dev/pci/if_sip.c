@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.9 2000/03/23 07:01:39 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.10 2000/03/23 22:23:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -348,6 +348,7 @@ sip_attach(parent, self, aux)
 	const struct sip_product *sip;
 	pcireg_t pmode;
 	u_int16_t enaddr[ETHER_ADDR_LEN / 2];
+	int pmreg;
 
 	callout_init(&sc->sc_tick_ch);
 
@@ -391,8 +392,8 @@ sip_attach(parent, self, aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed. */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, SIP_PCI_CFGPMCSR) & 0x3;
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
 		if (pmode == 3) {
 			/*
 			 * The card has lost all configuration data in
@@ -405,7 +406,7 @@ sip_attach(parent, self, aux)
 		if (pmode != 0) {
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, SIP_PCI_CFGPMCSR, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
 

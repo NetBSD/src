@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl.c,v 1.8 2000/03/23 07:01:38 thorpej Exp $ */
+/* $NetBSD: if_rl.c,v 1.9 2000/03/23 22:23:03 mycroft Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -752,7 +752,7 @@ rl_attach(parent, self, aux)
 	vm_offset_t		pbase, vbase;
 #endif
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
+	pcireg_t		command;
 	struct rl_softc *sc = (struct rl_softc *)self;
 	struct ifnet		*ifp;
 	u_int16_t		rl_did = 0;
@@ -762,6 +762,7 @@ rl_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg;
+	int pmreg;
 
 	callout_init(&sc->rl_tick_ch);
 
@@ -771,10 +772,10 @@ rl_attach(parent, self, aux)
 	 * Handle power management nonsense.
 	 */
 
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		command = pci_conf_read(pc, pa->pa_tag, RL_PCI_PWRMGMTCTRL);
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		command = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
 		if (command & RL_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
+			pcireg_t	iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOIO);
@@ -786,7 +787,7 @@ rl_attach(parent, self, aux)
 			"-- setting to D0\n", sc->sc_dev.dv_xname,
 			       command & RL_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, RL_PCI_PWRMGMTCTRL, command);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, command);
 
 			/* Restore PCI config data. */
 			pci_conf_write(pc, pa->pa_tag, RL_PCI_LOIO, iobase);
