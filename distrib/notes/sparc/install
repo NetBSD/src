@@ -91,7 +91,7 @@ SunOS and the OpenBOOT ROM map according to this table:
     0		sd3
     1		sd1
     2		sd2
-    3		sd3
+    3		sd0
     4		sd4
     5		sd5
     6		sd6
@@ -116,7 +116,7 @@ instead of `ok', type:
 This is needed because netbsd cannot handle the old-mode yet, and will
 firework on you.
 
-As well, you cannot use the security modes of the sparc OpenBOOT ROM.
+Also, you cannot use the security modes of the sparc OpenBOOT ROM.
 
     ok setenv security-mode none
 
@@ -143,6 +143,6 @@ protect it and the "root" account with good passwords.
 Some of the files in the NetBSD 1.0 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified, as well.  If you are unfamiliar with
-UN*X-like system administration, it's recommended that you buy a book
-that discusses it.
+probably need to be modified.  If you are unfamiliar with UN*X-like
+system administration, it's recommended that you buy a book that
+discusses it.
