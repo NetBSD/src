@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 1998/08/15 03:02:37 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 1998/08/24 01:40:30 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,11 +69,3 @@ const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
 void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *));
 void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
-
-/*
- * Compatibility functions, to map the old be PCI functions to the new ones.
- * NOT TO BE USED BY NEW CODE.
- */
-void		*pci_map_int __P((pcitag_t, int, int (*)(void *), void *));
-int		pci_map_io __P((pcitag_t, int, int *));
-int		pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));

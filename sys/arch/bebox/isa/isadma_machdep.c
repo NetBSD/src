@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.11 1998/06/09 05:53:30 sakamoto Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.12 1998/08/24 01:40:30 sakamoto Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -59,7 +59,7 @@
 
 #include <vm/vm.h>
 
-extern vm_offset_t avail_end;		/* XXX temporary */
+extern paddr_t avail_end;		/* XXX temporary */
 
 /*
  * ISA can DMA to 0-16M.
@@ -592,7 +592,7 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t high;
+	paddr_t high;
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
 		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
