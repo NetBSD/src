@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2003/05/18 07:57:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/06/04 19:00:26 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ MLINKS+=	msgc.1 msg_window.1 \
 		msgc.1 msg_display_add.1 \
 		msgc.1 msg_prompt.1 \
 		msgc.1 msg_prompt_add.1 \
+		msgc.1 msg_prompt_win.1 \
 		msgc.1 msg_prompt_noecho.1 \
 		msgc.1 msg_table_add.1
 
