@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.13 2001/04/25 01:46:25 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.14 2002/01/17 05:21:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.13 2001/04/25 01:46:25 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.14 2002/01/17 05:21:47 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -471,9 +471,14 @@ sizecmd(const char *filename)
 			(void) fclose(fin);
 			return;
 		}
+		if (stbuf.st_size > 10240) {
+			reply(550, "%s: file too large for SIZE.", filename);
+			(void) fclose(fin);
+			return;
+		}
 
 		count = 0;
-		while((c=getc(fin)) != EOF) {
+		while((c = getc(fin)) != EOF) {
 			if (c == '\n')	/* will get expanded to \r\n */
 				count++;
 			count++;
