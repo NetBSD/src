@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.17 1994/02/06 01:08:39 mycroft Exp $
+ *	$Id: ite.c,v 1.18 1994/02/10 13:59:35 mycroft Exp $
  */
 
 /*
@@ -53,19 +53,21 @@
 #undef NITE
 #define NITE	NGRF
 
-#include "param.h"
-#include "conf.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
-#include "itevar.h"
-#include "iteioctl.h"
-#include "kbdmap.h"
+#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grfioctl.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/iteioctl.h>
+#include <hp300/dev/kbdmap.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 #define set_attr(ip, attr)	((ip)->attribute |= (attr))
 #define clr_attr(ip, attr)	((ip)->attribute &= ~(attr))
@@ -290,17 +292,20 @@ itewrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
-iteioctl(dev, cmd, addr, flag)
+iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t addr;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp = ite_tty[UNIT(dev)];
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, addr, flag);
+	error = ttioctl(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 	return (ENOTTY);
@@ -774,8 +779,6 @@ ite_clrtoeos(ip, sp)
  * Console functions
  */
 #include <dev/cons.h>
-#include "grfioctl.h"
-#include "grfvar.h"
 
 #ifdef DEBUG
 /*

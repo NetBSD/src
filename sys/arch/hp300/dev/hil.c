@@ -37,33 +37,33 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.8 1994/01/09 21:36:55 mycroft Exp $
+ *	$Id: hil.c,v 1.9 1994/02/10 13:59:33 mycroft Exp $
  */
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/ioctl.h"
-#include "sys/file.h"
-#include "sys/select.h"
-#include "sys/tty.h"
-#include "sys/systm.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
 
-#include "hilreg.h"
-#include "hilioctl.h"
-#include "hilvar.h"
-#include "kbdmap.h"
+#include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilvar.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/kbdmap.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm_param.h"
-#include "vm/vm_map.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_pager.h"
+#include <vm/vm_param.h>
+#include <vm/vm_map.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
 
 struct	hilloop	hil0;
 struct	_hilbell default_bell = { BELLDUR, BELLFREQ };
@@ -326,7 +326,9 @@ hilread(dev, uio)
 
 hilioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	register struct hilloop *hilp = &hil0;	/* XXX */

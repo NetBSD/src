@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: ppi.c,v 1.2 1993/05/22 07:56:41 cgd Exp $
+ *	$Id: ppi.c,v 1.3 1994/02/10 13:59:37 mycroft Exp $
  */
 
 /*
@@ -41,13 +41,14 @@
 #include "ppi.h"
 #if NPPI > 0
 
-#include "sys/param.h"
-#include "sys/errno.h"
-#include "sys/uio.h"
-#include "sys/malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
 
-#include "device.h"
-#include "ppiioctl.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/ppiioctl.h>
 
 int	ppiattach(), ppistart(), ppitimo();
 struct	driver ppidriver = {
@@ -345,11 +346,12 @@ again:
 	return (error);
 }
 
-ppiioctl(dev, cmd, data, flag)
+ppiioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	struct ppi_softc *sc = &ppi_softc[UNIT(dev)];
 	struct ppiparam *pp, *upp;

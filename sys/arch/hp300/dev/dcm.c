@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: dcm.c 1.26 91/01/21
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.12 1994/02/06 01:08:37 mycroft Exp $
+ *	$Id: dcm.c,v 1.13 1994/02/10 13:59:30 mycroft Exp $
  */
 
 /*
@@ -51,22 +51,23 @@
 /*
  *  98642/MUX
  */
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
-#include "sys/time.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/time.h>
 
-#include "device.h"
-#include "dcmreg.h"
-#include "machine/cpu.h"
-#include "../hp300/isr.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/dcmreg.h>
+
+#include <machine/cpu.h>
+#include <hp300/hp300/isr.h>
 
 #ifndef DEFAULT_BAUD_RATE
 #define DEFAULT_BAUD_RATE 9600
@@ -716,9 +717,12 @@ dcmmint(unit, mcnd, dcm)
 	}
 }
 
-dcmioctl(dev, cmd, data, flag)
+dcmioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = UNIT(dev);
@@ -732,10 +736,10 @@ dcmioctl(dev, cmd, data, flag)
 		       unit, cmd, *data, flag);
 #endif
 	tp = dcm_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
