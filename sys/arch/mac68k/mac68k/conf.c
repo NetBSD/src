@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1994/12/14 19:12:23 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1994/12/22 05:50:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -482,6 +482,15 @@ cdev_decl(bpf);
 	(dev_type_map((*))) enodev, \
 	0 }
 
+#include "tun.h"
+cdev_decl(tun);
+/* open, close, read, write, ioctl, select -- XXX should be generic device */
+#define cdev_tun_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
+	(dev_type_map((*))) enodev, 0 }
+
 #ifdef LKM
 #define NLKM	1
 #else
@@ -547,7 +556,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
 	cdev_adb_init(adb),		/* 23: ADB event interface */
-	cdev_notdef(),			/* 24: */
+	cdev_tun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_lkm_init(NLKM),		/* 25: loadable kernel modules pdev */
 	LKM_CDEV(),			/* 26: Empty slot for LKM */
 	LKM_CDEV(),			/* 27: Empty slot for LKM */
