@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.3 2003/07/08 10:06:30 itojun Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.4 2005/01/31 04:58:02 simonb Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@
 #define	DS1687_BANK1_ADATE	0x49	/* BANK1: Alarm: Date (1-31) */
 
 #define	DS1687_NBASEREGS	0x0d	/* 14 registers; CMOS follows */
-#define	D1687_NVRAM_START	0xe	/* start of NVRAM: offset 14 */
+#define	DS1687_NVRAM_START	0xe	/* start of NVRAM: offset 14 */
 
 /* Layout of software shadow copy of TOD registers */
 #define DS1687_NHDW_TODREGS	0x0a	/* 10 basic TOD registers */
