@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/27 02:21:22 kleink Exp $
+#	$NetBSD: Makefile,v 1.4 2002/08/07 05:15:07 briggs Exp $
 
 KDIR=	/sys/arch/cesfic/include
 INCSDIR= /usr/include/cesfic
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h setjmp.h signal.h stdarg.h trap.h types.h \
 	varargs.h vmparam.h
 
