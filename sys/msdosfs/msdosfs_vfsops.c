@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.24 1994/12/14 16:33:18 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.25 1994/12/15 20:47:51 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -190,7 +190,6 @@ msdosfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void) msdosfs_statfs(mp, &mp->mnt_stat, p);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
 #endif
