@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.10 1997/12/19 14:08:43 kleink Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.11 1998/01/22 06:35:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.10 1997/12/19 14:08:43 kleink Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.11 1998/01/22 06:35:02 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
+#include "reentrant.h"
 
 /*
  * Set one of the three kinds of buffering, optionally including
@@ -73,6 +74,7 @@ setvbuf(fp, buf, mode, size)
 		if ((mode != _IOFBF && mode != _IOLBF) || (int)size < 0)
 			return (-1);
 
+	FLOCKFILE(fp);
 	/*
 	 * Write current buffer, if any.  Discard unread input (including
 	 * ungetc data), cancel line buffering, and free old buffer if
@@ -124,6 +126,7 @@ nbf:
 			fp->_w = 0;
 			fp->_bf._base = fp->_p = fp->_nbuf;
 			fp->_bf._size = 1;
+			FUNLOCKFILE(fp);
 			return (ret);
 		}
 		flags |= __SMBF;
@@ -164,5 +167,6 @@ nbf:
 	}
 	__cleanup = _cleanup;
 
+	FUNLOCKFILE(fp);
 	return (ret);
 }

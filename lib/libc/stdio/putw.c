@@ -1,4 +1,4 @@
-/*	$NetBSD: putw.c,v 1.6 1997/07/13 20:15:21 christos Exp $	*/
+/*	$NetBSD: putw.c,v 1.7 1998/01/22 06:35:01 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)putw.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putw.c,v 1.6 1997/07/13 20:15:21 christos Exp $");
+__RCSID("$NetBSD: putw.c,v 1.7 1998/01/22 06:35:01 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include "fvwrite.h"
+#include "reentrant.h"
 
 int
 putw(w, fp)
@@ -55,10 +56,14 @@ putw(w, fp)
 {
 	struct __suio uio;
 	struct __siov iov;
+	int r;
 
 	iov.iov_base = &w;
 	iov.iov_len = uio.uio_resid = sizeof(w);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	return (__sfvwrite(fp, &uio));
+	FLOCKFILE(fp);
+	r = __sfvwrite(fp, &uio);
+	FUNLOCKFILE(fp);
+	return r;
 }
