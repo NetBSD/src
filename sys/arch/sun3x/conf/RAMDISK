@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.2 1997/10/07 17:50:51 gwr Exp $
+# $NetBSD: RAMDISK,v 1.2.2.1 1998/05/05 08:44:05 mycroft Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -26,6 +26,8 @@ options 	FIFO		# named pipes used during install
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MINIROOTSIZE=512	# 256K
 
 # Networking options
