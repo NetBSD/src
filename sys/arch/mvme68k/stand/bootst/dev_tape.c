@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.1 1996/05/28 15:23:55 chuck Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.2 1997/12/17 21:28:02 scw Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -47,6 +47,8 @@ extern int debug;
 
 struct mvmeprom_dskio tape_ioreq;
 
+static int hackprom_diskrd(struct mvmeprom_dskio *);
+
 /*
  * This is a special version of devopen() for tape boot.
  * In this version, the file name is a numeric string of
@@ -75,7 +77,7 @@ tape_open(f, fname)
 	struct open_file *f;
 	char *fname;		/* partition number, i.e. "1" */
 {
-	int	error, part;
+	int	part;
 	struct mvmeprom_dskio *ti;
 
 	/*
@@ -105,7 +107,7 @@ tape_open(f, fname)
 
 	f->f_devdata = ti;
 
-	return (error);
+	return (0);
 }
 
 int
@@ -144,7 +146,11 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	/* don't change block #, set in open */
 	ti->blk_cnt = size / (512 / MVMEPROM_SCALE);
 
-	ret = mvmeprom_diskrd(ti);
+	/* work around for stupid '147 prom bug */
+	if ( bugargs.cputyp == 0x147 )
+		ret = hackprom_diskrd(ti);
+	else
+		ret = mvmeprom_diskrd(ti);
 
 	if (ret != 0)
 		return (EIO);
@@ -161,3 +167,46 @@ tape_ioctl()
 	return EIO;
 }
 
+static int
+hackprom_diskrd(struct mvmeprom_dskio *ti)
+{
+	static int blkoffset = 0;
+
+#define	hackload_addr	((char *) 0x080000)	/* Load tape segment here */
+#define hackload_blocks 0x2000			/* 2Mb worth */
+
+	if ( (ti->flag & IGNORE_FILENUM) == 0 ) {
+		/*
+		 * First time through. Load the whole tape segment...
+		 */
+		struct mvmeprom_dskio nti;
+		int ret;
+
+		nti = *ti;
+
+		nti.pbuffer = hackload_addr;
+		nti.blk_cnt = hackload_blocks;
+		nti.flag |= END_OF_FILE;
+
+		ret = mvmeprom_diskrd(&nti);
+
+		/*
+		 * PROM returns 1 on end-of-file. This isn't an
+		 * error in this instance, just in case you're wondering! ;-)
+		 */
+		if ( ret < 0 || ret > 1 )
+			return ret;
+
+		blkoffset = 0;
+	}
+
+	/*
+	 * Grab the required number of block(s)
+	 */
+	bcopy(&(hackload_addr[blkoffset]), ti->pbuffer,
+	      ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
+
+	blkoffset += (ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
+
+	return 0;
+}
