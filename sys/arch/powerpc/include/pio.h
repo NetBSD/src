@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.1 2001/02/05 19:33:54 briggs Exp $ */
+/*	$NetBSD: pio.h,v 1.2 2001/05/27 20:59:15 matt Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef _MACHINE_PIO_H_
-#define _MACHINE_PIO_H_
+#ifndef _POWERPC_PIO_H_
+#define _POWERPC_PIO_H_
 /*
  * I/O macros.
  */
@@ -324,4 +324,4 @@ __inslrb(a,d,c)
 #define	inslrb(a,d,c)	(__inslrb((volatile u_int32_t *)(a), d, c))
 #define	ins32rb(a,d,c)	inslrb(a,d,c)
 
-#endif /*_MACHINE_PIO_H_*/
+#endif /*_POWERPC_PIO_H_*/
