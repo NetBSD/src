@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.4 2001/02/19 22:56:23 cgd Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.5 2002/02/18 17:00:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ main(argc, argv)
 			for (i = 0; i < argc; i++) {
 				f = field_by_name(argv[i]);
 				if ((f->flags & FLG_WRONLY) != 0)
-					errx(1, "%s: read only", argv[i]);
+					errx(1, "%s: write only", argv[i]);
 				f->flags |= FLG_GET;
 			}
 			(*getval)(fd);
