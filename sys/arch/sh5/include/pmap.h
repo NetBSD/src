@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2002/07/05 13:32:00 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2002/08/26 10:33:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -101,7 +101,7 @@ extern paddr_t pmap_unmap_poolpage(vaddr_t);
 /* Private pmap data and functions */
 extern int	pmap_initialized;
 extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
-extern vaddr_t	pmap_bootstrap_mapping(paddr_t, u_int);
+extern vaddr_t	pmap_map_device(paddr_t, u_int);
 
 extern void (*__cpu_tlbinv)(pteh_t, pteh_t);
 extern void (*__cpu_tlbinv_cookie)(pteh_t, u_int);
