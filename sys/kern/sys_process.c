@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.57 1997/04/28 04:49:30 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.58 1998/02/05 07:59:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -62,6 +62,11 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/reg.h>
 

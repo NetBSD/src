@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.55 1997/11/16 22:50:55 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.56 1998/02/05 07:59:30 mrg Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -82,6 +82,9 @@
 #include <compat/svr4/svr4_mman.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 static __inline clock_t timeval_to_clock_t __P((struct timeval *));
 static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
@@ -684,10 +687,18 @@ svr4_sys_sysconfig(p, v, retval)
 		*retval = 3;	/* XXX: real, virtual, profiling */
 		break;
 	case SVR4_CONFIG_PHYS_PAGES:
+#if defined(UVM)
+		*retval = uvmexp.free;	/* XXX: free instead of total */
+#else
 		*retval = cnt.v_free_count;	/* XXX: free instead of total */
+#endif
 		break;
 	case SVR4_CONFIG_AVPHYS_PAGES:
+#if defined(UVM)
+		*retval = uvmexp.active;	/* XXX: active instead of avg */
+#else
 		*retval = cnt.v_active_count;	/* XXX: active instead of avg */
+#endif
 		break;
 	default:
 		return EINVAL;
@@ -817,7 +828,15 @@ svr4_sys_break(p, v, retval)
 	DPRINTF(("break(3): old %lx new %lx diff %x\n", old, new, diff));
 
 	if (diff > 0) {
+#if defined(UVM)
+		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
+           		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, 
+			UVM_ADV_NORMAL, 
+			UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
+			UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
+#else
 		rv = vm_allocate(&vm->vm_map, &old, diff, FALSE);
+#endif
 		if (rv != KERN_SUCCESS) {
 			uprintf("sbrk: grow failed, return = %d\n", rv);
 			return ENOMEM;
@@ -825,7 +844,11 @@ svr4_sys_break(p, v, retval)
 		vm->vm_dsize += btoc(diff);
 	} else if (diff < 0) {
 		diff = -diff;
+#if defined(UVM)
+		rv = uvm_deallocate(&vm->vm_map, new, diff);
+#else
 		rv = vm_deallocate(&vm->vm_map, new, diff);
+#endif
 		if (rv != KERN_SUCCESS) {
 			uprintf("sbrk: shrink failed, return = %d\n", rv);
 			return ENOMEM;

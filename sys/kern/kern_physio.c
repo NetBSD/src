@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.29 1998/02/05 07:59:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -45,9 +45,14 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 /*
  * The routines implemented in this file are described in:
@@ -94,31 +99,45 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	 */
 	if (uio->uio_segflg == UIO_USERSPACE)
 		for (i = 0; i < uio->uio_iovcnt; i++)
+#if defined(UVM) /* XXXCDC: map not locked, rethink */
+			if (!uvm_useracc(uio->uio_iov[i].iov_base,
+				     uio->uio_iov[i].iov_len,
+				     (flags == B_READ) ? B_WRITE : B_READ))
+				return (EFAULT);
+#else
 			if (!useracc(uio->uio_iov[i].iov_base,
 				     uio->uio_iov[i].iov_len,
 				     (flags == B_READ) ? B_WRITE : B_READ))
 				return (EFAULT);
+#endif
 
 	/* Make sure we have a buffer, creating one if necessary. */
-	if ((nobuf = (bp == NULL)) != 0)
+	if ((nobuf = (bp == NULL)) != 0) {
+
 		bp = getphysbuf();
+		/* bp was just malloc'd so can't already be busy */
+		bp->b_flags |= B_BUSY; 
 
-	/* [raise the processor priority level to splbio;] */
-	s = splbio();
+	} else {
 
-	/* [while the buffer is marked busy] */
-	while (bp->b_flags & B_BUSY) {
-		/* [mark the buffer wanted] */
-		bp->b_flags |= B_WANTED;
-		/* [wait until the buffer is available] */
-		tsleep((caddr_t)bp, PRIBIO+1, "physbuf", 0);
+		/* [raise the processor priority level to splbio;] */
+		s = splbio();
+
+		/* [while the buffer is marked busy] */
+		while (bp->b_flags & B_BUSY) {
+			/* [mark the buffer wanted] */
+			bp->b_flags |= B_WANTED;
+			/* [wait until the buffer is available] */
+			tsleep((caddr_t)bp, PRIBIO+1, "physbuf", 0);
+		}
+
+		/* Mark it busy, so nobody else will use it. */
+		bp->b_flags |= B_BUSY;
+
+		/* [lower the priority level] */
+		splx(s);
+
 	}
-
-	/* Mark it busy, so nobody else will use it. */
-	bp->b_flags |= B_BUSY;
-
-	/* [lower the priority level] */
-	splx(s);
 
 	/* [set up the fixed part of the buffer for a transfer] */
 	bp->b_dev = dev;
@@ -169,7 +188,11 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * restores it.
 			 */
 			PHOLD(p);
+#if defined(UVM)
+			uvm_vslock(bp->b_data, todo);
+#else
 			vslock(bp->b_data, todo);
+#endif
 			vmapbuf(bp, todo);
 
 			/* [call strategy to start the transfer] */
@@ -200,7 +223,11 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 *    locked]
 			 */
 			vunmapbuf(bp, todo);
+#if defined(UVM)
+			uvm_vsunlock(bp->b_data, todo);
+#else
 			vsunlock(bp->b_data, todo);
+#endif
 			PRELE(p);
 
 			/* remember error value (save a splbio/splx pair) */
@@ -258,47 +285,39 @@ done:
 }
 
 /*
- * Get a swap buffer structure, for use in physical I/O.
- * Mostly taken from /sys/vm/swap_pager.c, except that it no longer
- * records buffer list-empty conditions, and sleeps at PRIBIO + 1,
- * rather than PSWP + 1 (and on a different wchan).
+ * allocate a buffer structure for use in physical I/O.
  */
 struct buf *
 getphysbuf()
 {
 	struct buf *bp;
-	int s;
 
-	s = splbio();
-        while (bswlist.b_actf == NULL) {
-                bswlist.b_flags |= B_WANTED;
-                tsleep((caddr_t)&bswlist, PRIBIO + 1, "getphys", 0);
-        }
-        bp = bswlist.b_actf;
-        bswlist.b_actf = bp->b_actf;
-        splx(s);
-	return (bp);
+	bp = malloc(sizeof(*bp), M_TEMP, M_WAITOK);
+	bzero(bp, sizeof(*bp));
+
+	/* XXXCDC: are the following two lines necessary? */
+	bp->b_rcred = bp->b_wcred = NOCRED;
+	bp->b_vnbufs.le_next = NOLIST;
+
+	return(bp);
 }
 
 /*
- * Get rid of a swap buffer structure which has been used in physical I/O.
- * Mostly taken from /sys/vm/swap_pager.c, except that it now uses
- * wakeup() rather than the VM-internal thread_wakeup(), and that the caller
- * must mask disk interrupts, rather than putphysbuf() itself.
+ * get rid of a swap buffer structure which has been used in physical I/O.
  */
 void
 putphysbuf(bp)
-	struct buf *bp;
+        struct buf *bp;
 {
 
-        bp->b_actf = bswlist.b_actf;
-        bswlist.b_actf = bp;
-        if (bp->b_vp)
-                brelvp(bp);
-        if (bswlist.b_flags & B_WANTED) {
-                bswlist.b_flags &= ~B_WANTED;
-                wakeup(&bswlist);
-        }
+	/* XXXCDC: is this necesary? */
+	if (bp->b_vp)
+		brelvp(bp);
+
+	if (bp->b_flags & B_WANTED)
+		panic("putphysbuf: private buf B_WANTED");
+	free(bp, M_TEMP);
+
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.76 1997/10/18 16:34:17 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.77 1998/02/05 08:00:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,6 +104,10 @@
 #include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -430,6 +434,9 @@ getnewvnode(tag, mp, vops, vpp)
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
+#ifdef UVM
+	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
+#endif
 	return (0);
 }
 
@@ -1013,6 +1020,12 @@ vclean(vp, flags)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock");
 	vp->v_flag |= VXLOCK;
+#ifdef UVM
+	/*
+	 * clean out any VM data associated with the vnode.
+	 */
+	uvm_vnp_terminate(vp);
+#endif
 	/*
 	 * Clean out any buffers associated with the vnode.
 	 */
@@ -1788,7 +1801,9 @@ vfs_shutdown()
 
 	if (unmountem) {
 		/* Release inodes held by texts before update. */
+#if !defined(UVM)
 		vnode_pager_umount(NULL);
+#endif
 #ifdef notdef
 		vnshutdown();
 #endif

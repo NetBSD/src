@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.72 1997/10/24 17:37:47 chuck Exp $	*/
+/*	$NetBSD: systm.h,v 1.73 1998/02/05 08:00:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -87,8 +87,10 @@ extern int autoniceval;         /* proc priority after autonicetime */
 
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
+#if !defined(UVM)
 extern int nswdev;		/* number of swap devices */
 extern int nswap;		/* size of swap space */
+#endif
 
 extern int selwait;		/* select timeout address */
 
@@ -183,6 +185,9 @@ void	bcopy __P((const void *, void *, size_t));
 void	ovbcopy __P((const void *, void *, size_t));
 void	bzero __P((void *, size_t));
 int	bcmp __P((const void *, const void *, size_t));
+#if defined(UVM)
+int	kcopy __P((const void *, void *, size_t));
+#endif
 
 void	*memchr __P((const void *, int, size_t));
 int      memcmp __P((const void *, const void *, size_t));

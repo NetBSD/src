@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.46 1998/01/03 02:48:43 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.47 1998/02/05 07:59:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -75,6 +75,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 /*
  * exit --
@@ -154,9 +158,15 @@ exit1(p, rv)
 	 * Can't free the entire vmspace as the kernel stack
 	 * may be mapped within that space also.
 	 */
+#if defined(UVM)
+	if (vm->vm_refcnt == 1)
+		(void) uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
+		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+#else
 	if (vm->vm_refcnt == 1)
 		(void) vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS,
 		    VM_MAXUSER_ADDRESS);
+#endif
 
 	if (SESS_LEADER(p)) {
 		register struct session *sp = p->p_session;

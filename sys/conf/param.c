@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.22 1997/09/20 00:44:06 enami Exp $	*/
+/*	$NetBSD: param.c,v 1.23 1998/02/05 07:59:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -118,8 +118,8 @@ int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 #ifdef SYSVSHM
 #define	SHMMAX	SHMMAXPGS	/* shminit() performs a `*= NBPG' */
 #define	SHMMIN	1
-#define	SHMMNI	32			/* <= SHMMMNI in shm.h */
-#define	SHMSEG	8
+#define	SHMMNI	128			/* <= SHMMMNI in shm.h */
+#define	SHMSEG	32
 #define	SHMALL	(SHMMAXPGS/CLSIZE)
 
 struct	shminfo shminfo = {

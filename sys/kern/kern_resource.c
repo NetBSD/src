@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.42 1997/10/15 17:04:02 mycroft Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.43 1998/02/05 07:59:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -52,6 +52,10 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 void limfree __P((struct plimit *));
 /*
@@ -291,8 +295,13 @@ dosetrlimit(p, which, limp)
 				size = alimp->rlim_cur - limp->rlim_cur;
 				addr = USRSTACK - alimp->rlim_cur;
 			}
-			(void)vm_map_protect(&p->p_vmspace->vm_map,
-			    addr, addr+size, prot, FALSE);
+#if defined(UVM)
+			(void) uvm_map_protect(&p->p_vmspace->vm_map,
+					      addr, addr+size, prot, FALSE);
+#else
+			(void) vm_map_protect(&p->p_vmspace->vm_map,
+					      addr, addr+size, prot, FALSE);
+#endif
 		}
 		break;
 
