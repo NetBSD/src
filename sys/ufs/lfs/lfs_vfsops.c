@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.107 2003/03/20 14:11:47 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.108 2003/03/21 06:09:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.107 2003/03/20 14:11:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.108 2003/03/21 06:09:08 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2001,7 +2001,7 @@ lfs_vinit(struct mount *mp, struct vnode *vp)
 	if (vp->v_type != VLNK ||
 	    VTOI(vp)->i_ffs_size >= vp->v_mount->mnt_maxsymlinklen) {
 		struct lfs *fs = ump->um_lfs;
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		for (i = (ip->i_ffs_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
 		    i < NDADDR; i++) {
 			if (ip->i_ffs_db[i] != 0) {
@@ -2015,13 +2015,13 @@ inconsistent:
 				goto inconsistent;
 			}
 		}
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG */
 		for (i = 0; i < NDADDR; i++)
 			if (ip->i_ffs_db[i] != 0)
 				ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 	}
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (vp->v_type == VNON) {
 		printf("lfs_vinit: ino %d is type VNON! (ifmt=%o)\n",
 		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
@@ -2030,7 +2030,7 @@ inconsistent:
 		Debugger();
 #endif /* DDB */
 	}
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG */
 
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
