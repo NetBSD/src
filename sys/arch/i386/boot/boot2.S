@@ -127,11 +127,13 @@ ENTRY(boot2)
 	mov	%ax, %es
 
 	/* fix up IDT entries for bdb */
-	addr32
-	movl	%es: -2(%ebx), %eax	/* actually movw to %ax */
+	subl	$2, %ebx
+	movl	%es:(%edi), %eax	/* actually movw %es:(%bx), %ax */
 	addr32
 	movl	%eax, EXT(Idt)+8*DEBUG_VECTOR	/* actually movw %ax */
-	movl	%es: -2(%ecx), %eax	/* actually movw to %ax */
+	movl	%ecx, %ebx
+	subl	$2, %ebx
+	movl	%es:(%edi), %eax	/* actually movw %es:(%bx), %ax */
 	addr32
 	movl	%eax, EXT(Idt)+8*BREAKPOINT_VECTOR	/* actually movw %ax */
 
