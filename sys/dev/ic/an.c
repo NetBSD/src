@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.5.2.2 2000/12/12 21:25:42 he Exp $	*/
+/*	$NetBSD: an.c,v 1.5.2.3 2000/12/16 02:21:55 he Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1017,6 +1017,26 @@ static int an_ioctl(ifp, command, data)
 			an_stop(ifp, 1);
 		}
 		sc->an_if_flags = ifp->if_flags;
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
+
+		/* Update our multicast list. */
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->arpcom) :
+		    ether_delmulti(ifr, &sc->arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.  XXX Needed here?
+			 */
+			an_init(ifp);
+			error = 0;
+		}
 		break;
 	case SIOCGAIRONET:
 		error = copyin(ifr->ifr_data, &areq, sizeof(areq));
