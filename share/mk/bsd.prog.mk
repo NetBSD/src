@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.124 2001/01/14 06:17:27 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.125 2001/01/14 09:40:35 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -119,19 +119,21 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS}
-.if !target(${PROG})
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+.if !target(${PROG})
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -Wl,-rpath-link,${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${DESTDIR}/usr/lib -lgcc -lc -lgcc ${LIBCRTEND}
+.endif
 
 .else
 
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+.if !target(${PROG})
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
+.endif
 
 .endif	# defined(DESTDIR)
-.endif	# !target(${PROG})
 .endif	# defined(OBJS) && !empty(OBJS)
 
 .if !defined(MAN)
