@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.21 1998/01/09 18:45:43 perry Exp $	
+
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
 

@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.6 1998/01/09 18:46:16 perry Exp $	
+
 NetBSD/hp300 _VER will run on most HP 9000/300- and 400-series machines.
 The smallest amount of RAM that has been tested is 4M.  If you wish to
 run X, more RAM is recommended.

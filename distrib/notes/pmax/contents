@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.7 1998/01/09 18:47:09 perry Exp $	
+
 The pmax-specific portion of the NetBSD _VER release is found in the
 "pmax" subdirectory of the distribution.  That subdirectory is laid
 out as follows:

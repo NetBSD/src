@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.9 1998/01/09 18:46:06 perry Exp $	
+
 NetBSD/atari _VER runs on a TT030, Falcon and Hades. An FPU is not required.
 The minimum amount of RAM required is 4Mb. On the Hades, only the et4000-PCI
 card is supported in the _VER release. When another video card is present,

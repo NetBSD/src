@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.3 1998/01/09 18:46:17 perry Exp $	
+
 The miniroot's install program is very simple to use.  It will guide
 you through the entire process, and is well automated.  Additional
 improvements are planned for future releases.

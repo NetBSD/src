@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.12 1998/01/09 18:47:19 perry Exp $	
+
 The sparc-specific portion of the NetBSD _VER release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
