@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.12 1998/03/21 20:28:44 pk Exp $ */
+/*	$NetBSD: dmavar.h,v 1.13 1998/07/30 22:42:04 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -40,11 +40,11 @@ struct dma_softc {
 	u_int		sc_rev;			/* revision */
 	int		sc_node;		/* PROM node ID */
 	int		sc_burst;		/* DVMA burst size in effect */
-	caddr_t		sc_dvmakaddr;		/* DVMA cookies */
-	caddr_t		sc_dvmaaddr;		/*		*/
+	caddr_t		sc_dvmaaddr;		/* DVMA cookie */
 	size_t		sc_dmasize;
 	caddr_t		*sc_dmaaddr;
 	size_t		*sc_dmalen;
+	bus_dmamap_t	sc_dmamap;		/* DMA map for bus_dma_* */
 	void (*reset)(struct dma_softc *);	/* reset routine */
 	void (*enintr)(struct dma_softc *);	/* enable interrupts */
 	int (*isintr)(struct dma_softc *);	/* interrupt ? */
