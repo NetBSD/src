@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.88.2.6 2004/10/27 06:48:24 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.88.2.7 2004/10/31 07:15:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.88.2.7 2004/10/31 07:15:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.82.2.5 2004/09/21 13:39:24 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.82.2.6 2004/10/31 07:12:40 skrll Exp $	*/
 
 /*
  *
@@ -668,7 +668,7 @@ void			uvmspace_unshare(struct lwp *);
 /* uvm_meter.c */
 void			uvm_meter(void);
 int			uvm_sysctl(int *, u_int, void *, size_t *,
-			    void *, size_t, struct lwp *);
+			    void *, size_t, struct proc *);
 
 /* uvm_mmap.c */
 int			uvm_mmap(struct vm_map *, vaddr_t *, vsize_t,
