@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.121 2004/02/14 00:00:57 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.122 2004/05/02 12:21:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -592,10 +592,12 @@ vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
 	}
 	if (flags & V_SLEEPONLY)
 		return (0);
+	simple_lock(&mp->mnt_slock);
 	if ((flags & V_LOWER) == 0)
 		mp->mnt_writeopcountupper++;
 	else
 		mp->mnt_writeopcountlower++;
+	simple_unlock(&mp->mnt_slock);
 	return (0);
 }
 
@@ -609,6 +611,7 @@ vn_finished_write(struct mount *mp, int flags)
 {
 	if (mp == NULL)
 		return;
+	simple_lock(&mp->mnt_slock);
 	if ((flags & V_LOWER) == 0) {
 		mp->mnt_writeopcountupper--;
 		if (mp->mnt_writeopcountupper < 0)
@@ -626,6 +629,7 @@ vn_finished_write(struct mount *mp, int flags)
 		    mp->mnt_writeopcountupper <= 0)
 			wakeup(&mp->mnt_writeopcountlower);
 	}
+	simple_unlock(&mp->mnt_slock);
 }
 
 /*
