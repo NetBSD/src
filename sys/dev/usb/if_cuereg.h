@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.6 2000/03/23 07:01:45 thorpej Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.7 2000/03/24 13:03:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -133,8 +133,7 @@
 #define CUE_IFACE_IDX		0
 
 /*
- * The interrupt endpoint is currently unused
- * by the KLSI part.
+ * The interrupt endpoint is currently unused by the CATC part.
  */
 #define CUE_ENDPT_RX		0x0
 #define CUE_ENDPT_TX		0x1
