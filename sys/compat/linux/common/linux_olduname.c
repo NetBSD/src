@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.3 1995/03/21 13:34:30 mycroft Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.4 1995/03/22 05:24:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -451,7 +451,7 @@ linux_times(p, uap, retval)
 	struct timeval t;
 	struct linux_tms ltms;
 	struct rusage ru;
-	int error;
+	int error, s;
 
 	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
 	ltms.ltms_utime = CONVTCK(ru.ru_utime);
@@ -463,7 +463,9 @@ linux_times(p, uap, retval)
 	if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 		return error;
 
-	microtime(&t);
+	s = splclock();
+	timersub(&time, &boottime, &t);
+	splx(s);
 
 	retval[0] = ((linux_clock_t)(CONVTCK(t)));
 	return 0;
