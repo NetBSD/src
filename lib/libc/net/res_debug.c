@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.15 1998/01/06 05:01:26 perry Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.16 1998/07/26 11:32:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.15 1998/01/06 05:01:26 perry Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.16 1998/07/26 11:32:25 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,8 +100,8 @@ __RCSID("$NetBSD: res_debug.c,v 1.15 1998/01/06 05:01:26 perry Exp $");
 #include <string.h>
 #include <time.h>
 
-extern const char *_res_opcodes[];
-extern const char *_res_resultcodes[];
+extern const char *const _res_opcodes[];
+extern const char *const _res_resultcodes[];
 
 static char *dewks __P((int));
 static const char *deproto __P((int));
