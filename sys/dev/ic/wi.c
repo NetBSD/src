@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.61 2002/04/01 02:46:47 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.62 2002/04/03 15:33:20 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.61 2002/04/01 02:46:47 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.62 2002/04/03 15:33:20 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1999,20 +1999,32 @@ wi_get_id(sc)
 		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
-	case WI_NIC_PRISM2_5:
+	case WI_NIC_3842_PCMCIA_AMD:
+	case WI_NIC_3842_PCMCIA_SST:
+	case WI_NIC_3842_PCMCIA_ATM:
 		printf("RF:PRISM2.5 MAC:ISL3873");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
-	case WI_NIC_3874A:
-		printf("RF:PRISM2.5 MAC:ISL3874A(PCI)");
+	case WI_NIC_3842_MINI_AMD:
+	case WI_NIC_3842_MINI_SST:
+	case WI_NIC_3842_MINI_ATM:
+		printf("RF:PRISM2.5 MAC:ISL3874A(Mini-PCI)");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
-	case WI_NIC_P3_SST:
-		printf("RF:PRISM3");
+	case WI_NIC_3842_PCI_AMD:
+	case WI_NIC_3842_PCI_SST:
+	case WI_NIC_3842_PCI_ATM:
+		printf("RF:PRISM2.5 MAC:ISL3874A(PCI-bridge)");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
-	case WI_NIC_P3_PCI:
-		printf("RF:PRISM3");
+	case WI_NIC_P3_PCMCIA_AMD:
+	case WI_NIC_P3_PCMCIA_SST:
+		printf("RF:PRISM3(PCMCIA)");
+		sc->sc_firmware_type = WI_INTERSIL;
+		break;
+	case WI_NIC_P3_MINI_AMD:
+	case WI_NIC_P3_MINI_SST:
+		printf("RF:PRISM3(Mini-PCI)");
 		sc->sc_firmware_type = WI_INTERSIL;
 		break;
 	case WI_NIC_LUCENT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.26 2002/04/01 02:46:48 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.27 2002/04/03 15:33:21 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -431,11 +431,20 @@ struct wi_ltv_ver {
 #define WI_NIC_HWB1153	0x8007
 #define WI_NIC_P2_SST	0x8008	/* Prism2 with SST flush */
 #define	WI_NIC_EVB2_SST	0x8009
-#define	WI_NIC_3842	0x800A	/* 3842 Evaluation Board */
-#define WI_NIC_PRISM2_5	0x800C
-#define WI_NIC_3874A	0x8013	/* Prism2.5 Mini-PCI */
-#define	WI_NIC_P3_SST	0x801B	/* Prism3 PCMCIA */
-#define	WI_NIC_P3_PCI	0x8022	/* Prism3 Mini-PCI */
+#define	WI_NIC_3842_EVA		0x800A	/* 3842 Evaluation Board */
+#define	WI_NIC_3842_PCMCIA_AMD	0x800B	/* Prism2.5 PCMCIA */
+#define	WI_NIC_3842_PCMCIA_SST	0x800C
+#define	WI_NIC_3842_PCMCIA_ATM	0x800D
+#define	WI_NIC_3842_MINI_AMD	0x8012	/* Prism2.5 Mini-PCI */
+#define	WI_NIC_3842_MINI_SST	0x8013
+#define	WI_NIC_3842_MINI_ATM	0x8014
+#define	WI_NIC_3842_PCI_AMD	0x8016	/* Prism2.5 PCI-bridge */
+#define	WI_NIC_3842_PCI_SST	0x8017
+#define	WI_NIC_3842_PCI_ATM	0x8018
+#define	WI_NIC_P3_PCMCIA_AMD	0x801A	/* Prism3 PCMCIA */
+#define	WI_NIC_P3_PCMCIA_SST	0x801B
+#define	WI_NIC_P3_MINI_AMD	0x8021	/* Prism3 Mini-PCI */
+#define	WI_NIC_P3_MINI_SST	0x8022
 };
 
 /*
