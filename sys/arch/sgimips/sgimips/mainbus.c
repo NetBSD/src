@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2001/05/11 04:47:56 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2001/07/08 20:30:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -39,7 +39,9 @@
 #include <mips/cpuregs.h>
 
 #include <machine/autoconf.h>
-#include <machine/arcs.h>
+
+#include <dev/arcbios/arcbios.h>
+#include <dev/arcbios/arcbiosvar.h>
 
 #include "locators.h"
 
@@ -70,14 +72,14 @@ mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	struct arcs_component *root;
-	struct arcs_sysid *sysidp;
+	struct arcbios_component *root;
+	struct arcbios_sysid *sysidp;
 	int i = 0;
 
-	root = ARCS->GetChild(NULL);
+	root = ARCBIOS->GetChild(NULL);
 	printf(": %s", root->Identifier);
 
-	sysidp = ARCS->GetSystemId();
+	sysidp = ARCBIOS->GetSystemId();
 	printf(" [%s, %s]", sysidp->Vendor, sysidp->Serial);
 
 	printf("\n");
