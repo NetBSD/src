@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.26 1994/03/27 09:09:21 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.27 1994/04/14 10:27:46 pk Exp $
  */
 
 /*
@@ -63,6 +63,9 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsiom.h>
+
+#include <ufs/quota.h>
+#include <ufs/inode.h>	/* for IFTOVT */
 
 /* Defs */
 #define	TRUE	1
@@ -1836,7 +1839,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	type = nfstov_type(fp->fa_type);
 	mode = fxdr_unsigned(u_short, fp->fa_mode);
 	if (type == VNON)
-		type = ntov_type[mode&0x7];
+		type = IFTOVT(mode);
 	rdev = fxdr_unsigned(long, fp->fa_rdev);
 	fxdr_time(&fp->fa_mtime, &mtime);
 	/*
@@ -1879,7 +1882,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				 * Discard unneeded vnode and update actual one
 				 */
 				vput(vp);
-				*vpp = nvp;
+				*vpp = vp = nvp;
 			}
 		}
 		np->n_mtime = mtime.tv_sec;
