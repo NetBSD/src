@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2002/01/14 23:14:41 bjh21 Exp $
+	$NetBSD: syscalls.master,v 1.2 2002/01/15 10:21:46 bjh21 Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -124,8 +124,8 @@
 56	OBSOL		mpx
 57	NOARGS		{ int sys_setpgid(int pid, int pgid); }
 58	OBSOL		ulimit
-59 	STD		{ int linux_sys_olduname(struct linux_old_utsname \
-			   *up); }
+59 	STD		{ int linux_sys_oldolduname( \
+			   struct linux_oldold_utsname *up); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
 62	UNIMPL		ustat
@@ -200,7 +200,7 @@
 107	STD		{ int linux_sys_lstat(const char *path, \
 			    struct linux_stat *sp); }
 108	STD		{ int linux_sys_fstat(int fd, struct linux_stat *sp); }
-109	STD		{ int linux_sys_uname(struct linux_utsname *up); }
+109	STD		{ int linux_sys_olduname(struct linux_oldutsname *up); }
 110	UNIMPL
 111	UNIMPL		vhangup
 112	UNIMPL		idle
@@ -216,8 +216,7 @@
 120	STD		{ int linux_sys_clone(int flags, void *stack); }
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }
-;122	STD		{ int linux_sys_new_uname(struct linux_utsname *up); }
-122	UNIMPL		new_uname
+122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
 123	UNIMPL		modify_ldt	
 124	UNIMPL		adjtimex
 125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
