@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2000/05/19 05:26:17 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6 2000/06/24 04:20:58 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -54,7 +54,6 @@
 
 #include <dev/cons.h>
 
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/cons.h>
 
 static void prom_cnprobe __P((struct consdev *));
