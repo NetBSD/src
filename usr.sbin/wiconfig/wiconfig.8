@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.14 2001/04/03 11:42:40 wiz Exp $
+.\"	$NetBSD: wiconfig.8,v 1.15 2001/05/15 04:16:21 ichiro Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -85,11 +85,17 @@
 .Op Fl f Ar frequency
 .Ek
 .Bk -words
+.Op Fl A Ar 0|1
+.Ek
+.Bk -words
 .Op Fl M Ar 0|1
 .Ek
 .Bk -words
 .Op Fl P Ar 0|1
 .Ek
+.Bk -words
+.Op Fl R Ar 1|3
+.Ek 
 .Bk -words
 .Op Fl S Ar max sleep duration
 .Ek
@@ -197,7 +203,7 @@ for the specified interface. The
 is used for diagnostic purposes. The Lucent WaveMANAGER software can
 poll the names of remote hosts.
 .It Fl c Ar 0|1
-Allow the station to create a service set (IBSS). Permitted values
+[Lucent only] Allow the station to create a service set (IBSS). Permitted values
 are 0 (don't create IBSS) and 1 (enable creation of IBSS). The default
 is 0.
 .Pp
@@ -278,6 +284,16 @@ channel is 11. For NICs sold in Japan, the default channel is 14, and
 it is the only available channel for pre-11Mbps NICs.
 Note that two stations must be set to the same channel in order to
 communicate.
+.It Fl A Ar 0|1
+[Prism2 only] Sets the authentication type for a given interface.
+Permitted values are
+.Ar 1  
+(Open System Authentication) or
+.Ar 2  
+(Shared Key Authentication). The default is 1.
+.Pp
+Note: It is not valid to enable Shared Key Authentication
+when no valid WEP keys have been defined.
 .It Fl M Ar 0|1
 Enable or disable
 .Dq microwave oven robustness
@@ -293,6 +309,13 @@ is only implemented in Lucent WavePOINT firmware version 2.03 or
 later, and in WaveLAN PCMCIA adapter firmware 2.00 or later. Older
 revisions will silently ignore the power management setting. Legal
 values for this parameter are 0 (off) and 1 (on).
+.It Fl R Ar 1|3
+Enable or disable roaming function on a given interface.
+The legal values are
+.Ar 1
+(Roaming handled by firmware) and
+.Ar 3
+(Roaming Disabled). The default is 1.
 .It Fl S Ar max sleep interval
 Specify the sleep interval to use when power management is enabled.
 The
