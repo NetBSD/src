@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.85 1999/10/05 13:05:40 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.86 1999/10/05 22:12:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.85 1999/10/05 13:05:40 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.86 1999/10/05 22:12:34 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -476,6 +476,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	url_t			urltype;
 	in_port_t		portnum;
 
+	oldintr = oldintp = NULL;
 	closefunc = NULL;
 	fin = fout = NULL;
 	s = -1;
@@ -1018,8 +1019,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		}
 	}		/* end of ftp:// or http:// specific setup */
 
-	oldintr = oldintp = NULL;
-
 			/* Open the output file. */
 	if (strcmp(savefile, "-") == 0) {
 		fout = stdout;
@@ -1041,13 +1040,9 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	}
 
 			/* Trap signals */
-	if (setjmp(httpabort)) {
-		if (oldintr)
-			(void)xsignal(SIGINT, oldintr);
-		if (oldintp)
-			(void)xsignal(SIGPIPE, oldintp);
+	if (setjmp(httpabort))
 		goto cleanup_fetch_url;
-	}
+	(void)xsignal(SIGQUIT, psummary);
 	oldintr = xsignal(SIGINT, aborthttp);
 
 	if (rcvbuf_size > bufsize) {
@@ -1156,9 +1151,6 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	progressmeter(1);
 	bytes = 0;
 	(void)fflush(fout);
-	(void)xsignal(SIGINT, oldintr);
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
 	if (closefunc == fclose && mtime != -1) {
 		struct timeval tval[2];
 
@@ -1184,6 +1176,10 @@ improper:
 	warnx("Improper response from `%s'", host);
 
 cleanup_fetch_url:
+	if (oldintr)
+		(void)xsignal(SIGINT, oldintr);
+	if (oldintp)
+		(void)xsignal(SIGPIPE, oldintp);
 	if (fin != NULL)
 		fclose(fin);
 	else if (s != -1)
