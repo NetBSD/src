@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.181 2003/08/07 16:28:34 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.182 2003/09/20 22:50:52 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181 2003/08/07 16:28:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2003/09/20 22:50:52 cl Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -377,6 +377,12 @@ trap(status, cause, vaddr, opc, frame)
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
 
+		if (l->l_flag & L_SA) {
+			KDASSERT(p != NULL && p->p_sa != NULL);
+			p->p_sa->sa_vp_faultaddr = (vaddr_t)vaddr;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+
 		if (p->p_emul->e_fault)
 			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
 		else
@@ -404,6 +410,7 @@ trap(status, cause, vaddr, opc, frame)
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		if (rv == 0) {
 			if (type & T_USER) {
 				userret(l);
