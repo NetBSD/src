@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.26 2004/11/18 01:45:42 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.27 2004/11/18 05:02:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.26 2004/11/18 01:45:42 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.27 2004/11/18 05:02:49 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ void	deadq_enter(pid_t, const char *);
 int	deadq_remove(pid_t);
 int	decode(const char *, CODE *);
 void	die(struct kevent *);	/* SIGTERM kevent dispatch routine */
-void	domark(int);
+void	domark(struct kevent *);/* timer kevent dispatch routine */
 void	fprintlog(struct filed *, int, char *);
 int	getmsgbufsize(void);
 int*	socksetup(int);
@@ -254,7 +254,7 @@ void	printline(char *, char *);
 void	printsys(char *);
 int	p_open(char *, pid_t *);
 void	trim_localdomain(char *);
-void	reapchild(int);
+void	reapchild(struct kevent *); /* SIGCHLD kevent dispatch routine */
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
 int	main(int, char *[]);
@@ -442,8 +442,14 @@ getgroup:
 		    (intptr_t) die);
 	}
 
-	(void)signal(SIGCHLD, reapchild);
-	(void)signal(SIGALRM, domark);
+	ev = allocevchange();
+	EV_SET(ev, SIGCHLD, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) reapchild);
+
+	ev = allocevchange();
+	EV_SET(ev, 0, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0,
+	    TIMERINTVL * 1000 /* seconds -> ms */, (intptr_t) domark);
+
 	(void)signal(SIGPIPE, SIG_IGN);	/* We'll catch EPIPE instead. */
 
 #ifndef SUN_LEN
@@ -544,9 +550,6 @@ getgroup:
 		/* tuck my process id away, if i'm not in debug mode */
 		pidfile(NULL);
 	}
-
-	/* set timer for mark facility after the fork of daemon() */
-	(void)alarm(TIMERINTVL);
 
 	for (;;) {
 		void (*handler)(struct kevent *);
@@ -1253,7 +1256,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 }
 
 void
-reapchild(int signo)
+reapchild(struct kevent *ev)
 {
 	int status;
 	pid_t pid;
@@ -1269,7 +1272,7 @@ reapchild(int signo)
 		}
 
 		if (deadq_remove(pid))
-			goto oncemore;
+			continue;
 
 		/* Now, look in the list of active processes. */
 		for (f = Files; f != NULL; f = f->f_next) {
@@ -1282,8 +1285,6 @@ reapchild(int signo)
 				break;
 			}
 		}
- oncemore:
-		continue;
 	}
 }
 
@@ -1337,10 +1338,16 @@ trim_localdomain(char *host)
 }
 
 void
-domark(int signo)
+domark(struct kevent *ev)
 {
 	struct filed *f;
 	dq_t q, nextq;
+
+	/*
+	 * XXX Should we bother to adjust for the # of times the timer
+	 * has expired (i.e. in case we miss one?).  This information is
+	 * returned to us in ev->data.
+	 */
 
 	now = time((time_t *)NULL);
 	MarkSeq += TIMERINTVL;
@@ -1388,8 +1395,6 @@ domark(int signo)
 			q->dq_timeout--;
 		}
 	}
-
-	(void)alarm(TIMERINTVL);
 }
 
 /*
@@ -2019,7 +2024,6 @@ int
 p_open(char *prog, pid_t *pid)
 {
 	int pfd[2], nulldesc, i;
-	sigset_t omask, mask;
 	char *argv[4];	/* sh -c cmd NULL */
 	char errmsg[200];
 
@@ -2030,13 +2034,8 @@ p_open(char *prog, pid_t *pid)
 		return (-1);
 	}
 
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGALRM);
-	sigaddset(&mask, SIGHUP);
-	sigprocmask(SIG_BLOCK, &mask, &omask);
 	switch ((*pid = fork())) {
 	case -1:
-		sigprocmask(SIG_SETMASK, &omask, NULL);
 		(void) close(nulldesc);
 		return (-1);
 
@@ -2046,20 +2045,16 @@ p_open(char *prog, pid_t *pid)
 		argv[2] = prog;
 		argv[3] = NULL;
 
-		alarm(0);
 		(void) setsid();	/* avoid catching SIGHUPs. */
 
 		/*
-		 * Throw away pending signals, and reset signal
-		 * behavior to standard values.
+		 * Reset ignored signals to their default behavior.
 		 */
-		signal(SIGALRM, SIG_IGN);
-		signal(SIGHUP, SIG_IGN);
-		sigprocmask(SIG_SETMASK, &omask, NULL);
-		signal(SIGPIPE, SIG_DFL);
-		signal(SIGQUIT, SIG_DFL);
-		signal(SIGALRM, SIG_DFL);
-		signal(SIGHUP, SIG_DFL);
+		(void)signal(SIGTERM, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
+		(void)signal(SIGPIPE, SIG_DFL);
+		(void)signal(SIGHUP, SIG_DFL);
 
 		dup2(pfd[0], STDIN_FILENO);
 		dup2(nulldesc, STDOUT_FILENO);
@@ -2071,7 +2066,6 @@ p_open(char *prog, pid_t *pid)
 		_exit(255);
 	}
 
-	sigprocmask(SIG_SETMASK, &omask, NULL);
 	(void) close(nulldesc);
 	(void) close(pfd[0]);
 
