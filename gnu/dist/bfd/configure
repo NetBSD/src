@@ -2547,6 +2547,9 @@ EOF
 EOF
 
 	;;
+  vax-*-netbsd*)                   
+	COREFILE=netbsd-core.lo
+	;;
   vax-*-ultrix2*)
 	COREFILE=trad-core.lo
 	cat >> confdefs.h <<\EOF
