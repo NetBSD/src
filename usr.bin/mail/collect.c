@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.7 1997/05/17 19:55:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: collect.c,v 1.6 1996/06/08 19:48:16 christos Exp $";
+static char rcsid[] = "$NetBSD: collect.c,v 1.7 1997/05/17 19:55:12 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -542,11 +542,11 @@ forward(ms, fp, f)
 		return(0);
 	if (*msgvec == 0) {
 		*msgvec = first(0, MMNORM);
-		if (*msgvec == NULL) {
+		if (*msgvec == 0) {
 			printf("No appropriate messages\n");
 			return(0);
 		}
-		msgvec[1] = NULL;
+		msgvec[1] = 0;
 	}
 	if (f == 'f' || f == 'F')
 		tabst = NOSTR;

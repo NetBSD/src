@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.6 1994/12/22 06:17:47 jtc Exp $	*/
+/*	$NetBSD: locate.c,v 1.7 1997/05/17 19:47:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: locate.c,v 1.6 1994/12/22 06:17:47 jtc Exp $";
+static char rcsid[] = "$NetBSD: locate.c,v 1.7 1997/05/17 19:47:50 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -58,19 +58,19 @@ static char rcsid[] = "$NetBSD: locate.c,v 1.6 1994/12/22 06:17:47 jtc Exp $";
  * bigram coding by a further 20-25%.
  *
  * The codes are:
- * 
+ *
  * 	0-28	likeliest differential counts + offset to make nonnegative
  *	30	switch code for out-of-range count to follow in next word
  *	128-255 bigram codes (128 most common, as determined by 'updatedb')
  *	32-127  single character (printable) ascii residue (ie, literal)
- * 
+ *
  * A novel two-tiered string search technique is employed:
- * 
+ *
  * First, a metacharacter-free subpattern and partial pathname is matched
  * BACKWARDS to avoid full expansion of the pathname list.  The time savings
  * is 40-50% over forward matching, which cannot efficiently handle
  * overlapped search patterns and compressed path residue.
- * 
+ *
  * Then, the actual shell glob-style regular expression (if in this form) is
  * matched against the candidate pathnames using the slower routines provided
  * in the standard 'find'.
@@ -134,15 +134,15 @@ fastfind(pathpart)
 				c &= PARITY - 1;
 				*p++ = bigram1[c], *p++ = bigram2[c];
 			}
-		*p-- = NULL;
+		*p-- = '\0';
 		cutoff = (found ? path : path + count);
 		for (found = 0, s = p; s >= cutoff; s--)
 			if (*s == *patend) {	/* fast first char check */
-				for (p = patend - 1, q = s - 1; *p != NULL;
+				for (p = patend - 1, q = s - 1; *p != '\0';
 				    p--, q--)
 					if (*q != *p)
 						break;
-				if (*p == NULL) {	/* fast match success */
+				if (*p == '\0') {	/* fast match success */
 					found = 1;
 					if (!globflag ||
 					    !fnmatch(pathpart, path, 0))
