@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.403 2004/08/15 14:54:27 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.404 2004/08/16 05:50:15 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6691,3 +6691,8 @@ regress/sys/kern/ipf/regress/ipv6.1		1.2
 	Upgraded regression tests for IPFilter to version 4.1.3.
 	[martti, ticket #763]
 
+
+distrib/sets/lists/comp/mi			1.719-1.720
+
+	Fix the set lists after IPF 4.1.3
+	[tron, ticket #765]
