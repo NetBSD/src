@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.224 2003/02/24 07:47:17 kochi Exp $
+.\"	$NetBSD: main,v 1.225 2003/04/14 15:24:43 rtr Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1837,6 +1837,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Niels Provos Ta Mt provos@netbsd.org
 .It Ta Michael Rauch Ta Mt mrauch@netbsd.org
 .It Ta Darren Reed Ta Mt darrenr@netbsd.org
+.It Ta Tyler R. Retzlaff Ta Mt rtr@netbsd.org
 .It Ta Scott Reynolds Ta Mt scottr@netbsd.org
 .It Ta Michael Richardson Ta Mt mcr@netbsd.org
 .It Ta Tim Rightnour Ta Mt garbled@netbsd.org
