@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.11 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.6 1994/12/22 10:42:57 cgd Exp $
+#	$Id: Makefile,v 1.7 1995/04/20 02:04:51 mycroft Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -11,11 +11,13 @@ MAN=	me.7
 
 realinstall:
 	cd ${.CURDIR}; for i in ${MESRCS}; do \
+		rm -f ${DESTDIR}${MELIB}/$$i; \
 		sed -f strip.sed < $$i > ${DESTDIR}${MELIB}/$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}${MELIB}/$$i; \
 		chmod 444 ${DESTDIR}${MELIB}/$$i; \
 	done
 	cd ${.CURDIR}; for i in ${TMSRCS}; do \
+		rm -f ${DESTDIR}${TMLIB}/$$i; \
 		sed -f strip.sed < $$i > ${DESTDIR}${TMLIB}/$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}${TMLIB}/$$i; \
 		chmod 444 ${DESTDIR}${TMLIB}/$$i; \
