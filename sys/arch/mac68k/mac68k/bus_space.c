@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3.2.2 1999/11/01 06:19:13 scottr Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.2.3 1999/11/28 10:21:13 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		pte = kvtopte(va);
 		if ((flags & BUS_SPACE_MAP_CACHEABLE))
 			*pte &= ~PG_CI;
