@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.c,v 1.1 2002/03/17 22:14:18 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype.c,v 1.2 2002/03/18 09:02:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2000, 2001, 2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ctype.c,v 1.1 2002/03/17 22:14:18 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_ctype.c,v 1.2 2002/03/18 09:02:50 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -49,16 +49,16 @@ __RCSID("$NetBSD: citrus_ctype.c,v 1.1 2002/03/17 22:14:18 tshiozak Exp $");
 #include <dirent.h>
 #include <dlfcn.h>
 
-#ifdef _I18N_DYNAMIC
-
-static int _initctypemodule(_citrus_ctype_t, char const *, _citrus_module_t,
-			    void *, size_t, size_t);
-
 _citrus_ctype_rec_t _citrus_ctype_default = {
 	&_CITRUS_DEFAULT_CTYPE_OPS,	/* ce_ops */
 	NULL,				/* ce_closure */
 	NULL				/* ce_module */
 };
+
+#ifdef _I18N_DYNAMIC
+
+static int _initctypemodule(_citrus_ctype_t, char const *, _citrus_module_t,
+			    void *, size_t, size_t);
 
 static int
 _initctypemodule(_citrus_ctype_t cc, char const *modname,
