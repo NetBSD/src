@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.8 2000/12/21 10:36:15 hubertf Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.9 2001/01/16 03:38:23 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -554,6 +554,9 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
