@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.3.4.3 1997/10/14 01:59:11 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.3.4.4 1997/10/14 02:28:32 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1175,8 +1175,8 @@ dp8390_disable(sc)
 	struct dp8390_softc *sc;
 {
 
-	if (sc->sc_enabled != 0 && sc->sc_disable != NULL)
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
-
-	sc->sc_enabled = 0;
+		sc->sc_enabled = 0;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.7 1997/10/06 16:26:45 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.8 1997/10/14 02:28:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1739,8 +1739,8 @@ epdisable(sc)
 	struct ep_softc *sc;
 {
 
-	if (sc->enabled != 0 && sc->disable != NULL)
+	if (sc->enabled != 0 && sc->disable != NULL) {
 		(*sc->disable)(sc);
-
-	sc->enabled = 0;
+		sc->enabled = 0;
+	}
 }
