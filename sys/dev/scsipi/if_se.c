@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.18 1998/08/31 22:28:06 cgd Exp $	*/
+/*	$NetBSD: if_se.c,v 1.19 1998/09/25 21:50:38 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -41,7 +41,7 @@
  * of accurate documentation for the device.
  *
  * This is a weird device! It doesn't conform to the scsi spec in much
- * at all. About the only standard command supported in inquiry. Most
+ * at all. About the only standard command supported is inquiry. Most
  * commands are 6 bytes long, but the recv data is only 1 byte.  Data
  * must be received by periodically polling the device with the recv
  * command.
