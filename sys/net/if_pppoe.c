@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.2 2003/02/07 19:20:56 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.3 2003/02/07 19:56:56 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.2 2003/02/07 19:20:56 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.3 2003/02/07 19:56:56 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -529,7 +529,7 @@ pppoe_disc_input(struct mbuf *m)
 		/* XXX it is not valid to pass pointer outside of mbuf */
 		eh = mtod(m, struct ether_header *);
 		m_adj(m, sizeof(struct ether_header));
-		p = mtod(m, u_int8_t*);
+		p = mtod(m, u_int8_t *);
 		KASSERT(m->m_flags & M_PKTHDR);
 		pppoe_dispatch_disc_pkt(p, m->m_len, m->m_pkthdr.rcvif, eh);
 	}
@@ -551,7 +551,7 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 	}
 
-	p = mtod(m, u_int8_t*);
+	p = mtod(m, u_int8_t *);
 
 	vertype = *p++;
 	if (vertype != PPPOE_VERTYPE) {
@@ -781,7 +781,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		return ENOBUFS;
 
 	/* fill in pkt */
-	p = mtod(m0, u_int8_t*);
+	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADI, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
 	if (sc->sc_service_name != NULL) {
@@ -803,9 +803,9 @@ pppoe_send_padi(struct pppoe_softc *sc)
 
 #ifdef PPPOE_DEBUG
 	p += sizeof sc;
-	if (p - mtod(m0, u_int8_t*) != len + PPPOE_HEADERLEN)
+	if (p - mtod(m0, u_int8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padi: garbled output len, should be %ld, is %ld",
-		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t*)));
+		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t *)));
 #endif
 
 	/* send pkt */
@@ -974,7 +974,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return ENOBUFS;
-	p = mtod(m0, u_int8_t*);
+	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
 	if (sc->sc_service_name != NULL) {
@@ -996,9 +996,9 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 #ifdef PPPOE_DEBUG
 	p += sizeof sc;
-	if (p - mtod(m0, u_int8_t*) != len + PPPOE_HEADERLEN)
+	if (p - mtod(m0, u_int8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padr: garbled output len, should be %ld, is %ld",
-			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t*)));
+			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t *)));
 #endif
 
 	return pppoe_output(sc, m0);
@@ -1020,7 +1020,7 @@ pppoe_send_padt(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(PPPOE_HEADERLEN);
 	if (!m0)
 		return ENOBUFS;
-	p = mtod(m0, u_int8_t*);
+	p = mtod(m0, u_int8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, sc->sc_session, 0);
 	return pppoe_output(sc, m0);
 }
@@ -1073,7 +1073,7 @@ pppoe_start(struct ifnet *ifp)
 			m_free(m);
 			break;
 		}
-		p = mtod(m, u_int8_t*);
+		p = mtod(m, u_int8_t *);
 		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
 #if NBPFILTER > 0
