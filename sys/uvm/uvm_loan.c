@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.43 2003/10/26 16:04:00 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.44 2003/10/27 12:47:33 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.43 2003/10/26 16:04:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.44 2003/10/27 12:47:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,6 +667,7 @@ uvm_loanzero(ufi, output, flags)
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 
+again:
 	simple_lock(&uvm_loanzero_object.vmobjlock);
 
 	/*
@@ -689,18 +690,22 @@ uvm_loanzero(ufi, output, flags)
 			if (uobj) {
 				simple_lock(&uobj->vmobjlock);
 			}
-			simple_lock(&uvm_loanzero_object.vmobjlock);
+			goto again;
 		}
 
 		/* got a zero'd page. */
 		pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 		pg->flags |= PG_RDONLY;
+		uvm_lock_pageq();
+		uvm_pageactivate(pg);
+		uvm_unlock_pageq();
 		UVM_PAGE_OWN(pg, NULL);
 	}
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 		uvm_lock_pageq();
 		pg->loan_count++;
+		uvm_pagedequeue(pg);
 		uvm_unlock_pageq();
 		simple_unlock(&uvm_loanzero_object.vmobjlock);
 		**output = pg;
