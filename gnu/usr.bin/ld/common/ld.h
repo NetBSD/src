@@ -1,4 +1,4 @@
-/*	$Id: ld.h,v 1.1 1993/10/16 21:52:31 pk Exp $	*/
+/*	$Id: ld.h,v 1.2 1993/10/23 00:34:22 pk Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -703,7 +703,7 @@ int	findlib __P((struct file_entry *));
 /* In shlib.c: */
 char	*findshlib __P((char *, int *, int *));
 void	add_search_dir __P((char *));
-void	std_search_dirs __P((void));
+void	std_search_dirs __P((char *));
 
 /* In rrs.c: */
 void	init_rrs __P((void));
