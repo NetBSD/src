@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.30 2002/06/07 04:18:12 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.31 2002/06/08 21:22:33 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.30 2002/06/07 04:18:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.31 2002/06/08 21:22:33 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -411,7 +411,7 @@ ip6_forward(m, srcrt)
 		}
 		m_freem(m);
 		return;
- 	}
+	}
 
 	if (rt->rt_flags & RTF_GATEWAY)
 		dst = (struct sockaddr_in6 *)rt->rt_gateway;
@@ -528,12 +528,10 @@ ip6_forward(m, srcrt)
 		return;
 	switch (error) {
 	case 0:
-#if 1
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
 			return;
 		}
-#endif
 		goto freecopy;
 
 	case EMSGSIZE:
