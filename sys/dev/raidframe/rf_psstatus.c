@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.16 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.17 2003/12/29 04:56:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.16 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.17 2003/12/29 04:56:26 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -113,22 +113,13 @@ rf_MakeParityStripeStatusTable(raidPtr)
 	RF_Raid_t *raidPtr;
 {
 	RF_PSStatusHeader_t *pssTable;
-	int     i, j, rc;
-
+	int     i;
+	
 	RF_Malloc(pssTable, 
-			  raidPtr->pssTableSize * sizeof(RF_PSStatusHeader_t),
-			  (RF_PSStatusHeader_t *));
+		  raidPtr->pssTableSize * sizeof(RF_PSStatusHeader_t),
+		  (RF_PSStatusHeader_t *));
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
-		rc = rf_mutex_init(&pssTable[i].mutex);
-		if (rc) {
-			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			/* fail and deallocate */
-			for (j = 0; j < i; j++) {
-				rf_mutex_destroy(&pssTable[i].mutex);
-			}
-			RF_Free(pssTable, raidPtr->pssTableSize * sizeof(RF_PSStatusHeader_t));
-			return (NULL);
-		}
+		rf_mutex_init(&pssTable[i].mutex);
 	}
 	return (pssTable);
 }

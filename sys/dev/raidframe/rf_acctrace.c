@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.11 2003/12/29 04:56:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.10 2002/09/14 18:17:52 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_acctrace.c,v 1.11 2003/12/29 04:56:26 oster Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -81,10 +81,7 @@ rf_ConfigureAccessTrace(listp)
 		accessTraceBufCount = 0;
 	}
 	numTracesSoFar = 0;
-	rc = rf_mutex_init(&rf_tracing_mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-	}
+	rf_mutex_init(&rf_tracing_mutex);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownAccessTrace, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);

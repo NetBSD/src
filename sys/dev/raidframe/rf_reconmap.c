@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.19 2003/12/29 03:33:48 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.20 2003/12/29 04:56:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.19 2003/12/29 03:33:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.20 2003/12/29 04:56:26 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -92,7 +92,6 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
 	RF_ReconUnitCount_t num_rus = layoutPtr->stripeUnitsPerDisk / layoutPtr->SUsPerRU;
 	RF_ReconMap_t *p;
-	int     rc;
 
 	RF_Malloc(p, sizeof(RF_ReconMap_t), (RF_ReconMap_t *));
 	p->sectorsPerReconUnit = ru_sectors;
@@ -113,13 +112,7 @@ rf_MakeReconMap(raidPtr, ru_sectors, disk_sectors, spareUnitsPerDisk)
 	    0, 0, "raidreconpl", NULL);
 	pool_prime(&p->elem_pool, RF_NUM_RECON_POOL_ELEM);
 
-	rc = rf_mutex_init(&p->mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		RF_Free(p->status, num_rus * sizeof(RF_ReconMapListElem_t *));
-		RF_Free(p, sizeof(RF_ReconMap_t));
-		return (NULL);
-	}
+	rf_mutex_init(&p->mutex);
 	return (p);
 }
 

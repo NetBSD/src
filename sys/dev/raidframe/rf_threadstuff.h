@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.13 2002/10/02 21:48:00 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.14 2003/12/29 04:56:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -181,8 +181,9 @@ struct RF_ThreadGroup_s {
 }
 #endif
 
-int     rf_mutex_init(struct simplelock *);
-int     rf_mutex_destroy(struct simplelock *);
+#define rf_mutex_init(m) simple_lock_init(m)
+#define rf_mutex_destroy(m)
+
 int 
 _rf_create_managed_mutex(RF_ShutdownList_t **, struct simplelock *,
     char *, int);

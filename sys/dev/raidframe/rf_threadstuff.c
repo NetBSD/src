@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.12 2002/11/18 23:50:47 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.13 2003/12/29 04:56:26 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.12 2002/11/18 23:50:47 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.13 2003/12/29 04:56:26 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -49,12 +49,8 @@ static void
 mutex_destroyer(arg)
 	void   *arg;
 {
-	int     rc;
 
-	rc = rf_mutex_destroy(arg);
-	if (rc) {
-		RF_ERRORMSG1("RAIDFRAME: Error %d auto-destroying mutex\n", rc);
-	}
+	rf_mutex_destroy(arg);
 }
 
 static void 
@@ -76,18 +72,14 @@ RF_DECLARE_MUTEX(*m)
 	char   *file;
 	int     line;
 {
-	int     rc, rc1;
+	int     rc;
 
-	rc = rf_mutex_init(m);
-	if (rc)
-		return (rc);
+	rf_mutex_init(m);
+
 	rc = _rf_ShutdownCreate(listp, mutex_destroyer, (void *) m, file, line);
 	if (rc) {
 		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
-		rc1 = rf_mutex_destroy(m);
-		if (rc1) {
-			RF_ERRORMSG1("RAIDFRAME: Error %d destroying mutex\n", rc1);
-		}
+		rf_mutex_destroy(m);
 	}
 	return (rc);
 }
@@ -197,21 +189,6 @@ _rf_init_threadgroup(g, file, line)
 /*
  * Kernel
  */
-int 
-rf_mutex_init(m)
-decl_simple_lock_data(, *m)
-{
-	simple_lock_init(m);
-	return (0);
-}
-
-int 
-rf_mutex_destroy(m)
-decl_simple_lock_data(, *m)
-{
-	return (0);
-}
-
 int
 rf_lkmgr_mutex_init(m)
 decl_lock_data(, *m)
