@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.13 1995/03/26 20:24:44 jtc Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.14 1995/08/13 22:48:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -52,12 +52,12 @@ struct	sigacts {
 	sigset_t ps_catchmask[NSIG];	/* signals to be blocked */
 	sigset_t ps_sigonstack;		/* signals to take on sigstack */
 	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
+	sigset_t ps_sigreset;		/* signals that reset when caught */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
 	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
-	long	ps_addr;		/* for core dump/debugger XXX */
 	sigset_t ps_usertramp;		/* SunOS compat; libc sigtramp XXX */
 };
 
