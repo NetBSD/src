@@ -39,16 +39,18 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkdir.c	5.7 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: mkdir.c,v 1.6 1993/10/13 18:34:36 jtc Exp $";
+static char rcsid[] = "$Id: mkdir.c,v 1.7 1993/12/31 19:34:53 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <locale.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <err.h>
 
 main(argc, argv)
 	int argc;
@@ -57,6 +59,8 @@ main(argc, argv)
 	int ch, exitval, pflag;
 	void *set;
 	mode_t mode, dir_mode;
+
+	setlocale(LC_ALL, "");
 
 	/* default file mode is a=rwx (777) with selected permissions
 	   removed in accordance with the file mode creation mask.
@@ -67,16 +71,15 @@ main(argc, argv)
 	dir_mode = mode | S_IWUSR | S_IXUSR;
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "pm:")) != EOF)
+	while ((ch = getopt(argc, argv, "pm:")) != -1)
 		switch(ch) {
 		case 'p':
 			pflag = 1;
 			break;
 		case 'm':
 			if ((set = setmode(optarg)) == NULL) {
-				(void)fprintf(stderr,
-					"mkdir: invalid file mode.\n");
-				exit(1);
+				errx(1, "invalid file mode.");
+				/* NOTREACHED */
 			}
 			mode = getmode (set, S_IRWXU | S_IRWXG | S_IRWXO);
 			break;
@@ -92,8 +95,7 @@ main(argc, argv)
 		if (pflag)
 			exitval |= build(*argv, mode, dir_mode);
 		else if (mkdir(*argv, mode) < 0) {
-			(void)fprintf(stderr, "mkdir: %s: %s\n",
-			    *argv, strerror(errno));
+			warn("%s", *argv);
 			exitval = 1;
 		}
 	}
@@ -120,8 +122,7 @@ build(path, mode, dir_mode)
 			*p = '\0';
 			if (stat(path, &sb)) {
 				if (errno != ENOENT || mkdir(path, (ch) ? dir_mode : mode) < 0) {
-					(void)fprintf(stderr, "mkdir: %s: %s\n",
-					    path, strerror(errno));
+					warn("%s", path);
 					return(1);
 				}
 			}
