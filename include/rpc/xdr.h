@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.9 1998/02/10 03:52:21 lukem Exp $	*/
+/*	$NetBSD: xdr.h,v 1.10 1998/02/11 23:01:30 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -99,28 +99,26 @@ enum xdr_op {
 typedef struct __rpc_xdr {
 	enum xdr_op	x_op;		/* operation; fast additional param */
 	struct xdr_ops {
-				/* get an xdr long from underlying stream */
-		bool_t	(*x_getlong) __P((struct __rpc_xdr *, int32_t *));
-				/* put an xdr long to underlying stream */
-		bool_t	(*x_putlong) __P((struct __rpc_xdr *, int32_t *));
-				/* get some bytes from underlying stream */
-		bool_t	(*x_getbytes) __P((struct __rpc_xdr *, caddr_t,
-					size_t));
-				/* put some bytes to underlying stream */
-		bool_t	(*x_putbytes) __P((struct __rpc_xdr *, caddr_t,
-					size_t));
-				/* returns bytes offset from beginning */
-		size_t	(*x_getpostn) __P((struct __rpc_xdr *));
-				/* lets you reposition the stream */
-		bool_t  (*x_setpostn) __P((struct __rpc_xdr *, size_t));
-				/* buf quick ptr to buffered data */
-		int32_t	*(*x_inline) __P((struct __rpc_xdr *, size_t));
-				/* free privates of this xdr_stream */
+		/* get a long from underlying stream */
+		bool_t	(*x_getlong) __P((struct __rpc_xdr *, long *));
+		/* put a long to " */
+		bool_t	(*x_putlong) __P((struct __rpc_xdr *, long *));
+		/* get some bytes from " */
+		bool_t	(*x_getbytes) __P((struct __rpc_xdr *, caddr_t, u_int));
+		/* put some bytes to " */
+		bool_t	(*x_putbytes) __P((struct __rpc_xdr *, caddr_t, u_int));
+		/* returns bytes off from beginning */
+		u_int	(*x_getpostn) __P((struct __rpc_xdr *));
+		/* lets you reposition the stream */
+		bool_t  (*x_setpostn) __P((struct __rpc_xdr *, u_int));
+		/* buf quick ptr to buffered data */
+		int32_t	*(*x_inline) __P((struct __rpc_xdr *, u_int));
+		/* free privates of this xdr_stream */
 		void	(*x_destroy) __P((struct __rpc_xdr *));
 	} *x_ops;
-	caddr_t		x_public;	/* users' data */
+	caddr_t 	x_public;	/* users' data */
 	caddr_t		x_private;	/* pointer to private data */
-	caddr_t		x_base;		/* private used for position info */
+	caddr_t 	x_base;		/* private used for position info */
 	int		x_handy;	/* extra private word */
 } XDR;
 
@@ -134,16 +132,16 @@ typedef struct __rpc_xdr {
  *
  * XXX can't actually prototype it, because some take three args!!!
  */
-typedef	bool_t (*xdrproc_t) __P((/* XDR *, caddr_t, size_t */));
+typedef	bool_t (*xdrproc_t) __P((/* XDR *, void *, u_int */));
 
 /*
  * Operations defined on a XDR handle
  *
  * XDR		*xdrs;
- * int32_t	*longp;
+ * long		*longp;
  * caddr_t	 addr;
- * size_t	 len;
- * size_t	 pos;
+ * u_int	 len;
+ * u_int	 pos;
  */
 #define XDR_GETLONG(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_getlong)(xdrs, longp)
@@ -218,20 +216,20 @@ struct xdr_discrim {
  * N.B. and frozen for all time: each data type here uses 4 bytes
  * of external representation.
  */
-#define IXDR_GET_LONG(buf)		((int32_t)ntohl((u_int32_t)*(buf)++))
-#define IXDR_PUT_LONG(buf, v)		(*(buf)++ = (int32_t)htonl((u_int32_t)v))
+#define IXDR_GET_LONG(buf)		((long)ntohl((u_long)*(buf)++))
+#define IXDR_PUT_LONG(buf, v)		(*(buf)++ = (long)htonl((u_long)v))
 
 #define IXDR_GET_BOOL(buf)		((bool_t)IXDR_GET_LONG(buf))
 #define IXDR_GET_ENUM(buf, t)		((t)IXDR_GET_LONG(buf))
-#define IXDR_GET_U_LONG(buf)		((u_int32_t)IXDR_GET_LONG(buf))
-#define IXDR_GET_SHORT(buf)		((int16_t)IXDR_GET_LONG(buf))
-#define IXDR_GET_U_SHORT(buf)		((u_int16_t)IXDR_GET_LONG(buf))
+#define IXDR_GET_U_LONG(buf)		((u_long)IXDR_GET_LONG(buf))
+#define IXDR_GET_SHORT(buf)		((short)IXDR_GET_LONG(buf))
+#define IXDR_GET_U_SHORT(buf)		((u_short)IXDR_GET_LONG(buf))
 
-#define IXDR_PUT_BOOL(buf, v)		IXDR_PUT_LONG((buf), ((int32_t)(v)))
-#define IXDR_PUT_ENUM(buf, v)		IXDR_PUT_LONG((buf), ((int32_t)(v)))
-#define IXDR_PUT_U_LONG(buf, v)		IXDR_PUT_LONG((buf), ((int32_t)(v)))
-#define IXDR_PUT_SHORT(buf, v)		IXDR_PUT_LONG((buf), ((int32_t)(v)))
-#define IXDR_PUT_U_SHORT(buf, v)	IXDR_PUT_LONG((buf), ((int32_t)(v)))
+#define IXDR_PUT_BOOL(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
+#define IXDR_PUT_ENUM(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
+#define IXDR_PUT_U_LONG(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
+#define IXDR_PUT_SHORT(buf, v)		IXDR_PUT_LONG((buf), ((long)(v)))
+#define IXDR_PUT_U_SHORT(buf, v)	IXDR_PUT_LONG((buf), ((long)(v)))
 
 /*
  * These are the "generic" xdr routines.
@@ -250,32 +248,29 @@ extern bool_t	xdr_int32_t	__P((XDR *, int32_t *));
 extern bool_t	xdr_u_int32_t	__P((XDR *, u_int32_t *));
 extern bool_t	xdr_bool	__P((XDR *, bool_t *));
 extern bool_t	xdr_enum	__P((XDR *, enum_t *));
-extern bool_t	xdr_array	__P((XDR *, caddr_t *, size_t *, size_t, size_t,
-				    xdrproc_t));
-extern bool_t	xdr_bytes	__P((XDR *, caddr_t *, size_t *, size_t));
-extern bool_t	xdr_opaque	__P((XDR *, caddr_t, size_t));
-extern bool_t	xdr_string	__P((XDR *, char **, size_t));
-extern bool_t	xdr_union	__P((XDR *, enum_t *, caddr_t,
-				    struct xdr_discrim *, xdrproc_t));
+extern bool_t	xdr_array	__P((XDR *, char **, u_int *, u_int, u_int, xdrproc_t));
+extern bool_t	xdr_bytes	__P((XDR *, char **, u_int *, u_int));
+extern bool_t	xdr_opaque	__P((XDR *, caddr_t, u_int));
+extern bool_t	xdr_string	__P((XDR *, char **, u_int));
+extern bool_t	xdr_union	__P((XDR *, enum_t *, char *, struct xdr_discrim *, xdrproc_t));
 extern bool_t	xdr_char	__P((XDR *, char *));
 extern bool_t	xdr_u_char	__P((XDR *, u_char *));
-extern bool_t	xdr_vector	__P((XDR *, caddr_t, size_t, size_t,
-				    xdrproc_t));
+extern bool_t	xdr_vector	__P((XDR *, char *, u_int, u_int, xdrproc_t));
 extern bool_t	xdr_float	__P((XDR *, float *));
 extern bool_t	xdr_double	__P((XDR *, double *));
-extern bool_t	xdr_reference	__P((XDR *, caddr_t *, size_t, xdrproc_t));
-extern bool_t	xdr_pointer	__P((XDR *, caddr_t *, size_t, xdrproc_t));
+extern bool_t	xdr_reference	__P((XDR *, caddr_t *, u_int, xdrproc_t));
+extern bool_t	xdr_pointer	__P((XDR *, caddr_t *, u_int, xdrproc_t));
 extern bool_t	xdr_wrapstring	__P((XDR *, char **));
-extern void	xdr_free 	__P((xdrproc_t, caddr_t));
+extern void	xdr_free 	__P((xdrproc_t, char *));
 __END_DECLS
 
 /*
- * Common opaque bytes objects used by many RPC protocols;
+ * Common opaque bytes objects used by many rpc protocols;
  * declared here due to commonality.
  */
 #define MAX_NETOBJ_SZ 1024 
 struct netobj {
-	size_t	 n_len;
+	u_int	n_len;
 	char	*n_bytes;
 };
 typedef struct netobj netobj;
@@ -287,7 +282,7 @@ extern bool_t   xdr_netobj __P((XDR *, struct netobj *));
  */
 __BEGIN_DECLS
 /* XDR using memory buffers */
-extern void   xdrmem_create	__P((XDR *, caddr_t, size_t, enum xdr_op));
+extern void   xdrmem_create	__P((XDR *, char *, u_int, enum xdr_op));
 
 #ifdef _STDIO_H_
 /* XDR using stdio library */
@@ -295,9 +290,9 @@ extern void   xdrstdio_create	__P((XDR *, FILE *, enum xdr_op));
 #endif
 
 /* XDR pseudo records for tcp */
-extern void   xdrrec_create	__P((XDR *, size_t, size_t, caddr_t,
-				    int (*) __P((caddr_t, caddr_t, size_t)),
-				    int (*) __P((caddr_t, caddr_t, size_t))));
+extern void   xdrrec_create	__P((XDR *, u_int, u_int, char *,
+				    int (*) __P((caddr_t, caddr_t, int)),
+				    int (*) __P((caddr_t, caddr_t, int))));
 
 /* make end of xdr record */
 extern bool_t xdrrec_endofrecord __P((XDR *, int));
