@@ -1,10 +1,10 @@
-/*	$NetBSD: funcs.h,v 1.5 2001/07/26 13:43:44 mrg Exp $	*/
+/*	$NetBSD: funcs.h,v 1.6 2001/07/26 14:20:48 mrg Exp $	*/
 
 	public char * save ();
 	public VOID_POINTER ecalloc ();
 	public char * skipsp ();
 	public int sprefix ();
-	public void quit ();
+	public void quit () __attribute__((__noreturn__));
 	public void raw_mode ();
 	public void scrsize ();
 	public char * special_key_str ();
