@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2003/02/05 07:05:19 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2003/08/24 17:52:34 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -77,7 +77,7 @@ struct pteg {
 #define	PTE_RW		PTE_BW
 #define	PTE_RO		PTE_BR
 
-#define	PTE_EXEC	0x00000200	/* pseudo bit in attrs; page is exec */
+#define	PTE_EXEC	0x00000200	/* pseudo bit; page is exec */
 
 /*
  * Extract bits from address

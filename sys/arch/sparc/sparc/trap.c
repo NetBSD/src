@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.138 2003/08/12 15:34:32 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.139 2003/08/24 17:52:37 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2003/08/12 15:34:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2003/08/24 17:52:37 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1170,7 +1170,17 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	}
 
 	/* Now munch on protections... */
-	atype = sfsr & SFSR_AT_STORE ? VM_PROT_WRITE : VM_PROT_READ;
+	if (sfsr & SFSR_AT_STORE) {
+		/* stores are never text faults. */
+		atype = VM_PROT_WRITE;
+	} else {
+		if ((sfsr & SFSR_AT_TEXT) || type == T_TEXTFAULT) {
+			atype = VM_PROT_EXECUTE;
+		} else {
+			atype = VM_PROT_READ;
+		}
+	}
+
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {

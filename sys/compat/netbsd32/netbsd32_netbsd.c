@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.73 2003/06/29 22:29:39 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.74 2003/08/24 17:52:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.73 2003/06/29 22:29:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.74 2003/08/24 17:52:44 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -107,6 +107,8 @@ void netbsd32_syscall_intern __P((struct proc *));
 void syscall __P((void));
 #endif
 
+struct uvm_object *emul_netbsd32_object;
+
 const struct emul emul_netbsd32 = {
 	"netbsd32",
 	"/emul/netbsd32",
@@ -126,6 +128,7 @@ const struct emul emul_netbsd32 = {
 	trapsignal,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
+	&emul_netbsd32_object,
 	netbsd32_setregs,
 	NULL,
 	NULL,

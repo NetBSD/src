@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.80 2003/06/23 11:01:00 martin Exp $ */
+/* $NetBSD: trap.c,v 1.81 2003/08/24 17:52:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2003/06/23 11:01:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2003/08/24 17:52:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,17 +232,16 @@ void
 trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
     struct trapframe *framep)
 {
-	register struct lwp *l;
-	register int i;
+	struct lwp *l;
 	u_int64_t ucode;
-	int user;
+	vm_prot_t ftype;
+	int i, user;
 #if defined(DDB)
 	int call_debugger = 1;
 #endif
 
 	l = curlwp;
 
-	uvmexp.traps++;			/* XXXSMP: NOT ATOMIC */
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user)
@@ -360,8 +359,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			else
 				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
-			pmap_emulate_reference(l, a0, user,
-			    a1 == ALPHA_MMCSR_FOW ? 1 : 0);
+			if (pmap_emulate_reference(l, a0, user, a1)) {
+				ftype = VM_PROT_EXECUTE;
+				goto do_fault;
+			}
 
 			if (user)
 				KERNEL_PROC_UNLOCK(l);
@@ -372,12 +373,23 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
 	    	{
-			register vaddr_t va;
-			register struct vmspace *vm = NULL;
-			register struct vm_map *map;
-			vm_prot_t ftype;
+			vaddr_t va;
+			struct vmspace *vm = NULL;
+			struct vm_map *map;
 			int rv;
 
+			switch (a2) {
+			case -1:		/* instruction fetch fault */
+				ftype = VM_PROT_EXECUTE;
+				break;
+			case 0:			/* load instruction */
+				ftype = VM_PROT_READ;
+				break;
+			case 1:			/* store instruction */
+				ftype = VM_PROT_WRITE;
+				break;
+			}
+	
 			if (user)
 				KERNEL_PROC_LOCK(l);
 			else {
@@ -427,6 +439,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			 * The last can occur during an exec() copyin where the
 			 * argument space is lazy-allocated.
 			 */
+do_fault:
 			if (user == 0 && (a0 >= VM_MIN_KERNEL_ADDRESS ||
 			    l->l_addr->u_pcb.pcb_onfault == 0))
 				map = kernel_map;
@@ -435,28 +448,11 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				map = &vm->vm_map;
 			}
 	
-			switch (a2) {
-			case -1:		/* instruction fetch fault */
-			case 0:			/* load instruction */
-				ftype = VM_PROT_READ;
-				break;
-			case 1:			/* store instruction */
-				ftype = VM_PROT_WRITE;
-				break;
-#ifdef DIAGNOSTIC
-			default:		/* XXX gcc -Wuninitialized */
-				if (user)
-					KERNEL_PROC_UNLOCK(l);
-				else
-					KERNEL_UNLOCK();
-				goto dopanic;
-#endif
-			}
-	
 			va = trunc_page((vaddr_t)a0);
 			rv = uvm_fault(map, va,
 			    (a1 == ALPHA_MMCSR_INVALTRANS) ?
 			    VM_FAULT_INVALID : VM_FAULT_PROTECT, ftype);
+
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -614,7 +610,7 @@ alpha_enable_fp(struct lwp *l, int check)
 void
 ast(struct trapframe *framep)
 {
-	register struct lwp *l;
+	struct lwp *l;
 
 	/*
 	 * We may not have a current process to do AST processing

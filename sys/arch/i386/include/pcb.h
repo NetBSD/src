@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.34 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: pcb.h,v 1.35 2003/08/24 17:52:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ struct pcb {
 #define	pcb_cr3	pcb_tss.tss_cr3
 #define	pcb_esp	pcb_tss.tss_esp
 #define	pcb_ebp	pcb_tss.tss_ebp
+#define	pcb_cs	pcb_tss.__tss_cs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2003/07/22 13:55:31 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157 2003/08/24 17:52:31 chs Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2003/07/22 13:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2003/08/24 17:52:31 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -703,6 +703,68 @@ pmap_unmap_ptes(pmap)
 	}
 }
 
+__inline static void
+pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
+{
+	if (curproc == NULL || curproc->p_vmspace == NULL ||
+	    pm != vm_map_pmap(&curproc->p_vmspace->vm_map))
+		return;
+
+	if ((opte ^ npte) & PG_X)
+		pmap_update_pg(va);
+
+	/*
+	 * Executability was removed on the last executable change.
+	 * Reset the code segment to something conservative and
+	 * let the trap handler deal with setting the right limit.
+	 * We can't do that because of locking constraints on the vm map.
+	 */
+
+	if ((opte & PG_X) && (npte & PG_X) == 0 && va == pm->pm_hiexec) {
+		struct trapframe *tf = curlwp->l_md.md_regs;
+		struct pcb *pcb = &curlwp->l_addr->u_pcb;
+
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		pm->pm_hiexec = I386_MAX_EXE_ADDR;
+	}
+}
+
+/*
+ * Fixup the code segment to cover all potential executable mappings.
+ * returns 0 if no changes to the code segment were made.
+ */
+
+int
+pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
+{
+	struct vm_map_entry *ent;
+	struct pmap *pm = vm_map_pmap(map);
+	vaddr_t va = 0;
+
+	vm_map_lock_read(map);
+	for (ent = (&map->header)->next; ent != &map->header; ent = ent->next) {
+
+		/*
+		 * This entry has greater va than the entries before.
+		 * We need to make it point to the last page, not past it.
+		 */
+
+		if (ent->protection & VM_PROT_EXECUTE)
+			va = trunc_page(ent->end) - PAGE_SIZE;
+	}
+	vm_map_unlock_read(map);
+	if (va == pm->pm_hiexec)
+		return (0);
+
+	pm->pm_hiexec = va;
+	if (pm->pm_hiexec > I386_MAX_EXE_ADDR) {
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
+	} else {
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	}
+	return (1);
+}
+
 /*
  * p m a p   k e n t e r   f u n c t i o n s
  *
@@ -836,13 +898,13 @@ pmap_bootstrap(kva_start)
 	 */
 
 	protection_codes[VM_PROT_NONE] = 0;  			/* --- */
-	protection_codes[VM_PROT_EXECUTE] = PG_RO;		/* --x */
+	protection_codes[VM_PROT_EXECUTE] = PG_X;		/* --x */
 	protection_codes[VM_PROT_READ] = PG_RO;			/* -r- */
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO;	/* -rx */
+	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO|PG_X;/* -rx */
 	protection_codes[VM_PROT_WRITE] = PG_RW;		/* w-- */
-	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;/* w-x */
+	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW|PG_X;/* w-x */
 	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW;	/* wr- */
-	protection_codes[VM_PROT_ALL] = PG_RW;			/* wrx */
+	protection_codes[VM_PROT_ALL] = PG_RW|PG_X;		/* wrx */
 
 	/*
 	 * now we init the kernel's pmap
@@ -1614,6 +1676,7 @@ pmap_create()
 	pmap->pm_stats.wired_count = 0;
 	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
 	pmap->pm_ptphint = NULL;
+	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
 
 	/* init the LDT */
@@ -2114,6 +2177,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 
 		/* atomically save the old PTE and zap! it */
 		opte = x86_atomic_testset_ul(pte, 0);
+		pmap_exec_account(pmap, startva, opte, 0);
 
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
@@ -2196,6 +2260,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	/* atomically save the old PTE and zap! it */
 	opte = x86_atomic_testset_ul(pte, 0);
+	pmap_exec_account(pmap, va, opte, 0);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -3042,6 +3107,7 @@ enter_now:
 	if (ptp)
 		ptp->wire_count += ptpdelta;
 	npte = pa | protection_codes[prot] | PG_V;
+	pmap_exec_account(pmap, va, opte, npte);
 	if (pvh)
 		npte |= PG_PVLIST;
 	if (wired)

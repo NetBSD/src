@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.74 2003/07/22 13:55:33 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.75 2003/08/24 17:52:33 chs Exp $	*/
 
 /*
  *
@@ -206,7 +206,7 @@
 
 #define PG_W		PG_AVAIL1	/* "wired" mapping */
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
-/* PG_AVAIL3 not used */
+#define PG_X		PG_AVAIL3	/* executable mapping */
 
 /*
  * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
@@ -247,6 +247,7 @@ struct pmap {
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 
+	vaddr_t pm_hiexec;		/* highest executable mapping */
 	int pm_flags;			/* see below */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
@@ -346,6 +347,8 @@ void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
 boolean_t	pmap_test_attrs __P((struct vm_page *, int));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
+int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
+		    struct pcb *);
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 

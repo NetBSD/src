@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.53 2003/08/07 16:28:00 agc Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.54 2003/08/24 17:52:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,6 +75,14 @@
 #endif
 
 /*
+ * IA-32 can't do per-page execute permission, so instead we implement
+ * two executable segments for %cs, one that covers everything and one
+ * that excludes some of the address space (currently just the stack).
+ * I386_MAX_EXE_ADDR is the upper boundary for the smaller segment.
+ */
+#define I386_MAX_EXE_ADDR	(USRSTACK - MAXSSIZ)
+
+/*
  * Size of shared memory map
  */
 #ifndef SHMMAXPGS
@@ -107,7 +115,7 @@
 #define __HAVE_TOPDOWN_VM
 #ifdef USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+	trunc_page(USRSTACK - MAXSSIZ - (sz))
 #endif
 
 /* XXX max. amount of KVM to be used by buffers. */

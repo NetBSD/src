@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.268 2003/08/21 09:36:28 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.269 2003/08/24 17:52:36 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2003/08/21 09:36:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2003/08/24 17:52:36 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -889,6 +889,59 @@ setpte4m(va, pte)
 #endif
 	tlb_flush_page(va, 0, CPUSET_ALL);
 	setpgt4m(sp->sg_pte + VA_SUN4M_VPG(va), pte);
+}
+
+/*
+ * Translation table for kernel vs. PTE protection bits.
+ */
+u_int protection_codes[2][8];
+#define pte_prot4m(pm, prot) \
+	(protection_codes[(pm) == pmap_kernel() ? 0 : 1][(prot)])
+
+static void
+sparc_protection_init4m(void)
+{
+	u_int prot, *kp, *up;
+
+	kp = protection_codes[0];
+	up = protection_codes[1];
+
+	for (prot = 0; prot < 8; prot++) {
+		switch (prot) {
+		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RWX_RWX;
+			break;
+		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RW_RW;
+			break;
+		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_RX_RX;
+			break;
+		case VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_R_R;
+			break;
+		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RWX_RWX;
+			break;
+		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RWX;
+			up[prot] = PPROT_RW_RW;
+			break;
+		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_EXECUTE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_X_X;
+			break;
+		case VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE:
+			kp[prot] = PPROT_N_RX;
+			up[prot] = PPROT_N_RX;
+			break;
+		}
+	}
 }
 
 /*
@@ -3875,6 +3928,7 @@ pmap_bootstrap4m(top)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
+	sparc_protection_init4m();
 }
 
 static u_long prom_ctxreg;
@@ -5389,11 +5443,6 @@ out:
 /*
  * Lower (make more strict) the protection on the specified
  * range of this pmap.
- *
- * There are only two cases: either the protection is going to 0
- * (in which case we call pmap_remove to do the dirty work), or
- * it is going from read/write to read-only.  The latter is
- * fairly easy.
  */
 void
 pmap_protect4m(pm, sva, eva, prot)
@@ -5405,6 +5454,12 @@ pmap_protect4m(pm, sva, eva, prot)
 	int s, vr, vs;
 	struct regmap *rp;
 	struct segmap *sp;
+	int newprot;
+
+	/* XXX noexec stuff gets "Level 15 Interrupt" without this */
+	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
+		prot = VM_PROT_NONE;
+	}
 
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
@@ -5414,11 +5469,14 @@ pmap_protect4m(pm, sva, eva, prot)
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
 		printf("pmap_protect[%d][curpid %d, ctx %d,%d](%lx, %lx, %x)\n",
-			cpu_number(), getcontext4m(),
-			curproc==NULL ? -1 : curproc->p_pid,
-			pm->pm_ctx ? pm->pm_ctxnum : -1, sva, eva, prot);
+			cpu_number(), curproc->p_pid,
+			getcontext4m(), pm->pm_ctx ? pm->pm_ctxnum : -1,
+			sva, eva, prot);
 #endif
 
+	newprot = pte_prot4m(pm, prot);
+
+	write_user_windows();
 	s = splvm();
 	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pm->pm_lock);
@@ -5428,56 +5486,50 @@ pmap_protect4m(pm, sva, eva, prot)
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
 		nva = VSTOVA(vr,vs + 1);
-		if (nva == 0)	/* XXX */
-			panic("pmap_protect: last segment"); /* cannot happen(why?)*/
 		if (nva > eva)
 			nva = eva;
 		if (rp->rg_nsegmap == 0) {
 			va = nva;
 			continue;
 		}
-#ifdef DEBUG
-		if (rp->rg_segmap == NULL)
-			panic("pmap_protect: no segments");
-#endif
 		sp = &rp->rg_segmap[vs];
 		if (sp->sg_npte == 0) {
 			va = nva;
 			continue;
 		}
-#ifdef DEBUG
-		if (sp->sg_pte == NULL)
-			panic("pmap_protect: no pages");
-#endif
+
 		/*
 		 * pages loaded: take away write bits from MMU PTEs
 		 */
 
 		pmap_stats.ps_npg_prot_all += (nva - va) >> PGSHIFT;
 		for (; va < nva; va += NBPG) {
-			int tpte;
+			int tpte, npte;
 
 			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
+			if ((tpte & SRMMU_PGTYPE) != PG_SUN4M_OBMEM)
+				continue;
+			npte = (tpte & ~SRMMU_PROT_MASK) | newprot;
+			if (npte == tpte)
+				continue;
+
 			/*
 			 * Flush cache so that any existing cache
-			 * tags are updated.  This is really only
-			 * needed for PTEs that lose PG_W.
+			 * tags are updated.
 			 */
-			if ((tpte & (PPROT_WRITE|SRMMU_PGTYPE)) ==
-			    (PPROT_WRITE|PG_SUN4M_OBMEM)) {
-				pmap_stats.ps_npg_prot_actual++;
-				if (pm->pm_ctx) {
-					cache_flush_page(va, pm->pm_ctxnum);
+
+			pmap_stats.ps_npg_prot_actual++;
+			if (pm->pm_ctx) {
+				cache_flush_page(va, pm->pm_ctxnum);
 #if !defined(MULTIPROCESSOR)
-					/* Flush TLB entry */
-					tlb_flush_page(va, pm->pm_ctxnum,
-					   PMAP_CPUSET(pm));
+				/* Flush TLB entry */
+				tlb_flush_page(va, pm->pm_ctxnum,
+				   PMAP_CPUSET(pm));
 #endif
-				}
-				updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
-				    PPROT_WRITE, 0, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
 			}
+			updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+			    SRMMU_PROT_MASK, newprot, pm->pm_ctxnum,
+			    PMAP_CPUSET(pm));
 		}
 	}
 	simple_unlock(&pm->pm_lock);
@@ -5507,10 +5559,7 @@ pmap_changeprot4m(pm, va, prot, flags)
 		    cpu_number(), pm, va, prot, flags);
 #endif
 
-	if (pm == pmap_kernel())
-		newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
-	else
-		newprot = prot & VM_PROT_WRITE ? PPROT_RWX_RWX : PPROT_RX_RX;
+	newprot = pte_prot4m(pm, prot);
 
 	pmap_stats.ps_changeprots++;
 
@@ -6189,12 +6238,10 @@ pmap_enter4m(pm, va, pa, prot, flags)
 			      " MicroSPARC");
 	}
 #endif
+	pteproto |= SRMMU_TEPTE;
 	pteproto |= PMAP_T2PTE_SRMMU(pa);
-
-	/* Make sure we get a pte with appropriate perms! */
-	pteproto |= SRMMU_TEPTE | PPROT_RX_RX;
-
 	pa &= ~PMAP_TNC_SRMMU;
+
 	/*
 	 * Set up prototype for new PTE.  Cannot set PG_NC from PV_NC yet
 	 * since the pvlist no-cache bit might change as a result of the
@@ -6202,8 +6249,8 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	 */
 	pteproto |= (atop(pa) << SRMMU_PPNSHIFT);
 
-	if (prot & VM_PROT_WRITE)
-		pteproto |= PPROT_WRITE;
+	/* Make sure we get a pte with appropriate perms! */
+	pteproto |= pte_prot4m(pm, prot);
 
 	if (pm == pmap_kernel())
 		error = pmap_enk4m(pm, va, prot, flags, pg, pteproto | PPROT_S);
@@ -6524,12 +6571,10 @@ pmap_kenter_pa4m(va, pa, prot)
 
 	/* Initialise pteproto with cache bit */
 	pteproto = (pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0;
+	pteproto |= SRMMU_TEPTE | PPROT_S;
 	pteproto |= PMAP_T2PTE_SRMMU(pa);
-	pteproto |= SRMMU_TEPTE | PPROT_RX_RX;
 	pteproto |= (atop(pa & ~PMAP_TNC_SRMMU) << SRMMU_PPNSHIFT);
-	if (prot & VM_PROT_WRITE)
-		pteproto |= PPROT_WRITE;
-	pteproto |= PPROT_S;
+	pteproto |= pte_prot4m(pm, prot);
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -6641,7 +6686,7 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 	struct segmap *sp;
 
 	size = roundup(size,NBPG);
-	newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
+	newprot = pte_prot4m(pm, prot);
 
 	while (size > 0) {
 		rp = &pm->pm_regmap[VA_VREG(va)];
@@ -6739,7 +6784,6 @@ pmap_extract4_4c(pm, va, pap)
 		return (FALSE);
 	}
 	sp = &rp->rg_segmap[vs];
-
 	ptep = sp->sg_pte;
 	if (ptep == NULL) {
 #ifdef DEBUG
@@ -7543,11 +7587,6 @@ pmap_deactivate(l)
 #if defined(MULTIPROCESSOR)
 	pmap_t pm;
 	struct proc *p;
-
-#ifdef DIAGNOSTIC
-	if (l == NULL)
-		panic("pmap_deactivate: l==NULL");
-#endif
 
 	p = l->l_proc;
 	if (p->p_vmspace &&

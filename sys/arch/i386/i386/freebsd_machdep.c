@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.37 2003/08/20 21:48:36 fvdl Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.38 2003/08/24 17:52:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.37 2003/08/20 21:48:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.38 2003/08/24 17:52:30 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -181,7 +181,7 @@ freebsd_sendsig(sig, mask, code)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);

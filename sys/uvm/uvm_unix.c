@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.28 2003/05/25 13:00:40 simonb Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.29 2003/08/24 17:52:48 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.28 2003/05/25 13:00:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.29 2003/08/24 17:52:48 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,12 +95,14 @@ sys_obreak(l, v, retval)
 	/*
 	 * grow or shrink?
 	 */
+
 	if (new > old) {
 		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
-		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
-		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
+		    UVM_MAPFLAG(UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL,
+				UVM_INH_COPY,
+				UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
+				UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 			uprintf("sbrk: grow %ld failed, error = %d\n",
 				new - old, error);

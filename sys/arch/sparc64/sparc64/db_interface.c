@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.70 2003/07/15 03:36:08 lukem Exp $ */
+/*	$NetBSD: db_interface.c,v 1.71 2003/08/24 17:52:38 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.70 2003/07/15 03:36:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.71 2003/08/24 17:52:38 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -556,35 +556,38 @@ int64_t pseg_get __P((struct pmap *, vaddr_t));
 
 void
 db_dump_pmap(pm)
-struct pmap* pm;
+	struct pmap *pm;
 {
 	/* print all valid pages in the kernel pmap */
-	long i, j, k, n;
+	unsigned long long i, j, k, n, data0, data1;
 	paddr_t *pdir, *ptbl;
-	/* Almost the same as pmap_collect() */
 	
 	n = 0;
-	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
-			db_printf("pdir %ld at %lx:\n", i, (long)pdir);
-			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
-					db_printf("\tptable %ld:%ld at %lx:\n", i, k, (long)ptbl);
-					for (j=0; j<PTSZ; j++) {
-						int64_t data0, data1;
-						data0 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
-						j++;
-						data1 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
-						if (data0 || data1) {
-							db_printf("%llx: %llx\t",
-								  (unsigned long long)(((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT)),
-								  (unsigned long long)(data0));
-							db_printf("%llx: %llx\n",
-								  (unsigned long long)(((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT)),
-								  (unsigned long long)(data1));
-						}
-					}
+	for (i = 0; i < STSZ; i++) {
+		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED);
+		if (!pdir) {
+			continue;
+		}
+		db_printf("pdir %lld at %lx:\n", i, (long)pdir);
+		for (k = 0; k < PDSZ; k++) {
+			ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED);
+			if (!ptbl) {
+				continue;
+			}
+			db_printf("\tptable %lld:%lld at %lx:\n", i, k, (long)ptbl);
+			for (j = 0; j < PTSZ; j++) {
+				data0 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
+				j++;
+				data1 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
+				if (!data0 && !data1) {
+					continue;
 				}
+				db_printf("%016llx: %016llx\t",
+					  (i << STSHIFT) | (k << PDSHIFT) | ((j - 1) << PTSHIFT),
+					  data0);
+				db_printf("%016llx: %016llx\n",
+					  (i << STSHIFT) | (k << PDSHIFT) | (j << PTSHIFT),
+					  data1);
 			}
 		}
 	}
@@ -725,22 +728,22 @@ db_dump_dtsb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern pte_t *tsb;
+	extern pte_t *tsb_dmmu;
 	extern int tsbsize;
-#define TSBENTS (512<<tsbsize)
+#define TSBENTS (512 << tsbsize)
 	int i;
 
 	db_printf("TSB:\n");
-	for (i=0; i<TSBENTS; i++) {
+	for (i = 0; i < TSBENTS; i++) {
 		db_printf("%4d:%4d:%08x %08x:%08x ", i, 
-			  (int)((tsb[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag)),
-			  (int)(tsb[i].data>>32), (int)tsb[i].data);
+			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
+			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
+			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
 		i++;
 		db_printf("%4d:%4d:%08x %08x:%08x\n", i,
-			  (int)((tsb[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb[i].tag)),
-			  (int)((i<<13)|TSB_TAG_VA(tsb[i].tag)),
-			  (int)(tsb[i].data>>32), (int)tsb[i].data);
+			  (int)((tsb_dmmu[i].tag&TSB_TAG_G)?-1:TSB_TAG_CTX(tsb_dmmu[i].tag)),
+			  (int)((i<<13)|TSB_TAG_VA(tsb_dmmu[i].tag)),
+			  (int)(tsb_dmmu[i].data>>32), (int)tsb_dmmu[i].data);
 	}
 }
 

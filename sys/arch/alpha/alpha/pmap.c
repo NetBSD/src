@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.202 2003/08/07 16:26:32 agc Exp $ */
+/* $NetBSD: pmap.c,v 1.203 2003/08/24 17:52:28 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2003/08/07 16:26:32 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2003/08/24 17:52:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1554,9 +1554,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
-	if (prot & VM_PROT_WRITE)
-		return;
-
 	PMAP_LOCK(pmap);
 
 	bits = pte_prot(pmap, prot);
@@ -2518,39 +2515,23 @@ alpha_protection_init(void)
 	up = protection_codes[1];
 
 	for (prot = 0; prot < 8; prot++) {
-		kp[prot] = 0; up[prot] = 0;
-		switch (prot) {
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM;
-			up[prot] |= 0;
-			break;
+		kp[prot] = PG_ASM;
+		up[prot] = 0;
 
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE:
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE:
-			kp[prot] |= PG_EXEC;		/* software */
-			up[prot] |= PG_EXEC;		/* software */
-			/* FALLTHROUGH */
-
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM | PG_KRE;
-			up[prot] |= PG_URE | PG_KRE;
-			break;
-
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM | PG_KWE;
-			up[prot] |= PG_UWE | PG_KWE;
-			break;
-
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			kp[prot] |= PG_EXEC;		/* software */
-			up[prot] |= PG_EXEC;		/* software */
-			/* FALLTHROUGH */
-
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
-			kp[prot] |= PG_ASM | PG_KWE | PG_KRE;
-			up[prot] |= PG_UWE | PG_URE | PG_KWE | PG_KRE;
-			break;
+		if (prot & VM_PROT_READ) {
+			kp[prot] |= PG_KRE;
+			up[prot] |= PG_KRE | PG_URE;
+		}
+		if (prot & VM_PROT_WRITE) {
+			kp[prot] |= PG_KWE;
+			up[prot] |= PG_KWE | PG_UWE;
+		}
+		if (prot & VM_PROT_EXECUTE) {
+			kp[prot] |= PG_EXEC | PG_KRE;
+			up[prot] |= PG_EXEC | PG_KRE | PG_URE;
+		} else {
+			kp[prot] |= PG_FOE;
+			up[prot] |= PG_FOE;
 		}
 	}
 }
@@ -2722,20 +2703,24 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
  * pmap_emulate_reference:
  *
  *	Emulate reference and/or modified bit hits.
+ *	Return 1 if this was an execute fault on a non-exec mapping,
+ *	otherwise return 0.
  */
-void
-pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
+int
+pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 {
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	pt_entry_t faultoff, *pte;
 	struct vm_page *pg;
 	paddr_t pa;
 	boolean_t didlock = FALSE;
+	boolean_t exec = FALSE;
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_emulate_reference: %p, 0x%lx, %d, %d\n",
-		    l, v, user, write);
+		    l, v, user, type);
 #endif
 
 	/*
@@ -2755,12 +2740,18 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
 		if (l->l_proc->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		PMAP_LOCK(l->l_proc->p_vmspace->vm_map.pmap);
+		PMAP_LOCK(pmap);
 		didlock = TRUE;
-		pte = pmap_l3pte(l->l_proc->p_vmspace->vm_map.pmap, v, NULL);
+		pte = pmap_l3pte(pmap, v, NULL);
 		/*
 		 * We'll unlock below where we're done with the PTE.
 		 */
+	}
+	exec = pmap_pte_exec(pte);
+	if (!exec && type == ALPHA_MMCSR_FOE) {
+		if (didlock)
+			PMAP_UNLOCK(pmap);
+               return (1);
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
@@ -2777,7 +2768,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
 	 * pmap_emulate_reference(), and the bits aren't guaranteed,
 	 * for them...
 	 */
-	if (write) {
+	if (type == ALPHA_MMCSR_FOW) {
 		if (!(*pte & (user ? PG_UWE : PG_UWE | PG_KWE)))
 			panic("pmap_emulate_reference: write but unwritable");
 		if (!(*pte & PG_FOW))
@@ -2798,7 +2789,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
 	 * it now.
 	 */
 	if (didlock)
-		PMAP_UNLOCK(l->l_proc->p_vmspace->vm_map.pmap);
+		PMAP_UNLOCK(pmap);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2806,7 +2797,8 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
 #endif
 #ifdef DIAGNOSTIC
 	if (!PAGE_IS_MANAGED(pa))
-		panic("pmap_emulate_reference(%p, 0x%lx, %d, %d): pa 0x%lx not managed", l, v, user, write, pa);
+		panic("pmap_emulate_reference(%p, 0x%lx, %d, %d): "
+		      "pa 0x%lx not managed", l, v, user, type, pa);
 #endif
 
 	/*
@@ -2822,17 +2814,21 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pvh_slock);
 
-	if (write) {
+	if (type == ALPHA_MMCSR_FOW) {
 		pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
-		faultoff = PG_FOR | PG_FOW | PG_FOE;
+		faultoff = PG_FOR | PG_FOW;
 	} else {
 		pg->mdpage.pvh_attrs |= PGA_REFERENCED;
-		faultoff = PG_FOR | PG_FOE;
+		faultoff = PG_FOR;
+		if (exec) {
+			faultoff |= PG_FOE;
+		}
 	}
 	pmap_changebit(pg, 0, ~faultoff, cpu_id);
 
 	simple_unlock(&pg->mdpage.pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
+	return (0);
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.49 2002/11/01 19:26:23 jdolecek Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.50 2003/08/24 17:52:46 chs Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.49 2002/11/01 19:26:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.50 2003/08/24 17:52:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ extern const char * const svr4_syscallnames[];
 void syscall __P((void));
 #endif
 
+struct uvm_object *emul_svr4_object;
+
 const struct emul emul_svr4 = {
 	"svr4",
 	"/emul/svr4",
@@ -73,6 +75,7 @@ const struct emul emul_svr4 = {
 	trapsignal,
 	svr4_sigcode,
 	svr4_esigcode,
+	&emul_svr4_object,
 	svr4_setregs,
 	NULL,
 	NULL,

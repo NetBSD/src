@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.22 2003/06/23 11:01:18 martin Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.23 2003/08/24 17:52:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.22 2003/06/23 11:01:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.23 2003/08/24 17:52:30 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -85,6 +85,7 @@ ibcs2_setregs(l, epp, stack)
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __iBCS2_NPXCW__;
 	tf = l->l_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
+	tf->tf_cs = GSEL(LUCODEBIG_SEL, SEL_UPL);
 }
 
 /*
@@ -188,7 +189,7 @@ ibcs2_sendsig(sig, mask, code)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);

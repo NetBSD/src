@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.178 2003/07/08 22:09:26 cdi Exp $	*/
+/*	$NetBSD: locore.s,v 1.179 2003/08/24 17:52:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -2296,6 +2296,7 @@ data_miss:
 	sll	%g6, 3, %g6
 	brz,pn	%g4, data_nfo				! NULL entry? check somewhere else
 	 add	%g6, %g4, %g6
+
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
@@ -2308,9 +2309,9 @@ data_miss:
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
 	 or	%g4, TTE_ACCESS, %g4			! Update the access bit
+
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
-	
 	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
 	set	DATA_START, %g6	! debug
@@ -3256,7 +3257,14 @@ instr_miss:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, textfault
-	 or	%g4, TTE_ACCESS, %g7			! Update accessed bit
+	 nop
+
+	/* Check if it's an executable mapping. */
+	andcc	%g4, TTE_EXEC, %g0
+	bz,pn	%xcc, textfault
+	 nop
+
+	or	%g4, TTE_ACCESS, %g7			! Update accessed bit
 	btst	TTE_ACCESS, %g4				! Need to update access git?
 	bne,pt	%xcc, 1f
 	 nop
@@ -5942,44 +5950,32 @@ _C_LABEL(cpu_initialize):
 	flushw
 
 	/*
-	 * Step 7: change the trap base register, and install our TSB
-	 *
-	 * XXXX -- move this to CPUINFO_VA+32KB?
+	 * Step 7: change the trap base register, and install our TSB pointers
 	 */
 	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb), %l0
+	set	_C_LABEL(tsb_dmmu), %l0
 	LDPTR	[%l0], %l0
 	set	_C_LABEL(tsbsize), %l1
 	or	%l2, %lo(0x1fff), %l2
 	ld	[%l1], %l1
 	andn	%l0, %l2, %l0			! Mask off size and split bits
 	or	%l0, %l1, %l0			! Make a TSB pointer
-!	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
-
-#ifdef DEBUG
-	set	_C_LABEL(pmapdebug), %o1
-	ld	[%o1], %o1
-	sethi	%hi(0x40000), %o2
-	btst	%o2, %o1
-	bz	0f
-	
-	set	1f, %o0		! Debug printf
-	srlx	%l0, 32, %o1
-	call	_C_LABEL(prom_printf)
-	 srl	%l0, 0, %o2
-	.data
-1:
-	.asciz	"Setting TSB pointer %08x %08x\r\n"
-	_ALIGN
-	.text
-0:	
-#endif
-
 	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install insn TSB pointer
-	membar	#Sync				! We may need more membar #Sync in here
 	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
 	membar	#Sync
+
+	sethi	%hi(0x1fff), %l2
+	set	_C_LABEL(tsb_immu), %l0
+	LDPTR	[%l0], %l0
+	set	_C_LABEL(tsbsize), %l1
+	or	%l2, %lo(0x1fff), %l2
+	ld	[%l1], %l1
+	andn	%l0, %l2, %l0			! Mask off size and split bits
+	or	%l0, %l1, %l0			! Make a TSB pointer
+	set	TSB, %l2
+	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	membar	#Sync
+
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
@@ -5994,17 +5990,6 @@ _C_LABEL(cpu_initialize):
 	wrpr	%g0, 0, %tstate
 #endif
 
-#ifdef NOTDEF_DEBUG
-	set	1f, %o0		! Debug printf
-	srax	%l0, 32, %o1
-	call	_C_LABEL(prom_printf)
-	 srl	%l0, 0, %o2
-	.data
-1:
-	.asciz	"Our trap handler is enabled\r\n"
-	_ALIGN
-	.text
-#endif
 	/*
 	 * Call our startup routine.
 	 */
