@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.12 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_input.c,v 1.13 2000/03/30 11:31:27 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -104,7 +104,7 @@ db_delete(n, bwd)
 	int	n;
 	int	bwd;
 {
-	register char *p;
+	char *p;
 
 	if (bwd) {
 	    db_lc -= n;
@@ -223,7 +223,7 @@ db_inputchar(c)
 			INC_DB_CURR();
 			db_le = db_lc = db_lbuf_start;
 		} else {
-			register char *p;
+			char *p;
 			INC_DB_CURR();
 			for (p = db_history_curr, db_le = db_lbuf_start;
 			     *p; ) {
@@ -246,7 +246,7 @@ db_inputchar(c)
 			INC_DB_CURR();
 			db_delete_line();
 			if (db_history_curr != db_history_last) {
-				register char *p;
+				char *p;
 				for (p = db_history_curr,
 				     db_le = db_lbuf_start; *p;) {
 					*db_le++ = *p++;
@@ -273,7 +273,7 @@ db_inputchar(c)
 #if DDB_HISTORY_SIZE != 0
 		/* Check if it same than previous line */
 		if (db_history_curr == db_history_prev) {
-			register char *pp, *pc;
+			char *pp, *pc;
 
 			/* Is it unmodified */
 			for (pp = db_history_prev, pc = db_lbuf_start;
@@ -295,7 +295,7 @@ db_inputchar(c)
 			}
 		}
 		if (db_le != db_lbuf_start) {
-			register char *p;
+			char *p;
 			db_history_prev = db_history_last;
 			for (p = db_lbuf_start; p != db_le; p++) {
 				*db_history_last++ = *p;
@@ -315,7 +315,7 @@ db_inputchar(c)
 		    cnputc('\007');
 		}
 		else if (c >= ' ' && c <= '~') {
-		    register char *p;
+		    char *p;
 
 		    for (p = db_le; p > db_lc; p--)
 			*p = *(p-1);
@@ -354,7 +354,7 @@ db_readline(lstart, lsize)
 void
 db_check_interrupt()
 {
-	register int	c;
+	int	c;
 
 	c = cnmaygetc();
 	switch (c) {

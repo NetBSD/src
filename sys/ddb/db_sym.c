@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.18 1999/06/26 16:58:12 simonb Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.19 2000/03/30 11:31:27 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -185,7 +185,7 @@ db_qualify(sym, symtabname)
 {
 	char		*symname;
 	static char     tmp[256];
-	register char	*s;
+	char	*s;
 
 	db_symbol_values(sym, &symname, 0);
 	s = tmp;
@@ -237,10 +237,10 @@ db_lookup(symstr)
 	char *symstr;
 {
 	db_sym_t sp;
-	register int i;
+	int i;
 	int symtab_start = 0;
 	int symtab_end = MAXNOSYMTABS;
-	register char *cp;
+	char *cp;
 
 	/*
 	 * Look for, remove, and remember any symbol table specifier.
@@ -290,8 +290,7 @@ db_symbol_is_ambiguous(sym)
 	db_sym_t	sym;
 {
 	char		*sym_name;
-	register int	i;
-	register
+	int	i;
 	boolean_t	found_once = FALSE;
 
 	if (!db_qualify_ambiguous_names)
@@ -315,14 +314,13 @@ db_symbol_is_ambiguous(sym)
  */
 db_sym_t
 db_search_symbol( val, strategy, offp)
-	register db_addr_t	val;
+	db_addr_t		val;
 	db_strategy_t		strategy;
 	db_expr_t		*offp;
 {
-	register
 	unsigned int	diff;
 	db_expr_t	newdiff;
-	register int	i;
+	int		i;
 	db_sym_t	ret = DB_SYM_NULL, sym;
 
 	newdiff = diff = ~0;

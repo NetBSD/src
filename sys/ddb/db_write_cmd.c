@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.11 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.12 2000/03/30 11:31:27 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -52,12 +52,10 @@ db_write_cmd(address, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	register
 	db_addr_t	addr;
-	register
 	db_expr_t	old_value;
 	db_expr_t	new_value;
-	register int	size;
+	int		size;
 	boolean_t	wrote_one = FALSE;
 
 	addr = (db_addr_t) address;

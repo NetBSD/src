@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.26 1999/06/15 00:23:19 thorpej Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.27 2000/03/30 11:31:26 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -87,10 +87,10 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 				   boundary */
 	const char *name;
 {
-	register struct nlist	*sym_start, *sym_end;
-	register struct nlist	*sp;
-	register char *strtab;
-	register int slen, bad = 0;
+	struct nlist	*sym_start, *sym_end;
+	struct nlist	*sp;
+	char *strtab;
+	int slen, bad = 0;
 	char *estrtab;
 
 	if (ALIGNED_POINTER(vsymtab, long) == 0) {
@@ -126,7 +126,7 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 #undef	round_to_size
         
 	for (sp = sym_start; sp < sym_end; sp++) {
-	    register int strx;
+	    int strx;
 	    strx = sp->n_un.n_strx;
 	    if (strx != 0) {
 		if (strx > slen) {
@@ -158,7 +158,7 @@ db_aout_lookup(stab, symstr)
 	db_symtab_t	*stab;
 	char *		symstr;
 {
-	register struct nlist *sp, *ep;
+	struct nlist *sp, *ep;
 
 	sp = (struct nlist *)stab->start;
 	ep = (struct nlist *)stab->end;
@@ -179,14 +179,13 @@ db_aout_lookup(stab, symstr)
 db_sym_t
 db_aout_search_symbol(symtab, off, strategy, diffp)
 	db_symtab_t *	symtab;
-	register
 	db_addr_t	off;
 	db_strategy_t	strategy;
 	db_expr_t	*diffp;		/* in/out */
 {
-	register unsigned int	diff = *diffp;
-	register struct nlist	*symp = 0;
-	register struct nlist	*sp, *ep;
+	unsigned int	diff = *diffp;
+	struct nlist	*symp = 0;
+	struct nlist	*sp, *ep;
 
 	sp = (struct nlist *)symtab->start;
 	ep = (struct nlist *)symtab->end;
@@ -235,7 +234,7 @@ db_aout_symbol_values(symtab, sym, namep, valuep)
 	char		**namep;
 	db_expr_t	*valuep;
 {
-	register struct nlist *sp;
+	struct nlist *sp;
 
 	sp = (struct nlist *)sym;
 	if (namep)
@@ -253,7 +252,7 @@ db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
 	int 		*linenum;
 	db_expr_t	off;
 {
-	register struct nlist	*sp, *ep;
+	struct nlist	*sp, *ep;
 	unsigned long		sodiff = -1UL, lndiff = -1UL, ln = 0;
 	char			*fname = NULL;
 
@@ -316,7 +315,7 @@ db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
 	int		*nargp;
 	char		**argnamep;
 {
-	register struct nlist	*sp, *ep;
+	struct nlist		*sp, *ep;
 	u_long			addr;
 	int			maxnarg = *nargp, nargs = 0;
 

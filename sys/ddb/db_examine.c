@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.16 1999/05/31 06:53:45 ross Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.17 2000/03/30 11:31:26 augustss Exp $	*/
 
 /*
  * Mach Operating System
@@ -71,8 +71,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 
 void
 db_examine(addr, fmt, count)
-	register
-	    db_addr_t	addr;
+	db_addr_t	addr;
 	char *		fmt;	/* format string */
 	int		count;	/* repeat count */
 {
@@ -241,8 +240,8 @@ db_print_loc_and_inst(loc)
 
 void
 db_strcpy(dst, src)
-	register char *dst;
-	register char *src;
+	char *dst;
+	char *src;
 {
 	while ((*dst++ = *src++) != '\0')
 		;
@@ -324,7 +323,6 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 
 void
 db_search(addr, size, value, mask, count)
-	register
 	db_addr_t	addr;
 	int		size;
 	db_expr_t	value;

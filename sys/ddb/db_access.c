@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.13 1999/04/12 20:38:20 pk Exp $	*/
+/*	$NetBSD: db_access.c,v 1.14 2000/03/30 11:31:26 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -52,12 +52,12 @@ int db_extend[] = {	/* table for sign-extending */
 db_expr_t
 db_get_value(addr, size, is_signed)
 	db_addr_t addr;
-	register size_t size;
+	size_t size;
 	boolean_t is_signed;
 {
 	char data[sizeof(db_expr_t)];
-	register db_expr_t value;
-	register size_t i;
+	db_expr_t value;
+	size_t i;
 
 	db_read_bytes(addr, size, data);
 
@@ -77,11 +77,11 @@ db_get_value(addr, size, is_signed)
 void
 db_put_value(addr, size, value)
 	db_addr_t addr;
-	register size_t size;
-	register db_expr_t value;
+	size_t size;
+	db_expr_t value;
 {
 	char data[sizeof(db_expr_t)];
-	register size_t i;
+	size_t i;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = 0; i < size; i++)

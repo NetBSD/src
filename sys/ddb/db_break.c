@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.11 1999/04/12 20:38:20 pk Exp $	*/
+/*	$NetBSD: db_break.c,v 1.12 2000/03/30 11:31:26 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@ db_breakpoint_t		db_breakpoint_list = 0;
 db_breakpoint_t
 db_breakpoint_alloc()
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if ((bkpt = db_free_breakpoints) != 0) {
 	    db_free_breakpoints = bkpt->link;
@@ -70,7 +70,7 @@ db_breakpoint_alloc()
 
 void
 db_breakpoint_free(bkpt)
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 {
 	bkpt->link = db_free_breakpoints;
 	db_free_breakpoints = bkpt;
@@ -82,7 +82,7 @@ db_set_breakpoint(map, addr, count)
 	db_addr_t	addr;
 	int		count;
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (db_find_breakpoint(map, addr)) {
 	    db_printf("Already set.\n");
@@ -110,8 +110,8 @@ db_delete_breakpoint(map, addr)
 	vm_map_t	map;
 	db_addr_t	addr;
 {
-	register db_breakpoint_t	bkpt;
-	register db_breakpoint_t	*prev;
+	db_breakpoint_t	bkpt;
+	db_breakpoint_t	*prev;
 
 	for (prev = &db_breakpoint_list;
 	     (bkpt = *prev) != 0;
@@ -135,7 +135,7 @@ db_find_breakpoint(map, addr)
 	vm_map_t	map;
 	db_addr_t	addr;
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	for (bkpt = db_breakpoint_list;
 	     bkpt != 0;
@@ -160,7 +160,7 @@ boolean_t	db_breakpoints_inserted = TRUE;
 void
 db_set_breakpoints()
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (!db_breakpoints_inserted) {
 
@@ -182,7 +182,7 @@ db_set_breakpoints()
 void
 db_clear_breakpoints()
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (db_breakpoints_inserted) {
 
@@ -202,7 +202,7 @@ db_clear_breakpoints()
 void
 db_list_breakpoints()
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (db_breakpoint_list == 0) {
 	    db_printf("No breakpoints set\n");

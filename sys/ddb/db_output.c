@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.21 2000/03/08 08:31:33 jdolecek Exp $	*/
+/*	$NetBSD: db_output.c,v 1.22 2000/03/30 11:31:27 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -81,7 +81,7 @@ static void db_more __P((void));
 void
 db_force_whitespace()
 {
-	register int last_print, next_tab;
+	int last_print, next_tab;
 
 	last_print = db_last_non_space;
 	while (last_print < db_output_position) {
@@ -103,7 +103,7 @@ db_force_whitespace()
 static void
 db_more()
 {
-	register  char *p;
+	char *p;
 	int quit_output = 0;
 
 	for (p = "--db_more--"; *p; p++)

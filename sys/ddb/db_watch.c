@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.12 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.13 2000/03/30 11:31:27 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,7 +59,7 @@ db_watchpoint_t		db_watchpoint_list = 0;
 db_watchpoint_t
 db_watchpoint_alloc()
 {
-	register db_watchpoint_t	watch;
+	db_watchpoint_t	watch;
 
 	if ((watch = db_free_watchpoints) != 0) {
 	    db_free_watchpoints = watch->link;
@@ -77,7 +77,7 @@ db_watchpoint_alloc()
 
 void
 db_watchpoint_free(watch)
-	register db_watchpoint_t	watch;
+	db_watchpoint_t	watch;
 {
 	watch->link = db_free_watchpoints;
 	db_free_watchpoints = watch;
@@ -89,7 +89,7 @@ db_set_watchpoint(map, addr, size)
 	db_addr_t	addr;
 	vsize_t	size;
 {
-	register db_watchpoint_t	watch;
+	db_watchpoint_t	watch;
 
 	if (map == NULL) {
 	    db_printf("No map.\n");
@@ -131,8 +131,8 @@ db_delete_watchpoint(map, addr)
 	vm_map_t	map;
 	db_addr_t	addr;
 {
-	register db_watchpoint_t	watch;
-	register db_watchpoint_t	*prev;
+	db_watchpoint_t	watch;
+	db_watchpoint_t	*prev;
 
 	for (prev = &db_watchpoint_list;
 	     (watch = *prev) != 0;
@@ -151,7 +151,7 @@ db_delete_watchpoint(map, addr)
 void
 db_list_watchpoints()
 {
-	register db_watchpoint_t	watch;
+	db_watchpoint_t	watch;
 
 	if (db_watchpoint_list == 0) {
 	    db_printf("No watchpoints set\n");
@@ -216,7 +216,7 @@ db_listwatch_cmd(addr, have_addr, count, modif)
 void
 db_set_watchpoints()
 {
-	register db_watchpoint_t	watch;
+	db_watchpoint_t	watch;
 
 	if (!db_watchpoints_inserted) {
 	    for (watch = db_watchpoint_list;
@@ -243,7 +243,7 @@ db_find_watchpoint(map, addr, regs)
 	db_addr_t	addr;
 	db_regs_t	*regs;
 {
-	register db_watchpoint_t watch;
+	db_watchpoint_t watch;
 	db_watchpoint_t found = 0;
 
 	for (watch = db_watchpoint_list;

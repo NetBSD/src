@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.34 2000/02/21 05:48:56 sommerfeld Exp $	*/
+/*	$NetBSD: db_command.c,v 1.35 2000/03/30 11:31:26 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -109,9 +109,9 @@ db_cmd_search(name, table, cmdp)
 	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
-	    register char *lp;
-	    register char *rp;
-	    register int  c;
+	    char *lp;
+	    char *rp;
+	    int  c;
 
 	    lp = name;
 	    rp = cmd->name;
