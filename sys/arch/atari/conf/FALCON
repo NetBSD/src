@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.18 1997/01/31 01:48:27 thorpej Exp $
+#	$NetBSD: FALCON,v 1.19 1997/01/31 05:50:02 thorpej Exp $
 #
 # ATARI-FALCON
 #
@@ -69,7 +69,6 @@ options		COMPAT_12	# Compatibility to NetBSD1.2
 options		KTRACE			# Add kernel tracing system call
 options		DIAGNOSTIC		# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
-options		GENERIC			# Mini-root boot support
 
 #
 # Atari specific kernel options:

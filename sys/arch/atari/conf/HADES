@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.5 1997/01/31 01:48:28 thorpej Exp $
+#	$NetBSD: HADES,v 1.6 1997/01/31 05:50:04 thorpej Exp $
 #
 # Medusa-Hades
 #
@@ -31,6 +31,7 @@ options		INET		# Basic networking support
 # File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
+#file-system	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	NULLFS		# Loopback filesystem
@@ -46,11 +47,6 @@ options		FIFO		# FIFO operations on vnodes
 #
 options		PANICWAIT	# Require keystroke to dump/reboot
 options		DDB		# Kernel debugger
-
-#
-# File system related options
-#
-#options		NFSCLIENT	# Network File System client side code
 
 #
 # Compatability options for various existing systems
@@ -73,7 +69,6 @@ options		COMPAT_12	# Compatibility to NetBSD1.2
 options		KTRACE			# Add kernel tracing system call
 options		DIAGNOSTIC		# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
-options		GENERIC			# Mini-root boot support
 
 #
 # Atari specific kernel options:

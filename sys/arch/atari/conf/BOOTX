@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOTX,v 1.12 1997/01/31 01:48:26 thorpej Exp $
+#	$NetBSD: BOOTX,v 1.13 1997/01/31 05:50:01 thorpej Exp $
 #
 # BOOTX
 #
@@ -70,7 +70,6 @@ options		COMPAT_12	# Compatibility to NetBSD1.2
 options		KTRACE			# Add kernel tracing system call
 options		DIAGNOSTIC		# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
-options		GENERIC			# Mini-root boot support
 
 #
 # Atari specific kernel options:
