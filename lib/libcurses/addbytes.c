@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.15 2000/04/11 13:57:08 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.16 2000/04/12 21:47:50 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.15 2000/04/11 13:57:08 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.16 2000/04/12 21:47:50 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -69,7 +69,7 @@ __waddbytes(win, bytes, count, attr)
 	while (count--) {
 		c = *bytes++;
 #ifdef DEBUG
-		__CTRACE("ADDBYTES('%c') at (%d, %d)\n", c, y, x);
+		__CTRACE("ADDBYTES('%c', %x) at (%d, %d)\n", c, attr, y, x);
 #endif
 		switch (c) {
 		case '\t':
@@ -124,13 +124,17 @@ __waddbytes(win, bytes, count, attr)
 				attributes |= __PROTECT;
 			if (win->wattr & __ALTCHARSET || attr & __ALTCHARSET)
 				attributes |= __ALTCHARSET;
+			if (attr & __COLOR)
+				attributes |= attr & __COLOR;
+			else if (win->wattr & __COLOR)
+				attributes |= win->wattr & __COLOR;
 #ifdef DEBUG
 			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
 			    y, x, *win->lines[y]->firstchp,
 			    *win->lines[y]->lastchp);
 #endif
 			if (lp->line[x].ch != c ||
-			    !(lp->line[x].attr & attributes)) {
+			    lp->line[x].attr != attributes) {
 				newx = x + win->ch_off;
 				if (!(lp->flags & __ISDIRTY)) {
 					lp->flags |= __ISDIRTY;
@@ -185,6 +189,11 @@ __waddbytes(win, bytes, count, attr)
 				lp->line[x].attr |= __ALTCHARSET;
 			else
 				lp->line[x].attr &= ~__ALTCHARSET;
+			if (attributes & __COLOR) {
+				lp->line[x].attr &= ~__COLOR;
+				lp->line[x].attr |= attributes & __COLOR;
+			} else
+				lp->line[x].attr &= ~__COLOR;
 			if (x == win->maxx - 1)
 				lp->flags |= __ISPASTEOL;
 			else
