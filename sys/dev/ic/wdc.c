@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.45 1998/11/21 15:41:41 drochner Exp $ */
+/*	$NetBSD: wdc.c,v 1.46 1998/11/23 23:02:11 kenh Exp $ */
 
 
 /*
@@ -996,6 +996,23 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_error = chp->ch_error;
 	}
 	wdc_c->flags |= AT_DONE;
+	if (wdc_c->flags & AT_READREG && (wdc_c->flags & (AT_ERROR | AT_DF))
+								== 0) {
+		wdc_c->r_head = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						 wd_sdh);
+		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						wd_cyl_hi) << 8;
+		wdc_c->r_cyl |= bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						 wd_cyl_lo);
+		wdc_c->r_sector = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						   wd_sector);
+		wdc_c->r_count = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						  wd_seccnt);
+		wdc_c->r_error = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						  wd_error);
+		wdc_c->r_precomp = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+						    wd_precomp);
+	}
 	wdc_free_xfer(chp, xfer);
 	if (needdone) {
 		if (wdc_c->flags & AT_WAIT)
