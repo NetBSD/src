@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.c,v 1.6 2003/08/26 16:37:36 thorpej Exp $	*/
+/*	$NetBSD: cast128.c,v 1.7 2003/08/26 20:03:57 thorpej Exp $	*/
 /*      $OpenBSD: cast.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
 
 /*
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.6 2003/08/26 16:37:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.7 2003/08/26 20:03:57 thorpej Exp $");
 
 #include <sys/types.h>
 #include <crypto/cast128/cast128.h>
@@ -41,7 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.6 2003/08/26 16:37:36 thorpej Exp $");
 
 /***** Encryption Function *****/
 
-void cast128_encrypt(cast128_key* key, u_int8_t* inblock, u_int8_t* outblock)
+void cast128_encrypt(const cast128_key* key, const u_int8_t* inblock,
+    u_int8_t* outblock)
 {
 u_int32_t t, l, r;
 
@@ -86,7 +87,8 @@ u_int32_t t, l, r;
 
 /***** Decryption Function *****/
 
-void cast128_decrypt(cast128_key* key, u_int8_t* inblock, u_int8_t* outblock)
+void cast128_decrypt(const cast128_key* key, const u_int8_t* inblock,
+    u_int8_t* outblock)
 {
 u_int32_t t, l, r;
 
@@ -131,7 +133,7 @@ u_int32_t t, l, r;
 
 /***** Key Schedual *****/
 
-void cast128_setkey(cast128_key* key, u_int8_t* rawkey, int keybytes)
+void cast128_setkey(cast128_key* key, const u_int8_t* rawkey, int keybytes)
 {
 u_int32_t t[4], z[4], x[4];
 int i;
