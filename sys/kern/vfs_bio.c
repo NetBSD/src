@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.74.2.8 2002/07/12 01:40:23 nathanw Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.74.2.9 2002/07/17 18:02:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.8 2002/07/12 01:40:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.9 2002/07/17 18:02:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,7 +646,7 @@ start:
 	if (bp != NULL) {
 		s = splbio();
 		if (ISSET(bp->b_flags, B_BUSY)) {
-			if (curlwp == uvm.pagedaemon_proc) {
+			if (curproc == uvm.pagedaemon_proc) {
 				splx(s);
 				return NULL;
 			}
