@@ -183,7 +183,7 @@ struct lp_softc {
 };
 
 /* Autoconf structure */
-CFATTACH_DECL(lp, sizeof(struct lp_softc), lp_probe, lp_attach, lp_detach, 
+CFATTACH_DECL(plip, sizeof(struct lp_softc), lp_probe, lp_attach, lp_detach, 
 	NULL);
 
 /* Functions for the lp interface */
@@ -877,8 +877,6 @@ lpstart(struct ifnet * ifp)
 			err = 0;
 			/* Go quiescent */
 			ppbus_wdtr(ppbus, 0);
-
-nend:
 		}
 		/* Output packet for FreeBSD compatible protocol */
 		else {
@@ -908,7 +906,8 @@ end:
 			else
 				ppbus_wdtr(ppbus, txmitl['\0'] ^ 0x17);
 		}
-	
+
+nend:
 		/* Re-enable interrupt generation */
 		ppbus_wctr(ppbus, IRQENABLE);
 
