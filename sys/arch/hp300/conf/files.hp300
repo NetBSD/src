@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.63 2002/12/22 00:17:14 gmcgarry Exp $
+#	$NetBSD: files.hp300,v 1.64 2003/03/06 18:28:52 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -56,7 +56,7 @@ file	arch/hp300/dev/hil.c			hil	needs-flag
 file	arch/hp300/dev/hil_keymaps.c		hil
 
 # 98620 DMA controller
-device	dma { }
+device	dma
 attach	dma at intio
 file	arch/hp300/dev/dma.c			dma
 
@@ -135,11 +135,11 @@ file	arch/hp300/dev/if_le.c		le
 # HP-IB interfaces
 define	hpibdev { }
 
-device	nhpib: hpibdev, dma
+device	nhpib: hpibdev
 attach	nhpib at dio
 file	arch/hp300/dev/nhpib.c		nhpib
 
-device	fhpib: hpibdev, dma
+device	fhpib: hpibdev
 attach	fhpib at dio
 file	arch/hp300/dev/fhpib.c		fhpib
 
