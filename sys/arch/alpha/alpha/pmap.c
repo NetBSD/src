@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.167 2001/04/23 15:26:08 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.168 2001/04/23 15:42:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2001/04/23 15:26:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.168 2001/04/23 15:42:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,8 +239,7 @@ u_long		kernel_pmap_asngen_store[ALPHA_MAXPROCS];
 
 paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
-vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
-vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
+static vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 boolean_t	pmap_initialized;	/* Has pmap_init completed? */
 
@@ -828,8 +827,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	kmeminit_nkmempages();
 
 	/*
-	 * Figure out how many PTE's are necessary to map the kernel.
-	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
+	 * Figure out how many initial PTE's are necessary to map the
+	 * kernel.  We also reserve space for kmem_alloc_pageable()
+	 * for vm_fork().
 	 */
 	lev3mapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
 		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
@@ -839,6 +839,21 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	lev3mapsize += shminfo.shmall;
 #endif
 	lev3mapsize = roundup(lev3mapsize, NPTEPG);
+
+	/*
+	 * Initialize `FYI' variables.  Note we're relying on
+	 * the fact that BSEARCH sorts the vm_physmem[] array
+	 * for us.
+	 */
+	avail_start = ptoa(vm_physmem[0].start);
+	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
+
+#if 0
+	printf("avail_start = 0x%lx\n", avail_start);
+	printf("avail_end = 0x%lx\n", avail_end);
+	printf("virtual_end = 0x%lx\n", virtual_end);
+#endif
 
 	/*
 	 * Allocate a level 1 PTE table for the kernel.
@@ -945,23 +960,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Set up level three page table (lev3map)
 	 */
 	/* Nothing to do; it's already zero'd */
-
-	/*
-	 * Initialize `FYI' variables.  Note we're relying on
-	 * the fact that BSEARCH sorts the vm_physmem[] array
-	 * for us.
-	 */
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
-	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
-
-#if 0
-	printf("avail_start = 0x%lx\n", avail_start);
-	printf("avail_end = 0x%lx\n", avail_end);
-	printf("virtual_avail = 0x%lx\n", virtual_avail);
-	printf("virtual_end = 0x%lx\n", virtual_end);
-#endif
 
 	/*
 	 * Intialize the pmap pools and list.
@@ -1071,7 +1069,7 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = round_page(virtual_avail);
+	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
 	*vendp = VM_MAX_KERNEL_ADDRESS;		/* we use pmap_growkernel */
 }
 
