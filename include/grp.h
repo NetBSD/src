@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.18 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: grp.h,v 1.19 2004/10/04 04:11:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -61,6 +61,10 @@ struct group	*getgrnam __P((const char *));
 struct group	*getgrent __P((void));
 void		 setgrent __P((void));
 void		 endgrent __P((void));
+int		 getgrgid_r __P((gid_t, struct group *, char *, size_t,
+				struct group **));
+int		 getgrnam_r __P((const char *, struct group *, char *, size_t,
+				struct group **));
 #endif
 #if defined(_NETBSD_SOURCE)
 void		 setgrfile __P((const char *));

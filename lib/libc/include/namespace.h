@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.92 2004/08/17 14:10:06 ginsbach Exp $	*/
+/*	$NetBSD: namespace.h,v 1.93 2004/10/04 04:11:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -221,7 +221,9 @@
 #define getfsspec		_getfsspec
 #define getgrent		_getgrent
 #define getgrgid		_getgrgid
+#define getgrgid_r		_getgrgid_r
 #define getgrnam		_getgrnam
+#define getgrnam_r		_getgrnam_r
 #define getgrouplist		_getgrouplist
 #define gethostbyaddr		_gethostbyaddr
 #define gethostbyname		_gethostbyname
