@@ -1,4 +1,4 @@
-.\"	$NetBSD: xargs.1,v 1.12 2000/09/04 07:35:20 kleink Exp $
+.\"	$NetBSD: xargs.1,v 1.13 2001/12/08 19:27:11 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -160,11 +160,6 @@ command line cannot be assembled,
 .Ar utility
 cannot be invoked, an invocation of the utility is terminated by a signal
 or an invocation of the utility exits with a value of 255.
-.Sh FILES
-.Bl -tag -width /dev/tty -compact
-.It Pa /dev/tty
-used to read responses in prompt mode
-.El
 .Sh EXIT STATUS
 .Nm
 exits with one of the following values:
@@ -195,6 +190,11 @@ The
 could not be found.
 .It 1
 Some other error occurred.
+.El
+.Sh FILES
+.Bl -tag -width /dev/tty -compact
+.It Pa /dev/tty
+used to read responses in prompt mode
 .El
 .Sh SEE ALSO
 .Xr echo 1 ,
