@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.17 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.18 2000/02/06 16:45:56 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -137,7 +137,8 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, netbsd32_emul_path,
-		    itp, &bp, 0)))
+				       itp, &bp, 0)) && 
+		    (error = emul_find(p, NULL, "", itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &i)) != 0)
 			return error;
