@@ -42,19 +42,19 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.12 1999/03/26 17:49:26 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.13 1999/03/29 23:00:57 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl19 ";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl20";
+static char contrib [] = "Please contribute if you find this software useful.";
+static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
 #include "dhcpd.h"
 
-static void usage PROTO ((void));
+static void usage PROTO ((char *));
 
 TIME cur_time;
 struct group root_group;
@@ -82,7 +82,7 @@ int main (argc, argv, envp)
 {
 	int i, status;
 	struct servent *ent;
-	char *s;
+	char *s, *appname;
 	int cftest = 0;
 #ifndef DEBUG
 	int pidfilewritten = 0;
@@ -92,12 +92,18 @@ int main (argc, argv, envp)
 #endif
 	int quiet = 0;
 
+	appname = strchr (argv [0], '/');
+	if (!appname)
+		appname = argv [0];
+	else
+		appname++;
+
 	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
-	openlog ("dhcpd", LOG_NDELAY);
+	openlog (appname, LOG_NDELAY);
 	log_priority = DHCPD_LOG_FACILITY;
 #else
-	openlog ("dhcpd", LOG_NDELAY, DHCPD_LOG_FACILITY);
+	openlog (appname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 #endif
 
 #ifndef DEBUG
@@ -134,11 +140,15 @@ int main (argc, argv, envp)
 			log_perror = -1;
 		} else if (!strcmp (argv [i], "-cf")) {
 			if (++i == argc)
-				usage ();
+				usage (appname);
 			path_dhcpd_conf = argv [i];
+		} else if (!strcmp (argv [i], "-pf")) {
+			if (++i == argc)
+				usage (appname);
+			path_dhcpd_pid = argv [i];
 		} else if (!strcmp (argv [i], "-lf")) {
 			if (++i == argc)
-				usage ();
+				usage (appname);
 			path_dhcpd_db = argv [i];
                 } else if (!strcmp (argv [i], "-t")) {
 			/* test configurations only */
@@ -151,7 +161,7 @@ int main (argc, argv, envp)
 			quiet = 1;
 			quiet_interface_discovery = 1;
 		} else if (argv [i][0] == '-') {
-			usage ();
+			usage (appname);
 		} else {
 			struct interface_info *tmp =
 				((struct interface_info *)
@@ -171,8 +181,10 @@ int main (argc, argv, envp)
 		note (message);
 		note (copyright);
 		note (arr);
+		note ("");
 		note (contrib);
 		note (url);
+		note ("");
 	}
 
 	/* Default to the DHCP/BOOTP port. */
@@ -284,14 +296,20 @@ int main (argc, argv, envp)
 
 /* Print usage message. */
 
-static void usage ()
+static void usage (appname)
+	char *appname;
 {
 	note (message);
 	note (copyright);
 	note (arr);
+	note ("");
+	note (contrib);
+	note (url);
+	note ("");
 
-	error ("Usage: dhcpd [-p <UDP port #>] [-d] [-f] [-cf config-file]%s",
-	       "\n            [-lf lease-file] [if0 [...ifN]]");
+	warn ("Usage: %s [-p <UDP port #>] [-d] [-f] [-cf config-file]",
+	      appname);
+	error("            [-lf lease-file] [-pf pidfile] [if0 [...ifN]]");
 }
 
 void cleanup ()
