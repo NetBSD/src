@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.2 1998/06/26 21:20:34 drochner Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.3 1998/08/12 20:04:12 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -95,6 +95,7 @@ struct wsemul_vt100_emuldata {
 /* some useful utility macros */
 #define	ARG(n)			(edp->args[(n)])
 #define	DEF1_ARG(n)		(ARG(n) ? ARG(n) : 1)
+#define	DEFx_ARG(n, x)		(ARG(n) ? ARG(n) : (x))
 #define ROWS_ABOVE		(edp->crow - edp->scrreg_startrow)
 #define	ROWS_BELOW		(edp->scrreg_startrow + edp->scrreg_nrows \
 					- edp->crow - 1)

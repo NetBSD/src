@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.3 1998/06/29 21:14:40 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.4 1998/08/12 20:04:13 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -587,14 +587,14 @@ wsemul_vt100_handle_csi(edp, c)
 		}
 		break;
 	    case 'r': /* DECSTBM set top/bottom margins */
-		if (ARG(0) == 0 && ARG(1) == 0) {
-			edp->scrreg_startrow = 0;
-			edp->scrreg_nrows = edp->nrows;
+		help = min(DEF1_ARG(0), edp->nrows) - 1;
+		n = min(DEFx_ARG(1, edp->nrows), edp->nrows) - help;
+		if (n < 2) {
+			/* minimal scrolling region has 2 lines */
+			return;
 		} else {
-			edp->scrreg_startrow = min(DEF1_ARG(0),
-						   edp->nrows) - 1;
-			edp->scrreg_nrows = min(DEF1_ARG(1), edp->nrows) -
-			    edp->scrreg_startrow;
+			edp->scrreg_startrow = help;
+			edp->scrreg_nrows = n;
 		}
 		edp->crow = ((edp->flags & VTFL_DECOM) ?
 			     edp->scrreg_startrow : 0);
