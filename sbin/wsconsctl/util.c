@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.18 2004/04/02 22:16:52 heas Exp $ */
+/*	$NetBSD: util.c,v 1.19 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,6 +140,27 @@ static struct nameint kbdvar_tab[] = {
 	KB_VARTAB
 };
 
+static struct nameint color_tab[] = {
+	{ WSCOL_UNSUPPORTED,		"unsupported" },
+	{ WSCOL_BLACK,			"black" },
+	{ WSCOL_RED,			"red" },
+	{ WSCOL_GREEN,			"green" },
+	{ WSCOL_BROWN,			"brown" },
+	{ WSCOL_BLUE,			"blue" },
+	{ WSCOL_MAGENTA,		"magenta" },
+	{ WSCOL_CYAN,			"cyan" },
+	{ WSCOL_WHITE,			"white" },
+};
+
+static struct nameint attr_tab[] = {
+	{ WSATTR_NONE,			"none" },
+	{ WSATTR_REVERSE,		"reverse" },
+	{ WSATTR_HILIT,			"hilit" },
+	{ WSATTR_BLINK,			"blink" },
+	{ WSATTR_UNDERLINE,		"underline" },
+	{ WSATTR_WSCOLORS,		"color" },
+};
+
 static struct field *field_tab;
 static int field_tab_len;
 
@@ -224,7 +245,7 @@ pr_field(f, sep)
 {
 	char *p;
 	u_int flags;
-	int i;
+	int first, i, mask;
 
 	if (sep)
 		printf("%s%s", f->name, sep);
@@ -267,6 +288,26 @@ pr_field(f, sep)
 		break;
 	case FMT_KBMAP:
 		print_kmap((struct wskbd_map_data *) f->valp);
+		break;
+	case FMT_COLOR:
+		p = int2name(*((u_int *) f->valp), 1,
+			     color_tab, TABLEN(color_tab));
+		printf("%s", p);
+		break;
+	case FMT_ATTRS:
+		mask = 0x10;
+		first = 1;
+		while (mask > 0) {
+			if (*((u_int *) f->valp) & mask) {
+				p = int2name(*((u_int *) f->valp) & mask, 1,
+					     attr_tab, TABLEN(attr_tab));
+				printf("%s%s", first ? "" : ",", p);
+				first = 0;
+			}
+			mask >>= 1;
+		}
+		if (first)
+			printf("none");
 		break;
 	default:
 		errx(1, "internal error: pr_field: no format %d", f->format);
@@ -342,6 +383,25 @@ rd_field(f, val, merge)
 		kbmap.maplen = newkbmap.maplen;
 		bcopy(newkbmap.map, kbmap.map,
 		      kbmap.maplen*sizeof(struct wscons_keymap));
+		break;
+	case FMT_COLOR:
+		i = name2int(val, color_tab, TABLEN(color_tab));
+		if (i == -1)
+			errx(1, "%s: not a valid color", val);
+		*((u_int *) f->valp) = i;
+		break;
+	case FMT_ATTRS:
+		p = val;
+		while (p) {
+			val = p;
+			p = strchr(p, ',');
+			if (p != NULL)
+				*p++ = '\0';
+			i = name2int(val, attr_tab, TABLEN(attr_tab));
+			if (i == -1)
+				errx(1, "%s: not a valid attribute", val);
+			*((u_int *) f->valp) |= i;
+		}
 		break;
 	default:
 		errx(1, "internal error: rd_field: no format %d", f->format);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.16 2004/04/23 21:29:16 itojun Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.17 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.16 2004/04/23 21:29:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.17 2004/07/28 12:34:05 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsemulvar.h>
@@ -474,14 +475,14 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 			    case 0: /* reset */
 				if (n == edp->nargs - 1) {
 					edp->bkgdattr = edp->curattr = edp->defattr;
-					edp->attrflags = 0;
-					edp->fgcol = WSCOL_WHITE;
-					edp->bgcol = WSCOL_BLACK;
+					edp->attrflags = edp->msgattrs.default_attrs;
+					edp->fgcol = edp->msgattrs.default_fg;
+					edp->bgcol = edp->msgattrs.default_bg;
 					return;
 				}
-				flags = 0;
-				fgcol = WSCOL_WHITE;
-				bgcol = WSCOL_BLACK;
+				flags = edp->msgattrs.default_attrs;
+				fgcol = edp->msgattrs.default_fg;
+				bgcol = edp->msgattrs.default_bg;
 				break;
 			    case 1: /* bold */
 				flags |= WSATTR_HILIT;
@@ -622,13 +623,13 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp,
 {
 	int error;
 
-	if ((flags & WSATTR_WSCOLORS) &&
-	    !(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
+	if (!(edp->scrcapabilities & WSSCREEN_WSCOLORS)) {
 		flags &= ~WSATTR_WSCOLORS;
 #ifdef VT100_DEBUG
 		printf("colors ignored (impossible)\n");
 #endif
-	}
+	} else
+		flags |= WSATTR_WSCOLORS;
 	error = (*edp->emulops->allocattr)(edp->emulcookie, fgcol, bgcol,
 					   flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)

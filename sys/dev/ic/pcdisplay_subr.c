@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.26 2004/05/28 21:42:29 christos Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.27 2004/07/28 12:34:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.26 2004/05/28 21:42:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.27 2004/07/28 12:34:04 jmmv Exp $");
+
+#include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
+#include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.26 2004/05/28 21:42:29 christos
 #include <dev/wscons/wsconsio.h>
 
 #include <dev/wscons/wsdisplayvar.h>
-
-#include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 
 void
 pcdisplay_cursor_init(scr, existing)
@@ -277,6 +278,40 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 		for (i = 0; i < count; i++)
 			scr->mem[off + i] = val;
 }
+
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+void
+pcdisplay_replaceattr(id, oldattr, newattr)
+	void *id;
+	long oldattr, newattr;
+{
+	struct pcdisplayscreen *scr = id;
+	bus_space_tag_t memt = scr->hdl->ph_memt;
+	bus_space_handle_t memh = scr->hdl->ph_memh;
+	int off;
+	uint16_t chardata;
+
+	if (scr->active)
+		for (off = 0; off < scr->type->nrows * scr->type->ncols;
+		     off++) {
+			chardata = bus_space_read_2(memt, memh,
+						    scr->dispoffset + off * 2);
+			if ((long)(chardata >> 8) == oldattr)
+				bus_space_write_2(memt, memh,
+				                  scr->dispoffset + off * 2,
+				               	  ((u_int16_t)(newattr << 8)) |
+				                  (chardata & 0x00FF));
+		}
+	else
+		for (off = 0; off < scr->type->nrows * scr->type->ncols;
+		     off++) {
+			chardata = scr->mem[off];
+			if ((long)(chardata >> 8) == oldattr)
+				scr->mem[off] = ((u_int16_t)(newattr << 8)) |
+				                (chardata & 0x00FF);
+		}
+}
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
 
 #ifdef WSDISPLAY_CHARFUNCS
 int
