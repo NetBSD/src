@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 1996/03/14 05:50:06 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 1996/05/08 01:08:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -613,20 +613,22 @@ _lev4intr:
 
 	.globl _rtclock_intr
 
-/* MAJORBARF: Fix this routine to be like Mac clocks */
 _rtclock_intr:
+	movl	d2,sp@-			| save d2
+	movw	sr,d2			| save SPL
+	movw	#SPL2,sr		| raise SPL to splclock()
 	movl	a6@(8),a1		| get pointer to frame in via1_intr
-	movl	a1@(64), sp@-		| push ps
-	movl	a1@(68), sp@-		| push pc
-	movl	sp, sp@-		| push pointer to ps, pc
+	movl	a1@(64),sp@-		| push ps
+	movl	a1@(68),sp@-		| push pc
+	movl	sp,sp@-			| push pointer to ps, pc
 	jbsr	_hardclock		| call generic clock int routine
-	lea	sp@(12), sp		| pop params
+	lea	sp@(12),sp		| pop params
 	jbsr	_mrg_VBLQueue		| give programs in the VBLqueue a chance
 	addql	#1,_intrcnt+20		| add another system clock interrupt
-
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
-
-	movl	#1, d0			| clock taken care of
+	movw	d2,sr			| restore SPL
+	movl	sp@+,d2			| restore d2
+	movl	#1,d0			| clock taken care of
 	rts				| go back from whence we came
 
 _lev7intr:
