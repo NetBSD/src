@@ -1,4 +1,4 @@
-/*	$NetBSD: dkcksum.c,v 1.1 1996/01/13 22:25:37 leo Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.2 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,10 +44,10 @@
  */
 int
 dkcksum(lp)
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
-	register u_short *start, *end;
-	register u_short sum = 0;
+	u_short *start, *end;
+	u_short sum = 0;
 
 	start = (u_short *)lp;
 	end = (u_short *)&lp->d_partitions[lp->d_npartitions];

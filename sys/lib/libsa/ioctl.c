@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.c,v 1.5 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: ioctl.c,v 1.6 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -73,7 +73,7 @@ ioctl(fd, cmd, arg)
 	char *arg;
 {
 #if !defined(LIBSA_NO_FD_CHECKING) || !defined(LIBSA_NO_RAW_ACCESS)
-	register struct open_file *f = &files[fd];
+	struct open_file *f = &files[fd];
 #endif
 
 #if !defined(LIBSA_NO_FD_CHECKING)

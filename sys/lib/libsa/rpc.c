@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.20 1999/11/13 21:17:57 thorpej Exp $	*/
+/*	$NetBSD: rpc.c,v 1.21 2000/03/30 12:19:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -114,14 +114,14 @@ int rpc_port = 0x400;	/* predecrement */
  */
 ssize_t
 rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
-	register struct iodesc *d;
-	register n_long prog, vers, proc;
-	register void *sdata;
-	register size_t slen;
-	register void *rdata;
-	register size_t rlen;
+	struct iodesc *d;
+	n_long prog, vers, proc;
+	void *sdata;
+	size_t slen;
+	void *rdata;
+	size_t rlen;
 {
-	register ssize_t cc;
+	ssize_t cc;
 	struct auth_info *auth;
 	struct rpc_call *call;
 	struct rpc_reply *reply;
@@ -238,12 +238,12 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
  */
 static ssize_t
 recvrpc(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void *pkt;
+	size_t len;
 	time_t tleft;
 {
-	register struct rpc_reply *reply;
+	struct rpc_reply *reply;
 	ssize_t	n;
 	int	x;
 
@@ -383,7 +383,7 @@ rpc_pmap_putcache(addr, prog, vers, port)
  */
 int
 rpc_getport(d, prog, vers)
-	register struct iodesc *d;
+	struct iodesc *d;
 	n_long prog;	/* host order */
 	n_long vers;	/* host order */
 {

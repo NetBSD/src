@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.3 1996/11/13 19:30:39 cgd Exp $	*/
+/*	$NetBSD: random.c,v 1.4 2000/03/30 12:19:46 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@ u_long
 random()
 {
 	static u_long randseed = 1;
-	register long x, hi, lo, t;
+	long x, hi, lo, t;
 
 	/*
 	 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).

@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.c,v 1.4 1996/10/24 23:50:31 cgd Exp $	*/
+/*	$NetBSD: scanc.c,v 1.5 2000/03/30 12:19:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -41,10 +41,10 @@
 int
 scanc(size, cp, table, mask)
 	u_int size;
-	const register u_char *cp, table[];
-	register u_char mask;
+	const u_char *cp, table[];
+	u_char mask;
 {
-	const register u_char *end = &cp[size];
+	const u_char *end = &cp[size];
 
 	while (cp < end && (table[*cp] & mask) == 0)
 		cp++;

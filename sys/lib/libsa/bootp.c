@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.18 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: bootp.c,v 1.19 2000/03/30 12:19:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -90,7 +90,7 @@ bootp(sock)
 	int sock;
 {
 	struct iodesc *d;
-	register struct bootp *bp;
+	struct bootp *bp;
 	struct {
 		u_char header[HEADER_SIZE];
 		struct bootp wbootp;
@@ -241,11 +241,11 @@ bootp(sock)
 /* Transmit a bootp request */
 static ssize_t
 bootpsend(d, pkt, len)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void *pkt;
+	size_t len;
 {
-	register struct bootp *bp;
+	struct bootp *bp;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -265,13 +265,13 @@ bootpsend(d, pkt, len)
 
 static ssize_t
 bootprecv(d, pkt, len, tleft)
-	register struct iodesc *d;
-	register void *pkt;
-	register size_t len;
+	struct iodesc *d;
+	void *pkt;
+	size_t len;
 	time_t tleft;
 {
-	register ssize_t n;
-	register struct bootp *bp;
+	ssize_t n;
+	struct bootp *bp;
 
 #ifdef BOOTP_DEBUGx
 	if (debug)
@@ -329,12 +329,12 @@ bad:
 
 static int
 vend_rfc1048(cp, len)
-	register u_char *cp;
+	u_char *cp;
 	u_int len;
 {
-	register u_char *ep;
-	register int size;
-	register u_char tag;
+	u_char *ep;
+	int size;
+	u_char tag;
 
 #ifdef BOOTP_DEBUG
 	if (debug)
@@ -396,7 +396,7 @@ static void
 vend_cmu(cp)
 	u_char *cp;
 {
-	register struct cmu_vend *vp;
+	struct cmu_vend *vp;
 
 #ifdef BOOTP_DEBUG
 	if (debug)

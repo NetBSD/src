@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.c,v 1.3 1999/03/31 01:39:16 cgd Exp $	*/
+/*	$NetBSD: memcpy.c,v 1.4 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,8 +47,8 @@ memcpy(s1, s2, n)
 	const void *s2;
 	size_t n;
 {
-	register const char *f = s2;
-	register char *t = s1;
+	const char *f = s2;
+	char *t = s1;
 
 	while (n-- > 0)
 		*t++ = *f++;

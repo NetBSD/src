@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.2 1999/04/20 23:04:17 cgd Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.3 2000/03/30 12:19:49 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -106,8 +106,8 @@ kdoprnt(put, fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	register char *p;
-	register int ch, n;
+	char *p;
+	int ch, n;
 	unsigned long ul;
 	int lflag, set;
 
