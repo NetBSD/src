@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.7 2000/01/16 14:20:54 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.7.4.1 2002/01/06 20:03:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -328,10 +328,12 @@ intio_bus_space_map(t, bpa, size, flags, bshp)
 	*bshp = (bus_space_handle_t)
 	  ((u_int) bpa - PHYS_INTIODEV + intiobase);
 	/*
-	 * Some devices are mapped on odd addresses only.
+	 * Some devices are mapped on odd or even addresses only.
 	 */
-	if (flags & BUS_SPACE_MAP_SHIFTED)
+	if ((flags & BUS_SPACE_MAP_SHIFTED_MASK) == BUS_SPACE_MAP_SHIFTED_ODD)
 		*bshp += 0x80000001;
+	if ((flags & BUS_SPACE_MAP_SHIFTED_MASK) == BUS_SPACE_MAP_SHIFTED_EVEN)
+		*bshp += 0x80000000;
 
 	return (0);
 }
