@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2001/04/24 04:31:12 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -138,7 +138,7 @@ cpu_init(pa, cpu_num)
 	struct cpu_info *ci;
 	u_int64_t pagesize;
 	u_int64_t pte;
-	vm_page_t m;
+	struct vm_page *m;
 	psize_t size;
 	vaddr_t va;
 	struct pglist mlist;
