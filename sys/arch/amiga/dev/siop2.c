@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.15 2001/04/25 17:53:09 bouyer Exp $	*/
+/*	$NetBSD: siop2.c,v 1.16 2001/10/08 21:18:58 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -91,7 +91,7 @@ void siopng_start __P((struct siop_softc *, int, int, u_char *, int, u_char *, i
 void siopng_dump_acb __P((struct siop_acb *));
 
 /* 53C720/770 script */
-const
+
 #include <amiga/dev/siop2_script.out>
 
 /* default to not inhibit sync negotiation on any drive */
