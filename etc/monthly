@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: monthly,v 1.7 1998/09/15 05:06:31 lukem Exp $
+#	$NetBSD: monthly,v 1.8 2000/01/10 17:03:49 ad Exp $
 #	from: @(#)monthly	8.1 (Berkeley) 6/9/93
 #
 
@@ -22,5 +22,8 @@ echo ""
 # echo "Doing login accounting:"
 # ac -p | sort -nr +1
 
-echo "Nothing to do!"
-#echo "."
+if [ -f /etc/monthly.local ]; then
+	echo ""
+	echo "Running /etc/monthly.local:"
+	. /etc/monthly.local
+fi

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.30 2000/01/07 03:52:23 enami Exp $
+#	$NetBSD: daily,v 1.31 2000/01/10 17:03:49 ad Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -219,6 +219,12 @@ if checkyesno run_security; then
 		echo "Nothing to report on $date" > $SECOUT
 	fi
 	mail -s "$host daily insecurity output for $date" $MAILTO < $SECOUT
+fi
+
+if [ -f /etc/daily.local ]; then
+	echo ""
+	echo "Running /etc/daily.local:"
+	. /etc/daily.local
 fi
 
 rm -rf $TMPDIR

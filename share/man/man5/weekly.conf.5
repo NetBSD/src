@@ -1,4 +1,4 @@
-.\"	$NetBSD: weekly.conf.5,v 1.4 1999/03/17 20:19:49 garbled Exp $
+.\"	$NetBSD: weekly.conf.5,v 1.5 2000/01/10 17:03:49 ad Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,8 +55,14 @@ which must also exist, in order to be rebuilt.
 .El
 .Pp
 .Sh FILES
+.Bl -tag -width /etc/weekly.local -compact
+.It Pa /etc/weekly
+weekly maintenance script
+.It Pa /etc/weekly.conf
+weekly maintenance configuration
+.It Pa /etc/weekly.local
+local site additions to
 .Pa /etc/weekly
-.Pa /etc/weekly.conf
 .Sh SEE ALSO
 .Xr daily.conf 5 ,
 .Xr monthly.conf 5

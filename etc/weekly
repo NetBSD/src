@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.13 1999/04/23 08:20:28 kleink Exp $
+#	$NetBSD: weekly,v 1.14 2000/01/10 17:03:49 ad Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -70,4 +70,10 @@ if checkyesno rebuild_locatedb && [ -f /var/db/locate.database ]; then
 	chown root:wheel /var/db/locate.database
 else
 	echo "Not rebuilding locate database; no /var/db/locate.database"
+fi
+
+if [ -f /etc/weekly.local ]; then
+	echo ""
+	echo "Running /etc/weekly.local:"
+	. /etc/weekly.local
 fi

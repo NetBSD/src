@@ -1,4 +1,4 @@
-.\"	$NetBSD: daily.conf.5,v 1.4 1999/03/17 20:19:44 garbled Exp $
+.\"	$NetBSD: daily.conf.5,v 1.5 2000/01/10 17:03:49 ad Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -104,8 +104,15 @@ script looking for possible security problems with the system.
 .El
 .Pp
 .Sh FILES
+.Bl -tag -width /etc/daily.local -compact
+.It Pa /etc/daily
+daily maintenance script
+.It Pa /etc/daily.conf
+daily maintenance configuration
+.It Pa /etc/daily.local
+local site additions to
 .Pa /etc/daily
-.Pa /etc/daily.conf
+.El
 .Sh SEE ALSO
 .Xr weekly.conf 5 ,
 .Xr monthly.conf 5 ,
