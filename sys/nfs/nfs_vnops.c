@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.9 1993/07/13 10:50:06 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.10 1993/08/02 23:12:31 mycroft Exp $
  */
 
 /*
@@ -1723,6 +1723,7 @@ nfs_advlock(vp, id, op, fl, flags)
 /*
  * Print out the contents of an nfsnode.
  */
+void
 nfs_print(vp)
 	struct vnode *vp;
 {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsnode.h	7.12 (Berkeley) 4/16/91
- *	$Id: nfsnode.h,v 1.3 1993/05/22 09:00:56 cgd Exp $
+ *	$Id: nfsnode.h,v 1.4 1993/08/02 23:12:32 mycroft Exp $
  */
 
 #ifndef _NFS_NFSNODE_H_
@@ -214,7 +214,7 @@ int	nfs_bmap __P((
 		daddr_t *bnp));
 int	nfs_strategy __P((
 		struct buf *bp));
-int	nfs_print __P((
+void	nfs_print __P((
 		struct vnode *vp));
 int	nfs_islocked __P((
 		struct vnode *vp));
