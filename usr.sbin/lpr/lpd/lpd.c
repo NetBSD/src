@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.35 2002/07/14 15:28:00 wiz Exp $	*/
+/*	$NetBSD: lpd.c,v 1.36 2002/08/09 02:40:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.35 2002/07/14 15:28:00 wiz Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.36 2002/08/09 02:40:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,6 +292,10 @@ main(int argc, char **argv)
 	(void) umask(0);
 	sigprocmask(SIG_SETMASK, &omask, (sigset_t *)0);
 	FD_ZERO(&defreadfds);
+	if (funix >= FD_SETSIZE) {
+		syslog(LOG_ERR, "descriptor too big");
+		exit(1);
+	}
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
 	if (!sflag || blist_addrs)
@@ -307,6 +311,10 @@ main(int argc, char **argv)
 
 	if (finet) {
 		for (i = 1; i <= *finet; i++) {
+			if (finet[i] >= FD_SETSIZE) {
+				syslog(LOG_ERR, "descriptor too big");
+				exit(1);
+			}
 			FD_SET(finet[i], &defreadfds);
 			listen(finet[i], 5);
 		}
