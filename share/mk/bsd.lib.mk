@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.87 1997/03/22 22:33:57 perry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.88 1997/03/23 00:52:20 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -66,6 +66,8 @@ AS+=	-KPIC
 .else
 
 SHLIB_TYPE=a.out
+SHLIB_LDSTARTFILE=
+SHLIB_LDENDFILE=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
 CPICFLAGS?= -fpic -DPIC
 APICFLAGS?= -fpic -DPIC
@@ -174,7 +176,8 @@ lib${LIB}_pic.a:: ${SOBJS}
 	@${AR} cq lib${LIB}_pic.a `lorder ${SOBJS} | tsort -q`
 	${RANLIB} lib${LIB}_pic.a
 
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
+    ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if (${SHLIB_TYPE} == "a.out")
