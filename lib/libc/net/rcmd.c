@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.35 2000/01/22 23:34:28 mycroft Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.36 2000/01/22 23:36:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.35 2000/01/22 23:34:28 mycroft Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.36 2000/01/22 23:36:17 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -483,7 +483,7 @@ rresvport_af(alport, family)
 #endif
 	for (;;) {
 		*portp = htons((u_short)*alport);
-		if (bind(s, sa, (size_t)salen) >= 0)
+		if (bind(s, sa, (socklen_t)salen) >= 0)
 			return (s);
 		if (errno != EADDRINUSE) {
 			(void)close(s);
