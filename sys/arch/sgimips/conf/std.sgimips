@@ -1,10 +1,6 @@
-#	$NetBSD: std.sgimips,v 1.1 2000/06/14 15:45:37 soren Exp $
+#	$NetBSD: std.sgimips,v 1.2 2000/06/22 20:27:56 fvdl Exp $
 
 machine sgimips mips
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts

@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.5 2000/06/14 22:02:29 veego Exp $
+#	$NetBSD: GENERIC,v 1.6 2000/06/22 20:27:53 fvdl Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	8
 
@@ -59,7 +59,7 @@ file-system 	NULLFS		# loopback file system
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
-#options	SOFTDEP		# ffs soft updates support
+options	SOFTDEP		# ffs soft updates support
 
 # Networking options
 options 	INET		# IP prototol stack support

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.33 2000/06/17 07:29:07 soda Exp $
+#	$NetBSD: GENERIC,v 1.34 2000/06/22 20:27:50 fvdl Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.33 $"
+#ident		"GENERIC-$Revision: 1.34 $"
 
 maxusers	32		# estimated number of users
 
@@ -70,7 +70,7 @@ file-system 	UNION		# union file system
 # File system options
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

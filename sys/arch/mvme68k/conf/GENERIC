@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.8 2000/06/14 22:02:31 veego Exp $
+#	$NetBSD: GENERIC,v 1.9 2000/06/22 20:27:54 fvdl Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -29,7 +29,7 @@ file-system 	MFS
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 # Networking options
 options 	INET

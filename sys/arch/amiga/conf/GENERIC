@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.143 2000/06/14 22:02:18 veego Exp $
+#	$NetBSD: GENERIC,v 1.144 2000/06/22 20:27:50 fvdl Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.143 $"
+#ident 		"GENERIC-$Revision: 1.144 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -109,7 +109,7 @@ file-system 	UNION		# union filesystem
 
 #ifndef INSTALL_CONFIGURATION
 options 	QUOTA		# User and group quotas in FFS
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #endif
 

@@ -1,12 +1,8 @@
-#	$NetBSD: std.bebox,v 1.4 1999/11/15 19:00:27 fvdl Exp $
+#	$NetBSD: std.bebox,v 1.5 2000/06/22 20:27:51 fvdl Exp $
 #
 # standard, required NetBSD/bebox 'options'
 
 machine		bebox powerpc
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts

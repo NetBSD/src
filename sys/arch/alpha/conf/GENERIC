@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2000/06/14 22:02:15 veego Exp $
+# $NetBSD: GENERIC,v 1.158 2000/06/22 20:27:49 fvdl Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 maxusers 32
 
@@ -50,7 +50,7 @@ file-system	NFS		# Sun NFS-compatible file system client
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 
 # Networking options
 options 	INET		# Internet protocol suite
