@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.6 2003/02/18 10:09:28 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.7 2003/02/18 10:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -189,7 +189,7 @@ void
 smb_strtouni(u_int16_t *dst, const char *src)
 {
 	while (*src) {
-		*dst++ = htoles(*src++);
+		*dst++ = htole16(*src++);
 	}
 	*dst = 0;
 }

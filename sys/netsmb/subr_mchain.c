@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.2 2002/09/27 15:37:59 provos Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.3 2003/02/18 10:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -216,42 +216,42 @@ mb_put_uint8(struct mbchain *mbp, u_int8_t x)
 int
 mb_put_uint16be(struct mbchain *mbp, u_int16_t x)
 {
-	x = htobes(x);
+	x = htobe16(x);
 	return mb_put_mem(mbp, (caddr_t)&x, sizeof(x), MB_MSYSTEM);
 }
 
 int
 mb_put_uint16le(struct mbchain *mbp, u_int16_t x)
 {
-	x = htoles(x);
+	x = htole16(x);
 	return mb_put_mem(mbp, (caddr_t)&x, sizeof(x), MB_MSYSTEM);
 }
 
 int
 mb_put_uint32be(struct mbchain *mbp, u_int32_t x)
 {
-	x = htobel(x);
+	x = htobe32(x);
 	return mb_put_mem(mbp, (caddr_t)&x, sizeof(x), MB_MSYSTEM);
 }
 
 int
 mb_put_uint32le(struct mbchain *mbp, u_int32_t x)
 {
-	x = htolel(x);
+	x = htole32(x);
 	return mb_put_mem(mbp, (caddr_t)&x, sizeof(x), MB_MSYSTEM);
 }
 
 int
 mb_put_int64be(struct mbchain *mbp, int64_t x)
 {
-	x = htobeq(x);
+	x = htobe64(x);
 	return mb_put_mem(mbp, (caddr_t)&x, sizeof(x), MB_MSYSTEM);
 }
 
 int
 mb_put_int64le(struct mbchain *mbp, int64_t x)
 {
-	x = htoleq(x);
+	x = htole64(x);
 	return mb_put_mem(mbp, (caddr_t)&x, sizeof(x), MB_MSYSTEM);
 }
 
@@ -450,7 +450,7 @@ md_get_uint16le(struct mdchain *mdp, u_int16_t *x)
 	u_int16_t v;
 	int error = md_get_uint16(mdp, &v);
 
-	*x = letohs(v);
+	*x = le16toh(v);
 	return error;
 }
 
@@ -459,7 +459,7 @@ md_get_uint16be(struct mdchain *mdp, u_int16_t *x) {
 	u_int16_t v;
 	int error = md_get_uint16(mdp, &v);
 
-	*x = betohs(v);
+	*x = be16toh(v);
 	return error;
 }
 
@@ -476,7 +476,7 @@ md_get_uint32be(struct mdchain *mdp, u_int32_t *x)
 	int error;
 
 	error = md_get_uint32(mdp, &v);
-	*x = betohl(v);
+	*x = be32toh(v);
 	return error;
 }
 
@@ -487,7 +487,7 @@ md_get_uint32le(struct mdchain *mdp, u_int32_t *x)
 	int error;
 
 	error = md_get_uint32(mdp, &v);
-	*x = letohl(v);
+	*x = le32toh(v);
 	return error;
 }
 
@@ -504,7 +504,7 @@ md_get_int64be(struct mdchain *mdp, int64_t *x)
 	int error;
 
 	error = md_get_int64(mdp, &v);
-	*x = betohq(v);
+	*x = be64toh(v);
 	return error;
 }
 
@@ -515,7 +515,7 @@ md_get_int64le(struct mdchain *mdp, int64_t *x)
 	int error;
 
 	error = md_get_int64(mdp, &v);
-	*x = letohq(v);
+	*x = le64toh(v);
 	return error;
 }
 
