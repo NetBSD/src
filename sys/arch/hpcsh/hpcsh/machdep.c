@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2001/03/22 18:34:08 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2001/04/23 11:22:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,9 +69,9 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/autoconf.h>		/* makebootdev() */
+#include <hpcsh/hpcsh/clockvar.h>
 
 #include <sh3/intcreg.h>
-#include <sh3/tmureg.h>
 
 #if NBICONSDEV > 0
 #define DPRINTF(arg) printf arg
@@ -179,7 +179,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	/* symbol table size */
 	symbolsize = 0;
-	if (!memcmp(&end, "\177ELF", 4)) {
+	if (memcmp(&end, ELFMAG, SELFMAG) == 0) {
 		Elf_Ehdr *eh = (void *)end;
 		Elf_Shdr *sh = (void *)(end + eh->e_shoff);
 		for(i = 0; i < eh->e_shnum; i++, sh++)
@@ -197,10 +197,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_IPRC = 0;
 	SHREG_IPRD = 0;
 	SHREG_IPRE = 0;
-	/* initialize TMU */
-	SHREG_TCR0 = 0;
-	SHREG_TCR1 = 0;
-	SHREG_TCR2 = 0;
 
 	/* start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
@@ -373,20 +369,29 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 void
 cpu_startup()
 {
+	int cpuclock, pclock;
+
+	clock_init();
+	cpuclock = clock_get_cpuclock();
+	pclock = clock_get_pclock();
+
 	sh3_startup();
 #define CPUIDMATCH(p)							\
 	platid_match(&platid, &platid_mask_CPU_##p)
 
 	if (CPUIDMATCH(SH_3_7709))
-		sprintf(cpu_model, "%s (Hitachi SH7709)",
+		sprintf(cpu_model, "%s Hitachi SH7709",
 			platid_name(&platid));
 	else if (CPUIDMATCH(SH_3_7709A))
-		sprintf(cpu_model, "%s (Hitachi SH7709A)",
+		sprintf(cpu_model, "%s Hitachi SH7709A",
 			platid_name(&platid));
 	else
-		sprintf(cpu_model, "%s (Hitachi SH product unknown)",
+		sprintf(cpu_model, "%s Hitachi SH product unknown",
 			platid_name(&platid));
-	DPRINTF(("%s\n", cpu_model));
+
+#define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
+	DPRINTF(("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
+	    MHZ(cpuclock), MHZ(pclock)));
 
 #ifdef SYSCALL_DEBUG
 	scdebug |= SCDEBUG_ALL;
