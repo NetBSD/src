@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.40 2002/08/20 01:52:58 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.41 2003/01/29 10:32:34 simonb Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.40 2002/08/20 01:52:58 lukem Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.41 2003/01/29 10:32:34 simonb Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -56,6 +56,11 @@ __RCSID("$NetBSD: crunchgen.c,v 1.40 2002/08/20 01:52:58 lukem Exp $");
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
 
+/*
+ * Define RENAME_SYMS to rename symbols using objcopy --redefine-syms-file.
+ * Undef RENAME_SYMS to hide globals symbols using objcopy --keep-global-symbol.
+ */
+#define	RENAME_SYMS
 
 /* internal representation of conf file: */
 
@@ -829,6 +834,7 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "MAKE?=make\n");
 #ifdef NEW_TOOLCHAIN
     fprintf(outmk, "OBJCOPY?=objcopy\n");
+    fprintf(outmk, "NM?=nm\n");
 #else
     fprintf(outmk, "CRUNCHIDE?=crunchide\n");
 #endif
@@ -852,7 +858,7 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "all: ${PROG}\n\t${STRIP} ${PROG}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
-    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.o *_stub.c ${CRUNCHEDOBJSDIRS}\n",
+    fprintf(outmk, "clean:\n\trm -rf %s *.cro *.cro.syms *.o *_stub.c ${CRUNCHEDOBJSDIRS}\n",
 	    execfname);
 }
 
@@ -903,10 +909,21 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
     fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
 #ifdef NEW_TOOLCHAIN
+#ifdef RENAME_SYMS
+    fprintf(outmk, "\t${NM} -ng %s.cro | grep -wv U | ", p->name);
+    fprintf(outmk, "egrep -vw _crunched_%s_stub | ", p->ident);
+    for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
+	fprintf(outmk, "egrep -vw %s | ", lst->str);
+    fprintf(outmk, "env CRO=%s.cro awk "
+	"'{ print $$3 \" _$$$$hide$$$$\" ENVIRON[\"CRO\"] \"$$$$\" $$3 }' "
+	"> %s.cro.syms\n", p->name, p->name);
+    fprintf(outmk, "\t${OBJCOPY} --redefine-syms-file %s.cro.syms ", p->name);
+#else
     fprintf(outmk, "\t${OBJCOPY} --keep-global-symbol _crunched_%s_stub ",
   	    p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
 	fprintf(outmk, "--keep-global-symbol %s ", lst->str);
+#endif
 #else
     fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub ", p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
