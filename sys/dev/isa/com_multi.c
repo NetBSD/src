@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.6 1997/09/16 20:34:28 is Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.7 1997/10/03 07:32:52 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -63,7 +63,11 @@
 #include <dev/isa/comvar.h>
 #include <dev/isa/com_multi.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int com_multi_probe __P((struct device *, void *, void *));
+#else
+int com_multi_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void com_multi_attach __P((struct device *, struct device *, void *));
 
 struct cfattach com_multi_ca = {
@@ -73,7 +77,12 @@ struct cfattach com_multi_ca = {
 int
 com_multi_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;    
+#else   
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	int iobase;
 	struct cfdata *cf = match;
