@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.149 2000/11/19 03:16:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2000/11/19 03:16:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,6 +385,9 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	  all pmaps.  Note that a pm_slock must never be held while this
  *	  lock is held.
  *
+ *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
+ *	  and the virtual_end variable.
+ *
  *	Address space number management (global ASN counters and per-pmap
  *	ASN state) are not locked; they use arrays of values indexed
  *	per-processor.
@@ -395,6 +398,7 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  */
 struct lock pmap_main_lock;
 struct simplelock pmap_all_pmaps_slock;
+struct simplelock pmap_growkernel_slock;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	PMAP_MAP_TO_HEAD_LOCK() \
@@ -912,6 +916,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 		    (i*PAGE_SIZE*NPTEPG))] = pte;
 	}
 
+	/* Initialize the pmap_growkernel_slock. */
+	simple_lock_init(&pmap_growkernel_slock);
+
 	/*
 	 * Set up level three page table (lev3map)
 	 */
@@ -925,7 +932,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * NBPG;
+	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
 
 #if 0
 	printf("avail_start = 0x%lx\n", avail_start);
@@ -1115,7 +1122,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		if (vstartp)
 			*vstartp = round_page(virtual_avail);
 		if (vendp)
-			*vendp = trunc_page(virtual_end);
+			*vendp = VM_MAX_KERNEL_ADDRESS;
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
 		memset((caddr_t)va, 0, size);
@@ -3394,9 +3401,100 @@ pmap_physpage_delref(void *kva)
  *
  *	Grow the kernel address space.  This is a hint from the
  *	upper layer to pre-allocate more kernel PT pages.
- *
- *	XXX Implement XXX
  */
+vaddr_t
+pmap_growkernel(vaddr_t maxkvaddr)
+{
+	struct pmap *kpm = pmap_kernel(), *pm;
+	paddr_t ptaddr;
+	pt_entry_t *l1pte, *l2pte, pte;
+	vaddr_t va;
+	int s, l1idx;
+
+	if (maxkvaddr <= virtual_end)
+		goto out;		/* we are OK */
+
+	s = splhigh();			/* to be safe */
+	simple_lock(&pmap_growkernel_slock);
+
+	va = virtual_end;
+
+	while (va < maxkvaddr) {
+		/*
+		 * If there is no valid L1 PTE (i.e. no L2 PT page),
+		 * allocate a new L2 PT page and insert it into the
+		 * L1 map.
+		 */
+		l1pte = pmap_l1pte(kpm, va);
+		if (pmap_pte_v(l1pte) == 0) {
+			/*
+			 * XXX PGU_NORMAL?  It's not a "traditional" PT page.
+			 */
+			if (uvm.page_init_done == FALSE) {
+				/*
+				 * We're growing the kernel pmap early (from
+				 * uvm_pageboot_alloc()).  This case must
+				 * be handled a little differently.
+				 */
+				ptaddr = ALPHA_K0SEG_TO_PHYS(
+				    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
+			} else if (pmap_physpage_alloc(PGU_NORMAL,
+				   &ptaddr) == FALSE)
+				goto die;
+			pte = (atop(ptaddr) << PG_SHIFT) |
+			    PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
+			*l1pte = pte;
+
+			l1idx = l1pte_index(va);
+
+			/* Update all the user pmaps. */
+			simple_lock(&pmap_all_pmaps_slock);
+			for (pm = TAILQ_FIRST(&pmap_all_pmaps);
+			     pm != NULL; pm = TAILQ_NEXT(pm, pm_list)) {
+				/* Skip the kernel pmap. */
+				if (pm == pmap_kernel())
+					continue;
+
+				PMAP_LOCK(pm);
+				if (pm->pm_lev1map == kernel_lev1map) {
+					PMAP_UNLOCK(pm);
+					continue;
+				}
+				pm->pm_lev1map[l1idx] = pte;
+				PMAP_UNLOCK(pm);
+			}
+			simple_unlock(&pmap_all_pmaps_slock);
+		}
+
+		/*
+		 * Have an L2 PT page now, add the L3 PT page.
+		 */
+		l2pte = pmap_l2pte(kpm, va, l1pte);
+		KASSERT(pmap_pte_v(l2pte) == 0);
+		if (uvm.page_init_done == FALSE) {
+			/*
+			 * See above.
+			 */
+			ptaddr = ALPHA_K0SEG_TO_PHYS(
+			    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
+		} else if (pmap_physpage_alloc(PGU_NORMAL, &ptaddr) == FALSE)
+			goto die;
+		*l2pte = (atop(ptaddr) << PG_SHIFT) |
+		    PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
+		va += ALPHA_L2SEG_SIZE;
+	}
+
+	virtual_end = va;
+
+	simple_unlock(&pmap_growkernel_slock);
+	splx(s);
+
+ out:
+	return (virtual_end);
+
+ die:
+	panic("pmap_growkernel: out of memory");
+}
 
 /*
  * pmap_lev1map_create:
