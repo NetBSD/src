@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.27 2002/09/26 16:53:27 onoe Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.28 2002/11/16 22:39:57 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.27 2002/09/26 16:53:27 onoe Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.28 2002/11/16 22:39:57 dyoung Exp $");
 #endif
 
 struct wi_table {
@@ -112,14 +112,11 @@ static void wi_printbool	__P((struct wi_req *));
 static void wi_printhex		__P((struct wi_req *));
 static void wi_printbits	__P((struct wi_req *));
 static void wi_dumpinfo		__P((char *));
-static void wi_setkeys		__P((char *, char *, int));
 static void wi_printkeys	__P((struct wi_req *));
 static void wi_dumpstats	__P((char *));
 static void usage		__P((void));
 static struct wi_table *
 	wi_optlookup __P((struct wi_table *, int));
-static int  wi_hex2int(char c);
-static void wi_str2key		__P((char *, struct wi_key *));
 int main __P((int argc, char **argv));
 
 #ifdef WI_RID_SCAN_APS
@@ -438,92 +435,6 @@ void wi_sethex(iface, code, str)
 	return;
 }
 
-static int
-wi_hex2int(char c)
-{
-        if (c >= '0' && c <= '9')
-                return (c - '0');
-	if (c >= 'A' && c <= 'F')
-	        return (c - 'A' + 10);
-	if (c >= 'a' && c <= 'f')
-                return (c - 'a' + 10);
-
-	return (0); 
-}
-
-static void wi_str2key(s, k)
-        char                    *s;
-        struct wi_key           *k;
-{
-        int                     n, i;
-        char                    *p;
-
-        /* Is this a hex string? */
-        if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-                /* Yes, convert to int. */
-                n = 0;
-                p = (char *)&k->wi_keydat[0];
-                for (i = 2; i < strlen(s); i+= 2) {
-                        *p++ = (wi_hex2int(s[i]) << 4) + wi_hex2int(s[i + 1]);
-                        n++;
-                }
-                k->wi_keylen = htole16(n);
-        } else {
-                /* No, just copy it in. */
-                bcopy(s, k->wi_keydat, strlen(s));
-                k->wi_keylen = htole16(strlen(s));
-        }
-
-        return;
-}
-
-static void wi_setkeys(iface, key, idx)
-        char                    *iface;
-        char                    *key;
-        int                     idx;
-{
-        struct wi_req           wreq;
-        struct wi_ltv_keys      *keys;
-        struct wi_key           *k;
-
-        bzero((char *)&wreq, sizeof(wreq));
-        wreq.wi_len = WI_MAX_DATALEN;
-        wreq.wi_type = WI_RID_WEP_AVAIL;
-
-        wi_getval(iface, &wreq);
-        if (le16toh(wreq.wi_val[0]) == 0)
-                err(1, "no WEP option available on this card");
-
-        bzero((char *)&wreq, sizeof(wreq));
-        wreq.wi_len = WI_MAX_DATALEN;
-        wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
-
-        wi_getval(iface, &wreq);
-        keys = (struct wi_ltv_keys *)&wreq;
-
-        if (key[0] == '0' && (key[1] == 'x' || key[1] == 'X')) {
-	        if (strlen(key) > 30)
-		        err(1, "encryption key must be no "
-			    "more than 28 hex digits long");
-	} else {
-	        if (strlen(key) > 14)
-		        err(1, "encryption key must be no "
-			    "more than 14 characters long");
-	}
-
-        if (idx > 3)
-                err(1, "only 4 encryption keys available");
-
-        k = &keys->wi_keys[idx];
-        wi_str2key(key, k);
-
-        wreq.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
-        wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
-        wi_setval(iface, &wreq);
-
-        return;
-}
-
 static void wi_printkeys(wreq)
         struct wi_req           *wreq;
 {
@@ -622,50 +533,43 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_SERIALNO, WI_STRING, "NIC serial number:\t\t\t" },
 	{ WI_RID_NODENAME, WI_STRING, "Station name:\t\t\t\t",
 	    's', "station name" },
-	{ WI_RID_OWN_SSID, WI_STRING, "SSID for IBSS creation:\t\t\t",
-	    'q', "own SSID" },
+	{ WI_RID_OWN_SSID, WI_STRING, "SSID for IBSS creation:\t\t\t" },
 	{ WI_RID_CURRENT_SSID, WI_STRING, "Current netname (SSID):\t\t\t" },
-	{ WI_RID_DESIRED_SSID, WI_STRING, "Desired netname (SSID):\t\t\t",
-	    'n', "network name" },
+	{ WI_RID_DESIRED_SSID, WI_STRING, "Desired netname (SSID):\t\t\t" },
 	{ WI_RID_CURRENT_BSSID, WI_HEXBYTES, "Current BSSID:\t\t\t\t" },
 	{ WI_RID_CHANNEL_LIST, WI_BITS, "Channel list:\t\t\t\t" },
-	{ WI_RID_OWN_CHNL, WI_WORDS, "IBSS channel:\t\t\t\t",
-	    'f', "frequency" },
+	{ WI_RID_OWN_CHNL, WI_WORDS, "IBSS channel:\t\t\t\t" },
 	{ WI_RID_CURRENT_CHAN, WI_WORDS, "Current channel:\t\t\t" },
 	{ WI_RID_COMMS_QUALITY, WI_WORDS, "Comms quality/signal/noise:\t\t" },
 	{ WI_RID_PROMISC, WI_BOOL, "Promiscuous mode:\t\t\t" },
-	{ WI_RID_PORTTYPE, WI_WORDS, "Port type (1=BSS, 3=ad-hoc):\t\t",
-	    'p', "port type" },
+	{ WI_RID_PORTTYPE, WI_WORDS, "Port type:\t\t\t\t" },
 	{ WI_RID_MAC_NODE, WI_HEXBYTES, "MAC address:\t\t\t\t",
 	    'm', "MAC address" },
-	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t",
-	    't', "TX rate" },
+	{ WI_RID_TX_RATE, WI_WORDS, "TX rate (selection):\t\t\t" },
 	{ WI_RID_CUR_TX_RATE, WI_WORDS, "TX rate (actual speed):\t\t\t"},
 	{ WI_RID_CUR_BEACON_INT, WI_WORDS, "Beacon Interval (current) [msec]:\t"},
 	{ WI_RID_MAX_DATALEN, WI_WORDS, "Maximum data length:\t\t\t",
 	    'd', "maximum data length" },
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t",
 	    'r', "RTS threshold" },
-	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t",
-	    'c', "create ibss" },
+	{ WI_RID_FRAG_THRESH, WI_WORDS, "fragmentation threshold:\t\t",
+	    'g', "fragmentation threshold" },
+	{ WI_RID_DBM_ADJUST, WI_WORDS, "RSSI -> dBm adjustment:\t\t\t" },
+	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t" },
 	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t",
 	    'M', "microwave oven robustness enabled" },
 	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1:firm,3:disable):\t\t",
 	    'R', "roaming mode" },
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t",
 	    'a', "system scale" },
-	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t",
-	    'P', "power management enabled" },
-	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time (msec):\t\t\t",
-	    'S', "max sleep duration" },
+	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t" },
+	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time (msec):\t\t\t" },
 	{ 0, WI_NONE }
 };
 
 static struct wi_table wi_crypt_table[] = {
-	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t",
-	    'e', "encryption" },
-	{ WI_RID_CNFAUTHMODE, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t",
-	    'A', "authentication type" },
+	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
+	{ WI_RID_CNFAUTHMODE, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
         { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
         { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
 	{ 0, WI_NONE }
@@ -841,12 +745,10 @@ usage()
 
 	fprintf(stderr,
 	    "usage: %s interface "
-	    "[-oD] [-t tx rate] [-n network name] [-s station name]\n"
-	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
-	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
+	    "[-oD] [-s station name]\n"
+	    "       [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
-	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
-	    "       [-A 0|1 ] [-R 1|3]\n"
+	    "       [-M 0|1] [-R 1|3] [-g fragmentation threshold]\n"
 	    ,
 	    getprogname());
 	exit(1);
@@ -857,8 +759,8 @@ int main(argc, argv)
 	char			*argv[];
 {
 	struct wi_table *wt, **table;
-	char *iface, *key, *keyv[4], *tx_crypt_key;
-	int ch, dumpinfo, dumpstats, modifier, oldind, apscan;
+	char *iface;
+	int ch, dumpinfo, dumpstats, apscan;
 
 #define	SET_OPERAND(opr, desc) do {				\
 	if ((opr) == NULL)					\
@@ -871,8 +773,7 @@ int main(argc, argv)
 	dumpinfo = 1;
 	dumpstats = 0;
 	apscan = 0;
-	iface = key = keyv[0] = keyv[1] = keyv[2] = keyv[3] =
-	    tx_crypt_key = NULL;
+	iface = NULL;
 
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
@@ -880,7 +781,7 @@ int main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:m:n:op:q:r:s:t:A:M:S:P:R:T:DZ:")) != -1) {
+	    "a:d:g:hi:m:or:s:M:R:D")) != -1) {
 		if (ch != 'i')
 			dumpinfo = 0;
 		/*
@@ -901,26 +802,6 @@ int main(argc, argv)
 				break;
 			case 'i':
 				SET_OPERAND(iface, "interface");
-				break;
-			case 'k':
-				key = optarg;
-				oldind = optind;
-				opterr = 0;
-				ch = getopt(argc, argv, "v:");
-				opterr = 1;
-				switch (ch) {
-				case 'v':
-					modifier = atoi(optarg) - 1;
-					break;
-				default:
-					modifier = 0;
-					optind = oldind;
-					break;
-				}
-				keyv[modifier] = key;
-				break;
-			case 'T':
-				SET_OPERAND(tx_crypt_key, "TX encryption key");
 				break;
 			case 'D':
 				apscan = 1;
@@ -954,14 +835,6 @@ int main(argc, argv)
 					break;
 				}
 			}
-
-	if (tx_crypt_key != NULL)
-		wi_setword(iface, WI_RID_TX_CRYPT_KEY, atoi(tx_crypt_key) - 1);
-
-	for (modifier = 0; modifier < sizeof(keyv) / sizeof(keyv[0]);
-	    modifier++)
-		if (keyv[modifier] != NULL)
-			wi_setkeys(iface, keyv[modifier], modifier);
 
 	if (dumpstats)
 		wi_dumpstats(iface);
