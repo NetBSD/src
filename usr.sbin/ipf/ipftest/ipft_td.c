@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_td.c,v 1.1.1.2 1997/03/29 02:49:49 darrenr Exp $	*/
+/*	$NetBSD: ipft_td.c,v 1.1.1.3 1997/05/25 11:46:01 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -37,6 +37,7 @@ tcpdump -nqte
 #endif
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stddef.h>
@@ -53,12 +54,13 @@ tcpdump -nqte
 #include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
+#include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_td.c,v 1.1.1.2 1997/03/29 02:49:49 darrenr Exp $";
+static	char	rcsid[] = "$Id: ipft_td.c,v 1.1.1.3 1997/05/25 11:46:01 darrenr Exp $";
 #endif
 
 static	int	tcpd_open __P((char *));

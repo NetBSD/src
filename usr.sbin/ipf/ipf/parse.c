@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.2 1997/03/27 15:13:57 darrenr Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.3 1997/05/25 11:45:49 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -16,6 +16,7 @@
 #endif
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stddef.h>
@@ -30,12 +31,13 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
+#include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.1.1.2 1997/03/27 15:13:57 darrenr Exp $";
+static	char	rcsid[] = "$Id: parse.c,v 1.1.1.3 1997/05/25 11:45:49 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -112,7 +114,7 @@ char	*line;
 
 	cpp = cps;
 	if (**cpp == '@')
-		fil.fr_hits = atoi(*cpp++ + 1) + 1;
+		fil.fr_hits = (U_QUAD_T)atoi(*cpp++ + 1) + 1;
 
 	if (!strcasecmp("block", *cpp)) {
 		fil.fr_flags = FR_BLOCK;
@@ -326,6 +328,10 @@ char	*line;
 			return NULL;
 		}
 		ch = 0;
+		if (**cpp == '!') {
+			fil.fr_flags |= FR_NOTSRCIP;
+			(*cpp)++;
+		}
 		if (hostmask(&cpp, (u_long *)&fil.fr_src,
 			     (u_long *)&fil.fr_smsk, &fil.fr_sport, &ch,
 			     &fil.fr_stop)) {
@@ -351,6 +357,10 @@ char	*line;
 			return NULL;
 		}
 		ch = 0;
+		if (**cpp == '!') {
+			fil.fr_flags |= FR_NOTDSTIP;
+			(*cpp)++;
+		}
 		if (hostmask(&cpp, (u_long *)&fil.fr_dst,
 			     (u_long *)&fil.fr_dmsk, &fil.fr_dport, &ch,
 			     &fil.fr_dtop)) {
@@ -1165,10 +1175,11 @@ struct	frentry	*fp;
 			(void)printf("proto %d ", fp->fr_proto);
 	}
 
+	printf("from %s", fp->fr_flags & FR_NOTSRCIP ? "!" : "");
 	if (!fp->fr_src.s_addr & !fp->fr_smsk.s_addr)
-		(void)printf("from any ");
+		(void)printf("any ");
 	else {
-		(void)printf("from %s", inet_ntoa(fp->fr_src));
+		(void)printf("%s", inet_ntoa(fp->fr_src));
 		if ((ones = countbits(fp->fr_smsk.s_addr)) == -1)
 			(void)printf("/%s ", inet_ntoa(fp->fr_smsk));
 		else
@@ -1181,10 +1192,12 @@ struct	frentry	*fp;
 		else
 			(void)printf("port %s %s ", pcmp1[fp->fr_scmp],
 				     portname(pr, fp->fr_sport));
+
+	printf("to %s", fp->fr_flags & FR_NOTDSTIP ? "!" : "");
 	if (!fp->fr_dst.s_addr & !fp->fr_dmsk.s_addr)
-		(void)printf("to any");
+		(void)printf("any");
 	else {
-		(void)printf("to %s", inet_ntoa(fp->fr_dst));
+		(void)printf("%s", inet_ntoa(fp->fr_dst));
 		if ((ones = countbits(fp->fr_dmsk.s_addr)) == -1)
 			(void)printf("/%s", inet_ntoa(fp->fr_dmsk));
 		else
