@@ -1,4 +1,0 @@
-req-escript:40,script2,2,@@@1@@@	Hostname
-req-ipv6script:script2,1,@@@1@@@	IPV6 address
-escript:40,script2,3,@@@1@@@		Optional Aliases (space separated)
-invis:@@@1@@@ 
