@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.12 1998/07/23 20:51:09 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.13 1998/07/24 18:46:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -235,6 +235,7 @@ static struct swap_priority swap_priority;
 
 /* locks */
 lock_data_t swap_syscall_lock;
+static simple_lock_data_t swap_data_lock;
 
 /*
  * prototypes
@@ -283,6 +284,7 @@ uvm_swap_init()
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
 	lockinit(&swap_syscall_lock, PVM, "swapsys", 0, 0);
+	simple_lock_init(&swap_data_lock);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
