@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.11 1997/09/13 09:05:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.11 1997/09/13 09:05:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -87,7 +87,8 @@ complete_ambiguous(word, list, words)
 {
 	char insertstr[MAXPATHLEN];
 	char *lastmatch;
-	int i, j, matchlen, wordlen;
+	int i, j;
+	size_t matchlen, wordlen;
 
 	wordlen = strlen(word);
 	if (words->sl_cur == 0)
@@ -141,7 +142,7 @@ complete_command(word, list)
 {
 	struct cmd *c;
 	StringList *words;
-	int wordlen;
+	size_t wordlen;
 	unsigned char rv;
 
 	words = sl_init();
@@ -308,7 +309,8 @@ complete(el, ch)
 
 	struct cmd *c;
 	const LineInfo *lf;
-	int len, celems, dolist;
+	int celems, dolist;
+	size_t len;
 
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
