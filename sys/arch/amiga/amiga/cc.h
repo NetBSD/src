@@ -27,12 +27,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc.h,v 1.3 1994/02/13 21:13:12 chopps Exp $
+ *	$Id: cc.h,v 1.4 1994/03/25 16:30:04 chopps Exp $
  */
 
 #if ! defined (_CC_H)
 #define _CC_H
 
+#include <sys/queue.h>
 #include <amiga/amiga/cc_registers.h>
 
 #if ! defined (HIADDR)
@@ -47,23 +48,21 @@
  */
 
 struct vbl_node {
-    dll_node_t node;			/* Private. */
-    short   priority;			/* Private. */
-    short   flags;			/* Private. */
-    void  (*function)(register void *);	/* put your function pointer here. */
-    void   *data;			/* functions data. */
+	LIST_ENTRY(vbl_node) link;
+	short  priority;			/* Private. */
+	short  flags;				/* Private. */
+	void  (*function)(register void *);	/* put function pointer here */
+	void   *data;				/* functions data. */
 };
 
 enum vbl_node_bits {
-    VBLNB_OFF,					  /* don't call me right now. */
-    VBLNB_TURNOFF,				  /* turn function off. */
-    VBLNB_REMOVE,				  /* remove me on next vbl round and clear flag. */
+    VBLNB_OFF,		  /* don't call me right now. */
+    VBLNB_TURNOFF,	  /* turn function off. */
 };
 
 enum vlb_node_flags {
     VBLNF_OFF = 1 << VBLNB_OFF,
     VBLNF_TURNOFF = 1 << VBLNB_TURNOFF,
-    VBLNF_REMOVE = 1 << VBLNB_REMOVE,		  
 };    
 
 /*
@@ -130,30 +129,17 @@ typedef struct copper_list {
  * Chipmem allocator stuff.
  */
 
-typedef struct mem_node {
-    dll_node_t node;				  /* allways set. */
-    dll_node_t free;				  /* only set when nodes are available */
-    u_long   size;				  /* indicates size of memory following node. */
-} mem_node_t;
-
-typedef struct mem_list {
-    dll_list_t free_list;
-    dll_list_t node_list;
-    u_long   free_nodes;
-    u_long   alloc_nodes;
-    u_long   total;				  /* total free. */
-    u_long   size;				  /* size of it all. */
-    u_char  *memory;				  /* all the memory. */
-} mem_list_t;
+struct mem_node {
+	CIRCLEQ_ENTRY(mem_node) link; 	
+	CIRCLEQ_ENTRY(mem_node) free_link;
+	u_long size;		/* size of memory following node. */
+};
 
 #define CM_BLOCKSIZE 0x4
 #define CM_BLOCKMASK (~(CM_BLOCKSIZE - 1))
-
-#define MNODE_FROM_FREE(n) ((mem_node_t *)(((u_long)n) - offsetof (mem_node_t, free)))
 #define MNODES_MEM(mn) ((u_char *)(&mn[1]))
-
-extern caddr_t CHIPMEMADDR;
 #define PREP_DMA_MEM(mem) (void *)((caddr_t)mem - CHIPMEMADDR)
+extern caddr_t CHIPMEMADDR;
 
 
 /*
@@ -166,7 +152,6 @@ void custom_chips_init (void);
 void cc_init_vbl (void);
 void add_vbl_function (struct vbl_node *n, short priority, void *data);
 void remove_vbl_function (struct vbl_node *n);
-void wait_for_vbl_function_removal (struct vbl_node *n);
 void turn_vbl_function_off (struct vbl_node *n);
 void turn_vbl_function_on (struct vbl_node *n);
 /* blitter */
