@@ -28,7 +28,7 @@
  *
  *	from: @(#)types.h 1.18 87/07/24 SMI
  *	from: @(#)types.h	2.3 88/08/15 4.0 RPCSRC
- *	$Id: types.h,v 1.5 1993/08/01 18:45:51 mycroft Exp $
+ *	$Id: types.h,v 1.6 1993/12/06 08:40:00 cgd Exp $
  */
 
 /*
@@ -58,9 +58,5 @@
 #include <sys/types.h>
 #endif
 #include <sys/time.h>
-
-#ifndef INADDR_LOOPBACK
-#define	INADDR_LOOPBACK		(u_long)0x7F000001
-#endif
 
 #endif /* !_RPC_TYPES_H */
