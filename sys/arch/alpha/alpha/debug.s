@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.8 2001/05/30 15:24:27 lukem Exp $ */
+/* $NetBSD: debug.s,v 1.9 2003/04/08 22:37:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.8 2001/05/30 15:24:27 lukem Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.9 2003/04/08 22:37:52 thorpej Exp $")
 
 #include "opt_kgdb.h"
 
@@ -51,8 +51,9 @@ inc6:	.stabs	__FILE__,132,0,0,inc6; .loc	1 __LINE__
 /*
  * Debugger stack.
  */
-BSS(debug_stack_bottom, NBPG)
-ABS(debug_stack_top, debug_stack_bottom + NBPG)
+#define	DEBUG_STACK_SIZE	8192
+BSS(debug_stack_bottom, DEBUG_STACK_SIZE)
+ABS(debug_stack_top, debug_stack_bottom + DEBUG_STACK_SIZE)
 
 /*
  * alpha_debug:
