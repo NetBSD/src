@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.68.2.1 2004/07/12 20:36:58 he Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.68.2.2 2004/07/15 21:07:25 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68.2.1 2004/07/12 20:36:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68.2.2 2004/07/15 21:07:25 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -329,6 +329,7 @@ do {									\
 #define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
 #define	WM_F_BUS64		0x20	/* bus is 64-bit */
 #define	WM_F_PCIX		0x40	/* bus is PCI-X */
+#define	WM_F_CSA		0x80	/* bus is CSA */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -831,7 +832,16 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_type < WM_T_82543) {
 		/* We don't really know the bus characteristics here. */
 		sc->sc_bus_speed = 33;
-	} else  {
+	} else if (sc->sc_type == WM_T_82547 || sc->sc_type == WM_T_82547_2) {
+		/*
+		 * CSA (Communication Streaming Architecture) is about as fast
+		 * a 32-bit 66MHz PCI Bus.
+		 */
+		sc->sc_flags |= WM_F_CSA;
+		sc->sc_bus_speed = 66;
+		aprint_verbose("%s: Communication Streaming Architecture\n",
+		    sc->sc_dev.dv_xname);
+	} else {
 		reg = CSR_READ(sc, WMREG_STATUS);
 		if (reg & STATUS_BUS64)
 			sc->sc_flags |= WM_F_BUS64;
