@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.15 2001/10/24 14:07:32 augustss Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.16 2001/11/10 17:14:51 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@ struct wsevsrc;
 /*
  * Calls to the display interface from the glue code.
  */
-struct device *wsdisplay_set_console_kbd(struct wsevsrc *);
+void wsdisplay_set_console_kbd(struct wsevsrc *);
 
 /*
  * Calls to the display interface from the keyboard interface.
