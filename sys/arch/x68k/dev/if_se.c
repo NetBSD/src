@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.2 1996/05/07 02:35:09 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.3 1996/10/11 00:39:29 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -275,7 +275,7 @@ sefind(xd)
 	 * Initialize ifnet structure
 	 */
 	/* XXX: se->se_dev.dv_unit, se_cd.cd_name */
-	sprintf(ifp->if_xname, "%s%d", sedriver.d_name, xd->x68k_unit);
+	ksprintf(ifp->if_xname, "%s%d", sedriver.d_name, xd->x68k_unit);
 	ifp->if_softc = sc;
 	ifp->if_output = ether_output;
 	ifp->if_start = se_start;
@@ -295,23 +295,23 @@ sefind(xd)
 	/*
 	 * Print additional info when attached
 	 */
-	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	kprintf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	stat = scsi_scsi_cmd(xd->x68k_ctlr, xd->x68k_slave, xd->x68k_unit, &se_setmcast, 
 			     mcastaddr, 8);
 	if (stat != 0)
-	  printf("sefind:WARNING!! SET_MULTICAST_ADDR FAILED(stat == %d)\n", stat);
+	  kprintf("sefind:WARNING!! SET_MULTICAST_ADDR FAILED(stat == %d)\n", stat);
 
 	stat = scsi_scsi_cmd(xd->x68k_ctlr, xd->x68k_slave, xd->x68k_unit,
 			     &se_setprm, NULL, 0);
 	if (stat != 0)
-	  printf("sefind:WARNING!! SET_PACKET_RECEPT_MODE FAILED(stat == %d)\n", stat);
+	  kprintf("sefind:WARNING!! SET_PACKET_RECEPT_MODE FAILED(stat == %d)\n", stat);
 
 	se_setprm.cdb[2] = 0x04;
 	stat = scsi_scsi_cmd(xd->x68k_ctlr, xd->x68k_slave, xd->x68k_unit,
 			     &se_setprm, NULL, 0);
 	if (stat != 0)
-	  printf("sefind:WARNING!! SET_PACKET_RECEPT_MODE FAILED(stat == %d)\n", stat);
+	  kprintf("sefind:WARNING!! SET_PACKET_RECEPT_MODE FAILED(stat == %d)\n", stat);
 	return(1);
 }
 
@@ -380,7 +380,7 @@ seident(sc, xd)
 		DELAY(10000);
         }
 	if (stat == 0xff) { 
-		printf("se%d: Cant handle this Ethernet device\n", xd->x68k_unit);
+		kprintf("se%d: Cant handle this Ethernet device\n", xd->x68k_unit);
 		goto failed;
 	}
 	if (stat != 0)
@@ -402,7 +402,7 @@ seident(sc, xd)
 			if (version[i] != ' ')
 				break;
 		version[i+1] = 0;
-		printf("se%d: %s %s rev %s,", xd->x68k_unit, manu, model, version);
+		kprintf("se%d: %s %s rev %s,", xd->x68k_unit, manu, model, version);
 	} else if (inqlen == 5)
 		/* great it's a stupid device, doesn't know it's know name */
 		idstr[0] = idstr[8] = '\0';
@@ -423,9 +423,9 @@ seident(sc, xd)
 			sc->sc_arpcom.ac_enaddr[i] = se_inqbuf.ep_inquiry.eaddr[i];
 	} else {
 		if (idstr[8] == '\0')
-			printf("se%d: No ID, assuming Archive\n", xd->x68k_unit);
+			kprintf("se%d: No ID, assuming Archive\n", xd->x68k_unit);
 		else
-			printf("se%d: Unsupported Ethernet device\n", xd->x68k_unit);
+			kprintf("se%d: Unsupported Ethernet device\n", xd->x68k_unit);
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
 		sc->sc_datalen[CMD_INQUIRY] = 5;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
@@ -445,7 +445,7 @@ sestrategy(bp)
 	register struct buf *dp = &setab[unit];
 	int s;
 
-	printf("sestrategy()\n");
+	kprintf("sestrategy()\n");
 
 #if 0
 	bp->b_actf = NULL;
@@ -474,7 +474,7 @@ seustart(unit)
 	register struct scsi_fmt_cdb *cmd = &secmd[sc->sc_punit];
 	long nblks;
 
-	printf("seustart(%d)\n", unit);
+	kprintf("seustart(%d)\n", unit);
 
 	if (bp->b_flags & B_READ)
 		sc->sc_flags &= ~SEF_WRTTN;
@@ -491,7 +491,7 @@ seustart(unit)
 		sestart(unit);
 	}
 	else {
-		printf("seustart: scsireq() returns 0.\n");
+		kprintf("seustart: scsireq() returns 0.\n");
 	}
 }
 
@@ -518,12 +518,12 @@ seerror(unit, sc, am, stat)
 				   8/*sizeof(sesense[unit].sense)*/);
 		sp = (struct scsi_xsense *)sesense[unit].sense;
 		/* prtkey(unit, sc); */
-                printf("se%d: scsi sense class %d, code %d", unit,
+                kprintf("se%d: scsi sense class %d, code %d", unit,
                         sp->class, sp->code);
 		if (sp->class == 7) {
-			printf(", key %d", sp->key);
+			kprintf(", key %d", sp->key);
 			if (sp->valid)
-				printf(", blk %d", *(int *)&sp->info1);
+				kprintf(", blk %d", *(int *)&sp->info1);
 			switch (sp->key) {
 			/* no sense, try again */
 			case 0:
@@ -536,7 +536,7 @@ seerror(unit, sc, am, stat)
 			/* else, unrecovered error */
 			}
 		}
-		printf("\n");
+		kprintf("\n");
 	}
 	return(cond);
 }
@@ -547,7 +547,7 @@ sestart(unit)
 {
 	struct x68k_device *am = se_softc[unit].sc_xd;
 
-	printf("sestart(%d)\n", unit);
+	kprintf("sestart(%d)\n", unit);
 
 	if (am->x68k_dk >= 0) {
 		dk_busy |= 1 << am->x68k_dk;
@@ -575,7 +575,7 @@ sefinish(unit, sc, bp)
 {
 	struct buf *dp;
 
-	printf("sefinish(%d)\n", unit);
+	kprintf("sefinish(%d)\n", unit);
 #if 0
 	setab[unit].b_errcnt = 0;
 	if (dp = bp->b_actf)
@@ -605,7 +605,7 @@ se_reset(sc)
 {
 	int s;
 
-	printf("se_reset()\n");
+	kprintf("se_reset()\n");
 
 	sc->sc_flags |= SEF_RESET;
 	/*
@@ -624,7 +624,7 @@ se_stop(sc)
 {
 	int n = 5000;
 
-	printf("se_stop()\n");
+	kprintf("se_stop()\n");
 	/*
 	 * Stop everything on the interface, and select page 0 registers.
 	 */
@@ -668,7 +668,7 @@ se_init(sc)
 	int ctlr, slave;
 	int stat;
 
-	printf("se_init()\n");
+	kprintf("se_init()\n");
 
 #if 0 /* NetBSD 1.1 ??? */
 	/* address not known */
@@ -717,7 +717,7 @@ static inline void se_xmit(ifp)
 	int stat;
 	int s;
 
-	printf("se_xmit()\n");
+	kprintf("se_xmit()\n");
 	/*
 	 * Set NIC for page 0 register access
 	 */
@@ -746,9 +746,9 @@ static inline void se_xmit(ifp)
 
 	sestrategy(bp);
 
-	printf("se_xmit: waiting...\n");
+	kprintf("se_xmit: waiting...\n");
 	biowait(bp);
-	printf("se_xmit: returned...\n");
+	kprintf("se_xmit: returned...\n");
 
 }
 
@@ -764,7 +764,7 @@ static inline void se_rxmit(unit)
 	int stat;
 	int s;
 
-	printf("se_rxmit(%d)\n", unit);
+	kprintf("se_rxmit(%d)\n", unit);
 	/*
 	 * Set NIC for page 0 register access
 	 */
@@ -826,9 +826,9 @@ se_start(ifp)
 	u_short pktlen;
 	int	s;
 
-	printf("se_start()\n");
+	kprintf("se_start()\n");
 	if (sc->sc_flags & SEF_RESET) {
-		printf("reset operation is now in progress.\n");
+		kprintf("reset operation is now in progress.\n");
 		return;
 	}
 	/* Don't transmit if interface is busy or not running */
@@ -867,21 +867,21 @@ outloop:
 			return;
 		}
 	}
-	printf("get finished\n");
+	kprintf("get finished\n");
 #endif
 	/*
 	 * See if there are buffered packets and an idle transmitter -
 	 * should never happen at this point.
 	 */
-	printf("sc->txb_inuse == %d\n", sc->txb_inuse);
+	kprintf("sc->txb_inuse == %d\n", sc->txb_inuse);
 	if (sc->txb_inuse)
 		if (sc->xmit_busy == 0) {
-			printf("%s: packets buffers, but transmitter idle\n",
+			kprintf("%s: packets buffers, but transmitter idle\n",
 			    ifp->if_xname);
 			se_xmit(ifp);
 		} else {
 			/* See if there is room to put another packet in the buffer. */
-			printf("se_start: no room.\n");
+			kprintf("se_start: no room.\n");
 			/* No room.  Indicate this to the outside world and exit. */
 			ifp->if_flags |= IFF_OACTIVE;
 			return;
@@ -900,7 +900,7 @@ outloop:
 	 * we wouldn't have tried to de-queue the packet in the first place
 	 * if it was set.
 	 */
-		printf("se_start: no packet?\n");
+		kprintf("se_start: no packet?\n");
 		ifp->if_flags &= ~IFF_OACTIVE;
 		return;
 	}
@@ -919,15 +919,15 @@ outloop:
 	}
 
 	sc->txb_next_len = max(len, ETHER_MIN_LEN);
-	printf("se_start: next length == %d\n", sc->txb_next_len);
+	kprintf("se_start: next length == %d\n", sc->txb_next_len);
 
 	sc->txb_inuse++;
 
 	if (sc->xmit_busy == 0){
-		printf("se_start: no busy.\n");
+		kprintf("se_start: no busy.\n");
 		se_xmit(ifp);
 	} else
-		printf("se_start: busy.\n");
+		kprintf("se_start: busy.\n");
 
 	/*
 	 * If there is BPF support in the configuration, tap off here.
@@ -997,7 +997,7 @@ outloop:
 			bpf_mtap(sc->bpf, m0);
 	}
 #endif
-	printf("put finished\n");
+	kprintf("put finished\n");
 	m_freem(m0);
 	ifp->if_flags &= ~IFF_OACTIVE;
 }
@@ -1034,7 +1034,7 @@ seintr(unit, stat)
 	u_char isr;
 	int cond;
 
-	printf("seintr(%d,%d)\n", unit, stat);
+	kprintf("seintr(%d,%d)\n", unit, stat);
 	/*
 	 * clear watchdog timer
 	 */
@@ -1042,13 +1042,13 @@ seintr(unit, stat)
 
 #ifdef DIAGNOSTIC
 	if (bp == NULL) {
-		printf("se%d: bp == NULL\n", unit);
+		kprintf("se%d: bp == NULL\n", unit);
 		return;
 	}
 #endif
 
 	if (stat == SCSI_IO_TIMEOUT) {
-		printf("se%d: timeout error\n", unit);
+		kprintf("se%d: timeout error\n", unit);
 	}
 
 	if (am->x68k_dk >= 0)
@@ -1058,7 +1058,7 @@ seintr(unit, stat)
 		if (stat > 0) {
 #ifdef DEBUG
 			if (sedebug & SEB_ERROR)
-				printf("se%d: seintr: bad scsi status 0x%x\n",
+				kprintf("se%d: seintr: bad scsi status 0x%x\n",
 					unit, stat);
 #endif
 			cond = seerror(unit, sc, am, stat);
@@ -1067,10 +1067,10 @@ seintr(unit, stat)
 		bp->b_error = EIO;
 	} else {
 		/* scsi command completed ok */
-		printf("seintr: cdb0 = %d\n", dq->dq_cdb->cdb[0]);
+		kprintf("seintr: cdb0 = %d\n", dq->dq_cdb->cdb[0]);
 		if(setab[unit].b_active == 1) {
 			if ((dq->dq_cdb->cdb[0]) == 5) {
-				printf("seintr: sent\n");
+				kprintf("seintr: sent\n");
 				++sc->sc_arpcom.ac_if.if_opackets;
 				sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 				--sc->txb_inuse;
@@ -1095,7 +1095,7 @@ seintr(unit, stat)
 	}
 #ifdef DEBUG
 	if ((sedebug & SE_BRESID) && bp->b_resid != 0)
-		printf("b_resid %d b_flags 0x%x b_error 0x%x\n", 
+		kprintf("b_resid %d b_flags 0x%x b_error 0x%x\n", 
 		       bp->b_resid, bp->b_flags, bp->b_error);
 #endif
 
@@ -1124,7 +1124,7 @@ secommand(unit, command, cnt)
 	register cmdcnt;
 	int s;
 
-	printf("secommand()\n");
+	kprintf("secommand()\n");
 	cmd->len = 6; /* all Ether+ commands are cdb6 */
 	cmd->cdb[1] = sc->sc_punit;
 	cmd->cdb[2] = cmd->cdb[3] = cmd->cdb[4] = cmd->cdb[5] = 0;
@@ -1192,7 +1192,7 @@ secommand(unit, command, cnt)
 		*(u_char *)(&cmd->cdb[5]) = 0x00;
 		break;
 	default:
-		printf("se%d: secommand bad command 0x%x\n", 
+		kprintf("se%d: secommand bad command 0x%x\n", 
 		       unit, command);
 	}
 
@@ -1242,12 +1242,12 @@ se_ioctl(ifp, command, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	printf("se_ioctl()\n");
+	kprintf("se_ioctl()\n");
 
 	switch (command) {
 
 	case SIOCSIFADDR:
-		printf("se_ioctl:SIOCSIFADDR\n");
+		kprintf("se_ioctl:SIOCSIFADDR\n");
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -1298,7 +1298,7 @@ se_ioctl(ifp, command, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		printf("se_ioctl:SIOCSIFFLAGS\n");
+		kprintf("se_ioctl:SIOCSIFFLAGS\n");
 		if (((ifp->if_flags & IFF_UP) == 0) &&
 		    ((ifp->if_flags & IFF_RUNNING) != 0)) {
 			/*
@@ -1326,7 +1326,7 @@ se_ioctl(ifp, command, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		printf("se_ioctl:SIOC***MULTI\n");
+		kprintf("se_ioctl:SIOC***MULTI\n");
 		/* Update our multicast list. */
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
@@ -1343,10 +1343,10 @@ se_ioctl(ifp, command, data)
 		}
 		break;
 	default:
-		printf("se_ioctl:invalid IOCTL\n");
+		kprintf("se_ioctl:invalid IOCTL\n");
 		error = EINVAL;
 	}
-	printf("IOCTL finished.\n");
+	kprintf("IOCTL finished.\n");
 	return (error);
 }
  

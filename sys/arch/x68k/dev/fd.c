@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 1996/08/27 21:58:56 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 1996/10/11 00:39:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -66,7 +66,7 @@
 #define infdc   (IODEVbase->io_fdc)
 
 #ifdef DEBUG
-#define DPRINTF(x)      if (fddebug) printf x
+#define DPRINTF(x)      if (fddebug) kprintf x
 int     fddebug = 0;
 #else
 #define DPRINTF(x)
@@ -301,7 +301,7 @@ void
 fdcdmaerrintr()
 {
 	volatile struct dmac *dmac = &IODEVbase->io_dma[DRQ];
-	printf("fdcdmaerrintr: csr=%x, cer=%x\n", dmac->csr, dmac->cer);
+	kprintf("fdcdmaerrintr: csr=%x, cer=%x\n", dmac->csr, dmac->cer);
 	dmac->csr = 0xff;
 }
 
@@ -338,7 +338,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		printf(" drive %d", fa->fa_drive);
+		kprintf(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 
@@ -374,14 +374,14 @@ fdcattach(parent, self, aux)
 	dmac->niv = 0x64;
 	dmac->eiv = 0x65;
 
-	printf(": uPD72065 FDC\n");
+	kprintf(": uPD72065 FDC\n");
 	out_fdc(NE7CMD_SPECIFY);/* specify command */
 	out_fdc(0xd0);
 	out_fdc(0x10);
 
 	fdc_dmabuf = (u_char *)malloc(NBPG, M_DEVBUF, M_WAITOK);
 	if (fdc_dmabuf == 0)
-		printf("fdcinit: WARNING!! malloc() failed.\n");
+		kprintf("fdcinit: WARNING!! malloc() failed.\n");
 	dma_bouncebuf[DRQ] = fdc_dmabuf;
 
 	/* physical limit: four drives per controller. */
@@ -454,10 +454,10 @@ retry:
 #ifdef FDDEBUG
 	{
 		int i;
-		printf("fdprobe: status");
+		kprintf("fdprobe: status");
 		for (i = 0; i < n; i++)
-			printf(" %x", fdc->sc_status[i]);
-		printf("\n");
+			kprintf(" %x", fdc->sc_status[i]);
+		kprintf("\n");
 	}
 #endif
 
@@ -497,10 +497,10 @@ fdattach(parent, self, aux)
 	ioctlr.intr |= FDCI_EN;
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		kprintf(": %s %d cyl, %d head, %d sec\n", type->name,
 			type->tracks, type->heads, type->sectrac);
 	else
-		printf(": density unknown\n");
+		kprintf(": density unknown\n");
 
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
@@ -509,7 +509,7 @@ fdattach(parent, self, aux)
 
 	fd->sc_copybuf = (u_char *)malloc(NBPG, M_DEVBUF, M_WAITOK);
 	if (fd->sc_copybuf == 0)
-		printf("fdprobe: WARNING!! malloc() failed.\n");
+		kprintf("fdprobe: WARNING!! malloc() failed.\n");
 	fd->sc_flags |= FD_ALIVE;
 
 	/*
@@ -552,7 +552,7 @@ fdstrategy(bp)
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 #ifdef FDDEBUG
-		printf("fdstrategy: unit=%d, blkno=%d, bcount=%d\n", unit,
+		kprintf("fdstrategy: unit=%d, blkno=%d, bcount=%d\n", unit,
 		       bp->b_blkno, bp->b_bcount);
 #endif
 		bp->b_error = EINVAL;
@@ -597,7 +597,7 @@ fdstrategy(bp)
 	else {
 		struct fdc_softc *fdc = fdc_cd.cd_devs[0];	/* XXX */
 		if (fdc->sc_state == DEVIDLE) {
-			printf("fdstrategy: controller inactive\n");
+			kprintf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
 		}
 	}
@@ -852,7 +852,7 @@ fdcstart(fdc)
 	/* only got here if controller's drive queue was inactive; should
 	   be in idle state */
 	if (fdc->sc_state != DEVIDLE) {
-		printf("fdcstart: not idle\n");
+		kprintf("fdcstart: not idle\n");
 		return;
 	}
 #endif
@@ -873,19 +873,19 @@ fdcstatus(dv, n, s)
 		n = 2;
 	}
 
-	printf("%s: %s: state %d", dv->dv_xname, s, fdc->sc_state);
+	kprintf("%s: %s: state %d", dv->dv_xname, s, fdc->sc_state);
 
 	switch (n) {
 	case 0:
-		printf("\n");
+		kprintf("\n");
 		break;
 	case 2:
-		printf(" (st0 %b cyl %d)\n",
+		kprintf(" (st0 %b cyl %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d\n",
+		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -893,7 +893,7 @@ fdcstatus(dv, n, s)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf(" fdcstatus: weird size: %d\n", n);
+		kprintf(" fdcstatus: weird size: %d\n", n);
 		break;
 #endif
 	}
@@ -1077,8 +1077,8 @@ loop:
 			  + sec) * (1 << (type->secsize - 2));
 		 block += (fd->sc_part == SEC_P01) ? 1 : 0;
 		 if (block != fd->sc_blkno) {
-			 printf("C H R N: %d %d %d %d\n", fd->sc_cylin, head, sec, type->secsize);
-			 printf("fdcintr: doio: block %d != blkno %d\n", block, fd->sc_blkno);
+			 kprintf("C H R N: %d %d %d %d\n", fd->sc_cylin, head, sec, type->secsize);
+			 kprintf("fdcintr: doio: block %d != blkno %d\n", block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
@@ -1150,7 +1150,7 @@ loop:
 			 * (1 << (type->secsize - 2));
 		 block += (fd->sc_part == SEC_P01) ? 1 : 0;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 kprintf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
@@ -1225,13 +1225,13 @@ loop:
 		untimeout(fdctimeout, fdc);
 		DPRINTF(("fdcintr: in IOCOMPLETE\n"));
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
-			printf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
+			kprintf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
 #if 0
 			isa_dmaabort(fdc->sc_drq);
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			kprintf("blkno %d nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 			fdcretry(fdc);
 			goto loop;
@@ -1244,7 +1244,7 @@ loop:
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-			printf("\n");
+			kprintf("\n");
 			fdc->sc_errors = 0;
 		}
 		fd->sc_blkno += fd->sc_nblks;
@@ -1264,13 +1264,13 @@ loop:
 		DPRINTF(("fdcintr: COPYCOMPLETE:"));
 		untimeout(fdctimeout, fdc);
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
-			printf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
+			kprintf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
 #if 0
 			isa_dmaabort(fdc->sc_drq);
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			kprintf("blkno %d nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 			fdcretry(fdc);
 			goto loop;
@@ -1377,7 +1377,7 @@ fdcretry(fdc)
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 			fd->sc_skip, (struct disklabel *)NULL);
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1507,7 +1507,7 @@ fdgetdisklabel(sc, dev)
 	int part;
 
 #ifdef FDDEBUG
-	printf("fdgetdisklabel()\n");
+	kprintf("fdgetdisklabel()\n");
 #endif
 
 	part = DISKPART(dev);
@@ -1548,11 +1548,11 @@ fd_mountroot_hook(dev)
 	int c;
 
 	fd_do_eject(dev->dv_unit);
-	printf("Insert filesystem floppy and press return.");
+	kprintf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
-			printf("\n");
+			kprintf("\n");
 			return;
 		}
 	}

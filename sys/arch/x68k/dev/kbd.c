@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.2 1996/05/21 15:32:28 oki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.3 1996/10/11 00:39:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -100,7 +100,7 @@ kbdenable()
 	kbd_setLED();
 
 	if (!(sysport.keyctrl & 8))
-		printf("WARNING: no connected keyboard\n");
+		kprintf("WARNING: no connected keyboard\n");
 	kbd_softc.k_event_mode = 0;
 	kbd_softc.k_events.ev_io = 0;
 	splx(s);

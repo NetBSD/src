@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1995/08/29 22:37:44 phil Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.5 1996/10/11 00:41:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -162,7 +162,7 @@ in_cksum(m, len)
 	}
 
 	if (len)
-		printf("cksum: out of data\n");
+		kprintf("cksum: out of data\n");
 	if (byte_swapped) {
 		UNSWAP;
 	}

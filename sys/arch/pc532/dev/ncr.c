@@ -162,7 +162,7 @@ ncr_attach(parent, self, aux)
 
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
 		IPL_BIO, RISING_EDGE);
-	printf(" addr 0x%x, irq %d\n", NCR5380, IR_SCSI1);
+	kprintf(" addr 0x%x, irq %d\n", NCR5380, IR_SCSI1);
 
 	/*
 	 *  Initialize the SCSI controller itself.
@@ -182,11 +182,11 @@ ncr_intr(p)
 	if (*sc->sci_csr & SCI_CSR_INT) {
 		s = splbio();
 		if (ncr5380_intr(sc) == 0) {
-			printf("%s: ", sc->sc_dev.dv_xname);
+			kprintf("%s: ", sc->sc_dev.dv_xname);
 			if ((*sc->sci_bus_csr & ~SCI_BUS_RST) == 0)
-				printf("BUS RESET\n");
+				kprintf("BUS RESET\n");
 			else
-				printf("spurious interrupt\n");
+				kprintf("spurious interrupt\n");
 			SCI_CLR_INTR(sc);
 		}
 		splx(s);
@@ -226,7 +226,7 @@ ncr_ready(sc)
 		    SCI_BUSY(sc) == 0)
 			return(0);
 	}
-	printf("%s: ready timeout\n", sc->sc_dev.dv_xname);
+	kprintf("%s: ready timeout\n", sc->sc_dev.dv_xname);
 	return(0);
 }
 
@@ -342,7 +342,7 @@ ncr_pdma_out(sc, phase, datalen, data)
 	if (i != 0)
 		*byte_data = 0;
 	else
-		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
+		kprintf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
 			sc->sc_dev.dv_xname);
 
 	SCI_CLR_INTR(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1996/10/09 07:44:54 matthias Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1996/10/11 00:41:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@ cpu_initclocks()
 void
 setstatclockrate(int dummy)
 {
-	printf ("setstatclockrate\n");
+	kprintf ("setstatclockrate\n");
 }
 
 void
@@ -190,7 +190,7 @@ inittodr(base)
 	 * by checking for bad date info.
 	 */
 	if (sec > 59 || min > 59 || hr > 23 || dom > 31 || mon > 12) {
-		printf("inittodr: No clock found\n");
+		kprintf("inittodr: No clock found\n");
 		time.tv_sec = base;
 		return;
 	}

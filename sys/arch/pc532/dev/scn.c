@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.27 1996/09/02 06:43:57 mycroft Exp $ */
+/*	$NetBSD: scn.c,v 1.28 1996/10/11 00:41:05 christos Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -162,8 +162,8 @@ extern int kgdb_debug_init;
 /* Debug routine to print out the rs line structures. */
 void print_rs (struct rs232_s *rs)
 {
-  printf ("\nline frame overrun parity break\n");
-  printf ("tty%1d state=%2x  f=%2d o=%2d p=%2d b=%2d in=%x, out=%x grp=%d\n",
+  kprintf ("\nline frame overrun parity break\n");
+  kprintf ("tty%1d state=%2x  f=%2d o=%2d p=%2d b=%2d in=%x, out=%x grp=%d\n",
              rs->unit, rs->framing_errors, rs->overrun_errors,
 	     rs->parity_errors, rs->break_interrupts, 
 	     rs->uart->i_speed[rs->a_or_b], rs->uart->o_speed[rs->a_or_b],
@@ -428,16 +428,16 @@ scnattach(parent, self, aux)
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				printf("scn%d: ", unit);
+				kprintf("scn%d: ", unit);
 				kgdb_connect(1);
 			} else
-				printf("scn%d: kgdb enabled\n", unit);
+				kprintf("scn%d: kgdb enabled\n", unit);
 		}
 	}
 #endif
 
   /* print the device number... */
-  printf (" addr 0x%x\n", line_base);
+  kprintf (" addr 0x%x\n", line_base);
 }
 
 /* ARGSUSED */
@@ -607,12 +607,12 @@ scnintr(int uart_no)
   
 
   rs_stat = RD_ADR(u_char, uart->isr_port);
-  printf ("scnintr, rs_stat = 0x%x\n", rs_stat);
+  kprintf ("scnintr, rs_stat = 0x%x\n", rs_stat);
 
 	if (rs_stat & IMR_BRK_INT) {
 		/* A break interrupt! */
 		rs0->lstatus = RD_ADR(u_char, rs0->stat_port);
-		printf ("lstatus = 0x%x\n", rs0->lstatus);
+		kprintf ("lstatus = 0x%x\n", rs0->lstatus);
 		if (rs0->lstatus & SR_BREAK) {
 		  	++rs0->break_interrupts;
 			RD_ADR(u_char, rs0->recv_port);	/* Toss zero character. */
@@ -620,11 +620,11 @@ scnintr(int uart_no)
 		}
 		WR_ADR (u_char, rs0->cmd_port, CMD_RESET_BRK);
 		rs0->lstatus = RD_ADR(u_char, rs0->stat_port);
-		printf ("lstatus = 0x%x\n", rs0->lstatus);
+		kprintf ("lstatus = 0x%x\n", rs0->lstatus);
 	}
 	if (rs_stat & IMR_RX_INT) {
 		ch = RD_ADR(u_char, rs0->recv_port);
-		printf ("input ch = \"%c\"\n", ch);
+		kprintf ("input ch = \"%c\"\n", ch);
 	}
 }
 /* Change this for real interrupts! */
@@ -662,7 +662,7 @@ scnintr(int line1)
 	 */
 	rs_work = FALSE;
 	rs_stat = RD_ADR(u_char, uart->isr_port);
-/* if (rs_stat & ~(IMR_TX_INT | IMR_TXB_INT)) printf ("scn intr rs_stat = 0x%x\n", rs_stat); */
+/* if (rs_stat & ~(IMR_TX_INT | IMR_TXB_INT)) kprintf ("scn intr rs_stat = 0x%x\n", rs_stat); */
 	if ((rs_stat & IMR_TX_INT) && (tp0 != NULL) 
 	    && (tp0->t_state & TS_BUSY)) {
 		/* output char done. */
@@ -688,11 +688,11 @@ scnintr(int line1)
 		if (line1 == 1 && (rs0->lstatus & SR_BREAK)) {
 			if (++nr_brk >= 3) {
 				char c;
-				printf("\r\nDo you want a dump (y/n)? ");
+				kprintf("\r\nDo you want a dump (y/n)? ");
 				do
 					c = cngetc();
 				while (c != 'y' && c != 'n');
-				printf("%c\r\n", c);
+				kprintf("%c\r\n", c);
 				if (c == 'y') {
 					panic("Panic Button");
 				}

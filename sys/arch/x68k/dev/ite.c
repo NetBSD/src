@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.4 1996/07/17 01:51:43 oki Exp $	*/
+/*	$NetBSD: ite.c,v 1.5 1996/10/11 00:39:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,10 +200,10 @@ iteattach(pdp, dp, auxp)
 		}
 		ip->grf = gp;
 		iteinit(ip->device.dv_unit); /* XXX */
-		printf(": rows %d cols %d", ip->rows, ip->cols);
+		kprintf(": rows %d cols %d", ip->rows, ip->cols);
 		if (kbd_ite == NULL)
 			kbd_ite = ip;
-		printf("\n");
+		kprintf("\n");
 	} else {
 		if (con_itesoftc.grf != NULL) 
 			return;
@@ -503,7 +503,7 @@ itestart(tp)
 	/*
 	 * (Potentially) lower priority.  We only need to protect ourselves
 	 * from keyboard interrupts since that is all that can affect the
-	 * state of our tty (kernel printf doesn't go through this routine).
+	 * state of our tty (kernel kprintf doesn't go through this routine).
 	 */
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT | TS_BUSY | TS_TTSTOP))
@@ -1688,7 +1688,7 @@ iteputchar(c, ip)
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf (ip->argbuf, "\033[%d;%dR", 
+					ksprintf (ip->argbuf, "\033[%d;%dR", 
 						 ip->cury + 1, ip->curx + 1);
 					ite_sendstr (ip, ip->argbuf);
 					break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 1996/10/09 07:45:05 matthias Exp $  */
+/*	$NetBSD: intr.c,v 1.9 1996/10/11 00:41:18 christos Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -209,11 +209,11 @@ badhard(struct intrframe *frame)
 	di();
 	bad_count++;
 	if (bad_count < 5)
-   		printf("Unknown hardware interrupt: vec=%d pc=0x%08x psr=0x%04x cpl=0x%08x\n",
+   		kprintf("Unknown hardware interrupt: vec=%d pc=0x%08x psr=0x%04x cpl=0x%08x\n",
 		      frame->if_vec, frame->if_regs.r_pc, frame->if_regs.r_psr, frame->if_pl);
 
 	if (bad_count == 5)
-		printf("Too many unknown hardware interrupts, quitting reporting them.\n");
+		kprintf("Too many unknown hardware interrupts, quitting reporting them.\n");
 	ei();
 }
 
@@ -226,8 +226,8 @@ badsoft(void *n)
 	static int bad_count = 0;
 	bad_count++;
 	if (bad_count < 5)
-		printf("Unknown software interrupt: vec=%d\n", (int)n);
+		kprintf("Unknown software interrupt: vec=%d\n", (int)n);
 	
 	if (bad_count == 5)
-		printf("Too many unknown software interrupts, quitting reporting them.\n");
+		kprintf("Too many unknown software interrupts, quitting reporting them.\n");
 }

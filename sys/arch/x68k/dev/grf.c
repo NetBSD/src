@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.2 1996/05/21 15:32:06 oki Exp $	*/
+/*	$NetBSD: grf.c,v 1.3 1996/10/11 00:39:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -398,14 +398,14 @@ grflock(gp, block)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): dev %x flags %x lockpid %x\n",
+		kprintf("grflock(%d): dev %x flags %x lockpid %x\n",
 		       p->p_pid, gp-grf_softc, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_pid) {
 #ifdef DEBUG
 		if (grfdebug & GDB_LOCK)
-			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
+			kprintf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
 			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
 			       gp->g_lock->gl_locks[gp->g_lockpslot]);
 #endif
@@ -433,7 +433,7 @@ grflock(gp, block)
 
 #ifdef DEBUG
 		if (grfdebug & GDB_LOCK)
-			printf("  slot %d\n", slot);
+			kprintf("  slot %d\n", slot);
 #endif
 		gp->g_lockpslot = gp->g_lock->gl_lockslot = slot;
 		gp->g_lock->gl_locks[slot] = 1;
@@ -446,7 +446,7 @@ grfunlock(gp)
 {
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
+		kprintf("grfunlock(%d): dev %x flags %x lockpid %d\n",
 		       curproc->p_pid, gp-grf_softc, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
@@ -455,7 +455,7 @@ grfunlock(gp)
 	if (gp->g_pid) {
 #ifdef DEBUG
 		if (grfdebug & GDB_LOCK)
-			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
+			kprintf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
 			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
 			       gp->g_lock->gl_locks[gp->g_lockpslot]);
 #endif
@@ -499,7 +499,7 @@ grfdevno(dev)
 		newdev |= 0x01;
 #ifdef DEBUG
 	if (grfdebug & GDB_DEVNO)
-		printf("grfdevno: dev %x newdev %x\n", dev, newdev);
+		kprintf("grfdevno: dev %x newdev %x\n", dev, newdev);
 #endif
 	return(newdev);
 }
@@ -520,7 +520,7 @@ grfmap(dev, addrp, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
+		kprintf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
 	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
 	flags = MAP_SHARED;
@@ -551,7 +551,7 @@ grfunmap(dev, addr, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
+		kprintf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
 #endif
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
@@ -569,7 +569,7 @@ iommap(dev, addrp)
 
 #ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %x\n", curproc->p_pid, *addrp);
+		kprintf("iommap(%d): addr %x\n", curproc->p_pid, *addrp);
 #endif
 	return(EINVAL);
 }
@@ -582,7 +582,7 @@ iounmmap(dev, addr)
 
 #ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iounmmap(%d): id %d addr %x\n",
+		kprintf("iounmmap(%d): id %d addr %x\n",
 		       curproc->p_pid, unit, addr);
 #endif
 	return(0);
@@ -627,7 +627,7 @@ grffindpid(gp)
 done:
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grffindpid(%d): slot %d of %d\n",
+		kprintf("grffindpid(%d): slot %d of %d\n",
 		       pid, i, gp->g_pid[0]);
 #endif
 	return(i);
@@ -656,7 +656,7 @@ grfrmpid(gp)
 		gp->g_pid[0] = i;
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grfrmpid(%d): slot %d of %d\n",
+		kprintf("grfrmpid(%d): slot %d of %d\n",
 		       pid, sp-gp->g_pid, gp->g_pid[0]);
 #endif
 }
@@ -669,7 +669,7 @@ grflckmmap(dev, addrp)
 	struct proc *p = curproc;		/* XXX */
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckmmap(%d): addr %x\n",
+		kprintf("grflckmmap(%d): addr %x\n",
 		       p->p_pid, *addrp);
 #endif
 	return(EINVAL);
@@ -683,7 +683,7 @@ grflckunmmap(dev, addr)
 	int unit = minor(dev);
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckunmmap(%d): id %d addr %x\n",
+		kprintf("grflckunmmap(%d): id %d addr %x\n",
 		       curproc->p_pid, unit, addr);
 #endif
 	return(EINVAL);

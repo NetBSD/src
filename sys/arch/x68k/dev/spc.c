@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.6 1996/09/08 18:46:12 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.7 1996/10/11 00:39:36 christos Exp $	*/
 
 #define	integrate	static inline
 
@@ -328,9 +328,9 @@ struct spc_softc {
 #define SPC_SHOWSTART	0x20
 #define SPC_DOBREAK	0x40
 int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
-#define	SPC_PRINT(b, s)	do {if ((spc_debug & (b)) != 0) printf s;} while (0)
+#define	SPC_PRINT(b, s)	do {if ((spc_debug & (b)) != 0) kprintf s;} while (0)
 #define	SPC_BREAK()	do {if ((spc_debug & SPC_DOBREAK) != 0) Debugger();} while (0)
-#define	SPC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define	SPC_ASSERT(x)	do {if (x) {} else {kprintf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
 #else
 #define	SPC_PRINT(b, s)
 #define	SPC_BREAK()
@@ -465,7 +465,7 @@ spcattach(parent, self, aux)
 	sc->sc_link.device = &spc_dev;
 	sc->sc_link.openings = 2;
 
-	printf("\n");
+	kprintf("\n");
 
 	config_found(self, &sc->sc_link, scsiprint);
 }
@@ -836,7 +836,7 @@ spc_reselect(sc, message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
 	if (selid & (selid - 1)) {
-		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+		kprintf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname, selid);
 		SPC_BREAK();
 		goto reset;
@@ -857,7 +857,7 @@ spc_reselect(sc, message)
 			break;
 	}
 	if (acb == NULL) {
-		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+		kprintf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
 		    sc->sc_dev.dv_xname, target, lun);
 		SPC_BREAK();
 		goto abort;
@@ -1006,11 +1006,11 @@ spc_done(sc, acb)
 #if SPC_DEBUG
 	if ((spc_debug & SPC_SHOWMISC) != 0) {
 		if (xs->resid != 0)
-			printf("resid=%d ", xs->resid);
+			kprintf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.error_code);
+			kprintf("sense=0x%02x\n", xs->sense.error_code);
 		else
-			printf("error=%d\n", xs->error);
+			kprintf("error=%d\n", xs->error);
 	}
 #endif
 
@@ -1178,7 +1178,7 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				sc_link = acb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
+				kprintf("%s: %d extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, -sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				acb->data_length = 0;
@@ -1259,7 +1259,7 @@ nextbyte:
 					spc_sched_msgout(sc, SEND_SDTR);
 				} else {
 					sc_print_addr(acb->xs->sc_link);
-					printf("sync, offset %d, period %dnsec\n",
+					kprintf("sync, offset %d, period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
 				spc_setsync(sc, ti);
@@ -1278,14 +1278,14 @@ nextbyte:
 					spc_sched_msgout(sc, SEND_WDTR);
 				} else {
 					sc_print_addr(acb->xs->sc_link);
-					printf("wide, width %d\n",
+					kprintf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
 				break;
 #endif
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
+				kprintf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
 				    sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reject;
@@ -1293,7 +1293,7 @@ nextbyte:
 			break;
 
 		default:
-			printf("%s: unrecognized MESSAGE; sending REJECT\n",
+			kprintf("%s: unrecognized MESSAGE; sending REJECT\n",
 			    sc->sc_dev.dv_xname);
 			SPC_BREAK();
 		reject:
@@ -1304,7 +1304,7 @@ nextbyte:
 
 	case SPC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
+			kprintf("%s: reselect without IDENTIFY; sending DEVICE RESET\n",
 			    sc->sc_dev.dv_xname);
 			SPC_BREAK();
 			goto reset;
@@ -1314,7 +1314,7 @@ nextbyte:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
+		kprintf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
 		    sc->sc_dev.dv_xname);
 		SPC_BREAK();
 	reset:
@@ -1452,7 +1452,7 @@ nextmsg:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
+		kprintf("%s: unexpected MESSAGE OUT; sending NOOP\n",
 		    sc->sc_dev.dv_xname);
 		SPC_BREAK();
 		sc->sc_omess[0] = MSG_NOOP;
@@ -1772,7 +1772,7 @@ loop:
 	ints = INTS;
 #endif
 	if ((ints & INTS_RST) != 0) {
-		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
+		kprintf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
 		goto reset;
 	}
 
@@ -1780,7 +1780,7 @@ loop:
 	 * Check for less serious errors.
 	 */
 	if ((SERR & (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
-		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
+		kprintf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			sc->sc_flags |= SPC_DROP_MSGIN;
 			spc_sched_msgout(sc, SEND_PARITY_ERROR);
@@ -1806,7 +1806,7 @@ loop:
 			/*
 			 * We don't currently support target mode.
 			 */
-			printf("%s: target mode selected; going to BUS FREE\n",
+			kprintf("%s: target mode selected; going to BUS FREE\n",
 			    sc->sc_dev.dv_xname);
 
 			goto sched;
@@ -1839,7 +1839,7 @@ loop:
 			 * c) Mark device as busy.
 			 */
 			if (sc->sc_state != SPC_SELECTING) {
-				printf("%s: selection out while idle; resetting\n",
+				kprintf("%s: selection out while idle; resetting\n",
 				    sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reset;
@@ -1883,7 +1883,7 @@ loop:
 			SPC_MISC(("selection timeout  "));
 
 			if (sc->sc_state != SPC_SELECTING) {
-				printf("%s: selection timeout while idle; resetting\n",
+				kprintf("%s: selection timeout while idle; resetting\n",
 				    sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				goto reset;
@@ -1897,7 +1897,7 @@ loop:
 			goto finish;
 		} else {
 			if (sc->sc_state != SPC_IDLE) {
-				printf("%s: BUS FREE while not idle; state=%d\n",
+				kprintf("%s: BUS FREE while not idle; state=%d\n",
 				    sc->sc_dev.dv_xname, sc->sc_state);
 				SPC_BREAK();
 				goto out;
@@ -1964,7 +1964,7 @@ loop:
 				 * disconnecting, and this is necessary to
 				 * clean up their state.
 				 */
-				printf("%s: unexpected disconnect; sending REQUEST SENSE\n",
+				kprintf("%s: unexpected disconnect; sending REQUEST SENSE\n",
 				    sc->sc_dev.dv_xname);
 				SPC_BREAK();
 				spc_sense(sc, acb);
@@ -2034,7 +2034,7 @@ dophase:
 		if ((spc_debug & SPC_SHOWMISC) != 0) {
 			SPC_ASSERT(sc->sc_nexus != NULL);
 			acb = sc->sc_nexus;
-			printf("cmd=0x%02x+%d  ",
+			kprintf("cmd=0x%02x+%d  ",
 			    acb->scsi_cmd.opcode, acb->scsi_cmd_length-1);
 		}
 #endif
@@ -2076,7 +2076,7 @@ dophase:
 		goto loop;
 	}
 
-	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
+	kprintf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
 	SPC_BREAK();
 reset:
 	spc_init(sc);
@@ -2137,17 +2137,17 @@ spc_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("timed out");
+	kprintf("timed out");
 
 	s = splbio();
 
 	if (acb->flags & ACB_ABORT) {
 		/* abort timed out */
-		printf(" AGAIN\n");
+		kprintf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		printf("\n");
+		kprintf("\n");
 		acb->xs->error = XS_TIMEOUT;
 		spc_abort(sc, acb);
 	}
@@ -2173,12 +2173,12 @@ spc_show_scsi_cmd(acb)
 	if ((acb->xs->flags & SCSI_RESET) == 0) {
 		for (i = 0; i < acb->scsi_cmd_length; i++) {
 			if (i)
-				printf(",");
-			printf("%x", b[i]);
+				kprintf(",");
+			kprintf("%x", b[i]);
 		}
-		printf("\n");
+		kprintf("\n");
 	} else
-		printf("RESET\n");
+		kprintf("RESET\n");
 }
 
 void
@@ -2186,8 +2186,8 @@ spc_print_acb(acb)
 	struct spc_acb *acb;
 {
 
-	printf("acb@%x xs=%x flags=%x", acb, acb->xs, acb->flags);
-	printf(" dp=%x dleft=%d target_stat=%x\n",
+	kprintf("acb@%x xs=%x flags=%x", acb, acb->xs, acb->flags);
+	kprintf(" dp=%x dleft=%d target_stat=%x\n",
 	    (long)acb->data_addr, acb->data_length, acb->target_stat);
 	spc_show_scsi_cmd(acb);
 }
@@ -2198,14 +2198,14 @@ spc_print_active_acb()
 	struct spc_acb *acb;
 	struct spc_softc *sc = spc_cd.cd_devs[0]; /* XXX */
 
-	printf("ready list:\n");
+	kprintf("ready list:\n");
 	for (acb = sc->ready_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next)
 		spc_print_acb(acb);
-	printf("nexus:\n");
+	kprintf("nexus:\n");
 	if (sc->sc_nexus != NULL)
 		spc_print_acb(sc->sc_nexus);
-	printf("nexus list:\n");
+	kprintf("nexus list:\n");
 	for (acb = sc->nexus_list.tqh_first; acb != NULL;
 	    acb = acb->chain.tqe_next)
 		spc_print_acb(acb);
@@ -2218,15 +2218,15 @@ spc_dump_driver(sc)
 	struct spc_tinfo *ti;
 	int i;
 
-	printf("nexus=%x prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
-	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
+	kprintf("nexus=%x prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
+	kprintf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
 	    sc->sc_state, sc->sc_imess[0],
 	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);
 	for (i = 0; i < 7; i++) {
 		ti = &sc->sc_tinfo[i];
-		printf("tinfo%d: %d cmds %d disconnects %d timeouts",
+		kprintf("tinfo%d: %d cmds %d disconnects %d timeouts",
 		    i, ti->cmds, ti->dconns, ti->touts);
-		printf(" %d senses flags=%x\n", ti->senses, ti->flags);
+		kprintf(" %d senses flags=%x\n", ti->senses, ti->flags);
 	}
 }
 #endif

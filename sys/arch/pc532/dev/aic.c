@@ -1,4 +1,4 @@
-/*	$NetBSD: aic.c,v 1.5 1996/02/02 18:06:52 mycroft Exp $	*/
+/*	$NetBSD: aic.c,v 1.6 1996/10/11 00:40:57 christos Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -126,7 +126,7 @@ struct scsi_xfer *cur_xs;
 
 int aic_scsi_cmd(struct scsi_xfer *xs)
 {
-printf ("aic_scsi_cmd: ... \n");
+kprintf ("aic_scsi_cmd: ... \n");
 	cur_xs = xs;
 
 	return (HAD_ERROR);
