@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * from: Id: exec_aout.c,v 1.1.2.5 1993/10/17 04:29:26 deraadt Exp
- * $Id: sun_exec_aout.c,v 1.2 1993/11/20 03:05:41 deraadt Exp $
+ * $Id: sun_exec_aout.c,v 1.3 1993/11/22 22:54:48 deraadt Exp $
  */
 
 #include <sys/param.h>

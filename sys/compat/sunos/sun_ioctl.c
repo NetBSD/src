@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
- * $Id: sun_ioctl.c,v 1.4 1993/11/20 02:57:43 deraadt Exp $
+ * $Id: sun_ioctl.c,v 1.5 1993/11/22 22:54:48 deraadt Exp $
  */
 
 #include <sys/param.h>
