@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2001/06/10 05:26:58 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4 2001/06/14 19:03:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 
 	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
 			MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
-		/* Process clock and I/O interrupts. */
+		/* Process I/O and error interrupts. */
 		(*algor_iointr)(status, cause, pc, ipending);
 	}
 
