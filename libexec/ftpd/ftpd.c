@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.144 2002/09/13 02:58:54 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.145 2002/10/07 13:29:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.144 2002/09/13 02:58:54 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.145 2002/10/07 13:29:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,6 +234,7 @@ static int	 checkpassword(const struct passwd *, const char *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
 static char	*gunique(const char *);
+static void	 login_utmp(const char *, const char *, const char *);
 static void	 logremotehost(struct sockinet *);
 static void	 lostconn(int);
 static void	 myoob(int);
@@ -912,7 +913,7 @@ checkaccess(const char *name)
 }
 
 static void
-login_utmp(const char *name, const char *line, const char *host)
+login_utmp(const char *line, const char *name, const char *host)
 {
 #if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
 	struct timeval tv;
@@ -1090,7 +1091,7 @@ pass(const char *passwd)
 	gidcount = getgroups(sizeof(gidlist), gidlist);
 
 	/* open utmp/wtmp before chroot */
-	login_utmp(pw->pw_name, remotehost, ttyline);
+	login_utmp(ttyline, pw->pw_name, remotehost);
 
 	logged_in = 1;
 
