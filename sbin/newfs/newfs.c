@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)newfs.c	6.27 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: newfs.c,v 1.4.2.1 1993/07/20 00:01:25 cgd Exp $";
+static char rcsid[] = "$Id: newfs.c,v 1.4.2.2 1993/07/21 09:49:48 cgd Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -197,7 +197,7 @@ main(argc, argv)
 	else
 		progname = *argv;
 
-	if (strstr(progname, "mount_mfs")) {
+	if (strstr(progname, "mfs")) {
 		mfs = 1;
 		Nflag++;
 	}
@@ -460,7 +460,7 @@ main(argc, argv)
 	if (mfs) {
 		struct mfs_args args;
 
-		sprintf(buf, "mount_mfs:%d", getpid());
+		sprintf(buf, "mfs:%d", getpid());
 		args.name = buf;
 		args.base = membase;
 		args.size = fssize * sectorsize;
