@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.29 1997/07/04 15:17:57 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.30 1997/07/30 03:45:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: mount.c,v 1.29 1997/07/04 15:17:57 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.30 1997/07/30 03:45:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,8 @@ static struct opt {
 	{ 0 }
 };
 
+static char ffs[] = "ffs";
+
 int
 main(argc, argv)
 	int argc;
@@ -118,7 +120,7 @@ main(argc, argv)
 
 	all = forceall = init_flags = 0;
 	options = NULL;
-	vfstype = "ffs";
+	vfstype = ffs;
 	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != EOF)
 		switch (ch) {
 		case 'A':
@@ -299,6 +301,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 #ifdef __GNUC__
 	(void) &name;
 	(void) &optbuf;
+	(void) &vfstype;
 #endif
 
 	if (realpath(name, mntpath) == NULL) {
@@ -348,8 +351,12 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	 * optimisation mode.  We don't pass the default "-o rw"
 	 * for that reason.
 	 */
-	if (flags & MNT_UPDATE)
+	if (flags & MNT_UPDATE) {
 		optbuf = catopt(optbuf, "update");
+		/* Figure out the fstype only if we defaulted to ffs */
+		if (vfstype == ffs && statfs(name, &sf) != -1)
+			vfstype = sf.f_fstypename;
+	}
 
 	argc = 0;
 	argv[argc++] = vfstype;
