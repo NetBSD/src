@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $	*/
+/*	$NetBSD: pigs.c,v 1.17 2000/06/04 01:53:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.17 2000/06/04 01:53:51 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: pigs.c,v 1.16 2000/01/08 23:12:37 itojun Exp $");
 #include <sys/dir.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 
 #include <curses.h>
