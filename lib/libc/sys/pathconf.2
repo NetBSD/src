@@ -1,4 +1,4 @@
-.\"	$NetBSD: pathconf.2,v 1.17 2004/05/19 11:40:51 kleink Exp $
+.\"	$NetBSD: pathconf.2,v 1.18 2005/01/06 20:31:12 jmmv Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@ The
 .Fn pathconf
 and
 .Fn fpathconf
-functions provides a method for applications to determine the current
+functions provide a method for applications to determine the current
 value of a configurable system limit or option variable associated
 with a pathname or file descriptor.
 .Pp
@@ -136,6 +136,7 @@ argument is invalid.
 The implementation does not support an association of the variable
 name with the associated file.
 .El
+.Pp
 .Fn pathconf
 will fail if:
 .Bl -tag -width ENAMETOOLONGAA
