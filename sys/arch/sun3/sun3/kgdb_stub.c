@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.5 1996/10/13 03:47:50 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.6 1996/10/23 16:30:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -227,17 +227,25 @@ computeSignal(type)
 
 	switch (type) {
 	case T_BUSERR:
+		sigval = SIGBUS;
+		break;
 	case T_ADDRERR:
 		sigval = SIGBUS;
 		break;
 	case T_ILLINST:
-	case T_PRIVINST:
 		sigval = SIGILL;
 		break;
 	case T_ZERODIV:
+		sigval = SIGFPE;
+		break;
 	case T_CHKINST:
+		sigval = SIGFPE;
+		break;
 	case T_TRAPVINST:
 		sigval = SIGFPE;
+		break;
+	case T_PRIVINST:
+		sigval = SIGILL;
 		break;
 	case T_TRACE:
 		sigval = SIGTRAP;
@@ -252,6 +260,8 @@ computeSignal(type)
 		sigval = SIGILL;
 		break;
 	case T_FPERR:
+		sigval = SIGFPE;
+		break;
 	case T_COPERR:
 		sigval = SIGFPE;
 		break;
