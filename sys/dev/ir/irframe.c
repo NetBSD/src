@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.21 2002/10/02 02:15:32 thorpej Exp $	*/
+/*	$NetBSD: irframe.c,v 1.22 2002/10/02 15:29:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,9 +84,7 @@ Static int irf_reset_params(struct irframe_softc *sc);
 
 #if NIRFRAME == 0
 /* In case we just have tty attachment. */
-struct cfdriver irframe_cd = {
-	NULL, "irframe", DV_DULL
-};
+CFDRIVER_DECL(irframe, DV_DULL, NULL);
 #endif
 
 CFATTACH_DECL(irframe, sizeof(struct irframe_softc),
