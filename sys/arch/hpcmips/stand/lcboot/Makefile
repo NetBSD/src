@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2003/05/01 07:02:01 igy Exp $
+#	$NetBSD: Makefile,v 1.2 2003/06/24 12:27:03 igy Exp $
 .include <bsd.own.mk>
 
-ROMICE?=	yes
+ROMICE?=	no
 
 S=	${.CURDIR}/../../../../
 
@@ -9,7 +9,7 @@ PROG=	lcboot.out
 SREC=	lcboot.srec
 MKMAN=	no
 WARNS=	1
-SRCS=	start.S main.c com.c dev_lc.c i28f128.c
+SRCS=	start.S main.c com.c conf.c dev_flash.c devopen.c i28f128.c
 
 CPPFLAGS+=	-DDEBUG
 
@@ -56,7 +56,6 @@ LIBZ=	${ZLIB}
 ### find out what to use for libsa
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
-CPPFLAGS+=	-DLIBSA_SINGLE_FILESYSTEM=lc -DLIBSA_SINGLE_DEVICE=lcdev
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=	${SALIB}
 
