@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.180 2002/04/15 12:40:28 joda Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.181 2002/04/23 09:09:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.180 2002/04/15 12:40:28 joda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.181 2002/04/23 09:09:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,6 +843,30 @@ scsi_probe_device(sc, target, lun)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
 		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
+		if (periph->periph_version >= 4) { /* SPC-2 */
+			/*
+			 * Report ST clocking though CAP_WIDExx/CAP_SYNC.
+			 * If the device only supports DT, clear these
+			 * flags (DT implies SYNC and WIDE)
+			 */
+			switch (inqbuf.flags4 & SID_Clocking) {
+			case SID_CLOCKING_DT_ONLY:
+				periph->periph_cap &=
+				    ~(PERIPH_CAP_SYNC |
+				      PERIPH_CAP_WIDE16 |
+				      PERIPH_CAP_WIDE32);
+				/* FALLTHOUGH */
+			case SID_CLOCKING_SD_DT:
+				periph->periph_cap |= PERIPH_CAP_DT;
+				break;
+			default: /* ST only or invalid */
+				/* nothing to do */
+			}
+			if (inqbuf.flags4 & SID_IUS)
+				periph->periph_cap |= PERIPH_CAP_IUS;
+			if (inqbuf.flags4 & SID_QAS)
+				periph->periph_cap |= PERIPH_CAP_QAS;
+		}
 	} else {
 		if (quirks & PQUIRK_CAP_SYNC)
 			periph->periph_cap |= PERIPH_CAP_SYNC;

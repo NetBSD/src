@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.66 2002/04/01 20:37:42 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.67 2002/04/23 09:09:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -410,6 +410,9 @@ struct scsipi_periph {
 #define	PERIPH_CAP_TQING	0x0200	/* tagged queueing */
 #define	PERIPH_CAP_SFTRESET	0x0400	/* soft RESET condition response */
 #define	PERIPH_CAP_CMD16	0x0800	/* 16 byte commands (ATAPI) */
+#define	PERIPH_CAP_DT		0x1000	/* supports DT clock */
+#define	PERIPH_CAP_QAS		0x2000	/* supports quick arbit. and select. */
+#define	PERIPH_CAP_IUS		0x4000	/* supports information unit xfers */
 
 /* periph_flags */
 #define	PERIPH_REMOVABLE	0x0001	/* media is removable */
