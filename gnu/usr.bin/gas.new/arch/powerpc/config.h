@@ -45,7 +45,7 @@
 
 /* If we aren't doing cross-assembling, some operations can be optimized,
    since byte orders and value sizes don't need to be adjusted.  */
-#define CROSS_COMPILE 1
+/* #undef CROSS_COMPILE */
 
 /* Some gas code wants to know these parameters.  */
 #define TARGET_ALIAS "powerpc--netbsd"
