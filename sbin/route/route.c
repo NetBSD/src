@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.22 1997/09/02 00:30:49 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.23 1997/09/15 09:15:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.22 1997/09/02 00:30:49 thorpej Exp $";
+__RCSID("$NetBSD: route.c,v 1.23 1997/09/15 09:15:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static char rcsid[] = "$NetBSD: route.c,v 1.22 1997/09/02 00:30:49 thorpej Exp $
 typedef union sockunion *sup;
 
 int main __P((int, char **));
-static __dead void usage __P((char *));
+static void usage __P((char *));
 static void quit __P((char *));
 static char *any_ntoa __P((const struct sockaddr *));
 static void set_metric __P((char *, int));
@@ -122,7 +122,7 @@ int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_long  rtm_inits;
 
-static __dead void
+static void
 usage(cp)
 	char *cp;
 {
@@ -163,7 +163,7 @@ main(argc, argv)
 	if (argc < 2)
 		usage((char *)NULL);
 
-	while ((ch = getopt(argc, argv, "nqdtv")) != EOF)
+	while ((ch = getopt(argc, argv, "nqdtv")) != -1)
 		switch(ch) {
 		case 'n':
 			nflag = 1;
@@ -243,7 +243,7 @@ flushroutes(argc, argv)
 	size_t needed;
 	int mib[6], rlen, seqno;
 	char *buf, *next, *lim;
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 
 	shutdown(s, 0); /* Don't want to read back our messages */
 	if (argc > 1) {
@@ -364,7 +364,7 @@ char *
 routename(sa)
 	struct sockaddr *sa;
 {
-	register char *cp;
+	char *cp;
 	static char line[50];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
@@ -449,7 +449,7 @@ netname(sa)
 	static char line[50];
 	struct netent *np = 0;
 	u_long net, mask;
-	register u_long i;
+	u_long i;
 	int subnetshift;
 	struct in_addr in;
 
@@ -568,7 +568,7 @@ set_metric(value, key)
 static void
 newroute(argc, argv)
 	int argc;
-	register char **argv;
+	char **argv;
 {
 	char *cmd, *dest = "", *gateway = "", *err;
 	int ishost = 0, ret, attempts, oerrno, flags = RTF_STATIC;
@@ -797,10 +797,10 @@ newroute(argc, argv)
 static void
 inet_makenetandmask(net, sin)
 	u_long net;
-	register struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 {
 	u_long addr, mask = 0;
-	register char *cp;
+	char *cp;
 
 	rtm_addrs |= RTA_NETMASK;
 	if (net == 0)
@@ -846,7 +846,7 @@ getaddr(which, s, hpp)
 	char *s;
 	struct hostent **hpp;
 {
-	register sup su;
+	sup su;
 	struct hostent *hp;
 	struct netent *np;
 	u_long val;
@@ -916,7 +916,7 @@ getaddr(which, s, hpp)
 	case AF_OSI:
 		su->siso.siso_addr = *iso_addr(s);
 		if (which == RTA_NETMASK || which == RTA_GENMASK) {
-			register char *cp = (char *)TSEL(&su->siso);
+			char *cp = (char *)TSEL(&su->siso);
 			su->siso.siso_nlen = 0;
 			do {--cp ;} while ((cp > (char *)su) && (*cp == 0));
 			su->siso.siso_len = 1 + cp - (char *)su;
@@ -995,7 +995,7 @@ netdone:
 int
 x25_makemask()
 {
-	register char *cp;
+	char *cp;
 
 	if ((rtm_addrs & RTA_NETMASK) == 0) {
 		rtm_addrs |= RTA_NETMASK;
@@ -1019,8 +1019,8 @@ ns_print(sns)
 	u_short port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
-	register char *p;
-	register u_char *q;
+	char *p;
+	u_char *q;
 
 	work = sns->sns_addr;
 	port = ntohs(work.x_port);
@@ -1061,7 +1061,7 @@ interfaces()
 	size_t needed;
 	int mib[6];
 	char *buf, *lim, *next;
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -1114,8 +1114,8 @@ rtmsg(cmd, flags)
 {
 	static int seq;
 	int rlen;
-	register char *cp = m_rtmsg.m_space;
-	register int l;
+	char *cp = m_rtmsg.m_space;
+	int l;
 
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
@@ -1189,7 +1189,7 @@ static void
 mask_addr()
 {
 	int olen = so_mask.sa.sa_len;
-	register char *cp1 = olen + (char *)&so_mask, *cp2;
+	char *cp1 = olen + (char *)&so_mask, *cp2;
 
 	for (so_mask.sa.sa_len = 0; cp1 > (char *)&so_mask; )
 		if (*--cp1 != 0) {
@@ -1254,7 +1254,7 @@ char addrnames[] =
 
 static void
 print_rtmsg(rtm, msglen)
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 	int msglen;
 {
 	struct if_msghdr *ifm;
@@ -1293,14 +1293,14 @@ print_rtmsg(rtm, msglen)
 #ifndef	SMALL
 static void
 print_getmsg(rtm, msglen)
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 	int msglen;
 {
 	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL;
 	struct sockaddr_dl *ifp = NULL;
-	register struct sockaddr *sa;
-	register char *cp;
-	register int i;
+	struct sockaddr *sa;
+	char *cp;
+	int i;
 
 	(void) printf("   route to: %s\n",
 	    routename((struct sockaddr *) &so_dst));
@@ -1393,7 +1393,7 @@ print_getmsg(rtm, msglen)
 
 void
 pmsg_common(rtm)
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 {
 	(void) printf("\nlocks: ");
 	bprintf(stdout, rtm->rtm_rmx.rmx_locks, metricnames);
@@ -1407,7 +1407,7 @@ pmsg_addrs(cp, addrs)
 	char	*cp;
 	int	addrs;
 {
-	register struct sockaddr *sa;
+	struct sockaddr *sa;
 	int i;
 
 	if (addrs == 0)
@@ -1427,11 +1427,11 @@ pmsg_addrs(cp, addrs)
 
 static void
 bprintf(fp, b, s)
-	register FILE *fp;
-	register int b;
-	register u_char *s;
+	FILE *fp;
+	int b;
+	u_char *s;
 {
-	register int i;
+	int i;
 	int gotsome = 0;
 
 	if (b == 0)
@@ -1458,7 +1458,7 @@ static int
 keyword(cp)
 	char *cp;
 {
-	register struct keytab *kt = keywords;
+	struct keytab *kt = keywords;
 
 	while (kt->kt_cp && strcmp(kt->kt_cp, cp))
 		kt++;
@@ -1467,7 +1467,7 @@ keyword(cp)
 
 static void
 sodump(su, which)
-	register sup su;
+	sup su;
 	char *which;
 {
 	switch (su->sa.sa_family) {
@@ -1511,13 +1511,13 @@ sodump(su, which)
 
 static void
 sockaddr(addr, sa)
-	register char *addr;
-	register struct sockaddr *sa;
+	char *addr;
+	struct sockaddr *sa;
 {
-	register char *cp = (char *)sa;
+	char *cp = (char *)sa;
 	int size = sa->sa_len;
 	char *cplim = cp + size;
-	register int byte = 0, state = VIRGIN, new = 0;
+	int byte = 0, state = VIRGIN, new = 0;
 
 	(void) memset(cp, 0, size);
 	cp++;
