@@ -1,3 +1,5 @@
+/*	$NetBSD: netbios.h,v 1.2 2002/01/04 02:39:38 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/netsmb/netbios.h,v 1.1 2001/04/10 07:59:05 bp Exp $
+ * FreeBSD: src/sys/netsmb/netbios.h,v 1.1 2001/04/10 07:59:05 bp Exp
  */
 #ifndef _NETSMB_NETBIOS_H_
 #define	_NETSMB_NETBIOS_H_
@@ -41,8 +43,10 @@
 #include <netinet/in.h>
 #endif
 
+#ifndef NetBSD
 #ifndef _NETIPX_IPX_H_
 #include <netipx/ipx.h>
+#endif
 #endif
 
 #define AF_NETBIOS	AF_NS		/* XXX: should go to socket.h */
@@ -114,7 +118,6 @@
  */
 union nb_tran {
 	struct sockaddr_in	x_in;
-	struct sockaddr_ipx	x_ipx;
 };
 
 struct nb_name {

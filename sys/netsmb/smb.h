@@ -1,7 +1,7 @@
-/*	$NetBSD: smb.h,v 1.2 2001/06/19 13:45:58 wiz Exp $	*/
+/*	$NetBSD: smb.h,v 1.3 2002/01/04 02:39:38 deberg Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001 Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/smb.h,v 1.2 2001/08/21 08:21:03 bp Exp
  */
 
 /*
@@ -39,6 +41,7 @@
 #ifndef _NETSMB_SMB_H_
 #define _NETSMB_SMB_H_
 
+#define	SMB_TCP_PORT	139
 /*
  * SMB dialects that we have to deal with.
  */
@@ -67,7 +70,7 @@ enum smb_dialects {
  */
 #define	SMB_SIGNATURE		"\xFFSMB"
 #define	SMB_SIGLEN		4
-#define	SMB_HDRMID(p)		(*(u_short*)((u_char*)(p) + 30))
+#define	SMB_HDRMID(p)		(letohs(*(u_short*)((u_char*)(p) + 30)))
 #define	SMB_HDRLEN		32
 /*
  * bits in the smb_flags field
@@ -96,7 +99,7 @@ enum smb_dialects {
  * Security mode bits
  */
 #define SMB_SM_USER		0x01		/* server in the user security mode */
-#define	SMB_SM_ENCRYPT		0x02		/* use challenge/response */
+#define	SMB_SM_ENCRYPT		0x02		/* use challenge/responce */
 
 /*
  * NTLM capabilities
