@@ -1,4 +1,4 @@
-/*	$NetBSD: comio.S,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: comio.S,v 1.2 1997/10/27 19:51:18 drochner Exp $	*/
 
 /* serial console handling
   modelled after code in FreeBSD:sys/i386/boot/netboot/start2.S
@@ -99,13 +99,13 @@ ENTRY(comgetc)
 
 	movb	$0x02, %ah
 	int	$0x14
-	movb	%al,%bl
+	movl	%eax,%ebx	# at run time, it is mov %ax,%bx
 
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
 
 	xor	%eax,%eax
-	movb	%bl,%al
+	mov	%bx,%ax
 
 	pop	%edi
 	pop	%esi
