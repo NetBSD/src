@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.10 2002/10/09 06:27:09 fair Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.11 2002/11/08 22:03:50 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@ USB_MATCH(uhidev)
 		return (uaa->matchlvl);
 	return (UMATCH_IFACECLASS_GENERIC);
 }
-
-int repproto = 1;
 
 USB_ATTACH(uhidev)
 {
