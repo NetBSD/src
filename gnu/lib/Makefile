@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/08/27 16:03:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.35 2003/08/29 01:57:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SUBDIR+= libopcodes libbfd libiberty
 . if ${HAVE_GCC3} == "no"
 SUBDIR+= libg2c libgcc libobjc libstdc++
 . else
-SUBDIR+= libg2c3 libgcc3 libobjc3 libsupc++ libstdc++-v3
+SUBDIR+= libg2c3 libfrtbegin libgcc3 libobjc3 libsupc++ libstdc++-v3
 . endif
 .endif
 
