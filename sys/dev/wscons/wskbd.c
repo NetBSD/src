@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.19 1999/01/26 17:08:37 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.20 1999/03/27 11:22:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.19 1999/01/26 17:08:37 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.20 1999/03/27 11:22:23 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -352,7 +352,14 @@ wskbd_repeat(v)
 	struct wskbd_softc *sc = (struct wskbd_softc *)v;
 	int s = spltty();
 
-	KASSERT(sc->sc_repeating);
+	if (!sc->sc_repeating) {
+		/*
+		 * race condition: a "key up" event came in when wskbd_repeat()
+		 * was already called but not yet spltty()'d
+		 */
+		splx(s);
+		return;
+	}
 	if (sc->sc_displaydv != NULL)
 		wsdisplay_kbdinput(sc->sc_displaydv, sc->sc_repeatsym);
 	timeout(wskbd_repeat, sc,
