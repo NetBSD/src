@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.207 1996/09/08 15:43:40 jtk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208 1996/09/16 04:44:28 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -779,6 +779,16 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
+#if NAPM > 0 && !defined(APM_NO_POWEROFF)
+		/* turn off, if we can.  But try to turn disk off and
+		 * wait a bit first--some disk drives are slow to clean up
+		 * and users have reported disk corruption.
+		 */
+		delay(500000);
+		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+		delay(500000);
+		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+#endif
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
