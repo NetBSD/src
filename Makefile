@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 1999/01/24 19:18:54 scottr Exp $
+#	$NetBSD: Makefile,v 1.81 1999/01/28 15:36:48 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -60,9 +60,12 @@ beforeinstall:
 .endif
 
 afterinstall:
-.if !defined(NOMAN) && !defined(NOSHARE)
-	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
+.if !defined(NOMAN) && !defined(NOSHARE) && !defined(_BUILD)
+	${MAKE} whatis.db
 .endif
+
+whatis.db:
+	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 
 build: beforeinstall
 .if !defined(NOSHARE)
@@ -95,6 +98,7 @@ build: beforeinstall
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/domestic && ${MAKE} ${_J} _SLAVE_BUILD= build)
 .endif
+	${MAKE} whatis.db
 	@echo -n "Build finished at: "
 	@date
 
