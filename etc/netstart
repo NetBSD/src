@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.31 1997/03/30 19:08:14 veego Exp $
+#	$NetBSD: netstart,v 1.32 1997/04/01 19:36:19 perry Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 # /etc/myname contains my symbolic name
@@ -17,60 +17,49 @@ if [ "$ipfilter" != NO ] && [ -f /etc/ipf.conf ]; then
 	ipf -E -Fa -f /etc/ipf.conf
 fi
 
-# configure all of the interfaces which we know about.
-# do this by reading /etc/hostname.* files, where * is the name
-# of a given interface.
+# Configure all of the network interfaces listed in $net_interfaces;
+# if $net_interfaces is DEFAULT, grab all interfaces from ifconfig.
+# In the following, "xxN" stands in for interface names, like "le0".
+# For any interfaces that has an $ifconfig_xxN variable associated,
+# we do "ifconfig xxN $ifconfig_xxN".
+# If there is no such variable, we take the contents of the file
+# /etc/ifconfig.xxN, and run "ifconfig xxN" repeatedly, using each
+# line of the file as the arguments for a seperate "ifconfig" invocation.
 #
-# these files are formatted like the following, but with no # at the
-# beginning of the line
-#
-# addr_family hostname netmask broadcast_addr options
-# dest dest_addr
-#
-# addr_family is the address family of the interface, generally inet
-# hostname is the host name that belongs to the interface, in /etc/hosts.
-# netmask is the network mask for the interface.
-# broadcast_addr is the broadcast address for the interface
-# options are misc. options to ifconfig for the interface.
-#
-# dest is simply the string "dest" (no quotes, though) if the interface
-# has a "destination" (i.e. it's a point-to-point link, like SLIP).
-# dest_addr is the hostname of the other end of the link, in /etc/hosts
-#
-# the only required contents of the file are the addr_family field
-# and the hostname.
+# In order to configure an interface reasonably, you at the very least
+# need to specify "[addr_family] [hostname]" (as in "inet my.domain.org"),
+# and probably a netmask (as in "netmask 0xffffffe0"). You will
+# frequently need to specify a media type, as in "media UTP", for
+# interface cards with multiple media connections that do not autoconfigure.
+# see the ifconfig manual page for details.
 
-(
-    tmp="$IFS"
-    IFS="$IFS."
-    set -- `echo /etc/hostname*`
-    IFS=$tmp
-    unset tmp
+if [ "$net_interfaces" != NO ]; then
+	if [ "$net_interfaces" = DEFAULT ]; then
+		tmp="`ifconfig -l`"
+	else
+		tmp="$net_interfaces"
+	fi
+	echo -n "configuring network interfaces:"
+	for i in $tmp; do
+		eval `echo 'args=$ifconfig_'$i`
+		if [ ! -z "$args" ]; then
+			echo -n " $i"
+			ifconfig $i $args
+		elif [ -f /etc/ifconfig.$i ]; then
+			echo -n " $i"
+			(while read args; do
+				ifconfig $i $args
+			done) < /etc/ifconfig.$i
+		elif [ "$net_interfaces" != DEFAULT ]; then
+			echo
+			echo -n "/etc/ifconfig.$i missing"
+ 			echo -n "& ifconfig_$i not set"
+			echo "; interface $i can't be configured"
+		fi
+	done
+	echo "."
+fi
 
-    while [ $# -ge 2 ] ; do
-        shift            # get rid of "hostname"
-        (
-            read af name mask bcaddr extras
-            read dt dtaddr 
-
-            if [ ! -n "$name" ]; then
-                echo "/etc/hostname.$1: invalid network configuration file"
-                exit
-            fi
-
-	    cmd="ifconfig $1 $af $name "
-	    if [ "$dt" = dest ]; then cmd="$cmd $dtaddr"; fi
-	    if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-	    if [ -n "$bcaddr" ] && [ "$bcaddr" != NONE ]; then
-		cmd="$cmd broadcast $bcaddr";
-	    fi
-	    cmd="$cmd $extras"
-
-	    $cmd
-        ) < /etc/hostname.$1
-        shift
-    done
-)
 
 # set the address for the loopback interface
 ifconfig lo0 inet localhost
