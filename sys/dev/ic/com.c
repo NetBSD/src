@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.77 1996/03/17 13:38:14 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.78 1996/04/11 22:28:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -56,7 +56,11 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
+#ifdef i386							/* XXX */
+#include <machine/cpu.h>					/* XXX */
+#else								/* XXX */
+#include <machine/intr.h>
+#endif								/* XXX */
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -460,9 +464,17 @@ comattach(parent, self, aux)
 	bus_io_write_1(bc, ioh, com_ier, 0);
 	bus_io_write_1(bc, ioh, com_mcr, 0);
 
-	if (irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(irq, IST_EDGE, IPL_TTY,
-		    comintr, sc);
+	if (irq != IRQUNK) {
+#if NCOM_ISA
+		if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isa")) {
+			struct isa_attach_args *ia = aux;
+
+			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+			    IST_EDGE, IPL_TTY, comintr, sc);
+		} else
+#endif
+			panic("comattach: IRQ but can't have one");
+	}
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
