@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.2 1993/08/02 17:50:55 mycroft Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.3 1994/12/23 14:29:43 cgd Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -191,7 +191,7 @@ wallprog_1(rqstp, transp)
 		goto leave;
 	}
 	bzero((char *)&argument, sizeof(argument));
-	if (!svc_getargs(transp, xdr_argument, &argument)) {
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		goto leave;
 	}
@@ -199,7 +199,7 @@ wallprog_1(rqstp, transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		(void)fprintf(stderr, "unable to free arguments\n");
 		exit(1);
 	}

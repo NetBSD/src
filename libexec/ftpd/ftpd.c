@@ -35,7 +35,7 @@
 static char copyright[] =
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-static char rcsid[] = "$Id: ftpd.c,v 1.9 1994/09/20 23:09:14 jtc Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.10 1994/12/23 14:29:31 cgd Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -273,7 +273,7 @@ main(argc, argv, envp)
 	(void) freopen(_PATH_DEVNULL, "w", stderr);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
-	if ((int)signal(SIGURG, myoob) < 0)
+	if ((long)signal(SIGURG, myoob) < 0)
 		syslog(LOG_ERR, "signal: %m");
 
 	/* Try to handle urgent data inline */
