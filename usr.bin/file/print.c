@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.23 2002/05/18 07:00:46 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.24 2002/05/21 12:51:27 christos Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -47,12 +47,13 @@
 #if 0
 FILE_RCSID("@(#)Id: print.c,v 1.35 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.23 2002/05/18 07:00:46 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.24 2002/05/21 12:51:27 christos Exp $");
 #endif
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
 
+#ifndef COMPILE_ONLY
 void
 mdump(m)
 	struct magic *m;
@@ -137,6 +138,7 @@ mdump(m)
 	}
 	(void) fprintf(stderr, ",\"%s\"]\n", m->desc);
 }
+#endif
 
 /*
  * ckfputs - fputs, but with error checking
@@ -235,6 +237,7 @@ magwarn(va_alist)
 }
 
 
+#ifndef COMPILE_ONLY
 char *
 fmttime(v, local)
 	long v;
@@ -270,3 +273,4 @@ fmttime(v, local)
 		*rt = '\0';
 	return pp;
 }
+#endif
