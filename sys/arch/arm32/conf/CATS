@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.13 1999/08/16 22:27:14 augustss Exp $
+#	$NetBSD: CATS,v 1.14 1999/08/29 16:56:51 thorpej Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -262,6 +262,10 @@ ulpt* at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem*	at uhub? port ? configuration ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass? channel ?
 
 # USB Generic driver
 ugen* at uhub? port ?
