@@ -31,7 +31,7 @@ int	chmod();
 int	chown();
 int	svr4_break();
 int	svr4_stat();
-int	lseek();
+int	compat_43_lseek();
 int	getpid();
 int	setuid();
 int	getuid();
@@ -39,6 +39,7 @@ int	svr4_fstat();
 int	svr4_access();
 int	sync();
 int	kill();
+int	svr4_pgrpsys();
 int	dup();
 int	pipe();
 int	svr4_times();
@@ -61,9 +62,13 @@ int	svr4_execve();
 int	umask();
 int	chroot();
 int	svr4_fcntl();
+int	svr4_ulimit();
 int	mkdir();
 int	rmdir();
 int	svr4_getdents();
+int	svr4_getmsg();
+int	svr4_putmsg();
+int	svr4_poll();
 int	svr4_lstat();
 int	symlink();
 int	readlink();
@@ -97,6 +102,7 @@ int	svr4_uname();
 int	setegid();
 int	svr4_sysconfig();
 int	adjtime();
+int	svr4_systeminfo();
 int	seteuid();
 int	svr4_fchroot();
 int	svr4_vhangup();
@@ -207,8 +213,8 @@ struct sysent svr4_sysent[] = {
 	    svr4_break },			/* 17 = svr4_break */
 	{ 2, s(struct svr4_stat_args),
 	    svr4_stat },			/* 18 = svr4_stat */
-	{ 3, s(struct lseek_args),
-	    lseek },				/* 19 = lseek */
+	{ 3, s(struct compat_43_lseek_args),
+	    compat_43_lseek },			/* 19 = compat_43_lseek */
 	{ 0, 0,
 	    getpid },				/* 20 = getpid */
 	{ 0, 0,
@@ -247,8 +253,8 @@ struct sysent svr4_sysent[] = {
 	    kill },				/* 37 = kill */
 	{ 0, 0,
 	    nosys },				/* 38 = unimplemented svr4_fstatfs */
-	{ 0, 0,
-	    nosys },				/* 39 = unimplemented svr4_pgrpsys */
+	{ 3, s(struct svr4_pgrpsys_args),
+	    svr4_pgrpsys },			/* 39 = svr4_pgrpsys */
 	{ 0, 0,
 	    nosys },				/* 40 = unimplemented svr4_xenix */
 	{ 1, s(struct dup_args),
@@ -310,8 +316,8 @@ struct sysent svr4_sysent[] = {
 	    chroot },				/* 61 = chroot */
 	{ 3, s(struct svr4_fcntl_args),
 	    svr4_fcntl },			/* 62 = svr4_fcntl */
-	{ 0, 0,
-	    nosys },				/* 63 = unimplemented nosys */
+	{ 2, s(struct svr4_ulimit_args),
+	    svr4_ulimit },			/* 63 = svr4_ulimit */
 	{ 0, 0,
 	    nosys },				/* 64 = unimplemented reserved for unix/pc */
 	{ 0, 0,
@@ -354,12 +360,12 @@ struct sysent svr4_sysent[] = {
 	    nosys },				/* 83 = obsolete svr4_libdetach */
 	{ 0, 0,
 	    nosys },				/* 84 = unimplemented svr4_sysfs */
-	{ 0, 0,
-	    nosys },				/* 85 = unimplemented svr4_getmsg */
-	{ 0, 0,
-	    nosys },				/* 86 = unimplemented svr4_putmsg */
-	{ 0, 0,
-	    nosys },				/* 87 = unimplemented svr4_poll */
+	{ 4, s(struct svr4_getmsg_args),
+	    svr4_getmsg },			/* 85 = svr4_getmsg */
+	{ 4, s(struct svr4_putmsg_args),
+	    svr4_putmsg },			/* 86 = svr4_putmsg */
+	{ 3, s(struct svr4_poll_args),
+	    svr4_poll },			/* 87 = svr4_poll */
 	{ 2, s(struct svr4_lstat_args),
 	    svr4_lstat },			/* 88 = svr4_lstat */
 	{ 2, s(struct symlink_args),
@@ -467,8 +473,8 @@ struct sysent svr4_sysent[] = {
 	    svr4_sysconfig },			/* 137 = svr4_sysconfig */
 	{ 2, s(struct adjtime_args),
 	    adjtime },				/* 138 = adjtime */
-	{ 0, 0,
-	    nosys },				/* 139 = unimplemented svr4_systeminfo */
+	{ 3, s(struct svr4_systeminfo_args),
+	    svr4_systeminfo },			/* 139 = svr4_systeminfo */
 	{ 0, 0,
 	    nosys },				/* 140 = unimplemented reserved */
 	{ 1, s(struct seteuid_args),

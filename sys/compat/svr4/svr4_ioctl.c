@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.7 1994/10/29 00:43:21 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.8 1994/11/14 06:10:38 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,37 +39,37 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <net/if.h>
+#include <sys/malloc.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_syscallargs.h>
-
-#define	SVR4_IOC_VOID	0x20000000
-#define	SVR4_IOC_OUT	0x40000000
-#define	SVR4_IOC_IN	0x80000000
-#define	SVR4_IOC_INOUT	(SVR4_IOC_IN|SVR4_IOC_OUT)
+#include <compat/svr4/svr4_stropts.h>
+#include <compat/svr4/svr4_ioctl.h>
+#include <compat/svr4/svr4_termios.h>
+#include <compat/svr4/svr4_ttold.h>
+#include <compat/svr4/svr4_filio.h>
 
 #ifdef DEBUG_SVR4
 /*
  * Decode an ioctl command symbolically
  */
-static void
+void
 svr4_decode_cmd(cmd, dir, c, num, argsiz)
 	int		  cmd;
-	char		**dir, *c;
+	char		 *dir, *c;
 	int		 *num, *argsiz;
 {
-	*dir = "";
 	if (cmd & SVR4_IOC_VOID)
-		*dir = "V";
-	if (cmd & SVR4_IOC_INOUT)
-		*dir = "RW";
-	if (cmd & SVR4_IOC_OUT)
-		*dir = "W";
+		*dir++ = 'V';
 	if (cmd & SVR4_IOC_IN)
-		*dir = "R";
-	if (cmd & (SVR4_IOC_INOUT | SVR4_IOC_VOID))
+		*dir++ = 'R';
+	if (cmd & SVR4_IOC_OUT)
+		*dir++ = 'W';
+	*dir = '\0';
+	if (cmd & SVR4_IOC_INOUT)
 		*argsiz = (cmd >> 16) & 0xff;
 	else
 		*argsiz = -1;
@@ -85,14 +85,45 @@ svr4_ioctl(p, uap, retval)
 	register struct svr4_ioctl_args	*uap;
 	register_t			*retval;
 {
-	char		*dir;
+	struct file	*fp;
+	struct filedesc	*fdp;
+	u_long		 cmd;
+#ifdef DEBUG_SVR4
+	char		 dir[4];
 	char		 c;
 	int		 num;
 	int		 argsiz;
-#ifdef DEBUG_SVR4
-	svr4_decode_cmd(SCARG(uap, com), &dir, &c, &num, &argsiz);
-	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d))\n", SCARG(uap, fd),
-	       dir, c, num, argsiz);
+
+	svr4_decode_cmd(SCARG(uap, com), dir, &c, &num, &argsiz);
+
+	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %x);\n", SCARG(uap, fd),
+	       dir, c, num, argsiz, SCARG(uap, data));
 #endif
-	return 0;
+	fdp = p->p_fd;
+	cmd = SCARG(uap, com);
+
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return EBADF;
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+		return EBADF;
+
+	switch (cmd & 0xff00) {
+	case SVR4_tIOC:
+		return svr4_ttoldioctl(fp, cmd, SCARG(uap, data), p, retval);
+
+	case SVR4_TIOC:
+		return svr4_termioctl(fp, cmd, SCARG(uap, data), p, retval);
+
+	case SVR4_STR:
+		return svr4_streamioctl(fp, cmd, SCARG(uap, data), p, retval);
+
+	case SVR4_FIOC:
+		return svr4_filioctl(fp, cmd, SCARG(uap, data), p, retval);
+
+	default:
+		DPRINTF(("Unimplemented ioctl %x\n", cmd));
+		return 0;	/* XXX: really ENOSYS */
+	}
 }
