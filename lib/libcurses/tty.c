@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.9 1997/11/13 00:40:28 phil Exp $	*/
+/*	$NetBSD: tty.c,v 1.10 1998/01/30 04:33:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tty.c	8.5 (Berkeley) 8/13/94";
+static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.9 1997/11/13 00:40:28 phil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.10 1998/01/30 04:33:37 perry Exp $");
 #endif
 #endif /* not lint */
 
