@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.6 1998/03/29 22:36:42 mycroft Exp $ */
+/* $NetBSD: lemac.c,v 1.7 1998/03/30 10:35:03 hannken Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -458,7 +458,7 @@ lemac_multicast_op(
     const u_char *mca,
     int enable)
 {
-    u_int idx, crc = 0xFFFFFFFFUL;
+    u_int idx, bit, crc = 0xFFFFFFFFUL;
     static const u_int crctab[] = {
 	0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 	0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
