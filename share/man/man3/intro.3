@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.3,v 1.15 2001/11/23 07:18:52 gmcgarry Exp $
+.\"	$NetBSD: intro.3,v 1.16 2001/11/23 07:45:54 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@ specification of abstract data types.
 Block-sorting compressor library providing routines for fast and
 efficient compression.
 .It Em libc Pq Fl l Ns Ar c
-Standard C library functions.  When using the C compiler
+The standard C library.  When using the C compiler
 .Xr cc 1 ,
 it is not necessary to supply the linker flag
 .Fl l Ns Ar c
@@ -121,10 +121,10 @@ have been included for source code compatibility.  Use of these
 routines should, for the most part, be avoided.  The manual page entry
 for each compatibility routine indicates the proper interface to use.
 .It Em libcrypt Pq Fl l Ns Ar crypt
-Crypt library functions.  See
+The crypt library.  See
 .Xr crypt 3 .
 .It Em libcrypto Pq Fl l Ns Ar crypto
-The OpenSSL cryptographic library routines.  See
+The OpenSSL cryptographic library.  See
 .Xr crypto 3 .
 .It Em libcrypto_idea Pq Fl l Ns Ar crypto_idea
 The OpenSSL cryptographic library routines for the IDEA algorithm.
@@ -150,21 +150,22 @@ The command-line editor or editline library.  The editline library
 provides generic editing and history functions.  See
 .Xr editline 3 .
 .It Em libform Pq Fl l Ns Ar form
-The curses form library functions provides a terminal-independent form
-system using the curses library.  The form library provides facilities
-for defining forms on terminals.  See
+The curses form library provides a terminal-independent form system
+using the curses library.  The form library provides facilities for
+defining forms on terminals.  See
 .Xr forms 3 .
 .It Em libgssapi Pq Fl l Ns Ar gssapi
 The Generic Security Services (GSS) API library.  This library provides
 verification services to applications and usually sits above the
 cryptographic libraries.
 .It Em libhesiod Pq Fl l Ns Ar hesiod
-The Hesiod library functions.  This library provides routines for
-performing lookups of Hesiod information, which is stored as text
-records in the Domain Name Service.  See
+The Hesiod library.  This library provides routines for performing
+lookups of Hesiod information, which is stored as text records in the
+Domain Name Service.  See
 .Xr hesiod 3 .
 .It Em libhdb Pq Fl l Ns Ar hdb
-The Heimdal Kerberos 5 authentication/authorisation database library.
+The Heimdal Kerberos 5 authentication/authorisation database access
+library.
 .It Em libintl Pq Fl l Ns Ar intl
 The internationalized message handling library.  See
 .Xr gettext 3 .
@@ -174,22 +175,23 @@ The IPsec policy control library.  See
 and
 .Xr ipsec_strerror 3 .
 .It Em libkadm Pq Fl l Ns Ar kadm
-The Kerberos 4 administration server and client library.
+The Kerberos IV administration server and client library.
 .It Em libkadm5clnt Pq Fl l Ns Ar kadm5clnt
 The Kerberos 5 administration client library.
 .It Em libkadm5srv Pq Fl l Ns Ar kadm5srv
 The Kerberos 5 administration server library.
 .It Em libkafs Pq Fl l Ns Ar kafs
-The Kerberos AFS library functions.
+The Kerberos IV AFS library.  See
+.Xr kafs 3 .
 .It Em libkdb Pq Fl l Ns Ar kdb
-The Kerberos 4 authentication/authorisation database library.
+The Kerberos IV authentication/authorisation database access library.
 .It Em libkrb Pq Fl l Ns Ar krb
-The Kerberos 4 library.
+The Kerberos IV library.
 .It Em libkrb5 Pq Fl l Ns Ar krb5
 The Kerberos 5 library.  See
 .Xr krb5 3 .
 .It Em libkstream Pq Fl l Ns Ar kstream
-Kerberos 4 encrypted stream library.
+Kerberos IV encrypted stream library.
 .It Em libkvm Pq Fl l Ns Ar kvm
 Kernel data access library.  See
 .Xr kvm 3 .
