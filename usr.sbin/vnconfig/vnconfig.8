@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.11 1997/10/01 01:32:59 enami Exp $
+.\"	$NetBSD: vnconfig.8,v 1.12 1997/10/18 03:54:00 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,18 +79,20 @@
 .Nm vnconfig
 .Nd configure vnode disks
 .Sh SYNOPSIS
-.Nm vnconfig Op Fl c
+.Nm
+.Op Fl c
 .Op Fl t Ar typename
 .Op Fl v
 .Ar vnode_disk
 .Ar regular_file
 .Op Ar geomspec
-.Nm vnconfig Fl u
+.Nm ""
+.Fl u
 .Op Fl v
 .Ar vnode_disk
 .Sh DESCRIPTION
 The
-.Nm vnconfig
+.Nm
 command configures vnode pseudo disk devices.
 It will associate the vnode disk
 .Ar vnode_disk
