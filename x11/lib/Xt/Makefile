@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/08 13:57:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/07 04:02:01 rtr Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xt
 .PATH:	${X11SRCDIR.xc}/lib/${LIB}
-
-SUBDIR=	makestrs
 
 SRCS=	ActionHook.c Alloc.c ArgList.c Callback.c ClickTime.c \
 	Composite.c Constraint.c Convert.c Converters.c Core.c \
@@ -34,7 +32,7 @@ CPPFLAGS.TMkey.c=	-DXKB
 LDADD+=	-lX11 -lSM -lICE
 DPADD+=	${LIBX11} ${LIBSM} ${LIBICE}
 
-MAKESTRSDIR!=	cd ${.CURDIR}/makestrs && ${PRINTOBJDIR}
+MAKESTRSDIR!=	cd ${NETBSDSRCDIR}/x11/tools/makestrs && ${PRINTOBJDIR}
 MAKESTRS=	${MAKESTRSDIR}/makestrs
 
 ${MAKESTRS}:
@@ -54,4 +52,3 @@ DPSRCS+=	${STRINGS_FILES}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
-.include <bsd.subdir.mk>
