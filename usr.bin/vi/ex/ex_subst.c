@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_subst.c,v 1.11 1998/01/09 08:08:05 perry Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

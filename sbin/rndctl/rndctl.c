@@ -1,3 +1,5 @@
+/*	$NetBSD: rndctl.c,v 1.3 1998/01/09 08:04:03 perry Exp $	*/
+
 /*-
  * Copyright (c) 1997 Michael Graff.
  * All rights reserved.

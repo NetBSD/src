@@ -1,3 +1,5 @@
+/*	$NetBSD: getether.c,v 1.2 1998/01/09 08:09:08 perry Exp $	*/
+
 /*
  * getether.c : get the ethernet address of an interface
  *

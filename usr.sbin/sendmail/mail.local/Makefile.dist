@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.dist,v 1.2 1998/01/09 08:10:37 perry Exp $
+#
 #	@(#)Makefile.dist	8.4 (Berkeley) 2/19/97
 
 BINDIR=	${DESTDIR}/usr/lib

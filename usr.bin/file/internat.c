@@ -1,3 +1,5 @@
+/*	$NetBSD: internat.c,v 1.2 1998/01/09 08:05:32 perry Exp $	*/
+
 #include "file.h"
 
 #include <string.h>

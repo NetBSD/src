@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1998/01/09 08:06:16 perry Exp $
+#
 #	@(#)Makefile	8.23 (Berkeley) 5/2/96
 
 CAT=	dutch english german ru_SU.KOI8-R swedish

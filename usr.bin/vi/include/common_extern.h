@@ -1,3 +1,5 @@
+/*	$NetBSD: common_extern.h,v 1.2 1998/01/09 08:08:18 perry Exp $	*/
+
 #ifndef HAVE_STRSEP
 char *strsep __P((char **, const char *));
 #endif

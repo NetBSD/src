@@ -1,3 +1,5 @@
+/*	$NetBSD: hwaddr.c,v 1.3 1998/01/09 08:09:10 perry Exp $	*/
+
 /*
  * hwaddr.c - routines that deal with hardware addresses.
  * (i.e. Ethernet)

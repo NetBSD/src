@@ -1,3 +1,5 @@
+/*	$NetBSD: readfile.h,v 1.2 1998/01/09 08:09:14 perry Exp $	*/
+
 /* readfile.h */
 
 #include "bptypes.h"

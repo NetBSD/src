@@ -1,3 +1,5 @@
+/*	$NetBSD: vi_extern.h,v 1.2 1998/01/09 08:08:23 perry Exp $	*/
+
 int cs_init __P((SCR *, VCS *));
 int cs_next __P((SCR *, VCS *));
 int cs_fspace __P((SCR *, VCS *));

@@ -1,3 +1,5 @@
+.\"	$NetBSD: timed.ms,v 1.3 1998/01/09 08:11:55 perry Exp $
+.\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"

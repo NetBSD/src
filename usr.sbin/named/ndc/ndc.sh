@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+#	$NetBSD: ndc.sh,v 1.3 1998/01/09 08:10:00 perry Exp $
+#
 
 USAGE='echo \
 	"usage: $0 \

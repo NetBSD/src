@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.3 1998/01/09 08:04:01 perry Exp $
+#
 #	$OpenBSD: Makefile,v 1.1 1996/06/27 07:20:28 downsj Exp $
 
 PROG=	mount_ext2fs

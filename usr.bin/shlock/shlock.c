@@ -1,3 +1,5 @@
+/*	$NetBSD: shlock.c,v 1.3 1998/01/09 08:06:11 perry Exp $	*/
+
 /*
 ** Program to produce reliable locks for shell scripts.
 ** Algorithm suggested by Peter Honeyman, January 1984,

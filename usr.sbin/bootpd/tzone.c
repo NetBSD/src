@@ -1,3 +1,5 @@
+/*	$NetBSD: tzone.c,v 1.3 1998/01/09 08:09:18 perry Exp $	*/
+
 /*
  * tzone.c - get the timezone
  *
