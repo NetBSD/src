@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.13 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: def.h,v 1.14 2002/03/04 03:16:10 wiz Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.13 2002/03/04 03:07:25 wiz Exp $
+ *	$NetBSD: def.h,v 1.14 2002/03/04 03:16:10 wiz Exp $
  */
 
 /*
@@ -221,12 +221,6 @@ struct grouphead {
 	char	*g_name;		/* Name of this group */
 	struct	group *g_list;		/* Users in group. */
 };
-
-#define	NIL	((struct name *) 0)	/* The nil pointer for namelists */
-#define	NONE	((struct cmd *) 0)	/* The nil pointer to command tab */
-#define	NOVAR	((struct var *) 0)	/* The nil pointer to variables */
-#define	NOGRP	((struct grouphead *) 0)/* The nil grouphead pointer */
-#define	NOGE	((struct group *) 0)	/* The nil group pointer */
 
 /*
  * Structure of the hash table of ignored header fields

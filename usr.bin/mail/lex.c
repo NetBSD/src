@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.18 2002/03/04 03:07:26 wiz Exp $	*/
+/*	$NetBSD: lex.c,v 1.19 2002/03/04 03:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.18 2002/03/04 03:07:26 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.19 2002/03/04 03:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,7 @@ execute(char linebuf[], int contxt)
 	if (sourcing && *word == '\0')
 		return(0);
 	com = lex(word);
-	if (com == NONE) {
+	if (com == NULL) {
 		printf("Unknown command: \"%s\"\n", word);
 		goto out;
 	}
@@ -505,7 +505,7 @@ lex(char word[])
 	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
 		if (isprefix(word, cp->c_name))
 			return(cp);
-	return(NONE);
+	return(NULL);
 }
 
 /*
