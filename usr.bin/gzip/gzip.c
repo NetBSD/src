@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.28 2004/07/19 09:56:25 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.29 2004/07/19 09:57:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.28 2004/07/19 09:56:25 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.29 2004/07/19 09:57:24 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -447,12 +447,21 @@ static off_t
 gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime)
 {
 	z_stream z;
-	char inbuf[BUFLEN], outbuf[BUFLEN];
+	char *outbufp, *inbufp;
 	off_t in_tot = 0, out_tot = 0;
 	ssize_t in_size;
 	char *str;
 	int i, error;
 	uLong crc;
+
+	if ((outbufp = malloc(BUFLEN)) == NULL) {
+		maybe_err("malloc failed");
+		goto out2;
+	}
+	if ((inbufp = malloc(BUFLEN)) == NULL) {
+		maybe_err("malloc failed");
+		goto out1;
+	}
 
 	i = asprintf(&str, "%c%c%c%c%c%c%c%c%c%c%s", 
 		     GZIP_MAGIC0, GZIP_MAGIC1,
@@ -474,8 +483,8 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 	free(str);
 
 	memset(&z, 0, sizeof z);
-	z.next_out = outbuf;
-	z.avail_out = sizeof outbuf;
+	z.next_out = outbufp;
+	z.avail_out = BUFLEN;
 	z.zalloc = Z_NULL;
 	z.zfree = Z_NULL;
 	z.opaque = 0;
@@ -491,19 +500,19 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 	crc = crc32(0L, Z_NULL, 0);
 	for (;;) {
 		if (z.avail_out == 0) {
-			if (write(out, outbuf, sizeof outbuf) != sizeof outbuf) {
+			if (write(out, outbufp, BUFLEN) != BUFLEN) {
 				maybe_warn("write");
 				in_tot = -1;
 				goto out;
 			}
 
-			out_tot += sizeof outbuf;
-			z.next_out = outbuf;
-			z.avail_out = sizeof outbuf;
+			out_tot += BUFLEN;
+			z.next_out = outbufp;
+			z.avail_out = BUFLEN;
 		}
 
 		if (z.avail_in == 0) {
-			in_size = fread(inbuf, 1, sizeof inbuf, in);
+			in_size = fread(inbufp, 1, BUFLEN, in);
 			if (ferror(in)) {
 				maybe_warn("fread");
 				in_tot = -1;
@@ -512,9 +521,9 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 			if (in_size == 0)
 				break;
 
-			crc = crc32(crc, (const Bytef *)inbuf, (unsigned)in_size);
+			crc = crc32(crc, (const Bytef *)inbufp, (unsigned)in_size);
 			in_tot += in_size;
-			z.next_in = inbuf;
+			z.next_in = inbufp;
 			z.avail_in = in_size;
 		}
 
@@ -537,16 +546,16 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 			goto out;
 		}
 
-		len = sizeof outbuf - z.avail_out;
+		len = BUFLEN - z.avail_out;
 
-		if (write(out, outbuf, len) != len) {
+		if (write(out, outbufp, len) != len) {
 			maybe_warn("write");
 			out_tot = -1;
 			goto out;
 		}
 		out_tot += len;
-		z.next_out = outbuf;
-		z.avail_out = sizeof outbuf;
+		z.next_out = outbufp;
+		z.avail_out = BUFLEN;
 
 		if (error == Z_STREAM_END)
 			break;
@@ -576,6 +585,10 @@ gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime
 	free(str);
 
 out:
+	free(inbufp);
+out1:
+	free(outbufp);
+out2:
 	if (gsizep)
 		*gsizep = out_tot;
 	return in_tot;
@@ -591,7 +604,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 	      const char *filename)
 {
 	z_stream z;
-	char outbuf[BUFLEN], inbuf[BUFLEN];
+	char *outbufp, *inbufp;
 	off_t out_tot, out_sub_tot, in_tot;
 	enum {
 		GZSTATE_MAGIC0,
@@ -617,11 +630,20 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 #define ADVANCE()       { z.next_in++; z.avail_in--; }
 
+	if ((outbufp = malloc(BUFLEN)) == NULL) {
+		maybe_err("malloc failed");
+		goto out2;
+	}
+	if ((inbufp = malloc(BUFLEN)) == NULL) {
+		maybe_err("malloc failed");
+		goto out1;
+	}
+
 	memset(&z, 0, sizeof z);
 	z.avail_in = prelen;
 	z.next_in = pre;
-	z.avail_out = sizeof outbuf;
-	z.next_out = outbuf;
+	z.avail_out = BUFLEN;
+	z.next_out = outbufp;
 	z.zalloc = NULL;
 	z.zfree = NULL;
 	z.opaque = 0;
@@ -631,7 +653,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 	for (;;) {
 		if (z.avail_in == 0 && done_reading == 0) {
-			size_t in_size = read(in, inbuf, BUFLEN);
+			size_t in_size = read(in, inbufp, BUFLEN);
 
 			if (in_size == -1) {
 #ifndef SMALL
@@ -645,7 +667,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				done_reading = 1;
 
 			z.avail_in = in_size;
-			z.next_in = inbuf;
+			z.next_in = inbufp;
 
 			in_tot += in_size;
 		}
@@ -783,13 +805,13 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				if (wr == 0)
 					goto stop;
 
-				crc = crc32(crc, (const Bytef *)outbuf, (unsigned)wr);
+				crc = crc32(crc, (const Bytef *)outbufp, (unsigned)wr);
 				if (
 #ifndef SMALL
 				    /* don't write anything with -t */
 				    tflag == 0 &&
 #endif
-				    write(out, outbuf, wr) != wr) {
+				    write(out, outbufp, wr) != wr) {
 					maybe_warn("error writing to output");
 					out_tot = -1;
 					goto stop;
@@ -803,7 +825,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 					state++;
 				}
 
-				z.next_out = outbuf;
+				z.next_out = outbufp;
 				z.avail_out = BUFLEN;
 
 				break;
@@ -889,6 +911,10 @@ stop:
 		print_test(filename, out_tot != -1);
 #endif
 
+	free(inbufp);
+out1:
+	free(outbufp);
+out2:
 	if (gsizep)
 		*gsizep = in_tot;
 	return (out_tot);
