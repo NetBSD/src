@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.19 1994/04/22 01:48:27 chopps Exp $
+ *	$Id: machdep.c,v 1.20 1994/04/22 02:47:35 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -1248,10 +1248,10 @@ badbaddr(addr)
 netintr()
 {
 #ifdef INET
-        if (netisr & (1 << NETISR_ARP)) {
-                netisr &= ~(1 << NETISR_ARP);
-                arpintr();
-        }
+	if (netisr & (1 << NETISR_ARP)) {
+		netisr &= ~(1 << NETISR_ARP);
+		arpintr();
+	}
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
