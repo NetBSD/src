@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.84 2003/02/06 04:37:59 grant Exp $
+$NetBSD: UPDATING,v 1.85 2003/04/02 18:01:53 atatat Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,19 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20030324:
+	sendmail version 8.12.8 was imported.  Since sendmail is
+	now setgid to the smmsp group, and runs in "collection"
+	mode for most common activities, there is a new config
+	file called submit.cf that needs to live in /etc/mail.
+	The generic submit.cf sample in /usr/share/sendmail/cf
+	is named netbsd-msp.cf.  Upgrading your regular sendmail
+	configuration file is also strongly advised.
+
+	See the section named "MESSAGE SUBMISSION PROGRAM" in
+	the updated /usr/share/sendmail/README file for more
+	information.
 
 20030117:
 	Texinfo was updated to 4.3.  To avoid failures when trying to
