@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.36 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.37 2000/06/27 17:29:24 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -145,8 +145,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 
