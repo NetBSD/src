@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.14 1998/08/12 14:11:50 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.15 1998/12/30 20:19:29 mcr Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -23,10 +23,10 @@ $version = "3-5.93c";
 # definitions ...
 
 @subdirs = ("lib/libntp", "domestic/lib/libntp", 
-	    "usr.sbin/xntp/include", "usr.sbin/xntp/ntpdate",
-	    "usr.sbin/xntp/ntptime", "usr.sbin/xntp/ntpq",
-	    "usr.sbin/xntp/ntptrace", "usr.sbin/xntp/xntpd",
-	    "usr.sbin/xntp/xntpdc");
+	    "usr.sbin/xntp/include", "usr.sbin/xntp/html",    
+	    "usr.sbin/xntp/ntpdate", "usr.sbin/xntp/ntptime", 
+	    "usr.sbin/xntp/ntpq",    "usr.sbin/xntp/ntptrace", 
+            "usr.sbin/xntp/xntpd",   "usr.sbin/xntp/xntpdc");
 
 @includef = ("l_stdlib.h", "ntp.h", "ntp_calendar.h", "ntp_control.h",
 	     "ntp_filegen.h", "ntp_fp.h", "ntp_if.h", "ntp_io.h", 
@@ -78,6 +78,28 @@ $version = "3-5.93c";
 @ntpqf = ("ntpq.c", "ntpq.h", "ntpq_ops.c");
 
 @ntptracef = ("ntptrace.c", "ntptrace.h");
+
+@htmlf = ("HTMLPrimer.html", "accopt.html",    "authcert.html", 
+	"authopt.html",      "authspeed.html", "biblio.html", 
+	"build.html",        "clockopt.html",  "config.html",
+	"confopt.html",		"copyright.html",	"debug.html",
+	"driver1.html",		"driver10.html",	"driver11.html",
+	"driver12.html",	"driver18.html",	"driver19.html",
+	"driver2.html",		"driver20.html",	"driver22.html",
+	"driver23.html",	"driver24.html",	"driver26.html",
+	"driver27.html",	"driver28.html",	"driver3.html",	
+	"driver4.html",		"driver5.html",		"driver6.html",	
+	"driver7.html",		"driver8.html",		"driver9.html",	
+	"gadget.html",		"hints.html",	
+	"howto.html",		"index.html",		"irig.html",	
+	"kern.html",		"kernpps.html",		"ldisc.html",	
+	"md5cert.html",		"measure.html",		"miscopt.html",	
+	"monopt.html",		"notes.html",		"ntpdate.html",	
+	"ntpq.html",		"ntptime.html",		"ntptrace.html",
+	"parsedata.html",	"parsenew.html",	"patches.html",	
+	"porting.html",		"pps.html",		"prefer.html",	
+	"rdebug.html",		"refclock.html",	"release.html",	
+	"tickadj.html",	"vxworks.html",	"xntpd.html",	"xntpdc.html");
 
 #
 # Utility Subroutines
@@ -184,6 +206,9 @@ print "Populating the usr.sbin/xntp/ntpq directory.\n";
 print "Populating the usr.sbin/xntp/ntptrace directory.\n";
 &copyfiles ("$srcdir/ntptrace", "$targetdir/usr.sbin/xntp/ntptrace", @ntptracef);
 
+print "Populating the usr.sbin/xntp/html directory.\n";
+&copyfiles ("$srcdir/html", "$targetdir/usr.sbin/xntp/html", @htmlf);
+
 #
 # Build makefiles
 #
@@ -219,6 +244,8 @@ while ($line = <DATA>) {
 		&dumpsrcs (@ntptimef);
 	    } elsif ($cmd[2] eq "ntptrace") {
 		&dumpsrcs (@ntptracef);
+	    } elsif ($cmd[2] eq "html") {
+		&dumpsrcs (@htmlf);
 	    } elsif ($cmd[2] eq "libntp") {
 		&dumpsrcs (@libntpf);
 	    } else {
@@ -318,6 +345,18 @@ PROG= ntptime
 MAN+= ntptime.8
 
 .include <bsd.prog.mk>
+%% file usr.sbin/xntp/html/Makefile
+%% NetBSD #
+
+%% srcs html
+
+DIR=html/xntp
+FILES=${SRCS}
+
+docinstall::
+	${INSTALL} -d -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${DESTDIR}/${DOCDIR}/${DIR}
+
+.include <bsd.doc.mk>
 %% file lib/libntp/Makefile
 %% NetBSD #
 
@@ -1249,6 +1288,8 @@ identification string to be logged.
 .Sh FILES
 .Bl -tag -width /etc/ntp.keys -compact
 .It Pa /etc/gettytab
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntpdate.html
 .El
 .Sh BUGS
 The slew adjustment is actually 50% larger than the measured offset,
@@ -1312,6 +1353,11 @@ Specify clock status. Better know what you are doing.
 .It Fl t Ar time_constant
 Specify time constant, an integer in the range 0-4.
 .El
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntptime.html
 .Pp
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
@@ -1690,6 +1736,11 @@ terminating the command. The timeout time is a fixed constant, which
 means you wait a long time for timeouts since it assumes sort of a worst
 case. The program should improve the timeout estimate as it sends
 queries to a particular host, but doesn't.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntpq.html.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/ntptrace/ntptrace.8
@@ -1752,6 +1803,11 @@ Prints verbose information about the NTP servers.
 .Sh BUGS
 This program makes no attempt to improve accuracy by doing multiple
 samples.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/ntptrace.html
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/xntpd/xntpd.8
@@ -1933,6 +1989,8 @@ the default name of the configuration file
 the default name of the drift file
 .It Pa /etc/ntp.keys
 the default name of the key file
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/xntpd.html
 .Sh BUGS
 .Nm
 has gotten rather fat. While not huge, it has gotten
@@ -2515,5 +2573,11 @@ is deadly boring and could only be loved by its implementer. The program
 was designed so that new (and temporary) features were easy to hack in,
 at great expense to the program's ease of use. Despite this, the program
 is occasionally useful.
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/ntp.keys -compact
+.It Pa /usr/share/doc/xntp/index.html
+.It Pa /usr/share/doc/xntp/xntpdc.html
+.El
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
