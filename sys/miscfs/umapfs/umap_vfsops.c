@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.14 1997/03/11 03:55:04 mikel Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.15 1997/09/10 13:44:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	int error;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_mount(mp = %x)\n", mp);
+	printf("umapfs_mount(mp = %p)\n", mp);
 #endif
 
 	/*
@@ -118,7 +118,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 */
 	lowerrootvp = ndp->ni_vp;
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("vp = %x, check for VDIR...\n", lowerrootvp);
+	printf("vp = %p, check for VDIR...\n", lowerrootvp);
 #endif
 	vrele(ndp->ni_dvp);
 	ndp->ni_dvp = 0;
@@ -129,7 +129,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("mp = %x\n", mp);
+	printf("mp = %p\n", mp);
 #endif
 
 	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
@@ -244,7 +244,7 @@ umapfs_unmount(mp, mntflags, p)
 	extern int doforce;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_unmount(mp = %x)\n", mp);
+	printf("umapfs_unmount(mp = %p)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -296,7 +296,7 @@ umapfs_root(mp, vpp)
 	struct vnode *vp;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_root(mp = %x, vp = %x->%x)\n", mp,
+	printf("umapfs_root(mp = %p, vp = %p->%p)\n", mp,
 	    MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
 	    UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp));
 #endif
@@ -333,7 +333,7 @@ umapfs_statfs(mp, sbp, p)
 	struct statfs mstat;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_statfs(mp = %x, vp = %x->%x)\n", mp,
+	printf("umapfs_statfs(mp = %p, vp = %p->%p)\n", mp,
 	    MOUNTTOUMAPMOUNT(mp)->umapm_rootvp,
 	    UMAPVPTOLOWERVP(MOUNTTOUMAPMOUNT(mp)->umapm_rootvp));
 #endif
