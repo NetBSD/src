@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.118 2003/11/09 07:55:38 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.119 2003/11/09 07:57:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.118 2003/11/09 07:55:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.119 2003/11/09 07:57:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1471,7 +1471,7 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		wfp->f_count++;
-		/* 'indx' has beed fd_used'ed by caller */
+		/* 'indx' has been fd_used'ed by caller */
 		FILE_UNUSE(wfp, p);
 		return (0);
 
@@ -1487,7 +1487,7 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		 * Complete the clean up of the filedesc structure by
 		 * recomputing the various hints.
 		 */
-		/* 'indx' has beed fd_used'ed by caller */
+		/* 'indx' has been fd_used'ed by caller */
 		fd_unused(fdp, dfd);
 		FILE_UNUSE(wfp, p);
 		return (0);
