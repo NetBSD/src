@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30 2000/12/04 17:05:51 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.31 2000/12/17 22:57:35 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -345,11 +345,31 @@ ofw_back:
  * When we get here, interrupts are off (MSR[EE]=0) and sched_lock is held.
  */
 ASENTRY(Idle)
+#if defined(MULTIPROCESSOR)
+	/* Switch to the idle PCB unless we're already running on it. */
+	cmpwi	30,0			/* old process was exiting? */
+	beq	idle_loop
+
+	mfsr	10,USER_SR		/* save USER_SR for copyin/copyout */
+	mfcr	11			/* save cr */
+	mr	12,2			/* save r2 */
+	stwu	1,-SFRAMELEN(1)		/* still running on old stack */
+	stmw	10,8(1)
+	lwz	3,P_ADDR(30)
+	stw	1,PCB_SP(3)		/* save SP */
+
+	GET_CPUINFO(7)
+	lwz	6,CI_IDLE_PCB(7)
+	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
+	li	30,0			/* we are now on idle stack */
+#endif
+
+idle_loop:
 	lis	8,_C_LABEL(sched_whichqs)@ha
 	lwz	9,_C_LABEL(sched_whichqs)@l(8)
 
 	or.	9,9,9
-	bne-	.Lsw1			/* at least one queue non-empty */
+	bne+	.Lsw1			/* at least one queue non-empty */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
@@ -379,7 +399,7 @@ ASENTRY(Idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
-	b	_ASM_LABEL(Idle)
+	b	idle_loop
 
 /*
  * switchexit gets called from cpu_exit to complete the exit procedure.
