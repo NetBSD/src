@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.33 2003/08/12 09:18:50 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.34 2003/10/21 01:19:10 fvdl Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -62,14 +62,14 @@ _rtld_is_exported(const Elf_Sym *def)
 		(Elf_Addr)dlsym,
 		(Elf_Addr)dlerror,
 		(Elf_Addr)dladdr,
-		NULL
+		0
 	};
 	int i;
 
 	Elf_Addr value;
 	value = (Elf_Addr)(_rtld_objself.relocbase + def->st_value);
 
-	for (i = 0; _rtld_exports[i] != NULL; i++) {
+	for (i = 0; _rtld_exports[i] != 0; i++) {
 		if (value == _rtld_exports[i])
 			return true;
 	}
