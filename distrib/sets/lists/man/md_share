@@ -81,7 +81,6 @@
 ./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/openprom.0
-./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/sun3/bwtwo.0
 ./usr/share/man/cat4/sun3/cgfour.0
 ./usr/share/man/cat4/sun3/cgtwo.0
@@ -174,7 +173,6 @@
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/sparc/MAKEDEV.0
 ./usr/share/man/cat8/sparc/makedev.0
-./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/sun3/MAKEDEV.0
 ./usr/share/man/cat8/sun3/makedev.0
 ./usr/share/man/cat8/tahoe/MAKEDEV.0
