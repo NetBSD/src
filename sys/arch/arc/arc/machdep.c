@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64.2.6 2002/09/17 21:13:12 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.7 2002/10/05 01:17:23 gmcgarry Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -428,9 +428,9 @@ mach_init(argc, argv, envv)
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
@@ -615,7 +615,7 @@ cpu_reboot(howto, bootstr)
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		/* fill curlwp with live object */
 		if (curlwp == NULL)
-			curlwp = &proc0;
+			curlwp = &lwp0;
 		/*
 		 * Synchronize the disks....
 		 */
