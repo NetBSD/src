@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.82.2.3 1999/10/17 23:59:59 cgd Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.82.2.4 2000/02/12 18:10:24 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -340,6 +340,16 @@ next:
 		}
 		ip = mtod(m, struct ip *);
 	}
+
+	/*
+	 * RFC1122: packets with a multicast source address are
+	 * not allowed.
+	 */
+	if (IN_MULTICAST(ip->ip_src.s_addr)) {
+		/* XXX stat */
+		goto bad;
+	}
+
 	if (in_cksum(m, hlen) != 0) {
 		ipstat.ips_badsum++;
 		goto bad;
