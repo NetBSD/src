@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.12 1998/02/27 03:44:53 thorpej Exp $ */
+/* $NetBSD: pal.s,v 1.13 1999/11/30 00:42:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,37 +39,9 @@
  * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.12 1998/02/27 03:44:53 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.13 1999/11/30 00:42:46 thorpej Exp $");
 
 inc2:	.stabs	__FILE__,132,0,0,inc2; .loc	1 __LINE__
-/*
- * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)
- */
-        .text
-LEAF(alpha_rpcc,1)
-        rpcc    v0
-        RET
-        END(alpha_rpcc)
-
-/*
- * alpha_mb: memory barrier (XXX INSTRUCTION, NOT PALcode OP)
- */
-	.text
-LEAF(alpha_mb,0)
-	mb
-	RET
-	END(alpha_mb)
-
-/*
- * alpha_wmb: write memory barrier (XXX INSTRUCTION, NOT PALcode OP)
- */
-	.text
-LEAF(alpha_wmb,0)
-	/* wmb XXX */
-	mb /* XXX */
-	RET
-	END(alpha_wmb)
-
 /*
  * alpha_amask: read architecture features (XXX INSTRUCTION, NOT PALcode OP)
  *
@@ -100,16 +72,6 @@ LEAF(alpha_implver,0)
 #endif
 	RET
 	END(alpha_implver)
-
-/*
- * alpha_pal_imb: I-Stream memory barrier. [UNPRIVILEGED]
- * (Makes instruction stream coherent with data stream.)
- */
-	.text
-LEAF(alpha_pal_imb,0)
-	call_pal PAL_imb
-	RET
-	END(alpha_pal_imb)
 
 /*
  * alpha_pal_cflush: Cache flush [PRIVILEGED]
@@ -216,31 +178,6 @@ LEAF_NOPROFILE(_alpha_pal_swpipl,1)
 	call_pal PAL_OSF1_swpipl
 	RET
 	END(_alpha_pal_swpipl)
-
-/*
- * alpha_pal_tbi: Translation buffer invalidate. [PRIVILEGED]
- *
- * Arguments:
- *	a0	operation selector
- *	a1	address to operate on (if necessary)
- */
-	.text
-LEAF(alpha_pal_tbi,2)
-	call_pal PAL_OSF1_tbi
-	RET
-	END(alpha_pal_tbi)
-
-/*
- * alpha_pal_whami: Who am I? [PRIVILEGED]
- *
- * Return:
- *	v0	processor number
- */
-	.text
-LEAF(alpha_pal_whami,0)
-	call_pal PAL_OSF1_whami
-	RET
-	END(alpha_pal_whami)
 
 /*
  * alpha_pal_wrent: Write system entry address. [PRIVILEGED]
