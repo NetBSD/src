@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.6 2004/05/07 15:51:04 cl Exp $ */
+/* $NetBSD: hypervisor.c,v 1.7 2004/05/07 23:05:30 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.6 2004/05/07 15:51:04 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.7 2004/05/07 23:05:30 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.6 2004/05/07 15:51:04 cl Exp $");
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
+#include <machine/events.h>
 
 #ifdef DOM0OPS
 #include <sys/dirent.h>
@@ -143,6 +144,8 @@ hypervisor_attach(parent, self, aux)
 	union hypervisor_attach_cookie hac;
 
 	printf("\n");
+
+	init_events();
 
 #if NXENKBC > 0
 	hac.hac_xenkbc.xa_device = "xenkbc";
