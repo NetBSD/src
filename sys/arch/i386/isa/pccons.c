@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.103 1996/10/13 03:20:07 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.104 1996/10/24 12:22:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1664,7 +1664,9 @@ pcmmap(dev, offset, nprot)
 void
 pc_xmode_on()
 {
+#ifdef COMPAT_10
 	struct trapframe *fp;
+#endif
 
 	if (pc_xmode)
 		return;
