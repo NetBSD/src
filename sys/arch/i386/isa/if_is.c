@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.24 1994/03/06 17:19:07 mycroft Exp $
+ *	$Id: if_is.c,v 1.25 1994/03/08 12:21:26 mycroft Exp $
  */
 
 /* TODO
@@ -451,7 +451,7 @@ is_init(sc)
  	if (!ifp->if_addrlist)
 		return;
 
-	s = splnet();
+	s = splimp();
 
 	/* 
 	 * Lance must be stopped to access registers.
@@ -958,7 +958,7 @@ is_ioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splnet();
+	s = splimp();
 
 	switch (cmd) {
 

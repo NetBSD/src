@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.18 1994/03/06 17:18:43 mycroft Exp $
+ *	$Id: aha1542.c,v 1.19 1994/03/08 12:21:10 mycroft Exp $
  */
 
 /*
@@ -55,6 +55,7 @@
 #include <sys/dkbad.h>
 #include <sys/disklabel.h>
 
+#include <machine/cpu.h>
 #include <machine/stdarg.h>
 #include <machine/pio.h>
 

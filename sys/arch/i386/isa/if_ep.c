@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.21 1994/03/06 17:21:44 mycroft Exp $
+ *	$Id: if_ep.c,v 1.22 1994/03/08 12:21:22 mycroft Exp $
  */
 /*
  * TODO:
@@ -66,6 +66,7 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
@@ -921,7 +922,7 @@ epmbufqueue(sc)
 	int     i = 0;
 	int	s;
 
-	s = splnet();
+	s = splimp();
 	i = sc->last_mb;
 	if (sc->mb[i]) {
 		splx(s);

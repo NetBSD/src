@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.15 1994/03/06 17:18:46 mycroft Exp $
+ *	$Id: bt742a.c,v 1.16 1994/03/08 12:21:15 mycroft Exp $
  */
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <machine/cpu.h>
 #include <machine/pio.h>
 #include <i386/isa/isa_device.h>
 
