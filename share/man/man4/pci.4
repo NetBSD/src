@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.39 2000/11/28 12:42:51 ad Exp $
+.\"	$NetBSD: pci.4,v 1.40 2000/12/19 15:33:52 onoe Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -127,6 +127,11 @@ IDE disk controllers.
 .Pp
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
+.It an
+.Tn Aironet
+4500/4800 and
+.Tn Cisco
+340 series 802.11 interfaces.
 .It de
 .Tn DEC
 DC21x4x (Tulip) based
@@ -268,6 +273,7 @@ VGA graphics boards.
 .Xr adv 4 ,
 .Xr adw 4 ,
 .Xr ahc 4 ,
+.Xr an 4 ,
 .Xr auich 4 ,
 .Xr auvia 4 ,
 .Xr bha 4 ,
