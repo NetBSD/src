@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.48 2000/01/23 17:12:11 ad Exp $
+.\"	$NetBSD: sysctl.3,v 1.49 2000/02/06 07:31:23 fair Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -266,6 +266,7 @@ information.
 .It KERN\_JOB\_CONTROL	integer	no
 .It KERN\_LINK\_MAX	integer	no
 .It KERN\_LOGIN\_NAME\_MAX	integer	no
+.It KERN\_LOGSIGEXIT	integer	yes
 .It KERN\_MAPPED\_FILES	integer	no
 .It KERN\_MAXFILES	integer	yes
 .It KERN\_MAXPARTITIONS	integer	no
@@ -374,6 +375,12 @@ The maximum file link count.
 .It Li KERN_LOGIN_NAME_MAX
 The size of the storage required for a login name, in bytes,
 including the terminating NUL.
+.It Li KERN_LOGSIGEXIT
+If this flag is non-zero, the kernel will
+.Xr log 9
+all process exits due to signals which create a
+.Xr core 5
+file, and whether the coredump was created.
 .It Li KERN_MAPPED_FILES
 Returns 1 if the POSIX 1003.1b Memory Mapped Files Option is available
 on this system,
