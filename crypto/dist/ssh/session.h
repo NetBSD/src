@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.3 2002/06/24 05:48:34 itojun Exp $	*/
-/*	$OpenBSD: session.h,v 1.18 2002/06/23 21:06:41 deraadt Exp $	*/
+/*	$NetBSD: session.h,v 1.4 2002/07/01 05:56:45 itojun Exp $	*/
+/*	$OpenBSD: session.h,v 1.19 2002/06/30 21:59:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -60,7 +60,7 @@ struct Session {
 
 void	 do_authenticated(Authctxt *);
 
-int	 session_open(Authctxt*, int);
+int	 session_open(Authctxt *, int);
 int	 session_input_channel_req(Channel *, const char *);
 void	 session_close_by_pid(pid_t, int);
 void	 session_close_by_channel(int, void *);

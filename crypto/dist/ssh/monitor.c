@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.5 2002/06/26 14:08:31 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.6 2002/07/01 05:56:45 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.18 2002/06/26 13:20:57 deraadt Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.21 2002/06/27 10:35:47 deraadt Exp $");
 
 #include <openssl/dh.h>
 
@@ -541,7 +541,7 @@ int mm_answer_auth2_read_banner(int socket, Buffer *m)
 	mm_request_send(socket, MONITOR_ANS_AUTH2_READ_BANNER, m);
 
 	if (banner != NULL)
-		free(banner);
+		xfree(banner);
 
 	return (0);
 }

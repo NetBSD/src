@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-none.c,v 1.2 2002/06/24 05:48:27 itojun Exp $	*/
+/*	$NetBSD: auth2-none.c,v 1.3 2002/07/01 05:56:45 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-none.c,v 1.3 2002/06/19 00:27:55 deraadt Exp $");
+RCSID("$OpenBSD: auth2-none.c,v 1.4 2002/06/27 10:35:47 deraadt Exp $");
 
 #include "auth.h"
 #include "xmalloc.h"
@@ -62,7 +62,7 @@ auth2_read_banner(void)
 	close(fd);
 
 	if (n != len) {
-		free(banner);
+		xfree(banner);
 		return (NULL);
 	}
 	banner[n] = '\0';

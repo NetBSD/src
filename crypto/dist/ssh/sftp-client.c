@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.16 2002/06/24 05:48:34 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.17 2002/07/01 05:56:45 itojun Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.33 2002/06/23 09:30:14 deraadt Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.34 2002/06/27 10:35:47 deraadt Exp $");
 
 #include <sys/queue.h>
 
@@ -1092,7 +1092,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 			debug3("In write loop, ack for %u %u bytes at %llu",
 			   ack->id, ack->len, (unsigned long long)ack->offset);
 			++ackid;
-			free(ack);
+			xfree(ack);
 		}
 		offset += len;
 	}
