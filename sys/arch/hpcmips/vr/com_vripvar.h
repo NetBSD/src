@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vripvar.h,v 1.2 2000/07/20 21:03:38 jeffs Exp $	*/
+/*	$NetBSD: com_vripvar.h,v 1.3 2001/09/16 05:32:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -34,4 +34,4 @@
  *
  */
 
-int com_vrip_cndb_attach __P((bus_space_tag_t, int, int, int, tcflag_t, int));
+int com_vrip_cndb_attach(bus_space_tag_t, int, int, int, tcflag_t, int);

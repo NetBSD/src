@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsuvar.h,v 1.1 1999/11/28 04:29:39 takemura Exp $	*/
+/*	$NetBSD: vrdsuvar.h,v 1.2 2001/09/16 05:32:21 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -26,4 +26,4 @@
  * SUCH DAMAGE.
  */
 
-void vrdsu_reset __P((void));
+void vrdsu_reset(void);

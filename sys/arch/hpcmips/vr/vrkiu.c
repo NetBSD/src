@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.28 2001/06/11 06:11:01 enami Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.29 2001/09/16 05:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -76,116 +76,63 @@ int vrkiu_debug = 0;
 #define	DPRINTF(arg)
 #endif
 
-/*
- * function prototypes
- */
-static int vrkiumatch __P((struct device *, struct cfdata *, void *));
-static void vrkiuattach __P((struct device *, struct device *, void *));
+static int vrkiumatch(struct device *, struct cfdata *, void *);
+static void vrkiuattach(struct device *, struct device *, void *);
 
-int vrkiu_intr __P((void *));
+int vrkiu_intr(void *);
 
-static int vrkiu_init(struct vrkiu_chip*, bus_space_tag_t, bus_space_handle_t);
-static void vrkiu_write __P((struct vrkiu_chip *, int, unsigned short));
-static unsigned short vrkiu_read __P((struct vrkiu_chip *, int));
+static int vrkiu_init(struct vrkiu_chip *, bus_space_tag_t, bus_space_handle_t);
+static void vrkiu_write(struct vrkiu_chip *, int, unsigned short);
+static unsigned short vrkiu_read(struct vrkiu_chip *, int);
 static int vrkiu_is_console(bus_space_tag_t, bus_space_handle_t);
-static void vrkiu_scan __P((struct vrkiu_chip *));
+static void vrkiu_scan(struct vrkiu_chip *);
 static int countbits(int);
-static void eliminate_phantom_keys(struct vrkiu_chip*, unsigned short *);
-static int vrkiu_poll __P((void*));
-static int vrkiu_input_establish __P((void*, struct hpckbd_if*));
+static void eliminate_phantom_keys(struct vrkiu_chip *, unsigned short *);
+static int vrkiu_poll(void*);
+static int vrkiu_input_establish(void*, struct hpckbd_if*);
 
-/*
- * global/static data
- */
 struct cfattach vrkiu_ca = {
 	sizeof(struct vrkiu_softc), vrkiumatch, vrkiuattach
 };
 
 struct vrkiu_chip *vrkiu_consdata = NULL;
 
-/*
- * utilities
- */
 static inline void
-vrkiu_write(chip, port, val)
-	struct vrkiu_chip *chip;
-	int port;
-	unsigned short val;
+vrkiu_write(struct vrkiu_chip *chip, int port, unsigned short val)
 {
+
 	bus_space_write_2(chip->kc_iot, chip->kc_ioh, port, val);
 }
 
 static inline unsigned short
-vrkiu_read(chip, port)
-	struct vrkiu_chip *chip;
-	int port;
+vrkiu_read(struct vrkiu_chip *chip, int port)
 {
-	return bus_space_read_2(chip->kc_iot, chip->kc_ioh, port);
+
+	return (bus_space_read_2(chip->kc_iot, chip->kc_ioh, port));
 }
 
 static inline int
-vrkiu_is_console(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+vrkiu_is_console(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
+
 	if (vrkiu_consdata &&
 	    vrkiu_consdata->kc_iot == iot &&
 	    vrkiu_consdata->kc_ioh == ioh) {
-		return 1;
+		return (1);
 	} else {
-		return 0;
+		return (0);
 	}
 }
 
-/*
- * initialize device
- */
 static int
-vrkiu_init(chip, iot, ioh)
-	struct vrkiu_chip* chip;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+vrkiumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	memset(chip, 0, sizeof(struct vrkiu_chip));
-	chip->kc_iot = iot;
-	chip->kc_ioh = ioh;
-	chip->kc_enabled = 0;
 
-	chip->kc_if.hii_ctx		= chip;
-	chip->kc_if.hii_establish	= vrkiu_input_establish;
-	chip->kc_if.hii_poll		= vrkiu_poll;
-
-	/* set KIU */
-	vrkiu_write(chip, KIURST, 1);   /* reset */
-	vrkiu_write(chip, KIUSCANLINE, 0); /* 96keys */
-	vrkiu_write(chip, KIUWKS, 0x18a4); /* XXX: scan timing! */
-	vrkiu_write(chip, KIUWKI, 450);
-	vrkiu_write(chip, KIUSCANREP, 0x8023);
-				/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
-
-	return 0;
+	return (1);
 }
 
-/*
- * probe
- */
-static int
-vrkiumatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	return 1;
-}
-
-/*
- * attach
- */
 static void
-vrkiuattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrkiuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrkiu_softc *sc = (struct vrkiu_softc *)self;
 	struct vrip_attach_args *va = aux;
@@ -210,8 +157,8 @@ vrkiuattach(parent, self, aux)
 	sc->sc_chip->kc_sc = sc;
 
 	if (!(sc->sc_handler = 
-	      vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
-				  vrkiu_intr, sc))) {
+	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+		vrkiu_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;
 	}
@@ -225,17 +172,44 @@ vrkiuattach(parent, self, aux)
 	config_found(self, &haa, hpckbd_print);
 }
 
+/*
+ * initialize device
+ */
+static int
+vrkiu_init(struct vrkiu_chip *chip, bus_space_tag_t iot,
+    bus_space_handle_t ioh)
+{
+
+	memset(chip, 0, sizeof(struct vrkiu_chip));
+	chip->kc_iot = iot;
+	chip->kc_ioh = ioh;
+	chip->kc_enabled = 0;
+
+	chip->kc_if.hii_ctx		= chip;
+	chip->kc_if.hii_establish	= vrkiu_input_establish;
+	chip->kc_if.hii_poll		= vrkiu_poll;
+
+	/* set KIU */
+	vrkiu_write(chip, KIURST, 1);   /* reset */
+	vrkiu_write(chip, KIUSCANLINE, 0); /* 96keys */
+	vrkiu_write(chip, KIUWKS, 0x18a4); /* XXX: scan timing! */
+	vrkiu_write(chip, KIUWKI, 450);
+	vrkiu_write(chip, KIUSCANREP, 0x8023);
+	/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
+
+	return (0);
+}
+
 int
-vrkiu_intr(arg)
-	void *arg;
+vrkiu_intr(void *arg)
 {
         struct vrkiu_softc *sc = arg;
 
 	/* When key scan finisshed, this entry is called. */
 #if 0
 	DPRINTF(("vrkiu_intr: intr=%x scan=%x\n",
-		 vrkiu_read(sc->sc_chip, KIUINT) & 7,
-		 vrkiu_read(sc->sc_chip, KIUSCANS) & KIUSCANS_SSTAT_MASK));
+	    vrkiu_read(sc->sc_chip, KIUINT) & 7,
+	    vrkiu_read(sc->sc_chip, KIUSCANS) & KIUSCANS_SSTAT_MASK));
 #endif
 
 	/*
@@ -249,7 +223,7 @@ vrkiu_intr(arg)
 #if 1
 	/* just return if kiu is scanning keyboard. */
 	if ((vrkiu_read(sc->sc_chip, KIUSCANS) & KIUSCANS_SSTAT_MASK) ==
-	       KIUSCANS_SSTAT_SCANNING)
+	    KIUSCANS_SSTAT_SCANNING)
 		return (0);
 #endif
 	vrkiu_scan(sc->sc_chip);
@@ -258,21 +232,18 @@ vrkiu_intr(arg)
 }
 
 static int
-countbits(d)
-	int d;
+countbits(int d)
 {
 	int i, n;
 
 	for (i = 0, n = 0; i < NBBY; i++)
 		if (d & (1 << i))
 			n++;
-	return n;
+	return (n);
 }
 
 static void
-eliminate_phantom_keys(chip, scandata)
-	struct vrkiu_chip* chip;
-	unsigned short *scandata;
+eliminate_phantom_keys(struct vrkiu_chip *chip, unsigned short *scandata)
 {
 	unsigned char inkey[KIU_NSCANLINE], *prevkey, *reskey;
 	int i, j;
@@ -287,23 +258,23 @@ eliminate_phantom_keys(chip, scandata)
 	prevkey = (unsigned char *)chip->kc_scandata;
 
 	for (i = 0; i < KIU_NSCANLINE; i++) {
-	    if (countbits(inkey[i]) > 1) {
-		for (j = 0; j < KIU_NSCANLINE; j++) {
-		    if (i != j && (inkey[i] & inkey[j])) {
+		if (countbits(inkey[i]) > 1) {
+			for (j = 0; j < KIU_NSCANLINE; j++) {
+				if (i != j && (inkey[i] & inkey[j])) {
 #ifdef VRKIUDEBUG
-			    modified = 1;
-			    if (!prevmod) {
-				DPRINTF(("vrkiu_scan: %x:%02x->%02x",
-					 i, inkey[i], prevkey[i]));
-				DPRINTF(("  %x:%02x->%02x\n",
-					 j, inkey[j], prevkey[j]));
-			    }
+					modified = 1;
+					if (!prevmod) {
+						DPRINTF(("vrkiu_scan: %x:%02x->%02x",
+						    i, inkey[i], prevkey[i]));
+						DPRINTF(("  %x:%02x->%02x\n",
+						    j, inkey[j], prevkey[j]));
+					}
 #endif
-			    reskey[i] = prevkey[i];
-			    reskey[j] = prevkey[j];
-		    }
+					reskey[i] = prevkey[i];
+					reskey[j] = prevkey[j];
+				}
+			}
 		}
-	    }
 	}
 #ifdef VRKIUDEBUG
 	prevmod = modified;
@@ -311,8 +282,7 @@ eliminate_phantom_keys(chip, scandata)
 }
 
 static void
-vrkiu_scan(chip)
-	struct vrkiu_chip* chip;
+vrkiu_scan(struct vrkiu_chip* chip)
 {
 	int i, j, modified, mask;
 	unsigned short scandata[KIU_NSCANLINE/2];
@@ -337,10 +307,10 @@ vrkiu_scan(chip)
 			if (modified & mask) {
 				int key = i * 16 + j;
 				DPRINTF(("vrkiu_scan: %s(%d,%d)\n",
-					 (scandata[i] & mask) ? "down" : "up",
-					 i, j));
+				    (scandata[i] & mask) ? "down" : "up",
+				    i, j));
 				hpckbd_input(chip->kc_hpckbd,
-					     (scandata[i] & mask), key);
+				    (scandata[i] & mask), key);
 			}
 		}
 	}
@@ -358,18 +328,16 @@ vrkiu_getc()
 	if (flag) {
 		flag = 0;
 		printf("%s(%d): vrkiu_getc() is not implemented\n",
-		       __FILE__, __LINE__);
+		    __FILE__, __LINE__);
 	}
-	return 0;
+	return (0);
 }
 
 /*
  * hpckbd interface routines
  */
 int
-vrkiu_input_establish(ic, kbdif)
-	void *ic;
-	struct hpckbd_if *kbdif;
+vrkiu_input_establish(void *ic, struct hpckbd_if *kbdif)
 {
 	struct vrkiu_chip *kc = ic;
 
@@ -378,34 +346,31 @@ vrkiu_input_establish(ic, kbdif)
 	
 	kc->kc_enabled = 1;
 
-	return 0;
+	return (0);
 }
 
 int
-vrkiu_poll(ic)
-	void *ic;
+vrkiu_poll(void *ic)
 {
 	struct vrkiu_chip *kc = ic;
 
 #if 1
 	/* wait until kiu completes keyboard scan. */
 	while ((vrkiu_read(kc, KIUSCANS) & KIUSCANS_SSTAT_MASK) ==
-	       KIUSCANS_SSTAT_SCANNING)
+	    KIUSCANS_SSTAT_SCANNING)
 		/* wait until kiu completes keyboard scan */;
 #endif
 
 	vrkiu_scan(kc);
 
-	return 0;
+	return (0);
 }
 
 /*
  * console support routine
  */
 int
-vrkiu_cnattach(iot, iobase)
-	bus_space_tag_t iot;
-	int iobase;
+vrkiu_cnattach(bus_space_tag_t iot, int iobase)
 {
 	static struct vrkiu_chip vrkiu_consdata_body;
 	bus_space_handle_t ioh;
@@ -415,12 +380,12 @@ vrkiu_cnattach(iot, iobase)
 	}
 	if (bus_space_map(iot, iobase, 1, 0, &ioh)) {
 		printf("%s(%d): can't map bus space\n", __FILE__, __LINE__);
-		return -1;
+		return (-1);
 	}
 
 	if (vrkiu_init(&vrkiu_consdata_body, iot, ioh) != 0) {
 		DPRINTF(("%s(%d): vrkiu_init() failed\n", __FILE__, __LINE__));
-		return -1;
+		return (-1);
 	}
 	vrkiu_consdata = &vrkiu_consdata_body;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrledvar.h,v 1.1 2000/10/03 03:13:05 sato Exp $	*/
+/*	$NetBSD: vrledvar.h,v 1.2 2001/09/16 05:32:21 uch Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -46,4 +46,4 @@ struct vrled_softc {
 /*
  * export function
  */
-void vrled_set_state __P((struct vrled_softc *, vrled_status));
+void vrled_set_state(struct vrled_softc *, vrled_status);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.8 2001/05/30 15:24:30 lukem Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.9 2001/09/16 05:32:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -79,14 +79,14 @@ struct com_vrip_softc {
 	int sc_pwctl;
 };
 
-static int com_vrip_probe __P((struct device *, struct cfdata *, void *));
-static void com_vrip_attach __P((struct device *, struct device *, void *));
-static int com_vrip_common_probe __P((bus_space_tag_t iot, int iobase));
-int find_comenableport_from_cfdata __P((int *));
+static int com_vrip_probe(struct device *, struct cfdata *, void *);
+static void com_vrip_attach(struct device *, struct device *, void *);
+static int com_vrip_common_probe(bus_space_tag_t, int);
+int find_comenableport_from_cfdata(int *);
 
-void vrcmu_init __P((void));
-void vrcmu_supply __P((int));
-void vrcmu_mask __P((int));
+void vrcmu_init(void);
+void vrcmu_supply(int);
+void vrcmu_mask(int);
 
 struct cfattach com_vrip_ca = {
 	sizeof(struct com_vrip_softc), com_vrip_probe, com_vrip_attach
@@ -122,12 +122,8 @@ find_comenableport_from_cfdata(int *port)
 }
 
 int
-com_vrip_cndb_attach(iot, iobase, rate, frequency, cflag, kgdb)
-	bus_space_tag_t iot;
-	int iobase;
-	int rate, frequency;
-	tcflag_t cflag;
-	int kgdb;
+com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate, int frequency,
+    tcflag_t cflag, int kgdb)
 {
 	int port;
 	/* Platform dependent setting */
@@ -146,9 +142,7 @@ com_vrip_cndb_attach(iot, iobase, rate, frequency, cflag, kgdb)
 }
 
 static int
-com_vrip_common_probe(iot, iobase)
-	bus_space_tag_t iot;
-	int iobase;
+com_vrip_common_probe(bus_space_tag_t iot, int iobase)
 {
 	bus_space_handle_t ioh;
 	int rv;
@@ -163,10 +157,7 @@ com_vrip_common_probe(iot, iobase)
 }
 
 static int
-com_vrip_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	bus_space_tag_t iot = va->va_iot;
@@ -204,9 +195,7 @@ com_vrip_probe(parent, cf, aux)
 
 
 static void
-com_vrip_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_vrip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_vrip_softc *vsc = (void *) self;
 	struct com_softc *sc = &vsc->sc_com;
@@ -234,7 +223,7 @@ com_vrip_attach(parent, self, aux)
 	/* Power management */
 	va->va_cf->cf_clock(va->va_cc, CMUMSKSSIU | CMUMSKSIU, 1);
 	/*
-	va->va_gf->gf_portwrite(va->va_gc, GIUPORT_COM, 1);
+	  va->va_gf->gf_portwrite(va->va_gc, GIUPORT_COM, 1);
 	*/
 	/* XXX, locale 'ID' must be need */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL, vsc->sc_pwctl, (void*)1);

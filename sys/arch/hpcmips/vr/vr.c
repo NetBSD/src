@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.27 2001/09/15 19:51:40 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.28 2001/09/16 05:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -109,25 +109,25 @@
 #include <arch/hpcmips/vr/vrkiuvar.h>
 #endif
 
-void	vr_init __P((void));
-void	vr_os_init __P((void));
-void	vr_bus_reset __P((void));
-int	vr_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-void	vr_cons_init __P((void));
-void	vr_device_register __P((struct device *, void *));
-void    vr_fb_init __P((caddr_t*));
-void    vr_mem_init __P((paddr_t));
-void	vr_find_dram __P((paddr_t, paddr_t));
-void	vr_reboot __P((int howto, char *bootstr));
+void	vr_init(void);
+void	vr_os_init(void);
+void	vr_bus_reset(void);
+int	vr_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	vr_cons_init(void);
+void	vr_device_register(struct device *, void *);
+void    vr_fb_init(caddr_t*);
+void    vr_mem_init(paddr_t);
+void	vr_find_dram(paddr_t, paddr_t);
+void	vr_reboot(int, char *);
 
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
+extern unsigned nullclkread(void);
+extern unsigned (*clkread)(void);
 
 /*
  * CPU interrupt dispatch table (HwInt[0:3])
  */
-int null_handler __P((void*, u_int32_t, u_int32_t));
-static int (*intr_handler[4]) __P((void*, u_int32_t, u_int32_t)) = 
+int null_handler(void *, u_int32_t, u_int32_t);
+static int (*intr_handler[4])(void*, u_int32_t, u_int32_t) = 
 {
 	null_handler,
 	null_handler,
@@ -171,8 +171,7 @@ vr_init()
 }
 
 void
-vr_mem_init(kernend)
-	paddr_t kernend;
+vr_mem_init(paddr_t kernend)
 {
 
 	mem_clusters[0].start = 0;
@@ -189,8 +188,7 @@ vr_mem_init(kernend)
 }
 
 void
-vr_find_dram(addr, end)
-	paddr_t addr, end;
+vr_find_dram(paddr_t addr, paddr_t end)
 {
 	int n;
 	caddr_t page;
@@ -259,8 +257,7 @@ vr_find_dram(addr, end)
 }
 
 void
-vr_fb_init(kernend)
-	caddr_t *kernend;
+vr_fb_init(caddr_t *kernend)
 {
 	/* Nothing to do */
 }
@@ -293,6 +290,7 @@ vr_os_init()
 void
 vr_bus_reset()
 {
+
 	printf("%s(%d): vr_bus_reset() not implemented.\n",
 	       __FILE__, __LINE__);
 }
@@ -302,7 +300,7 @@ vr_cons_init()
 {
 #if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
 	extern bus_space_tag_t system_bus_iot;
-	extern bus_space_tag_t mb_bus_space_init __P((void));
+	extern bus_space_tag_t mb_bus_space_init(void);
 
 	/*
 	 * At this time, system_bus_iot is not initialized yet.
@@ -354,9 +352,7 @@ vr_cons_init()
 }
 
 void
-vr_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+vr_device_register(struct device *dev, void *aux)
 {
 	printf("%s(%d): vr_device_register() not implemented.\n",
 	       __FILE__, __LINE__);
@@ -364,9 +360,7 @@ vr_device_register(dev, aux)
 }
 
 void
-vr_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+vr_reboot(int howto, char *bootstr)
 {
 	/*
 	 * power down
@@ -416,11 +410,10 @@ vr_reboot(howto, bootstr)
 }
 
 void *
-vr_intr_establish(line, ih_fun, ih_arg)
-	int line;
-	int (*ih_fun) __P((void*, u_int32_t, u_int32_t));
-	void *ih_arg;
+vr_intr_establish(int line, int (*ih_fun)(void*, u_int32_t, u_int32_t),
+    void *ih_arg)
 {
+
 	if (intr_handler[line] != null_handler) {
 		panic("vr_intr_establish: can't establish duplicated intr handler.");
 	}
@@ -432,30 +425,27 @@ vr_intr_establish(line, ih_fun, ih_arg)
 
 
 void
-vr_intr_disestablish(ih)
-	void *ih;
+vr_intr_disestablish(void *ih)
 {
 	int line = (int)ih;
+
 	intr_handler[line] = null_handler;
 	intr_arg[line] = NULL;
 }
 
 int
-null_handler(arg, pc, statusReg)
-	void *arg;
-	u_int32_t pc;
-	u_int32_t statusReg;
+null_handler(void *arg, u_int32_t pc, u_int32_t statusReg)
 {
 	printf("null_handler\n");
-	return 0;
+
+	return (0);
 }
 
 /*
  * Handle interrupts.
  */
 int
-vr_intr(status, cause, pc, ipending)
-	u_int32_t status, cause, pc, ipending;
+vr_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	int hwintr;
 
