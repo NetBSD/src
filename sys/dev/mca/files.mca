@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.6 2001/03/22 16:54:46 jdolecek Exp $
+# $NetBSD: files.mca,v 1.7 2001/03/23 19:25:35 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -14,10 +14,9 @@ file	dev/mca/mca_subr.c		mca
 attach	ep at mca with ep_mca: elink
 file	dev/mca/if_ep_mca.c		ep_mca
 
-# WD/SMC 80x3/A (not yet)
-#device	we: ether, ifnet, arp, dp8390nic
-#attach	we at mca
-#file	dev/mca/if_we_mca.c		we_mca
+# WD/SMC 80x3x/A and clones
+attach	we at mca with we_mca
+file	dev/mca/if_we_mca.c		we_mca
 
 # Adaptec AHA-1640
 attach	aha at mca with aha_mca: isadma
