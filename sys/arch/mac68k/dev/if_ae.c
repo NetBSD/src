@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.16 1994/12/04 19:40:14 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.17 1995/03/01 03:47:08 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.16 1994/12/04 19:40:14 briggs Exp $
+ * $Id: if_ae.c,v 1.17 1995/03/01 03:47:08 briggs Exp $
  */
  
 #include "ae.h"
@@ -108,8 +108,8 @@ struct	ae_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 } ae_softc[NAE];
 
-void	ae_find(), ae_attach();
-int	ae_init(), aeintr(), ae_ioctl(), ae_probe(),
+void	ae_find(), ae_attach(), aeintr();
+int	ae_init(), ae_ioctl(), ae_probe(),
 	ae_start(), ae_reset(), ae_watchdog();
 
 struct cfdriver aecd =
@@ -723,7 +723,7 @@ static inline void ae_xmit(ifp)
 	/*
 	 * Set a timer just in case we never hear from the board again
 	 */
-	ifp->if_timer = 2;
+	ifp->if_timer = 4;
 }
 
 /*
@@ -979,7 +979,7 @@ ae_rint(unit)
 /*
  * Ethernet interface interrupt processor
  */
-int
+void
 aeintr(unit)
 	int unit;
 {
