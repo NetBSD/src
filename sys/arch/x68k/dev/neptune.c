@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.10 2003/07/15 01:44:52 lukem Exp $	*/
+/*	$NetBSD: neptune.c,v 1.11 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.10 2003/07/15 01:44:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.11 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,13 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.10 2003/07/15 01:44:52 lukem Exp $");
 #include <arch/x68k/dev/neptunevar.h>
 
 /* bus_space stuff */
-static int neptune_bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
-				      int, bus_space_handle_t*));
-static void neptune_bus_space_unmap __P((bus_space_tag_t,
-					 bus_space_handle_t, bus_size_t));
-static int neptune_bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
-					    bus_size_t, bus_size_t,
-					    bus_space_handle_t*));
+static int neptune_bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
+	int, bus_space_handle_t *);
+static void neptune_bus_space_unmap(bus_space_tag_t, bus_space_handle_t,
+	bus_size_t);
+static int neptune_bus_space_subregion(bus_space_tag_t, bus_space_handle_t,
+	bus_size_t, bus_size_t, bus_space_handle_t *);
 
 static struct x68k_bus_space neptune_bus = {
 #if 0
@@ -73,19 +72,16 @@ static struct x68k_bus_space neptune_bus = {
 };
 
 
-static int neptune_match __P((struct device *, struct cfdata *, void *));
-static void neptune_attach __P((struct device *, struct device *, void *));
-static int neptune_search __P((struct device *, struct cfdata *cf, void *));
-static int neptune_print __P((void *, const char *));
+static int neptune_match(struct device *, struct cfdata *, void *);
+static void neptune_attach(struct device *, struct device *, void *);
+static int neptune_search(struct device *, struct cfdata *cf, void *);
+static int neptune_print(void *, const char *);
 
 CFATTACH_DECL(neptune, sizeof(struct neptune_softc),
     neptune_match, neptune_attach, NULL, NULL);
 
-static int
-neptune_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+neptune_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -102,10 +98,8 @@ neptune_match(parent, cf, aux)
 }
 
 
-static void
-neptune_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+neptune_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct neptune_softc *sc = (struct neptune_softc *)self;
 	struct intio_attach_args *ia = aux;
@@ -141,11 +135,8 @@ neptune_attach(parent, self, aux)
 	}
 }
 
-static int
-neptune_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+neptune_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct neptune_attach_args *na = aux;
 
@@ -154,10 +145,8 @@ neptune_search(parent, cf, aux)
 	return config_match(parent, cf, na);
 }
 
-static int
-neptune_print(aux, name)
-	void *aux;
-	const char *name;
+static int 
+neptune_print(void *aux, const char *name)
 {
 	struct neptune_attach_args *na = aux;
 
@@ -171,13 +160,9 @@ neptune_print(aux, name)
 /*
  * neptune bus space stuff.
  */
-static int
-neptune_bus_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+static int 
+neptune_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
 {
 	vaddr_t start = ((struct neptune_softc*) ((struct x68k_bus_space*) t)
 			 ->x68k_bus_device)->sc_addr;
@@ -196,21 +181,16 @@ neptune_bus_space_map(t, bpa, size, flags, bshp)
 	return (0);
 }
 
-static void
-neptune_bus_space_unmap(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+static void 
+neptune_bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t size)
 {
 	return;
 }
 
-static int
-neptune_bus_space_subregion(t, bsh, offset, size, nbshp)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t offset, size;
-	bus_space_handle_t *nbshp;
+static int 
+neptune_bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 
 	*nbshp = bsh + offset*2;

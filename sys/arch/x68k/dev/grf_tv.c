@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tv.c,v 1.9 2004/01/25 13:17:00 minoura Exp $	*/
+/*	$NetBSD: grf_tv.c,v 1.10 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tv.c,v 1.9 2004/01/25 13:17:00 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tv.c,v 1.10 2005/01/18 07:12:15 chs Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -104,9 +104,7 @@ int cc_mode(struct grf_softc *, u_long, caddr_t);
  * Returns 0 if hardware not present, non-zero ow.
  */
 int
-cc_init(gp, addr)
-	struct grf_softc *gp;
-	caddr_t addr;
+cc_init(struct grf_softc *gp, caddr_t addr)
 {
 	struct grfinfo *gi = &gp->g_display;
 
@@ -154,10 +152,7 @@ cc_init(gp, addr)
  */
 /*ARGSUSED*/
 int
-cc_mode(gp, cmd, data)
-	register struct grf_softc *gp;
-	u_long cmd;
-	caddr_t data;
+cc_mode(struct grf_softc *gp, u_long cmd, caddr_t data)
 {
 	int error = 0;
 

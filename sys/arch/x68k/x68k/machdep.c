@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2004/03/24 15:34:51 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 2005/01/18 07:12:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2004/03/24 15:34:51 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2005/01/18 07:12:16 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,12 +145,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2004/03/24 15:34:51 atatat Exp $")
 #include <machine/bus.h>
 #include <arch/x68k/dev/intiovar.h>
 
-void initcpu __P((void));
-void identifycpu __P((void));
-void doboot __P((void))
-    __attribute__((__noreturn__));
-int badaddr __P((caddr_t));
-int badbaddr __P((caddr_t));
+void initcpu(void);
+void identifycpu(void);
+void doboot(void) __attribute__((__noreturn__));
+int badaddr(caddr_t);
+int badbaddr(caddr_t);
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -179,21 +178,21 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 int	safepri = PSL_LOWIPL;
 
 /* prototypes for local functions */
-void    identifycpu __P((void));
-void    initcpu __P((void));
-int	cpu_dumpsize __P((void));
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
-void	cpu_init_kcore_hdr __P((void));
+void    identifycpu(void);
+void    initcpu(void);
+int	cpu_dumpsize(void);
+int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+void	cpu_init_kcore_hdr(void);
 #ifdef EXTENDED_MEMORY
-static int mem_exists __P((caddr_t, u_long));
-static void setmemrange __P((void));
+static int mem_exists(caddr_t, u_long);
+static void setmemrange(void);
 #endif
 
 /* functions called from locore.s */
-void	dumpsys __P((void));
-void    straytrap __P((int, u_short));
-void	nmihand __P((struct frame));
-void	intrhand __P((int));
+void	dumpsys(void);
+void    straytrap(int, u_short);
+void	nmihand(struct frame);
+void	intrhand(int);
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -219,7 +218,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	/*
 	 * bring graphics layer up.
@@ -259,7 +258,7 @@ consinit()
  * initialize cpu, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -338,10 +337,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -387,7 +383,7 @@ static char *fpu_descr[] = {
 	};
 
 void
-identifycpu()
+identifycpu(void)
 {
         /* there's alot of XXX in here... */
 	char *cpu_type, *mach, *mmu, *fpu;
@@ -483,9 +479,7 @@ int	waittime = -1;
 int	power_switch_is_off = 0;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp && curlwp->l_addr)
@@ -549,7 +543,7 @@ cpu_reboot(howto, bootstr)
  * Initialize the kernel crash dump header.
  */
 void
-cpu_init_kcore_hdr()
+cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -616,7 +610,7 @@ cpu_init_kcore_hdr()
  * Returns size in disk blocks.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -628,9 +622,7 @@ cpu_dumpsize()
  * Called by dumpsys() to dump the machine-dependent header.
  */
 int
-cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	daddr_t *blknop;
+cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
 	int buf[dbtob(1) / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -666,7 +658,7 @@ long	dumplo = 0;		/* blocks */
  * that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -705,14 +697,14 @@ cpu_dumpconf()
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
@@ -814,7 +806,7 @@ dumpsys()
 }
 
 void
-initcpu()
+initcpu(void)
 {
 	/* XXX should init '40 vecs here, too */
 #if defined(M68060)
@@ -867,9 +859,7 @@ initcpu()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
@@ -881,43 +871,41 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr)
-	caddr_t addr;
+badaddr(caddr_t addr)
 {
 	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return(1);
 	}
 	i = *(volatile short *)addr;
-	nofault = (int *) 0;
+	nofault = NULL;
 	return(0);
 }
 
 int
-badbaddr(addr)
-	caddr_t addr;
+badbaddr(caddr_t addr)
 {
 	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return(1);
 	}
 	i = *(volatile char *)addr;
-	nofault = (int *) 0;
+	nofault = NULL;
 	return(0);
 }
 
-void netintr __P((void));
+void netintr(void);
 
 void
-netintr()
+netintr(void)
 {
 
 #define DONETISR(bit, fn) do {		\
@@ -933,8 +921,7 @@ netintr()
 }
 
 void
-intrhand(sr)
-	int sr;
+intrhand(int sr)
 {
 	printf("intrhand: unexpected sr 0x%x\n", sr);
 }
@@ -947,15 +934,14 @@ intrhand(sr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
-void candbtimer __P((void *));
+void candbtimer(void *);
 
 #ifndef DDB
 static struct callout candbtimer_ch = CALLOUT_INITIALIZER;
 #endif
 
 void
-candbtimer(arg)
-	void *arg;
+candbtimer(void *arg)
 {
 
 	crashandburn = 0;
@@ -966,8 +952,7 @@ candbtimer(arg)
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
 void
-nmihand(frame)
-	struct frame frame;
+nmihand(struct frame frame)
 {
 	intio_set_sysport_keyctrl(intio_get_sysport_keyctrl() | 0x04);
 
@@ -1018,9 +1003,7 @@ nmihand(frame)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;
@@ -1079,9 +1062,7 @@ static vaddr_t mem_v, base_v;
  * check memory existency
  */
 static int
-mem_exists(mem, basemax)
-	caddr_t mem;
-	u_long basemax;
+mem_exists(caddr_t mem, u_long basemax)
 {
 	/* most variables must be register! */
 	volatile unsigned char *m, *b;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.21 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: kbd.c,v 1.22 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.21 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.22 2005/01/18 07:12:15 chs Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -69,17 +69,17 @@ struct kbd_softc {
 	struct evvar sc_events; /* event queue state */
 };
 
-void	kbdenable	__P((int));
-int	kbdintr 	__P((void *));
-void	kbdsoftint	__P((void));
-void	kbd_bell	__P((int));
-int	kbdcngetc	__P((void));
-void	kbd_setLED	__P((void));
-int	kbd_send_command __P((int));
+void	kbdenable(int);
+int	kbdintr (void *);
+void	kbdsoftint(void);
+void	kbd_bell(int);
+int	kbdcngetc(void);
+void	kbd_setLED(void);
+int	kbd_send_command(int);
 
 
-static int kbdmatch	__P((struct device *, struct cfdata *, void *));
-static void kbdattach	__P((struct device *, struct device *, void *));
+static int kbdmatch(struct device *, struct cfdata *, void *);
+static void kbdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
     kbdmatch, kbdattach, NULL, NULL);
@@ -98,12 +98,10 @@ const struct cdevsw kbd_cdevsw = {
 	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
 
-static int
-kbdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	if (strcmp(aux, "kbd") != 0)
 		return (0);
 	if (kbd_attached)
@@ -112,16 +110,16 @@ kbdmatch(parent, cf, aux)
 	return (1);
 }
 
-static void
-kbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+kbdattach(struct device *parent, struct device *self, void *aux)
 {
 	struct kbd_softc *k = (void*) self;
 	struct mfp_softc *mfp = (void*) parent;
-	int s = spltty();
+	int s;
 
 	kbd_attached = 1;
+
+	s = spltty();
 
 	/* MFP interrupt #12 is for USART receive buffer full */
 	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, self);
@@ -139,10 +137,10 @@ kbdattach(parent, self, aux)
 #define KEY_CODE(c)  ((c) & 0x7f)
 #define KEY_UP(c)    ((c) & 0x80)
 
-void
-kbdenable(mode)
-	int mode;		/* 1: interrupt, 0: poll */
+void 
+kbdenable(int mode)
 {
+
 	intio_set_sysport_keyctrl(8);
 	mfp_bit_clear_iera(MFP_INTR_RCV_FULL | MFP_INTR_TIMER_B);
 	mfp_set_tbcr(MFP_TIMERB_RESET | MFP_TIMERB_STOP);
@@ -171,11 +169,8 @@ kbdenable(mode)
 
 extern struct cfdriver kbd_cd;
 
-int
-kbdopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct kbd_softc *k;
 	int unit = minor(dev);
@@ -194,11 +189,8 @@ kbdopen(dev, flags, mode, p)
 	return (0);
 }
 
-int
-kbdclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+kbdclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 
@@ -211,11 +203,8 @@ kbdclose(dev, flags, mode, p)
 }
 
 
-int
-kbdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+int 
+kbdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 
@@ -224,20 +213,15 @@ kbdread(dev, uio, flags)
 
 #if NBELL > 0
 struct bell_info;
-int opm_bell_setup __P((struct bell_info *));
-void opm_bell_on __P((void));
-void opm_bell_off __P((void));
+int opm_bell_setup(struct bell_info *);
+void opm_bell_on(void);
+void opm_bell_off(void);
 #endif
 
-int
-kbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+int 
+kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	register struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 	int cmd_data;
 
 	switch (cmd) {
@@ -306,11 +290,8 @@ kbdioctl(dev, cmd, data, flag, p)
 }
 
 
-int
-kbdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+int 
+kbdpoll(dev_t dev, int events, struct proc *p)
 {
 	struct kbd_softc *k;
 
@@ -333,9 +314,8 @@ static u_char kbdbuf[KBDBUFSIZ];
 static int kbdputoff = 0;
 static int kbdgetoff = 0;
 
-int
-kbdintr(arg)
-	void *arg;
+int 
+kbdintr(void *arg)
 {
 	u_char c, st;
 	struct kbd_softc *k = arg; /* XXX */
@@ -377,10 +357,12 @@ kbdintr(arg)
 	return 0;
 }
 
-void
-kbdsoftint()			/* what if ite is not configured? */
+void 
+kbdsoftint(void)			/* what if ite is not configured? */
 {
-	int s = spltty();
+	int s;
+
+	s = spltty();
 
 	while(kbdgetoff < kbdputoff)
 		ite_filter(kbdbuf[kbdgetoff++ & KBDBUFMASK]);
@@ -389,9 +371,8 @@ kbdsoftint()			/* what if ite is not configured? */
 	splx(s);
 }
 
-void
-kbd_bell(mode)
-	int mode;
+void 
+kbd_bell(int mode)
 {
 #if NBELL > 0
 	if (mode)
@@ -402,15 +383,15 @@ kbd_bell(mode)
 }
 
 unsigned char kbdled;
-void
-kbd_setLED()
+
+void 
+kbd_setLED(void)
 {
         mfp_send_usart(~kbdled | 0x80);
 }
 
-int
-kbd_send_command(cmd)
-	int cmd;
+int 
+kbd_send_command(int cmd)
 {
 	switch (cmd) {
 	case KBD_CMD_RESET:
@@ -436,7 +417,7 @@ kbd_send_command(cmd)
 #include "ite.h"
 #if NITE > 0
 int
-kbdcngetc()
+kbdcngetc(void)
 {
 	int s;
 	u_char ints, c;

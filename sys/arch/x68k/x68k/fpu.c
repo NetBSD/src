@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.10 2003/07/15 01:44:56 lukem Exp $	*/
+/*	$NetBSD: fpu.c,v 1.11 2005/01/18 07:12:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2003/07/15 01:44:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2005/01/18 07:12:16 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2003/07/15 01:44:56 lukem Exp $");
 extern int *nofault;
 
 int
-fpu_probe()
+fpu_probe(void)
 {
 	/*
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
@@ -81,7 +81,7 @@ fpu_probe()
 	 */
 	asm("fnop");
 
-	nofault = (int *) 0;
+	nofault = NULL;
 
 	/*
 	 * Presumably, if we're an 040/060 and did not take exception

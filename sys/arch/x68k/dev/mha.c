@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.34 2003/07/15 01:44:52 lukem Exp $	*/
+/*	$NetBSD: mha.c,v 1.35 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.34 2003/07/15 01:44:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.35 2005/01/18 07:12:15 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -187,7 +187,6 @@ __KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.34 2003/07/15 01:44:52 lukem Exp $");
 #define	DMR	(sc->sc_pcx[11])
 #define	IMR	(sc->sc_pcx[12])
 
-
 #ifndef DDB
 #define	Debugger() panic("should call debugger here (mha.c)")
 #endif /* ! DDB */
@@ -239,55 +238,49 @@ SPC_SHOWSTART|SPC_SHOWTRAC;
 #define	SPC_ASSERT(x)
 #endif
 
-int	mhamatch	__P((struct device *, struct cfdata *, void *));
-void	mhaattach	__P((struct device *, struct device *, void *));
-void	mhaselect	__P((struct mha_softc *,
-				     u_char, u_char, u_char *, u_char));
-void	mha_scsi_reset	__P((struct mha_softc *));
-void	mha_reset	__P((struct mha_softc *));
-void	mha_free_acb	__P((struct mha_softc *, struct acb *, int));
-void	mha_sense	__P((struct mha_softc *, struct acb *));
-void	mha_msgin	__P((struct mha_softc *));
-void	mha_msgout	__P((struct mha_softc *));
-int	mha_dataout_pio	__P((struct mha_softc *, u_char *, int));
-int	mha_datain_pio	__P((struct mha_softc *, u_char *, int));
-int	mha_dataout	__P((struct mha_softc *, u_char *, int));
-int	mha_datain	__P((struct mha_softc *, u_char *, int));
-void	mha_abort	__P((struct mha_softc *, struct acb *));
-void 	mha_init	__P((struct mha_softc *));
-void	mha_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void	mha_poll	__P((struct mha_softc *, struct acb *));
-void	mha_sched	__P((struct mha_softc *));
-void	mha_done	__P((struct mha_softc *, struct acb *));
-int	mhaintr		__P((void*));
-void	mha_timeout	__P((void *));
-void	mha_minphys	__P((struct buf *));
-void	mha_dequeue	__P((struct mha_softc *, struct acb *));
-inline void	mha_setsync	__P((struct mha_softc *, struct spc_tinfo *));
+int	mhamatch(struct device *, struct cfdata *, void *);
+void	mhaattach(struct device *, struct device *, void *);
+void	mhaselect(struct mha_softc *, u_char, u_char, u_char *, u_char);
+void	mha_scsi_reset(struct mha_softc *);
+void	mha_reset(struct mha_softc *);
+void	mha_free_acb(struct mha_softc *, struct acb *, int);
+void	mha_sense(struct mha_softc *, struct acb *);
+void	mha_msgin(struct mha_softc *);
+void	mha_msgout(struct mha_softc *);
+int	mha_dataout_pio(struct mha_softc *, u_char *, int);
+int	mha_datain_pio(struct mha_softc *, u_char *, int);
+int	mha_dataout(struct mha_softc *, u_char *, int);
+int	mha_datain(struct mha_softc *, u_char *, int);
+void	mha_abort(struct mha_softc *, struct acb *);
+void 	mha_init(struct mha_softc *);
+void	mha_scsi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void	mha_poll(struct mha_softc *, struct acb *);
+void	mha_sched(struct mha_softc *);
+void	mha_done(struct mha_softc *, struct acb *);
+int	mhaintr(void *);
+void	mha_timeout(void *);
+void	mha_minphys(struct buf *);
+void	mha_dequeue(struct mha_softc *, struct acb *);
+inline void	mha_setsync(struct mha_softc *, struct spc_tinfo *);
 #if SPC_DEBUG
-void	mha_print_acb __P((struct acb *));
-void	mha_show_scsi_cmd __P((struct acb *));
-void	mha_print_active_acb __P((void));
-void	mha_dump_driver __P((struct mha_softc *));
+void	mha_print_acb(struct acb *);
+void	mha_show_scsi_cmd(struct acb *);
+void	mha_print_active_acb(void);
+void	mha_dump_driver(struct mha_softc *);
 #endif
 
-static int mha_dataio_dma __P((int, int, struct mha_softc *, u_char *, int));
+static int mha_dataio_dma(int, int, struct mha_softc *, u_char *, int);
 
 CFATTACH_DECL(mha, sizeof(struct mha_softc),
     mhamatch, mhaattach, NULL, NULL);
 
 extern struct cfdriver mha_cd;
 
-
 /*
  * returns non-zero value if a controller is found.
  */
-int
-mhamatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+int 
+mhamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
@@ -316,10 +309,8 @@ mhamatch(parent, cf, aux)
 
 struct mha_softc *tmpsc;
 
-void
-mhaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+void 
+mhaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mha_softc *sc = (void *)self;
 	struct intio_attach_args *ia = aux;
@@ -407,9 +398,8 @@ mhaattach(parent, self, aux)
 }
 
 #if 0
-void
-mha_reset(sc)
-	struct mha_softc *sc;
+void 
+mha_reset(struct mha_softc *sc)
 {
 	u_short	dummy;
 printf("reset...");
@@ -433,22 +423,20 @@ printf("done.\n");
 /*
  * Pull the SCSI RST line for 500us.
  */
-void
-mha_scsi_reset(sc)	/* FINISH? */
-	struct mha_softc *sc;
+void 
+mha_scsi_reset(struct mha_softc *sc)
 {
 
 	CMR = CMD_SCSI_RESET;	/* SCSI RESET */
 	while (!(SSR&SS_IREQUEST))
-	  delay(10);
+		delay(10);
 }
 
 /*
  * Initialize mha SCSI driver.
  */
-void
-mha_init(sc)
-	struct mha_softc *sc;
+void 
+mha_init(struct mha_softc *sc)
 {
 	struct acb *acb;
 	int r;
@@ -521,11 +509,8 @@ mha_init(sc)
 	sc->sc_state = SPC_IDLE;
 }
 
-void
-mha_free_acb(sc, acb, flags)
-	struct mha_softc *sc;
-	struct acb *acb;
-	int flags;
+void 
+mha_free_acb(struct mha_softc *sc, struct acb *acb, int flags)
 {
 	int s;
 
@@ -544,7 +529,6 @@ mha_free_acb(sc, acb, flags)
 	splx(s);
 }
 
-
 /*
  * DRIVER FUNCTIONS CALLABLE FROM HIGHER LEVEL DRIVERS
  */
@@ -571,11 +555,8 @@ mha_free_acb(sc, acb, flags)
  * and by mha_done() to immediately reselect a target to get sense information.
  */
 void
-mhaselect(sc, target, lun, cmd, clen)
-	struct mha_softc *sc;
-	u_char target, lun;
-	u_char *cmd;
-	u_char clen;
+mhaselect(struct mha_softc *sc, u_char target, u_char lun, u_char *cmd,
+    u_char clen)
 {
 	int i;
 	int s;
@@ -619,9 +600,7 @@ mhaselect(sc, target, lun, cmd, clen)
 
 #if 0
 int
-mha_reselect(sc, message)
-	struct mha_softc *sc;
-	u_char message;
+mha_reselect(struct mha_softc *sc, u_char message)
 {
 	u_char selid, target, lun;
 	struct acb *acb;
@@ -698,11 +677,9 @@ abort:
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
-void
-mha_scsi_request(chan, req, arg)
-	struct scsipi_channel *chan; 
-	scsipi_adapter_req_t req;
-	void *arg;
+void 
+mha_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -782,9 +759,8 @@ mha_scsi_request(chan, req, arg)
 /*
  * Adjust transfer size in buffer structure
  */
-void
-mha_minphys(bp)
-	struct buf *bp;
+void 
+mha_minphys(struct buf *bp)
 {
 
 	SPC_TRACE(("mha_minphys  "));
@@ -794,14 +770,14 @@ mha_minphys(bp)
 /*
  * Used when interrupt driven I/O isn't allowed, e.g. during boot.
  */
-void
-mha_poll(sc, acb)
-	struct mha_softc *sc;
-	struct acb *acb;
+void 
+mha_poll(struct mha_softc *sc, struct acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 	int count = xs->timeout * 100;
-	int s = splbio();
+	int s;
+
+	s = splbio();
 
 	SPC_TRACE(("[mha_poll] "));
 
@@ -831,7 +807,7 @@ mha_poll(sc, acb)
 	splx(s);
 	scsipi_done(xs);
 }
-
+
 /*
  * LOW LEVEL SCSI UTILITIES
  */
@@ -839,23 +815,19 @@ mha_poll(sc, acb)
 /*
  * Set synchronous transfer offset and period.
  */
-inline void
-mha_setsync(sc, ti)
-	struct mha_softc *sc;
-	struct spc_tinfo *ti;
+inline void 
+mha_setsync(struct mha_softc *sc, struct spc_tinfo *ti)
 {
 }
 
-
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from mha_scsi_cmd and mha_done.  This may
  * save us an unecessary interrupt just to get things going.  Should only be
  * called when state == SPC_IDLE and at bio pl.
  */
-void
-mha_sched(sc)
-	register struct mha_softc *sc;
+void 
+mha_sched(struct mha_softc *sc)
 {
 	struct scsipi_periph *periph;
 	struct acb *acb;
@@ -898,14 +870,12 @@ mha_sched(sc)
 		}
 	}
 }
-
+
 /*
  * POST PROCESSING OF SCSI_CMD (usually current)
  */
-void
-mha_done(sc, acb)
-	struct mha_softc *sc;
-	struct acb *acb;
+void 
+mha_done(struct mha_softc *sc, struct acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
@@ -1005,10 +975,8 @@ mha_done(sc, acb)
 	scsipi_done(xs);
 }
 
-void
-mha_dequeue(sc, acb)
-	struct mha_softc *sc;
-	struct acb *acb;
+void 
+mha_dequeue(struct mha_softc *sc, struct acb *acb)
 {
 
 	if (acb->flags & ACB_QNEXUS) {
@@ -1017,7 +985,7 @@ mha_dequeue(sc, acb)
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 	}
 }
-
+
 /*
  * INTERRUPT/PROTOCOL ENGINE
  */
@@ -1039,11 +1007,10 @@ mha_dequeue(sc, acb)
  * The SCSI bus is already in the MSGI phase and there is a message byte
  * on the bus, along with an asserted REQ signal.
  */
-void
-mha_msgin(sc)
-	register struct mha_softc *sc;
+void 
+mha_msgin(struct mha_softc *sc)
 {
-	register int v;
+	int v;
 
 	SPC_TRACE(("[mha_msgin(curmsglen:%d)] ", sc->sc_imlen));
 
@@ -1327,9 +1294,8 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 /*
  * Send the highest priority, scheduled message.
  */
-void
-mha_msgout(sc)
-	register struct mha_softc *sc;
+void 
+mha_msgout(struct mha_softc *sc)
 {
 #if (SPC_USE_SYNCHRONOUS || SPC_USE_WIDE)
 	struct spc_tinfo *ti;
@@ -1524,7 +1490,6 @@ out:
 	return;
 }
 
-
 /***************************************************************
  *
  *	datain/dataout
@@ -1532,10 +1497,7 @@ out:
  */
 
 int
-mha_datain_pio(sc, p, n)
-	register struct mha_softc *sc;
-	u_char *p;
-	int n;
+mha_datain_pio(struct mha_softc *sc, u_char *p, int n)
 {
 	u_short d;
 	int a;
@@ -1570,10 +1532,7 @@ mha_datain_pio(sc, p, n)
 }
 
 int
-mha_dataout_pio(sc, p, n)
-	register struct mha_softc *sc;
-	u_char *p;
-	int n;
+mha_dataout_pio(struct mha_softc *sc, u_char *p, int n)
 {
 	u_short d;
 	int a;
@@ -1608,80 +1567,69 @@ mha_dataout_pio(sc, p, n)
 }
 
 static int
-mha_dataio_dma(dw, cw, sc, p, n)
-	int dw;		/* DMA word */
-	int cw;		/* CMR word */
-	register struct mha_softc *sc;
-	u_char *p;
-	int n;
+mha_dataio_dma(int dw, int cw, struct mha_softc *sc, u_char *p, int n)
 {
-  char *paddr;
+	char *paddr;
 
-  if (n > MAXBSIZE)
-    panic("transfer size exceeds MAXBSIZE");
-  if (sc->sc_dmasize > 0)
-    panic("DMA request while another DMA transfer is in pregress");
+	if (n > MAXBSIZE)
+		panic("transfer size exceeds MAXBSIZE");
+	if (sc->sc_dmasize > 0)
+		panic("DMA request while another DMA transfer is in pregress");
 
-  if (cw == CMD_SEND_FROM_DMA) {
-    memcpy(sc->sc_dmabuf, p, n);
-    bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n, BUS_DMASYNC_PREWRITE);
-  } else {
-    bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n, BUS_DMASYNC_PREREAD);
-  }
-  sc->sc_p = p;
-  sc->sc_dmasize = n;
+	if (cw == CMD_SEND_FROM_DMA) {
+		memcpy(sc->sc_dmabuf, p, n);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n, BUS_DMASYNC_PREWRITE);
+	} else {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, n, BUS_DMASYNC_PREREAD);
+	}
+	sc->sc_p = p;
+	sc->sc_dmasize = n;
 
-  paddr = (char *)sc->sc_dmaseg[0].ds_addr;
+	paddr = (char *)sc->sc_dmaseg[0].ds_addr;
 #if MHA_DMA_SHORT_BUS_CYCLE == 1
-  if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
-    dw &= ~(1 << 3);
+	if ((*(int *)&IODEVbase->io_sram[0xac]) & (1 << ((paddr_t)paddr >> 19)))
+		dw &= ~(1 << 3);
 #endif
-  sc->sc_pc[0x80 + (((long)paddr >> 16) & 0xFF)] = 0;
-  sc->sc_pc[0x180 + (((long)paddr >> 8) & 0xFF)] = 0;
-  sc->sc_pc[0x280 + (((long)paddr >> 0) & 0xFF)] = 0;
-  WAIT;
-  sc->sc_ps[3] = 1;
-  sc->sc_ps[4] = n >> 8;
-  sc->sc_pc[10] = n;
-  /* DMA 転送制御は以下の通り。
-     3 ... short bus cycle
-     2 ... MAXIMUM XFER.
-     1 ... BURST XFER.
-     0 ... R/W */
-  sc->sc_ps[-1] = dw;	/* burst */
-  asm volatile ("nop");
-  CMR = cw;	/* receive to DMA */
-  return n;
+	sc->sc_pc[0x80 + (((long)paddr >> 16) & 0xFF)] = 0;
+	sc->sc_pc[0x180 + (((long)paddr >> 8) & 0xFF)] = 0;
+	sc->sc_pc[0x280 + (((long)paddr >> 0) & 0xFF)] = 0;
+	WAIT;
+	sc->sc_ps[3] = 1;
+	sc->sc_ps[4] = n >> 8;
+	sc->sc_pc[10] = n;
+	/* DMA 転送制御は以下の通り。
+	   3 ... short bus cycle
+	   2 ... MAXIMUM XFER.
+	   1 ... BURST XFER.
+	   0 ... R/W */
+	sc->sc_ps[-1] = dw;	/* burst */
+	asm volatile ("nop");
+	CMR = cw;	/* receive to DMA */
+	return n;
 }
-int
-mha_dataout(sc, p, n)
-	register struct mha_softc *sc;
-	u_char *p;
-	int n;
-{
-  if (n == 0)
-    return n;
 
-  if (n & 1)
-    return mha_dataout_pio(sc, p, n);
-  return mha_dataio_dma(MHA_DMA_DATAOUT, CMD_SEND_FROM_DMA, sc, p, n);
-}
-
 int
-mha_datain(sc, p, n)
-	register struct mha_softc *sc;
-	u_char *p;
-	int n;
+mha_dataout(struct mha_softc *sc, u_char *p, int n)
 {
-  register struct acb *acb = sc->sc_nexus;
+	if (n == 0)
+		return n;
 
-  if (n == 0)
-    return n;
-  if (acb->cmd.opcode == REQUEST_SENSE || (n & 1))
-    return mha_datain_pio(sc, p, n);
-  return mha_dataio_dma(MHA_DMA_DATAIN, CMD_RECEIVE_TO_DMA, sc, p, n);
+	if (n & 1)
+		return mha_dataout_pio(sc, p, n);
+	return mha_dataio_dma(MHA_DMA_DATAOUT, CMD_SEND_FROM_DMA, sc, p, n);
 }
-
+
+int
+mha_datain(struct mha_softc *sc, u_char *p, int n)
+{
+	 struct acb *acb = sc->sc_nexus;
+
+	 if (n == 0)
+		 return n;
+	 if (acb->cmd.opcode == REQUEST_SENSE || (n & 1))
+		 return mha_datain_pio(sc, p, n);
+	 return mha_dataio_dma(MHA_DMA_DATAIN, CMD_RECEIVE_TO_DMA, sc, p, n);
+}
 
 /*
  * Catch an interrupt from the adaptor
@@ -1691,9 +1639,8 @@ mha_datain(sc, p, n)
  * Deficiencies (for now):
  * 1) always uses programmed I/O
  */
-int
-mhaintr(arg)
-	void *arg;
+int 
+mhaintr(void *arg)
 {
 	struct mha_softc *sc = arg;
 #if 0
@@ -1980,10 +1927,8 @@ mhaintr(arg)
 	return 1;
 }
 
-void
-mha_abort(sc, acb)
-	struct mha_softc *sc;
-	struct acb *acb;
+void 
+mha_abort(struct mha_softc *sc, struct acb *acb)
 {
 	acb->flags |= ACB_ABORTED;
 
@@ -2002,16 +1947,17 @@ mha_abort(sc, acb)
 	}
 }
 
-void
-mha_timeout(arg)
-	void *arg;
+void 
+mha_timeout(void *arg)
 {
-	int s = splbio();
 	struct acb *acb = (struct acb *)arg;
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct mha_softc *sc =
-	    (void*)periph->periph_channel->chan_adapter->adapt_dev;
+	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	int s;
+
+	s = splbio();
 
 	scsipi_printaddr(periph);
 	printf("%s: timed out [acb %p (flags 0x%x, dleft %x, stat %x)], "
@@ -2039,16 +1985,15 @@ mha_timeout(arg)
 
 	splx(s);
 }
-
+
 #if SPC_DEBUG
 /*
  * The following functions are mostly used for debugging purposes, either
  * directly called from the driver or from the kernel debugger.
  */
 
-void
-mha_show_scsi_cmd(acb)
-	struct acb *acb;
+void 
+mha_show_scsi_cmd(struct acb *acb)
 {
 	u_char  *b = (u_char *)&acb->cmd;
 	struct scsipi_periph *periph = acb->xs->xs_periph;
@@ -2066,9 +2011,8 @@ mha_show_scsi_cmd(acb)
 		printf("RESET\n");
 }
 
-void
-mha_print_acb(acb)
-	struct acb *acb;
+void 
+mha_print_acb(struct acb *acb)
 {
 
 	printf("acb@%p xs=%p flags=%x", acb, acb->xs, acb->flags);
@@ -2077,8 +2021,8 @@ mha_print_acb(acb)
 	mha_show_scsi_cmd(acb);
 }
 
-void
-mha_print_active_acb()
+void 
+mha_print_active_acb(void)
 {
 	struct acb *acb;
 	struct mha_softc *sc = mha_cd.cd_devs[0]; /* XXX */
@@ -2096,9 +2040,8 @@ mha_print_active_acb()
 		mha_print_acb(acb);
 }
 
-void
-mha_dump_driver(sc)
-	struct mha_softc *sc;
+void 
+mha_dump_driver(struct mha_softc *sc)
 {
 	struct spc_tinfo *ti;
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.16 2004/12/13 02:14:14 chs Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.17 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.16 2004/12/13 02:14:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.17 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,24 +55,21 @@ __KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.16 2004/12/13 02:14:14 chs Exp $");
 #include <arch/x68k/dev/rtclock_var.h>
 #include <arch/x68k/dev/intiovar.h>
 
-static time_t rtgettod __P((void));
-static int  rtsettod __P((long));
+static time_t rtgettod(void);
+static int  rtsettod(long);
 
-static int rtc_match __P((struct device *, struct cfdata *, void *));
-static void rtc_attach __P((struct device *, struct device *, void *));
+static int rtc_match(struct device *, struct cfdata *, void *);
+static void rtc_attach(struct device *, struct device *, void *);
 
-int rtclockinit __P((void));
+int rtclockinit(void);
 
 CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
     rtc_match, rtc_attach, NULL, NULL);
 
 static int rtc_attached;
 
-static int
-rtc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -93,10 +90,8 @@ rtc_match(parent, cf, aux)
 
 static struct rtc_softc *rtc;	/* XXX: softc cache */
 
-static void
-rtc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+rtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtc_softc *sc = (struct rtc_softc *)self;
 	struct intio_attach_args *ia = aux;
@@ -128,7 +123,7 @@ rtc_attach(parent, self, aux)
  */
 
 int
-rtclockinit()
+rtclockinit(void)
 {
 	if (rtgettod())	{
 		gettod = rtgettod;
@@ -140,7 +135,7 @@ rtclockinit()
 }
 
 static time_t
-rtgettod()
+rtgettod(void)
 {
 	struct clock_ymdhms dt;
 
@@ -170,8 +165,7 @@ rtgettod()
 }
 
 static int
-rtsettod (tim)
-	time_t tim;
+rtsettod(time_t tim)
 {
 	struct clock_ymdhms dt;
 	u_char sec1, sec2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 2003/07/15 01:44:53 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2003/07/15 01:44:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2003/07/15 01:44:53 lukem Exp $");
 #include "zstty.h"
 
 
-extern void Debugger __P((void));
+extern void Debugger(void);
 
 /*
  * Some warts needed by z8530tty.c -
@@ -129,28 +129,25 @@ static volatile struct zschan *conschan = 0;
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_match __P((struct device *, struct cfdata *, void *));
-static void	zs_attach __P((struct device *, struct device *, void *));
-static int  zs_print __P((void *, const char *name));
+static int	zs_match(struct device *, struct cfdata *, void *);
+static void	zs_attach(struct device *, struct device *, void *);
+static int	zs_print(void *, const char *name);
 
 CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
     zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
-static int zshard __P((void *));
-int zssoft __P((void *));
-static int zs_get_speed __P((struct zs_chanstate *));
+static int zshard(void *);
+int zssoft(void *);
+static int zs_get_speed(struct zs_chanstate *);
 
 
 /*
  * Is the zs chip present?
  */
-static int
-zs_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+zs_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct zsdevice *zsaddr = (void*) ia->ia_addr;
@@ -178,11 +175,8 @@ zs_match(parent, cf, aux)
 /*
  * Attach a found zs.
  */
-static void
-zs_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void 
+zs_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct intio_attach_args *ia = aux;
@@ -298,10 +292,8 @@ zs_attach(parent, self, aux)
 	splx(s);
 }
 
-static int
-zs_print(aux, name)
-	void *aux;
-	const char *name;
+static int 
+zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -319,12 +311,11 @@ zs_print(aux, name)
  * For x68k-port, we don't use autovectored interrupt.
  * We do not need to look at all of the zs chips.
  */
-static int
-zshard(arg)
-	void *arg;
+static int 
+zshard(void *arg)
 {
-	register struct zsc_softc *zsc = arg;
-	register int rval;
+	struct zsc_softc *zsc = arg;
+	int rval;
 	int s;
 
 	/*
@@ -346,12 +337,11 @@ zshard(arg)
 /*
  * Shared among the all chips. We have to look at all of them.
  */
-int
-zssoft(arg)
-	void *arg;
+int 
+zssoft(void *arg)
 {
-	register struct zsc_softc *zsc;
-	register int s, unit;
+	struct zsc_softc *zsc;
+	int s, unit;
 
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
@@ -370,9 +360,8 @@ zssoft(arg)
 /*
  * Compute the current baud rate given a ZS channel.
  */
-static int
-zs_get_speed(cs)
-	struct zs_chanstate *cs;
+static int 
+zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
 
@@ -384,10 +373,8 @@ zs_get_speed(cs)
 /*
  * MD functions for setting the baud rate and control modes.
  */
-int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+int 
+zs_set_speed(struct zs_chanstate *cs, int bps	/* bits per second */)
 {
 	int tconst, real_bps;
 
@@ -426,10 +413,8 @@ zs_set_speed(cs, bps)
 	return (0);
 }
 
-int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+int 
+zs_set_modes(struct zs_chanstate *cs, int cflag	/* bits per second */)
 {
 	int s;
 
@@ -500,7 +485,7 @@ zs_write_reg(cs, reg, val)
 u_char zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
@@ -518,7 +503,7 @@ void  zs_write_csr(cs, val)
 u_char zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = *cs->cs_reg_data;
 	ZS_DELAY();
@@ -546,9 +531,8 @@ static struct zs_chanstate zscn_cs;
 /*
  * Handle user request to enter kernel debugger.
  */
-void
-zs_abort(cs)
-	struct zs_chanstate *cs;
+void 
+zs_abort(struct zs_chanstate *cs)
 {
 	int rr0;
 
@@ -572,8 +556,8 @@ zs_abort(cs)
 #include <dev/cons.h>
 cons_decl(zs);
 
-static int zs_getc __P((void));
-static void zs_putc __P((int));
+static int zs_getc(void);
+static void zs_putc(int);
 
 /*
  * Polled input char.
@@ -581,7 +565,7 @@ static void zs_putc __P((int));
 static int
 zs_getc(void)
 {
-	register int s, c, rr0;
+	int s, c, rr0;
 
 	s = splzs();
 	/* Wait for a character to arrive. */
@@ -602,11 +586,10 @@ zs_getc(void)
 /*
  * Polled output char.
  */
-static void
-zs_putc(c)
-	int c;
+static void 
+zs_putc(int c)
 {
-	register int s, rr0;
+	int s, rr0;
 
 	s = splzs();
 	/* Wait for transmitter to become ready. */
@@ -618,9 +601,8 @@ zs_putc(c)
 	splx(s);
 }
 
-void
-zscninit(cn)
-	struct consdev *cn;
+void 
+zscninit(struct consdev *cn)
 {
 	volatile struct zschan *cnchan = (void*) INTIO_ADDR(ZSCN_PHYSADDR);
 	int s;
@@ -643,9 +625,8 @@ zscninit(cn)
 /*
  * Polled console input putchar.
  */
-int
-zscngetc(dev)
-	dev_t dev;
+int 
+zscngetc(dev_t dev)
 {
 	return (zs_getc());
 }
@@ -653,17 +634,14 @@ zscngetc(dev)
 /*
  * Polled console output putchar.
  */
-void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
+void 
+zscnputc(dev_t dev, int c)
 {
 	zs_putc(c);
 }
 
-void
-zscnprobe(cd)
-	struct consdev *cd;
+void 
+zscnprobe(struct consdev *cd)
 {
 	int maj;
 	extern const struct cdevsw zstty_cdevsw;
@@ -684,10 +662,8 @@ zscnprobe(cd)
 	}
 }
 
-void
-zscnpollc(dev, on)
-	dev_t dev;
-	int on;
+void 
+zscnpollc(dev_t dev, int on)
 {
 }
 

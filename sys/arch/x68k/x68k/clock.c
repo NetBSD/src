@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2004/12/13 02:14:14 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.19 2005/01/18 07:12:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2004/12/13 02:14:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2005/01/18 07:12:16 chs Exp $");
 
 #include "clock.h"
 
@@ -102,8 +102,8 @@ struct clock_softc {
 	struct device		sc_dev;
 };
 
-static int clock_match __P((struct device *, struct cfdata *, void *));
-static void clock_attach __P((struct device *, struct device *, void *));
+static int clock_match(struct device *, struct cfdata *, void *);
+static void clock_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clock_match, clock_attach, NULL, NULL);
@@ -111,11 +111,9 @@ CFATTACH_DECL(clock, sizeof(struct clock_softc),
 static int clock_attached;
 
 static int
-clock_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	if (strcmp (aux, "clock") != 0)
 		return (0);
 	if (clock_attached)
@@ -125,15 +123,12 @@ clock_match(parent, cf, aux)
 
 
 static void
-clock_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clock_attach(struct device *parent, struct device *self, void *aux)
 {
 
 	clock_attached = 1;
 
 	printf(": MFP timer C\n");
-	return;
 }
 
 
@@ -146,7 +141,7 @@ clock_attach(parent, self, aux)
 
 static int clkint;		/* clock interval */
 
-static int clkread __P((void));
+static int clkread(void);
 
 /*
  * Machine-dependent clock routines.
@@ -171,7 +166,7 @@ static int clkread __P((void));
  *
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	if (CLOCKS_PER_SEC % hz ||
 	    hz <= (CLOCKS_PER_SEC / 256) || hz > CLOCKS_PER_SEC) {
@@ -193,8 +188,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int hz)
 {
 }
 
@@ -203,7 +197,7 @@ setstatclockrate(hz)
  * (i.e. clock interrupt).
  */
 int
-clkread()
+clkread(void)
 {
 	return (clkint - mfp_get_tcdr()) * CLK_RESOLUTION;
 }
@@ -276,8 +270,8 @@ int clockdebug = 0;
 #endif
 
 /*ARGSUSED*/
-clockopen(dev, flags)
-	dev_t dev;
+int
+clockopen(dev_t dev, int flags)
 {
 #ifdef PROFTIMER
 #ifdef PROF
@@ -301,20 +295,18 @@ clockopen(dev, flags)
 }
 
 /*ARGSUSED*/
-clockclose(dev, flags)
-	dev_t dev;
+int
+clockclose(dev_t dev, int flags)
 {
-	(void) clockunmmap(dev, (caddr_t)0, curproc);	/* XXX */
+	(void) clockunmmap(dev, NULL, curproc);	/* XXX */
 	stopclock();
 	clockon = 0;
 	return(0);
 }
 
 /*ARGSUSED*/
-clockioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	caddr_t data;
-	struct proc *p;
+int
+clockioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 	
@@ -340,16 +332,14 @@ clockioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
-clockmap(dev, off, prot)
-	dev_t dev;
+int
+clockmap(dev_t dev, off_t off, int prot)
 {
-	return((off + (INTIOBASE+CLKBASE+CLKSR-1)) >> PGSHIFT);
+	return ((off + (INTIOBASE + CLKBASE + CLKSR - 1)) >> PGSHIFT);
 }
 
-clockmmap(dev, addrp, p)
-	dev_t dev;
-	caddr_t *addrp;
-	struct proc *p;
+int
+clockmmap(dev_t dev, caddr_t *addrp, struct proc *p)
 {
 	int error;
 	struct vnode vn;
@@ -369,10 +359,8 @@ clockmmap(dev, addrp, p)
 	return(error);
 }
 
-clockunmmap(dev, addr, p)
-	dev_t dev;
-	caddr_t addr;
-	struct proc *p;
+int
+clockunmmap(dev_t dev, caddr_t addr, struct proc *p)
 {
 	int rv;
 
@@ -382,9 +370,10 @@ clockunmmap(dev, addr, p)
 	return 0;
 }
 
-startclock()
+void
+startclock(void)
 {
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
+	struct clkreg *clk = (struct clkreg *)clkstd[0];
 
 	clk->clk_msb2 = -1; clk->clk_lsb2 = -1;
 	clk->clk_msb3 = -1; clk->clk_lsb3 = -1;
@@ -395,9 +384,10 @@ startclock()
 	clk->clk_cr1 = CLK_IENAB;
 }
 
-stopclock()
+void
+stopclock(void)
 {
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
+	struct clkreg *clk = (struct clkreg *)clkstd[0];
 
 	clk->clk_cr2 = CLK_CR3;
 	clk->clk_cr3 = 0;
@@ -431,7 +421,8 @@ char profon    = 0;		/* Is profiling clock on? */
 #define	PRF_USER	0x01
 #define	PRF_KERNEL	0x80
 
-initprofclock()
+void
+initprofclock(void)
 {
 	struct proc *p = curproc;		/* XXX */
 
@@ -468,11 +459,13 @@ initprofclock()
 	profscale = CLK_INTERVAL / profint;
 }
 
-startprofclock()
+void
+startprofclock(void)
 {
 }
 
-stopprofclock()
+void
+stopprofclock(void)
 {
 }
 
@@ -481,10 +474,10 @@ stopprofclock()
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-profclock(pc, ps)
-	caddr_t pc;
-	int ps;
+void
+profclock(caddr_t pc, int ps)
 {
+
 	/*
 	 * Came from user mode.
 	 * If this process is being profiled record the tick.
@@ -493,16 +486,18 @@ profclock(pc, ps)
 		if (p->p_stats.p_prof.pr_scale)
 			addupc(pc, &curproc->p_stats.p_prof, 1);
 	}
+
 	/*
 	 * Came from kernel (supervisor) mode.
 	 * If we are profiling the kernel, record the tick.
 	 */
 	else if (profiling < 2) {
-		register int s = pc - s_lowpc;
+		int s = pc - s_lowpc;
 
 		if (s < s_textsize)
 			kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
 	}
+
 	/*
 	 * Kernel profiling was on but has been disabled.
 	 * Mark as no longer profiling kernel and if all profiling done,
@@ -521,8 +516,7 @@ profclock(pc, ps)
  * Return the best possible estimate of the current time.
  */
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	static struct timeval lasttime;
 
@@ -543,16 +537,15 @@ microtime(tvp)
 
 /* this is a hook set by a clock driver for the configured realtime clock,
    returning plain current unix-time */
-time_t (*gettod) __P((void)) = 0;
-int    (*settod) __P((long)) = 0;
+time_t (*gettod)(void) = 0;
+int    (*settod)(long) = 0;
 
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	u_long timbuf = base;	/* assume no battery clock exists */
   
@@ -576,7 +569,7 @@ inittodr(base)
 }
 
 void
-resettodr()
+resettodr(void)
 {
 	if (settod)
 		if (settod (time.tv_sec) != 1)

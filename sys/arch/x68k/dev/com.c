@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.32 2003/08/07 16:30:21 agc Exp $	*/
+/*	$NetBSD: com.c,v 1.33 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.32 2003/08/07 16:30:21 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.33 2005/01/18 07:12:15 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,19 +149,19 @@ struct com_softc {
 
 struct callout com_poll_ch = CALLOUT_INITIALIZER;
 
-int comprobe __P((struct device *, struct cfdata *, void *));
-void comattach __P((struct device *, struct device *, void *));
+int comprobe(struct device *, struct cfdata *, void *);
+void comattach(struct device *, struct device *, void *);
 
-static int comprobe1 __P((int));
-static void comdiag __P((void *));
-int comintr __P((void *));
-static void compollin __P((void *));
-static int comparam __P((struct tty *, struct termios *));
-static void comstart __P((struct tty *));
-static void cominit __P((int, int));
-static int comspeed __P((long));
+static int comprobe1(int);
+static void comdiag(void *);
+int comintr(void *);
+static void compollin(void *);
+static int comparam(struct tty *, struct termios *);
+static void comstart(struct tty *);
+static void cominit(int, int);
+static int comspeed(long);
 
-static u_char tiocm_xxx2mcr __P((int));
+static u_char tiocm_xxx2mcr(int);
 
 CFATTACH_DECL(xcom, sizeof(struct com_softc),
     comprobe, comattach, NULL, NULL);
@@ -213,8 +213,7 @@ extern int kgdb_debug_init;
 #define	ISSET(t, f)	((t) & (f))
 
 static int
-comspeed(speed)
-	long speed;
+comspeed(long speed)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -238,8 +237,7 @@ comspeed(speed)
 }
 
 static int
-comprobe1(iobase)
-	int iobase;
+comprobe1(int iobase)
 {
 
 	if (badbaddr((caddr_t)pio(iobase, com_lcr)))
@@ -255,9 +253,7 @@ comprobe1(iobase)
 
 #ifdef COM_HAYESP
 int
-comprobeHAYESP(iobase, sc)
-	int iobase;
-	struct com_softc *sc;
+comprobeHAYESP(int iobase, struct com_softc *sc)
 {
 	char	val, dips;
 	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
@@ -318,10 +314,7 @@ comprobeHAYESP(iobase, sc)
 #endif
 
 int
-comprobe(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+comprobe(struct device *parent, struct cfdata *cfp, void *aux)
 {
 #if 0
 	struct isa_attach_args *ia = aux;
@@ -342,10 +335,7 @@ comprobe(parent, cfp, aux)
 }
 
 void
-comattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+comattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct com_softc *sc = (struct com_softc *)dev;
 #if 0
@@ -442,10 +432,7 @@ comattach(parent, dev, aux)
 }
 
 int
-comopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+comopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc;
@@ -570,10 +557,7 @@ comopen(dev, flag, mode, p)
 }
  
 int
-comclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+comclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];
@@ -610,10 +594,7 @@ comclose(dev, flag, mode, p)
 }
  
 int
-comread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+comread(dev_t dev, struct uio *uio, int flag)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -622,10 +603,7 @@ comread(dev, uio, flag)
 }
  
 int
-comwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+comwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -634,10 +612,7 @@ comwrite(dev, uio, flag)
 }
 
 int
-compoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+compoll(dev_t dev, int events, struct proc *p)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -646,8 +621,7 @@ compoll(dev, events, p)
 }
 
 struct tty *
-comtty(dev)
-	dev_t dev;
+comtty(dev_t dev)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -656,8 +630,7 @@ comtty(dev)
 }
  
 static u_char
-tiocm_xxx2mcr(data)
-	int data;
+tiocm_xxx2mcr(int data)
 {
 	u_char m = 0;
 
@@ -669,12 +642,7 @@ tiocm_xxx2mcr(data)
 }
 
 int
-comioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];
@@ -785,9 +753,7 @@ comioctl(dev, cmd, data, flag, p)
 }
 
 static int
-comparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+comparam(struct tty *tp, struct termios *t)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
@@ -898,8 +864,7 @@ comparam(tp, t)
 int comdebug = 0;
 
 static void
-comstart(tp)
-	struct tty *tp;
+comstart(struct tty *tp)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
@@ -965,8 +930,7 @@ stopped:
  * Stop output on a line.
  */
 void
-comstop(tp, flag)
-	struct tty *tp;
+comstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -978,8 +942,7 @@ comstop(tp, flag)
 }
 
 static void
-comdiag(arg)
-	void *arg;
+comdiag(void *arg)
 {
 	struct com_softc *sc = arg;
 	int overflows, floods;
@@ -1000,15 +963,14 @@ comdiag(arg)
 }
 
 static void
-compollin(arg)
-	void *arg;
+compollin(void *arg)
 {
 	int unit;
 	struct com_softc *sc;
 	struct tty *tp;
-	register u_char *ibufp;
+	u_char *ibufp;
 	u_char *ibufend;
-	register int c;
+	int c;
 	int s;
 	static int lsrmap[8] = {
 		0,      TTY_PE,
@@ -1080,8 +1042,7 @@ out:
 }
 
 int
-comintr(arg)
-	void *arg;
+comintr(void *arg)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[(int)arg];
 	int iobase = sc->sc_iobase;
@@ -1100,7 +1061,7 @@ comintr(arg)
 		lsr = inb(pio(iobase , com_lsr));
 
 		if (ISSET(lsr, LSR_RXRDY)) {
-			register u_char *p = sc->sc_ibufp;
+			u_char *p = sc->sc_ibufp;
 
 			comevents = 1;
 			do {
@@ -1177,15 +1138,14 @@ comintr(arg)
  */
 #include <dev/cons.h>
 
-void comcnprobe __P((struct consdev *));
-void comcninit __P((struct consdev *));
-int comcngetc __P((dev_t));
-void comcnputc __P((dev_t, int));
-void comcnpollc __P((dev_t, int));
+void comcnprobe(struct consdev *);
+void comcninit(struct consdev *);
+int comcngetc(dev_t);
+void comcnputc(dev_t, int);
+void comcnpollc(dev_t, int);
 
 void
-comcnprobe(cp)
-	struct consdev *cp;
+comcnprobe(struct consdev *cp)
 {
 	int maj;
 
@@ -1207,8 +1167,7 @@ comcnprobe(cp)
 }
 
 void
-comcninit(cp)
-	struct consdev *cp;
+comcninit(struct consdev *cp)
 {
 
 	cominit(CONUNIT, comdefaultrate);
@@ -1217,13 +1176,13 @@ comcninit(cp)
 }
 
 static void
-cominit(unit, rate)
-	int unit, rate;
+cominit(int unit, int rate)
 {
-	int s = splhigh();
+	int s;
 	int iobase = CONADDR;
 	u_char stat;
 
+	s = splhigh();
 	outb(pio(iobase , com_lcr), LCR_DLAB);
 	rate = comspeed(comdefaultrate);
 	outb(pio(iobase , com_dlbl), rate);
@@ -1236,13 +1195,13 @@ cominit(unit, rate)
 }
 
 int
-comcngetc(dev)
-	dev_t dev;
+comcngetc(dev_t dev)
 {
-	int s = splhigh();
+	int s;
 	int iobase = CONADDR;
 	u_char stat, c;
 
+	s = splhigh();
 	while (!ISSET(stat = inb(pio(iobase , com_lsr)), LSR_RXRDY))
 		;
 	c = inb(pio(iobase , com_data));
@@ -1255,14 +1214,14 @@ comcngetc(dev)
  * Console kernel output character routine.
  */
 void
-comcnputc(dev, c)
-	dev_t dev;
-	int c;
+comcnputc(dev_t dev, int c)
 {
-	int s = splhigh();
+	int s;
 	int iobase = CONADDR;
 	u_char stat;
-	register int timo;
+	int timo;
+
+	s = splhigh();
 
 #ifdef KGDB
 	if (dev != kgdb_dev)
@@ -1271,24 +1230,24 @@ comcnputc(dev, c)
 		(void) cominit(COMUNIT(dev), comdefaultrate);
 		comconsinit = 1;
 	}
+
 	/* wait for any pending transmission to finish */
 	timo = 50000;
 	while (!ISSET(stat = inb(pio(iobase , com_lsr)), LSR_TXRDY) && --timo)
 		;
 	outb(pio(iobase , com_data), c);
+
 	/* wait for this transmission to complete */
 	timo = 1500000;
 	while (!ISSET(stat = inb(pio(iobase , com_lsr)), LSR_TXRDY) && --timo)
 		;
+
 	/* clear any interrupts generated by this transmission */
 	stat = inb(pio(iobase , com_iir));
 	splx(s);
 }
 
 void
-comcnpollc(dev, on)
-	dev_t dev;
-	int on;
+comcnpollc(dev_t dev, int on)
 {
-
 }

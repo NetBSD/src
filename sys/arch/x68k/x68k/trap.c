@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2004/08/28 17:53:03 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 2005/01/18 07:12:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2004/08/28 17:53:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2005/01/18 07:12:16 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,18 +126,17 @@ extern struct emul emul_hpux;
 #include <compat/sunos/sunos_syscall.h>
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((int type, u_int code, u_int v, struct frame frame));
+int	writeback(struct frame *, int);
+void	trap(int, u_int, u_int, struct frame);
 
 #if defined(M68040) || defined(M68060)
 #ifdef DEBUG
-static void dumpssw __P((u_short));
-static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw(u_short);
+static void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *, struct frame *, u_quad_t, u_int, int);
 
 int	astpending;
 
@@ -222,12 +221,8 @@ int mmupid = -1;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr,
+    int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -289,10 +284,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -305,11 +297,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(type, code, v, frame)
-	int type;
-	unsigned code;
-	unsigned v;
-	struct frame frame;
+trap(int type, unsigned code, unsigned v, struct frame frame)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -605,7 +593,7 @@ trap(type, code, v, frame)
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
 		if (ssir & SIR_NET) {
-			void netintr __P((void));
+			void netintr(void);
 			siroff(SIR_NET);
 			uvmexp.softs++;
 			netintr();
@@ -618,7 +606,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_SERIAL) {
 #include "zsc.h"
 #if NZSC > 0
-			void zssoft __P((int));
+			void zssoft(int);
 #endif
 			siroff(SIR_SERIAL);
 			uvmexp.softs++;
@@ -629,7 +617,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_KBD) {
 #include "kbd.h"
 #if NKBD > 0
-			void	kbdsoftint __P((void));
+			void	kbdsoftint(void);
 #endif
 			siroff(SIR_KBD);
 			uvmexp.softs++;
@@ -712,7 +700,7 @@ trap(type, code, v, frame)
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
-			int pmap_mapmulti __P((pmap_t, vaddr_t));
+			int pmap_mapmulti(pmap_t, vaddr_t);
 			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
@@ -806,9 +794,7 @@ char wberrstr[] =
 #endif
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -1045,8 +1031,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 static void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -1072,10 +1057,7 @@ dumpssw(ssw)
 }
 
 static void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct proc *p = curproc;
 	paddr_t pa;

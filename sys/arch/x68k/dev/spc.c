@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.26 2003/07/15 01:44:52 lukem Exp $	*/
+/*	$NetBSD: spc.c,v 1.27 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.26 2003/07/15 01:44:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.27 2005/01/18 07:12:15 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,17 +60,14 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.26 2003/07/15 01:44:52 lukem Exp $");
 #include <dev/ic/mb89352var.h>
 #include <dev/ic/mb89352reg.h>
 
-static int spc_intio_match __P((struct device *, struct cfdata *, void *));
-static void spc_intio_attach __P((struct device *, struct device *, void *));
+static int spc_intio_match(struct device *, struct cfdata *, void *);
+static void spc_intio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(spc_intio, sizeof (struct spc_softc),
     spc_intio_match, spc_intio_attach, NULL, NULL);
 
-static int
-spc_intio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+spc_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
@@ -92,10 +89,8 @@ spc_intio_match(parent, cf, aux)
 	return 1;
 }
 
-static void
-spc_intio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+spc_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spc_softc *sc = (struct spc_softc *)self;
 	struct intio_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2003/06/15 23:09:08 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2005/01/18 07:12:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -73,24 +73,24 @@ struct x68k_bus_space {
 	}	x68k_bus_type;
 #endif
 
-	int	(*x68k_bus_space_map) __P((
+	int	(*x68k_bus_space_map)(
 				bus_space_tag_t,
 				bus_addr_t,
 				bus_size_t,
 				int,			/* flags */
-				bus_space_handle_t *));
-	void	(*x68k_bus_space_unmap) __P((
+				bus_space_handle_t *);
+	void	(*x68k_bus_space_unmap)(
 				bus_space_tag_t,
 				bus_space_handle_t,
-				bus_size_t));
-	int	(*x68k_bus_space_subregion) __P((
+				bus_size_t);
+	int	(*x68k_bus_space_subregion)(
 				bus_space_tag_t,
 				bus_space_handle_t,
 				bus_size_t,		/* offset */
 				bus_size_t,		/* size */
-				bus_space_handle_t *));
+				bus_space_handle_t *);
 
-	int	(*x68k_bus_space_alloc) __P((
+	int	(*x68k_bus_space_alloc)(
 				bus_space_tag_t,
 				bus_addr_t,		/* reg_start */
 				bus_addr_t,		/* reg_end */
@@ -99,26 +99,26 @@ struct x68k_bus_space {
 				bus_size_t,		/* boundary */
 				int,			/* flags */
 				bus_addr_t *,
-				bus_space_handle_t *));
-	void	(*x68k_bus_space_free) __P((
+				bus_space_handle_t *);
+	void	(*x68k_bus_space_free)(
 				bus_space_tag_t,
 				bus_space_handle_t,
-				bus_size_t));
+				bus_size_t);
 
 #if 0
-	void	(*x68k_bus_space_barrier) __P((
+	void	(*x68k_bus_space_barrier)(
 				bus_space_tag_t,
 				bus_space_handle_t,
 				bus_size_t,		/* offset */
 				bus_size_t,		/* length */
-				int));			/* flags */
+				int);			/* flags */
 #endif
 
 	struct device *x68k_bus_device;
 };
 
-int x68k_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *));
-void x68k_bus_space_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+int x68k_bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+void x68k_bus_space_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
  * bus_space(9) interface
@@ -195,78 +195,78 @@ void x68k_bus_space_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 		_bus_space_copy_region_4(t,sh,so,dh,do,c)
 
 static inline u_int8_t _bus_space_read_1
-	__P((bus_space_tag_t, bus_space_handle_t bsh, bus_size_t offset));
+	(bus_space_tag_t, bus_space_handle_t bsh, bus_size_t offset);
 static inline u_int16_t _bus_space_read_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 static inline u_int32_t _bus_space_read_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 static inline void _bus_space_read_multi_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int8_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int8_t *, bus_size_t);
 static inline void _bus_space_read_multi_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int16_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int16_t *, bus_size_t);
 static inline void _bus_space_read_multi_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int32_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int32_t *, bus_size_t);
 
 static inline void _bus_space_read_region_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int8_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int8_t *, bus_size_t);
 static inline void _bus_space_read_region_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int16_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int16_t *, bus_size_t);
 static inline void _bus_space_read_region_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int32_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int32_t *, bus_size_t);
 
 static inline void _bus_space_write_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t);
 static inline void _bus_space_write_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
 static inline void _bus_space_write_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 
 static inline void _bus_space_write_multi_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int8_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int8_t *, bus_size_t);
 static inline void _bus_space_write_multi_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int16_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int16_t *, bus_size_t);
 static inline void _bus_space_write_multi_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int32_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int32_t *, bus_size_t);
 
 static inline void _bus_space_write_region_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int8_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int8_t *, bus_size_t);
 static inline void _bus_space_write_region_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int16_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int16_t *, bus_size_t);
 static inline void _bus_space_write_region_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int32_t *, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int32_t *, bus_size_t);
 
 static inline void _bus_space_set_region_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int8_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int8_t, bus_size_t);
 static inline void _bus_space_set_region_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int16_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int16_t, bus_size_t);
 static inline void _bus_space_set_region_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int32_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     u_int32_t, bus_size_t);
 
 static inline void _bus_space_copy_region_1
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     bus_space_handle_t, bus_size_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     bus_space_handle_t, bus_size_t, bus_size_t);
 static inline void _bus_space_copy_region_2
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     bus_space_handle_t, bus_size_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     bus_space_handle_t, bus_size_t, bus_size_t);
 static inline void _bus_space_copy_region_4
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     bus_space_handle_t, bus_size_t, bus_size_t));
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	     bus_space_handle_t, bus_size_t, bus_size_t);
 
 
 #define __X68K_BUS_ADDR(tag, handle, offset)	\
@@ -784,33 +784,33 @@ struct x68k_bus_dma {
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*x68k_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*x68k_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*x68k_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*x68k_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*x68k_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*x68k_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*x68k_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*x68k_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+	int	(*x68k_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*x68k_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*x68k_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*x68k_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*x68k_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*x68k_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*x68k_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*x68k_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*x68k_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*x68k_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*x68k_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
-	void	(*x68k_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	paddr_t	(*x68k_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, off_t, int, int));
+	int	(*x68k_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*x68k_dmamem_free)(bus_dma_tag_t,
+		    bus_dma_segment_t *, int);
+	int	(*x68k_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int);
+	void	(*x68k_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+	paddr_t	(*x68k_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int);
 };
 
 /*
@@ -839,39 +839,39 @@ struct x68k_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-int	x68k_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
-void	x68k_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	x68k_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	x68k_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	x68k_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	x68k_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	x68k_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	x68k_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+int	x68k_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	x68k_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	x68k_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	x68k_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	x68k_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	x68k_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	x68k_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	x68k_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
-int	x68k_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int	x68k_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	x68k_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
-int	x68k_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-void	x68k_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
-	    size_t size));
-paddr_t	x68k_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags));
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void	x68k_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	x68k_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags);
+void	x68k_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    size_t size);
+paddr_t	x68k_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags);
 
-int	x68k_bus_dmamap_load_buffer __P((bus_dmamap_t, void *,
-	    bus_size_t buflen, struct proc *, int, paddr_t *, int *, int));
-int	x68k_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+int	x68k_bus_dmamap_load_buffer(bus_dmamap_t, void *,
+	    bus_size_t buflen, struct proc *, int, paddr_t *, int *, int);
+int	x68k_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    paddr_t low, paddr_t high));
+	    paddr_t low, paddr_t high);
 
 #define	bus_dmamap_create(t,s,n,m,b,f,p) \
 	((*((t)->x68k_dmamap_create)) ((t),(s),(n),(m),(b),(f),(p)))

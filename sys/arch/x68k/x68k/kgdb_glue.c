@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.5 2003/08/07 16:30:29 agc Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.6 2005/01/18 07:12:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.5 2003/08/07 16:30:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.6 2005/01/18 07:12:16 chs Exp $");
 
 #include "opt_kgdb.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.5 2003/08/07 16:30:29 agc Exp $");
 #include <machine/reg.h>
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.5 2003/08/07 16:30:29 agc Exp $";
+static char rcsid[] = "$NetBSD: kgdb_glue.c,v 1.6 2005/01/18 07:12:16 chs Exp $";
 #endif
 
 #define KGDB_STACKSIZE 0x800
@@ -69,9 +69,7 @@ u_long kgdb_stack[KGDB_STACKWORDS];
 #define setsp(v) asm("movl %0, %%sp" :: "r" (v))
 
 static inline void
-copywords(src, dst, nbytes)
-	register u_long *src, *dst;
-	register u_int nbytes;
+copywords(u_long *src, u_long *dst, u_int nbytes)
 {
 	u_long *limit = src + (nbytes / sizeof(u_long));
 
@@ -82,9 +80,8 @@ copywords(src, dst, nbytes)
 		*(u_short *)dst = *(u_short *)src;
 }
 
-kgdb_trap_glue(type, frame)
-	int type;
-	struct frame frame;
+int
+kgdb_trap_glue(int type, struct frame frame)
 {
 	u_long osp, nsp;
 	u_int fsize, s;
@@ -145,8 +142,8 @@ kgdb_trap_glue(type, frame)
 
 int kgdb_testval;
 
-kgdb_test(i)
-	int i;
+int
+kgdb_test(int i)
 {
         ++kgdb_testval;
         return (i + 1);

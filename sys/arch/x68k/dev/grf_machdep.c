@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.19 2004/01/25 13:17:00 minoura Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.20 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.19 2004/01/25 13:17:00 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.20 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,35 +127,31 @@ static struct cfdata *cfdata_grf   = NULL;
 extern struct cfdriver grfbus_cd;
 
 int
-grfbusmatch(pdp, cfp, auxp)
-	struct device *pdp;
-	struct cfdata *cfp;
-	void *auxp;
+grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	if (strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
 
-	if((x68k_realconfig == 0) || (cfdata_gbus == NULL)) {
+	if ((x68k_realconfig == 0) || (cfdata_gbus == NULL)) {
+
 		/*
 		 * Probe layers we depend on
 		 */
-		if(x68k_realconfig == 0) {
+		if (x68k_realconfig == 0) {
 			cfdata_gbus = cfp;
 		}
 	}
-	return(1);	/* Always there	*/
+	return(1);
 }
 
 void
-grfbusattach(pdp, dp, auxp)
-	struct device *pdp, *dp;
-	void *auxp;
+grfbusattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	int i;
 
 	if (dp == NULL) {
 		i = 0;
-		x68k_config_found(cfdata_gbus, NULL, (void*)&i, grfbusprint);
+		x68k_config_found(cfdata_gbus, NULL, (void *)&i, grfbusprint);
 	} else {
 		printf("\n");
 		config_search(grfbussearch, dp, NULL);
@@ -163,23 +159,19 @@ grfbusattach(pdp, dp, auxp)
 }
 
 int
-grfbussearch(dp, match, aux)
-	struct device *dp;
-	struct cfdata *match;
-	
-	void *aux;
+grfbussearch(struct device *dp, struct cfdata *match, void *aux)
 {
 	int i = 0;
-	config_found(dp, (void*)&i, grfbusprint);
+
+	config_found(dp, (void *)&i, grfbusprint);
 	return (0);
 }
 
 int
-grfbusprint(auxp, name)
-	void *auxp;
-	const char *name;
+grfbusprint(void *auxp, const char *name)
 {
-	if(name == NULL)
+
+	if (name == NULL)
 		return(UNCONF);
 	return(QUIET);
 }
@@ -188,10 +180,7 @@ grfbusprint(auxp, name)
  * Normal init routine called by configure() code
  */
 int
-grfmatch(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+grfmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 	/* XXX console at grf0 */
 	if (x68k_realconfig == 0) {
@@ -205,10 +194,7 @@ grfmatch(parent, cfp, aux)
 static struct grf_softc	congrf;
 
 void
-grfattach(parent, dp, aux)
-	struct device *parent;
-	struct device *dp;
-	void *aux;
+grfattach(struct device *parent, struct device *dp, void *aux)
 {
 	struct grf_softc *gp;
 
@@ -240,9 +226,7 @@ grfattach(parent, dp, aux)
 }
 
 int
-grfprint(auxp, pnp)
-void *auxp;
-const char *pnp;
+grfprint(void *auxp, const char *pnp)
 {
 	if(pnp)
 		aprint_normal("ite at %s", pnp);
@@ -250,12 +234,10 @@ const char *pnp;
 }
 
 int
-grfinit(dp, unit)
-	void *dp;
-	int unit;
+grfinit(void *dp, int unit)
 {
 	struct grf_softc *gp = dp;
-	register struct grfsw *gsw;
+	struct grfsw *gsw;
 	caddr_t addr;
 
 	if (unit == 0)
