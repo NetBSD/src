@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.5 2000/08/22 11:42:14 joda Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -32,17 +32,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This is a driver for CardBus based serial devices. It is less
-   generic than it could be, but it keeps the complexity down. So far
-   it assumes that anything that reports itself as a `serial' device
-   is infact a 16x50 or 8250, which is not necessarily true (in
-   practice this shouldn't be a problem). It also does not handle
-   devices in the `multiport serial' or `modem' sub-classes, I've
-   never seen any of thise, so I don't know what they might look like.
+/* A driver for CardBus based serial devices. 
 
    If the CardBus device only has one BAR (that is not also the CIS
    BAR) listed in the CIS, it is assumed to be the one to use. For
-   devices with more than one BAR, the list of known devies has to be
+   devices with more than one BAR, the list of known devices has to be
    updated below.  */
 
 #include <sys/param.h>
