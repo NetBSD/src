@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.99 2000/04/06 14:42:06 tsutsui Exp $	*/
+/*	$NetBSD: ncr.c,v 1.100 2000/04/08 13:44:12 tsutsui Exp $	*/
 
 /**************************************************************************
 **
@@ -250,14 +250,14 @@
 #if defined(__NetBSD__) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
+#define	vtophys(va)	alpha_XXX_dmamap(va)
 #endif
 
 #if defined(__NetBSD__) && defined(__mips__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
 extern paddr_t kvtophys __P((vaddr_t)); /* XXX */
-#define	vtophys(va)	kvtophys((vaddr_t)(va))
+#define	vtophys(va)	kvtophys(va)
 #endif
 
 /*==========================================================
@@ -1534,7 +1534,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.99 2000/04/06 14:42:06 tsutsui Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.100 2000/04/08 13:44:12 tsutsui Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3439,7 +3439,7 @@ static void ncr_script_copy_and_bind (ncb_p np, ncrcmd *src, ncrcmd *dst, int le
 					    ((old & ~RELOC_MASK) >
 					     SCRIPT_KVAR_LAST))
 						panic("ncr KVAR out of range");
-					new = vtophys((void *)script_kvars[old &
+					new = vtophys((vaddr_t)script_kvars[old &
 					    ~RELOC_MASK]);
 					break;
 				case 0:
@@ -4276,7 +4276,7 @@ static void ncr_attach (pcici_t config_id, int unit)
 	ncr_script_copy_and_bind (np, (ncrcmd *) &scripth0,
 		(ncrcmd *) np->scripth, sizeof(struct scripth));
 
-	np->ccb->p_ccb	= vtophys (np->ccb);
+	np->ccb->p_ccb	= vtophys((vaddr_t)np->ccb);
 
 	/*
 	**    Patch the script for LED support.
@@ -6571,11 +6571,11 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	**	and the address at which to continue.
 	*/
 
-	if (dsp == vtophys (&cp->patch[2])) {
+	if (dsp == vtophys((vaddr_t)&cp->patch[2])) {
 		vdsp_base = cp;
 		vdsp_off = offsetof(struct ccb, patch[0]);
 		nxtdsp = READSCRIPT_OFF(vdsp_base, vdsp_off + 3*4);
-	} else if (dsp == vtophys (&cp->patch[6])) {
+	} else if (dsp == vtophys((vaddr_t)&cp->patch[6])) {
 		vdsp_base = cp;
 		vdsp_off = offsetof(struct ccb, patch[4]);
 		nxtdsp = READSCRIPT_OFF(vdsp_base, vdsp_off + 3*4);
@@ -6655,7 +6655,8 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	*/
 
 	newcmd = cp->patch;
-	if (cp->phys.header.savep == htole32(vtophys (newcmd))) newcmd+=4;
+	if (cp->phys.header.savep == htole32(vtophys((vaddr_t)newcmd)))
+		newcmd += 4;
 
 	/*
 	**	fillin the commands
@@ -6680,7 +6681,7 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	**	and restart script processor at dispatcher.
 	*/
 	np->profile.num_break++;
-	OUTL (nc_temp, vtophys (newcmd));
+	OUTL (nc_temp, vtophys((vaddr_t)newcmd));
 	if ((cmd & 7) == 0)
 		OUTL (nc_dsp, NCB_SCRIPT_PHYS (np, dispatch));
 	else
@@ -7414,10 +7415,10 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 
 		tp->getscr[0] =
 			(np->features & FE_PFEN)? htole32(SCR_COPY(1)) : htole32(SCR_COPY_F(1));
-		tp->getscr[1] = htole32(vtophys (&tp->sval));
+		tp->getscr[1] = htole32(vtophys((vaddr_t)&tp->sval));
 		tp->getscr[2] = htole32(np->paddr + offsetof (struct ncr_reg, nc_sxfer));
 		tp->getscr[3] = tp->getscr[0];
-		tp->getscr[4] = htole32(vtophys (&tp->wval));
+		tp->getscr[4] = htole32(vtophys((vaddr_t)&tp->wval));
 		tp->getscr[5] = htole32(np->paddr + offsetof (struct ncr_reg, nc_scntl3));
 
 		assert (( (offsetof(struct ncr_reg, nc_sxfer) ^
@@ -7430,7 +7431,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 
 		tp->jump_lcb.l_cmd   = htole32(SCR_JUMP);
 		tp->jump_lcb.l_paddr = htole32(NCB_SCRIPTH_PHYS (np, abort));
-		np->ncb_dma->jump_tcb.l_paddr = htole32(vtophys (&tp->jump_tcb));
+		np->ncb_dma->jump_tcb.l_paddr = htole32(vtophys((vaddr_t)&tp->jump_tcb));
 
 		tp->usrtags = SCSI_NCR_DFLT_TAGS;
 		ncr_setmaxtags (tp, tp->usrtags);
@@ -7465,7 +7466,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 		/*
 		**   Chain into LUN list
 		*/
-		tp->jump_lcb.l_paddr = htole32(vtophys (&lp->jump_lcb));
+		tp->jump_lcb.l_paddr = htole32(vtophys((vaddr_t)&lp->jump_lcb));
 		tp->lp[lun] = lp;
 
 	}
@@ -7508,7 +7509,7 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 	**	Fill in physical addresses
 	*/
 
-	cp->p_ccb	     = vtophys (cp);
+	cp->p_ccb = vtophys((vaddr_t)cp);
 
 #ifdef __NetBSD__
 	if (ncr_ccb_dma_init(np, cp) != 0)
