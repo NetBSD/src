@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.13 2002/09/05 18:25:47 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.14 2002/09/05 20:08:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -240,102 +240,110 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_object(obj, rela, dodebug)
+_rtld_relocate_nonplt_objects(obj, dodebug)
 	Obj_Entry *obj;
-	const Elf_Rela *rela;
 	bool dodebug;
 {
-	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-	Elf_Word type, value, mask;
-	const Elf_Sym *def = NULL;
-	const Obj_Entry *defobj = NULL;
+	const Elf_Rela *rela;
 
-	type = ELF_R_TYPE(rela->r_info);
-	if (type == R_TYPE(NONE))
-		return (0);
+	for (rela = obj->rela; rela < obj->relalim; rela++) {
+		Elf_Addr *where;
+		Elf_Word type, value, mask;
+		const Elf_Sym *def = NULL;
+		const Obj_Entry *defobj = NULL;
 
-	/* We do JMP_SLOTs in relocate_plt_object() below */
-	if (type == R_TYPE(JMP_SLOT))
-		return (0);
+		where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
 
-	/* COPY relocs are also handled elsewhere */
-	if (type == R_TYPE(COPY))
-		return (0);
+		type = ELF_R_TYPE(rela->r_info);
+		if (type == R_TYPE(NONE))
+			return (0);
 
-	/*
-	 * We use the fact that relocation types are an `enum'
-	 * Note: R_SPARC_6 is currently numerically largest.
-	 */
-	if (type > R_TYPE(6))
-		return (-1);
+		/* We do JMP_SLOTs in relocate_plt_object() below */
+		if (type == R_TYPE(JMP_SLOT))
+			return (0);
 
-	value = rela->r_addend;
+		/* COPY relocs are also handled elsewhere */
+		if (type == R_TYPE(COPY))
+			return (0);
 
-	/*
-	 * Handle relative relocs here, because we might not
-	 * be able to access globals yet.
-	 */
-	if (!dodebug && type == R_TYPE(RELATIVE)) {
-		*where += (Elf_Addr)(obj->relocbase + value);
-		return (0);
-	}
-
-	if (RELOC_RESOLVE_SYMBOL(type)) {
-
-		/* Find the symbol */
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
-		if (def == NULL)
+		/*
+		 * We use the fact that relocation types are an `enum'
+		 * Note: R_SPARC_6 is currently numerically largest.
+		 */
+		if (type > R_TYPE(6))
 			return (-1);
 
-		/* Add in the symbol's absolute address */
-		value += (Elf_Word)(defobj->relocbase + def->st_value);
-	}
+		value = rela->r_addend;
 
-	if (RELOC_PC_RELATIVE(type)) {
-		value -= (Elf_Word)where;
-	}
-
-	if (RELOC_BASE_RELATIVE(type)) {
 		/*
-		 * Note that even though sparcs use `Elf_rela' exclusively
-		 * we still need the implicit memory addend in relocations
-		 * referring to GOT entries. Undoubtedly, someone f*cked
-		 * this up in the distant past, and now we're stuck with
-		 * it in the name of compatibility for all eternity..
-		 *
-		 * In any case, the implicit and explicit should be mutually
-		 * exclusive. We provide a check for that here.
+		 * Handle relative relocs here, because we might not
+		 * be able to access globals yet.
 		 */
+		if (!dodebug && type == R_TYPE(RELATIVE)) {
+			*where += (Elf_Addr)(obj->relocbase + value);
+			return (0);
+		}
+
+		if (RELOC_RESOLVE_SYMBOL(type)) {
+
+			/* Find the symbol */
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
+			if (def == NULL)
+				return (-1);
+
+			/* Add in the symbol's absolute address */
+			value += (Elf_Word)(defobj->relocbase + def->st_value);
+		}
+
+		if (RELOC_PC_RELATIVE(type)) {
+			value -= (Elf_Word)where;
+		}
+
+		if (RELOC_BASE_RELATIVE(type)) {
+			/*
+			 * Note that even though sparcs use `Elf_rela'
+			 * exclusively we still need the implicit memory addend
+			 * in relocations referring to GOT entries.
+			 * Undoubtedly, someone f*cked this up in the distant
+			 * past, and now we're stuck with it in the name of
+			 * compatibility for all eternity..
+			 *
+			 * In any case, the implicit and explicit should be
+			 * mutually exclusive. We provide a check for that
+			 * here.
+			 */
 #define DIAGNOSTIC
 #ifdef DIAGNOSTIC
-		if (value != 0 && *where != 0) {
-			xprintf("BASE_REL(%s): where=%p, *where 0x%x, "
-				"addend=0x%x, base %p\n",
-				obj->path, where, *where,
-				rela->r_addend, obj->relocbase);
+			if (value != 0 && *where != 0) {
+				xprintf("BASE_REL(%s): where=%p, *where 0x%x, "
+					"addend=0x%x, base %p\n",
+					obj->path, where, *where,
+					rela->r_addend, obj->relocbase);
+			}
+#endif
+			value += (Elf_Word)(obj->relocbase + *where);
+		}
+
+		mask = RELOC_VALUE_BITMASK(type);
+		value >>= RELOC_VALUE_RIGHTSHIFT(type);
+		value &= mask;
+
+		/* We ignore alignment restrictions here */
+		*where &= ~mask;
+		*where |= value;
+#ifdef RTLD_DEBUG_RELOC
+		if (RELOC_RESOLVE_SYMBOL(type)) {
+			rdbg(dodebug, ("%s %s in %s --> %p %s",
+			    reloc_names[type],
+			    defobj->strtab + def->st_name, obj->path,
+			    (void *)*where, defobj->path));
+		}
+		else {
+			rdbg(dodebug, ("%s --> %p", reloc_names[type],
+			    (void *)*where));
 		}
 #endif
-		value += (Elf_Word)(obj->relocbase + *where);
 	}
-
-	mask = RELOC_VALUE_BITMASK(type);
-	value >>= RELOC_VALUE_RIGHTSHIFT(type);
-	value &= mask;
-
-	/* We ignore alignment restrictions here */
-	*where &= ~mask;
-	*where |= value;
-#ifdef RTLD_DEBUG_RELOC
-	if (RELOC_RESOLVE_SYMBOL(type)) {
-		rdbg(dodebug, ("%s %s in %s --> %p %s", 
-		    reloc_names[type],
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-	}
-	else {
-		rdbg(dodebug, ("%s --> %p", reloc_names[type],
-		    (void *)*where));
-	}
-#endif
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.8 2002/09/05 17:58:04 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.9 2002/09/05 20:08:17 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -133,86 +133,93 @@ _rtld_setup_pltgot(obj)
 }
 
 int
-_rtld_relocate_nonplt_object(obj, rela, dodebug)
+_rtld_relocate_nonplt_objects(obj, dodebug)
 	Obj_Entry *obj;
-	const Elf_Rela *rela;
 	bool dodebug;
 {
-	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	const Elf_Sym   *def;
-	const Obj_Entry *defobj;
+	const Elf_Rel *rel;
 
-	switch (ELF_R_TYPE(rela->r_info)) {
+	for (rel = obj->rel; rel < obj->rellim; rel++) {
+		Elf_Addr        *where;
+		const Elf_Sym   *def;
+		const Obj_Entry *defobj;
 
-	case R_TYPE(NONE):
-		break;
+		where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
 
-	case R_TYPE(REL32):
-		/* 32-bit PC-relative reference */
-		def = obj->symtab + ELF_R_SYM(rela->r_info);
+		switch (ELF_R_TYPE(rel->r_info)) {
+		case R_TYPE(NONE):
+			break;
 
-		if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
-		  (ELF_ST_TYPE(def->st_info) == STT_SECTION ||
-		   ELF_ST_TYPE(def->st_info) == STT_NOTYPE)) {
-			/*
-			 * XXX: ABI DIFFERENCE!
-			 * 
-			 * Old NetBSD binutils would generate shared libs
-			 * with section-relative relocations being already
-			 * adjusted for the start address of the section.
-			 * 
-			 * New binutils, OTOH, generate shared libs with
-			 * the same relocations being based at zero, so we
-			 * need to add in the start address of the section.  
-			 * 
-			 * We assume that all section-relative relocs with
-			 * contents less than the start of the section need 
-			 * to be adjusted; this should work with both old
-			 * and new shlibs.
-			 * 
-			 * --rkb, Oct 6, 2001
-			 */
-			if (def->st_info == STT_SECTION && 
-				    (*where < def->st_value))
-			    *where += (Elf_Addr) def->st_value;
+		case R_TYPE(REL32):
+			/* 32-bit PC-relative reference */
+			def = obj->symtab + ELF_R_SYM(rel->r_info);
 
-			*where += (Elf_Addr)obj->relocbase;
+			if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
+			  (ELF_ST_TYPE(def->st_info) == STT_SECTION ||
+			   ELF_ST_TYPE(def->st_info) == STT_NOTYPE)) {
+				/*
+				 * XXX: ABI DIFFERENCE!
+				 *
+				 * Old NetBSD binutils would generate shared
+				 * libs with section-relative relocations being
+				 * already adjusted for the start address of
+				 * the section.
+				 *
+				 * New binutils, OTOH, generate shared libs
+				 * with the same relocations being based at
+				 * zero, so we need to add in the start address
+				 * of the section.
+				 *
+				 * We assume that all section-relative relocs
+				 * with contents less than the start of the
+				 * section need to be adjusted; this should
+				 * work with both old and new shlibs.
+				 *
+				 * --rkb, Oct 6, 2001
+				 */
+				if (def->st_info == STT_SECTION &&
+					    (*where < def->st_value))
+				    *where += (Elf_Addr) def->st_value;
 
-			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
-			    obj->strtab + def->st_name, obj->path,
-			    (void *)*where, obj->path));
-		} else {
-			/* XXX maybe do something re: bootstrapping? */
-			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
-			    false);
-			if (def == NULL)
-				return -1;
-			*where += (Elf_Addr)(defobj->relocbase + def->st_value);
-			rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+				*where += (Elf_Addr)obj->relocbase;
+
+				rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+				    obj->strtab + def->st_name, obj->path,
+				    (void *)*where, obj->path));
+			} else {
+				/* XXX maybe do something re: bootstrapping? */
+				def = _rtld_find_symdef(rel->r_info, obj,
+				    &defobj, false);
+				if (def == NULL)
+					return -1;
+				*where += (Elf_Addr)(defobj->relocbase +
+				    def->st_value);
+				rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
+				    defobj->strtab + def->st_name, obj->path,
+				    (void *)*where, defobj->path));
+			}
+			break;
+
+		default:
+			def = _rtld_find_symdef(rel->r_info, obj, &defobj,
+			    true);
+			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			    "contents = %p, symbol = %s",
+			    (u_long)ELF_R_SYM(rel->r_info),
+			    (u_long)ELF_R_TYPE(rel->r_info),
+			    (void *)rel->r_offset, (void *)*where,
+			    def ? defobj->strtab + def->st_name : "??"));
+			_rtld_error("%s: Unsupported relocation type %ld "
+			    "in non-PLT relocations\n",
+			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
+			return -1;
 		}
-		break;
-
-	default:
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
-		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
-		    "addend = %p, contents = %p, symbol = %s",
-		    (u_long)ELF_R_SYM(rela->r_info),
-		    (u_long)ELF_R_TYPE(rela->r_info),
-		    (void *)rela->r_offset, (void *)rela->r_addend,
-		    (void *)*where,
-		    def ? defobj->strtab + def->st_name : "??"));
-		_rtld_error("%s: Unsupported relocation type %ld "
-		    "in non-PLT relocations\n",
-		    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
-		return -1;
 	}
 	return 0;
 }
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
+_rtld_relocate_plt_objects(obj, rela, addrp, bind_now, dodebug)
 	Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;

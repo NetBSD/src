@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.5 2002/09/05 18:25:46 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.6 2002/09/05 20:08:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -109,96 +109,103 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_object(obj, rela, dodebug)
+_rtld_relocate_nonplt_objects(obj, dodebug)
 	Obj_Entry *obj;
-	const Elf_Rela *rela;
 	bool dodebug;
 {
-	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	const Elf_Sym   *def;
-	const Obj_Entry *defobj;
-	Elf_Addr         tmp;
+	const Elf_Rela *rela;
 
-	switch (ELF_R_TYPE(rela->r_info)) {
+	for (rela = obj->rela; rela < obj->relalim; rela++) {
+		Elf_Addr        *where;
+		const Elf_Sym   *def;
+		const Obj_Entry *defobj;
+		Elf_Addr         tmp;
 
-	case R_TYPE(NONE):
-		break;
+		where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 
-	case R_TYPE(REFQUAD):
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
-		if (def == NULL)
-			return -1;
+		switch (ELF_R_TYPE(rela->r_info)) {
+		case R_TYPE(NONE):
+			break;
 
-		tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
-		    *where + rela->r_addend;
-		if (*where != tmp)
-			*where = tmp;
-		rdbg(dodebug, ("REFQUAD %s in %s --> %p in %s",
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-		break;
+		case R_TYPE(REFQUAD):
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
+			if (def == NULL)
+				return -1;
 
-	case R_TYPE(GLOB_DAT):
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, false);
-		if (def == NULL)
-			return -1;
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
+		    	*where + rela->r_addend;
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("REFQUAD %s in %s --> %p in %s",
+		    	defobj->strtab + def->st_name, obj->path,
+		    	(void *)*where, defobj->path));
+			break;
 
-		tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
-		    rela->r_addend;
-		if (*where != tmp)
-			*where = tmp;
-		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-		break;
+		case R_TYPE(GLOB_DAT):
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    false);
+			if (def == NULL)
+				return -1;
 
-	case R_TYPE(RELATIVE):
-	    {
-		extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
-		extern Elf_Addr	_GOT_END_[];
+			tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
+			    rela->r_addend;
+			if (*where != tmp)
+				*where = tmp;
+			rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
+		    	defobj->strtab + def->st_name, obj->path,
+		    	(void *)*where, defobj->path));
+			break;
 
-		/* This is the ...iffy hueristic. */
-		if (!dodebug ||
-		    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
-		    (caddr_t)where >= (caddr_t)_GOT_END_) {
-			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
-			    (void *)*where));
-		} else
-			rdbg(dodebug, ("RELATIVE in %s stays at %p",
-			    obj->path, (void *)*where));
-		break;
-	    }
+		case R_TYPE(RELATIVE):
+		    {
+			extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
+			extern Elf_Addr	_GOT_END_[];
 
-	case R_TYPE(COPY):
-		/*
-		 * These are deferred until all other relocations have
-		 * been done.  All we do here is make sure that the COPY
-		 * relocation is not in a shared library.  They are allowed
-		 * only in executable files.
-		 */
-		if (!obj->mainprog) {
-			_rtld_error(
+			/* This is the ...iffy hueristic. */
+			if (!dodebug ||
+			    (caddr_t)where < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+			    (caddr_t)where >= (caddr_t)_GOT_END_) {
+				*where += (Elf_Addr)obj->relocbase;
+				rdbg(dodebug, ("RELATIVE in %s --> %p",
+				    obj->path, (void *)*where));
+			} else
+				rdbg(dodebug, ("RELATIVE in %s stays at %p",
+				    obj->path, (void *)*where));
+			break;
+		    }
+
+		case R_TYPE(COPY):
+			/*
+			 * These are deferred until all other relocations have
+			 * been done.  All we do here is make sure that the
+			 * COPY relocation is not in a shared library.  They
+			 * are allowed only in executable files.
+			 */
+			if (!obj->mainprog) {
+				_rtld_error(
 			"%s: Unexpected R_COPY relocation in shared library",
-			    obj->path);
+				    obj->path);
+				return -1;
+			}
+			rdbg(dodebug, ("COPY (avoid in main)"));
+			break;
+
+		default:
+			def = _rtld_find_symdef(rela->r_info, obj, &defobj,
+			    true);
+			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			    "addend = %p, contents = %p, symbol = %s",
+			    (u_long)ELF_R_SYM(rela->r_info),
+			    (u_long)ELF_R_TYPE(rela->r_info),
+			    (void *)rela->r_offset, (void *)rela->r_addend,
+			    (void *)*where,
+			    def ? defobj->strtab + def->st_name : "??"));
+			_rtld_error("%s: Unsupported relocation type %ld "
+			    "in non-PLT relocations\n",
+			    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
 			return -1;
 		}
-		rdbg(dodebug, ("COPY (avoid in main)"));
-		break;
-
-	default:
-		def = _rtld_find_symdef(rela->r_info, obj, &defobj, true);
-		rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
-		    "addend = %p, contents = %p, symbol = %s",
-		    (u_long)ELF_R_SYM(rela->r_info),
-		    (u_long)ELF_R_TYPE(rela->r_info),
-		    (void *)rela->r_offset, (void *)rela->r_addend,
-		    (void *)*where,
-		    def ? defobj->strtab + def->st_name : "??"));
-		_rtld_error("%s: Unsupported relocation type %ld "
-		    "in non-PLT relocations\n",
-		    obj->path, (u_long) ELF_R_TYPE(rela->r_info));
-		return -1;
 	}
 	return 0;
 }
