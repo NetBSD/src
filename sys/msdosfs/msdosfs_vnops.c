@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.54 1996/10/13 04:16:36 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.55 1996/11/08 15:51:49 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1228,6 +1228,7 @@ msdosfs_mkdir(v)
 		goto bad2;
 
 	bzero(&ndirent, sizeof(ndirent));
+	ndirent.de_pmp = pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	DETIMES(&ndirent, &ts, &ts, &ts);
