@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.18 2000/09/21 20:32:24 jdolecek Exp $ */
+/* $NetBSD: expr.y,v 1.19 2000/09/29 17:49:21 jdolecek Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.18 2000/09/21 20:32:24 jdolecek Exp $");
+__RCSID("$NetBSD: expr.y,v 1.19 2000/09/29 17:49:21 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ expr:	item	{ $$ = $1; }
 		if (regexec(&rp, $1, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
 			char *val;
 			if (rm[1].rm_so >= 0) {
-				(void) asprintf(&val, "%*s",
+				(void) asprintf(&val, "%.*s",
 					(int) (rm[1].rm_eo - rm[1].rm_so),
 					$1 + rm[1].rm_so);
 			} else {
