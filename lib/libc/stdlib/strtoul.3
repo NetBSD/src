@@ -33,20 +33,26 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)strtoul.3	5.3 (Berkeley) 6/29/91
-.\"	$Id: strtoul.3,v 1.4 1993/11/29 22:07:24 jtc Exp $
+.\"     from: @(#)strtoul.3	5.4 (Berkeley) 6/25/92
+.\"	$Id: strtoul.3,v 1.5 1994/01/03 22:58:39 jtc Exp $
 .\"
-.Dd June 29, 1991
+.Dd June 25, 1992
 .Dt STRTOUL 3
 .Os
 .Sh NAME
-.Nm strtoul
-.Nd convert a string to an unsigned long integer
+.Nm strtoul, strtouq
+.Nd convert a string to an unsigned long or uquad_t integer
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft unsigned long
 .Fn strtoul "const char *nptr" "char **endptr" "int base"
+
+.Fd #include <sys/types.h>
+.Fd #include <stdlib.h>
+.Fd #include <limits.h>
+.Ft u_quad_t
+.Fn strtouq "const char *nptr" "char **endptr" "int base"
 .Sh DESCRIPTION
 The
 .Fn strtoul
@@ -55,7 +61,16 @@ converts the string in
 .Fa nptr
 to an
 .Em unsigned long
-value according to the given
+value.
+The
+.Fn strtouq
+function
+converts the string in
+.Fa nptr
+to a
+.Em u_quad_t
+value.
+The conversion is done according to the given
 .Fa base ,
 which must be between 2 and 36 inclusive,
 or be the special value 0.

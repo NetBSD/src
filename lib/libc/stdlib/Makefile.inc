@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.16 1993/12/05 15:46:05 briggs Exp $
+#	$Id: Makefile.inc,v 1.17 1994/01/03 22:58:35 jtc Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
@@ -7,7 +7,7 @@
 SRCS+=	a64l.c abort.c atexit.c atoi.c atol.c bsearch.c calloc.c cfree.c \
 	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c multibyte.c \
 	putenv.c qsort.c radixsort.c rand.c random.c setenv.c strtod.c \
-	strtol.c strtoul.c system.c \
+	strtol.c strtoq.c strtoul.c strtouq.c system.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c
 
@@ -33,6 +33,8 @@ MAN3+=	abort.0 abs.0 alloca.0 atexit.0 atof.0 atoi.0 atol.0 bsearch.0 \
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=qsort.3 heapsort.3
 MLINKS+=rand.3 srand.3
+MLINKS+=strtol.3 strtoq.3
+MLINKS+=strtoul.3 strtouq.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
 MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
