@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6.2.3 2002/04/17 00:04:55 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.6.2.4 2002/05/04 04:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6.2.3 2002/04/17 00:04:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6.2.4 2002/05/04 04:16:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,21 +77,20 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6.2.3 2002/04/17 00:04:55 nathan
 #include <compat/linux/linux_syscallargs.h>
 
 void
-linux_setregs(p, epp, stack)
-	struct proc *p;
+linux_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-/*	struct pcb *pcb = &p->p_addr->u_pcb; */
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 }
 
 static __inline struct trapframe *
-process_frame(struct proc *p)
+process_frame(struct lwp *l)
 {
 
-	return p->p_addr->u_pcb.pcb_tf;
+	return l->l_addr->u_pcb.pcb_tf;
 }
 
 void
@@ -101,12 +100,13 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
 
-	tf = process_frame(p);
+	tf = process_frame(l);
 
 	/*
 	 * The Linux version of this code is in
@@ -170,7 +170,7 @@ linux_sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 	/*
@@ -212,16 +212,17 @@ linux_sys_rt_sigreturn(p, v, retval)
 #endif
 
 int
-linux_sys_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sigframe *sfp, frame;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	sigset_t mask;
 
-	tf = process_frame(p);
+	tf = process_frame(l);
 
 	/*
 	 * The trampoline code hands us the context.
@@ -247,7 +248,7 @@ linux_sys_sigreturn(p, v, retval)
 #endif
 
 	/* Restore register context. */
-	tf = process_frame(p);
+	tf = process_frame(l);
 	tf->tf_r0    = frame.sf_sc.sc_r0;
 	tf->tf_r1    = frame.sf_sc.sc_r1;
 	tf->tf_r2    = frame.sf_sc.sc_r2;
@@ -316,5 +317,6 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(p, &bia, retval);
+	/* XXX NJWLWP */
+	return sys_ioctl(curproc, &bia, retval);
 }

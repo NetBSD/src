@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.3.2.3 2002/04/01 07:39:06 nathanw Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.3.2.4 2002/05/04 04:16:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.3 2002/04/01 07:39:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.4 2002/05/04 04:16:17 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -107,12 +107,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.3 2002/04/01 07:39:06 nathan
 #define LINUX_SYS_ARMBASE	0x000100 /* Must agree with syscalls.master */
 
 /* XXX */
-void linux_syscall(struct trapframe *frame, struct proc *p, u_int32_t insn);
+void linux_syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn);
 
 void
-linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
+linux_syscall(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 {
 	const struct sysent *callp;
+	struct proc *p = l->l_proc;
 	int code, error;
 	u_int nargs;
 	register_t *args, rval[2];
@@ -138,7 +139,7 @@ linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -163,7 +164,7 @@ linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
