@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.69 2003/01/12 21:49:51 christos Exp $ */
+/*	$NetBSD: md.c,v 1.70 2003/01/15 00:09:30 thorpej Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -211,16 +211,16 @@ md_post_newfs(void)
 	int ret;
 
 	/* boot blocks ... */
-	ret = stat("/usr/mdec/biosboot_com0.sym", &sb);
+	ret = stat("/usr/mdec/biosboot_com0_9600.sym", &sb);
 	if ((ret != -1) && (sb.st_mode & S_IFREG)) {
 		msg_display(MSG_getboottype);
 		process_menu(MENU_getboottype);
 	}
 	msg_display(MSG_dobootblks, diskdev);
-	if (!strcmp(boottype, "serial"))
+	if (!strncmp(boottype, "serial", 6))
 	        return run_prog(RUN_DISPLAY, NULL,
-	            "/usr/mdec/installboot -v /usr/mdec/biosboot_com0.sym /dev/r%sa",
-	            diskdev);
+	            "/usr/mdec/installboot -v /usr/mdec/biosboot_com0_%s.sym /dev/r%sa",
+	            boottype + 6, diskdev);
 	else
 	        return run_prog(RUN_DISPLAY, NULL,
 	            "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
