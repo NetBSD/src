@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.14 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: tstp.c,v 1.15 2000/04/12 21:36:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.14 2000/04/11 13:57:10 blymn Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.15 2000/04/12 21:36:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -135,7 +135,10 @@ __stopwin()
 				curscr->wattr &= ~__UNDERSCORE;
 			}
 			if (ME != NULL && !strcmp(SE, ME)) {
-				curscr->wattr &= ~__TERMATTR;
+				curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
+			}
+			if (OP != NULL && !strcmp(SE, OP)) {
+				curscr->wattr &= ~__COLOR;
 			}
 
 		}
@@ -143,12 +146,29 @@ __stopwin()
 			tputs(UE, 0, __cputchar);
 			curscr->wattr &= ~__UNDERSCORE;
 			if (ME != NULL && !strcmp(UE, ME)) {
-				curscr->wattr &= ~__TERMATTR;
+				curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
+			}
+			if (OP != NULL && !strcmp(UE, OP)) {
+				curscr->wattr &= ~__COLOR;
 			}
 		}
-		if (curscr->wattr & __TERMATTR && ME != NULL) {
-			tputs(SE, 0, __cputchar);
-			curscr->wattr &= ~__TERMATTR;
+		if (curscr->wattr & __ATTRIBUTES && ME != NULL) {
+			tputs(ME, 0, __cputchar);
+			curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
+			if (OP != NULL && !strcmp(ME, OP)) {
+				curscr->wattr &= ~__COLOR;
+			}
+		}
+		if (curscr->wattr & __ALTCHARSET && AE != NULL) {
+			tputs(AE, 0, __cputchar);
+			curscr->wattr &= ~__ALTCHARSET;
+		}
+		if (curscr->wattr & __COLOR) {
+			if (OC != NULL)
+				tputs(OC, 0, __cputchar);
+			if (OP != NULL)
+				tputs(OP, 0, __cputchar);
+			curscr->wattr &= ~__COLOR;
 		}
 		__mvcur((int) curscr->cury, (int) curscr->curx, (int) curscr->maxy - 1, 0, 0);
 	}
@@ -177,9 +197,25 @@ __restartwin()
 	(void) tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios);
 
+	/* Restore colours */
+	__restore_colors();
+
 	/* Restart the screen. */
 	__startwin();
 
 	/* Repaint the screen. */
 	wrefresh(curscr);
+}
+
+int
+def_prog_mode()
+{
+	return (tcgetattr(STDIN_FILENO, &save_termios) ? ERR : OK);
+}
+
+int
+reset_prog_mode()
+{
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios) ? ERR : OK);
 }
