@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.492 2002/11/26 18:13:29 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.493 2002/12/03 06:08:35 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.489 2002/11/26 18:12:27 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.490 2002/12/03 06:08:00 explorer Exp 
  */
 
 /*
@@ -1863,6 +1863,7 @@
 #define	PCI_PRODUCT_RICOH_RL5C476	0x0476		/* 5C476 PCI-CardBus bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C477	0x0477		/* 5C477 PCI-CardBus bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C478	0x0478		/* 5C478 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C552	0x0552		/* 5C552 PCI-CardBus bridge/Firewire */
 
 /* RISCom (SDL Communications, Inc?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
