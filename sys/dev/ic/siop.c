@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.8 2000/05/04 16:56:13 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.9 2000/05/04 17:18:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -758,10 +758,6 @@ reset:
 				goto reset;
 			}
 		case A_int_msgin:
-			if (xs)
-				scsi_print_addr(xs->sc_link);
-			else
-				printf("%s: ", sc->sc_dev.dv_xname);
 			if (siop_cmd->siop_table->msg_in[0] ==
 			    MSG_MESSAGE_REJECT) {
 				int msg, extmsg;
@@ -779,6 +775,59 @@ reset:
 					extmsg =
 					    siop_cmd->siop_table->msg_out[2];
 				}
+				if (msg == MSG_MESSAGE_REJECT) {
+					/* MSG_REJECT  for a MSG_REJECT  !*/
+					if (xs)
+						scsi_print_addr(xs->sc_link);
+					else
+						printf("%s: ",
+						   sc->sc_dev.dv_xname);
+					printf("our reject message was "
+					    "rejected\n");
+					goto reset;
+				}
+				if (msg == MSG_EXTENDED &&
+				    extmsg == MSG_EXT_WDTR) {
+					/* WDTR rejected, initiate sync */
+					printf("%s: target %d using 8bit "
+					    "transfers\n", sc->sc_dev.dv_xname,
+					    xs->sc_link->scsipi_scsi.target);
+					siop_target->status = TARST_SYNC_NEG;
+					siop_cmd->siop_table->msg_out[0] =
+					    MSG_EXTENDED;
+					siop_cmd->siop_table->msg_out[1] =
+					    MSG_EXT_SDTR_LEN;
+					siop_cmd->siop_table->msg_out[2] =
+					    MSG_EXT_SDTR;
+					siop_cmd->siop_table->msg_out[3] =
+					    sc->minsync;
+					siop_cmd->siop_table->msg_out[4] =
+					    sc->maxoff;
+					siop_cmd->siop_table->t_msgout.count =
+					    htole32(MSG_EXT_SDTR_LEN + 2);
+					siop_cmd->siop_table->t_msgout.addr =
+					    htole32(siop_cmd->dsa);
+					siop_table_sync(siop_cmd,
+					    BUS_DMASYNC_PREREAD |
+					    BUS_DMASYNC_PREWRITE);
+					CALL_SCRIPT(Ent_send_msgout);
+					return 1;
+				} else if (msg == MSG_EXTENDED &&
+				    extmsg == MSG_EXT_SDTR) {
+					/* sync rejected */
+					printf("%s: target %d asynchronous\n",
+					    sc->sc_dev.dv_xname,
+					    xs->sc_link->scsipi_scsi.target);
+					siop_cmd->siop_target->status =
+					    TARST_OK;
+					/* no table to flush here */
+					CALL_SCRIPT(Ent_msgin_ack);
+					return 1;
+				}
+				if (xs)
+					scsi_print_addr(xs->sc_link);
+				else
+					printf("%s: ", sc->sc_dev.dv_xname);
 				if (msg == MSG_EXTENDED) {
 					printf("scsi message reject, extended "
 					    "message sent was 0x%x\n", extmsg);
@@ -786,25 +835,14 @@ reset:
 					printf("scsi message reject, message "
 					    "sent was 0x%x\n", msg);
 				}
-				if (msg == MSG_MESSAGE_REJECT) {
-					/* MSG_REJECT  for a MSG_REJECT  !*/
-					goto reset;
-				}
-				if (msg == MSG_EXTENDED &&
-				    extmsg == MSG_EXT_WDTR) {
-					/* wide rejected, should do sync */
-					siop_cmd->siop_target->status =
-					    TARST_OK;
-				} else if (msg == MSG_EXTENDED &&
-				    extmsg == MSG_EXT_SDTR) {
-					/* sync rejected */
-					siop_cmd->siop_target->status =
-					    TARST_OK;
-				}
 				/* no table to flush here */
 				CALL_SCRIPT(Ent_msgin_ack);
 				return 1;
 			}
+			if (xs)
+				scsi_print_addr(xs->sc_link);
+			else
+				printf("%s: ", sc->sc_dev.dv_xname);
 			printf("unhandled message 0x%x\n",
 			    siop_cmd->siop_table->msg_in[0]);
 			siop_cmd->siop_table->t_msgout.count= htole32(1);
@@ -1142,6 +1180,8 @@ siop_wdtr_neg(siop_cmd)
 		siop_cmd->siop_table->t_msgout.count =
 		    htole32(MSG_EXT_SDTR_LEN + 2);
 		siop_cmd->siop_table->t_msgout.addr = htole32(siop_cmd->dsa);
+		siop_table_sync(siop_cmd,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		CALL_SCRIPT(Ent_send_msgout);
 		return;
 	} else {
