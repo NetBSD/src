@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              xRevision: 170 $
+ *              xRevision: 171 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.9 2003/12/13 18:11:00 kochi Exp $");
 
 #define __EXDUMP_C__
 
@@ -740,7 +740,7 @@ AcpiExDumpObjectDescriptor (
 
     case ACPI_TYPE_DEVICE:
 
-        AcpiExOutPointer ("AddressSpace",   ObjDesc->Device.AddressSpace);
+        AcpiExOutPointer ("Handler",        ObjDesc->Device.Handler);
         AcpiExOutPointer ("SystemNotify",   ObjDesc->Device.SystemNotify);
         AcpiExOutPointer ("DeviceNotify",   ObjDesc->Device.DeviceNotify);
         break;
@@ -778,7 +778,7 @@ AcpiExDumpObjectDescriptor (
         AcpiExOutInteger ("Flags",           ObjDesc->Region.Flags);
         AcpiExOutAddress ("Address",         ObjDesc->Region.Address);
         AcpiExOutInteger ("Length",          ObjDesc->Region.Length);
-        AcpiExOutPointer ("AddressSpace",    ObjDesc->Region.AddressSpace);
+        AcpiExOutPointer ("Handler",         ObjDesc->Region.Handler);
         AcpiExOutPointer ("Next",            ObjDesc->Region.Next);
         break;
 
@@ -799,7 +799,7 @@ AcpiExDumpObjectDescriptor (
         AcpiExOutAddress ("Address",         (ACPI_PHYSICAL_ADDRESS) ObjDesc->Processor.Address);
         AcpiExOutPointer ("SystemNotify",    ObjDesc->Processor.SystemNotify);
         AcpiExOutPointer ("DeviceNotify",    ObjDesc->Processor.DeviceNotify);
-        AcpiExOutPointer ("AddressSpace",    ObjDesc->Processor.AddressSpace);
+        AcpiExOutPointer ("Handler",         ObjDesc->Processor.Handler);
         break;
 
 
@@ -807,7 +807,7 @@ AcpiExDumpObjectDescriptor (
 
         AcpiExOutPointer ("SystemNotify",    ObjDesc->ThermalZone.SystemNotify);
         AcpiExOutPointer ("DeviceNotify",    ObjDesc->ThermalZone.DeviceNotify);
-        AcpiExOutPointer ("AddressSpace",    ObjDesc->ThermalZone.AddressSpace);
+        AcpiExOutPointer ("Handler",         ObjDesc->ThermalZone.Handler);
         break;
 
 
