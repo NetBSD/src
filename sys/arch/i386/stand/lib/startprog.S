@@ -1,10 +1,10 @@
-/*	$NetBSD: startprog.S,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: startprog.S,v 1.2 1999/03/01 12:46:16 simonb Exp $	*/
 	
 /* starts program in protected mode / flat space
  with given stackframe
  needs global variables flatcodeseg and flatdataseg
  (gdt offsets)
-  derivied from: NetBSD:sys/arch/i386/boot/asm.S
+  derived from: NetBSD:sys/arch/i386/boot/asm.S
  */
 
 /*
