@@ -1,16 +1,25 @@
-#	$NetBSD: files.ofppc,v 1.15 2001/10/22 14:46:08 thorpej Exp $
+#	$NetBSD: files.ofppc,v 1.16 2001/10/22 23:01:18 thorpej Exp $
 #
-# First try for ofppc-specific configuration info
+# NetBSD/ofppc configuration info
 #
+
+# maxpartitions must be the first thing in files.${MACHINE}
 maxpartitions 16
 
-maxusers 2 8 64
+maxusers 8 16 64
+
+# Platform support option headers
+defopt	FIREPOWER_ES			# Firepower ES
+defopt	FIREPOWER_MX			# Firepower MX
+defopt	FIREPOWER_LX			# Firepower LX
+defopt	TOTALIMPACT_BRIQ		# Total Impact briQ
 
 file	arch/ofppc/ofppc/autoconf.c
 file	arch/ofppc/ofppc/clock.c
 file	arch/ofppc/ofppc/conf.c
 file	arch/ofppc/ofppc/disksubr.c		disk
 file	arch/ofppc/ofppc/machdep.c
+file	arch/ofppc/ofppc/platform.c
 file	arch/ofppc/ofppc/procfs_machdep.c	procfs
 file	dev/cons.c
 file	dev/cninit.c
@@ -39,19 +48,8 @@ file arch/powerpc/powerpc/linux_trap.c		compat_linux
 include "dev/ofw/files.ofw"
 major	{ofdisk = 0}
 
-# For now, hardwire soft interrupt handling
-file	arch/ofppc/ofppc/soft_spl.c
-
-# FirePower specific code
-#device firepower: ofbus
-#attach firepower at root
-
-#file	arch/ofppc/firepower/firedep.c	firepower needs-flag
-#file	arch/ofppc/firepower/fireirq.c	firepower
-
-
 #
-# System bus types
+# Main system bus and devices.
 #
 define	mainbus {}
 device	mainbus: mainbus, ofbus
@@ -61,6 +59,13 @@ file	arch/ofppc/ofppc/mainbus.c		mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/ofppc/ofppc/cpu.c			cpu
+
+#
+# Support for generic OpenFirmware driver configurations.  This is
+# always included in the kernel.
+#
+file	arch/ofppc/ofwgen/ofwgen.c
+file	arch/ofppc/ofwgen/ofwgen_intr.c
 
 # RAIDframe
 major	{raid = 12}
