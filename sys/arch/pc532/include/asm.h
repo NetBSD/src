@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 1997/05/08 13:44:11 matthias Exp $	*/
+/*	$NetBSD: asm.h,v 1.11 1997/11/10 01:50:25 phil Exp $	*/
 
 /* 
  * Mach Operating System
@@ -189,8 +189,7 @@
 #define PANIC(message)						\
 		addr	9f,tos				;	\
 		bsr	_C_LABEL(panic) 		;	\
-	9:	.asciz	message				;	\
-		.even
+	9:	.asciz	message
 
 /*
  * Shorthand for defining vectors for the vector table.
