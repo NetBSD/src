@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.27 2001/03/10 23:52:45 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.28 2002/11/30 04:04:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,12 +36,12 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: input.c,v 1.27 2001/03/10 23:52:45 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.28 2002/11/30 04:04:23 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
-__RCSID("Revision: 2.23 ");
-#ident "Revision: 2.23 "
+__RCSID("Revision: 2.26 ");
+#ident "Revision: 2.26 "
 #endif
 
 static void input(struct sockaddr_in *, struct interface *, struct interface *,
@@ -329,9 +329,14 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 					v12buf.n->n_family = RIP_AF_INET;
 					v12buf.n->n_dst = RIP_DEFAULT;
 					i = aifp->int_d_metric;
-					if (0 != (rt = rtget(RIP_DEFAULT, 0)))
-					    i = MIN(i, (rt->rt_metric
-							+aifp->int_metric+1));
+					if (0 != (rt = rtget(RIP_DEFAULT, 0))) {
+					    j = (rt->rt_metric
+						 +aifp->int_metric
+						 +aifp->int_adj_outmetric
+						 +1);
+					    if (i > j)
+						i = j;
+					}
 					v12buf.n->n_metric = htonl(i);
 					v12buf.n++;
 					break;
@@ -397,11 +402,15 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 				 */
 				v12buf.n->n_family = RIP_AF_INET;
 				v12buf.n->n_dst = dst;
-				v12buf.n->n_metric = (rt->rt_metric+1
-						      + ((aifp!=0)
-							  ? aifp->int_metric
-							  : 1));
-				if (v12buf.n->n_metric > HOPCNT_INFINITY)
+				j = rt->rt_metric+1;
+				if (!aifp)
+					++j;
+				else
+					j += (aifp->int_metric
+					      + aifp->int_adj_outmetric);
+				if (j < HOPCNT_INFINITY)
+					v12buf.n->n_metric = j;
+				else
 					v12buf.n->n_metric = HOPCNT_INFINITY;
 				if (v12buf.buf->rip_vers != RIPv1) {
 					v12buf.n->n_tag = rt->rt_tag;
@@ -666,7 +675,8 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 
 			/* Adjust metric according to incoming interface..
 			 */
-			n->n_metric += aifp->int_metric;
+			n->n_metric += (aifp->int_metric
+					+ aifp->int_adj_inmetric);
 			if (n->n_metric > HOPCNT_INFINITY)
 				n->n_metric = HOPCNT_INFINITY;
 
@@ -979,12 +989,12 @@ ck_passwd(struct interface *aifp,
 			 */
 			if (TRACEPACKETS) {
 				if (NA->au.a_md5.md5_auth_len
-				    != RIP_AUTH_MD5_LEN)
+				    != RIP_AUTH_MD5_HASH_LEN)
 					msglim(use_authp, from,
 					       "unknown MD5 RIPv2 auth len %#x"
 					       " instead of %#x from %s",
 					       NA->au.a_md5.md5_auth_len,
-					       RIP_AUTH_MD5_LEN,
+					       RIP_AUTH_MD5_HASH_LEN,
 					       naddr_ntoa(from));
 				if (na2->a_family != RIP_AF_AUTH)
 					msglim(use_authp, from,
@@ -1001,8 +1011,9 @@ ck_passwd(struct interface *aifp,
 			}
 
 			MD5Init(&md5_ctx);
-			MD5Update(&md5_ctx, (u_char *)rip, len);
-			MD5Update(&md5_ctx, ap->key, RIP_AUTH_MD5_LEN);
+			MD5Update(&md5_ctx, (u_char *)rip,
+				  len + RIP_AUTH_MD5_HASH_XTRA);
+			MD5Update(&md5_ctx, ap->key, RIP_AUTH_MD5_KEY_LEN);
 			MD5Final(hash, &md5_ctx);
 			if (!memcmp(hash, na2->au.au_pw, sizeof(hash)))
 				return 1;
