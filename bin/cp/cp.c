@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.16 1997/05/19 01:07:33 kleink Exp $	*/
+/*	$NetBSD: cp.c,v 1.17 1997/05/21 09:48:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: cp.c,v 1.16 1997/05/19 01:07:33 kleink Exp $";
+static char rcsid[] = "$NetBSD: cp.c,v 1.17 1997/05/21 09:48:33 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ copy(argv, type, fts_options)
 	FTS *ftsp;
 	FTSENT *curr;
 	int base, dne, nlen, rval;
-	char *p;
+	char *p, *tmp;
 
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
 		err(1, NULL);
@@ -324,12 +324,13 @@ copy(argv, type, fts_options)
 			p = &curr->fts_path[base];
 			nlen = curr->fts_pathlen - base;
 
-			if (*p != '/' && to.target_end[-1] != '/')
-				*to.target_end++ = '/';
-			*to.target_end = 0;
+			tmp = to.target_end;
+			if (*p != '/' && *(tmp - 1) != '/')
+				*tmp++ = '/';
+			*tmp = 0;
 
-			(void)strncat(to.target_end, p, nlen);
-			to.p_end = to.target_end + nlen;
+			(void)strncat(tmp, p, nlen);
+			to.p_end = tmp + nlen;
 			*to.p_end = 0;
 			STRIP_TRAILING_SLASH(to);
 		}
