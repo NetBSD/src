@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.8 2004/11/19 20:52:10 wiz Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.9 2004/12/16 02:08:29 yamt Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.37 2004/07/11 01:54:36 brad Exp $ */
 
 /*
@@ -1136,26 +1136,6 @@ main(int argc, char *argv[])
 	if (ipf && ipf_get_proxy_env(0, &real_server_sa, &client_iob.sa,
 	    &proxy_sa) == -1)
 		exit(EX_PROTOCOL);
-
-	/*
-	 * We may now drop root privs, as we have done our ioctl for
-	 * pf. If we do drop root, we can't make backchannel connections
-	 * for PORT and EPRT come from port 20, which is not strictly
-	 * RFC compliant. This shouldn't cause problems for all but
-	 * the stupidest ftp clients and the stupidest packet filters.
-	 */
-	drop_privs();
-
-	/*
-	 * We check_host after get_proxy_env so that checks are done
-	 * against the original destination endpoint, not the endpoint
-	 * of our side of the rdr. This allows the use of tcpwrapper
-	 * rules to restrict destinations as well as sources of connections
-	 * for ftp.
-	 */
-	if (Use_Rdns)
-		flags = 0;
-	else
 
 	/*
 	 * We may now drop root privs, as we have done our ioctl for
