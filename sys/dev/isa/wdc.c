@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.4 1997/09/03 07:57:51 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.5 1997/09/24 17:00:55 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -619,7 +619,7 @@ wdc_ata_intr(wdc,xfer)
 
 	if (wait_for_unbusy(wdc) < 0) {
 		wdcerror(wdc, "wdcintr: timeout waiting for unbusy");
-		wdc->sc_status |= WDCS_ERR;	/* XXX */
+		return 0;
 	}
 
 	untimeout(wdctimeout, wdc);
@@ -712,7 +712,7 @@ wdc_ata_intr(wdc,xfer)
 done:
 	/* Done with this transfer, with or without error. */
 	wdc_ata_done(wdc, xfer);
-	return 0;
+	return 1;
 
 restart:
 	/* Start the next operation */
@@ -974,14 +974,12 @@ wdcintr(arg)
 	xfer = wdc->sc_xfer.tqh_first;
 #if NATAPIBUS > 0 && NWD > 0
 	if (xfer->c_flags & C_ATAPI) {
-		(void) wdc_atapi_intr(wdc,xfer);
-		return 0;
+		return wdc_atapi_intr(wdc,xfer);
 	} else
 		return wdc_ata_intr(wdc,xfer);
 #else /* NATAPIBUS > 0  && NWD > 0 */
 #if NATAPIBUS > 0
-	(void) wdc_atapi_intr(wdc,xfer);
-	return 0;
+	return wdc_atapi_intr(wdc,xfer);
 #endif /* NATAPIBUS > 0 */
 #if NWD > 0
 	return wdc_ata_intr(wdc,xfer);
@@ -1605,7 +1603,8 @@ wdc_atapi_send_command_packet(sc_xfer)
 #ifdef ATAPI_DEBUG_WDC
 		printf("Wait for data i/o phase: i = %d\n", i);
 #endif
-		while (wdc_atapi_intr(wdc, xfer)) {
+		while ((sc_xfer->flags & ITSDONE) == 0) {
+			wdc_atapi_intr(wdc, xfer);
 			for (i = 2000; i > 0; --i)
 				if ((inb(wdc->sc_iobase + wd_status)
 				    & WDCS_DRQ) == 0)
@@ -1656,7 +1655,7 @@ wdc_atapi_intr(wdc, xfer)
 	if (wait_for_unbusy(wdc) < 0) {
 		if ((wdc->sc_status & WDCS_ERR) == 0) {
 			printf("wdc_atapi_intr: controller busy\n");
-			sc_xfer->error = XS_SELTIMEOUT;
+			return 0;
 		} else {
 			sc_xfer->error = XS_SENSE;
 			sc_xfer->sense.atapi_sense = wdc->sc_error;
@@ -1714,7 +1713,7 @@ again:
 		if ((sc_xfer->flags & SCSI_DATA_OUT) == 0) {
 			printf("wdc_atapi_intr: bad data phase\n");
 			sc_xfer->error = XS_DRIVER_STUFFUP;
-			return 1;
+			return 0;
 		}
 		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		if (xfer->c_bcount < len) {
@@ -1743,7 +1742,7 @@ again:
 		if ((sc_xfer->flags & SCSI_DATA_IN) == 0) {
 			printf("wdc_atapi_intr: bad data phase\n");
 			sc_xfer->error = XS_DRIVER_STUFFUP;
-			return 1;
+			return 0;
 		}
 		wdc->sc_flags |= WDCF_IRQ_WAIT;
 		if (xfer->c_bcount < len) {
@@ -1799,7 +1798,7 @@ again:
 			sc_xfer->error);
 #endif
 	wdc_atapi_done(wdc, xfer);
-	return (0);
+	return (1);
 }
 
 
