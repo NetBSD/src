@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.14 2001/07/19 16:30:52 itojun Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.15 2001/07/19 19:15:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -466,8 +466,18 @@ lmc_watchdog(int unit)
 	if (link_status != LMC_LINK_DOWN && !ostatus) {
 		printf(LMC_PRINTF_FMT ": physical link up\n",
 		       LMC_PRINTF_ARGS);
-		if (sc->lmc_flags & LMC_IFUP)
+		if (sc->lmc_flags & LMC_IFUP) {
 			lmc_ifup(sc);
+#if 0 && (defined(__NetBSD__) || defined(__FreeBSD__))
+			if (sc->lmc_if.if_flags & IFF_UP) {
+				struct sppp *sp = &sc->lmc_sppp;
+
+				/* re-connect LCP */
+				(sp->pp_down)(sp);
+				(sp->pp_up)(sp);
+			}
+#endif
+		}
 		sc->lmc_flags |= LMC_MODEMOK;
 		if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
 		    sc->lmc_cardtype == LMC_CARDTYPE_T1)
@@ -506,10 +516,6 @@ lmc_watchdog(int unit)
 static void
 lmc_ifup(lmc_softc_t * const sc)
 {
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-	struct sppp *sp = &sc->lmc_sppp;
-#endif
-
 	sc->lmc_if.if_timer = 0;
 
 	lmc_dec_reset(sc);
@@ -548,13 +554,6 @@ lmc_ifup(lmc_softc_t * const sc)
 	LMC_CSR_WRITE(sc, csr_command, sc->lmc_cmdmode);
 
 	sc->lmc_if.if_timer = 1;
-
-
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-	/* connect LCP */
-	if ((sc->lmc_sppp.pp_flags & PP_CISCO) == 0)
-		(sp->pp_up)(sp);
-#endif
 }
 
 /*
@@ -564,12 +563,14 @@ lmc_ifup(lmc_softc_t * const sc)
 static void
 lmc_ifdown(lmc_softc_t * const sc)
 {
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-	struct sppp *sp = &sc->lmc_sppp;
 
-	/* disconnect LCP */
-	if ((sc->lmc_sppp.pp_flags & PP_CISCO) == 0)
+#if 0 && (defined(__NetBSD__) || defined(__FreeBSD__))
+	if (sc->lmc_if.if_flags & IFF_UP) {
+		struct sppp *sp = &sc->lmc_sppp;
+
+		/* disconnect LCP */
 		(sp->pp_down)(sp);
+	}
 #endif
 
 	sc->lmc_if.if_timer = 0;
