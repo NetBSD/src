@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.48 2000/03/23 07:01:32 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.49 2000/03/29 13:57:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1029,9 +1029,9 @@ abort:
  */
 void
 ncr53c9x_msgin(sc)
-	register struct ncr53c9x_softc *sc;
+	struct ncr53c9x_softc *sc;
 {
-	register int v;
+	int v;
 
 	NCR_TRACE(("[ncr53c9x_msgin(curmsglen:%ld)] ", (long)sc->sc_imlen));
 
@@ -1301,7 +1301,7 @@ gotit:
  */
 void
 ncr53c9x_msgout(sc)
-	register struct ncr53c9x_softc *sc;
+	struct ncr53c9x_softc *sc;
 {
 	struct ncr53c9x_tinfo *ti;
 	struct ncr53c9x_ecb *ecb;
@@ -1436,9 +1436,9 @@ int
 ncr53c9x_intr(arg)
 	void *arg;
 {
-	register struct ncr53c9x_softc *sc = arg;
-	register struct ncr53c9x_ecb *ecb;
-	register struct scsipi_link *sc_link;
+	struct ncr53c9x_softc *sc = arg;
+	struct ncr53c9x_ecb *ecb;
+	struct scsipi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
 	size_t size;
 	int nfifo;
