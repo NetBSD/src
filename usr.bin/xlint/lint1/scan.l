@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.5 1995/10/02 17:19:03 jpo Exp $	*/
+/*	$NetBSD: scan.l,v 1.6 1995/10/02 17:26:57 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.5 1995/10/02 17:19:03 jpo Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.6 1995/10/02 17:26:57 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -191,6 +191,9 @@ static	struct	kwtab {
 	u_int	kw_stdc : 1;	/* STDC keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
 } kwtab[] = {
+	{ "asm",	T_ASM,		0,	0,	0,	  0, 1 },
+	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0 },
+	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0 },
 	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0 },
 	{ "break",	T_BREAK,	0,	0,	0,	  0, 0 },
 	{ "case",	T_CASE,		0,	0,	0,	  0, 0 },
@@ -1378,4 +1381,33 @@ pushdown(sym)
 	dcs->d_ldlsym = &nsym->s_dlnxt;
 
 	return (nsym);
+}
+
+/*
+ * Free any dynamically allocated memory referenced by
+ * the value stack or yylval.
+ * The type of information in yylval is described by tok.
+ */
+void
+freeyyv(sp, tok)
+	void	*sp;
+	int	tok;
+{
+	if (tok == T_NAME || tok == T_TYPENAME) {
+		sbuf_t *sb = *(sbuf_t **)sp;
+		freesb(sb);
+	} else if (tok == T_CON) {
+		val_t *val = *(val_t **)sp;
+		free(val);
+	} else if (tok == T_STRING) {
+		strg_t *strg = *(strg_t **)sp;
+		if (strg->st_tspec == CHAR) {
+			free(strg->st_cp);
+		} else if (strg->st_tspec == WCHAR) {
+			free(strg->st_wcp);
+		} else {
+			lerror("fryylv() 1");
+		}
+		free(strg);
+	}	
 }
