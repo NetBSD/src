@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.36 2001/07/25 09:57:31 kanaoka Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.37 2001/08/07 02:59:53 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -754,7 +754,7 @@ rtk_attach(sc)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(rtk_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unbale to establish shutdown hook\n",
+		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	/*
 	 * Add a suspend hook to make sure we come back up after a
