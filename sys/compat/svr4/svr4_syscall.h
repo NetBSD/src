@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscall.h,v 1.63 2000/12/09 05:37:06 mycroft Exp $ */
+/* $NetBSD: svr4_syscall.h,v 1.64 2000/12/09 06:19:40 mycroft Exp $ */
 
 /*
  * System call numbers.
@@ -487,3 +487,4 @@
 
 				/* 249 is excluded ntp_adjtime */
 #define	SVR4_SYS_MAXSYSCALL	250
+#define	SVR4_SYS_NSYSENT	256

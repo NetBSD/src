@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_sysent.c,v 1.65 2000/12/09 05:37:06 mycroft Exp $ */
+/* $NetBSD: svr4_sysent.c,v 1.66 2000/12/09 06:19:41 mycroft Exp $ */
 
 /*
  * System call switch table.
@@ -550,5 +550,17 @@ struct sysent svr4_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 249 = excluded ntp_adjtime */
 #endif
+	{ 0, 0,
+	    sys_nosys },			/* 250 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 251 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 252 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 253 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 254 = filler */
+	{ 0, 0,
+	    sys_nosys },			/* 255 = filler */
 };
 
