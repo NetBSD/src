@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.174 1998/05/09 05:20:35 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.175 1998/06/04 02:25:05 enami Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -425,7 +425,7 @@ wdunlock(d_link)
 	struct wd_link *d_link;
 {
 
-	WDDEBUG_PRINT(("wdunlock"));
+	WDDEBUG_PRINT(("wdunlock\n"));
 
 	d_link->sc_flags &= ~WDF_LOCKED;
 	if ((d_link->sc_flags & WDF_WANTED) != 0) {
