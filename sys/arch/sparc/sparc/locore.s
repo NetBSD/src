@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148 2001/09/13 13:25:48 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.149 2001/12/11 03:46:59 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2465,6 +2465,7 @@ softintr_common:
 	 */
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(sparc_interrupt4m))
+#if !defined(MSIIEP)	/* "normal" sun4m */
 	mov	1, %l4
 	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
@@ -2478,7 +2479,20 @@ _ENTRY(_C_LABEL(sparc_interrupt4m))
 	sll	%l4, 16, %l5
 	st	%l5, [%l6 + ICR_PI_CLR_OFFSET]
 	b,a	softintr_common
-#endif
+#else /* MSIIEP */
+	sethi	%hi(MSIIEP_PCIC_VA), %l6
+	mov	1, %l4
+	ld	[%l6 + PCIC_PROC_IPR_REG], %l5 ! get pending interrupts
+	sll	%l4, %l3, %l4
+	btst	%l4, %l5	!  has pending hw intr at this level?
+	bnz	sparc_interrupt_common
+	 nop
+
+	! a soft interrupt; clear its bit in softintr clear register
+	b	softintr_common
+	 sth	%l4, [%l6 + PCIC_SOFT_INTR_CLEAR_REG]
+#endif /* MSIIEP */
+#endif /* SUN4M */
 
 _ENTRY(_C_LABEL(sparc_interrupt44c))
 sparc_interrupt_common:
@@ -5834,6 +5848,7 @@ ENTRY(ienab_bic)
  * raise(cpu, level)
  */
 ENTRY(raise)
+#if !defined(MSIIEP) /* normal suns */
 	! *(ICR_PI_SET + cpu*_MAXNBPG) = PINTR_SINTRLEV(level)
 	sethi	%hi(1 << 16), %o2
 	sll	%o2, %o1, %o2
@@ -5845,7 +5860,13 @@ ENTRY(raise)
 	 add	%o1, %o3, %o1
 	retl
 	 st	%o2, [%o1]
-
+#else /* MSIIEP - ignore %o0, only one cpu ever */
+	mov	1, %o2
+	sethi	%hi(MSIIEP_PCIC_VA), %o0
+	sll	%o2, %o1, %o2
+	retl
+	 sth	%o2, [%o0 + PCIC_SOFT_INTR_SET_REG]
+#endif
 
 /*
  * Read Synchronous Fault Status registers.
@@ -5951,6 +5972,7 @@ _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 
 #endif /* SUN4M */
 
+#if !defined(MSIIEP)	/* normal suns */
 /*
  * void lo_microtime(struct timeval *tv)
  *
@@ -6015,6 +6037,66 @@ NOP_ON_4_4C_1:
 4:
 	retl
 	 st	%o3, [%o0+4]
+
+#else /* MSIIEP */
+/* XXX: uwe: can be merged with 4c/4m version above */
+/*
+ * ms-IIep version of
+ * void microtime(struct timeval *tv)
+ *
+ * This is similar to 4c/4m microtime.   The difference is that
+ * counter uses 31 bits and ticks every 4 CPU cycles (cpu is @100MHz)
+ * the magic to divide by 25 is stolen from gcc
+ */
+ENTRY(microtime)
+	sethi	%hi(_C_LABEL(time)), %g2
+
+	sethi	%hi(MSIIEP_PCIC_VA), %g3
+	or	%g3, PCIC_SCCR_REG, %g3
+
+2:
+	ldd	[%g2+%lo(_C_LABEL(time))], %o2	! time.tv_sec & time.tv_usec
+	ld	[%g3], %o4			! system (timer) counter
+	ldd	[%g2+%lo(_C_LABEL(time))], %g4	! see if time values changed
+	cmp	%g4, %o2
+	bne	2b				! if time.tv_sec changed
+	 cmp	%g5, %o3
+	bne	2b				! if time.tv_usec changed
+	 tst	%o4
+	!! %o2 - time.tv_sec;  %o3 - time.tv_usec;  %o4 - timer counter
+
+!!! BEGIN ms-IIep specific code
+	bpos	3f				! if limit not reached yet
+	 clr	%g4				!  then use timer as is
+
+	sethi	%hi(0x80000000), %g5
+	sethi	%hi(_C_LABEL(tick)), %g4
+	andn	%o4, %g5, %o4			! cleat limit reached flag
+	ld	[%g4+%lo(_C_LABEL(tick))], %g4
+
+	!! %g4 - either 0 or tick (if timer has hit the limit)
+3:
+	inc	-1, %o4				! timer is 1-based, adjust
+	!! divide by 25 magic stollen from a gcc output
+	sethi	%hi(1374389535), %g5
+	or	%g5, %lo(1374389535), %g5
+	umul	%o4, %g5, %g0
+	rd	%y, %o4
+	srl	%o4, 3, %o4
+	add	%o4, %g4, %o4			! may be bump usec by tick
+!!! END ms-IIep specific code
+
+	add	%o3, %o4, %o3			! add timer to time.tv_usec
+	set	1000000, %g5			! normalize usec value
+	cmp	%o3, %g5
+	bl	4f
+	 nop
+	inc	%o2				! overflow into tv_sec
+	sub	%o3, %g5, %o3
+4:
+	retl
+	 std	%o2, [%o0]
+#endif /* MSIIEP */
 
 /*
  * delay function
