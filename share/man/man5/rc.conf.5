@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.8 1997/05/12 05:21:51 mikel Exp $
+.\"	$NetBSD: rc.conf.5,v 1.9 1997/05/12 11:28:19 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -68,6 +68,25 @@ always run, and will not take "NO."
 The arguments passed if "DEFAULT" is chosen are listed in
 .Nm
 itself.
+.Pp
+Basic network configuration:
+.Bl -tag -width bootparamd_flags
+.It Sy hostname
+Name of host.
+If empty or not set, then the contents of
+.Pa /etc/myname
+(if it exists) are used.
+.It Sy domainname
+YP domain of host.
+If empty or not set, then the contents of
+.Pa /etc/defaultdomain
+(if it exists) are used.
+.It Sy defaultroute
+Default network route.
+If empty or not set, then the contents of
+.Pa /etc/mygate
+(if it exists) are used.
+.El
 .Pp
 Actions to perform on boot-up:
 .Bl -tag -width bootparamd_flags
@@ -144,6 +163,19 @@ Supplies a set of parameters for configuring the given interface
 See
 .Sy net_interfaces
 above.
+.It Sy ifaliases_*
+List of
+.Sq Ar "address netmask"
+pairs to configure additional network addresses for the given
+configured interface
+.Dq *
+(e.g.
+.Sy ifaliases_le0 ) .
+If
+.Ar netmask
+is
+.Dq - ,
+then use the default netmask for the interface.
 .El
 .Pp
 Daemons required for other daemons:
