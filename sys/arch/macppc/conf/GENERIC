@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2005/01/17 16:42:55 briggs Exp $
+# $NetBSD: GENERIC,v 1.189 2005/01/20 19:14:08 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.188 $"
+#ident 		"GENERIC-$Revision: 1.189 $"
 
 maxusers	32
 
@@ -387,9 +387,11 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI USB controllers
-ohci*	at pci? dev ? function ?			# Open Host Controller
+ohci*	at pci? dev ? function ?		# Open Host Controller
+ehci*	at pci? dev ? function ?		# Enhanced Host Controller
 
 usb*	at ohci?					# USB bus support
+usb*	at ehci?					# USB bus support
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ? configuration ? interface ?
 
