@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.6 1999/06/27 11:10:18 pk Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7 2004/03/23 16:13:27 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/trap.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: _setjmp.S,v 1.6 1999/06/27 11:10:18 pk Exp $")
+RCSID("$NetBSD: _setjmp.S,v 1.7 2004/03/23 16:13:27 pk Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -75,5 +75,5 @@ ENTRY(_longjmp)
 	ld	[%o0+4], %o7	/* restore return pc */
 	ld	[%o0+0], %fp	/* and stack pointer */
 
-	retl			! success, return %g6
+	retl			! success, return %o1
 	 restore	%o1, 0, %o0
