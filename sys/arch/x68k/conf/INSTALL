@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27 2000/06/22 14:27:07 minoura Exp $
+#	$NetBSD: INSTALL,v 1.28 2000/07/05 16:18:02 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,15 +6,15 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.27 $"
+#ident 		"INSTALL-$Revision: 1.28 $"
 
-maxusers	8
+maxusers	4
 
 ## Enable the hooks used for initializing the memory-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
+options 	MINIROOTSIZE=2100	# 1.2M, same as a 130mm floppy
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a 90mm floppy
 #options 	MINIROOTSIZE=2048
 
@@ -146,7 +146,7 @@ makeoptions	COPTS="-Os"
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
-file-system	KERNFS		# kernel data-structure filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem (buggy)
 #file-system 	OVERLAY		# overlay file system
 #file-system	MFS		# memory-based filesystem
@@ -172,7 +172,7 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
+#options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
@@ -268,7 +268,7 @@ ne0	at neptune? addr 0x300			# NE2000 or clone
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
-pseudo-device	ccd	4
+#pseudo-device	ccd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
@@ -307,6 +307,7 @@ pseudo-device	sl		1
 ## for IPv6
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 #### Other device configuration
 
@@ -316,7 +317,7 @@ pseudo-device	sl		1
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
+pseudo-device	pty		4	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
