@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.31 1999/03/12 08:15:27 nisimura Exp $	*/
+/*	$NetBSD: asic.c,v 1.32 1999/03/14 23:59:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -63,42 +63,51 @@
 #include "opt_dec_3maxplus.h"
 #include "opt_dec_maxine.h"
 
+/* We  support only one ioctl asic chip, and this is its address. */
+tc_addr_t	ioasic_base = 0;
 
+/* tables of child devices on an ioasic bus. */
+struct ioasic_dev {
+        char            *iad_modname;
+        tc_offset_t     iad_offset;
+        void            *iad_cookie;
+        u_int32_t       iad_intrbits;
+};
 
 #define	C(x)	((void*)(x))
 #define	ASIC_NDEVS(x)	(sizeof(x)/sizeof(x[0]))
 #define ARRAY_SIZEOF(x) (sizeof((x)) / sizeof ((x)[0]))
 
 #if defined(DEC_3MAXPLUS) || defined(DEC_3MIN)
-struct ioasicdev_attach_args kn03_ioasic_devs[] = {
-/* 0 */	{ "lance",	0x0C0000, 0, C(KN03_LANCE_SLOT)	},
-/* 1 */	{ "scc",	0x100000, 0, C(KN03_SCC0_SLOT)	},
-/* 2 */	{ "scc",	0x180000, 0, C(KN03_SCC1_SLOT)	},
-/* 3 */	{ "mc146818",	0x200000, 0, C(0), },
-/* 4 */	{ "asc",	0x300000, 0, C(KN03_SCSI_SLOT)	},
+struct ioasic_dev kn03_ioasic_devs[] = {
+	{ "lance",	0x0C0000, C(KN03_LANCE_SLOT),	IOASIC_INTR_LANCE },
+	{ "scc",	0x100000, C(KN03_SCC0_SLOT),	IOASIC_INTR_SCC_0 },
+	{ "scc",	0x180000, C(KN03_SCC1_SLOT),	IOASIC_INTR_SCC_1 },
+	{ "mc146818",	0x200000, C(0),			0 },
+	{ "asc",	0x300000, C(KN03_SCSI_SLOT),	IOASIC_INTR_SCSI },
 };
-const int nkn03_ioasic_devs  =  ARRAY_SIZEOF(kn03_ioasic_devs);
+const int kn03_ioasic_ndevs  =  ARRAY_SIZEOF(kn03_ioasic_devs);
 #endif /* DEC_3MAXPLUS || DEC_3MIN */
 
 #if defined(DEC_MAXINE)
-struct ioasicdev_attach_args xine_ioasic_devs[] = {
-/* 0 */	{ "lance",	0x0C0000, 0, C(XINE_LANCE_SLOT),	},
-/* 1 */	{ "scc",	0x100000, 0, C(XINE_SCC0_SLOT),	},
-/* 2 */	{ "mc146818",	0x200000, 0, C(0),  },
-/* 3 */	{ "isdn",	0x240000, 0, C(XINE_ISDN_SLOT),	},
-/* 4 */	{ "dtop",	0x280000, 0, C(XINE_DTOP_SLOT),	},
-/* 5 */	{ "fdc",	0x2C0000, 0, C(XINE_FLOPPY_SLOT),	},
-/* 6 */	{ "asc",	0x300000, 0, C(XINE_SCSI_SLOT),	},
+struct ioasic_dev xine_ioasic_devs[] = {
+	{ "lance",	0x0C0000, C(XINE_LANCE_SLOT),	IOASIC_INTR_LANCE },
+	{ "scc",	0x100000, C(XINE_SCC0_SLOT),	IOASIC_INTR_SCC_0 },
+	{ "mc146818",	0x200000, C(0),			0 },
+	{ "isdn",	0x240000, C(XINE_ISDN_SLOT),	XINE_INTR_ISDN },
+	{ "dtop",	0x280000, C(XINE_DTOP_SLOT),	XINE_INTR_DTOP },
+	{ "fdc",	0x2C0000, C(XINE_FLOPPY_SLOT),	0 },
+	{ "asc",	0x300000, C(XINE_SCSI_SLOT),	IOASIC_INTR_SCSI },
 };
-const int nxine_ioasic_devs  =  ARRAY_SIZEOF(xine_ioasic_devs);
+const int xine_ioasic_ndevs  =  ARRAY_SIZEOF(xine_ioasic_devs);
 #endif /* DEC_MAXINE */
 
 #if defined(DEC_3MAX)
-struct ioasicdev_attach_args kn02_ioasic_devs[] = {
-/* 0 */	{ "dc",		0x200000, 0, C(7), },
-/* 0 */	{ "mc146818",	0x280000, 0, C(0), },
+struct ioasic_dev kn02_ioasic_devs[] = {
+	{ "dc",		0x200000, C(7), 0 },
+	{ "mc146818",	0x280000, C(0), 0 },
 };
-const int nkn02_ioasic_devs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
+const int kn02_ioasic_ndevs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
 #endif /* DEC_3MAX */
 #endif /* pmax */
 
@@ -120,34 +129,10 @@ struct cfattach ioasic_ca = {
 	sizeof(struct asic_softc), ioasicmatch, ioasicattach
 };
 
-void    asic_intr_establish __P((struct confargs *, intr_handler_t,
-				 intr_arg_t));
-void    asic_intr_disestablish __P((struct confargs *));
-
-int	asic_intrnull __P((intr_arg_t));
-
-struct asic_slot {
-	struct confargs	as_ca;
-	intr_handler_t	as_handler;
-	void		*iada_cookie;
-	u_int		iada_intrbits;
-};
-
 #ifdef	pmax
-/*#define IOASIC_DEBUG*/
-
-struct ioasicdev_attach_args *asic_slots;
-
-extern tc_addr_t	ioasic_base;
-tc_addr_t	ioasic_base = 0;
+struct ioasic_dev *ioasic_devs;
 #endif	/*pmax*/
 
-
-#ifdef IOASIC_DEBUG
-#define IOASIC_DPRINTF(x)	printf x
-#else
-#define IOASIC_DPRINTF(x)	do { if (0) printf x ; } while (0)
-#endif
 
 int
 ioasicmatch(parent, cf, aux)
@@ -157,15 +142,11 @@ ioasicmatch(parent, cf, aux)
 {
 	struct tc_attach_args *ta = aux;
 
-	IOASIC_DPRINTF(("asicmatch: %s slot %d offset 0x%x pri %d\n",
-		ta->ta_modname, ta->ta_slot, ta->ta_offset, (int)ta->ta_cookie));
-
 	/* An IOCTL asic can only occur on the turbochannel, anyway. */
 #ifdef notyet
 	if (parent != &tccd)
 		return (0);
 #endif
-
 
 	/*
 	 * XXX This is wrong.
@@ -206,30 +187,28 @@ ioasicattach(parent, self, aux)
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		/* 3min ioasic addressees are the same as 3maxplus. */
-		asic_slots = kn03_ioasic_devs;
-		nslots = nkn03_ioasic_devs;
+		ioasic_devs = kn03_ioasic_devs;
+		nslots = kn03_ioasic_ndevs;
 		break;
 #endif
 
 #ifdef DEC_MAXINE
 	case DS_MAXINE:
-		asic_slots = xine_ioasic_devs;
-		nslots = nxine_ioasic_devs;
+		ioasic_devs = xine_ioasic_devs;
+		nslots = xine_ioasic_ndevs;
 		break;
 #endif
 
 #ifdef DEC_3MAX
 	case DS_3MAX:
-		asic_slots = kn02_ioasic_devs;
-		nslots = nkn02_ioasic_devs;
+		ioasic_devs = kn02_ioasic_devs;
+		nslots = kn02_ioasic_ndevs;
 		break;
 #endif
 
 	default:
 		panic("ioasicattach: shouldn't be here, really...");
 	}
-
-	IOASIC_DPRINTF(("asicattach: %s\n", sc->sc_dv.dv_xname));
 
 	sc->sc_base = ta->ta_addr;
 
@@ -254,29 +233,21 @@ ioasicattach(parent, self, aux)
 #endif 	/* Alpha AXP: select ASIC speed  */
 
 
-/* The MAXINE has seven pseudo-slots in its system slot */
-#define ASIC_MAX_NSLOTS 7 /*XXX*/
-
-        /* Try to configure each CPU-internal device */
+        /* 
+	 * Try to configure each ioctl asic baseboard device.
+	 */
         for (i = 0; i < nslots; i++) {
-
-		IOASIC_DPRINTF(("asicattach: entry %d, base addr %x\n",
-		       i, sc->sc_base));
-
-		/* Compute address at runtime. Leave table readonly. */
-		idev = asic_slots[i];
-		idev.iada_addr =((u_long)sc->sc_base) + idev.iada_offset;
-
-		if (idev.iada_modname == NULL || idev.iada_modname[0] == 0)
-			break;
-
-		IOASIC_DPRINTF((" adding %s offset %x addr %x\n",
-		    idev.iada_modname, idev.iada_offset, idev.iada_addr));
+		strncpy(idev.iada_modname, ioasic_devs[i].iad_modname,
+			TC_ROM_LLEN);
+		idev.iada_modname[TC_ROM_LLEN] = '\0';
+		idev.iada_offset = ioasic_devs[i].iad_offset;
+		idev.iada_addr = sc->sc_base + ioasic_devs[i].iad_offset;
+		idev.iada_cookie = ioasic_devs[i].iad_cookie;
+		/* XXX bus-space handle */
 
                 /* Tell the autoconfig machinery we've found the hardware. */
                 config_found(self, &idev, ioasicprint);
         }
-	IOASIC_DPRINTF(("asicattach: done\n"));
 }
 
 int
@@ -314,14 +285,6 @@ ioasic_intr_establish(dev, cookie, level, handler, val)
 {
 
 	(*tc_enable_interrupt)((int)cookie, handler, val, 1);
-}
-
-int
-asic_intrnull(val)
-	intr_arg_t val;
-{
-
-        panic("uncaught IOCTL ASIC intr for slot %ld\n", (long)val);
 }
 
 
