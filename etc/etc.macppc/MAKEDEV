@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.26 2000/03/07 18:24:16 tsubai Exp $
+#	$NetBSD: MAKEDEV,v 1.26.2.1 2000/06/23 15:46:00 minoura Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,8 @@
 #
 # Terminal ports:
 #	tty*	standard built-in serial ports
+#	ttyCZ*	Cyclades-Z multiport serial boards.  Each "unit"
+#		makes 64 ports.
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -102,7 +104,7 @@ all)
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
 	sh $0 random tty00 tty01 tty10 pty0 pty1 adb grf0 wscons
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 tun0 tun1 ipl usbs
+	sh $0 tun0 tun1 ipl usbs ttyCZ0
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
@@ -251,6 +253,30 @@ ccd*|fd*|raid*|sd*|vnd*|wd*)
 	mknod r${name}${unit}h	c $chr $(($unit * 16 + 7))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+ttyCZ*)
+	unit=${i#ttyCZ}
+	major=46
+	minor=$(($unit * 64))
+	eminor=$(($minor + 64))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=000$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 1000 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
+		rm -f ttyCZ$nminor dtyCZ$nminor
+		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
+		chown uucp.wheel ttyCZ$nminor dtyCZ$nminor
+		chmod 600 ttyCZ$nminor dtyCZ$nminor
+		minor=$(($minor + 1))
+	done
 	;;
 
 ttyU*)

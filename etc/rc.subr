@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.19 2000/05/13 08:23:45 lukem Exp $
+# $NetBSD: rc.subr,v 1.19.2.1 2000/06/23 15:45:56 minoura Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -449,7 +449,6 @@ run_rc_script()
 #
 # load_rc_config
 #	Source in the configuration file for a given command.
-#	Currently just uses /etc/rc.conf.
 #
 load_rc_config()
 {
@@ -459,6 +458,9 @@ load_rc_config()
 	fi
 
 	. /etc/rc.conf
+	if [ -f /etc/rc.conf.d/"$_command" ]; then
+		. /etc/rc.conf.d/"$_command"
+	fi
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.10 1998/02/13 04:36:15 lukem Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.10.8.1 2000/06/23 15:46:05 minoura Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,7 +42,7 @@
 #ifndef _RPC_RPC_MSG_H_
 #define _RPC_RPC_MSG_H_
 
-#define RPC_MSG_VERSION		((u_long) 2)
+#define RPC_MSG_VERSION		((u_int32_t) 2)
 #define RPC_SERVICE_PORT	((u_short) 2048)
 
 /*
@@ -89,8 +89,8 @@ struct accepted_reply {
 	enum accept_stat	ar_stat;
 	union {
 		struct {
-			u_int32_t low;
-			u_int32_t high;
+			rpcvers_t low;
+			rpcvers_t high;
 		} AR_versions;
 		struct {
 			caddr_t	where;
@@ -109,8 +109,8 @@ struct rejected_reply {
 	enum reject_stat rj_stat;
 	union {
 		struct {
-			u_int32_t low;
-			u_int32_t high;
+			rpcvers_t low;
+			rpcvers_t high;
 		} RJ_versions;
 		enum auth_stat RJ_why;  /* why authentication did not work */
 	} ru;
@@ -135,10 +135,10 @@ struct reply_body {
  * Body of an rpc request call.
  */
 struct call_body {
-	u_int32_t cb_rpcvers;	/* must be equal to two */
-	u_int32_t cb_prog;
-	u_int32_t cb_vers;
-	u_int32_t cb_proc;
+	rpcvers_t cb_rpcvers;	/* must be equal to two */
+	rpcprog_t cb_prog;
+	rpcvers_t cb_vers;
+	rpcproc_t cb_proc;
 	struct opaque_auth cb_cred;
 	struct opaque_auth cb_verf; /* protocol specific - provided by client */
 };

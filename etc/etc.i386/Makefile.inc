@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2000/05/06 05:31:58 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.20.2.1 2000/06/23 15:46:00 minoura Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -12,8 +12,9 @@ BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY
 # Build the boot floppies and install them
 snap_md_post:
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib/i386/floppies && ${MAKE} clean
+	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
-	cd ${.CURDIR}/../distrib/i386/floppies && \
-		${MAKE} depend && ${MAKE} ${_J} && ${MAKE} release
+	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
+	cd ${.CURDIR}/../distrib/i386 && ${MAKE} release
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/floppies '*.gz'

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: nfsd,v 1.2 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: nfsd,v 1.2.2.1 2000/06/23 15:46:03 minoura Exp $
 #
 
 # PROVIDE: nfsd
@@ -11,7 +11,7 @@
 name="nfsd"
 rcvar="nfs_server"
 command="/usr/sbin/${name}"
-required_vars="portmap"
+required_vars="rpcbind"
 
 load_rc_config $name
 run_rc_command "$1"

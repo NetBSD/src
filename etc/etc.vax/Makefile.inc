@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2000/05/17 21:40:45 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.7.2.1 2000/06/23 15:46:02 minoura Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -15,3 +15,14 @@ pcs750.bin: etc.vax/pcs750.bin.uu
 	    ${DESTDIR}/)
 	
 
+INSTALLATION_DIRS+=	installation \
+			installation/bootfs \
+			installation/netboot
+
+snap_md_post:
+.ifndef UPDATE
+	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
+.endif
+	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
+	cd ${.CURDIR}/../distrib/vax && ${MAKE} release
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
