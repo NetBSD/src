@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.8 2000/06/04 19:15:16 cgd Exp $ */
+/* $NetBSD: vmevar.h,v 1.9 2000/06/25 00:23:13 pk Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef _vmevar_h_
-#define _vmevar_h_
+#ifndef _VMEVAR_H_
+#define _VMEVAR_H_
 
 typedef u_int32_t vme_addr_t, vme_size_t;
 typedef int vme_am_t;
@@ -45,16 +45,18 @@ typedef int vme_swap_t; /* hardware swap capabilities,
 
 #ifdef _KERNEL
 
-/* generic placeholder for any ressources needed for a mapping,
- overloaded by bus interface driver */
+/*
+ * Generic placeholder for any resources needed for a mapping,
+ * overloaded by bus interface driver
+ */
 typedef void *vme_mapresc_t; 
 
-/* describes interrupt mapping, overloaded by bus interface driver */
+/* Describes interrupt mapping, opaque to MI drivers */
 typedef void *vme_intr_handle_t;
 
 /*
- * tag structure passed to VME bus devices,
- * contains the bus dependant functions, accessed via macros below
+ * Tag structure passed to VME bus devices;
+ * contains the bus dependent functions, accessed via macros below.
  */
 typedef struct vme_chipset_tag {
 	void *cookie;
@@ -102,44 +104,43 @@ typedef struct vme_chipset_tag {
  *     wasting kvm
  */
 #define vme_space_map(vc, vmeaddr, len, am, datasize, swap, tag, handle, resc) \
-  (*((vc)->vct_map))((vc)->cookie, (vmeaddr), (len), (am), (datasize), \
-  (swap), (tag), (handle), (resc))
+	(*((vc)->vct_map))((vc)->cookie, (vmeaddr), (len), (am), (datasize), \
+			   (swap), (tag), (handle), (resc))
 #define vme_space_unmap(vc, resc) \
-  (*((vc)->vct_unmap))((vc)->cookie, (resc))
+	(*((vc)->vct_unmap))((vc)->cookie, (resc))
 
 /*
- * probe: check readability or call callback
+ * probe: check readability or call callback.
  */
 #define vme_probe(vc, vmeaddr, len, am, datasize, callback, cbarg) \
-  (*((vc)->vct_probe))((vc)->cookie, (vmeaddr), (len), (am), (datasize), \
-  (callback), (cbarg))
+	(*((vc)->vct_probe))((vc)->cookie, (vmeaddr), (len), (am), \
+			     (datasize), (callback), (cbarg))
 
 /*
- * install / deinstall VME interrupt handler
+ * install / deinstall VME interrupt handler.
  */
 #define vme_intr_map(vc, level, vector, handlep) \
-  (*((vc)->vct_int_map))((vc)->cookie, (level), (vector), (handlep))
+	(*((vc)->vct_int_map))((vc)->cookie, (level), (vector), (handlep))
 #define vme_intr_evcnt(vc, handle) \
-  (*((vc)->vct_int_evcnt))((vc)->cookie, (handle))
+	(*((vc)->vct_int_evcnt))((vc)->cookie, (handle))
 #define vme_intr_establish(vc, handle, prio, func, arg) \
-  (*((vc)->vct_int_establish))((vc)->cookie, \
-                        (handle), (prio), (func), (arg))
+	(*((vc)->vct_int_establish))((vc)->cookie, \
+		(handle), (prio), (func), (arg))
 #define vme_intr_disestablish(vc, cookie) \
-  (*((vc)->vct_int_unmap))((vc)->cookie, (cookie))
+	(*((vc)->vct_int_unmap))((vc)->cookie, (cookie))
 
 /*
- * create DMA map (which is later used by bus independant
- * DMA functions)
+ * Create DMA map (which is later used by bus independent DMA functions).
  */
 #define vme_dmamap_create(vc, size, am, datasize, swap, nsegs, segsz, bound, \
-  flags, map) \
-  (*((vc)->vct_dmamap_create))((vc)->cookie, (size), (am), (datasize), (swap), \
-  (nsegs), (segsz), (bound), (flags), (map))
+			  flags, map) \
+	(*((vc)->vct_dmamap_create))((vc)->cookie, (size), (am), (datasize), \
+		(swap), (nsegs), (segsz), (bound), (flags), (map))
 #define vme_dmamap_destroy(vc, map) \
-  (*((vc)->vct_dmamap_destroy))((vc)->cookie, (map))
+	(*((vc)->vct_dmamap_destroy))((vc)->cookie, (map))
 
 /*
- * allocate memory directly accessible from VME
+ * Allocate memory directly accessible from VME.
  */
 #define vme_dmamem_alloc(vc, size, am, datasize, swap, \
   segs, nsegs, rsegs, flags) \
@@ -149,7 +150,7 @@ typedef struct vme_chipset_tag {
   (*((vc)->vct_dmamem_free))((vc)->cookie, (segs), (nsegs))
 
 /*
- * autoconfiguration data structures
+ * Autoconfiguration data structures.
  */
 
 struct vme_attach_args;
@@ -194,7 +195,7 @@ struct vme_attach_args {
 };
 
 /*
- * address space accounting
+ * Address space accounting.
  */
 int _vme_space_alloc __P((struct vmebus_softc *, vme_addr_t,
 			  vme_size_t, vme_am_t));
@@ -204,13 +205,13 @@ int _vme_space_get __P((struct vmebus_softc *, vme_size_t, vme_am_t,
 			u_long, vme_addr_t*));
 
 #define vme_space_alloc(tag, addr, size, ams) \
-  _vme_space_alloc(tag->bus, addr, size, ams)
+	_vme_space_alloc(tag->bus, addr, size, ams)
 
 #define vme_space_free(tag, addr, size, ams) \
-  _vme_space_free(tag->bus, addr, size, ams)
+	_vme_space_free(tag->bus, addr, size, ams)
 
 #define vme_space_get(tag, size, ams, align, addr) \
-  _vme_space_get(tag->bus, size, ams, align, addr)
+	_vme_space_get(tag->bus, size, ams, align, addr)
 
 #endif /* KERNEL */
-#endif /* _vmevar_h_ */
+#endif /* _VMEVAR_H_ */
