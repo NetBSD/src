@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.12 1996/10/15 01:15:24 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.13 1997/01/12 20:28:04 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -231,7 +231,7 @@ static struct fsyn fsyn_pref[] = {
 
 /*#define mod(x)	(((x) > 0) ? (x) : (-x))*/
 
-static inline int
+static __inline int
 mod(int n)
 {
 	if (n < 0)
