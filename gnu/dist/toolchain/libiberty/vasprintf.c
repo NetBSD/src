@@ -160,6 +160,7 @@ checkit VPARAMS ((const char* format, ...))
 #endif
 
   vasprintf (&result, format, args);
+  va_end (args);
   if (strlen (result) < (size_t) global_total_width)
     printf ("PASS: ");
   else
