@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 2005/03/11 16:16:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -356,6 +356,52 @@ bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 }
 
 /*
+ *	void bus_space_read_region_stream_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count);
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.
+ */
+static __inline void bus_space_read_region_stream_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+static __inline void bus_space_read_region_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+static __inline void bus_space_read_region_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
+
+void
+bus_space_read_region_stream_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t *addr, bus_size_t count)
+{
+	u_int8_t *p = (u_int8_t *)(bsh + offset);
+
+	while (count--)
+		*addr++ = *p++;
+}
+
+void
+bus_space_read_region_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t *addr, bus_size_t count)
+{
+	u_int16_t *p = (u_int16_t *)(bsh + offset);
+
+	while (count--)
+		*addr++ = *p++;
+}
+
+void
+bus_space_read_region_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t *addr, bus_size_t count)
+{
+	u_int32_t *p = (u_int32_t *)(bsh + offset);
+
+	while (count--)
+		*addr++ = *p++;
+}
+
+/*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    const u_intN_t *addr, size_t count);
@@ -398,6 +444,51 @@ bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 
 	while (count--)
 		*p++ = bswap32(*addr++);
+}
+
+/*
+ *	void bus_space_write_region_stream_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_intN_t *addr, size_t count);
+ *
+ * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
+ * to bus space described by tag/handle starting at `offset'.
+ */
+static __inline void bus_space_write_region_stream_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
+static __inline void bus_space_write_region_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+static __inline void bus_space_write_region_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
+
+void
+bus_space_write_region_stream_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, const u_int8_t *addr, bus_size_t count)
+{
+	u_int8_t *p = (u_int8_t *)(bsh + offset);
+
+	while (count--)
+		*p++ = *addr++;
+}
+
+void
+bus_space_write_region_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, const u_int16_t *addr, bus_size_t count)
+{
+	u_int16_t *p = (u_int16_t *)(bsh + offset);
+
+	while (count--)
+		*p++ = *addr++;
+}
+
+void
+bus_space_write_region_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, const u_int32_t *addr, bus_size_t count)
+{
+	u_int32_t *p = (u_int32_t *)(bsh + offset);
+
+	while (count--)
+		*p++ = *addr++;
 }
 
 /*
@@ -610,6 +701,51 @@ bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 	volatile u_int32_t *addr = (void *)(bsh + offset);
 
 	val = bswap32(val);
+	while (count--)
+		*addr++ = val;
+}
+
+/*
+ *	void bus_space_set_region_stream_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    size_t count);
+ *
+ * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle starting at `offset'.
+ */
+static __inline void bus_space_set_region_stream_1(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+static __inline void bus_space_set_region_stream_2(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+static __inline void bus_space_set_region_stream_4(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
+
+void
+bus_space_set_region_stream_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int8_t val, bus_size_t count)
+{
+	volatile u_int8_t *addr = (void *)(bsh + offset);
+
+	while (count--)
+		*addr++ = val;
+}
+
+void
+bus_space_set_region_stream_2(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int16_t val, bus_size_t count)
+{
+	volatile u_int16_t *addr = (void *)(bsh + offset);
+
+	while (count--)
+		*addr++ = val;
+}
+
+void
+bus_space_set_region_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
+    bus_size_t offset, u_int32_t val, bus_size_t count)
+{
+	volatile u_int32_t *addr = (void *)(bsh + offset);
+
 	while (count--)
 		*addr++ = val;
 }
