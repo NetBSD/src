@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.4 1993/10/27 00:53:49 pk Exp $
+ *	$Id: rrs.c,v 1.5 1993/11/01 16:26:18 pk Exp $
  */
 
 #include <sys/param.h>
@@ -239,6 +239,10 @@ struct localsymbol	*lsp;
 		}
 
 	} else if (sp->gotslot_offset == -1) {
+
+		if (sp->alias)
+			sp = sp->alias;
+
 		/*
 		 * External symbols always get a relocation entry
 		 */
@@ -394,6 +398,9 @@ long			addend;
 	symbol	*sp = lsp->symbol;
 	int	reloc_type = 0;
 
+	if (sp->alias)
+		sp = sp->alias;
+
 #ifdef DEBUG
 printf("claim_rrs_gotslot: %s(%d) slot offset %#x, addend %#x\n",
 	 sp->name, sp->rrs_symbolnum, sp->gotslot_offset, addend);
@@ -402,6 +409,10 @@ printf("claim_rrs_gotslot: %s(%d) slot offset %#x, addend %#x\n",
 		fatal(
 		"internal error: claim_rrs_gotslot: %s: gotslot_offset == -1\n",
 		sp->name);
+
+	if (sp->gotslot_claimed)
+		/* This symbol already passed here before. */
+		return sp->gotslot_offset;
 
 	if (sp->defined &&
 		(!(link_mode & SHAREABLE) || (link_mode & SYMBOLIC))) {
@@ -442,10 +453,6 @@ printf("claim_rrs_gotslot: %s(%d) slot offset %#x, addend %#x\n",
 		return sp->gotslot_offset;
 	}
 
-	if (sp->gotslot_claimed)
-		/* This symbol already passed here before. */
-		return sp->gotslot_offset;
-
 	/*
 	 * Claim a relocation entry.
 	 * If symbol is defined and in "main" (!SHAREABLE)
@@ -471,7 +478,8 @@ printf("claim_rrs_gotslot: %s(%d) slot offset %#x, addend %#x\n",
  * the GOT.
  */
 long
-claim_rrs_internal_gotslot(rp, lsp, addend)
+claim_rrs_internal_gotslot(entry, rp, lsp, addend)
+struct file_entry	*entry;
 struct relocation_info	*rp;
 struct localsymbol	*lsp;
 long			addend;
@@ -492,6 +500,10 @@ printf("claim_rrsinternal__gotslot: slot offset %#x, addend = %#x\n",
 		fatal(
 		"internal error: claim_rrs_internal_gotslot: slot_offset == -1\n");
 
+	if (lsp->gotslot_claimed)
+		/* Already done */
+		return lsp->gotslot_offset;
+
 	*(long *)((long)rrs_got + lsp->gotslot_offset) = addend;
 
 	if (!(link_mode & SHAREABLE))
@@ -500,10 +512,6 @@ printf("claim_rrsinternal__gotslot: slot offset %#x, addend = %#x\n",
 	/*
 	 * Relocation entry needed for this static GOT entry.
 	 */
-	if (lsp->gotslot_claimed)
-		return lsp->gotslot_offset;
-
-	/* Claim a relocation entry */
 	r = rrs_next_reloc();
 	lsp->gotslot_claimed = 1;
 	r->r_address = rrs_dyn2.ld_got + lsp->gotslot_offset;

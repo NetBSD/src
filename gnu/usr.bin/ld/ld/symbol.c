@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.c,v 1.2 1993/10/27 00:53:50 pk Exp $		- symbol table routines
+ * $Id: symbol.c,v 1.3 1993/11/01 16:26:19 pk Exp $		- symbol table routines
  */
 
 /* Create the symbol table entries for `etext', `edata' and `end'.  */
@@ -102,9 +102,11 @@ getsym(key)
 	bp->warning = 0;
 	bp->undef_refs = 0;
 	bp->multiply_defined = 0;
+	bp->alias = 0;
+	bp->setv_count = 0;
 
 	bp->size = 0;
-	bp->dynrefs = 0;
+	bp->sorefs = 0;
 	bp->so_defined = 0;
 	bp->def_nlist = 0;
 	bp->jmpslot_offset = -1;

@@ -1,4 +1,4 @@
-/*	$Id: ld.h,v 1.3 1993/10/27 00:53:47 pk Exp $	*/
+/*	$Id: ld.h,v 1.4 1993/11/01 16:26:16 pk Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -184,15 +184,142 @@ int oldmagic;
 #define DATA_START(x)		N_DATADDR(x)
 #endif
 
+/* If a this type of symbol is encountered, its name is a warning
+   message to print each time the symbol referenced by the next symbol
+   table entry is referenced.
+
+   This feature may be used to allow backwards compatibility with
+   certain functions (eg. gets) but to discourage programmers from
+   their use.
+
+   So if, for example, you wanted to have ld print a warning whenever
+   the function "gets" was used in their C program, you would add the
+   following to the assembler file in which gets is defined:
+
+	.stabs "Obsolete function \"gets\" referenced",30,0,0,0
+	.stabs "_gets",1,0,0,0
+
+   These .stabs do not necessarily have to be in the same file as the
+   gets function, they simply must exist somewhere in the compilation.  */
+
 #ifndef N_WARNING
 #define N_WARNING 0x1E		/* Warning message to print if symbol
 				   included */
 #endif				/* This is input to ld */
 
+/* Special global symbol types understood by GNU LD.  */
+
+/* The following type indicates the definition of a symbol as being
+   an indirect reference to another symbol.  The other symbol
+   appears as an undefined reference, immediately following this symbol.
+
+   Indirection is asymmetrical.  The other symbol's value will be used
+   to satisfy requests for the indirect symbol, but not vice versa.
+   If the other symbol does not have a definition, libraries will
+   be searched to find a definition.
+
+   So, for example, the following two lines placed in an assembler
+   input file would result in an object file which would direct gnu ld
+   to resolve all references to symbol "foo" as references to symbol
+   "bar".
+
+	.stabs "_foo",11,0,0,0
+	.stabs "_bar",1,0,0,0
+
+   Note that (11 == (N_INDR | N_EXT)) and (1 == (N_UNDF | N_EXT)).  */
+
+#ifndef N_INDR
+#define N_INDR 0xa
+#endif
+
+/* The following symbols refer to set elements.  These are expected
+   only in input to the loader; they should not appear in loader
+   output (unless relocatable output is requested).  To be recognized
+   by the loader, the input symbols must have their N_EXT bit set.
+   All the N_SET[ATDB] symbols with the same name form one set.  The
+   loader collects all of these elements at load time and outputs a
+   vector for each name.
+   Space (an array of 32 bit words) is allocated for the set in the
+   data section, and the n_value field of each set element value is
+   stored into one word of the array.
+   The first word of the array is the length of the set (number of
+   elements).  The last word of the vector is set to zero for possible
+   use by incremental loaders.  The array is ordered by the linkage
+   order; the first symbols which the linker encounters will be first
+   in the array.
+
+   In C syntax this looks like:
+
+	struct set_vector {
+	  unsigned int length;
+	  unsigned int vector[length];
+	  unsigned int always_zero;
+	};
+
+   Before being placed into the array, each element is relocated
+   according to its type.  This allows the loader to create an array
+   of pointers to objects automatically.  N_SETA type symbols will not
+   be relocated.
+
+   The address of the set is made into an N_SETV symbol
+   whose name is the same as the name of the set.
+   This symbol acts like a N_DATA global symbol
+   in that it can satisfy undefined external references.
+
+   For the purposes of determining whether or not to load in a library
+   file, set element definitions are not considered "real
+   definitions"; they will not cause the loading of a library
+   member.
+
+   If relocatable output is requested, none of this processing is
+   done.  The symbols are simply relocated and passed through to the
+   output file.
+
+   So, for example, the following three lines of assembler code
+   (whether in one file or scattered between several different ones)
+   will produce a three element vector (total length is five words;
+   see above), referenced by the symbol "_xyzzy", which will have the
+   addresses of the routines _init1, _init2, and _init3.
+
+   *NOTE*: If symbolic addresses are used in the n_value field of the
+   defining .stabs, those symbols must be defined in the same file as
+   that containing the .stabs.
+
+	.stabs "_xyzzy",23,0,0,_init1
+	.stabs "_xyzzy",23,0,0,_init2
+	.stabs "_xyzzy",23,0,0,_init3
+
+   Note that (23 == (N_SETT | N_EXT)).  */
+
+#ifndef N_SETA
+#define	N_SETA	0x14		/* Absolute set element symbol */
+#endif				/* This is input to LD, in a .o file.  */
+
+#ifndef N_SETT
+#define	N_SETT	0x16		/* Text set element symbol */
+#endif				/* This is input to LD, in a .o file.  */
+
+#ifndef N_SETD
+#define	N_SETD	0x18		/* Data set element symbol */
+#endif				/* This is input to LD, in a .o file. */
+
+#ifndef N_SETB
+#define	N_SETB	0x1A		/* Bss set element symbol */
+#endif				/* This is input to LD, in a .o file. */
+
+/* Macros dealing with the set element symbols defined in a.out.h */
+#define	SET_ELEMENT_P(x)	((x) >= N_SETA && (x) <= (N_SETB|N_EXT))
+#define TYPE_OF_SET_ELEMENT(x)	((x) - N_SETA + N_ABS)
+
+#ifndef N_SETV
+#define N_SETV	0x1C		/* Pointer to set vector in data area. */
+#endif				/* This is output from LD. */
+
+
 #ifndef __GNU_STAB__
 
 /* Line number for the data section.  This is to be used to describe
-   the source location of a variable declaration.  */
+   the source location of a variable declaration. */
 #ifndef N_DSLINE
 #define N_DSLINE (N_SLINE+N_DATA-N_TEXT)
 #endif
@@ -277,6 +404,16 @@ typedef struct glosym {
 	/* Nonzero means print a message at all refs or defs of this symbol */
 	char            trace;
 
+	/*
+	 * For symbols of type N_INDR, this points at the real symbol.
+	 */
+	struct glosym	*alias;
+
+	/*
+	 * Count number of elements in set vector if symbol is of type N_SETV
+	 */
+	int		setv_count;
+
 	/* Dynamic lib support */
 
 	/*
@@ -294,7 +431,7 @@ typedef struct glosym {
 	 * Chain of external 'nlist's in shared objects for this symbol, both
 	 * defs and refs.
 	 */
-	struct localsymbol	*dynrefs;
+	struct localsymbol	*sorefs;
 
 	/* The offset into one of the RRS tables, -1 if not used */
 	long			jmpslot_offset;
@@ -366,9 +503,16 @@ int common_defined_global_count;
 /* Count the number of linker defined symbols.
    XXX - Currently, only __DYNAMIC and _G_O_T_ go here if required,
    perhaps _etext, _edata and _end should go here too */
-int special_sym_count;
+int	special_sym_count;
 
-#if 0
+/* Count number of aliased symbols */
+int	global_alias_count;
+
+/* Count number of set element type symbols and the number of separate
+   vectors which these symbols will fit into */
+int	set_symbol_count;
+int	set_vector_count;
+
 /* Define a linked list of strings which define symbols which should
    be treated as set elements even though they aren't.  Any symbol
    with a prefix matching one of these should be treated as a set
@@ -383,7 +527,6 @@ struct string_list_element {
 };
 
 struct string_list_element *set_element_prefixes;
-#endif
 
 /* Count the number of warning symbols encountered. */
 int warning_count;
@@ -617,7 +760,7 @@ int	bss_relocation;
 int	pc_relocation;
 
 /* Specifications of start and length of the area reserved at the end
-   of the text segment for the set vectors.  Computed in 'digest_symbols' */
+   of the data segment for the set vectors.  Computed in 'digest_symbols' */
 int set_sect_start;
 int set_sect_size;
 

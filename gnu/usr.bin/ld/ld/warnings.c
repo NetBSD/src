@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.2 1993/10/21 00:53:01 pk Exp $
+ * $Id: warnings.c,v 1.3 1993/11/01 16:26:20 pk Exp $
  */
 
 #include <sys/param.h>
@@ -516,7 +516,7 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 		g = s->symbol;
 		errmsg = 0;
 
-		if (!g->defined && list_unresolved_refs) {	/* Reference */
+		if (!g->defined && !g->so_defined && list_unresolved_refs) {	/* Reference */
 			/* Mark as being noted by relocation warning pass.  */
 			SET_BIT(nlist_bitvector, s - start_of_syms);
 

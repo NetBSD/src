@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.2 1993/10/21 00:52:58 pk Exp $	- library routines
+ * $Id: lib.c,v 1.3 1993/11/01 16:26:17 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -473,7 +473,7 @@ subfile_wanted_p(entry)
 			int             defs = 0;
 
 			/* Check for undefined symbols in shared objects */
-			for (lsp = sp->dynrefs; lsp; lsp = lsp->next) {
+			for (lsp = sp->sorefs; lsp; lsp = lsp->next) {
 				type = lsp->nzlist.nlist.n_type;
 				if (	(type & N_EXT) &&
 					(type & N_STAB) == 0 &&
