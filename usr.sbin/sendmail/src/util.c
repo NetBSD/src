@@ -1350,7 +1350,7 @@ dumpfd(fd, printclosed, logit)
 
 	  default:
 defprint:
-		sprintf(p, "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%ld",
+		sprintf(p, "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%qd",
 			major(st.st_dev), minor(st.st_dev), st.st_ino,
 			st.st_nlink, st.st_uid, st.st_gid, st.st_size);
 		break;
