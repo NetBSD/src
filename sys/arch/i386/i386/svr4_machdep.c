@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.64 2002/11/26 18:40:46 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.65 2002/12/06 00:00:04 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.64 2002/11/26 18:40:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.65 2002/12/06 00:00:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -380,8 +380,7 @@ svr4_sendsig(sig, mask, code)
 	tf = p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	onstack = (sas->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
