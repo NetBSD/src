@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.13 2003/09/25 19:29:48 mycroft Exp $	*/
+/*	$NetBSD: icside.c,v 1.14 2003/10/08 11:01:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.13 2003/09/25 19:29:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.14 2003/10/08 11:01:16 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -304,8 +304,10 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		}
 		/* Enable interrupts */
 		bus_space_write_1(iot, icp->ic_irqioh, 0, 0);
+		/* Call common attach routines */
+		wdcattach(self);
+
 	}
-	wdcattach(&sc->sc_wdcdev);
 }
 
 /*

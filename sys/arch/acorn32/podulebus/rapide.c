@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.12 2003/09/25 19:29:48 mycroft Exp $	*/
+/*	$NetBSD: rapide.c,v 1.13 2003/10/08 11:01:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.12 2003/09/25 19:29:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.13 2003/10/08 11:01:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,8 +304,8 @@ rapide_attach(parent, self, aux)
 		bus_space_write_1(iot, sc->sc_ctlioh,
 		    IRQ_MASK_REGISTER_OFFSET, sc->sc_intr_enable_mask);
 		/* XXX - Issue 1 cards will need to clear any pending interrupts */
+		wdcattach(self);
 	}
-	wdcattach(&sc->sc_wdcdev);
 }
 
 /*
