@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.52 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.53 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.52 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.53 2003/10/15 11:29:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -625,7 +625,7 @@ softdep_process_worklist(matchmnt)
 {
 	struct proc *p = CURPROC;
 	struct worklist *wk, *wkend;
-	struct fs *matchfs;
+	struct mount *mp;
 	int matchcnt;
 
 	/*
@@ -642,9 +642,6 @@ softdep_process_worklist(matchmnt)
 	 */
 	filesys_syncer = p;
 	matchcnt = 0;
-	matchfs = NULL;
-	if (matchmnt != NULL)
-		matchfs = VFSTOUFS(matchmnt)->um_fs;
 	/*
 	 * There is no danger of having multiple processes run this
 	 * code. It is single threaded solely so that softdep_flushfiles
@@ -687,30 +684,42 @@ softdep_process_worklist(matchmnt)
 
 		case D_DIRREM:
 			/* removal of a directory entry */
-			if (WK_DIRREM(wk)->dm_mnt == matchmnt)
+			mp = WK_DIRREM(wk)->dm_mnt;
+			if (mp == matchmnt)
 				matchcnt += 1;
+			vn_start_write(NULL, &mp, V_WAIT);
 			handle_workitem_remove(WK_DIRREM(wk));
+			vn_finished_write(mp, 0);
 			break;
 
 		case D_FREEBLKS:
 			/* releasing blocks and/or fragments from a file */
-			if (WK_FREEBLKS(wk)->fb_ump->um_fs == matchfs)
+			mp = WK_FREEBLKS(wk)->fb_ump->um_mountp;
+			if (mp == matchmnt)
 				matchcnt += 1;
+			vn_start_write(NULL, &mp, V_WAIT);
 			handle_workitem_freeblocks(WK_FREEBLKS(wk));
+			vn_finished_write(mp, 0);
 			break;
 
 		case D_FREEFRAG:
 			/* releasing a fragment when replaced as a file grows */
-			if (WK_FREEFRAG(wk)->ff_fs == matchfs)
+			mp = WK_FREEFRAG(wk)->ff_mnt;
+			if (mp == matchmnt)
 				matchcnt += 1;
+			vn_start_write(NULL, &mp, V_WAIT);
 			handle_workitem_freefrag(WK_FREEFRAG(wk));
+			vn_finished_write(mp, 0);
 			break;
 
 		case D_FREEFILE:
 			/* releasing an inode when its link count drops to 0 */
-			if (WK_FREEFILE(wk)->fx_fs == matchfs)
+			mp = WK_FREEFILE(wk)->fx_mnt;
+			if (mp == matchmnt)
 				matchcnt += 1;
+			vn_start_write(NULL, &mp, V_WAIT);
 			handle_workitem_freefile(WK_FREEFILE(wk));
+			vn_finished_write(mp, 0);
 			break;
 
 		default:
@@ -2254,6 +2263,7 @@ softdep_freefile(v)
 	freefile->fx_oldinum = ap->a_ino;
 	freefile->fx_devvp = ip->i_devvp;
 	freefile->fx_fs = ip->i_fs;
+	freefile->fx_mnt = ITOV(ip)->v_mount;
 	if ((ip->i_flag & IN_SPACECOUNTED) == 0)
 		ip->i_fs->fs_pendinginodes += 1;
 
@@ -5381,14 +5391,18 @@ clear_remove(p)
 			mp = pagedep->pd_mnt;
 			ino = pagedep->pd_ino;
 			FREE_LOCK(&lk);
+			if (vn_start_write(NULL, &mp, V_WAIT | V_PCATCH) != 0)
+				return;
 			if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 				softdep_error("clear_remove: vget", error);
+				vn_finished_write(mp, 0);
 				return;
 			}
 			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
+			vn_finished_write(mp, 0);
 			return;
 		}
 	}
@@ -5450,8 +5464,11 @@ clear_inodedeps(p)
 		if (inodedep_lookup(fs, ino, 0, &inodedep) == 0)
 			continue;
 		FREE_LOCK(&lk);
+		if (vn_start_write(NULL, &mp, V_WAIT | V_PCATCH) != 0)
+			return;
 		if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 			softdep_error("clear_inodedeps: vget", error);
+			vn_finished_write(mp, 0);
 			return;
 		}
 		if (ino == lastino) {
@@ -5464,6 +5481,7 @@ clear_inodedeps(p)
 			drain_output(vp, 0);
 		}
 		vput(vp);
+		vn_finished_write(mp, 0);
 		ACQUIRE_LOCK(&lk);
 	}
 	FREE_LOCK(&lk);

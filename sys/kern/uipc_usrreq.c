@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.69 2003/09/03 22:20:34 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.70 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.69 2003/09/03 22:20:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.70 2003/10/15 11:29:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,6 +597,7 @@ unp_bind(unp, nam, p)
 {
 	struct sockaddr_un *sun;
 	struct vnode *vp;
+	struct mount *mp;
 	struct vattr vattr;
 	size_t addrlen;
 	int error;
@@ -615,6 +616,7 @@ unp_bind(unp, nam, p)
 	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
+restart:
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
 	    sun->sun_path, p);
 
@@ -622,21 +624,29 @@ unp_bind(unp, nam, p)
 	if ((error = namei(&nd)) != 0)
 		goto bad;
 	vp = nd.ni_vp;
-	if (vp != NULL) {
+	if (vp != NULL || vn_start_write(nd.ni_dvp, &mp, V_NOWAIT) != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
 		vrele(vp);
-		error = EADDRINUSE;
-		goto bad;
+		if (vp != NULL) {
+			error = EADDRINUSE;
+			goto bad;
+		}
+		error = vn_start_write(NULL, &mp,
+		    V_WAIT | V_SLEEPONLY | V_PCATCH);
+		if (error)
+			goto bad;
+		goto restart;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS;
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	vn_finished_write(mp, 0);
 	if (error)
 		goto bad;
 	vp = nd.ni_vp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.102 2003/08/07 16:30:52 agc Exp $	*/
+/*	$NetBSD: vnd.c,v 1.103 2003/10/15 11:28:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.102 2003/08/07 16:30:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.103 2003/10/15 11:28:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -408,6 +408,7 @@ vndstrategy(bp)
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
 	struct vndxfer *vnx;
+	struct mount *mp;
 	int s, bsize, resid;
 	off_t bn;
 	caddr_t addr;
@@ -495,6 +496,9 @@ vndstrategy(bp)
 	vnx->vx_pending = 0;
 	vnx->vx_bp = bp;
 
+	if ((flags & B_READ) == 0)
+		vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf *nbp;
 		struct vnode *vp;
@@ -579,6 +583,8 @@ vndstrategy(bp)
 	s = splbio();
 
 out: /* Arrive here at splbio */
+	if ((flags & B_READ) == 0)
+		vn_finished_write(mp, 0);
 	vnx->vx_flags &= ~VX_BUSY;
 	if (vnx->vx_pending == 0) {
 		if (vnx->vx_error != 0) {

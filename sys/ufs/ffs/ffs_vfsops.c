@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.124 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.125 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.124 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.125 2003/10/15 11:29:01 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -302,6 +302,8 @@ ffs_mount(mp, path, data, ndp, p)
 			/*
 			 * Changing from r/w to r/o
 			 */
+			if ((error = vn_start_write(NULL, &mp, V_WAIT)) != 0)
+				return (error);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -326,6 +328,7 @@ ffs_mount(mp, path, data, ndp, p)
 				fs->fs_clean = FS_ISCLEAN;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
 			}
+			vn_finished_write(mp, 0);
 			if (error)
 				return (error);
 			fs->fs_ronly = 1;
@@ -340,6 +343,8 @@ ffs_mount(mp, path, data, ndp, p)
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    !(mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
 #ifdef notyet
+			if ((error = vn_start_write(NULL, &mp, V_WAIT)) != 0)
+				return (error);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
@@ -347,6 +352,7 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error == 0 && ffs_cgupdate(ump, MNT_WAIT) == 0)
 				fs->fs_flags &= ~FS_DOSOFTDEP;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
+			vn_finished_write(mp);
 #elif defined(SOFTDEP)
 			mp->mnt_flag |= MNT_SOFTDEP;
 #endif
@@ -359,10 +365,13 @@ ffs_mount(mp, path, data, ndp, p)
 		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
 		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
 #ifdef notyet
+			if ((error = vn_start_write(NULL, &mp, V_WAIT)) != 0)
+				return (error);
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = ffs_flushfiles(mp, flags, p);
+			vn_finished_write(mp);
 #else
 			mp->mnt_flag &= ~MNT_SOFTDEP;
 #endif

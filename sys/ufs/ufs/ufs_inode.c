@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.40 2003/08/07 16:34:45 agc Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.41 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.40 2003/08/07 16:34:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.41 2003/10/15 11:29:01 hannken Exp $");
 
 #include "opt_quota.h"
 
@@ -71,6 +71,7 @@ ufs_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct mount *mp;
 	struct proc *p = ap->a_p;
 	mode_t mode;
 	int error = 0;
@@ -87,6 +88,9 @@ ufs_inactive(v)
 		softdep_releasefile(ip);
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		error = vn_start_write(vp, &mp, V_WAIT | V_LOWER);
+		if (error)
+			return (error);
 #ifdef QUOTA
 		if (!getinoquota(ip))
 			(void)chkiq(ip, -1, NOCRED, 0);
@@ -108,10 +112,17 @@ ufs_inactive(v)
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 		VOP_VFREE(vp, ip->i_number, mode);
+		vn_finished_write(mp, V_LOWER);
 	}
 
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
+	if (ip->i_flag &
+	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) {
+		error = vn_start_write(vp, &mp, V_WAIT | V_LOWER);
+		if (error)
+			return (error);
 		VOP_UPDATE(vp, NULL, NULL, 0);
+		vn_finished_write(mp, V_LOWER);
+	}
 out:
 	VOP_UNLOCK(vp, 0);
 	/*
