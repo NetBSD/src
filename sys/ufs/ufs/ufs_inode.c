@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.3 1994/06/29 06:47:28 cgd Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.4 1994/10/20 04:21:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -64,10 +64,6 @@ ufs_init()
 		return (0);
 	first = 0;
 
-#ifdef DIAGNOSTIC
-	if ((sizeof(struct inode) - 1) & sizeof(struct inode))
-		printf("ufs_init: bad size %d\n", sizeof(struct inode));
-#endif
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();

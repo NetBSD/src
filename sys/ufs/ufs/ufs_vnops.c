@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.3 1994/06/29 06:47:34 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.4 1994/10/20 04:21:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,8 +71,8 @@ static int ufs_chown
 	__P((struct vnode *, uid_t, gid_t, struct ucred *, struct proc *));
 
 union _qcvt {
-	quad_t qcvt;
-	long val[2];
+	int64_t	qcvt;
+	int32_t val[2];
 };
 #define SETHIGH(q, h) { \
 	union _qcvt tmp; \
@@ -302,9 +302,12 @@ ufs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime = ip->i_atime;
-	vap->va_mtime = ip->i_mtime;
-	vap->va_ctime = ip->i_ctime;
+	vap->va_atime.ts_sec = ip->i_atime.ts_sec;
+	vap->va_atime.ts_nsec = ip->i_atime.ts_nsec;
+	vap->va_mtime.ts_sec = ip->i_mtime.ts_sec;
+	vap->va_mtime.ts_nsec = ip->i_mtime.ts_nsec;
+	vap->va_ctime.ts_sec = ip->i_ctime.ts_sec;
+	vap->va_ctime.ts_nsec = ip->i_ctime.ts_nsec;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
@@ -1779,7 +1782,7 @@ ufs_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 
