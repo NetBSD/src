@@ -1,4 +1,4 @@
-.\"	$Id: getopt.1,v 1.4 1994/01/11 02:25:20 jtc Exp $	-*- nroff -*-
+.\"	$Id: getopt.1,v 1.5 1995/07/07 22:41:30 jtc Exp $	-*- nroff -*-
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -19,17 +19,17 @@ if a letter is followed by a colon, the option
 is expected to have an argument which may or may not be
 separated from it by white space.
 The special option
-.B \-\-
+.Dq \-\-
 is used to delimit the end of the options.
 .Nm Getopt
 will place
-.B \-\-
+.Dq \-\-
 in the arguments at the end of the options,
 or recognize it if used explicitly.
 The shell arguments
 (\fB$1 $2\fR ...) are reset so that each option is
 preceded by a
-.B \-
+.Dq \-
 and in its own shell argument;
 each option argument is also in its own shell argument.
 .Sh EXAMPLE
