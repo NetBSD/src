@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.123 2001/05/14 01:43:42 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.124 2001/05/16 12:57:55 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.124 2001/05/14 01:41:16 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -739,6 +739,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "EMTAC A2424i 11Mbps WLAN Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
+	    PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
+	    0,
+	    "BUFFALO (Melco Corporation)",
+	    "BUFFALO AirStation 11Mbps WLAN"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -1254,6 +1261,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Samsung",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BUFFALO, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "BUFFALO (Melco Corporation)",
 	    NULL,
 	},
 	{
