@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.1 1997/04/01 08:18:03 leo Exp $	*/
+/*	$NetBSD: wd.c,v 1.2 1997/04/02 20:33:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -303,7 +303,7 @@ wdcprobe(parent, cfp, aux)
 	u_char			sv_ierb;
 	int			rv = 0;
 
-	if(strcmp("wdc", aux) || cfp->cf_unit != 0)
+	if((machineid & ATARI_TT) || strcmp("wdc", aux) || cfp->cf_unit != 0)
 		return(0);
 	if (!atari_realconfig)
 		return 0;
