@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.1 1993/10/02 10:24:26 deraadt Exp $
+ * $Id: pmap.c,v 1.2 1993/10/11 02:16:24 deraadt Exp $
  */
 
 /*
@@ -268,7 +268,8 @@ caddr_t	vpage[2];		/* two reserved MD virtual pages */
 caddr_t	vmempage;		/* one reserved MI vpage for /dev/mem */
 caddr_t vdumppages;		/* 32KB worth of reserved dump pages */
 
-struct kpmap kernel_pmap_store;	/* the kernel's pmap */
+struct kpmap	kernel_pmap_store;	/* the kernel's pmap */
+pmap_t		kernel_pmap;
 
 /*
  * We need to know real physical memory ranges (for /dev/mem).
@@ -344,6 +345,34 @@ int	pmap_stod[BTSIZE];		/* sparse to dense */
 #define	HWTOSW(pg) (pmap_stod[(pg) >> BSHIFT] | ((pg) & BOFFSET))
 #define	SWTOHW(pg) (pmap_dtos[(pg) >> BSHIFT] | ((pg) & BOFFSET))
 
+/*
+ * Sort a memory array by address.
+ */
+static void
+sortm(mp, n)
+	register struct memarr *mp;
+	register int n;
+{
+	register struct memarr *mpj;
+	register int i, j;
+	register u_int addr, len;
+
+	/* Insertion sort.  This is O(n^2), but so what? */
+	for (i = 1; i < n; i++) {
+		/* save i'th entry */
+		addr = mp[i].addr;
+		len = mp[i].len;
+		/* find j such that i'th entry goes before j'th */
+		for (j = 0, mpj = mp; j < i; j++, mpj++)
+			if (addr < mpj->addr)
+				break;
+		/* slide up any additional entries */
+		ovbcopy(mpj, mpj + 1, (i - j) * sizeof(*mp));
+		mpj->addr = addr;
+		mpj->len = len;
+	}
+}
+
 #ifdef DEBUG
 struct	memarr pmap_ama[MA_SIZE];
 int	pmap_nama;
@@ -366,6 +395,21 @@ init_translations()
 #endif
 
 	nmem = makememarr(ama, MA_SIZE, MEMARR_AVAILPHYS);
+
+	/*
+	 * Open Boot supposedly guarantees at least 3 MB free mem at 0;
+	 * this is where the kernel has been loaded (we certainly hope the
+	 * kernel is <= 3 MB).  We need the memory array to be sorted, and
+	 * to start at 0, so that `software page 0' and `hardware page 0'
+	 * are the same (otherwise the VM reserves the wrong pages for the
+	 * kernel).
+	 */
+	sortm(ama, nmem);
+	if (ama[0].addr != 0) {
+		/* cannot panic here; there's no real kernel yet. */
+		printf("init_translations: no kernel memory?!\n");
+		callrom();
+	}
 #ifdef DEBUG
 	pmap_nama = nmem;
 #endif
@@ -1125,6 +1169,8 @@ pmap_bootstrap(nmmu, nctx)
 	extern char end[];
 	extern caddr_t reserve_dumppages(caddr_t);
 
+	kernel_pmap = (pmap_t)&kernel_pmap_store;
+
 	ncontext = nctx;
 
 	/*
@@ -1276,13 +1322,14 @@ pmap_bootstrap(nmmu, nctx)
 	 * set red zone at kernel base; enable cache on message buffer.
 	 */
 	{
-		extern char etext[], trapbase[];
+		extern char etext[];
 #ifdef KGDB
 		register int mask = ~PG_NC;	/* XXX chgkprot is busted */
 #else
 		register int mask = ~(PG_W | PG_NC);
 #endif
-		for (p = trapbase; p < etext; p += NBPG)
+
+		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte(p, getpte(p) & mask);
 		p = (caddr_t)KERNBASE;
 		setpte(p, 0);
@@ -1312,10 +1359,7 @@ pmap_bootstrap_alloc(size)
 	int size;
 {
 	register void *mem;
-	extern int vm_page_startup_initialized;
 
-	if (vm_page_startup_initialized)
-		panic("pmap_bootstrap_alloc: called after startup initialized");
 	size = round_page(size);
 	mem = (void *)virtual_avail;
 	virtual_avail = pmap_map(virtual_avail, avail_start,
@@ -2528,6 +2572,17 @@ pmap_pageable(pm, start, end, pageable)
 	vm_offset_t start, end;
 	int pageable;
 {
+}
+
+/*
+ *	Routine:	pmap_kernel
+ *	Function:
+ *		Returns the physical map handle for the kernel.
+ */
+pmap_t
+pmap_kernel()
+{
+	return (kernel_pmap);
 }
 
 /*

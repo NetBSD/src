@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.1 1993/10/02 10:24:09 deraadt Exp $
+ * $Id: conf.c,v 1.2 1993/10/11 02:16:16 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -52,21 +52,21 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/systm.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
-int	swstrategy	__P((struct buf *));
+void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_strategy(n)	int n __P((struct buf *))
+#define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
-/*	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, int))*/
-#define	dev_type_dump(n)	int n ()
+#define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, int))
 #define	dev_type_size(n)	int n __P((dev_t))
 
 /* error/nullop functions */
@@ -137,9 +137,9 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,read); \
 	dev_decl(n,write); dev_decl(n,ioctl); dev_decl(n,select); \
 	dev_decl(n,map); dev_decl(n,strategy); \
-	extern struct tty __CONCAT(n,_tty)[]
+	extern struct tty *__CONCAT(n,_tty)[];
 
-#define	dev_tty_init(c,n)	(c > 0 ? __CONCAT(n,_tty) : 0)
+#define	dev_tty_init(c,n)	(c > 0 ? __CONCAT(n,_tty) : (struct tty **)0)
 
 /* open, close, read, write, ioctl, strategy */
 #define	cdev_disk_init(c,n) { \
@@ -177,10 +177,10 @@ cdev_decl(no);			/* dummy declarations */
 
 cdev_decl(cn);
 /* open, close, read, write, ioctl, select -- XXX should be a tty */
-extern struct tty cons;
+extern struct tty *constty[];
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, &cons, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, constty, \
 	dev_init(c,n,select), 0, 0 }
 
 cdev_decl(ctty);
@@ -373,6 +373,8 @@ struct cdevsw	cdevsw[] =
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
+
+int	mem_no = 3; 	/* major device number of memory special file */
 
 /*
  * Swapdev is a fake device implemented

@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.1 1993/10/02 10:24:07 deraadt Exp $
+ * $Id: clock.c,v 1.2 1993/10/11 02:16:15 deraadt Exp $
  */
 
 /*
@@ -279,7 +279,7 @@ int
 clockintr(cap)
 	void *cap;
 {
-	register int discard;
+	volatile register int discard;
 	extern int rom_console_input;
 
 	/* read the limit register to clear the interrupt */
@@ -298,7 +298,7 @@ int
 statintr(cap)
 	void *cap;
 {
-	register int discard;
+	volatile register int discard;
 	register u_long newint, r, var;
 
 	/* read the limit register to clear the interrupt */
