@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbdmap.c,v 1.7 2003/09/15 21:03:10 uwe Exp $	*/
+/*	$NetBSD: j720kbdmap.c,v 1.8 2003/12/15 16:11:34 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.7 2003/09/15 21:03:10 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbdmap.c,v 1.8 2003/12/15 16:11:34 manu Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -187,6 +187,37 @@ static const keysym_t j720kbd_keydesc_jp[] = {
     KC(91),  KS_backslash,      KS_bar,
 };
 
+static const keysym_t j720kbd_keydesc_pt[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(17),  KS_1,		KS_exclam,	KS_onesuperior,
+    KC(18),  KS_2,		KS_at,		KS_twosuperior,
+    KC(19),  KS_3,		KS_numbersign,	KS_threesuperior,
+    KC(20),  KS_4,		KS_backslash,	KS_dollar,
+    KC(21),  KS_5,		KS_percent,	KS_cent,
+    KC(22),  KS_6,		KS_dead_diaeresis, KS_notsign,
+    KC(23),  KS_7,		KS_ampersand,	KS_sterling,
+    KC(28),  KS_equal,		KS_plus,	KS_section,
+    KC(33),  KS_q,		KS_Q,		KS_slash,
+    KC(34),  KS_w,		KS_W,		KS_question,	
+    KC(35),  KS_e,		KS_E,
+    KC(42),  KS_p,		KS_P,
+    KC(43),  KS_dead_acute,    KS_dead_grave,
+    KC(49),  KS_a,		KS_A,		KS_degree,
+    KC(58),  KS_ccedilla,
+    KC(59),  KS_bracketleft,	KS_braceleft,	KS_ordfeminine,
+    KC(60),  KS_bracketright,	KS_braceright,	KS_masculine,
+    KC(65),  KS_z,		KS_Z,		KS_backslash,
+    KC(66),  KS_x,		KS_X,		KS_bar,
+    KC(72),  KS_comma,		KS_less,	KS_guillemotleft,
+    KC(73),  KS_period,	KS_greater,	KS_guillemotright,
+    KC(74),  KS_semicolon,	KS_colon,
+    KC(75),  KS_dead_tilde,	KS_dead_circumflex,
+    KC(83),  KS_Shift_L,	KS_Caps_Lock,
+    KC(102), KS_apostrophe,	KS_quotedbl,
+    KC(113), KS_slash,		KS_bar,		KS_backslash,
+    KC(120), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 /* KBD_NULLMAP generates a entry for machine native variant.
@@ -197,6 +228,7 @@ const struct wscons_keydesc j720kbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	j720kbd_keydesc_us),
 	KBD_MAP(KB_JP,			KB_US,	j720kbd_keydesc_jp),
 	KBD_MAP(KB_FR,			KB_US,	j720kbd_keydesc_fr),
+	KBD_MAP(KB_PT,			KB_US,	j720kbd_keydesc_pt),
 	{0, 0, 0, 0}
 };
 
