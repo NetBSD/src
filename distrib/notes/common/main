@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.5 2002/07/02 04:20:05 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.6 2002/07/09 08:00:48 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd June 28, 2002
+.Dd July 9, 2002
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -289,7 +289,7 @@ For boot CDs, the command is something like
 You will need to use the correct case for
 .Ic OFWBOOT.XCF No and Ic NETBSD.MACPPC
 depending on how your version of Open Firmware interprets the ISO
-filesystem.
+file system.
 You may need to replace
 .Ic cd
 with
@@ -447,219 +447,275 @@ Some highlights include:
 .
 .(bullet
 Ports to new platforms including:
-arc,
-cobalt,
-hpcmips,
-news68k,
+evbarm,
+hpcsh,
 newsmips,
+sandpoint,
 sgimips,
-sparc64,
+sun2,
 and
 walnut.
 .It
-Improved performance and stability of the UVM virtual memory subsystem.
+Unified Buffer Cache (UBC) removes size restriction of the file system's
+buffer cache to use all available RAM (if not otherwise used!).
 .It
-Implementation of generic kernel locking code, as well as a
-restructure and re-tuning of the scheduler, to be used by the
-future symmetric multi-processing (SMP) implementation.
+Road-robin page colouring implemented for various ports for better
+cache utilisation, more deterministic run-time behaviour, and faster
+program execution.
 .It
-Improved compatibility support for Linux, OSF1, and SVR4 programs.
+A rewritten SCSI middle layer to provide a cleaner interface between
+the different kernel layers, including a kernel thread to handle error
+recovery out of interrupt context.
+See
+.Xr scsipi 9 .
 .It
-New compatibility support for Win32 programs.
+A new pipe implementation with significantly higher performance
+due to lower overheads, which uses the UVM Page Loan facility.
 .It
-Support for dynamically loaded ELF kernel modules.
+New boot flags
+.Fl v
+.Pq Em bootverbose
+and
+.Fl q
+.Pq Em bootquiet ,
+to be used by kernel code to optionally print information during boot.
 .It
-Kernel process tracing using
-.Xr ktruss 1 .
+An in-kernel boot time device configuration manager
+.Xr userconf 4 ,
+activated with the
+.Fl c
+boot loader flag.
 .It
-Deletion of swap devices using
-.Xr swapctl 8 .
+A work-in-progress snapshot of ACPI support,
+based on the 20010831 snapshot of the Intel ACPICA reference implementation.
 .It
-Easier hot-pluggability of keyboards and mice using a new wscons
-device\(emwsmux.
+USB 2.0 support, in the form of a preliminary driver for the
+.Xr ehci 4
+host controller.
 .It
-Improved PCMCIA and CardBus support, including support for detaching
-of devices and cards, resulting in better support for notebooks and
-PDA devices.
+Basic kernel support for IrDA in the form of the
+.Xr irframe 4
+IrDA frame level driver.
+Serial dongles and the
+.Xr oboe 4
+driver are currently supported.
 .It
-Numerous hardware improvements, including areas such as:
-audio, UDMA/66 support for ATA drives, USB, and wireless networking.
+Kernel configuration files can be embedded into the kernel for later
+retrieval.
+Refer to
+.Dv INCLUDE_CONFIG_FILE
+in
+.Xr options 4
+for more information.
+.It
+Many more kernel tunable variables added to
+.Xr sysctl 8 .
+.It
+Linux binary emulation has been greatly improved,
+and not supports Linux kernel version 2.4.18.
 .bullet)
 .
 .Ss2 Networking
 .
 .(bullet
-Addition of IP version 6 (IPv6) and IPsec to the networking stack,
-from the KAME project.
-This includes addition of kernel code for IPv6/IPsec,
-IPv4/v6 dual-stack user applications and supporting libraries.
-Due to this, the shlib major version for
-.Xr pcap 3
-is incremented and you may need to recompile userland tools.
-The KAME IPv6 part includes results from the unified-IPv6 effort.
+Hardware assisted IPv4 TCP and UDP checksumming and for caching of the
+IPv6 TCP pseudo header.
+Support checksum offloading on the DP83820 Gigabit Ethernet, 3Com 3c90xB,
+3Com 3c90xC, and Alteon Tigon/Tigon2 Gigabit Ethernet cards.
+.It
+Zero-Copy for TCP and UDP transmit path achieved through page
+loaning code for
+.Fn sosend .
+.It
+IPFilter now supports IPv6 filtering.
+.It
+Add
+.Xr ndbootd 8 ,
+used to netboot
+.Nx Ns sun2
+machines.
+.It
+Added the
+.Xr racoon 8
+IKE daemon from the KAME project, for IPsec key negotiation.
+.It
+WEP encryption supported in
+.Xr ifconfig 8
+and
+.Xr awi 4
+driver.
+.It
+.Xr wi 4
+and
+.Xr wiconfig 8
+now support scanning for access points.
+.It
+Bridging support; currently only for ethernet.
+See
+.Xr bridge 4 .
+.It
+In-kernel PPP over Ethernet (PPPoE - RFC 2516).
+See 
+.Xr pppoe 8 .
+.It
+Add
+.Xr ifwatchd 8
+to invoke up-script and down-script when a network interface goes up and down.
+Used by
+.Xr pppoe 8 .
 .bullet)
 .
 .Ss2 File system
 .
 .(bullet
-Significant Fast file system (FFS) performance enhancements via
-integration of Kirk McKusick's soft updates and trickle sync code.
+Enhanced stability of LFS version 2, the BSD log-structured file system.
 .It
-Support for the
-.Tn "Windows NT"
-.Sq NTFS
-file system (read-only at this stage).
+.Xr dump 8 ,
+.Xr dumpfs 8 ,
+.Xr fsck_ffs 8 ,
+.Xr fsirand 8 ,
+.Xr newfs 8 ,
+and
+.Xr tunefs 8
+support a
+.Fl F
+option to manipulate file system images in regular files.
 .It
-Support for revision 1 of the
-.Tn Linux
-.Sq ext2fs
-file system.
+Added
+.Xr makefs 8 ,
+which creates file system images from a directory tree.
+(Currently ffs only.)
 .It
-Enhanced stability and usability of LFS (the
-.Bx
-log-structured file system).
-.It
-Various RAIDframe enhancements including: auto-detection of RAID components
-and auto-configuration of RAID sets, and the ability to configure the root
-file system
-.Pq Pa /
-on a RAID set.
+Add
+.Xr dpti 4 ,
+an implementation of the DPT/Adaptec SCSI/I2O RAID management interface.
+Allows the use of the Linux versions of
+.Ic dptmgr ,
+.Ic raidutil ,
+.Ic dptelog ,
+(etc).
 .It
 Support for
-.Tn Microsoft
-Joliet extensions to the ISO9660 CD file system.
-.It
-Improved file system vnode locking mechanisms,
-thus resolving a source of several panics in the past.
-.It
-Support for NFS and RPC over IPv6.
-.It
-The server part of NFS locking (implemented by
-.Xr rpc.lockd 8 )
-now works.
+.Tn "Windows 2000"
+.Sq NTFS
+(NTFS5).
 .bullet)
 .
 .Ss2 Security
 .
 .(bullet
-Strong cryptographic libraries and applications integrated,
-including the AES cipher Rijndael, the OpenSSL library, more
-complete Kerberos IV and Kerberos V support, and an SSH server
-and client.
-.It
-.Xr sysctl 3
-interfaces to various elements of process and system information,
-allowing programs such as
-.Xr ps 1 ,
-.Xr dmesg 1
-and the like to operate without recompilation after kernel upgrades,
-and remove the necessity to run setgid kmem (thus improving system
-security).
-.It
-Disable various services by default, and set the default options for
-disabled daemons to a higher level of logging.
-.It
-Several code audits were performed.
-One audit replaced string routines that were used without bounds checking,
-and another one identified and disabled places where format strings were
-used in unsafe ways, allowing arbitrary data to be entered by (possibly)
-malicious users to overwrite application code, and leading from
-Denial of Service attacks to compromised systems.
-.It
-.Xr sshd 8
+Addition of a
+.Xr chroot 8
+heirarchy for services including
+.Xr named 8 ,
+.Xr ntpd 8 ,
 and
-.Xr ssh 1
-now require
-.Xr rnd 4
-kernel random number devices.
+.Xr sshd 8 .
+.It
+Additional
+.Xr passwd 4
+ciphers:
+MD5, and
+DES with more encryption rounds.
+See
+.Xr passwd.conf 5 .
+.It
+Several more code audits were performed.
+.
+.\" XXX: list security advisories here?
+.
 .bullet)
 .
 .Ss2 System administration and user tools
 .
 .(bullet
-Conversion of the
-.Xr rc 8
-system startup and shutdown scripts to an
-.Sq rc.d
-mechanism, with separate control scripts for each service, and
-appropriate dependency ordering provided by
-.Xr rcorder 8 .
+Added
+.Xr sushi 8 ,
+a menu based system administration tool.
 .It
-.Xr postfix 1
-provided as alternative mail transport agent to
-.Xr sendmail 8 .
-.It
-User management tools
-.Xr useradd 8 ,
-.Xr usermod 8 ,
-.Xr userdel 8 ,
-.Xr groupadd 8 ,
-.Xr groupmod 8 ,
+Added
+.Xr pgrep 1
 and
-.Xr groupdel 8
-added to the system.
+.Xr pkill 1 ,
+to find or signal processes by name or other attributes.
 .It
-Incorporation of a login class capability database
-.Pq Pa /etc/login.conf
-from
-.Tn BSD/OS .
+System upgrades are made easier through the
+.Xr etcupdate 8
+script which helps updating the
+.Pa /etc
+config files interactively, and the
+.Pa /etc/postinstall
+script which is provided to check for or fix configuration changes
+that have occurred in
+.Nx .
 .It
-Improved support for usernames longer than eight characters in programs
-such as
-.Xr at 1
-and
-.Xr w 1 .
-.It
-Many enhancements to
-.Xr ftpd 8
-providing features found in larger and less secure FTP daemons,
-such as user classes, connection limits, improved support for
-virtual hosting, transfer statistics, transfer rate throttling,
-and support for various IETF ftpext working group extensions.
-.It
-The
-.Xr ftp 1
-client has been improved even further, including
-transfer rate throttling, improved URL support, command line uploads.
-See the man page for details.
+Added
+.Xr stat 1 ,
+a user interface to the information returned by the
+.Xr stat 2
+system call.
 .bullet)
 .
 .Ss2 Miscellaneous
 .
 .(bullet
-Updates to the
-.Nx
-source code style code (located in
-.Pa /usr/share/misc/style )
-to use ANSI C only (instead of K&R) and reflect current (best) practice,
-and begin migrating the
-.Nx
-source code to follow it.
+Full support for cross-compilation of the base system!
+.Pa src/build.sh
+is available for doing arbitrary cross-builds; see
+.Pa src/BUILDING
+for more information.
+At least 38 ports for the
+.Nx \*V
+release were cross-built on a
+.Nx Ns /i386
+system using this mechanism.
 .It
-Implementation of many SUSv2 features to the
-.Xr curses 3
-library, including support for color.
+Migrated the following CPU platforms to ELF: arm, and m68k (including
+amiga, hp300, mac68k, mvme68k, sun2, and x68k).
 .It
 Updates of most third party packages that are shipped in the base
-system, including
-.Xr file 1 ,
-.Xr ipfilter 4 ,
-.Xr ppp 4 ,
+system to the following latest stable releases:
+amd 6.0.6,
+BIND 8.3.3,
+bzip2 1.0.2,
+cvs 1.11,
+dhcpd 3.0rc10,
+file 3.38,
+groff 1.16.1,
+Heimdal 0.4e,
+IPfilter 3.4.27,
+kerberos4 1.1,
+ksh from pdksh 5.2.14-patches.2,
+less 374,
+nvi 1.79,
+OpenSSH 3.4 ,
+OpenSSL 0.9.6a,
+Postfix 20010228-pl02,
+pppd 2.4.0,
+routed 2.24 ,
+sendmail 8.11.6,
+tcpdump 3.7.1,
 and
-.Xr sendmail 8
-to the latest stable release.
+XFree 4.2.0.
 .It
 Many new packages in the
 .Em pkgsrc
-system, including standard desktops like KDE and GNOME as well as latest
-Tcl/Tk and perl and many of the components of the Java Enterprise platform.
-The package framework itself now has full wildcard dependency support.
+system, including the latest open source desktop KDE3, OpenOffice,
+perl, Apache and many more.
+At the time of writing, there are almost 3000 third party packages
+available in pkgsrc.
+.It
+Added AGP GART driver
+.Xr agp 4
+for faster access to graphics boards.
 .bullet)
+.
 .Pp
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports.
 You can look for this trend to continue.
 .Pp
+.
 .so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
 .
@@ -796,22 +852,19 @@ This set contains the
 .Dq gnu
 sources, including the source for the compiler, assembler, groff,
 and the other GNU utilities in the binary distribution sets.
-.br
-.Em 22.3 MB gzipped, 98.8 MB uncompressed
+.setsize 55 247
 .It Sy pkgsrc
 This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
-.br
-.Em 7.4 MB gzipped, 73.0 MB uncompressed
+.setsize 12 94
 .It Sy sharesrc
 This set contains the
 .Dq share
 sources, which include the sources for the man pages not associated
 with any particular program; the sources for the typesettable document
 set; the dictionaries; and more.
-.br
-.Em 3.3 MB gzipped, 13.2 MB uncompressed
+.setsize 4 16
 .It Sy src
 This set contains all of the base
 .Nx \*V
@@ -820,8 +873,7 @@ sources which are not in
 .Sy sharesrc ,
 or
 .Sy syssrc .
-.br
-.Em 24.8 MB gzipped, 123.1 MB uncompressed
+.setsize 27 136
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
@@ -829,12 +881,10 @@ kernel for all architectures;
 .Xr config 8 ;
 and
 .Xr dbsym 8 .
-.br
-.Em 18.0 MB gzipped, 90.9 MB uncompressed
+.setsize 22 114
 .It Sy xsrc
 This set contains the sources to the X Window System.
-.br
-.Em 78.1 MB gzipped, 393.6 MB uncompressed
+.setsize 78 394
 .tag)
 .Pp
 All the above source sets are located in the
@@ -1336,6 +1386,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Luke Mewburn Ta Mt lukem@netbsd.org
 .It Ta Christos Zoulas Ta Mt christos@netbsd.org
 .It Ta Ta
+.
 .br_ne 2i
 .It-span Em "The portmasters (and their ports):"
 .It Ta Ta
@@ -1353,9 +1404,10 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org Ta Sy sgimips
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org Ta Sy mipsco
 .It Ta Paul Kranenburg Ta Mt pk@netbsd.org Ta Sy sparc
+.It Ta "Frank van der Linden" Ta Mt fvdl@netbsd.org Ta Sy i386
 .It Ta Anders Magnusson Ta Mt ragge@netbsd.org Ta Sy vax
-.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org Ta Sy x68k
 .It Ta Phil Nelson Ta Mt phil@netbsd.org Ta Sy pc532
+.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org Ta Sy x68k
 .It Ta Tohru Nishimura Ta Mt nisimura@netbsd.org Ta Sy luna68k
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org Ta Sy prep
 .It Ta Scott Reynolds Ta Mt scottr@netbsd.org Ta Sy mac68k
@@ -1370,28 +1422,26 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Tsubai Masanari Ta Mt tsubai@netbsd.org Ta Sy macppc
 .It Ta Tsubai Masanari Ta Mt tsubai@netbsd.org Ta Sy newsmips
 .It Ta Izumi Tsutsui Ta Mt tsutsui@netbsd.org Ta Sy news68k
-.It Ta "Frank van der Linden" Ta Mt fvdl@netbsd.org Ta Sy i386
 .It Ta Leo Weppelman Ta Mt leo@netbsd.org Ta Sy atari
 .It Ta Nathan Williams Ta Mt nathanw@netbsd.org Ta Sy sun3
 .It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvme68k
 .It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvmeppc
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org Ta Sy acorn32
 .It Ta Ta
+.
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
 .It Ta Erik Berls Ta Mt cyber@netbsd.org
-.It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
-.It Ta Ted Lemon Ta Mt mellon@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta Luke Mewburn Ta Mt lukem@netbsd.org
-.It Ta Curt Sampson Ta Mt cjs@netbsd.org
 .It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
 .It Ta Todd Vierling Ta Mt tv@netbsd.org
 .It Ta Ta
+.
 .br_ne 2i
-.It-span Em "Developers and other contributors:"
+.It-span Em "NetBSD Developers:"
 .It Ta Ta
 .It Ta Nathan Ahlstrom Ta Mt nra@netbsd.org
 .It Ta Steve Allen Ta Mt wormey@netbsd.org
@@ -1416,13 +1466,14 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta David Brownlee Ta Mt abs@netbsd.org
 .It Ta Frederick Bruckman Ta Mt fredb@netbsd.org
 .It Ta Jon Buller Ta Mt jonb@netbsd.org
-.It Ta Dave Burgess Ta Mt burgess@cynjut.infonet.net
+.It Ta Simon Burge Ta Mt simonb@netbsd.org
 .It Ta Robert Byrnes Ta Mt byrnes@netbsd.org
 .It Ta D'Arcy J.M. Cain Ta Mt darcy@netbsd.org
 .It Ta Dave Carrel Ta Mt carrel@netbsd.org
 .It Ta James Chacon Ta Mt jmc@netbsd.org
 .It Ta Bill Coldwell Ta Mt billc@netbsd.org
 .It Ta Julian Coleman Ta Mt jdc@netbsd.org
+.It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org
 .It Ta Chuck Cranor Ta Mt chuck@netbsd.org
 .It Ta Alistair Crooks Ta Mt agc@netbsd.org
 .It Ta Aidan Cully Ta Mt aidan@netbsd.org
@@ -1445,21 +1496,24 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Gavan Fantom Ta Mt gavan@netbsd.org
 .It Ta Hubert Feyrer Ta Mt hubertf@netbsd.org
 .It Ta Jason R. Fink Ta Mt jrf@netbsd.org
+.It Ta Matt Fredette Ta Mt fredette@netbsd.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@netbsd.org
 .It Ta Castor Fu Ta Mt castor@netbsd.org
 .It Ta Ichiro Fukuhara Ta Mt ichiro@netbsd.org
-.It Ta Brian R. Gaeke Ta Mt brg@dgate.org
 .It Ta Thomas Gerner Ta Mt thomas@netbsd.org
 .It Ta Simon J. Gerraty Ta Mt sjg@netbsd.org
 .It Ta Justin Gibbs Ta Mt gibbs@netbsd.org
+.It Ta Chris Gilbert Ta Mt chris@netbsd.org
 .It Ta Adam Glass Ta Mt glass@netbsd.org
 .It Ta Michael Graff Ta Mt explorer@netbsd.org
-.It Ta Brad Grantham Ta Mt grantham@tenon.com
 .It Ta Brian C. Grayson Ta Mt bgrayson@netbsd.org
 .It Ta Matthew Green Ta Mt mrg@netbsd.org
 .It Ta Andreas Gustafsson Ta Mt gson@netbsd.org
+.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@netbsd.org
 .It Ta Juergen Hannken-Illjes Ta Mt hannken@netbsd.org
 .It Ta Charles M. Hannum Ta Mt mycroft@netbsd.org
+.It Ta Ben Harris Ta Mt bjh21@netbsd.org
+.It Ta Ross Harvey Ta Mt ross@netbsd.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@netbsd.org
 .It Ta John Hawkinson Ta Mt jhawk@netbsd.org
 .It Ta HAYAKAWA Koichi Ta Mt haya@netbsd.org
@@ -1468,6 +1522,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Christian E. Hopps Ta Mt chopps@netbsd.org
 .It Ta Ken Hornstein Ta Mt kenh@netbsd.org
 .It Ta Marc Horowitz Ta Mt marc@netbsd.org
+.It Ta Eduardo Horvath Ta Mt eeh@netbsd.org
 .It Ta Nick Hudson Ta Mt skrll@netbsd.org
 .It Ta Shell Hung Ta Mt shell@netbsd.org
 .It Ta Martin Husemann Ta Mt martin@netbsd.org
@@ -1478,23 +1533,26 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta IWAMOTO Toshihiro Ta Mt toshii@netbsd.org
 .It Ta Matthew Jacob Ta Mt mjacob@netbsd.org
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@netbsd.org
+.It Ta Darrin Jewell Ta Mt dbj@netbsd.org
 .It Ta Chris Jones Ta Mt cjones@netbsd.org
+.It Ta S\(/oren J\(/orvang Ta Mt soren@netbsd.org
 .It Ta Takahiro Kambe Ta Mt taca@netbsd.org
 .It Ta Antti Kantee Ta Mt pooka@netbsd.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
 .It Ta Mattias Karlsson Ta Mt keihan@netbsd.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
 .It Ta Mario Kemper Ta Mt magick@netbsd.org
-.It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@netbsd.org
 .It Ta Klaus Klein Ta Mt kleink@netbsd.org
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org
 .It Ta John Kohl Ta Mt jtk@netbsd.org
+.It Ta Paul Kranenburg Ta Mt pk@netbsd.org
 .It Ta Martti Kuparinen Ta Mt martti@netbsd.org
 .It Ta Kevin Lahey Ta Mt kml@netbsd.org
 .It Ta Johnny C. Lam Ta Mt jlam@netbsd.org
 .It Ta Martin J. Laubach Ta Mt mjl@netbsd.org
 .It Ta Ted Lemon Ta Mt mellon@netbsd.org
+.It Ta Frank van der Linden Ta Mt fvdl@netbsd.org
 .It Ta Joel Lindholm Ta Mt joel@netbsd.org
 .It Ta Mike Long Ta Mt mikel@netbsd.org
 .It Ta Warner Losh Ta Mt imp@netbsd.org
@@ -1502,6 +1560,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Federico Lupi Ta Mt federico@netbsd.org
 .It Ta Brett Lymn Ta Mt blymn@netbsd.org
 .It Ta Paul Mackerras Ta Mt paulus@netbsd.org
+.It Ta Anders Magnusson Ta Mt ragge@netbsd.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@netbsd.org
 .It Ta David Maxwell Ta Mt david@netbsd.org
 .It Ta Dan McMahill Ta Mt dmcmahill@netbsd.org
@@ -1510,10 +1569,14 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Neil J. McRae Ta Mt neil@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta Minoura Makoto Ta Mt minoura@netbsd.org
+.It Ta Luke Mewburn Ta Mt lukem@netbsd.org
 .It Ta der Mouse Ta Mt mouse@netbsd.org
 .It Ta Joseph Myers Ta Mt jsm@netbsd.org
 .It Ta Ken Nakata Ta Mt kenn@netbsd.org
+.It Ta Phil Nelson Ta Mt phil@netbsd.org
 .It Ta Bob Nestor Ta Mt rnestor@netbsd.org
+.It Ta NISHIMURA Takeshi Ta Mt nsmrtks@netbsd.org
+.It Ta Tohru Nishimura Ta Mt nisimura@netbsd.org
 .It Ta NONAKA Kimihiro Ta Mt nonaka@netbsd.org
 .It Ta Jesse Off Ta Mt joff@netbsd.org
 .It Ta Tatoku Ogaito Ta Mt tacha@netbsd.org
@@ -1526,14 +1589,15 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Dante Profeta Ta Mt dante@netbsd.org
 .It Ta Chris Provenzano Ta Mt proven@netbsd.org
 .It Ta Michael Rauch Ta Mt mrauch@netbsd.org
-.It Ta Waldi Ravens Ta Mt waldi@moacs.indiv.nl.net
 .It Ta Darren Reed Ta Mt darrenr@netbsd.org
+.It Ta Scott Reynolds Ta Mt scottr@netbsd.org
 .It Ta Michael Richardson Ta Mt mcr@netbsd.org
 .It Ta Tim Rightnour Ta Mt garbled@netbsd.org
 .It Ta Gordon Ross Ta Mt gwr@netbsd.org
 .It Ta Heiko W. Rupp Ta Mt hwr@netbsd.org
 .It Ta David Sainty Ta Mt dsainty@netbsd.org
 .It Ta SAITOH Masanobu Ta Mt msaitoh@netbsd.org
+.It Ta Kazuki Sakamoto Ta Mt sakamoto@netbsd.org
 .It Ta Curt Sampson Ta Mt cjs@netbsd.org
 .It Ta Wilfredo Sanchez Ta Mt wsanchez@netbsd.org
 .It Ta Ty Sarna Ta Mt tsarna@netbsd.org
@@ -1551,17 +1615,25 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Chuck Silvers Ta Mt chs@netbsd.org
 .It Ta Thor Lancelot Simon Ta Mt tls@netbsd.org
 .It Ta Jeff Smith Ta Mt jeffs@netbsd.org
+.It Ta Noriyuki Soda Ta Mt soda@netbsd.org
+.It Ta Wolfgang Solfrank Ta Mt ws@netbsd.org
 .It Ta SOMEYA Yoshihiko Ta Mt someya@netbsd.org
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@netbsd.org
+.It Ta Ignatios Souvatzis Ta Mt is@netbsd.org
 .It Ta Bill Squier Ta Mt groo@netbsd.org
+.It Ta Jonathan Stone Ta Mt jonathan@netbsd.org
 .It Ta Bill Studenmund Ta Mt wrstuden@netbsd.org
 .It Ta Kevin Sullivan Ta Mt sullivan@netbsd.org
 .It Ta SUNAGAWA Keiki Ta Mt kei@netbsd.org
 .It Ta Kimmo Suominen Ta Mt kim@netbsd.org
+.It Ta Shin Takemura Ta Mt takemura@netbsd.org
 .It Ta TAMURA Kent Ta Mt kent@netbsd.org
 .It Ta Shin'ichiro TAYA Ta Mt taya@netbsd.org
 .It Ta Matt Thomas Ta Mt matt@netbsd.org
+.It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
 .It Ta Christoph Toshok Ta Mt toshok@netbsd.org
+.It Ta Tsubai Masanari Ta Mt tsubai@netbsd.org
+.It Ta Izumi Tsutsui Ta Mt tsutsui@netbsd.org
 .It Ta UCHIYAMA Yasushi Ta Mt uch@netbsd.org
 .It Ta Masao Uebayashi Ta Mt uebayasi@netbsd.org
 .It Ta Shuichiro URATA Ta Mt ur@netbsd.org
@@ -1570,16 +1642,30 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Paul Vixie Ta Mt vixie@netbsd.org
 .It Ta Krister Walfridsson Ta Mt kristerw@netbsd.org
 .It Ta Lex Wennmacher Ta Mt wennmach@netbsd.org
+.It Ta Leo Weppelman Ta Mt leo@netbsd.org
 .It Ta Assar Westerlund Ta Mt assar@netbsd.org
 .It Ta Todd Whitesel Ta Mt toddpw@netbsd.org
+.It Ta Nathan Williams Ta Mt nathanw@netbsd.org
 .It Ta Rob Windsor Ta Mt windsor@netbsd.org
 .It Ta Dan Winship Ta Mt danw@netbsd.org
 .It Ta Jim Wise Ta Mt jwise@netbsd.org
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
+.It Ta Steve Woodford Ta Mt scw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
+.It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
 .It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
+.It Ta Christos Zoulas Ta Mt christos@netbsd.org
+.
+.br_ne 2i
+.It-span Em "Other contributors:"
+.It Ta Ta
+.It Ta Dave Burgess Ta Mt burgess@cynjut.infonet.net
+.It Ta Brian R. Gaeke Ta Mt brg@dgate.org
+.It Ta Brad Grantham Ta Mt grantham@tenon.com
+.It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
+.It Ta Waldi Ravens Ta Mt waldi@moacs.indiv.nl.net
 .
 .El
 .
