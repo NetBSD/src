@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.2 1996/02/22 22:22:11 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.3 1996/03/08 16:25:07 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,7 +50,7 @@
  *
  * Based on kate/katelib/prototypes.h
  *
- *    $Id: katelib.h,v 1.2 1996/02/22 22:22:11 mark Exp $
+ *    $Id: katelib.h,v 1.3 1996/03/08 16:25:07 mark Exp $
  */
 
 #include <sys/types.h>
@@ -117,7 +117,7 @@ void postmortem __P((trapframe_t */*frame*/));
 u_int traceback __P(());
 u_int simpletraceback __P(());
 u_int irqtraceback __P((u_int, u_int));
-int shell __P((caddr_t /*ident*/));
+int shell __P(());
 void kstack_stuff __P((struct proc */*p*/));
 void boot0 __P(());
 void bootsync __P((void));
