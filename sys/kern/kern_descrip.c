@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.114 2003/09/22 12:59:55 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.115 2003/10/30 07:27:02 provos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.114 2003/09/22 12:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.115 2003/10/30 07:27:02 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,9 @@ MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
 static __inline void	fd_used(struct filedesc *, int);
 static __inline void	fd_unused(struct filedesc *, int);
+static __inline int	find_next_zero(uint32_t *, int, u_int);
 int			finishdup(struct proc *, int, int, register_t *);
+int			find_last_set(struct filedesc *, int);
 int			fcntl_forfs(int, struct proc *, int, void *);
 
 dev_type_open(filedescopen);
@@ -92,9 +94,70 @@ const struct cdevsw filedesc_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
+static __inline int
+find_next_zero(uint32_t *bitmap, int want, u_int bits)
+{
+	int i, off, maxoff;
+	uint32_t sub;
+
+	if (want > bits)
+		return -1;
+
+	off = want >> NDENTRYSHIFT;
+	i = want & NDENTRYMASK;
+	if (i) {
+		sub = bitmap[off] | ((u_int)~0 >> (NDENTRIES - i));
+		if (sub != ~0)
+			goto found;
+		off++;
+	}
+
+	maxoff = NDLOSLOTS(bits);
+	while (off < maxoff) {
+		if ((sub = bitmap[off]) != ~0)
+			goto found;
+		off++;
+	}
+
+	return (-1);
+
+ found:
+	return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
+}
+
+int
+find_last_set(struct filedesc *fd, int last)
+{
+	int off, i;
+	struct file **ofiles = fd->fd_ofiles;
+	uint32_t *bitmap = fd->fd_lomap;
+
+	off = (last - 1) >> NDENTRYSHIFT;
+
+	while (!bitmap[off] && off >= 0)
+		off--;
+
+	if (off < 0)
+		return (0);
+       
+	i = ((off + 1) << NDENTRYSHIFT) - 1;
+	if (i >= last)
+		i = last - 1;
+
+	while (i > 0 && ofiles[i] == NULL)
+		i--;
+
+	return (i);
+}
+
 static __inline void
 fd_used(struct filedesc *fdp, int fd)
 {
+	u_int off = fd >> NDENTRYSHIFT;
+
+	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
+	if (fdp->fd_lomap[off] == ~0)
+		fdp->fd_himap[off >> NDENTRYSHIFT] |= 1 << (off & NDENTRYMASK);
 
 	if (fd > fdp->fd_lastfile)
 		fdp->fd_lastfile = fd;
@@ -103,19 +166,21 @@ fd_used(struct filedesc *fdp, int fd)
 static __inline void
 fd_unused(struct filedesc *fdp, int fd)
 {
+	u_int off = fd >> NDENTRYSHIFT;
 
 	if (fd < fdp->fd_freefile)
 		fdp->fd_freefile = fd;
+
+	if (fdp->fd_lomap[off] == ~0)
+		fdp->fd_himap[off >> NDENTRYSHIFT] &= ~(1 << (off & NDENTRYMASK));
+	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
+
 #ifdef DIAGNOSTIC
 	if (fd > fdp->fd_lastfile)
 		panic("fd_unused: fd_lastfile inconsistent");
 #endif
-	if (fd == fdp->fd_lastfile) {
-		do {
-			fd--;
-		} while (fd >= 0 && fdp->fd_ofiles[fd] == NULL);
-		fdp->fd_lastfile = fd;
-	}
+	if (fd == fdp->fd_lastfile)
+		fdp->fd_lastfile = find_last_set(fdp, fd);
 }
 
 /*
@@ -646,6 +711,7 @@ fdalloc(struct proc *p, int want, int *result)
 {
 	struct filedesc	*fdp;
 	int i, lim, last;
+	u_int off, new;
 
 	fdp = p->p_fd;
 
@@ -656,15 +722,32 @@ fdalloc(struct proc *p, int want, int *result)
 	 */
 	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 	last = min(fdp->fd_nfiles, lim);
+ again:
 	if ((i = want) < fdp->fd_freefile)
 		i = fdp->fd_freefile;
-	for (; i < last; i++) {
-		if (fdp->fd_ofiles[i] == NULL) {
-			fd_used(fdp, i);
-			if (want <= fdp->fd_freefile)
-				fdp->fd_freefile = i;
-			*result = i;
-			return (0);
+	off = i >> NDENTRYSHIFT;
+	new = find_next_zero(fdp->fd_himap, off,
+	    (last + NDENTRIES - 1) >> NDENTRYSHIFT);
+	if (new != -1) {
+		i = find_next_zero(&fdp->fd_lomap[new], 
+		    new > off ? 0 : i & NDENTRYMASK, NDENTRIES);
+		if (i == -1) {
+			/* 
+			 * free file descriptor in this block was
+			 * below want, try again with higher want.
+			 */
+			want = (new + 1) << NDENTRYSHIFT;
+			goto again;
+		}
+		i += (new << NDENTRYSHIFT);
+		if (i < last) {
+			if (fdp->fd_ofiles[i] == NULL) {
+				fd_used(fdp, i);
+				if (want <= fdp->fd_freefile)
+					fdp->fd_freefile = i;
+				*result = i;
+				return (0);
+			}
 		}
 	}
 
@@ -683,6 +766,7 @@ fdexpand(struct proc *p)
 	int		i, nfiles;
 	struct file	**newofile;
 	char		*newofileflags;
+	uint32_t	*newhimap, *newlomap;
 
 	fdp = p->p_fd;
 
@@ -705,6 +789,31 @@ fdexpand(struct proc *p)
 	memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
 	if (fdp->fd_nfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
+
+	if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
+		newhimap = malloc(NDHISLOTS(nfiles) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+		newlomap = malloc(NDLOSLOTS(nfiles) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+
+		memcpy(newhimap, fdp->fd_himap,
+		    (i = NDHISLOTS(fdp->fd_nfiles) * sizeof(uint32_t)));
+		memset((char *)newhimap + i, 0,
+		    NDHISLOTS(nfiles) * sizeof(uint32_t) - i);
+
+		memcpy(newlomap, fdp->fd_lomap,
+		    (i = NDLOSLOTS(fdp->fd_nfiles) * sizeof(uint32_t)));
+		memset((char *)newlomap + i, 0,
+		    NDLOSLOTS(nfiles) * sizeof(uint32_t) - i);
+
+		if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+			free(fdp->fd_himap, M_FILEDESC);
+			free(fdp->fd_lomap, M_FILEDESC);
+		}
+		fdp->fd_himap = newhimap;
+		fdp->fd_lomap = newlomap;
+	}
+
 	fdp->fd_ofiles = newofile;
 	fdp->fd_ofileflags = newofileflags;
 	fdp->fd_nfiles = nfiles;
@@ -772,6 +881,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	if (nfiles >= maxfiles) {
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		simple_unlock(&filelist_slock);
+		fd_unused(p->p_fd, i);
 		pool_put(&file_pool, fp);
 		return (ENFILE);
 	}
@@ -927,6 +1037,8 @@ fdinit1(struct filedesc0 *newfdp)
 	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
 	newfdp->fd_fd.fd_nfiles = NDFILE;
 	newfdp->fd_fd.fd_knlistsize = -1;
+	newfdp->fd_fd.fd_himap = newfdp->fd_dhimap;
+	newfdp->fd_fd.fd_lomap = newfdp->fd_dlomap;
 }
 
 /*
@@ -1008,9 +1120,23 @@ fdcopy(struct proc *p)
 		newfdp->fd_ofiles = malloc(i * OFILESIZE, M_FILEDESC, M_WAITOK);
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
 	}
+	if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
+		newfdp->fd_himap =
+		    ((struct filedesc0 *) newfdp)->fd_dhimap;
+		newfdp->fd_lomap =
+		    ((struct filedesc0 *) newfdp)->fd_dlomap;
+	} else {
+		newfdp->fd_himap = malloc(NDHISLOTS(i) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+		newfdp->fd_lomap = malloc(NDLOSLOTS(i) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+	}
+
 	newfdp->fd_nfiles = i;
 	memcpy(newfdp->fd_ofiles, fdp->fd_ofiles, i * sizeof(struct file **));
 	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
+	memcpy(newfdp->fd_himap, fdp->fd_himap, NDHISLOTS(i)*sizeof(uint32_t));
+	memcpy(newfdp->fd_lomap, fdp->fd_lomap, NDLOSLOTS(i)*sizeof(uint32_t));
 	/*
 	 * kq descriptors cannot be copied.
 	 */
@@ -1060,6 +1186,10 @@ fdfree(struct proc *p)
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
+	if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+		free(fdp->fd_himap, M_FILEDESC);
+		free(fdp->fd_lomap, M_FILEDESC);
+	}
 	if (fdp->fd_knlist)
 		free(fdp->fd_knlist, M_KEVENT);
 	if (fdp->fd_knhash)
