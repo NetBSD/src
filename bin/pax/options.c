@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.21 1999/08/24 08:00:03 tron Exp $	*/
+/*	$NetBSD: options.c,v 1.22 1999/08/24 08:02:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.21 1999/08/24 08:00:03 tron Exp $");
+__RCSID("$NetBSD: options.c,v 1.22 1999/08/24 08:02:27 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -617,7 +617,7 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:lmoprutvwxzBC:HLPX:Z014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:hlmoprutvwxzBC:LPX:Z014578")) 
 	    != -1)  {
 		switch(c) {
 		case 'b':
@@ -1419,7 +1419,7 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar -{txru}[cevfblmopwBHLPX014578] [tapefile] ",
+	(void)fputs("usage: tar -{txru}[cevfbhlmopwBLPX014578] [tapefile] ",
 		 stderr);
 	(void)fputs("[blocksize] [exclude-file] file1 file2...\n", stderr);
 	exit(1);
