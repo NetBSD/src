@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.9 2000/04/14 08:27:17 mrg Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.10 2000/06/12 05:25:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -454,7 +454,7 @@ lsi64854_enet_intr(arg)
 	struct lsi64854_softc *sc = arg;
 	char bits[64];
 	u_int32_t csr;
-static int dodrain=0;
+	static int dodrain = 0;
 
 	csr = L64854_GCSR(sc);
 
