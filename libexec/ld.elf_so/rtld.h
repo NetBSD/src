@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.25.4.3 2001/05/01 12:06:31 he Exp $	 */
+/*	$NetBSD: rtld.h,v 1.25.4.4 2001/12/09 17:21:50 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -195,13 +195,13 @@ typedef struct Struct_Obj_Entry {
 	int             (*dlclose) __P((void *));
 	int             (*dladdr) __P((const void *, Dl_info *));
 
-	int             mainprog:1;	/* True if this is the main program */
-	int             rtld:1;		/* True if this is the dynamic linker */
-	int             textrel:1;	/* True if there are relocations to
+	u_int32_t	mainprog:1,	/* True if this is the main program */
+	        	rtld:1,		/* True if this is the dynamic linker */
+			textrel:1,	/* True if there are relocations to
 					 * text seg */
-	int             symbolic:1;	/* True if generated with
+			symbolic:1,	/* True if generated with
 					 * "-Bsymbolic" */
-	int             printed:1;	/* True if ldd has printed it */
+			printed:1;	/* True if ldd has printed it */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -248,14 +248,16 @@ int _rtld_dladdr __P((const void *, Dl_info *));
 void _rtld_debug_state __P((void));
 void _rtld_linkmap_add __P((Obj_Entry *));
 void _rtld_linkmap_delete __P((Obj_Entry *));
+void _rtld_objlist_add __P((Objlist *, Obj_Entry *));
+Objlist_Entry *_rtld_objlist_find __P((Objlist *, const Obj_Entry *));
 
 /* headers.c */
 void _rtld_digest_dynamic __P((Obj_Entry *));
 Obj_Entry *_rtld_digest_phdr __P((const Elf_Phdr *, int, caddr_t));
 
 /* load.c */
-Obj_Entry *_rtld_load_object __P((char *, bool));
-int _rtld_load_needed_objects __P((Obj_Entry *, bool));
+Obj_Entry *_rtld_load_object __P((char *, int, bool));
+int _rtld_load_needed_objects __P((Obj_Entry *, int, bool));
 int _rtld_preload __P((const char *, bool));
 
 /* path.c */
