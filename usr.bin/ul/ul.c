@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.4 1995/11/28 20:58:38 jtc Exp $	*/
+/*	$NetBSD: ul.c,v 1.5 1997/10/14 01:40:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,22 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: ul.c,v 1.4 1995/11/28 20:58:38 jtc Exp $";
+__RCSID("$NetBSD: ul.c,v 1.5 1997/10/14 01:40:26 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termcap.h>
+#include <unistd.h>
 
 #define	IESC	'\033'
 #define	SO	'\016'
@@ -82,9 +84,23 @@ int	halfpos;
 int	upln;
 int	iflag;
 
-int	outchar();
+int	main __P((int, char **));
+void	filter __P((FILE *));
+void	flushln __P((void));
+void	fwd __P((void));
+void	iattr __P((void));
+void	initbuf __P((void));
+void	initcap __P((void));
+void	outc __P((int));
+void	outchar __P((int));
+void	overstrike __P((void));
+void	reverse __P((void));
+void	setulmode __P((int));
+
+
 #define	PRINT(s)	if (s == NULL) /* void */; else tputs(s, 1, outchar)
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -151,10 +167,11 @@ main(argc, argv)
 	exit(0);
 }
 
+void
 filter(f)
 	FILE *f;
 {
-	register c;
+	int c;
 
 	while ((c = getc(f)) != EOF) switch(c) {
 
@@ -264,17 +281,18 @@ filter(f)
 		flushln();
 }
 
+void
 flushln()
 {
-	register lastmode;
-	register i;
+	int lastmode;
+	int i;
 	int hadmodes = 0;
 
 	lastmode = NORMAL;
 	for (i=0; i<maxcol; i++) {
 		if (obuf[i].c_mode != lastmode) {
 			hadmodes++;
-			setmode(obuf[i].c_mode);
+			setulmode(obuf[i].c_mode);
 			lastmode = obuf[i].c_mode;
 		}
 		if (obuf[i].c_char == '\0') {
@@ -286,7 +304,7 @@ flushln()
 			outc(obuf[i].c_char);
 	}
 	if (lastmode != NORMAL) {
-		setmode(0);
+		setulmode(0);
 	}
 	if (must_overstrike && hadmodes)
 		overstrike();
@@ -303,11 +321,12 @@ flushln()
  * For terminals that can overstrike, overstrike underlines and bolds.
  * We don't do anything with halfline ups and downs, or Greek.
  */
+void
 overstrike()
 {
-	register int i;
+	int i;
 	char lbuf[256];
-	register char *cp = lbuf;
+	char *cp = lbuf;
 	int hadbold=0;
 
 	/* Set up overstrike buffer */
@@ -340,11 +359,12 @@ overstrike()
 	}
 }
 
+void
 iattr()
 {
-	register int i;
+	int i;
 	char lbuf[256];
-	register char *cp = lbuf;
+	char *cp = lbuf;
 
 	for (i=0; i<maxcol; i++)
 		switch (obuf[i].c_mode) {
@@ -363,6 +383,7 @@ iattr()
 	putchar('\n');
 }
 
+void
 initbuf()
 {
 
@@ -372,9 +393,10 @@ initbuf()
 	mode &= ALTSET;
 }
 
+void
 fwd()
 {
-	register oldcol, oldmax;
+	int oldcol, oldmax;
 
 	oldcol = col;
 	oldmax = maxcol;
@@ -383,6 +405,7 @@ fwd()
 	maxcol = oldmax;
 }
 
+void
 reverse()
 {
 	upln++;
@@ -392,11 +415,11 @@ reverse()
 	upln++;
 }
 
+void
 initcap()
 {
 	static char tcapbuf[512];
 	char *bp = tcapbuf;
-	char *getenv(), *tgetstr();
 
 	/* This nonsense attempts to work with both old and new termcap */
 	CURS_UP =		tgetstr("up", &bp);
@@ -445,6 +468,7 @@ initcap()
 	must_use_uc = (UNDER_CHAR && !ENTER_UNDERLINE);
 }
 
+void
 outchar(c)
 	int c;
 {
@@ -453,6 +477,7 @@ outchar(c)
 
 static int curmode = 0;
 
+void
 outc(c)
 	int c;
 {
@@ -463,12 +488,13 @@ outc(c)
 	}
 }
 
-setmode(newmode)
+void
+setulmode(newmode)
 	int newmode;
 {
 	if (!iflag) {
 		if (curmode != NORMAL && newmode != NORMAL)
-			setmode(NORMAL);
+			setulmode(NORMAL);
 		switch (newmode) {
 		case NORMAL:
 			switch(curmode) {
