@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.1 2002/11/10 02:18:03 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.2 2002/11/10 09:41:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.1 2002/11/10 02:18:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.2 2002/11/10 09:41:45 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.1 2002/11/10 02:18:03 manu Exp $"
 
 struct mach_subsystem_namemap mach_namemap[] = {
 	{ 200, mach_host_info, "host_info" },
+	{ 202, mach_host_page_size," host_page_size" },
 	{ 0, NULL, NULL },
 };
 
