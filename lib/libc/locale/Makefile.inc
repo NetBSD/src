@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.46 2005/03/30 03:47:12 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2005/03/30 10:15:12 wiz Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -32,7 +32,7 @@ SRCS+=	___runetype_mb.c _wctrans.c iswctype.c multibyte_c90.c \
 .endif
 MAN+=	btowc.3 iswalnum.3 iswctype.3 towlower.3 towctrans.3 mblen.3 mbrlen.3 \
 	mbrtowc.3 mbsinit.3 mbsrtowcs.3 mbstowcs.3 mbtowc.3 wcrtomb.3 \
-	wcsrtombs.3 wcstombs.3 wctob.3 wctomb.3 wctrans.3 wctype.3
+	wcsftime.3 wcsrtombs.3 wcstombs.3 wctob.3 wctomb.3 wctrans.3 wctype.3
 
 
 MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
