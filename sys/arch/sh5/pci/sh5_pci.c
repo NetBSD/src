@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.7 2002/10/14 14:19:28 scw Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.8 2002/10/31 14:52:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -778,7 +778,7 @@ sh5pci_intr_establish(void *arg, pci_intr_handle_t ih,
 	if (ihead->ih_cookie != NULL && ihead->ih_level != level) {
 		splx(s);
 		sh5_intr_free_handle(ic);
-		printf("sh5pci_intr_establish: shared level mismatch");
+		printf("sh5pci_intr_establish: shared level mismatch\n");
 		return (NULL);
 	}
 
