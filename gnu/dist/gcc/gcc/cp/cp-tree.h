@@ -2961,7 +2961,7 @@ struct lang_decl GTY(())
    entity with its own template parameter list, and which is not a
    full specialization.  */
 #define PROCESSING_REAL_TEMPLATE_DECL_P() \
-  (processing_template_decl > template_class_depth (current_class_type))
+  (processing_template_decl > template_class_depth (current_scope ()))
 
 /* Nonzero if this VAR_DECL or FUNCTION_DECL has already been
    instantiated, i.e. its definition has been generated from the
@@ -3632,6 +3632,7 @@ extern tree perform_direct_initialization_if_possible (tree, tree);
 /* in class.c */
 extern tree build_base_path			PARAMS ((enum tree_code, tree, tree, int));
 extern tree convert_to_base                     (tree, tree, bool);
+extern tree convert_to_base_statically          (tree, tree);
 extern tree build_vtbl_ref			PARAMS ((tree, tree));
 extern tree build_vfn_ref			PARAMS ((tree, tree));
 extern tree get_vtable_decl                     PARAMS ((tree, int));
@@ -4122,6 +4123,7 @@ extern int unemitted_tinfo_decl_p    	        PARAMS((tree, void *));
 extern int emit_tinfo_decl                      PARAMS((tree *, void *));
 
 /* in search.c */
+extern bool accessible_base_p (tree, tree);
 extern tree lookup_base PARAMS ((tree, tree, base_access, base_kind *));
 extern int types_overlap_p			PARAMS ((tree, tree));
 extern tree get_vbase				PARAMS ((tree, tree));

@@ -1669,15 +1669,15 @@ have meanings only for C++ programs:
 
 
 `-Wctor-dtor-privacy (C++ only)'
-     Warn when a class seems unusable, because all the constructors or
-     destructors in a class are private and the class has no friends or
-     public static member functions.  This warning is enabled by
+     Warn when a class seems unusable because all the constructors or
+     destructors in that class are private, and it has neither friends
+     nor public static member functions.  This warning is enabled by
      default.
 
 `-Wnon-virtual-dtor (C++ only)'
-     Warn when a class declares a non-virtual destructor that should
-     probably be virtual, because it looks like the class will be used
-     polymorphically.  This warning is enabled by `-Wall'.
+     Warn when a class appears to be polymorphic, thereby requiring a
+     virtual destructor, yet it declares a non-virtual one.  This
+     warning is enabled by `-Wall'.
 
 `-Wreorder (C++ only)'
      Warn when the order of member initializers given in the code does
@@ -1689,9 +1689,9 @@ have meanings only for C++ programs:
             A(): j (0), i (1) { }
           };
 
-     Here the compiler will warn that the member initializers for `i'
-     and `j' will be rearranged to match the declaration order of the
-     members.  This warning is enabled by `-Wall'.
+     The compiler will rearrange the member initializers for `i' and
+     `j' to match the declaration order of the members, emitting a
+     warning to that effect.  This warning is enabled by `-Wall'.
 
    The following `-W...' options are not affected by `-Wall'.
 
@@ -1712,8 +1712,8 @@ have meanings only for C++ programs:
           return an object.
 
 
-     and about violations of the following style guidelines from Scott
-     Meyers' `More Effective C++' book:
+     Also warn about violations of the following style guidelines from
+     Scott Meyers' `More Effective C++' book:
 
         * Item 6:  Distinguish between prefix and postfix forms of
           increment and decrement operators.
@@ -1721,9 +1721,9 @@ have meanings only for C++ programs:
         * Item 7:  Never overload `&&', `||', or `,'.
 
 
-     If you use this option, you should be aware that the standard
-     library headers do not obey all of these guidelines; you can use
-     `grep -v' to filter out those warnings.
+     When selecting this option, be aware that the standard library
+     headers do not obey all of these guidelines; use `grep -v' to
+     filter out those warnings.
 
 `-Wno-deprecated (C++ only)'
      Do not warn about usage of deprecated features.  *Note Deprecated
@@ -1731,7 +1731,7 @@ have meanings only for C++ programs:
 
 `-Wno-non-template-friend (C++ only)'
      Disable warnings when non-templatized friend functions are declared
-     within a template.  With the advent of explicit template
+     within a template.  Since the advent of explicit template
      specification support in G++, if the name of the friend is an
      unqualified-id (i.e., `friend foo(int)'), the C++ language
      specification demands that the friend declare or define an
@@ -1740,16 +1740,16 @@ have meanings only for C++ programs:
      interpreted as a particular specialization of a templatized
      function.  Because this non-conforming behavior is no longer the
      default behavior for G++, `-Wnon-template-friend' allows the
-     compiler to check existing code for potential trouble spots, and
-     is on by default.  This new compiler behavior can be turned off
-     with `-Wno-non-template-friend' which keeps the conformant
-     compiler code but disables the helpful warning.
+     compiler to check existing code for potential trouble spots and is
+     on by default.  This new compiler behavior can be turned off with
+     `-Wno-non-template-friend' which keeps the conformant compiler code
+     but disables the helpful warning.
 
 `-Wold-style-cast (C++ only)'
      Warn if an old-style (C-style) cast to a non-void type is used
      within a C++ program.  The new-style casts (`static_cast',
      `reinterpret_cast', and `const_cast') are less vulnerable to
-     unintended effects, and much easier to grep for.
+     unintended effects and much easier to search for.
 
 `-Woverloaded-virtual (C++ only)'
      Warn when a function declaration hides virtual functions from a
@@ -1763,7 +1763,7 @@ have meanings only for C++ programs:
             void f(int);
           };
 
-     the `A' class version of `f' is hidden in `B', and code like this:
+     the `A' class version of `f' is hidden in `B', and code like:
 
           B* b;
           b->f();
@@ -1776,7 +1776,7 @@ have meanings only for C++ programs:
 
 `-Wsign-promo (C++ only)'
      Warn when overload resolution chooses a promotion from unsigned or
-     enumeral type to a signed type over a conversion to an unsigned
+     enumeral type to a signed type, over a conversion to an unsigned
      type of the same size.  Previous versions of G++ would try to
      preserve unsignedness, but the standard mandates the current
      behavior.
@@ -1806,13 +1806,13 @@ Options Controlling Objective-C Dialect
 =======================================
 
    This section describes the command-line options that are only
-meaningful for Objective-C programs; but you can also use most of the
+meaningful for Objective-C programs, but you can also use most of the
 GNU compiler options regardless of what language your program is in.
 For example, you might compile a file `some_class.m' like this:
 
      gcc -g -fgnu-runtime -O -c some_class.m
 
-In this example, only `-fgnu-runtime' is an option meant only for
+In this example, `-fgnu-runtime' is an option meant only for
 Objective-C programs; you can use the other options with any language
 supported by GCC.
 
@@ -1852,8 +1852,8 @@ programs:
      Warn if multiple methods of different types for the same selector
      are found during compilation.  The check is performed on the list
      of methods in the final stage of compilation.  Additionally, a
-     check is performed that for each selector appearing in a
-     `@selector(...)' expression, a corresponding method with that
+     check is performed for each selector appearing in a
+     `@selector(...)'  expression, and a corresponding method for that
      selector has been found during compilation.  Because these checks
      scan the method table only at the end of compilation, these
      warnings are not produced if the final stage of compilation is not
@@ -1863,14 +1863,14 @@ programs:
 `-Wundeclared-selector'
      Warn if a `@selector(...)' expression referring to an undeclared
      selector is found.  A selector is considered undeclared if no
-     method with that name has been declared (explicitly, in an
-     `@interface' or `@protocol' declaration, or implicitly, in an
-     `@implementation' section) before the `@selector(...)' expression.
-     This option always performs its checks as soon as a
-     `@selector(...)' expression is found (while `-Wselector' only
-     performs its checks in the final stage of compilation), and so
-     additionally enforces the coding style convention that methods and
-     selectors must be declared before being used.
+     method with that name has been declared before the
+     `@selector(...)' expression, either explicitly in an `@interface'
+     or `@protocol' declaration, or implicitly in an `@implementation'
+     section.  This option always performs its checks as soon as a
+     `@selector(...)' expression is found, while `-Wselector' only
+     performs its checks in the final stage of compilation.  This also
+     enforces the coding style convention that methods and selectors
+     must be declared before being used.
 
 
 File: gcc.info,  Node: Language Independent Options,  Next: Warning Options,  Prev: Objective-C Dialect Options,  Up: Invoking GCC
@@ -8869,9 +8869,9 @@ V850 Options
 `-mno-prolog-function'
 `-mprolog-function'
      Do not use (do use) external functions to save and restore
-     registers at the prolog and epilog of a function.  The external
-     functions are slower, but use less code space if more than one
-     function saves the same number of registers.  The
+     registers at the prologue and epilogue of a function.  The
+     external functions are slower, but use less code space if more
+     than one function saves the same number of registers.  The
      `-mprolog-function' option is on by default if you optimize.
 
 `-mspace'
@@ -12555,8 +12555,8 @@ attributes.
 `malloc'
      The `malloc' attribute is used to tell the compiler that a function
      may be treated as if it were the malloc function.  The compiler
-     assumes that calls to malloc result in a pointers that cannot
-     alias anything.  This will often improve optimization.
+     assumes that calls to malloc result in pointers that cannot alias
+     anything.  This will often improve optimization.
 
 `alias ("TARGET")'
      The `alias' attribute causes the declaration to be emitted as an
@@ -12602,7 +12602,7 @@ attributes.
           additional processor specific semantics.  Unless otherwise
           specified by the psABI, gcc defines internal visibility to
           mean that the function is _never_ called from another module.
-          Note that hidden symbols, while then cannot be referenced
+          Note that hidden symbols, while they cannot be referenced
           directly by other modules, can be referenced indirectly via
           function pointers.  By indicating that a symbol cannot be
           called from outside the module, gcc may for instance omit the
@@ -12647,12 +12647,12 @@ attributes.
      attributes override both the `-mlongcall' switch and the `#pragma
      longcall' setting.
 
-     *Note RS/6000 and PowerPC Options::, for more information on when
-     long calls are and are not necessary.
+     *Note RS/6000 and PowerPC Options::, for more information on
+     whether long calls are necessary.
 
 `long_call/short_call'
-     This attribute allows to specify how to call a particular function
-     on ARM.  Both attributes override the `-mlong-calls' (*note ARM
+     This attribute specifies how a particular function is called on
+     ARM.  Both attributes override the `-mlong-calls' (*note ARM
      Options::) command line switch and `#pragma long_calls' settings.
      The `long_call' attribute causes the compiler to always call the
      function by first loading its address into a register and then
@@ -12680,9 +12680,9 @@ attributes.
      Note, interrupt handlers for the H8/300, H8/300H and SH processors
      can be specified via the `interrupt_handler' attribute.
 
-     Note, on the AVR interrupts will be enabled inside the function.
+     Note, on the AVR, interrupts will be enabled inside the function.
 
-     Note, for the ARM you can specify the kind of interrupt to be
+     Note, for the ARM, you can specify the kind of interrupt to be
      handled by adding an optional parameter to the interrupt attribute
      like this:
 
@@ -12731,20 +12731,20 @@ attributes.
 
 `signal'
      Use this attribute on the AVR to indicate that the specified
-     function is an signal handler.  The compiler will generate function
-     entry and exit sequences suitable for use in an signal handler
-     when this attribute is present.  Interrupts will be disabled
-     inside function.
+     function is a signal handler.  The compiler will generate function
+     entry and exit sequences suitable for use in a signal handler when
+     this attribute is present.  Interrupts will be disabled inside the
+     function.
 
 `naked'
      Use this attribute on the ARM, AVR and IP2K ports to indicate that
-     the specified function do not need prologue/epilogue sequences
+     the specified function does not need prologue/epilogue sequences
      generated by the compiler.  It is up to the programmer to provide
      these sequences.
 
 `model (MODEL-NAME)'
      Use this attribute on the M32R/D to set the addressability of an
-     object, and the code generated for a function.  The identifier
+     object, and of the code generated for a function.  The identifier
      MODEL-NAME is one of `small', `medium', or `large', representing
      each of the code models.
 
@@ -13177,7 +13177,7 @@ is true on many RISC machines.  On more traditional machine designs,
 `__alignof__ (double)' is 4 or even 2.
 
    Some machines never actually require alignment; they allow reference
-to any data type even at an odd addresses.  For these machines,
+to any data type even at an odd address.  For these machines,
 `__alignof__' reports the _recommended_ alignment of a type.
 
    If the operand of `__alignof__' is an lvalue rather than a type, its
@@ -13298,7 +13298,7 @@ attributes.
      program.  The warning also includes the location of the declaration
      of the deprecated variable, to enable users to easily find further
      information about why the variable is deprecated, or what they
-     should do instead.  Note that the warnings only occurs for uses:
+     should do instead.  Note that the warning only occurs for uses:
 
           extern int old_var __attribute__ ((deprecated));
           extern int old_var;
@@ -13585,7 +13585,7 @@ attributes.
 
 `packed'
      This attribute, attached to an `enum', `struct', or `union' type
-     definition, specified that the minimum required memory be used to
+     definition, specifies that the minimum required memory be used to
      represent the type.
 
      Specifying this attribute for `struct' and `union' types is
@@ -13613,7 +13613,7 @@ attributes.
      just as with normal pointer conversions.
 
      Second, the argument is passed to the function using the calling
-     conventions of first member of the transparent union, not the
+     conventions of the first member of the transparent union, not the
      calling conventions of the union itself.  All members of the union
      must have the same machine representation; this is necessary for
      this argument passing to work properly.
@@ -13804,11 +13804,12 @@ the header file will cause most calls to the function to be inlined.
 If any uses of the function remain, they will refer to the single copy
 in the library.
 
-   For future compatibility with when GCC implements ISO C99 semantics
-for inline functions, it is best to use `static inline' only.  (The
-existing semantics will remain available when `-std=gnu89' is
-specified, but eventually the default will be `-std=gnu99' and that
-will implement the C99 semantics, though it does not do so yet.)
+   Since GCC eventually will implement ISO C99 semantics for inline
+functions, it is best to use `static inline' only to guarentee
+compatibility.  (The existing semantics will remain available when
+`-std=gnu89' is specified, but eventually the default will be
+`-std=gnu99' and that will implement the C99 semantics, though it does
+not do so yet.)
 
    GCC does not inline any functions when not optimizing unless you
 specify the `always_inline' attribute for the function, like this:
@@ -13868,8 +13869,8 @@ like:
 
 Note that the symbolic operand names have no relation whatsoever to
 other C identifiers.  You may use any name you like, even those of
-existing C symbols, but must ensure that no two operands within the same
-assembler construct use the same symbolic name.
+existing C symbols, but you must ensure that no two operands within the
+same assembler construct use the same symbolic name.
 
    Output operand expressions must be lvalues; the compiler can check
 this.  The input operands need not be lvalues.  The compiler cannot
@@ -24714,194 +24715,194 @@ Node: Overall Options40915
 Node: Invoking G++47797
 Node: C Dialect Options49243
 Node: C++ Dialect Options59892
-Node: Objective-C Dialect Options77669
-Node: Language Independent Options81064
-Node: Warning Options82851
-Node: Debugging Options118310
-Node: Optimize Options138279
-Node: Preprocessor Options182134
-Ref: -MF189946
-Node: Assembler Options202988
-Node: Link Options203355
-Ref: Link Options-Footnote-1211434
-Node: Directory Options211770
-Node: Spec Files216762
-Node: Target Options235622
-Node: Submodel Options236923
-Node: M680x0 Options238682
-Node: M68hc1x Options244689
-Node: VAX Options246241
-Node: SPARC Options246777
-Node: ARM Options257071
-Node: MN10200 Options268938
-Node: MN10300 Options269460
-Node: M32R/D Options270511
-Node: M88K Options272969
-Node: RS/6000 and PowerPC Options280852
-Node: Darwin Options302019
-Node: RT Options304137
-Node: MIPS Options305806
-Node: i386 and x86-64 Options318142
-Node: HPPA Options333300
-Node: Intel 960 Options341183
-Node: DEC Alpha Options344125
-Node: DEC Alpha/VMS Options355140
-Node: H8/300 Options355517
-Node: SH Options356574
-Node: System V Options358890
-Node: TMS320C3x/C4x Options359708
-Node: V850 Options365220
-Node: ARC Options368143
-Node: NS32K Options369344
-Node: AVR Options373868
-Node: MCore Options375669
-Node: IA-64 Options376674
-Node: D30V Options379397
-Node: S/390 and zSeries Options380640
-Node: CRIS Options382574
-Node: MMIX Options386608
-Node: PDP-11 Options389076
-Node: Xstormy16 Options390902
-Node: FRV Options391178
-Node: Xtensa Options395122
-Node: Code Gen Options401853
-Node: Environment Variables418411
-Node: Running Protoize426051
-Node: C Implementation432407
-Node: Translation implementation433341
-Node: Environment implementation433776
-Node: Identifiers implementation434069
-Node: Characters implementation434682
-Node: Integers implementation436539
-Node: Floating point implementation437494
-Node: Arrays and pointers implementation439343
-Ref: Arrays and pointers implementation-Footnote-1440646
-Node: Hints implementation440772
-Node: Structures unions enumerations and bit-fields implementation442211
-Node: Qualifiers implementation443020
-Node: Preprocessing directives implementation443331
-Node: Library functions implementation445130
-Node: Architecture implementation445455
-Node: Locale-specific behavior implementation446020
-Node: C Extensions446318
-Node: Statement Exprs450438
-Node: Local Labels453492
-Node: Labels as Values455563
-Ref: Labels as Values-Footnote-1457628
-Node: Nested Functions457813
-Node: Constructing Calls461705
-Node: Typeof463786
-Node: Lvalues466962
-Node: Conditionals469402
-Node: Long Long470293
-Node: Complex471792
-Node: Hex Floats474363
-Node: Zero Length475392
-Node: Empty Structures478689
-Node: Variable Length479100
-Node: Variadic Macros481875
-Node: Escaped Newlines484266
-Node: Subscripting485098
-Node: Pointer Arith485824
-Node: Initializers486389
-Node: Compound Literals486878
-Node: Designated Inits489041
-Node: Case Ranges492715
-Node: Cast to Union493395
-Node: Mixed Declarations494490
-Node: Function Attributes494991
-Node: Attribute Syntax524109
-Node: Function Prototypes534486
-Node: C++ Comments536279
-Node: Dollar Signs536791
-Node: Character Escapes537249
-Node: Alignment537536
-Node: Variable Attributes538856
-Node: Type Attributes551177
-Node: Inline562606
-Node: Extended Asm567315
-Node: Constraints584609
-Node: Simple Constraints585452
-Node: Multi-Alternative591959
-Node: Modifiers593670
-Node: Machine Constraints596200
-Node: Asm Labels617460
-Node: Explicit Reg Vars619142
-Node: Global Reg Vars620596
-Node: Local Reg Vars625161
-Node: Alternate Keywords626961
-Node: Incomplete Enums628388
-Node: Function Names629144
-Node: Return Address631581
-Node: Vector Extensions634367
-Node: Other Builtins637923
-Node: Target Builtins653430
-Node: Alpha Built-in Functions653960
-Node: X86 Built-in Functions656949
-Node: PowerPC AltiVec Built-in Functions666448
-Node: Pragmas724258
-Node: ARM Pragmas724756
-Node: RS/6000 and PowerPC Pragmas725363
-Node: Darwin Pragmas726093
-Node: Solaris Pragmas727149
-Node: Tru64 Pragmas727712
-Node: Unnamed Fields728453
-Node: Thread-Local729545
-Node: C99 Thread-Local Edits731636
-Node: C++98 Thread-Local Edits733637
-Node: C++ Extensions737071
-Node: Min and Max738632
-Node: Volatiles740016
-Node: Restricted Pointers743386
-Node: Vague Linkage744968
-Node: C++ Interface748626
-Ref: C++ Interface-Footnote-1753714
-Node: Template Instantiation753853
-Node: Bound member functions760990
-Node: C++ Attributes762541
-Node: Java Exceptions764145
-Node: Deprecated Features765542
-Node: Backwards Compatibility767508
-Node: Objective-C768856
-Node: Executing code before main769435
-Node: What you can and what you cannot do in +load772073
-Node: Type encoding774239
-Node: Garbage Collection777491
-Node: Constant string objects780155
-Node: compatibility_alias782668
-Node: Compatibility783547
-Node: Gcov790134
-Node: Gcov Intro790603
-Node: Invoking Gcov793325
-Node: Gcov and Optimization801773
-Node: Gcov Data Files803210
-Node: Trouble807917
-Node: Actual Bugs809511
-Node: Cross-Compiler Problems810419
-Node: Interoperation811929
-Node: External Bugs822071
-Node: Incompatibilities823507
-Node: Fixed Headers831954
-Node: Standard Libraries834263
-Node: Disappointments835633
-Node: C++ Misunderstandings840127
-Node: Static Definitions840853
-Node: Temporaries841900
-Node: Copy Assignment843877
-Node: Protoize Caveats845699
-Node: Non-bugs849654
-Node: Warnings and Errors859522
-Node: Bugs861282
-Node: Bug Criteria861845
-Node: Bug Reporting864036
-Node: Service864417
-Node: Contributing865235
-Node: Funding865978
-Node: GNU Project868482
-Node: Copying869133
-Node: GNU Free Documentation License888341
-Node: Contributors910750
-Node: Option Index937144
-Node: Keyword Index1013149
+Node: Objective-C Dialect Options77643
+Node: Language Independent Options81027
+Node: Warning Options82814
+Node: Debugging Options118273
+Node: Optimize Options138242
+Node: Preprocessor Options182097
+Ref: -MF189909
+Node: Assembler Options202951
+Node: Link Options203318
+Ref: Link Options-Footnote-1211397
+Node: Directory Options211733
+Node: Spec Files216725
+Node: Target Options235585
+Node: Submodel Options236886
+Node: M680x0 Options238645
+Node: M68hc1x Options244652
+Node: VAX Options246204
+Node: SPARC Options246740
+Node: ARM Options257034
+Node: MN10200 Options268901
+Node: MN10300 Options269423
+Node: M32R/D Options270474
+Node: M88K Options272932
+Node: RS/6000 and PowerPC Options280815
+Node: Darwin Options301982
+Node: RT Options304100
+Node: MIPS Options305769
+Node: i386 and x86-64 Options318105
+Node: HPPA Options333263
+Node: Intel 960 Options341146
+Node: DEC Alpha Options344088
+Node: DEC Alpha/VMS Options355103
+Node: H8/300 Options355480
+Node: SH Options356537
+Node: System V Options358853
+Node: TMS320C3x/C4x Options359671
+Node: V850 Options365183
+Node: ARC Options368110
+Node: NS32K Options369311
+Node: AVR Options373835
+Node: MCore Options375636
+Node: IA-64 Options376641
+Node: D30V Options379364
+Node: S/390 and zSeries Options380607
+Node: CRIS Options382541
+Node: MMIX Options386575
+Node: PDP-11 Options389043
+Node: Xstormy16 Options390869
+Node: FRV Options391145
+Node: Xtensa Options395089
+Node: Code Gen Options401820
+Node: Environment Variables418378
+Node: Running Protoize426018
+Node: C Implementation432374
+Node: Translation implementation433308
+Node: Environment implementation433743
+Node: Identifiers implementation434036
+Node: Characters implementation434649
+Node: Integers implementation436506
+Node: Floating point implementation437461
+Node: Arrays and pointers implementation439310
+Ref: Arrays and pointers implementation-Footnote-1440613
+Node: Hints implementation440739
+Node: Structures unions enumerations and bit-fields implementation442178
+Node: Qualifiers implementation442987
+Node: Preprocessing directives implementation443298
+Node: Library functions implementation445097
+Node: Architecture implementation445422
+Node: Locale-specific behavior implementation445987
+Node: C Extensions446285
+Node: Statement Exprs450405
+Node: Local Labels453459
+Node: Labels as Values455530
+Ref: Labels as Values-Footnote-1457595
+Node: Nested Functions457780
+Node: Constructing Calls461672
+Node: Typeof463753
+Node: Lvalues466929
+Node: Conditionals469369
+Node: Long Long470260
+Node: Complex471759
+Node: Hex Floats474330
+Node: Zero Length475359
+Node: Empty Structures478656
+Node: Variable Length479067
+Node: Variadic Macros481842
+Node: Escaped Newlines484233
+Node: Subscripting485065
+Node: Pointer Arith485791
+Node: Initializers486356
+Node: Compound Literals486845
+Node: Designated Inits489008
+Node: Case Ranges492682
+Node: Cast to Union493362
+Node: Mixed Declarations494457
+Node: Function Attributes494958
+Node: Attribute Syntax524068
+Node: Function Prototypes534445
+Node: C++ Comments536238
+Node: Dollar Signs536750
+Node: Character Escapes537208
+Node: Alignment537495
+Node: Variable Attributes538813
+Node: Type Attributes551133
+Node: Inline562566
+Node: Extended Asm567288
+Node: Constraints584586
+Node: Simple Constraints585429
+Node: Multi-Alternative591936
+Node: Modifiers593647
+Node: Machine Constraints596177
+Node: Asm Labels617437
+Node: Explicit Reg Vars619119
+Node: Global Reg Vars620573
+Node: Local Reg Vars625138
+Node: Alternate Keywords626938
+Node: Incomplete Enums628365
+Node: Function Names629121
+Node: Return Address631558
+Node: Vector Extensions634344
+Node: Other Builtins637900
+Node: Target Builtins653407
+Node: Alpha Built-in Functions653937
+Node: X86 Built-in Functions656926
+Node: PowerPC AltiVec Built-in Functions666425
+Node: Pragmas724235
+Node: ARM Pragmas724733
+Node: RS/6000 and PowerPC Pragmas725340
+Node: Darwin Pragmas726070
+Node: Solaris Pragmas727126
+Node: Tru64 Pragmas727689
+Node: Unnamed Fields728430
+Node: Thread-Local729522
+Node: C99 Thread-Local Edits731613
+Node: C++98 Thread-Local Edits733614
+Node: C++ Extensions737048
+Node: Min and Max738609
+Node: Volatiles739993
+Node: Restricted Pointers743363
+Node: Vague Linkage744945
+Node: C++ Interface748603
+Ref: C++ Interface-Footnote-1753691
+Node: Template Instantiation753830
+Node: Bound member functions760967
+Node: C++ Attributes762518
+Node: Java Exceptions764122
+Node: Deprecated Features765519
+Node: Backwards Compatibility767485
+Node: Objective-C768833
+Node: Executing code before main769412
+Node: What you can and what you cannot do in +load772050
+Node: Type encoding774216
+Node: Garbage Collection777468
+Node: Constant string objects780132
+Node: compatibility_alias782645
+Node: Compatibility783524
+Node: Gcov790111
+Node: Gcov Intro790580
+Node: Invoking Gcov793302
+Node: Gcov and Optimization801750
+Node: Gcov Data Files803187
+Node: Trouble807894
+Node: Actual Bugs809488
+Node: Cross-Compiler Problems810396
+Node: Interoperation811906
+Node: External Bugs822048
+Node: Incompatibilities823484
+Node: Fixed Headers831931
+Node: Standard Libraries834240
+Node: Disappointments835610
+Node: C++ Misunderstandings840104
+Node: Static Definitions840830
+Node: Temporaries841877
+Node: Copy Assignment843854
+Node: Protoize Caveats845676
+Node: Non-bugs849631
+Node: Warnings and Errors859499
+Node: Bugs861259
+Node: Bug Criteria861822
+Node: Bug Reporting864013
+Node: Service864394
+Node: Contributing865212
+Node: Funding865955
+Node: GNU Project868459
+Node: Copying869110
+Node: GNU Free Documentation License888318
+Node: Contributors910727
+Node: Option Index937121
+Node: Keyword Index1013126
 
 End Tag Table
