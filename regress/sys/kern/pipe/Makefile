@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/09/29 13:54:20 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/31 15:57:56 tv Exp $
 
 PROG=	pipe1
 MKMAN=	no
@@ -6,6 +6,6 @@ MKMAN=	no
 all:	${PROG}
 
 regress: ${PROG}
-	@${.OBJDIR}/${PROG} || ( echo 'pipe write restart test failed' && exit 1 )
+	@./${PROG} || ( echo 'pipe write restart test failed' && exit 1 )
 
 .include <bsd.prog.mk>
