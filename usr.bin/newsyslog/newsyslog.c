@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.36 2000/08/22 14:20:17 tron Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.37 2000/08/22 16:23:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.36 2000/08/22 14:20:17 tron Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.37 2000/08/22 16:23:15 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -669,7 +669,7 @@ log_compress(struct conf_entry *log, const char *fn)
 	snprintf(tmp, sizeof (tmp), "%s.gz", fn);
 	PRINFO(("chown %d:%d %s\n", log->uid, log->gid, tmp));
 	if (!noaction)
-		if (!chown(tmp, log->uid, log->gid))
+		if (chown(tmp, log->uid, log->gid))
 			err(EXIT_FAILURE, "%s", tmp);
 }
 
