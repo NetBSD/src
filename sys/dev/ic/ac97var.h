@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.2 2000/11/04 08:07:14 thorpej Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.3 2001/01/09 23:14:25 rh Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -43,6 +43,7 @@ struct ac97_host_if {
 
 	enum ac97_host_flags {
 		AC97_HOST_DONT_READ = 0x1,
+		AC97_HOST_SWAPPED_CHANNELS = 0x2,	/* l/r is reversed */
 	};
 
 	enum ac97_host_flags (*flags)(void *arg);
