@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.19 1996/12/17 21:11:41 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.20 1997/01/27 19:19:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -52,8 +52,8 @@
 
 #include <dev/cons.h>
 
+#include <machine/machdep.h>
 #include <machine/mon.h>
-#include "machdep.h"
 
 static int net_mkunit __P((int ctlr, int unit));
 static int sd_mkunit  __P((int ctlr, int unit));
@@ -286,10 +286,12 @@ static void
 ds_from_boot(ds)
 	struct devspec *ds;
 {
+	MachMonRomVector *rvec;
 	MachMonBootParam *bpp;
 	struct genconf *gc;
 
-	bpp = *romp->bootParam;
+	rvec = romVectorPtr;
+	bpp = *rvec->bootParam;
 
 	bzero((caddr_t)ds, sizeof(*ds));
 
