@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.6 2002/07/04 23:30:40 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.7 2003/06/03 07:34:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_send.c,v 8.49 2002/03/29 21:50:51 marka Exp";
+static const char rcsid[] = "Id: res_send.c,v 8.51.2.1 2003/06/02 05:59:57 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -391,6 +391,8 @@ res_nsend(res_state statp,
 		int nsaplen;
 		nsap = get_nsaddr(statp, ns);
 		nsaplen = get_salen(nsap);
+		statp->_flags &= ~RES_F_LASTMASK;
+		statp->_flags |= (ns << RES_F_LASTSHIFT);
  same_ns:
 		if (statp->qhook) {
 			int done = 0, loops = 0;
@@ -628,7 +630,7 @@ send_vc(res_state statp,
 	/*
 	 * Send length & message
 	 */
-	putshort((u_short)buflen, (u_char*)&len);
+	ns_put16((u_short)buflen, (u_char*)&len);
 	iov[0] = evConsIovec(&len, INT16SZ);
 	DE_CONST(buf, tmp);
 	iov[1] = evConsIovec(tmp, buflen);
