@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.36 2004/11/18 21:07:28 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.37 2004/11/18 21:23:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.36 2004/11/18 21:07:28 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.37 2004/11/18 21:23:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1854,8 +1854,7 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 
 	/* scan through the list of selectors */
 	for (p = line; *p && !isblank((unsigned char)*p);) {
-		int pri_done;
-		int pri_cmp;
+		int pri_done, pri_cmp, pri_invert;
 
 		/* find the end of this facility name list */
 		for (q = p; *q && !isblank((unsigned char)*q) && *q++ != '.'; )
@@ -1864,6 +1863,11 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 		/* get the priority comparison */
 		pri_cmp = 0;
 		pri_done = 0;
+		pri_invert = 0;
+		if (*q == '!') {
+			pri_invert = 1;
+			q++;
+		}
 		while (! pri_done) {
 			switch (*q) {
 			case '<':
@@ -1883,9 +1887,6 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 				break;
 			}
 		}
-		if (pri_cmp == 0)
-			pri_cmp = UniquePriority ? PRI_EQ
-						 : PRI_EQ | PRI_GT;
 
 		/* collect priority name */
 		for (bp = buf; *q && !strchr("\t ,;", *q); )
@@ -1897,9 +1898,10 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 			q++;
 
 		/* decode priority name */
-		if (*buf == '*')
+		if (*buf == '*') {
 			pri = LOG_PRIMASK + 1;
-		else {
+			pri_cmp = PRI_LT | PRI_EQ | PRI_GT;
+		} else {
 			pri = decode(buf, prioritynames);
 			if (pri < 0) {
 				errno = 0;
@@ -1907,6 +1909,11 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 				return;
 			}
 		}
+		if (pri_cmp == 0)
+			pri_cmp = UniquePriority ? PRI_EQ
+						 : PRI_EQ | PRI_GT;
+		if (pri_invert)
+			pri_cmp ^= PRI_LT | PRI_EQ | PRI_GT;
 
 		/* scan facilities */
 		while (*p && !strchr("\t .;", *p)) {
