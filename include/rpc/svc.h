@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
+/*	$NetBSD: svc.h,v 1.10 1997/07/13 18:17:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -302,6 +302,7 @@ __END_DECLS
 __BEGIN_DECLS
 extern SVCXPRT *svcudp_create __P((int));
 extern SVCXPRT *svcudp_bufcreate __P((int, u_int, u_int));
+extern int svcudp_enablecache __P((SVCXPRT *, u_long));
 __END_DECLS
 
 
