@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.4 1993/10/29 06:01:46 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.5 1993/10/29 18:08:19 mycroft Exp $
  */
 
 /*
@@ -195,12 +195,13 @@ int ed_reset __P((int));
 int ed_watchdog __P((int));
 void ed_stop __P((int));
 
-static inline void ed_rint();
-static inline void ed_xmit();
-static inline char *ed_ring_copy();
+static inline void ed_rint __P((int));
+static inline void ed_xmit __P((struct ifnet *));
+static inline char *ed_ring_copy __P((struct ed_softc *, char *, char *, u_short));
 
-void ed_pio_readmem(), ed_pio_writemem();
-u_short ed_pio_write_mbufs();
+void ed_pio_readmem __P((struct ed_softc *, u_short, u_char *, u_short));
+void ed_pio_writemem __P((struct ed_softc *, u_char *, u_short, u_short));
+u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
 extern int ether_output();
 
@@ -1473,7 +1474,7 @@ outloop:
 			}
 		}
 	} else {
-		len = ed_pio_write_mbufs(sc, m, buffer);
+		len = ed_pio_write_mbufs(sc, m, (u_short)buffer);
 	}
 		
 	sc->txb_len[sc->txb_new] = MAX(len, ETHER_MIN_LEN);
@@ -1605,7 +1606,7 @@ ed_rint(unit)
 		if (sc->mem_shared)
 			packet_hdr = *(struct ed_ring *)packet_ptr;
 		else
-			ed_pio_readmem(sc, packet_ptr, (char *) &packet_hdr,
+			ed_pio_readmem(sc, (u_short)packet_ptr, (char *) &packet_hdr,
 				sizeof(packet_hdr));
 		len = packet_hdr.count;
 		if ((len >= ETHER_MIN_LEN) && (len <= ETHER_MAX_LEN)) {
@@ -2039,7 +2040,7 @@ ed_get_packet(sc, buf, len)
 	if (sc->mem_shared)
 		bcopy(buf, mtod(head, caddr_t), sizeof(struct ether_header));
 	else
-		ed_pio_readmem(sc, buf, mtod(head, caddr_t),
+		ed_pio_readmem(sc, (u_short)buf, mtod(head, caddr_t),
 			sizeof(struct ether_header));
 	buf += sizeof(struct ether_header);
 	head->m_len += sizeof(struct ether_header);
@@ -2073,7 +2074,7 @@ ed_get_packet(sc, buf, len)
 		} else {
 			struct trailer_header trailer_header;
 			ed_pio_readmem(sc,
-				ringoffset(sc, buf, off, caddr_t),
+				(u_short)ringoffset(sc, buf, off, caddr_t),
 				(char *) &trailer_header,
 				sizeof(trailer_header));
 			eh->ether_type = trailer_header.ether_type;
@@ -2158,9 +2159,9 @@ bad:	if (head)
 void
 ed_pio_readmem(sc,src,dst,amount)
 	struct	ed_softc *sc;
-	unsigned short src;
-	unsigned char *dst;
-	unsigned short amount;
+	u_short src;
+	u_char *dst;
+	u_short amount;
 {
 	unsigned short tmp_amount;
 
@@ -2196,9 +2197,9 @@ ed_pio_readmem(sc,src,dst,amount)
 void
 ed_pio_writemem(sc,src,dst,len)
 	struct ed_softc *sc;
-	char *src;
-	unsigned short dst;
-	unsigned short len;
+	u_char *src;
+	u_short dst;
+	u_short len;
 {
 	int maxwait=100; /* about 120us */
 
@@ -2241,7 +2242,7 @@ u_short
 ed_pio_write_mbufs(sc,m,dst)
 	struct ed_softc *sc;
 	struct mbuf *m;
-	unsigned short dst;
+	u_short dst;
 {
 	unsigned short len, mb_offset;
 	struct mbuf *mp;
@@ -2357,9 +2358,9 @@ ed_ring_copy(sc,src,dst,amount)
 
 		/* copy amount up to end of NIC memory */
 		if (sc->mem_shared)
-			bcopy(src,dst,tmp_amount);
+			bcopy(src, dst, tmp_amount);
 		else
-			ed_pio_readmem(sc,src,dst,tmp_amount);
+			ed_pio_readmem(sc, (u_short)src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
@@ -2369,7 +2370,7 @@ ed_ring_copy(sc,src,dst,amount)
 	if (sc->mem_shared)
 		bcopy(src, dst, amount);
 	else
-		ed_pio_readmem(sc, src, dst, amount);
+		ed_pio_readmem(sc, (u_short)src, dst, amount);
 
 	return(src + amount);
 }
