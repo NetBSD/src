@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2003/06/12 23:18:07 provos Exp $
+#	$NetBSD: Makefile,v 1.86 2003/07/23 05:27:38 itojun Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -16,8 +16,8 @@ SUBDIR+= libskey
 # XXX Crypto bits must be done before libtelnet.
 
 .if (${MKCRYPTO} != "no")
-# OpenSSL libraries.  NOTE!  WE DO NOT TRAVERSE INTO libdes FOR A REASON!
-SUBDIR+= libcrypto libssl
+# OpenSSL libraries.
+SUBDIR+= libcrypto libssl libdes
 
 .if (${MKCRYPTO_IDEA} != "no")
 SUBDIR+= libcrypto_idea
