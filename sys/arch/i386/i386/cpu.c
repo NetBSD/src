@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.15 2000/11/18 22:53:20 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.16 2000/11/19 01:07:28 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -432,6 +432,7 @@ cpu_hatch(void *v)
 	enable_intr();
 	lapic_initclocks();
 	printf("%s: CPU %d running\n",ci->ci_dev.dv_xname, cpu_number());
+	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
 
