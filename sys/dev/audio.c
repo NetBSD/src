@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.79 1997/10/29 02:11:45 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.80 1997/12/03 01:01:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -973,6 +973,17 @@ audio_close(dev, flags, ifmt, p)
 
 	DPRINTF(("audio_close: unit=%d\n", unit));
 
+        /* Stop recording. */
+	if (sc->sc_rbus) {
+		/* 
+		 * XXX Some drivers (e.g. SB) use the same routine
+		 * to halt input and output so don't halt input if
+		 * in full duplex mode.  These drivers should be fixed.
+		 */
+		if (!sc->sc_full_duplex || sc->hw_if->halt_input != sc->hw_if->halt_output)
+			sc->hw_if->halt_input(sc->hw_hdl);
+		sc->sc_rbus = 0;
+	}
 	/*
 	 * Block until output drains, but allow ^C interrupt.
 	 */
@@ -982,7 +993,7 @@ audio_close(dev, flags, ifmt, p)
 	 * If there is pending output, let it drain (unless
 	 * the output is paused).
 	 */
-	if (!sc->sc_pr.pause) {
+	if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pr.pause) {
 		if (!audio_drain(sc) && hw->drain)
 			(void)hw->drain(sc->hw_hdl);
 	}
@@ -1425,6 +1436,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
 	int error = 0, s, offs, fd;
+        int rbus, pbus;
 
 	DPRINTF(("audio_ioctl(%d,'%c',%d)\n",
 	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
@@ -1445,6 +1457,8 @@ audio_ioctl(dev, cmd, addr, flag, p)
 
 	case AUDIO_FLUSH:
 		DPRINTF(("AUDIO_FLUSH\n"));
+                rbus = sc->sc_rbus;
+                pbus = sc->sc_pbus;
 		audio_clear(sc);
 		s = splaudio();
 		error = audio_initbufs(sc);
@@ -1452,10 +1466,10 @@ audio_ioctl(dev, cmd, addr, flag, p)
 			splx(s);
 			return error;
 		}
-		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus)
+		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus && pbus)
 			error = audiostartp(sc);
 		if (!error &&
-		    (sc->sc_mode & AUMODE_RECORD) && !sc->sc_rbus)
+		    (sc->sc_mode & AUMODE_RECORD) && !sc->sc_rbus && rbus)
 			error = audiostartr(sc);
 		splx(s);
 		break;
@@ -2526,7 +2540,7 @@ audiosetinfo(sc, ai)
 
 	if (p->pause != (u_char)~0) {
 		sc->sc_pr.pause = p->pause;
-		if (!p->pause && !sc->sc_pbus) {
+		if (!p->pause && !sc->sc_pbus && (sc->sc_mode & AUMODE_PLAY)) {
 			s = splaudio();
 			error = audiostartp(sc);
 			splx(s);
@@ -2536,7 +2550,7 @@ audiosetinfo(sc, ai)
 	}
 	if (r->pause != (u_char)~0) {
 		sc->sc_rr.pause = r->pause;
-		if (!r->pause && !sc->sc_rbus) {
+		if (!r->pause && !sc->sc_rbus && (sc->sc_mode & AUMODE_RECORD)) {
 			s = splaudio();
 			error = audiostartr(sc);
 			splx(s);
