@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.12.4.1 2000/10/19 14:24:24 tv Exp $
+#	$NetBSD: Makefile.buildboot,v 1.12.4.2 2000/11/01 03:24:23 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,8 +10,17 @@ SRCS=		${COMMONSOURCE} ${PROGSOURCE}
 MKMAN=		no
 BINMODE=	444
 
-# Note: relocating `boot' at 0x3C8000 seems to work on most machines
-RELOC_DEFAULT?=	3C8000
+#
+# The relocation address for `boot' must leave enough free memory below
+# it to load a kernel at address 0x4000. On the other hand, on some
+# machines, the PROM uses memory in the upper portion of the first 4MB
+# segment, depending on the actual memory bank configuration probably.
+# Our boot program must stear clear of that as well.
+#
+# Relocating `boot' at 0x388000 seems to provide a working compromise
+# on the machines tested so far.
+#
+RELOC_DEFAULT?=	388000
 RELOCS=		$(RELOC_DEFAULT)
 #RELOCS+=	200000 400000 700000		# additional link addresses
 
