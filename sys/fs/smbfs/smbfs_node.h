@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.4 2003/02/18 20:09:01 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.5 2003/02/23 21:55:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,6 +36,8 @@
 #ifndef _FS_SMBFS_NODE_H_
 #define _FS_SMBFS_NODE_H_
 
+#include <miscfs/genfs/genfs_node.h>	/* for struct genfs_node */
+
 #define	SMBFS_ROOT_INO		2	/* just like in UFS */
 
 /* Bits for smbnode.n_flag */
@@ -48,6 +50,7 @@
 struct smbfs_fctx;
 
 struct smbnode {
+	struct genfs_node	n_gnode;
 	int			n_flag;
 	struct smbnode *	n_parent;
 	struct vnode *		n_vnode;
