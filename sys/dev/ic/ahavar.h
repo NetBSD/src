@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.5 1997/08/27 11:24:47 bouyer Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.6 1997/11/04 05:58:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/queue.h>
 
 /*
  * Mail box defs  etc.
@@ -69,6 +71,9 @@ struct aha_softc {
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
 	struct scsipi_link sc_link;	/* prototype for devs */
+
+	LIST_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_xfer *sc_queuelast;
 
 	char sc_model[18],
 	     sc_firmware[4];
