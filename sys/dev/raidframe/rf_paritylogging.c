@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.14 2002/09/23 02:40:08 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.15 2003/11/16 20:32:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.14 2002/09/23 02:40:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.15 2003/11/16 20:32:05 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -943,7 +943,7 @@ rf_ParityLoggingDagSelect(
 
 	if (asmp->numDataFailed + asmp->numParityFailed > 1) {
 		RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
-		 /* *infoFunc = */ *createFunc = NULL;
+		*createFunc = NULL;
 		return;
 	} else
 		if (asmp->numDataFailed + asmp->numParityFailed == 1) {

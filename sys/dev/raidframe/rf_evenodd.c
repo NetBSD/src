@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.9 2002/09/23 02:40:08 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.10 2003/11/16 20:32:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.9 2002/09/23 02:40:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.10 2003/11/16 20:32:05 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -213,7 +213,7 @@ rf_EODagSelect(
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 	if (ntfail > 2) {
 		RF_ERRORMSG("more than two disks failed in a single group!  Aborting I/O operation.\n");
-		 /* *infoFunc = */ *createFunc = NULL;
+		*createFunc = NULL;
 		return;
 	}
 	/* ok, we can do this I/O */
