@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.54 2000/08/26 15:13:23 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.55 2000/08/27 00:21:46 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -329,12 +329,12 @@ idle:
 3:	bbssi	$0,_C_LABEL(sched_lock),3b	# acquire sched lock
 #endif
 	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
-	bneq	Swtch			# Yes, goto switch again.
-	brb	idle			# nope, continue to idlely loop
+	beql	idle			# Yes, goto switch again.
+	brb	Swtch			# nope, continue to idlely loop
 
 #
 # cpu_switch, cpu_exit and the idle loop implemented in assembler 
-# for efficiency. r0 contains pointer to last process.  This is
+# for efficiency. r6 contains pointer to last process.  This is
 # called at IPL_HIGH.
 #
 
@@ -351,7 +351,13 @@ JSBENTRY(Swtch)
 	bvc	1f			# check if something on queue
 	pushab	noque
 	calls	$1,_C_LABEL(panic)
+#ifdef __ELF__
+	.section	.rodata
+#endif
 noque:	.asciz	"swtch"
+#ifdef __ELF__
+	.text
+#endif
 #endif
 1:	bneq	2f			# more processes on queue?
 	bbsc	r3,_C_LABEL(sched_whichqs),2f	# no, clear bit in whichqs
@@ -364,7 +370,7 @@ noque:	.asciz	"swtch"
 	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
 	movl	r2,CI_CURPROC(r1)	# set new process running
 	clrl	CI_WANT_RESCHED(r1)	# we are now changing process
-	cmpl	r0,r2			# Same process?
+	cmpl	r6,r2			# Same process?
 	bneq	1f			# No, continue
 #if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_unlock_idle)
@@ -391,8 +397,10 @@ noque:	.asciz	"swtch"
 #
 	svpctx
 	mtpr	r3,$PR_PCBB
+#if defined(MULTIPROCESSOR)
 	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
 _C_LABEL(tramp):
+#endif
 	ldpctx
 #if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_unlock_idle)
@@ -416,7 +424,13 @@ ENTRY(cpu_exit,0)
 	mtpr	r7,$PR_SSP	# In case...
 	pushl	r6
 	calls	$1,_C_LABEL(exit2)	# release last resources.
-	clrl	r0
+	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
+#if defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(sched_lock_idle)
+#elif defined(MULTIPROCESSOR)
+1:	bbssi	$0,_C_LABEL(sched_lock),1b	# acquire sched lock
+#endif
+	clrl	r6
 	brw	Swtch
 
 #
