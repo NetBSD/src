@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.65 2002/06/16 00:13:16 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.66 2002/09/22 19:32:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.65 2002/06/16 00:13:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.66 2002/09/22 19:32:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.65 2002/06/16 00:13:16 perseant Exp 
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>

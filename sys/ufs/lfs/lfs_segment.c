@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.80 2002/07/06 01:30:13 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.81 2002/09/22 19:32:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.80 2002/07/06 01:30:13 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.81 2002/09/22 19:32:55 jdolecek Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.80 2002/07/06 01:30:13 perseant Ex
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
