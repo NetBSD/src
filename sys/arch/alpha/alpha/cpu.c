@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35 1999/03/04 06:46:23 chs Exp $ */
+/* $NetBSD: cpu.c,v 1.36 1999/06/29 06:49:36 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 1999/03/04 06:46:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 1999/06/29 06:49:36 ross Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -130,7 +130,7 @@ static char *ev4minor[] = {
 }, *ev56minor[] = {
 	"", "pass 1", "pass 2", 0
 }, *ev6minor[] = {
-	"", "pass 1", 0
+	"pass 1", "pass 2", "pass 2.2", "pass 2.3", "pass 3", 0
 }, *pca56minor[] = {
 	"", "pass 1", 0
 };
@@ -218,7 +218,7 @@ cpuattach(parent, dev, aux)
 
 	for(i = 0; i < sizeof cpunametable / sizeof cpunametable[0]; ++i) {
 		if (cpunametable[i].cpu_major_code == major) {
-			printf("%s", cpunametable[i].cpu_major_name);
+			printf("%s-%d", cpunametable[i].cpu_major_name, minor);
 			s = cpunametable[i].cpu_minor_names;
 			for(i = 0; s && s[i]; ++i) {
 				if (i == minor) {
