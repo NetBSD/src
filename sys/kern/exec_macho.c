@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.27 2003/09/07 11:16:59 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.28 2003/10/19 07:52:22 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.27 2003/09/07 11:16:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.28 2003/10/19 07:52:22 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -421,6 +421,7 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 	struct exec_macho_fat_arch arch;
 	struct exec_macho_object_header hdr;
 	struct exec_macho_load_command lc;
+	struct exec_macho_emul_arg *emea;
 	int error = ENOEXEC, i;
 	size_t size;
 	void *buf = &lc;
@@ -540,6 +541,8 @@ exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
 				DPRINTF(("load linker failed\n"));
 				goto bad;
 			}
+			emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+			emea->dynamic = 1;
 			break;
 		case MACHO_LC_LOAD_DYLIB:
 			/* 
@@ -625,6 +628,7 @@ exec_macho_makecmds(p, epp)
 
 	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
 	epp->ep_emul_arg = (void *)emea;
+	emea->dynamic = 0;
 
 	if (!epp->ep_esch->u.mach_probe_func)
 		emea->path = "/";
@@ -633,6 +637,13 @@ exec_macho_makecmds(p, epp)
 		&emea->path)) != 0)
 		    goto bad2;
 	}
+
+	/*
+	 * Make sure the underlying functions will not get
+	 * a random value here. 0 means that no entry point
+	 * has been found yet.
+	 */
+	epp->ep_entry = 0;
 		
 	if ((error = exec_macho_load_vnode(p, epp, epp->ep_vp, fat,
 	    &epp->ep_entry, MACHO_MOH_EXECUTE, 1, 0)) != 0)
