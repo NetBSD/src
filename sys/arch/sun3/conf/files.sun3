@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.41 1997/08/27 11:26:02 bouyer Exp $
+#	$NetBSD: files.sun3,v 1.42 1997/10/17 02:59:10 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -42,6 +42,12 @@ include "arch/m68k/fpe/files.fpe"
 file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
 #
 # Bus types
 #
@@ -76,6 +82,18 @@ file arch/sun3/dev/vme.c		vmes | vmel
 include "../../../dev/scsipi/files.scsipi"
 
 #
+# Devices and attributes needed below
+#
+device ie: ifnet, ether, arp
+file arch/sun3/dev/if_ie.c		ie
+
+device si: scsi, ncr5380sbc
+file	arch/sun3/dev/si.c		si
+
+define sunfb
+file arch/sun3/dev/fb.c			# sunfb needs-flag
+
+#
 # On-Board I/O (OBIO)
 #
 device zsc {channel = -1}
@@ -100,29 +118,15 @@ device intreg
 attach intreg at obio
 file arch/sun3/sun3/intreg.c		intreg
 
-device ie: ifnet, ether, arp
 attach ie at obio with ie_obio
-attach ie at vmes with ie_vmes
 file arch/sun3/dev/if_ie_obio.c		ie_obio
-file arch/sun3/dev/if_ie_vmes.c		ie_vmes
-file arch/sun3/dev/if_ie.c		ie
 
 # device defined in sys/conf/files
 attach le at obio
 file arch/sun3/dev/if_le.c		le
 
-device si: scsi, ncr5380sbc
-file	arch/sun3/dev/si.c		si
 attach si at obio with si_obio
 file	arch/sun3/dev/si_obio.c		si_obio
-attach si at vmes with si_vmes
-file	arch/sun3/dev/si_vme.c		si_vmes
-
-#
-# Sun-compatible Frame Buffers (?)
-#
-define sunfb
-file arch/sun3/dev/fb.c			# sunfb needs-flag
 
 #
 # On-Board MEMory (OBMEM)
@@ -131,28 +135,47 @@ device bwtwo: sunfb
 attach bwtwo at obmem
 file arch/sun3/dev/bw2.c		bwtwo needs-flag
 
-device cgtwo: sunfb
-attach cgtwo at vmes
-file arch/sun3/dev/cg2.c		cgtwo needs-flag
-
 device cgfour: sunfb
 attach cgfour at obmem
 file arch/sun3/dev/cg4.c		cgfour needs-flag
 
 #
-# VME
+# VME A16 (vmes)
 #
-device	xdc {drive = -1}
-attach	xdc at vmel
-device	xd: disk
-attach	xd at xdc
-file	arch/sun3/dev/xd.c		xd needs-flag
+attach ie at vmes with ie_vmes
+file arch/sun3/dev/if_ie_vmes.c		ie_vmes
+
+attach si at vmes with si_vmes
+file	arch/sun3/dev/si_vme.c		si_vmes
+
+device sebuf {}
+attach sebuf at vmes
+file	arch/sun3/dev/sebuf.c		sebuf
+
+attach ie at sebuf with ie_sebuf
+file arch/sun3/dev/if_ie_sebuf.c	ie_sebuf
+
+attach si at sebuf with si_sebuf
+file	arch/sun3/dev/si_sebuf.c	si_sebuf
+
+device cgtwo: sunfb
+attach cgtwo at vmes
+file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
 device	xyc {drive = -1}
 attach	xyc at vmes
 device	xy: disk
 attach	xy at xyc
 file	arch/sun3/dev/xy.c		xy needs-flag
+
+#
+# VME A32 (vmel)
+#
+device	xdc {drive = -1}
+attach	xdc at vmel
+device	xd: disk
+attach	xd at xdc
+file	arch/sun3/dev/xd.c		xd needs-flag
 
 
 
@@ -188,9 +211,3 @@ major	{vnd=5}	# vnode pseudo-device
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
 major	{md=13}	# Memory disk (for mini-kernel)
-
-# Compatibility modules
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
