@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.c,v 1.5 1999/03/13 00:05:39 jonathan Exp $	*/
+/*	$NetBSD: mips_mcclock.c,v 1.6 1999/04/07 23:04:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.5 1999/03/13 00:05:39 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.6 1999/04/07 23:04:34 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -117,7 +117,7 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 	 */
 	cpu_mhz = mips_mcclock_to_mhz(iters);
 
-#if defined(DEBUG) || defined(DIAGNOSTIC) || 1
+#if defined(DEBUG)
 	printf("mcclock: iters %d computed MHz %d, instrs per usec=%d\n",
 	       iters, cpu_mhz, cpuspeed);
 #endif
