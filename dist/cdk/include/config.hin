@@ -1,5 +1,5 @@
 /* 
- * $Id: config.hin,v 1.1.1.1 2001/01/04 19:58:46 garbled Exp $
+ * $Id: config.hin,v 1.2 2004/04/26 05:15:17 simonb Exp $
  */
 
 #ifndef CDK_CONFIG_H
@@ -25,7 +25,6 @@
 #undef NCURSES
 #define RETSIGTYPE @RETSIGTYPE@
 #undef STDC_HEADERS
-#define SYSTEM_NAME @SYSTEM_NAME@
 #undef TYPE_CHTYPE_IS_SCALAR
 
 #if !defined(HAVE_LSTAT) && !defined(lstat)
