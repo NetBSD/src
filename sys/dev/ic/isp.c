@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.3 1997/03/23 00:50:07 cgd Exp $	*/
+/*	$NetBSD: isp.c,v 1.4 1997/04/05 02:53:22 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -86,6 +86,7 @@ static struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
 
 static int isp_poll __P((struct ispsoftc *, struct scsi_xfer *, int));	
 static int isp_parse_status __P((struct ispsoftc *, ispstatusreq_t *));
+static void isp_lostcmd __P((struct ispsoftc *, struct scsi_xfer *));
 
 /*
  * Reset Hardware.
@@ -98,13 +99,26 @@ isp_reset(isp)
 {
 	mbreg_t mbs;
 	int loops, i;
+	u_int8_t oldclock;
 
 	isp->isp_state = ISP_NILSTATE;
 	/*
 	 * Do MD specific pre initialization
 	 */
 	ISP_RESET0(isp);
-		
+
+	/*
+	 * Try and get old clock rate out before we hit the
+	 * chip over the head.
+	 */
+	mbs.param[0] = MBOX_GET_CLOCK_RATE;
+	(void) isp_mboxcmd(isp, &mbs);
+	if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
+		oldclock = mbs.param[1];
+	} else {
+		oldclock = 0;
+	}
+	
 	/*
 	 * Hit the chip over the head with hammer.
 	 */
@@ -252,6 +266,21 @@ isp_reset(isp)
 	mbs.param[0] = MBOX_EXEC_FIRMWARE;
 	mbs.param[1] = isp->isp_mdvec->dv_codeorg;
 	(void) isp_mboxcmd(isp, &mbs);
+
+	/*
+	 * Set CLOCK RATE
+	 */
+	if (isp->isp_mdvec->dv_clock || oldclock) {
+		u_int8_t save;
+		mbs.param[0] = MBOX_SET_CLOCK_RATE;
+		save = mbs.param[1] =
+			(oldclock)? oldclock : isp->isp_mdvec->dv_clock;
+		(void) isp_mboxcmd(isp, &mbs);
+		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+			printf("%s: failed to set CLOCKRATE\n", isp->isp_name);
+			return;
+		}
+	}
 	mbs.param[0] = MBOX_ABOUT_FIRMWARE;
 	(void) isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
@@ -474,7 +503,7 @@ isp_attach(isp)
 	isp->isp_link.adapter_target = isp->isp_initiator_id;
 	isp->isp_link.adapter = &isp_switch;
 	isp->isp_link.device = &isp_dev;
-	isp->isp_link.openings = RESULT_QUEUE_LEN / (MAX_TARGETS - 1);
+	isp->isp_link.openings = RQUEST_QUEUE_LEN / (MAX_TARGETS - 1);
 	isp->isp_link.max_target = MAX_TARGETS-1;
 	config_found((void *)isp, &isp->isp_link, scsiprint);
 }
@@ -610,6 +639,14 @@ ispscsicmd(xs)
 			/* XXX really nuke it */
 		}
 #endif
+		/*
+		 * If no other error occurred but we didn't finish,
+		 * assume a *selection* timeout.
+		 */
+		if ((xs->flags & ITSDONE) == 0 && xs->error == XS_NOERROR) {
+			isp_lostcmd(isp, xs);
+			xs->error = XS_SELTIMEOUT;
+		}
 	}
 	return (COMPLETE);
 }
@@ -1005,4 +1042,32 @@ isp_mboxcmd(isp, mbp)
 	 */
 	ISP_WRITE(isp, BIU_SEMA, 0);
 	return (0);
+}
+
+static void
+isp_lostcmd(struct ispsoftc *isp, struct scsi_xfer *xs)
+{
+	mbreg_t mbs;
+	mbs.param[0] = MBOX_GET_FIRMWARE_STATUS;
+	(void) isp_mboxcmd(isp, &mbs);
+
+	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+		printf("%s: couldn't GET FIRMWARE STATUS\n", isp->isp_name);
+		return;
+	}
+	printf("%s: lost command, %d commands active of total %d\n",
+	       isp->isp_name, mbs.param[1], mbs.param[2]);
+	if (xs == NULL || xs->sc_link == NULL)
+		return;
+
+	mbs.param[0] = MBOX_GET_DEV_QUEUE_STATUS;
+	mbs.param[1] = xs->sc_link->target << 8 | xs->sc_link->lun;
+	(void) isp_mboxcmd(isp, &mbs);
+	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+		printf("%s: couldn't GET DEVICE STATUS\n", isp->isp_name);
+		return;
+	}
+	printf("%s: lost command, target %d lun %d, State: %x\n",
+	       isp->isp_name, mbs.param[1] >> 8, mbs.param[1] & 0x7,
+	       mbs.param[2] & 0xff);
 }
