@@ -1,8 +1,8 @@
-#	$NetBSD: files.opencrypto,v 1.9 2003/08/24 19:29:09 thorpej Exp $
+#	$NetBSD: files.opencrypto,v 1.10 2003/08/26 14:24:06 thorpej Exp $
 #
 #
 
-defpseudo opencrypto: des, ripemd160, sha2
+defpseudo opencrypto: des, rijndael, ripemd160, sha2
 
 file	opencrypto/criov.c		opencrypto
 file	opencrypto/cryptodev.c		opencrypto
@@ -14,6 +14,5 @@ file	opencrypto/crypto.c		opencrypto	needs-flag
 file	opencrypto/blf.c		opencrypto
 file	opencrypto/skipjack.c		opencrypto
 file	opencrypto/cast.c		opencrypto
-file	opencrypto/rijndael.c		opencrypto
 
 file	opencrypto/deflate.c		opencrypto
