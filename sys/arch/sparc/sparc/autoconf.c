@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.159 2001/12/11 04:21:39 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.160 2001/12/14 06:06:26 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1746,7 +1746,7 @@ instance_match(dev, aux, bp)
 	case BUSCLASS_PCIC:
 		pba = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci bus "
-		    "want bus %d pa %#x have bus %d pa %#x\n",
+		    "want bus %d pa %#x have bus %d pa %#lx\n",
 		    bp->val[0], bp->val[1], pba->pba_bus, MSIIEP_PCIC_PA));
 		if ((int)bp->val[0] == pba->pba_bus
 		    && (bus_addr_t)bp->val[1] == MSIIEP_PCIC_PA)
