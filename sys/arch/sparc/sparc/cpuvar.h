@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.46 2002/12/31 15:04:49 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.47 2003/01/03 15:44:55 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -426,11 +426,26 @@ void getcpuinfo (struct cpu_info *sc, int node);
 void mmu_install_tables (struct cpu_info *);
 void pmap_alloc_cpu (struct cpu_info *);
 void pmap_globalize_boot_cpu (struct cpu_info *);
+
 #if defined(MULTIPROCESSOR)
-void raise_ipi_wait_and_unlock (struct cpu_info *);
 typedef int (*xcall_func_t)(int, int, int, int);
-void xcall (xcall_func_t, int, int, int, int, int);
-#endif
+void xcall(xcall_func_t, int, int, int, int, u_int);
+#define	CPUSET_ALL	0xffffffffU	/* xcall to all configured CPUs */
+/* Shorthand */
+#define XCALL0(f,cpuset)		\
+	xcall((xcall_func_t)f, 0, 0, 0, 0, cpuset)
+#define XCALL1(f,a1,cpuset)		\
+	xcall((xcall_func_t)f, (int)a1, 0, 0, 0, cpuset)
+#define XCALL2(f,a1,a2,cpuset)		\
+	xcall((xcall_func_t)f, (int)a1, (int)a2, 0, 0, cpuset)
+#define XCALL3(f,a1,a2,a3,cpuset)	\
+	xcall((xcall_func_t)f, (int)a1, (int)a2, (int)a3, 0, cpuset)
+#else
+#define XCALL0(f,cpuset)		/**/
+#define XCALL1(f,a1,cpuset)		/**/
+#define XCALL2(f,a1,a2,cpuset)		/**/
+#define XCALL3(f,a1,a2,a3,cpuset)	/**/
+#endif /* MULTIPROCESSOR */
 
 extern struct cpu_info **cpus;
 
