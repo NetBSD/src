@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.3 2000/06/24 06:50:03 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.4 2000/06/24 06:57:05 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -313,13 +313,9 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 			log_fatal ("Can't allocate shared subnet: %s",
 				   isc_result_totext (status));
 		if (!clone_group (&share -> group, group, MDL))
-<<<<<<< confpars.c
 			log_fatal ("Can't allocate group for shared net");
 		shared_network_reference (&share -> group -> shared_network,
 					  share, MDL);
-=======
-			log_fatal ("Can't allocate group for shared net");
->>>>>>> 1.1.1.11
 
 		parse_subnet_declaration (cfile, share);
 
@@ -1077,13 +1073,8 @@ void parse_pool_statement (cfile, group, type)
 		log_fatal ("no memory for pool: %s",
 			   isc_result_totext (status));
 
-<<<<<<< confpars.c
 	if (!clone_group (&pool -> group, group, MDL))
 		log_fatal ("can't clone pool group.");
-=======
-	if (!clone_group (&pool -> group, group, MDL))
-		log_fatal ("can't clone pool group");
->>>>>>> 1.1.1.11
 
 	if (type == SUBNET_DECL)
 		shared_network_reference (&pool -> shared_network,
@@ -1380,14 +1371,8 @@ void parse_host_declaration (cfile, group)
 		log_fatal ("can't allocate host decl struct %s: %s",
 			   name, isc_result_totext (status));
 	host -> name = name;
-<<<<<<< confpars.c
-	if (!clone_group (&host -> group, group, MDL)) {
-		log_fatal ("can't clone group for host %s: %s",
-			   name, isc_result_totext (status));
-=======
 	if (!clone_group (&host -> group, group, MDL)) {
 		log_fatal ("can't clone group for host %s", name);
->>>>>>> 1.1.1.11
 	      boom:
 		host_dereference (&host, MDL);
 		return;
@@ -1724,14 +1709,9 @@ int parse_class_declaration (cp, cfile, group, type)
 			return cp ? (status == ISC_R_SUCCESS) : 1;
 		}
 		/* Give the subclass its own group. */
-<<<<<<< confpars.c
-		if (!clone_group (&class -> group, class -> group, MDL))
-			log_fatal ("can't clone class group.");
-=======
 		if (!clone_group (&class -> group, class -> group, MDL))
 			log_fatal ("can't clone class group.");
 
->>>>>>> 1.1.1.11
 	}
 
 	if (!parse_lbrace (cfile)) {
