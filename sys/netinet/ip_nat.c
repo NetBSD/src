@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.50 2002/06/05 13:11:34 itojun Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.51 2002/06/09 16:33:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.50 2002/06/05 13:11:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.51 2002/06/09 16:33:41 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.67 2002/04/27 15:23:39 darrenr Exp";
@@ -370,13 +370,13 @@ u_32_t n;
  * fix_datacksum is used *only* for the adjustments of checksums in the data
  * section of an IP packet.
  *
- * The only situation in which you need to do this is when NAT'ing an 
+ * The only situation in which you need to do this is when NAT'ing an
  * ICMP error message. Such a message, contains in its body the IP header
  * of the original IP packet, that causes the error.
  *
  * You can't use fix_incksum or fix_outcksum in that case, because for the
- * kernel the data section of the ICMP error is just data, and no special 
- * processing like hardware cksum or ntohs processing have been done by the 
+ * kernel the data section of the ICMP error is just data, and no special
+ * processing like hardware cksum or ntohs processing have been done by the
  * kernel on the data section.
  */
 void fix_datacksum(sp, n)
@@ -1798,14 +1798,14 @@ int dir;
 		 * Fix IP checksum of the offending IP packet to adjust for
 		 * the change in the IP address.
 		 *
-		 * Normally, you would expect that the ICMP checksum of the 
+		 * Normally, you would expect that the ICMP checksum of the
 		 * ICMP error message needs to be adjusted as well for the
 		 * IP address change in oip.
-		 * However, this is a NOP, because the ICMP checksum is 
+		 * However, this is a NOP, because the ICMP checksum is
 		 * calculated over the complete ICMP packet, which includes the
-		 * changed oip IP addresses and oip->ip_sum. However, these 
+		 * changed oip IP addresses and oip->ip_sum. However, these
 		 * two changes cancel each other out (if the delta for
-		 * the IP address is x, then the delta for ip_sum is minus x), 
+		 * the IP address is x, then the delta for ip_sum is minus x),
 		 * so no change in the icmp_cksum is necessary.
 		 *
 		 * Be careful that nat_dir refers to the direction of the
@@ -1819,7 +1819,7 @@ int dir;
 		 */
 		if (oip->ip_p == IPPROTO_UDP && udp->uh_sum) {
 			/*
-			 * The UDP checksum is optional, only adjust it 
+			 * The UDP checksum is optional, only adjust it
 			 * if it has been set.
 			 */
 			sum1 = ntohs(udp->uh_sum);
@@ -1827,7 +1827,7 @@ int dir;
 			sum2 = ntohs(udp->uh_sum);
 
 			/*
-			 * Fix ICMP checksum to compensate the UDP 
+			 * Fix ICMP checksum to compensate the UDP
 			 * checksum adjustment.
 			 */
 			CALC_SUMD(sum1, sum2, sumd);
@@ -1835,19 +1835,19 @@ int dir;
 		}
 
 		/*
-		 * Fix TCP pseudo header checksum to compensate for the 
+		 * Fix TCP pseudo header checksum to compensate for the
 		 * IP address change. Before we can do the change, we
 		 * must make sure that oip is sufficient large to hold
 		 * the TCP checksum (normally it does not!).
 		 */
 		if (oip->ip_p == IPPROTO_TCP && dlen >= 18) {
-		
+
 			sum1 = ntohs(tcp->th_sum);
 			fix_datacksum(&tcp->th_sum, sumd);
 			sum2 = ntohs(tcp->th_sum);
 
 			/*
-			 * Fix ICMP checksum to compensate the TCP 
+			 * Fix ICMP checksum to compensate the TCP
 			 * checksum adjustment.
 			 */
 			CALC_SUMD(sum1, sum2, sumd);
@@ -1859,14 +1859,14 @@ int dir;
 		 * Fix IP checksum of the offending IP packet to adjust for
 		 * the change in the IP address.
 		 *
-		 * Normally, you would expect that the ICMP checksum of the 
+		 * Normally, you would expect that the ICMP checksum of the
 		 * ICMP error message needs to be adjusted as well for the
 		 * IP address change in oip.
-		 * However, this is a NOP, because the ICMP checksum is 
+		 * However, this is a NOP, because the ICMP checksum is
 		 * calculated over the complete ICMP packet, which includes the
-		 * changed oip IP addresses and oip->ip_sum. However, these 
+		 * changed oip IP addresses and oip->ip_sum. However, these
 		 * two changes cancel each other out (if the delta for
-		 * the IP address is x, then the delta for ip_sum is minus x), 
+		 * the IP address is x, then the delta for ip_sum is minus x),
 		 * so no change in the icmp_cksum is necessary.
 		 *
 		 * Be careful that nat_dir refers to the direction of the
@@ -1875,7 +1875,7 @@ int dir;
 		fix_datacksum(&oip->ip_sum, sumd);
 
 /* XXX FV : without having looked at Solaris source code, it seems unlikely
- * that SOLARIS would compensate this in the kernel (a body of an IP packet 
+ * that SOLARIS would compensate this in the kernel (a body of an IP packet
  * in the data section of an ICMP packet). I have the feeling that this should
  * be unconditional, but I'm not in a position to check.
  */
@@ -1886,29 +1886,29 @@ int dir;
 		 */
 		if (oip->ip_p == IPPROTO_UDP && udp->uh_sum) {
 			/*
-			 * The UDP checksum is optional, only adjust it 
-			 * if it has been set 
+			 * The UDP checksum is optional, only adjust it
+			 * if it has been set
 			 */
 			sum1 = ntohs(udp->uh_sum);
 			fix_datacksum(&udp->uh_sum, sumd);
 			sum2 = ntohs(udp->uh_sum);
 
 			/*
-			 * Fix ICMP checksum to compensate the UDP 
+			 * Fix ICMP checksum to compensate the UDP
 			 * checksum adjustment.
 			 */
 			CALC_SUMD(sum1, sum2, sumd);
 			sumd2 = sumd;
 		}
-		
-		/* 
-		 * Fix TCP pseudo header checksum to compensate for the 
+
+		/*
+		 * Fix TCP pseudo header checksum to compensate for the
 		 * IP address change. Before we can do the change, we
 		 * must make sure that oip is sufficient large to hold
 		 * the TCP checksum (normally it does not!).
 		 */
 		if (oip->ip_p == IPPROTO_TCP && dlen >= 18) {
-		
+
 			sum1 = ntohs(tcp->th_sum);
 			fix_datacksum(&tcp->th_sum, sumd);
 			sum2 = ntohs(tcp->th_sum);
@@ -1978,8 +1978,8 @@ int dir;
 					sum2 = ntohs(udp->uh_sum);
 
 					/*
-					 * Fix ICMP checksum to 
-					 * compensate UDP checksum 
+					 * Fix ICMP checksum to
+					 * compensate UDP checksum
 					 * adjustment.
 					 */
 					CALC_SUMD(sum1, sum2, sumd);
@@ -1999,8 +1999,8 @@ int dir;
 					sum2 = ntohs(tcp->th_sum);
 
 					/*
-					 * Fix ICMP checksum to 
-					 * compensate TCP checksum 
+					 * Fix ICMP checksum to
+					 * compensate TCP checksum
 					 * adjustment.
 					 */
 					CALC_SUMD(sum1, sum2, sumd);
@@ -2586,11 +2586,11 @@ maskloop:
 				if (nat->nat_age == fr_tcpclosed)
 					nat->nat_age = fr_tcplastack;
 
- 				/*
- 				 * Do a MSS CLAMPING on a SYN packet,
+				/*
+				 * Do a MSS CLAMPING on a SYN packet,
 				 * only deal IPv4 for now.
- 				 */
- 				if (nat->nat_mssclamp &&
+				 */
+				if (nat->nat_mssclamp &&
 				    (tcp->th_flags & TH_SYN) != 0)
 					tcp_mss_clamp(tcp, nat->nat_mssclamp, fin, csump);
 

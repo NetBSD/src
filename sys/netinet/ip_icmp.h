@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.16 2001/10/30 06:41:11 kml Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.17 2002/06/09 16:33:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -70,7 +70,7 @@ struct icmp {
 
 		/* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
 		struct ih_pmtu {
-			  n_short ipm_void;    
+			  n_short ipm_void;
 			  n_short ipm_nextmtu;
 		} ih_pmtu __attribute__((__packed__));
 		struct ih_rtradv {

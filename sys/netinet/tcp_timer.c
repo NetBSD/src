@@ -1,9 +1,9 @@
-/*	$NetBSD: tcp_timer.c,v 1.58 2002/05/26 16:05:45 itojun Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.59 2002/06/09 16:33:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.58 2002/05/26 16:05:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.59 2002/06/09 16:33:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -303,7 +303,7 @@ tcp_timer_rexmt(void *arg)
 	    tp->t_rttmin, TCPTV_REXMTMAX);
 	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 
-	/* 
+	/*
 	 * If we are losing and we are trying path MTU discovery,
 	 * try turning it off.  This will avoid black holes in
 	 * the network which suppress or fail to send "packet
@@ -373,7 +373,7 @@ tcp_timer_rexmt(void *arg)
 	 * size increase exponentially with time.  If the
 	 * window is larger than the path can handle, this
 	 * exponential growth results in dropped packet(s)
-	 * almost immediately.  To get more time between 
+	 * almost immediately.  To get more time between
 	 * drops but still "push" the network to take advantage
 	 * of improving conditions, we switch from exponential
 	 * to linear window opening at some threshhold size.
