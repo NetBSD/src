@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.37 2003/10/18 09:19:04 manu Exp $ */
+/* $NetBSD: pckbd.c,v 1.38 2003/10/22 09:06:24 mjl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.37 2003/10/18 09:19:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.38 2003/10/22 09:06:24 mjl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ pckbd_set_xtscancode(kbctag, kbcslot)
 	 * is set to table 1; in fact, it would appear that some keyboards just
 	 * ignore the command altogether.  So by default, we use the AT scan
 	 * codes and have the 8042 translate them.  Unfortunately, this is
-	 * known to not work on some PS/2 machines.  We try desparately to deal
+	 * known to not work on some PS/2 machines.  We try desperately to deal
 	 * with this by checking the (lack of a) translate bit in the 8042 and
 	 * attempting to set the keyboard to XT mode.  If this all fails, well,
 	 * tough luck.
