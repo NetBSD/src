@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.12 2000/02/26 08:39:21 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.13 2000/03/02 07:14:52 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.27 2000/02/26 06:53:11 itojun Exp $	*/
 
 /*
@@ -1219,7 +1219,10 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 
 	bzero((caddr_t)ia, sizeof(*ia));
 	ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
-	ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
+	if (ifp->if_flags & IFF_POINTOPOINT)
+		ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
+	else
+		ia->ia_ifa.ifa_dstaddr = NULL;
 	ia->ia_ifa.ifa_netmask = (struct sockaddr *)&ia->ia_prefixmask;
 	ia->ia_ifp = ifp;
 
