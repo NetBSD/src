@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_amd_reg.h,v 1.4 2001/10/21 18:49:20 thorpej Exp $	*/
+/*	$NetBSD: pciide_amd_reg.h,v 1.5 2003/01/24 04:53:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 David Sainty.
@@ -54,13 +54,19 @@
  */
 #define AMD756_CHIPREV_DISABLEDMA(rev) ((rev) <= AMD756_CHIPREV_D2)
 
+/*
+ * The nVidia nForce and nForce2 IDE controllers are compatible with
+ * the AMD controllers, but their registers are offset 0x10 bytes.
+ */
+#define	AMD7X6_AMD_REGBASE		0x40
+#define	AMD7X6_NVIDIA_REGBASE		0x50
 
 /* Channel enable */
-#define AMD7X6_CHANSTATUS_EN		0x40
+#define AMD7X6_CHANSTATUS_EN(sc)	((sc)->sc_amd_regbase + 0x00)
 #define AMD7X6_CHAN_EN(chan)		(0x01 << (1 - (chan)))
 
 /* Data port timing controls */
-#define AMD7X6_DATATIM 0x48
+#define AMD7X6_DATATIM(sc)		((sc)->sc_amd_regbase + 0x08)
 #define AMD7X6_DATATIM_MASK(channel) (0xffff << ((1 - (channel)) << 4))
 #define AMD7X6_DATATIM_RECOV(channel, drive, x) (((x) & 0xf) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
@@ -71,7 +77,7 @@ static const int8_t amd7x6_pio_set[] = {0x0a, 0x0a, 0x0a, 0x02, 0x02};
 static const int8_t amd7x6_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
 
 /* Ultra-DMA/33 control */
-#define AMD7X6_UDMA 0x50
+#define AMD7X6_UDMA(sc)			((sc)->sc_amd_regbase + 0x10)
 #define AMD7X6_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
 #define AMD7X6_UDMA_TIME(channel, drive, x) (((x) & 0x7) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))

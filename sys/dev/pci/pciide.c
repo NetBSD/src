@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.176 2002/12/26 20:54:03 matt Exp $	*/
+/*	$NetBSD: pciide.c,v 1.177 2003/01/24 04:53:13 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.176 2002/12/26 20:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.177 2003/01/24 04:53:13 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -332,6 +332,24 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC8111_IDE,
 	  0,
 	  "Advanced Micro Devices AMD8111 IDE Controller",
+	  amd7x6_chip_map
+	},
+	{ 0,
+	  0,
+	  NULL,
+	  NULL
+	}
+};
+
+const struct pciide_product_desc pciide_nvidia_products[] = {
+	{ PCI_PRODUCT_NVIDIA_NFORCE_ATA100,
+	  0,
+	  "NVIDIA nForce IDE Controller",
+	  amd7x6_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE2_ATA133,
+	  0,
+	  "NVIDIA nForce2 IDE Controller",
 	  amd7x6_chip_map
 	},
 	{ 0,
@@ -624,6 +642,7 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_SERVERWORKS, pciide_serverworks_products },
 	{ PCI_VENDOR_SYMPHONY, pciide_symphony_products },
 	{ PCI_VENDOR_WINBOND, pciide_winbond_products },
+	{ PCI_VENDOR_NVIDIA, pciide_nvidia_products },
 	{ 0, NULL }
 };
 
@@ -723,6 +742,7 @@ pciide_attach(parent, self, aux)
 	char devinfo[256];
 	const char *displaydev;
 
+	sc->sc_pci_vendor = PCI_VENDOR(pa->pa_id);
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
 	if (sc->sc_pp == NULL) {
 		sc->sc_pp = &default_product_desc;
@@ -2016,19 +2036,40 @@ amd7x6_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 
-	switch (sc->sc_pp->ide_product) {
-	case PCI_PRODUCT_AMD_PBC766_IDE:
-	case PCI_PRODUCT_AMD_PBC768_IDE:
-	case PCI_PRODUCT_AMD_PBC8111_IDE:
-		sc->sc_wdcdev.UDMA_cap = 5;
+	switch (sc->sc_pci_vendor) {
+	case PCI_VENDOR_AMD:
+		switch (sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_AMD_PBC766_IDE:
+		case PCI_PRODUCT_AMD_PBC768_IDE:
+		case PCI_PRODUCT_AMD_PBC8111_IDE:
+			sc->sc_wdcdev.UDMA_cap = 5;
+			break;
+		default:
+			sc->sc_wdcdev.UDMA_cap = 4;
+		}
+		sc->sc_amd_regbase = AMD7X6_AMD_REGBASE;
 		break;
+
+	case PCI_VENDOR_NVIDIA:
+		switch (sc->sc_pp->ide_product) {
+		case PCI_PRODUCT_NVIDIA_NFORCE_ATA100:
+			sc->sc_wdcdev.UDMA_cap = 5;
+			break;
+		case PCI_PRODUCT_NVIDIA_NFORCE2_ATA133:
+			sc->sc_wdcdev.UDMA_cap = 5;	/* XXX */
+			break;
+		}
+		sc->sc_amd_regbase = AMD7X6_NVIDIA_REGBASE;
+		break;
+
 	default:
-		sc->sc_wdcdev.UDMA_cap = 4;
+		panic("amd7x6_chip_map: unknown vendor");
 	}
 	sc->sc_wdcdev.set_modes = amd7x6_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN);
+	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    AMD7X6_CHANSTATUS_EN(sc));
 
 	WDCDEBUG_PRINT(("amd7x6_chip_map: Channel enable=0x%x\n", chanenable),
 	    DEBUG_PROBE);
@@ -2053,7 +2094,7 @@ amd7x6_chip_map(sc, pa)
 
 		amd7x6_setup_channel(&cp->wdc_channel);
 	}
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN,
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN(sc),
 	    chanenable);
 	return;
 }
@@ -2074,8 +2115,8 @@ amd7x6_setup_channel(chp)
 #endif
 
 	idedma_ctl = 0;
-	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM);
-	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA);
+	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM(sc));
+	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA(sc));
 	datatim_reg &= ~AMD7X6_DATATIM_MASK(chp->channel);
 	udmatim_reg &= ~AMD7X6_UDMA_MASK(chp->channel);
 
@@ -2155,8 +2196,8 @@ pio:		/* setup PIO mode */
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM, datatim_reg);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA, udmatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM(sc), datatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA(sc), udmatim_reg);
 }
 
 void
