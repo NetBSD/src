@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 2001/11/28 00:19:53 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13 2002/01/05 22:41:47 chris Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -43,9 +43,10 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/db_machdep.h>
+#include <arm/arm32/db_machdep.h>
 #include <arm/arm32/katelib.h>
 #include <arm/undefined.h>
+#include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
@@ -60,6 +61,11 @@ int db_access_und_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((const struct db_variable *, db_expr_t *, int));
 int db_access_irq_sp __P((const struct db_variable *, db_expr_t *, int));
 u_int db_fetch_reg __P((int, db_regs_t *));
+
+static int db_validate_address __P((vm_offset_t));
+static void db_write_text __P((unsigned char *, int));
+int db_trapper __P((u_int, u_int, trapframe_t	*, int));
+
 
 const struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, },
@@ -162,20 +168,6 @@ kdb_trap(type, regs)
 }
 
 
-/*
- * Received keyboard interrupt sequence.
- */
-void
-kdb_kbd_trap(regs)
-	db_regs_t *regs;
-{
-	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, regs);
-	}
-}
-
-
 static int
 db_validate_address(addr)
 	vm_offset_t addr;
@@ -216,7 +208,7 @@ db_validate_address(addr)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	int	size;
+	size_t	size;
 	char	*data;
 {
 	char	*src;
@@ -266,7 +258,7 @@ db_write_text(dst, ch)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	int	size;
+	size_t	size;
 	char	*data;
 {
 	extern char	etext[];
@@ -299,9 +291,6 @@ cpu_Debugger()
 {
 	asm(".word	0xe7ffffff");
 }
-
-void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },

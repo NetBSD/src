@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.6 2001/11/26 23:19:04 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.7 2002/01/05 22:41:47 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
+#include <arm/arm32/machdep.h>
 
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
