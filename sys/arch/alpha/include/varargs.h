@@ -1,4 +1,4 @@
-/* $NetBSD: varargs.h,v 1.8 2000/05/10 17:53:45 thorpej Exp $ */
+/* $NetBSD: varargs.h,v 1.9 2000/05/12 23:49:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,8 +51,14 @@
 #define	__va_ellipsis	...
 #endif
 
+#if __GNUC_PREREQ__(2, 96)
+#define	__va_alist_t	__builtin_va_alist_t
+#else
+#define	__va_alist_t	long
+#endif
+
 #define	va_alist	__builtin_va_alist
-#define	va_dcl		__builtin_va_alist_t __builtin_va_alist; __va_ellipsis
+#define	va_dcl		__va_alist_t __builtin_va_alist; __va_ellipsis
 
 #undef va_start
 #if __GNUC_PREREQ__(2, 96)
