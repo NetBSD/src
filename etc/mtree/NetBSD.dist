@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.122 2000/11/10 02:00:09 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.123 2000/11/18 06:05:10 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -952,11 +952,6 @@ supfiles
 # ./usr/share/examples/syslogd
 syslogd
 # ./usr/share/examples/syslogd
-..
-
-# ./usr/share/examples/usermgmt
-usermgmt
-# ./usr/share/examples/usermgmt
 ..
 
 # ./usr/share/examples
@@ -2031,11 +2026,6 @@ siteconfig
 ..
 
 # ./usr/share/sendmail
-..
-
-# ./usr/share/skel
-skel
-# ./usr/share/skel
 ..
 
 # ./usr/share/tabset
