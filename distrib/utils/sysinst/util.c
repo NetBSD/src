@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.45 1999/06/22 06:57:01 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.46 1999/06/22 18:47:07 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -736,7 +736,10 @@ get_and_unpack_sets(success_msg, failure_msg)
 	ask_verbose_dist();
 
 	/* Get the distribution files */
-	process_menu(MENU_distmedium);
+	do {
+		got_dist = 0;
+		process_menu(MENU_distmedium);
+	} while (got_dist == -1);
 
 	if (nodist)
 		return 1;
