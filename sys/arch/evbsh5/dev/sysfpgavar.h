@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgavar.h,v 1.4 2002/09/28 11:16:38 scw Exp $	*/
+/*	$NetBSD: sysfpgavar.h,v 1.5 2002/10/05 10:59:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -96,5 +96,6 @@ extern struct evcnt *sysfpga_intr_evcnt(int);
 extern void *sysfpga_intr_establish(int, int, int, int (*)(void *), void *);
 extern void sysfpga_intr_disestablish(void *);
 extern void sysfpga_nmi_clear(void);
+extern void sysfpga_sreset(void);
 
 #endif /* _SH5_SYSFPGAVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.9 2002/10/02 05:33:54 thorpej Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.10 2002/10/05 10:59:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,7 +42,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -65,6 +67,7 @@ struct sysfpga_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
+	struct callout sc_ledco;
 	u_int8_t sc_intmr[SYSFPGA_NGROUPS];
 	void *sc_ih[SYSFPGA_NGROUPS];
 #if NSUPERIO > 0
@@ -102,6 +105,9 @@ static struct sysfpga_device sysfpga_devices[] = {
 	    bus_space_read_4((s)->sc_bust, (s)->sc_bush, (r))
 #define	sysfpga_reg_write(s,r,v)	\
 	    bus_space_write_4((s)->sc_bust, (s)->sc_bush, (r), (v))
+
+
+static void sysfpga_twinkle_led(void *);
 
 #if NSUPERIO > 0
 static int sysfpga_intr_handler_irl1(void *);
@@ -207,6 +213,13 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 #endif
 
 	/*
+	 * Arrange to twinkle the "Discrete LED" periodically
+	 * as a crude "heartbeat" indication.
+	 */
+	callout_init(&sc->sc_ledco);
+	sysfpga_twinkle_led(sc);
+
+	/*
 	 * Attach configured children
 	 */
 	sa._sa_base = fa->fa_offset;
@@ -231,6 +244,35 @@ sysfpgaprint(void *arg, const char *cp)
 	printf(" offset 0x%lx", sa->sa_offset - sa->_sa_base);
 
 	return (UNCONF);
+}
+
+static void
+sysfpga_twinkle_led(void *arg)
+{
+	struct sysfpga_softc *sc = arg;
+	u_int32_t ledcr;
+	int next;
+
+	/*
+	 * Flip the state of the Cayman's discrete LED
+	 */
+	ledcr = sysfpga_reg_read(sc, SYSFPGA_REG_LEDCR);
+	ledcr ^= SYSFPGA_LEDCR_SLED_MASK;
+	sysfpga_reg_write(sc, SYSFPGA_REG_LEDCR, ledcr);
+	ledcr &= SYSFPGA_LEDCR_SLED_MASK;
+
+	/*
+	 * We flash the LED twice per second, with 25% duty-cycle for ON
+	 */
+#define	TWINKLE_PERIOD	(hz / 2)
+
+	next = (ledcr == SYSFPGA_LEDCR_SLED_ON) ?
+	    TWINKLE_PERIOD / 4 :
+	    TWINKLE_PERIOD - (TWINKLE_PERIOD / 4);
+
+#undef TWINKLE_PERIOD
+
+	callout_reset(&sc->sc_ledco, next, sysfpga_twinkle_led, sc);
 }
 
 #if NSUPERIO > 0
@@ -480,4 +522,12 @@ sysfpga_nmi_clear(void)
 {
 
 	sysfpga_reg_write(sysfpga_sc, SYSFPGA_REG_NMISR, 0);
+}
+
+void
+sysfpga_sreset(void)
+{
+
+	sysfpga_reg_write(sysfpga_sc, SYSFPGA_REG_SOFT_RESET,
+	    SYSFPGA_SOFT_RESET_ASSERT);
 }
