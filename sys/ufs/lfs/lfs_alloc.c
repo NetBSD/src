@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.32 2000/05/27 00:19:52 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.33 2000/05/31 01:40:02 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -339,10 +339,10 @@ lfs_vfree(v)
 	if (ip->i_flag & IN_CLEANING) {
 		--fs->lfs_uinodes;
 	}
-	if (ip->i_flag & IN_MODIFIED) {
+	if (ip->i_flag & (IN_MODIFIED | IN_ACCESSED)) {
 		--fs->lfs_uinodes;
 	}
-	ip->i_flag &= ~(IN_CLEANING | IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+	ip->i_flag &= ~IN_ALLMOD;
 #ifdef DEBUG_LFS	
 	if((int32_t)fs->lfs_uinodes<0) {
 		printf("U1");
