@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.57 1995/01/16 12:23:55 mycroft Exp $
+#	$NetBSD: SUN_LAMP,v 1.58 1995/01/25 04:58:21 cgd Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -164,4 +164,4 @@ pseudo-device	bpfilter 4		# packet filter
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vn	4		# paging to files
+pseudo-device	vnd	4		# paging to files

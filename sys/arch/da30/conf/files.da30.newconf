@@ -1,4 +1,4 @@
-#	$NetBSD: files.da30.newconf,v 1.4 1994/10/26 02:32:36 cgd Exp $
+#	$NetBSD: files.da30.newconf,v 1.5 1995/01/25 04:58:12 cgd Exp $
 
 # config file for da30
 
@@ -30,7 +30,7 @@ file arch/da30/dev/id.c			id needs-count
 major { sd = 1 }
 major { wd = 2 }
 major { id = 4 }
-major { vn = 6 }
+major { vnd = 6 }
 
 file arch/da30/da30/autoconf.c
 file arch/da30/da30/conf.c
