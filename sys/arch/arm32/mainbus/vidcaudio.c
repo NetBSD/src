@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.9 1997/03/20 17:04:12 mycroft Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.10 1997/03/25 05:09:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -308,7 +308,7 @@ u_long vidcaudio_get_in_sr       __P((void *));
 int    vidcaudio_set_out_sr      __P((void *, u_long));
 u_long vidcaudio_get_out_sr      __P((void *));
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_format	 __P((void *, u_int));
+int    vidcaudio_set_format	 __P((void *, u_int, u_int));
 int    vidcaudio_get_encoding	 __P((void *));
 int    vidcaudio_get_precision	 __P((void *));
 int    vidcaudio_set_channels 	 __P((void *, int));
