@@ -1,4 +1,4 @@
-/*	$NetBSD: retest.c,v 1.3 2000/06/23 15:40:13 aymeric Exp $	*/
+/*	$NetBSD: retest.c,v 1.4 2003/05/17 14:58:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)retest.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: retest.c,v 1.3 2000/06/23 15:40:13 aymeric Exp $";
+static char rcsid[] = "$NetBSD: retest.c,v 1.4 2003/05/17 14:58:19 itojun Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -64,7 +64,7 @@ main()
 
     while (1) {
 	printf ("\nexpr: ");
-	scanf ("%s", reg);
+	scanf ("%131s", reg);
 	ireg = convexp(reg);
 	match = ireg;
 	while(*match) {
