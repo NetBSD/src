@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.241 2004/06/01 04:31:05 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.242 2004/06/01 04:32:59 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3420,3 +3420,9 @@ sys/arch/x86/x86/mpacpi.c			1.20-1.29
 
 	Lots of fixes to prevents panic's on HT motherboards
 	[kochi, ticket #427]
+
+sys/arch/macppc/stand/ofwboot/version		1.10
+sys/arch/macppc/stand/ofwboot/boot.c		1.18
+
+	Support userconf(4) ("boot -c").
+	[schmonz, ticket #428]
