@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.94 2003/08/07 16:28:01 agc Exp $	*/
+/*	$NetBSD: npx.c,v 1.95 2003/09/06 23:15:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.94 2003/08/07 16:28:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.95 2003/09/06 23:15:35 christos Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -362,6 +362,7 @@ npxintr(void *arg, struct intrframe iframe)
 	struct intrframe *frame = &iframe;
 	struct npx_softc *sc;
 	int code;
+	ksiginfo_t ksi;
 
 	sc = npx_softc;
 
@@ -434,6 +435,9 @@ npxintr(void *arg, struct intrframe iframe)
 	/*
 	 * Pass exception to process.
 	 */
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SIGFPE;
+	ksi.ksi_addr = (void *)frame->if_eip;
 	if (USERMODE(frame->if_cs, frame->if_eflags)) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
@@ -456,7 +460,7 @@ npxintr(void *arg, struct intrframe iframe)
 #else
 		code = 0;	/* XXX */
 #endif
-		trapsignal(l, SIGFPE, code);
+		trapsignal(l, &ksi);
 	} else {
 		/*
 		 * This is a nested interrupt.  This should only happen when
