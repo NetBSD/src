@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149reg.h,v 1.2 1996/11/17 13:47:21 leo Exp $	*/
+/*	$NetBSD: ym2149reg.h,v 1.3 1997/01/21 20:41:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -151,10 +151,10 @@ extern u_char	ym2149_ioa;	/* Soft-copy of port-A			*/
 	splx(s);							\
 	}
 
-#define ym2149_ser2_select() {						\
+#define ym2149_ser2(set) {						\
 	int s = splhigh();						\
 									\
-	ym2149_ioa |= PA_SER2;						\
+	ym2149_ioa = set ? ym2149_ioa | PA_SER2 : ym2149_ioa & ~PA_SER2;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
 	splx(s);							\
 	}
