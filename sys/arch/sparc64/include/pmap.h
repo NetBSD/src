@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 1998/08/27 06:23:31 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 1998/08/30 15:32:17 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -154,7 +154,7 @@ int pmap_count_res __P((pmap_t pmap));
 #define pmap_resident_count(pm)		pmap_count_res((pm))
 #define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
 
-void pmap_bootstrap __P((u_int kernelstart, u_int kernelend, u_int numctx));
+void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 
 /* This needs to be implemented when we get a kernel map */
 void pmap_changeprot __P((pmap_t pmap, vaddr_t start, vm_prot_t prot, int size));

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 1998/08/27 06:23:32 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.9 1998/08/30 15:32:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -353,14 +353,14 @@ const char *trap_type[] = {
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
 static __inline void userret __P((struct proc *, int,  u_quad_t));
-void trap __P((unsigned, int, int, struct trapframe *));
+void trap __P((unsigned, long, long, struct trapframe *));
 static __inline void share_fpu __P((struct proc *, struct trapframe *));
 static int fixalign __P((struct proc *, struct trapframe *));
-void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
-void data_access_fault __P((unsigned type, u_int va, u_int pc, struct trapframe *));
-void data_access_error __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
-void text_access_fault __P((unsigned, u_int, struct trapframe *));
-void text_access_error __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
+void mem_access_fault __P((unsigned, int, u_long, int, int, struct trapframe *));
+void data_access_fault __P((unsigned type, u_long va, u_long pc, struct trapframe *));
+void data_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe *));
+void text_access_fault __P((unsigned, u_long, struct trapframe *));
+void text_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
 
 #ifdef DEBUG
@@ -471,7 +471,7 @@ static __inline void share_fpu(p, tf)
 void
 trap(type, tstate, pc, tf)
 	register unsigned type;
-	register int tstate, pc;
+	register long tstate, pc;
 	register struct trapframe *tf;
 {
 	register struct proc *p;
@@ -675,6 +675,7 @@ badtrap:
 		break;
 	}
 
+#if 0
 #define read_rw(src, dst) \
 	((src&1)?copyin((caddr_t)(src), (caddr_t)(dst), sizeof(struct rwindow32))\
 	 :copyin((caddr_t)(src+BIAS), (caddr_t)(dst), sizeof(struct rwindow64)))
@@ -695,6 +696,8 @@ badtrap:
 			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 		printf("trap: T_RWRET sent!?!\n");
+/* I don't think this is ever used */
+		Debugger();
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0])) 
 			sigexit(p, SIGILL);
@@ -702,7 +705,7 @@ badtrap:
 			panic("trap T_RWRET 2");
 		pcb->pcb_nsaved = -1;		/* mark success */
 		break;
-
+#endif
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
@@ -872,12 +875,12 @@ rwindow_save(p)
 #endif
 #ifdef DEBUG
 			if (rwindow_debug&RW_64) {
-				printf("rwindow_save: 64-bit tf to %p-BIAS or %p\n", 
-				       rwdest, rwdest-BIAS);
+				printf("rwindow_save: 64-bit tf to %p+BIAS or %p\n", 
+				       rwdest, rwdest+BIAS);
 				Debugger();
 			}
 #endif
-			rwdest -= BIAS;
+			rwdest += BIAS;
 			if (copyout((caddr_t)rw, (caddr_t)rwdest,
 				    sizeof(*rw))) {
 #ifdef DEBUG
@@ -963,10 +966,10 @@ extern struct proc *masterpaddr;
 
 void
 data_access_fault(type, addr, pc, tf)
-	register unsigned type;
-	register u_int addr;
-	register u_int pc;
-	register struct trapframe *tf;
+	unsigned type;
+	u_long addr;
+	u_long pc;
+	struct trapframe *tf;
 {
 	register u_int64_t tstate;
 	register struct proc *p;
@@ -974,7 +977,7 @@ data_access_fault(type, addr, pc, tf)
 	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
-	int onfault;
+	vaddr_t onfault;
 	u_quad_t sticks;
 #if DEBUG
 	static int lastdouble;
@@ -1131,7 +1134,7 @@ data_access_fault(type, addr, pc, tf)
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 kfault:
 			onfault = p->p_addr ?
-			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
+			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				printf("data fault: pc=%x addr=%x\n",
@@ -1158,7 +1161,7 @@ kfault:
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_int)addr);
+		trapsignal(p, SIGSEGV, (u_long)addr);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p, pc, sticks);
@@ -1182,10 +1185,10 @@ kfault:
 void
 data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register unsigned type;
-	register u_int sfva;
-	register u_int sfsr;
-	register u_int afva;
-	register u_int afsr;
+	register u_long sfva;
+	register u_long sfsr;
+	register u_long afva;
+	register u_long afsr;
 	register struct trapframe *tf;
 {
 	register int pc;
@@ -1195,7 +1198,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
-	int onfault;
+	vaddr_t onfault;
 	u_quad_t sticks;
 #ifdef DEBUG
 	static int lastdouble;
@@ -1264,7 +1267,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 		       type, sfsr, sfva, afsr, afva, tf);
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 			/* User fault -- Berr */
-			trapsignal(p, SIGBUS, (u_int)sfva);
+			trapsignal(p, SIGBUS, (u_long)sfva);
 		} else {
 			DEBUGGER(type, tf);
 			panic("trap: memory error");
@@ -1389,7 +1392,7 @@ fault:
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 kfault:
 			onfault = p->p_addr ?
-			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
+			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				printf("data fault: pc=%x addr=%x sfsr=%b\n",
@@ -1414,7 +1417,7 @@ kfault:
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_int)sfva);
+		trapsignal(p, SIGSEGV, (u_long)sfva);
 	}
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
@@ -1433,7 +1436,7 @@ out:
 void
 text_access_fault(type, pc, tf)
 	register unsigned type;
-	register u_int pc;
+	register u_long pc;
 	register struct trapframe *tf;
 {
 	register u_int64_t tstate;
@@ -1540,7 +1543,7 @@ text_access_fault(type, pc, tf)
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_int)pc);
+		trapsignal(p, SIGSEGV, (u_long)pc);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p, pc, sticks);
@@ -1561,10 +1564,10 @@ text_access_fault(type, pc, tf)
 void
 text_access_error(type, pc, sfsr, afva, afsr, tf)
 	register unsigned type;
-	register u_int pc;
-	register u_int sfsr;
-	register u_int afva;
-	register u_int afsr;
+	register u_long pc;
+	register u_long sfsr;
+	register u_long afva;
+	register u_long afsr;
 	register struct trapframe *tf;
 {
 	register int64_t tstate;
@@ -1707,7 +1710,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_int)pc);
+		trapsignal(p, SIGSEGV, (u_long)pc);
 	}
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
@@ -1828,19 +1831,22 @@ syscall(code, tf, pc)
 #endif
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
-	else {
+	else if (tf->tf_out[6] & 1) {
+		/* 64-bit stack -- not really supported on 32-bit kernels */
 		callp += code;
-		i = callp->sy_argsize / sizeof(register_t);
+		i = callp->sy_argsize / sizeof(register64_t);
 		if (i > nap) {	/* usually false */
+			register64_t temp;
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 				printf("Args %d>%d -- need to copyin\n", i , nap);
 #endif
 			if (i > 8)
 				panic("syscall nargs");
-			error = copyin((caddr_t)tf->tf_out[6] +
-			    offsetof(struct frame, fr_argx),
-			    (caddr_t)&args.i[nap], (i - nap) * sizeof(register_t));
+			error = copyin((caddr_t)tf->tf_out[6] + BIAS +
+				       offsetof(struct frame64, fr_argx),
+				       (caddr_t)&temp, (i - nap) * sizeof(register64_t));
+			args.i[nap] = temp;
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
@@ -1851,13 +1857,49 @@ syscall(code, tf, pc)
 			}
 			i = nap;
 		}
-#if 0
-		copywords(ap, args.i, i * sizeof(register_t));
-#else
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
 				*argp++ = *ap++;
+#ifdef DEBUG
+		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
+			for (i=0; i < callp->sy_argsize / sizeof(register_t); i++) 
+				printf("arg[%d]=%x ", i, (long)(args.i[i]));
+			printf("\n");
+		}
+		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
+			printf("stop precall\n");
+			Debugger();
+		}
 #endif
+	} else {
+		/* 32-bit stack */
+		callp += code;
+		i = callp->sy_argsize / sizeof(register32_t);
+		if (i > nap) {	/* usually false */
+			register32_t temp;
+#ifdef DEBUG
+			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+				printf("Args %d>%d -- need to copyin\n", i , nap);
+#endif
+			if (i > 8)
+				panic("syscall nargs");
+			error = copyin((caddr_t)tf->tf_out[6] +
+			    offsetof(struct frame32, fr_argx),
+			    (caddr_t)&temp, (i - nap) * sizeof(register32_t));
+			args.i[nap] = temp;
+			if (error) {
+#ifdef KTRACE
+				if (KTRPOINT(p, KTR_SYSCALL))
+					ktrsyscall(p->p_tracep, code,
+					    callp->sy_argsize, args.i);
+#endif
+				goto bad;
+			}
+			i = nap;
+		}
+		/* Need to convert from int64 to int32 or we lose */
+		for (argp = &args.i[0]; i--;) 
+				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
 			for (i=0; i < callp->sy_argsize / sizeof(register_t); i++) 
@@ -1983,8 +2025,12 @@ child_return(p)
 
 /*
  * Code to handle alignment faults on the sparc. This is enabled by sending
- * a fixalign trap.  * Such code is generated by compiling with cc -misalign
+ * a fixalign trap.
+ *
+ * Such code is generated by compiling with cc -misalign
  * on SunOS, but we don't have such a feature yet on our gcc.
+ *
+ * We don't do any funny ASIs, so don't expect endianess-inversion to work.
  */
 #ifdef DEBUG_ALIGN
 # define DPRINTF(a) uprintf a
@@ -1992,8 +2038,8 @@ child_return(p)
 # define DPRINTF(a)
 #endif
 
-#define GPR(tf, i)	((int32_t *) &tf->tf_global)[i]
-#define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
+#define GPR(tf, i)	((int64_t *) &tf->tf_global)[i]
+#define IPR(tf, i)	((int64_t *) tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
 
 static __inline int readgpreg __P((struct trapframe *, int, void *));
@@ -2010,11 +2056,11 @@ readgpreg(tf, i, val)
 {
 	int error = 0;
 	if (i == 0)
-		*(int32_t *) val = 0;
+		*(int64_t *) val = 0;
 	else if (i < 16)
-		*(int32_t *) val = GPR(tf, i);
+		*(int64_t *) val = GPR(tf, i);
 	else
-		error = copyin(&IPR(tf, i), val, sizeof(int32_t));
+		error = copyin(&IPR(tf, i), val, sizeof(int64_t));
 
 	return error;
 }
@@ -2031,10 +2077,10 @@ writegpreg(tf, i, val)
 	if (i == 0)
 		return error;
 	else if (i < 16)
-		GPR(tf, i) = *(int32_t *) val;
+		GPR(tf, i) = *(int64_t *) val;
 	else
 		/* XXX: Fix copyout prototype */
-		error = copyout((caddr_t) val, &IPR(tf, i), sizeof(int32_t));
+		error = copyout((caddr_t) val, &IPR(tf, i), sizeof(int64_t));
 
 	return error;
 }
@@ -2092,13 +2138,14 @@ fixalign(p, tf)
 
 	union {
 		double	d;
+		int64_t l;
 		int32_t i[2];
 		int16_t s[4];
 		int8_t  c[8];
 	} data;
 
 	size_t size;
-	int32_t offs, addr;
+	int64_t offs, addr;
 	int error;
 
 	/* fetch and check the instruction that caused the fault */
@@ -2175,12 +2222,17 @@ fixalign(p, tf)
 			}
 		}
 		else {
-			error = readgpreg(tf, code.bits.rd, &data.i[0]);
+			error = readgpreg(tf, code.bits.rd, &data.l);
 			if (error)
 				return error;
-			if (size == 8) {
-				error = readgpreg(tf, code.bits.rd + 1,
-				    &data.i[1]);
+			if (size == 8 && !code.bits.sgn) {
+				int64_t temp;
+				/* std or stda -- get things in the right regs. */
+
+				temp = data.l;
+				data.i[0] = temp;
+				error = readgpreg(tf, code.bits.rd + 1, &temp);
+				data.i[1] = temp;
 				if (error)
 					return error;
 			}
@@ -2222,12 +2274,16 @@ fixalign(p, tf)
 			loadfpstate(p->p_md.md_fpstate);
 		}
 		else {
-			error = writegpreg(tf, code.bits.rd, &data.i[0]);
-			if (error)
-				return error;
-			if (size == 8)
-				error = writegpreg(tf, code.bits.rd + 1,
-				    &data.i[1]);
+			if (size == 8 && !code.bits.sgn) {
+				u_int64_t temp;
+				/* ldd or ldda -- get things in the right regs. */
+
+				temp = (unsigned int)data.i[0]; /* Do not sign extend */
+				error = writegpreg(tf, code.bits.rd, &temp);
+				temp = (unsigned int)data.i[1]; /* Do not sign extend */
+				if (!error)
+					error = writegpreg(tf, code.bits.rd + 1, &temp);
+			} else error = writegpreg(tf, code.bits.rd, &data.i[0]);
 		}
 	}
 	return error;

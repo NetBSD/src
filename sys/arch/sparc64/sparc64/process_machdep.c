@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.2 1998/08/30 15:32:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -139,8 +139,8 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	p->p_md.md_tf->tf_pc = (u_int)addr;
-	p->p_md.md_tf->tf_npc = (u_int)addr + 4;
+	p->p_md.md_tf->tf_pc = addr;
+	p->p_md.md_tf->tf_npc = addr + 4;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.3 1998/08/29 18:16:57 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.4 1998/08/30 15:32:19 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -40,12 +40,16 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
+#include <sys/signal.h>
+#include <sys/signalvar.h>
 
 #include <vm/vm.h>
 
 #include <compat/sparc32/sparc32.h>
 #include <compat/sparc32/sparc32_exec.h>
 #include <compat/sparc32/sparc32_syscall.h>
+
+#include <machine/frame.h>
 
 extern struct sysent sparc32_sysent[];
 #ifdef SYSCALL_DEBUG
@@ -55,6 +59,9 @@ extern char sigcode[], esigcode[];
 const char sparc32_emul_path[] = "/emul/sparc32";
 void sparc32_sendsig __P((sig_t, int, int, u_long));
 void sparc32_setregs __P((struct proc *, struct exec_package *, u_long));
+static int sparc32_exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
+static int sparc32_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
+static int sparc32_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 
 struct emul emul_sparc32 = {
 	"sparc32",
@@ -116,6 +123,11 @@ exec_sparc32_makecmds(p, epp)
 		break;
 	case (MID_MACHINE << 16) | OMAGIC:
 		error = sparc32_exec_aout_prep_omagic(p, epp);
+		break;
+	default:
+		/* Invalid magic */
+		error = EINVAL;
+		break;
 	}
 
 	if (error)
@@ -346,13 +358,14 @@ sparc32_sendsig(catcher, sig, mask, code)
 	register struct sparc32_sigframe *fp;
 	register struct trapframe *tf;
 	register int addr, oonstack; 
-	struct rwindow32 *kwin, *oldsp, *newsp, /* DEBUG */tmpwin;
+	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sparc32_sigframe sf;
 	extern char sigcode[], esigcode[];
 #define	szsigcode	(esigcode - sigcode)
 
 	tf = p->p_md.md_tf;
-	oldsp = (struct rwindow32 *)(int)tf->tf_out[6];
+	/* Need to attempt to zero extend this 32-bit pointer */
+	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
@@ -365,7 +378,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sparc32_sigframe *)oldsp;
-	fp = (struct sparc32_sigframe *)((int)(fp - 1) & ~7);
+	fp = (struct sparc32_sigframe *)((long)(fp - 1) & ~7);
 
 #ifdef DEBUG
 	sigpid = p->p_pid;
@@ -383,7 +396,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 	sf.sf_signo = sig;
 	sf.sf_code = code;
 #ifdef COMPAT_SUNOS
-	sf.sf_scp = (u_int)&fp->sf_sc;
+	sf.sf_scp = (u_long)&fp->sf_sc;
 #endif
 	sf.sf_addr = 0;			/* XXX */
 
@@ -392,7 +405,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_sc.sc_onstack = oonstack;
 	sf.sf_sc.sc_mask = mask;
-	sf.sf_sc.sc_sp = (int)oldsp;
+	sf.sf_sc.sc_sp = (long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
 	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
@@ -408,7 +421,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
-	newsp = (struct rwindow32 *)((int)fp - sizeof(struct rwindow32));
+	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
@@ -426,7 +439,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 	    suword(&oldsp->rw_local[4], (int)tf->tf_local[4]) || suword(&oldsp->rw_local[5], (int)tf->tf_local[5]) ||
 	    suword(&oldsp->rw_local[6], (int)tf->tf_local[6]) || suword(&oldsp->rw_local[7], (int)tf->tf_local[7]) ||
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_int)oldsp)) {
+	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_long)oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -453,16 +466,16 @@ sparc32_sendsig(catcher, sig, mask, code)
 	 */
 #ifdef COMPAT_SUNOS
 	if (psp->ps_usertramp & sigmask(sig)) {
-		addr = (int)catcher;	/* user does his own trampolining */
+		addr = (long)catcher;	/* user does his own trampolining */
 	} else
 #endif
 	{
-		addr = (int)PS_STRINGS - szsigcode;
-		tf->tf_global[1] = (int)catcher;
+		addr = (long)PS_STRINGS - szsigcode;
+		tf->tf_global[1] = (long)catcher;
 	}
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(int)newsp;
+	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 

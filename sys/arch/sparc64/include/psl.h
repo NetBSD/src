@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.3 1998/07/28 04:44:52 eeh Exp $ */
+/*	$NetBSD: psl.h,v 1.4 1998/08/30 15:32:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,13 +135,19 @@
 
 #define	PSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
+#ifdef _LP64
+#define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
+#define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_PRIV|PSTATE_AG)
+#define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_PRIV)
+#define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
+#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
+#define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_AM|PSTATE_IE)
+#else
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_PRIV)
 #define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
-#ifdef DEBUG
-#define PSTATE_USER	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
-#else
+#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
 #define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_AM|PSTATE_IE)
 #endif
 
@@ -216,6 +222,11 @@
 #define KERN_MM		PSTATE_MM_TSO
 #define USER_MM		PSTATE_MM_RMO
 
+/* 
+ * Register window handlers.  These point to generic routines that check the
+ * stack pointer and then vector to the real handler.  We could optimize this
+ * if we could guarantee only 32-bit or 64-bit stacks.
+ */
 #define WSTATE_KERN	026
 #define WSTATE_USER	022
 

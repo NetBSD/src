@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1998/06/20 05:58:05 mrg Exp $ */
+/*	$NetBSD: disksubr.c,v 1.3 1998/08/30 15:32:18 eeh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -183,7 +183,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register i;
+	register int i;
 	register struct partition *opp, *npp;
 
 	/* sanity clause */
