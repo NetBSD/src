@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.8 1999/05/30 04:21:29 christos Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.9 1999/05/30 21:13:04 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -442,6 +442,8 @@ wsdisplay_usl_ioctl(sc, scr, cmd, data, flag, p)
 				bd.which = WSKBD_BELL_DOPERIOD;
 				bd.period = d >> 16; /* ms */
 			}
+			else
+				bd.which = 0;
 			if (d & 0xffff) {
 				bd.which |= WSKBD_BELL_DOPITCH;
 				bd.pitch = PCVT_SYSBEEPF/(d & 0xffff); /* Hz */
