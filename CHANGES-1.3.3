@@ -1095,3 +1095,68 @@ sys/arch/i386/i386/disksubr.c			patch
   Warn about old-style 165 partitions with a reference to installboot(8)
   for details on when and how to upgrade bootblocks and partition IDs.
   Do fresh installs using the new ID.  (jonathan)
+
+sys/arch/pmax/dev/dc.c				patch
+sys/arch/pmax/dev/dtop.c			1.33
+sys/arch/pmax/dev/lk201.c			1.9
+sys/arch/pmax/dev/rcons.c			1.15-1.16
+sys/arch/pmax/dev/rconsvar.h			1.1-1.2 (new)
+sys/arch/pmax/dev/sccreg.h			1.5
+sys/arch/pmax/pmax/cpu_cons.c			patch
+sys/arch/pmax/tc/scc.c				patch
+sys/arch/pmax/tc/sccvar.h			1.3
+
+  Replace 4.4BSD/pmax console support.  Rework console code to
+  eliminate sending rcons output via the serial driver (PR#4438).
+  Replace scc interrupt-handler with code back-ported from a
+  version of the machine-independent 'zs' driver.  Dont use PROM
+  for serial-console output from boot until autoconfiguration finds
+  device, use driver.  (jonathan and simonb)
+
+usr.bin/crunch/crunchide/exec_elf32.c		1.5
+
+  Reimplement ELF symbol hiding by prepend underscore-mangled program
+  name.  Works with mips CALL16 external relocs (which cannot be
+  relocated properly if they are made local).  (jonathan)
+
+sys/lkm/netinet/if_ipl/ipl.h			1.13
+sys/lkm/netinet/if_ipl/mln_ipl.c		1.21
+sys/netinet/fil.c				1.24
+sys/netinet/ip_auth.c				1.9
+sys/netinet/ip_auth.h				1.4
+sys/netinet/ip_compat.h				1.16
+sys/netinet/ip_fil.c				1.31
+sys/netinet/ip_fil.h				1.27
+sys/netinet/ip_frag.c				1.13
+sys/netinet/ip_frag.h				1.12
+sys/netinet/ip_ftp_pxy.c			1.10-1.11
+sys/netinet/ip_log.c				1.6
+sys/netinet/ip_nat.c				1.23
+sys/netinet/ip_nat.h				1.15
+sys/netinet/ip_proxy.c				1.15
+sys/netinet/ip_proxy.h				1.12
+sys/netinet/ip_state.c				1.16
+sys/netinet/ip_state.h				1.13
+usr.sbin/ipf/ipf/ipf.5				1.6
+usr.sbin/ipf/ipf/ipf.c				1.15
+usr.sbin/ipf/ipfstat/fils.c			1.15
+usr.sbin/ipf/ipftest/ipt.c			1.9
+usr.sbin/ipf/ipmon/ipmon.8			1.6
+usr.sbin/ipf/ipmon/ipmon.c			1.16
+usr.sbin/ipf/ipnat/ipnat.8			1.5
+usr.sbin/ipf/ipnat/ipnat.c			1.20
+usr.sbin/ipf/ipresend/resend.c			1.6
+usr.sbin/ipf/ipsend/44arp.c			1.6
+usr.sbin/ipf/ipsend/ip.c			1.8
+usr.sbin/ipf/ipsend/iplang_l.l			1.6
+usr.sbin/ipf/ipsend/iplang_y.y			1.8
+usr.sbin/ipf/ipsend/ipsend.c			1.8
+usr.sbin/ipf/ipsend/ipsend.h			1.5
+usr.sbin/ipf/ipsend/ipsopt.c			1.5
+usr.sbin/ipf/ipsend/sbpf.c			1.6
+usr.sbin/ipf/iptest/iptest.c			1.8
+usr.sbin/ipf/iptest/iptests.c			1.7
+usr.sbin/ipf/iptest/sock.c			1.9
+usr.sbin/ipf/rules/BASIC_2.FW			1.4
+
+  Update to IP Filter 3.2.10.  (mrg)
