@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.81 2002/10/09 05:07:55 junyoung Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.82 2002/11/26 18:42:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.81 2002/10/09 05:07:55 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.82 2002/11/26 18:42:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -192,18 +192,18 @@ linux_sendsig(sig, mask, code)
 	struct linux_sigframe *fp, frame;
 	int onstack;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
 	tf = p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	onstack = (sas->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					  p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct linux_sigframe *) ((caddr_t)sas->ss_sp +
+		sas->ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_esp;
 	fp--;
@@ -211,6 +211,12 @@ linux_sendsig(sig, mask, code)
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
+	frame.sf_sip = &fp->sf_si;
+	frame.sf_scp = &fp->sf_sc;
+	/*
+	 * XXX: zero siginfo out until we provide more info.
+	 */
+	(void)memset(&frame.sf_si, 0, sizeof(frame.sf_si));
 
 	/* Save register context. */
 #ifdef VM86
@@ -274,7 +280,7 @@ linux_sendsig(sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		sas->ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -310,6 +316,7 @@ linux_sys_sigreturn(p, v, retval)
 	struct trapframe *tf;
 	sigset_t mask;
 	ssize_t ss_gap;
+	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -366,11 +373,11 @@ linux_sys_sigreturn(p, v, retval)
 	 * to save the onstack flag.
 	 */
 	ss_gap = (ssize_t)
-	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) p->p_sigctx.ps_sigstk.ss_sp);
-	if (ss_gap >= 0  && ss_gap < p->p_sigctx.ps_sigstk.ss_size)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) sas->ss_sp);
+	if (ss_gap >= 0 && ss_gap < sas->ss_size)
+		sas->ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		sas->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&mask, &context.sc_mask);
