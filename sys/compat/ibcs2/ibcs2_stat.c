@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.26 2003/06/29 22:29:22 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.27 2003/10/01 08:03:48 itojun Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.26 2003/06/29 22:29:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.27 2003/10/01 08:03:48 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ ibcs2_sys_utssys(l, v, retval)
 		memcpy(sut.nodename, hostname, sizeof(sut.nodename));
 		sut.nodename[sizeof(sut.nodename)-1] = '\0';
 		memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
-		memcpy(sut.version, "1", sizeof(sut.version) - 1);
+		strlcpy(sut.version, "1", sizeof(sut.version));
 		memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 		return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, a1),
