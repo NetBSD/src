@@ -1,13 +1,10 @@
-#	$NetBSD: GENERIC,v 1.16 1996/06/03 20:10:53 cgd Exp $
+#	$NetBSD: GENERIC,v 1.17 1996/06/12 01:42:49 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
 include	"std.alpha"
 
 maxusers 8
-
-# does not really do anything anymore, but this replaces "ident GENERIC"
-options		GENERIC
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
