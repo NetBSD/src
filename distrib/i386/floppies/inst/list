@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1.1.1 1994/08/29 15:30:21 cgd Exp $
+#	$Id: list,v 1.2 1994/10/18 07:03:04 glass Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc
@@ -7,4 +7,5 @@ COPY	disktab.preinstall		etc
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.sh			install
+COPY	dot.hdprofile			tmp/.hdprofile
 SPECIAL	chmod 755 install
