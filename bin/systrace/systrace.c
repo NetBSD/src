@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.1 2002/06/17 16:29:11 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.16 2002/06/12 22:14:51 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace.c,v 1.1 2002/06/17 16:29:11 christos Exp $");
+__RCSID("$NetBSD: systrace.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: systrace.c,v 1.1 2002/06/17 16:29:11 christos Exp $");
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <string.h>
 #include <syslog.h>
 #include <err.h>
 #include <errno.h>
