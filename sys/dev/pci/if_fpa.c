@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.3 1995/12/24 02:32:17 mycroft Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.4 1996/03/09 03:46:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -144,6 +144,17 @@ pdq_pci_ifwatchdog(
 {
     pdq_ifwatchdog(PDQ_PCI_UNIT_TO_SOFTC(unit));
 }
+
+#ifdef __NetBSD__
+static int
+pdq_pci_ifioctl(
+    struct ifnet *ifp,
+    ioctl_cmd_t cmd,
+    caddr_t data)
+{
+    return (pdq_ifioctl(PDQ_PCI_UNIT_TO_SOFTC(ifp->if_unit), cmd, data));
+}
+#endif /* __NetBSD__ */
 
 static int
 pdq_pci_ifintr(
@@ -387,7 +398,7 @@ pdq_pci_attach(
     if (sc->sc_pdq == NULL)
 	return;
     bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
-    pdq_ifattach(sc, pdq_pci_ifinit, pdq_pci_ifwatchdog);
+    pdq_ifattach(sc, pdq_pci_ifinit, pdq_pci_ifwatchdog, pdq_pci_ifioctl);
 
     sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, pdq_pci_ifintr, sc);
     if (sc->sc_ih == NULL) {
