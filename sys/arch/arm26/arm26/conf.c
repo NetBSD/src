@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $ */
+/* $NetBSD: conf.c,v 1.2 2000/08/17 16:31:52 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -66,6 +66,10 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
+#include "com.h"
+cdev_decl(com);
+#include "lpt.h"
+cdev_decl(lpt);
 
 cons_decl(rs);
 
@@ -81,6 +85,12 @@ struct bdevsw bdevsw[] = {
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
 struct cdevsw cdevsw[] = {
 	/* First seven are standard across most ports */
 	cdev_cn_init(1, cn),		/* 0: /dev/console */
@@ -91,7 +101,6 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY, ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1, log),		/* 6: /dev/klog */
 	cdev_fd_init(1, filedesc),	/* 7: file descriptors */
-
 	cdev_disk_init(NMD, md),	/* 8: memory "disk" */
 	cdev_disk_init(NVND, vnd),	/* 9: vnode "disk" */
 	cdev_disk_init(NCCD, ccd),	/* 10: concatenated disks */
@@ -104,6 +113,10 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NWD, wd),	/* 15: IDE disks */
 	cdev_disk_init(NSD, sd),	/* 16: SCSI disks */
 	cdev_disk_init(NCD, cd),	/* 17: SCSI CD-ROMs */
+	cdev_bpftun_init(NBPFILTER, bpf),/*18: Berkeley packet filter */
+	cdev_bpftun_init(NTUN,tun),	/* 19: network tunnel */
+	cdev_tty_init(NCOM, com),	/* 20: ns8250 etc serial */
+	cdev_lpt_init(NLPT, lpt),	/* 21: PC-style parallel
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -164,6 +177,10 @@ static int chrtoblktbl[] = {
 	/* 15 */	4,		/* wd */
 	/* 16 */	5,		/* sd */
 	/* 17 */	6,		/* cd */
+	/* 18 */	NODEV,
+	/* 19 */	NODEV,
+	/* 20 */	NODEV,
+	/* 21 */	NODEV,
 };
 
 /*
