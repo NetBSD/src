@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.46 2002/02/05 19:18:29 agc Exp $ */
+/* $NetBSD: user.c,v 1.47 2002/03/31 21:31:10 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.46 2002/02/05 19:18:29 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.47 2002/03/31 21:31:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -899,13 +899,14 @@ adduser(char *login, user_t *up)
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
 	if (up->u_uid == -1) {
-		/* default is in index '0' in array */
-		for (i = up->u_rc - 1 ; i >= 0 ; --i) {
+		/* default is in index '0' in u_rv array */
+		for (i = 1 ; i < up->u_rc ; i++) {
 			if (getnextuid(sync_uid_gid, &up->u_uid, up->u_rv[i].r_from, up->u_rv[i].r_to)) {
 				break;
 			}
 		}
-		if (i == up->u_rc) {
+		if (i == up->u_rc &&
+		    !getnextuid(sync_uid_gid, &up->u_uid, up->u_rv[0].r_from, up->u_rv[0].r_to)) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			errx(EXIT_FAILURE, "can't get next uid for %d", up->u_uid);
