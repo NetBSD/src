@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.7 1998/07/06 00:49:21 mark Exp $
+#	$NetBSD: SHARK,v 1.8 1998/07/08 05:27:17 thorpej Exp $
 #
 #	SHARK
 #
@@ -16,7 +16,8 @@ options 	HZ=64
 #options 	NTP		# NTP phase/frequency locked loop
 options 	NMBCLUSTERS=1024 # XXX, temporarily required
 #options 	BOOT_QUIETLY	# twiddle instead of normal boot msg output
-options 	UVM		# use UVM instead of Mach VM
+options 	UVM		# use UVM instead of Mach VM; mandatory
+				# on the Shark!!!
 
 # CPU options
 
