@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.40 2004/01/11 02:04:05 tls Exp $ */
+/* $NetBSD: rm.c,v 1.41 2004/01/11 02:17:12 tls Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.40 2004/01/11 02:04:05 tls Exp $");
+__RCSID("$NetBSD: rm.c,v 1.41 2004/01/11 02:17:12 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,8 +314,9 @@ rm_file(char **argv)
  * rm_overwrite --
  *	Overwrite the file 3 times with varying bit patterns.
  *
- * This is a cheap way to *really* delete files.  Note that only regular
- * files are deleted, directories (and therefore names) will remain.
+ * This is an expensive way to keep people from recovering files from your
+ * non-snapshotted FFS filesystems using fsdb(8).  Really.  No more.  Only
+ * regular files are deleted, directories (and therefore names) will remain.
  * Also, this assumes a fixed-block file system (like FFS, or a V7 or a
  * System V file system).  In a logging file system, you'll have to have
  * kernel support.
