@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivga.c,v 1.4 1995/12/24 02:29:47 mycroft Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.5 1996/03/17 01:06:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -47,9 +47,12 @@
 int	pcivgamatch __P((struct device *, void *, void *));
 void	pcivgaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver pcivgacd = {
-	NULL, "pcivga", pcivgamatch, pcivgaattach, DV_DULL,
-	    sizeof(struct pcivga_softc)
+struct cfdriver pcivga_ca = {
+	pcivgamatch, pcivgaattach
+};
+
+struct cfdriver pcivga_cd = {
+	NULL, "pcivga", DV_DULL, sizeof(struct pcivga_softc)
 };
 
 void	pcivga_getdevconfig __P((__const struct pci_conf_fns *, void *,
@@ -202,7 +205,7 @@ tgammap(dev, offset, nprot)
 	int offset;
 	int nprot;
 {
-	struct pcivga_softc *sc = pcivgacd.cd_devs[TGAUNIT(dev)];
+	struct pcivga_softc *sc = pcivga_cd.cd_devs[TGAUNIT(dev)];
 
 	if (offset > sc->sc_dc->dc_pcivgaconf->pcivgac_cspace_size)
 		return -1;

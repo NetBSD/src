@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.1 1995/12/20 00:43:20 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.2 1996/03/17 01:06:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -51,9 +51,14 @@ struct ioasic_softc {
 int	ioasicmatch __P((struct device *, void *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
 int     ioasicprint(void *, char *);
-struct cfdriver ioasiccd =
-    { NULL, "ioasic", ioasicmatch, ioasicattach, DV_DULL,
-    sizeof(struct ioasic_softc) };
+
+struct cfattach ioasic_ca = {
+	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
+};
+
+struct cfdriver ioasic_cd = {
+	NULL, "ioasic", DV_DULL
+};
 
 int	ioasic_intr __P((void *));
 int	ioasic_intrnull __P((void *));

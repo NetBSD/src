@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.4 1995/11/23 02:37:11 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.5 1996/03/17 01:06:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -48,9 +48,12 @@
 int	apecsmatch __P((struct device *, void *, void *));
 void	apecsattach __P((struct device *, struct device *, void *));
 
-struct cfdriver apecscd = {
-	NULL, "apecs", apecsmatch, apecsattach, DV_DULL,
-	    sizeof(struct apecs_softc)
+struct cfattach apecs_ca = {
+	sizeof(struct apecs_softc), apecsmatch, apecsattach
+};
+
+struct cfdriver apecs_cd = {
+	NULL, "apecs", DV_DULL
 };
 
 static int	apecsprint __P((void *, char *pnp));
@@ -70,7 +73,7 @@ apecsmatch(parent, match, aux)
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for an APECS. */
-	if (strcmp(ca->ca_name, apecscd.cd_name) != 0)
+	if (strcmp(ca->ca_name, apecs_cd.cd_name) != 0)
 		return (0);
 
 	if (apecsfound)

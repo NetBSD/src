@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.9 1995/12/20 00:14:19 cgd Exp $
+#	$NetBSD: files.alpha,v 1.10 1996/03/17 01:06:24 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -12,9 +12,11 @@ maxusers 2 8 64
 # Bus-independent devices
 #
 
-device mainbus at root { }              # no locators (yet?)
+device mainbus { }			# no locators (yet?)
+attach mainbus at root
 
-device	cpu at mainbus { }		# not really optional; can be a 'bus'
+device cpu { }				# not really optional; can be a 'bus'
+attach cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
 
@@ -61,38 +63,47 @@ file	arch/alpha/pci/wscons.c		wsc		needs-flag
 
 include "../../../dev/tc/files.tc"
 
-device tcasic at mainbus: tcbus
+device tcasic: tcbus
+attach tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
 
 # the TurboChannel IOCTL ASIC
-device ioasic at tc { offset = -1 }
+device ioasic { offset = -1 }
+attach ioasic at tc
 file	arch/alpha/tc/ioasic.c		ioasic		needs-flag
 
 # the TurboChannel clock (XXX)
-# device clock at ioasic			# not really optional
+# device clock					# not really optional
+# attach clock at ioasic
 #file	arch/alpha/alpha/clock.c	clock
 
 # Smart Frame buffer (XXX NOT YET SUPPORTED)
-device sfb at tc
+device sfb
+attach sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
 # 8530 UARTs
-device scc at ioasic
+device scc
+attach scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
 # the TCDS ASIC
-device tcds at tc { slot = -1 }
+device tcds { slot = -1 }
+attach tcds at tc
 file	arch/alpha/tc/tcds.c		tcds		needs-count
 
 # 53C[F]90 SCSI
-device esp at tcds: scsi
+device esp: scsi
+attach esp at tcds
 file	arch/alpha/tc/esp.c		esp		needs-count
 file	arch/alpha/tc/tcds_dma.c	esp
 
 # Baseboard Lance ethernet.
+# XXX should use entry in files.tc
 device le at ioasic, tc: ether, ifnet
+attach le at ioasic, tc with le_tc
 file	dev/tc/if_le.c			le	needs-flag # for le_iomem
 
 #
@@ -108,13 +119,19 @@ include "../../../dev/isa/files.isa"
 # ISA Bus devices
 #
 
-device	ibus at mainbus { }
-device	jcombo at ibus: isabus
-device	jeisa at ibus: eisabus
+device	ibus { }
+attach	ibus at mainbus
+device	jcombo: isabus
+attach	jcombo at ibus
+device	jeisa: eisabus
+attach	jeisa at ibus
 
-device  pckbd at isa
+device  pckbd
+attach	pckbd at isa
 file    arch/alpha/isa/pckbd.c           pckbd needs-flag
-device  pms at isa
+# XXX should attach to pckbd
+device  pms
+attach	pms at isa
 file    arch/alpha/isa/pms.c             pms needs-flag
 
 
@@ -131,17 +148,20 @@ include "../../../dev/eisa/files.eisa"
 
 include "../../../dev/pci/files.pci"
 
-device	apecs at mainbus: pcibus
+device	apecs: pcibus
+attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
 file	arch/alpha/pci/apecs_isa.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
-device	cia at mainbus: pcibus
+device	cia: pcibus
+attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
 file	arch/alpha/pci/cia_isa.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
 
-device	lca at mainbus: pcibus
+device	lca: pcibus
+attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
 file	arch/alpha/pci/lca_isa.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
@@ -157,15 +177,19 @@ file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio at pci: isabus
-device	pceb at pci: eisabus
+device	sio: isabus
+attach	sio at pci
+device	pceb: eisabus
+attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio pceb
 
-device	tga at pci: rcons, wsc, ansicons
+device	tga: rcons, wsc, ansicons
+attach	tga at pci
 file	arch/alpha/pci/tga.c		tga		needs-flag
 
-device	pcivga at pci: wsc, ansicons
+device	pcivga: wsc, ansicons
+attach	pcivga at pci
 file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 
 
@@ -173,7 +197,8 @@ file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 # Devices that can live on multiple busses
 #
 
-device clock at isa, ioasic				# not really optional
+device clock						# not really optional
+attach clock at isa, ioasic
 file	arch/alpha/alpha/clock.c	clock
 file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
 					dec_2100_a50 dec_kn20aa dec_axppci_33

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.1 1995/12/20 00:43:34 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.2 1996/03/17 01:06:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,9 +39,14 @@
 /* Definition of the driver for autoconfig. */
 int	tcasicmatch(struct device *, void *, void *);
 void	tcasicattach(struct device *, struct device *, void *);
-struct cfdriver tcasiccd =
-    { NULL, "tcasic", tcasicmatch, tcasicattach, DV_DULL,
-    sizeof (struct device) };
+
+struct cfattach tcasic_ca = {
+	sizeof(struct device), tcasicmatch, tcasicattach
+};
+
+struct cfdriver tcasic_cd = {
+	NULL, "tcasic", DV_DULL
+};
 
 int	tcasicprint __P((void *, char *));
 
@@ -59,7 +64,7 @@ tcasicmatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a TurboChannel ASIC. */
-        if (strcmp(ca->ca_name, tcasiccd.cd_name))
+        if (strcmp(ca->ca_name, tcasic_cd.cd_name))
                 return (0);
 
         /* Make sure that the system supports a TurboChannel ASIC. */
