@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_meas.c,v 1.8 2000/03/30 13:10:14 augustss Exp $	*/
+/*	$NetBSD: tp_meas.c,v 1.9 2001/11/13 01:10:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,6 +65,9 @@ SOFTWARE.
  * tp_meas.c : create a performance measurement event
  * in the circular buffer tp_Meas[]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_meas.c,v 1.9 2001/11/13 01:10:50 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>

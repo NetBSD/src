@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: des_enc.c,v 1.2 2001/11/13 01:40:10 lukem Exp $");
+
 #include <sys/types.h>
 #include <crypto/des/des_locl.h>
 

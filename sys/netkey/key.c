@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.53 2001/10/29 07:02:36 simonb Exp $	*/
+/*	$NetBSD: key.c,v 1.54 2001/11/13 01:39:21 lukem Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 /*
  * This code is referd to RFC 2367
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.54 2001/11/13 01:39:21 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

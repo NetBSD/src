@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.c,v 1.3 2001/02/21 21:39:52 jdolecek Exp $	*/
+/*	$NetBSD: cast128.c,v 1.4 2001/11/13 01:40:09 lukem Exp $	*/
 /*	$KAME: cast128.c,v 1.4 2000/11/06 13:58:08 itojun Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.4 2001/11/13 01:40:09 lukem Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL

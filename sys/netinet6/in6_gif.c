@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.22 2001/08/16 17:45:26 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.23 2001/11/13 00:56:59 lukem Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.23 2001/11/13 00:56:59 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

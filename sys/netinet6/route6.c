@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.9 2001/10/16 06:24:45 itojun Exp $	*/
+/*	$NetBSD: route6.c,v 1.10 2001/11/13 00:57:06 lukem Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.10 2001/11/13 00:57:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.1 2000/07/04 14:27:57 onoe Exp $	*/
+/*	$NetBSD: arc4.c,v 1.2 2001/11/13 01:40:07 lukem Exp $	*/
 
 /*
  * ARC4 implementation
@@ -28,6 +28,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.2 2001/11/13 01:40:07 lukem Exp $");
 
 #include <sys/types.h>
 

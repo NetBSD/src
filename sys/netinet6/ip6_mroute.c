@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.23 2001/10/16 06:24:44 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.24 2001/11/13 00:57:01 lukem Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  *
  * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.24 2001/11/13 00:57:01 lukem Exp $");
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.19 2001/10/18 20:17:33 thorpej Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.20 2001/11/13 01:10:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,6 +68,9 @@ SOFTWARE.
  * tp_getoptions: initializes variables that are affected by the options
  * chosen.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.20 2001/11/13 01:10:51 lukem Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
