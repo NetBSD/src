@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.3 2001/11/21 09:10:38 wdk Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.4 2001/11/24 02:11:54 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.3 2001/11/21 09:10:38 wdk Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.4 2001/11/24 02:11:54 wdk Exp $");
 #endif
 
 #include <inttypes.h>
@@ -62,10 +62,11 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* LINTED uintptr_t is safe */
 	sp -= (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
 	sp  = (uintptr_t *)
-	      ((uintptr_t)sp & ~0x7);	/* Align on double-word boundary. */
+	      ((u_long)sp & ~0x7);	/* Align on double-word boundary. */
 
 	gr[_REG_SP]  = (__greg_t)sp;
 	gr[_REG_RA]  = (__greg_t)_resumecontext;
+	gr[_REG_T9]  = (__greg_t)func;	/* required for .abicalls */
 	gr[_REG_EPC] = (__greg_t)func;
 
 	/* Construct argument list. */

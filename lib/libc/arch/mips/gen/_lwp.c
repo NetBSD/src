@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1.2.1 2001/11/20 07:59:03 wdk Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.1.2.2 2001/11/24 02:11:55 wdk Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	sp = (void **) (stack_base + stack_size);
 
 	gr[_REG_EPC] = (unsigned long) start;
+	gr[_REG_T9] = (unsigned long) start; /* required for .abicalls */
 	gr[_REG_RA] = (unsigned long) _lwp_exit;
 	gr[_REG_A0] = (unsigned long) arg;
 	gr[_REG_SP] = (unsigned long) sp;
