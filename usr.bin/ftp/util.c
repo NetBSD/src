@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77 1999/10/12 06:05:01 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.78 1999/10/13 02:47:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.77 1999/10/12 06:05:01 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.78 1999/10/13 02:47:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: util.c,v 1.77 1999/10/12 06:05:01 lukem Exp $");
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <netinet/in.h>
 #include <arpa/ftp.h>
 
 #include <ctype.h>
@@ -618,6 +619,9 @@ foregroundproc()
 
 static void updateprogressmeter __P((int));
 
+/*
+ * SIGALRM handler to update the progress meter
+ */
 static void
 updateprogressmeter(dummy)
 	int dummy;
@@ -876,7 +880,7 @@ ptransfer(siginfo)
 }
 
 /*
- * Print transfer stats if a transfer is in progress
+ * SIG{INFO,QUIT} handler to print transfer stats if a transfer is in progress
  */
 void
 psummary(notused)
@@ -1098,6 +1102,9 @@ setupsockbufsize(sock)
 		warn("unable to set rcvbuf size %d", rcvbuf_size);
 }
 
+/*
+ * Copy characters from src into dst, \ quoting characters that require it
+ */
 void
 ftpvis(dst, dstlen, src, srclen)
 	char		*dst;
@@ -1138,9 +1145,9 @@ isipv6addr(addr)
 {
 	int rv = 0;
 #ifdef INET6
-	u_char buf[16];		/* XXX: sizeof(struct in_addr6) */
+	struct sockaddr_in6 su_sin6;
 
-	rv = inet_pton(AF_INET6, addr, &buf);
+	rv = inet_pton(AF_INET6, addr, &su_sin6.sin6_addr);
 	if (debug)
 		fprintf(ttyout, "isipv6addr: got %d for %s\n", rv, addr);
 #endif
@@ -1174,6 +1181,9 @@ xlisten(sock, backlog)
 	return (listen(sock, backlog));
 }
 
+/*
+ * malloc() with inbuilt error checking
+ */
 void *
 xmalloc(size)
 	size_t size;
@@ -1186,6 +1196,9 @@ xmalloc(size)
 	return (p);
 }
 
+/*
+ * strdup() with inbuilt error checking
+ */
 char *
 xstrdup(str)
 	const char *str;
@@ -1200,6 +1213,10 @@ xstrdup(str)
 	return (s);
 }
 
+/*
+ * Install a POSIX signal handler, allowing the invoker to set whether
+ * the signal should be restartable or not
+ */
 sig_t
 xsignal_restart(sig, func, restartable)
 	int sig;
@@ -1222,6 +1239,10 @@ xsignal_restart(sig, func, restartable)
 	return (oact.sa_handler);
 }
 
+/*
+ * Install a signal handler with the `restartable' flag set dependent upon
+ * which signal is being set. (This is a wrapper to xsignal_restart())
+ */
 sig_t
 xsignal(sig, func)
 	int sig;

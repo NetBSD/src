@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.46 1999/10/12 06:04:59 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.47 1999/10/13 02:47:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P((int));
 void	cmdtimeout __P((int));
-void	cmdscanner __P((int));
+void	cmdscanner __P((void));
 void	crankrate __P((int));
 int	command __P((const char *, ...));
 #ifndef NO_EDITCOMPLETE
