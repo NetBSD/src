@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.8 2000/12/15 03:29:40 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.9 2000/12/15 06:20:25 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -177,3 +177,133 @@ distrib/sparc/ramdisk/dot.profile		1.15
 sys/arch/pmax/pmax/autoconf.c			1.55
 
   Fix netbooting on the 2100/3100.  Fixes PR#11212.
+
+usr.sbin/pkg_install/add/main.c			1.17
+usr.sbin/pkg_install/add/perform.c		1.56
+usr.sbin/pkg_install/admin/main.c		1.17
+usr.sbin/pkg_install/create/perform.c		1.24
+usr.sbin/pkg_install/info/perform.c		1.34
+usr.sbin/pkg_install/lib/file.c			1.44-1.45
+usr.sbin/pkg_install/lib/ftpio.c		1.28
+usr.sbin/pkg_install/lib/str.c			1.24
+
+  Accept ``.tbz'' as an alternative suffix; compress with bzip2 if
+  a .tbz suffix is given.  Fix pkg_info to work via ftp, either
+  via URL on command line or from PKG_PATH environment variable.
+
+sys/arch/news68k/dev/zs.c			1.5
+
+  Initialize zs chip in zscninit() so that the kernel can use serial
+  console even if the PROM uses bitmap console.  Remove some dead
+  code.  Use BPS_TO_TCONST() to initialize baudrate.
+
+sys/arch/arm32/pci/pciide_machdep.c		1.3
+
+  Print which IRQ is used for compatibility interrupts.
+
+sys/arch/sun3/sun3/sunmon.c			1.11
+sys/arch/sun3/sun3x/machdep.c			1.61
+
+  Make PROM boot command work properly even after halt on 3/80.
+
+sys/lib/libsa/loadfile.c			1.9
+
+  Don't print ``]'' if loading kernel does not have a symbol table.
+
+sys/dev/pci/pciide.c				1.93
+
+  Add support for Intel ICH2 IDE controller.
+
+usr.sbin/mopd/mopd/process.c			1.10
+
+  Make sure dle points to the correct slot.  Fixes PR#11253.
+
+sys/dev/microcode/siop/ncr53cxxx.c		1.3-1.5
+
+  Allow conditional branch like "JUMP foo, IF FALSE" (that the
+  driver can later patch).  Bug fixes and syntax checking improvement.
+
+sys/dev/microcode/siop/siop.ss			1.8-1.12
+sys/dev/microcode/siop/siop.out			regenerate
+sys/dev/ic/siop.c				1.23-1.24,1.28-1.36
+sys/dev/ic/siopreg.h				1.7
+sys/dev/ic/siopvar.h				1.9-1.13
+sys/dev/ic/siopvar_common.h			1.5-1.8
+sys/dev/pci/siop_pci_common.c			1.3
+sys/dev/pci/siop_pci_common.h			1.2
+
+  Speed improvements to the siop driver, and add tagged queueing
+  support.  As a side effect, better handling of some not so common
+  phase or message sequences.
+
+distrib/notes/amiga/hardware			1.39
+
+  Nowadays, need to tell people what models didn't have an MMU out
+  of the box.
+
+sbin/ping6/ping6.c				1.25
+
+  Validate strdup() error on argument parsing.  Also, use strlcat()
+  on complex string manipulation.
+
+usr.sbin/grfconfig/grfconfig.8			1.10
+
+  Document that text console modes need a depth field of 4.
+
+share/man/man8/compat_pecoff.8			1.3-1.6
+
+  Various grammar corrections, markup fixes.  Updates for the
+  current status of The PEACE Project.
+
+share/man/man8/Makefile				1.40
+
+  Alias compat_win32.8 and peace.8.
+
+distrib/sets/lists/man/mi			1.288
+
+  Add peace(8) and compat_win32(8).
+
+distrib/x68k/floppies/ramdisk-common/Makefile.inc 1.2
+
+  Change all ocurrences of ``crunchgen'' to ${CRUNCHGEN}.
+
+distrib/x68k/floppies/Makefile			1.7
+distrib/x68k/floppies/bootfloppy-common/Makefile.inc 1.16
+distrib/x68k/floppies/ramdisk.sysinst/Makefile	1.12 via patch
+distrib/x68k/floppies/ramdisk.sysinst/dot.profile 1.7
+distrib/x68k/floppies/bootfloppy.generic/Makefile 1.1 (new)
+distrib/x68k/floppies/inst/Makefile		1.1 (new)
+distrib/x68k/floppies/bootfloppy/Makefile	delete
+distrib/x68k/floppies/ramdisk/Makefile		delete
+distrib/x68k/floppies/ramdisk/dot.hdprofile	delete
+distrib/x68k/floppies/ramdisk/dot.profile	delete
+distrib/x68k/floppies/ramdisk/install.tmpl	delete
+distrib/x68k/floppies/ramdisk/list		delete
+distrib/x68k/floppies/ramdisk/mtree.conf	delete
+distrib/x68k/floppies/ramdisk/ramdiskbin.conf	delete
+distrib/x68k/floppies/ramdisk/start.tmpl	delete
+distrib/x68k/floppies/ramdisk/upgrade.tmpl	delete
+
+  Reorganize installation system by removing the old script based
+  installer, provided for 4M systems.  Instead we provide
+  ``floppy-root'' 2-floppy installer.
+
+etc/etc.x68k/Makefile.inc			1.9
+sys/arch/x68k/conf/INSTALL_SMALL		delete
+
+  We do not use INSTALL_SMALL anymore.
+
+sys/arch/x68k/conf/INSTALL			1.36 via patch
+
+  Adjust the ramdisk size.
+
+distrib/x68k/floppies/bootfloppy.sysinst/Makefile 1.6
+
+  Change the kernel name from netbsdsi(.gz) to netbsd(.gz).
+
+sys/arch/mac68k/obio/grf_obio.c			1.46-1.47
+
+  Map only the register space of the DAFB required to set up the
+  video hardware.  Fixes PR#11000.
+  Be careful to unmap anything we map in the drivers' match function
+  in order to avoid potential future problems.
