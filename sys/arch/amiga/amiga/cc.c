@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.7 1994/10/26 02:01:36 cgd Exp $	*/
+/*	$NetBSD: cc.c,v 1.8 1996/01/28 19:49:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -442,7 +442,7 @@ play_sample(len, data, period, volume, channels, count)
 	 * turn on interrupts and enable dma for channels and
 	 */
 	custom.intena = INTF_SETCLR | (dmabits << 7);
-	custom.dmacon = DMAF_SETCLR | dmabits;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER |dmabits;
 }
 
 /*
