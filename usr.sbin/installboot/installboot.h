@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.7 2002/04/30 14:45:12 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.8 2002/05/06 16:24:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -110,6 +110,8 @@ int		alpha_clearboot(ib_params *);
 int		pmax_parseopt(ib_params *, const char *);
 int		pmax_setboot(ib_params *);
 int		pmax_clearboot(ib_params *);
+int		sparc_setboot(ib_params *);
+int		sparc_clearboot(ib_params *);
 int		sparc64_setboot(ib_params *);
 int		sparc64_clearboot(ib_params *);
 int		sun68k_setboot(ib_params *);
