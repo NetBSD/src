@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.11 2002/03/17 20:54:05 martin Exp $
+ *	$Id: i4b_ipr.c,v 1.12 2002/03/18 22:15:28 martin Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.11 2002/03/17 20:54:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.12 2002/03/18 22:15:28 martin Exp $");
 
 #include "irip.h"
 
@@ -416,7 +416,6 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	 struct rtentry *rtp)
 {
 	struct ipr_softc *sc;
-	int unit;
 	int s, rv;
 	struct ifqueue *ifq = NULL;
 	struct ip *ip;
@@ -496,7 +495,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 		NDBGL4(L4_IPRDBG, "%s: send dial request message!", sc->sc_if.if_xname);
 		NDBGL4(L4_DIALST, "%s: setting dial state to ST_DIALING", sc->sc_if.if_xname);
-		i4b_l4_dialout(irip_driver_id, unit);
+		i4b_l4_dialout(irip_driver_id, sc->sc_unit);
 		sc->sc_state = ST_DIALING;
 	}
 
@@ -504,7 +503,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if(sc->sc_log_first > 0)
 	{
 		--(sc->sc_log_first);
-		i4b_l4_packet_ind(BDRV_IPR, unit, 1, m );
+		i4b_l4_packet_ind(BDRV_IPR, sc->sc_unit, 1, m );
 	}
 #endif
 
@@ -530,7 +529,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	) {
 		if(IF_QFULL(ifq))
 		{
-			NDBGL4(L4_IPRDBG, "irip%d: send queue full!", unit);
+			NDBGL4(L4_IPRDBG, "%s: send queue full!", sc->sc_if.if_xname);
 			IF_DROP(ifq);
 			m_freem(m);
 			sc->sc_if.if_oerrors++;
@@ -547,7 +546,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		}
 	}
 	
-	NDBGL4(L4_IPRDBG, "irip%d: added packet to send queue!", unit);
+	NDBGL4(L4_IPRDBG, "%s: added packet to send queue!", sc->sc_if.if_xname);
 
 	ipr_tx_queue_empty(sc);
 
@@ -1063,7 +1062,7 @@ error:
 	if(sc->sc_log_first > 0)
 	{
 		--(sc->sc_log_first);
-		i4b_l4_packet_ind(BDRV_IPR, unit, 0, m );
+		i4b_l4_packet_ind(BDRV_IPR, sc->sc_unit, 0, m );
 	}
 #endif
 
