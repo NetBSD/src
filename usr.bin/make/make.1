@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.98 2004/02/03 19:25:29 chuck Exp $
+.\"	$NetBSD: make.1,v 1.99 2004/02/04 00:37:45 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 27, 2004
+.Dd February 3, 2004
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -188,36 +188,43 @@ Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
 Specify a directory in which to search for sys.mk and makefiles included
-via the 
-.Aq Ar file
-style include statement.
+via the
+.Ao Ar file Ac Ns -style
+include statement.
 The
 .Fl m
 option can be used multiple times to form a search path.
 This path will override the default system include path: /usr/share/mk.
 Furthermore the system include path will be appended to the search path used
-for 
-.Pf \*q Ar file Ns \*q 
-style include statements (see the
+for
+.Qo Ar file Qc Ns -style
+include statements (see the
 .Fl I
 option).
 .Pp
 If a file or directory name in the
 .Fl m
-argument (or the 
-.Ev MAKESYSPATH 
-environment variable) starts with the string ".../" then 
+argument (or the
+.Ev MAKESYSPATH
+environment variable) starts with the string
+.Qq \&.../
+then
 .Nm
-will search for the specified file or directory named in the remaining part 
-of the argument string.   The search starts with the current directory of 
+will search for the specified file or directory named in the remaining part
+of the argument string.
+The search starts with the current directory of
 the Makefile and then works upward towards the root of the filesystem.
-If the search is successful, then the resulting directory replaces the 
-".../" specification in the
+If the search is successful, then the resulting directory replaces the
+.Qq \&.../
+specification in the
 .Fl m
-argument.  If used, this feature allows 
+argument.
+If used, this feature allows
 .Nm
 to easily search in the current source tree for customized sys.mk files
-(e.g. by using ".../mk/sys.mk" as an argument).
+(e.g., by using
+.Qq \&.../mk/sys.mk
+as an argument).
 .It Fl n
 Display the commands that would have been executed, but do not
 actually execute them unless the target depends on the .MAKE special
