@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 1997/11/27 10:18:47 sakamoto Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 1997/12/11 09:04:28 sakamoto Exp $	*/
 /*	$OpenBSD: intr.h,v 1.1 1997/10/13 10:53:45 pefo Exp $ */
 
 /*
@@ -147,15 +147,16 @@ set_sint(pending)
 #define	CPU1_INT_MASK	0x1f0
 #define	INT_STATE_REG	0x2f0
 
-#define	SINT_CLOCK	0x10000000
-#define	SINT_NET	0x20000000
-#define	SINT_TTY	0x40000000
-#define	SPL_CLOCK	0x80000000
+#define	SINT_CLOCK	0x20000000
+#define	SINT_NET	0x40000000
+#define	SINT_TTY	0x80000000
+#define	SPL_CLOCK	0x00000001
 #define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_TTY)
 
 #define	CNT_SINT_NET	29
 #define	CNT_SINT_CLOCK	30
-#define	CNT_CLOCK	31
+#define	CNT_SINT_TTY	31
+#define	CNT_CLOCK	0
 
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
