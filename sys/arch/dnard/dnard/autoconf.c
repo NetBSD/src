@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/05/09 15:58:07 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2001/07/22 15:26:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -272,7 +272,7 @@ cninit(void)
 		goto nocons;
 
 	node = OF_instance_to_package(stdout);
-	bzero(type, sizeof(type));
+	memset(type, 0, sizeof(type));
 	if (OF_getprop(node, "device_type", type, sizeof(type)) == -1)
 		goto nocons;
 
@@ -298,7 +298,7 @@ cninit(void)
 		}
 
 		node = OF_instance_to_package(stdin);
-		bzero(name, sizeof(name));
+		memset(name, 0, sizeof(name));
 		OF_getprop(node, "name", name, sizeof(name));
 		if (strcmp(name, "keyboard") != 0) {
 			printf("WARNING: stdin is not a keyboard: %s\n", name);
