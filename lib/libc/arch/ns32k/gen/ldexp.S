@@ -18,7 +18,7 @@
  * 29-Apr-92  Tero Kivinen (kivinen) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: ldexp.S,v 1.2 1994/05/03 20:40:14 phil Exp $
+ *	$Id: ldexp.S,v 1.2.2.1 1994/10/23 22:22:45 cgd Exp $
  */
 
 /*
@@ -70,7 +70,7 @@ ldexp_underflow:
 	exit	[]
 	ret	0
 ldexp_overflow:
-	movl	@huge,f0	/* if overflow return HUGE */
+	movl	huge(pc),f0	/* if overflow return HUGE */
 	movdl	0d0e0,f2
 	cmpl	f2,8(fp)	/* check original sign */
 	bgt	ldexp_positive
