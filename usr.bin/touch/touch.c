@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.12 1997/10/06 13:46:52 enami Exp $	*/
+/*	$NetBSD: touch.c,v 1.13 1997/10/11 03:12:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$NetBSD: touch.c,v 1.12 1997/10/06 13:46:52 enami Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.13 1997/10/11 03:12:17 enami Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -363,6 +363,6 @@ __dead void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: touch [-acfm] [-r file] [-t time] file ...\n");
+	    "usage: touch [-acfhm] [-r file] [-t time] file ...\n");
 	exit(1);
 }
