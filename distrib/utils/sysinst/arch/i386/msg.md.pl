@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.16 2003/07/27 20:25:07 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.17 2003/08/27 16:00:30 lukem Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -65,7 +65,7 @@ message Use_serial_com1		{Use serial port com1}
 message Use_serial_com2		{Use serial port com2}
 message Use_serial_com3		{Use serial port com3}
 message serial_baud_rate	{Serial baud rate}
-message Use_existing_bootblocks	{Use exitisting bootblocks}
+message Use_existing_bootblocks	{Use existing bootblocks}
 
 .if 0
 message Use_normal_bootblocks
