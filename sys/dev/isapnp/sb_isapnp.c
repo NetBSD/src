@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.4 1997/03/21 00:49:38 mycroft Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.5 1997/03/25 15:16:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,6 +82,7 @@ sb_isapnp_match(parent, match, aux)
 
 	if (strcmp(ipa->ipa_devlogic, "CTL0001") &&
 	    strcmp(ipa->ipa_devlogic, "CTL0031") &&
+	    strcmp(ipa->ipa_devlogic, "CTL0041") &&
 	    strcmp(ipa->ipa_devlogic, "ESS1868"))
 		return (0);
 
