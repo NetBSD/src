@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11.2.1 2000/06/30 16:27:42 simonb Exp $ */
+/*	$NetBSD: mem.c,v 1.11.2.2 2000/07/18 16:23:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,8 +51,8 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/msgbuf.h>
 
-#include <sparc64/sparc64/vaddrs.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 #include <machine/ctlreg.h>
@@ -99,6 +99,7 @@ mmrw(dev, uio, flags)
 	static int physlock;
 	vm_prot_t prot;
 	extern caddr_t vmmap;
+	vsize_t msgbufsz;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -208,8 +209,10 @@ mmrw(dev, uio, flags)
 		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
-			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
-				c = min(iov->iov_len, 4096);
+			msgbufsz = msgbufp->msg_bufs +
+				offsetof(struct kern_msgbuf, msg_bufc);
+			if (v >= msgbufp && v < (msgbufp + msgbufsz)) {
+				c = min(iov->iov_len, msgbufsz);
 #if 1		/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
 			} else if (v >= prom_vstart && v < prom_vend &&
 				   uio->uio_rw == UIO_READ) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.3 2000/06/12 23:32:47 eeh Exp $ */
+/*	$NetBSD: intreg.h,v 1.3.2.1 2000/07/18 16:23:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,6 @@
  *	@(#)intreg.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <sparc64/sparc64/vaddrs.h>
-
 /*
  * All sun4u interrupts arrive as interrupt packets.  These packets
  * consist of up to six (three on spitfires) quads.  The first one
@@ -56,22 +54,9 @@
  * and a 5-bit interrupt number.  We ignore this distinction.
  *
  */
-
 #define MAXINTNUM	(1<<11)
-
-/*
- * These masks are used for ienab_bis and ienab_bic, neither valid for
- * 4u machines.   We translate this to a set_softint and clear_softint.
- */
-#define	IE_L14		(1<<14)	/* enable level 14 (counter 1) interrupts */
-#define	IE_L10		(1<<10)	/* enable level 10 (counter 0) interrupts */
-#define	IE_L8		(1<<8)	/* enable level 8 interrupts */
-#define	IE_L6		(1<<6)	/* request software level 6 interrupt */
-#define	IE_L4		(1<<4)	/* request software level 4 interrupt */
-#define	IE_L1		(1<<1)	/* request software level 1 interrupt */
 
 #ifndef _LOCORE
 struct intrhand;	/* This is in cpu.h if you need it. */
 void	send_softint __P((int cpu, int level, struct intrhand *ih));
 #endif
-

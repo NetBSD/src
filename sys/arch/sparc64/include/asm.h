@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 1999/10/05 03:34:41 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.9.12.1 2000/07/18 16:23:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -72,7 +72,7 @@
 	3: rd %pc, tmp; \
 	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
-	add tmp,%o7,dest
+	add dest,tmp,dest
 
 /*
  * PICCY_SET() does the equivalent of a `set var, %dest' instruction in
@@ -95,7 +95,7 @@
 #ifdef GPROF
 #define _PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
-	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
+	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
 #define _PROF_PROLOGUE
@@ -111,6 +111,12 @@
 #define ASMSTR			.asciz
 
 #define RCSID(name)		.asciz name
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
+#endif
 
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.30 2000/06/08 17:41:46 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.30.2.1 2000/07/18 16:23:21 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,6 @@
 #include <vm/vm.h>
 
 #include <machine/bus.h>
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
@@ -125,7 +124,6 @@
 #include <dev/sbus/sbusvar.h>
 
 #include <machine/autoconf.h>
-#include <machine/ctlreg.h>
 #include <machine/cpu.h>
 #include <machine/sparc64.h>
 
@@ -156,7 +154,8 @@ static int _sbus_bus_map __P((
 		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
-		int,			/*level*/
+		int,			/*Sbus interrupt level*/
+		int,			/*`device class' priority*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*handler arg*/
@@ -619,8 +618,9 @@ sbus_get_intr(sc, node, ipp, np, slot)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(t, level, flags, handler, arg)
+sbus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
@@ -629,7 +629,7 @@ sbus_intr_establish(t, level, flags, handler, arg)
 	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
 	int ipl;
-	long vec = level; 
+	long vec = pri; 
 
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
@@ -651,7 +651,7 @@ sbus_intr_establish(t, level, flags, handler, arg)
 			/* We're in an SBUS slot */
 			/* Register the map and clear intr registers */
 
-			int slot = INTSLOT(level);
+			int slot = INTSLOT(pri);
 
 			ih->ih_map = &(&sc->sc_sysio->sbus_slot0_int)[slot];
 			ih->ih_clr = &sc->sc_sysio->sbus0_clr_int[vec];
@@ -787,7 +787,7 @@ sbus_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, size, flags));
+	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, flags, size));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2000/06/18 07:12:39 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10.2.1 2000/07/18 16:23:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -277,13 +277,17 @@ confaddr_ok(sc, tag)
 			DPRINTF(SPDB_CONF, (" confaddr_ok: rejecting bus %d dev %d fn %d -", bus, dev, fn));
 			return (0);
 		}
-	} else if (sc->sc_mode == PSYCHO_MODE_PSYCHO_A ||
-		   sc->sc_mode == PSYCHO_MODE_PSYCHO_B) {
+	} else if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
 		/*
 		 * make sure we are reading our own bus
 		 */
 		/* XXX??? */
-		panic("confaddr_ok: can't do SUNW,psycho yet");
+		paddr_t addr = sc->sc_configaddr + tag;
+		int asi = bus_type_asi[sc->sc_configtag->type];
+		if (probeget(addr, asi, 4) == -1) {
+			DPRINTF(SPDB_CONF, (" confaddr_ok: rejecting bus %d dev %d fn %d -", bus, dev, fn));
+			return (0);
+		}
 	}
 	return (1);
 }
@@ -327,7 +331,7 @@ pci_conf_write(pc, tag, reg, data)
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	DPRINTF(SPDB_CONF, ("pci_conf_write: tag %ld; reg %d; data %d; ", (long)tag, reg, (int)data));
+	DPRINTF(SPDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ", (long)tag, reg, (int)data));
 	DPRINTF(SPDB_CONF, ("asi = %x; readaddr = %qx (offset = %x)\n",
 		    bus_type_asi[sc->sc_configtag->type],
 		    sc->sc_configaddr + tag + reg, (int)tag + reg));
@@ -417,7 +421,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	struct psycho_pbm *pp = (struct psycho_pbm *)pc->cookie;
 
 	DPRINTF(SPDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
-	cookie = bus_intr_establish(pp->pp_memt, ih, 0, func, arg);
+	cookie = bus_intr_establish(pp->pp_memt, ih, level, 0, func, arg);
 
 	DPRINTF(SPDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2000/05/19 05:26:17 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5.4.1 2000/07/18 16:23:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -54,7 +54,6 @@
 
 #include <dev/cons.h>
 
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/cons.h>
 
 static void prom_cnprobe __P((struct consdev *));
@@ -108,9 +107,17 @@ prom_cngetc(dev)
 {
 	unsigned char ch = '\0';
 	int l;
+#ifdef DDB
+	static int nplus = 0;
+#endif
 	
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
 		/* void */;
+#ifdef DDB
+	if (ch == '+') {
+		if (nplus++ > 3) Debugger();
+	} else nplus = 0;
+#endif
 	if (ch == '\r')
 		ch = '\n';
 	return ch;

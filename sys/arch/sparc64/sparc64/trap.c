@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 2000/06/19 23:30:36 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.44.2.1 2000/07/18 16:23:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -92,7 +92,6 @@
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/memreg.h>
 #include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
@@ -968,11 +967,6 @@ kill_user_windows(p)
 	p->p_addr->u_pcb.pcb_nsaved = 0;
 }
 
-#ifdef DEBUG
-int dfdebug = 0;
-#endif
-extern struct proc *masterpaddr;
-
 void
 data_access_fault(type, addr, pc, tf)
 	unsigned type;
@@ -995,7 +989,7 @@ data_access_fault(type, addr, pc, tf)
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("data_access_fault: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		printf("data_access_fault: tpc %qx == tnpc %qx\n", tf->tf_pc, tf->tf_npc);
 		Debugger();
 	}
 	if (protmmu || missmmu) {
@@ -1218,7 +1212,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 
 #if DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("data_access_error: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		printf("data_access_error: tpc %qx == tnpc %qx\n", tf->tf_pc, tf->tf_npc);
 		Debugger();
 	}
 	if (protmmu || missmmu) {
@@ -1491,7 +1485,7 @@ text_access_fault(type, pc, tf)
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d tl %d text_access_fault(%x, %x, %x)\n",
+		printf("%d tl %d text_access_fault(%x, %lx, %x)\n",
 		       curproc?curproc->p_pid:-1, tl(), type, pc, tf); 
 		Debugger();
 	}
@@ -1516,7 +1510,7 @@ text_access_fault(type, pc, tf)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
-		printf("text_access_fault: pc=%lx\n", pc);
+		printf("text_access_fault: pc=%lx va=%lx\n", pc, va);
 		DEBUGGER(type, tf);
 		panic("kernel fault");
 		/* NOTREACHED */
@@ -1525,12 +1519,12 @@ text_access_fault(type, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
 		printf("text_access_fault: uvm_fault(%x, %x, %x, FALSE) sez %x\n",
-		       &vm->vm_map, (vaddr_t)va, 0, rv);
+		       &vm->vm_map, va, 0, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum

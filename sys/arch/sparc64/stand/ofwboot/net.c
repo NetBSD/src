@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 1999/05/07 16:19:28 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.3.12.1 2000/07/18 16:23:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -63,6 +63,9 @@
 
 #include <lib/libkern/libkern.h>
 
+static int net_mountroot_bootparams __P((void));
+static int net_mountroot_bootp __P((void));
+
 char	rootpath[FNAME_SIZE];
 
 static	int netdev_sock = -1;
@@ -114,41 +117,79 @@ net_close(op)
 }
 
 int
-net_mountroot()
+net_mountroot_bootparams()
 {
+	/* Get our IP address.  (rarp.c) */
+	if (rarp_getipaddress(netdev_sock) == -1)
+		return (errno);
 
-#ifdef	DEBUG
-	printf("net_mountroot\n");
-#endif
-	
-	/*
-	 * Get info for NFS boot: our IP address, out hostname,
-	 * server IP address, and our root path on the server.
-	 * We use BOOTP (RFC951, RFC1532) exclusively as mandated
-	 * by PowerPC Reference Platform Specification I.4.2
-	 */
-	
+	printf("Using BOOTPARAMS protocol: ");
+	printf("ip address: %s", inet_ntoa(myip));
+
+	/* Get our hostname, server IP address. */
+	if (bp_whoami(netdev_sock))
+		return (errno);
+
+	printf(", hostname: %s\n", hostname);
+
+	/* Get the root pathname. */
+	if (bp_getfile(netdev_sock, "root", &rootip, rootpath))
+		return (errno);
+
+	return (0);
+}
+
+int
+net_mountroot_bootp()
+{
 	bootp(netdev_sock);
-	
+
 	if (myip.s_addr == 0)
-		return ETIMEDOUT;
-	
-	printf("Using IP address: %s\n", inet_ntoa(myip));
-	
-#ifdef	DEBUG
-	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
-	if (gateip.s_addr)
-		printf(", gateip: %s", inet_ntoa(gateip));
+		return(ENOENT);
+
+	printf("Using BOOTP protocol: ");
+	printf("ip address: %s", inet_ntoa(myip));
+
+	if (hostname[0])
+		printf(", hostname: %s", hostname);
 	if (netmask)
 		printf(", netmask: %s", intoa(netmask));
+	if (gateip.s_addr)
+		printf(", gateway: %s", inet_ntoa(gateip));
 	printf("\n");
+
+	return (0);
+}
+
+int
+net_mountroot()
+{
+	int error;
+
+#ifdef DEBUG
+	printf("net_mountroot\n");
 #endif
-	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
-	
+
 	/*
-	 * Get the NFS file handle (mount).
+	 * Get info for NFS boot: our IP address, our hostname,
+	 * server IP address, and our root path on the server.
+	 * There are two ways to do this:  The old, Sun way,
+	 * and the more modern, BOOTP way. (RFC951, RFC1048)
 	 */
-	if (nfs_mount(netdev_sock, rootip, rootpath) < 0)
-		return errno;
-	return 0;
+
+	/* Historically, we've used BOOTPARAMS, so try that first */
+	error = net_mountroot_bootparams();
+	if (error != 0)
+		/* Next, try BOOTP */
+		error = net_mountroot_bootp();
+	if (error != 0)
+		return (error);
+
+	printf("root addr=%s path=%s\n", inet_ntoa(rootip), rootpath);
+
+	/* Get the NFS file handle (mount). */
+	if (nfs_mount(netdev_sock, rootip, rootpath) != 0)
+		return (errno);
+
+	return (0);
 }

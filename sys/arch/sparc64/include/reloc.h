@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: reloc.h,v 1.1.1.1.24.1 2000/07/18 16:23:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,35 @@ enum reloc_type {
 	RELOC_GLOB_DAT,		/* ? */
 	RELOC_JMP_SLOT,		/* ? */
 	RELOC_RELATIVE,		/* ? */
+	RELOC_UA_32,
+
+		/* The following are LP64 relocations */
+
+	RELOC_PLT32,
+	RELOC_HIPLT22,
+	RELOC_LOPLT10,
+	RELOC_LOPLT10,
+	RELOC_PCPLT22,
+	RELOC_PCPLT32,
+
+	RELOC_10,
+	RELOC_11,
+	RELOC_64,
+	RELOC_OLO10,
+	RELOC_HH22,
+
+	RELOC_HM10,
+	RELOC_LM22,
+	RELOC_PC_HH22,
+	RELOC_PC_HM10,
+	RELOC_PC_LM22,
+
+	RELOC_WDISP16,
+	RELOC_WDISP19,
+	RELOC_GLOB_JMP,
+	RELOC_7,
+	RELOC_5,
+	RELOC_6
 };
 
 /*

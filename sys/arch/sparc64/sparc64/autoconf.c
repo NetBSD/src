@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2000/06/19 23:30:34 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.31.2.1 2000/07/18 16:23:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,7 +75,6 @@
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
-#include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <sparc64/sparc64/timerreg.h>
 
@@ -134,6 +133,14 @@ struct intrmap intrmap[] = {
 	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
 };
+
+#ifdef DEBUG
+#define ACDB_BOOTDEV	0x1
+int autoconf_debug = 0x0;
+#define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -201,6 +208,11 @@ bootstrap(nctx)
 #if defined(DDB) && defined(DB_ELF_SYMBOLS)
 	extern void *ssym, *esym;
 #endif
+#ifndef	__arch64__
+	/* Assembly glue for the PROM */
+	extern void OF_sym2val32 __P((void *));
+	extern void OF_val2sym32 __P((void *));
+#endif
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
@@ -227,6 +239,10 @@ bootstrap(nctx)
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
+#else
+#if 1
+	OF_set_symbol_lookup(OF_sym2val32, OF_val2sym32);
+#endif
 #endif
 #endif
 
@@ -1009,7 +1025,7 @@ getdevunit(name, unit)
 #define BUSCLASS_FDC		9
 
 static int bus_class __P((struct device *));
-static char *bus_compatible __P((char *));
+static char *bus_compatible __P((char *, struct device *));
 static int instance_match __P((struct device *, void *, struct bootpath *));
 static void nail_bootdev __P((struct device *, struct bootpath *));
 
@@ -1019,6 +1035,7 @@ static struct {
 } bus_class_tab[] = {
 	{ "mainbus",	BUSCLASS_MAINBUS },
 	{ "upa",	BUSCLASS_MAINBUS },
+	{ "psycho",	BUSCLASS_MAINBUS },
 	{ "obio",	BUSCLASS_OBIO },
 	{ "iommu",	BUSCLASS_IOMMU },
 	{ "sbus",	BUSCLASS_SBUS },
@@ -1027,7 +1044,6 @@ static struct {
 	{ "dma",	BUSCLASS_SBUS },
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
-	{ "psycho",	BUSCLASS_PCI },
 	{ "simba",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
@@ -1043,23 +1059,31 @@ static struct {
  */
 static struct {
 	char	*bpname;
+	int	class;
 	char	*cfname;
 } dev_compat_tab[] = {
-	{ "espdma",	"dma" },
-	{ "QLGC,isp",	"isp" },
-	{ "PTI,isp",	"isp" },
-	{ "ptisp",	"isp" },
-	{ "SUNW,fdtwo",	"fdc" },
+	{ "espdma",	BUSCLASS_NONE,		"dma" },
+	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
+	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
+	{ "ptisp",	BUSCLASS_NONE,		"isp" },
+	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
+	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
+	{ "pci",	BUSCLASS_PCI,		"simba" },
+	{ "ide",	BUSCLASS_PCI,		"pciide" },
+	{ "disk",	BUSCLASS_NONE,		"wd" },
 };
 
 static char *
-bus_compatible(bpname)
+bus_compatible(bpname, dev)
 	char *bpname;
+	struct device *dev;
 {
-	int i;
+	int i, class = bus_class(dev);
 
 	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0)
+		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
+		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
+		     dev_compat_tab[i].class == class))
 			return (dev_compat_tab[i].cfname);
 	}
 
@@ -1117,20 +1141,30 @@ instance_match(dev, aux, bp)
 	switch (bus_class(dev->dv_parent)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
+		DPRINTF(ACDB_BOOTDEV,
+		    ("instance_match: mainbus device, want %#x have %#x\n",
+		    ma->ma_upaid, bp->val[0]));
 		if (bp->val[0] == ma->ma_upaid)
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
 		sa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
+		    "want slot %#x offset %#x have slot %#x offset %#x\n",
+		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
 		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
 			return (1);
 		break;
 	case BUSCLASS_PCI:
 		pa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci device, "
+		    "want dev %#x fn %#x have dev %#x fn %#x\n",
+		     bp->val[0], bp->val[1], pa->pa_device, pa->pa_function));
 		if (bp->val[0] == pa->pa_device &&
 		    bp->val[1] == pa->pa_function)
 			return (1);
 		break;
+#if 0
 	case BUSCLASS_XDC:
 	case BUSCLASS_XYC:
 		{
@@ -1145,6 +1179,7 @@ instance_match(dev, aux, bp)
 
 		}
 		break;
+#endif
 	default:
 		break;
 	}
@@ -1199,10 +1234,14 @@ device_register(dev, aux)
 	/*
 	 * Translate PROM name in case our drivers are named differently
 	 */
-	bpname = bus_compatible(bp->name);
+	bpname = bus_compatible(bp->name, dev);
+	dvname = dev->dv_cfdata->cf_driver->cd_name;
+
+	DPRINTF(ACDB_BOOTDEV,
+	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
+	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
 
 	/* First, match by name */
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
 	if (strcmp(dvname, bpname) != 0)
 		return;
 
@@ -1214,6 +1253,8 @@ device_register(dev, aux)
 		if (instance_match(dev, aux, bp) != 0) {
 			bp->dev = dev;
 			bootpath_store(1, bp + 1);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp(dvname, "le") == 0 ||
@@ -1223,6 +1264,8 @@ device_register(dev, aux)
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
@@ -1257,23 +1300,26 @@ device_register(dev, aux)
 		if (sc_link->scsipi_scsi.target == target &&
 		    sc_link->scsipi_scsi.lun == lun) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found x[yd] disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp("wd", dvname) == 0) {
-		/*
-		 * IDE disks.
-		 * ?XXX?
-		 */
+		/* IDE disks. */
 		struct ata_atapi_attach *aa = aux;
 
 		if (aa->aa_channel == bp->val[0]) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else {
@@ -1282,6 +1328,8 @@ device_register(dev, aux)
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found generic device %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	}
