@@ -1,8 +1,8 @@
-/*	$NetBSD: hmac_link.c,v 1.2.2.1 2002/06/28 11:43:30 lukem Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.2.2.2 2003/10/27 04:40:22 jmc Exp $	*/
 
 #ifdef HMAC_MD5
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/hmac_link.c,v 1.9 2001/05/29 05:48:10 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/hmac_link.c,v 1.10 2002/12/03 05:26:49 marka Exp";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -483,15 +483,10 @@ dst_hmac_md5_init()
 }
 
 #else 
+#define	dst_hmac_md5_init	__dst_hmac_md5_init
+
 int
 dst_hmac_md5_init(){
 	return (0);
 }
 #endif
-
-
-
-
-
-
-

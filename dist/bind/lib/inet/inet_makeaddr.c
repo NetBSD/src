@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.1.1.1.10.1 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -51,9 +51,9 @@ static const char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
  */
 struct in_addr
 inet_makeaddr(net, host)
-	u_long net, host;
+	in_addr_t net, host;
 {
-	u_long addr;
+	in_addr_t addr;
 
 	if (net < 128)
 		addr = (net << IN_CLASSA_NSHIFT) | (host & IN_CLASSA_HOST);

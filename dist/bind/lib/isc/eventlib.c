@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.c,v 1.3.2.1 2002/06/28 11:55:36 lukem Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.3.2.2 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: eventlib.c,v 1.46 2001/11/01 05:35:48 marka Exp";
+static const char rcsid[] = "Id: eventlib.c,v 1.48 2002/07/17 07:37:34 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -293,12 +293,12 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 			}
 
 			evPrintf(ctx, 4,
-				"pselect(%d, 0x%lx, 0x%lx, 0x%lx, %d.%09ld)\n",
+				"pselect(%d, 0x%lx, 0x%lx, 0x%lx, %ld.%09ld)\n",
 				 ctx->fdMax+1,
 				 (u_long)ctx->rdLast.fds_bits[0],
 				 (u_long)ctx->wrLast.fds_bits[0],
 				 (u_long)ctx->exLast.fds_bits[0],
-				 tp ? (int)tp->tv_sec : -1,
+				 tp ? (long)tp->tv_sec : -1L,
 				 tp ? tp->tv_nsec : -1);
 
 			/* XXX should predict system's earliness and adjust. */

@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_lexer.c,v 1.3.2.1 2002/06/28 11:33:06 lukem Exp $	*/
+/*	$NetBSD: ns_lexer.c,v 1.3.2.2 2003/10/27 04:40:21 jmc Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_lexer.c,v 8.31 2002/05/24 03:05:03 marka Exp";
+static const char rcsid[] = "Id: ns_lexer.c,v 8.31.10.1 2003/06/02 09:56:35 marka Exp";
 #endif /* not lint */
 
 /*
@@ -259,6 +259,7 @@ static struct keyword keywords[] = {
 	{"dump-file", T_DUMP_FILE},
 	{"dynamic", T_DYNAMIC},
 	{"edns", T_EDNS},
+	{"edns-udp-size", T_EDNS_UDP_SIZE},
 	{"explicit", T_EXPLICIT},
 	{"fail", T_FAIL},
 	{"fake-iquery", T_FAKE_IQUERY},

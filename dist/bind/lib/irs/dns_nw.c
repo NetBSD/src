@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_nw.c,v 1.1.1.1.10.1 2002/06/28 11:46:25 lukem Exp $	*/
+/*	$NetBSD: dns_nw.c,v 1.1.1.1.10.2 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_nw.c,v 1.23 2002/06/26 07:42:06 marka Exp";
+static const char rcsid[] = "Id: dns_nw.c,v 1.25 2002/07/18 02:07:43 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */
@@ -351,7 +351,12 @@ get1101answer(struct irs_nw *this,
 				RES_SET_H_ERRNO(pvt->res, NO_RECOVERY);
 				return (NULL);
 			}
+#ifdef HAVE_STRLCPY
+			strlcpy(bp, name, ep - bp);
+			pvt->net.n_name = bp;
+#else
 			pvt->net.n_name = strcpy(bp, name);
+#endif
 			bp += n;
 		}
 		break;

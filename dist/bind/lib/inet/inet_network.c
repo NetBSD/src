@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.1.10.1 2002/06/28 11:45:20 lukem Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.1.1.1.10.2 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -51,7 +51,7 @@ static const char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
  * The library routines call this routine to interpret
  * network numbers.
  */
-u_long
+in_addr_t
 inet_network(cp)
 	register const char *cp;
 {

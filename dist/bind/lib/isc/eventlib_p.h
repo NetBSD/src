@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.3.2.1 2002/06/28 11:55:46 lukem Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.3.2.2 2003/10/27 04:40:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -20,7 +20,7 @@
 /* eventlib_p.h - private interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib_p.h,v 1.30 2001/11/01 05:35:50 marka Exp
+ * Id: eventlib_p.h,v 1.31 2003/04/03 05:37:56 marka Exp
  */
 
 #ifndef _EVENTLIB_P_H
@@ -201,7 +201,7 @@ typedef struct {
 /* eventlib.c */
 #define evPrintf __evPrintf
 void evPrintf(const evContext_p *ctx, int level, const char *fmt, ...)
-     __attribute__((__format__(__printf__, 3, 4)));
+     ISC_FORMAT_PRINTF(3, 4);
 
 /* ev_timers.c */
 #define evCreateTimers __evCreateTimers
