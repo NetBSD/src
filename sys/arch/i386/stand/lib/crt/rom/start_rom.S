@@ -1,7 +1,8 @@
-/*	$NetBSD: start_rom.S,v 1.2 1997/03/15 22:15:02 perry Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.3 1999/01/22 22:43:45 thorpej Exp $	*/
 	
-/* ROM startup
- mostly from freebsd:sys/arch/i396/boot/netboot/start2.S
+/*
+ * ROM startup
+ * mostly from freebsd:sys/arch/i396/boot/netboot/start2.S
  */
 
 #include <machine/asm.h>
@@ -63,8 +64,8 @@ pcidataend:
 	.word	0x66
 	.byte	0xa3			/* MOV %ax, 0x302 */
 	.word	0x302
-	.byte	0xb8			/* MOV $_start-RELOCADDR, %ax */
-	.word	(_start-reloc)
+	.byte	0xb8			/* MOV $_C_LABEL(start)-RELOCADDR, %ax */
+	.word	(_C_LABEL(start)-reloc)
 	.byte	0xa3			/* MOV %ax, 0x64 */
 	.word	0x64
 	mov	%cs,%ax
@@ -98,7 +99,7 @@ ENTRY(start)
 	.word	(reloc>>4)
         mov     %ax, %es
 	.byte	0xb9			/* MOV $ROMSIZE, %cx */
-	.word   (_edata-reloc)
+	.word   (_C_LABEL(edata)-reloc)
         cs
         rep
         movsb
@@ -116,19 +117,20 @@ ENTRY(start)
 
 	/* clear bss */
 	xorl %eax,%eax
-	movl $_edata,%edi
-	movl $_end,%ecx
+	movl $_C_LABEL(edata),%edi
+	movl $_C_LABEL(end),%ecx
 	subl %edi,%ecx
 	cld
 	rep
 	stosb
 
 	opsize
-	call	_real_to_prot
-	call	_main
-	.globl	_exit
-_exit:
-	call	_prot_to_real
+	call	_C_LABEL(real_to_prot)
+	call	_C_LABEL(main)
+
+	.globl	_C_LABEL(exit)
+_C_LABEL(exit):
+	call	_C_LABEL(prot_to_real)
 #ifdef BOOTROM
 	xor	%eax,%eax
 	mov	%ax,%ds
@@ -246,11 +248,11 @@ ENTRY(prot_to_real)
 	ret
 
 ENTRY(pbzero)
-	jmp	_bzero
+	jmp	_C_LABEL(bzero)
 
 ENTRY(vpbcopy)
 ENTRY(pvbcopy)
-	jmp	_bcopy
+	jmp	_C_LABEL(bcopy)
 
 ENTRY(vtophys)
 	movl 4(%esp), %eax

@@ -1,11 +1,12 @@
-/*	$NetBSD: start_dos.S,v 1.3 1998/10/16 18:07:35 ws Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.4 1999/01/22 22:43:45 thorpej Exp $	*/
 	
-/* startup for DOS .COM programs
- with input from:
- netbsd:sys/arch/i386/boot/start.S
- Tor Egge's patches for NetBSD boot (pr port-i386/1002)
- freebsd:sys/i386/boot/netboot/start2.S
- XMS support by Martin Husemann
+/*
+ * startup for DOS .COM programs
+ * with input from:
+ * netbsd:sys/arch/i386/boot/start.S
+ * Tor Egge's patches for NetBSD boot (pr port-i386/1002)
+ * freebsd:sys/i386/boot/netboot/start2.S
+ * XMS support by Martin Husemann
  */
 
 /*
@@ -352,7 +353,7 @@ ENTRY(vtophys)
 /* pointer to XMS driver, 0 if no XMS used */
 
 	.data
-_xmsdrv:
+_C_LABEL(xmsdrv):
 	.long	0
 
 	.text
@@ -378,16 +379,16 @@ ENTRY(checkxms)
 	int	$0x2f	/* get driver address */
 
 	.byte	0x89,0x1e	/* save es:bx to _xmsdrv */
-	.word	_xmsdrv
+	.word	_C_LABEL(xmsdrv)
 	.byte	0x8c,0x06
-	.word	_xmsdrv+2
+	.word	_C_LABEL(xmsdrv)+2
 
 	movb	$0x08, %ah	/* XMS: query free extended memory */
 #if 0
 	movb	$0x00, %bl
 #endif
 	.byte	0xff, 0x1e
-	.word	_xmsdrv  /* result in dx */
+	.word	_C_LABEL(xmsdrv)  /* result in dx */
 	jmp	xdone
 
 noxms:		/* no XMS manager found */
@@ -431,10 +432,10 @@ ENTRY(xmsalloc)
 
 	movb	$0x09, %ah	# XMS allocate block
 	.byte 0xff,0x1e
-	.word _xmsdrv		# result: handle in %dx
+	.word _C_LABEL(xmsdrv)	# result: handle in %dx
 	movb	$0x0c, %ah	# XMS lock block
 	.byte 0xff,0x1e
-	.word _xmsdrv		# result: 32 bit physical address in DX:BX
+	.word _C_LABEL(xmsdrv)	# result: 32 bit physical address in DX:BX
 
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
