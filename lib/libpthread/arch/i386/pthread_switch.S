@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.6 2001/07/23 21:32:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.7 2001/07/24 21:38:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,9 +41,8 @@
 
 #define STACK_SWITCH			  \
 	movl	PT_UC(%ecx),%esi	; \
-	movl	%esi, %esp		; \
-	subl	$CONTEXTSIZE, %esp /* XXX dodge kernel-placed ucontext */
-
+	movl	%esi, %esp
+	
 #define	NOTREACHED			  \
 	/* force error */		  \
 	int3
@@ -54,19 +53,31 @@
 ENTRY(pthread__switch)
 	pushl	%ebp
 	movl	%esp, %ebp
+	pushl	%esi	/* callee save */
 	pushl	%edi	/* callee save */
 	PIC_PROLOGUE
 	movl	8(%ebp), %eax  /* eax holds the current thread */
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
-	movl	$0, %edx       /* edx indicates whether eax's lockcount
-				* should be decremented once its stack
-				* isn't current.
-				*/
-pthread__switch_no_save:
 	subl	$CONTEXTSIZE, %esp
 	movl	%esp, PT_UC(%eax)
 	movl	%esp, %edi
+	movl	PT_UC(%ecx),%esi
+	pushl	%esi	/* ucontext_t *ucp */
+	pushl	%edi	/* ucontext_t *oucp */
+	call	PIC_PLT(_C_LABEL(_swapcontext_u))
+	addl	$CONTEXTSIZE+8, %esp
+	PIC_EPILOGUE
+	popl	%edi
+	popl	%esi
+	movl	%ebp, %esp
+	popl	%ebp
+	ret
 
+/* Helper switch code used by pthread__locked_switch and 
+ * pthread__upcall_switch.
+ */
+.globl pthread__switch_away
+pthread__switch_away:
 	STACK_SWITCH
 
 	/* If we're invoked from the switch-to-next provisions of
@@ -76,21 +87,13 @@ pthread__switch_no_save:
 	 * the old stack.
 	 */ 
 	cmpl	$0, %edx
-	je pthread__switch_no_decrement
+	jle pthread__switch_no_decrement
 	decl	PT_SPINLOCKS(%eax)
 
 pthread__switch_no_decrement:	
 	pushl	%esi	/* ucontext_t *ucp */
-	pushl	%edi	/* ucontext_t *oucp */
-	call	PIC_PLT(_C_LABEL(_swapcontext_u))
-	addl	$8, %esp
-	movl	%edi, %esp	/* Switches back to the old stack! */
-	addl	$CONTEXTSIZE, %esp
-	PIC_EPILOGUE
-	popl	%edi
-	movl	%ebp, %esp
-	popl	%ebp
-	ret
+	call	PIC_PLT(_C_LABEL(_setcontext_u))
+	NOTREACHED
 
 /* Switch away from a thread that is holding a lock on a queue (to
  * prevent being removed from the queue before being switched away).
@@ -149,14 +152,14 @@ ENTRY(pthread__locked_switch)
 	movl	%esi, PT_SWITCHTOUC(%eax)
 	movl	%edx, PT_HELDLOCK(%eax)
 	decl	PT_SPINLOCKS(%eax)
-	
+
 	movl	PT_NEXT(%eax), %edx
 	movl	%ecx, %eax
 	movl	%edx, %ecx
 	movl	$1, %edx
-	jmp	pthread__switch_no_save
+	jmp	pthread__switch_away
 	NOTREACHED
-	
+
 locked_no_old_preempt:		
 	/* We've moved to the new stack, and the old context has been 
 	 * saved. The queue lock can be released. */
@@ -169,11 +172,12 @@ locked_no_old_preempt:
 	cmpl	$0, PT_NEXT(%ecx)
 	je	locked_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	PT_NEXT(%ecx), %edx
+	movl	%ecx, PT_SWITCHTO(%eax)
+	movl	%esi, PT_SWITCHTOUC(%eax)
 	movl	%ecx, %eax
-	movl	%edx, %ecx
-	movl	$0, %edx
-	jmp	pthread__switch_no_save
+	movl	PT_NEXT(%ecx), %ecx
+	movl	$-2, %edx
+	jmp	pthread__switch_away
 	NOTREACHED
 	
 locked_no_new_preempt:		
@@ -218,26 +222,29 @@ ENTRY(pthread__upcall_switch)
 	movl	%ecx, %eax
 	movl	%edx, %ecx
 	movl	$1, %edx
-	jmp	pthread__switch_no_save
+	jmp	pthread__switch_away
 	NOTREACHED
 	
 upcall_no_old_preempt:		
+	pushl	%eax	/* caller save */
 	pushl	%ecx	/* caller save */
 	pushl   %ecx	/* pthread_t new */
 	pushl   %eax	/* pthread_t old */
 	call    PIC_PLT(_C_LABEL(pthread__sa_recycle))
 	addl	$8, %esp
 	popl	%ecx
+	popl	%eax
 	decl	PT_SPINLOCKS(%ecx)
 	/* Check if we were preempted while holding the fake lock. */
 	cmpl	$0, PT_NEXT(%ecx)
 	je	upcall_no_new_preempt
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	PT_NEXT(%ecx), %edx
+	movl	%ecx, PT_SWITCHTO(%eax)
+	movl	%esi, PT_SWITCHTOUC(%eax)
 	movl	%ecx, %eax
-	movl	%edx, %ecx
-	movl	$0, %edx
-	jmp	pthread__switch_no_save
+	movl	PT_NEXT(%ecx), %ecx
+	movl	$-1, %edx
+	jmp	pthread__switch_away
 	NOTREACHED
 	
 upcall_no_new_preempt:		
