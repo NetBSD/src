@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.14 1994/04/14 04:06:26 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.15 1994/04/18 06:18:22 glass Exp $
  */
 
 #include <sys/param.h>
@@ -83,7 +83,6 @@ struct vfsops nfs_vfsops = {
 static u_char nfs_mntid;
 extern u_long nfs_procids[NFS_NPROCS];
 extern u_long nfs_prog, nfs_vers;
-struct nfs_diskless nfs_diskless;
 void nfs_disconnect();
 
 #define TRUE	1
@@ -146,17 +145,17 @@ nfs_statfs(mp, sbp, p)
 }
 
 /*
- * Mount a remote root fs via. nfs. This depends on the info in the
- * nfs_diskless structure that has been filled in properly by some primary
- * bootstrap.
- * It goes something like this:
- * - do enough of "ifconfig" by calling ifioctl() so that the system
- *   can talk to the server
- * - If nfs_diskless.mygateway is filled in, use that address as
- *   a default gateway.
- *   (This is done the 4.3 way with rtioctl() and should be changed)
- * - hand craft the swap nfs vnode hanging off a fake mount point
- * - build the rootfs mount point and call mountnfs() to do the rest.
+ * Mount a remote root fs via. nfs.
+ *
+ * Configure up an interface
+ * Initialize a nfs_diskless struct with:
+ *                 ip addr
+ *                 broadcast addr
+ *                 netmask
+ * as acquired and implied by RARP.
+ *
+ * Then call nfs_boot() to fill in the rest of the structure with enough
+ * information to mount root and swap.
  */
 nfs_mountroot()
 {
@@ -164,23 +163,68 @@ nfs_mountroot()
 	register struct mbuf *m;
 	struct socket *so;
 	struct vnode *vp;
-	int error;
+	struct ifnet *ifp;
+	struct sockaddr_in *sin;
+	struct in_addr myip;
+	struct ifreq ireq;
+	struct nfs_diskless diskless;
+	int error, len;
 
 	/*
-	 * Do enough of ifconfig(8) so that critical net interface can
-	 * talk to the server.
+	 * Find an interface, rarp for its ip address, stuff it, the
+	 * implied broadcast addr, and netmask into a nfs_diskless struct.
 	 */
-	if (socreate(nfs_diskless.myif.ifra_addr.sa_family, &so, SOCK_DGRAM, 0))
+
+	for (ifp = ifnet; ifp; ifp = ifp->if_next)
+		if ((ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
+			break;
+	if (ifp == NULL)
+		return ENETUNREACH;
+	strcpy(ireq.ifr_name, ifp->if_name);
+	len = strlen(ireq.ifr_name);
+	ireq.ifr_name[len] = '0' + ifp->if_unit; /* XXX */
+	ireq.ifr_name[len+1] = '\0';
+	ireq.ifr_flags = IFF_UP;
+	if (error = ifioctl(NULL, SIOCSIFFLAGS, &ireq, curproc))
+		panic("nfs_mountroot, bringing interface %s up",
+		      ireq.ifr_name);
+	bzero((caddr_t) &diskless, sizeof(diskless));
+	strcpy(diskless.myif.ifra_name, ireq.ifr_name);
+	if (revarp_whoami(&myip, ifp))
+		panic("revarp failed");
+	sin = (struct sockaddr_in *) &ireq.ifr_addr;
+	bzero((caddr_t) sin, sizeof(struct sockaddr_in));
+	sin->sin_len = sizeof(struct sockaddr_in);
+	sin->sin_family = AF_INET;
+	sin->sin_addr = myip;
+
+	/*
+	 * Do enough of ifconfig(8) so that the chosen interface can
+	 * talk to the server(s).
+	 */
+	if (socreate(AF_INET, &so, SOCK_DGRAM, 0))
 		panic("nfs ifconf");
-	if (ifioctl(so, SIOCAIFADDR, &nfs_diskless.myif))
-		panic("nfs ifconf2");
+	if (ifioctl(so, SIOCSIFADDR, &ireq, curproc))
+		panic("nfs_mountroot: setting interface address\n");
+	bcopy((caddr_t) sin, (caddr_t) &diskless.myif.ifra_addr,
+	      sizeof(struct sockaddr));
+	if (ifioctl(so, SIOCGIFBRDADDR, &ireq, curproc))
+		panic("nfs baddr");
+	bcopy((caddr_t) &ireq.ifr_broadaddr,
+	      (caddr_t) &diskless.myif.ifra_broadaddr,
+	      sizeof (ireq.ifr_broadaddr));
+	if (ifioctl(so, SIOCGIFNETMASK, &ireq, curproc))
+		panic("nfs get netmask");
 	soclose(so);
+
+	if (error = nfs_boot(&diskless))
+		return error;
 
 	/*
 	 * If the gateway field is filled in, set it as the default route.
 	 */
 #ifdef COMPAT_43
-	if (nfs_diskless.mygateway.sa_family == AF_INET) {
+	if (diskless.mygateway.sa_family == AF_INET) {
 		struct ortentry rt;
 		struct sockaddr_in *sin;
 
@@ -188,7 +232,7 @@ nfs_mountroot()
 		sin->sin_len = sizeof (struct sockaddr_in);
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = 0;	/* default */
-		bcopy((caddr_t)&nfs_diskless.mygateway, (caddr_t)&rt.rt_gateway,
+		bcopy((caddr_t)&diskless.mygateway, (caddr_t)&rt.rt_gateway,
 			sizeof (struct sockaddr_in));
 		rt.rt_flags = (RTF_UP | RTF_GATEWAY);
 		if (rtioctl(SIOCADDRT, (caddr_t)&rt, curproc))
@@ -217,15 +261,15 @@ nfs_mountroot()
 		 * Since the swap file is not the root dir of a file system,
 		 * hack it to a regular file.
 		 */
-		nfs_diskless.swap_args.fh = (nfsv2fh_t *)nfs_diskless.swap_fh;
+		diskless.swap_args.fh = (nfsv2fh_t *)diskless.swap_fh;
 		MGET(m, MT_SONAME, M_DONTWAIT);
 		if (m == NULL)
 			panic("nfs root mbuf");
-		bcopy((caddr_t)&nfs_diskless.swap_saddr, mtod(m, caddr_t),
-			nfs_diskless.swap_saddr.sa_len);
-		m->m_len = nfs_diskless.swap_saddr.sa_len;
-		if (mountnfs(&nfs_diskless.swap_args, mp, m, "/swap",
-			nfs_diskless.swap_hostnam, &vp))
+		bcopy((caddr_t)&diskless.swap_saddr, mtod(m, caddr_t),
+			diskless.swap_saddr.sa_len);
+		m->m_len = diskless.swap_saddr.sa_len;
+		if (mountnfs(&diskless.swap_args, mp, m, "/swap",
+			diskless.swap_hostnam, &vp))
 			panic("nfs swap");
 		vp->v_type = VREG;
 		vp->v_flag = 0;
@@ -257,15 +301,15 @@ nfs_mountroot()
 	/*
 	 * Set up the root fs args and call mountnfs() to do the rest.
 	 */
-	nfs_diskless.root_args.fh = (nfsv2fh_t *)nfs_diskless.root_fh;
+	diskless.root_args.fh = (nfsv2fh_t *)diskless.root_fh;
 	MGET(m, MT_SONAME, M_DONTWAIT);
 	if (m == NULL)
 		panic("nfs root mbuf2");
-	bcopy((caddr_t)&nfs_diskless.root_saddr, mtod(m, caddr_t),
-		nfs_diskless.root_saddr.sa_len);
-	m->m_len = nfs_diskless.root_saddr.sa_len;
-	if (mountnfs(&nfs_diskless.root_args, mp, m, "/",
-		nfs_diskless.root_hostnam, &vp))
+	bcopy((caddr_t)&diskless.root_saddr, mtod(m, caddr_t),
+		diskless.root_saddr.sa_len);
+	m->m_len = diskless.root_saddr.sa_len;
+	if (mountnfs(&diskless.root_args, mp, m, "/",
+		diskless.root_hostnam, &vp))
 		panic("nfs root");
 	if (vfs_lock(mp))
 		panic("nfs root2");

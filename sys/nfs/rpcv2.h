@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpcv2.h	7.4 (Berkeley) 6/28/90
- *	$Id: rpcv2.h,v 1.3 1993/05/20 03:19:16 cgd Exp $
+ *	$Id: rpcv2.h,v 1.4 1994/04/18 06:18:23 glass Exp $
  */
 
 #ifndef _NFS_RPCV2_H_
@@ -90,4 +90,8 @@
 #define	RPCMNT_PATHLEN	1024
 #define	RPCPROG_NFS	100003
 
+#ifdef KERNEL
+int krpc_call __P((struct sockaddr *, u_long, u_long, u_long,
+		   struct mbuf **, int));
+#endif		   
 #endif /* !_NFS_RPCV2_H_ */
