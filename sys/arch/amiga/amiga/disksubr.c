@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.12 1994/06/27 04:55:38 chopps Exp $
+ *	$Id: disksubr.c,v 1.13 1994/07/04 19:37:51 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -160,7 +160,7 @@ readdisklabel(dev, strat, lp, clp)
 	if (lp->d_ncylinders != rbp->ncylinders)
 		printf("warning found rdb->ncylinders(%d) != "
 		    "rdb->highcyl(%d) + 1\n", rbp->ncylinders,
-		    rbp->highcyl + 1);
+		    rbp->highcyl);
 	if (lp->d_nsectors * lp->d_ntracks != rbp->secpercyl)
 		printf("warning found rdb->secpercyl(%d) != "
 		    "rdb->nsectors(%d) * rdb->nheads(%d)\n", rbp->secpercyl,

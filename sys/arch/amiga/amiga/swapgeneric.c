@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.14 1994/06/13 08:12:34 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.15 1994/07/04 19:38:01 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -174,10 +174,10 @@ setconf()
 				    dkp->dk_driver->d_strategy)
 					break;
 			if (bdp->d_open(MAKEDISKDEV(major(gc->gc_root),
-			    unit, 3), FREAD | FNONBLOCK, 0, curproc))
+			    unit, 0), FREAD | FNONBLOCK, 0, curproc))
 				continue;
-			bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 0),
-			    FREAD | FNONBLOCK, 0, curproc);
+			bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 
+			    0), FREAD | FNONBLOCK, 0, curproc);
 			pp = &dkp->dk_label.d_partitions[0];
 			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
 				continue;
