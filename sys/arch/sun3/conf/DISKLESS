@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.15 1996/10/09 00:14:32 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.16 1996/11/19 21:04:44 gwr Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -16,7 +16,6 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options 	KTRACE				# system call tracing support
 
 # Debugging options.  Uncomment either this:
