@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.25 1997/12/01 06:04:23 mjacob Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -321,7 +321,7 @@ svr4_sys_sigaltstack(p, v, retval)
 	} */ *uap = v;
 	struct svr4_sigaltstack *nsss, *osss, tmpsss;
 	struct sigaltstack *nbss, *obss, tmpbss;
-	struct sys_sigaltstack_args sa;
+	struct sys___sigaltstack14_args sa;
 	caddr_t sg;
 	int error;
 
@@ -347,7 +347,7 @@ svr4_sys_sigaltstack(p, v, retval)
 	SCARG(&sa, nss) = nbss;
 	SCARG(&sa, oss) = obss;
 
-	if ((error = sys_sigaltstack(p, &sa, retval)) != 0)
+	if ((error = sys___sigaltstack14(p, &sa, retval)) != 0)
 		return error;
 
 	if (obss != NULL) {
