@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.3 2002/03/21 04:09:27 uwe Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.4 2002/03/21 21:33:57 eeh Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -171,20 +171,13 @@ cs4231_ebus_attach(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (ea->ea_nvaddr) {
-		bh = (bus_space_handle_t)ea->ea_vaddr[0];
-	} else {
-		if (bus_space_map(ea->ea_bustag,
-				  EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-				  ea->ea_reg[0].size,
-				  0, &bh) != 0)
-		{
-			printf("%s: unable to map registers\n",
-			       self->dv_xname);
-			return;
-		}
+	if (bus_space_map(ea->ea_bustag, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
+		ea->ea_reg[0].size, 0, &bh) != 0) {
+		printf("%s: unable to map registers\n",
+			self->dv_xname);
+		return;
 	}
-
+	
 	/* XXX: map playback DMA registers (we just know where they are) */
 	if (bus_space_map(ea->ea_bustag,
 			  BUS_ADDR(0x14, 0x702000), /* XXX: magic num */
