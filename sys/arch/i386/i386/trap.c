@@ -35,7 +35,7 @@
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.2 1993/04/10 12:04:42 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.3 1993/05/07 07:10:59 cgd Exp $";
 
 /*
  * 386 Trap and System call handleing
@@ -158,6 +158,7 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		astoff();
+		cnt.v_soft++;
 		if ((p->p_flag & SOWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.tf_eip, &p->p_stats->p_prof, 1);
 			p->p_flag &= ~SOWEUPC;
@@ -195,7 +196,10 @@ copyfault:
 		break;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+#if 0
+		/* XXX - check only applies to 386's and 486's with WP off */
 		if (code & PGEX_P) goto we_re_toast;
+#endif
 
 		/* fall into */
 	case T_PAGEFLT|T_USER:		/* page fault */
@@ -210,6 +214,27 @@ copyfault:
 
 		va = trunc_page((vm_offset_t)eva);
 		/*
+		 * Avoid even looking at pde_v(va) for high va's.   va's
+		 * above VM_MAX_KERNEL_ADDRESS don't correspond to normal
+		 * PDE's (half of them correspond to APDEpde and half to
+		 * an unmapped kernel PDE).  va's betweeen 0xFEC00000 and
+		 * VM_MAX_KERNEL_ADDRESS correspond to unmapped kernel PDE's
+		 * (XXX - why are only 3 initialized when 6 are required to
+		 * reach VM_MAX_KERNEL_ADDRESS?).  Faulting in an unmapped
+		 * kernel page table would give inconsistent PTD's.
+		 *
+		 * XXX - faulting in unmapped page tables wastes a page if
+		 * va turns out to be invalid.
+		 *
+		 * XXX - should "kernel address space" cover the kernel page
+		 * tables?  Might have same problem with PDEpde as with
+		 * APDEpde (or there may be no problem with APDEpde).
+		 */
+		if (va > 0xFEBFF000) {
+			v = KERN_FAILURE;	/* becomes SIGBUS */
+			goto nogo;
+		}
+		/*
 		 * It is only a kernel address space fault iff:
 		 * 	1. (type & T_USER) == 0  and
 		 * 	2. pcb_onfault not set or
@@ -217,7 +242,7 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_PAGEFLT && va >= 0xfe000000)
+		if (type == T_PAGEFLT && va >= KERNBASE)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
