@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.11 1994/07/04 19:30:22 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.12 1994/09/19 02:56:37 mycroft Exp $";
 #endif
 
 #define SETSID
@@ -1144,8 +1144,8 @@ device_script(program, in, out)
     }
 
     if (pid == 0) {
-	setreuid(getuid(), getuid());
-	setregid(getgid(), getgid());
+	setuid(getuid());
+	setgid(getgid());
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 	dup2(in, 0);
 	dup2(out, 1);
