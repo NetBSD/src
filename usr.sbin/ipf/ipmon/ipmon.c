@@ -1,16 +1,28 @@
-/*	$NetBSD: ipmon.c,v 1.7.2.3 1998/07/23 00:49:14 mellon Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.7.2.4 1998/11/24 07:21:16 cgd Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.9 1998/05/23 14:29:45 darrenr Exp ";
+static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1998 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.20 1998/11/22 01:50:35 darrenr Exp ";
 #endif
+
+#ifndef SOLARIS
+#define SOLARIS (defined(__SVR4) || defined(__svr4__)) && defined(sun)
+#endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
 
 #include <stdio.h>
 #include <unistd.h>
@@ -26,18 +38,13 @@ static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.9 1998/05/23 14:29:45 
 #include <sys/filio.h>
 #include <sys/byteorder.h>
 #endif
-#include <sys/stat.h>
-#include <sys/param.h>
-#include <sys/file.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <net/if.h>
 #include <netinet/ip.h>
+#include <netinet/tcp_fsm.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -87,6 +94,15 @@ struct	flags	tcpfl[] = {
 	{ 0, '\0' }
 };
 
+#if SOLARIS
+static	char	*pidfile = "/etc/opt/ipf/ipmon.pid";
+#else
+# if BSD >= 199306
+static	char	*pidfile = "/var/run/ipmon.pid";
+# else
+static	char	*pidfile = "/etc/ipmon.pid";
+# endif
+#endif
 
 static	char	line[2048];
 static	int	opts = 0;
@@ -101,6 +117,7 @@ static	void	print_ipflog __P((FILE *, char *, int));
 static	void	print_natlog __P((FILE *, char *, int));
 static	void	print_statelog __P((FILE *, char *, int));
 static	void	dumphex __P((FILE *, u_char *, int));
+static	void	write_pid __P((char *file));
 static	int	read_log __P((int, int *, char *, int, FILE *));
 char	*hostname __P((int, struct in_addr));
 char	*portname __P((int, char *, u_short));
@@ -126,8 +143,8 @@ static	void	logopts __P((int, char *));
 #endif
 
 
-static void handlehup(unused)
-	int unused;
+void handlehup(sig)
+int sig;
 {
 	FILE	*fp;
 
@@ -274,7 +291,7 @@ int	blen;
 		strcpy(t, "NAT:MAP ");
 	else if (nl->nl_type == NL_NEWRDR)
 		strcpy(t, "NAT:RDR ");
-	else if (nl->nl_type == ISL_EXPIRE)
+	else if (nl->nl_type == NL_EXPIRE)
 		strcpy(t, "NAT:EXPIRE ");
 	else
 		sprintf(t, "Type: %d ", nl->nl_type);
@@ -339,8 +356,14 @@ int	blen;
 
 	if (sl->isl_type == ISL_NEW)
 		strcpy(t, "STATE:NEW ");
-	else if (sl->isl_type == ISL_EXPIRE)
-		strcpy(t, "STATE:EXPIRE ");
+	else if (sl->isl_type == ISL_EXPIRE) {
+		if (sl->isl_state[0] > TCPS_ESTABLISHED ||
+		    sl->isl_state[1] > TCPS_ESTABLISHED)
+			strcpy(t, "STATE:CLOSE ");
+		else
+			strcpy(t, "STATE:EXPIRE ");
+	} else if (sl->isl_type == ISL_FLUSH)
+		strcpy(t, "STATE:FLUSH ");
 	else
 		sprintf(t, "Type: %d ", sl->isl_type);
 	t += strlen(t);
@@ -444,7 +467,7 @@ char	*buf;
 int	blen;
 {
 	struct	protoent *pr;
-	struct	tcphdr	*tp;
+	tcphdr_t	*tp;
 	struct	icmp	*ic;
 	struct	tm	*tm;
 	char	c[3], pname[8], *t, *proto;
@@ -531,8 +554,9 @@ int	blen;
 	(void) strcat(line, c);
 	t = line + strlen(line);
 
-	if ((p == IPPROTO_TCP || p == IPPROTO_UDP) && !(ip->ip_off & 0x1fff)) {
-		tp = (struct tcphdr *)((char *)ip + hl);
+	if ((p == IPPROTO_TCP || p == IPPROTO_UDP) &&
+	    !(ip->ip_off & IP_OFFMASK)) {
+		tp = (tcphdr_t *)((char *)ip + hl);
 		if (!(ipf->fl_flags & (FI_SHORT << 16))) {
 			(void) sprintf(t, "%s,%s -> ",
 				hostname(res, ip->ip_src),
@@ -549,6 +573,13 @@ int	blen;
 				for (i = 0; tcpfl[i].value; i++)
 					if (tp->th_flags & tcpfl[i].value)
 						*t++ = tcpfl[i].flag;
+				if (opts & OPT_VERBOSE) {
+					(void) sprintf(t, " %lu %lu %hu",
+						(u_long)tp->th_seq,
+						(u_long)tp->th_ack,
+						tp->th_win);
+					t += strlen(t);
+				}
 			}
 			if (opts & OPT_VERBOSE) {
 				(void) sprintf(t, " %lu %lu %hu",
@@ -577,7 +608,7 @@ int	blen;
 		    ic->icmp_type == ICMP_REDIRECT ||
 		    ic->icmp_type == ICMP_TIMXCEED) {
 			ipc = &ic->icmp_ip;
-			tp = (struct tcphdr *)((char *)ipc + hl);
+			tp = (tcphdr_t *)((char *)ipc + hl);
 
 			p = (u_short)ipc->ip_p;
 			pr = getprotobynumber((int)p);
@@ -603,11 +634,12 @@ int	blen;
 		(void) sprintf(t, "%s PR %s len %hu (%hu)",
 			hostname(res, ip->ip_dst), proto, hl, ip->ip_len);
 		t += strlen(t);
-		if (ip->ip_off & 0x1fff)
+		if (ip->ip_off & IP_OFFMASK)
 			(void) sprintf(t, " frag %s%s%hu@%hu",
 				ip->ip_off & IP_MF ? "+" : "",
 				ip->ip_off & IP_DF ? "-" : "",
-				ip->ip_len - hl, (ip->ip_off & 0x1fff) << 3);
+				ip->ip_len - hl,
+				(ip->ip_off & IP_OFFMASK) << 3);
 	}
 	t += strlen(t);
 
@@ -639,6 +671,25 @@ char *prog;
 {
 	fprintf(stderr, "%s: [-NFhstvxX] [-f <logfile>]\n", prog);
 	exit(1);
+}
+
+
+static void write_pid(file)
+char *file;
+{
+	FILE *fp = NULL;
+	int fd;
+
+	if ((fd = open(file, O_CREAT|O_TRUNC|O_WRONLY, 0644)) >= 0)
+		fp = fdopen(fd, "w");
+	if (!fp) {
+		close(fd);
+		fprintf(stderr, "unable to open/create pid file: %s\n", file);
+		return;
+	}
+	fprintf(fp, "%d", getpid());
+	fclose(fp);
+	close(fd);
 }
 
 
@@ -713,7 +764,7 @@ char *argv[];
 	int	fd[3], doread, n, i;
 	int	tr, nr, regular[3], c;
 	int	fdt[3], devices = 0, make_daemon = 0;
-	char	buf[512], *iplfile[3];
+	char	buf[512], *iplfile[3], *s;
 	extern	int	optind;
 	extern	char	*optarg;
 
@@ -723,11 +774,14 @@ char *argv[];
 	iplfile[1] = IPNAT_NAME;
 	iplfile[2] = IPSTATE_NAME;
 
-	while ((c = getopt(argc, argv, "?aDf:FhI:nN:o:O:sS:tvxX")) != -1)
+	while ((c = getopt(argc, argv, "?aDf:FhnN:o:O:pP:sS:tvxX")) != -1)
 		switch (c)
 		{
 		case 'a' :
 			opts |= OPT_ALL;
+			fdt[0] = IPL_LOGIPF;
+			fdt[1] = IPL_LOGNAT;
+			fdt[2] = IPL_LOGSTATE;
 			break;
 		case 'D' :
 			make_daemon = 1;
@@ -763,8 +817,14 @@ char *argv[];
 		case 'p' :
 			opts |= OPT_PORTNUM;
 			break;
+		case 'P' :
+			pidfile = optarg;
+			break;
 		case 's' :
-			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
+			s = strrchr(argv[0], '/');
+			if (s == NULL)
+				s = argv[0];
+			openlog(s, LOG_NDELAY|LOG_PID, LOGFAC);
 			opts |= OPT_SYSLOG;
 			break;
 		case 'S' :
@@ -834,11 +894,13 @@ char *argv[];
 	if (make_daemon && (log != stdout)) {
 		if (fork() > 0)
 			exit(0);
+		write_pid(pidfile);
 		close(0);
 		close(1);
 		close(2);
 		setsid();
-	}
+	} else
+		write_pid(pidfile);
 
 	signal(SIGHUP, handlehup);
 
