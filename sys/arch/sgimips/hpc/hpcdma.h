@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.h,v 1.2 2001/11/10 07:32:42 wdk Exp $	*/
+/*	$NetBSD: hpcdma.h,v 1.3 2001/11/18 05:14:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -62,6 +62,7 @@ struct hpc_dma_softc {
 void hpcdma_init(struct hpc_attach_args *, struct hpc_dma_softc *, int);
 void hpcdma_sglist_create(struct hpc_dma_softc *, bus_dmamap_t);
 void hpcdma_cntl(struct hpc_dma_softc *, u_int32_t);
+void hpcdma_reset(struct hpc_dma_softc *);
 void hpcdma_flush(struct hpc_dma_softc *);
 
 #endif /* _SGIMIPS_HPC_DMA_H */

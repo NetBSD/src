@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.1 2001/08/19 03:16:21 wdk Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.2 2001/11/18 05:14:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -156,6 +156,18 @@ hpcdma_cntl(sc, mode)
 	u_int32_t	mode;
 {
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, HPC_SCSI0_CTL, mode);
+}
+
+void
+hpcdma_reset(sc)
+	struct hpc_dma_softc *sc;
+{
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, HPC_SCSI0_CTL,
+	    HPC_DMACTL_RESET);
+	delay(100);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, HPC_SCSI0_CTL, 0);
+	delay(1000);
 }
 
 void
