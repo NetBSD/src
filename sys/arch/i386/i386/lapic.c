@@ -1,3 +1,5 @@
+/* $NetBSD: lapic.c,v 1.1.2.4 2000/02/21 18:51:00 sommerfeld Exp $ */
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.

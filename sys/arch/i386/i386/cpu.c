@@ -1,3 +1,5 @@
+/* $NetBSD: cpu.c,v 1.1.2.3 2000/02/21 18:51:00 sommerfeld Exp $ */
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
