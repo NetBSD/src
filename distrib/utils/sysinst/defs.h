@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.87 2003/06/12 12:41:55 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.88 2003/06/13 11:45:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,6 +114,7 @@ extern const char * const fstypenames[];
 #define nelem(x) (sizeof (x) / sizeof *(x))
 
 /* Round up to the next full cylinder size */
+#define	ROUNDDOWN(n,d) (((n)/(d)) * (d))
 #define	ROUNDUP(n,d) ((((n) + (d) - 1)/(d)) * (d))
 #define NUMSEC(size, sizemult, cylsize) \
 	((size) == -1 ? -1 : (sizemult) == 1 ? (size) : \
