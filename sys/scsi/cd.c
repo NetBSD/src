@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.50 1995/01/23 18:17:22 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.51 1995/01/26 11:56:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -176,8 +176,8 @@ cdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if (scsi_start_and_wait(cd->sc_link, 5,
-	    SCSI_AUTOCONF | SCSI_SILENT) == EIO ||
+	if (scsi_start(cd->sc_link, SSS_START,
+	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
 	    cd_get_parms(cd, SCSI_AUTOCONF) != 0)
 		printf(": drive empty\n");
 	else
@@ -227,24 +227,21 @@ cdopen(dev, flag, fmt)
 			return ENXIO;
 	} else {
 		cd->flags |= CDF_LOCKED;
+		sc_link->flags |= SDEV_OPEN;
 
-		/*
-		 * Check that it is still responding and ok.
-		 * if the media has been changed this will result in a
-		 * "unit attention" error which the error code will
-		 * disregard because the SDEV_OPEN flag is not yet set.
-		 */
+		/* Check that it is still responding and ok. */
 		if (error = scsi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE))
-			goto bad3;
-
-		sc_link->flags |= SDEV_OPEN;	/* unit attn errors are now errors */
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
+			goto bad;
 
 		/* Lock the pack in. */
-		scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		if (error = scsi_prevent(sc_link, PR_PREVENT,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
+			goto bad;
 
-		if ((error = scsi_start_and_wait(sc_link, 30, 0)) == EIO)
+		/* Start the pack spinning if necessary. */
+		if (error = scsi_start(sc_link, SSS_START,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
 			goto bad;
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
@@ -297,10 +294,9 @@ bad2:
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
 
-bad3:
 		cd->flags &= ~CDF_LOCKED;
 		if ((cd->flags & CDF_WANTED) != 0) {
 			cd->flags &= ~CDF_WANTED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.54 1995/01/23 18:17:24 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.55 1995/01/26 11:56:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -178,8 +178,8 @@ sdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if (scsi_start_and_wait(sd->sc_link, 5,
-	    SCSI_AUTOCONF | SCSI_SILENT) == EIO ||
+	if (scsi_start(sd->sc_link, SSS_START,
+	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
 	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
 		printf(": drive offline\n");
 	else
@@ -230,25 +230,21 @@ sdopen(dev, flag, fmt)
 			return ENXIO;
 	} else {
 		sd->flags |= SDF_LOCKED;
+		sc_link->flags |= SDEV_OPEN;
 
-		/*
-		 * "unit attention" errors should occur here if the 
-		 * drive has been restarted or the pack changed.
-		 * just ingnore the result, it's a decoy instruction
-		 * The error code will act on the error though
-		 * and invalidate any media information we had.
-		 */
-		if (scsi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE))
-			goto bad3;
-
-		sc_link->flags |= SDEV_OPEN;	/* unit attn becomes an err now */
+		/* Check that it is still responding and ok. */
+		if (error = scsi_test_unit_ready(sc_link,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
+			goto bad;
 
 		/* Lock the pack in. */
-		scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		if (error = scsi_prevent(sc_link, PR_PREVENT,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
+			goto bad;
 
-		if ((error = scsi_start_and_wait(sc_link, 30, 0)) == EIO)
+		/* Start the pack spinning if necessary. */
+		if (error = scsi_start(sc_link, SSS_START,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
 			goto bad;
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
@@ -301,10 +297,9 @@ bad2:
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
 		scsi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
 
-bad3:
 		sd->flags &= ~SDF_LOCKED;
 		if ((sd->flags & SDF_WANTED) != 0) {
 			sd->flags &= ~SDF_WANTED;
