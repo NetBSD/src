@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,39 +32,34 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989, 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)stty.c	5.28 (Berkeley) 6/5/91";*/
-static char rcsid[] = "$Id: stty.c,v 1.9 1994/03/23 04:05:33 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)stty.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: stty.c,v 1.10 1994/09/20 04:52:12 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <err.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "stty.h"
 #include "extern.h"
 
-void
-usage()
-{
-
-	fprintf(stderr, "usage: stty: [-eg] [-f file] [options]\n");
-	exit(1);
-}
-
+int
 main(argc, argv) 
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	struct info i;
 	enum FMT fmt;
@@ -74,9 +69,9 @@ main(argc, argv)
 	i.fd = STDIN_FILENO;
 
 	opterr = 0;
-	while (argv[optind] &&
-	       strspn(argv[optind], "-aefg") == strlen(argv[optind]) &&
-	       (ch = getopt(argc, argv, "aef:g")) != EOF)
+	while (optind < argc &&
+	    strspn(argv[optind], "-aefg") == strlen(argv[optind]) &&
+	    (ch = getopt(argc, argv, "aef:g")) != -1)
 		switch(ch) {
 		case 'a':		/* undocumented: POSIX compatibility */
 			fmt = POSIX;
@@ -155,4 +150,12 @@ args:	argc -= optind;
 	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) < 0)
 		warn("TIOCSWINSZ");
 	exit(0);
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: stty: [-a|-e|-g] [-f file] [options]\n");
+	exit (1);
 }
