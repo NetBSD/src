@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.194 2003/06/28 23:13:26 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.195 2003/08/10 14:51:55 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194 2003/06/28 23:13:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.195 2003/08/10 14:51:55 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -4595,14 +4595,14 @@ pdc20268_setup_channel(chp)
 
 	/* I don't know what this is for, FreeBSD does it ... */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + 0x1, 0x0b);
+	    IDEDMA_CMD + 0x1 + IDEDMA_SCH_OFFSET * chp->channel, 0x0b);
 
 	/*
-	 * I don't know what this is for; FreeBSD checks this ... this is not
-	 * cable type detect.
+	 * cable type detect, from FreeBSD
 	 */
 	u100 = (bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-	    IDEDMA_CMD + 0x3) & 0x04) ? 0 : 1;
+	    IDEDMA_CMD + 0x3 + IDEDMA_SCH_OFFSET * chp->channel) & 0x04) ?
+	    0 : 1;
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
