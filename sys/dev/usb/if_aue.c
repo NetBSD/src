@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.29 2000/03/08 15:33:24 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.30 2000/03/12 21:57:50 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -280,6 +280,9 @@ aue_csr_read_1(sc, reg)
 	uByte			val = 0;
 	int			s;
 
+	if (sc->aue_dying)
+		return (0);
+
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = AUE_UR_READREG;
 	USETW(req.wValue, 0);
@@ -308,6 +311,9 @@ aue_csr_read_2(sc, reg)
 	usbd_status		err;
 	uWord			val;
 	int			s;
+
+	if (sc->aue_dying)
+		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = AUE_UR_READREG;
@@ -338,6 +344,9 @@ aue_csr_write_1(sc, reg, aval)
 	int			s;
 	uByte			val;
 
+	if (sc->aue_dying)
+		return (0);
+
 	val = aval;
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = AUE_UR_WRITEREG;
@@ -367,6 +376,9 @@ aue_csr_write_2(sc, reg, aval)
 	usbd_status		err;
 	int			s;
 	uWord			val;
+
+	if (sc->aue_dying)
+		return (0);
 
 	USETW(val, aval);
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;

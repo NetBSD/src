@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.14 2000/03/08 15:33:38 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.15 2000/03/12 21:59:38 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -195,7 +195,7 @@ static void kue_setmulti	__P((struct kue_softc *));
 static void kue_reset		__P((struct kue_softc *));
 
 static usbd_status kue_do_request
-				__P((usbd_device_handle,
+				__P((struct kue_softc *,
 				   usb_device_request_t *, void *, u_int16_t,
 				   u_int32_t *));
 static usbd_status kue_ctl_l	__P((struct kue_softc *, int, u_int8_t,
@@ -247,8 +247,8 @@ DRIVER_MODULE(if_kue, uhub, kue_driver, kue_devclass, usbd_driver_load, 0);
  * than the default timeout.
  */
 static usbd_status
-kue_do_request(dev, req, data, flags, lenp)
-	usbd_device_handle	dev;
+kue_do_request(sc, req, data, flags, lenp)
+	struct kue_softc	*sc;
 	usb_device_request_t	*req;
 	void			*data;
 	u_int16_t		flags;
@@ -259,9 +259,12 @@ kue_do_request(dev, req, data, flags, lenp)
 
 	DPRINTFN(15,("kue_do_request: enter\n"));
 
-	xfer = usbd_alloc_xfer(dev);
+	if (sc->kue_dying)
+		return (0);
+
+	xfer = usbd_alloc_xfer(sc->kue_udev);
 	/* XXX 20000 */
-	usbd_setup_default_xfer(xfer, dev, 0, 20000, req,
+	usbd_setup_default_xfer(xfer, sc->kue_udev, 0, 20000, req,
 	    data, UGETW(req->wLength), flags, 0);
 	err = usbd_sync_transfer(xfer);
 	if (lenp != NULL)
@@ -269,7 +272,8 @@ kue_do_request(dev, req, data, flags, lenp)
 	usbd_free_xfer(xfer);
 	
 	if (err) {
-		DPRINTF(("kue_do_request: err=%s\n", usbd_errstr(err)));
+		DPRINTF(("%s: kue_do_request: err=%s\n",
+			 USBDEVNAME(sc->kue_dev), usbd_errstr(err)));
 	}
 
 	return (err);
@@ -294,7 +298,7 @@ kue_setword(sc, breq, word)
 	USETW(req.wLength, 0);
 
 	s = splusb();
-	err = kue_do_request(sc->kue_udev, &req, NULL, sc->kue_xfer_flags, 0);
+	err = kue_do_request(sc, &req, NULL, sc->kue_xfer_flags, 0);
 	splx(s);
 
 	return (err);
@@ -329,8 +333,7 @@ kue_ctl_l(sc, rw, breq, val, data, len, flags, lenp)
 	USETW(req.wLength, len);
 
 	s = splusb();
-	err = kue_do_request(sc->kue_udev, &req, data, 
-		  sc->kue_xfer_flags | flags, lenp);
+	err = kue_do_request(sc, &req, data, sc->kue_xfer_flags | flags, lenp);
 	splx(s);
 
 	return (err);
