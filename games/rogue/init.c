@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.3 1995/04/22 10:27:32 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.3 1995/04/22 10:27:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,13 +198,11 @@ start_window()
 #ifndef BAD_NONL
 	nonl();
 #endif
-	md_control_keybord(0);
 }
 
 stop_window()
 {
 	endwin();
-	md_control_keybord(1);
 }
 
 void
