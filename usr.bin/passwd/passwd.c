@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.16 2000/02/14 04:36:21 aidan Exp $	*/
+/*	$NetBSD: passwd.c,v 1.17 2000/03/01 12:46:36 joda Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.16 2000/02/14 04:36:21 aidan Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.17 2000/03/01 12:46:36 joda Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ main(argc, argv)
 
 		curopt = pw_modules[i].args;
 		while (*curopt != '\0') {
-			if ((optopt = strchr(optstring, *curopt)) == (char *) 0) {
+			if ((optopt = strchr(optstring, *curopt)) == NULL) {
 				optstring[j++] = *curopt;
 				if (curopt[1] == ':') {
 					curopt++;
@@ -188,10 +188,10 @@ main(argc, argv)
 		for (i = 0; pw_modules[i].pw_init != NULL; i++) {
 			if (pw_modules[i].invalid)
 				continue;
-			if ((optopt = strchr(pw_modules[i].args, ch)) != (char *) 0) {
+			if ((optopt = strchr(pw_modules[i].args, ch)) != NULL) {
 				j = (optopt[1] == ':') ?
 				    ! (*pw_modules[i].pw_arg)(ch, optarg) :
-				    ! (*pw_modules[i].pw_arg)(ch, (char *) 0);
+				    ! (*pw_modules[i].pw_arg)(ch, NULL);
 				if (j != 0)
 					pw_modules[i].invalid |= ARG_INVALID;
 				if (pw_modules[i].invalid)
