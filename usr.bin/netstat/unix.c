@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.19 2003/02/01 18:35:44 tron Exp $	*/
+/*	$NetBSD: unix.c,v 1.20 2003/02/02 02:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.19 2003/02/01 18:35:44 tron Exp $");
+__RCSID("$NetBSD: unix.c,v 1.20 2003/02/02 02:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,6 @@ __RCSID("$NetBSD: unix.c,v 1.19 2003/02/01 18:35:44 tron Exp $");
  * Display protocol blocks in the unix domain.
  */
 #include <sys/param.h>
-#define _KERNEL
-#include <sys/mallocvar.h>
-#undef _KERNEL
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
