@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.27 2000/11/23 23:01:55 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.28 2001/01/10 01:13:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.27 2000/11/23 23:01:55 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.28 2001/01/10 01:13:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ cost_benefit(fsp, su)
 		 * priority = ((seg_size - live) * age) / (seg_size + live)
 		 */
 		if (live < 0 || live > seg_size(lfsp)) {
-			syslog(LOG_NOTICE,"bad segusage count: %ld", live);
+			syslog(LOG_WARNING,"bad segusage count: %ld", live);
 			live = 0;
 		}
 		return (lblkno(lfsp, seg_size(lfsp) - live) * age)
@@ -252,6 +252,9 @@ main(argc, argv)
 		err(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
 	}
 
+	openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID | (debug ? LOG_PERROR : 0),
+	    LOG_DAEMON);
+
 	/* should we become a daemon, chdir to / & close fd's */
 	if (debug == 0) {
 		if (daemon(0, 0) == -1)
@@ -260,7 +263,7 @@ main(argc, argv)
 		loopcount=0;
 	    loop:
 		if((childpid=fork())<0) {
-			syslog(LOG_NOTICE,"%s: couldn't fork, exiting: %m",
+			syslog(LOG_ERR,"%s: couldn't fork, exiting: %m",
 				fs_name);
 			exit(1);
 		}
@@ -294,15 +297,11 @@ main(argc, argv)
 			}
 			if (fs_getmntinfo(&lstatfsp, fs_name, MOUNT_LFS) == 0) {
 				/* fs has been unmounted(?); exit quietly */
-				syslog(LOG_INFO,"lfs_cleanerd: fs %s unmounted, exiting", fs_name);
+				syslog(LOG_ERR,"lfs_cleanerd: fs %s unmounted, exiting", fs_name);
 				exit(0);
 			}
 			goto loop;
 		}
-		openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID, LOG_DAEMON);
-	} else {
-		openlog("lfs_cleanerd", LOG_NDELAY|LOG_PID|LOG_PERROR,
-			LOG_DAEMON);
 	}
 
 	signal(SIGINT, sig_report);
@@ -492,7 +491,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 		if(debug)
 			syslog(LOG_DEBUG,"Wiping empty segment %ld",sp->sl_id);
 		if(lfs_segclean(fsidp, sp->sl_id) < 0)
-			syslog(LOG_NOTICE,"lfs_segclean failed empty segment %ld: %m", sp->sl_id);
+			syslog(LOG_WARNING,"lfs_segclean failed empty segment %ld: %m", sp->sl_id);
 		++cleaner_stats.segs_empty;
 		sp++;
 		i--;
@@ -526,7 +525,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 			to_clean = nsegs << fsp->fi_lfs.lfs_segshift;
 			for (; i && cleaned_bytes < to_clean; i--, ++sp) {
 				if (add_segment(fsp, sp, sbp) < 0) {
-					syslog(LOG_NOTICE,"add_segment failed"
+					syslog(LOG_WARNING,"add_segment failed"
 					       " segment %ld: %m", sp->sl_id);
 					if (sbp->nsegs == 0 && errno != ENOENT)
 						continue;
@@ -542,7 +541,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 				syslog(LOG_DEBUG, "Cleaning segment %ld"
 				       " (of %ld choices)", sp->sl_id, i + 1);
 				if (add_segment(fsp, sp, sbp) != 0) {
-					syslog(LOG_NOTICE,"add_segment failed"
+					syslog(LOG_WARNING,"add_segment failed"
 					       " segment %ld: %m", sp->sl_id);
 					if (sbp->nsegs == 0 && errno != ENOENT)
 						continue;
@@ -555,7 +554,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 			for (j = 0; j < sbp->nsegs; j++) {
 				sp = sbp->segs[j];
 				if (lfs_segclean(fsidp, sp->sl_id) < 0)
-					syslog(LOG_NOTICE,
+					syslog(LOG_WARNING,
 					       "lfs_segclean: segment %ld: %m",
 					       sp->sl_id);
 				else
@@ -574,7 +573,7 @@ clean_fs(fsp, cost_func, nsegs, options)
 	if(debug) {
 		error = getrusage(RUSAGE_SELF, &ru);
 		if(error) {
-			syslog(LOG_INFO, "getrusage returned error: %m");
+			syslog(LOG_WARNING, "getrusage returned error: %m");
 		} else {
 			syslog(LOG_DEBUG, "Current usage: maxrss=%ld,"
 			       " idrss=%ld, isrss=%ld", ru.ru_maxrss,
@@ -688,8 +687,9 @@ add_segment(fsp, slp, sbp)
 	error = 0;
 	tba = NULL;
 
-	syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
-		(unsigned long)sp->su_nbytes);
+	if (debug)
+		syslog(LOG_DEBUG, "adding segment %d: contains %lu bytes", id,
+		    (unsigned long)sp->su_nbytes);
 
 	/* XXX could add debugging to verify that segment is really empty */
 	if (sp->su_nbytes == 0) {
@@ -725,7 +725,7 @@ add_segment(fsp, slp, sbp)
 	/* get the current disk address of blocks contained by the segment */
 	if ((error = lfs_bmapv(&fsp->fi_statfsp->f_fsid, tba,
 			       num_blocks)) < 0) {
-		syslog(LOG_NOTICE, "add_segment: lfs_bmapv failed");
+		syslog(LOG_WARNING, "add_segment: lfs_bmapv failed");
 		goto out;
 	}
 
@@ -772,14 +772,18 @@ add_segment(fsp, slp, sbp)
 					}
 				}
 				if(j<0) {
-					syslog(LOG_NOTICE, "lost inode %d in the shuffle! (blk %d)",
+					syslog(LOG_ERR, "lost inode %d in the shuffle! (blk %d)",
 					       tba[i].bi_inode, tba[i].bi_daddr);
-					syslog(LOG_DEBUG, "inode numbers found were:");
-					for(j=INOPB(lfsp)-1;j>=0;j--) {
-						syslog(LOG_DEBUG, "%d", dip[j].di_u.inumber);
+					if (debug) {
+						syslog(LOG_DEBUG,
+						   "inode numbers found were:");
+						for(j=INOPB(lfsp)-1;j>=0;j--) {
+							syslog(LOG_DEBUG, "%d",
+							   dip[j].di_u.inumber);
+						}
 					}
 					err(1,"lost inode");
-				} else if(debug>1) {
+				} else if (debug > 1) {
 					syslog(LOG_DEBUG,"Ino %d corrected to 0x%x+%d",
 					       tba[i].bi_inode,
 					       tba[i].bi_daddr,
@@ -925,16 +929,16 @@ sig_report(sig)
 {
 	double avg = 0.0;
 
-	syslog(LOG_DEBUG, "lfs_cleanerd:\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d",
+	syslog(LOG_INFO, "lfs_cleanerd:\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d\n\t\t%s%d",
 		"blocks_read    ", cleaner_stats.blocks_read,
 		"blocks_written ", cleaner_stats.blocks_written,
 		"segs_cleaned   ", cleaner_stats.segs_cleaned,
 		"segs_empty     ", cleaner_stats.segs_empty,
 		"seg_error      ", cleaner_stats.segs_error);
-	syslog(LOG_DEBUG, "\t\t%s%5.2f\n\t\t%s%5.2f",
+	syslog(LOG_INFO, "\t\t%s%5.2f\n\t\t%s%5.2f",
 		"util_tot       ", cleaner_stats.util_tot,
 		"util_sos       ", cleaner_stats.util_sos);
-	syslog(LOG_DEBUG, "\t\tavg util: %4.2f std dev: %9.6f",
+	syslog(LOG_INFO, "\t\tavg util: %4.2f std dev: %9.6f",
 	       avg = cleaner_stats.util_tot / MAX(cleaner_stats.segs_cleaned, 1.0),
 		cleaner_stats.util_sos / MAX(cleaner_stats.segs_cleaned - avg * avg, 1.0));
 
