@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1998/01/02 20:10:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1998/01/22 21:48:44 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -3503,31 +3503,59 @@ pmap_pa_exists(pa)
 	return (0);
 }
 
-/* pmap_activate			INTERFACE
- **
- * This is called to activate the address space for the specified
- * process.  It is called either from locore.s:cpu_switch after the
- * process has become curproc, or from machine-independent VM code
- * when a process is given a new address space.  Note that we do
- * not reload the MMU context if the process is not the current process;
- * that will be done for us when the process is switched to.
+/* Called only from locore.s and pmap.c */
+void	_pmap_switch __P((pmap_t pmap));
+
+/*
+ * _pmap_switch			INTERNAL
  *
- * Note: Only used when locore.s is compiled with PMAP_DEBUG.
+ * This is called by locore.s:cpu_switch() when it is
+ * switching to a new process.  Load new translations.
+ * Note: done in-line by locore.s unless PMAP_DEBUG
+ *
+ * Note that we do NOT allocate a context here, but
+ * share the "kernel only" context until we really
+ * need our own context for user-space mappings in
+ * pmap_enter_user().  [ s/context/mmu A table/ ]
  */
 void
-pmap_activate(p)
-struct proc *p;
+_pmap_switch(pmap)
+	pmap_t pmap;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	u_long rootpa;
 
-	/* Only do reload/flush if we have to. */
+	/*
+	 * Only do reload/flush if we have to.
+	 * Note that if the old and new process
+	 * were BOTH using the "null" context,
+	 * then this will NOT flush the TLB.
+	 */
 	rootpa = pmap->pm_a_phys;
-	if (p == curproc && kernel_crp.rp_addr != rootpa) {
-		DPRINT(("pmap_activate(%p)\n", p));
+	if (kernel_crp.rp_addr != rootpa) {
+		DPRINT(("pmap_activate(%p)\n", pmap));
 		kernel_crp.rp_addr = rootpa;
 		loadcrp(&kernel_crp);
 		TBIAU();
+	}
+}
+
+/*
+ * Exported version of pmap_activate().  This is called from the
+ * machine-independent VM code when a process is given a new pmap.
+ * If (p == curproc) do like cpu_switch would do; otherwise just
+ * take this as notification that the process has a new pmap.
+ */
+void
+pmap_activate(p)
+	struct proc *p;
+{
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int s;
+
+	if (p == curproc) {
+		s = splimp();
+		_pmap_switch(pmap);
+		splx(s);
 	}
 }
 
