@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2002/04/10 17:08:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2002/04/10 17:39:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2002/04/10 17:08:13 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2002/04/10 17:39:31 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3801,13 +3801,17 @@ void
 pmap_pte_init_xscale(void)
 {
 
-	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
+	/*
+	 * Use write-back caching with read/write-allocate.
+	 */
+
+	pte_l1_s_cache_mode = L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X);
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_xscale;
 
-	pte_l2_l_cache_mode = L2_B|L2_C;
+	pte_l2_l_cache_mode = L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X);
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_xscale;
 
-	pte_l2_s_cache_mode = L2_B|L2_C;
+	pte_l2_s_cache_mode = L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X);
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
 
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
@@ -3828,7 +3832,8 @@ pmap_pte_init_i80200(void)
 {
 
 	/*
-	 * Use write-through caching on the i80200.
+	 * Use write-through caching on the i80200 to work around
+	 * bugs in its cache unit.
 	 */
 	pmap_pte_init_xscale();
 	pte_l1_s_cache_mode = L1_S_C;
