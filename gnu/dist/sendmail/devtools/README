@@ -136,7 +136,7 @@ confMAN1EXT	    1			The extension on files in confMAN1.
 confMAN1SRC	    0			The source for man pages installed
 					in confMAN1.
 confMAN3	    confMANROOT 3	The location of man3 files.
-confMAN3EXT	    4			The extension on files in confMAN3.
+confMAN3EXT	    3			The extension on files in confMAN3.
 confMAN3SRC	    0			The source for man pages installed
 					in confMAN3.
 confMAN4	    confMANROOT 4	The location of man4 files.
@@ -186,7 +186,7 @@ confRANLIB	    echo		The path to the program to use
 confRANLIBOPTS      [empty]		Options to pass to ranlib.
 confSBINDIR	    /usr/sbin		The location of root-oriented
 					commands, such as makemap.
-confSBINGRP	    sbin		The group for setuid binaries.
+confSBINGRP	    bin			The group for setuid binaries.
 confSBINMODE	    4555		The mode for setuid binaries.
 confSBINOWN	    root		The owner for setuid binaries.
 confSHAREDLIB_EXT   .so              	Shared library file extenion name.
@@ -330,8 +330,8 @@ bldSOURCES - This should be defined to a space separated list of source
 files that make up the executable.
 
 bldBIN_TYPE - This determines where the binaries will be installed and what
-permissions they will have.  Available types are `U', `K', `S', and `E'.  See
-M4/make/executable.m4 for what the different types mean.
+permissions they will have.  Available types are `U', `K', `S', and `E'.
+See M4/UNIX/make/executable.m4 for what the different types mean.
 
 bldTARGET_LINKS - This determines where additional symbolic links to the
 executable are placed.  These should be full pathnames, separated by
@@ -358,4 +358,4 @@ files that make up the library.
 bldINSTALLABLE - This should be set if the library should be installed in
 confLIBDIR.
 
-Revision: 8.65.4.7, Last updated Date: 2001/02/11 19:45:51
+Revision: 8.65.4.9, Last updated Date: 2001/05/30 19:50:37
