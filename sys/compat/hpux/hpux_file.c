@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.13 1999/02/09 20:21:18 christos Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.14 2000/08/29 14:33:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -482,10 +482,9 @@ hpux_stat1(p, v, retval, dolstat)
 	int error;
 
 	sg = stackgap_init(p->p_emul);
-
+	st = stackgap_alloc(&sg, sizeof (struct stat));
 	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 

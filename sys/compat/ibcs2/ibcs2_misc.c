@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.51 2000/08/23 21:11:47 matt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.52 2000/08/29 14:33:27 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -640,27 +640,39 @@ ibcs2_sys_getgroups(p, v, retval)
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
 	int error, i;
-	ibcs2_gid_t *iset = NULL;
+	ibcs2_gid_t iset[NGROUPS_MAX];
+	gid_t nset[NGROUPS_MAX];
 	struct sys_getgroups_args sa;
-	gid_t *gp;
+	int gidsetsize;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	if (SCARG(uap, gidsetsize)) {
+	gidsetsize = SCARG(uap, gidsetsize);
+	if (gidsetsize > NGROUPS_MAX)
+		return EINVAL;
+	
+	SCARG(&sa, gidsetsize) = gidsetsize;
+	
+	if (gidsetsize) {
 		SCARG(&sa, gidset) = stackgap_alloc(&sg, NGROUPS_MAX *
 						    sizeof(gid_t *));
-		iset = stackgap_alloc(&sg, SCARG(uap, gidsetsize) *
-				      sizeof(ibcs2_gid_t));
 	}
 	if ((error = sys_getgroups(p, &sa, retval)) != 0)
 		return error;
-	for (i = 0, gp = SCARG(&sa, gidset); i < retval[0]; i++)
-		iset[i] = (ibcs2_gid_t)*gp++;
-	if (retval[0] && (error = copyout((caddr_t)iset,
-					  (caddr_t)SCARG(uap, gidset),
-					  sizeof(ibcs2_gid_t) * retval[0])))
-		return error;
-        return 0;
+	if (gidsetsize) {
+		gidsetsize = retval[0];
+		if (gidsetsize < 0)
+			gidsetsize = 0;
+		error = copyin((caddr_t)SCARG(&sa, gidset), (caddr_t)nset,
+		    sizeof(gid_t) * gidsetsize);
+		if (error)
+			return error;
+		for (i = 0; i < gidsetsize; i++)
+			iset[i] = (ibcs2_gid_t)nset[i];
+		error = copyout((caddr_t)iset,
+		    (caddr_t)SCARG(uap, gidset),
+		    sizeof(ibcs2_gid_t) * retval[0]);
+	}
+        return error;
 }
 
 int
@@ -674,24 +686,28 @@ ibcs2_sys_setgroups(p, v, retval)
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
 	int error, i;
-	ibcs2_gid_t *iset;
+	ibcs2_gid_t iset[NGROUPS_MAX];
 	struct sys_setgroups_args sa;
-	gid_t *gp;
+	gid_t gp[NGROUPS_MAX], *ngid;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	gp = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) * sizeof(gid_t *));
-	iset = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) *
-			      sizeof(ibcs2_gid_t *));
+	if (SCARG(uap, gidsetsize) > NGROUPS_MAX)
+		return EINVAL;
+	
 	if (SCARG(&sa, gidsetsize)) {
 		error = copyin((caddr_t)SCARG(uap, gidset), (caddr_t)iset, 
-		    sizeof(ibcs2_gid_t *) * SCARG(uap, gidsetsize));
+		    sizeof(ibcs2_gid_t) * SCARG(uap, gidsetsize));
 		if (error)
 			return error;
 	}
 	for (i = 0; i < SCARG(&sa, gidsetsize); i++)
 		gp[i]= (gid_t)iset[i];
-	SCARG(&sa, gidset) = gp;
+	ngid = stackgap_alloc(&sg, NGROUPS_MAX * sizeof(gid_t));
+	error = copyout(gp, ngid, SCARG(&sa, gidsetsize) * sizeof(gid_t));
+	if (error)
+		return error;
+	SCARG(&sa, gidset) = ngid;
 	return sys_setgroups(p, &sa, retval);
 }
 
@@ -1030,8 +1046,9 @@ ibcs2_sys_utime(p, v, retval)
 	int error;
 	struct sys_utimes_args sa;
 	struct timeval *tp;
-	caddr_t sg = stackgap_init(p->p_emul);
 
+	caddr_t sg = stackgap_init(p->p_emul);
+	tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
         IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
@@ -1041,7 +1058,6 @@ ibcs2_sys_utime(p, v, retval)
 		    sizeof(ubuf));
 		if (error)
 			return error;
-		tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
 		tp[0].tv_sec = ubuf.actime;
 		tp[0].tv_usec = 0;
 		tp[1].tv_sec = ubuf.modtime;
