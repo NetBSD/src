@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.23 1997/10/04 10:00:30 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.24 1998/01/12 18:31:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -159,9 +159,7 @@ struct cfattach oscsi_ca = {
 	sizeof(struct scsi_softc), scsimatch, scsiattach
 };
 
-struct cfdriver oscsi_cd = {
-	NULL, "oscsi", DV_DULL
-};
+extern struct cfdriver oscsi_cd;
 
 int scsi_cmd_wait = SCSI_CMD_WAIT;
 int scsi_data_wait = SCSI_DATA_WAIT;

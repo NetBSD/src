@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.18 1997/10/04 10:00:10 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.19 1998/01/12 18:31:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -95,9 +95,7 @@ struct cfattach hpibbus_ca = {
 	sizeof(struct hpibbus_softc), hpibbusmatch, hpibbusattach
 };
 
-struct cfdriver hpibbus_cd = {
-	NULL, "hpibbus", DV_DULL
-};
+extern struct cfdriver hpibbus_cd;
 
 void	hpibbus_attach_children __P((struct hpibbus_softc *));
 int	hpibbussearch __P((struct device *, struct cfdata *, void *));

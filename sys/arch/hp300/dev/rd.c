@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.35 1997/10/04 10:00:26 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.36 1998/01/12 18:31:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -278,9 +278,7 @@ struct cfattach rd_ca = {
 	sizeof(struct rd_softc), rdmatch, rdattach
 };
 
-struct cfdriver rd_cd = {
-	NULL, "rd", DV_DISK
-};
+extern struct cfdriver rd_cd;
 
 int
 rdmatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.15 1997/10/04 10:00:23 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.16 1998/01/12 18:31:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -114,9 +114,7 @@ struct cfattach ppi_ca = {
 	sizeof(struct ppi_softc), ppimatch, ppiattach
 };
 
-struct cfdriver ppi_cd = {
-	NULL, "ppi", DV_DULL
-};
+extern struct cfdriver ppi_cd;
 
 void	ppistart __P((void *));
 void	ppinoop __P((void *));
