@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.60 2002/04/25 20:05:10 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.61 2002/05/16 02:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.60 2002/04/25 20:05:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.61 2002/05/16 02:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1363,9 +1363,11 @@ siop_scsipi_request(chan, req, arg)
 			    TARST_ASYNC;
 
 		for (lun = 0; lun < sc->sc_c.sc_chan.chan_nluns; lun++) {
-			if (sc->sc_c.sc_chan.chan_periphs[xm->xm_target][lun])
+			if (scsipi_lookup_periph(chan,
+			    xm->xm_target, lun) != NULL) {
 				/* allocate a lun sw entry for this device */
 				siop_add_dev(sc, xm->xm_target, lun);
+			}
 		}
 
 		splx(s);
