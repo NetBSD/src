@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.19 2002/10/27 21:12:38 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.20 2002/11/25 21:44:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -511,6 +511,9 @@ lwp_exit(struct lwp *l)
 	simple_unlock(&p->p_lwplock);
 
 	l->l_stat = LSDEAD;
+
+	/* This LWP no longer needs to hold the kernel lock. */
+	KERNEL_PROC_UNLOCK(l);
 
 	/* cpu_exit() will not return */
 	cpu_exit(l, 0);
