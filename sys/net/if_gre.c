@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.47 2003/08/22 21:53:01 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.48 2003/09/05 23:02:42 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.47 2003/08/22 21:53:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.48 2003/09/05 23:02:42 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -188,7 +188,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
 	struct ip *ip;
-	u_short etype = 0;
+	u_int16_t etype = 0;
 	struct mobile_h mob_h;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
@@ -243,7 +243,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				msiz = MOB_H_SIZ_L;
 			}
 			HTONS(mob_h.proto);
-			mob_h.hcrc = gre_in_cksum((u_short *)&mob_h, msiz);
+			mob_h.hcrc = gre_in_cksum((u_int16_t *)&mob_h, msiz);
 
 			if ((m->m_data - msiz) < m->m_pktdat) {
 				/* need new mbuf */
@@ -589,10 +589,10 @@ gre_compute_route(struct gre_softc *sc)
  * do a checksum of a buffer - much like in_cksum, which operates on
  * mbufs.
  */
-u_short
-gre_in_cksum(u_short *p, u_int len)
+u_int16_t
+gre_in_cksum(u_int16_t *p, u_int len)
 {
-	u_int sum = 0;
+	u_int32_t sum = 0;
 	int nwords = len >> 1;
 
 	while (nwords-- != 0)
