@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.83 2003/01/05 22:13:04 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.84 2003/01/06 04:37:18 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2849,3 +2849,84 @@ sys/ufs/ffs/ffs_softdep.c			1.38 (via patch)
 	fixes all the problems in PR 19288.
 	[chs, ticket #1053]
 
+include/rpc/rpc_com.h				0-1.1
+
+	Moved here from libc/rpc. Install this in /usr/include/rpc, just
+	like on Solaris. This wasn't done before, since it only contained
+	internal libc interfaces. These have been moved to rpc_internal.h,
+	and this file now contains some actual exported definitions.
+	[fvdl, ticket #1037]
+
+include/rpc/Makefile				1.9-1.10
+
+	Install rpc_com.h
+	[fvdl, ticket #1037]
+
+include/rpc/svc.h				1.19-1.20
+
+	include rpc_com.h, and define SVC{GET,SET}_CONNMAXREC
+	[fvdl, ticket #1037]
+
+include/rpc/clnt.h				1.16-1.17
+	Include rpc_com.h.
+	[fvdl, ticket #1037]        
+
+lib/libc/rpc/clnt_bcast.c			1.8-1.9
+lib/libc/rpc/clnt_dg.c				1.7-1.8
+lib/libc/rpc/clnt_generic.c			1.19-1.20
+lib/libc/rpc/clnt_vc.c				1.7-1.8
+lib/libc/rpc/getnetconfig.c			1.7-1.8
+lib/libc/rpc/pmap_clnt.c			1.16-1.17
+lib/libc/rpc/rpc_generic.c			1.9-1.10
+lib/libc/rpc/rpc_soc.c				1.8-1.9
+lib/libc/rpc/rpcb_clnt.c			1.11-1.12
+lib/libc/rpc/svc.c				1.22-1.23
+lib/libc/rpc/svc_dg.c				1.6-1.7
+lib/libc/rpc/svc_generic.c			1.3-1.4
+lib/libc/rpc/svc_run.c				1.17-1.18
+lib/libc/rpc/svc_simple.c			1.21-1.22
+lib/libc/rpc/svc_vc.c				1.9-1.10
+lib/libc/rpc/xdr_rec.c				1.18-1.19
+lib/libc/rpc/rpc_internal.h			0-1.1
+lib/libc/rpc/rpc_com.h				1.3-0
+
+	* Adapt include files for rpc_com.h/rpc_internal.h split.
+	* Add rpc_control to svc.c
+	* Implement non-blocking connections.
+	[fvdl, ticket #1037]
+
+lib/libc/include/namespace.h			1.71-1.72
+
+	Add rpc_control.
+	[fvdl, ticket #1037]
+
+lib/libc/shlib_version				1.121-1.122 (via hand patch)
+
+	Bump teeny version to account for minor bump on trunk
+	[fvdl, ticket #1037]
+
+dist/am-utils/conf/transp/transp_sockets.c	1.1.1.4-1.2
+usr.sbin/mountd/mountd.c			1.80-1.81 (required hand patch)
+usr.sbin/rpc.lockd/lockd.c			1.7-1.8
+usr.sbin/rpc.statd/statd.c			1.20-1.21
+usr.sbin/rpc.yppasswdd/rpc.yppasswdd.c		1.10-1.11
+usr.sbin/rpcbind/rpcb_svc_com.c			1.8-1.9
+usr.sbin/rpcbind/rpcbind.c			1.2-1.3
+
+	Use a non-blocking SVC for TCP connections.
+	[fvdl, ticket #1037]
+
+usr.bin/rpcinfo/rpcinfo.c			1.15-1.16
+
+	Don't include obsolete include file "rpc_com.h" any more.
+	[fvdl, ticket #1037]
+
+distrib/sets/lists/base/shl.mi			1.161.2.2-1.161.2.3 (hand patch)
+
+	Bump libc to 12.83.1 to reflect new teeny version
+	[fvdl, ticket #1037]
+
+distrib/sets/lists/comp/mi			1.440.2.4-1.440.2.5 (hand patch)
+	
+	Add rpc_com.h
+	[fvdl, ticket #1037] 
