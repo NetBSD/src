@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.30 2000/05/02 17:50:52 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.31 2000/05/04 08:18:59 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -69,6 +69,9 @@ include "dev/wsfont/files.wsfont"
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
+file	dev/pckbc/wskbdmap_mfii.c		btnmgr | vrkiu | skbd
+file	arch/hpcmips/dev/pckbd_encode.c		btnmgr | vrkiu | skbd
+defopt	PCKBD_LAYOUT
 
 define	hpcfbif {}
 device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops8, rasops15, rasops16
@@ -141,15 +144,6 @@ file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
 device vrkiu: wskbddev
 attach vrkiu at vrip
 file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
-
-#
-#	XXX files.pckbc XXX
-#
-device	pckbd: wskbddev
-attach	pckbd at pckbc
-file	dev/pckbc/pckbd.c		pckbd	needs-flag
-file	dev/pckbc/wskbdmap_mfii.c		pckbd | vrkiu | skbd
-defopt	PCKBD_LAYOUT
 
 device vrpmu
 attach vrpmu at vrip
