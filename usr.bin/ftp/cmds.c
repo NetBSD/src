@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.61 1999/09/24 14:28:14 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.62 1999/09/27 23:09:42 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.61 1999/09/24 14:28:14 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.62 1999/09/27 23:09:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,6 @@ __RCSID("$NetBSD: cmds.c,v 1.61 1999/09/24 14:28:14 lukem Exp $");
 #include <arpa/ftp.h>
 
 #include <ctype.h>
-#include <signal.h>
 #include <err.h>
 #include <glob.h>
 #include <limits.h>
@@ -396,7 +395,7 @@ mput(argc, argv)
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = signal(SIGINT, mabort);
+	oldintr = xsignal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	if (proxy) {
 		char *cp, *tp2, tmpbuf[MAXPATHLEN];
@@ -445,7 +444,7 @@ mput(argc, argv)
 				}
 			}
 		}
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		mflag = 0;
 		return;
 	}
@@ -497,7 +496,7 @@ mput(argc, argv)
 		}
 		globfree(&gl);
 	}
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	mflag = 0;
 }
 
@@ -657,7 +656,7 @@ mget(argc, argv)
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = signal(SIGINT, mabort);
+	oldintr = xsignal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
 		if (*cp == '\0') {
@@ -690,7 +689,7 @@ mget(argc, argv)
 			}
 		}
 	}
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	mflag = 0;
 }
 
@@ -1153,7 +1152,7 @@ mdelete(argc, argv)
 	}
 	mname = argv[0];
 	mflag = 1;
-	oldintr = signal(SIGINT, mabort);
+	oldintr = xsignal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	while ((cp = remglob(argv, 0, NULL)) != NULL) {
 		if (*cp == '\0') {
@@ -1172,7 +1171,7 @@ mdelete(argc, argv)
 			}
 		}
 	}
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	mflag = 0;
 }
 
@@ -1271,7 +1270,7 @@ usage:
 	dolist = strcmp(argv[0], "mls");
 	mname = argv[0];
 	mflag = 1;
-	oldintr = signal(SIGINT, mabort);
+	oldintr = xsignal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
@@ -1286,7 +1285,7 @@ usage:
 			interactive = ointer;
 		}
 	}
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	mflag = 0;
 	if (dest != odest)			/* free up after globulize() */
 		free(dest);
@@ -1306,13 +1305,13 @@ shell(argc, argv)
 	char shellnam[MAXPATHLEN], *shell, *namep;
 	int wait_status;
 
-	old1 = signal (SIGINT, SIG_IGN);
-	old2 = signal (SIGQUIT, SIG_IGN);
+	old1 = xsignal(SIGINT, SIG_IGN);
+	old2 = xsignal(SIGQUIT, SIG_IGN);
 	if ((pid = fork()) == 0) {
 		for (pid = 3; pid < 20; pid++)
 			(void)close(pid);
-		(void)signal(SIGINT, SIG_DFL);
-		(void)signal(SIGQUIT, SIG_DFL);
+		(void)xsignal(SIGINT, SIG_DFL);
+		(void)xsignal(SIGQUIT, SIG_DFL);
 		shell = getenv("SHELL");
 		if (shell == NULL)
 			shell = _PATH_BSHELL;
@@ -1341,8 +1340,8 @@ shell(argc, argv)
 	if (pid > 0)
 		while (wait(&wait_status) != pid)
 			;
-	(void)signal(SIGINT, old1);
-	(void)signal(SIGQUIT, old2);
+	(void)xsignal(SIGINT, old1);
+	(void)xsignal(SIGQUIT, old2);
 	if (pid == -1) {
 		warn("Try again later");
 		code = -1;
@@ -1589,7 +1588,7 @@ do_umask(argc, argv)
 }
 
 void
-idle(argc, argv)
+idlecmd(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -1731,12 +1730,12 @@ doproxy(argc, argv)
 		code = -1;
 		return;
 	}
-	oldintr = signal(SIGINT, proxabort);
+	oldintr = xsignal(SIGINT, proxabort);
 	pswitch(1);
 	if (c->c_conn && !connected) {
 		fputs("Not connected.\n", ttyout);
 		pswitch(0);
-		(void)signal(SIGINT, oldintr);
+		(void)xsignal(SIGINT, oldintr);
 		code = -1;
 		return;
 	}
@@ -1751,7 +1750,7 @@ doproxy(argc, argv)
 		proxflag = 0;
 	}
 	pswitch(0);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 }
 
 void
@@ -2108,8 +2107,8 @@ usage:
 	} else
 		incr = DEFAULTINCR;
 
-	oldusr1 = signal(SIGUSR1, SIG_IGN);
-	oldusr2 = signal(SIGUSR2, SIG_IGN);
+	oldusr1 = xsignal(SIGUSR1, SIG_IGN);
+	oldusr2 = xsignal(SIGUSR2, SIG_IGN);
 	if (dir & RATE_GET) {
 		if (!showonly) {
 			rate_get = max;
@@ -2130,8 +2129,8 @@ usage:
 		"Put transfer rate throttle: %s; maximum: %d; increment %d.\n",
 			    onoff(rate_put), rate_put, rate_put_incr);
 	}
-	(void)signal(SIGUSR1, oldusr1);
-	(void)signal(SIGUSR2, oldusr2);
+	(void)xsignal(SIGUSR1, oldusr1);
+	(void)xsignal(SIGUSR2, oldusr2);
 	return 0;
 }
 

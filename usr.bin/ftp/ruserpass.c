@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.23 1999/09/22 03:01:54 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.24 1999/09/27 23:09:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.23 1999/09/22 03:01:54 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.24 1999/09/27 23:09:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: ruserpass.c,v 1.23 1999/09/22 03:01:54 lukem Exp $");
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <signal.h>
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
