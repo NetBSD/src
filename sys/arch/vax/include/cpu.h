@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.57 2001/05/30 12:28:52 mrg Exp $      */
+/*      $NetBSD: cpu.h,v 1.58 2001/06/03 15:12:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -75,12 +75,30 @@ struct	cpu_dep {
 	void	(*cpu_clrf)(void); /* Clear cold/warm start flags */
 	void	(*cpu_subconf)(struct device *);/*config cpu dep. devs */
 	int     cpu_flags;
-#if defined(MULTIPROCESSOR)
-	/* Kick off slave cpu */
-	void	(*cpu_startslave)(struct device *, struct cpu_info *);
-#endif
 	void	(*cpu_badaddr)(void); /* cpu-specific badaddr() */
 };
+
+#if defined(MULTIPROCESSOR)
+/*
+ * All cpu-dependent calls for multicpu systems goes here.
+ */
+struct cpu_mp_dep {
+	void	(*cpu_startslave)(struct device *, struct cpu_info *);
+	void	(*cpu_send_ipi)(struct device *dest);
+	void	(*cpu_cnintr)(void);
+};
+/*
+ * NOTE: This is not bit mask, this is bit _number_.
+ */
+#define	IPI_START_CNTX	1	/* Start console transmitter, proc out */
+#define	IPI_SEND_CNCHAR	2	/* Write char to console, kernel printf */
+#define	IPI_RUNNING	3	/* This CPU just started to run */
+
+#define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
+#define	IPI_DEST_ALL	-2	/* Broadcast */
+
+extern struct cpu_mp_dep *mp_dep_call;
+#endif /* defined(MULTIPROCESSOR) */
   
 #define	CPU_RAISEIPL	1	/* Must raise IPL until intr is handled */ 
 
@@ -113,10 +131,22 @@ struct cpu_info {
 	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
 	vaddr_t ci_istack;		/* Interrupt stack location */
 	int ci_flags;			/* See below */
+	long ci_ipimsgs;		/* Sent IPI bits */
 #endif
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
 #define	CI_RUNNING	2		/* Set when a slave CPU is running */
+
+#if defined(MULTIPROCESSOR)
+/*
+ * "helper" struct. All multicpu systems must have the first two field
+ * of its cpu softc like this. (used in multicpu.c).
+ */
+struct cpu_mp_softc {
+	struct device sc_dev;
+	struct cpu_info sc_ci;
+};
+#endif /* defined(MULTIPROCESSOR) */
 
 #define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
 #define	curproc	(curcpu()->ci_curproc)
@@ -124,10 +154,11 @@ struct cpu_info {
 #define	ci_cpuid ci_dev->dv_unit
 #define	need_resched(ci) {(ci)->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
 #if defined(MULTIPROCESSOR)
-#define	CPU_IS_PRIMARY(ci)	(ci->ci_flags & CI_MASTERCPU)
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
 extern char tramp;
 #endif
+#define	NO_KPRINTF_SPINLOCK	/* Separate consoles */
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -153,8 +184,10 @@ struct device;
 
 /* Some low-level prototypes */
 #if defined(MULTIPROCESSOR)
-struct	cpu_info *cpu_slavesetup(struct device *);
+void	cpu_slavesetup(struct device *);
 void	cpu_boot_secondary_processors(void);
+void	cpu_send_ipi(int, int);
+void	cpu_handle_ipi(void);
 #endif
 int	badaddr(caddr_t, int);
 void	cpu_swapin(struct proc *);
