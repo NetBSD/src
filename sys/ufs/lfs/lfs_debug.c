@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.6 1996/10/12 21:58:50 christos Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.7 1996/11/15 23:11:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -92,7 +92,7 @@ lfs_dump_super(lfsp)
 		"sushift  ", lfsp->lfs_sushift,
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
-		"maxfilesize ", lfsp->lfs_maxfilesize);
+		"maxfilesize ", (long long)lfsp->lfs_maxfilesize);
 
 	printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
@@ -125,7 +125,7 @@ lfs_dump_dinode(dip)
 		"nlink ", dip->di_nlink,
 		"uid   ", dip->di_uid,
 		"gid   ", dip->di_gid,
-		"size  ", dip->di_size);
+		"size  ", (long long)dip->di_size);
 	printf("inum  %d\n", dip->di_inumber);
 	printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
