@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.4 1994/10/26 21:10:15 cgd Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.4.22.1 1999/03/30 01:10:03 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,35 +60,23 @@
  * Definitions for MC146818 real time clock
  */
 struct chiptime {
-	u_char	sec;		/* current seconds */
-	char	dummy0[3];
-	u_char	alarm_sec;	/* alarm seconds */
-	char	dummy1[3];
-	u_char	min;		/* current minutes */
-	char	dummy2[3];
-	u_char	alarm_min;	/* alarm minutes */
-	char	dummy3[3];
-	u_char	hour;		/* current hours */
-	char	dummy4[3];
-	u_char	alarm_hour;	/* alarm hours */
-	char	dummy5[3];
-	u_char	dayw;		/* day of the week */
-	char	dummy6[3];
-	u_char	day;		/* day of the month */
-	char	dummy7[3];
-	u_char	mon;		/* month */
-	char	dummy8[3];
-	u_char	year;		/* year */
-	char	dummy9[3];
-	u_char	rega;		/* register a */
-	char	dummy10[3];
-	u_char	regb;		/* register b */
-	char	dummy11[3];
-	u_char	regc;		/* register c */
-	char	dummy12[3];
-	u_char	regd;		/* register d */
-	char	dummy13[3];
-	u_char	nvram[50*4];	/* battery backed-up ram */
+#define	_WORD_(xxx)	u_int8_t xxx; unsigned : 24
+	_WORD_(sec);		/* current seconds */
+	_WORD_(alarm_sec);	/* alarm seconds */
+	_WORD_(min);		/* current minutes */
+	_WORD_(alarm_min);	/* alarm minutes */
+	_WORD_(hour);		/* current hours */
+	_WORD_(alarm_hour);	/* alarm hours */
+	_WORD_(dayw);		/* day of the week */
+	_WORD_(day);		/* day of the month */
+	_WORD_(mon);		/* month */
+	_WORD_(year);		/* year */
+	_WORD_(rega);		/* register a */
+	_WORD_(regb);		/* register b */
+	_WORD_(regc);		/* register c */
+	_WORD_(regd);		/* register d */
+	_WORD_(nvram);		/* battery backed-up ram: 50B or larger */
+#undef	_WORD_
 };
 
 /*

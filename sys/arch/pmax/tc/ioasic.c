@@ -1,53 +1,82 @@
-/* $NetBSD: ioasic.c,v 1.1.2.4 1999/03/29 16:50:35 drochner Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.5 1999/03/30 01:10:04 nisimura Exp $ */
+
+/*
+ * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * All rights reserved.
+ *
+ * Author: Keith Bostic, Chris G. Demetriou, Jonathan Stone
+ *
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.4 1999/03/29 16:50:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.5 1999/03/30 01:10:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <pmax/pmax/pmaxtype.h>
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 #include <pmax/tc/ioasicreg.h>
-#include <pmax/pmax/pmaxtype.h>
+
+#include "opt_dec_3min.h"
+#include "opt_dec_maxine.h"
+#include "opt_dec_3maxplus.h"
 
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
-int     ioasicprint __P((void *, const char *));
-int	ioasic_submatch __P((struct cfdata *, struct ioasicdev_attach_args *));
-
-tc_addr_t ioasic_base;
 
 struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
 };
 
+tc_addr_t ioasic_base;
+
 /* XXX XXX XXX */
-#define	IOASIC_INTR_SCSI	0x000e0200
-#define	IOASIC_INTR_DTOP	0x00000001
-#define	IOASIC_INTR_FDC		0x00000090
-#define	XINE_INTR_TC_0		0x00001000
-#define	XINE_INTR_TC_1		0x00000020
-#define	KN03_INTR_TC_0		0x00000800
-#define	KN03_INTR_TC_1		0x00001000
-#define	KN03_INTR_TC_2		0x00002000
-#define	KMIN_INTR_CLOCK		0x00000020
+#define IOASIC_INTR_SCSI	0x000e0200
+#define IOASIC_INTR_DTOP	0x00000001
+#define IOASIC_INTR_FDC		0x00000090
+#define XINE_INTR_TC_0		0x00001000
+#define XINE_INTR_TC_1		0x00000020
+#define KN03_INTR_TC_0		0x00000800
+#define KN03_INTR_TC_1		0x00001000
+#define KN03_INTR_TC_2		0x00002000
+#define KMIN_INTR_CLOCK		0x00000020
 
 extern u_int32_t iplmask[], oldiplmask[];
 /* XXX XXX XXX */
 
-#define	C(x)	(void *)(x)
+#define C(x)	(void *)(x)
 
+#if defined(DEC_MAXINE)
 struct ioasic_dev xine_ioasic_devs[] = {
 	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
 	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), 0, 			},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), 0,			},
 	{ "isdn",	0x240000, C(SYS_DEV_ISDN),  IOASIC_INTR_ISDN,	},
 	{ "dtop",	0x280000, C(SYS_DEV_DTOP),  IOASIC_INTR_DTOP,	},
 	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),   IOASIC_INTR_FDC,	},
@@ -57,7 +86,9 @@ struct ioasic_dev xine_ioasic_devs[] = {
 };
 int xine_builtin_ndevs = 7;
 int xine_ioasic_ndevs = sizeof(xine_ioasic_devs)/sizeof(xine_ioasic_devs[0]);
+#endif
 
+#if defined(DEC_3MIN) || defined(DEC_3MAXPLUS)
 struct ioasic_dev kn03_ioasic_devs[] = {
 	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
 	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
@@ -70,14 +101,10 @@ struct ioasic_dev kn03_ioasic_devs[] = {
 };
 int kn03_builtin_ndevs = 5;
 int kn03_ioasic_ndevs = sizeof(kn03_ioasic_devs)/sizeof(kn03_ioasic_devs[0]);
+#endif
 
 struct ioasic_dev *ioasic_devs;
 int ioasic_ndevs, builtin_ndevs;
-
-/* There can be only one. */
-int ioasicfound;
-
-extern int systype;
 
 int
 ioasicmatch(parent, cfdata, aux)
@@ -91,21 +118,28 @@ ioasicmatch(parent, cfdata, aux)
 	if (strncmp("IOCTL   ", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
 
-	if (systype == DS_MAXINE) {
+	if (cfdata->cf_unit > 0)
+		return (0);
+
+	switch (systype) {
+#if defined(DEC_MAXINE)
+	case DS_MAXINE:
 		ioasic_devs = xine_ioasic_devs;
 		ioasic_ndevs = xine_ioasic_ndevs;
 		builtin_ndevs = xine_builtin_ndevs;
-	}
-	else if (systype == DS_3MIN || systype == DS_3MAXPLUS) {
+		break;
+#endif
+#if defined(DEC_3MIN) || defined(DS_3MAXPLUS)
+	case DS_3MIN:
+	case DS_3MAXPLUS:
 		ioasic_devs = kn03_ioasic_devs;
 		ioasic_ndevs = kn03_ioasic_ndevs;
 		builtin_ndevs = kn03_builtin_ndevs;
-	}
-	else
+		break;
+#endif
+	default:
 		panic("ioasicmatch: how did we get here?");
-
-	if (ioasicfound)
-		return (0);
+	}
 
 	return (1);
 }
@@ -117,14 +151,11 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
-	int i;
-
-	ioasicfound = 1;
 
 	sc->sc_bst = ta->ta_memt;
 	sc->sc_dmat = ta->ta_dmat;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
-			  0x400000, 0, &sc->sc_bsh)) {
+			0x400000, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
 		return;
 	}
@@ -135,7 +166,7 @@ ioasicattach(parent, self, aux)
 
 	printf("\n");
 
-#if 1	/* !!! necessary? already all-0 upon booting as documented !!! */
+#if 1 /* !!! necessary? already all-0 upon booting as documented !!! */
 	/*
 	 * Turn off all device interrupt bits.
 	 * (This _does_ include TC option slot bits.
@@ -143,17 +174,21 @@ ioasicattach(parent, self, aux)
 	for (i = 0; i < ioasic_ndevs; i++)
 		*(volatile u_int32_t *)(sc->sc_base + IOASIC_IMSK)
 			&= ~ioasic_devs[i].iad_intrbits;
-	tc_mb();
+	tc_wmb();
 #endif
 
 #if 0
+	/* XXX correct if_le_ioasic.c XXX */
 	/*
 	 * Set up the LANCE DMA area.
 	 */
 	ioasic_lance_dma_setup(sc);
 #endif
 
-	ioasic_attach_devs(sc, ioasic_devs, builtin_ndevs);
+	/*
+	 * Try to configure each device.
+	 */
+	ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs);
 }
 
 void
@@ -168,22 +203,20 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 
 	dev = (u_long)cookie;
 
-	intrtab[dev].ih_func = func;
-	intrtab[dev].ih_arg = arg;
-
 	for (i = 0; i < ioasic_ndevs; i++) {
 		if (ioasic_devs[i].iad_cookie == cookie)
-			break;
+			goto found;
 	}
-	if (i == ioasic_ndevs) {
-		printf("\ndevice %s with cookie %d ", ioa->dv_xname, dev);
-		panic("ioasic_intr_establish: invalid cookie.");
-	}
+	panic("ioasic_intr_establish: invalid cookie %d", dev);
+found:
+
+	intrtab[dev].ih_func = func;
+	intrtab[dev].ih_arg = arg;
 	
 	intrbits = ioasic_devs[i].iad_intrbits;
 	iplmask[level] |= intrbits;
 	*(volatile u_int32_t *)(sc->sc_base + IOASIC_IMSK) |= intrbits;
-	tc_mb();
+	tc_wmb();
 }
 
 void
@@ -207,9 +240,9 @@ ioasic_lance_ether_address()
  * DMA area for IOASIC LANCE.
  * XXX Should be done differently, but this is better than it used to be.
  */
-#define	LE_IOASIC_MEMSIZE	(128*1024)
-#define	LE_IOASIC_MEMALIGN	(128*1024)
-caddr_t	le_iomem;
+#define LE_IOASIC_MEMSIZE	(128*1024)
+#define LE_IOASIC_MEMALIGN	(128*1024)
+caddr_t le_iomem;
 
 void	ioasic_lance_dma_setup __P((struct ioasic_softc *));
 
@@ -291,7 +324,7 @@ ioasic_lance_dma_setup(v)
 
 	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
 	    IOASIC_CSR_DMAEN_LANCE;
-	tc_mb();
+	tc_wmb();
 }
 #endif
 
@@ -322,7 +355,7 @@ _spllower_ioasic(mask)
 	int s;
 
 	s = IPL_NONE | _spllower(mask);
-	oldiplmask[IPL_NONE] =  *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+	oldiplmask[IPL_NONE] = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = iplmask[IPL_HIGH];
 	tc_wmb();
 	return s;

@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.9 1999/03/29 06:55:05 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.10 1999/03/30 01:10:05 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.9 1999/03/29 06:55:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.10 1999/03/30 01:10:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,24 +55,24 @@ __KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.9 1999/03/29 06:55:05 nisimura Exp $");
 extern void kn01_wbflush __P((void));
 
 struct pccreg {
-#define	_WORD_(xxx)	u_int16_t xxx; unsigned : 16
-	_WORD_(pcc_cmdr);	/* cursor command register */
-	_WORD_(pcc_xpos);	/* cursor X position */
-	_WORD_(pcc_ypos);	/* cursor Y position */
-	_WORD_(pcc_xmin1);	/* region 1 top edge */
-	_WORD_(pcc_xmax1);	/* region 1 bottom edge */
-	_WORD_(pcc_ymin1);	/* region 1 top edge */
-	_WORD_(pcc_ymax1);	/* region 1 bottom edge */
+#define	_HALF_(xxx)	u_int16_t xxx; unsigned : 16
+	_HALF_(pcc_cmdr);	/* cursor command register */
+	_HALF_(pcc_xpos);	/* cursor X position */
+	_HALF_(pcc_ypos);	/* cursor Y position */
+	_HALF_(pcc_xmin1);	/* region 1 top edge */
+	_HALF_(pcc_xmax1);	/* region 1 bottom edge */
+	_HALF_(pcc_ymin1);	/* region 1 top edge */
+	_HALF_(pcc_ymax1);	/* region 1 bottom edge */
 	unsigned : 32;		/* unused */
 	unsigned : 32;		/* unused */
 	unsigned : 32;		/* unused */
 	unsigned : 32;		/* unused */
-	_WORD_(pcc_xmin2);	/* region 2 top edge */
-	_WORD_(pcc_xmax2);	/* region 2 bottom edge */
-	_WORD_(pcc_ymin2);	/* region 2 top edge */
-	_WORD_(pcc_ymax2);	/* region 2 bottom edge */
-	_WORD_(pcc_memory);	/* cursor sprite pattern load */
-#undef	_WORD_
+	_HALF_(pcc_xmin2);	/* region 2 top edge */
+	_HALF_(pcc_xmax2);	/* region 2 bottom edge */
+	_HALF_(pcc_ymin2);	/* region 2 top edge */
+	_HALF_(pcc_ymax2);	/* region 2 bottom edge */
+	_HALF_(pcc_memory);	/* cursor sprite pattern load */
+#undef	_HALF_
 };
 
 #define	PCC_ENPA	0000001
@@ -93,7 +93,7 @@ struct pccreg {
 #define	PCC_TEST	0100000
 
 struct bt478reg {
-#define	_BYTE_(_y_)	u_int8_t _y_; unsigned : 24
+#define	_BYTE_(yyy)	u_int8_t yyy; unsigned : 24
 	_BYTE_(bt_mapWA);	/* address register (color map write) */
 	_BYTE_(bt_map);		/* color map */
 	_BYTE_(bt_mask);	/* pixel read mask */
