@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.344 2000/05/28 20:11:59 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.345 2000/05/28 21:12:00 jhawk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.344 $"
+#ident 		"GENERIC-$Revision: 1.345 $"
 
 maxusers	32		# estimated number of users
 
@@ -210,14 +210,14 @@ mainbus0 at root
 #pnpbios*	at mainbus?
 
 # mainboard audio chips
-#ess*		at pnpbios0 index ?	# ESS AudioDrive
-#sb*		at pnpbios0 index ?	# NeoMagic 256AV in sb mode
-#wss*		at pnpbios0 index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios0 index ?	# OPL3-SA3
+#ess*		at pnpbios? index ?	# ESS AudioDrive
+#sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
+#wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
+#ym*		at pnpbios? index ?	# OPL3-SA3
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
-# Interfaces" to "com*", otherwise com2 will attach at pnpbios0 and there
+# Interfaces" to "com*", otherwise com2 will attach at pnpbios? and there
 # will be no com0.  A side effect is pcmcia (and other) com? previously
 # starting at com3 may attach as com1 or com2.
 #com*		at pnpbios? index ?	# serial ports
@@ -231,7 +231,7 @@ mainbus0 at root
 #fdc*		at pnpbios? index ?	# floppy controller
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios0 index ?
+#pciide* at pnpbios? index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
