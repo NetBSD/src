@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.73 2002/03/09 05:14:33 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.74 2002/03/09 18:06:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.73 2002/03/09 05:14:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.74 2002/03/09 18:06:55 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1039,6 +1039,46 @@ pool_put(struct pool *pp, void *v)
 #ifdef POOL_DIAGNOSTIC
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #endif
+
+/*
+ * Add N items to the pool.
+ */
+int
+pool_prime(struct pool *pp, int n)
+{
+	struct pool_item_header *ph;
+	caddr_t cp;
+	int newpages, error = 0;
+
+	simple_lock(&pp->pr_slock);
+
+	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
+
+	while (newpages-- > 0) {
+		simple_unlock(&pp->pr_slock);
+		cp = pool_allocator_alloc(pp, PR_NOWAIT);
+		if (__predict_true(cp != NULL))
+			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
+		simple_lock(&pp->pr_slock);
+
+		if (__predict_false(cp == NULL || ph == NULL)) {
+			error = ENOMEM;
+			if (cp != NULL)
+				pool_allocator_free(pp, cp);
+			break;
+		}
+
+		pool_prime_page(pp, cp, ph);
+		pp->pr_npagealloc++;
+		pp->pr_minpages++;
+	}
+
+	if (pp->pr_minpages >= pp->pr_maxpages)
+		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
+
+	simple_unlock(&pp->pr_slock);
+	return (0);
+}
 
 /*
  * Add a page worth of items to the pool.
