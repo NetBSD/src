@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_kern.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_kern.c,v 1.9 1994/01/08 04:17:31 mycroft Exp $
+ *	$Id: vm_kern.c,v 1.10 1994/01/08 05:26:10 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -81,8 +81,8 @@
  *	Allocate pageable memory to the kernel's address map.
  *	map must be "kernel_map" below.
  */
-
-vm_offset_t kmem_alloc_pageable(map, size)
+vm_offset_t
+kmem_alloc_pageable(map, size)
 	vm_map_t		map;
 	register vm_size_t	size;
 {
@@ -115,7 +115,8 @@ vm_offset_t kmem_alloc_pageable(map, size)
  *	Allocate wired-down memory in the kernel's address map
  *	or a submap.
  */
-vm_offset_t kmem_alloc(map, size)
+vm_offset_t
+kmem_alloc(map, size)
 	register vm_map_t	map;
 	register vm_size_t	size;
 {
@@ -220,7 +221,8 @@ vm_offset_t kmem_alloc(map, size)
  *	with kmem_alloc, and return the physical pages
  *	associated with that region.
  */
-void kmem_free(map, addr, size)
+void
+kmem_free(map, addr, size)
 	vm_map_t		map;
 	register vm_offset_t	addr;
 	vm_size_t		size;
@@ -248,7 +250,8 @@ void kmem_free(map, addr, size)
  *	min, max	Returned endpoints of map
  *	pageable	Can the region be paged
  */
-vm_map_t kmem_suballoc(parent, min, max, size, pageable)
+vm_map_t
+kmem_suballoc(parent, min, max, size, pageable)
 	register vm_map_t	parent;
 	vm_offset_t		*min, *max;
 	register vm_size_t	size;
@@ -300,7 +303,8 @@ vm_map_t kmem_suballoc(parent, min, max, size, pageable)
  *
  *	Returns new destination address or 0 (if a failure occurs).
  */
-vm_offset_t vm_move(src_map,src_addr,dst_map,num_bytes,src_dealloc)
+vm_offset_t
+vm_move(src_map,src_addr,dst_map,num_bytes,src_dealloc)
 	vm_map_t		src_map;
 	register vm_offset_t	src_addr;
 	register vm_map_t	dst_map;
@@ -495,7 +499,8 @@ kmem_malloc(map, size, canwait)
  *	has no room, the caller sleeps waiting for more memory in the submap.
  *
  */
-vm_offset_t kmem_alloc_wait(map, size)
+vm_offset_t
+kmem_alloc_wait(map, size)
 	vm_map_t	map;
 	vm_size_t	size;
 {
@@ -546,7 +551,8 @@ thread_wakeup(&vm_pages_needed); /* XXX */
  *	has no room, the caller sleeps waiting for more memory in the submap.
  *
  */
-vm_offset_t kmem_alloc_wired_wait(map, size)
+vm_offset_t
+kmem_alloc_wired_wait(map, size)
 	vm_map_t	map;
 	vm_size_t	size;
 {
@@ -596,7 +602,8 @@ thread_wakeup(&vm_pages_needed); /* XXX */
  *	Returns memory to a submap of the kernel, and wakes up any threads
  *	waiting for memory in that map.
  */
-void	kmem_free_wakeup(map, addr, size)
+void
+kmem_free_wakeup(map, addr, size)
 	vm_map_t	map;
 	vm_offset_t	addr;
 	vm_size_t	size;
@@ -614,7 +621,8 @@ void	kmem_free_wakeup(map, addr, size)
  *	Initialize the kernel's virtual memory map, taking
  *	into account all memory allocated up to this time.
  */
-void kmem_init(start, end)
+void
+kmem_init(start, end)
 	vm_offset_t	start;
 	vm_offset_t	end;
 {
