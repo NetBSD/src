@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $	*/
+/*	$NetBSD: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,10 +11,10 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $
+ * $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $
  */
 
-/* 
+/*
  *  ==FILEVERSION 020312==
  *
  * This marker is used by the Linux installation script to determine
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -285,7 +285,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2002 Jean-loup Gailly
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -293,7 +293,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -598,7 +598,7 @@ void _tr_stored_type_only __P((deflate_state *));
 #else
 # define _tr_tally_lit(s, c, flush) flush = _tr_tally(s, 0, c)
 # define _tr_tally_dist(s, distance, length, flush) \
-              flush = _tr_tally(s, distance, length) 
+              flush = _tr_tally(s, distance, length)
 #endif
 
 #endif
@@ -608,7 +608,7 @@ void _tr_stored_type_only __P((deflate_state *));
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -655,7 +655,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
 
 /* #include "deflate.h" */
 
@@ -952,7 +952,7 @@ int ZEXPORT deflateReset (strm)
     z_streamp strm;
 {
     deflate_state *s;
-    
+
     if (strm == Z_NULL || strm->state == Z_NULL ||
         strm->zalloc == Z_NULL || strm->zfree == Z_NULL) return Z_STREAM_ERROR;
 
@@ -1026,7 +1026,7 @@ local void putShortMSB (s, b)
 {
     put_byte(s, (Byte)(b >> 8));
     put_byte(s, (Byte)(b & 0xff));
-}   
+}
 
 /* =========================================================================
  * Flush as much pending output as possible. All deflate() output goes
@@ -1293,7 +1293,7 @@ int deflateOutputPending (strm)
     z_streamp strm;
 {
     if (strm == Z_NULL || strm->state == Z_NULL) return 0;
-    
+
     return ((deflate_state *)(strm->state))->pending;
 }
 #endif
@@ -1845,7 +1845,7 @@ local block_state deflate_fast(s, flush)
                      * always MIN_MATCH bytes ahead.
                      */
                 } while (--s->match_length != 0);
-                s->strstart++; 
+                s->strstart++;
             } else
 #endif
 	    {
@@ -1865,7 +1865,7 @@ local block_state deflate_fast(s, flush)
             Tracevv((stderr,"%c", s->window[s->strstart]));
             _tr_tally_lit (s, s->window[s->strstart], bflush);
             s->lookahead--;
-            s->strstart++; 
+            s->strstart++;
         }
         if (bflush) FLUSH_BLOCK(s, 0);
     }
@@ -2000,7 +2000,7 @@ local block_state deflate_slow(s, flush)
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2002 Jean-loup Gailly
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /*
@@ -2029,7 +2029,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -3340,7 +3340,7 @@ local void copy_block(s, buf, len, header)
     s->last_eob_len = 8; /* enough lookahead for inflate */
 
     if (header) {
-        put_short(s, (ush)len);   
+        put_short(s, (ush)len);
         put_short(s, (ush)~len);
 #ifdef DEBUG_ZLIB
         s->bits_sent += 2*16;
@@ -3359,7 +3359,7 @@ local void copy_block(s, buf, len, header)
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* #include "zutil.h" */
@@ -3368,7 +3368,7 @@ local void copy_block(s, buf, len, header)
 
 /* infblock.h -- header to use infblock.c
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -3454,7 +3454,7 @@ struct internal_state {
   /* mode independent information */
   int  nowrap;          /* flag for no wrapper */
   uInt wbits;           /* log2(window size)  (8..15, defaults to 15) */
-  inflate_blocks_statef 
+  inflate_blocks_statef
     *blocks;            /* current inflate_blocks state */
 
 };
@@ -3814,7 +3814,7 @@ z_streamp z;
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* #include "zutil.h" */
@@ -3824,7 +3824,7 @@ z_streamp z;
 
 /* inftrees.h -- header to use inftrees.c
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -3886,7 +3886,7 @@ extern int inflate_trees_fixed __P((
 
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -3917,7 +3917,7 @@ extern void inflate_codes_free __P((
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -3958,7 +3958,7 @@ struct inflate_blocks_state {
       inflate_huft *tb;         /* bit length decoding tree */
     } trees;            /* if DTREE, decoding info for trees */
     struct {
-      inflate_codes_statef 
+      inflate_codes_statef
          *codes;
     } decode;           /* if CODES, current state */
   } sub;                /* submode */
@@ -4471,7 +4471,7 @@ int inflate_packet_flush(s)
 }
 
 /* Returns true if inflate is currently at the end of a block generated
- * by Z_SYNC_FLUSH or Z_FULL_FLUSH. 
+ * by Z_SYNC_FLUSH or Z_FULL_FLUSH.
  * IN assertion: s != Z_NULL
  */
 #if 0
@@ -4488,7 +4488,7 @@ inflate_blocks_statef *s;
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* #include "zutil.h" */
@@ -5103,7 +5103,7 @@ z_streamp z;             /* for memory allocation */
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* #include "zutil.h" */
@@ -5116,7 +5116,7 @@ z_streamp z;             /* for memory allocation */
 
 /* inffast.h -- header to use inffast.c
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is
@@ -5378,7 +5378,7 @@ z_streamp z;
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* #include "zutil.h" */
@@ -5475,7 +5475,7 @@ int r;
 
 /* inffast.c -- process literals and length/distance pairs fast
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* #include "zutil.h" */
@@ -5664,7 +5664,7 @@ z_streamp z;
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) Id */
@@ -5902,10 +5902,10 @@ void  zcfree (opaque, ptr)
 /* +++ adler32.c */
 /* adler32.c -- compute the Adler-32 checksum of a data stream
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.19 2002/08/20 03:52:26 kristerw Exp $ */
+/* @(#) $Id: zlib.c,v 1.19.6.1 2005/03/04 16:53:00 skrll Exp $ */
 
 /* #include "zlib.h" */
 

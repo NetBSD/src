@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.40.2.5 2005/01/17 19:31:52 skrll Exp $ */
+/* $NetBSD: cfb.c,v 1.40.2.6 2005/03/04 16:50:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.40.2.5 2005/01/17 19:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.40.2.6 2005/03/04 16:50:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.40.2.5 2005/01/17 19:31:52 skrll Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/ic/bt459reg.h>	
+#include <dev/ic/bt459reg.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -532,7 +532,7 @@ cfbintr(arg)
 	struct cfb_softc *sc = arg;
 	caddr_t base, vdac;
 	int v;
-	
+
 	base = (caddr_t)sc->sc_ri->ri_hw;
 	*(u_int8_t *)(base + CX_OFFSET_IREQ) = 0;
 	if (sc->sc_changed == 0)
@@ -554,7 +554,7 @@ cfbintr(arg)
 		y += sc->sc_cursor.cc_magic.y;
 
 		VDACSELECT(vdac, BT459_IREG_CURSOR_X_LOW);
-		REGWRITE32(vdac, bt_reg, x);	
+		REGWRITE32(vdac, bt_reg, x);
 		REGWRITE32(vdac, bt_reg, x >> 8);
 		REGWRITE32(vdac, bt_reg, y);
 		REGWRITE32(vdac, bt_reg, y >> 8);

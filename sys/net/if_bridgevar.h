@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.3.2.3 2004/09/21 13:36:36 skrll Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.3.2.4 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,12 +35,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.

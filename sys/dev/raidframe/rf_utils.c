@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.11.2.3 2004/09/21 13:32:55 skrll Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.11.2.4 2005/03/04 16:50:09 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11.2.3 2004/09/21 13:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11.2.4 2005/03/04 16:50:09 skrll Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
@@ -56,7 +56,7 @@ rf_make_2d_array(int b, int k, RF_AllocListElem_t *allocList)
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
-void 
+void
 rf_free_2d_array(RF_RowCol_t **a, int b, int k)
 {
 	RF_RowCol_t i;
@@ -78,7 +78,7 @@ rf_make_1d_array(int c, RF_AllocListElem_t *allocList)
 	return (retval);
 }
 
-void 
+void
 rf_free_1d_array(RF_RowCol_t *a, int n)
 {
 	RF_Free(a, n * sizeof(RF_RowCol_t));
@@ -87,7 +87,7 @@ rf_free_1d_array(RF_RowCol_t *a, int n)
 /* Euclid's algorithm:  finds and returns the greatest common divisor
  * between a and b.     (MCH)
  */
-int 
+int
 rf_gcd(int m, int n)
 {
 	int     t;
@@ -110,7 +110,7 @@ rf_gcd(int m, int n)
 #define HC2INT(x)    ( ((x) >= 'a' && (x) <= 'f') ? (x) - 'a' + 10 :                    \
 		       ( ((x) >= 'A' && (x) <= 'F') ? (x) - 'A' + 10 : (x - '0') ) )
 
-int 
+int
 rf_atoi(char *p)
 {
 	int     val = 0, negate = 0;
@@ -124,7 +124,7 @@ rf_atoi(char *p)
 	return ((negate) ? -val : val);
 }
 
-int 
+int
 rf_htoi(char *p)
 {
 	int     val = 0;

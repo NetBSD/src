@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.76.2.6 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.76.2.7 2005/03/04 16:50:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ typedef	int	boolean;
 
 #include <sys/callout.h>
 #include <sys/queue.h>
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_debug.h>
 
 struct buf;
@@ -236,7 +237,7 @@ struct scsipi_adapter {
  */
 struct scsipi_bustype {
 	int	bustype_type;		/* symbolic name of type */
-	
+
 	void	(*bustype_cmd)(struct scsipi_xfer *);
 	int	(*bustype_interpret_sense)(struct scsipi_xfer *);
 	void	(*bustype_printaddr)(struct scsipi_periph *);
@@ -513,7 +514,7 @@ struct scsipi_xfer {
 	struct	buf *bp;		/* If we need to associate with */
 					/* a buf */
 	union {
-		struct  scsipi_sense_data scsi_sense; /* 32 bytes */
+		struct  scsi_sense_data scsi_sense; /* 32 bytes */
 		u_int32_t atapi_sense;
 	} sense;
 
@@ -638,13 +639,13 @@ int	scsipi_prevent(struct scsipi_periph *, int, int);
 int	scsipi_inquire(struct scsipi_periph *,
 	    struct scsipi_inquiry_data *, int);
 int	scsipi_mode_select(struct scsipi_periph *, int,
-	    struct scsipi_mode_header *, int, int, int, int);
+	    struct scsi_mode_parameter_header_6 *, int, int, int, int);
 int	scsipi_mode_select_big(struct scsipi_periph *, int,
-	    struct scsipi_mode_header_big *, int, int, int, int);
+	    struct scsi_mode_parameter_header_10 *, int, int, int, int);
 int	scsipi_mode_sense(struct scsipi_periph *, int, int,
-	    struct scsipi_mode_header *, int, int, int, int);
+	    struct scsi_mode_parameter_header_6 *, int, int, int, int);
 int	scsipi_mode_sense_big(struct scsipi_periph *, int, int,
-	    struct scsipi_mode_header_big *, int, int, int, int);
+	    struct scsi_mode_parameter_header_10 *, int, int, int, int);
 int	scsipi_start(struct scsipi_periph *, int, int);
 void	scsipi_done(struct scsipi_xfer *);
 void	scsipi_user_done(struct scsipi_xfer *);
@@ -654,7 +655,7 @@ void	scsipi_kill_pending(struct scsipi_periph *);
 struct scsipi_periph *scsipi_alloc_periph(int);
 #ifdef SCSIVERBOSE
 void	scsipi_print_sense(struct scsipi_xfer *, int);
-void	scsipi_print_sense_data(struct scsipi_sense_data *, int);
+void	scsipi_print_sense_data(struct scsi_sense_data *, int);
 char   *scsipi_decode_sense(void *, int);
 #endif
 void	scsipi_print_cdb(struct scsipi_generic *cmd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.35.2.3 2004/09/21 13:36:19 skrll Exp $	*/
+/*	$NetBSD: ufs.c,v 1.35.2.4 2005/03/04 16:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -855,7 +855,7 @@ ffs_oldfscompat(struct fs *fs)
 
 #ifdef COMPAT_UFS
 	if (fs->fs_magic == FS_UFS1_MAGIC &&
-	    fs->fs_old_inodefmt < FS_44INODEFMT) {	
+	    fs->fs_old_inodefmt < FS_44INODEFMT) {
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.24.2.4 2004/09/21 13:38:36 skrll Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.24.2.5 2005/03/04 16:54:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.24.2.4 2004/09/21 13:38:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.24.2.5 2005/03/04 16:54:20 skrll Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.24.2.4 2004/09/21 13:38:36 skrll 
  * Given that the server needs a-priori knowledge about
  * the client anyway, it might as well assign a fixed IP
  * address for the client and support BOOTP.
- * 
+ *
  * On the other hand, disk-FULL clients may use DHCP, but
  * in that case the DHCP client should be user-mode code,
  * and has no bearing on the code below. -gwr

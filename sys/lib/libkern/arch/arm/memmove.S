@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.2.16.3 2004/09/21 13:36:06 skrll Exp $	*/
+/*	$NetBSD: memmove.S,v 1.2.16.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ ENTRY(memmove)
 
 	bcc	.Lmemmove_backwards
 
-	/* start of forwards copy */	
+	/* start of forwards copy */
 	subs	r2, r2, #4
 	blt	.Lmemmove_fl4		/* less than 4 bytes */
 	ands	r12, r0, #3
@@ -106,34 +106,34 @@ ENTRY(memmove)
 	/* We have aligned source and destination */
 	subs	r2, r2, #8
 	blt	.Lmemmove_fl12		/* less than 12 bytes (4 from above) */
-	subs	r2, r2, #0x14         
+	subs	r2, r2, #0x14
 	blt	.Lmemmove_fl32		/* less than 32 bytes (12 from above) */
 	stmdb	sp!, {r4}		/* borrow r4 */
 
 	/* blat 32 bytes at a time */
 	/* XXX for really big copies perhaps we should use more registers */
-.Lmemmove_floop32:	
+.Lmemmove_floop32:
 	ldmia	r1!, {r3, r4, r12, lr}
 	stmia	r0!, {r3, r4, r12, lr}
 	ldmia	r1!, {r3, r4, r12, lr}
 	stmia	r0!, {r3, r4, r12, lr}
-	subs	r2, r2, #0x20         
+	subs	r2, r2, #0x20
 	bge	.Lmemmove_floop32
 
 	cmn	r2, #0x10
 	ldmgeia	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
 	stmgeia	r0!, {r3, r4, r12, lr}
-	subge	r2, r2, #0x10         
+	subge	r2, r2, #0x10
 	ldmia	sp!, {r4}		/* return r4 */
 
 .Lmemmove_fl32:
-	adds	r2, r2, #0x14         
+	adds	r2, r2, #0x14
 
 	/* blat 12 bytes at a time */
 .Lmemmove_floop12:
 	ldmgeia	r1!, {r3, r12, lr}
 	stmgeia	r0!, {r3, r12, lr}
-	subges	r2, r2, #0x0c         
+	subges	r2, r2, #0x0c
 	bge	.Lmemmove_floop12
 
 .Lmemmove_fl12:
@@ -191,9 +191,9 @@ ENTRY(memmove)
 	cmp	r12, #2
 	bgt	.Lmemmove_fsrcul3
 	beq	.Lmemmove_fsrcul2
-	cmp	r2, #0x0c            
+	cmp	r2, #0x0c
 	blt	.Lmemmove_fsrcul1loop4
-	sub	r2, r2, #0x0c         
+	sub	r2, r2, #0x0c
 	stmdb	sp!, {r4, r5}
 
 .Lmemmove_fsrcul1loop16:
@@ -221,10 +221,10 @@ ENTRY(memmove)
 	orr	r12, r12, lr, lsr #24
 #endif
 	stmia	r0!, {r3-r5, r12}
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemmove_fsrcul1loop16
 	ldmia	sp!, {r4, r5}
-	adds	r2, r2, #0x0c         
+	adds	r2, r2, #0x0c
 	blt	.Lmemmove_fsrcul1l4
 
 .Lmemmove_fsrcul1loop4:
@@ -248,9 +248,9 @@ ENTRY(memmove)
 	b	.Lmemmove_fl4
 
 .Lmemmove_fsrcul2:
-	cmp	r2, #0x0c            
+	cmp	r2, #0x0c
 	blt	.Lmemmove_fsrcul2loop4
-	sub	r2, r2, #0x0c         
+	sub	r2, r2, #0x0c
 	stmdb	sp!, {r4, r5}
 
 .Lmemmove_fsrcul2loop16:
@@ -278,10 +278,10 @@ ENTRY(memmove)
 	orr	r12, r12, lr, lsl #16
 #endif
 	stmia	r0!, {r3-r5, r12}
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemmove_fsrcul2loop16
 	ldmia	sp!, {r4, r5}
-	adds	r2, r2, #0x0c         
+	adds	r2, r2, #0x0c
 	blt	.Lmemmove_fsrcul2l4
 
 .Lmemmove_fsrcul2loop4:
@@ -305,9 +305,9 @@ ENTRY(memmove)
 	b	.Lmemmove_fl4
 
 .Lmemmove_fsrcul3:
-	cmp	r2, #0x0c            
+	cmp	r2, #0x0c
 	blt	.Lmemmove_fsrcul3loop4
-	sub	r2, r2, #0x0c         
+	sub	r2, r2, #0x0c
 	stmdb	sp!, {r4, r5}
 
 .Lmemmove_fsrcul3loop16:
@@ -335,10 +335,10 @@ ENTRY(memmove)
 	orr	r12, r12, lr, lsl #8
 #endif
 	stmia	r0!, {r3-r5, r12}
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemmove_fsrcul3loop16
 	ldmia	sp!, {r4, r5}
-	adds	r2, r2, #0x0c         
+	adds	r2, r2, #0x0c
 	blt	.Lmemmove_fsrcul3l4
 
 .Lmemmove_fsrcul3loop4:
@@ -386,18 +386,18 @@ ENTRY(memmove)
 	stmdb	r0!, {r3, r4, r12, lr}
 	ldmdb	r1!, {r3, r4, r12, lr}
 	stmdb	r0!, {r3, r4, r12, lr}
-	subs	r2, r2, #0x20         
+	subs	r2, r2, #0x20
 	bge	.Lmemmove_bloop32
 
 .Lmemmove_bl32:
-	cmn	r2, #0x10            
+	cmn	r2, #0x10
 	ldmgedb	r1!, {r3, r4, r12, lr}	/* blat a remaining 16 bytes */
 	stmgedb	r0!, {r3, r4, r12, lr}
-	subge	r2, r2, #0x10         
-	adds	r2, r2, #0x14         
+	subge	r2, r2, #0x10
+	adds	r2, r2, #0x14
 	ldmgedb	r1!, {r3, r12, lr}	/* blat a remaining 12 bytes */
 	stmgedb	r0!, {r3, r12, lr}
-	subge	r2, r2, #0x0c         
+	subge	r2, r2, #0x0c
 	ldmia	sp!, {r4}
 
 .Lmemmove_bl12:
@@ -449,9 +449,9 @@ ENTRY(memmove)
 	cmp	r12, #2
 	blt	.Lmemmove_bsrcul1
 	beq	.Lmemmove_bsrcul2
-	cmp	r2, #0x0c            
+	cmp	r2, #0x0c
 	blt	.Lmemmove_bsrcul3loop4
-	sub	r2, r2, #0x0c         
+	sub	r2, r2, #0x0c
 	stmdb	sp!, {r4, r5}
 
 .Lmemmove_bsrcul3loop16:
@@ -479,10 +479,10 @@ ENTRY(memmove)
 	orr	r4, r4, r3, lsr #24
 #endif
 	stmdb	r0!, {r4, r5, r12, lr}
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemmove_bsrcul3loop16
 	ldmia	sp!, {r4, r5}
-	adds	r2, r2, #0x0c         
+	adds	r2, r2, #0x0c
 	blt	.Lmemmove_bsrcul3l4
 
 .Lmemmove_bsrcul3loop4:
@@ -506,9 +506,9 @@ ENTRY(memmove)
 	b	.Lmemmove_bl4
 
 .Lmemmove_bsrcul2:
-	cmp	r2, #0x0c            
+	cmp	r2, #0x0c
 	blt	.Lmemmove_bsrcul2loop4
-	sub	r2, r2, #0x0c         
+	sub	r2, r2, #0x0c
 	stmdb	sp!, {r4, r5}
 
 .Lmemmove_bsrcul2loop16:
@@ -536,10 +536,10 @@ ENTRY(memmove)
 	orr	r4, r4, r3, lsr #16
 #endif
 	stmdb	r0!, {r4, r5, r12, lr}
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemmove_bsrcul2loop16
 	ldmia	sp!, {r4, r5}
-	adds	r2, r2, #0x0c         
+	adds	r2, r2, #0x0c
 	blt	.Lmemmove_bsrcul2l4
 
 .Lmemmove_bsrcul2loop4:
@@ -563,9 +563,9 @@ ENTRY(memmove)
 	b	.Lmemmove_bl4
 
 .Lmemmove_bsrcul1:
-	cmp	r2, #0x0c            
+	cmp	r2, #0x0c
 	blt	.Lmemmove_bsrcul1loop4
-	sub	r2, r2, #0x0c         
+	sub	r2, r2, #0x0c
 	stmdb	sp!, {r4, r5}
 
 .Lmemmove_bsrcul1loop32:
@@ -593,10 +593,10 @@ ENTRY(memmove)
 	orr	r4, r4, r3, lsr #8
 #endif
 	stmdb	r0!, {r4, r5, r12, lr}
-	subs	r2, r2, #0x10         
+	subs	r2, r2, #0x10
 	bge	.Lmemmove_bsrcul1loop32
 	ldmia	sp!, {r4, r5}
-	adds	r2, r2, #0x0c         
+	adds	r2, r2, #0x0c
 	blt	.Lmemmove_bsrcul1l4
 
 .Lmemmove_bsrcul1loop4:

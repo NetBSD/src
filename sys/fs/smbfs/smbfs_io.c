@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.15.2.4 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.15.2.5 2005/03/04 16:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.15.2.4 2004/09/21 13:35:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.15.2.5 2005/03/04 16:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 			uvm_vnp_setsize(vp, np->n_size);
 			extended = 1;
 		}
-	
+
 	}
 	if (resid > uiop->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.33.2.5 2005/02/04 11:47:09 skrll Exp $	*/
+/*	$NetBSD: dhu.c,v 1.33.2.6 2005/03/04 16:49:52 skrll Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.5 2005/02/04 11:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.6 2005/03/04 16:49:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.5 2005/02/04 11:47:09 skrll Exp $");
 
 /* A DHU-11 has 16 ports while a DHV-11 has only 8. We use 16 by default */
 
-#define	NDHULINE 	16
+#define	NDHULINE	16
 
 #define DHU_M2U(c)	((c)>>4)	/* convert minor(dev) to unit # */
 #define DHU_LINE(u)	((u)&0xF)	/* extract line # from minor(dev) */
@@ -201,9 +201,9 @@ const struct cdevsw dhu_cdevsw = {
 
 static int
 dhu_match(parent, cf, aux)
-        struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-        void *aux;
+	void *aux;
 {
 	struct uba_attach_args *ua = aux;
 	int n;
@@ -235,13 +235,13 @@ dhu_match(parent, cf, aux)
 	    DHU_CSR_DIAG_FAIL) != 0)
 		return 0;
 
-       	return 1;
+	return 1;
 }
 
 static void
 dhu_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct dhu_softc *sc = (void *)self;
 	struct uba_attach_args *ua = aux;
@@ -283,12 +283,12 @@ dhu_attach(parent, self, aux)
 		struct tty *tp;
 		tp = sc->sc_dhu[i].dhu_tty = ttymalloc();
 		sc->sc_dhu[i].dhu_state = STATE_IDLE;
-		bus_dmamap_create(sc->sc_dmat, tp->t_outq.c_cn, 1, 
+		bus_dmamap_create(sc->sc_dmat, tp->t_outq.c_cn, 1,
 		    tp->t_outq.c_cn, 0, BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT,
 		    &sc->sc_dhu[i].dhu_dmah);
 		bus_dmamap_load(sc->sc_dmat, sc->sc_dhu[i].dhu_dmah,
 		    tp->t_outq.c_cs, tp->t_outq.c_cn, 0, BUS_DMA_NOWAIT);
-			
+
 	}
 
 	/* Now establish RX & TX interrupt handlers */
@@ -403,7 +403,7 @@ dhuxint(arg)
 			tp->t_state &= ~TS_FLUSH;
 		else {
 			if (sc->sc_dhu[line].dhu_state == STATE_DMA_STOPPED)
-				sc->sc_dhu[line].dhu_cc -= 
+				sc->sc_dhu[line].dhu_cc -=
 				    DHU_READ_WORD(DHU_UBA_TBUFCNT);
 			ndflush(&tp->t_outq, sc->sc_dhu[line].dhu_cc);
 			sc->sc_dhu[line].dhu_cc = 0;
@@ -473,7 +473,7 @@ dhuopen(dev, flag, mode, l)
 		tp->t_state |= TS_CARR_ON;
 	s = spltty();
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
-	       !(tp->t_state & TS_CARR_ON)) {
+	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 				TTIPRI | PCATCH, ttopen, 0);
@@ -634,11 +634,11 @@ dhuioctl(dev, cmd, data, flag, l)
 
 struct tty *
 dhutty(dev)
-        dev_t dev;
+	dev_t dev;
 {
 	struct dhu_softc *sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
 	struct tty *tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
-        return (tp);
+	return (tp);
 }
 
 /*ARGSUSED*/
@@ -663,8 +663,8 @@ dhustop(tp, flag)
 			sc->sc_dhu[line].dhu_state = STATE_DMA_STOPPED;
 
 			DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
-			DHU_WRITE_WORD(DHU_UBA_LNCTRL, 
-			    DHU_READ_WORD(DHU_UBA_LNCTRL) | 
+			DHU_WRITE_WORD(DHU_UBA_LNCTRL,
+			    DHU_READ_WORD(DHU_UBA_LNCTRL) |
 			    DHU_LNCTRL_DMA_ABORT);
 		}
 
@@ -696,7 +696,7 @@ dhustart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	cc = ndqb(&tp->t_outq, 0);
-	if (cc == 0) 
+	if (cc == 0)
 		goto out;
 
 	tp->t_state |= TS_BUSY;
@@ -712,8 +712,8 @@ dhustart(tp)
 	if (cc == 1 && sc->sc_type == IS_DHV) {
 
 		sc->sc_dhu[line].dhu_state = STATE_TX_ONE_CHAR;
-		
-		DHU_WRITE_WORD(DHU_UBA_TXCHAR, 
+
+		DHU_WRITE_WORD(DHU_UBA_TXCHAR,
 		    DHU_TXCHAR_DATA_VALID | *tp->t_outq.c_cf);
 
 	} else {
@@ -727,7 +727,7 @@ dhustart(tp)
 		DHU_WRITE_WORD(DHU_UBA_TBUFAD1, addr & 0xFFFF);
 		DHU_WRITE_WORD(DHU_UBA_TBUFAD2, ((addr>>16) & 0x3F) |
 		    DHU_TBUFAD2_TX_ENABLE);
-		DHU_WRITE_WORD(DHU_UBA_LNCTRL, 
+		DHU_WRITE_WORD(DHU_UBA_LNCTRL,
 		    DHU_READ_WORD(DHU_UBA_LNCTRL) & ~DHU_LNCTRL_DMA_ABORT);
 		DHU_WRITE_WORD(DHU_UBA_TBUFAD2,
 		    DHU_READ_WORD(DHU_UBA_TBUFAD2) | DHU_TBUFAD2_DMA_START);
@@ -756,12 +756,12 @@ dhuparam(tp, t)
 	sc = dhu_cd.cd_devs[unit];
 
 	/* check requested parameters */
-        if (ospeed < 0 || ispeed < 0)
-                return (EINVAL);
+	if (ospeed < 0 || ispeed < 0)
+		return (EINVAL);
 
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = cflag;
 
 	if (ospeed == 0) {
 		(void) dhumctl(sc, line, 0, DMSET);	/* hang up line */
@@ -801,7 +801,7 @@ dhuparam(tp, t)
 
 	DHU_WRITE_WORD(DHU_UBA_LPR, lpr);
 
-	DHU_WRITE_WORD(DHU_UBA_TBUFAD2, 
+	DHU_WRITE_WORD(DHU_UBA_TBUFAD2,
 	    DHU_READ_WORD(DHU_UBA_TBUFAD2) | DHU_TBUFAD2_TX_ENABLE);
 
 	lnctrl = DHU_READ_WORD(DHU_UBA_LNCTRL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.26.2.4 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: ms.c,v 1.26.2.5 2005/03/04 16:50:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.26.2.4 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.26.2.5 2005/03/04 16:50:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ msopen(dev, flags, mode, l)
 	if (ms->ms_deviopen) {
 		int err;
 		err = (*ms->ms_deviopen)((struct device *)ms, flags);
-		if (err) 
+		if (err)
 			return (err);
 	}
 	ms->ms_events.ev_io = l->l_proc;
@@ -149,7 +149,7 @@ msclose(dev, flags, mode, l)
 	if (ms->ms_deviclose) {
 		int err;
 		err = (*ms->ms_deviclose)((struct device *)ms, flags);
-		if (err) 
+		if (err)
 			return (err);
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.10 2005/02/15 21:33:41 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.11 2005/03/04 16:54:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.10 2005/02/15 21:33:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.11 2005/03/04 16:54:45 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -165,7 +165,7 @@ ext2fs_init()
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-	    "ext2dinopl", &pool_allocator_nointr); 
+	    "ext2dinopl", &pool_allocator_nointr);
 #endif
 	ufs_init();
 }
@@ -205,7 +205,7 @@ ext2fs_mountroot()
 
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
-	
+
 	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -506,7 +506,7 @@ ext2fs_reload(mountp, cred, l)
 	}
 
 	fs = VFSTOUFS(mountp)->um_e2fs;
-	/* 
+	/*
 	 * copy in new superblock, and compute in-memory values
 	 */
 	e2fs_sbload(newfs, &fs->e2fs);
@@ -541,7 +541,7 @@ ext2fs_reload(mountp, cred, l)
 		    fs->e2fs_bsize);
 		brelse(bp);
 	}
-	
+
 loop:
 	simple_lock(&mntvnode_slock);
 	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
@@ -879,7 +879,7 @@ loop:
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
-		{   
+		{
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -1084,7 +1084,7 @@ ext2fs_fhtovp(mp, fhp, vpp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
+	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 ||
 		ip->i_e2fs_gen != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;

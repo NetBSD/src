@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.18.2.4 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.18.2.5 2005/03/04 16:54:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.18.2.4 2004/09/21 13:38:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.18.2.5 2005/03/04 16:54:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -161,7 +161,7 @@ nsmbattach(int num)
 		num = NSMB_DEFNUM;
 
 	smb_devtbl = malloc(num * sizeof(void *), M_NSMBDEV, M_WAITOK|M_ZERO);
-	
+
 	if (smb_sm_init()) {
 #ifdef DIAGNOSTIC
 		panic("netsmbattach: smb_sm_init failed");
@@ -315,7 +315,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	    case SMBIOC_SETFLAGS: {
 		struct smbioc_flags *fl = (struct smbioc_flags*)data;
 		int on;
-	
+
 		if (fl->ioc_level == SMBL_VC) {
 			if (fl->ioc_mask & SMBV_PERMANENT) {
 				on = fl->ioc_flags & SMBV_PERMANENT;
@@ -380,7 +380,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		struct smbioc_rw *rwrq = (struct smbioc_rw*)data;
 		struct uio auio;
 		struct iovec iov;
-	
+
 		if ((ssp = sdp->sd_share) == NULL)
 			return ENOTCONN;
 		iov.iov_base = rwrq->ioc_base;

@@ -1,7 +1,7 @@
-/*	$NetBSD: iodesc.h,v 1.5 2003/03/12 14:49:19 drochner Exp $	*/
+/*	$NetBSD: iodesc.h,v 1.5.2.1 2005/03/04 16:52:41 skrll Exp $	*/
 
 /*
- * Copyright (c) 1993 Adam Glass 
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcilkm.h,v 1.3.2.4 2004/09/21 13:36:24 skrll Exp $	*/
+/*	$NetBSD: pcilkm.h,v 1.3.2.5 2005/03/04 16:52:46 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -6,7 +6,7 @@
  *
  *  This code is derived from software contributed to the NetBSD Foundation
  *   by Quentin Garnier.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -22,7 +22,7 @@
  *  4. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR

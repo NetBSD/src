@@ -33,7 +33,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.5.42.3 2004/09/21 13:36:13 skrll Exp $
+ *	$NetBSD: SYS.h,v 1.5.42.4 2005/03/04 16:52:41 skrll Exp $
  */
 
 #include <machine/asm.h>
@@ -84,7 +84,7 @@
 	t ST_SYSCALL; ERROR()
 
 /*
- * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls 
+ * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls
  * that never fail.
  *
  * XXX - This should be optimized.
@@ -93,7 +93,7 @@
 	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL
 
 /*
- * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls 
+ * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls
  * that never fail.
  *
  * XXX - This should be optimized.

@@ -1,14 +1,14 @@
-/*	$NetBSD: strcmp.S,v 1.1.42.1 2004/10/19 15:58:08 skrll Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.1.42.2 2005/03/04 16:52:30 skrll Exp $	*/
 #include <machine/cdefs.h>
 #include <mips/asm.h>
 
 #if defined(_LP64)
 #define ADDU    daddu
 #define SUBU    dsubu
-#else   
-#define ADDU    addu    
+#else
+#define ADDU    addu
 #define SUBU    subu
-#endif 
+#endif
 
 	.set noreorder
 

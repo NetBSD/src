@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.13.6.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.13.6.4 2005/03/04 16:50:08 skrll Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.13.6.3 2004/09/21 13:32:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.13.6.4 2005/03/04 16:50:08 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_shutdown.c,v 1.13.6.3 2004/09/21 13:32:54 skrll E
 
 static void rf_FreeShutdownEnt(RF_ShutdownList_t *);
 
-static void 
+static void
 rf_FreeShutdownEnt(RF_ShutdownList_t *ent)
 {
 	FREE(ent, M_RAIDFRAME);
@@ -71,9 +71,9 @@ _rf_ShutdownCreate(RF_ShutdownList_t **listp,  void (*cleanup)(void *arg),
          * Have to directly allocate memory here, since we start up before
          * and shutdown after RAIDframe internal allocation system.
          */
-	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
+	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t),
 		M_RAIDFRAME, M_WAITOK); */
-	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
+	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t),
 					   M_RAIDFRAME, M_WAITOK);
 	ent->cleanup = cleanup;
 	ent->arg = arg;

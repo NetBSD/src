@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.95.2.6 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.95.2.7 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -849,6 +849,9 @@ struct buf_sysctl {
 #if defined(_KERNEL_OPT)
 #include "opt_sysctl.h"
 #endif
+
+/* Root node of the kernel sysctl tree */
+extern struct sysctlnode sysctl_root;
 
 /*
  * A log of nodes created by a setup function or set of setup

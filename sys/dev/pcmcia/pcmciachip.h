@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.6.16.5 2005/02/04 11:47:09 skrll Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.6.16.6 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -91,7 +91,7 @@ struct pcmcia_chip_functions {
 	void	(*socket_settype)(pcmcia_chipset_handle_t, int);
 
 	/* card detection */
-	int (*card_detect)(pcmcia_chipset_handle_t);  
+	int (*card_detect)(pcmcia_chipset_handle_t);
 };
 
 /* Memory space functions. */

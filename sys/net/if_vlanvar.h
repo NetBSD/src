@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.4 2000/10/03 23:50:52 thorpej Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.4.28.1 2005/03/04 16:52:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * no representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied
  * warranty.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY M.I.T. ``AS IS''.  M.I.T. DISCLAIMS
  * ALL EXPRESS OR IMPLIED WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF

@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.31.2.3 2004/09/21 13:36:41 skrll Exp $ */
+/* $NetBSD: netisr.h,v 1.31.2.4 2005/03/04 16:52:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -49,12 +49,12 @@
 #if defined(_KERNEL)
 
 #if !defined(_LKM)
-#include "opt_inet.h"    
+#include "opt_inet.h"
 #include "opt_atalk.h"
-#include "opt_ccitt.h"   
+#include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
-#include "opt_natm.h" 
+#include "opt_natm.h"
 #include "arp.h"
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include "sl.h"
@@ -85,7 +85,7 @@
 # ifndef INET
 #  include <netinet/in.h>
 # endif
-#include <netinet/ip6.h> 
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 #ifdef NS

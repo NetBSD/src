@@ -1,4 +1,4 @@
-/*	$NetBSD: ataio.h,v 1.3.6.3 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: ataio.h,v 1.3.6.4 2005/03/04 16:54:22 skrll Exp $	*/
 
 #ifndef _SYS_ATAIO_H_
 #define _SYS_ATAIO_H_
@@ -38,7 +38,7 @@ typedef struct	atareq {
 /*
  * ATA bus IOCTL
  */
-/* Scan bus for new devices. */       
+/* Scan bus for new devices. */
 struct atabusioscan_args {
 	int	at_dev;		/* device to scan, -1 for wildcard */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.13.2.6 2004/11/29 07:25:04 skrll Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.13.2.7 2005/03/04 16:54:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -408,7 +408,7 @@ static const struct mbr_ptype {
 	{ MBR_PTYPE_FAT16S, "Primary DOS with 16 bit FAT <32M" },
 	{ MBR_PTYPE_EXT, "Extended partition" },
 	{ MBR_PTYPE_FAT16B, "Primary 'big' DOS, 16-bit FAT (> 32MB)" },
-	{ MBR_PTYPE_NTFS, "OS/2 HPFS or NTFS or QNX2 or Advanced UNIX" },
+	{ MBR_PTYPE_NTFS, "NTFS, OS/2 HPFS, QNX2 or Advanced UNIX" },
 	{ MBR_PTYPE_DELL, "AIX filesystem or OS/2 (thru v1.3) or DELL "
 			  "multiple drives or Commodore DOS or SplitDrive" },
 	{ MBR_PTYPE_AIX_BOOT, "AIX boot partition or Coherent" },
@@ -724,9 +724,9 @@ int xlat_mbr_fstype(int);	/* in sys/lib/libkern/xlat_mbr_fstype.c */
 struct mbr_sector {
 					/* Jump instruction to boot code.  */
 					/* Usually 0xE9nnnn or 0xEBnn90 */
-	uint8_t			mbr_jmpboot[3];	
+	uint8_t			mbr_jmpboot[3];
 					/* OEM name and version */
-	uint8_t			mbr_oemname[8];	
+	uint8_t			mbr_oemname[8];
 	union {				/* BIOS Parameter Block */
 		struct mbr_bpbFAT12	bpb12;
 		struct mbr_bpbFAT16	bpb16;
@@ -1029,7 +1029,7 @@ struct hp700_lifload {
 #define	HP700_LIF_FILESTART	4096
 
 #define	hp700_btolifs(b)	(((b) + (HP700_LIF_SECTSIZE - 1)) / HP700_LIF_SECTSIZE)
-#define	hp700_lifstob(s)	((s) * HP700_LIF_SECTSIZE) 
+#define	hp700_lifstob(s)	((s) * HP700_LIF_SECTSIZE)
 #define	hp700_lifstodb(s)	((s) * HP700_LIF_SECTSIZE / DEV_BSIZE)
 
 

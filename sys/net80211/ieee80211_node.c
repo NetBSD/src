@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.32.2.7 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.32.2.8 2005/03/04 16:53:17 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,14 +35,14 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.32.2.7 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.32.2.8 2005/03/04 16:53:17 skrll Exp $");
 #endif
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.32.2.7 2005/01/17 19:32:38 skrl
 #ifdef __FreeBSD__
 #include <machine/atomic.h>
 #endif
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.32.2.7 2005/01/17 19:32:38 skrl
 #include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #ifdef __FreeBSD__
 #include <netinet/if_ether.h>
 #else
@@ -516,14 +516,14 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 
 	IEEE80211_NODE_LOCK_BH(ic);
-	/* 
+	/*
 	 * Note we don't enable the inactive timer when acting
 	 * as a station.  Nodes created in this mode represent
 	 * AP's identified while scanning.  If we time them out
 	 * then several things happen: we can't return the data
 	 * to users to show the list of AP's we encountered, and
 	 * more importantly, we'll incorrectly deauthenticate
-	 * ourself because the inactivity timer will kick us off. 
+	 * ourself because the inactivity timer will kick us off.
 	 */
 	if (ic->ic_opmode != IEEE80211_M_STA &&
 	    TAILQ_EMPTY(&ic->ic_node))
@@ -813,7 +813,7 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	LIST_REMOVE(ni, ni_hash);
 	ic->ic_nnodes--;
 	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
-		IF_PURGE(&ni->ni_savedq); 
+		IF_PURGE(&ni->ni_savedq);
 		if (ic->ic_set_tim)
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
@@ -845,7 +845,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic)
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE, ("free all nodes\n"));
 	IEEE80211_NODE_LOCK_BH(ic);
 	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
-		ieee80211_free_node(ic, ni);  
+		ieee80211_free_node(ic, ni);
 	IEEE80211_NODE_UNLOCK_BH(ic);
 
 	if (ic->ic_bss != NULL)
@@ -884,8 +884,8 @@ restart:
 		 * Send a deauthenticate frame.
 		 *
 		 * Drop the node lock before sending the
-		 * deauthentication frame in case the driver takes     
-		 * a lock, as this will result in a LOR between the     
+		 * deauthentication frame in case the driver takes
+		 * a lock, as this will result in a LOR between the
 		 * node lock and the driver lock.
 		 */
 		IEEE80211_NODE_UNLOCK(ic);

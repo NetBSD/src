@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.123.2.9 2005/02/04 11:47:42 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.123.2.10 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -51,7 +51,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.9 2005/02/04 11:47:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.10 2005/03/04 16:52:56 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -417,7 +417,7 @@ if_attach(ifp)
 	    ifp->if_index >= if_indexlim) {
 		size_t m, n, oldlim;
 		caddr_t q;
-		
+
 		oldlim = if_indexlim;
 		while (ifp->if_index >= if_indexlim)
 			if_indexlim <<= 1;
@@ -1392,7 +1392,7 @@ ifioctl(so, cmd, data, l)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
-	case SIOCSDRVSPEC:  
+	case SIOCSDRVSPEC:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
@@ -1534,7 +1534,7 @@ ifioctl(so, cmd, data, l)
 		if (ifp->if_mtu != oldmtu) {
 #ifdef INET6
 			nd6_setmtu(ifp);
-#endif 
+#endif
 		}
 		break;
 	}
@@ -1556,7 +1556,7 @@ ifioctl(so, cmd, data, l)
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
-	case SIOCSDRVSPEC:  
+	case SIOCSDRVSPEC:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.39.2.6 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.39.2.7 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.6 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.7 2005/03/04 16:52:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ umapfs_mount(mp, path, data, ndp, l)
 	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 
-	/* 
+	/*
 	 * Now copy in the number of entries and maps for umap mapping.
 	 */
 	if (args.nentries > MAPFILEENTRIES || args.gnentries > GMAPFILEENTRIES) {
@@ -162,7 +162,7 @@ umapfs_mount(mp, path, data, ndp, l)
 
 	amp->info_nentries = args.nentries;
 	amp->info_gnentries = args.gnentries;
-	error = copyin(args.mapdata, amp->info_mapdata, 
+	error = copyin(args.mapdata, amp->info_mapdata,
 	    2*sizeof(u_long)*args.nentries);
 	if (error) {
 		vput(lowerrootvp);
@@ -176,7 +176,7 @@ umapfs_mount(mp, path, data, ndp, l)
 	 	    amp->info_mapdata[i][1]);
 #endif
 
-	error = copyin(args.gmapdata, amp->info_gmapdata, 
+	error = copyin(args.gmapdata, amp->info_gmapdata,
 	    2*sizeof(u_long)*args.gnentries);
 	if (error) {
 		vput(lowerrootvp);
@@ -186,7 +186,7 @@ umapfs_mount(mp, path, data, ndp, l)
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umap_mount:gnentries %d\n",args.gnentries);
 	for (i = 0; i < args.gnentries; i++)
-		printf("\tgroup %ld maps to %ld\n", 
+		printf("\tgroup %ld maps to %ld\n",
 		    amp->info_gmapdata[i][0],
 	 	    amp->info_gmapdata[i][1]);
 #endif
@@ -265,7 +265,7 @@ umapfs_unmount(mp, mntflags, l)
 	 * moment, but who knows...
 	 */
 #ifdef notyet
-	mntflushbuf(mp, 0); 
+	mntflushbuf(mp, 0);
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif
@@ -276,7 +276,7 @@ umapfs_unmount(mp, mntflags, l)
 
 #ifdef UMAPFS_DIAGNOSTIC
 	vprint("alias root of lower", rootvp);
-#endif	 
+#endif
 	/*
 	 * Release reference on underlying root vnode
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootstatic.c,v 1.1.4.5 2005/02/04 07:09:29 skrll Exp $	*/
+/*	$NetBSD: nfs_bootstatic.c,v 1.1.4.6 2005/03/04 16:54:20 skrll Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.1.4.5 2005/02/04 07:09:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.1.4.6 2005/03/04 16:54:20 skrll Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -108,7 +108,7 @@ nfs_bootstatic(struct nfs_diskless *nd, struct lwp *lwp)
 	if (flags & NFS_BOOTSTATIC_HAS_MYIP)
 		aprint_normal("nfs_boot: client_addr=%s\n",
 		    inet_ntoa(nd->nd_myip));
-	
+
 	if (flags & NFS_BOOTSTATIC_HAS_GWIP)
 		aprint_normal("nfs_boot: gateway=%s\n",
 		    inet_ntoa(nd->nd_gwip));

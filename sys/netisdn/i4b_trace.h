@@ -27,7 +27,7 @@
  *	i4b_trace.h - header file for trace data read device
  *	----------------------------------------------------
  *
- *	$Id: i4b_trace.h,v 1.2.22.3 2004/09/21 13:38:00 skrll Exp $ 
+ *	$Id: i4b_trace.h,v 1.2.22.4 2005/03/04 16:53:46 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -69,7 +69,7 @@ typedef struct i4b_trace_hdr {
  * 	ioctl via /dev/i4btrc device(s):
  *	get/set current trace flag settings
  *---------------------------------------------------------------------------*/
-	
+
 #define	I4B_TRC_SET	_IOW('T', 0, int)	/* set trace settings	*/
 
 #define TRACE_OFF       0x00		/* tracing off 		*/

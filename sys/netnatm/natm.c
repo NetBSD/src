@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.9.2.4 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: natm.c,v 1.9.2.5 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.9.2.4 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.9.2.5 2005/03/04 16:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct proc *p;
     error = EINVAL;
     goto done;
   }
-    
+
 
   switch (req) {
     case PRU_ATTACH:			/* attach protocol to up */
@@ -119,7 +119,7 @@ struct proc *p;
       }
 
       if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-	if (proto == PROTO_NATMAAL5) 
+	if (proto == PROTO_NATMAAL5)
           error = soreserve(so, natm5_sendspace, natm5_recvspace);
 	else
           error = soreserve(so, natm0_sendspace, natm0_recvspace);
@@ -201,7 +201,7 @@ struct proc *p;
       ATM_PH_SETVCI(&api.aph, npcb->npcb_vci);
       api.rxhand = npcb;
       s2 = splnet();
-      if (ifp->if_ioctl == NULL || 
+      if (ifp->if_ioctl == NULL ||
 	  ifp->if_ioctl(ifp, SIOCATMENA, (caddr_t) &api) != 0) {
 	splx(s2);
 	npcb_free(npcb, NPCB_REMOVE);
@@ -302,10 +302,10 @@ struct proc *p;
         }
         ario.npcb = npcb;
         ario.rawvalue = *((int *)nam);
-        error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp, 
+        error = npcb->npcb_ifp->if_ioctl(npcb->npcb_ifp,
 				SIOCXRAWATM, (caddr_t) &ario);
 	if (!error) {
-          if (ario.rawvalue) 
+          if (ario.rawvalue)
 	    npcb->npcb_flags |= NPCB_RAW;
 	  else
 	    npcb->npcb_flags &= ~(NPCB_RAW);
@@ -336,7 +336,7 @@ struct proc *p;
 #endif
       error = EOPNOTSUPP;
       break;
-   
+
     default: panic("natm usrreq");
   }
 
@@ -425,7 +425,7 @@ NETISR_SET(NETISR_NATM, natmintr);
 #endif
 
 
-/* 
+/*
  * natm0_sysctl: not used, but here in case we want to add something
  * later...
  */
@@ -446,7 +446,7 @@ size_t newlen;
   return (ENOPROTOOPT);
 }
 
-/* 
+/*
  * natm5_sysctl: not used, but here in case we want to add something
  * later...
  */

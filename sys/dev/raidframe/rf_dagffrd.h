@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.h,v 1.4 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.h,v 1.4.18.1 2005/03/04 16:50:06 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,19 +32,19 @@
 #include <dev/raidframe/raidframevar.h>
 
 /* fault-free read DAG creation routines */
-void 
+void
 rf_CreateFaultFreeReadDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
     RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList);
-void 
+void
 rf_CreateNonredundantDAG(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
     RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList, RF_IoType_t type);
-void 
+void
 rf_CreateMirrorIdleReadDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
-void 
+void
 rf_CreateMirrorPartitionReadDAG(RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
     RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);

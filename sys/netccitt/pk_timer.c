@@ -1,9 +1,9 @@
-/*	$NetBSD: pk_timer.c,v 1.9.16.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: pk_timer.c,v 1.9.16.4 2005/03/04 16:53:18 skrll Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Dirk Husemann and the Computer Science Department (IV) of
  * the University of Erlangen-Nuremberg, Germany.
@@ -35,11 +35,11 @@
  *	@(#)pk_timer.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Copyright (c) 1990, 1991, 1992
- *		Dirk Husemann, Computer Science Department IV, 
+ *		Dirk Husemann, Computer Science Department IV,
  * 		University of Erlangen-Nuremberg, Germany.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Dirk Husemann and the Computer Science Department (IV) of
  * the University of Erlangen-Nuremberg, Germany.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_timer.c,v 1.9.16.3 2004/09/21 13:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_timer.c,v 1.9.16.4 2005/03/04 16:53:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.7.6.3 2004/09/21 13:32:21 skrll Exp $ */
+/* $NetBSD: opl_esl.c,v 1.7.6.4 2005/03/04 16:49:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.7.6.3 2004/09/21 13:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.7.6.4 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ CFATTACH_DECL(opl_esl, sizeof(struct opl_softc),
 int
 opl_esl_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct audio_attach_args *aa = (struct audio_attach_args *)aux; 
+	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct esl_pcmcia_softc *ssc = (struct esl_pcmcia_softc *)parent;
 	struct opl_softc sc;
 

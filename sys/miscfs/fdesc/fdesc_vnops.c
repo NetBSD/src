@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.77.2.6 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.77.2.7 2005/03/04 16:52:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.6 2004/12/18 09:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.77.2.7 2005/03/04 16:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ loop:
 	/*
 	 * otherwise lock the array while we call getnewvnode
 	 * since that can block.
-	 */ 
+	 */
 	if (fdcache_lock & FDL_LOCKED) {
 		fdcache_lock |= FDL_WANT;
 		(void) tsleep(&fdcache_lock, PINOD, "fdcache", 0);
@@ -447,7 +447,7 @@ fdesc_open(v)
 	case Fdesc:
 		/*
 		 * XXX Kludge: set dupfd to contain the value of the
-		 * the file descriptor being sought for duplication. The error 
+		 * the file descriptor being sought for duplication. The error
 		 * return ensures that the vnode for this device will be
 		 * released by vn_open. Open will detect this special error and
 		 * take the actions in dupfdopen.  Other callers of vn_open or
@@ -610,7 +610,7 @@ fdesc_getattr(v)
 
 	default:
 		panic("fdesc_getattr");
-		break;	
+		break;
 	}
 
 	if (error == 0)
@@ -786,7 +786,7 @@ fdesc_readdir(v)
 				d.d_name[i + 1] = '\0';
 				d.d_type = DT_DIR;
 				break;
-	
+
 			default:
 				if (fdp->fd_ofiles[i - 2] == NULL ||
 				    FILE_IS_USABLE(fdp->fd_ofiles[i - 2]) == 0)
@@ -863,7 +863,7 @@ fdesc_read(v)
 		error = EOPNOTSUPP;
 		break;
 	}
-	
+
 	return (error);
 }
 
@@ -892,7 +892,7 @@ fdesc_write(v)
 		error = EOPNOTSUPP;
 		break;
 	}
-	
+
 	return (error);
 }
 
@@ -921,7 +921,7 @@ fdesc_ioctl(v)
 		error = EOPNOTSUPP;
 		break;
 	}
-	
+
 	return (error);
 }
 
@@ -973,7 +973,7 @@ fdesc_kqfilter(v)
 		p = l->l_proc;
 		if ((fp = fd_getfile(p->p_fd, VTOFDESC(ap->a_vp)->fd_fd)) == NULL)
 			return (1);
-			
+
 		FILE_USE(fp);
 		error = (*fp->f_ops->fo_kqfilter)(fp, ap->a_kn);
 		FILE_UNUSE(fp, l);
@@ -1076,15 +1076,15 @@ fdesc_print(v)
 }
 
 int
-fdesc_link(v) 
+fdesc_link(v)
 	void *v;
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
-		struct vnode *a_vp;  
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -1101,7 +1101,7 @@ fdesc_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-  
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);

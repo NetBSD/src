@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.89.2.4 2005/02/04 11:47:45 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.89.2.5 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89.2.4 2005/02/04 11:47:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.89.2.5 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -1064,7 +1064,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		inm->inm_refcount = 1;
 		LIST_INSERT_HEAD(
 		    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
-		    inm, inm_list); 
+		    inm, inm_list);
 		/*
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.

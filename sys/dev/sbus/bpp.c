@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.21.2.5 2005/02/04 11:47:23 skrll Exp $ */
+/*	$NetBSD: bpp.c,v 1.21.2.6 2005/03/04 16:50:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.21.2.5 2005/02/04 11:47:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.21.2.6 2005/03/04 16:50:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -355,9 +355,9 @@ bppwrite(dev, uio, flags)
 			u_int8_t tcr;
 			size_t size = len;
 			DMA_SETUP(lsi, &bp, &len, 0, &size);
-	
+
 #ifdef DEBUG
-			if (bppdebug) { 
+			if (bppdebug) {
 				int i;
 				printf("bpp: writing %ld : ", len);
 				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
@@ -384,7 +384,7 @@ bppwrite(dev, uio, flags)
 			if ((error = sc->sc_error) != 0)
 				goto out;
 
-			/* 
+			/*
 			 * lsi64854_pp_intr() does this part.
 			 *
 			 * len -= size;

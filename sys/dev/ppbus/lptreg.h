@@ -1,4 +1,4 @@
-/* $NetBSD: lptreg.h,v 1.4.4.4 2004/09/21 13:32:37 skrll Exp $ */
+/* $NetBSD: lptreg.h,v 1.4.4.5 2005/03/04 16:49:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,7 +33,7 @@
  *
  * Distantly from :
  *	@(#)lptreg.h      1.1 (Berkeley) 12/19/90
- *	Id: lptreg.h,v 1.6 1997/02/22 09:36:52 peter Exp 
+ *	Id: lptreg.h,v 1.6 1997/02/22 09:36:52 peter Exp
  *	From Id: nlpt.h,v 1.3 1999/01/10 12:04:54 nsouch Exp
  *
  * FreeBSD: src/sys/dev/ppbus/lpt.h,v 1.4 1999/08/28 00:42:23 peter Exp

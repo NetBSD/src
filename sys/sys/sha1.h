@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.2.48.4 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: sha1.h,v 1.2.48.5 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*
  * SHA-1 in C
@@ -13,10 +13,10 @@
 
 typedef struct {
 	u_int32_t state[5];
-	u_int32_t count[2];  
+	u_int32_t count[2];
 	u_char buffer[64];
 } SHA1_CTX;
-  
+
 void	SHA1Transform(u_int32_t[5], const u_char[64]);
 void	SHA1Init(SHA1_CTX *);
 void	SHA1Update(SHA1_CTX *, const u_char *, u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.35.2.5 2005/01/24 08:36:05 skrll Exp $	*/
+/*	$NetBSD: inode.h,v 1.35.2.6 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -210,7 +210,7 @@ struct inode {
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
 #define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */	
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
 #define	IN_RENAME	0x0020		/* Inode is being renamed. */

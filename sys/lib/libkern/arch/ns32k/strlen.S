@@ -1,6 +1,6 @@
-/*	$NetBSD: strlen.S,v 1.2 1998/04/03 22:59:30 matthias Exp $	*/
+/*	$NetBSD: strlen.S,v 1.2.48.1 2005/03/04 16:52:30 skrll Exp $	*/
 
-/* 
+/*
  * Written by Randy Hyde, 1993
  * Public domain.
  */
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.2 1998/04/03 22:59:30 matthias Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.2.48.1 2005/03/04 16:52:30 skrll Exp $")
 #endif
 
 /*
@@ -67,13 +67,13 @@ KENTRY(strlen, 4)
 	 *	 aabbccdd
 	 *  bic  xxyyzztt
 	 *	---------
-	 *       eeffgghh   ee=0x80 if xx=0, ff=0x80 if yy=0, etc. 
+	 *       eeffgghh   ee=0x80 if xx=0, ff=0x80 if yy=0, etc.
 	 *
 	 *		This whole result will be zero if there
 	 *		was no zero byte, it will be non-zero if
 	 *		there is a zero byte present.
 	 */
-   
+
 5:	movd	0x01010101,r2		/* Magic number to use */
 	movd	0x80808080,r3		/* Another magic number. */
 	addqd	-4,r0
@@ -98,7 +98,7 @@ KENTRY(strlen, 4)
 	cmpqb	0,1(r0) ; beq 8f
 	cmpqb	0,2(r0) ; beq 9f
 	addqd	3,r0			/* Must be in fourth byte. */
-	
+
 7:	subd	B_ARG0,r0
 	exit	[r3,r4]
 	ret	ARGS

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.37.2.7 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.37.2.8 2005/03/04 16:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.7 2005/01/17 19:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.37.2.8 2005/03/04 16:52:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -195,7 +195,7 @@ portal_unmount(mp, mntflags, l)
 	 * moment, but who knows...
 	 */
 #ifdef notyet
-	mntflushbuf(mp, 0); 
+	mntflushbuf(mp, 0);
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
 #endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_elf32.c,v 1.92.2.7 2005/02/07 08:36:33 skrll Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.92.2.8 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.7 2005/02/07 08:36:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.8 2005/03/04 16:51:58 skrll Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -258,7 +258,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		 * But make sure to not map any pages before the start of the
 		 * psection by limiting the difference to within a page.
 		 */
-		diff &= PAGE_MASK;  
+		diff &= PAGE_MASK;
 	} else
 		diff = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.4.2.6 2004/10/27 06:48:23 skrll Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.4.2.7 2005/03/04 16:51:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.6 2004/10/27 06:48:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.4.2.7 2005/03/04 16:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ iso_dunmap(device)
 {
 	struct idvhashhead *dpp;
 	struct iso_dnode *dp, *dq;
-	
+
 	for (dpp = idvhashtbl; dpp <= idvhashtbl + idvhash; dpp++) {
 		for (dp = LIST_FIRST(dpp); dp != NULL; dp = dq) {
 			dq = LIST_NEXT(dp, d_hash);
@@ -295,10 +295,10 @@ cd9660_inactive(v)
 	struct lwp *l = ap->a_l;
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_inactive: pushing active", vp);
-	
+
 	ip->i_flag = 0;
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -323,7 +323,7 @@ cd9660_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_reclaim: pushing active", vp);
 	/*
@@ -356,7 +356,7 @@ cd9660_defattr(isodir, inop, bp)
 	struct iso_mnt *imp;
 	struct iso_extended_attributes *ap = NULL;
 	int off;
-	
+
 	if (isonum_711(isodir->flags)&2) {
 		inop->inode.iso_mode = S_IFDIR;
 		/*
@@ -377,7 +377,7 @@ cd9660_defattr(isodir, inop, bp)
 	}
 	if (bp) {
 		ap = (struct iso_extended_attributes *)bp->b_data;
-		
+
 		if (isonum_711(ap->version) == 1) {
 			if (!(ap->perm[1]&0x10))
 				inop->inode.iso_mode |= S_IRUSR;
@@ -419,7 +419,7 @@ cd9660_deftstamp(isodir,inop,bp)
 	struct iso_mnt *imp;
 	struct iso_extended_attributes *ap = NULL;
 	int off;
-	
+
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
@@ -429,7 +429,7 @@ cd9660_deftstamp(isodir,inop,bp)
 	}
 	if (bp) {
 		ap = (struct iso_extended_attributes *)bp->b_data;
-		
+
 		if (isonum_711(ap->version) == 1) {
 			if (!cd9660_tstamp_conv17(ap->ftime,&inop->inode.iso_atime))
 				cd9660_tstamp_conv17(ap->ctime,&inop->inode.iso_atime);
@@ -456,7 +456,7 @@ cd9660_tstamp_conv7(pi,pu)
 {
 	int crtime, days;
 	int y, m, d, hour, minute, second, tz;
-	
+
 	y = pi[0] + 1900;
 	m = pi[1];
 	d = pi[2];
@@ -464,7 +464,7 @@ cd9660_tstamp_conv7(pi,pu)
 	minute = pi[4];
 	second = pi[5];
 	tz = pi[6];
-	
+
 	if (y < 1970) {
 		pu->tv_sec  = 0;
 		pu->tv_nsec = 0;
@@ -482,7 +482,7 @@ cd9660_tstamp_conv7(pi,pu)
 		days = 367*(y-1960)-7*(y+(m+9)/12)/4-3*((y+(m+9)/12-1)/100+1)/4+275*m/9+d-239;
 #endif
 		crtime = ((((days * 24) + hour) * 60 + minute) * 60) + second;
-		
+
 		/* timezone offset is unreliable on some disks */
 		if (-48 <= tz && tz <= 52)
 			crtime -= tz * 15 * 60;
@@ -498,7 +498,7 @@ cd9660_chars2ui(begin,len)
 	int len;
 {
 	u_int rc;
-	
+
 	for (rc = 0; --len >= 0;) {
 		rc *= 10;
 		rc += *begin++ - '0';
@@ -512,28 +512,28 @@ cd9660_tstamp_conv17(pi,pu)
 	struct timespec *pu;
 {
 	u_char buf[7];
-	
+
 	/* year:"0001"-"9999" -> -1900  */
 	buf[0] = cd9660_chars2ui(pi,4) - 1900;
-	
+
 	/* month: " 1"-"12"      -> 1 - 12 */
 	buf[1] = cd9660_chars2ui(pi + 4,2);
-	
+
 	/* day:   " 1"-"31"      -> 1 - 31 */
 	buf[2] = cd9660_chars2ui(pi + 6,2);
-	
+
 	/* hour:  " 0"-"23"      -> 0 - 23 */
 	buf[3] = cd9660_chars2ui(pi + 8,2);
-	
+
 	/* minute:" 0"-"59"      -> 0 - 59 */
 	buf[4] = cd9660_chars2ui(pi + 10,2);
-	
+
 	/* second:" 0"-"59"      -> 0 - 59 */
 	buf[5] = cd9660_chars2ui(pi + 12,2);
-	
+
 	/* difference of GMT */
 	buf[6] = pi[16];
-	
+
 	return cd9660_tstamp_conv7(buf,pu);
 }
 

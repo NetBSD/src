@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.8.4.4 2004/09/21 13:38:44 skrll Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.8.4.5 2005/03/04 16:54:22 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.8.4.4 2004/09/21 13:38:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.8.4.5 2005/03/04 16:54:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 					bcopy(blk, iv, blks);
 					ivp = iv;
 				} else {	/* decrypt */
-					/*	
+					/*
 					 * Keep encrypted block for XOR'ing
 					 * with next block
 					 */
@@ -531,7 +531,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 				i -= blks;
 			}
 		}
-#endif		
+#endif
 		return 0; /* Done with mbuf encryption/decryption */
 	}
 
@@ -1106,7 +1106,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
-			if ((crp->crp_etype = swcr_compdec(crd, sw, 
+			if ((crp->crp_etype = swcr_compdec(crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
 			else

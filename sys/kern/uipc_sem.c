@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.8.2.5 2004/09/21 13:35:17 skrll Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.8.2.6 2005/03/04 16:52:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.8.2.5 2004/09/21 13:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.8.2.6 2005/03/04 16:52:02 skrll Exp $");
 
 #include "opt_posix.h"
 
@@ -339,7 +339,7 @@ sys__ksem_open(struct lwp *l, void *v, register_t *retval)
 		int oflag;
 		mode_t mode;
 		unsigned int value;
-		semid_t *idp;	
+		semid_t *idp;
 	} */ *uap = v;
 	char name[SEM_MAX_NAMELEN + 1];
 	size_t done;
@@ -438,7 +438,7 @@ sys__ksem_open(struct lwp *l, void *v, register_t *retval)
 		goto found_one;
 	} else {
 		/* ksnew already has its initial reference. */
-		LIST_INSERT_HEAD(&ksem_head, ksnew, ks_entry); 
+		LIST_INSERT_HEAD(&ksem_head, ksnew, ks_entry);
 		simple_unlock(&ksem_slock);
 
 		ksem_add_proc(l->l_proc, ksnew);
@@ -590,7 +590,7 @@ ksem_wait(struct lwp *l, semid_t id, int tryflag)
 	ksem_addref(ks);
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
-		error = tryflag ? EAGAIN : ltsleep(ks, PCATCH, "psem", 0, 
+		error = tryflag ? EAGAIN : ltsleep(ks, PCATCH, "psem", 0,
 		    &ks->ks_interlock);
 		ks->ks_waiters--;
 		if (error)

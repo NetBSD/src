@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.33.2.6 2005/02/15 21:33:41 skrll Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.33.2.7 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.33.2.6 2005/02/15 21:33:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.33.2.7 2005/03/04 16:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,7 +709,7 @@ spp_fixmtu(struct nspcb *nsp)
 	struct mbuf *firstbad, *m0;
 
 	if (cb) {
-		/* 
+		/*
 		 * The notification that we have sent
 		 * too much is bad news -- we will
 		 * have to go through queued up so far
@@ -969,7 +969,7 @@ again:
 	if (rcv_win > 0) {
 		u_int16_t delta = 1 + cb->s_alo - cb->s_ack;
 		int adv = rcv_win - (delta * cb->s_mtu);
-		
+
 		if ((so->so_rcv.sb_cc == 0 && adv >= (2 * cb->s_mtu)) ||
 		    (100 * adv / so->so_rcv.sb_hiwat >= 35)) {
 			sppstat.spps_sndwinup++;
@@ -1024,7 +1024,7 @@ send:
 	if (rcv_win < 0)
 		rcv_win = 0;
 	alo = cb->s_ack - 1 + (rcv_win / ((short)cb->s_mtu));
-	if (SSEQ_LT(alo, cb->s_alo)) 
+	if (SSEQ_LT(alo, cb->s_alo))
 		alo = cb->s_alo;
 
 	if (si) {
@@ -1078,7 +1078,7 @@ send:
 		if (cb->s_force != (1 + SPPT_PERSIST) ||
 		    cb->s_timer[SPPT_PERSIST] == 0) {
 			/*
-			 * If this is a new packet and we are not currently 
+			 * If this is a new packet and we are not currently
 			 * timing anything, time this one.
 			 */
 			if (SSEQ_LT(cb->s_smax, si->si_seq)) {
@@ -1377,7 +1377,7 @@ spp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		SPPT_RANGESET(cb->s_rxtcur,
 		    ((SPPTV_SRTTBASE >> 2) + (SPPTV_SRTTDFLT << 2)) >> 1,
 		    SPPTV_MIN, SPPTV_REXMTMAX);
-		nsp->nsp_pcb = (caddr_t) cb; 
+		nsp->nsp_pcb = (caddr_t) cb;
 		break;
 
 	case PRU_DETACH:

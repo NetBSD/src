@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.26.2.4 2004/09/21 13:36:32 skrll Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.26.2.5 2005/03/04 16:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.26.2.4 2004/09/21 13:36:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.26.2.5 2005/03/04 16:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ static const vfs_namemap_t signames[] = {
 
 int procfs_control __P((struct lwp *, struct lwp *, int, int));
 
-/* Macros to clear/set/test flags. */ 
+/* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
@@ -153,7 +153,7 @@ procfs_control(curl, l, op, sig)
 	 * by the calling process.
 	 */
 	case PROCFS_CTL_ATTACH:
-		/* 
+		/*
 		 * You can't attach to a process if:
 		 *      (1) it's the process that's doing the attaching,
 		 */

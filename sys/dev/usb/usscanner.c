@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.12.6.3 2004/09/21 13:33:53 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.12.6.4 2005/03/04 16:50:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.12.6.3 2004/09/21 13:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.12.6.4 2005/03/04 16:50:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.12.6.3 2004/09/21 13:33:53 skrll Exp
 #include <dev/usb/usbdevs.h>
 
 #include <sys/scsiio.h>
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -419,12 +420,12 @@ usscanner_sense(struct usscanner_softc *sc)
 {
 	struct scsipi_xfer *xs = sc->sc_xs;
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense sense_cmd;
+	struct scsi_request_sense sense_cmd;
 	usbd_status err;
 
 	/* fetch sense data */
 	memset(&sense_cmd, 0, sizeof(sense_cmd));
-	sense_cmd.opcode = REQUEST_SENSE;
+	sense_cmd.opcode = SCSI_REQUEST_SENSE;
 	sense_cmd.byte2 = periph->periph_lun << SCSI_CMD_LUN_SHIFT;
 	sense_cmd.length = sizeof xs->sense;
 

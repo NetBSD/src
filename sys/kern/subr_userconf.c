@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.10.6.3 2004/09/21 13:35:12 skrll Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.10.6.4 2005/03/04 16:52:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.10.6.3 2004/09/21 13:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.10.6.4 2005/03/04 16:52:00 skrll Exp $");
 
 #include "opt_userconf.h"
 
@@ -407,11 +407,11 @@ userconf_change(devno)
 		}
 
 		if (c == 'y' || c == 'Y') {
-			
+
 			/* XXX add cmd 'c' <devno> */
 			userconf_hist_cmd('c');
 			userconf_hist_int(devno);
-			
+
 			cd = &cfdata[devno];
 			l = cd->cf_loc;
 			locnames = cd->cf_locnames;
@@ -420,10 +420,10 @@ userconf_change(devno)
 			while (locnames[ln])
 			{
 				userconf_modify(locnames[ln], l);
-				
+
 				/* XXX add *l */
 				userconf_hist_int(*l);
-				
+
 				ln++;
 				l++;
 			}
@@ -435,7 +435,7 @@ userconf_change(devno)
 
 			/* XXX add eoc */
 			userconf_hist_eoc();
-			
+
 		}
 	} else {
 		printf("Unknown devno (max is %d)\n", userconf_maxdev);
@@ -486,7 +486,7 @@ userconf_enable(devno)
 	int devno;
 {
 	int done = 0;
-	
+
 	if (devno <= userconf_maxdev) {
 		switch (cfdata[devno].cf_fstate) {
 		case FSTATE_DNOTFOUND:

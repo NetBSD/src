@@ -1,8 +1,8 @@
-/* $NetBSD: inflate.c,v 1.5 2003/03/25 22:48:44 mycroft Exp $ */
+/* $NetBSD: inflate.c,v 1.5.2.1 2005/03/04 16:52:42 skrll Exp $ */
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 #include "zutil.h"
@@ -24,7 +24,7 @@ struct internal_state {
 
   /* mode independent information */
   uInt wbits;           /* log2(window size)  (8..15, defaults to 15) */
-  inflate_blocks_statef 
+  inflate_blocks_statef
     *blocks;            /* current inflate_blocks state */
 
 };

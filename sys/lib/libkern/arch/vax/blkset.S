@@ -1,6 +1,6 @@
-/*	$NetBSD: blkset.S,v 1.3 2002/02/24 00:08:22 matt Exp $	*/
+/*	$NetBSD: blkset.S,v 1.3.20.1 2005/03/04 16:52:41 skrll Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -40,7 +40,7 @@ ENTRY(__blkset,R6|R7)
 	movl	8(%ap), %r7
 	movl	12(%ap), %r6
 	jbr	2f
-1:	subl2	%r0, %r6 
+1:	subl2	%r0, %r6
 	movc5	$0,(%r3),%r7,%r0,(%r3)
 2:	movzwl	$65535,%r0
 	cmpl	%r6, %r0

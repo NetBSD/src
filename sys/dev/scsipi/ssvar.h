@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.9.6.5 2004/09/21 13:33:25 skrll Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.9.6.6 2005/03/04 16:50:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -78,7 +78,7 @@ struct ss_softc {
 	struct ss_special *special;	/* special handlers for spec. devices */
 };
 
-void	ssrestart(void *); 
+void	ssrestart(void *);
 
 /*
  * define the special attach routines if configured

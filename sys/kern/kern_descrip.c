@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.110.2.8 2005/02/24 17:22:33 skrll Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.110.2.9 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.8 2005/02/24 17:22:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.9 2005/03/04 16:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ find_last_set(struct filedesc *fd, int last)
 
 	if (off < 0)
 		return (-1);
-       
+
 	i = ((off + 1) << NDENTRYSHIFT) - 1;
 	if (i >= last)
 		i = last - 1;
@@ -780,10 +780,10 @@ fdalloc(struct proc *p, int want, int *result)
 	new = find_next_zero(fdp->fd_himap, off,
 	    (last + NDENTRIES - 1) >> NDENTRYSHIFT);
 	if (new != -1) {
-		i = find_next_zero(&fdp->fd_lomap[new], 
+		i = find_next_zero(&fdp->fd_lomap[new],
 		    new > off ? 0 : i & NDENTRYMASK, NDENTRIES);
 		if (i == -1) {
-			/* 
+			/*
 			 * free file descriptor in this block was
 			 * below want, try again with higher want.
 			 */
@@ -1842,7 +1842,7 @@ void
 fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
 	struct proc *p1;
-	ksiginfo_t ksi; 
+	ksiginfo_t ksi;
 
 	memset(&ksi, 0, sizeof(ksi));
 	ksi.ksi_signo = signo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.5.2.4 2005/01/24 08:35:53 skrll Exp $	*/
+/*	$NetBSD: natm.h,v 1.5.2.5 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #define PROTO_NATMAAL0		1
-#define PROTO_NATMAAL5		2	
+#define PROTO_NATMAAL5		2
 
 /*
  * sockaddr_natm
@@ -103,8 +103,8 @@ struct natmpcb {
 #define NPCB_DESTROY	1		/* destroy and be free */
 
 /*
- * NPCB_RAWCC is a hack which applies to connections in 'raw' mode.   it 
- * is used to override the sbspace() macro when you *really* don't want 
+ * NPCB_RAWCC is a hack which applies to connections in 'raw' mode.   it
+ * is used to override the sbspace() macro when you *really* don't want
  * to drop rcv data.   the recv socket buffer size is raised to this value.
  *
  * XXX: socket buffering needs to be looked at.
@@ -130,7 +130,7 @@ extern	u_int natm_sookcnt,
 struct atm_rawioctl {
   struct natmpcb *npcb;
   int rawvalue;
-}; 
+};
 #define SIOCXRAWATM     _IOWR('a', 125, struct atm_rawioctl)
 
 /* external functions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.14.2.3 2004/09/21 13:35:11 skrll Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.14.2.4 2005/03/04 16:51:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14.2.3 2004/09/21 13:35:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14.2.4 2005/03/04 16:51:59 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -145,10 +145,10 @@ digit2i(c)
 	if (c >= '0' && c <= '9')
 		return (c - '0');
 	else if (c >= 'a' && c <= 'f')
-		return (c - 'a' + 10);	
+		return (c - 'a' + 10);
 	else if (c >= 'A' && c <= 'F')
 
-		return (c - 'A' + 10);	
+		return (c - 'A' + 10);
 	else
 		return (-1);
 }
@@ -213,7 +213,7 @@ hex2mem(vdst, src, maxlen)
  * Convert an hex string into an integer.
  * This returns a pointer to the character following
  * the last valid hex digit.
- */ 
+ */
 static vaddr_t
 hex2i(srcp)
 	u_char **srcp;

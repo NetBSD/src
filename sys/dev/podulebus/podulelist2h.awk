@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: podulelist2h.awk,v 1.2 2002/05/22 22:43:15 bjh21 Exp $
+#	$NetBSD: podulelist2h.awk,v 1.2.6.1 2005/03/04 16:49:52 skrll Exp $
 #	from: devlist2h.awk,v 1.2 1996/01/22 21:08:09 cgd Exp
 #
 # Copyright (c) 1996 Mark Brinicombe
@@ -39,6 +39,7 @@ BEGIN {
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+	gsub(/ $/, "", VERSION)
 
 	printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
 	printf("/*\n") > dfile

@@ -1,6 +1,6 @@
-/*	$NetBSD: subr_prop.c,v 1.11.2.3 2004/09/21 13:35:12 skrll Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.11.2.4 2005/03/04 16:52:00 skrll Exp $	*/
 
-/*  
+/*
  * Copyright (c) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.11.2.3 2004/09/21 13:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.11.2.4 2005/03/04 16:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ int propdebug = 0;
 #define	DPRINTF(v, t)
 #endif
 
-/* 
+/*
  * Kernel properties database implementation.
  *
  * While this could theoretically be flat, lookups
@@ -82,7 +82,7 @@ struct propdb {
 struct kdbobj {
 	LIST_ENTRY(kdbobj)	ko_link;
 	opaque_t		ko_object;
-	/* 
+	/*
 	 * There should only be a dozen props for each object,
 	 * so we can keep them in a list.
 	 */
@@ -100,20 +100,20 @@ struct kdbprop {
 
 static struct kdbprop *allocprop(const char *name, size_t len, int wait);
 static void kdb_rehash(struct propdb *db);
-static struct kdbobj *kdbobj_find(propdb_t db, opaque_t object, 
+static struct kdbobj *kdbobj_find(propdb_t db, opaque_t object,
 	int create, int wait);
-static int prop_insert(struct kdbobj *obj, const char *name, void *val, 
+static int prop_insert(struct kdbobj *obj, const char *name, void *val,
 	size_t len, int type, int wait);
 
 MALLOC_DEFINE(M_PROP, "prop", "Kernel properties structures");
 
-/* 
+/*
  * Allocate a prop structure large enough to hold
  * `name' and `len' bytes of data.  For PROP_CONST
  * pass in a `len' of 0.
  */
 static struct kdbprop *
-allocprop(const char *name, size_t len, int wait) 
+allocprop(const char *name, size_t len, int wait)
 {
 	struct kdbprop *kp;
 	char *np, *vp;
@@ -123,7 +123,7 @@ allocprop(const char *name, size_t len, int wait)
 	nsize = ALIGN(strlen(name) + 1);
 
 	DPRINTF(x, ("allocprop: allocating %lu bytes for %s %s\n",
-		(unsigned long)(sizeof(struct kdbprop) + dsize + nsize), name, 
+		(unsigned long)(sizeof(struct kdbprop) + dsize + nsize), name,
 		wait ? "can wait" : "can't wait"));
 
 	kp = (struct kdbprop *)malloc(sizeof(struct kdbprop) + dsize + nsize,
@@ -185,7 +185,7 @@ kdb_rehash(struct propdb *db)
  * hash.
  */
 
-propdb_t 
+propdb_t
 propdb_create(const char *name)
 {
 	struct propdb *db;
@@ -199,7 +199,7 @@ propdb_create(const char *name)
 	/* Initialize the hash table. */
 	db->kd_size = KDB_SIZE;
 	db->kd_longest = 0;
-	db->kd_obj = (kobj_bucket_t *)malloc(sizeof(kobj_bucket_t) * 
+	db->kd_obj = (kobj_bucket_t *)malloc(sizeof(kobj_bucket_t) *
 		db->kd_size, M_PROP, M_WAITOK);
 	for (i = 0; i < db->kd_size; i++)
 		LIST_INIT(&db->kd_obj[i]);
@@ -207,7 +207,7 @@ propdb_create(const char *name)
 	return (db);
 }
 
-void 
+void
 propdb_destroy(propdb_t db)
 {
 	struct kdbobj *obj;
@@ -268,7 +268,7 @@ kdbobj_find(propdb_t db, opaque_t object, int create, int wait)
 		}
 
 		/* Handle hash table growth */
-		if (++i > db->kd_longest) 
+		if (++i > db->kd_longest)
 			db->kd_longest = i;
 		if (db->kd_longest > KDB_MAXLEN) {
 			/* Increase the size of our hash table */
@@ -284,7 +284,7 @@ kdbobj_find(propdb_t db, opaque_t object, int create, int wait)
 }
 
 /*
- * Internal property insertion routine. 
+ * Internal property insertion routine.
  */
 static int
 prop_insert(struct kdbobj *obj, const char *name, void *val, size_t len,
@@ -304,7 +304,7 @@ prop_insert(struct kdbobj *obj, const char *name, void *val, size_t len,
 				(oprop->kp_type & PROP_CONST) == 0)) {
 			/* We can reuse it */
 			prop = oprop;
-		} 
+		}
 	}
 	if (!prop) {
 		/* Allocate a new prop */
@@ -335,7 +335,7 @@ prop_insert(struct kdbobj *obj, const char *name, void *val, size_t len,
 	return (0);
 }
 
-int 
+int
 prop_set(propdb_t db, opaque_t object, const char *name,
 	void *val, size_t len, int type, int wait)
 {
@@ -343,7 +343,7 @@ prop_set(propdb_t db, opaque_t object, const char *name,
 	struct kdbprop *prop = NULL, *oprop;
 	int s;
 
-	DPRINTF(x, ("prop_set: %p, %p, %s, %p, %lx, %x, %d\n", db, object, 
+	DPRINTF(x, ("prop_set: %p, %p, %s, %p, %lx, %x, %d\n", db, object,
 		name ? name : "NULL", val, (unsigned long)len, type, wait));
 
 	/* Find our object */
@@ -376,7 +376,7 @@ oprop = prop; /* XXXX -- use vars to make gcc happy. */
 				(oprop->kp_type & PROP_CONST) == 0)) {
 			/* We can reuse it */
 			prop = oprop;
-		} 
+		}
 	}
 	if (!prop) {
 		/* Allocate a new prop */
@@ -409,15 +409,15 @@ oprop = prop; /* XXXX -- use vars to make gcc happy. */
 #endif
 }
 
-size_t 
-prop_get(propdb_t db, opaque_t object, const char *name, void *val, 
+size_t
+prop_get(propdb_t db, opaque_t object, const char *name, void *val,
 	size_t len, int *type)
 {
 	struct kdbobj *obj;
 	struct kdbprop *prop = NULL;
 	int s;
 
-	DPRINTF(x, ("prop_get: %p, %p, %s, %p, %lx, %p\n", db, object, 
+	DPRINTF(x, ("prop_get: %p, %p, %s, %p, %lx, %p\n", db, object,
 		name ? name : "NULL", val, (unsigned long)len, type));
 
 	/* Find our object */
@@ -444,7 +444,7 @@ prop_get(propdb_t db, opaque_t object, const char *name, void *val,
 	if (val && len) {
 		memcpy(val, prop->kp_val, len);
 	}
-	if (type) 
+	if (type)
 		*type = prop->kp_type;
 	splx(s);
 	DPRINTF(x, ("copied %ld of %d\n", (long) len, prop->kp_len));
@@ -456,7 +456,7 @@ prop_get(propdb_t db, opaque_t object, const char *name, void *val,
  * many as fit in the buffer.
  */
 size_t
-prop_objs(propdb_t db, opaque_t *objects, size_t len) 
+prop_objs(propdb_t db, opaque_t *objects, size_t len)
 {
 	struct kdbobj *obj;
 	size_t i, j, nelem = (len / sizeof(opaque_t));
@@ -482,14 +482,14 @@ prop_objs(propdb_t db, opaque_t *objects, size_t len)
  * and as many as fit in the buffer.
  */
 size_t
-prop_list(propdb_t db, opaque_t object, char *names, size_t len) 
+prop_list(propdb_t db, opaque_t object, char *names, size_t len)
 {
 	struct kdbobj *obj;
 	struct kdbprop *prop = NULL;
 	int s, i = 0;
 	char *sp, *ep;
 
-	DPRINTF(x, ("prop_list: %p, %p, %p, %lx\n", 
+	DPRINTF(x, ("prop_list: %p, %p, %p, %lx\n",
 		db, object, names, (unsigned long)len));
 
 	/* Find our source object */
@@ -515,14 +515,14 @@ prop_list(propdb_t db, opaque_t object, char *names, size_t len)
 	return (names - sp);
 }
 
-int 
+int
 prop_delete(propdb_t db, opaque_t object, const char *name)
 {
 	struct kdbobj *obj;
 	struct kdbprop *prop = NULL;
 	int s, i = 0;
 
-	DPRINTF(x, ("prop_delete: %p, %p, %s\n", db, object, 
+	DPRINTF(x, ("prop_delete: %p, %p, %s\n", db, object,
 		name ? name : "NULL"));
 
 	/* Find our object */
@@ -562,7 +562,7 @@ prop_delete(propdb_t db, opaque_t object, const char *name)
 	return (i);
 }
 
-int 
+int
 prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 {
 	struct kdbobj *nobj, *oobj;
@@ -589,7 +589,7 @@ prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 	/* Copy these properties over now */
 	LIST_FOREACH(srcp, &oobj->ko_props, kp_link) {
 
-		DPRINTF(x, ("prop_copy: copying prop %s\n", 
+		DPRINTF(x, ("prop_copy: copying prop %s\n",
 			srcp->kp_name));
 
 #if 1
@@ -597,7 +597,7 @@ prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 			int rv;
 
 oprop = prop; /* XXXX -- use vars to make gcc happy. */
-			rv = prop_insert(nobj, srcp->kp_name, 
+			rv = prop_insert(nobj, srcp->kp_name,
 				(void *)srcp->kp_val, srcp->kp_len,
 				srcp->kp_type, wait);
 			if (rv) {
@@ -632,7 +632,7 @@ oprop = prop; /* XXXX -- use vars to make gcc happy. */
 			if (srcp->kp_type & PROP_CONST)
 				prop = allocprop(srcp->kp_name, 0, wait);
 			else
-				prop = allocprop(srcp->kp_name, 
+				prop = allocprop(srcp->kp_name,
 					srcp->kp_len, wait);
 			if (!prop) {
 				splx(s);
@@ -655,7 +655,7 @@ oprop = prop; /* XXXX -- use vars to make gcc happy. */
 			DPRINTF(x, ("prop_copy: inserting prop %p\n", prop));
 			LIST_INSERT_HEAD(&nobj->ko_props, prop, kp_link);
 			if (oprop) {
-				DPRINTF(x, ("prop_copy: removing prop %p\n", 
+				DPRINTF(x, ("prop_copy: removing prop %p\n",
 					oprop));
 				LIST_REMOVE(oprop, kp_link);
 				free(oprop, M_PROP);

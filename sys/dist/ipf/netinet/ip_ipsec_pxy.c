@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.2.3 2005/03/04 16:51:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 2001-2003 by Darren Reed
@@ -8,11 +8,11 @@
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ipsec_pxy.c,v 2.20.2.3 2004/06/07 14:20:05 darrenr Exp
+ * Id: ip_ipsec_pxy.c,v 2.20.2.4 2005/02/04 10:22:55 darrenr Exp
  *
  */
 
-__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ipsec_pxy.c,v 1.1.2.3 2005/03/04 16:51:28 skrll Exp $");
 
 #define	IPF_IPSEC_PROXY
 
@@ -138,6 +138,8 @@ nat_t *nat;
 	ipn->in_p = IPPROTO_ESP;
 
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
+	fi.fin_state = NULL;
+	fi.fin_nat = NULL;
 	fi.fin_fi.fi_p = IPPROTO_ESP;
 	fi.fin_fr = &ipsecfr;
 	fi.fin_data[0] = 0;
@@ -169,6 +171,8 @@ nat_t *nat;
 		fi.fin_data[1] = 0;
 		ipsec->ipsc_state = fr_addstate(&fi, &ipsec->ipsc_state,
 						SI_WILDP);
+		if (fi.fin_state != NULL)
+			fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 	}
 	ip->ip_p = p & 0xff;
 	return 0;
@@ -203,6 +207,8 @@ nat_t *nat;
 
 		if ((ipsec->ipsc_nat == NULL) || (ipsec->ipsc_state == NULL)) {
 			bcopy((char *)fin, (char *)&fi, sizeof(fi));
+			fi.fin_state = NULL;
+			fi.fin_nat = NULL;
 			fi.fin_fi.fi_p = IPPROTO_ESP;
 			fi.fin_fr = &ipsecfr;
 			fi.fin_data[0] = 0;
@@ -244,6 +250,8 @@ nat_t *nat;
 			ipsec->ipsc_state = fr_addstate(&fi,
 							&ipsec->ipsc_state,
 							SI_WILDP);
+			if (fi.fin_state != NULL)
+				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_p = p;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.32.2.4 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.32.2.5 2005/03/04 16:52:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.32.2.4 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.32.2.5 2005/03/04 16:52:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	 */
 	lock->lf_start = start;
 	lock->lf_end = end;
-	/* XXX NJWLWP 
+	/* XXX NJWLWP
 	 * I don't want to make the entire VFS universe use LWPs, because
 	 * they don't need them, for the most part. This is an exception,
 	 * and a kluge.
@@ -203,7 +203,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	}
 	lock->lf_id = (struct proc *)ap->a_id;
 	lock->lf_lwp = curlwp;
-		
+
 	/*
 	 * Do the requested operation.
 	 */
@@ -801,7 +801,7 @@ lf_wakelock(struct lockf *listhead)
 static void
 lf_print(char *tag, struct lockf *lock)
 {
-	
+
 	printf("%s: lock %p for ", tag, lock);
 	if (lock->lf_flags & F_POSIX)
 		printf("proc %d", ((struct proc *)lock->lf_id)->p_pid);

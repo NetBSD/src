@@ -1,11 +1,11 @@
-/*	$NetBSD: ieee1212reg.h,v 1.8 2002/06/25 16:31:43 itojun Exp $	*/
+/*	$NetBSD: ieee1212reg.h,v 1.8.6.1 2005/03/04 16:50:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,7 +68,7 @@
 /* ROM Formats
  *	0x00-0x000000		Initializing
  *	0x01-0xzzyyxx		Minimal (zz-yy-xx is an OUI)
- *	0xii-0xcc-0xllll	General (ii is info-length, 
+ *	0xii-0xcc-0xllll	General (ii is info-length,
  *				cc is crc-length, llll is length)
  */
 
@@ -242,7 +242,7 @@
 
 /*
  * XXX: Note that some of these go away if full p1212r support is done as
- * a lot of the restrictions were lifted there in what can go where. 
+ * a lot of the restrictions were lifted there in what can go where.
  */
 
 

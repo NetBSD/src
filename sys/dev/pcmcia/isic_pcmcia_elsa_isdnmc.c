@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.5.10.5 2005/02/04 11:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.5.10.6 2005/03/04 16:49:38 skrll Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_ISDNMC
@@ -126,7 +126,7 @@ elsa_isdnmc_clrirq(struct isic_softc *sc)
  *	read fifo routines
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
-static void		
+static void
 elsa_isdnmc_read_fifo(void *buf, const void *base, size_t len)
 {
 }
@@ -303,7 +303,7 @@ isic_attach_elsaisdnmc(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry
 	sc->writefifo = elsa_isdnmc_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;

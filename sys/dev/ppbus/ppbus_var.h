@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_var.h,v 1.3.4.4 2004/09/21 13:32:37 skrll Exp $ */
+/* $NetBSD: ppbus_var.h,v 1.3.4.5 2005/03/04 16:49:52 skrll Exp $ */
 
 #ifndef __PPBUS_VAR_H
 #define __PPBUS_VAR_H
@@ -35,12 +35,12 @@
 
 /* List of IVARS available to ppbus device drivers */
 /* #define PPBUS_IVAR_MODE 0 */
-#define PPBUS_IVAR_DMA		1 
-#define PPBUS_IVAR_INTR		2 
+#define PPBUS_IVAR_DMA		1
+#define PPBUS_IVAR_INTR		2
 #define PPBUS_IVAR_EPP_PROTO    3
 #define PPBUS_IVAR_IEEE		4
 /* Needed by callback's implemented using callout */
-#define PPBUS_IVAR_IRQSTAT	5 
+#define PPBUS_IVAR_IRQSTAT	5
 #define PPBUS_IVAR_DMASTAT	6
 /* other fields are reserved to the ppbus internals */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.15.6.4 2005/02/04 11:47:33 skrll Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.15.6.5 2005/03/04 16:50:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.15.6.4 2005/02/04 11:47:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.15.6.5 2005/03/04 16:50:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ int	kbd_zs_bps = KBD_DEFAULT_BPS;
 /*
  * kbd_zs_match: how is this zs channel configured?
  */
-int 
+int
 kbd_zs_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -122,7 +122,7 @@ kbd_zs_match(parent, cf, aux)
 	return 0;
 }
 
-void 
+void
 kbd_zs_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;

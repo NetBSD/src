@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_tpdu.h,v 1.8.64.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_tpdu.h,v 1.8.64.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -140,7 +140,7 @@ union tpdu_fixed_rest {
 
 	struct {
 		u_short         _tpdufr_sref,	/* source reference */
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 				_tpdufr_class:4, /* class [ISO 8073 13.3.3.e] */
 		                _tpdufr_opt:4, /* options [ISO 8073 13.3.3.e] */
 #endif

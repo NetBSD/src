@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.71.2.4 2004/10/19 15:58:04 skrll Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.71.2.5 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71.2.4 2004/10/19 15:58:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.71.2.5 2005/03/04 16:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ sys_setpriority(l, v, retval)
 
 	case PRIO_PGRP: {
 		struct pgrp *pg;
-		 
+
 		if (SCARG(uap, who) == 0)
 			pg = curp->p_pgrp;
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
@@ -408,16 +408,16 @@ calcru(p, up, sp, ip)
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_stat == LSONPROC) {
 			struct schedstate_percpu *spc;
-			
+
 			KDASSERT(l->l_cpu != NULL);
 			spc = &l->l_cpu->ci_schedstate;
-			
+
 			/*
 			 * Adjust for the current time slice.  This is
 			 * actually fairly important since the error
 			 * here is on the order of a time quantum,
 			 * which is much greater than the sampling
-			 * error.  
+			 * error.
 			 */
 			microtime(&tv);
 			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
@@ -554,7 +554,7 @@ struct pstats *
 pstatscopy(ps)
 	struct pstats *ps;
 {
-	
+
 	struct pstats *newps;
 
 	newps = pool_get(&pstats_pool, PR_WAITOK);

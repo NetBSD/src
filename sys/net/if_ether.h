@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.33.2.4 2005/01/17 19:32:38 skrll Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.33.2.5 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -243,6 +243,38 @@ struct ether_multistep {
 }
 
 #ifdef _KERNEL
+
+/*
+ * Ethernet 802.1Q VLAN structures.
+ */
+
+/* add VLAN tag to input/received packet */
+#define	VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)	\
+	do {								\
+                struct m_tag *mtag =					\
+                    m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);\
+                if (mtag == NULL) {					\
+			ifp->if_ierrors++;				\
+                        printf("%s: unable to allocate VLAN tag\n",	\
+                            ifp->if_xname);				\
+                        m_freem(m);					\
+                        _errcase;					\
+                }							\
+                *(u_int *)(mtag + 1) = vlanid;				\
+                m_tag_prepend(m, mtag);					\
+	} while(0)
+
+/* extract VLAN tag from output/trasmit packet */
+#define VLAN_OUTPUT_TAG(ec, m0)			\
+	VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL
+
+/* extract VLAN ID value from a VLAN tag */
+#define VLAN_TAG_VALUE(mtag)	\
+	((*(u_int *)(mtag + 1)) & 4095)
+
+/* test if any VLAN is configured for this interface */
+#define VLAN_ATTACHED(ec)	(&(ec)->ec_nvlans > 0)
+
 void	ether_ifattach(struct ifnet *, const u_int8_t *);
 void	ether_ifdetach(struct ifnet *);
 

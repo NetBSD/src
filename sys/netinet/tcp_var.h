@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.102.2.8 2005/02/07 08:36:33 skrll Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.102.2.9 2005/03/04 16:53:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,12 +70,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -167,6 +169,23 @@
 #endif /* TCP_SIGNATURE */
 
 /*
+ * SACK option block.
+ */
+struct sackblk {
+	tcp_seq left;		/* Left edge of sack block. */
+	tcp_seq right;		/* Right edge of sack block. */
+};
+
+TAILQ_HEAD(sackhead, sackhole);
+struct sackhole {
+	tcp_seq start;
+	tcp_seq end;
+	tcp_seq rxmit;
+
+	TAILQ_ENTRY(sackhole) sackhole_q;
+};
+
+/*
  * Tcp control block, one per tcp; fields:
  */
 struct tcpcb {
@@ -194,10 +213,8 @@ struct tcpcb {
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
 #define	TF_SYN_REXMT	0x0400		/* rexmit timer fired on SYN */
 #define	TF_WILL_SACK	0x0800		/* try to use SACK */
-#define	TF_CANT_TXSACK	0x1000		/* other side said I could not SACK */
-#define	TF_IGNR_RXSACK	0x2000		/* ignore received SACK blocks */
-#define	TF_REASSEMBLING	0x4000		/* we're busy reassembling */
-#define	TF_DEAD		0x8000		/* dead and to-be-released */
+#define	TF_REASSEMBLING	0x1000		/* we're busy reassembling */
+#define	TF_DEAD		0x2000		/* dead and to-be-released */
 #define	TF_SIGNATURE	0x400000	/* require MD5 digests (RFC2385) */
 
 
@@ -269,7 +286,20 @@ struct tcpcb {
 	tcp_seq	last_ack_sent;
 
 /* SACK stuff */
-	struct ipqehead timeq;		/* time sequenced queue (for SACK) */
+#define TCP_SACK_MAX 3
+#define TCPSACK_NONE 0
+#define TCPSACK_HAVED 1
+	u_char rcv_sack_flags;		/* SACK flags. */
+	u_int32_t rcv_sack_num;		/* Num of RX SACK blocks. */
+	struct sackblk rcv_sack_block[TCP_SACK_MAX];	/* RX SACK blocks. */
+	struct sackblk rcv_dsack_block;	/* RX D-SACK block. */
+	struct ipqehead timeq;		/* time sequenced queue. */
+	struct sackhead snd_holes;	/* TX SACK holes. */
+	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
+	tcp_seq sack_newdata;		/* New data xmitted in this recovery
+					   episode starts at this seq number*/
+	tcp_seq snd_fack;		/* FACK TCP.  Forward-most data held by
+					   peer. */
 
 /* path MTU discovery blackhole detection */
 	int t_mtudisc;			/* perform mtudisc for this tcb */
@@ -283,6 +313,14 @@ struct tcpcb {
 	int	t_lastoff;		/* last data address in mbuf chain */
 	int	t_lastlen;		/* last length read from mbuf chain */
 };
+
+/*
+ * Macros to aid SACK/FACK TCP.
+ */
+#define TCP_SACK_ENABLED(tp)	(tp->t_flags & TF_WILL_SACK)
+#define TCP_FACK_FASTRECOV(tp)	\
+	(TCP_SACK_ENABLED(tp) && \
+	(SEQ_GT(tp->snd_fack, tp->snd_una + tcprexmtthresh * tp->t_segsz)))
 
 #ifdef _KERNEL
 /*
@@ -436,6 +474,7 @@ struct syn_cache {
 #define	SCF_UNREACH		0x0001		/* we've had an unreach error */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 #define	SCF_DEAD		0x0004		/* this entry to be released */
+#define SCF_SACK_PERMIT		0x0008		/* peer will do SACK */
 #define SCF_SIGNATURE	0x40			/* send MD5 digests */
 
 	struct mbuf *sc_ipopts;			/* IP options */
@@ -805,6 +844,16 @@ void	 tcp_xmit_timer(struct tcpcb *, uint32_t);
 tcp_seq	 tcp_new_iss(struct tcpcb *, tcp_seq);
 tcp_seq  tcp_new_iss1(void *, void *, u_int16_t, u_int16_t, size_t,
 	    tcp_seq);
+
+void	 tcp_update_sack_list(struct tcpcb *);
+void	 tcp_new_dsack(struct tcpcb *, tcp_seq, u_int32_t);
+void	 tcp_sack_option(struct tcpcb *, struct tcphdr *, u_char *, int);
+void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);
+void	 tcp_free_sackholes(struct tcpcb *);
+void	 tcp_sack_adjust(struct tcpcb *tp);
+struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
+void	 tcp_sack_newack(struct tcpcb *, struct tcphdr *);
+
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.10 2001/11/15 09:48:19 lukem Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.10.16.1 2005/03/04 16:51:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.10 2001/11/15 09:48:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.10.16.1 2005/03/04 16:51:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -395,7 +395,7 @@ wskbd_init_keymap(int newlen, struct wscons_keymap **map, int *maplen)
 }
 
 int
-wskbd_load_keymap(const struct wskbd_mapdata *mapdata, 
+wskbd_load_keymap(const struct wskbd_mapdata *mapdata,
 	struct wscons_keymap **map, int *maplen)
 {
 	int i, s, kc, stack_ptr;

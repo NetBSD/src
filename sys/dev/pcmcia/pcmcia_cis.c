@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.31.6.6 2005/02/04 11:47:09 skrll Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.31.6.7 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.6 2005/02/04 11:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.31.6.7 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,7 +709,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	switch (tuple->code) {
 	case PCMCIA_CISTPL_END:
 		/* if we've seen a LONGLINK_MFC, and this is the first
-		 * END after it, reset the function list.  
+		 * END after it, reset the function list.
 		 *
 		 * XXX This might also be the right place to start a
 		 * new function, but that assumes that a function

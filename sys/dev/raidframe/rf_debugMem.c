@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.12.6.3 2004/09/21 13:32:52 skrll Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.12.6.4 2005/03/04 16:50:06 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.12.6.3 2004/09/21 13:32:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.12.6.4 2005/03/04 16:50:06 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -63,7 +63,7 @@ static int mh_table_initialized = 0;
 static void memory_hash_insert(void *addr, int size, int line, char *filen);
 static int memory_hash_remove(void *addr, int sz);
 
-void 
+void
 rf_record_malloc(void *p, int size, int line, char *filen)
 {
 	RF_ASSERT(size != 0);
@@ -77,7 +77,7 @@ rf_record_malloc(void *p, int size, int line, char *filen)
 	}
 }
 
-void 
+void
 rf_unrecord_malloc(void *p, int sz)
 {
 	int     size;
@@ -92,7 +92,7 @@ rf_unrecord_malloc(void *p, int sz)
 	}
 }
 
-void 
+void
 rf_print_unfreed()
 {
 	int     i, foundone = 0;
@@ -114,7 +114,7 @@ rf_print_unfreed()
 }
 #endif /* RF_DEBUG_MEM */
 
-int 
+int
 rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 {
 #if RF_DEBUG_MEM
@@ -134,7 +134,7 @@ rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 
 #define HASHADDR(_a_)      ( (((unsigned long) _a_)>>3) % RF_MH_TABLESIZE )
 
-static void 
+static void
 memory_hash_insert(void *addr, int size, int line, char *filen)
 {
 	unsigned long bucket = HASHADDR(addr);
@@ -163,7 +163,7 @@ memory_hash_insert(void *addr, int size, int line, char *filen)
 	p->allocated = 1;
 }
 
-static int 
+static int
 memory_hash_remove(void *addr, int sz)
 {
 	unsigned long bucket = HASHADDR(addr);

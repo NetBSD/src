@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.3.22.3 2004/09/21 13:36:07 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.3.22.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.3.22.3 2004/09/21 13:36:07 skrll Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.3.22.4 2005/03/04 16:52:29 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,7 +101,7 @@ ENTRY(bcopy)
 	cmpl	%a1,%a0			| src after dest?
 	jlt	Lbcback			| yes, must copy backwards
 
-	/* 
+	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
@@ -119,11 +119,11 @@ ENTRY(bcopy)
 	btst	#0,%d0
 	jne	Lbcfbyte
 #endif	/* __mc68010__ */
-	
+
 	/* word align */
 	movl	%a1,%d0
 	btst	#0,%d0		| if (dst & 1)
-	jeq	Lbcfalgndw	| 
+	jeq	Lbcfalgndw	|
 	movb	%a0@+,%a1@+	|	*(char *)dst++ = *(char *) src++
 	subql	#1,%d1		|	len--
 Lbcfalgndw:
@@ -184,7 +184,7 @@ Lbcback:
 	addl	%d1,%a0		| src pointer to end
 	addl	%d1,%a1		| dest pointer to end
 
-	/* 
+	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
@@ -202,11 +202,11 @@ Lbcback:
 	btst	#0,%d0
 	jne	Lbcbbyte
 #endif	/* __mc68010__ */
-	
+
 	/* word align */
 	movl	%a1,%d0
 	btst	#0,%d0		| if (dst & 1)
-	jeq	Lbcbalgndw	| 
+	jeq	Lbcbalgndw	|
 	movb	%a0@-,%a1@-	|	*(char *)dst-- = *(char *) src--
 	subql	#1,%d1		|	len--
 Lbcbalgndw:
@@ -235,7 +235,7 @@ Lbcb32loop:
 	clrw	%d0
 	subql	#1,%d0
 	jcc	Lbcb32loop
-	
+
 Lbcblong:
 	/* copy by longwords */
 	movel	%d1,%d0

@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.40.2.5 2005/01/17 19:31:52 skrll Exp $ */
+/* $NetBSD: tfb.c,v 1.40.2.6 2005/03/04 16:50:53 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.40.2.5 2005/01/17 19:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.40.2.6 2005/03/04 16:50:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.40.2.5 2005/01/17 19:31:52 skrll Exp $");
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt463reg.h>
-#include <dev/ic/bt431reg.h>	
+#include <dev/ic/bt431reg.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -144,7 +144,7 @@ struct hwcursor64 {
 struct tfb_softc {
 	struct device sc_dev;
 	vaddr_t sc_vaddr;
-	size_t sc_size;	
+	size_t sc_size;
 	struct rasops_info *sc_ri;
 	struct hwcmap256 sc_cmap;	/* software copy of colormap */
 	struct hwcursor64 sc_cursor;	/* software copy of cursor */
@@ -435,7 +435,7 @@ tfbioctl(v, cmd, data, flag, l)
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
 		if (sc->sc_blanked != turnoff) {
 			sc->sc_blanked = turnoff;
-#if 0	/* XXX later XXX */		
+#if 0	/* XXX later XXX */
 	To turn off;
 	- clear the MSB of TX control register; &= ~0x80,
 	- assign Bt431 register #0 with value 0x4 to hide sprite cursor.
@@ -570,7 +570,7 @@ tfbintr(arg)
 	struct tfb_softc *sc = arg;
 	caddr_t base, vdac, curs;
 	int v;
-	
+
 	base = (caddr_t)sc->sc_ri->ri_hw;
 	*(u_int8_t *)(base + TX_CONTROL) &= ~0x40;
 	if (sc->sc_changed == 0)
@@ -642,7 +642,7 @@ tfbintr(arg)
 				img = *ip++;
 				msk = *mp++;
 				img &= msk;	/* cookie off image */
-				half = (flip[img] << 8) | flip[msk]; 
+				half = (flip[img] << 8) | flip[msk];
 				REGWRITE32(curs, bt_ram, half);
 			}
 			bcnt += 2;
@@ -728,7 +728,7 @@ tfbhwinit(tfbbase)
 	}
 
 	SELECT431(curs, BT431_REG_COMMAND);
-	REGWRITE32(curs, bt_ctl, 0x0404);	
+	REGWRITE32(curs, bt_ctl, 0x0404);
 	REGWRITE32(curs, bt_ctl, 0); /* XLO */
 	REGWRITE32(curs, bt_ctl, 0); /* XHI */
 	REGWRITE32(curs, bt_ctl, 0); /* YLO */

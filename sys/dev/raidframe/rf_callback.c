@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.8.6.3 2004/09/21 13:32:50 skrll Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.8.6.4 2005/03/04 16:50:05 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8.6.3 2004/09/21 13:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8.6.4 2005/03/04 16:50:05 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -51,13 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.8.6.3 2004/09/21 13:32:50 skrll Ex
 #define RF_MIN_FREE_CALLBACK 32
 
 static void rf_ShutdownCallback(void *);
-static void 
+static void
 rf_ShutdownCallback(void *ignored)
 {
 	pool_destroy(&rf_pools.callback);
 }
 
-int 
+int
 rf_ConfigureCallback(listp)
 	RF_ShutdownList_t **listp;
 {
@@ -78,7 +78,7 @@ rf_AllocCallbackDesc()
 	return (p);
 }
 
-void 
+void
 rf_FreeCallbackDesc(p)
 	RF_CallbackDesc_t *p;
 {

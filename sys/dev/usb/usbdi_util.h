@@ -1,7 +1,7 @@
-/*	$NetBSD: usbdi_util.h,v 1.28.6.5 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.28.6.6 2005/03/04 16:50:56 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.94.2.5 2005/02/04 11:47:48 skrll Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.94.2.6 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,12 +70,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe and Kevin M. Lahey of the Numerical Aerospace Simulation
  * Facility, NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -138,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.5 2005/02/04 11:47:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.6 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -203,7 +205,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.5 2005/02/04 11:47:48 skrll Ex
 extern struct mbuf *m_copypack();
 #endif
 
-#define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
+#define MAX_TCPOPTLEN	40	/* max # bytes that go in options */
 
 /*
  * Knob to enable Congestion Window Monitoring, and control the
@@ -554,6 +556,9 @@ tcp_output(struct tcpcb *tp)
 	int maxburst = TCP_MAXBURST;
 	int af;		/* address family on the wire */
 	int iphdrlen;
+	int sack_rxmit;
+	int sack_bytes_rxmt;
+	struct sackhole *p;
 #ifdef TCP_SIGNATURE
 	int sigoff = 0;
 #endif
@@ -654,12 +659,70 @@ again:
 	 * flags that should be used.  If there is some data or critical
 	 * controls (SYN, RST) to send, then transmit; otherwise,
 	 * investigate further.
+	 *
+	 * Readjust SACK information to avoid resending duplicate data.
 	 */
+	if (TCP_SACK_ENABLED(tp) && SEQ_LT(tp->snd_nxt, tp->snd_max))
+		tcp_sack_adjust(tp);
 	sendalot = 0;
 	off = tp->snd_nxt - tp->snd_una;
 	win = min(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
+
+	/*
+	 * Send any SACK-generated retransmissions.  If we're explicitly trying
+	 * to send out new data (when sendalot is 1), bypass this function.
+	 * If we retransmit in fast recovery mode, decrement snd_cwnd, since
+	 * we're replacing a (future) new transmission with a retransmission
+	 * now, and we previously incremented snd_cwnd in tcp_input().
+	 */
+	/*
+	 * Still in sack recovery , reset rxmit flag to zero.
+	 */
+	sack_rxmit = 0;
+	sack_bytes_rxmt = 0;
+	len = 0;
+	p = NULL;
+	if (!TCP_SACK_ENABLED(tp))
+		goto after_sack_rexmit;
+	if ((tp->t_partialacks >= 0) &&
+			(p = tcp_sack_output(tp, &sack_bytes_rxmt))) {
+		long cwin;
+		
+		cwin = min(tp->snd_wnd, tp->snd_cwnd) - sack_bytes_rxmt;
+		if (cwin < 0)
+			cwin = 0;
+		/* Do not retransmit SACK segments beyond snd_recover */
+		if (SEQ_GT(p->end, tp->snd_recover)) {
+			/*
+			 * (At least) part of sack hole extends beyond
+			 * snd_recover. Check to see if we can rexmit data
+			 * for this hole.
+			 */
+			if (SEQ_GEQ(p->rxmit, tp->snd_recover)) {
+				/*
+				 * Can't rexmit any more data for this hole.
+				 * That data will be rexmitted in the next
+				 * sack recovery episode, when snd_recover
+				 * moves past p->rxmit.
+				 */
+				p = NULL;
+				goto after_sack_rexmit;
+			} else
+				/* Can rexmit part of the current hole */
+				len = ((long)ulmin(cwin,
+						   tp->snd_recover - p->rxmit));
+		} else
+			len = ((long)ulmin(cwin, p->end - p->rxmit));
+		off = p->rxmit - tp->snd_una;
+		if (len > 0) {
+			sack_rxmit = 1;
+			sendalot = 1;
+		}
+	}
+after_sack_rexmit:
+
 	/*
 	 * If in persist timeout with window of 0, send 1 byte.
 	 * Otherwise, if window is small but nonzero
@@ -693,11 +756,46 @@ again:
 		}
 	}
 
-	if (win < so->so_snd.sb_cc) {
-		len = win - off;
-		flags &= ~TH_FIN;
-	} else
-		len = so->so_snd.sb_cc - off;
+	if (!TCP_SACK_ENABLED(tp)) {
+		if (win < so->so_snd.sb_cc) {
+			len = win - off;
+			flags &= ~TH_FIN;
+		} else
+			len = so->so_snd.sb_cc - off;
+	} else if (sack_rxmit == 0) {
+		if (sack_bytes_rxmt != 0) {
+			long cwin;
+
+			/*
+			 * We are inside of a SACK recovery episode and are
+			 * sending new data, having retransmitted all the
+			 * data possible in the scoreboard.
+			 */
+			len = ((long)ulmin(so->so_snd.sb_cc, tp->snd_wnd) 
+				       - off);
+			/*
+			 * From FreeBSD:
+			 *  Don't remove this (len > 0) check !
+			 *  We explicitly check for len > 0 here (although it 
+			 *  isn't really necessary), to work around a gcc 
+			 *  optimization issue - to force gcc to compute
+			 *  len above. Without this check, the computation
+			 *  of len is bungled by the optimizer.
+			 */
+			if (len > 0) {
+				cwin = tp->snd_cwnd - 
+						(tp->snd_nxt - tp->sack_newdata) -
+						sack_bytes_rxmt;
+				if (cwin < 0)
+					cwin = 0;
+				len = lmin(len, cwin);
+			}
+		} else if (win < so->so_snd.sb_cc) {
+			len = win - off;
+			flags &= ~TH_FIN;
+		} else
+			len = so->so_snd.sb_cc - off;
+	}
 
 	if (len < 0) {
 		/*
@@ -734,6 +832,10 @@ again:
 		flags &= ~TH_FIN;
 		sendalot = 1;
 	}
+	if (sack_rxmit) {
+		if (SEQ_LT(p->rxmit + len, tp->snd_una + so->so_snd.sb_cc))
+			flags &= ~TH_FIN;
+	}
 
 	win = sbspace(&so->so_rcv);
 
@@ -759,6 +861,8 @@ again:
 		if (len >= tp->max_sndwnd / 2)
 			goto send;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_max))
+			goto send;
+		if (sack_rxmit)
 			goto send;
 	}
 
@@ -794,6 +898,17 @@ again:
 		goto send;
 	if (SEQ_GT(tp->snd_up, tp->snd_una))
 		goto send;
+	/*
+	 * In SACK, it is possible for tcp_output to fail to send a segment
+	 * after the retransmission timer has been turned off.  Make sure
+	 * that the retransmission timer is set.
+	 */
+	if (TCP_SACK_ENABLED(tp) && SEQ_GT(tp->snd_max, tp->snd_una) &&
+	    !TCP_TIMER_ISARMED(tp, TCPT_REXMT) &&
+	    !TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
+		TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
+		goto just_return;
+	}
 
 	/*
 	 * TCP window updates are not reliable, rather a polling protocol
@@ -826,6 +941,7 @@ again:
 	/*
 	 * No reason to send a segment, just return.
 	 */
+just_return:
 	return (0);
 
 send:
@@ -887,6 +1003,15 @@ send:
 					tp->request_r_scale);
 				optlen += 4;
 			}
+			if (tcp_do_sack) {
+				u_int8_t *p = (u_int8_t *)(opt + optlen);
+
+				p[0] = TCPOPT_SACK_PERMITTED;
+				p[1] = 2;
+				p[2] = TCPOPT_NOP;
+				p[3] = TCPOPT_NOP;
+				optlen += 4;
+			}
 		}
 	}
 
@@ -908,9 +1033,31 @@ send:
 		optlen += TCPOLEN_TSTAMP_APPA;
 	}
 
+	/*
+	 * Tack on the SACK block if it is necessary.
+	 */
+	if (TCP_SACK_ENABLED(tp) && (tp->t_flags & TF_ACKNOW)
+			&& (tp->rcv_sack_num > 0)) {
+		int sack_len, i;
+		u_char *bp = (u_char *)(opt + optlen);
+		u_int32_t *lp = (u_int32_t *)(bp + 4);
+
+		sack_len = tp->rcv_sack_num * 8 + 2;
+		bp[0] = TCPOPT_NOP;
+		bp[1] = TCPOPT_NOP;
+		bp[2] = TCPOPT_SACK;
+		bp[3] = sack_len;
+		for (i = 0; i < tp->rcv_sack_num; i++) {
+			*lp++ = htonl(tp->rcv_sack_block[i].left);
+			*lp++ = htonl(tp->rcv_sack_block[i].right);
+		}
+		tp->rcv_sack_num = 0;
+		optlen += sack_len + 2;
+	}
+
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) 
+	if (tp->t_family == AF_INET)
 #endif
 	if (tp->t_flags & TF_SIGNATURE) {
 		u_char *bp;
@@ -1030,11 +1177,16 @@ send:
 	 * case, since we know we aren't doing a retransmission.
 	 * (retransmit and persist are mutually exclusive...)
 	 */
-	if (len || (flags & (TH_SYN|TH_FIN)) ||
-	    TCP_TIMER_ISARMED(tp, TCPT_PERSIST))
-		th->th_seq = htonl(tp->snd_nxt);
-	else
-		th->th_seq = htonl(tp->snd_max);
+	if (TCP_SACK_ENABLED(tp) && sack_rxmit) {
+		th->th_seq = htonl(p->rxmit);
+		p->rxmit += len;
+	} else {
+		if (len || (flags & (TH_SYN|TH_FIN)) ||
+		    TCP_TIMER_ISARMED(tp, TCPT_PERSIST))
+			th->th_seq = htonl(tp->snd_nxt);
+		else
+			th->th_seq = htonl(tp->snd_max);
+	}
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
 		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
@@ -1076,7 +1228,7 @@ send:
 		u_int8_t *sigp;
 
 		sav = tcp_signature_getsav(m, th);
-		
+
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
@@ -1172,6 +1324,8 @@ send:
 		 */
 		if (flags & (TH_SYN|TH_FIN))
 			tp->snd_nxt++;
+		if (sack_rxmit)
+			goto timer;
 		tp->snd_nxt += len;
 		if (SEQ_GT(tp->snd_nxt, tp->snd_max)) {
 			tp->snd_max = tp->snd_nxt;
@@ -1194,8 +1348,10 @@ send:
 		 * Initialize shift counter which is used for backoff
 		 * of retransmit time.
 		 */
+timer:
 		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
-		    tp->snd_nxt != tp->snd_una) {
+			((sack_rxmit && tp->snd_nxt != tp->snd_max) ||
+		    tp->snd_nxt != tp->snd_una)) {
 			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
 				TCP_TIMER_DISARM(tp, TCPT_PERSIST);
 				tp->t_rxtshift = 0;
@@ -1284,7 +1440,7 @@ send:
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE, 
+			so->so_options & SO_DONTROUTE,
 			(struct ip6_moptions *)0, so, NULL);
 		break;
 	    }
@@ -1311,6 +1467,10 @@ out:
 			tp->t_softerror = error;
 			error = 0;
 		}
+
+		/* Back out the seqence number advance. */
+		if (sack_rxmit)
+			p->rxmit -= len;
 
 		/* Restart the delayed ACK timer, if necessary. */
 		if (tp->t_flags & TF_DELACK)

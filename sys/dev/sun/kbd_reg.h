@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_reg.h,v 1.2.6.3 2004/09/21 13:33:27 skrll Exp $ */
+/*	$NetBSD: kbd_reg.h,v 1.2.6.4 2005/03/04 16:50:38 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,10 @@
 #define	KBD_ERROR	0x7e		/* keyboard detected an error */
 #define KBD_SPECIAL(c) (((c) & 0x7e) == 0x7e)
 
-/* Keyboard IDs */
+/*
+ * Keyboard IDs
+ * The serial versions of the type 5 and 6 keyboards both return ID 4.
+ */
 #define	KB_KLUNK	0		/* Micro Switch 103SD32-2 */
 #define	KB_VT100	1		/* Keytronics VT100 compatible */
 #define	KB_SUN2		2		/* type 2 keyboard */

@@ -1,11 +1,11 @@
-#	$NetBSD: files.ufs,v 1.2.6.6 2005/02/15 21:33:41 skrll Exp $
+#	$NetBSD: files.ufs,v 1.2.6.7 2005/03/04 16:54:45 skrll Exp $
 
 deffs					FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX
 
-defflag	opt_ffs.h			FFS_EI APPLE_UFS
+defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -22,8 +22,7 @@ file	ufs/ffs/ffs_alloc.c		ffs | mfs
 file	ufs/ffs/ffs_balloc.c		ffs | mfs
 file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
 file	ufs/ffs/ffs_inode.c		ffs | mfs
-file	ufs/ffs/ffs_snapshot.c		(ffs | mfs) & ffs_snapshot
-file	ufs/ffs/ffs_snapshot_stub.c	(ffs | mfs) & !ffs_snapshot
+file	ufs/ffs/ffs_snapshot.c		ffs | mfs
 file	ufs/ffs/ffs_softdep.c		ffs & softdep
 file	ufs/ffs/ffs_softdep.stub.c	(ffs & !softdep) |
 					    (!ffs & (lfs | mfs | ext2fs))
@@ -33,7 +32,7 @@ file	ufs/ffs/ffs_vfsops.c		ffs | mfs
 file	ufs/ffs/ffs_vnops.c		ffs | mfs
 file	ufs/ffs/ffs_appleufs.c		ffs & apple_ufs
 
-file	ufs/lfs/lfs_alloc.c		lfs  
+file	ufs/lfs/lfs_alloc.c		lfs
 file	ufs/lfs/lfs_balloc.c		lfs
 file	ufs/lfs/lfs_bio.c		lfs
 file	ufs/lfs/lfs_cksum.c		lfs

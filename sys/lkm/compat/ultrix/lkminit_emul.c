@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.4 2001/11/12 23:23:07 lukem Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.4.16.1 2005/03/04 16:52:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.4 2001/11/12 23:23:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.4.16.1 2005/03/04 16:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -63,7 +63,7 @@ MOD_COMPAT("compat_ultrix", -1, &emul_ultrix);
  */
 int
 compat_ultrix_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

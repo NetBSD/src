@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.15.6.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.15.6.4 2005/03/04 16:50:08 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.15.6.3 2004/09/21 13:32:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.15.6.4 2005/03/04 16:50:08 skrll Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -54,21 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.15.6.3 2004/09/21 13:32:54 skrll E
 /* For most reconstructs we need at most 3 RF_ReconMapListElem_t's.
  * Bounding the number we need is quite difficult, as it depends on how
  * badly the sectors to be reconstructed get divided up.  In the current
- * code, the reconstructed sectors appeared aligned on stripe boundaries, 
- * and are always presented in stripe width units, so we're probably 
+ * code, the reconstructed sectors appeared aligned on stripe boundaries,
+ * and are always presented in stripe width units, so we're probably
  * allocating quite a bit more than we'll ever need.
  */
 #define RF_NUM_RECON_POOL_ELEM 100
 
-static void 
+static void
 compact_stat_entry(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
     int i);
-static void crunch_list(RF_ReconMap_t *mapPtr, 
+static void crunch_list(RF_ReconMap_t *mapPtr,
 			RF_ReconMapListElem_t * listPtr);
 static RF_ReconMapListElem_t *
 MakeReconMapListElem(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector,
 		     RF_SectorNum_t stopSector, RF_ReconMapListElem_t * next);
-static void 
+static void
 FreeReconMapListElem(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t * p);
 #if 0
 static void PrintList(RF_ReconMapListElem_t * listPtr);
@@ -84,7 +84,7 @@ static void PrintList(RF_ReconMapListElem_t * listPtr);
  *-------------------------------------------------------------------------*/
 
 RF_ReconMap_t *
-rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors, 
+rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
 		RF_SectorCount_t disk_sectors,
 		RF_ReconUnitCount_t spareUnitsPerDisk)
 {
@@ -106,7 +106,7 @@ rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
 	(void) memset((char *) p->status, 0,
 	    num_rus * sizeof(RF_ReconMapListElem_t *));
 
-	
+
 	pool_init(&p->elem_pool, sizeof(RF_ReconMapListElem_t), 0,
 	    0, 0, "raidreconpl", NULL);
 	pool_prime(&p->elem_pool, RF_NUM_RECON_POOL_ELEM);
@@ -133,7 +133,7 @@ rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
  * stuff.
  *-------------------------------------------------------------------------*/
 
-void 
+void
 rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 		  RF_SectorNum_t startSector, RF_SectorNum_t stopSector)
 {
@@ -147,7 +147,7 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 	}
 	mapPtr->lock = 1;
 	RF_UNLOCK_MUTEX(mapPtr->mutex);
-	RF_ASSERT(startSector >= 0 && stopSector < mapPtr->sectorsInDisk && 
+	RF_ASSERT(startSector >= 0 && stopSector < mapPtr->sectorsInDisk &&
 		  stopSector >= startSector);
 
 	while (startSector <= stopSector) {
@@ -199,7 +199,7 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
  *
  *-------------------------------------------------------------------------*/
 
-static void 
+static void
 compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i)
 {
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
@@ -208,7 +208,7 @@ compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i)
 	crunch_list(mapPtr, p);
 
 	if ((p->startSector == i * sectorsPerReconUnit) &&
-	    (p->stopSector == i * sectorsPerReconUnit + 
+	    (p->stopSector == i * sectorsPerReconUnit +
 			      sectorsPerReconUnit - 1)) {
 		mapPtr->status[i] = RU_ALL;
 		mapPtr->unitsLeft--;
@@ -216,7 +216,7 @@ compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i)
 	}
 }
 
-static void 
+static void
 crunch_list(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t *listPtr)
 {
 	RF_ReconMapListElem_t *pt, *p = listPtr;
@@ -261,7 +261,7 @@ MakeReconMapListElem(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector,
  *
  *-------------------------------------------------------------------------*/
 
-static void 
+static void
 FreeReconMapListElem(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t *p)
 {
 	pool_put(&mapPtr->elem_pool, p);
@@ -272,7 +272,7 @@ FreeReconMapListElem(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t *p)
  * any time.
  *
  *-------------------------------------------------------------------------*/
-void 
+void
 rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 {
 	RF_ReconMapListElem_t *p, *q;
@@ -292,7 +292,7 @@ rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 		}
 	}
 	pool_destroy(&mapPtr->elem_pool);
-	RF_Free(mapPtr->status, mapPtr->totalRUs * 
+	RF_Free(mapPtr->status, mapPtr->totalRUs *
 		sizeof(RF_ReconMapListElem_t *));
 	RF_Free(mapPtr, sizeof(RF_ReconMap_t));
 }
@@ -302,7 +302,7 @@ rf_FreeReconMap(RF_ReconMap_t *mapPtr)
  *
  *-------------------------------------------------------------------------*/
 
-int 
+int
 rf_CheckRUReconstructed(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector)
 {
 	RF_ReconMapListElem_t *l;	/* used for searching */
@@ -313,7 +313,7 @@ rf_CheckRUReconstructed(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector)
 	return ((l == RU_ALL) ? 1 : 0);
 }
 
-RF_ReconUnitCount_t 
+RF_ReconUnitCount_t
 rf_UnitsLeftToReconstruct(RF_ReconMap_t *mapPtr)
 {
 	RF_ASSERT(mapPtr != NULL);
@@ -321,18 +321,18 @@ rf_UnitsLeftToReconstruct(RF_ReconMap_t *mapPtr)
 }
 
 #if 0
-static void 
+static void
 PrintList(RF_ReconMapListElem_t *listPtr)
 {
 	while (listPtr) {
-		printf("%d,%d -> ", (int) listPtr->startSector, 
+		printf("%d,%d -> ", (int) listPtr->startSector,
 		       (int) listPtr->stopSector);
 		listPtr = listPtr->next;
 	}
 	printf("\n");
 }
 
-void 
+void
 rf_PrintReconMap(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, RF_RowCol_t fcol)
 {
 	RF_ReconUnitCount_t numRUs;
@@ -359,19 +359,19 @@ rf_PrintReconMap(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, RF_RowCol_t fcol)
 #endif
 
 #if RF_DEBUG_RECON
-void 
+void
 rf_PrintReconSchedule(RF_ReconMap_t *mapPtr, struct timeval *starttime)
 {
 	static int old_pctg = -1;
 	struct timeval tv, diff;
 	int     new_pctg;
 
-	new_pctg = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 
+	new_pctg = 100 - (rf_UnitsLeftToReconstruct(mapPtr) *
 			  100 / mapPtr->totalRUs);
 	if (new_pctg != old_pctg) {
 		RF_GETTIME(tv);
 		RF_TIMEVAL_DIFF(starttime, &tv, &diff);
-		printf("%d %d.%06d\n", (int) new_pctg, (int) diff.tv_sec, 
+		printf("%d %d.%06d\n", (int) new_pctg, (int) diff.tv_sec,
 		       (int) diff.tv_usec);
 		old_pctg = new_pctg;
 	}

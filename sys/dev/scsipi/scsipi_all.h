@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.22.16.3 2004/09/21 13:33:23 skrll Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.22.16.4 2005/03/04 16:50:33 skrll Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -54,69 +54,6 @@
 /*
  * Some basic, common SCSI commands
  */
-#define	TEST_UNIT_READY		0x00
-struct scsipi_test_unit_ready {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[3];
-	u_int8_t control;
-};
-
-#define	REQUEST_SENSE		0x03
-struct scsipi_sense {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t length;
-	u_int8_t control;
-};
-
-#define	MODE_SENSE		0x1a
-struct scsipi_mode_sense {
-	u_int8_t opcode;
-	u_int8_t byte2;
-#define	SMS_DBD				0x08 /* disable block descriptors */
-	u_int8_t page;
-#define	SMS_PAGE_CODE 			0x3F
-#define	SMS_PAGE_CTRL 			0xC0
-#define	SMS_PAGE_CTRL_CURRENT 		0x00
-#define	SMS_PAGE_CTRL_CHANGEABLE 	0x40
-#define	SMS_PAGE_CTRL_DEFAULT 		0x80
-#define	SMS_PAGE_CTRL_SAVED 		0xC0
-	u_int8_t unused;
-	u_int8_t length;
-	u_int8_t control;
-} __attribute__((packed));
-
-#define	MODE_SENSE_BIG		0x5A
-struct scsipi_mode_sense_big {
-	u_int8_t opcode;
-	u_int8_t byte2;		/* same bits as small version */
-	u_int8_t page; 		/* same bits as small version */
-	u_int8_t unused[4];
-	u_int8_t length[2];
-	u_int8_t control;
-} __attribute__((packed));
-
-#define	MODE_SELECT		0x15
-struct scsipi_mode_select {
-	u_int8_t opcode;
-	u_int8_t byte2;
-#define	SMS_SP	0x01		/* save page */
-#define	SMS_PF	0x10		/* page format (0 = SCSI-1, 1 = SCSI-2) */
-	u_int8_t unused[2];
-	u_int8_t length;
-	u_int8_t control;
-} __attribute__((packed));
-
-#define	MODE_SELECT_BIG		0x55
-struct scsipi_mode_select_big {
-	u_int8_t opcode;
-	u_int8_t byte2;		/* same bits as small version */
-	u_int8_t unused[5];
-	u_int8_t length[2];
-	u_int8_t control;
-} __attribute__((packed));
 
 #define	INQUIRY			0x12
 struct scsipi_inquiry {
@@ -139,75 +76,9 @@ struct scsipi_start_stop {
 	u_int8_t control;
 };
 
-#define	PREVENT_ALLOW		0x1e
-struct scsipi_prevent {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t how;
-	u_int8_t control;
-} __attribute__((packed));
-#define	PR_PREVENT 0x01
-#define	PR_ALLOW   0x00
-
 /*
- * inquiry and sense data format
+ * inquiry data format
  */
-
-struct scsipi_sense_data {
-/* 1*/	u_int8_t error_code;
-#define	SSD_ERRCODE	0x7F
-#define	SSD_ERRCODE_VALID 0x80
-/* 2*/	u_int8_t segment;
-/* 3*/	u_int8_t flags;
-#define	SSD_KEY		0x0F
-#define	SSD_ILI		0x20
-#define	SSD_EOM		0x40
-#define	SSD_FILEMARK	0x80
-/* 7*/	u_int8_t info[4];
-/* 8*/	u_int8_t extra_len;
-/*12*/	u_int8_t cmd_spec_info[4];
-/*13*/	u_int8_t add_sense_code;
-/*14*/	u_int8_t add_sense_code_qual;
-/*15*/	u_int8_t fru;
-/*16*/	u_int8_t sense_key_spec_1;
-#define	SSD_SCS_VALID	0x80
-/*17*/	u_int8_t sense_key_spec_2;
-/*18*/	u_int8_t sense_key_spec_3;
-/*32*/	u_int8_t extra_bytes[14];
-} __attribute__((packed));
-
-#define	SKEY_NO_SENSE		0x00
-#define	SKEY_RECOVERED_ERROR	0x01
-#define	SKEY_NOT_READY		0x02
-#define	SKEY_MEDIUM_ERROR	0x03
-#define	SKEY_HARDWARE_ERROR	0x04
-#define	SKEY_ILLEGAL_REQUEST	0x05
-#define	SKEY_UNIT_ATTENTION	0x06
-#define	SKEY_WRITE_PROTECT	0x07
-#define	SKEY_BLANK_CHECK	0x08
-#define	SKEY_VENDOR_UNIQUE	0x09
-#define	SKEY_COPY_ABORTED	0x0A
-#define	SKEY_ABORTED_COMMAND	0x0B
-#define	SKEY_EQUAL		0x0C
-#define	SKEY_VOLUME_OVERFLOW	0x0D
-#define	SKEY_MISCOMPARE		0x0E
-#define	SKEY_RESERVED		0x0F
-
-/*
- * Sense bytes described by the extra_len tag start at cmd_spec_info,
- * and can only continue up to the end of the structure we've defined
- * (which is too short for some cases).
- */
-#define	ADD_BYTES_LIM(sp)	\
-	((((int)(sp)->extra_len) < (int) sizeof(struct scsipi_sense_data) - 8)? \
-	((sp)->extra_len) : (sizeof (struct scsipi_sense_data) - 8))
-
-
-struct scsipi_sense_data_unextended {
-/* 1*/	u_int8_t error_code; 
-/* 4*/	u_int8_t block[3];
-} __attribute__((packed)); 
 
 #define	T_REMOV		1	/* device is removable */
 #define	T_FIXED		0	/* device is not removable */
@@ -293,31 +164,5 @@ struct scsipi_inquiry_data {
 /*59*/	char    version_descriptor[8][2];
 #define	SCSIPI_INQUIRY_LENGTH_SCSI3	74
 } __attribute__((packed)); /* 74 Bytes */
-
-/* Data structures for mode select/mode sense */
-struct scsipi_mode_header {
-	u_int8_t data_length;	/* Sense data length */
-	u_int8_t medium_type;
-	u_int8_t dev_spec;
-	u_int8_t blk_desc_len;	/* unused on ATAPI */
-} __attribute__((packed));
-
-struct scsipi_mode_header_big {
-	u_int8_t data_length[2];	/* Sense data length */
-	u_int8_t medium_type;
-	u_int8_t dev_spec;
-	u_int8_t unused[2];		/* unused on ATAPI */
-	u_int8_t blk_desc_len[2];	/* unused on ATAPI */
-} __attribute__((packed));
-
-/*
- * This part is common to all mode pages.
- */
-struct scsipi_mode_page_header {
-	u_int8_t pg_code;		/* page code */
-#define	PGCODE_MASK	0x3f		/* page code mask */
-#define	PGCODE_PS	0x80		/* page is savable */
-	u_int8_t pg_length;		/* page length (not including hdr) */
-} __attribute__((__packed__));
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2.14.1 2005/01/24 08:35:52 skrll Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.14.2 2005/03/04 16:52:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2.14.1 2005/01/24 08:35:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2.14.2 2005/03/04 16:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/syscall.h>
@@ -78,7 +78,7 @@ compat_pecoff_lkmload(struct lkm_table *lkmtp, int cmd)
  */
 int
 compat_pecoff_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

@@ -27,7 +27,7 @@
  *	i4b_tei.c - tei handling procedures
  *	-----------------------------------
  *
- *	$Id: i4b_tei.c,v 1.5.8.3 2004/09/21 13:38:00 skrll Exp $ 
+ *	$Id: i4b_tei.c,v 1.5.8.4 2005/03/04 16:53:46 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.5.8.3 2004/09/21 13:38:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.5.8.4 2005/03/04 16:53:46 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -90,7 +90,7 @@ void
 i4b_tei_rxframe(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	u_char *ptr = m->m_data;
-	
+
 	switch(*(ptr + OFF_MT))
 	{
 		case MT_ID_ASSIGN:
@@ -112,7 +112,7 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 				i4b_next_l2state(l2sc, drv, EV_MDASGRQ);
 			}
 			break;
-			
+
 		case MT_ID_DENY:
 			if( (*(ptr + OFF_RIL) == l2sc->last_ril) &&
 			    (*(ptr + OFF_RIH) == l2sc->last_rih))
@@ -129,12 +129,12 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 				{
 					log(LOG_WARNING, "i4b: isdnif %d, denied TEI = %d = 0x%02x\n", l2sc->drv->isdnif, l2sc->tei, l2sc->tei);
 					NDBGL2(L2_TEI_ERR, "TEI ID Denied - TEI = %d", l2sc->tei);
-				}					
+				}
 				i4b_mdl_status_ind(drv, STI_TEIASG, -1);
 				i4b_next_l2state(l2sc, drv, EV_MDERRRS);
 			}
 			break;
-			
+
 		case MT_ID_CHK_REQ:
 			if( (l2sc->tei_valid == TEI_VALID) &&
 			    ( (l2sc->tei == GET_TEIFROMAI(*(ptr+OFF_AI))) ||
@@ -147,13 +147,13 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 					NDBGL2(L2_TEI_MSG, "TEI ID Check Req - TEI = %d", l2sc->tei);
 					lasttei = l2sc->tei;
 				}
-				
+
 				if(l2sc->T202 == TIMER_ACTIVE)
 					i4b_T202_stop(l2sc);
 				i4b_tei_chkresp(l2sc);
 			}
 			break;
-			
+
 		case MT_ID_REMOVE:
 			if( (l2sc->tei_valid == TEI_VALID) &&
 			    ( (l2sc->tei == GET_TEIFROMAI(*(ptr+OFF_AI))) ||
@@ -168,7 +168,7 @@ i4b_tei_rxframe(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 				i4b_next_l2state(l2sc, drv, EV_MDREMRQ);
 			}
 			break;
-			
+
 		default:
 			NDBGL2(L2_TEI_ERR, "UNKNOWN TEI MGMT Frame, type = 0x%x", *(ptr + OFF_MT));
 			i4b_print_frame(m->m_len, m->m_data);
@@ -184,7 +184,7 @@ static struct mbuf *
 build_tei_mgmt_frame(l2_softc_t *l2sc, unsigned char type)
 {
 	struct mbuf *m;
-	
+
 	if((m = i4b_Dgetmbuf(TEI_MGMT_FRM_LEN)) == NULL)
 		return(NULL);
 
@@ -193,7 +193,7 @@ build_tei_mgmt_frame(l2_softc_t *l2sc, unsigned char type)
 	m->m_data[TEIM_UIO]   = UI;	/* UI */
 	m->m_data[TEIM_MEIO]  = MEI;	/* MEI */
 	m->m_data[TEIM_MTO]   = type;	/* message type */
-	
+
 	switch(type)
 	{
 		case MT_ID_REQEST:
@@ -209,7 +209,7 @@ build_tei_mgmt_frame(l2_softc_t *l2sc, unsigned char type)
 			m->m_data[TEIM_RIHO] = l2sc->last_rih;
 			m->m_data[TEIM_AIO] = (l2sc->tei << 1) | 0x01;
 			break;
-			
+
 		case MT_ID_VERIFY:
 			m->m_data[TEIM_RILO] = 0;
 			m->m_data[TEIM_RIHO] = 0;
@@ -235,11 +235,11 @@ i4b_tei_assign(l2_softc_t *l2sc)
 	struct mbuf *m;
 
 	NDBGL2(L2_TEI_MSG, "tx TEI ID_Request");
-	
+
 	m = build_tei_mgmt_frame(l2sc, MT_ID_REQEST);
 
 	if(m == NULL)
-		panic("i4b_tei_assign: no mbuf");		
+		panic("i4b_tei_assign: no mbuf");
 
 	i4b_T202_start(l2sc);
 
@@ -260,7 +260,7 @@ i4b_tei_verify(l2_softc_t *l2sc)
 	m = build_tei_mgmt_frame(l2sc, MT_ID_VERIFY);
 
 	if(m == NULL)
-		panic("i4b_tei_verify: no mbuf");		
+		panic("i4b_tei_verify: no mbuf");
 
 	i4b_T202_start(l2sc);
 
@@ -285,7 +285,7 @@ i4b_tei_chkresp(l2_softc_t *l2sc)
 	m = build_tei_mgmt_frame(l2sc, MT_ID_CHK_RSP);
 
 	if(m == NULL)
-		panic("i4b_tei_chkresp: no mbuf");		
+		panic("i4b_tei_chkresp: no mbuf");
 
 	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_FREE);
 }
@@ -305,18 +305,18 @@ i4b_make_rand_ri(l2_softc_t *l2sc)
         read_random((char *)&val, sizeof(val));
 #else
 	val = (u_short)random();
-#endif /* RANDOMDEV */ 
+#endif /* RANDOMDEV */
 
 #else
 
 	register u_short val;
 	register int i;
 	static int called = 42;
-	
+
 	val = (l2sc->last_rih << 8) | l2sc->last_ril;
 
 	val += ++called;
-	
+
 	for(i=0; i < 50 ; i++, val++)
 	{
 		val |= l2sc->drv->isdnif+i;

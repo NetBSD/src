@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3.20.3 2004/09/21 13:36:07 skrll Exp $	*/
+/*	$NetBSD: memset.S,v 1.3.20.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.3.20.3 2004/09/21 13:36:07 skrll Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3.20.4 2005/03/04 16:52:29 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,7 +85,7 @@ ENTRY(memset)
 	movl	%sp@(16),%d1		| count
 	movb	%sp@(15),%d2		| character
 
-	/* 
+	/*
 	 * It isn't worth the overhead of aligning to {long}word boundries
 	 * if the string is too short.
 	 */
@@ -97,7 +97,7 @@ ENTRY(memset)
 	movl	%d0,%d2
 	lsll	#8,%d0
 	orl	%d0,%d2
-	lsll	#8,%d0 
+	lsll	#8,%d0
 	orl	%d0,%d2
 	lsll	#8,%d0
 	orl	%d0,%d2
@@ -105,7 +105,7 @@ ENTRY(memset)
 	/* word align */
 	movl	%a0,%d0
 	btst	#0,%d0			| if (dst & 1)
-	jeq	Lbzalgndw		| 
+	jeq	Lbzalgndw		|
 	movb	%d2,%a0@+		|	*(char *)dst++ = X
 	subql	#1,%d1			|	len--
 	addql	#1,%d0

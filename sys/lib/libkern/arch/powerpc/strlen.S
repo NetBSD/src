@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.1.20.3 2004/09/21 13:36:13 skrll Exp $ */
+/*	$NetBSD: strlen.S,v 1.1.20.4 2005/03/04 16:52:41 skrll Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@NetBSD.org>
@@ -92,7 +92,7 @@ ENTRY(strlen)
 		and.	r0, r0, r6
 
 		beq+	1b			/* no NUL bytes here */
-	
+
 		and	r8, r7, r10		/* ok, a NUL is somewhere */
 		or	r7, r7, r10		/* do step 2 to find out */
 		add	r0, r8, r10		/* where */

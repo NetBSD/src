@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_timer.c,v 1.10.16.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: hd_timer.c,v 1.10.16.4 2005/03/04 16:53:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_timer.c,v 1.10.16.3 2004/09/21 13:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_timer.c,v 1.10.16.4 2005/03/04 16:53:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ hd_timer()
 		case DM_SENT:
 			if (++hdp->hd_retxcnt == hd_n2) {
 				/* Notify the packet level. */
-				(void) pk_ctlinput(PRC_LINKDOWN, 
+				(void) pk_ctlinput(PRC_LINKDOWN,
 				       (struct sockaddr *) hdp->hd_pkp, NULL);
 				hdp->hd_retxcnt = 0;
 				hdp->hd_state = SABM_SENT;
