@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2002/05/06 22:20:57 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.57 2002/05/16 01:01:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1016,7 +1016,6 @@ static struct {
 	{ "pciide",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
-	{ "ofpci",	BUSCLASS_PCI },
 	{ "fdc",	BUSCLASS_FDC },
 };
 

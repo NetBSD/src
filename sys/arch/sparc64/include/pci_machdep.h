@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.12 2002/05/15 19:23:56 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.13 2002/05/16 01:01:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -30,11 +30,6 @@
 
 #ifndef _MACHINE_PCI_MACHDEP_H_
 #define _MACHINE_PCI_MACHDEP_H_
-
-/*
- * We want to contro both device & function probe order.
- */
-#define		__PCI_BUS_DEVORDER
 
 /*
  * Forward declarations.
@@ -75,9 +70,6 @@ typedef u_int64_t pcitag_t;
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
-#ifdef __PCI_BUS_DEVORDER
-int		pci_bus_devorder(pci_chipset_tag_t, int, char *);
-#endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
@@ -92,7 +84,8 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 					 int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
+int		pci_enumerate_bus(struct pci_softc *,
+		    int (*match)(struct pci_attach_args *),
+		    struct pci_attach_args *);
 
 #endif /* _MACHINE_PCI_MACHDEP_H_ */
