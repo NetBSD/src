@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.14 2000/07/03 08:59:27 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.15 2000/09/27 03:57:51 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -221,13 +221,6 @@ struct adbCommand {
 };
 extern	void	adb_pass_up __P((struct adbCommand *));
 
-#if 0
-/*
- * Define the external functions
- */
-extern int	zshard __P((int));		/* from zs.c */
-#endif
-
 #ifdef ADB_DEBUG
 /*
  * This function dumps contents of the PMData
@@ -306,11 +299,7 @@ pm_wait_busy(delay)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
 			return 1;	/* timeout */
@@ -328,11 +317,7 @@ pm_wait_free(delay)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
-		(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0)
 			return 0;	/* timeout */
@@ -1068,14 +1053,22 @@ pm_adb_op(buffer, compRout, data, command)
 	/* wait until the PM interrupt is occured */
 	delay = 0x80000;
 	while (adbWaiting == 1) {
-		if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
+		switch (mac68k_machine.machineid) {
+		case MACH_MACPB210:
+		case MACH_MACPB230:	/* daishi tested with Duo230 */
+		case MACH_MACPB250:
+		case MACH_MACPB270:
+		case MACH_MACPB280:
+		case MACH_MACPB280C:
 			pm_intr((void *)0);
+			break;
+		default:
+			if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
+				pm_intr((void *)0);
+			break;
+		}
 #ifdef PM_GRAB_SI
-#if 0
-			zshard(0);		/* grab any serial interrupts */
-#else
-			(void)intr_dispatch(0x70);
-#endif
+		(void)intr_dispatch(0x70);	/* grab any serial interrupts */
 #endif
 		if ((--delay) < 0) {
 			splx(s);
