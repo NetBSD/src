@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2002/09/18 14:00:39 lukem Exp $
+# $NetBSD: Makefile,v 1.11 2002/10/23 01:25:38 itojun Exp $
 
 NOMAN=	# defined
 NOLINT= # defined
@@ -24,9 +24,8 @@ CFLAGS+= -I.					\
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD=	-L${VERS} -lvers \
-	-lroken \
-	-lcrypt
+LDADD+=	-L${VERS} -lvers -lroken -lcrypt
+DPADD+=	${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
 
 CLEANFILES+=lex.c parse.c parse.h
 
