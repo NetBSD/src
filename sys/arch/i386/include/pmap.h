@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pmap.h	7.4 (Berkeley) 5/12/91
+ *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
+ *	$Id: pmap.h,v 1.2 1993/05/22 08:00:30 cgd Exp $
  */
 
 /*

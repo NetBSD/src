@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ct.c	7.3 (Berkeley) 5/5/91
+ *	from: @(#)ct.c	7.3 (Berkeley) 5/5/91
+ *	$Id: ct.c,v 1.2 1993/05/22 07:58:49 cgd Exp $
  */
 
 /*

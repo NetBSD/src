@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: itereg.h 1.1 90/07/09$
  *
- *	@(#)itereg.h	7.2 (Berkeley) 11/4/90
+ *	from: @(#)itereg.h	7.2 (Berkeley) 11/4/90
+ *	$Id: itereg.h,v 1.2 1993/05/22 07:56:35 cgd Exp $
  */
 
 #define REGADDR		ip->regbase

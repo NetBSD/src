@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
- *	@(#)mem.c	7.5 (Berkeley) 5/7/91
+ *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
+ *	$Id: mem.c,v 1.2 1993/05/22 07:57:35 cgd Exp $
  */
 
 /*

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sd.c	7.8 (Berkeley) 6/9/91
+ *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
+ *	$Id: sd.c,v 1.2 1993/05/22 07:56:53 cgd Exp $
  */
 
 /*
@@ -41,10 +42,6 @@
  */
 #include "sd.h"
 #if NSD > 0
-
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.1.1.1 1993/05/13 13:56:47 cgd Exp $";
-#endif
 
 #include "sys/param.h"
 #include "sys/systm.h"

@@ -22,11 +22,16 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
+ *
+ *	$Id: db_machdep.h,v 1.2 1993/05/22 08:00:12 cgd Exp $
  */
 /*
  * HISTORY
  * $Log: db_machdep.h,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/22 08:00:12  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.1.1.1  1993/03/21  09:45:47  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 2.8  92/02/19  15:07:56  elf

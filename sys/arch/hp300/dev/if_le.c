@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_le.c	7.6 (Berkeley) 5/8/91
+ *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
+ *	$Id: if_le.c,v 1.2 1993/05/22 07:56:23 cgd Exp $
  */
 
 #include "le.h"

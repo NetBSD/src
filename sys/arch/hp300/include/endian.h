@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)endian.h	7.7 (Berkeley) 4/3/91
+ *	from: @(#)endian.h	7.7 (Berkeley) 4/3/91
+ *	$Id: endian.h,v 1.2 1993/05/22 07:58:19 cgd Exp $
  */
 
 /*

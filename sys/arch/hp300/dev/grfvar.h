@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
  *
- *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)grfvar.h	7.3 (Berkeley) 5/7/91
+ *	$Id: grfvar.h,v 1.2 1993/05/22 07:56:15 cgd Exp $
  */
 
 /* internal structure of lock page */

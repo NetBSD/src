@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:@(#)wd.c	7.2 (Berkeley) 5/9/91
+ *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
+ *	$Id: wd.c,v 1.15 1993/05/22 08:01:43 cgd Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */

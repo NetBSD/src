@@ -1,3 +1,7 @@
+/*
+ *	$Id: if_isreg.h,v 1.2 1993/05/22 08:01:21 cgd Exp $
+ */
+
 /* Declarations specific to this driver */
 #define NTBUF 2
 #define TLEN 1

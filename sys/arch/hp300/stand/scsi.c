@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: scsi.c 1.3 90/01/27$
  *
- *	@(#)scsi.c	7.4 (Berkeley) 5/7/91
+ *	from: @(#)scsi.c	7.4 (Berkeley) 5/7/91
+ *	$Id: scsi.c,v 1.2 1993/05/22 07:59:21 cgd Exp $
  */
 
 /*

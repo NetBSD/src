@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hil_keymaps.c 1.1 90/07/09$
  *
- *	@(#)hil_keymaps.c	7.3 (Berkeley) 12/16/90
+ *	from: @(#)hil_keymaps.c	7.3 (Berkeley) 12/16/90
+ *	$Id: hil_keymaps.c,v 1.2 1993/05/22 07:56:16 cgd Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kbdmap.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)kbdmap.h	7.1 (Berkeley) 5/8/90
+ *	$Id: kbdmap.h,v 1.2 1993/05/22 07:56:37 cgd Exp $
  */
 
 #define	ESC	'\033'

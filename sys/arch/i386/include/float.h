@@ -30,14 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)float.h	7.1 (Berkeley) 5/8/90
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00086
- * --------------------         -----   ----------------------
- *
- * 27 Feb 93    Handel/da Silva/Poirot  Adjust value for MAX_DOUBLE
+ *	from: @(#)float.h	7.1 (Berkeley) 5/8/90
+ *	$Id: float.h,v 1.3 1993/05/22 08:00:18 cgd Exp $
  */
 
 #define FLT_RADIX	2		/* b */

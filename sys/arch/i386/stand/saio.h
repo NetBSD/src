@@ -47,7 +47,7 @@
  *
  * I/O interface to driver.
  *
- * $Header: /cvsroot/src/sys/arch/i386/stand/Attic/saio.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+ *	$Id: saio.h,v 1.2 1993/05/22 08:02:22 cgd Exp $
  */
 
 /*

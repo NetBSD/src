@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_lereg.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)if_lereg.h	7.1 (Berkeley) 5/8/90
+ *	$Id: if_lereg.h,v 1.2 1993/05/22 07:56:25 cgd Exp $
  */
 
 #define	LEID		21

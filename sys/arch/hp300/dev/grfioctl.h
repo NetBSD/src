@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: grfioctl.h 1.1 90/07/09$
  *
- *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
+ *	from: @(#)grfioctl.h	7.2 (Berkeley) 11/4/90
+ *	$Id: grfioctl.h,v 1.2 1993/05/22 07:56:14 cgd Exp $
  */
 
 struct	grfinfo {

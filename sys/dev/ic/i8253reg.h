@@ -30,8 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/dev/ic/i8253reg.h,v 1.1 1993/03/23 08:12:25 cgd Exp $
- *
+ *	$Id: i8253reg.h,v 1.2 1993/05/22 08:01:39 cgd Exp $
+ */
+
+/*
  * Register definitions for the Intel 8253 Programmable Interval Timer.
  *
  * This chip has three independent 16-bit down counters that can be

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hpux_sysent.c 1.1 90/07/09$
  *
- *	@(#)hpux_sysent.c	7.7 (Berkeley) 4/20/91
+ *	from: @(#)hpux_sysent.c	7.7 (Berkeley) 4/20/91
+ *	$Id: hpux_sysent.c,v 1.2 1993/05/22 07:58:09 cgd Exp $
  */
 
 /*

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
- *	@(#)param.h	7.8 (Berkeley) 6/28/91
+ *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
+ *	$Id: param.h,v 1.2 1993/05/22 07:58:25 cgd Exp $
  */
 
 /*

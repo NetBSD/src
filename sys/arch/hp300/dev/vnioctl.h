@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: fdioctl.h 1.1 90/07/09$
  *
- *	@(#)vnioctl.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)vnioctl.h	7.3 (Berkeley) 5/7/91
+ *	$Id: vnioctl.h,v 1.2 1993/05/22 07:57:00 cgd Exp $
  */
 
 /*

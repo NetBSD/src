@@ -15,14 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
- * commenced: Sun Sep 27 18:14:01 PDT 1992
+ *	$Id: ultra14f.c,v 1.10 1993/05/22 08:01:41 cgd Exp $
  */
  
 #include <sys/types.h>

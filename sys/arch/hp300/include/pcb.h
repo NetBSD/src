@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: pcb.h 1.13 89/04/23$
  *
- *	@(#)pcb.h	7.4 (Berkeley) 5/4/91
+ *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
+ *	$Id: pcb.h,v 1.2 1993/05/22 07:58:27 cgd Exp $
  */
 
 #include <machine/frame.h>

@@ -37,7 +37,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah $Hdr: mem.c 1.13 89/10/08$
- *	@(#)mem.c	7.2 (Berkeley) 5/9/91
+ *	from: @(#)mem.c	7.2 (Berkeley) 5/9/91
+ *	$Id: mem.c,v 1.3 1993/05/22 07:59:53 cgd Exp $
  */
 
 /*

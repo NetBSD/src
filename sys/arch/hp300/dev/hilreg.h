@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hilreg.h 1.9 91/01/21$
  *
- *	@(#)hilreg.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)hilreg.h	7.3 (Berkeley) 5/7/91
+ *	$Id: hilreg.h,v 1.2 1993/05/22 07:56:19 cgd Exp $
  */
 
 struct	hil_dev {

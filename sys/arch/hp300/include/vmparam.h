@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
- *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
+ *	$Id: vmparam.h,v 1.2 1993/05/22 07:58:38 cgd Exp $
  */
 
 /*

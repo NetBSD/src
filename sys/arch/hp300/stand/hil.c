@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hil.c 1.1 89/08/22$
  *
- *	@(#)hil.c	7.2 (Berkeley) 12/16/90
+ *	from: @(#)hil.c	7.2 (Berkeley) 12/16/90
+ *	$Id: hil.c,v 1.2 1993/05/22 07:58:55 cgd Exp $
  */
 
 /*

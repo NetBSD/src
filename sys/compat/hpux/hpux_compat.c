@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hpux_compat.c 1.41 91/04/06$
  *
- *	@(#)hpux_compat.c	7.16 (Berkeley) 5/30/91
+ *	from: @(#)hpux_compat.c	7.16 (Berkeley) 5/30/91
+ *	$Id: hpux_compat.c,v 1.2 1993/05/22 07:58:01 cgd Exp $
  */
 
 /*

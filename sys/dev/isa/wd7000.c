@@ -15,6 +15,8 @@
  * quite easy to do. Look at the Linux wd7000 device driver to see how
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
+ *
+ *	$Id: wd7000.c,v 1.6 1993/05/22 08:01:45 cgd Exp $
  */
 #include "wds.h"
 #if NWDS > 0

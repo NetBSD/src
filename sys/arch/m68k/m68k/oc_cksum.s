@@ -29,7 +29,8 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	@(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
+|	from: @(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
+|	$Id: oc_cksum.s,v 1.2 1993/05/22 07:57:37 cgd Exp $
 |
 |
 | oc_cksum: ones complement 16 bit checksum for MC68020.
@@ -88,8 +89,6 @@
 | packet -- a 1% effect for a 1ms ethernet packet.  This is not
 | enough gain to be worth the effort.
 
-	.data
-	.asciz	"@(#)$Header: /cvsroot/src/sys/arch/m68k/m68k/oc_cksum.s,v 1.1.1.1 1993/05/13 13:56:55 cgd Exp $"
 	.even
 	.text
 

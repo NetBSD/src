@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)isa.h	5.7 (Berkeley) 5/9/91
+ *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
+ *	$Id: isa.h,v 1.5 1993/05/22 08:01:28 cgd Exp $
  */
 
 /*

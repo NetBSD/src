@@ -33,7 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	$Id: if_ec.c,v 1.9 1993/05/22 08:01:15 cgd Exp $
  */
+
 /*
  * A driver for the 3Com 3C503 (Etherlink II) ethernet adaptor.
  *

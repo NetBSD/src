@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rtc.h	7.1 (Berkeley) 5/12/91
+ *	from: @(#)rtc.h	7.1 (Berkeley) 5/12/91
+ *	$Id: rtc.h,v 1.3 1993/05/22 08:01:36 cgd Exp $
  */
 
 /*

@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: rdreg.h 1.2 90/10/12$
  *
- *	@(#)rdreg.h	7.3 (Berkeley) 2/25/91
+ *	from: @(#)rdreg.h	7.3 (Berkeley) 2/25/91
+ *	$Id: rdreg.h,v 1.2 1993/05/22 07:56:47 cgd Exp $
  */
 
 struct	rd_iocmd {

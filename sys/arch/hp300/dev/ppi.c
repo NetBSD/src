@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ppi.c	7.3 (Berkeley) 12/16/90
+ *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
+ *	$Id: ppi.c,v 1.2 1993/05/22 07:56:41 cgd Exp $
  */
 
 /*

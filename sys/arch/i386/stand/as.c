@@ -5,13 +5,7 @@
  * 
  * Pace Willisson        pace@blitz.com       April 8, 1992
  *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00088
- * --------------------         -----   ----------------------
- *
- * 23 Oct 92	Joerg Lohse		changed ccb opcode for compatibility
- *					with Adaptec AHA-1542A
+ *	$Id: as.c,v 1.3 1993/05/22 08:02:05 cgd Exp $
  */
 
 #include "param.h"

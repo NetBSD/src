@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fd.c	7.3 (Berkeley) 5/25/91
+ *	from: @(#)fd.c	7.3 (Berkeley) 5/25/91
+ *	$Id: fd.c,v 1.2 1993/05/22 08:02:14 cgd Exp $
  */
 
 /****************************************************************************/

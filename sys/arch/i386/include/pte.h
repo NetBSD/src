@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pte.h	5.5 (Berkeley) 5/9/91
+ *	from: @(#)pte.h	5.5 (Berkeley) 5/9/91
+ *	$Id: pte.h,v 1.2 1993/05/22 08:00:34 cgd Exp $
  */
 
 /*

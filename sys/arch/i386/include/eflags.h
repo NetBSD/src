@@ -22,11 +22,16 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
+ *
+ *	$Id: eflags.h,v 1.2 1993/05/22 08:00:15 cgd Exp $
  */
 /*
  * HISTORY
  * $Log: eflags.h,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/22 08:00:15  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.1.1.1  1993/03/21  09:45:47  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 2.4  91/05/14  16:06:35  mrt

@@ -12,19 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
+ *	$Id: bt742a.c,v 1.6 1993/05/22 08:01:05 cgd Exp $
  */
 
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.5  1993/05/04 08:32:44  deraadt
+ * Revision 1.6  1993/05/22 08:01:05  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.5  1993/05/04  08:32:44  deraadt
  * support for making dev->id_alive be set, this is for iostat to
  * find disk devices. wee bit of a kludge. sub-device attach()
  * routines must now return 1 for successful attach(), 0 otherwise.

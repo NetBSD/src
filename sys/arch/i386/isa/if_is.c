@@ -31,7 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_ne.c	7.4 (Berkeley) 5/21/91
+ *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
+ *	$Id: if_is.c,v 1.5 1993/05/22 08:01:20 cgd Exp $
  */
 
 /*
