@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.25 2003/07/10 01:09:43 lukem Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.26 2004/11/03 21:01:45 dsl Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: clientloop.c,v 1.108 2003/04/02 09:48:07 markus Exp $");
-__RCSID("$NetBSD: clientloop.c,v 1.25 2003/07/10 01:09:43 lukem Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.26 2004/11/03 21:01:45 dsl Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -487,7 +487,7 @@ process_cmdline(void)
 	cmd = s = read_passphrase("\r\nssh> ", RP_ECHO);
 	if (s == NULL)
 		goto out;
-	while (*s && isspace(*s))
+	while (*s && isspace((unsigned char)*s))
 		s++;
 	if (*s == 0)
 		goto out;
@@ -502,7 +502,7 @@ process_cmdline(void)
 		goto out;
 	}
 	s += 2;
-	while (*s && isspace(*s))
+	while (*s && isspace((unsigned char)*s))
 		s++;
 
 	if (sscanf(s, "%5[0-9]:%255[^:]:%5[0-9]",
