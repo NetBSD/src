@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.3 1999/10/25 17:13:45 drochner Exp $
+#	$NetBSD: CARDBUS,v 1.4 1999/10/31 15:17:03 joda Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #
@@ -485,8 +485,9 @@ tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
-# CardBus network card
+# CardBus network cards
 ex*	at cardbus?			# 3Com 3C575TX
+fxp*	at cardbus?			# Intel i8255x
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
