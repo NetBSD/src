@@ -1,4 +1,4 @@
-/*	$NetBSD: kn03.h,v 1.7 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: kn03.h,v 1.8 1999/03/25 03:00:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -203,6 +203,7 @@
 /* (re)defines for the System Interrupt and Mask Registers */
 /* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
 
+#define	KN03_INTR_PROD_JUMPER	0x00008000	/* ro */
 #define	KN03_INTR_NVR_JUMPER	0x00004000	/* ro */
 #define	KN03_INTR_TC_2		0x00002000	/* ro */
 #define	KN03_INTR_TC_1		0x00001000	/* ro */
