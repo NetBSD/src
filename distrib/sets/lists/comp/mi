@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.457 2002/07/16 10:04:39 agc Exp $
+#	$NetBSD: mi,v 1.458 2002/07/18 09:35:48 agc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2945,6 +2945,7 @@
 ./usr/share/man/cat9/bitmask_snprintf.0		comp-sys-catman
 ./usr/share/man/cat9/boottime.0		comp-sys-catman
 ./usr/share/man/cat9/bounds_check_with_label.0		comp-sys-catman
+./usr/share/man/cat9/bufq.0		comp-sys-catman
 ./usr/share/man/cat9/bus_dma.0		comp-sys-catman
 ./usr/share/man/cat9/bus_dmamap_create.0		comp-sys-catman
 ./usr/share/man/cat9/bus_dmamap_destroy.0		comp-sys-catman
@@ -5510,6 +5511,7 @@
 ./usr/share/man/man9/bitmask_snprintf.9		comp-sys-man
 ./usr/share/man/man9/boottime.9		comp-sys-man
 ./usr/share/man/man9/bounds_check_with_label.9		comp-sys-man
+./usr/share/man/man9/bufq.9		comp-sys-man
 ./usr/share/man/man9/bus_dma.9		comp-sys-man
 ./usr/share/man/man9/bus_dmamap_create.9		comp-sys-man
 ./usr/share/man/man9/bus_dmamap_destroy.9		comp-sys-man
