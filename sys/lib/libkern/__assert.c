@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.6 2002/09/27 15:37:47 provos Exp $	*/
+/*	$NetBSD: __assert.c,v 1.7 2005/03/12 16:39:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -39,9 +39,7 @@
 #endif
 
 void
-__assert(t, f, l, e)
-	const char *t, *f, *e;
-	int l;
+__assert(const char *t, const char *f, int l, const char *e)
 {
 
 	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d",
