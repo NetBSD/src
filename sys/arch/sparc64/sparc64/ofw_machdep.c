@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.13 2000/08/28 18:01:23 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.14 2000/09/11 22:36:35 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -163,7 +163,7 @@ prom_vtop(vaddr)
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo); 
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo); 
 }
 
 /* 
@@ -401,7 +401,7 @@ prom_alloc_phys(len, align)
 	args.len = len;
 	if (openfirmware(&args) != 0)
 		return 0;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo);
 }
 
 /* 
@@ -444,7 +444,7 @@ prom_claim_phys(phys, len)
 	args.phys_lo = HDL2CELL(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(int)args.rphys_lo);
+	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(u_int32_t)args.rphys_lo);
 }
 
 /* 
@@ -538,7 +538,8 @@ prom_get_msgbuf(len, align)
 			args.align = align;
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
-				return (((paddr_t)args.phys_hi<<32)|args.phys_lo);
+				return (((paddr_t)args.phys_hi<<32)|
+					(u_int32_t)args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
