@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 1999/10/31 08:18:59 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 1999/11/05 19:06:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -327,7 +327,6 @@ Lloaddone:
 Lnocache0:
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(mac68k_init)
-	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
