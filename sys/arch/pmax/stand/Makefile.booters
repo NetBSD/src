@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.36 2002/05/04 07:26:11 gmcgarry Exp $
+# $NetBSD: Makefile.booters,v 1.37 2002/05/05 22:09:05 jdolecek Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -33,6 +33,8 @@ CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 PRIMARY_LOAD_ADDRESS?=	0x80700000
 SECONDARY_LOAD_ADDRESS?=0x80710000
+
+MKMAN=		no
 
 .if defined(PRIMARY_PROG)
 PROG=		${PRIMARY_PROG}
