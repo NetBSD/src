@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 2000/01/31 15:53:01 christos Exp $
+	$NetBSD: syscalls.master,v 1.9 2000/05/04 21:52:32 kristerw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -610,3 +610,5 @@
 #else
 303	EXCL		__shmctl13
 #endif
+304	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
+305	NOARGS		{ int sys_issetugid(void); }
