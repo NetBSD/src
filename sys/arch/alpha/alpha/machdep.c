@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.122 1998/05/19 18:35:11 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.123 1998/05/25 05:16:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,10 +66,12 @@
 
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
+#include "opt_dec_3000_300.h"
+#include "opt_dec_3000_500.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 1998/05/19 18:35:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 1998/05/25 05:16:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +228,11 @@ int		ncpus;
 
 struct bootinfo_kernel bootinfo;
 
+/* For built-in TCDS */
+#if defined(DEC_3000_300) || defined(DEC_3000_500)
+u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
+#endif
+
 struct platform platform;
 
 u_int32_t vm_mbuf_size = _VM_MBUF_SIZE;
@@ -355,6 +362,16 @@ nobootinfo:
 	 * lots of things.
 	 */
 	hwrpb = (struct rpb *)ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys);
+
+#if defined(DEC_3000_300) || defined(DEC_3000_500)
+	if (hwrpb->rpb_type == ST_DEC_3000_300 ||
+	    hwrpb->rpb_type == ST_DEC_3000_500) {
+		prom_getenv(PROM_E_SCSIID, dec_3000_scsiid,
+		    sizeof(dec_3000_scsiid));
+		prom_getenv(PROM_E_SCSIFAST, dec_3000_scsifast,
+		    sizeof(dec_3000_scsifast));
+	}
+#endif
 
 	/*
 	 * Remember how many cycles there are per microsecond, 
