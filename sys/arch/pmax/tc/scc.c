@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.3 1995/09/25 04:30:43 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.4 1995/09/25 22:10:56 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -1078,6 +1078,12 @@ sccstart(tp)
 		}
 		goto out;
 	}
+	
+#ifndef SCC_PARITY_MEANS_DELAY
+	/* normal case */
+	cc = ndqb(&tp->t_outq, 0);
+#else /* SCC_PARITY_MEANS_DELAY */
+	/* XXX 4.4bsd/pmax quirk: even parity means delay ? */
 	if (tp->t_flags & (RAW|LITOUT))
 		cc = ndqb(&tp->t_outq, 0);
 	else {
@@ -1089,6 +1095,8 @@ sccstart(tp)
 			goto out;
 		}
 	}
+#endif /* SCC_PARITY_MEANS_DELAY */
+
 	tp->t_state |= TS_BUSY;
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
