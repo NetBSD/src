@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.54 2002/07/17 05:57:47 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.55 2002/07/17 06:07:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,8 +189,8 @@ extern void	delay __P((unsigned int));
  * system.  So insist on SUN4M defined and SUN4 and SUN4C not defined.
  */
 #if defined(MSIIEP)
-#if defined(SUN4) || defined(SUN4C)
-#error "microSPARC-IIep kernels cannot support sun4 or sun4c"
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4D)
+#error "microSPARC-IIep kernels cannot support sun4, sun4c, or sun4d"
 #endif
 #if !defined(SUN4M)
 #error "microSPARC-IIep kernel must have 'options SUN4M'"
@@ -207,7 +207,7 @@ extern void	delay __P((unsigned int));
  * kernel.
  */
 #define	CPU_NTYPES	(defined(SUN4) + defined(SUN4C) + \
-			 defined(SUN4M))
+			 defined(SUN4M) + defined(SUN4D))
 
 /*
  * Step 2: Define the CPU type predicates.  Rules:
@@ -242,6 +242,14 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(1)
 #else
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
+#endif
+
+#if !defined(SUN4D)
+#	define CPU_ISSUN4D	(0)
+#elif CPU_NTYPES == 1
+#	define CPU_ISSUN4D	(1)
+#else
+#	define CPU_ISSUN4D	(cputyp == CPU_SUN4D)
 #endif
 
 #define	CPU_ISSUN4U		(0)
