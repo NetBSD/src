@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.143 2003/10/18 04:50:35 simonb Exp $	*/
+/*	$NetBSD: ohci.c,v 1.144 2003/11/23 19:18:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.143 2003/10/18 04:50:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.144 2003/11/23 19:18:06 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,9 +882,9 @@ ohci_init(ohci_softc_t *sc)
  bad4:
 	ohci_free_sed(sc, sc->sc_isoc_head);
  bad3:
-	ohci_free_sed(sc, sc->sc_ctrl_head);
- bad2:
 	ohci_free_sed(sc, sc->sc_bulk_head);
+ bad2:
+	ohci_free_sed(sc, sc->sc_ctrl_head);
  bad1:
 	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
 	return (err);
