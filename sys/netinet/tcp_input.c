@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.183 2003/09/10 00:58:29 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.184 2003/09/10 01:46:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.183 2003/09/10 00:58:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.184 2003/09/10 01:46:27 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1373,16 +1373,6 @@ findpcb:
 #endif
 				}
 #endif
-
-				if (af == AF_INET6 && !ip6_use_deprecated) {
-					struct in6_ifaddr *ia6;
-					if ((ia6 = in6ifa_ifpwithaddr(m->m_pkthdr.rcvif,
-					    &ip6->ip6_dst)) &&
-					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
-						tp = NULL;
-						goto dropwithreset;
-					}
-				}
 
 				/*
 				 * LISTEN socket received a SYN
