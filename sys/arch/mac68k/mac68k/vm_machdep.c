@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1996/02/05 02:10:00 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 1996/04/24 18:02:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -118,8 +118,8 @@ cpu_fork(p1, p2)
  */
 void
 cpu_set_kpc(p, pc)
-	struct proc	*p;
-	u_int32_t	pc;
+	struct proc *p;
+	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
@@ -128,7 +128,7 @@ cpu_set_kpc(p, pc)
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *) pcbp->pcb_regs[11];
 	sf->sf_pc = (u_int) proc_trampoline;
-	pcbp->pcb_regs[6] = pc;		/* A2 */
+	pcbp->pcb_regs[6] = (int)pc;	/* A2 */
 	pcbp->pcb_regs[7] = (int)p;	/* A3 */
 }
 
@@ -232,9 +232,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t	pa;
 
