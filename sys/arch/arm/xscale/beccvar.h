@@ -1,4 +1,4 @@
-/*	$NetBSD: beccvar.h,v 1.1 2003/01/25 01:57:20 thorpej Exp $	*/
+/*	$NetBSD: beccvar.h,v 1.2 2003/03/25 19:45:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -101,6 +101,13 @@ struct becc_softc {
 
 	/* DMA window info for PCI DMA. */
 	struct arm32_dma_range sc_pci_dma_range[3];
+
+	/* DMA tag for local DMA. */
+	struct arm32_bus_dma_tag sc_local_dmat;
+};
+
+struct becc_attach_args {
+	bus_dma_tag_t	ba_dmat;
 };
 
 extern int becc_rev;	/* Set by early bootstrap code */
