@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.12 2001/07/18 20:39:53 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.13 2001/07/18 20:52:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -375,7 +375,7 @@ satlinkioctl(dev, cmd, data, flags, p)
 		break;
 
 	case SATIOGID:
-		bcopy(&sc->sc_id, data, sizeof(sc->sc_id));
+		memcpy(data, &sc->sc_id, sizeof(sc->sc_id));
 		break;
 
 	default:
