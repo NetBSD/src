@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: if_le.c,v 1.2 1999/03/25 23:16:37 thorpej Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,10 +46,6 @@
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/am7990reg.h>
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 /*
  * The following are incorrect. Why doesn't DEC follow its own specs???
