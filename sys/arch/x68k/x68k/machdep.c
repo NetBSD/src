@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1999/03/24 05:51:18 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1999/03/24 14:11:47 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1083,7 +1083,7 @@ void	arpintr __P((void));
 void	atintr __P((void));
 void	ipintr __P((void));
 void	nsintr __P((void));
-void	clnintr __P((void));
+void	clnlintr __P((void));
 void	ccittintr __P((void));
 void	pppintr __P((void));
 
@@ -1135,78 +1135,6 @@ netintr()
 	}
 #endif
 }
-
-/* this is a handy package to have asynchronously executed
-   function calls executed at very low interrupt priority.
-   Example for use is keyboard repeat, where the repeat 
-   handler running at splclock() triggers such a (hardware
-   aided) software interrupt.
-
-   Note: the installed functions are currently called in a
-         LIFO fashion, might want to change this to FIFO
-	 later. */
-
-struct si_callback {
-	struct si_callback *next;
-	void (*function) __P((void *rock1, void *rock2));
-	void *rock1, *rock2;
-};
-
-static struct si_callback *si_callbacks = 0;
-
-void add_sicallback __P((void (*)(void *, void *), void *, void *));
-void rem_sicallback __P((void (*)(void *, void *)));
-
-void
-add_sicallback (function, rock1, rock2)
-	void (*function) __P((void *rock1, void *rock2));
-	void *rock1, *rock2;
-{
-	struct si_callback *si;
-	int s;
-
-	/* Note: this function may be called from high-priority
-	 * interrupt handlers. We may NOT block for 
-	 * memory-allocation in here!.
-	 */
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
-
-	/* bad luck really.. */
-	if (! si)
-		return;
-	si->function = function;
-	si->rock1    = rock1;
-	si->rock2    = rock2;
-
-	s = splhigh();
-	si->next     = si_callbacks;
-	si_callbacks = si;
-	splx(s);
-}
-
-void
-rem_sicallback (function)
-	void (*function) __P((void *rock1, void *rock2));
-{
-	struct si_callback *si, *psi;
-	int s;
-
-	s = splhigh();
-	for (psi = 0, si = si_callbacks; si; ) {
-		struct si_callback *nsi = si->next;
-		if (si->function == function) {
-			free (si, M_TEMP);
-			if (psi)
-				psi->next = nsi;
-			else
-				si_callbacks = nsi;
-		} else
-			psi = si;
-		si = nsi;
-	}
-	splx(s);
-}
-
 
 void
 intrhand(sr)
@@ -1339,8 +1267,10 @@ static struct memlist {
 	psize_t min;
 	psize_t max;
 } memlist[] = {
-	(caddr_t)0x01000000, 0x01000000, 0x01000000, /* TS-6BE16 16MB memory */
-	(caddr_t)0x10000000, 0x00400000, 0x08000000, /* 060turbo SIMM slot (4--128MB) */
+	/* TS-6BE16 16MB memory */
+	{(caddr_t)0x01000000, 0x01000000, 0x01000000},
+	/* 060turbo SIMM slot (4--128MB) */
+	{(caddr_t)0x10000000, 0x00400000, 0x08000000},
 };
 static vaddr_t mem_v, base_v;
 
@@ -1460,7 +1390,6 @@ setmemrange(void)
 	int i;
 	psize_t s, min, max;
 	struct memlist *mlist = memlist;
-	int nranges;
 	u_long h;
 
 	/*
@@ -1506,14 +1435,9 @@ setmemrange(void)
 			h = (u_long)(mlist[i].base + s);
 		}
 		if ((u_long)mlist[i].base < h) {
-#ifdef UVM
 			uvm_page_physload(atop(mlist[i].base), atop(h),
 					  atop(mlist[i].base), atop(h),
 					  VM_FREELIST_DEFAULT);
-#else	/* not UVM */
-			vm_page_physload(atop(mlist[i].base), atop(h),
-					 atop(mlist[i].base), atop(h));
-#endif
 			mem_size += h - (u_long) mlist[i].base;
 		}
 			
