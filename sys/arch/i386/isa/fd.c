@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.90.4.2 1996/08/31 05:16:50 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.90.4.3 1997/01/26 01:35:48 rat Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -715,6 +715,7 @@ fdcresult(fdc)
 			}
 			fdc->sc_status[n++] = bus_io_read_1(bc, ioh, fddata);
 		}
+		delay(10);
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return -1;
