@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.31 2001/01/22 12:17:37 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.32 2001/02/10 14:28:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -643,7 +643,7 @@ ntfs_unmount(
 	dprintf(("ntfs_unmount: vflushing...\n"));
 	error = vflush(mp,NULLVP,flags | SKIPSYSTEM);
 	if (error) {
-		printf("ntfs_unmount: vflush failed: %d\n",error);
+		dprintf(("ntfs_unmount: vflush failed: %d\n",error));
 		return (error);
 	}
 
@@ -658,8 +658,10 @@ ntfs_unmount(
 
 	/* vflush system vnodes */
 	error = vflush(mp,NULLVP,flags);
-	if (error)
+	if (error) {
+		/* XXX should this be panic() ? */
 		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
+	}
 
 	/* Check if the type of device node isn't VBAD before
 	 * touching v_specinfo.  If the device vnode is revoked, the
