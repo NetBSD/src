@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.131 2003/02/03 22:56:23 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.132 2003/02/07 09:02:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.131 2003/02/03 22:56:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.132 2003/02/07 09:02:14 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1316,8 +1316,7 @@ proc_stop(struct proc *p)
 	 * return to userspace.
 	 */
 	   
-	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
-	     l = LIST_NEXT(l, l_sibling)) {
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_stat == LSONPROC) {
 			/* XXX SMP this assumes that a LWP that is LSONPROC
 			 * is curlwp and hence is about to be mi_switched 
@@ -1390,17 +1389,18 @@ proc_unstop(p)
 	 */
 	if (p->p_flag & P_SA)
 		lr = p->p_sa->sa_idle; /* OK if this is NULL. */
-	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
-	     l = LIST_NEXT(l, l_sibling))
-		if (l->l_stat == LSSTOP) {
-			if (l->l_wchan == 0) {
-				if (lr == NULL || l == lr)
-					lr = l;
-				else
-					setrunnable(l);
-			} else
-				l->l_stat = LSSLEEP;
-		}
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l->l_stat != LSSTOP)
+			continue;
+
+		if (l->l_wchan == NULL) {
+			if (lr == NULL)
+				lr = l;
+			else if (l != lr)
+				setrunnable(l);
+		} else
+			l->l_stat = LSSLEEP;
+	}
 
 	return lr;
 }
