@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.7 1996/02/14 08:09:47 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.8 1996/02/22 21:07:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -53,15 +53,6 @@
 #endif
 
 /*
- * This is crap, but because the interrupts now run at MFP spl-level (6),
- * splbio() is not enough at some places. The code should be checked to
- * find out where splhigh() is needed and where splbio() should be used.
- * Now that I use this interrupt sceme, the spl values are fake!
- */
-#undef splbio()
-#define splbio()	splhigh()
-
-/*
  * Set the various driver options
  */
 #define	NREQ		18	/* Size of issue queue			*/
@@ -84,6 +75,21 @@
 #endif
 #undef	USE_PDMA		/* Use special pdma-transfer function	*/
 #define MIN_PHYS	65536	/*BARF!!!!*/
+
+/*
+ * Include more driver definitions
+ */
+#include <atari/dev/ncr5380var.h>
+
+
+/*
+ * This is crap, but because the interrupts now run at MFP spl-level (6),
+ * splbio() is not enough at some places. The code should be checked to
+ * find out where splhigh() is needed and where splbio() should be used.
+ * Now that I use this interrupt sceme, the spl values are fake!
+ */
+#undef splbio()
+#define splbio()	splhigh()
 
 /*
  * The atari specific driver options
@@ -199,8 +205,7 @@ struct dma_chain	*dm;
 #define	tt_wrong_dma_range(reqp, dm)	0
 #endif
 
-static void scsi_tt_init(sc)
-struct ncr_softc	*sc;
+static void scsi_tt_init(struct ncr_softc *sc)
 {
 	/*
 	 * Enable SCSI-related interrupts
@@ -226,19 +231,17 @@ struct ncr_softc	*sc;
 #endif
 }
 
-static u_char get_tt_5380_reg(rnum)
-u_short	rnum;
+static u_char get_tt_5380_reg(u_short rnum)
 {
 	return(SCSI_5380->scsi_5380[(rnum << 1) | 1]);
 }
 
-static void set_tt_5380_reg(rnum, val)
-u_short	rnum, val;
+static void set_tt_5380_reg(u_short rnum, u_short val)
 {
 	SCSI_5380->scsi_5380[(rnum << 1) | 1] = val;
 }
 
-extern __inline__ void scsi_tt_ienable()
+extern __inline__ void scsi_tt_ienable(void)
 {
 	int	sps = splbio();
 	MFP2->mf_ierb |= IB_SCDM;
@@ -246,7 +249,7 @@ extern __inline__ void scsi_tt_ienable()
 	splx(sps);
 }
 
-extern __inline__ scsi_tt_idisable()
+extern __inline__ void scsi_tt_idisable(void)
 {
 	int	sps = splbio();
 	MFP2->mf_ierb &= ~IB_SCDM;
@@ -254,7 +257,7 @@ extern __inline__ scsi_tt_idisable()
 	splx(sps);
 }
 
-extern __inline__ scsi_tt_clr_ipend()
+extern __inline__ void scsi_tt_clr_ipend(void)
 {
 	int	tmp;
 
@@ -262,10 +265,7 @@ extern __inline__ scsi_tt_clr_ipend()
 	tmp = GET_TT_REG(NCR5380_IRCV);
 }
 
-static void scsi_tt_dmasetup(reqp, phase, mode)
-SC_REQ	*reqp;
-u_int	phase;
-u_char	mode;
+static void scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 {
 	if (PH_IN(phase)) {
 		SCSI_DMA->s_dma_ctrl = SD_IN;
@@ -288,8 +288,7 @@ u_char	mode;
 }
 
 static int
-tt_poll_edma(reqp)
-SC_REQ	*reqp;
+tt_poll_edma(SC_REQ *reqp)
 {
 	u_char	dmstat, dmastat;
 	int	timeout = 9000; /* XXX */
@@ -331,9 +330,7 @@ SC_REQ	*reqp;
  * Convert physical DMA address to a virtual address.
  */
 static u_char *
-ptov(reqp, phaddr)
-SC_REQ	*reqp;
-u_long	*phaddr;
+ptov(SC_REQ *reqp, u_long *phaddr)
 {
 	struct dma_chain	*dm;
 	u_char			*vaddr;
@@ -347,9 +344,7 @@ u_long	*phaddr;
 }
 
 static int
-tt_get_dma_result(reqp, bytes_left)
-SC_REQ	*reqp;
-u_long	*bytes_left;
+tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 {
 	int	dmastat, dmstat;
 	u_char	*byte_p;
@@ -393,7 +388,7 @@ u_long	*bytes_left;
 	if (((u_long)byte_p & 3) && PH_IN(reqp->phase)) {
 		u_char	*p, *q;
 
-		p = ptov(reqp, (u_long)byte_p & ~3);
+		p = ptov(reqp, (u_long *)((u_long)byte_p & ~3));
 		q = (u_char*)&(SCSI_DMA->s_dma_res);
 		switch ((u_long)byte_p & 3) {
 			case 3: *p++ = *q++;
@@ -777,11 +772,8 @@ u_long	*bytes_left;
  * Our autoconfig matching function
  */
 static int
-machine_match(pdp, cdp, auxp, cd)
-struct device	*pdp;
-struct cfdata	*cdp;
-void		*auxp;
-struct cfdriver *cd;
+machine_match(struct device *pdp, struct cfdata *cdp, void *auxp,
+						struct cfdriver *cd)
 {
 	if (strcmp(auxp, cd->cd_name))
 		return(0);
@@ -796,8 +788,7 @@ struct cfdriver *cd;
  * the address space. Thus being DMA-able for all controllers.
  */
 static u_char *
-alloc_bounceb(len)
-u_long len;
+alloc_bounceb(u_long len)
 {
 	u_long	tmp;
 
@@ -805,8 +796,7 @@ u_long len;
 }
 
 static void
-free_bounceb(bounceb)
-u_char	*bounceb;
+free_bounceb(u_char *bounceb)
 {
 	free_stmem(bounceb);
 }
@@ -814,8 +804,8 @@ u_char	*bounceb;
 /*
  * 5380 interrupt.
  */
-scsi_ctrl(sr)
-int	sr;	/* sr at time of interrupt */
+void
+scsi_ctrl(int sr)
 {
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
 		scsi_idisable();
@@ -831,8 +821,8 @@ int	sr;	/* sr at time of interrupt */
 /*
  * DMA controller interrupt
  */
-scsi_dma(sr)
-int	sr;	/* sr at time of interrupt */
+void
+scsi_dma(int sr)
 {
 	SC_REQ	*reqp;
 
