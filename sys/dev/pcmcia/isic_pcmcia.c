@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.8 2002/03/27 07:39:38 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.9 2002/03/29 11:21:23 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.8 2002/03/27 07:39:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.9 2002/03/29 11:21:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -215,20 +215,21 @@ isic_pcmcia_attach(parent, self, aux)
 	const struct isic_pcmcia_card_entry * cde;
 	int s;
 
+	psc->sc_pf = pa->pf;
+	cfe = pa->pf->cfe_head.sqh_first;
+	psc->sc_ih = NULL;
+
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL)
-		return; /* oops - not found?!? */
-
-	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+		goto bad2;	/* oops - not found?!? */
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
 	pcmcia_function_enable(pa->pf);
 
 	if (!cde->attach(psc, cfe, pa))
-		return;		/* Ooops ? */
+		goto bad;	/* Ooops ? */
 
 	/* Announce card name */
 	printf(": %s\n", cde->name);
@@ -242,9 +243,16 @@ isic_pcmcia_attach(parent, self, aux)
 	if (isic_pcmcia_isdn_attach(sc, cde->name) == 0) {
 		/* setup interrupt */
 		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
-	}
+	} else
+		goto bad;
 
 	splx(s);
+	return;
+bad:
+	pcmcia_function_disable(psc->sc_pf);
+	splx(s);
+bad2:
+	printf("%s: attach failed\n", psc->sc_isic.sc_dev.dv_xname);
 }
 
 static int
@@ -257,7 +265,8 @@ isic_pcmcia_detach(self, flags)
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	if (psc->sc_ih != NULL)
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 
 	return (0);
 }
@@ -278,7 +287,8 @@ isic_pcmcia_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_dying = 1;
-		isic_detach_bri(&psc->sc_isic);
+		if (psc->sc_isic.sc_l3token != NULL)
+			isic_detach_bri(&psc->sc_isic);
 		break;
 	}
 	splx(s);
@@ -322,6 +332,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 		"Unknown Version"
 	};
 
+	sc->sc_l3token = NULL;
 	sc->sc_isac_version = 0;
 	sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
 
@@ -348,7 +359,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 		case HSCX_VA3:
 		case HSCX_V21:
 			break;
-			
+
 		default:
 			printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
 				ISIC_PARM, sc->sc_hscx_version);
