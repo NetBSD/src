@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.4 1998/10/23 13:58:17 bouyer Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.5 1998/12/02 00:18:41 sommerfe Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -56,6 +56,7 @@
 
 struct wdc_ofisa_softc {
 	struct wdc_softc sc_wdcdev;
+	struct	channel_softc *wdc_chanptr;	
 	struct  channel_softc wdc_channel;
 	void	*sc_ih;
 };
@@ -144,7 +145,8 @@ wdc_ofisa_attach(parent, self, aux)
 
 	printf("\n");
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->wdc_chanptr = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
