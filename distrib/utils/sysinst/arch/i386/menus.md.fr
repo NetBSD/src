@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.15 1999/04/11 22:40:26 bouyer Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.16 1999/05/18 18:07:26 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -235,3 +235,93 @@ menu biosmultmatch;
 		set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
 	};
+
+menu configbootsel, title  "  Changer une entree du menu", exit;
+        display action  { msg_display(MSG_configbootsel);
+                          disp_bootsel((struct mbr_partition *)&mbr[MBR_PARTOFF], mbs);
+			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->timeo) / 18200);
+			  msg_display_add(MSG_defbootselopt);
+			  if (mbs->defkey == SCAN_ENTER)
+			  	msg_display_add(MSG_defbootseloptactive);
+			  else if (mbs->defkey < (SCAN_F1 + 4))
+				msg_display_add(MSG_defbootseloptpart,
+				    defbootselpart);
+			  else
+				msg_display_add(MSG_defbootseloptdisk,
+				    defbootseldisk);
+                        };
+        option "Changer l'entrée 0 du menu",
+		action {
+			if (part[0].mbrp_typ != 0)
+				msg_prompt(MSG_bootselitemname, mbs->nametab[0],
+				    mbs->nametab[0], 8);
+		};
+        option "Changer l'entrée 1 du menu",
+		action {
+			if (part[1].mbrp_typ != 0)
+				msg_prompt(MSG_bootselitemname, mbs->nametab[1],
+				    mbs->nametab[1], 8);
+		};
+        option "Changer l'entrée 2 du menu",
+		action {
+			if (part[2].mbrp_typ != 0)
+				msg_prompt(MSG_bootselitemname, mbs->nametab[2],
+				    mbs->nametab[2], 8);
+		};
+        option "Changer l'entrée 3 du menu",
+		action {
+			if (part[3].mbrp_typ != 0)
+				msg_prompt(MSG_bootselitemname, mbs->nametab[3],
+				    mbs->nametab[3], 8);
+		};
+	option "Changer le temps d'attente",
+		action {
+			char tstr[8];
+			unsigned timo;
+
+			do {
+				snprintf(tstr, 8, "%u",
+				    (1000 * mbs->timeo) / 18200);
+				msg_prompt(MSG_bootseltimeoutval, tstr, tstr,
+				    8);
+				timo = (unsigned)atoi(tstr);
+			} while (timo > 3600);
+			mbs->timeo = (u_int16_t)((timo * 18200) / 1000);
+		};
+	option "Changer le choix par defaut", sub menu defaultbootsel;
+
+menu defaultbootsel, title "  Choisissez un disque ou partition";
+	option "Partition 0", exit,
+		action {
+			if (mbs->nametab[0][0] != 0 && part[0].mbrp_typ != 0)
+				mbs->defkey = SCAN_F1; defbootselpart = 0;
+		};
+	option "Partition 1", exit,
+		action {
+			if (mbs->nametab[1][0] != 0 && part[1].mbrp_typ != 0)
+				mbs->defkey = SCAN_F1 + 1; defbootselpart = 1;
+		};
+	option "Partition 2", exit,
+		action {
+			if (mbs->nametab[2][0] != 0 && part[2].mbrp_typ != 0)
+				mbs->defkey = SCAN_F1 + 2; defbootselpart = 2;
+		};
+	option "Partition 3", exit,
+		action {
+			if (mbs->nametab[3][0] != 0 && part[3].mbrp_typ != 0)
+				mbs->defkey = SCAN_F1 + 3; defbootselpart = 3;
+		};
+	option "Disque dur 0", exit,
+		action { mbs->defkey = SCAN_F1 + 4; defbootseldisk = 0; };
+	option "Disque dur 1", exit,
+		action { mbs->defkey = SCAN_F1 + 5; defbootseldisk = 1; };
+	option "Disque dur 2", exit,
+		action { mbs->defkey = SCAN_F1 + 6; defbootseldisk = 2; };
+	option "Disque dur 3", exit,
+		action { mbs->defkey = SCAN_F1 + 7; defbootseldisk = 3; };
+	option "Disque dur 4", exit,
+		action { mbs->defkey = SCAN_F1 + 8; defbootseldisk = 4; };
+	option "Disque dur 5", exit,
+		action { mbs->defkey = SCAN_F1 + 9; defbootseldisk = 5; };
+	option "Première partition active", exit,
+		action { mbs->defkey = SCAN_ENTER; };

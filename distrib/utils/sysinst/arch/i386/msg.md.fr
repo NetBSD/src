@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.8 1999/04/11 22:40:27 bouyer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.9 1999/05/18 18:07:26 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -205,3 +205,53 @@ message pickdisk
 
 message wmbrfail
 {L'écriture du MBR a échouée. Je ne peux pas continuer.}
+
+message partabovechs
+{La partition de votre disque réservée à NetBSD se trouve en-dehors de l'espace
+que le BIOS de votre machine peut adresser. L'amorcage depuis cette partition
+ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
+
+('Non' vous ramènera au menu d'edition des partitions.)}
+
+message installbootsel
+{Il me semble que vous avez plusieur système d'exploitation sur ce disque.
+Voulez-vous installer un selecteur de boot qui vous permettra de choisir
+quel système chargé lorsque votre ordinateur est (re)démarré?}
+
+message installmbr
+{Le début de la partition de votre disque réservée à NetBSD se trouve en-dehors
+de l'espace que le BIOS peut adresser. Le programme d'amorcage du secteur de
+demmarage doit utiliser l'interface étendue du BIOS pour ammorcer depuis cette
+partition. Voulez-vous installer le programme d'amorcage de NetBSD pour etre
+sur de pouvoir démarer depuis cette partition ? Notez que cela va écraser
+le programme d'amorcage existant, comme un selecteur de boot.}
+
+message configbootsel
+{Configurez les differents choix du selecteur de boot. Vous pouvez changer
+le menu proposé pour chaque partition lorsque le système demarre.
+Vous pouvez également préciser le choix par defaut et le temps d'attente.
+}
+
+message bootseltimeout
+{Temps d'attente: %d\n}
+
+message defbootselopt
+{Action par defaut: }
+
+message defbootseloptactive
+{Démarrer la première partition active.}
+
+message defbootseloptpart
+{Démarrer depuis la partition %d.\n}
+
+message defbootseloptdisk
+{Demarrer depuis le disque %d.\n}
+
+message bootselitemname
+{Entrez un nom pour ce choix}
+
+message bootseltimeoutval
+{Temps d'attente en secondes (0-3600)}
+
+message bootselheader
+{Numéro      Type                                 Nom\n}
