@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.8 2003/06/29 22:29:29 fvdl Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.9 2005/02/28 22:10:46 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.8 2003/06/29 22:29:29 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.9 2005/02/28 22:10:46 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,6 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	com = SCARG(uap, com);
 	ioctlf = fp->f_ops->fo_ioctl;
 	retval[0] = error = 0;
-
-	com = SCARG(uap, com);
 
 	switch (com) {
 	case LINUX_HDIO_OBSOLETE_IDENTITY:
