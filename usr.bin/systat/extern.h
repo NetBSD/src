@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2001/07/14 07:09:11 matt Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2002/11/01 12:47:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -126,6 +126,8 @@ int	 inittcp(void);
 void	 iostat_bars(char *);
 void	 iostat_numbers(char *);
 void	 iostat_secs(char *);
+void	 iostat_rw(char *);
+void	 iostat_all(char *);
 void	 ip_boot(char *);
 void	 ip_run(char *);
 void	 ip_time(char *);
