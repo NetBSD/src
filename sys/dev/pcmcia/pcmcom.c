@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.1 1998/10/10 21:27:21 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.2 1998/10/14 18:05:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ pcmcom_attach(parent, self, aux)
 	if (pcmcia_function_enable(sc->sc_pf)) {
 		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
 		return;
-	};
+	}
 
 	sc->sc_enabled_count = 1;
 
