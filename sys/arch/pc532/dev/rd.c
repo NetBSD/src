@@ -1,3 +1,5 @@
+/*	$NetBSD: rd.c,v 1.6 1996/10/15 21:59:07 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1995 Philip A. Nelson.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: rd.c,v 1.5 1996/10/13 03:30:20 christos Exp $
  */
 
 #include <sys/param.h>
