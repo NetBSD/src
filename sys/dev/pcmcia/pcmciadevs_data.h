@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.210 2005/02/27 15:29:37 perry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.211 2005/03/19 22:00:27 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp
+ *	NetBSD: pcmciadevs,v 1.209 2005/03/19 21:59:56 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -727,6 +727,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Melco Corporation",
 	    "Melco LPC3-TX",	}
+	,
+	{
+	    PCMCIA_VENDOR_MICROSOFT, PCMCIA_PRODUCT_MICROSOFT_MN_520,
+	    PCMCIA_CIS_MICROSOFT_MN_520,
+	    0,
+	    "Microsoft Corporation",
+	    "Microsoft MN-520 WLAN Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
@@ -2087,6 +2094,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Asustek Computer",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_MICROSOFT,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Microsoft Corporation",
 	    NULL,
 	},
 	{
