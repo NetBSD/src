@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.22 2002/03/31 04:06:29 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.23 2002/03/31 05:12:55 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -637,19 +637,24 @@ struct wi_frame {
 #define WI_802_11_OFFSET_RAW	0x3C
 #define	WI_802_11_OFFSET_HDR	0x0E
 
-/* Status Field */
+/* Tx Status Field */
+#define	WI_TXSTAT_RET_ERR	0x0001
+#define	WI_TXSTAT_AGED_ERR	0x0002
+#define	WI_TXSTAT_DISCONNECT	0x0004
+#define	WI_TXSTAT_FORM_ERR	0x0008
+
+/* Rx Status Field */
 #define WI_STAT_BADCRC		0x0001
 #define WI_STAT_UNDECRYPTABLE	0x0002
 #define WI_STAT_ERRSTAT		0x0003
 #define WI_STAT_MAC_PORT	0x0700
-#define WI_STAT_1042		0x2000	/* RFC1042 encoded */
-#define WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
-#define WI_STAT_WMP_MSG		0x6000	/* WaveLAN-II management protocol */
-#define	WI_STAT_MGMT		0x8000	/* 802.11b management frames */
+#define	WI_STAT_PCF		0x1000
 #define WI_RXSTAT_MSG_TYPE	0xE000
+#define  WI_STAT_1042		0x2000	/* RFC1042 encoded */
+#define  WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
+#define  WI_STAT_WMP_MSG	0x6000	/* WaveLAN-II management protocol */
+#define	 WI_STAT_MGMT		0x8000	/* 802.11b management frames */
 
-#define WI_ENC_TX_802_3		0x00
-#define WI_ENC_TX_802_11	0x11
 #define	WI_ENC_TX_MGMT		0x08
 #define WI_ENC_TX_E_II		0x0E
 
@@ -659,6 +664,9 @@ struct wi_frame {
 /* TxControl Field (enhanced) */
 #define	WI_TXCNTL_TX_OK		0x0002
 #define	WI_TXCNTL_TX_EX		0x0004
+#define	WI_TXCNTL_STRUCT_TYPE	0x0018
+#define	 WI_ENC_TX_802_3	0x00
+#define	 WI_ENC_TX_802_11	0x11
 #define	WI_TXCNTL_ALTRTRY	0x0020
 #define	WI_TXCNTL_NOCRYPT	0x0080
 #define WI_TXCNTL_MACPORT	0x00FF
