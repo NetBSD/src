@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.7 2003/04/28 23:16:16 bjh21 Exp $ */
+/* $NetBSD: signal.h,v 1.8 2003/10/07 17:04:19 skd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,6 +33,8 @@
 #include <sys/featuretest.h>
 
 typedef long	sig_atomic_t;
+
+#define __HAVE_SIGINFO
 
 #if defined(_NETBSD_SOURCE)
 /*

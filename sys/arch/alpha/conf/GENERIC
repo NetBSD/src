@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.232 2003/08/22 07:52:48 itojun Exp $
+# $NetBSD: GENERIC,v 1.233 2003/10/07 17:04:18 skd Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.232 $"
+#ident 		"GENERIC-$Revision: 1.233 $"
 
 maxusers 32
 
@@ -118,7 +118,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
-
+options		COMPAT_16
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
 

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.103 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.104 2003/10/07 17:04:18 skd Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,10 +70,11 @@
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_compat_netbsd.h"
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.103 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.104 2003/10/07 17:04:18 skd Exp $");
 
 #include "assym.h"
 
@@ -271,6 +272,7 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 backtolocore1:
 /**************************************************************************/
 
+#ifdef COMPAT_16
 /*
  * Signal "trampoline" code.
  *
@@ -282,16 +284,12 @@ backtolocore1:
 
 NESTED_NOPROFILE(sigcode,0,0,ra,0,0)
 	mov	sp, a0			/* get pointer to sigcontext */
-	CALLSYS_NOERROR(__sigreturn14)	/* and call sigreturn() with it. */
+	CALLSYS_NOERROR(compat_16___sigreturn14)	/* and call sigreturn() with it. */
 	mov	v0, a0			/* if that failed, get error code */
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
 XNESTED(esigcode,0)
 	END(sigcode)
-
-
-	
-
-
+#endif /* COMPAT_16 */
 
 /**************************************************************************/
 

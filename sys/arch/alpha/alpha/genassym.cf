@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.8 2003/04/08 22:37:52 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.9 2003/10/07 17:04:18 skd Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -168,7 +168,11 @@ define	ENAMETOOLONG		ENAMETOOLONG
 define	EFAULT			EFAULT
 
 # Syscalls called from sigreturn.
+ifdef __HAVE_SIGINFO
+define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
+else
 define	SYS___sigreturn14	SYS___sigreturn14
+endif
 define	SYS_exit		SYS_exit
 
 # CPU info
