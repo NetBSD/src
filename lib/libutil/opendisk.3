@@ -1,4 +1,4 @@
-.\"	$NetBSD: opendisk.3,v 1.5 2001/09/26 07:21:42 lukem Exp $
+.\"	$NetBSD: opendisk.3,v 1.6 2001/11/01 06:53:24 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 2001
+.Dd November 1, 2001
 .Dt OPENDISK 3
 .Os
 .Sh NAME
@@ -164,6 +164,16 @@ didn't return a valid partition.
 was the
 .Dv NULL
 pointer.
+.It Bq Er ENODEV
+A matching filename was found, but it was the incorrect file type;
+if
+.Fa iscooked
+is zero, the type must be
+.Dv S_IFCHR ,
+and if
+.Fa iscooked
+is non-zero, the type must be
+.Dv S_IFBLK .
 .El
 .Pp
 The

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendisk.c,v 1.7 2000/07/05 11:46:41 ad Exp $	*/
+/*	$NetBSD: opendisk.c,v 1.8 2001/11/01 06:53:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: opendisk.c,v 1.7 2000/07/05 11:46:41 ad Exp $");
+__RCSID("$NetBSD: opendisk.c,v 1.8 2001/11/01 06:53:25 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,22 +46,22 @@ __RCSID("$NetBSD: opendisk.c,v 1.7 2000/07/05 11:46:41 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <util.h>
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <util.h>
 
 int
 opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 {
-	int f, rawpart;
+	struct stat sb;
+	int	f, pass, rawpart, serrno;
 
 	if (buf == NULL) {
 		errno = EFAULT;
 		return (-1);
 	}
-	snprintf(buf, buflen, "%s", path);
-
 	if ((flags & O_CREAT) != 0) {
 		errno = EINVAL;
 		return (-1);
@@ -71,25 +71,42 @@ opendisk(const char *path, int flags, char *buf, size_t buflen, int iscooked)
 	if (rawpart < 0)
 		return (-1);	/* sysctl(3) in getrawpartition sets errno */
 
-	f = open(buf, flags);
-	if (f != -1 || errno != ENOENT)
-		return (f);
-
-	snprintf(buf, buflen, "%s%c", path, 'a' + rawpart);
-	f = open(buf, flags);
-	if (f != -1 || errno != ENOENT)
-		return (f);
-
-	if (strchr(path, '/') != NULL)
-		return (-1);
-
-	snprintf(buf, buflen, "%s%s%s", _PATH_DEV, iscooked ? "" : "r", path);
-	f = open(buf, flags);
-	if (f != -1 || errno != ENOENT)
-		return (f);
-
-	snprintf(buf, buflen, "%s%s%s%c", _PATH_DEV, iscooked ? "" : "r", path,
-	    'a' + rawpart);
-	f = open(buf, flags);
+	for (pass = 0; pass < 4; pass++) {
+		switch (pass) {
+		case 0:
+			snprintf(buf, buflen, "%s", path);
+			break;
+		case 1:
+			snprintf(buf, buflen, "%s%c", path, 'a' + rawpart);
+			break;
+		case 2:
+			if (strchr(path, '/') != NULL)
+				return (-1);
+			snprintf(buf, buflen, "%s%s%s", _PATH_DEV,
+			    iscooked ? "" : "r", path);
+			break;
+		case 3:
+			snprintf(buf, buflen, "%s%s%s%c", _PATH_DEV,
+			    iscooked ? "" : "r", path, 'a' + rawpart);
+			break;
+		}
+		f = open(buf, flags);
+		if (f == -1 && errno != ENOENT)
+			return (-1);
+		if (f != -1) {
+			if (fstat(f, &sb) == -1) {
+				serrno = errno;
+				close (f);
+				errno = serrno;
+				f = -1;
+			} else if ((!iscooked && !S_ISCHR(sb.st_mode)) ||
+			    	   ( iscooked && !S_ISBLK(sb.st_mode)) ) {
+				close (f);
+				errno = ENODEV;
+				f = -1;
+			}
+			return (f);
+		}
+	}
 	return (f);
 }
