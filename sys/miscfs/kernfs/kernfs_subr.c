@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.2 2003/09/10 03:31:29 dan Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.3 2003/09/10 03:42:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.2 2003/09/10 03:31:29 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.3 2003/09/10 03:42:07 itojun Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -255,8 +255,8 @@ again:
 		vp->v_type = VREG;
 		break;
 
-	case Phostname: /* /kern/hostname = -rw------- */
-		kfs->kfs_mode = S_IRUSR|S_IWUSR;
+	case Phostname: /* /kern/hostname = -rw-r-r--- */
+		kfs->kfs_mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
 
