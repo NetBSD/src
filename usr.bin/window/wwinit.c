@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.9 1995/12/21 10:46:12 mycroft Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.10 1995/12/21 11:06:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: wwinit.c,v 1.9 1995/12/21 10:46:12 mycroft Exp $";
+static char rcsid[] = "$NetBSD: wwinit.c,v 1.10 1995/12/21 11:06:28 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,6 @@ wwinit()
 	wwnewtty.ww_termios.c_cc[VMIN] = 1;
 	wwnewtty.ww_termios.c_cc[VTIME] = 0;
 #endif
-	wwnewtty.ww_fflags = wwoldtty.ww_fflags | FNONBLOCK;
 	if (wwsettty(0, &wwnewtty) < 0)
 		goto bad;
 
