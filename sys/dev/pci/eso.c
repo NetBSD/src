@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.9 1999/10/10 18:52:03 cgd Exp $	*/
+/*	$NetBSD: eso.c,v 1.10 1999/10/28 13:49:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -58,16 +58,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define htopci(x) bswap32(x)
-#define pcitoh(x) bswap32(x)
-#else
-#define htopci(x) (x)
-#define pcitoh(x) (x)
-#endif
-
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) printf x
@@ -1613,9 +1603,9 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	
 	/* Set up DMA controller. */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAA,
-	    htopci(DMAADDR(ed)));
+	    DMAADDR(ed));
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAC,
-	    htopci((uint8_t *)end - (uint8_t *)start));
+	    (uint8_t *)end - (uint8_t *)start);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_A2DMAM,
 	    ESO_IO_A2DMAM_DMAENB | ESO_IO_A2DMAM_AUTO);
 	
@@ -1714,9 +1704,9 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 	bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_MODE,
 	    DMA37MD_WRITE | DMA37MD_LOOP | DMA37MD_DEMAND);
 	bus_space_write_4(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_DMAA,
-	    htopci(DMAADDR(ed)));
+	    DMAADDR(ed));
 	bus_space_write_2(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_DMAC,
-	    htopci((uint8_t *)end - (uint8_t *)start - 1));
+	    (uint8_t *)end - (uint8_t *)start - 1);
 	bus_space_write_1(sc->sc_dmac_iot, sc->sc_dmac_ioh, ESO_DMAC_MASK, 0);
 
 	/* Start DMA. */
