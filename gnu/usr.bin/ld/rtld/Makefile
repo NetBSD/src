@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/06/08 22:22:26 pk Exp $
+#	$NetBSD: Makefile,v 1.14 1996/12/23 22:13:03 pk Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
@@ -13,6 +13,7 @@ LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
 .endif
 LDADD+=	-lc_pic
 BINDIR= /usr/libexec
+HDRS=	link.h
 MLINKS=	rtld.1 ld.so.1
 
 .PATH: $(LDDIR) $(LDDIR)/$(MACHINE_ARCH) ${.CURDIR}/../../../../lib/libc/stdio
@@ -22,5 +23,14 @@ $(PROG):
 
 .S.o:
 	${CPP} ${.IMPSRC} | ${AS} ${ASFLAGS} -o ${.TARGET} -
+
+includes:
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
+	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done
 
 .include <bsd.prog.mk>
