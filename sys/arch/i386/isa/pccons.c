@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.25 1993/11/09 10:55:32 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.26 1993/11/10 19:24:45 mycroft Exp $
  */
 
 /*
@@ -694,7 +694,7 @@ sput(ps, cp, n)
 {
 #define	state	ps->ps_state
 #define	at	ps->ps_at
-	u_char	c, scroll;
+	u_char	c, scroll = 0;
 
 	if (ps->ps_flags & PSF_RAW)		/* XXX */
 		return;
@@ -703,13 +703,15 @@ sput(ps, cp, n)
 		if (!(c = *cp++))
 			continue;
 
-		scroll = 1;	/* do scroll check */
-
 		switch (c) {
 		    case 0x1B:
 			if (state >= PSS_ESCAPE) {
 				wrtchar(c, ps->ps_sat);
 				state = 0;
+				if (ps->ps_col >= COL) {
+					ps->ps_col = 0;
+					scroll = 1;
+				}
 			} else
 				state = PSS_ESCAPE;
 			break;
@@ -719,6 +721,13 @@ sput(ps, cp, n)
 			    	inccol = (8 - col % 8);
 			    crtat += inccol;
 			    ps->ps_col = col + inccol;
+			    if (ps->ps_col >= COL) {
+				    if (COL % 8) /* evaluated at compile time */
+					    ps->ps_col -= COL;
+				    else
+					    ps->ps_col = 0;
+				    scroll = 1;
+			    }
 			    break;
 		    }
 
@@ -735,257 +744,277 @@ sput(ps, cp, n)
 
 		    case '\n':
 			crtat += COL;
+			scroll = 1;
 			break;
 
 		    default:
 		    bypass:
-			if (state >= PSS_ESCAPE) {
-				scroll = 0;
-				if (state >= PSS_EBRACE) {
-					switch(c) {
-						int pos;
-					    case 'm':
-						if (!ps->ps_cx)
-							ps->ps_flags &=~ PSF_STAND;
+			switch (state) {
+			    case 0:
+				if (c == '\a')
+					sysbeep(BEEP_FREQ, BEEP_TIME);
+				else {
+					/*
+					 * If we're outputting multiple printed
+					 * characters, just blast them to the
+					 * screen until we reach the end of the
+					 * buffer or a control character.  This
+					 * saves time by short-circuiting the
+					 * switch.
+					 * If we reach the end of the line, we
+					 * break to do a scroll check.
+					 */
+					for (;;) {
+						if (ps->ps_flags & PSF_STAND)
+							wrtchar(c, ps->ps_sat);
 						else
-							ps->ps_flags |= PSF_STAND;
-						state = 0;
-						break;
-					    case 'A': { /* up cx rows */
-						int	cx = ps->ps_cx;
-						if (cx <= 0)
-							cx = 1;
-						else
-							cx %= ROW;
-						pos = crtat - Crtat;
-						pos -= COL * cx;
-						if (pos < 0)
-							pos += ROW * COL;
-						crtat = Crtat + pos;
-						state = 0;
-						break;
-					    }
-					    case 'B': { /* down cx rows */
-						int	cx = ps->ps_cx;
-						if (cx <= 0)
-							cx = 1;
-						else
-							cx %= ROW;
-						pos = crtat - Crtat;
-						pos += COL * cx;
-						if (pos >= ROW * COL)
-							pos -= ROW * COL;
-						crtat = Crtat + pos;
-						state = 0;
-						break;
-					    }
-					    case 'C': { /* right cursor */
-						int	cx = ps->ps_cx,
-							col = ps->ps_col;
-						if (cx <= 0)
-							cx = 1;
-						else
-							cx %= COL;
-						pos = crtat - Crtat;
-						pos += cx;
-						col += cx;
-						if (col >= COL) {
-							pos -= COL;
-							col -= COL;
-						}
-						ps->ps_col = col;
-						crtat = Crtat + pos;
-						state = 0;
-						break;
-					    }
-					    case 'D': { /* left cursor */
-						int	cx = ps->ps_cx,
-							col = ps->ps_col;
-						if (cx <= 0)
-							cx = 1;
-						else
-							cx %= COL;
-						pos = crtat - Crtat;
-						pos -= cx;
-						col -= cx;
-						if (col < 0) {
-							pos += COL;
-							col += COL;
-						}
-						ps->ps_col = col;
-						crtat = Crtat + pos;
-						state = 0;
-						break;
-					    }
-					    case 'J': /* Clear ... */
-						switch (ps->ps_cx) {
-						    case 0:
-							/* ... to end of display */
-							fillw((at << 8) | ' ',
-								crtat,
-								Crtat + COL * ROW - crtat);
-							break;
-						    case 1:
-							/* ... to next location */
-							fillw((at << 8) | ' ',
-								Crtat,
-								crtat - Crtat + 1);
-							break;
-						    case 2:
-							/* ... whole display */
-							fillw((at << 8) | ' ',
-								Crtat, COL * ROW);
-							break;
-						}
-						state = 0;
-						break;
-					    case 'K': /* Clear line ... */
-						switch (ps->ps_cx) {
-						    case 0:
-							/* ... current to EOL */
-							fillw((at << 8) | ' ',
-								crtat, COL - ps->ps_col);
-							break;
-						    case 1: {
-							int	col = ps->ps_col;
-							/* ... beginning to next */
-							fillw((at << 8) | ' ',
-								crtat - col,
-								col + 1);
-							break;
-						    }
-						    case 2:
-							/* ... entire line */
-							fillw((at << 8) | ' ',
-								crtat - ps->ps_col, COL);
-							break;
-						}
-						state = 0;
-						break;
-					    case 'f': /* in system V consoles */
-					    case 'H': { /* Cursor move */
-						int	cx = ps->ps_cx,
-							cy = ps->ps_cy;
-						if (!cx || !cy) {
-							crtat = Crtat;
+							wrtchar(c, at); 
+						if (ps->ps_col >= COL) {
 							ps->ps_col = 0;
-						} else {
-							if (cx > ROW)
-								cx = ROW;
-							if (cy > COL)
-								cy = COL;
-							crtat = Crtat + (cx - 1) * COL + cy - 1;
-							ps->ps_col = cy - 1;
-						}
-						state = 0;
-						break;
-					    }
-					    case 'S': { /* scroll up cx lines */
-						int	cx = ps->ps_cx;
-						if (cx <= 0)
-							cx = 1;
-						if (cx > ROW)
-							cx = ROW;
-						if (cx < ROW)
-							bcopyw(Crtat+COL*cx, Crtat,
-							       COL*(ROW-cx)*CHR);
-						fillw((at << 8) | ' ', Crtat+COL*(ROW-cx), COL*cx);
-						/* crtat -= COL*cx; /* XXX */
-						state = 0;
-						break;
-					    }
-					    case 'T': { /* scroll down cx lines */
-						int	cx = ps->ps_cx;
-						if (cx <= 0)
-							cx = 1;
-						if (cx > ROW)
-							cx = ROW;
-						if (cx < ROW)
-							bcopyw(Crtat, Crtat+COL*cx,
-							       COL*(ROW-cx)*CHR);
-						fillw((at << 8) | ' ', Crtat, COL*cx);
-						/* crtat += COL*cx; /* XXX */
-						state = 0;
-						break;
-					    }
-					    case ';': /* Switch params in cursor def */
-						state = PSS_EPARAM;
-						break;
-					    case 'r':
-						ps->ps_sat = (ps->ps_cx & FG_MASK) |
-							((ps->ps_cy << 4) & BG_MASK);
-						state = 0;
-						break;
-					    case 'x': /* set attributes */
-						switch (ps->ps_cx) {
-						    case 0:
-							/* reset to normal attributes */
-							at = FG_LIGHTGREY | BG_BLACK;
-						    case 1:
-							/* ansi background */
-							if (ps->ps_flags & PSF_COLOR) {
-								at &= FG_MASK;
-								at |= bgansitopc[ps->ps_cy & 7];
-							}
-							break;
-						    case 2:
-							/* ansi foreground */
-							if (ps->ps_flags & PSF_COLOR) {
-								at &= BG_MASK;
-								at |= fgansitopc[ps->ps_cy & 7];
-							}
-							break;
-						    case 3:
-							/* pc text attribute */
-							if (state >= PSS_EPARAM)
-								at = ps->ps_cy;
+							scroll = 1;
 							break;
 						}
-						ps->ps_at = at;
-						state = 0;
-						break;
-
-					    default: /* Only numbers valid here */
-						if ((c >= '0') && (c <= '9')) {
-							if (state >= PSS_EPARAM) {
-								ps->ps_cy *= 10;
-								ps->ps_cy += c - '0';
-							} else {
-								ps->ps_cx *= 10;
-								ps->ps_cx += c - '0';
-							}
-						} else
-							state = 0;
-						break;
+						if (!n || (c = *cp) < ' ')
+							break;
+						n--, cp++;
 					}
+				}
+				break;
+			    case PSS_ESCAPE:
+				if (c == '[') { /* Start ESC [ sequence */
+					ps->ps_cx = ps->ps_cy = 0;
+					state = PSS_EBRACE;
 				} else if (c == 'c') { /* Clear screen & home */
 					fillw((at << 8) | ' ', Crtat, COL * ROW);
 					crtat = Crtat;
 					ps->ps_col = 0;
 					state = 0;
-				} else if (c == '[') { /* Start ESC [ sequence */
-					ps->ps_cx = ps->ps_cy = 0;
-					state = PSS_EBRACE;
 				} else { /* Invalid, clear state */
 					wrtchar(c, ps->ps_sat); 
 					state = 0;
 				}
-			} else {
-				if (c == 7) {
-					sysbeep(BEEP_FREQ, BEEP_TIME);
-					scroll = 0;
-				} else {
-					if (ps->ps_flags & PSF_STAND)
-						wrtchar(c, ps->ps_sat);
+				break;
+			    default: /* PSS_EBRACE or PSS_EPARAM */
+				switch (c) {
+					int pos;
+				    case 'm':
+					if (!ps->ps_cx)
+						ps->ps_flags &=~ PSF_STAND;
 					else
-						wrtchar(c, at); 
-					if (ps->ps_col >= COL)
+						ps->ps_flags |= PSF_STAND;
+					state = 0;
+					break;
+				    case 'A': { /* up cx rows */
+					int	cx = ps->ps_cx;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= ROW;
+					pos = crtat - Crtat;
+					pos -= COL * cx;
+					if (pos < 0)
+						pos += ROW * COL;
+					crtat = Crtat + pos;
+					state = 0;
+					break;
+				    }
+				    case 'B': { /* down cx rows */
+					int	cx = ps->ps_cx;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= ROW;
+					pos = crtat - Crtat;
+					pos += COL * cx;
+					if (pos >= ROW * COL)
+						pos -= ROW * COL;
+					crtat = Crtat + pos;
+					state = 0;
+					break;
+				    }
+				    case 'C': { /* right cursor */
+					int	cx = ps->ps_cx,
+						col = ps->ps_col;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= COL;
+					pos = crtat - Crtat;
+					pos += cx;
+					col += cx;
+					if (col >= COL) {
+						pos -= COL;
+						col -= COL;
+					}
+					ps->ps_col = col;
+					crtat = Crtat + pos;
+					state = 0;
+					break;
+				    }
+				    case 'D': { /* left cursor */
+					int	cx = ps->ps_cx,
+						col = ps->ps_col;
+					if (cx <= 0)
+						cx = 1;
+					else
+						cx %= COL;
+					pos = crtat - Crtat;
+					pos -= cx;
+					col -= cx;
+					if (col < 0) {
+						pos += COL;
+						col += COL;
+					}
+					ps->ps_col = col;
+					crtat = Crtat + pos;
+					state = 0;
+					break;
+				    }
+				    case 'J': /* Clear ... */
+					switch (ps->ps_cx) {
+					    case 0:
+						/* ... to end of display */
+						fillw((at << 8) | ' ',
+						      crtat,
+						      Crtat + COL * ROW - crtat);
+						break;
+					    case 1:
+						/* ... to next location */
+						fillw((at << 8) | ' ',
+						      Crtat,
+						      crtat - Crtat + 1);
+						break;
+					    case 2:
+						/* ... whole display */
+						fillw((at << 8) | ' ',
+						      Crtat, COL * ROW);
+						break;
+					}
+					state = 0;
+					break;
+				    case 'K': /* Clear line ... */
+					switch (ps->ps_cx) {
+					    case 0:
+						/* ... current to EOL */
+						fillw((at << 8) | ' ',
+						      crtat, COL - ps->ps_col);
+						break;
+					    case 1: {
+						int	col = ps->ps_col;
+						/* ... beginning to next */
+						fillw((at << 8) | ' ',
+						      crtat - col,
+						      col + 1);
+						break;
+					    }
+					    case 2:
+						/* ... entire line */
+						fillw((at << 8) | ' ',
+						      crtat - ps->ps_col, COL);
+						break;
+					    }
+					state = 0;
+					break;
+				    case 'f': /* in system V consoles */
+				    case 'H': { /* Cursor move */
+					int	cx = ps->ps_cx,
+						cy = ps->ps_cy;
+					if (!cx || !cy) {
+						crtat = Crtat;
 						ps->ps_col = 0;
+					} else {
+						if (cx > ROW)
+							cx = ROW;
+						if (cy > COL)
+							cy = COL;
+						crtat = Crtat + (cx - 1) * COL + cy - 1;
+						ps->ps_col = cy - 1;
+					}
+					state = 0;
+					break;
+				    }
+				    case 'S': { /* scroll up cx lines */
+					int	cx = ps->ps_cx;
+					if (cx <= 0)
+						cx = 1;
+					if (cx > ROW)
+						cx = ROW;
+					if (cx < ROW)
+						bcopyw(Crtat+COL*cx, Crtat,
+						       COL*(ROW-cx)*CHR);
+					fillw((at << 8) | ' ', Crtat+COL*(ROW-cx), COL*cx);
+					/* crtat -= COL*cx; /* XXX */
+					state = 0;
+					break;
+				    }
+				    case 'T': { /* scroll down cx lines */
+					int	cx = ps->ps_cx;
+					if (cx <= 0)
+						cx = 1;
+					if (cx > ROW)
+						cx = ROW;
+					if (cx < ROW)
+						bcopyw(Crtat, Crtat+COL*cx,
+						       COL*(ROW-cx)*CHR);
+					fillw((at << 8) | ' ', Crtat, COL*cx);
+					/* crtat += COL*cx; /* XXX */
+					state = 0;
+					break;
+				    }
+				    case ';': /* Switch params in cursor def */
+					state = PSS_EPARAM;
+					break;
+				    case 'r':
+					ps->ps_sat = (ps->ps_cx & FG_MASK) |
+						((ps->ps_cy << 4) & BG_MASK);
+					state = 0;
+					break;
+				    case 'x': /* set attributes */
+					switch (ps->ps_cx) {
+					    case 0:
+						/* reset to normal attributes */
+						at = FG_LIGHTGREY | BG_BLACK;
+					    case 1:
+						/* ansi background */
+						if (ps->ps_flags & PSF_COLOR) {
+							at &= FG_MASK;
+							at |= bgansitopc[ps->ps_cy & 7];
+						}
+						break;
+					    case 2:
+						/* ansi foreground */
+						if (ps->ps_flags & PSF_COLOR) {
+							at &= BG_MASK;
+							at |= fgansitopc[ps->ps_cy & 7];
+						}
+						break;
+					    case 3:
+						/* pc text attribute */
+						if (state >= PSS_EPARAM)
+							at = ps->ps_cy;
+						break;
+					}
+					ps->ps_at = at;
+					state = 0;
+					break;
+				    default: /* Only numbers valid here */
+					if ((c >= '0') && (c <= '9')) {
+						if (state >= PSS_EPARAM) {
+							ps->ps_cy *= 10;
+							ps->ps_cy += c - '0';
+						} else {
+							ps->ps_cx *= 10;
+							ps->ps_cx += c - '0';
+						}
+					} else
+						state = 0;
 					break;
 				}
+				break;
 			}
 		}
 		if (scroll) {
+			scroll = 0;
 			if (crtat >= Crtat + COL * ROW) { /* scroll check */
 				if (!kernel) {
 					int s = spltty();
