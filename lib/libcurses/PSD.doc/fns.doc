@@ -32,7 +32,7 @@
 .\"     @(#)fns.doc	8.2 (Berkeley) 6/1/94
 .\"
 .Ds
-.Fn addch "char ch" \(dg
+.Fn addch "chtype ch" \(dg
 .De
 Add the character
 .Vn ch
@@ -117,7 +117,30 @@ Sound the terminal bell.  If the terminal has no bell capability,
 but has the ability to flash the screen, do that instead.  See also
 .Fn flash
 .Ds
-.Fn box "WINDOW win" "char vert" "char hor"
+.Fn border "chtype left" "chtype right" "chtype top" "chtype bottom" "chtype topleft" "chtype topright" "chtype botleft" "chtype botright"
+.De
+.Pp
+Draws a border around the window using the characters:
+.Vn left
+for drawing the left side, 
+.Vn right
+for drawing the left side, 
+.Vn top
+for drawing the top edge, 
+.Vn bottom
+for drawing the top edge, 
+.Vn topleft
+for drawing the top-left corner, 
+.Vn topright
+for drawing the top-right corner, 
+.Vn botleft
+for drawing the bottom-left corner, and 
+.Vn botright
+for drawing the bottom-right corner.  If scrolling is not allowed,
+and the window encompasses the lower right-hand corner of the terminal,
+the corners are left blank to avoid a scroll.
+.Ds
+.Fn box "WINDOW win" "chtype vert" "chtype hor"
 .De
 .Pp
 Draws a box around the window using
@@ -401,6 +424,28 @@ at the current \*y
 Each character after it shifts to the right,
 and the last character disappears.
 \*(Es
+.Ds
+.Fn insdelln "int n"
+.De
+If
+.Vn n
+is positive insert
+.Vn n
+lines above the current one.
+Every line below the current line
+will be shifted down,
+and the last
+.Vn n
+lines will disappear.
+If
+.Vn n
+is negative, delete
+.Vn n
+lines starting from the current one.
+The last
+.Vn n
+lines are cleared.
+The current \*y will remain unchanged.
 .Ds
 .Fn insertln ""
 .De
@@ -745,6 +790,15 @@ It does this using consecutive calls to
 \*(Es
 .ne 1i
 .Ds
+.Fn scrl "int n"
+.De
+Scroll the window by
+.Vn n
+lines. If
+.Vn n
+is positive, scroll upward, otherwise
+scroll downward.
+.Ds
 .Fn scroll "WINDOW *win"
 .De
 Scroll the window upward one line.
@@ -931,12 +985,13 @@ are output to the current \*y position of the window specified by
 specification of a window, rather than the use of the default
 .Vn stdscr.\fP
 .Ds
-.Fn waddch "WINDOW *win" "char ch"
+.Fn waddch "WINDOW *win" "char chtype"
 .Fn waddstr "WINDOW *win" "char *str"
 .Fn waddnstr "WINDOW *win" "char *str" "int len"
 .Fn wattron  "WINDOW *win" "int attr"
 .Fn wattroff  "WINDOW *win" "int attr"
 .Fn wattrset  "WINDOW *win" "int attr"
+.Fn wborder "WINDOW *win" "chtype left" "chtype right" "chtype top" "chtype bottom" "chtype topleft" "chtype topright" "chtype botleft" "chtype botright"
 .Fn wclear "WINDOW *win"
 .Fn wclrtobot "WINDOW *win"
 .Fn wclrtoeol "WINDOW *win"
@@ -947,11 +1002,13 @@ specification of a window, rather than the use of the default
 .Fn wgetstr "WINDOW *win" "char *str"
 .Fn winch "WINDOW *win" \(dg
 .Fn winsch "WINDOW *win" "char c"
+.Fn winsdelln "WINDOW *win" "int n"
 .Fn winsertln "WINDOW *win"
 .Fn wmove "WINDOW *win" "int y" int x"
 .Fn wprintw "WINDOW *win" "char *fmt" "..."
 .Fn wrefresh "WINDOW *win"
 .Fn wscanw "WINDOW *win" "char *fmt" "..."
+.Fn wscrl "WINDOW *win" "int n"
 .Fn wstandend "WINDOW *win"
 .Fn wstandout "WINDOW *win"
 .Fn wtimeout "WINDOW *win" "int delay"
