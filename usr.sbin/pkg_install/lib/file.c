@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.69 2003/11/21 22:04:32 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.70 2003/12/20 03:31:56 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.69 2003/11/21 22:04:32 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.70 2003/12/20 03:31:56 grant Exp $");
 #endif
 #endif
 
@@ -558,107 +558,41 @@ remove_files(const char *path, const char *pattern)
  * Unpack a tar file
  */
 int
-unpack(const char *pkg, const char *extra1, const char *extra2)
+unpack(const char *pkg, const char *flist)
 {
-	const char *decompress_cmd[3];
+	char args[10] = "-";
+	char cmd[FILENAME_MAX];
+	const char *decompress_cmd;
 	const char *suf;
-	int     pipefds[2];
-	pid_t   tarpid, gzpid;
-	int	state;
-	int	ret;
 
 	if (!IS_STDIN(pkg)) {
 		suf = suffix_of(pkg);
-		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2")) {
-			decompress_cmd[0] = BZIP2_CMD;
-			decompress_cmd[1] = "-c";
-			decompress_cmd[2] = "-d";
-		}
-		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz")) {
-			decompress_cmd[0] = GZIP_CMD;
-			decompress_cmd[1] = "-c";
-			decompress_cmd[2] = "-d";
-		}
-		else if (!strcmp(suf, "tar")) {
-			decompress_cmd[0] = "cat";
-			decompress_cmd[1] = NULL;
-			decompress_cmd[2] = NULL;
-		}
+		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2"))
+			decompress_cmd = BZIP2_CMD;
+		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz"))
+			decompress_cmd = GZIP_CMD;
+		else if (!strcmp(suf, "tar"))
+			; /* do nothing */
 		else
 			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
-	} else {
-		decompress_cmd[0] = GZIP_CMD;
-		decompress_cmd[1] = "-c";
-		decompress_cmd[2] = "-d";
-	}
+	} else
+		decompress_cmd = GZIP_CMD;
 
-	/* Set up a pipe for passing the extracted contents, and fork off a decompress process. */
-	if (pipe(pipefds) == -1) {
-		warnx("cannot create pipe -- %s extract of %s failed!", TAR_CMD, pkg);
+	strlcat(args, "xpf", sizeof(args));
+	sprintf(cmd, "%s %s %s %s %s %s %s", TAR_CMD,
+	    flist ? "--fast-read" : "",
+	    decompress_cmd != NULL ? "--use-compress-program" : "",
+	    decompress_cmd != NULL ? decompress_cmd : "", args, pkg,
+	    flist ? flist : "");
+
+	if (Verbose)
+		printf("running: %s\n", cmd);
+	if (system(cmd) != 0) {
+		warnx("extract of %s failed", pkg);
 		return 1;
 	}
-	if ((gzpid = fork()) == -1) {
-		warnx("cannot fork process for %s -- %s extract of %s failed!",
-		      decompress_cmd[0], TAR_CMD, pkg);
-		return 1;
-	}
-	if (gzpid == 0) {		/* The child */
-		if (dup2(pipefds[1], STDOUT_FILENO) == -1) {
-			warnx("dup2 failed before executing %s command",
-			      decompress_cmd[0]);
-			_exit(2);
-		}
-		close(pipefds[0]);
-		close(pipefds[1]);
-		if (decompress_cmd[1] != NULL)
-			execlp(decompress_cmd[0], decompress_cmd[0],
-			       decompress_cmd[1], decompress_cmd[2],
-			       pkg, NULL);
-		else
-			execlp(decompress_cmd[0], decompress_cmd[0],
-			       pkg, NULL);
-		warnx("failed to execute %s command", decompress_cmd[0]);
-		_exit(2);
-	}
 
-	/* Meanwhile, back in the parent process ... */
-	/* fork off an untar process */
-	if ((tarpid = fork()) == -1) {
-		warnx("cannot fork process for %s -- %s extract of %s failed!",
-		      TAR_CMD, TAR_CMD, pkg);
-		return 1;
-	}
-	if (tarpid == 0) {		/* The child */
-		if (dup2(pipefds[0], STDIN_FILENO) == -1) {
-			warnx("dup2 failed before executing %s command",
-			      TAR_CMD);
-			_exit(2);
-		}
-		close(pipefds[0]);
-		close(pipefds[1]);
-		execlp(TAR_CMD, TAR_CMD, "-xpf", "-", extra1, extra2, NULL);
-		warnx("failed to execute %s command", TAR_CMD);
-		_exit(2);
-	}
-
-
-	close(pipefds[0]);
-	close(pipefds[1]);
-
-	ret = 0;
-	/* wait for decompress process ... */
-	if (waitpid(gzpid, &state, 0) < 0) {
-		/* error has been reported by child */
-		ret = 1;
-	}
-
-	/* ... and for tar exit so we are sure the needed files exist */
-	if (waitpid(tarpid, &state, 0) < 0) {
-		/* error has been reported by child */
-		ret = 1;
-	}
-
-	return ret;
+	return 0;
 }
 
 /*

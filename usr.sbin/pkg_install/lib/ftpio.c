@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.61 2003/12/20 02:37:49 grant Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.62 2003/12/20 03:31:56 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.61 2003/12/20 02:37:49 grant Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.62 2003/12/20 03:31:56 grant Exp $");
 #endif
 
 /*-
@@ -1062,7 +1062,7 @@ http_fetch(const char *url, const char *path)
 		if ((path != NULL) && (chdir(path) < 0))
 			_exit(127);
 
-		if (unpack("-", Verbose ? "-vv" : NULL, NULL) != 0) {
+		if (unpack("-", NULL) != 0) {
 			warnx("unpack failed");
 			_exit(2);
 		}
