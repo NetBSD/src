@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.95 2002/02/07 21:47:45 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.96 2002/05/31 05:26:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.95 2002/02/07 21:47:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.96 2002/05/31 05:26:42 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -177,7 +177,7 @@ ip_output(m0, va_alist)
 	struct route *ro;
 	int flags, sw_csum;
 	int *mtu_p;
-	int mtu;
+	u_long mtu;
 	struct ip_moptions *imo;
 	va_list ap;
 #ifdef IPSEC
