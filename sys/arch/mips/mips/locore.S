@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34 1997/06/19 06:30:03 mhitch Exp $	*/
+/*	$NetBSD: locore.S,v 1.35 1997/06/21 06:32:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -642,6 +642,9 @@ NON_LEAF(cpu_switch, STAND_FRAME_SIZE, ra)
 	sw	t0, cnt+V_SWTCH
 	beq	t1, zero, idle
 	mtc0	zero, MACH_COP_0_STATUS_REG
+/*
+ * Entered here from idle() and switch_exit().
+ */
 sw1:
 	nop					# wait for intrs disabled
 	nop
@@ -685,14 +688,12 @@ sw1:
 	jal	_C_LABEL(pmap_alloc_tlbpid)	# v0 = TLB PID
 	move	s0, a0				# BDSLOT: save p
 	sw	s0, _C_LABEL(curproc)		# set curproc
-	sll	v0, v0, VMMACH_TLB_PID_SHIFT	# v0 = aligned PID
 	lw	t0, P_MD_UPTE+0(s0)		# t0 = first u. pte
 	lw	t1, P_MD_UPTE+4(s0)		# t1 = 2nd u. pte
 	lw	s0, P_ADDR(s0)
-	sw	s0, _C_LABEL(curpcb)		# set curpcb
 	lw	s1, _C_LABEL(mips_locore_jumpvec) + MIPSX_CPU_SWITCH_RESUME
-	or	v0, v0, UADDR			# v0 = first HI entry
-	jr	s1
+	sw	s0, _C_LABEL(curpcb)		# set curpcb
+	jr	s1				# CPU-specific: resume process
 	nop
 END(cpu_switch)
 
