@@ -446,7 +446,7 @@ static int
 get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask)
 {
 	char w[128], *ocp;
-	u_long tmp;
+	struct in_addr tmp;
 	
 	addr->s_addr = 0;
 	mask->s_addr = 0xffffffff;
@@ -454,7 +454,7 @@ get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask)
 	if (!next_word(cpp, w))
 		return (0);
 
-	if ((tmp = inet_addr((char *)w)) == INADDR_NONE) {
+	if (inet_aton((char *)w, &tmp) != 1) {
 		/* try gethostbyname */
 		struct hostent *h;
 
@@ -465,7 +465,7 @@ get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask)
 		bcopy(h->h_addr, &tmp, (size_t)h->h_length);
 	}
 
-	addr->s_addr = tmp;
+	addr->s_addr = tmp.s_addr;
 
 	/* check if netmask option is present */
 	ocp = *cpp;
@@ -473,10 +473,10 @@ get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask)
 		if (!next_word(&ocp, w))
 			return (0);
 		
-		if (inet_aton((char *)w, (struct in_addr *)&tmp) == 0)
+		if (inet_aton((char *)w, (struct in_addr *)&tmp) != 1)
 			return (0);
 
-		mask->s_addr = tmp;
+		mask->s_addr = tmp.s_addr;
 		*cpp = ocp;	
 		return (1);
 	}
@@ -563,7 +563,7 @@ interface_parser(char *cmdbuf)
 	/*
 	 * Create argment list & look for scheduling discipline options.
 	 */
-	sprintf(qdisc_name, "null");
+	snprintf(qdisc_name, sizeof(qdisc_name), "null");
 	argc = 0;
 	ap = w;
 	while (next_word(&cp, ap)) {
@@ -956,7 +956,7 @@ get_ip6addr(char **cpp, struct in6_addr *addr, struct in6_addr *mask)
 		*prefix++ = '\0';
 	}
 
-	if (inet_pton(AF_INET6, w, addr) <= 0)
+	if (inet_pton(AF_INET6, w, addr) != 1)
 		return (0);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(addr) && prefix == NULL)
