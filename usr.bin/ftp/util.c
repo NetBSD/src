@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 1997/02/01 10:45:08 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.3 1997/02/01 10:45:08 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -528,7 +528,7 @@ ptransfer(siginfo)
 	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
 	    bytes, bytes == 1 ? "" : "s", direction, elapsed,
 	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
-	if (siginfo && bytes > 0 && elapsed > 0.0) {
+	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0) {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
 		hh = remaining / 3600;
