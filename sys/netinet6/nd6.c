@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.48 2001/06/27 17:36:14 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.49 2001/06/29 16:01:47 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -1768,7 +1768,7 @@ fail:
 	 * we can compromise the overhead, since it only happens the first
 	 * time.
 	 */
-	if (do_update && ln->ln_router)
+	if (do_update && ln->ln_router && !ip6_forwarding && ip6_accept_rtadv)
 		defrouter_select();
 
 	return rt;
