@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2001/10/16 16:31:33 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56.2.1 2001/11/11 04:17:19 shin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -225,11 +225,6 @@ do {									\
 #define aston(p)	((p)->p_md.md_astpending = 1)
 
 extern int want_resched;		/* resched() was called */
-#ifdef MIPS3
-extern u_int	mips_L2CacheSize;
-extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */
-extern int	mips_L2CacheMixed;
-#endif /* MIPS3 */
 
 /*
  * Misc prototypes and variable declarations.
