@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.38 2002/10/11 01:48:25 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.39 2002/11/17 23:36:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,8 +104,8 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	AND AT ATTACH BUILD CINCLUDE COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
 %token	DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
 %token	FILE_SYSTEM FLAGS IDENT INCLUDE XMACHINE MAJOR MAKEOPTIONS
-%token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PREFIX PSEUDO_DEVICE ROOT
-%token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO BLOCK CHAR DEVICE_MAJOR
+%token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PACKAGE PREFIX PSEUDO_DEVICE
+%token	ROOT SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO BLOCK CHAR DEVICE_MAJOR
 %token	<val> NUMBER
 %token	<str> PATHNAME QSTRING WORD EMPTY
 %token	ENDDEFS
@@ -245,6 +245,9 @@ include:
 	INCLUDE filename		{ (void) include($2, 0, 0, 1); } |
 	CINCLUDE filename		{ (void) include($2, 0, 1, 1); };
 
+package:
+	PACKAGE filename		{ package($2); };
+
 prefix:
 	PREFIX filename			{ prefix_push($2); } |
 	PREFIX				{ prefix_pop(); };
@@ -267,6 +270,7 @@ one_def:
 	object |
 	device_major			{ do_devsw = 1; } |
 	include |
+	package |
 	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); } |
 	DEFFS fsoptfile_opt deffses	{ deffilesystem($2, $3); } |
