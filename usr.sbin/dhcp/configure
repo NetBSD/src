@@ -1,6 +1,17 @@
 #!/bin/sh
 
-sysname=$1
+while [ $# != 0 ]; do
+  if [ x$1 = x--with-nsupdate ]; then
+    nsupdate="-e /^##--nsupdate--/,/^##--nsupdate--/s/^#//"
+  else
+   if [ x$sysname = x ]; then
+     sysname=$1
+    else
+       echo "Unexpected argument: $1"
+    fi
+  fi
+  shift
+done
 
 uname=`uname -s`
 machine=`uname -m`
@@ -20,16 +31,26 @@ if [ "$sysname" = "" ]; then
         sysname=alphaosf
       fi;;
     Linux)
-      case `uname -r` in
-	1*) sysname=linux-1 ;;
-	2.1*) sysname=linux-2.1 ;;
-	2.2*) sysname=linux-2.2 ;;
-	2*) sysname=linux-2.0 ;;
+      release=`uname -r`
+      minor=`echo $release |sed -e 's/[0-9]*\.\([0-9][0-9]*\)\(\..*\)*$/\1/'`
+      major=`echo $release |sed -e 's/\([0-9][0-9]*\)\..*$/\1/'`
+      
+      case $major in
+	1) sysname=linux-1 ;;
+	2) case $minor in
+	     0) sysname=linux-2.0 ;;
+	     1) sysname=linux-2.1 ;;
+	     2) sysname=linux-2.2 ;;
+	     *) sysname=linux-2.2 ;;
+	   esac;;
       esac;;
     SunOS)
-      case `uname -r` in
-        4*) sysname=sunos4;;
-        5*)
+      release=`uname -r`
+      minor=`echo $release |sed -e 's/.*[0-9]*\.\([0-9][0-9]*\).*$/\1/'`
+      major=`echo $release |sed -e 's/\([0-9][0-9]*\)\..*$/\1/'`
+      case $major in
+        4) sysname=sunos4;;
+        5)
 	  set `which gcc`
 	  if [ $# = 1 ]; then
 	    sysname=sunos5-gcc
@@ -39,6 +60,8 @@ if [ "$sysname" = "" ]; then
       esac;;
     NetBSD)
       sysname=netbsd;;
+    OpenBSD)
+      sysname=openbsd;;
     FreeBSD)
       sysname=freebsd;;
     hpux)
@@ -49,6 +72,8 @@ if [ "$sysname" = "" ]; then
       sysname=qnx;;
     NEXTSTEP)
       sysname=nextstep;;
+    UnixWare)
+      sysname=uw7;;
   esac
 fi
 
@@ -70,6 +95,7 @@ if [ "$sysname" = "" ]; then
   echo "   sunos5-gcc	Solaris 2.4 or higher with gcc"
   echo "   netbsd	NetBSD 1.1 or higher"
   echo "   freebsd	FreeBSD"
+  echo "   openbsd      OpenBSD (i386/alpha)"
   echo "   hpux		HP-UX"
   echo "   qnx		QNX 4.2 or higher"
   echo "   NEXTSTEP     NeXTSTEP"
@@ -78,9 +104,15 @@ fi
 
 echo "System Type: $sysname"
 
-for foo in . client server relay common; do
-	 (sed -e "/^##--${sysname}--/,/^##--${sysname}--/s/^#//" \
-		<Makefile.conf; cat $foo/Makefile.dist)	\
+if [ x$major != x ] && [ x$minor != x ]; then
+  majversubst="-e /^##--majver--/,/^##--majver--/s/MajorVersion/$major/"
+  minversubst="-e /^##--minver--/,/^##--minver--/s/MinorVersion/$minor/"
+fi
+
+for foo in . client server relay common omapip dhcpctl minires; do
+	 (sed $nsupdate $majversubst $minversubst \
+	      -e "/^##--${sysname}--/,/^##--${sysname}--/s/^#//" \
+		<Makefile.conf; cat site.conf; cat $foo/Makefile.dist)	\
 				>$foo/Makefile
 done
 

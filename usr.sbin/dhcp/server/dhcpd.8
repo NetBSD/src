@@ -1,40 +1,20 @@
 .\"	dhcpd.8
 .\"
-.\" Copyright (c) 1995, 1996 The Internet Software Consortium.
-.\" All rights reserved.
+.\" Copyright (c) 1996-1999 Internet Software Consortium.
+.\" Use is subject to license terms which appear in the file named
+.\" ISC-LICENSE that should have accompanied this file when you
+.\" received it.   If a file named ISC-LICENSE did not accompany this
+.\" file, or you are not sure the one you have is correct, you may
+.\" obtain an applicable copy of the license at:
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\"             http://www.isc.org/isc-license-1.0.html. 
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The Internet Software Consortium nor the names
-.\"    of its contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
+.\" This file is part of the ISC DHCP distribution.   The documentation
+.\" associated with this file is listed in the file DOCUMENTATION,
+.\" included in the top-level directory of this release.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
-.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\" This software has been written for the Internet Software Consortium
-.\" by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
-.\" Enterprises.  To learn more about the Internet Software Consortium,
-.\" see ``http://www.isc.org/isc''.  To learn more about Vixie
-.\" Enterprises, see ``http://www.vix.com''.
+.\" Support and other services are available for ISC products - see
+.\" http://www.isc.org for more information.
 .TH dhcpd 8
 .SH NAME
 dhcpd - Dynamic Host Configuration Protocol Server
@@ -52,6 +32,11 @@ dhcpd - Dynamic Host Configuration Protocol Server
 ]
 [
 .B -q
+]
+[
+.B -t
+|
+.B -T
 ]
 [
 .B -cf
@@ -74,6 +59,12 @@ Protocol (BOOTP).  DHCP allows hosts on a TCP/IP network to request
 and be assigned IP addresses, and also to discover information about
 the network to which they are attached.  BOOTP provides similar
 functionality, with certain restrictions.
+.SH CONTRIBUTIONS
+.PP
+Development of this software is funded through contributions and
+support contracts.   Please see
+.B dhcp-contrib(5)
+for information on how you can contribute.
 .SH OPERATION
 .PP
 The DHCP protocol allows a host which is unknown to the network
@@ -158,18 +149,6 @@ the
 .B -p
 flag may used.  It should be followed by the udp port number on which
 dhcpd should listen.  This is mostly useful for debugging purposes.
-If the
-.B -p
-flag is specified, the server will transmit responses to clients at a
-port number that is one greater than the one specified - i.e., if you
-specify
-.B -p
-67, then the server will listen on port 67 and transmit to port 68.
-Datagrams that must go through relay agents are sent to the port
-number specified with the
-.B -p
-flag - if you wish to use alternate port numbers, you must configure
-any relay agents you are using to use the same alternate port numbers.
 .PP
 To run dhcpd as a foreground process, rather than allowing it to run
 as a daemon in the background, the
@@ -199,6 +178,18 @@ it may not be desirable to print out the entire copyright message on
 startup.   To avoid printing this message, the
 .B -q
 flag may be specified.
+.PP
+The DHCP server reads two files on startup: a configuration file, and
+a lease database.   If the
+.B -t
+flag is specified, the server will simply test the configuration file
+for correct syntax, but will not attempt to perform any network
+operations.   This can be used to test the a new configuration file
+automatically before installing it.
+.PP
+The
+.B -T
+flag can be used to test the lease database file in a similar way.
 .SH CONFIGURATION
 The syntax of the dhcpd.conf(5) file is discussed seperately.   This
 section should be used as an overview of the configuration process,
@@ -333,6 +324,6 @@ dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .B dhcpd(8)
 was written by Ted Lemon <mellon@vix.com>
 under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Corporation.
+for this project was provided by the Internet Software Consortium.
 Information about the Internet Software Consortium can be found at
 .B http://www.isc.org/isc.
