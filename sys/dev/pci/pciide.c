@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.90 2000/11/08 17:57:37 wrstuden Exp $	*/
+/*	$NetBSD: pciide.c,v 1.91 2000/11/08 18:22:27 matt Exp $	*/
 
 
 /*
@@ -210,7 +210,8 @@ struct pciide_product_desc {
 };
 
 /* Flags for ide_flags */
-#define IDE_PCI_CLASS_OVERRIDE 0x0001 /* accept even if class != pciide */
+#define IDE_PCI_CLASS_OVERRIDE	0x0001 /* accept even if class != pciide */
+#define	IDE_16BIT_IOSPACE	0x0002 /* I/O space BARS ignore upper word */
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
@@ -325,7 +326,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 
 const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ PCI_PRODUCT_CONTAQ_82C693,
-	  0,
+	  IDE_16BIT_IOSPACE,
 	  "Cypress 82C693 IDE Controller",
 	  cy693_chip_map,
 	},
@@ -361,22 +362,22 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA33,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra33/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA66,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra66/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100X,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
@@ -708,7 +709,8 @@ pciide_mapreg_dma(sc, pa)
 			printf(", but unused (couldn't query registers)");
 			break;
 		}
-		if (addr >= 0x10000) {
+		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
+		    && addr >= 0x10000) {
 			sc->sc_dma_ok = 0;
 			printf(", but unused (registers at unsafe address %#lx)", addr);
 			break;
