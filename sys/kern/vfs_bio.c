@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.129 2004/09/08 10:20:15 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.130 2004/09/18 16:01:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.129 2004/09/08 10:20:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.130 2004/09/18 16:01:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,24 @@ u_int	nbuf;			/* XXX - for softdep_lockedbufs */
 u_int	bufpages = BUFPAGES;	/* optional hardwired count */
 u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
 
+/* Function prototypes */
+struct bqueues;
+
+static int buf_trim(void);
+static void *bufpool_page_alloc(struct pool *, int);
+static void bufpool_page_free(struct pool *, void *);
+static __inline struct buf *bio_doread(struct vnode *, daddr_t, int,
+    struct ucred *, int);
+static int buf_lotsfree(void);
+static int buf_canrelease(void);
+static __inline u_long buf_mempoolidx(u_long);
+static __inline u_long buf_roundsize(u_long);
+static __inline caddr_t buf_malloc(size_t);
+static void buf_mrelease(caddr_t, size_t);
+int count_lock_queue(void); /* XXX */
+#ifdef DEBUG
+static int checkfreelist(struct buf *, struct bqueues *);
+#endif
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -225,15 +243,6 @@ buf_setvalimit(vsize_t sz)
 	bufmem_valimit = sz;
 	return 0;
 }
-
-static int buf_trim(void);
-
-/*
- * bread()/breadn() helper.
- */
-static __inline struct buf *bio_doread(struct vnode *, daddr_t, int,
-					struct ucred *, int);
-int count_lock_queue(void);
 
 /*
  * Insq/Remq for the buffer free lists.
@@ -528,7 +537,9 @@ buf_mrelease(caddr_t addr, size_t size)
 	pool_put(&bmempools[buf_mempoolidx(size)], addr);
 }
 
-
+/*
+ * bread()/breadn() helper.
+ */
 static __inline struct buf *
 bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
     int async)
@@ -1247,7 +1258,7 @@ start:
  * Called at splbio and with queue lock held.
  * Returns the amount of buffer memory freed.
  */
-int
+static int
 buf_trim(void)
 {
 	struct buf *bp;
