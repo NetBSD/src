@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.15 2004/01/10 00:56:27 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.16 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.15 2004/01/10 00:56:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.16 2004/03/05 03:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -183,8 +183,10 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	 * disk */
 	failedPDA = asmap->failedPDAs[0];
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug)
 		printf("[Creating degraded-write DAG]\n");
+#endif
 
 	RF_ASSERT(asmap->numDataFailed == 1);
 	dag_h->creator = "SimpleDegradedWriteDAG";
