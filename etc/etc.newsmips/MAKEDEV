@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 2000/10/29 13:03:39 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.12 2000/11/13 19:30:56 tsubai Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,11 +82,11 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 ipl raid0 raid1 raid2 raid3
-	sh $0 lkm random local
+	sh $0 lkm random wscons local
 	;;
 
 floppy)
-	sh $0 std sd0 sd1 cd0 st0 st1 pty0 tty0 tty1 md0
+	sh $0 std sd0 sd1 cd0 st0 st1 pty0 tty0 tty1 md0 wscons
 	;;
 
 std)
@@ -110,10 +110,6 @@ std)
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
-
-	mknod fb		c 14 0 ; chmod 666 fb
-	mknod mouse		c 12 0 ; chmod 666 mouse
-	mknod kbd		c 11 0 ; chmod 666 kbd
 	;;
 
 audio)
@@ -256,6 +252,51 @@ ipl)
 	mknod ipauth c 46 3
 	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+wscons)
+	sh $0 ttyEcfg ttyE0 ttyE1 ttyE2 ttyE3
+	sh $0 wskbd0 wsmouse0
+	;;
+
+ttyEcfg)
+	rm -f ttyEcfg
+	mknod ttyEcfg c 60 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
+	;;
+
+ttyE*)
+	unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c 60 $unit
+	chown root.wheel ttyE$unit
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	rm -f $wskbd
+	mknod $wskbd c 61 $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	rm -f $wsmouse
+	mknod $wsmouse c 62 $unit
+	chown root.wheel $wsmouse
+	chmod 600 $wsmouse
+	;;
+
+wsmux|wsmouse|wskbd)
+	rm -f wsmouse wskbd
+	mknod wsmouse c 63 0
+	mknod wskbd c 63 1
+	chown root.wheel wsmouse wskbd
+	chmod 600 wsmouse wskbd
 	;;
 
 pty*)
