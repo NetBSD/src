@@ -1,4 +1,4 @@
-/* $NetBSD: e_atanh.S,v 1.4 2000/05/12 20:11:12 is Exp $ */
+/* $NetBSD: e_atanh.S,v 1.5 2000/05/16 19:07:35 is Exp $ */
 
 /*
  * FPLSP wrapper for __ieee754_atanh
@@ -9,11 +9,11 @@
 
 ENTRY(__ieee754_atanh)
 #ifdef __SVR4_ABI__
-	jbra _ASM_LABEL(___060FPLSP0050)
+	jbra _C_LABEL(__fplsp060_0050)
 #else
 	movel %sp@(8),%sp@-
 	movel %sp@(8),%sp@-
-	jbsr _ASM_LABEL(___060FPLSP0050)
+	jbsr _C_LABEL(__fplsp060_0050)
 	fmoved %fp0,%sp@
 	movel %sp@+,%d0
 	movel %sp@+,%d1

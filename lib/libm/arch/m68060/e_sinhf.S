@@ -1,4 +1,4 @@
-/* $NetBSD: e_sinhf.S,v 1.4 2000/05/12 20:11:14 is Exp $ */
+/* $NetBSD: e_sinhf.S,v 1.5 2000/05/16 19:07:35 is Exp $ */
 
 /*
  * FPLSP wrapper for __ieee754_sinhf
@@ -9,10 +9,10 @@
 
 ENTRY(__ieee754_sinhf)
 #ifdef __SVR4_ABI__
-	jbra _ASM_LABEL(___060FPLSP01c8)
+	jbra _C_LABEL(__fplsp060_01c8)
 #else
 	movel %sp@(4),%sp@-
-	jbsr _ASM_LABEL(___060FPLSP01c8)
+	jbsr _C_LABEL(__fplsp060_01c8)
 	fmoves %fp0,%sp@
 	movel %sp@+,%d0
 	rts

@@ -1,4 +1,4 @@
-/* $NetBSD: s_log1p.S,v 1.4 2000/05/12 20:11:17 is Exp $ */
+/* $NetBSD: s_log1p.S,v 1.5 2000/05/16 19:07:36 is Exp $ */
 
 /*
  * FPLSP wrapper for log1p
@@ -9,11 +9,11 @@
 
 ENTRY(log1p)
 #ifdef __SVR4_ABI__
-	jbra _ASM_LABEL(___060FPLSP0140)
+	jbra _C_LABEL(__fplsp060_0140)
 #else
 	movel %sp@(8),%sp@-
 	movel %sp@(8),%sp@-
-	jbsr _ASM_LABEL(___060FPLSP0140)
+	jbsr _C_LABEL(__fplsp060_0140)
 	fmoved %fp0,%sp@
 	movel %sp@+,%d0
 	movel %sp@+,%d1
