@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.79 2003/03/22 02:21:57 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.80 2003/04/09 18:38:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 
+#include <uvm/uvm_param.h>	/* for MIN_PAGE_SIZE */
+
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
  * includes overhead.  An mbuf may add a single "mbuf cluster" of size
@@ -134,6 +136,7 @@ struct m_hdr {
 	struct	mowner *mh_owner;	/* mbuf owner */
 	int	mh_len;			/* amount of data in this mbuf */
 	int	mh_flags;		/* flags; see below */
+	paddr_t	mh_paddr;		/* physical address of mbuf */
 	short	mh_type;		/* type of data in this mbuf */
 };
 
@@ -172,8 +175,16 @@ struct	pkthdr {
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
 
+/*
+ * Max # of pages we can attach to m_ext.  This is carefully chosen
+ * to be able to handle SOSEND_LOAN_CHUNK with our minimum sized page.
+ */
+#ifdef MIN_PAGE_SIZE
+#define	M_EXT_MAXPAGES		((65536 / MIN_PAGE_SIZE) + 1)
+#endif
+
 /* description of external storage mapped into mbuf, valid if M_EXT set */
-struct m_ext {
+struct _m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
 		(struct mbuf *, caddr_t, size_t, void *);
@@ -182,6 +193,19 @@ struct m_ext {
 	struct malloc_type *ext_type;	/* malloc type */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
+	union {
+		paddr_t extun_paddr;	/* physical address (M_EXT_CLUSTER) */
+					/* pages (M_EXT_PAGES) */
+	/*
+	 * XXX This is gross, but it doesn't really matter; this is
+	 * XXX overlaid on top of the mbuf data area.
+	 */
+#ifdef M_EXT_MAXPAGES
+		struct vm_page *extun_pgs[M_EXT_MAXPAGES];
+#endif
+	} ext_un;
+#define	ext_paddr	ext_un.extun_paddr
+#define	ext_pgs		ext_un.extun_pgs
 #ifdef DEBUG
 	const char *ext_ofile;
 	const char *ext_nfile;
@@ -190,13 +214,15 @@ struct m_ext {
 #endif
 };
 
+#define	M_PADDR_INVALID		POOL_PADDR_INVALID
+
 struct mbuf {
 	struct	m_hdr m_hdr;
 	union {
 		struct {
 			struct	pkthdr MH_pkthdr;	/* M_PKTHDR set */
 			union {
-				struct	m_ext MH_ext;	/* M_EXT set */
+				struct	_m_ext MH_ext;	/* M_EXT set */
 				char	MH_databuf[MHLEN];
 			} MH_dat;
 		} MH;
@@ -210,6 +236,7 @@ struct mbuf {
 #define	m_type		m_hdr.mh_type
 #define	m_flags		m_hdr.mh_flags
 #define	m_nextpkt	m_hdr.mh_nextpkt
+#define	m_paddr		m_hdr.mh_paddr
 #define	m_pkthdr	M_dat.MH.MH_pkthdr
 #define	m_ext		M_dat.MH.MH_dat.MH_ext
 #define	m_pktdat	M_dat.MH.MH_dat.MH_databuf
@@ -237,6 +264,8 @@ struct mbuf {
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
 #define	M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
+#define	M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
+#define	M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
 
 /* for source-level compatibility */
 #define	M_CLUSTER	M_EXT_CLUSTER
@@ -453,8 +482,9 @@ do {									\
 do {									\
 	MBUFLOCK(							\
 		(m)->m_ext.ext_buf =					\
-		    pool_cache_get(&mclpool_cache, (how) == M_WAIT ?	\
-			(PR_WAITOK|PR_LIMITFAIL) : 0);			\
+		    pool_cache_get_paddr(&mclpool_cache,		\
+		        (how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,	\
+			&(m)->m_ext.ext_paddr);				\
 		if ((m)->m_ext.ext_buf != NULL)				\
 			_MOWNERREF((m), M_EXT|M_CLUSTER);		\
 	);								\
@@ -465,6 +495,7 @@ do {									\
 		(m)->m_ext.ext_size = MCLBYTES;				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
+		/* ext_paddr initialized above */			\
 		MCLINITREFERENCE(m);					\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -505,7 +536,8 @@ do {									\
 		_MCLDEREFERENCE(m);					\
 		splx(_ms_);						\
 	} else if ((m)->m_flags & M_CLUSTER) {				\
-		pool_cache_put(&mclpool_cache, (m)->m_ext.ext_buf);	\
+		pool_cache_put_paddr(&mclpool_cache, (m)->m_ext.ext_buf,\
+		    (m)->m_ext.ext_paddr);				\
 		splx(_ms_);						\
 	} else if ((m)->m_ext.ext_free) {				\
 		/*							\
@@ -554,8 +586,9 @@ do {									\
 				_MCLDEREFERENCE(m);			\
 				pool_cache_put(&mbpool_cache, (m));	\
 			} else if ((m)->m_flags & M_CLUSTER) {		\
-				pool_cache_put(&mclpool_cache,		\
-				    (m)->m_ext.ext_buf);		\
+				pool_cache_put_paddr(&mclpool_cache,	\
+				    (m)->m_ext.ext_buf,			\
+				    (m)->m_ext.ext_paddr);		\
 				pool_cache_put(&mbpool_cache, (m));	\
 			} else if ((m)->m_ext.ext_free) {		\
 				/*					\
@@ -617,6 +650,12 @@ do {									\
 	  (((m)->m_flags & M_CLUSTER) == 0 || MCLISREFERENCED(m)))
 
 /*
+ * Determine if an mbuf's data area is read-only at the MMU.
+ */
+#define	M_ROMAP(m)							\
+	(((m)->m_flags & (M_EXT|M_EXT_ROMAP)) == (M_EXT|M_EXT_ROMAP))
+
+/*
  * Compute the amount of space available
  * before the current start of data in an mbuf.
  */
@@ -639,6 +678,20 @@ do {									\
 
 #define	M_TRAILINGSPACE(m)						\
 	(M_READONLY((m)) ? 0 : _M_TRAILINGSPACE((m)))
+
+/*
+ * Compute the address of an mbuf's data area.
+ */
+#define	M_BUFADDR(m)							\
+	(((m)->m_flags & M_PKTHDR) ? (m)->m_pktdat : (m)->m_dat)
+
+/*
+ * Compute the offset of the beginning of the data buffer of a non-ext
+ * mbuf.
+ */
+#define	M_BUFOFFSET(m)							\
+	(((m)->m_flags & M_PKTHDR) ?					\
+	 offsetof(struct mbuf, m_pktdat) : offsetof(struct mbuf, m_dat))
 
 /*
  * Arrange to prepend space of size plen to mbuf m.

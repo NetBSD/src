@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.64 2003/02/26 06:31:11 matt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.65 2003/04/09 18:38:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.64 2003/02/26 06:31:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.65 2003/04/09 18:38:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.64 2003/02/26 06:31:11 matt Exp $");
 
 #include <net/if.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 
 struct	pool mbpool;		/* mbuf pool */
@@ -105,6 +105,8 @@ int	max_linkhdr;
 int	max_protohdr;
 int	max_hdr;
 int	max_datalen;
+
+static int mb_ctor(void *, void *, int);
 
 void	*mclpool_alloc(struct pool *, int);
 void	mclpool_release(struct pool *, void *);
@@ -141,13 +143,16 @@ struct mowner revoked_mowner = { "revoked", "" };
 void
 mbinit(void)
 {
+
+	KASSERT(sizeof(struct _m_ext) <= MHLEN);
+
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
 
 	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
 	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
 
-	pool_cache_init(&mbpool_cache, &mbpool, NULL, NULL, NULL);
+	pool_cache_init(&mbpool_cache, &mbpool, mb_ctor, NULL, NULL);
 	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
 
 	/*
@@ -287,6 +292,20 @@ mclpool_release(struct pool *pp, void *v)
 {
 
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
+}
+
+/*ARGSUSED*/
+static int
+mb_ctor(void *arg, void *object, int flags)
+{
+	struct mbuf *m = object;
+
+#ifdef POOL_VTOPHYS
+	m->m_paddr = POOL_VTOPHYS(m);
+#else
+	m->m_paddr = M_PADDR_INVALID;
+#endif
+	return (0);
 }
 
 void
