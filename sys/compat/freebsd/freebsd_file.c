@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.8 1997/10/18 16:30:25 christos Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.9 1998/02/19 00:36:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,6 +32,8 @@
  *
  *	from: linux_file.c,v 1.3 1995/04/04 04:21:30 mycroft Exp
  */
+
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
