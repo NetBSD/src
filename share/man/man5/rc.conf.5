@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.18 1999/01/16 14:16:43 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.19 1999/01/31 08:46:58 mrg Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -130,6 +130,17 @@ version string in the
 file to reflect the version of the running kernel.
 See
 .Xr motd 5 .
+.El
+.Pp
+System security setting:
+.Bl -tag -width securelevel
+.It Sy securelevel
+A number.  The system securelevel is set to the specified value early
+in the boot process, before any external logins, or other programs
+that run users job, are started.  If set to nothing, the default
+action is taken, as described
+.Xr init 8 ,
+which contains definative information about the system securelevel.
 .El
 .Pp
 Networking startup:
