@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.425 2001/09/10 10:19:12 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.426 2001/09/14 21:44:21 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.425 $"
+#ident 		"GENERIC-$Revision: 1.426 $"
 
 maxusers	32		# estimated number of users
 
@@ -259,13 +259,13 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #agp* 	at pchb?
 
 # EISA bus support
-eisa*	at mainbus?
-eisa*	at pceb?
+eisa0	at mainbus?
+eisa0	at pceb?
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pceb?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pceb?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?

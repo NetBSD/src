@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.23 2001/09/10 10:19:12 fvdl Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.24 2001/09/14 21:44:21 nathanw Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -255,8 +255,8 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #agp* 	at pchb?
 
 # ISA bus support
-isa*	at mainbus?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?

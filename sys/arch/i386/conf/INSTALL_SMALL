@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.69 2001/07/30 19:59:06 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.70 2001/09/14 21:44:22 nathanw Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -174,13 +174,13 @@ mainbus0 at root
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # EISA bus support
-eisa*	at mainbus?
-#eisa*	at pceb?
+eisa0	at mainbus?
+#eisa0	at pceb?
 
 # ISA bus support
-isa*	at mainbus?
-#eisa*	at pceb?
-#isa*	at pcib?
+isa0	at mainbus?
+#isa0	at pceb?
+#isa0	at pcib?
 
 # PCMCIA bus support
 #pcmcia*	at pcic? controller ? socket ?
