@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.51 1998/07/21 17:26:45 drochner Exp $	*/
+/*	$NetBSD: am7990.c,v 1.52 1998/07/24 13:41:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -349,7 +349,7 @@ am7990_tint(sc)
 			else if (tmd.tmd3 & LE_T3_UFLO)
 				printf("%s: underflow\n", sc->sc_dev.dv_xname);
 			if (tmd.tmd3 & (LE_T3_BUFF | LE_T3_UFLO)) {
-				lance_reset((struct lance_softc *)sc);
+				lance_reset(sc);
 				return;
 			}
 			if (tmd.tmd3 & LE_T3_LCAR) {
