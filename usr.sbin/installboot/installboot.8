@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.29 2003/08/16 18:42:53 martin Exp $
+.\"	$NetBSD: installboot.8,v 1.30 2003/10/03 13:43:34 lukem Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 20, 2003
+.Dd October 3, 2003
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -369,7 +369,7 @@ Most
 .Nx
 ports will contain variations of the following files:
 .Pp
-.Bl -tag -width /usr/mdec/boot.$MACHINE
+.Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/bootxx_ Ns Sy FSTYPE
 Primary bootstrap for file system type
@@ -377,12 +377,54 @@ Primary bootstrap for file system type
 Installed into the bootstrap area of the file system by
 .Nm .
 .
+.It Pa /usr/mdec/bootxx_dos
+Primary bootstrap for
+.Tn MS-DOS
+.Sy FAT
+file systems.
+.
+.It Pa /usr/mdec/bootxx_ffsv1
+Primary bootstrap for
+.Sy FFSv1
+file systems
+(the "traditional" NetBSD file system).
+.
+.It Pa /usr/mdec/bootxx_ffsv2
+Primary bootstrap for
+.Sy FFSv2
+file systems.
+.
+.It Pa /usr/mdec/bootxx_lfsv1
+Primary bootstrap for
+.Sy LFSv1
+file systems.
+.
+.It Pa /usr/mdec/bootxx_lfsv2
+Primary bootstrap for
+.Sy LFSv2
+file systems
+(the default LFS version).
+.
+.It Pa /usr/mdec/bootxx_ufs
+Synonym for
+.Pa /usr/mdec/bootxx_ffsv1 .
+.
+.It Pa /usr/mdec/bootxx_ustarfs
+Primary bootstrap for
+.Sy TARFS
+boot images.
+This is used by various install media.
+.
 .It Pa /usr/mdec/boot. Ns Sy MACHINE
 Secondary bootstrap for machine type
 .Sy MACHINE .
 This should be installed into the file system before
 .Nm
 is run.
+.
+.It Pa /usr/mdec/boot
+Synonym for
+.Pa /usr/mdec/boot. Ns Sy MACHINE
 .
 .It Pa /boot. Ns Sy MACHINE
 Installed copy of secondary bootstrap for machine type
@@ -396,9 +438,21 @@ is not found.
 .
 .El
 .
+.Ss NetBSD/i386 files
+.
+.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.
+.It Pa /usr/mdec/biosboot
+Secondary bootstrap.
+This should be installed into the file system before
+.Nm
+is run.
+.
+.El
+.
 .Ss NetBSD/sparc64 files
 .
-.Bl -tag -width /usr/mdec/boot.$MACHINE
+.Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/bootblk
 .Nx Ns Tn /sparc64
