@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.28 2002/11/16 22:39:57 dyoung Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.29 2003/04/03 17:26:33 perry Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.28 2002/11/16 22:39:57 dyoung Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.29 2003/04/03 17:26:33 perry Exp $");
 #endif
 
 struct wi_table {
@@ -82,6 +82,7 @@ struct wi_table {
 #define	WI_HEXBYTES		0x04
 #define	WI_KEYSTRUCT		0x05
 #define	WI_BITS			0x06
+#define	WI_VENDOR		0x07
 	char *wi_label;			/* label used to print info */
 	int wi_opt;			/* option character to set this */
 	char *wi_desc;
@@ -113,6 +114,7 @@ static void wi_printhex		__P((struct wi_req *));
 static void wi_printbits	__P((struct wi_req *));
 static void wi_dumpinfo		__P((char *));
 static void wi_printkeys	__P((struct wi_req *));
+static void wi_printvendor	__P((struct wi_req *));
 static void wi_dumpstats	__P((char *));
 static void usage		__P((void));
 static struct wi_table *
@@ -469,6 +471,43 @@ static void wi_printkeys(wreq)
         return;
 };
 
+void wi_printvendor(wreq)
+	struct wi_req		*wreq;
+{
+	/* id
+	 * vendor
+	 * firmware major
+	 *          minor
+	 */
+#define WI_RID_STA_IDENTITY_LUCENT	0x1
+#define WI_RID_STA_IDENTITY_PRISMII	0x2
+#define WI_RID_STA_IDENTITY_SAMSUNG	0x3
+#define WI_RID_STA_IDENTITY_DLINK	0x6
+	
+	const char *vendor = "Unknown";
+
+	if (wreq->wi_len < 4)
+		return;
+
+	switch (wreq->wi_val[1]) {
+	case WI_RID_STA_IDENTITY_LUCENT:
+		vendor = "Lucent";
+		break;
+	case WI_RID_STA_IDENTITY_PRISMII:
+		vendor = "generic PRISM II";
+		break;
+	case WI_RID_STA_IDENTITY_SAMSUNG:
+		vendor = "Samsung";
+		break;
+	case WI_RID_STA_IDENTITY_DLINK:
+		vendor = "D-Link";
+		break;
+	}
+	printf("[ %s ID: %d version: %d.%d ]", vendor,
+	       wreq->wi_val[0], wreq->wi_val[2], wreq->wi_val[3]);
+	return;
+}	
+
 void wi_printwords(wreq)
 	struct wi_req		*wreq;
 {
@@ -564,6 +603,7 @@ static struct wi_table wi_table[] = {
 	    'a', "system scale" },
 	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time (msec):\t\t\t" },
+ 	{ WI_RID_STA_IDENTITY, WI_VENDOR, "Vendor info:\t\t\t\t" },
 	{ 0, WI_NONE }
 };
 
@@ -634,6 +674,9 @@ static void wi_dumpinfo(iface)
 			break;
 		case WI_BITS:
 			wi_printbits(&wreq);
+			break;
+		case WI_VENDOR:
+			wi_printvendor(&wreq);
 			break;
 		default:
 			break;
