@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 2003/04/01 16:34:59 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.57 2003/05/10 14:03:19 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -784,7 +784,6 @@ clockintr(cap)
 			printf("Clock lost an interrupt!\n");
 			printf("Actual: %llx Expected: %llx tick %llx tick_base %llx\n",
 			       (long long)t, (long long)clk, (long long)tk, (long long)tick_base);
-			Debugger();
 			tick_base = 0;
 		}
 	}	
