@@ -31,19 +31,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$NetBSD: id.c,v 1.7 1995/09/28 08:05:42 perry Exp $";
+#if 0
+static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: id.c,v 1.8 1997/10/19 02:45:48 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
 
+#include <err.h>
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
@@ -53,8 +57,8 @@ static char rcsid[] = "$NetBSD: id.c,v 1.7 1995/09/28 08:05:42 perry Exp $";
 #include <unistd.h>
 
 void	current __P((void));
-void	err __P((const char *, ...));
 void	pretty __P((struct passwd *));
+int	main __P((int, char **));
 void	group __P((struct passwd *, int));
 void	usage __P((void));
 void	user __P((struct passwd *));
@@ -160,7 +164,7 @@ pretty(pw)
 		group(pw, 1);
 	} else {
 		if ((login = getlogin()) == NULL)
-			err("getlogin: %s", strerror(errno));
+			err(1, "getlogin");
 
 		pw = getpwuid(rid = getuid());
 		if (pw == NULL || strcmp(login, pw->pw_name))
@@ -171,12 +175,12 @@ pretty(pw)
 			(void)printf("uid\t%u\n", rid);
 		
 		if ((eid = geteuid()) != rid)
-			if (pw = getpwuid(eid))
+			if ((pw = getpwuid(eid)) != NULL)
 				(void)printf("euid\t%s", pw->pw_name);
 			else
 				(void)printf("euid\t%u", eid);
 		if ((rid = getgid()) != (eid = getegid()))
-			if (gr = getgrgid(rid))
+			if ((gr = getgrgid(rid)) != NULL)
 				(void)printf("rgid\t%s\n", gr->gr_name);
 			else
 				(void)printf("rgid\t%u\n", rid);
@@ -196,30 +200,30 @@ current()
 
 	id = getuid();
 	(void)printf("uid=%u", id);
-	if (pw = getpwuid(id))
+	if ((pw = getpwuid(id)) != NULL)
 		(void)printf("(%s)", pw->pw_name);
 	if ((eid = geteuid()) != id) {
 		(void)printf(" euid=%u", eid);
-		if (pw = getpwuid(eid))
+		if ((pw = getpwuid(eid)) != NULL)
 			(void)printf("(%s)", pw->pw_name);
 	}
 	id = getgid();
 	(void)printf(" gid=%u", id);
-	if (gr = getgrgid(id))
+	if ((gr = getgrgid(id)) != NULL)
 		(void)printf("(%s)", gr->gr_name);
 	if ((eid = getegid()) != id) {
 		(void)printf(" egid=%u", eid);
-		if (gr = getgrgid(eid))
+		if ((gr = getgrgid(eid)) != NULL)
 			(void)printf("(%s)", gr->gr_name);
 	}
-	if (ngroups = getgroups(NGROUPS, groups)) {
+	if ((ngroups = getgroups(NGROUPS, groups)) != NULL) {
 		for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
 		    fmt = ", %u", lastid = id) {
 			id = groups[cnt++];
 			if (lastid == id)
 				continue;
 			(void)printf(fmt, id);
-			if (gr = getgrgid(id))
+			if ((gr = getgrgid(id)) != NULL)
 				(void)printf("(%s)", gr->gr_name);
 		}
 	}
@@ -228,16 +232,16 @@ current()
 
 void
 user(pw)
-	register struct passwd *pw;
+	struct passwd *pw;
 {
-	register struct group *gr;
-	register char *fmt, **p;
+	struct group *gr;
+	char *fmt;
 	int cnt, id, lastid, ngroups, groups[NGROUPS + 1];
 
 	id = pw->pw_uid;
 	(void)printf("uid=%u(%s)", id, pw->pw_name);
 	(void)printf(" gid=%u", pw->pw_gid);
-	if (gr = getgrgid(pw->pw_gid))
+	if ((gr = getgrgid(pw->pw_gid)) != NULL)
 		(void)printf("(%s)", gr->gr_name);
 	ngroups = NGROUPS + 1;
 	(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
@@ -247,7 +251,7 @@ user(pw)
 			continue;
 		(void)printf(fmt, id);
 		fmt = " %u";
-		if (gr = getgrgid(id))
+		if ((gr = getgrgid(id)) != NULL)
 			(void)printf("(%s)", gr->gr_name);
 		lastid = id;
 	}
@@ -276,7 +280,7 @@ group(pw, nflag)
 		if (lastid == (id = groups[cnt]))
 			continue;
 		if (nflag) {
-			if (gr = getgrgid(id))
+			if ((gr = getgrgid(id)) != NULL)
 				(void)printf(fmt, gr->gr_name);
 			else
 				(void)printf(*fmt == ' ' ? " %u" : "%u",
@@ -303,42 +307,14 @@ who(u)
 	 * Translate user argument into a pw pointer.  First, try to
 	 * get it as specified.  If that fails, try it as a number.
 	 */
-	if (pw = getpwnam(u))
+	if ((pw = getpwnam(u)) != NULL)
 		return(pw);
 	id = strtol(u, &ep, 10);
 	if (*u && !*ep && (pw = getpwuid(id)))
 		return(pw);
-	err("%s: No such user", u);
+	errx(1, "%s: No such user", u);
 	/* NOTREACHED */
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "id: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
+	return (NULL);
 }
 
 void
