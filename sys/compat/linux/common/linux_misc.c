@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.89 2001/05/27 21:17:16 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.90 2001/06/02 11:46:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1241,9 +1241,9 @@ linux_sys_ptrace(p, v, retval)
 
 			/*
 			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
-			 * to continue as the process left off previously,
-			 * i.e. same as if NetBSD ptrace called with
-			 * addr == (caddr_t) 1.
+			 * to continue where the process left off previously.
+			 * The same thing is achieved by addr == (caddr_t) 1
+			 * on NetBSD, so rewrite 'addr' appropriately.
 			 */
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (caddr_t) 1;
