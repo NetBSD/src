@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.39 1997/03/17 02:55:12 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.39.4.1 1997/07/30 07:29:41 marc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -62,11 +62,13 @@ void	if_slowtimo __P((void *arg));
 void
 ifinit()
 {
+#if 0
 	register struct ifnet *ifp;
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		if (ifp->if_snd.ifq_maxlen == 0)
 			ifp->if_snd.ifq_maxlen = ifqmaxlen;
+#endif
 	if_slowtimo(NULL);
 }
 
@@ -134,6 +136,8 @@ if_attach(ifp)
 	sdl->sdl_len = masklen;
 	while (namelen != 0)
 		sdl->sdl_data[--namelen] = 0xff;
+	if (ifp->if_snd.ifq_maxlen == 0)
+	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
 }
 /*
  * Locate an interface based on a complete address.
