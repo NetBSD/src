@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3min.c,v 1.3 1999/12/01 08:41:41 nisimura Exp $	*/
+/*	$NetBSD: tc_3min.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.3 1999/12/01 08:41:41 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3min.c,v 1.3 1999/12/01 08:41:41 nisimura Exp $ "
 
 /*
  * 3MIN has 4 TC option slot address space starting at 0x1000.0000.
- * TC slot size is 32MB.  Three option slots are available.  IOASIC, 
+ * TC slot size is 64MB.  Three option slots are available.  IOASIC, 
  * which governs various baseboard devices like keyboard/mouse, RTC,
  * DMA assisted ASC SCSI, LANCE Ether, forms a system base.  IOASIC
  * is designed as a TC device and sits in slot #3 space.
