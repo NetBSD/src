@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.66 2001/09/16 07:41:56 manu Exp $	*/
+/*	$NetBSD: namespace.h,v 1.67 2001/09/19 21:38:21 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,12 +38,10 @@
 
 #include <sys/cdefs.h>
 
-#define adjtime		_adjtime
 #define brk		_brk
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
-#define clock_settime	_clock_settime
 #define daylight	_daylight
 #define err		_err
 #define errx		_errx
@@ -95,6 +93,7 @@
 #define SHA1Transform		_SHA1Transform
 #define SHA1Update		_SHA1Update
 #define a64l			_a64l
+#define adjtime			_adjtime
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define asctime_r		_asctime_r
@@ -144,6 +143,7 @@
 #define clnttcp_create		_clnttcp_create
 #define clntudp_bufcreate	_clntudp_bufcreate
 #define clntudp_create		_clntudp_create
+#define clock_settime		_clock_settime
 #define closedir		_closedir
 #define closelog		_closelog
 #define confstr			_confstr
