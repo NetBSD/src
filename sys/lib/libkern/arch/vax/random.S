@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.2 2000/07/19 03:48:24 matt Exp $	*/
+/*	$NetBSD: random.S,v 1.3 2002/02/24 00:08:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -53,31 +53,31 @@ randseed:
 	.long	1
 
 ENTRY(random, 0)
-	movl	$16807,r0
+	movl	$16807,%r0
 
-	movl	randseed,r1		# r2=16807*loword(randseed)
-	bicl3	$0xffff0000,r1,r2
-	mull2	r0,r2
-	ashl	$-16,r1,r1		# r1=16807*hiword(randseed)
-	bicl2	$0xffff0000,r1
-	mull2	r0,r1
-	bicl3	$0xffff0000,r2,r0
-	ashl	$-16,r2,r2		# r1+=(r2>>16)
-	bicl2	$0xffff0000,r2
-	addl2	r2,r1
-	ashl	$16,r1,r2		# r0|=r1<<16
-	bisl2	r2,r0
-	ashl	$-16,r1,r1		# r1=r1>>16
+	movl	randseed,%r1		# %r2=16807*loword(randseed)
+	bicl3	$0xffff0000,%r1,%r2
+	mull2	%r0,%r2
+	ashl	$-16,%r1,%r1		# %r1=16807*hiword(randseed)
+	bicl2	$0xffff0000,%r1
+	mull2	%r0,%r1
+	bicl3	$0xffff0000,%r2,%r0
+	ashl	$-16,%r2,%r2		# %r1+=(%r2>>16)
+	bicl2	$0xffff0000,%r2
+	addl2	%r2,%r1
+	ashl	$16,%r1,%r2		# %r0|=%r1<<16
+	bisl2	%r2,%r0
+	ashl	$-16,%r1,%r1		# %r1=%r1>>16
 
-	ashl	$1,r1,r1
-	movl	r0,r2
-	rotl	$1,r0,r0
-	bicl2	$0xfffffffe,r0
-	bisl2	r0,r1
-	movl	r2,r0
-	bicl2	$0x80000000,r0
-	addl2	r1,r0
+	ashl	$1,%r1,%r1
+	movl	%r0,%r2
+	rotl	$1,%r0,%r0
+	bicl2	$0xfffffffe,%r0
+	bisl2	%r0,%r1
+	movl	%r2,%r0
+	bicl2	$0x80000000,%r0
+	addl2	%r1,%r0
 	bgeq	L1
-	subl2	$0x7fffffff,r0
-L1:	movl	r0,randseed
+	subl2	$0x7fffffff,%r0
+L1:	movl	%r0,randseed
 	ret

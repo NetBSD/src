@@ -1,4 +1,4 @@
-/*	$NetBSD: blkcpy.S,v 1.1 2002/02/10 22:04:51 thorpej Exp $	*/
+/*	$NetBSD: blkcpy.S,v 1.2 2002/02/24 00:08:22 matt Exp $	*/
 
 /* 
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -36,14 +36,14 @@
  * Copy a block of memory larger than 64K.
  */
 ENTRY(__blkcpy,R6)
-	movl	4(ap),r1
-	movl	8(ap),r3
-	movl	12(ap),r6
+	movl	4(%ap),%r1
+	movl	8(%ap),%r3
+	movl	12(%ap),%r6
 	jbr	2f
-1:	subl2	r0,r6 
-	movc3	r0,(r1),(r3)
-2:	movzwl	$65535,r0
-	cmpl	r6,r0
+1:	subl2	%r0,%r6 
+	movc3	%r0,(%r1),(%r3)
+2:	movzwl	$65535,%r0
+	cmpl	%r6,%r0
 	jgtr	1b
-	movc3	r6,(r1),(r3)
+	movc3	%r6,(%r1),(%r3)
 	ret
