@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.5 2002/09/09 11:33:31 wiz Exp $
+.\"	$NetBSD: pdisk.8,v 1.6 2002/09/09 11:43:27 dbj Exp $
 .Dd August 19, 2002
 .Os
 .Dt PDISK 8
@@ -14,7 +14,7 @@
 .Op Fl -fname
 .Op Fl -help
 .Op Fl -interactive
-.Op Fl -list Ar name
+.Op Fl -list Ar device
 .Op Fl -logical
 .Op Fl -readonly
 .Op Fl -version
@@ -56,9 +56,9 @@ Causes
 .Nm
 to go into an interactive mode similar to the MacOS version of the program.
 .It Fl l
-.It Fl -list Ar name
+.It Fl -list Ar device
 If no
-.Ar name
+.Ar device
 argument is given,
 .Nm
 tries to list partition tables for all available hard drives.
