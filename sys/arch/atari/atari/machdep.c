@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 1999/06/28 08:20:43 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 1999/07/22 09:20:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,6 +130,19 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 void
 consinit()
 {
+	int	i;
+
+	/*
+	 * Initialize error message buffer. pmap_bootstrap() has
+	 * positioned this at the end of kernel memory segment - map
+	 * and initialize it now.
+	 */
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+
 	/*
 	 * Initialize the console before we print anything out.
 	 */
@@ -168,21 +181,9 @@ cpu_startup()
 		 vsize_t	size = 0;
 	extern	 vsize_t	mem_size;	/* from pmap.c */
 
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
-	/*
-	 * pmap_bootstrap has positioned this at the end of kernel
-	 * memory segment - map and initialize it now.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
