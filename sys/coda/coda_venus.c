@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.12 2002/03/27 05:10:40 phil Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.13 2002/11/02 07:18:36 perry Exp $	*/
 
 /*
  * 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.12 2002/03/27 05:10:40 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.13 2002/11/02 07:18:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.12 2002/03/27 05:10:40 phil Exp $")
 	  if (from & O_TRUNC) to |= C_O_TRUNC; 		\
 	  if (from & O_EXCL)  to |= C_O_EXCL; 		\
 	  if (from & O_CREAT) to |= C_O_CREAT;		\
-    } while (0)
+    } while (/*CONSTCOND*/ 0)
 
 #define CNV_VV2V_ATTR(top, fromp) \
 	do { \
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.12 2002/03/27 05:10:40 phil Exp $")
 		(top)->va_filerev = (fromp)->va_filerev; \
 		(top)->va_vaflags = VNOVAL; \
 		(top)->va_spare = VNOVAL; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define CNV_V2VV_ATTR(top, fromp) \
 	do { \
@@ -160,7 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.12 2002/03/27 05:10:40 phil Exp $")
 		(top)->va_rdev = (fromp)->va_rdev; \
 		(top)->va_bytes = (fromp)->va_bytes; \
 		(top)->va_filerev = (fromp)->va_filerev; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 
 int coda_kernel_version = CODA_KERNEL_VERSION;
