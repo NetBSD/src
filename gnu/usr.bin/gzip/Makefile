@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1993/12/21 20:27:39 pk Exp $
+#	$Id: Makefile,v 1.11 1994/06/13 15:18:46 cgd Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -14,11 +14,11 @@ CFLAGS+=-DASMV
 LDADD+=	-lgnumalloc
 DPADD+=	/usr/lib/libgnumalloc.a
 
-MLINKS= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 uncompress.1 gzip.1 zcat.1
+MLINKS= gzip.1 gunzip.1 gzip.1 gzcat.1 # gzip.1 uncompress.1 gzip.1 zcat.1
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gunzip
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gzcat
-LINKS+=	${BINDIR}/gzip ${BINDIR}/uncompress
-LINKS+= ${BINDIR}/gzip ${BINDIR}/zcat
+#LINKS+= ${BINDIR}/gzip ${BINDIR}/uncompress
+#LINKS+= ${BINDIR}/gzip ${BINDIR}/zcat
 
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
