@@ -1,0 +1,550 @@
+/*	$NetBSD: wskbdutil.c,v 1.1 1998/04/07 13:43:17 hannken Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Juergen Hannken-Illjes.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/cdefs.h>
+#include <sys/errno.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+
+static struct compose_tab_s {
+	keysym_t elem[2];
+	keysym_t result;
+} compose_tab[] = {
+	{ { KS_plus,			KS_plus },		KS_numbersign },
+	{ { KS_a,			KS_a },			KS_at },
+	{ { KS_parenleft,		KS_parenleft },		KS_bracketleft },
+	{ { KS_slash,			KS_slash },		KS_backslash },
+	{ { KS_parenright,		KS_parenright },	KS_bracketright },
+	{ { KS_parenleft,		KS_minus },		KS_braceleft },
+	{ { KS_slash,			KS_minus },		KS_bar },
+	{ { KS_parenright,		KS_minus },		KS_braceright },
+	{ { KS_exclam,			KS_exclam },		KS_exclamdown },
+	{ { KS_c,			KS_slash },		KS_cent },
+	{ { KS_l,			KS_minus },		KS_sterling },
+	{ { KS_y,			KS_minus },		KS_yen },
+	{ { KS_s,			KS_o },			KS_section },
+	{ { KS_x,			KS_o },			KS_currency },
+	{ { KS_c,			KS_o },			KS_copyright },
+	{ { KS_less,			KS_less },		KS_guillemotleft },
+	{ { KS_greater,			KS_greater },		KS_guillemotright },
+	{ { KS_question,		KS_question },		KS_questiondown },
+	{ { KS_dead_acute,		KS_space },		KS_acute },
+	{ { KS_dead_grave,		KS_space },		KS_grave },
+	{ { KS_dead_tilde,		KS_space },		KS_asciitilde },
+	{ { KS_dead_circumflex,		KS_space },		KS_asciicircum },
+	{ { KS_dead_circumflex,		KS_A },			KS_Acircumflex },
+	{ { KS_dead_diaeresis,		KS_A },			KS_Adiaeresis },
+	{ { KS_dead_grave,		KS_A },			KS_Agrave },
+	{ { KS_dead_abovering,		KS_A },			KS_Aring },
+	{ { KS_dead_tilde,		KS_A },			KS_Atilde },
+	{ { KS_dead_cedilla,		KS_C },			KS_Ccedilla },
+	{ { KS_dead_acute,		KS_E },			KS_Eacute },
+	{ { KS_dead_circumflex,		KS_E },			KS_Ecircumflex },
+	{ { KS_dead_diaeresis,		KS_E },			KS_Ediaeresis },
+	{ { KS_dead_grave,		KS_E },			KS_Egrave },
+	{ { KS_dead_acute,		KS_I },			KS_Iacute },
+	{ { KS_dead_circumflex,		KS_I },			KS_Icircumflex },
+	{ { KS_dead_diaeresis,		KS_I },			KS_Idiaeresis },
+	{ { KS_dead_grave,		KS_I },			KS_Igrave },
+	{ { KS_dead_tilde,		KS_N },			KS_Ntilde },
+	{ { KS_dead_acute,		KS_O },			KS_Oacute },
+	{ { KS_dead_circumflex,		KS_O },			KS_Ocircumflex },
+	{ { KS_dead_diaeresis,		KS_O },			KS_Odiaeresis },
+	{ { KS_dead_grave,		KS_O },			KS_Ograve },
+	{ { KS_dead_tilde,		KS_O },			KS_Otilde },
+	{ { KS_dead_acute,		KS_U },			KS_Uacute },
+	{ { KS_dead_circumflex,		KS_U },			KS_Ucircumflex },
+	{ { KS_dead_diaeresis,		KS_U },			KS_Udiaeresis },
+	{ { KS_dead_grave,		KS_U },			KS_Ugrave },
+	{ { KS_dead_acute,		KS_Y },			KS_Yacute },
+	{ { KS_dead_acute,		KS_a },			KS_aacute },
+	{ { KS_dead_circumflex,		KS_a },			KS_acircumflex },
+	{ { KS_dead_diaeresis,		KS_a },			KS_adiaeresis },
+	{ { KS_dead_grave,		KS_a },			KS_agrave },
+	{ { KS_dead_abovering,		KS_a },			KS_aring },
+	{ { KS_dead_tilde,		KS_a },			KS_atilde },
+	{ { KS_dead_cedilla,		KS_c },			KS_ccedilla },
+	{ { KS_dead_acute,		KS_e },			KS_eacute },
+	{ { KS_dead_circumflex,		KS_e },			KS_ecircumflex },
+	{ { KS_dead_diaeresis,		KS_e },			KS_ediaeresis },
+	{ { KS_dead_grave,		KS_e },			KS_egrave },
+	{ { KS_dead_acute,		KS_i },			KS_iacute },
+	{ { KS_dead_circumflex,		KS_i },			KS_icircumflex },
+	{ { KS_dead_diaeresis,		KS_i },			KS_idiaeresis },
+	{ { KS_dead_grave,		KS_i },			KS_igrave },
+	{ { KS_dead_tilde,		KS_n },			KS_ntilde },
+	{ { KS_dead_acute,		KS_o },			KS_oacute },
+	{ { KS_dead_circumflex,		KS_o },			KS_ocircumflex },
+	{ { KS_dead_diaeresis,		KS_o },			KS_odiaeresis },
+	{ { KS_dead_grave,		KS_o },			KS_ograve },
+	{ { KS_dead_tilde,		KS_o },			KS_otilde },
+	{ { KS_dead_acute,		KS_u },			KS_uacute },
+	{ { KS_dead_circumflex,		KS_u },			KS_ucircumflex },
+	{ { KS_dead_diaeresis,		KS_u },			KS_udiaeresis },
+	{ { KS_dead_grave,		KS_u },			KS_ugrave },
+	{ { KS_dead_acute,		KS_y },			KS_yacute },
+	{ { KS_dead_diaeresis,		KS_y },			KS_ydiaeresis },
+	{ { KS_quotedbl,		KS_A },			KS_Adiaeresis },
+	{ { KS_quotedbl,		KS_E },			KS_Ediaeresis },
+	{ { KS_quotedbl,		KS_I },			KS_Idiaeresis },
+	{ { KS_quotedbl,		KS_O },			KS_Odiaeresis },
+	{ { KS_quotedbl,		KS_U },			KS_Udiaeresis },
+	{ { KS_quotedbl,		KS_a },			KS_adiaeresis },
+	{ { KS_quotedbl,		KS_e },			KS_ediaeresis },
+	{ { KS_quotedbl,		KS_i },			KS_idiaeresis },
+	{ { KS_quotedbl,		KS_o },			KS_odiaeresis },
+	{ { KS_quotedbl,		KS_u },			KS_udiaeresis },
+	{ { KS_quotedbl,		KS_y },			KS_ydiaeresis },
+	{ { KS_acute,			KS_A },			KS_Aacute },
+	{ { KS_asciicircum,		KS_A },			KS_Acircumflex },
+	{ { KS_grave,			KS_A },			KS_Agrave },
+	{ { KS_asterisk,		KS_A },			KS_Aring },
+	{ { KS_asciitilde,		KS_A },			KS_Atilde },
+	{ { KS_cedilla,			KS_C },			KS_Ccedilla },
+	{ { KS_acute,			KS_E },			KS_Eacute },
+	{ { KS_asciicircum,		KS_E },			KS_Ecircumflex },
+	{ { KS_grave,			KS_E },			KS_Egrave },
+	{ { KS_acute,			KS_I },			KS_Iacute },
+	{ { KS_asciicircum,		KS_I },			KS_Icircumflex },
+	{ { KS_grave,			KS_I },			KS_Igrave },
+	{ { KS_asciitilde,		KS_N },			KS_Ntilde },
+	{ { KS_acute,			KS_O },			KS_Oacute },
+	{ { KS_asciicircum,		KS_O },			KS_Ocircumflex },
+	{ { KS_grave,			KS_O },			KS_Ograve },
+	{ { KS_asciitilde,		KS_O },			KS_Otilde },
+	{ { KS_acute,			KS_U },			KS_Uacute },
+	{ { KS_asciicircum,		KS_U },			KS_Ucircumflex },
+	{ { KS_grave,			KS_U },			KS_Ugrave },
+	{ { KS_acute,			KS_Y },			KS_Yacute },
+	{ { KS_acute,			KS_a },			KS_aacute },
+	{ { KS_asciicircum,		KS_a },			KS_acircumflex },
+	{ { KS_grave,			KS_a },			KS_agrave },
+	{ { KS_asterisk,		KS_a },			KS_aring },
+	{ { KS_asciitilde,		KS_a },			KS_atilde },
+	{ { KS_cedilla,			KS_c },			KS_ccedilla },
+	{ { KS_acute,			KS_e },			KS_eacute },
+	{ { KS_asciicircum,		KS_e },			KS_ecircumflex },
+	{ { KS_grave,			KS_e },			KS_egrave },
+	{ { KS_acute,			KS_i },			KS_iacute },
+	{ { KS_asciicircum,		KS_i },			KS_icircumflex },
+	{ { KS_grave,			KS_i },			KS_igrave },
+	{ { KS_asciitilde,		KS_n },			KS_ntilde },
+	{ { KS_acute,			KS_o },			KS_oacute },
+	{ { KS_asciicircum,		KS_o },			KS_ocircumflex },
+	{ { KS_grave,			KS_o },			KS_ograve },
+	{ { KS_asciitilde,		KS_o },			KS_otilde },
+	{ { KS_acute,			KS_u },			KS_uacute },
+	{ { KS_asciicircum,		KS_u },			KS_ucircumflex },
+	{ { KS_grave,			KS_u },			KS_ugrave },
+	{ { KS_acute,			KS_y },			KS_yacute }
+};
+
+#define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])
+
+static struct string_tab_s {
+	keysym_t ksym;
+	char value[WSKBD_STRING_LEN];
+} string_tab[] = {
+	{ KS_f1,		"\033[OP" },
+	{ KS_f2,		"\033[OQ" },
+	{ KS_f3,		"\033[OR" },
+	{ KS_f4,		"\033[OS" },
+	{ KS_f5,		"\033[15~" },
+	{ KS_f6,		"\033[17~" },
+	{ KS_f7,		"\033[18~" },
+	{ KS_f8,		"\033[19~" },
+	{ KS_f9,		"\033[20~" },
+	{ KS_f10,		"\033[21~" },
+	{ KS_f11,		"\033[23~" },
+	{ KS_f12,		"\033[24~" },
+	{ KS_f13,		"\033[25~" },
+	{ KS_f14,		"\033[26~" },
+	{ KS_f15,		"\033[28~" },
+	{ KS_f16,		"\033[29~" },
+	{ KS_f17,		"\033[31~" },
+	{ KS_f18,		"\033[32~" },
+	{ KS_f19,		"\033[33~" },
+	{ KS_f20,		"\033[34~" },
+	{ KS_F1,		"\033[OP" },
+	{ KS_F2,		"\033[OQ" },
+	{ KS_F3,		"\033[OR" },
+	{ KS_F4,		"\033[OS" },
+	{ KS_F5,		"\033[15~" },
+	{ KS_F6,		"\033[17~" },
+	{ KS_F7,		"\033[18~" },
+	{ KS_F8,		"\033[19~" },
+	{ KS_F9,		"\033[20~" },
+	{ KS_F10,		"\033[21~" },
+	{ KS_F11,		"\033[23~" },
+	{ KS_F12,		"\033[24~" },
+	{ KS_F13,		"\033[25~" },
+	{ KS_F14,		"\033[26~" },
+	{ KS_F15,		"\033[28~" },
+	{ KS_F16,		"\033[29~" },
+	{ KS_F17,		"\033[31~" },
+	{ KS_F18,		"\033[32~" },
+	{ KS_F19,		"\033[33~" },
+	{ KS_F20,		"\033[34~" },
+	{ KS_KP_F1,		"\033[OP" },
+	{ KS_KP_F2,		"\033[OQ" },
+	{ KS_KP_F3,		"\033[OR" },
+	{ KS_KP_F4,		"\033[OS" },
+	{ KS_KP_Home,		"\033[H" },
+	{ KS_Home,		"\033[H" },
+	{ KS_KP_Left,		"\033[D" },
+	{ KS_Left,		"\033[D" },
+	{ KS_KP_Up,		"\033[A" },
+	{ KS_Up,		"\033[A" },
+	{ KS_KP_Right,		"\033[C" },
+	{ KS_Right,		"\033[C" },
+	{ KS_KP_Down,		"\033[B" },
+	{ KS_Down,		"\033[B" },
+	{ KS_KP_Prior,		"\033[I" },
+	{ KS_Prior,		"\033[I" },
+	{ KS_KP_Next,		"\033[G" },
+	{ KS_Next,		"\033[G" },
+	{ KS_KP_End,		"\033[F" },
+	{ KS_End,		"\033[F" },
+	{ KS_KP_Begin,		"\033[H" },
+	{ KS_KP_Insert,		"\033[L" },
+	{ KS_Insert,		"\033[L" },
+	{ KS_KP_Delete,		"\b" }
+};
+
+#define STRING_SIZE	sizeof(string_tab)/sizeof(string_tab[0])
+
+static int compose_tab_inorder = 0;
+static int string_tab_inorder = 0;
+
+static inline int compose_tab_cmp __P((struct compose_tab_s *, struct compose_tab_s *));
+static keysym_t ksym_upcase __P((keysym_t));
+
+static inline int
+compose_tab_cmp(i, j)
+	struct compose_tab_s *i, *j;
+{
+	if (i->elem[0] == j->elem[0])
+		return(i->elem[1] - j->elem[1]);
+	else
+		return(i->elem[0] - j->elem[0]);
+}
+
+keysym_t
+wskbd_compose_value(compose_buf)
+	keysym_t *compose_buf;
+{
+	int i, j, r;
+	struct compose_tab_s v;
+
+	if (! compose_tab_inorder) {
+		/* Insertion sort. */
+		for (i = 1; i < COMPOSE_SIZE; i++) {
+			v = compose_tab[i];
+			/* find correct slot, moving others up */
+			for (j = i; --j >= 0 && compose_tab_cmp(& v, & compose_tab[j]) < 0; )
+				compose_tab[j + 1] = compose_tab[j];
+			compose_tab[j + 1] = v;
+		}
+		compose_tab_inorder = 1;
+	}
+
+	for (j = 0, i = COMPOSE_SIZE; i != 0; i /= 2) {
+		if (compose_tab[j + i/2].elem[0] == compose_buf[0]) {
+			if (compose_tab[j + i/2].elem[1] == compose_buf[1])
+				return(compose_tab[j + i/2].result);
+			r = compose_tab[j + i/2].elem[1] < compose_buf[1];
+		} else
+			r = compose_tab[j + i/2].elem[0] < compose_buf[0];
+		if (r) {
+			j += i/2 + 1;
+			i--;
+		}
+	}
+
+	return(KS_voidSymbol);
+}
+
+char *
+wskbd_get_string(sym)
+	keysym_t sym;
+{
+	int i, j;
+	struct string_tab_s v;
+
+	if (! string_tab_inorder) {
+		/* Insertion sort. */
+		for (i = 1; i < STRING_SIZE; i++) {
+			v = string_tab[i];
+			/* find correct slot, moving others up */
+			for (j = i; --j >= 0 && v.ksym < string_tab[j].ksym; )
+				string_tab[j + 1] = string_tab[j];
+			string_tab[j + 1] = v;
+		}
+		string_tab_inorder = 1;
+	}
+
+	for (j = 0, i = STRING_SIZE; i != 0; i /= 2) {
+		if (string_tab[j + i/2].ksym == sym)
+			return(string_tab[j + i/2].value);
+		else if (string_tab[j + i/2].ksym < sym) {
+			j += i/2 + 1;
+			i--;
+		}
+	}
+
+	return(NULL);
+}
+
+int
+wskbd_set_string(sym, data)
+	keysym_t sym;
+	char *data;
+{
+	int i, j;
+	struct string_tab_s v;
+
+	if (! string_tab_inorder) {
+		/* Insertion sort. */
+		for (i = 1; i < STRING_SIZE; i++) {
+			v = string_tab[i];
+			/* find correct slot, moving others up */
+			for (j = i; --j >= 0 && v.ksym < string_tab[j].ksym; )
+				string_tab[j + 1] = string_tab[j];
+			string_tab[j + 1] = v;
+		}
+		string_tab_inorder = 1;
+	}
+
+	for (j = 0, i = STRING_SIZE; i != 0; i /= 2) {
+		if (string_tab[j + i/2].ksym == sym) {
+			bcopy(data, string_tab[j + i/2].value, WSKBD_STRING_LEN);
+			return(0);
+		} else if (string_tab[j + i/2].ksym < sym) {
+			j += i/2 + 1;
+			i--;
+		}
+	}
+
+	return(EINVAL);
+}
+
+static const u_char latin1_to_upper[256] = {
+/*      0  8  1  9  2  a  3  b  4  c  5  d  6  e  7  f               */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 0 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 0 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 1 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 1 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 2 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 2 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 3 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 3 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 4 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 4 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 5 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 5 */
+	0x00,  'A',  'B',  'C',  'D',  'E',  'F',  'G',		/* 6 */
+	 'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O',		/* 6 */
+	 'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W',		/* 7 */
+	 'X',  'Y',  'Z', 0x00, 0x00, 0x00, 0x00, 0x00,		/* 7 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 8 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 8 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 9 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* 9 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* a */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* a */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* b */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* b */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* c */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* c */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* d */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,		/* d */
+	0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,		/* e */
+	0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,		/* e */
+	0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0x00,		/* f */
+	0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x00,		/* f */
+};
+
+static keysym_t
+ksym_upcase(ksym)
+	keysym_t ksym;
+{
+	if (ksym >= KS_f1 && ksym <= KS_f20)
+		return(KS_F1 - KS_f1 + ksym);
+
+	if (KS_GROUP(ksym) == KS_GROUP_Ascii &&
+	    latin1_to_upper[ksym & 0xff] != 0x00)
+		return(latin1_to_upper[ksym & 0xff] | KS_GROUP_Ascii);
+
+	return(ksym);
+}
+
+void
+wskbd_init_keymap(newlen, map, maplen)
+	int newlen;
+	struct wscons_keymap **map;
+	int *maplen;
+{
+	int i;
+
+	if (newlen != *maplen) {
+		if (*maplen > 0)
+			free(*map, M_TEMP);
+		*maplen = newlen;
+		*map = malloc(newlen*sizeof(struct wscons_keymap),
+			      M_TEMP, M_WAITOK);
+	}
+
+	for (i = 0; i < *maplen; i++) {
+		(*map)[i].command = KS_voidSymbol;
+		(*map)[i].group1[0] = KS_voidSymbol;
+		(*map)[i].group1[1] = KS_voidSymbol;
+		(*map)[i].group2[0] = KS_voidSymbol;
+		(*map)[i].group2[1] = KS_voidSymbol;
+	}
+}
+
+int
+wskbd_load_keymap(name, kdesc, kdesclen, map, maplen)
+	kbd_t name;
+	const struct wscons_keydesc *kdesc;
+	int kdesclen;
+	struct wscons_keymap **map;
+	int *maplen;
+{
+	int i, s, kc, found, stack[10], stack_ptr;
+	const keysym_t *kp;
+	const struct wscons_keydesc *mp;
+	kbd_t cur;
+
+	for (cur = name, stack_ptr = 0; cur != 0; stack_ptr++) {
+		for (i = found = 0; i < kdesclen; i++)
+			if (cur == 0 || kdesc[i].name == cur) {
+				found = 1;
+				break;
+			}
+
+		if (stack_ptr == sizeof(stack)/sizeof(stack[0]))
+			panic("wskbd_load_keymap: %d: recursion too deep", name);
+		if (! found)
+			return(EINVAL);
+
+		stack[stack_ptr] = i;
+		cur = kdesc[i].base;
+	}
+
+	for (i = 0, s = stack_ptr - 1; s >= 0; s--) {
+		mp = kdesc + stack[s];
+		for (kp = mp->map; kp < mp->map + mp->map_size; kp++)
+			if (KS_GROUP(*kp) == KS_GROUP_Keycode && KS_VALUE(*kp) > i)
+				i = KS_VALUE(*kp);
+	}
+
+	wskbd_init_keymap(i + 1, map, maplen);
+
+	for (s = stack_ptr - 1; s >= 0; s--) {
+		mp = kdesc + stack[s];
+		for (kp = mp->map; kp < mp->map + mp->map_size; ) {
+			if (KS_GROUP(*kp) != KS_GROUP_Keycode)
+				panic("wskbd_load_keymap: %d(%d): bad entry",
+				      mp->name, *kp);
+
+			kc = KS_VALUE(*kp);
+			kp++;
+
+			if (KS_GROUP(*kp) == KS_GROUP_Command ||
+			    *kp == KS_Cmd || *kp == KS_Cmd1 || *kp == KS_Cmd2) {
+				(*map)[kc].command = *kp;
+				kp++;
+			}
+
+			for (i = 0; kp + i < mp->map + mp->map_size; i++)
+				if (KS_GROUP(kp[i]) == KS_GROUP_Keycode)
+					break;
+
+			if (i > 4)
+				panic("wskbd_load_keymap: %d(%d): bad entry",
+				      mp->name, *kp);
+
+			switch (i) {
+			case 0:
+				(*map)[kc].group1[0] = KS_voidSymbol;
+				(*map)[kc].group1[1] = KS_voidSymbol;
+				(*map)[kc].group2[0] = KS_voidSymbol;
+				(*map)[kc].group2[1] = KS_voidSymbol;
+				break;
+
+			case 1:
+				(*map)[kc].group1[0] = kp[0];
+				(*map)[kc].group1[1] = ksym_upcase(kp[0]);
+				(*map)[kc].group2[0] = (*map)[kc].group1[0];
+				(*map)[kc].group2[1] = (*map)[kc].group1[1];
+				break;
+
+			case 2:
+				(*map)[kc].group1[0] = kp[0];
+				(*map)[kc].group1[1] = kp[1];
+				(*map)[kc].group2[0] = (*map)[kc].group1[0];
+				(*map)[kc].group2[1] = (*map)[kc].group1[1];
+				break;
+
+			case 3:
+				(*map)[kc].group1[0] = kp[0];
+				(*map)[kc].group1[1] = kp[1];
+				(*map)[kc].group2[0] = kp[2];
+				(*map)[kc].group2[1] = ksym_upcase(kp[2]);
+				break;
+
+			case 4:
+				(*map)[kc].group1[0] = kp[0];
+				(*map)[kc].group1[1] = kp[1];
+				(*map)[kc].group2[0] = kp[2];
+				(*map)[kc].group2[1] = kp[3];
+				break;
+
+			 }
+
+			kp += i;
+		}
+	}
+
+	return(0);
+}

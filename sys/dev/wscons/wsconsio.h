@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.1 1998/03/22 14:24:02 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.2 1998/04/07 13:43:17 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ALPHA_INCLUDE_WSCONSIO_H_
-#define	__ALPHA_INCLUDE_WSCONSIO_H_
+#ifndef _DEV_WSCONS_WSCONSIO_H_
+#define	_DEV_WSCONS_WSCONSIO_H_
 
 /*
  * WSCONS (wsdisplay, wskbd, wsmouse) exported interfaces.
@@ -45,6 +45,7 @@
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
+#include <dev/wscons/wsksymvar.h>
 
 
 /*
@@ -115,7 +116,32 @@ struct wskbd_keyrepeat_data {
 #define	WSKBDIO_GETDEFAULTKEYREPEAT \
 	    _IOR('W', 10, struct wskbd_keyrepeat_data)
 
-#define	WSKBDIO_SETLEDS		_IOW('W', 11, int)
+/* Get/set keyboard leds */
+#define		WSKBD_LED_CAPS		0x01
+#define		WSKBD_LED_NUM		0x02
+#define		WSKBD_LED_SCROLL	0x04
+#define		WSKBD_LED_COMPOSE	0x08
+
+#define	WSKBDIO_SETLEDS		_IOR('W', 11, int)
+#define	WSKBDIO_GETLEDS		_IOW('W', 12, int)
+
+/* Manipulate keysym groups. */
+struct wskbd_map_data {
+	u_int	maplen;				/* number of entries in map */
+	struct wscons_keymap *map;		/* map to get or set */
+};
+#define WSKBDIO_GETMAP		_IOWR('W', 13, struct wskbd_map_data)
+#define WSKBDIO_SETMAP		_IOW('W', 14, struct wskbd_map_data)
+#define WSKBDIO_GETENCODING	_IOR('W', 15, int)
+#define WSKBDIO_SETENCODING	_IOW('W', 16, int)
+
+/* Manipulate strings of function keys */
+struct wskbd_string_data {
+	u_int	keycode;			/* keycode to change */
+	char	value[WSKBD_STRING_LEN];	/* string data */
+};
+#define WSKBDIO_GETSTRING	_IOR('W', 17, struct wskbd_string_data)
+#define WSKBDIO_SETSTRING	_IOW('W', 18, struct wskbd_string_data)
 
 /*
  * Mouse ioctls (32 - 63)
@@ -219,4 +245,4 @@ struct wsdisplay_font {
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
 
-#endif /* __ALPHA_INCLUDE_WSCONSIO_H_ */
+#endif /* _DEV_WSCONS_WSCONSIO_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbdreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
+/* $NetBSD: pckbdreg.h,v 1.2 1998/04/07 13:43:16 hannken Exp $ */
 
 /*
  * Keyboard definitions
@@ -16,7 +16,8 @@
 #define	KBC_ECHO	0xEE	/* request an echo from the keyboard */
 
 /* keyboard responses */
-#define	KBR_EXTENDED	0xE0	/* extended key sequence */
+#define	KBR_EXTENDED0	0xE0	/* extended key sequence */
+#define	KBR_EXTENDED1	0xE1	/* extended key sequence */
 #define	KBR_RESEND	0xFE	/* needs resend of command */
 #define	KBR_ACK		0xFA	/* received a valid command */
 #define	KBR_OVERRUN	0x00	/* flooded */

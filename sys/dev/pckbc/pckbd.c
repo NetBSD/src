@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.1 1998/03/22 15:41:27 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.2 1998/04/07 13:43:16 hannken Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -58,8 +58,9 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-
-#include <dev/pckbc/pckbd_scancodes.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wskbdmap_mfii.h>
 
 #include "locators.h"
 
@@ -67,11 +68,6 @@ struct pckbd_internal {
 	int t_isconsole;
 	pckbc_tag_t t_kbctag;
 	int t_kbcslot;
-
-	pckbd_scan_def *t_scancodes;
-
-	int extended;
-	u_char shift_state, lock_state;
 
 	struct pckbd_softc *t_sc; /* back pointer */
 };
@@ -81,6 +77,9 @@ struct pckbd_softc {
 
 	struct pckbd_internal *id;
 	int sc_lastchar;
+	int sc_extended;
+	int sc_extended1;
+	int sc_led_state;
 
 	struct device *sc_wskbddev;
 };
@@ -96,15 +95,15 @@ struct cfattach pckbd_ca = {
 	sizeof(struct pckbd_softc), pckbdprobe, pckbdattach,
 };
 
+void	pckbd_set_leds __P((void *, int));
 int	pckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-const char *pckbd_translate __P((void *, u_int, int));
 
 const struct wskbd_accessops pckbd_accessops = {
+	pckbd_set_leds,
 	pckbd_ioctl,
-	pckbd_translate,
 };
 
-int	pckbd_cngetc __P((void *));
+void	pckbd_cngetc __P((void *, u_int *, int *));
 void	pckbd_cnpollc __P((void *, int));
 
 const struct wskbd_consops pckbd_consops = {
@@ -116,7 +115,10 @@ int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
 void	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
 			int));
 void	pckbd_input __P((void *, int));
-void	pckbd_update_leds __P((struct pckbd_internal *));
+
+static int	pckbd_decode __P((struct pckbd_softc *, u_int *, int *));
+static int	pckbd_led_encode __P((int));
+static int	pckbd_led_decode __P((int));
 
 struct pckbd_internal pckbd_consdata;
 
@@ -262,6 +264,13 @@ pckbdattach(parent, self, aux)
 	pckbc_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
 			       pckbd_input, sc);
 
+#ifdef PCKBD_LAYOUT
+	a.layout = PCKBD_LAYOUT;
+#else
+	a.layout = KB_US;
+#endif
+	a.keydesc = wscons_keydesctab;
+	a.num_keydescs = sizeof(wscons_keydesctab)/sizeof(wscons_keydesctab[0]);
 	a.console = isconsole;
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc->id;
@@ -271,6 +280,47 @@ pckbdattach(parent, self, aux)
 	 * XXX XXX XXX
 	 */
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+}
+
+static int pckbd_decode(sc, type, data)
+	struct pckbd_softc *sc;
+	u_int *type;
+	int *data;
+{
+	if (*data == KBR_EXTENDED0) {
+		sc->sc_extended = 1;
+		return(0);
+	} else if (*data == KBR_EXTENDED1) {
+		sc->sc_extended1 = 2;
+		return(0);
+	}
+
+	/* process BREAK key (EXT1 1D 45  EXT1 9D C5) map to (unused) code 7F */
+	if (sc->sc_extended1 == 2 && (*data == 0x1d || *data == 0x9d)) {
+		sc->sc_extended1 = 1;
+		return(0);
+	} else if (sc->sc_extended1 == 1 && (*data == 0x45 || *data == 0xc5)) {
+		sc->sc_extended1 = 0;
+		*data = (*data & 0x80) | 0x7f;
+	} else if (sc->sc_extended1 > 0) {
+		sc->sc_extended1 = 0;
+	}
+ 
+	/* Always ignore typematic keys */
+	if (*data == sc->sc_lastchar)
+		return(0);
+	sc->sc_lastchar = *data;
+
+	if (*data & 0x80)
+		*type = WSCONS_EVENT_KEY_UP;
+	else
+		*type = WSCONS_EVENT_KEY_DOWN;
+
+	/* map extended keys to (unused) codes 128-254 */
+	*data = (*data & 0x7f) | (sc->sc_extended ? 0x80 : 0);
+
+	sc->sc_extended = 0;
+	return(1);
 }
 
 void
@@ -283,19 +333,52 @@ pckbd_init(t, kbctag, kbcslot, console)
 	t->t_isconsole = console;
 	t->t_kbctag = kbctag;
 	t->t_kbcslot = kbcslot;
-	t->t_scancodes = pckbd_scan_codes_us;
-	t->extended = 0;
-	t->shift_state = t->lock_state = 0;
+}
+
+static int
+pckbd_led_encode(led)
+	int led;
+{
+	int res;
+
+	res = 0;
+
+	if (led & WSKBD_LED_SCROLL)
+		res |= 0x01;
+	if (led & WSKBD_LED_NUM)
+		res |= 0x02;
+	if (led & WSKBD_LED_CAPS)
+		res |= 0x04;
+	return(res);
+}
+
+static int
+pckbd_led_decode(led)
+	int led;
+{
+	int res;
+
+	res = 0;
+	if (led & 0x01)
+		res |= WSKBD_LED_SCROLL;
+	if (led & 0x02)
+		res |= WSKBD_LED_NUM;
+	if (led & 0x04)
+		res |= WSKBD_LED_CAPS;
+	return(res);
 }
 
 void
-pckbd_update_leds(t)
-	struct pckbd_internal *t;
+pckbd_set_leds(v, leds)
+	void *v;
+	int leds;
 {
+	struct pckbd_internal *t = v;
 	u_char cmd[2];
 
 	cmd[0] = KBC_MODEIND;
-	cmd[1] = t->lock_state;
+	cmd[1] = pckbd_led_encode(leds);
+	t->t_sc->sc_led_state = cmd[1];
 
 	(void) pckbc_enqueue_cmd(t->t_kbctag, t->t_kbcslot, cmd, 2, 0, 0, 0);
 }
@@ -312,22 +395,8 @@ pckbd_input(vsc, data)
 	struct pckbd_softc *sc = vsc;
 	int type;
 
-	/* Always ignore typematic keys */
-	if (data == sc->sc_lastchar)
-		return;
-	sc->sc_lastchar = data;
-
-	switch (data) {
-	    case KBR_EXTENDED:
-		type = WSCONS_EVENT_KEY_OTHER;
-		break;
-	    default:
-		type = (data & 0x80) ? WSCONS_EVENT_KEY_UP :
-		    WSCONS_EVENT_KEY_DOWN;
-		data &= ~0x80;
-		break;
-	}
-	wskbd_input(sc->sc_wskbddev, type, data);
+	if (pckbd_decode(sc, &type, &data))
+		wskbd_input(sc->sc_wskbddev, type, data);
 }
 
 int
@@ -349,188 +418,17 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		char cmd[2];
 		int res;
 		cmd[0] = KBC_MODEIND;
-		cmd[1] = *(int*)data;
+		cmd[1] = pckbd_led_encode(*(int *)data);
+		t->t_sc->sc_led_state = cmd[1];
 		res = pckbc_enqueue_cmd(t->t_kbctag, t->t_kbcslot, cmd, 2, 0,
 					1, 0);
 		return (res);
 		}
+	    case WSKBDIO_GETLEDS:
+		*(int *)data = pckbd_led_decode(t->t_sc->sc_led_state);
+		return(0);
 	}
 	return -1;
-}
-
-/*
- * Get characters from the keyboard.  If none are present, return NULL.
- */
-const char *
-pckbd_translate(v, type, value)
-	void *v;
-	u_int type;
-	int value;
-{
-	struct pckbd_internal *t = v;
-	u_char dt = value;
-	static u_char capchar[2];
-
-	if (type == WSCONS_EVENT_KEY_OTHER && dt == KBR_EXTENDED) {
-		t->extended = 1;
-		return NULL;
-	}
-
-#ifdef DDB
-	/*
-	 * Check for cntl-alt-esc.
-	 */
-	if (t->t_isconsole && (type == WSCONS_EVENT_KEY_DOWN) &&
-	    (dt == 1) && ((t->shift_state & (CTL | ALT)) == (CTL | ALT))
-	    /* XXX && we're not already in the debugger */) {
-		Debugger();
-#if 0
-		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
-#else
-		t->extended = 0;
-		return (NULL);
-#endif
-	}
-#endif
-
-	/* XXX XXX temporary hack to get virtual consoles working */
-	if (t->t_sc && ((t->shift_state & (CTL | ALT)) == (CTL | ALT)) &&
-	    (dt >= 59 && dt <= 66)) {
-		if (type == WSCONS_EVENT_KEY_DOWN)
-			wskbd_ctlinput(t->t_sc->sc_wskbddev, dt - 59);
-		t->extended = 0;
-		return (NULL);
-	}
-
-	/*
-	 * Check for make/break.
-	 */
-	if (type == WSCONS_EVENT_KEY_UP) {
-		/*
-		 * break
-		 */
-		switch (t->t_scancodes[dt].type) {
-		case NUM:
-			t->shift_state &= ~NUM;
-			break;
-		case CAPS:
-			t->shift_state &= ~CAPS;
-			break;
-		case SCROLL:
-			t->shift_state &= ~SCROLL;
-			break;
-		case SHIFT:
-			t->shift_state &= ~SHIFT;
-			break;
-		case ALT:
-			if (t->extended) 
-				t->shift_state &= ~ALTGR;
-			else
-				t->shift_state &= ~ALT;
-			break;
-		case CTL:
-			t->shift_state &= ~CTL;
-			break;
-		}
-	} else if (type == WSCONS_EVENT_KEY_DOWN) {
-		/*
-		 * make
-		 */
-		/* fix numeric / on non US keyboard */
-		if (t->extended && dt == 53) {
-			capchar[0] = '/';
-			t->extended = 0;
-			return capchar;
-		}
-
-		switch (t->t_scancodes[dt].type) {
-		/*
-		 * locking keys
-		 */
-		case NUM:
-			if (t->shift_state & NUM)
-				break;
-			t->shift_state |= NUM;
-			t->lock_state ^= NUM;
-			pckbd_update_leds(t);
-			break;
-		case CAPS:
-			if (t->shift_state & CAPS)
-				break;
-			t->shift_state |= CAPS;
-			t->lock_state ^= CAPS;
-			pckbd_update_leds(t);
-			break;
-		case SCROLL:
-			if (t->shift_state & SCROLL)
-				break;
-			t->shift_state |= SCROLL;
-			t->lock_state ^= SCROLL;
-			if (t->t_sc)
-				wskbd_holdscreen(t->t_sc->sc_wskbddev,
-						 t->lock_state & SCROLL);
-			pckbd_update_leds(t);
-			break;
-		/*
-		 * non-locking keys
-		 */
-		case SHIFT:
-			t->shift_state |= SHIFT;
-			break;
-		case ALT:
-			if (t->extended)  
-				t->shift_state |= ALTGR;
-			else
-				t->shift_state |= ALT;
-			break;
-		case CTL:
-			t->shift_state |= CTL;
-			break;
-		case ASCII:
-			/* control has highest priority */
-			if (t->shift_state & CTL)
-				capchar[0] = t->t_scancodes[dt].ctl[0];
-			else if (t->shift_state & ALTGR)
-				capchar[0] = t->t_scancodes[dt].altgr[0];
-			else if (t->shift_state & SHIFT)
-				capchar[0] = t->t_scancodes[dt].shift[0];
-			else
-				capchar[0] = t->t_scancodes[dt].unshift[0];
-			if ((t->lock_state & CAPS) && capchar[0] >= 'a' &&
-			    capchar[0] <= 'z') {
-				capchar[0] -= ('a' - 'A');
-			}
-			capchar[0] |= (t->shift_state & ALT);
-			t->extended = 0;
-			return capchar;
-		case NONE:
-			break;
-		case FUNC: {
-			char *more_chars;
-			if (t->shift_state & SHIFT)
-				more_chars = t->t_scancodes[dt].shift;
-			else if (t->shift_state & CTL)
-				more_chars = t->t_scancodes[dt].ctl;
-			else
-				more_chars = t->t_scancodes[dt].unshift;
-			t->extended = 0;
-			return more_chars;
-		}
-		case KP: {
-			char *more_chars;
-			if (t->shift_state & (SHIFT | CTL) ||
-			    (t->lock_state & NUM) == 0 || t->extended)
-				more_chars = t->t_scancodes[dt].shift;
-			else
-				more_chars = t->t_scancodes[dt].unshift;
-			t->extended = 0;
-			return more_chars;
-		}
-		}
-	}
-
-	t->extended = 0;
-	return (NULL);
 }
 
 int
@@ -546,47 +444,18 @@ pckbd_cnattach(kbctag, kbcslot)
 }
 
 /* ARGSUSED */
-int
-pckbd_cngetc(v)
+void
+pckbd_cngetc(v, type, data)
 	void *v;
+	u_int *type;
+	int *data;
 {
-        register const char *cp = NULL;
-	u_int type;
-	int data;
-#if 0
-	static u_char last;
-#endif
-
-        do {
-		/* wait for byte */
-		do {
-			data = pckbc_poll_data(pckbd_consdata.t_kbctag,
-					       pckbd_consdata.t_kbcslot);
-		} while (data == -1);
-
-#if 0
-		/* Ignore typematic keys */
-		if (data == last)
-			continue;
-		last = data;
-#endif
-
-		switch (data) { 
-		case KBR_EXTENDED:
-			type = WSCONS_EVENT_KEY_OTHER;
-			break;
-		default:
-			type = (data & 0x80) ? WSCONS_EVENT_KEY_UP :
-			    WSCONS_EVENT_KEY_DOWN;
-			data &= ~0x80;
-			break;
-		}
-
-		cp = pckbd_translate(&pckbd_consdata, type, data);
-        } while (!cp);
-        if (*cp == '\r')
-                return ('\n');
-        return (*cp);
+	for (;;) {
+		*data = pckbc_poll_data(pckbd_consdata.t_kbctag,
+					pckbd_consdata.t_kbcslot);
+		if (pckbd_decode(pckbd_consdata.t_sc, type, data))
+			return;
+	}
 }
 
 void

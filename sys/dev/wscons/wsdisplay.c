@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.2 1998/03/27 18:26:22 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.3 1998/04/07 13:43:17 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.2 1998/03/27 18:26:22 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.3 1998/04/07 13:43:17 hannken Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -901,6 +901,9 @@ wsdisplay_switch(dev, no)
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen *ws;
 	int s;
+
+	if (no < 0 || no >= WSDISPLAY_MAXSCREEN)
+		return (ENXIO);
 
 	ws = sc->sc_scr[no];
 	if (!ws)
