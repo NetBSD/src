@@ -263,3 +263,175 @@ struct svr4_gettimeofday_args {
 };
 
 #undef	syscallarg
+
+/*
+ * System call prototypes.
+ */
+
+int	nosys	__P((struct proc *, void *, register_t *));
+int	exit	__P((struct proc *, void *, register_t *));
+int	fork	__P((struct proc *, void *, register_t *));
+int	read	__P((struct proc *, void *, register_t *));
+int	write	__P((struct proc *, void *, register_t *));
+int	svr4_open	__P((struct proc *, void *, register_t *));
+int	close	__P((struct proc *, void *, register_t *));
+int	svr4_wait	__P((struct proc *, void *, register_t *));
+int	svr4_creat	__P((struct proc *, void *, register_t *));
+int	link	__P((struct proc *, void *, register_t *));
+int	unlink	__P((struct proc *, void *, register_t *));
+int	svr4_execv	__P((struct proc *, void *, register_t *));
+int	chdir	__P((struct proc *, void *, register_t *));
+int	svr4_time	__P((struct proc *, void *, register_t *));
+int	svr4_mknod	__P((struct proc *, void *, register_t *));
+int	chmod	__P((struct proc *, void *, register_t *));
+int	chown	__P((struct proc *, void *, register_t *));
+int	svr4_break	__P((struct proc *, void *, register_t *));
+int	svr4_stat	__P((struct proc *, void *, register_t *));
+int	compat_43_lseek	__P((struct proc *, void *, register_t *));
+int	getpid	__P((struct proc *, void *, register_t *));
+int	setuid	__P((struct proc *, void *, register_t *));
+int	getuid	__P((struct proc *, void *, register_t *));
+int	svr4_alarm	__P((struct proc *, void *, register_t *));
+int	svr4_fstat	__P((struct proc *, void *, register_t *));
+int	svr4_access	__P((struct proc *, void *, register_t *));
+int	sync	__P((struct proc *, void *, register_t *));
+int	svr4_kill	__P((struct proc *, void *, register_t *));
+int	svr4_pgrpsys	__P((struct proc *, void *, register_t *));
+int	dup	__P((struct proc *, void *, register_t *));
+int	pipe	__P((struct proc *, void *, register_t *));
+int	svr4_times	__P((struct proc *, void *, register_t *));
+int	setgid	__P((struct proc *, void *, register_t *));
+int	getgid	__P((struct proc *, void *, register_t *));
+int	svr4_signal	__P((struct proc *, void *, register_t *));
+#ifdef SYSVMSG
+#else
+#endif
+int	svr4_sysarch	__P((struct proc *, void *, register_t *));
+#ifdef SYSVSHM
+#else
+#endif
+#ifdef SYSVSEM
+#else
+#endif
+int	svr4_ioctl	__P((struct proc *, void *, register_t *));
+int	svr4_utssys	__P((struct proc *, void *, register_t *));
+int	fsync	__P((struct proc *, void *, register_t *));
+int	svr4_execve	__P((struct proc *, void *, register_t *));
+int	umask	__P((struct proc *, void *, register_t *));
+int	chroot	__P((struct proc *, void *, register_t *));
+int	svr4_fcntl	__P((struct proc *, void *, register_t *));
+int	svr4_ulimit	__P((struct proc *, void *, register_t *));
+int	rmdir	__P((struct proc *, void *, register_t *));
+int	mkdir	__P((struct proc *, void *, register_t *));
+int	svr4_getdents	__P((struct proc *, void *, register_t *));
+int	svr4_getmsg	__P((struct proc *, void *, register_t *));
+int	svr4_putmsg	__P((struct proc *, void *, register_t *));
+int	svr4_poll	__P((struct proc *, void *, register_t *));
+int	svr4_lstat	__P((struct proc *, void *, register_t *));
+int	symlink	__P((struct proc *, void *, register_t *));
+int	readlink	__P((struct proc *, void *, register_t *));
+int	getgroups	__P((struct proc *, void *, register_t *));
+int	setgroups	__P((struct proc *, void *, register_t *));
+int	fchmod	__P((struct proc *, void *, register_t *));
+int	fchown	__P((struct proc *, void *, register_t *));
+int	svr4_sigprocmask	__P((struct proc *, void *, register_t *));
+int	svr4_sigsuspend	__P((struct proc *, void *, register_t *));
+int	svr4_sigaltstack	__P((struct proc *, void *, register_t *));
+int	svr4_sigaction	__P((struct proc *, void *, register_t *));
+int	svr4_sigpending	__P((struct proc *, void *, register_t *));
+int	svr4_context	__P((struct proc *, void *, register_t *));
+int	svr4_statvfs	__P((struct proc *, void *, register_t *));
+int	svr4_fstatvfs	__P((struct proc *, void *, register_t *));
+#ifdef NFSSERVER
+#else
+#endif
+int	svr4_waitsys	__P((struct proc *, void *, register_t *));
+int	svr4_hrtsys	__P((struct proc *, void *, register_t *));
+int	svr4_mmap	__P((struct proc *, void *, register_t *));
+int	mprotect	__P((struct proc *, void *, register_t *));
+int	munmap	__P((struct proc *, void *, register_t *));
+int	fpathconf	__P((struct proc *, void *, register_t *));
+int	vfork	__P((struct proc *, void *, register_t *));
+int	fchdir	__P((struct proc *, void *, register_t *));
+int	readv	__P((struct proc *, void *, register_t *));
+int	writev	__P((struct proc *, void *, register_t *));
+int	svr4_xstat	__P((struct proc *, void *, register_t *));
+int	svr4_lxstat	__P((struct proc *, void *, register_t *));
+int	svr4_fxstat	__P((struct proc *, void *, register_t *));
+int	svr4_setrlimit	__P((struct proc *, void *, register_t *));
+int	svr4_getrlimit	__P((struct proc *, void *, register_t *));
+int	rename	__P((struct proc *, void *, register_t *));
+int	svr4_uname	__P((struct proc *, void *, register_t *));
+int	setegid	__P((struct proc *, void *, register_t *));
+int	svr4_sysconfig	__P((struct proc *, void *, register_t *));
+int	adjtime	__P((struct proc *, void *, register_t *));
+int	svr4_systeminfo	__P((struct proc *, void *, register_t *));
+int	seteuid	__P((struct proc *, void *, register_t *));
+int	svr4_fchroot	__P((struct proc *, void *, register_t *));
+int	svr4_vhangup	__P((struct proc *, void *, register_t *));
+int	svr4_gettimeofday	__P((struct proc *, void *, register_t *));
+int	getitimer	__P((struct proc *, void *, register_t *));
+int	setitimer	__P((struct proc *, void *, register_t *));
+
+#ifdef COMPAT_43
+#define compat_43(func) __CONCAT(compat_43_,func)
+
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef NFSSERVER
+#else
+#endif
+
+#else /* COMPAT_43 */
+#define compat_43(func) nosys
+#endif /* COMPAT_43 */
+
+
+#ifdef COMPAT_09
+#define compat_09(func) __CONCAT(compat_09_,func)
+
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef NFSSERVER
+#else
+#endif
+
+#else /* COMPAT_09 */
+#define compat_09(func) nosys
+#endif /* COMPAT_09 */
+
+
+#ifdef COMPAT_10
+#define compat_10(func) __CONCAT(compat_10_,func)
+
+#ifdef SYSVMSG
+#else
+#endif
+#ifdef SYSVSHM
+#else
+#endif
+#ifdef SYSVSEM
+#else
+#endif
+#ifdef NFSSERVER
+#else
+#endif
+
+#else /* COMPAT_10 */
+#define compat_10(func) nosys
+#endif /* COMPAT_10 */
+
