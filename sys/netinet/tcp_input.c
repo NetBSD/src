@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.69 1998/10/06 00:20:44 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.70 1998/10/06 00:41:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1217,7 +1217,7 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tcp_do_newreno) {
+		if (!tcp_do_newreno) {
 			if (tp->t_dupacks >= tcprexmtthresh &&
 			    tp->snd_cwnd > tp->snd_ssthresh)
 				tp->snd_cwnd = tp->snd_ssthresh;
