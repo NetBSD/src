@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532.newconf,v 1.4 1994/10/26 08:24:05 cgd Exp $
+#	$NetBSD: files.pc532.newconf,v 1.5 1994/12/05 19:26:57 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -58,7 +58,7 @@ file	arch/pc532/pc532/db_interface.c	ddb
 file	arch/pc532/pc532/db_trace.c	ddb
 file	arch/pc532/pc532/disksubr.c	disk
 file	arch/pc532/pc532/icuinit.c
-file	arch/pc532/pc532/in_cksum.c	inet
+file	netinet/in_cksum.c		inet
 file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
 file	arch/pc532/pc532/ns_cksum.c	ns

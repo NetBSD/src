@@ -1,4 +1,4 @@
-/*	$NetBSD: nncr.c,v 1.3 1994/10/26 08:24:15 cgd Exp $	*/
+/*	$NetBSD: nncr.c,v 1.4 1994/12/05 19:27:07 phil Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -112,20 +112,17 @@ typedef sci_regmap_t		sci_padded_regmap_t;
 
 #define NNCR5380	1
 
-struct ncr5380_data {
+struct ncr5380_softc {
 	struct device		sc_dev;
-
-	void			*reg_base;
-	int			adapter_target;
 	struct scsi_link	sc_link;
-} *ncr5380data[NNCR5380];
+};
 
 /* From the mapping of the pc532 address space.  See pc532/machdep.c */
 static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0xffd00000;
 static volatile long			*sci_4byte_addr=  (long *) 0xffe00000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0xffe00000;
 
-static unsigned int	ncr5380_adapter_info(struct ncr5380_data *ncr5380);
+static unsigned int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
 static void		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
@@ -174,7 +171,7 @@ static void	ncrattach();
 
 struct cfdriver ncrcd =
       {	NULL, "ncr", ncrprobe, ncrattach,
-	DV_DULL, sizeof(struct ncr5380_data), NULL, 0 };
+	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0 };
 
 static int
 ncr_print(aux, name)
@@ -186,18 +183,19 @@ ncr_print(aux, name)
 }
 
 static int
-ncrprobe(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
+ncrprobe(parent, self, aux)
+	struct device	*parent, *self;
 	void		*aux;
 {
-	int			unit = cf->cf_unit;
-	struct ncr5380_data	*ncr5380;
+/*	int			unit = cf->cf_unit; */
+	struct ncr5380_softc	*ncr5380 = (void *)self;
 
 	if (strcmp(*((char **) aux), ncrcd.cd_name)) {
 		return 0;
 	}
 
+#if 0
+DELETE THIS ????
  	if (unit >= NNCR5380) {
 		printf("ncr5380attach: unit %d more than %d configured.\n",
 			unit+1, NNCR5380);
@@ -211,6 +209,7 @@ ncrprobe(parent, cf, aux)
 
 	bzero(ncr5380, sizeof(*ncr5380));
 	ncr5380data[unit] = ncr5380;
+#endif
 
 	/* If we call this, we need to add SPL_DP to the bio mask! */
 	/*  PL_bio |= SPL_DP;  Not yet ... no interrupts */
@@ -220,34 +219,27 @@ ncrprobe(parent, cf, aux)
 }
 
 static void
-ncrattach(parent, dev, aux)
-	struct device	*parent, *dev;
+ncrattach(parent, self, aux)
+	struct device	*parent, *self;
 	void		*aux;
 {
-register volatile sci_padded_regmap_t	*regs = ncr;
-	int				unit = dev->dv_unit;
-	struct ncr5380_data		*ncr5380 = ncr5380data[unit];
-	int				r;
+	register volatile sci_padded_regmap_t	*regs = ncr;
+	struct ncr5380_softc *ncr5380 = (void *)self;
+	int r;
 
-	bcopy((char *) ncr5380 + sizeof(struct device),
-	      (char *) dev + sizeof(struct device),
-	      sizeof(struct ncr5380_data) - sizeof(struct device));
-	free(ncr5380, M_TEMP);
-
-	ncr5380data[unit] = ncr5380 = (struct ncr5380_data *) dev;
-
-	ncr5380->sc_link.scsibus = unit;
+	ncr5380->sc_link.adapter_softc = ncr5380;
+	ncr5380->sc_link.scsibus = 0;
 	ncr5380->sc_link.adapter_targ = 7;
 	ncr5380->sc_link.adapter = &ncr5380_switch;
 	ncr5380->sc_link.device = &ncr_dev;
 
 	printf("\n");
 
-	config_found(dev, &(ncr5380->sc_link), ncr_print);
+	config_found(self, &(ncr5380->sc_link), ncr_print);
 }
 
 static unsigned int
-ncr5380_adapter_info(struct ncr5380_data *ncr5380)
+ncr5380_adapter_info(struct ncr5380_softc *ncr5380)
 {
 	return 1;
 }
@@ -307,9 +299,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	}
 	 */
 
-printf ("before ncr5380_send_cmd\n");
 	r = ncr5380_send_cmd(xs);
-printf ("after ncr5380_send_cmd\n");
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 	switch(r) {
@@ -436,7 +426,9 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	int	s;
 	int	sense;
 
+#if 0
 	ncr5380_show_scsi_cmd(xs); 
+#endif
 	s = splbio();
 	sense = scsi_gen( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
