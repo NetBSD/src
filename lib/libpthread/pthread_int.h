@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.40 2003/01/16 14:47:12 skrll Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.41 2003/01/16 17:58:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include "pthread_types.h"
 #include "pthread_queue.h"
 #include "pthread_debug.h"
+#include "pthread_md.h"
 
 #include <sa.h>
 #include <signal.h>
@@ -252,14 +253,18 @@ extern const struct pthread_lock_ops *pthread__lock_ops;
 #define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
 #define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
 
+#ifndef _getcontext_u
 int	_getcontext_u(ucontext_t *);
+#endif
+#ifndef _setcontext_u
 int	_setcontext_u(const ucontext_t *);
+#endif
+#ifndef _swapcontext_u
 int	_swapcontext_u(ucontext_t *, const ucontext_t *);
+#endif
 
 void	pthread__testcancel(pthread_t self);
 int	pthread__find(pthread_t self, pthread_t target);
-
-#include "pthread_md.h"
 
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
