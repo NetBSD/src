@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.15.2.2 2004/04/21 03:22:28 jmc Exp $
+#	$NetBSD: makesrctars,v 1.15.2.3 2004/05/11 13:11:18 tron Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -60,7 +60,7 @@ makeset()
 	echo "Creating ${set}"
 	set -f
 	find -s $* \
-	    ! \( \( -name obj -o -name 'obj.*' \) \( -type l -o -type d \) \) \
+	    ! \( \( -name obj -o -name 'obj.*' \) \( -type l -o -type d \) -prune \) \
 	    -print \
 	    | ${PAX} -w -d -s'|^\.|'${srcprefix}'|' \
 	    | gzip \
