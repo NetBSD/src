@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.7 2000/05/30 02:04:29 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.8 2000/09/11 00:22:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -156,8 +156,10 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 	}
 
 	reconDesc->reconExecTimerRunning = 1;
-	RF_ETIMER_START(reconDesc->recon_exec_timer);
-
+	if (RF_ETIMER_VAL_US(reconDesc->recon_exec_timer)!=0) {
+		/* it moved!!  reset the timer. */
+		RF_ETIMER_START(reconDesc->recon_exec_timer);
+	}
 	event = rctrl->eventQueue;
 	rctrl->eventQueue = event->next;
 	event->next = NULL;
