@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.37 2000/01/14 02:39:14 mjl Exp $	*/
+/*	$NetBSD: su.c,v 1.38 2000/01/25 02:19:19 mjl Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.37 2000/01/14 02:39:14 mjl Exp $");
+__RCSID("$NetBSD: su.c,v 1.38 2000/01/25 02:19:19 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,12 +345,7 @@ badlogin:
 			if (chdir(pwd->pw_dir) < 0)
 				errx(1, "no directory");
 		} 
-#ifdef LOGIN_CAP		
-		else if (pwd->pw_uid == 0)
-			if (setusercontext(lc,
-			    pwd, pwd->pw_uid, LOGIN_SETPATH|LOGIN_SETUMASK))
-				err(1, "setting path");
-#endif
+
 		if (asthem || pwd->pw_uid)
 			(void)setenv("USER", pwd->pw_name, 1);
 		(void)setenv("HOME", pwd->pw_dir, 1);
