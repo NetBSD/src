@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.18 2004/05/19 23:37:41 abs Exp $	*/
+/*	$NetBSD: boot32.c,v 1.19 2004/05/26 23:13:03 abs Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -42,6 +42,7 @@
 #include <arm/arm32/pte.h>
 #include <machine/bootconfig.h>
 
+extern char end[];
 
 /* debugging flags */
 int debug = 1;
@@ -159,8 +160,10 @@ void init_datastructures(void) {
 	/* Get number of pages and the memorytablesize */
 	osmemory_read_arrangement_table_size(&memory_table_size, &nbpp);
 
-	/* reserve some space for heap etc... 512 might be bigish though */
-	memory_image_size = (int) HIMEM - 512*1024;
+	/* Allocate 99% - (small fixed amount) of the heap for memory_image */
+	memory_image_size = (int)HIMEM - (int)end - 512 * 1024;
+	memory_image_size /= 100;
+	memory_image_size *= 99;
 	if (memory_image_size <= 256*1024)
 		panic("Insufficient memory");
 
@@ -175,9 +178,8 @@ void init_datastructures(void) {
 	lastpage   = ((int) top_memory    / nbpp) - 1;
 	totalpages = lastpage - firstpage;
 
-	printf("Got %ld memory pages each %d kilobytes to mess with.\n\n",
-			totalpages, nbpp>>10
-		);
+	printf("Allocated %ld memory pages, each of %d kilobytes.\n\n",
+			totalpages, nbpp>>10 );
 
 	/*
 	 * Setup the relocation table. Its a simple array of 3 * 32 bit
