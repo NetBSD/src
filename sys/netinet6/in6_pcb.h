@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.12 2000/07/07 15:54:18 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.13 2000/10/19 20:23:02 itojun Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.28 2000/06/09 01:10:12 itojun Exp $	*/
 
 /*
@@ -182,14 +182,12 @@ int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
 int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
 	struct ifnet *));
 
-#ifndef TCP6
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));
 extern struct in6pcb *in6_pcblookup_connect __P((struct in6pcb *,
 	struct in6_addr *, u_int, struct in6_addr *, u_int, int));
 extern struct in6pcb *in6_pcblookup_bind __P((struct in6pcb *,
 	struct in6_addr *, u_int, int));
-#endif
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_PCB_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.47 2000/10/17 03:06:44 itojun Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.48 2000/10/19 20:23:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,7 +177,7 @@ tcp_slowtimo()
 {
 	struct inpcb *inp, *ninp;
 	struct tcpcb *tp;
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 	struct in6pcb *in6p, *nin6p;
 #endif
 	int s;
@@ -224,7 +224,7 @@ tpgone:
 		;
 	}
 dotcb6:
-#if defined(INET6) && !defined(TCP6)
+#ifdef INET6
 	mask |= 2;
 	in6p = tcb6.in6p_next;
 	if (in6p == (struct in6pcb *)0) {			/* XXX */
