@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.6 2001/12/05 01:13:58 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.7 2001/12/05 04:07:06 augustss Exp $	*/
 
 /*
  * TODO
@@ -235,9 +235,9 @@ irframetopen(dev_t dev, struct tty *tp)
 
 	s = spltty();
 
-	DPRINTF(("%s: linesw=%p disc=%d\n", __FUNCTION__, tp->t_linesw,
-		 tp->t_linesw->l_no));
-	if (tp->t_linesw->l_no == IRFRAMEDISC) {
+	DPRINTF(("%s: linesw=%p disc=%s\n", __FUNCTION__, tp->t_linesw,
+		 tp->t_linesw->l_name));
+	if (strcmp(tp->t_linesw->l_name, "irframe") == 0) { /* XXX */
 		sc = (struct irframet_softc *)tp->t_sc;
 		DPRINTF(("%s: sc=%p sc_tp=%p\n", __FUNCTION__, sc, sc->sc_tp));
 		if (sc != NULL) {
@@ -246,12 +246,12 @@ irframetopen(dev_t dev, struct tty *tp)
 		}
 	}
 
-	printf("%s attached at tty%02d:", sc->sc_irp.sc_dev.dv_xname,
-	    minor(tp->t_dev));
 	tp->t_sc = irframe_alloc(sizeof (struct irframet_softc),
 			&irframet_methods, tp);
 	sc = (struct irframet_softc *)tp->t_sc;
 	sc->sc_tp = tp;
+	printf("%s attached at tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
+	    minor(tp->t_dev));
 
 	DPRINTF(("%s: set sc=%p\n", __FUNCTION__, sc));
 
@@ -360,6 +360,9 @@ irframetstart(struct tty *tp)
 void
 irt_frame(struct irframet_softc *sc, u_char *buf, u_int len)
 {
+	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
+		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
+
 	if (sc->sc_nframes >= MAXFRAMES) {
 #ifdef IRFRAMET_DEBUG
 		printf("%s: dropped frame\n", __FUNCTION__);
@@ -397,7 +400,12 @@ irframetinput(int c, struct tty *tp)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
-	DPRINTF(("%s: tp=%p c=0x%0x\n", __FUNCTION__, tp, c));
+	c &= 0xff;
+
+#if IRFRAMET_DEBUG
+	if (irframetdebug > 1)
+		DPRINTF(("%s: tp=%p c=0x%02x\n", __FUNCTION__, tp, c));
+#endif
 
 	if (sc == NULL || tp != (struct tty *)sc->sc_tp)
 		return (0);
@@ -407,11 +415,15 @@ irframetinput(int c, struct tty *tp)
 
 	switch (c) {
 	case SIR_BOF:
+		DPRINTF(("%s: BOF\n", __FUNCTION__));
 		sc->sc_framestate = FRAME_INSIDE;
 		sc->sc_inchars = 0;
 		sc->sc_inFCS = INITFCS;
 		break;
 	case SIR_EOF:
+		DPRINTF(("%s: EOF state=%d inchars=%d fcs=0x%04x\n",
+			 __FUNCTION__,
+			 sc->sc_framestate, sc->sc_inchars, sc->sc_inFCS));
 		if (sc->sc_framestate == FRAME_INSIDE &&
 		    sc->sc_inchars >= 4 && sc->sc_inFCS == GOODFCS) {
 			irt_frame(sc, sc->sc_inbuf, sc->sc_inchars - 2);
@@ -423,10 +435,13 @@ irframetinput(int c, struct tty *tp)
 		sc->sc_framestate = FRAME_OUTSIDE;
 		break;
 	case SIR_CE:
+		DPRINTF(("%s: CE\n", __FUNCTION__));
 		if (sc->sc_framestate == FRAME_INSIDE)
 			sc->sc_framestate = FRAME_ESCAPE;
 		break;
 	default:
+		DPRINTF(("%s: c=0x%02x, inchar=%d state=%d\n", __FUNCTION__, c,
+			 sc->sc_inchars, sc->sc_state));
 		if (sc->sc_framestate != FRAME_OUTSIDE) {
 			if (sc->sc_framestate == FRAME_ESCAPE) {
 				sc->sc_framestate = FRAME_INSIDE;
@@ -446,9 +461,11 @@ irframetinput(int c, struct tty *tp)
 		break;
 	}
 
+#if 1
 	if (sc->sc_framestate != FRAME_OUTSIDE) {
-		callout_reset(&sc->sc_timeout, hz/100, irt_timeout, sc);
+		callout_reset(&sc->sc_timeout, hz/20, irt_timeout, sc);
 	}
+#endif
 
 	return (0);
 }
@@ -513,6 +530,9 @@ irframet_read(void *h, struct uio *uio, int flag)
 	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n", 
 		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
 		 (long)uio->uio_offset));
+	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
+		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
+
 
 	s = splir();	
 	while (sc->sc_nframes == 0) {
@@ -538,10 +558,11 @@ irframet_read(void *h, struct uio *uio, int flag)
 		} else {
 			DPRINTF(("%s: moving %d bytes\n", __FUNCTION__,
 				 sc->sc_frames[sc->sc_frameo].len));
-				error = uiomove(sc->sc_frames[sc->sc_frameo].buf,
+			error = uiomove(sc->sc_frames[sc->sc_frameo].buf,
 					sc->sc_frames[sc->sc_frameo].len, uio);
+			DPRINTF(("%s: error=%d\n", __FUNCTION__, error));
 		}
-		sc->sc_frameo++;
+		sc->sc_frameo = (sc->sc_frameo+1) % MAXFRAMES;
 		sc->sc_nframes--;
 	}
 	splx(s);
@@ -602,7 +623,9 @@ irframet_write(void *h, struct uio *uio, int flag)
 	size_t n;
 	int error;
 
-	DPRINTF(("%s\n", __FUNCTION__));
+	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n", 
+		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
+		 (long)uio->uio_offset));
 
 	n = uio->uio_resid;
 	if (n > MAX_IRDA_FRAME)
@@ -647,6 +670,8 @@ irt_write_buf(void *h, void *buf, size_t len)
 
 	irframetstart(tp);
 
+	DPRINTF(("%s: done\n", __FUNCTION__));
+
 	return (error);
 }
 
@@ -669,7 +694,7 @@ irframet_poll(void *h, int events, struct proc *p)
 			DPRINTF(("%s: have data\n", __FUNCTION__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			DPRINTF(("%s: recording select", __FUNCTION__));
+			DPRINTF(("%s: recording select\n", __FUNCTION__));
 			selrecord(p, &sc->sc_rsel);
 		}
 	}
@@ -686,7 +711,8 @@ irframet_set_params(void *h, struct irda_params *p)
 	struct termios tt;
 	int i;
 
-	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
+	DPRINTF(("%s: tp=%p speed=%d ebofs=%d maxsize=%d\n",
+		 __FUNCTION__, tp, p->speed, p->ebofs, p->maxsize));
 
 	if (p->speed != sc->sc_speed) {
 		switch (p->speed) {
