@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.21 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: iso.c,v 1.22 1999/04/01 06:51:48 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -450,7 +450,7 @@ iso_control(so, cmd, data, ifp, p)
 	register struct ifnet *ifp;
 	struct proc *p;
 {
-	register struct ifreq *ifr = (struct ifreq *) data;
+	register struct iso_ifreq *ifr = (struct iso_ifreq *) data;
 	register struct iso_ifaddr *ia = 0;
 	struct iso_aliasreq *ifra = (struct iso_aliasreq *) data;
 	int             error, hostIsNew, maskIsNew;
@@ -465,15 +465,15 @@ iso_control(so, cmd, data, ifp, p)
 
 	switch (cmd) {
 
-	case SIOCAIFADDR:
-	case SIOCDIFADDR:
+	case SIOCAIFADDR_ISO:
+	case SIOCDIFADDR_ISO:
 		if (ifra->ifra_addr.siso_family == AF_ISO)
 			for (; ia != 0; ia = ia->ia_list.tqe_next) {
 				if (ia->ia_ifp == ifp &&
 				    SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
 					break;
 			}
-		if (cmd == SIOCDIFADDR && ia == 0)
+		if (cmd == SIOCDIFADDR_ISO && ia == 0)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 #if 0
@@ -504,31 +504,30 @@ iso_control(so, cmd, data, ifp, p)
 		}
 		break;
 
-	case SIOCGIFADDR:
-	case SIOCGIFNETMASK:
-	case SIOCGIFDSTADDR:
-	case SIOCGIFBRDADDR:
+	case SIOCGIFADDR_ISO:
+	case SIOCGIFNETMASK_ISO:
+	case SIOCGIFDSTADDR_ISO:
 		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		break;
 	}
 	switch (cmd) {
 
-	case SIOCGIFADDR:
-		*satosiso(&ifr->ifr_addr) = ia->ia_addr;
+	case SIOCGIFADDR_ISO:
+		ifr->ifr_Addr = ia->ia_addr;
 		break;
 
-	case SIOCGIFDSTADDR:
+	case SIOCGIFDSTADDR_ISO:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		*satosiso(&ifr->ifr_dstaddr) = ia->ia_dstaddr;
+		ifr->ifr_Addr = ia->ia_dstaddr;
 		break;
 
-	case SIOCGIFNETMASK:
-		*satosiso(&ifr->ifr_addr) = ia->ia_sockmask;
+	case SIOCGIFNETMASK_ISO:
+		ifr->ifr_Addr = ia->ia_sockmask;
 		break;
 
-	case SIOCAIFADDR:
+	case SIOCAIFADDR_ISO:
 		maskIsNew = 0;
 		hostIsNew = 1;
 		error = 0;
@@ -557,7 +556,7 @@ iso_control(so, cmd, data, ifp, p)
 			ia->ia_snpaoffset = ifra->ifra_snpaoffset;
 		return (error);
 
-	case SIOCDIFADDR:
+	case SIOCDIFADDR_ISO:
 		iso_ifscrub(ifp, ia);
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
