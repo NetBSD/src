@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.109 1997/08/14 16:02:16 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.110 1997/08/23 14:10:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -532,6 +532,21 @@ pcattach(parent, self, aux)
 	 */
 	while (config_found(self, ia->ia_ic, NULL) != NULL)	/* XXX */
 		/* will break when no more children */ ;
+
+	if(pccons_is_console) {
+		int maj;
+
+		/* locate the major number */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == pcopen)
+				break;
+
+		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		/* there can be only one, but it can have any
+		 unit number */
+
+		printf("%s: console\n", sc->sc_dev.dv_xname);
+	}
 }
 
 int
@@ -766,32 +781,17 @@ pcstop(tp, flag)
 
 }
 
-void
-pccnprobe(cp)
-	struct consdev *cp;
+int
+pccnattach()
 {
-	int maj;
+	static struct consdev pccons = { NULL, NULL,
+	pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL};
 
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == pcopen)
-			break;
+	cn_tab = &pccons;
 
-	/* initialize required fields */
-	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;
-}
-
-/* ARGSUSED */
-void
-pccninit(cp)
-	struct consdev *cp;
-{
 	pccons_is_console = 1;
-	/*
-	 * For now, don't screw with it.
-	 */
-	/* crtat = 0; */
+
+	return(0);
 }
 
 /* ARGSUSED */
