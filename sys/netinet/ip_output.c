@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.74.4.3 2002/12/15 15:20:21 he Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.74.4.4 2003/08/04 19:48:36 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -520,11 +520,7 @@ sendit:
 
 	/* be sure to update variables that are affected by ipsec4_output() */
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 	if (ro->ro_rt == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
 			printf("ip_output: "
@@ -560,6 +556,7 @@ skip_ipsec:
 			if (m == NULL)
 				goto done;
 			ip = mtod(m, struct ip *);
+			hlen = ip->ip_hl << 2;
 		}
 #endif /* PFIL_HOOKS */
 
