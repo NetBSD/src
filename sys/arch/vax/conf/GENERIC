@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.30 1998/03/21 10:02:40 ragge Exp $
+#	$NetBSD: GENERIC,v 1.31 1998/05/22 09:59:55 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -122,16 +122,16 @@ mt*		at mscpbus? drive?	# MSCP tape
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
-hdc0		at vsbus0		# The strange builtin MFM controller
-rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
+#hdc0		at vsbus0		# The strange builtin MFM controller
+#rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
 
 # VAXstation builtin SCSI-controller (NCR5380)
-ncr0		at vsbus0		# 1st built-in SCSI interface
-ncr1		at vsbus0		# 2nd built-in SCSI interface
-scsibus*	at ncr?
+#ncr0		at vsbus0		# 1st built-in SCSI interface
+#ncr1		at vsbus0		# 2nd built-in SCSI interface
+#scsibus*	at ncr?
 
-sd*		at scsibus? target? lun?
-st*		at scsibus? target? lun?
+#sd*		at scsibus? target? lun?
+#st*		at scsibus? target? lun?
 
 # Graphic adapters.
 qd0		at uba? csr 0177400
@@ -144,6 +144,7 @@ ln0		at vsbus0		# LANCE
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
+dz0		at vsbus0		# DC-367
 dl0		at uba? csr 0176500	# DL-11
 
 pseudo-device   loop	1
