@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.5 1998/08/15 03:02:37 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.6 1998/09/28 09:33:14 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -183,8 +183,7 @@ pmsprobe(parent, match, aux)
 	 * child of a real keyboard controller driver.)
 	 */
 	if ((parent == NULL) ||
-	   ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0) &&
-	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt") != 0)))
+	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0))
 		return (0);
 
 	/* Can't wildcard IRQ. */

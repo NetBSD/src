@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1998/09/13 11:57:59 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1998/09/28 09:33:13 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,11 +81,6 @@
 #include "pc.h"
 #if (NPC > 0)
 #include <machine/pccons.h>
-#endif
-
-#include "vt.h"
-#if (NVT > 0)
-#include <bebox/isa/pcvt/pcvt_cons.h>
 #endif
 
 #include "vga.h"
@@ -730,14 +725,14 @@ consinit()
 	if (!consinfo)
 		panic("not found console information in bootinfo");
 
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0)
+#if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(BEBOX_BUS_SPACE_IO, BEBOX_BUS_SPACE_MEM,
 				  -1, 1))
 			goto dokbd;
 #endif
-#if (NPC > 0) || (NVT > 0)
+#if (NPC > 0)
 		pccnattach();
 #endif
 dokbd:
@@ -746,7 +741,7 @@ dokbd:
 #endif
 		return;
 	}
-#endif /* PC | VT | VGA */
+#endif /* PC | VGA */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = BEBOX_BUS_SPACE_IO;
