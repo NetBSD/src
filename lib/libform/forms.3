@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.12 2003/04/16 13:35:05 wiz Exp $
+.\"	$NetBSD: forms.3,v 1.13 2004/04/21 02:46:34 kim Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -77,13 +77,13 @@ pointer in the field or form parameter when calling the set routine.
 The current default value can be retrieved by calling the get routine with a
 NULL pointer for the field or form parameter.
 .Pp
-.ta 20
+.ta 21
 .nf
 .ft 3
-Form Routine Name      Manual Page Name
+Form Routine Name	Manual Page Name
 .sp 0.5
 current_field		form_page(3)
-data_ahead		form_data(3
+data_ahead		form_data(3)
 data_behind		form_data(3)
 dup_field		form_field_new(3)
 dynamic_field_info	form_field_info(3)
@@ -163,7 +163,7 @@ unpost_form		form_post(3)
 Any function returning a string pointer will return NULL if an error occurs.
 Functions returning an integer will return one of the following:
 .Pp
-.ta 20
+.ta 21
 .nf
 E_OK			The function was successful
 E_SYSTEM_ERROR		There was a system error during the call.
@@ -194,7 +194,7 @@ This implementation of the forms library does depart in behavior
 subtly from the original AT \*[Am] T implementation.
 Some of the more notable departures are:
 .Pp
-.Bl -tag -width "circular fields" -compact
+.Bl -tag -width "The TAB character" -compact
 .It field wrapping
 For multi-line fields the data will be wrapped as it is entered, this
 does not happen in the AT\*[Am]T implementation.
