@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.9 2003/01/18 23:58:19 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.10 2003/01/20 05:26:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -191,20 +191,20 @@ cpu_getmcontext(l, mcp, flagp)
 	unsigned int *flagp;
 {
 	const struct trapframe *tf = trapframe(l);
-	struct __gregs *gr = (struct __gregs *)mcp->__gregs;
+	__greg_t *gr = mcp->__gregs;
 #ifdef PPC_HAVE_FPU
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
 	/* Save GPR context. */
-	(void)memcpy(gr, &tf->fixreg, 32 * sizeof (gr->__r_r0)); /* GR0-31 */
-	gr->__r_cr  = tf->cr;
-	gr->__r_lr  = tf->lr;
-	gr->__r_pc  = tf->srr0;
-	gr->__r_msr = tf->srr1;
-	gr->__r_ctr = tf->ctr;
-	gr->__r_xer = tf->xer;
-	gr->__r_mq  = 0;				/* For now. */
+	(void)memcpy(gr, &tf->fixreg, 32 * sizeof (gr[0])); /* GR0-31 */
+	gr[_REG_CR]  = tf->cr;
+	gr[_REG_LR]  = tf->lr;
+	gr[_REG_PC]  = tf->srr0;
+	gr[_REG_MSR] = tf->srr1;
+	gr[_REG_CTR] = tf->ctr;
+	gr[_REG_XER] = tf->xer;
+	gr[_REG_MQ]  = 0;				/* For now. */
 	*flagp |= _UC_CPU;
 
 #ifdef PPC_HAVE_FPU
@@ -234,25 +234,25 @@ cpu_setmcontext(l, mcp, flags)
 	unsigned int flags;
 {
 	struct trapframe *tf = trapframe(l);
-	struct __gregs *gr = (struct __gregs *)mcp->__gregs;
+	__greg_t *gr = mcp->__gregs;
 #ifdef PPC_HAVE_FPU
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
 	/* Restore GPR context, if any. */
 	if (flags & _UC_CPU) {
-		if ((gr->__r_msr & PSL_USERSTATIC) !=
+		if ((gr[_REG_MSR] & PSL_USERSTATIC) !=
 		    (tf->srr1 & PSL_USERSTATIC))
 			return (EINVAL);
 
-		(void)memcpy(&tf->fixreg, gr, 32 * sizeof (gr->__r_r0));
-		tf->cr   = gr->__r_cr;
-		tf->lr   = gr->__r_lr;
-		tf->srr0 = gr->__r_pc;
-		tf->srr1 = gr->__r_msr;
-		tf->ctr  = gr->__r_ctr;
-		tf->xer  = gr->__r_xer;
-		/* unused = gr->__r_mq; */
+		(void)memcpy(&tf->fixreg, gr, 32 * sizeof (gr[0]));
+		tf->cr   = gr[_REG_CR];
+		tf->lr   = gr[_REG_LR];
+		tf->srr0 = gr[_REG_PC];
+		tf->srr1 = gr[_REG_MSR];
+		tf->ctr  = gr[_REG_CTR];
+		tf->xer  = gr[_REG_XER];
+		/* unused = gr[_REG_MQ]; */
 	}
 
 #ifdef PPC_HAVE_FPU
