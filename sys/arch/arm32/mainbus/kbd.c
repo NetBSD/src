@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.7 1996/03/28 21:55:15 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.8 1996/05/06 00:35:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -68,13 +68,6 @@
 #include "vt.h"
 #include "kbd.h"
 
-/* Declare global variables */
-
-/* Declare external variables */
-
-/* Local function prototypes */
-
-/* Now for the main code */
 
 /* Define the key_struct structure */
 
@@ -104,7 +97,11 @@ key_struct keys[256] = {
     { 0x86, 0x96, 0x00, 0x486, 0x00 },
     { 0x84, 0x94, 0x00, 0x484, 0x00 },
     { 0x09, 0x09, 0x09, 0x09, 0x00 },
+#ifdef RC7500
+    { 0x60, 0x7e, 0x00, 0x00, 0x00 },
+#else
     { 0x60, 0x00, 0x00, 0x00, 0x00 },
+#endif
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
 
 /* 0x10 - 0x1f */
@@ -182,7 +179,11 @@ key_struct keys[256] = {
 /* 0x50 - 0x5f */
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
+#ifdef RC7500
+    { 0x27, 0x22, 0x00, 0x00, 0x00 },
+#else
     { 0x27, 0x40, 0x00, 0x00, 0x00 },
+#endif
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
     { 0x5b, 0x7b, 0x00, 0x00, 0x00 },
     { 0x3d, 0x2b, 0x00, 0x00, 0x00 },
@@ -193,7 +194,11 @@ key_struct keys[256] = {
     { 0x0d, 0x0d, 0x0d, 0x00, 0x00 },
     { 0x5d, 0x7d, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
+#ifdef RC7500
+    { 0x5c, 0x7c, 0x00, 0x00, 0x00 },
+#else
     { 0x23, 0x7e, 0x00, 0x00, 0x00 },
+#endif
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
 
@@ -555,9 +560,8 @@ key_struct E0keys[128] = {
 #define MODIFIER_CAPSLOCK 0x40
 #define MODIFIER_NORETURN 0x80
 
-/* Keyboard buffer variables */
+/* Keyboard variables */
 
-#define BUFFER_SIZE 32
 #define RAWKBD_BSIZE 128
 
 static int autorepeatkey = -1;
@@ -589,6 +593,8 @@ struct kbd_softc {
 #define KBDFLAG_RAWUNIT	0
 #define KBDFLAG_CONUNIT	1
 
+/* Local function prototypes */
+
 int	kbdprobe __P((struct device *, void *, void *));
 void	kbdattach __P((struct device *, struct device *, void *));
 
@@ -598,7 +604,9 @@ int	kbdread __P((dev_t, struct uio *, int));
 int	kbdselect __P((dev_t, int, struct proc *));
 int	kbdioctl __P((dev_t, int, caddr_t, int, struct proc *));
 
-void	kbdinit	__P((struct kbd_softc *sc));
+int	kbdreset __P((void));
+void	kbd_flush_input __P((void));
+int	kbdcmd __P((u_char cmd));
 void	kbdsetleds __P((int /*leds*/));
 
 int PollKeyboard __P((int));
@@ -608,6 +616,8 @@ int kbdintr __P((struct kbd_softc *));
 void autorepeatstart __P((void *));
 void autorepeat __P((void *));
 
+/* Device structures */
+
 struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbdprobe, kbdattach
 };
@@ -616,6 +626,32 @@ struct cfdriver	kbd_cd = {
 	NULL, "kbd", DV_TTY
 };
 
+/* keyboard commands */
+
+#define	KBC_RESET	0xFF	/* reset the keyboard */
+#define	KBC_RESEND	0xFE	/* request the keyboard resend the last byte */
+#define KBC_SET_TMB	0xFA	/* What is this one ? */
+#define	KBC_SETDEFAULT	0xF6	/* resets keyboard to its power-on defaults */
+#define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key scanning */
+#define	KBC_ENABLE	0xF4	/* enable key scanning */
+#define	KBC_TYPEMATIC	0xF3	/* set typematic rate and delay */
+#define	KBC_SETSCANTBL	0xF0	/* set scancode translation table */
+#define	KBC_SETLEDS	0xED	/* set mode indicators (i.e. LEDs) */
+#define	KBC_ECHO	0xEE	/* request an echo from the keyboard */
+
+#define KBD_SETSCAN_2	0x02
+#define KBD_SETSCAN_3	0x03
+
+/* keyboard responses */
+#define	KBR_EXTENDED	0xE0	/* extended key sequence */
+#define	KBR_RESEND	0xFE	/* needs resend of command */
+#define	KBR_ACK		0xFA	/* received a valid command */
+#define	KBR_OVERRUN	0x00	/* flooded */
+#define	KBR_FAILURE	0xFD	/* diagnosic failure */
+#define	KBR_BREAK	0xF0	/* break code prefix - sent on key release */
+#define	KBR_RSTDONE	0xAA	/* reset complete */
+#define	KBR_ECHO	0xEE	/* echo response */
+
 
 int
 kbdprobe(parent, match, aux)
@@ -623,7 +659,6 @@ kbdprobe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-/*	struct mainbus_attach_args *mb = aux;*/
 	int id;
 
 /* Make sure we have an IOMD we understand */
@@ -654,11 +689,23 @@ kbdattach(parent, self, aux)
 {
 	struct kbd_softc *sc = (void *)self;
 	struct mainbus_attach_args *mb = aux;
+	int error;
+
+	error = kbdreset();
+	if (error == 1)
+		printf(": Cannot enable keyboard");
+	else if (error == 2)
+		printf(": No keyboard present");
 
 	sc->sc_iobase = mb->mb_iobase;
 
-	kbdinit(sc);
-    
+	sc->sc_ih.ih_func = kbdintr;
+	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_level = IPL_TTY;
+	sc->sc_ih.ih_name = "kbd rx";
+	if (irq_claim(IRQ_KBDRX, &sc->sc_ih))
+		panic("Cannot claim IRQ for kbd%d\n", sc->sc_device.dv_unit);
+
 	printf("\n");
 }
 
@@ -785,6 +832,7 @@ kbdread(dev, uio, flag)
 	return error;
 }
 
+
 int
 kbdselect(dev, rw, p)
 	dev_t dev;
@@ -857,24 +905,154 @@ kbdioctl(dev, cmd, data, flag, p)
 }
 
 
+/* Low level keyboard driver functions */
+
+/*
+ * kbdcmd
+ *
+ * Send a command to the keyboard
+ * Returns 0 if command succeeded or 1 if it failed.
+ */
+
+int
+kbdcmd(cmd)
+	u_char cmd;
+{
+	u_char c;
+	int i = 0;
+	int retry;
+
+	for (retry = 7; retry >= 0; --retry) {
+
+		/* Wait for empty kbd transmit register */
+		 
+		for (i = 1000; i; i--) {
+			if (inb(IOMD_KBDCR) & 0x80)
+				break;
+			delay(200);
+		}
+		if (i == 0)
+			printf("kbd: transmit not ready\n");
+
+		outb(IOMD_KBDDAT, cmd);
+		delay(200);
+	
+		/* Wait for full kbd receive register */
+
+		for (i = 0; i < 1000; i++) {
+			c = inb(IOMD_KBDCR);
+			if ((c & 0x20) == 0x20)
+				break;
+			delay(100);
+		}
+
+		delay(100);
+
+		/* Get byte from kbd receive register */
+
+		c = inb(IOMD_KBDDAT);
+		if ((c == KBR_ACK) || (c == KBR_ECHO))
+			return(0);
+
+		/* Failed if we have more reties to go flush kbd */
+
+		if (retry)
+			kbd_flush_input();
+	}
+	printf("kbd: command failed, cmd = %02x, status = %02x\n", cmd, c);
+	return(1);
+}
+
+
+/*
+ * kbd_flush_input()
+ *
+ * Flushes the keyboard input register
+ */
+
+void
+kbd_flush_input()
+{
+	int i;
+
+	/* Loop round reading bytes while the receive buffer is not empty */
+
+	for (i = 0; i < 20; i++) {
+		if ((inb(IOMD_KBDCR) & 0x20) == 0)
+			break;
+		delay(100);
+		(void)inb(IOMD_KBDDAT);
+	}
+}
+
+
+/*
+ * kbdreset()
+ *
+ * Resets the keyboard.
+ * Returns 0 if successful.
+ * Returns 1 if keyboard could not be enabled.
+ * Returns 2 if keyboard could not be reset.
+ */
+
+int
+kbdreset()
+{
+	int i;
+	u_char c;
+
+	kbd_flush_input();
+
+	/* Disable, wait then enable the keyboard interface */
+
+	outb(IOMD_KBDCR, 0x00);
+	delay(100);
+	outb(IOMD_KBDCR, 0x08);
+
+	/* Wait for kdata and kclk to go high */
+
+	for (i = 1000; i; i--) {
+		if ((inb(IOMD_KBDCR) & 0x03) == 0x03)
+			break;
+		outb(IOMD_KBDCR, 0x03);
+		delay(200);
+		outb(IOMD_KBDCR, 0x08);
+	}
+	if (i == 0 || (inb(IOMD_KBDCR) & 0x08) == 0)
+		return(1);
+
+	kbd_flush_input();
+	kbdcmd(KBC_DISABLE);
+retry:
+	kbdcmd(KBC_RESET);
+	delay(100000);
+	for (i = 10000; i; i--) {
+		c = inb(IOMD_KBDDAT);
+		if (c == KBR_RSTDONE)
+			break;
+		if (c == KBR_RESEND)
+			goto retry;
+		delay(100);
+	}
+	if (i == 0)
+		return(2);
+
+	kbdcmd(KBC_SETSCANTBL);
+	kbdcmd(KBD_SETSCAN_2);
+	kbdcmd(KBC_ENABLE);
+
+	modifiers = MODIFIER_NUM;
+	kbdsetleds((modifiers >> 3) & 7);
+	return(0);
+}
+
+
 void
 kbdsetleds(leds)
 	int leds;
 {
-	int loop;
-
-	if ((ReadByte(IOMD_KBDCR) & 0x80)) {
-		WriteByte(IOMD_KBDDAT, 0xed);
-		loop = 10000;
-		while ((ReadByte(IOMD_KBDCR) & 0x40) && loop > 0)
-			--loop;
-		if ((ReadByte(IOMD_KBDCR) & 0x80)) {
-			WriteByte(IOMD_KBDDAT, leds);
-			loop = 10000;
-			while ((ReadByte(IOMD_KBDCR) & 0x40) && loop > 0)
-				--loop;
-		}
-	}
+	kbdcmd(KBC_SETLEDS);
+	kbdcmd(leds);
 }
 
 
@@ -883,6 +1061,7 @@ kbdsetstate(state)
 	int state;
 {
 	modifiers = state & MODIFIER_LOCK_MASK;
+	kbdsetleds((modifiers >> 3) & 7);
 }
 
 
@@ -893,22 +1072,6 @@ kdbgetstate()
 }
 
   
-void
-kbdinit(sc)
-	struct kbd_softc *sc;
-{
-	sc->sc_ih.ih_func = kbdintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_TTY;
-	sc->sc_ih.ih_name = "kbd rx";
-	if (irq_claim(IRQ_KBDRX, &sc->sc_ih))
-		panic("Cannot claim IRQ for kbd%d\n", sc->sc_device.dv_unit);
-
-	modifiers = 0;
-	kbdsetleds((modifiers >> 3) & 7);
-}
-
-
 int
 getkey_polled()
 {
@@ -924,6 +1087,7 @@ getkey_polled()
 
 	do {
 		while ((ReadByte(IOMD_KBDCR) & (1<<5)) == 0) ;
+		delay(10);
 
 /* Read the IOMD keyboard register and process the key */
 
@@ -1074,7 +1238,7 @@ PollKeyboard(code)
 
 /* If it is a resend code note it down */
 
-	if (code == 0xfe) {
+	if (code == KBR_RESEND) {
 		printf("kbd:resend\n");
 		kbd_resend = 1;
 		return(0);
@@ -1082,7 +1246,7 @@ PollKeyboard(code)
 
 /* If it is an ack code note it down */
 
-	if (code == 0xfa) {
+	if (code == KBR_ACK) {
 /*		printf("kbd:ack\n");*/
 		kbd_ack = 1;
 		return(0);
@@ -1317,7 +1481,11 @@ kbddecodekey(sc, code)
 					break;
 				}
 		} else {
-			if (physconkbd(key) == 0 && rawkbd_device == 0) {
+			/*
+			 * Check rawkbd_device first, in case we stick in the
+			 * physconkbd().
+			 */
+			if (rawkbd_device == 0 && physconkbd(key) == 0) {
 				if (autorepeatkey != key) {
 					untimeout(autorepeatstart, &autorepeatkey);
 					untimeout(autorepeat, &autorepeatkey);
