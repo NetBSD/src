@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.1 2000/03/10 05:51:58 groo Exp $ */
+/*	$NetBSD: envstat.c,v 1.2 2000/04/14 06:26:53 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.1 2000/03/10 05:51:58 groo Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.2 2000/04/14 06:26:53 simonb Exp $");
 #endif
 
 #include <fcntl.h>
@@ -71,8 +71,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	int c, fd, ns, ls, celsius;
 	unsigned int interval, width, headrep, headcnt;
 	envsys_tre_data_t *etds;

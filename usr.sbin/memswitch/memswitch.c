@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.3 1999/06/28 08:48:35 minoura Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.4 2000/04/14 06:26:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	extern char *optarg;
-	extern int optind;
 	enum md {
 		MD_NONE, MD_WRITE, MD_HELP, MD_SHOWALL, MD_SAVE, MD_RESTORE
 	} mode = MD_NONE;

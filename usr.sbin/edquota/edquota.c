@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.20 2000/01/21 17:08:37 mycroft Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.21 2000/04/14 06:26:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,8 +107,6 @@ main(argc, argv)
 	char **argv;
 {
 	struct quotause *qup, *protoprivs, *curprivs;
-	extern char *optarg;
-	extern int optind;
 	long id, protoid;
 	int quotatype, tmpfd;
 	char *protoname;

@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.4 2000/03/14 21:27:41 jdc Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.5 2000/04/14 06:26:54 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -744,7 +744,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	int ch, j;
 
 	while ((ch = getopt(argc, argv, "anw")) != -1) {
