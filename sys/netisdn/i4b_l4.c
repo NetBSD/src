@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.23 2003/05/16 05:12:32 itojun Exp $ 
+ *	$Id: i4b_l4.c,v 1.24 2003/09/25 14:17:57 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.23 2003/05/16 05:12:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.24 2003/09/25 14:17:57 pooka Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -643,7 +643,11 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		d->bch_state[cd->channelid] = BCH_ST_FREE;
-		i4b_l2_channel_set_state(d, cd->channelid, BCH_ST_FREE);
+		/*
+		 * XXX: don't call l2 function for active cards.
+		 */
+		if (d->l3driver->N_DOWNLOAD == NULL)
+			i4b_l2_channel_set_state(d, cd->channelid, BCH_ST_FREE);
 	}
 	else
 	{
