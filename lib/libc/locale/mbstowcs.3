@@ -1,4 +1,4 @@
-.\" $NetBSD: mbstowcs.3,v 1.7 2004/01/21 12:40:14 jmmv Exp $
+.\" $NetBSD: mbstowcs.3,v 1.8 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -41,16 +41,15 @@
 .Fn mbstowcs "wchar_t * restrict pwcs" "const char * restrict s" "size_t n"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
-The
 .Fn mbstowcs
-converts a null-terminated multibyte character string pointed by
+converts a null-terminated multibyte character string pointed to by
 .Fa s
-to the corresponding wide character string and stores it to the array
-pointed by
+to the corresponding wide character string and stores it in the array
+pointed to by
 .Fa pwcs .
 This function may modify the first at most
 .Fa n
-elements of the array pointed by
+elements of the array pointed to by
 .Fa pwcs .
 Each character will be converted as if
 .Xr mbtowc 3
@@ -58,61 +57,62 @@ is continuously called, except the internal state of
 .Xr mbtowc 3
 will not be affected.
 .Pp
-For state-dependent encoding, the
+For state-dependent encoding,
 .Fn mbstowcs
-implies the multibyte character string pointed by
+implies the multibyte character string pointed to by
 .Fa s
-always to begin with an initial state.
+always begins with an initial state.
 .Pp
-There are special cases:
+These are the special cases:
 .Bl -tag -width 012345678901
 .It pwcs == NULL
-The
 .Fn mbstowcs
 returns the number of elements to store the whole wide character string
-corresponding to the multibyte character string pointed by
+corresponding to the multibyte character string pointed to by
 .Fa s .
 In this case,
 .Fa n
 is ignored.
 .It s == NULL
-undefined (may causes the program to crash).
+Undefined (may cause the program to crash).
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn mbstowcs
 returns:
 .Bl -tag -width 012345678901
 .It 0 or positive
-Number of elements stored to the array pointed by
+Number of elements stored in the array pointed to by
 .Fa pwcs .
-There is no cases that the value returned is greater than
+There are no cases that the value returned is greater than
 .Fa n
 (unless
 .Fa pwcs
-is a null pointer) or the value of MB_CUR_MAX macro.
+is a null pointer) or the value of the
+.Dv MB_CUR_MAX
+macro.
 If the return value is equal to
 .Fa n ,
-the string pointed by
+the string pointed to by
 .Fa pwcs
 will not be null-terminated.
 .It (size_t)-1
 .Fa s
-points the string containing invalid or incomplete multibyte character.
+points to a string containing an invalid or incomplete multibyte character.
 The
 .Fn mbstowcs
-also sets errno to indicate the error.
+also sets
+.Va errno
+to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
-The
 .Fn mbstowcs
-may causes an error in the following case:
+may cause an error in the following case:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
 .Fa s
-points the string containing invalid or incomplete multibyte character.
+points to a string containing an invalid or incomplete multibyte character.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO

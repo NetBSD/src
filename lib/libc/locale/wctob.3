@@ -1,4 +1,4 @@
-.\" $NetBSD: wctob.3,v 1.3 2003/04/16 13:34:41 wiz Exp $
+.\" $NetBSD: wctob.3,v 1.4 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -48,7 +48,7 @@ function converts a wide character
 to a corresponding single byte character in the initial shift state of
 the current locale.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn wctob
 is affected by the
 .Dv LC_CTYPE
@@ -60,7 +60,7 @@ The
 function returns:
 .Bl -tag -width 012345678901
 .It Dv EOF
-if
+If
 .Fa wc
 is
 .Dv WEOF
@@ -68,7 +68,7 @@ or if
 .Fa wc
 does not correspond to a valid single byte character representation.
 .It (otherwise)
-a single byte character corresponding to
+A single byte character corresponding to
 .Fa wc .
 .El
 .\" ----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-.\" $NetBSD: wcstombs.3,v 1.6 2004/01/21 12:40:14 jmmv Exp $
+.\" $NetBSD: wcstombs.3,v 1.7 2004/01/24 16:58:54 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -41,16 +41,15 @@
 .Fn wcstombs "const char * restrict s" "wchar_t * restrict pwcs" "size_t n"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
-The
 .Fn wcstombs
-converts the null-terminated wide character string pointed by
+converts the null-terminated wide character string pointed to by
 .Fa pwcs
 to the corresponding multibyte character string,
-and store it to the array pointed by
+and stores it in the array pointed to by
 .Fa s .
 This function may modify the first at most
 .Fa n
-bytes of the array pointed by
+bytes of the array pointed to by
 .Fa s .
 Each character will be converted as if
 .Xr wctomb 3
@@ -60,63 +59,64 @@ will not be affected.
 .Pp
 For state-dependent encoding, the
 .Fn wcstombs
-implies the result multibyte character string pointed by
+implies the result multibyte character string pointed to by
 .Fa s
 always to begin with an initial state.
 .Pp
-The behaviour of the
+The behaviour of
 .Fn wcstombs
-is affected by LC_CTYPE category of the current locale.
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
 .Pp
-There are special cases:
+These are the special cases:
 .Bl -tag -width 012345678901
 .It s == NULL
 The
 .Fn wcstombs
 returns the number of bytes to store the whole multibyte character string
-corresponding to the wide character string pointed by
+corresponding to the wide character string pointed to by
 .Fa pwcs .
 In this case,
 .Fa n
 is ignored.
 .It pwcs == NULL
-undefined (may causes the program to crash).
+Undefined (may cause the program to crash).
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
-The
 .Fn wcstombs
 returns:
 .Bl -tag -width 012345678901
 .It 0 or positive
-number of bytes stored to the array pointed by
+Number of bytes stored in the array pointed to by
 .Fa s .
-There is no cases that the value returned is greater than
+There are no cases that the value returned is greater than
 .Fa n
 (unless
 .Fa s
 is a null pointer).
 If the return value is equal to
 .Fa n ,
-the string pointed by
+the string pointed to by
 .Fa s
 will not be null-terminated.
 .It (size_t)-1
 .Fa pwcs
-points the string containing invalid wide character.
-The
+points to a string containing an invalid wide character.
 .Fn wcstombs
-also sets errno to indicate the error.
+also sets
+.Va errno
+to indicate the error.
 .El
 .\" ----------------------------------------------------------------------
 .Sh ERRORS
-The
 .Fn wcstombs
-may causes an error in the following case:
+may cause an error in the following case:
 .Bl -tag -width Er
 .It Bq Er EILSEQ
 .Fa pwcs
-points the string containing invalid wide character.
+points to a string containing an invalid wide character.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
