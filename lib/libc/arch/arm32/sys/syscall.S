@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.3 1997/10/06 00:07:22 mark Exp $	*/
+/*	$NetBSD: syscall.S,v 1.4 2000/12/12 07:10:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,6 @@
 #include "SYS.h"
 
 ENTRY(syscall)
-	swi	0x00000000
+	swi	SYS_syscall
 	bcs	cerror
-	mov	r15, r14
+	mov	pc, lr
