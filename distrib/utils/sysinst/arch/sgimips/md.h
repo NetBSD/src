@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.19 2004/11/13 10:26:39 sekiya Exp $	*/
+/*	$NetBSD: md.h,v 1.20 2004/11/13 11:49:08 sekiya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@
 #define PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
 #define PART_FIRST_FREE	PART_F
 
-#define BOOT_SIZE	MEG	/* Size in bytes, rounded to cylinders later */
+#define BOOT_SIZE	(4 * MEG)	/* Enough for a GENERIC kernel */
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
 #define DEFROOTSIZE	64	/* Default root size */
