@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 1999/03/28 21:31:11 simonb Exp $
+#	$NetBSD: Makefile,v 1.112 1999/03/29 16:40:44 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -202,7 +202,7 @@ distribution: distrib-dirs
 .ifndef NO_SENDMAIL
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
-.ifndef NO_POSTFIX
+.ifdef BUILD_POSTFIX
 	(cd ../usr.sbin/postfix/etc; ${MAKE} distribution)
 .endif
 
