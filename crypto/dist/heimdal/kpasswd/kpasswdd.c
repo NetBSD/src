@@ -32,7 +32,7 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$Id: kpasswdd.c,v 1.3 2001/02/11 14:13:09 assar Exp $");
+RCSID("$Id: kpasswdd.c,v 1.4 2001/06/19 22:39:56 assar Exp $");
 
 #include <kadm5/admin.h>
 
@@ -138,7 +138,8 @@ reply_error (krb5_principal server,
 			 &e_data,
 			 NULL,
 			 server,
-			 0,
+			 NULL,
+			 NULL,
 			 &error_data);
     krb5_data_free (&e_data);
     if (ret) {
@@ -366,7 +367,10 @@ process (krb5_principal server,
 	return;
     }
 
-    ret = krb5_sockaddr2address (sa, &other_addr);
+    krb5_auth_con_setflags (context, auth_context,
+			    KRB5_AUTH_CONTEXT_DO_SEQUENCE);
+
+    ret = krb5_sockaddr2address (context, sa, &other_addr);
     if (ret) {
 	krb5_warn (context, ret, "krb5_sockaddr2address");
 	goto out;
@@ -485,8 +489,7 @@ doit (krb5_keytab keytab, int port)
 	for (i = 0; i < n; ++i) {
 	    int sa_size;
 
-	    krb5_addr2sockaddr (&addrs.val[i], sa, &sa_size, port);
-
+	    krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
 	
 	    sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
 	    if (sockets[i] < 0)

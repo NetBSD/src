@@ -1,4 +1,4 @@
-@c $Id: migration.texi,v 1.1.1.2 2001/06/19 22:07:47 assar Exp $
+@c $Id: migration.texi,v 1.2 2001/06/19 22:39:54 assar Exp $
 
 @node Migration, Acknowledgments, Programming with Kerberos, Top
 @chapter Migration

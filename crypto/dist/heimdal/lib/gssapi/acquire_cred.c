@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: acquire_cred.c,v 1.5 2001/03/08 04:12:08 thorpej Exp $");
+RCSID("$Id: acquire_cred.c,v 1.6 2001/06/19 22:39:57 assar Exp $");
 
 OM_uint32 gss_acquire_cred
            (OM_uint32 * minor_status,
@@ -145,6 +145,7 @@ OM_uint32 gss_acquire_cred
  krb5_bad:
     ret = GSS_S_FAILURE;
     *minor_status = kret;
+    gssapi_krb5_set_error_string ();
 
  gssapi_bad:
     krb5_free_principal(gssapi_krb5_context, handle->principal);
