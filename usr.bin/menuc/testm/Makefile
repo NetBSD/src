@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/22 01:53:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1998/02/18 22:49:45 jtc Exp $
 
 MENUC!=cd $(.CURDIR)/..; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/menuc\n" | ${MAKE} -s -f-
@@ -9,8 +9,8 @@ PROG=	testm
 SRCS=	menu_defs.c main.c
 CPPFLAGS+=-I.
 WARNS=	1
-LDADD+=	-lcurses -ltermcap
-DPADD+=	${LIBCURSES} ${LIBTERMCAP}
+LDADD+=	-lcurses
+DPADD+=	${LIBCURSES}
 NOMAN=	noman
 
 CLEANFILES+= menu_defs.c menu_defs.h
