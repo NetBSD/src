@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.104.4.3 2003/09/10 19:00:09 tron Exp $	*/
+/*	$NetBSD: if.c,v 1.104.4.4 2004/03/12 06:00:37 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.104.4.3 2003/09/10 19:00:09 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.104.4.4 2004/03/12 06:00:37 jmc Exp $");
 
 #include "opt_inet.h"
 
@@ -370,7 +370,8 @@ if_attach(ifp)
 	if (ifindex2ifnet == 0)
 		if_index++;
 	else
-		while (ifindex2ifnet[ifp->if_index] != NULL) {
+		while (ifp->if_index < if_indexlim &&
+		    ifindex2ifnet[ifp->if_index] != NULL) {
 			++if_index;
 			if (if_index == 0)
 				if_index = 1;
@@ -405,28 +406,31 @@ if_attach(ifp)
 	 */
 	if (ifnet_addrs == 0 || ifindex2ifnet == 0 ||
 	    ifp->if_index >= if_indexlim) {
-		size_t n;
+		size_t m, n, oldlim;
 		caddr_t q;
 		
+		oldlim = if_indexlim;
 		while (ifp->if_index >= if_indexlim)
 			if_indexlim <<= 1;
 
 		/* grow ifnet_addrs */
+		m = oldlim * sizeof(struct ifaddr *);
 		n = if_indexlim * sizeof(struct ifaddr *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
 		memset(q, 0, n);
 		if (ifnet_addrs) {
-			bcopy((caddr_t)ifnet_addrs, q, n/2);
+			bcopy((caddr_t)ifnet_addrs, q, m);
 			free((caddr_t)ifnet_addrs, M_IFADDR);
 		}
 		ifnet_addrs = (struct ifaddr **)q;
 
 		/* grow ifindex2ifnet */
+		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
 		memset(q, 0, n);
 		if (ifindex2ifnet) {
-			bcopy((caddr_t)ifindex2ifnet, q, n/2);
+			bcopy((caddr_t)ifindex2ifnet, q, m);
 			free((caddr_t)ifindex2ifnet, M_IFADDR);
 		}
 		ifindex2ifnet = (struct ifnet **)q;
