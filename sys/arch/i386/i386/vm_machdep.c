@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.6 1993/07/18 08:23:15 andrew Exp $
+ *	$Id: vm_machdep.c,v 1.7 1993/08/02 23:20:55 mycroft Exp $
  */
 
 /*
@@ -172,6 +172,7 @@ cpu_exit(p)
 #endif
 	splclock();
 	swtch();
+	panic("cpu_exit: swtch returned");
 }
 
 void
