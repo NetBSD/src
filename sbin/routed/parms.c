@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.8 1997/09/19 16:25:49 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.9 1998/02/04 15:06:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.8 1997/09/19 16:25:49 christos Exp $");
+__RCSID("$NetBSD: parms.c,v 1.9 1998/02/04 15:06:11 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -430,6 +430,7 @@ parse_ts(time_t *tp,
 	 u_int bufsize)
 {
 	struct tm tm;
+	char *ptr;
 
 	if (0 > parse_quote(valp, "| ,\n\r", delimp,
 			    buf,bufsize)
@@ -440,14 +441,12 @@ parse_ts(time_t *tp,
 	}
 	strcat(buf,"\n");
 	memset(&tm, 0, sizeof(tm));
-	if (5 != sscanf(buf, "%u/%u/%u@%u:%u\n",
-			&tm.tm_year, &tm.tm_mon, &tm.tm_mday,
-			&tm.tm_hour, &tm.tm_min)) {
+
+	ptr = strptime(buf, "%y/%m/%d@%H:%M\n", &tm);
+	if (ptr == NULL || *ptr != '\0') {
 		sprintf(buf,"bad timestamp %.25s", val0);
 		return buf;
 	}
-	if (tm.tm_year <= 37)
-		tm.tm_year += 100;
 
 	if ((*tp = mktime(&tm)) == -1) {
 		sprintf(buf,"bad timestamp %.25s", val0);
