@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.11 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: C.c,v 1.12 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.11 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: C.c,v 1.12 2005/02/17 17:29:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,17 +48,17 @@ __RCSID("$NetBSD: C.c,v 1.11 2004/06/20 22:20:15 jmc Exp $");
 
 #include "ctags.h"
 
-static int	func_entry __P((void));
-static void	hash_entry __P((void));
-static void	skip_string __P((int));
-static int	str_entry __P((int));
+static int	func_entry(void);
+static void	hash_entry(void);
+static void	skip_string(int);
+static int	str_entry(int);
 
 /*
  * c_entries --
  *	read .c and .h files and call appropriate routines
  */
 void
-c_entries()
+c_entries(void)
 {
 	int	c;			/* current character */
 	int	level;			/* brace level */
@@ -255,7 +255,7 @@ c_entries()
  *	handle a function reference
  */
 static int
-func_entry()
+func_entry(void)
 {
 	int	c;			/* current character */
 	int	level = 0;		/* for matching '()' */
@@ -353,7 +353,7 @@ fnd:
  *	handle a line starting with a '#'
  */
 static void
-hash_entry()
+hash_entry(void)
 {
 	int	c;			/* character read */
 	int	curline;		/* line started on */
@@ -410,8 +410,7 @@ skip:	if (c == '\n') {		/* get rid of rest of define */
  *	handle a struct, union or enum entry
  */
 static int
-str_entry(c)
-	int	c;			/* current character */
+str_entry(int c /* current character */)
 {
 	int	curline;		/* line started on */
 	char	*sp;			/* buffer pointer */
@@ -493,8 +492,7 @@ skip_comment(int commenttype)
  *	skip to the end of a string or character constant.
  */
 void
-skip_string(key)
-	int	key;
+skip_string(int key)
 {
 	int	c,
 		skip;
@@ -519,8 +517,7 @@ skip_string(key)
  *	skip to next char "key"
  */
 int
-skip_key(key)
-	int	key;
+skip_key(int key)
 {
 	int	c,
 		skip,
