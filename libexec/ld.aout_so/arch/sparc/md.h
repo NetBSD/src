@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.16 1998/12/15 21:22:52 pk Exp $	*/
+/*	$NetBSD: md.h,v 1.17 2000/05/28 01:53:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,6 @@
 
 #define RELOC_STATICS_THROUGH_GOT_P(r)		(1)
 #define JMPSLOT_NEEDS_RELOC			(1)
-#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		(1)
 #define	JMPSLOT_NONEXTERN_IS_INTERMODULE	(0)
 
 /*
