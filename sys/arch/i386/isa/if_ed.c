@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.19 1994/02/10 16:43:01 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.20 1994/02/10 17:07:14 mycroft Exp $
  */
 
 #include "ed.h"
@@ -93,7 +93,7 @@ struct	ed_softc {
  *	being write-only. It's sort of a prototype/shadow of the real thing.
  */
 	u_char	wd_laar_proto;
-	u_char	wd_cr_rd2;	/* WD_CR_RD2 if not 790; 0 if 790 */
+	u_char	ed_cr_rd2;	/* ED_CR_RD2 if not 790; 0 if 790 */
 	u_char	isa16bit;	/* width of access to card 0=8 or 1=16 */
 	u_char	is790;		/* set by probe if NIC is a 790 */
 
@@ -417,7 +417,7 @@ ed_probe_WD80x3(ia, sc)
 	 *		bother...if we get past this, it *has* to be correct.
 	 */
 	if (sc->is790) {
-		sc->wd_cr_rd2 = 0;
+		sc->ed_cr_rd2 = 0;
 		/*
 		 * Assemble together the encoded interrupt number.
 		 */
@@ -438,7 +438,7 @@ ed_probe_WD80x3(ia, sc)
 			return 0;
 		}
 	} else if (sc->type & ED_WD_SOFTCONFIG) {
-		sc->wd_cr_rd2 = WD_CR_RD2;
+		sc->ed_cr_rd2 = ED_CR_RD2;
 		/*
 		 * Assemble together the encoded interrupt number.
 		 */
@@ -618,7 +618,7 @@ ed_probe_3Com(ia, sc)
 
 	sc->asic_addr = ia->ia_iobase + ED_3COM_ASIC_OFFSET;
 	sc->nic_addr = ia->ia_iobase + ED_3COM_NIC_OFFSET;
-	sc->wd_cr_rd2 = WD_CR_RD2;
+	sc->ed_cr_rd2 = ED_CR_RD2;
 
 	/*
 	 * Verify that the kernel configured I/O address matches the board
@@ -903,7 +903,7 @@ ed_probe_Novell(ia, sc)
 
 	sc->asic_addr = ia->ia_iobase + ED_NOVELL_ASIC_OFFSET;
 	sc->nic_addr = ia->ia_iobase + ED_NOVELL_NIC_OFFSET;
-	sc->wd_cr_rd2 = WD_CR_RD2;
+	sc->ed_cr_rd2 = ED_CR_RD2;
 
 	/* XXX - do Novell-specific probe here */
 
@@ -1176,7 +1176,7 @@ ed_stop(sc)
 	/*
 	 * Stop everything on the interface, and select page 0 registers.
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_STP | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_STP | sc->ed_cr_rd2);
 
 	/*
 	 * Wait for interface to enter stopped state, but limit # of checks
@@ -1239,7 +1239,7 @@ ed_init(sc)
 	/*
 	 * Set interface for page 0, Remote DMA complete, Stopped
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_STP | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_STP | sc->ed_cr_rd2);
 
 	if (sc->isa16bit) {
 		/*
@@ -1310,7 +1310,7 @@ ed_init(sc)
 	/*
 	 * Program Command Register for page 1
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STP | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STP | sc->ed_cr_rd2);
 
 	/*
 	 * Copy out our station address
@@ -1344,7 +1344,7 @@ ed_init(sc)
 	 * Set Command Register for page 0, Remote DMA complete,
 	 * 	and interface Start.
 	 */
-	outb(sc->nic_addr + ED_P1_CR, ED_CR_STA | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P1_CR, ED_CR_STA | sc->ed_cr_rd2);
 
 	/*
 	 * Clear all interrupts.
@@ -1406,7 +1406,7 @@ static inline void ed_xmit(ifp)
 	/*
 	 * Set NIC for page 0 register access
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->ed_cr_rd2);
 
 	/*
 	 * Set TX buffer start page
@@ -1423,7 +1423,7 @@ static inline void ed_xmit(ifp)
 	/*
 	 * Set page 0, Remote DMA complete, Transmit Packet, and *Start*
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_TXP|ED_CR_STA | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_TXP|ED_CR_STA | sc->ed_cr_rd2);
 
 	sc->xmit_busy = 1;
 	
@@ -1658,7 +1658,7 @@ ed_rint(sc)
 	/*
 	 * Set NIC to page 1 registers to get 'current' pointer
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STA | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_PAGE_1|ED_CR_STA | sc->ed_cr_rd2);
 
 	/*
 	 * 'sc->next_packet' is the logical beginning of the ring-buffer - i.e.
@@ -1720,7 +1720,7 @@ ed_rint(sc)
 		/*
 		 * Set NIC to page 0 registers to update boundry register
 		 */
-		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->wd_cr_rd2);
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->ed_cr_rd2);
 		outb(sc->nic_addr + ED_P0_BNRY, boundry);
 
 		/*
@@ -1728,7 +1728,7 @@ ed_rint(sc)
 		 *	get 'CURR' current pointer)
 		 */
 		outb(sc->nic_addr + ED_P0_CR,
-		    ED_CR_PAGE_1|ED_CR_STA | sc->wd_cr_rd2);
+		    ED_CR_PAGE_1|ED_CR_STA | sc->ed_cr_rd2);
 	}
 }
 
@@ -1746,7 +1746,7 @@ edintr(aux)
 	/*
 	 * Set NIC to page 0 registers
 	 */
-	outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->wd_cr_rd2);
+	outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->ed_cr_rd2);
 
 	if (!(isr = inb(sc->nic_addr + ED_P0_ISR)))
 		return 0;
@@ -1923,7 +1923,7 @@ edintr(aux)
 		 *	in the transmit routine, is *okay* - it is 'edge'
 		 *	triggered from low to high)
 		 */
-		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->wd_cr_rd2);
+		outb(sc->nic_addr + ED_P0_CR, ED_CR_STA | sc->ed_cr_rd2);
 
 		/*
 		 * If the Network Talley Counters overflow, read them to
