@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.28 1998/08/12 00:03:23 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.29 1998/09/08 07:16:46 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -48,7 +48,6 @@ static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
 	ispreq_t *, u_int8_t *, u_int8_t));
 static void isp_pci_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
 	u_int32_t));
-
 static void isp_pci_reset1 __P((struct ispsoftc *));
 static void isp_pci_dumpregs __P((struct ispsoftc *));
 static int isp_pci_intr __P((void *));
@@ -66,8 +65,8 @@ static struct ispmdvec mdvec = {
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
 	ISP_CODE_VERSION,
-	BIU_PCI_CONF1_FIFO_64 | BIU_BURST_ENABLE,
-	60	/* MAGIC- all known PCI card implementations are 60MHz */
+	BIU_BURST_ENABLE,	/* default to 8 byte burst */
+	0
 };
 
 static struct ispmdvec mdvec_2100 = {
@@ -83,8 +82,8 @@ static struct ispmdvec mdvec_2100 = {
 	ISP2100_CODE_LENGTH,
 	ISP2100_CODE_ORG,
 	ISP2100_CODE_VERSION,
-	BIU_PCI_CONF1_FIFO_64 | BIU_BURST_ENABLE,
-	60	/* MAGIC- all known PCI card implementations are 60MHz */
+	BIU_BURST_ENABLE,	/* default to 8 byte burst */
+	0			/* Not relevant to the 2100 */
 };
 
 #define	PCI_QLOGIC_ISP	\
@@ -143,7 +142,7 @@ isp_pci_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-#ifdef DEBUG
+#ifdef	DEBUG
 	static char oneshot = 1;
 #endif
 	struct pci_attach_args *pa = aux;
@@ -243,7 +242,6 @@ isp_pci_attach(parent, self, aux)
 	} else {
 		return;
 	}
-
 #ifdef DEBUG
 	if (oneshot) {
 		oneshot = 0;
@@ -253,7 +251,6 @@ isp_pci_attach(parent, self, aux)
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
 	}
 #endif
-
 	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
