@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.185 2003/01/18 06:45:03 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.186 2003/02/21 19:04:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3545,14 +3545,32 @@ dostart:
 	/*
 	 * Startup.
 	 *
-	 * We have been loaded in low RAM, at some address which
+	 * We may have been loaded in low RAM, at some address which
 	 * is page aligned (PROM_LOADADDR actually) rather than where we
 	 * want to run (KERNBASE+PROM_LOADADDR).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
 
 	/*
-	 * We now use the bootinfo method to pass arguments, and the new
+	 * Find out if the above is the case.
+	 */
+0:	call	1f
+	 sethi	%hi(0b), %l0		! %l0 = virtual address of 0:
+1:	or	%l0, %lo(0b), %l0
+	sub	%l0, %o7, %l7		! subtract actual physical address of 0:
+
+	/*
+	 * If we're already running at our desired virtual load address,
+	 * %l7 will be set to 0, otherwise it will be KERNBASE.
+	 * From now on until the end of locore bootstrap code, %l7 will
+	 * be used to relocate memory references.
+	 */
+#define RELOCATE(l,r)		\
+	set	l, r;		\
+	sub	r, %l7, r
+
+	/*
+	 * We use the bootinfo method to pass arguments, and the new
 	 * magic number indicates that. A pointer to the kernel top, i.e.
 	 * the first address after the load kernel image (including DDB
 	 * symbols, if any) is passed in %o4[0] and the bootinfo structure
@@ -3576,7 +3594,6 @@ dostart:
 	 * the difference between KERNBASE and the old value (known to be
 	 * 0xf8000000) compiled into pre-1.3 bootblocks.
 	 */
-	set	KERNBASE, %l4
 
 	set	0x44444232, %l3		! bootinfo magic
 	cmp	%o5, %l3
@@ -3585,19 +3602,20 @@ dostart:
 
 	/* The loader has passed to us a `bootinfo' structure */
 	ld	[%o4], %l3		! 1st word is kernel_top
-	add	%l3, %l4, %o5		! relocate: + KERNBASE
-	sethi	%hi(_C_LABEL(kernel_top) - KERNBASE), %l3 ! and store it
-	st	%o5, [%l3 + %lo(_C_LABEL(kernel_top) - KERNBASE)]
+	add	%l3, %l7, %o5		! relocate: + KERNBASE
+	RELOCATE(_C_LABEL(kernel_top),%l3)
+	st	%o5, [%l3]		! and store it
 
 	ld	[%o4 + 4], %l3		! 2nd word is bootinfo
-	add	%l3, %l4, %o5		! relocate
-	sethi	%hi(_C_LABEL(bootinfo) - KERNBASE), %l3	! store bootinfo
-	st	%o5, [%l3 + %lo(_C_LABEL(bootinfo) - KERNBASE)]
+	add	%l3, %l7, %o5		! relocate
+	RELOCATE(_C_LABEL(bootinfo),%l3)
+	st	%o5, [%l3]		! store bootinfo
 	b,a	4f
 
 1:
 #ifdef DDB
 	/* Check for old-style DDB loader magic */
+	set	KERNBASE, %l4
 	set	0x44444231, %l3		! Is it DDB_MAGIC1?
 	cmp	%o5, %l3
 	be,a	2f
@@ -3625,8 +3643,8 @@ dostart:
 	 * let it default to `end'.
 	 */
 	set	end, %o4
-	sethi	%hi(_C_LABEL(kernel_top) - KERNBASE), %l3 ! store kernel_top
-	st	%o4, [%l3 + %lo(_C_LABEL(kernel_top) - KERNBASE)]
+	RELOCATE(_C_LABEL(kernel_top),%l3)
+	st	%o4, [%l3]	! store kernel_top
 
 4:
 
@@ -3665,15 +3683,15 @@ dostart:
 	call	%o4
 	 mov	0, %o0			! node
 
-	mov	%o0, %l0
-	set	cputypvar-KERNBASE, %o1	! name = "compatible"
-	set	cputypval-KERNBASE, %o2	! buffer ptr (assume buffer long enough)
+	!mov	%o0, %l0
+	RELOCATE(cputypvar,%o1)		! name = "compatible"
+	RELOCATE(cputypval,%l2)		! buffer ptr (assume buffer long enough)
 	ld	[%g7 + PV_NODEOPS], %o4	! (void)pv->pv_nodeops->no_getprop(...)
 	ld	[%o4 + NO_GETPROP], %o4
 	call	 %o4
-	 nop
-	set	cputypval-KERNBASE, %o2	! buffer ptr
-	ldub	[%o2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
+	 mov	%l2, %o2
+	!set	cputypval-KERNBASE, %o2	! buffer ptr
+	ldub	[%l2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
 	cmp	%o0, 'c'
 	be	is_sun4c
 	 nop
@@ -3705,7 +3723,7 @@ is_sun4m:
 	b	start_havetype
 	 mov	CPU_SUN4M, %g4
 #else
-	set	sun4m_notsup-KERNBASE, %o0
+	RELOCATE(sun4m_notsup,%o0)
 	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4m architecture is not supported
@@ -3721,7 +3739,7 @@ is_sun4d:
 	b	start_havetype
 	 mov	CPU_SUN4D, %g4
 #else
-	set	sun4d_notsup-KERNBASE, %o0
+	RELOCATE(sun4d_notsup,%o0)
 	ld	[%g7 + PV_EVAL], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4d architecture is not supported
@@ -3741,7 +3759,7 @@ is_sun4c:
 	b	start_havetype
 	 mov	CPU_SUN4C, %g4		! XXX CPU_SUN4
 #else
-	set	sun4c_notsup-KERNBASE, %o0
+	RELOCATE(sun4c_notsup,%o0)
 
 	ld	[%g7 + PV_ROMVEC_VERS], %o1
 	cmp	%o1, 0
@@ -3751,6 +3769,7 @@ is_sun4c:
 	! stupid version 0 rom interface is pv_eval(int length, char *string)
 	mov	%o0, %o1
 2:	ldub	[%o0], %o4
+	tst	%o4
 	bne	2b
 	 inc	%o0
 	dec	%o0
@@ -3777,7 +3796,7 @@ is_sun4:
 #else
 	set	PROM_BASE, %g7
 
-	set	sun4_notsup-KERNBASE, %o0
+	RELOCATE(sun4_notsup,%o0)
 	ld	[%g7 + OLDMON_PRINTF], %o1
 	call	%o1			! print a message saying that the
 	 nop				! sun4 architecture is not supported
@@ -3788,6 +3807,9 @@ is_sun4:
 #endif
 
 start_havetype:
+	cmp	%l7, 0
+	be	startmap_done
+
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
 	 * to KERNBASE (addresses [KERNBASE.._end-1]).  None of these
