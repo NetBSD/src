@@ -152,7 +152,7 @@
 .de St
 .if \\n(aC==0 \{\
 .	ie \\n(.$==0 \{\
-.tm Usage: .St [-p1003.1-88 | -p1003.2 | -ansiC-89 | -iso ] \\*(Pu ... (#\\n(.c)
+.tm Usage: .St [-p1003.1-90 | -p1003.2 | -ansiC-89 | -iso ] \\*(Pu ... (#\\n(.c)
 .	\}
 .	el \{\
 .		ds mN St
@@ -175,6 +175,16 @@
 .	nr cZ \\n(.s
 .	ds aa \&\f\\n(cF\s\\n(cZ
 .	nr aP \\n(aP+1
+.       if "\\*(A\\n(aP"-p1003.1-90" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
+.			as b1 (``\\*(tN\\*(Px\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
+.			as b1 (``\\*(tN\\*(Px\\*(aa'')
+.		\}
+.       \}
 .       if "\\*(A\\n(aP"-p1003.1-88" \{\
 .		ie \\n(sT==1 \{\
 .			ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1988\\*(sV
@@ -185,14 +195,24 @@
 .			as b1 (``\\*(tN\\*(Px\\*(aa'')
 .		\}
 .       \}
+.       if "\\*(A\\n(aP"-p1003.2-92" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2-1992\\*(sV
+.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2-1992\\*(sV
+.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
+.		\}
+.       \}
 .       if "\\*(A\\n(aP"-p1003.2" \{\
 .		ie \\n(sT==1 \{\
-.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
+.			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2\\*(sV
+.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
 .		\}
 .		el \{\
 .			ds b1 \&\\*(tNIEEE Std\\*(aa1003.2\\*(sV
-.			as b1 (``\\*(tN\\*(Px\\*(aa'')
+.			as b1 (``\\*(tN\\*(Px.2\\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-ansiC" \{\
