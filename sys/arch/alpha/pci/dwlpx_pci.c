@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.8 1997/09/02 13:19:28 thorpej Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.8.4.1 1998/11/04 03:28:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.8 1997/09/02 13:19:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.8.4.1 1998/11/04 03:28:21 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ dwlpx_conf_read(cpv, tag, offset)
 	paddr |= (((unsigned long) sc->dwlpx_hosenum) << 34);
 	paddr |= (((u_long) sc->dwlpx_node - 4) << 36);
 	paddr |= (1LL << 39);
-	paddr |= (1LL << 3);	/* 32 Bit PCI byte enables */
+	paddr |= (3LL << 3);	/* 32 Bit PCI byte enables */
 
 	dp = (pcireg_t *)KV(paddr);
 	if (badaddr(dp, sizeof (*dp)) == 0) {
@@ -242,7 +242,7 @@ dwlpx_conf_write(cpv, tag, offset, data)
 	paddr |= (((unsigned long) sc->dwlpx_hosenum) << 34);
 	paddr |= (((u_long) sc->dwlpx_node - 4) << 36);
 	paddr |= (1LL << 39);
-	paddr |= (1LL << 3);	/* 32 bit PCI byte enables */
+	paddr |= (3LL << 3);	/* 32 bit PCI byte enables */
 
 	dp = (pcireg_t *)KV(paddr);
 	*dp = data;
