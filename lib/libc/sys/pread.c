@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $	*/
+/*	$NetBSD: pread.c,v 1.6 2003/01/18 11:33:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pread.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $");
+__RCSID("$NetBSD: pread.c,v 1.6 2003/01/18 11:33:09 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,15 +44,18 @@ __RCSID("$NetBSD: pread.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(pread,_pread)
+__weak_alias(pread,_sys_pread)
+__weak_alias(_pread,_sys_pread)
 #endif
+
+ssize_t	 _sys_pread __P((int, void *, size_t, off_t));
 
 /*
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-pread(fd, buf, nbyte, offset)
+_sys_pread(fd, buf, nbyte, offset)
 	int fd;
 	void *buf;
 	size_t nbyte;

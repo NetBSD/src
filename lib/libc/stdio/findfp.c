@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.15 2002/03/12 22:56:16 christos Exp $	*/
+/*	$NetBSD: findfp.c,v 1.16 2003/01/18 11:29:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.15 2002/03/12 22:56:16 christos Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.16 2003/01/18 11:29:52 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: findfp.c,v 1.15 2002/03/12 22:56:16 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "reentrant.h"
 #include "local.h"
 #include "glue.h"
-#include "reentrant.h"
 
 int	__sdidinit;
 
@@ -73,7 +73,14 @@ static FILE usual[FOPEN_MAX - 3];
 static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 
+#ifdef _REENTRANT
+#define STDEXT { {0}, {{{0}}}, MUTEX_INITIALIZER, COND_INITIALIZER, NULL, 0}
+struct __sfileext __sFext[3] = { STDEXT,
+				 STDEXT,
+				 STDEXT};
+#else
 struct __sfileext __sFext[3];
+#endif
 
 FILE __sF[3] = {
 	std(__SRD, STDIN_FILENO),		/* stdin */
@@ -85,7 +92,7 @@ struct glue __sglue = { &uglue, 3, __sF };
 static struct glue *moreglue __P((int));
 void f_prealloc __P((void));
 
-#ifdef _REENT
+#ifdef _REENTRANT
 rwlock_t __sfp_lock = RWLOCK_INITIALIZER;
 #endif
 

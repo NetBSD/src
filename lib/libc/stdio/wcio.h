@@ -1,4 +1,4 @@
-/* $NetBSD: wcio.h,v 1.2 2001/12/07 12:18:53 yamt Exp $ */
+/* $NetBSD: wcio.h,v 1.3 2003/01/18 11:30:00 thorpej Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
