@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.20 2002/09/04 02:45:16 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.21 2002/09/04 02:50:27 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1362,3 +1362,7 @@ etc/etc.i386/ttys				1.12
   boot console tty, so that the console is on the same place that the kernel
   dmesg output goes, whether wscons or serial.  Users who want to use tty00
   or ttyE0 explicitly can change /etc/ttys themselves.
+
+usr.bin/getconf/getconf.c			1.17-1.18
+  Fix acient cut and paste error which made "_POSIX_PATH_MAX" actually
+  return "_POSIX_PIPE_BUF".
