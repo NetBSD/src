@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.48.2.1 1994/07/26 19:54:22 cgd Exp $
+ *	$Id: fd.c,v 1.48.2.2 1994/08/01 17:13:45 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -891,7 +891,7 @@ again:
 		else
 			out_fdc(iobase, NE7CMD_WRITE);	/* WRITE */
 		out_fdc(iobase, (head << 2) | fd->sc_drive);
-		out_fdc(iobase, fd->sc_track);		/* track */
+		out_fdc(iobase, fd->sc_track / type->step);	/* track */
 		out_fdc(iobase, head);
 		out_fdc(iobase, sec + 1);		/* sector +1 */
 		out_fdc(iobase, type->secsize);		/* sector size */
@@ -1151,7 +1151,6 @@ fdioctl(dev, cmd, addr, flag)
 		/* XXX do something */
 		return 0;
 
-	case DIOCSDINFO:
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1164,8 +1163,9 @@ fdioctl(dev, cmd, addr, flag)
 		return error;
 
 	default:
-		return EINVAL;
+		return ENOTTY;
 	}
+
 #ifdef DIAGNOSTIC
 	panic("fdioctl: impossible");
 #endif
