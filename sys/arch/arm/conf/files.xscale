@@ -1,0 +1,18 @@
+#	$NetBSD: files.xscale,v 1.1 2001/08/26 19:19:09 matt Exp $
+#
+# Shared xscale files information
+
+defopt	I80312
+
+# i80312 specific files
+define	iopxs {}
+device	iopxs: pcibus
+attach	iopxs at mainbus
+file	arch/arm/xscale/iopxs.c			iopxs
+file	arch/arm/xscale/iopxs_machdep.c		iopxs
+file	arch/arm/xscale/iopxs_io.c		iopxs
+file	arch/arm/xscale/iopxs_io_asm.S		iopxs
+file	arch/arm/xscale/iopxs_pci.c		iopxs
+file	arch/arm/xscale/iopxs_irq.S		iopxs
+file	arch/arm/xscale/iopxs_irqhandler.c	iopxs
+file	arch/arm/xscale/iopxs_clock.c		iopxs
