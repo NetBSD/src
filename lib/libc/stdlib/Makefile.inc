@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.46 2000/03/08 20:17:20 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2000/04/02 20:27:58 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -7,10 +7,10 @@
 SRCS+=	_rand48.c _strtoll.c _strtoull.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c calloc.c drand48.c erand48.c exit.c \
-	getenv.c getopt.c getsubopt.c heapsort.c jrand48.c l64a.c \
-	lldiv.c lcong48.c lrand48.c malloc.c merge.c mrand48.c multibyte.c \
-	nrand48.c putenv.c qabs.c qdiv.c qsort.c radixsort.c rand.c \
-	rand_r.c random.c seed48.c setenv.c srand48.c strtod.c \
+	getenv.c getopt.c getopt_long.c getsubopt.c heapsort.c jrand48.c \
+	l64a.c lldiv.c lcong48.c lrand48.c malloc.c merge.c mrand48.c \
+	multibyte.c nrand48.c putenv.c qabs.c qdiv.c qsort.c radixsort.c \
+	rand.c rand_r.c random.c seed48.c setenv.c srand48.c strtod.c \
 	strtol.c strtoll.c strtoq.c strtoul.c strtoull.c strtouq.c system.c \
 	tdelete.c tfind.c tsearch.c twalk.c
 
@@ -21,7 +21,7 @@ SRCS+=	_rand48.c _strtoll.c _strtoull.c \
 .include "${ARCHDIR}/stdlib/Makefile.inc"
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
-	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getsubopt.3 \
+	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getopt_long.3 getsubopt.3 \
 	labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 qabs.3 qdiv.3 qsort.3 \
 	radixsort.3 rand48.3 rand.3 random.3 strtod.3 \
 	strtol.3 strtoul.3 system.3 tsearch.3
