@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 1997/01/03 18:23:41 cgd Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 1997/03/10 23:13:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -78,7 +78,7 @@ extern void	__fini __P((void));
 #ifdef DYNAMIC
 void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
 
-const Obj_Entry *mainprog_obj;
+const Obj_Entry *__mainprog_obj;
 
 /*
  * Arrange for _DYNAMIC to exist weakly at address zero.  That way,
@@ -171,7 +171,7 @@ rtld_setup(cleanup, obj)
 	if (obj->version != RTLD_VERSION)
 		_FATAL("Dynamic linker version mismatch");
 
-	mainprog_obj = obj;
+	__mainprog_obj = obj;
 	atexit(cleanup);
 }
 
@@ -181,9 +181,9 @@ dlopen(name, mode)
 	int mode;
 {
 
-	if (mainprog_obj == NULL)
+	if (__mainprog_obj == NULL)
 		return NULL;
-	return (mainprog_obj->dlopen)(name, mode);
+	return (__mainprog_obj->dlopen)(name, mode);
 }
 
 int
@@ -191,9 +191,9 @@ dlclose(fd)
 	void *fd;
 {
 
-	if (mainprog_obj == NULL)
+	if (__mainprog_obj == NULL)
 		return -1;
-	return (mainprog_obj->dlclose)(fd);
+	return (__mainprog_obj->dlclose)(fd);
 }
 
 void *
@@ -202,9 +202,9 @@ dlsym(fd, name)
 	const char *name;
 {
 
-	if (mainprog_obj == NULL)
+	if (__mainprog_obj == NULL)
 		return NULL;
-	return (mainprog_obj->dlsym)(fd, name);
+	return (__mainprog_obj->dlsym)(fd, name);
 }
 
 #if 0 /* not supported for ELF shlibs, apparently */
@@ -214,9 +214,9 @@ dlctl(fd, cmd, arg)
 	int cmd;
 {
 
-	if (mainprog_obj == NULL)
+	if (__mainprog_obj == NULL)
 		return -1;
-	return (mainprog_obj->dlctl)(fd, cmd, arg);
+	return (__mainprog_obj->dlctl)(fd, cmd, arg);
 }
 #endif
 
@@ -224,8 +224,8 @@ char *
 dlerror()
 {
 
-	if (mainprog_obj == NULL)
+	if (__mainprog_obj == NULL)
 		return NULL;
-	return (mainprog_obj->dlerror)();
+	return (__mainprog_obj->dlerror)();
 }
 #endif /* DYNAMIC */
