@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2003/05/04 12:00:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -520,6 +520,7 @@ sendsig(sig, mask, code)
 	fp = (struct sigframe *)sp - 1;
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
+		fpusave_lwp(l, 1);
 		frame.sf_sc.sc_fpstate =
 		    (struct fxsave64 *)&fp->sf_sc.sc_mcontext.__fpregs;
 		memcpy(&frame.sf_sc.sc_mcontext.__fpregs,
@@ -653,7 +654,8 @@ sys___sigreturn14(l, v, retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((caddr_t)scp, &context,
+	    sizeof(struct sigcontext) - sizeof(struct fxsave64)) != 0)
 		return EFAULT;
 
 	/* Restore register context. */
@@ -674,7 +676,7 @@ sys___sigreturn14(l, v, retval)
 	/* Restore (possibly fixed up) FP state and force it to be reloaded */
 	if (l->l_md.md_flags & MDP_USEDFPU) {
 		fpusave_lwp(l, 0);
-		if (copyin(context.sc_fpstate,
+		if (context.sc_fpstate != NULL && copyin(context.sc_fpstate,
 		    &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64)) != 0)
 			return EFAULT;
