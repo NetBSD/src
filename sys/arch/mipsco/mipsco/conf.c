@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2001/09/15 01:11:02 wdk Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2002/01/12 13:32:11 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,9 @@
 
 cdev_decl(com);
 cdev_decl(lpt);
+
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct bdevsw	bdevsw[] =
 {
@@ -199,6 +202,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 72: */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 73: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 74: RAIDframe disk driver */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 75: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -303,6 +307,7 @@ static int chrtoblktbl[] =  {
 	/* 72 */	NODEV,
 	/* 73 */	NODEV,
 	/* 74 */	32,
+	/* 75 */	NODEV,
 };
 
 /*
