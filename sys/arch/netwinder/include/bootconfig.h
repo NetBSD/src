@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.1 2001/04/19 07:11:01 matt Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.2 2002/04/12 18:01:17 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,8 +41,6 @@
  *
  * Based on kate/boot/bootconfig.h
  */
-
-#include "opt_footbridge.h"
 
 typedef struct _PhysMem {
 	u_int address;
