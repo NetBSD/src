@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.1 1998/06/08 17:49:42 tv Exp $	*/
+/*	$NetBSD: ess.c,v 1.2 1998/06/08 20:23:07 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -32,10 +32,6 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
-
-#if 0
-static char *rcsid = "@(#) $RCSfile: ess.c,v $ $Revision: 1.1 $ (SHARK) $Date: 1998/06/08 17:49:42 $";
-#endif
 
 /*
 **++

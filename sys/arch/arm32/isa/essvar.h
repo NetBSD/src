@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.1 1998/06/08 17:49:43 tv Exp $	*/
+/*	$NetBSD: essvar.h,v 1.2 1998/06/08 20:23:08 tv Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,8 +34,6 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.1 $ (SHARK) $Date: 1998/06/08 17:49:43 $
-**
 **++
 **
 **  essvar.h
