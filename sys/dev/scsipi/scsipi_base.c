@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.11 1998/09/18 05:53:07 scottr Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.12 1998/10/10 03:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -498,7 +498,8 @@ sc_err1(xs, async)
 		}
 	case XS_TIMEOUT:
 	retry:
-		if (xs->retries--) {
+		if (xs->retries) {
+			xs->retries--;
 			xs->error = XS_NOERROR;
 			xs->flags &= ~ITSDONE;
 			return (ERESTART);
@@ -510,6 +511,15 @@ sc_err1(xs, async)
 
 	case XS_SELTIMEOUT:
 		/* XXX Disable device? */
+		error = EIO;
+		break;
+
+	case XS_RESET:
+		if (xs->retries) {
+			SC_DEBUG(xs->sc_link, SDEV_DB3,
+			    ("restarting command destroyed by reset\n"));
+			goto retry;
+		}
 		error = EIO;
 		break;
 
