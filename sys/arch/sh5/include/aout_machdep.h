@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.1 2002/07/05 13:31:55 scw Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.2 2002/12/10 17:14:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,6 +30,6 @@
 #ifndef _SH5_AOUT_MACHDEP_H_
 #define	_SH5_AOUT_MACHDEP_H_
 
-#define	__LDPGSZ	4096
+#define	AOUT_LDPGSZ	4096
 
 #endif /* SH5_AOUT_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.2 2002/12/10 17:14:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -32,13 +32,13 @@
 
 /*
  * XXX fredette - the definitions in this file (with
- * the possible exception of __LDPGSZ) are bogus,
+ * the possible exception of AOUT_LDPGSZ) are bogus,
  * and they exist only to let certain userland programs
  * compile.  I don't think any SunOS-style a.out HPPA 
  * binaries exist.
  */
 
-#define __LDPGSZ	4096
+#define AOUT_LDPGSZ	4096
 
 /* Relocation format. */
 struct relocation_info_hppa {
