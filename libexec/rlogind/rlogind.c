@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.22 2000/11/09 01:04:14 itojun Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.23 2001/01/10 01:41:38 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.22 2000/11/09 01:04:14 itojun Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.23 2001/01/10 01:41:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ doit(f, fromp)
 			hints.ai_flags = AI_CANONNAME;
 			gaierror = getaddrinfo(hostnamebuf, "0", &hints, &res0);
 			if (gaierror) {
-				syslog(LOG_INFO,
+				syslog(LOG_NOTICE,
 				    "Couldn't look up address for %s: %s",
 				    hostnamebuf, gai_strerror(gaierror));
 				hostname = naddr;
