@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.43 2003/05/14 17:00:22 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.44 2003/05/14 17:02:59 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.43 2003/05/14 17:00:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.44 2003/05/14 17:02:59 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1442,9 +1442,9 @@ ip6_mdq(m, ifp, rt)
 
 static void
 phyint_send(ip6, mifp, m)
-    struct ip6_hdr *ip6;
-    struct mif6 *mifp;
-    struct mbuf *m;
+	struct ip6_hdr *ip6;
+	struct mif6 *mifp;
+	struct mbuf *m;
 {
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
