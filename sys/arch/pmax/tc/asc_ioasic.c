@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.8 1999/04/05 06:42:51 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.9 1999/04/06 01:54:28 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.8 1999/04/05 06:42:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.9 1999/04/06 01:54:28 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,13 +39,8 @@ struct asc_softc {
 	size_t	*sc_dmalen;
 
 	/* XXX XXX XXX */
-	vaddr_t	sc_base;
-	volatile u_int32_t *sc_ssr;
-	volatile u_int32_t *sc_scsi_scr;
 	volatile u_int32_t *sc_scsi_dmaptr;
 	volatile u_int32_t *sc_scsi_nextptr;
-	volatile u_int32_t *sc_scsi_sdr0;
-	volatile u_int32_t *sc_scsi_sdr1;
 };
 
 int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
@@ -133,13 +128,8 @@ asc_ioasic_attach(parent, self, aux)
 	asc->sc_cookie = d->iada_cookie;
 
 	/* XXX XXX XXX */
-	asc->sc_base =	(vaddr_t)ioasic_base; /* TC slot 3 */	
-	asc->sc_ssr =	(void *)(asc->sc_base + IOASIC_CSR);
-	asc->sc_scsi_dmaptr =	(void *)(asc->sc_base + IOASIC_SCSI_DMAPTR);
-	asc->sc_scsi_nextptr =	(void *)(asc->sc_base + IOASIC_SCSI_NEXTPTR);
-	asc->sc_scsi_scr =  (void *)(asc->sc_base + IOASIC_SCSI_SCR);
-	asc->sc_scsi_sdr0 = (void *)(asc->sc_base + IOASIC_SCSI_SDR0);
-	asc->sc_scsi_sdr1 = (void *)(asc->sc_base + IOASIC_SCSI_SDR1);
+	asc->sc_scsi_dmaptr =	(void *)(ioasic_base + IOASIC_SCSI_DMAPTR);
+	asc->sc_scsi_nextptr =	(void *)(ioasic_base + IOASIC_SCSI_NEXTPTR);
 
 	sc->sc_id = 7;
 	sc->sc_freq = 25000000;
@@ -320,9 +310,7 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 		ssr |=  IOASIC_CSR_SCSI_DIR;
 	else
 		ssr &= ~IOASIC_CSR_SCSI_DIR;
-	ssr |= IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-	asc->sc_active = 1;
 	return 0;
 }
 
@@ -331,17 +319,11 @@ asc_ioasic_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-#if 0
 	u_int32_t ssr;
 
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
-	if (asc->sc_ispullup)
-		ssr |=  IOASIC_CSR_SCSI_DIR;
-	else
-		ssr &= ~IOASIC_CSR_SCSI_DIR;
 	ssr |= IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
-#endif
 	asc->sc_active = 1;
 }
 
