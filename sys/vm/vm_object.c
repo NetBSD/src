@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.14 1994/01/08 04:38:16 mycroft Exp $
+ *	$Id: vm_object.c,v 1.15 1994/01/08 04:59:08 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -75,9 +75,12 @@
 #include <vm/vm_page.h>
 
 static void	_vm_object_allocate __P((vm_size_t, vm_object_t));
+static void	vm_object_terminate __P((vm_object_t));
 static void	vm_object_deactivate_pages __P((vm_object_t));
 static void	vm_object_cache_trim __P((void));
+static void	vm_object_shutdown __P((void));
 static void	vm_object_remove __P((vm_pager_t));
+static void	vm_object_cache_clear __P((void));
 
 /*
  *	Virtual memory objects maintain the actual data
@@ -337,7 +340,7 @@ vm_object_deallocate(object)
  *
  *	The object must be locked.
  */
-void
+static void
 vm_object_terminate(object)
 	register vm_object_t	object;
 {
@@ -558,7 +561,7 @@ vm_object_cache_trim()
  *	a duplicate deallocation.  This routine is probably full of
  *	race conditions!
  */
-void
+static void
 vm_object_shutdown()
 {
 	register vm_object_t	object;
@@ -1050,7 +1053,7 @@ vm_object_remove(pager)
  *	vm_object_cache_clear removes all objects from the cache.
  *
  */
-void
+static void
 vm_object_cache_clear()
 {
 	register vm_object_t	object;

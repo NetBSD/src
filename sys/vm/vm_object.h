@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_object.h,v 1.7 1994/01/08 04:38:19 mycroft Exp $
+ *	$Id: vm_object.h,v 1.8 1994/01/08 04:59:11 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -125,10 +125,6 @@ simple_lock_data_t	vm_object_list_lock;
 vm_object_t	kernel_object;		/* the single kernel object */
 vm_object_t	kmem_object;
 
-#define	vm_object_cache_lock()		simple_lock(&vm_cache_lock)
-#define	vm_object_cache_unlock()	simple_unlock(&vm_cache_lock)
-#endif	/* KERNEL */
-
 /*
  *	Declare procedures that operate on VM objects.
  */
@@ -136,10 +132,8 @@ void		vm_object_init __P((void));
 vm_object_t	vm_object_allocate __P((vm_size_t));
 void		vm_object_reference __P((vm_object_t));
 void		vm_object_deallocate __P((vm_object_t));
-void		vm_object_terminate __P((vm_object_t));
 void		vm_object_page_clean
 		   __P((vm_object_t, vm_offset_t, vm_offset_t));
-void		vm_object_shutdown __P((void));
 void		vm_object_pmap_copy
 		   __P((vm_object_t, vm_offset_t, vm_offset_t));
 void		vm_object_pmap_remove
@@ -153,7 +147,6 @@ void		vm_object_setpager
 		   __P((vm_object_t, vm_pager_t, vm_offset_t, boolean_t));
 vm_object_t	vm_object_lookup __P((vm_pager_t));
 void		vm_object_enter __P((vm_object_t, vm_pager_t));
-void		vm_object_cache_clear __P((void));
 void		vm_object_collapse __P((vm_object_t));
 void		vm_object_page_remove
 		   __P((vm_object_t, vm_offset_t, vm_offset_t));
@@ -166,6 +159,9 @@ void		_vm_object_print __P((vm_object_t, boolean_t, int (*)()));
 /*
  *	Functions implemented as macros
  */
+#define		vm_object_cache_lock()		simple_lock(&vm_cache_lock)
+#define		vm_object_cache_unlock()	simple_unlock(&vm_cache_lock)
+
 #define		vm_object_cache(pager)		pager_cache(vm_object_lookup(pager),TRUE)
 #define		vm_object_uncache(pager)	pager_cache(vm_object_lookup(pager),FALSE)
 
@@ -179,5 +175,7 @@ void		_vm_object_print __P((vm_object_t, boolean_t, int (*)()));
 	simple_lock_try(&(object)->Lock)
 #define	vm_object_sleep(event, object) \
 	thread_sleep((event), &(object)->Lock)
+
+#endif	/* KERNEL */
 
 #endif /* !_VM_VM_OBJECT_H_ */
