@@ -1,4 +1,6 @@
-# $NetBSD: md.evbarm,v 1.3 2003/04/29 05:42:00 thorpej Exp $
+# $NetBSD: md.evbarm,v 1.4 2003/07/31 20:50:40 he Exp $
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
 ./usr/mdec/gzboot_IQ80310_0x00080000.bin	base-sysutil-bin
 ./usr/mdec/gzboot_IQ80321_0xf0080000.bin	base-sysutil-bin
+./usr/mdec/gzboot_SMDK2800_0x00000000.bin	base-sysutil-bin
+./usr/mdec/gzboot_SMDK2800_0x00100000.bin	base-sysutil-bin
