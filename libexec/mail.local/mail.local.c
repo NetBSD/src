@@ -217,8 +217,8 @@ deliver(fd, name, lockfile)
 	}
 
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
-		for (off = 0; off < nr; nr -= nw, off += nw)
-			if ((nw = write(mbfd, buf + off, nr)) < 0) {
+		for (off = 0; off < nr;  off += nw)
+			if ((nw = write(mbfd, buf + off, nr - off)) < 0) {
 				err(NOTFATAL, "%s: %s", path, strerror(errno));
 				goto trunc;
 			}
