@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1998/02/05 04:57:24 gwr Exp $ */
+/*	$NetBSD: boot.c,v 1.4 1998/06/29 20:17:03 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,22 +42,44 @@
 #include <stand.h>
 #include "libsa.h"
 
-char	defname[32] = "netbsd.sun3";
+#define XX "ufs"
+
+/*
+ * If the kernel name was not specified, try the extended name,
+ * and if that is not found, try the default name, and if that
+ * is not found, ask the user for help.
+ */
+char	defname[32] = "netbsd";
+char	extname[32] = "netbsd.sun3";
 char	line[80];
 
 main()
 {
+	struct open_file	f;
 	char *cp, *file;
-	int	io;
+	char *entry;
+	int	io, x;
 
-	printf(">> NetBSD ufsboot [%s]\n", version);
+	printf(">> NetBSD " XX "boot [%s]\n", version);
 	prom_get_boot_info();
+
+	/*
+	 * Hold the raw device open so it will not be
+	 * closed and reopened on every attempt to
+	 * load files that did not exist.
+	 */
+	f.f_flags = F_RAW;
+	if (devopen(&f, 0, &file)) {
+		printf(XX "boot: devopen failed\n");
+		return;
+	}
 
 	/* If running on a Sun3X, append an x. */
 	if (_is3x)
-		defname[11] = 'x';
-	file = defname;
+		extname[11] = 'x';
+	file = extname;
 
+	/* If the PROM gave us a file name, use it. */
 	cp = prom_bootfile;
 	if (cp && *cp)
 		file = cp;
@@ -70,11 +92,43 @@ main()
 				file = line;
 			else
 				file = defname;
-		} else
-			printf("ufsboot: loading %s\n", file);
+		}
 
-		exec_sun(file, (char *)LOADADDR);
-		printf("ufsboot: %s: %s\n", file, strerror(errno));
+#ifdef DEBUG
+		printf(XX "boot: trying \"%s\"\n", file);
+#endif
+
+		/* Can we open the file? */
+		io = open(file, 0);
+		if (io < 0) {
+			/*
+			 * Failed to open the file.  If we were
+			 * trying the extended name (first time)
+			 * then quietly retry with the plain name.
+			 */
+			if (file == extname) {
+				file = defname;
+				continue;
+			}
+			goto err;
+		}
+
+		/* The open succeeded.  Try loading. */
+		if (file != line)
+			printf(XX "boot: loading %s\n", file);
+		x = load_sun(io, (char *)LOADADDR, &entry);
+		close(io);
+		if (x == 0)
+			break;
+
+	err:
+		printf(XX "boot: %s: %s\n", file, strerror(errno));
 		prom_boothow |= RB_ASKNAME;
 	}
+
+	/* Do the "last close" on the underlying device. */
+	f.f_dev->dv_close(&f);
+
+	printf("Starting program at 0x%x\n", entry);
+	chain_to((void*)entry);
 }
