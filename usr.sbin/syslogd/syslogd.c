@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.31 2004/11/18 15:36:30 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.32 2004/11/18 15:52:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.31 2004/11/18 15:36:30 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.32 2004/11/18 15:52:01 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1704,7 +1704,6 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 	int    error, i, pri, syncfile;
 	char   *bp, *p, *q;
 	char   buf[MAXLINE];
-	int    sp_err;
 
 	dprintf("cfline(\"%s\", f, \"%s\", \"%s\")\n", line, prog, host);
 
@@ -1748,27 +1747,6 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 		return;
 	}
 	
-	/* q is at the end of the blank between the two fields */
-	sp_err = 0;
-	while (isblank((unsigned char)*q) && (q != line))
-		if (*q-- == ' ')
-			sp_err = 1;
-
-	if (sp_err) {
-		/* 
-		 * A space somewhere between the log facility 
-		 * and the log target: complain 
-		 */
-		errno = 0;
-		logerror(
-		    "Warning: `%s' space found where tab is expected",
-		    line);
-		/* ... and fix the problem: replace all spaces by tabs */
-		while (*++q && isblank((unsigned char)*q))
-			if (*q == ' ')
-				*q='\t';	
-	}	
-
 	/* save host name, if any */
 	if (*host == '*')
 		f->f_host = NULL;
@@ -1784,19 +1762,19 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 		f->f_program = strdup(prog);
 
 	/* scan through the list of selectors */
-	for (p = line; *p && *p != '\t';) {
+	for (p = line; *p && !isblank((unsigned char)*p);) {
 
 		/* find the end of this facility name list */
-		for (q = p; *q && *q != '\t' && *q++ != '.'; )
+		for (q = p; *q && !isblank((unsigned char)*q) && *q++ != '.'; )
 			continue;
 
 		/* collect priority name */
-		for (bp = buf; *q && !strchr("\t,;", *q); )
+		for (bp = buf; *q && !strchr("\t ,;", *q); )
 			*bp++ = *q++;
 		*bp = '\0';
 
 		/* skip cruft */
-		while (strchr(", ;", *q))
+		while (strchr(",;", *q))
 			q++;
 
 		/* decode priority name */
@@ -1812,8 +1790,8 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 		}
 
 		/* scan facilities */
-		while (*p && !strchr("\t.;", *p)) {
-			for (bp = buf; *p && !strchr("\t,;.", *p); )
+		while (*p && !strchr("\t .;", *p)) {
+			for (bp = buf; *p && !strchr("\t ,;.", *p); )
 				*bp++ = *p++;
 			*bp = '\0';
 			if (*buf == '*')
@@ -1837,8 +1815,7 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 	}
 
 	/* skip to action part */
-	sp_err = 0;
-	while ((*p == '\t') || (*p == ' '))
+	while (isblank((unsigned char)*p))
 		p++;
 
 	if (*p == '-') {
