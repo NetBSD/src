@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.172 2004/05/18 11:59:11 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.173 2004/07/05 07:28:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -274,6 +274,7 @@ void	initclocks __P((void));
 void	inittodr __P((time_t));
 void	resettodr __P((void));
 void	cpu_initclocks __P((void));
+void	setrootfstime __P((time_t));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));

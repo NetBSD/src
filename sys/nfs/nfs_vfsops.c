@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.140 2004/05/25 14:54:58 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.141 2004/07/05 07:28:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.140 2004/05/25 14:54:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.141 2004/07/05 07:28:45 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -357,7 +357,7 @@ nfs_mountroot()
 #ifdef	DEBUG
 	printf("root time: 0x%lx\n", n);
 #endif
-	inittodr(n);
+	setrootfstime(n);
 
 out:
 	if (error)
