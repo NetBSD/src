@@ -1,4 +1,4 @@
-/*	$NetBSD: esmreg.h,v 1.3 2002/01/14 19:24:39 pooka Exp $	*/
+/*	$NetBSD: esmreg.h,v 1.4 2002/12/30 05:23:27 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -303,6 +303,9 @@
 #define APUREG_ENDPTR	6
 #define APUREG_LOOPLEN	7
 
+/* APU register 8 */
+#define APUREG_EFFECTS_ENV	8
+
 /* APU register 9 */
 #define APUREG_AMPLITUDE	9
 #define APU_AMPLITUDE_NOW_MASK	0xff00
@@ -327,6 +330,10 @@
 #define PAN_RIGHT	0x00
 #define PAN_FRONT	0x08
 #define PAN_LEFT	0x10
+
+/* APU register 11 */
+#define APUREG_ROUTE		11
+#define ROUTE_PARALLEL		0x14
 
 
 /* -----------------------------
