@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.79 2003/07/12 08:44:44 itojun Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.81 2003/07/29 04:50:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -89,6 +89,8 @@
 /* 0.9.7 stuff? */
 #if OPENSSL_VERSION_NUMBER < 0x0090700fL
 typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
+#else
+#define USE_NEW_DES_API
 #endif
 
 #include "var.h"
@@ -971,9 +973,17 @@ eay_des_encrypt(data, key, iv)
 	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
+#ifdef USE_NEW_DES_API
+	DES_key_schedule ks;
+#else
 	des_key_schedule ks;
+#endif
 
+#ifdef USE_NEW_DES_API
+	if (DES_key_sched((void *)key->v, &ks) != 0)
+#else
 	if (des_key_sched((void *)key->v, ks) != 0)
+#endif
 		return NULL;
 
 	/* allocate buffer for result */
@@ -981,8 +991,13 @@ eay_des_encrypt(data, key, iv)
 		return NULL;
 
 	/* decryption data */
+#ifdef USE_NEW_DES_API
+	DES_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
+	                &ks, (void *)iv->v, DES_ENCRYPT);
+#else
 	des_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
 	                ks, (void *)iv->v, DES_ENCRYPT);
+#endif
 
 	return res;
 }
@@ -992,9 +1007,17 @@ eay_des_decrypt(data, key, iv)
 	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
+#ifdef USE_NEW_DES_API
+	DES_key_schedule ks;
+#else
 	des_key_schedule ks;
+#endif
 
+#ifdef USE_NEW_DES_API
+	if (DES_key_sched((void *)key->v, &ks) != 0)
+#else
 	if (des_key_sched((void *)key->v, ks) != 0)
+#endif
 		return NULL;
 
 	/* allocate buffer for result */
@@ -1002,8 +1025,13 @@ eay_des_decrypt(data, key, iv)
 		return NULL;
 
 	/* decryption data */
+#ifdef USE_NEW_DES_API
+	DES_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
+	                &ks, (void *)iv->v, DES_DECRYPT);
+#else
 	des_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
 	                ks, (void *)iv->v, DES_DECRYPT);
+#endif
 
 	return res;
 }
@@ -1012,7 +1040,11 @@ int
 eay_des_weakkey(key)
 	vchar_t *key;
 {
+#ifdef USE_NEW_DES_API
+	return DES_is_weak_key((void *)key->v);
+#else
 	return des_is_weak_key((void *)key->v);
+#endif
 }
 
 int
@@ -1144,7 +1176,7 @@ eay_bf_keylen(len)
 		return 448;
 	if (len < 40 || len > 448)
 		return -1;
-	return (len + 7) / 8;
+	return len;
 }
 
 #ifdef HAVE_OPENSSL_RC5_H
@@ -1209,7 +1241,7 @@ eay_rc5_keylen(len)
 		return 128;
 	if (len < 40 || len > 2040)
 		return -1;
-	return (len + 7) / 8;
+	return len;
 }
 #endif
 
@@ -1221,25 +1253,43 @@ eay_3des_encrypt(data, key, iv)
 	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
+#ifdef USE_NEW_DES_API
+	DES_key_schedule ks1, ks2, ks3;
+#else
 	des_key_schedule ks1, ks2, ks3;
+#endif
 
 	if (key->l < 24)
 		return NULL;
 
+#ifdef USE_NEW_DES_API
+	if (DES_key_sched((void *)key->v, &ks1) != 0)
+		return NULL;
+	if (DES_key_sched((void *)(key->v + 8), &ks2) != 0)
+		return NULL;
+	if (DES_key_sched((void *)(key->v + 16), &ks3) != 0)
+		return NULL;
+#else
 	if (des_key_sched((void *)key->v, ks1) != 0)
 		return NULL;
 	if (des_key_sched((void *)(key->v + 8), ks2) != 0)
 		return NULL;
 	if (des_key_sched((void *)(key->v + 16), ks3) != 0)
 		return NULL;
+#endif
 
 	/* allocate buffer for result */
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
 	/* decryption data */
+#ifdef USE_NEW_DES_API
+	DES_ede3_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
+	                &ks1, &ks2, &ks3, (void *)iv->v, DES_ENCRYPT);
+#else
 	des_ede3_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
 	                ks1, ks2, ks3, (void *)iv->v, DES_ENCRYPT);
+#endif
 
 	return res;
 }
@@ -1249,25 +1299,43 @@ eay_3des_decrypt(data, key, iv)
 	vchar_t *data, *key, *iv;
 {
 	vchar_t *res;
+#ifdef USE_NEW_DES_API
+	DES_key_schedule ks1, ks2, ks3;
+#else
 	des_key_schedule ks1, ks2, ks3;
+#endif
 
 	if (key->l < 24)
 		return NULL;
 
+#ifdef USE_NEW_DES_API
+	if (DES_key_sched((void *)key->v, &ks1) != 0)
+		return NULL;
+	if (DES_key_sched((void *)(key->v + 8), &ks2) != 0)
+		return NULL;
+	if (DES_key_sched((void *)(key->v + 16), &ks3) != 0)
+		return NULL;
+#else
 	if (des_key_sched((void *)key->v, ks1) != 0)
 		return NULL;
 	if (des_key_sched((void *)(key->v + 8), ks2) != 0)
 		return NULL;
 	if (des_key_sched((void *)(key->v + 16), ks3) != 0)
 		return NULL;
+#endif
 
 	/* allocate buffer for result */
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
 	/* decryption data */
+#ifdef USE_NEW_DES_API
+	DES_ede3_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
+	                &ks1, &ks2, &ks3, (void *)iv->v, DES_DECRYPT);
+#else
 	des_ede3_cbc_encrypt((void *)data->v, (void *)res->v, data->l,
 	                ks1, ks2, ks3, (void *)iv->v, DES_DECRYPT);
+#endif
 
 	return res;
 }
@@ -1279,9 +1347,15 @@ eay_3des_weakkey(key)
 	if (key->l < 24)
 		return NULL;
 
-	return (des_is_weak_key((void *)key->v)
-		|| des_is_weak_key((void *)(key->v + 8))
-		|| des_is_weak_key((void *)(key->v + 16)));
+#ifdef USE_NEW_DES_API
+	return (DES_is_weak_key((void *)key->v) ||
+	    DES_is_weak_key((void *)(key->v + 8)) ||
+	    DES_is_weak_key((void *)(key->v + 16)));
+#else
+	return (des_is_weak_key((void *)key->v) ||
+	    des_is_weak_key((void *)(key->v + 8)) ||
+	    des_is_weak_key((void *)(key->v + 16)));
+#endif
 }
 
 int
@@ -1351,7 +1425,7 @@ eay_cast_keylen(len)
 		return 128;
 	if (len < 40 || len > 128)
 		return -1;
-	return (len + 7) / 8;
+	return len;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.23 2001/12/12 18:23:42 sakane Exp $	*/
+/*	$KAME: strnames.c,v 1.24 2003/08/19 09:10:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -417,7 +417,7 @@ static struct ksmap name_attr_ipsec[] = {
 { IPSECDOI_ATTR_SA_LD_TYPE,	"SA Life Type",		s_ipsecdoi_ltype },
 { IPSECDOI_ATTR_SA_LD,		"SA Life Duration",	NULL },
 { IPSECDOI_ATTR_GRP_DESC,	"Group Description",	NULL },
-{ IPSECDOI_ATTR_ENC_MODE,	"Encription Mode",	s_ipsecdoi_encmode },
+{ IPSECDOI_ATTR_ENC_MODE,	"Encryption Mode",	s_ipsecdoi_encmode },
 { IPSECDOI_ATTR_AUTH,		"Authentication Algorithm", s_ipsecdoi_auth },
 { IPSECDOI_ATTR_KEY_LENGTH,	"Key Length",		NULL },
 { IPSECDOI_ATTR_KEY_ROUNDS,	"Key Rounds",		NULL },

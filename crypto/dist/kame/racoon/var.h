@@ -1,4 +1,4 @@
-/*	$KAME: var.h,v 1.13 2003/05/17 18:18:34 itojun Exp $	*/
+/*	$KAME: var.h,v 1.14 2003/07/29 04:46:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,9 +35,6 @@
 #define MAX3(a, b, c) (a > b ? (a > c ? a : c) : (b > c ? b : c))
 
 #define ISSET(exp, bit) (((exp) & (bit)) == (bit))
-
-#define ATOX(c) \
-    (isdigit(c) ? (c - '0') : (isupper(c) ? (c - 'A' + 10) : (c - 'a' + 10) ))
 
 #define LALIGN(a) \
     ((a) > 0 ? ((a) &~ (sizeof(long) - 1)) : sizeof(long))
