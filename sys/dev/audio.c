@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.1 2004/12/10 00:30:55 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.2 2004/12/10 07:25:56 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.1 2004/12/10 00:30:55 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.2 2004/12/10 07:25:56 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -97,6 +97,8 @@ int	audiodebug = AUDIO_DEBUG;
 #endif
 
 #define ROUNDSIZE(x) x &= -16	/* round to nice boundary */
+#define SPECIFIED(x)	(x != ~0)
+#define SPECIFIED_CH(x)	(x != (u_char)~0)
 
 int	audio_blk_ms = AUDIO_BLK_MS;
 
@@ -2869,35 +2871,35 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	rp = sc->sc_rparams;	/* case setting the modes fails. */
 	nr = np = 0;
 
-	if (p->sample_rate != ~0) {
+	if (SPECIFIED(p->sample_rate)) {
 		pp.sample_rate = p->sample_rate;
 		np++;
 	}
-	if (r->sample_rate != ~0) {
+	if (SPECIFIED(r->sample_rate)) {
 		rp.sample_rate = r->sample_rate;
 		nr++;
 	}
-	if (p->encoding != ~0) {
+	if (SPECIFIED(p->encoding)) {
 		pp.encoding = p->encoding;
 		np++;
 	}
-	if (r->encoding != ~0) {
+	if (SPECIFIED(r->encoding)) {
 		rp.encoding = r->encoding;
 		nr++;
 	}
-	if (p->precision != ~0) {
+	if (SPECIFIED(p->precision)) {
 		pp.precision = p->precision;
 		np++;
 	}
-	if (r->precision != ~0) {
+	if (SPECIFIED(r->precision)) {
 		rp.precision = r->precision;
 		nr++;
 	}
-	if (p->channels != ~0) {
+	if (SPECIFIED(p->channels)) {
 		pp.channels = p->channels;
 		np++;
 	}
-	if (r->channels != ~0) {
+	if (SPECIFIED(r->channels)) {
 		rp.channels = r->channels;
 		nr++;
 	}
@@ -2931,7 +2933,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		setmode |= AUMODE_PLAY;
 	}
 
-	if (ai->mode != ~0) {
+	if (SPECIFIED(ai->mode)) {
 		if (!cleared) {
 			audio_clear(sc);
 			cleared = 1;
@@ -3021,7 +3023,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	    audio_print_params("After setting play params", &sc->sc_pparams);
 #endif
 
-	if (p->port != ~0) {
+	if (SPECIFIED(p->port)) {
 		if (!cleared) {
 			audio_clear(sc);
 			cleared = 1;
@@ -3030,7 +3032,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (error)
 			return(error);
 	}
-	if (r->port != ~0) {
+	if (SPECIFIED(r->port)) {
 		if (!cleared) {
 			audio_clear(sc);
 			cleared = 1;
@@ -3039,34 +3041,33 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (error)
 			return(error);
 	}
-	if (p->gain != ~0) {
+	if (SPECIFIED(p->gain)) {
 		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
 		error = au_set_gain(sc, &sc->sc_outports, p->gain, balance);
 		if (error)
 			return(error);
 	}
-	if (r->gain != ~0) {
+	if (SPECIFIED(r->gain)) {
 		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
 		error = au_set_gain(sc, &sc->sc_inports, r->gain, balance);
 		if (error)
 			return(error);
 	}
 
-	if (p->balance != (u_char)~0) {
+	if (SPECIFIED_CH(p->balance)) {
 		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
 		error = au_set_gain(sc, &sc->sc_outports, gain, p->balance);
 		if (error)
 			return(error);
 	}
-	if (r->balance != (u_char)~0) {
+	if (SPECIFIED_CH(r->balance)) {
 		au_get_gain(sc, &sc->sc_inports, &gain, &balance);
 		error = au_set_gain(sc, &sc->sc_inports, gain, r->balance);
 		if (error)
 			return(error);
 	}
 
-	if (ai->monitor_gain != ~0 &&
-	    sc->sc_monitor_port != -1) {
+	if (SPECIFIED(ai->monitor_gain) && sc->sc_monitor_port != -1) {
 		mixer_ctrl_t ct;
 
 		ct.dev = sc->sc_monitor_port;
@@ -3078,7 +3079,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			return(error);
 	}
 
-	if (p->pause != (u_char)~0) {
+	if (SPECIFIED_CH(p->pause)) {
 		sc->sc_pr.pause = p->pause;
 		if (!p->pause && !sc->sc_pbus && (sc->sc_mode & AUMODE_PLAY)) {
 			s = splaudio();
@@ -3088,7 +3089,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 				return error;
 		}
 	}
-	if (r->pause != (u_char)~0) {
+	if (SPECIFIED_CH(r->pause)) {
 		sc->sc_rr.pause = r->pause;
 		if (!r->pause && !sc->sc_rbus &&
 		    (sc->sc_mode & AUMODE_RECORD)) {
@@ -3100,7 +3101,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		}
 	}
 
-	if (ai->blocksize != ~0) {
+	if (SPECIFIED(ai->blocksize)) {
 		/* Block size specified explicitly. */
 		if (!cleared) {
 			audio_clear(sc);
@@ -3116,7 +3117,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		}
 	}
 
-	if (ai->mode != ~0) {
+	if (SPECIFIED(ai->mode)) {
 		if (sc->sc_mode & AUMODE_PLAY)
 			audio_init_play(sc);
 		if (sc->sc_mode & AUMODE_RECORD)
@@ -3150,7 +3151,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 
 	/* Change water marks after initializing the buffers. */
-	if (ai->hiwat != ~0) {
+	if (SPECIFIED(ai->hiwat)) {
 		blks = ai->hiwat;
 		if (blks > sc->sc_pr.maxblks)
 			blks = sc->sc_pr.maxblks;
@@ -3158,13 +3159,13 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			blks = 2;
 		sc->sc_pr.usedhigh = blks * sc->sc_pr.blksize;
 	}
-	if (ai->lowat != ~0) {
+	if (SPECIFIED(ai->lowat)) {
 		blks = ai->lowat;
 		if (blks > sc->sc_pr.maxblks - 1)
 			blks = sc->sc_pr.maxblks - 1;
 		sc->sc_pr.usedlow = blks * sc->sc_pr.blksize;
 	}
-	if (ai->hiwat != ~0 || ai->lowat != ~0) {
+	if (SPECIFIED(ai->hiwat) || SPECIFIED(ai->lowat)) {
 		if (sc->sc_pr.usedlow > sc->sc_pr.usedhigh - sc->sc_pr.blksize)
 			sc->sc_pr.usedlow =
 				sc->sc_pr.usedhigh - sc->sc_pr.blksize;
