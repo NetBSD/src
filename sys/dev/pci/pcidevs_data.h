@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.218 2000/04/30 18:46:18 dante Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.219 2000/05/07 17:00:07 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4046,6 +4046,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Yamaha",
 	    "724 Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B,
+	    0,
+	    "Yamaha",
+	    "744 (DS-1S) Audio",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754,
+	    0,
+	    "Yamaha",
+	    "754 (DS-1E) Audio",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
