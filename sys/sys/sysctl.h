@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.51.2.1 2000/07/14 18:10:51 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.51.2.2 2000/07/22 04:36:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -165,7 +165,8 @@ struct ctlname {
 #define	KERN_CP_TIME		51	/* struct: cpu time counters */
 #define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
-#define	KERN_MAXID		54	/* number of valid kern ids */
+#define	KERN_CONSDEV		54	/* dev_t: console terminal device */
+#define	KERN_MAXID		55	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -222,6 +223,7 @@ struct ctlname {
 	{ "cp_time", CTLTYPE_STRUCT }, \
 	{ "sysvipc_info", CTLTYPE_STRUCT }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
+	{ "consdev", CTLTYPE_STRUCT }, \
 }
 
 /*
