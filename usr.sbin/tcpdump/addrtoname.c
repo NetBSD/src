@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.3 1995/03/06 19:09:49 mycroft Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.4 1995/04/24 13:27:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -170,7 +170,7 @@ getname(const u_char *ap)
 	/*
 	 * Deal with alignment.
 	 */
-	switch ((int)ap & 3) {
+	switch ((long)ap & 3) {
 
 	case 0:
 		addr = *(u_int32 *)ap;
@@ -355,7 +355,7 @@ etheraddr_string(register const u_char *ep)
 		char buf[128];
 		if (ether_ntohost(buf, (struct ether_addr *)ep) == 0) {
 			tp->e_name = savestr(buf);
-			return (buf);
+			return (tp->e_name);
 		}
 	}
 #endif

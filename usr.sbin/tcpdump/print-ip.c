@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.3 1995/03/06 19:11:14 mycroft Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.4 1995/04/24 13:27:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -225,7 +225,7 @@ ip_print(register const u_char *bp, register int length)
 	 * This will never happen with BPF.  It does happen raw packet
 	 * dumps from -r.
 	 */
-	if ((int)ip & (sizeof(long)-1)) {
+	if ((long)ip & (sizeof(long)-1)) {
 		static u_char *abuf;
 
 		if (abuf == 0)
