@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.1 2000/11/24 09:42:10 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.2 2000/11/30 22:51:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -125,11 +125,22 @@ memc_attach(parent, self, aux)
 	bus_space_map(sc->sc_bust, pa->pa_offset, MEMC_REGSIZE, 0,
 	    &sc->sc_bush);
 	chipid = bus_space_read_1(pa->pa_bust, sc->sc_bush, MEMC_REG_CHIP_ID);
-	memcfg = bus_space_read_1(pa->pa_bust, sc->sc_bush, MEMC_REG_MEMORY_CONFIG);
+	memcfg = bus_space_read_1(pa->pa_bust, sc->sc_bush,
+	    MEMC_REG_MEMORY_CONFIG);
 
-	printf(": %dMB %s Memory Controller Chip\n",
+	printf(": %dMB %s Memory Controller Chip (Rev %d)\n",
 	    MEMC_MEMORY_CONFIG_2_MB(memcfg),
-	    (chipid == MEMC_CHIP_ID_MEMC040) ? "Parity" : "ECC");
+	    (chipid == MEMC_CHIP_ID_MEMC040) ? "Parity" : "ECC",
+	    bus_space_read_1(sc->sc_bust, sc->sc_bush, MEMC_REG_CHIP_REVISION));
+
+	printf("%s: Base Address: 0x%x, ", sc->sc_dev.dv_xname,
+	    MEMC_BASE_ADDRESS(bus_space_read_1(sc->sc_bust, sc->sc_bush,
+		MEMC_REG_BASE_ADDRESS_HI), bus_space_read_1(sc->sc_bust,
+		sc->sc_bush, MEMC_REG_BASE_ADDRESS_LO)));
+
+	printf("Fast RAM Read %sabled\n", (bus_space_read_1(sc->sc_bust,
+	    sc->sc_bush, MEMC_REG_MEMORY_CONFIG) & MEMC_MEMORY_CONFIG_FSTRD) ?
+	    "En" : "Dis");
 
 	switch (chipid) {
 	case MEMC_CHIP_ID_MEMC040:
