@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 1997/09/19 13:55:33 leo Exp $ */
+/*	$NetBSD: machdep.c,v 1.87 1997/09/20 18:18:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -713,7 +713,7 @@ cpu_dumpconf()
 
 	nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 
-	dumpblks = ctod(physmem) + ctod(pmap_dumpsize());
+	dumpblks = ctod(physmem) + pmap_dumpsize();
 	if (dumpblks > (nblks - ctod(1)))
 		/*
 		 * dump size is too big for the partition.
@@ -786,7 +786,7 @@ dumpsys()
 	dump = bdevsw[major(dumpdev)].d_dump;
 
 	error = pmap_dumpmmu(dump, blkno);
-	blkno += ctod(pmap_dumpsize());
+	blkno += pmap_dumpsize();
 
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
 		register unsigned i = 0, n;
