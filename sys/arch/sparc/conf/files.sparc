@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.63 1998/08/29 20:53:11 pk Exp $
+#	$NetBSD: files.sparc,v 1.64 1998/08/30 21:53:35 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -104,11 +104,13 @@ file dev/sun/ms.c			ms needs-flag
 #
 include "../../../dev/scsipi/files.scsipi"
 
-major { sd = 7 }
-major { vnd = 8 }
-major { cd = 18 }
-major { xd = 10 }
-major { xy = 3 }
+major	{ cd = 18 }
+major	{ fd = 16 }
+major	{ md = 5 }
+major	{ sd = 7 }
+major	{ vnd = 8 }
+major	{ xd = 10 }
+major	{ xy = 3 }
 
 attach dma at obio with dma_obio
 file	arch/sparc/dev/dma_obio.c	dma_obio
@@ -245,5 +247,4 @@ include "../../../compat/sunos/files.sunos"
 # Miscellaneous
 file	netns/ns_cksum.c		ns
 
-major	{md = 5}
 file	arch/sparc/dev/md_root.c	memory_disk_hooks
