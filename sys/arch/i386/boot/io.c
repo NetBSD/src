@@ -29,7 +29,10 @@
 /*
  * HISTORY
  * $Log: io.c,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
+ * Revision 1.2  1993/06/18 02:28:59  cgd
+ * make it *do* something when loading the kernel, a la sun twiddling-thing
+ *
+ * Revision 1.1  1993/03/21  18:08:38  cgd
  * after 0.2.2 "stable" patches applied
  *
  * Revision 2.2  92/04/04  11:35:57  rpd
@@ -85,6 +88,8 @@ printf(format,data)
 {
 	int *dataptr = &data;
 	char c;
+
+	reset_twiddle();
 	while (c = *format++)
 		if (c != '%')
 			putchar(c);
@@ -189,4 +194,31 @@ int len;
 {
 	while (len-- > 0)
 		*to++ = *from++;
+}
+
+static int tw_on;
+static int tw_pos;
+static char tw_chars[] = "|/-\\";
+
+reset_twiddle()
+{
+	if (tw_on) {
+		putchar('\b'); putchar('\b'); putchar('\b'); putchar('\b');
+	}
+	tw_on = 0;
+	tw_pos = 0;
+}
+
+twiddle()
+{
+	if (tw_on) {
+		putchar('\b');
+	} else {
+		putchar(' ');
+		putchar(':');
+		putchar(' ');
+		tw_on = 1;
+	}
+	putchar(tw_chars[tw_pos++]);
+	tw_pos %= (sizeof(tw_chars) - 1);
 }
