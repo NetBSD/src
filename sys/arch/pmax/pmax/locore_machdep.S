@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 1996/09/30 02:21:20 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3 1996/10/22 20:46:09 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,8 @@
  */
 
 #include <mips/asm.h>
+
+	.set	noreorder
 
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
