@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.3 2000/08/03 08:25:41 ad Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.4 2000/09/18 16:00:41 ad Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pwd_gensalt.c,v 1.3 2000/08/03 08:25:41 ad Exp $");
+__RCSID("$NetBSD: pwd_gensalt.c,v 1.4 2000/09/18 16:00:41 ad Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -63,7 +63,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 	char option[LINE_MAX], *next, *now, *cipher, grpkey[LINE_MAX];
 	int rounds;
 	struct group *grp;
-	
+
 	*salt = '\0';
 
 	switch (type) {
@@ -76,20 +76,19 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		break;
 	}
 
-	pw_getconf(option, LINE_MAX, pwd->pw_name, cipher);
+	pw_getconf(option, sizeof(option), pwd->pw_name, cipher);
 
 	/* Try to find an entry for the group */
 	if (*option == 0) {
 		if ((grp = getgrgid(pwd->pw_gid)) != NULL) {
-                        snprintf(grpkey, LINE_MAX - 1, ":%s", grp->gr_name);
-			grpkey[LINE_MAX-1] = 0;
-			pw_getconf(option, LINE_MAX, grpkey, cipher);
+			snprintf(grpkey, sizeof(grpkey), ":%s", grp->gr_name);
+			pw_getconf(option, sizeof(option), grpkey, cipher);
 		}
 		if (*option == 0)
-		        pw_getconf(option, LINE_MAX, "default", cipher);
+		        pw_getconf(option, sizeof(option), "default", cipher);
 	}
 
-	srandom((int)time((time_t *)NULL));
+	srandom((int)time(NULL));
 	next = option;
 	now = strsep(&next, ",");
 	if (strcmp(now, "old") == 0) {
@@ -107,7 +106,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		else if (rounds > 0xffffff)
 		        rounds = 0xffffff;
 		salt[0] = _PASSWORD_EFMT1;
-		to64(&salt[1], (u_int32_t) rounds, 4);
+		to64(&salt[1], (u_int32_t)rounds, 4);
 		to64(&salt[5], random(), 4);
 		salt[9] = '\0';
 	} else if (strcmp(now, "md5") == 0) {
