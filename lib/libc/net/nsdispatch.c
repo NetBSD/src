@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.4 1999/01/17 04:49:04 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.5 1999/01/19 07:58:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+
+/*
+ * default sourcelist: `files'
+ */
+const ns_src __nsdefaultsrc[] = {
+	{ NSSRC_FILES, NS_SUCCESS },
+	{ 0 },
+};
 
 
 static	int			 _nsmapsize = 0;
@@ -121,26 +130,18 @@ _nsdbtget(name)
 	const char	*name;
 {
 	static	time_t	 confmod;
-	static	ns_dbt	 dbt;
 
 	struct stat	 statbuf;
-	ns_dbt		*ndbt;
+	ns_dbt		 dbt;
 
 	extern	FILE 	*_nsyyin;
 	extern	int	 _nsyyparse __P((void));
 
-	if (dbt.srclist == NULL) {	/* construct dummy `files' entry */
-		ns_src	src;
-
-		src.name = NSSRC_FILES;
-		src.flags = NS_SUCCESS;
-		_nsdbtaddsrc(&dbt, &src);
-	}
 	dbt.name = name;
 
 	if (confmod) {
 		if (stat(_PATH_NS_CONF, &statbuf) == -1)
-			return (&dbt);
+			return (NULL);
 		if (confmod < statbuf.st_mtime) {
 			int i, j;
 
@@ -164,19 +165,16 @@ _nsdbtget(name)
 	}
 	if (!confmod) {
 		if (stat(_PATH_NS_CONF, &statbuf) == -1)
-			return (&dbt);
+			return (NULL);
 		_nsyyin = fopen(_PATH_NS_CONF, "r");
 		if (_nsyyin == NULL)
-			return (&dbt);
+			return (NULL);
 		_nsyyparse();
 		(void)fclose(_nsyyin);
 		qsort(_nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp);
 		confmod = statbuf.st_mtime;
 	}
-	ndbt = bsearch(&dbt, _nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp);
-	if (ndbt != NULL)
-		return (ndbt);
-	return (&dbt);
+	return (bsearch(&dbt, _nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp));
 }
 
 
@@ -209,58 +207,55 @@ _nsdbtput(dbt)
 
 int
 #if __STDC__
-nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database, ...)
+nsdispatch(void *retval, const ns_dtab disp_tab[], const char *database,
+	    const char *method, const ns_src defaults[], ...)
 #else
-nsdispatch(retval, disp_tab, database, va_alist)
+nsdispatch(retval, disp_tab, database, method, defaults, va_alist)
 	void		*retval;
 	const ns_dtab	 disp_tab[];
 	const char	*database;
+	const char	*method;
+	const ns_src	 defaults[];
 	va_dcl
 #endif
 {
 	va_list		 ap;
 	int		 i, curdisp, result;
 	const ns_dbt	*dbt;
+	const ns_src	*srclist;
+	int		 srclistsize;
 
 	dbt = _nsdbtget(database);
+	if (dbt != NULL) {
+		srclist = dbt->srclist;
+		srclistsize = dbt->srclistsize;
+	} else {
+		srclist = defaults;
+		srclistsize = 0;
+		while (srclist[srclistsize].name != NULL)
+			srclistsize++;
+	}
 	result = 0;
 
-#if _NS_DEBUG
-	_nsdumpdbt(dbt);
-	fprintf(stderr, "nsdispatch: %s\n", database);
-#endif
-	for (i = 0; i < dbt->srclistsize; i++) {
-#if _NS_DEBUG
-		fprintf(stderr, "    source=%s", dbt->srclist[i]->source);
-#endif
+	for (i = 0; i < srclistsize; i++) {
 		for (curdisp = 0; disp_tab[curdisp].src != NULL; curdisp++)
 			if (strcasecmp(disp_tab[curdisp].src,
-			    dbt->srclist[i].name) == 0)
+			    srclist[i].name) == 0)
 				break;
 		result = 0;
 		if (disp_tab[curdisp].callback) {
 #if __STDC__
-			va_start(ap, database);
+			va_start(ap, defaults);
 #else
 			va_start(ap);
 #endif
 			result = disp_tab[curdisp].callback(retval,
 			    disp_tab[curdisp].cb_data, ap);
 			va_end(ap);
-#if _NS_DEBUG
-			fprintf(stderr, " result=%d (%d)", result,
-			    (result & dbt->srclist[i].flags));
-#endif
-			if (result & dbt->srclist[i].flags) {
-#if _NS_DEBUG
-				fprintf(stderr, " MATCH!\n");
-#endif
+			if (result & srclist[i].flags) {
 				break;
 			}
 		}
-#if _NS_DEBUG
-		fprintf(stderr, "\n");
-#endif
 	}
 	return (result ? result : NS_NOTFOUND);
 }

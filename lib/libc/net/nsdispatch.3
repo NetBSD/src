@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.3 1999/01/16 07:55:43 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.4 1999/01/19 07:58:05 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 16, 1999
+.Dd January 19, 1999
 .Dt NSDISPATCH 3
 .Os NetBSD
 .Sh NAME
@@ -43,7 +43,14 @@
 .Sh SYNOPSIS
 .Fd #include <nsswitch.h>
 .Ft int
-.Fn nsdispatch "void *retval" "const ns_dtab dtab[]" "const char *database" "..."
+.Fo nsdispatch
+.Fa "void *retval"
+.Fa "const ns_dtab dtab[]"
+.Fa "const char *database"
+.Fa "const char *method"
+.Fa "const ns_src defaults[]"
+.Fa "..."
+.Fc
 .Sh DESCRIPTION
 The
 .Fn nsdispatch
@@ -55,28 +62,25 @@ for the database
 .Va database
 until a successful entry is found.
 .Pp
-The return value from the last function invoked is stored at
-the location specified in
-.Va retval .
+.Va retval
+is passed to each callback function to modify as necessary
+(to pass back to the caller of
+.Fn nsdispatch )
 .Pp
-The optional extra arguments given in
-.Va ...
-are passed to the appropriate callback function as a variable argument
-list of the type
-.Va va_list .
-.Pp
-The format of the
+.Va dtab
+is an array of
 .Va ns_dtab
-structure is as follows:
+structures, which have the following format:
 .Bd -literal -offset indent
 typedef struct {
 	const char *src;
 	int (*cb)(void *retval, void *cb_data, va_list ap);
 	void *cb_data;
-} ns_dtab [];
+} ns_dtab;
 .Ed
 .Pp
-For each source type that is implemented, and entry with
+.Bd -ragged -offset indent
+For each source type that is implemented, an entry with
 .Va src
 set to the name of the source,
 .Va cb
@@ -92,15 +96,74 @@ values for
 .Va cb ,
 and
 .Va cb_data .
+.Ed
+.Pp
+.Va method
+is usually the name of the function calling
+.Fn nsdispatch .
+When dynamic loading is supported, a symbol constructed from
+.Va database ,
+the current source, and
+.Va method
+will be used as the name to invoke the dynamically loaded function.
+.Pp
+.Va defaults
+contains a list of default sources to try in the case of
+a missing or absent
+.Xr nsswitch.conf 5 ,
+or if there isn't a relevant entry for
+.Va database .
+It is an array of
+.Va ns_src
+structures, which have the following format:
+.Bd -literal -offset indent
+typedef struct {
+	const char *src;
+	u_int32_t flags;
+} ns_src;
+.Ed
+.Pp
+.Bd -ragged -offset indent
+For each default source type, an entry with
+.Va src
+set to the name of the source, and
+.Va flags
+set to the relevant flags
+(usually 
+.Dv NS_SUCCESS ;
+refer to
+.Sx Callback return values
+for more information).
+The last entry in
+.Va defaults
+should have
+.Va src
+set to
+.Dv NULL
+and
+.Va flags
+set to 0.
+.Pp
+For convenience, a global variable defined as:
+.Dl extern const ns_src __nsdefaultsrc[];
+exists which contains a single default entry for
+.Sq files
+for use by callers which don't require complicated default rules.
+.Ed
+.Pp
+.Va Sq ...
+are optional extra arguments, which
+are passed to the appropriate callback function as a variable argument
+list of the type
+.Va va_list .
 .Ss Valid source types
 Whilst there is support for arbitrary sources, the following
 #defines for commonly implementated sources are available:
-.Bl -column NS_NISPLUS NISPLUS -offset indent
+.Bl -column NS_COMPAT COMPAT -offset indent
 .Sy #define	value
 .It NSSRC_FILES	"files"
 .It NSSRC_DNS	"dns"
 .It NSSRC_NIS	"nis"
-.It NSSRC_NISPLUS	"nisplus"
 .It NSSRC_COMPAT	"compat"
 .El
 .Pp
