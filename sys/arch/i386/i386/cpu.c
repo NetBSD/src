@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.10 2000/08/18 03:33:46 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.11 2000/08/18 13:29:40 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -353,15 +353,12 @@ cpu_boot_secondary (ci)
 	struct pmap *kpm = pmap_kernel();
 	extern u_int32_t mp_pdirpa;
 
-	printf("%s: starting\n", ci->ci_dev.dv_xname);
-
 	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
 	
 	pcb = ci->ci_idle_pcb;
 
-	printf("%s: init idle stack ptr is 0x%x\n", ci->ci_dev.dv_xname,
-	    pcb->pcb_esp);
-	
+	printf("%s: starting\n", ci->ci_dev.dv_xname);
+
 	CPU_STARTUP(ci);
 
 	/*
@@ -372,7 +369,10 @@ cpu_boot_secondary (ci)
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
 		printf("cpu failed to become ready\n");
+#if defined(MPDEBUG) && defined(DDB)
+		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
+#endif
 	}
 
 	CPU_START_CLEANUP(ci);
