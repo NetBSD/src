@@ -79,7 +79,6 @@
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
 ./usr/share/man/cat1/passwd.0
-./usr/share/man/cat1/telnet.0
 ./usr/share/man/cat1/yppasswd.0
 ./usr/share/man/cat3/acl_add.0
 ./usr/share/man/cat3/acl_canonicalize_principal.0
@@ -150,7 +149,6 @@
 ./usr/share/man/man1/kinit.1
 ./usr/share/man/man1/klist.1
 ./usr/share/man/man1/passwd.1
-./usr/share/man/man1/telnet.1
 ./usr/share/man/man1/yppasswd.1
 ./usr/share/man/man3/acl_add.3
 ./usr/share/man/man3/acl_canonicalize_principal.3
