@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.44 2001/12/21 22:41:18 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.45 2002/03/17 12:00:56 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -85,10 +85,6 @@ file	dev/clock_subr.c			rtc
 device	ioeb { [offset = -1] }
 attach	ioeb at ioc
 file	arch/arm26/ioc/ioeb.c			ioeb		needs-flag
-
-# A3010 joysticks
-device joy
-attach joy at ioeb
 
 # Latches (random internal use) (usually at ioc0 bank 5)
 device	latches
