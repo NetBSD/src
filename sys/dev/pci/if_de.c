@@ -1,5 +1,3 @@
-/*	$NetBSD: if_de.c,v 1.2 1995/06/05 00:47:42 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
  * All rights reserved.
@@ -230,7 +228,7 @@ struct _tulip_softc_t {
 #if defined(__NetBSD__)
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
-    /* XXX no shutdown routine? */
+    void *tulip_ats;			/* shutdown routine */
 #endif
     struct arpcom tulip_ac;
     tulip_regfile_t tulip_csrs;
@@ -1676,7 +1674,6 @@ struct cfdriver decd = {
 #if defined(__NetBSD__)
 #define	TULIP_PCI_ATTACH_ARGS	struct device *parent, struct device *self, void *aux
 
-#if 0						/* XXX! */
 static void
 tulip_pci_shutdown(
     void *arg)
@@ -1687,7 +1684,6 @@ tulip_pci_shutdown(
 			   33MHz that comes to two microseconds but wait a
 			   bit longer anyways) */
 }
-#endif
 
 static int
 tulip_pci_probe(
@@ -1856,6 +1852,10 @@ tulip_pci_attach(
 		   sc->tulip_name, sc->tulip_unit);
 	    return;
 	}
+	sc->tulip_ats = shutdownhook_establish(tulip_pci_shutdown, sc);
+	if (sc->tulip_ats == NULL)
+	    printf("%s%d: warning: couldn't establish shutdown hook\n",
+		   sc->tulip_name, sc->tulip_unit);
 #endif
 #if defined(__FreeBSD__)
 	pci_map_int (config_id, tulip_intr, (void*) sc, &net_imask);
