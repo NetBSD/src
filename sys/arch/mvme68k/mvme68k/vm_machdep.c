@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1997/02/02 08:30:54 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 1997/05/19 10:15:14 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,7 @@ cpu_fork(p1, p2)
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
 
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
+	PMAP_ACTIVATE(p2->p_vmspace->vm_map.pmap, pcb, 0);
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
