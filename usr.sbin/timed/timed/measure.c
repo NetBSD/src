@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.7 1997/10/17 14:19:29 lukem Exp $	*/
+/*	$NetBSD: measure.c,v 1.8 2001/09/02 00:13:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,13 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.7 1997/10/17 14:19:29 lukem Exp $");
+__RCSID("$NetBSD: measure.c,v 1.8 2001/09/02 00:13:06 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.7 $"
-#endif
 
 #include "globals.h"
 #include <netinet/in_systm.h>
@@ -139,10 +135,6 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	oicp->icmp_seq = seqno;
 
 	FD_ZERO(&ready);
-
-#ifdef sgi
-	sginap(1);			/* start at a clock tick */
-#endif /* sgi */
 
 	(void)gettimeofday(&tdone, 0);
 	mstotvround(&tout, maxmsec);
@@ -310,13 +302,12 @@ quit:
 void
 mstotvround(struct timeval *res, long x)
 {
-#ifndef sgi
 	if (x < 0)
 		x = -((-x + 3)/5);
 	else
 		x = (x+3)/5;
 	x *= 5;
-#endif /* sgi */
+
 	res->tv_sec = x/1000;
 	res->tv_usec = (x-res->tv_sec*1000)*1000;
 	if (res->tv_usec < 0) {

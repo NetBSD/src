@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.9 1998/07/06 07:06:14 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.10 2001/09/02 00:13:08 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,13 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.9 1998/07/06 07:06:14 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.10 2001/09/02 00:13:08 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.9 $"
-#endif
 
 #include "timedc.h"
 #include <sys/file.h>
@@ -60,13 +56,8 @@ __RCSID("$NetBSD: cmds.c,v 1.9 1998/07/06 07:06:14 mrg Exp $");
 #define TSPTYPES
 #include <protocols/timed.h>
 
-#ifdef sgi
-#include <bstring.h>
-#include <sys/clock.h>
-#else
 #define	SECHR	(60*60)
 #define	SECDAY	(24*SECHR)
-#endif /* sgi */
 
 # define DATE_PROTO "udp"
 # define DATE_PORT "time"
