@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.2 1997/01/27 22:42:44 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.3 1997/04/09 04:42:25 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 #define	OBIO_IOC_FLUSH		0x6D000000
 
 #define	OBIO_FDC    		0x6e000000	/* 3/80 only */
-#define	OBIO_PRINTER_PORT	0x6f000000	/* 3/80 only */
+#define	OBIO_PRINTER_PORT	0x6f00003c	/* 3/80 only */
 
 #ifdef	_KERNEL
 
