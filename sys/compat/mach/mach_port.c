@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.52 2004/03/24 16:55:07 pooka Exp $ */
+/*	$NetBSD: mach_port.c,v 1.53 2004/07/24 15:46:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.52 2004/03/24 16:55:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.53 2004/07/24 15:46:02 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -583,6 +583,70 @@ mach_port_request_notification(args)
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
 	mach_add_port_desc(rep, oldmn);
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int 
+mach_port_get_refs(args)
+	struct mach_trap_args *args;
+{
+	mach_port_get_refs_request_t *req = args->smsg;
+	mach_port_get_refs_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	mach_port_right_t right = req->req_right;
+
+	mn = req->req_name;
+	if ((mr = mach_right_check(mn, l, right)) == NULL) 
+		return mach_msg_error(args, EINVAL);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+	rep->rep_refs = mr->mr_refcount;
+
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int 
+mach_port_mod_refs(args)
+	struct mach_trap_args *args;
+{
+	mach_port_mod_refs_request_t *req = args->smsg;
+	mach_port_mod_refs_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+#if 0
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	mach_port_right_t right = req->req_right;
+
+	mn = req->req_name;
+	if ((mr = mach_right_check(mn, l, right)) == NULL) 
+		return mach_msg_error(args, EINVAL);
+
+	/* 
+	 * Changing the refcount is likely to cause crashes,
+	 * as we will free a right which might still be referenced
+	 * within the kernel. Add a user refcount field?
+	 */
+	mr->mr_refcount += req->req_delta;
+	if (mr->mr_refcount <= 0)
+		mach_right_put(mr, right);
+#endif
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
 	mach_set_trailer(rep, *msglen);
 
 	return 0;

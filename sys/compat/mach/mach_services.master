@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.10 2003/12/29 01:30:27 manu Exp $
+ $NetBSD: mach_services.master,v 1.11 2004/07/24 15:46:02 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -63,9 +63,9 @@
 400	UNIMPL	host_get_boot_info
 401	UNIMPL	host_reboot
 402	UNIMPL	host_priv_statistics
-; Would be boostrap_register instead?
-403	UNIMPL	host_default_memory_manager
-; Would be vm_wire instead?
+; Implemented by mach_init, clashes with host_default_memory_manager
+403	UNIMPL	boostrap_register
+; Implemented by mach_init, clashes with vm_wire
 404	STD	bootstrap_look_up 
 405	UNIMPL	thread_wire
 406	UNIMPL	vm_allocate_cpm
@@ -267,8 +267,8 @@
 3204	STD	port_allocate
 3205	STD	port_destroy
 3206	STD	port_deallocate
-3207	UNIMPL	port_get_refs
-3208	UNIMPL	port_mod_refs
+3207	STD	port_get_refs
+3208	STD	port_mod_refs
 3210	UNIMPL	port_set_mscount
 3211	UNIMPL	port_get_set_status
 3212	STD	port_move_member
