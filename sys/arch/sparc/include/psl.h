@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.13 1997/11/19 23:05:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,7 +154,7 @@ static __inline int name() \
 	return (oldipl); \
 }
 /* A non-priority-decreasing version of SPL */
-#define	SPLHOLD(name, newipl) \
+#define	_SPLRAISE(name, newipl) \
 static __inline int name __P((void)); \
 static __inline int name() \
 { \
@@ -197,7 +197,7 @@ SPL(spltty, PIL_TTY)
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
 SPL(splimp, 7)
-SPLHOLD(splpmap, 7)
+SPL(splpmap, 7)
 
 SPL(splclock, PIL_CLOCK)
 
