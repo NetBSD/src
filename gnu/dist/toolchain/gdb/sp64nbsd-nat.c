@@ -152,25 +152,51 @@ fetch_inferior_registers (regno)
   if (regno == -1)
     {
       CORE_ADDR sp = *(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)];
-      if (sp & 0x1) 
+      if (sp & 0x1) {
 	      sp += BIAS;
-      target_read_memory (sp,
-		          &registers[REGISTER_BYTE (L0_REGNUM)],
-			  16*REGISTER_RAW_SIZE (L0_REGNUM));
-      for (i = L0_REGNUM; i <= I7_REGNUM; i++)
-	register_valid[i] = 1;
+	      target_read_memory (sp,
+				  &registers[REGISTER_BYTE (L0_REGNUM)],
+				  16*REGISTER_RAW_SIZE (L0_REGNUM));
+	      for (i = L0_REGNUM; i <= I7_REGNUM; i++)
+		      register_valid[i] = 1;
+      } else {
+	      int tmp[16];
+
+	      sp &= 0x0ffffffffL;
+	      target_read_memory (sp, (void *)&tmp, sizeof(tmp));
+	      for (i = L0_REGNUM; i <= I7_REGNUM; i++) {
+		      *(long *)&registers[REGISTER_BYTE (i)] =
+			      (long)tmp[i];
+		      printf_unfiltered("register %d valid is now %lx from %x\n", i, tmp[i], registers[REGISTER_BYTE (i)]);
+		      register_valid[i] = 1;
+	      }
+      }
     }
   else if (regno >= L0_REGNUM && regno <= I7_REGNUM)
     {
       CORE_ADDR sp = *(CORE_ADDR*)&registers[REGISTER_BYTE (SP_REGNUM)];
-      if (sp & 0x1) 
+      if (sp & 0x1) {
 	      sp += BIAS;
-      i = REGISTER_BYTE (regno);
-      if (register_valid[regno])
-	printf_unfiltered("register %d valid and read\n", regno);
-      target_read_memory (sp + i - REGISTER_BYTE (L0_REGNUM),
-			  &registers[i], REGISTER_RAW_SIZE (regno));
-      register_valid[regno] = 1;
+	      i = REGISTER_BYTE (regno);
+	      if (register_valid[regno])
+		      printf_unfiltered("register %d valid and read\n", regno);
+	      target_read_memory (sp + i - REGISTER_BYTE (L0_REGNUM),
+				  &registers[i], REGISTER_RAW_SIZE (regno));
+	      register_valid[regno] = 1;
+      } else {
+	      int tmp;
+
+	      sp &= 0x0ffffffffL;
+	      i = REGISTER_BYTE (regno);
+	      if (register_valid[regno])
+		      printf_unfiltered("register %d valid and read\n", regno);
+	      target_read_memory (sp + sizeof(tmp) * (regno - L0_REGNUM),
+				  (void *)&tmp, sizeof(tmp));
+	      *(long *)&registers[i] = (long)tmp;
+	      printf_unfiltered("register %d valid is now %lx from %x\n", i, tmp, *(long *)&registers[i]);
+      
+	      register_valid[regno] = 1;
+      }
     }
 }
 
@@ -233,17 +259,37 @@ store_inferior_registers (regno)
       if (regno < 0 || regno == SP_REGNUM)
 	{
 	  if (!register_valid[L0_REGNUM+5]) abort();
-	  target_write_memory (sp, 
-			       &registers[REGISTER_BYTE (L0_REGNUM)],
-			       16*REGISTER_RAW_SIZE (L0_REGNUM));
+	  if (sp & 0x1) {
+		  sp += BIAS;
+		  target_write_memory (sp, 
+				       &registers[REGISTER_BYTE (L0_REGNUM)],
+				       16*REGISTER_RAW_SIZE (L0_REGNUM));
+	  } else {
+		  int i, tmp[16];
+
+		  sp &= 0x0ffffffffL;
+		  for (i = L0_REGNUM; i <= I7_REGNUM; i++)
+			  tmp[i] = *(long *)&registers[REGISTER_BYTE (i)];
+		  target_write_memory (sp, (void *)&tmp, sizeof(tmp));
+	  }
 	}
       else
 	{
 	  if (!register_valid[regno]) abort();
-	  target_write_memory ((sp + REGISTER_BYTE (regno) -
-			       REGISTER_BYTE (L0_REGNUM)),
-			       &registers[REGISTER_BYTE (regno)],
-			       REGISTER_RAW_SIZE (regno));
+	  if (sp & 0x1) {
+		  sp += BIAS;
+		  target_write_memory ((sp + REGISTER_BYTE (regno) -
+					REGISTER_BYTE (L0_REGNUM)),
+				       &registers[REGISTER_BYTE (regno)],
+				       REGISTER_RAW_SIZE (regno));
+	  } else {
+		  int tmp;
+
+		  sp &= 0x0ffffffffL;
+		  tmp = *(long *)&registers[REGISTER_BYTE (regno)];
+		  target_write_memory (sp + sizeof(tmp) * (regno - L0_REGNUM),
+				       (void *)&tmp, sizeof(tmp));
+	  }
 	}
 	
     }
@@ -353,15 +399,31 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
     CORE_ADDR sp;
 
     sp = *(CORE_ADDR *)&registers[REGISTER_BYTE (SP_REGNUM)];
-      if (sp & 0x1) 
-	      sp += BIAS;
-    if (0 != target_read_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)], 
-				 16 * REGISTER_RAW_SIZE (L0_REGNUM)))
-      {
-	/* fprintf_unfiltered so user can still use gdb */
-	fprintf_unfiltered (gdb_stderr,
-		"Couldn't read input and local registers from core file\n");
-      }
+    if (sp & 0x1) {
+	    sp += BIAS;
+	    if (0 != target_read_memory (sp, &registers[REGISTER_BYTE (L0_REGNUM)], 
+					 16 * REGISTER_RAW_SIZE (L0_REGNUM)))
+	    {
+		    /* fprintf_unfiltered so user can still use gdb */
+		    fprintf_unfiltered (gdb_stderr,
+					"Couldn't read input and local registers from core file\n");
+	    }
+    } else {
+	    int i, tmp[16];
+
+	    sp &= 0x0ffffffff;
+	    if (0 != target_read_memory (sp, (void *)&tmp, sizeof(tmp))) {
+		    /* fprintf_unfiltered so user can still use gdb */
+		    fprintf_unfiltered (gdb_stderr,
+					"Couldn't read input and local registers from core file\n");
+	    } else
+	    for (i = L0_REGNUM; i <= I7_REGNUM; i++) {
+		    *(long *)&registers[REGISTER_BYTE (i)] =
+			    (long)tmp[i];
+		    register_valid[i] = 1;
+	    }
+	    
+    }
   }
 
   /* Floating point registers */
