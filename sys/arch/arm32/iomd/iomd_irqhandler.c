@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.18 1998/07/07 03:05:16 mark Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.19 1998/08/08 23:39:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -136,9 +136,10 @@ irq_init()
 	irqmasks[IPL_BIO]   = 0x00000000;
 	irqmasks[IPL_NET]   = 0x00000000;
 	irqmasks[IPL_TTY]   = 0x00000000;
-	irqmasks[IPL_CLOCK] = 0x00000000;
 	irqmasks[IPL_IMP]   = 0x00000000;
-	irqmasks[IPL_NONE]   = 0x00000000;
+	irqmasks[IPL_AUDIO] = 0x00000000;
+	irqmasks[IPL_CLOCK] = 0x00000000;
+	irqmasks[IPL_NONE]  = 0x00000000;
 
 	current_mask = 0x00000000;
 	actual_mask = 0x00000000;

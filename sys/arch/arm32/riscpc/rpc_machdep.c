@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.12 1998/07/08 00:10:44 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.13 1998/08/08 23:39:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -227,13 +227,13 @@ cpu_reboot(howto, bootstr)
 #endif	/* NHYDRABUS */
 
 #ifdef DIAGNOSTIC
-	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 
-	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
-            irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-            irqmasks[IPL_CLOCK], irqmasks[IPL_IMP]);
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
+	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
+	    irqmasks[IPL_IMP]);
+	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
+	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
 
 	dump_spl_masks();
 

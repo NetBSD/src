@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.2 1998/07/18 21:27:26 is Exp $	*/
+/* 	$NetBSD: intr.h,v 1.3 1998/08/08 23:39:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,14 +39,15 @@
 
 /* Interrupt Priority Levels are not mutually exclusive. */
 
-#define IPL_BIO        0	/* block I/O */
-#define IPL_NET        1	/* network */
-#define IPL_TTY        2	/* terminal */
-#define IPL_CLOCK      3	/* clock */
-#define IPL_IMP        4	/* memory allocation */
-#define IPL_NONE       5
+#define IPL_BIO		0	/* block I/O */
+#define IPL_NET		1	/* network */
+#define IPL_TTY		2	/* terminal */
+#define IPL_IMP		3	/* memory allocation */
+#define	IPL_AUDIO	4	/* audio */
+#define IPL_CLOCK	5	/* clock */
+#define IPL_NONE	6
 
-#define IPL_LEVELS     6
+#define IPL_LEVELS	7
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
