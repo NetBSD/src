@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.7 2001/06/03 15:07:20 ragge Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.8 2001/06/04 15:34:16 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -183,6 +183,8 @@ cpu_send_ipi(int cpu, int type)
 			}
 			break;
 		case IPI_DEST_ALL:
+			if (i == cpu_number())
+				continue;	/* No IPI to myself */
 			bbssi(type, &sc->sc_ci.ci_ipimsgs);
 			(*mp_dep_call->cpu_send_ipi)(&sc->sc_dev);
 			break;
@@ -215,7 +217,9 @@ cpu_handle_ipi()
 			(*mp_dep_call->cpu_cnintr)();
 			break;
 		case IPI_RUNNING:
-			printf("something running\n");
+			break;
+		case IPI_TBIA:
+			mtpr(0, PR_TBIA);
 			break;
 		}
 	}
