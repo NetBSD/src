@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 1997/03/26 22:39:20 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 1997/03/27 00:15:31 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 /* Want compile-time initialization here. */
 int cold = 1;
 
-static void	rootconf __P((void));
-
 /*
  * Do general device autoconfiguration,
  * then choose root device (etc.)
@@ -77,12 +75,6 @@ configure()
 	/*
 	 * Now that device autoconfiguration is finished,
 	 * we can safely enable interrupts.
-	 *
-	 * XXX - This would also be the "natrual" place to
-	 * set cold=0 but we need to leave it set until the
-	 * end so that kern_synch.c:tsleep() will not try to
-	 * use the proc0 that is not yet ready...
-	 * XXX - Maybe procinit should be earlier...
 	 */
 	printf("enabling interrupts\n");
 	(void)spl0();
@@ -184,6 +176,7 @@ static struct devnametobdevmaj nam2blk[] = {
 /* This takes the args: name, ctlr, unit */
 typedef struct device * (*findfunc_t) __P((char *, int, int));
 
+static struct device * find_dev_byname __P((char *));
 static struct device * net_find  __P((char *, int, int));
 static struct device * scsi_find __P((char *, int, int));
 static struct device * xx_find   __P((char *, int, int));
@@ -200,9 +193,6 @@ static struct prom_n2f prom_dev_table[] = {
 	{ "xd",		xx_find },
 	{ "",		0 },
 };
-
-static struct device * find_dev_byname __P((char *));
-
 
 /*
  * Choose root and swap devices.
@@ -266,7 +256,7 @@ cpu_rootconf()
 /*
  * Network device:  Just use controller number.
  */
-struct device *
+static struct device *
 net_find(name, ctlr, unit)
 	char *name;
 	int ctlr, unit;
@@ -281,7 +271,7 @@ net_find(name, ctlr, unit)
  * SCSI device:  The controller number corresponds to the
  * scsibus number, and the unit number is (targ*8 + LUN).
  */
-struct device *
+static struct device *
 scsi_find(name, ctlr, unit)
 	char *name;
 	int ctlr, unit;
@@ -314,7 +304,7 @@ scsi_find(name, ctlr, unit)
  * Xylogics SMD disk: (xy, xd)
  * Assume wired-in unit numbers for now...
  */
-struct device *
+static struct device *
 xx_find(name, ctlr, unit)
 	char *name;
 	int ctlr, unit;
