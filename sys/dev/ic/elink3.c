@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.84 2000/10/01 23:32:41 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.85 2000/11/15 01:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -511,10 +511,6 @@ epconfig(sc, chipset, enaddr)
 	}
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -2173,9 +2169,6 @@ ep_detach(self, flags)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.3 2000/07/03 12:50:09 soren Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.4 2000/11/15 01:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -198,12 +198,6 @@ return; /* XXX */
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf,
-	    ifp, DLT_EN10MB, sizeof (struct ether_header));
-#endif  
-
 }
 
 int

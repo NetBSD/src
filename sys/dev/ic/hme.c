@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.17 2000/10/20 06:08:02 mrg Exp $	*/
+/*	$NetBSD: hme.c,v 1.18 2000/11/15 01:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -305,10 +305,6 @@ hme_config(sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_sh = shutdownhook_establish(hme_shutdown, sc);
 	if (sc->sc_sh == NULL)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.27 1999/11/30 17:02:39 tron Exp $ */
+/* $NetBSD: if_ie.c,v 1.28 2000/11/15 01:02:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -467,11 +467,6 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	printf ( " %s using %dk card ram",
 	    ether_sprintf(hwaddr),
 	    ((NRXBUF*IE_RXBUF_SIZE)+(NTXBUF*IE_TXBUF_SIZE))/1024 );
-
-#if NBPFILTER > 0
-	printf ( " BPF" );
-	bpfattach ( &ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih.ih_func = ieintr;
 	sc->sc_ih.ih_arg = sc;

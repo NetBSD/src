@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.42 2000/11/02 18:55:46 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.43 2000/11/15 01:02:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -462,10 +462,6 @@ wi_attach(parent, self, aux)
 
 	ifp->if_baudrate = IF_Mbps(2);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
@@ -1769,9 +1765,6 @@ wi_detach(self, flags)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
