@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.23 2000/10/11 23:47:55 fvdl Exp $	*/
+/*	$NetBSD: install.c,v 1.24 2000/10/22 22:57:04 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,4 +142,7 @@ do_install()
 	sanity_check();
 
 	md_cleanup_install();
+
+	msg_display(MSG_instcomplete);
+	process_menu(MENU_ok);
 }
