@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.3 2002/01/01 01:58:01 thorpej Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 2002/11/08 00:08:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -43,9 +43,19 @@
 
 typedef _BSD_VA_LIST_	va_list;
 #ifdef __lint__
-#define __builtin_next_arg(t) ((t) ? 0 : 0)
+#define __builtin_next_arg(t)		((t) ? 0 : 0)
+#define	__builtin_stdarg_start(a, l)	((a) = ((l) ? 0 : 0))
+#define	__builtin_va_arg(a, t)		((a) ? 0 : 0)
+#define	__builtin_va_end		/* nothing */
+#define	__builtin_va_copy(d, s)		((d) = (s))
 #endif
 
+#ifdef __GNUC_PREREQ__(2, 96)
+#define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#define	va_arg			__builtin_va_arg
+#define	va_end			__builtin_va_end
+#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+#else
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
@@ -55,13 +65,14 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_arg(ap, type) \
 	((type *)(ap += sizeof(type)))[-1]
 
+#define	va_end(ap)
+
+#define	__va_copy(dest, src)	((dest) = (src))
+
 #if !defined(_ANSI_SOURCE) && \
     (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
      defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
-#define	va_copy(dest, src) \
-	((dest) = (src))
+#define	va_copy(dest, src)	__va_copy((dest), (src))
 #endif
-
-#define	va_end(ap)
 
 #endif /* !_ARM32_STDARG_H_ */
