@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.9 2001/11/20 12:56:27 lukem Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.10 2001/11/26 23:54:49 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -122,8 +122,9 @@ LINKFLAGS+=	-X
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${HPCARM}/hpcarm/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${HPCARM}/hpcarm/genassym.cf > assym.h.tmp && \
+	cat ${HPCARM}/hpcarm/genassym.cf ${GENASSYM_EXTRAS} | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
