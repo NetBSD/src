@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.157 2004/05/08 09:23:14 nisimura Exp $
+#	$NetBSD: DEVNAMES,v 1.158 2004/05/08 10:34:15 nisimura Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1111,6 +1111,7 @@ sqphy			MI
 ss			MI		
 st			MI		
 st			hp300
+stpcide			MI
 su			MI		
 supio			amiga		Attribute
 supio			amigappc	Attribute
