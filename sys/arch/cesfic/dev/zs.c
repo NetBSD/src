@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 2001/05/14 18:23:07 drochner Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.16.1 2002/05/19 08:14:15 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ void zs_putc __P((void*, int));
 
 static struct zs_chanstate zs_conschan_store;
 static int zs_hwflags[2][2];
-int zs_major = 10;
 int zssoftpending;
 
 extern struct cfdriver zsc_cd;
