@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.432 2002/05/28 17:08:19 tron Exp $
+$NetBSD: pcidevs,v 1.433 2002/05/28 17:46:10 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -554,6 +554,7 @@ vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor COREGA		0x15e8	Corega
+vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor SANDBURST	0x17ba	Sandburst, Inc.
