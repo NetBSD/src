@@ -1,3 +1,5 @@
+/*	$NetBSD: genassym.c,v 1.3 1994/10/26 02:32:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
- *	$Id: genassym.c,v 1.2 1994/06/18 12:09:50 paulus Exp $
+ *	@(#)genassym.c	8.3 (Berkeley) 1/4/94
  */
 
 /* XXXX */

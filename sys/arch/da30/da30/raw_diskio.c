@@ -1,3 +1,5 @@
+/*	$NetBSD: raw_diskio.c,v 1.4 1994/10/26 02:33:01 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Mackerras.
  * All rights reserved.
@@ -7,8 +9,6 @@
  * notice appears in all copies.  This software is provided without any
  * warranty, express or implied.  The author makes no representations
  * about the suitability of this software for any purpose.
- *
- *	$Id: raw_diskio.c,v 1.3 1994/07/08 12:02:23 paulus Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu.h,v 1.3 1994/10/26 02:33:39 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
- *	from: @(#)cpu.h	8.4 (Berkeley) 1/5/94
- *	$Id: cpu.h,v 1.2 1994/06/18 12:10:27 paulus Exp $
+ *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
 /*

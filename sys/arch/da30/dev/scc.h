@@ -1,3 +1,5 @@
+/*	$NetBSD: scc.h,v 1.2 1994/10/26 02:33:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Mackerras.
  * All rights reserved.
@@ -23,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: scc.h,v 1.1 1994/02/22 23:50:36 paulus Exp $
  */
 /*
  * SCC I/O register definitions

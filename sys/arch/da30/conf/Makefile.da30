@@ -1,5 +1,6 @@
-#	from: @(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#	$Id: Makefile.da30,v 1.4 1994/08/02 03:54:05 paulus Exp $
+#	$NetBSD: Makefile.da30,v 1.5 1994/10/26 02:32:33 cgd Exp $
+
+#	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
 #

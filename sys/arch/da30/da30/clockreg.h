@@ -1,3 +1,5 @@
+/*	$NetBSD: clockreg.h,v 1.2 1994/10/26 02:32:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Mackerras.
  * All rights reserved.
@@ -7,8 +9,6 @@
  * notice appears in all copies.  This software is provided without any
  * warranty, express or implied.  The author makes no representations
  * about the suitability of this software for any purpose.
- *
- *	$Id: clockreg.h,v 1.1 1994/02/22 23:49:31 paulus Exp $
  */
 
 #ifndef PRF_INTERVAL
