@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 1996/09/30 01:30:21 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.24 1996/09/30 02:21:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,10 +61,11 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
+#include <mips/regnum.h>
+#include <mips/asm.h>
+
 #include <machine/param.h>
 #include <machine/psl.h>
-#include <machine/regnum.h>
-#include <machine/machAsmDefs.h>
 #include <machine/pte.h>
 
 /*----------------------------------------------------------------------------
