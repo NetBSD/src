@@ -241,7 +241,11 @@ static Keycap_def	key2ascii[] =
 /* 27*/ { KBD_ASCII, I, {S,1, { "[" }},       {S,1, { "{" }},       {S,1, { "\033" }},    DFAULT,            DFAULT,            DFAULT,            DFAULT },
 /* 28*/ { KBD_ASCII, I, {S,1, { "]" }},       {S,1, { "}" }},       {S,1, { "\035" }},    DFAULT,            DFAULT,            DFAULT,            DFAULT },
 /* 29*/ { KBD_ASCII, I, {S,1, { "\\" }},      {S,1, { "|" }},       {S,1, { "\034" }},    DFAULT,            DFAULT,            DFAULT,            DFAULT },
+#ifdef PCVT_CAPS_IS_CTRL
+/* 30*/ { KBD_CTL,   I, DFAULT,            DFAULT,            DFAULT,            DFAULT,            DFAULT,            DFAULT,            DFAULT },
+#else
 /* 30*/ { KBD_CAPS,  I, DFAULT,            DFAULT,            DFAULT,            DFAULT,            DFAULT,            DFAULT,            DFAULT },
+#endif
 /* 31*/ { KBD_ASCII, I, {S,1, { "a" }},       {S,1, { "A" }},       {S,1, { "\001" }},    DFAULT,            DFAULT,            DFAULT,            DFAULT },
 /* 32*/ { KBD_ASCII, I, {S,1, { "s" }},       {S,1, { "S" }},       {S,1, { "\023" }},    DFAULT,            DFAULT,            DFAULT,            DFAULT },
 /* 33*/ { KBD_ASCII, I, {S,1, { "d" }},       {S,1, { "D" }},       {S,1, { "\004" }},    DFAULT,            DFAULT,            DFAULT,            DFAULT },
@@ -396,7 +400,11 @@ static Keycap_def	key2ascii[] =
 /* 27*/ { KBD_ASCII, I, {S, { "[" }},     {S, { "{" }},     {S, { "\033" }} },
 /* 28*/ { KBD_ASCII, I, {S, { "]" }},     {S, { "}" }},     {S, { "\035" }} },
 /* 29*/ { KBD_ASCII, I, {S, { "\\" }},    {S, { "|" }},     {S, { "\034" }} },
+#ifdef PCVT_CAPS_IS_CTRL
+/* 30*/ { KBD_CTL,   I, {S, { "" }},      {S, { "" }},      {S, { "" }} },
+#else
 /* 30*/ { KBD_CAPS,  I, {S, { "" }},      {S, { "" }},      {S, { "" }} },
+#endif
 /* 31*/ { KBD_ASCII, I, {S, { "a" }},     {S, { "A" }},     {S, { "\001" }} },
 /* 32*/ { KBD_ASCII, I, {S, { "s" }},     {S, { "S" }},     {S, { "\023" }} },
 /* 33*/ { KBD_ASCII, I, {S, { "d" }},     {S, { "D" }},     {S, { "\004" }} },
