@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.5 2003/04/17 01:02:21 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.6 2003/04/18 01:31:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,12 +38,16 @@
 
 #include <sys/envsys.h>
 #include <sys/wdog.h>
+#include <sys/power.h>
 #include <sys/queue.h>
 
 struct proc;
+struct knote;
+struct uio;
 
 #define	SYSMON_MINOR_ENVSYS	0
 #define	SYSMON_MINOR_WDOG	1
+#define	SYSMON_MINOR_POWER	2
 
 /*****************************************************************************
  * Environmental sensor support
@@ -112,12 +116,14 @@ struct sysmon_pswitch {
 	LIST_ENTRY(sysmon_pswitch) smpsw_list;
 };
 
-#define	SMPSW_TYPE_POWER	0	/* power button */
-#define	SMPSW_TYPE_SLEEP	1	/* sleep button */
-#define	SMPSW_TYPE_LID		2	/* lid switch */
+int	sysmonopen_power(dev_t, int, int, struct proc *);
+int	sysmonclose_power(dev_t, int, int, struct proc *);
+int	sysmonread_power(dev_t, struct uio *, int);
+int	sysmonpoll_power(dev_t, int, struct proc *);
+int	sysmonkqfilter_power(dev_t, struct knote *);
+int	sysmonioctl_power(dev_t, u_long, caddr_t, int, struct proc *);
 
-#define	SMPSW_EVENT_PRESSED	0	/* button pressed/lid closed */
-#define	SMPSW_EVENT_RELEASED	1	/* button released/lid opened */
+void	sysmon_power_settype(const char *);
 
 int	sysmon_pswitch_register(struct sysmon_pswitch *);
 void	sysmon_pswitch_unregister(struct sysmon_pswitch *);
