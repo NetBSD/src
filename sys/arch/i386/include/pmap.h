@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2000/02/11 07:00:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
  *
@@ -407,6 +407,12 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+void		pmap_zero_page_uncached __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*
  * inline functions

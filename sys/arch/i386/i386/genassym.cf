@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 1999/06/17 00:12:11 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.18 2000/04/24 17:18:16 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ include <sys/mbuf.h>
 
 include <vm/vm.h>
 
+include <uvm/uvm.h>
 include <uvm/uvm_extern.h>
 
 include <machine/trap.h>
@@ -126,6 +127,8 @@ define	NKPTP_MIN		NKPTP_MIN
 define	NKPTP_MAX		NKPTP_MAX
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
+
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 define	P_ADDR			offsetof(struct proc, p_addr)
 define	P_BACK			offsetof(struct proc, p_back)

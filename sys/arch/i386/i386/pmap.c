@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2000/04/11 06:30:28 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2000/04/24 17:18:17 thorpej Exp $	*/
 
 /*
  *
@@ -2074,6 +2074,28 @@ pmap_zero_page(pa)
 }
 
 /*
+ * pmap_zero_page_uncached: the same, except uncached.
+ */
+
+void
+pmap_zero_page_uncached(pa)
+	paddr_t pa;
+{
+	simple_lock(&pmap_zero_page_lock);
+#ifdef DIAGNOSTIC
+	if (*zero_pte)
+		panic("pmap_zero_page_uncached: lock botch");
+#endif
+
+	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
+	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	memset(zerop, 0, NBPG);				/* zero */
+	*zero_pte = 0;					/* zap! */
+	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
+	simple_unlock(&pmap_zero_page_lock);
+}
+
+/*
  * pmap_copy_page: copy a page
  */
 
@@ -2180,7 +2202,8 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 #ifdef DIAGNOSTIC
 		if (bank == -1)
 			panic("pmap_remove_ptes: unmanaged page marked "
-			      "PG_PVLIST");
+			      "PG_PVLIST, va = 0x%lx, pa = 0x%lx",
+			      startva, (u_long)(opte & PG_FRAME));
 #endif
 
 		/* sync R/M bits */
@@ -2246,7 +2269,7 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	if ((opte & PG_PVLIST) == 0) {
 #ifdef DIAGNOSTIC
 		if (vm_physseg_find(i386_btop(opte & PG_FRAME), &off) != -1)
-			panic("pmap_remove_ptes: managed page without "
+			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
 		return(TRUE);
@@ -2255,7 +2278,9 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
 #ifdef DIAGNOSTIC
 	if (bank == -1)
-		panic("pmap_remove_pte: unmanaged page marked PG_PVLIST");
+		panic("pmap_remove_pte: unmanaged page marked "
+		    "PG_PVLIST, va = 0x%lx, pa = 0x%lx", va,
+		    (u_long)(opte & PG_FRAME));
 #endif
 
 	/* sync R/M bits */
@@ -3471,8 +3496,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 				bank = vm_physseg_find(atop(pa), &off);
 #ifdef DIAGNOSTIC
 				if (bank == -1)
-					panic("pmap_enter: PG_PVLIST mapping "
-					      "with unmanaged page");
+					panic("pmap_enter: same pa PG_PVLIST "
+					      "mapping with unmanaged page "
+					      "pa = 0x%lx (0x%lx)", pa,
+					      atop(pa));
 #endif
 				pvh = &vm_physmem[bank].pmseg.pvhead[off];
 				simple_lock(&pvh->pvh_lock);
@@ -3498,7 +3525,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DIAGNOSTIC
 			if (bank == -1)
 				panic("pmap_enter: PG_PVLIST mapping with "
-				      "unmanaged page");
+				      "unmanaged page "
+				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
 #endif
 			pvh = &vm_physmem[bank].pmseg.pvhead[off];
 			simple_lock(&pvh->pvh_lock);
