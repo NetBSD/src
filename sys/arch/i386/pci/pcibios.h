@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.1 1999/11/17 01:16:37 thorpej Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -85,3 +85,6 @@ extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
 extern int pcibios_max_bus;
+
+void pci_device_foreach __P((pci_chipset_tag_t, int,
+			     void (*) (pci_chipset_tag_t, pcitag_t)));
