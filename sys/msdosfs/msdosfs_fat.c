@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.29 1998/05/02 01:47:12 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.30 1998/08/09 20:52:20 perry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -393,7 +393,7 @@ updatefats(pmp, bp, fatbn)
 			fatbn += pmp->pm_FATsecs;
 			/* getblk() never fails */
 			bpn = getblk(pmp->pm_devvp, fatbn, bp->b_bcount, 0, 0);
-			bcopy(bp->b_data, bpn->b_data, bp->b_bcount);
+			memcpy(bpn->b_data, bp->b_data, bp->b_bcount);
 			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
 				bwrite(bpn);
 			else

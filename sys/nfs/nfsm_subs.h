@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.17 1997/07/14 20:46:24 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.18 1998/08/09 21:19:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -114,7 +114,7 @@
 				nfsm_build(tl, u_int32_t *, t2); \
 				*tl++ = txdr_unsigned(VTONFS(v)->n_fhsize); \
 				*(tl + ((t2>>2) - 2)) = 0; \
-				bcopy((caddr_t)VTONFS(v)->n_fhp,(caddr_t)tl, \
+				memcpy((caddr_t)tl,(caddr_t)VTONFS(v)->n_fhp, \
 					VTONFS(v)->n_fhsize); \
 			} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, \
 				(caddr_t)VTONFS(v)->n_fhp, \
@@ -125,24 +125,24 @@
 			} \
 		} else { \
 			nfsm_build(cp, caddr_t, NFSX_V2FH); \
-			bcopy((caddr_t)VTONFS(v)->n_fhp, cp, NFSX_V2FH); \
+			memcpy(cp, (caddr_t)VTONFS(v)->n_fhp, NFSX_V2FH); \
 		} }
 
 #define nfsm_srvfhtom(f, v3) \
 		{ if (v3) { \
 			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED + NFSX_V3FH); \
 			*tl++ = txdr_unsigned(NFSX_V3FH); \
-			bcopy((caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
+			memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
 		} else { \
 			nfsm_build(cp, caddr_t, NFSX_V2FH); \
-			bcopy((caddr_t)(f), cp, NFSX_V2FH); \
+			memcpy(cp, (caddr_t)(f), NFSX_V2FH); \
 		} }
 
 #define nfsm_srvpostop_fh(f) \
 		{ nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED + NFSX_V3FH); \
 		*tl++ = nfs_true; \
 		*tl++ = txdr_unsigned(NFSX_V3FH); \
-		bcopy((caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
+		memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
 		}
 
 #define nfsm_mtofh(d, v, v3, f) \
@@ -309,7 +309,7 @@
 			nfsm_build(tl,u_int32_t *,t2); \
 			*tl++ = txdr_unsigned(s); \
 			*(tl+((t2>>2)-2)) = 0; \
-			bcopy((const char *)(a), (caddr_t)tl, (s)); \
+			memcpy((caddr_t)tl, (const char *)(a), (s)); \
 		} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, (a), (s))) != 0) { \
 			error = t2; \
 			m_freem(mreq); \
@@ -366,7 +366,7 @@
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			fhlen = fxdr_unsigned(int, *tl); \
 			if (fhlen == 0) { \
-				bzero((caddr_t)(f), NFSX_V3FH); \
+				memset((caddr_t)(f), 0, NFSX_V3FH); \
 			} else if (fhlen != NFSX_V3FH) { \
 				error = EBADRPC; \
 				nfsm_reply(0); \
@@ -374,7 +374,7 @@
 		} \
 		if (fhlen != 0) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_V3FH); \
-			bcopy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
+			memcpy( (caddr_t)(f), (caddr_t)tl, NFSX_V3FH); \
 			if ((nfsd->nd_flag & ND_NFSV3) == 0) \
 				nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
 		} \

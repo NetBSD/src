@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.7 1998/04/24 18:38:30 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.8 1998/08/09 21:19:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -261,8 +261,8 @@ nfs_bootdhcp(ifp, nd, procp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  Use address zero for now.
 	 */
-	bzero(&iareq, sizeof(iareq));
-	bcopy(ifp->if_xname, iareq.ifra_name, IFNAMSIZ);
+	memset(&iareq, 0, sizeof(iareq));
+	memcpy(iareq.ifra_name, ifp->if_xname, IFNAMSIZ);
 	/* Set the I/F address */
 	sin = (struct sockaddr_in *)&iareq.ifra_addr;
 	sin->sin_len = sizeof(*sin);
@@ -394,7 +394,7 @@ bootpcheck(m, context)
 		DPRINT("bad hwa_len");
 		return (-1);
 	}
-	if (bcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
+	if (memcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
 		DPRINT("wrong hwaddr");
 		return (-1);
 	}
@@ -428,7 +428,7 @@ bootpcheck(m, context)
 	/*
 	 * Check the vendor data.
 	 */
-	if (bcmp(bootp->bp_vend, vm_rfc1048, 4)) {
+	if (memcmp(bootp->bp_vend, vm_rfc1048, 4)) {
 		printf("nfs_boot: reply missing options");
 		goto warn;
 	}
@@ -453,7 +453,7 @@ bootpcheck(m, context)
 			bpc->dhcp_ok = 1;
 			break;
 		    case TAG_SERVERID:
-			bcopy(p, &bpc->dhcp_serverip.s_addr,
+			memcpy(&bpc->dhcp_serverip.s_addr, p,
 			      sizeof(bpc->dhcp_serverip.s_addr));
 			break;
 #endif
@@ -571,14 +571,14 @@ bootpc_call(so, ifp, nd, procp)
 	 * Build the BOOTP reqest message.
 	 * Note: xid is host order! (opaque to server)
 	 */
-	bzero((caddr_t)bootp, BOOTP_SIZE_MAX);
+	memset((caddr_t)bootp, 0, BOOTP_SIZE_MAX);
 	bootp->bp_op    = BOOTREQUEST;
 	bootp->bp_htype = hafmt;
 	bootp->bp_hlen  = halen;	/* Hardware address length */
 	bootp->bp_xid = ++xid;
-	bcopy(haddr, bootp->bp_chaddr, halen);
+	memcpy(bootp->bp_chaddr, haddr, halen);
 	/* Fill-in the vendor data. */
-	bcopy(vm_rfc1048, bootp->bp_vend, 4);
+	memcpy(bootp->bp_vend, vm_rfc1048, 4);
 #ifdef NFS_BOOT_DHCP
 	bootp->bp_vend[4] = TAG_DHCP_MSGTYPE;
 	bootp->bp_vend[5] = 1;
@@ -610,14 +610,14 @@ bootpc_call(so, ifp, nd, procp)
 		bootp->bp_vend[6] = DHCPREQUEST;
 		bootp->bp_vend[7] = TAG_REQ_ADDR;
 		bootp->bp_vend[8] = 4;
-		bcopy(&bpc.replybuf->bp_yiaddr, &bootp->bp_vend[9], 4);
+		memcpy(&bootp->bp_vend[9], &bpc.replybuf->bp_yiaddr, 4);
 		bootp->bp_vend[13] = TAG_SERVERID;
 		bootp->bp_vend[14] = 4;
-		bcopy(&bpc.dhcp_serverip.s_addr, &bootp->bp_vend[15], 4);
+		memcpy(&bootp->bp_vend[15], &bpc.dhcp_serverip.s_addr, 4);
 		bootp->bp_vend[19] = TAG_LEASETIME;
 		bootp->bp_vend[20] = 4;
 		leasetime = htonl(300);
-		bcopy(&leasetime, &bootp->bp_vend[21], 4);
+		memcpy(&bootp->bp_vend[21], &leasetime, 4);
 		bootp->bp_vend[25] = TAG_END;
 
 		bpc.expected_dhcpmsgtype = DHCPACK;
@@ -697,11 +697,11 @@ bootp_extract(bootp, replylen, nd)
 #endif
 		switch (tag) {
 		    case TAG_SUBNET_MASK:
-			bcopy(p, &netmask, 4);
+			memcpy(&netmask, p, 4);
 			break;
 		    case TAG_GATEWAY:
 			/* Routers */
-			bcopy(p, &gateway, 4);
+			memcpy(&gateway, p, 4);
 			break;
 		    case TAG_HOST_NAME:
 			if (len >= sizeof(hostname)) {
@@ -733,7 +733,7 @@ bootp_extract(bootp, replylen, nd)
 			break;
 		    case TAG_SWAP_SERVER:
 			/* override NFS server address */
-			bcopy(p, &rootserver, 4);
+			memcpy(&rootserver, p, 4);
 			break;
 		    default:
 			break;
@@ -775,12 +775,12 @@ bootp_extract(bootp, replylen, nd)
 
 		/* Server IP address. */
 		sin = (struct sockaddr_in *) &ndm->ndm_saddr;
-		bzero((caddr_t)sin, sizeof(*sin));
+		memset((caddr_t)sin, 0, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_addr = rootserver;
 		/* Server name. */
-		if (!bcmp(&rootserver, &bootp->bp_siaddr,
+		if (!memcmp(&rootserver, &bootp->bp_siaddr,
 			  sizeof(struct in_addr))) {
 			/* standard root server, we have the name */
 			strncpy(ndm->ndm_host, bootp->bp_sname, BP_SNAME_LEN-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.25 1998/07/05 08:49:45 jonathan Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.26 1998/08/09 20:51:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -113,9 +113,9 @@ fdesc_mount(mp, path, data, ndp, p)
 	vfs_getnewfsid(mp, MOUNT_FDESC);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
-	bcopy("fdesc", mp->mnt_stat.f_mntfromname, sizeof("fdesc"));
+	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
+	memcpy(mp->mnt_stat.f_mntfromname, "fdesc", sizeof("fdesc"));
 	return (0);
 }
 
@@ -243,9 +243,9 @@ fdesc_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	if (sbp != &mp->mnt_stat) {
-		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);

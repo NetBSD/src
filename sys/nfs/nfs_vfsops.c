@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.76 1998/07/05 08:49:48 jonathan Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.77 1998/08/09 21:19:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -194,8 +194,8 @@ nfs_statfs(mp, sbp, p)
 		sbp->f_ffree = 0;
 	}
 	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
 	nfsm_reqdone;
@@ -305,7 +305,7 @@ nfs_mountroot()
 	 * Side effect:  Finds and configures a network interface.
 	 */
 	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
-	bzero((caddr_t)nd, sizeof(*nd));
+	memset((caddr_t)nd, 0, sizeof(*nd));
 	error = nfs_boot_init(nd, procp);
 	if (error)
 		goto out;
@@ -440,7 +440,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	m = m_get(M_WAIT, MT_SONAME);
 	if (m == NULL)
 		panic("nfs_mountroot: mget soname for %s", mntname);
-	bcopy((caddr_t)ndmntp->ndm_args.addr, mtod(m, caddr_t),
+	memcpy(mtod(m, caddr_t), (caddr_t)ndmntp->ndm_args.addr,
 	      (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
@@ -592,7 +592,7 @@ nfs_decode_args(nmp, argp)
  *
  * mount system call
  * It seems a bit dumb to copyinstr() the host and path here and then
- * bcopy() them in mountnfs(), but I wanted to detect errors before
+ * memcpy() them in mountnfs(), but I wanted to detect errors before
  * doing the sockargs() call because sockargs() allocates an mbuf and
  * an error after that means that I have to release the mbuf.
  */
@@ -640,11 +640,11 @@ nfs_mount(mp, path, data, ndp, p)
 	error = copyinstr(path, pth, MNAMELEN-1, &len);
 	if (error)
 		return (error);
-	bzero(&pth[len], MNAMELEN - len);
+	memset(&pth[len], 0, MNAMELEN - len);
 	error = copyinstr(args.hostname, hst, MNAMELEN-1, &len);
 	if (error)
 		return (error);
-	bzero(&hst[len], MNAMELEN - len);
+	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
 	error = sockargs(&nam, (caddr_t)args.addr, args.addrlen, MT_SONAME);
 	if (error)
@@ -680,7 +680,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	} else {
 		MALLOC(nmp, struct nfsmount *, sizeof (struct nfsmount),
 		    M_NFSMNT, M_WAITOK);
-		bzero((caddr_t)nmp, sizeof (struct nfsmount));
+		memset((caddr_t)nmp, 0, sizeof (struct nfsmount));
 		mp->mnt_data = (qaddr_t)nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
@@ -716,7 +716,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
 	nmp->nm_fhsize = argp->fhsize;
-	bcopy((caddr_t)argp->fh, (caddr_t)nmp->nm_fh, argp->fhsize);
+	memcpy((caddr_t)nmp->nm_fh, (caddr_t)argp->fh, argp->fhsize);
 #ifdef COMPAT_09
 	mp->mnt_stat.f_type = 2;
 #else
@@ -724,8 +724,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 #endif
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_op->vfs_name,
 	    MFSNAMELEN);
-	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
+	memcpy(mp->mnt_stat.f_mntfromname, hst, MNAMELEN);
+	memcpy(mp->mnt_stat.f_mntonname, pth, MNAMELEN);
 	nmp->nm_nam = nam;
 
 	/* Set up the sockets and per-host congestion */

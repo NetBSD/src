@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.43 1998/06/05 19:53:01 kleink Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.44 1998/08/09 21:19:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -444,7 +444,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	vrele(ndp->ni_startdir);
 	FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 	vp = ndp->ni_vp;
-	bzero((caddr_t)fhp, sizeof(nfh));
+	memset((caddr_t)fhp, 0, sizeof(nfh));
 	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 	error = VFS_VPTOFH(vp, &fhp->fh_fid);
 	if (!error)
@@ -1042,12 +1042,12 @@ nfsmout:
 		owp = NULL;
 		wp = wpp->lh_first;
 		while (wp &&
-		    bcmp((caddr_t)&nfsd->nd_fh,(caddr_t)&wp->nd_fh,NFSX_V3FH)) {
+		    memcmp((caddr_t)&nfsd->nd_fh, (caddr_t)&wp->nd_fh, NFSX_V3FH)) {
 		    owp = wp;
 		    wp = wp->nd_hash.le_next;
 		}
 		while (wp && wp->nd_off < nfsd->nd_off &&
-		    !bcmp((caddr_t)&nfsd->nd_fh,(caddr_t)&wp->nd_fh,NFSX_V3FH)) {
+		    !memcmp((caddr_t)&nfsd->nd_fh, (caddr_t)&wp->nd_fh, NFSX_V3FH)) {
 		    owp = wp;
 		    wp = wp->nd_hash.le_next;
 		}
@@ -1356,7 +1356,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			break;
 		case NFSV3CREATE_EXCLUSIVE:
 			nfsm_dissect(cp, caddr_t, NFSX_V3CREATEVERF);
-			bcopy(cp, cverf, NFSX_V3CREATEVERF);
+			memcpy(cverf, cp, NFSX_V3CREATEVERF);
 			exclusive_flag = 1;
 			if (nd.ni_vp == NULL)
 				va.va_mode = 0;
@@ -1400,7 +1400,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				if (exclusive_flag) {
 					exclusive_flag = 0;
 					VATTR_NULL(&va);
-					bcopy(cverf, (caddr_t)&va.va_atime,
+					memcpy((caddr_t)&va.va_atime, cverf,
 						NFSX_V3CREATEVERF);
 					error = VOP_SETATTR(nd.ni_vp, &va, cred,
 						procp);
@@ -1476,7 +1476,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		}
 	}
 	if (!error) {
-		bzero((caddr_t)fhp, sizeof(nfh));
+		memset((caddr_t)fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
@@ -1485,7 +1485,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	}
 	if (v3) {
 		if (exclusive_flag && !error &&
-			bcmp(cverf, (caddr_t)&va.va_atime, NFSX_V3CREATEVERF))
+			memcmp(cverf, (caddr_t)&va.va_atime, NFSX_V3CREATEVERF))
 			error = EEXIST;
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
 		vrele(dirp);
@@ -1637,7 +1637,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 out:
 	vp = nd.ni_vp;
 	if (!error) {
-		bzero((caddr_t)fhp, sizeof(nfh));
+		memset((caddr_t)fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
@@ -1900,7 +1900,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	 */
 	if (fvp == tvp && fromnd.ni_dvp == tdvp &&
 	    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
-	    !bcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
+	    !memcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
 	      fromnd.ni_cnd.cn_namelen))
 		error = -1;
 out:
@@ -2163,7 +2163,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		nd.ni_cnd.cn_cred = cred;
 		error = lookup(&nd);
 		if (!error) {
-			bzero((caddr_t)fhp, sizeof(nfh));
+			memset((caddr_t)fhp, 0, sizeof(nfh));
 			fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
 			error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
 			if (!error)
@@ -2287,7 +2287,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	if (!error) {
 		vp = nd.ni_vp;
-		bzero((caddr_t)fhp, sizeof(nfh));
+		memset((caddr_t)fhp, 0, sizeof(nfh));
 		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
@@ -2676,7 +2676,7 @@ again:
 					tsiz = be-bp;
 				else
 					tsiz = xfer;
-				bcopy(cp, bp, tsiz);
+				memcpy(bp, cp, tsiz);
 				bp += tsiz;
 				xfer -= tsiz;
 				if (xfer > 0)
@@ -2917,7 +2917,7 @@ again:
 			 */
 			if (VFS_VGET(vp->v_mount, dp->d_fileno, &nvp))
 				goto invalid;
-			bzero((caddr_t)nfhp, NFSX_V3FH);
+			memset((caddr_t)nfhp, 0, NFSX_V3FH);
 			nfhp->fh_fsid =
 				nvp->v_mount->mnt_stat.f_fsid;
 			if (VFS_VPTOFH(nvp, &nfhp->fh_fid)) {
@@ -2977,7 +2977,7 @@ again:
 					tsiz = be - bp;
 				else
 					tsiz = xfer;
-				bcopy(cp, bp, tsiz);
+				memcpy(bp, cp, tsiz);
 				bp += tsiz;
 				xfer -= tsiz;
 				if (xfer > 0)
@@ -2998,7 +2998,7 @@ again:
 					tsiz = be - bp;
 				else
 					tsiz = xfer;
-				bcopy(cp, bp, tsiz);
+				memcpy(bp, cp, tsiz);
 				bp += tsiz;
 				xfer -= tsiz;
 				if (xfer > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.31 1998/07/05 04:37:44 jonathan Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.32 1998/08/09 21:19:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -150,7 +150,7 @@ sys_getfh(p, v, retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	bzero((caddr_t)&fh, sizeof(fh));
+	memset((caddr_t)&fh, 0, sizeof(fh));
 	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 	error = VFS_VPTOFH(vp, &fh.fh_fid);
 	vput(vp);
@@ -318,8 +318,8 @@ sys_nfssvc(p, v, retval)
 				/*
 				 * and save the session key in nu_key.
 				 */
-				bcopy(nsd->nsd_key, nuidp->nu_key,
-				    sizeof (nsd->nsd_key));
+				memcpy(nuidp->nu_key, nsd->nsd_key,
+				    sizeof(nsd->nsd_key));
 				if (nfsd->nfsd_nd->nd_nam2) {
 				    struct sockaddr_in *saddr;
 
@@ -434,7 +434,7 @@ nfssvc_addsock(fp, mynam)
 	else {
 		slp = (struct nfssvc_sock *)
 			malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-		bzero((caddr_t)slp, sizeof (struct nfssvc_sock));
+		memset((caddr_t)slp, 0, sizeof (struct nfssvc_sock));
 		TAILQ_INIT(&slp->ns_uidlruhead);
 		TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
 	}
@@ -481,7 +481,7 @@ nfssvc_nfsd(nsd, argp, p)
 	if (nfsd == (struct nfsd *)0) {
 		nsd->nsd_nfsd = nfsd = (struct nfsd *)
 			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
-		bzero((caddr_t)nfsd, sizeof (struct nfsd));
+		memset((caddr_t)nfsd, 0, sizeof (struct nfsd));
 		nfsd->nfsd_procp = p;
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
 		nfs_numnfsd++;
@@ -838,13 +838,13 @@ nfsrv_init(terminating)
 
 	nfs_udpsock = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	bzero((caddr_t)nfs_udpsock, sizeof (struct nfssvc_sock));
+	memset((caddr_t)nfs_udpsock, 0, sizeof (struct nfssvc_sock));
 	TAILQ_INIT(&nfs_udpsock->ns_uidlruhead);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
 
 	nfs_cltpsock = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
-	bzero((caddr_t)nfs_cltpsock, sizeof (struct nfssvc_sock));
+	memset((caddr_t)nfs_cltpsock, 0, sizeof (struct nfssvc_sock));
 	TAILQ_INIT(&nfs_cltpsock->ns_uidlruhead);
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_cltpsock, ns_chain);
 }
@@ -1015,7 +1015,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	else {
 		*auth_len = nmp->nm_authlen;
 		*verf_len = nmp->nm_verflen;
-		bcopy((caddr_t)nmp->nm_key, (caddr_t)key, sizeof (key));
+		memcpy((caddr_t)key, (caddr_t)nmp->nm_key, sizeof (key));
 	}
 	nmp->nm_iflag &= ~NFSMNT_HASAUTH;
 	nmp->nm_iflag |= NFSMNT_WAITAUTH;
@@ -1153,7 +1153,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 			nuidp->nu_expire = time.tv_sec + NFS_KERBTTL;
 			nuidp->nu_timestamp = ktvout;
 			nuidp->nu_nickname = nick;
-			bcopy(key, nuidp->nu_key, sizeof (key));
+			memcpy(nuidp->nu_key, key, sizeof (key));
 			TAILQ_INSERT_TAIL(&nmp->nm_uidlruhead, nuidp,
 				nu_lru);
 			LIST_INSERT_HEAD(NMUIDHASH(nmp, cred->cr_uid),

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.33 1998/07/05 08:49:45 jonathan Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.34 1998/08/09 20:51:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -150,9 +150,9 @@ kernfs_mount(mp, path, data, ndp, p)
 	vfs_getnewfsid(mp, MOUNT_KERNFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
-	bcopy("kernfs", mp->mnt_stat.f_mntfromname, sizeof("kernfs"));
+	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
+	memcpy(mp->mnt_stat.f_mntfromname, "kernfs", sizeof("kernfs"));
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
@@ -274,9 +274,9 @@ kernfs_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	if (sbp != &mp->mnt_stat) {
-		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);

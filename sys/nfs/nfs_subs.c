@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.62 1998/07/05 04:37:44 jonathan Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.63 1998/08/09 21:19:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -708,7 +708,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 				bpos = mtod(mb, caddr_t);
 			}
 			i = min(siz, M_TRAILINGSPACE(mb));
-			bcopy(auth_str, bpos, i);
+			memcpy(bpos, auth_str, i);
 			mb->m_len += i;
 			auth_str += i;
 			bpos += i;
@@ -741,7 +741,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 				bpos = mtod(mb, caddr_t);
 			}
 			i = min(siz, M_TRAILINGSPACE(mb));
-			bcopy(verf_str, bpos, i);
+			memcpy(bpos, verf_str, i);
 			mb->m_len += i;
 			verf_str += i;
 			bpos += i;
@@ -808,7 +808,7 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			else
 #endif
 			if (uiop->uio_segflg == UIO_SYSSPACE)
-				bcopy(mbufcp, uiocp, xfer);
+				memcpy(uiocp, mbufcp, xfer);
 			else
 				copyout(mbufcp, uiocp, xfer);
 			left -= xfer;
@@ -892,7 +892,7 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			else
 #endif
 			if (uiop->uio_segflg == UIO_SYSSPACE)
-				bcopy(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
+				memcpy(mtod(mp, caddr_t)+mp->m_len, uiocp, xfer);
 			else
 				copyin(uiocp, mtod(mp, caddr_t)+mp->m_len, xfer);
 			mp->m_len += xfer;
@@ -1008,7 +1008,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 		 * move the data to the front of the mbuf.
 		 */
 		if ((dst = m1->m_dat) != src)
-			ovbcopy(src, dst, left);
+			memmove(dst, src, left);
 		dst += left; 
 		m1->m_len = left;
 		m2 = m1->m_next;
@@ -1023,7 +1023,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 	 */
 	while ((len = (MLEN - m1->m_len)) != 0 && m2) {
 		if ((len = min(len, m2->m_len)) != 0)
-			bcopy(m2->m_data, dst, len);
+			memcpy(dst, m2->m_data, len);
 		m1->m_len += len;
 		dst += len;
 		m2->m_data += len;
@@ -1087,7 +1087,7 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 		left -= NFSX_UNSIGNED;
 		m2->m_len += NFSX_UNSIGNED;
 		if (left > 0) {
-			bcopy(cp, (caddr_t) tl, left);
+			memcpy((caddr_t) tl, cp, left);
 			siz -= left;
 			cp += left;
 			m2->m_len += left;
@@ -1118,7 +1118,7 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 		} else {
 			xfer = len = m1->m_len;
 		}
-		bcopy(cp, (caddr_t) tl, xfer);
+		memcpy((caddr_t) tl, cp, xfer);
 		m1->m_len = len+tlen;
 		siz -= xfer;
 		cp += xfer;
@@ -1193,7 +1193,7 @@ nfs_initdircache(vp)
 		MALLOC(np->n_dirgens, unsigned *,
 		    NFS_DIRHASHSIZ * sizeof (unsigned), M_NFSDIROFF,
 		    M_WAITOK);
-		bzero((caddr_t)np->n_dirgens,
+		memset((caddr_t)np->n_dirgens, 0,
 		    NFS_DIRHASHSIZ * sizeof (unsigned));
 	}
 }
@@ -1652,7 +1652,7 @@ nfs_loadattrcache(vpp, fp, vaper)
 	}
 	np->n_attrstamp = time.tv_sec;
 	if (vaper != NULL) {
-		bcopy((caddr_t)vap, (caddr_t)vaper, sizeof(*vap));
+		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
 			if (np->n_flag & NACC)
 				vaper->va_atime = np->n_atim;
@@ -1699,7 +1699,7 @@ nfs_getattrcache(vp, vaper)
 		} else
 			np->n_size = vap->va_size;
 	}
-	bcopy((caddr_t)vap, (caddr_t)vaper, sizeof(struct vattr));
+	memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(struct vattr));
 	if (np->n_flag & NCHG) {
 		if (np->n_flag & NACC)
 			vaper->va_atime = np->n_atim;
@@ -1994,7 +1994,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 			goto badlink;
 		}
 		if (ndp->ni_pathlen > 1) {
-			bcopy(ndp->ni_next, cp + linklen, ndp->ni_pathlen);
+			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
 			FREE(cnp->cn_pnbuf, M_NAMEI);
 			cnp->cn_pnbuf = cp;
 		} else
@@ -2401,7 +2401,7 @@ nfsrvw_sort(list, num)
 }
 
 /*
- * copy credentials making sure that the result can be compared with bcmp().
+ * copy credentials making sure that the result can be compared with memcmp().
  */
 void
 nfsrv_setcred(incred, outcred)
@@ -2409,7 +2409,7 @@ nfsrv_setcred(incred, outcred)
 {
 	register int i;
 
-	bzero((caddr_t)outcred, sizeof (struct ucred));
+	memset((caddr_t)outcred, 0, sizeof (struct ucred));
 	outcred->cr_ref = 1;
 	outcred->cr_uid = incred->cr_uid;
 	outcred->cr_gid = incred->cr_gid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.30 1998/08/03 14:20:00 kleink Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.31 1998/08/09 20:51:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -238,7 +238,7 @@ portal_lookup(v)
 
 	pt->pt_arg = malloc(size+1, M_TEMP, M_WAITOK);
 	pt->pt_size = size+1;
-	bcopy(pname, pt->pt_arg, pt->pt_size);
+	memcpy(pt->pt_arg, pname, pt->pt_size);
 	pt->pt_fileid = portal_fileid++;
 
 	*vpp = fvp;
@@ -276,7 +276,7 @@ portal_connect(so, so2)
 	if (unp2->unp_addr) {
 		unp3->unp_addr = malloc(unp2->unp_addrlen,
 		    M_SONAME, M_WAITOK);
-		bcopy(unp2->unp_addr, unp3->unp_addr,
+		memcpy(unp3->unp_addr, unp2->unp_addr,
 		    unp2->unp_addrlen);
 		unp3->unp_addrlen = unp2->unp_addrlen;
 	}
@@ -397,7 +397,7 @@ portal_open(v)
 	pcred.pcr_uid = ap->a_cred->cr_uid;
 	pcred.pcr_gid = ap->a_cred->cr_gid;
 	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
-	bcopy(ap->a_cred->cr_groups, pcred.pcr_groups, NGROUPS * sizeof(gid_t));
+	memcpy(pcred.pcr_groups, ap->a_cred->cr_groups, NGROUPS * sizeof(gid_t));
 	aiov[0].iov_base = (caddr_t) &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
@@ -536,7 +536,7 @@ portal_getattr(v)
 	struct vattr *vap = ap->a_vap;
 	struct timeval tv;
 
-	bzero(vap, sizeof(*vap));
+	memset(vap, 0, sizeof(*vap));
 	vattr_null(vap);
 	vap->va_uid = 0;
 	vap->va_gid = 0;

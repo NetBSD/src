@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.43 1998/06/21 22:18:16 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.44 1998/08/09 21:19:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1031,7 +1031,7 @@ nfs_doio(bp, cr, p)
 				+ diff);
 			if (len > 0) {
 			    len = min(len, uiop->uio_resid);
-			    bzero((char *)bp->b_data + diff, len);
+			    memset((char *)bp->b_data + diff, 0, len);
 			    bp->b_validend = diff + len;
 			} else
 			    bp->b_validend = diff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.30 1998/03/01 02:24:11 fvdl Exp $	*/
+/*	$NetBSD: buf.h,v 1.31 1998/08/09 20:58:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -147,7 +147,7 @@ struct cluster_save {
  * Zero out the buffer's data area.
  */
 #define	clrbuf(bp) {							\
-	bzero((bp)->b_data, (u_int)(bp)->b_bcount);			\
+	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount);			\
 	(bp)->b_resid = 0;						\
 }
 
