@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.15 2001/11/28 12:02:59 manu Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.16 2001/11/28 13:46:06 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.15 2001/11/28 12:02:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.16 2001/11/28 13:46:06 christos Exp $");
 
 #include "opt_compat_irix.h"
 
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.15 2001/11/28 12:02:59 manu Exp $")
 #include <sys/mount.h>
 #include <net/if.h>
 #include <sys/malloc.h>
-#ifdef COMPAT_IRIX
 #include <sys/ioctl_compat.h>
-#endif
 
 #include <sys/syscallargs.h>
 
