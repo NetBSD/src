@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2003/01/19 00:42:24 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 2003/01/19 02:39:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,7 +80,7 @@ struct trapframe32 {
 /*
  * This is to ensure alignment of the stackpointer
  */
-#define	FRAMELEN	roundup(sizeof(struct trapframe) + 8, 16)
+#define	FRAMELEN	roundup(sizeof(struct trapframe) + 8, CALLFRAMELEN)
 #define	trapframe(l)	((struct trapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN + 8))
 
 struct switchframe {
@@ -116,7 +116,7 @@ struct saframe {
 	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
 
-#define	IFRAMELEN	roundup(sizeof(struct intrframe), 16)
+#define	IFRAMELEN	roundup(sizeof(struct intrframe), CALLFRAMELEN)
 struct intrframe {
 	register_t r1;			/*  0 */
 	register_t _pad4;		/*  4 */
