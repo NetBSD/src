@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.27 1998/07/04 19:44:32 mrg Exp $	*/
+/*	$NetBSD: df.c,v 1.28 1998/07/27 16:33:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.27 1998/07/04 19:44:32 mrg Exp $");
+__RCSID("$NetBSD: df.c,v 1.28 1998/07/27 16:33:31 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,12 +141,12 @@ main(argc, argv)
 				continue;
 			} else if (S_ISBLK(stbuf.st_mode)) {
 				if ((mntpt = getmntpt(*argv)) == 0) {
-					mntpt = mktemp(strdup("/tmp/df.XXXXXX"));
-					mdev.fspec = *argv;
-					if (mkdir(mntpt, DEFFILEMODE) != 0) {
+					mntpt = strdup("/tmp/df.XXXXXX");
+					if (!mkdtemp(mntpt)) {
 						warn("%s", mntpt);
 						continue;
 					}
+					mdev.fspec = *argv;
 					if (mount(MOUNT_FFS, mntpt, MNT_RDONLY,
 					    &mdev) != 0) {
 						(void)rmdir(mntpt);
