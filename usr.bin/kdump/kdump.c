@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.66 2003/11/16 21:52:33 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.67 2003/11/18 13:21:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.66 2003/11/16 21:52:33 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.67 2003/11/18 13:21:53 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ main(argc, argv)
 	int col;
 	char *cp;
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:xX:")) != -1) {
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -143,10 +143,14 @@ main(argc, argv)
 			tail = 1;
 			break;
 		case 'p':
-			do_pid = atoi(optarg);
+			do_pid = strtoul(optarg, &cp, 0);
+			if (*cp != 0)
+				errx(1,"invalid number %s", optarg);
 			break;
 		case 'm':
-			maxdata = atoi(optarg);
+			maxdata = strtoul(optarg, &cp, 0);
+			if (*cp != 0)
+				errx(1,"invalid number %s", optarg);
 			break;
 		case 'N':
 			numeric++;
@@ -167,22 +171,19 @@ main(argc, argv)
 				errx(1, "unknown trace point in %s", optarg);
 			break;
 		case 'x':
-			if (word_size != 0)
-				errx(1, "-x and -X are mutually exclusive");
 			word_size = 1;
 			break;
 		case 'X':
-			if (word_size != 0)
-				errx(1, "-x and -X are mutually exclusive");
 			word_size = strtoul(optarg, &cp, 0);
 			if (*cp != 0 || word_size & (word_size - 1) ||
-			    word_size > 16 || word_size == 0)
+			    word_size > 16 || word_size <= 0)
 				errx(1, "argument to -X must be "
 				    "1, 2, 4, 8 or 16");
 			break;
 		default:
 			usage();
 		}
+	}
 	argv += optind;
 	argc -= optind;
 
@@ -378,41 +379,61 @@ void
 ktrsyscall(ktr)
 	struct ktr_syscall *ktr;
 {
-	int argsize = ktr->ktr_argsize;
-	const struct emulation *revelant = current;
+	int argcount = ktr->ktr_argsize / sizeof (register_t);
+	const struct emulation *emul = cur_emul;
 	register_t *ap;
+	char c;
+	char *cp;
+	const char *sys_name;
 
-	if (((ktr->ktr_code >= revelant->nsysnames || ktr->ktr_code < 0)
-	    && (mach_traps_dispatch(&ktr->ktr_code, &revelant) == 0)) ||
-	    numeric)
+	emul_changed = 0;
+
+	if (((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0)
+	    && (mach_traps_dispatch(&ktr->ktr_code, &emul) == 0)) ||
+	    numeric) {
+		sys_name = "?";
 		(void)printf("[%d]", ktr->ktr_code);
-	else
-		(void)printf("%s", revelant->sysnames[ktr->ktr_code]);
+	} else {
+		sys_name = emul->sysnames[ktr->ktr_code];
+		(void)printf("%s", sys_name);
+	}
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
-	if (argsize) {
-		char c = '(';
-		if (!plain) {
-			char *cp;
+	if (argcount) {
+		c = '(';
+		if (plain) {
+			;
 
-			switch (ktr->ktr_code) {
-			case SYS_ioctl:
-				if (decimal)
-					(void)printf("(%ld", (long)*ap);
-				else
-					(void)printf("(%#lx", (long)*ap);
-				ap++;
-				argsize -= sizeof(register_t);
-				if ((cp = ioctlname(*ap)) != NULL)
-					(void)printf(",%s", cp);
-				else
-					ioctldecode(*ap);
-				c = ',';
-				ap++;
-				argsize -= sizeof(register_t);
-				break;
-			
-			case SYS_ptrace:
-				if (strcmp(revelant->name, "linux") == 0) {
+		} else if (strcmp(sys_name, "exit") == 0) {
+			ectx_delete();
+
+		} else if (strcmp(sys_name, "ioctl") == 0 && argcount >= 2 ) {
+			if (decimal || *ap <= 9)
+				(void)printf("(%ld", (long)*ap);
+			else
+				(void)printf("(%#lx", (long)*ap);
+			ap++;
+			argcount--;
+			if ((cp = ioctlname(*ap)) != NULL)
+				(void)printf(",%s", cp);
+			else
+				ioctldecode(*ap);
+			ap++;
+			argcount--;
+			c = ',';
+
+		} else if (strcmp(sys_name, "kill") == 0 && argcount >= 2) {
+			if (decimal || *ap <= 9)
+				(void)printf("(%ld, SIG%s",
+				    (long)ap[0], signame(ap[1], 1));
+			else
+				(void)printf("(%#lx, SIG%s",
+				    (long)ap[0], signame(ap[1], 1));
+			ap += 2;
+			argcount -= 2;
+			c = ',';
+
+		} else if (strcmp(sys_name, "ptrace") == 0 && argcount >= 1) {
+			if (strcmp(emul->name, "linux") == 0) {
 				  if (*ap >= 0 && *ap <= 
 				      sizeof(linux_ptrace_ops) /
 				      sizeof(linux_ptrace_ops[0]))
@@ -420,42 +441,26 @@ ktrsyscall(ktr)
 					    linux_ptrace_ops[*ap]);
 				  else
 					(void)printf("(%ld", (long)*ap);
-				} else {
+			} else {
 				  if (*ap >= 0 && *ap <=
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
 					(void)printf("(%s", ptrace_ops[*ap]);
 				  else
 					(void)printf("(%ld", (long)*ap);
-				}
-				c = ',';
-				ap++;
-				argsize -= sizeof(register_t);
-				break;
-
-			case SYS_kill:
-				if (decimal)
-					(void)printf("(%ld, SIG%s",
-					    (long)ap[0], signame(ap[1], 1));
-				else
-					(void)printf("(%#lx, SIG%s",
-					    (long)ap[0], signame(ap[1], 1));
-				ap += 2;
-				argsize -= 2 * sizeof(register_t);
-				break;
-
-			default:
-				/* No special handling */
-				break;
 			}
+			ap++;
+			argcount--;
+			c = ',';
+
 		}
-		while (argsize) {
-			if (decimal)
+		while (argcount > 0) {
+			if (decimal || *ap <= 9)
 				(void)printf("%c%ld", c, (long)*ap);
 			else
 				(void)printf("%c%#lx", c, (long)*ap);
-			c = ',';
 			ap++;
-			argsize -= sizeof(register_t);
+			argcount--;
+			c = ',';
 		}
 		(void)putchar(')');
 	}
@@ -467,21 +472,22 @@ ktrsysret(ktr, len)
 	struct ktr_sysret *ktr;
 	int len;
 {
-	const struct emulation *revelant;
+	const struct emulation *emul;
 	int error = ktr->ktr_error;
 	int code = ktr->ktr_code;
 
-	if (emul_changed) 
-		revelant = previous;
-	else
-		revelant = current;
-	emul_changed = 0;
+	if (emul_changed)  {
+		/* In order to get system call name right in execve return */
+		emul = prev_emul;
+		emul_changed = 0;
+	} else
+		emul = cur_emul;
 
-	if ((code >= revelant->nsysnames || code < 0 || plain > 1) 
-	    && (mach_traps_dispatch(&code, &revelant) == 0))
+	if ((code >= emul->nsysnames || code < 0 || plain > 1) 
+	    && (mach_traps_dispatch(&code, &emul) == 0))
 		(void)printf("[%d] ", code);
 	else
-		(void)printf("%s ", revelant->sysnames[code]);
+		(void)printf("%s ", emul->sysnames[code]);
 
 	switch (error) {
 	case 0:
@@ -508,7 +514,7 @@ rprint(register_t ret)
 		if (ret < 0 || ret > 9)
 			(void)printf("/%#lx", (long)ret);
 	} else {
-		if (decimal)
+		if (decimal || ret <= 9)
 			(void)printf("%ld", (long)ret);
 		else
 			(void)printf("%#lx", (long)ret);
@@ -525,18 +531,18 @@ eprint(e)
 {
 	int i = e;
 
-	if (current->errnomap) {
+	if (cur_emul->errnomap) {
 
 		/* No remapping for ERESTART and EJUSTRETURN */
 		/* Kludge for linux that has negative error numbers */
-		if (current->errnomap[2] > 0 && e < 0)
+		if (cur_emul->errnomap[2] > 0 && e < 0)
 			goto normal;
 
-		for (i = 0; i < current->nerrnomap; i++)
-			if (e == current->errnomap[i])
+		for (i = 0; i < cur_emul->nerrnomap; i++)
+			if (e == cur_emul->errnomap[i])
 				break;
 
-		if (i == current->nerrnomap) {
+		if (i == cur_emul->nerrnomap) {
 			printf("-1 unknown errno %d", e);
 			return;
 		}
@@ -638,7 +644,7 @@ hexdump_buf(vdp, datalen, word_sz)
 			*cp++ = isgraph(c) ? c : '.';
 		};
 
-		printf("\t%3.3x  %.*s%.*s\n", off, width, bytes, l, chars);
+		printf("\t%-5.3x%.*s%.*s\n", off, width, bytes, l, chars);
 	}
 }
 
@@ -885,8 +891,8 @@ signame(long sig, int xlat)
 		(void)snprintf(buf, sizeof(buf), "*unknown %ld*", sig);
 		return buf;
 	} else
-		return sys_signame[(xlat && current->signalmap != NULL) ?
-		    current->signalmap[sig] : sig];
+		return sys_signame[(xlat && cur_emul->signalmap != NULL) ?
+		    cur_emul->signalmap[sig] : sig];
 }
 
 void
