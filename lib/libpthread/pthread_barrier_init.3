@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier_init.3,v 1.5 2003/07/04 08:41:25 wiz Exp $
+.\" $NetBSD: pthread_barrier_init.3,v 1.5.6.1 2005/03/22 15:22:58 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
-.Fn pthread_barrier_init "pthread_barrier_t *barrier" "const pthread_barrierattr_t *attr" "unsigned int count"
+.Fn pthread_barrier_init "pthread_barrier_t * restrict barrier" "const pthread_barrierattr_t * restrict attr" "unsigned int count"
 .Sh DESCRIPTION
 The
 .Fn pthread_barrier_init
