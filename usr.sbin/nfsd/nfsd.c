@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	5.10 (Berkeley) 4/24/91";*/
-static char rcsid[] = "$Id: nfsd.c,v 1.8 1993/10/05 00:36:28 cgd Exp $";
+static char rcsid[] = "$Id: nfsd.c,v 1.9 1993/12/05 13:41:07 deraadt Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -112,6 +112,9 @@ main(argc, argv, envp)
 	extern char *optarg;
 	struct sockaddr_in saddr, msk, mtch, peername;
 
+	bzero((char *)&saddr, sizeof saddr);
+	bzero((char *)&msk, sizeof msk);
+	bzero((char *)&mtch, sizeof mtch);
 
 	/*
 	 *  Save start and extent of argv for setproctitle.
