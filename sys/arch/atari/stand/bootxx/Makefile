@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/08 16:49:46 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/08 16:58:19 bjh21 Exp $
 
 NOMAN=	# defined
 
@@ -33,15 +33,9 @@ S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa
 S_LIBTOS=${S}/arch/atari/stand/tostools/libtos
 
-.if exists(${S_MACHSA}/libsa.a)
-LIBSA=${S_MACHSA}/libsa.a
-.else
-.	if exists(${S_MACHSA}/obj/libsa.a)
-LIBSA=${S_MACHSA}/obj/libsa.a
-.	else
-LIBSA=${S_MACHSA}/obj.${MACHINE}/libsa.a
-.	endif
-.endif
+S_MACHSAOBJ!=	cd ${S_MACHSA} && ${PRINTOBJDIR}
+
+LIBSA=${S_MACHSAOBJ}/libsa.a
 
 DPADD=	${LIBSA}
 LDADD=	${LIBSA}
