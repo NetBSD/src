@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.19 2003/08/07 11:14:24 agc Exp $	*/
+/*	$NetBSD: klogin.c,v 1.20 2005/01/20 15:41:14 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.19 2003/08/07 11:14:24 agc Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.20 2005/01/20 15:41:14 xtraeme Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -66,8 +66,8 @@ extern int has_ccache;
 
 static char tkt_location[MAXPATHLEN];  /* a pointer to this is returned... */
 
-int  klogin __P((struct passwd *, char *, char *, char *));
-void kdestroy __P((void));
+int  klogin(struct passwd *, char *, char *, char *);
+void kdestroy(void);
 
 /*
  * Attempt to log the user in using Kerberos authentication
@@ -76,9 +76,7 @@ void kdestroy __P((void));
  *	  1 if Kerberos failed (try local password in login)
  */
 int
-klogin(pw, instance, localhost, password)
-	struct passwd *pw;
-	char *instance, *localhost, *password;
+klogin(struct passwd *pw, char *instance, char *localhost, char *password)
 {
 	int kerror;
 	AUTH_DAT authdata;
@@ -216,7 +214,7 @@ klogin(pw, instance, localhost, password)
 }
 
 void
-kdestroy()
+kdestroy(void)
 {
         char *file = krbtkfile_env;
 	int i, fd;
