@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.1 1998/01/25 19:50:50 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.2 1998/02/07 17:28:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -99,6 +99,9 @@
 #include <net/if_ether.h>
 
 #include <vm/vm.h>
+#ifdef UVM
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -305,12 +308,21 @@ ie_obio_attach(parent, self, aux)
 	 * XXX-should provide bus support for 24-bit devices..
 	 */
 
+#ifdef UVM
+	ie_map = uvm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
+		(vm_offset_t)IEOB_ADBASE + sc->sc_msize, TRUE);
+#else
 	ie_map = vm_map_create(pmap_kernel(), (vm_offset_t)IEOB_ADBASE,
 		(vm_offset_t)IEOB_ADBASE + sc->sc_msize, 1);
+#endif
 	if (ie_map == NULL)
 		panic("ie_map");
 
+#ifdef UVM
+	sc->sc_maddr = (caddr_t) uvm_km_alloc(ie_map, sc->sc_msize);
+#else
 	sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
+#endif
 	if (sc->sc_maddr == NULL)
 		panic("ie kmem_alloc");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.10 1997/07/04 20:22:18 drochner Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.11 1998/02/07 17:29:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -175,7 +175,11 @@ lfs_truncate(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
+#ifdef UVM
+	uvm_vnp_setsize(vp, length);
+#else
 	vnode_pager_setsize(vp, length);
+#endif
 
 	fs = ip->i_lfs;
 
@@ -212,7 +216,11 @@ lfs_truncate(v)
 			return (e1);
 		ip->i_ffs_size = length;
 		size = blksize(fs);
+#ifdef UVM
+		(void)uvm_vnp_uncache(vp);
+#else
 		(void)vnode_pager_uncache(vp);
+#endif
 		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
 		allocbuf(bp, size);
 		if ((e1 = VOP_BWRITE(bp)) != 0)
