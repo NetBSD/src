@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.1 2003/05/01 07:01:58 igy Exp $
+# 	$NetBSD: LCARD,v 1.2 2003/12/29 12:51:48 igy Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -35,7 +35,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	INET		# IP + ICMP + TCP + UDP
 
 # compile options
-makeoptions	DEFGP="-G 18"
+#makeoptions	DEFGP="-G 18"
 
 config		netbsd		root on ? type ?
 
