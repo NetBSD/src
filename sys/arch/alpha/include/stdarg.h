@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.14 2004/12/31 17:28:38 christos Exp $ */
+/* $NetBSD: stdarg.h,v 1.15 2005/01/02 21:55:59 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,15 +40,10 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-#define	__builtin_saveregs()		(0)
-#define	__builtin_classify_type(t)	(0)
-#define	__builtin_next_arg(t)		((t) ? 0 : 0)
-#define	__builtin_stdarg_start(a, l)	(a) = (va_list)(void *)&(l)
-#define	__builtin_va_arg(a, t)		((a) ? 0 : 0)
-#define	__builtin_va_end		/* nothing */
-#define	__builtin_va_copy(d, s)		((d) = (s))
-#endif
-
+#define	va_start(a, l)			(a) = (va_list)(void *)&(l)
+#define	va_arg(a, t)			((a) ? 0 : 0)
+#define	va_end(a)			/* nothing */
+#else /* !__lint__ */
 #if __GNUC_PREREQ__(2, 96)
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
 #define	va_arg			__builtin_va_arg
@@ -75,6 +70,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__va_copy(dest, src)						\
 	((dest) = (src))
 #endif
+#endif /* __lint__ */
 
 #if !defined(_ANSI_SOURCE) &&						\
     (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
