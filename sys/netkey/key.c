@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.5 1999/07/03 21:32:47 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.6 1999/07/04 02:01:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.5 1999/07/03 21:32:47 thorpej Exp $ */
+/* KAME $Id: key.c,v 1.6 1999/07/04 02:01:16 itojun Exp $ */
 
 /*
  * This code is referd to RFC 2367,
@@ -1768,7 +1768,7 @@ key_delsaidx(saidx)
 	if (saidx == NULL)
 		panic("key_delsaidx: NULL pointer is passed.\n");
 
-	s = splnet();	/*called from softclock()*/
+	s = splsoftnet();	/*called from softclock()*/
 
 	/* searching all SA registerd in the secindex. */
 	for (stateidx = 0;
@@ -3423,7 +3423,7 @@ key_timehandler(void)
 	u_int diridx, dir;
 	int s;
 
-	s = splnet();	/*called from softclock()*/
+	s = splsoftnet();	/*called from softclock()*/
 
 	/* SPD */
     {
@@ -5190,7 +5190,7 @@ key_expire(sa)
 {
 	int s;
 
-	s = splnet();	/*called from softclock()*/
+	s = splsoftnet();	/*called from softclock()*/
 
 	/* sanity check */
 	if (sa == NULL)
