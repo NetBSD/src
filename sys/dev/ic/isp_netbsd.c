@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.1 1999/10/19 17:47:37 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.2 1999/10/19 20:02:23 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -206,6 +206,7 @@ isp_scsipi_request(chan, req, arg)
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
 		s = splbio();
 		if (isp->isp_state < ISP_RUNSTATE) {
 			DISABLE_INTS(isp);
