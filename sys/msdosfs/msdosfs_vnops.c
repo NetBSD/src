@@ -226,7 +226,6 @@ msdosfs_getattr(vp, vap, cred, p)
 	vap->va_uid = 0;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
-	vap->va_size_rsv = 0;
 	dos2unixtime((union dosdate *) & dep->de_Date,
 	    (union dostime *) & dep->de_Time, &vap->va_atime);
 	vap->va_atime.tv_usec = 0;
@@ -245,7 +244,6 @@ msdosfs_getattr(vp, vap, cred, p)
 	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
 	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
 	    			~(dep->de_pmp->pm_crbomask);
-	vap->va_bytes_rsv = 0;
 	vap->va_type = vp->v_type;
 	return 0;
 }
