@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cobalt,v 1.1 2000/03/19 23:07:44 soren Exp $
+#	$NetBSD: Makefile.cobalt,v 1.2 2000/03/30 20:08:37 soren Exp $
 
 # Makefile for NetBSD
 #
@@ -117,12 +117,7 @@ LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
-		sudo gzip -c $@ > /nfsroot/boot/vmlinux_raq-2800.gz ; \
-		ln -f /nfsroot/boot/vmlinux_raq-2800.gz /nfsroot/boot/n ; \
-		echo bfd /boot/vmlinux_raq-2800.gz root=/dev/nfs \
-			nfsroot=/nfsroot ; \
-		echo bfd /boot/n nfsroot=/nfsroot
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-x
 .endif
