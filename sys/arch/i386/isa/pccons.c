@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.23 1993/11/03 13:23:18 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.24 1993/11/08 20:18:08 mycroft Exp $
  */
 
 /*
@@ -366,7 +366,7 @@ pcprobe(parent, cf, aux)
 
 #ifdef DIAGNOSTIC
 	if (cf->cf_unit != 0)
-		panic("pcprobe: heh");
+		panic("pcprobe: unit != 0");
 #endif
 
 	/* enable interrupts and keyboard, etc. */
