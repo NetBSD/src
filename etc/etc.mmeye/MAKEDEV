@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.3 2000/03/27 19:35:25 msaitoh Exp $
+#	$NetBSD: MAKEDEV,v 1.4 2000/07/27 18:43:25 mason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,7 +90,7 @@ case $i in
 
 all)
 	sh $0 std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
-	sh $0 tty0 tty1 pty0 pty1 raid0 raid1 raid2 raid3
+	sh $0 tty0 tty1 pty0 pty1 pty2 pty3 raid0 raid1 raid2 raid3
 	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
 	sh $0 lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
@@ -101,7 +101,7 @@ all)
 
 floppy)
 	sh $0 std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1
-	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0
+	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0
 	;;
 
 ramdisk)
