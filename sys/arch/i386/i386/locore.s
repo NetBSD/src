@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 1995/04/12 15:38:13 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.121 1995/04/21 04:51:30 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -532,16 +532,11 @@ try586:	/* Use the `cpuid' instruction. */
 begin:	/* Now running relocated at KERNBASE. */
 
 	/* Relocate atdevbase. */
-	.globl	_Crtat
-	movl	_Crtat,%eax
-	subl	$(KERNBASE|IOM_BEGIN),%eax
 	movl	_atdevphys,%edx		# get pte PA
 	subl	_KPTphys,%edx		# remove base of ptes; have phys offset
 	shll	$(PGSHIFT-2),%edx	# corresponding to virt offset
 	addl	$(KERNBASE),%edx	# add virtual base
 	movl	%edx,_atdevbase
-	addl	%eax,%edx
-	movl	%edx,_Crtat
 
 	/* Set up bootstrap stack. */
 	movl	$(_kstack+USPACE-4*12),%esp # bootstrap stack end location
