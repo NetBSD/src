@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipcp.c,v 1.5 1994/05/08 12:16:19 paulus Exp $";
+static char rcsid[] = "$Id: ipcp.c,v 1.6 1994/05/30 01:18:47 paulus Exp $";
 #endif
 
 /*
@@ -26,18 +26,10 @@ static char rcsid[] = "$Id: ipcp.c,v 1.5 1994/05/08 12:16:19 paulus Exp $";
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <syslog.h>
-#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-
-#include <net/if.h>
-#include <net/if_ppp.h>
-#include <net/route.h>
-#include <netinet/in.h>
-
-#include <string.h>
 
 #include "pppd.h"
 #include "ppp.h"
@@ -498,10 +490,6 @@ ipcp_nakci(f, p, len)
 	len -= cilen; \
 	INCPTR(2, p); \
 	GETSHORT(cishort, p); \
-	if (cilen == CILEN_VJ) { \
-	    GETCHAR(cimaxslotindex, p); \
-            GETCHAR(cicflag, p); \
-        } \
 	no.neg = 1; \
         code \
     }
@@ -531,6 +519,8 @@ ipcp_nakci(f, p, len)
      */
     NAKCIVJ(CI_COMPRESSTYPE, neg_vj,
 	    if (cilen == CILEN_VJ) {
+		GETCHAR(cimaxslotindex, p);
+		GETCHAR(cicflag, p);
 		if (cishort == IPCP_VJ_COMP) {
 		    try.old_vj = 0;
 		    if (cimaxslotindex < go->maxslotindex)

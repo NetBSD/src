@@ -1,5 +1,5 @@
 .\" manual page [] for pppd 2.0
-.\" $Id: pppd.8,v 1.6 1994/05/08 12:16:29 paulus Exp $
+.\" $Id: pppd.8,v 1.7 1994/05/30 01:18:56 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -82,7 +82,8 @@ This entry is removed when the PPP connection is broken.
 .B disconnect \fI<p>
 Run the executable or shell command specified by \fI<p>\fR after
 \fIpppd\fR has terminated the link.  This script could, for example,
-issue commands to the modem to cause it to hang up.
+issue commands to the modem to cause it to hang up if hardware modem
+control signals were not available.
 .TP
 .B escape \fIxx,yy,...
 Specifies that certain characters should be escaped on transmission
@@ -235,7 +236,9 @@ fully qualified domain name is porsche.Quotron.COM, you would use the
 domain option to set the domain name to Quotron.COM.
 .TP
 .B modem
-Use the modem control lines.  (This option is not fully implemented.)
+Use the modem control lines.  On Ultrix, this option implies hardware
+flow control, as for the \fBcrtscts\fR option.  (This option is not fully
+implemented.)
 .TP
 .B kdebug \fIn
 Enable debugging code in the kernel-level PPP driver.  The argument
@@ -285,6 +288,25 @@ which is to determine (if possible) the local IP address from the
 hostname.  With this option, the peer will have to supply the local IP
 address during IPCP negotiation (unless it specified explicitly on the
 command line or in an options file).
+.TP
+.B lcp-echo-interval \fI<n>
+If this option is given, \fIpppd\fR will send an LCP echo-request
+frame to the peer every \fIn\fR seconds.  Under Linux, the
+echo-request is sent when no packets have been received from the peer
+for \fIn\fR seconds.  Normally the peer should respond to the
+echo-request by sending an echo-reply.  This option can be used with
+the \fIlcp-echo-failure\fR option to detect that the peer is no longer
+connected.
+.TP
+.B lcp-echo-failure \fI<n>
+If this option is given, \fIpppd\fR will presume the peer to be dead
+if \fIn\fR LCP echo-requests are sent without receiving a valid LCP
+echo-reply.  If this happens, \fIpppd\fR will terminate the
+connection.  Use of this option requires a non-zero value for the
+\fIlcp-echo-interval\fR parameter.  This option can be used to enable
+\fIpppd\fR to terminate after the physical connection has been broken
+(e.g., the modem has hung up) in situations where no hardware modem
+control lines are available.
 .TP
 .B lcp-restart \fI<n>
 Set the LCP restart interval (retransmission timeout) to <n> seconds
@@ -353,7 +375,7 @@ remote IP address was specified in an option.
 .SH OPTIONS FILES
 Options can be taken from files as well as the command line.  
 .I pppd
-reads options from the files /etc/ppp/options and $HOME/.ppprc before
+reads options from the files /etc/ppp/options and ~/.ppprc before
 looking at the command line.  An options file is parsed into a series
 of words, delimited by whitespace.  Whitespace can be included in a
 word by enclosing the word in quotes (").  A backslash (\\) quotes the
@@ -573,6 +595,28 @@ process.
 .B /var/run/ppp\fIn\fB.pid \fR(BSD), \fB/etc/ppp/ppp\fIn\fB.pid \fR(SunOS)
 Process-ID for \fIpppd\fR process on ppp interface unit \fIn\fR.
 .TP
+.B /etc/ppp/ip-up
+A program or script which is executed when the link is available for
+sending and receiving IP packets (that is, IPCP has come up).  It is
+executed with the parameters \fIinterface-name tty-device speed
+local-IP-address remote-IP-address\fR.
+.IP
+This program or script is executed with the same real and effective
+user-ID as \fIpppd\fR, that is, at least the effective user-ID and
+possibly the real user-ID will be \fBroot\fR.  This is so that it can
+be used to manipulate routes, run privileged daemons (e.g.
+\fBsendmail\fR), etc.  Be careful that the contents of the
+/etc/ppp/ip-up and /etc/ppp/ip-down scripts do not compromise your
+system's security.
+.TP
+.B /etc/ppp/ip-down
+A program or script which is executed when the link is no longer
+available for sending and receiving IP packets.  This script can be
+used for undoing the effects of the /etc/ppp/ip-up script.  It is
+invoked with the same parameters as the ip-up script, and the same
+security considerations apply, since it is executed with the same
+effective and real user-IDs as \fIpppd\fR.
+.TP
 .B /etc/ppp/pap-secrets
 Usernames, passwords and IP addresses for PAP authentication.
 .TP
@@ -584,7 +628,7 @@ System default options for
 .I pppd,
 read before user default options or command-line options.
 .TP
-.B $HOME/.ppprc
+.B ~/.ppprc
 User default options, read before command-line options.
 .SH SEE ALSO
 .TP
