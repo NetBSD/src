@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.2 2003/09/28 01:03:07 mrg Exp $	 */
+/* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -195,13 +195,21 @@ int             bcedebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#ifdef OLDNETBSD
+#if __NetBSD_Version__ >= 106080000
+CFATTACH_DECL(bce, sizeof(struct bce_softc),
+	      bce_probe, bce_attach, NULL, NULL);
+#else
 struct cfattach bce_ca = {
 	sizeof(struct bce_softc), bce_probe, bce_attach
 };
+#endif
+
+#if __NetBSD_Version__ >= 106120000
+#define APRINT_ERROR	aprint_error
+#define APRINT_NORMAL	aprint_normal
 #else
-CFATTACH_DECL(bce, sizeof(struct bce_softc),
-	      bce_probe, bce_attach, NULL, NULL);
+#define APRINT_ERROR	printf
+#define APRINT_NORMAL	printf
 #endif
 
 
@@ -284,11 +292,10 @@ bce_attach(parent, self, aux)
 	sc->bce_pa = *pa;
 	sc->bce_dmatag = pa->pa_dmat;
 
-	printf(": %s\n", bp->bp_name);
-	/*
-	 * following is for new aprint_naive(": Ethernet controller\n");
-	 * aprint_normal(": %s\n", bp->bp_name);
-	 */
+#if __NetBSD_Version__ >= 106120000
+	 aprint_naive(": Ethernet controller\n");
+#endif
+	 APRINT_NORMAL(": %s\n", bp->bp_name);
 
 	/*
 	 * Map control/status registers.
@@ -299,12 +306,8 @@ bce_attach(parent, self, aux)
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping!\n",
-		/*
-		 * following line for new aprint_error("%s: failed to enable
-		 * memory mapping!\n",
-		 */
-		       sc->bce_dev.dv_xname);
+		APRINT_ERROR("%s: failed to enable memory mapping!\n",
+		    sc->bce_dev.dv_xname);
 		return;
 	}
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BCE_PCI_BAR0);
@@ -315,12 +318,8 @@ bce_attach(parent, self, aux)
 		    &sc->bce_bhandle, &memaddr, &memsize) == 0)
 			break;
 	default:
-		printf("%s: unable to find mem space\n",
-		/*
-		 * following for new aprint_error("%s: unable to find mem
-		 * space\n",
-		 */
-		       sc->bce_dev.dv_xname);
+		APRINT_ERROR("%s: unable to find mem space\n",
+		    sc->bce_dev.dv_xname);
 		return;
 	}
 
@@ -343,12 +342,8 @@ bce_attach(parent, self, aux)
 		}
 	}
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n",
-		/*
-		 * following for new aprint_error("%s: couldn't map
-		 * interrupt\n",
-		 */
-		       sc->bce_dev.dv_xname);
+		APRINT_ERROR("%s: couldn't map interrupt\n",
+		    sc->bce_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -356,28 +351,15 @@ bce_attach(parent, self, aux)
 	sc->bce_intrhand = pci_intr_establish(pc, ih, IPL_NET, bce_intr, sc);
 
 	if (sc->bce_intrhand == NULL) {
-		printf("%s: couldn't establish interrupt",
-		/*
-		 * following for new aprint_error("%s: couldn't establish
-		 * interrupt",
-		 */
-		       sc->bce_dev.dv_xname);
+		APRINT_ERROR("%s: couldn't establish interrupt",
+		    sc->bce_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		/*
-		 * following for new aprint_normal(" at %s", intrstr);
-		 */
-		printf("\n");
-		/*
-		 * following for new aprint_normal("\n");
-		 */
+			APRINT_NORMAL(" at %s", intrstr);
+		APRINT_NORMAL("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n",
-	/*
-	 * following for new aprint_normal("%s: interrupting at %s\n",
-	 */
-	       sc->bce_dev.dv_xname, intrstr);
+	APRINT_NORMAL("%s: interrupting at %s\n",
+	    sc->bce_dev.dv_xname, intrstr);
 
 	/* reset the chip */
 	bce_reset(sc);
@@ -389,7 +371,7 @@ bce_attach(parent, self, aux)
 	 */
 	/*
 	 * XXX PAGE_SIZE is wasteful; we only need 1KB + 1KB, but
-	 * due to the limition above.
+	 * due to the limition above. ??
 	 */
 	if ((error = bus_dmamem_alloc(sc->bce_dmatag,
 	    2 * PAGE_SIZE, PAGE_SIZE, 2 * PAGE_SIZE,
@@ -476,33 +458,33 @@ bce_attach(parent, self, aux)
 	} else
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_AUTO);
 	/* get the phy */
-	sc->bce_phy =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 90) & 0x1f;	 /* MAGIC */
+	sc->bce_phy = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_PHY) & 0x1f;
 	/*
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
 	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
-		      bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	 /* MAGIC */
+	    bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	 /* MAGIC */
 	/* enable traffic meter led mode */
 	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
-		      bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	 /* MAGIC */
+	    bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	 /* MAGIC */
 
 
 	/* Attach the interface */
 	if_attach(ifp);
-	sc->enaddr[0] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 79);	 /* MAGIC */
-	sc->enaddr[1] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 78);	 /* MAGIC */
-	sc->enaddr[2] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 81);	 /* MAGIC */
-	sc->enaddr[3] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 80);	 /* MAGIC */
-	sc->enaddr[4] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 83);	 /* MAGIC */
-	sc->enaddr[5] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 82);	 /* MAGIC */
+	sc->enaddr[0] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_ENET0);
+	sc->enaddr[1] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_ENET1);
+	sc->enaddr[2] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_ENET2);
+	sc->enaddr[3] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_ENET3);
+	sc->enaddr[4] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_ENET4);
+	sc->enaddr[5] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
+	    BCE_MAGIC_ENET5);
 	printf("%s: Ethernet address %s\n", sc->bce_dev.dv_xname,
 	       ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
@@ -999,7 +981,7 @@ bce_init(ifp)
 	memset(sc->bce_rx_ring, 0, BCE_NRXDESC * sizeof(struct bce_dma_slot));
 	/* enable receive */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXCTL,
-	    30 << 1 | 1);
+	    30 << 1 | 1);	/* MAGIC */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXADDR,
 	    sc->bce_ring_map->dm_segs[0].ds_addr + 0x40000000);		/* MAGIC */
 
@@ -1217,11 +1199,11 @@ bce_reset(sc)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXCTL, 0);
 		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS);
 		/* if error on receive, wait to go idle */
-		if (val & 0xf0000) {	/* MAGIC */
+		if (val & RS_ERROR) {
 			for (i = 0; i < 100; i++) {
 				val = bus_space_read_4(sc->bce_btag,
 				    sc->bce_bhandle, BCE_DMA_RXSTATUS);
-				if (val & 0x2000)	/* MAGIC */
+				if (val & RS_DMA_IDLE)
 					break;
 				delay(10);
 			}
@@ -1324,9 +1306,9 @@ bce_reset(sc)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATEHI,
 		    0);
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBIMSTATE);
-	if (val & 0x60000)	/* MAGIC */
+	if (val & SBIM_MAGIC_ERRORBITS)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBIMSTATE,
-		    val & ~0x60000);	/* MAGIC */
+		    val & ~SBIM_MAGIC_ERRORBITS);
 
 	/* clear reset and allow it to propagate throughout the core */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
