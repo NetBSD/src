@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3 2001/11/23 16:09:11 uch Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.4 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 	
-#include "opt_kloader_kernel_path.h"
+#include "opt_kloader.h"
 
 #include <mips/asm.h>
 #include <mips/cache_r5900.h>	
@@ -121,13 +121,13 @@ NESTED_NOPROFILE(spllowersofthigh, CALLFRAME_SIZ, ra)
 	addu	sp, sp, CALLFRAME_SIZ
 END(spllowersofthigh)
 
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
 /*
- * kloader_boot(vaddr_t entry_addr, struct kloader_page_tag *p)	
+ * kloader_playstation2_boot(struct kloader_bootinfo *,
+ *		struct kloader_page_tag *)	
  *	must be PIC.
  */
-EXPORT(kloader_boot_start)	
-LEAF_NOPROFILE(kloader_boot)
+LEAF_NOPROFILE(kloader_playstation2_boot)
 	di			# disable cache
 	/*
 	 * 1. load kernel image.
@@ -214,13 +214,12 @@ LEAF_NOPROFILE(kloader_boot)
 	/* 
 	 * 3. jump to kernel entry 
 	 */
+	lw	a0, 0(a0)
 	jr	a0
 	nop
 	/* NOTREACHED */
-END(kloader_boot)
-EXPORT(kloader_boot_end)	
-	
-#endif /* KLOADER_KERNEL_PATH */
+END(kloader_playstation2_boot)
+#endif /* KLOADER */
 
 /*
  * Unused. but for vmstat(8)

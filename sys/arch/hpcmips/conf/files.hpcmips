@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.95 2004/07/03 12:54:34 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.96 2004/07/06 13:09:19 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -53,7 +53,7 @@ file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
 
-file	arch/hpc/hpc/kloader.c			kloader
+file	dev/kloader.c				kloader
 file	arch/hpcmips/hpcmips/kloader_machdep.c	kloader
 file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx & kloader
 file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx & kloader
