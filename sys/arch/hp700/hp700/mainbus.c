@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2003/11/18 04:04:42 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2003/11/24 02:51:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2003/11/18 04:04:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2003/11/24 02:51:35 chs Exp $");
 
 #undef BTLBDEBUG
 
@@ -100,8 +100,8 @@ struct mainbus_softc {
 	hppa_hpa_t sc_hpa;
 };
 
-int	mbmatch __P((struct device *, struct cfdata *, void *));
-void	mbattach __P((struct device *, struct device *, void *));
+int	mbmatch(struct device *, struct cfdata *, void *);
+void	mbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
     mbmatch, mbattach, NULL, NULL);
@@ -113,65 +113,65 @@ extern struct extent *hp700_io_extent;
 extern struct extent *dma24_ex;
 extern struct pdc_btlb pdc_btlb;
 
-u_int8_t mbus_r1 __P((void *, bus_space_handle_t, bus_size_t));
-u_int16_t mbus_r2 __P((void *, bus_space_handle_t, bus_size_t));
-u_int32_t mbus_r4 __P((void *, bus_space_handle_t, bus_size_t));
-u_int64_t mbus_r8 __P((void *, bus_space_handle_t, bus_size_t));
-void mbus_w1 __P((void *, bus_space_handle_t, bus_size_t, u_int8_t));
-void mbus_w2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t));
-void mbus_w4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t));
-void mbus_w8 __P((void *, bus_space_handle_t, bus_size_t, u_int64_t));
-void mbus_rm_1 __P((void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t));
-void mbus_rm_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-void mbus_rm_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
-void mbus_rm_8 __P((void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t));
-void mbus_wm_1 __P((void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t));
-void mbus_wm_2 __P((void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t));
-void mbus_wm_4 __P((void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t));
-void mbus_wm_8 __P((void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t));
-void mbus_rr_1 __P((void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t));
-void mbus_rr_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t));
-void mbus_rr_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t));
-void mbus_rr_8 __P((void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t));
-void mbus_wr_1 __P((void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t));
-void mbus_wr_2 __P((void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t));
-void mbus_wr_4 __P((void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t));
-void mbus_wr_8 __P((void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t));
-void mbus_sm_1 __P((void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t));
-void mbus_sm_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t));
-void mbus_sm_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t));
-void mbus_sm_8 __P((void *, bus_space_handle_t, bus_size_t, u_int64_t, bus_size_t));
-void mbus_sr_1 __P((void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t));
-void mbus_sr_2 __P((void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t));
-void mbus_sr_4 __P((void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t));
-void mbus_sr_8 __P((void *, bus_space_handle_t, bus_size_t, u_int64_t, bus_size_t));
-void mbus_cp_1 __P((void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void mbus_cp_2 __P((void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void mbus_cp_4 __P((void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
-void mbus_cp_8 __P((void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+u_int8_t mbus_r1(void *, bus_space_handle_t, bus_size_t);
+u_int16_t mbus_r2(void *, bus_space_handle_t, bus_size_t);
+u_int32_t mbus_r4(void *, bus_space_handle_t, bus_size_t);
+u_int64_t mbus_r8(void *, bus_space_handle_t, bus_size_t);
+void mbus_w1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+void mbus_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+void mbus_w4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
+void mbus_w8(void *, bus_space_handle_t, bus_size_t, u_int64_t);
+void mbus_rm_1(void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+void mbus_rm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+void mbus_rm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
+void mbus_rm_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t);
+void mbus_wm_1(void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
+void mbus_wm_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+void mbus_wm_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
+void mbus_wm_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t);
+void mbus_rr_1(void *, bus_space_handle_t, bus_size_t, u_int8_t *, bus_size_t);
+void mbus_rr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+void mbus_rr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
+void mbus_rr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t);
+void mbus_wr_1(void *, bus_space_handle_t, bus_size_t, const u_int8_t *, bus_size_t);
+void mbus_wr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+void mbus_wr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
+void mbus_wr_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t);
+void mbus_sm_1(void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+void mbus_sm_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+void mbus_sm_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
+void mbus_sm_8(void *, bus_space_handle_t, bus_size_t, u_int64_t, bus_size_t);
+void mbus_sr_1(void *, bus_space_handle_t, bus_size_t, u_int8_t, bus_size_t);
+void mbus_sr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t, bus_size_t);
+void mbus_sr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t, bus_size_t);
+void mbus_sr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t, bus_size_t);
+void mbus_cp_1(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void mbus_cp_2(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void mbus_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
+void mbus_cp_8(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
-int mbus_add_mapping __P((bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-int mbus_remove_mapping __P((bus_space_handle_t, bus_size_t, bus_addr_t *));
-int mbus_map __P((void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-void mbus_unmap __P((void *, bus_space_handle_t, bus_size_t));
-int mbus_alloc __P((void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *));
-void mbus_free __P((void *, bus_space_handle_t, bus_size_t));
-int mbus_subregion __P((void *, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *));
-void mbus_barrier __P((void *, bus_space_handle_t, bus_size_t, bus_size_t, int));
+int mbus_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+int mbus_remove_mapping(bus_space_handle_t, bus_size_t, bus_addr_t *);
+int mbus_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+void mbus_unmap(void *, bus_space_handle_t, bus_size_t);
+int mbus_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+void mbus_free(void *, bus_space_handle_t, bus_size_t);
+int mbus_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
+void mbus_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
 
-int mbus_dmamap_create __P((void *, bus_size_t, int, bus_size_t, bus_size_t, int, bus_dmamap_t *));
-void mbus_dmamap_destroy __P((void *, bus_dmamap_t));
-int mbus_dmamap_load __P((void *, bus_dmamap_t, void *, bus_size_t, struct proc *, int));
-int mbus_dmamap_load_mbuf __P((void *, bus_dmamap_t, struct mbuf *, int));
-int mbus_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
-int mbus_dmamap_load_raw __P((void *, bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
-void mbus_dmamap_unload __P((void *, bus_dmamap_t));
-void mbus_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t, int));
-int mbus_dmamem_alloc __P((void *, bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int));
-void mbus_dmamem_free __P((void *, bus_dma_segment_t *, int));
-int mbus_dmamem_map __P((void *, bus_dma_segment_t *, int, size_t, caddr_t *, int));
-void mbus_dmamem_unmap __P((void *, caddr_t, size_t));
-paddr_t mbus_dmamem_mmap __P((void *, bus_dma_segment_t *, int, off_t, int, int));
+int mbus_dmamap_create(void *, bus_size_t, int, bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void mbus_dmamap_destroy(void *, bus_dmamap_t);
+int mbus_dmamap_load(void *, bus_dmamap_t, void *, bus_size_t, struct proc *, int);
+int mbus_dmamap_load_mbuf(void *, bus_dmamap_t, struct mbuf *, int);
+int mbus_dmamap_load_uio(void *, bus_dmamap_t, struct uio *, int);
+int mbus_dmamap_load_raw(void *, bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int);
+void mbus_dmamap_unload(void *, bus_dmamap_t);
+void mbus_dmamap_sync(void *, bus_dmamap_t, bus_addr_t, bus_size_t, int);
+int mbus_dmamem_alloc(void *, bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
+void mbus_dmamem_free(void *, bus_dma_segment_t *, int);
+int mbus_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *, int);
+void mbus_dmamem_unmap(void *, caddr_t, size_t);
+paddr_t mbus_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
 
 int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
@@ -297,8 +297,8 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 }
 
 int
-mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
-    int flags, bus_space_handle_t *bshp)
+mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 	int error;
 	bus_size_t offset;
@@ -374,8 +374,8 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 
 int
 mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
-	 bus_size_t align, bus_size_t boundary, int flags,
-	 bus_addr_t *addrp, bus_space_handle_t *bshp)
+    bus_size_t align, bus_size_t boundary, int flags, bus_addr_t *addrp,
+    bus_space_handle_t *bshp)
 {
 	bus_addr_t bpa;
 	int error;
@@ -582,19 +582,13 @@ mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t 
 		*(volatile u_int64_t *)h = vv;
 }
 
-void mbus_rrm_2 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int16_t*a, bus_size_t c));
-void mbus_rrm_4 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int32_t*a, bus_size_t c));
-void mbus_rrm_8 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, u_int64_t*a, bus_size_t c));
-
-void mbus_wrm_2 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int16_t *a, bus_size_t c));
-void mbus_wrm_4 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int32_t *a, bus_size_t c));
-void mbus_wrm_8 __P((void *v, bus_space_handle_t h,
-		     bus_size_t o, const u_int64_t *a, bus_size_t c));
+void mbus_rrm_2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t*a, bus_size_t c);
+void mbus_rrm_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t*a, bus_size_t c);
+void mbus_rrm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t*a, bus_size_t c);
+	       
+void mbus_wrm_2(void *v, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, bus_size_t c);
+void mbus_wrm_4(void *v, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, bus_size_t c);
+void mbus_wrm_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_size_t c);
 
 void
 mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
@@ -660,19 +654,13 @@ mbus_wr_8(void *v, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, bus_s
 		*((volatile u_int64_t *)h)++ = *(a++);
 }
 
-void mbus_rrr_2 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int16_t *a, bus_size_t c));
-void mbus_rrr_4 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int32_t *a, bus_size_t c));
-void mbus_rrr_8 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, u_int64_t *a, bus_size_t c));
+void mbus_rrr_2(void *, bus_space_handle_t, bus_size_t, u_int16_t *, bus_size_t);
+void mbus_rrr_4(void *, bus_space_handle_t, bus_size_t, u_int32_t *, bus_size_t);
+void mbus_rrr_8(void *, bus_space_handle_t, bus_size_t, u_int64_t *, bus_size_t);
 
-void mbus_wrr_2 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int16_t *a, bus_size_t c));
-void mbus_wrr_4 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int32_t *a, bus_size_t c));
-void mbus_wrr_8 __P((void *v, bus_space_handle_t h,
-		   bus_size_t o, const u_int64_t *a, bus_size_t c));
+void mbus_wrr_2(void *, bus_space_handle_t, bus_size_t, const u_int16_t *, bus_size_t);
+void mbus_wrr_4(void *, bus_space_handle_t, bus_size_t, const u_int32_t *, bus_size_t);
+void mbus_wrr_8(void *, bus_space_handle_t, bus_size_t, const u_int64_t *, bus_size_t);
 
 void
 mbus_sr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv, bus_size_t c)
@@ -778,9 +766,8 @@ const struct hppa_bus_space_tag hppa_bustag = {
  * DMA map creation functions.
  */
 int
-mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
-		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
-		   bus_dmamap_t *dmamp)
+mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
+    bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct hppa_bus_dmamap *map;
 	void *mapstore;
@@ -840,7 +827,7 @@ mbus_dmamap_destroy(void *v, bus_dmamap_t map)
  */
 int
 mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
-		 struct proc *p, int flags)
+    struct proc *p, int flags)
 {
 	paddr_t pa, pa_next;
 	bus_size_t mapsize;
@@ -999,8 +986,8 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t addr, bus_size_t size, in
  */
 int
 mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
-		  bus_size_t boundary, bus_dma_segment_t *segs, int nsegs,
-		  int *rsegs, int flags)
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	paddr_t low, high;
 	struct pglist *mlist;
@@ -1122,7 +1109,7 @@ mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
  */
 int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
-		caddr_t *kvap, int flags)
+    caddr_t *kvap, int flags)
 {
 	struct vm_page *m;
 	vaddr_t va;
@@ -1275,10 +1262,7 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 }
 
 void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct pdc_system_map_find_mod pdc_find_mod PDC_ALIGNMENT;
@@ -1373,8 +1357,7 @@ mbattach(parent, self, aux)
  * retrive CPU #N HPA value
  */
 hppa_hpa_t
-cpu_gethpa(n)
-	int n;
+cpu_gethpa(int n)
 {
 	struct mainbus_softc *sc;
 
@@ -1384,9 +1367,7 @@ cpu_gethpa(n)
 }
 
 int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 	int n;
 	struct confargs *ca = aux;
@@ -1413,10 +1394,7 @@ mbprint(aux, pnp)
 }
 
 int
-mbsubmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mbsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.3 2003/08/31 01:26:32 chs Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4 2003/11/24 02:51:35 chs Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -90,11 +90,11 @@
 #define	_HP700_LEDS_COUNT	(8)
 
 /* This forcefully reboots the machine. */
-void cpu_die __P((void));
+void cpu_die(void);
 
 /* These map and unmap page zero. */
-int hp700_pagezero_map __P((void));
-void hp700_pagezero_unmap __P((int));
+int hp700_pagezero_map(void);
+void hp700_pagezero_unmap(int);
 
 /* Blinking the LEDs. */
 #ifdef USELEDS
@@ -111,7 +111,7 @@ do {						\
 do {						\
 	_hp700_led_on_cycles[i] = (((ms) * _HP700_LED_FREQ) / 1000); \
 } while (/* CONSTCOND */ 0)
-void hp700_led_ctl __P((int, int, int));
+void hp700_led_ctl(int, int, int);
 #else  /* !USELEDS */
 #define hp700_led_blink(i)
 #define hp700_led_on(i, ms)

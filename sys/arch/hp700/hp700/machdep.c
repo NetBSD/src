@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/11/01 18:23:37 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/11/24 02:51:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2003/11/01 18:23:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/11/24 02:51:35 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -215,8 +215,8 @@ int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 /*
  * exported methods for cpus
  */
-int (*cpu_desidhash) __P((void));
-int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
+int (*cpu_desidhash)(void);
+int (*cpu_hpt_init)(vaddr_t, vsize_t);
 
 dev_t	bootdev;
 int	totalphysmem, physmem, esym;
@@ -258,9 +258,9 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 
-void delay_init __P((void));
-static __inline void fall __P((int, int, int, int, int));
-void dumpsys __P((void));
+void delay_init(void);
+static __inline void fall(int, int, int, int, int);
+void dumpsys(void);
 
 /*
  * wide used hardware params
@@ -284,12 +284,12 @@ extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
 extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
 extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
 extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
-int hpti_g __P((vaddr_t, vsize_t));
-int desidhash_x __P((void));
-int desidhash_s __P((void));
-int desidhash_t __P((void));
-int desidhash_l __P((void));
-int desidhash_g __P((void));
+int hpti_g(vaddr_t, vsize_t);
+int desidhash_x(void);
+int desidhash_s(void);
+int desidhash_t(void);
+int desidhash_l(void);
+int desidhash_g(void);
 #define _HPPA_CPU_UNSUPP \
 	  NULL, \
 	  NULL, 0, \
@@ -418,8 +418,7 @@ const struct hppa_cpu_info hppa_cpu_pa8600 = {
 };
 
 void
-hppa_init(start)
-	paddr_t start;
+hppa_init(paddr_t start)
 {
 	vaddr_t vstart, vend;
 	int error;
@@ -816,7 +815,7 @@ do {									\
 	hp700_kgdb_attached = FALSE;
 #if NCOM > 0
 	if (!strcmp(KGDB_DEVNAME, "com")) {
-		int com_gsc_kgdb_attach __P((void));
+		int com_gsc_kgdb_attach(void);
 		if (com_gsc_kgdb_attach() == 0)
 			hp700_kgdb_attached = TRUE;
 	}
@@ -835,7 +834,7 @@ do {									\
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
@@ -972,8 +971,7 @@ delay_init(void)
 }
 
 void
-delay(us)
-	u_int us;
+delay(u_int us)
 {
 	u_int start, end, n;
 
@@ -998,8 +996,7 @@ delay(us)
 }
 
 static __inline void
-fall(c_base, c_count, c_loop, c_stride, data)
-	int c_base, c_count, c_loop, c_stride, data;
+fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
 	int loop;
 
@@ -1012,7 +1009,7 @@ fall(c_base, c_count, c_loop, c_stride, data)
 }
 
 void
-fcacheall()
+fcacheall(void)
 {
 	/*
 	 * Flush the instruction, then data cache.
@@ -1026,7 +1023,7 @@ fcacheall()
 }
 
 void
-ptlball()
+ptlball(void)
 {
 	pa_space_t sp;
 	int i, j, k;
@@ -1057,7 +1054,7 @@ ptlball()
 }
 
 int
-desidhash_g()
+desidhash_g(void)
 {
 	/* TODO call PDC to disable SID hashing in the cache index */
 
@@ -1065,10 +1062,9 @@ desidhash_g()
 }
 
 int
-hpti_g(hpt, hptsize)
-	vaddr_t hpt;
-	vsize_t hptsize;
+hpti_g(vaddr_t hpt, vsize_t hptsize)
 {
+
 	return pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_CONFIG,
 	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
@@ -1076,7 +1072,7 @@ hpti_g(hpt, hptsize)
 /*
  * This inserts a recorded BTLB slot.
  */
-static int _hp700_btlb_insert __P((struct btlb_slot *));
+static int _hp700_btlb_insert(struct btlb_slot *);
 static int
 _hp700_btlb_insert(struct btlb_slot *btlb_slot)
 {
@@ -1133,8 +1129,8 @@ _hp700_btlb_insert(struct btlb_slot *btlb_slot)
  * This records and inserts a new BTLB entry.
  */
 int
-hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, 
-		vsize_t *sizep, u_int tlbprot)
+hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
+    u_int tlbprot)
 {
 	struct btlb_slot *btlb_slot, *btlb_slot_best, *btlb_slot_end;
 	vsize_t frames;
@@ -1450,7 +1446,7 @@ long	dumplo = 0;		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -1595,7 +1591,7 @@ do {							\
 }
 
 int
-cpu_dump()
+cpu_dump(void)
 {
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
@@ -1629,13 +1625,13 @@ cpu_dump()
 #define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	int psize, bytes, i, n;
 	caddr_t maddr;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
 	if (dumpdev == NODEV)
@@ -1702,10 +1698,7 @@ dumpsys()
 
 /* bcopy(), error on fault */
 int
-kcopy(from, to, size)
-	const void *from;
-	void *to;
-	size_t size;
+kcopy(const void *from, void *to, size_t size)
 {
 	u_int oldh = curlwp->l_addr->u_pcb.pcb_onfault;
 
@@ -1720,10 +1713,7 @@ kcopy(from, to, size)
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
@@ -1753,16 +1743,11 @@ setregs(l, pack, stack)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	dev_t consdev;
+
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);	/* overloaded */
@@ -1786,7 +1771,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted = 0;
 
