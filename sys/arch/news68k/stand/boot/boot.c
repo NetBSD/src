@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2003/11/21 19:44:53 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2004/09/04 13:43:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -51,8 +51,7 @@ char *kernels[] = { "/netbsd", "/netbsd.gz", NULL };
 #endif
 
 void
-boot(d4, d5, d6, d7)
-	u_int32_t d4, d5, d6, d7;
+boot(u_int32_t d4, u_int32_t d5, u_int32_t d6, u_int32_t d7)
 {
 	int fd, i;
 	int ctlr, unit, part, type;
@@ -135,7 +134,7 @@ boot(d4, d5, d6, d7)
 }
 
 void
-_rtt()
+_rtt(void)
 {
 
 	rom_halt();

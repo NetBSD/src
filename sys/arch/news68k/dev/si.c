@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.15 2004/09/04 11:30:39 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.16 2004/09/04 13:43:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.15 2004/09/04 11:30:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.16 2004/09/04 13:43:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,17 +85,17 @@ struct si_softc {
 	struct	si_dma_handle ncr_dma[SCI_OPENINGS];
 };
 
-void si_attach(struct device *, struct device *, void *);
-int  si_match(struct device *, struct cfdata *, void *);
+static void si_attach(struct device *, struct device *, void *);
+static int  si_match(struct device *, struct cfdata *, void *);
 int  si_intr(int);
 
-void si_dma_alloc(struct ncr5380_softc *);
-void si_dma_free(struct ncr5380_softc *);
-void si_dma_setup(struct ncr5380_softc *);
-void si_dma_start(struct ncr5380_softc *);
-void si_dma_poll(struct ncr5380_softc *);
-void si_dma_eop(struct ncr5380_softc *);
-void si_dma_stop(struct ncr5380_softc *);
+static void si_dma_alloc(struct ncr5380_softc *);
+static void si_dma_free(struct ncr5380_softc *);
+static void si_dma_setup(struct ncr5380_softc *);
+static void si_dma_start(struct ncr5380_softc *);
+static void si_dma_poll(struct ncr5380_softc *);
+static void si_dma_eop(struct ncr5380_softc *);
+static void si_dma_stop(struct ncr5380_softc *);
 
 CFATTACH_DECL(si, sizeof(struct si_softc),
     si_match, si_attach, NULL, NULL);
@@ -114,11 +114,8 @@ CFATTACH_DECL(si, sizeof(struct si_softc),
 int si_options = 0x0f;
 
 
-int
-si_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+si_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	int addr;
@@ -140,10 +137,8 @@ si_match(parent, cf, aux)
  * Card attach function
  */
 
-void
-si_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+si_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct si_softc *sc = (struct si_softc *)self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
@@ -208,8 +203,7 @@ si_attach(parent, self, aux)
 }
 
 int
-si_intr(unit)
-	int unit;
+si_intr(int unit)
 {
 	struct si_softc *sc;
 
@@ -226,9 +220,8 @@ si_intr(unit)
  *  DMA routines for news1700 machines
  */
 
-void
-si_dma_alloc(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_alloc(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -274,9 +267,8 @@ si_dma_alloc(ncr_sc)
 	sr->sr_dma_hand = dh;
 }
 
-void
-si_dma_free(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_free(struct ncr5380_softc *ncr_sc)
 {
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
@@ -289,17 +281,15 @@ si_dma_free(ncr_sc)
 	sr->sr_dma_hand = NULL;
 }
 
-void
-si_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_setup(struct ncr5380_softc *ncr_sc)
 {
 
 	/* Do nothing here */
 }
 
-void
-si_dma_start(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	volatile struct dma_regs *dmac = sc->sc_regs;
@@ -376,9 +366,8 @@ si_dma_start(ncr_sc)
 /*
  * When?
  */
-void
-si_dma_poll(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_poll(struct ncr5380_softc *ncr_sc)
 {
 
 	printf("si_dma_poll\n");
@@ -387,17 +376,15 @@ si_dma_poll(ncr_sc)
 /*
  * news68k (probably) does not use the EOP signal.
  */
-void
-si_dma_eop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_eop(struct ncr5380_softc *ncr_sc)
 {
 
 	printf("si_dma_eop\n");
 }
 
-void
-si_dma_stop(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
+static void
+si_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	volatile struct dma_regs *dmac = sc->sc_regs;

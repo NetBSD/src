@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.c,v 1.1 2002/04/30 13:08:01 tsutsui Exp $	*/
+/*	$NetBSD: getchar.c,v 1.2 2004/09/04 13:43:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2002 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
 #include <machine/romcall.h>
 
 int
-getchar()
+getchar(void)
 {
 	char c = '\0';
 	int i;
