@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.47 1999/12/08 19:16:52 sommerfeld Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.48 2000/03/30 12:22:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -158,7 +158,7 @@ spec_open(v)
 	struct proc *p = ap->a_p;
 	struct vnode *bvp, *vp = ap->a_vp;
 	dev_t bdev, dev = (dev_t)vp->v_rdev;
-	register int maj = major(dev);
+	int maj = major(dev);
 	int error;
 
 	/*
@@ -245,8 +245,8 @@ spec_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn, nextbn;
@@ -331,8 +331,8 @@ spec_write(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
@@ -460,7 +460,7 @@ spec_poll(v)
 		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-	register dev_t dev;
+	dev_t dev;
 
 	switch (ap->a_vp->v_type) {
 
@@ -486,7 +486,7 @@ spec_fsync(v)
 		int  a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type == VBLK)
 		vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
@@ -564,7 +564,7 @@ spec_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
@@ -728,7 +728,7 @@ spec_advlock(v)
 		struct flock *a_fl;
 		int a_flags;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	return (lf_advlock(&vp->v_speclockf, (off_t)0, ap->a_id, ap->a_op,
 	                   ap->a_fl, ap->a_flags));

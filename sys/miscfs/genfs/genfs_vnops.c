@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.15 1999/11/15 18:49:10 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.16 2000/03/30 12:22:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@ genfs_fsync(v)
 		int a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	int wait;
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
