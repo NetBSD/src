@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.4 1996/03/08 21:08:39 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.5 1996/03/13 21:21:00 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -87,7 +87,6 @@
 extern int pmap_debug_level;
 extern u_int kmodule_size;
 extern u_int kmodule_base;
-extern char *kstack;
 u_int arm700bugcount = 0;
 extern int vnodeconsolebug;
 extern int usertraceback;
@@ -205,9 +204,7 @@ syscall(frame, code)
 
 	p = curproc;
 	sticks = p->p_sticks;
-/*	p->p_md.md_regs = frame;*/
-	p->p_md.md_regs = (struct trapframe *)
-	    ((char *)frame + ((char *)p->p_addr - kstack));
+	p->p_md.md_regs = frame;
 	opc = frame->tf_pc;
 	params = (caddr_t)&frame->tf_r0;
 	regparams = 4;
@@ -273,9 +270,6 @@ syscall(frame, code)
 		case 11:
 			frame->tf_r0 = ReadShort(frame->tf_r1);
 			break;
-/*		case 12:
-			shell_kstack(frame->tf_r1, frame->tf_r2);
-			break;*/
 		case 16:
 			pmap_pagedir_dump();
 			break;
