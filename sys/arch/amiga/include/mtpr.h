@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.11 1997/08/27 18:31:14 is Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.12 1998/07/25 07:21:20 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,10 +50,6 @@
  * SOFTINT bit)
  */
 
-/*
- * this makes it pretty machine dependant. Should this go into
- * <amiga/amiga/mtpr.h> ?
- */
 #include <amiga/amiga/custom.h>
 #ifdef DRACO
 #include <amiga/amiga/drcustom.h>
