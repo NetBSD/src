@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,32 +30,93 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kern_proc.c	7.16 (Berkeley) 6/28/91
- *	$Id: kern_proc.c,v 1.6 1994/05/04 03:41:56 cgd Exp $
+ *	from: @(#)kern_proc.c	8.4 (Berkeley) 1/4/94
+ *	$Id: kern_proc.c,v 1.7 1994/05/19 05:57:50 cgd Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/acct.h>
 #include <sys/wait.h>
 #include <sys/file.h>
+#include <ufs/quota.h>	/* XXX */
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 
-#include <ufs/quota.h>
+/*
+ * Structure associated with user cacheing.
+ */
+struct uidinfo {
+	struct	uidinfo *ui_next;
+	struct	uidinfo **ui_prev;
+	uid_t	ui_uid;
+	long	ui_proccnt;
+} **uihashtbl;
+u_long	uihash;		/* size of hash table - 1 */
+#define	UIHASH(uid)	((uid) & uihash)
 
-/* static */ void pgdelete __P((struct pgrp *pgrp));
+/*
+ * Allocate a hash table.
+ */
+usrinfoinit()
+{
+
+	uihashtbl = hashinit(maxproc / 16, M_PROC, &uihash);
+}
+
+/*
+ * Change the count associated with number of processes
+ * a given user is using.
+ */
+int
+chgproccnt(uid, diff)
+	uid_t	uid;
+	int	diff;
+{
+	register struct uidinfo **uipp, *uip, *uiq;
+
+	uipp = &uihashtbl[UIHASH(uid)];
+	for (uip = *uipp; uip; uip = uip->ui_next)
+		if (uip->ui_uid == uid)
+			break;
+	if (uip) {
+		uip->ui_proccnt += diff;
+		if (uip->ui_proccnt > 0)
+			return (uip->ui_proccnt);
+		if (uip->ui_proccnt < 0)
+			panic("chgproccnt: procs < 0");
+		if (uiq = uip->ui_next)
+			uiq->ui_prev = uip->ui_prev;
+		*uip->ui_prev = uiq;
+		FREE(uip, M_PROC);
+		return (0);
+	}
+	if (diff <= 0) {
+		if (diff == 0)
+			return(0);
+		panic("chgproccnt: lost user");
+	}
+	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
+	if (uiq = *uipp)
+		uiq->ui_prev = &uip->ui_next;
+	uip->ui_next = uiq;
+	uip->ui_prev = uipp;
+	*uipp = uip;
+	uip->ui_uid = uid;
+	uip->ui_proccnt = diff;
+	return (diff);
+}
 
 /*
  * Is p an inferior of the current process?
  */
-int
 inferior(p)
 	register struct proc *p;
 {
@@ -73,12 +134,12 @@ struct proc *
 pfind(pid)
 	register pid_t pid;
 {
-	register struct proc *p = pidhash[PIDHASH(pid)];
+	register struct proc *p;
 
-	for (; p; p = p->p_hash)
+	for (p = pidhash[PIDHASH(pid)]; p != NULL; p = p->p_hash)
 		if (p->p_pid == pid)
 			return (p);
-	return ((struct proc *)0);
+	return (NULL);
 }
 
 /*
@@ -88,18 +149,18 @@ struct pgrp *
 pgfind(pgid)
 	register pid_t pgid;
 {
-	register struct pgrp *pgrp = pgrphash[PIDHASH(pgid)];
+	register struct pgrp *pgrp;
 
-	for (; pgrp; pgrp = pgrp->pg_hforw)
+	for (pgrp = pgrphash[PIDHASH(pgid)];
+	    pgrp != NULL; pgrp = pgrp->pg_hforw)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
-	return ((struct pgrp *)0);
+	return (NULL);
 }
 
 /*
  * Move p to a new or existing process group (and session)
  */
-void
 enterpgrp(p, pgid, mksess)
 	register struct proc *p;
 	pid_t pgid;
@@ -110,12 +171,14 @@ enterpgrp(p, pgid, mksess)
 	int n;
 
 #ifdef DIAGNOSTIC
-	if (pgrp && mksess)	/* firewalls */
+	if (pgrp != NULL && mksess)	/* firewalls */
 		panic("enterpgrp: setsid into non-empty pgrp");
 	if (SESS_LEADER(p))
 		panic("enterpgrp: session leader attempted setpgrp");
 #endif
 	if (pgrp == NULL) {
+		pid_t savepid = p->p_pid;
+		struct proc *np;
 		/*
 		 * new process group
 		 */
@@ -125,6 +188,8 @@ enterpgrp(p, pgid, mksess)
 #endif
 		MALLOC(pgrp, struct pgrp *, sizeof(struct pgrp), M_PGRP,
 		       M_WAITOK);
+		if ((np = pfind(savepid)) == NULL || np != p)
+			return (ESRCH);
 		if (mksess) {
 			register struct session *sess;
 
@@ -155,7 +220,7 @@ enterpgrp(p, pgid, mksess)
 		pgrp->pg_jobc = 0;
 		pgrp->pg_mem = NULL;
 	} else if (pgrp == p->p_pgrp)
-		return;
+		return (0);
 
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.
@@ -168,13 +233,16 @@ enterpgrp(p, pgid, mksess)
 	/*
 	 * unlink p from old process group
 	 */
-	for (pp = &p->p_pgrp->pg_mem; *pp; pp = &(*pp)->p_pgrpnxt)
+	for (pp = &p->p_pgrp->pg_mem; *pp; pp = &(*pp)->p_pgrpnxt) {
 		if (*pp == p) {
 			*pp = p->p_pgrpnxt;
-			goto done;
+			break;
 		}
-	panic("enterpgrp: can't find p on old pgrp");
-done:
+	}
+#ifdef DIAGNOSTIC
+	if (pp == NULL)
+		panic("enterpgrp: can't find p on old pgrp");
+#endif
 	/*
 	 * delete old if empty
 	 */
@@ -186,33 +254,36 @@ done:
 	p->p_pgrp = pgrp;
 	p->p_pgrpnxt = pgrp->pg_mem;
 	pgrp->pg_mem = p;
+	return (0);
 }
 
 /*
  * remove process from process group
  */
-void
 leavepgrp(p)
 	register struct proc *p;
 {
 	register struct proc **pp = &p->p_pgrp->pg_mem;
 
-	for (; *pp; pp = &(*pp)->p_pgrpnxt)
+	for (; *pp; pp = &(*pp)->p_pgrpnxt) {
 		if (*pp == p) {
 			*pp = p->p_pgrpnxt;
-			goto done;
+			break;
 		}
-	panic("leavepgrp: can't find p in pgrp");
-done:
+	}
+#ifdef DIAGNOSTIC
+	if (pp == NULL)
+		panic("leavepgrp: can't find p in pgrp");
+#endif
 	if (!p->p_pgrp->pg_mem)
 		pgdelete(p->p_pgrp);
 	p->p_pgrp = 0;
+	return (0);
 }
 
 /*
- * delete a process group [internal]
+ * delete a process group
  */
-void
 pgdelete(pgrp)
 	register struct pgrp *pgrp;
 {
@@ -221,13 +292,16 @@ pgdelete(pgrp)
 	if (pgrp->pg_session->s_ttyp != NULL && 
 	    pgrp->pg_session->s_ttyp->t_pgrp == pgrp)
 		pgrp->pg_session->s_ttyp->t_pgrp = NULL;
-	for (; *pgp; pgp = &(*pgp)->pg_hforw)
+	for (; *pgp; pgp = &(*pgp)->pg_hforw) {
 		if (*pgp == pgrp) {
 			*pgp = pgrp->pg_hforw;
-			goto done;
+			break;
 		}
-	panic("pgdelete: can't find pgrp on hash chain");
-done:
+	}
+#ifdef DIAGNOSTIC
+	if (pgp == NULL)
+		panic("pgdelete: can't find pgrp on hash chain");
+#endif
 	if (--pgrp->pg_session->s_count == 0)
 		FREE(pgrp->pg_session, M_SESSION);
 	FREE(pgrp, M_PGRP);
@@ -304,7 +378,6 @@ orphanpg(pg)
 
 #ifdef debug
 /* DEBUG */
-void
 pgrpdump()
 {
 	register struct pgrp *pgrp;
