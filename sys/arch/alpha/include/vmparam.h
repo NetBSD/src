@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.25 2002/12/10 05:14:25 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.26 2003/04/08 23:35:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,14 @@
 /*
  * Machine dependent constants for Alpha.
  */
+
+/*
+ * All systypes currently supported by NetBSD/alpha have an 8K pages.
+ * Override the PAGE_* definitions to be compile-time constants.
+ */
+#define	PAGE_SHIFT	13
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRSTACK is the top (end) of the user stack.
@@ -106,7 +114,7 @@
 #define VM_MAX_KERNEL_ADDRESS	trunc_page((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */

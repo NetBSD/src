@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.262 2003/04/01 02:18:51 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.263 2003/04/08 23:35:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2003/04/01 02:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2003/04/08 23:35:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,15 +363,13 @@ nobootinfo:
 	trap_init();
 
 	/*
-	 * find out this system's page size
+	 * Find out this system's page size, and initialize
+	 * PAGE_SIZE-dependent variables.
 	 */
-	PAGE_SIZE = hwrpb->rpb_page_size;
-	if (PAGE_SIZE != 8192)
-		panic("page size %d != 8192?!", PAGE_SIZE);
-
-	/*
-	 * Initialize PAGE_SIZE-dependent variables.
-	 */
+	if (hwrpb->rpb_page_size != ALPHA_PGBYTES)
+		panic("page size %lu != %d?!", hwrpb->rpb_page_size,
+		    ALPHA_PGBYTES);
+	uvmexp.pagesize = hwrpb->rpb_page_size;
 	uvm_setpagesize();
 
 	/*
