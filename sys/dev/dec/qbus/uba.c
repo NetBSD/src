@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.15 1996/02/02 22:57:43 mycroft Exp $      */
+/*      $NetBSD: uba.c,v 1.16 1996/02/11 13:24:50 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,36 +80,8 @@ struct	cfdriver ubacd = {
 	sizeof(struct uba_softc), 1
 };
 
-
-#ifdef 0
-/*
- * Mark addresses starting at "addr" and continuing
- * "size" bytes as allocated in the map "ualloc".
- * Warn if the new allocation overlaps a previous allocation.
- */
-static
-csralloc(ualloc, addr, size)
-	caddr_t ualloc;
-	u_short addr;
-	register int size;
-{
-	register caddr_t p;
-	int warned = 0;
-
-	p = &ualloc[ubdevreg(addr+size)];
-	while (--size >= 0) {
-		if (*--p && !warned) {
-			printf(
-	"WARNING: device registers overlap those for a previous device!\n");
-			warned = 1;
-		}
-		*p = 1;
-	}
-}
-#endif
 /* 
- * Stray interrupt vector handler, used when nowhere else to 
- * go to.
+ * Stray interrupt vector handler, used when nowhere else to go to.
  */
 void
 ubastray(arg)
@@ -121,13 +93,12 @@ ubastray(arg)
 
 	vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
 
-	if(cold){
+	if (cold) {
 		rbr = mfpr(PR_IPL);
 		rcvec = vektor;
-	} else {
+	} else 
 		printf("uba%d: unexpected interrupt, vector %o, level %d",
 		    arg, vektor << 2, mfpr(PR_IPL));
-	}
 }
 
 /*
@@ -153,66 +124,7 @@ unifind(uhp0, pumem)
 #if DW780 || DWBUA
 	struct uba_regs *vubp = uhp->uh_uba;
 #endif
-#if 0
-	/*
-	 * Initialize the UNIBUS, by freeing the map
-	 * registers and the buffered data path registers
-	 */
-	uhp->uh_map = (struct map *)
-		malloc((u_long)(UAMSIZ * sizeof (struct map)), M_DEVBUF,
-		    M_NOWAIT);
-	if (uhp->uh_map == 0)
-		panic("no mem for unibus map");
-	bzero((caddr_t)uhp->uh_map, (unsigned)(UAMSIZ * sizeof (struct map)));
-	ubainitmaps(uhp);
 
-	/*
-	 * Set last free interrupt vector for devices with
-	 * programmable interrupt vectors.  Use is to decrement
-	 * this number and use result as interrupt vector.
-	 */
-	uhp->uh_lastiv = 0x200;
-
-#ifdef DWBUA
-	if (uhp->uh_type == DWBUA)
-		BUA(vubp)->bua_offset = (int)uhp->uh_vec - (int)&scb[0];
-#endif
-
-#ifdef DW780
-	if (uhp->uh_type == DW780) {
-		vubp->uba_sr = vubp->uba_sr;
-		vubp->uba_cr = UBACR_IFS|UBACR_BRIE;
-	}
-#endif
-	/*
-	 * First configure devices that have unibus memory,
-	 * allowing them to allocate the correct map registers.
-	 */
-	ubameminit(uhp->uh_dev.dv_unit);
-	/*
-	 * Grab some memory to record the umem address space we allocate,
-	 * so we can be sure not to place two devices at the same address.
-	 *
-	 * We could use just 1/8 of this (we only want a 1 bit flag) but
-	 * we are going to give it back anyway, and that would make the
-	 * code here bigger (which we can't give back), so ...
-	 *
-	 * One day, someone will make a unibus with something other than
-	 * an 8K i/o address space, & screw this totally.
-	 */
-	ualloc = (caddr_t)malloc((u_long)(8 * 1024), M_TEMP, M_NOWAIT);
-	if (ualloc == (caddr_t)0)
-		panic("no mem for unifind");
-	bzero(ualloc, 8*1024);
-
-	/*
-	 * Map the first page of UNIBUS i/o
-	 * space to the first page of memory
-	 * for devices which will need to dma
-	 * output to produce an interrupt.
-	 */
-	*(int *)(&uhp->uh_mr[0]) = UBAMR_MRV;
-#endif
 #define	ubaddr(uhp, off)    (u_short *)((int)(uhp)->uh_iopage + ubdevreg(off))
 	/*
 	 * Check each unibus mass storage controller.
@@ -232,10 +144,6 @@ unifind(uhp0, pumem)
 		 * in the driver til we find it
 		 */
 	    for (ap = udp->ud_addr; addr || (addr = *ap++); addr = 0) {
-#if 0
-		if (ualloc[ubdevreg(addr)])
-			continue;
-#endif
 		reg = ubaddr(uhp, addr);
 
 		if (badaddr((caddr_t)reg, 2))
@@ -268,9 +176,6 @@ unifind(uhp0, pumem)
 			continue;
 		}
 		printf("vec %o, ipl %x\n", rcvec << 2, rbr);
-#if 0
-		csralloc(ualloc, addr, i);
-#endif
 		um->um_alive = 1;
 		um->um_ubanum = uhp->uh_dev.dv_unit;
 		um->um_hd = uhp;
@@ -313,9 +218,6 @@ unifind(uhp0, pumem)
 		break;
 	    }
 	}
-#if 0
-	free(ualloc, M_TEMP);
-#endif
 }
 
 
@@ -491,8 +393,8 @@ ubasetup(uban, bp, flags)
 	if ((bp->b_flags & B_PHYS) == 0)
 		pte = (struct pte *)kvtopte(bp->b_un.b_addr);
 	else {
-		struct pte *hej;
-		u_int i;
+		struct	pte *hej;
+		int	i;
 
 		rp = bp->b_proc;
 		v = btop((u_int)bp->b_un.b_addr&0x3fffffff);
@@ -553,6 +455,7 @@ uballoc(uban, addr, bcnt, flags)
  * The map register parameter is by value since we need to block
  * against uba resets on 11/780's.
  */
+void
 ubarelse(uban, amr)
 	int uban, *amr;
 {
@@ -1027,6 +930,10 @@ resuba()
 	panic("resuba");
 }
 
+/*
+ * The match routine checks which UBA adapter number it is, to
+ * be sure to use correct interrupt vectors.
+ */
 int
 uba_match(parent, vcf, aux)
 	struct	device *parent;
@@ -1058,6 +965,12 @@ uba_match(parent, vcf, aux)
 	return 1;
 }
 
+/*
+ * The attach routines:
+ *   Allocates interrupt vectors.
+ *   Puts correct (cpu-specific) addresses in uba_softc.
+ *   Calls the scan routine to search for uba devices.
+ */
 void
 uba_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -1258,13 +1171,33 @@ ubascan(parent, match)
 
 fail:
 	printf("%s at %s csr %o %s\n", dev->dv_cfdata->cf_driver->cd_name, 
-	    parent->dv_xname, dev->dv_cfdata->cf_loc[0] << 2, 
+	    parent->dv_xname, dev->dv_cfdata->cf_loc[0], 
 	    rcvec ? "didn't interrupt\n" : "zero vector\n");
 
 forgetit:
 	free(dev, M_DEVBUF);
 }
 
+/*
+ * Called when a device needs more than one interrupt vector.
+ * (Like DHU11, DMF32). Argument is the device's softc, vector
+ * number and a function pointer to the interrupt catcher.
+ */
+void
+ubasetvec(dev, vec, func)
+	struct	device *dev;
+	int	vec;
+	void	(*func)();
+{
+	struct	uba_softc *sc = (void *)dev->dv_parent;
+
+	sc->uh_idsp[vec].hoppaddr = func;
+	sc->uh_idsp[vec].pushlarg = dev->dv_unit;
+}
+
+/*
+ * Print out some interesting info common to all unibus devices.
+ */
 int
 ubaprint(aux, uba)
 	void *aux;
