@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: keywords.sh,v 1.3 1996/12/16 19:53:03 cgd Exp $
+# $NetBSD: keywords.sh,v 1.4 1997/04/03 02:35:49 christos Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
 # WARNING!  If you change this file, re-run it!
@@ -9,6 +9,7 @@ awk=${AWK:-awk}
 
 cat << _EOF_ > _keywords.t1
 add
+atalk
 blackhole
 change
 cloning

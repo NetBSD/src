@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/02/22 03:49:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 1997/04/03 02:35:46 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	route
@@ -15,5 +15,6 @@ SRCS=	route.c show.c keywords.c ccitt_addr.c
 # 	sh keywords.sh
 
 route.o .depend lint tags: keywords.h
+
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.8 1997/02/22 21:22:24 carrel Exp $
+.\"	$NetBSD: route.8,v 1.9 1997/04/03 02:35:50 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -122,6 +122,7 @@ will ``flush'' the routing tables of all gateway entries.
 When the address family may is specified by any of the
 .Fl osi ,
 .Fl xns ,
+.Fl atalk ,
 or
 .Fl inet
 modifiers, only routes having destinations with addresses in the
@@ -185,11 +186,14 @@ indicating the interface to be used for transmission.
 The optional modifiers
 .Fl xns ,
 .Fl osi ,
+.Fl atalk ,
 and
 .Fl link 
 specify that all subsequent addresses are in the
-.Tn XNS
-.Tn OSI
+.Tn XNS ,
+.Tn OSI ,
+or
+.Tn AppleTalk
 address families,
 or are specified as link-level addresses,
 and the names must be numeric specifications rather than
