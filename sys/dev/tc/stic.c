@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.5 2000/12/17 14:46:43 ad Exp $	*/
+/*	$NetBSD: stic.c,v 1.6 2000/12/22 13:30:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ static void stic_free_screen(void *, void *);
 static int stic_show_screen(void *, void *, int,
 			    void (*) (void *, int, int), void *);
 static void stic_do_switch(void *);
-static int stic_setup_backing(struct stic_info *, struct stic_screen *, int);
+static void stic_setup_backing(struct stic_info *, struct stic_screen *);
 static void stic_setup_cmap(struct stic_screen *);
 static void stic_setup_cursor(struct stic_info *, struct stic_screen *);
 
@@ -333,12 +333,12 @@ stic_init(struct stic_info *si)
 	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
 		panic("stic_init: couldn't lock font\n");
 
-	si->si_fonth = si->si_font->fontheight;
 	si->si_fontw = si->si_font->fontwidth;
-	si->si_consh = 1024 / si->si_fonth;
+	si->si_fonth = si->si_font->fontheight;
 	si->si_consw = (1280 / si->si_fontw) & ~1;
-	stic_stdscreen.nrows = si->si_consh;
+	si->si_consh = 1024 / si->si_fonth;
 	stic_stdscreen.ncols = si->si_consw;
+	stic_stdscreen.nrows = si->si_consh;
 
 #ifdef DIAGNOSTIC
 	if ((u_int)si->si_fonth > 32 || (u_int)si->si_fontw > 16)
@@ -413,7 +413,7 @@ stic_attach(struct device *self, struct stic_info *si, int console)
 	 * but that's a little ugly.
 	 */
 	if (console)
-		stic_setup_backing(si, &stic_consscr, M_NOWAIT);
+		stic_setup_backing(si, &stic_consscr);
 
 	waa.console = console;
 	waa.scrdata = &stic_screenlist;
@@ -427,7 +427,6 @@ stic_cnattach(struct stic_info *si)
 {
 	struct stic_screen *ss;
 	long defattr;
-	int i;
 
 	ss = &stic_consscr;
 	si->si_curscreen = ss;
@@ -439,7 +438,7 @@ stic_cnattach(struct stic_info *si)
 	stic_flush(si);
 	stic_eraserows(ss, 0, si->si_consh, 0);
 
-	stic_alloc_attr(ss, 0, 0, 0, &defattr);
+	stic_alloc_attr(ss, WSCOL_WHITE, 0, 0, &defattr);
 	wsdisplay_cnattach(&stic_stdscreen, ss, 0, 0, defattr);
 }
 
@@ -551,70 +550,68 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		sxi->sxi_stamph = si->si_stamph;
 		sxi->sxi_buf_size = si->si_buf_size;
 		sxi->sxi_buf_phys = (u_long)si->si_buf_phys;
-		break;
+		return (0);
 
 	case STICIO_SBLINK:
 		if ((int *)data != 0)
 			si->si_vdacctl |= STIC_VDAC_BLINK;
 		else
 			si->si_vdacctl &= ~STIC_VDAC_BLINK;
-		break;
-	
+		return (0);
+
 	case STICIO_S24BIT:
 		if ((int *)data != 0)
 			si->si_vdacctl |= STIC_VDAC_24BIT;
 		else
 			si->si_vdacctl &= ~STIC_VDAC_24BIT;
-		break;
+		return (0);
 	}
 
+	if (si->si_ioctl != NULL)
+		return ((*si->si_ioctl)(si, cmd, data, flag, p));
 	return (ENOTTY);
 }
 
 static paddr_t
 sticmmap(void *v, off_t offset, int prot)
 {
-	struct stic_softc *sc;
+	struct stic_info *si;
 	struct stic_xmap sxm;
 	paddr_t pa;
 
-	sc = v;
+	si = v;
 
 	if (offset < 0)
 		return ((paddr_t)-1L);
 
 	if (offset < sizeof(sxm.sxm_stic)) {
 		pa = STIC_KSEG_TO_PHYS(si->si_stic);
-		return (machine_btop(pa + pffset));
+		return (machine_btop(pa + offset));
 	}
 	offset -= sizeof(sxm.sxm_stic);
 
 	if (offset < sizeof(sxm.sxm_poll)) {
-		pa = STIC_KSEG_TO_PHYS(si->si_poll);
-		return (machine_btop(pa + pffset));
+		pa = STIC_KSEG_TO_PHYS(si->si_slotkva);
+		return (machine_btop(pa + offset));
 	}
 	offset -= sizeof(sxm.sxm_poll);
 
 	if (offset < si->si_buf_size) {
 		pa = STIC_KSEG_TO_PHYS(si->si_buf_phys);
-		return (machine_btop(pa + pffset));
+		return (machine_btop(pa + offset));
 	}
 
 	return ((paddr_t)-1L);
 }
 
-static int
-stic_setup_backing(struct stic_info *si, struct stic_screen *ss, int mflag)
+static void
+stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 {
 	int size;
 
 	size = si->si_consw * si->si_consh * sizeof(*ss->ss_backing);
-	if ((ss->ss_backing = malloc(size, M_DEVBUF, mflag)) == NULL) {
-		free(ss, M_DEVBUF);
-		return (ENOMEM);
-	}
+	ss->ss_backing = malloc(size, M_DEVBUF, M_NOWAIT);
 	memset(ss->ss_backing, 0, size);
-	return (0);
 }
 
 static void
@@ -638,25 +635,20 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 {
 	struct stic_info *si;
 	struct stic_screen *ss;
-	int i;
 
 	si = (struct stic_info *)v;
+	
+	/* ZZZ */
+	printf("stic_alloc_screen: %s, %dx%d %p/%p\n",
+	    type->name, type->ncols, type->nrows, type, &stic_stdscreen);
 
-	if ((stic_consscr.ss_flags & SS_ALLOCED) == 0) {
+	if ((stic_consscr.ss_flags & SS_ALLOCED) == 0)
 		ss = &stic_consscr;
-
-		if (stic_setup_backing(si, ss, M_WAITOK) != 0)
-			return (ENOMEM);
-	} else {
-		if ((ss = malloc(sizeof(*ss), M_DEVBUF, M_WAITOK)) == NULL)
-			return (ENOMEM);
+	else {
+		ss = malloc(sizeof(*ss), M_DEVBUF, M_WAITOK);
 		memset(ss, 0, sizeof(*ss));
-
-		if (stic_setup_backing(si, ss, M_WAITOK) != 0) {
-			free(ss, M_DEVBUF);
-			return (ENOMEM);
-		}
 	}
+	stic_setup_backing(si, ss);
 
 	ss->ss_si = si;
 	ss->ss_flags |= SS_ALLOCED | SS_CURENB;
@@ -665,10 +657,11 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curxp = 0;
 	*curyp = 0;
 
-	stic_alloc_attr(ss, 0, 0, 0, attrp);
+	stic_alloc_attr(ss, WSCOL_WHITE, 0, 0, attrp);
 	stic_setup_cursor(si, ss);
 	stic_setup_cmap(ss);
 
+	printf("stic_alloc_screen: you got %p\n", ss);
 	return (0);
 }
 
@@ -702,6 +695,8 @@ stic_show_screen(void *v, void *cookie, int waitok,
 	si->si_switchcb = cb;
 	si->si_switchcbarg = cbarg;
 
+	printf("stic_show_screen: cookie=%p v=%p\n", cookie, v);
+
 	if (cb != NULL) {
 		callout_reset(&si->si_switch_callout, 0, stic_do_switch,
 		    cookie);
@@ -722,6 +717,8 @@ stic_do_switch(void *cookie)
 
 	ss = cookie;
 	si = ss->ss_si;
+
+	printf("stic_do_switch: cookie=%p si=%p\n", cookie, si);
 
 	if (ss == si->si_curscreen) {
 		si->si_switchcbarg = NULL;
@@ -854,7 +851,7 @@ stic_eraserows(void *cookie, int row, int num, long attr)
 
 	if (ss->ss_backing != NULL) {
 		pb = (u_int32_t *)(ss->ss_backing + row * si->si_consw);
-		for (i = si->si_consw * num; i != 0; i -= 2)
+		for (i = si->si_consw * num; i > 0; i -= 2)
 			*pb++ = (u_int32_t)attr;
 	}
 	if ((ss->ss_flags & SS_ACTIVE) == 0)
@@ -1038,7 +1035,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	c *= font->fontwidth;
 	uc = (uc - font->firstchar) * font->stride * font->fontheight;
 	fr = (u_short *)((caddr_t)font->data + uc);
-	bgcolor = DUPBYTE1((attr & 0x40) >> 4);
+	bgcolor = DUPBYTE1((attr & 0xf0) >> 4);
 	fgcolor = DUPBYTE0(attr & 0x0f);
 
 	i = ((font->fontheight > 16 ? 16 : font->fontheight) << 2) - 1;
@@ -1242,7 +1239,7 @@ stic_flush(struct stic_info *si)
 
 		SELECT(vdac, 0);
 		SELECT(vdac, 0);
-		if ((si->si_vdacctl & STIC_VDAC_24BIT) != 0) {
+		if ((si->si_vdacctl & STIC_VDAC_24BIT) == 0) {
 			for (index = 0; index < CMAP_SIZE; index++) {
 				REG(vdac, bt_cmap) = DUPBYTE0(cm->r[index]);
 				tc_wmb();
