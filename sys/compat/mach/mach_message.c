@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.5 2002/12/19 22:23:07 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.6 2002/12/21 23:50:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.5 2002/12/19 22:23:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.6 2002/12/21 23:50:47 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -93,6 +93,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	struct mach_port *mp;
 	struct mach_message *mm;
 	struct mach_right *mr;
+	struct mach_right *cmr;
 	int timeout;
 
 	/*
@@ -266,33 +267,90 @@ out1:
 		else
 			return EINVAL;
 
-		/* 
-		 * Check for receive right on the port 
-		 */
-		mr = (struct mach_right *)SCARG(uap, rcv_name);
-		if ((mach_right_check(mr, p, MACH_PORT_TYPE_RECEIVE)) == 0)
-			return EPERM;
-		/*
-		 * If there is no message queued on the port,
-		 * block until we get some.
-		 */
-		mp = mr->mr_port;
-
-#ifdef DEBUG_MACH
-		if (mp->mp_recv != mr)
-			uprintf("mach_msg_trp: bad receive port/right\n");
-#endif
 		if (SCARG(uap, option) & MACH_RCV_TIMEOUT)
 			timeout = SCARG(uap, timeout) * hz / 1000;
 		else
 			timeout = 0;
 
-		if (mp->mp_count == 0) {
-			error = tsleep(mp->mp_recv, PZERO, "mach_msg", timeout);
-			if ((error == ERESTART) || (error == EINTR))
-				return EINTR;
-			if (mp->mp_count == 0)
-				return ETIMEDOUT;
+		/* 
+		 * Check for receive right on the port 
+		 */
+		mr = (struct mach_right *)SCARG(uap, rcv_name);
+		if ((mach_right_check(mr, p, MACH_PORT_TYPE_RECEIVE)) == 0) {
+			
+			/* 
+			 * Is it a port set?
+			 */
+			if ((mach_right_check(mr, p, 
+			    MACH_PORT_TYPE_PORT_SET)) == 0) 
+			return EPERM;
+			
+			/* 
+			 * This is a port set. For each port in the
+			 * port set, check we have receive right, and
+			 * and check if we have some message.
+			 */
+			LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
+				if ((mach_right_check(cmr, p, 
+				    MACH_PORT_TYPE_RECEIVE)) == 0)
+					return EPERM;
+
+				mp = cmr->mr_port;	
+#ifdef DEBUG_MACH
+				if (mp->mp_recv != cmr)
+					uprintf("mach_msg_trap: bad receive "
+					    "port/right\n");
+#endif
+				if (mp->mp_count != 0)
+					break;
+			}
+
+			/* 
+			 * If cmr is NULL then we found no message on
+			 * any port. Sleep on the port set until we get 
+			 * some or until we get a timeout.
+			 */
+			if (cmr == NULL) {
+				error = tsleep(mr, PZERO, "mach_msg", timeout);
+				if ((error == ERESTART) || (error == EINTR))
+					return EINTR;
+
+				LIST_FOREACH(cmr, &mr->mr_set, mr_setlist) {
+					mp = cmr->mr_port;	
+					if (mp->mp_count != 0)
+						break;
+				}
+
+				if (cmr == NULL)
+					return ETIMEDOUT;
+			}
+			
+			/* 
+			 * We found a port with a pending message.
+			 */
+			mp = cmr->mr_port;
+
+		} else {
+			/*
+			 * This is a receive on a simple port (no port set).
+			 * If there is no message queued on the port,
+			 * block until we get some.
+			 */
+			mp = mr->mr_port;
+
+#ifdef DEBUG_MACH
+			if (mp->mp_recv != mr)
+				uprintf("mach_msg_trap: bad receive "
+				    "port/right\n");
+#endif
+			if (mp->mp_count == 0) {
+				error = tsleep(mp->mp_recv, PZERO, 
+				    "mach_msg", timeout);
+				if ((error == ERESTART) || (error == EINTR))
+					return EINTR;
+				if (mp->mp_count == 0)
+					return ETIMEDOUT;
+			}
 		}
 
 		/* 
