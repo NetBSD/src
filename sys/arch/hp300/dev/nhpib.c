@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.15 1997/03/31 07:37:30 scottr Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.16 1997/04/14 02:33:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,9 +47,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/psl.h>
-
-#include <hp300/hp300/isr.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -179,7 +177,7 @@ nhpibattach(parent, self, aux)
 	printf(" ipl %d: %s\n", ipl, desc);
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(nhpibintr, sc, ipl, ISRPRI_BIO);
+	(void) intr_establish(nhpibintr, sc, ipl, IPL_BIO);
 	dmacomputeipl();
 
 	ha.ha_ops = &nhpib_controller;

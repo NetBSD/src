@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.16 1997/04/06 21:40:35 mycroft Exp $	*/
+/*	$NetBSD: dma.c,v 1.17 1997/04/14 02:33:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -50,11 +50,10 @@
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
-
-#include <hp300/hp300/isr.h>
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -199,14 +198,14 @@ dmacomputeipl()
 	struct dma_softc *sc = &Dma_softc;
 
 	if (sc->sc_ih != NULL)
-		isrunlink(sc->sc_ih);
+		intr_disestablish(sc->sc_ih);
 
 	/*
 	 * Our interrupt level must be as high as the highest
 	 * device using DMA (i.e. splbio).
 	 */
 	sc->sc_ipl = PSLTOIPL(hp300_bioipl);
-	sc->sc_ih = isrlink(dmaintr, sc, sc->sc_ipl, ISRPRI_BIO);
+	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_BIO);
 }
 
 int

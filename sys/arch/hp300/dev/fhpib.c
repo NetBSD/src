@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.16 1997/04/02 22:37:29 scottr Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.17 1997/04/14 02:33:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,8 +47,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-
-#include <hp300/hp300/isr.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -159,7 +158,7 @@ fhpibattach(parent, self, aux)
 	printf(" ipl %d: %s\n", ipl, DIO_DEVICE_DESC_FHPIB);
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(fhpibintr, sc, ipl, ISRPRI_BIO);
+	(void) intr_establish(fhpibintr, sc, ipl, IPL_BIO);
 	dmacomputeipl();
 
 	ha.ha_ops = &fhpib_controller;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.40 1997/03/31 07:37:24 scottr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.41 1997/04/14 02:33:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -59,9 +59,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
-
-#include <hp300/hp300/isr.h>
+#include <machine/intr.h>
 
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
@@ -200,7 +198,7 @@ leattach(parent, self, aux)
 	am7990_config(sc);
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(leintr, sc, ipl, ISRPRI_NET);
+	(void) intr_establish(leintr, sc, ipl, IPL_NET);
 	ler0->ler0_status = LE_IE;
 }
 

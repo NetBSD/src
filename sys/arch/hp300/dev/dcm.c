@@ -1,7 +1,7 @@
-/*	$NetBSD: dcm.c,v 1.38 1997/04/04 18:16:07 scottr Exp $	*/
+/*	$NetBSD: dcm.c,v 1.39 1997/04/14 02:33:17 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/cons.h>
 
@@ -74,7 +75,6 @@
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/dcmreg.h>
-#include <hp300/hp300/isr.h>
 
 #ifndef DEFAULT_BAUD_RATE
 #define DEFAULT_BAUD_RATE 9600
@@ -354,7 +354,7 @@ dcmattach(parent, self, aux)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(dcmintr, sc, ipl, ISRPRI_TTY);
+	(void) intr_establish(dcmintr, sc, ipl, IPL_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
