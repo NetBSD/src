@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.1 2003/06/25 09:51:43 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.2 2003/06/26 12:09:58 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.1 2003/06/25 09:51:43 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.2 2003/06/26 12:09:58 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -125,6 +125,13 @@ wctombx(struct _citrus_iconv_std_encoding *se,
 	char *s, size_t n, _wc_t wc, size_t *nresult)
 {
 	return _stdenc_wctomb(se->se_handle, s, n, wc, se->se_ps, nresult);
+}
+
+static __inline int
+put_state_resetx(struct _citrus_iconv_std_encoding *se,
+		 char *s, size_t n, size_t *nresult)
+{
+	return _stdenc_put_state_reset(se->se_handle, s, n, se->se_ps, nresult);
 }
 
 
@@ -442,11 +449,10 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
 			save_encoding_state(&is->is_src_encoding);
 			save_encoding_state(&is->is_dst_encoding);
 			szrout = 0;
-			
-			ret = cstombx(&is->is_dst_encoding,
-				      *out, *outbytes,
-				      _CITRUS_CSID_INVALID,
-				      0, &szrout);
+
+			ret = put_state_resetx(&is->is_dst_encoding,
+					       *out, *outbytes,
+					       &szrout);
 			if (ret)
 				goto err;
 
@@ -487,6 +493,7 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
 		if (ret) {
 			if (ret == E_NO_CORRESPONDING_CHAR) {
 				inval ++;
+				szrout = 0;
 				if ((flags&_CITRUS_ICONV_F_HIDE_INVALID)==0 &&
 				    is->is_use_invalid) {
 					ret = wctombx(&is->is_dst_encoding,
