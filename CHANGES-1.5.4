@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.2 2002/08/01 17:34:49 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.3 2002/08/29 17:41:03 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -11,11 +11,12 @@ share/tmac/doc-common				patch
 
   Mark this with 1.5.4_ALPHA.
 
+crypto/Makefile.openssl				1.7 via patch
 crypto/dist/openssl/CHANGES			patch
-crypto/dist/openssl/crypto/cryptlib.c		patch
-crypto/dist/openssl/crypto/cryptlib.h		patch
 crypto/dist/openssl/crypto/asn1/asn1_lib.c	patch
 crypto/dist/openssl/crypto/conf/conf.c		patch
+crypto/dist/openssl/crypto/cryptlib.c		patch
+crypto/dist/openssl/crypto/cryptlib.h		patch
 crypto/dist/openssl/crypto/objects/obj_dat.c	patch
 crypto/dist/openssl/ssl/s2_clnt.c		patch
 crypto/dist/openssl/ssl/s2_lib.c		patch
@@ -26,7 +27,6 @@ crypto/dist/openssl/ssl/ssl.h			patch
 crypto/dist/openssl/ssl/ssl_asn1.c		patch
 crypto/dist/openssl/ssl/ssl_err.c		patch
 crypto/dist/openssl/ssl/ssl_sess.c		patch
-crypto/Makefile.openssl				1.7 via patch
 
   Apply point patch to add ASN.1 encoding and buffer overflow
   checks.
@@ -34,3 +34,1207 @@ crypto/Makefile.openssl				1.7 via patch
 lib/libc/rpc/xdr_array.c			1.13-1.14
 
   Fix bounds checking, eliminating an overflow condition.
+
+crypto/Makefile.openssl				1.2.2.3 -> 1.7
+crypto/dist/openssl/CHANGES			1.1.1.1.2.2 -> 1.6
+crypto/dist/openssl/Configure			1.1.1.3-1.1.1.7
+crypto/dist/openssl/FAQ				1.2-1.7
+crypto/dist/openssl/INSTALL			1.1.1.3-1.1.1.6
+crypto/dist/openssl/INSTALL.MacOS		1.2
+crypto/dist/openssl/INSTALL.VMS			1.1.1.3-1.1.1.4
+crypto/dist/openssl/INSTALL.W32			1.1.1.3-1.1.1.5
+crypto/dist/openssl/LICENSE			1.1.1.3-1.1.1.4
+crypto/dist/openssl/Makefile.org		1.1.1.3-1.1.1.8
+crypto/dist/openssl/Makefile.ssl		1.1.1.3-1.1.1.8
+crypto/dist/openssl/NEWS			1.1.1.3-1.1.1.8
+crypto/dist/openssl/PROBLEMS			1.1-1.2 (new)
+crypto/dist/openssl/README			1.1.1.3-1.1.1.8
+crypto/dist/openssl/README.ENGINE		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/VMS/install.com		1.1.1.3
+crypto/dist/openssl/VMS/vms_idhacks.h		deleted
+crypto/dist/openssl/apps/CA.pl			1.1.1.3-1.1.1.5
+crypto/dist/openssl/apps/CA.pl.in		1.2
+crypto/dist/openssl/apps/Makefile.save		1.2
+crypto/dist/openssl/apps/Makefile.ssl		1.1.1.3-1.1.1.5
+crypto/dist/openssl/apps/app_rand.c		1.2
+crypto/dist/openssl/apps/apps.c			1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/apps.h			1.1.1.2 -> 1.2
+crypto/dist/openssl/apps/asn1pars.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/ca-cert.srl		1.1.1.2
+crypto/dist/openssl/apps/ca.c			1.1.1.3-1.1.1.6
+crypto/dist/openssl/apps/ciphers.c		1.1.1.3
+crypto/dist/openssl/apps/crl.c			1.1.1.3
+crypto/dist/openssl/apps/crl2p7.c		1.1.1.3
+crypto/dist/openssl/apps/der_chop		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/dgst.c			1.1.1.2 -> 1.3
+crypto/dist/openssl/apps/dh.c			1.1.1.3
+crypto/dist/openssl/apps/dh1024.pem		1.1.1.2
+crypto/dist/openssl/apps/dh2048.pem		1.1.1.1 (new)
+crypto/dist/openssl/apps/dh4096.pem		1.1.1.1 (new)
+crypto/dist/openssl/apps/dh512.pem		1.1.1.1 (new)
+crypto/dist/openssl/apps/dhparam.c		1.2
+crypto/dist/openssl/apps/dsa.c			1.1.1.3
+crypto/dist/openssl/apps/dsaparam.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/eay.c			deleted
+crypto/dist/openssl/apps/enc.c			1.1.1.3-1.1.1.5
+crypto/dist/openssl/apps/errstr.c		1.1.1.3
+crypto/dist/openssl/apps/gendh.c		1.1.1.3
+crypto/dist/openssl/apps/gendsa.c		1.1.1.3
+crypto/dist/openssl/apps/genrsa.c		1.1.1.3
+crypto/dist/openssl/apps/makeapps.com		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/nseq.c			1.1.1.3
+crypto/dist/openssl/apps/openssl.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/passwd.c		1.2
+crypto/dist/openssl/apps/pca-cert.srl		1.1.1.2
+crypto/dist/openssl/apps/pem_mail.c		deleted
+crypto/dist/openssl/apps/pkcs12.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/pkcs7.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/pkcs8.c		1.1.1.3
+crypto/dist/openssl/apps/progs.h		1.1.1.2 -> 1.2
+crypto/dist/openssl/apps/progs.pl		1.1.1.3
+crypto/dist/openssl/apps/rand.c			1.2
+crypto/dist/openssl/apps/req.c			1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/rsa.c			1.1.1.3
+crypto/dist/openssl/apps/rsa/01.pem		deleted
+crypto/dist/openssl/apps/rsa/1.txt		deleted
+crypto/dist/openssl/apps/rsa/SecureServer.pem	deleted
+crypto/dist/openssl/apps/rsa/s.txt		deleted
+crypto/dist/openssl/apps/rsautl.c		1.1.1.1 (new)
+crypto/dist/openssl/apps/s_client.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/apps/s_server.c		1.1.1.3
+crypto/dist/openssl/apps/s_socket.c		1.1.1.3
+crypto/dist/openssl/apps/s_time.c		1.1.1.2 -> 1.3
+crypto/dist/openssl/apps/server.pem		1.1.1.2
+crypto/dist/openssl/apps/sess_id.c		1.1.1.3
+crypto/dist/openssl/apps/smime.c		1.2-1.4
+crypto/dist/openssl/apps/speed.c		1.1.1.3-1.1.1.5
+crypto/dist/openssl/apps/spkac.c		1.2
+crypto/dist/openssl/apps/tkca			deleted
+crypto/dist/openssl/apps/verify.c		1.1.1.3
+crypto/dist/openssl/apps/x509.c			1.1.1.3-1.1.1.4
+crypto/dist/openssl/certs/expired/rsa-ssca.pem	1.1.1.1 (new)
+crypto/dist/openssl/certs/rsa-ssca.pem		deleted
+crypto/dist/openssl/config			1.1.1.3-1.1.1.7
+crypto/dist/openssl/crypto/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/Makefile.ssl		1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/asn1/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/asn1/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/a_bitstr.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/asn1/a_bytes.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_digest.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_dup.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_enum.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/a_gentm.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/a_hdr.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_i2d_fp.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_int.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/a_mbstr.c	1.2
+crypto/dist/openssl/crypto/asn1/a_object.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_set.c		1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_sign.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/a_strex.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/asn1/a_strnid.c	1.2-1.3
+crypto/dist/openssl/crypto/asn1/a_time.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/a_type.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_utctm.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/asn1/a_utf8.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/a_verify.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/asn1.h		1.1.1.2 -> 1.3
+crypto/dist/openssl/crypto/asn1/asn1_lib.c	1.1.1.1.2.2 -> 1.4
+crypto/dist/openssl/crypto/asn1/asn1_mac.h	1.1.1.3
+crypto/dist/openssl/crypto/asn1/asn1_par.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/asn_pack.c	1.1.1.2
+crypto/dist/openssl/crypto/asn1/charmap.h	1.1.1.1 (new)
+crypto/dist/openssl/crypto/asn1/charmap.pl	1.1.1.1 (new)
+crypto/dist/openssl/crypto/asn1/d2i_dhp.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/d2i_dsap.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/d2i_r_pr.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/d2i_r_pu.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/d2i_s_pr.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/d2i_s_pu.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/f_enum.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/f_int.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/f_string.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/i2d_dhp.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/i2d_dsap.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/i2d_r_pr.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/i2d_r_pu.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/i2d_s_pr.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/i2d_s_pu.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/n_pkey.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/nsseq.c		1.1.1.2
+crypto/dist/openssl/crypto/asn1/p5_pbe.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p5_pbev2.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_dgst.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_enc.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_enc_c.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_evp.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_i_s.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_lib.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_recip.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_s_e.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_signd.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p7_signi.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/p8_key.c	1.2
+crypto/dist/openssl/crypto/asn1/p8_pkey.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/pkcs8.c		deleted
+crypto/dist/openssl/crypto/asn1/t_pkey.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/t_x509.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/asn1/t_x509a.c	1.2
+crypto/dist/openssl/crypto/asn1/x_algor.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_attrib.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_cinf.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_crl.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_exten.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_info.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_name.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_pkey.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_pubkey.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/asn1/x_req.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_sig.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_spki.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_val.c		1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_x509.c	1.1.1.3
+crypto/dist/openssl/crypto/asn1/x_x509a.c	1.2
+crypto/dist/openssl/crypto/bf/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/bf/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/bf/Makefile.uni	deleted
+crypto/dist/openssl/crypto/bf/asm/b-win32.asm	deleted
+crypto/dist/openssl/crypto/bf/bftest.c		1.1.1.3
+crypto/dist/openssl/crypto/bio/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/bio/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bio/b_dump.c		1.1.1.3
+crypto/dist/openssl/crypto/bio/b_print.c	1.1.1.3-1.1.1.7
+crypto/dist/openssl/crypto/bio/b_sock.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bio/bf_buff.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bio/bf_lbuf.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/bio/bf_lbuf.c	1.1.1.2
+crypto/dist/openssl/crypto/bio/bf_nbio.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bio/bf_null.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bio.h		1.3-1.4
+crypto/dist/openssl/crypto/bio/bio_err.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bio_lib.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_acpt.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_bio.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/bio/bss_conn.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_file.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_log.c	1.1.1.2 -> 1.4
+crypto/dist/openssl/crypto/bio/bss_mem.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_null.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_rtcp.c	1.1.1.3
+crypto/dist/openssl/crypto/bio/bss_sock.c	1.1.1.3
+crypto/dist/openssl/crypto/bn/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/bn/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bn/asm/README	1.1.1.3
+crypto/dist/openssl/crypto/bn/asm/bn-win32.asm	deleted
+crypto/dist/openssl/crypto/bn/asm/ia64.S	1.1.1.1 (new)
+crypto/dist/openssl/crypto/bn/asm/mips3.s	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bn/asm/pa-risc2.s	1.1.1.2
+crypto/dist/openssl/crypto/bn/asm/pa-risc2W.s	1.1.1.1 (new)
+crypto/dist/openssl/crypto/bn/asm/x86w16.asm	deleted
+crypto/dist/openssl/crypto/bn/asm/x86w32.asm	deleted
+crypto/dist/openssl/crypto/bn/bn.h		1.4-1.5
+crypto/dist/openssl/crypto/bn/bn_asm.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_blind.c	1.1.1.2
+crypto/dist/openssl/crypto/bn/bn_comba.c	deleted
+crypto/dist/openssl/crypto/bn/bn_ctx.c		1.2
+crypto/dist/openssl/crypto/bn/bn_div.c		1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/bn/bn_err.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_exp.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_exp2.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_gcd.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_lcl.h		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_lib.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_m.c		deleted
+crypto/dist/openssl/crypto/bn/bn_mont.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bn/bn_mul.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bn/bn_opts.c		deleted
+crypto/dist/openssl/crypto/bn/bn_prime.c	1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_print.c	1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_rand.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bn/bn_recp.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bn_shift.c	1.1.1.2
+crypto/dist/openssl/crypto/bn/bn_sqr.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/bn/bn_word.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/bntest.c		1.1.1.3
+crypto/dist/openssl/crypto/bn/comba.pl		deleted
+crypto/dist/openssl/crypto/bn/d.c		deleted
+crypto/dist/openssl/crypto/bn/divtest.c		1.4
+crypto/dist/openssl/crypto/bn/new		deleted
+crypto/dist/openssl/crypto/bn/old/b_sqr.c	deleted
+crypto/dist/openssl/crypto/bn/old/bn_com.c	deleted
+crypto/dist/openssl/crypto/bn/old/bn_high.c	deleted
+crypto/dist/openssl/crypto/bn/old/bn_ka.c	deleted
+crypto/dist/openssl/crypto/bn/old/bn_low.c	deleted
+crypto/dist/openssl/crypto/bn/old/bn_m.c	deleted
+crypto/dist/openssl/crypto/bn/old/bn_mul.c.works deleted
+crypto/dist/openssl/crypto/bn/old/bn_wmul.c	deleted
+crypto/dist/openssl/crypto/bn/old/build		deleted
+crypto/dist/openssl/crypto/bn/old/info		deleted
+crypto/dist/openssl/crypto/bn/old/test.works	deleted
+crypto/dist/openssl/crypto/bn/test.c		deleted
+crypto/dist/openssl/crypto/bn/vms-helper.c	1.1.1.2
+crypto/dist/openssl/crypto/buffer/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/buffer/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/buffer/buffer.c	1.1.1.2
+crypto/dist/openssl/crypto/buffer/buffer.h	1.1.1.2
+crypto/dist/openssl/crypto/cast/Makefile.save	1.2
+crypto/dist/openssl/crypto/cast/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/cast/Makefile.uni	deleted
+crypto/dist/openssl/crypto/cast/asm/c-win32.asm	deleted
+crypto/dist/openssl/crypto/cast/c_skey.c	1.1.1.2
+crypto/dist/openssl/crypto/cast/cast.h		1.4
+crypto/dist/openssl/crypto/comp/Makefile.save	1.2
+crypto/dist/openssl/crypto/comp/Makefile.ssl	1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/comp/comp.h		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/comp/comp_lib.c	1.1.1.2
+crypto/dist/openssl/crypto/conf/Makefile.save	1.2
+crypto/dist/openssl/crypto/conf/Makefile.ssl	1.1.1.2-1.1.1.4
+crypto/dist/openssl/crypto/conf/conf.c		deleted
+crypto/dist/openssl/crypto/conf/conf.h		1.1.1.2 -> 1.3
+crypto/dist/openssl/crypto/conf/conf_api.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/conf/conf_api.h	1.1.1.1 (new)
+crypto/dist/openssl/crypto/conf/conf_def.c	1.1-1.2 (new)
+crypto/dist/openssl/crypto/conf/conf_def.h	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/conf/conf_err.c	1.1.1.3
+crypto/dist/openssl/crypto/conf/conf_lcl.h	deleted
+crypto/dist/openssl/crypto/conf/conf_lib.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/conf/keysets.pl	1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/conf/test.c		1.1.1.2
+crypto/dist/openssl/crypto/cpt_err.c		1.1.1.3
+crypto/dist/openssl/crypto/cryptlib.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/crypto/crypto-lib.com	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/crypto.c		deleted
+crypto/dist/openssl/crypto/crypto.h		1.1.1.2 -> 1.3
+crypto/dist/openssl/crypto/des/DES.pod		deleted
+crypto/dist/openssl/crypto/des/MODES.DES	deleted
+crypto/dist/openssl/crypto/des/Makefile.PL	deleted
+crypto/dist/openssl/crypto/des/Makefile.lit	deleted
+crypto/dist/openssl/crypto/des/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/des/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/des/Makefile.uni	deleted
+crypto/dist/openssl/crypto/des/PC1		deleted
+crypto/dist/openssl/crypto/des/PC2		deleted
+crypto/dist/openssl/crypto/des/asm/d-win32.asm	deleted
+crypto/dist/openssl/crypto/des/asm/des-586.pl	1.1.1.2
+crypto/dist/openssl/crypto/des/asm/des686.pl	1.1.1.2
+crypto/dist/openssl/crypto/des/asm/readme	1.1.1.2
+crypto/dist/openssl/crypto/des/asm/y-win32.asm	deleted
+crypto/dist/openssl/crypto/des/cbc_cksm.c	1.1.1.2
+crypto/dist/openssl/crypto/des/cfb64enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/cfb_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/des.c		1.1.1.3
+crypto/dist/openssl/crypto/des/des.h		1.1.1.1.2.4 -> 1.13
+crypto/dist/openssl/crypto/des/des.man		deleted
+crypto/dist/openssl/crypto/des/des.pl		deleted
+crypto/dist/openssl/crypto/des/des_crypt.man	deleted
+crypto/dist/openssl/crypto/des/des_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/des_locl.h	1.1.1.2
+crypto/dist/openssl/crypto/des/des_opts.c	1.3
+crypto/dist/openssl/crypto/des/dess.cpp		1.1.1.2
+crypto/dist/openssl/crypto/des/destest.c	1.1.1.2
+crypto/dist/openssl/crypto/des/doIP		deleted
+crypto/dist/openssl/crypto/des/doPC1		deleted
+crypto/dist/openssl/crypto/des/doPC2		deleted
+crypto/dist/openssl/crypto/des/ecb_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/ede_cbcm_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/ede_enc.c	deleted
+crypto/dist/openssl/crypto/des/enc_read.c	1.1.1.3
+crypto/dist/openssl/crypto/des/enc_writ.c	1.1.1.3
+crypto/dist/openssl/crypto/des/fcrypt.c		1.1.1.2 -> 1.3
+crypto/dist/openssl/crypto/des/fcrypt_b.c	1.1.1.2
+crypto/dist/openssl/crypto/des/ncbc_enc.c	1.1.1.3
+crypto/dist/openssl/crypto/des/ofb64enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/ofb_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/pcbc_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/des/podd.h		deleted
+crypto/dist/openssl/crypto/des/qud_cksm.c	1.1.1.3
+crypto/dist/openssl/crypto/des/read_pwd.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/des/shifts.pl	deleted
+crypto/dist/openssl/crypto/des/sk.h		deleted
+crypto/dist/openssl/crypto/des/speed.c		1.1.1.3
+crypto/dist/openssl/crypto/des/supp.c		deleted
+crypto/dist/openssl/crypto/des/testdes.pl	deleted
+crypto/dist/openssl/crypto/des/xcbc_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/dh/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/dh/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/dh/dh.h		1.3-1.4
+crypto/dist/openssl/crypto/dh/dh_err.c		1.1.1.3
+crypto/dist/openssl/crypto/dh/dh_gen.c		1.1.1.3
+crypto/dist/openssl/crypto/dh/dh_key.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/dh/dh_lib.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/dh/dhtest.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/dsa/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/dsa/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/dsa/dsa.h		1.3-1.5
+crypto/dist/openssl/crypto/dsa/dsa_asn1.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/dsa/dsa_err.c	1.1.1.3
+crypto/dist/openssl/crypto/dsa/dsa_key.c	1.1.1.3
+crypto/dist/openssl/crypto/dsa/dsa_lib.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/dsa/dsa_ossl.c	1.2-1.3
+crypto/dist/openssl/crypto/dso/Makefile.save	1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/Makefile.ssl	1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/README		1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/dso.h		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/dso/dso_dl.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/dso_dlfcn.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/dso/dso_err.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/dso_lib.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/dso_null.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/dso_openssl.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/dso/dso_vms.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/dso/dso_win32.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/ebcdic.c		1.2-1.3
+crypto/dist/openssl/crypto/err/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/err/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/err/err.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/err/err.h		1.3-1.4
+crypto/dist/openssl/crypto/err/err_all.c	1.1.1.3
+crypto/dist/openssl/crypto/err/err_prn.c	1.1.1.2
+crypto/dist/openssl/crypto/err/openssl.ec	1.1.1.3
+crypto/dist/openssl/crypto/evp/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/evp/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/evp/bio_b64.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/evp/bio_enc.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/evp/bio_md.c		1.1.1.3
+crypto/dist/openssl/crypto/evp/bio_ok.c		1.1.1.3
+crypto/dist/openssl/crypto/evp/c_allc.c		1.2
+crypto/dist/openssl/crypto/evp/c_alld.c		1.2-1.3
+crypto/dist/openssl/crypto/evp/e_bf.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/evp/e_cast.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/e_cbc_3d.c	deleted
+crypto/dist/openssl/crypto/evp/e_cbc_bf.c	deleted
+crypto/dist/openssl/crypto/evp/e_cbc_c.c	deleted
+crypto/dist/openssl/crypto/evp/e_cbc_d.c	deleted
+crypto/dist/openssl/crypto/evp/e_cbc_i.c	deleted
+crypto/dist/openssl/crypto/evp/e_cbc_r2.c	deleted
+crypto/dist/openssl/crypto/evp/e_cbc_r5.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_3d.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_bf.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_c.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_d.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_i.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_r2.c	deleted
+crypto/dist/openssl/crypto/evp/e_cfb_r5.c	deleted
+crypto/dist/openssl/crypto/evp/e_des.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/e_des3.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/e_ecb_3d.c	deleted
+crypto/dist/openssl/crypto/evp/e_ecb_bf.c	deleted
+crypto/dist/openssl/crypto/evp/e_ecb_c.c	deleted
+crypto/dist/openssl/crypto/evp/e_ecb_d.c	deleted
+crypto/dist/openssl/crypto/evp/e_ecb_i.c	deleted
+crypto/dist/openssl/crypto/evp/e_ecb_r2.c	deleted
+crypto/dist/openssl/crypto/evp/e_ecb_r5.c	deleted
+crypto/dist/openssl/crypto/evp/e_idea.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/e_null.c		1.1.1.2
+crypto/dist/openssl/crypto/evp/e_ofb_3d.c	deleted
+crypto/dist/openssl/crypto/evp/e_ofb_bf.c	deleted
+crypto/dist/openssl/crypto/evp/e_ofb_c.c	deleted
+crypto/dist/openssl/crypto/evp/e_ofb_d.c	deleted
+crypto/dist/openssl/crypto/evp/e_ofb_i.c	deleted
+crypto/dist/openssl/crypto/evp/e_ofb_r2.c	deleted
+crypto/dist/openssl/crypto/evp/e_ofb_r5.c	deleted
+crypto/dist/openssl/crypto/evp/e_rc2.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/e_rc4.c		1.1.1.2
+crypto/dist/openssl/crypto/evp/e_rc5.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/e_xcbc_d.c	1.1.1.3
+crypto/dist/openssl/crypto/evp/encode.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/evp/evp.h		1.3-1.6
+crypto/dist/openssl/crypto/evp/evp_enc.c	1.1.1.2
+crypto/dist/openssl/crypto/evp/evp_err.c	1.1.1.3
+crypto/dist/openssl/crypto/evp/evp_key.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/evp/evp_locl.h	1.1.1.1 (new)
+crypto/dist/openssl/crypto/evp/evp_pbe.c	1.1.1.2
+crypto/dist/openssl/crypto/evp/evp_pkey.c	1.1.1.3
+crypto/dist/openssl/crypto/evp/m_md4.c		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/evp/p5_crpt.c	1.1.1.2
+crypto/dist/openssl/crypto/evp/p5_crpt2.c	1.1.1.2
+crypto/dist/openssl/crypto/evp/p_lib.c		1.1.1.3
+crypto/dist/openssl/crypto/evp/p_open.c		1.1.1.3
+crypto/dist/openssl/crypto/evp/p_seal.c		1.1.1.3
+crypto/dist/openssl/crypto/ex_data.c		1.1.1.3
+crypto/dist/openssl/crypto/hmac/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/hmac/Makefile.ssl	1.1.1.2
+crypto/dist/openssl/crypto/hmac/hmac.c		1.1.1.2
+crypto/dist/openssl/crypto/hmac/hmac.h		1.3-1.4
+crypto/dist/openssl/crypto/idea/Makefile.save	1.2
+crypto/dist/openssl/crypto/idea/Makefile.ssl	1.1.1.2
+crypto/dist/openssl/crypto/idea/Makefile.uni	deleted
+crypto/dist/openssl/crypto/idea/i_cbc.c		1.2-1.3
+crypto/dist/openssl/crypto/idea/i_cfb64.c	1.3
+crypto/dist/openssl/crypto/idea/i_ecb.c		1.3
+crypto/dist/openssl/crypto/idea/i_ofb64.c	1.3
+crypto/dist/openssl/crypto/idea/i_skey.c	1.3
+crypto/dist/openssl/crypto/idea/idea.h		1.4
+crypto/dist/openssl/crypto/install.com		1.1.1.3
+crypto/dist/openssl/crypto/lhash/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/lhash/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/lhash/lh_stats.c	1.1.1.2
+crypto/dist/openssl/crypto/lhash/lh_test.c	1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/lhash/lhash.c	1.1.1.3
+crypto/dist/openssl/crypto/lhash/lhash.h	1.3
+crypto/dist/openssl/crypto/md2/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/md2/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/md2/md2.h		1.4
+crypto/dist/openssl/crypto/md32_common.h	1.1.1.2 -> 1.3
+crypto/dist/openssl/crypto/md4/Makefile.save	1.1.1.1 (new)
+crypto/dist/openssl/crypto/md4/Makefile.ssl	1.1.1.1 (new)
+crypto/dist/openssl/crypto/md4/md4.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/md4/md4.h		1.1-1.3 (new)
+crypto/dist/openssl/crypto/md4/md4_dgst.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/md4/md4_locl.h	1.1-1.3 (new)
+crypto/dist/openssl/crypto/md4/md4_one.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/md4/md4s.cpp		1.1.1.1 (new)
+crypto/dist/openssl/crypto/md4/md4test.c	1.1.1.1 (new)
+crypto/dist/openssl/crypto/md5/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/md5/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/md5/Makefile.uni	deleted
+crypto/dist/openssl/crypto/md5/asm/m5-win32.asm	deleted
+crypto/dist/openssl/crypto/md5/md5_locl.h	1.3
+crypto/dist/openssl/crypto/mdc2/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/mdc2/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/mdc2/mdc2.h		1.3-1.4
+crypto/dist/openssl/crypto/mdc2/mdc2dgst.c	1.1.1.3
+crypto/dist/openssl/crypto/mem.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/mem_dbg.c		1.2
+crypto/dist/openssl/crypto/objects/Makefile.save 1.2-1.3
+crypto/dist/openssl/crypto/objects/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/objects/o_names.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/objects/obj_dat.c	1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/crypto/objects/obj_dat.h	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/objects/obj_dat.pl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/objects/obj_lib.c	1.1.1.2
+crypto/dist/openssl/crypto/objects/obj_mac.h	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/objects/obj_mac.num	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/objects/objects.README 1.1.1.1 (new)
+crypto/dist/openssl/crypto/objects/objects.h	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/objects/objects.pl	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/objects/objects.txt	1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/opensslv.h		1.1.1.3-1.1.1.8
+crypto/dist/openssl/crypto/pem/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/pem/Makefile.ssl	1.1.1.2
+crypto/dist/openssl/crypto/pem/pem.h		1.3-1.4
+crypto/dist/openssl/crypto/pem/pem2.h		1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/pem/pem_info.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/pem/pem_lib.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/pem/pem_seal.c	1.1.1.3
+crypto/dist/openssl/crypto/pem/pem_sign.c	1.1.1.2
+crypto/dist/openssl/crypto/perlasm/x86nasm.pl	1.1.1.2
+crypto/dist/openssl/crypto/perlasm/x86unix.pl	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/Makefile.save	1.2
+crypto/dist/openssl/crypto/pkcs12/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_add.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_attr.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_bags.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_crt.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_decr.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_key.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_kiss.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_lib.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_mac.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_mutl.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs12/p12_npas.c	1.2
+crypto/dist/openssl/crypto/pkcs12/p12_sbag.c	1.1.1.2
+crypto/dist/openssl/crypto/pkcs12/p12_utl.c	1.1.1.2
+crypto/dist/openssl/crypto/pkcs12/pkcs12.h	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/pkcs7/Makefile.save	1.2
+crypto/dist/openssl/crypto/pkcs7/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/pkcs7/README		deleted
+crypto/dist/openssl/crypto/pkcs7/bio_ber.c	1.1.1.3
+crypto/dist/openssl/crypto/pkcs7/pk7_attr.c	1.2-1.3
+crypto/dist/openssl/crypto/pkcs7/pk7_doit.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/pkcs7/pk7_mime.c	1.2
+crypto/dist/openssl/crypto/pkcs7/pk7_smime.c	1.2
+crypto/dist/openssl/crypto/pkcs7/pkcs7.h	1.1.1.2 -> 1.3
+crypto/dist/openssl/crypto/pkcs7/verify.c	1.1.1.3
+crypto/dist/openssl/crypto/rand/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/rand/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/rand/md_rand.c	1.1.1.1.2.2 -> 1.4
+crypto/dist/openssl/crypto/rand/rand.h		1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/rand/rand_egd.c	1.2-1.3
+crypto/dist/openssl/crypto/rand/rand_lcl.h	1.1.1.1 (new)
+crypto/dist/openssl/crypto/rand/rand_win.c	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/crypto/rand/randfile.c	1.5-1.6
+crypto/dist/openssl/crypto/rc2/Makefile.save	1.2
+crypto/dist/openssl/crypto/rc2/Makefile.ssl	1.1.1.2
+crypto/dist/openssl/crypto/rc2/Makefile.uni	deleted
+crypto/dist/openssl/crypto/rc2/rc2.h		1.4
+crypto/dist/openssl/crypto/rc2/rc2_cbc.c	1.3
+crypto/dist/openssl/crypto/rc2/rc2_ecb.c	1.3
+crypto/dist/openssl/crypto/rc2/rc2_skey.c	1.1.1.2
+crypto/dist/openssl/crypto/rc2/rc2cfb64.c	1.3
+crypto/dist/openssl/crypto/rc2/rc2ofb64.c	1.3
+crypto/dist/openssl/crypto/rc4/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/rc4/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/rc4/Makefile.uni	deleted
+crypto/dist/openssl/crypto/rc4/asm/r4-win32.asm	deleted
+crypto/dist/openssl/crypto/rc4/rc4.h		1.4
+crypto/dist/openssl/crypto/rc5/Makefile.save	1.2
+crypto/dist/openssl/crypto/rc5/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/rc5/Makefile.uni	deleted
+crypto/dist/openssl/crypto/rc5/asm/r5-win32.asm	deleted
+crypto/dist/openssl/crypto/rc5/rc5.h		1.4
+crypto/dist/openssl/crypto/rc5/rc5_ecb.c	1.3
+crypto/dist/openssl/crypto/rc5/rc5_enc.c	1.3
+crypto/dist/openssl/crypto/rc5/rc5_skey.c	1.1.1.2
+crypto/dist/openssl/crypto/rc5/rc5cfb64.c	1.3
+crypto/dist/openssl/crypto/rc5/rc5ofb64.c	1.3
+crypto/dist/openssl/crypto/ripemd/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/ripemd/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/ripemd/Makefile.uni	deleted
+crypto/dist/openssl/crypto/ripemd/asm/rm-win32.asm deleted
+crypto/dist/openssl/crypto/ripemd/rmd_locl.h	1.3
+crypto/dist/openssl/crypto/rsa/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/rsa/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/rsa/rsa.h		1.3-1.4
+crypto/dist/openssl/crypto/rsa/rsa_eay.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/rsa/rsa_err.c	1.1.1.3
+crypto/dist/openssl/crypto/rsa/rsa_gen.c	1.1.1.3
+crypto/dist/openssl/crypto/rsa/rsa_lib.c	1.1.1.3
+crypto/dist/openssl/crypto/rsa/rsa_oaep.c	1.1.1.3-1.1.1.5
+crypto/dist/openssl/crypto/rsa/rsa_oaep_test.c	deleted
+crypto/dist/openssl/crypto/rsa/rsa_saos.c	1.1.1.3
+crypto/dist/openssl/crypto/rsa/rsa_sign.c	1.1.1.3
+crypto/dist/openssl/crypto/rsa/rsa_ssl.c	1.1.1.3
+crypto/dist/openssl/crypto/sha/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/sha/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/sha/Makefile.uni	deleted
+crypto/dist/openssl/crypto/sha/asm/s1-win32.asm	deleted
+crypto/dist/openssl/crypto/sha/asm/sha1-586.pl	1.1.1.3
+crypto/dist/openssl/crypto/sha/sha.h		1.4
+crypto/dist/openssl/crypto/sha/sha_locl.h	1.3
+crypto/dist/openssl/crypto/stack/Makefile.save	1.2-1.3
+crypto/dist/openssl/crypto/stack/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/stack/safestack.h	1.1.1.2
+crypto/dist/openssl/crypto/stack/stack.c	1.1.1.3
+crypto/dist/openssl/crypto/stack/stack.h	1.1.1.3
+crypto/dist/openssl/crypto/symhacks.h		1.1.1.1 (new)
+crypto/dist/openssl/crypto/threads/mttest.c	1.1.1.3
+crypto/dist/openssl/crypto/threads/th-lock.c	1.1.1.3
+crypto/dist/openssl/crypto/tmdiff.c		1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/txt_db/Makefile.save	1.2
+crypto/dist/openssl/crypto/txt_db/Makefile.ssl	1.1.1.3
+crypto/dist/openssl/crypto/txt_db/txt_db.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/txt_db/txt_db.h	1.2
+crypto/dist/openssl/crypto/uid.c		1.1.1.1 (new)
+crypto/dist/openssl/crypto/x509/Makefile.save	1.2
+crypto/dist/openssl/crypto/x509/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/x509/by_dir.c	1.1.1.3
+crypto/dist/openssl/crypto/x509/x509.h		1.3-1.4
+crypto/dist/openssl/crypto/x509/x509_cmp.c	1.1.1.3
+crypto/dist/openssl/crypto/x509/x509_lu.c	1.1.1.3
+crypto/dist/openssl/crypto/x509/x509_obj.c	1.1.1.2-1.1.1.3
+crypto/dist/openssl/crypto/x509/x509_req.c	1.1.1.3
+crypto/dist/openssl/crypto/x509/x509_set.c	1.1.1.3
+crypto/dist/openssl/crypto/x509/x509_trs.c	1.2-1.4
+crypto/dist/openssl/crypto/x509/x509_txt.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/x509/x509_vfy.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/x509/x509_vfy.h	1.3-1.4
+crypto/dist/openssl/crypto/x509/x509spki.c	1.2
+crypto/dist/openssl/crypto/x509/x_all.c		1.1.1.3
+crypto/dist/openssl/crypto/x509v3/Makefile.save	1.2
+crypto/dist/openssl/crypto/x509v3/Makefile.ssl	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/x509v3/README	deleted
+crypto/dist/openssl/crypto/x509v3/v3_akey.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_alt.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_bcons.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_conf.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_cpols.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_crld.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_extku.c	1.1.1.2
+crypto/dist/openssl/crypto/x509v3/v3_genn.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_ia5.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/x509v3/v3_info.c	1.2
+crypto/dist/openssl/crypto/x509v3/v3_lib.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_pku.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_prn.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_purp.c	1.2
+crypto/dist/openssl/crypto/x509v3/v3_sxnet.c	1.1.1.3
+crypto/dist/openssl/crypto/x509v3/v3_utl.c	1.1.1.3-1.1.1.4
+crypto/dist/openssl/crypto/x509v3/x509v3.h	1.1.1.3-1.1.1.4
+crypto/dist/openssl/demos/b64.c			1.1.1.2-1.1.1.3
+crypto/dist/openssl/demos/maurice/example1.c	1.1.1.2
+crypto/dist/openssl/demos/maurice/loadkeys.c	1.1.1.2
+crypto/dist/openssl/demos/pkcs12/README		1.1.1.1 (new)
+crypto/dist/openssl/demos/pkcs12/pkread.c	1.1.1.1 (new)
+crypto/dist/openssl/demos/pkcs12/pkwrite.c	1.1.1.1 (new)
+crypto/dist/openssl/demos/state_machine/Makefile 1.1.1.1 (new)
+crypto/dist/openssl/demos/state_machine/state_machine.c 1.1.1.1 (new)
+crypto/dist/openssl/dep/crypto.txt		deleted
+crypto/dist/openssl/dep/files			deleted
+crypto/dist/openssl/dep/gen.pl			deleted
+crypto/dist/openssl/dep/ssl.txt			deleted
+crypto/dist/openssl/doc/README			1.1.1.3
+crypto/dist/openssl/doc/apps/CA.pl.pod		1.2
+crypto/dist/openssl/doc/apps/ca.pod		1.2-1.3
+crypto/dist/openssl/doc/apps/ciphers.pod	1.2
+crypto/dist/openssl/doc/apps/crl2pkcs7.pod	1.2
+crypto/dist/openssl/doc/apps/dgst.pod		1.2
+crypto/dist/openssl/doc/apps/dhparam.pod	1.2
+crypto/dist/openssl/doc/apps/dsaparam.pod	1.2
+crypto/dist/openssl/doc/apps/enc.pod		1.2
+crypto/dist/openssl/doc/apps/gendsa.pod		1.2
+crypto/dist/openssl/doc/apps/genrsa.pod		1.2
+crypto/dist/openssl/doc/apps/openssl.pod	1.2-1.3
+crypto/dist/openssl/doc/apps/passwd.pod		1.2
+crypto/dist/openssl/doc/apps/pkcs12.pod		1.2
+crypto/dist/openssl/doc/apps/rand.pod		1.2
+crypto/dist/openssl/doc/apps/req.pod		1.2
+crypto/dist/openssl/doc/apps/rsa.pod		1.2
+crypto/dist/openssl/doc/apps/rsautl.pod		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/apps/s_client.pod	1.2
+crypto/dist/openssl/doc/apps/s_server.pod	1.2-1.3
+crypto/dist/openssl/doc/apps/smime.pod		1.2-1.3
+crypto/dist/openssl/doc/apps/speed.pod		1.2
+crypto/dist/openssl/doc/apps/verify.pod		1.2-1.3
+crypto/dist/openssl/doc/apps/x509.pod		1.2
+crypto/dist/openssl/doc/c-indentation.el	1.1.1.3
+crypto/dist/openssl/doc/crypto.pod		deleted
+crypto/dist/openssl/doc/crypto/BIO_ctrl.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_f_base64.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_f_buffer.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_f_cipher.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_f_md.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_f_null.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_f_ssl.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_find_type.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_new.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_new_bio_pair.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_push.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_read.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_accept.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_bio.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_connect.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_fd.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_file.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_mem.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_null.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_s_socket.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_set_callback.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BIO_should_retry.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/BN_CTX_start.pod	1.2
+crypto/dist/openssl/doc/crypto/BN_bn2bin.pod	1.2-1.3
+crypto/dist/openssl/doc/crypto/BN_mod_mul_montgomery.pod 1.2
+crypto/dist/openssl/doc/crypto/BN_mod_mul_reciprocal.pod 1.2
+crypto/dist/openssl/doc/crypto/BN_rand.pod	1.2-1.4
+crypto/dist/openssl/doc/crypto/BN_zero.pod	1.2
+crypto/dist/openssl/doc/crypto/DH_get_ex_new_index.pod 1.2
+crypto/dist/openssl/doc/crypto/DH_set_method.pod 1.2
+crypto/dist/openssl/doc/crypto/DSA_set_method.pod 1.2
+crypto/dist/openssl/doc/crypto/ERR_error_string.pod 1.2
+crypto/dist/openssl/doc/crypto/ERR_get_error.pod 1.2
+crypto/dist/openssl/doc/crypto/ERR_remove_state.pod 1.2
+crypto/dist/openssl/doc/crypto/EVP_DigestInit.pod 1.2-1.3
+crypto/dist/openssl/doc/crypto/EVP_EncryptInit.pod 1.2-1.3
+crypto/dist/openssl/doc/crypto/EVP_OpenInit.pod	1.2
+crypto/dist/openssl/doc/crypto/EVP_SealInit.pod	1.2
+crypto/dist/openssl/doc/crypto/EVP_SignInit.pod	1.2-1.3
+crypto/dist/openssl/doc/crypto/EVP_VerifyInit.pod 1.2-1.3
+crypto/dist/openssl/doc/crypto/OPENSSL_VERSION_NUMBER.pod 1.2-1.3
+crypto/dist/openssl/doc/crypto/OpenSSL_add_all_algorithms.pod 1.2
+crypto/dist/openssl/doc/crypto/RAND_egd.pod	1.2
+crypto/dist/openssl/doc/crypto/RAND_load_file.pod 1.2
+crypto/dist/openssl/doc/crypto/RSA_check_key.pod 1.2
+crypto/dist/openssl/doc/crypto/RSA_generate_key.pod 1.2
+crypto/dist/openssl/doc/crypto/RSA_get_ex_new_index.pod 1.2
+crypto/dist/openssl/doc/crypto/RSA_print.pod	1.2
+crypto/dist/openssl/doc/crypto/RSA_public_encrypt.pod 1.2
+crypto/dist/openssl/doc/crypto/RSA_set_method.pod 1.2
+crypto/dist/openssl/doc/crypto/bio.pod		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/crypto/blowfish.pod	1.2-1.3
+crypto/dist/openssl/doc/crypto/bn.pod		1.2-1.3
+crypto/dist/openssl/doc/crypto/bn_internal.pod	1.2
+crypto/dist/openssl/doc/crypto/buffer.pod	1.2
+crypto/dist/openssl/doc/crypto/crypto.pod	1.2-1.3
+crypto/dist/openssl/doc/crypto/des.pod		1.2
+crypto/dist/openssl/doc/crypto/des_modes.pod	1.3-1.4
+crypto/dist/openssl/doc/crypto/err.pod		1.2-1.3
+crypto/dist/openssl/doc/crypto/evp.pod		1.1.1.1 (new)
+crypto/dist/openssl/doc/crypto/hmac.pod		1.2
+crypto/dist/openssl/doc/crypto/lhash.pod	1.2
+crypto/dist/openssl/doc/crypto/md5.pod		1.2
+crypto/dist/openssl/doc/crypto/rand.pod		1.2-1.3
+crypto/dist/openssl/doc/crypto/rsa.pod		1.2-1.3
+crypto/dist/openssl/doc/crypto/threads.pod	1.2-1.3
+crypto/dist/openssl/doc/openssl.pod		deleted
+crypto/dist/openssl/doc/openssl.txt		1.1.1.3
+crypto/dist/openssl/doc/ssl.pod			deleted
+crypto/dist/openssl/doc/ssl/SSL_CIPHER_get_name.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_COMP_add_compression_method.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_add_extra_chain_cert.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_add_session.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_ctrl.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_flush_sessions.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_free.pod	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_get_ex_new_index.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_get_verify_mode.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_load_verify_locations.pod 1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_new.pod	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_sess_number.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_sess_set_cache_size.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_sess_set_get_cb.pod 1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_sessions.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_cert_store.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_cert_verify_callback.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_cipher_list.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_client_CA_list.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_client_cert_cb.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_default_passwd_cb.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_info_callback.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_mode.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_options.pod 1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_quiet_shutdown.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_session_cache_mode.pod 1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_session_id_context.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_ssl_version.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_timeout.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_tmp_dh_callback.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_tmp_rsa_callback.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_verify.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_CTX_use_certificate.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_SESSION_free.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_SESSION_get_ex_new_index.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_SESSION_get_time.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_accept.pod	1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_alert_type_string.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_clear.pod	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_connect.pod	1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_do_handshake.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_free.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_SSL_CTX.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_ciphers.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_client_CA_list.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_current_cipher.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_default_timeout.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_error.pod	1.2-1.5
+crypto/dist/openssl/doc/ssl/SSL_get_ex_data_X509_STORE_CTX_idx.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_ex_new_index.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_fd.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_peer_cert_chain.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_peer_certificate.pod 1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_rbio.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_session.pod	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_verify_result.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_get_version.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_library_init.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_load_client_CA_file.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_new.pod		1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_pending.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_read.pod	1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_rstate_string.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_session_reused.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_set_bio.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_set_connect_state.pod 1.1.1.1-1.1.1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_set_fd.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_set_session.pod	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_set_shutdown.pod 1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/SSL_set_verify_result.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_shutdown.pod	1.1-1.3 (new)
+crypto/dist/openssl/doc/ssl/SSL_state_string.pod 1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_want.pod	1.1.1.1 (new)
+crypto/dist/openssl/doc/ssl/SSL_write.pod	1.1.1.1-1.1.1.4 (new)
+crypto/dist/openssl/doc/ssl/d2i_SSL_SESSION.pod	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/doc/ssl/ssl.pod		1.2-1.4
+crypto/dist/openssl/doc/ssleay.txt		1.1.1.2 -> 1.3
+crypto/dist/openssl/doc/standards.txt		1.1.1.1 (new)
+crypto/dist/openssl/e_os.h			1.3-1.6
+crypto/dist/openssl/e_os2.h			1.1.1.2-1.1.1.3
+crypto/dist/openssl/extsrcs.pl			deleted
+crypto/dist/openssl/makevms.com			1.1.1.3-1.1.1.4
+crypto/dist/openssl/ms/16all.bat		1.1.1.2
+crypto/dist/openssl/ms/32all.bat		1.1.1.2
+crypto/dist/openssl/ms/do_masm.bat		1.1.1.2
+crypto/dist/openssl/ms/do_nasm.bat		1.1.1.2
+crypto/dist/openssl/ms/mingw32.bat		1.2
+crypto/dist/openssl/ms/test.bat			1.1.1.3
+crypto/dist/openssl/ms/tlhelp32.h		1.1.1.1 (new)
+crypto/dist/openssl/mt/README			deleted
+crypto/dist/openssl/mt/mttest.c			deleted
+crypto/dist/openssl/mt/profile.sh		deleted
+crypto/dist/openssl/mt/ptest.bat		deleted
+crypto/dist/openssl/mt/pthread.sh		deleted
+crypto/dist/openssl/mt/purify.sh		deleted
+crypto/dist/openssl/mt/solaris.sh		deleted
+crypto/dist/openssl/mt/win32.bat		deleted
+crypto/dist/openssl/openssl-unifdef.pl		1.1 (new)
+crypto/dist/openssl/openssl.spec		1.1.1.1-1.1.1.4 (new)
+crypto/dist/openssl/perl/openssl_cb.c		deleted
+crypto/dist/openssl/rsaref/Makefile.save	1.2
+crypto/dist/openssl/rsaref/Makefile.ssl		1.1.1.3
+crypto/dist/openssl/rsaref/rsaref.h		1.2-1.3
+crypto/dist/openssl/shlib/Makefile.hpux10-cc	1.2-1.3
+crypto/dist/openssl/shlib/hpux10-cc.sh		1.2-1.3
+crypto/dist/openssl/shlib/svr5-shared-gcc.sh	1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/shlib/svr5-shared-installed	1.1.1.1 (new)
+crypto/dist/openssl/shlib/svr5-shared.sh	1.1.1.1 (new)
+crypto/dist/openssl/ssl/Makefile.save		1.2
+crypto/dist/openssl/ssl/Makefile.ssl		1.1.1.3-1.1.1.5
+crypto/dist/openssl/ssl/bio_ssl.c		1.1.1.3
+crypto/dist/openssl/ssl/s23_clnt.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/s23_lib.c		1.1.1.3
+crypto/dist/openssl/ssl/s23_meth.c		1.1.1.2
+crypto/dist/openssl/ssl/s23_pkt.c		1.1.1.3
+crypto/dist/openssl/ssl/s23_srvr.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/s2_clnt.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/s2_enc.c		1.1.1.3-1.1.1.5
+crypto/dist/openssl/ssl/s2_lib.c		1.1.1.1.2.2 -> 1.5
+crypto/dist/openssl/ssl/s2_pkt.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/s2_srvr.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/s3_both.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/s3_clnt.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/s3_enc.c		1.1.1.3-1.1.1.6
+crypto/dist/openssl/ssl/s3_lib.c		1.1.1.2 -> 1.4
+crypto/dist/openssl/ssl/s3_pkt.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/s3_srvr.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/ssl-lib.com		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/ssl.c			deleted
+crypto/dist/openssl/ssl/ssl.h			1.1.1.1.2.3 -> 1.7
+crypto/dist/openssl/ssl/ssl2.h			1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/ssl3.h			1.3-1.4
+crypto/dist/openssl/ssl/ssl_algs.c		1.1.1.2
+crypto/dist/openssl/ssl/ssl_asn1.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/ssl_cert.c		1.3-1.4
+crypto/dist/openssl/ssl/ssl_ciph.c		1.1.1.2 -> 1.4
+crypto/dist/openssl/ssl/ssl_err.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/ssl_lib.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/ssl_locl.h		1.3-1.5
+crypto/dist/openssl/ssl/ssl_sess.c		1.1.1.1.2.2 -> 1.3
+crypto/dist/openssl/ssl/ssl_stat.c		1.1.1.3
+crypto/dist/openssl/ssl/ssl_txt.c		1.1.1.3
+crypto/dist/openssl/ssl/ssltest.c		1.1.1.3-1.1.1.4
+crypto/dist/openssl/ssl/t1_enc.c		1.1.1.3-1.1.1.6
+crypto/dist/openssl/ssl/tls1.h			1.1.1.3
+crypto/dist/openssl/test/Makefile.save		1.2
+crypto/dist/openssl/test/Makefile.ssl		1.1.1.3-1.1.1.6
+crypto/dist/openssl/test/bctest			1.1.1.1-1.1.1.2 (new)
+crypto/dist/openssl/test/dsa-ca.pem		deleted
+crypto/dist/openssl/test/dsa-pca.pem		deleted
+crypto/dist/openssl/test/maketests.com		1.1.1.3-1.1.1.4
+crypto/dist/openssl/test/testp7.pem		1.1.1.2
+crypto/dist/openssl/test/tests.com		1.1.1.3
+crypto/dist/openssl/test/testss			1.1.1.3
+crypto/dist/openssl/times/x86/md4s.cpp		1.1.1.1 (new)
+crypto/dist/openssl/tools/c89.sh		1.1.1.1 (new)
+crypto/dist/openssl/tools/c_rehash		1.1.1.2-1.1.1.4
+crypto/dist/openssl/tools/c_rehash.in		1.1.1.2
+crypto/dist/openssl/util/clean-depend.pl	1.1.1.2
+crypto/dist/openssl/util/cygwin.sh		1.1.1.1 (new)
+crypto/dist/openssl/util/dirname.pl		1.1.1.1 (new)
+crypto/dist/openssl/util/domd			1.1.1.3
+crypto/dist/openssl/util/libeay.num		1.1.1.3-1.1.1.4
+crypto/dist/openssl/util/mk1mf.pl		1.1.1.3-1.1.1.4
+crypto/dist/openssl/util/mkdef.pl		1.1.1.3-1.1.1.4
+crypto/dist/openssl/util/mkerr.pl		1.1.1.3-1.1.1.5
+crypto/dist/openssl/util/mkfiles.pl		1.1.1.2
+crypto/dist/openssl/util/mklink.pl		1.1.1.2
+crypto/dist/openssl/util/mkstack.pl		1.1.1.1 (new)
+crypto/dist/openssl/util/pl/BC-32.pl		1.1.1.3-1.1.1.4
+crypto/dist/openssl/util/pl/Mingw32.pl		1.1.1.3
+crypto/dist/openssl/util/pl/Mingw32f.pl		1.1.1.2
+crypto/dist/openssl/util/pl/VC-32.pl		1.1.1.3-1.1.1.4
+crypto/dist/openssl/util/pl/linux.pl		1.1.1.2
+crypto/dist/openssl/util/pod2man.pl		1.2-1.3
+crypto/dist/openssl/util/pod2mantest		1.1.1.1 (new)
+crypto/dist/openssl/util/pod2mantest.pod	1.1.1.1 (new)
+crypto/dist/openssl/util/selftest.pl		1.2-1.3
+crypto/dist/openssl/util/sep_lib.sh		deleted
+crypto/dist/openssl/util/sp-diff.pl		1.1.1.2
+crypto/dist/openssl/util/ssleay.num		1.1.1.3-1.1.1.4
+distrib/sets/lists/base/shl.elf			patch
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/comp/obsolete.mi		patch
+distrib/sets/lists/man/mi			patch
+lib/libasn1/shlib_version			1.4
+lib/libcom_err/shlib_version			1.4
+lib/libcrypto/Makefile				1.10-1.12,1.14-1.22 via patch
+lib/libcrypto/arch/alpha/des.inc		1.1 (new)
+lib/libcrypto/arch/i386/bf.inc			1.1-1.2 (new)
+lib/libcrypto/arch/i386/bf_enc_586.S		1.1 (new)
+lib/libcrypto/arch/i386/bf_enc_686.S		1.1 (new)
+lib/libcrypto/arch/i386/bf_enc_x86.S		1.1-1.2 (new)
+lib/libcrypto/arch/i386/bn.inc			1.1 (new)
+lib/libcrypto/arch/i386/bn_asm_586.S		1.1 (new)
+lib/libcrypto/arch/i386/bn_comba_586.S		1.1 (new)
+lib/libcrypto/arch/i386/des.inc			1.1-1.3 (new)
+lib/libcrypto/arch/i386/md5.inc			1.1 (new)
+lib/libcrypto/arch/i386/md5_dgst_586.S		1.1 (new)
+lib/libcrypto/arch/i386/ripemd.inc		1.1 (new)
+lib/libcrypto/arch/i386/rmd_dgst_586.S		1.1 (new)
+lib/libcrypto/arch/mips/bf.inc			1.1 (new)
+lib/libcrypto/arch/mips/des.inc			1.1-1.2 (new)
+lib/libcrypto/arch/powerpc/des.inc		1.1 (new)
+lib/libcrypto/arch/sparc/bf.inc			1.1 (new)
+lib/libcrypto/arch/sparc/des.inc		1.1 (new)
+lib/libcrypto/arch/sparc64/des.inc		1.1 (new)
+lib/libcrypto/asn1.inc				1.4
+lib/libcrypto/bf.inc				1.4-1.5
+lib/libcrypto/conf.inc				1.4
+lib/libcrypto/crypto.inc			1.4
+lib/libcrypto/des.inc				1.4-1.8
+lib/libcrypto/dso.inc				1.1 (new)
+lib/libcrypto/evp.inc				1.4
+lib/libcrypto/i_cbc_dummy.c			1.2-1.3
+lib/libcrypto/i_skey_dummy.c			1.2-1.3
+lib/libcrypto/man.inc				1.6-1.8
+lib/libcrypto/man/BIO_ctrl.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_f_base64.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_f_buffer.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_f_cipher.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_f_md.3			1.1-1.7 (new)
+lib/libcrypto/man/BIO_f_null.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_f_ssl.3			1.1-1.7 (new)
+lib/libcrypto/man/BIO_find_type.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_new.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_new_bio_pair.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_push.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_read.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_accept.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_bio.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_connect.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_fd.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_file.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_mem.3			1.1-1.7 (new)
+lib/libcrypto/man/BIO_s_null.3			1.1-1.6 (new)
+lib/libcrypto/man/BIO_s_socket.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_set_callback.3		1.1-1.6 (new)
+lib/libcrypto/man/BIO_should_retry.3		1.1-1.7 (new)
+lib/libcrypto/man/BN_CTX_new.3			1.3-1.10
+lib/libcrypto/man/BN_CTX_start.3		1.3-1.10
+lib/libcrypto/man/BN_add.3			1.3-1.10
+lib/libcrypto/man/BN_add_word.3			1.3-1.10
+lib/libcrypto/man/BN_bn2bin.3			1.3-1.10
+lib/libcrypto/man/BN_cmp.3			1.3-1.10
+lib/libcrypto/man/BN_copy.3			1.3-1.10
+lib/libcrypto/man/BN_generate_prime.3		1.3-1.10
+lib/libcrypto/man/BN_mod_inverse.3		1.3-1.10
+lib/libcrypto/man/BN_mod_mul_montgomery.3	1.3-1.10
+lib/libcrypto/man/BN_mod_mul_reciprocal.3	1.3-1.10
+lib/libcrypto/man/BN_new.3			1.3-1.10
+lib/libcrypto/man/BN_num_bytes.3		1.3-1.10
+lib/libcrypto/man/BN_rand.3			1.3-1.10
+lib/libcrypto/man/BN_set_bit.3			1.3-1.11
+lib/libcrypto/man/BN_zero.3			1.3-1.10
+lib/libcrypto/man/CRYPTO_set_ex_data.3		1.3-1.9
+lib/libcrypto/man/DH_generate_key.3		1.3-1.10
+lib/libcrypto/man/DH_generate_parameters.3	1.3-1.10
+lib/libcrypto/man/DH_get_ex_new_index.3		1.3-1.10
+lib/libcrypto/man/DH_new.3			1.3-1.10
+lib/libcrypto/man/DH_set_method.3		1.3-1.10
+lib/libcrypto/man/DH_size.3			1.3-1.10
+lib/libcrypto/man/DSA_SIG_new.3			1.3-1.10
+lib/libcrypto/man/DSA_do_sign.3			1.3-1.10
+lib/libcrypto/man/DSA_dup_DH.3			1.3-1.10
+lib/libcrypto/man/DSA_generate_key.3		1.3-1.10
+lib/libcrypto/man/DSA_generate_parameters.3	1.3-1.10
+lib/libcrypto/man/DSA_get_ex_new_index.3	1.3-1.10
+lib/libcrypto/man/DSA_new.3			1.3-1.10
+lib/libcrypto/man/DSA_set_method.3		1.3-1.10
+lib/libcrypto/man/DSA_sign.3			1.3-1.10
+lib/libcrypto/man/DSA_size.3			1.3-1.10
+lib/libcrypto/man/ERR_GET_LIB.3			1.3-1.10
+lib/libcrypto/man/ERR_clear_error.3		1.3-1.10
+lib/libcrypto/man/ERR_error_string.3		1.3-1.10
+lib/libcrypto/man/ERR_get_error.3		1.3-1.11
+lib/libcrypto/man/ERR_load_crypto_strings.3	1.3-1.10
+lib/libcrypto/man/ERR_load_strings.3		1.3-1.10
+lib/libcrypto/man/ERR_print_errors.3		1.3-1.10
+lib/libcrypto/man/ERR_put_error.3		1.3-1.10
+lib/libcrypto/man/ERR_remove_state.3		1.3-1.10
+lib/libcrypto/man/EVP_DigestInit.3		1.3-1.11
+lib/libcrypto/man/EVP_EncryptInit.3		1.3-1.11
+lib/libcrypto/man/EVP_OpenInit.3		1.3-1.10
+lib/libcrypto/man/EVP_SealInit.3		1.3-1.10
+lib/libcrypto/man/EVP_SignInit.3		1.3-1.10
+lib/libcrypto/man/EVP_VerifyInit.3		1.3-1.10
+lib/libcrypto/man/Makefile			1.6-1.10
+lib/libcrypto/man/OPENSSL_VERSION_NUMBER.3	1.3-1.10
+lib/libcrypto/man/OpenSSL_add_all_algorithms.3	1.3-1.10
+lib/libcrypto/man/RAND_add.3			1.3-1.10
+lib/libcrypto/man/RAND_bytes.3			1.3-1.10
+lib/libcrypto/man/RAND_cleanup.3		1.3-1.10
+lib/libcrypto/man/RAND_egd.3			1.3-1.10
+lib/libcrypto/man/RAND_load_file.3		1.3-1.10
+lib/libcrypto/man/RAND_set_rand_method.3	1.3-1.10
+lib/libcrypto/man/RSA_blinding_on.3		1.3-1.10
+lib/libcrypto/man/RSA_check_key.3		1.3-1.10
+lib/libcrypto/man/RSA_generate_key.3		1.3-1.10
+lib/libcrypto/man/RSA_get_ex_new_index.3	1.3-1.10
+lib/libcrypto/man/RSA_new.3			1.3-1.10
+lib/libcrypto/man/RSA_padding_add_PKCS1_type_1.3 1.3-1.10
+lib/libcrypto/man/RSA_print.3			1.3-1.10
+lib/libcrypto/man/RSA_private_encrypt.3		1.3-1.10
+lib/libcrypto/man/RSA_public_encrypt.3		1.3-1.10
+lib/libcrypto/man/RSA_set_method.3		1.3-1.11
+lib/libcrypto/man/RSA_sign.3			1.3-1.10
+lib/libcrypto/man/RSA_sign_ASN1_OCTET_STRING.3	1.3-1.10
+lib/libcrypto/man/RSA_size.3			1.3-1.10
+lib/libcrypto/man/SSL_CIPHER_get_name.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_COMP_add_compression_method.3 1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_add_extra_chain_cert.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_add_session.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_ctrl.3		1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_flush_sessions.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_free.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_get_ex_new_index.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_get_verify_mode.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_load_verify_locations.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_new.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_sess_number.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_sess_set_cache_size.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_sess_set_get_cb.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_sessions.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_cert_store.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_cert_verify_callback.3 1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_cipher_list.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_client_CA_list.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_client_cert_cb.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_default_passwd_cb.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_info_callback.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_mode.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_options.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_quiet_shutdown.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_session_cache_mode.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_session_id_context.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_ssl_version.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_timeout.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_CTX_set_tmp_dh_callback.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_tmp_rsa_callback.3 1.1-1.4 (new)
+lib/libcrypto/man/SSL_CTX_set_verify.3		1.1-1.7 (new)
+lib/libcrypto/man/SSL_CTX_use_certificate.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_SESSION_free.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_SESSION_get_ex_new_index.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_SESSION_get_time.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_accept.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_alert_type_string.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_clear.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_connect.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_do_handshake.3		1.1-1.3 (new)
+lib/libcrypto/man/SSL_free.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_SSL_CTX.3		1.1-1.4 (new)
+lib/libcrypto/man/SSL_get_ciphers.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_client_CA_list.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_current_cipher.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_default_timeout.3	1.1-1.4 (new)
+lib/libcrypto/man/SSL_get_error.3		1.3-1.10
+lib/libcrypto/man/SSL_get_ex_data_X509_STORE_CTX_idx.3 1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_ex_new_index.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_fd.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_peer_cert_chain.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_peer_certificate.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_rbio.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_session.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_verify_result.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_get_version.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_library_init.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_load_client_CA_file.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_new.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_pending.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_read.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_rstate_string.3		1.1-1.4 (new)
+lib/libcrypto/man/SSL_session_reused.3		1.1-1.4 (new)
+lib/libcrypto/man/SSL_set_bio.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_set_connect_state.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_set_fd.3			1.1-1.6 (new)
+lib/libcrypto/man/SSL_set_session.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_set_shutdown.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_set_verify_result.3	1.1-1.6 (new)
+lib/libcrypto/man/SSL_shutdown.3		1.1-1.6 (new)
+lib/libcrypto/man/SSL_state_string.3		1.1-1.4 (new)
+lib/libcrypto/man/SSL_want.3			1.1-1.4 (new)
+lib/libcrypto/man/SSL_write.3			1.1-1.6 (new)
+lib/libcrypto/man/crypto.3			1.4-1.10
+lib/libcrypto/man/d2i_DHparams.3		1.3-1.10
+lib/libcrypto/man/d2i_RSAPublicKey.3		1.3-1.10
+lib/libcrypto/man/d2i_SSL_SESSION.3		1.1-1.6 (new)
+lib/libcrypto/man/des_modes.7			1.3,1.5-1.11
+lib/libcrypto/man/lh_stats.3			1.3-1.10
+lib/libcrypto/man/libcrypto.pl			1.1 (new)
+lib/libcrypto/man/openssl.1			1.3-1.9
+lib/libcrypto/man/openssl.cnf.5			1.5-1.11
+lib/libcrypto/man/openssl_CA.pl.1		1.2-1.8
+lib/libcrypto/man/openssl_asn1parse.1		1.2-1.8
+lib/libcrypto/man/openssl_bio.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_blowfish.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_bn.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_bn_internal.3		1.1-1.7 (new)
+lib/libcrypto/man/openssl_buffer.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_ca.1			1.2-1.8
+lib/libcrypto/man/openssl_ciphers.1		1.2-1.8
+lib/libcrypto/man/openssl_crl.1			1.2-1.8
+lib/libcrypto/man/openssl_crl2pkcs7.1		1.2-1.8
+lib/libcrypto/man/openssl_des.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_dgst.1		1.2-1.8
+lib/libcrypto/man/openssl_dh.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_dhparam.1		1.2-1.8
+lib/libcrypto/man/openssl_dsa.1			1.2-1.8
+lib/libcrypto/man/openssl_dsa.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_dsaparam.1		1.2-1.8
+lib/libcrypto/man/openssl_enc.1			1.2-1.8
+lib/libcrypto/man/openssl_err.3			1.2-1.9
+lib/libcrypto/man/openssl_evp.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_gendsa.1		1.2-1.8
+lib/libcrypto/man/openssl_genrsa.1		1.2-1.8
+lib/libcrypto/man/openssl_hmac.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_lhash.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_md5.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_mdc2.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_nseq.1		1.2-1.8
+lib/libcrypto/man/openssl_passwd.1		1.2-1.8
+lib/libcrypto/man/openssl_pkcs12.1		1.2-1.8
+lib/libcrypto/man/openssl_pkcs7.1		1.2-1.9
+lib/libcrypto/man/openssl_pkcs8.1		1.2-1.8
+lib/libcrypto/man/openssl_rand.1		1.2-1.8
+lib/libcrypto/man/openssl_rand.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_rc4.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_req.1			1.2-1.8
+lib/libcrypto/man/openssl_ripemd.3		1.1-1.6 (new)
+lib/libcrypto/man/openssl_rsa.1			1.2-1.8
+lib/libcrypto/man/openssl_rsa.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_rsautl.1		1.1-1.6 (new)
+lib/libcrypto/man/openssl_s_client.1		1.2-1.9
+lib/libcrypto/man/openssl_s_server.1		1.2-1.8
+lib/libcrypto/man/openssl_sess_id.1		1.2-1.8
+lib/libcrypto/man/openssl_sha.3			1.1-1.6 (new)
+lib/libcrypto/man/openssl_smime.1		1.2-1.8
+lib/libcrypto/man/openssl_speed.1		1.2-1.8
+lib/libcrypto/man/openssl_spkac.1		1.2-1.8
+lib/libcrypto/man/openssl_threads.3		1.1-1.7 (new)
+lib/libcrypto/man/openssl_verify.1		1.2-1.8
+lib/libcrypto/man/openssl_version.1		1.2-1.8
+lib/libcrypto/man/openssl_x509.1		1.2-1.9
+lib/libcrypto/man/ssl.3				1.4-1.10
+lib/libcrypto/md4.inc				1.1 (new)
+lib/libcrypto/mdc2.inc				1.4
+lib/libcrypto/rand.inc				1.4
+lib/libcrypto/rc5_enc_dummy.c			1.2-1.3
+lib/libcrypto/rc5_skey_dummy.c			1.2-1.3
+lib/libcrypto/rnd_keys.c			1.2
+lib/libcrypto/shlib_version			1.4-1.6
+lib/libcrypto/srcs.inc				1.9-1.10
+lib/libcrypto/x509v3.inc			1.4
+lib/libgssapi/shlib_version			1.4
+lib/libhdb/shlib_version			1.4
+lib/libkadm/shlib_version			1.3
+lib/libkadm5clnt/shlib_version			1.4
+lib/libkadm5srv/shlib_version			1.4
+lib/libkafs/shlib_version			1.4
+lib/libkdb/shlib_version			1.3
+lib/libkrb/shlib_version			1.3
+lib/libkrb5/shlib_version			1.5
+lib/libkstream/shlib_version			1.2
+lib/libroken/shlib_version			1.4
+lib/libsl/shlib_version				1.3
+lib/libss/shlib_version				1.4
+lib/libssl/Makefile				1.3-1.4
+lib/libssl/shlib_version			1.3-1.4
+lib/libssl/ssl.inc				1.3
+lib/libtelnet/shlib_version			1.8
+usr.bin/openssl/Makefile			1.8-1.10
+
+  Update OpenSSL to version 0.9.6g.  Includes major version bump for
+  libcrypto and all the dependent libraries.
+
+lib/libkrb5/Makefile                            1.11
+
+  Use libc md4, not openssl md4.
