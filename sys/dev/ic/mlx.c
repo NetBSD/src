@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.16.2.1 2002/05/16 12:16:28 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.16 2002/04/23 11:57:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.16.2.1 2002/05/16 12:16:28 gehenna Exp $");
 
 #include "ld.h"
 
@@ -135,7 +135,14 @@ static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
 static __inline__ time_t	mlx_curtime(void);
 
-cdev_decl(mlx);
+dev_type_open(mlxopen);
+dev_type_close(mlxclose);
+dev_type_ioctl(mlxioctl);
+
+const struct cdevsw mlx_cdevsw = {
+	mlxopen, mlxclose, noread, nowrite, mlxioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 extern struct	cfdriver mlx_cd; 
 static struct	proc *mlx_periodic_proc;
