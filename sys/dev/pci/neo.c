@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.2 2000/11/05 16:13:17 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.3 2000/11/05 16:24:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -145,6 +145,10 @@ struct neo_softc {
 	int	pbuf_allocated;
 	int	rbuf_allocated;
 
+	bus_addr_t buf_pciaddr;
+	bus_addr_t rbuf_pciaddr;
+	bus_addr_t pbuf_pciaddr;
+
 	u_int32_t 	ac97_base, ac97_status, ac97_busy;
 	u_int32_t	buftop, pbuf, rbuf, cbuf, acbuf;
 	u_int32_t	playint, recint, misc1int, misc2int;
@@ -201,6 +205,7 @@ int	neo_query_devinfo(void *, mixer_devinfo_t *);
 void   *neo_malloc(void *, int, size_t, int, int);
 void	neo_free(void *, void *, int);
 size_t	neo_round_buffersize(void *, int, size_t);
+paddr_t	neo_mappage(void *, void *, off_t, int);
 int	neo_get_props(void *);
 void	neo_set_mixer(struct neo_softc *sc, int a, int d);
 
@@ -252,7 +257,7 @@ struct audio_hw_if neo_hw_if = {
 	neo_malloc,
 	neo_free,
 	neo_round_buffersize,
-	0,				/* mappage */
+	neo_mappage,
 	neo_get_props,
 	neo_trigger_output,
 	neo_trigger_input,
@@ -470,6 +475,9 @@ nm_init(struct neo_softc *sc)
 	sc->rbuf_vaddr = sc->buf_vaddr + sc->rbuf;
 	sc->pbuf_vaddr = sc->buf_vaddr + sc->pbuf;
 
+	sc->rbuf_pciaddr = sc->buf_pciaddr + sc->rbuf;
+	sc->pbuf_pciaddr = sc->buf_pciaddr + sc->pbuf;
+
 	nm_wr_1(sc, 0, 0x11);
 	nm_wr_1(sc, NM_RECORD_ENABLE_REG, 0);
 	nm_wr_2(sc, 0x214, 0);
@@ -537,7 +545,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->bufiot, &sc->bufioh, NULL, NULL)) {
+			   &sc->bufiot, &sc->bufioh, &sc->buf_pciaddr, NULL)) {
 		printf("%s: can't map buffer\n", sc->dev.dv_xname);
 		return;
 	}
@@ -986,11 +994,33 @@ neo_round_buffersize(void *addr, int direction, size_t size)
 	return (NM_BUFFSIZE);
 }
 
+paddr_t
+neo_mappage(void *addr, void *mem, off_t off, int prot)
+{
+	struct neo_softc *sc = addr;
+	vaddr_t v = (vaddr_t) mem;
+	bus_addr_t pciaddr;
+
+	/* XXX Need new mapping code. */
+
+	if (v == sc->pbuf_vaddr)
+		pciaddr = sc->pbuf_pciaddr;
+	else if (v == sc->rbuf_vaddr)
+		pciaddr = sc->rbuf_pciaddr;
+	else
+		return (-1);
+
+#ifdef __i386__
+	return (i386_btop(pciaddr + off));
+#else
+	return (-1);
+#endif
+}
 
 int
 neo_get_props(void *addr)
 {
 
-	return (AUDIO_PROP_INDEPENDENT | 
+	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_MMAP |
                 AUDIO_PROP_FULLDUPLEX);
 }
