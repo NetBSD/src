@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.16 2002/03/13 01:26:56 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2002/03/16 17:03:31 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,7 +48,7 @@
 #		null, stderr, stdin, stdout, tty, zero).
 #	local	Configuration specific devices which are created by running
 #		the MAKEDEV.local shell script with the argument "all".
-#	isdn	make ISDN devices
+#	isdns	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tape
@@ -70,11 +70,11 @@
 #	opty	first 16 ptys, to save inodes on install media
 #
 # ISDN devices:
-#	i4b	communication between userland isdnd and kernel
-#	i4bctl	control device
-#	i4brbch* raw b-channel access
-#	i4btel*	telephony device
-#	i4btrc*	trace device
+#	isdn	communication between userland isdnd and kernel
+#	isdnctl	control device
+#	isdnbchan* raw b-channel access
+#	isdntel*	telephony device
+#	isdntrc*	trace device
 #
 # Special purpose devices:
 #	clockctl clock control for non root users
@@ -122,7 +122,7 @@ all)
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev tun0 tun1 tun2 tun3
 	makedev tty00 tty01 tty02 tty03
-	makedev random local isdn
+	makedev random local isdns
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
 	;;
@@ -134,8 +134,8 @@ minimal)
 	makedev tty00
 	;;
 
-isdn)
-	makedev i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
+isdns)
+	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdntrc0 isdntrc1
 	;;
 
 std)
@@ -370,37 +370,37 @@ scsibus*)
 	chmod 644 scsibus$unit
 	;;
 
-i4b)
-	rm -f i4b
-	mknod i4b c 28 0
-	chmod 600 i4b
+isdn)
+	rm -f isdn
+	mknod isdn c 28 0
+	chmod 600 isdn
 	;;
 
-i4bctl)
-	rm -f i4bctl
-	mknod i4bctl c 29 0
-	chmod 600 i4bctl
+isdnctl)
+	rm -f isdnctl
+	mknod isdnctl c 29 0
+	chmod 600 isdnctl
 	;;
 
-i4brbch*)
-	unit=${i#i4brbch}
-	rm -f i4brbch$unit
-	mknod i4brbch$unit c 30 $unit
-	chmod 600 i4brbch$unit
+isdnbchan*)
+	unit=${i#isdnbchan}
+	rm -f isdnbchan$unit
+	mknod isdnbchan$unit c 30 $unit
+	chmod 600 isdnbchan$unit
 	;;
 
-i4btel*)
-	unit=${i#i4btel}
-	rm -f i4btel$unit
-	mknod i4btel$unit c 32 $unit
-	chmod 600 i4btel$unit
+isdntel*)
+	unit=${i#isdntel}
+	rm -f isdntel$unit
+	mknod isdntel$unit c 32 $unit
+	chmod 600 isdntel$unit
 	;;
 
-i4btrc*)
-	unit=${i#i4btrc}
-	rm -f i4btrc$unit
-	mknod i4btrc$unit c 31 $unit
-	chmod 600 i4btrc$unit
+isdntrc*)
+	unit=${i#isdntrc}
+	rm -f isdntrc$unit
+	mknod isdntrc$unit c 31 $unit
+	chmod 600 isdntrc$unit
 	;;
 
 clockctl)
