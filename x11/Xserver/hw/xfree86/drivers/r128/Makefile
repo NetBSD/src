@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:10 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -7,6 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 .include <bsd.own.mk>
 
 MODULE=	r128_drv
+MAN=	r128.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati
 
 SRCS=	r128_accel.c r128_cursor.c r128_dga.c r128_driver.c r128_video.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:11 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -7,6 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 .include <bsd.own.mk>
 
 MODULE=	trident_drv
+MAN=	trident.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/trident
 
 SRCS=	trident_driver.c trident_dac.c tridenthelper.c \
