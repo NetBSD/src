@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.29.2.1 1997/11/02 00:13:03 mellon Exp $	*/
+/*	$NetBSD: newfs.c,v 1.29.2.2 1997/11/19 21:24:09 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.29.2.1 1997/11/02 00:13:03 mellon Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.29.2.2 1997/11/19 21:24:09 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -562,10 +562,12 @@ havelabel:
 					err(11, "waitpid");
 				if (res != pid)
 					continue;
-				if (WIFEXITED(status))
+				if (WIFEXITED(status)) {
+					if (WEXITSTATUS(status) == 0)
+						exit(0);
 					errx(1, "%s: mount: %s", argv[1],
 					     strerror(WEXITSTATUS(status)));
-				else
+				} else
 					errx(11, "abnormal termination");
 			}
 			/* NOTREACHED */
