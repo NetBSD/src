@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.7 1999/06/04 20:12:52 thorpej Exp $
+# $NetBSD: netbsd,v 1.8 1999/06/04 20:40:50 thorpej Exp $
 
 make_resolv_conf() {
   echo search $new_domain_name >/etc/resolv.conf
@@ -32,6 +32,10 @@ fi
 
 if [ x$new_host_name != x ]; then
    echo New Host Name: $new_host_name
+fi
+
+if [ x$new_nis_domain != x ]; then
+   echo New NIS Domain: $new_nis_domain
 fi
 
 if [ x$new_network_number != x ]; then
@@ -81,6 +85,9 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
   if [ x$new_host_name != x ]; then
     hostname $new_host_name
   fi
+  if [ x$new_nis_domain != x ]; then
+    domainname $new_nis_domain
+  fi
   if [ x$old_ip_address != x ] && [ x$alias_ip_address != x ] && \
 		[ x$alias_ip_address != x$old_ip_address ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
@@ -127,6 +134,10 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
 fi
 
 if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
+  if [ x$old_nis_domain != x ]; then
+    # delete the old nis domain name
+    domainname ""
+  fi
   if [ x$alias_ip_address != x ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
@@ -161,6 +172,9 @@ if [ x$reason = xTIMEOUT ]; then
   fi
   if [ x$new_host_name != x ]; then
     hostname $new_host_name
+  fi
+  if [ x$new_nis_domain != x ]; then
+    domainname $new_nis_domain
   fi
   ifconfig $interface inet $new_ip_address $new_netmask_arg \
 					$new_broadcast_arg $medium
