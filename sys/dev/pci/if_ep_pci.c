@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.4 1996/05/10 05:28:03 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.5 1996/05/12 02:46:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -74,11 +74,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-/* PCI constants */
-#define PCI_VENDORID(x)		((x) & 0xFFFF)
-#define PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
+/*
+ * PCI constants.
+ * XXX These should be in a common file!
+ */
 #define PCI_CONN		0x48    /* Connector type */
-#define PCI_CBMA		0x10    /* Configuration Base Memory Address */
+#define PCI_CBIO		0x10    /* Configuration Base IO Address */
 
 int ep_pci_match __P((struct device *, void *, void *));
 void ep_pci_attach __P((struct device *, struct device *, void *));
@@ -94,10 +95,10 @@ ep_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_3COM)
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
 		return 0;
 
-	switch (PCI_CHIPID(pa->pa_id)) {
+	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
 	case PCI_PRODUCT_3COM_3C595:
 		break;
@@ -124,7 +125,7 @@ ep_pci_attach(parent, self, aux)
 	char *model;
 	const char *intrstr = NULL;
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBMA, &iobase, &iosize)) {
+	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
 		return;
 	}
@@ -152,7 +153,7 @@ ep_pci_attach(parent, self, aux)
 
 	GO_WINDOW(0);
 
-	switch (PCI_CHIPID(pa->pa_id)) {
+	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
 		model = "3Com 3C590 Ethernet";
 		break;
