@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.36 2003/01/01 00:48:33 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.37 2003/02/02 15:08:37 thomas Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -607,7 +607,7 @@ fdstrategy(bp)
  	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE/DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %ld cylin %ld sz"
+	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %qd cylin %ld sz"
 		" %d\n", bp->b_blkno, bp->b_bcount, (long)fd->sc_blkno,
 		bp->b_cylinder, sz);
 #endif
@@ -1042,7 +1042,7 @@ loop:
 		     block = (fd->sc_cylin * type->heads + head)
 				* type->sectrac + sec;
 		     if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n",
+			 printf("fdcintr: block %d != blkno %qd\n",
 						block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
@@ -1149,7 +1149,7 @@ loop:
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			printf("blkno %qd nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
