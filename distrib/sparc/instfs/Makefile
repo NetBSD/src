@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/05/02 18:02:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/05/09 11:12:48 lukem Exp $
 #
 # instfs.tgz is the filesystem image for disk 2 of the floppy based
 # installation method.
@@ -9,39 +9,25 @@
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-MINIROOT=	${.CURDIR}/../../miniroot
+IMAGETAR=		instfs.tgz
+IMAGETAR_RELEASEDIR=	installation/bootfs
 
-MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
-INSTFS?=	instfs.tgz
+MINIROOTDIR!=	cd ${.CURDIR}/../../miniroot && ${PRINTOBJDIR}
+WORKDIR=	${MINIROOTDIR}/work
+WORKBUILT=	${MINIROOTDIR}/work.built
+WORKSPEC=	instfs.spec
 
-MINIROOTDIR!=	cd ${MINIROOT} && ${PRINTOBJDIR}
-MINIROOT_IMAGE=	${MINIROOTDIR}/miniroot.fs
+${WORKSPEC}: ${MINIROOTDIR}/work.spec
+	-rm -f ${.TARGET} ${.TARGET}.tmp
+	egrep -v '^\./(netbsd|boot)($$|[ \t])' ${.ALLSRC} > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
 
-all: ${INSTFS}
+CLEANFILES+=	${WORKSPEC} ${WORKSPEC}.tmp
 
-${INSTFS}: ${MINIROOT_IMAGE}
-	vnconfig -v -c ${VND} ${MINIROOT_IMAGE}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	(cd ${MOUNT_POINT}; \
-		tar -z -X ${.CURDIR}/exclude -c -f ${.OBJDIR}/${.TARGET} .)
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
+${WORKBUILT}:
+	@echo "Need ../../miniroot built first"
+	@false
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${INSTFS}
-
-clean cleandir distclean:
-	/bin/rm -f *.core ${INSTFS}
-
-release: check_RELEASEDIR .WAIT ${INSTFS}
-	${RELEASE_INSTALL} ${INSTFS} $(RELEASEDIR)/installation/bootfs
+.include "${DISTRIBDIR}/common/Makefile.image"
 
 .include <bsd.prog.mk>
