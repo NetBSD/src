@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.1 1996/10/03 06:33:24 mrg Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.2 1997/01/16 22:27:01 perry Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -957,6 +957,8 @@ struct tree *parse_ip_addr_or_hostname (cfile, uniform)
 		if (!name)
 			return (struct tree *)0;
 		rv = tree_host_lookup (name);
+		if (!rv)
+			return (struct tree *)0;
 		if (!uniform)
 			rv = tree_limit (rv, 4);
 	} else if (token == NUMBER) {
