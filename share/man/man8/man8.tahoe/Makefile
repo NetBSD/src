@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.1 (Berkeley) 3/22/91
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN8=	MAKEDEV.0
 MANSUBDIR=/tahoe
