@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.9 2001/01/18 20:28:22 jdolecek Exp $
+#	$NetBSD: devlist2h.awk,v 1.10 2003/10/28 10:35:12 augustss Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -39,11 +39,11 @@ NR == 1 {
 	gsub("\\$", "", VERSION)
 
 	if (os == "NetBSD")
-		printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
+		printf("/*\t$NetBSD: devlist2h.awk,v 1.10 2003/10/28 10:35:12 augustss Exp $\t*/\n\n") > dfile
 	else if (os == "FreeBSD")
-		printf("/*\t\$FreeBSD\$\t*/\n\n") > dfile
+		printf("/*\t$FreeBSD$\t*/\n\n") > dfile
 	else if (os == "OpenBSD")
-		printf("/*\t\$OpenBSD\$\t*/\n\n") > dfile
+		printf("/*\t$OpenBSD$\t*/\n\n") > dfile
 	else
 		printf("/* ??? */\n\n") > dfile
 	printf("/*\n") > dfile
@@ -55,11 +55,11 @@ NR == 1 {
 	printf(" */\n") > dfile
 
 	if (os == "NetBSD")
-		printf("/*\t\$NetBSD\$\t*/\n\n") > hfile
+		printf("/*\t$NetBSD: devlist2h.awk,v 1.10 2003/10/28 10:35:12 augustss Exp $\t*/\n\n") > hfile
 	else if (os == "FreeBSD")
-		printf("/*\t\$FreeBSD\$\t*/\n\n") > hfile
+		printf("/*\t$FreeBSD$\t*/\n\n") > hfile
 	else if (os == "OpenBSD")
-		printf("/*\t\$OpenBSD\$\t*/\n\n") > hfile
+		printf("/*\t$OpenBSD$\t*/\n\n") > hfile
 	else
 		printf("/* ??? */\n\n") > hfile
 	printf("/*\n") > hfile
