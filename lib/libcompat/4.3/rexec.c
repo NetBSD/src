@@ -31,8 +31,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: rexec.c,v 1.6 1997/10/09 10:21:00 lukem Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,7 +53,8 @@ static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 
 int	rexecoptions;
 
-void ruserpass __P((const char *, char **, char **));
+void	ruserpass __P((const char *, char **, char **));
+int	rexec __P((char **, int, char *, char *, char *, int *));
 
 int
 rexec(ahost, rport, name, pass, cmd, fd2p)

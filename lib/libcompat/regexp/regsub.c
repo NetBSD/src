@@ -19,8 +19,9 @@
  *		be misrepresented as being the original software.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$Id: regsub.c,v 1.4 1995/06/05 19:42:35 pk Exp $";
+__RCSID("$NetBSD: regsub.c,v 1.5 1997/10/09 10:21:26 lukem Exp $");
 #endif /* not lint */
 
 #include <regexp.h>

@@ -28,8 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$Id: ftime.c,v 1.4 1995/06/05 19:42:19 pk Exp $";
+__RCSID("$NetBSD: ftime.c,v 1.5 1997/10/09 10:20:10 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -33,8 +33,9 @@
  * regular-expression syntax might require a total rethink.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$Id: regexp.c,v 1.6 1997/01/23 14:02:39 mrg Exp $";
+__RCSID("$NetBSD: regexp.c,v 1.7 1997/10/09 10:21:18 lukem Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
