@@ -125,9 +125,7 @@ struct	disk {
 #define	DKFL_WRITEPROT	0x00040	 /* manual unit write protect */
 	struct wdparams dk_params; /* ESDI/IDE drive/controller parameters */
 	struct disklabel dk_dd;	/* device configuration data */
-	struct	dos_partition
-		dk_dospartitions[NDOSPART];	/* DOS view of disk */
-	struct	dkbad	dk_bad;	/* bad sector table */
+	struct cpu_disklabel dk_cpd;
 #ifdef TIHBAD144
 	long	dk_badsect[127];	/* 126 plus trailing -1 marker */
 #endif
@@ -835,12 +833,10 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 #if defined(TIHMODS) && defined(garbage)
 		/* wdsetctlr(dev, du); */	/* Maybe do this TIH */
 		msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
-			wdstrategy, &du->dk_dd, du->dk_dospartitions,
-			0, 0);
+			wdstrategy, &du->dk_dd, &du->dk_cpd);
 		wdsetctlr(dev, du);
 		msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
-			wdstrategy, &du->dk_dd, du->dk_dospartitions,
-			&du->dk_bad, 0);
+			wdstrategy, &du->dk_dd, &du->dk_cpd);
 		if (msg) {
 #ifdef QUIETWORKS
 			if((du->dk_flags & DKFL_QUIET) == 0) {
@@ -864,8 +860,7 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 		}
 #else
 		if (msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
-		    wdstrategy, &du->dk_dd, du->dk_dospartitions,
-		    &du->dk_bad, 0)) {
+		    wdstrategy, &du->dk_dd, &du->dk_cpd) ) {
 			if((du->dk_flags & DKFL_QUIET) == 0) {
 				log(LOG_WARNING, "wd%d: cannot find label (%s)\n",
 					lunit, msg);
@@ -1250,7 +1245,7 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			du->dk_bad = *(struct dkbad *)addr;
+			du->dk_cpd.bad = *(struct dkbad *)addr;
 #ifdef TIHBAD144
 			bad144intern(du);
 #endif
@@ -1270,10 +1265,11 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
-		else
+		else {
 			error = setdisklabel(&du->dk_dd, (struct disklabel *)addr,
 				 /*(du->dk_flags&DKFL_BSDLABEL) ? du->dk_openpart : */0,
-				 du->dk_dospartitions);
+				 &du->dk_cpd);
+		}
 		if (error == 0) {
 			du->dk_flags |= DKFL_BSDLABEL;
 			wdsetctlr(dev, du);
@@ -1294,7 +1290,7 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 			error = EBADF;
 		else if ((error = setdisklabel(&du->dk_dd, (struct disklabel *)addr,
 		    /*(du->dk_flags & DKFL_BSDLABEL) ? du->dk_openpart :*/ 0,
-		    du->dk_dospartitions)) == 0) {
+		    &du->dk_cpd)) == 0) {
 			int wlab;
 	    
 			du->dk_flags |= DKFL_BSDLABEL;
@@ -1304,8 +1300,7 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 			du->dk_openpart |= (1 << 0);	    /* XXX */
 			wlab = du->dk_wlabel;
 			du->dk_wlabel = 1;
-			error = writedisklabel(dev, wdstrategy,
-				&du->dk_dd, du->dk_dospartitions);
+			error = writedisklabel(dev, wdstrategy, &du->dk_dd, &du->dk_cpd);
 			du->dk_openpart = du->dk_copenpart | du->dk_bopenpart;
 			du->dk_wlabel = wlab;
 		}
@@ -1558,13 +1553,15 @@ bad144intern(struct disk *du)
 		}
 
 		for (i = 0; i < 126; i++) {
-			if (du->dk_bad.bt_bad[i].bt_cyl == 0xffff) {
+			if (du->dk_cpd.bad.bt_bad[i].bt_cyl == 0xffff) {
 				break;
 			} else {
 				du->dk_badsect[i] =
-				    du->dk_bad.bt_bad[i].bt_cyl * du->dk_dd.d_secpercyl +
-				   (du->dk_bad.bt_bad[i].bt_trksec >> 8) * du->dk_dd.d_nsectors +
-				   (du->dk_bad.bt_bad[i].bt_trksec & 0x00ff);
+				    du->dk_cpd.bad.bt_bad[i].bt_cyl *
+					du->dk_dd.d_secpercyl +
+				   (du->dk_cpd.bad.bt_bad[i].bt_trksec >> 8) *
+					du->dk_dd.d_nsectors +
+				   (du->dk_cpd.bad.bt_bad[i].bt_trksec & 0x00ff);
 			}
 		}
 	}

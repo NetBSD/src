@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.8 1993/05/20 03:46:15 cgd Exp $
+ *	$Id: cd.c,v 1.9 1993/05/20 22:48:57 deraadt Exp $
  */
 
 #define SPLCD splbio
@@ -922,7 +922,6 @@ unsigned char	unit;
 {
 	/*unsigned int n, m;*/
 	char *errstring;
-	struct dos_partition *dos_partition_p;
 	struct cd_data *cd = cd_data[unit];
 
 	/*******************************************************\
