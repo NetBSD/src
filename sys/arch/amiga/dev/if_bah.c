@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.27 1997/03/16 23:27:18 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.28 1997/03/17 17:47:59 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1031,7 +1031,11 @@ bahintr(arg)
 #endif
 
 	if (maskedisr & ARC_POR) {
-		sc->sc_arccom.ac_anaddr = sc->sc_base->dipswitches;
+	  	/* 
+		 * XXX We should never see this. Don't bother to store
+		 * the address.
+		 * sc->sc_arccom.ac_anaddr = sc->sc_base->dipswitches;
+		 */
 		sc->sc_base->command = ARC_CLR(CLR_POR);
 		log(LOG_WARNING, "%s: intr: got spurious power on reset int\n",
 		    sc->sc_dev.dv_xname);
