@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 1998/07/28 20:46:28 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.118 1998/07/30 22:28:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/extent.h>
 #include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -136,6 +137,7 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 #include "fb.h"
 #include "power.h"
@@ -185,6 +187,7 @@ int   safepri = 0;
 vm_offset_t dvma_base, dvma_end;
 struct map *dvmamap;
 static int ndvmamap;	/* # of entries in dvmamap */
+struct extent *dvmamap24;
 
 caddr_t allocsys __P((caddr_t));
 void	dumpsys __P((void));
@@ -380,6 +383,17 @@ cpu_startup()
 #endif
 	rminit(dvmamap, btoc((dvma_end-dvma_base)),
 		vtorc(dvma_base), "dvmamap", ndvmamap);
+
+	if (CPU_ISSUN4OR4C) {
+		/*
+		 * Allocate dma map for 24-bit devices (le, ie)
+		 * [dvma_base - dvma_end] is for VME devices..
+		 */
+		dvmamap24 = extent_create("dvmamap24", 0xff000000, dvma_base,
+					  M_DEVBUF, 0, 0, EX_NOWAIT);
+		if (dvmamap24 == NULL)
+			panic("unable to allocate DVMA map");
+	}
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
@@ -1261,6 +1275,8 @@ dvmamap_free (addr, size)
 	splx(s);
 }
 
+
+
 /*
  * Common function for DMA map creation.  May be called by bus-specific
  * DMA map creation functions.
@@ -1325,94 +1341,6 @@ _bus_dmamap_destroy(t, map)
 }
 
 /*
- * Common function for loading a DMA map with a linear buffer.  May
- * be called by bus-specific DMA map load functions.
- */
-int
-_bus_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-{
-	bus_size_t sgsize;
-	bus_addr_t dvmaddr, curaddr;
-	caddr_t vaddr = buf;
-	pmap_t pmap;
-
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_nsegs = 0;
-
-	if (buflen > map->_dm_size)
-		return (EINVAL);
-
-	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
-
-	/*
-	 * XXX Need to implement "don't dma across this boundry".
-	 */
-	if (map->_dm_boundary != 0)
-		panic("bus_dmamap_load: boundaries not implemented");
-
-	dvmaddr = dvmamap_alloc(sgsize, flags);
-	if (dvmaddr != 0)
-		return (ENOMEM);
-
-	/*
-	 * We always use just one segment.
-	 */
-	map->dm_mapsize = buflen;
-	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr;
-	map->dm_segs[0].ds_len = buflen;
-
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
-
-	for (; buflen > 0; ) {
-		/*
-		 * Get the physical address for this page.
-		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
-
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
-		if (buflen < sgsize)
-			sgsize = buflen;
-
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {
-			iommu_enter(dvmaddr, curaddr & ~(NBPG-1));
-		} else
-#endif
-		{
-#ifdef notyet
-#if defined(SUN4)
-			if (have_iocache)
-				curaddr |= PG_IOC;
-#endif
-#endif
-			pmap_enter(pmap_kernel(), dvmaddr,
-				   (curaddr & ~(NBPG-1))| PMAP_NC,
-				   VM_PROT_READ|VM_PROT_WRITE, 1);
-		}
-
-		dvmaddr += PAGE_SIZE;
-		vaddr += sgsize;
-		buflen -= sgsize;
-	}
-	return (0);
-}
-
-/*
  * Like _bus_dmamap_load(), but for mbufs.
  */
 int
@@ -1458,38 +1386,6 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 }
 
 /*
- * Common function for unloading a DMA map.  May be called by
- * bus-specific DMA map unload functions.
- */
-void
-_bus_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-	bus_addr_t addr;
-	bus_size_t len;
-
-	if (map->dm_nsegs != 1)
-		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
-
-	addr = map->dm_segs[0].ds_addr;
-	len = map->dm_segs[0].ds_len;
-
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		iommu_remove(addr, len);
-	else
-#endif
-		pmap_remove(pmap_kernel(), addr, addr + len);
-
-	dvmamap_free(addr, len);
-
-	/* Mark the mappings as invalid. */
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
-}
-
-/*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
  */
@@ -1501,18 +1397,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-
-	/*
-	 * XXX Should flush CPU write buffers.
-	 */
 }
 
-/*
- * Common function for DMA-safe memory allocation.  May be called
- * by bus-specific DMA memory allocation functions.
- */
 int
-_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
+_bus_dmamem_alloc_common(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	bus_dma_tag_t t;
 	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
@@ -1520,10 +1408,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t curaddr;
 	vm_offset_t low, high;
-	bus_addr_t dvmaddr;
-	vm_page_t m;
 	struct pglist *mlist;
 	int error;
 
@@ -1550,18 +1435,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error)
 		return (error);
 
-	dvmaddr = dvmamap_alloc(size, flags);
-	if (dvmaddr == (bus_addr_t)-1)
-		return (ENOMEM);
-
-	/*
-	 * Compute the location, size, and number of segments actually
-	 * returned by the VM code.
-	 */
-	segs[0].ds_addr = dvmaddr;
-	segs[0].ds_len = size;
-	*rsegs = 1;
-
 	/*
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
@@ -1570,30 +1443,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * ARE IN OUR CUSTODY.
 	 */
 	segs[0]._ds_mlist = mlist;
-
-	/* Map memory into DVMA space */
-	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-		curaddr = VM_PAGE_TO_PHYS(m);
-
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {
-			iommu_enter(dvmaddr, curaddr);
-		} else
-#endif
-		{
-#ifdef notyet
-#if defined(SUN4)
-			if (have_iocache)
-				curaddr |= PG_IOC;
-#endif
-#endif
-			pmap_enter(pmap_kernel(), dvmaddr,
-				   curaddr | PMAP_NC,
-				   VM_PROT_READ|VM_PROT_WRITE, 1);
-		}
-		dvmaddr += PAGE_SIZE;
-	}
-
 	return (0);
 }
 
@@ -1602,29 +1451,14 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
  * bus-specific DMA memory free functions.
  */
 void
-_bus_dmamem_free(t, segs, nsegs)
+_bus_dmamem_free_common(t, segs, nsegs)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
-	bus_addr_t addr;
-	bus_size_t len;
 
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
-
-
-	addr = segs[0].ds_addr;
-	len = segs[0].ds_len;
-
-	dvmamap_free(addr, len);
-
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		iommu_remove(addr, len);
-	else
-#endif
-		pmap_remove(pmap_kernel(), addr, addr + len);
 
 	/*
 	 * Return the list of pages back to the VM system.
@@ -1635,97 +1469,6 @@ _bus_dmamem_free(t, segs, nsegs)
 	vm_page_free_memory(segs[0]._ds_mlist);
 #endif
 	free(segs[0]._ds_mlist, M_DEVBUF);
-}
-
-/*
- * Common function for mapping DMA-safe memory.  May be called by
- * bus-specific DMA memory map functions.
- */
-int
-_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
-{
-	vm_page_t m;
-	vm_offset_t va, sva;
-	bus_addr_t addr;
-	struct pglist *mlist;
-	int cbit;
-	size_t oversize;
-	u_long align;
-#if defined(SUN4M)
-	extern int has_iocache;
-#else
-#define	has_iocache	0
-#endif
-	extern u_long dvma_cachealign;
-
-	if (nsegs != 1)
-		panic("_bus_dmamem_map: nsegs = %d", nsegs);
-
-	cbit = (CPU_ISSUN4M && has_iocache) ? 0 : PMAP_NC;
-	align = dvma_cachealign ? dvma_cachealign : PAGE_SIZE;
-
-	size = round_page(size);
-
-	/*
-	 * Find a region of kernel virtual addresses that can accomodate
-	 * our aligment requirements.
-	 */
-	oversize = size + align - PAGE_SIZE;
-#if defined(UVM)
-	sva = uvm_km_valloc(kernel_map, oversize);
-	if (sva == 0)
-		return (ENOMEM);
-#else
-	r = vm_map_find(kernel_map, NULL, (vm_offset_t)0, &sva, oversize, TRUE);
-	if (r != KERN_SUCCESS)
-		return (ENOMEM);
-#endif
-
-	/* Compute start of aligned region */
-	va = sva;
-	va += ((segs[0].ds_addr & (align - 1)) + align - va) & (align - 1);
-
-	/* Return excess virtual addresses */
-	if (va != sva)
-#if defined(UVM)
-		(void)uvm_unmap(kernel_map, sva, va, 0);
-#else
-		vm_map_remove(kernel_map, sva, va);
-#endif
-	if (va + size != sva + oversize)
-#if defined(UVM)
-		(void)uvm_unmap(kernel_map, va + size, sva + oversize, 0);
-#else
-		vm_map_remove(kernel_map, va + size, sva + oversize);
-#endif
-
-
-	*kvap = (caddr_t)va;
-	mlist = segs[0]._ds_mlist;
-
-	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
-
-		if (size == 0)
-			panic("_bus_dmamem_map: size botch");
-
-		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
-#if 0
-			if (flags & BUS_DMA_COHERENT)
-				/* XXX */;
-#endif
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-
-	return (0);
 }
 
 /*
@@ -1750,9 +1493,6 @@ _bus_dmamem_unmap(t, kva, size)
 #else
 	vm_map_remove(kernel_map, (vm_offset_t)kva, (vm_offset_t)kva + size);
 #endif
-#if 0
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
-#endif
 }
 
 /*
@@ -1769,21 +1509,321 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	panic("_bus_dmamem_mmap: not implemented");
 }
 
+/* sun4/sun4c dma map functions */
+int	sun4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
+				bus_size_t, struct proc *, int));
+void	sun4_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+int	sun4_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size, 
+				bus_size_t alignment, bus_size_t boundary,
+				bus_dma_segment_t *segs, int nsegs, int *rsegs,
+				int flags));
+void	sun4_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+				int nsegs));
+int	sun4_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,  
+				int nsegs, size_t size, caddr_t *kvap,
+				int flags));
+
+/*
+ * sun4/sun4c: load DMA map with a linear buffer.
+ */
+int
+sun4_dmamap_load(t, map, buf, buflen, p, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+{
+#if notyet
+	bus_size_t sgsize;
+	caddr_t vaddr = buf;
+	bus_addr_t dvmaddr, curaddr;
+	pmap_t pmap;
+#endif
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
+	/*
+	 * XXX Need to implement "don't dma across this boundry".
+	 */
+	if (map->_dm_boundary != 0)
+		panic("bus_dmamap_load: boundaries not implemented");
+
+	cpuinfo.cache_flush(buf, buflen);
+
+	if (p == NULL) {
+		map->dm_mapsize = buflen;
+		map->dm_nsegs = 1;
+		map->dm_segs[0].ds_addr = (bus_addr_t)buf;
+		map->dm_segs[0].ds_len = buflen;
+		return (0);
+	}
+
+#if notyet
+	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
+
+	dvmaddr = dvmamap_alloc(sgsize, flags);
+	if (dvmaddr != 0)
+		return (ENOMEM);
+
+	/*
+	 * We always use just one segment.
+	 */
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_len = buflen;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	for (; buflen > 0; ) {
+		/*
+		 * Get the physical address for this page.
+		 */
+		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+#ifdef notyet
+#if defined(SUN4)
+		if (have_iocache)
+			curaddr |= PG_IOC;
+#endif
+#endif
+		pmap_enter(pmap_kernel(), dvmaddr,
+			   (curaddr & ~(NBPG-1))| PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+
+		dvmaddr += PAGE_SIZE;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+#else
+	panic("sun4_dmamap_load: not implemented");
+#endif
+	return (0);
+}
+
+/*
+ * sun4/sun4c function for unloading a DMA map.
+ */
+void
+sun4_dmamap_unload(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	bus_addr_t addr;
+	bus_size_t len;
+
+	if (map->dm_nsegs != 1)
+		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+
+	if (1) {
+		map->dm_mapsize = 0;
+		map->dm_nsegs = 0;
+		return;
+	}
+	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
+	len = map->dm_segs[0].ds_len;
+
+	pmap_remove(pmap_kernel(), addr, addr + len);
+
+	dvmamap_free(addr, len);
+
+	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+}
+
+/*
+ * Common function for DMA-safe memory allocation.  May be called
+ * by bus-specific DMA memory allocation functions.
+ */
+int
+sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
+	bus_dma_tag_t t;
+	bus_size_t size, alignment, boundary;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int *rsegs;
+	int flags;
+{
+	vm_offset_t va;
+	bus_addr_t dvmaddr;
+	vm_page_t m;
+	struct pglist *mlist;
+	int error;
+
+	if ((flags & BUS_DMA_24BIT) == 0) {
+		/* Any memory will do */
+		va = uvm_km_kmemalloc(kernel_map, uvm.kernel_object, size,
+				      (flags & BUS_DMA_NOWAIT) != 0
+						? UVM_KMF_NOWAIT
+						: 0);
+		if (va == NULL)
+			return (ENOMEM);
+
+		kvm_uncache((caddr_t)va, btoc(size));
+		segs[0].ds_addr = (bus_addr_t)va;
+		segs[0].ds_len = size;
+		segs[0]._ds_mlist = NULL;
+		*rsegs = 1;
+		return (0);
+	}
+
+	error = _bus_dmamem_alloc_common(t, size, alignment, boundary,
+					 segs, nsegs, rsegs, flags);
+	if (error != 0)
+		return (error);
+
+	if (extent_alloc(dvmamap24, round_page(size), NBPG, EX_NOBOUNDARY,
+            EX_NOWAIT, (u_long *)&dvmaddr) != 0)
+		return (ENOMEM);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	segs[0].ds_addr = dvmaddr;
+	segs[0].ds_len = size;
+	*rsegs = 1;
+
+	mlist = segs[0]._ds_mlist;
+
+	/* Map memory into DVMA space */
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		va = VM_PAGE_TO_PHYS(m);
+
+#ifdef notyet
+#if defined(SUN4)
+		if (have_iocache)
+			va |= PG_IOC;
+#endif
+#endif
+		pmap_enter(pmap_kernel(), dvmaddr,
+			   va | PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		dvmaddr += PAGE_SIZE;
+	}
+
+	return (0);
+}
+
+/*
+ * Common function for freeing DMA-safe memory.  May be called by
+ * bus-specific DMA memory free functions.
+ */
+void
+sun4_dmamem_free(t, segs, nsegs)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+{
+	bus_addr_t addr;
+	bus_size_t len;
+
+	if (segs[0]._ds_mlist == NULL) {
+		vm_offset_t kva = (vm_offset_t)segs[0].ds_addr;
+		vm_offset_t size = round_page(segs[0].ds_len);
+		uvm_unmap(kernel_map, kva, kva + size, 0);
+		return;
+	}
+
+	addr = segs[0].ds_addr;
+	len = segs[0].ds_len;
+
+	if (extent_free(dvmamap24, addr, round_page(len), EX_NOWAIT) != 0)
+		printf("warning: %ld of DVMA space lost\n", len);
+
+	pmap_remove(pmap_kernel(), addr, addr + len);
+
+	/*
+	 * Return the list of pages back to the VM system.
+	 */
+	_bus_dmamem_free_common(t, segs, nsegs);
+}
+
+/*
+ * Common function for mapping DMA-safe memory.  May be called by
+ * bus-specific DMA memory map functions.
+ */
+int
+sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	vm_page_t m;
+	vm_offset_t va;
+	bus_addr_t addr;
+	struct pglist *mlist;
+
+	if (nsegs != 1)
+		panic("sun4_dmamem_map: nsegs = %d", nsegs);
+
+	if (segs[0]._ds_mlist == NULL) {
+		*kvap = (caddr_t)segs[0].ds_addr;
+		return (0);
+	}
+
+	size = round_page(size);
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		return (ENOMEM);
+
+	*kvap = (caddr_t)va;
+	mlist = segs[0]._ds_mlist;
+
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+
+		if (size == 0)
+			panic("sun4_dmamem_map: size botch");
+
+		addr = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, addr | PMAP_NC,
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
+
+		va += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+
+	return (0);
+}
+
 
 struct sparc_bus_dma_tag mainbus_dma_tag = {
 	NULL,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
-	_bus_dmamap_load,
+	sun4_dmamap_load,
 	_bus_dmamap_load_mbuf,
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
+	sun4_dmamap_unload,
 	_bus_dmamap_sync,
 
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
+	sun4_dmamem_alloc,
+	sun4_dmamem_free,
+	sun4_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
