@@ -1,4 +1,5 @@
-/*	$NetBSD: usbdi_util.c,v 1.24 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.25 1999/11/18 23:32:34 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,9 +42,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/device.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+#include <sys/proc.h>
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/bus.h>
@@ -449,7 +449,7 @@ usbd_alloc_report_desc(ifc, descp, sizep, mem)
 	if (id == NULL)
 		return (USBD_INVAL);
 	hid = usbd_get_hid_descriptor(ifc);
-	if (!hid)
+	if (hid == NULL)
 		return (USBD_IOERROR);
 	*sizep = UGETW(hid->descrs[0].wDescriptorLength);
 	*descp = malloc(*sizep, mem, M_NOWAIT);

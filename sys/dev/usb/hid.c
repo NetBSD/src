@@ -1,4 +1,5 @@
-/*	$NetBSD: hid.c,v 1.10 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.11 1999/11/18 23:32:25 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,11 +40,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#if defined(__NetBSD__)
 #include <sys/kernel.h>
-#include <sys/malloc.h>
-#if defined(__FreeBSD__)
-#include <sys/bus.h>
 #endif
+#include <sys/malloc.h>
  
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -456,15 +456,15 @@ hid_is_collection(desc, size, usage)
 {
 	struct hid_data *hd;
 	struct hid_item hi;
-	int r;
+	int err;
 
 	hd = hid_start_parse(desc, size, hid_input);
-	if (!hd)
+	if (hd == NULL)
 		return (0);
 
-	r = hid_get_item(hd, &hi) &&
+	err = hid_get_item(hd, &hi) &&
 	    hi.kind == hid_collection &&
 	    hi.usage == usage;
 	hid_end_parse(hd);
-	return (r);
+	return (err);
 }

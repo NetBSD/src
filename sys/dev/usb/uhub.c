@@ -1,4 +1,5 @@
-/*	$NetBSD: uhub.c,v 1.33 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.34 1999/11/18 23:32:29 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,12 +48,12 @@
 #include <sys/malloc.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
+#include <sys/proc.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
 #include "bus_if.h"
 #endif
-#include <sys/proc.h>
 
 #include <machine/bus.h>
 
@@ -80,15 +81,12 @@ struct uhub_softc {
 
 static usbd_status uhub_init_port __P((struct usbd_port *));
 static usbd_status uhub_explore __P((usbd_device_handle hub));
-static void uhub_intr __P((usbd_xfer_handle, usbd_private_handle,
-			   usbd_status));
+static void uhub_intr __P((usbd_xfer_handle, usbd_private_handle,usbd_status));
 
 #if defined(__FreeBSD__)
 static bus_child_detached_t uhub_child_detached;
 #endif
 
-USB_DECLARE_DRIVER_INIT(uhub, 
-			DEVMETHOD(bus_child_detached, uhub_child_detached));
 
 /* 
  * We need two attachment points:
@@ -97,12 +95,17 @@ USB_DECLARE_DRIVER_INIT(uhub,
  */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+USB_DECLARE_DRIVER(uhub);
+
 /* Create the driver instance for the hub connected to hub case */
 struct cfattach uhub_uhub_ca = {
 	sizeof(struct uhub_softc), uhub_match, uhub_attach,
 	uhub_detach, uhub_activate
 };
 #elif defined(__FreeBSD__)
+USB_DECLARE_DRIVER_INIT(uhub,
+			DEVMETHOD(bus_child_detached, uhub_child_detached));
+			
 /* Create the driver instance for the hub connected to usb case. */
 devclass_t uhubroot_devclass;
 
@@ -444,7 +447,7 @@ uhub_explore(dev)
 			/* Make sure we don't try to restart it infinitely. */
 			up->restartcnt = USBD_RESTART_MAX;
 		} else {
-			if (up->device->hub != NULL)
+			if (up->device->hub)
 				up->device->hub->explore(up->device);
 		}
 	}
@@ -459,7 +462,8 @@ uhub_activate(self, act)
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	usbd_device_handle devhub = sc->sc_hub;
-	int nports, p, i;
+	usbd_device_handle dev;
+	int nports, port, i;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -468,8 +472,8 @@ uhub_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		nports = devhub->hub->hubdesc.bNbrPorts;
-		for(p = 0; p < nports; p++) {
-			usbd_device_handle dev = devhub->hub->ports[p].device;
+		for(port = 0; port < nports; port++) {
+			dev = devhub->hub->ports[port].device;
 			if (dev != NULL) {
 				for (i = 0; dev->subdevs[i]; i++)
 					config_deactivate(dev->subdevs[i]);
@@ -516,6 +520,40 @@ USB_DETACH(uhub)
 
 	return (0);
 }
+
+#if defined(__FreeBSD__)
+/* Called when a device has been detached from it */
+static void
+uhub_child_detached(self, child)
+       device_t self;
+       device_t child;
+{
+       struct uhub_softc *sc = device_get_softc(self);
+       usbd_device_handle devhub = sc->sc_hub;
+       usbd_device_handle dev;
+       int nports;
+       int port;
+       int i;
+
+       if (!devhub->hub)  
+               /* should never happen; children are only created after init */
+               panic("hub not fully initialised, but child deleted?");
+
+       nports = devhub->hub->hubdesc.bNbrPorts;
+       for (port = 0; port < nports; port++) {
+               dev = devhub->hub->ports[port].device;
+               if (dev && dev->subdevs) {
+                       for (i = 0; dev->subdevs[i]; i++) {
+                               if (dev->subdevs[i] == child) {
+                                       dev->subdevs[i] = NULL;
+                                       return;
+                               }
+                       }
+               }
+       }
+}
+#endif
+
 
 /*
  * Hub interrupt.

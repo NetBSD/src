@@ -1,4 +1,5 @@
-/*	$NetBSD: usbdi.c,v 1.50 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.51 1999/11/18 23:32:33 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,14 +40,17 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+#include <sys/kernel.h>
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include "usb_if.h"
+#if defined(DIAGNOSTIC) && defined(__i386__)
+#include <machine/cpu.h>
+#endif
 #endif
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -58,6 +62,10 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
+
+#if defined(__FreeBSD__)
+#include "usb_if.h"
+#endif
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
@@ -269,7 +277,7 @@ usbd_transfer(xfer)
 
 	err = pipe->methods->transfer(xfer);
 
-	if (err != USBD_IN_PROGRESS && err != USBD_NORMAL_COMPLETION) {
+	if (err != USBD_IN_PROGRESS && err) {
 		/* The transfer has not been queued, so free buffer. */
 		if (xfer->rqflags & URQ_AUTO_DMABUF) {
 			struct usbd_bus *bus = pipe->device->bus;
@@ -543,7 +551,7 @@ usbd_clear_endpoint_stall(pipe)
 	err = usbd_do_request(dev, &req, 0);
 #if 0
 XXX should we do this?
-	if (err == USBD_NORMAL_COMPLETION) {
+	if (!err) {
 		pipe->state = USBD_PIPE_ACTIVE;
 		/* XXX activate pipe */
 	}
@@ -839,25 +847,23 @@ usbd_start_next(pipe)
 
 	SPLUSBCHECK;
 
-	DPRINTFN(10, ("usbd_start_next: pipe=%p\n", pipe));
-	
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_start_next: pipe == 0\n");
+		printf("usbd_start_next: pipe == NULL\n");
 		return;
 	}
 	if (pipe->methods == NULL || pipe->methods->start == NULL) {
-		printf("usbd_start_next:  no start method\n");
+		printf("usbd_start_next: pipe=%p no start method\n", pipe);
 		return;
 	}
 #endif
 
 	/* Get next request in queue. */
 	xfer = SIMPLEQ_FIRST(&pipe->queue);
-	DPRINTFN(5, ("usbd_start_next: pipe=%p start xfer=%p\n", pipe, xfer));
-	if (xfer == NULL)
+	DPRINTFN(5, ("usbd_start_next: pipe=%p, xfer=%p\n", pipe, xfer));
+	if (xfer == NULL) {
 		pipe->running = 0;
-	else {
+	} else {
 		err = pipe->methods->start(xfer);
 		if (err != USBD_IN_PROGRESS) {
 			printf("usbd_start_next: error=%d\n", err);
@@ -888,6 +894,10 @@ usbd_do_request_flags(dev, req, data, flags, actlen)
 	usbd_status err;
 
 #ifdef DIAGNOSTIC
+#if defined(__i386__) && defined(__FreeBSD__)
+	KASSERT(intr_nesting_level == 0,
+	       	("ohci_abort_req in interrupt context"));
+#endif
 	if (dev->bus->intr_context) {
 		printf("usbd_do_request: not in process context\n");
 		return (USBD_INVAL);
