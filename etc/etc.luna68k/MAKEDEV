@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2000/01/05 08:50:49 nisimura Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2000/01/13 01:06:24 nisimura Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -11,6 +11,7 @@
 #	md*	"memory disk" pseudo-disks
 #	sd*	SCSI disks
 #	vnd*	"file" pseudo-disks
+#	raid*	RAIDframe disk driver
 # Terminals:
 #	ttya	'ttya' system console
 #	ttyE?	Workstation console ("wscons") glass-tty emulation
@@ -29,8 +30,8 @@
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown
-#	wskbd	Workstation console ("wscons") keyboard
-#	wsmouse	Workstation console ("wscons") mouse
+#	wskbd0	Workstation console ("wscons") keyboard
+#	wsmouse0  Workstation console ("wscons") mouse
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -72,11 +73,12 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ccd*|cd*|md*|sd*|vnd*)
+ccd*|cd*|md*|raid*|sd*|vnd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=5; chr=14;;
-	cd*)	name=cd;	unit=${i#cd};	blk=3; chr=10;;
+	cd*)	name=cd;	unit=${i#cd};	blk=4; chr=10;;
 	md*)	name=md;	unit=${i#md};	blk=7; chr=16;;
+	raid*)	name=raid;	unit=${i#raid};	blk=14; chr=32;;
 	sd*)	name=sd;	unit=${i#sd};	blk=2; chr=8;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=6; chr=15;;
 	esac
@@ -239,7 +241,7 @@ ipl)
 scsibus*)
 	unit=${i#scsibus};
 	rm -f scsibus$unit
-	mknod scsibus$unit c 32 $unit
+	mknod scsibus$unit c 31 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
 	;;
@@ -259,12 +261,12 @@ ttyE*)
         chown uucp.wheel $name$unit
         ;;
 
-wsmouse|wskbd)
-        rm -f wsmouse wskbd
-        mknod wsmouse c 17 0
-        mknod wskbd c 18 0
-        chown root.wheel wsmouse wskbd
-        chmod 600 wsmouse wskbd
+wsmouse*|wskbd*)
+        rm -f wsmouse0 wskbd0
+        mknod wsmouse0 c 18 0		### mknod wsmouse c 33 0
+        mknod wskbd0 c 17 0		### mknod wskbd c 33 1
+        chown root.wheel wsmouse0 wskbd0
+        chmod 600 wsmouse0 wskbd0
         ;;
 
 
