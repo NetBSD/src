@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.22 2000/06/07 13:26:25 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.23 2000/06/09 13:30:42 tsutsui Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -35,7 +35,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=512	# size of memory disk, in blocks
+options 	MINIROOTSIZE=800	# size of memory disk, in blocks
 
 config		netbsd root on md0a type ffs
 
@@ -130,4 +130,3 @@ pseudo-device	md		2
 # Misc.
 pseudo-device	loop		1	# network loopback
 pseudo-device	sl		2	# CSLIP
-pseudo-device	ppp		2	# PPP
