@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.4 2002/01/04 09:26:46 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.5 2002/01/04 10:03:36 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -7697,6 +7697,7 @@ Lsw_load:
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
 	 */
+	LDPTR	[%l3 + L_PROC], %l3	! now %l3 points to p
 	LDPTR	[%l3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	sethi	%hi(_C_LABEL(kernel_pmap_)), %o1
 	mov	CTX_SECONDARY, %l5		! Recycle %l5
