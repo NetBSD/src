@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.16 2002/09/18 02:44:04 lukem Exp $
+# 	$NetBSD: INSTALL,v 1.17 2003/05/10 04:11:53 tsutsui Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -85,7 +85,7 @@ kb0	at ap?
 #ms0	at ap?
 
 sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
-scsibus0 at sc0
+scsibus* at sc0
 
 dmac*	at ap?				# dmac3
 spifi*	at ap?				# SPIFI SCSI
