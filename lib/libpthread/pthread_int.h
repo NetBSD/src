@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.16 2001/09/04 21:19:23 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.17 2001/12/30 02:13:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,16 @@
 #define ERRORCHECK
 
 #include "pthread_types.h"
+#include "pthread_queue.h"
 
+/* The size of this structure needs to be no larger than struct
+ * __pthread_cleanup_store, defined in pthread.h.
+ */
+struct pt_clean_t {
+	PTQ_ENTRY(pt_clean_t)	ptc_next;
+	void	(*ptc_cleanup)(void *);
+	void	*ptc_arg;
+};
 
 struct	pthread_st {
 	unsigned int	pt_magic;
@@ -54,7 +63,10 @@ struct	pthread_st {
 	int	pt_type;	/* normal, upcall, or idle */
 	int	pt_state;	/* running, blocked, etc. */
 	int	pt_flags;	
+	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
+
+	int	pt_errno;	/* Thread-specific errno. */
 
 	/* Entry on the run queue */
 	PTQ_ENTRY(pthread_st)	pt_runq;
@@ -68,16 +80,19 @@ struct	pthread_st {
 
 	sigset_t	pt_sigmask;	/* Signals we won't take. */
 	sigset_t	pt_siglist;	/* Signals pending for us. */
-	pt_spin_t	pt_siglock;	/* Lock on above */
+	pthread_spin_t	pt_siglock;	/* Lock on above */
 
 	void *		pt_exitval;	/* Read by pthread_join() */
 
+	/* Stack of cancellation cleanup handlers and their arguments */
+	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
+
 	/* Other threads trying to pthread_join() us. */
-	struct pt_queue_t	pt_joiners;
+	struct pthread_queue_t	pt_joiners;
 	/* Lock for above, and for changing pt_state to ZOMBIE or DEAD,
 	 * and for setting the DETACHED flag
 	 */
-	pt_spin_t 		pt_join_lock;
+	pthread_spin_t	pt_join_lock;
 
 	/* Thread we were going to switch to before we were preempted
 	 * ourselves. Will be used by the upcall that's continuing us.
@@ -103,7 +118,7 @@ struct	pthread_st {
 	/* A queue lock that this thread held while trying to 
 	 * context switch to another process.
 	 */
-	pt_spin_t*	pt_heldlock;
+	pthread_spin_t*	pt_heldlock;
 
 	/* Thread-specific data */
 	void*		pt_specific[PTHREAD_KEYS_MAX];
@@ -133,6 +148,9 @@ struct	pthread_st {
 
 #define PT_FLAG_DETACHED	0x0001
 #define PT_FLAG_IDLED		0x0002
+#define PT_FLAG_CS_DISABLED	0x0004	/* Cancellation disabled */
+#define PT_FLAG_CS_ASYNC	0x0008  /* Cancellation is async */
+#define PT_FLAG_CS_PENDING	0x0010
 
 #define PT_MAGIC	0x11110001
 #define PT_DEAD		0xDEAD0001
@@ -163,7 +181,7 @@ void	pthread_init(void)  __attribute__ ((__constructor__));
 void	pthread__initthread(pthread_t t);
 
 /* Go do something else. Don't go back on the run queue */
-void	pthread__block(pthread_t self, pt_spin_t* queuelock);
+void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
 /* Put a thread back on the run queue */
 void	pthread__sched(pthread_t self, pthread_t thread);
 void	pthread__sched_idle(pthread_t self, pthread_t thread);
@@ -188,6 +206,8 @@ int	_getcontext_u(ucontext_t *);
 int	_setcontext_u(const ucontext_t *);
 int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 
+void	pthread__testcancel(pthread_t self);
+
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
 	((pthread_t) (((vaddr_t)(sp)) & ~PT_STACKMASK))
@@ -198,7 +218,7 @@ int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 void	pthread__upcall_switch(pthread_t self, pthread_t next);
 void	pthread__switch(pthread_t self, pthread_t next);
 void	pthread__locked_switch(pthread_t self, pthread_t next, 
-    pt_spin_t *lock);
+    pthread_spin_t *lock);
 
 
 void	pthread__signal(pthread_t t, int sig, int code);
