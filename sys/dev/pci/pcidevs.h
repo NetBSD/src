@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.575 2003/09/21 07:59:04 nisimura Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.576 2003/09/21 14:27:40 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.576 2003/09/21 07:45:13 nisimura Exp 
+ *	NetBSD: pcidevs,v 1.578 2003/09/21 14:23:21 nisimura Exp 
  */
 
 /*
@@ -126,7 +126,7 @@
 #define	PCI_VENDOR_GENOA	0x1047		/* Genoa Systems */
 #define	PCI_VENDOR_ELSA	0x1048		/* Elsa */
 #define	PCI_VENDOR_FOUNTAINTECH	0x1049		/* Fountain Technology */
-#define	PCI_VENDOR_SGSTHOMSON	0x104a		/* SGS-Thomson Microelectrics */
+#define	PCI_VENDOR_SGSTHOMSON	0x104a		/* SGS-Thomson Microelectronics */
 #define	PCI_VENDOR_BUSLOGIC	0x104b		/* BusLogic */
 #define	PCI_VENDOR_TI	0x104c		/* Texas Instruments */
 #define	PCI_VENDOR_SONY	0x104d		/* Sony */
@@ -528,7 +528,7 @@
 #define	PCI_VENDOR_USR	0x12b9		/* US Robotics (3Com) */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
-#define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS-Thomson Microelectrics */
+#define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS-Thomson Microelectronics */
 #define	PCI_VENDOR_RAINBOW	0x12de		/* Rainbow Technologies */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
@@ -1977,7 +1977,7 @@
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_2000	0x0308		/* Quadro FX 2000 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_1000	0x0309		/* Quadro FX 1000 */
 
-/* Nvidia Corporation & SGS-Thomson Microelectrics */
+/* Nvidia Corporation & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
 
 /* Oak Technologies products */
