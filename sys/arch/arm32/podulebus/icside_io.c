@@ -1,4 +1,4 @@
-/*	$NetBSD: icside_io.c,v 1.3 1997/10/14 22:59:11 mark Exp $	*/
+/*	$NetBSD: icside_io.c,v 1.4 1998/06/28 07:27:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -54,76 +54,76 @@ struct bus_space icside_bs_tag = {
 	NULL,
 
 	/* mapping/unmapping */
-	icside_map,
-	icside_unmap,
-	icside_subregion,
+	icside_bs_map,
+	icside_bs_unmap,
+	icside_bs_subregion,
 
 	/* allocation/deallocation */
-	icside_alloc,
-	icside_free,
+	icside_bs_alloc,
+	icside_bs_free,
 
 	/* barrier */
-	icside_barrier,
+	icside_bs_barrier,
 
 	/* read (single) */
-	icside_r_1,
-	icside_r_2,
-	icside_r_4,
-	bs_notimpl_r_8,
+	icside_bs_r_1,
+	icside_bs_r_2,
+	icside_bs_r_4,
+	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	bs_notimpl_rm_1,
-	icside_rm_2,
-	bs_notimpl_rm_4,
-	bs_notimpl_rm_8,
+	bs_notimpl_bs_rm_1,
+	icside_bs_rm_2,
+	bs_notimpl_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_rr_1,
-	bs_notimpl_rr_2,
-	bs_notimpl_rr_4,
-	bs_notimpl_rr_8,
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	icside_w_1,
-	icside_w_2,
-	icside_w_4,
-	bs_notimpl_w_8,
+	icside_bs_w_1,
+	icside_bs_w_2,
+	icside_bs_w_4,
+	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	bs_notimpl_wm_1,
-	icside_wm_2,
-	bs_notimpl_wm_4,
-	bs_notimpl_wm_8,
+	bs_notimpl_bs_wm_1,
+	icside_bs_wm_2,
+	bs_notimpl_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_wr_1,
-	bs_notimpl_wr_2,
-	bs_notimpl_wr_4,
-	bs_notimpl_wr_8,
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
-	bs_notimpl_sm_1,
-	bs_notimpl_sm_2,
-	bs_notimpl_sm_4,
-	bs_notimpl_sm_8,
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_sr_1,
-	bs_notimpl_sr_2,
-	bs_notimpl_sr_4,
-	bs_notimpl_sr_8,
+	bs_notimpl_bs_sr_1,
+	bs_notimpl_bs_sr_2,
+	bs_notimpl_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
 	/* copy */
-	bs_notimpl_c_1,
-	bs_notimpl_c_2,
-	bs_notimpl_c_4,
-	bs_notimpl_c_8,
+	bs_notimpl_bs_c_1,
+	bs_notimpl_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 /* bus space functions */
 
 int
-icside_map(t, bpa, size, cacheable, bshp)
+icside_bs_map(t, bpa, size, cacheable, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -140,7 +140,7 @@ icside_map(t, bpa, size, cacheable, bshp)
 	}
 
 int
-icside_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+icside_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	void *t;
 	bus_addr_t rstart, rend;
@@ -149,12 +149,12 @@ icside_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("icside_alloc(): Help!\n");
+	panic("icside_bs_alloc(): Help!\n");
 }
 
 
 void
-icside_unmap(t, bsh, size)
+icside_bs_unmap(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -165,19 +165,19 @@ icside_unmap(t, bsh, size)
 }
 
 void    
-icside_free(t, bsh, size)
+icside_bs_free(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
 
-	panic("icside_free(): Help!\n");
-	/* icside_unmap() does all that we need to do. */
-/*	icside_unmap(t, bsh, size);*/
+	panic("icside_bs_free(): Help!\n");
+	/* icside_bs_unmap() does all that we need to do. */
+/*	icside_bs_unmap(t, bsh, size);*/
 }
 
 int
-icside_subregion(t, bsh, offset, size, nbshp)
+icside_bs_subregion(t, bsh, offset, size, nbshp)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, size;
@@ -189,7 +189,7 @@ icside_subregion(t, bsh, offset, size, nbshp)
 }
 
 void
-icside_barrier(t, bsh, offset, len, flags)
+icside_bs_barrier(t, bsh, offset, len, flags)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, len;
