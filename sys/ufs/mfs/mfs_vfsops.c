@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.19 1999/02/26 23:44:50 wrstuden Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.19.2.1 2000/10/13 18:14:41 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -287,6 +287,11 @@ mfs_start(mp, flags, p)
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_buflist != (struct buf *)-1) {
+		while ((bp = mfsp->mfs_buflist) != NULL) {
+			mfsp->mfs_buflist = bp->b_actf;
+			mfs_doio(bp, base);
+			wakeup((caddr_t)bp);
+		}
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, or the filesystem is already in the
@@ -300,12 +305,6 @@ mfs_start(mp, flags, p)
 				CLRSIG(p, CURSIG(p));
 			sleepreturn = 0;
 			continue;
-		}
-
-		while ((bp = mfsp->mfs_buflist) != NULL) {
-			mfsp->mfs_buflist = bp->b_actf;
-			mfs_doio(bp, base);
-			wakeup((caddr_t)bp);
 		}
 		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
