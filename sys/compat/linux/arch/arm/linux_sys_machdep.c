@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.3 2002/02/02 16:30:28 bjh21 Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.4 2002/02/02 16:53:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$Id: linux_sys_machdep.c,v 1.3 2002/02/02 16:30:28 bjh21 Exp $");
+__RCSID("$Id: linux_sys_machdep.c,v 1.4 2002/02/02 16:53:39 bjh21 Exp $");
 
 #include <sys/systm.h>
 
@@ -58,7 +58,7 @@ linux_sys_cacheflush(struct proc *p, void *v, register_t *retval)
 		syscallarg(uintptr_t) to;
 	} */ *uap = v;
 
-	cpu_cache_syncI_rng(SCARG(uap, from),
+	cpu_icache_sync_range(SCARG(uap, from),
 	    SCARG(uap, to) - SCARG(uap, from) + 1);
 #endif
 	*retval = 0;
