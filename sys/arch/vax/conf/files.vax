@@ -1,6 +1,6 @@
 #
 # new style config file for vax architecture
-#	$Id: files.vax,v 1.2 1994/08/16 23:41:13 ragge Exp $
+#	$Id: files.vax,v 1.3 1994/10/08 15:42:29 ragge Exp $
 #
 
 maxusers 8 32 64
@@ -173,6 +173,8 @@ file	arch/vax/uba/dhu.c		dhu needs-count
 
 # These are general files needed for compilation.
 file	dev/cons.c
+file	arch/vax/vax/mem.c
+file	arch/vax/vax/clock.c
 file	arch/vax/vax/gencons.c
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/skit.c
@@ -186,12 +188,12 @@ file	arch/vax/vax/bcopy.s
 file	arch/vax/vax/trap.c
 
 file	arch/vax/vax/vm_machdep.c
+file	arch/vax/vax/cpu_machdep.c
 file	arch/vax/vax/in_cksum.c		inet
 file	arch/vax/vax/disksubr.c		ffs
 file	arch/vax/vax/random.s		inet
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
-#arch/vax/vax/clock.c         standard
 #arch/vax/vax/crl.c           standard
 #arch/vax/vax/dkbad.c         standard
 #arch/vax/vax/flp.c           standard
@@ -204,12 +206,9 @@ file	arch/vax/vax/random.s		inet
 #arch/vax/vax/ka860.c         standard
 #arch/vax/vax/kdb_machdep.c   optional kadb
 #arch/vax/vax/kdb_opset.c     optional kadb
-#arch/vax/vax/mem.c           standard
-#arch/vax/vax/mscp.c          optional kra
 #arch/vax/vax/ns_cksum.c      optional ns
 #arch/vax/vax/rx50.c          standard
 #arch/vax/vax/sys_machdep.c   standard
-#arch/vax/vax/trap.c          standard
 #arch/vax/vax/iidr.o          optional ii
 #arch/vax/vax/iidrsys.o       optional ii
 #arch/vax/vax/iidr_glob.o     optional ii
