@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.84 1996/02/10 18:31:13 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.85 1996/03/04 04:01:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -926,7 +926,7 @@ loop:
 #endif
 		 }}
 #endif
-		read = bp->b_flags & B_READ;
+		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 #ifdef NEWCONFIG
 		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
@@ -1018,7 +1018,7 @@ loop:
 #ifdef NEWCONFIG
 		at_dma_terminate(fdc->sc_drq);
 #else
-		read = bp->b_flags & B_READ;
+		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 		isa_dmadone(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
 #endif
