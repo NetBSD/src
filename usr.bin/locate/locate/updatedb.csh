@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$NetBSD: updatedb.csh,v 1.6 1995/02/15 15:37:56 jtc Exp $
+#	$NetBSD: updatedb.csh,v 1.7 1995/08/31 22:36:35 jtc Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)updatedb.csh	8.3 (Berkeley) 3/19/94
+#	@(#)updatedb.csh	8.4 (Berkeley) 10/27/94
 #
 
 set SRCHPATHS = "/"			# directories to be put in the database
