@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.14 2004/03/14 10:55:45 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.15 2004/03/18 05:57:58 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.14 2004/03/14 10:55:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.15 2004/03/18 05:57:58 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.14 2004/03/14 10:55:45 simonb Exp $");
 #include <mips/sibyte/include/sb1250_dma.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 
-
 /* Simple types */
 
 typedef u_long sbmac_port_t;
@@ -104,6 +103,8 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 
 /* Macros */
+
+#define	SBMAC_EVENT_COUNTERS	/* Include counters for various events */
 
 #define	SBDMA_NEXTBUF(d, f) ((((d)->f+1) == (d)->sbdma_dscrtable_end) ? \
 			  (d)->sbdma_dscrtable : (d)->f+1)
@@ -213,8 +214,24 @@ struct sbmac_softc {
 	sbmacdma_t	sbm_rxdma;
 
 	int		sbm_pass3_dma;	/* chip has pass3 SOC DMA features */
+
+#ifdef SBMAC_EVENT_COUNTERS
+	struct evcnt	sbm_ev_rxintr;	/* Rx interrupts */
+	struct evcnt	sbm_ev_txintr;	/* Tx interrupts */
+	struct evcnt	sbm_ev_txdrop;	/* Tx dropped due to no mbuf alloc failed */
+	struct evcnt	sbm_ev_txstall;	/* Tx stalled due to no descriptors free */
+
+	struct evcnt	sbm_ev_txsplit;	/* pass3 Tx split mbuf */
+	struct evcnt	sbm_ev_txkeep;	/* pass3 Tx didn't split mbuf */
+#endif
 };
 
+
+#ifdef SBMAC_EVENT_COUNTERS
+#define	SBMAC_EVCNT_INCR(ev)	(ev).ev_count++
+#else
+#define	SBMAC_EVCNT_INCR(ev)	do { /* nothing */ } while (0)
+#endif
 
 /* Externs */
 
@@ -593,22 +610,10 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * the ring, the ring is full
 	 */
 
-	if (nextdsc == d->sbdma_remptr)
+	if (nextdsc == d->sbdma_remptr) {
+		SBMAC_EVCNT_INCR(sc->sbm_ev_txstall);
 		return ENOSPC;
-
-#if 0
-	do {
-		struct mbuf *m0;
-
-		printf("mbuf chain: ");
-		for (m0 = m; m0 != 0; m0 = m0->m_next) {
-			printf("%d%c/%X ", m0->m_len,
-			m0->m_flags & M_EXT ? 'X' : 'N',
-			mtod(m0, u_int));
-		}
-		printf("\n");
-	} while (0);
-#endif
+	}
 
 	/*
 	 * PASS3 parts do not have buffer alignment restriction.
@@ -632,7 +637,8 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 */
 		dsc->dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
-		    V_DMA_DSCRB_A_SIZE((m->m_len + (mtod(m,unsigned int) & 0x0000001F))) |
+		    V_DMA_DSCRB_A_SIZE((m->m_len +
+		      (mtod(m,unsigned int) & 0x0000001F))) |
 		    V_DMA_DSCRB_PKT_SIZE_MSB( (m->m_pkthdr.len & 0xB000) ) |
 		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len);
 
@@ -643,24 +649,50 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 
 		/* Start with first non-head mbuf */
 		for(m_temp = m->m_next; m_temp != 0; m_temp = m_temp->m_next) {
+			int len, next_len;
+			uint64_t addr;
 
 			if (m_temp->m_len == 0)
 				continue;	/* Skip 0-length mbufs */
 
+			len = m_temp->m_len;
+			addr = KVTOPHYS(mtod(m_temp, caddr_t));
+
+			/*
+			 * Check to see if the mbuf spans a page boundary.  If
+			 * it does, and the physical pages behind the virtual
+			 * pages are not contiguous, split it so that each
+			 * virtual page uses it's own Tx descriptor.
+			 */
+			if (trunc_page(addr) != trunc_page(addr + len - 1)) {
+				next_len = (addr + len) - trunc_page(addr + len);
+
+				len -= next_len;
+
+				if (addr + len ==
+				    KVTOPHYS(mtod(m_temp, caddr_t) + len)) {
+					SBMAC_EVCNT_INCR(sc->sbm_ev_txkeep);
+					len += next_len;
+					next_len = 0;
+				} else {
+					SBMAC_EVCNT_INCR(sc->sbm_ev_txsplit);
+				}
+			} else {
+				next_len = 0;
+			}
+
+again:
 			/*
 			 * fill in the descriptor
 			 */
-
-			dsc->dscr_a = KVTOPHYS(mtod(m_temp,caddr_t)) |
-			    M_DMA_DSCRA_INTERRUPT;
+			dsc->dscr_a = addr | M_DMA_DSCRA_INTERRUPT;
 
 			/*
 			 * transmitting: set outbound options,buffer A
 			 * size(+ low 5 bits of start addr)
 			 */
 			dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
-			    V_DMA_DSCRB_A_SIZE( (m_temp->m_len +
-			    (mtod(m_temp,unsigned int) & 0x0000001F)) );
+			    V_DMA_DSCRB_A_SIZE((len + (addr & 0x0000001F)));
 
 			d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = NULL;
 
@@ -670,6 +702,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 			nextdsc = SBDMA_NEXTBUF(d,sbdma_addptr);
 			if (nextdsc == d->sbdma_remptr) {
 				d->sbdma_addptr = origdesc;
+				SBMAC_EVCNT_INCR(sc->sbm_ev_txstall);
 				return ENOSPC;
 			}
 			d->sbdma_addptr = nextdsc;
@@ -677,8 +710,16 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 			prevdsc = dsc;
 			dsc = d->sbdma_addptr;
 			num_mbufs++;
-		}
 
+			if (next_len != 0) {
+				addr = KVTOPHYS(mtod(m_temp, caddr_t) + len);
+				len = next_len;
+
+				next_len = 0;
+				goto again;
+			}
+
+		}
 		/*Set head mbuf to last context index*/
 		d->sbdma_ctxtable[prevdsc-d->sbdma_dscrtable] = m;
 	} else {
@@ -694,6 +735,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		if (m_new == NULL) {
 			printf("%s: mbuf allocation failed\n",
 			    d->sbdma_eth->sc_dev.dv_xname);
+			SBMAC_EVCNT_INCR(sc->sbm_ev_txdrop);
 			return ENOBUFS;
 		}
 
@@ -702,6 +744,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 			printf("%s: mbuf cluster allocation failed\n",
 			    d->sbdma_eth->sc_dev.dv_xname);
 			m_freem(m_new);
+			SBMAC_EVCNT_INCR(sc->sbm_ev_txdrop);
 			return ENOBUFS;
 		}
 
@@ -1077,12 +1120,22 @@ sbmac_initctx(struct sbmac_softc *s)
 			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125H ||
 			    (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250 &&
 			     0));
+#ifdef SBMAC_EVENT_COUNTERS
+	evcnt_attach_dynamic(&s->sbm_ev_rxintr, EVCNT_TYPE_INTR,
+	    NULL, s->sc_dev.dv_xname, "rxintr");
+	evcnt_attach_dynamic(&s->sbm_ev_txintr, EVCNT_TYPE_INTR,
+	    NULL, s->sc_dev.dv_xname, "txintr");
+	evcnt_attach_dynamic(&s->sbm_ev_txdrop, EVCNT_TYPE_MISC,
+	    NULL, s->sc_dev.dv_xname, "txdrop");
+	evcnt_attach_dynamic(&s->sbm_ev_txstall, EVCNT_TYPE_MISC,
+	    NULL, s->sc_dev.dv_xname, "txstall");
 	if (s->sbm_pass3_dma) {
-		printf("\n");
-		printf("%s: disabling unaligned tx DMA\n", s->sc_dev.dv_xname);
-		printf("%s", s->sc_dev.dv_xname);
-		s->sbm_pass3_dma = 0;
+		evcnt_attach_dynamic(&s->sbm_ev_txsplit, EVCNT_TYPE_MISC,
+		    NULL, s->sc_dev.dv_xname, "pass3tx-split");
+		evcnt_attach_dynamic(&s->sbm_ev_txkeep, EVCNT_TYPE_MISC,
+		    NULL, s->sc_dev.dv_xname, "pass3tx-keep");
 	}
+#endif
 }
 
 /*
@@ -1706,15 +1759,19 @@ sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
 		 * Transmits on channel 0
 		 */
 
-		if (isr & (M_MAC_INT_CHANNEL << S_MAC_TX_CH0))
+		if (isr & (M_MAC_INT_CHANNEL << S_MAC_TX_CH0)) {
 			sbdma_tx_process(sc, &(sc->sbm_txdma));
+			SBMAC_EVCNT_INCR(sc->sbm_ev_txintr);
+		}
 
 		/*
 		 * Receives on channel 0
 		 */
 
-		if (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0))
+		if (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0)) {
 			sbdma_rx_process(sc, &(sc->sbm_rxdma));
+			SBMAC_EVCNT_INCR(sc->sbm_ev_rxintr);
+		}
 	}
 
 	/* try to get more packets going */
