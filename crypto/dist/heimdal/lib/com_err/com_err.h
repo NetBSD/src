@@ -31,14 +31,14 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: com_err.h,v 1.1.1.3 2001/06/19 22:08:35 assar Exp $ */
+/* $Id: com_err.h,v 1.2 2001/11/21 05:38:40 gmcgarry Exp $ */
 
 /* MIT compatible com_err library */
 
 #ifndef __COM_ERR_H__
 #define __COM_ERR_H__
 
-#include <com_right.h>
+#include <krb5/com_right.h>
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(X)
