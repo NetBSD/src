@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.52.4.1 2003/10/19 10:01:31 tron Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.52.4.1 2003/10/19 10:01:31 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1312,7 +1312,7 @@ ip6_nexthdr(m, off, proto, nxtp)
 		if (m->m_pkthdr.len < off + sizeof(fh))
 			return -1;
 		m_copydata(m, off, sizeof(fh), (caddr_t)&fh);
-		if ((ntohs(fh.ip6f_offlg) & IP6F_OFF_MASK) != 0)
+		if ((fh.ip6f_offlg & IP6F_OFF_MASK) != 0)
 			return -1;
 		if (nxtp)
 			*nxtp = fh.ip6f_nxt;
