@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 2001/07/07 09:06:44 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 2001/11/08 21:41:42 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -201,7 +201,7 @@ le_reset(nif, myea)
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
 	unsigned int a;
-	int     timo = 100000, stat, i;
+	int     timo = 100000, stat = 0, i;
 
 	if (le_debug)
 		printf("le%d: le_reset called\n", nif->nif_unit);
@@ -346,7 +346,7 @@ le_put(desc, pkt, len)
 	volatile struct lereg1 *ler1 = le_softc.sc_r1;
 	volatile struct lereg2 *ler2 = le_softc.sc_r2;
 	volatile struct letmd *tmd;
-	int     timo = 100000, stat;
+	int     timo = 100000, stat = 0;
 	unsigned int a;
 
 	ler1->ler1_rap = LE_CSR0;
