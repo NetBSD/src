@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37 1997/08/27 11:23:21 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.38 1997/11/27 22:43:44 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -279,7 +279,7 @@ siop_poll(sc, acb)
 					return(COMPLETE);
 				}
 			}
-			delay(10);
+			delay(20);
 		}
 		sstat0 = rp->siop_sstat0;
 		dstat = rp->siop_dstat;
