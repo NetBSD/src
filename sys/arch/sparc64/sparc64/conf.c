@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
+/*	$NetBSD: conf.c,v 1.18 2001/09/15 17:51:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)conf.c	8.3 (Berkeley) 11/14/93
  */
+
+/* XXX KEEP THIS FILE IN SYNC WITH THE arch/sparc/sparc/conf.c VERSION */
 
 #include "opt_compat_svr4.h"
 
@@ -100,6 +102,9 @@
 #include "ses.h"
 cdev_decl(ses);
 
+#include "vcoda.h"
+cdev_decl(vc_nb_);
+
 #include "i4b.h"
 #include "i4bctl.h"
 #include "i4btrc.h"
@@ -110,6 +115,9 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
+
+#include "pci.h"
+cdev_decl(pci);
 
 struct bdevsw	bdevsw[] =
 {
@@ -191,7 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
-	cdev_notdef(),			/* 47 */
+	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: coda file system psuedo-device */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
@@ -267,6 +275,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
+	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
