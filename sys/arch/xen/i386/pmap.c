@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6.6.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6.6.2 2004/12/17 11:27:24 bouyer Exp $	*/
 /*	NetBSD: pmap.c,v 1.172 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6.6.2 2004/12/17 11:27:24 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1163,8 +1163,8 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
-	XENPRINTF(("pm_pdirpa %p PTDpaddr %p\n",
-	    (void *)lwp0.l_addr->u_pcb.pcb_cr3, (void *)PTDpaddr));
+	XENPRINTF(("pm_pdirpa %p PDPpaddr %p\n",
+	    (void *)lwp0.l_addr->u_pcb.pcb_cr3, (void *)PDPpaddr));
 	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
