@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.10 2001/06/02 00:46:00 jdolecek Exp $ */
+/* $NetBSD: pckbc.c,v 1.11 2001/06/17 16:15:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -113,7 +113,7 @@ void pckbc_cleanup __P((void *));
 int pckbc_cmdresponse __P((struct pckbc_internal *, pckbc_slot_t, u_char));
 void pckbc_start __P((struct pckbc_internal *, pckbc_slot_t));
 
-const char *pckbc_slot_names[] = { "kbd", "aux" };
+const char * const pckbc_slot_names[] = { "kbd", "aux" };
 
 #define KBC_DEVCMD_ACK 0xfa
 #define KBC_DEVCMD_RESEND 0xfe
@@ -491,7 +491,7 @@ pckbc_xt_translation(self, slot, on)
 	return (0);
 }
 
-static struct pckbc_portcmd {
+static const struct pckbc_portcmd {
 	u_char cmd_en, cmd_dis;
 } pckbc_portcmd[2] = {
 	{
@@ -508,7 +508,7 @@ pckbc_slot_enable(self, slot, on)
 	int on;
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
-	struct pckbc_portcmd *cmd;
+	const struct pckbc_portcmd *cmd;
 
 	cmd = &pckbc_portcmd[slot];
 
