@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.48 2002/05/03 08:07:02 agc Exp $ */
+/* $NetBSD: user.c,v 1.49 2002/05/03 10:05:28 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.48 2002/05/03 08:07:02 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.49 2002/05/03 10:05:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -678,7 +678,7 @@ save_range(user_t *up, char *cp)
 		RENEW(range_t, up->u_rv, up->u_rsize, return(0));
 	}
 	if (up->u_rv && sscanf(cp, "%d..%d", &from, &to) == 2) {
-		for (i = 0 ; i < up->u_rc ; i++) {
+		for (i = up->u_defrc ; i < up->u_rc ; i++) {
 			if (up->u_rv[i].r_from == from && up->u_rv[i].r_to == to) {
 				break;
 			}
@@ -766,6 +766,7 @@ read_defaults(user_t *up)
 	memsave(&up->u_class, DEF_CLASS, strlen(DEF_CLASS));
 #endif
 	up->u_rsize = 16;
+	up->u_defrc = 0;
 	NEWARRAY(range_t, up->u_rv, up->u_rsize, exit(1));
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
