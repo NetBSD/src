@@ -1,4 +1,4 @@
-/*	$KAME: kmpstat.c,v 1.30 2002/08/31 07:53:20 itojun Exp $	*/
+/*	$KAME: kmpstat.c,v 1.31 2003/05/23 05:15:42 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -181,8 +181,6 @@ main(ac, av)
 	int ac;
 	char **av;
 {
-	extern char *optarg;
-	extern int optind;
 	vchar_t *combuf;
 	int c;
 
