@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.48 1995/06/05 20:57:54 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.49 1995/06/08 23:51:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -260,8 +260,8 @@ ptrace(p, uap, retval)
 			CLR(t->p_flag, P_TRACED|P_WAITED);
 		}
 
+	sendsig:
 		/* Finally, deliver the requested signal (or none). */
-sendsig:
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
 			setrunnable(t);
