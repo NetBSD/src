@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.79 1999/06/06 19:48:24 christos Exp $
+.\"	$NetBSD: options.4,v 1.80 1999/06/12 21:22:11 tron Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -168,19 +168,19 @@ On those architectures that support it, this enables binary
 compatibility with
 .At V.4
 applications built for the same architecture.
-This currently includes the i386, m68k and sparc.
+This currently includes the i386, m68k and sparc port.
 .It Cd options COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with Linux ELF and
 .Xr a.out 5
 applications built for the same architecture.
-This is currently limited to the i386.
+This currently includes the alpha, i386, and m68k port.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
 .Tn SunOS 4.1
 applications built for the same architecture.
-This currently includes the sparc and most or all m68k platforms.
+This currently includes the sparc and most or all m68k ports.
 .It Cd options COMPAT_ULTRIX
 On those architectures that support it, this enables binary
 compatibility with
@@ -193,7 +193,7 @@ On those architectures that support it, this enables binary
 compatibility with
 .Fx
 applications built for the same architecture.
-This is obviously limited to the i386.
+At the moment this is limited to the i386 port.
 .It Cd options COMPAT_HPUX
 On those architectures that support it, this enables binary
 compatibility with
@@ -204,7 +204,7 @@ A limited set of programs do work.
 .It Cd options COMPAT_IBCS2
 On those architectures that support it, this enables binary
 compatibility with iBCS2 applications built for the same architecture.
-This is currently limited to the i386.
+This is currently limited to the i386 port.
 .It Cd options COMPAT_OSF1
 On those architectures that support it, this enables binary
 compatibility with
@@ -215,7 +215,7 @@ formerly
 .Tn OSF/1
 .Pc
 applications built for the same architecture.
-This is currently limited to the alpha.
+This is currently limited to the alpha port.
 .It Cd options COMPAT_NOMID
 Enable compatibility with
 .Xr a.out 5
