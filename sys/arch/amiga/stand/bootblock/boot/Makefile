@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/05/19 21:19:22 is Exp $
+#	$NetBSD: Makefile,v 1.11 1997/05/19 21:49:20 veego Exp $
 
 ### what we need:
 
@@ -83,7 +83,8 @@ libboot.a: $(OBJS)
 ### install what we need: ###
 
 install: all
-	install -o $(BINOWN) -g $(BINGRP) $(BOOTBLOCKS) ${DESTDIR}/usr/mdec
+	$(INSTALL) $(COPY) -o $(BINOWN) -g $(BINGRP) -m $(BINMODE) \
+	    $(BOOTBLOCKS) ${DESTDIR}/usr/mdec
 
 .include <bsd.prog.mk>
 
