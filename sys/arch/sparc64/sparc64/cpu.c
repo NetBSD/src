@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2000/12/04 16:01:19 fvdl Exp $ */
+/*	$NetBSD: cpu.c,v 1.12 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -175,6 +175,8 @@ cpu_init(pa, cpu_num)
 			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		va += NBPG;
 	}
+	pmap_update();
+
 	if (!cpus) cpus = (struct cpu_info *)va;
 	else {
 		for (ci = cpus; ci->ci_next; ci=ci->ci_next);

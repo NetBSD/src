@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 2001/03/31 07:50:59 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26 2001/04/24 04:31:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -181,6 +181,7 @@ pagemove(from, to, size)
 		va += NBPG;
 		to += NBPG;
 	}
+	pmap_update();
 }
 
 /*
@@ -299,6 +300,7 @@ vmapbuf(bp, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
+	pmap_update();
 }
 
 /*

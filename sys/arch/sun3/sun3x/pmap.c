@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2001/04/23 23:57:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2001/04/24 04:31:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2199,6 +2199,7 @@ pmap_map(va, pa, endpa, prot)
 		pa += NBPG;
 		sz -= NBPG;
 	} while (sz > 0);
+	pmap_update();
 	return(va);
 }
 

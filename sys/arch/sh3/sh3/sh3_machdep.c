@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.11 2001/03/15 06:10:48 chs Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.12 2001/04/24 04:31:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ sh3_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

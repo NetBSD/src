@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.6 2000/11/14 22:55:05 thorpej Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.7 2001/04/24 04:30:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -314,6 +314,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 				pmap_update_pg(va);
 		}
 	}
+	pmap_update();
  
 	return 0;
 }
@@ -731,6 +732,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
+	pmap_update();
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69 2001/04/01 19:18:42 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.70 2001/04/24 04:31:15 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -328,6 +328,7 @@ vmapbuf(bp, len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
+	pmap_update();
 #endif
 }
 

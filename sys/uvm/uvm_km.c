@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.45 2001/04/12 21:11:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.46 2001/04/24 04:31:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -582,6 +582,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		offset += PAGE_SIZE;
 		loopsize -= PAGE_SIZE;
 	}
+	pmap_update();
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
 }
@@ -709,7 +710,9 @@ uvm_km_alloc1(map, size, zeroit)
 		offset += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	
+
+	pmap_update();
+
 	/*
 	 * zero on request (note that "size" is now zero due to the above loop
 	 * so we need to subtract kva from loopva to reconstruct the size).
