@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.11 1999/04/23 12:33:13 leo Exp $
+.\" $NetBSD: main,v 1.12 1999/04/23 15:25:41 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -818,7 +818,6 @@ them, and would like to mentioned, tell us!)
 .It-span Em "The NetBSD core group:"
 .It Ta Ta
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG
-.It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.ORG
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.ORG
 .It Ta Ta
@@ -850,9 +849,9 @@ them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
-.It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.ORG
 .It Ta Ted Lemon Ta Mt mellon@NetBSD.ORG
 .It Ta Perry Metzger Ta Mt perry@NetBSD.ORG
+.It Ta Curt Sampson Ta Mt cjs@NetBSD.ORG
 .It Ta Ta
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
@@ -912,6 +911,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.ORG
 .It Ta Masaru Oki Ta Mt oki@NetBSD.ORG
 .It Ta Greg Oster Ta Mt oster@NetBSD.ORG
+.It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.ORG
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.ORG
 .It Ta Dante Profeta Ta Mt dante@NetBSD.ORG
 .It Ta Chris Provenzano Ta Mt proven@NetBSD.ORG
