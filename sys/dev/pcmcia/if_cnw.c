@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.5 2000/02/02 12:25:13 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.6 2000/02/02 13:02:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,9 +204,10 @@ struct cnw_softc {
 	int sc_active;			    /* Currently xmitting a packet */
 
 	int sc_resource;		    /* Resources alloc'ed on attach */
-#define CNW_RES_IO	1
-#define CNW_RES_MEM	2
-#define CNW_RES_NET	4
+#define CNW_RES_PCIC	1
+#define CNW_RES_IO	2
+#define CNW_RES_MEM	4
+#define CNW_RES_NET	8
 };
 
 struct cfattach cnw_ca = {
@@ -410,6 +411,7 @@ cnw_enable(sc)
 		printf("%s: couldn't enable card\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
+	sc->sc_resource |= CNW_RES_PCIC;
 	cnw_init(sc);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
@@ -430,6 +432,7 @@ cnw_disable(sc)
 		return;
 
 	pcmcia_function_disable(sc->sc_pf);
+	sc->sc_resource &= ~CNW_RES_PCIC;
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
@@ -480,38 +483,33 @@ cnw_attach(parent, self, aux)
 		printf(": function enable failed\n");
 		return;
 	}
+	sc->sc_resource |= CNW_RES_PCIC;
 
 	/* Map I/O register and "memory" */
 	if (pcmcia_io_alloc(sc->sc_pf, 0, CNW_IO_SIZE, CNW_IO_SIZE,
 	    &sc->sc_pcioh) != 0) {
 		printf(": can't allocate i/o space\n");
-		return;
+		goto fail;
 	}
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    CNW_IO_SIZE, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 		printf(": can't map i/o space\n");
-		return;
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+		goto fail;
 	}
 	sc->sc_iot = sc->sc_pcioh.iot;
 	sc->sc_ioh = sc->sc_pcioh.ioh;
 	sc->sc_resource |= CNW_RES_IO;
 	if (pcmcia_mem_alloc(sc->sc_pf, CNW_MEM_SIZE, &sc->sc_pcmemh) != 0) {
 		printf(": can't allocate memory\n");
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-		sc->sc_resource = 0;
-		return;
+		goto fail;
 	}
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_COMMON, CNW_MEM_ADDR,
 	    CNW_MEM_SIZE, &sc->sc_pcmemh, &sc->sc_memoff,
 	    &sc->sc_memwin) != 0) {
 		printf(": can't map memory\n");
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_pcmemh);
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-		sc->sc_resource = 0;
-		return;
+		goto fail;
 	}
 	sc->sc_memt = sc->sc_pcmemh.memt;
 	sc->sc_memh = sc->sc_pcmemh.memh;
@@ -559,6 +557,19 @@ cnw_attach(parent, self, aux)
 
 	/* Disable the card now, and turn it on when the interface goes up */
 	pcmcia_function_disable(sc->sc_pf);
+	sc->sc_resource &= ~CNW_RES_PCIC;
+	return;
+
+fail:
+	if ((sc->sc_resource & CNW_RES_IO) != 0) {
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+		sc->sc_resource &= ~CNW_RES_IO;
+	}
+	if ((sc->sc_resource & CNW_RES_PCIC) != 0) {
+		pcmcia_function_disable(sc->sc_pf);
+		sc->sc_resource &= ~CNW_RES_PCIC;
+	}
 }
 
 /*
