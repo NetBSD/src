@@ -1,4 +1,4 @@
-.\"	$NetBSD: utmp.5,v 1.5 1994/11/30 19:31:35 jtc Exp $
+.\"	$NetBSD: utmp.5,v 1.6 1997/06/22 08:11:08 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,7 @@ Each time a user logs in, the
 program looks up the user's
 .Tn UID
 in the file
-.Nm lastlog.
+.Nm lastlog .
 If it is found, the timestamp of the last time the user logged
 in, the terminal line and the hostname
 are written to the standard output. (Providing the login is not
@@ -120,7 +120,8 @@ is opened and the
 .Fa utmp
 record for the user inserted.
 This record remains there until
-the user logs out at which time it is deleted.
+the user logs out at which time it is deleted (by clearing
+the user and host fields, and updating the timestamp field).
 The
 .Nm utmp
 file is used by the programs
@@ -137,10 +138,10 @@ program opens the file
 and appends the user's
 .Fa utmp
 record.
-The same
+When the user logs out, a
 .Fa utmp
-record, with an updated time stamp is later appended
-to the file when the user logs out. (See
+record with the tty line, an updated time stamp, and cleared user and host
+fields is appended to the file. (See
 .Xr init 8 . )
 The
 .Nm wtmp
@@ -193,13 +194,16 @@ indicates the new time.
 .Bl -tag -width /var/log/lastlog -compact
 .It Pa /var/run/utmp
 The
-.Nm utmp file.
+.Nm utmp
+file.
 .It Pa /var/log/wtmp
 The
-.Nm wtmp file.
+.Nm wtmp
+file.
 .It Pa /var/log/lastlog
 The
-.Nm lastlog file.
+.Nm lastlog
+file.
 .El
 .Sh SEE ALSO
 .Xr last 1 ,
