@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.131 2001/04/20 11:22:02 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.132 2001/05/14 18:51:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1795,6 +1795,14 @@ nfs_link(v)
 		vput(dvp);
 		return (EXDEV);
 	}
+	if (dvp != vp) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error != 0) {
+			VOP_ABORTOP(dvp, cnp);
+			vput(dvp);
+			return error;
+		}
+	}
 
 	/*
 	 * Push all writes to the server, so that the attribute cache
@@ -1822,6 +1830,8 @@ nfs_link(v)
 		VTONFS(vp)->n_attrstamp = 0;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
+	if (dvp != vp)
+		VOP_UNLOCK(vp, 0);
 	vput(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
