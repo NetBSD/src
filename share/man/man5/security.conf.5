@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.15 2001/10/01 03:02:34 atatat Exp $
+.\"	$NetBSD: security.conf.5,v 1.16 2001/10/15 08:53:28 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 30, 2001
+.Dd October 15, 2001
 .Dt SECURITY.CONF 5
 .Os
 .Sh NAME
@@ -74,7 +74,8 @@ will be checked as well if exists.
 .It Sy check_rhosts
 This checks for system and user rhosts files with "+" in them.
 .It Sy check_homes
-This checks that home directories are owned by the correct user.
+This checks that home directories are owned by the correct user,
+and have appropriate permissions.
 .It Sy check_varmail
 This checks that the correct user owns mail in
 .Pa /var/mail ,
@@ -89,25 +90,67 @@ This checks for changes to devices and setuid files.
 This runs
 .Xr mtree 8
 to ensure that the system is installed correctly.
+The following configuration files are checked:
+.Bl -tag -width 4n
+.It Pa /etc/mtree/special
+Default files to check.
+.It Pa /etc/mtree/special.local
+Local site additions.
+.It Pa /etc/mtree/DIR.secure
+Specification for the directory
+.Pa DIR .
+.El
 .It Sy check_disklabels
 Backup text copies of the disklabels of available disk drives into
-.Pa /var/backups/disklabel.XXX ,
+.Pa /var/backups/work/disklabel.XXX ,
 and display any differences in those and the previous copies
 as per
 .Sy check_changelist
 below.
+If
+.Xr fdisk 8
+is available on the current platform, the output of
+.Pa /sbin/fdisk
+for each available disk drive is stored in
+.Pa /var/backups/work/fdisk.XXX ,
+and any differences displayed as per the disklabels.
 .It Sy check_pkgs
 This stores a list of all installed pkgs into
-.Pa /var/backups/pkgs
+.Pa /var/backups/work/pkgs
 and checks it for any changes.
 .It Sy check_changelist
-This updates the list of files in
-.Pa /etc/changelist
-and their backups in
+This determines a list of files from the contents of
+.Pa /etc/changelist ,
+and the output of
+.Ic mtree -D
+for
+.Pa /etc/mtree/special
+and
+.Pa /etc/mtree/special.local .
+For each file in the list it compares the files with their backups in
 .Pa /var/backups/file.current
 and
 .Pa /var/backups/file.backup ,
 and displays any differences found.
+The following
+.Xr mtree 8
+.Sy tags
+modify how files are determined from
+.Pa /etc/mtree/special
+and
+.Pa /etc/mtree/special.local :
+.Bl -tag -width exclude -offset indent
+.It exclude
+The entry is ignored; no backups are made and the differences are not
+displayed.
+This includes dynamic or binary files such as
+.Pa /var/run/utmp .
+.It nodiff
+The entry is backed up but the differences are not displayed because
+the contents of the file are sensitive.
+This includes files such as
+.Pa /etc/master.passwd .
+.El
 .El
 .Pp
 The variables described below can be set to modify the tests:
@@ -123,7 +166,7 @@ is enabled, this determines the maximum permitted length of login names.
 .It Sy backup_dir
 Change the backup directory from
 .Pa /var/backup .
-.It Sy pkg_dbdir
+.It Sy pkgdb_dir
 Change the pkg database directory from
 .Pa /var/db/pkg
 when
