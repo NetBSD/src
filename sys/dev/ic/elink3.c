@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.89 2001/03/22 16:54:46 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.90 2001/05/14 07:03:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -782,12 +782,6 @@ epinit(ifp)
 
 	if (sc->bustype == ELINK_BUS_PCMCIA) {
 		bus_space_write_2(iot, ioh, ELINK_W0_RESOURCE_CFG, 0x3f00);
-	}
-
-	if (sc->bustype == ELINK_BUS_MCA) {
-		/* use Synchronous Read mode of operation */
-		GO_WINDOW(0);
-		bus_space_write_2(iot, ioh, ELINK_W0_RESOURCE_CFG, 1<<6);
 	}
 
 	GO_WINDOW(2);
