@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.2 2003/07/18 19:20:58 thorpej Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.3 2003/09/26 22:25:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <dev/ic/mk48txxreg.h>
 
 /*
- * Defintions exported to ASIC-specific clock attachment.
+ * Definitions exported to ASIC-specific clock attachment.
  */
 
 extern	struct evcnt clock_profcnt;

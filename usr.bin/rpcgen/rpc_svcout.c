@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.20 2003/07/14 11:53:20 itojun Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.21 2003/09/26 22:25:21 wiz Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.20 2003/07/14 11:53:20 itojun Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.21 2003/09/26 22:25:21 wiz Exp $");
 #endif
 #endif
 
@@ -297,7 +297,7 @@ write_programs(storage)
 
 }
 /* write out definition of internal function (e.g. _printmsg_1(...))
-   which calls server's defintion of actual function (e.g. printmsg_1(...)).
+   which calls server's definition of actual function (e.g. printmsg_1(...)).
    Unpacks single user argument of printmsg_1 to call-by-value format
    expected by printmsg_1. */
 static void

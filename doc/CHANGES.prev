@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.4 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.5 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -2193,7 +2193,7 @@ Changes from NetBSD 1.0 to NetBSD 1.1:
 		a warning), for exportable configurations.  [cgd 19950724]
 	prototyped physio(), adjusted various users and definers of
 		minphys()-like routines to use its correct
-		defintion.  [cgd 19950724]
+		definition.  [cgd 19950724]
 	kernel: disabled early aging of file system data buffers; it will make
 		less and less sense as buffer cache sizes increase,
 		won almost nothing (and sometimes lost badly) with
