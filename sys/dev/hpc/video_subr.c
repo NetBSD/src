@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.4 2001/11/13 12:47:57 lukem Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.5 2003/08/02 22:14:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.4 2001/11/13 12:47:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.5 2003/08/02 22:14:13 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: video_subr.c,v 1.4 2001/11/13 12:47:57 lukem Exp $")
 #define LINEFUNC(b)							\
 static void linebpp##b (struct video_chip *, int, int, int, int);	\
 static void								\
-linebpp##b##(vc, x0, y0, x1, y1)					\
+linebpp##b(vc, x0, y0, x1, y1)						\
 	struct video_chip *vc;						\
 	int x0, y0, x1, y1;						\
 {									\
@@ -135,13 +135,13 @@ linebpp##b##(vc, x0, y0, x1, y1)					\
 	_y = abs(y);							\
 	xbase = x0;							\
 	ybase = y0;							\
-	DRAWLINE(BPP##b##);						\
+	DRAWLINE(BPP##b);						\
 }
 
 #define DOTFUNC(b)							\
 static void dotbpp##b (struct video_chip *, int, int);			\
 static void								\
-dotbpp##b##(vc, x, y)							\
+dotbpp##b(vc, x, y)							\
 	struct video_chip *vc;						\
 	int x, y;							\
 {									\
