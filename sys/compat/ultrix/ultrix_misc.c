@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.66 2000/12/16 13:30:08 jdolecek Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.67 2001/01/07 04:13:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -140,6 +140,10 @@
 #include <sys/socketvar.h>				/* sosetopt() */
 
 #include <compat/ultrix/ultrix_flock.h>
+
+#ifdef __mips
+#include <mips/cachectl.h>
+#endif
 
 static int ultrix_to_bsd_flock __P((struct ultrix_flock *, struct flock *));
 static void bsd_to_ultrix_flock __P((struct flock *, struct ultrix_flock *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cachectl.h,v 1.3 1997/10/18 02:25:14 jonathan Exp $	*/
+/*	$NetBSD: cachectl.h,v 1.4 2001/01/07 04:13:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,4 +59,8 @@ int  cachectl __P((void *addr, int nbytes, int cacheop));
 #define CACHEABLE       0x00		/* make page(s) cacheable */
 #define UNCACHEABLE     0x01		/* make page(s) uncacheable */
 
+#ifdef _KERNEL
+int mips_user_cachectl __P((struct proc *, vaddr_t, int, int));
+int mips_user_cacheflush __P((struct proc *, vaddr_t, int, int));
+#endif
 #endif /* _MIPS_CACHECTL_H_ */
