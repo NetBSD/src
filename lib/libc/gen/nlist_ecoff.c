@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.6 1998/02/03 18:23:48 perry Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.7 1998/10/14 12:05:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,9 +32,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.6 1998/02/03 18:23:48 perry Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.7 1998/10/14 12:05:14 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

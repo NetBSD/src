@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.6 1998/06/30 20:47:37 thorpej Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.7 1998/10/14 11:56:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,10 +39,11 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.6 1998/06/30 20:47:37 thorpej Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.7 1998/10/14 11:56:28 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.11 1998/07/26 14:05:20 mycroft Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.12 1998/10/14 12:06:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.11 1998/07/26 14:05:20 mycroft Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.12 1998/10/14 12:06:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: hash_page.c,v 1.11 1998/07/26 14:05:20 mycroft Exp $");
  *	overflow_page
  *	open_temp
  */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 
