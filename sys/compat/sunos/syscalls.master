@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 1995/06/24 20:23:02 christos Exp $
+	$NetBSD: syscalls.master,v 1.29 1995/06/25 14:18:35 briggs Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -155,7 +155,7 @@
 			    caddr_t val, int valsize); }
 106	NOARGS		{ int listen(int s, int backlog); }
 107	UNIMPL		vtimes
-108	STD		{ int sigvec(int signum, struct sigvec *nsv, \
+108	STD		{ int compat_43_sigvec(int signum, struct sigvec *nsv, \
 			    struct sigvec *osv); }
 109	NOARGS		{ int compat_43_sigblock(int mask); }
 110	NOARGS		{ int compat_43_sigsetmask(int mask); }
