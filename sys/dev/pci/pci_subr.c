@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.41 2000/11/21 00:20:30 soren Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42 2001/01/18 13:12:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -70,18 +70,18 @@ static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
  * NULL subclass pointer.
  */
 struct pci_class {
-	char		*name;
+	const char		*name;
 	int		val;		/* as wide as pci_{,sub}class_t */
-	struct pci_class *subclasses;
+	const struct pci_class *subclasses;
 };
 
-struct pci_class pci_subclass_prehistoric[] = {
+const struct pci_class pci_subclass_prehistoric[] = {
 	{ "miscellaneous",	PCI_SUBCLASS_PREHISTORIC_MISC,		},
 	{ "VGA",		PCI_SUBCLASS_PREHISTORIC_VGA,		},
 	{ 0 }
 };
 
-struct pci_class pci_subclass_mass_storage[] = {
+const struct pci_class pci_subclass_mass_storage[] = {
 	{ "SCSI",		PCI_SUBCLASS_MASS_STORAGE_SCSI,		},
 	{ "IDE",		PCI_SUBCLASS_MASS_STORAGE_IDE,		},
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
@@ -92,7 +92,7 @@ struct pci_class pci_subclass_mass_storage[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_network[] = {
+const struct pci_class pci_subclass_network[] = {
 	{ "ethernet",		PCI_SUBCLASS_NETWORK_ETHERNET,		},
 	{ "token ring",		PCI_SUBCLASS_NETWORK_TOKENRING,		},
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
@@ -104,7 +104,7 @@ struct pci_class pci_subclass_network[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_display[] = {
+const struct pci_class pci_subclass_display[] = {
 	{ "VGA",		PCI_SUBCLASS_DISPLAY_VGA,		},
 	{ "XGA",		PCI_SUBCLASS_DISPLAY_XGA,		},
 	{ "3D",			PCI_SUBCLASS_DISPLAY_3D,		},
@@ -112,7 +112,7 @@ struct pci_class pci_subclass_display[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_multimedia[] = {
+const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,		},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,		},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY,	},
@@ -120,14 +120,14 @@ struct pci_class pci_subclass_multimedia[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_memory[] = {
+const struct pci_class pci_subclass_memory[] = {
 	{ "RAM",		PCI_SUBCLASS_MEMORY_RAM,		},
 	{ "flash",		PCI_SUBCLASS_MEMORY_FLASH,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MEMORY_MISC,		},
 	{ 0 },
 };
 
-struct pci_class pci_subclass_bridge[] = {
+const struct pci_class pci_subclass_bridge[] = {
 	{ "host",		PCI_SUBCLASS_BRIDGE_HOST,		},
 	{ "ISA",		PCI_SUBCLASS_BRIDGE_ISA,		},
 	{ "EISA",		PCI_SUBCLASS_BRIDGE_EISA,		},
@@ -143,7 +143,7 @@ struct pci_class pci_subclass_bridge[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_communications[] = {
+const struct pci_class pci_subclass_communications[] = {
 	{ "serial",		PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	},
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
 	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
@@ -152,7 +152,7 @@ struct pci_class pci_subclass_communications[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_system[] = {
+const struct pci_class pci_subclass_system[] = {
 	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
@@ -162,7 +162,7 @@ struct pci_class pci_subclass_system[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_input[] = {
+const struct pci_class pci_subclass_input[] = {
 	{ "keyboard",		PCI_SUBCLASS_INPUT_KEYBOARD,		},
 	{ "digitizer",		PCI_SUBCLASS_INPUT_DIGITIZER,		},
 	{ "mouse",		PCI_SUBCLASS_INPUT_MOUSE,		},
@@ -172,13 +172,13 @@ struct pci_class pci_subclass_input[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_dock[] = {
+const struct pci_class pci_subclass_dock[] = {
 	{ "generic",		PCI_SUBCLASS_DOCK_GENERIC,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DOCK_MISC,			},
 	{ 0 },
 };
 
-struct pci_class pci_subclass_processor[] = {
+const struct pci_class pci_subclass_processor[] = {
 	{ "386",		PCI_SUBCLASS_PROCESSOR_386,		},
 	{ "486",		PCI_SUBCLASS_PROCESSOR_486,		},
 	{ "Pentium",		PCI_SUBCLASS_PROCESSOR_PENTIUM,		},
@@ -189,7 +189,7 @@ struct pci_class pci_subclass_processor[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_serialbus[] = {
+const struct pci_class pci_subclass_serialbus[] = {
 	{ "Firewire",		PCI_SUBCLASS_SERIALBUS_FIREWIRE,	},
 	{ "ACCESS.bus",		PCI_SUBCLASS_SERIALBUS_ACCESS,		},
 	{ "SSA",		PCI_SUBCLASS_SERIALBUS_SSA,		},
@@ -204,7 +204,7 @@ struct pci_class pci_subclass_serialbus[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_wireless[] = {
+const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
@@ -212,12 +212,12 @@ struct pci_class pci_subclass_wireless[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_i2o[] = {
+const struct pci_class pci_subclass_i2o[] = {
 	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,		},
 	{ 0 },
 };
 
-struct pci_class pci_subclass_satcom[] = {
+const struct pci_class pci_subclass_satcom[] = {
 	{ "TV",			PCI_SUBCLASS_SATCOM_TV,			},
 	{ "audio",		PCI_SUBCLASS_SATCOM_AUDIO,		},
 	{ "voice",		PCI_SUBCLASS_SATCOM_VOICE,		},
@@ -225,21 +225,21 @@ struct pci_class pci_subclass_satcom[] = {
 	{ 0 },
 };
 
-struct pci_class pci_subclass_crypto[] = {
+const struct pci_class pci_subclass_crypto[] = {
 	{ "network/computing",	PCI_SUBCLASS_CRYPTO_NETCOMP,		},
 	{ "entertainment",	PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	},
 	{ "miscellaneous",	PCI_SUBCLASS_CRYPTO_MISC,		},
 	{ 0 },
 };
 
-struct pci_class pci_subclass_dasp[] = {
+const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
 	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
 
-struct pci_class pci_class[] = {
+const struct pci_class pci_class[] = {
 	{ "prehistoric",	PCI_CLASS_PREHISTORIC,
 	    pci_subclass_prehistoric,				},
 	{ "mass storage",	PCI_CLASS_MASS_STORAGE,
@@ -302,7 +302,7 @@ pci_findvendor(id_reg)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
-	struct pci_knowndev *kdp;
+	const struct pci_knowndev *kdp;
 
 	kdp = pci_knowndevs;
         while (kdp->vendorname != NULL) {	/* all have vendor name */
@@ -329,9 +329,9 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	pci_interface_t interface;
 	pci_revision_t revision;
 	char *vendor_namep, *product_namep;
-	struct pci_class *classp, *subclassp;
+	const struct pci_class *classp, *subclassp;
 #ifdef PCIVERBOSE
-	struct pci_knowndev *kdp;
+	const struct pci_knowndev *kdp;
 	const char *unmatched = "unknown ";
 #else
 	const char *unmatched = "";
@@ -430,9 +430,9 @@ pci_conf_print_common(pc, tag, regs)
 	const pcireg_t *regs;
 {
 #ifdef PCIVERBOSE
-	struct pci_knowndev *kdp;
+	const struct pci_knowndev *kdp;
 #endif
-	struct pci_class *classp, *subclassp;
+	const struct pci_class *classp, *subclassp;
 	pcireg_t rval;
 
 	rval = regs[o2i(PCI_ID_REG)];
