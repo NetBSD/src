@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.4.12.1 2002/03/17 23:07:43 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.4.12.2 2002/03/22 00:18:20 thorpej Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,6 +44,7 @@ include <sys/proc.h>
 include <sys/sched.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
+include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/user.h>
 include <sys/syscall.h>
@@ -178,3 +179,9 @@ define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB_PADDR	offsetof(struct cpu_info, ci_idle_pcb_paddr)
 define	CPU_INFO_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)
+
+# Mutex info
+ifdef MUTEX_DEBUG
+define	MTX_DBG_LOCKED		offsetof(kmutex_t, mtx_debug.mtx_locked)
+define	MTX_DBG_UNLOCKED	offsetof(kmutex_t, mtx_debug.mtx_unlocked)
+endif
