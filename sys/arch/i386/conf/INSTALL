@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.111 1999/03/15 07:22:18 christos Exp $
+#	$NetBSD: INSTALL,v 1.112 1999/03/17 18:40:30 sommerfe Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -17,6 +17,8 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MINIROOTSIZE=3174	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+
+makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
 maxusers	32		# estimated number of users
 
