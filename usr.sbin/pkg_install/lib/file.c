@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.60 2003/04/10 16:25:25 grant Exp $	*/
+/*	$NetBSD: file.c,v 1.61 2003/05/14 14:31:01 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.60 2003/04/10 16:25:25 grant Exp $");
+__RCSID("$NetBSD: file.c,v 1.61 2003/05/14 14:31:01 wiz Exp $");
 #endif
 #endif
 
@@ -240,7 +240,7 @@ fileGetURL(const char *spec)
 
 	rp = NULL;
 	if (!IS_URL(spec)) {
-		errx(EXIT_FAILURE, "fileGetURL was called with non-url arg '%s'", spec);
+		errx(EXIT_FAILURE, "fileGetURL was called with non-URL arg '%s'", spec);
 	}
 
  	/* Some sanity checks on the URL */
@@ -356,7 +356,7 @@ fileFindByPath(const char *fname)
 	struct path *path;
 
 	/*
-	 * 1. if fname is an absolute pathname or a url,
+	 * 1. if fname is an absolute pathname or a URL,
 	 *    just use it.
 	 */
 	if (IS_FULLPATH(fname) || IS_URL(fname))
