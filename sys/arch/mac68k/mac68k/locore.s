@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 1995/08/12 18:48:47 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1995/08/16 04:48:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1937,7 +1937,7 @@ Lm68881rdone:
  * is turned off.  We have conveniently mapped the last page of physical
  * memory this way.
  */
-	.globl	_doboot
+	.globl	_doboot, _ROMBase
 _doboot:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	movl	#CACHE_OFF,d0
@@ -1961,6 +1961,7 @@ Lmap030rom:
 	lea	longscratch,a0
 	movl	#0x400F8307,a0@		| map all of 0x4xxxxxxx
 	.long	0xf0100800		| pmove a0@,tt0
+	movl	_MacOSROMBase, _ROMBase	| Load MacOS ROMBase
 
 Lreboot:
 	movl	#0x90,a1		| offset of ROM reset routine
@@ -2276,8 +2277,11 @@ _eintrnames:
 	.even
 _intrcnt:
 	.long	0,0,0,0,0,0
-_eintrcnt:
+_eintrcnt:			| Unused, but needed for vmstat
 	.long	0
+	.globl	_MacOSROMBase
+_MacOSROMBase:
+	.long	0x40800000
 	.globl	_mac68k_vrsrc_cnt, _mac68k_vrsrc_vec
 _mac68k_vrsrc_cnt:
 	.long	0
