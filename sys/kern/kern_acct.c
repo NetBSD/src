@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.34 1994/11/14 06:01:16 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.35 1994/12/11 18:06:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -183,13 +183,13 @@ acct_process(p)
 	s = splclock();
 	tmp = time;
 	splx(s);
-	timevalsub(&tmp, &p->p_stats->p_start);
+	__timersub(&tmp, &p->p_stats->p_start);
 	acct.ac_etime = encode_comp_t(tmp.tv_sec, tmp.tv_usec);
 
 	/* (4) The average amount of memory used */
 	r = &p->p_stats->p_ru;
 	tmp = ut;
-	timevaladd(&tmp, &st);
+	__timeradd(&tmp, &st);
 	t = tmp.tv_sec * hz + tmp.tv_usec / tick;
 	if (t)
 		acct.ac_mem = (r->ru_ixrss + r->ru_idrss + r->ru_isrss) / t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.11 1994/10/20 04:22:59 cgd Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.12 1994/12/11 18:06:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -107,16 +107,13 @@ settimeofday(p, uap, retval)
 		return (error);
 	if (SCARG(uap, tv)) {
 		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
+		delta = atv;
 		s = splclock();
-		/* nb. delta.tv_usec may be < 0, but this is OK here */
-		delta.tv_sec = atv.tv_sec - time.tv_sec;
-		delta.tv_usec = atv.tv_usec - time.tv_usec;
+		__timersub(&delta, &time);
 		time = atv;
 		(void) splsoftclock();
-		timevaladd(&boottime, &delta);
-		timevalfix(&boottime);
-		timevaladd(&runtime, &delta);
-		timevalfix(&runtime);
+		__timeradd(&boottime, &delta);
+		__timeradd(&runtime, &delta);
 		LEASE_UPDATETIME(delta.tv_sec);
 		splx(s);
 		resettodr();
@@ -226,7 +223,7 @@ getitimer(p, uap, retval)
 	s = splclock();
 	if (SCARG(uap, which) == ITIMER_REAL) {
 		/*
-		 * Convert from absoulte to relative time in .it_value
+		 * Convert from absolute to relative time in .it_value
 		 * part of real time timer.  If time for real time timer
 		 * has passed return 0, else return difference between
 		 * current time and time for the timer to go off.
@@ -236,8 +233,7 @@ getitimer(p, uap, retval)
 			if (timercmp(&aitv.it_value, &time, <))
 				timerclear(&aitv.it_value);
 			else
-				timevalsub(&aitv.it_value,
-				    (struct timeval *)&time);
+				__timersub(&aitv.it_value, &time);
 	} else
 		aitv = p->p_stats->p_timer[SCARG(uap, which)];
 	splx(s);
@@ -277,7 +273,7 @@ setitimer(p, uap, retval)
 	if (SCARG(uap, which) == ITIMER_REAL) {
 		untimeout(realitexpire, p);
 		if (timerisset(&aitv.it_value)) {
-			timevaladd(&aitv.it_value, (struct timeval *)&time);
+			__timeradd(&aitv.it_value, &time);
 			timeout(realitexpire, p, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
@@ -310,7 +306,7 @@ realitexpire(arg)
 	}
 	for (;;) {
 		s = splclock();
-		timevaladd(&p->p_realtimer.it_value,
+		__timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
 			timeout(realitexpire, p,
@@ -382,46 +378,4 @@ expire:
 	} else
 		itp->it_value.tv_usec = 0;		/* sec is already 0 */
 	return (0);
-}
-
-/*
- * Add and subtract routines for timevals.
- * N.B.: subtract routine doesn't deal with
- * results which are before the beginning,
- * it just gets very confused in this case.
- * Caveat emptor.
- */
-void
-timevaladd(t1, t2)
-	struct timeval *t1, *t2;
-{
-
-	t1->tv_sec += t2->tv_sec;
-	t1->tv_usec += t2->tv_usec;
-	timevalfix(t1);
-}
-
-void
-timevalsub(t1, t2)
-	struct timeval *t1, *t2;
-{
-
-	t1->tv_sec -= t2->tv_sec;
-	t1->tv_usec -= t2->tv_usec;
-	timevalfix(t1);
-}
-
-void
-timevalfix(t1)
-	struct timeval *t1;
-{
-
-	if (t1->tv_usec < 0) {
-		t1->tv_sec--;
-		t1->tv_usec += 1000000;
-	}
-	if (t1->tv_usec >= 1000000) {
-		t1->tv_sec++;
-		t1->tv_usec -= 1000000;
-	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.17 1994/10/30 21:47:48 cgd Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.18 1994/12/11 18:06:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -543,7 +543,7 @@ select(p, uap, retval)
 			goto done;
 		}
 		s = splclock();
-		timevaladd(&atv, (struct timeval *)&time);
+		__timeradd(&atv, &time);
 		timo = hzto(&atv);
 		/*
 		 * Avoid inadvertently sleeping forever.
