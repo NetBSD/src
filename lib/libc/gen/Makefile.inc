@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.86 1998/02/02 02:41:17 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.87 1998/02/02 22:52:15 perry Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-# XXX add getvfsbyname.c
 SRCS+=	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
 	disklabel.c err.c errx.c errlist.c errno.c execl.c execle.c \
@@ -36,7 +35,6 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
-# XXX add getvfsbyname.3
 MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 \
 	fnmatch.3 frexp.3 ftok.3 fts.3 getbsize.3 getcap.3 getcwd.3 \
