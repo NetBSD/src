@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.38 1999/09/24 06:00:33 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.39 1999/09/26 02:15:42 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -484,3 +484,24 @@ gnu/dist/gprof/gprof.1				1.2
 
   Remove references to nonexistent manual pages and replace them with
   up-to-date references where appropriate.
+
+share/man/man8/compat_ultrix.8			1.9
+
+  Fix typo in roff macro name.
+
+bin/df/df.c					1.32
+
+  Fix overflow on big partition's raw device.
+
+usr.bin/join/join.c				1.16
+
+  Fix incorrect array size in a call to memset(), and avoid a possible
+  segmentation fault in a call to memmove().  Fixes PR#8184.
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.20
+sys/dev/raidframe/rf_raid.h			1.6
+sys/dev/raidframe/rf_states.c			1.7
+
+  Add a more reasonable throttling mechanism to the RAIDframe code.
+  Increases write performance, and helps prevent the I/O routines from
+  using too much kernel memory.
