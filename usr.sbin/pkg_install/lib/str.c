@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.30 2001/07/15 00:34:15 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.31 2001/10/04 05:32:50 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.30 2001/07/15 00:34:15 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.31 2001/10/04 05:32:50 yamt Exp $");
 #endif
 #endif
 
@@ -374,7 +374,7 @@ findbestmatchingname_fn(const char *found, char *best)
 			/* skip '-' if any version found */
 			best_version++;
 		}
-		strip_txz(best_no_sfx, NULL, best);
+		strip_txz(best_no_sfx, NULL, best_version);
 		best_version = best_no_sfx;
 	}
 
