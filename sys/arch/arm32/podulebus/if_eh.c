@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.5 1996/03/17 01:24:47 thorpej Exp $ */
+/* $NetBSD: if_eh.c,v 1.6 1996/03/27 21:49:34 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -430,7 +430,8 @@ ehattach(parent, self, aux)
 	sc->sc_ih.ih_func  = ehintr;
 	sc->sc_ih.ih_arg   = sc;
 	sc->sc_ih.ih_level = IPL_NET;
-
+	sc->sc_ih.ih_name = "net: eh";
+	
 	irq = (sc->sc_podule_number>=MAX_PODULES) ? IRQ_NETSLOT : IRQ_PODULE;
 
 	if (irq_claim(irq, &sc->sc_ih))
