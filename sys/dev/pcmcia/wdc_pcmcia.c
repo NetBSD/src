@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.74 2004/08/10 03:03:11 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.75 2004/08/10 03:54:26 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.74 2004/08/10 03:03:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.75 2004/08/10 03:54:26 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,10 +69,12 @@ struct wdc_pcmcia_softc {
 	struct pcmcia_mem_handle sc_pmemh;
 	struct pcmcia_mem_handle sc_auxpmemh;
 	void *sc_ih;
+
 	struct pcmcia_function *sc_pf;
-	int sc_flags;
-#define WDC_PCMCIA_ATTACH	0x0001
-#define WDC_PCMCIA_ATTACHED	0x0002
+	int sc_state;
+#define WDC_PCMCIA_ATTACH1	1
+#define WDC_PCMCIA_ATTACH2	2
+#define WDC_PCMCIA_ATTACHED	3
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
@@ -323,9 +325,11 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
 
-	sc->sc_flags |= WDC_PCMCIA_ATTACH;
+	sc->sc_state = WDC_PCMCIA_ATTACH1;
 	wdcattach(&sc->wdc_channel);
-	sc->sc_flags |= WDC_PCMCIA_ATTACHED;
+	if (sc->sc_state == WDC_PCMCIA_ATTACH1)
+		wdc_pcmcia_enable(self, 0);
+	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
 
 fail2:
@@ -342,7 +346,7 @@ wdc_pcmcia_detach(self, flags)
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int error;
 
-	if ((sc->sc_flags & WDC_PCMCIA_ATTACHED) == 0)
+	if (sc->sc_state != WDC_PCMCIA_ATTACHED)
 		return (0);
 
 	if ((error = wdcdetach(self, flags)) != 0)
@@ -368,8 +372,8 @@ wdc_pcmcia_enable(self, onoff)
 		 * the flag, though, so that the next disable/enable
 		 * will do the right thing.
 		 */
-		if (sc->sc_flags & WDC_PCMCIA_ATTACH) {
-			sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+		if (sc->sc_state == WDC_PCMCIA_ATTACH1) {
+			sc->sc_state = WDC_PCMCIA_ATTACH2;
 		} else {
 			/* Establish the interrupt handler. */
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
