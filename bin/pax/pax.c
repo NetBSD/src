@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.33 2004/02/13 23:10:14 matt Exp $	*/
+/*	$NetBSD: pax.c,v 1.33.2.1 2004/06/22 07:23:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.33 2004/02/13 23:10:14 matt Exp $");
+__RCSID("$NetBSD: pax.c,v 1.33.2.1 2004/06/22 07:23:25 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,9 +337,11 @@ sig_cleanup(int which_sig)
 	 * will clearly see the message on a line by itself.
 	 */
 	vflag = vfpart = 1;
+#ifdef SIGXCPU
 	if (which_sig == SIGXCPU)
 		tty_warn(0, "CPU time limit reached, cleaning up.");
 	else
+#endif
 		tty_warn(0, "Signal caught, cleaning up.");
 
 	/* delete any open temporary file */
@@ -416,11 +418,23 @@ gen_init(void)
 	 */
 	if ((sigemptyset(&s_mask) < 0) || (sigaddset(&s_mask, SIGTERM) < 0) ||
 	    (sigaddset(&s_mask,SIGINT) < 0)||(sigaddset(&s_mask,SIGHUP) < 0) ||
-	    (sigaddset(&s_mask,SIGPIPE) < 0)||(sigaddset(&s_mask,SIGQUIT)<0) ||
-	    (sigaddset(&s_mask,SIGXCPU) < 0)||(sigaddset(&s_mask,SIGXFSZ)<0)) {
+	    (sigaddset(&s_mask,SIGPIPE) < 0)||(sigaddset(&s_mask,SIGQUIT)<0)){
 		tty_warn(1, "Unable to set up signal mask");
 		return(-1);
 	}
+#ifdef SIGXCPU
+	if (sigaddset(&s_mask,SIGXCPU) < 0) {
+		tty_warn(1, "Unable to set up signal mask");
+		return(-1);
+	}
+#endif
+#ifdef SIGXFSZ
+	if (sigaddset(&s_mask,SIGXFSZ) < 0) {
+		tty_warn(1, "Unable to set up signal mask");
+		return(-1);
+	}
+#endif
+
 	memset(&n_hand, 0, sizeof n_hand);
 	n_hand.sa_mask = s_mask;
 	n_hand.sa_flags = 0;
@@ -446,15 +460,19 @@ gen_init(void)
 	    (sigaction(SIGQUIT, &o_hand, &o_hand) < 0))
 		goto out;
 
+#ifdef SIGXCPU
 	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) &&
 	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGXCPU, &o_hand, &o_hand) < 0))
 		goto out;
-
+#endif
 	n_hand.sa_handler = SIG_IGN;
-	if ((sigaction(SIGPIPE, &n_hand, &o_hand) < 0) ||
-	    (sigaction(SIGXFSZ, &n_hand, &o_hand) < 0))
+	if (sigaction(SIGPIPE, &n_hand, &o_hand) < 0)
 		goto out;
+#ifdef SIGXFSZ
+	if (sigaction(SIGXFSZ, &n_hand, &o_hand) < 0)
+		goto out;
+#endif
 	return(0);
 
     out:
