@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.2 2000/02/12 02:33:34 mjacob Exp $ */
+/* $NetBSD: isp_target.h,v 1.3 2000/02/19 01:50:25 mjacob Exp $ */
 /*
  * Qlogic Target Mode Structure and Flag Definitions
  *
@@ -606,7 +606,7 @@ extern int isp_tdebug;
 #define	ISP_TDQE(isp, msg, idx, arg)	\
 	if (isp_tdebug > 3) isp_print_qentry(isp, msg, idx, arg)
 
-#define	ITDEBUG(level, msg)	if (level > isp_tdebug) PRINTF msg
+#define	ITDEBUG(level, msg)	if (isp_tdebug >= level) PRINTF msg
 
 /*
  * The functions below are target mode functions that
