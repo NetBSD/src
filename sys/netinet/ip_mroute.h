@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.21 2003/06/26 03:35:00 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.22 2004/04/18 21:00:36 matt Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -204,22 +204,22 @@ struct rtdetq {
 #define	MAXQSIZE        10		/* max. no of pkts in token queue */
 
 
-int ip_mrouter_set __P((struct socket *, int, struct mbuf **));
-int ip_mrouter_get __P((struct socket *, int, struct mbuf **));
-int mrt_ioctl __P((struct socket *, u_long, caddr_t));
-int ip_mrouter_done __P((void));
-void ip_mrouter_detach(struct ifnet *);
-void reset_vif __P((struct vif *));
+int ip_mrouter_set (struct socket *, int, struct mbuf **);
+int ip_mrouter_get (struct socket *, int, struct mbuf **);
+int mrt_ioctl (struct socket *, u_long, caddr_t);
+int ip_mrouter_done (void);
+void ip_mrouter_detach (struct ifnet *);
+void reset_vif (struct vif *);
 #ifdef RSVP_ISI
-int ip_mforward __P((struct mbuf *, struct ifnet *, struct ip_moptions *));
-int legal_vif_num __P((int));
-int ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
-int ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
-void ip_rsvp_force_done __P((struct socket *));
-/*int rsvp_input __P((struct mbuf *, struct ifnet *));*/
-void rsvp_input __P((struct mbuf *, int, int));
+int ip_mforward (struct mbuf *, struct ifnet *, struct ip_moptions *);
+int legal_vif_num (int);
+int ip_rsvp_vif_init (struct socket *, struct mbuf *);
+int ip_rsvp_vif_done (struct socket *, struct mbuf *);
+void ip_rsvp_force_done (struct socket *);
+/*int rsvp_input (struct mbuf *, struct ifnet *);*/
+void rsvp_input (struct mbuf *, int, int);
 #else
-int ip_mforward __P((struct mbuf *, struct ifnet *));
+int ip_mforward (struct mbuf *, struct ifnet *);
 #endif
 
 #endif /* _KERNEL */
