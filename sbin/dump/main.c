@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25.6.3 2001/05/15 21:55:58 he Exp $	*/
+/*	$NetBSD: main.c,v 1.25.6.4 2001/08/08 18:13:22 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25.6.3 2001/05/15 21:55:58 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.25.6.4 2001/08/08 18:13:22 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ __RCSID("$NetBSD: main.c,v 1.25.6.3 2001/05/15 21:55:58 he Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
+gid_t	egid;			/* Retain tty privs for notification */
 int	notify = 0;		/* notify operator flag */
 int	blockswritten = 0;	/* number of blocks written on current tape */
 int	tapeno = 0;		/* current tape number */
@@ -118,6 +119,10 @@ main(argc, argv)
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
+
+	/* Save setgid bit for use later */
+	egid = getegid();
+	setegid(getgid());
 
 	tsize = 0;	/* Default later, based on 'c' option for cart tapes */
 	if ((tape = getenv("TAPE")) == NULL)
