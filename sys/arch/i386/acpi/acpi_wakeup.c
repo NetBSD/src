@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.12 2004/06/14 18:09:35 tshiozak Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.13 2004/08/27 03:51:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.12 2004/06/14 18:09:35 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.13 2004/08/27 03:51:34 thorpej Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -321,7 +321,7 @@ acpi_md_sleep(int state)
 		/* Execute Sleep */
 
 		/* load proc 0 PTD */
-		__asm__( "movl %0,%%cr3;" : : "a" (PTDpaddr) );
+		__asm__( "movl %0,%%cr3;" : : "a" (PDPpaddr) );
 
 		p_gdt = (struct region_descriptor *)(phys_wakeup+physical_gdt);
 		p_gdt->rd_limit = r_gdt.rd_limit;
@@ -338,7 +338,7 @@ acpi_md_sleep(int state)
 		 * entering to protect mode.  The current PTD will be restored
 		 * in acpi_restorecpu().
 		 */
-		WAKECODE_FIXUP(previous_cr3, u_int32_t, PTDpaddr);
+		WAKECODE_FIXUP(previous_cr3, u_int32_t, PDPpaddr);
 
 		WAKECODE_FIXUP(previous_tr,  u_int16_t, r_tr);
 		WAKECODE_BCOPY(previous_gdt, struct region_descriptor, r_gdt);
