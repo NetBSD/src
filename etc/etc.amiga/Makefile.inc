@@ -1,7 +1,7 @@
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
-#	$NetBSD: Makefile.inc,v 1.9 1998/06/28 09:38:40 fair Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1998/10/09 10:40:59 itohy Exp $
 
 .ifdef DESTDIR
 
@@ -18,7 +18,8 @@ snap_md:
 		-b ${KERNOBJDIR}/${kernel} \
 		-s ${KERNSRCDIR} \
 		${kernel}
-	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+	cd ${KERNOBJDIR}/${kernel} &&	\
+		${MAKE} clean && ${MAKE} depend && ${MAKE} &&	\
 		gzip -c -9 netbsd > ${DESTDIR}/snapshot/netbsd.${kernel}.gz
 .endfor
 
