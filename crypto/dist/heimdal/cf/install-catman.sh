@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Id: install-catman.sh,v 1.1.1.2 2001/09/17 12:25:13 assar Exp $
+# $Id: install-catman.sh,v 1.2 2001/09/17 12:32:35 assar Exp $
 #
 # install preformatted manual pages
 
