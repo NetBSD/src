@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.49 1996/05/03 19:42:07 christos Exp $	*/
+/*	$NetBSD: genassym.c,v 1.50 1996/07/03 13:10:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -44,6 +44,7 @@
 #include <sys/resourcevar.h>
 #include <sys/device.h>
 #include <sys/user.h>
+#include <sys/mbuf.h>
 
 #include <vm/vm.h>
 
@@ -99,6 +100,10 @@ main()
 	off("P_FLAG", struct proc, p_flag);
 
 	def("P_SYSTEM", P_SYSTEM);
+
+	off("M_DATA", struct mbuf, m_data);
+	off("M_LEN", struct mbuf, m_len);
+	off("M_NEXT", struct mbuf, m_next);
 
 	off("V_TRAP", struct vmmeter, v_trap);
 	off("V_INTR", struct vmmeter, v_intr);
