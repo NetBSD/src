@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 1996/04/04 23:55:47 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.38 1996/04/22 02:50:20 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,6 @@
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/cpu.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif

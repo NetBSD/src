@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1996/03/31 22:48:24 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.62 1996/04/22 02:50:24 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,6 @@
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
-#include <sys/cpu.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif

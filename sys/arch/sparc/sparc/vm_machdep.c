@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 1996/04/04 23:05:25 abrown Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.26 1996/04/22 02:50:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -58,7 +58,6 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
-#include <sys/cpu.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
