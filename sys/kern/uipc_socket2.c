@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.15 1996/10/13 02:32:47 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.16 1996/11/10 05:58:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -189,26 +189,58 @@ sonewconn1(head, connstatus)
 	return (so);
 }
 
+/*
+ * The following two routines (soqinsque & soqremque) have been changed
+ * to keep the queue of pending sockets in a double linked list.
+ * (Previously a singly linked list was used.  This gave O(N)
+ * insertion/deletion times and was a major time consumer for sockets
+ * with large pending socket queues).  The doublely-linked list gives
+ * constant insertion/deletion times with only small cost in complexity.
+ *
+ * Since a socket can be on, at most, one queue at a time both so_q and
+ * so_q0 can safely be used as (forward and backward, respectively) queue
+ * pointers.
+ *
+ * Unlike traditional doublely linked lists, the queue head is not present
+ * in the list.  Instead only a single pointer to the first element is kept.
+ * Only when this first element is modified (either adding to an empty list
+ * or removing the first element) does the pointer change.  If the list is
+ * empty, the pointer will be NULL.
+ *
+ * The back pointer of the first entry points to the last entry (instead of
+ * the queue head since there isn't a queue head).
+ */
+
 void
 soqinsque(head, so, q)
 	register struct socket *head, *so;
 	int q;
 {
+	register struct socket **qh;
 
-	register struct socket **prev;
+#ifdef DIAGNOSTIC
+	if (so->so_head != NULL)
+		panic("soqinsque");
+#endif
+
 	so->so_head = head;
 	if (q == 0) {
 		head->so_q0len++;
-		so->so_q0 = 0;
-		for (prev = &(head->so_q0); *prev; )
-			prev = &((*prev)->so_q0);
+		qh = &head->so_q0;
 	} else {
 		head->so_qlen++;
-		so->so_q = 0;
-		for (prev = &(head->so_q); *prev; )
-			prev = &((*prev)->so_q);
+		qh = &head->so_q;
 	}
-	*prev = so;
+	if ((*qh) == NULL) {
+		so->so_q = so->so_q0 = so;
+		(*qh) = so;
+	} else {
+		/* insert at tail */
+		so->so_q = (*qh);
+		so->so_q0 = (*qh)->so_q0;
+		so->so_q0->so_q = so;
+		(*qh)->so_q0 = so; 
+	}
 }
 
 int
@@ -216,27 +248,46 @@ soqremque(so, q)
 	register struct socket *so;
 	int q;
 {
-	register struct socket *head, *prev, *next;
+	register struct socket *head = so->so_head;
+	register struct socket **qh;
 
-	head = so->so_head;
-	prev = head;
-	for (;;) {
-		next = q ? prev->so_q : prev->so_q0;
-		if (next == so)
-			break;
-		if (next == 0)
-			return (0);
-		prev = next;
+	if (head == NULL) {
+#ifdef DIAGNOSTIC
+		if (so->so_q != NULL || so->so_q0 != NULL)
+			panic("soqremque 1");
+#endif
+		return (0);
 	}
 	if (q == 0) {
-		prev->so_q0 = next->so_q0;
 		head->so_q0len--;
+		qh = &head->so_q0;
 	} else {
-		prev->so_q = next->so_q;
 		head->so_qlen--;
+		qh = &head->so_q;
 	}
-	next->so_q0 = next->so_q = 0;
-	next->so_head = 0;
+
+#ifdef DIAGNOSTIC
+	if ((*qh) == NULL || so->so_q == NULL || so->so_q0 == NULL)
+		panic("soqremque 2");
+#endif
+
+	if ((*qh) == so) {
+		/* first */
+		if (so->so_q == so) {
+			/* single entry; don't remove it from itself */
+			(*qh) = NULL;
+		} else {
+			so->so_q0->so_q = so->so_q;
+			so->so_q->so_q0 = so->so_q0;
+			(*qh) = so->so_q;
+		}
+	} else {
+		/* in the middle (or last) but not first */
+		so->so_q0->so_q = so->so_q;
+		so->so_q->so_q0 = so->so_q0;
+	}
+	so->so_q = so->so_q0 = NULL;
+	so->so_head = NULL;
 	return (1);
 }
 
