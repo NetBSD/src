@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2003/11/21 22:57:14 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2003/12/27 13:35:52 mjl Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2003/11/21 22:57:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2003/12/27 13:35:52 mjl Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -770,7 +770,7 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
 	
 #if defined(DEBUG)
 	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%x 0x%x\n",
-		ptegidx, pvo_pt->pte_hi, pvo_pt->pte_lo));
+		ptegidx, (unsigned int) pvo_pt->pte_hi, (unsigned int) pvo_pt->pte_lo));
 #endif
 	/*
 	 * First try primary hash.
@@ -1127,10 +1127,14 @@ pmap_create(void)
 	DPRINTFN(CREATE,("pmap_create: pm %p:\n"
 	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n"
 	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n", pm,
-	    pm->pm_sr[0], pm->pm_sr[1], pm->pm_sr[2], pm->pm_sr[3], 
-	    pm->pm_sr[4], pm->pm_sr[5], pm->pm_sr[6], pm->pm_sr[7],
-	    pm->pm_sr[8], pm->pm_sr[9], pm->pm_sr[10], pm->pm_sr[11], 
-	    pm->pm_sr[12], pm->pm_sr[13], pm->pm_sr[14], pm->pm_sr[15]));
+	    (unsigned int) pm->pm_sr[0], (unsigned int) pm->pm_sr[1],
+	    (unsigned int) pm->pm_sr[2], (unsigned int) pm->pm_sr[3], 
+	    (unsigned int) pm->pm_sr[4], (unsigned int) pm->pm_sr[5],
+	    (unsigned int) pm->pm_sr[6], (unsigned int) pm->pm_sr[7],
+	    (unsigned int) pm->pm_sr[8], (unsigned int) pm->pm_sr[9],
+	    (unsigned int) pm->pm_sr[10], (unsigned int) pm->pm_sr[11], 
+	    (unsigned int) pm->pm_sr[12], (unsigned int) pm->pm_sr[13],
+	    (unsigned int) pm->pm_sr[14], (unsigned int) pm->pm_sr[15]));
 	return pm;
 }
 
@@ -1450,15 +1454,15 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 		}
 		if (pvo->pvo_pte.pte_hi != pt->pte_hi) {
 			printf("pmap_pvo_check: pvo %p: pte_hi differ: "
-			    "%#x/%#x\n", pvo, pvo->pvo_pte.pte_hi, pt->pte_hi);
+			    "%#x/%#x\n", pvo, (unsigned int) pvo->pvo_pte.pte_hi, (unsigned int) pt->pte_hi);
 			failed = 1;
 		}
 		if (((pvo->pvo_pte.pte_lo ^ pt->pte_lo) &
 		    (PTE_PP|PTE_WIMG|PTE_RPGN)) != 0) {
 			printf("pmap_pvo_check: pvo %p: pte_lo differ: "
 			    "%#x/%#x\n", pvo,
-			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN),
-			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
+			    (unsigned int) (pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN)),
+			    (unsigned int) (pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN)));
 			failed = 1;
 		}
 		if ((pmap_pte_to_va(pt) ^ PVO_VADDR(pvo)) & 0x0fffffff) {
@@ -1516,10 +1520,10 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			    ~(PTE_REF|PTE_CHG)) == 0 &&
 			   va < VM_MIN_KERNEL_ADDRESS) {
 				printf("pmap_pvo_enter: pvo %p: dup %#x/%#lx\n",
-				    pvo, pvo->pvo_pte.pte_lo, pte_lo|pa);
+				    pvo, (unsigned int) pvo->pvo_pte.pte_lo, (unsigned int) pte_lo|pa);
 				printf("pmap_pvo_enter: pte_hi=%#x sr=%#x\n",
-				    pvo->pvo_pte.pte_hi,
-				    pm->pm_sr[va >> ADDR_SR_SHFT]);
+				    (unsigned int) pvo->pvo_pte.pte_hi,
+				    (unsigned int) pm->pm_sr[va >> ADDR_SR_SHFT]);
 				pmap_pte_print(pmap_pvo_to_pte(pvo, -1));
 #ifdef DDBX
 				Debugger();
