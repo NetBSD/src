@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.2 1996/02/05 21:43:40 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.3 1996/02/22 22:48:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 17/09/94
  * Last updated : 20/01/96
  *
- *    $Id: stubs.c,v 1.2 1996/02/05 21:43:40 mark Exp $
+ *    $Id: stubs.c,v 1.3 1996/02/22 22:48:05 mark Exp $
  */
 
 #include <sys/param.h>
@@ -151,58 +151,7 @@ do_mountroot()
 	}
 #endif
 	return(error);
-}
-
- 
-#if 0
-
-/*
- * These are now macros defined in machine/cpu.h
- * These functions are scheduled for deletion
- */
-
-/*
- * Return TRUE/FALSE (1/0) depending on whether the frame came from USR
- * mode or not.
- */
-
-int
-CLKF_USERMODE(frame)
-	struct clockframe *frame;
-{
-	return((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE);
-}
-
-int
-CLKF_BASEPRI(frame)
-	struct clockframe *frame;
-{
-	return(1);
-}
-
-int
-CLKF_PC(frame)
-	struct clockframe *frame;
-{
-	return(frame->if_pc);
-}
-
-int
-CLKF_INTR(frame)
-	struct clockframe *frame;
-{
-	return((frame->if_spsr & PSR_MODE) == PSR_IRQ32_MODE);
-}
-
-void
-cpu_set_init_frame(p, frame)
-	struct proc *p;
-	void *frame;
-{
-	printf("Setting init frame for proc %08x to %08x\n", p, frame);
-	p->p_md.md_regs = frame;
-}
-#endif
+} 
 
 
 /*
@@ -395,9 +344,11 @@ struct queue {
  */
 
 void
-_insque(elem, head)
-	register struct queue *elem, *head;
+_insque(v1, v2)
+	void *v1;
+	void *v2;
 {
+	register struct queue *elem = v1, *head = v2;
 	register struct queue *next;
 
 	next = head->q_next;
@@ -412,9 +363,10 @@ _insque(elem, head)
  */
 
 void
-_remque(elem)
-	register struct queue *elem;
+_remque(v)
+	void *v;
 {
+	register struct queue *elem = v;
 	register struct queue *next, *prev;
 
 	next = elem->q_next;
@@ -423,6 +375,7 @@ _remque(elem)
 	prev->q_next = next;
 	elem->q_prev = 0;
 }
+
 
 
 /*
@@ -563,6 +516,7 @@ dumpsys()
 
 /*
  * Dummy function is case no audio device has been configured
+ * Need to fix the code that uses this function (console) to check NBEEP.
  */
 
 #include "beep.h"
