@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.170 2003/06/28 14:20:51 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171 2003/06/29 15:58:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2003/06/28 14:20:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2003/06/29 15:58:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -668,14 +668,14 @@ identifycpu()
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	dev_t consdev;
 
