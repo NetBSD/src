@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.9 2002/09/15 21:31:11 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.10 2002/09/15 21:34:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -114,10 +114,6 @@ struct RF_DiskQueue_s {
 						 * arrived at the head of the
 						 * queue & is waiting for
 						 * drainage */
-	RF_DiskQueueData_t *unlockingOp;	/* used at user level to
-						 * communicate unlocking op
-						 * b/w user (or dag exec) &
-						 * disk threads */
 	int     numWaiting;	/* number of threads waiting on this variable.
 				 * user-level only */
 	RF_DiskQueueFlags_t flags;	/* terminate, locked */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.19 2002/09/15 21:19:50 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.20 2002/09/15 21:34:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.19 2002/09/15 21:19:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.20 2002/09/15 21:34:03 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -197,7 +197,6 @@ rf_ConfigureDiskQueue(
 	diskqueue->maxOutstanding = maxOutstanding;
 	diskqueue->curPriority = RF_IO_NORMAL_PRIORITY;
 	diskqueue->nextLockingOp = NULL;
-	diskqueue->unlockingOp = NULL;
 	diskqueue->numWaiting = 0;
 	diskqueue->flags = 0;
 	diskqueue->raidPtr = raidPtr;
@@ -405,7 +404,7 @@ rf_DiskIOComplete(queue, req, status)
 	 * locking req fails */
 	if (RF_UNLOCKING_REQ(req) || (RF_LOCKING_REQ(req) && status)) {
 		Dprintf2("DiskIOComplete: unlocking queue at r %d c %d\n", queue->row, queue->col);
-		RF_ASSERT(RF_QUEUE_LOCKED(queue) && (queue->unlockingOp == NULL));
+		RF_ASSERT(RF_QUEUE_LOCKED(queue));
 		RF_UNLOCK_QUEUE(queue);
 	}
 	queue->numOutstanding--;
