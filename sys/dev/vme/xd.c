@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.26 2000/06/04 19:15:17 cgd Exp $	*/
+/*	$NetBSD: xd.c,v 1.27 2000/06/05 15:58:43 chs Exp $	*/
 
 /*
  *
@@ -79,7 +79,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>
 #endif
 
@@ -264,7 +264,7 @@ void xdc_md_setup()
 	else
 		XDC_DELAY = XDC_DELAY_SPARC;
 }
-#elif defined(__sun3__)
+#elif defined(sun3)
 void xdc_md_setup()
 {
 	XDC_DELAY = XDC_DELAY_SUN3;
@@ -326,7 +326,7 @@ xdgetdisklabel(xd, b)
 	void *b;
 {
 	char *err;
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	struct sun_disklabel *sdl;
 #endif
 
@@ -344,7 +344,7 @@ xdgetdisklabel(xd, b)
 		return(XD_ERR_FAIL);
 	}
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel->cd_block;
 	if (sdl->sl_magic == SUN_DKMAGIC) {
