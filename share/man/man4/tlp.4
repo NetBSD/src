@@ -1,0 +1,478 @@
+.\"	$NetBSD: tlp.4,v 1.2.2.2 1999/11/05 19:55:08 thorpej Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+.\" NASA Ames Research Center.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 4, 1999
+.Dt TLP 4
+.Os
+.Sh NAME
+.Nm tlp
+.Nd device driver for DECchip 21x4x and clone Ethernet interfaces
+.Sh SYNOPSIS
+.Cd "tlp* at eisa? slot ?"
+.Cd "tlp* at pci? dev ? function ?"
+.Cd "tlp* at cardbus?"
+.Pp
+.Cd "options TLP_MATCH_21040"
+.Cd "options TLP_MATCH_21041"
+.Cd "options TLP_MATCH_21140"
+.Cd "options TLP_MATCH_21142"
+.Pp
+Configuration of PHYs may also be necessary.  See
+.Xr mii 4 .
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports Ethernet interfaces based on the DECchip 21x4x
+.Dq Tulip
+(DEC third generation Ethernet controller) and a variety of clone chips.
+The Tulip has several features designed to make it flexible and reduce
+CPU usage:
+.Bl -bullet -offset indent
+.It
+Flexible receive filter allowing for 16 perfect matches, 16 perfect
+inverse matches, 512-bit hash table plus 1 perfect match, or
+512-bit hash table only.
+.It
+Uniform transmit descriptor architecture, configurable as a ring (allowing
+2 buffers per descriptor) or a chain (allowing 1 buffer per descriptor).
+.It
+Uniform receive descriptor architecture, configurable as a ring (allowing
+2 buffers per descriptor) or a chain (allowing 1 buffer per descriptor).
+.It
+Interrupt pacing; host may chose whether or not completion of processing of
+an individual descriptor causes an interrupt.
+.It
+Support for jumbo packets (by disabling transmit and receive watchdog
+timers).
+.It
+A patented transmit backoff algorithm which solves the Ethernet capture
+effect problem.
+.It
+Flexible bus modes to optimize DMA cycles for various cache sizes and
+bus implementations.
+.It
+Programmable transmit FIFO drain threshold to allow DMA overlap and reduce
+time to transmit.
+.It
+Flexible media attachment facilities.
+.El
+.Pp
+The
+.Nm
+driver supports the following chips:
+.Bl -bullet -offset indent
+.It
+.Em DECchip 21040
+-- This is the original Tulip Ethernet chip.  It supports 10Mb/s speeds
+over a built-in serial interface.  The serial interface has support for
+10baseT and AUI media.  The AUI port may be connected to 10base5 AUI
+or 10base2 BNC connectors, or both, selected by a gang jumper on the
+board.  Some boards connect the BNC connector to an external serial
+interface.  The driver has no way of knowing this, but the external
+serial interface may be selected with the
+.Dq manual
+media setting.
+.Pp
+Boards that include this chip include the DEC DE-435, on-board Ethernet on
+many DEC AlphaStation and AlphaServer systems, ZNYX ZX312, ZX312T,
+ZX314, ZX315, SMC 8432, SMC 8434, ACCTON EN1203, and some Cogent
+multi-port boards.
+.Pp
+This chip also appears on the DEC DE-425 EISA Ethernet board.  This board
+is a DECchip 21040 and a PLX PCI glue chip, which provides the interface
+to the EISA bus, and special address decoding so that the PCI configuration
+space registers of the 21040 are accessible in normal EISA I/O space.
+.Pp
+The very first versions of this chip were labeled
+.Dq DC1003
+and
+.Dq DC1003 Prototype .
+.It
+.Em DECchip 21041
+-- This is the second chip in the Tulip family, dubbed
+.Dq Tulip Plus .
+It supports 10Mb/s speeds over a built-in serial interface.  The serial
+interface has support for 10baseT, 10base5 AUI, and 10base2 BNC media.
+The serial interface also includes support for IEEE 802.3u NWay over
+the 10baseT interface, for negotiation of duplex mode with the link
+partner.
+.Pp
+Boards that include this chip include the DEC DE-450 and some SMC boards.
+.It
+.Em DECchip 21140 and 21140A
+-- This is the third chip in the Tulip family, dubbed
+.Dq FasterNet .
+It supports 10Mb/s speeds with a built-in 10baseT encoder/decoder,
+and 100Mb/s speeds with a built-in 100base PCS function.  Support
+for 100baseTX and 100baseT4 is provided by a built-in scrambler.
+Support for 100baseFX is possible with an appropriate PMD connected
+to the 100base PCS.  The 21140 and 21140A also support 10Mb/s and
+100Mb/s speeds over an MII interface connected to one or more PHYs.
+.Pp
+The 21140 and 21140A include a general purpose I/O facility, which
+may be used to toggle relays on the board.  This facility is often
+used to reset individual board modules (e.g. the MII bus), select
+the output path of the chip (e.g. connect the UTP port on the board
+to the PHY, built-in 10baseT ENDEC, or built-in 100baseT PMD), or
+detect link status (by reading an output pin on the 100baseT magnetics).
+.Pp
+The 21140 and 21140A use a standardized data structure located in
+the SROM to describe how the chip should be programmed for various
+media settings, including the internal chip pathway, and GPIO settings.
+If the SROM data is not in the standardized format, the device driver
+must know specific programming information for that particular board.
+.Pp
+Boards that include the 21140 and 21140A include the DEC EB140, DE-500XA,
+DE-500AA, Asante EtherFast, DaynaPORT BlueStreak, Cogent EM100TX, EM110TX,
+EM440T4 multi-port, Kingston KNE100TX, older verions of the NetGear FA-310TX,
+SMC 9332, SMC 9334, ZNYX ZX34x multi-port, and Adaptec ANA-6944A/TX multi-port.
+.It
+.Em DECchip 21142 and 21143
+-- These are the fourth and fifth chips in the Tulip family.  While
+they have two different chip numbers, the 21142 and 21143 are essentially
+identical, with only minor differences related to available technology
+at time of manufacture.  Both chips include support for 10Mb/s speeds
+over a built-in serial interface, and support for 10Mb/s and 100Mb/s
+speeds over an MII interface connected to one or more PHYs.  The
+serial interface includes support for 10baseT, 10base5 AUI, and
+10base2 BNC media, as well as support for IEEE 802.3u NWay over
+the 10baseT interface, for negotiation of duplex mode and link
+speed with the link partner.
+.Pp
+The 21143 adds support for 100Mb/s speeds with a built-in
+PCS function.  Support for 100baseTX and 100baseT4 is provided by
+a built-in scrambler.  Support for 100baseFX is possible with an
+appropriate PMD connected to the 100base PCS.
+.Pp
+The 21142 and 21143 include a general purpose I/O facility, which
+may be used to toggle relays on the board.  This facility is often
+used to reset individual board modules (e.g. the MII bus), select
+the output path of the chip (e.g. connect the UTP port on the board
+to the PHY, built-in serial interface, or built-in 100baseT PMD), or
+detect link status (by reading an output pin on the 100baseT magnetics).
+.Pp
+The 21142 and 21143 use a standardized data structure located in
+the SROM to describe how the chip should be programmed for various
+media settings, including the internal chip pathway, and GPIO settings.
+If the SROM data is not in the standardized format, the device driver
+must know specific programming information for that particular board.
+.Pp
+Boards that include the 21142 include the DEC EB142, and on-board Ethernet
+on the Digital Personal Workstation (Alpha
+.Dq Miata
+and x86 models) and several Digital PCs.
+.Pp
+Boards that include the 21143 include the DEC EB143, DE-500BA, several
+commonly-available 100baseFX boards, and the NetGear FA-510c CardBus
+card.
+.It
+.Em Lite-On 82C168 and 82C169
+-- These chips, dubbed
+.Dq PNIC ,
+were some of the first commonly-available Tulip clones,
+appearing on low-cost boards when it became difficult for board
+vendors to obtain DECchip 21140A parts.  They include support for
+10Mb/s speeds over a built-in 10baseT encoder/decoder, and 100Mb/s
+speeds over a built-in PCS function.  Support for 100baseTX and
+100baseT4 is provided by a built-in scrambler and transciever
+module.  The transciever module also includes support for NWay,
+for negotiating duplex mode and link speed with the link partner.
+These chips also include support for 10Mb/s and 100Mb/s speeds over
+and MII interface connected to one or more PHYs.
+.Pp
+These chips also include a GPIO facility, although it is programmed
+differently than the 21140's.
+.Pp
+Unfortunately, these chips seem to be plagued by two unfortunate
+hardware bugs: in some situations, the receive logic incorrectly
+dumps the entire transmit FIFO into the receive chain, rather
+than a single Ethernet frame, and the DMA engines appear to be
+substandard; they must be run in store-and-forward mode, and
+occasionally fail to upload the filter setup frame.
+.Pp
+Boards that include the 82C168 and 82C169 include the newer NetGear
+FA-310TX, the Kingston KNE110TX, and some older LinkSys LNE100TX boards.
+.It
+.Em Macronix 98713, 98713A, 98715, 98715A, and 98725
+-- Of all the clones, these chips, dubbed
+.Dq PMAC ,
+are the best.  They are very close clones of their respective
+originals, with the exception of some slight programming magic
+necessary to work around an apparent hardware bug.
+.Pp
+The 98713 is a DECchip 21140A clone.  It includes all of the 21140A's
+features, and uses the same SROM data format.
+.Pp
+The 98713A is a half-clone of the DECchip 21143.  It has support for
+serial, PCS, and MII media.  The serial interface has a built-in
+NWay function.  However, the 98713A does not have a GPIO facility, and,
+as a result, usually does not use the same SROM format as the 21143 (no
+need for GPIO programming information).
+.Pp
+The 98715, 98715A, and 98725 are more 21143-like, but lack the GPIO
+facility and MII.  These chips also support ACPI power management.
+.Pp
+Boards that include the Macronix chips include some SVEC boards,
+some SOHOWare boards, and the Compex RL100TX.
+.It
+.Em Lite-On/Macronix 82C115
+-- This chip, dubbed the
+.Dq PNIC-II ,
+was co-designed by Lite-On and Macronix.  It is almost identical to
+the Macronix 98725, with a few exceptions: it has Wake-On-LAN support,
+uses a 128-bit receive filter hash table, and supports IEEE 802.3x
+flow control.
+.Pp
+Boards that include the 82C115 include the newer LinkSys (Version 2)
+LNE100TX boards.
+.It
+.Em Winbond 89C840F
+-- This chip is a very low-end barely-a-clone of the 21140.  It supports
+10Mb/s and 100Mb/s speeds over an MII interface only, and has several
+programming differences from the 21140.
+.Pp
+The receive filter is completely different: it supports only a single
+perfect match, and has only a 64-bit multicast filter hash table.  The
+receive filter is programmed using special registers rather than the
+standard Tulip setup frame.
+.Pp
+This chip is also plagued by a terrible DMA engine.  The chip must be
+run in store-and-forward mode or it will often transmit garbage onto
+the wire.
+.Pp
+Interrupt pacing is also less flexible on the chip.
+.Pp
+Boards that include the 89C940F include the Complex RL100ATX,
+some Unicom 10/100 boards, and several no-name 10/100 boards.
+.It
+.Em ADMtek AL981
+-- This chip is a low cost, single-chip (sans magnetics) 10/100 Ethernet
+implementation.  It supports 10Mb/s and 100Mb/s speeds over an internal
+PHY.  There is no generic MII bus; instead the IEEE 802.3u-compliant PHY
+is accessed via special registers on the chip.  This chip also supports
+Wake-On-LAN and IEEE 802.3x flow control.
+.Pp
+The receive filter on the AL981 is completely different: it supports only
+a single perfect match, and has only a 64-bit multicast filter hash table.
+The receive filter is programmed using special registers rather than the
+standard Tulip setup frame.
+.Pp
+This chip also supports ACPI power management.
+.Pp
+A list of boards which include the AL981 is not yet available.
+.Pp
+Support for the AL981 has not yet been tested.  If you have a board
+which uses this chip, please contact the author (listed below).
+.El
+.Sh MEDIA SELECTION
+Media selection done using
+.Xr ifconfig 8
+using the standard
+.Xr ifmedia 4
+mechanism.  Refer to those manual pages for more information.
+.\" .Sh DIAGNOSTICS
+.\" XXX too be done.
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr eisa 4 ,
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr ifconfig 8
+.Rs
+.%T "DECchip 21040 Ethernet LAN Controller for PCI Hardware Reference Manual"
+.%D May 1994
+.%A Digital Equipment Corporation
+.%O Order Number EC-N0752-72
+.Re
+.Rs
+.%T "DECchip 21041 PCI Ethernet LAN Controller Hardware Reference Manual"
+.%N Preliminary
+.%D April 1995
+.%A Digital Equipment Corporation
+.%O Order Number EC-QAWXA-TE
+.Re
+.Rs
+.%T "DECchip 21041 DC1017-BA Errata"
+.%N Revision 1.0
+.%D April 27, 1995
+.%A Digital Equipment Corporation
+.%O Order Number EC-QD2MA-TE
+.Re
+.Rs
+.%T "DECchip 21140 PCI Fast Ethernet LAN Controller Hardware Reference Manual"
+.%N Supercedes EC-Q0CA-TE
+.%D May 1995
+.%A Digital Equipment Corporation
+.%O Order Number EC-Q0CB-TE
+.Re
+.Rs
+.%T "DECchip 21140A PCI Fast Ethernet LAN Controller Hardware Reference Manual"
+.%N Supercedes EC-QN7NA-TE, EC-QN7NB-TE
+.%D January 1996
+.%A Digital Equipment Corporation
+.%O Order Number EC-QN7NC-TE
+.Re
+.Rs
+.%T "21143 PCI/CardBus 10/100Mb/s Ethernet LAN Controller Hardware Reference Manual"
+.%N Revision 1.0
+.%D October 1998
+.%A Intel Corporation
+.%O Document Number 278074-001
+.Re
+.Rs
+.%T "Ethernet Address ROM Programming: An Application Note"
+.%D April 1994
+.%A Digital Equipment Corporation
+.%O Order Number EC-N3214-72
+.Re
+.Rs
+.%T "Using the DECchip 21041 with Boot ROM, Serial ROM, and External Register: An Application Note"
+.%D April 1995
+.%A Digital Equipment Corporation
+.%O Order Number EC-QJLGA-TE
+.Re
+.Rs
+.%T "Connecting the DECchip 21140 PCI Fast Ethernet LAN Controller to the Network: An Application Note"
+.%N Preliminary
+.%D December 1994
+.%A Digital Equipment Corporation
+.%O Order Number EC-QAR2A-TE
+.Re
+.Rs
+.%T "MXIC MX98713 PMAC 100/10BASE PCI MAC Controller"
+.%N Revision 1.1
+.%D November 8, 1996
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0386
+.Re
+.Rs
+.%T "MXIC MX98713A Fast Ethernet MAC Controller"
+.%N Revision 1.0
+.%D August 28, 1997
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0489
+.Re
+.Rs
+.%T "MXIC MX98715A Single Chip Fast Ethernet NIC Controller"
+.%N Revision 1.2
+.%D February 24, 1999
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0537
+.Re
+.Rs
+.%T "MXIC MX98725 Single Chip Fast Ethernet NIC Controller"
+.%N Revision 1.7
+.%D September 15, 1998
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0468
+.Re
+.Rs
+.%T "MXIC MX98715 Application Note"
+.%N Revision 1.5
+.%D October 9, 1998
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0498
+.Re
+.Rs
+.%T "MXIC MX98715A Application Note"
+.%N Revision 1.2
+.%D October 9, 1998
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0541
+.Re
+.Rs
+.%T "MXIC MX98725 Application Note"
+.%N Revision 1.1
+.%D July 10, 1998
+.%A Macronix Internation Co., Ltd.
+.%O Part Number: PM0525
+.Re
+.Rs
+.%T "MXIC LC82C115 Single Chip Fast Ethernet NIC Controller"
+.%N Revision 0.2
+.%D February 12, 1999
+.%A Macronix International Co., Ltd.
+.%O Part Number: PM0572
+.Re
+.Rs
+.%T "PNIC Hardware Specification"
+.%N Revision 1.0
+.%D December 1, 1994
+.%A LITE ON, Inc.
+.Re
+.Rs
+.%T "Comet: AL981 PCI 10/100 Fast Ethernet Controller with Integrated PHY"
+.%N Revision 0.93
+.%D January, 1999
+.%A ADMtek Incorporated
+.Re
+.Rs
+.%T "Winbond LAN W89C840F 100/10Mbps Ethernet Controller"
+.%N Revision A1
+.%D April 1997
+.%A Winbond Electronics Corporation
+.Re
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 1.5 .
+.Sh BUGS
+The
+.Nm
+driver does not match the DECchip 21040, 21041, 21140, 21142, and 21143
+chips on the PCI bus by default.  That is because another driver,
+.Nm de ,
+which is more functional in some circumstances, exists for them.  In
+order for support for these chips to be activated in
+.Nm tlp ,
+either
+.Nm de
+must be left out of the kernel, or the appropriate
+.Pa TLP_MATCH_*
+options must be used.
+.Pp
+Media autosense is not yet supported for any serial or PCS function media.
+It is, however, supported for IEEE 802.3u-compliant PHY media.
+.Sh AUTHOR
+The
+.Nm
+driver was written by
+.An Jason R. Thorpe Aq thorpej@nas.nasa.gov
+of the Numerical Aerospace Simulation Facility, NASA Ames Research Center.
