@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)savecore.8	8.1 (Berkeley) 6/5/93
-.\"	$Id: savecore.8,v 1.8 1994/06/11 08:01:16 mycroft Exp $
+.\"	$Id: savecore.8,v 1.9 1994/06/13 14:55:39 cgd Exp $
 .\"
 .Dd June 5, 1993
 .Dt SAVECORE 8
@@ -110,8 +110,7 @@ is meant to be called near the end of the initialization file
 .Sh FILES
 .Bl -tag -width /netbsdxx -compact
 .It Pa /netbsd
-current
-.Tn UNIX
+current kernel
 .El
 .Sh BUGS
 The minfree code does not consider the effect of compression.
