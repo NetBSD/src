@@ -1,4 +1,4 @@
-/*	$NetBSD: fpclassifyl.c,v 1.1 2003/10/28 22:05:37 kleink Exp $	*/
+/*	$NetBSD: fpclassifyl.c,v 1.2 2004/01/18 19:33:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpclassifyl.c,v 1.1 2003/10/28 22:05:37 kleink Exp $");
+__RCSID("$NetBSD: fpclassifyl.c,v 1.2 2004/01/18 19:33:01 matt Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -54,7 +54,7 @@ __fpclassifyl(long double x)
 {
 	union ieee_ext_u u;
 
-	u.dblu_ld = x;
+	u.extu_ld = x;
 
 	_DIAGASSERT(u.extu_ext.ext_exp == 0 || u.extu_ext.ext_int == 1);
 
