@@ -6,7 +6,7 @@
 /* SYNOPSIS
 /*	#include <attr.h>
 /*
-/*	int	attr_scan64(fp, flags, type, name, ...)
+/*	int	attr_scan64(fp, flags, type, name, ..., ATTR_TYPE_END)
 /*	VSTREAM	fp;
 /*	int	flags;
 /*	int	type;
@@ -43,7 +43,7 @@
 /* .in
 /*
 /*	All attribute names and attribute values are sent as base64-encoded
-/*	strings. Each base64 encoding must be no longer than 2*var_line_limit
+/*	strings. Each base64 encoding must be no longer than 4*var_line_limit
 /*	characters. The formatting rules aim to make implementations in PERL
 /*	and other languages easy.
 /*
@@ -94,10 +94,12 @@
 /* .IP "ATTR_TYPE_STR (char *, VSTRING *)"
 /*	This argument is followed by an attribute name and a VSTRING pointer.
 /* .IP "ATTR_TYPE_HASH (HTABLE *)"
+/* .IP "ATTR_TYPE_NAMEVAL (NVTABLE *)"
 /*	All further input attributes are processed as string attributes.
 /*	No specific attribute sequence is enforced.
 /*	All attributes up to the attribute list terminator are read,
 /*	but only the first instance of each attribute is stored.
+/*	There can be no more than 1024 attributes in a hash table.
 /* .sp
 /*	The attribute string values are stored in the hash table under
 /*	keys equal to the attribute name (obtained from the input stream).
@@ -109,9 +111,10 @@
 /*	This argument terminates the requested attribute list.
 /* .RE
 /* BUGS
-/*	ATTR_TYPE_HASH accepts attributes with arbitrary names from possibly
-/*	untrusted sources. This is unsafe, unless the resulting table is
-/*	queried only with known to be good attribute names.
+/*	ATTR_TYPE_HASH (ATTR_TYPE_NAMEVAL) accepts attributes with arbitrary
+/*	names from possibly untrusted sources.
+/*	This is unsafe, unless the resulting table is queried only with
+/*	known to be good attribute names.
 /* DIAGNOSTICS
 /*	attr_scan64() and attr_vscan64() return -1 when malformed input is
 /*	detected (string too long, incomplete line, missing end marker).
@@ -161,7 +164,9 @@ static int attr_scan64_string(VSTREAM *fp, VSTRING *plain_buf, const char *conte
 {
     static VSTRING *base64_buf = 0;
     extern int var_line_limit;		/* XXX */
-    int     limit = var_line_limit * 2;
+#if 0
+    int     limit = var_line_limit * 4;
+#endif
     int     ch;
 
     if (base64_buf == 0)
@@ -335,7 +340,7 @@ int     attr_vscan64(VSTREAM *fp, int flags, va_list ap)
 	    /*
 	     * Skip over this attribute. The caller does not ask for it.
 	     */
-	    while ((ch = VSTREAM_GETC(fp)) != VSTREAM_EOF && ch != '\n')
+	    while (ch != '\n' && (ch = VSTREAM_GETC(fp)) != VSTREAM_EOF)
 		 /* void */ ;
 	}
 
@@ -416,6 +421,10 @@ int     attr_vscan64(VSTREAM *fp, int flags, va_list ap)
 			     STR(name_buf), VSTREAM_PATH(fp));
 		    return (conversions);
 		}
+	    } else if (hash_table->used >= ATTR_HASH_LIMIT) {
+		msg_warn("attribute count exceeds limit %d in input from %s",
+			 ATTR_HASH_LIMIT, VSTREAM_PATH(fp));
+		return (conversions);
 	    } else {
 		htable_enter(hash_table, STR(name_buf),
 			     mystrdup(STR(str_buf)));

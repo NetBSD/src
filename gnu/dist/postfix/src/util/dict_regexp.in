@@ -11,3 +11,7 @@ get aa
 get 1235
 get 1234
 get 123
+get bar/find
+get bar/whynot
+get bar/elbereth
+get say/elbereth

@@ -584,9 +584,9 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	    first_pat.options |= REG_NOSUB;
 	} else if (dict_flags & DICT_FLAG_NO_REGSUB) {
 	    msg_warn("regexp map %s, line %d: "
-		      "regular expression substitution is not allowed: "
-		      "skipping this rule", mapname, lineno);
-	    return(0);
+		     "regular expression substitution is not allowed: "
+		     "skipping this rule", mapname, lineno);
+	    return (0);
 	}
 	if ((first_exp = dict_regexp_compile_pat(mapname, lineno,
 						 &first_pat)) == 0)
@@ -636,6 +636,8 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	    p++;
 	if (!dict_regexp_get_pat(mapname, lineno, &p, &pattern))
 	    return (0);
+	while (*p && ISSPACE(*p))
+	    ++p;
 	if (*p)
 	    msg_warn("regexp map %s, line %d: ignoring extra text after IF",
 		     mapname, lineno);
@@ -661,6 +663,8 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 		     mapname, lineno);
 	    return (0);
 	}
+	while (*p && ISSPACE(*p))
+	    ++p;
 	if (*p)
 	    msg_warn("regexp map %s, line %d: ignoring extra text after ENDIF",
 		     mapname, lineno);

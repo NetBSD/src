@@ -3,9 +3,6 @@ SRCS	= sendmail.c
 OBJS	= sendmail.o
 HDRS	= 
 TESTSRC	= 
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG=
@@ -73,6 +70,7 @@ sendmail.o: ../../include/iostuff.h
 sendmail.o: ../../include/stringops.h
 sendmail.o: ../../include/set_ugid.h
 sendmail.o: ../../include/connect.h
+sendmail.o: ../../include/split_at.h
 sendmail.o: ../../include/mail_queue.h
 sendmail.o: ../../include/mail_proto.h
 sendmail.o: ../../include/attr.h
@@ -90,3 +88,7 @@ sendmail.o: ../../include/resolve_clnt.h
 sendmail.o: ../../include/mail_flush.h
 sendmail.o: ../../include/mail_stream.h
 sendmail.o: ../../include/verp_sender.h
+sendmail.o: ../../include/deliver_request.h
+sendmail.o: ../../include/recipient_list.h
+sendmail.o: ../../include/mime_state.h
+sendmail.o: ../../include/header_opts.h

@@ -56,7 +56,7 @@
 /*	A message header contains 8-bit data. This is always illegal.
 /* .IP MIME_ERR_8BIT_IN_7BIT_BODY
 /*	A MIME header specifies (or defaults to) 7-bit content, but the
-/*	correspnding message body or body parts contain 8-bit content.
+/*	corresponding message body or body parts contain 8-bit content.
 /* .IP MIME_ERR_ENCODING_DOMAIN
 /*	An entity of type "message" or "multipart" specifies the wrong
 /*	content transfer encoding domain, or specifies a transformation
@@ -387,7 +387,7 @@ static MIME_ENCODING mime_encoding_map[] = {	/* RFC 2045 */
   * Outputs and state changes are interleaved, so we must maintain separate
   * offsets for header and body segments.
   */
-#define HEAD_OUT(ptr, info) do { \
+#define HEAD_OUT(ptr, info, len) do { \
 	(ptr)->head_out((ptr)->app_context, (ptr)->curr_state, \
 			(info), (ptr)->output_buffer, (ptr)->head_offset); \
 	(ptr)->head_offset += (len) + 1; \
@@ -805,7 +805,7 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 		    || header_info->type != HDR_CONTENT_TRANSFER_ENCODING
 		    || (state->static_flags & MIME_OPT_DOWNGRADE) == 0
 		    || state->curr_domain == MIME_ENC_7BIT)
-		    HEAD_OUT(state, header_info);
+		    HEAD_OUT(state, header_info, len);
 		state->prev_rec_type = 0;
 		VSTRING_RESET(state->output_buffer);
 	    }
@@ -855,7 +855,7 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 		cp = CU_CHAR_PTR("quoted-printable");
 	    vstring_sprintf(state->output_buffer,
 			    "Content-Transfer-Encoding: %s", cp);
-	    HEAD_OUT(state, (HEADER_OPTS *) 0);
+	    HEAD_OUT(state, (HEADER_OPTS *) 0, len);
 	    VSTRING_RESET(state->output_buffer);
 	}
 
@@ -1054,7 +1054,7 @@ static void head_out(void *context, int class, HEADER_OPTS *unused_info,
 {
     VSTREAM *stream = (VSTREAM *) context;
 
-    vstream_fprintf(stream, "%s %ld\t%s\n",
+    vstream_fprintf(stream, "%s %ld\t|%s\n",
 		    class == MIME_HDR_PRIMARY ? "MAIN" :
 		    class == MIME_HDR_MULTIPART ? "MULT" :
 		    class == MIME_HDR_NESTED ? "NEST" :
@@ -1073,7 +1073,7 @@ static void body_out(void *context, int rec_type, const char *buf, int len,
 {
     VSTREAM *stream = (VSTREAM *) context;
 
-    vstream_fprintf(stream, "BODY %c %ld\t", rec_type, (long) offset);
+    vstream_fprintf(stream, "BODY %c %ld\t|", rec_type, (long) offset);
     vstream_fwrite(stream, buf, len);
     if (rec_type == REC_TYPE_NORM)
 	VSTREAM_PUTC('\n', stream);

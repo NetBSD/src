@@ -38,10 +38,6 @@
 #include <unistd.h>
 #include <time.h>
 
-#ifndef RAND_MAX
-#define RAND_MAX 0x7fffffff
-#endif
-
 /* Utility library. */
 
 #include <msg.h>

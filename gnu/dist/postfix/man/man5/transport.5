@@ -5,7 +5,7 @@
 transport
 \-
 format of Postfix transport table
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .na
 .nf
 \fBpostmap /etc/postfix/transport\fR
@@ -24,7 +24,8 @@ This mapping overrides the default routing that is built into
 Postfix:
 .IP \fBmydestination\fR
 A list of domains that is by default delivered via
-\fB$local_transport\fR.
+\fB$local_transport\fR. This also includes domains
+that match \fB$inet_interfaces\fR or \fB$proxy_interfaces\fR.
 .IP \fBvirtual_mailbox_domains\fR
 A list of domains that is by default delivered via
 \fB$virtual_transport\fR.
@@ -46,10 +47,11 @@ When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular-expression
-map where patterns are given as regular expressions. In that case,
-the lookups are done in a slightly different way as described
-in section "REGULAR EXPRESSION TABLES".
-.SH TABLE FORMAT
+map where patterns are given as regular expressions, or lookups
+can be directed to TCP-based server. In that case, the lookups are
+done in a slightly different way as described below under
+"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+.SH "TABLE FORMAT"
 .na
 .nf
 .ad
@@ -68,12 +70,10 @@ starts with whitespace continues a logical line.
 The \fIpattern\fR specifies an email address, a domain name, or
 a domain name hierarchy, as described in section "TABLE LOOKUP".
 
-The \fIresult\fR is of the form \fItransport\fB:\fInexthop\fR.
-The \fItransport\fR field specifies a mail delivery transport
-such as \fBsmtp\fR or \fBlocal\fR. The \fInexthop\fR field
-specifies where and how to deliver mail. More details are given
-in section "RESULT FORMAT".
-.SH TABLE LOOKUP
+The \fIresult\fR is of the form \fItransport:nexthop\fR and
+specifies how or where to deliver mail. This is described in
+section "RESULT FORMAT".
+.SH "TABLE LOOKUP"
 .na
 .nf
 .ad
@@ -104,19 +104,24 @@ functions as the wild-card pattern).
 Note 2: the null recipient address is looked up as
 \fB$empty_address_recipient\fR@\fB$myhostname\fR (default:
 mailer-daemon@hostname).
-.SH RESULT FORMAT
+.SH "RESULT FORMAT"
 .na
 .nf
 .ad
 .fi
+The lookup result is of the form \fItransport\fB:\fInexthop\fR.
+The \fItransport\fR field specifies a mail delivery transport
+such as \fBsmtp\fR or \fBlocal\fR. The \fInexthop\fR field
+specifies where and how to deliver mail.
+
 The transport field specifies the name of a mail delivery transport
 (the first name of a mail delivery service entry in the Postfix
 \fBmaster.cf\fR file).
 
 The interpretation of the nexthop field is transport
-dependent. In the case of SMTP, specify \fIhost\fR:\fIservice\fR for a
-non-default server port, and use [\fIhost\fR] or [\fIhost\fR]:\fIport\fR
-in order to disable MX (mail exchanger) DNS lookups. The [] form
+dependent. In the case of SMTP, specify a service on a non-default
+port as \fIhost\fR:\fIservice\fR, and disable MX (mail exchanger)
+DNS lookups with [\fIhost\fR] or [\fIhost\fR]:\fIport\fR. The [] form
 is required when you specify an IP address instead of a hostname.
 
 A null \fItransport\fR and null \fInexthop\fR result means "do
@@ -128,7 +133,7 @@ resets the nexthop information to the recipient domain.
 
 A null \fItransport\fR field with non-null \fInexthop\fR field
 does not modify the transport information.
-.SH EXAMPLES
+.SH "EXAMPLES"
 .na
 .nf
 .ad
@@ -144,56 +149,57 @@ destinations.
 .ti +5
 \fB\&.my.domain   :\fR
 .ti +5
-\fB*            smtp:outbound-relay.my.domain\fR
+\fB*         smtp:outbound-relay.my.domain\fR
 
-In order to send mail for \fBfoo.org\fR and its subdomains
-via the \fBuucp\fR transport to the UUCP host named \fBfoo\fR:
+In order to send mail for \fBexample.com\fR and its subdomains
+via the \fBuucp\fR transport to the UUCP host named \fBexample\fR:
 
 .ti +5
-\fBfoo.org      uucp:foo\fR
+\fBexample.com      uucp:example\fR
 .ti +5
-\fB\&.foo.org     uucp:foo\fR
+\fB\&.example.com     uucp:example\fR
 
 When no nexthop host name is specified, the destination domain
 name is used instead. For example, the following directs mail for
-\fIuser\fR@\fBfoo.org\fR via the \fBslow\fR transport to a mail
-exchanger for \fBfoo.org\fR.  The \fBslow\fR transport could be
-something that runs at most one delivery process at a time:
+\fIuser\fR@\fBexample.com\fR via the \fBslow\fR transport to a mail
+exchanger for \fBexample.com\fR.  The \fBslow\fR transport could be
+configured to run at most one delivery process at a time:
 
 .ti +5
-\fBfoo.org      slow:\fR
+\fBexample.com      slow:\fR
 
 When no transport is specified, Postfix uses the transport that
-matches the address domain class (see TRANSPORT FIELD discussion
-above).  The following sends all mail for \fBfoo.org\fR and its
-subdomains to host \fBgateway.foo.org\fR:
+matches the address domain class (see DESCRIPTION
+above).  The following sends all mail for \fBexample.com\fR and its
+subdomains to host \fBgateway.example.com\fR:
 
 .ti +5
-\fBfoo.org      :[gateway.foo.org]\fR
+\fBexample.com      :[gateway.example.com]\fR
 .ti +5
-\fB\&.foo.org     :[gateway.foo.org]\fR
+\fB\&.example.com     :[gateway.example.com]\fR
 
-In the above example, the [] are used to suppress MX lookups.
-The result would likely point to your local machine.
+In the above example, the [] suppress MX lookups.
+This prevents mail routing loops when your machine is primary MX
+host for \fBexample.com\fR.
 
 In the case of delivery via SMTP, one may specify
 \fIhostname\fR:\fIservice\fR instead of just a host:
 
 .ti +5
-\fBfoo.org      smtp:bar.org:2025\fR
+\fBexample.com      smtp:bar.example:2025\fR
 
-This directs mail for \fIuser\fR@\fBfoo.org\fR to host \fBbar.org\fR
+This directs mail for \fIuser\fR@\fBexample.com\fR to host \fBbar.example\fR
 port \fB2025\fR. Instead of a numerical port a symbolic name may be
-used. Specify [] around the hostname in order to disable MX lookups.
+used. Specify [] around the hostname if MX lookups must be disabled.
 
 The error mailer can be used to bounce mail:
 
 .ti +5
-\fB\&.foo.org      error:mail for *.foo.org is not deliverable\fR
+\fB\&.example.com     error:mail for *.example.com is not deliverable\fR
 
-This causes all mail for \fIuser\fR@\fIanything\fB.foo.org\fR
+This causes all mail for \fIuser\fR@\fIanything\fB.example.com\fR
 to be bounced.
-.SH REGULAR EXPRESSION TABLES
+.SH "REGULAR EXPRESSION TABLES"
 .na
 .nf
 .ad
@@ -204,8 +210,9 @@ regular expression lookup table syntax, see \fBregexp_table\fR(5)
 or \fBpcre_table\fR(5).
 
 Each pattern is a regular expression that is applied to the entire
-domain being looked up. Thus, \fIsome.domain.hierarchy\fR is not
-broken up into parent domains.
+address being looked up. Thus, \fIsome.domain.hierarchy\fR is not
+looked up via its parent domains,
+nor is \fIuser+foo@domain\fR looked up as \fIuser@domain\fR.
 
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
@@ -213,15 +220,29 @@ pattern is found that matches the search string.
 Results are the same as with indexed file lookups, with
 the additional feature that parenthesized substrings from the
 pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
-.SH CONFIGURATION PARAMETERS
+.SH "TCP-BASED TABLES"
 .na
 .nf
 .ad
 .fi
-The following \fBmain.cf\fR parameters are especially relevant to
-this topic. See the Postfix \fBmain.cf\fR file for syntax details
-and for default values. Use the \fBpostfix reload\fR command after
-a configuration change.
+This section describes how the table lookups change when lookups
+are directed to a TCP-based server. For a description of the TCP
+client/server lookup protocol, see \fBtcp_table\fR(5).
+This feature is not available in Postfix version 2.1.
+
+Each lookup operation uses the entire recipient address once.  Thus,
+\fIsome.domain.hierarchy\fR is not looked up via its parent domains,
+nor is \fIuser+foo@domain\fR looked up as \fIuser@domain\fR.
+
+Results are the same as with indexed file lookups.
+.SH "CONFIGURATION PARAMETERS"
+.na
+.nf
+.ad
+.fi
+The following \fBmain.cf\fR parameters are especially relevant.
+The text below provides only a parameter summary. See
+postconf(5) for more details including examples.
 .IP \fBempty_address_recipient\fR
 The address that is looked up instead of the null sender address.
 .IP \fBparent_domain_matches_subdomains\fR
@@ -230,20 +251,30 @@ to match \fIsub.domain.tld\fR (as opposed to
 requiring \fI.domain.tld\fR patterns).
 .IP \fBtransport_maps\fR
 List of transport lookup tables.
-.SH SEE ALSO
+.SH "SEE ALSO"
 .na
 .nf
-postmap(1) create mapping table
-trivial-rewrite(8) rewrite and resolve addresses
-pcre_table(5) format of PCRE tables
-regexp_table(5) format of POSIX regular expression tables
-.SH LICENSE
+trivial-rewrite(8), rewrite and resolve addresses
+postconf(5), configuration parameters
+postmap(1), Postfix lookup table manager
+.SH "README FILES"
+.na
+.nf
+.ad
+.fi
+Use "\fBpostconf readme_directory\fR" or
+"\fBpostconf html_directory\fR" to locate this information.
+.na
+.nf
+DATABASE_README, Postfix lookup table overview
+FILTER_README, external content filter
+.SH "LICENSE"
 .na
 .nf
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH AUTHOR(S)
+.SH "AUTHOR(S)"
 .na
 .nf
 Wietse Venema

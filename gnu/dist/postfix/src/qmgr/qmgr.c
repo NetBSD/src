@@ -13,9 +13,9 @@
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
 /*
-/*	Mail addressed to the local \fBdouble-bounce\fR address is silently
-/*	discarded.  This stops potential loops caused by undeliverable
-/*	bounce notifications.
+/*	Mail addressed to the local \fBdouble-bounce\fR address is
+/*	logged and discarded.  This stops potential loops caused by
+/*	undeliverable bounce notifications.
 /* MAIL QUEUES
 /* .ad
 /* .fi
@@ -48,10 +48,14 @@
 /* .IP \fBdefer\fR
 /*	Per-recipient status information about why mail is delayed.
 /*	These files are maintained by the \fBdefer\fR(8) daemon.
+/* .IP \fBtrace\fR
+/*	Per-recipient status information as requested with the
+/*	Postfix "\fBsendmail -v\fR" or "\fBsendmail -bv" command\fR.
+/*	These files are maintained by the \fBtrace\fR(8) daemon.
 /* .PP
 /*	The \fBqmgr\fR daemon is responsible for asking the
-/*	\fBbounce\fR(8) or \fBdefer\fR(8) daemons to send non-delivery
-/*	reports.
+/*	\fBbounce\fR(8), \fBdefer\fR(8) or \fBtrace\fR(8) daemons to
+/*	send delivery reports.
 /* STRATEGIES
 /* .ad
 /* .fi
@@ -80,6 +84,10 @@
 /* .IP "\fBdestination status cache\fR"
 /*	The queue manager avoids unnecessary delivery attempts by
 /*	maintaining a short-term, in-memory list of unreachable destinations.
+/* .IP "\fBpreemptive message scheduling\fR"
+/*	The queue manager attempts to minimize the average per-recipient delay
+/*	while still preserving the correct per-message delays, using
+/*	a sophisticated preemptive message scheduling.
 /* TRIGGERS
 /* .ad
 /* .fi
@@ -137,88 +145,156 @@
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
-/*	The following \fBmain.cf\fR parameters are especially relevant to
-/*	this program. See the Postfix \fBmain.cf\fR file for syntax details
-/*	and for default values. Use the \fBpostfix reload\fR command after
+/*	Changes to \fBmain.cf\fR are not picked up automatically as qmgr(8)
+/*	processes are persistent. Use the \fBpostfix reload\fR command after
 /*	a configuration change.
-/* .SH Miscellaneous
-/* .ad
-/* .fi
-/* .IP \fBallow_min_user\fR
-/*	Do not bounce recipient addresses that begin with '-'.
-/* .IP \fBqueue_directory\fR
-/*	Top-level directory of the Postfix queue.
-/* .SH "Active queue controls"
-/* .ad
-/* .fi
-/* .IP \fBqmgr_clog_warn_time\fR
-/*	Minimal delay between warnings that a specific destination
-/*	is clogging up the active queue. Specify 0 to disable.
-/* .IP \fBqmgr_message_active_limit\fR
-/*	Limit the number of messages in the active queue.
-/* .IP \fBqmgr_message_recipient_limit\fR
-/*	Limit the number of in-memory recipients.
-/* .sp
-/*	This parameter also limits the size of the short-term, in-memory
-/*	destination cache.
-/* .SH "Timing controls"
-/* .ad
-/* .fi
-/* .IP \fBminimal_backoff_time\fR
-/*	Minimal time in seconds between delivery attempts
-/*	of a deferred message.
-/* .sp
-/*	This parameter also limits the time an unreachable destination
-/*	is kept in the short-term, in-memory destination status cache.
-/* .IP \fBmaximal_backoff_time\fR
-/*	Maximal time in seconds between delivery attempts
-/*	of a deferred message.
-/* .IP \fBmaximal_queue_lifetime\fR
-/*	Maximal time in days a message is queued
-/*	before it is sent back as undeliverable.
-/* .IP \fBqueue_run_delay\fR
-/*	Time in seconds between deferred queue scans. Queue scans do
-/*	not overlap.
-/* .IP \fBtransport_retry_time\fR
-/*	Time in seconds between attempts to contact a broken
-/*	delivery transport.
-/* .SH "Concurrency controls"
-/* .ad
-/* .fi
+/*
+/*	The text below provides only a parameter summary. See
+/*	postconf(5) for more details including examples.
+/*
 /*	In the text below, \fItransport\fR is the first field in a
 /*	\fBmaster.cf\fR entry.
-/* .IP "\fBqmgr_fudge_factor\fR (valid range: 10..100)"
-/*	The percentage of delivery resources that a busy mail system will
-/*	use up for delivery of a large mailing list message.
-/*	With 100%, delivery of one message does not begin before the previous
-/*	message has been delivered. This results in good performance for large
-/*	mailing lists, but results in poor response time for one-to-one mail.
-/*	With less than 100%, response time for one-to-one mail improves,
-/*	but large mailing list delivery performance suffers. In the worst
-/*	case, recipients near the beginning of a large list receive a burst
-/*	of messages immediately, while recipients near the end of that list
-/*	receive that same burst of messages a whole day later.
-/* .IP \fBinitial_destination_concurrency\fR
-/*	Initial per-destination concurrency level for parallel delivery
-/*	to the same destination.
-/* .IP \fBdefault_destination_concurrency_limit\fR
-/*	Default limit on the number of parallel deliveries to the same
-/*	destination.
-/* .IP \fItransport\fB_destination_concurrency_limit\fR
-/*	Limit on the number of parallel deliveries to the same destination,
-/*	for delivery via the named message \fItransport\fR.
-/* .SH "Recipient controls"
+/* COMPATIBILITY CONTROLS
 /* .ad
 /* .fi
-/* .IP \fBdefault_destination_recipient_limit\fR
-/*	Default limit on the number of recipients per message transfer.
-/* .IP \fItransport\fB_destination_recipient_limit\fR
-/*	Limit on the number of recipients per message transfer, for the
-/*	named message \fItransport\fR.
+/* .IP "\fBallow_min_user (no)\fR"
+/*	Allow a recipient address to have `-' as the first character.
+/* ACTIVE QUEUE CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBqmgr_clog_warn_time (300s)\fR"
+/*	The minimal delay between warnings that a specific destination is
+/*	clogging up the Postfix active queue.
+/* .IP "\fBqmgr_message_active_limit (20000)\fR"
+/*	The maximal number of messages in the active queue.
+/* .IP "\fBqmgr_message_recipient_limit (20000)\fR"
+/*	The maximal number of recipients held in memory by the Postfix
+/*	queue manager, and the maximal size of the size of the short-term,
+/*	in-memory "dead" destination status cache.
+/* .IP "\fBqmgr_message_recipient_minimum (10)\fR"
+/*	The minimal number of in-memory recipients for any message.
+/* .IP "\fBdefault_recipient_limit (10000)\fR"
+/*	The default per-transport upper limit on the number of in-memory
+/*	recipients.
+/* .IP "\fItransport\fB_recipient_limit ($default_recipient_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_extra_recipient_limit (1000)\fR"
+/*	The default value for the extra per-transport limit imposed on the
+/*	number of in-memory recipients.
+/* .IP "\fItransport\fB_extra_recipient_limit ($default_extra_recipient_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* DELIVERY CONCURRENCY CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBinitial_destination_concurrency (5)\fR"
+/*	The initial per-destination concurrency level for parallel delivery
+/*	to the same destination.
+/* .IP "\fBdefault_destination_concurrency_limit (20)\fR"
+/*	The default maximal number of parallel deliveries to the same
+/*	destination.
+/* .IP "\fItransport\fB_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* RECIPIENT SCHEDULING CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBdefault_destination_recipient_limit (50)\fR"
+/*	The default maximal number of recipients per message delivery.
+/* .IP "\fItransport\fB_destination_recipient_limit ($default_destination_recipient_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* MESSAGE SCHEDULING CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBdefault_delivery_slot_cost (5)\fR"
+/*	How often the Postfix queue manager's scheduler is allowed to
+/*	preempt delivery of one message with another.
+/* .IP "\fItransport\fB_delivery_slot_cost ($default_delivery_slot_cost)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_minimum_delivery_slots (3)\fR"
+/*	How many recipients a message must have in order to invoke the
+/*	Postfix queue manager's scheduling algorithm at all.
+/* .IP "\fItransport\fB_minimum_delivery_slots ($default_minimum_delivery_slots)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_delivery_slot_discount (50)\fR"
+/*	The default value for transport-specific _delivery_slot_discount
+/*	settings.
+/* .IP "\fItransport\fB_delivery_slot_discount ($default_delivery_slot_discount)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_delivery_slot_loan (3)\fR"
+/*	The default value for transport-specific _delivery_slot_loan
+/*	settings.
+/* .IP "\fItransport\fB_delivery_slot_loan ($default_delivery_slot_loan)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* OTHER RESOURCE AND RATE CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBminimal_backoff_time (1000s)\fR"
+/*	The minimal time between attempts to deliver a deferred message.
+/* .IP "\fBmaximal_backoff_time (4000s)\fR"
+/*	The maximal time between attempts to deliver a deferred message.
+/* .IP "\fBmaximal_queue_lifetime (5d)\fR"
+/*	The maximal time a message is queued before it is sent back as
+/*	undeliverable.
+/* .IP "\fBqueue_run_delay (1000s)\fR"
+/*	The time between deferred queue scans by the queue manager.
+/* .IP "\fBtransport_retry_time (60s)\fR"
+/*	The time between attempts by the Postfix queue manager to contact
+/*	a malfunctioning message delivery transport.
+/* .PP
+/*	Available in Postfix version 2.1 and later:
+/* .IP "\fBbounce_queue_lifetime (5d)\fR"
+/*	The maximal time a bounce message is queued before it is considered
+/*	undeliverable.
+/* MISCELLANEOUS CONTROLS
+/* .ad
+/* .fi
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
+/* .IP "\fBdaemon_timeout (18000s)\fR"
+/*	How much time a Postfix daemon process may take to handle a
+/*	request before it is terminated by a built-in watchdog timer.
+/* .IP "\fBdefer_transports (empty)\fR"
+/*	The names of message delivery transports that should not be delivered
+/*	to unless someone issues "\fBsendmail -q\fR" or equivalent.
+/* .IP "\fBhelpful_warnings (yes)\fR"
+/*	Log warnings about problematic configuration settings, and provide
+/*	helpful suggestions.
+/* .IP "\fBipc_timeout (3600s)\fR"
+/*	The time limit for sending or receiving information over an internal
+/*	communication channel.
+/* .IP "\fBprocess_id (read-only)\fR"
+/*	The process ID of a Postfix command or daemon process.
+/* .IP "\fBprocess_name (read-only)\fR"
+/*	The process name of a Postfix command or daemon process.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
+/* .IP "\fBsyslog_facility (mail)\fR"
+/*	The syslog facility of Postfix logging.
+/* .IP "\fBsyslog_name (postfix)\fR"
+/*	The mail system name that is prepended to the process name in syslog
+/*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* FILES
+/*	/var/spool/postfix/incoming, incoming queue
+/*	/var/spool/postfix/active, active queue
+/*	/var/spool/postfix/deferred, deferred queue
+/*	/var/spool/postfix/bounce, non-delivery status
+/*	/var/spool/postfix/defer, non-delivery status
+/*	/var/spool/postfix/trace, delivery status
 /* SEE ALSO
+/*	trivial-rewrite(8), address routing
+/*	bounce(8), delivery status reports
+/*	postconf(5) configuration parameters
 /*	master(8), process manager
 /*	syslogd(8) system logging
-/*	trivial-rewrite(8), address routing
+/* README FILES
+/* .ad
+/* .fi
+/*	Use "\fBpostconf readme_directory\fR" or
+/*	"\fBpostconf html_directory\fR" to locate this information.
+/* .na
+/* .nf
+/*	SCHEDULER_README, scheduling algorithm
+/*	QSHAPE_README, Postfix queue analysis
 /* LICENSE
 /* .ad
 /* .fi
@@ -228,6 +304,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Scheduler enhancements:
+/*	Patrik Rak
+/*	Modra 6
+/*	155 00, Prague, Czech Republic
 /*--*/
 
 /* System library. */
@@ -252,6 +333,7 @@
 #include <mail_params.h>
 #include <mail_proto.h>			/* QMGR_SCAN constants */
 #include <mail_flow.h>
+#include <flush_clnt.h>
 
 /* Master process interface */
 
@@ -269,17 +351,24 @@ int     var_queue_run_delay;
 int     var_min_backoff_time;
 int     var_max_backoff_time;
 int     var_max_queue_time;
+int     var_dsn_queue_time;
 int     var_qmgr_active_limit;
 int     var_qmgr_rcpt_limit;
+int     var_qmgr_msg_rcpt_limit;
+int     var_xport_rcpt_limit;
+int     var_stack_rcpt_limit;
+int     var_delivery_slot_cost;
+int     var_delivery_slot_loan;
+int     var_delivery_slot_discount;
+int     var_min_delivery_slots;
 int     var_init_dest_concurrency;
 int     var_transport_retry_time;
 int     var_dest_con_limit;
 int     var_dest_rcpt_limit;
 char   *var_defer_xports;
 bool    var_allow_min_user;
-int     var_qmgr_fudge;
-int     var_local_rcpt_lim;		/* XXX */
-int     var_local_con_lim;		/* XXX */
+int     var_local_con_lim;
+int     var_local_rcpt_lim;
 int     var_proc_limit;
 bool    var_verp_bounce_off;
 bool    var_sender_routing;
@@ -388,16 +477,13 @@ static int qmgr_loop(char *unused_name, char **unused_argv)
 
     /*
      * Let some new blood into the active queue when the queue size is
-     * smaller than some configurable limit, and when the number of in-core
-     * recipients does not exceed some configurable limit. When the system is
-     * under heavy load, favor new mail over old mail.
+     * smaller than some configurable limit. When the system is under heavy
+     * load, favor new mail over old mail.
      */
-    if (qmgr_message_count < var_qmgr_active_limit
-	&& qmgr_recipient_count < var_qmgr_rcpt_limit)
+    if (qmgr_message_count < var_qmgr_active_limit)
 	if ((in_path = qmgr_scan_next(qmgr_incoming)) != 0)
 	    in_feed = qmgr_active_feed(qmgr_incoming, in_path);
-    if (qmgr_message_count < var_qmgr_active_limit
-	&& qmgr_recipient_count < var_qmgr_rcpt_limit)
+    if (qmgr_message_count < var_qmgr_active_limit)
 	if ((df_path = qmgr_scan_next(qmgr_deferred)) != 0)
 	    qmgr_active_feed(qmgr_deferred, df_path);
 
@@ -425,16 +511,35 @@ static int qmgr_loop(char *unused_name, char **unused_argv)
 
 static void pre_accept(char *unused_name, char **unused_argv)
 {
-    if (dict_changed()) {
-	msg_info("table has changed -- exiting");
+    const char *table;
+
+    if ((table = dict_changed_name()) != 0) {
+	msg_info("table %s has changed -- restarting", table);
 	exit(0);
     }
 }
 
+/* qmgr_pre_init - pre-jail initialization */
+
+static void qmgr_pre_init(char *unused_name, char **unused_argv)
+{
+    flush_init();
+}
+
 /* qmgr_post_init - post-jail initialization */
 
-static void qmgr_post_init(char *unused_name, char **unused_argv)
+static void qmgr_post_init(char *name, char **unused_argv)
 {
+
+    /*
+     * Backwards compatibility.
+     */
+    if (strcmp(var_procname, "nqmgr") == 0) {
+	msg_warn("please update the %s/%s file; the new queue manager",
+		 var_config_dir, MASTER_CONF_FILE);
+	msg_warn("(old name: nqmgr) has become the standard queue manager (new name: qmgr)");
+	msg_warn("support for the name old name (nqmgr) will be removed from Postfix");
+    }
 
     /*
      * Sanity check.
@@ -479,6 +584,7 @@ int     main(int argc, char **argv)
 	VAR_MIN_BACKOFF_TIME, DEF_MIN_BACKOFF_TIME, &var_min_backoff_time, 1, 0,
 	VAR_MAX_BACKOFF_TIME, DEF_MAX_BACKOFF_TIME, &var_max_backoff_time, 1, 0,
 	VAR_MAX_QUEUE_TIME, DEF_MAX_QUEUE_TIME, &var_max_queue_time, 0, 8640000,
+	VAR_DSN_QUEUE_TIME, DEF_DSN_QUEUE_TIME, &var_dsn_queue_time, 0, 8640000,
 	VAR_XPORT_RETRY_TIME, DEF_XPORT_RETRY_TIME, &var_transport_retry_time, 1, 0,
 	VAR_QMGR_CLOG_WARN_TIME, DEF_QMGR_CLOG_WARN_TIME, &var_qmgr_clog_warn_time, 0, 0,
 	0,
@@ -486,10 +592,16 @@ int     main(int argc, char **argv)
     static CONFIG_INT_TABLE int_table[] = {
 	VAR_QMGR_ACT_LIMIT, DEF_QMGR_ACT_LIMIT, &var_qmgr_active_limit, 1, 0,
 	VAR_QMGR_RCPT_LIMIT, DEF_QMGR_RCPT_LIMIT, &var_qmgr_rcpt_limit, 1, 0,
+	VAR_QMGR_MSG_RCPT_LIMIT, DEF_QMGR_MSG_RCPT_LIMIT, &var_qmgr_msg_rcpt_limit, 1, 0,
+	VAR_XPORT_RCPT_LIMIT, DEF_XPORT_RCPT_LIMIT, &var_xport_rcpt_limit, 0, 0,
+	VAR_STACK_RCPT_LIMIT, DEF_STACK_RCPT_LIMIT, &var_stack_rcpt_limit, 0, 0,
+	VAR_DELIVERY_SLOT_COST, DEF_DELIVERY_SLOT_COST, &var_delivery_slot_cost, 0, 0,
+	VAR_DELIVERY_SLOT_LOAN, DEF_DELIVERY_SLOT_LOAN, &var_delivery_slot_loan, 0, 0,
+	VAR_DELIVERY_SLOT_DISCOUNT, DEF_DELIVERY_SLOT_DISCOUNT, &var_delivery_slot_discount, 0, 100,
+	VAR_MIN_DELIVERY_SLOTS, DEF_MIN_DELIVERY_SLOTS, &var_min_delivery_slots, 0, 0,
 	VAR_INIT_DEST_CON, DEF_INIT_DEST_CON, &var_init_dest_concurrency, 1, 0,
 	VAR_DEST_CON_LIMIT, DEF_DEST_CON_LIMIT, &var_dest_con_limit, 0, 0,
 	VAR_DEST_RCPT_LIMIT, DEF_DEST_RCPT_LIMIT, &var_dest_rcpt_limit, 0, 0,
-	VAR_QMGR_FUDGE, DEF_QMGR_FUDGE, &var_qmgr_fudge, 10, 100,
 	VAR_LOCAL_RCPT_LIMIT, DEF_LOCAL_RCPT_LIMIT, &var_local_rcpt_lim, 0, 0,
 	VAR_LOCAL_CON_LIMIT, DEF_LOCAL_CON_LIMIT, &var_local_con_lim, 0, 0,
 	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
@@ -498,6 +610,7 @@ int     main(int argc, char **argv)
     static CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_ALLOW_MIN_USER, DEF_ALLOW_MIN_USER, &var_allow_min_user,
 	VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
+	VAR_SENDER_ROUTING, DEF_SENDER_ROUTING, &var_sender_routing,
 	0,
     };
 
@@ -511,6 +624,7 @@ int     main(int argc, char **argv)
 			MAIL_SERVER_STR_TABLE, str_table,
 			MAIL_SERVER_BOOL_TABLE, bool_table,
 			MAIL_SERVER_TIME_TABLE, time_table,
+			MAIL_SERVER_PRE_INIT, qmgr_pre_init,
 			MAIL_SERVER_POST_INIT, qmgr_post_init,
 			MAIL_SERVER_LOOP, qmgr_loop,
 			MAIL_SERVER_PRE_ACCEPT, pre_accept,

@@ -1,0 +1,185 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix + Maildrop Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix + Maildrop Howto</h1>
+
+<hr>
+
+<h2> Introduction </h2>
+
+<p> This document discusses various options to plug the maildrop
+delivery agent into Postfix: </p>
+
+<ul>
+
+<li><a href="#direct">Direct delivery without the local delivery agent</a>
+
+<li><a href="#indirect">Indirect delivery via the local delivery agent</a>
+
+<li><a href="#credits">Credits</a>
+
+</ul>
+
+<h2><a name="direct">Direct delivery without the local delivery agent</a></h2>
+
+<p> Postfix can be configured to deliver mail directly to maildrop,
+without using the local(8) delivery agent as an intermediate.  This
+means that you do not get local aliases(5) expansion or $HOME/.forward
+file processing. You would typically do this for hosted domains with 
+recipients that don't have UNIX home directories. </p>
+
+<p> The following example shows how to use maildrop for some.domain
+and for someother.domain.  </p>
+
+<blockquote>
+<pre>
+ 1 /etc/postfix/main.cf:
+ 2     maildrop_destination_recipient_limit = 1
+ 3     virtual_mailbox_domains = some.domain someother.domain
+ 4     virtual_transport = maildrop
+ 5     virtual_mailbox_maps = hash:/etc/postfix/virtual_mailbox
+ 6     virtual_alias_maps = hash:/etc/postfix/virtual_alias
+ 7 
+ 8 /etc/postfix/virtual_mailbox:
+ 9     user1@some.domain        <i>...text here does not matter...</i>
+10     user2@some.domain        <i>...text here does not matter...</i>
+11     user3@someother.domain   <i>...text here does not matter...</i>
+12 
+13 /etc/postfix/virtual_alias:
+14     postmaster@some.domain           postmaster
+15     postmaster@someother.domain      postmaster
+</pre>
+</blockquote>
+
+<ul>
+
+<li> <p> Line 2 is needed so that Postfix will provide one recipient
+at a time to the maildrop delivery agent.  </p>
+
+<li> <p> Line 3 informs Postfix that some.domain and someother.domain
+are so-called virtual mailbox domains.
+Instead of listing the names in main.cf you can also
+list them in a file; see the virtual_mailbox_domains documentation for
+details. </p>
+
+<li> <p> Line 4 specifies that mail for some.domain and someother.domain
+should be delivered by the maildrop delivery agent. </p>
+
+<li> <p> Lines 5 and 8-11 specify what recipients the Postfix SMTP
+server should receive mail for. This prevents the mail queue from
+becoming clogged with undeliverable messages. Specify an empty
+value ("virtual_mailbox_maps =") to disable this feature. </p>
+
+<li> <p> Lines 6 and 13-15 redirect mail for postmaster to the
+local postmaster. RFC 821 requires that every domain has a postmaster
+address. </p>
+
+</ul>
+
+<p> The vmail userid as used below is the user that maildrop should
+run as.  This would be the owner of the virtual mailboxes if they
+all have the same owner.  If maildrop is suid (see maildrop
+documentation), then maildrop will change to the appropriate owner
+to deliver the mail.  </p>
+
+<p> Note: Do not use the postfix user as the maildrop user. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/master.cf:
+    maildrop  unix  -       n       n       -       -       pipe
+      flags=DRhu user=vmail argv=/path/to/maildrop -d ${recipient}
+</pre>
+</blockquote>
+
+<p> If you want to support user+extension@domain style addresses,
+use the following instead: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/master.cf:
+    maildrop  unix  -       n       n       -       -       pipe
+      flags=DRhu user=vmail argv=/path/to/maildrop 
+      -d ${user}@${nexthop} ${extension} ${recipient} ${user} ${nexthop}
+</pre>
+</blockquote>
+
+<p> The mail is delivered to ${user}@${nexthop} (match key for
+maildrop userdb lookup). The ${extension} and the other address
+components are available to maildrop rules as $1, $2, $3, ...  and
+can be omitted from master.cf or ignored by maildrop when not
+needed. </p>
+
+<h2><a name="indirect">Indirect delivery via the local delivery agent</a></h2>
+
+<p> Postfix can be configured to deliver mail to maildrop via the
+local delivery agent. This is slightly less efficient than the
+"direct" approach discussed above, but gives you the convenience
+of local aliases(5) expansion and $HOME/.forward file processing. 
+You would typically use this for domains that are listed in
+mydestination and that have users with a UNIX system account. </p>
+
+<p> To configure maildrop delivery for all UNIX system accounts: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    mailbox_command = /path/to/maildrop -d ${USER}
+</pre>
+</blockquote>
+
+<p> Note: ${USER} is spelled in upper case. </p>
+
+<p> To enable maildrop delivery for specific users only, you can
+use the Postfix local(8) delivery agent's mailbox_command_maps feature:
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    mailbox_command_maps = /etc/postfix/mailbox_commands
+
+/etc/postfix/mailbox_commands:
+    you    /path/to/maildrop -d ${USER}
+</pre>
+</blockquote>
+
+<p> Maildrop delivery for specific users is also possible by
+invoking it from the user's $HOME/.forward file: </p>
+
+<blockquote>
+<pre>
+/home/you/.forward:
+    "|/path/to/maildrop -d ${USER}"
+</pre>
+</blockquote>
+
+<h2><a name="credits">Credits</a></h2>
+
+<ul>
+
+<li> The original text was kindly provided by Russell Mosemann.
+
+<li> Victor Duchovni provided tips for supporting user+foo@domain
+addresses.
+
+<li> Tonni Earnshaw contributed text about delivery via the local(8)
+delivery agent.
+
+</ul>
+
+</body>
+
+</html>

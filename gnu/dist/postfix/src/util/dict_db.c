@@ -352,7 +352,7 @@ static int dict_db_delete(DICT *dict, const char *name)
 
 /* dict_db_sequence - traverse the dictionary */
 
-static int dict_db_sequence(DICT *dict, const int function,
+static int dict_db_sequence(DICT *dict, int function,
 			            const char **key, const char **value)
 {
 #if DB_VERSION_MAJOR > 1

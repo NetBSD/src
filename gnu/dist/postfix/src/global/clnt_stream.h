@@ -21,7 +21,7 @@
   */
 typedef struct CLNT_STREAM CLNT_STREAM;
 
-extern CLNT_STREAM *clnt_stream_create(const char *, const char *, int);
+extern CLNT_STREAM *clnt_stream_create(const char *, const char *, int, int);
 extern VSTREAM *clnt_stream_access(CLNT_STREAM *);
 extern void clnt_stream_recover(CLNT_STREAM *);
 extern void clnt_stream_free(CLNT_STREAM *);

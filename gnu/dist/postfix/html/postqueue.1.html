@@ -1,13 +1,18 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - postqueue(1) </title>
+</head> <body> <pre>
 POSTQUEUE(1)                                         POSTQUEUE(1)
 
 <b>NAME</b>
        postqueue - Postfix queue control
 
 <b>SYNOPSIS</b>
-       <b>postqueue</b> [<b>-c</b> <i>config_dir</i>] <b>-f</b>
-       <b>postqueue</b> [<b>-c</b> <i>config_dir</i>] <b>-p</b>
-       <b>postqueue</b> [<b>-c</b> <i>config_dir</i>] <b>-s</b> <i>site</i>
+       <b>postqueue</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-f</b>
+       <b>postqueue</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-p</b>
+       <b>postqueue</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-s</b> <i>site</i>
 
 <b>DESCRIPTION</b>
        The  <b>postqueue</b>  program implements the Postfix user inter-
@@ -19,7 +24,7 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
 
        The following options are recognized:
 
-       <b>-c</b> <i>config_dir</i>
+       <b>-c</b> <i>config</i><b>_</b><i>dir</i>
               The <b>main.cf</b> configuration  file  is  in  the  named
               directory  instead  of  the  default  configuration
               directory. See  also  the  MAIL_CONFIG  environment
@@ -28,8 +33,12 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
        <b>-f</b>     Flush  the  queue:  attempt  to  deliver all queued
               mail.
 
-              This option implements the traditional <b>sendmail</b>  <b>-q</b>
+              This option implements the traditional <b>sendmail  -q</b>
               command,  by contacting the Postfix <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon.
+
+              Warning:  flushing  undeliverable  mail  frequently
+              will  result  in  poor  delivery performance of all
+              other mail.
 
        <b>-p</b>     Produce a traditional sendmail-style queue listing.
               This  option  implements the traditional <b>mailq</b> com-
@@ -75,51 +84,83 @@ POSTQUEUE(1)                                         POSTQUEUE(1)
 
 <b>ENVIRONMENT</b>
        MAIL_CONFIG
-              Directory with the <b>main.cf</b> file.
+              Directory with the <b>main.cf</b> file. In order to  avoid
+              exploitation  of  set-group  ID  privileges, a non-
+              standard directory is allowed only if:
 
-              In order to  avoid  exploitation  of  set-group  ID
-              privileges, it is not possible to specify arbitrary
-              directory names.
+              <b>o</b>      The name is listed in the  standard  <b>main.cf</b>
+                     file  with  the <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>
+                     configuration parameter.
 
-              A non-standard directory is  allowed  only  if  the
-              name is listed in the standard <b>main.cf</b> file, in the
-              <b>alternate</b><i>_</i><b>config</b><i>_</i><b>directories</b> configuration  parame-
-              ter value.
+              <b>o</b>      The command is invoked by the super-user.
 
-              Only  the superuser is allowed to specify arbitrary
-              directory names.
+<b>CONFIGURATION PARAMETERS</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to this program.  The text below provides only a parameter
+       summary. See <a href="postconf.5.html">postconf(5)</a> for more details including  exam-
+       ples.
+
+       <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
+              A  list of non-default Postfix configuration direc-
+              tories that may be specified with "-c <a href="postconf.5.html#config_directory">config_direc</a>-
+              <a href="postconf.5.html#config_directory">tory</a>"  on  the command line, or via the MAIL_CONFIG
+              environment parameter.
+
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
+
+       <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
+              The  location  of  all  postfix administrative com-
+              mands.
+
+       <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
+              Optional list of destinations that are eligible for
+              per-destination  logfiles  with mail that is queued
+              to those destinations.
+
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The list of environment parameters that  a  Postfix
+              process  will import from a non-Postfix parent pro-
+              cess.
+
+       <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
+              The location of the Postfix top-level queue  direc-
+              tory.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The  mail system name that is prepended to the pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
+
+       <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
+              The  time  limit for sending a trigger to a Postfix
+              daemon (for example, the <a href="pickup.8.html">pickup(8)</a> or <a href="qmgr.8.html">qmgr(8)</a>  dae-
+              mon).
 
 <b>FILES</b>
        /var/spool/postfix, mail queue
-       /etc/postfix, configuration files
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       <b>import</b><i>_</i><b>environment</b>
-              List of names of environment parameters that can be
-              imported from non-Postfix processes.
+<b>SEE ALSO</b>
+       <a href="qmgr.8.html">qmgr(8)</a>, queue manager
+       <a href="showq.8.html">showq(8)</a>, list mail queue
+       <a href="flush.8.html">flush(8)</a>, fast flush service
+       <a href="sendmail.1.html">sendmail(1)</a>, Sendmail-compatible user interface
+       <a href="postsuper.1.html">postsuper(1)</a>, privileged queue operations
 
-       <b>queue</b><i>_</i><b>directory</b>
-              Top-level  directory  of the Postfix queue. This is
-              also the root directory of Postfix daemons that run
-              chrooted.
-
-       <b>fast</b><i>_</i><b>flush</b><i>_</i><b>domains</b>
-              List of domains that will receive "fast flush" ser-
-              vice (default: all  domains  that  this  system  is
-              willing  to relay mail to). This list specifies the
-              domains that  Postfix  accepts  in  the  SMTP  <b>ETRN</b>
-              request and in the <b>sendmail</b> <b>-qR</b> command.
-
-<b>SEE</b> <b>ALSO</b>
-       <a href="sendmail.1.html">sendmail(1)</a> sendmail-compatible user interface
-       <a href="postsuper.1.html">postsuper(1)</a> privileged queue operations
-       <a href="qmgr.8.html">qmgr(8)</a> queue manager
-       <a href="showq.8.html">showq(8)</a> list mail queue
-       <a href="flush.8.html">flush(8)</a> fast flush service
+<b>README FILES</b>
+       <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
+
+<b>HISTORY</b>
+       The  postqueue command was introduced with Postfix version
+       1.1.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

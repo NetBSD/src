@@ -85,6 +85,11 @@ int     make_dirs(const char *path, int perms)
 		break;
 
 	    /*
+	     * mkdir(foo) fails with EEXIST if foo is a symlink.
+	     */
+#if 0
+
+	    /*
 	     * Create a new directory. Unfortunately, mkdir(2) has no
 	     * equivalent of open(2)'s O_CREAT|O_EXCL safety net, so we must
 	     * require that the parent directory is not world writable.
@@ -99,6 +104,7 @@ int     make_dirs(const char *path, int perms)
 		ret = -1;
 		break;
 	    }
+#endif
 	    if ((ret = mkdir(saved_path, perms)) < 0) {
 		if (errno != EEXIST)
 		    break;

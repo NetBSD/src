@@ -25,6 +25,7 @@
 #define MAIL_QUEUE_INCOMING	"incoming"
 #define MAIL_QUEUE_ACTIVE	"active"
 #define MAIL_QUEUE_DEFERRED	"deferred"
+#define MAIL_QUEUE_TRACE	"trace"
 #define MAIL_QUEUE_DEFER	"defer"
 #define MAIL_QUEUE_BOUNCE	"bounce"
 #define MAIL_QUEUE_CORRUPT	"corrupt"

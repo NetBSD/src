@@ -1,0 +1,141 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix MySQL Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix MySQL Howto</h1>
+
+<hr>
+
+<h2>Introduction</h2>
+
+<p> The Postfix mysql map type allows you to hook up Postfix to a
+MySQL database. This implementation allows for multiple mysql
+databases: you can use one for a <a href="virtual.5.html">virtual(5)</a> table, one for an
+<a href="access.5.html">access(5)</a> table, and one for an <a href="aliases.5.html">aliases(5)</a> table if you want.  You
+can specify multiple servers for the same database, so that Postfix
+can switch to a good database server if one goes bad.  </p>
+
+<p> Busy mail servers using mysql maps will generate lots of
+concurrent mysql clients, so the mysql server(s) should be run with
+this fact in mind.  You can reduce the number of concurrent mysql
+clients by using the Postfix <a href="proxymap.8.html">proxymap(8)</a> service. </p>
+
+<h2>Building Postfix with MySQL support</h2>
+
+<p> Note: to use mysql with Debian GNU/Linux's Postfix, all you
+need is to install the postfix-mysql package and you're done.
+There is no need to recompile Postfix. </p>
+
+<p> The Postfix MySQL client utilizes the mysql client library,
+which can be obtained from: </p>
+
+<blockquote>
+    <p> <a href="http://www.mysql.com/downloads/">http://www.mysql.com/downloads/</a> <br>
+    <a href="http://sourceforge.net/projects/mysql/">http://sourceforge.net/projects/mysql/</a> </p>
+</blockquote>
+
+<p> In order to build Postfix with mysql map support, you will need to add
+-DHAS_MYSQL and -I for the directory containing the mysql headers, and
+the mysqlclient library (and libm) to AUXLIBS, for example: </p>
+
+<blockquote>
+<pre>
+make -f Makefile.init makefiles \
+    'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+    'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+</pre>
+</blockquote>
+
+<p> Then, just run 'make'. This requires libz, the compression
+library.  Older mysql implementations build without libz. </p>
+
+<h2>Using MySQL tables</h2>
+
+<p> Once Postfix is built with mysql support, you can specify a
+map type in main.cf like this: </p>
+
+<blockquote>
+<pre>
+<a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="mysql_table.5.html">mysql</a>:/etc/postfix/mysql-aliases.cf
+</pre>
+</blockquote>
+
+<p> The file /etc/postfix/mysql-aliases.cf specifies lots of
+information telling Postfix how to reference the mysql database.
+For a complete description, see the <a href="mysql_table.5.html">mysql_table(5)</a> manual page. </p>
+
+<h2>Example: local aliases </h2>
+
+<pre>
+#
+# mysql config file for <a href="local.8.html">local(8)</a> <a href="aliases.5.html">aliases(5)</a> lookups
+#
+
+# The user name and password to log into the mysql server.
+user = someone
+password = some_password
+
+# The database name on the servers.
+dbname = customer_database
+
+# The table name.
+table = mxaliases
+
+# Query components, see below.
+select_field = forw_addr
+where_field = alias
+
+# You may specify additional_conditions or leave this empty.
+additional_conditions = and status = 'paid'
+
+# The above variables will result in a query of the form:
+#
+# select forw_addr from mxaliases where alias = '$lookup' and status = 'paid'
+#
+# ($lookup is escaped so if it contains single quotes or other odd
+# characters, it will not cause trouble).
+</pre>
+
+<h2>Additional notes</h2>
+
+<p> The MySQL configuration interface setup allows for multiple
+mysql databases: you can use one for a virtual table, one for an
+access table, and one for an aliases table if you want. </p>
+
+<p> Since sites that have a need for multiple mail exchangers may
+enjoy the convenience of using a networked mailer database, but do
+not want to introduce a single point of failure to their system,
+we've included the ability to have Postfix reference multiple hosts
+for access to a single mysql map.  This will work if sites set up
+mirrored mysql databases on two or more hosts.  Whenever queries
+fail with an error at one host, the rest of the hosts will be tried
+in random order.  If no mysql server hosts are reachable, then mail
+will be deferred until at least one of those hosts is reachable.
+</p>
+
+<h2>Credits</h2>
+
+<ul>
+
+<li> The initial version was contributed by Scott Cotton and Joshua
+Marcus, IC Group, Inc.
+
+<li>Liviu Daia revised the configuration interface and added the
+main.cf configuration feature.
+
+</ul>
+
+</body>
+
+</html>

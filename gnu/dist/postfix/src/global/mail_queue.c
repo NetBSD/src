@@ -285,6 +285,11 @@ int     mail_queue_id_ok(const char *queue_id)
 {
     const char *cp;
 
+    /*
+     * A file name is either a queue ID (short alphanumeric string in
+     * time+inum form) or a fast flush service logfile name (destination
+     * domain name with non-alphanumeric characters replaced by "_").
+     */
     if (*queue_id == 0 || strlen(queue_id) > VALID_HOSTNAME_LEN)
 	return (0);
 

@@ -3,9 +3,6 @@ SRCS	= dns_lookup.c dns_rr.c dns_strerror.c dns_strtype.c
 OBJS	= dns_lookup.o dns_rr.o dns_strerror.o dns_strtype.o
 HDRS	= dns.h
 TESTSRC	= test_dns_lookup.c test_alias_token.c
-WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 INCL	=
