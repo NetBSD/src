@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.4 2002/07/05 18:45:20 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.5 2003/01/13 20:26:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ fakeintr(void *arg)
 }
 
 void setleds(int);
+
+#define RECINTR 1			/* handle nested interrupts */
 
 /*
  * external interrupt handler
