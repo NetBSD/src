@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 2001/01/20 17:14:20 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 2001/01/22 22:10:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -46,7 +46,7 @@
 
 #ifndef _LOCORE
 
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 
 /*
  * System stack frames.

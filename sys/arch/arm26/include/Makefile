@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2000/08/22 21:27:21 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.4 2001/01/22 22:10:44 bjh21 Exp $
 
 KDIR=	/sys/arch/arm26/include
 INCSDIR= /usr/include/arm26
 
-INCS=	ansi.h aout_machdep.h armreg.h asm.h boot.h bswap.h bus.h cdefs.h \
+INCS=	ansi.h aout_machdep.h asm.h boot.h bswap.h bus.h cdefs.h \
 	cpu.h db_machdep.h disklabel.h \
 	disklabel_acorn.h elf_machdep.h endian.h endian_machdep.h float.h \
 	fp.h frame.h ieee.h ieeefp.h int_types.h intr.h ipkdb.h irq.h \
