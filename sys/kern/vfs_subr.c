@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.66 1997/04/25 02:43:10 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.67 1997/05/08 10:21:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -1525,7 +1525,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	
 	/* Otherwise, check the owner. */
 	if (cred->cr_uid == uid) {
-		if (acc_mode & VEXEC)
+		if (acc_mode & (VEXEC|VLOOKUP))
 			mask |= S_IXUSR;
 		if (acc_mode & VREAD)
 			mask |= S_IRUSR;
@@ -1536,7 +1536,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	
 	/* Otherwise, check the groups. */
 	if (cred->cr_gid == gid || groupmember(gid, cred)) {
-		if (acc_mode & VEXEC)
+		if (acc_mode & (VEXEC|VLOOKUP))
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)
 			mask |= S_IRGRP;
@@ -1546,7 +1546,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	}
 	
 	/* Otherwise, check everyone else. */
-	if (acc_mode & VEXEC)
+	if (acc_mode & (VEXEC|VLOOKUP))
 		mask |= S_IXOTH;
 	if (acc_mode & VREAD)
 		mask |= S_IROTH;
