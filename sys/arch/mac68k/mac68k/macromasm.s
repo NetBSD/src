@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.15 1997/04/15 07:02:50 scottr Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.16 1997/05/12 07:29:33 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -104,6 +104,7 @@
 	loglob(VBLQueue, 0x160)		/* Vertical blanking Queue, unused ? */
 	loglob(VBLQueue_head, 0x162)	/* Vertical blanking Queue, head */
 	loglob(VBLQueue_tail, 0x166)	/* Vertical blanking Queue, tail */
+	loglob(jDTInstall, 0xd9c)	/* Deferred task mgr trap handler */
 
 	loglob(InitEgretJTVec, 0x2010)	/* pointer to a jump table for */
 					/* InitEgret on AV machines */
