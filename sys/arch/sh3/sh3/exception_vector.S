@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.12 2003/11/24 04:16:51 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.13 2003/11/24 23:24:18 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.12 2003/11/24 04:16:51 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.13 2003/11/24 23:24:18 uwe Exp $")
 
 
 /*
@@ -71,7 +71,7 @@ _C_LABEL(sh_vector_generic):
 	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
 	/* Get curlwp */
-	mov.l	3f,	r1
+	mov.l	_L.curlwp, r1
 	mov.l	@r1,	r4	/* 1st arg */
 	/* Get TEA */
 	MOV	(TEA,	r1)
@@ -118,7 +118,7 @@ _C_LABEL(sh_vector_generic):
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
-3:		.long	_C_LABEL(curlwp)
+_L.curlwp:	.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
 REG_SYMBOL(TEA)
