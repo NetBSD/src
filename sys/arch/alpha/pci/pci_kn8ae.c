@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.8 1998/03/23 06:32:39 mjacob Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.9 1998/04/15 00:49:58 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.8 1998/03/23 06:32:39 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.9 1998/04/15 00:49:58 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -227,6 +227,20 @@ dec_kn8ae_intr_disestablish(ccv, cookie)
 	(void) splx(s);
 }
 
+int
+kn8ae_spurious(arg)
+	void *arg;
+{
+	int ionode, hose, device;
+	ionode = DWLPX_MVEC_IONODE(arg);
+	hose = DWLPX_MVEC_HOSE(arg);
+	device = DWLPX_MVEC_PCISLOT(arg);
+	printf("Spurious Interrupt from TLSB Node %d Hose %d Slot %d\n",
+	    ionode + 4, hose, device);
+	return (-1);
+}
+
+
 void
 kn8ae_iointr(framep, vec)
 	void *framep;
@@ -235,6 +249,11 @@ kn8ae_iointr(framep, vec)
 	struct vectab *vp;
 	int ionode, hose, device;
 	if ((vec & DWLPX_VEC_EMARK) != 0) {
+#ifdef	EVCNT_COUNTERS
+		kn8ae_intr_evcnt.ev_count++;
+#else
+		intrcnt[INTRCNT_KN8AE_IRQ]++;
+#endif
 		dwlpx_iointr(framep, vec);
 		return;
 	}
@@ -242,14 +261,14 @@ kn8ae_iointr(framep, vec)
 		panic("kn8ae_iointr: vec 0x%x\n", vec);
 		/* NOTREACHED */
 	}
-#ifdef	EVCNT_COUNTERS
-	kn8ae_intr_evcnt.ev_count++;
-#else
-	;	/* XXX */
-#endif
 	ionode = DWLPX_MVEC_IONODE(vec);
 	hose = DWLPX_MVEC_HOSE(vec);
 	device = DWLPX_MVEC_PCISLOT(vec);
+#ifdef	EVCNT_COUNTERS
+	kn8ae_intr_evcnt.ev_count++;
+#else
+	intrcnt[INTRCNT_KN8AE_IRQ+1]++;
+#endif
 
 	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
 	    hose < 0 || hose >= DWLPX_NHOSE ||
@@ -265,20 +284,6 @@ kn8ae_iointr(framep, vec)
 #endif
 	}
 }
-
-int
-kn8ae_spurious(arg)
-	void *arg;
-{
-	int ionode, hose, device;
-	ionode = DWLPX_MVEC_IONODE(arg);
-	hose = DWLPX_MVEC_HOSE(arg);
-	device = DWLPX_MVEC_PCISLOT(arg);
-	printf("Spurious Interrupt from TLSB Node %d Hose %d Slot %d\n",
-	    ionode + 4, hose, device);
-	return (-1);
-}
-
 
 void
 kn8ae_enadis_intr(irq, onoff)
