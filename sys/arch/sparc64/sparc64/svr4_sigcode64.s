@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode64.s,v 1.1 2001/06/06 21:19:51 mrg Exp $	*/
+/*	$NetBSD: svr4_sigcode64.s,v 1.2 2001/06/30 00:09:08 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -157,16 +157,16 @@ _C_LABEL(svr4_sigcode):
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	ldda	[%l0] ASI_BLK_P, %f0
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %l0
 	ldda	[%l0] ASI_BLK_P, %f16
 1:
 	bz,pt	%icc, 2f
 	 wr	%l1, %g0, %y		! in any case, restore %y
 	add	%sp, BIAS+CC64FSZ+BLOCK_SIZE, %l0	! Generate a pointer so we can
 	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
-	inc	2*BLOCK_SIZE, %o0	! and skip what we already loaded
+	inc	2*BLOCK_SIZE, %l0	! and skip what we already loaded
 	ldda	[%l0] ASI_BLK_P, %f32
-	inc	BLOCK_SIZE, %o0
+	inc	BLOCK_SIZE, %l0
 	ldda	[%l0] ASI_BLK_P, %f48
 2:
 	mov	%l2, %g2
