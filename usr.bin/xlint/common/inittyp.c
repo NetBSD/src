@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.6 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.7 2004/09/12 08:58:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.6 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.7 2004/09/12 08:58:52 yamt Exp $");
 #endif
 
 #include <ctype.h>
@@ -69,6 +69,9 @@ inittyp(void)
 		{ UNSIGN,   { 0, 0,
 				      SIGNED, UNSIGN,
 				      0, 0, 0, 0, 0, "unsigned" } },
+		{ BOOL,	    { CHAR_SIZE, 1,
+				      BOOL, BOOL,
+				      1, 1, 0, 1, 1, "_Bool" } },
 		{ CHAR,	    { CHAR_SIZE, CHAR_BIT,
 				      SCHAR, UCHAR,
 				      1, 0, 0, 1, 1, "char" } },
