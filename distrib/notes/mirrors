@@ -5,6 +5,10 @@ ftp.iastate.edu		Anonymous FTP, AFS
 	Anon-FTP path: pub/netbsd/NetBSD-1.0
 	AFS path: /afs/iastate.edu/public/ftp/pub/netbsd/NetBSD-1.0
 
+ftp.eecs.umich.edu	Anonymous FTP
+
+	Anon-FTP path: BSD/NetBSD/NetBSD-1.0
+
 gatekeeper.dec.com	Anonymous FTP
 
 	Anon-FTP path: pub/BSD/NetBSD/NetBSD-1.0
