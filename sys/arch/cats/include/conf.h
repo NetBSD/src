@@ -2,7 +2,7 @@
 #define	_CATS_CONF_H
 
 /*
- * CATS specifc device includes go in here
+ * CATS specific device includes go in here
  */
 #include "fcom.h"
 
