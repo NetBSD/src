@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.19 1999/03/10 00:08:33 erh Exp $
+.\"	$NetBSD: fsck.8,v 1.19.12.1 2001/04/04 16:17:52 he Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -37,14 +37,14 @@
 .Nm ""
 .Op Fl dvplfyn
 .Op Fl l Ar maxparallel
-.Op Fl t Ar fstype 
-.Op Fl T Ar fstype:fsoptions 
+.Op Fl t Ar fstype
+.Op Fl T Ar fstype:fsoptions
 .Op special | node ...
 .Sh DESCRIPTION
 The
 .Nm
 command invokes filesystem-specific programs to check
-the special devices listed in the 
+the special devices listed in the
 .Xr fstab 5
 file or in the command line for consistency.
 .Pp
