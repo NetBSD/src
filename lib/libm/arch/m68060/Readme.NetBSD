@@ -27,3 +27,5 @@ Double precision:
 	movel	sp@+,d1				4
 	rts					2
 	(26 bytes)
+
+For __SVR4_ABI, the code is much shorter... it reduces to a single jbra.
