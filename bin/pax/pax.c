@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.12 2000/02/17 03:12:25 itohy Exp $	*/
+/*	$NetBSD: pax.c,v 1.13 2000/10/22 15:41:31 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.12 2000/02/17 03:12:25 itohy Exp $");
+__RCSID("$NetBSD: pax.c,v 1.13 2000/10/22 15:41:31 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,6 @@ int	pids;			/* preserve file uid/gid */
 int	exit_val;		/* exit value */
 int	docrc;			/* check/create file crc */
 char	*dirptr;		/* destination dir in a copy */
-const	char *ltmfrmt;		/* -v locale time format (if any) */
 char	*argv0;			/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 
@@ -357,13 +356,6 @@ gen_init()
 		reslimit.rlim_cur = reslimit.rlim_max;
 		(void)setrlimit(RLIMIT_RSS , &reslimit);
 	}
-
-	/*
-	 * Handle posix locale
-	 *
-	 * set user defines time printing format for -v option
-	 */
-	ltmfrmt = getenv("LC_TIME");
 
 	/*
 	 * signal handling to reset stored directory times and modes. Since
