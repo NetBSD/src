@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 1999/11/29 11:12:13 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23 2000/01/26 13:36:05 soren Exp $	*/
 
 /*
  * Mach Operating System
@@ -55,7 +55,6 @@ mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_halt_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
-void db_trapdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_kvtophys_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 extern void	kdbpoke __P((vaddr_t addr, int newval));
@@ -324,21 +323,6 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_trapdump_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-#ifdef DEBUG_TRAP
-	extern void show_traplog __P((char*));
-	show_traplog("CPU exception log:");
-#else
-	db_printf("trap log only available with options DEBUG_TRAP.\n");
-#endif
-}
-
-void
 db_kvtophys_cmd(addr, have_addr, count, modif)
 	db_expr_t addr;
 	int have_addr;
@@ -357,7 +341,6 @@ struct db_command mips_db_command_table[] = {
 	{ "halt",	db_halt_cmd,		0,	0 },
 	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
-	{ "trapdump",	db_trapdump_cmd,	0,	0 },
 	{ (char *)0, }
 };
 
