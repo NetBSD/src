@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.40 1997/07/02 02:44:12 cjs Exp $
+#	$NetBSD: INSTALL,v 1.41 1997/07/29 00:42:38 perry Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -195,7 +195,10 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
-wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+# note: the wt driver conflicts unpleasantly with ed devices at the
+# same I/O address. The probe reprograms their eeproms. Don't
+# uncomment it unless you are actually using it.
+#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
