@@ -1,3 +1,4 @@
+/*	$NetBSD: cipher.h,v 1.1.1.1.2.3 2001/12/10 23:52:30 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -32,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* RCSID("$OpenBSD: cipher.h,v 1.25 2000/12/19 23:17:56 markus Exp $"); */
+/* RCSID("$OpenBSD: cipher.h,v 1.29 2001/08/23 11:31:59 markus Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
@@ -71,8 +72,9 @@ struct CipherContext {
 		struct {
 			des_key_schedule key1;
 			des_key_schedule key2;
-			des_cblock iv2;
 			des_key_schedule key3;
+			des_cblock iv1;
+			des_cblock iv2;
 			des_cblock iv3;
 		}       des3;
 		struct {
@@ -84,7 +86,7 @@ struct CipherContext {
 			u_char iv[8];
 		} cast;
 		struct {
-			u4byte iv[4];
+			u_char iv[16];
 			rijndael_ctx enc;
 			rijndael_ctx dec;
 		} rijndael;
@@ -103,15 +105,16 @@ struct Cipher {
 	void	(*decrypt)(CipherContext *, u_char *, const u_char *, u_int);
 };
 
-u_int cipher_mask_ssh1(int client);
-Cipher *cipher_by_name(const char *name);
-Cipher *cipher_by_number(int id);
-int cipher_number(const char *name);
-char *cipher_name(int id);
-int ciphers_valid(const char *names);
-void cipher_init(CipherContext *, Cipher *, const u_char *, u_int, const u_char *, u_int);
-void cipher_encrypt(CipherContext *context, u_char *dest, const u_char *src, u_int len);
-void cipher_decrypt(CipherContext *context, u_char *dest, const u_char *src, u_int len);
-void cipher_set_key_string(CipherContext *context, Cipher *cipher, const char *passphrase);
+u_int	 cipher_mask_ssh1(int);
+Cipher	*cipher_by_name(const char *);
+Cipher	*cipher_by_number(int);
+int	 cipher_number(const char *);
+char	*cipher_name(int);
+int	 ciphers_valid(const char *);
+void	 cipher_init(CipherContext *, Cipher *, const u_char *, u_int,
+    const u_char *, u_int);
+void	 cipher_encrypt(CipherContext *, u_char *, const u_char *, u_int);
+void	 cipher_decrypt(CipherContext *, u_char *, const u_char *, u_int);
+void	 cipher_set_key_string(CipherContext *, Cipher *, const char *);
 
 #endif				/* CIPHER_H */
