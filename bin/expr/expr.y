@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.25 2001/04/25 02:33:09 simonb Exp $ */
+/* $NetBSD: expr.y,v 1.26 2001/05/05 06:57:57 jmc Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.25 2001/04/25 02:33:09 simonb Exp $");
+__RCSID("$NetBSD: expr.y,v 1.26 2001/05/05 06:57:57 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,8 @@ static void yyerror(const char *, ...);
 static int yylex(void);
 static int is_zero_or_null(const char *);
 static int is_integer(const char *);
+static int64_t perform_arith_op(const char *, const char *, const char *);
+
 int main(int, const char * const *);
 
 #define YYSTYPE	const char *
@@ -66,7 +68,10 @@ int main(int, const char * const *);
 %token STRING
 %left SPEC_OR
 %left SPEC_AND
-%left COMPARE ARITH_OPERATOR SPEC_REG
+%left COMPARE 
+%left ADD_SUB_OPERATOR
+%left MUL_DIV_MOD_OPERATOR
+%left SPEC_REG
 %left LEFT_PARENT RIGHT_PARENT
 
 %%
@@ -139,101 +144,25 @@ expr:	item { $$ = $1; }
 		}
 
 		}
-	| expr ARITH_OPERATOR expr = {
-		/*
-		 * Returns the results of multiplication, division,
-		 * addition, subtraction, remainder of numeric-valued arguments.
+	| expr ADD_SUB_OPERATOR expr = {
+		/* Returns the results of addition, subtraction */
+		char *val;
+		int64_t res;
+		
+		res = perform_arith_op($1, $2, $3);
+		(void) asprintf(&val, "%lld", (long long int) res);
+		$$ = val;
+                }
+
+	| expr MUL_DIV_MOD_OPERATOR expr = {
+		/* 
+		 * Returns the results of multiply, divide or remainder of 
+		 * numeric-valued arguments.
 		 */
 		char *val;
-		int64_t res, l, r;
+		int64_t res;
 
-		if (!is_integer($1)) {
-			yyerror("non-integer argument '%s'", $1);
-			/* NOTREACHED */
-		}
-		if (!is_integer($3)) {
-			yyerror("non-integer argument '%s'", $3);
-			/* NOTREACHED */
-		}
-
-		errno = 0;
-		l = strtoll($1, NULL, 10);
-		if (errno == ERANGE) {
-			yyerror("value '%s' is %s is %lld", $1,
-				(l > 0)
-				? "too big, maximum" : "too small, minimum",
-				(l > 0) ? LLONG_MAX : LLONG_MIN
-			);
-			/* NOTREACHED */
-		}
-
-		errno = 0;
-		r = strtoll($3, NULL, 10);
-		if (errno == ERANGE) {
-			yyerror("value '%s' is %s is %lld", $3,
-				(l > 0)
-				? "too big, maximum" : "too small, minimum",
-				(l > 0) ? LLONG_MAX : LLONG_MIN
-			);
-			/* NOTREACHED */
-		}
-
-		switch($2[0]) {
-		case '+':
-			res = l + r;
-			/* very simplistic check for over-& underflow */
-			if ((res < 0 && l > 0 && r > 0 && l > r)
-				|| (res > 0 && l < 0 && r < 0 && l < r)) {
-				yyerror("integer overflow or underflow occurred\
- for operation '%s %s %s'", $1, $2, $3);
-				/* NOTREACHED */
-			}
-			break;
-		case '-':
-			res = l - r;
-			/* very simplistic check for over-& underflow */
-			if ((res < 0 && l > 0 && l > r)
-				|| (res > 0 && l < 0 && l < r) ) {
-				yyerror("integer overflow or underflow occurred\
- for operation '%s %s %s'", $1, $2, $3);
-				/* NOTREACHED */
-			}
-			break;
-		case '/':
-			if (r == 0) {
-				yyerror("second argument to '%s' must not be\
- zero", $2);
-				/* NOTREACHED */
-			}
-			res = l / r;
-				
-			break;
-		case '%':
-			if (r == 0) {
-				yyerror("second argument to '%s' must not be zero", $2);
-				/* NOTREACHED */
-			}
-			res = l % r;
-			break;
-		case '*':
-			if (r == 0) {
-				res = 0;
-				break;
-			}
-				
-			/* check if the result would over- or underflow */
-			if ((l > 0 && l > (LLONG_MAX / r))
-				|| (l < 0 && l < (LLONG_MIN / r))) {
-				yyerror("operation '%s %s %s' would cause over-\
- or underflow",
-					$1, $2, $3);
-				/* NOTREACHED */
-			}
-
-			res = l * r;
-			break;
-		}
-
+		res = perform_arith_op($1, $2, $3);
 		(void) asprintf(&val, "%lld", (long long int) res);
 		$$ = val;
 
@@ -292,7 +221,8 @@ expr:	item { $$ = $1; }
 	;
 
 item:	STRING
-	| ARITH_OPERATOR
+	| ADD_SUB_OPERATOR
+	| MUL_DIV_MOD_OPERATOR
 	| COMPARE
 	| SPEC_OR
 	| SPEC_AND
@@ -326,12 +256,100 @@ is_integer(const char *str)
 	return (endptr[0] == '\0');
 }
 
+static int64_t
+perform_arith_op(const char *left, const char *op, const char *right)
+{
+	int64_t res, l, r;
+
+	if (!is_integer(left)) {
+		yyerror("non-integer argument '%s'", left);
+		/* NOTREACHED */
+	}
+	if (!is_integer(right)) {
+		yyerror("non-integer argument '%s'", right);
+		/* NOTREACHED */
+	}
+
+	errno = 0;
+	l = strtoll(left, NULL, 10);
+	if (errno == ERANGE) {
+		yyerror("value '%s' is %s is %lld", left,
+		    (l > 0) ? "too big, maximum" : "too small, minimum",
+		    (l > 0) ? LLONG_MAX : LLONG_MIN);
+		/* NOTREACHED */
+	}
+
+	errno = 0;
+	r = strtoll(right, NULL, 10);
+	if (errno == ERANGE) {
+		yyerror("value '%s' is %s is %lld", right,
+		    (l > 0) ? "too big, maximum" : "too small, minimum",
+	  	    (l > 0) ? LLONG_MAX : LLONG_MIN);
+		/* NOTREACHED */
+	}
+
+	switch(op[0]) {
+	case '+':
+		res = l + r;
+		/* very simplistic check for over-& underflow */
+		if ((res < 0 && l > 0 && r > 0 && l > r)
+	  	    || (res > 0 && l < 0 && r < 0 && l < r)) {
+			yyerror("integer overflow or underflow occurred for "
+                            "operation '%s %s %s'", left, op, right);
+			/* NOTREACHED */
+		}
+		break;
+	case '-':
+		res = l - r;
+		/* very simplistic check for over-& underflow */
+		if ((res < 0 && l > 0 && l > r)
+		    || (res > 0 && l < 0 && l < r) ) {
+			yyerror("integer overflow or underflow occurred for "
+			    "operation '%s %s %s'", left, op, right);
+			/* NOTREACHED */
+		}
+		break;
+	case '/':
+		if (r == 0) {
+			yyerror("second argument to '%s' must not be zero", op);
+			/* NOTREACHED */
+		}
+		res = l / r;
+			
+		break;
+	case '%':
+		if (r == 0) {
+			yyerror("second argument to '%s' must not be zero", op);
+			/* NOTREACHED */
+		}
+		res = l % r;
+		break;
+	case '*':
+		if (r == 0) {
+			res = 0;
+			break;
+		}
+				
+		/* check if the result would over- or underflow */
+		if ((l > 0 && l > (LLONG_MAX / r))
+			|| (l < 0 && l < (LLONG_MIN / r))) {
+			yyerror("operation '%s %s %s' would cause over or "
+			    "underflow", left, op, right);
+			/* NOTREACHED */
+		}
+
+		res = l * r;
+		break;
+	}
+
+	return res;
+}
 
 static const char *x = "|&=<>+-*/%:()";
 static const int x_token[] = {
-	SPEC_OR, SPEC_AND, COMPARE, COMPARE, COMPARE, ARITH_OPERATOR,
-	ARITH_OPERATOR, ARITH_OPERATOR, ARITH_OPERATOR, ARITH_OPERATOR,
-	SPEC_REG, LEFT_PARENT, RIGHT_PARENT
+	SPEC_OR, SPEC_AND, COMPARE, COMPARE, COMPARE, ADD_SUB_OPERATOR,
+	ADD_SUB_OPERATOR, MUL_DIV_MOD_OPERATOR, MUL_DIV_MOD_OPERATOR, 
+	MUL_DIV_MOD_OPERATOR, SPEC_REG, LEFT_PARENT, RIGHT_PARENT
 };
 
 static int handle_ddash = 1;
