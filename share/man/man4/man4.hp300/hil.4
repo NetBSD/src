@@ -1,4 +1,4 @@
-.\"	$NetBSD: hil.4,v 1.9 2003/04/16 16:13:29 wiz Exp $
+.\"	$NetBSD: hil.4,v 1.10 2003/06/27 18:26:36 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -295,11 +295,9 @@ bits are listed):
 .It 0x0c
 .Sq CTRL
 .It 0x0e
-.Sm off
 .Sq Break
 /
 .Sq Reset
-.Sm on
 .It 0x10
 4, on the numeric keypad.
 .It 0x12
@@ -344,11 +342,9 @@ X
 .It 0x38
 Z
 .It 0x3e
-.Sm off
 .Sq ESC
 /
 .Sq DEL
-.Sm on
 .It 0x42
 The second (counting from the left) of the four unmarked keys at the
 top right.
@@ -428,17 +424,13 @@ Right mouse button.
 .It 0x9c
 .Sq Stop
 .It 0x9e
-.Sm off
 .Sq Enter
 /
 .Sq Print
-.Sm on
 .It 0xa0
-.Sm off
 .Sq System
 /
 .Sq User
-.Sm on
 .It 0xa2
 .Sq F5
 .It 0xa4
