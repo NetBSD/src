@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.46 1999/03/08 03:09:08 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.47 1999/05/05 16:04:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.46 1999/03/08 03:09:08 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.47 1999/05/05 16:04:58 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -251,20 +251,15 @@ ftp_login(host, user, pass)
 	const char *acct;
 	char anonpass[MAXLOGNAME + 2]; /* "user@" */
 	struct passwd *pw;
-	int n, aflag = 0;
+	int n, aflag, rval, freeuser, freepass, freeacct;
 
 	acct = NULL;
-	if (user == NULL) {
-		if (ruserpass(host, &user, &pass, &acct) < 0) {
-			code = -1;
-			return (0);
-		}
-	}
+	aflag = rval = freeuser = freepass = freeacct = 0;
 
 	/*
 	 * Set up arguments for an anonymous FTP session, if necessary.
 	 */
-	if ((user == NULL || pass == NULL) && anonftp) {
+	if (anonftp) {
 		memset(anonpass, 0, sizeof(anonpass));
 
 		/*
@@ -289,6 +284,17 @@ ftp_login(host, user, pass)
 			pass = anonpass;
 		}
 		user = "anonymous";	/* as per RFC 1635 */
+	}
+
+	if (user == NULL) {
+		freeuser = 1;
+		if (pass == NULL)
+			freepass = 1;
+		freeacct = 1;
+		if (ruserpass(host, &user, &pass, &acct) < 0) {
+			code = -1;
+			goto cleanup_ftp_login;
+		}
 	}
 
 	while (user == NULL) {
@@ -316,17 +322,21 @@ ftp_login(host, user, pass)
 	}
 	if (n == CONTINUE) {
 		aflag++;
-		if (acct == NULL)
+		if (acct == NULL) {
 			acct = getpass("Account:");
+			freeacct = 0;
+		}
 		n = command("ACCT %s", acct);
 	}
 	if ((n != COMPLETE) ||
 	    (!aflag && acct != NULL && command("ACCT %s", acct) != COMPLETE)) {
 		warnx("Login failed.");
-		return (0);
+		goto cleanup_ftp_login;
 	}
-	if (proxy)
-		return (1);
+	if (proxy) {
+		rval = 1;
+		goto cleanup_ftp_login;
+	}
 	connected = -1;
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
@@ -336,7 +346,14 @@ ftp_login(host, user, pass)
 			break;
 		}
 	}
-	return (1);
+cleanup_ftp_login:
+	if (user != NULL && freeuser)
+		free((char *)user);
+	if (pass != NULL && freepass)
+		free((char *)pass);
+	if (acct != NULL && freeacct)
+		free((char *)acct);
+	return (rval);
 }
 
 /*
