@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 1998/01/12 20:35:09 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 1998/02/05 04:58:00 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,12 +41,11 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
-#include <machine/obio.h>
 #include <machine/pte.h>
 
-short *enable_reg;
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3x/obio.h>
 
 static int  obio_match __P((struct device *, struct cfdata *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
@@ -265,10 +264,10 @@ save_prom_mappings __P((void))
 	vm_offset_t va, pa;
 	int i;
 
-	/* Note: mon_ctbl[0] maps MON_KDB_START */
+	/* Note: mon_ctbl[0] maps SUN3X_MON_KDB_BASE */
 	mon_pte = *romVectorPtr->monptaddr;
 
-	for (va = MON_KDB_START; va < MONEND;
+	for (va = SUN3X_MON_KDB_BASE; va < SUN3X_MONEND;
 		 va += NBPG, mon_pte++)
 	{
 		/* Is this a valid mapping to OBIO? */
@@ -329,7 +328,7 @@ obio_init()
 	save_prom_mappings();
 	make_required_mappings();
 
-	enable_reg = (short*) obio_find_mapping(OBIO_ENABLEREG, 2);
+	enable_init();
 
 	/*
 	 * Find the interrupt reg mapping and turn off the
@@ -337,30 +336,4 @@ obio_init()
 	 * would poll the zs and toggle some LEDs...
 	 */
 	intreg_init();
-
-	/* Turn on the LEDs so we know power is on. */
-	leds_init();
-
-	/* Make the zs driver ready for console duty. */
-	zs_init();
-}
-
-/*
- * This function is used by some OBIO drivers to conserve
- * kernel virtual space by sharing mappings made by the
- * PROM monitor.  If we could not find any mapping made by
- * the PROM monitor, then make our own as usual.
- */
-caddr_t
-obio_mapin(obio_addr, obio_size)
-	int obio_addr, obio_size;
-{
-	caddr_t cp;
-
-	cp = obio_find_mapping((vm_offset_t)obio_addr, obio_size);
-	if (cp)
-		return (cp);
-
-	cp = bus_mapin(BUS_OBIO, obio_addr, obio_size);
-	return (cp);
 }

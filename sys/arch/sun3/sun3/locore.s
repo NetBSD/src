@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 1998/01/22 23:39:03 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 1998/02/05 04:57:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -107,7 +107,7 @@ L_high_code:
 | the backtrace algorithm used by KGDB terminates nicely.
 	lea	_ASM_LABEL(tmpstk)-32, sp
 	movl	#0,a6
-	jsr	_C_LABEL(_bootstrap)	| See _startup.c
+	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 
 | Now that _bootstrap() is done using the PROM functions,
 | we can safely set the sfc/dfc to something != FC_CONTROL
@@ -784,15 +784,15 @@ Lswnofpsave:
 #endif
 #if 1	/* XXX: PMAP_DEBUG */
 	/*
-	 * Just call _pmap_activate() for now.  Later on,
+	 * Just call _pmap_switch() for now.  Later on,
 	 * use the in-line version below (for speed).
 	 */
 	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	pea	a2@			| push pmap
-	jbsr	_C_LABEL(_pmap_activate) | _pmap_activate(pmap)
+	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
-| Note: pmap_activate will clear the cache if needed.
+| Note: pmap_switch will clear the cache if needed.
 #else
 	/* XXX - Later, use this unfinished inline.. */
 	XXX	XXX	(PM_CTXNUM)
@@ -963,8 +963,8 @@ Lm68881rdone:
  * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
- * XXX: Currently this is set in sun3_startup.c based on the
- * XXX: CPU model but this should be determined at run time...
+ * XXX: Currently this is set based on the CPU model,
+ * XXX: but this should be determined at run time...
  */
 GLOBAL(_delay)
 	| d0 = arg = (usecs << 8)
@@ -982,8 +982,8 @@ L_delay:
 | referenced by any C code, and if the leading underscore
 | ever goes away, these lines turn into syntax errors...
 	.set	_KERNBASE,KERNBASE
-	.set	_MONSTART,MONSTART
-	.set	_PROM_BASE,PROM_BASE
-	.set	_MONEND,MONEND
+	.set	_MONSTART,SUN3_MONSTART
+	.set	_PROM_BASE,SUN3_PROM_BASE
+	.set	_MONEND,SUN3_MONEND
 
 |The end!

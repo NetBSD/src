@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.4 1997/10/06 19:58:05 gwr Exp $	*/
+/*	$NetBSD: leds.c,v 1.5 1998/02/05 04:57:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 
 /*
  * Functions to flash the LEDs with some pattern.
- * All Sun3 machines have an 8-position LED array
- * in which some pattern is animated.
+ * The 3/80 has just one LED on the front panel,
+ * which we turn on during boot and leave alone.
+ * All other Sun3 machines have an 8-position LED
+ * array in which some pattern is animated.
  */
 
 #include <sys/param.h>
@@ -51,14 +53,28 @@
 #include <sys/proc.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
+#include <machine/idprom.h>
 #include <machine/leds.h>
-#include <machine/machdep.h>
+
+#include <sun3/sun3/machdep.h>
+#ifdef	_SUN3_
+#include <sun3/sun3/control.h>
+#endif
+#ifdef	_SUN3X_
+#include <sun3/sun3x/obio.h>
+static volatile u_int8_t *diagreg;
+#endif
 
 static u_char led_countdown = 0;
 static u_char led_px = 0;
 
-/* Initial value is the default pattern set. */
+/*
+ * Initial value is the default pattern set. Note, only bit zero
+ * shows on the 3/80, and it is active-high (3/470 is active-low).
+ * We normally want the 3/80's LED to just stay ON, so the 3/80
+ * will change the default patlen to one, causing the LED to keep
+ * using the first byte of the pattern where bit zero is ON.
+ */
 static struct led_patterns ledpat = {
 	8,	/* divisor */
 	8,	/* patlen */
@@ -67,6 +83,24 @@ static struct led_patterns ledpat = {
 		0xF0, 0xE1, 0xC3, 0x87,
 	}
 };
+
+/*
+ * This is called early during startup to find the
+ * diag register (LEDs) and turn on the light(s).
+ */
+void
+leds_init()
+{
+
+#ifdef	_SUN3X_
+	diagreg = obio_find_mapping(OBIO_DIAGREG, 1);
+	if (cpu_machine_id == SUN3X_MACH_80)
+		ledpat.patlen = 1;
+#endif	/* SUN3X */
+
+	/* Turn on some lights. */
+	leds_intr();
+}
 
 /*
  * This is called by the clock interrupt.
@@ -82,9 +116,13 @@ leds_intr()
 	}
 
 	led_countdown = ledpat.divisor - 1;
-
 	i = led_px;
+
+#ifdef	_SUN3X_
+	*diagreg = (char) ledpat.pat[i];
+#else
 	set_control_byte(DIAG_REG, ledpat.pat[i]);
+#endif
 
 	i = i+1;
 	if (i == ledpat.patlen)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 1997/04/28 23:21:01 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.27 1998/02/05 04:57:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -59,11 +59,13 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/eeprom.h>
 #include <machine/leds.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+
+#include <sun3/sun3/machdep.h>
 
 #define	mmread	mmrw
 cdev_decl(mm);
@@ -309,15 +311,16 @@ promacc(va, len, rw)
 	eva = (vm_offset_t)va + len;
 
 	/* Test for the most common case first. */
-	if (sva < PROM_BASE)
+	if (sva < SUN3_PROM_BASE)
 		return (0);
 
 	/* Read in the PROM itself is OK. */
-	if ((rw == B_READ) && (eva <= MONEND))
+	if ((rw == B_READ) && (eva <= SUN3_MONEND))
 		return (1);
 
 	/* PROM data page is OK for read/write. */
-	if ((sva >= MONSHORTPAGE) && (eva <= (MONSHORTPAGE+NBPG)))
+	if ((sva >= SUN3_MONSHORTPAGE) &&
+		(eva <= (SUN3_MONSHORTPAGE+NBPG)))
 		return (1);
 
 	/* otherwise, not OK to touch */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.52 1998/01/12 20:32:29 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.53 1998/02/05 04:56:47 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,15 +58,19 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/z8530var.h>
 
+#include <sun3/sun3/machdep.h>
+#ifdef	_SUN3X_
+#include <sun3/sun3x/obio.h>
+#else
+#include <sun3/sun3/obio.h>
+#endif
+#include <sun3/dev/zs_cons.h>
+
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
-
-#include <sun3/dev/zs_cons.h>
 
 #include "kbd.h"	/* NKBD */
 #include "zsc.h"	/* NZSC */
@@ -814,11 +818,14 @@ static char *prom_inSrc_name[] = {
 void
 cninit()
 {
-	MachMonRomVector *v;
+	struct sunromvec *v;
 	struct zschan *zc;
 	struct consdev *cn;
 	int channel, zs_unit, zstty_unit;
 	u_char inSource, outSink;
+
+	/* Get the zs driver ready for console duty. */
+	zs_init();
 
 	v = romVectorPtr;
 	inSource = *v->inSource;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 1998/01/22 21:48:42 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 1998/02/05 04:57:58 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@ L_high_code:
 | the backtrace algorithm used by KGDB terminates nicely.
 	lea	_ASM_LABEL(tmpstk)-32, sp
 	movl	#0,a6
-	jsr	_C_LABEL(_bootstrap)	| See _startup.c
+	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 
 | Now turn off the transparent translation of the low 1GB.
 | (this also flushes the ATC)
@@ -1089,8 +1089,8 @@ Lm68881rdone:
  * Delay for at least (N/256) microseconds.
  * This routine depends on the variable:  delay_divisor
  * which should be set based on the CPU clock rate.
- * XXX: Currently this is set in sun3_startup.c based on the
- * XXX: CPU model but this should be determined at run time...
+ * XXX: Currently this is set based on the CPU model,
+ * XXX: but this should be determined at run time...
  */
 GLOBAL(_delay)
 	| d0 = arg = (usecs << 8)
@@ -1108,8 +1108,8 @@ L_delay:
 | referenced by any C code, and if the leading underscore
 | ever goes away, these lines turn into syntax errors...
 	.set	_KERNBASE,KERNBASE
-	.set	_MONSTART,MONSTART
-	.set	_PROM_BASE,PROM_BASE
-	.set	_MONEND,MONEND
+	.set	_MONSTART,SUN3X_MONSTART
+	.set	_PROM_BASE,SUN3X_PROM_BASE
+	.set	_MONEND,SUN3X_MONEND
 
 |The end!

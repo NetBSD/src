@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.8 1998/01/22 22:20:37 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.9 1998/02/05 04:57:55 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,15 +92,20 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/enable.h>
-#include <machine/pmap.h>
 #include <machine/dvma.h>
-#include <machine/machdep.h>
+#include <machine/pmap.h>
+/* #include <machine/reg.h> */
 
-#include "iommu.h"
+#include <sun3/sun3/machdep.h>
+
+#include <sun3/sun3x/enable.h>
+#include <sun3/sun3x/iommu.h>
 
 /*
  * Use a resource map to manage DVMA scratch-memory pages.
+ * Note: SunOS says last three pages are reserved (PROM?)
+ * Note: need a separate map (sub-map?) for last 1MB for
+ *       use by VME slave interface.
  */
 
 /* Number of slots in dvmamap. */
@@ -299,4 +304,19 @@ dvma_malloc(bytes)
 		return NULL;
 	dvma_mem = dvma_mapin(new_mem, new_size, 1);
 	return (dvma_mem);
+}
+
+/*
+ * Free pages from dvma_malloc()
+ */
+void
+dvma_free(addr, size)
+	void *addr;
+	size_t size;
+{
+	vm_size_t sz = m68k_round_page(size);
+
+	dvma_mapout(addr, sz);
+	/* XXX: need kmem address to free it...
+	   Oh well, we never call this anyway. */
 }

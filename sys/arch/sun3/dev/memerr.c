@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.9 1998/01/12 20:32:22 thorpej Exp $ */
+/*	$NetBSD: memerr.c,v 1.10 1998/02/05 04:56:43 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,12 +49,11 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/control.h>
 #include <machine/cpu.h>
 #include <machine/idprom.h>
-#include <machine/obio.h>
 #include <machine/pte.h>
 
+#include <sun3/sun3/machdep.h>
 #include <sun3/dev/memerr.h>
 /* #include <sun3/dev/eccreg.h> - not yet */
 
@@ -94,10 +93,6 @@ memerr_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
@@ -125,6 +120,7 @@ memerr_attach(parent, self, args)
 	switch (cpu_machine_id) {
 	case SUN3_MACH_160:		/* XXX: correct? */
 	case SUN3_MACH_260:
+	case SUN3X_MACH_470:
 		sc->sc_type = ME_ECC;
 		sc->sc_typename = "ECC";
 		sc->sc_csrbits = ME_ECC_STR;
@@ -138,8 +134,7 @@ memerr_attach(parent, self, args)
 	}
 	printf(": (%s memory)\n", sc->sc_typename);
 
-	mer = (struct memerr *)
-	    obio_mapin(ca->ca_paddr, sizeof(*mer));
+	mer = bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(*mer));
 	if (mer == NULL)
 		panic("memerr: can not map register");
 	sc->sc_reg = mer;
