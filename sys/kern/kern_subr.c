@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.53 2000/01/25 01:15:14 fvdl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.54 2000/01/25 03:42:36 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -666,15 +666,12 @@ setroot(bootdv, bootpartition)
 					ndumpdev = MAKEDISKDEV(major(nrootdev),
 					    DISKUNIT(nrootdev), 1);
 				}
-				if (rootdv->dv_class == DV_IFNET)
-					dumpdv = NULL;
-				else
-					dumpdv = rootdv;
+				dumpdv = defdumpdv;
 				break;
 			}
 			if (len == 4 && strcmp(buf, "none") == 0) {
 				dumpspec = "none";
-				goto havedump;
+				break;
 			}
 			dv = getdisk(buf, len, 1, &ndumpdev, 1);
 			if (dv) {
@@ -683,7 +680,6 @@ setroot(bootdv, bootpartition)
 			}
 		}
 
- havedump:
 		rootdev = nrootdev;
 		dumpdev = ndumpdev;
 
