@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_vfsops.c	7.56 (Berkeley) 6/28/91
- *	$Id: ufs_vfsops.c,v 1.16 1994/05/18 00:35:13 cgd Exp $
+ *	$Id: ufs_vfsops.c,v 1.17 1994/05/18 10:21:49 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -243,7 +243,7 @@ mountfs(devvp, mp, p)
 	}
 	if (error = bread(devvp, SBOFF / size, SBSIZE, NOCRED, &bp))
 		goto out;
-	fs = bp->b_un.b_fs;
+	fs = (struct fs *)bp->b_data;
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs)) {
 		error = EINVAL;		/* XXX needs translation */
@@ -605,7 +605,7 @@ sbupdate(mp, waitfor)
 	bcopy((caddr_t)fs, bp->b_un.b_addr, (u_int)fs->fs_sbsize);
 	/* Restore compatibility to old file systems.		   XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
-		bp->b_un.b_fs->fs_nrpos = -1;			/* XXX */
+		((struct fs *)bp->b_data)->fs_nrpos = -1;	/* XXX */
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
 	else
