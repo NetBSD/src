@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 2000/08/10 18:33:47 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 2000/08/23 21:35:57 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -78,6 +78,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -7511,13 +7512,13 @@ Lcopyfault:
  * the psr change when entering a new process, since this
  * usually changes the CWP field (hence heavy usage of %g's).
  *
- *	%g1 = <free>; newpcb -- WARNING this register tends to get trashed
- *	%g2 = %hi(_whichqs); newpsr
- *	%g3 = p
- *	%g4 = lastproc
- *	%g5 = oldpsr (excluding ipl bits)
- *	%g6 = %hi(cpcb)
- *	%g7 = %hi(curproc)
+ *	%l1 = <free>; newpcb
+ *	%l2 = %hi(_whichqs); newpsr
+ *	%l3 = p
+ *	%l4 = lastproc
+ *	%l5 = oldpsr (excluding ipl bits)
+ *	%l6 = %hi(cpcb)
+ *	%l7 = %hi(curproc)
  *	%o0 = tmp 1
  *	%o1 = tmp 2
  *	%o2 = tmp 3
@@ -7535,6 +7536,11 @@ Lcopyfault:
  * and note that the `last loaded process' is nonexistent.
  */
 ENTRY(switchexit)
+	/*
+	 * Since we're exiting we don't need to save locals or ins, so
+	 * we won't need the next instruction.
+	 */
+!	save	%sp, -CC64FSZ, %sp
 	flushw				! We don't have anything else to run, so why not
 #ifdef DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -7542,7 +7548,7 @@ ENTRY(switchexit)
 	restore
 #endif
 	wrpr	%g0, PSTATE_KERN, %pstate ! Make sure we're on the right globals
-	mov	%o0, %g2		! save proc arg for exit2() call
+	mov	%o0, %l2		! save proc arg for exit2() call XXXXX
 
 #ifdef SCHED_DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -7564,8 +7570,8 @@ ENTRY(switchexit)
 	 * destroy it.  Call it any sooner and the register windows
 	 * go bye-bye.
 	 */
-	set	_C_LABEL(idle_u), %g1
-	sethi	%hi(CPCB), %g6
+	set	_C_LABEL(idle_u), %l1
+	sethi	%hi(CPCB), %l6
 #if 0
 	/* Get rid of the stack	*/
 	rdpr	%ver, %o0
@@ -7578,15 +7584,13 @@ ENTRY(switchexit)
 	flushw						! DEBUG
 #endif
 
-	STPTR	%g1, [%g6 + %lo(CPCB)]	! cpcb = &idle_u
+	STPTR	%l1, [%l6 + %lo(CPCB)]	! cpcb = &idle_u
 	set	_C_LABEL(idle_u) + USPACE - CC64FSZ, %o0	! set new %sp
 #ifdef _LP64
 	sub	%o0, BIAS, %sp		! Maybe this should be a save?
 #else
 	mov	%o0, %sp		! Maybe this should be a save?
 #endif
-	save	%sp,-CC64FSZ,%sp	! Get an extra frame for good measure
-	flushw				! DEBUG this should not be needed
 	wrpr	%g0, 0, %canrestore
 	wrpr	%g0, 0, %otherwin
 	rdpr	%ver, %l7
@@ -7594,26 +7598,34 @@ ENTRY(switchexit)
 	wrpr	%l7, 0, %cleanwin
 	dec	1, %l7					! NWINDOWS-1-1
 	wrpr	%l7, %cansave
-	flushw						! DEBUG
+	clr	%fp			! End of stack.
 #ifdef DEBUG
+	flushw						! DEBUG
 	set	_C_LABEL(idle_u), %l6
 	SET_SP_REDZONE(%l6, %l5)
 #endif
 	wrpr	%g0, PSTATE_INTR, %pstate	! and then enable traps
 	call	_C_LABEL(exit2)			! exit2(p)
-	 mov	%g2, %o0
+	 mov	%l2, %o0
 
+	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
+	 nop
+	
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
 	 * %hi(cpcb), but may have been clobbered in kmem_free,
 	 * so all the registers described below will be set here.
 	 *
+	 * Since the process has exited we can blow its context
+	 * out of the MMUs now to free up those TLB entries rather
+	 * than have more useful ones replaced.
+	 *
 	 * REGISTER USAGE AT THIS POINT:
-	 *	%g2 = %hi(_whichqs)
-	 *	%g4 = lastproc
-	 *	%g5 = oldpsr (excluding ipl bits)
-	 *	%g6 = %hi(cpcb)
-	 *	%g7 = %hi(curproc)
+	 *	%l2 = %hi(_whichqs)
+	 *	%l4 = lastproc
+	 *	%l5 = oldpsr (excluding ipl bits)
+	 *	%l6 = %hi(cpcb)
+	 *	%l7 = %hi(curproc)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o3 = whichqs
@@ -7622,17 +7634,17 @@ ENTRY(switchexit)
 	INCR(_C_LABEL(nswitchexit))		! nswitchexit++;
 	INCR(_C_LABEL(uvmexp)+V_SWTCH)		! cnt.v_switch++;
 
-	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
-	clr	%g4			! lastproc = NULL;
-	sethi	%hi(CPCB), %g6
-	sethi	%hi(CURPROC), %g7
-	LDPTR	[%g6 + %lo(CPCB)], %g5
+	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
+	clr	%l4			! lastproc = NULL;
+	sethi	%hi(CPCB), %l6
+	sethi	%hi(CURPROC), %l7
+	LDPTR	[%l6 + %lo(CPCB)], %l5
 	wr	%g0, ASI_DMMU, %asi
-	ldxa	[CTX_SECONDARY] %asi, %g1	! Don't demap the kernel
-	brz,pn	%g1, 1f
-	 set	0x030, %g1			! Demap secondary context
-	stxa	%g1, [%g1] ASI_DMMU_DEMAP
-	stxa	%g1, [%g1] ASI_IMMU_DEMAP
+	ldxa	[CTX_SECONDARY] %asi, %l1	! Don't demap the kernel
+	brz,pn	%l1, 1f
+	 set	0x030, %l1			! Demap secondary context
+	stxa	%g1, [%l1] ASI_DMMU_DEMAP
+	stxa	%g1, [%l1] ASI_IMMU_DEMAP
 	membar	#Sync
 1:
 	stxa	%g0, [CTX_SECONDARY] %asi	! Clear out our context
@@ -7646,7 +7658,10 @@ ENTRY(switchexit)
  */
 	.globl	idle
 idle:
-	STPTR	%g0, [%g7 + %lo(CURPROC)] ! curproc = NULL;
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
+#endif
+	 STPTR	%g0, [%l7 + %lo(CURPROC)] ! curproc = NULL;
 1:					! spin reading _whichqs until nonzero
 	wrpr	%g0, PSTATE_INTR, %pstate		! Make sure interrupts are enabled
 	wrpr	%g0, 0, %pil		! (void) spl0();
@@ -7670,39 +7685,31 @@ idle:
 	LOCTOGLOB
 	restore
 #endif
-	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
-	brnz,a,pt	%o3, Lsw_scan
-	 wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
+	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
+	brnz,pt	%o3, notidle		! Something to run
+	 nop
 	
-#if 1		/* Don't enable the zeroing code just yet. */
-	ba,a,pt %icc, 1b
-	nop
-#else
+#if 0
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
 	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
 	brz,pn	%o3, 1b
 	 nop
-	/*
-	 * We must preserve several global registers across the call
-	 * to uvm_pageidlezero().  Use the %ix registers for this, but
-	 * since we might still be running in our our caller's frame
-	 * (if we came here from cpu_switch()), we need to setup a
-	 * frame first.
-	 */
-	save	%sp, -CCFSZ, %sp
-	GLOBTOLOC
 
 	! zero some pages
 	call	_C_LABEL(uvm_pageidlezero)
 	 nop
-
-	! restore global registers again which are now
-	! clobbered by uvm_pageidlezero()
-	LOCTOGLOB
-	ba,pt	%icc, 1b
-	 restore
 #endif
+	ba,a,pt	%xcc, 1b
+	 nop				! spitfire bug
+notidle:
+	wrpr	%g0, PIL_HIGH, %pil	! (void) splhigh();
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)	! Grab sched_lock
+	 add	%o7, (Lsw_scan-.-4), %o7	! Return to Lsw_scan directly
+#endif
+	ba,a,pt	%xcc, Lsw_scan
+	 nop				! spitfire bug
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -7742,15 +7749,16 @@ idlemsg1:	.asciz	" %x %x %x\r\n"
  */
 	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
+	save	%sp, -CC64FSZ, %sp
 	/*
 	 * REGISTER USAGE AT THIS POINT:
-	 *	%g1 = tmp 0
-	 *	%g2 = %hi(_C_LABEL(whichqs))
-	 *	%g3 = p
-	 *	%g4 = lastproc
-	 *	%g5 = cpcb
-	 *	%g6 = %hi(CPCB)
-	 *	%g7 = %hi(CURPROC)
+	 *	%l1 = tmp 0
+	 *	%l2 = %hi(_C_LABEL(whichqs))
+	 *	%l3 = p
+	 *	%l4 = lastproc
+	 *	%l5 = cpcb
+	 *	%l6 = %hi(CPCB)
+	 *	%l7 = %hi(CURPROC)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -7774,9 +7782,9 @@ swdebug:	.word 0
 2:
 #endif
 #ifdef NOTDEF_DEBUG
-	set	_C_LABEL(intrdebug), %g1
+	set	_C_LABEL(intrdebug), %l1
 	mov	INTRDEBUG_FUNC, %o1
-	st	%o1, [%g1]
+	st	%o1, [%l1]
 #endif
 	flushw				! We don't have anything else to run, so why not flush
 #ifdef DEBUG
@@ -7786,29 +7794,18 @@ swdebug:	.word 0
 #endif
 	rdpr	%pstate, %o1		! oldpstate = %pstate;
 	wrpr	%g0, PSTATE_INTR, %pstate ! make sure we're on normal globals
-	sethi	%hi(CPCB), %g6
-	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
-	LDPTR	[%g6 + %lo(CPCB)], %g5
-	sethi	%hi(CURPROC), %g7
-	stx	%o7, [%g5 + PCB_PC]	! cpcb->pcb_pc = pc;
-	LDPTR	[%g7 + %lo(CURPROC)], %g4	! lastproc = curproc;
-	sth	%o1, [%g5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
+	sethi	%hi(CPCB), %l6
+	sethi	%hi(_C_LABEL(sched_whichqs)), %l2	! set up addr regs
+	LDPTR	[%l6 + %lo(CPCB)], %l5
+	sethi	%hi(CURPROC), %l7
+	stx	%o7, [%l5 + PCB_PC]	! cpcb->pcb_pc = pc;
+	LDPTR	[%l7 + %lo(CURPROC)], %l4	! lastproc = curproc;
+	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 
-	/*
-	 * In all the fiddling we did to get this far, the thing we are
-	 * waiting for might have come ready, so let interrupts in briefly
-	 * before checking for other processes.  Note that we still have
-	 * curproc set---we have to fix this or we can get in trouble with
-	 * the run queues below.
-	 */
-	rdpr	%pil, %g3		! %g3 has not been used yet
-	STPTR	%g0, [%g7 + %lo(CURPROC)]	! curproc = NULL;
-	wrpr	%g0, 0, %pil			! (void) spl0();
-	stb	%g3, [%g5 + PCB_PIL]	! save old %pil
-	wrpr	%g0, PIL_CLOCK, %pil	! (void) splclock();
-
+	STPTR	%g0, [%l7 + %lo(CURPROC)]	! curproc = NULL;
+	
 Lsw_scan:
-	ld	[%g2 + %lo(_C_LABEL(sched_whichqs))], %o3
+	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
 #ifndef POPC
 	.globl	_C_LABEL(__ffstab)
@@ -7864,11 +7861,11 @@ Lsw_scan:
 	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
 	sll	%o4, PTRSHFT+1, %o0
 	add	%o0, %o5, %o5
-	LDPTR	[%o5], %g3		! p = q->ph_link;
-	cmp	%g3, %o5		! if (p == q)
+	LDPTR	[%o5], %l3		! p = q->ph_link;
+	cmp	%l3, %o5		! if (p == q)
 	be,pn	%icc, Lsw_panic_rq	!	panic("switch rq");
 	 EMPTY
-	LDPTR	[%g3], %o0		! tmp0 = p->p_forw;
+	LDPTR	[%l3], %o0		! tmp0 = p->p_forw;
 	STPTR	%o0, [%o5]		! q->ph_link = tmp0;
 	STPTR	%o5, [%o0 + PTRSZ]	! tmp0->p_back = q;
 	cmp	%o0, %o5		! if (tmp0 == q)
@@ -7877,17 +7874,17 @@ Lsw_scan:
 	mov	1, %o1			!	whichqs &= ~(1 << which);
 	sll	%o1, %o4, %o1
 	andn	%o3, %o1, %o3
-	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
+	st	%o3, [%l2 + %lo(_C_LABEL(sched_whichqs))]
 1:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
-	 *	%g1 = newpcb
-	 *	%g2 = newpstate
-	 *	%g3 = p
-	 *	%g4 = lastproc
-	 *	%g5 = cpcb
-	 *	%g6 = %hi(_cpcb)
-	 *	%g7 = %hi(_curproc)
+	 *	%l1 = newpcb
+	 *	%l2 = newpstate
+	 *	%l3 = p
+	 *	%l4 = lastproc
+	 *	%l5 = cpcb
+	 *	%l6 = %hi(_cpcb)
+	 *	%l7 = %hi(_curproc)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -7897,10 +7894,10 @@ Lsw_scan:
 	 */
 
 	/* firewalls */
-	LDPTR	[%g3 + P_WCHAN], %o0	! if (p->p_wchan)
+	LDPTR	[%l3 + P_WCHAN], %o0	! if (p->p_wchan)
 	brnz,pn	%o0, Lsw_panic_wchan	!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%g3 + P_STAT], %o0	! if (p->p_stat != SRUN)
+	ldsb	[%l3 + P_STAT], %o0	! if (p->p_stat != SRUN)
 	cmp	%o0, SRUN
 	bne	Lsw_panic_srun		!	panic("switch SRUN");
 	 EMPTY
@@ -7916,32 +7913,38 @@ Lsw_scan:
 	 */
 #endif
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
-	stb	%o0, [%g3 + P_STAT]
+	stb	%o0, [%l3 + P_STAT]
 	sethi	%hi(_C_LABEL(want_resched)), %o0
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
-	LDPTR	[%g3 + P_ADDR], %g1		! newpcb = p->p_addr;
-	STPTR	%g0, [%g3 + PTRSZ]		! p->p_back = NULL;
-	ldub	[%g1 + PCB_PIL], %g2		! newpil = newpcb->pcb_pil;
-	STPTR	%g4, [%g7 + %lo(CURPROC)]	! restore old proc so we can save it
+	LDPTR	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;
+	STPTR	%g0, [%l3 + PTRSZ]		! p->p_back = NULL;
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+	 STPTR	%l4, [%l7 + %lo(CURPROC)]	! restore old proc so we can save it
 
-	cmp	%g3, %g4		! p == lastproc?
-	be,a	Lsw_sameproc		! yes, go return 0
-	 wrpr	%g2, 0, %pil		! (after restoring pil)
+	cmp	%l3, %l4			! p == lastproc?
+	be,pt	%xcc, Lsw_sameproc		! yes, go return 0
+	 nop
 
 	/*
 	 * Not the old process.  Save the old process, if any;
 	 * then load p.
 	 */
 #ifdef SCHED_DEBUG
+	mov	%l4, %g1
+	mov	%l3, %g2
 	save	%sp, -CC64FSZ, %sp
-	GLOBTOLOC
 	set	1f, %o0
-	mov	%g4, %o1
+	mov	%g1, %o1
 	ld	[%o1+P_PID], %o2
-	mov	%g3, %o3
+	mov	%g2, %o3
 	call	printf
 	 ld	[%o3+P_PID], %o4
-	LOCTOGLOB
 	ba	2f
 	 restore
 	.data
@@ -7952,18 +7955,16 @@ Lsw_scan:
 2:
 #endif
 	flushw				! DEBUG -- make sure we don't hold on to any garbage
-	brz,pn	%g4, Lsw_load		! if no old process, go load
+	brz,pn	%l4, Lsw_load		! if no old process, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
 
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
 wb1:
 	flushw				! save all register windows except this one
-	save	%sp, -CC64FSZ, %sp	! Get space for this one
-	stx	%i7, [%g5 + PCB_PC]	! Save rpc
-	flushw				! save this window, too
-	stx	%i6, [%g5 + PCB_SP]
-	rdpr	%cwp, %o2
-	stb	%o2, [%g5 + PCB_CWP]
+	stx	%i7, [%l5 + PCB_PC]	! Save rpc
+	stx	%i6, [%l5 + PCB_SP]
+	rdpr	%cwp, %o2		! Useless
+	stb	%o2, [%l5 + PCB_CWP]
 
 	/*
 	 * Load the new process.  To load, we must change stacks and
@@ -7987,11 +7988,14 @@ Lsw_load:
 	.text
 #endif
 	/* set new cpcb */
-	STPTR	%g3, [%g7 + %lo(CURPROC)]	! curproc = p;
-	STPTR	%g1, [%g6 + %lo(CPCB)]	! cpcb = newpcb;
+	STPTR	%l3, [%l7 + %lo(CURPROC)]	! curproc = p;
+	STPTR	%l1, [%l6 + %lo(CPCB)]	! cpcb = newpcb;
 
 #ifdef SCHED_DEBUG
-	ldx	[%g1 + PCB_SP], %o0
+	ldx	[%l1 + PCB_SP], %o0
+	btst	1, %o0
+	add	%o0, BIAS, %o1
+	movnz	%icc, %o1, %o0
 	brnz,pt	%o0, 2f
 	 ldx	[%o0], %o0			! Force a fault if needed
 	save	%sp, -CC64FSZ, %sp
@@ -8008,9 +8012,9 @@ Lsw_load:
 	.text
 2:
 #endif
-	ldx	[%g1 + PCB_SP], %i6
+	ldx	[%l1 + PCB_SP], %i6
 !	call	_C_LABEL(blast_vcache)		! Clear out I$ and D$
-	 ldx	[%g1 + PCB_PC], %i7
+	 ldx	[%l1 + PCB_PC], %i7
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
 	rdpr	%ver, %l7
@@ -8023,14 +8027,15 @@ Lsw_load:
 	flushw						! DEBUG
 	wrpr	%g0, 0, %tl				! DEBUG
 	/* load window */
-	restore				! The logic is just too complicated to handle here.  Let the traps deal with the problem
+!	restore				! The logic is just too complicated to handle here.  Let the traps deal with the problem
 !	flushw						! DEBUG
 #ifdef SCHED_DEBUG
+	mov	%fp, %i1
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
 	set	1f, %o0
 	call	printf
-	 mov	%fp, %o1
+	 mov	%i1, %o1
 	LOCTOGLOB
 	restore
 	.data
@@ -8039,12 +8044,12 @@ Lsw_load:
 	.text
 #endif
 #ifdef DEBUG
-	mov	%g1, %o0
+	mov	%l1, %o0
 	SET_SP_REDZONE(%o0, %o1)
 	CHECK_SP_REDZONE(%o0, %o1)
 #endif
 	/* finally, enable traps */
-!	lduh	[%g1 + PCB_PSTATE], %o3	! Load newpstate
+!	lduh	[%l1 + PCB_PSTATE], %o3	! Load newpstate
 !	wrpr	%o3, 0, %pstate		! psr = newpsr;
 	wrpr	%g0, PSTATE_INTR, %pstate
 
@@ -8053,8 +8058,7 @@ Lsw_load:
 	 * can talk about user space stuff.  (Its pcb_uw is currently
 	 * zero so it is safe to have interrupts going here.)
 	 */
-	save	%sp, -CC64FSZ, %sp
-	LDPTR	[%g3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
+	LDPTR	[%l3 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	set	_C_LABEL(kernel_pmap_), %o1
 	LDPTR	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap.pm_ctx != NULL)
 	cmp	%o2, %o1
@@ -8068,11 +8072,12 @@ Lsw_load:
 	 mov	%o2, %o0
 
 #ifdef SCHED_DEBUG
+	mov	%o0, %g1
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
 	set	1f, %o0
 	call	printf
- 	 mov	%i0, %o1
+ 	 mov	%g1, %o1
 	LOCTOGLOB
 	restore
 	.data
@@ -8087,6 +8092,11 @@ Lsw_havectx:
 	 * We probably need to flush the cache here.
 	 */
 	wr	%g0, ASI_DMMU, %asi		! restore the user context
+#if 0
+	!!
+	!! We should not need to flush the MMU here.  It will make
+	!! context switches expensive.
+	!! 
 	ldxa	[CTX_SECONDARY] %asi, %o1
 	brz,pn	%o1, 1f
 	 set	0x030, %o1
@@ -8094,21 +8104,20 @@ Lsw_havectx:
 	stxa	%o1, [%o1] ASI_IMMU_DEMAP
 	membar	#Sync
 1:
+#endif
 	stxa	%o0, [CTX_SECONDARY] %asi	! Maybe we should invalidate the old context?
 	membar	#Sync				! Maybe we should use flush here?
 	flush	%sp
 
-!	call	blast_vcache	! Maybe we don't need to do this now
-	 nop
-
-	restore
 #ifdef SCHED_DEBUG
+	mov	%o0, %g1
+	mov	%i7, %g1
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
 	set	1f, %o0
-	mov	%i0, %o2
+	mov	%g1, %o2
 	call	printf
-	 mov	%i7, %o1
+	 mov	%g2, %o1
 	LOCTOGLOB
 	restore
 	.data
@@ -8167,7 +8176,7 @@ Lsw_sameproc:
 	 * call to switch().  Just set psr ipl and return.
 	 */
 #ifdef SCHED_DEBUG
-	mov	%l0, %o0
+	mov	%l0, %o0		! XXXXX
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
 	set	1f, %o0
@@ -8201,9 +8210,9 @@ swtchdelay:
 #endif
 !	wrpr	%g0, 0, %cleanwin	! DEBUG
 	clr	%g4		! This needs to point to the base of the data segment
-	retl
-	 wrpr	%g0, PSTATE_INTR, %pstate
-
+	wrpr	%g0, PSTATE_INTR, %pstate
+	ret
+	 restore
 
 /*
  * Snapshot the current process so that stack frames are up to date.
@@ -10982,6 +10991,11 @@ Lstupid_loop:
  * cycles in the future.  Also handles %tick wraparound.  In 32-bit
  * mode we're limited to a 32-bit increment.
  */
+	.data
+	.align	8
+tlimit:	
+	.xword	0
+	.text
 ENTRY(next_tick)
 #ifndef TICK_IS_TIME
 /*
@@ -10992,6 +11006,11 @@ ENTRY(next_tick)
 	retl
 	 wrpr	%g0, 0, %tick	! Reset the clock
 #else
+	sethi	%hi(tlimit), %o1
+	ldx	[%o1 + %lo(tlimit)], %o2
+	add	%o2, %o0, %o2
+
+		
 	rdpr	%tick, %o1
 	mov	1, %o2
 	sllx	%o2, 63, %o2
