@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.65 1997/08/18 21:19:02 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.66 1997/08/18 23:20:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1259,7 +1259,6 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	case AUDIO_FLUSH:
 		DPRINTF(("AUDIO_FLUSH\n"));
 		audio_clear(sc);
-		sc->sc_blkset = 0;
 		s = splaudio();
 		audio_initbufs(sc);
 		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus)
@@ -1872,6 +1871,7 @@ audiosetinfo(sc, ai)
 	struct audio_params pp, rp;
 	int np, nr;
 	unsigned int blks;
+	int oldpblksize, oldrblksize;
 	
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
@@ -1879,6 +1879,7 @@ audiosetinfo(sc, ai)
 	pp = sc->sc_pparams;
 	rp = sc->sc_rparams;
 	nr = np = 0;
+
 	if (p->sample_rate != ~0) {
 		pp.sample_rate = p->sample_rate;
 		np++;
@@ -1945,6 +1946,9 @@ audiosetinfo(sc, ai)
 			return (error);
 		sc->sc_pparams = pp;
 	}
+
+	oldpblksize = sc->sc_pr.blksize;
+	oldrblksize = sc->sc_rr.blksize;
 	/* Play params can affect the record params, so recalculate blksize. */
 	if (nr || np) {
 		audio_calc_blksize(sc, AUMODE_RECORD);
@@ -2018,9 +2022,15 @@ audiosetinfo(sc, ai)
 		cleared = 1;
 
 		/* No need to check the blocksize, audio_initbufs() does that. */
-		sc->sc_pr.blksize = ai->blocksize;
-		sc->sc_rr.blksize = ai->blocksize;
-		sc->sc_blkset = 1;
+		if (ai->blocksize == 0) {
+			audio_calc_blksize(sc, AUMODE_RECORD);
+			audio_calc_blksize(sc, AUMODE_PLAY);
+			sc->sc_blkset = 0;
+		} else {
+			sc->sc_pr.blksize = ai->blocksize;
+			sc->sc_rr.blksize = ai->blocksize;
+			sc->sc_blkset = 1;
+		}
 	}
 
 	if (ai->mode != ~0) {
@@ -2049,7 +2059,9 @@ audiosetinfo(sc, ai)
 	if (cleared) {
 		s = splaudio();
 		audio_initbufs(sc);
-		audio_calcwater(sc);
+		if (sc->sc_pr.blksize != oldpblksize ||
+		    sc->sc_rr.blksize != oldrblksize)
+			audio_calcwater(sc);
 		if (sc->sc_mode & AUMODE_PLAY)
 			audiostartp(sc);
 		if ((sc->sc_mode & AUMODE_RECORD) &&
