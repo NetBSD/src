@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.c,v 1.2 1996/09/18 19:34:33 cgd Exp $	*/
+/*	$NetBSD: loadfile.c,v 1.3 1996/09/23 04:32:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
+
+#define	ELFSIZE		64
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
