@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.18 2003/08/07 11:15:57 agc Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.19 2003/09/12 17:32:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.18 2003/08/07 11:15:57 agc Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.19 2003/09/12 17:32:29 mycroft Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -70,11 +70,9 @@ struct command	iostat_commands[] = {
 	{ "rw",		iostat_rw,	"show read/write disk stats"},
 	{ "all",	iostat_all,	"show combiend disk stats"},
 	/* from disks.c */
-	{ "add",	disks_add,	"add a disk to displayed disks"},
-	{ "show",	disks_add,	"add a disk to displayed disks"},
-	{ "delete",	disks_delete,	"remove a disk from displayed disks"},
-	{ "ignore",	disks_delete,	"remove a disk from displayed disks"},
-	{ "drives",	disks_drives,	"list all disks"},
+	{ "display",	disks_add,	"add a disk to displayed disks"},
+	{ "ignore",	disks_remove,	"remove a disk from displayed disks"},
+	{ "drives",	disks_drives,	"list all disks/set disk list"},
 	{ 0 }
 };
 
@@ -138,11 +136,9 @@ struct command	vmstat_commands[] = {
 	{ "time",	vmstat_time,	"show vm stats for each sample time"},
 	{ "zero",	vmstat_zero,	"re-zero running totals"},
 	/* from disks.c */
-	{ "add",	disks_add,	"add a disk to displayed disks"},
-	{ "show",	disks_add,	"add a disk to displayed disks"},
-	{ "delete",	disks_delete,	"remove a disk from displayed disks"},
-	{ "ignore",	disks_delete,	"remove a disk from displayed disks"},
-	{ "drives",	disks_drives,	"list all disks"},
+	{ "display",	disks_add,	"add a disk to displayed disks"},
+	{ "ignore",	disks_remove,	"remove a disk from displayed disks"},
+	{ "drives",	disks_drives,	"list all disks/set disk list"},
 	{ 0 }
 };
 
