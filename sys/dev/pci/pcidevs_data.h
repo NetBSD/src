@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.449 2002/07/03 16:51:36 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.450 2002/07/04 21:00:33 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.446 2002/06/27 09:50:06 pooka Exp 
+ *	NetBSD: pcidevs,v 1.448 2002/07/04 20:51:35 rjs Exp 
  */
 
 /*
@@ -5200,6 +5200,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "RZ1000",
 	},
 	{
+	    PCI_VENDOR_PEAK, PCI_PRODUCT_PEAK_PCAN,
+	    0,
+	    "Peak System Technik",
+	    "PCAN CAN controller",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
 	    0,
 	    "PLX Technology",
@@ -7658,6 +7664,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Zoran Corporation",
 	    "Video Controller",
+	},
+	{
+	    PCI_VENDOR_PEAK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Peak System Technik",
+	    NULL,
 	},
 	{
 	    PCI_VENDOR_MARTINMARIETTA, 0,
