@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 2001/06/24 17:40:08 nonaka Exp $
+#	$NetBSD: INSTALL,v 1.6 2001/08/29 17:37:47 briggs Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -107,6 +107,7 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -116,6 +117,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
+scsibus* at adw?
 scsibus* at ahc?
 scsibus* at aic?
 scsibus* at iha?
