@@ -1,4 +1,4 @@
-.\"	$NetBSD: fpa.4,v 1.7 2001/06/12 12:04:22 wiz Exp $
+.\"	$NetBSD: fpa.4,v 1.8 2001/09/11 00:08:27 wiz Exp $
 .\"
 .\" Copyright (c) 1995, Matt Thomas
 .\" All rights reserved.
@@ -50,7 +50,7 @@ The DEFEA can be configured with no device memory, this driver
 requires a minimum of 1K device memory be setup.
 The ECU (EISA Configuration Utility) will need to be run to change the settings.
 .El
-.Sh CAVEATS
+.Sh BUGS
 Normally, the device driver will not enable the reception of SMT frames.
 However if the IFF_LINK1 flag is set, the device driver will enable the
 reception of SMT frames and pass them up to the Berkeley Packet Filter for
@@ -60,7 +60,7 @@ processing.
 .Xr arp 4 ,
 .Xr ifconfig 8 ,
 .Xr netintro 4
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm fpa ,
 .Nm fea
