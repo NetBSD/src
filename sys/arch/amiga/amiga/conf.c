@@ -1,4 +1,4 @@
-/*- 
+/*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.13 1994/05/28 07:50:14 cgd Exp $
+ *	$Id: conf.c,v 1.14 1994/05/28 07:52:19 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -72,33 +72,100 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	dev_decl(n,open); dev_decl(n,close); dev_decl(n,strategy); \
 	dev_decl(n,ioctl); dev_decl(n,dump); dev_decl(n,size)
 
-#define	bdev_disk_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, \
-	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
-	dev_init(c,n,dump), dev_size_init(c,n), 0 }
 
+#include "vn.h"
+bdev_decl(vn);
+#define bdev_vn_init(c) { \
+	dev_init(c,vn,open), \
+	(dev_type_close((*))) nullop, \
+	dev_init(c,vn,strategy), \
+	dev_init(c,vn,ioctl), \
+	dev_init(c,vn,dump), \
+	dev_size_init(c,vn), \
+	0 \
+}
+
+#include "sd.h"
+bdev_decl(sd);
+#define	bdev_sd_init(c) { \
+	dev_init(c,sd,open), \
+	dev_init(c,sd,close), \
+	dev_init(c,sd,strategy), \
+	dev_init(c,sd,ioctl), \
+	(dev_type_dump((*))) enxio, \
+	dev_size_init(c,sd), \
+	0 \
+}
+
+#include "cd.h"
+bdev_decl(cd);
+#define	bdev_cd_init(c) { \
+	dev_init(c,cd,open), dev_init(c,cd,close), \
+	dev_init(c,cd,strategy), \
+	dev_init(c,cd,ioctl), \
+	(dev_type_dump((*))) enxio, \
+	dev_size_init(c,cd), \
+	0 \
+}
+
+#include "ch.h"
+bdev_decl(ch);	/* XXX not used yet */
+#define	bdev_ch_init(c) { \
+	dev_init(c,ch,open), \
+	dev_init(c,ch,close), \
+	(dev_type_strategy((*))) xxx, \
+	dev_init(c,ch,ioctl), \
+	(dev_type_dump((*))) enxio, \
+	(dev_type_size((*))) xxx, \
+	0 \
+}
+
+#include "fd.h"
+bdev_decl(fd);
+dev_decl(Fd,open);
 #define	bdev_floppy_init(c) { \
-	dev_init(c,Fd,open), dev_init(c,fd,close), \
-	dev_init(c,fd,strategy), dev_init(c,fd,ioctl), \
-	(dev_type_dump((*))) enxio, dev_size_init(c,fd), 0 }
+	dev_init(c,Fd,open), \
+	dev_init(c,fd,close), \
+	dev_init(c,fd,strategy), \
+	dev_init(c,fd,ioctl), \
+	(dev_type_dump((*))) enxio, \
+	dev_size_init(c,fd), \
+	0 \
+}
 
-#define	bdev_tape_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	dev_init(c,n,strategy), dev_init(c,n,ioctl), \
-	dev_init(c,n,dump), 0, B_TAPE }
+#include "st.h"
+bdev_decl(st);
+#define	bdev_st_init(c) { \
+	dev_init(c,st,open), \
+	dev_init(c,st,close), \
+	dev_init(c,st,strategy), \
+	dev_init(c,st,ioctl), \
+	(dev_type_dump((*))) enxio, \
+	(dev_type_size((*))) NULL, \
+	0 \
+}
 
 #define	bdev_swap_init() { \
-	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
-	swstrategy, (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0, 0 }
+	(dev_type_open((*))) enodev, \
+	(dev_type_close((*))) enodev, \
+	swstrategy, \
+	(dev_type_ioctl((*))) enodev, \
+	(dev_type_dump((*))) enodev, \
+	0, \
+	0 \
+}
+#define bdev_tape_init(c,n) { \
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	dev_init(c,n,strategy), \
+	dev_init(c,n,ioctl), \
+	dev_init(c,n,dump), \
+	0, \
+	B_TAPE \
+}
 
 #define	bdev_notdef()	bdev_tape_init(0,no)
 bdev_decl(no);	/* dummy declarations */
-
-#include "sd.h"
-#include "st.h"
-#include "vn.h"
-#include "fd.h"
 
 #ifdef LKM
 int lkmenodev();
@@ -111,22 +178,16 @@ int lkmenodev();
 	(dev_type_strategy((*))) lkmenodev, (dev_type_ioctl((*))) lkmenodev, \
 	(dev_type_dump((*))) lkmenodev, 0, 0 }
 
-bdev_decl(sd);
-bdev_decl(st);
-bdev_decl(vn);
-bdev_decl(fd);
-dev_decl(Fd,open);
-
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),		/* 0 */
-	bdev_notdef(),		/* 1 */
+	bdev_notdef(),		/* 0: */
+	bdev_notdef(),		/* 1: */
 	bdev_floppy_init(NFD),	/* 2: floppy */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
-	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
-	bdev_notdef(),		/* 5 */
-	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
-	bdev_tape_init(NST,st),	/* 7: exabyte tape */
+	bdev_sd_init(NSD),	/* 4: scsi disk */
+	bdev_st_init(NST),	/* 5: exabyte tape */
+	bdev_vn_init(NVN),	/* 6: vnode disk driver (swap to files) */
+	bdev_cd_init(NCD),	/* 7: scsi cd.*/
 	bdev_notdef(),		/* 8: */
 	LKM_BDEV(),		/* 9: Empty slot for LKM */
 	LKM_BDEV(),		/* 10: Empty slot for LKM */
@@ -154,77 +215,149 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
 #define	dev_tty_init(c,n)	(c > 0 ? __CONCAT(n,_tty) : 0)
 
-/* open, read, write, ioctl, strategy */
-#define	cdev_disk_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
-	(dev_type_map((*))) enodev, dev_init(c,n,strategy) }
-
-/* open, read, write, ioctl, strategy */
-#define	cdev_floppy_init(c) { \
-	dev_init(c,Fd,open), dev_init(c,fd,close), \
-	(dev_type_read((*)))rawread, \
-	(dev_type_write((*))) rawwrite, dev_init(c,fd,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, \
-	0, seltrue, (dev_type_map((*))) enodev, dev_init(c,fd,strategy) }
-
-cdev_decl(fd);
-dev_type_open(Fdopen);
-
-/* open, close, read, write, ioctl, strategy */
-#define	cdev_tape_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
-	(dev_type_map((*))) enodev, dev_init(c,n,strategy) }
 
 /* open, close, read, write, ioctl, stop, tty */
 #define	cdev_tty_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
-	(dev_type_map((*))) enodev, 0 }
-
-#define	cdev_notdef() { \
-	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
-	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
-	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
-	(dev_type_map((*))) enodev, 0 }
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	dev_init(c,n,read), \
+	dev_init(c,n,write), \
+	dev_init(c,n,ioctl), \
+	dev_init(c,n,stop), \
+	(dev_type_reset((*))) nullop, \
+	dev_tty_init(c,n), \
+	ttselect, \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
 cdev_decl(no);			/* dummy declarations */
+#define	cdev_notdef() { \
+	(dev_type_open((*))) enodev, \
+	(dev_type_close((*))) enodev, \
+	(dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, \
+	(dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	(dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
+
+/* scsi disk */
+cdev_decl(sd);
+#define	cdev_sd_init(c) { \
+	dev_init(c,sd,open), \
+	dev_init(c,sd,close), \
+	(dev_type_read((*))) rawread, \
+	(dev_type_write((*))) rawwrite, \
+	dev_init(c,sd,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	(dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, \
+	dev_init(c,sd,strategy) \
+}
+
+/* scsi tape */
+cdev_decl(st);
+#define	cdev_st_init(c) { \
+	dev_init(c,st,open), \
+	dev_init(c,st,close), \
+	(dev_type_read((*))) rawread, \
+	(dev_type_write((*))) rawwrite, \
+	dev_init(c,st,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	(dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, \
+	dev_init(c,st,strategy) \
+}
+
+
+/* floppy disk */
+cdev_decl(fd);
+dev_type_open(Fdopen);
+#define	cdev_floppy_init(c) { \
+	dev_init(c,Fd,open), \
+	dev_init(c,fd,close), \
+	(dev_type_read((*)))rawread, \
+	(dev_type_write((*))) rawwrite, \
+	dev_init(c,fd,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	seltrue, \
+	(dev_type_map((*))) enodev, \
+	dev_init(c,fd,strategy) \
+}
 
 cdev_decl(cn);
-/* open, close, read, write, ioctl, select -- XXX should be a tty */
-#define	cdev_cn_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+/* console */
+#define	cdev_cn_init(c) { \
+	dev_init(c,cn,open), \
+	dev_init(c,cn,close), \
+	dev_init(c,cn,read), \
+	dev_init(c,cn,write), \
+	dev_init(c,cn,ioctl), \
+	(dev_type_stop((*))) nullop, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	dev_init(c,cn,select), \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
 cdev_decl(ctty);
 /* open, read, write, ioctl, select -- XXX should be a tty */
-#define	cdev_ctty_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+#define	cdev_ctty_init(c) { \
+	dev_init(c,ctty,open), \
+	(dev_type_close((*))) nullop, \
+	dev_init(c,ctty,read), \
+	dev_init(c,ctty,write), \
+	dev_init(c,ctty,ioctl), \
+	(dev_type_stop((*))) nullop, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	dev_init(c,ctty,select), \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
 dev_type_read(mmrw);
 /* read/write */
-#define	cdev_mm_init(c,n) { \
-	(dev_type_open((*))) nullop, (dev_type_close((*))) nullop, mmrw, \
-	mmrw, (dev_type_ioctl((*))) enodev, (dev_type_stop((*))) nullop, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*)))seltrue, \
-	(dev_type_map((*))) enodev, 0 }
+#define	cdev_mm_init(c) { \
+	(dev_type_open((*))) nullop, \
+	(dev_type_close((*))) nullop, \
+	mmrw, \
+	mmrw, \
+	(dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) nullop, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	(dev_type_select((*)))seltrue, \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
 /* read, write, strategy */
-#define	cdev_swap_init(c,n) { \
-	(dev_type_open((*))) nullop, (dev_type_close((*))) nullop, rawread, \
-	rawwrite, (dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_map((*))) enodev, dev_init(c,n,strategy) }
+#define	cdev_swap_init(c) { \
+	(dev_type_open((*))) nullop, \
+	(dev_type_close((*))) nullop, \
+	rawread, \
+	rawwrite, \
+	(dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	(dev_type_select((*))) enodev, \
+	(dev_type_map((*))) enodev, \
+	dev_init(c,sw,strategy) \
+}
 
 #include "pty.h"
 #define	pts_tty		pt_tty
@@ -235,103 +368,187 @@ cdev_decl(pts);
 cdev_decl(ptc);
 
 /* open, close, read, write, ioctl, tty, select */
-#define	cdev_ptc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	(dev_type_reset((*))) nullop, dev_tty_init(c,n), dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+#define	cdev_ptc_init(c) { \
+	dev_init(c,ptc,open), \
+	dev_init(c,ptc,close), \
+	dev_init(c,ptc,read), \
+	dev_init(c,ptc,write), \
+	dev_init(c,ptc,ioctl), \
+	(dev_type_stop((*))) nullop, \
+	(dev_type_reset((*))) nullop, \
+	dev_tty_init(c,ptc), \
+	dev_init(c,ptc,select), \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
 cdev_decl(log);
 /* open, close, read, ioctl, select -- XXX should be a generic device */
-#define	cdev_log_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
-	dev_init(c,n,select), (dev_type_map((*))) enodev, 0 }
+#define	cdev_log_init(c) { \
+	dev_init(c,log,open), \
+	dev_init(c,log,close), \
+	dev_init(c,log,read), \
+	(dev_type_write((*))) enodev, \
+	dev_init(c,log,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	dev_init(c,log,select), \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
-cdev_decl(st);
-cdev_decl(sd);
 
+#include "grf.h"
 cdev_decl(grf);
 /* open, close, ioctl, select, map -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
-	dev_init(c,n,select), dev_init(c,n,map), 0 }
+#define	cdev_grf_init(c) { \
+	dev_init(c,grf,open), \
+	dev_init(c,grf,close), \
+	(dev_type_read((*))) nullop, \
+	(dev_type_write((*))) nullop, \
+	dev_init(c,grf,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	dev_init(c,grf,select), \
+	dev_init(c,grf,map), \
+	0 \
+}
 
 #include "view.h"
 cdev_decl(view);
 /* open, close, ioctl, select, map -- XXX should be a map device */
-#define	cdev_view_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
-	dev_init(c,n,select), dev_init(c,n,map), 0 }
+#define	cdev_view_init(c) { \
+	dev_init(c,view,open), \
+	dev_init(c,view,close), \
+	(dev_type_read((*))) nullop, \
+	(dev_type_write((*))) nullop, \
+	dev_init(c,view,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	dev_init(c,view,select), \
+	dev_init(c,view,map), \
+	0 \
+}
 
 #include "par.h"
 cdev_decl(par);
 /* open, close, read, write, ioctl -- XXX should be a generic device */
-#define	cdev_par_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_map((*))) enodev, 0 }
-
-#include "ser.h"
-cdev_decl(ser);
+#define	cdev_par_init(c) { \
+	dev_init(c,par,open), \
+	dev_init(c,par,close), \
+	dev_init(c,par,read), \
+	dev_init(c,par,write), \
+	dev_init(c,par,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	0, \
+	(dev_type_select((*))) enodev, \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
 #include "ite.h"
 cdev_decl(ite);
 /* open, close, read, write, ioctl, tty -- XXX should be a tty! */
-#define	cdev_ite_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
-	(dev_type_map((*))) enodev, 0 }
+#define	cdev_ite_init(c) { \
+	dev_init(c,ite,open), \
+	dev_init(c,ite,close), \
+	dev_init(c,ite,read), \
+	dev_init(c,ite,write), \
+	dev_init(c,ite,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	dev_tty_init(c,ite), \
+	ttselect, \
+	(dev_type_map((*))) enodev, \
+	0 \
+}
 
+#include "kbd.h"
 cdev_decl(kbd);
 /* open, close, read, write, ioctl, select */
-#define cdev_kbd_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+#define cdev_kbd_init(c) { \
+	dev_init(c,kbd,open), \
+	dev_init(c,kbd,close), \
+	dev_init(c,kbd,read), \
+	dev_init(c,kbd,write), \
+	dev_init(c,kbd,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	(struct tty **) NULL, \
+	dev_init(c,kbd,select), \
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) 0 \
+}
 
 #include "mouse.h"
 cdev_decl(ms);
 /* open, close, read, write, ioctl, select */
-#define cdev_mouse_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+#define cdev_mouse_init(c) { \
+	dev_init(c,ms,open), \
+	dev_init(c,ms,close), \
+	dev_init(c,ms,read), \
+	dev_init(c,ms,write), \
+	dev_init(c,ms,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	(struct tty **) NULL, \
+	dev_init(c,ms,select), \
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) NULL \
+}
 
 cdev_decl(vn);
 /* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
-	(dev_type_map((*))) enodev, 0 }
+#define	cdev_vn_init(c) { \
+	dev_init(c,vn,open), \
+	(dev_type_close((*))) nullop, \
+	dev_init(c,vn,read), \
+	dev_init(c,vn,write), \
+	dev_init(c,vn,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	(struct tty **) NULL, \
+	(dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) NULL \
+}
 
 dev_type_open(fdopen);
 /* open */
 #define	cdev_fd_init(c) { \
-	dev_init(c,fd,open), (dev_type_close((*))) enodev, \
-	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
-	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) enodev, 0, (dev_type_select((*))) enodev, \
-	(dev_type_map((*))) enodev, 0 }
+	dev_init(c,fd,open), \
+	(dev_type_close((*))) enodev, \
+	(dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, \
+	(dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, \
+	(struct tty **) NULL, \
+	(dev_type_select((*))) enodev, \
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) NULL \
+}
 
 #include "bpfilter.h"
 cdev_decl(bpf);
 /* open, close, read, write, ioctl, select -- XXX should be generic device */
-#define	cdev_bpf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+#define	cdev_bpf_init(c) { \
+	dev_init(c,bpf,open), \
+	dev_init(c,bpf,close), \
+	dev_init(c,bpf,read), \
+	dev_init(c,bpf,write), \
+	dev_init(c,bpf,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, \
+	(struct tty **) NULL, \
+	dev_init(c,bpf,select), \
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) NULL \
+}
 
 
 #ifdef LKM
@@ -344,46 +561,64 @@ dev_type_open(lkmopen);
 dev_type_close(lkmclose);
 dev_type_ioctl(lkmioctl);
 
-#define	cdev_lkm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev,\
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) enodev, 0, \
-	(dev_type_select((*))) enodev, (dev_type_map((*))) enodev, 0 }
+#define	cdev_lkm_init(c) { \
+	dev_init(c,lkm,open), \
+	dev_init(c,lkm,close), \
+	(dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, \
+	dev_init(c,lkm,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, \
+	(struct tty **) NULL, \
+	(dev_type_select((*))) enodev,\
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) NULL \
+}
 
 #define	LKM_CDEV() { \
-	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) lkmenodev, \
-	(dev_type_read((*))) lkmenodev, (dev_type_write((*))) lkmenodev, \
-	(dev_type_ioctl((*))) lkmenodev, (dev_type_stop((*))) lkmenodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
-	(dev_type_map((*))) lkmenodev, 0 }
+	(dev_type_open((*))) lkmenodev, \
+	(dev_type_close((*))) lkmenodev, \
+	(dev_type_read((*))) lkmenodev, \
+	(dev_type_write((*))) lkmenodev, \
+	(dev_type_ioctl((*))) lkmenodev, \
+	(dev_type_stop((*))) lkmenodev, \
+	(dev_type_reset((*))) nullop, \
+	(struct tty **) NULL, \
+	(dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) lkmenodev, \
+	(dev_type_strategy((*))) NULL \
+}
+
+#include "ser.h"
+cdev_decl(ser);
 
 struct cdevsw	cdevsw[] =
 {
-	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
-	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
+	cdev_cn_init(1),		/* 0: virtual console */
+	cdev_ctty_init(1),		/* 1: controlling terminal */
+	cdev_mm_init(1),		/* 2: /dev/{null,mem,kmem,...} */
+	cdev_swap_init(1),		/* 3: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
-	cdev_log_init(1,log),		/* 6: /dev/klog */
+	cdev_ptc_init(NPTY),		/* 5: pseudo-tty master */
+	cdev_log_init(1),		/* 6: /dev/klog */
 	cdev_notdef(),			/* 7: */
-	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
+	cdev_sd_init(NSD),		/* 8: scsi disk */
 	cdev_notdef(),			/* 9: */
-	cdev_grf_init(NITE,grf),	/* 10: frame buffer */
-	cdev_par_init(NPAR,par),	/* 11: parallel interface */
-	cdev_tty_init(1,ser),		/* 12: built-in single-port serial */
-	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
-	cdev_kbd_init(1, kbd),		/* 14: /dev/kbd */
-	cdev_mouse_init(NMOUSE, ms),	/* 15: /dev/mouse0 /dev/mouse1 */
-	cdev_view_init (NVIEW, view),	/* 16: /dev/view00 /dev/view01 ... */
+	cdev_grf_init(NGRF),		/* 10: frame buffer */
+	cdev_par_init(NPAR),		/* 11: parallel interface */
+	cdev_tty_init(NSER,ser),	/* 12: built-in single-port serial */
+	cdev_ite_init(NITE),		/* 13: console terminal emulator */
+	cdev_kbd_init(NKBD),		/* 14: /dev/kbd */
+	cdev_mouse_init(NMOUSE),	/* 15: /dev/mouse0 /dev/mouse1 */
+	cdev_view_init(NVIEW),		/* 16: /dev/view00 /dev/view01 ... */
 	cdev_notdef(),			/* 17: */
 	cdev_floppy_init(NFD),		/* 18: floppy */
-	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
-	cdev_tape_init(NST,st),		/* 20: exabyte tape */
+	cdev_vn_init(NVN),		/* 19: vnode disk */
+	cdev_st_init(NST),		/* 20: scsi tape */
 	cdev_fd_init(1),		/* 21: file descriptor pseudo-dev */
-	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
+	cdev_bpf_init(NBPFILTER),	/* 22: berkeley packet filter */
 	cdev_notdef(),			/* 23: */
-	cdev_lkm_init(NLKM,lkm),	/* 24: loadable kernel modules pdev */
+	cdev_lkm_init(NLKM),	/* 24: loadable kernel modules pdev */
 	LKM_CDEV(),			/* 25: Empty slot for LKM */
 	LKM_CDEV(),			/* 26: Empty slot for LKM */
 	LKM_CDEV(),			/* 27: Empty slot for LKM */
@@ -432,7 +667,9 @@ int sercnprobe(), sercninit(), sercngetc(), sercnputc();
 int ite_cnprobe(), ite_cninit(), ite_cngetc(), ite_cnputc();
 
 struct	consdev constab[] = {
+#if NSER > 0
 	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
+#endif
 #if NITE > 0
 	{ ite_cnprobe,	ite_cninit,	ite_cngetc,	ite_cnputc },
 #endif
