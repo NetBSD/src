@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.19 1996/05/14 13:26:49 jtc Exp $	*/
+/*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@ struct ostat {
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 };
-#endif /* !_POSIX_SOURCE */
+#endif /* !_KERNEL */
 
 struct stat {
 	dev_t	  st_dev;		/* inode's device */
