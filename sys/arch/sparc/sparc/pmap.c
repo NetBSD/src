@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.19 2003/01/15 18:40:18 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.20 2003/01/17 15:18:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -7184,8 +7184,15 @@ pmap_deactivate(l)
 {
 #if defined(MULTIPROCESSOR)
 	pmap_t pmap;
+	struct proc *p;
 
-	if (p && p->p_vmspace &&
+#ifdef DIAGNOSTIC
+	if (l == NULL)
+		panic("pmap_deactivate: l==NULL");
+#endif
+
+	p = l->l_proc;
+	if (p->p_vmspace &&
 	    (pmap = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
 		if (pmap->pm_ctx)
 			sp_tlb_flush(0, pmap->pm_ctxnum, ASI_SRMMUFP_L0);
