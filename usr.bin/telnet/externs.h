@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.23 2002/06/14 00:30:56 wiz Exp $	*/
+/*	$NetBSD: externs.h,v 1.24 2002/06/14 09:55:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -537,14 +537,14 @@ int DataToTerminal(char *, int);
 int Push3270(void);
 void Finish3270(void);
 void StringToTerminal(char *);
-void _putchar(int);
+int _putchar(int);
 void SetIn3270(void);
 int tn3270_ttype(void);
 int settranscom(int, char *[]);
 int shell_continue(void);
-int DataFromTerminal __(char *, int);
-int DataFromNetwork __(char *, int, int);
-void ConnectScreen __(void);
-int DoTerminalOutput __(void);
+int DataFromTerminal(char *, int);
+int DataFromNetwork(char *, int, int);
+void ConnectScreen(void);
+int DoTerminalOutput(void);
 
 #endif	/* defined(TN3270) */
