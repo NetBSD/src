@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.5 2000/08/21 06:57:51 kleink Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.6 2000/12/03 02:39:42 minoura Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -50,7 +50,7 @@ executable file format.
 The
 .Tn Win32
 API is an application program interface (API) for 32-bit
-applications for Microsoft Windows 9x/NT/2000.  The
+applications for Microsoft Windows 9x/Me/NT/2000.  The
 .Tn Win32
 API is provided
 via a set of core DLLs (Dynamically Linked Libraries), including
@@ -171,6 +171,10 @@ in order to use
 (or another
 .Tn Win32
 application) as the login shell.
+.Pp
+According to the development phase, some other PEACE-specific DLLs
+might be distributed separately.  Please check the announcements
+on the Web or the mailing list.
 .Pp
 Other DLLs can be stored in arbitrary directories specified by the
 environment variable
