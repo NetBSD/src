@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.90 2000/06/05 23:05:31 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.91 2000/06/09 13:05:03 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.90 2000/06/05 23:04:04 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.91 2000/06/06 17:19:59 soren Exp 
  */
 
 /*-
@@ -262,6 +262,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "I-O DATA PCLA/TE"	},
 	},
 	{
+	    PCMCIA_VENDOR_FARALLON, PCMCIA_PRODUCT_FARALLON_SKYLINE,
+	    PCMCIA_CIS_FARALLON_SKYLINE,
+	    0,
+	    "Farallon Communications",
+	    "SkyLINE Wireless"	},
+	},
+	{
 	    PCMCIA_VENDOR_LEXARMEDIA, PCMCIA_PRODUCT_LEXARMEDIA_COMPATFLASH,
 	    PCMCIA_CIS_LEXARMEDIA_COMPATFLASH,
 	    0,
@@ -344,6 +351,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Nokia Communications",
 	    "Nokia C020 WLAN Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_TR,
+	    PCMCIA_CIS_OLICOM_TR,
+	    0,
+	    "Olicom",
+	    "GoCard Token Ring 16/4"	},
 	},
 	{
 	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
@@ -892,6 +906,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_OLICOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Olicom",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_ADAPTEC, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -966,6 +987,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_FARALLON, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Farallon Communications",
 	    NULL,
 	},
 	{
