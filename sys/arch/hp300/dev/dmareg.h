@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.11 1997/04/27 20:58:56 thorpej Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.12 1997/05/05 21:02:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -116,8 +116,8 @@ struct	dmareg {
 #define	DMA_STAT(dc)	dc->dm_Bhwaddr->dmaB_stat
 
 #if defined(HP320)
-#define	DMA_ARM(dc)	\
-	if (dc->dm_softc->sc_type == DMA_B) { \
+#define	DMA_ARM(sc, dc)	\
+	if (sc->sc_type == DMA_B) { \
 		struct dmaBdevice *dma = dc->dm_Bhwaddr; \
 		dma->dmaB_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dmaB_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
@@ -129,7 +129,7 @@ struct	dmareg {
 		dma->dma_cmd = dc->dm_cmd; \
 	}
 #else
-#define	DMA_ARM(dc)	\
+#define	DMA_ARM(sc, dc)	\
 	{ \
 		struct dmadevice *dma = dc->dm_hwaddr; \
 		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
