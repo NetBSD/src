@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2000/09/28 07:26:48 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2001/01/07 20:56:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -701,12 +701,14 @@ u_short evec;
 {
 	static int	prev_evec;
 
-	printf("unexpected trap (vector offset %x) from %x\n",evec & 0xFFF, pc);
+	printf("unexpected trap (vector offset 0x%x) from 0x%x\n",
+						evec & 0xFFF, pc);
 
 	if(prev_evec == evec) {
 		delay(1000000);
 		prev_evec = 0;
 	}
+	else prev_evec = evec;
 }
 
 void
