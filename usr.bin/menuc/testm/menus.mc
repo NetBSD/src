@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.7 1998/07/01 07:46:02 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.8 1998/07/02 21:46:19 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@
 
 default x=20, y=10;
 
-include dynamic menu;
+allow dynamic menus;
 
 error action { fprintf (stderr, "Testm: Could not initialize curses.\n");
 	       exit(1); };

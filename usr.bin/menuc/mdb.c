@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.9 1998/07/01 07:46:02 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.10 1998/07/02 21:46:18 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -162,7 +162,7 @@ write_menu_file (char *initcode)
 			"	int	nextmenu;\n"
 			"	int	submenu;\n"
 			"	void	(*action)(void);\n"
-			"} dyn_menu_ent ;\n");
+			"} dyn_menu_ent ;\n\n");
 
 	(void) fprintf (out_file, "%s",
 		"typedef\n"
