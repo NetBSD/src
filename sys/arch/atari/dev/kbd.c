@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.4 1995/06/25 19:05:26 leo Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5 1995/06/26 14:31:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -54,6 +54,8 @@
 #include <atari/dev/kbdreg.h>
 #include <atari/dev/event_var.h>
 #include <atari/dev/vuid_event.h>
+
+#include "mouse.h"
 
 /*
  * The ringbuffer is the interface between the hard and soft interrupt handler.
@@ -353,11 +355,13 @@ kbdsoft()
 				k->k_package[k->k_pkg_idx++] = code;
 				if (k->k_pkg_idx == k->k_pkg_size) {
 				    k->k_pkg_size = 0;
+#if NMOUSE > 0
 				    /*
 				     * Package is complete, we can now
 				     * send it to the mouse driver...
 				     */
 				    mouse_soft(k->k_package, k->k_pkg_size);
+#endif /* NMOUSE */
 				}
 				continue;
 			}
