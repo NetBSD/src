@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2003/07/14 22:32:39 lukem Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2003/07/14 22:32:39 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

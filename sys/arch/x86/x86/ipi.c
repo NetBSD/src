@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
+/*	$NetBSD: ipi.c,v 1.3 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>                  /* RCS ID & Copyright macro defns */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.3 2003/07/14 22:32:40 lukem Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>

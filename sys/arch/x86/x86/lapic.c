@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.3 2003/07/14 22:32:40 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.3 2003/07/14 22:32:40 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
