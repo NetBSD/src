@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.13 2001/04/16 08:11:17 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.14 2001/06/26 02:11:56 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,42 +95,42 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar ct#
 HP300 HP-IB cartridge tape, see
-.Xr ct 4
+.Xr c\&t 4
 . It Ar mt#
 (Magnetic) 9-track reel tape
 . It Ar st#
 Exabyte tape, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Disks:
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 ``concatenated'' pseudo-disks, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar md#
 Memory pseudo-disk devices, see
-.Xr md 4
+.Xr m\&d 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr raid 4
+.Xr r\&aid 4
 . It Ar rd#
 HP300 HP-IB disks, see
-.Xr rd 4
+.Xr r\&d 4
 . It Ar sd#
 HP300 SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . El
 .It Terminal multiplexors:
 . Bl -tag -width 0123456789 -compact
 . It Ar dca#
 HP200/300 single port serial interface, see
-.Xr dca 4
+.Xr d\&ca 4
 . It Ar dcm#
 HP200/300 4 port serial mux interface, see
-.Xr dcm 4
+.Xr d\&cm 4
 . It Ar apci#
 HP400 4 port serial mux interface
 . El
@@ -138,7 +138,7 @@ HP400 4 port serial mux interface
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
@@ -146,30 +146,30 @@ Set of 16 master and slave pseudo terminals, see
 File descriptors
 . It Ar grf#
 Raw interface to HP300 graphics devices, see
-.Xr grf 4
+.Xr g\&rf 4
 . It Ar ite#
 Terminal emulator interface to HP300 graphics devices, see
-.Xr ite 4
+.Xr i\&te 4
 . It Ar hil
 HP300 HIL input devices, see
-.Xr hil 4
+.Xr h\&il 4
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar ipl
 IPilter control
 . It Ar random
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr scsictl 8 ,
-.Xr scsi 4
+.Xr s\&csictl 8 ,
+.Xr s\&csi 4
 . El
 .El
 .Sh FILES
