@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.h,v 1.19 1997/02/18 13:39:35 mrg Exp $	*/
+/*	$NetBSD: vm_object.h,v 1.20 1997/02/21 20:26:03 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -160,6 +160,9 @@ vm_object_t	kmem_object;
 		}							\
 	} while (0)
 
+#define	vm_object_paging(object) \
+	((object)->paging_in_progress != 0)
+
 #ifndef DIAGNOSTIC
 #define	vm_object_paging_begin(object) \
 	do {								\
@@ -176,13 +179,13 @@ vm_object_t	kmem_object;
 
 #define	vm_object_paging_end(object) \
 	do {								\
-		if (--(object)->paging_in_progress == 0)		\
+		if (--((object)->paging_in_progress) == 0)		\
 			vm_object_wakeup((object));			\
 	} while (0)
 
 #define	vm_object_paging_wait(object) \
 	do {								\
-		while ((object)->paging_in_progress != 0) {		\
+		while (vm_object_paging((object))) {			\
 			vm_object_sleep((object), (object), FALSE,	\
 			    "vospgw");					\
 			vm_object_lock((object));			\
@@ -222,6 +225,5 @@ void		 vm_object_setpager __P((vm_object_t,
 		    vm_pager_t, vm_offset_t, boolean_t));
 void		 vm_object_shadow __P((vm_object_t *,
 		    vm_offset_t *, vm_size_t));
-void		 vm_object_terminate __P((vm_object_t));
 #endif
 #endif /* _VM_OBJECT_ */
