@@ -1,9 +1,9 @@
-#	$NetBSD: GENERIC,v 1.18 1997/01/11 09:11:42 mikel Exp $
+#	$NetBSD: GENERIC,v 1.19 1997/01/11 11:15:38 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
-include "std.vax"
+machine	vax
 
 # Here are all different supported CPU types listed.
 options         "VAX8600"
@@ -52,6 +52,10 @@ options		SYSVMSG
 options		SYSVSEM
 options		SYSVSHM
 
+# What executables to look for.
+options		EXEC_AOUT
+options		EXEC_SCRIPT
+
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
@@ -66,9 +70,10 @@ options		TCP_COMPAT_42
 
 options		LKM
 
-
 # Kernel(s) to compile
 config          netbsd          swap generic
+
+backplane0	at root
 
 # Devices directly attached to backplane.
 cpu0		at backplane0	# Only one CPU so far.
@@ -113,7 +118,7 @@ ra*		at mscpbus? drive?	# MSCP disk
 mt*		at mscpbus? drive?	# MSCP tape
 
 # Unibus tapes
-ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+#ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
 hdc0		at vsbus0		# The strange builtin MFM controller
@@ -136,7 +141,6 @@ le0		at vsbus0		# LANCE
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
-dc0		at vsbus0		# VAXstation 4-line serial controller
 
 pseudo-device   loop	1
 pseudo-device   pty	48
