@@ -1,11 +1,11 @@
-/* $NetBSD: wsmoused.c,v 1.10 2003/03/05 10:51:43 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.11 2003/08/06 18:07:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio Merino.
+ * by Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,9 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.10 2003/03/05 10:51:43 jmmv Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
+"The NetBSD Foundation, Inc.  All rights reserved.\n");
+__RCSID("$NetBSD: wsmoused.c,v 1.11 2003/08/06 18:07:53 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -42,113 +44,133 @@ __RCSID("$NetBSD: wsmoused.c,v 1.10 2003/03/05 10:51:43 jmmv Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <util.h>
 
 #include "pathnames.h"
 #include "wsmoused.h"
 
-#define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
-			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
-			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Z))
-#define IS_BUTTON_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_UP) || \
-			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
-
-static struct mouse mouse;
-static char *PidFile = NULL;
-static int XConsole = -1;
+/* --------------------------------------------------------------------- */
 
 /*
- * Show program usage information
+ * Global variables.
  */
+
+static struct mouse Mouse;
+static char *Pid_File = NULL;
+static int X_Console = -1;
+
+#ifdef WSMOUSED_SELECTION_MODE
+extern struct mode_bootstrap Selection_Mode;
+#endif
+
+#define MAX_MODES 1
+static struct mode_bootstrap *Modes[MAX_MODES];
+static struct mode_bootstrap *Avail_Modes[] = {
+#ifdef WSMOUSED_SELECTION_MODE
+	&Selection_Mode,
+#endif
+};
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Prototypes for functions private to this module.
+ */
+
+static void usage(void);
+static void open_device(unsigned int);
+static void init_mouse(void);
+static void event_loop(void);
+static void generic_wscons_event(struct wscons_event);
+static int  attach_mode(const char *);
+static void attach_modes(char *);
+static void detach_mode(const char *);
+static void detach_modes(void);
+static void signal_terminate(int);
+int main(int, char **);
+
+/* --------------------------------------------------------------------- */
+
+/* Shows program usage information and exits. */
 static void
 usage(void)
 {
+
 	(void)fprintf(stderr,
-	    "Usage: %s [-d device] [-f config_file] [-n]\n",
+	    "Usage: %s [-d device] [-f config_file] [-m modes] [-n]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
-/*
- * Handler for close signals
- */
+/* --------------------------------------------------------------------- */
+
+/* Initializes mouse information.  Basically, it opens required files
+ * for the daemon to work. */
 static void
-signal_terminate(int sig)
+init_mouse(void)
 {
-	mouse_cursor_hide(&mouse);
-	config_free();
-	exit(EXIT_SUCCESS);
+
+	Mouse.m_devfd = -1;
+	open_device(0);
+
+	/* Open FIFO, if wanted */
+	Mouse.m_fifofd = -1;
+	if (Mouse.m_fifoname != NULL) {
+		Mouse.m_fifofd = open(Mouse.m_fifoname,
+		    O_RDWR | O_NONBLOCK, 0);
+		if (Mouse.m_fifofd == -1)
+			err(EXIT_FAILURE, "cannot open %s", Mouse.m_fifoname);
+	}
 }
 
-/*
- * Open the mouse device (i.e. /dev/wsmouse). The argument secs
- * specifies the number of seconds we must wait before opening the
- * device. This is used when returning from X. See mouse_open_tty().
- */
+/* --------------------------------------------------------------------- */
+
+/* Opens the mouse device (if not already opened).  The argument `secs'
+ * specifies how much seconds the function will wait before trying to
+ * open the device; this is used when returning from the X console. */
 static void
-mouse_open_device(struct mouse *m, int secs)
+open_device(unsigned int secs)
 {
-	if (m->fd != -1) return;
+
+	if (Mouse.m_devfd != -1)
+		return;
 
 	sleep(secs);
 
 	/* Open mouse file descriptor */
-	m->fd = open(m->device_name,
-	             O_RDONLY | O_NONBLOCK, 0);
-	if (m->fd == -1) {
-		err(EXIT_FAILURE, "cannot open %s", m->device_name);
-	}
+	Mouse.m_devfd = open(Mouse.m_devname, O_RDONLY | O_NONBLOCK, 0);
+	if (Mouse.m_devfd == -1)
+		err(EXIT_FAILURE, "cannot open %s", Mouse.m_devname);
 }
 
-/*
- * Prepare mouse file descriptors
- */
-static void
-open_files(void)
-{
-	/* Open wsdisplay status device */
-	mouse.stat_fd = open(_PATH_TTYSTAT, O_RDONLY | O_NONBLOCK, 0);
-	if (mouse.stat_fd == -1)
-		err(EXIT_FAILURE, "cannot open %s", mouse.tstat_name);
+/* --------------------------------------------------------------------- */
 
-	mouse.fd = -1;
-	mouse_open_device(&mouse, 0);
-
-	/* Open FIFO, if wanted */
-	mouse.fifo_fd = -1;
-	if (mouse.fifo_name != NULL) {
-		mouse.fifo_fd = open(mouse.fifo_name, O_RDWR | O_NONBLOCK, 0);
-		if (mouse.fifo_fd == -1)
-			err(EXIT_FAILURE, "cannot open %s", mouse.fifo_name);
-	}
-}
-
-/*
- * Mouse event loop
- */
+/* Main program event loop.  This function polls the wscons status
+ * device and the mouse device; whenever an event is received, the
+ * appropiate callback is fired for all attached modes.  If the polls
+ * times out (which only appens when the mouse is disabled), another
+ * callback is launched. */
 static void
 event_loop(void)
 {
-	int res;
+	int i, res;
 	struct pollfd fds[2];
 	struct wscons_event event;
 
-	fds[0].fd = mouse.stat_fd;
+	fds[0].fd = Mouse.m_statfd;
 	fds[0].events = POLLIN;
 
 	for (;;) {
-		fds[1].fd = mouse.fd;
+		fds[1].fd = Mouse.m_devfd;
 		fds[1].events = POLLIN;
-		if (mouse.disabled)
+		if (Mouse.m_disabled)
 			res = poll(fds, 1, INFTIM);
 		else
 			res = poll(fds, 2, 300);
@@ -157,168 +179,219 @@ event_loop(void)
 			warn("failed to read from devices");
 
 		if (fds[0].revents & POLLIN) {
-			res = read(mouse.stat_fd, &event, sizeof(event));
+			res = read(Mouse.m_statfd, &event, sizeof(event));
 			if (res != sizeof(event))
 				warn("failed to read from mouse stat");
-			screen_event(&mouse, &event);
+
+			generic_wscons_event(event);
+
+			for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
+				if (Modes[i]->mb_wscons_event != NULL)
+					Modes[i]->mb_wscons_event(event);
+
 		} else if (fds[1].revents & POLLIN) {
-			res = read(mouse.fd, &event, sizeof(event));
+			res = read(Mouse.m_devfd, &event, sizeof(event));
 			if (res != sizeof(event))
 				warn("failed to read from mouse");
 
-			if (mouse.fifo_fd >= 0) {
-				res = write(mouse.fifo_fd, &event,
+			if (Mouse.m_fifofd >= 0) {
+				res = write(Mouse.m_fifofd, &event,
 				            sizeof(event));
 				if (res != sizeof(event))
 					warn("failed to write to fifo");
 			}
 
-			if (IS_MOTION_EVENT(event.type)) {
-				mouse_motion_event(&mouse, &event);
-			} else if (IS_BUTTON_EVENT(event.type)) {
-				mouse_button_event(&mouse, &event);
-			} else {
-				warn("unknown wsmouse event");
-			}
-		} else
-			if (!mouse.selecting) mouse_cursor_hide(&mouse);
+			for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
+				if (Modes[i]->mb_wsmouse_event != NULL)
+					Modes[i]->mb_wsmouse_event(event);
+		} else {
+			for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
+				if (Modes[i]->mb_poll_timeout != NULL)
+					Modes[i]->mb_poll_timeout();
+		}
 	}
 }
 
-/*
- * Initializes mouse structure coordinate information. The mouse will
- * be displayed at the center of the screen at start.
- */
+/* --------------------------------------------------------------------- */
+
+/* This function parses generic wscons status events.  Actually, it
+ * handles the screen switch event to enable or disable the mouse,
+ * depending if we are entering or leaving the X console. */
 static void
-mouse_init(void)
+generic_wscons_event(struct wscons_event evt)
 {
-	struct winsize ws;
-	struct wsdisplay_char ch;
+
+	switch (evt.type) {
+	case WSCONS_EVENT_SCREEN_SWITCH:
+		if (evt.value == X_Console) {
+			Mouse.m_disabled = 1;
+			(void)close(Mouse.m_devfd);
+			Mouse.m_devfd = -1;
+		} else {
+			if (Mouse.m_disabled) {
+				open_device(5);
+				Mouse.m_disabled = 0;
+			} else {
+				(void)close(Mouse.m_devfd);
+				Mouse.m_devfd = -1;
+				open_device(0);
+			}
+		}
+		break;
+	}
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Attaches a mode to the list of active modes, based on its name.
+ * Returns 1 on success or 0 if the mode fails to initialize or there is
+ * any other problem. */
+static int
+attach_mode(const char *name)
+{
+	int i, pos;
+	struct mode_bootstrap *mb;
+
+	for (i = 0, pos = -1; i < MAX_MODES; i++)
+		if (Modes[i] == NULL) {
+			pos = i;
+			break;
+		}
+	if (pos == -1) {
+		warnx("modes table full; cannot register `%s'", name);
+		return 0;
+	}
+
+	for (i = 0; i < MAX_MODES; i++) {
+		mb = Avail_Modes[i];
+		if (mb != NULL && strcmp(name, mb->mb_name) == 0) {
+			int res;
+
+			res = mb->mb_startup(&Mouse);
+			if (res == 0) {
+				warnx("startup failed for `%s' mode",
+				    mb->mb_name);
+				return 0;
+			} else {
+				Modes[pos] = mb;
+				return 1;
+			}
+		}
+	}
+
+	warnx("unknown mode `%s' (see the `modes' directive)", name);
+	return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Attaches all modes given in the whitespace separated string `list'.
+ * A fatal error is produced if no active modes can be attached. */
+static void
+attach_modes(char *list)
+{
+	char *last, *p;
+	int count;
+
+	/* Attach all requested modes */
+	(void)memset(&Modes, 0, sizeof(struct mode_bootstrap) * MAX_MODES);
+	for (count = 0, (p = strtok_r(list, " ", &last)); p;
+	    (p = strtok_r(NULL, " ", &last))) {
+		if (attach_mode(p))
+			count++;
+	}
+
+	if (count == 0)
+		errx(EXIT_FAILURE, "no active modes found; exiting...");
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Detaches a mode from the active modes list based on its name. */
+static void
+detach_mode(const char *name)
+{
+	int i;
+	struct mode_bootstrap *mb;
+
+	for (i = 0; i < MAX_MODES; i++) {
+		mb = Modes[i];
+		if (mb != NULL && strcmp(name, mb->mb_name) == 0) {
+			int res;
+
+			res = mb->mb_cleanup();
+			if (res == 0) {
+				warnx("cleanup failed for `%s' mode",
+				    mb->mb_name);
+				return;
+			} else {
+				Modes[i] = NULL;
+				return;
+			}
+		}
+	}
+
+	warnx("unknown mode `%s' (see the `modes' directive)", name);
+}
+
+/* --------------------------------------------------------------------- */
+
+/* Detaches all active modes. */
+static void
+detach_modes(void)
+{
 	int i;
 
-	/* Get terminal size */
-	if (ioctl(0, TIOCGWINSZ, &ws) < 0)
-		err(EXIT_FAILURE, "cannot get terminal size");
-
-	/* Open current tty */
-	ioctl(mouse.stat_fd, WSDISPLAYIO_GETACTIVESCREEN, &i);
-	mouse.tty_fd = -1;
-	mouse_open_tty(&mouse, i);
-
-	/* Check if the kernel has character functions */
-	ch.row = ch.col = 0;
-	if (ioctl(mouse.tty_fd, WSDISPLAYIO_GETWSCHAR, &ch) < 0)
-		err(EXIT_FAILURE, "ioctl(WSDISPLAYIO_GETWSCHAR) failed");
-
-	mouse.max_row = ws.ws_row - 1;
-	mouse.max_col = ws.ws_col - 1;
-	mouse.row = mouse.max_row / 2;
-	mouse.col = mouse.max_col / 2;
-	mouse.count_row = 0;
-	mouse.count_col = 0;
-	mouse.cursor = 0;
-	mouse.selecting = 0;
+	for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
+		detach_mode(Modes[i]->mb_name);
 }
 
-/*
- * Hides the mouse cursor
- */
-void
-mouse_cursor_hide(struct mouse *m)
+/* --------------------------------------------------------------------- */
+
+/* Signal handler for close signals.  The program can only be exited
+ * through this function. */
+/* ARGSUSED */
+static void
+signal_terminate(int sig)
 {
-	if (!m->cursor) return;
-	char_invert(m, m->row, m->col);
-	m->cursor = 0;
+
+	detach_modes();
+	config_free();
+	exit(EXIT_SUCCESS);
 }
 
-/*
- * Shows the mouse cursor
- */
-void
-mouse_cursor_show(struct mouse *m)
-{
-	if (m->cursor) return;
-	char_invert(m, m->row, m->col);
-	m->cursor = 1;
-}
+/* --------------------------------------------------------------------- */
 
-/*
- * Opens the specified tty (we want it for ioctl's). If tty_fd in
- * mouse structure is -1, no close is performed. Otherwise, the old
- * file descriptor is closed and the new one opened.
- */
-void
-mouse_open_tty(struct mouse *m, int ttyno)
-{
-	char buf[20];
-
-	if (m->tty_fd >= 0) close(m->tty_fd);
-	if (ttyno == XConsole) {
-		m->disabled = 1;
-		(void)close(m->fd);
-		m->fd = -1;
-		return;
-	}
-	/* Open with delay. When returning from X, wsmoused keeps busy
-	   some seconds so we have to wait. */
-	mouse_open_device(m, 5);
-	(void)snprintf(buf, sizeof(buf), _PATH_TTYPREFIX "%d", ttyno);
-	m->tty_fd = open(buf, O_RDONLY | O_NONBLOCK);
-	if (m->tty_fd < 0)
-		errx(EXIT_FAILURE, "cannot open %s", buf);
-	m->disabled = 0;
-}
-
-/*
- * Flip the foreground and background colors on char at coordinates
- */
-void
-char_invert(struct mouse *m, size_t row, size_t col)
-{
-	struct wsdisplay_char ch;
-	int t;
-
-	ch.row = row;
-	ch.col = col;
-
-	if (ioctl(m->tty_fd, WSDISPLAYIO_GETWSCHAR, &ch) == -1) {
-		warn("ioctl(WSDISPLAYIO_GETWSCHAR) failed");
-		return;
-	}
-
-	t = ch.foreground;
-	ch.foreground = ch.background;
-	ch.background = t;
-
-	if (ioctl(m->tty_fd, WSDISPLAYIO_PUTWSCHAR, &ch) == -1)
-		warn("ioctl(WSDISPLAYIO_PUTWSCHAR) failed");
-}
-
-/*
- * Main function
- */
+/* Main program.  Parses command line options, reads the configuration
+ * file, initializes the mouse and associated files and launches the main
+ * event loop. */
 int
 main(int argc, char **argv)
 {
-	int opt, nodaemon = -1;
-	int needconf = 0;
-	char *conffile;
-	struct block *mode;
+	char *conffile, *modelist, *tstat;
+	int needconf, nodaemon, opt;
+	struct block *conf;
 
 	setprogname(argv[0]);
 
-	memset(&mouse, 0, sizeof(struct mouse));
+	(void)memset(&Mouse, 0, sizeof(struct mouse));
 	conffile = _PATH_CONF;
+	modelist = NULL;
+	needconf = 0;
+	nodaemon = -1;
 
 	/* Parse command line options */
-	while ((opt = getopt(argc, argv, "d:f:n")) != -1) {
+	while ((opt = getopt(argc, argv, "d:f:m:n")) != -1) {
 		switch (opt) {
 		case 'd': /* Mouse device name */
-			mouse.device_name = optarg;
+			Mouse.m_devname = optarg;
 			break;
 		case 'f': /* Configuration file name */
 			needconf = 1;
 			conffile = optarg;
+			break;
+		case 'm': /* List of modes to activate */
+			modelist = optarg;
 			break;
 		case 'n': /* No daemon */
 			nodaemon = 1;
@@ -329,34 +402,28 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* Read the configuration file and get our mode configuration */
+	/* Read the configuration file and get some basic properties */
 	config_read(conffile, needconf);
-	mode = config_get_mode("sel");
-
-	/* Set values according to the configuration file */
-	if (mouse.device_name == NULL)
-		mouse.device_name = block_get_propval(mode, "device",
-		    _PATH_DEFAULT_MOUSE);
-
+	conf = config_get_mode("Global");
 	if (nodaemon == -1)
-		nodaemon = block_get_propval_int(mode, "nodaemon", 0);
+		nodaemon = block_get_propval_int(conf, "nodaemon", 0);
+	X_Console = block_get_propval_int(conf, "xconsole", -1);
 
-	mouse.slowdown_x = block_get_propval_int(mode, "slowdown_x", 0);
-	mouse.slowdown_y = block_get_propval_int(mode, "slowdown_y", 3);
-	mouse.tstat_name = block_get_propval(mode, "ttystat", _PATH_TTYSTAT);
-	XConsole = block_get_propval_int(mode, "xconsole", -1);
+	/* Open wsdisplay status device */
+	tstat = block_get_propval(conf, "ttystat", _PATH_TTYSTAT);
+	Mouse.m_statfd = open(tstat, O_RDONLY | O_NONBLOCK, 0);
+	if (Mouse.m_statfd == -1)
+		err(EXIT_FAILURE, "cannot open %s", tstat);
 
-	if (block_get_propval_int(mode, "lefthanded", 0)) {
-		mouse.but_select = 2;
-		mouse.but_paste = 0;
-	} else {
-		mouse.but_select = 0;
-		mouse.but_paste = 2;
-	}
-
-	open_files();
-	mouse_init();
-	mouse_sel_init();
+	/* Initialize mouse information and attach modes */
+	if (Mouse.m_devname == NULL)
+		Mouse.m_devname = block_get_propval(conf, "device",
+		    _PATH_DEFAULT_MOUSE);
+	init_mouse();
+	if (modelist != NULL)
+		attach_modes(modelist);
+	else
+		attach_modes(block_get_propval(conf, "modes", "selection"));
 
 	/* Setup signal handlers */
 	(void)signal(SIGINT,  signal_terminate);
@@ -370,10 +437,11 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE, "failed to become a daemon");
 
 		/* Create the pidfile, if wanted */
-		PidFile = block_get_propval(mode, "pidfile", NULL);
-		if (pidfile(PidFile) == -1)
-			warn("pidfile %s", PidFile);
+		Pid_File = block_get_propval(conf, "pidfile", NULL);
+		if (pidfile(Pid_File) == -1)
+			warn("pidfile %s", Pid_File);
 	}
+
 	event_loop();
 
 	/* NOTREACHED */

@@ -1,11 +1,11 @@
-/* $NetBSD: config_yacc.y,v 1.1 2003/03/04 14:33:55 jmmv Exp $ */
+/* $NetBSD: config_yacc.y,v 1.2 2003/08/06 18:07:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio Merino.
+ * by Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_yacc.y,v 1.1 2003/03/04 14:33:55 jmmv Exp $");
+__RCSID("$NetBSD: config_yacc.y,v 1.2 2003/08/06 18:07:53 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>

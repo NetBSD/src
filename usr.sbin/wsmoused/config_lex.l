@@ -1,11 +1,11 @@
-/* $NetBSD: config_lex.l,v 1.2 2003/03/04 22:31:15 jmmv Exp $ */
+/* $NetBSD: config_lex.l,v 1.3 2003/08/06 18:07:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio Merino.
+ * by Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.2 2003/03/04 22:31:15 jmmv Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.3 2003/08/06 18:07:53 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,7 +55,8 @@ int yylex(void);
 %option noyywrap
 
 STRING		[\$A-Za-z\.\/_\-0-9]*
-MODE_PROPS	device|fifo|lefthanded|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole
+SP_STRING	[\$A-Za-z\.\/_\-0-9 ]*
+MODE_PROPS	device|fifo|lefthanded|modes|nodaemon|pidfile|slowdown_x|slowdown_y|ttystat|xconsole
 EVENT_PROPS	button|do
 
 %%
@@ -72,6 +73,8 @@ event		{ return TK_EVENT; }
 mode		{ return TK_MODE; }
 {EVENT_PROPS}	{ yylval.string = strdup(yytext); return TK_EVENTPROP; }
 {MODE_PROPS}	{ yylval.string = strdup(yytext); return TK_MODEPROP; }
+\"{SP_STRING}\"	{ yylval.string = strdup(yytext + 1);
+		  yylval.string[strlen(yytext) - 2] = '\0'; return TK_STRING; }
 {STRING}	{ yylval.string = strdup(yytext); return TK_STRING; }
 
-. 		{ yyerror("illegal token `%s'", yytext); }
+.		{ yyerror("illegal token `%s'", yytext); }
