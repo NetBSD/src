@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2003/07/04 17:25:59 marcus Exp $
+.\"	$NetBSD: boot.8,v 1.2 2003/07/09 14:20:06 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,14 +39,15 @@
 .Os
 .Sh NAME
 .Nm boot
-.Nd
-system bootstrapping procedures
+.Nd system bootstrapping procedures
 .Sh DESCRIPTION
 .Tn Dreamcast
-consoles can only boot from the builtin
+consoles can only boot from the built-in
 .Tn GD-ROM
-drive.  Insert a bootable CD-R containing the NetBSD kernel and
-turn on the power.
+drive.
+Insert a bootable CD-R containing the
+.Nx
+kernel and turn on the power.
 .Sh FILES
 .Bl -tag -width /netbsd -compact
 .It Pa /netbsd
@@ -62,4 +63,4 @@ system code
 The
 .Nm
 man page appeared in
-.Nx 1.6.1+ .
+.Nx 2.0 .
