@@ -1,4 +1,4 @@
-#	$NetBSD: Make.tags.inc,v 1.4 1998/01/09 08:05:19 perry Exp $
+#	$NetBSD: Make.tags.inc,v 1.5 1998/09/09 03:02:23 dbj Exp $
 #
 #	from: @(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
 
@@ -17,4 +17,5 @@ COMM=	/sys/conf/*.[ch] \
 	/sys/netiso/*.[ch] /sys/netns/*.[ch] \
 	/sys/nfs/*.[ch] /sys/sys/*.[ch] \
 	/sys/ufs/*/*.[ch] \
-	/sys/vm/*.[ch]
+	/sys/vm/*.[ch] \
+        /sys/uvm/*.[ch] /sys/ddb/*.[ch]
