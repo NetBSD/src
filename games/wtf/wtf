@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.6 1999/11/15 19:14:01 hubertf Exp $
+#	$NetBSD: wtf,v 1.7 2000/11/21 00:18:52 soren Exp $
 #
 # Public domain
 #
@@ -12,7 +12,7 @@ if [ X"$1" = X"is" ] ; then
 fi
 
 if [ $# -lt 1 ] ; then
-	echo "Usage: $0 [is] <acronym>"
+	echo "Usage: `basename $0` [is] <acronym>"
 fi
 
 rv=0
