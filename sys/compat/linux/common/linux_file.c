@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.47 2002/03/22 14:53:26 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.48 2002/03/23 15:36:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.47 2002/03/22 14:53:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.48 2002/03/23 15:36:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,6 +426,7 @@ linux_sys_fcntl(p, v, retval)
 		switch (fp->f_type) {
 		case DTYPE_SOCKET:
 			cmd = cmd == LINUX_F_SETOWN ? F_SETOWN : F_GETOWN;
+			FILE_UNUSE(fp, p);
 			goto doit;
 
 		case DTYPE_VNODE:
@@ -483,7 +484,6 @@ done:
 	}
 
 doit:
-	FILE_UNUSE(fp, p);
 	SCARG(&fca, fd) = fd;
 	SCARG(&fca, cmd) = cmd;
 	SCARG(&fca, arg) = arg;
