@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.2 2005/01/12 00:28:03 reinoud Exp $*/
+/* $NetBSD: auixpvar.h,v 1.3 2005/01/12 15:54:34 kent Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -141,7 +141,7 @@ struct auixp_softc {
 
 	/* suspend/resume */
 	void			*powerhook;
-	u_int16_t		*savemem;
+	uint16_t		*savemem;
 };
 
 
