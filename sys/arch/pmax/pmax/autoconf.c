@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:21 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2003/04/02 16:04:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2003/04/02 16:04:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,18 +244,25 @@ device_register(dev, aux)
 	/*
 	 * Check if netboot device.
 	 */
-	if (netboot && strcmp(name, "le") == 0) {
+	if (netboot) {
 		struct tc_attach_args *ta = aux;
 
+		if ((
 #if defined(DEC_3100) || defined(DEC_5100)
-		/* Only one Ethernet interface on 2100/3100/5100. */
-		if (systype == DS_PMAX || systype == DS_MIPSMATE) {
+		     /* Only one Ethernet interface on 2100/3100/5100. */
+		     systype == DS_PMAX || systype == DS_MIPSMATE ||
+#endif
+		     /* Only one Ethernet interface at IOASIC. */
+		     parent == ioasicdev)
+		    && strcmp(name, "le") == 0) {
 			booted_device = dev;
 			found = 1;
 			return;
 		}
-#endif
-		if (parent == ioasicdev ||
+
+		/* allow any TC network adapter */
+		if (dev->dv_cfdriver->cd_class == DV_IFNET &&
+		    strcmp(parent->dv_cfdriver->cd_name, "tc") == 0 &&
 		    ta->ta_slot == booted_slot) {
 			booted_device = dev;
 			found = 1;
