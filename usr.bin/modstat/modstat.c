@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.10 1997/10/19 05:17:30 lukem Exp $	*/
+/*	$NetBSD: modstat.c,v 1.11 1998/07/06 11:58:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.10 1997/10/19 05:17:30 lukem Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.11 1998/07/06 11:58:51 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: modstat.c,v 1.10 1997/10/19 05:17:30 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "pathnames.h"
 
 void	cleanup __P((void));
@@ -139,7 +140,9 @@ main(argc, argv)
 	int c;
 	int modnum = -1;
 	char *modname = NULL;
+	gid_t egid = getegid();
 
+	setegid(getgid());
 	while ((c = getopt(argc, argv, "i:n:")) != -1) {
 		switch (c) {
 		case 'i':
@@ -165,8 +168,12 @@ main(argc, argv)
 	 * Open the virtual device device driver for exclusive use (needed
 	 * to ioctl() to retrive the loaded module(s) status).
 	 */
+	(void)setegid(egid);
 	if ((devfd = open(_PATH_LKM, O_RDONLY, 0)) == -1)
 		err(2, _PATH_LKM);
+
+	/* get rid of our priviledges now */
+	setgid(getgid());
 
 	atexit(cleanup);
 
