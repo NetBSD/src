@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.39 1996/12/01 03:23:04 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.40 1997/02/03 07:23:32 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -133,7 +133,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -157,7 +158,7 @@ links:
 SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
 	${PMAX}/pmax/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
