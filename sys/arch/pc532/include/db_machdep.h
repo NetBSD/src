@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 1994/10/26 08:24:24 cgd Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4 1996/10/09 07:28:44 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,36 +46,30 @@
 #ifndef	_MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
-/* #include <mach/ns532/vm_types.h> */
-/* #include <mach/ns532/vm_param.h> */
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <vm/lock.h>
 
-/* #include <ns532/thread.h>		/* for thread_status */
-#include <machine/frame.h>	/* For struct trapframe */
-
+#include <machine/reg.h>		/* For struct reg */
 #include <machine/psl.h>
 #include <machine/trap.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 
-typedef struct ns532_saved_state	db_regs_t;
+typedef struct trapframe db_regs_t;
 db_regs_t  	ddb_regs;		/* register state */
 #define DDB_REGS	(&ddb_regs)
 
-#define PC_REGS(regs)	((db_addr_t)(regs)->pc)
+#define PC_REGS(regs)	((db_addr_t)(regs)->tf_regs.r_pc)
 
 #define	BKPT_INST	0xf2		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-/* #define	FIXUP_PC_AFTER_BREAK	ddb_regs.pc -= 1; */
-
-#define	db_clear_single_step(regs)	((regs)->psr &= ~PSR_T)
-#define	db_set_single_step(regs)	((regs)->psr |=  PSR_T)
+#define	db_clear_single_step(regs)	((regs)->tf_regs.r_psr &= ~PSL_T)
+#define	db_set_single_step(regs)	((regs)->tf_regs.r_psr |=  PSL_T)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BPT)
 #define IS_WATCHPOINT_TRAP(type, code)	((type) == T_WATCHPOINT)
@@ -98,34 +92,11 @@ db_regs_t  	ddb_regs;		/* register state */
 
 extern int db_active_ipl;
 
-/* access capability and access macros */
-
-#define DB_ACCESS_LEVEL		2	/* access any space */
-#define DB_CHECK_ACCESS(addr,size,task)				\
-	db_check_access(addr,size,task)
-#define DB_PHYS_EQ(task1,addr1,task2,addr2)			\
-	db_phys_eq(task1,addr1,task2,addr2)
-#define DB_VALID_KERN_ADDR(addr)				\
-	((addr) >= VM_MIN_KERNEL_ADDRESS && 			\
-	 (addr) < VM_MAX_KERNEL_ADDRESS)
-#define DB_VALID_ADDRESS(addr,user)				\
-	((!(user) && DB_VALID_KERN_ADDR(addr)) ||		\
-	 ((user) && (addr) < VM_MIN_KERNEL_ADDRESS))
-
-boolean_t 	db_check_access(/* vm_offset_t, int, task_t */);
-boolean_t	db_phys_eq(/* task_t, vm_offset_t, task_t, vm_offset_t */);
-
-/* macros for printing OS server dependent task name */
-
-#define DB_TASK_NAME(task)	db_task_name(task)
-#define DB_TASK_NAME_TITLE	"COMMAND                "
-#define DB_TASK_NAME_LEN	23
-#define DB_NULL_TASK_NAME	"?                      "
-
-void		db_task_name(/* task_t */);
-
-/* macro for checking if a thread has used floating point */
-
-#define db_thread_fp_used(thread)	((thread)->pcb->fps && (thread)->pcb->fps->valid)
+/*
+ * This is needed for kgdb.
+ */
+typedef long kgdb_reg_t;
+#define KGDB_NUMREGS	25
+#define KGDB_BUFLEN	512
 
 #endif
