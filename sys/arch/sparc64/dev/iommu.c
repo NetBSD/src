@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.29 2001/01/28 01:26:57 martin Exp $	*/
+/*	$NetBSD: iommu.c,v 1.30 2001/02/06 19:04:57 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -435,7 +435,7 @@ iommu_strbuf_flush(is)
 		microtime(&cur);
 
 #ifdef DIAGNOSTIC
-	if (!is->is_flush) {
+	if (!ldxa(is->is_flushpa, ASI_PHYS_CACHED)) {
 		printf("iommu_strbuf_flush: flush timeout %p at %p\n",
 		    (void *)(u_long)is->is_flush, 
 		    (void *)(u_long)is->is_flushpa); /* panic? */
