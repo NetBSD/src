@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2000/01/14 02:10:08 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2000/09/19 16:17:48 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2000/01/14 02:10:08 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2000/09/19 16:17:48 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,19 +238,18 @@ main(argc, argv)
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
-	    strncpy(ttyn, ttyname(0), 32);
-	    ttyn[31] = (char)NULL;
+	    strlcpy(ttyn, ttyname(0), sizeof(ttyn));
 	}
 	else {
 	    int i;
 
-	    strcpy(ttyn, dev);
-	    strncat(ttyn, argv[2], sizeof(ttyn)-sizeof(dev));
+	    strlcpy(ttyn, dev, sizeof(ttyn));
+	    strlcat(ttyn, argv[2], sizeof(ttyn));
 
 	    if (uugetty)  {
 		chown(ttyn, ttyowner, 0);
 		strcpy(lockfile, _PATH_LOCK);
-		strncat(lockfile, argv[2], sizeof(lockfile)-sizeof(_PATH_LOCK));
+		strlcat(lockfile, argv[2], sizeof(lockfile));
 		/* wait for lockfiles to go away before we try to open */
 		if ( pidlock(lockfile, 0, 0, 0) != 0 )  {
 		    syslog(LOG_ERR, "%s: can't create lockfile", ttyn);
@@ -651,7 +650,7 @@ putf(cp)
 
 		case 't':
 			slash = strrchr(ttyn, '/');
-			if (slash == (char *) 0)
+			if (slash == NULL)
 				xputs(ttyn);
 			else
 				xputs(&slash[1]);
