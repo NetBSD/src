@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.22 1995/06/18 20:01:19 cgd Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.23 1995/06/26 08:46:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -377,7 +377,7 @@ udp_ctlinput(cmd, sa, ip)
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
-	else if (errno = 0)
+	else if (errno == 0)
 		return;
 	if (ip) {
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
