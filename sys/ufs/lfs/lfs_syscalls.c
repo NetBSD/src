@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.55 2000/11/30 15:57:35 jdolecek Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56 2000/12/03 07:34:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1110,6 +1110,8 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	*need_unlock |= FVG_PUT;
+
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	return (0);
 }
