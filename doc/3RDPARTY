@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.164 2003/12/05 11:15:44 junyoung Exp $
+#	$NetBSD: 3RDPARTY,v 1.165 2003/12/10 04:52:57 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -55,8 +55,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	8.3.6
-Current Vers:	4.9.11/8.3.6/8.4.1/9.2.2
+Version:	8.3.7
+Current Vers:	4.9.11/8.3.7/8.4.3/9.2.3
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
@@ -72,7 +72,7 @@ issues (A6 queries for glue, for instance).
 
 Package:	bind/resolver
 Version:	4.9.11
-Current Vers:	4.9.11/8.3.6/8.4.1/9.2.2
+Current Vers:	4.9.11/8.3.7/8.4.3/9.2.3
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
