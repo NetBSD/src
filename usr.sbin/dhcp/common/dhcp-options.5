@@ -614,6 +614,39 @@ The routers option specifies a list of IP addresses for routers on the
 client's subnet.  Routers should be listed in order of preference.
 .RE
 .PP
+.B option slp-directory-agent \fIboolean ip-address
+[\fB,\fR \fIip-address\fR... ]\fB;\fR
+.RS 0.25i
+.PP
+This option specifies two things: the IP addresses of one or more
+Service Location Protocol Directory Agents, and whether the use of
+these addresses is mandatory.   If the initial boolean value is true,
+the SLP agent should just use the IP addresses given.   If the value
+is false, the SLP agent may additionally do active or passive
+multicast discovery of SLP agents (see RFC2165 for details).
+.PP
+Please note that in this option and the slp-service-scope option, the
+term "SLP Agent" is being used to refer to a Service Location Protocol
+agent running on a machine that is being configured using the DHCP
+protocol.
+.RE
+.PP
+.B option slp-service-scope \fIboolean text\fR\fB;\fR
+.RS 0.25i
+.PP
+The Service Location Protocol Service Scope Option specifies two
+things: a list of service scopes for SLP, and whether the use of this
+list is mandatory.  If the initial boolean value is true, the SLP
+agent should only use the list of scopes provided in this option;
+otherwise, it may use its own static configuration in preference to
+the list provided in this option.
+.PP
+The text string should be a comma-seperated list of scopes that the
+SLP agent should use.   It may be omitted, in which case the SLP Agent
+will use the aggregated list of scopes of all directory agents known
+to the SLP agent.
+.RE
+.PP
 .B option \fBsmtp-server\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
@@ -817,7 +850,7 @@ The WWW server option specifies a list of WWW available to the
 client.  Servers should be listed in order of preference.
 .RE
 .SH RELAY AGENT INFORMATION OPTION
-An IETF draft, draft-ietf-dhc-agent-options-03.txt, defines a series
+An IETF draft, draft-ietf-dhc-agent-options-11.txt, defines a series
 of encapsulated options that a relay agent can add to a DHCP packet
 when relaying it to the DHCP server.   The server can then make
 address allocation decisions (or whatever other decisions it wants)
@@ -828,9 +861,10 @@ purposes.
 .PP
 The current draft defines two options.   To reference
 these options in the dhcp server, specify the option space name,
-"agent", followed by a period, followed by the option name.   It isn't
-useful to specify these options to be sent, nor is it useful to
-reference them at all in the client.
+"agent", followed by a period, followed by the option name.   It is
+not normally useful to define values for these options in the server,
+although it is permissible.   These options are not supported in the
+client.
 .PP
 .B option \fBagent.circuit-id\fR \fIstring\fR\fB;\fR
 .RS 0.25i
@@ -855,6 +889,66 @@ and it should generally be assumed to be an opaque object that is
 administratively guaranteed to be unique to a particular remote end of
 a circuit.
 .RE
+.SH THE CLIENT FQDN SUBOPTIONS
+The Client FQDN option, currently defined in the Internet Draft
+draft-ietf-dhc-fqdn-option-00.txt is not a standard yet, but is in
+sufficiently wide use already that we have implemented it.   Due to
+the complexity of the option format, we have implemented it as a
+suboption space rather than a single option.   In general this
+option should not be configured by the user - instead it should be
+used as part of an automatic DNS update system.
+.PP
+.B option fqdn.no-client-update \fIflag\fB;
+.RS 0.25i
+.PP
+When the client sends this, if it is true, it means the client will not
+attempt to update its A record.   When sent by the server to the client,
+it means that the client \fIshould not\fR update its own A record.
+.RE
+.PP
+.B option fqdn.server-update \fIflag\fB;
+.RS 0.25i
+.PP
+When the client sends this to the server, it is requesting that the server
+update its A record.   When sent by the server, it means that the server
+has updated (or is about to update) the client's A record.
+.RE
+.PP
+.B option fqdn.encoded \fIflag\fB;
+.RS 0.25i
+.PP
+If true, this indicates that the domain name included in the option is
+encoded in DNS wire format, rather than as plain ASCII text.   The client
+normally sets this to false if it doesn't support DNS wire format in the
+FQDN option.   The server should always send back the same value that the
+client sent.   When this value is set on the configuration side, it controls
+the format in which the \fIfqdn.name\fR suboption is encoded.
+.RE
+.PP
+.B option fqdn.rcode1 \fIflag\fB;
+.PP
+.B option fqdn.rcode1 \fIflag\fB;
+.RS 0.25i
+.PP
+These options specify the result of the updates of the A and PTR records,
+respectively, and are only sent by the DHCP server to the DHCP client.
+The values of these fields are those defined in the DNS protocol specification.
+.RE
+.PP
+.B option fqdn.name \fItext\fB;
+.RS 0.25i
+.PP
+Specifies the domain name that the client wishes to use.   This can be a
+fully-qualified domain name, or a single label.   If there is no trailing
+'.' character in the name, it is not fully-qualified, and the server will
+generally update that name in some locally-defined domain.
+.RE
+.PP
+If you wish to use any of these suboptions, we strongly recommend that you
+refer to the Client FQDN option draft (or standard, when it becomes a
+standard) - the documentation here is sketchy and incomplete in comparison,
+and is just intended for reference by people who already understand the
+Client FQDN option specification.
 .SH THE NETWARE/IP SUBOPTIONS
 RFC2242 defines a set of encapsulated options for Novell NetWare/IP
 clients.  To use these options in the dhcp server, specify the option
@@ -1066,6 +1160,31 @@ values must be between 0 and FF.   For example:
 
 option sql-identification-token code 195 = string;
 option sql-identification-token 17:23:19:a6:42:ea:99:7c:22;
+
+.fi
+.PP
+.B ENCAPSULATION
+.PP
+.B option
+.I new-name
+.B code
+.I new-code
+.B =
+.B encapsulate
+.I identifier
+.B ;
+.PP
+An option whose type is \fBencapsulate\fR will encapsulate the
+contents of the option space specified in \fIidentifier\fR.   Examples
+of encapsulated options in the DHCP protocol as it currently exists
+include the vendor-encapsulated-options option, the netware-suboptions
+option and the relay-agent-information option.
+.nf
+
+option space local;
+option local.demo code 1 = text;
+option local-encapsulation code 197 = encapsulate local;
+option local.demo "demo";
 
 .fi
 .PP

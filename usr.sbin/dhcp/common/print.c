@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.2 2000/10/11 20:23:50 is Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.3 2000/10/17 16:10:42 taca Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -102,6 +102,35 @@ void print_lease (lease)
 }	
 
 #if defined (DEBUG)
+void dump_packet_option (struct option_cache *oc,
+			 struct packet *packet,
+			 struct lease *lease,
+			 struct option_state *in_options,
+			 struct option_state *cfg_options,
+			 struct binding_scope **scope,
+			 struct universe *u, void *foo)
+{
+	const char *name, *dot;
+	struct data_string ds;
+	memset (&ds, 0, sizeof ds);
+
+	if (u != &dhcp_universe) {
+		name = u -> name;
+		dot = ".";
+	} else {
+		name = "";
+		dot = "";
+	}
+	if (evaluate_option_cache (&ds, packet, lease,
+				   in_options, cfg_options, scope, oc, MDL)) {
+		log_debug ("  option %s%s%s %s;\n",
+			   name, dot, oc -> option -> name,
+			   pretty_print_option (oc -> option -> code,
+						ds.data, ds.len, 1, 1));
+		data_string_forget (&ds, MDL);
+	}
+}
+
 void dump_packet (tp)
 	struct packet *tp;
 {
@@ -110,13 +139,13 @@ void dump_packet (tp)
 	log_debug ("packet length %d", tp -> packet_length);
 	log_debug ("op = %d  htype = %d  hlen = %d  hops = %d",
 	       tdp -> op, tdp -> htype, tdp -> hlen, tdp -> hops);
-	log_debug ("xid = %x  secs = %d  flags = %x",
-	       tdp -> xid, tdp -> secs, tdp -> flags);
+	log_debug ("xid = %x  secs = %ld  flags = %x",
+	       tdp -> xid, (unsigned long)tdp -> secs, tdp -> flags);
 	log_debug ("ciaddr = %s", inet_ntoa (tdp -> ciaddr));
 	log_debug ("yiaddr = %s", inet_ntoa (tdp -> yiaddr));
 	log_debug ("siaddr = %s", inet_ntoa (tdp -> siaddr));
 	log_debug ("giaddr = %s", inet_ntoa (tdp -> giaddr));
-	log_debug ("chaddr = %02.2x:%02.2x:%02.2x:%02.2x:%02.2x:%02.2x",
+	log_debug ("chaddr = %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
 	       ((unsigned char *)(tdp -> chaddr)) [0],
 	       ((unsigned char *)(tdp -> chaddr)) [1],
 	       ((unsigned char *)(tdp -> chaddr)) [2],
@@ -128,16 +157,18 @@ void dump_packet (tp)
 	if (tp -> options_valid) {
 		int i;
 
-		for (i = 0; i < 256; i++) {
-			if (tp -> options [i].data)
-				log_debug ("  %s = %s",
-					dhcp_options [i].name,
-					pretty_print_option
-					(i, tp -> options [i].data,
-					 tp -> options [i].len, 1, 1));
+		for (i = 0; i < tp -> options -> universe_count; i++) {
+			if (tp -> options -> universes [i]) {
+				option_space_foreach (tp, (struct lease *)0,
+						      (struct option_state *)0,
+						      tp -> options,
+						      &global_scope,
+						      universes [i], 0,
+						      dump_packet_option);
+			}
 		}
 	}
-	log_debug ("");
+	log_debug ("%s", "");
 }
 #endif
 

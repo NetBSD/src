@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.8 2000/09/04 23:19:29 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.9 2000/10/17 16:10:40 taca Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -206,6 +206,7 @@ void read_client_leases ()
 	REBOOT number |
 	SELECT_TIMEOUT number |
 	SCRIPT string |
+	VENDOR_SPACE string |
 	interface-declaration |
 	LEASE client-lease-statement |
 	ALIAS client-lease-statement |
@@ -226,7 +227,7 @@ void parse_client_statement (cfile, ip, config)
 	struct data_string key_id;
 	enum policy policy;
 	int known;
-	int tmp;
+	int tmp, i;
 
 	switch (peek_token (&val, cfile)) {
 	      case KEY:
@@ -469,6 +470,31 @@ void parse_client_statement (cfile, ip, config)
 	      case SCRIPT:
 		token = next_token (&val, cfile);
 		config -> script_name = parse_string (cfile);
+		return;
+
+	      case VENDOR:
+		token = next_token (&val, cfile);
+		token = next_token (&val, cfile);
+		if (token != OPTION) {
+			parse_warn (cfile, "expecting 'vendor option space'");
+			skip_to_semi (cfile);
+			return;
+		}
+		token = next_token (&val, cfile);
+		if (token != SPACE) {
+			parse_warn (cfile, "expecting 'vendor option space'");
+			skip_to_semi (cfile);
+			return;
+		}
+		config -> vendor_space_name = parse_string (cfile);
+		for (i = 0; i < universe_count; i++)
+			if (!strcmp (universes [i] -> name,
+				     config -> vendor_space_name))
+				break;
+		if (i == universe_count) {
+			log_error ("vendor option space %s not found.",
+				   config -> vendor_space_name);
+		}
 		return;
 
 	      case INTERFACE:

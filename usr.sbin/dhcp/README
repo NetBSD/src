@@ -1,6 +1,6 @@
 	    Internet Software Consortium DHCP Distribution
-		   Version 3, Beta 2, Patchlevel 2
-			  September 4, 2000
+		   Version 3, Beta 2, Patchlevel 9
+			   October 15, 2000
 
 			     README FILE
 
@@ -141,14 +141,14 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	zcat dhcp-3.0b2pl2.tar.gz |tar xvf -
+	zcat dhcp-3.0b2pl9.tar.gz |tar xvf -
 
 On BSD/OS, you have to type gzcat, not zcat, and you may run into
 similar problems on other operating systems.
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-3.0b2pl2 subdirectory that you've just
+Now, cd to the dhcp-3.0b2pl9 subdirectory that you've just
 created and configure the source tree by typing:
 
 		./configure
@@ -477,6 +477,14 @@ If you are having trouble with a combination of the client and server,
 send the request to dhcp-server@isc.org.  Please do not cross-post to
 both lists under any circumstances.
 
+WHERE TO REPORT BUGS: If you want the act of sending in a bug report
+to result in you getting help in the form of a fixed piece of
+software, you are asking for help.  Your bug report is helpful to us,
+but fundamentally you are making a support request, so please use the
+addresses described in the previous paragraphs.  If your bug report
+includes a patch, or if you don't care about getting a response to it,
+you can send it to dhcp-bugs@isc.org without subscribing.
+
 PLEASE DO NOT REPORT BUGS IN OLD SOFTWARE RELEASES!  Fetch the latest
 release and see if the bug is still in that version of the software,
 and if it's not, _then_ report it.  It's okay to report bugs in the
@@ -493,9 +501,57 @@ frequently do not work.   Getting a source distribution from the ISC
 and installing it frequently *does* work.   Please try this *before*
 asking for help.
 
-PLEASE READ THIS README FILE CAREFULLY BEFORE REPORTING BUGS!
+PLEASE READ THIS README FILE CAREFULLY BEFORE REPORTING BUGS,
+PARTICULARLY THE SECTION BELOW ON WHAT TO INCLUDE IN A BUG REPORT OR
+HELP REQUEST.
 
-		HOW TO REPORT BUGS OR REQUEST SUPPORT
+PLEASE DO NOT SEND REQUESTS FOR SUPPORT DIRECTLY TO THE ENGINEERS WHO
+WORK ON THE ISC DHCP DISTRIBUTION!  *PARTICULARLY*, DO NOT SEND MAIL
+TO THE ENGINEERS BECAUSE YOU AREN'T SURE TO WHOM YOU SHOULD SEND MAIL
+- if you aren't sure, *ask* on the dhcp-server@isc.org or
+dhcp-client@isc.org mailing list.
+
+The number of people using the DHCP Distribution is sufficiently large
+that if we take interrupts every time any one of those people runs
+into trouble, we will never get any more coding done.  If you send a
+support request directly to any ISC or Nominum engineer, we will
+forward it to the mailing list, or possibly ignore it, depending on
+how much stress we are under at the time.
+
+Please do not Cc: us on mail you send to these lists - we read both
+mailing lists, so this just means we get two copies!
+
+If your question can only be answered by one of the engineers, send it
+to the appropriate public mailing list anyway - we will answer it
+there.  When we have time.
+
+Please do not think "Oh, I don't want to bother the whole mailing list
+with this question."  If you are too embarrassed to ask publically,
+get a support contract.
+
+If you are concerned about bothering everybody on the list, that's
+great, but that's what the list is there for.  When you send mail to
+one of the engineers, you are taking resources away from everybody on
+the mailing list *anyway* - they just don't know it.
+
+We're not writing this because we don't respect you - we really do
+want to help you, and we appreciate your bug reports and comments.
+But please use the mechanisms we have in place to provide you with
+help, because otherwise you are almost certainly depriving someone
+else of our help.
+
+PLEASE DO NOT CALL US ON THE PHONE FOR HELP!  Answering the phone
+takes a lot more of our time and attention than answering email.  If
+you do call us on the phone, we will tell you to send email to the
+mailing list or buy a support contract, so please don't waste your
+time or ours.  If you have a support contract, please use the support
+channel mentioned in the support contract - otherwise you probably
+won't get timely support unless you happen to ask an interesting
+question and we happen to have some time to kill, because we can't
+tell you're a support customer if you send mail to the public mailing
+lists.
+
+		HOW TO REPORT BUGS OR REQUEST HELP
 
 When you report bugs or ask for help, please provide us complete
 information.  A list of information we need follows.  Please read it
@@ -559,25 +615,4 @@ you with it.
 Please see http://www.isc.org/services/public/lists/dhcp-lists.html
 for details on how to subscribe to the ISC DHCP mailing lists.
 
-PLEASE DO NOT SEND REQUESTS FOR SUPPORT DIRECTLY TO THE ENGINEERS WHO
-WORK ON THE ISC DHCP DISTRIBUTION!  Do not even Cc: us - we do read
-the public mailing lists!  The number of people using the DHCP
-Distribution is sufficiently large that if we take interrupts every
-time any one of those people runs into trouble, we will never get any
-more coding done.  If you send a support request directly to any ISC
-or Nominum engineer, we will forward it to the mailing list, or
-possibly ignore it, depending on how much stress we are under at the
-time.  If your question can only be answered by one of us, we will
-answer it on the public mailing list.  When we have time.
-
-PLEASE DO NOT CALL US ON THE PHONE FOR SUPPORT!  Answering the phone
-takes a lot more of our time and attention than answering email.  If
-you do call us on the phone, we will tell you to send email to the
-mailing list or buy a support contract, so please don't waste your
-time or ours.  If you have a support contract, please use the support
-channel mentioned in the support contract - otherwise you probably
-won't get timely support unless you happen to ask an interesting
-question and we happen to have some time to kill, because we can't
-tell you're a support customer if you send mail to the public mailing
-lists.
 
