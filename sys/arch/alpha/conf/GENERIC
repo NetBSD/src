@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 1998/09/29 18:25:54 drochner Exp $
+# $NetBSD: GENERIC,v 1.102 1998/10/14 18:31:34 matt Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -161,7 +161,6 @@ ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
-wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
@@ -235,9 +234,11 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
+wd*	at	pciide? channel ?
 wd*	at	wdc? drive ?
 
 # ATAPI bus support
+atapibus* at	pciide? channel ?
 atapibus* at	wdc?
 
 # ATAPI devices

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.87 1998/09/02 02:02:33 enami Exp $
+# $NetBSD: ALPHA,v 1.88 1998/10/14 18:31:34 matt Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -185,7 +185,6 @@ ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
-wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
@@ -250,9 +249,11 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # ST506/ESDI/IDE devices
+wd*	at	pciide? channel ?
 wd*	at	wdc? drive ?
 
 # ATAPI bus support
+atapibus* at	pciide? channel ?
 atapibus* at	wdc?
 
 # ATAPI devices
