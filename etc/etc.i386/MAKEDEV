@@ -149,31 +149,24 @@ fd*|sd*|vnd*|wd*)
 	wd*) name=wd; blk=0; chr=3;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-		;;
-	*)
-		echo bad unit for disk in: $i
-		;;
-	esac
+	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
+	mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
+	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
+	mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
+	mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
+	mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
+	mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
+	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
+	mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
+	mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
+	mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
+	mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
+	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
+	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;
 
@@ -215,29 +208,22 @@ st*)
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-		mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-		mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-		mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-		mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-		chgrp operator ${name}${unit} n${name}${unit} \
-			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
-			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		;;
-	*)
-		echo bad unit for tape in: $i
-		;;
-	esac
+	mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
+	mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
+	mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
+	mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
+	mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
+	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
+	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
+	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
+	chgrp operator ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit} 
+	chmod 640 ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit} 
 	umask 77
 	;;
 
@@ -247,16 +233,9 @@ ch*)
 	ch*) name=ch;  chr=17;;
 	esac
 	rm -f $name$unit
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-		chgrp operator ${name}${unit}
-		chmod 640 ${name}${unit}
-		;;
-	*)
-		echo bad unit for media changer in: $i
-		;;
-	esac
+	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
+	chgrp operator ${name}${unit}
+	chmod 640 ${name}${unit}
 	umask 77
 	;;
 
@@ -267,19 +246,12 @@ cd*|mcd*)
 	mcd*) name=mcd; blk=7; chr=39;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-		;;
-	*)
-		echo bad unit for disk in: $i
-		;;
-	esac
+	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
+	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
+	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
+	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
+	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;
 
