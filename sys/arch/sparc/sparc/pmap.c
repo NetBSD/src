@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 1997/03/31 19:53:41 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.78 1997/03/31 22:03:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2584,7 +2584,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	extern char end[];
 #ifdef DDB
 	extern char *esym;
-	char *theend = end;
 #endif
 
 	switch (cputyp) {
@@ -2684,21 +2683,19 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	p = end;
 #ifdef DDB
 	if (esym != 0)
-		theend = p = esym;
+		p = esym;
 #endif
 #if defined(SUN4_MMU3L)
 	mmuregions = mmureg = (struct mmuentry *)p;
 	p += nregion * sizeof(struct mmuentry);
+	bzero(mmuregions, nregion * sizeof(struct mmuentry));
 #endif
 	mmusegments = mmuseg = (struct mmuentry *)p;
 	p += nsegment * sizeof(struct mmuentry);
+	bzero(mmusegments, nsegment * sizeof(struct mmuentry));
+
 	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
 	p += nctx * sizeof *ci;
-#ifdef DDB
-	bzero(theend, p - theend);
-#else
-	bzero(end, p - end);
-#endif
 
 	/* Initialize MMU resource queues */
 #if defined(SUN4_MMU3L)
@@ -2941,16 +2938,12 @@ pmap_bootstrap4m(void)
 	register struct memarr *mp;
 	register int reg, seg;
 	unsigned int ctxtblsize;
-#if 0
-	int nkreg, nkseg, nkpag, kernsize, newpgs;
-#endif
 	extern char end[];
 	extern char etext[];
+	extern caddr_t reserve_dumppages(caddr_t);
 #ifdef DDB
 	extern char *esym;
-	char *theend = end;
 #endif
-	extern caddr_t reserve_dumppages(caddr_t);
 
 #if defined(SUN4) || defined(SUN4C) /* setup 4M fn. ptrs for dual-arch kernel */
 	pmap_clear_modify_p 	=	pmap_clear_modify4m;
@@ -2997,7 +2990,7 @@ pmap_bootstrap4m(void)
 	p = end;		/* p points to top of kernel mem */
 #ifdef DDB
 	if (esym != 0)
-		theend = p = esym;
+		p = esym;
 #endif
 
 
