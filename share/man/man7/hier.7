@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.54 2003/03/30 21:34:17 wiz Exp $
+.\"	$NetBSD: hier.7,v 1.55 2003/03/31 23:24:47 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -273,16 +273,23 @@ protocol name database; see
 database form of passwd file; see
 .Xr pwd_mkdb 8
 .It Sy rc
-.It Sy rc.shutdown
-.It Sy rc.local
-.It Sy rc.d/
-system startup and shutdown scripts; see
+master system startup script invoked by
+.Xr init 8 ;
+see
 .Xr rc 8
-and
-.Xr rc.d 8
 .It Sy rc.conf
 configuration file for system startup and shutdown scripts; see
 .Xr rc.conf 5
+.It Sy rc.d/
+directory containing per-subsystem startup and shutdown scripts; see
+.Xr rc 8
+.It Sy rc.local
+locally editable system startup script
+.It Sy rc.shutdown
+master system shutdown script invoked by
+.Xr shutdown 8 ;
+see
+.Xr rc 8
 .It Sy remote
 remote host description file; see
 .Xr remote 5
@@ -360,14 +367,14 @@ statically linked rescue tools, for use in system recovery
 home directory for the super-user
 .Pp
 .Bl -tag -width ".profile" -compact
-.It Sy \&.rhosts
-super-user id mapping between machines
 .It Sy \&.cshrc
 super-user start-up file
 .It Sy \&.login
 super-user start-up file
 .It Sy \&.profile
 super-user start-up file
+.It Sy \&.rhosts
+super-user id mapping between machines
 .El
 .ne 1i
 .It Sy /sbin/
@@ -437,7 +444,7 @@ include files for ISO standard protocols; see
 .It Sy netkey/
 include files for secret key management, used for security protocols; see
 .Xr ipsec 4
-.It Sy natm/
+.It Sy netnatm/
 C include files for native mode ATM
 .It Sy netns/
 C include files for XNS standard protocols; see
@@ -453,7 +460,7 @@ C include files for UFS (The U-word File System)
 .El
 .Pp
 .It Sy lib/
-archive, profiled, position independant archive, and shared libraries
+archive, profiled, position independent archive, and shared libraries
 .It Sy libdata/
 miscellaneous utility data files
 .It Sy libexec/
@@ -468,6 +475,10 @@ UUCP binaries and scripts (historically placed; to be moved)
 loadable kernel modules
 .It Sy mdec/
 boot blocks, etc.
+.It Sy obj/
+architecture-specific target tree produced by building the
+.Pa /usr/src
+tree; normally a symbolic link or mounted filesystem
 .It Sy pkg/
 packages maintained by groups other than the
 .Nx
@@ -476,14 +487,16 @@ Project.
 .Bl -tag -width "include/" -compact
 .It Sy bin/
 contributed binaries
-.It Sy sbin/
-contributed system utilities
 .It Sy include/
 contributed include files
-.It Sy libexec/
-contributed daemons
+.It Sy lib/
+contributed libraries
 .It Sy libdata/
 contributed data files
+.It Sy libexec/
+contributed daemons
+.It Sy sbin/
+contributed system utilities
 .El
 .Pp
 .It Sy pkgsrc/
@@ -501,10 +514,6 @@ Where compiled binary packages are stored
 There are also several other subdirectories which contain packages of
 a certain category, e.g. archivers, graphics, ...
 .Pp
-.It Sy obj/
-architecture-specific target tree produced by building the
-.Pa /usr/src
-tree; normally a symbolic link or mounted filesystem
 .It Sy sbin/
 system daemons and system utilities (normally executed by the super-user)
 .It Sy share/
@@ -599,14 +608,17 @@ and local source files
 .It Sy bin/
 source for utilities/files in
 .Pa /bin
-.It Sy distrib/
-tools and data-files for making distributions
 .It Sy crypto/
 cryptographic source, which may have import or export restrictions
 .It Sy dist/
 third-party
 .Sq virgin
 source code, referenced by other parts of the source tree
+.It Sy distrib/
+tools and data-files for making distributions
+.It Sy doc/
+documentation about the source tree (i.e. about the tree, not about
+how to use the built software.)
 .It Sy etc/
 source (usually example files) for files in
 .Pa /etc
@@ -628,6 +640,8 @@ source for utilities/files in
 .Pa /usr/libexec
 .It Sy regress/
 various regression tests
+.It Sy rescue/
+source/makefiles for /rescue
 .It Sy sbin/
 source for utilities/files in
 .Pa /sbin
@@ -654,9 +668,6 @@ source for User's Supplementary Documents
 kernel source files
 .Pp
 .Bl -tag -width "gdbscripts/" -compact
-.It Sy adosfs/
-AmigaDOS file-system support; see
-.Xr mount_ados 8
 .It Sy arch/
 architecture-specific support
 .Pp
@@ -794,7 +805,7 @@ support for Intel Binary binaries
 support for Linux binaries; see
 .Xr compat_linux 8
 .It Sy m68k4k/
-support for 4Kb page 68000 binaries
+support for 4KB page 68000 binaries
 .It Sy netbsd32/
 support for
 .Nx
@@ -839,22 +850,37 @@ cryptographic kernel source, which may have import or export restrictions
 in kernel debugger
 .It Sy dev/
 architecture independent device support
+.It Sy fs/
+miscellaneous file systems
+.Bl -tag -width "filecorefs/" -compact
+.It Sy adosfs/
+AmigaDOS file-system support; see
+.Xr mount_ados 8
+.It Sy cd9660/
+support for the ISO-9660 filesystem; see
+.Xr mount_cd9660 8
 .It Sy filecorefs/
 support for the Acorn RISC OS filecore filesystem; see
 .Xr mount_filecore 8
+.It Sy msdosfs/
+.Tn MS-DOS
+file system; see
+.Xr mount_msdos 8
+.It Sy ntfs/
+NTFS filesystem support; see
+.Xr mount_ntfs 8
+.It Sy smbfs
+SMB/CIFS filesystem support; see
+.Xr mount_smbfs 8
+.It Sy union/
+union file system; see
+.Xr mount_union 8
+.El
 .It Sy gdbscripts/
 support for accessing kernel structures from within the debugger
 .Xr gdb 1 .
 .It Sy ipkdb/
 support for kernel debugging over the network
-.It Sy isofs/
-support for ISO filesystems
-.Pp
-.Bl -tag -width "cd9660/" -compact
-.It Sy cd9660/
-support for the ISO-9660 filesystem; see
-.Xr mount_cd9660 8
-.El
 .Pp
 .It Sy kern/
 support for the high kernel (system calls)
@@ -865,7 +891,7 @@ kernel libraries
 .It Sy libkern/
 C library routines used in the kernel
 .It Sy libsa/
-machine independant stand alone kernel library
+machine independent stand alone kernel library
 .It Sy libz/
 compression library
 .El
@@ -923,15 +949,8 @@ kernel trickle sync algorithm
 .It Sy umapfs/
 user and group re-mapping file system; see
 .Xr mount_umap 8
-.It Sy union/
-union file system; see
-.Xr mount_union 8
 .El
 .Pp
-.It Sy msdosfs/
-.Tn MS-DOS
-file system; see
-.Xr mount_msdos 8
 .It Sy net/
 miscellaneous networking support
 .It Sy netatalk/
@@ -952,8 +971,6 @@ ATM networking support
 XNS networking support
 .It Sy nfs/
 NFS support
-.It Sy ntfs/
-NTFS filesystem support
 .It Sy stand/
 kernel standalone support
 .It Sy sys/
@@ -1111,13 +1128,17 @@ commonly
 the anonymous ftp root directory; see
 .Xr ftpd 8
 .It Sy mqueue/
-undelivered mail queue;
+sendmail mail queue;
 see
 .Xr sendmail 8
 .It Sy news/
 Network news archival and spooling directories
 .It Sy output/
 printer spooling directories
+.It Sy postfix/
+postfix mail queue;
+see
+.Xr postfix 1
 .It Sy uucp/
 uucp spool directory
 .It Sy uucppublic/
@@ -1146,7 +1167,7 @@ Databases and configuration for the NIS (YP) system; see
 .Xr ls 1 ,
 .Xr whatis 1 ,
 .Xr whereis 1 ,
-.Xr which 1
+.Xr which 1 .
 .Sh HISTORY
 A
 .Nm
