@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.2 2003/01/22 03:13:32 enami Exp $ */
+/*	$NetBSD: progress.c,v 1.3 2003/01/22 03:24:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.2 2003/01/22 03:13:32 enami Exp $");
+__RCSID("$NetBSD: progress.c,v 1.3 2003/01/22 03:24:21 christos Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -89,6 +89,7 @@ main(int argc, char *argv[])
 	int lflag = 0, zflag = 0;
 	ssize_t nr, nw, off;
 	struct stat statb;
+	struct ttysize ts;
 
 	setprogname(argv[0]);
 
@@ -179,7 +180,12 @@ main(int argc, char *argv[])
 	bytes = 0;
 	progress = 1;
 	ttyout = stdout;
-	ttywidth = 80;
+
+	if (ioctl(fileno(ttyout), TIOCGSIZE, &ts) == -1) {
+		warn("could not get tty window size");
+		ttywidth = 80;
+	} else
+		ttywidth = ts.ts_cols;
 
 	if (pipe(outpipe) < 0)
 		err(1, "output pipe");
