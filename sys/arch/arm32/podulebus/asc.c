@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.5 1996/04/19 20:13:56 mark Exp $ */
+/* $NetBSD: asc.c,v 1.6 1996/04/26 22:38:11 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -114,15 +114,11 @@ ascmatch(pdp, match, auxp)
 	void *match, *auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
-	int podule;
 
-	podule = findpodule(0x00, 0x02, pa->pa_podule_number);
+/* Look for the card */
 
-	if (podule == -1)
-	  return(0);
-
-	pa->pa_podule_number = podule;
-	pa->pa_podule = &podules[podule];
+	if (matchpodule(pa, 0x00, 0x02, -1) == 0)
+		return(0);
 
 	return(1);
 }
@@ -132,19 +128,19 @@ ascattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	volatile struct sdmac *rp;
+/*	volatile struct sdmac *rp;*/
 	struct asc_softc *sc;
 	struct sbic_softc *sbic;
 	struct podule_attach_args *pa;
 
 	sc = (struct asc_softc *)dp;
-
 	pa = (struct podule_attach_args *)auxp;
-	sc->sc_podule_number = pa->pa_podule_number;
-	if (sc->sc_podule_number == -1)
+
+	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
 
-	sc->sc_podule = &podules[sc->sc_podule_number];
+	sc->sc_podule_number = pa->pa_podule_number;
+	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
 
 #if ASC_POLL > 0
@@ -282,6 +278,7 @@ asc_dmago(dev, addr, count, flags)
 
 	return(dev->sc_tcnt);
 #endif
+	return(0);
 }
 
 void
@@ -362,6 +359,7 @@ asc_dmaintr(dev)
 		found += sbicintr(dev);
 	return(found);
 #endif
+	return(0);
 }
 
 
@@ -408,6 +406,7 @@ asc_dmanext(dev)
 	dev->sc_tcnt = dev->sc_cur->dc_count << 1;
 	return(dev->sc_tcnt);
 #endif
+	return(0);
 }
 
 void
@@ -424,7 +423,7 @@ int
 asc_scsicmd(xs)
 	struct scsi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+/*	struct scsi_link *sc_link = xs->sc_link;*/
 
 	/* ensure command is polling for the moment */
 #if ASC_POLL > 0
@@ -448,7 +447,7 @@ asc_intr(sc)
 	
 /*	printf("ascintr:");*/
        	intr = ReadByte(sc->sc_intstat);
-/*       	printf("%02x\n", intr);*/
+/*	printf("%02x\n", intr);*/
 
 	if (intr & IS_SBIC_IRQ)
 		sbicintr((struct sbic_softc *)sc);
