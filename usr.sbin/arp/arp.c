@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.36 2003/05/17 00:50:36 itojun Exp $ */
+/*	$NetBSD: arp.c,v 1.37 2003/05/17 19:00:22 itojun Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.36 2003/05/17 00:50:36 itojun Exp $");
+__RCSID("$NetBSD: arp.c,v 1.37 2003/05/17 19:00:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ int	delete __P((const char *, const char *));
 void	dump __P((u_long));
 void	delete_all __P((void));
 void	sdl_print __P((const struct sockaddr_dl *));
-int	getifname __P((u_int16_t, char *));
+int	getifname __P((u_int16_t, char *, size_t));
 int	atosdl __P((const char *s, struct sockaddr_dl *sdl));
 int	file __P((char *));
 void	get __P((const char *));
@@ -446,7 +446,7 @@ dump(addr)
 			(void)printf("(incomplete)");
 
 		if (sdl->sdl_index) {
-			if (getifname(sdl->sdl_index, ifname) == 0)
+			if (getifname(sdl->sdl_index, ifname, sizeof(ifname)) == 0)
 				printf(" on %s", ifname);
 		}
 
@@ -657,9 +657,10 @@ getinetaddr(host, inap)
 }
 
 int
-getifname(ifindex, ifname)
+getifname(ifindex, ifname, l)
 	u_int16_t ifindex;
 	char* ifname;
+	size_t l;
 {
 	int i;
 	struct ifaddrs *addr;
@@ -678,7 +679,7 @@ getifname(ifindex, ifname)
 
 		sdl = (const struct sockaddr_dl *) addr->ifa_addr;
 		if (sdl && sdl->sdl_index == ifindex) {
-			(void) strncpy(ifname, addr->ifa_name, IFNAMSIZ);
+			(void) strlcpy(ifname, addr->ifa_name, l);
 			return 0;
 		}
 	}
