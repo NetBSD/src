@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.13 1995/10/14 20:24:27 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.14 1996/02/10 00:48:08 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -100,8 +100,8 @@ svr4_sys_ioctl(p, v, retval)
 
 	svr4_decode_cmd(SCARG(uap, com), dir, &c, &num, &argsiz);
 
-	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %x);\n", SCARG(uap, fd),
-	       dir, c, num, argsiz, (unsigned int) SCARG(uap, data));
+	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %p);\n", SCARG(uap, fd),
+	       dir, c, num, argsiz, SCARG(uap, data));
 #endif
 	fdp = p->p_fd;
 	cmd = SCARG(uap, com);
