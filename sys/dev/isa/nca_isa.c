@@ -1,4 +1,4 @@
-/*	$NetBSD: nca.c,v 1.3 1998/11/19 21:53:32 thorpej Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.1 2000/03/18 13:05:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
+#include <dev/ic/ncr53c400reg.h>
 
-#include <dev/isa/ncareg.h>
 #include <dev/isa/ncavar.h>
 
 int	nca_find __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, struct nca_probe_data*));
