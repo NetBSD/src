@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.3 2003/07/31 08:04:21 matt Exp $	*/
+/*	$NetBSD: setfault.S,v 1.4 2003/08/03 21:27:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -93,6 +93,25 @@ _C_LABEL(setfault):
 	streg	%r0,FB_PC(%r3)			/* LR */
 	streg	%r1,FB_SP(%r3)			/* SP (R1) */
 	streg	%r2,FB_R2(%r3)			/* why?? */
-	stmreg	%r12,FB_CR(%r3)			/* CR, R13-R31 */
+	streg	%r12,FB_CR(%r3)			/* CR */
+	streg	%r13,FB_R13(%r3)		/* R13-R31 */
+	streg	%r14,FB_R14(%r3)
+	streg	%r15,FB_R15(%r3)
+	streg	%r16,FB_R16(%r3)
+	streg	%r17,FB_R17(%r3)
+	streg	%r18,FB_R18(%r3)
+	streg	%r19,FB_R19(%r3)
+	streg	%r20,FB_R20(%r3)
+	streg	%r21,FB_R21(%r3)
+	streg	%r22,FB_R22(%r3)
+	streg	%r23,FB_R23(%r3)
+	streg	%r24,FB_R24(%r3)
+	streg	%r25,FB_R25(%r3)
+	streg	%r26,FB_R26(%r3)
+	streg	%r27,FB_R27(%r3)
+	streg	%r28,FB_R28(%r3)
+	streg	%r29,FB_R29(%r3)
+	streg	%r30,FB_R30(%r3)
+	streg	%r31,FB_R31(%r3)
 	li	%r3,0
 	blr
