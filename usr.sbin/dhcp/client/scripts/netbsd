@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.8 1999/06/04 20:40:50 thorpej Exp $
+# $NetBSD: netbsd,v 1.9 2000/04/22 08:18:13 mellon Exp $
 
 make_resolv_conf() {
   echo search $new_domain_name >/etc/resolv.conf
@@ -82,18 +82,24 @@ fi
   
 if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
    [ x$reason = xREBIND ] || [ x$reason = xREBOOT ]; then
-  if [ x$new_host_name != x ]; then
-    hostname $new_host_name
-  fi
   if [ x$new_nis_domain != x ]; then
     domainname $new_nis_domain
   fi
+  current_hostname=`/bin/hostname`
+  if [ x$current_hostname = x ] || \
+     [ x$current_hostname = x$old_host_name ]; then
+    if [ x$new_host_name != x$old_host_name ]; then
+      hostname $new_host_name
+    fi
+  fi
+    
   if [ x$old_ip_address != x ] && [ x$alias_ip_address != x ] && \
 		[ x$alias_ip_address != x$old_ip_address ]; then
     ifconfig $interface inet -alias $alias_ip_address > /dev/null 2>&1
     route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
   fi
-  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]; then
+  if [ x$old_ip_address != x ] && [ x$old_ip_address != x$new_ip_address ]
+   then
     ifconfig $interface inet -alias $old_ip_address $medium
     route delete $old_ip_address 127.1 >/dev/null 2>&1
     for router in $old_routers; do

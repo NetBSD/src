@@ -30,7 +30,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIR=	common server client relay statmsg sysconfd
+SUBDIR=	common omapip minires server client relay dhcpctl
 
 all-server all-client all-relay: all-common
 
