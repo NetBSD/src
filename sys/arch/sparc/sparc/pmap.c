@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.276 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: pmap.c,v 1.276.2.1 2004/04/08 21:00:48 jdc Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276.2.1 2004/04/08 21:00:48 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -556,7 +556,7 @@ static void  mmu_setup4m_L3(int, struct segmap *);
 				  int, struct vm_page *, int);
 /*static*/ void pv_changepte4_4c(struct vm_page *, int, int);
 /*static*/ int  pv_syncflags4_4c(struct vm_page *);
-/*static*/ int  pv_link4_4c(struct vm_page *, struct pmap *, vaddr_t, int);
+/*static*/ int  pv_link4_4c(struct vm_page *, struct pmap *, vaddr_t, u_int *);
 /*static*/ void pv_unlink4_4c(struct vm_page *, struct pmap *, vaddr_t);
 #endif
 
@@ -1595,6 +1595,7 @@ mmu_setup4m_L3(pagtblptd, sp)
 		case SRMMU_TEPTE:
 			sp->sg_npte++;
 			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
+			pmap_kernel()->pm_stats.resident_count++;
 			break;
 		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
@@ -2577,8 +2578,12 @@ pv_unlink4_4c(pg, pm, va)
 	} else {
 		struct pvlist *prev;
 
+		pmap_stats.ps_unlink_pvsearch++;
 		for (prev = pv0;; prev = npv, npv = npv->pv_next) {
-			pmap_stats.ps_unlink_pvsearch++;
+			if (npv == NULL) {
+				panic("pv_unlink: pm %p is missing on pg %p",
+					pm, pg);
+			}
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
 		}
@@ -2605,17 +2610,16 @@ pv_unlink4_4c(pg, pm, va)
  * be cached.
  */
 /*static*/ int
-pv_link4_4c(pg, pm, va, nc)
+pv_link4_4c(pg, pm, va, pteprotop)
 	struct vm_page *pg;
 	struct pmap *pm;
 	vaddr_t va;
-	int nc;
+	unsigned int *pteprotop;
 {
-	struct pvlist *pv0, *npv;
-	int ret;
+	struct pvlist *pv0, *pv, *npv;
+	int nc = (*pteprotop & PG_NC) != 0 ? PV_NC : 0;
 
 	pv0 = VM_MDPAGE_PVHEAD(pg);
-	ret = nc ? PG_NC : 0;
 
 	if (pv0->pv_pmap == NULL) {
 		/* no pvlist entries yet */
@@ -2623,55 +2627,66 @@ pv_link4_4c(pg, pm, va, nc)
 		pv0->pv_next = NULL;
 		pv0->pv_pmap = pm;
 		pv0->pv_va = va;
-		pv0->pv_flags |= nc ? PV_NC : 0;
-		return (ret);
+		pv0->pv_flags |= nc;
+		return (0);
 	}
+
+	/*
+	 * Allocate the new PV entry now, and, if that fails, bail out 
+	 * before changing the cacheable state of the existing mappings.
+	 */
+	npv = pool_get(&pv_pool, PR_NOWAIT);
+	if (npv == NULL)
+		return (ENOMEM);
+
+	pmap_stats.ps_enter_secondpv++;
+
 	/*
 	 * Before entering the new mapping, see if
 	 * it will cause old mappings to become aliased
 	 * and thus need to be `discached'.
 	 */
-	pmap_stats.ps_enter_secondpv++;
 	if (pv0->pv_flags & PV_ANC) {
 		/* already uncached, just stay that way */
-		ret = PG_NC;
-	} else {
-		for (npv = pv0; npv != NULL; npv = npv->pv_next) {
-			if (npv->pv_flags & PV_NC) {
-				ret = PG_NC;
+		*pteprotop |= PG_NC;
+		goto link_npv;
+	}
+
+	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
+		if ((pv->pv_flags & PV_NC) != 0) {
+			*pteprotop |= PG_NC;
 #ifdef DEBUG
-				/* Check currently illegal condition */
-				if (nc == 0)
-					printf("pv_link: proc %s, va=0x%lx: "
+			/* Check currently illegal condition */
+			if (nc == 0)
+				printf("pv_link: proc %s, va=0x%lx: "
 				"unexpected uncached mapping at 0x%lx\n",
-					    curproc ? curproc->p_comm : "--",
-					    va, npv->pv_va);
+				    curproc ? curproc->p_comm : "--",
+				    va, pv->pv_va);
 #endif
-			}
-			if (BADALIAS(va, npv->pv_va)) {
+		}
+		if (BADALIAS(va, pv->pv_va)) {
 #ifdef DEBUG
-				if (pmapdebug & PDB_CACHESTUFF)
-					printf(
-			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pv %p\n",
-					curproc ? curproc->p_comm : "--",
-					va, npv->pv_va, pg);
+			if (pmapdebug & PDB_CACHESTUFF)
+				printf(
+			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pg %p\n",
+				curproc ? curproc->p_comm : "--",
+				va, pv->pv_va, pg);
 #endif
-				/* Mark list head `uncached due to aliases' */
-				pv0->pv_flags |= PV_ANC;
-				pv_changepte4_4c(pg, ret = PG_NC, 0);
-				break;
-			}
+			/* Mark list head `uncached due to aliases' */
+			pv0->pv_flags |= PV_ANC;
+			pv_changepte4_4c(pg, PG_NC, 0);
+			*pteprotop |= PG_NC;
+			break;
 		}
 	}
-	npv = pool_get(&pv_pool, PR_NOWAIT);
-	if (npv == NULL)
-		panic("pv_link: pv_pool exhausted");
+
+link_npv:
 	npv->pv_next = pv0->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
-	npv->pv_flags = nc ? PV_NC : 0;
+	npv->pv_flags = nc;
 	pv0->pv_next = npv;
-	return (ret);
+	return (0);
 }
 
 #endif /* SUN4 || SUN4C */
@@ -2866,13 +2881,13 @@ pv_unlink4m(pg, pm, va)
 	} else {
 		struct pvlist *prev;
 
+		pmap_stats.ps_unlink_pvsearch++;
 		for (prev = pv0;; prev = npv, npv = npv->pv_next) {
 			if (npv == NULL) {
-				panic("pm %p is missing ", pm);
-				printf("pm %p is missing ", pm);
+				panic("pv_unlink: pm %p is missing on pg %p",
+					pm, pg);
 				goto out;
 			}
-			pmap_stats.ps_unlink_pvsearch++;
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
 		}
@@ -2934,8 +2949,6 @@ pv_link4m(pg, pm, va, pteprotop)
 		goto out;
 	}
 
-	pmap_stats.ps_enter_secondpv++;
-
 	/*
 	 * Allocate the new PV entry now, and, if that fails, bail out 
 	 * before changing the cacheable state of the existing mappings.
@@ -2945,6 +2958,8 @@ pv_link4m(pg, pm, va, pteprotop)
 		error = ENOMEM;
 		goto out;
 	}
+
+	pmap_stats.ps_enter_secondpv++;
 
 	/*
 	 * See if the new mapping will cause old mappings to
@@ -2994,7 +3009,7 @@ link_npv:
 
 out:
 	simple_unlock(&pg->mdpage.pv_slock);
-	return (0);
+	return (error);
 }
 #endif
 
@@ -3474,6 +3489,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		npte = ++scookie < zseg ? NPTESG : lastpage;
 		sp->sg_npte = npte;
 		sp->sg_nwired = npte;
+		pmap_kernel()->pm_stats.resident_count += npte;
 		rp->rg_nsegmap += 1;
 		for (i = 0; i < npte; i++)
 			sp->sg_pte[i] = getpte4(p + i * NBPG) | PG_WIRED;
@@ -3599,6 +3615,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 			sp = &rp->rg_segmap[VA_VSEG(p)];
 			sp->sg_nwired--;
 			sp->sg_npte--;
+			pmap_kernel()->pm_stats.resident_count--;
 			sp->sg_pte[VA_VPG(p)] = 0;
 			setpte4(p, 0);
 		}
@@ -3911,6 +3928,7 @@ pmap_bootstrap4m(top)
 			pte |= PPROT_WRITE;
 
 		setpgt4m(ptep, pte);
+		pmap_kernel()->pm_stats.resident_count++;
 	}
 
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
@@ -4367,6 +4385,11 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 	}
 #endif /* SUN4M || SUN4D */
 
+	/* XXX - a peculiar place to do this, but we can't do it in pmap_init
+	 * and here at least it's off the beaten code track.
+	 */
+{static int x; if (x == 0) pool_setlowat(&pv_pool, 512), x = 1; }
+
 	return (0);
 }
 
@@ -4750,6 +4773,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 		if (inmmu)
 			setpte4(va, 0);
 		*ptep = 0;
+		pm->pm_stats.resident_count--;
 	}
 
 #ifdef DIAGNOSTIC
@@ -4822,6 +4846,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		}
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 		    SRMMU_TEINVALID, 1, 0, CPUSET_ALL);
+		pm->pm_stats.resident_count--;
 		nleft--;
 #ifdef DIAGNOSTIC
 		if (nleft < 0)
@@ -4925,6 +4950,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		if (pte & PG_WIRED)
 			sp->sg_nwired--;
 		*ptep = 0;
+		pm->pm_stats.resident_count--;
 	}
 
 #ifdef DIAGNOSTIC
@@ -5016,6 +5042,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 #endif
 		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
@@ -5136,6 +5163,7 @@ pmap_page_protect4_4c(pg, prot)
 		}
 
 		*ptep = 0;
+		pm->pm_stats.resident_count--;
 		if (nleft == 0)
 			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
 		npv = pv->pv_next;
@@ -5425,6 +5453,8 @@ pmap_page_protect4m(pg, prot)
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID,
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
 
+		pm->pm_stats.resident_count--;
+
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V: pg %p va %lx", pg, va);
 
@@ -5687,6 +5717,7 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 	int *ptep;
 	struct regmap *rp;
 	struct segmap *sp;
+	int error = 0;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -5727,8 +5758,12 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 				cache_flush_page(va, 0);
 			}
 		}
+		*ptep = 0;
+		if (inmmu)
+			setpte4(va, 0);
 		if (pte & PG_WIRED)
 			sp->sg_nwired--;
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
 		if (sp->sg_npte++ == 0) {
@@ -5747,13 +5782,19 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
 	 */
-	if (pg != NULL)
-		pteproto |= pv_link4_4c(pg, pm, va, pteproto & PG_NC);
+	if (pg != NULL && (error = pv_link4_4c(pg, pm, va, &pteproto)) != 0) {
+		if (--sp->sg_npte == 0)
+			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+		if ((flags & PMAP_CANFAIL) != 0)
+			goto out;
+		panic("pmap_enter: cannot allocate PV entry");
+	}
 
 	/* Update S/W page table */
 	*ptep = pteproto;
 	if (pteproto & PG_WIRED)
 		sp->sg_nwired++;
+	pm->pm_stats.resident_count++;
 
 #ifdef DIAGNOSTIC
 	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
@@ -5768,8 +5809,9 @@ pmap_enk4_4c(pm, va, prot, flags, pg, pteproto)
 
 	/* Update H/W page table */
 	setpte4(va, pteproto & ~PG_MBZ);
+out:
 	splx(s);
-	return (0);
+	return (error);
 }
 
 /* enter new (or change existing) user mapping */
@@ -5914,6 +5956,10 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 			}
 			if (pte & PG_WIRED)
 				sp->sg_nwired--;
+			pm->pm_stats.resident_count--;
+			ptep[VA_VPG(va)] = 0;
+			if (sp->sg_pmeg != seginval)
+				setpte4(va, 0);
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -5926,14 +5972,22 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 		}
 	}
 
-	if (pg != NULL)
-		pteproto |= pv_link4_4c(pg, pm, va, pteproto & PG_NC);
+	if (pg != NULL && (error = pv_link4_4c(pg, pm, va, &pteproto)) != 0) {
+		if (--sp->sg_npte == 0)
+			/* Sigh, undo pgt allocations */
+			pgt_lvl23_remove4_4c(pm, rp, sp, vr, vs);
+
+		if ((flags & PMAP_CANFAIL) != 0)
+			goto out;
+		panic("pmap_enter: cannot allocate PV entry");
+	}
 
 	/* Update S/W page table */
 	ptep += VA_VPG(va);
 	*ptep = pteproto;
 	if (pteproto & PG_WIRED)
 		sp->sg_nwired++;
+	pm->pm_stats.resident_count++;
 
 #ifdef DIAGNOSTIC
 	if (sp->sg_nwired > sp->sg_npte || sp->sg_nwired < 0)
@@ -6344,6 +6398,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 			SRMMU_TEINVALID, pm->pm_ctx != NULL,
 			pm->pm_ctxnum, PMAP_CPUSET(pm));
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
 		sp->sg_npte++;
@@ -6352,7 +6407,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	/*
 	 * If the new mapping is for a managed PA, enter into pvlist.
 	 */
-	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto) != 0)) {
+	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto)) != 0) {
 		sp->sg_npte--;
 		if ((flags & PMAP_CANFAIL) != 0)
 			goto out;
@@ -6360,6 +6415,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	}
 
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 out:
 	simple_unlock(&pm->pm_lock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
@@ -6536,6 +6592,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 			setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 				SRMMU_TEINVALID, pm->pm_ctx != NULL,
 				pm->pm_ctxnum, PMAP_CPUSET(pm));
+			pm->pm_stats.resident_count--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -6548,7 +6605,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		}
 	}
 
-	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto) != 0)) {
+	if (pg != NULL && (error = pv_link4m(pg, pm, va, &pteproto)) != 0) {
 		if (--sp->sg_npte == 0)
 			/* Sigh, undo pgt allocations */
 			pgt_lvl23_remove4m(pm, rp, sp, vr, vs);
@@ -6562,6 +6619,7 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 	 * Update PTEs, flush TLB as necessary.
 	 */
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 
 out:
 	simple_unlock(&pm->pm_lock);
@@ -7494,33 +7552,6 @@ kvm_iocache(va, npages)
 		setpte4(va, pte);
 	}
 #endif
-}
-
-int
-pmap_count_ptes(pm)
-	struct pmap *pm;
-{
-	int idx, vs, total;
-	struct regmap *rp;
-	struct segmap *sp;
-
-	if (pm == pmap_kernel()) {
-		rp = &pm->pm_regmap[NUREG];
-		idx = NKREG;
-	} else {
-		rp = pm->pm_regmap;
-		idx = NUREG;
-	}
-	for (total = 0; idx;) {
-		if ((sp = rp[--idx].rg_segmap) == NULL) {
-			continue;
-		}
-		for (vs = 0; vs < NSEGRG; vs++) {
-			total += sp[vs].sg_npte;
-		}
-	}
-	pm->pm_stats.resident_count = total;
-	return (total);
 }
 
 /*
