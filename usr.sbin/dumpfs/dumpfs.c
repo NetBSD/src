@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.19 1999/04/05 19:54:45 mycroft Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.20 1999/04/13 00:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.19 1999/04/05 19:54:45 mycroft Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.20 1999/04/13 00:16:24 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,8 @@ dumpfs(name)
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
 	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
 	    afs.fs_contigsumsize);
-	printf("maxfilesize 0x%016qx\n", afs.fs_maxfilesize);
+	printf("maxfilesize 0x%016qx\n",
+	    (unsigned long long)afs.fs_maxfilesize);
 	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
 	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
