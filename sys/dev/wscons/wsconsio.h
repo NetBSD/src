@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.15 1999/01/28 11:46:22 dbj Exp $ */
+/* $NetBSD: wsconsio.h,v 1.16 1999/02/12 11:14:49 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -82,6 +82,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_PC_XT	3	/* PC-ish, XT scancode */
 #define		WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode */
 #define		WSKBD_TYPE_USB		5	/* USB, XT scancode */
+#define		WSKBD_TYPE_NEXT		6	/* NeXT keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
