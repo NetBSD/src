@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2003/10/05 15:38:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2003/10/30 23:05:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2003/10/05 15:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2003/10/30 23:05:07 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,6 +157,7 @@ pci_intr_map(pa, ihp)
 		panic("SCSI0 and SCSI1 must be hardwired!");
 
 	switch (pin) {
+	default:
 	case PCI_INTERRUPT_PIN_NONE:
 		return -1;
 
