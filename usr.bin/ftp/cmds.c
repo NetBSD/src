@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.49 1999/06/02 02:03:57 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.50 1999/06/11 14:12:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.49 1999/06/02 02:03:57 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.50 1999/06/11 14:12:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2276,7 +2276,7 @@ page(argc, argv)
 		return;
 	}
 	p = getenv("PAGER");
-	if (p == NULL)
+	if (p == NULL || p[0] == '\0')
 		p = PAGER;
 	len = strlen(p) + 2;
 	pager = xmalloc(len);
