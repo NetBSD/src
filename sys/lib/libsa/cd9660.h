@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.1 1996/09/30 16:01:20 ws Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.2 2003/08/21 00:00:52 elric Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -31,11 +31,4 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	cd9660_open __P((char *path, struct open_file *f));
-int	cd9660_close __P((struct open_file *f));
-int	cd9660_read __P((struct open_file *f, void *buf,
-			 size_t size, size_t *resid));
-int	cd9660_write __P((struct open_file *f, void *buf,
-			  size_t size, size_t *resid));
-off_t	cd9660_seek __P((struct open_file *f, off_t offset, int where));
-int	cd9660_stat __P((struct open_file *f, struct stat *sb));
+FS_DEF(cd9660);
