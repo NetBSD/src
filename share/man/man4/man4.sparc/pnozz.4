@@ -1,4 +1,4 @@
-.\"     $NetBSD: pnozz.4,v 1.1 2004/03/31 07:20:49 mrg Exp $
+.\"     $NetBSD: pnozz.4,v 1.2 2004/03/31 21:59:34 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -38,13 +38,13 @@
 The
 .Nm
 is a color frame buffer with graphics acceleration, embedded in the
-.Tn "Tadpole SPARCbook"
-3GS, 3GX, 3TX and 3XP
+.Tn Tadpole SPARCbook
+3GS, 3GX, 3TX, and 3XP
 laptops.
 It is based on the
-.Tn "Weitek Power9100"
+.Tn Weitek Power9100
 video processor and an
-.Tn "IBM RGB525"
+.Tn IBM RGB525
 RAMDAC.
 .Pp
 If the
@@ -56,13 +56,13 @@ is closed or the screen is blanked.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sbus 4 ,
-.Xr tctrl 4 ,
-.Sh BUGS
-There is currently no way to switch back and forth from
-the onboard display to the external connector.
-It is not possible to change resolutions or color depth.
+.Xr tctrl 4
 .Sh HISTORY
 Support for the
 .Nm
 first appeared in
 .Nx 1.6 .
+.Sh BUGS
+There is currently no way to switch back and forth from
+the onboard display to the external connector.
+It is not possible to change resolutions or color depth.
