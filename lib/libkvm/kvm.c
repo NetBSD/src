@@ -428,11 +428,18 @@ kvm_getprocs(what, arg)
 			return (-1);
 		}
 		copysize = ret;
-		if (copysize > ocopysize &&
-			(kvmprocbase = (struct kinfo_proc *)malloc(copysize)) 
-								     == NULL) {
-			seterr("out of memory");
-			return (-1);
+		if (copysize > ocopysize) {
+			if (ocopysize == -1)
+				kvmprocbase =
+					(struct kinfo_proc *)malloc(copysize);
+			else
+				kvmprocbase =
+					(struct kinfo_proc *)realloc(kvmprocbase,
+								copysize);
+			if (!kvmprocbase) {
+				seterr("out of memory");
+				return (-1);
+			}
 		}
 		ocopysize = copysize;
 		if ((ret = getkerninfo(what, kvmprocbase, &copysize, 
