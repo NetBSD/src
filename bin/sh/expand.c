@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	8.2 (Berkeley) 10/22/93";*/
-static char *rcsid = "$Id: expand.c,v 1.10 1994/06/11 16:11:54 mycroft Exp $";
+static char *rcsid = "$Id: expand.c,v 1.11 1994/08/29 01:54:39 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -1076,6 +1076,8 @@ pmatch(pattern, string)
 			}
 			found = 0;
 			chr = *q++;
+			if (chr == '\0')
+				return 0;
 			c = *p++;
 			do {
 				if (c == CTLESC)
