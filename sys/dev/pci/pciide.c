@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.153.2.7 2002/11/01 16:20:50 tron Exp $	*/
+/*	$NetBSD: pciide.c,v 1.153.2.8 2002/11/01 16:33:33 tron Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.7 2002/11/01 16:20:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.8 2002/11/01 16:33:33 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2201,8 +2201,7 @@ apollo_chip_map(sc, pa)
 		break;
 	case PCI_PRODUCT_VIATECH_VT8233A:
 		printf("VT8233A ATA133 controller\n");
-		/* XXX use ATA100 untill ATA133 is supported */
-		sc->sc_wdcdev.UDMA_cap = 5;
+		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
 	default:
 		printf("unknown ATA controller\n");
@@ -2303,9 +2302,12 @@ apollo_setup_channel(chp)
 			drvp->drive_flags &= ~DRIVE_DMA;
 			udmatim_reg |= APO_UDMA_EN(chp->channel, drive) |
 			    APO_UDMA_EN_MTH(chp->channel, drive);
-			if (sc->sc_wdcdev.UDMA_cap == 5) {
+			if (sc->sc_wdcdev.UDMA_cap == 6) {
+				/* 8233a */
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma133_tim[drvp->UDMA_mode]);
+			} else if (sc->sc_wdcdev.UDMA_cap == 5) {
 				/* 686b */
-				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
 				udmatim_reg |= APO_UDMA_TIME(chp->channel,
 				    drive, apollo_udma100_tim[drvp->UDMA_mode]);
 			} else if (sc->sc_wdcdev.UDMA_cap == 4) {
