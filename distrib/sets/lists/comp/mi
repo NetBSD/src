@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.382 2001/10/06 01:45:09 thorpej Exp $
+#	$NetBSD: mi,v 1.383 2001/10/17 05:22:32 jmc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3239,6 +3239,15 @@
 ./usr/share/man/cat9/powerhook_establish.0		comp-sys-catman
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman
 ./usr/share/man/cat9/printf.0		comp-sys-catman
+./usr/share/man/cat9/prop_copy.0	comp-sys-catman
+./usr/share/man/cat9/prop_delete.0	comp-sys-catman
+./usr/share/man/cat9/prop_get.0		comp-sys-catman
+./usr/share/man/cat9/prop_list.0	comp-sys-catman
+./usr/share/man/cat9/prop_objs.0	comp-sys-catman
+./usr/share/man/cat9/prop_set.0		comp-sys-catman
+./usr/share/man/cat9/propdb_create.0	comp-sys-catman
+./usr/share/man/cat9/propdb_destroy.0	comp-sys-catman
+./usr/share/man/cat9/properties.0	comp-sys-catman
 ./usr/share/man/cat9/psignal.0		comp-sys-catman
 ./usr/share/man/cat9/ratecheck.0		comp-sys-catman
 ./usr/share/man/cat9/readdisklabel.0		comp-sys-catman
