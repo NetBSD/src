@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.17 2002/07/13 22:31:18 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.18 2002/07/13 22:48:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -195,6 +195,7 @@ int	bgedebug = 0;
 
 /* Various chip quirks. */
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
+#define	BGE_QUIRK_CSUM_BROKEN		0x00000002
 
 struct cfattach bge_ca = {
 	sizeof(struct bge_softc), bge_probe, bge_attach
@@ -1527,7 +1528,7 @@ static const struct bge_revision {
 	  "BCM5700 A1" },
 
 	{ BGE_ASICREV_BCM5700_B0,
-	  BGE_QUIRK_LINK_STATE_BROKEN,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_CSUM_BROKEN,
 	  "BCM5700 B0" },
 
 	{ BGE_ASICREV_BCM5700_B1,
@@ -1869,8 +1870,9 @@ bge_attach(parent, self, aux)
 	DPRINTFN(5, ("bcopy\n"));
 	strcpy(ifp->if_xname, sc->bge_dev.dv_xname);
 
-	sc->ethercom.ec_if.if_capabilities |=
-	  IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
+		sc->ethercom.ec_if.if_capabilities |=
+		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	sc->ethercom.ec_capabilities |=	
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 
@@ -2147,7 +2149,7 @@ bge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		if (sc->bge_asicrev != BGE_ASICREV_BCM5700_B0) {
+		if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
