@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.2 2002/05/26 22:07:28 wiz Exp $ */
+/*	$NetBSD: spx.c,v 1.3 2003/07/15 05:09:35 itojun Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)spx.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: spx.c,v 1.2 2002/05/26 22:07:28 wiz Exp $");
+__RCSID("$NetBSD: spx.c,v 1.3 2003/07/15 05:09:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,8 +180,9 @@ spx_init(ap, server)
 	if (server) {
 		str_data[3] = TELQUAL_REPLY;
 		gethostname(lhostname, sizeof(lhostname));
-		strcpy(targ_printable, "SERVICE:rcmd@");
-		strcat(targ_printable, lhostname);
+		strlcpy(targ_printable, "SERVICE:rcmd@",
+		    sizeof(targ_printable));
+		strlcat(targ_printable, lhostname, sizeof(targ_printable));
 		input_name_buffer.length = strlen(targ_printable);
 		input_name_buffer.value = targ_printable;
 		major_status = gss_import_name(&status,
@@ -223,8 +224,8 @@ spx_send(ap)
 	char *address;
 
 	printf("[ Trying SPX ... ]\n");
-	strcpy(targ_printable, "SERVICE:rcmd@");
-	strcat(targ_printable, RemoteHostName);
+	strlcpy(targ_printable, "SERVICE:rcmd@", sizeof(targ_printable));
+	strlcat(targ_printable, RemoteHostName, sizeof(targ_printable));
 
 	input_name_buffer.length = strlen(targ_printable);
 	input_name_buffer.value = targ_printable;
@@ -331,8 +332,9 @@ spx_is(ap, data, cnt)
 
 		gethostname(lhostname, sizeof(lhostname));
 
-		strcpy(targ_printable, "SERVICE:rcmd@");
-		strcat(targ_printable, lhostname);
+		strlcpy(targ_printable, "SERVICE:rcmd@",
+		    sizeof(targ_printable));
+		strlcat(targ_printable, lhostname, sizeof(targ_printable));
 
 		input_name_buffer.length = strlen(targ_printable);
 		input_name_buffer.value = targ_printable;
@@ -502,8 +504,8 @@ spx_status(ap, name, level)
 	  return(AUTH_USER);   /*  not authenticated  */
 	}
 
-	strcpy(acl_file, pwd->pw_dir);
-	strcat(acl_file, "/.sphinx");
+	strlcpy(acl_file, pwd->pw_dir, sizeof(acl_file));
+	strlcat(acl_file, "/.sphinx", sizeof(acl_file));
 	acl_file_buffer.value = acl_file;
 	acl_file_buffer.length = strlen(acl_file);
 
@@ -564,12 +566,12 @@ spx_printsub(data, cnt, buf, buflen)
 		goto common2;
 
 	default:
-		sprintf(lbuf, " %d (unknown)", data[3]);
+		snprintf(lbuf, sizeof(lbuf), " %d (unknown)", data[3]);
 		strncpy((char *)buf, lbuf, buflen);
 	common2:
 		BUMP(buf, buflen);
 		for (i = 4; i < cnt; i++) {
-			sprintf(lbuf, " %d", data[i]);
+			snprintf(lbuf, sizeof(lbuf), " %d", data[i]);
 			strncpy((char *)buf, lbuf, buflen);
 			BUMP(buf, buflen);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.10 2002/11/05 22:34:50 thorpej Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.11 2003/07/15 05:09:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.10 2002/11/05 22:34:50 thorpej Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.11 2003/07/15 05:09:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,12 +494,12 @@ kerberos4_printsub(data, cnt, buf, buflen)
 		goto common2;
 
 	default:
-		sprintf(lbuf, " %d (unknown)", data[3]);
+		snprintf(lbuf, sizeof(lbuf), " %d (unknown)", data[3]);
 		strncpy((char *)buf, lbuf, buflen);
 	common2:
 		BUMP(buf, buflen);
 		for (i = 4; i < cnt; i++) {
-			sprintf(lbuf, " %d", data[i]);
+			snprintf(lbuf, sizeof(lbuf), " %d", data[i]);
 			strncpy((char *)buf, lbuf, buflen);
 			BUMP(buf, buflen);
 		}
