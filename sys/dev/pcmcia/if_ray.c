@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.20.2.2 2000/12/15 00:15:01 he Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.20.2.3 2001/01/26 00:32:07 jhawk Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -1587,8 +1587,8 @@ done:
 	}
 
 	if (pktlen < sizeof(*frame) + sizeof(struct llc)) {
-		RAY_DPRINTF(("%s: pkt too small for llc (%d)\n",
-		    sc->sc_xname, pktlen));
+		RAY_DPRINTF(("%s: pkt too small for llc (%ld)\n",
+		    sc->sc_xname, (u_long)pktlen));
 		m_freem(m);
 		return;
 	}
