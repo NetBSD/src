@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1995/10/14 01:43:24 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1995/10/16 04:55:44 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -61,7 +61,9 @@ rz25-image.gz: mount-fs build-fs unmount-fs
 
 bin.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
-	(cd ${DESTDIR} ; find . | grep -v '^./etc' | pax -w -d | gzip -9) > $@
+	(cd ${DESTDIR} ; find . | grep -v '^./etc' | \
+	    grep -v '^./usr/X11R6' | grep -v '^./netbsd' | \
+	    pax -w -d | gzip -9) > $@
 
 etc.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
