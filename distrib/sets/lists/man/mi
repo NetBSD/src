@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.619 2003/10/19 09:12:32 wiz Exp $
+# $NetBSD: mi,v 1.620 2003/10/20 09:07:44 mbw Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1549,6 +1549,7 @@
 ./usr/share/man/cat8/mac68k/boot.0		man-sys-catman
 ./usr/share/man/cat8/mac68k/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/macppc/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/macppc/boot.0		man-sys-catman
 ./usr/share/man/cat8/macppc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/macppc/ofwboot.0		man-sysutil-catman
 ./usr/share/man/cat8/macppc/ofwboot.elf.0	man-sysutil-catman
@@ -3398,6 +3399,7 @@
 ./usr/share/man/man8/mac68k/boot.8		man-sys-man
 ./usr/share/man/man8/mac68k/makedev.8		man-sysutil-man
 ./usr/share/man/man8/macppc/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/macppc/boot.8		man-sys-man
 ./usr/share/man/man8/macppc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/macppc/ofwboot.8		man-sysutil-man
 ./usr/share/man/man8/macppc/ofwboot.elf.8	man-sysutil-man
