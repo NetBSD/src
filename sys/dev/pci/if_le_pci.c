@@ -1,4 +1,41 @@
-/*	$NetBSD: if_le_pci.c,v 1.18 1997/04/13 20:14:31 cgd Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.18.2.1 1997/05/13 03:52:50 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -76,12 +113,6 @@
 
 #include <dev/pci/if_levar.h>
 
-#ifdef __alpha__			/* XXX */
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
-#undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
-#endif
-
 #ifdef __BROKEN_INDIRECT_CONFIG
 int le_pci_match __P((struct device *, void *, void *));
 #else
@@ -101,6 +132,8 @@ hide u_int16_t le_pci_rdcsr __P((struct am7990_softc *, u_int16_t));
  * XXX These should be in a common file!
  */
 #define PCI_CBIO	0x10		/* Configuration Base IO Address */
+
+#define	LE_PCI_MEMSIZE	16384
 
 hide void
 le_pci_wrcsr(sc, port, val)
@@ -164,9 +197,11 @@ le_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	bus_dma_tag_t dmat = pa->pa_dmat;
+	bus_dma_segment_t seg;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
-	int i;
+	int i, rseg;
 	const char *model, *intrstr;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -194,19 +229,48 @@ le_pci_attach(parent, self, aux)
 	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
 		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
-	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mem == 0) {
+	lesc->sc_iot = iot;
+	lesc->sc_ioh = ioh;
+	lesc->sc_dmat = dmat;
+
+	/*
+	 * Allocate a DMA area for the card.
+	 */
+	if (bus_dmamem_alloc(dmat, LE_PCI_MEMSIZE, &seg, 1,
+	    &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: couldn't allocate memory for card\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	if (bus_dmamem_map(dmat, &seg, rseg, LE_PCI_MEMSIZE,
+	    (caddr_t *)&sc->sc_mem,
+	    BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+		printf("%s: couldn't map memory for card\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
-	lesc->sc_iot = iot;
-	lesc->sc_ioh = ioh;
+	/*
+	 * Create and load the DMA map for the DMA area.
+	 */
+	if (bus_dmamap_create(dmat, LE_PCI_MEMSIZE, 1,
+	    LE_PCI_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
+		printf("%s: couldn't create DMA map\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamem_free(dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_load(dmat, lesc->sc_dmam,
+	    sc->sc_mem, LE_PCI_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: coundn't load DMA map\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamem_free(dmat, &seg, rseg);
+		return;
+	}
 
 	sc->sc_conf3 = 0;
-	sc->sc_addr = vtophys(sc->sc_mem);	/* XXX XXX XXX */
-	sc->sc_memsize = 16384;
+	sc->sc_addr = lesc->sc_dmam->dm_segs[0].ds_addr;
+	sc->sc_memsize = LE_PCI_MEMSIZE;
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
