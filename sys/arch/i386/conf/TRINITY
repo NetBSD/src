@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.13 1993/07/02 03:23:17 mycroft Exp $
+#	$Id: TRINITY,v 1.14 1993/07/12 12:07:46 mycroft Exp $
 #
 
 machine		"i386"
@@ -18,7 +18,7 @@ options		KERNFS
 options		SCSI
 options		DDB
 
-config		netbsd	root on sd0 swap on sd0
+config		netbsd	root on sd0 swap on sd0 and sd1
 
 controller	isa0
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
