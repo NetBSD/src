@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.12 1997/07/13 18:57:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
+__RCSID("$NetBSD: fnmatch.c,v 1.12 1997/07/13 18:57:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,7 +154,7 @@ rangematch(pattern, test, flags)
 	 * consistency with the regular expression syntax.
 	 * J.T. Conklin (conklin@ngai.kaleida.com)
 	 */
-	if (negate = (*pattern == '!' || *pattern == '^'))
+	if ((negate = (*pattern == '!' || *pattern == '^')) != 0)
 		++pattern;
 	
 	for (ok = 0; (c = *pattern++) != ']';) {
