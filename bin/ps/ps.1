@@ -39,7 +39,7 @@
 .Nd process status
 .Sh SYNOPSIS
 .Nm \&ps
-.Op Fl aCehjlmrSTuvwx
+.Op Fl acCehjlmrSTuvwx
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl O Ar fmt
@@ -71,6 +71,13 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Display information about other users' processes as well as your own.
+.It Fl c
+Do not display full command with arguments, but only the
+executable name.
+This may be somewhat confusing; for example, all
+.Xr sh 1
+scripts will show as
+.Dq sh .
 .It Fl C
 Change the way the cpu percentage is calculated by using a ``raw''
 cpu calculation that ignores ``resident'' time (this normally has
@@ -491,6 +498,7 @@ default system namelist
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
+.Xr sh 1 ,
 .Xr w 1 ,
 .Xr kvm 3 ,
 .Xr strftime 3 ,
