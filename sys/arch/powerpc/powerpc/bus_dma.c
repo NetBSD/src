@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2003/03/16 05:37:37 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 2003/04/02 02:47:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -592,7 +592,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		for (addr = BUS_MEM_TO_PHYS(t, segs[curseg].ds_addr);
 		    addr < (BUS_MEM_TO_PHYS(t, segs[curseg].ds_addr)
 			+ segs[curseg].ds_len);
-		    addr += NBPG, va += NBPG, size -= NBPG) {
+		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			/*
@@ -600,7 +600,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			 * cache before we map it.
 			 */
 			if (flags & BUS_DMA_NOCACHE)
-				dcbf(addr, NBPG,
+				dcbf(addr, PAGE_SIZE,
 				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE |
