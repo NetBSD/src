@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.10 1998/11/12 16:09:46 christos Exp $	*/
+/*	$NetBSD: execvp.c,v 1.11 1999/02/04 18:17:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execvp.c,v 1.10 1998/11/12 16:09:46 christos Exp $");
+__RCSID("$NetBSD: execvp.c,v 1.11 1999/02/04 18:17:16 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,8 +66,7 @@ execvp(name, argv)
 	const char *name;
 	char * const *argv;
 {
-	static size_t memsize;
-	static const char **memp;
+	const char **memp;
 	int cnt;
 	size_t lp, ln;
 	char *p;
@@ -126,27 +125,23 @@ execvp(name, argv)
 retry:		rwlock_rdlock(&__environ_lock);
 		(void)execve(bp, argv, environ);
 		rwlock_unlock(&__environ_lock);
-		switch(errno) {
+		switch (errno) {
 		case EACCES:
 			eacces = 1;
 			break;
 		case ENOENT:
 			break;
 		case ENOEXEC:
-			for (cnt = 0; argv[cnt]; ++cnt);
-			if ((cnt + 2) * sizeof(char *) > memsize) {
-				memsize = (cnt + 2) * sizeof(char *);
-				if ((memp = realloc(memp, memsize)) == NULL) {
-					memsize = 0;
-					goto done;
-				}
-			}
-			memp[0] = "sh";
+			for (cnt = 0; argv[cnt] != NULL; ++cnt);
+			if ((memp = malloc((cnt + 2) * sizeof (*memp))) == NULL)
+				goto done;
+			memp[0] = _PATH_BSHELL;
 			memp[1] = bp;
-			memmove(memp + 2, argv + 1, cnt * sizeof(char *));
+			(void)memmove(&memp[2], &argv[1], cnt * sizeof (*memp));
 			rwlock_rdlock(&__environ_lock);
 			(void)execve(_PATH_BSHELL, (char * const *)memp, environ);
 			rwlock_unlock(&__environ_lock);
+			free(memp);
 			goto done;
 		case ETXTBSY:
 			if (etxtbsy < 3)
