@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.5 2002/01/15 01:48:57 wiz Exp $
+.\"	$NetBSD: intro.4,v 1.6 2002/05/21 00:49:56 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,6 +97,11 @@ A list of the supported devices is given below.
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr awacs 4 ,
+.Xr bm 4 ,
+.Xr de 4 ,
+.Xr gm 4 ,
+.Xr mc 4 ,
+.Xr tlp 4 ,
 .Xr config 8
 .Sh HISTORY
 The
@@ -136,16 +141,19 @@ machines, and
 .Tn Open Firmware 3
 based machines).
 .It Em bm
-bmac ethernet (at least in the G3 series).
+BMac Ethernet.
+.It Em de
+DECchip 21x4x based Ethernet cards (see also
+.Xr tlp 4 ) .
 .It Em esp
 .Tn NCR
 53C9x built-in SCSI interface.
-.It Em gmac
-gmac ethernet.
+.It Em gm
+GMac Ethernet.
 .It Em kmem
 kernel virtual memory.
 .It Em mc
-MACE ethernet.
+MACE Ethernet.
 .It Em mem
 physical memory.
 .It Em mesh
@@ -160,6 +168,8 @@ support.
 .It Em openfirm
 .Tn Open Firmware
 access.
+.It Em tlp
+DECchip 21x4x based Ethernet cards.
 .It Em wdc
 Standard on-board IDE controller.
 .It Em zsc
