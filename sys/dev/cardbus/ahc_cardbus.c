@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.2 2000/03/15 02:03:51 fvdl Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.3 2000/03/16 03:06:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@
 #include <dev/cardbus/cardbusdevs.h>
 
 #include <dev/ic/aic7xxxvar.h>
+
+#include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 
 #define	AHC_CARDBUS_IOBA	0x10
 #define	AHC_CARDBUS_MMBA	0x14
@@ -172,30 +174,29 @@ ahc_cardbus_attach(parent, self, aux)
 	 * ADP-1480 is always an AIC-7860.
 	 */
 	ahc_t = AHC_AIC7860;
+	ahc_fe = AHC_AIC7860_FE;
 
 	/*
 	 * On all CardBus adapters, we allow SCB paging.
 	 */
 	ahc_f = AHC_PAGESCBS;
 
-	ahc_fe = AHC_AIC7860_FE;
-	ahc_t = AHC_AIC7860;
-
-	if (ahc_alloc(ahc, bsh, bst, ca->ca_dmat, ahc_t, ahc_fe, ahc_f) < 0) {
+	if (ahc_alloc(ahc, bsh, bst, ca->ca_dmat, ahc_t | AHC_PCI /* XXX */,
+	    ahc_fe, ahc_f) < 0) {
 		printf("%s: unable to initialize softc\n", ahc_name(ahc));
 		return;
 	}
 
 	ahc->channel = 'A';
 
-	ahc_reset(ahc->sc_dev.dv_xname);
+	ahc_reset(ahc);
 
 	/*
 	 * Establish the interrupt.
 	 */
-	ahc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
+	ahc->ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    ahc_intr, ahc);
-	if (ahc->sc_ih == NULL) {
+	if (ahc->ih == NULL) {
 		printf("%s: unable to establish interrupt at %d\n",
 		    ahc_name(ahc), ca->ca_intrline);
 		return;
@@ -209,10 +210,10 @@ ahc_cardbus_attach(parent, self, aux)
 		u_char sblkctl;
 		const char *id_string;
 
-		switch (ahc->type) {
+		switch (ahc->chip & AHC_CHIPID_MASK) {
 		case AHC_AIC7860:
 			id_string = "aic7860 ";
-			check_export(ahc, &sxfrctl1);
+			check_extport(ahc, &sxfrctl1);
 			break;
 
 		default:
