@@ -1,4 +1,4 @@
-/*	$NetBSD: talk.h,v 1.5 1998/07/26 22:26:29 mycroft Exp $	*/
+/*	$NetBSD: talk.h,v 1.6 2000/03/02 17:37:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,6 +35,7 @@
  *	@(#)talk.h	8.1 (Berkeley) 6/6/93
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
