@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.7 1997/11/02 23:43:14 jonathan Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.8 1997/11/03 09:47:03 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,6 +70,10 @@ void do_upgrade(void)
 	   copy file systems ... */
 	if (!md_update ())
 		return;
+
+	/* Done with disks. Ready to get and unpack tarballs. */
+	printf("%s", msg_string(MSG_disksetupdone));
+	getchar();
 
 	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
 }
