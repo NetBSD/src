@@ -1,11 +1,11 @@
-/*	$NetBSD: cpu.c,v 1.2 2001/10/20 08:22:58 billc Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2001/10/22 14:46:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by NONAKA Kimihiro.
+ * by NONAKA Kimihiro; by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,10 +56,16 @@ cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
 	struct ofbus_attach_args *oba = aux;
 	char name[32];
 
-	if (OF_getprop(oba->oba_phandle, "device_type", name, sizeof name) <= 3)
+	if (strcmp(oba->oba_busname, "cpu") != 0)
 		return (0);
-	if (!strcmp(name, "cpu"))
+
+	if (OF_getprop(oba->oba_phandle, "device_type", name,
+	    sizeof(name)) <= 3)
+		return (0);
+
+	if (strcmp(name, "cpu") == 0)
 		return (1);
+
 	return (0);
 }
 
@@ -69,12 +75,29 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_softc *sc = (struct cpu_softc *) self;
 	struct ofbus_attach_args *oba = aux;
 	unsigned char data[4];
+	int tbase, cpunum;
 
 	sc->sc_ofnode = oba->oba_phandle;
-	cpu_attach_common(self, 0);
 
-	if (OF_getprop(oba->oba_phandle, "timebase-frequency", 
-	    data, sizeof data) >= sizeof(int)) {
-		cpu_timebase = of_decode_int(data);
+	if (OF_getprop(sc->sc_ofnode, "reg",
+	    data, sizeof(data)) < sizeof(data)) {
+		printf(": unable to get CPU ID\n");
+		return;
+	}
+	cpunum = of_decode_int(data);
+
+	cpu_attach_common(self, cpunum);
+
+	if (OF_getprop(oba->oba_phandle, "timebase-frequency",
+	    data, sizeof(data)) < sizeof(data))
+		printf("%s: unable to get timebase-frequence property\n",
+		    sc->sc_dev.dv_xname);
+	else {
+		tbase = of_decode_int(data);
+		if (cpu_timebase == 0)
+			cpu_timebase = tbase;
+		else if (tbase != cpu_timebase)
+			printf("%s: WARNING: timebase %d != %d\n",
+			    sc->sc_dev.dv_xname, tbase, cpu_timebase);
 	}
 }

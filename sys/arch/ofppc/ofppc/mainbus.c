@@ -1,11 +1,11 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/08/26 02:47:41 matt Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.4 2001/10/22 14:46:09 thorpej Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,24 +42,26 @@
 
 #include <dev/ofw/openfirm.h>
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
+int	mainbus_print(void *, const char *);
+
 extern struct cfdriver mainbus_cd;
+
+char platform_type[64];
 
 /*
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	return (1);
 }
 
@@ -67,19 +69,93 @@ mainbus_match(parent, cf, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
+	char buf[32];
+	const char * const *ssp, *sp = NULL;
 	int node;
 
-	printf("\n");
+	static const char * const openfirmware_special[] = {
+		/*
+		 * These are _root_ devices to ignore.  Others must be
+		 * handled elsewhere, if at all.
+		 */
+		"virtual-memory",
+		"mmu",
+		"aliases",
+		"memory",
+		"openprom",
+		"options",
+		"packages",
+		"chosen",
+
+		/*
+		 * This one is extra-special .. we make a special case
+		 * and attach CPUs early.
+		 */
+		"cpus",
+
+		NULL
+	};
 
 	node = OF_peer(0);
-	if (node) {
+	if (node == 0) {
+		printf("\n");
+		panic("mainbus_attach: no OpenFirmware root node\n");
+	}
+
+	/*
+	 * Display the type of system we are running on.  Eventually,
+	 * this can be used to look up methods to handle native hardware
+	 * devices.
+	 */
+	OF_getprop(node, "name", platform_type, sizeof(platform_type));
+	printf(": %s\n", platform_type);
+
+	/*
+	 * Before we do anything else, attach CPUs.  We do this early,
+	 * because we might need to make CPU dependent decisions during
+	 * the autoconfiguration process.  Also, it's a little weird to
+	 * see CPUs after other devices in the boot messages.
+	 */
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+			oba.oba_busname = "cpu";
+			oba.oba_phandle = node;
+			(void) config_found(self, &oba, mainbus_print);
+		}
+	}
+
+	/*
+	 * Now attach the rest of the devices on the system.
+	 */
+	for (node = OF_child(OF_peer(0)); node != 0; node = OF_peer(node)) {
+		OF_getprop(node, "name", buf, sizeof(buf));
+		for (ssp = openfirmware_special; (sp = *ssp) != NULL; ssp++) {
+			if (strcmp(buf, sp) == 0)
+				break;
+		}
+		if (sp != NULL)
+			continue;
+
 		oba.oba_busname = "ofw";
 		oba.oba_phandle = node;
-		config_found(self, &oba, NULL);
+		(void) config_found(self, &oba, mainbus_print);
 	}
+}
+
+int
+mainbus_print(void *aux, const char *pnp)
+{
+	struct ofbus_attach_args *oba = aux;
+	char name[64];
+
+	if (pnp) {
+		OF_getprop(oba->oba_phandle, "name", name, sizeof(name));
+		printf("%s at %s", name, pnp);
+	}
+
+	return (UNCONF);
 }
