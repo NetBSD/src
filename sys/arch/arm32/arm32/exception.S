@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.13 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: exception.S,v 1.14 2000/03/24 17:05:30 ws Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,7 +45,7 @@
  * Based on kate/display/abort.s
  */
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -227,7 +227,7 @@ do_swi_ast:
  */
 
 ASENTRY_NP(undefined_entry)
-#if NIPKDB > 0
+#ifdef IPKDB
 /*
  * IPKDB must be hooked in at the earliest possible entry point.
  *
@@ -350,7 +350,7 @@ Lpull_r0r7:
 	str	r1, [r0, #0x0004]
 	ldmia	r0, {r0, r1, pc}
 
-#if NIPKDB > 0
+#ifdef IPKDB
 Lipkdb_trap_return:
 	.word	Lipkdb_trap_return_data
 #endif
@@ -374,7 +374,7 @@ ENTRY_NP(undefinedinstruction_bounce)
 	.data
 	.align	0
 
-#if NIPKDB > 0
+#ifdef IPKDB
 Lipkdb_trap_return_data:
 	.word	0
 #endif

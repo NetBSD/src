@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofw,v 1.9 1998/07/22 22:04:14 thorpej Exp $
+#	$NetBSD: files.ofw,v 1.10 2000/03/24 17:05:34 ws Exp $
 #
 # First cut on Openfirmware interface
 #
@@ -16,11 +16,9 @@ attach	ofdisk at ofbus
 file	dev/ofw/ofdisk.c		ofdisk needs-flag
 
 # Generic net support
-define	ipkdbofn { [ disable = 0 ] }
-device	ofnet: ether, ifnet, ipkdbofn, arp
+device	ofnet: ether, ifnet, arp
 attach	ofnet at ofbus
-file	dev/ofw/ofnet.c			ofnet | ipkdb_ofn needs-flag
-attach	ipkdbif at ipkdbofn with ipkdb_ofn
+file	dev/ofw/ofnet.c			ofnet needs-flag
 
 # Generic console support
 device	ofcons: tty

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2000/03/09 18:59:27 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2000/03/24 17:05:33 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,7 +40,7 @@
 #include "opt_ns.h"
 #include "opt_natm.h"
 #include "adb.h"
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -143,7 +143,7 @@ initppc(startkernel, endkernel, args)
 #ifdef DDB
 	extern ddblow, ddbsize;
 #endif
-#if NIPKDB > 0
+#ifdef IPKDB
 	extern ipkdblow, ipkdbsize;
 #endif
 	extern void consinit __P((void));
@@ -253,7 +253,7 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
-#if defined(DDB) || NIPKDB > 0
+#if defined(DDB) || defined(IPKDB)
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
@@ -263,7 +263,7 @@ initppc(startkernel, endkernel, args)
 			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
 #endif
 			break;
-#endif /* DDB || NIPKDB > 0 */
+#endif /* DDB || IPKDB */
 		}
 
 	/*
@@ -314,7 +314,7 @@ initppc(startkernel, endkernel, args)
 #ifdef DDB
 	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
-#if NIPKDB > 0
+#ifdef IPKDB
 	/*
 	 * Now trap to IPKDB
 	 */
