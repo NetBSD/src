@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.4.3 2001/07/10 01:43:29 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.4.4 2001/07/13 04:51:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -158,7 +158,6 @@
 			ifp->if_atime_sec = (acc)->tv_sec;		\
 			ifp->if_atime_nsec = (acc)->tv_nsec;		\
 			VOP_BWRITE(ibp);				\
-			(ip)->i_flag &= ~IN_ACCESS;			\
 		} else {						\
 			LFS_SET_UINO(ip, IN_ACCESSED);			\
 		}                                              		\
