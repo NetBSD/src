@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.415 2002/03/19 22:03:07 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.416 2002/03/27 13:12:11 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.412 2002/03/19 22:02:36 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.413 2002/03/27 13:11:37 abs Exp 
  */
 
 /*
@@ -2114,6 +2114,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Conexant Systems",
 	    "SoftK56 PCI Software Modem",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56KFAXMODEM,
+	    0,
+	    "Conexant Systems",
+	    "HW 56K Fax Modem",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
