@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.15.4.6 1999/08/09 00:05:54 chs Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.15.4.7 1999/08/31 21:03:45 perseant Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -1113,17 +1113,17 @@ struct vop_putpages_args {
 	struct vnode *a_vp;
 	vm_page_t *a_m;
 	int a_count;
-	int a_sync;
+	int a_flags;
 	int *a_rtvals;
 };
 extern struct vnodeop_desc vop_putpages_desc;
 static __inline int VOP_PUTPAGES __P((struct vnode *, vm_page_t *, int, int, 
     int *)) __attribute__((__unused__));
-static __inline int VOP_PUTPAGES(vp, m, count, sync, rtvals)
+static __inline int VOP_PUTPAGES(vp, m, count, flags, rtvals)
 	struct vnode *vp;
 	vm_page_t *m;
 	int count;
-	int sync;
+	int flags;
 	int *rtvals;
 {
 	struct vop_putpages_args a;
@@ -1131,7 +1131,7 @@ static __inline int VOP_PUTPAGES(vp, m, count, sync, rtvals)
 	a.a_vp = vp;
 	a.a_m = m;
 	a.a_count = count;
-	a.a_sync = sync;
+	a.a_flags = flags;
 	a.a_rtvals = rtvals;
 	return (VCALL(vp, VOFFSET(vop_putpages), &a));
 }

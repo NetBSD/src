@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.8 1999/08/11 05:40:13 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.9 1999/08/31 21:03:47 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -975,12 +975,10 @@ uvn_put(uobj, pps, npages, flags)
 	int npages, flags;
 {
 	struct vnode *vp = (struct vnode *)uobj;
-	int error, sync;
-
-	sync = (flags & PGO_SYNCIO) ? 1 : 0;
+	int error;
 
 	simple_unlock(&uobj->vmobjlock);
-	error = VOP_PUTPAGES(vp, pps, npages, sync, NULL);
+	error = VOP_PUTPAGES(vp, pps, npages, flags, NULL);
 
 	return uvm_errno2vmerror(error);
 }

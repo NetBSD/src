@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.26.2.2.2.2 1999/08/02 22:57:34 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.26.2.2.2.3 1999/08/31 21:03:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -477,7 +477,7 @@ sys_lfs_markv(p, v, retval)
  again:
 	for(bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp=nbp) {
 		nbp = bp->b_freelist.tqe_next;
-		if(bp->b_flags & B_CALL) {
+		if(lfs_iscleaner_bp(bp)) {
 			s = splbio();
 			if(bp->b_flags & B_BUSY) { /* not bloody likely */
 				bp->b_flags |= B_WANTED;

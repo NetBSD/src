@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.22.2.1.2.2 1999/07/11 05:44:00 chs Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.22.2.1.2.3 1999/08/31 21:03:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ lfs_update(v)
 }
 
 /* Update segment usage information when removing a block. */
-#define UPDATE_SEGUSE \
+#define UPDATE_SEGUSE do {\
 	if (lastseg != -1) { \
 		LFS_SEGENTRY(sup, fs, lastseg, sup_bp); \
 		if (num > sup->su_nbytes) { \
@@ -193,18 +193,22 @@ lfs_update(v)
 		sup->su_nbytes -= num; \
 		e1 = VOP_BWRITE(sup_bp); \
 		fragsreleased += numfrags(fs, num); \
-	}
+	} \
+	fragsreleased += numfrags(fs, unum); \
+} while(0)
 
-#define SEGDEC(S) { \
-	if (daddr != 0) { \
+#define SEGDEC(S) do { \
+	if (daddr > 0) { \
 		if (lastseg != (seg = datosn(fs, daddr))) { \
 			UPDATE_SEGUSE; \
 			num = (S); \
 			lastseg = seg; \
 		} else \
 			num += (S); \
+	} else if (daddr == UNWRITTEN) { \
+		unum += (S); \
 	} \
-}
+} while(0)
 
 /*
  * Truncate the inode ip to at most length size.  Update segment usage
@@ -236,7 +240,7 @@ lfs_truncate(v)
 	ufs_daddr_t daddr, lastblock, lbn, olastblock;
 	ufs_daddr_t oldsize_lastblock, oldsize_newlast, newsize;
 	long off, a_released, fragsreleased, i_released;
-	int e1, e2, depth, lastseg, num, offset, seg, freesize;
+	int e1, e2, depth, lastseg, num, unum, offset, seg, freesize;
 	
 	ip = VTOI(vp);
 
@@ -311,8 +315,8 @@ lfs_truncate(v)
 		newsize = blksize(fs, ip, lbn);
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
 #ifdef DEBUG
-		if(bp->b_flags & B_CALL)
-		    panic("Can't allocbuf malloced buffer!");
+		if(lfs_iscleaner_bp(bp))
+			panic("Can't allocbuf malloced buffer!");
 		else
 #endif
 			allocbuf(bp, newsize);
@@ -329,6 +333,7 @@ lfs_truncate(v)
 	 */
 	fragsreleased = 0;
 	num = 0;
+	unum = 0;
 	lastseg = -1;
 
 	for (lbn = olastblock; lbn >= lastblock;) {
@@ -532,7 +537,7 @@ lfs_vinvalbuf(vp, cred, p, maxblk)
 			   || (bp->b_lblkno < 0 && bp->b_lblkno < -maxblk-(NIADDR-1)))
 			{
 				bp->b_flags |= B_INVAL | B_VFLUSH;
-				if(bp->b_flags & B_CALL) {
+				if(lfs_iscleaner_bp(bp)) {
 					lfs_freebuf(bp);
 				} else {
 					brelse(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.9.2.1.2.1 1999/06/21 01:31:08 thorpej Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.9.2.1.2.2 1999/08/31 21:03:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ lfs_bwrite_ext(bp, flags)
 		}
 		
 		ip = VTOI(bp->b_vp);
-		if (bp->b_flags & B_CALL)
+		if (lfs_iscleaner_bp(bp))
 		{
 			if(!(ip->i_flag & IN_CLEANING))
 				++fs->lfs_uinodes;
@@ -259,7 +259,7 @@ lfs_bwrite_ext(bp, flags)
 
 	}
 	
-	if(bp->b_flags & B_CALL)
+	if(bp->b_flags & B_CALL) /* No B_CALL buffers on the free list */
 		bp->b_flags &= ~B_BUSY;
 	else
 		brelse(bp);
@@ -385,6 +385,27 @@ lfs_check(vp, blkno, flags)
 	return (error);
 }
 
+int
+lfs_iscleaner_bp(bp)
+	struct buf *bp;
+{
+	if((bp->b_flags & B_CALL)
+	   && (bp->b_iodone == lfs_callback
+	       || bp->b_iodone == lfs_supercallback))
+		return 1;
+	return 0;
+}
+
+int
+lfs_isfake_bp(bp)
+	struct buf *bp;
+{
+	if((bp->b_flags & (B_CALL|B_INVAL)) == (B_CALL|B_INVAL)
+	   && (bp->b_iodone == lfs_callback
+	       || bp->b_iodone == lfs_supercallback))
+		return 1;
+	return 0;
+}
 /*
  * Allocate a new buffer header.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.13.4.2 1999/07/11 05:52:10 chs Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.13.4.3 1999/08/31 21:03:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ int lfs_vcreate __P((struct mount *, ino_t, struct vnode **));
 
 
 /* lfs_balloc.c */
-int lfs_balloc __P((struct vnode *, int, u_long, ufs_daddr_t, struct buf **));
+int lfs_balloc1 __P((struct vnode *, int, u_long, ufs_daddr_t, struct buf **));
 
 /* lfs_bio.c */
 int lfs_bwrite_ext __P((struct buf *, int));
@@ -120,6 +120,8 @@ void lfs_flush __P((struct lfs *, int));
 int lfs_check __P((struct vnode *, ufs_daddr_t, int));
 void lfs_freebuf __P((struct buf *));
 void lfs_countlocked __P((int *, long *));
+int lfs_iscleaner_bp __P((struct buf *));
+int lfs_isfake_bp __P((struct buf *));
 
 /* lfs_cksum.c */
 u_long cksum __P((void *, size_t));
@@ -186,6 +188,7 @@ int lfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 
 
 int lfs_valloc		__P((void *));
+int lfs_balloc		__P((void *));
 int lfs_vfree		__P((void *));
 int lfs_bwrite		__P((void *));
 int lfs_update		__P((void *));
@@ -207,9 +210,9 @@ int lfs_inactive	__P((void *));
 int lfs_reclaim		__P((void *));
 int lfs_write		__P((void *));
 int lfs_whiteout	__P((void *));
+int lfs_putpages	__P((void *));
 
-#define lfs_getpages genfs_eopnotsupp
-#define lfs_putpages genfs_eopnotsupp
+#define lfs_getpages genfs_getpages
 
 __END_DECLS
 extern int lfs_mount_type;

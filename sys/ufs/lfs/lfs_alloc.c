@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.3 1999/08/02 22:57:34 thorpej Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.4 1999/08/31 21:03:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ lfs_valloc(v)
 		VOP_LOCK(vp,LK_EXCLUSIVE);
 		ip = VTOI(vp);
 		blkno = lblkno(fs, ip->i_ffs_size);
-		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
+		lfs_balloc1(vp, 0, fs->lfs_bsize, blkno, &bp);
 		ip->i_ffs_size += fs->lfs_bsize;
 		uvm_vnp_setsize(vp, ip->i_ffs_size);
 
