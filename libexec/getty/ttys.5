@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttys.5,v 1.7 1996/07/31 20:40:40 thorpej Exp $
+.\"	$NetBSD: ttys.5,v 1.8 1997/10/20 02:36:08 enami Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,14 +41,14 @@
 .Nd terminal initialization information
 .Sh DESCRIPTION
 The file
-.Nm ttys
+.Nm
 contains information that is used by various routines to initialize
 and control the use of terminal special files.
 This information is read with the
 .Xr getttyent 3
 library routines.
 There is one line in the 
-.Nm ttys
+.Nm
 file per special device file.
 Fields are separated by tabs and/or spaces.
 Fields comprised of more than one word should be enclosed in double
