@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.10.1 2000/02/20 18:29:43 sommerfeld Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.10.2 2000/02/21 21:53:57 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,49 +157,20 @@ IDTVEC(softserial)
 	movl	%ebx,CPL
 	jmp	%esi
 
-#define DONET(s, c) \
-	.globl  c		;\
-	testl	$(1 << s),%edi	;\
-	jz	1f		;\
-	call	c		;\
-1:
-
 IDTVEC(softnet)
-	movl	$IPL_SOFTNET,CPL
+	movl	$IPL_SOFTNET,CPL	
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-	DONET(NETISR_ARP, _C_LABEL(arpintr))
-#endif
-	DONET(NETISR_IP, _C_LABEL(ipintr))
-#endif
-#ifdef INET6
-	DONET(NETISR_IPV6, _C_LABEL(ip6intr))
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP, _C_LABEL(impintr))
-#endif
-#ifdef NS
-	DONET(NETISR_NS, _C_LABEL(nsintr))
-#endif
-#ifdef ISO
-	DONET(NETISR_ISO, _C_LABEL(clnlintr))
-#endif
-#ifdef CCITT
-	DONET(NETISR_CCITT, _C_LABEL(ccittintr))
-#endif
-#ifdef NATM
-	DONET(NETISR_NATM, _C_LABEL(natmintr))
-#endif
-#ifdef NETATALK
-	DONET(NETISR_ATALK, _C_LABEL(atintr))
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	DONET(NETISR_PPP, _C_LABEL(pppintr))
-#endif
+
+#define DONETISR(s, c) \
+	.globl  _C_LABEL(c)	;\
+	testl	$(1 << s),%edi	;\
+	jz	1f		;\
+	call	_C_LABEL(c)	;\
+1:
+
+#include "net/netisr_dispatch.h"
+
 	movl	%ebx,CPL
 	jmp	%esi
 
