@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.2 2000/06/13 15:37:16 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.3 2000/06/24 06:50:04 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -717,7 +717,7 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 			struct group_object *group;
 			group = (struct group_object *)0;
 			group_hash_lookup (&group, group_name_hash,
-					   value -> u.buffer.value,
+					   (char *)value -> u.buffer.value,
 					   value -> u.buffer.len, MDL);
 			if (!group || (group -> flags & GROUP_OBJECT_DELETED))
 				return ISC_R_NOTFOUND;

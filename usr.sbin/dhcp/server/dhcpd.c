@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.17 2000/06/10 18:31:11 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.18 2000/06/24 06:50:04 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -163,7 +163,7 @@ int main (argc, argv, envp)
 	struct option_state *options = (struct option_state *)0;
 	struct parse *parse;
 	int lose;
-	u_int16_t omapi_port;
+	int omapi_port;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
@@ -379,7 +379,7 @@ int main (argc, argv, envp)
 		path_dhcpd_pid = s;
 	}
 
-	omapi_port = OMAPI_PROTOCOL_PORT;
+	omapi_port = -1;
 	oc = lookup_option (&server_universe, options, SV_OMAPI_PORT);
 	if (oc &&
 	    evaluate_option_cache (&db, (struct packet *)0,
@@ -482,15 +482,18 @@ int main (argc, argv, envp)
 	icmp_startup (1, lease_pinged);
 
 	/* Start up a listener for the object management API protocol. */
-	listener = (omapi_object_t *)0;
-	result = omapi_generic_new (&listener, MDL);
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't allocate new generic object: %s",
-			   isc_result_totext (result));
-	result = omapi_protocol_listen (listener, omapi_port, 1);
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't start OMAPI protocol: %s",
-			   isc_result_totext (result));
+	if (omapi_port != -1) {
+		listener = (omapi_object_t *)0;
+		result = omapi_generic_new (&listener, MDL);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Can't allocate new generic object: %s",
+				   isc_result_totext (result));
+		result = omapi_protocol_listen (listener,
+						(unsigned)omapi_port, 1);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Can't start OMAPI protocol: %s",
+				   isc_result_totext (result));
+	}
 
 #if defined (FAILOVER_PROTOCOL)
 	/* Start the failover protocol. */
