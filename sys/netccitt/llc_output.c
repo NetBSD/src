@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.10 2003/08/07 16:33:02 agc Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.11 2004/04/26 01:41:15 matt Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.10 2003/08/07 16:33:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.11 2004/04/26 01:41:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,13 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.10 2003/08/07 16:33:02 agc Exp $");
  */
 
 int
-#if __STDC__
 llc_output(struct mbuf *m, ...)
-#else
-llc_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct llc_linkcb *linkp;
 	int    i = splnet();

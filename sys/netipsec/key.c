@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: key.c,v 1.13 2004/04/26 01:41:15 matt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.12 2004/04/25 22:25:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.13 2004/04/26 01:41:15 matt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1598,17 +1598,8 @@ key_sp2msg(sp)
 
 /* m will not be freed nor modified */
 static struct mbuf *
-#ifdef __STDC__
 key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 	int ndeep, int nitem, ...)
-#else
-key_gather_mbuf(m, mhp, ndeep, nitem, va_alist)
-	struct mbuf *m;
-	const struct sadb_msghdr *mhp;
-	int ndeep;
-	int nitem;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int idx;

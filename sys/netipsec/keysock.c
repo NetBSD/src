@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.3 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: keysock.c,v 1.4 2004/04/26 01:41:15 matt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.3 2003/12/04 19:38:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.4 2004/04/26 01:41:15 matt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -83,13 +83,7 @@ struct pfkeystat pfkeystat;
  * key_output()
  */
 int
-#if __STDC__
 key_output(struct mbuf *m, ...)
-#else
-key_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sadb_msg *msg;
 	int len, error = 0;

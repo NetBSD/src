@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.27 2004/04/21 18:40:41 itojun Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.28 2004/04/26 01:41:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.27 2004/04/21 18:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.28 2004/04/26 01:41:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1167,15 +1167,7 @@ format_ntn(xcp)
 
 /* VARARGS1 */
 void
-#if __STDC__
 pk_message(int lcn, struct x25config * xcp, char * fmt,...)
-#else
-pk_message(lcn, xcp, fmt, va_alist)
-	int             lcn;
-	struct x25config *xcp;
-	char           *fmt;
-	va_dcl
-#endif
 {
 	va_list         ap;
 

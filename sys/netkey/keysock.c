@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.28 2004/04/22 01:01:41 matt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.29 2004/04/26 01:41:15 matt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.28 2004/04/22 01:01:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.29 2004/04/26 01:41:15 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -129,13 +129,7 @@ key_usrreq(so, req, m, nam, control, p)
  * key_output()
  */
 int
-#if __STDC__
 key_output(struct mbuf *m, ...)
-#else
-key_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sadb_msg *msg;
 	int len, error = 0;

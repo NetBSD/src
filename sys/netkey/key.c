@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.114 2004/04/12 07:50:56 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.115 2004/04/26 01:41:15 matt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.114 2004/04/12 07:50:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.115 2004/04/26 01:41:15 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1445,17 +1445,8 @@ key_sp2msg(sp)
 
 /* m will not be freed nor modified */
 static struct mbuf *
-#ifdef __STDC__
 key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 	int ndeep, int nitem, ...)
-#else
-key_gather_mbuf(m, mhp, ndeep, nitem, va_alist)
-	struct mbuf *m;
-	const struct sadb_msghdr *mhp;
-	int ndeep;
-	int nitem;
-	va_dcl
-#endif
 {
 	va_list ap;
 	int idx;

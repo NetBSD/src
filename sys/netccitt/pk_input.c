@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.23 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.24 2004/04/26 01:41:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.23 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.24 2004/04/26 01:41:15 matt Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -393,13 +393,7 @@ struct mbuf_cache pk_input_cache = {0};
 	 ((xp)->packet_cause >= X25_RESTART_DTE_ORIGINATED2))
 
 void
-#if __STDC__
 pk_input(struct mbuf *m, ...)
-#else
-pk_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct x25_packet *xp;
 	struct pklcd *lcp;

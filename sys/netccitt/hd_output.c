@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.15 2003/08/07 16:33:00 agc Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.16 2004/04/26 01:41:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_output.c,v 1.15 2003/08/07 16:33:00 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_output.c,v 1.16 2004/04/26 01:41:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,13 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: hd_output.c,v 1.15 2003/08/07 16:33:00 agc Exp $");
  */
 
 int
-#if __STDC__
 hd_output(struct mbuf *m0, ...)
-#else
-hd_output(m0, va_alist)
-	struct mbuf    *m0;
-	va_dcl
-#endif
 {
 	struct hdcb *hdp;
 	struct mbuf *m = m0;
@@ -246,13 +240,7 @@ hd_send_iframe(hdp, buf, poll_bit)
 }
 
 int
-#if __STDC__
 hd_ifoutput(struct mbuf *m, ...)
-#else
-hd_ifoutput(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct hdcb *hdp;
 	struct ifnet *ifp;
