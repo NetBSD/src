@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.20 1998/07/31 22:50:52 perry Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.21 1998/08/04 04:03:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -137,7 +137,7 @@ tbopen(dev, tp)
 	tbp->tbflags = TBTIGER|TBPOINT;		/* default */
 	tbp->tbcp = tbp->cbuf;
 	tbp->tbinbuf = 0;
-	bzero((caddr_t)&tbp->tbpos, sizeof(tbp->tbpos));
+	memset((caddr_t)&tbp->tbpos, 0, sizeof(tbp->tbpos));
 	tp->t_sc = (caddr_t)tbp;
 	tp->t_flags |= LITOUT;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.77 1998/07/31 22:50:50 perry Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.78 1998/08/04 04:03:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1098,7 +1098,7 @@ coredump(p)
 	 * hasn't actually had any effect for a long time, since we don't dump
 	 * the user area.  For now, it's dead.
 	 */
-	bcopy(p, &p->p_addr->u_kproc.kp_proc, sizeof(struct proc));
+	memcpy(&p->p_addr->u_kproc.kp_proc, p, sizeof(struct proc));
 	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
 #endif
 

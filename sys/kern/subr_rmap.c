@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_rmap.c,v 1.13 1996/10/13 02:32:41 christos Exp $	*/
+/*	$NetBSD: subr_rmap.c,v 1.14 1998/08/04 04:03:15 perry Exp $	*/
 
 /*
  * Copyright (C) 1992, 1994 Wolfgang Solfrank.
@@ -105,7 +105,7 @@ rmalloc(mp, size)
 			/* found exact match, use it, ... */
 			addr = ep->m_addr;
 			/* copy over the remaining slots ... */
-			ovbcopy(ep + 1,ep,(char *)mp->m_limit - (char *)(ep + 1));
+			memmove(ep, ep + 1, (char *)mp->m_limit - (char *)(ep + 1));
 			/* and mark the last slot as unused */
 			mp->m_limit[-1].m_addr = 0;
 			return addr;
@@ -161,7 +161,7 @@ rmfree(mp, size, addr)
 						panic("rmfree %s", mp->m_name);
 					/* the next slot is now contiguous, so join ... */
 					ep->m_size += ep[1].m_size;
-					ovbcopy(ep + 2, ep + 1,
+					memmove(ep + 1, ep + 2,
 						(char *)mp->m_limit - (char *)(ep + 2));
 					/* and mark the last slot as unused */
 					mp->m_limit[-1].m_addr = 0;
@@ -177,7 +177,7 @@ rmfree(mp, size, addr)
 			if (addr < ep->m_addr
 			    && !mp->m_limit[-1].m_addr) {
 				/* insert entry into list keeping it sorted on m_addr */
-				ovbcopy(ep,ep + 1,(char *)(mp->m_limit - 1) - (char *)ep);
+				memmove(ep + 1, ep, (char *)(mp->m_limit - 1) - (char *)ep);
 				ep->m_addr = addr;
 				ep->m_size = size;
 				return;
@@ -214,7 +214,7 @@ rmfree(mp, size, addr)
 			/* drop the smallest slot in the list */
 			printf("rmfree: map '%s' loses space (%ld)\n",
 			    mp->m_name, fp->m_size);
-			ovbcopy(fp + 1, fp,
+			memmove(fp, fp + 1,
 				(char *)(mp->m_limit - 1) - (char *)fp);
 			mp->m_limit[-1].m_addr = 0;
 			/* now retry */

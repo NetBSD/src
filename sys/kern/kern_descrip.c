@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.52 1998/07/31 22:50:49 perry Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.53 1998/08/04 04:03:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -534,12 +534,12 @@ fdalloc(p, want, result)
 		 * Copy the existing ofile and ofileflags arrays
 		 * and zero the new portion of each array.
 		 */
-		bcopy(fdp->fd_ofiles, newofile,
+		memcpy(newofile, fdp->fd_ofiles,
 			(i = sizeof(struct file *) * fdp->fd_nfiles));
-		bzero((char *)newofile + i, nfiles * sizeof(struct file *) - i);
-		bcopy(fdp->fd_ofileflags, newofileflags,
+		memset((char *)newofile + i, 0, nfiles * sizeof(struct file *) - i);
+		memcpy(newofileflags, fdp->fd_ofileflags,
 			(i = sizeof(char) * fdp->fd_nfiles));
-		bzero(newofileflags + i, nfiles * sizeof(char) - i);
+		memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
 		if (fdp->fd_nfiles > NDFILE)
 			FREE(fdp->fd_ofiles, M_FILEDESC);
 		fdp->fd_ofiles = newofile;
@@ -599,7 +599,7 @@ falloc(p, resultfp, resultfd)
 	 */
 	nfiles++;
 	MALLOC(fp, struct file *, sizeof(struct file), M_FILE, M_WAITOK);
-	bzero(fp, sizeof(struct file));
+	memset(fp, 0, sizeof(struct file));
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
@@ -645,7 +645,7 @@ fdinit(p)
 
 	MALLOC(newfdp, struct filedesc0 *, sizeof(struct filedesc0),
 	    M_FILEDESC, M_WAITOK);
-	bzero(newfdp, sizeof(struct filedesc0));
+	memset(newfdp, 0, sizeof(struct filedesc0));
 	newfdp->fd_fd.fd_cdir = fdp->fd_cdir;
 	VREF(newfdp->fd_fd.fd_cdir);
 	newfdp->fd_fd.fd_rdir = fdp->fd_rdir;
@@ -730,7 +730,7 @@ fdcopy(p)
 
 	MALLOC(newfdp, struct filedesc *, sizeof(struct filedesc0),
 	    M_FILEDESC, M_WAITOK);
-	bcopy(fdp, newfdp, sizeof(struct filedesc));
+	memcpy(newfdp, fdp, sizeof(struct filedesc));
 	VREF(newfdp->fd_cdir);
 	if (newfdp->fd_rdir)
 		VREF(newfdp->fd_rdir);
@@ -761,8 +761,8 @@ fdcopy(p)
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
 	}
 	newfdp->fd_nfiles = i;
-	bcopy(fdp->fd_ofiles, newfdp->fd_ofiles, i * sizeof(struct file **));
-	bcopy(fdp->fd_ofileflags, newfdp->fd_ofileflags, i * sizeof(char));
+	memcpy(newfdp->fd_ofiles, fdp->fd_ofiles, i * sizeof(struct file **));
+	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
 	fpp = newfdp->fd_ofiles;
 	for (i = newfdp->fd_lastfile; i >= 0; i--, fpp++)
 		if (*fpp != NULL)

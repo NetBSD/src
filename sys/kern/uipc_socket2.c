@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.25 1998/08/02 04:53:12 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.26 1998/08/04 04:03:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -164,7 +164,7 @@ sonewconn1(head, connstatus)
 	so = pool_get(&socket_pool, PR_NOWAIT);
 	if (so == NULL) 
 		return (NULL);
-	bzero((caddr_t)so, sizeof(*so));
+	memset((caddr_t)so, 0, sizeof(*so));
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
@@ -606,7 +606,7 @@ panic("sbappendaddr");
 		}
 	}
 	m->m_len = asa->sa_len;
-	bcopy((caddr_t)asa, mtod(m, caddr_t), asa->sa_len);
+	memcpy(mtod(m, caddr_t), (caddr_t)asa, asa->sa_len);
 	if (n)
 		n->m_next = m0;		/* concatenate data to control */
 	else
@@ -680,7 +680,7 @@ sbcompress(sb, m, n)
 		if (n && (n->m_flags & (M_EXT | M_EOR)) == 0 &&
 		    (n->m_data + n->m_len + m->m_len) < &n->m_dat[MLEN] &&
 		    n->m_type == m->m_type) {
-			bcopy(mtod(m, caddr_t), mtod(n, caddr_t) + n->m_len,
+			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    (unsigned)m->m_len);
 			n->m_len += m->m_len;
 			sb->sb_cc += m->m_len;
@@ -801,7 +801,7 @@ sbcreatecontrol(p, size, type, level)
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
 		return ((struct mbuf *) NULL);
 	cp = mtod(m, struct cmsghdr *);
-	bcopy(p, CMSG_DATA(cp), size);
+	memcpy(CMSG_DATA(cp), p, size);
 	size += sizeof(*cp);
 	m->m_len = size;
 	cp->cmsg_len = size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.24 1998/08/02 04:41:32 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.25 1998/08/04 04:03:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -223,7 +223,7 @@ enterpgrp(p, pgid, mksess)
 			sess->s_count = 1;
 			sess->s_ttyvp = NULL;
 			sess->s_ttyp = NULL;
-			bcopy(p->p_session->s_login, sess->s_login,
+			memcpy(sess->s_login, p->p_session->s_login,
 			    sizeof(sess->s_login));
 			p->p_flag &= ~P_CONTROLT;
 			pgrp->pg_session = sess;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.29 1998/08/01 01:47:24 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.30 1998/08/04 04:03:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -220,7 +220,7 @@ m_getclr(nowait, type)
 	MGET(m, nowait, type);
 	if (m == 0)
 		return (0);
-	bzero(mtod(m, caddr_t), MLEN);
+	memset(mtod(m, caddr_t), 0, MLEN);
 	return (m);
 }
 
@@ -337,7 +337,7 @@ m_copym(m, off0, len, wait)
 			n->m_ext = m->m_ext;
 			MCLADDREFERENCE(m, n);
 		} else
-			bcopy(mtod(m, caddr_t)+off, mtod(n, caddr_t),
+			memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
 			    (unsigned)n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
@@ -377,7 +377,7 @@ m_copypacket(m, how)
 		n->m_ext = m->m_ext;
 		MCLADDREFERENCE(m, n);
 	} else {
-		bcopy(mtod(m, char *), mtod(n, char *), n->m_len);
+		memcpy(mtod(n, char *), mtod(m, char *), n->m_len);
 	}
 
 	m = m->m_next;
@@ -395,7 +395,7 @@ m_copypacket(m, how)
 			n->m_ext = m->m_ext;
 			MCLADDREFERENCE(m, n);
 		} else {
-			bcopy(mtod(m, char *), mtod(n, char *), n->m_len);
+			memcpy(mtod(n, char *), mtod(m, char *), n->m_len);
 		}
 
 		m = m->m_next;
@@ -434,7 +434,7 @@ m_copydata(m, off, len, cp)
 		if (m == 0)
 			panic("m_copydata");
 		count = min(m->m_len - off, len);
-		bcopy(mtod(m, caddr_t) + off, cp, count);
+		memcpy(cp, mtod(m, caddr_t) + off, count);
 		len -= count;
 		cp += count;
 		off = 0;
@@ -461,7 +461,7 @@ m_cat(m, n)
 			return;
 		}
 		/* splat the data from one into the other */
-		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
+		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t),
 		    (u_int)n->m_len);
 		m->m_len += n->m_len;
 		n = m_free(n);
@@ -588,7 +588,7 @@ m_pullup(n, len)
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
 	do {
 		count = min(min(max(len, max_protohdr), space), n->m_len);
-		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
+		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t),
 		  (unsigned)count);
 		len -= count;
 		m->m_len += count;
@@ -667,7 +667,7 @@ extpacket:
 		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
 	} else {
-		bcopy(mtod(m, caddr_t) + len, mtod(n, caddr_t), remain);
+		memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + len, remain);
 	}
 	n->m_len = remain;
 	m->m_len = len;
@@ -740,7 +740,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 		if (copy)
 			copy(cp, mtod(m, caddr_t), (size_t)len);
 		else
-			bcopy(cp, mtod(m, caddr_t), (size_t)len);
+			memcpy(mtod(m, caddr_t), cp, (size_t)len);
 		cp += len;
 		*mp = m;
 		mp = &m->m_next;
@@ -783,7 +783,7 @@ m_copyback(m0, off, len, cp)
 	}
 	while (len > 0) {
 		mlen = min (m->m_len - off, len);
-		bcopy(cp, mtod(m, caddr_t) + off, (unsigned)mlen);
+		memcpy(mtod(m, caddr_t) + off, cp, (unsigned)mlen);
 		cp += mlen;
 		len -= mlen;
 		mlen += off;

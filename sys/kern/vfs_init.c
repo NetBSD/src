@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.13 1998/06/24 20:58:45 sommerfe Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.14 1998/08/04 04:03:18 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ vfs_opv_init(vopvdpp)
 		/* XXX - shouldn't be M_VNODE */
 		opv_desc_vector =
 		    malloc(vfs_opv_numops * sizeof(PFI), M_VNODE, M_WAITOK);
-		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
+		memset(opv_desc_vector, 0, vfs_opv_numops * sizeof(PFI));
 		*(vopvdpp[i]->opv_desc_vector_p) = opv_desc_vector;
 		DODEBUG(printf("vector at %p allocated\n",
 		    opv_desc_vector_p));

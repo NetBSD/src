@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.93 1998/07/28 18:37:47 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.94 1998/08/04 04:03:12 perry Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -428,7 +428,7 @@ sys_execve(p, v, retval)
 
 	/* set command name & other accounting info */
 	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	bcopy(nid.ni_cnd.cn_nameptr, p->p_comm, len);
+	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, len);
 	p->p_comm[len] = 0;
 	p->p_acflag &= ~AFORK;
 
