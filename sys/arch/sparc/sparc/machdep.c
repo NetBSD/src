@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.17 1994/02/26 10:30:35 deraadt Exp $
+ * $Id: machdep.c,v 1.18 1994/03/05 02:26:39 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -64,8 +64,8 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
+#ifdef SYSVMSG
+#include <sys/msg.h>
 #endif
 #ifdef SYSVSEM
 #include <sys/sem.h>
