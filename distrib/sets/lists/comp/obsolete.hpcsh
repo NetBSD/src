@@ -1,7 +1,8 @@
-# $NetBSD: obsolete.hpcsh,v 1.2 2002/05/09 18:28:57 wiz Exp $
+# $NetBSD: obsolete.hpcsh,v 1.3 2002/05/11 19:23:15 wiz Exp $
 /usr/include/hpcsh/bootinfo.h
 /usr/include/hpcsh/cpufunc.h
 /usr/include/hpcsh/pio.h
 /usr/include/hpcsh/segments.h
 /usr/include/hpcsh/shbvar.h
 /usr/include/hpcsh/trap.h
+/usr/include/sh3/db_disasm.h

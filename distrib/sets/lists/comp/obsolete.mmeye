@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mmeye,v 1.3 2002/05/09 18:28:57 wiz Exp $
+# $NetBSD: obsolete.mmeye,v 1.4 2002/05/11 19:23:15 wiz Exp $
 /usr/include/mmeye/bootinfo.h
 /usr/include/mmeye/cpufunc.h
 /usr/include/mmeye/loadfile_machdep.h
@@ -6,3 +6,4 @@
 /usr/include/mmeye/segments.h
 /usr/include/mmeye/shbvar.h
 /usr/include/mmeye/trap.h
+/usr/include/sh3/db_disasm.h
