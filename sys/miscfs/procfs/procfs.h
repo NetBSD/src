@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.24 1999/03/12 18:45:40 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.25 1999/03/13 00:57:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -38,6 +38,10 @@
  *
  *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 /*
  * The different types of node in a procfs filesystem
@@ -126,6 +130,10 @@ int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 
 int procfs_checkioperm __P((struct proc *, struct proc *));
+
+#if !defined(UVM)
+int procfs_rwmem __P((struct proc *, struct uio *));
+#endif
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *));
