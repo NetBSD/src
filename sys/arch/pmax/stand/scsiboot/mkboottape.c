@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkboottape.c	8.1 (Berkeley) 6/10/93
- *      $Id: mkboottape.c,v 1.3 1994/05/27 09:05:21 glass Exp $
+ *      $Id: mkboottape.c,v 1.4 1994/09/17 00:24:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ extern char *__progname;		/* Program name, from crt0. */
  * The -b option makes a bootfile that can load the kernel and mini-root
  * over the network using the 'boot 6/tftp/filename -m' PROM command.
  *
- * usage: mkboottape [-b] tapedev vmunix minirootdev size
+ * usage: mkboottape [-b] tapedev netbsd minirootdev size
  */
 int
 main(argc, argv)
@@ -233,6 +233,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-b] tapedev vmunix minirootdev size\n", __progname);
+	    "usage: %s [-b] tapedev netbsd minirootdev size\n", __progname);
 	exit(1);
 }
