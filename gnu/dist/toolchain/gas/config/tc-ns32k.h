@@ -28,21 +28,33 @@
 #define NO_RELOC BFD_RELOC_NONE
 
 #define TARGET_ARCH		bfd_arch_ns32k
+#ifdef OBJ_AOUT
+#ifdef TE_NetBSD
+#define TARGET_FORMAT		"a.out-ns32k-netbsd"
+#endif
 
 #ifndef TARGET_FORMAT		/* Maybe defined in te-*.h */
 #define TARGET_FORMAT		"a.out-pc532-mach"
+#endif
 #endif
 #else
 #define NO_RELOC 0
 #endif
 
+#ifndef LOCAL_LABELS_FB
 #define LOCAL_LABELS_FB 1
+#endif
 
 #include "bit_fix.h"
 
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */
 #define tc_headers_hook(a)		{;}	/* not used */
+
+#ifdef TE_NetBSD
+#define NS32532
+#define NS32381
+#endif
 
 #ifdef SEQUENT_COMPATABILITY
 #define DEF_MODEC 20
@@ -69,8 +81,9 @@ extern void fix_new_ns32k_exp PARAMS((fragS *frag,
 				   int im_disp,
 				   bit_fixS *bit_fixP,	/* really bit_fixS */
 				   int bsr,
-				   fragS *opcode_frag,
-				   unsigned int opcode_offset));
+				   fragS *opcode_frag,	
+				   unsigned int opcode_offset,
+				   unsigned int reloc_mode));
 
 
 extern void fix_new_ns32k PARAMS ((fragS *frag,
@@ -83,7 +96,8 @@ extern void fix_new_ns32k PARAMS ((fragS *frag,
 				   bit_fixS *bit_fixP,	/* really bit_fixS */
 				   int bsr,
 				   fragS *opcode_frag,
-				   unsigned int opcode_offset));
+				   unsigned int opcode_offset,
+				   unsigned int reloc_mode));
 
 extern void cons_fix_new_ns32k PARAMS ((fragS *frag,
 					int where,

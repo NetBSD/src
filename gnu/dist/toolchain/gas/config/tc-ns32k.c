@@ -25,6 +25,7 @@
 #include <ctype.h>
 
 #include "as.h"
+#include "subsegs.h"
 #include "opcode/ns32k.h"
 
 #include "obstack.h"
@@ -366,6 +367,16 @@ char disp_test[] =
 
 char disp_size[] =
 {4, 1, 2, 0, 4};
+
+/* In pic-mode all external pc-relative references are jmpslot
+   references except references to __GLOBAL_OFFSET_TABLE_. */
+static symbolS *got_symbol;
+
+/* The size of got-offsets. */
+static int got_offset_size = 2;
+
+/* Non-zero if we are generating PIC code.  */
+static int ns32k_pic_code = 0;
 
 static void evaluate_expr PARAMS ((expressionS * resultP, char *ptr));
 static void md_number_to_disp PARAMS ((char *buf, long val, int n));
@@ -1227,6 +1238,14 @@ convert_iif ()
     {
       if (type = iif.iifP[i].type)
 	{			/* the object exist, so handle it */
+	  unsigned int reloc_mode;
+	  if ((i == 4 || i == 6)
+	      && aout_pic_flag
+	      && (iif.iifP[i].addr_mode == 18 || iif.iifP[i].addr_mode == 26))
+	     reloc_mode = BFD_RELOC_NS32K_GLOB_DAT;
+	  else
+	     reloc_mode = NO_RELOC;
+
 	  switch (size = iif.iifP[i].size)
 	    {
 	    case 42:
@@ -1257,7 +1276,7 @@ convert_iif ()
 				     iif.iifP[i].im_disp,
 				     j,
 				     iif.iifP[i].bsr,	/* sequent hack */
-				     inst_frag, inst_offset);
+				     inst_frag, inst_offset, reloc_mode);
 		    }
 		  else
 		    {		/* good, just put them bytes out */
@@ -1347,7 +1366,7 @@ convert_iif ()
 					 iif.iifP[i].im_disp,
 					 j,
 					 iif.iifP[i].bsr,
-					 inst_frag, inst_offset);
+					 inst_frag, inst_offset, reloc_mode);
 		    }
 		  else
 		    {
@@ -1380,9 +1399,18 @@ convert_iif ()
 		if ((exprP.X_add_symbol || exprP.X_op_symbol) &&
 		    !iif.iifP[i].pcrel)
 		  {
-		    /* Size is unknown until link time so have to
-                       allow 4 bytes. */
-		    size = 4;
+		    if (reloc_mode == BFD_RELOC_NS32K_GLOB_DAT
+		    	&& got_offset_size == 2)
+		      {
+			/* We are using 2 byte GOT offsets. */
+		        size = 2;
+		      }
+		    else
+		      {
+			/* Size is unknown until link time so have to
+			   allow 4 bytes. */
+			size = 4;
+		      }
 		    memP = frag_more(size);
 		    fix_new_ns32k_exp (frag_now,
 				       (long) (memP - frag_now->fr_literal),
@@ -1392,7 +1420,8 @@ convert_iif ()
 				       1, /* always iif.iifP[i].im_disp */
 				       (bit_fixS *) 0, 0,
 				       inst_frag,
-				       inst_offset);
+				       inst_offset,
+				       reloc_mode);
 		    break;		/* exit this absolute hack */
 		  }
 
@@ -2012,7 +2041,7 @@ md_estimate_size_before_relax (fragP, segment)
 			 0,
 			 frag_bsr(fragP), /*sequent hack */
 			 frag_opcode_frag(fragP),
-			 frag_opcode_offset(fragP));
+			 frag_opcode_offset(fragP), NO_RELOC);
 	  fragP->fr_fix += 4;
 	  /* fragP->fr_opcode[1]=0xff; */
 	  frag_wane (fragP);
@@ -2090,6 +2119,16 @@ md_parse_option (c, arg)
 	}
       break;
 
+    case 'K':
+      got_offset_size = 4;
+      /*FALLTHROUGH*/
+    case 'k':
+#ifdef OBJ_AOUT
+      aout_pic_flag = 1;
+#endif
+      ns32k_pic_code = 1;
+      break;
+
     default:
       return 0;
     }
@@ -2141,7 +2180,7 @@ bit_fix_new (size, offset, min, max, add, base_type, base_adj)
 
 void
 fix_new_ns32k (frag, where, size, add_symbol, offset, pcrel,
-	       im_disp, bit_fixP, bsr, opcode_frag, opcode_offset)
+	       im_disp, bit_fixP, bsr, opcode_frag, opcode_offset, reloc_mode)
      fragS *frag;		/* Which frag? */
      int where;			/* Where in that frag? */
      int size;			/* 1, 2  or 4 usually. */
@@ -2156,12 +2195,13 @@ fix_new_ns32k (frag, where, size, add_symbol, offset, pcrel,
 				   a bsr */
      fragS *opcode_frag;
      unsigned int opcode_offset;
+     unsigned int reloc_mode;
 
 {
   fixS *fixP = fix_new (frag, where, size, add_symbol,
 			offset, pcrel,
 #ifdef BFD_ASSEMBLER
-			bit_fixP? NO_RELOC: reloc(size, pcrel, im_disp)
+			bit_fixP || reloc_mode != NO_RELOC? reloc_mode: reloc(size, pcrel, im_disp)
 #else
 			NO_RELOC
 #endif
@@ -2176,7 +2216,7 @@ fix_new_ns32k (frag, where, size, add_symbol, offset, pcrel,
 
 void
 fix_new_ns32k_exp (frag, where, size, exp, pcrel,
-		   im_disp, bit_fixP, bsr, opcode_frag, opcode_offset)
+		   im_disp, bit_fixP, bsr, opcode_frag, opcode_offset, reloc_mode)
      fragS *frag;		/* Which frag? */
      int where;			/* Where in that frag? */
      int size;			/* 1, 2  or 4 usually. */
@@ -2190,10 +2230,12 @@ fix_new_ns32k_exp (frag, where, size, exp, pcrel,
 				   a bsr */
      fragS *opcode_frag;
      unsigned int opcode_offset;
+     unsigned int reloc_mode;
+
 {
   fixS *fixP = fix_new_exp (frag, where, size, exp, pcrel,
 #ifdef BFD_ASSEMBLER
-			    bit_fixP? NO_RELOC: reloc(size, pcrel, im_disp)
+			    bit_fixP || reloc_mode != NO_RELOC? reloc_mode: reloc(size, pcrel, im_disp)
 #else
 			    NO_RELOC
 #endif
@@ -2216,15 +2258,25 @@ cons_fix_new_ns32k (frag, where, size, exp)
      expressionS *exp;		/* Expression. */
 {
   fix_new_ns32k_exp (frag, where, size, exp,
-		     0, 2, 0, 0, 0, 0);
+		     0, 2, 0, 0, 0, 0, NO_RELOC);
 }
-
-/* We have no need to default values of symbols.  */
 
 symbolS *
 md_undefined_symbol (name)
      char *name;
 {
+  if (*name == '_' && *(name+1) == '_' && *(name+2) == 'G'
+      && strcmp(name, "__GLOBAL_OFFSET_TABLE_") == 0)
+    {
+      if (!got_symbol)
+	{
+	  if (symbol_find(name)) 
+	    as_bad("GOT already in symbol table");
+	  got_symbol = symbol_new (name, undefined_section, 
+					 (valueT) 0, &zero_address_frag);
+	};
+      return got_symbol;
+    }
   return 0;
 }
 
