@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.88 1997/10/17 04:54:33 lukem Exp $
-#	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-
+#	$NetBSD: Makefile,v 1.89 1997/10/17 09:04:12 mrg Exp $
+#	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
+#
 # not yet done: catman
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bootpd bootpef bootpgw bootptest \
