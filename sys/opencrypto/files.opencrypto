@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.7 2003/08/24 19:26:56 thorpej Exp $
+#	$NetBSD: files.opencrypto,v 1.8 2003/08/24 19:28:32 thorpej Exp $
 #
 #
 
@@ -20,8 +20,3 @@ file	opencrypto/cast.c		opencrypto
 file	opencrypto/rijndael.c		opencrypto
 
 file	opencrypto/deflate.c		opencrypto
-
-# old pre-OpenCryptoFramework/fast-ipsec crypto hooks.
-
-#file	crypto/des/des_ecb.c		opencrypto
-#file	crypto/des/des_setkey.c		opencrypto
