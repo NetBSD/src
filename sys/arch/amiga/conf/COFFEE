@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.11 1995/10/05 12:41:01 chopps Exp $
+#	$NetBSD: COFFEE,v 1.12 1995/10/09 02:08:35 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -136,12 +136,14 @@ grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
 grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
 grful0		at zbus0		# A2410
+grfcv0		at zbus0		# CyberVision 64
 
 grf0		at grfcc0
 grf1		at grfrt0
 grf2		at grfrh0
 grf3		at grfcl?
 grf4		at grful0
+grf5		at grfcv0
 
 ite0		at grf0			# terminal emulators for grf's
 ite1		at grf1			# terminal emulators for grf's
@@ -162,6 +164,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 le0		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
+qn0		at zbus0		# quicknet ethernet
 ae0		at zbus0		# Ariadne ethernet
 bah0		at zbus0		# C= arcnet
 
@@ -179,6 +182,7 @@ mgnsc0		at zbus0		# Magnum scsi
 wesc0		at zbus0		# Warp Engine scsi
 idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
+aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
 bzsc0		at zbus0		# Blizzard 1230 scsi
 
@@ -194,6 +198,7 @@ scsibus*	at mgnsc0
 scsibus*	at wesc0
 scsibus*	at idesc0
 scsibus*	at afsc0
+scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
 
