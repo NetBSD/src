@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.15 1994/07/18 08:34:59 mycroft Exp $
+#	$Id: PATEK,v 1.16 1994/10/25 21:31:44 cgd Exp $
 #
 
 machine		"i386"
@@ -27,6 +27,7 @@ options		LKM
 
 options		"COMPAT_NOMID"
 options		"COMPAT_09"
+options		"COMPAT_10"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 

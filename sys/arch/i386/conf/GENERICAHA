@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.53 1994/10/17 21:49:51 cgd Exp $
+#	$Id: GENERICAHA,v 1.54 1994/10/25 21:31:36 cgd Exp $
 #
 
 machine		"i386"
@@ -23,6 +23,7 @@ options		SCSI
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
 options		"COMPAT_09"
+options		"COMPAT_10"
 options		"MACHINE_NONCONTIG"
 
 config		netbsd	swap generic

@@ -1,7 +1,7 @@
 #
 #	CHIMERA -- Adam Glass's confused machine
 #
-#	$Id: CHIMERA,v 1.1 1994/08/26 05:07:00 glass Exp $
+#	$Id: CHIMERA,v 1.2 1994/10/25 21:31:34 cgd Exp $
 #
 
 machine		"i386"
@@ -41,6 +41,7 @@ options		DDB, PANICWAIT, KTRACE
 
 options		"COMPAT_NOMID"
 options		"COMPAT_09"
+options		"COMPAT_10"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
