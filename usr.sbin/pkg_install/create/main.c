@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.5 1997/10/17 14:53:50 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1998/06/05 11:22:20 frueauf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1997/10/17 14:53:50 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1998/06/05 11:22:20 frueauf Exp $");
 #endif
 #endif
 
@@ -24,10 +24,10 @@ __RCSID("$NetBSD: main.c,v 1.5 1997/10/17 14:53:50 lukem Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "YNOhvf:p:P:c:d:i:k:r:t:X:D:m:s:";
+static char Options[] = "YNOhvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
 
 char	*Prefix		= NULL;
-char	*Comment        = NULL;
+char	*Comment	= NULL;
 char	*Desc		= NULL;
 char	*SrcDir		= NULL;
 char	*Display	= NULL;
@@ -38,6 +38,7 @@ char	*Require	= NULL;
 char	*ExcludeFrom	= NULL;
 char	*Mtree		= NULL;
 char	*Pkgdeps	= NULL;
+char	*Pkgcfl		= NULL;
 char	PlayPen[FILENAME_MAX];
 int	Dereference	= 0;
 int	PlistOnly	= 0;
@@ -125,6 +126,10 @@ main(int argc, char **argv)
 	    Pkgdeps = optarg;
 	    break;
 
+	case 'C':
+		Pkgcfl = optarg;
+		break;
+
 	case '?':
 	default:
 	    usage();
@@ -158,9 +163,9 @@ static void
 usage()
 {
     fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: pkg_create [-YNOhv] [-P pkgs] [-p prefix] [-f contents] [-i iscript]",
-"                  [-k dscript] [-r rscript] [-t template] [-X excludefile]",
-"                  [-D displayfile] [-m mtreefile] -c comment -d description",
-"                  -f packlist pkg-name");
+"usage: pkg_create [-YNOhv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
+"                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
+"                  [-X excludefile] [-D displayfile] [-m mtreefile]",
+"                  -c comment -d description -f packlist pkg-name");
     exit(1);
 }
