@@ -1,38 +1,27 @@
-/* XXX */
+/* get generic alpha definitions. */
 
-#include "alpha/alpha.h"
+#include <alpha/alpha.h>
 
-#undef	WCHAR_TYPE
-#define	WCHAR_TYPE "int"
+/* Get generic NetBSD definitions. */
 
-#undef	WCHAR_TYPE_SIZE
-#define	WCHAR_TYPE_SIZE 32
+#include <netbsd.h>
 
-/* NetBSD-specific things: */
+/* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__NetBSD__ -D__alpha__ -D__alpha"
+#define CPP_PREDEFINES "-D__alpha__ -D__alpha -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(alpha) -Amachine(alpha)"
 
-/* Look for the include files in the system-defined places.  */
+/* Make gcc agree with <machine/ansi.h> */
 
-#undef GPLUSPLUS_INCLUDE_DIR
-#define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
 
-#undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
-
-#undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS                \
-  {                                     \
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },    \
-    { GCC_INCLUDE_DIR, 0, 0 },          \
-    { 0, 0, 0 }                         \
-  }
-
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
 
 /* Under NetBSD, the normal location of the `ld' and `as' programs is the
    /usr/bin directory.  */
-
+    
 #undef MD_EXEC_PREFIX
 #define MD_EXEC_PREFIX "/usr/bin/"
 
@@ -42,40 +31,24 @@
 #undef MD_STARTFILE_PREFIX
 #define MD_STARTFILE_PREFIX "/usr/lib/"
 
+/* This is BSD, so it wants DBX format.  */
+#define DBX_DEBUGGING_INFO
 
-/* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
-   the GCC option `-posix'.  */
+/* This is the char to use for continuation (in case we need to turn
+   continuation back on).  */
 
-#undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
+#define DBX_CONTIN_CHAR '?'
 
-/* Provide an ASM_SPEC appropriate for NetBSD. */
-
-#undef ASM_SPEC
-#define ASM_SPEC " %|"
-
-#undef ASM_FINAL_SPEC
-
-/* Provide a LIB_SPEC appropriate for NetBSD.  Just select the appropriate
-   libc, depending on whether we're doing profiling.  */
-
-#undef LIB_SPEC
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
-
-/* Provide a LINK_SPEC appropriate for NetBSD.  Here we provide support
-   for the special GCC options -static, -assert, and -nostdlib.  */
-
-#undef LINK_SPEC
-#define LINK_SPEC \
-  "%{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp %{static:-Bstatic} %{assert*}"
+/* Name the port */
+#define	TARGET_NAME	"alpha-netbsd"
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  Under NetBSD/Alpha, the assembler does
    nothing special with -pg. */
 
 #undef FUNCTION_PROFILER
-#define FUNCTION_PROFILER(FILE, LABELNO)			\
-	fputs ("\tjsr $28,_mcount\n", (FILE)); /* at */
+#define FUNCTION_PROFILER(FILE, LABELNO)                        \
+fputs ("\tjsr $28,_mcount\n", (FILE)); /* at */
 
 /* Show that we need a GP when profiling.  */
 #define TARGET_PROFILING_NEEDS_GP
@@ -85,3 +58,4 @@
 
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+
