@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.32 1998/03/20 19:56:19 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.33 1998/03/28 02:24:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -41,6 +41,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int pcimatch __P((struct device *, void *, void *));
@@ -173,7 +174,7 @@ pciattach(parent, self, aux)
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
-		if (PCI_VENDOR(id) == 0xffff)
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
 			continue;
 		/* XXX Not invalid, but we've done this ~forever. */
 		if (PCI_VENDOR(id) == 0)
@@ -190,7 +191,7 @@ pciattach(parent, self, aux)
 			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
 			/* Invalid vendor ID value? */
-			if (PCI_VENDOR(id) == 0xffff)
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
 				continue;
 			/* XXX Not invalid, but we've done this ~forever. */
 			if (PCI_VENDOR(id) == 0)
