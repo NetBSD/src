@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_hdr.h,v 1.11 1994/11/04 19:08:19 mycroft Exp $	*/
+/*	$NetBSD: pcvt_hdr.h,v 1.12 1995/04/10 01:07:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -1488,9 +1488,9 @@ int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
 int	pcrint ( void );
 int	pcparam ( struct tty *tp, struct termios *t );
-int	pccnprobe ( struct consdev *cp );
-int	pccninit ( struct consdev *cp );
-int	pccnputc ( Dev_t dev, U_char c );
+void	pccnprobe ( struct consdev *cp );
+void	pccninit ( struct consdev *cp );
+void	pccnputc ( Dev_t dev, U_char c );
 int	pccngetc ( Dev_t dev );
 
 #if PCVT_NETBSD
