@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.28 2001/08/15 20:05:08 rearnsha Exp $ */
+/* $NetBSD: sbic.c,v 1.29 2001/08/15 20:08:46 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -95,8 +95,6 @@
 #include <dev/scsipi/scsiconf.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/io.h>
-#include <machine/irqhandler.h>
 #include <machine/bus.h>
 #include <arm32/podulebus/sbicreg.h>
 #include <arm32/podulebus/sbicvar.h>
