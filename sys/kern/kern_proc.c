@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_proc.c,v 1.46 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.46.2.1 2002/03/10 07:59:52 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.46 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.46.2.1 2002/03/10 07:59:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,14 @@ procinit()
 	uihashtbl =
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
 
-	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
+	/*
+	 * We need to make sure proc structures are aligned to 16
+	 * byte boundaries, so that the lower 4 bits of the address
+	 * are zero.  The locking primitives depend on this.
+	 */
+	pool_init(&proc_pool, sizeof(struct proc), 16, 0, 0, "procpl",
 	    &pool_allocator_nointr);
+
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
 	    &pool_allocator_nointr);
 	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",

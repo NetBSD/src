@@ -1,3 +1,0 @@
-#	$NetBSD: list.makedev,v 1.1 2002/02/08 02:18:53 lukem Exp $
-
-COPY	${_SRC_TOP_}/etc/etc.@MACHINE@/MAKEDEV	dev/MAKEDEV	555

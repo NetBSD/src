@@ -1,3 +1,0 @@
-# $NetBSD: md.sandpoint,v 1.1 2001/08/30 20:55:55 briggs Exp $
-./etc/fstab.nfs		etc-sys-etc
-./etc/fstab.sd		etc-sys-etc

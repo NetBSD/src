@@ -1,8 +1,0 @@
-# $NetBSD: obsolete.arm26,v 1.6 2001/11/25 16:28:53 thorpej Exp $
-/usr/include/arm/arm32/bus.h
-/usr/include/arm/arm32/sysarch.h
-/usr/include/arm26/armreg.h
-/usr/include/arm26/disklabel_acorn.h
-/usr/include/arm26/pte.h
-/usr/include/arm26/spl.h
-/usr/include/arm26/undefined.h

@@ -1,5 +1,0 @@
-# $NetBSD: md.hpcmips,v 1.5 2002/02/11 16:23:21 tron Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/Xhpc
-./usr/X11R6/lib/X11/rgb.db
-./usr/X11R6/man/cat1/Xhpc.0
