@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/11 01:09:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/09/18 06:49:27 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -14,7 +14,13 @@ SRCS=	atiaccel.c atiadjust.c atiaudio.c aticlock.c aticonfig.c \
 	atimach64xv.c atimode.c atipreinit.c atiprint.c \
 	atirgb514.c atiscreen.c atituner.c atiutil.c ativalid.c \
         atixv.c atibank.c ativga.c atiwonder.c atiwonderio.c \
-	atidga.c atiload.c atimisc.c
+	atiload.c atimisc.c
+
+# NOTICE: there is a corresponding CPPFLAG below that sets -DAVOID_DGA
+#         if sparc.
+.if ${MACHINE} != "sparc"
+SRCS+=	atidga.c
+.endif
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
@@ -45,7 +51,30 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${XSERVERINCDIR}
-		
+
+# XXX from the Imakefile
+# -DAVOID_CPIO must be defined for os/arch combinations that do not
+# provide or emulate a little-endian undirected PIO address space of
+# at least 64KB in size.  The 'first cut' configuration only explicitly
+# defines the following as providing.
+.if !(${MACHINE} == "i386" || \
+    ${MACHINE} == "x86_64" || \
+    ${MACHINE} == "amd64"  || \
+    ${MACHINE} == "alpha") 
+CPPFLAGS+=	-DAVOID_CPIO
+.endif
+
+# XXX from the Imakefile
+# -DAVOID_NON_PCI must be defined for those platforms that do not
+# tolerate PCI master aborts.
+.if ${MACHINE} == "macppc"
+CPPFLAGS+=	-DAVOID_NON_PCI
+.endif
+
+.if ${MACHINE} == "sparc"
+CPPFLAGS+=	-DAVOID_DGA
+.endif
+
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
 .include "../../Makefile.drivermod"
