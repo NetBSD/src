@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2000/01/19 02:52:18 msaitoh Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2000/01/19 20:05:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2000/01/19 02:52:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2000/01/19 20:05:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2000/01/19 02:52:18 msaitoh Exp $");
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/clist.h>
-#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -348,14 +347,6 @@ cpu_startup()
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
-
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
