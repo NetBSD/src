@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.7 2002/03/17 11:08:32 martin Exp $
+ *	$Id: i4b_rbch.c,v 1.8 2002/03/17 20:54:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.7 2002/03/17 11:08:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.8 2002/03/17 20:54:05 martin Exp $");
 
 #include "isdnbchan.h"
 
@@ -111,9 +111,6 @@ extern cc_t ttydefchars;
 #include <sys/filio.h>
 #endif
 
-static drvr_link_t rbch_drvr_linktab[NISDNBCHAN];
-static isdn_link_t *isdn_linktab[NISDNBCHAN];
-
 #define I4BRBCHACCT		1 	/* enable accounting messages */
 #define	I4BRBCHACCTINTVL	2	/* accounting msg interval in secs */
 
@@ -132,6 +129,7 @@ static struct rbch_softc {
 	int sc_bprot;			/* B-ch protocol used	*/
 
 	call_desc_t *sc_cd;		/* Call Descriptor */
+	isdn_link_t *sc_ilt;		/* B-channel driver/state */
 
 	struct termios it_in;
 
@@ -166,8 +164,13 @@ static void rbch_rx_data_rdy(void *softc);
 static void rbch_tx_queue_empty(void *softc);
 static void rbch_connect(void *softc, void *cdp);
 static void rbch_disconnect(void *softc, void *cdp);
-static void rbch_init_linktab(int unit);
 static void rbch_clrq(void *softc);
+static void rbch_activity(void *softc, int rxtx);
+static void rbch_dialresponse(void *softc, int status, cause_t cause);
+static void rbch_updown(void *softc, int updown);
+static void rbch_set_linktab(void *softc, isdn_link_t *ilt);
+static void* rbch_get_softc(int unit);
+
 
 #ifndef __FreeBSD__
 #define PDEVSTATIC	/* - not static - */
@@ -285,6 +288,23 @@ dummy_isdnbchanattach(struct device *parent, struct device *self, void *aux)
 }
 #endif /* __bsdi__ */
 
+
+static const struct isdn_l4_driver_functions
+rbch_driver_functions = {
+	rbch_rx_data_rdy,
+	rbch_tx_queue_empty,
+	rbch_activity,
+	rbch_connect,
+	rbch_disconnect,
+	rbch_dialresponse,
+	rbch_updown,
+	rbch_get_softc,
+	rbch_set_linktab,
+	NULL
+};
+
+static int rbch_driver_id = -1;
+
 /*---------------------------------------------------------------------------*
  *	interface attach routine
  *---------------------------------------------------------------------------*/
@@ -296,6 +316,8 @@ isdnbchanattach()
 #endif
 {
 	int i;
+
+	rbch_driver_id = isdn_l4_driver_attach("isdnbchan", NISDNBCHAN, &rbch_driver_functions);
 
 	for(i=0; i < NISDNBCHAN; i++)
 	{
@@ -329,7 +351,6 @@ isdnbchanattach()
 		rbch_softc[i].sc_hdlcq.ifq_maxlen = I4BRBCHMAXQLEN;
 		rbch_softc[i].it_in.c_ispeed = rbch_softc[i].it_in.c_ospeed = 64000;
 		termioschars(&rbch_softc[i].it_in);
-		rbch_init_linktab(i);
 	}
 }
 
@@ -368,7 +389,7 @@ isdnbchanclose(dev_t dev, int flag, int fmt, struct proc *p)
 	struct rbch_softc *sc = &rbch_softc[unit];
 	
 	if(sc->sc_devstate & ST_CONNECTED)
-		i4b_l4_drvrdisc(BDRV_RBCH, unit);
+		i4b_l4_drvrdisc(sc->sc_cd->cdid);
 
 	sc->sc_devstate &= ~ST_ISOPEN;		
 
@@ -413,7 +434,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		if(sc->sc_bprot == BPROT_RHDLC)
 			iqp = &sc->sc_hdlcq;
 		else
-			iqp = isdn_linktab[unit]->rx_queue;	
+			iqp = sc->sc_ilt->rx_queue;	
 
 		if(IF_QEMPTY(iqp) && (sc->sc_devstate & ST_ISOPEN)) {
 			splx(s);
@@ -439,7 +460,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		if(sc->sc_bprot == BPROT_RHDLC)
 			iqp = &sc->sc_hdlcq;
 		else
-			iqp = isdn_linktab[unit]->rx_queue;	
+			iqp = sc->sc_ilt->rx_queue;	
 
 		while(IF_QEMPTY(iqp) && (sc->sc_devstate & ST_ISOPEN))
 		{
@@ -447,7 +468,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		
 			NDBGL4(L4_RBCHDBG, "unit %d, wait read data", unit);
 		
-			if((error = tsleep((caddr_t) &isdn_linktab[unit]->rx_queue,
+			if((error = tsleep((caddr_t) &sc->sc_ilt->rx_queue,
 					   TTIPRI | PCATCH,
 					   "rrbch", 0 )) != 0)
 			{
@@ -510,7 +531,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 			splx(s);
 			return(EWOULDBLOCK);
 		}
-		if(IF_QFULL(isdn_linktab[unit]->tx_queue) && (sc->sc_devstate & ST_ISOPEN)) {
+		if(IF_QFULL(sc->sc_ilt->tx_queue) && (sc->sc_devstate & ST_ISOPEN)) {
 			splx(s);
 			return(EWOULDBLOCK);
 	}
@@ -543,13 +564,13 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 			tsleep((caddr_t) &rbch_softc[unit], TTIPRI | PCATCH, "xrbch", (hz*1));
 		}
 
-		while(IF_QFULL(isdn_linktab[unit]->tx_queue) && (sc->sc_devstate & ST_ISOPEN))
+		while(IF_QFULL(sc->sc_ilt->tx_queue) && (sc->sc_devstate & ST_ISOPEN))
 		{
 			sc->sc_devstate |= ST_WRWAITEMPTY;
 
 			NDBGL4(L4_RBCHDBG, "unit %d, write queue full", unit);
 		
-			if ((error = tsleep((caddr_t) &isdn_linktab[unit]->tx_queue,
+			if ((error = tsleep((caddr_t) &sc->sc_ilt->tx_queue,
 					    TTIPRI | PCATCH,
 					    "wrbch", 0)) != 0) {
 				sc->sc_devstate &= ~ST_WRWAITEMPTY;
@@ -589,16 +610,16 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 		
 		error = uiomove(m->m_data, m->m_len, uio);
 
-		if(IF_QFULL(isdn_linktab[unit]->tx_queue))
+		if(IF_QFULL(sc->sc_ilt->tx_queue))
 		{
 			m_freem(m);			
 		}
 		else
 		{
-			IF_ENQUEUE(isdn_linktab[unit]->tx_queue, m);
+			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 		}
 
-		(*isdn_linktab[unit]->bchannel_driver->bch_tx_start)(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel);
+		(*sc->sc_ilt->bchannel_driver->bch_tx_start)(sc->sc_ilt->l1token, sc->sc_ilt->channel);
 	}
 
 	splx(s);
@@ -646,7 +667,7 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
 			if(sc->sc_devstate & ST_CONNECTED)
 			{
 				NDBGL4(L4_RBCHDBG, "unit %d, disconnecting for DTR down", unit);
-				i4b_l4_drvrdisc(BDRV_RBCH, unit);
+				i4b_l4_drvrdisc(sc->sc_cd->cdid);
 			}
 			break;
 
@@ -658,8 +679,8 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
 				;
 			if (l)
 			{
-				NDBGL4(L4_RBCHDBG, "unit %d, attempting dialout to %s", unit, (char *)data);
-				i4b_l4_dialoutnumber(BDRV_RBCH, unit, l, (char *)data);
+				NDBGL4(L4_RBCHDBG, "%d, attempting dialout to %s", unit, (char *)data);
+				i4b_l4_dialoutnumber(rbch_driver_id, unit, l, (char *)data);
 				break;
 			}
 			/* fall through to SDTR */
@@ -667,7 +688,7 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
 
 		case TIOCSDTR:	/* Set DTR */
 			NDBGL4(L4_RBCHDBG, "unit %d, attempting dialout (DTR)", unit);
-			i4b_l4_dialout(BDRV_RBCH, unit);
+			i4b_l4_dialout(rbch_driver_id, unit);
 			break;
 
 		case TIOCSETA:	/* Set termios struct */
@@ -733,7 +754,7 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 	 
 	if((events & (POLLOUT|POLLWRNORM)) &&
 	   (sc->sc_devstate & ST_CONNECTED) &&
-	   !IF_QFULL(isdn_linktab[unit]->tx_queue))
+	   !IF_QFULL(sc->sc_ilt->tx_queue))
 	{
 		revents |= (events & (POLLOUT|POLLWRNORM));
 	}
@@ -748,7 +769,7 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 		if(sc->sc_bprot == BPROT_RHDLC)
 			iqp = &sc->sc_hdlcq;
 		else
-			iqp = isdn_linktab[unit]->rx_queue;	
+			iqp = sc->sc_ilt->rx_queue;	
 
 		if(!IF_QEMPTY(iqp))
 			revents |= (events & (POLLIN|POLLRDNORM));
@@ -829,12 +850,11 @@ static void
 rbch_timeout(struct rbch_softc *sc)
 {
 	bchan_statistics_t bs;
-	int unit = sc->sc_unit;
 
 	/* get # of bytes in and out from the HSCX driver */ 
 	
-	(*isdn_linktab[unit]->bchannel_driver->bch_stat)
-		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
+	(*sc->sc_ilt->bchannel_driver->bch_stat)
+		(sc->sc_ilt->l1token, sc->sc_ilt->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
 	sc->sc_iinb += bs.inbytes;
@@ -964,7 +984,7 @@ rbch_rx_data_rdy(void *softc)
 	{
 		register struct mbuf *m;
 		
-		if((m = *isdn_linktab[sc->sc_unit]->rx_mbuf) == NULL)
+		if((m = *sc->sc_ilt->rx_mbuf) == NULL)
 			return;
 
 		m->m_pkthdr.len = m->m_len;
@@ -984,7 +1004,7 @@ rbch_rx_data_rdy(void *softc)
 	{
 		NDBGL4(L4_RBCHDBG, "(minor=%d) wakeup", sc->sc_unit);
 		sc->sc_devstate &= ~ST_RDWAITDATA;
-		wakeup((caddr_t) &isdn_linktab[sc->sc_unit]->rx_queue);
+		wakeup((caddr_t) &sc->sc_ilt->rx_queue);
 	}
 	else
 	{
@@ -1007,7 +1027,7 @@ rbch_tx_queue_empty(void *softc)
 	{
 		NDBGL4(L4_RBCHDBG, "(minor=%d): wakeup", sc->sc_unit);
 		sc->sc_devstate &= ~ST_WRWAITEMPTY;
-		wakeup((caddr_t) &isdn_linktab[sc->sc_unit]->tx_queue);
+		wakeup((caddr_t) &sc->sc_ilt->tx_queue);
 	}
 	else
 	{
@@ -1052,45 +1072,24 @@ rbch_clrq(void *softc)
 			break;
 	}
 }
-				
-/*---------------------------------------------------------------------------*
- *	return this drivers linktab address
- *---------------------------------------------------------------------------*/
-drvr_link_t *
-rbch_ret_linktab(int unit)
-{
-	rbch_init_linktab(unit);
-	return(&rbch_drvr_linktab[unit]);
-}
 
 /*---------------------------------------------------------------------------*
  *	setup the isdn_linktab for this driver
  *---------------------------------------------------------------------------*/
-void
-rbch_set_linktab(int unit, isdn_link_t *ilt)
+static void
+rbch_set_linktab(void *softc, isdn_link_t *ilt)
 {
-	isdn_linktab[unit] = ilt;
+	struct rbch_softc *sc = softc;
+	sc->sc_ilt = ilt;
 }
-
-static const struct isdn_l4_driver_functions
-rbch_driver_functions = {
-	rbch_rx_data_rdy,
-	rbch_tx_queue_empty,
-	rbch_activity,
-	rbch_connect,
-	rbch_disconnect,
-	rbch_dialresponse,
-	rbch_updown
-};
 
 /*---------------------------------------------------------------------------*
  *	initialize this drivers linktab
  *---------------------------------------------------------------------------*/
-static void
-rbch_init_linktab(int unit)
+static void*
+rbch_get_softc(int unit)
 {
-	rbch_drvr_linktab[unit].l4_driver_softc = &rbch_softc[unit];
-	rbch_drvr_linktab[unit].l4_driver = &rbch_driver_functions;
+	return &rbch_softc[unit];
 }
 
 /*===========================================================================*/

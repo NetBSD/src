@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.10 2002/03/17 11:08:32 martin Exp $
+ *	$Id: i4b_ipr.c,v 1.11 2002/03/17 20:54:05 martin Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.10 2002/03/17 11:08:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.11 2002/03/17 20:54:05 martin Exp $");
 
 #include "irip.h"
 
@@ -172,20 +172,15 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.10 2002/03/17 11:08:32 martin Exp $");
 #define	I4BIPRACCTINTVL	2		/* accounting msg interval in secs */
 #define I4BIPRADJFRXP	1		/* adjust 1st rxd packet */
 
-/* initialized by L4 */
-
-static drvr_link_t ipr_drvr_linktab[NIRIP];
-static isdn_link_t *isdn_linktab[NIRIP];
 
 struct ipr_softc {
 	struct ifnet	sc_if;		/* network-visible interface	*/
 	int		sc_state;	/* state of the interface	*/
 
-#ifndef __FreeBSD__
-	int		sc_unit;	/* unit number for Net/OpenBSD	*/
-#endif
-
 	call_desc_t	*sc_cdp;	/* ptr to call descriptor	*/
+	isdn_link_t	*sc_ilt;	/* ptr to B channel driver/state */
+
+	int		sc_unit;	/* which instance are we?	*/
 	int		sc_updown;	/* soft state of interface	*/
 	struct ifqueue  sc_fastq;	/* interactive traffic		*/
 	int		sc_dialresp;	/* dialresponse			*/
@@ -260,10 +255,33 @@ static int iprwatchdog(int unit);
 #else
 static void iprwatchdog(struct ifnet *ifp);
 #endif
-static void ipr_init_linktab(int unit);
 static void ipr_tx_queue_empty(void *);
 static int iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst, struct rtentry *rtp);
 static void iripclearqueues(struct ipr_softc *sc);
+static void ipr_set_linktab(void *softc, isdn_link_t *ilt);
+static void ipr_activity(void *softc, int rxtx);
+static void ipr_rx_data_rdy(void *softc);
+static void ipr_disconnect(void *softc, void *cdp);
+static void ipr_connect(void *softc, void *cdp);
+static void ipr_dialresponse(void *softc, int status, cause_t cause);
+static void ipr_updown(void *softc, int updown);
+static void* ipr_get_softc(int unit);
+
+static const struct isdn_l4_driver_functions
+ipr_l4_functions = {
+	ipr_rx_data_rdy,
+	ipr_tx_queue_empty,
+	ipr_activity,
+	ipr_connect,
+	ipr_disconnect,
+	ipr_dialresponse,
+	ipr_updown,
+	ipr_get_softc,
+	ipr_set_linktab,
+	NULL
+};
+
+static int irip_driver_id = -1;
 
 /*===========================================================================*
  *			DEVICE DRIVER ROUTINES
@@ -281,14 +299,15 @@ iripattach()
 {
 	struct ipr_softc *sc = ipr_softc;
 	int i;
+
+	irip_driver_id = isdn_l4_driver_attach("irip", NIRIP, &ipr_l4_functions);
 	
 	for(i=0; i < NIRIP; sc++, i++)
 	{
-		ipr_init_linktab(i);
-
 		NDBGL4(L4_DIALST, "setting dial state to ST_IDLE");
 
 		sc->sc_state = ST_IDLE;
+		sc->sc_unit = i;
 		
 #ifdef __FreeBSD__		
 		sc->sc_if.if_name = "irip";
@@ -302,7 +321,6 @@ iripattach()
 #else
 		sprintf(sc->sc_if.if_xname, "irip%d", i);
 		sc->sc_if.if_softc = sc;
-		sc->sc_unit = i;
 #endif
 
 #ifdef	IPR_VJ
@@ -411,7 +429,6 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	sc = &ipr_softc[unit];
 #else
 	sc = ifp->if_softc;
-	unit = sc->sc_unit;
 #endif
 
 	/* check for IP */
@@ -430,7 +447,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	
 	if(!(ifp->if_flags & IFF_UP))
 	{
-		NDBGL4(L4_IPRDBG, "irip%d: interface is DOWN!", unit);
+		NDBGL4(L4_IPRDBG, "%s: interface is DOWN!", sc->sc_if.if_xname);
 		m_freem(m);
 		splx(s);
 		sc->sc_if.if_oerrors++;
@@ -446,7 +463,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		switch(sc->sc_dialresp)
 		{
 			case DSTAT_TFAIL:	/* transient failure */
-				NDBGL4(L4_IPRDBG, "irip%d: transient dial failure!", unit);
+				NDBGL4(L4_IPRDBG, "%s: transient dial failure!", sc->sc_if.if_xname);
 				m_freem(m);
 				iripclearqueues(sc);
 				sc->sc_dialresp = DSTAT_NONE;
@@ -456,7 +473,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				break;
 
 			case DSTAT_PFAIL:	/* permanent failure */
-				NDBGL4(L4_IPRDBG, "irip%d: permanent dial failure!", unit);
+				NDBGL4(L4_IPRDBG, "%s: permanent dial failure!", sc->sc_if.if_xname);
 				m_freem(m);
 				iripclearqueues(sc);
 				sc->sc_dialresp = DSTAT_NONE;
@@ -466,7 +483,7 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				break;
 
 			case DSTAT_INONLY:	/* no dialout allowed*/
-				NDBGL4(L4_IPRDBG, "irip%d: dialout not allowed failure!", unit);
+				NDBGL4(L4_IPRDBG, "%s: dialout not allowed failure!", sc->sc_if.if_xname);
 				m_freem(m);
 				iripclearqueues(sc);
 				sc->sc_dialresp = DSTAT_NONE;
@@ -477,9 +494,9 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		}
 #endif
 
-		NDBGL4(L4_IPRDBG, "irip%d: send dial request message!", unit);
-		NDBGL4(L4_DIALST, "irip%d: setting dial state to ST_DIALING", unit);
-		i4b_l4_dialout(BDRV_IPR, unit);
+		NDBGL4(L4_IPRDBG, "%s: send dial request message!", sc->sc_if.if_xname);
+		NDBGL4(L4_DIALST, "%s: setting dial state to ST_DIALING", sc->sc_if.if_xname);
+		i4b_l4_dialout(irip_driver_id, unit);
 		sc->sc_state = ST_DIALING;
 	}
 
@@ -580,11 +597,7 @@ iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				if(sc->sc_if.if_flags & IFF_RUNNING)
 				{
 					/* disconnect ISDN line */
-#if defined(__FreeBSD__) || defined(__bsdi__)
-					i4b_l4_drvrdisc(BDRV_IPR, ifp->if_unit);
-#else
-					i4b_l4_drvrdisc(BDRV_IPR, sc->sc_unit);
-#endif
+					i4b_l4_drvrdisc(sc->sc_cdp->cdid);
 					sc->sc_if.if_flags &= ~IFF_RUNNING;
 				}
 
@@ -700,14 +713,13 @@ iprwatchdog(struct ifnet *ifp)
 	struct ifnet *ifp = &ipr_softc[unit].sc_if;
 #else
 	struct ipr_softc *sc = ifp->if_softc;
-	int unit = sc->sc_unit;
 #endif
 	bchan_statistics_t bs;
 	
 	/* get # of bytes in and out from the HSCX driver */ 
 	
-	(*isdn_linktab[unit]->bchannel_driver->bch_stat)
-		(isdn_linktab[unit]->l1token, isdn_linktab[unit]->channel, &bs);
+	(*sc->sc_ilt->bchannel_driver->bch_stat)
+		(sc->sc_ilt->l1token, sc->sc_ilt->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
 	sc->sc_iinb += bs.inbytes;
@@ -916,7 +928,7 @@ ipr_rx_data_rdy(void *softc)
 	int len, c;
 #endif
 	
-	if((m = *isdn_linktab[sc->sc_unit]->rx_mbuf) == NULL)
+	if((m = *sc->sc_ilt->rx_mbuf) == NULL)
 		return;
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
@@ -1156,14 +1168,14 @@ ipr_tx_queue_empty(void *softc)
 #endif
 		x = 1;
 
-		if(IF_QFULL(isdn_linktab[sc->sc_unit]->tx_queue))
+		if(IF_QFULL(sc->sc_ilt->tx_queue))
 		{
 			NDBGL4(L4_IPRDBG, "%s: tx queue full!", sc->sc_if.if_xname);
 			m_freem(m);
 		}
 		else
 		{
-			IF_ENQUEUE(isdn_linktab[sc->sc_unit]->tx_queue, m);
+			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 
 			sc->sc_if.if_obytes += m->m_pkthdr.len;
 
@@ -1172,7 +1184,7 @@ ipr_tx_queue_empty(void *softc)
 	}
 
 	if(x)
-		(*isdn_linktab[sc->sc_unit]->bchannel_driver->bch_tx_start)(isdn_linktab[sc->sc_unit]->l1token, isdn_linktab[sc->sc_unit]->channel);
+		(*sc->sc_ilt->bchannel_driver->bch_tx_start)(sc->sc_ilt->l1token, sc->sc_ilt->channel);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1190,40 +1202,20 @@ ipr_activity(void *softc, int rxtx)
 /*---------------------------------------------------------------------------*
  *	return this drivers linktab address
  *---------------------------------------------------------------------------*/
-drvr_link_t *
-ipr_ret_linktab(int unit)
+static void*
+ipr_get_softc(int unit)
 {
-	return(&ipr_drvr_linktab[unit]);
+	return &ipr_softc[unit];
 }
 
 /*---------------------------------------------------------------------------*
  *	setup the isdn_linktab for this driver
  *---------------------------------------------------------------------------*/
-void
-ipr_set_linktab(int unit, isdn_link_t *ilt)
-{
-	isdn_linktab[unit] = ilt;
-}
-
-static const struct isdn_l4_driver_functions
-ipr_l4_functions = {
-	ipr_rx_data_rdy,
-	ipr_tx_queue_empty,
-	ipr_activity,
-	ipr_connect,
-	ipr_disconnect,
-	ipr_dialresponse,
-	ipr_updown
-};
-
-/*---------------------------------------------------------------------------*
- *	initialize this drivers linktab
- *---------------------------------------------------------------------------*/
 static void
-ipr_init_linktab(int unit)
+ipr_set_linktab(void *softc, isdn_link_t *ilt)
 {
-	ipr_drvr_linktab[unit].l4_driver_softc = &ipr_softc[unit];
-	ipr_drvr_linktab[unit].l4_driver = &ipr_l4_functions;
+	struct ipr_softc *sc = softc;
+	sc->sc_ilt = ilt;
 }
 
 /*===========================================================================*/
