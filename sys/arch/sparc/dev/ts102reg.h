@@ -1,4 +1,4 @@
-/*	$NetBSD: ts102reg.h,v 1.5 2000/03/09 07:04:10 garbled Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.5.4.1 2000/07/26 07:28:34 toddpw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@
 #define	TS102_UCTRL_STS_TXNF_STA	0x02	/* transmit FIFO not full */
 #define	TS102_UCTRL_STS_RXNE_STA	0x04	/* receive FIFO not empty */
 #define	TS102_UCTRL_STS_RXO_STA		0x08	/* receive FIFO overflow */
+#define	TS102_UCTRL_STS_MASK		0x0F	/* Only 4 bits significant */
 
 enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_SERIAL_NUM=0x01,	/* none		ack + 4 bytes */
