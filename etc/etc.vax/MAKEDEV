@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.37 2001/12/19 17:58:10 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.38 2001/12/19 18:30:12 wiz Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -64,8 +64,8 @@
 #	tun*	network tunnel device
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
-#	uk*	SCSI unknown
-#	ch*	SCSI changer
+#	uk*	unknown SCSI device
+#	ch*	SCSI media changer
 #	random	Random number generator
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin

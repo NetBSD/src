@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 2001/12/19 18:14:22 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.43 2001/12/19 18:30:09 wiz Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -42,7 +42,7 @@
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
-#	uk*	MI unknown scsi devices
+#	uk*	unknown SCSI device
 # Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of these for X windows.
 #	fb*	generic framebuffer pseudo-device
