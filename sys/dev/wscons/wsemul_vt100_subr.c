@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.7.4.1 2003/05/27 04:17:09 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -391,7 +391,7 @@ wsemul_vt100_handle_csi(edp, c)
 
 	    case A2('&', 'u'): /* DECRQUPSS request user preferred
 				  supplemental set */
-		wsdisplay_emulinput(edp->emulcookie, "\033P0!u%5\033\\", 9);
+		wsdisplay_emulinput(edp->cbcookie, "\033P0!u%5\033\\", 9);
 		break;
 
 	    case '@': /* ICH insert character VT300 only */
