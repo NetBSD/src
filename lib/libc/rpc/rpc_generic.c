@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.16 2003/10/21 00:03:47 fvdl Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.17 2005/01/08 22:48:42 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.16 2003/10/21 00:03:47 fvdl Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.17 2005/01/08 22:48:42 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -808,6 +808,7 @@ __rpc_socktype2seman(int socktype)
  * machine. If they are both "link local" or "site local", copy
  * the scope id of the server address over to the service address.
  */
+/* ARGSUSED */
 int
 __rpc_fixup_addr(struct netbuf *new, const struct netbuf *svc)
 {
