@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 1995/03/23 20:19:23 briggs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 1995/04/10 12:42:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -97,15 +97,13 @@ struct pmap {
 
 typedef struct pmap	*pmap_t;
 
-extern pmap_t		kernel_pmap;
-
 /*
  * Macros for speed
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
-		    mac68k_btop(pmap_extract(kernel_pmap, (vm_offset_t) \
+		    mac68k_btop(pmap_extract(pmap_kernel(), (vm_offset_t) \
 		    (cpu040 ? (pmapp)->pm_rtab : (pmapp)->pm_stab))); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
@@ -131,6 +129,7 @@ typedef struct pv_entry {
 
 #ifdef	_KERNEL
 pv_entry_t	pv_table;		/* array of entries, one per page */
+struct pmap	kernel_pmap_store;
 
 #ifdef MACHINE_NONCONTIG
 #define pa_index(pa)		pmap_page_index(pa)
@@ -140,7 +139,7 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
 
-#define	pmap_kernel()			(kernel_pmap)
+#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 extern	struct pte *Sysmap;

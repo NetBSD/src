@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1994/12/28 09:08:45 chopps Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 1995/04/10 12:41:44 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -58,7 +58,6 @@ struct pmap {
 };
 
 typedef struct pmap *pmap_t;
-extern pmap_t kernel_pmap;
 
 /*
  * Macros for speed
@@ -66,7 +65,7 @@ extern pmap_t kernel_pmap;
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
-		    amiga_btop(pmap_extract(kernel_pmap, \
+		    amiga_btop(pmap_extract(pmap_kernel(), \
 		    cpu040 ? (vm_offset_t)(pmapp)->pm_rtab : \
 		    (vm_offset_t)(pmapp)->pm_stab)); \
 		if (iscurproc) \
@@ -95,6 +94,7 @@ typedef struct pv_entry {
 pv_entry_t	pv_table;	/* array of entries, one per page */
 u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
+struct pmap	kernel_pmap_store;
 
 #ifdef MACHINE_NONCONTIG
 #define pa_index(pa)		pmap_page_index(pa)
@@ -102,6 +102,7 @@ char		*vmmap;		/* map for mem, dumps, etc. */
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #endif
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
+#define	pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #endif	KERNEL
 
