@@ -1,9 +1,10 @@
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1993 Jan-Simon Pendry
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Rick Macklem at The University of Guelph.
+ * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,47 +34,70 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)xdr_subs.h	8.1 (Berkeley) 6/10/93
- *	$Id: xdr_subs.h,v 1.6 1994/06/08 11:37:20 mycroft Exp $
+ *	from: Id: procfs_regs.c,v 3.2 1993/12/15 09:40:17 jsp Exp
+ *	from: @(#)procfs_fpregs.c	8.1 (Berkeley) 1/27/94
+ *	$Id: procfs_fpregs.c,v 1.1 1994/06/08 11:33:35 mycroft Exp $
  */
 
-/*
- * Macros used for conversion to/from xdr representation by nfs...
- * These use the MACHINE DEPENDENT routines ntohl, htonl
- * As defined by "XDR: External Data Representation Standard" RFC1014
- *
- * To simplify the implementation, we use ntohl/htonl even on big-endian
- * machines, and count on them being `#define'd away.  Some of these
- * might be slightly more efficient as quad_t copies on a big-endian,
- * but we cannot count on their alignment anyway.
- */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/ptrace.h>
+#include <machine/reg.h>
+#include <miscfs/procfs/procfs.h>
 
-#define	fxdr_unsigned(t, v)	((t)ntohl((long)(v)))
-#define	txdr_unsigned(v)	(htonl((long)(v)))
+int
+procfs_dofpregs(curp, p, pfs, uio)
+	struct proc *curp;
+	struct proc *p;
+	struct pfsnode *pfs;
+	struct uio *uio;
+{
+#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	int error;
+	struct fpreg r;
+	char *kv;
+	int kl;
 
-#define	fxdr_nfstime(f, t) { \
-	(t)->ts_sec = ntohl(((struct nfsv2_time *)(f))->nfs_sec); \
-	(t)->ts_nsec = 1000 * ntohl(((struct nfsv2_time *)(f))->nfs_usec); \
-}
-#define	txdr_nfstime(f, t) { \
-	((struct nfsv2_time *)(t))->nfs_sec = htonl((f)->ts_sec); \
-	((struct nfsv2_time *)(t))->nfs_usec = htonl((f)->ts_nsec) / 1000; \
+	kl = sizeof(r);
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_read_fpregs(p, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (p->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			error = process_write_fpregs(p, &r);
+	}
+
+	uio->uio_offset = 0;
+	return (error);
+#else
+	return (EINVAL);
+#endif
 }
 
-#define	fxdr_nqtime(f, t) { \
-	(t)->ts_sec = ntohl(((struct nqnfs_time *)(f))->nq_sec); \
-	(t)->ts_nsec = ntohl(((struct nqnfs_time *)(f))->nq_nsec); \
-}
-#define	txdr_nqtime(f, t) { \
-	((struct nqnfs_time *)(t))->nq_sec = htonl((f)->ts_sec); \
-	((struct nqnfs_time *)(t))->nq_nsec = htonl((f)->ts_nsec); \
-}
+int
+procfs_validfpregs(p)
+	struct proc *p;
+{
 
-#define	fxdr_hyper(f, t) { \
-	((long *)(t))[_QUAD_HIGHWORD] = ntohl(((long *)(f))[0]); \
-	((long *)(t))[_QUAD_LOWWORD] = ntohl(((long *)(f))[1]); \
-}
-#define	txdr_hyper(f, t) { \
-	((long *)(t))[0] = htonl(((long *)(f))[_QUAD_HIGHWORD]); \
-	((long *)(t))[1] = htonl(((long *)(f))[_QUAD_LOWWORD]); \
+#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
+	return ((p->p_flag & P_SYSTEM) == 0);
+#else
+	return (0);
+#endif
 }

@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California
- * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: fdesc.h,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: fdesc.h,v 1.3 1994/01/05 09:00:57 cgd Exp $
+ *	from: Id: fdesc.h,v 1.8 1993/04/06 15:28:33 jsp Exp
+ *	from: @(#)fdesc.h	8.5 (Berkeley) 1/21/94
+ *	$Id: fdesc.h,v 1.4 1994/06/08 11:33:12 mycroft Exp $
  */
 
 #ifdef KERNEL
@@ -63,6 +61,9 @@ typedef enum {
 } fdntype;
 
 struct fdescnode {
+	struct fdescnode *fd_forw;	/* Hash chain */
+	struct fdescnode *fd_back;
+	struct vnode	*fd_vnode;	/* Back ptr to vnode */
 	fdntype		fd_type;	/* Type of this node */
 	unsigned	fd_fd;		/* Fd to be dup'ed */
 	char		*fd_link;	/* Link to fd/n */
@@ -73,7 +74,9 @@ struct fdescnode {
 #define	VTOFDESC(vp) ((struct fdescnode *)(vp)->v_data)
 
 extern dev_t devctty;
+extern int fdesc_init __P((void));
+extern int fdesc_root __P((struct mount *, struct vnode **));
 extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
-extern struct vnodeops fdesc_vnodeops;
+extern int (**fdesc_vnodeop_p)();
 extern struct vfsops fdesc_vfsops;
 #endif /* KERNEL */

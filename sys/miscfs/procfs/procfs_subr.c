@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: procfs_subr.c,v 1.10 1994/04/25 03:50:01 cgd Exp $
+ *	from: Id: procfs_subr.c,v 3.2 1993/12/15 09:40:17 jsp Exp
+ *	from: @(#)procfs_subr.c	8.4 (Berkeley) 1/27/94
+ *	$Id: procfs_subr.c,v 1.11 1994/06/08 11:33:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -46,6 +45,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/malloc.h>
 #include <miscfs/procfs/procfs.h>
 
 static struct pfsnode *pfshead;
@@ -77,26 +77,27 @@ static int pfsvplock;
  * zero references to it and so it needs to removed from
  * the vnode free list.
  */
+int
 procfs_allocvp(mp, vpp, pid, pfs_type)
 	struct mount *mp;
 	struct vnode **vpp;
 	long pid;
 	pfstype pfs_type;
 {
+	register struct pfsnode *pfs;
+	register struct vnode *vp;
+	register struct pfsnode **pp;
 	int error;
-	struct pfsnode *pfs;
-	struct pfsnode **pp;
-	struct vnode *vp;
 
 loop:
 	for (pfs = pfshead; pfs != 0; pfs = pfs->pfs_next) {
+		vp = PFSTOV(pfs);
 		if (pfs->pfs_pid == pid &&
 		    pfs->pfs_type == pfs_type &&
-		    PFSTOV(pfs)->v_mount == mp) {
-			if (vget(pfs->pfs_vnode, 1))
+		    vp->v_mount == mp) {
+			if (vget(vp, 0))
 				goto loop;
-			VOP_UNLOCK(pfs->pfs_vnode);
-			*vpp = pfs->pfs_vnode;
+			*vpp = vp;
 			return (0);
 		}
 	}
@@ -112,39 +113,34 @@ loop:
 	}
 	pfsvplock |= PROCFS_LOCKED;
 
-	error = getnewvnode(VT_PROCFS, mp, &procfs_vnodeops, vpp);
-	if (error)
+	if (error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp))
 		goto out;
+	vp = *vpp;
 
-	/* 4.4: at this point, need to allocate a pfsnode */
+	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
+	vp->v_data = pfs;
 
-	pfs = VTOPFS(*vpp);
 	pfs->pfs_next = 0;
 	pfs->pfs_pid = (pid_t) pid;
 	pfs->pfs_type = pfs_type;
-	pfs->pfs_vnode = vp = *vpp;
+	pfs->pfs_vnode = vp;
 	pfs->pfs_flags = 0;
 	pfs->pfs_fileno = PROCFS_FILENO(pid, pfs_type);
 
 	switch (pfs_type) {
-	case Proot:
-		switch ((int)pid) {
-		case 0:		/* /proc = dr-xr-xr-x */
-			pfs->pfs_mode = (VREAD|VEXEC) |
-					(VREAD|VEXEC) >> 3 |
-					(VREAD|VEXEC) >> 6;
-			vp->v_type = VDIR;
-			vp->v_flag = VROOT;
-			break;
-		case 1:		/* /proc/curproc = lr--r--r-- */
-			pfs->pfs_mode = VREAD |
-					VREAD >> 3 |
-					VREAD >> 6;
-			vp->v_type = VLNK;
-			break;
-		default:
-			panic("procfs_allocvp root");
-		}
+	case Proot:	/* /proc = dr-xr-xr-x */
+		pfs->pfs_mode = (VREAD|VEXEC) |
+				(VREAD|VEXEC) >> 3 |
+				(VREAD|VEXEC) >> 6;
+		vp->v_type = VDIR;
+		vp->v_flag = VROOT;
+		break;
+
+	case Pcurproc:	/* /proc/curproc = lr--r--r-- */
+		pfs->pfs_mode = (VREAD) |
+				(VREAD >> 3) |
+				(VREAD >> 6);
+		vp->v_type = VLNK;
 		break;
 
 	case Pproc:
@@ -154,23 +150,18 @@ loop:
 		vp->v_type = VDIR;
 		break;
 
+	case Pfile:
 	case Pmem:
-		pfs->pfs_mode = (VREAD|VWRITE);
-		vp->v_type = VREG;
-		break;
-
 	case Pregs:
-		pfs->pfs_mode = (VREAD|VWRITE);
-		vp->v_type = VREG;
-		break;
-
 	case Pfpregs:
 		pfs->pfs_mode = (VREAD|VWRITE);
 		vp->v_type = VREG;
 		break;
 
 	case Pctl:
-		pfs->pfs_mode = (VREAD|VWRITE);
+	case Pnote:
+	case Pnotepg:
+		pfs->pfs_mode = (VWRITE);
 		vp->v_type = VREG;
 		break;
 
@@ -181,18 +172,8 @@ loop:
 		vp->v_type = VREG;
 		break;
 
-	case Pnote:
-		pfs->pfs_mode = (VREAD|VWRITE);
-		vp->v_type = VREG;
-		break;
-
-	case Pnotepg:
-		pfs->pfs_mode = (VWRITE);
-		vp->v_type = VREG;
-		break;
-
 	default:
-		panic("procfs_allocvp type");
+		panic("procfs_allocvp");
 	}
 
 	/* add to procfs vnode list */
@@ -211,13 +192,12 @@ out:
 	return (error);
 }
 
+int
 procfs_freevp(vp)
 	struct vnode *vp;
 {
 	struct pfsnode **pfspp;
 	struct pfsnode *pfs = VTOPFS(vp);
-
-	/* 4.4: at this point, need to deallocate the pfsnode */
 
 	for (pfspp = &pfshead; *pfspp != 0; pfspp = &(*pfspp)->pfs_next) {
 		if (*pfspp == pfs) {
@@ -226,15 +206,17 @@ procfs_freevp(vp)
 		}
 	}
 
+	FREE(vp->v_data, M_TEMP);
+	vp->v_data = 0;
 	return (0);
 }
 
-procfs_rw(vp, uio, ioflag, cred)
-	struct vnode *vp;
-	struct uio *uio;
-	int ioflag;
-	struct ucred *cred;
+int
+procfs_rw(ap)
+	struct vop_read_args *ap;
 {
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
 	struct proc *curp = uio->uio_procp;
 	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
@@ -246,22 +228,22 @@ procfs_rw(vp, uio, ioflag, cred)
 	switch (pfs->pfs_type) {
 	case Pnote:
 	case Pnotepg:
-		return (pfs_donote(curp, p, pfs, uio));
+		return (procfs_donote(curp, p, pfs, uio));
 
 	case Pregs:
-		return (pfs_doregs(curp, p, pfs, uio));
+		return (procfs_doregs(curp, p, pfs, uio));
 
 	case Pfpregs:
-		return (pfs_dofpregs(curp, p, pfs, uio));
+		return (procfs_dofpregs(curp, p, pfs, uio));
 
 	case Pctl:
-		return (pfs_doctl(curp, p, pfs, uio));
+		return (procfs_doctl(curp, p, pfs, uio));
 
 	case Pstatus:
-		return (pfs_dostatus(curp, p, pfs, uio));
+		return (procfs_dostatus(curp, p, pfs, uio));
 
 	case Pmem:
-		return (pfs_domem(curp, p, pfs, uio));
+		return (procfs_domem(curp, p, pfs, uio));
 
 	default:
 		return (EOPNOTSUPP);
@@ -271,7 +253,7 @@ procfs_rw(vp, uio, ioflag, cred)
 /*
  * Get a string from userland into (buf).  Strip a trailing
  * nl character (to allow easy access from the shell).
- * The buffer should be *buflenp + 1 chars long.  procfs_getuserstr
+ * The buffer should be *buflenp + 1 chars long.  vfs_getuserstr
  * will automatically add a nul char at the end.
  *
  * Returns 0 on success or the following errors
@@ -280,13 +262,17 @@ procfs_rw(vp, uio, ioflag, cred)
  * EMSGSIZE:  message is longer than kernel buffer
  * EFAULT:    user i/o buffer is not addressable
  */
-procfs_getuserstr(uio, buf, buflenp)
+int
+vfs_getuserstr(uio, buf, buflenp)
 	struct uio *uio;
 	char *buf;
 	int *buflenp;
 {
 	int xlen;
 	int error;
+
+	if (uio->uio_offset != 0)
+		return (EINVAL);
 
 	xlen = *buflenp;
 
@@ -295,9 +281,11 @@ procfs_getuserstr(uio, buf, buflenp)
 		return (EMSGSIZE);
 	xlen = uio->uio_resid;
 
-	error = uiomove(buf, xlen, uio);
-	if (error)
+	if (error = uiomove(buf, xlen, uio))
 		return (error);
+
+	/* allow multiple writes without seeks */
+	uio->uio_offset = 0;
 
 	/* cleanup string and remove trailing newline */
 	buf[xlen] = '\0';
@@ -309,12 +297,13 @@ procfs_getuserstr(uio, buf, buflenp)
 	return (0);
 }
 
-procfs_namemap_t *
-procfs_findname(nm, buf, buflen)
-	procfs_namemap_t *nm;
+vfs_namemap_t *
+vfs_findname(nm, buf, buflen)
+	vfs_namemap_t *nm;
 	char *buf;
 	int buflen;
 {
+
 	for (; nm->nm_name; nm++)
 		if (bcmp(buf, (char *) nm->nm_name, buflen+1) == 0)
 			return (nm);

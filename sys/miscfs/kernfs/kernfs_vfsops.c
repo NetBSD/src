@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California
- * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: kernfs_vfsops.c,v 4.1 1994/01/02 14:42:00 jsp Exp
- *
- *	$Id: kernfs_vfsops.c,v 1.14 1994/04/23 07:54:55 cgd Exp $
+ *	from: @(#)kernfs_vfsops.c	8.4 (Berkeley) 1/21/94
+ *	$Id: kernfs_vfsops.c,v 1.15 1994/06/08 11:33:20 mycroft Exp $
  */
 
 /*
@@ -46,58 +43,47 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
+#include <sys/conf.h>
 #include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+
+#include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
+
+dev_t rrootdev = NODEV;
 
 kernfs_init()
 {
-#ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_init\n");		/* printed during system boot */
-#endif
+
 }
 
-#ifdef notyet
 void
-kernfs_rrootdevvp_init()
+kernfs_get_rrootdev()
 {
-	int error, bmaj, cmaj;
+	int bmaj, cmaj;
 
-	if (rrootdevvp != NULL)		/* then we've already done this */
+	if (rootdev == NODEV)
 		return;
-
-	error = ENXIO;
+	if (rrootdev != NODEV) {
+		/* Already did it once. */
+		return;
+	}
 	bmaj = major(rootdev);
-
-	/*
-	 * hunt for the raw root device by looking in cdevsw for a matching
-	 * open routine...
-	 */
 	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
-		if (cdevsw[cmaj].d_open == bdevsw[bmaj].d_open) {
-			dev_t cdev = makedev(cmaj, minor(rootdev));
-
-			error = cdevvp(cdev, &rrootdevvp);
-			if (error == 0)
-				return;
+		if (chrtoblk(cmaj) == bmaj) {
+			rrootdev = makedev(cmaj, minor(rootdev));
+			return;
 		}
 	}
-
-	/* this isn't fatal... */
-	if (error) {
-		printf("kernfs: no raw root device\n");
-		rrootdevvp = NULL;
-	}
+	printf("kernfs_get_rrootdev: no raw root device\n");
 }
-#endif
 
 /*
- * Mount the kernel parameter filesystem
+ * Mount the Kernel params filesystem
  */
 kernfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
@@ -121,12 +107,11 @@ kernfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = getnewvnode(VT_KERNFS, mp, &kernfs_vnodeops, &rvp);
-	if (error)
+	if (error = getnewvnode(VT_KERNFS, mp, kernfs_vnodeop_p, &rvp))
 		return (error);
 
-	fmp = (struct kernfs_mount *) malloc(sizeof(struct kernfs_mount),
-				 M_MISCFSMNT, M_WAITOK);
+	MALLOC(fmp, struct kernfs_mount *, sizeof(struct kernfs_mount),
+	    M_MISCFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 #ifdef KERNFS_DIAGNOSTIC
@@ -134,7 +119,7 @@ kernfs_mount(mp, path, data, ndp, p)
 #endif
 	fmp->kf_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t) fmp;
+	mp->mnt_data = (qaddr_t)fmp;
 	getnewfsid(mp, makefstype(MOUNT_KERNFS));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -145,10 +130,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
 
-#ifdef notyet
-	kernfs_rrootdevvp_init();
-#endif
-
+	kernfs_get_rrootdev();
 	return (0);
 }
 
@@ -157,6 +139,7 @@ kernfs_start(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
+
 	return (0);
 }
 
@@ -186,15 +169,6 @@ kernfs_unmount(mp, mntflags, p)
 	 * ever get anything cached at this level at the
 	 * moment, but who knows...
 	 */
-#ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_unmount: calling mntflushbuf\n");
-#endif
-	mntflushbuf(mp, 0); 
-#ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_unmount: calling mntinvalbuf\n");
-#endif
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
 	if (rootvp->v_usecount > 1)
 		return (EBUSY);
 #ifdef KERNFS_DIAGNOSTIC
@@ -205,21 +179,18 @@ kernfs_unmount(mp, mntflags, p)
 
 #ifdef KERNFS_DIAGNOSTIC
 	vprint("kernfs root", rootvp);
-#endif	 
+#endif
 	/*
-	 * Release reference on underlying root vnode
+	 * Clean out the old root vnode for reuse.
 	 */
 	vrele(rootvp);
-	/*
-	 * And blow it away for future re-use
-	 */
 	vgone(rootvp);
 	/*
 	 * Finally, throw away the kernfs_mount structure
 	 */
 	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
-	return 0;
+	return (0);
 }
 
 kernfs_root(mp, vpp)
@@ -227,7 +198,6 @@ kernfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 	struct vnode *vp;
-	int error;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_root(mp = %x)\n", mp);
@@ -250,6 +220,7 @@ kernfs_quotactl(mp, cmd, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
+
 	return (EOPNOTSUPP);
 }
 
@@ -258,11 +229,6 @@ kernfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
-	struct filedesc *fdp;
-	int lim;
-	int i;
-	int last;
-	int freefd;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_statfs(mp = %x)\n", mp);
@@ -279,8 +245,8 @@ kernfs_statfs(mp, sbp, p)
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
-	sbp->f_files = 0;		/* Allow for "." */
-	sbp->f_ffree = 0;		/* See comments above */
+	sbp->f_files = 0;
+	sbp->f_ffree = 0;
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -295,14 +261,31 @@ kernfs_sync(mp, waitfor)
 	struct mount *mp;
 	int waitfor;
 {
+
 	return (0);
 }
 
-kernfs_fhtovp(mp, fhp, vpp)
+/*
+ * Kernfs flat namespace lookup.
+ * Currently unsupported.
+ */
+kernfs_vget(mp, ino, vpp)
 	struct mount *mp;
-	struct fid *fhp;
+	ino_t ino;
 	struct vnode **vpp;
 {
+
+	return (EOPNOTSUPP);
+}
+
+
+kernfs_fhtovp(mp, fhp, setgen, vpp)
+	struct mount *mp;
+	struct fid *fhp;
+	int setgen;
+	struct vnode **vpp;
+{
+
 	return (EOPNOTSUPP);
 }
 
@@ -310,6 +293,7 @@ kernfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
+
 	return (EOPNOTSUPP);
 }
 
@@ -322,6 +306,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_quotactl,
 	kernfs_statfs,
 	kernfs_sync,
+	kernfs_vget,
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,

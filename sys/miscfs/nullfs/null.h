@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 1989, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Rick Macklem at The University of Guelph.
+ * This code is derived from software donated to Berkeley by
+ * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,47 +33,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)xdr_subs.h	8.1 (Berkeley) 6/10/93
- *	$Id: xdr_subs.h,v 1.6 1994/06/08 11:37:20 mycroft Exp $
+ *	from: Id: lofs.h,v 1.8 1992/05/30 10:05:43 jsp Exp
+ *	from: @(#)null.h	8.2 (Berkeley) 1/21/94
+ *	$Id: null.h,v 1.1 1994/06/08 11:33:23 mycroft Exp $
  */
 
+struct null_args {
+	char		*target;	/* Target of loopback  */
+};
+
+struct null_mount {
+	struct mount	*nullm_vfs;
+	struct vnode	*nullm_rootvp;	/* Reference to root null_node */
+};
+
+#ifdef KERNEL
 /*
- * Macros used for conversion to/from xdr representation by nfs...
- * These use the MACHINE DEPENDENT routines ntohl, htonl
- * As defined by "XDR: External Data Representation Standard" RFC1014
- *
- * To simplify the implementation, we use ntohl/htonl even on big-endian
- * machines, and count on them being `#define'd away.  Some of these
- * might be slightly more efficient as quad_t copies on a big-endian,
- * but we cannot count on their alignment anyway.
+ * A cache of vnode references
  */
+struct null_node {
+	struct null_node	*null_forw;	/* Hash chain */
+	struct null_node	*null_back;
+	struct vnode	        *null_lowervp;	/* VREFed once */
+	struct vnode		*null_vnode;	/* Back pointer */
+};
 
-#define	fxdr_unsigned(t, v)	((t)ntohl((long)(v)))
-#define	txdr_unsigned(v)	(htonl((long)(v)))
+extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
 
-#define	fxdr_nfstime(f, t) { \
-	(t)->ts_sec = ntohl(((struct nfsv2_time *)(f))->nfs_sec); \
-	(t)->ts_nsec = 1000 * ntohl(((struct nfsv2_time *)(f))->nfs_usec); \
-}
-#define	txdr_nfstime(f, t) { \
-	((struct nfsv2_time *)(t))->nfs_sec = htonl((f)->ts_sec); \
-	((struct nfsv2_time *)(t))->nfs_usec = htonl((f)->ts_nsec) / 1000; \
-}
+#define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
+#define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
+#define	NULLTOV(xp) ((xp)->null_vnode)
+#ifdef NULLFS_DIAGNOSTIC
+extern struct vnode *null_checkvp __P((struct vnode *vp, char *fil, int lno));
+#define	NULLVPTOLOWERVP(vp) null_checkvp((vp), __FILE__, __LINE__)
+#else
+#define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
+#endif
 
-#define	fxdr_nqtime(f, t) { \
-	(t)->ts_sec = ntohl(((struct nqnfs_time *)(f))->nq_sec); \
-	(t)->ts_nsec = ntohl(((struct nqnfs_time *)(f))->nq_nsec); \
-}
-#define	txdr_nqtime(f, t) { \
-	((struct nqnfs_time *)(t))->nq_sec = htonl((f)->ts_sec); \
-	((struct nqnfs_time *)(t))->nq_nsec = htonl((f)->ts_nsec); \
-}
-
-#define	fxdr_hyper(f, t) { \
-	((long *)(t))[_QUAD_HIGHWORD] = ntohl(((long *)(f))[0]); \
-	((long *)(t))[_QUAD_LOWWORD] = ntohl(((long *)(f))[1]); \
-}
-#define	txdr_hyper(f, t) { \
-	((long *)(t))[0] = htonl(((long *)(f))[_QUAD_HIGHWORD]); \
-	((long *)(t))[1] = htonl(((long *)(f))[_QUAD_LOWWORD]); \
-}
+extern int (**null_vnodeop_p)();
+extern struct vfsops null_vfsops;
+#endif /* KERNEL */

@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California
- * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: portal_vfsops.c,v 1.6 1993/09/22 17:57:30 jsp Exp
- *
- *	$Id: portal_vfsops.c,v 1.4 1994/04/23 07:55:00 cgd Exp $
+ *	from: Id: portal_vfsops.c,v 1.5 1992/05/30 10:25:27 jsp Exp
+ *	from: @(#)portal_vfsops.c	8.6 (Berkeley) 1/21/94
+ *	$Id: portal_vfsops.c,v 1.5 1994/06/08 11:33:29 mycroft Exp $
  */
 
 /*
@@ -49,7 +47,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/proc.h>
-/*#include <sys/resourcevar.h>*/
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
@@ -64,18 +61,17 @@
 #include <sys/un.h>
 #include <miscfs/portal/portal.h>
 
-static u_short portal_mntid;
-
-int portal_init()
+int
+portal_init()
 {
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_init\n");		/* printed during system boot */
-#endif
+
+	return (0);
 }
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
  */
+int
 portal_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	char *path;
@@ -83,19 +79,13 @@ portal_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	int error = 0;
-	struct portal_args args;
-	u_int size;
-	struct portalmount *fmp;
-	struct vnode *rvp;
-	struct sockaddr_un *unp;
 	struct file *fp;
+	struct portal_args args;
+	struct portalmount *fmp;
 	struct socket *so;
-	char cfile[MAXPATHLEN];
-
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_mount(mp = %x)\n", mp);
-#endif
+	struct vnode *rvp;
+	u_int size;
+	int error;
 
 	/*
 	 * Update is a no-op
@@ -112,9 +102,11 @@ portal_mount(mp, path, data, ndp, p)
 	if (so->so_proto->pr_domain->dom_family != AF_UNIX)
 		return (ESOCKTNOSUPPORT);
 
-	error = getnewvnode(VT_UFS, mp, &portal_vnodeops, &rvp); /* XXX */
+	error = getnewvnode(VT_PORTAL, mp, portal_vnodeop_p, &rvp); /* XXX */
 	if (error)
 		return (error);
+	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
+		M_TEMP, M_WAITOK);
 
 	fmp = (struct portalmount *) malloc(sizeof(struct portalmount),
 				 M_UFSMNT, M_WAITOK);	/* XXX */
@@ -123,20 +115,17 @@ portal_mount(mp, path, data, ndp, p)
 	VTOPORTAL(rvp)->pt_arg = 0;
 	VTOPORTAL(rvp)->pt_size = 0;
 	VTOPORTAL(rvp)->pt_fileid = PORTAL_ROOTFILEID;
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_mount: root vp = %x\n", rvp);
-#endif
 	fmp->pm_root = rvp;
 	fmp->pm_server = fp; fp->f_count++;
 
-	/* mp->mnt_flag |= MNT_LOCAL; */
+	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) fmp;
 	getnewfsid(mp, makefstype(MOUNT_PORTAL));
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	(void)copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	(void) copyinstr(args.pa_config, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-		&size);
+	(void)copyinstr(args.pa_config,
+	    mp->mnt_stat.f_mntfromname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 
 #ifdef notdef
@@ -144,34 +133,28 @@ portal_mount(mp, path, data, ndp, p)
 	bcopy("portal", mp->mnt_stat.f_mntfromname, sizeof("portal"));
 #endif
 
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_mount: config %s at %s\n",
-			mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
-#endif
 	return (0);
 }
 
+int
 portal_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
 	struct proc *p;
 {
+
 	return (0);
 }
 
+int
 portal_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
 	struct proc *p;
 {
-	int error;
-	int flags = 0;
 	extern int doforce;
 	struct vnode *rootvp = VFSTOPORTAL(mp)->pm_root;
-
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_unmount(mp = %x)\n", mp);
-#endif
+	int error, flags = 0;
 
 	if (mntflags & MNT_FORCE) {
 		/* portal can never be rootfs so don't check for it */
@@ -185,26 +168,16 @@ portal_unmount(mp, mntflags, p)
 	 * ever get anything cached at this level at the
 	 * moment, but who knows...
 	 */
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_unmount: calling mntflushbuf\n");
-#endif
+#ifdef notyet
 	mntflushbuf(mp, 0); 
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_unmount: calling mntinvalbuf\n");
-#endif
 	if (mntinvalbuf(mp, 1))
 		return (EBUSY);
+#endif
 	if (rootvp->v_usecount > 1)
 		return (EBUSY);
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_unmount: calling vflush\n");
-#endif
 	if (error = vflush(mp, rootvp, flags))
 		return (error);
 
-#ifdef PORTAL_DIAGNOSTIC
-	vprint("portal root", rootvp);
-#endif	 
 	/*
 	 * Release reference on underlying root vnode
 	 */
@@ -218,36 +191,26 @@ portal_unmount(mp, mntflags, p)
 	 * daemon to wake up, and then the accept will get ECONNABORTED
 	 * which it interprets as a request to go and bury itself.
 	 */
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_unmount: shutdown socket\n");
-#endif	 
 	soshutdown((struct socket *) VFSTOPORTAL(mp)->pm_server->f_data, 2);
 	/*
 	 * Discard reference to underlying file.  Must call closef because
 	 * this may be the last reference.
 	 */
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_unmount: closef(%x)\n", VFSTOPORTAL(mp)->pm_server);
-#endif	 
 	closef(VFSTOPORTAL(mp)->pm_server, (struct proc *) 0);
 	/*
 	 * Finally, throw away the portalmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
-	return 0;
+	return (0);
 }
 
+int
 portal_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
 	struct vnode *vp;
-	int error;
-
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_root(mp = %x)\n", mp);
-#endif
 
 	/*
 	 * Return locked reference to root.
@@ -259,6 +222,7 @@ portal_root(mp, vpp)
 	return (0);
 }
 
+int
 portal_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
@@ -266,23 +230,16 @@ portal_quotactl(mp, cmd, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
+
 	return (EOPNOTSUPP);
 }
 
+int
 portal_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
 	struct proc *p;
 {
-	struct filedesc *fdp;
-	int lim;
-	int i;
-	int last;
-	int freefd;
-
-#ifdef PORTAL_DIAGNOSTIC
-	printf("portal_statfs(mp = %x)\n", mp);
-#endif
 
 #ifdef COMPAT_09
 	sbp->f_type = 12;
@@ -307,25 +264,41 @@ portal_statfs(mp, sbp, p)
 	return (0);
 }
 
+int
 portal_sync(mp, waitfor)
 	struct mount *mp;
 	int waitfor;
 {
+
 	return (0);
 }
 
+int
+portal_vget(mp, ino, vpp)
+	struct mount *mp;
+	ino_t ino;
+	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
+int
 portal_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
+
 	return (EOPNOTSUPP);
 }
 
+int
 portal_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
+
 	return (EOPNOTSUPP);
 }
 
@@ -338,6 +311,7 @@ struct vfsops portal_vfsops = {
 	portal_quotactl,
 	portal_statfs,
 	portal_sync,
+	portal_vget,
 	portal_fhtovp,
 	portal_vptofh,
 	portal_init,

@@ -14,12 +14,13 @@ are:
 
 	status  - r/o.  returns process status.
 
-	ctl	- r/w.  sends a control message to the process.
+	ctl	- w/o.  sends a control message to the process.
 			for example:
+				echo hup > /proc/curproc/note
+			will send a SIGHUP to the shell.
+			whereas
 				echo attach > /proc/1293/ctl
 			would set up process 1293 for debugging.
-			a debugged process' signal may be read
-			from here.
 			see below for more details.
 
 	mem	- r/w.  virtual memory image of the process.
@@ -29,25 +30,21 @@ are:
 			to return zero pages instead of an error.
 			comments?
 
-	note	- r/w.  writing a string here sends the
-			equivalent note to the process or process group.
-			for example:
-				echo hup > /proc/curproc/note
-			will send a SIGHUP to the shell.
-			reading will return the lowest numbered signal
-			pending for process and inhibit its delivery to
-			process.
+	note	- w/o.  writing a string here sends the
+			equivalent note to the process.
+			[ not implemented. ]
 
 	notepg	- w/o.  the same as note, but sends to all
 			members of the process group.
+			[ not implemented. ]
 
 	regs	- r/w.	process register set.  this can be read
-			at any time even if the process is not stopped.
-			since the bsd kernel is single-processor, this
-			implementation will get the "right" register values.
+			or written any time even if the process
+			is not stopped.  since the bsd kernel
+			is single-processor, this implementation
+			will get the "right" register values.
 			a multi-proc kernel would need to do some
 			synchronisation.
-			writing is only allowed to a stopped process.
 
 this then looks like:
 
@@ -74,44 +71,43 @@ total 0
  665 dr-xr-xr-x  2 jsp   staff  0 Sep 21 15:06 82
  673 dr-xr-xr-x  2 jsp   staff  0 Sep 21 15:06 83
  681 dr-xr-xr-x  2 root  wheel  0 Sep 21 15:06 84
-   3 lr-xr-xr-x  2 root  wheel  0 Sep 21 15:06 curproc
+3273 dr-xr-xr-x  2 jsp   staff  0 Sep 21 15:06 curproc
 % ls -li /proc/curproc
 total 408
-3341 -rw-------  1 jsp  staff       8 Sep 21 15:06 ctl
+3341 --w-------  1 jsp  staff       0 Sep 21 15:06 ctl
 1554 -r-xr-xr-x  1 bin  bin     90112 Mar 29 04:52 file
 3339 -rw-------  1 jsp  staff  118784 Sep 21 15:06 mem
-3343 -rw-------  1 jsp  staff       8 Sep 21 15:06 note
+3343 --w-------  1 jsp  staff       0 Sep 21 15:06 note
 3344 --w-------  1 jsp  staff       0 Sep 21 15:06 notepg
-3340 -rw-------  1 jsp  staff      56 Sep 21 15:06 regs
-3342 -r--r--r--  1 jsp  staff     256 Sep 21 15:06 status
+3340 -rw-------  1 jsp  staff       0 Sep 21 15:06 regs
+3342 -r--r--r--  1 jsp  staff       0 Sep 21 15:06 status
 % df /proc/curproc /proc/curproc/file
 Filesystem  512-blocks    Used   Avail Capacity  Mounted on
 proc                 2       2       0   100%    /proc
 /dev/wd0a        16186   13548    1018    93%    /
 % cat /proc/curproc/status
-cat 446 439 400 81 12,0 ctty 748620684 270000 0 0 0 20000 nochan 11 20 20 0 21 117
+cat 446 439 400 81 12,0 ctty 748620684 270000 0 0 0 20000 nochan 11 20 20 20 0 21 117
 
 
 
-the basic sequence of commands written to "ctl"/data read from "ctl" would be
+the basic sequence of commands written to "ctl" would be
 
-write	attach		- this stops the target process and
+	attach		- this stops the target process and
 			  arranges for the sending process
-			  to become the debug control process.
-read	<signame>	- read signal that caused the stop.
-write	step		- single step, with no signal delivery.
-read	<signame>	- see above
-write	run		- continue running, with no signal delivery,
+			  to become the debug control process
+	wait		- wait for the target process to come to
+			  a steady state ready for debugging.
+	step		- single step, with no signal delivery.
+	run		- continue running, with no signal delivery,
 			  until next trap or breakpoint.
-write	<signame>	- set signal to be delivered on next step or run.
-write	detach		- continue execution of the target process
+	<signame>	- deliver signal <signame> and continue running.
+	detach		- continue execution of the target process
 			  and remove it from control by the debug process
 
 in a normal debugging environment, where the target is fork/exec'd by
 the debugger, the debugger should fork and the child should stop itself
-(with a self-inflicted SIGSTOP).  the parent should do an "attach".
-as before, the child will hit a breakpoint on the first
+(with a self-inflicted SIGSTOP).  the parent should do a "wait" then an
+"attach".  as before, the child will hit a breakpoint on the first
 instruction in any newly exec'd image.
 
-From: Id: README,v 4.1 1993/12/17 10:47:45 jsp Rel 
-$Id: README,v 1.2 1994/01/20 21:23:03 ws Exp $
+$Id: README,v 1.3 1994/06/08 11:33:32 mycroft Exp $

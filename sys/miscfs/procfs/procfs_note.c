@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: procfs_note.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: procfs_note.c,v 1.5 1994/05/05 05:39:10 cgd Exp $
+ *	from: Id: procfs_note.c,v 3.2 1993/12/15 09:40:17 jsp Exp
+ *	from: @(#)procfs_note.c	8.2 (Berkeley) 1/21/94
+ *	$Id: procfs_note.c,v 1.6 1994/06/08 11:33:37 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -47,104 +46,27 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/signal.h>
-#include <sys/signalvar.h>
 #include <miscfs/procfs/procfs.h>
 
-procfs_namemap_t procfs_signames[] = {
-	/* regular signal names */
-	{ "hup",	SIGHUP },	{ "int",	SIGINT },
-	{ "quit",	SIGQUIT },	{ "ill",	SIGILL },
-	{ "trap",	SIGTRAP },	{ "abrt",	SIGABRT },
-	{ "iot",	SIGIOT },	{ "emt",	SIGEMT },
-	{ "fpe",	SIGFPE },	{ "kill",	SIGKILL },
-	{ "bus",	SIGBUS },	{ "segv",	SIGSEGV },
-	{ "sys",	SIGSYS },	{ "pipe",	SIGPIPE },
-	{ "alrm",	SIGALRM },	{ "term",	SIGTERM },
-	{ "urg",	SIGURG },	{ "stop",	SIGSTOP },
-	{ "tstp",	SIGTSTP },	{ "cont",	SIGCONT },
-	{ "chld",	SIGCHLD },	{ "ttin",	SIGTTIN },
-	{ "ttou",	SIGTTOU },	{ "io",		SIGIO },
-	{ "xcpu",	SIGXCPU },	{ "xfsz",	SIGXFSZ },
-	{ "vtalrm",	SIGVTALRM },	{ "prof",	SIGPROF },
-	{ "winch",	SIGWINCH },	{ "info",	SIGINFO },
-	{ "usr1",	SIGUSR1 },	{ "usr2",	SIGUSR2 },
-	{ 0 },
-};
-
-pfs_readnote(sig, uio)
-	int sig;
-	struct uio *uio;
-{
-	int xlen;
-	int error;
-	procfs_namemap_t *nm;
-	
-	/* could do indexing by sig */
-	for (nm = procfs_signames; nm->nm_name; nm++)
-		if (nm->nm_val == sig)
-			break;
-	if (!nm->nm_name)
-		panic("pfs_readnote");
-	
-	xlen = strlen(nm->nm_name);
-	if (uio->uio_resid < xlen)
-		return EMSGSIZE;
-	
-	if (error = uiomove(nm->nm_name, xlen, uio))
-		return error;
-	
-	return 0;
-}
-
-pfs_donote(curp, p, pfs, uio)
+int
+procfs_donote(curp, p, pfs, uio)
 	struct proc *curp;
 	struct proc *p;
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
-	int len = uio->uio_resid;
 	int xlen;
 	int error;
 	char note[PROCFS_NOTELEN+1];
-	procfs_namemap_t *nm;
-	int sig, mask;
-	
-	if (pfs->pfs_type == Pnote && uio->uio_rw == UIO_READ) {
-		
-		mask = p->p_siglist & ~p->p_sigmask;
-		if (mask == 0)
-			return 0;
-		sig = ffs((long)mask);
-		
-		if (error = pfs_readnote(sig, uio))
-			return error;
-		
-		p->p_siglist &= ~mask;
-		return 0;
-	}
-	
+
 	if (uio->uio_rw != UIO_WRITE)
 		return (EINVAL);
 
 	xlen = PROCFS_NOTELEN;
-	error = procfs_getuserstr(uio, note, &xlen);
+	error = vfs_getuserstr(uio, note, &xlen);
 	if (error)
 		return (error);
-	
-	/*
-	 * Map signal names into signal generation
-	 * Unknown signals return EOPNOTSUPP.
-	 */
-	error = EOPNOTSUPP;
-	
-	nm = procfs_findname(procfs_signames, note, xlen);
-	if (nm) {
-		if (pfs->pfs_type == Pnote)
-			psignal(p, nm->nm_val);
-		else
-			gsignal(p->p_pgid, nm->nm_val);
-		
-		error = 0;
-	}
-	return (error);
+
+	/* send to process's notify function */
+	return (EOPNOTSUPP);
 }

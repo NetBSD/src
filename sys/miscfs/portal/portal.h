@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California
- * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: portal.h,v 1.4 1993/09/22 17:57:12 jsp Exp
- *
- *	$Id: portal.h,v 1.2 1994/01/12 19:50:22 cgd Exp $
+ *	from: Id: portal.h,v 1.3 1992/05/30 10:05:24 jsp Exp
+ *	from: @(#)portal.h	8.4 (Berkeley) 1/21/94
+ *	$Id: portal.h,v 1.3 1994/06/08 11:33:28 mycroft Exp $
  */
 
 struct portal_args {
@@ -51,7 +49,6 @@ struct portal_cred {
 	short		pcr_ngroups;		/* From ucred */
 	gid_t		pcr_groups[NGROUPS];	/* From ucred */
 };
-
 
 #ifdef KERNEL
 struct portalmount {
@@ -70,6 +67,6 @@ struct portalnode {
 
 #define PORTAL_ROOTFILEID	2
 
-extern struct vnodeops portal_vnodeops;
+extern int (**portal_vnodeop_p)();
 extern struct vfsops portal_vfsops;
 #endif /* KERNEL */
