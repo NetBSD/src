@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.28 1999/07/17 06:41:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.29 1999/07/18 22:55:30 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -880,7 +880,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	vaddr_t va;
 
  again:
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg == NULL) {
 		if (waitok) {
 			uvm_wait("plpg");
