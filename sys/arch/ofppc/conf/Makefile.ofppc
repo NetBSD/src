@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.ofppc,v 1.12 1998/04/12 23:47:44 tv Exp $
+#	$NetBSD: Makefile.ofppc,v 1.13 1998/05/28 08:12:13 sakamoto Exp $
 #
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/powerpc/conf/``machineid''
+#	/sys/arch/ofppc/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/powerpc/conf/Makefile.powerpc
+#	/sys/arch/ofppc/conf/Makefile.ofppc
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -42,7 +42,8 @@ COPTS?= -O2
 .ifndef	S
 S!=	cd ../../../..; pwd
 .endif
-PPC=	$S/arch/powerpc
+OFPPC=	$S/arch/ofppc
+POWERPC= $S/arch/powerpc
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
@@ -117,9 +118,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${PPC}/powerpc/genassym.cf
+assym.h: $S/kern/genassym.sh ${OFPPC}/ofppc/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${PPC}/powerpc/genassym.cf > assym.h.tmp && \
+	    < ${OFPPC}/ofppc/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -150,7 +151,7 @@ cleandir: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${PPC}/powerpc/Locore.c ${CFILES} \
+		${POWERPC}/powerpc/Locore.c ${CFILES} \
 		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
@@ -165,17 +166,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${PPC}/powerpc/locore.S \
+SRCS=	${OFPPC}/ofppc/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PPC}/powerpc/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${OFPPC}/ofppc/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} < ${PPC}/powerpc/genassym.cf
+	  ${CPPFLAGS} < ${OFPPC}/ofppc/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -192,7 +193,7 @@ machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${PPC}/powerpc/locore.S assym.h
+locore.o: ${OFPPC}/ofppc/locore.S assym.h
 	${NORMAL_S}
 
 %RULES

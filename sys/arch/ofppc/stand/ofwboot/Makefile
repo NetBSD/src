@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 1998/03/02 17:07:53 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 1998/05/28 08:12:17 sakamoto Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
-.PATH:		${S}/arch/powerpc/powerpc
+.PATH:		${S}/arch/ofppc/ofppc
 SRCS+=		ofwmagic.S
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
 NOMAN=
