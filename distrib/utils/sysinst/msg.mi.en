@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.98 2003/06/04 20:05:13 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.99 2003/06/06 14:31:23 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -126,11 +126,6 @@ message badname
 The following disks are available: %s
 \nOn which disk do you want to install NetBSD? }
 
-message disktoosmall
-{Your hard disk is too small for a standard install. You will have to enter
-the partitions size by hand.
-}
-
 message pleasemountroot
 {The root device is not mounted.  Please mount it.
 
@@ -241,29 +236,6 @@ message fssizesok
 
 message fssizesbad
 {Reduce partition sizes by %d %s (%d sectors).}
-
-.if 0
-message askfsroot
-{I will be asking for partition sizes and on some, mount points.
- 
-First the root partition.  You have %d %s left on your disk. 
-Root partition size? }
-   
-message askfsswap
-{
-Next the swap partition.  You have %d %s left on your disk.
-Swap partition size? }
-    
-message askfsusr 
-{
-Next the /usr partition.  You have %d %s left on your disk.
-/usr partition size? }
-
-message askfspart
-{The next partition is /dev/%s%c.  You have %d %s left on your disk.
-Partition size? }
-.endif
-
 
 message startoutsidedisk
 {The start value you specified is beyond the end of the disk.

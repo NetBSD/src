@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.80 2003/06/04 20:05:12 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.81 2003/06/06 14:31:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -396,8 +396,7 @@ int	target_symlink_exists_p(const char *);
 void	unwind_mounts(void);
 
 /* from bsddisklabel.c */
-void	show_cur_filesystems(void);
-extern int layout_swap, layout_usr, layout_tmp, layout_var, layout_home;
+extern int layout_tmp;
 int	make_bsd_partitions(void);
 
 /* from aout2elf.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.32 2003/06/04 20:05:14 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.33 2003/06/06 14:31:27 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1001,19 +1001,19 @@ md_make_bsd_partitions(void)
 		switch (whichType(&map.blk[j])) {
 		    case HFS_PART:
 			bsdlabel[pl].pi_fstype = FS_HFS; 
-			strcpy (fsmount[pl], bzb->mount_point);
+			strcpy (bsdlabel[pl].pi_mount, bzb->mount_point);
 			break;
 		    case ROOT_PART:
 		    case UFS_PART:
 			bsdlabel[pl].pi_fstype = FS_BSDFFS;
-			strcpy (fsmount[pl], bzb->mount_point);
+			strcpy (bsdlabel[pl].pi_mount, bzb->mount_point);
 			break;
 		    case SWAP_PART:
 			bsdlabel[pl].pi_fstype = FS_SWAP;
 			break;
 		    case SCRATCH_PART:
 			bsdlabel[pl].pi_fstype = FS_OTHER;
-			strcpy (fsmount[pl], bzb->mount_point);
+			strcpy (bsdlabel[pl].pi_mount, bzb->mount_point);
 		    default:
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/05/18 18:54:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2003/06/06 14:31:30 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/01/16 16:54:01 nonaka Exp */
 
@@ -58,36 +58,6 @@ message dobad144
 message dobootblks
 {Instalowanie bootblokow na %s....
 }
-
-message askfsroot1
-{Bede pytal o informacje o partycjach.
-
-Najpierw partycja glowna. Masz %d %s wolnego miejsca na dysku.
-}
-
-message askfsroot2
-{Rozmiar partycji glownej? }
-
-message askfsswap1
-{
-Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
-}
-
-message askfsswap2
-{Rozmiar partycji wymiany? }
-
-message otherparts
-{Nadal masz wolna przestrzen na dysku. Podaj rozmiary i punkty montazu
-dla ponizszych partycji.
-
-}
-
-message askfspart1
-{Nastepna partycja jest /dev/%s%c. Masz %d %s wolnego miejsca na dysku.
-}
-
-message askfspart2
-{Rozmiar partycji? }
 
 message cyl1024
 {Disklabel (zestaw partycji) ktory skonfigurowales ma glowna partycje, ktora
