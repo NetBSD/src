@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2002/05/06 13:35:17 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.7 2002/05/15 04:07:42 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ main()
 #endif
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
-		printf("bootxx: devopen failed\n");
+		putstr("bootxx: devopen failed\n");
 		return;
 	}
 
@@ -126,11 +126,11 @@ copyboot(fp, addr)
 		if ((fp->f_dev->dv_strategy)(fp->f_devdata, F_READ, blknum,
 					   bbinfo.bbi_block_size, buf, &n))
 		{
-			printf("bootxx: read failed\n");
+			putstr("bootxx: read failed\n");
 			return -1;
 		}
 		if (n != bbinfo.bbi_block_size) {
-			printf("bootxx: short read\n");
+			putstr("bootxx: short read\n");
 			return -1;
 		}
 		bcopy(buf, addr, bbinfo.bbi_block_size);
