@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.7 1996/04/11 07:47:41 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.8 1996/04/11 10:07:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ vm86_return(p, retval)
 	/*
 	 * We can't set the virtual flags in our real trap frame,
 	 * since it's used to jump to the signal handler.  Instead we
-	 * let sendsig() pull in the VM86_EFLAGS bits.
+	 * let sendsig() pull in the vm86_eflags bits.
 	 */
 	if (p->p_sigmask & sigmask(SIGURG)) {
 #ifdef DIAGNOSTIC
@@ -380,13 +380,14 @@ i386_vm86(p, args, retval)
 	register_t *retval;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vm86_kern vm86s;
 	int err;
 
 	if (err = copyin(args, &vm86s, sizeof(vm86s)))
 		return err;
 
-	p->p_addr->u_pcb.vm86_userp = (void *)args;
+	pcb->vm86_userp = (void *)args;
 
 	/*
 	 * Keep mask of flags we simulate to simulate a particular type of
@@ -396,17 +397,17 @@ i386_vm86(p, args, retval)
 	case VCPU_086:
 	case VCPU_186:
 	case VCPU_286:
-		VM86_FLAGMASK(p) = 0;
+		pcb->vm86_flagmask = 0;
 		break;
 	case VCPU_386:
-		VM86_FLAGMASK(p) = PSL_NT|PSL_IOPL;
+		pcb->vm86_flagmask = PSL_NT|PSL_IOPL;
 		break;
 	case VCPU_486:
-		VM86_FLAGMASK(p) = PSL_AC|PSL_NT|PSL_IOPL;
+		pcb->vm86_flagmask = PSL_AC|PSL_NT|PSL_IOPL;
 		break;
 	case VCPU_586:
 	default:
-		VM86_FLAGMASK(p) = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
+		pcb->vm86_flagmask = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
 		break;
 	}
 
