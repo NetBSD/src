@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.34 1997/03/10 23:01:43 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.35 1997/03/14 19:57:20 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -658,21 +658,6 @@ si_dma_alloc(ncr_sc)
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
 		panic("si_dma_alloc: xlen=0x%x\n", xlen);
-
-	/*
-	 * XXX SUN4 doesn't have this limitation?
-	 * Never attempt single transfers of more than 63k, because
-	 * our count register may be only 16 bits (an OBIO adapter).
-	 * This should never happen since already bounded by minphys().
-	 * XXX - Should just segment these...
-	 */
-	if (xlen > MAX_DMA_LEN) {
-		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
-#ifdef DEBUG
-		Debugger();
-#endif
-		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
-	}
 
 	/* Find free DMA handle.  Guaranteed to find one since we have
 	   as many DMA handles as the driver has processes. */
