@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.6 1994/06/29 06:31:34 cgd Exp $	*/
+/*	$NetBSD: cons.h,v 1.7 1994/10/26 17:56:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@ struct consdev {
 	int	(*cn_init)();	/* turn on as console */
 	int	(*cn_getc)();	/* kernel getchar interface */
 	int	(*cn_putc)();	/* kernel putchar interface */
+	void	(*cn_pollc)();	/* turn on and off polling */
 	dev_t	cn_dev;		/* major/minor of device */
 	short	cn_pri;		/* pecking order; the higher the better */
 };

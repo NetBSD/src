@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.18 1994/06/29 06:31:32 cgd Exp $	*/
+/*	$NetBSD: cons.c,v 1.19 1994/10/26 17:56:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -251,4 +251,20 @@ cnputc(c)
 		if (c == '\n')
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
 	}
+}
+
+void
+cnpollc(on)
+	int on;
+{
+	static int refcount = 0;
+
+	if (cn_tab == NULL)
+		return;
+	if (!on)
+		--refcount;
+	if (refcount == 0)
+		(*cn_tab->cn_pollc)(cn_tab->cn_dev, on);
+	if (on)
+		++refcount;
 }
