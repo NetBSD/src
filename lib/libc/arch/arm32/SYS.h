@@ -1,4 +1,4 @@
-/* $NetBSD: SYS.h,v 1.2 1996/05/12 20:01:54 mark Exp $ */
+/* $NetBSD: SYS.h,v 1.3 1996/08/07 17:39:44 mark Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,16 +41,17 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#ifdef __STDC__
 #define SYSCALL(x)	.text; .align 0; ENTRY(x) ; swi SYS_ ## x; bcs cerror;
 #define RSYSCALL(x)	SYSCALL(x) ; mov r15, r14
 #define PSEUDO(x, y)	.text; .align 0; ENTRY(x); swi SYS_ ## y; mov r15, r14
 
-#if 0
-#define	SYSCALL(x)	.text; .align 2; 2: jmp PIC_PLT(cerror); ENTRY(x); movl $(SYS_/**/x),%eax; int $0x80; jc 2b
-#define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); movl $(SYS_/**/y),%eax; int $0x80; ret
-#define	CALL(x,y)	call PIC_PLT(_/**/y); addl $4*x,%esp
+#else	/* !__STDC__ */
 
-#endif
+#define SYSCALL(x)	.text; .align 0; ENTRY(x) ; swi SYS_/**/x; bcs cerror;
+#define RSYSCALL(x)	SYSCALL(x) ; mov r15, r14
+#define PSEUDO(x, y)	.text; .align 0; ENTRY(x); swi SYS_/**/y; mov r15, r14
+
+#endif	/* __STDC__ */
 
 	.globl	cerror
