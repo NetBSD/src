@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.11 2000/06/26 19:41:20 pk Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.12 2000/08/24 22:00:04 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -507,12 +507,24 @@ prom_get_msgbuf(len, align)
 		cell_t phys_lo;
 	} args;
 	paddr_t addr;
+	int rooth;
+	int is_e250 = 1;
+
+	/* E250s tend to have buggy PROMs that break on test-method */
+	if ((rooth = OF_finddevice("/chosen")) != -1) {
+		char name[80];
+
+		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
+			if (strcmp(name, "SUNW,Ultra-250")) 
+				is_e250 = 0;
+		}
+	}
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (OF_test("test-method") == 0) {
+	if (!is_e250 && (OF_test("test-method") == 0)) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
 			args.name = ADR2CELL(&"call-method");
 			args.nargs = 5;
