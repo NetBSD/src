@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.11 1994/02/01 06:18:49 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.12 1994/02/01 06:26:59 mycroft Exp $
  */
 
 /*
@@ -197,7 +197,8 @@ void ed_stop __P((struct ed_softc *));
 
 #define inline
 
-void ds_getmcaf __P((...));
+u_long ds_crc __P((u_char *));
+void ds_getmcaf __P((struct ed_softc *, u_long *));
 
 void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
 static inline void ed_rint __P((struct ed_softc *));
@@ -2009,8 +2010,8 @@ ed_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ed_stop(ifp->if_unit); /* XXX for ds_setmcaf? */
-			ed_init(ifp->if_unit);
+			ed_stop(sc); /* XXX for ds_setmcaf? */
+			ed_init(sc);
 			error = 0;
 		}
 		break;
