@@ -242,6 +242,10 @@ typedef des_key_schedule bit_64;
 #define des_fixup_key_parity des_set_odd_parity
 #define des_check_key_parity check_parity
 
+void des_set_random_generator_seed(des_cblock *seed);
+int des_new_random_key(des_cblock *key);
+void des_init_random_number_generator(des_cblock *seed);
+
 #ifdef  __cplusplus
 }
 #endif
