@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.11 2001/02/22 18:38:05 uch Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.12 2001/06/10 12:37:43 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -204,7 +204,23 @@ vrpiuattach(parent, self, aux)
 		platid_mask_t *mask;
 		struct wsmouse_calibcoords coords;
 	    } calibrations[] = {
+		{ &platid_mask_MACH_NEC_MCR_700,
+		  { 0, 0, 799, 599,
+		    4,
+		    { { 115,  80,   0,   0 },
+		      { 115, 966,   0, 599 },
+		      { 912,  80, 799,   0 },
+		      { 912, 966, 799, 599 } } } },
+
 		{ &platid_mask_MACH_NEC_MCR_700A,
+		  { 0, 0, 799, 599,
+		    4,
+		    { { 115,  80,   0,   0 },
+		      { 115, 966,   0, 599 },
+		      { 912,  80, 799,   0 },
+		      { 912, 966, 799, 599 } } } },
+
+		{ &platid_mask_MACH_NEC_MCR_730,
 		  { 0, 0, 799, 599,
 		    4,
 		    { { 115,  80,   0,   0 },
