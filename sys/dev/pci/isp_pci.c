@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.64 2000/12/28 22:59:14 sommerfeld Exp $ */
+/* $NetBSD: isp_pci.c,v 1.65 2000/12/30 08:49:11 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -63,6 +63,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <uvm/uvm_extern.h>
+#include <sys/reboot.h>
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
@@ -335,7 +336,6 @@ isp_pci_attach(parent, self, aux)
 	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, NULL, NULL) == 0);
-
 	if (memh_valid) {
 		st = memt;
 		sh = memh;
@@ -471,12 +471,14 @@ isp_pci_attach(parent, self, aux)
 #ifdef	ISP_LOGDEFAULT
 	isp->isp_dblev = ISP_LOGDEFAULT;
 #else
-	isp->isp_dblev = ISP_LOGCONFIG|ISP_LOGWARN|ISP_LOGERR;
+	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
+	if (bootverbose)
+		isp->isp_dblev |= ISP_LOGCONFIG|ISP_LOGINFO;
 #ifdef	SCSIDEBUG
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0;
 #endif
 #endif
 
