@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.8 1998/08/25 00:12:16 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.9 1998/08/25 00:54:09 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.8 1998/08/25 00:12:16 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.9 1998/08/25 00:54:09 hubertf Exp $");
 #endif
 #endif
 
@@ -323,7 +323,7 @@ cleanup(int sig)
     if (!alreadyCleaning) {
     	alreadyCleaning = 1;
 	if (sig)
-	    printf("Signal %d received, cleaning up..\n", sig);
+	    printf("Signal %d received, cleaning up.\n", sig);
 	leave_playpen(home);
 	if (sig)
 	    exit(1);
