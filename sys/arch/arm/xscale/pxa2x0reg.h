@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.5 2004/09/24 17:30:22 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -326,7 +326,7 @@ struct pxa2x0_dma_desc {
 #define	GPIO_IS_GPIO_IN(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_IN)
 #define	GPIO_IS_GPIO_OUT(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_OUT)
 
-#define	GPIO_NPINS    81
+#define	GPIO_NPINS    85
 
 /*
  * memory controller
