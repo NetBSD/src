@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/04/12 14:52:57 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/04/26 15:50:44 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 # Required variables:
 #	IMAGE

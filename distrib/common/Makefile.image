@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.8 2002/04/12 04:50:01 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.9 2002/04/26 15:50:27 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -6,7 +6,7 @@
 
 #
 # Required variables:
-#	_SRC_TOP_	top level of src tree (set by <bsd.own.mk>)
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
 #	CRUNCHBIN	name of crunchgen(1)ed binary
 #	LISTS		list file(s) to use
 #	IMAGE		name of target image
@@ -53,7 +53,7 @@ ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	@echo "Creating image into ${.TARGET}..."
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	${MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
-	    -N ${_SRC_TOP_}/etc -o bsize=4096,fsize=512 \
+	    -N ${NETBSDSRCDIR}/etc -o bsize=4096,fsize=512 \
 	    -o optimization=space,minfree=0,nsectors=1,ntracks=128 \
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
@@ -65,7 +65,7 @@ CLEANFILES+=	${IMAGE} ${IMAGE}.tmp ${WORKBUILT} ${WORKSPEC} ${WORKSPEC}.tmp
 
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	( cd ${WORKDIR}; \
-	    GZIP=-9 ${PAX} -N ${_SRC_TOP_}/etc -wdzM < ${.OBJDIR}/${WORKSPEC} \
+	  GZIP=-9 ${PAX} -N ${NETBSDSRCDIR}/etc -wdzM < ${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
