@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.9 2003/12/13 23:13:41 thorpej Exp $
+#	$NetBSD: WALNUT,v 1.10 2003/12/13 23:24:47 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -223,19 +223,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-atabus* 	at pciide? channel ?
-atabus* 	at acardide? channel ?
-atabus* 	at aceride? channel ?
-atabus* 	at cmdide? channel ?
-atabus* 	at cypide? channel ?
-atabus* 	at hptide? channel ?
-atabus* 	at optiide? channel ?
-atabus* 	at piixide? channel ?
-atabus* 	at pdcide? channel ?
-atabus* 	at satalink? channel ?
-atabus* 	at siside? channel ?
-atabus* 	at slide? channel ?
-atabus* 	at viaide? channel ?
+atabus* 	at ata? channel ?
 wd*		at atabus? drive ? flags 0x0000
 
 atapibus* at atabus?
