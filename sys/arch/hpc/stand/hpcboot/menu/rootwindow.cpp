@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.19 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.20 2004/08/13 15:49:37 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -376,7 +376,7 @@ RootWindow::progress(const char *msg)
 {
 
 	if (msg)
-		Console::Instance()->print(TEXT("[progress] %s\n"), msg);
+		Console::Instance()->print(TEXT("[progress] %S\n"), msg);
 
 	SendMessage(_progress_bar->_window, PBM_STEPIT, 0, 0);
 }
