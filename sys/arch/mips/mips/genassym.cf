@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.2.3 2001/11/18 00:09:24 wdk Exp $
+#	$NetBSD: genassym.cf,v 1.25.2.4 2001/11/18 01:26:28 wdk Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -61,6 +61,7 @@ define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_PROC			offsetof(struct lwp, l_proc)
 
 # Process status constants
 define	LSONPROC		LSONPROC

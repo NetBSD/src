@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.72.2.3 2001/11/18 00:09:25 wdk Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.72.2.4 2001/11/18 01:26:28 wdk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -606,6 +606,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
  * Check pending asynchronous traps.
  */
 	lw	t0, _C_LABEL(curproc)
+	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
 	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
@@ -755,8 +756,9 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	lw	t1, P_MD_SYSCALL(a0)		# t1 = syscall
+	lw	t1, L_PROC(a0)			# t1 = l->l_proc
 	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
+	lw	t1, P_MD_SYSCALL(t1)		# t1 = syscall
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a3
@@ -773,6 +775,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
  * Check pending asynchronous traps.
  */
 	lw	t0, _C_LABEL(curproc)
+	lw	t0, L_PROC(t0)
 	lw	t0, P_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
@@ -1108,6 +1111,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	lw	v0, _C_LABEL(curproc)
 	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
+	lw	v0, L_PROC(v0)			# v0 = curproc->l_proc
 	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 /*

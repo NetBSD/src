@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.53.2.3 2001/11/18 00:09:24 wdk Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.53.2.4 2001/11/18 01:26:28 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -365,6 +365,8 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	lw	t0, _C_LABEL(curproc)		# t0 = curproc
 	nop
+	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
+	nop
 	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
 	nop
 	beq	t0, zero, 1f			# if no, skip ast processing
@@ -445,7 +447,9 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	move	ra, a3
 	sw	ra, CALLFRAME_RA(sp)
 #endif
-	lw	t1, P_MD_SYSCALL(a0)		# t1 = syscall
+	lw	t0, L_PROC(a0)			# t0 = curproc->l_proc
+	nop
+	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	ori	t0, a1, MIPS_SR_INT_IE		# turn on IEc, enable intr.
 	and	t0, t0, ~MIPS_SR_COP_1_BIT	# turn off FPU
 /*
@@ -457,6 +461,8 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
  * Check pending asynchronous traps.
  */
 	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	nop
+	lw	t0, L_PROC(t0)			# t0 = curproc->l_proc
 	nop
 	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
 	nop
@@ -641,6 +647,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
  */
 	lw	v0, _C_LABEL(curproc)		# v0 = curproc
 	addu	a1, sp, CALLFRAME_SIZ
+	lw	v0, L_PROC(v0)			# v0 = curproc->l_proc
 	lw	a0, FRAME_SR(a1)
 	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
