@@ -272,4 +272,4 @@ const device_descriptor hw_vm_device_descriptor[] = {
   { NULL },
 };
 
-#endif _HW_VM_C_
+#endif /* _HW_VM_C_ */

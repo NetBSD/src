@@ -100,4 +100,4 @@ const device_descriptor hw_trace_device_descriptor[] = {
   { NULL },
 };
 
-#endif _HW_TRACE_C_
+#endif /* _HW_TRACE_C_ */
