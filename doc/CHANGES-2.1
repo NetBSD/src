@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.48 2005/04/06 11:44:16 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.49 2005/04/06 12:22:14 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1082,4 +1082,50 @@ sys/ufs/ufs/ufs_bmap.c                          patch
 	Fix a silent truncation problem that could cause corruption with large
 	FFSv1 file systems.
 	[mycroft, ticket #1035]
+
+sys/nfs/files.nfs				1.4
+
+	The macro used for static server address is NFS_BOOTSTATIC_SERVADDR,
+	not NFS_BOOTSTATIC_SADDR. From Xen source distribution.
+	[bouyer, ticket #1036]
+
+sys/dev/raidframe/rf_desc.h			1.15
+sys/dev/raidframe/rf_driver.c			1.105
+sys/dev/raidframe/rf_driver.h			1.13
+sys/dev/raidframe/rf_netbsdkintf.c		1.183
+sys/dev/raidframe/rf_states.c			1.36
+
+	On an idea from Thor (tls@), do not fail a component if doing so would
+	render the RAID set completely dead.  Instead, we retry the IO a
+	maximum of RF_RETRY_THRESHOLD times (currently '5'), and then just
+	return an IO error if the IO fails.  This should reduce the damage
+	caused by having multiple disks appear to fail when the culprit is
+	really something else (power, controllers, etc.)
+	[oster, ticket #1038]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.184
+
+	Initialize parity_rewrite_stripes_done to remove the window where
+	bogus values could be returned at the start of parity rewriting.
+	[oster, ticket #1039]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.185
+
+	Don't allow -f to fail a disk while a reconstruction is taking place
+	since that would cause a panic.  (Problem noticed by dan@.)
+	[oster, ticket #1040]
+
+sys/dev/raidframe/rf_diskqueue.c		1.36
+
+	Only touch bufpool whilst in splbio(). (That should be the case
+	already, but this makes it explicit and safer in the case where
+	that changes for some reason.)
+	[oster, ticket #1041]
+
+usr.bin/window/wwiomux.c			1.11
+
+	. wait only for 10 ms instead of 100 ms before updating the screen
+	. fix a variable reuse bug
+	It has been broken since the conversion from select() to poll().
+	[aymeric, ticket #1400]
 
