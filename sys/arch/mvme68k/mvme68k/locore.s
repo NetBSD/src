@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9.4.1 1996/05/29 05:19:11 chuck Exp $	*/
+/*	$NetBSD: locore.s,v 1.9.4.2 1996/12/10 18:34:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -204,6 +204,7 @@ Lstploaddone:
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
+	RELOC(_prototc, a2)
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 Lenab1:
@@ -1667,7 +1668,7 @@ Lsboot: /* sboot */
 1:	jmp	0x400a			| tell sboot to reboot us
 
 	.data
-	.globl	_mmutype,_protorp
+	.globl	_mmutype,_protorp,_prototc
 _mmutype:
 	.long	-1		| default to MMU_68030
 _protorp:
@@ -1692,6 +1693,8 @@ fulltflush:
 	.long	0
 fullcflush:
 	.long	0
+_prototc:
+	.long	0		| prototype translation control
 #endif
 /* interrupt counters */
 	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
