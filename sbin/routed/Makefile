@@ -1,11 +1,13 @@
-#	from: @(#)Makefile	5.16 (Berkeley) 4/26/91
-#	$Id: Makefile,v 1.8 1994/01/28 00:38:59 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
+#	$Id: Makefile,v 1.9 1994/05/13 08:04:29 mycroft Exp $
 
 PROG=	routed
 SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
 	trace.c inet.c
 MAN8=	routed.0
-#SUBDIR=	query trace
+SUBDIR=	query trace
+DPADD=	${LIBCOMPAT}
+LDADD=	-lcompat
 
 .include <bsd.prog.mk>
 
