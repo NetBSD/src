@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.62 2002/09/30 14:15:47 agc Exp $ */
+/* $NetBSD: user.c,v 1.63 2002/10/01 02:50:51 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.62 2002/09/30 14:15:47 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.63 2002/10/01 02:50:51 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1304,7 +1304,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 		if (up->u_flags & F_PASSWORD) {
 			if (up->u_password != NULL) {
-				if (!valid_password_length(up->u_password) > 0) {
+				if (!valid_password_length(up->u_password)) {
 					(void) close(ptmpfd);
 					pw_abort();
 					errx(EXIT_FAILURE, "Invalid password: `%s'",
