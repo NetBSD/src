@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwvb.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
+/*	$NetBSD: refclock_wwvb.c,v 1.4 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * refclock_wwvb - clock driver for Spectracom WWVB receivers
@@ -253,6 +253,7 @@ wwvb_receive(rbufp)
 	char	syncchar;	/* synchronization indicator */
 	char	qualchar;	/* quality indicator */
 	char	leapchar;	/* leap indicator */
+	int tz = 0;
 
 #ifdef DEBUG
 	if (debug)
@@ -482,4 +483,6 @@ wwvb_poll(unit, peer)
 		pp->polls++;
 }
 
-#endif
+#else /* not (REFCLOCK && WWVB) */
+int refclock_wwvb_bs;
+#endif /* not (REFCLOCK && WWVB) */

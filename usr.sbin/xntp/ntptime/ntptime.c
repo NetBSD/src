@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.8 1998/04/01 15:01:18 christos Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.9 1998/08/12 14:11:52 christos Exp $	*/
 
 /*
  * NTP test program
@@ -23,6 +23,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
+#include <unistd.h>
 #include <setjmp.h>
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"
@@ -43,6 +44,9 @@
 #  endif
 #  ifdef HAVE___ADJTIMEX
 #   define ntp_adjtime(t)  __adjtimex((t))
+/* Hack hack hack 1998-Apr-29  JSP */
+#   define ntptimeval timex
+#   define ntp_gettime __adjtimex
 #  endif
 # endif /* NOT NTP_SYSCALLS_STD */
 #endif /* KERNEL_PLL */
@@ -75,6 +79,7 @@ extern int syscall	P((int, void *, ...));
 #endif /* NTP_SYSCALLS_LIBC */
 char *sprintb		P((u_int, char *));
 char *timex_state	P((int));
+int   main		P((int, char *[]));
 int debug = 0;
 
 #ifdef SIGSYS
@@ -89,8 +94,6 @@ static volatile int pll_control; /* (0) daemon, (1) kernel loop */
 
 char* progname;
 static char optargs[] = "cde:f:hm:o:rs:t:";
-
-int main P((int, char *[]));
 
 int
 main(argc, argv)
@@ -110,7 +113,8 @@ main(argc, argv)
   int cost	= 0;
   int rawtime	= 0;
 
-#ifdef __GNUC__	/* Avoid longjmp register clobbering */
+#ifdef __GNUC__
+  /* avoid vfork clobbering */
   (void) &cost;
   (void) &rawtime;
 #endif
@@ -270,6 +274,9 @@ main(argc, argv)
   /*
    * Fetch timekeeping data and display.
    */
+#ifdef HAVE___ADJTIMEX
+  ntv.modes = 0;
+#endif
   status = ntp_gettime(&ntv);
   if (status < 0)
     perror("ntp_gettime() call fails");

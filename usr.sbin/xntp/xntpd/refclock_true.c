@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.4 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -875,4 +875,6 @@ true_sample720()
 }
 #endif
 
-#endif /*defined(REFCLOCK) && defined(TRUETIME)*/
+#else /* not (REFCLOCK && TRUETIME) */
+int refclock_true_bs;
+#endif /* not (REFCLOCK && TRUETIME) */

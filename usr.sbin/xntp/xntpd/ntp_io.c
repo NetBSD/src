@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.7 1998/04/01 15:01:22 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.8 1998/08/12 14:11:53 christos Exp $	*/
 
 /*
  * xntp_io.c - input/output routines for xntpd.  The socket-opening code
@@ -526,7 +526,7 @@ create_sockets(port)
 	}
 #  endif /* not STREAMS_TLI */
 # endif /* not SYS_WINNT */
-#endif 0
+#endif /* 0 */
 
       (void)strncpy(inter_list[i].name, ifreq.ifr_name,
 		    sizeof(inter_list[i].name));
@@ -654,7 +654,7 @@ create_sockets(port)
    */
   resmask.sin_addr.s_addr = ~ (u_int32)0;
   for (i = 1; i < ninterfaces; i++)
-    restrict_addr(RESTRICT_FLAGS, &inter_list[i].sin, &resmask,
+    hack_restrict(RESTRICT_FLAGS, &inter_list[i].sin, &resmask,
 	     RESM_NTPONLY|RESM_INTERFACE, RES_IGNORE);
 
   any_interface = &inter_list[0];

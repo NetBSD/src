@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktypes.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.4 1998/08/12 14:11:49 christos Exp $	*/
 
 /*
  * Data for pretty printing clock types
@@ -70,6 +70,12 @@ struct clktype clktypes[] = {
 	    "ARCRON_MSF" },
 	{ REFCLK_SHM,		"Clock attached thru shared Memory (28)",
 	    "SHM" },
+        { REFCLK_PALISADE,      "Trimble Navigation Palisade GPS (29)",
+            "PALISADE" },
+        { REFCLK_ONCORE,        "Motorola UT Oncore GPS (30)",
+            "ONCORE" },
+        { REFCLK_GPS_JUPITER,   "Rockwell Jupiter GPS Receiver (31)",
+          "GPS_JUPITER" },
 	{ -1,			"", "" }
 };
 
