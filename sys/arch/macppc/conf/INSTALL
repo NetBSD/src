@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 1998/12/28 00:50:44 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.7 1999/01/17 11:49:56 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -70,6 +70,7 @@ wsdisplay* at ofb? console ?
 wskbd0	at akbd? console ?
 
 mc0	at obio0			# MACE ethernet
+bm0	at obio0			# bmac ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI
 scsibus0 at esp0
 
