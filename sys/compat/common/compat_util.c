@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.5 1996/10/12 02:12:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -36,10 +36,13 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
+#include <sys/exec.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+
+#include <vm/vm_param.h>
 
 #include <compat/common/compat_util.h>
 
@@ -168,4 +171,26 @@ bad2:
 bad:
 	free(buf, M_TEMP);
 	return error;
+}
+
+caddr_t
+stackgap_init(e)
+	struct emul *e;
+{
+
+#define szsigcode ((caddr_t)(e->e_esigcode - e->e_sigcode))
+	return STACKGAPBASE;
+#undef szsigcode
+}
+
+
+void *
+stackgap_alloc(sgp, sz)
+	caddr_t *sgp;
+	size_t sz;
+{
+	void *p = (void *) *sgp;
+
+	*sgp += ALIGN(sz);
+	return p;
 }
