@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.1 2002/07/05 13:31:33 scw Exp $	*/
+/*	$NetBSD: cerror.S,v 1.2 2003/03/24 14:29:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,30 +78,32 @@
 #if 0
 	RCSID("from: @(#)cerror.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.1 2002/07/05 13:31:33 scw Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.2 2003/03/24 14:29:34 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 
+/*
+ * Error code is in r2. Caller has already performed PIC_PROLOGUE.
+ * Original caller's return address is in r18.
+ * Must perform PIC_EPILOGUE before returning.
+ */
 ENTRY_NOPROFILE(__cerror)
-	movi	-1, r1
-ENTRY_NOPROFILE(__cerror_rv)
 #ifdef	_REENTRANT
-	addi	r15, -24, r15
-	st.q	r15, 0, r1
-	st.q	r15, 8, r2
-	pt/l	_C_LABEL(__errno), tr0
-	st.q	r15, 16, r18
+	addi	r15, -16, r15
+	st.q	r15, 0, r2
+	PIC_PTAL(_C_LABEL(__errno), r0, tr0)
+	st.q	r15, 8, r18
 	blink	tr0, r18
-	ld.q	r15, 16, r18
+	ld.q	r15, 8, r18
 	or	r2, r63, r0
-	ld.q	r15, 8, r2
-	ld.q	r15, 0, r1
-	addi	r15, 24, r15
+	ld.q	r15, 0, r2
+	addi	r15, 16, r15
 #else
-	LEA(_C_LABEL(errno), r0)
+	PIC_LEA(_C_LABEL(errno), r0)
 #endif
 	ptabs/l	r18, tr0
 	st.l	r0, 0, r2
-	or	r1, r63, r2
+	PIC_EPILOGUE
+	movi	-1, r2
 	blink	tr0, r63

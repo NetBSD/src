@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.1 2002/07/05 13:31:36 scw Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.2 2003/03/24 14:29:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.1 2002/07/05 13:31:36 scw Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.2 2003/03/24 14:29:35 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,6 +87,9 @@ WARN_REFERENCES(sigsuspend, \
 
 ENTRY(sigsuspend)
 	ld.l	r2, 0, r2
-	SYSCALL(compat_13_sigsuspend13)
+	SYSTRAP(compat_13_sigsuspend13)
 	ptabs/l	r18, tr0
+	beq/l	r0, r63, tr0
+	PIC_PROLOGUE
+	PIC_PTAL(_C_LABEL(__cerror), r0, tr0)
 	blink	tr0, r63
