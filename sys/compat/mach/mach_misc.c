@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.6 2002/11/01 20:04:40 jdolecek Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.7 2002/11/10 02:18:03 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.6 2002/11/01 20:04:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.7 2002/11/10 02:18:03 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,9 @@ mach_print_msg_header_t(mach_msg_header_t *mh) {
 
 int
 mach_sys_reply_port(struct proc *p, void *vv, register_t *r) {
-	*r = 0;
+	static int current_port = 0x80b;
+
+	*r = current_port++; /* XXX */
 	DPRINTF(("mach_sys_reply_port();\n"));
 	return 0;
 }
@@ -144,7 +146,7 @@ mach_sys_thread_self_trap(struct proc *p, void *v, register_t *r) {
 
 int
 mach_sys_task_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0;
+	*r = 0xa07; /* XXX */
 	DPRINTF(("mach_sys_task_self();\n"));
 	return 0;
 }
@@ -152,7 +154,7 @@ mach_sys_task_self_trap(struct proc *p, void *v, register_t *r) {
 
 int
 mach_sys_host_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0;
+	*r = 0x90b; /* XXX */
 	DPRINTF(("mach_sys_host_self();\n"));
 	return 0;
 }
@@ -162,6 +164,7 @@ int
 mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 	struct mach_sys_msg_overwrite_trap_args *ap = v;
 	int error;
+	struct mach_subsystem_namemap *namemap;
 #ifdef DEBUG_MACH
 	char buf[128];
 #endif
@@ -185,6 +188,14 @@ mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 #ifdef DEBUG_MACH
 			mach_print_msg_header_t(&mh);
 #endif /* DEBUG_MACH */
+			for (namemap = mach_namemap; 
+			    namemap->map_id; namemap++)
+				if (namemap->map_id == mh.msgh_id)
+					break;
+			if (namemap->map_id) {
+				DPRINTF(("mach_%s()\n", namemap->map_name));
+				return (*namemap->map_handler)(SCARG(ap, msg));
+			}
 		}
 		break;
 	default:
