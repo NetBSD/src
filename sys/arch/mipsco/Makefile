@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/08/12 22:57:55 wdk Exp $
+#	$NetBSD: Makefile,v 1.2 2000/08/13 19:25:13 soren Exp $
 
 # Makefile for mipsco tags file
 
@@ -7,11 +7,11 @@
 
 TMIPSCO=	../mipsco/tags
 SMIPSCO=	../mipsco/mipsco/*.[ch] ../mipsco/include/*.h \
-		../mipsco/dev/*.[ch]
+		../mipsco/obio/*.[ch]
 AMIPSCO=	../mipsco/mipsco/*.S
 
 # Directories in which to place tags links
-DMIPSCO=	dev include
+DMIPSCO=	obio include
 
 .include "../../kern/Make.tags.inc"
 
