@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.6 2001/02/04 08:37:33 minoura Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.7 2003/07/13 12:28:14 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,8 +171,8 @@ show_single(name)
 	char valuestr[MAXVALUELEN];
 
 	for (i = 0; i < number_of_props; i++) {
-		sprintf(fullname, "%s.%s",
-			properties[i].class, properties[i].node);
+		snprintf(fullname, sizeof(fullname), "%s.%s",
+		    properties[i].class, properties[i].node);
 		if (strcmp(name, fullname) == 0 || strcmp(name, properties[i].class) == 0) {
 			properties[i].print (&properties[i], valuestr);
 			if (!nflag)
@@ -272,8 +272,8 @@ help_single(name)
 	char valuestr[MAXVALUELEN];
 
 	for (i = 0; i < number_of_props; i++) {
-		sprintf(fullname, "%s.%s",
-			properties[i].class, properties[i].node);
+		snprintf(fullname, sizeof(fullname), "%s.%s",
+		    properties[i].class, properties[i].node);
 		if (strcmp(name, fullname) == 0) {
 			properties[i].print (&properties[i], valuestr);
 			if (!nflag)
