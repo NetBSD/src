@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/05 21:23:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2002/04/26 01:26:49 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ IMAGE1=		disk1of2
 IMAGE2=		disk2of2
 
 INSTKERNELDIR!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
-INSTKERNEL=	${INSTKERNELDIR}/netbsd.gz
+INSTKERNEL=	${INSTKERNELDIR}/netbsd.INSTALL.gz
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
