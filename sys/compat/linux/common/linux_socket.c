@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.30 2001/06/14 20:32:43 thorpej Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.31 2001/06/25 19:55:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -527,9 +527,7 @@ linux_getifhwaddr(p, retval, fd, data)
 		}
 	}
 
-	if (lreq.if_name[0] == 'e' &&
-	    lreq.if_name[1] == 't' &&
-	    lreq.if_name[2] == 'h') {
+	if (strncmp(lreq.if_name, "eth", 3) == 0) {
 		for (ifnum = 0, index = 3;
 		     lreq.if_name[index] != '\0' && index < IF_NAME_LEN;
 		     index++) {
