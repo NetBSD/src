@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.3 2003/07/31 23:47:07 jonathan Exp $ */
+/*	$NetBSD: crypto.c,v 1.4 2003/09/21 20:56:01 lha Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.3 2003/07/31 23:47:07 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.4 2003/09/21 20:56:01 lha Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -50,7 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.3 2003/07/31 23:47:07 jonathan Exp $");
   softintr_establish(IPL_SOFTNET, (void (*)(void*))fn, NULL)
   #define unregister_swi(lvl, fn)  softintr_disestablish(softintr_cookie)
   #define setsoftcrypto(x) softintr_schedule(x)
- #define nanouptime(tp) microtime((struct timeval*)(tp))
+
+static void nanouptime(struct timespec *);
+static void
+nanouptime(struct timespec *tp)
+{
+	struct timeval tv;
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, tp);
+}
+
 #endif
 
 #define	SESID2HID(sid)	(((sid) >> 32) & 0xffffffff)
@@ -152,7 +161,7 @@ SYSCTL_INT(_debug, OID_AUTO, crypto_timing, CTLFLAG_RW,
 	   &crypto_timing, 0, "Enable/disable crypto timing support");
 SYSCTL_STRUCT(_kern, OID_AUTO, crypto_stats, CTLFLAG_RW, &cryptostats,
 	    cryptostats, "Crypto system statistics");
-#endif __FreeBSD__
+#endif /* __FreeBSD__ */
 
 int
 crypto_init(void)
@@ -1224,6 +1233,6 @@ static moduledata_t crypto_mod = {
 
 MODULE_VERSION(crypto, 1);
 DECLARE_MODULE(crypto, crypto_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-#endif __FreeBSD__
+#endif /* __FreeBSD__ */
 
 
