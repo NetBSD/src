@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.14 1996/03/26 15:16:32 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.15 1996/10/30 00:04:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -39,22 +39,22 @@
  *
  */
 
-#define OBIO_KEYBD_MS     0x00000000
-#define OBIO_ZS           0x00020000
-#define OBIO_EEPROM       0x00040000
-#define OBIO_CLOCK        0x00060000
-#define OBIO_MEMERR       0x00080000
-#define OBIO_INTERREG     0x000A0000
-#define OBIO_INTEL_ETHER  0x000C0000
-#define OBIO_COLOR_MAP    0x000E0000
-#define OBIO_EPROM        0x00100000
-#define OBIO_AMD_ETHER    0x00120000
-#define OBIO_NCR_SCSI     0x00140000
-#define OBIO_RESERVED1    0x00160000
-#define OBIO_RESERVED2    0x00180000
-#define OBIO_IOX_BUS      0x001A0000
-#define OBIO_DES          0x001C0000
-#define OBIO_ECCREG       0x001E0000
+#define OBIO_KEYBD_MS     0x000000
+#define OBIO_ZS           0x020000
+#define OBIO_EEPROM       0x040000
+#define OBIO_CLOCK        0x060000
+#define OBIO_MEMERR       0x080000
+#define OBIO_INTERREG     0x0A0000
+#define OBIO_INTEL_ETHER  0x0C0000
+#define OBIO_COLOR_MAP    0x0E0000
+#define OBIO_EPROM        0x100000
+#define OBIO_AMD_ETHER    0x120000
+#define OBIO_NCR_SCSI     0x140000
+#define OBIO_RESERVED1    0x160000
+#define OBIO_RESERVED2    0x180000
+#define OBIO_IOX_BUS      0x1A0000
+#define OBIO_DES          0x1C0000
+#define OBIO_ECCREG       0x1E0000
 
 #define OBIO_KEYBD_MS_SIZE	0x00008
 #define OBIO_ZS_SIZE		0x00008
