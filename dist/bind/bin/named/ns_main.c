@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.3 1999/11/20 20:48:27 veego Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.4 1999/11/21 10:31:22 veego Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -1642,7 +1642,7 @@ opensocket_f() {
 
 	if (evSelectFD(ev, ds, EV_READ, datagram_read, NULL, &ds_evID) == -1)
 		ns_panic(ns_log_default, 1, "evSelectFD(fd %d): %s",
-			 (void *)ds, strerror(errno));
+			 ds, strerror(errno));
 	/* XXX: should probably use a different FileFunc that only accepts
 	 *	responses, since requests on this socket make no sense.
 	 */
