@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1997/11/27 10:18:09 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1997/12/15 08:00:23 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
+#include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -684,14 +685,38 @@ long dumplo = -1;			/* blocks */
 /*
  * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
- * in case there might be a disk label stored there. 
+ * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
 cpu_dumpconf()
 {
-	printf("cpu_dumpconf: TBD\n");
+	int nblks;	/* size of dump area */
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	dumpsize = physmem;
+
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
 }
 
 void
