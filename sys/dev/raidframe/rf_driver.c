@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.15 1999/08/14 03:10:03 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.16 1999/12/03 03:18:45 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -768,13 +768,8 @@ bp_in is a buf pointer.  void * to facilitate ignoring it outside the kernel
 		printf("DoAccess: raid addr %lu too large to access %lu sectors.  Max legal addr is %lu\n",
 		    (u_long) raidAddress, (u_long) numBlocks, (u_long) raidPtr->totalSectors);
 
-		if (type == RF_IO_TYPE_READ) {
-			IO_BUF_ERR(bp, ENOSPC, raidPtr->raidid);
-			return (ENOSPC);
-		} else {
-			IO_BUF_ERR(bp, ENOSPC, raidPtr->raidid);
-			return (ENOSPC);
-		}
+		IO_BUF_ERR(bp, ENOSPC, raidPtr->raidid);
+		return (ENOSPC);
 	}
 	desc = rf_AllocRaidAccDesc(raidPtr, type, raidAddress,
 	    numBlocks, lbufPtr, bp, paramDAG, paramASM,
