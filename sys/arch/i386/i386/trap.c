@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.25 1994/01/11 15:37:18 mycroft Exp $
+ *	$Id: trap.c,v 1.26 1994/01/11 19:12:07 mycroft Exp $
  */
 
 /*
@@ -164,9 +164,7 @@ trap(frame)
 	register struct pcb *pcb;
 	int type, code;
 	struct timeval sticks;
-#ifdef notyet
 	extern char fusubail[];
-#endif
 
 	cnt.v_trap++;
 
@@ -191,7 +189,7 @@ trap(frame)
 
 	/* fusubail is used by [fs]uswintr to avoid page faulting */
 	if (pcb->pcb_onfault &&
-	    (type != T_PAGEFLT /*|| pcb->pcb_onfault == fusubail*/)) {
+	    (type != T_PAGEFLT || pcb->pcb_onfault == fusubail)) {
 	    copyfault:
 		frame.tf_eip = (int)pcb->pcb_onfault;
 		return;
