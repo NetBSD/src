@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.3 2002/05/08 02:12:55 matt Exp $ */
+/*	$NetBSD: gemreg.h,v 1.4 2002/05/11 00:36:02 matt Exp $ */
 
 /*
  * 
@@ -204,13 +204,14 @@
 
 /* GEM_RX_PAUSE_THRESH register bits -- sizes in multiples of 64 bytes */
 #define	GEM_RX_PTH_XOFF_THRESH	0x000001ff
-#define	GEM_RX_PTH_XON_THRESH	0x07fc0000
+#define	GEM_RX_PTH_XON_THRESH	0x001ff000
 
 
 /* GEM_RX_BLANKING register bits */
 #define	GEM_RX_BLANKING_PACKETS	0x000001ff	/* Delay intr for x packets */
-#define	GEM_RX_BLANKING_TIME	0x03fc0000	/* Delay intr for x ticks */
-/* One tick is 1048 PCI clocs, or 16us at 66MHz */
+#define	GEM_RX_BLANKING_TIME	0x000ff000	/* Delay intr for x ticks */
+#define	GEM_RX_BLANKING_TIME_SHIFT 12
+/* One tick is 2048 PCI clocks, or 16us at 66MHz */
 
 
 /* GEM_MAC registers */
@@ -475,6 +476,8 @@
 #define	GEM_MII_DATAPATH_SERDES	0x00000002	/* Use PCS via 10bit interfac */
 #define	GEM_MII_DATAPATH_MII	0x00000004	/* Use MII, not PCS */
 #define	GEM_MII_DATAPATH_MIIOUT	0x00000008	/* enable serial output on GMII */
+#define GEM_MII_DATAPATH_BITS	"\177\020"	\
+				"b\0SERIAL\0b\1SERDES\0b\2MII\0b\3MIIOUT\0\0"
 
 
 /* GEM_MII_SLINK_CONTROL reg */
