@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.5 1997/03/13 04:07:47 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.6 1997/03/16 00:37:00 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -88,7 +88,10 @@ static struct ispmdvec mdvec = {
 #define	PCI_QLOGIC_ISP	\
 	((PCI_PRODUCT_QLOGIC_ISP1020 << 16) | PCI_VENDOR_QLOGIC)
 
-#define BASEADDR	PCI_MAPREG_START
+#define IO_MAP_REG	0x10
+#define MEM_MAP_REG	0x14
+
+int isp_pci_prefer_io = 0;	/* prefer to map via I/O (patchable data) */
 
 
 #ifdef	__BROKEN_INDIRECT_CONFIG
@@ -100,8 +103,8 @@ static void isp_pci_attach __P((struct device *, struct device *, void *));
 
 struct isp_pcisoftc {
 	struct ispsoftc		pci_isp;
-	bus_space_tag_t		pci_iot;
-	bus_space_handle_t	pci_ioh;
+	bus_space_tag_t		pci_st;
+	bus_space_handle_t	pci_sh;
 	void *			pci_ih;
 };
 
@@ -136,24 +139,41 @@ isp_pci_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
-	bus_addr_t iobase;
-	bus_size_t iosize;
-	bus_space_handle_t ioh;
+	bus_addr_t busbase;
+	bus_size_t bussize;
+	bus_space_tag_t st;
+	bus_space_handle_t sh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	int cacheable;
 
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, BASEADDR, &iobase, &iosize)) {
-		printf(" unable to find PCI base\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh)) {
-		printf(": unable to map registers\n");
-		return;
+	if (isp_pci_prefer_io) {
+		if (pci_io_find(pa->pa_pc, pa->pa_tag, IO_MAP_REG, &busbase,
+		    &bussize)) {
+			printf(": unable to find PCI I/O base\n");
+			return;
+		}
+		st = pa->pa_iot;
+		if (bus_space_map(st, busbase, bussize, 0, &sh)) {
+			printf(": unable to map I/O registers\n");
+			return;
+		}
+	} else {
+		if (pci_mem_find(pa->pa_pc, pa->pa_tag, MEM_MAP_REG, &busbase,
+		    &bussize, &cacheable)) {
+			printf(": unable to find PCI memory base\n");
+			return;
+		}
+		st = pa->pa_memt;
+		if (bus_space_map(st, busbase, bussize, 0, &sh)) {
+			printf(": unable to map memory registers\n");
+			return;
+		}
 	}
 	printf("\n");
 
-	pcs->pci_iot = pa->pa_iot;
-	pcs->pci_ioh = ioh;
+	pcs->pci_st = st;
+	pcs->pci_sh = sh;
 	pcs->pci_isp.isp_mdvec = &mdvec;
 	isp_reset(&pcs->pci_isp);
 	if (pcs->pci_isp.isp_state != ISP_RESETSTATE) {
@@ -221,7 +241,7 @@ isp_pci_rd_reg(isp, regoff)
 	}
 	regoff &= 0xff;
 	offset += regoff;
-	return bus_space_read_2(pcs->pci_iot, pcs->pci_ioh, offset);
+	return bus_space_read_2(pcs->pci_st, pcs->pci_sh, offset);
 }
 
 static void
@@ -247,7 +267,7 @@ isp_pci_wr_reg(isp, regoff, val)
 	}
 	regoff &= 0xff;
 	offset += regoff;
-	bus_space_write_2(pcs->pci_iot, pcs->pci_ioh, offset, val);
+	bus_space_write_2(pcs->pci_st, pcs->pci_sh, offset, val);
 }
 
 static vm_offset_t
