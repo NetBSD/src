@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.6 1997/11/13 03:16:53 mycroft Exp $	*/
+/*	$NetBSD: gdt.h,v 1.6.10.1 1999/06/21 00:50:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct pmap;
+
 void gdt_init __P((void));
 void tss_alloc __P((struct pcb *));
 void tss_free __P((struct pcb *));
-void ldt_alloc __P((struct pcb *, union descriptor *, size_t));
-void ldt_free __P((struct pcb *));
+void ldt_alloc __P((struct pmap *, union descriptor *, size_t));
+void ldt_free __P((struct pmap *));

@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.7 1998/01/23 19:13:28 thorpej Exp $ */
+/* $NetBSD: dev_net.c,v 1.7.10.1 1999/06/21 00:46:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,6 +60,9 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
 #include <lib/libsa/nfs.h>
+
+#include <lib/libkern/libkern.h>
+
 #include "dev_net.h"
 
 #ifndef SUN_BOOTPARAMS

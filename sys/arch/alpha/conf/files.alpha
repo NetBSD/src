@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.100 1999/02/18 21:27:54 mycroft Exp $
+# $NetBSD: files.alpha,v 1.100.4.1 1999/06/21 00:46:08 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -66,7 +66,6 @@ include "dev/mii/files.mii"
 #
 
 include "dev/scsipi/files.scsipi"
-major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
 
@@ -430,6 +429,7 @@ file	arch/alpha/alpha/compat_13_machdep.c	compat_13
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
+file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.6.2.1 1999/05/06 19:42:17 perry Exp $	*/
+/*	$NetBSD: akbd.c,v 1.6.2.1.2.1 1999/06/21 00:51:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -171,7 +171,7 @@ akbdattach(parent, self, aux)
 			adbinfo.siDataAreaAddr = (Ptr)0;
 		} else {
 			printf("extended keyboard\n");
-#ifdef notyet  
+#ifdef notyet
 			blinkleds(sc);
 #endif
 		}
@@ -226,6 +226,9 @@ akbdattach(parent, self, aux)
 		break;
 	case ADB_PBJPKBD:
 		printf("PowerBook keyboard (Japanese layout)\n");
+		break;
+	case ADB_PBG3JPKBD:
+		printf("PowerBook G3 keyboard (Japanese layout)\n");
 		break;
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/02/13 02:54:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 1999/06/21 00:50:03 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -16,14 +16,16 @@ CPPFLAGS+= -DCOMPAT_OLDBOOT -DXMS
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
-CFLAGS+= -Wall
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
 # XXX should go into library
-SRCS+= getopt.c ls.c
+SRCS+= getopt.c
 .PATH: ${.CURDIR}/../libsa
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
+
+VERSIONFILE= ${.CURDIR}/version
 
 .include "../Makefile.booters"

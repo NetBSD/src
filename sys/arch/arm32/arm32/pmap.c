@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59.2.1 1999/04/16 16:15:32 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59.2.1.2.1 1999/06/21 00:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1311,28 +1311,6 @@ pmap_virtual_space(start, end)
 
 
 /*
- * void pmap_pageable(pmap_t pmap, vm_offset_t sva, vm_offset_t eva,
- *   boolean_t pageable)
- *  
- * Make the specified pages (by pmap, offset) pageable (or not) as requested.
- *
- * A page which is not pageable may not take a fault; therefore, its
- * page table entry must remain valid for the duration.
- *
- * This routine is merely advisory; pmap_enter will specify that these
- * pages are to be wired down (or not) as appropriate.
- */
- 
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t pmap;
-	vm_offset_t sva;
-	vm_offset_t eva;
-	boolean_t pageable;
-{
-}
-
-/*
  * Activate the address space for the specified process.  If the process
  * is the current process, load the new MMU context.
  */
@@ -2247,18 +2225,17 @@ pmap_page_protect(phys, prot)
 
 
 /*
- * Routine:	pmap_change_wiring
- * Function:	Change the wiring attribute for a map/virtual-address
+ * Routine:	pmap_unwire
+ * Function:	Clear the wired attribute for a map/virtual-address
  *		pair.
  * In/out conditions:
  *		The mapping must already exist in the pmap.
  */
 
 void
-pmap_change_wiring(pmap, va, wired)
+pmap_unwire(pmap, va)
 	pmap_t pmap;
 	vm_offset_t va;
-	boolean_t wired;
 {
 	pt_entry_t *pte;
 	vm_offset_t pa;
@@ -2283,7 +2260,7 @@ pmap_change_wiring(pmap, va, wired)
 		return;
 	pv = &vm_physmem[bank].pmseg.pvent[off];
 	/* Update the wired bit in the pv entry for this page. */
-	(void) pmap_modify_pv(pmap, va, pv, PT_W, wired ? PT_W : 0);
+	(void) pmap_modify_pv(pmap, va, pv, PT_W, 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.38.2.3 1999/04/19 04:25:33 cjs Exp $	*/
+/*	$NetBSD: idesc.c,v 1.38.2.3.2.1 1999/06/21 00:46:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.45 1999/03/26 23:41:26 mycroft Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.45.4.1 1999/06/21 00:46:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 1999/03/26 23:41:26 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45.4.1 1999/06/21 00:46:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,11 +139,12 @@ cpu_exit(p)
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
-	int i;
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -153,16 +154,6 @@ cpu_fork(p1, p2)
 	 * swap to it easily.
 	 */
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
-
-	/*
-	 * Simulate a write to the process's U-area pages,
-	 * so that the system doesn't lose badly.
-	 * (If this isn't done, the kernel can't read or
-	 * write the kernel stack.  "Ouch!")
-	 */
-	for (i = 0; i < UPAGES; i++)
-		pmap_emulate_reference(p2, (vaddr_t)up + i * PAGE_SIZE,
-		    0, 1);
 
 	/*
 	 * Copy floating point state from the FP chip to the PCB
@@ -219,6 +210,12 @@ cpu_fork(p1, p2)
 		p2tf->tf_regs[FRAME_V0] = p1->p_pid;	/* parent's pid */
 		p2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		p2tf->tf_regs[FRAME_A4] = 1;		/* is child */
+
+		/*
+		 * If specificed, give the child a different stack.
+		 */
+		if (stack != NULL)
+			p2tf->tf_regs[FRAME_SP] = (u_long)stack + stacksize;
 
 		/*
 		 * Arrange for continuation at child_return(), which
@@ -278,23 +275,12 @@ cpu_swapin(p)
 	register struct proc *p;
 {
 	struct user *up = p->p_addr;
-	int i;
 
 	/*
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
 	p->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
-
-	/*
-	 * Simulate a write to the process's U-area pages,
-	 * so that the system doesn't lose badly.
-	 * (If this isn't done, the kernel can't read or
-	 * write the kernel stack.  "Ouch!")
-	 */
-	for (i = 0; i < UPAGES; i++)
-		pmap_emulate_reference(p, (vaddr_t)up + i * PAGE_SIZE,
-		    0, 1);
 }
 
 /*
@@ -362,22 +348,9 @@ pagemove(from, to, size)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
- *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the useriomap
- * (a name with only slightly more meaning than "kernelmap")
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
@@ -409,8 +382,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

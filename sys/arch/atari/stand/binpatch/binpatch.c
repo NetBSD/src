@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.2.8.1 1999/04/07 08:12:41 pk Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.2.8.1.2.1 1999/06/21 00:48:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps

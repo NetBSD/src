@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.15 1999/04/05 03:42:50 cgd Exp $
+# $NetBSD: Makefile.inc,v 1.15.4.1 1999/06/21 00:46:10 thorpej Exp $
 
 .include <bsd.own.mk>
 
-BINDIR=			/usr/mdec
+BINDIR?=		/usr/mdec
 WARNS?=			1
 
 MKMAN=			no

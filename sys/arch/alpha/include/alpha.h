@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.2 1999/02/23 03:20:04 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.2.2.1 1999/06/21 00:46:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,6 @@
 
 #ifndef _ALPHA_H_
 #define _ALPHA_H_
-#include <machine/bus.h>
 
 /*
  * CTL_MACHDEP definitions.
@@ -68,6 +67,8 @@
 }
 
 #ifdef _KERNEL
+
+#include <machine/bus.h>
 
 struct pcb;
 struct proc;

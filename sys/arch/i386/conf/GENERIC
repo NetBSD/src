@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.231.2.1 1999/04/28 14:25:15 perry Exp $
+#	$NetBSD: GENERIC,v 1.231.2.1.2.1 1999/06/21 00:49:55 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -93,6 +93,7 @@ file-system 	EXT2FS		# second extended file system (linux)
 file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
+file-system 	NTFS		# Windows/NT file system
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
@@ -320,6 +321,7 @@ aha*	at isapnp? 			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
+adv0	at isa? port ? irq ? drq ?	# AdvanSys APB-514[02]
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha1	at isa? port 0x334 irq ? drq ?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
@@ -373,8 +375,11 @@ wdc*	at isapnp?
 wdc*	at pcmcia? function ?
 
 # ISA ST506, ESDI, and IDE controllers
-wdc0	at isa? port 0x1f0 irq 14
-wdc1	at isa? port 0x170 irq 15
+# Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
+# fall back to 16bits I/O if 32bits I/O are not functionnal).
+# Some controllers pass the initial 32bit test, but will fail later.
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -538,6 +543,7 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 # ISA audio devices
 # the "aria" probe might give false hits
 #aria0	at isa? port 0x290 irq 10 		# Aria
+#ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System

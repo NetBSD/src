@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.3 1999/03/26 22:50:22 mhitch Exp $	*/
+/*	$NetBSD: cbiiisc.c,v 1.3.4.1 1999/06/21 00:46:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -117,7 +117,7 @@ cbiiiscattach(pdp, dp, auxp)
 
 	sc = (struct siop_softc *)dp;
 	sc->sc_siopp = rp = ztwomap(0xf40000);
-	siopng_dump_registers(sc);
+	/* siopng_dump_registers(sc); */
 
 	/*
 	 * CTEST7 = 00
@@ -145,6 +145,9 @@ cbiiiscattach(pdp, dp, auxp)
 	sc->sc_link.type = BUS_SCSI;
 
 	siopnginitialize(sc);
+
+	if (sc->sc_link.scsipi_scsi.max_target < 0)
+		return;
 
 	sc->sc_isr.isr_intr = cbiiisc_dmaintr;
 	sc->sc_isr.isr_arg = sc;

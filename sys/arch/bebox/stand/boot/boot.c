@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: boot.c,v 1.6.4.1 1999/06/21 00:49:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -278,7 +278,7 @@ exec_kernel(fd, howto)
 			printf("read text error: %s\n", strerror(errno));
 			return;
 		}
-		syncicache((void *)phdr.p_vaddr, phdr.p_filesz);
+		__syncicache((void *)phdr.p_vaddr, phdr.p_filesz);
 
 		/* Zero out bss. */
 		if (phdr.p_filesz < phdr.p_memsz) {

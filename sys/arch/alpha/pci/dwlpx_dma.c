@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.12.6.1 1999/04/07 08:12:40 pk Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.12.6.1.2.1 1999/06/21 00:46:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.12.6.1 1999/04/07 08:12:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.12.6.1.2.1 1999/06/21 00:46:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

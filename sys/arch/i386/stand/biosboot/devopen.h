@@ -1,3 +1,3 @@
-/* $NetBSD: devopen.h,v 1.1 1999/04/14 11:45:39 drochner Exp $ */
+/* $NetBSD: devopen.h,v 1.1.2.1 1999/06/21 00:50:03 thorpej Exp $ */
 
 int bios2dev __P((int, char **, unsigned int *));

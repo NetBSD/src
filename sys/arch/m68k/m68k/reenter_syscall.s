@@ -1,4 +1,4 @@
-/*	$NetBSD: reenter_syscall.s,v 1.1 1999/04/19 20:58:37 kleink Exp $	*/
+/*	$NetBSD: reenter_syscall.s,v 1.1.2.1 1999/06/21 00:50:30 thorpej Exp $	*/
 
 /*
  * Written by ITOH Yasufumi.

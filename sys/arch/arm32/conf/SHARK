@@ -1,5 +1,5 @@
-#	$NetBSD: SHARK,v 1.21 1999/03/27 07:11:36 explorer Exp $
-# From:  NetBSD: GENERIC,v 1.53 1999/01/23 22:18:42 sommerfe Exp
+#	$NetBSD: SHARK,v 1.21.4.1 1999/06/21 00:47:32 thorpej Exp $
+# From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
 #
