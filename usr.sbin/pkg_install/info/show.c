@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.12.2.2 1999/09/13 22:16:22 he Exp $	*/
+/*	$NetBSD: show.c,v 1.12.2.3 1999/12/20 15:13:15 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.12.2.2 1999/09/13 22:16:22 he Exp $");
+__RCSID("$NetBSD: show.c,v 1.12.2.3 1999/12/20 15:13:15 he Exp $");
 #endif
 #endif
 
@@ -74,14 +74,14 @@ typedef struct show_t {
  * pl_ent_t constants
  */
 static show_t showv[] = {
-	{PLIST_FILE, "%s", "File: %s"},
+	{PLIST_FILE, "%s", "\tFile: %s"},
 	{PLIST_CWD, "@cwd %s", "\tCWD to: %s"},
 	{PLIST_CMD, "@exec %s", "\tEXEC '%s'"},
 	{PLIST_CHMOD, "@chmod %s", "\tCHMOD to %s"},
 	{PLIST_CHOWN, "@chown %s", "\tCHOWN to %s"},
 	{PLIST_CHGRP, "@chgrp %s", "\tCHGRP to %s"},
 	{PLIST_COMMENT, "@comment %s", "\tComment: %s"},
-	{PLIST_IGNORE, NULL, NULL},
+	{PLIST_IGNORE, "@ignore", "Ignore next file:"},
 	{PLIST_NAME, "@name %s", "\tPackage name: %s"},
 	{PLIST_UNEXEC, "@unexec %s", "\tUNEXEC '%s'"},
 	{PLIST_SRC, "@src: %s", "\tSRC to: %s"},
@@ -175,6 +175,7 @@ show_plist(char *title, package_t *plist, pl_ent_t type)
 				    p->name ? p->name : "(clear default)");
 				break;
 			case PLIST_IGNORE:
+				printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose);
 				ign = TRUE;
 				break;
 			case PLIST_IGNORE_INST:
