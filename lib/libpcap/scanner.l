@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.16 2004/06/25 12:22:23 itojun Exp $	*/
+/*	$NetBSD: scanner.l,v 1.17 2004/09/27 23:02:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,21 +26,39 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/scanner.l,v 1.95.2.3 2004/03/28 21:45:33 fenner Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.16 2004/06/25 12:22:23 itojun Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.17 2004/09/27 23:02:53 dyoung Exp $");
 #endif
 #endif
 
-#include <sys/types.h>
-#include <sys/time.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <ctype.h>
-#include <unistd.h>
+#include <string.h>
 
 #include "pcap-int.h"
 
 #include "gencode.h"
+#ifdef INET6
+#ifdef WIN32
+#include <pcap-stdinc.h>
+
+#ifdef __MINGW32__
+#include "IP6_misc.h"
+#endif
+#else /* WIN32 */
+#include <sys/socket.h>	/* for "struct sockaddr" in "struct addrinfo" */
+#include <netdb.h>	/* for "struct addrinfo" */
+#endif /* WIN32 */
+
+/* Workaround for AIX 4.3 */
+#if !defined(AI_NUMERICHOST)
+#define AI_NUMERICHOST 0x04
+#endif
+#endif /*INET6*/
 #include <pcap-namedb.h>
 #ifdef INET6
 #include <netdb.h>
@@ -49,7 +67,6 @@ __RCSID("$NetBSD: scanner.l,v 1.16 2004/06/25 12:22:23 itojun Exp $");
 #endif /*INET6*/
 #include "grammar.h"
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
@@ -59,22 +76,10 @@ static inline int xdtoi(int);
 
 #ifdef FLEX_SCANNER
 #define YY_NO_UNPUT
-#undef YY_INPUT
-#define YY_INPUT(buf, result, max)\
- {\
-	char *src = in_buffer;\
-	int i;\
-\
-	if (*src == 0)\
-		result = YY_NULL;\
-	else {\
-		for (i = 0; *src && i < max; ++i)\
-			buf[i] = *src++;\
-		in_buffer += i;\
-		result = i;\
-	}\
- }
+static YY_BUFFER_STATE in_buffer;
 #else
+static char *in_buffer;
+
 #undef getc
 #define getc(fp)  (*in_buffer == 0 ? EOF : *in_buffer++)
 #endif
@@ -84,15 +89,18 @@ static inline int xdtoi(int);
 extern YYSTYPE yylval;
 #endif
 
-static char *in_buffer;
-
 %}
 
 N		([0-9]+|(0X|0x)[0-9A-Fa-f]+)
 B		([0-9A-Fa-f][0-9A-Fa-f]?)
 W		([0-9A-Fa-f][0-9A-Fa-f]?[0-9A-Fa-f]?[0-9A-Fa-f]?)
 
-%a 3000
+%a 16000
+%o 19000
+%e 6000
+%k 4000
+%p 25000
+%n 2000
 
 V680		{W}:{W}:{W}:{W}:{W}:{W}:{W}:{W}
 
@@ -177,10 +185,11 @@ dst		return DST;
 src		return SRC;
 
 link|ether|ppp|slip  return LINK;
-fddi		return LINK;
+fddi|tr|wlan	return LINK;
 arp		return ARP;
 rarp		return RARP;
 ip		return IP;
+sctp		return SCTP;
 tcp		return TCP;
 udp		return UDP;
 icmp		return ICMP;
@@ -189,21 +198,55 @@ igrp		return IGRP;
 pim		return PIM;
 vrrp		return VRRP;
 
-ip6		return IPV6;
-icmp6		return ICMPV6;
+ip6		{
+#ifdef INET6
+		return IPV6;
+#else
+		bpf_error("%s not supported", yytext);
+#endif
+		}
+icmp6		{
+#ifdef INET6
+		return ICMPV6;
+#else
+		bpf_error("%s not supported", yytext);
+#endif
+		}
 ah		return AH;
 esp		return ESP;
 
 atalk		return ATALK;
+aarp		return AARP;
 decnet		return DECNET;
 lat		return LAT;
 sca		return SCA;
 moprc		return MOPRC;
 mopdl		return MOPDL;
 
+iso		return ISO;
+esis		return ESIS;
+es-is		return ESIS;
+isis		return ISIS;
+is-is		return ISIS;
+l1              return L1;
+l2              return L2;
+iih             return IIH;
+lsp             return LSP;
+snp             return SNP;
+csnp            return CSNP;
+psnp            return PSNP;
+
+clnp		return CLNP;
+
+stp		return STP;
+
+ipx		return IPX;
+
+netbeui		return NETBEUI;
+
 host		return HOST;
 net		return NET;
-mask		return MASK;
+mask		return NETMASK;
 port		return PORT;
 proto		return PROTO;
 protochain	{
@@ -218,7 +261,7 @@ gateway		return GATEWAY;
 
 less		return LESS;
 greater		return GREATER;
-byte		return BYTE;
+byte		return CBYTE;
 broadcast	return TK_BROADCAST;
 multicast	return TK_MULTICAST;
 
@@ -229,7 +272,23 @@ not		return '!';
 len|length	return LEN;
 inbound		return INBOUND;
 outbound	return OUTBOUND;
+
 vlan		return VLAN;
+
+lane		return LANE;
+llc		return LLC;
+metac		return METAC;
+bcc		return BCC;
+oam		return OAM;
+oamf4		return OAMF4;
+oamf4ec		return OAMF4EC;
+oamf4sc		return OAMF4SC;
+sc		return SC;
+ilmic		return ILMIC;
+vpi		return VPI;
+vci		return VCI;
+connectmsg	return CONNECTMSG;
+metaconnect	return METACONNECT;
 
 on|ifname	return PF_IFNAME;
 rset|ruleset	return PF_RSET;
@@ -238,7 +297,7 @@ srnr|subrulenum	return PF_SRNR;
 reason		return PF_REASON;
 action		return PF_ACTION;
 
-[ \n\t]			;
+[ \r\n\t]		;
 [+\-*/:\[\]!<>()&|=]	return yytext[0];
 ">="			return GEQ;
 "<="			return LEQ;
@@ -262,7 +321,7 @@ ${B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
 			  if (getaddrinfo(yytext, NULL, &hints, &res))
 				bpf_error("bogus IPv6 address %s", yytext);
 			  else {
-				yylval.e = sdup((char *)yytext); return HID6;
+				yylval.s = sdup((char *)yytext); return HID6;
 			  }
 #else
 			  bpf_error("IPv6 address %s not supported", yytext);
@@ -293,18 +352,35 @@ tcp-rst			{ yylval.i = 0x04; return NUM; }
 tcp-push		{ yylval.i = 0x08; return NUM; }
 tcp-ack			{ yylval.i = 0x10; return NUM; }
 tcp-urg			{ yylval.i = 0x20; return NUM; }
-[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
+[A-Za-z0-9]([-_.A-Za-z0-9]*[.A-Za-z0-9])? {
 			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
-[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
-			bpf_error("illegal token: %s\n", yytext); }
+[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+ {
+			bpf_error("illegal token: %s", yytext); }
 .			{ bpf_error("illegal char '%c'", *yytext); }
 %%
 void
 lex_init(buf)
 	char *buf;
 {
+#ifdef FLEX_SCANNER
+	in_buffer = yy_scan_string(buf);
+#else
 	in_buffer = buf;
+#endif
+}
+
+/*
+ * Do any cleanup necessary after parsing.
+ */
+void
+lex_cleanup()
+{
+#ifdef FLEX_SCANNER
+	if (in_buffer != NULL)
+		yy_delete_buffer(in_buffer);
+	in_buffer = NULL;
+#endif
 }
 
 /*
@@ -356,4 +432,3 @@ stoi(s)
 
 	return n;
 }
-
