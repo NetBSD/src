@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.15 1999/11/18 23:32:27 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.16 2000/01/16 10:27:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -94,6 +94,8 @@ typedef struct ohci_softc {
 	int sc_id_vendor;
 
 	void *sc_powerhook;
+	void *sc_shutdownhook;		/* cookie from shutdown hook */
+
 	device_ptr_t sc_child;
 } ohci_softc_t;
 
