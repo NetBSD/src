@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.2 1997/06/12 17:35:21 mrg Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.3 1997/06/12 21:55:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -39,15 +39,14 @@
 
 #include <vm/vm_swap.h>
 
-#ifdef COMPAT_12
 int
-compat_12_sys_swapon(p, v, retval)
+sys_swapon(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct sys_swapctl_args ua;
-	struct compat_12_sys_swapon_args /* {
+	struct sys_swapon_args /* {
 		syscallarg(const char *) name;
 	} */ *uap = v;
 
@@ -56,4 +55,3 @@ compat_12_sys_swapon(p, v, retval)
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(p, &ua, retval));
 }
-#endif
