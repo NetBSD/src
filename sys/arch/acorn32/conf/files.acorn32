@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.12 2002/06/16 12:11:23 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.13 2002/06/16 12:14:30 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -8,9 +8,6 @@ maxusers 2 8 64
 
 # Maintain Interrupt statistics
 defflag	IRQSTATS
-
-# X server support in console drivers
-defflag	XSERVER
 
 #
 # predefine some variables ... not that we have one but the arm framework
