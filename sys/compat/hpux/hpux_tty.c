@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.18 2001/05/30 11:37:24 mrg Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.19 2001/06/14 20:32:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -520,11 +520,12 @@ getsettty(p, fdes, com, cmarg)
 	struct sgttyb sb;
 	int error;
 
-	if (((unsigned)fdes) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fdes]) == NULL)
+	if ((fp = fd_getfile(fdp, fdes)) == NULL)
 		return (EBADF);
+
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
 		return (EBADF);
+
 	if (com == HPUXTIOCSETP) {
 		if ((error = copyin(cmarg, (caddr_t)&hsb, sizeof hsb)))
 			return (error);
