@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.112 2000/12/31 19:06:40 castor Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.113 2001/05/02 21:23:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.112 2000/12/31 19:06:40 castor Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.113 2001/05/02 21:23:03 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -466,6 +466,15 @@ mips_vector_init()
 		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
 		memcpy(mips_locoresw, mips1_locoresw, sizeof(mips_locoresw));
+		
+		/*
+		 * Set the initial number of page colors based on
+		 * the L1 cache size.  We can re-size it later when
+		 * we find the L2 cache size, if there is one.
+		 *
+		 * Note that all MIPS1 caches are direct-mapped.
+		 */
+		uvmexp.ncolors = atop(mips_L1DCacheSize);
 	} else
 #endif
 #ifdef MIPS3
@@ -480,6 +489,21 @@ mips_vector_init()
 		}
 		mips3_vector_init(mips3_csizebase);
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
+
+		/*
+		 * Set the initial number of page colors based on
+		 * the L1 cache size.  We can re-size it later when
+		 * we find the L2 cache size, if there is one.
+		 *
+		 * Note if we have a 2-way cache, we need 1/2 the
+		 * number of colors.
+		 *
+		 * XXX This is somewhat useless for virtually-indexed
+		 * caches, but it doesn't hurt anything.
+		 */
+		uvmexp.ncolors = atop(mips_L1DCacheSize);
+		if (mips3_L1TwoWayCache)
+			uvmexp.ncolors >>= 1;
 	} else
 
 #endif
