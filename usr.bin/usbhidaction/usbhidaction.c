@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.12 2004/10/10 01:16:17 mrg Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.13 2004/10/20 13:49:15 augustss Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.12 2004/10/10 01:16:17 mrg Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.13 2004/10/20 13:49:15 augustss Exp $");
 #endif
 
 #include <stdio.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: usbhidaction.c,v 1.12 2004/10/10 01:16:17 mrg Exp $");
 
 int verbose = 0;
 int isdemon = 0;
-int reparse = 1;
+int reparse = 0;
 
 struct command {
 	struct command *next;
@@ -300,8 +300,9 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		for (d = hid_start_parse(repd, 1 << hid_input, reportid);
 		     hid_get_item(d, &h); ) {
 			if (verbose > 2)
-				printf("kind=%d usage=%x\n", h.kind, h.usage);
-			if (h.flags & HIO_CONST)
+				printf("kind=%d usage=%x flags=%x\n",
+				       h.kind, h.usage, h.flags);
+			if ((h.flags & HIO_CONST) && h.kind != hid_collection)
 				continue;
 			switch (h.kind) {
 			case hid_input:
@@ -341,6 +342,8 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				    sizeof coll - strlen(coll),  ".%s:%s",
 				    hid_usage_page(HID_PAGE(h.usage)), 
 				    hid_usage_in_page(h.usage));
+				if (verbose > 2)
+					printf("coll '%s'\n", coll);
 				break;
 			case hid_endcollection:
 				if (coll[0])
