@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.4 2002/03/16 20:43:57 christos Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.5 2002/03/24 15:32:52 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.4 2002/03/16 20:43:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.5 2002/03/24 15:32:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,17 +271,10 @@ fd_revoke(p, fd, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	switch (fp->f_type) {
-	case DTYPE_VNODE:
-		vp = (struct vnode *) fp->f_data;
-
-	case DTYPE_SOCKET:
+	if (fp->f_type != DTYPE_VNODE)
 		return EINVAL;
 
-	default:
-		panic("svr4_32_fcntl(F_REVOKE)");
-		/*NOTREACHED*/
-	}
+	vp = (struct vnode *) fp->f_data;
 
 	if (vp->v_type != VCHR && vp->v_type != VBLK) {
 		error = EINVAL;
