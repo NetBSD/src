@@ -1,6 +1,6 @@
-.\"	$NetBSD: whatis,v 1.15 2001/05/20 23:29:58 jhawk Exp $
+.\"	$NetBSD: whatis,v 1.15.2.1 2002/07/09 06:16:17 lukem Exp $
 .
-This is the eighth major release of
+This is the ninth major release of
 .Nx
 for the \*M.
 .Pp
@@ -12,10 +12,9 @@ See the supported hardware list for details.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Migration to the ELF binary format from a.out.
-You can still use your pre-1.5 a.out applications, though.
+Support for booting off RAIDframe RAID-1 mirrors
 .It
-Preliminary support for MCA (MicroChannel Architecture)
+Increase the maximum number of partitions per disklabel from 8 to 16.
 .bullet)
 .Pp
 .Nx \*V

@@ -1,18 +1,22 @@
-.\"	$NetBSD: whatis,v 1.15 2000/10/29 14:08:05 lukem Exp $
+.\"	$NetBSD: whatis,v 1.15.2.1 2002/07/09 06:16:13 lukem Exp $
 .
-This is the seventh major release of
+This is the eighth major release of
 .Nx
 for the Amiga and DraCo line of computers.
 .Pp
 New port-specific features include:
 .(bullet
-Support Amiga partition tables that fake more than one sector per
-file system block (for Adosfs), and partition tables on media with more
-than 512 bytes per sector.
+Two stage boot loader capable of loading ELF or a.out as well as
+compressed kernels.
 .It
-PCMCIA support.
+New device driver support:
+.(bullet -compact
+ZEUS ISDN-link and Individual Computers ISDN surfer
 .It
-Recognize
-.Tn Linux
-ext2fs partitions.
+BSC ISDN MAster II
+.It
+Repulse audio board
+.It
+Toccata driver (experimental)
+.bullet)
 .bullet)
