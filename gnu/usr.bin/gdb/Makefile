@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2000/04/14 17:58:40 nathanw Exp $
+#	$NetBSD: Makefile,v 1.39.2.1 2000/08/16 22:54:54 msaitoh Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -20,6 +20,10 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
 		-DTARGET_NAME=\"${MACHINE_GNU_ARCH}--netbsd\"
 .if defined(ELF_PLEASE)
 CPPFLAGS+=	-DSVR4_SHARED_LIBS
+.endif
+
+.if (${MACHINE_ARCH} == "sh3") && (${OBJECT_FMT} != "ELF")
+CPPFLAGS+=	-DNO_SOLIB
 .endif
 
 LDADD+=		-ledit -lkvm -ltermcap -L${BFDOBJ} -lbfd
@@ -56,9 +60,7 @@ NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c \
 	&& (${MACHINE_ARCH} != "sh3")
 NATDEPFILES+= kcore-nbsd.c
 .endif
-.if ${MKPIC} != "no"
 NATDEPFILES+= solib.c
-.endif
 
 NATDEPFILES.alpha=	alphanbsd-nat.c
 TDEPFILES.alpha=	alpha-tdep.c
