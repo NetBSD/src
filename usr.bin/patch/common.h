@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.5 1996/09/19 06:27:08 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.6 1997/03/22 03:38:03 lukem Exp $	*/
 
 #define DEBUGGING
 
@@ -17,7 +17,6 @@
 #define Fclose (void)fclose
 #define Fflush (void)fflush
 #define Sprintf (void)sprintf
-#define Mktemp (void)mktemp
 #define Strcpy (void)strcpy
 #define Strcat (void)strcat
 
@@ -167,7 +166,6 @@ char *getenv();
 char *strcpy();
 char *strcat();
 char *rindex();
-char *mktemp();
 #if 0				/* This can cause a prototype conflict.  */
 #ifdef CHARSPRINTF
 char *sprintf();

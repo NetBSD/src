@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.4 1996/09/19 06:27:13 thorpej Exp $	*/
+/*	$NetBSD: patch.c,v 1.5 1997/03/22 03:38:06 lukem Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: patch.c,v 1.4 1996/09/19 06:27:13 thorpej Exp $";
+static char rcsid[] = "$NetBSD: patch.c,v 1.5 1997/03/22 03:38:06 lukem Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -83,22 +83,30 @@ char **argv;
       TMPOUTNAME = (char *) malloc (tmpname_len);
       strcpy (TMPOUTNAME, tmpdir);
       strcat (TMPOUTNAME, "/patchoXXXXXX");
-      Mktemp(TMPOUTNAME);
+      if ((i = mkstemp(TMPOUTNAME)) < 0)
+        pfatal2("can't create %s", TMPOUTNAME);
+      Close(i);
 
       TMPINNAME = (char *) malloc (tmpname_len);
       strcpy (TMPINNAME, tmpdir);
       strcat (TMPINNAME, "/patchiXXXXXX");
-      Mktemp(TMPINNAME);
+      if ((i = mkstemp(TMPINNAME)) < 0)
+        pfatal2("can't create %s", TMPINNAME);
+      Close(i);
 
       TMPREJNAME = (char *) malloc (tmpname_len);
       strcpy (TMPREJNAME, tmpdir);
       strcat (TMPREJNAME, "/patchrXXXXXX");
-      Mktemp(TMPREJNAME);
+      if ((i = mkstemp(TMPREJNAME)) < 0)
+        pfatal2("can't create %s", TMPREJNAME);
+      Close(i);
 
       TMPPATNAME = (char *) malloc (tmpname_len);
       strcpy (TMPPATNAME, tmpdir);
       strcat (TMPPATNAME, "/patchpXXXXXX");
-      Mktemp(TMPPATNAME);
+      if ((i = mkstemp(TMPPATNAME)) < 0)
+        pfatal2("can't create %s", TMPPATNAME);
+      Close(i);
     }
 
     {
