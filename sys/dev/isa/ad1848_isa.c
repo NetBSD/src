@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.10 1999/03/22 14:29:14 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.11 1999/03/22 14:54:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -142,8 +142,7 @@ ad1848_isa_read(sc, index)
 	struct ad1848_softc *sc;
 	int index;
 {
-	struct ad1848_isa_softc *isc = (struct ad1848_isa_softc *)sc;
-	return (bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (index)));
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, index));
 }
 
 void
@@ -152,8 +151,7 @@ ad1848_isa_write(sc, index, value)
 	int index;
 	int value;
 {
-	struct ad1848_isa_softc *isc = (struct ad1848_isa_softc *)sc;
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (index), value);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, index, value);
 }
 
 /*
@@ -395,26 +393,6 @@ ad1848_isa_attach(isc)
 	sc->sc_readreg = ad1848_isa_read;
 	sc->sc_writereg = ad1848_isa_write;
 
-	isc->sc_playrun = 0;
-	isc->sc_recrun = 0;
-
-	if (isc->sc_playdrq != -1) {
-		if (isa_dmamap_create(isc->sc_ic, isc->sc_playdrq, MAX_ISADMA,
-				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("ad1848_attach: can't create map for drq %d\n",
-			       isc->sc_playdrq);
-			return;
-		}
-	}
-	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq) {
-		if (isa_dmamap_create(isc->sc_ic, isc->sc_recdrq, MAX_ISADMA,
-				      BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("ad1848_attach: can't create map for drq %d\n",
-			       isc->sc_recdrq);
-			return;
-		}
-	}
-
 	ad1848_attach(sc);
 }
 
@@ -423,11 +401,48 @@ ad1848_isa_open(addr, flags)
 	void *addr;
 	int flags;
 {
-	struct ad1848_isa_softc *sc = addr;
+	struct ad1848_isa_softc *isc = addr;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
+	int error, state;
 
-	DPRINTF(("ad1848_isa_open: sc=%p\n", sc));
+	DPRINTF(("ad1848_isa_open: sc=%p\n", isc));
+	state = 0;
 
-	return (ad1848_open(&sc->sc_ad1848, flags));
+	if (isc->sc_playdrq != -1) {
+		error = isa_dmamap_create(isc->sc_ic, isc->sc_playdrq,
+		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, isc->sc_playdrq);
+			goto bad;
+		}
+		state |= 1;
+	}
+	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq) {
+		error = isa_dmamap_create(isc->sc_ic, isc->sc_recdrq,
+		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, isc->sc_recdrq);
+			goto bad;
+		}
+		state |= 2;
+	}
+
+	error = ad1848_open(sc, flags);
+	if (error)
+		goto bad;
+
+	DPRINTF(("ad1848_isa_open: opened\n"));
+	return (0);
+
+bad:
+	if (state & 1)
+		isa_dmamap_destroy(isc->sc_ic, isc->sc_playdrq);
+	if (state & 2)
+		isa_dmamap_destroy(isc->sc_ic, isc->sc_recdrq);
+
+	return (error);
 }
 
 /*
@@ -437,15 +452,21 @@ void
 ad1848_isa_close(addr)
 	void *addr;
 {
-	struct ad1848_isa_softc *sc = addr;
+	struct ad1848_isa_softc *isc = addr;
+	struct ad1848_softc *sc = &isc->sc_ad1848;
 
-	ad1848_isa_halt_output(sc);
-	ad1848_isa_halt_input(sc);
+	ad1848_isa_halt_output(isc);
+	ad1848_isa_halt_input(isc);
 
-	sc->sc_intr = 0;
+	isc->sc_intr = 0;
+
+	if (isc->sc_playdrq != -1)
+		isa_dmamap_destroy(isc->sc_ic, isc->sc_playdrq);
+	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq)
+		isa_dmamap_destroy(isc->sc_ic, isc->sc_recdrq);
 
 	DPRINTF(("ad1848_isa_close: stop DMA\n"));
-	ad1848_close(&sc->sc_ad1848);
+	ad1848_close(sc);
 }
 
 int
