@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.86 1998/05/08 21:02:35 pk Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.87 1998/05/18 14:59:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -918,7 +918,7 @@ vput(vp)
 	}
 #endif
 	/*
-	 * insert at tail of LRU list
+	 * Insert at tail of LRU list.
 	 */
 	simple_lock(&vnode_free_list_slock);
 	TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
@@ -954,7 +954,7 @@ vrele(vp)
 	}
 #endif
 	/*
-	 * insert at tail of LRU list
+	 * Insert at tail of LRU list.
 	 */
 	simple_lock(&vnode_free_list_slock);
 	TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
@@ -1115,7 +1115,9 @@ vclean(vp, flags, p)
 	 * race against ourselves to recycle it.
 	 */
 	if ((active = vp->v_usecount) != 0)
-		VREF(vp);
+		/* We have the vnode interlock. */
+		vp->v_usecount++;
+
 	/*
 	 * Prevent the vnode from being recycled or
 	 * brought into use while we clean it out.
@@ -1165,8 +1167,29 @@ vclean(vp, flags, p)
 	 */
 	if (VOP_RECLAIM(vp, p))
 		panic("vclean: cannot reclaim");
-	if (active)
-		vrele(vp);
+
+	if (active) {
+		/*
+		 * Inline copy of vrele() since VOP_INACTIVE
+		 * has already been called.
+		 */
+		simple_lock(&vp->v_interlock);
+		if (--vp->v_usecount <= 0) {
+#ifdef DIAGNOSTIC
+			if (vp->v_usecount < 0 || vp->v_writecount != 0) {
+				vprint("vclean: bad ref count", vp);
+				panic("vclean: ref cnt");
+			}
+#endif
+			/*
+			 * Insert at tail of LRU list.
+			 */
+			simple_lock(&vnode_free_list_slock);
+			TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+			simple_unlock(&vnode_free_list_slock);
+		}
+		simple_unlock(&vp->v_interlock);
+	}
 
 	cache_purge(vp);
 	if (vp->v_vnlock) {
