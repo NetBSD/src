@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.12 1999/12/18 03:09:49 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.13 2000/01/10 02:25:25 deberg Exp $
 #
 ###########################################################################
 #
@@ -28,8 +28,6 @@
 #   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
 #
 ###########################################################################
-# @@@ This was taken from the mac68k port.  It works, but still should
-# be reviewed for next68k device #'s --dbj
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -52,7 +50,6 @@
 #	md*	memory pseudo-disk devices
 #
 # Terminal ports:
-#	ttye*	ite consoles
 #	tty*	standard built-in serial ports (2)
 #	ttyE?	Workstation console ("wscons") glass-tty emulators
 #
@@ -66,7 +63,6 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Graphics devices:
-#	grf*	Bitmapped graphics device
 #
 # Special purpose devices:
 #	tun*	network tunnel driver
@@ -78,8 +74,6 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
-#	adb	Apple Desktop Bus
-#	asc*	Apple Sound Chip
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -93,10 +87,9 @@ all)
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1
 	sh $0 raid0 raid1 raid2 raid3
-	sh $0 ttye0 adb grf0 grf1 grf2 grf3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11 random
-	sh $0 tun0 tun1 tun2 tun3 asc0 lkm ipl local
+	sh $0 tun0 tun1 tun2 tun3 lkm ipl local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
 	;;
@@ -121,28 +114,7 @@ std)
 raminst)
 	sh $0 std
 	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh $0 adb grf0 grf1 ttye0
 	sh $0 tty0 tty1 pty0
-	;;
-
-ttye*)
-	chr=11; unit=${i#ttye}
-	rm -f ttye$unit ite*
-	mknod ttye$unit	c $chr $unit
-	chown root.wheel ttye$unit
-	;;
-
-grf*)
-	unit=${i#grf}
-	rm -f grf$unit
-	mknod grf$unit c 10 $unit
-	chmod 666 grf$unit
-	;;
-
-adb)
-	rm -f adb
-	mknod adb c 23 0
-	chmod 666 adb
 	;;
 
 wscons)
@@ -377,13 +349,6 @@ ipl)
 	mknod ipauth c 35 3
 	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
-	;;
-
-asc*)
-	unit=${i#asc}
-	rm -f asc$unit
-	mknod asc$unit c 36 $unit
-	chmod 666 asc$unit
 	;;
 
 random)
