@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.30 2003/02/26 18:31:21 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.31 2003/02/26 18:35:42 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.51 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.30 2003/02/26 18:31:21 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.31 2003/02/26 18:35:42 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -113,7 +113,7 @@ match(struct magic *magic, uint32_t nmagic, unsigned char *s, int nbytes)
 
 	if (tmpoff == NULL)
 		if ((tmpoff = (int32_t *) malloc((tmplen = 20) *
-		    sizeof(*tmpoff)) == NULL)
+		    sizeof(*tmpoff))) == NULL)
 			error("out of memory\n");
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
