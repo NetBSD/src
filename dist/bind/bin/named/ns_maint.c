@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_maint.c,v 1.1.1.1.8.3 2001/01/28 15:52:39 he Exp $	*/
+/*	$NetBSD: ns_maint.c,v 1.1.1.1.8.4 2002/07/01 17:12:54 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
-static const char rcsid[] = "Id: ns_maint.c,v 8.117 2001/01/25 05:50:55 marka Exp";
+static const char rcsid[] = "Id: ns_maint.c,v 8.136 2002/06/26 03:27:20 marka Exp";
 #endif /* not lint */
 
 /*
@@ -134,7 +134,6 @@ static int		nxfers(struct zoneinfo *),
 
 static void		startxfer(struct zoneinfo *),
 			abortxfer(struct zoneinfo *),
-			tryxfer(void),
 			purge_z_2(struct hashbuf *, int);
 static int		purge_nonglue_2(const char *, struct hashbuf *,
 					int, int, int);
@@ -269,11 +268,8 @@ zone_maint(struct zoneinfo *zp) {
 		break;
 	}
 
-	/*
-	 * It is essential that we never try to set a timer in the past
-	 * or for now because doing so could cause an infinite loop.
-	 */
-	INSIST(zp->z_time == 0 || zp->z_time > tt.tv_sec);
+	if (zp->z_time != 0 && zp->z_time < tt.tv_sec)
+		zp->z_time = tt.tv_sec;
 
 	sched_zone_maint(zp);
 }
@@ -283,6 +279,10 @@ do_zone_maint(evContext ctx, void *uap, struct timespec due,
 	      struct timespec inter) {
 	ztimer_info zti = uap;
 	struct zoneinfo *zp;
+
+	UNUSED(ctx);
+	UNUSED(due);
+	UNUSED(inter);
 
 	INSIST(zti != NULL);
 	
@@ -405,6 +405,10 @@ ns_cleancache(evContext ctx, void *uap,
 {
 	int deleted;
 
+	UNUSED(ctx);
+	UNUSED(due);
+	UNUSED(inter);
+
 	gettime(&tt);
 	INSIST(uap == NULL);
 	deleted = clean_cache(hashtab, 0);
@@ -417,6 +421,10 @@ ns_heartbeat(evContext ctx, void *uap, struct timespec due,
 	     struct timespec inter)
 {
 	struct zoneinfo *zp;
+
+	UNUSED(ctx);
+	UNUSED(due);
+	UNUSED(inter);
 
 	gettime(&tt);
 	INSIST(uap == NULL);
@@ -446,9 +454,10 @@ ns_heartbeat(evContext ctx, void *uap, struct timespec due,
 		 * Trigger a refresh query while the link is up by
 		 * sending a notify.
 		 */
-		if (((zp->z_notify == znotify_yes) ||
-		     ((zp->z_notify == znotify_use_default) &&
-		      !NS_OPTION_P(OPTION_NONOTIFY))) &&
+		if (((zp->z_notify == notify_yes) ||
+		     (zp->z_notify == notify_explicit) ||
+		     ((zp->z_notify == notify_use_default) &&
+		      server_options->notify != notify_no)) &&
 		    (zt == z_master || zt == z_slave) && !loading &&
 		    ((zp->z_flags & Z_AUTH) != 0))
 			ns_notify(zp->z_origin, zp->z_class, ns_t_soa);
@@ -517,9 +526,9 @@ qserial_query(struct zoneinfo *zp) {
 	}
 
 	qp = sysquery(zp->z_origin, zp->z_class, T_SOA,
-		      zp->z_addr, zp->z_addrcnt,
+		      zp->z_addr, zp->z_keys, zp->z_addrcnt,
 		      ntohs(zp->z_port) ? zp->z_port : ns_port,
-		      QUERY);
+		      QUERY, 0);
 	if (qp == NULL) {
 		ns_debug(ns_log_default, 1,
 			 "qserial_query(%s): sysquery FAILED",
@@ -649,18 +658,28 @@ qserial_answer(struct qinfo *qp) {
  *	 1:	Tsig info successfully written.
  */
 static int
-write_tsig_info(struct in_addr addr, char *name, int *fd) {
+write_tsig_info(struct zoneinfo *zp, struct in_addr addr, char *name, int *fd) {
 	server_info si;
-	DST_KEY *dst_key;
+	DST_KEY *dst_key = NULL;
 	int tsig_fd = *fd;
 	char tsig_str[1024], secret_buf64[172];
 	u_char secret_buf[128];
 	int secret_len, len;
+	int i;
 
-	si = find_server(addr);
-	if (si == NULL || si->key_list == NULL || si->key_list->first == NULL)
-		return(0);
-	dst_key = si->key_list->first->key;
+	for (i = 0; i < zp->z_addrcnt ; i++)
+		if (memcmp(&addr, &zp->z_addr[i], sizeof(addr)) == 0) {
+			dst_key = zp->z_keys[i];
+			break;
+		}
+
+	if (dst_key == NULL) {
+		si = find_server(addr);
+		if (si == NULL || si->key_list == NULL ||
+		    si->key_list->first == NULL)
+			return(0);
+		dst_key = si->key_list->first->key;
+	}
 	if (tsig_fd == -1) {
 		*fd = tsig_fd = mkstemp(name);
 		if (tsig_fd < 0) {
@@ -681,7 +700,7 @@ write_tsig_info(struct in_addr addr, char *name, int *fd) {
 	if (len == -1)
 		return (-1);
 	/* We need snprintf! */
-	if (strlen(dst_key->dk_key_name) + len + sizeof("XXX.XXX.XXX.XXX"),
+	if (strlen(dst_key->dk_key_name) + len + sizeof("XXX.XXX.XXX.XXX") +
 	    sizeof("123") + 5 > sizeof(tsig_str))
 		return (-1);
 	sprintf(tsig_str, "%s\n%s\n%d\n%s\n",
@@ -709,7 +728,7 @@ write_tsigs(struct zoneinfo *zp, char *tsig_name) {
 		if (aIsUs(a) && ns_port == zp->z_port)
 			continue;
 
-		tsig_ret = write_tsig_info(a, tsig_name, &tsig_fd);
+		tsig_ret = write_tsig_info(zp, a, tsig_name, &tsig_fd);
 		switch (tsig_ret) {
 		case -1:
 			goto error;
@@ -759,7 +778,8 @@ supports_ixfr(struct zoneinfo *zp) {
  */
 static void
 startxfer(struct zoneinfo *zp) {
-	char *argv[NSMAX*2 + 20], argv_ns[NSMAX][MAXDNAME];
+	char *argv[NSMAX*2 + 20];
+	char argv_ns[NSMAX][MAXDNAME];
 	int argc = 0, argc_ns = 0, i;
 	pid_t pid;
 	u_int cnt;
@@ -775,50 +795,50 @@ startxfer(struct zoneinfo *zp) {
 		 zp->z_origin[0] != '\0' ? zp->z_origin : ".");
 
 	argv[argc++] = server_options->named_xfer;
-	argv[argc++] = "-z";
-	argv[argc++] = zp->z_origin;
-	argv[argc++] = "-f";
+	DE_CONST("-z", argv[argc++]);
+	DE_CONST(*zp->z_origin ? zp->z_origin : ".", argv[argc++]);
+	DE_CONST("-f", argv[argc++]);
 	argv[argc++] = zp->z_source;
 #ifdef BIND_IXFR
 	if (supports_ixfr(zp) && zp->z_ixfr_tmp != NULL) {
-		argv[argc++] = "-i";
+		DE_CONST("-i", argv[argc++]);
 		argv[argc++] = zp->z_ixfr_tmp;
 	}
 #endif
 	if (zp->z_serial != 0) {
-		argv[argc++] = "-s";
+		DE_CONST("-s", argv[argc++]);
 		sprintf(serial_str, "%u", zp->z_serial);
 		argv[argc++] = serial_str;
 	}
 	if (zp->z_axfr_src.s_addr != 0 ||
 	    server_options->axfr_src.s_addr != 0) {
-		argv[argc++] = "-x";
+		DE_CONST("-x", argv[argc++]);
 		argv[argc++] = strcpy(src_str, inet_ntoa(
 			(zp->z_axfr_src.s_addr != 0) ? zp->z_axfr_src :
 			server_options->axfr_src));
 	}
-	argv[argc++] = "-C";
+	DE_CONST("-C", argv[argc++]);
 	sprintf(class_str, "%d", zp->z_class);
 	argv[argc++] = class_str;
  	if (zp->z_flags & Z_SYSLOGGED)
-		argv[argc++] = "-q";
-	argv[argc++] = "-P";
+		DE_CONST("-q", argv[argc++]);
+	DE_CONST("-P", argv[argc++]);
 	sprintf(port_str, "%d", ntohs(zp->z_port) != 0 ? zp->z_port : ns_port);
 	argv[argc++] = port_str;
 #ifdef STUBS
 	if (zp->z_type == Z_STUB)
-		argv[argc++] = "-S";
+		DE_CONST("-S", argv[argc++]);
 #endif
 #ifdef DEBUG
 	if (debug) {
-		argv[argc++] = "-d";
+		DE_CONST("-d", argv[argc++]);
 		sprintf(debug_str, "%d", debug);
 		argv[argc++] = debug_str;
-		argv[argc++] = "-l";
-		argv[argc++] = _PATH_XFERDDT;
+		DE_CONST("-l", argv[argc++]);
+		DE_CONST(_PATH_XFERDDT, argv[argc++]);
 		if (debug > 5) {
-			argv[argc++] = "-t";
-			argv[argc++] = _PATH_XFERTRACE;
+			DE_CONST("-t", argv[argc++]);
+			DE_CONST(_PATH_XFERTRACE, argv[argc++]);
 		}
 	}
 #endif
@@ -842,7 +862,7 @@ startxfer(struct zoneinfo *zp) {
 		return;
 	}
 	if (tsig_ret != 0) {
-		argv[argc++] = "-T";
+		DE_CONST("-T", argv[argc++]);
 		argv[argc++] = tsig_name;
 	}
 
@@ -869,9 +889,9 @@ startxfer(struct zoneinfo *zp) {
 
 			if (si != NULL &&
 			    (si->flags & SERVER_INFO_SUPPORT_IXFR) != 0)
-				argv[argc++] = "ixfr";
+				DE_CONST("ixfr", argv[argc++]);
 			else
-				argv[argc++] = "axfr";
+				DE_CONST("axfr", argv[argc++]);
 		}
 #endif
 	}
@@ -928,6 +948,7 @@ startxfer(struct zoneinfo *zp) {
 	zp->z_flags |= Z_XFER_RUNNING;
 	zp->z_xferpid = pid;
 	xfers_running++;
+	xfers_deferred--;
 	if (zp->z_max_transfer_time_in)
 		zp->z_time = tt.tv_sec + zp->z_max_transfer_time_in;
 	else
@@ -986,7 +1007,8 @@ printzoneinfo(int zonenum, int category, int level) {
 	if (zp->z_type == z_master && (zp->z_flags & Z_DYNAMIC) != 0) {
 		ns_debug(category, level,
 			 "\tdumpintvl %lu, soaincrintvl %lu deferupdcnt %lu",
-			 (unsigned long)zp->z_dumpintvl, zp->z_soaincrintvl,
+			 (unsigned long)zp->z_dumpintvl,
+			 (unsigned long)zp->z_soaincrintvl,
 			 (unsigned long)zp->z_deferupdcnt);
 		if (zp->z_soaincrtime)
 			ns_debug(category, level,
@@ -1174,7 +1196,27 @@ remove_zone(struct zoneinfo *zp, const char *verb) {
 #endif
 	if ((zp->z_flags & Z_NOTIFY) != 0)
 		ns_stopnotify(zp->z_origin, zp->z_class);
+	if ((zp->z_flags & Z_NEED_XFER) != 0) {
+		zp->z_flags &= ~Z_NEED_XFER;
+		xfers_deferred--;
+	}
 	ns_stopxfrs(zp);
+	if ((zp->z_flags & Z_XFER_RUNNING) != 0) {
+		int i;
+		/* Kill and abandon the current transfer. */
+		for (i = 0; i < MAX_XFERS_RUNNING; i++) {
+			if (xferstatus[i].xfer_pid == zp->z_xferpid) {
+				xferstatus[i].xfer_pid = 0;
+				xferstatus[i].xfer_state = XFER_IDLE;
+				xfers_running--;
+				break;
+			}
+		}
+		(void)kill(zp->z_xferpid, SIGTERM);
+		zp->z_flags &= ~(Z_XFER_RUNNING|Z_XFER_ABORTED|Z_XFER_GONE);
+		zp->z_xferpid = 0;
+		ns_need(main_need_tryxfer);
+	}
 	do_reload(zp->z_origin, zp->z_type, zp->z_class, 1);
 	ns_notice(ns_log_config, "%s zone \"%s\" (%s) %s",
 		  zoneTypeString(zp->z_type), zp->z_origin,
@@ -1237,9 +1279,8 @@ valid_glue(struct databuf *dp, char *name, int belowcut) {
 	    ns_samedomain((char*)dp->d_data, zones[dp->d_zone].z_origin))
 		return (1);
 
-	/* NOKEY is in parent zone otherwise child zone */
-	if (dp->d_type == T_KEY && dp->d_size == 4 &&
-	    (dp->d_data[0] & 0xc3) == 0xc1)
+	/* KEY RRset may be in the parent */
+	if (dp->d_type == T_KEY)
 		return (1);
 
 	/* NXT & KEY records may be signed */
@@ -1280,7 +1321,7 @@ purge_nonglue_2(const char *dname, struct hashbuf *htp, int class,
 					    zonecut &&
 					    !valid_glue(dp, name, belowcut)) {
 						if (log)
-						    ns_error(ns_log_db,
+						    ns_error(ns_log_load,
 	        "zone: %s/%s: non-glue record %s bottom of zone: %s/%s",
 							 *dname ? dname : ".",
 						         p_class(dp->d_class),
@@ -1590,10 +1631,11 @@ endxfer() {
 					zp->z_xferpid = XFER_ISAXFR;
 					if (exitstatus == XFER_SUCCESSAXFRIXFRFILE) {
 						zp->z_xferpid = XFER_ISAXFRIXFR;
+						if (zp->z_ixfr_tmp != NULL)
+							isc_movefile(
+								zp->z_ixfr_tmp,
+								zp->z_source);
 					} 
-					if (zp->z_ixfr_tmp != NULL)
-						isc_movefile(zp->z_ixfr_tmp,
-							     zp->z_source);
 					/* XXX should incorporate loadxfer() */
 					zp->z_flags |= Z_NEED_RELOAD;
 					zp->z_flags &= ~Z_SYSLOGGED;
@@ -1601,7 +1643,6 @@ endxfer() {
 					break;
 
 				case XFER_SUCCESSIXFR:
-					zp->z_flags |= Z_XFER_RUNNING;
 					zp->z_xferpid = XFER_ISIXFR;
 					ns_notice(ns_log_default,
 						  "IXFR Success %s",
@@ -1626,8 +1667,6 @@ endxfer() {
 						ns_notice(ns_log_default,
 							"IXFR Merge failed %s",
 							  zp->z_ixfr_tmp);
-					zp->z_flags &=
-						~(Z_XFER_RUNNING|Z_XFER_ABORTED|Z_XFER_GONE);
 						ns_retrytime(zp, tt.tv_sec);
 						sched_zone_maint(zp);
 					}
@@ -1637,7 +1676,18 @@ endxfer() {
 					if (!(zp->z_flags & Z_SYSLOGGED)) {
 						zp->z_flags |= Z_SYSLOGGED;
 						ns_notice(ns_log_default,
-		      "zoneref: Masters for secondary zone \"%s\" unreachable",
+		      "zoneref: Masters for slave zone \"%s\" unreachable",
+							  zp->z_origin);
+					}
+					ns_retrytime(zp, tt.tv_sec);
+					sched_zone_maint(zp);
+					break;
+
+				case XFER_REFUSED:
+					if (!(zp->z_flags & Z_SYSLOGGED)) {
+						zp->z_flags |= Z_SYSLOGGED;
+						ns_error(ns_log_xfer_in,
+		      "zoneref: Masters for slave zone \"%s\" REFUSED transfer",
 							  zp->z_origin);
 					}
 					ns_retrytime(zp, tt.tv_sec);
@@ -1671,7 +1721,7 @@ endxfer() {
 /*
  * Try to start some xfers - new "fair scheduler" by Bob Halley @DEC (1995)
  */
-static void
+void
 tryxfer() {
 	static struct zoneinfo *zp = NULL;
 	static struct zoneinfo *lastzones = NULL;
@@ -1714,7 +1764,6 @@ tryxfer() {
 		if ((xfers = nxfers(zp)) != -1 &&
 		    xfers < server_options->transfers_per_ns &&
 		    (zp->z_flags & Z_NEED_XFER)) {
-			xfers_deferred--;
 			startxfer(zp);
 			sched_zone_maint(zp);
 		}
@@ -1914,7 +1963,7 @@ ns_reload(void) {
 	INSIST(reloading == 0);
 	qflush();
 	sq_flush(NULL);
-	reloading++;	/* To force transfer if secondary and backing up. */
+	reloading++;	/* To force transfer if slave and backing up. */
 	confmtime = ns_init(conffile);
 	time(&resettime);
 	reloading--;
@@ -1948,20 +1997,21 @@ void
 make_new_zones(void) {
 	struct zoneinfo *zp;
 	int n;
+	int newzones = (nzones == 0) ? INITIALZONES : NEWZONES;
 
 	ns_debug(ns_log_config, 1, "Adding %d template zones", NEWZONES);
 	zp = (struct zoneinfo *)
-		memget((nzones + NEWZONES) * sizeof(struct zoneinfo));
+		memget((nzones + newzones) * sizeof(struct zoneinfo));
 	if (zp == NULL)
 		panic("no memory for more zones", NULL);
-	memset(zp, 0, (nzones + NEWZONES) * sizeof(struct zoneinfo));
+	memset(zp, 0, (nzones + newzones) * sizeof(struct zoneinfo));
 	if (zones != NULL) {
 		memcpy(zp, zones, nzones * sizeof(struct zoneinfo));
 		memput(zones, nzones * sizeof(struct zoneinfo));
 	}
 	zones = zp;
 	block_signals();
-	for (n = 0; n < NEWZONES; n++) {
+	for (n = 0; n < newzones; n++) {
 		INIT_LINK(&zones[nzones], z_reloadlink);
 		INIT_LINK(&zones[nzones], z_freelink);
 		if (nzones != 0)
