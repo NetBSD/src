@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.145 2000/02/20 03:26:10 mycroft Exp $
+# $NetBSD: mi,v 1.146 2000/02/20 03:31:06 mycroft Exp $
 .
 ./altroot
 ./bin
@@ -651,6 +651,7 @@
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/screenblank
+./usr/sbin/scriptdump
 ./usr/sbin/sendmail
 ./usr/sbin/setkey
 ./usr/sbin/sliplogin
