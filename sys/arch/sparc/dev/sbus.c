@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.43 2001/12/20 07:53:59 uwe Exp $ */
+/*	$NetBSD: sbus.c,v 1.44 2001/12/31 15:00:58 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -610,23 +610,9 @@ sbus_bus_addr(t, btype, offset)
 	u_int btype;
 	u_int offset;
 {
-	int slot = (int)btype;
-	struct sbus_softc *sc = t->cookie;
-	int i;
 
-	for (i = 0; i < sc->sc_nrange; i++) {
-		bus_addr_t baddr;
-		bus_addr_t iospace;
-
-		if (sc->sc_range[i].cspace != slot)
-			continue;
-
-		baddr = sc->sc_range[i].poffset + offset;
-		iospace = (bus_addr_t)sc->sc_range[i].pspace;
-		baddr = baddr|(iospace<<32);
-		return (baddr);
-	}
-	return (-1);
+	/* XXX: sbus_bus_addr should be g/c'ed */
+	return (BUS_ADDR(btype, offset));
 }
 
 
