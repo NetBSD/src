@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1 1998/07/03 22:27:59 mhitch Exp $
+#	$NetBSD: RAMDISK,v 1.2 1998/08/04 11:19:02 kleink Exp $
 
 #
 # GENERIC AMIGA with memory disk
@@ -70,7 +70,6 @@ file-system 	UNION		# union filesystem
 
 # Filesystem options
 options 	NFSSERVER	# Network File System server side code
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 
