@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.14 2002/04/03 19:57:48 thorpej Exp $	*/
+/*	$NetBSD: armreg.h,v 1.15 2002/04/03 22:12:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -298,6 +298,12 @@
 #define FAULT_DOMAIN_P  0x0b /* Domain -- Page */
 #define FAULT_PERM_S    0x0d /* Permission -- Section */
 #define FAULT_PERM_P    0x0f /* Permission -- Page */
+
+/*
+ * Address of the vector page, low and high versions.
+ */
+#define	ARM_VECTORS_LOW		0x00000000
+#define	ARM_VECTORS_HIGH	0xffff0000
 
 /*
  * ARM Instructions
