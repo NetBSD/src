@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27.8.1 1997/05/13 02:58:44 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.27.8.2 1997/05/18 23:43:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -134,9 +134,6 @@ pci_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
-
-	/* Give the MI code the bus DMA tag. */
-	pba->pba_dmat = &pci_bus_dma_tag;
 
 	if (pba->pba_bus == 0)
 		printf(": configuration mode %d", pci_mode);
