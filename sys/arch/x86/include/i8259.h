@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.h,v 1.2 2003/03/03 22:17:15 fvdl Exp $	*/
+/*	$NetBSD: i8259.h,v 1.3 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,13 +134,11 @@ extern void i8259_reinit(void);
 	MASKDELAY							;\
 	outb	%al,$(ICUADDR+1)
 #define	i8259_asm_unmask(num) \
-	cli								;\
 	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
 	andb	$~IRQ_BIT(num),%al					;\
 	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
 	MASKDELAY							;\
-	outb	%al,$(ICUADDR+1)					;\
-	sti
+	outb	%al,$(ICUADDR+1)
 
 #else /* ICU_HARDWARE_MASK */
 

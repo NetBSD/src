@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
 #define _i386_INTRDEFS_H
@@ -85,5 +85,7 @@
 #define X86_IPI_NAMES { "halt IPI", "timeset IPI", "FPU flush IPI", \
 			 "FPU synch IPI", "TLB shootdown IPI", \
 			 "MTRR update IPI", "GDT update IPI" }
+
+#define IREENT_MAGIC	0x18041969
 
 #endif /* _X86_INTRDEFS_H */
