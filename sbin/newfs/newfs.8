@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.36 2001/11/21 15:23:40 lukem Exp $
+.\"	$NetBSD: newfs.8,v 1.37 2001/12/30 16:47:55 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd November 22, 2001
+.Dd December 31, 2001
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -173,9 +173,13 @@ See
 for more details on how to set this option.
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
+It must be a power of two.
+The default size is 8192 bytes, and the smallest allowable size is 4096 bytes.
 .It Fl c Ar cpg
 The number of cylinders per cylinder group in a file system.
-The default value is 16.
+The default is to compute the maximum allowed by the other parameters.
+This value is dependent on a number of other parameters, in particular
+the block size and the number of bytes per inode.
 .It Fl d Ar rotdelay
 This specifies the expected time (in milliseconds) to service a transfer
 completion interrupt and initiate a new transfer on the same disk.
@@ -194,13 +198,25 @@ See
 for more details on how to set this option.
 .It Fl f Ar frag-size
 The fragment size of the file system in bytes.
+It must be a power of two ranging in value between
+.Ar block-size Ns /8
+and
+.Ar block-size .
+The default is 1024 bytes.
+The optimal
+.Ar block-size Ns : Ns Ar frag-size
+ratio is 8:1.
+Other ratios are possible, but are not recommended,
+and may produce unpredictable results.
 .It Fl g Ar avgfilesize
 The expected average file size for the file system.
 .It Fl h Ar avgfpdir
 The expected average number of files per directory on the file system.
 .It Fl i Ar bytes-per-inode
 This specifies the density of inodes in the file system.
-The default is to create an inode for each 4096 bytes of data space.
+The default is to create an inode for every
+.Pq 4 * Ar frag-size
+bytes of data space.
 If fewer inodes are desired, a larger number should be used;
 to create more inodes a smaller number should be given.
 .It Fl m Ar free-space
