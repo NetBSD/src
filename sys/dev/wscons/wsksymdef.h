@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.6 1998/04/20 10:47:36 hannken Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.7 1998/06/16 11:08:30 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -379,6 +379,10 @@
 #define KS_Right		0xf387
 #define KS_End			0xf388
 #define KS_Insert		0xf389
+#define KS_Help			0xf38a
+#define KS_Execute		0xf38b
+#define KS_Find			0xf38c
+#define KS_Select		0xf38d
 
 /*
  * Group 4 (command)
