@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.18 1996/10/13 01:39:03 christos Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.19 1996/10/20 13:13:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -126,9 +126,9 @@ struct rpc_reply {
  * Returns non-zero error on failure.
  */
 int
-krpc_portmap(sin,  prog, vers, portp)
+krpc_portmap(sin,  prog, vers, proto, portp)
 	struct sockaddr_in *sin;		/* server address */
-	u_int prog, vers;	/* host order */
+	u_int prog, vers, proto;	/* host order */
 	u_int16_t *portp;	/* network order */
 {
 	struct sdata {
@@ -157,7 +157,7 @@ krpc_portmap(sin,  prog, vers, portp)
 	/* Do the RPC to get it. */
 	sdata->prog = txdr_unsigned(prog);
 	sdata->vers = txdr_unsigned(vers);
-	sdata->proto = txdr_unsigned(IPPROTO_UDP);
+	sdata->proto = txdr_unsigned(proto);
 	sdata->port = 0;
 
 	sin->sin_port = htons(PMAPPORT);
@@ -381,7 +381,9 @@ krpc_call(sa, prog, vers, func, data, from_p)
 			/* Did the call succeed? */
 			if (reply->rp_status != 0) {
 				error = fxdr_unsigned(u_int32_t, reply->rp_status);
-				printf("rpc denied, status=%d\n", error);
+				if (error == RPC_PROGMISMATCH)
+				       goto out;
+				printf("rpc failed, status=%d\n", error);
 				continue;
 			}
 
