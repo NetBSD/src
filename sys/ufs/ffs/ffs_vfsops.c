@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.112 2003/04/12 10:35:58 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.113 2003/04/16 21:44:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.112 2003/04/12 10:35:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.113 2003/04/16 21:44:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -192,7 +192,6 @@ ffs_mount(mp, path, data, ndp, p)
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
-	size_t size;
 	int error, flags, update;
 	mode_t accessmode;
 
@@ -407,12 +406,8 @@ ffs_mount(mp, path, data, ndp, p)
 		}
 	}
 
-	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
-	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
-	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
-	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
-	    &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
+	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	    UIO_USERSPACE, mp, p);
 	if (mp->mnt_flag & MNT_SOFTDEP)
 		fs->fs_flags |= FS_DOSOFTDEP;
 	else
@@ -430,7 +425,7 @@ ffs_mount(mp, path, data, ndp, p)
 		}
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
-	return (0);
+	return error;
 }
 
 /*
@@ -1201,11 +1196,7 @@ ffs_statfs(mp, sbp, p)
 	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
-	if (sbp != &mp->mnt_stat) {
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 
