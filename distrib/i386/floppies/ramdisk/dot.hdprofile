@@ -1,4 +1,4 @@
-#	$NetBSD: dot.hdprofile,v 1.1 1997/06/14 18:56:09 perry Exp $
+#	$NetBSD: dot.hdprofile,v 1.1.2.1 1997/12/20 22:34:39 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -42,22 +42,15 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo "Checking filesystems..."
 	fsck -y
 
-	echo "Mounting filesystems..."
-	mount -a
-	mount -t kernfs /kern /kern
+	echo "Mounting root..."
+	mount -u /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
-	# run update, so that installed software is written as it goes.
-	update
+	TERMCAP=/.termcap ; export TERMCAP
 
-	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
-	. /.instutils
-
-	echo "Follow the installation directions to install the NetBSD"
-	echo "distribution sets."
+	[ -x /sysinst ] && /sysinst
 fi
