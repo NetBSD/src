@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.12 1999/01/28 21:29:27 itohy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.13 1999/03/26 08:51:35 proff Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ ipflow_fastforward(
 	ip = mtod(m, struct ip *);
 	iplen = ntohs(ip->ip_len);
 	if (ip->ip_v != IPVERSION || ip->ip_hl != (sizeof(struct ip) >> 2) ||
-	    iplen > m->m_pkthdr.len)
+	    iplen < sizeof(struct ip) || iplen > m->m_pkthdr.len)
 		return 0;
 	/*
 	 * Find a flow.
