@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	$Id: vm_glue.c,v 1.9 1993/07/18 08:19:34 andrew Exp $
+ *	$Id: vm_glue.c,v 1.10 1993/07/19 13:47:09 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -236,6 +236,12 @@ vm_fork(p1, p2, isvfork)
 	/* ream out old pagetables and kernel stack */
 	(void)vm_deallocate(vp, addr, UPT_MAX_ADDRESS - addr);
 	(void)vm_allocate(vp, &addr, UPT_MAX_ADDRESS - addr, FALSE);
+
+	/* protect from the user area from user accesses. :-)
+	   addr -> addr + UPAGES*NBPG don't seem to be protected without
+	   this; the rest seems to be OK, and doesn't like being protected
+	   - andrew@werple.apana.org.au */
+	vm_protect(vp, addr, UPAGES*NBPG, FALSE, VM_PROT_NONE);
 	}
 #endif
 	/*
