@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.82 2000/03/16 18:08:17 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.83 2000/05/03 14:53:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -183,8 +183,6 @@ struct mount {
 
 /*
  * Mask of flags that are visible to statfs()
- * Since f_flags in struct statfs is short, this mask overflows on
- * most architecture.  XXX.
  */
 #define	MNT_VISFLAGMASK	0xfc00ffff
 
