@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 2000/05/29 11:46:52 nisimura Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.19 2000/05/30 01:30:00 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2000/05/29 11:46:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19 2000/05/30 01:30:00 nisimura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -100,10 +100,8 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
 	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		savefpregs(p);
-#endif
 	memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	return 0;
 }
