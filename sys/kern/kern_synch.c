@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.93 2000/09/05 16:20:28 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.94 2000/09/05 16:27:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -998,4 +998,39 @@ schedclock(struct proc *p)
 
 	if (p->p_priority >= PUSER)
 		p->p_priority = p->p_usrpri;
+}
+
+void
+suspendsched()
+{
+	int s, i;
+	struct proc *p, *next;
+	SCHED_LOCK(s);
+
+	/*
+	 * Convert all non-P_SYSTEM SSLEEP processes to SSTOP. Curproc is
+	 * necesserelly SONPROC.
+	 */
+	for (p = LIST_FIRST(&allproc); p != NULL; p = next) {
+		next = LIST_NEXT(p, p_list);
+		if (p->p_stat != SSLEEP || p == curproc ||
+		    (p->p_flag & P_SYSTEM) != 0)
+			continue;
+		p->p_stat = SSTOP;
+	}
+	/* go through the run queues, remove non-P_SYSTEM processes */
+	for (i = 0; i < RUNQUE_NQS; i++) {
+		for (p = (struct proc *)&sched_qs[i];
+		    p->p_forw != (struct proc *)&sched_qs[i]; p = next) {
+			next = p->p_forw;
+			if ((p->p_flag & P_SYSTEM) == 0) {
+				if (p->p_flag & P_INMEM)
+					remrunqueue(p);
+				p->p_stat = SSTOP;
+			}
+		}
+	}
+	/* XXX SMP: we need to deal with processes on others CPU ! */
+
+	SCHED_UNLOCK(s);
 }
