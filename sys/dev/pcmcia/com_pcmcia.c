@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.16 1998/11/19 00:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ static struct com_dev *com_dev_match __P((struct pcmcia_card *));
 
 int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
+int com_pcmcia_detach __P((struct device *, int));
 void com_pcmcia_cleanup __P((void *));
 
 int com_pcmcia_enable __P((struct com_softc *));
@@ -133,7 +134,8 @@ struct com_pcmcia_softc {
 };
 
 struct cfattach com_pcmcia_ca = {
-	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach
+	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
+	    com_pcmcia_detach, com_activate
 };
 
 /* Look for pcmcia cards with particular CIS strings */
@@ -287,6 +289,26 @@ found:
 	sc->enabled = 0;
 	
 	com_pcmcia_disable1(sc);
+}
+
+int
+com_pcmcia_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *)self;
+	int error;
+
+	if ((error = com_detach(self, flags)) != 0)
+		return (error);
+
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+	return (0);
 }
 
 int
