@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.1 1999/09/27 23:41:48 ad Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,11 +28,11 @@
  */
 
 /*
- * PCI frontend for DPT EATA SCSI driver.
+ * PCI front-end for DPT EATA SCSI driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.1 1999/09/27 23:41:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,17 +113,24 @@ dpt_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("couldn't map interrupt\n");
+		printf("can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, dpt_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("couldn't establish interrupt");
+		printf("can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
+	}
+
+	/* Read the EATA configuration */
+	if (dpt_readcfg(sc)) {
+		printf("%s: readcfg failed - see dpt(4)\n", 
+		    sc->sc_dv.dv_xname);
+		return;	
 	}
 
 	/* Now attach to the bus-independant code */
