@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.4 1996/05/10 05:27:59 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.5 1996/05/12 23:38:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -67,6 +67,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
