@@ -1,4 +1,4 @@
-/*	$NetBSD: localhostname.c,v 1.1.1.1 1996/08/09 10:14:53 thorpej Exp $	*/
+/*	$NetBSD: localhostname.c,v 1.2 1997/07/18 21:57:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "protos.h"
 

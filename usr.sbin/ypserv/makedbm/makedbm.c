@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.2 1997/03/22 03:32:36 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.3 1997/07/18 21:57:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -52,6 +53,7 @@ extern	char *__progname;		/* from crt0.s */
 extern	char *optarg;
 extern	int optind;
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 void	add_record __P((DBM *, char *, char *, int));
 char	*file_date __P((char *));
@@ -62,7 +64,7 @@ void	create_database __P((char *, char *, char *, char *,
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int aflag, uflag, bflag, lflag, sflag;
 	char *yp_input_file, *yp_output_file;
@@ -348,7 +350,7 @@ usage()
 	fprintf(stderr, "usage: %s -u file", __progname);
 	fprintf(stderr, "       %s [-lbs] %s\n", __progname,
 	    "[-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]");
-	fprintf(stderr, "          %s infile outfile\n", __progname,
+	fprintf(stderr, "          %s infile outfile\n",
 	    "[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME]");
 	exit(1);
 }
