@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.17 2001/12/09 16:10:43 manu Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.18 2002/03/17 11:10:43 simonb Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.17 2001/12/09 16:10:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.18 2002/03/17 11:10:43 simonb Exp $");
 
 #include "opt_ntp.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.17 2001/12/09 16:10:43 manu Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 #include <sys/timex.h>
 #include <sys/vnode.h>
 
@@ -66,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.17 2001/12/09 16:10:43 manu Exp $
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 #ifdef NTP
 
