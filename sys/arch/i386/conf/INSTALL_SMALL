@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.25 1998/06/26 18:58:38 cgd Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.26 1998/07/27 01:51:29 thorpej Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -364,6 +364,7 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
+cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
