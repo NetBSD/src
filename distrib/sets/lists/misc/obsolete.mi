@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.16 2001/05/26 01:07:34 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.17 2001/10/19 02:53:02 tv Exp $
 /usr/share/doc/smm/03.fsck
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
@@ -32,4 +32,5 @@
 /usr/share/sendmail/cf/trinity.mc
 /usr/share/sendmail/cf/uucpproto.mc
 /usr/share/sendmail/m4/nullrelay.m4
+/usr/share/sendmail/ostype/aux.m4
 /usr/share/sendmail/ostype/gnuhurd.m4
