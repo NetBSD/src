@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.3 1999/11/29 17:21:21 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.4 1999/12/02 18:50:54 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -27,7 +27,6 @@
  */
 
 #include "opt_tx39_debug.h"
-#include "fb.h"
 #include "cckbd.h"
 
 #include <sys/param.h>
