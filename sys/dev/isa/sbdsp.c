@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.62 1997/07/28 01:32:02 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.63 1997/07/28 20:56:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2049,4 +2049,14 @@ sb_round(addr, size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return size;
+}
+
+int
+sb_mappage(addr, mem, off, prot)
+	void *addr;
+        void *mem;
+        int off;
+	int prot;
+{
+	return isa_mappage(mem, off, prot);
 }
