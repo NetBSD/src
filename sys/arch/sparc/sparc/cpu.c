@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.147 2003/01/02 09:42:09 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.148 2003/01/03 09:22:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -320,12 +320,12 @@ cpu_mainbus_attach(parent, self, aux)
 	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
 					sizeof(struct openprom_addr),
 					&n, (void **)&rrp)) == 0) {
-		if (rrp[0].oa_space != 0)
-			panic("%s: mailbox in I/O space", self->dv_xname);
-
 		/* XXX - map cached/uncached? If cached, deal with
 		 *	 cache congruency!
 		 */
+		if (rrp[0].oa_space == 0)
+			printf("%s: mailbox in mem space\n", self->dv_xname);
+
 		if (bus_space_map(ma->ma_bustag,
 				BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
 				rrp[0].oa_size,
