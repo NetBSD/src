@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6.4.2 1999/03/23 21:29:05 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.4.3 1999/04/08 03:17:18 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -126,16 +126,13 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-    (wbflush(),						/* XXX */	\
-     (void) t, (*(volatile u_int8_t *)((h) + (o))))
+     ((void) t, (*(volatile u_int8_t *)((h) + (o))))
 
 #define	bus_space_read_2(t, h, o)					\
-    (wbflush(),						/* XXX */	\
-     (void) t, (*(volatile u_int16_t *)((h) + (o))))
+     ((void) t, (*(volatile u_int16_t *)((h) + (o))))
 
 #define	bus_space_read_4(t, h, o)					\
-    (wbflush(),						/* XXX */	\
-     (void) t, (*(volatile u_int32_t *)((h) + (o))))
+     ((void) t, (*(volatile u_int32_t *)((h) + (o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
