@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.2 1995/09/11 21:29:28 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.3 1995/09/25 04:30:43 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -459,7 +459,11 @@ sccattach(parent, self, aux)
 	 * Unit 1 is the remote console, wire it up now.
 	 */
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
-	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
+	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
+#else /* !alpha */
+	if (cn_tab->cn_dev == NODEV) /*XXX*/
+#endif /* !alpha */
+	 {
 		static struct consdev scccons = {
 		    NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 		};
@@ -471,7 +475,6 @@ sccattach(parent, self, aux)
 		/* wire carrier for console. */
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
-#endif /* alpha */
 		printf("\n");
 }
 
@@ -929,6 +932,9 @@ sccintr(xxxsc)
 		dp = &sc->scc_pdma[chan];
 		if (dp->p_mem < dp->p_end) {
 			SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
+#ifdef pmax	/* Alpha handles the 1.6 msec settle time in hardware */
+			DELAY(2);
+#endif
 			wbflush();
 		} else {
 			tp->t_state &= ~TS_BUSY;
@@ -1105,6 +1111,9 @@ sccstart(tp)
 			panic("sccstart: No chars");
 #endif /* DIAGNOSTIC */
 		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
+#ifdef pmax /* Alpha handles the 1.6 msec settle time in hardware */
+		DELAY(2);
+#endif
 	}
 	wbflush();
 out:
