@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1999/02/13 02:54:18 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/06/20 05:55:51 cgd Exp $
 #
 # Makefile for install
 
@@ -23,7 +23,7 @@ WARNS=1
 
 CLEANFILES= menu_defs.c menu_defs.h menus.def msg_defs.c msg_defs.h msg.def
 
-LANG?=eng
+LANG?=en
 
 .PATH: ${.CURDIR}/../..
 
