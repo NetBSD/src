@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.11 2002/02/11 15:11:49 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.11.8.1 2002/05/16 11:29:45 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.11 2002/02/11 15:11:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.11.8.1 2002/05/16 11:29:45 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,19 @@ int	uriodebug = 0;
 #endif
 
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+dev_type_open(urioopen);
+dev_type_close(urioclose);
+dev_type_read(urioread);
+dev_type_write(uriowrite);
+dev_type_ioctl(urioioctl);
+dev_type_poll(uriopoll);
+
+const struct cdevsw urio_cdevsw = {
+	urioopen, urioclose, urioread, uriowrite, urioioctl,
+	nostop, notty, uriopoll, nommap,
+};
+#elif defined(__OpenBSD__)
 cdev_decl(urio);
 #elif defined(__FreeBSD__)
 d_open_t  urioopen;
@@ -258,9 +270,13 @@ USB_DETACH(urio)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&urio_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == urioopen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

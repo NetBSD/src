@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.28 2002/05/12 08:04:41 simonb Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.28.2.1 2002/05/16 11:29:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.28 2002/05/12 08:04:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.28.2.1 2002/05/16 11:29:46 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,19 @@ struct uscanner_softc {
 	u_char			sc_dying;
 };
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+dev_type_open(uscanneropen);
+dev_type_close(uscannerclose);
+dev_type_read(uscannerread);
+dev_type_write(uscannerwrite);
+dev_type_ioctl(uscannerioctl);
+dev_type_poll(uscannerpoll);
+
+const struct cdevsw uscanner_cdevsw = {
+	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
+	uscannerioctl, nostop, notty, uscannerpoll, nommap,
+};
+#elif defined(__OpenBSD__)
 cdev_decl(uscanner);
 #elif defined(__FreeBSD__)
 d_open_t  uscanneropen;
@@ -642,9 +654,13 @@ USB_DETACH(uscanner)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
+#if defined(__NetBSD__)
+	maj = cdevsw_lookup_major(&uscanner_cdevsw);
+#elif defined(__OpenBSD__)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uscanneropen)
 			break;
+#endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit * USB_MAX_ENDPOINTS;
