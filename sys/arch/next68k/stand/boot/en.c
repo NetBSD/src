@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.5 2002/09/11 01:46:36 mycroft Exp $        */
+/*      $NetBSD: en.c,v 1.6 2002/09/11 02:17:15 mycroft Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -81,7 +81,7 @@ struct netif_driver en_driver = {
 	en_ifs, NENTS(en_ifs)
 };
 
-int turbo = 1;
+extern int turbo;
 
 /* ### int netdev_sock;
 static int open_count; */
@@ -137,9 +137,7 @@ en_init(struct iodesc *desc, void *machdep_hint)
 		er->txmode = EN_TMD_LB_DISABLE;
 
 	/* setup for bnc/tp */
-	if (turbo) {
-
-	} else {
+	if (!turbo) {
 		DPRINTF (("en_media: %s\n",
 			  (bmap_chip[13] & 0x20000000) ? "BNC" : "TP"));
 		if (!(bmap_chip[13] & 0x20000000)) {
