@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.58 2003/02/20 13:30:44 seb Exp $
+# 	$NetBSD: GENERIC32,v 1.59 2003/02/27 19:22:47 perseant Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.59 $"
 
 maxusers	64
 
@@ -527,6 +527,7 @@ pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2002/12/22 00:17:13 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.90 2003/02/27 19:22:40 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.90 $"
 
 maxusers	32		# estimated number of users
 
@@ -246,6 +246,7 @@ pseudo-device	vnd		4	# vnode pseudo-disks
 
 # network pseudo-devices
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	gre		2	# generic L3 over IP tunnel

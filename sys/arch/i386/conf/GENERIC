@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.547 2003/02/18 20:13:03 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.548 2003/02/27 19:22:41 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.547 $"
+#ident 		"GENERIC-$Revision: 1.548 $"
 
 maxusers	32		# estimated number of users
 
@@ -1099,6 +1099,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
