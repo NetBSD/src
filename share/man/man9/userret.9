@@ -1,4 +1,4 @@
-.\"     $NetBSD: userret.9,v 1.5 2003/04/16 13:35:34 wiz Exp $
+.\"     $NetBSD: userret.9,v 1.6 2003/06/26 12:07:43 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ function on each architecture is essentially the same.
 Specifically, the
 .Fn userret
 function performs the following procedure:
-.Bl -bullet -indent
+.Bl -bullet -offset indent
 .It
 Detect a change in the signal disposition of the current process and invoke
 .Xr postsig 9
