@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.2 2003/05/14 12:22:35 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.3 2004/03/25 15:47:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-	.globl _C_LABEL(netbsd32_esigcode)
-
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -60,5 +58,5 @@ NENTRY(netbsd32_sigcode)
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(esigcode)
+	.globl	_C_LABEL(netbsd32_esigcode)
 _C_LABEL(netbsd32_esigcode):
