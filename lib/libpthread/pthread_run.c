@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.19 2002/12/20 01:06:17 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.20 2003/01/02 06:41:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,12 +51,12 @@
 #define SDPRINTF(x)
 #endif
 
-pthread_spin_t runqueue_lock;
-struct pthread_queue_t runqueue;
-struct pthread_queue_t idlequeue;
+extern pthread_spin_t pthread__runqueue_lock;
+extern struct pthread_queue_t pthread__runqueue;
+extern struct pthread_queue_t pthread__idlequeue;
 
-extern pthread_spin_t deadqueue_lock;
-extern struct pthread_queue_t reidlequeue;
+extern pthread_spin_t pthread__deadqueue_lock;
+extern struct pthread_queue_t pthread__reidlequeue;
 
 
 int
@@ -68,16 +68,16 @@ sched_yield(void)
 	if (pthread__started) {
 		self = pthread__self();
 		SDPRINTF(("(sched_yield %p) yielding\n", self));
-		pthread_spinlock(self, &runqueue_lock);
-		PTQ_INSERT_TAIL(&runqueue, self, pt_runq);
+		pthread_spinlock(self, &pthread__runqueue_lock);
+		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
 		/*
 		 * There will always be at least one thread on the runqueue,
 		 * because we just put ourselves there.
 		 */
-	        next = PTQ_FIRST(&runqueue);
-		PTQ_REMOVE(&runqueue, next, pt_runq);
+	        next = PTQ_FIRST(&pthread__runqueue);
+		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
 		next->pt_state = PT_STATE_RUNNING;
-		pthread__locked_switch(self, next, &runqueue_lock);
+		pthread__locked_switch(self, next, &pthread__runqueue_lock);
 	}
 
 	return 0;
@@ -106,19 +106,19 @@ pthread__next(pthread_t self)
 {
 	pthread_t next;
 
-	pthread_spinlock(self, &runqueue_lock);
-	next = PTQ_FIRST(&runqueue);
+	pthread_spinlock(self, &pthread__runqueue_lock);
+	next = PTQ_FIRST(&pthread__runqueue);
 	if (next) {
 		assert(next->pt_type == PT_THREAD_NORMAL);
-		PTQ_REMOVE(&runqueue, next, pt_runq);
+		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
 	} else {
-		next = PTQ_FIRST(&idlequeue);
+		next = PTQ_FIRST(&pthread__idlequeue);
 		assert(next != 0);
-		PTQ_REMOVE(&idlequeue, next, pt_runq);
+		PTQ_REMOVE(&pthread__idlequeue, next, pt_runq);
 		assert(next->pt_type == PT_THREAD_IDLE);
 		SDPRINTF(("(next %p) returning idle thread %p\n", self, next));
 	}
-	pthread_spinunlock(self, &runqueue_lock);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 
 	return next;
 }
@@ -136,9 +136,9 @@ pthread__sched(pthread_t self, pthread_t thread)
 #ifdef PTHREAD__DEBUG
 	thread->rescheds++;
 #endif
-	pthread_spinlock(self, &runqueue_lock);
-	PTQ_INSERT_TAIL(&runqueue, thread, pt_runq);
-	pthread_spinunlock(self, &runqueue_lock);
+	pthread_spinlock(self, &pthread__runqueue_lock);
+	PTQ_INSERT_TAIL(&pthread__runqueue, thread, pt_runq);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 }
 
 
@@ -156,9 +156,9 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 	thread->pt_uc->uc_link = NULL;
 	makecontext(thread->pt_uc, pthread__idle, 0);
 
-	pthread_spinlock(self, &runqueue_lock);
-	PTQ_INSERT_TAIL(&idlequeue, thread, pt_runq);
-	pthread_spinunlock(self, &runqueue_lock);
+	pthread_spinlock(self, &pthread__runqueue_lock);
+	PTQ_INSERT_TAIL(&pthread__idlequeue, thread, pt_runq);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 }
 
 
@@ -168,13 +168,13 @@ pthread__sched_idle2(pthread_t self)
 	pthread_t idlethread, qhead, next;
 
 	qhead = NULL;
-	pthread_spinlock(self, &deadqueue_lock);
-	idlethread = PTQ_FIRST(&reidlequeue);
+	pthread_spinlock(self, &pthread__deadqueue_lock);
+	idlethread = PTQ_FIRST(&pthread__reidlequeue);
 	while (idlethread != NULL) {
 		SDPRINTF(("(sched_idle2 %p) reidling %p\n", self, idlethread));
 		next = PTQ_NEXT(idlethread, pt_runq);
 		if (idlethread->pt_next == NULL) {
-			PTQ_REMOVE(&reidlequeue, idlethread, pt_runq);
+			PTQ_REMOVE(&pthread__reidlequeue, idlethread, pt_runq);
 			idlethread->pt_next = qhead;
 			qhead = idlethread;
 		} else {
@@ -182,7 +182,7 @@ pthread__sched_idle2(pthread_t self)
 		}
 		idlethread = next;
 	}
-	pthread_spinunlock(self, &deadqueue_lock);
+	pthread_spinunlock(self, &pthread__deadqueue_lock);
 
 	if (qhead)
 		pthread__sched_bulk(self, qhead);
@@ -197,7 +197,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 {
 	pthread_t next;
 
-	pthread_spinlock(self, &runqueue_lock);
+	pthread_spinlock(self, &pthread__runqueue_lock);
 	for ( ; qhead && (qhead != self) ; qhead = next) {
 		next = qhead->pt_next;
 		assert (qhead->pt_spinlocks == 0);
@@ -209,9 +209,9 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->rescheds++;
 #endif
 			SDPRINTF(("(bulk %p) scheduling %p\n", self, qhead));
-			assert(PTQ_LAST(&runqueue, pthread_queue_t) != qhead);
-			assert(PTQ_FIRST(&runqueue) != qhead);
-			PTQ_INSERT_TAIL(&runqueue, qhead, pt_runq);
+			assert(PTQ_LAST(&pthread__runqueue, pthread_queue_t) != qhead);
+			assert(PTQ_FIRST(&pthread__runqueue) != qhead);
+			PTQ_INSERT_TAIL(&pthread__runqueue, qhead, pt_runq);
 		} else if (qhead->pt_type == PT_THREAD_IDLE) {
 			qhead->pt_state = PT_STATE_RUNNABLE;
 			qhead->pt_flags &= ~PT_FLAG_IDLED;
@@ -222,8 +222,8 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_uc->uc_link = NULL;
 			makecontext(qhead->pt_uc, pthread__idle, 0);
 			SDPRINTF(("(bulk %p) idling %p\n", self, qhead));
-			PTQ_INSERT_TAIL(&idlequeue, qhead, pt_runq);
+			PTQ_INSERT_TAIL(&pthread__idlequeue, qhead, pt_runq);
 		}
 	}
-	pthread_spinunlock(self, &runqueue_lock);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 }

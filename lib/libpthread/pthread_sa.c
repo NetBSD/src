@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.35 2002/12/30 22:24:35 thorpej Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.36 2003/01/02 06:41:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,13 +60,13 @@
 #define SDPRINTF(x)
 #endif
 
-extern struct pthread_queue_t allqueue;
+extern struct pthread_queue_t pthread__allqueue;
 
-stack_t recyclable[2][(PT_UPCALLSTACKS/2)+1];
-int	recycle_count;
-int	recycle_threshold;
-int	recycle_side;
-pthread_spin_t recycle_lock;
+static stack_t recyclable[2][(PT_UPCALLSTACKS/2)+1];
+static int	recycle_count;
+static int	recycle_threshold;
+static int	recycle_side;
+static pthread_spin_t recycle_lock;
 
 #define	PTHREAD_RRTIMER_INTERVAL_DEFAULT	100
 static pthread_mutex_t rrtimer_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -75,7 +75,6 @@ static int pthread_rrtimer_interval = PTHREAD_RRTIMER_INTERVAL_DEFAULT;
 
 int pthread__maxlwps;
 
-extern struct pthread_queue_t runqueue;
 
 #define pthread__sa_id(sap) (pthread__id((sap)->sa_context))
 
@@ -670,7 +669,7 @@ pthread__sa_start(void)
 		t->pt_flags = PT_FLAG_DETACHED;
 		sigfillset(&t->pt_sigmask); /* XXX hmmmmmm */
 		/* No locking needed, there are no threads yet. */
-		PTQ_INSERT_HEAD(&allqueue, t, pt_allq);
+		PTQ_INSERT_HEAD(&pthread__allqueue, t, pt_allq);
 	}
 
 	recycle_threshold = PT_UPCALLSTACKS/2;
