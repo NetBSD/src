@@ -1,4 +1,4 @@
-/*  $NetBSD: tlphy.c,v 1.1.2.1 1997/10/21 08:25:21 mrg Exp $   */
+/*  $NetBSD: tlphy.c,v 1.1.2.2 1997/11/17 02:07:07 thorpej Exp $   */
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -81,7 +81,8 @@ tlphymatch(parent, match, aux)
 {
 	mii_phy_t *phy = aux;
 
-	if (phy->phy_id == 0x40005014 || phy->phy_id == 0x40005015)
+	if (phy->phy_id == 0x40005013 || phy->phy_id == 0x40005014 ||
+	    phy->phy_id == 0x40005015)
 		return 1;
 	return 0;
 }
@@ -111,6 +112,9 @@ tlphyattach(parent, self, aux)
 	case COMPAQ_INT_NETFLEX:
 	case COMPAQ_NETFLEX_BNC:
 		sc->phy_link->phy_media = PHY_BNC | PHY_10baseT;
+		break;
+	case TI_TLAN:
+		sc->phy_link->phy_media = PHY_10baseT;
 		break;
 	default:
 		sc->phy_link->phy_media = PHY_AUI;
