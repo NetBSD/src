@@ -46,9 +46,8 @@
 #include <assert.h>
 
 __RCSID("$Heimdal: resolve.c,v 1.38.2.1 2003/04/22 15:02:47 lha Exp $"
-        "$NetBSD: resolve.c,v 1.6 2003/05/15 21:36:55 lha Exp $");
+        "$NetBSD: resolve.c,v 1.7 2004/05/25 11:15:43 lha Exp $");
 
-#undef HAVE_RES_NSEARCH
 #if (defined(HAVE_RES_SEARCH) || defined(HAVE_RES_NSEARCH)) && defined(HAVE_DN_EXPAND)
 
 #define DECL(X) {#X, T_##X}

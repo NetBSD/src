@@ -580,7 +580,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_RESOLV_H 1
 
 /* Define to 1 if you have the `res_nsearch' function. */
-/* #undef HAVE_RES_NSEARCH */
+#define HAVE_RES_NSEARCH 1
 
 /* Define to 1 if you have the `res_search' function. */
 #define HAVE_RES_SEARCH 1
