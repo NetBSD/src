@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2003/10/18 09:08:46 wiz Exp $
+#	$NetBSD: Makefile,v 1.49 2004/03/16 07:55:05 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -53,7 +53,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_attributes.3 attrset.3 curses_tty.3 beep.3 \
 	 curses_background.3 bkgd.3 curses_background.3 bkgdset.3 \
 	 curses_border.3 border.3 curses_border.3 box.3 \
-	 curses_color.3 can_change_colors.3 curses_tty.3 cbreak.3 \
+	 curses_color.3 can_change_color.3 curses_tty.3 cbreak.3 \
 	 curses_clear.3 clear.3 curses_clear.3 clearok.3 \
 	 curses_clear.3 clrtobot.3 curses_clear.3 clrtoeol.3 \
 	 curses_color.3 color_content.3 curses_attributes.3 color_set.3 \
