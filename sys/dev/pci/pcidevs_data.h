@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.144 1999/07/27 00:24:06 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.145 1999/07/27 17:55:01 castor Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.139 1999/07/27 00:23:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.140 1999/07/27 17:52:59 castor Exp 
  */
 
 /*
@@ -5971,6 +5971,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DELTA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Delta Electronics",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_GEOCAST, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Geocast Network Systems",
 	    NULL,
 	},
 	{
