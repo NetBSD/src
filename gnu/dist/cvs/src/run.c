@@ -462,7 +462,7 @@ close_on_exec (fd)
      int fd;
 {
 #ifdef F_SETFD
-    if (fcntl (fd, F_SETFD, 1))
+    if (fcntl (fd, F_SETFD, 1) == -1)
 	error (1, errno, "can't set close-on-exec flag on %d", fd);
 #endif
 }
