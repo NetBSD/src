@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.114 1997/10/29 01:39:40 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.115 1997/10/31 08:15:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -213,9 +213,9 @@ kbd_wait_output()
 	for (i = 100000; i; i--)
 		if ((inb(KBSTATP) & KBS_IBF) == 0) {
 			KBD_DELAY;
-			return 1;
+			return (1);
 		}
-	return 0;
+	return (0);
 }
 
 static __inline int
@@ -226,9 +226,9 @@ kbd_wait_input()
 	for (i = 100000; i; i--)
 		if ((inb(KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
-			return 1;
+			return (1);
 		}
-	return 0;
+	return (0);
 }
 
 static __inline void
@@ -253,11 +253,11 @@ kbc_get8042cmd()
 {
 
 	if (!kbd_wait_output())
-		return -1;
+		return (-1);
 	outb(KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
-		return -1;
-	return inb(KBDATAP);
+		return (-1);
+	return (inb(KBDATAP));
 }
 #endif
 
@@ -270,12 +270,12 @@ kbc_put8042cmd(val)
 {
 
 	if (!kbd_wait_output())
-		return 0;
+		return (0);
 	outb(KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
-		return 0;
+		return (0);
 	outb(KBOUTP, val);
-	return 1;
+	return (1);
 }
 
 /*
@@ -291,7 +291,7 @@ kbd_cmd(val, polling)
 
 	do {
 		if (!kbd_wait_output())
-			return 0;
+			return (0);
 		ack = nak = 0;
 		outb(KBOUTP, val);
 		if (polling)
@@ -303,7 +303,7 @@ kbd_cmd(val, polling)
 					c = inb(KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
-						return 1;
+						return (1);
 					}
 					if (c == KBR_RESEND) {
 						nak = 1;
@@ -318,14 +318,14 @@ kbd_cmd(val, polling)
 			for (i = 100000; i; i--) {
 				(void) inb(KBSTATP);
 				if (ack)
-					return 1;
+					return (1);
 				if (nak)
 					break;
 			}
 		if (!nak)
-			return 0;
+			return (0);
 	} while (--retries);
-	return 0;
+	return (0);
 }
 
 void
@@ -442,7 +442,7 @@ pcprobe(parent, match, aux)
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
-		return 0;
+		return (0);
 	}
 
 #if 1
@@ -510,7 +510,7 @@ lose:
 
 	ia->ia_iosize = 16;
 	ia->ia_msize = 0;
-	return 1;
+	return (1);
 }
 
 void
@@ -535,20 +535,21 @@ pcattach(parent, self, aux)
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, ia->ia_ic, NULL) != NULL)	/* XXX */
-		/* will break when no more children */ ;
+	while (config_found(self, ia->ia_ic, NULL) != NULL) {	/* XXX */
+		/* Will break when no more children. */
+		;
+	}
 
-	if(pccons_is_console) {
+	if (pccons_is_console) {
 		int maj;
 
-		/* locate the major number */
+		/* Locate the major number. */
 		for (maj = 0; maj < nchrdev; maj++)
 			if (cdevsw[maj].d_open == pcopen)
 				break;
 
+		/* There can be only one, but it can have any unit number. */
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
-		/* there can be only one, but it can have any
-		 unit number */
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -565,10 +566,10 @@ pcopen(dev, flag, mode, p)
 	struct tty *tp;
 
 	if (unit >= pc_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	sc = pc_cd.cd_devs[unit];
 	if (sc == 0)
-		return ENXIO;
+		return (ENXIO);
 
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
@@ -590,7 +591,7 @@ pcopen(dev, flag, mode, p)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return EBUSY;
+		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
@@ -610,7 +611,7 @@ pcclose(dev, flag, mode, p)
 #ifdef notyet /* XXX */
 	ttyfree(tp);
 #endif
-	return(0);
+	return (0);
 }
 
 int
@@ -661,19 +662,19 @@ pcintr(arg)
 	u_char *cp;
 
 	if ((inb(KBSTATP) & KBS_DIB) == 0)
-		return 0;
+		return (0);
 	if (polling)
-		return 1;
+		return (1);
 	do {
 		cp = sget();
 		if (!tp || (tp->t_state & TS_ISOPEN) == 0)
-			return 1;
+			return (1);
 		if (cp)
 			do
 				(*linesw[tp->t_line].l_rint)(*cp++, tp);
 			while (*cp);
 	} while (inb(KBSTATP) & KBS_DIB);
-	return 1;
+	return (1);
 }
 
 int
@@ -690,21 +691,21 @@ pcioctl(dev, cmd, data, flag, p)
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
-		return error;
+		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
-		return error;
+		return (error);
 
 	switch (cmd) {
 #ifdef XSERVER
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
 		ttyflush(tp, FREAD);
-		return 0;
+		return (0);
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
 		ttyflush(tp, FREAD);
-		return 0;
+		return (0);
 	case CONSOLE_X_BELL:
 		/*
 		 * If set, data is a pointer to a length 2 array of
@@ -716,26 +717,26 @@ pcioctl(dev, cmd, data, flag, p)
 				(((int*)data)[1] * hz) / 1000);
 		else
 			sysbeep(BEEP_FREQ, BEEP_TIME);
-		return 0;
+		return (0);
 #endif /* XSERVER */
 	case CONSOLE_SET_TYPEMATIC_RATE: {
  		u_char	rate;
 
  		if (!data)
-			return EINVAL;
+			return (EINVAL);
 		rate = *((u_char *)data);
 		/*
 		 * Check that it isn't too big (which would cause it to be
 		 * confused with a command).
 		 */
 		if (rate & 0x80)
-			return EINVAL;
+			return (EINVAL);
 		typematic_rate = rate;
 		async_update();
-		return 0;
+		return (0);
  	}
 	default:
-		return ENOTTY;
+		return (ENOTTY);
 	}
 
 #ifdef DIAGNOSTIC
@@ -766,6 +767,7 @@ pcstart(tp)
 	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
 	sput(buf, len);
+
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
@@ -788,6 +790,7 @@ pcstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
+
 	lock_state |= SCROLL;
 	async_update();
 }
@@ -795,14 +798,15 @@ pcstop(tp, flag)
 int
 pccnattach()
 {
-	static struct consdev pccons = { NULL, NULL,
-	pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL};
+	static struct consdev pccons = {
+		NULL, NULL, pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL
+	};
 
 	cn_tab = &pccons;
 
 	pccons_is_console = 1;
 
-	return(0);
+	return (0);
 }
 
 /* ARGSUSED */
@@ -831,7 +835,7 @@ pccngetc(dev)
 
 #ifdef XSERVER
 	if (pc_xmode > 0)
-		return 0;
+		return (0);
 #endif
 
 	do {
@@ -841,8 +845,8 @@ pccngetc(dev)
 		cp = sget();
 	} while (!cp);
 	if (*cp == '\r')
-		return '\n';
-	return *cp;
+		return ('\n');
+	return (*cp);
 }
 
 void
@@ -887,7 +891,7 @@ pcparam(tp, t)
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
-	return 0;
+	return (0);
 }
 
 void
@@ -2011,7 +2015,7 @@ top:
 			async_update();
 			break;
 		}
-		return capchar;
+		return (capchar);
 	}
 #endif /* XSERVER */
 
@@ -2074,7 +2078,7 @@ top:
 		if (extended && dt == 53) {
 			capchar[0] = '/';
 			extended = 0;
-			return capchar;
+			return (capchar);
 		}
 #endif
 		switch (scan_codes[dt].type) {
@@ -2104,7 +2108,7 @@ top:
 			else
 				capchar[0] = 'Q' - '@';
 			extended = 0;
-			return capchar;
+			return (capchar);
 		/*
 		 * non-locking keys
 		 */
@@ -2143,7 +2147,7 @@ top:
 			}
 			capchar[0] |= (shift_state & ALT);
 			extended = 0;
-			return capchar;
+			return (capchar);
 		case NONE:
 			break;
 		case FUNC: {
@@ -2155,7 +2159,7 @@ top:
 			else
 				more_chars = scan_codes[dt].unshift;
 			extended = 0;
-			return more_chars;
+			return (more_chars);
 		}
 		case KP: {
 			char *more_chars;
@@ -2165,7 +2169,7 @@ top:
 			else
 				more_chars = scan_codes[dt].unshift;
 			extended = 0;
-			return more_chars;
+			return (more_chars);
 		}
 		}
 	}
@@ -2173,7 +2177,7 @@ top:
 	extended = 0;
 loop:
 	if ((inb(KBSTATP) & KBS_DIB) == 0)
-		return 0;
+		return (0);
 	goto top;
 }
 
@@ -2185,8 +2189,8 @@ pcmmap(dev, offset, nprot)
 {
 
 	if (offset > 0x20000)
-		return -1;
-	return i386_btop(0xa0000 + offset);
+		return (-1);
+	return (i386_btop(0xa0000 + offset));
 }
 
 #ifdef XSERVER
