@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.507 2003/02/03 11:00:53 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.508 2003/02/03 13:28:54 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.504 2003/02/03 11:00:26 joda Exp 
+ *	NetBSD: pcidevs,v 1.505 2003/02/03 13:27:57 pooka Exp 
  */
 
 /*
@@ -1797,6 +1797,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCEDDR	0x0101		/* GeForce DDR */
 #define	PCI_PRODUCT_NVIDIA_QUADRO	0x0103		/* Quadro */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2MX	0x0110		/* GeForce2 MX [NV11] */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE2GO	0x0112		/* GeForce2 Go */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2	0x0150		/* GeForce2 GTS */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2DDR	0x0151		/* GeForce2 GTS (DDR) */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2BR	0x0152		/* GeForce2 GTS */
