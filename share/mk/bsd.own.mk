@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.71 1998/05/29 10:15:17 agc Exp $
+#	$NetBSD: bsd.own.mk,v 1.72 1998/06/27 20:56:49 mark Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -108,7 +108,8 @@ OBJECT_FMT?=a.out
 
 # all machines on which we are okay should be added here until we can
 # get rid of the whole "NOLINT by default" thing.
-.if (${MACHINE} == "i386") || \
+.if (${MACHINE} == "arm32") || \
+    (${MACHINE} == "i386") || \
     (${MACHINE} == "sparc")
 NONOLINT=1
 .endif
