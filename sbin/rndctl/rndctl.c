@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.3 1998/01/09 08:04:03 perry Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.4 1999/02/28 17:42:37 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -162,9 +162,9 @@ do_list(int all, u_int32_t type, char *name)
 		printf(HEADER);
 		printf("%-16s %-8s %10u %s\n",
 		       rstat_name.source.name,
-		       find_name(rstat_name.source.tyfl & 0xff),
+		       find_name(rstat_name.source.type),
 		       rstat_name.source.total,
-		       strflags(rstat_name.source.tyfl));
+		       strflags(rstat_name.source.flags));
 		close(fd);
 		return;
 	}
@@ -187,12 +187,12 @@ do_list(int all, u_int32_t type, char *name)
                         
 		for (res = 0 ; res < rstat.count ; res++) {
 			if ((all != 0)
-			    || (type == (rstat.source[res].tyfl & 0xff)))
+			    || (type == rstat.source[res].type))
 				printf("%-16s %-8s %10u %s\n",
 				       rstat.source[res].name,
-				       find_name(rstat.source[res].tyfl & 0xff),
+				       find_name(rstat.source[res].type),
 				       rstat.source[res].total,
-				       strflags(rstat.source[res].tyfl));
+				       strflags(rstat.source[res].flags));
 		}
 		start += rstat.count;
 	}
