@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.9 2000/02/01 05:25:31 tsutsui Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.10 2000/02/24 21:59:13 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,17 +21,21 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AR?=	ar
-AS?=	as
-CC?=	cc
+#BINDIR=	/usr/pkg/mipsel-netbsd/bin/mipsel-netbsd-
+MACHINE=hpcmips
+MACHINE_ARCH=mipsel
+
+AR=	${BINDIR}ar
+AS=	${BINDIR}as
+CC=	${BINDIR}gcc
 CPP?=	cpp
-LD?=	ld
+LD=	${BINDIR}ld
 LORDER?=lorder
 MKDEP?=	mkdep
-NM?=	nm
-RANLIB?=ranlib
-SIZE?=	size
-STRIP?=	strip
+NM=	${BINDIR}nm
+RANLIB=	${BINDIR}ranlib
+SIZE=	${BINDIR}size
+STRIP=	${BINDIR}strip
 TSORT?=	tsort -q
 
 COPTS?=	-Os -mmemcpy
@@ -177,13 +181,13 @@ SRCS=	${MIPS}/mips/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${HPCMIPS}/hpcmips/locore_machdep.S 
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	CC="${CC}" ${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S
+	CC="${CC}" ${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${HPCMIPS}/hpcmips/locore_machdep.S 
+	CC="${CC}" ${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if (${SFILES} != "")
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	CC="${CC}" ${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	CC="${CC}" sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
