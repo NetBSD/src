@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.3 2000/07/22 21:30:54 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.4 2000/08/07 22:21:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -203,8 +203,10 @@ ea_dump_buffer(sc, offset)
 	addr = offset;
 
 	do {
-		WriteShort(sc->sc_iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_FIFO_READ);
-		WriteShort(iobase + EA_8005_CONFIG1, sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
+		WriteShort(sc->sc_iobase + EA_8005_COMMAND,
+			   sc->sc_command | EA_CMD_FIFO_READ);
+		WriteShort(iobase + EA_8005_CONFIG1,
+			   sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
 		WriteShort(iobase + EA_8005_DMA_ADDR, addr);
 
 		ptr = ReadShort(iobase + EA_8005_BUFWIN);
@@ -244,16 +246,18 @@ eaprobe(parent, cf, aux)
 	struct podulebus_attach_args *pa = (void *)aux;
 	u_int iobase;
 	
-/* Look for a network slot interface */
+	/* Look for a network slot interface */
 
-	if ((matchpodule(pa, MANUFACTURER_ATOMWIDE, PODULE_ATOMWIDE_ETHER3, -1) == 0)
-	    && (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_ETHER3XXX, -1) == 0)
+	if ((matchpodule(pa, MANUFACTURER_ATOMWIDE,
+			 PODULE_ATOMWIDE_ETHER3, -1) == 0)
+	    && (matchpodule(pa, MANUFACTURER_ACORN,
+			    PODULE_ACORN_ETHER3XXX, -1) == 0)
 	    && (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHER3, -1) == 0))
 		return(0);
 
 	iobase = pa->pa_memc_h + EA_8005_BASE;
 
-/* Reset it  - Why here ? */
+	/* Reset it  - Why here ? */
 
 	WriteShort(iobase + EA_8005_CONFIG2, EA_CFG2_RESET);
 	delay(100);
@@ -308,7 +312,7 @@ eaattach(parent, self, aux)
 
 	sc->sc_irqclaimed = 0;
 
-/* Claim a podule interrupt */
+	/* Claim a podule interrupt */
 
 	sc->sc_ih = podulebus_irq_establish(sc->sc_dev.dv_parent,
 	    pa->pa_slotnum, IPL_NET, eaintr, sc);
@@ -400,14 +404,16 @@ ea_ramtest(sc)
 	ea_writebuf(sc, NULL, 0x0000, 0);
 
 	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		WriteShort(iobase + EA_8005_BUFWIN, loop ^ (EA_BUFFER_SIZE - 1));
+		WriteShort(iobase + EA_8005_BUFWIN,
+			   loop ^ (EA_BUFFER_SIZE - 1));
 
 	/* Set the read start address and verify the pattern */
 
 	ea_readbuf(sc, NULL, 0x0000, 0);
 
 	for (loop = 0; loop < EA_BUFFER_SIZE; loop += 2)
-		if (ReadShort(iobase + EA_8005_BUFWIN) != (loop ^ (EA_BUFFER_SIZE - 1)))
+		if (ReadShort(iobase + EA_8005_BUFWIN) !=
+		    (loop ^ (EA_BUFFER_SIZE - 1)))
 			++sum;
 
 	if (sum != 0)
@@ -465,12 +471,11 @@ void
 ea_claimirq(sc)
 	struct ea_softc *sc;
 {
-/* Have we claimed one already ? */
 
+	/* Have we claimed one already ? */
 	if (sc->sc_irqclaimed) return;
 
-/* Claim it */
-
+	/* Claim it */
 	irq_enable(sc->sc_ih);
 
 	sc->sc_irqclaimed = 1;
@@ -483,8 +488,8 @@ void
 ea_releaseirq(sc)
 	struct ea_softc *sc;
 {
-/* Have we claimed one ? */
 
+	/* Have we claimed one ? */
 	if (!sc->sc_irqclaimed) return;
 
 	irq_disable(sc->sc_ih);
@@ -505,7 +510,7 @@ ea_reinit(sc)
 
 	dprintf(("eareinit()\n"));
 
-/* Stop and reinitialise the interface */
+	/* Stop and reinitialise the interface */
 
 	s = splnet();
 	ea_stop(sc);
@@ -534,8 +539,7 @@ ea_stoptx(sc)
 	if (!(status & EA_STATUS_TX_ON))
 		return(0);
 
-/* Stop any tx and wait for confirmation */
-
+	/* Stop any tx and wait for confirmation */
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_TX_OFF);
 
 	timeout = 20000;
@@ -545,9 +549,9 @@ ea_stoptx(sc)
 	if (timeout == 0)
 		dprintf(("ea_stoptx: timeout waiting for tx termination\n"));
 
-/* Clear any pending tx interrupt */
-
-	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_TX_INTACK);
+	/* Clear any pending tx interrupt */
+	WriteShort(iobase + EA_8005_COMMAND,
+		   sc->sc_command | EA_CMD_TX_INTACK);
 	return(1);
 }
 
@@ -572,7 +576,7 @@ ea_stoprx(sc)
 	if (!(status & EA_STATUS_RX_ON))
 		return(0);
 
-/* Stop any rx and wait for confirmation */
+	/* Stop any rx and wait for confirmation */
 
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_RX_OFF);
 
@@ -583,9 +587,10 @@ ea_stoprx(sc)
 	if (timeout == 0)
 		dprintf(("ea_stoprx: timeout waiting for rx termination\n"));
 
-/* Clear any pending rx interrupt */
+	/* Clear any pending rx interrupt */
 
-	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_RX_INTACK);
+	WriteShort(iobase + EA_8005_COMMAND,
+		   sc->sc_command | EA_CMD_RX_INTACK);
 	return(1);
 }
 
@@ -603,29 +608,24 @@ ea_stop(sc)
 
 	dprintf(("ea_stop()\n"));
 
-/* Stop all IO */
-
+	/* Stop all IO */
 	ea_stoptx(sc);
 	ea_stoprx(sc);
 
-/* Disable rx and tx interrupts */
-
+	/* Disable rx and tx interrupts */
 	sc->sc_command &= (EA_CMD_RX_INTEN | EA_CMD_TX_INTEN);
 
-/* Clear any pending interrupts */
-
+	/* Clear any pending interrupts */
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command
 	    | EA_CMD_RX_INTACK | EA_CMD_TX_INTACK | EA_CMD_DMA_INTACK
 	    | EA_CMD_BW_INTACK);
 	dprintf(("st=%08x", ReadShort(iobase + EA_8005_STATUS)));
 
-/* Release the irq */
-
+	/* Release the irq */
 	ea_releaseirq(sc);
 
 	/* Cancel any watchdog timer */
-	
-	sc->sc_ethercom.ec_if.if_timer = 0;
+       	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 
@@ -642,7 +642,7 @@ ea_chipreset(sc)
 
 	dprintf(("ea_chipreset()\n"));
 
-/* Reset the controller. Min of 4us delay here */
+	/* Reset the controller. Min of 4us delay here */
 
 	WriteShort(iobase + EA_8005_CONFIG2, EA_CFG2_RESET);
 	delay(100);
@@ -669,33 +669,30 @@ ea_hardreset(sc)
 
 	dprintf(("ea_hardreset()\n"));
 
-/* Stop any activity */
-
+	/* Stop any activity */
 	ea_stoptx(sc);
 	ea_stoprx(sc);
 
 	ea_chipreset(sc);
 
-/* Set up defaults for the registers */
-
+	/* Set up defaults for the registers */
 	sc->sc_config2 = 0;
 	WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 	sc->sc_command = 0x00;
-	sc->sc_config1 = EA_CFG1_STATION_ADDR0 | EA_CFG1_DMA_BSIZE_1 | EA_CFG1_DMA_BURST_CONT;
+	sc->sc_config1 = EA_CFG1_STATION_ADDR0 | EA_CFG1_DMA_BSIZE_1 |
+	    EA_CFG1_DMA_BURST_CONT;
 	WriteShort(iobase + EA_8005_CONFIG1, sc->sc_config1);
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command);
 
 	WriteShort(iobase + EA_8005_CONFIG1, EA_BUFCODE_TX_EAP);
 	WriteShort(iobase + EA_8005_BUFWIN, ((EA_TX_BUFFER_SIZE >> 8) - 1));
 
-/* Write the station address - the receiver must be off */
-
+	/* Write the station address - the receiver must be off */
 	WriteShort(sc->sc_iobase + EA_8005_CONFIG1,
 	    sc->sc_config1 | EA_BUFCODE_STATION_ADDR0);
-	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
+	for (loop = 0; loop < ETHER_ADDR_LEN; ++loop)
 		WriteByte(sc->sc_iobase + EA_8005_BUFWIN,
-		    LLADDR(ifp->if_sadl)[loop]);
-	}
+			  LLADDR(ifp->if_sadl)[loop]);
 }
 
 
@@ -721,26 +718,34 @@ ea_writebuf(sc, buf, addr, len)
 
 	dprintf(("writebuf: st=%04x\n", ReadShort(iobase + EA_8005_STATUS)));
 
-/* If we have a valid buffer address set the buffer pointer and direction */
-
+	/*
+	 * If we have a valid buffer address set the buffer pointer and
+	 * direction.
+	 */
 	if (addr >= 0 && addr < EA_BUFFER_SIZE) {
-		WriteShort(iobase + EA_8005_CONFIG1, sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
-		WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_FIFO_WRITE);
+		WriteShort(iobase + EA_8005_CONFIG1,
+			   sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
+		WriteShort(iobase + EA_8005_COMMAND,
+			   sc->sc_command | EA_CMD_FIFO_WRITE);
 
 		/* Should wait here of FIFO empty flag */
 
 		timeout = 20000;
-		while ((ReadShort(iobase + EA_8005_STATUS) & EA_STATUS_FIFO_EMPTY) == 0 && --timeout > 0);
-
+		while ((ReadShort(iobase + EA_8005_STATUS) &
+			EA_STATUS_FIFO_EMPTY) == 0 &&
+		       --timeout > 0);
 
 		WriteShort(iobase + EA_8005_DMA_ADDR, addr);
 	}
 
 	for (loop = 0; loop < len; loop += 2)
-		WriteShort(iobase + EA_8005_BUFWIN, buf[loop] | buf[loop + 1] << 8);
+		WriteShort(iobase + EA_8005_BUFWIN,
+			   buf[loop] | buf[loop + 1] << 8);
 
-/*	if (len > 0)
-		outsw(iobase + EA_8005_BUFWIN, buf, len / 2);*/
+#if 0
+	if (len > 0)
+		outsw(iobase + EA_8005_BUFWIN, buf, len / 2);
+#endif
 }
 
 
@@ -765,32 +770,47 @@ ea_readbuf(sc, buf, addr, len)
 	int word;
 	int timeout;
 
-	dprintf(("readbuf: st=%04x addr=%04x len=%d\n", ReadShort(iobase + EA_8005_STATUS), addr, len));
+	dprintf(("readbuf: st=%04x addr=%04x len=%d\n",
+		 ReadShort(iobase + EA_8005_STATUS), addr, len));
 
-/* If we have a valid buffer address set the buffer pointer and direction */
-
+	/*
+	 * If we have a valid buffer address set the buffer pointer and
+	 * direction.
+	 */
 	if (addr >= 0 && addr < EA_BUFFER_SIZE) {
-		if ((ReadShort(iobase + EA_8005_STATUS) & EA_STATUS_FIFO_DIR) == 0) {
+		if ((ReadShort(iobase + EA_8005_STATUS) &
+		     EA_STATUS_FIFO_DIR) == 0) {
 			/* Should wait here of FIFO empty flag */
 
 			timeout = 20000;
-			while ((ReadShort(iobase + EA_8005_STATUS) & EA_STATUS_FIFO_EMPTY) == 0 && --timeout > 0);
+			while ((ReadShort(iobase + EA_8005_STATUS) &
+				EA_STATUS_FIFO_EMPTY) == 0 &&
+			       --timeout > 0)
+				continue;
 		}
-		WriteShort(iobase + EA_8005_CONFIG1, sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
-		WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_FIFO_WRITE);
+		WriteShort(iobase + EA_8005_CONFIG1,
+			   sc->sc_config1 | EA_BUFCODE_LOCAL_MEM);
+		WriteShort(iobase + EA_8005_COMMAND,
+			   sc->sc_command | EA_CMD_FIFO_WRITE);
 
 		/* Should wait here of FIFO empty flag */
 
 		timeout = 20000;
-		while ((ReadShort(iobase + EA_8005_STATUS) & EA_STATUS_FIFO_EMPTY) == 0 && --timeout > 0);
+		while ((ReadShort(iobase + EA_8005_STATUS) &
+			EA_STATUS_FIFO_EMPTY) == 0 &&
+		       --timeout > 0)
+			continue;
 
 		WriteShort(iobase + EA_8005_DMA_ADDR, addr);
-		WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_FIFO_READ);
+		WriteShort(iobase + EA_8005_COMMAND,
+			   sc->sc_command | EA_CMD_FIFO_READ);
 
 		/* Should wait here of FIFO full flag */
 
 		timeout = 20000;
-		while ((ReadShort(iobase + EA_8005_STATUS) & EA_STATUS_FIFO_FULL) == 0 && --timeout > 0);
+		while ((ReadShort(iobase + EA_8005_STATUS) &
+			EA_STATUS_FIFO_FULL) == 0 && --timeout > 0)
+			continue;
 
 
 	}
@@ -806,7 +826,8 @@ ea_readbuf(sc, buf, addr, len)
 /*
  * Initialize interface.
  *
- * This should leave the interface in a state for packet reception and transmission
+ * This should leave the interface in a state for packet reception and
+ * transmission.
  */
 
 static int
@@ -821,7 +842,7 @@ ea_init(sc)
 
 	s = splnet();
 
-/* Grab an irq */
+	/* Grab an irq */
 
 	ea_claimirq(sc);
 
@@ -829,30 +850,32 @@ ea_init(sc)
 
 	ea_hardreset(sc);
 
-/* Configure rx. */
 
+	/* Configure rx. */
 	dprintf(("Configuring rx...\n"));
 	if (ifp->if_flags & IFF_PROMISC)
 		sc->sc_config1 = EA_CFG1_PROMISCUOUS;
 	else
 		sc->sc_config1 = EA_CFG1_BROADCAST;
 
-	sc->sc_config1 |= EA_CFG1_DMA_BSIZE_8 | EA_CFG1_STATION_ADDR0 | EA_CFG1_DMA_BURST_CONT;
+	sc->sc_config1 |= EA_CFG1_DMA_BSIZE_8 | EA_CFG1_STATION_ADDR0 |
+		EA_CFG1_DMA_BURST_CONT;
 	WriteShort(iobase + EA_8005_CONFIG1, sc->sc_config1);
 
-/* Configure TX. */
 
+	/* Configure TX. */
 	dprintf(("Configuring tx...\n"));
 
-	WriteShort(iobase + EA_8005_CONFIG1, sc->sc_config1 | EA_BUFCODE_TX_EAP);
+	WriteShort(iobase + EA_8005_CONFIG1,
+		   sc->sc_config1 | EA_BUFCODE_TX_EAP);
 	WriteShort(iobase + EA_8005_BUFWIN, ((EA_TX_BUFFER_SIZE >> 8) - 1));
 	WriteShort(iobase + EA_8005_TX_PTR, 0x0000);
 
 	sc->sc_config2 |= EA_CFG2_OUTPUT;
 	WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 
-/* Place a NULL header at the beginning of the transmit area */
 
+	/* Place a NULL header at the beginning of the transmit area */
 	ea_writebuf(sc, NULL, 0x0000, 0);
 		
 	WriteShort(iobase + EA_8005_BUFWIN, 0x0000);
@@ -861,30 +884,32 @@ ea_init(sc)
 	sc->sc_command |= EA_CMD_TX_INTEN;
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command);
 
-/* Setup the Rx pointers */
 
+	/* Setup the Rx pointers */
 	sc->sc_rx_ptr = EA_TX_BUFFER_SIZE;
 
 	WriteShort(iobase + EA_8005_RX_PTR, sc->sc_rx_ptr);
 	WriteShort(iobase + EA_8005_RX_END, (sc->sc_rx_ptr >> 8));
 
-/* Place a NULL header at the beginning of the receive area */
 
+	/* Place a NULL header at the beginning of the receive area */
 	ea_writebuf(sc, NULL, sc->sc_rx_ptr, 0);
 		
 	WriteShort(iobase + EA_8005_BUFWIN, 0x0000);
 	WriteShort(iobase + EA_8005_BUFWIN, 0x0000);
 
-/* Turn on Rx */
 
+	/* Turn on Rx */
 	sc->sc_command |= EA_CMD_RX_INTEN;
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_RX_ON);
+
 
 	/* Set flags appropriately. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	dprintf(("init: st=%04x\n", ReadShort(iobase + EA_8005_STATUS)));
+
 
 	/* And start output. */
 	ea_start(ifp);
@@ -945,12 +970,10 @@ eatxpacket(sc)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-/* Dequeue the next datagram. */
-
+	/* Dequeue the next datagram. */
 	IF_DEQUEUE(&ifp->if_snd, m0);
 
-/* If there's nothing to send, return. */
-
+	/* If there's nothing to send, return. */
 	if (!m0) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_config2 |= EA_CFG2_OUTPUT;
@@ -971,12 +994,12 @@ eatxpacket(sc)
 	dprintf(("Tx new packet\n"));
 #endif
 
-/*
- * Copy the datagram to the temporary buffer.
- *
- * Eventually we may as well just copy straight into the interface buffer
- */
-
+	/*
+	 * Copy the datagram to the temporary buffer.
+	 *
+	 * Eventually we may as well just copy straight into the
+	 * interface buffer.
+	 */
 	len = 0;
 	for (m = m0; m; m = m->m_next) {
 		if (m->m_len == 0)
@@ -986,8 +1009,8 @@ eatxpacket(sc)
 	}
 	m_freem(m0);
 
-/* If packet size is odd round up to the next 16 bit boundry */
 
+	/* If packet size is odd round up to the next 16 bit boundry */
 	if (len % 2)
 		++len;
 
@@ -996,10 +1019,10 @@ eatxpacket(sc)
 	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
 		log(LOG_WARNING, "ea: oversize packet = %d bytes\n", len);
 
-/* Ok we now have a packet len bytes long in our packet buffer */
 
-/* Transfer datagram to board. */
+	/* Ok we now have a packet len bytes long in our packet buffer */
 
+	/* Transfer datagram to board. */
 #ifdef EA_TX_DEBUG
 	dprintf(("ea: xfr pkt length=%d...\n", len));
 
@@ -1012,20 +1035,24 @@ eatxpacket(sc)
 
 /*	dprintf(("st=%04x\n", ReadShort(iobase + EA_8005_STATUS)));*/
 
-/* Write the packet to the interface buffer, skipping the packet header */
 
+	/*
+	 * Write the packet to the interface buffer, skipping the
+	 * packet header
+	 */
 	ea_writebuf(sc, sc->sc_pktbuf, 0x0004, len);
 
-/* Follow it with a NULL packet header */
 
+	/* Follow it with a NULL packet header */
 	WriteShort(iobase + EA_8005_BUFWIN, 0x00);
 	WriteShort(iobase + EA_8005_BUFWIN, 0x00);
 
-/* Write the packet header */
 
+	/* Write the packet header */
 	ea_writebuf(sc, NULL, 0x0000, 0);
 
-	WriteShort(iobase + EA_8005_BUFWIN, (((len+4) & 0xff00) >> 8) | (((len+4) & 0xff) << 8));
+	WriteShort(iobase + EA_8005_BUFWIN,
+		   (((len+4) & 0xff00) >> 8) | (((len+4) & 0xff) << 8));
 	WriteShort(iobase + EA_8005_BUFWIN, 0x00aa);
 
 	WriteShort(iobase + EA_8005_TX_PTR, 0x0000);
@@ -1036,8 +1063,8 @@ eatxpacket(sc)
 	ea_dump_buffer(sc, 0);
 #endif
 
-/* Now transmit the datagram. */
 
+	/* Now transmit the datagram. */
 /*	dprintf(("st=%04x\n", ReadShort(iobase + EA_8005_STATUS)));*/
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command | EA_CMD_TX_ON);
 #ifdef EA_TX_DEBUG
@@ -1064,19 +1091,18 @@ eaintr(arg)
 	handled = 0;
 	dprintf(("eaintr: "));
 
-/* Get the controller status */
 
+	/* Get the controller status */
 	status = ReadShort(iobase + EA_8005_STATUS);
         dprintf(("st=%04x ", status));	
 
-/* Tx interrupt ? */
 
+	/* Tx interrupt ? */
 	if (status & EA_STATUS_TX_INT) {
 		dprintf(("txint "));
 		handled = 1;
 
-/* Acknowledge the interrupt */
-
+		/* Acknowledge the interrupt */
 		WriteShort(iobase + EA_8005_COMMAND, sc->sc_command
 		    | EA_CMD_TX_INTACK);
 
@@ -1087,34 +1113,34 @@ eaintr(arg)
 #endif
 		txstatus = (txstatus >> 24) & 0xff;
 
-/*
- * Did it succeed ? Did we collide ?
- *
- * The exact proceedure here is not clear. We should get
- * an interrupt on a sucessfull tx or on a collision.
- * The done flag is set after successfull tx or 16 collisions
- * We should thus get a interrupt for each of collision
- * and the done bit should not be set. However it does appear
- * to be set at the same time as the collision bit ...
- *
- * So we will count collisions and output errors and will assume
- * that if the done bit is set the packet was transmitted.
- * Stats may be wrong if 16 collisions occur on a packet
- * as the done flag should be set but the packet may not have been
- * transmitted. so the output count might not require incrementing
- * if the 16 collisions flags is set. I don;t know abou this until
- * it happens.
- */
+		/*
+		 * Did it succeed ? Did we collide ?
+		 *
+		 * The exact proceedure here is not clear. We should get
+		 * an interrupt on a sucessfull tx or on a collision.
+		 * The done flag is set after successfull tx or 16 collisions
+		 * We should thus get a interrupt for each of collision
+		 * and the done bit should not be set. However it does appear
+		 * to be set at the same time as the collision bit ...
+		 *
+		 * So we will count collisions and output errors and will
+		 * assume that if the done bit is set the packet was
+		 * transmitted. Stats may be wrong if 16 collisions occur on
+		 * a packet as the done flag should be set but the packet
+		 * may not have been transmitted. so the output count might
+		 * not require incrementing if the 16 collisions flags is
+		 * set. I don;t know abou this until it happens.
+		 */
 
-		if (txstatus & EA_TXHDR_COLLISION) {
+		if (txstatus & EA_TXHDR_COLLISION)
 			ifp->if_collisions++;
-		} else if (txstatus & EA_TXHDR_ERROR_MASK) {
+		else if (txstatus & EA_TXHDR_ERROR_MASK)
 			ifp->if_oerrors++;
-		}
 
-/*		if (txstatus & EA_TXHDR_ERROR_MASK) {
+#if 0
+		if (txstatus & EA_TXHDR_ERROR_MASK)
 			log(LOG_WARNING, "tx packet error =%02x\n", txstatus);
-		}*/
+#endif
 
 		if (txstatus & EA_PKTHDR_DONE) {
 			ifp->if_opackets++;
@@ -1127,31 +1153,31 @@ eaintr(arg)
 		}
 	}
 
-/* Rx interrupt ? */
 
+	/* Rx interrupt ? */
 	if (status & EA_STATUS_RX_INT) {
 		dprintf(("rxint "));
 		handled = 1;
 
-/* Acknowledge the interrupt */
-
+		/* Acknowledge the interrupt */
 		WriteShort(iobase + EA_8005_COMMAND, sc->sc_command
 		    | EA_CMD_RX_INTACK);
 
-/* Install a watchdog timer needed atm to fixed rx lockups */
-
+		/* Install a watchdog timer needed atm to fixed rx lockups */
 		ifp->if_timer = EA_TIMEOUT;
 
-/* Processes the received packets */
+		/* Processes the received packets */
 		eagetpackets(sc);
 
-/* Make sure the receiver is on */
 
-/*		if ((status & EA_STATUS_RX_ON) == 0) {
+#if 0
+		/* Make sure the receiver is on */
+		if ((status & EA_STATUS_RX_ON) == 0) {
 			WriteShort(iobase + EA_8005_COMMAND, sc->sc_command
 			    | EA_CMD_RX_ON);
 			printf("rxintr: rx is off st=%04x\n",status);
-		}*/
+		}
+#endif
 	}
 
 #ifdef EA_DEBUG
@@ -1179,61 +1205,64 @@ eagetpackets(sc)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-/* We start from the last rx pointer position */
 
+	/* We start from the last rx pointer position */
 	addr = sc->sc_rx_ptr;
 	sc->sc_config2 &= ~EA_CFG2_OUTPUT;
 	WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 
 	do {
-/* Read rx header */
-
+		/* Read rx header */
 		ea_readbuf(sc, (u_char *)&rxstatus, addr, 4);
 		
-/* Split the packet header */
-
+		/* Split the packet header */
 		ptr = ((rxstatus & 0xff) << 8) | ((rxstatus >> 8) & 0xff);
 		ctrl = (rxstatus >> 16) & 0xff;
 		status = (rxstatus >> 24) & 0xff;
 
 #ifdef EA_RX_DEBUG
-		dprintf(("addr=%04x ptr=%04x ctrl=%02x status=%02x\n", addr, ptr, ctrl, status));
+		dprintf(("addr=%04x ptr=%04x ctrl=%02x status=%02x\n",
+			 addr, ptr, ctrl, status));
 #endif
 
-/* Zero packet ptr ? then must be null header so exit */
 
+		/* Zero packet ptr ? then must be null header so exit */
 		if (ptr == 0) break;
 
-/* Get packet length */
-	
-		len = (ptr - addr) - 4;
 
-		if (len < 0) {
+		/* Get packet length */
+       		len = (ptr - addr) - 4;
+
+		if (len < 0)
 			len += EA_RX_BUFFER_SIZE;
-		}
 
 #ifdef EA_RX_DEBUG
 		dprintf(("len=%04x\n", len));
 #endif
 
-/* Has the packet rx completed ? if not then exit */
 
+		/* Has the packet rx completed ? if not then exit */
 		if ((status & EA_PKTHDR_DONE) == 0)
 			break;
 
-/* Did we have any errors ? then note error and go to next packet */
-
+		/*
+		 * Did we have any errors? then note error and go to
+		 * next packet
+		 */
 		if (status & 0x0f) {
 			++ifp->if_ierrors;
-			printf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
+			printf("rx packet error (%02x) - dropping packet\n",
+			       status & 0x0f);
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 			ea_reinit(sc);
 			return;
 		}
 
-/* Is the packet too big ? - this will probably be trapped above as a receive error */
-
+		/*
+		 * Is the packet too big ? - this will probably be trapped
+		 * above as a receive error
+		 */
 		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 			++ifp->if_ierrors;
 			printf("rx packet size error len=%d\n", len);
@@ -1264,13 +1293,12 @@ eagetpackets(sc)
 	dprintf(("new rx ptr=%04x\n", addr));
 #endif
 
-/* Store new rx pointer */
 
+	/* Store new rx pointer */
 	sc->sc_rx_ptr = addr;
 	WriteShort(iobase + EA_8005_RX_END, (sc->sc_rx_ptr >> 8));
 
-/* Make sure the receiver is on */
-
+	/* Make sure the receiver is on */
 	WriteShort(iobase + EA_8005_COMMAND, sc->sc_command
 	    | EA_CMD_RX_ON);
 
