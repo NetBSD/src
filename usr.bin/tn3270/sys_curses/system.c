@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.7 1998/03/04 13:16:09 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.8 1998/03/04 13:44:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.7 1998/03/04 13:16:09 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.8 1998/03/04 13:44:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ extern int errno;
 #include "../general/general.h"
 #include "../ctlr/api.h"
 #include "../api/api_exch.h"
-#include "sys_curses.h"
+#include "telextrn.h"
 #include "externs.h"
 
 #include "../general/globals.h"
