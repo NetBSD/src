@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.3 1998/09/05 15:20:47 pk Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.4 2000/07/24 18:39:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,10 +44,13 @@
 
 #include <sys/types.h>
 #include <machine/prom.h>
+#include <machine/stdarg.h>
+
+#include <lib/libkern/libkern.h>
 
 #include "stand.h"
 #include "libsa.h"
-
+#include "dev_tape.h"
 
 extern int debug;
 
@@ -68,7 +71,6 @@ devopen(f, fname, file)
 	char **file;
 {
 	struct devsw *dp;
-	int error;
 
 	*file = (char*)fname;
 	dp = &devsw[0];
@@ -79,12 +81,16 @@ devopen(f, fname, file)
 }
 
 int
-tape_open(f, fname)
-	struct open_file *f;
-	char *fname;		/* partition number, i.e. "1" */
+tape_open(struct open_file *f, ...)
 {
+	char *fname;		/* partition number, i.e. "1" */
 	int	part;
 	struct mvmeprom_dskio *ti;
+	va_list ap;
+
+	va_start(ap, f);
+	fname = va_arg(ap, char *);
+	va_end(ap);
 
 	/*
 	 * Set the tape segment number to the one indicated
@@ -136,7 +142,7 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	int	flag;
 	daddr_t	dblk;
 	u_int	size;
-	char	*buf;
+	void	*buf;
 	u_int	*rsize;
 {
 	struct mvmeprom_dskio *ti;
@@ -168,7 +174,7 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 }
 
 int
-tape_ioctl()
+tape_ioctl(struct open_file *f, u_long cmd, void * data)
 {
 	return EIO;
 }

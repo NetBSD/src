@@ -1,6 +1,7 @@
-/*	$NetBSD: clock.c,v 1.4 2000/07/24 18:39:45 jdolecek Exp $ */
+/*	$NetBSD: chiptotime.c,v 1.1 2000/07/24 18:39:44 jdolecek Exp $ */
 
 #include <sys/types.h>
+
 #include <machine/prom.h>
 
 #include "stand.h"
@@ -52,14 +53,4 @@ chiptotime(sec, min, hour, day, mon, year)
 		days++;
 	/* now have days since Jan 1, 1970; the rest is easy... */
 	return (days * SECDAY + hour * 3600 + min * 60 + sec);
-}
-
-time_t
-getsecs()
-{
-	struct mvmeprom_time m;
-
-	mvmeprom_rtc_rd(&m);
-	return (chiptotime(m.sec_BCD, m.min_BCD, m.hour_BCD, m.day_BCD, 
-			m.month_BCD, m.year_BCD));
 }

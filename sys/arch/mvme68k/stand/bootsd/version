@@ -1,0 +1,4 @@
+$NetBSD: version,v 1.1 2000/07/24 18:39:11 jdolecek Exp $
+
+1.1:	Initial bootsd import (from sun3 port, adjusted for mvme68k port
+	by Chuck Cranor)
