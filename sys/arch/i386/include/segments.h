@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.21 1995/12/20 17:58:55 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.22 1995/12/20 18:09:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -72,7 +72,7 @@
 
 #ifndef LOCORE
 
-#if __GNUC__ >= 2
+#if __GNUC__ == 2 && __GNUC_MINOR__ < 7
 #pragma pack(1)
 #endif
 
@@ -122,7 +122,7 @@ struct region_descriptor {
 	unsigned rd_base:32;		/* base address  */
 } __attribute__((packed));
 
-#if __GNUC__ >= 2
+#if __GNUC__ == 2 && __GNUC_MINOR__ < 7
 #pragma pack(4)
 #endif
 
