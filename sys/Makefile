@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.8.2 1997/11/27 08:17:02 mellon Exp $
+#	$NetBSD: Makefile,v 1.22.8.3 1998/11/04 20:27:28 cgd Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -51,8 +51,12 @@ copies:
 	    'netiso/xebec/*' -print` ${DESTDIR}/usr/include
 	(cd ${DESTDIR}/usr/include; find ${LDIRS} -type f | \
 		xargs chmod a=r)
+	(cd ${DESTDIR}/usr/include; find ${LDIRS} -type f | \
+		xargs chown ${BINOWN}:${BINGRP})
 	(cd ${DESTDIR}/usr/include; find ${LDIRS} -type d | \
 		xargs chmod u=rwx,go=rx)
+	(cd ${DESTDIR}/usr/include; find ${LDIRS} -type d | \
+		xargs chown ${BINOWN}:${BINGRP})
 	rm -rf ${DESTDIR}/usr/include/machine
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/machine
@@ -61,8 +65,12 @@ copies:
 	    ${DESTDIR}/usr/include/machine   
 	(cd ${DESTDIR}/usr/include; find machine -type f | \
 		xargs chmod a=r)
+	(cd ${DESTDIR}/usr/include; find machine -type f | \
+		xargs chown ${BINOWN}:${BINGRP})
 	(cd ${DESTDIR}/usr/include; find machine -type d | \
 		xargs chmod u=rwx,go=rx)
+	(cd ${DESTDIR}/usr/include; find machine -type d | \
+		xargs chown ${BINOWN}:${BINGRP})
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d arch/${MACHINE_ARCH}/include; then \
@@ -73,8 +81,12 @@ copies:
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 		(cd ${DESTDIR}/usr/include; find ${MACHINE_ARCH} -type f | \
 			xargs chmod a=r); \
+		(cd ${DESTDIR}/usr/include; find ${MACHINE_ARCH} -type f | \
+			xargs chown ${BINOWN}:${BINGRP}); \
 		(cd ${DESTDIR}/usr/include; find ${MACHINE_ARCH} -type d | \
 			xargs chmod u=rwx,go=rx); \
+		(cd ${DESTDIR}/usr/include; find ${MACHINE_ARCH} -type d | \
+			xargs chown ${BINOWN}:${BINGRP}); \
 	else \
 		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	fi
