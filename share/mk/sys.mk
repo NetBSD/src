@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.62 2001/09/17 12:28:14 mycroft Exp $
+#	$NetBSD: sys.mk,v 1.63 2001/12/19 21:17:59 tv Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -14,9 +14,6 @@ RANLIB?=	ranlib
 
 AS?=		as
 AFLAGS?=
-.if ${MACHINE_ARCH} == "sparc64" 
-AFLAGS+= -Wa,-Av9a
-.endif
 COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c -traditional-cpp
