@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.23 2002/11/26 18:49:44 christos Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.24 2002/12/25 06:16:58 toshii Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.23 2002/11/26 18:49:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.24 2002/12/25 06:16:58 toshii Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -2309,7 +2309,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 /*
  * common ioctls
  */
-int
+static int
 common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
 {
         int                           pixfmt;
@@ -2555,7 +2555,7 @@ dump_bt848( bktr_ptr_t bktr )
 #define BKTR_TEST_RISC_STATUS_BIT2 (1 << 30)
 #define BKTR_TEST_RISC_STATUS_BIT3 (1 << 31)
 
-bool_t notclipped (bktr_reg_t * bktr, int x, int width) {
+static bool_t notclipped (bktr_reg_t * bktr, int x, int width) {
     int i;
     bktr_clip_t * clip_node;
     bktr->clip_start = -1;
@@ -2582,7 +2582,7 @@ bool_t notclipped (bktr_reg_t * bktr, int x, int width) {
     return TRUE;
 }	
 
-bool_t getline(bktr_reg_t *bktr, int x ) {
+static bool_t getline(bktr_reg_t *bktr, int x ) {
     int i, j;
     bktr_clip_t * clip_node ;
     
