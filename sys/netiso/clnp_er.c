@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.12 2001/11/13 01:10:46 lukem Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.12.10.1 2003/05/25 12:15:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.12 2001/11/13 01:10:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.12.10.1 2003/05/25 12:15:37 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -254,7 +254,6 @@ clnp_emit_er(m, reason)
 	struct iso_addr src, dst, *our_addr;
 	caddr_t         hoff, hend;
 	int             total_len;	/* total len of dg */
-	struct mbuf    *m0;	/* contains er pdu hdr */
 	struct iso_ifaddr *ia = 0;
 
 #ifdef ARGO_DEBUG
@@ -329,12 +328,17 @@ clnp_emit_er(m, reason)
 #endif
 
 	/* allocate mbuf for er pdu header: punt on no space */
-	MGET(m0, M_DONTWAIT, MT_HEADER);
-	if (m0 == 0)
+	/*
+	 * fixed part, two addresses and their length bytes, and a 
+	 * 4-byte option
+	 */
+
+	M_PREPEND(m, sizeof(struct clnp_fixed) + 4 + 1 + 1 +
+			src.isoa_len + our_addr->isoa_len, M_DONTWAIT);
+	if (m == 0)
 		goto bad;
 
-	m0->m_next = m;
-	er = mtod(m0, struct clnp_fixed *);
+	er = mtod(m, struct clnp_fixed *);
 	*er = er_template;
 
 	/* setup src/dst on er pdu */
@@ -355,20 +359,20 @@ clnp_emit_er(m, reason)
 	*hoff++ = 0;		/* error localization = not specified */
 
 	/* set length */
-	er->cnf_hdr_len = m0->m_len = (u_char) (hoff - (caddr_t) er);
-	total_len = m0->m_len + m->m_len;
+	er->cnf_hdr_len = (u_char) (hoff - (caddr_t) er);
+	total_len = m->m_pkthdr.len;
 	HTOC(er->cnf_seglen_msb, er->cnf_seglen_lsb, total_len);
 
 	/* compute checksum (on header only) */
-	iso_gen_csum(m0, CLNP_CKSUM_OFF, (int) er->cnf_hdr_len);
+	iso_gen_csum(m, CLNP_CKSUM_OFF, (int) er->cnf_hdr_len);
 
 	/* trim packet if too large for interface */
 	if (total_len > ifp->if_mtu)
-		m_adj(m0, -(total_len - ifp->if_mtu));
+		m_adj(m, -(total_len - ifp->if_mtu));
 
 	/* send packet */
 	INCSTAT(cns_er_outhist[clnp_er_index(reason)]);
-	(void) (*ifp->if_output) (ifp, m0, first_hop, route.ro_rt);
+	(void) (*ifp->if_output) (ifp, m, first_hop, route.ro_rt);
 	goto done;
 
 bad:
