@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.78 2004/06/26 22:09:49 dsl Exp $	*/
+/*	$NetBSD: eval.c,v 1.79 2004/06/30 09:32:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.78 2004/06/26 22:09:49 dsl Exp $");
+__RCSID("$NetBSD: eval.c,v 1.79 2004/06/30 09:32:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,13 +237,13 @@ evaltree(union node *n, int flags)
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip || exitstatus != 0)
 			goto out;
-		evaltree(n->nbinary.ch2, flags | EV_TESTED);
+		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NOR:
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip || exitstatus == 0)
 			goto out;
-		evaltree(n->nbinary.ch2, flags | EV_TESTED);
+		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NREDIR:
 		expredir(n->nredir.redirect);
