@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sci.c,v 1.6 1994/06/13 08:13:05 chopps Exp $
+ *	$Id: sci.c,v 1.7 1994/06/22 16:20:51 chopps Exp $
  */
 
 /*
@@ -304,10 +304,10 @@ sciabort(dev, where)
 
 	if (dev->sc_flags & SCI_SELECTED) {
 
-		/* XXX */
-		scireset (dev);
 		/* lets just hope it worked.. */
 		dev->sc_flags &= ~SCI_SELECTED;
+		/* XXX */
+		scireset (dev);
 	}
 }
 
@@ -347,6 +347,7 @@ scireset(dev)
 	u_int i, s;
 	u_char my_id, csr;
 
+	dev->sc_flags &= ~SCI_SELECTED;
 	if (dev->sc_flags & SCI_ALIVE)
 		sciabort(dev, "reset");
 
@@ -377,7 +378,6 @@ scireset(dev)
 
 	printf("sci id %d\n", my_id);
 	dev->sc_flags |= SCI_ALIVE;
-	dev->sc_flags &= ~SCI_SELECTED;
 }
 
 void
