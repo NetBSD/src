@@ -1,9 +1,11 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: signal.c,v 1.3 1995/03/23 08:34:18 cgd Exp $";
+static char rcsid[] = "$NetBSD: signal.c,v 1.4 1995/04/24 12:24:12 cgd Exp $";
 #endif /* not lint */
 
 #include <signal.h>
 #include "header.h"			/* "Larn is copyrighted 1986 by Noah Morgan.\n" */
+#include <string.h>
+
 #define BIT(a) (1<<((a)-1))
 extern char savefilename[],wizard,predostuff,nosignal;
 static s2choose()	/* text to be displayed if ^C during intro screen */

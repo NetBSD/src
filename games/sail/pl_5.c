@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.3 1995/04/22 10:37:12 cgd Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_5.c,v 1.3 1995/04/22 10:37:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ acceptmove()
 		(void) strcpy(movebuf, buf);
 	else
 		(void) strcpy(movebuf, "d");
-	Write(W_MOVE, ms, 1, (int)movebuf, 0, 0, 0);
+	Write(W_MOVE, ms, 1, (long)movebuf, 0, 0, 0);
 	Signal("Helm: %s.", (struct ship *)0, movebuf);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.3 1995/04/22 10:36:55 cgd Exp $	*/
+/*	$NetBSD: externs.h,v 1.4 1995/04/24 12:25:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
 #include <ctype.h>
 #include <setjmp.h>
 #include "machdep.h"

@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: monster.c,v 1.3 1995/03/23 08:33:50 cgd Exp $";
+static char rcsid[] = "$NetBSD: monster.c,v 1.4 1995/04/24 12:24:05 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -101,6 +101,7 @@ static char rcsid[] = "$NetBSD: monster.c,v 1.3 1995/03/23 08:33:50 cgd Exp $";
  *
  */
 #include "header.h"
+#include <string.h>
 
 struct isave	/* used for altar reality */
 	{

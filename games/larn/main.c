@@ -1,11 +1,13 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/04/22 07:34:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1995/04/24 12:24:01 cgd Exp $";
 #endif /* not lint */
 
 /*	main.c		*/
 #include <sys/types.h>
 #include "header.h"
 #include <pwd.h>
+#include <string.h>
+
 static char copyright[]="\nLarn is copyrighted 1986 by Noah Morgan.\n";
 int srcount=0;	/* line counter for showstr()	*/
 int dropflag=0; /* if 1 then don't lookforobject() next round */

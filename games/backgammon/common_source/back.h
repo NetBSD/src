@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.3 1995/03/21 15:05:28 cgd Exp $	*/
+/*	$NetBSD: back.h,v 1.4 1995/04/24 12:22:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,6 +36,8 @@
  */
 
 #include <sgtty.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define rnum(r)	(random()%r)
 #define D0	dice[0]

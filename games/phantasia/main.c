@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1995/03/24 03:58:54 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -102,7 +102,7 @@ char	**argv;
 bool	noheader = FALSE;	/* set if don't want header */
 bool	headeronly = FALSE;	/* set if only want header */
 bool	examine = FALSE;	/* set if examine a character */
-long	seconds;		/* for time of day */
+time_t	seconds;		/* for time of day */
 double	dtemp;			/* for temporary calculations */
 
     initialstate();		/* init globals */
@@ -369,7 +369,7 @@ initialstate()
 	error(_PATH_VOID);
 	/*NOTREACHED*/
 
-    srandom((unsigned) time((long *) NULL));	/* prime random numbers */
+    srandom((unsigned) time(NULL));	/* prime random numbers */
 }
 /**/
 /************************************************************************

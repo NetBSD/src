@@ -1,4 +1,4 @@
-/*	$NetBSD: shield.c,v 1.3 1995/04/22 10:59:28 cgd Exp $	*/
+/*	$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: shield.c,v 1.3 1995/04/22 10:59:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ int	f;
 	if (f <= 0 && !testnl())
 	{
 		r = getcodpar("Up or down", Udtab);
-		i = (int) r->value;
+		i = (long) r->value;
 	}
 	else
 	{

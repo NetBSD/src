@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.3 1995/04/22 08:19:51 cgd Exp $	*/
+/*	$NetBSD: wump.c,v 1.4 1995/04/24 12:26:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: wump.c,v 1.3 1995/04/22 08:19:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: wump.c,v 1.4 1995/04/24 12:26:22 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: wump.c,v 1.3 1995/04/22 08:19:51 cgd Exp $";
 #include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <string.h>
 #include "pathnames.h"
 
 /* some defines to spec out what our wumpus cave should look like */

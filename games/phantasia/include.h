@@ -1,4 +1,4 @@
-/*	$NetBSD: include.h,v 1.2 1995/03/24 03:58:45 cgd Exp $	*/
+/*	$NetBSD: include.h,v 1.3 1995/04/24 12:24:31 cgd Exp $	*/
 
 /*
  * include.h - includes all important files for Phantasia
@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
+#include <string.h>
 
 #include "macros.h"
 #include "phantdefs.h"
