@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.10 1997/10/09 12:29:32 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10.2.1 1998/11/22 04:02:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -31,9 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 1997/10/09 12:29:32 lukem Exp $");
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -97,6 +94,14 @@ start(arg0)
 __asm("__callmain:");		/* Defined for the benefit of debuggers */
 	exit(main(argc, argv, environ));
 }
+
+/*
+ * RCSid. Place after __start for programs that assume start of text
+ *  is the entrypoint. (Not really necessary, just to avoid confusion).
+ */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: crt0.c,v 1.10.2.1 1998/11/22 04:02:00 cgd Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #ifdef DYNAMIC
 __asm("
