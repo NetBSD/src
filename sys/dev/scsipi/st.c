@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.94 1998/07/30 03:17:22 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.95 1998/07/30 04:11:43 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -45,12 +45,8 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
- */
-
-/*
- * To do:
- * work out some better way of guessing what a good timeout is going
- * to be depending on whether we expect to retension or not.
+ *
+ * A lot of rewhacking done by mjacob (mjacob@nas.nasa.gov).
  */
 
 #include "opt_scsi.h"
