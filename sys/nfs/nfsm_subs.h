@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.15 1997/03/27 20:45:27 thorpej Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.16 1997/06/24 23:40:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -361,18 +361,24 @@
 		} }
 
 #define nfsm_srvmtofh(f) \
-		{ if (nfsd->nd_flag & ND_NFSV3) { \
+	{ int fhlen = NFSX_V3FH; \
+		if (nfsd->nd_flag & ND_NFSV3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-			if (fxdr_unsigned(int, *tl) != NFSX_V3FH) { \
+			fhlen = fxdr_unsigned(int, *tl); \
+			if (fhlen == 0) { \
+				bzero((caddr_t)(f), NFSX_V3FH); \
+			} else if (fhlen != NFSX_V3FH) { \
 				error = EBADRPC; \
 				nfsm_reply(0); \
 			} \
 		} \
-		nfsm_dissect(tl, u_int32_t *, NFSX_V3FH); \
-		bcopy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
-		if ((nfsd->nd_flag & ND_NFSV3) == 0) \
-			nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
-		}
+		if (fhlen != 0) { \
+			nfsm_dissect(tl, u_int32_t *, NFSX_V3FH); \
+			bcopy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
+			if ((nfsd->nd_flag & ND_NFSV3) == 0) \
+				nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
+		} \
+	}
 
 #define	nfsm_clget \
 		if (bp >= be) { \
