@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/04/19 00:05:00 thorpej Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2001/05/28 06:10:20 nathanw Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -76,7 +76,7 @@ L3:	ldq	t1, 0(t9)	/* load the value */
 	 * Ya!  Things are far enough so we can do some dynamic linking!
 	 */
 
-	/* Sqirrel away ps_strings. */
+	/* Squirrel away ps_strings. */
 	mov	a3, s0
 
 	/*
