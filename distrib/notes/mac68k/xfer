@@ -9,13 +9,18 @@ knowledge, please feel free to add that functionality.
 If the install is being done from an AppleShare-mounted volume, the install
 utility must be in the same folder as the data files.
 
-Each distribution file is in "raw" archive format, and must be downloaded
-in binary mode.  Common web browsers are not suitable for this task; FTP
-clients such as Fetch and Anarchie work fine, but be sure to specify a
-binary file transfer.
+Each distribution file is in "raw" archive format.
 
-Also note:  the distribution files should not be unpacked.  If you have
-the Internet Config extension installed, 
+    -	Distribution files must be downloaded in binary mode.  Common web
+	browsers may not be suitable for this task; FTP clients such as
+	Fetch and Anarchie work fine, but be sure to specify a binary file
+	transfer.
+
+    -	The files should not be unpacked.  If you have the Internet Config
+	extension installed, you can disable this in the "Helpers" dialog
+	by removing the entry associated with ".tgz" files.  Other FTP
+	clients may require separate changes; consult your package's
+	documentation.
 
 You will also need to collect the MacOS installation tools from the
 "mac68k/installation/misc" subdirectory of the NetBSD _VER distribution:
