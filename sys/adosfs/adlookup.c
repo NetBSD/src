@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.9 1994/12/28 08:51:56 chopps Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.10 1995/08/18 15:14:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -68,7 +68,7 @@ strmatch(s1, l1, s2, l2)
  * adosfs lookup. enters with:
  * pvp (parent vnode) referenced and locked.
  * exit with:
- *	target vp refernced and locked.
+ *	target vp referenced and locked.
  *	unlock pvp unless LOCKPARENT and at end of search.
  * special cases:
  *	pvp == vp, just ref pvp, pvp already holds a ref and lock from
