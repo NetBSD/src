@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.9 2003/08/29 00:10:03 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.10 2003/08/29 00:46:05 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * //depot/aic7xxx/aic7xxx/aic79xx.c#190 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#192 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.12 2003/05/04 00:20:07 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.14 2003/05/26 21:18:48 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.9 2003/08/29 00:10:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.10 2003/08/29 00:46:05 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5560,6 +5560,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		next_scb->sg_list = segs;
 		next_scb->sense_data = sense_data;
 		next_scb->sense_busaddr = sense_busaddr;
+		memset(hscb, 0, sizeof(*hscb));
 		next_scb->hscb = hscb;
 		hscb->hscb_busaddr = ahd_htole32(hscb_busaddr);
 		KASSERT((vaddr_t)hscb >= (vaddr_t)hscb_map->vaddr &&
@@ -8104,8 +8105,6 @@ ahd_loadseq(struct ahd_softc *ahd)
 	download_consts[PKT_OVERRUN_BUFOFFSET] =
 		(ahd->overrun_buf - (uint8_t *)ahd->qoutfifo) / 256;
 	download_consts[SCB_TRANSFER_SIZE] = SCB_TRANSFER_SIZE_1BYTE_LUN;
-	if ((ahd->bugs & AHD_PKT_LUN_BUG) != 0)
-		download_consts[SCB_TRANSFER_SIZE] = SCB_TRANSFER_SIZE_FULL_LUN;
 	cur_patch = patches;
 	downloaded = 0;
 	skip_addr = 0;
