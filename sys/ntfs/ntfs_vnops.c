@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.13 1999/09/09 16:29:46 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.14 1999/09/09 17:59:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,8 +99,8 @@ static int	ntfs_bmap __P((struct vop_bmap_args *ap));
 #if defined(__FreeBSD__)
 static int	ntfs_getpages __P((struct vop_getpages_args *ap));
 static int	ntfs_putpages __P((struct vop_putpages_args *));
-#endif
 static int	ntfs_fsync __P((struct vop_fsync_args *ap));
+#endif
 
 int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
 
@@ -965,6 +965,7 @@ ntfs_lookup(ap)
 	return (error);
 }
 
+#if defined(__FreeBSD__)
 /*
  * Flush the blocks of a file to disk.
  *
@@ -982,6 +983,7 @@ ntfs_fsync(ap)
 {
 	return (0);
 }
+#endif
 
 /*
  * Global vfs data structures
@@ -989,7 +991,6 @@ ntfs_fsync(ap)
 vop_t **ntfs_vnodeop_p;
 #if defined(__FreeBSD__)
 static
-#endif
 struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_default_desc, (vop_t *)ntfs_bypass },
 
@@ -998,25 +999,11 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, (vop_t *)ntfs_reclaim },
 	{ &vop_print_desc, (vop_t *)ntfs_print },
 
-#if defined(__FreeBSD__)
 	{ &vop_islocked_desc, (vop_t *)vop_stdislocked },
 	{ &vop_unlock_desc, (vop_t *)vop_stdunlock },
 	{ &vop_lock_desc, (vop_t *)vop_stdlock },
 	{ &vop_cachedlookup_desc, (vop_t *)ntfs_lookup },
 	{ &vop_lookup_desc, (vop_t *)vfs_cache_lookup },
-#else
-#if __NetBSD_Version__ >= 104050000
-	{ &vop_islocked_desc, genfs_islocked },
-	{ &vop_unlock_desc, genfs_unlock },
-	{ &vop_lock_desc, genfs_lock },
-	{ &vop_fcntl_desc, genfs_fcntl },
-#else
-	{ &vop_islocked_desc, (vop_t *)ntfs_islocked },
-	{ &vop_unlock_desc, (vop_t *)ntfs_unlock },
-	{ &vop_lock_desc, (vop_t *)ntfs_lock },
-#endif
-	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
-#endif
 
 	{ &vop_access_desc, (vop_t *)ntfs_access },
 	{ &vop_close_desc, (vop_t *)ntfs_close },
@@ -1025,28 +1012,81 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_fsync_desc, (vop_t *)ntfs_fsync },
 
 	{ &vop_bmap_desc, (vop_t *)ntfs_bmap },
-#if defined(__FreeBSD__)
 	{ &vop_getpages_desc, (vop_t *) ntfs_getpages },
 	{ &vop_putpages_desc, (vop_t *) ntfs_putpages },
-#endif
 	{ &vop_strategy_desc, (vop_t *)ntfs_strategy },
-#if defined(__FreeBSD__)
 	{ &vop_bwrite_desc, (vop_t *)vop_stdbwrite },
-#else /* defined(__NetBSD__) */
-	{ &vop_bwrite_desc, vn_bwrite },
-#endif
 	{ &vop_read_desc, (vop_t *)ntfs_read },
 	{ &vop_write_desc, (vop_t *)ntfs_write },
 
 	{ NULL, NULL }
 };
 
-#if defined(__FreeBSD__)
 static
-#endif
 struct vnodeopv_desc ntfs_vnodeop_opv_desc =
 	{ &ntfs_vnodeop_p, ntfs_vnodeop_entries };
 
-#if defined(__FreeBSD__)
 VNODEOP_SET(ntfs_vnodeop_opv_desc);
+
+#else /* !FreeBSD */
+
+struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
+	{ &vop_default_desc, (vop_t *) ntfs_bypass },
+	{ &vop_lookup_desc, (vop_t *) ntfs_lookup },	/* lookup */
+	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
+	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
+	{ &vop_open_desc, (vop_t *) ntfs_open },	/* open */
+	{ &vop_close_desc,(vop_t *)  ntfs_close },	/* close */
+	{ &vop_access_desc, (vop_t *) ntfs_access },	/* access */
+	{ &vop_getattr_desc, (vop_t *) ntfs_getattr },	/* getattr */
+	{ &vop_setattr_desc, genfs_eopnotsupp },	/* setattr */
+	{ &vop_read_desc, (vop_t *) ntfs_read },	/* read */
+	{ &vop_write_desc, (vop_t *) ntfs_write },	/* write */
+	{ &vop_lease_desc, genfs_lease_check },		/* lease */
+#if __NetBSD_Version__ >= 104050000
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
+#endif
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_eopnotsupp },		/* mmap */
+	{ &vop_fsync_desc, genfs_fsync },		/* fsync */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
+	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
+	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
+	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
+	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
+	{ &vop_readdir_desc, (vop_t *) ntfs_readdir },	/* readdir */
+	{ &vop_readlink_desc, genfs_eopnotsupp },	/* readlink */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
+	{ &vop_inactive_desc, (vop_t *) ntfs_inactive },	/* inactive */
+	{ &vop_reclaim_desc, (vop_t *) ntfs_reclaim },	/* reclaim */
+#if __NetBSD_Version__ >= 104050000
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
+#else
+	{ &vop_lock_desc, (vop_t *) ntfs_lock },	/* lock */
+	{ &vop_unlock_desc, (vop_t *) ntfs_unlock },	/* unlock */
+	{ &vop_islocked_desc, (vop_t *) ntfs_islocked },	/* islocked */
+#endif
+	{ &vop_bmap_desc, (vop_t *) ntfs_bmap },	/* bmap */
+	{ &vop_strategy_desc, (vop_t *) ntfs_strategy },	/* strategy */
+	{ &vop_print_desc, (vop_t *) ntfs_print },	/* print */
+	{ &vop_pathconf_desc, genfs_eopnotsupp },	/* pathconf */
+	{ &vop_advlock_desc, genfs_nullop },		/* advlock */
+	{ &vop_blkatoff_desc, genfs_eopnotsupp },	/* blkatoff */
+	{ &vop_valloc_desc, genfs_eopnotsupp },		/* valloc */
+	{ &vop_reallocblks_desc, genfs_eopnotsupp },	/* reallocblks */
+	{ &vop_vfree_desc, genfs_eopnotsupp },		/* vfree */
+	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
+	{ &vop_update_desc, genfs_eopnotsupp },		/* update */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ (struct vnodeop_desc *)NULL, (int (*) __P((void *)))NULL }
+};
+struct vnodeopv_desc ntfs_vnodeop_opv_desc =
+	{ &ntfs_vnodeop_p, ntfs_vnodeop_entries };
+
 #endif
