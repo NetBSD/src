@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.28 2002/11/10 07:43:40 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.29 2002/11/10 16:30:44 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -920,6 +920,11 @@ sys/sys/systm.h					1.146
 	* Use this in uiomove() to allow UIO_USERSPACE to non-curproc.
 	[thorpej, ticket #527]
 
+sys/arch/powerpc/powerpc/trap_subr.S		patch
+
+	Remove superflous #endif.
+	[jdolecek, ticket #970]
+
 sys/dev/audio.c					1.157
 
 	The logic in audio_poll() was incorrect in full duplex mode;
@@ -928,3 +933,25 @@ sys/dev/audio.c					1.157
 	This fixes PRs kern/11179 and kern/13829.
 	[gson, ticket #972]
 
+usr.bin/join/join.c				1.21
+
+	Finish fixing PR#15412 -- deal with ``-e'' option properly.
+	[jonb, ticket #540]
+
+sys/arch/vax/uba/uba_sbi.c			1.15
+
+	Count adapter, stray and device interrupts separately.
+	[ragge, ticket #546]
+
+sys/dev/mscp/mscp_disk.c			1.32
+
+	Correct ``ra'' disk instrumentation.
+	[ragge, ticket #547]
+
+sys/arch/powerpc/include/mpc6xx/pte.h		1.9
+sys/arch/powerpc/mpc6xx/pmap.c			1.51
+
+	Set normal memory PTEs with PTE_M (memory coherent).  Change
+	how we remember the ``execness'' of a page, so that we can
+	avoid I-cache syncing in some cases.
+	[matt, ticket #559]
