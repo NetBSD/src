@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1997/02/14 20:00:51 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1997/02/18 15:54:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,6 +74,9 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+#ifdef	KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <vm/vm.h>
 #include <vm/vm_map.h>
@@ -86,8 +89,8 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/mon.h>
 #include <machine/dvma.h>
+/* #include <machine/kcore.h> XXX: needs st_entry_t */
 #include <machine/db_machdep.h>
 #include <machine/machdep.h>
 
@@ -125,7 +128,6 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-label_t *nofault;
 
 static void identifycpu __P((void));
 static void initcpu __P((void));
@@ -135,9 +137,10 @@ static void initcpu __P((void));
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-void consinit()
+void
+consinit()
 {
-	cninit();
+	cninit();	/* See dev/zs.c */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -723,25 +726,12 @@ initcpu()
 	/* XXX: Enable RAM parity/ECC checking? */
 	/* XXX: parityenable(); */
 
-	nofault = NULL;	/* XXX - needed? */
-
 #ifdef	HAVECACHE
 	cache_enable();
 #endif
 }
 
-/* called from locore.s */
-void straytrap __P((struct trapframe));
-void
-straytrap(frame)
-	struct trapframe frame;
-{
-	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
-		frame.tf_vector, frame.tf_pc);
-#ifdef	DDB
-	kdb_trap(-1, (db_regs_t *) &frame);
-#endif
-}
+/* straptrap() in trap.c */
 
 /* from hp300: badaddr() */
 /* peek_byte(), peek_word() moved to autoconf.c */
