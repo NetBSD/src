@@ -1,9 +1,9 @@
-/*	$NetBSD: isa_machdep.c,v 1.25 1998/01/23 00:44:13 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.26 1998/02/04 00:34:22 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -725,6 +725,12 @@ _isa_bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int error;
 
 	STAT_INCR(isa_dma_stats_loads);
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 
 	/*
 	 * Check to see if we might need to bounce the transfer.
