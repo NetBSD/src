@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.8 2003/05/13 04:53:25 bsh Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.9 2003/05/13 08:30:33 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -30,11 +30,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * Machine dependant functions for kernel setup for Samsung SMDK2800
- * derived from integrator_machdep.c
  */
 
 /*
@@ -105,6 +100,11 @@
  * Created      : 24/11/97
  */
 
+/*
+ * Machine dependant functions for kernel setup for Samsung SMDK2800
+ * derived from integrator_machdep.c
+ */
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
@@ -164,6 +164,18 @@
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
+
+/* Memory disk support */
+#if defined(MEMORY_DISK_DYNAMIC) && defined(MEMORY_DISK_ROOT_ADDR)
+#define DO_MEMORY_DISK
+/* We have memory disk image outside of the kernel on ROM. */
+#ifdef MEMORY_DISK_ROOT_ROM
+/* map the image directory and use read-only */
+#else
+/* copy the image to RAM */
+#endif
+#endif
+
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -228,12 +240,6 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
-#ifdef MEMORY_DISK_DYNAMIC
-#define MD_ROOT_SIZE	4	/* in megabytes */
-#define MD_ROOT_START	0x400000/* MD root image in ROM */
-#endif
-
-
 /* Prototypes */
 
 void consinit(void);
@@ -242,6 +248,7 @@ void kgdb_port_init(void);
 static int 
 bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
     int cacheable, bus_space_handle_t * bshp);
+static void map_builtin_peripherals(void);
 static void copy_io_area_map(pd_entry_t * new_pd);
 
 /* A load of console goo. */
@@ -297,7 +304,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
 
-	cpu_reset_address = (u_int)s3c2800_softreset;
+	cpu_reset_address = vtophys((u_int)s3c2800_softreset);
 
 	/*
 	 * If we are still cold then hit the air brakes
@@ -371,11 +378,16 @@ initarm(void *arg)
 	extern int etext asm("_etext");
 	extern int end asm("_end");
 	pv_addr_t kernel_l1pt;
-	struct s3c2xx0_softc temp_softc;	/* used to initialize IO regs */
+	struct s3c2800_softc temp_softc;	/* used to initialize IO regs */
 	int progress_counter = 0;
-#ifdef MEMORY_DISK_DYNAMIC
-	void *md_root_start, *md_root_rom;
+
+#ifdef DO_MEMORY_DISK
+	vm_offset_t md_root_start;
+#define MD_ROOT_SIZE (MEMORY_DISK_ROOT_SIZE * DEV_BSIZE)
 #endif
+
+#define gpio_read8(reg) bus_space_read_1(temp_softc.sc_sx.sc_iot,  \
+					 temp_softc.sc_sx.sc_gpio_ioh, (reg))
 
 #define LEDSTEP()  __LED(progress_counter++)
 
@@ -390,31 +402,38 @@ initarm(void *arg)
 		panic("cpu not recognized!");
 
 	LEDSTEP();
+
+	map_builtin_peripherals();
+
 	/*
 	 * prepare fake bus space tag
 	 */
 	bootstrap_bs_tag = s3c2xx0_bs_tag;
 	bootstrap_bs_tag.bs_map = bootstrap_bs_map;
-	temp_softc.sc_iot = &bootstrap_bs_tag;
-	s3c2xx0_softc = &temp_softc;
-
+	s3c2xx0_softc = &temp_softc.sc_sx;
+	s3c2xx0_softc->sc_iot = &bootstrap_bs_tag;
 
 	bootstrap_bs_map(&bootstrap_bs_tag, S3C2800_GPIO_BASE,
-	    S3C2800_GPIO_SIZE, 0, &temp_softc.sc_gpio_ioh);
+	    S3C2800_GPIO_SIZE, 0, &temp_softc.sc_sx.sc_gpio_ioh);
 	bootstrap_bs_map(&bootstrap_bs_tag, S3C2800_INTCTL_BASE,
-	    S3C2800_INTCTL_SIZE, 0, &temp_softc.sc_intctl_ioh);
+	    S3C2800_INTCTL_SIZE, 0, &temp_softc.sc_sx.sc_intctl_ioh);
+	bootstrap_bs_map(&bootstrap_bs_tag, S3C2800_CLKMAN_BASE,
+	    S3C2800_CLKMAN_SIZE, 0, &temp_softc.sc_sx.sc_clkman_ioh);
 
 #undef __LED
-#define __LED(x) bus_space_write_1( &bootstrap_bs_tag, temp_softc.sc_gpio_ioh,	\
-		     GPIO_PDATC, (~(x) & 0x07) |				\
-		     (bus_space_read_1( &bootstrap_bs_tag,			\
-			 temp_softc.sc_gpio_ioh, GPIO_PDATC ) & ~0x07) )
+#define __LED(x) 								\
+	bus_space_write_1(&bootstrap_bs_tag, temp_softc.sc_sx.sc_gpio_ioh,	\
+	    GPIO_PDATC, (~(x) & 0x07) |						\
+	    (bus_space_read_1(&bootstrap_bs_tag,				\
+		temp_softc.sc_sx.sc_gpio_ioh, GPIO_PDATC ) & ~0x07))
 
 	LEDSTEP();
 
 	/* Disable all peripheral interrupts */
-	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_intctl_ioh,
+	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_sx.sc_intctl_ioh,
 	    INTCTL_INTMSK, 0);
+
+	s3c2800_clock_freq(&temp_softc);
 
 	consinit();
 	printf("consinit done\n");
@@ -468,10 +487,21 @@ initarm(void *arg)
 	 */
 	physical_start = bootconfig.dram[0].address;
 	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
-#ifdef MEMORY_DISK_DYNAMIC
-	/* Reserve for ram disk */
-	printf("Reserve %d bytes for memory disk\n", MD_ROOT_SIZE * L1_S_SIZE);
-	physical_end -= MD_ROOT_SIZE * L1_S_SIZE;
+
+#if DO_MEMORY_DISK
+#ifdef MEMORY_DISK_ROOT_ROM
+	md_root_start = MEMORY_DISK_ROOT_ADDR;
+	boothowto |= RB_RDONLY;
+#else
+	/* Reserve physmem for ram disk */
+	md_root_start = ((physical_end - MD_ROOT_SIZE) & ~(L1_S_SIZE-1));
+	printf("Reserve %ld bytes for memory disk\n",  
+	    physical_end - md_root_start);
+	/* copy fs contents */
+	memcpy((void *)md_root_start, (void *)MEMORY_DISK_ROOT_ADDR,
+	    MD_ROOT_SIZE);
+	physical_end = md_root_start;
+#endif
 #endif
 
 	physical_freestart = 0x08000000UL;	/* XXX */
@@ -541,7 +571,7 @@ initarm(void *arg)
 	}
 
 	/* This should never be able to happen but better confirm that. */
-	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE - 1)) != 0)
+	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
 		panic("initarm: Failed to align the kernel page directory\n");
 
 	/*
@@ -684,14 +714,13 @@ initarm(void *arg)
 #endif
 
 #ifdef MEMORY_DISK_DYNAMIC
-	/* Map ram for MD root This will overwrite old page table */
-	bootstrap_bs_map(&bootstrap_bs_tag, physical_end,
-	    MD_ROOT_SIZE * L1_S_SIZE, 0, (bus_space_handle_t *) & md_root_start);
-	/* map MD root image on ROM */
-	bootstrap_bs_map(&bootstrap_bs_tag, MD_ROOT_START,
-	    MD_ROOT_SIZE * L1_S_SIZE, 0, (bus_space_handle_t *) & md_root_rom);
+	/* map MD root image */
+	bootstrap_bs_map(&bootstrap_bs_tag, md_root_start, MD_ROOT_SIZE,
+			 BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_LINEAR,
+			 (bus_space_handle_t *)&md_root_start);
 
-#endif
+	md_root_setconf((void *)md_root_start, MD_ROOT_SIZE);
+#endif /* MEMORY_DISK_DYNAMIC */
 	/*
 	 * map integrated peripherals at same address in l1pagetable
 	 * so that we can continue to use console.
@@ -737,11 +766,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");
-#endif
-
-#ifdef MEMORY_DISK_DYNAMIC
-	memcpy(md_root_start, md_root_rom, MD_ROOT_SIZE * L1_S_SIZE);
-	md_root_setconf(md_root_start, MD_ROOT_SIZE * L1_S_SIZE);
 #endif
 
 #if 0
@@ -824,7 +848,18 @@ initarm(void *arg)
 
 	printf("done.\n");
 
-	boothowto |= RB_SINGLE | RB_KDB | RB_ASKNAME;
+#ifdef BOOTHOWTO_INIT
+	boothowto |= BOOTHOWTO_INIT;
+#endif
+	{
+		uint8_t  gpio = ~gpio_read8(GPIO_PDATF);
+		
+		if (gpio & (1<<5)) /* SW3 */
+			boothowto ^= RB_SINGLE;
+		if (gpio & (1<<7)) /* SW7 */
+			boothowto ^= RB_KDB;
+		printf( "sw: %x boothowto: %x\n", gpio, boothowto );
+	}
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
@@ -854,16 +889,13 @@ initarm(void *arg)
 	/* We return the new stack pointer address */
 	return (kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
-#ifndef SSCOM_FREQ
-/* our PCLK is 50MHz */
-#define SSCOM_FREQ  50000000
-#endif
 
 void
 consinit(void)
 {
 	static int consinit_done = 0;
 	bus_space_tag_t iot = s3c2xx0_softc->sc_iot;
+	int pclk = s3c2xx0_softc->sc_pclk;
 
 	if (consinit_done != 0)
 		return;
@@ -873,12 +905,12 @@ consinit(void)
 #if NSSCOM > 0
 #ifdef SSCOM0CONSOLE
 	if (0 == s3c2800_sscom_cnattach(iot, 0, comcnspeed,
-		SSCOM_FREQ, comcnmode))
+		pclk, comcnmode))
 		return;
 #endif
 #ifdef SSCOM1CONSOLE
 	if (0 == s3c2800_sscom_cnattach(iot, 1, comcnspeed,
-		SSCOM_FREQ, comcnmode))
+		pclk, comcnmode))
 		return;
 #endif
 #endif				/* NSSCOM */
@@ -915,6 +947,7 @@ kgdb_port_init(void)
 {
 #if (NSSCOM > 0)
 	int unit = -1;
+	int pclk = s3c2xx0_softc->sc_pclk;
 
 	if (strcmp(kgdb_devname, "sscom0") == 0)
 		unit = 0;
@@ -923,7 +956,7 @@ kgdb_port_init(void)
 
 	if (unit >= 0) {
 		s3c2800_sscom_kgdb_attach(s3c2xx0_softc->sc_iot,
-		    unit, kgdb_rate, SSCOM_FREQ, kgdb_sscom_mode);
+		    unit, kgdb_rate, pclk, kgdb_sscom_mode);
 	}
 #endif
 }
@@ -964,6 +997,27 @@ clean_dcache_line(vaddr_t va)
 
 static vaddr_t section_free = SMDK2800_VBASE_FREE;
 
+static void
+map_builtin_peripherals(void)
+{
+	pd_entry_t *pagedir = read_ttb();
+	int i, sec;
+
+	for (i=0; i < 2; ++i) {
+
+		pmap_map_section((vaddr_t)pagedir, 
+		    SMDK2800_IO_AREA_VBASE + (i <<L1_S_SHIFT),
+		    S3C2800_PERIPHERALS + (i << L1_S_SHIFT),
+		    VM_PROT_READ | VM_PROT_WRITE, PTE_NOCACHE);
+
+		sec = (SMDK2800_IO_AREA_VBASE >> L1_S_SHIFT) + i;
+		writeback_dcache_line((vaddr_t)&pagedir[sec]);
+	}
+
+	cpu_drain_writebuf();
+	cpu_tlb_flushD();
+}
+
 /*
  * simple memory mapping function used in early bootstrap stage
  * before pmap is initialized.
@@ -974,7 +1028,7 @@ static int
 bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
     int flag, bus_space_handle_t * bshp)
 {
-	long offset, sec;
+	long offset;
 	int modified = 0;
 	pd_entry_t *pagedir = read_ttb();
 	/* This assumes PA==VA for page directory */
@@ -983,18 +1037,6 @@ bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 		offset = bpa - S3C2800_PERIPHERALS;
 		if (offset < 0 || 2 * L1_S_SIZE < offset)
 			panic("bootstrap_bs_map: can't map");
-		sec = (SMDK2800_IO_AREA_VBASE + offset) >> L1_S_SHIFT;
-
-		/* already mapped? */
-		if ((pagedir[sec] & L1_S_FRAME) != (bpa & L1_S_FRAME)) {
-			pmap_map_section((vaddr_t)pagedir, sec << L1_S_SHIFT,
-			    bpa & L1_S_FRAME,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    PTE_NOCACHE);
-
-			writeback_dcache_line((vaddr_t)&pagedir[sec]);
-			modified = 1;
-		}
 		*bshp = (bus_space_handle_t)(SMDK2800_IO_AREA_VBASE + offset);
 	} else {
 		vaddr_t va;
@@ -1034,7 +1076,7 @@ static void
 copy_io_area_map(pd_entry_t * new_pd)
 {
 	pd_entry_t *cur_pd = read_ttb();
-	vaddr_t sec;
+	int sec;
 
 	for (sec = SMDK2800_IO_AREA_VBASE >> L1_S_SHIFT;
 	    sec < (section_free >> L1_S_SHIFT); ++sec) {
