@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.4 1999/07/31 17:20:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -60,7 +60,7 @@
 #define MHZ_33		4
 #define MHZ_50		6
 
-extern	int cpuspeed, machineid;
+extern	int cpuspeed, machineid, mmuid;
 extern	int howto;
 extern	int cons_scode;
 extern	u_int opendev;
