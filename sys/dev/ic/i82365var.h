@@ -99,7 +99,7 @@ int pcic_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
 void pcic_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int pcic_chip_io_alloc __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-			    struct pcmcia_io_handle *));
+			    bus_size_t, struct pcmcia_io_handle *));
 void pcic_chip_io_free __P((pcmcia_chipset_handle_t,
 			    struct pcmcia_io_handle *));
 int pcic_chip_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,

@@ -767,10 +767,11 @@ void pcic_chip_mem_unmap(pch, window)
     h->memalloc &= ~(1 << window);
 }
 
-int pcic_chip_io_alloc(pch, start, size, pcihp)
+int pcic_chip_io_alloc(pch, start, size, align, pcihp)
      pcmcia_chipset_handle_t pch;
      bus_addr_t start;
      bus_size_t size;
+     bus_size_t align;
      struct pcmcia_io_handle *pcihp;
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
@@ -794,7 +795,7 @@ int pcic_chip_io_alloc(pch, start, size, pcihp)
     } else {
 	flags |= PCMCIA_IO_ALLOCATED;
 	if (bus_space_alloc(iot, h->sc->iobase, h->sc->iobase+h->sc->iosize,
-			    size, size, 0, 0, &ioaddr, &ioh))
+			    size, align, 0, 0, &ioaddr, &ioh))
 	    return(1);
 	DPRINTF(("pcic_chip_io_alloc alloc port %lx+%lx\n",
 		 (u_long) ioaddr, (u_long) size));

@@ -176,9 +176,9 @@ void pcmcia_function_init __P((struct pcmcia_function *,
 int pcmcia_function_enable __P((struct pcmcia_function *));
 void pcmcia_function_disable __P((struct pcmcia_function *));
 
-#define pcmcia_io_alloc(pf, start, size, pciop) \
+#define pcmcia_io_alloc(pf, start, size, align, pciop) \
 	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, \
-			      (start), (size), (pciop)))
+			      (start), (size), (align), (pciop)))
 
 int pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t, bus_size_t,
 		       struct pcmcia_io_handle *, int *));
