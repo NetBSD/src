@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.108 2002/06/08 14:44:07 yamt Exp $	*/
+/*	$NetBSD: util.c,v 1.109 2002/08/27 13:11:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.108 2002/06/08 14:44:07 yamt Exp $");
+__RCSID("$NetBSD: util.c,v 1.109 2002/08/27 13:11:02 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -858,9 +858,11 @@ void
 progressmeter(int flag)
 {
 	static off_t lastsize;
+	off_t cursize;
+	struct timeval now, wait;
 #ifndef NO_PROGRESS
-	struct timeval now, td, wait;
-	off_t cursize, abbrevsize, bytespersec;
+	struct timeval td;
+	off_t abbrevsize, bytespersec;
 	double elapsed;
 	int ratio, barlength, i, len, remaining;
 
@@ -890,6 +892,37 @@ progressmeter(int flag)
 		lastupdate = start;
 		lastsize = restart_point;
 	}
+
+	(void)gettimeofday(&now, NULL);
+	cursize = bytes + restart_point;
+	timersub(&now, &lastupdate, &wait);
+	if (cursize > lastsize) {
+		lastupdate = now;
+		lastsize = cursize;
+		wait.tv_sec = 0;
+	} else {
+		if (quit_time > 0 && wait.tv_sec > quit_time) {
+			len = snprintf(buf, sizeof(buf), "\r\n%s: "
+			    "transfer aborted because stalled for %lu sec.\r\n",
+			    getprogname(), (unsigned long)wait.tv_sec);
+			(void)write(fileno(ttyout), buf, len);
+			(void)xsignal(SIGALRM, SIG_DFL);
+			alarmtimer(0);
+			siglongjmp(toplevel, 1);
+		}
+	}
+	/*
+	 * Always set the handler even if we are not the foreground process.
+	 */
+	if (quit_time > 0 || progress) {
+		if (flag == -1) {
+			(void)xsignal_restart(SIGALRM, updateprogressmeter, 1);
+			alarmtimer(1);		/* set alarm timer for 1 Hz */
+		} else if (flag == 1) {
+			(void)xsignal(SIGALRM, SIG_DFL);
+			alarmtimer(0);
+		}
+	}
 #ifndef NO_PROGRESS
 	if (!progress)
 		return;
@@ -901,14 +934,6 @@ progressmeter(int flag)
 	if (! foregroundproc())
 		return;
 
-	(void)gettimeofday(&now, NULL);
-	cursize = bytes + restart_point;
-	timersub(&now, &lastupdate, &wait);
-	if (cursize > lastsize) {
-		lastupdate = now;
-		lastsize = cursize;
-		wait.tv_sec = 0;
-	}
 
 	len += snprintf(buf + len, BUFLEFT, "\r");
 	if (filesize > 0) {
@@ -993,13 +1018,6 @@ progressmeter(int flag)
 		len += snprintf(buf + len, BUFLEFT, "\n");
 	(void)write(fileno(ttyout), buf, len);
 
-	if (flag == -1) {
-		(void)xsignal_restart(SIGALRM, updateprogressmeter, 1);
-		alarmtimer(1);		/* set alarm timer for 1 Hz */
-	} else if (flag == 1) {
-		(void)xsignal(SIGALRM, SIG_DFL);
-		alarmtimer(0);
-	}
 #endif	/* !NO_PROGRESS */
 }
 
