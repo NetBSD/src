@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.4.2.3 2004/06/21 17:13:46 tron Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4.2.4 2004/06/21 17:18:38 tron Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -849,6 +849,8 @@ re_attach(struct device *parent, struct device *self, void *aux)
 
 		/* Set RX length mask */
 
+		sc->rtk_rxlenmask = RTK_RDESC_STAT_FRAGLEN;
+
 		if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
 			addr_len = RTK_EEADDR_LEN1;
 		else
@@ -864,10 +866,6 @@ re_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	memset((char *)&sc->rtk_ldata.rtk_rx_mbuf, 0,
-	    (RTK_RX_DESC_CNT * sizeof(struct mbuf *)));
-	memset((char *)&sc->rtk_ldata.rtk_tx_mbuf, 0,
-	    (RTK_TX_DESC_CNT * sizeof(struct mbuf *)));
 	error = re_allocmem(sc);
 
 	if (error)
