@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbr.8,v 1.1 1999/04/15 22:35:19 fvdl Exp $
+.\"	$NetBSD: mbr.8,v 1.2 1999/04/28 23:27:02 fvdl Exp $
 .Dd April 13, 1999
 .Dt MBR 8 i386
 .Os
@@ -67,13 +67,13 @@ selection is picked.
 The following messages may be printed in case of an error condition,
 (after which the user must restart the system):
 .Bl -tag -width Er
-.It Error 1
+.It E1
 Invalid partition table. The MBR has a partition table without an
 active partition.
-.It Error 2
+.It E2
 Read error. There was an error reading the bootsector for the
 partition or drive selected.
-.It Error 3
+.It E3
 No operating system. The bootsector was loaded successfully, but
 it was not valid (i.e. the magic number check failed).
 .El
