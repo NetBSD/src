@@ -283,6 +283,8 @@ to send the PR with `send-pr -b -f -'."
 	(and send-pr:::err-buffer (kill-buffer send-pr:::err-buffer))
 	(kill-buffer nil)
 	(message "send-pr: no categories found"))
+    (if (eq mail-default-reply-to t)
+	(setq mail-default-reply-to (getenv "REPLYTO")))
     (and mail-default-reply-to
 	 (gnats::set-mail-field "Reply-To" mail-default-reply-to))
     (and mail-self-blind
