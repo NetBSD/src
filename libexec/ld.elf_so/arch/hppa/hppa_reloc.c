@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.18 2004/05/14 11:11:02 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.19 2004/05/14 11:59:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -401,8 +401,8 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				if (def == NULL)
 					return -1;
 
-				tmp = _rtld_function_descriptor_alloc(defobj, def,
-				    rela->r_addend);
+				tmp = _rtld_function_descriptor_alloc(defobj,
+				    def, rela->r_addend);
 				if (tmp == (Elf_Addr)-1)
 					return -1;
 
@@ -429,7 +429,8 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				 * a PLABEL pointer from a plain function
 				 * pointer.
 				 */
-				tmp = (Elf_Addr)(obj->relocbase + rela->r_addend);
+				tmp = (Elf_Addr)
+				    (obj->relocbase + rela->r_addend);
 
 				if (*where != tmp)
 					*where = tmp;
@@ -503,7 +504,8 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 			 * _rtld_bind_start.
 			 */
 			func_pc = ((Elf_Addr)HPPA_OBJ_GOT(obj)) - 16;
-			func_sl = (Elf_Addr)((caddr_t)rela - (caddr_t)obj->pltrela);
+			func_sl = (Elf_Addr)
+			    ((caddr_t)rela - (caddr_t)obj->pltrela);
 		}
 
 		/*
