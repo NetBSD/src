@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.57 2003/12/28 16:34:03 atatat Exp $
+#	$NetBSD: daily,v 1.58 2004/03/29 02:17:26 mrg Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -115,11 +115,20 @@ fi
 if checkyesno purge_accounting && [ -f /var/account/acct ]; then
 	echo ""
 	echo "Purging accounting records:"
-	mv /var/account/acct.2 /var/account/acct.3 2>/dev/null
-	mv /var/account/acct.1 /var/account/acct.2 2>/dev/null
-	mv /var/account/acct.0 /var/account/acct.1 2>/dev/null
+	if [ -f /var/account/acct.0.gz ]; then
+		mv /var/account/acct.2.gz /var/account/acct.3.gz 2>/dev/null
+		mv /var/account/acct.1.gz /var/account/acct.2.gz 2>/dev/null
+		mv /var/account/acct.0.gz /var/account/acct.1.gz 2>/dev/null
+	else
+		mv /var/account/acct.2 /var/account/acct.3 2>/dev/null
+		mv /var/account/acct.1 /var/account/acct.2 2>/dev/null
+		mv /var/account/acct.0 /var/account/acct.1 2>/dev/null
+	fi
 	cp /var/account/acct /var/account/acct.0
 	sa -sq
+	if [ -f /var/account/acct.1.gz ]; then
+		gzip /var/account/acct.0
+	fi
 fi
 
 if checkyesno run_calendar; then
