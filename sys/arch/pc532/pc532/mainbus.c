@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2002/10/02 04:18:58 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2003/01/01 01:58:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -101,15 +101,15 @@ mbprint(aux, pnp)
 	struct confargs *ca = aux;
 
 	if (ca->ca_addr != -1) {
-		printf(" addr 0x%x", ca->ca_addr);
+		aprint_normal(" addr 0x%x", ca->ca_addr);
 		delim = ",";
 	} else
 		delim = "";
 
 	if (ca->ca_irq != -1) {
-		printf("%s irq %d", delim, ca->ca_irq & 15);
+		aprint_normal("%s irq %d", delim, ca->ca_irq & 15);
 		if (ca->ca_irq & 0xf0)
-			printf(", %d", ca->ca_irq >> 4);
+			aprint_normal(", %d", ca->ca_irq >> 4);
 	}
 
 	return(UNCONF);
