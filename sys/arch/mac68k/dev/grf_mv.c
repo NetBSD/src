@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.40 1998/04/24 01:58:44 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.41 1998/04/25 21:27:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -52,19 +52,19 @@
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 
-static void	grfmv_intr_generic_write1 __P((void *vsc, int slot));
-static void	grfmv_intr_generic_write4 __P((void *vsc, int slot));
-static void	grfmv_intr_generic_or4 __P((void *vsc, int slot));
+static void	grfmv_intr_generic_write1 __P((void *vsc));
+static void	grfmv_intr_generic_write4 __P((void *vsc));
+static void	grfmv_intr_generic_or4 __P((void *vsc));
 
-static void	grfmv_intr_cb264 __P((void *vsc, int slot));
-static void	grfmv_intr_cb364 __P((void *vsc, int slot));
-static void	grfmv_intr_cmax __P((void *vsc, int slot));
-static void	grfmv_intr_cti __P((void *vsc, int slot));
-static void	grfmv_intr_radius __P((void *vsc, int slot));
-static void	grfmv_intr_radius24 __P((void *vsc, int slot));
-static void	grfmv_intr_supermacgfx __P((void *vsc, int slot));
-static void	grfmv_intr_lapis __P((void *vsc, int slot));
-static void	grfmv_intr_formac __P((void *vsc, int slot));
+static void	grfmv_intr_cb264 __P((void *vsc));
+static void	grfmv_intr_cb364 __P((void *vsc));
+static void	grfmv_intr_cmax __P((void *vsc));
+static void	grfmv_intr_cti __P((void *vsc));
+static void	grfmv_intr_radius __P((void *vsc));
+static void	grfmv_intr_radius24 __P((void *vsc));
+static void	grfmv_intr_supermacgfx __P((void *vsc));
+static void	grfmv_intr_lapis __P((void *vsc));
+static void	grfmv_intr_formac __P((void *vsc));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp));
@@ -343,9 +343,8 @@ grfmv_phys(gp)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_write1(vsc, slot)
+grfmv_intr_generic_write1(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -360,9 +359,8 @@ grfmv_intr_generic_write1(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_write4(vsc, slot)
+grfmv_intr_generic_write4(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -377,9 +375,8 @@ grfmv_intr_generic_write4(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_or4(vsc, slot)
+grfmv_intr_generic_or4(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	unsigned long	scratch;
@@ -394,9 +391,8 @@ grfmv_intr_generic_or4(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_radius(vsc, slot)
+grfmv_intr_radius(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
@@ -420,9 +416,8 @@ grfmv_intr_radius(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_radius24(vsc, slot)
+grfmv_intr_radius24(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
@@ -444,9 +439,8 @@ grfmv_intr_radius24(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_cti(vsc, slot)
+grfmv_intr_cti(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
@@ -460,9 +454,8 @@ grfmv_intr_cti(vsc, slot)
 
 /*ARGSUSED*/
 static void
-grfmv_intr_cb264(vsc, slot)
+grfmv_intr_cb264(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -515,9 +508,8 @@ grfmv_intr_cb264(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_cb364(vsc, slot)
+grfmv_intr_cb364(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -604,9 +596,8 @@ grfmv_intr_cb364(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_supermacgfx(vsc, slot)
+grfmv_intr_supermacgfx(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t dummy;
@@ -619,9 +610,8 @@ grfmv_intr_supermacgfx(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_cmax(vsc, slot)
+grfmv_intr_cmax(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int32_t dummy;
@@ -636,9 +626,8 @@ grfmv_intr_cmax(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_lapis(vsc, slot)
+grfmv_intr_lapis(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -651,9 +640,8 @@ grfmv_intr_lapis(vsc, slot)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_formac(vsc, slot)
+grfmv_intr_formac(vsc)
 	void	*vsc;
-	int	slot;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t dummy;
