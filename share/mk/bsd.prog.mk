@@ -1,13 +1,16 @@
-#	$NetBSD: bsd.prog.mk,v 1.87 1997/09/29 15:02:49 gwr Exp $
+#	$NetBSD: bsd.prog.mk,v 1.88 1997/10/11 08:16:28 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
+.if !target(__initialized__)
+__initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
 .include <bsd.own.mk>
-
+.include <bsd.obj.mk>
 .MAIN:		all
+.endif
+
 .PHONY:		cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean cleandir:	cleanprog
@@ -183,18 +186,13 @@ lint: ${LOBJS}
 	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
-.if !defined(NOMAN)
 .include <bsd.man.mk>
-.endif
-
-.if !defined(NONLS)
 .include <bsd.nls.mk>
-.endif
-
-.include <bsd.obj.mk>
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
-.include <bsd.subdir.mk>
 .include <bsd.sys.mk>
+
+# Make sure all of the standard targets are defined, even if they do nothing.
+regress:
