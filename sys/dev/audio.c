@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.124 2000/05/01 17:10:40 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.125 2000/05/02 00:00:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1266,13 +1266,27 @@ audio_read(sc, uio, ioflag)
 		if (n < cc)
 			cc = n;	/* don't read beyond end of buffer */
 		
+		if (sc->sc_rparams.factor != 1) {
+			/* Compensate for software coding expansion factor. */
+			n /= sc->sc_rparams.factor;
+			cc /= sc->sc_rparams.factor;
+		}
+ 
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; /* and no more than we want */
 
 		if (sc->sc_rparams.sw_code)
 			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
+
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
+		n = uio->uio_resid;
 		error = uiomove(outp, cc, uio);
+		cc = n - uio->uio_resid; /* number of bytes actually moved */
+		if (sc->sc_rparams.factor != 1) {
+			/* Adjust count with expansion. */
+			cc *= sc->sc_rparams.factor;
+		}
+
 		used -= cc;
 		outp += cc;
 		if (outp >= cb->end)
