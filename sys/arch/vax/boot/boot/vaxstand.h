@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.4 2000/05/21 20:17:43 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.5 2000/06/15 19:53:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,5 +76,7 @@ int	zeopen(struct open_file *, int, int, int, int),
 	    zeclose(struct open_file *);
 int	deopen(struct open_file *, int, int, int, int),
 	    declose(struct open_file *);
+int	niopen(struct open_file *, int, int, int, int),
+	    niclose(struct open_file *);
 int	netopen(struct open_file *), netclose(struct open_file *);
 
