@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1.2.5 2001/11/14 19:13:07 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.1.2.6 2001/12/06 09:30:54 wdk Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.5 2001/11/14 19:13:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.6 2001/12/06 09:30:54 wdk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.5 2001/11/14 19:13:07 nathan
 #include <machine/regnum.h>
 #include <machine/vmparam.h>
 #include <machine/locore.h>
+#include <mips/cache.h>
 
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
@@ -100,12 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1.2.5 2001/11/14 19:13:07 nathan
  * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(p, pack, stack) 
-	struct proc *p;
+linux_setregs(l, pack, stack) 
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {	
-	setregs(p, pack, stack);
+	setregs(l, pack, stack);
 	return;
 }
 
@@ -125,7 +126,8 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct linux_sigframe *fp;
 	struct frame *f;
 	int i,onstack;
@@ -134,7 +136,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 #ifdef DEBUG_LINUX
 	printf("linux_sendsig()\n");
 #endif /* DEBUG_LINUX */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 #ifdef DEBUG_LINUX
 	printf("f = %p\n", f);
 #endif /* DEBUG_LINUX */
@@ -206,7 +208,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 #ifdef DEBUG_LINUX
 		printf("linux_sendsig: stack trashed\n");
 #endif /* DEBUG_LINUX */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -238,14 +240,15 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
  * stack state from context left by sendsig (above).
  */
 int
-linux_sys_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_pt_regs) regs;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct linux_pt_regs regs, kregs;
 	struct linux_sigframe *sf, ksf;
 	struct frame *f;
@@ -272,7 +275,7 @@ linux_sys_sigreturn(p, v, retval)
 		return (error);
 
 	/* Restore the register context. */
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)l->l_md.md_regs;
 #ifdef DEBUG_LINUX
 	printf("sf = %p, f = %p\n", sf, f);
 #endif /* DEBUG_LINUX */
@@ -296,19 +299,19 @@ linux_sys_sigreturn(p, v, retval)
 
 
 int
-linux_sys_rt_sigreturn(p, v, retval)  
-	struct proc *p;
+linux_sys_rt_sigreturn(l, v, retval)  
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	return 0;
+	return (ENOSYS);
 }
 
 
 #if 0
 int
-linux_sys_modify_ldt(p, v, retval)
-	struct proc *p;
+linux_sys_modify_ldt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -351,8 +354,8 @@ linux_machdepioctl(p, v, retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(p, v, retval)
-	struct proc *p;
+linux_sys_ioperm(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -369,8 +372,8 @@ linux_sys_ioperm(p, v, retval)
  * wrapper linux_sys_new_uname() -> linux_sys_uname() 
  */
 int	
-linux_sys_new_uname(p, v, retval) 
-	struct proc *p;
+linux_sys_new_uname(l, v, retval) 
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -393,22 +396,23 @@ linux_sys_new_uname(p, v, retval)
 
         return copyout(&luts, SCARG(uap, up), sizeof(luts));
 #else
-	return linux_sys_uname(p, v, retval);
+	return linux_sys_uname(l, v, retval);
 #endif
 }
 
 /*
- * In Linux, cacheflush is icurrently implemented
+ * In Linux, cacheflush is currently implemented
  * as a whole cache flush (arguments are ignored)
  * we emulate this broken beahior.
  */
 int
-linux_sys_cacheflush(p, v, retval)
-	struct proc *p;
+linux_sys_cacheflush(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	MachFlushCache();
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
 	return 0;
 }
 
@@ -417,8 +421,8 @@ linux_sys_cacheflush(p, v, retval)
  * some binaries and some libraries use it.
  */
 int
-linux_sys_sysmips(p, v, retval)
-	struct proc *p;
+linux_sys_sysmips(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -428,6 +432,7 @@ linux_sys_sysmips(p, v, retval)
 		syscallarg(int) arg2;
 		syscallarg(int) arg3;
 	} *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 	
 	switch (SCARG(uap, cmd)) {
@@ -473,7 +478,8 @@ linux_sys_sysmips(p, v, retval)
 	case LINUX_MIPS_FIXADE:		/* XXX not implemented */
 		break;
 	case LINUX_FLUSH_CACHE:
-		MachFlushCache();
+		mips_icache_sync_all();
+		mips_dcache_wbinv_all();
 		break;
 	case LINUX_MIPS_RDNVRAM:
 		return EIO;
