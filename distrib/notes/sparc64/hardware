@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.13 2003/05/14 14:06:07 martin Exp $
+.\"	$NetBSD: hardware,v 1.14 2003/05/18 16:29:57 martin Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -6,7 +6,8 @@ Sbus-based UltraSPARC systems (the Ultra 1, Ultra 1 Creator/Ultra1 Creator3D,
 Ultra 2/Ultra 2 Creator/Ultra 2 Creator 3D)
 .It
 PCI-based UltraSPARC systems (known to work on the Ultra 5, Ultra 10, Ultra 30,
-Ultra 60 and Blade 100, Netra X1, and may work on many other systems)
+Ultra 60, Ultra 80 and their rack mounted equivalents E220R, E250, E420 and E450,
+as well as Blade 100, Netra T1, Netra X1 - and may work on many other systems)
 .bullet)
 .
 .Ss2 Unsupported machines
