@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.29 2001/07/31 22:53:21 bjh21 Exp $
+$NetBSD: UPDATING,v 1.30 2001/08/03 14:19:50 enami Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,11 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20010803:
+	(i386 only): i386 kernel now uses new instructions like fxsave which
+	old gas doesn't understand.  To build the kernel successfuly, you
+	need to build and install new gas (gnu/usr.bin/gas.new).
 
 20010731:
 	Bootloader update on ELF platforms.  DDB in kernels from before
