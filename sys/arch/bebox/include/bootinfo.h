@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 1998/01/16 04:04:14 sakamoto Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 1998/01/19 02:52:02 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -36,12 +36,13 @@
 #define	_MACHINE_BOOTINFO_H_
 
 struct btinfo_common {
-	void *next;		/* next item, or null */
+	int next;		/* offset of next item, or zero */
 	int type;
 };
 
-#define BTINFO_MEMORY 0
-#define BTINFO_CONSOLE 1
+#define BTINFO_MEMORY	0
+#define BTINFO_CONSOLE	1
+#define	BTINFO_CLOCK	2
 
 struct btinfo_memory {
 	struct btinfo_common common;
@@ -51,14 +52,19 @@ struct btinfo_memory {
 struct btinfo_console {
 	struct btinfo_common common;
 	char devname[4];
-	int port;
+	int addr;
 	int speed;
+};
+
+struct btinfo_clock {
+	struct btinfo_common common;
+	int ticks_per_sec;
 };
 
 #ifdef _KERNEL
 void *lookup_bootinfo __P((int));
 #endif
 
-#define BOOTINFO_MAXSIZE	0xe0
+#define BOOTINFO_MAXSIZE	0xd0
 
 #endif	/* _MACHINE_BOOTINFO_H_ */
