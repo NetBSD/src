@@ -1,16 +1,10 @@
-/*	$NetBSD: sock.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: sock.c,v 1.1.1.1.8.1 2002/02/09 16:55:55 he Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.1 1999/08/04 17:31:16 darrenr Exp";
-#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -67,6 +61,12 @@ static const char rcsid[] = "@(#)Id: sock.c,v 2.1 1999/08/04 17:31:16 darrenr Ex
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include "ipsend.h"
+
+#if !defined(lint)
+static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.1.4.4 2001/12/24 15:10:49 darrenr Exp";
+#endif
+
 
 int	nproc;
 struct	proc	*proc;
@@ -189,8 +189,6 @@ struct	tcpiphdr *ti;
 
 	if (!(p = getproc()))
 		return NULL;
-printf("fl %x ty %x cn %d mc %d\n",
-f->f_flag, f->f_type, f->f_count, f->f_msgcount);
 	up = (struct user *)malloc(sizeof(*up));
 #ifndef	ultrix
 	if (KMCPY(up, p->p_uarea, sizeof(*up)) == -1)
@@ -284,12 +282,21 @@ struct	tcpiphdr *ti;
 		return NULL;
 
 	fd = (struct filedesc *)malloc(sizeof(*fd));
+#if defined( __FreeBSD_version) && __FreeBSD_version >= 500013
+	if (KMCPY(fd, p->ki_fd, sizeof(*fd)) == -1)
+	    {
+		fprintf(stderr, "read(%#lx,%#lx) failed\n",
+			(u_long)p, (u_long)p->ki_fd);
+		return NULL;
+	    }
+#else
 	if (KMCPY(fd, p->kp_proc.p_fd, sizeof(*fd)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx) failed\n",
 			(u_long)p, (u_long)p->kp_proc.p_fd);
 		return NULL;
 	    }
+#endif
 
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)

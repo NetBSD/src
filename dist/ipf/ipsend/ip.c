@@ -1,16 +1,10 @@
-/*	$NetBSD: ip.c,v 1.1.1.1 1999/12/11 22:24:08 veego Exp $	*/
+/*	$NetBSD: ip.c,v 1.1.1.1.8.1 2002/02/09 16:55:55 he Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 2.1 1999/08/04 17:31:04 darrenr Exp";
-#endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +29,10 @@ static const char rcsid[] = "@(#)Id: ip.c,v 2.1 1999/08/04 17:31:04 darrenr Exp"
 #endif
 #include "ipsend.h"
 
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995";
+static const char rcsid[] = "@(#)Id: ip.c,v 2.1.4.3 2001/07/15 22:00:13 darrenr Exp";
+#endif
 
 static	char	*ipbuf = NULL, *ethbuf = NULL;
 
@@ -101,7 +99,15 @@ int	frag;
 	int	err, iplen;
 
 	if (!ipbuf)
+	  {
 		ipbuf = (char *)malloc(65536);
+		if(!ipbuf) 
+		  {
+			perror("malloc failed");
+			return -2;
+		  }
+	  }
+
 	eh = (ether_header_t *)ipbuf;
 
 	bzero((char *)A_A eh->ether_shost, sizeof(eh->ether_shost));
