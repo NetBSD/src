@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.41 2002/09/23 12:48:08 mycroft Exp $	*/
+/*	$NetBSD: route6d.c,v 1.42 2002/09/24 13:48:14 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.41 2002/09/23 12:48:08 mycroft Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.42 2002/09/24 13:48:14 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -561,7 +561,8 @@ ripalarm(void)
 void
 init(void)
 {
-	int	i, int0, int255, error;
+	int	i, error;
+	const int int0 = 0, int1 = 1, int255 = 255;
 	struct	addrinfo hints, *res;
 	char	port[10];
 
@@ -585,7 +586,6 @@ init(void)
 		/*NOTREACHED*/
 	}
 
-	int0 = 0; int255 = 255;
 	ripsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (ripsock < 0) {
 		fatal("rip socket");
@@ -593,6 +593,11 @@ init(void)
 	}
 	if (bind(ripsock, res->ai_addr, res->ai_addrlen) < 0) {
 		fatal("rip bind");
+		/*NOTREACHED*/
+	}
+	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_V6ONLY,
+	    &int1, sizeof(int1)) < 0) {
+		fatal("rip IPV6_V6ONLY");
 		/*NOTREACHED*/
 	}
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
