@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.53 2002/06/05 12:19:23 yamt Exp $ */
+/*	$NetBSD: fdisk.c,v 1.54 2002/08/08 13:19:18 soren Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.53 2002/06/05 12:19:23 yamt Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.54 2002/08/08 13:19:18 soren Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -363,13 +363,13 @@ main(int argc, char *argv[])
 			s_flag = 1;
 			if (sscanf(optarg, "%d/%d/%d", &csysid, &cstart,
 			    &csize) != 3)
-				err(1, "Bad argument to the -s flag.\n");
+				errx(1, "Bad argument to the -s flag.");
 			break;
 		case 'b':
 			b_flag = 1;
 			if (sscanf(optarg, "%d/%d/%d", &b_cyl, &b_head,
 			    &b_sec) != 3)
-				err(1, "Bad argument to the -s flag.\n");
+				errx(1, "Bad argument to the -b flag.");
 			if (b_cyl > MAXCYL)
 				b_cyl = MAXCYL;
 			break;
