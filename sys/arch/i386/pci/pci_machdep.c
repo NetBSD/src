@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.36.2.1 2000/08/10 22:25:57 soda Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36.2.2 2002/09/09 08:06:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
 	/* Triton needed for Connectix Virtual PC */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	/* Connectix Virtual PC 5 has a 440BX */
+	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
 	{0, 0xffffffff} /* patchable */
 };
 #undef _m1tag
