@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.17 2003/04/29 17:55:00 agc Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.18 2003/10/21 02:24:59 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -886,7 +886,7 @@ failed:
 					sprintf(p++, ",");
 			}
 			printf("%-10s", buf);
-			buf[0] = NULL;
+			buf[0] = 0;
 			for (nl = rs->nlist; nl; nl = nl->next) {
 				strcat(buf, nl->netid);
 				if (nl->next)
