@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.2 1995/01/26 17:55:20 mycroft Exp $
+	$Id: tm.h,v 1.3 1995/02/06 13:31:59 mycroft Exp $
 */
 
 /* Override number of expected traps from sysv. */
@@ -75,7 +75,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 /* Saved Pc.  Get it from sigcontext if within sigtramp.  */
 
 /* Offset to saved PC in sigcontext, from <sys/signal.h>.  */
-#define SIGCONTEXT_PC_OFFSET 20
+#define SIGCONTEXT_PC_OFFSET 44
 
 #undef FRAME_SAVED_PC(FRAME)
 #define FRAME_SAVED_PC(FRAME) \
