@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 1997/12/12 22:59:46 gwr Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 1998/05/29 17:41:21 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,7 @@ LISTS=	${TOP}/common/${IMAGE}.list \
 	${TOP}/common/mini_bin.list \
 	${TOP}/common/mini_usr.list
 
-KERNEL=${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
+KERNEL=${SRCSYSDIR}/arch/sun3/compile/INSTALL/netbsd
 
 MOUNT_POINT=	/mnt
 BDEV=		/dev/sd1b
@@ -28,6 +28,8 @@ NBLKS=		16384
 NEWFSARGS= -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
 
 CLEANFILES= ${IMAGE}.gz install.sub
+
+all: ${IMAGE}.gz
 
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
