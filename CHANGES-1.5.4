@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.135 2004/04/07 22:44:20 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.136 2004/04/07 22:46:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2525,3 +2525,10 @@ usr.bin/sed/process.c				1.34
 
 	Prevent integer underflow.
 	[itojun, ticket #108]
+
+usr.bin/window/wwiomux.c			1.8
+
+	Fix a bug where window(1) would (appear to) miss a character when two
+	characters are typed fast one after the other (<10 ms).
+
+	[aymeric, ticket #112]
