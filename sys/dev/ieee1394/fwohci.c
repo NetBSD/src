@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.61 2002/12/01 12:05:11 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.62 2002/12/04 00:28:41 haya Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,12 +49,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.61 2002/12/01 12:05:11 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.62 2002/12/04 00:28:41 haya Exp $");
 
-#define DOUBLEBUF 1
-#define NO_THREAD 1
+#define FWOHCI_WAIT_DEBUG 1
+
+#define FWOHCI_IT_BUFNUM 4
 
 #include "opt_inet.h"
+#include "fwiso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.61 2002/12/01 12:05:11 jmc Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/poll.h>
+#include <sys/select.h>
 
 #if __NetBSD_Version__ >= 105010000
 #include <uvm/uvm_extern.h>
@@ -80,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.61 2002/12/01 12:05:11 jmc Exp $");
 
 #include <dev/ieee1394/ieee1394var.h>
 #include <dev/ieee1394/fwohcivar.h>
+#include <dev/ieee1394/fwisovar.h>
 
 static const char * const ieee1394_speeds[] = { IEEE1394_SPD_STRINGS };
 
@@ -104,6 +109,47 @@ static int  fwohci_ctx_alloc(struct fwohci_softc *, struct fwohci_ctx **,
 static void fwohci_ctx_free(struct fwohci_softc *, struct fwohci_ctx *);
 static void fwohci_ctx_init(struct fwohci_softc *, struct fwohci_ctx *);
 
+static int fwohci_misc_dmabuf_alloc(bus_dma_tag_t, int, int,
+    bus_dma_segment_t *, bus_dmamap_t *, void **, const char *);
+static void fwohci_misc_dmabuf_free(bus_dma_tag_t, int, int,
+    bus_dma_segment_t *, bus_dmamap_t *, caddr_t);
+
+static struct fwohci_ir_ctx *fwohci_ir_ctx_construct(struct fwohci_softc *,
+    int, int, int, int, int, int);
+static void fwohci_ir_ctx_destruct(struct fwohci_ir_ctx *);
+
+static int fwohci_ir_buf_setup(struct fwohci_ir_ctx *);
+static int fwohci_ir_init(struct fwohci_ir_ctx *);
+static int fwohci_ir_start(struct fwohci_ir_ctx *);
+static void fwohci_ir_intr(struct fwohci_softc *, struct fwohci_ir_ctx *);
+static int fwohci_ir_stop(struct fwohci_ir_ctx *);
+static int fwohci_ir_ctx_packetnum(struct fwohci_ir_ctx *);
+#ifdef USEDRAIN
+static int fwohci_ir_ctx_drain(struct fwohci_ir_ctx *);
+#endif /* USEDRAIN */
+
+static int fwohci_it_desc_alloc(struct fwohci_it_ctx *);
+static void fwohci_it_desc_free(struct fwohci_it_ctx *itc);
+struct fwohci_it_ctx *fwohci_it_ctx_construct(struct fwohci_softc *,
+    int, int, int, int);
+void fwohci_it_ctx_destruct(struct fwohci_it_ctx *);
+int fwohci_it_ctx_writedata(ieee1394_it_tag_t, int,
+    struct ieee1394_it_datalist *, int);
+static void fwohci_it_ctx_run(struct fwohci_it_ctx *);
+int fwohci_it_ctx_flush(ieee1394_it_tag_t);
+static void fwohci_it_intr(struct fwohci_softc *, struct fwohci_it_ctx *);
+
+int fwohci_itd_construct(struct fwohci_it_ctx *, struct fwohci_it_dmabuf *,
+    int, struct fwohci_desc *, bus_addr_t, int, int, paddr_t);
+void fwohci_itd_destruct(struct fwohci_it_dmabuf *);
+static int fwohci_itd_dmabuf_alloc(struct fwohci_it_dmabuf *);
+static void fwohci_itd_dmabuf_free(struct fwohci_it_dmabuf *);
+int fwohci_itd_link(struct fwohci_it_dmabuf *, struct fwohci_it_dmabuf *);
+int fwohci_itd_unlink(struct fwohci_it_dmabuf *);
+int fwohci_itd_writedata(struct fwohci_it_dmabuf *, int,
+    struct ieee1394_it_datalist *);
+int fwohci_itd_isfilled(struct fwohci_it_dmabuf *);
+
 static int  fwohci_buf_alloc(struct fwohci_softc *, struct fwohci_buf *);
 static void fwohci_buf_free(struct fwohci_softc *, struct fwohci_buf *);
 static void fwohci_buf_init_rx(struct fwohci_softc *);
@@ -126,9 +172,22 @@ static void fwohci_phy_input(struct fwohci_softc *, struct fwohci_pkt *);
 static int  fwohci_handler_set(struct fwohci_softc *, int, u_int32_t, u_int32_t,
     int (*)(struct fwohci_softc *, void *, struct fwohci_pkt *), void *);
 
+ieee1394_ir_tag_t fwohci_ir_ctx_set(struct device *, int, int, int, int, int);
+int fwohci_ir_ctx_clear(struct device *, ieee1394_ir_tag_t);
+int fwohci_ir_read(struct device *, ieee1394_ir_tag_t, struct uio *,
+    int, int);
+int fwohci_ir_wait(struct device *, ieee1394_ir_tag_t, void *, char *name);
+int fwohci_ir_select(struct device *, ieee1394_ir_tag_t, struct proc *);
+
+
+
+ieee1394_it_tag_t fwohci_it_set(struct ieee1394_softc *, int, int);
+static ieee1394_it_tag_t fwohci_it_ctx_set(struct fwohci_softc *, int, int, int);
+int fwohci_it_ctx_clear(ieee1394_it_tag_t *);
+
 static void fwohci_arrq_input(struct fwohci_softc *, struct fwohci_ctx *);
 static void fwohci_arrs_input(struct fwohci_softc *, struct fwohci_ctx *);
-static void fwohci_ir_input(struct fwohci_softc *, struct fwohci_ctx *);
+static void fwohci_as_input(struct fwohci_softc *, struct fwohci_ctx *);
 
 static int  fwohci_at_output(struct fwohci_softc *, struct fwohci_ctx *,
     struct fwohci_pkt *);
@@ -158,6 +217,7 @@ static int  fwohci_if_inreg(struct device *, u_int32_t, u_int32_t,
     void (*)(struct device *, struct mbuf *));
 static int  fwohci_if_input(struct fwohci_softc *, void *, struct fwohci_pkt *);
 static int  fwohci_if_input_iso(struct fwohci_softc *, void *, struct fwohci_pkt *);
+
 static int  fwohci_if_output(struct device *, struct mbuf *,
     void (*)(struct device *, struct mbuf *));
 static int fwohci_if_setiso(struct device *, u_int32_t, u_int32_t, u_int32_t,
@@ -174,6 +234,10 @@ static int  fwohci_parse_input(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
 static int  fwohci_submatch(struct device *, struct cfdata *, void *);
 
+/* XXX */
+u_int16_t fwohci_cycletimer(struct fwohci_softc *);
+u_int16_t fwohci_it_cycletimer(ieee1394_it_tag_t);
+
 #ifdef FW_DEBUG
 static void fwohci_show_intr(struct fwohci_softc *, u_int32_t);
 static void fwohci_show_phypkt(struct fwohci_softc *, u_int32_t);
@@ -188,6 +252,20 @@ int     fwdebug = 1;
 #define DPRINTFN(n,x)
 #endif
 
+#define OHCI_ITHEADER_SPD_MASK		0x00070000
+#define OHCI_ITHEADER_SPD_BITPOS	16
+#define OHCI_ITHEADER_TAG_MASK		0x0000c000
+#define OHCI_ITHEADER_TAG_BITPOS	14
+#define OHCI_ITHEADER_CHAN_MASK		0x00003f00
+#define OHCI_ITHEADER_CHAN_BITPOS	8
+#define OHCI_ITHEADER_TCODE_MASK	0x000000f0
+#define OHCI_ITHEADER_TCODE_BITPOS	4
+#define OHCI_ITHEADER_SY_MASK		0x0000000f
+#define OHCI_ITHEADER_SY_BITPOS		0
+
+#define OHCI_ITHEADER_VAL(fld, val) \
+	(OHCI_ITHEADER_##fld##_MASK & ((val) << OHCI_ITHEADER_##fld##_BITPOS))
+
 int
 fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 {
@@ -201,9 +279,11 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	    sc->sc_sc1394.sc1394_dev.dv_xname, "intr");
 
 	evcnt_attach_dynamic(&sc->sc_isocnt, EVCNT_TYPE_MISC, ev,
-	    sc->sc_sc1394.sc1394_dev.dv_xname, "iso");
-	evcnt_attach_dynamic(&sc->sc_isopktcnt, EVCNT_TYPE_MISC, ev,
-	    sc->sc_sc1394.sc1394_dev.dv_xname, "isopackets");
+	    sc->sc_sc1394.sc1394_dev.dv_xname, "isorcvs");
+	evcnt_attach_dynamic(&sc->sc_ascnt, EVCNT_TYPE_MISC, ev,
+	    sc->sc_sc1394.sc1394_dev.dv_xname, "asrcvs");
+	evcnt_attach_dynamic(&sc->sc_itintrcnt, EVCNT_TYPE_INTR, ev,
+	    sc->sc_sc1394.sc1394_dev.dv_xname, "itintr");
 
 	/*
 	 * Wait for reset completion
@@ -254,7 +334,7 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	printf(", %u max_rec", sc->sc_sc1394.sc1394_max_receive);
 
 	/*
-	 * Count how many isochronous ctx we have.
+	 * Count how many isochronous receive ctx we have.
 	 */
 	OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntMaskSet, ~0);
 	val = OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntMaskClear);
@@ -264,8 +344,24 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 			i++;
 	}
 	sc->sc_isoctx = i;
-	printf(", %d iso_ctx", sc->sc_isoctx);
-	
+	printf(", %d ir_ctx", sc->sc_isoctx);
+
+	/*
+	 * Count how many isochronous transmit ctx we have.
+	 */
+	OHCI_CSR_WRITE(sc, OHCI_REG_IsoXmitIntMaskSet, ~0);
+	val = OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntMaskClear);
+	OHCI_CSR_WRITE(sc, OHCI_REG_IsoXmitIntMaskClear, ~0);
+	for (i = 0; val != 0; val >>= 1) {
+		if (val & 0x1) {
+			i++;
+			OHCI_SYNC_TX_DMA_WRITE(sc, i,OHCI_SUBREG_CommandPtr,0);
+		}
+	}
+	sc->sc_itctx = i;
+
+	printf(", %d it_ctx", sc->sc_itctx);
+
 	printf("\n");
 
 #if 0
@@ -301,7 +397,7 @@ fwohci_if_setiso(struct device *self, u_int32_t channel, u_int32_t tag,
 
 	s = splnet();
 	retval = fwohci_handler_set(sc, IEEE1394_TCODE_STREAM_DATA,
-	    channel, tag, fwohci_if_input_iso, handler);
+	    channel, 1 << tag, fwohci_if_input_iso, handler);
 	splx(s);
 
 	if (!retval) {
@@ -366,42 +462,39 @@ fwohci_intr(void *arg)
 		sc->sc_intmask |= intmask;
 
 		if (intmask & OHCI_Int_IsochTx) {
+			int i;
+
 			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoXmitIntEventClear);
 			OHCI_CSR_WRITE(sc, OHCI_REG_IsoXmitIntEventClear, iso);
+
+			sc->sc_itintrcnt.ev_count++;
+			for (i = 0; i < sc->sc_itctx; ++i) {
+				if ((iso & (1<<i)) == 0 ||
+				    sc->sc_ctx_it[i] == NULL) {
+					continue;
+				}
+
+				fwohci_it_intr(sc, sc->sc_ctx_it[i]);
+			}
 		}
 		if (intmask & OHCI_Int_IsochRx) {
-#if NO_THREAD
 			int i;
-			int asyncstream = 0;
-#endif
 
 			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear);
 			OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear, iso);
-#if NO_THREAD
-			for (i = 0; i < sc->sc_isoctx; i++) {
-				if ((iso & (1<<i)) && sc->sc_ctx_ir[i] != NULL) {
-					if (sc->sc_ctx_ir[i]->fc_type == FWOHCI_CTX_ISO_SINGLE) {
-						asyncstream |= (1 << i);
-						continue;
-					}
-					bus_dmamap_sync(sc->sc_dmat,
-					    sc->sc_ddmamap,
-					    0, sizeof(struct fwohci_desc) * sc->sc_descsize,
-					    BUS_DMASYNC_PREREAD);
-					sc->sc_isocnt.ev_count++;
 
-					fwohci_ir_input(sc, sc->sc_ctx_ir[i]);
+			for (i = 0; i < sc->sc_isoctx; i++) {
+				if ((iso & (1 << i))
+				    && sc->sc_ctx_ir[i] != NULL) {
+					iso &= ~(1 << i);
+					fwohci_ir_intr(sc, sc->sc_ctx_ir[i]);
 				}
 			}
-			if (asyncstream != 0) {
-				sc->sc_iso |= asyncstream;
-			} else {
-				/* all iso intr is pure isochronous */
+
+			if (iso == 0) {
 				sc->sc_intmask &= ~OHCI_Int_IsochRx;
 			}
-#else
 			sc->sc_iso |= iso;
-#endif /* NO_THREAD */
 		}
 
 		if (!progress) {
@@ -456,10 +549,18 @@ fwohci_thread_init(void *arg)
 	    FWOHCI_CTX_ASYNC);
 	fwohci_ctx_alloc(sc, &sc->sc_ctx_atrs, 0, OHCI_CTX_ASYNC_TX_RESPONSE,
 	    FWOHCI_CTX_ASYNC);
-	sc->sc_ctx_ir = malloc(sizeof(sc->sc_ctx_ir[0]) * sc->sc_isoctx,
+	sc->sc_ctx_as = malloc(sizeof(sc->sc_ctx_as[0]) * sc->sc_isoctx,
 	    M_DEVBUF, M_WAITOK);
-	for (i = 0; i < sc->sc_isoctx; i++)
-		sc->sc_ctx_ir[i] = NULL;
+	if (sc->sc_ctx_as == NULL) {
+		printf("no asynchronous stream\n");
+	} else {
+		for (i = 0; i < sc->sc_isoctx; i++)
+			sc->sc_ctx_as[i] = NULL;
+	}
+	sc->sc_ctx_ir = malloc(sizeof(sc->sc_ctx_ir[0]) * sc->sc_isoctx,
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	sc->sc_ctx_it = malloc(sizeof(sc->sc_ctx_it[0]) * sc->sc_itctx,
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 
 	/*
 	 * Allocate buffer for configuration ROM and SelfID buffer
@@ -473,6 +574,19 @@ fwohci_thread_init(void *arg)
 	sc->sc_sc1394.sc1394_ifoutput = fwohci_if_output;
 	sc->sc_sc1394.sc1394_ifsetiso = fwohci_if_setiso;
 
+	sc->sc_sc1394.sc1394_ir_open = fwohci_ir_ctx_set;
+	sc->sc_sc1394.sc1394_ir_close = fwohci_ir_ctx_clear;
+	sc->sc_sc1394.sc1394_ir_read = fwohci_ir_read;
+	sc->sc_sc1394.sc1394_ir_wait = fwohci_ir_wait;
+	sc->sc_sc1394.sc1394_ir_select = fwohci_ir_select;
+
+#if 0
+	sc->sc_sc1394.sc1394_it_open = fwohci_it_open;
+	sc->sc_sc1394.sc1394_it_write = fwohci_it_write;
+	sc->sc_sc1394.sc1394_it_close = fwohci_it_close;
+	/* XXX: need fwohci_it_flush? */
+#endif
+
 	/*
 	 * establish hooks for shutdown and suspend/resume 
 	 */
@@ -481,6 +595,10 @@ fwohci_thread_init(void *arg)
 
 	sc->sc_sc1394.sc1394_if = config_found(&sc->sc_sc1394.sc1394_dev, "fw",
 	    fwohci_print);
+
+#if NFWISO > 0
+	fwiso_register_if(&sc->sc_sc1394);
+#endif
 
 	/* Main loop. It's not coming back normally. */
 
@@ -554,15 +672,18 @@ fwohci_event_thread(struct fwohci_softc *sc)
 		if (intmask & OHCI_Int_RSPkt)
 			fwohci_arrs_input(sc, sc->sc_ctx_arrs);
 		if (intmask & OHCI_Int_IsochRx) {
+			if (sc->sc_ctx_as == NULL) {
+				continue;
+			}
 			s = splbio();
 			iso = sc->sc_iso;
 			sc->sc_iso = 0;
 			splx(s);
 			for (i = 0; i < sc->sc_isoctx; i++) {
 				if ((iso & (1 << i)) &&
-				    sc->sc_ctx_ir[i] != NULL) {
-					fwohci_ir_input(sc, sc->sc_ctx_ir[i]);
-					sc->sc_isocnt.ev_count++;
+				    sc->sc_ctx_as[i] != NULL) {
+					fwohci_as_input(sc, sc->sc_ctx_as[i]);
+					sc->sc_ascnt.ev_count++;
 				}
 			}
 		}
@@ -653,6 +774,10 @@ fwohci_hw_init(struct fwohci_softc *sc)
 	OHCI_CSR_WRITE(sc, OHCI_REG_BusOptions, val);
 	for (i = 0; i < sc->sc_isoctx; i++) {
 		OHCI_SYNC_RX_DMA_WRITE(sc, i, OHCI_SUBREG_ContextControlClear,
+		    ~0);
+	}
+	for (i = 0; i < sc->sc_itctx; i++) {
+		OHCI_SYNC_TX_DMA_WRITE(sc, i, OHCI_SUBREG_ContextControlClear,
 		    ~0);
 	}
 	OHCI_CSR_WRITE(sc, OHCI_REG_LinkControlClear, ~0);
@@ -859,6 +984,11 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	dsize = sizeof(struct fwohci_desc) * sc->sc_descsize;
 	mapsize = howmany(sc->sc_descsize, NBBY);
 	sc->sc_descmap = malloc(mapsize, M_DEVBUF, M_WAITOK|M_ZERO);
+
+	if (sc->sc_descmap == NULL) {
+		printf("fwohci_desc_alloc: cannot get memory\n");
+		return -1;
+	}
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dsize, PAGE_SIZE, 0,
 	    &sc->sc_dseg, 1, &sc->sc_dnseg, 0)) != 0) {
@@ -1110,8 +1240,25 @@ fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			    OHCI_CTXCTL_RX_BUFFER_FILL);
 		}
 		fh = LIST_FIRST(&fc->fc_handler);
+
+		if (fh->fh_key1 == IEEE1394_ISO_CHANNEL_ANY) {
+			OHCI_SYNC_RX_DMA_WRITE(sc, n,
+			    OHCI_SUBREG_ContextControlSet,
+			    OHCI_CTXCTL_RX_MULTI_CHAN_MODE);
+			
+			/* Receive all the isochronous channels */
+			OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskHiSet,
+			    0xffffffff);
+			OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskLoSet,
+			    0xffffffff);
+			DPRINTF(("%s: CTXCTL 0x%08x\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname,
+			    OHCI_SYNC_RX_DMA_READ(sc, n,
+				OHCI_SUBREG_ContextControlSet)));
+		}
 		OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextMatch,
-		    (OHCI_CTXMATCH_TAG0 << fh->fh_key2) | fh->fh_key1);
+		    (fh->fh_key2 << OHCI_CTXMATCH_TAG_BITPOS) |
+		    (fh->fh_key1 & IEEE1394_ISO_CHANNEL_MASK));
 	} else {
 		OHCI_ASYNC_DMA_WRITE(sc, n, OHCI_SUBREG_CommandPtr,
 		    fb->fb_daddr | 1);
@@ -1193,9 +1340,11 @@ fwohci_buf_init_rx(struct fwohci_softc *sc)
 	/*
 	 * Initialize for Isochronous Receive Queue.
 	 */
-	for (i = 0; i < sc->sc_isoctx; i++) {
-		if (sc->sc_ctx_ir[i] != NULL)
-			fwohci_ctx_init(sc, sc->sc_ctx_ir[i]);
+	if (sc->sc_ctx_as != NULL) {
+		for (i = 0; i < sc->sc_isoctx; i++) {
+			if (sc->sc_ctx_as[i] != NULL)
+				fwohci_ctx_init(sc, sc->sc_ctx_as[i]);
+		}
 	}
 }
 
@@ -1208,10 +1357,13 @@ fwohci_buf_start_rx(struct fwohci_softc *sc)
 	    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
 	OHCI_ASYNC_DMA_WRITE(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
 	    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
-	for (i = 0; i < sc->sc_isoctx; i++) {
-		if (sc->sc_ctx_ir[i] != NULL)
-			OHCI_SYNC_RX_DMA_WRITE(sc, i,
-			    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
+	if (sc->sc_ctx_as != NULL) {
+		for (i = 0; i < sc->sc_isoctx; i++) {
+			if (sc->sc_ctx_as[i] != NULL)
+				OHCI_SYNC_RX_DMA_WRITE(sc, i,
+				    OHCI_SUBREG_ContextControlSet,
+				    OHCI_CTXCTL_RUN);
+		}
 	}
 }
 
@@ -1536,14 +1688,22 @@ fwohci_handler_set(struct fwohci_softc *sc,
 	struct fwohci_handler *fh;
 	int i, j;
 
-	if (tcode == IEEE1394_TCODE_STREAM_DATA) {
+	if (tcode == IEEE1394_TCODE_STREAM_DATA &&
+	    (((key1 & OHCI_ASYNC_STREAM) && sc->sc_ctx_as != NULL)
+		    || (key1 & OHCI_ASYNC_STREAM) == 0)) {
 		int isasync = key1 & OHCI_ASYNC_STREAM;
 
-		key1 &= IEEE1394_ISOCH_MASK;
+		key1 = key1 & IEEE1394_ISO_CHANNEL_ANY ?
+		    IEEE1394_ISO_CHANNEL_ANY : (key1 & IEEE1394_ISOCH_MASK);
+		if (key1 & IEEE1394_ISO_CHANNEL_ANY) {
+			printf("%s: key changed to %x\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname, key1);
+		}
 		j = sc->sc_isoctx;
 		fh = NULL;
+
 		for (i = 0; i < sc->sc_isoctx; i++) {
-			if ((fc = sc->sc_ctx_ir[i]) == NULL) {
+			if ((fc = sc->sc_ctx_as[i]) == NULL) {
 				if (j == sc->sc_isoctx)
 					j = i;
 				continue;
@@ -1562,13 +1722,20 @@ fwohci_handler_set(struct fwohci_softc *sc,
 				    "context\n"));
 				return ENOMEM;
 			}
-			if ((fc = sc->sc_ctx_ir[j]) == NULL) {
+			if ((fc = sc->sc_ctx_as[j]) == NULL) {
 				fwohci_ctx_alloc(sc, &fc, OHCI_BUF_IR_CNT, j,
 				    isasync ? FWOHCI_CTX_ISO_SINGLE :
 				    FWOHCI_CTX_ISO_MULTI);
-				sc->sc_ctx_ir[j] = fc;
+				sc->sc_ctx_as[j] = fc;
 			}
 		}
+#ifdef FW_DEBUG
+		if (fh == NULL && handler != NULL) {
+			printf("use ir context %d\n", j);
+		} else if (fh != NULL && handler == NULL) {
+			printf("remove ir context %d\n", i);
+		}
+#endif
 	} else {
 		switch (tcode) {
 		case IEEE1394_TCODE_WRITE_REQ_QUAD:
@@ -1602,7 +1769,7 @@ fwohci_handler_set(struct fwohci_softc *sc,
 		if (tcode == IEEE1394_TCODE_STREAM_DATA) {
 			OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
 			    OHCI_SUBREG_ContextControlClear, OHCI_CTXCTL_RUN);
-			sc->sc_ctx_ir[fc->fc_ctx] = NULL;
+			sc->sc_ctx_as[fc->fc_ctx] = NULL;
 			fwohci_ctx_free(sc, fc);
 		}
 		return 0;
@@ -1628,6 +1795,332 @@ fwohci_handler_set(struct fwohci_softc *sc,
 	}
 	return 0;
 }
+
+
+
+
+
+/*
+ * static ieee1394_ir_tag_t
+ * fwohci_ir_ctx_set(struct device *dev, int channel, int tagbm,
+ *	int bufnum, int maxsize, int flags)
+ *
+ *	This function will return non-negative value if it succeeds.
+ *	This return value is pointer to the context of isochronous
+ *	transmission.  This function will return NULL value if it
+ *	fails.
+ */
+ieee1394_ir_tag_t
+fwohci_ir_ctx_set(struct device *dev, int channel, int tagbm,
+    int bufnum, int maxsize, int flags)
+{
+	int i, openctx;
+	struct fwohci_ir_ctx *irc;
+	struct fwohci_softc *sc = (struct fwohci_softc *)dev;
+	const char *xname = sc->sc_sc1394.sc1394_dev.dv_xname;
+
+	printf("%s: ir_ctx_set channel %d tagbm 0x%x maxsize %d bufnum %d\n",
+	    xname, channel, tagbm, maxsize, bufnum);
+	/*
+	 * This loop will find the smallest vacant context and check
+	 * whether other channel uses the same channel.
+	 */
+	openctx = sc->sc_isoctx;
+	for (i = 0; i < sc->sc_isoctx; ++i) {
+		if (sc->sc_ctx_ir[i] == NULL) {
+			/*
+			 * Find a vacant contet.  If this has the
+			 * smallest context number, register it.
+			 */
+			if (openctx == sc->sc_isoctx) {
+				openctx = i;
+			}
+		} else {
+			/*
+			 * This context is used.  Check whether this
+			 * context uses the same channel as ours.
+			 */
+			if (sc->sc_ctx_ir[i]->irc_channel == channel) {
+				/* Using same channel. */
+				printf("%s: channel %d occupied by ctx%d\n",
+				    xname, channel, i);
+				return NULL;
+			}
+		}
+	}
+
+	/*
+	 * If there is a vacant context, allocate isochronous transmit
+	 * context for it.
+	 */
+	if (openctx != sc->sc_isoctx) {
+		printf("%s using ctx %d for iso receive\n", xname, openctx);
+		if ((irc = fwohci_ir_ctx_construct(sc, openctx, channel,
+		    tagbm, bufnum, maxsize, flags)) == NULL) {
+			return NULL;
+		}
+#ifndef IR_CTX_OPENTEST
+		sc->sc_ctx_ir[openctx] = irc;
+#else
+		fwohci_ir_ctx_destruct(irc);
+		irc = NULL;
+#endif
+	} else {
+		printf("%s: cannot find any vacant contexts\n", xname);
+		irc = NULL;
+	}
+
+	return (ieee1394_ir_tag_t)irc;
+}
+
+
+/*
+ * int fwohci_ir_ctx_clear(struct device *dev, ieee1394_ir_tag_t *ir)
+ *
+ *	This function will return 0 if it succeed.  Otherwise return
+ *	negative value.
+ */
+int
+fwohci_ir_ctx_clear(struct device *dev, ieee1394_ir_tag_t ir)
+{
+	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)ir;
+	struct fwohci_softc *sc = irc->irc_sc;
+	int i;
+
+	if (sc->sc_ctx_ir[irc->irc_num] != irc) {
+		printf("fwohci_ir_ctx_clear: irc differs %p %p\n",
+		    sc->sc_ctx_ir[irc->irc_num], irc);
+		return -1;
+	}
+
+	i = 0;
+	while (irc->irc_status & IRC_STATUS_RUN) {
+		tsleep((void *)irc, PWAIT|PCATCH, "IEEE1394 iso receive", 100);
+		if (irc->irc_status & IRC_STATUS_RUN) {
+			if (fwohci_ir_stop(irc) == 0) {
+				irc->irc_status &= ~IRC_STATUS_RUN;
+			}
+
+		}
+		if (++i > 20) {
+			u_int32_t reg
+			    = OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+				OHCI_SUBREG_ContextControlSet);
+
+			printf("fwochi_ir_ctx_clear: "
+			    "Cannot stop iso receive engine\n");
+			printf("%s:  intr IR_CommandPtr 0x%08x "
+			    "ContextCtrl 0x%08x%s%s%s%s\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname,
+			    OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+				OHCI_SUBREG_CommandPtr),
+			    reg,
+			    reg & OHCI_CTXCTL_RUN ? " run" : "",
+			    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+			    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+			    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+
+			return EBUSY;
+		}
+	}
+
+	printf("fwohci_ir_ctx_clear: DMA engine is stopped. get %d frames max queuelen %d pos %d\n",
+	    irc->irc_pktcount, irc->irc_maxqueuelen, irc->irc_maxqueuepos);
+
+	fwohci_ir_ctx_destruct(irc);
+
+	sc->sc_ctx_ir[irc->irc_num] = NULL;
+
+	return 0;
+}
+
+
+
+
+
+
+
+
+ieee1394_it_tag_t
+fwohci_it_set(struct ieee1394_softc *isc, int channel, int tagbm)
+{
+	ieee1394_it_tag_t rv;
+	int tag;
+
+	for (tag = 0; tagbm != 0 && (tagbm & 0x01) == 0; tagbm >>= 1, ++tag);
+
+	rv = fwohci_it_ctx_set((struct fwohci_softc *)isc, channel, tag, 488);
+
+	return rv;
+}
+
+/*
+ * static ieee1394_it_tag_t
+ * fwohci_it_ctx_set(struct fwohci_softc *sc, 
+ *    u_int32_t key1 (channel), u_int32_t key2 (tag), int maxsize)
+ *
+ *	This function will return non-negative value if it succeeds.
+ *	This return value is pointer to the context of isochronous
+ *	transmission.  This function will return NULL value if it
+ *	fails.
+ */
+static ieee1394_it_tag_t
+fwohci_it_ctx_set(struct fwohci_softc *sc, int channel, int tag, int maxsize)
+{
+	int i, openctx;
+	struct fwohci_it_ctx *itc;
+	const char *xname = sc->sc_sc1394.sc1394_dev.dv_xname;
+#ifdef TEST_CHAIN
+	extern int fwohci_test_chain(struct fwohci_it_ctx *);
+#endif /* TEST_CHAIN */
+#ifdef TEST_WRITE
+	extern void fwohci_test_write(struct fwohci_it_ctx *itc);
+#endif /* TEST_WRITE */
+
+	printf("%s: it_ctx_set channel %d tag %d maxsize %d\n",
+	    xname, channel, tag, maxsize);
+
+	/*
+	 * This loop will find the smallest vacant context and check
+	 * whether other channel uses the same channel.
+	 */
+	openctx = sc->sc_itctx;
+	for (i = 0; i < sc->sc_itctx; ++i) {
+		if (sc->sc_ctx_it[i] == NULL) {
+			/*
+			 * Find a vacant contet.  If this has the
+			 * smallest context number, register it.
+			 */
+			if (openctx == sc->sc_itctx) {
+				openctx = i;
+			}
+		} else {
+			/*
+			 * This context is used.  Check whether this
+			 * context uses the same channel as ours.
+			 */
+			if (sc->sc_ctx_it[i]->itc_channel == channel) {
+				/* Using same channel. */
+				printf("%s: channel %d occupied by ctx%d\n",
+				    xname, channel, i);
+				return NULL;
+			}
+		}
+	}
+
+	/*
+	 * If there is a vacant context, allocate isochronous transmit
+	 * context for it.
+	 */
+	if (openctx != sc->sc_itctx) {
+		printf("%s using ctx %d for iso trasmit\n", xname, openctx);
+		if ((itc = fwohci_it_ctx_construct(sc, openctx, channel,
+		    tag, maxsize)) == NULL) {
+			return NULL;
+		}
+		sc->sc_ctx_it[openctx] = itc;
+
+#ifdef TEST_CHAIN
+		fwohci_test_chain(itc);
+#endif /* TEST_CHAIN */
+#ifdef TEST_WRITE
+		fwohci_test_write(itc);
+		itc = NULL;
+#endif /* TEST_WRITE */
+
+	} else {
+		printf("%s: cannot find any vacant contexts\n", xname);
+		itc = NULL;
+	}
+
+	return (ieee1394_it_tag_t)itc;
+}
+
+
+/*
+ * int fwohci_it_ctx_clear(ieee1394_it_tag_t *it)
+ *
+ *	This function will return 0 if it succeed.  Otherwise return
+ *	negative value.
+ */
+int
+fwohci_it_ctx_clear(ieee1394_it_tag_t *it)
+{
+	struct fwohci_it_ctx *itc = (struct fwohci_it_ctx *)it;
+	struct fwohci_softc *sc = itc->itc_sc;
+	int i;
+
+	if (sc->sc_ctx_it[itc->itc_num] != itc) {
+		printf("fwohci_it_ctx_clear: itc differs %p %p\n",
+		    sc->sc_ctx_it[itc->itc_num], itc);
+		return -1;
+	}
+
+	fwohci_it_ctx_flush(it);
+
+	i = 0;
+	while (itc->itc_flags & ITC_FLAGS_RUN) {
+		tsleep((void *)itc, PWAIT|PCATCH, "IEEE1394 iso transmit", 100);
+		if (itc->itc_flags & ITC_FLAGS_RUN) {
+			u_int32_t reg;
+
+			reg = OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num,
+			    OHCI_SUBREG_ContextControlSet);
+
+			if ((reg & OHCI_CTXCTL_WAKE) == 0) {
+				itc->itc_flags &= ~ITC_FLAGS_RUN;
+				printf("fwochi_it_ctx_clear: "
+				    "DMA engine stopped without intr\n");
+			}
+			printf("%s: %d intr IT_CommandPtr 0x%08x "
+			    "ContextCtrl 0x%08x%s%s%s%s\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname, i,
+			    OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num,
+				OHCI_SUBREG_CommandPtr),
+			    reg,
+			    reg & OHCI_CTXCTL_RUN ? " run" : "",
+			    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+			    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+			    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+
+
+		}
+		if (++i > 20) {
+			u_int32_t reg
+			    = OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num,
+				OHCI_SUBREG_ContextControlSet);
+
+			printf("fwochi_it_ctx_clear: "
+			    "Cannot stop iso transmit engine\n");
+			printf("%s:  intr IT_CommandPtr 0x%08x "
+			    "ContextCtrl 0x%08x%s%s%s%s\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname,
+			    OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num,
+				OHCI_SUBREG_CommandPtr),
+			    reg,
+			    reg & OHCI_CTXCTL_RUN ? " run" : "",
+			    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+			    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+			    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+
+			return EBUSY;
+		}
+	}
+
+	printf("fwohci_it_ctx_clear: DMA engine is stopped.\n");
+
+	fwohci_it_ctx_destruct(itc);
+
+	sc->sc_ctx_it[itc->itc_num] = NULL;
+	
+
+	return 0;
+}
+
+
+
+
+
 
 /*
  * Asyncronous Receive Requests input frontend.
@@ -1724,7 +2217,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
  * Isochronous Receive input frontend.
  */
 static void
-fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
+fwohci_as_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	int rcode, chan, tag;
 	struct iovec *iov;
@@ -1771,10 +2264,11 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	while (fwohci_buf_input_ppb(sc, fc, &pkt)) {
 		chan = (pkt.fp_hdr[0] & 0x00003f00) >> 8;
 		tag  = (pkt.fp_hdr[0] & 0x0000c000) >> 14;
-		DPRINTFN(1, ("fwohci_ir_input: hdr 0x%08x, tcode 0x%0x, hlen %d"
+		DPRINTFN(1, ("fwohci_as_input: hdr 0x%08x, tcode 0x%0x, hlen %d"
 		    ", dlen %d\n", pkt.fp_hdr[0], pkt.fp_tcode, pkt.fp_hlen,
 		    pkt.fp_dlen));
-		if (tag == IEEE1394_TAG_GASP) {
+		if (tag == IEEE1394_TAG_GASP &&
+		    fc->fc_type == FWOHCI_CTX_ISO_SINGLE) {
 			/*
 			 * The pkt with tag=3 is GASP format.
 			 * Move GASP header to header part.
@@ -1790,11 +2284,12 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 			pkt.fp_hlen += 8;
 			pkt.fp_dlen -= 8;
 		}
-		sc->sc_isopktcnt.ev_count++;
 		for (fh = LIST_FIRST(&fc->fc_handler); fh != NULL;
 		    fh = LIST_NEXT(fh, fh_list)) {
 			if (pkt.fp_tcode == fh->fh_tcode &&
-			    chan == fh->fh_key1 && tag == fh->fh_key2) {
+			    (chan == fh->fh_key1 ||
+				fh->fh_key1 == IEEE1394_ISO_CHANNEL_ANY) &&
+			    ((1 << tag) & fh->fh_key2) != 0) {
 				rcode = (*fh->fh_handler)(sc, fh->fh_handarg,
 				    &pkt);
 				break;
@@ -1802,9 +2297,9 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		}
 #ifdef FW_DEBUG
 		if (fh == NULL) {
-			DPRINTFN(1, ("fwohci_ir_input: no handler\n"));
+			DPRINTFN(1, ("fwohci_as_input: no handler\n"));
 		} else {
-			DPRINTFN(1, ("fwohci_ir_input: rcode %d\n", rcode));
+			DPRINTFN(1, ("fwohci_as_input: rcode %d\n", rcode));
 		}
 #endif
 	}
@@ -2788,7 +3283,8 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 	fwohci_handler_set(sc, IEEE1394_TCODE_STREAM_DATA,
 	    (sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] & IEEE1394_ISOCH_MASK) |
 	    OHCI_ASYNC_STREAM,
-	    IEEE1394_TAG_GASP, handler ? fwohci_if_input : NULL, handler);
+	    1 << IEEE1394_TAG_GASP,
+	    handler ? fwohci_if_input : NULL, handler);
 	return 0;
 }
 
@@ -3866,3 +4362,2441 @@ fwohci_show_phypkt(struct fwohci_softc *sc, u_int32_t val)
 	}
 }
 #endif /* FW_DEBUG */
+
+#if 0
+void fwohci_dumpreg(struct ieee1394_softc *, struct fwiso_regdump *);
+
+void
+fwohci_dumpreg(struct ieee1394_softc *isc, struct fwiso_regdump *fr)
+{
+	struct fwohci_softc *sc = (struct fwohci_softc *)isc;
+#if 0
+	u_int32_t val;
+
+	printf("%s: dump reg\n", isc->sc1394_dev.dv_xname);
+	printf("\tNodeID reg 0x%08x\n",
+	    OHCI_CSR_READ(sc, OHCI_REG_NodeId));
+	val = OHCI_CSR_READ(sc, OHCI_REG_IsochronousCycleTimer);
+	printf("\tIsoCounter 0x%08x, %d %d %d", val,
+	    (val >> 25) & 0xfe, (val >> 12) & 0x1fff, val & 0xfff);
+	val = OHCI_CSR_READ(sc, OHCI_REG_IntMaskSet);
+	printf(" IntMask    0x%08x, %s\n", val,
+	    val & OHCI_Int_IsochTx ? "isoTx" : "");
+
+	val = OHCI_SYNC_TX_DMA_READ(sc, 0, OHCI_SUBREG_ContextControlSet);
+	printf("\tIT_CommandPtr 0x%08x ContextCtrl 0x%08x%s%s%s%s\n",
+	    OHCI_SYNC_TX_DMA_READ(sc, 0, OHCI_SUBREG_CommandPtr),
+	    val,
+	    val & OHCI_CTXCTL_RUN ? " run" : "",
+	    val & OHCI_CTXCTL_WAKE ? " wake" : "",
+	    val & OHCI_CTXCTL_DEAD ? " dead" : "",
+	    val & OHCI_CTXCTL_ACTIVE ? " active" : "");
+#endif
+
+	fr->fr_nodeid = OHCI_CSR_READ(sc, OHCI_REG_NodeId);
+	fr->fr_isocounter = OHCI_CSR_READ(sc, OHCI_REG_IsochronousCycleTimer);
+	fr->fr_intmask = OHCI_CSR_READ(sc, OHCI_REG_IntMaskSet);
+	fr->fr_it0_commandptr = OHCI_SYNC_TX_DMA_READ(sc, 0, OHCI_SUBREG_CommandPtr);
+	fr->fr_it0_contextctrl = OHCI_SYNC_TX_DMA_READ(sc, 0, OHCI_SUBREG_ContextControlSet);
+
+
+}
+#endif
+
+
+u_int16_t
+fwohci_cycletimer(struct fwohci_softc *sc)
+{
+	u_int32_t reg;
+
+	reg = OHCI_CSR_READ(sc, OHCI_REG_IsochronousCycleTimer);
+
+	return (reg >> 12)&0xffff;
+}
+
+
+u_int16_t
+fwohci_it_cycletimer(ieee1394_it_tag_t it)
+{
+	struct fwohci_it_ctx *itc = (struct fwohci_it_ctx *)it;
+
+	return fwohci_cycletimer(itc->itc_sc);
+}
+
+
+
+
+
+/*
+ * return value: if positive value, number of DMA buffer segments.  If
+ * negative value, error happens.  Never zero.
+ */
+static int
+fwohci_misc_dmabuf_alloc(bus_dma_tag_t dmat, int dsize, int segno,
+    bus_dma_segment_t *segp, bus_dmamap_t *dmapp, void **mapp,
+    const char *xname)
+{
+	int nsegs;
+	int error;
+
+	printf("fwohci_misc_desc_alloc: dsize %d segno %d\n", dsize, segno);
+
+	if ((error = bus_dmamem_alloc(dmat, dsize, PAGE_SIZE, 0,
+	    segp, segno, &nsegs, 0)) != 0) {
+		printf("%s: unable to allocate descriptor buffer, error = %d\n",
+		    xname, error);
+		goto fail_0;
+	}
+
+	DPRINTF(("fwohci_misc_desc_alloc: %d segment[s]\n", nsegs));
+
+	if ((error = bus_dmamem_map(dmat, segp, nsegs, dsize, (caddr_t *)mapp,
+	    BUS_DMA_COHERENT | BUS_DMA_WAITOK)) != 0) {
+		printf("%s: unable to map descriptor buffer, error = %d\n",
+		    xname, error);
+		goto fail_1;
+	}
+
+	DPRINTF(("fwohci_misc_desc_alloc: %s map ok\n", xname));
+
+#ifdef FWOHCI_DEBUG
+	{
+		int loop;
+
+		for (loop = 0; loop < nsegs; ++loop) {
+			printf("\t%.2d: 0x%lx - 0x%lx\n", loop,
+			    (long)segp[loop].ds_addr,
+			    (long)segp[loop].ds_addr + segp[loop].ds_len - 1);
+		}
+	}
+#endif /* FWOHCI_DEBUG */
+
+	if ((error = bus_dmamap_create(dmat, dsize, nsegs, dsize,
+	    0, BUS_DMA_WAITOK, dmapp)) != 0) {
+		printf("%s: unable to create descriptor buffer DMA map, "
+		    "error = %d\n", xname, error);
+		goto fail_2;
+	}
+
+	DPRINTF(("fwohci_misc_dmabuf_alloc: bus_dmamem_create success\n"));
+
+	if ((error = bus_dmamap_load(dmat, *dmapp, *mapp, dsize, NULL,
+	    BUS_DMA_WAITOK)) != 0) {
+		printf("%s: unable to load descriptor buffer DMA map, "
+		    "error = %d\n", xname, error);
+		goto fail_3;
+	}
+
+	DPRINTF(("fwohci_it_desc_alloc: bus_dmamem_load success\n"));
+
+	return nsegs;
+
+  fail_3:
+	bus_dmamap_destroy(dmat, *dmapp);
+  fail_2:
+	bus_dmamem_unmap(dmat, *mapp, dsize);
+  fail_1:
+	bus_dmamem_free(dmat, segp, nsegs);
+  fail_0:
+	return error;
+}
+    
+
+static void
+fwohci_misc_dmabuf_free(bus_dma_tag_t dmat, int dsize, int nsegs,
+    bus_dma_segment_t *segp, bus_dmamap_t *dmapp, caddr_t map)
+{
+	bus_dmamap_destroy(dmat, *dmapp);
+	bus_dmamem_unmap(dmat, map, dsize);
+	bus_dmamem_free(dmat, segp, nsegs);
+}
+
+
+
+
+/*
+ * Isochronous receive service
+ */
+
+/*
+ * static struct fwohci_ir_ctx *
+ * fwohci_ir_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tagbm,
+ *			   int bufnum, int maxsize, int flags)
+ */
+static struct fwohci_ir_ctx *
+fwohci_ir_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tagbm,
+    int bufnum, int maxsize, int flags)
+{
+	struct fwohci_ir_ctx *irc;
+	int i;
+
+	printf("fwohci_ir_construct(%s, %d, %d, %x, %d, %d\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname, no, ch, tagbm, bufnum, maxsize);
+
+	if ((irc = malloc(sizeof(*irc), M_DEVBUF, M_WAITOK|M_ZERO)) == NULL) {
+		return NULL;
+	}
+
+	irc->irc_sc = sc;
+
+	irc->irc_num = no;
+	irc->irc_status = 0;
+
+	irc->irc_channel = ch;
+	irc->irc_tagbm = tagbm;
+
+	irc->irc_desc_num = bufnum;
+
+	irc->irc_flags = flags;
+
+	/* add header */
+	maxsize += 8;
+	/* rounding up */
+	for (i = 32; i < maxsize; i <<= 1);
+	printf("fwohci_ir_ctx_construct: maxsize %d => %d\n",
+	    maxsize, i);
+
+	maxsize = i;
+	
+	irc->irc_maxsize = maxsize;
+	irc->irc_buf_totalsize = bufnum * maxsize;
+
+	if (fwohci_ir_buf_setup(irc)) {
+		/* cannot alloc descriptor */
+		return NULL;
+	}
+
+	irc->irc_readtop = irc->irc_desc_map;
+	irc->irc_writeend = irc->irc_desc_map + irc->irc_desc_num - 1;
+	irc->irc_savedbranch = irc->irc_writeend->fd_branch;
+	irc->irc_writeend->fd_branch = 0;
+	/* sync */
+
+	if (fwohci_ir_stop(irc) || fwohci_ir_init(irc)) {
+		return NULL;
+	}
+
+	irc->irc_status |= IRC_STATUS_READY;
+
+	return irc;
+}
+
+
+
+/*
+ * static void fwohci_ir_ctx_destruct(struct fwohci_ir_ctx *irc)
+ *
+ *	This function release all DMA buffers and itself.
+ */
+static void
+fwohci_ir_ctx_destruct(struct fwohci_ir_ctx *irc)
+{
+	fwohci_misc_dmabuf_free(irc->irc_sc->sc_dmat, irc->irc_buf_totalsize,
+	    irc->irc_buf_nsegs, irc->irc_buf_segs,
+	    &irc->irc_buf_dmamap, (caddr_t)irc->irc_buf);
+	fwohci_misc_dmabuf_free(irc->irc_sc->sc_dmat,
+	    irc->irc_desc_size,
+	    irc->irc_desc_nsegs, &irc->irc_desc_seg,
+	    &irc->irc_desc_dmamap, (caddr_t)irc->irc_desc_map);
+
+	free(irc, M_DEVBUF);
+}
+
+
+
+
+/*
+ * static int fwohci_ir_buf_setup(struct fwohci_ir_ctx *irc)
+ *
+ *	Allocates descriptors for context DMA dedicated for
+ *	isochronous receive.
+ *
+ *	This function returns 0 (zero) if it succeeds.  Otherwise,
+ *	return negative value.
+ */
+static int
+fwohci_ir_buf_setup(struct fwohci_ir_ctx *irc)
+{
+	int nsegs;
+	struct fwohci_desc *fd;
+	u_int32_t branch;
+	int bufno = 0;		/* DMA segment */
+	bus_size_t bufused = 0;	/* offset in a DMA segment */
+
+	irc->irc_desc_size = irc->irc_desc_num * sizeof(struct fwohci_desc);
+	
+	nsegs = fwohci_misc_dmabuf_alloc(irc->irc_sc->sc_dmat,
+	    irc->irc_desc_size, 1, &irc->irc_desc_seg, &irc->irc_desc_dmamap,
+	    (void **)&irc->irc_desc_map,
+	    irc->irc_sc->sc_sc1394.sc1394_dev.dv_xname);
+
+	if (nsegs < 0) {
+		printf("fwohci_ir_buf_alloc: cannot get descriptor\n");
+		return -1;
+	}
+	irc->irc_desc_nsegs = nsegs;
+
+	nsegs = fwohci_misc_dmabuf_alloc(irc->irc_sc->sc_dmat,
+	    irc->irc_buf_totalsize, 16, irc->irc_buf_segs,
+	    &irc->irc_buf_dmamap, (void **)&irc->irc_buf,
+	    irc->irc_sc->sc_sc1394.sc1394_dev.dv_xname);
+
+	if (nsegs < 0) {
+		printf("fwohci_ir_buf_alloc: cannot get DMA buffer\n");
+		fwohci_misc_dmabuf_free(irc->irc_sc->sc_dmat,
+		    irc->irc_desc_size,
+		    irc->irc_desc_nsegs, &irc->irc_desc_seg,
+		    &irc->irc_desc_dmamap, (caddr_t)irc->irc_desc_map);
+		return -1;
+	}
+	irc->irc_buf_nsegs = nsegs;
+
+	branch = irc->irc_desc_dmamap->dm_segs[0].ds_addr
+	    + sizeof(struct fwohci_desc);
+	bufno = 0;
+	bufused = 0;
+
+	for (fd = irc->irc_desc_map;
+	     fd < irc->irc_desc_map + irc->irc_desc_num; ++fd) {
+		fd->fd_flags = OHCI_DESC_INPUT | OHCI_DESC_LAST
+		    | OHCI_DESC_STATUS | OHCI_DESC_BRANCH;
+		if (irc->irc_flags & IEEE1394_IR_SHORTDELAY) {
+			fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
+		}
+#if 0
+		if  ((fd - irc->irc_desc_map) % 64 == 0) {
+			fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
+		}
+#endif
+		fd->fd_reqcount = irc->irc_maxsize;
+		fd->fd_status = fd->fd_rescount = 0;
+		
+		fd->fd_branch = branch | 0x01;
+		branch += sizeof(struct fwohci_desc);
+
+		/* physical addr to data? */
+		fd->fd_data = 
+		    (u_int32_t)((irc->irc_buf_segs[bufno].ds_addr + bufused));
+		bufused += irc->irc_maxsize;
+		if (bufused > irc->irc_buf_segs[bufno].ds_len) {
+			bufused = 0;
+			if (++bufno == irc->irc_buf_nsegs) {
+				/* fail */
+				printf("fwohci_ir_buf_setup fail\n");
+
+				fwohci_misc_dmabuf_free(irc->irc_sc->sc_dmat,
+				    irc->irc_desc_size,
+				    irc->irc_desc_nsegs, &irc->irc_desc_seg,
+				    &irc->irc_desc_dmamap,
+				    (caddr_t)irc->irc_desc_map);
+				fwohci_misc_dmabuf_free(irc->irc_sc->sc_dmat,
+				    irc->irc_buf_totalsize,
+				    irc->irc_buf_nsegs, irc->irc_buf_segs,
+				    &irc->irc_buf_dmamap,
+				    (caddr_t)irc->irc_buf);
+				return -1;
+			}
+		}
+
+#ifdef FWOHCI_DEBUG
+		if (fd < irc->irc_desc_map + 4
+		    || (fd > irc->irc_desc_map + irc->irc_desc_num - 4)) {
+			printf("fwohci_ir_buf_setup: desc %d %p buf %08x"
+			    " size %d branch %08x\n",
+			    fd - irc->irc_desc_map, fd, fd->fd_data,
+			    fd->fd_reqcount, fd->fd_branch);
+		}
+#endif /* FWOHCI_DEBUG */
+	}
+
+	--fd;
+	fd->fd_branch = irc->irc_desc_dmamap->dm_segs[0].ds_addr | 1;
+	DPRINTF(("fwohci_ir_buf_setup: desc %d %p buf %08x size %d branch %08x\n",
+	    fd - irc->irc_desc_map, fd, fd->fd_data, fd->fd_reqcount,
+	    fd->fd_branch));
+
+	return 0;
+}
+
+
+
+/*
+ * static void fwohci_ir_init(struct fwohci_ir_ctx *irc)
+ *
+ *	This function initialise DMA engine.
+ */
+static int
+fwohci_ir_init(struct fwohci_ir_ctx *irc)
+{
+	struct fwohci_softc *sc = irc->irc_sc;
+	int n = irc->irc_num;
+	u_int32_t ctxmatch;
+
+	ctxmatch = irc->irc_channel & IEEE1394_ISO_CHANNEL_MASK;
+
+	if (irc->irc_channel & IEEE1394_ISO_CHANNEL_ANY) {
+		OHCI_SYNC_RX_DMA_WRITE(sc, n,
+		    OHCI_SUBREG_ContextControlSet,
+		    OHCI_CTXCTL_RX_MULTI_CHAN_MODE);
+			
+		/* Receive all the isochronous channels */
+		OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskHiSet, 0xffffffff);
+		OHCI_CSR_WRITE(sc, OHCI_REG_IRMultiChanMaskLoSet, 0xffffffff);
+		ctxmatch = 0;
+	}
+
+	ctxmatch |= ((irc->irc_tagbm & 0x0f) << OHCI_CTXMATCH_TAG_BITPOS);
+	OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextMatch, ctxmatch);
+
+	OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextControlClear,
+	    OHCI_CTXCTL_RX_BUFFER_FILL | OHCI_CTXCTL_RX_CYCLE_MATCH_ENABLE);
+	OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextControlSet,
+	    OHCI_CTXCTL_RX_ISOCH_HEADER);
+
+	printf("fwohci_ir_init\n");
+
+	return 0;
+}
+
+
+/*
+ * static int fwohci_ir_start(struct fwohci_ir_ctx *irc)
+ *
+ *	This function starts DMA engine.  This function must call
+ *	after fwohci_ir_init() and active bit of context control
+ *	register negated.  This function will not check it.
+ */
+static int
+fwohci_ir_start(struct fwohci_ir_ctx *irc)
+{
+	struct fwohci_softc *sc = irc->irc_sc;
+	int startidx = irc->irc_readtop - irc->irc_desc_map;
+	u_int32_t startaddr;
+
+	startaddr = irc->irc_desc_dmamap->dm_segs[0].ds_addr
+	    + sizeof(struct fwohci_desc)*startidx;
+
+	OHCI_SYNC_RX_DMA_WRITE(sc, irc->irc_num, OHCI_SUBREG_CommandPtr,
+	    startaddr | 1);
+	OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear,
+		    (1 << irc->irc_num));
+	OHCI_SYNC_RX_DMA_WRITE(sc, irc->irc_num,
+	    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
+
+	printf("fwohci_ir_start: CmdPtr %08x Ctx %08x startidx %d\n",
+	    OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num, OHCI_SUBREG_CommandPtr),
+	    OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num, OHCI_SUBREG_ContextControlSet),
+	    startidx);
+
+	irc->irc_status &= ~IRC_STATUS_READY;
+	irc->irc_status |= IRC_STATUS_RUN;
+
+	if ((irc->irc_flags & IEEE1394_IR_TRIGGER_CIP_SYNC) == 0) {
+		irc->irc_status |= IRC_STATUS_RECEIVE;
+	}
+
+	return 0;
+}
+
+
+
+/*
+ * static int fwohci_ir_stop(struct fwohci_ir_ctx *irc)
+ *
+ *	This function stops DMA engine.
+ */
+static int
+fwohci_ir_stop(struct fwohci_ir_ctx *irc)
+{
+	struct fwohci_softc *sc = irc->irc_sc;
+	int i;
+
+	printf("fwohci_ir_stop\n");
+
+	OHCI_SYNC_RX_DMA_WRITE(sc, irc->irc_num,
+	    OHCI_SUBREG_ContextControlClear,
+	    OHCI_CTXCTL_RUN | OHCI_CTXCTL_DEAD);
+
+	i = 0;
+	while (OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+	    OHCI_SUBREG_ContextControlSet) & OHCI_CTXCTL_ACTIVE) {
+#if 0
+		u_int32_t reg = OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+		    OHCI_SUBREG_ContextControlClear);
+
+		printf("%s: %d intr IR_CommandPtr 0x%08x "
+		    "ContextCtrl 0x%08x%s%s%s%s\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, i,
+		    OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+			OHCI_SUBREG_CommandPtr),
+		    reg,
+		    reg & OHCI_CTXCTL_RUN ? " run" : "",
+		    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+		    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+		    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+#endif
+		if (i > 20) {
+			printf("fwohci_ir_stop: %s does not stop\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname);
+			return 1;
+		}
+		DELAY(10);
+	}
+
+	irc->irc_status &= ~IRC_STATUS_RUN;
+
+	return 0;
+}
+
+
+
+
+
+
+static void
+fwohci_ir_intr(struct fwohci_softc *sc, struct fwohci_ir_ctx *irc)
+{
+	const char *xname = sc->sc_sc1394.sc1394_dev.dv_xname;
+	u_int32_t cmd, ctx;
+	int idx;
+	struct fwohci_desc *fd;
+
+	sc->sc_isocnt.ev_count++;
+
+	if (!(irc->irc_status & IRC_STATUS_RUN)) {
+		printf("fwohci_ir_intr: not running\n");
+		return;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, irc->irc_desc_dmamap,
+	    0, irc->irc_desc_size, BUS_DMASYNC_PREREAD);
+
+	ctx = OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+	    OHCI_SUBREG_ContextControlSet);
+
+	cmd = OHCI_SYNC_RX_DMA_READ(sc, irc->irc_num,
+	    OHCI_SUBREG_CommandPtr);
+
+#define OHCI_CTXCTL_RUNNING (OHCI_CTXCTL_RUN|OHCI_CTXCTL_ACTIVE)
+#define OHCI_CTXCTL_RUNNING_MASK (OHCI_CTXCTL_RUNNING|OHCI_CTXCTL_DEAD)
+
+	idx = (cmd & 0xfffffff8) - (u_int32_t)irc->irc_desc_dmamap->dm_segs[0].ds_addr;
+	idx /= sizeof(struct fwohci_desc);
+
+	if ((ctx & OHCI_CTXCTL_RUNNING_MASK) == OHCI_CTXCTL_RUNNING) {
+		if (irc->irc_waitchan != NULL) {
+			DPRINTF(("fwohci_ir_intr: wakeup "
+			    "ctx %d CmdPtr %08x Ctxctl %08x idx %d\n",
+			    irc->irc_num, cmd, ctx, idx));
+#ifdef FWOHCI_WAIT_DEBUG
+			irc->irc_cycle[1] = fwohci_cycletimer(irc->irc_sc);
+#endif
+			wakeup((void *)irc->irc_waitchan);
+		}
+		selwakeup(&irc->irc_sel);
+		return;
+	}
+
+	fd = irc->irc_desc_map + idx;
+
+	printf("fwohci_ir_intr: %s error "
+	    "ctx %d CmdPtr %08x Ctxctl %08x idx %d\n", xname,
+	    irc->irc_num, cmd, ctx, idx);
+	printf("\tfd flag %x branch %x stat %x rescnt %x total pkt %d\n",
+	    fd->fd_flags, fd->fd_branch, fd->fd_status,fd->fd_rescount,
+	    irc->irc_pktcount);
+}
+
+
+
+
+/*
+ * static int fwohci_ir_ctx_packetnum(struct fwohci_ir_ctx *irc)
+ *
+ *	This function obtains the lenth of descriptors with data.
+ */
+static int
+fwohci_ir_ctx_packetnum(struct fwohci_ir_ctx *irc)
+{
+	struct fwohci_desc *fd = irc->irc_readtop;
+	int i = 0;
+
+	/* XXX SYNC */
+	while (fd->fd_status != 0) {
+		if (fd == irc->irc_readtop && i > 0) {
+			printf("descriptor filled %d at %d\n", i,
+			    irc->irc_pktcount);
+#ifdef FWOHCI_WAIT_DEBUG
+			irc->irc_cycle[2] = fwohci_cycletimer(irc->irc_sc);
+			printf("cycletimer %d:%d %d:%d %d:%d\n",
+			    irc->irc_cycle[0]>>13, irc->irc_cycle[0]&0x1fff,
+			    irc->irc_cycle[1]>>13, irc->irc_cycle[1]&0x1fff,
+			    irc->irc_cycle[2]>>13, irc->irc_cycle[2]&0x1fff);
+#endif
+
+			break;
+		}
+
+		++i;
+		++fd;
+		if (fd == irc->irc_desc_map + irc->irc_desc_num) {
+			fd = irc->irc_desc_map;
+		}
+
+	}
+
+	return i;
+}
+
+
+
+
+/*
+ * int fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag,
+ *		      struct uio *uio, int headoffs, int flags)
+ *
+ *	This function reads data from fwohci's isochronous receive
+ *	buffer.
+ */
+int
+fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
+    int headoffs, int flags)
+{
+	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
+	int packetnum;
+	int copylen, hdrshim, fwisohdrsiz;
+	struct fwohci_desc *fd, *fdprev;
+	u_int8_t *data;
+	int status = 0;
+	u_int32_t tmpbranch;
+	int pktcount_prev = irc->irc_pktcount;
+#ifdef FW_DEBUG
+	int totalread = 0;
+#endif
+	
+	if (irc->irc_status & IRC_STATUS_READY) {
+		printf("fwohci_ir_read: starting iso read engine\n");
+		fwohci_ir_start(irc);
+	}
+
+	packetnum = fwohci_ir_ctx_packetnum(irc);
+
+	DPRINTF(("fwohci_ir_read resid %d DMA buf %d\n",
+	    uio->uio_resid, packetnum));
+
+	if (packetnum == 0) {
+		return EAGAIN;
+	}
+
+#ifdef USEDRAIN
+	if (packetnum > irc->irc_desc_num - irc->irc_desc_num/4) {
+		packetnum -= fwohci_ir_ctx_drain(irc);
+		if (irc->irc_pktcount != 0) {
+			printf("fwohci_ir_read overrun %d\n",
+			    irc->irc_pktcount);
+		}
+	}
+#endif /* USEDRAIN */
+
+	fd = irc->irc_readtop;
+
+#if 0
+	if ((irc->irc_status & IRC_STATUS_RECEIVE) == 0
+	    && irc->irc_flags & IEEE1394_IR_TRIGGER_CIP_SYNC) {
+		unsigned int s;
+		int i = 0;
+
+		fdprev = fd;
+		while (fd->fd_status != 0) {
+			s = data[14] << 8;
+			s |= data[15];
+
+			if (s != 0x0000ffffu) {
+				DPRINTF(("find header %x at %d\n",
+				    s, irc->irc_pktcount));
+				irc->irc_status |= IRC_STATUS_RECEIVE;
+				break;
+			}
+
+			fd->fd_rescount = 0;
+			fd->fd_status = 0;
+
+			fdprev = fd;
+			if (++fd == irc->irc_desc_map + irc->irc_desc_num) {
+				fd = irc->irc_desc_map;
+				data = irc->irc_buf;
+			}
+			++i;
+		}
+
+		/* XXX SYNC */
+		if (i > 0) {
+			tmpbranch = fdprev->fd_branch;
+			fdprev->fd_branch = 0;
+			irc->irc_writeend->fd_branch = irc->irc_savedbranch;
+			irc->irc_writeend = fdprev;
+			irc->irc_savedbranch = tmpbranch;
+		}
+		/* XXX SYNC */
+
+		if (fd->fd_status == 0) {
+			return EAGAIN;
+		}
+	}
+#endif
+
+	hdrshim = 8;
+	fwisohdrsiz = 0;
+	data = irc->irc_buf + (fd - irc->irc_desc_map) * irc->irc_maxsize;
+	if (irc->irc_flags & IEEE1394_IR_NEEDHEADER) {
+		fwisohdrsiz = sizeof(struct fwiso_header);
+	}
+
+	while (fd->fd_status != 0 &&
+	    (copylen = fd->fd_reqcount - fd->fd_rescount - hdrshim - headoffs)
+	    + fwisohdrsiz < uio->uio_resid) {
+
+		DPRINTF(("pkt %04x:%04x uiomove %p, %d\n",
+		    fd->fd_status, fd->fd_rescount,
+		    (void *)(data + 8 + headoffs), copylen));
+		if ((irc->irc_status & IRC_STATUS_RECEIVE) == 0) {
+			DPRINTF(("[%d]", copylen));
+			if (irc->irc_pktcount > 1000) {
+				printf("no header found\n");
+				status = EIO;
+				break; /* XXX */
+			}
+		} else {
+			DPRINTF(("<%d>", copylen));
+		}
+
+		if ((irc->irc_status & IRC_STATUS_RECEIVE) == 0
+		    && irc->irc_flags & IEEE1394_IR_TRIGGER_CIP_SYNC
+		    && copylen > 0) {
+			unsigned int s;
+
+			s = data[14] << 8;
+			s |= data[15];
+
+			if (s != 0x0000ffffu) {
+				DPRINTF(("find header %x at %d\n",
+				    s, irc->irc_pktcount));
+				irc->irc_status |= IRC_STATUS_RECEIVE;
+			}
+		}
+
+		if (irc->irc_status & IRC_STATUS_RECEIVE) {
+			if (copylen > 0) {
+				if (irc->irc_flags & IEEE1394_IR_NEEDHEADER) {
+					struct fwiso_header fh;
+
+					fh.fh_timestamp = htonl((*(u_int32_t *)data) & 0xffff);
+					fh.fh_speed = htonl((fd->fd_status >> 5)& 0x00000007);
+					fh.fh_capture_size = htonl(copylen + 4);
+					fh.fh_iso_header = htonl(*(u_int32_t *)(data + 4));
+					status = uiomove((void *)&fh,
+					    sizeof(fh), uio);
+					if (status != 0) {
+						/* An error happens */
+						printf("uio error in hdr\n");
+						break;
+					}
+				}
+				status = uiomove((void *)(data + 8 + headoffs),
+				    copylen, uio);
+				if (status != 0) {
+					/* An error happens */
+					printf("uio error\n");
+					break;
+				}
+#ifdef FW_DEBUG
+				totalread += copylen;
+#endif
+			}
+		}
+
+		fd->fd_rescount = 0;
+		fd->fd_status = 0;
+
+#if 0
+		/* advance writeend pointer and fill branch */
+
+		tmpbranch = fd->fd_branch;
+		fd->fd_branch = 0;
+		irc->irc_writeend->fd_branch = irc->irc_savedbranch;
+		irc->irc_writeend = fd;
+		irc->irc_savedbranch = tmpbranch;
+#endif
+		fdprev = fd;
+
+		data += irc->irc_maxsize;
+		if (++fd == irc->irc_desc_map + irc->irc_desc_num) {
+			fd = irc->irc_desc_map;
+			data = irc->irc_buf;
+		}
+		++irc->irc_pktcount;
+	}
+
+#if 1
+	if (irc->irc_pktcount != pktcount_prev) {
+		/* XXX SYNC */
+		tmpbranch = fdprev->fd_branch;
+		fdprev->fd_branch = 0;
+		irc->irc_writeend->fd_branch = irc->irc_savedbranch;
+		irc->irc_writeend = fdprev;
+		irc->irc_savedbranch = tmpbranch;
+		/* XXX SYNC */
+	}
+#endif
+
+	if (!(OHCI_SYNC_RX_DMA_READ(irc->irc_sc, irc->irc_num,
+	    OHCI_SUBREG_ContextControlClear) & OHCI_CTXCTL_ACTIVE)) {
+		/* do wake */
+		OHCI_SYNC_RX_DMA_WRITE(irc->irc_sc, irc->irc_num,
+		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_WAKE);
+	}
+
+	if (packetnum > irc->irc_maxqueuelen) {
+		irc->irc_maxqueuelen = packetnum;
+		irc->irc_maxqueuepos = irc->irc_pktcount;
+	}
+
+	if (irc->irc_pktcount == pktcount_prev) {
+#if 0
+		printf("fwohci_ir_read: process 0 packet, total %d\n",
+		    irc->irc_pktcount);
+		if (++pktfail > 30) {
+			return 0;
+		}
+#endif
+		return EAGAIN;
+	}
+
+	irc->irc_readtop = fd;
+
+	DPRINTF(("fwochi_ir_read: process %d packet, total %d\n",
+	    totalread, irc->irc_pktcount));
+
+	return status;
+}
+
+
+
+
+/*
+ * int fwohci_ir_wait(struct device *dev, ieee1394_ir_tag_t tag,
+ *		      void *wchan, char *name)
+ *
+ *	This function waits till new data comes.
+ */
+int
+fwohci_ir_wait(struct device *dev, ieee1394_ir_tag_t tag, void *wchan, char *name)
+{
+	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
+	struct fwohci_desc *fd;
+	int pktnum;
+	int stat;
+
+	if ((pktnum = fwohci_ir_ctx_packetnum(irc)) > 4) {
+		DPRINTF(("fwohci_ir_wait enough data %d\n", pktnum));
+		return 0;
+	}
+
+	fd = irc->irc_readtop + 32;
+	if (fd >= irc->irc_desc_map + irc->irc_desc_num) {
+		fd -= irc->irc_desc_num;
+	}
+
+	irc->irc_waitchan = wchan;
+	if ((irc->irc_flags & IEEE1394_IR_SHORTDELAY) == 0) {
+		fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
+		DPRINTF(("fwohci_ir_wait stops %d set intr %d\n",
+		    irc->irc_readtop - irc->irc_desc_map,
+		    fd - irc->irc_desc_map));
+		/* XXX SYNC */
+	}
+
+#ifdef FWOHCI_WAIT_DEBUG
+	irc->irc_cycle[0] = fwohci_cycletimer(irc->irc_sc);
+#endif
+
+	irc->irc_status |= IRC_STATUS_SLEEPING;
+	if ((stat = tsleep(wchan, PCATCH|PRIBIO, name, hz*10)) != 0) {
+		irc->irc_waitchan = NULL;
+		fd->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
+		if (stat == EWOULDBLOCK) {
+			printf("fwohci_ir_wait: timeout\n");
+			return EIO;
+		} else {
+			return EINTR;
+		}
+	}
+
+	irc->irc_waitchan = NULL;
+	if ((irc->irc_flags & IEEE1394_IR_SHORTDELAY) == 0) {
+		fd->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
+		/* XXX SYNC */
+	}
+
+	DPRINTF(("fwohci_ir_wait: wakeup\n"));
+
+	return 0;
+}
+
+
+
+
+/*
+ * int fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag,
+ *			   struct proc *p)
+ *
+ *	This function returns the number of packets in queue.
+ */
+int
+fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct proc *p)
+{
+	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
+	int pktnum;
+
+	if (irc->irc_status & IRC_STATUS_READY) {
+		printf("fwohci_ir_select: starting iso read engine\n");
+		fwohci_ir_start(irc);
+	}
+
+	if ((pktnum = fwohci_ir_ctx_packetnum(irc)) == 0) {
+		selrecord(p, &irc->irc_sel);
+	}
+
+	return pktnum;
+}
+
+
+
+#ifdef USEDRAIN
+/*
+ * int fwohci_ir_ctx_drain(struct fwohci_ir_ctx *irc)
+ *
+ *	This function will drain all the packets in receive DMA
+ *	buffer.
+ */
+static int
+fwohci_ir_ctx_drain(struct fwohci_ir_ctx *irc)
+{
+	struct fwohci_desc *fd = irc->irc_readtop;
+	u_int32_t reg;
+	int count = 0;
+
+	reg = OHCI_SYNC_RX_DMA_READ(irc->irc_sc, irc->irc_num,
+	    OHCI_SUBREG_ContextControlClear);
+
+	printf("fwohci_ir_ctx_drain ctx%s%s%s%s\n",
+	    reg & OHCI_CTXCTL_RUN ? " run" : "",
+	    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+	    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+	    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+
+	if ((reg & OHCI_CTXCTL_RUNNING_MASK) == OHCI_CTXCTL_RUN) {
+		/* DMA engine is stopped */
+		u_int32_t startadr;
+
+		for (fd = irc->irc_desc_map;
+		     fd < irc->irc_desc_map + irc->irc_desc_num;
+		     ++fd) {
+			fd->fd_status = 0;
+		}
+
+		/* Restore branch addr of the last descriptor */
+		irc->irc_writeend->fd_branch = irc->irc_savedbranch;
+
+		irc->irc_readtop = irc->irc_desc_map;
+		irc->irc_writeend = irc->irc_desc_map + irc->irc_desc_num - 1;
+		irc->irc_savedbranch = irc->irc_writeend->fd_branch;
+		irc->irc_writeend->fd_branch = 0;
+
+		count = irc->irc_desc_num;
+
+		OHCI_SYNC_RX_DMA_WRITE(irc->irc_sc, irc->irc_num,
+		    OHCI_SUBREG_ContextControlClear,
+		    OHCI_CTXCTL_RUN | OHCI_CTXCTL_DEAD);
+
+		startadr = (u_int32_t)irc->irc_desc_dmamap->dm_segs[0].ds_addr;
+	
+		printf("fwohci_ir_ctx_drain: remove %d pkts\n", count);
+
+		OHCI_SYNC_RX_DMA_WRITE(irc->irc_sc, irc->irc_num,
+		    OHCI_SUBREG_CommandPtr, startadr | 1);
+
+		OHCI_SYNC_RX_DMA_WRITE(irc->irc_sc, irc->irc_num,
+		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
+	} else {
+		const int removecount = irc->irc_desc_num/2;
+		u_int32_t tmpbranch;
+
+		for (count = 0; count < removecount; ++count) {
+			if (fd->fd_status == 0) {
+				break;
+			}
+
+			fd->fd_status = 0;
+
+			tmpbranch = fd->fd_branch;
+			fd->fd_branch = 0;
+			irc->irc_writeend->fd_branch = irc->irc_savedbranch;
+			irc->irc_writeend = fd;
+			irc->irc_savedbranch = tmpbranch;
+
+			if (++fd == irc->irc_desc_map + irc->irc_desc_num) {
+				fd = irc->irc_desc_map;
+			}
+			++count;
+		}
+
+		printf("fwohci_ir_ctx_drain: remove %d pkts\n", count);
+	}
+
+	return count;
+}
+#endif /* USEDRAIN */
+
+
+
+
+
+
+
+
+
+/*
+ * service routines for isochronous transmit
+ */
+
+
+struct fwohci_it_ctx *
+fwohci_it_ctx_construct(struct fwohci_softc *sc, int no, int ch, int tag, int maxsize) 
+{
+	struct fwohci_it_ctx *itc;
+	size_t dmastrsize;
+	struct fwohci_it_dmabuf *dmastr;
+	struct fwohci_desc *desc;
+	bus_addr_t descphys;
+	int nodesc;
+	int i, j;
+
+	if ((itc = malloc(sizeof(*itc), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
+		return itc;
+	}
+
+	itc->itc_num = no;
+	itc->itc_flags = 0;
+	itc->itc_sc = sc;
+	itc->itc_bufnum = FWOHCI_IT_BUFNUM;
+
+	itc->itc_channel = ch;
+	itc->itc_tag = tag;
+	itc->itc_speed = OHCI_CTXCTL_SPD_100; /* XXX */
+
+	itc->itc_outpkt = 0;
+
+	itc->itc_maxsize = maxsize;
+
+	dmastrsize = sizeof(struct fwohci_it_dmabuf)*itc->itc_bufnum;
+
+	if ((dmastr = malloc(dmastrsize, M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) {
+		goto error_1;
+	}
+	itc->itc_buf = dmastr;
+
+	/*
+	 * Get memory for descriptors.  One buffer will have 256
+	 * packet entry and 1 trailing descriptor for writing scratch.
+	 * 4-byte space for scratch.
+	 */
+	itc->itc_descsize = (256*3 + 1)*itc->itc_bufnum;
+
+	if (fwohci_it_desc_alloc(itc)) {
+		printf("%s: cannot get enough memory for descriptor\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname);
+		goto error_2;
+	}
+
+	/* prepare DMA buffer */
+	nodesc = itc->itc_descsize/itc->itc_bufnum;
+	desc = (struct fwohci_desc *)itc->itc_descmap;
+	descphys = itc->itc_dseg.ds_addr;
+
+	for (i = 0; i < itc->itc_bufnum; ++i) {
+		
+		if (fwohci_itd_construct(itc, &dmastr[i], i, desc,
+		    descphys, nodesc,
+		    itc->itc_maxsize, itc->itc_scratch_paddr)) {
+			goto error_3;
+		}
+		desc += nodesc;
+		descphys += sizeof(struct fwohci_desc)*nodesc;
+	}
+
+#if 1
+	itc->itc_buf_start = itc->itc_buf;
+	itc->itc_buf_end = itc->itc_buf;
+	itc->itc_buf_linkend = itc->itc_buf;
+#else
+	itc->itc_bufidx_start = 0;
+	itc->itc_bufidx_end = 0;
+	itc->itc_bufidx_linkend = 0;
+#endif
+	itc->itc_buf_cnt = 0;
+	itc->itc_waitchan = NULL;
+	*itc->itc_scratch = 0xffffffff;
+
+	return itc;
+
+ error_3:
+	for (j = 0; j < i; ++j) {
+		fwohci_itd_destruct(&dmastr[j]);
+	}
+	fwohci_it_desc_free(itc);
+ error_2:
+	free(itc->itc_buf, M_DEVBUF);
+ error_1:
+	free(itc, M_DEVBUF);
+
+	return NULL;
+}
+
+
+
+void
+fwohci_it_ctx_destruct(struct fwohci_it_ctx *itc)
+{
+	int i;
+
+	for (i = 0; i < itc->itc_bufnum; ++i) {
+		fwohci_itd_destruct(&itc->itc_buf[i]);
+	}
+
+	fwohci_it_desc_free(itc);
+	free(itc, M_DEVBUF);
+}
+
+
+/*
+ * static int fwohci_it_desc_alloc(struct fwohci_it_ctx *itc)
+ *
+ *	Allocates descriptors for context DMA dedicated for
+ *	isochronous transmit.
+ *
+ *	This function returns 0 (zero) if it succeeds.  Otherwise,
+ *	return negative value.
+ */
+static int
+fwohci_it_desc_alloc(struct fwohci_it_ctx *itc)
+{
+	bus_dma_tag_t dmat = itc->itc_sc->sc_dmat;
+	const char *xname = itc->itc_sc->sc_sc1394.sc1394_dev.dv_xname;
+	int error, dsize;
+
+	/* add for scratch */
+	itc->itc_descsize++;
+
+	/* rounding up to 256 */
+	if ((itc->itc_descsize & 0x0ff) != 0) {
+		itc->itc_descsize =
+		    (itc->itc_descsize & ~0x0ff) + 0x100;
+	}
+	/* remove for scratch */
+
+	itc->itc_descsize--;
+	printf("%s: fwohci_it_desc_alloc will allocate %d descs\n",
+	    xname, itc->itc_descsize);
+
+	/*
+	 * allocate descriptor buffer
+	 */
+	dsize = sizeof(struct fwohci_desc) * itc->itc_descsize;
+
+	printf("%s: fwohci_it_desc_alloc: descriptor %d, dsize %d\n",
+	    xname, itc->itc_descsize, dsize);
+
+	if ((error = bus_dmamem_alloc(dmat, dsize, PAGE_SIZE, 0,
+	    &itc->itc_dseg, 1, &itc->itc_dnsegs, 0)) != 0) {
+		printf("%s: unable to allocate descriptor buffer, error = %d\n",
+		    xname, error);
+		goto fail_0;
+	}
+
+	printf("fwohci_it_desc_alloc: %d segment[s]\n", itc->itc_dnsegs);
+
+	if ((error = bus_dmamem_map(dmat, &itc->itc_dseg,
+	    itc->itc_dnsegs, dsize, (caddr_t *)&itc->itc_descmap,
+	    BUS_DMA_COHERENT | BUS_DMA_WAITOK)) != 0) {
+		printf("%s: unable to map descriptor buffer, error = %d\n",
+		    xname, error);
+		goto fail_1;
+	}
+
+	printf("fwohci_it_desc_alloc: bus_dmamem_map success dseg %lx:%lx\n",
+	    (long)itc->itc_dseg.ds_addr, (long)itc->itc_dseg.ds_len);
+
+	if ((error = bus_dmamap_create(dmat, dsize, itc->itc_dnsegs,
+	    dsize, 0, BUS_DMA_WAITOK, &itc->itc_ddmamap)) != 0) {
+		printf("%s: unable to create descriptor buffer DMA map, "
+		    "error = %d\n", xname, error);
+		goto fail_2;
+	}
+
+	printf("fwohci_it_desc_alloc: bus_dmamem_create success\n");
+
+	{
+		int loop;
+
+		for (loop = 0; loop < itc->itc_ddmamap->dm_nsegs; ++loop) {
+			printf("\t%.2d: 0x%lx - 0x%lx\n", loop,
+			    (long)itc->itc_ddmamap->dm_segs[loop].ds_addr,
+			    (long)itc->itc_ddmamap->dm_segs[loop].ds_addr +
+			    (long)itc->itc_ddmamap->dm_segs[loop].ds_len - 1);
+		}
+	}
+
+	if ((error = bus_dmamap_load(dmat, itc->itc_ddmamap,
+	    itc->itc_descmap, dsize, NULL, BUS_DMA_WAITOK)) != 0) {
+		printf("%s: unable to load descriptor buffer DMA map, "
+		    "error = %d\n", xname, error);
+		goto fail_3;
+	}
+
+	printf("%s: fwohci_it_desc_alloc: get DMA memory phys:0x%08x vm:%p\n",
+	    xname, (int)itc->itc_ddmamap->dm_segs[0].ds_addr, itc->itc_descmap);
+
+	itc->itc_scratch = (u_int32_t *)(itc->itc_descmap
+	    + (sizeof(struct fwohci_desc))*itc->itc_descsize);
+	itc->itc_scratch_paddr =
+	    itc->itc_ddmamap->dm_segs[0].ds_addr
+	    + (sizeof(struct fwohci_desc))*itc->itc_descsize;
+
+	printf("%s: scratch %p, 0x%x\n", xname, itc->itc_scratch,
+	    (int)itc->itc_scratch_paddr);
+
+	/* itc->itc_scratch_paddr = vtophys(itc->itc_scratch); */
+
+	return 0;
+
+  fail_3:
+	bus_dmamap_destroy(dmat, itc->itc_ddmamap);
+  fail_2:
+	bus_dmamem_unmap(dmat, (caddr_t)itc->itc_descmap, dsize);
+  fail_1:
+	bus_dmamem_free(dmat, &itc->itc_dseg, itc->itc_dnsegs);
+  fail_0:
+	itc->itc_dnsegs = 0;
+	itc->itc_descmap = NULL;
+	return error;
+}
+
+
+static void
+fwohci_it_desc_free(struct fwohci_it_ctx *itc)
+{
+	bus_dma_tag_t dmat = itc->itc_sc->sc_dmat;
+	int dsize = sizeof(struct fwohci_desc) * itc->itc_descsize + 4;
+
+	bus_dmamap_destroy(dmat, itc->itc_ddmamap);
+	bus_dmamem_unmap(dmat, (caddr_t)itc->itc_descmap, dsize);
+	bus_dmamem_free(dmat, &itc->itc_dseg, itc->itc_dnsegs);
+	
+	itc->itc_dnsegs = 0;
+	itc->itc_descmap = NULL;
+}
+
+
+
+/*
+ * int fwohci_it_ctx_writedata(ieee1394_it_tag_t it, int ndata,
+ *		struct ieee1394_it_datalist *itdata, int flags)
+ *
+ *	This function will write packet data to DMA buffer in the
+ *	context.  This function will parse ieee1394_it_datalist
+ *	command and fill DMA buffer.  This function will return the
+ *	number of written packets, or error code if the return value
+ *	is negative.
+ *
+ *	When this funtion returns positive value but smaller than
+ *	ndata, it reaches at the ent of DMA buffer.
+ */
+int
+fwohci_it_ctx_writedata(ieee1394_it_tag_t it, int ndata,
+    struct ieee1394_it_datalist *itdata, int flags)
+{
+	struct fwohci_it_ctx *itc = (struct fwohci_it_ctx *)it;
+	int rv;
+	int writepkt = 0;
+	struct fwohci_it_dmabuf *itd;
+	int i = 0;
+
+	itd = itc->itc_buf_end;
+
+	while (ndata > 0) {
+		int s;
+
+		if (fwohci_itd_isfull(itd) || fwohci_itd_islocked(itd)) {
+			if (itc->itc_buf_cnt == itc->itc_bufnum) {
+				/* no space to write */
+				printf("sleeping: start linkend end %d %d %d "
+				    "bufcnt %d\n",
+				    itc->itc_buf_start->itd_num,
+				    itc->itc_buf_linkend->itd_num,
+				    itc->itc_buf_end->itd_num,
+				    itc->itc_buf_cnt);
+
+				itc->itc_waitchan = itc;
+				if (tsleep((void *)itc->itc_waitchan,
+				    PCATCH, "fwohci it", 0) == EWOULDBLOCK) {
+					itc->itc_waitchan = NULL;
+					printf("fwohci0 signal\n");
+					break;
+				}
+				printf("waking:   start linkend end %d %d %d\n",
+				    itc->itc_buf_start->itd_num,
+				    itc->itc_buf_linkend->itd_num,
+				    itc->itc_buf_end->itd_num);
+
+				itc->itc_waitchan = itc;
+				i = 0;
+			} else {
+				/*
+				 * Use next buffer.  This DMA buffer is full
+				 * or locked.
+				 */
+				INC_BUF(itc, itd);
+			}
+		}
+
+		if (++i > 10) {
+			panic("why loop so much %d", itc->itc_buf_cnt);
+			break;
+		}
+
+		s = splbio();
+
+		if (fwohci_itd_hasdata(itd) == 0) {
+			++itc->itc_buf_cnt;
+			DPRINTF(("<buf cnt %d>\n", itc->itc_buf_cnt));
+		}
+
+		rv = fwohci_itd_writedata(itd, ndata, itdata);
+		DPRINTF(("fwohci_it_ctx_writedata: buf %d ndata %d rv %d\n",
+		    itd->itd_num, ndata, rv));
+
+		if (itc->itc_buf_start == itc->itc_buf_linkend
+		    && (itc->itc_flags & ITC_FLAGS_RUN) != 0) {
+
+#ifdef DEBUG_USERADD
+			printf("fwohci_it_ctx_writedata: emergency!\n");
+#endif
+			if (itc->itc_buf_linkend != itc->itc_buf_end
+			    && fwohci_itd_hasdata(itc->itc_buf_end)) {
+				struct fwohci_it_dmabuf *itdn = itc->itc_buf_linkend;
+
+				INC_BUF(itc, itdn);
+				printf("connecting %d after %d\n",
+				    itdn->itd_num,
+				    itc->itc_buf_linkend->itd_num);
+				if (fwohci_itd_link(itc->itc_buf_linkend, itdn)) {
+					printf("fwohci_it_ctx_writedata:"
+					    " cannot link correctly\n");
+					return -1;
+				}
+				itc->itc_buf_linkend = itdn;
+			}
+		}
+
+		splx(s);
+
+		if (rv < 0) {
+			/* some errors happend */
+			break;
+		}
+
+		writepkt += rv;
+		ndata -= rv;
+		itdata += rv;
+		itc->itc_buf_end = itd;
+	}
+
+	/* Start DMA engine if stopped */
+	if ((itc->itc_flags & ITC_FLAGS_RUN) == 0) {
+		if (itc->itc_buf_cnt > itc->itc_bufnum - 1 || flags) {
+			/* run */
+			printf("fwohci_itc_ctl_writedata: DMA engine start\n");
+			fwohci_it_ctx_run(itc);
+		}
+	}
+
+	return writepkt;
+}
+
+
+
+static void
+fwohci_it_ctx_run(struct fwohci_it_ctx *itc)
+{
+	struct fwohci_softc *sc = itc->itc_sc;
+	int ctx = itc->itc_num;
+	struct fwohci_it_dmabuf *itd
+	    = (struct fwohci_it_dmabuf *)itc->itc_buf_start;
+	u_int32_t reg;
+	int i;
+
+	if (itc->itc_flags & ITC_FLAGS_RUN) {
+		return;
+	}
+	itc->itc_flags |= ITC_FLAGS_RUN;
+
+	/*
+	 * dirty, but I can't imagine better place to save branch addr
+	 * of top DMA buffer and substitute 0 to it.
+	 */
+	itd->itd_savedbranch = itd->itd_lastdesc->fd_branch;
+	itd->itd_lastdesc->fd_branch = 0;
+
+	if (itc->itc_buf_cnt > 1) {
+		struct fwohci_it_dmabuf *itdn = itd;
+
+#if 0
+		INC_BUF(itc, itdn);
+
+		if (fwohci_itd_link(itd, itdn)) {
+			printf("fwohci_it_ctx_run: cannot link correctly\n");
+			return;
+		}
+		itc->itc_buf_linkend = itdn;
+#else
+		for (;;) {
+			INC_BUF(itc, itdn);
+
+			if (itdn == itc->itc_buf_end) {
+				break;
+			}
+			if (fwohci_itd_link(itd, itdn)) {
+				printf("fwohci_it_ctx_run: cannot link\n");
+				return;
+			}
+			itd = itdn;
+		}
+		itc->itc_buf_linkend = itd;
+#endif
+	} else {
+		itd->itd_lastdesc->fd_flags |= OHCI_DESC_INTR_ALWAYS;
+		itc->itc_buf_linkend = itc->itc_buf_end;
+		itc->itc_buf_end->itd_flags |= ITD_FLAGS_LOCK;
+
+		/* sanity check */
+		if (itc->itc_buf_end != itc->itc_buf_start) {
+			printf("buf start & end differs %p %p\n",
+			    itc->itc_buf_end, itc->itc_buf_start);
+		}
+#if 0
+		{
+			u_int32_t *fdp;
+			u_int32_t adr;
+			int i;
+
+			printf("fwohci_it_ctx_run: itc_buf_cnt 1, DMA buf %d\n",
+			    itd->itd_num);
+			printf(" last desc %p npacket %d, %d 0x%04x%04x",
+			    itd->itd_lastdesc, itd->itd_npacket,
+			    (itd->itd_lastdesc - itd->itd_desc)/3,
+			    itd->itd_lastdesc->fd_flags,
+			    itd->itd_lastdesc->fd_reqcount);
+			fdp = (u_int32_t *)itd->itd_desc;
+			adr = (u_int32_t)itd->itd_desc_phys; /* XXX */
+
+			for (i = 0; i < 7*4; ++i) {
+				if (i % 4 == 0) {
+					printf("\n%x:", adr + 4*i);
+				}
+				printf(" %08x", fdp[i]);
+			}
+
+			if (itd->itd_npacket > 4) {
+				printf("\n...");
+				i = (itd->itd_npacket - 2)*12 + 4;
+			} else {
+				i = 2*12 + 4;
+			}
+			for (;i < itd->itd_npacket*12 + 4; ++i) {
+				if (i % 4 == 0) {
+					printf("\n%x:", adr + 4*i);
+				}
+				printf(" %08x", fdp[i]);
+			}
+			printf("\n");
+		}
+#endif
+	}
+	{
+		struct fwohci_desc *fd;
+
+		printf("fwohci_it_ctx_run: link start linkend end %d %d %d\n",
+		    itc->itc_buf_start->itd_num,
+		    itc->itc_buf_linkend->itd_num,
+		    itc->itc_buf_end->itd_num);
+
+		fd = itc->itc_buf_start->itd_desc;
+		if ((fd->fd_flags & 0xff00) != OHCI_DESC_STORE_VALUE) {
+			printf("fwohci_it_ctx_run: start buf not with STORE\n");
+		}
+		fd += 3;
+		if ((fd->fd_flags & OHCI_DESC_INTR_ALWAYS) == 0) {
+			printf("fwohci_it_ctx_run: start buf does not have intr\n");
+		}
+
+		fd = itc->itc_buf_linkend->itd_desc;
+		if ((fd->fd_flags & 0xff00) != OHCI_DESC_STORE_VALUE) {
+			printf("fwohci_it_ctx_run: linkend buf not with STORE\n");
+		}
+		fd += 3;
+		if ((fd->fd_flags & OHCI_DESC_INTR_ALWAYS) == 0) {
+			printf("fwohci_it_ctx_run: linkend buf does not have intr\n");
+		}
+	}
+
+	*itc->itc_scratch = 0xffffffff;
+
+	OHCI_SYNC_TX_DMA_WRITE(sc, ctx, OHCI_SUBREG_ContextControlClear,
+	    0xffff0000);
+	reg = OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_ContextControlSet);
+
+	printf("fwohci_it_ctx_run start for ctx %d\n", ctx);
+	printf("%s: bfr IT_CommandPtr 0x%08x ContextCtrl 0x%08x%s%s%s%s\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname,
+	    OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_CommandPtr),
+	    reg,
+	    reg & OHCI_CTXCTL_RUN ? " run" : "",
+	    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+	    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+	    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+
+	OHCI_SYNC_TX_DMA_WRITE(sc, ctx, OHCI_SUBREG_ContextControlClear,
+	    OHCI_CTXCTL_RUN);
+	
+	reg = OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_ContextControlSet);
+	i = 0;
+	while (reg & (OHCI_CTXCTL_ACTIVE | OHCI_CTXCTL_RUN)) {
+		delay(100);
+		if (++i > 1000) {
+			printf("%s: cannot stop iso transmit engine\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname);
+			break;
+		}
+		reg = OHCI_SYNC_TX_DMA_READ(sc, ctx,
+		    OHCI_SUBREG_ContextControlSet);
+	}
+
+	printf("%s: itm IT_CommandPtr 0x%08x ContextCtrl 0x%08x%s%s%s%s\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname,
+	    OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_CommandPtr),
+	    reg,
+	    reg & OHCI_CTXCTL_RUN ? " run" : "",
+	    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+	    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+	    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+
+	printf("%s: writing CommandPtr to 0x%08x\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname,
+	    (int)itc->itc_buf_start->itd_desc_phys);
+	OHCI_SYNC_TX_DMA_WRITE(sc, ctx, OHCI_SUBREG_CommandPtr,
+	    fwohci_itd_list_head(itc->itc_buf_start) | 4);
+
+	OHCI_SYNC_TX_DMA_WRITE(sc, ctx, OHCI_SUBREG_ContextControlSet,
+	    OHCI_CTXCTL_RUN | OHCI_CTXCTL_WAKE);
+
+	reg = OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_ContextControlSet);
+
+	printf("%s: aft IT_CommandPtr 0x%08x ContextCtrl 0x%08x%s%s%s%s\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname,
+	    OHCI_SYNC_TX_DMA_READ(sc, ctx, OHCI_SUBREG_CommandPtr),
+	    reg,
+	    reg & OHCI_CTXCTL_RUN ? " run" : "",
+	    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+	    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+	    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+}
+
+
+
+int
+fwohci_it_ctx_flush(ieee1394_it_tag_t it)
+{
+	struct fwohci_it_ctx *itc = (struct fwohci_it_ctx *)it;
+	int rv = 0;
+
+	if ((itc->itc_flags & ITC_FLAGS_RUN) == 0
+	    && itc->itc_buf_cnt > 0) {
+		printf("fwohci_it_ctx_flush: %s flushing\n",
+		    itc->itc_sc->sc_sc1394.sc1394_dev.dv_xname);
+
+		fwohci_it_ctx_run(itc);
+		rv = 1;
+	}
+
+	return rv;
+}
+
+
+/*
+ * static void fwohci_it_intr(struct fwohci_softc *sc,
+ *			      struct fwochi_it_ctx *itc)
+ *
+ *	This function is the interrupt handler for isochronous
+ *	transmit interrupt.  This function will 1) unlink used
+ *	(already transmitted) buffers, 2) link new filled buffers, if
+ *	necessary and 3) say some free dma buffers exist to
+ *	fwiso_write()
+ */
+static void
+fwohci_it_intr(struct fwohci_softc *sc, struct fwohci_it_ctx *itc)
+{
+	struct fwohci_it_dmabuf *itd, *newstartbuf;
+	u_int16_t scratchval;
+	u_int32_t reg;
+
+	reg = OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num,
+	    OHCI_SUBREG_ContextControlSet);
+
+	/* print out debug info */
+#ifdef FW_DEBUG
+	printf("fwohci_it_intr: CTX %d\n", itc->itc_num);
+
+	printf("fwohci_it_intr: %s: IT_CommandPtr 0x%08x "
+	    "ContextCtrl 0x%08x%s%s%s%s\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname,
+	    OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num, OHCI_SUBREG_CommandPtr),
+	    reg,
+	    reg & OHCI_CTXCTL_RUN ? " run" : "",
+	    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+	    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+	    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+	printf("fwohci_it_intr: %s: scratch %x start %d end %d valid %d\n",
+	    sc->sc_sc1394.sc1394_dev.dv_xname, *itc->itc_scratch,
+	    itc->itc_buf_start->itd_num, itc->itc_buf_end->itd_num,
+	    itc->itc_buf_cnt);
+	{
+		u_int32_t reg
+		    = OHCI_CSR_READ(sc, OHCI_REG_IsochronousCycleTimer);
+		printf("\t\tIsoCounter 0x%08x, %d %d %d\n", reg,
+		    (reg >> 25) & 0xfe, (reg >> 12) & 0x1fff, reg & 0xfff);
+	}
+#endif /* FW_DEBUG */
+	/* end print out debug info */
+
+	scratchval = (*itc->itc_scratch) & 0x0000ffff;
+	*itc->itc_scratch = 0xffffffff;
+
+	if ((reg & OHCI_CTXCTL_ACTIVE) == 0 && scratchval != 0xffff) {
+		/* DMA engine has been stopped */
+		printf("DMA engine stopped\n");
+		printf("fwohci_it_intr: %s: IT_CommandPtr 0x%08x "
+		    "ContextCtrl 0x%08x%s%s%s%s\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname,
+		    OHCI_SYNC_TX_DMA_READ(sc, itc->itc_num, OHCI_SUBREG_CommandPtr),
+		    reg,
+		    reg & OHCI_CTXCTL_RUN ? " run" : "",
+		    reg & OHCI_CTXCTL_WAKE ? " wake" : "",
+		    reg & OHCI_CTXCTL_DEAD ? " dead" : "",
+		    reg & OHCI_CTXCTL_ACTIVE ? " active" : "");
+		printf("fwohci_it_intr: %s: scratch %x start %d end %d valid %d\n",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, *itc->itc_scratch,
+		    itc->itc_buf_start->itd_num, itc->itc_buf_end->itd_num,
+		    itc->itc_buf_cnt);
+		{
+			u_int32_t reg
+			    = OHCI_CSR_READ(sc, OHCI_REG_IsochronousCycleTimer);
+			printf("\t\tIsoCounter 0x%08x, %d %d %d\n", reg,
+			    (reg >> 25) & 0xfe, (reg >> 12) & 0x1fff, reg & 0xfff);
+		}
+		printf("\t\tbranch of lastdesc 0x%08x\n",
+		    itc->itc_buf_start->itd_lastdesc->fd_branch);
+
+		scratchval = 0xffff;
+		itc->itc_flags &= ~ITC_FLAGS_RUN;
+	}
+
+	/* unlink old buffers */
+	if (scratchval != 0xffff) {
+		/* normal path */
+		newstartbuf = &itc->itc_buf[scratchval];
+	} else {
+		/* DMA engine stopped */
+		newstartbuf = itc->itc_buf_linkend;
+		INC_BUF(itc, newstartbuf);
+	}
+
+	itd = (struct fwohci_it_dmabuf *)itc->itc_buf_start;
+	itc->itc_buf_start = newstartbuf;
+	while (itd != newstartbuf) {
+		itc->itc_outpkt += itd->itd_npacket;
+		fwohci_itd_unlink(itd);
+		INC_BUF(itc, itd);
+		--itc->itc_buf_cnt;
+		DPRINTF(("<buf cnt %d>\n", itc->itc_buf_cnt));
+	}
+
+#ifdef DEBUG_USERADD
+	if (scratchval != 0xffff) {
+		printf("fwohci0: intr start %d dataend %d %d\n", scratchval,
+		    itc->itc_buf_end->itd_num, itc->itc_outpkt);
+	}
+#endif
+
+	if (scratchval == 0xffff) {
+		/* no data supplied */
+		printf("fwohci_it_intr: no it data.  output total %d\n",
+		    itc->itc_outpkt);
+
+		if (itc->itc_buf_cnt > 0) {
+			printf("fwohci_it_intr: it DMA stops "
+			    "w/ valid databuf %d buf %d data %d"
+			    " intr reg 0x%08x\n",
+			    itc->itc_buf_cnt,
+			    itc->itc_buf_end->itd_num,
+			    fwohci_itd_hasdata(itc->itc_buf_end),
+			    OHCI_CSR_READ(sc, OHCI_REG_IntEventSet));
+		} else {
+			/* All the data gone */
+			itc->itc_buf_start
+			    = itc->itc_buf_end
+			    = itc->itc_buf_linkend
+			    = &itc->itc_buf[0];
+			printf("fwohci_it_intr: all packets gone\n");
+		}
+
+		itc->itc_flags &= ~ITC_FLAGS_RUN;
+
+		OHCI_SYNC_TX_DMA_WRITE(sc, itc->itc_num,
+		    OHCI_SUBREG_ContextControlClear, 0xffffffff);
+		OHCI_SYNC_TX_DMA_WRITE(sc, itc->itc_num,
+		    OHCI_SUBREG_CommandPtr, 0);
+		OHCI_SYNC_TX_DMA_WRITE(sc, itc->itc_num,
+		    OHCI_SUBREG_ContextControlClear, 0x1f);
+
+		/* send message */
+		if (itc->itc_waitchan != NULL) {
+			wakeup((void *)itc->itc_waitchan);
+		}
+
+		return;
+	}
+
+#if 0
+	/* unlink old buffers */
+	newstartbuf = &itc->itc_buf[scratchval];
+
+	itd = (struct fwohci_it_dmabuf *)itc->itc_buf_start;
+	itc->itc_buf_start = newstartbuf;
+	while (itd != newstartbuf) {
+		itc->itc_outpkt += itd->itd_npacket;
+		fwohci_itd_unlink(itd);
+		INC_BUF(itc, itd);
+		--itc->itc_buf_cnt;
+		DPRINTF(("<buf cnt %d>\n", itc->itc_buf_cnt));
+	}
+#endif
+
+	/* sanity check */
+	{
+		int startidx, endidx, linkendidx;
+
+		startidx = itc->itc_buf_start->itd_num;
+		endidx = itc->itc_buf_end->itd_num;
+		linkendidx = itc->itc_buf_linkend->itd_num;
+
+		if (startidx < endidx) {
+			if (linkendidx < startidx
+			    || endidx < linkendidx) {
+				printf("funny, linkend is not between start "
+				    "and end [%d, %d]: %d\n",
+				    startidx, endidx, linkendidx);
+			}
+		} else if (startidx > endidx) {
+			if (linkendidx < startidx
+			    && endidx < linkendidx) {
+				printf("funny, linkend is not between start "
+				    "and end [%d, %d]: %d\n",
+				    startidx, endidx, linkendidx);
+			}
+		} else {
+			if (linkendidx != startidx) {
+				printf("funny, linkend is not between start "
+				    "and end [%d, %d]: %d\n",
+				    startidx, endidx, linkendidx);
+			}
+				
+		}
+	}
+
+	/* link if some valid DMA buffers exist */
+	if (itc->itc_buf_cnt > 1
+	    && itc->itc_buf_linkend != itc->itc_buf_end) {
+		struct fwohci_it_dmabuf *itdprev;
+		int i;
+
+		DPRINTF(("CTX %d: start linkend dataend bufs %d, %d, %d, %d\n",
+		    itc->itc_num,
+		    itc->itc_buf_start->itd_num,
+		    itc->itc_buf_linkend->itd_num,
+		    itc->itc_buf_end->itd_num,
+		    itc->itc_buf_cnt));
+
+		itd = itdprev = itc->itc_buf_linkend;
+		INC_BUF(itc, itd);
+
+#if 0
+		if (fwohci_itd_isfilled(itd) || itc->itc_buf_cnt == 2) {
+			while (itdprev != itc->itc_buf_end) {
+
+				if (fwohci_itd_link(itdprev, itd)) {
+					break;
+				}
+
+				itdprev = itd;
+				INC_BUF(itc, itd);
+			}
+			itc->itc_buf_linkend = itdprev;
+		}
+#endif
+		i = 0;
+		while (itdprev != itc->itc_buf_end) {
+			if (!fwohci_itd_isfilled(itd) && itc->itc_buf_cnt > 2) {
+				break;
+			}
+
+			if (fwohci_itd_link(itdprev, itd)) {
+				break;
+			}
+
+			itdprev = itd;
+			INC_BUF(itc, itd);
+
+			itc->itc_buf_linkend = itdprev;
+			++i;
+		}
+
+		if (i > 0) {
+			DPRINTF(("CTX %d: start linkend dataend bufs %d, %d, %d, %d\n",
+			    itc->itc_num,
+			    itc->itc_buf_start->itd_num,
+			    itc->itc_buf_linkend->itd_num,
+			    itc->itc_buf_end->itd_num,
+			    itc->itc_buf_cnt));
+		}
+	} else {
+		struct fwohci_it_dmabuf *le;
+
+		le = itc->itc_buf_linkend;
+
+		printf("CTX %d: start linkend dataend bufs %d, %d, %d, %d no buffer added\n",
+			    itc->itc_num,
+			    itc->itc_buf_start->itd_num,
+			    itc->itc_buf_linkend->itd_num,
+			    itc->itc_buf_end->itd_num,
+			    itc->itc_buf_cnt);
+		printf("\tlast descriptor %s %04x %08x\n",
+		    le->itd_lastdesc->fd_flags & OHCI_DESC_INTR_ALWAYS ? "intr" : "",
+		    le->itd_lastdesc->fd_flags,
+		    le->itd_lastdesc->fd_branch);
+	}
+
+	/* send message */
+	if (itc->itc_waitchan != NULL) {
+		/*  */
+		wakeup((void *)itc->itc_waitchan);
+	}
+}
+
+
+
+/*
+ * int fwohci_itd_construct(struct fwohci_it_ctx *itc,
+ *			    struct fwohci_it_dmabuf *itd, int num,
+ *			    struct fwohci_desc *desc, bus_addr_t phys,
+ *			    int descsize, int maxsize, paddr_t scratch)
+ *
+ *	
+ *
+ */
+int
+fwohci_itd_construct(struct fwohci_it_ctx *itc, struct fwohci_it_dmabuf *itd,
+    int num, struct fwohci_desc *desc, bus_addr_t phys, int descsize,
+    int maxsize, paddr_t scratch)
+{
+	const char *xname = itc->itc_sc->sc_sc1394.sc1394_dev.dv_xname;
+	struct fwohci_desc *fd;
+	struct fwohci_desc *descend;
+	int npkt;
+	int bufno = 0;		/* DMA segment */
+	bus_size_t bufused = 0;	/* offset in a DMA segment */
+	int roundsize;
+	int tag = itc->itc_tag;
+	int ch = itc->itc_channel;
+
+	itd->itd_ctx = itc;
+	itd->itd_num = num;
+
+	if (descsize > 1024*3) {
+		printf("%s: fwohci_itd_construct[%d] descsize %d too big\n",
+		    xname, num, descsize);
+		return -1;
+	}
+
+	itd->itd_desc = desc;
+	itd->itd_descsize = descsize;
+	itd->itd_desc_phys = phys;
+
+	itd->itd_lastdesc = desc;
+	itd->itd_npacket = 0;
+
+	printf("%s: fwohci_itd_construct[%d] desc %p descsize %d, maxsize %d\n",
+	    xname, itd->itd_num, itd->itd_desc, itd->itd_descsize, maxsize);
+
+	if (descsize < 4) {
+		/* too small descriptor array.  at least 4 */
+		return -1;
+	}
+
+	/* count up how many packet can handle */
+	itd->itd_maxpacket = (descsize - 1)/3;
+
+	/* rounding up to power of 2. minimum 16 */
+	roundsize = 16;
+	for (roundsize = 16; roundsize < maxsize; roundsize <<= 1);
+	itd->itd_maxsize = roundsize;
+
+	printf("\t\tdesc%d [%x, %x]\n", itd->itd_num,
+	    (u_int32_t)phys,
+	    (u_int32_t)phys
+	    + (itd->itd_maxpacket*3 + 1)*sizeof(struct fwohci_desc));
+	printf("%s: fwohci_itd_construct[%d] npkt %d maxsize round up to %d\n",
+	    xname, itd->itd_num, itd->itd_maxpacket, itd->itd_maxsize);
+
+	/* obtain DMA buffer */
+	if (fwohci_itd_dmabuf_alloc(itd)) {
+		/* cannot allocate memory for DMA buffer */
+		return -1;
+	}
+
+	/*
+	 * make descriptor chain
+	 *
+	 * First descriptor group has a STORE_VALUE, OUTPUT_IMMEDIATE
+	 * and OUTPUT_LAST descriptors Second and after that, a
+	 * descriptor group has an OUTPUT_IMMEDIATE and an OUTPUT_LAST
+	 * descriptor.
+	 */
+	descend = desc + descsize;
+
+	/* set store value descriptor for 1st descriptor group */
+	desc->fd_flags = OHCI_DESC_STORE_VALUE;
+	desc->fd_reqcount = num; /* write number of DMA buffer class */
+	desc->fd_data = scratch; /* at physical memory 'scratch' */
+	desc->fd_branch = 0;
+	desc->fd_status = desc->fd_rescount = 0;
+
+	itd->itd_store = desc;
+	itd->itd_store_phys = phys;
+
+	++desc;
+	phys += 16;
+
+	npkt = 0;
+	/* make OUTPUT_DESC chain for packets */
+	for (fd = desc; fd + 2 < descend; fd += 3, ++npkt) {
+		struct fwohci_desc *fi = fd;
+		struct fwohci_desc *fl = fd + 2;
+		u_int32_t *fi_data = (u_int32_t *)(fd + 1);
+
+#if 0
+		if (npkt > itd->itd_maxpacket - 3) {
+			printf("%s: %3d fi fl %p %p\n", xname, npkt, fi,fl);
+		}
+#endif
+
+		fi->fd_reqcount = 8; /* data size for OHCI command */
+		fi->fd_flags = OHCI_DESC_IMMED;
+		fi->fd_data = 0;
+		fi->fd_branch = 0; /* branch for error */
+		fi->fd_status = fi->fd_rescount = 0;
+
+		/* channel and tag is unchanged */
+		*fi_data = OHCI_ITHEADER_VAL(TAG, tag) |
+		    OHCI_ITHEADER_VAL(CHAN, ch) |
+		    OHCI_ITHEADER_VAL(TCODE, IEEE1394_TCODE_STREAM_DATA);
+		*++fi_data = 0;
+		*++fi_data = 0;
+		*++fi_data = 0;
+
+		fl->fd_flags = OHCI_DESC_OUTPUT | OHCI_DESC_LAST |
+		    OHCI_DESC_BRANCH;
+		fl->fd_branch =
+		    (phys + sizeof(struct fwohci_desc)*(npkt + 1)*3) | 0x03;
+		fl->fd_status = fl->fd_rescount = 0;
+
+#ifdef FW_DEBUG
+		if (npkt > itd->itd_maxpacket - 3) {
+			DPRINTF(("%s: %3d fi fl fl branch %p %p 0x%x\n",
+			    xname, npkt, fi, fl, (int)fl->fd_branch));
+		}
+#endif
+
+		/* physical addr to data? */
+		fl->fd_data = 
+		    (u_int32_t)((itd->itd_seg[bufno].ds_addr + bufused));
+		bufused += itd->itd_maxsize;
+		if (bufused > itd->itd_seg[bufno].ds_len) {
+			bufused = 0;
+			if (++bufno == itd->itd_nsegs) {
+				/* fail */
+				break;
+			}
+		}
+	}
+
+#if 0
+	if (itd->itd_num == 0) {
+		u_int32_t *fdp;
+		u_int32_t adr;
+		int i = 0;
+		
+		fdp = (u_int32_t *)itd->itd_desc;
+		adr = (u_int32_t)itd->itd_desc_phys; /* XXX */
+
+		printf("fwohci_itd_construct: audit DMA desc chain. %d\n",
+		    itd->itd_maxpacket);
+		for (i = 0; i < itd->itd_maxpacket*12 + 4; ++i) {
+			if (i % 4 == 0) {
+				printf("\n%x:", adr + 4*i);
+			}
+			printf(" %08x", fdp[i]);
+		}
+		printf("\n");
+		
+	}
+#endif
+	/* last branch should be 0 */
+	--fd;
+	fd->fd_branch = 0;
+
+	printf("%s: pkt %d %d maxdesc %p\n",
+	    xname, npkt, itd->itd_maxpacket, descend);
+
+	return 0;
+}
+
+void
+fwohci_itd_destruct(struct fwohci_it_dmabuf *itd)
+{
+	const char *xname = itd->itd_ctx->itc_sc->sc_sc1394.sc1394_dev.dv_xname;
+
+	printf("%s: fwohci_itd_destruct %d\n", xname, itd->itd_num);
+
+	fwohci_itd_dmabuf_free(itd);
+}
+
+
+/*
+ * static int fwohci_itd_dmabuf_alloc(struct fwohci_it_dmabuf *itd)
+ *
+ *	This function allocates DMA memory for fwohci_it_dmabuf.  This
+ *	function will return 0 when it succeeds and return non-zero
+ *	value when it fails.
+ */
+static int
+fwohci_itd_dmabuf_alloc(struct fwohci_it_dmabuf *itd)
+{
+	const char *xname = itd->itd_ctx->itc_sc->sc_sc1394.sc1394_dev.dv_xname;
+	bus_dma_tag_t dmat = itd->itd_ctx->itc_sc->sc_dmat;
+
+	int dmasize = itd->itd_maxsize * itd->itd_maxpacket;
+	int error;
+
+	DPRINTF(("%s: fwohci_itd_dmabuf_alloc[%d] dmasize %d maxpkt %d\n",
+	    xname, itd->itd_num, dmasize, itd->itd_maxpacket));
+
+	if ((error = bus_dmamem_alloc(dmat, dmasize, PAGE_SIZE, 0,
+	    itd->itd_seg, FWOHCI_MAX_ITDATASEG, &itd->itd_nsegs, 0)) != 0) {
+		printf("%s: unable to allocate data buffer, error = %d\n",
+		    xname, error);
+		goto fail_0;
+	}
+
+	/* checking memory range */
+#ifdef FW_DEBUG
+	{
+		int loop;
+
+		for (loop = 0; loop < itd->itd_nsegs; ++loop) {
+			DPRINTF(("\t%.2d: 0x%lx - 0x%lx\n", loop,
+			    (long)itd->itd_seg[loop].ds_addr,
+			    (long)itd->itd_seg[loop].ds_addr
+			    + (long)itd->itd_seg[loop].ds_len - 1));
+		}
+	}
+#endif
+
+	if ((error = bus_dmamem_map(dmat, itd->itd_seg, itd->itd_nsegs,
+	    dmasize, (caddr_t *)&itd->itd_buf,
+	    BUS_DMA_COHERENT | BUS_DMA_WAITOK)) != 0) {
+		printf("%s: unable to map data buffer, error = %d\n",
+		    xname, error);
+		goto fail_1;
+	}
+
+	DPRINTF(("fwohci_it_data_alloc[%d]: bus_dmamem_map addr %p\n",
+	    itd->itd_num, itd->itd_buf));
+
+	if ((error = bus_dmamap_create(dmat, /*chunklen*/dmasize,
+	    itd->itd_nsegs, dmasize, 0, BUS_DMA_WAITOK,
+	    &itd->itd_dmamap)) != 0) {
+		printf("%s: unable to create data buffer DMA map, "
+		    "error = %d\n", xname, error);
+		goto fail_2;
+	}
+
+	DPRINTF(("fwohci_it_data_alloc: bus_dmamem_create\n"));
+
+	if ((error = bus_dmamap_load(dmat, itd->itd_dmamap,
+	    itd->itd_buf, dmasize, NULL, BUS_DMA_WAITOK)) != 0) {
+		printf("%s: unable to load data buffer DMA map, error = %d\n",
+		    xname, error);
+		goto fail_3;
+	}
+
+	DPRINTF(("fwohci_itd_dmabuf_alloc: load DMA memory vm %p\n",
+	    itd->itd_buf));
+	DPRINTF(("\tmapsize %ld nsegs %d\n",
+	    (long)itd->itd_dmamap->dm_mapsize, itd->itd_dmamap->dm_nsegs));
+
+#ifdef FW_DEBUG
+	{
+		int loop;
+
+		for (loop = 0; loop < itd->itd_dmamap->dm_nsegs; ++loop) {
+			DPRINTF(("\t%.2d: 0x%lx - 0x%lx\n", loop,
+			    (long)itd->itd_dmamap->dm_segs[loop].ds_addr,
+			    (long)itd->itd_dmamap->dm_segs[loop].ds_addr +
+			    (long)itd->itd_dmamap->dm_segs[loop].ds_len - 1));
+		}
+	}
+#endif
+
+	return 0;
+
+  fail_3:
+	bus_dmamap_destroy(dmat, itd->itd_dmamap);
+  fail_2:
+	bus_dmamem_unmap(dmat, (caddr_t)itd->itd_buf, dmasize);
+  fail_1:
+	bus_dmamem_free(dmat, itd->itd_seg, itd->itd_nsegs);
+  fail_0:
+	itd->itd_nsegs = 0;
+	itd->itd_maxpacket = 0;
+	return error;
+}
+
+/*
+ * static void fwohci_itd_dmabuf_free(struct fwohci_it_dmabuf *itd)
+ *
+ *	This function will release memory resource allocated by
+ *	fwohci_itd_dmabuf_alloc().
+ */
+static void
+fwohci_itd_dmabuf_free(struct fwohci_it_dmabuf *itd)
+{
+	bus_dma_tag_t dmat = itd->itd_ctx->itc_sc->sc_dmat;
+	int dmasize = itd->itd_maxsize * itd->itd_maxpacket;
+
+	bus_dmamap_destroy(dmat, itd->itd_dmamap);
+	bus_dmamem_unmap(dmat, (caddr_t)itd->itd_buf, dmasize);
+	bus_dmamem_free(dmat, itd->itd_seg, itd->itd_nsegs);
+
+	itd->itd_nsegs = 0;
+	itd->itd_maxpacket = 0;
+}
+
+
+
+/*
+ * int fwohci_itd_link(struct fwohci_it_dmabuf *itd,
+ *		struct fwohci_it_dmabuf *itdc)
+ *
+ *	This function will concatinate two descriptor chains in dmabuf
+ *	itd and itdc.  The descriptor link in itdc follows one in itd.
+ *	This function will move interrrupt packet from the end of itd
+ *	to the top of itdc.
+ *
+ *	This function will return 0 whel this funcion suceeds.  If an
+ *	error happens, return a negative value.
+ */
+int
+fwohci_itd_link(struct fwohci_it_dmabuf *itd, struct fwohci_it_dmabuf *itdc)
+{
+	struct fwohci_desc *fd1, *fdc;
+
+	if (itdc->itd_lastdesc == itdc->itd_desc) {
+		/* no valid data */
+		printf("fwohci_itd_link: no data\n");
+		return -1;
+	}
+
+	if (itdc->itd_flags & ITD_FLAGS_LOCK) {
+		/* used already */
+		printf("fwohci_itd_link: link locked\n");
+		return -1;
+	}
+	itdc->itd_flags |= ITD_FLAGS_LOCK;
+	/* for the first one */
+	itd->itd_flags |= ITD_FLAGS_LOCK;
+
+	DPRINTF(("linking %d after %d: add %d pkts\n",
+	    itdc->itd_num, itd->itd_num, itdc->itd_npacket));
+
+	/* XXX: should sync cache */
+
+	fd1 = itd->itd_lastdesc;
+	fdc = itdc->itd_desc + 3; /* OUTPUT_LAST in the first descriptor */
+
+	/* sanity check */
+#define OUTPUT_LAST_DESC (OHCI_DESC_OUTPUT | OHCI_DESC_LAST | OHCI_DESC_BRANCH)
+	if ((fd1->fd_flags & OUTPUT_LAST_DESC) != OUTPUT_LAST_DESC) {
+		printf("funny! not OUTPUT_LAST descriptor %p\n", fd1);
+	}
+	if (itd->itd_lastdesc - itd->itd_desc != 3 * itd->itd_npacket) {
+		printf("funny! packet number inconsistency %d <=> %d\n",
+		    itd->itd_lastdesc - itd->itd_desc, 3*itd->itd_npacket);
+	}
+
+	fd1->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
+	fdc->fd_flags |= OHCI_DESC_INTR_ALWAYS;
+	fd1->fd_branch = itdc->itd_desc_phys | 4;
+
+	itdc->itd_lastdesc->fd_flags |= OHCI_DESC_INTR_ALWAYS;
+	/* save branch addr of lastdesc and substitute 0 to it */
+	itdc->itd_savedbranch = itdc->itd_lastdesc->fd_branch;
+	itdc->itd_lastdesc->fd_branch = 0;
+
+	DPRINTF(("%s: link (%d %d), add pkt %d/%d branch 0x%x next saved 0x%x\n",
+	    itd->itd_ctx->itc_sc->sc_sc1394.sc1394_dev.dv_xname,
+	    itd->itd_num, itdc->itd_num,
+	    itdc->itd_npacket, itdc->itd_maxpacket,
+	    (int)fd1->fd_branch, (int)itdc->itd_savedbranch));
+
+	/* XXX: should sync cache */
+
+	return 0;
+}
+
+
+/*
+ * int fwohci_itd_unlink(struct fwohci_it_dmabuf *itd)
+ *
+ *	This function will unlink the descriptor chain from valid link
+ *	of descriptors.  The target descriptor is specified by the
+ *	arguent.
+ */
+int
+fwohci_itd_unlink(struct fwohci_it_dmabuf *itd)
+{
+	struct fwohci_desc *fd;
+
+	/* XXX: should sync cache */
+
+	fd = itd->itd_lastdesc;
+
+	fd->fd_branch = itd->itd_savedbranch;
+	DPRINTF(("%s: unlink buf %d branch restored 0x%x\n",
+	    itd->itd_ctx->itc_sc->sc_sc1394.sc1394_dev.dv_xname,
+	    itd->itd_num, (int)fd->fd_branch));
+
+	fd->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
+	itd->itd_lastdesc = itd->itd_desc;
+
+	fd = itd->itd_desc + 3;	/* 1st OUTPUT_LAST */
+	fd->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
+
+	/* XXX: should sync cache */
+
+	itd->itd_npacket = 0;
+	itd->itd_lastdesc = itd->itd_desc;
+	itd->itd_flags &= ~ITD_FLAGS_LOCK;
+
+	return 0;
+}
+
+
+/*
+ * static int fwohci_itd_writedata(struct fwohci_it_dmabuf *, int ndata,
+ *			struct ieee1394_it_datalist *);
+ *
+ *	This function will return the number of written data, or
+ *	negative value if an error happens
+ */
+int
+fwohci_itd_writedata(struct fwohci_it_dmabuf *itd, int ndata,
+    struct ieee1394_it_datalist *itdata)
+{
+	int writepkt;
+	int i;
+	u_int8_t *p;
+	struct fwohci_desc *fd;
+	u_int32_t *fd_idata;
+	const int dspace =
+	    itd->itd_maxpacket - itd->itd_npacket < ndata ?
+	    itd->itd_maxpacket - itd->itd_npacket : ndata;
+
+	if (itd->itd_flags & ITD_FLAGS_LOCK || dspace == 0) {
+		/* it is locked: cannot write anything */
+		if (itd->itd_flags & ITD_FLAGS_LOCK) {
+			DPRINTF(("fwohci_itd_writedata: buf %d lock flag %s,"
+			    " dspace %d\n",
+			    itd->itd_num,
+			    itd->itd_flags & ITD_FLAGS_LOCK ? "ON" : "OFF",
+			    dspace));
+			return 0;	/* not an error */
+		}
+	}
+
+	/* sanity check */
+	if (itd->itd_maxpacket < itd->itd_npacket) {
+		printf("fwohci_itd_writedata: funny! # pkt > maxpkt"
+			"%d %d\n", itd->itd_npacket, itd->itd_maxpacket);
+	}
+
+	p = itd->itd_buf + itd->itd_maxsize * itd->itd_npacket;
+	fd = itd->itd_lastdesc;
+
+	DPRINTF(("fwohci_itd_writedata(%d[%p], %d, 0x%p) invoked:\n",
+	    itd->itd_num, itd, ndata, itdata));
+
+	for (writepkt = 0; writepkt < dspace; ++writepkt) {
+		u_int8_t *p1 = p;
+		int cpysize;
+		int totalsize = 0;
+
+		DPRINTF(("writing %d ", writepkt));
+
+		for (i = 0; i < 4; ++i) {
+			switch (itdata->it_cmd[i]&IEEE1394_IT_CMD_MASK) {
+			case IEEE1394_IT_CMD_IMMED:
+				memcpy(p1, &itdata->it_u[i].id_data, 8);
+				p1 += 8;
+				totalsize += 8;
+				break;
+			case IEEE1394_IT_CMD_PTR:
+				cpysize = itdata->it_cmd[i]&IEEE1394_IT_CMD_SIZE;
+				DPRINTF(("fwohci_itd_writedata: cpy %d %p\n",
+				    cpysize, itdata->it_u[i].id_addr));
+				if (totalsize + cpysize > itd->itd_maxsize) {
+					/* error: too big size */
+					break;
+				}
+				memcpy(p1, itdata->it_u[i].id_addr, cpysize);
+				totalsize += cpysize;
+				break;
+			case IEEE1394_IT_CMD_NOP:
+				break;
+			default:
+				/* unknown command */
+				break;
+			}
+		}
+
+		/* only for DV test */
+		if (totalsize != 488) {
+			printf("error: totalsize %d at %d\n",
+			    totalsize, writepkt);
+		}
+
+		DPRINTF(("totalsize %d ", totalsize));
+
+		/* fill iso command in OUTPUT_IMMED descriptor */
+
+		/* XXX: sync cache */
+		fd += 2;	/* next to first descriptor */
+		fd_idata = (u_int32_t *)fd;
+
+		/*
+		 * Umm, should tag, channel and tcode be written
+		 * previously in itd_construct?
+		 */
+#if 0
+		*fd_idata = OHCI_ITHEADER_VAL(TAG, tag) |
+		    OHCI_ITHEADER_VAL(CHAN, ch) |
+		    OHCI_ITHEADER_VAL(TCODE, IEEE1394_TCODE_STREAM_DATA);
+#endif
+		*++fd_idata = totalsize << 16;
+
+		/* fill data in OUTPUT_LAST descriptor */
+		++fd;
+		/* intr check... */
+		if (fd->fd_flags & OHCI_DESC_INTR_ALWAYS) {
+			printf("uncleared INTR flag in desc %d\n",
+			    (fd - itd->itd_desc - 1)/3);
+		}
+		fd->fd_flags &= ~OHCI_DESC_INTR_ALWAYS;
+
+		if ((fd - itd->itd_desc - 1)/3 != itd->itd_maxpacket - 1) {
+			u_int32_t bcal;
+
+			bcal = (fd - itd->itd_desc + 1)*sizeof(struct fwohci_desc) + (u_int32_t)itd->itd_desc_phys;
+			if (bcal != (fd->fd_branch & 0xfffffff0)) {
+
+				printf("uum, branch differ at %d, %x %x %d/%d\n",
+				    itd->itd_num,
+				    bcal,
+				    fd->fd_branch,
+				    (fd - itd->itd_desc - 1)/3,
+				    itd->itd_maxpacket);
+			}
+		} else {
+			/* the last pcaket */
+			if (fd->fd_branch != 0) {
+				printf("uum, branch differ at %d, %x %x %d/%d\n",
+				    itd->itd_num,
+				    0,
+				    fd->fd_branch,
+				    (fd - itd->itd_desc - 1)/3,
+				    itd->itd_maxpacket);
+			}
+		}
+
+		/* sanity check */
+		if (fd->fd_flags != OUTPUT_LAST_DESC) {
+			printf("fwohci_itd_writedata: dmabuf %d desc inconsistent %d\n",
+			    itd->itd_num, writepkt + itd->itd_npacket);
+			break;
+		}
+		fd->fd_reqcount = totalsize;
+		/* XXX: sync cache */
+
+		++itdata;
+		p += itd->itd_maxsize;
+	}
+
+	DPRINTF(("loop start %d, %d times %d\n",
+	    itd->itd_npacket, dspace, writepkt));
+
+	itd->itd_npacket += writepkt;
+	itd->itd_lastdesc = fd;
+
+	return writepkt;
+}
+
+
+
+
+
+int
+fwohci_itd_isfilled(struct fwohci_it_dmabuf *itd)
+{
+
+	return itd->itd_npacket*2 > itd->itd_maxpacket ? 1 : 0;
+}

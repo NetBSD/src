@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.16 2002/11/22 16:20:20 jmc Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.17 2002/12/04 00:28:42 haya Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,16 @@
 struct ieee1394_softc;
 struct ieee1394_node;
 
+struct fwiso_header;		/* XXX */
+struct selinfo;			/* XXX */
+
+/* for isochronous receive */
+typedef void *ieee1394_ir_tag_t;
+
+/* for isochronous transmit */
+typedef void *ieee1394_it_tag_t;
+struct ieee1394_it_datalist;
+
 /* These buffers have no reference counting.  It is assumed that 
  * the upper level buffer (struct buf or struct mbuf) will have the
  * requisite reference counting.
@@ -80,6 +90,8 @@ struct ieee1394_attach_args {
 struct ieee1394_softc {
 	struct device sc1394_dev;
 	struct device *sc1394_if; /* Move to fwohci level. */
+	struct device *sc1394_iso; /* Move to fwohci level. */
+	void *sc1394_isoarg;	/* XXX */
 	
 	struct ieee1394_callbacks sc1394_callback; /* Nuke probably. */
 	u_int32_t *sc1394_configrom;
@@ -95,6 +107,23 @@ struct ieee1394_softc {
 	    void (*)(struct device *, struct mbuf *)); /* Nuke */
 	int (*sc1394_ifsetiso)(struct device *, u_int32_t, u_int32_t, u_int32_t,
 	    void (*)(struct device *, struct mbuf *)); /* Nuke */
+
+	/* for isochronous receive */
+	ieee1394_ir_tag_t (*sc1394_ir_open)(struct device *, int, int,
+	    int, int, int);
+	int (*sc1394_ir_close)(struct device *, ieee1394_ir_tag_t);
+	int (*sc1394_ir_read)(struct device *, ieee1394_ir_tag_t,
+	    struct uio *, int, int);
+	int (*sc1394_ir_wait)(struct device *, ieee1394_ir_tag_t,
+	    void *, char *);
+	int (*sc1394_ir_select)(struct device *, ieee1394_ir_tag_t,
+	    struct proc *);
+
+	/* for isochronous transmission */
+	ieee1394_it_tag_t (*sc1394_it_open)(struct device *, int, int, int);
+	int (*sc1394_it_writedata)(struct device *, int, int,
+	    struct ieee1394_it_datalist *, int);
+	int (*sc1394_it_close)(struct device *, ieee1394_it_tag_t);
 	
 	LIST_ENTRY(ieee1394_softc) sc1394_node;
 };
@@ -109,7 +138,50 @@ struct ieee1394_node {
 
 int ieee1394_init __P((struct ieee1394_softc *));
 
+
+struct ieee1394_it_func_t {
+	int (*ieee1394_it_writedata)(ieee1394_it_tag_t, int,
+	    struct ieee1394_it_datalist *);
+};
+
+
+union ieee1394_it_data {
+	u_int32_t id_data[2];
+	u_int8_t *id_addr;
+};
+
+#define IEEE1394_IT_CMD_NUM	4
+
+struct ieee1394_it_datalist {
+	u_int16_t it_cmd[IEEE1394_IT_CMD_NUM];
+	union ieee1394_it_data it_u[IEEE1394_IT_CMD_NUM];
+};
+
+#define IEEE1394_IT_CMD_MASK	0xf000
+#define IEEE1394_IT_CMD_NOP	0x0000
+#define IEEE1394_IT_CMD_IMMED	0x1000
+#define IEEE1394_IT_CMD_PTR	0x2000
+#define IEEE1394_IT_CMD_SIZE	0x0fff
+
+
 #define	IEEE1394_ARGTYPE_PTR	0
 #define	IEEE1394_ARGTYPE_MBUF	1
+
+/*
+ * some definitions for 2nd, 3rd and 4th arguments of
+ * sc1394_devsetiso().
+ */
+#define IEEE1394_ISO_CHANNEL_ANY	64
+#define IEEE1394_ISO_CHANNEL_MASK	0x3f
+#define IEEE1394_ISO_TAG0		0x01
+#define IEEE1394_ISO_TAG1		0x02
+#define IEEE1394_ISO_TAG2		0x04
+#define IEEE1394_ISO_TAG3		0x08
+#define IEEE1394_ISO_DIR_READ		0
+#define IEEE1394_ISO_DIR_WRITE		1
+
+#define IEEE1394_IR_NEEDHEADER		0x01
+#define IEEE1394_IR_TRIGGER_CIP_SYNC	0x02
+#define IEEE1394_IR_SHORTDELAY		0x04
 
 #endif	/* _DEV_IEEE1394_IEEE1394VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.13 2002/11/22 16:28:56 jmc Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.14 2002/12/04 00:28:43 haya Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ struct ieee1394_async_nodata {
 /*
  * Tag value
  */
+#define IEEE1394_TAG_CIP		0x1
 #define	IEEE1394_TAG_GASP		0x3
 
 /*
@@ -275,5 +276,38 @@ struct ieee1394_async_nodata {
 
 #define SBP_DATA_SIZE	(SBP_DATA_MAX - SBP_DATA_BEG)
 #define SBP_DATA_BLOCK_SIZE	512
+
+
+/* CIP format (isochronous transaction, tag 1) */
+#define IEEE1394_CIP_SID_MASK		0x3f000000
+#define IEEE1394_CIP_SID_OFFS		24
+#define IEEE1394_CIP_DBS_MASK		0x00ff0000
+#define IEEE1394_CIP_DBS_OFFS		16
+#define IEEE1394_CIP_FN_MASK		0x0000c000
+#define IEEE1394_CIP_FN_OFFS		14
+#define IEEE1394_CIP_QPC_MASK		0x00003800
+#define IEEE1394_CIP_QPC_OFFS		11
+#define IEEE1394_CIP_SPH_MASK		0x00000400
+#define IEEE1394_CIP_SPH_OFFS		10
+#define IEEE1394_CIP_DBC_MASK		0x000000ff
+#define IEEE1394_CIP_DBC_OFFS		0
+#define IEEE1394_CIP_FMT_MASK		0x3f000000
+#define IEEE1394_CIP_FMT_OFFS		24
+#define IEEE1394_CIP_FDF_MASK		0x00ffffff
+
+#define IEEE1394_CIP_FDF_SYT_MASK	0x0000ffff
+#define IEEE1394_CIP_FDF_SYT_OFFS	0
+
+#define IEEE1394_CIP_FDF_DV_FR		0x00800000
+#define IEEE1394_CIP_FDF_DV_FR_60	0x00800000
+#define IEEE1394_CIP_FDF_DV_FR_50	0x00000000
+#define IEEE1394_CIP_FDF_DV_STYPE	0x007c0000
+
+#define IEEE1394_CIP_FMT_DV		0
+#define IEEE1394_CIP_FMT_MPEG2TS	0x20000000
+#define IEEE1394_CIP_FMT_AUDIO		0x10000000
+
+#define IEEE1394_CIP_SET(reg, val)					\
+	(IEEE1394_CIP_##reg##_MASK & ((val) << IEEE1394_CIP_##reg##_OFFS))
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */
