@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.21 2002/07/29 14:03:16 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.22 2002/07/29 14:23:39 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1495,6 +1495,51 @@ configuration file in
 .tag)
 .\}
 .
+.if \n[sgimips] \{\
+.Pp
+The following are included in the
+.Pa sgimips/installation
+directory:
+.
+.(tag diskimage/
+.It Pa diskimage/
+.	(tag diskimage.tgz
+.	It Pa diskimage.gz
+FFS disk image of the installation filesystem.
+.	tag)
+.It Pa netboot/
+.	(tag diskimage.tgz
+.	It Pa diskimage.tgz
+Minimal file set necessary for NFS-root installations; to be extraced on the 
+NFS server.
+.	tag)
+.tag)
+.
+.Pp
+.
+The following are included in the
+.Pa sgimips/binary/kernel
+directory:
+.
+.(tag netbsd-INDY_INSTALL.symbols.gz
+.It Pa netbsd.ecoff-GENERIC_INDY.hz
+An ECOFF
+version of the 
+.Li GENERIC_INDY
+kernel (gzipped).  This kernel can be used when booting machines
+whoose PROMs do not understand the ELF binary format.
+.It Pa netbsd-INDY_INSTALL.gz
+A gzipped
+.Li INDY_INSTALL
+kernel, which includes an embedded ramdisk with the installation tools.
+.It Pa netbsd-INDY_INSTALL.ecoff.gz
+An ECOFF version of the
+.Li netbsd-INDY_INSTALL kernel (also gzipped).
+.It Pa netbsd-INDY_INSTALL.symbols.gz
+Symbols for
+.Pa netbsd-INDY_INSTALL.gz .
+.tag)
+.\}
 .
 .if \n[sparc] \{\
 .(Note
