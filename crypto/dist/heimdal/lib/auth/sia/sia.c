@@ -33,7 +33,7 @@
 
 #include "sia_locl.h"
 
-RCSID("$Id: sia.c,v 1.1.1.3 2001/02/11 13:51:51 assar Exp $");
+RCSID("$Id: sia.c,v 1.1.1.4 2001/06/19 22:08:35 assar Exp $");
 
 int 
 siad_init(void)
@@ -493,7 +493,7 @@ siad_chg_password (sia_collect_func_t *collect,
     char new_pw2[MAX_KPW_LEN+1];
     static struct et_list *et_list;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     SIA_DEBUG(("DEBUG", "siad_chg_password"));
     if(collect == NULL)

@@ -37,7 +37,7 @@
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$Id: asn1_print.c,v 1.1.1.3 2001/02/11 13:51:36 assar Exp $");
+RCSID("$Id: asn1_print.c,v 1.1.1.4 2001/06/19 22:08:13 assar Exp $");
 
 static struct et_list *et_list;
 
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 {
     int optind = 0;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     initialize_asn1_error_table_r (&et_list);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: creds.c,v 1.1.1.2 2000/08/02 19:59:26 assar Exp $");
+RCSID("$Id: creds.c,v 1.1.1.3 2001/06/19 22:08:19 assar Exp $");
 
 krb5_error_code
 krb5_free_cred_contents (krb5_context context, krb5_creds *c)
@@ -108,8 +108,10 @@ krb5_copy_creds (krb5_context context,
     krb5_creds *c;
 
     c = malloc (sizeof (*c));
-    if (c == NULL)
+    if (c == NULL) {
+	krb5_set_error_string (context, "malloc: out of memory");
 	return ENOMEM;
+    }
     memset (c, 0, sizeof(*c));
     *outcred = c;
     return krb5_copy_creds_contents (context, incred, c);

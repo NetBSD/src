@@ -32,12 +32,12 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: hdb-ldap.c,v 1.1.1.3 2001/02/11 13:51:40 assar Exp $");
+RCSID("$Id: hdb-ldap.c,v 1.1.1.4 2001/06/19 22:08:16 assar Exp $");
 
 #ifdef OPENLDAP
 
-#include <ldap.h>
 #include <lber.h>
+#include <ldap.h>
 #include <ctype.h>
 #include <sys/un.h>
 

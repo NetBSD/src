@@ -34,7 +34,7 @@
 #include "make_cmds.h"
 #include <getarg.h>
 
-RCSID("$Id: make_cmds.c,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $");
+RCSID("$Id: make_cmds.c,v 1.1.1.3 2001/06/19 22:08:33 assar Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -213,7 +213,7 @@ main(int argc, char **argv)
 {
     int optind = 0;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

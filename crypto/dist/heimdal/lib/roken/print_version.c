@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: print_version.c,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $");
+RCSID("$Id: print_version.c,v 1.1.1.4 2001/06/19 22:08:25 assar Exp $");
 #endif
 #include "roken.h"
 
@@ -49,7 +49,7 @@ print_version(const char *progname)
     int i;
     
     if(progname == NULL)
-	progname = __progname;
+	progname = getprogname();
     
     if(num_args == 0)
 	msg = "no version information";

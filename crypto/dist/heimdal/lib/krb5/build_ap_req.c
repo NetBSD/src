@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: build_ap_req.c,v 1.1.1.2 2000/08/02 19:59:24 assar Exp $");
+RCSID("$Id: build_ap_req.c,v 1.1.1.3 2001/06/19 22:08:19 assar Exp $");
 
 krb5_error_code
 krb5_build_ap_req (krb5_context context,
@@ -68,9 +68,10 @@ krb5_build_ap_req (krb5_context context,
 
   retdata->length = length_AP_REQ(&ap);
   retdata->data   = malloc(retdata->length);
-  if(retdata->data == NULL)
+  if(retdata->data == NULL) {
+      krb5_set_error_string(context, "malloc: out of memory");
       ret = ENOMEM;
-  else
+  } else
       encode_AP_REQ((unsigned char *)retdata->data + retdata->length - 1,
 		    retdata->length, &ap, &len);
   free_AP_REQ(&ap);

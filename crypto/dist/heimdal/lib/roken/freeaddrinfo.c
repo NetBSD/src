@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: freeaddrinfo.c,v 1.1.1.2 2000/08/02 19:59:48 assar Exp $");
+RCSID("$Id: freeaddrinfo.c,v 1.1.1.3 2001/06/19 22:08:24 assar Exp $");
 #endif
 
 #include "roken.h"
@@ -45,8 +45,13 @@ RCSID("$Id: freeaddrinfo.c,v 1.1.1.2 2000/08/02 19:59:48 assar Exp $");
 void
 freeaddrinfo(struct addrinfo *ai)
 {
-    for (; ai != NULL; ai = ai->ai_next) {
+    struct addrinfo *tofree;
+
+    while(ai != NULL) {
 	free (ai->ai_canonname);
 	free (ai->ai_addr);
+	tofree = ai;
+	ai = ai->ai_next;
+	free (tofree);
     }
 }

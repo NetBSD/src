@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: ticket.c,v 1.1.1.2 2000/08/02 19:59:42 assar Exp $");
+RCSID("$Id: ticket.c,v 1.1.1.3 2001/06/19 22:08:23 assar Exp $");
 
 krb5_error_code
 krb5_free_ticket(krb5_context context,
@@ -52,8 +52,10 @@ krb5_copy_ticket(krb5_context context,
 {
     krb5_error_code ret;
     krb5_ticket *tmp = malloc(sizeof(*tmp));
-    if(tmp == NULL)
+    if(tmp == NULL) {
+	krb5_set_error_string (context, "malloc: out of memory");
 	return ENOMEM;
+    }
     if((ret = copy_EncTicketPart(&from->ticket, &tmp->ticket))){
 	free(tmp);
 	return ret;

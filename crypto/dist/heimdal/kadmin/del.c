@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: del.c,v 1.1.1.3 2001/02/11 13:51:32 assar Exp $");
+RCSID("$Id: del.c,v 1.1.1.4 2001/06/19 22:08:08 assar Exp $");
 
 static int
 do_del_entry(krb5_principal principal, void *data)
@@ -75,6 +75,6 @@ del_entry(int argc, char **argv)
     }
 
     for(i = 1; i < argc; i++)
-	ret = foreach_principal(argv[i], do_del_entry, NULL);
+	ret = foreach_principal(argv[i], do_del_entry, "del", NULL);
     return 0;
 }

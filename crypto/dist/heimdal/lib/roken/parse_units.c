@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: parse_units.c,v 1.1.1.2 2000/08/02 19:59:53 assar Exp $");
+RCSID("$Id: parse_units.c,v 1.1.1.3 2001/06/19 22:08:25 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -84,7 +84,8 @@ parse_something (const char *s, const struct units *units,
 	    ++p;
 
 	val = strtod (p, &next); /* strtol(p, &next, 0); */
-	if (val == 0 && p == next) {
+	if (p == next) {
+	    val = 0;
 	    if(!accept_no_val_p)
 		return -1;
 	    no_val_p = 1;

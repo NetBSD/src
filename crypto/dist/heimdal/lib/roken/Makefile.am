@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $
+# $Id: Makefile.am,v 1.1.1.4 2001/06/19 22:08:23 assar Exp $
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
@@ -10,7 +10,7 @@ ACLOCAL_AMFLAGS = -I ../../cf
 CLEANFILES = roken.h make-roken.c $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
-libroken_la_LDFLAGS = -version-info 11:1:2
+libroken_la_LDFLAGS = -version-info 12:0:3
 
 noinst_PROGRAMS = make-roken
 
@@ -34,6 +34,7 @@ parse_bytes_test_LDADD = $(common_LDADD)
 
 libroken_la_SOURCES =		\
 	base64.c		\
+	bswap.c			\
 	concat.c		\
 	emalloc.c		\
 	environment.c		\

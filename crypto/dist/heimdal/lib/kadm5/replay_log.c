@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998, 1999, 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,10 @@
 
 #include "iprop.h"
 
-RCSID("$Id: replay_log.c,v 1.1.1.2 2000/08/02 19:59:22 assar Exp $");
+RCSID("$Id: replay_log.c,v 1.1.1.3 2001/06/19 22:08:18 assar Exp $");
+
+int start_version = -1;
+int end_version = -1;
 
 static void
 apply_entry(kadm5_server_context *server_context,
@@ -45,6 +48,12 @@ apply_entry(kadm5_server_context *server_context,
 {
     krb5_error_code ret;
 
+    if((start_version != -1 && ver < start_version) ||
+       (end_version != -1 && ver > end_version)) {
+	/* XXX skip this entry */
+	(*sp->seek)(sp, len, SEEK_CUR);
+	return;
+    }
     printf ("ver %u... ", ver);
     fflush (stdout);
 
@@ -60,6 +69,8 @@ apply_entry(kadm5_server_context *server_context,
 int version_flag;
 int help_flag;
 struct getargs args[] = {
+    { "start-version", 0, arg_integer, &start_version, "start replay with this version" },
+    { "end-version", 0, arg_integer, &end_version, "end replay with this version" },
     { "version", 0, arg_flag, &version_flag },
     { "help", 0, arg_flag, &help_flag }
 };

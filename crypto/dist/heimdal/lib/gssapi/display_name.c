@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: display_name.c,v 1.1.1.2 2000/08/02 19:59:08 assar Exp $");
+RCSID("$Id: display_name.c,v 1.1.1.3 2001/06/19 22:08:14 assar Exp $");
 
 OM_uint32 gss_display_name
            (OM_uint32 * minor_status,
@@ -50,13 +50,17 @@ OM_uint32 gss_display_name
   kret = krb5_unparse_name (gssapi_krb5_context,
 			    input_name,
 			    &buf);
-  if (kret)
+  if (kret) {
+    *minor_status = kret;
+    gssapi_krb5_set_error_string ();
     return GSS_S_FAILURE;
+  }
   len = strlen (buf);
   output_name_buffer->length = len;
   output_name_buffer->value  = malloc(len + 1);
   if (output_name_buffer->value == NULL) {
     free (buf);
+    *minor_status = ENOMEM;
     return GSS_S_FAILURE;
   }
   memcpy (output_name_buffer->value, buf, len);

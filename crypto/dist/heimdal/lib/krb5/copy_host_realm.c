@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: copy_host_realm.c,v 1.1.1.2 2000/08/02 19:59:25 assar Exp $");
+RCSID("$Id: copy_host_realm.c,v 1.1.1.3 2001/06/19 22:08:19 assar Exp $");
 
 /*
  * Copy the list of realms from `from' to `to'.
@@ -51,14 +51,17 @@ krb5_copy_host_realm(krb5_context context,
 	++n;
     ++n;
     *to = malloc (n * sizeof(**to));
-    if (*to == NULL)
+    if (*to == NULL) {
+	krb5_set_error_string (context, "malloc: out of memory");
 	return ENOMEM;
+    }
     for (i = 0; i < n; ++i)
 	(*to)[i] = NULL;
     for (i = 0, p = from; *p != NULL; ++p, ++i) {
 	(*to)[i] = strdup(*p);
 	if ((*to)[i] == NULL) {
 	    krb5_free_host_realm (context, *to);
+	    krb5_set_error_string (context, "malloc: out of memory");
 	    return ENOMEM;
 	}
     }
