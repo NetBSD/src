@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.4 2003/11/17 13:20:06 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.5 2003/11/18 01:40:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.4 2003/11/17 13:20:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.5 2003/11/18 01:40:18 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.4 2003/11/17 13:20:06 manu Exp $")
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_notify.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_services.h>
 
 static void mach_siginfo_to_exception(const struct ksiginfo *, int *);
 
@@ -260,7 +262,11 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 	int behavior, flavor;
 	mach_msg_header_t *msgh;
 	size_t msglen;
-	struct mach_right *exc_right;
+	struct mach_right *exc_mr;
+	struct mach_emuldata *med;
+	struct mach_right *kernel_mr;
+	struct lwp *catcher_lwp;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (exc_port->mp_datatype != MACH_MP_EXC_FLAGS)
@@ -268,8 +274,16 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 #endif
 	behavior = (int)exc_port->mp_data >> 16;
 	flavor = (int)exc_port->mp_data & 0xffff;
-	exc_right = mach_right_get(exc_port, l, MACH_PORT_TYPE_SEND, 0);
 
+	/* 
+	 * We want the port names in the target process, that is, 
+	 * the process with receive right for exc_port.
+	 */
+	catcher_lwp = exc_port->mp_recv->mr_lwp;
+	med = catcher_lwp->l_proc->p_emuldata;
+	exc_mr = mach_right_get(exc_port, catcher_lwp, MACH_PORT_TYPE_SEND, 0);
+	kernel_mr = mach_right_get(med->med_kernel, 
+	    catcher_lwp, MACH_PORT_TYPE_SEND, 0);
 
 	switch (behavior) {
 	case MACH_EXCEPTION_DEFAULT: {
@@ -284,7 +298,8 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 		req->req_msgh.msgh_size = 
 		    sizeof(*req) - sizeof(req->req_trailer);
-		req->req_msgh.msgh_local_port = exc_right->mr_name;
+		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
+		req->req_msgh.msgh_local_port = exc_mr->mr_name;
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_MSGID;
 		req->req_body.msgh_descriptor_count = 2;
 		req->req_thread.name = thread->mr_name;
@@ -313,7 +328,8 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 		req->req_msgh.msgh_size = 
 		    sizeof(*req) - sizeof(req->req_trailer);
-		req->req_msgh.msgh_local_port = exc_right->mr_name;
+		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
+		req->req_msgh.msgh_local_port = exc_mr->mr_name;
 		req->req_msgh.msgh_id = MACH_EXCEPTION_STATE;
 		req->req_exc = exc;
 		req->req_codecount = 2;
@@ -342,7 +358,8 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		    MACH_MSGH_REMOTE_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 		req->req_msgh.msgh_size = 
 		    sizeof(*req) - sizeof(req->req_trailer);
-		req->req_msgh.msgh_local_port = exc_right->mr_name;
+		req->req_msgh.msgh_remote_port = kernel_mr->mr_name;
+		req->req_msgh.msgh_local_port = exc_mr->mr_name;
 		req->req_msgh.msgh_id = MACH_EXC_RAISE_STATE_IDENTITY_MSGID;
 		req->req_body.msgh_descriptor_count = 2;
 		req->req_thread.name = thread->mr_name;
@@ -371,8 +388,18 @@ mach_exception(l, ksi, exc_port, exc, task, thread)
 		break;
 	}
 		
-	(void)mach_message_get(msgh, msglen, exc_port, l);
+	(void)mach_message_get(msgh, msglen, exc_port, NULL);
 	wakeup(exc_port->mp_recv->mr_sethead);
+
+	/* 
+	 * The thread that caused the exception is now 
+	 * supposed to wait for a reply to its message.
+	 * This is to avoid an endless loop on the same
+	 * exception.
+	 */
+	error = tsleep(kernel_mr->mr_port, PZERO|PCATCH, "mach_exc", 0);
+	if ((error == ERESTART) || (error == EINTR))
+		return error;
 
 	return 0;
 }
@@ -449,4 +476,63 @@ mach_siginfo_to_exception(ksi, code)
 		break;
 	}
 	return;
+}
+
+int
+mach_exception_raise(args)
+	struct mach_trap_args *args;
+{
+	mach_exception_raise_reply_t *rep;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+	struct mach_emuldata *med;
+
+	/*
+	 * No typo here: the reply is in the sent message. 
+	 * The kernel is acting as a client that gets the
+	 * reply message to its exception message.
+	 */
+	rep = args->smsg;
+
+	/*
+	 * Sanity check the remote port: it should be a 
+	 * right to the process' kernel port 
+	 */
+	mn = rep->rep_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return MACH_SEND_INVALID_RIGHT;
+
+	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
+	if (med->med_kernel != mr->mr_port) {
+#ifdef DEBUG_MACH
+		printf("mach_exception_raise: remote port not kernel port\n");
+#endif
+		return 0;
+	}
+
+	/* 
+	 * This message is sent by the process catching the
+	 * exception to release the process that raised the exception.
+	 * We wake it up if the return value is 0 (no error), else
+	 * we should ignore this message. 
+	 */
+	if (rep->rep_retval == 0)
+		wakeup(mr->mr_port);
+
+	return 0;
+}
+
+int
+mach_exception_raise_state(args)
+	struct mach_trap_args *args;
+{
+	return mach_exception_raise(args);
+}
+
+int
+mach_exception_raise_state_identity(args)
+	struct mach_trap_args *args;
+{
+	return mach_exception_raise(args);
 }

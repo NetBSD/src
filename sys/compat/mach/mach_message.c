@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.29 2003/11/15 22:55:35 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.30 2003/11/18 01:40:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.29 2003/11/15 22:55:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.30 2003/11/18 01:40:18 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -180,15 +180,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 		if (mp->mp_flags & MACH_MP_INKERNEL) {
 			struct mach_trap_args args;
 			mach_msg_header_t *rm;
-
-			/*
-			 * Check that the local port is valid, else
-			 * we will not be able to send the reply
-			 */
-			if (lr == NULL) {
-				*retval = MACH_SEND_INVALID_REPLY;
-				goto out1;
-			}
+			size_t min_reqlen, max_replen;
 
 			/* 
 			 * Look for the function that will handle it,
@@ -207,6 +199,35 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 				*retval = MACH_SEND_INVALID_DEST;
 				goto out1;
 			}
+			min_reqlen = srv->srv_reqlen;
+			max_replen = srv->srv_replen;
+
+			/*
+			 * Special case when the kernel behaves as
+			 * the client: replies to exceptions and
+			 * notifications. There will be no reply,
+			 * as we already receive a reply.
+			 * - request and reply are swapped
+			 * - there will be no reply, so set lr to NULL.
+			 * - skip the lr == NULL test
+			 * XXX This is inelegant.
+			 */
+			if ((sm->msgh_id >= 2501) && (sm->msgh_id <= 2503)) {
+				min_reqlen = srv->srv_replen;
+				max_replen = srv->srv_reqlen;
+				lr = NULL;
+				goto skip_null_lr;
+			}
+
+			/*
+			 * Check that the local port is valid, else
+			 * we will not be able to send the reply
+			 */
+			if (lr == NULL) {
+				*retval = MACH_SEND_INVALID_REPLY;
+				goto out1;
+			}
+skip_null_lr:
 
 			/*
 			 * Sanity check message length. We do not want the
@@ -214,11 +235,11 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * 1) use kernel memory located after
 			 *    the end of the request message.
 			 */
-			if (send_size < srv->srv_reqlen) {
+			if (send_size < min_reqlen) {
 #ifdef DEBUG_MACH
 				printf("mach server %s: smsg overflow: "
 				    "send = %d, min = %d\n",
-				    srv->srv_name, send_size, srv->srv_reqlen);
+				    srv->srv_name, send_size, min_reqlen);
 #endif
 				*retval = MACH_SEND_MSG_TOO_SMALL;
 				goto out1;
@@ -228,13 +249,13 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * 2) give away random kernel data to the user program
 			 *    when the reply message is copied out.
 			 */
-			if (rcv_size > srv->srv_replen) {
+			if (rcv_size > max_replen) {
 #ifdef DEBUG_MACH
 				printf("mach server %s: rmsg overflow: "
 				    "recv = %d, max = %d\n",
-				    srv->srv_name, rcv_size, srv->srv_replen);
+				    srv->srv_name, rcv_size, max_replen);
 #endif
-				rcv_size = srv->srv_replen;
+				rcv_size = max_replen;
 			}
 
 			/*
@@ -249,9 +270,13 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * Invoke the server. We give it the opportunity
 			 * to shorten rcv_size if there is less data in
 			 * the reply than what the sender expected.
+			 * If lr is NULL, this is a no reply operation.
 			 */
-			rm = malloc(srv->srv_replen, 
-			    M_EMULDATA, M_WAITOK | M_ZERO);
+			if (lr != NULL)
+				rm = malloc(max_replen, 
+				    M_EMULDATA, M_WAITOK | M_ZERO);
+			else
+				rm = NULL;
 
 			args.l = l;
 			args.smsg = sm;
@@ -261,14 +286,20 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			if ((*retval = (*srv->srv_handler)(&args)) != 0) 
 				goto out1;
 			
+			/*
+			 * No-reply opration: everything is done.
+			 */
+			if (lr == NULL)
+				goto out1;
+
 #ifdef DIAGNOSTIC
 			/* 
-			 * Catch potential bug in the server (santity
+			 * Catch potential bug in the server (sanity
 			 * check #3): did it output a larger message
 			 * then the one that was allocated?
 			 */
 			if ((SCARG(uap, option) & MACH_RCV_MSG) &&
-			    (rcv_size > srv->srv_replen)) {
+			    (rcv_size > max_replen)) {
 				uprintf("mach_msg: reply too big in %s\n",
 				    srv->srv_name);
 			}
@@ -290,8 +321,17 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 				    mach_bootstrap_port->mp_recv->mr_sethead);
 #endif
 			wakeup(mp->mp_recv->mr_sethead);
-			free(sm, M_EMULDATA);
 			*retval = 0;
+out1:
+			free(sm, M_EMULDATA);
+			/* 
+			 * Skip the recieve part and return now if
+			 * - there has been an error in the send part
+			 * - this is a no-reply operation (lr == NULL)
+			 */
+			if ((*retval != 0) || (lr == NULL))
+				return 0;
+
 		} else {
 			/* 
 			 * The message is not to be handled by the kernel. 
@@ -352,12 +392,6 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * Wakeup any process awaiting for this message
 			 */
 			wakeup(mp->mp_recv->mr_sethead);
-		}
-
-out1:
-		if (*retval != 0) {
-			free(sm, M_EMULDATA);
-			return 0;
 		}
 	}
 

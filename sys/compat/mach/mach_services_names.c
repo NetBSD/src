@@ -1,14 +1,14 @@
-/* $NetBSD: mach_services_names.c,v 1.3 2003/11/17 01:52:14 manu Exp $ */
+/* $NetBSD: mach_services_names.c,v 1.4 2003/11/18 01:40:18 manu Exp $ */
 
 /*
  * Mach services names. This file is not built
  * by the kernel, it is included by kdump sources.
  *
- * created from  $NetBSD: mach_services_names.c,v 1.3 2003/11/17 01:52:14 manu Exp $
+ * created from  $NetBSD: mach_services_names.c,v 1.4 2003/11/18 01:40:18 manu Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.3 2003/11/17 01:52:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.4 2003/11/18 01:40:18 manu Exp $");
 
 struct mach_service_name {
 	int srv_id;
@@ -113,6 +113,9 @@ struct mach_service_name mach_services_names[] = {
 	{2403, "exception_raise_state_identity"},
 	{2450, "unimpl. samples"},
 	{2451, "unimpl. notices"},
+	{2501, "exception_raise"},
+	{2502, "exception_raise_state"},
+	{2503, "exception_raise_state_identity"},
 	{2800, "io_object_get_class"},
 	{2801, "io_object_conforms_to"},
 	{2802, "io_iterator_next"},

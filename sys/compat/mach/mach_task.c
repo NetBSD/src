@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.35 2003/11/17 13:20:06 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.36 2003/11/18 01:40:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.35 2003/11/17 13:20:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.36 2003/11/18 01:40:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -377,7 +377,7 @@ mach_task_get_exception_ports(args)
 		rep->rep_old_handler[j].type = 0;
 		rep->rep_masks[j] = 1 << i;
 		rep->rep_old_behaviors[j] = (int)mr->mr_port->mp_data >> 16;
-		rep->rep_old_flavors[j] = (int)mr->mr_port->mp_data & 0xff;
+		rep->rep_old_flavors[j] = (int)mr->mr_port->mp_data & 0xffff;
 
 		j++;
 	}

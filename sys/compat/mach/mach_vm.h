@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.21 2003/11/16 01:14:07 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.22 2003/11/18 01:40:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -213,28 +213,26 @@ typedef struct {
 
 /*
  * make_memory_entry_64 
- * It is a bit difficult to see the difference between 32 bits
- * and 64 bits size and offset in Mach header files (the
- * difference seems to be only experimental)
  */
+
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_msg_body_t req_body;
 	mach_msg_port_descriptor_t req_parent_entry;
 	mach_ndr_record_t req_ndr;
-	mach_vm_size_64_t req_size;
-	mach_vm_offset_64_t req_offset;
+	mach_memory_object_size_t req_size;
+	mach_memory_object_offset_t req_offset;
 	mach_vm_prot_t req_perm;
-} mach_make_memory_entry_64_request_t;
+} __attribute__((packed)) mach_make_memory_entry_64_request_t;
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
 	mach_msg_body_t rep_body;
 	mach_msg_port_descriptor_t rep_obj_handle;
 	mach_ndr_record_t rep_ndr;
-	mach_vm_size_64_t rep_size;
+	mach_memory_object_size_t rep_size;
 	mach_msg_trailer_t rep_trailer;
-} mach_make_memory_entry_64_reply_t;
+} __attribute__((packed)) mach_make_memory_entry_64_reply_t;
 
 /* vm_region */
 
