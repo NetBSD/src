@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.33 1994/10/30 21:48:10 cgd Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.34 1994/11/22 01:31:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -154,6 +154,41 @@ bufinit()
 	}
 }
 
+__inline struct buf *
+bio_doread(vp, blkno, size, cred, async)
+	struct vnode *vp;
+	daddr_t blkno;
+	int size;
+	struct ucred *cred;
+	int async;
+{
+	register struct buf *bp;
+
+	bp = getblk(vp, blkno, size, 0, 0);
+
+	/*
+	 * If buffer does not have data valid, start a read.
+	 * Note that if buffer is B_INVAL, getblk() won't return it.
+	 * Therefore, it's valid if it's I/O has completed or been delayed.
+	 */
+	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
+		/* Start I/O for the buffer (keeping credentials). */
+		SET(bp->b_flags, B_READ | async);
+		if (cred != NOCRED && bp->b_rcred == NOCRED) {
+			crhold(cred);
+			bp->b_rcred = cred;
+		}
+		VOP_STRATEGY(bp);
+
+		/* Pay for the read. */
+		curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
+	} else if (async) {
+		brelse(bp);
+	}
+
+	return (bp);
+}
+
 /*
  * Read a disk block.
  * This algorithm described in Bach (p.54).
@@ -168,26 +203,7 @@ bread(vp, blkno, size, cred, bpp)
 	register struct buf *bp;
 
 	/* Get buffer for block. */
-	bp = *bpp = getblk(vp, blkno, size, 0, 0);
-
-	/*
-	 * If buffer data valid, return it.
-	 * Note that if buffer is B_INVAL, getblk() won't return it.
-	 * Therefore, it's valid if it's I/O has completed or been delayed.
-	 */
-	if (ISSET(bp->b_flags, (B_DONE | B_DELWRI)))
-		return (0);
-
-	/* Start some I/O for the buffer (keeping credentials, if needed). */
-	SET(bp->b_flags, B_READ);
-	if (cred != NOCRED && bp->b_rcred == NOCRED) {
-		crhold(cred);
-		bp->b_rcred = cred;
-	}
-	VOP_STRATEGY(bp);
-
-	/* Pay for the read. */
-	curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
+	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
 	/* Wait for the read to complete, and return result. */
 	return (biowait(bp));
@@ -205,32 +221,10 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 	struct ucred *cred;
 	struct buf **bpp;
 {
-	struct buf *bp, *rabp;
+	register struct buf *bp;
 	int i;
 
-	bp = NULL;		/* We don't have a buffer yet. */
-
-	/* If first block not in cache, get buffer for it and read it in. */
-	if (!incore(vp, blkno)) {
-		bp = *bpp = getblk(vp, blkno, size, 0, 0);
-
-		/*
-	 	 * If buffer data not valid, we have to read it in.
-		 * If it is valid, just hold on to the buffer pointer.
-	 	 */
-		if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
-			/* Start I/O for the buffer (keeping credentials). */
-			SET(bp->b_flags, B_READ);
-			if (cred != NOCRED && bp->b_rcred == NOCRED) {
-				crhold(cred);
-				bp->b_rcred = cred;
-			}
-			VOP_STRATEGY(bp);
-
-			/* Pay for the read. */
-			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
-		}
-	}
+	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
 	/*
 	 * For each of the read-ahead blocks, start a read, if necessary.
@@ -241,34 +235,8 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 			continue;
 
 		/* Get a buffer for the read-ahead block */
-		rabp = getblk(vp, rablks[i], rasizes[i], 0, 0);
-
-		/*
-	 	 * If buffer data valid, just release the buffer back into
-		 * the cache.  If it's not valid, we have to read it in.
-	 	 */
-		if (ISSET(rabp->b_flags, (B_DONE | B_DELWRI)))
-			brelse(rabp);
-		else {
-			/* Start I/O for the buffer (keeping credentials). */
-			SET(rabp->b_flags, (B_READ | B_ASYNC));
-			if (cred != NOCRED && rabp->b_rcred == NOCRED) {
-				crhold(cred);
-				rabp->b_rcred = cred;
-			}
-			VOP_STRATEGY(rabp);
-
-			/* Pay for the read. */
-			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
-		}
+		(void) bio_doread(vp, rablks[i], rasizes[i], cred, B_ASYNC);
 	}
-
-	/*
-	 * If first block was originally in the cache (i.e. we *still* don't
-	 * have buffer), use bread to get and return it.
-	 */
-	if (bp == NULL)
-		return (bread(vp, blkno, size, cred, bpp));
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
 	return (biowait(bp));
@@ -286,6 +254,7 @@ breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
 	struct ucred *cred;
 	struct buf **bpp;
 {
+
 	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));	
 }
 
@@ -297,62 +266,59 @@ bwrite(bp)
 {
 	int rv, s, sync, wasdelayed;
 
-	rv = 0;
-
 	/* Remember buffer type, to switch on it later. */
 	sync = !ISSET(bp->b_flags, B_ASYNC);
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
-	/*
-	 * If not synchronous, pay for the I/O operation and make
-	 * sure the buf is on the correct vnode queue.  We have
-	 * to do this now, because if we don't, the vnode may not
-	 * be properly notified that it's i/o has completed.
-	 */
-	if (!sync)
+	if (!sync) {
+		/*
+		 * If not synchronous, pay for the I/O operation and make
+		 * sure the buf is on the correct vnode queue.  We have
+		 * to do this now, because if we don't, the vnode may not
+		 * be properly notified that its I/O has completed.
+		 */
 		if (wasdelayed)
 			reassignbuf(bp, bp->b_vp);
 		else
 			curproc->p_stats->p_ru.ru_oublock++;
+	}
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	SET(bp->b_flags, B_WRITEINPROG);
 	bp->b_vp->v_numoutput++;
 	VOP_STRATEGY(bp);
 
-	/*
-	 * If I/O was synchronous, wait for it to complete.
-	 */
-	if (sync)
+	if (sync) {
+		/*
+		 * If I/O was synchronous, wait for it to complete.
+		 */
 		rv = biowait(bp);
 
-	/*
-	 * Pay for the I/O operation, if it's not been paid for, and
-	 * make sure it's on the correct vnode queue. (async operatings
-	 * were payed for above.)
-	 */
-	if (sync)
+		/*
+		 * Pay for the I/O operation, if it's not been paid for, and
+		 * make sure it's on the correct vnode queue. (async operatings
+		 * were payed for above.)
+		 */
 		if (wasdelayed)
 			reassignbuf(bp, bp->b_vp);
 		else
 			curproc->p_stats->p_ru.ru_oublock++;
 
-	/* Release the buffer, or, if async, make sure it gets reused ASAP. */
-	if (sync)
+		/* Release the buffer. */
 		brelse(bp);
-	else if (wasdelayed) {
-		s = splbio();
-		SET(bp->b_flags, B_AGE);
-		splx(s);
+
+		return (rv);
+	} else {
+		return (0);
 	}
-	return (rv);
 }
 
 int
 vn_bwrite(ap)
 	struct vop_bwrite_args *ap;
 {
+
 	return (bwrite(ap->a_bp));
 }
 
@@ -549,13 +515,12 @@ start:
 		splx(s);
 		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
 			goto start;
+		binshash(bp, BUFHASH(vp, blkno));
 		allocbuf(bp, size);
 		bp->b_blkno = bp->b_lblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
 		splx(s);
-		bremhash(bp);
-		binshash(bp, BUFHASH(vp, blkno));
 	}
 	return (bp);
 }
@@ -572,12 +537,8 @@ geteblk(size)
 	while ((bp = getnewbuf(0, 0)) == 0)
 		;
 	SET(bp->b_flags, B_INVAL);
-	bremhash(bp);
 	binshash(bp, &invalhash);
 	allocbuf(bp, size);
-	bp->b_bcount = 0;
-	bp->b_error = 0;
-	bp->b_resid = 0;
 
 	return (bp);
 }
@@ -616,6 +577,8 @@ allocbuf(bp, size)
 		/* find a buffer */
 		while ((nbp = getnewbuf(0, 0)) == NULL)
 			;
+		SET(nbp->b_flags, B_INVAL);
+		binshash(nbp, &invalhash);
 
 		/* and steal its pages, up to the amount we need */
 		amt = min(nbp->b_bufsize, (desired_size - bp->b_bufsize));
@@ -632,13 +595,7 @@ allocbuf(bp, size)
 		if (nbp->b_bufsize < 0)
 			panic("allocbuf: negative bufsize");
 #endif
-		if (nbp->b_bufsize == 0) {
-			bremhash(nbp);
-			binshash(nbp, &invalhash);
-			SET(nbp->b_flags, B_INVAL);
-			nbp->b_error = 0;
-			nbp->b_dev = NODEV;
-		}
+
 		brelse(nbp);
 	}
 
@@ -737,6 +694,7 @@ start:
 		bp->b_wcred = NOCRED;
 	}
 	
+	bremhash(bp);
 	return (bp); 
 }
 
