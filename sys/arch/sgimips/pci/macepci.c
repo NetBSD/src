@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.9 2003/01/06 06:21:11 rafal Exp $	*/
+/*	$NetBSD: macepci.c,v 1.10 2003/01/19 23:08:54 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -66,7 +66,7 @@
 
 
 #define PAGE_ALIGN(x)	(((x) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
-#define MEG_ALIGN(x)	(((x) + 0x1000000 - 1) & ~(0x1000000 - 1))
+#define MEG_ALIGN(x)	(((x) + 0x100000 - 1) & ~(0x100000 - 1))
 
 #include "pci.h"
 
@@ -114,10 +114,9 @@ macepci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct mace_attach_args *maa = aux;
 	struct pcibus_attach_args pba;
-	pcitag_t devtag;
 	u_int32_t control;
-	int rev;
-	int i;
+	pcitag_t devtag;
+	int device, rev;
 
 	rev = bus_space_read_4(maa->maa_st, maa->maa_sh, MACEPCI_REVISION);
 	printf(": rev %d\n", rev);
@@ -132,10 +131,44 @@ macepci_attach(parent, self, aux)
         *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_SOFTINT) = 0;
 
 	/* Only fix up the PCI slot, leave SCSI 0 & 1 as is */
-	for (i = 3; i < 4; i++)
-	{
-        	devtag = pci_make_tag(0, 0, i, 0);
-		pciaddr_resource_manage(0, devtag, NULL, NULL);
+	for (device = 3; device < 4; device++) {
+		const struct pci_quirkdata *qd;
+		int function, nfuncs;
+		pcireg_t bhlcr, id;
+
+		devtag = pci_make_tag(0, 0, device, 0);
+		id = pci_conf_read(pc, devtag, PCI_ID_REG);
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
+		bhlcr = pci_conf_read(pc, devtag, PCI_BHLC_REG);
+
+		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+		    (qd != NULL &&
+		     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			nfuncs = 8;
+		else
+			nfuncs = 1;
+
+		for (function = 0; function < nfuncs; function++) {
+			devtag = pci_make_tag(0, 0, device, function);
+			id = pci_conf_read(pc, devtag, PCI_ID_REG);
+
+			/* Invalid vendor ID value? */
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+				continue;
+			/* Not invalid, but we've done this ~forever */
+			if (PCI_VENDOR(id) == 0)
+				continue;
+
+			pciaddr_resource_manage(0, devtag, NULL, NULL);
+		}
 	}
 
 	/*
