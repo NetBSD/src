@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.73 2002/11/29 12:58:16 lukem Exp $	*/
+/*	$NetBSD: namespace.h,v 1.74 2002/11/30 03:04:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -193,6 +193,7 @@
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fnmatch			_fnmatch
+#define fparseln		_fparseln
 #define fpgetmask		_fpgetmask
 #define fpgetround		_fpgetround
 #define fpgetsticky		_fpgetsticky
