@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.5 2002/02/02 15:31:58 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.6 2003/02/19 08:04:29 elric Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 
 /*
  * Copied from:  lib/libc/gen/getgrent.c
- *	NetBSD: getgrent.c,v 1.42 2002/02/02 15:21:29 lukem Exp
+ *     NetBSD: getgrent.c,v 1.46 2003/02/17 00:11:54 simonb Exp
  * and then gutted, leaving only /etc/group support.
  */
 
@@ -66,26 +66,45 @@ __weak_alias(setgroupent,_setgroupent)
 #include <stdlib.h>
 #include <string.h>
 
+struct group *_getgrent_user(const char *);
+
 static FILE		*_gr_fp;
 static struct group	_gr_group;
-static int		_gr_filesdone;
 static int		_gr_stayopen;
+static int		_gr_filesdone;
 
-static int grscan(int, gid_t, const char *);
+static int grscan(int, gid_t, const char *, const char *);
 static int grstart(void);
-static int grmatchline(int, gid_t, const char *);
+static int grmatchline(int, gid_t, const char *, const char *);
 
 #define	MAXGRP		200
 #define	MAXLINELENGTH	1024
-static char		*members[MAXGRP];
+
+static __aconst char	*members[MAXGRP];
 static char		grline[MAXLINELENGTH];
 
 struct group *
 getgrent(void)
 {
-	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL))
-		return (NULL);
-	return (&_gr_group);
+
+	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, NULL))
+ 		return (NULL);
+	return &_gr_group;
+}
+
+/*
+ * _getgrent_user() is designed only to be called by getgrouplist(3) and
+ * hence makes no guarantees about filling the entire structure that it
+ * returns.  It may only fill in the group name and gid fields.
+ */
+
+struct group *
+_getgrent_user(const char *user)
+{
+
+	if ((!_gr_fp && !grstart()) || !grscan(0, 0, NULL, user))
+ 		return (NULL);
+	return &_gr_group;
 }
 
 struct group *
@@ -94,11 +113,11 @@ getgrnam(const char *name)
 	int rval;
 
 	if (!grstart())
-		return(NULL);
-	rval = grscan(1, 0, name);
+		return NULL;
+	rval = grscan(1, 0, name, NULL);
 	if (!_gr_stayopen)
 		endgrent();
-	return(rval ? &_gr_group : NULL);
+	return (rval) ? &_gr_group : NULL;
 }
 
 struct group *
@@ -107,42 +126,46 @@ getgrgid(gid_t gid)
 	int rval;
 
 	if (!grstart())
-		return(NULL);
-	rval = grscan(1, gid, NULL);
+		return NULL;
+	rval = grscan(1, gid, NULL, NULL);
 	if (!_gr_stayopen)
 		endgrent();
-	return(rval ? &_gr_group : NULL);
+	return (rval) ? &_gr_group : NULL;
 }
 
 static int
 grstart(void)
 {
+
 	_gr_filesdone = 0;
 	if (_gr_fp) {
 		rewind(_gr_fp);
-		return(1);
+		return 1;
 	}
-	return((_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0);
+	return (_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0;
 }
 
 void
 setgrent(void)
 {
+
 	(void) setgroupent(0);
 }
 
 int
 setgroupent(int stayopen)
 {
+
 	if (!grstart())
-		return(0);
+		return 0;
 	_gr_stayopen = stayopen;
-	return(1);
+	return 1;
 }
 
 void
 endgrent(void)
 {
+
 	_gr_filesdone = 0;
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
@@ -151,8 +174,9 @@ endgrent(void)
 }
 
 static int
-grscan(int search, gid_t gid, const char *name)
+grscan(int search, gid_t gid, const char *name, const char *user)
 {
+
 	if (_gr_filesdone)
 		return 0;
 	for (;;) {
@@ -169,23 +193,22 @@ grscan(int search, gid_t gid, const char *name)
 				;
 			continue;
 		}
-		if (grmatchline(search, gid, name))
+		if (grmatchline(search, gid, name, user))
 			return 1;
 	}
 	/* NOTREACHED */
 }
 
 static int
-grmatchline(int search, gid_t gid, const char *name)
+grmatchline(int search, gid_t gid, const char *name, const char *user)
 {
 	unsigned long	id;
-	char		**m;
+	__aconst char	**m;
 	char		*cp, *bp, *ep;
 
 	/* name may be NULL if search is nonzero */
 
 	bp = grline;
-	memset(&_gr_group, 0, sizeof(_gr_group));
 	_gr_group.gr_name = strsep(&bp, ":\n");
 	if (search && name && strcmp(_gr_group.gr_name, name))
 		return 0;
@@ -220,5 +243,11 @@ grmatchline(int search, gid_t gid, const char *name)
 			cp = bp;
 	}
 	*m = NULL;
+	if (user) {
+		for (m = members; *m; m++)
+			if (!strcmp(user, *m))
+				return 1;
+		return 0;
+	}
 	return 1;
 }
