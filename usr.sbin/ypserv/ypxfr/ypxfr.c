@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.4 1997/07/18 21:57:24 thorpej Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.5 1997/10/07 15:00:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -57,8 +57,6 @@
 #include "ypdef.h"
 
 extern	char *__progname;		/* from crt0.o */
-extern	char *optarg;
-extern	int optind;
 
 DBM	*db;
 
@@ -184,9 +182,9 @@ main(argc, argv)
 
 	if (host == NULL) {
 		if (srcdomain == NULL)
-			status = yp_master(domain,map,&host);
+			status = yp_master(domain, map, &host);
 	        else
-			status = yp_master(srcdomain,map,&host);
+			status = yp_master(srcdomain, map, &host);
 
 		if (status == 0)
 			status = YPPUSH_SUCC;
@@ -198,16 +196,16 @@ main(argc, argv)
 
         yplog("Connect host: %s", host); 
 
-	client = yp_bind_host(host,YPPROG,YPVERS,0,1);
+	client = yp_bind_host(host, YPPROG, YPVERS, 0, 1);
 
-	status = get_remote_ordernum(client,domain,map,
-	    ordernum,&new_ordernum);
+	status = get_remote_ordernum(client, domain, map, ordernum,
+	    &new_ordernum);
 	
 
 	if (status == YPPUSH_SUCC) {
 		/* Create temporary db */
 		mktemp(mapname);
-		db = create_db(domain,map,mapname);
+		db = create_db(domain, map, mapname);
 		if (db == NULL)
 			status = YPPUSH_DBM;
 
@@ -304,7 +302,7 @@ get_local_ordernum(domain, map, lordernum)
 	char order[MAX_LAST_LEN+1];
 	struct stat finfo;
 	DBM *db;
-	datum k,v;
+	datum k, v;
 	int status;
 
 	status = YPPUSH_SUCC;
@@ -408,7 +406,7 @@ create_db(domain, map, temp_map)
 }
 
 int
-install_db(domain,map,temp_map)
+install_db(domain, map, temp_map)
 	char *domain, *map, *temp_map;
 {
 	char db_name[255], db_temp[255];
@@ -484,7 +482,7 @@ add_master(client, domain, map, db)
 	char keystr[] = YP_MASTER_KEY;
 	char *master;
 	int status;
-	datum key,val;
+	datum key, val;
 
 	master = NULL;
 
