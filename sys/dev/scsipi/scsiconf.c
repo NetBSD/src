@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.202 2003/04/19 19:16:06 fvdl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.203 2003/04/21 18:07:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.202 2003/04/19 19:16:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.203 2003/04/21 18:07:14 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,6 +539,9 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	/* improperly report DT-only sync mode */
 	 "IBM     ", "DXHS36D",		 ""},
+				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
+	{{T_DIRECT, T_FIXED,
+	 "IBM     ", "DXHS18Y",		 ""},
 				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "H3171-S2",	 ""},
