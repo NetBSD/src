@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.25 2002/08/23 08:14:20 kanaoka Exp $	*/
+/*	$NetBSD: externs.h,v 1.26 2003/06/18 20:51:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -381,7 +381,7 @@ void setcommandmode(void);
 
 /* utilities.c */
 void upcase(char *);
-int SetSockOpt(int, int , int , int );
+int SetSockOpt(int, int, int, int);
 void SetNetTrace(char *);
 void Dump(int, unsigned char *, int);
 void printoption(char *, int, int );

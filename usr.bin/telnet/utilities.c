@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.14 2002/09/23 12:48:05 mycroft Exp $	*/
+/*	$NetBSD: utilities.c,v 1.15 2003/06/18 20:51:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.14 2002/09/23 12:48:05 mycroft Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.15 2003/06/18 20:51:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,9 +86,8 @@ int	prettydump;
  *	Upcase (in place) the argument.
  */
 
-    void
-upcase(argument)
-    char *argument;
+void
+upcase(char *argument)
 {
     int c;
 
@@ -106,9 +105,8 @@ upcase(argument)
  * Compensate for differences in 4.2 and 4.3 systems.
  */
 
-    int
-SetSockOpt(fd, level, option, yesno)
-    int fd, level, option, yesno;
+int
+SetSockOpt(int fd, int level, int option, int yesno)
 {
 #ifndef	NOT43
     return setsockopt(fd, level, option,
@@ -129,9 +127,8 @@ SetSockOpt(fd, level, option, yesno)
 
 unsigned char NetTraceFile[256] = "(standard output)";
 
-    void
-SetNetTrace(file)
-    char *file;
+void
+SetNetTrace(char *file)
 {
     if (NetTrace && NetTrace != stdout)
 	fclose(NetTrace);
@@ -147,11 +144,8 @@ SetNetTrace(file)
     strcpy((char *)NetTraceFile, "(standard output)");
 }
 
-    void
-Dump(direction, buffer, length)
-    char direction;
-    unsigned char *buffer;
-    int length;
+void
+Dump(int direction, unsigned char *buffer, int length)
 {
 #   define BYTES_PER_LINE	32
 #   define min(x,y)	((x<y)? x:y)
@@ -198,10 +192,8 @@ Dump(direction, buffer, length)
 }
 
 
-	void
-printoption(direction, cmd, option)
-	char *direction;
-	int cmd, option;
+void
+printoption(char *direction, int cmd, int option)
 {
 	if (!showoptions)
 		return;
@@ -234,8 +226,8 @@ printoption(direction, cmd, option)
 	return;
 }
 
-    void
-optionstatus()
+void
+optionstatus(void)
 {
     int i;
     extern char will_wont_resp[], do_dont_resp[];
@@ -311,11 +303,11 @@ optionstatus()
 
 }
 
-    void
-printsub(direction, pointer, length)
-    char direction;	/* '<' or '>' */
-    unsigned char *pointer;	/* where suboption data sits */
-    int		  length;	/* length of suboption data */
+void
+printsub(
+    int direction,	/* '<' or '>' */
+    unsigned char *pointer,	/* where suboption data sits */
+    int		  length)	/* length of suboption data */
 {
     int i;
 #ifdef	ENCRYPTION
@@ -892,8 +884,8 @@ printsub(direction, pointer, length)
  *			way to the kernel (thus the select).
  */
 
-    void
-EmptyTerminal()
+void
+EmptyTerminal(void)
 {
 #if	defined(unix)
     struct pollfd set[1];
@@ -916,8 +908,8 @@ EmptyTerminal()
     }
 }
 
-    void
-SetForExit()
+void
+SetForExit(void)
 {
     setconnmode(0);
 #if	defined(TN3270)
@@ -943,18 +935,15 @@ SetForExit()
     setcommandmode();
 }
 
-    void
-Exit(returnCode)
-    int returnCode;
+void
+Exit(int returnCode)
 {
     SetForExit();
     exit(returnCode);
 }
 
-    void
-ExitString(string, returnCode)
-    char *string;
-    int returnCode;
+void
+ExitString(char *string, int returnCode)
 {
     SetForExit();
     fwrite(string, 1, strlen(string), stderr);
