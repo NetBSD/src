@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.10 1996/02/01 00:02:24 jtc Exp $	*/
+/*	$NetBSD: rcp.c,v 1.11 1997/05/26 15:18:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.10 1996/02/01 00:02:24 jtc Exp $";
+static char rcsid[] = "$NetBSD: rcp.c,v 1.11 1997/05/26 15:18:52 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,7 @@ toremote(targ, argc, argv)
 					    tuser ? tuser : pwd->pw_name);
 				else
 #endif
-					rem = rcmd(&host, port, pwd->pw_name,
+					rem = orcmd(&host, port, pwd->pw_name,
 					    tuser ? tuser : pwd->pw_name,
 					    bp, 0);
 				if (rem < 0)
@@ -375,7 +375,7 @@ tolocal(argc, argv)
 		    use_kerberos ? 
 			kerberos(&host, bp, pwd->pw_name, suser) : 
 #endif
-			rcmd(&host, port, pwd->pw_name, suser, bp, 0);
+			orcmd(&host, port, pwd->pw_name, suser, bp, 0);
 		(void)free(bp);
 		if (rem < 0) {
 			++errs;
@@ -809,7 +809,7 @@ again:
 			errx(1,
 			   "the -x option requires Kerberos authentication");
 #endif
-		rem = rcmd(host, port, locuser, user, bp, 0);
+		rem = orcmd(host, port, locuser, user, bp, 0);
 	}
 	return (rem);
 }
