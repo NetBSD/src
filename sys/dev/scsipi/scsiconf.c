@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.119 1998/12/05 19:39:23 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.120 1998/12/05 20:52:47 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -500,7 +500,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST19171FC", ""},            SDEV_NOMODESENSE},
+	 "SEAGATE ", "ST19171",          ""},     SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST34501FC       ", ""},     SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
