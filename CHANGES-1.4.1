@@ -1,6 +1,6 @@
-#	$NetBSD: CHANGES-1.4.1,v 1.1.2.5 1999/08/09 03:12:14 cgd Exp $
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.6 1999/08/09 07:40:10 mrg Exp $
 
-Woefully incomplete partial list of changes from NetBSD 1.4 to NetBSD 1.4.1:
+A complete list of changes from NetBSD 1.4 to NetBSD 1.4.1:
 
 File						Version(s)
 ----						--------
@@ -425,3 +425,810 @@ sys/kern/kern_exec.c				1.102
 
   Stop profiling when execve()ing another program.  Addresses NetBSD
   Security Advistory SA1999-011.  (ross)
+
+
+sys/arch/mac68k/dev/adb_direct.c		1.23
+
+  make auto power off work on Performa 58x's.  (scottr)
+
+sys/netinet/in_var.h				1.34
+
+  fix INADDR_TO_IA().  (thorpej)
+
+share/man/man7/release.7			1.7
+
+  legalize INSTALL.{html,txt,ps,more}.  (is)
+
+etc/etc.amiga/MAKEDEV				1.48
+
+  create a few lpt* nodes.  (is)
+
+distrib/miniroot/install.sub			1.28
+
+  media options on sh-miniroot install.  (is)
+
+sys/arch/amiga/dev/hyper.c			1.9
+sys/arch/amiga/conf/GENERIC			1.123
+sys/arch/amiga/conf/AMIGA			1.16
+sys/arch/amiga/conf/DRACO			1.35
+
+  Support for HyperCom 3+/4+ lpt ports.  (is)
+
+sbin/ifconfig/ifconfig.c			1.51-1.52
+
+  Don't force "inet" on status display.  (thorpej)
+
+sys/arch/alpha/alpha/pmap.c			1.94
+
+  Count new resident and wired pages in pmap_kenter*().   (thorpej)
+
+sys/uvm/uvm_page.c				1.19
+
+  If we run out of virtual space in uvm_pageboot_alloc(), fail
+  gracefully rather than unpredictably.  (thorpej)
+
+sys/arch/i386/i386/pmap.new.c			1.27
+sys/arch/pc532/pc532/pmap.new.c			1.13
+sys/uvm/uvm_map.c				1.40
+sys/uvm/uvm_map.h				1.12
+sys/uvm/uvm_page.c				1.20
+
+  fix the 1G RAM bug.  (thorpej)
+
+sys/dev/audio.c					1.114-1.115
+
+  Don't clobber the error returned by uiomove() when starting the
+  audio output (in case we got a partial block).  Fixes PR #7722,
+  from Antti Kantee <pooka@iki.fi>.  (thorpej)
+
+sys/kern/kern_time.c				1.37
+
+  Make sure "olddelta" is a valid pointer.  (thorpej)
+
+sys/kern/uipc_socket.c				1.45-1.48
+
+  Fix problem with some transient errors becoming stuck.  Fixes PR
+  #7640 from Havard Eidnes.  (thorpej)
+
+sys/uvm/uvm_map.c				patch
+
+  Fixes bug in mlock() of anonymous memory.  (thorpej)
+
+sys/ddb/db_aout.c				1.26
+
+  Don't load the symbol table if it's corrupted.  (thorpej)
+
+distrib/utils/sysinst/msg.mi.fr			1.18
+distrib/utils/sysinst/arch/i386/menus.md.fr	1.16
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.9
+
+  Sync to English version.  (bouyer)
+
+sys/arch/amiga/conf/GENERIC			1.124
+syssrc/sys/arch/amiga/conf/AMIGA		1.17
+sys/arch/amiga/conf/DRACO			1.36
+sys/arch/amiga/conf/MDINSTALL			1.2
+
+  Allow more than one ed,ed or qn interface.  (is)
+
+sys/uvm/uvm_fault.c				1.29
+
+  Fixes loss of process data under heavy paging bug.  (chuq)
+
+distrib/mvme68k/miniroot/list			1.4
+
+  remove strings(1) from list.  (scw)
+
+sys/arch/arm32/arm32/bcopyinout.S		1.19
+
+  Test for zero length copyin() was broken.  (scw)
+
+sys/dev/ic/smc83c170.c				patch
+
+  Fix transmit timeout problem.  (thorpej)
+
+sys/netinet/if_arp.c				1.62
+  When sending an ARP reply, make sure to set the length of
+  the outgoing packet.  (thorpej)
+
+syssrc/sys/dev/mii/inphyreg.h			1.2
+
+  Correct a register number.  (thorpej)
+
+sys/arch/x68k/x68k/locore.s			1.42,1.44
+
+  Handle F line emulation correctly when FPU_EMULATE is
+  enabled.  (minoura)
+
+sys/arch/x68k/x68k/trap.c			1.32
+
+  Handle T_ILLINST in kernel mode.  (minoura)
+
+etc/etc.sun3/disktab				1.4-1.5
+etc/Makefile					1.117-1.118
+etc/etc.sun3/Makefile.inc			1.9
+distrib/notes/common/contents			1.16
+distrib/notes/sun3/hardware			1.6
+distrib/notes/sun3/prep				1.5
+distrib/notes/sun3/whatis			1.6
+distrib/notes/sun3/xfer				1.6
+distrib/sun3/Makefile.inc			1.7
+distrib/sun3/common/Make.crunch			1.4
+distrib/sun3/common/mini_bin.list		1.5
+distrib/sun3/common/mini_usr.list		1.8
+distrib/sun3/common/mr.disktab			1.2
+distrib/sun3/miniroot/Makefile			1.12-1.15
+distrib/sun3/ramdisk/Makefile			1.7-1.11
+distrib/utils/libhack/Makefile.inc		1.5-1.7
+distrib/utils/libhack/Makefile			1.7
+distrib/sun3/Makefile				1.3
+
+  Make sun3 install work again.  (gwr)
+
+sys/arch/x68k/x68k/machdep.c			1.64
+
+  Message cosmetics.  (minoura)
+
+distrib/x68k/floppies/ramdisk/upgrade.tmpl	1.8
+
+sys/arch/x68k/conf/ALL				revert 1.29.2.2
+sys/arch/x68k/conf/GENERIC			revert 1.31.2.2
+sys/arch/x68k/conf/INSTALL			revert 1.12.2.3
+sys/arch/x68k/conf/SMALL			revert 1.17.2.2
+sys/arch/x68k/conf/ZSCONS			revert 1.5.2.2
+
+  FPU_EMULATE now works.  (minoura)
+
+sys/arch/x68k/dev/intio.c			1.6
+
+  Add missing ia_size argument.  (minoura)
+
+sys/arch/x68k/include/pmap.h			1.14
+
+  Missing #if for 060 & minor cosmetics.  (minoura)
+
+sys/arch/x68k/x68k/pmap.c			1.33
+
+  Disable on-chip cache for PT and ST pages for '060 stability.  (minoura)
+
+sys/dev/isa/wdc_isa.c				1.15
+sys/arch/i386/conf/GENERIC			1.235
+sys/arch/i386/conf/INSTALL			1.117
+sys/arch/i386/conf/INSTALL_SMALL		1.39
+sys/arch/i386/conf/INSTALL_TINY			1.8
+share/man/man4/wdc.4				1.4
+
+  Enable 32-bit I/O to be specified in kernel configuration.  (bouyer)
+
+lib/csu/common_elf/common.c			1.2
+
+  Missing error indication in dlerror().  (kleink)
+
+sys/vm/pmap.h					1.31
+
+  Make a slight modification of pmap_growkernel() -- it now returns the
+  end of the mappable kernel virtual address space.  Previously, it would
+  get called more often than necessary, because the caller only new what
+  was requested.
+  Also, export uvm_maxkaddr so that uvm_pageboot_alloc() can grow the
+  kernel pmap if necessary, as well.  Note that pmap_growkernel() must
+  now be able to handle being called before pmap_init().  (thorpej)
+
+bin/csh/proc.c					1.18-1.20
+
+  Fix potential memory corruption with "kill" builtin.  (cgd)
+
+sys/msdosfs/msdosfs_vnops.c			1.81
+
+  Silently ignore attributes modifications on directories. Fixes
+  PR kern/7630 by Markus Kurek.  (tron)
+
+usr.sbin/xntp/xntpd/ntp_io.c			1.10
+
+  Fix abort when multiple interfaces had same IP address.  (bad)
+
+sys/arch/amiga/amiga/disksubr.c			1.30
+
+  Support for a ... somewhat strange method of doing >512 byte/block
+  ADOSFS partitions. By Matthias Scheler via PR 2559. A diagnostic
+  check was updated by myself.  (is)
+
+sys/arch/mac68k/nubus/nubus.h			1.45
+sys/arch/mac68k/nubus/grf_nubus.c		1.53
+
+  PR 7021 from Yoshihisa Sugimoto <sugimoto@sums.shiga-med.ac.jp>: Clear
+  interrupt properly on the RasterOps 24XLTV.  Same as the 24LX.  (briggs)
+
+sys/arch/mac68k/conf/GENERIC			1.87
+sys/arch/mac68k/conf/INSTALL			1.2
+
+  Comment out DISABLE_EXT_CACHE.  (briggs)
+
+sys/arch/m68k/fpe/fpu_add.c			1.3
+sys/arch/m68k/fpe/fpu_arith.h			1.2
+sys/arch/m68k/fpe/fpu_calcea.c			1.8
+sys/arch/m68k/fpe/fpu_div.c			1.2
+sys/arch/m68k/fpe/fpu_emulate.c			1.21
+sys/arch/m68k/fpe/fpu_emulate.h			1.5
+sys/arch/m68k/fpe/fpu_explode.c			1.3
+sys/arch/m68k/fpe/fpu_fmovecr.c			1.7
+sys/arch/m68k/fpe/fpu_fscale.c			1.10
+sys/arch/m68k/fpe/fpu_fstore.c			1.7
+sys/arch/m68k/fpe/fpu_implode.c			1.4
+sys/arch/m68k/fpe/fpu_int.c			1.2
+sys/arch/m68k/fpe/fpu_log.c			1.6
+sys/arch/m68k/fpe/fpu_mul.c			1.2
+sys/arch/m68k/fpe/fpu_rem.c			1.4
+sys/arch/m68k/fpe/fpu_sqrt.c			1.2
+sys/arch/m68k/fpe/fpu_subr.c			1.3
+
+   Fix FPE.  (briggs)
+
+sys/arch/alpha/conf/Makefile.alpha		1.50
+
+  Fix generation of locore.s dependencies.  (ross)
+
+distrib/notes/mac68k/install			1.21
+distrib/notes/mac68k/prep			1.9
+
+  Update.  (ender)
+
+sys/adosfs/adosfs.h				1.16
+sys/adosfs/adutil.c				1.18
+
+  Incomplete check for the machine's endianness.  (kleink)
+
+sys/arch/x68k/x68k/machdep.c			1.65
+
+  mem_exists was called with wrong 2nd argument.  Because of
+  this, >12MB high memory was not detected.  (minoura)
+
+usr.bin/error/subr.c				1.7-1.8
+
+  String overruns caused by incorrect bounds check.  (christos)
+
+usr.sbin/cron/crontab.c				1.15
+
+  PR/7662: TheMan: crontab does not think the file changed if the
+  editing session took < 1sec.  (christos)
+
+usr.bin/wall/wall.c				1.12
+
+  Bogus check for mkstemp() return code [fixed].  (christos)
+
+sys/dev/wscons/wsdisplay_compat_usl.c		1.8-1.9
+
+  Fix X server bell pitch.  (christos)
+
+usr.bin/make/parse.c				1.42
+
+  Fix awful variable assignment bug in make.  (christos)
+
+sys/arch/arm32/include/Makefile			1.6
+
+  Make sure to install devmap.h.  (mark)
+
+sys/arch/arm32/riscpc/rpc_machdep.c		1.29
+
+  Fix bootstrap problems for ARM610, ARM710.  (mark)
+
+distrib/arm32/ramdisk/Makefile			1.9
+
+  Reduce the number of bytes per inode to 5120.  (mark)
+
+lib/libc/arch/arm32/gen/infinity.c		1.6
+
+  Fix definition of infinity.  (tron)
+
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.25
+
+  Zero ump->um_e2fs after malloc.  (bouyer)
+
+sys/dev/pci/if_fpa.c				1.29
+sys/dev/pci/if_de.c				1.86
+
+  Make sure bus mastering is enabled.  (thorpej)
+
+sbin/mount_umap/mount_umap.c			1.8
+
+  Fixes a trivial bug in gid handling.  (perseant)
+
+sbin/disklabel/disklabel.8			1.27
+
+  Kill bogus comments about -r.  (cgd)
+
+sys/dev/isa/ess.c				1.45
+
+  Fix bug uncovered by audio.c fix: Since the monitor control
+  on the ESS is a muting control, not a level control, change
+  the name to reflect that.  (nathanw)
+
+sys/arch/arm32/include/vidc.h			1.8
+
+  Guard inclusion of opt_cputypes.h.  (mark)
+
+sbin/fdisk/fdisk.c				1.37
+
+  Update boot selector only if it needs updating.  (thorpej)
+
+sys/arch/amiga/amiga/disksubr.c			1.31
+sys/adosfs/adutil.c				1.19
+sys/adosfs/advfsops.c				1.36
+sys/adosfs/advnops.c				1.49
+
+sbin/disklabel/disklabel.c			1.71-1.73
+
+  Print/parse block size, fragment size and cpg for FS_ADOS.
+  Make BSDLFS a EXT2FS-like filesystem, that is, dont print
+  or parse the cpg field.  (is)
+
+sys/arch/sparc/sparc/pmap.c			1.143-1.145
+sys/arch/sparc/sparc/cpu.c			1.93
+
+  Support for hypersparc CPU modules.  (pk)
+
+distrib/i386/floppies/ramdisk/Makefile			1.14-1.15
+distrib/i386/floppies/ramdisk/list			1.20
+distrib/i386/floppies/ramdisk/dist/base_obsolete	removed
+distrib/i386/floppies/ramdisk/dist/comp_obsolete	removed
+distrib/i386/floppies/ramdisk/dist/games_obsolete	removed
+distrib/i386/floppies/ramdisk/dist/man_obsolete		removed
+distrib/i386/floppies/ramdisk/dist/misc_obsolete	removed
+distrib/i386/floppies/ramdisk/dist/secr_obsolete	removed
+distrib/i386/floppies/ramdisk/dist/xbase_obsolete	removed
+distrib/i386/floppies/ramdisk/dist/xserver_obsolete	removed
+
+  Autogen obsolete files list.  (bouyer)
+
+sys/netinet/ip_output.c				1.60
+
+  IP-Filter should filter multicast traffic.  (mrg)
+
+sys/arch/atari/pci/pci_tseng.c			1.3
+
+  Fix et4000 consoles.  (leo)
+
+sys/nfs/nfsm_subs.h				1.20
+sys/nfs/nfs_vnops.c				1.101
+
+  Fix file creation with a Solaris 7 server.  (fvdl)
+
+sys/dev/pci/pcidevs				1.124
+sys/dev/pci/if_ex_pci.c				1.6
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+  Recognize another 390xB card.  (fvdl)
+
+sys/arch/amiga/dev/siop2.c			1.12
+sys/arch/amiga/dev/cbiiisc.c			1.5
+
+  Disable adapter if completely unterminated.  (is)
+
+sys/arch/x68k/dev/ite.c				1.18
+sys/arch/x68k/x68k/machdep.c			1.66
+
+  Move config_console to ensure that it is always called. (minoura)
+
+usr.bin/ftp/cmds.c				1.48-1.49
+usr.bin/ftp/fetch.c				1.53-1.55
+usr.bin/ftp/ftp.1				1.37-1.40
+usr.bin/ftp/ftp.c				1.42-1.44
+usr.bin/ftp/main.c				1.41-1.42
+usr.bin/ftp/util.c				1.47-1.49
+
+  Fix several problems with ftp.  Split "SMALL" #ifdefs into fine-grained
+  NO_SOMETHING #ifdefs.  Fix user@host for TIS fwtk (fixes PR #5556).
+  Parse http:// URLs for username and password.  Parse ftp:// URLs exactly
+  as specified in RFC 1738.  Only enabled command line editing if stdin
+  is a tty.  (lukem)
+
+lib/libc/arch/ns32k/string/strcmp.S		1.4
+lib/libc/arch/ns32k/string/strcpy.S		1.4
+lib/libc/arch/ns32k/string/strncmp.S		1.4
+
+  Go for correctness instead of speed as suggested by Ian Dall. This
+  fixes PR #7710.  (matthias)
+
+sys/arch/pc532/stand/common/machdep.c		1.3
+
+  Fix symbol loading. esym is passed as an offset to loadaddress.  (matthias)
+
+gnu/dist/gdb/config/ns32k/tm-nbsd.h		1.5
+
+  GDB no longer did tracebacks on the pc532. Use unsigned not signed
+  compares when winding up the stack. Thank's to Ian Dall for this fix
+  (PR #7711).  (matthias)
+
+sys/miscfs/umapfs/umap_vnops.c			1.14
+
+  Remove calls to NULLFS.  (wrstuden)
+
+sys/arch/m68k/m68k/db_disasm.c			1.23
+
+  Someone forgot to tell ddb that SWAP is not PEA.  (scottr)
+
+usr.bin/audio/record/record.c			1.5
+
+  Fix -C option.  (jtk)
+
+usr.bin/man/man.1				1.8
+usr.bin/man/man.c				1.16
+usr.bin/msgs/msgs.1				1.9
+usr.bin/msgs/msgs.c				1.15
+usr.bin/ftp/cmds.c				1.50
+usr.bin/ftp/ftp.1				1.41
+
+  Fall back to more(1) if PAGER is set but null.  (kleink)
+
+sys/dev/raidframe/rf_diskqueue.c		1.7
+sys/dev/raidframe/rf_disks.c			1.9
+sys/dev/raidframe/rf_netbsdkintf.c		1.19
+
+  At config time, initialize a small amount of space for the disk
+  queues corresponding to the hot spares.  We'll need that space
+  when a spare is actually added.  Huge Thanks to Martin Laubach
+  for helping track this down.  (oster)
+
+etc/root/dot.cshrc				1.10
+
+  Check for /usr/bin/id before using.  (abs)
+
+distrib/sets/lists/xbase/md.arm32		1.7 via patch
+
+  Add X11 server binaries, etc.  (mark)
+
+libexec/ld.elf_so/load.c			1.4
+libexec/ld.elf_so/rtld.c			1.19
+libexec/ld.elf_so/rtld.h			1.11
+
+  LD_PRELOAD support.  (kleink)
+
+usr.sbin/traceroute/traceroute.c		1.31,1.33
+
+  Fix byte ordering and UDP length bugs.  (is)
+
+libexec/tftpd/tftpd.c				1.17
+
+  Truncate a file when writing.  (carrel)
+
+sys/dev/tc/asc.c				1.54
+
+  Significantly reduce or eliminate problems reported in PR #5510
+  (SCSI DMA problems).  (mhitch)
+
+sys/dev/scsipi/cd.c				1.127
+
+  Ignore transient "media error" when ejecting CD-ROM's.  (bouyer)
+
+sys/dev/pci/pciide.c				1.38
+
+  For the PIIX, make sure the PIO_mode and DMA_mode get reset to the
+  values used by the controller for all drives.  (bouyer)
+
+sys/dev/ic/wdc.c				1.68
+
+  Fix PR #7702.  Avoid false matches on controllers which properly respond
+  to a WDCC_RECAL command.  (bouyer)
+
+sys/arch/sparc/conf/files.sparc			1.77
+
+  Fixes COMPAT_SUNOS && !COMPAT_13.  (pk)
+
+sys/arch/x68k/dev/sram.c			1.6
+sys/arch/x68k/dev/sramvar.h			1.2
+
+  Check file open mode at ioctl.  Add debug option
+  SRAM_DEBUG_DONTDOIT.  (minoura)
+
+sys/arch/x68k/dev/mfp.c				1.4
+sys/arch/x68k/include/cpu.h			1.18
+sys/arch/x68k/include/param.h			1.12
+sys/arch/x68k/x68k/locore.s			1.46
+sys/arch/x68k/x68k/machdep.c			1.67
+
+  Use mvme68k-derived delay() routine.  (minoura)
+
+sys/dev/tc/asc.c				1.55
+
+  Fix interrupt problems with ASC SCSI.  (mhitch)
+
+sys/net/pfil.c					1.8
+
+  Call pfil_list_add with the right flag, to ensure it goes into the
+  right list.  Fixes PR #7802 from mike@pelley.com.  (mrg)
+
+sys/kern/subr_extent.c				1.25-1.27
+sys/kern/subr_pool.c				1.27
+sys/dev/rnd.c					1.16
+sys/dev/scsipi/scsipi_base.c			1.22
+sys/dev/scsipi/scsi_base.c			1.67
+
+  Deal with missing "raise interrupt level" code.  (pk)
+
+sys/net/if_ethersubr.c				1.43
+
+  Allocate mbuf with M_DONTWAIT in ether_output().  (bouyer)
+
+sbin/ping/ping.c				1.48
+
+  Turn of nokerninfo flag correctly when exiting.  (sommerfeld)
+
+sbin/ping/ping.8				1.28-1.30
+
+  Remove duplicate paragraph, fix a typo.  (sommerfeld)
+
+sys/arch/macppc/macppc/machdep.c		1.45
+sys/dev/usb/ukbd.c				1.31
+sys/dev/pci/ohci_pci.c				1.8
+sys/dev/pci/uhci_pci.c				1.6
+
+  Rewrite USB keyboard attachment.  (tsubai)
+
+sys/dev/scsipi/atapi_base.c			1.12
+
+  Go to splbio() when calling scsipi_free_xs().  (thorpej)
+
+sys/arch/x68k/x68k/machdep.c			1.68
+
+  Print both the core clock and the bus clock on 040/060 machines.  (minoura)
+
+sys/dev/usb/ohci.c				1.28-1.32
+
+  Fix various bugs in USB support.  (augustss)
+
+sys/ufs/lfs/lfs.h				1.16
+sys/ufs/lfs/lfs_alloc.c				1.22
+sys/ufs/lfs/lfs_balloc.c			1.13
+sys/ufs/lfs/lfs_inode.c				1.26
+sys/ufs/lfs/lfs_segment.c			1.27
+libexec/lfs_cleanerd/cleanerd.c			1.14
+sbin/newfs_lfs/lfs.c				1.4
+
+  Fix various bugs in LFS.  (perseant)
+
+usr.bin/sed/process.c				1.25
+
+  Fix bug pointed out by Jerry Peek <jpeek@jpeek.com> in PR #7674.  If
+  hold space null when doing an 'G', make sure it contains a newline.
+  Fix copied from revision 1.17 where cgd applied a fix for 'x'.  (kim)
+
+lib/libc/sys/socket.2				1.14
+
+  Add missing reference to setsockopt(2) to "SEE ALSO" section.  (tron)
+
+sys/arch/sparc/sparc/cpu.c			1.94
+
+  When overriding cache flush functions for specific cpu models, make
+  sure to update the correct function pointers in `cpuinfo'.  (pk)
+
+sys/dev/pckbc/pckbd.c				1.19
+
+  Fix "extended" prefixes on PC keyboard.  (drochner)
+
+usr.sbin/greconfig/greconfig.c			1.5
+
+  If returning a pointer to something on the stack, make it a static.  (explorer)
+
+libexec/ld.aout_so/arch/vax/md.c		1.15
+libexec/ld.aout_so/arch/vax/mdprologue.S	1.10
+
+  Make longjmp work with dynamic linking.  Fixes PR #7671.  (ragge)
+
+sys/arch/amiga/dev/ite_cl.c			1.4
+
+  Fix grf3 problems.  (is)
+
+usr.sbin/traceroute/traceroute.c		1.36
+
+  Only require half of the responses to indicate that the destination is
+  unreachable.  This makes traceroute exit when it encounters a Cisco, which
+  typically does not respond to every other probe (or so) when either there
+  is no route to the destionation or an access list is blocking the probes.  (kim)
+
+usr.bin/audio/play/play.c			1.10
+
+  Fix bug in setting number of channels which would also set the control
+  device.  (jtk)
+
+sys/arch/mac68k/mac68k/clock.c			1.37-1.38
+sys/arch/mac68k/mac68k/locore.s			1.115-1.117
+
+  re-implement delay().  (scottr)
+
+bin/sh/eval.c					1.46
+
+  Fix bugs with non-forking shell `builtins`.  (christos)
+
+sys/arch/mac68k/mac68k/machdep.c		1.236
+
+  Fix serial console on Quadra 900/950.  (briggs)
+
+distrib/sparc/bootfs/list			1.2
+sys/arch/sparc/conf/INSTALL			1.9
+distrib/notes/sparc/install			1.20
+distrib/miniroot/install.sub			1.29-1.30
+distrib/miniroot/makeconf.awk			1.6
+distrib/miniroot/mtree.conf			1.5
+distrib/sparc/install.md			1.12
+distrib/sparc/miniroot/list			1.12
+distrib/sparc/ramdisk/Makefile			1.11
+distrib/sparc/ramdisk/dot.profile		1.5
+distrib/sparc/ramdisk/ramdiskbin.conf		delete
+distrib/sparc/ramdisk/list			1.9
+distrib/utils/libhack/Makefile			1.8
+distrib/utils/libhack/Makefile.inc		1.8
+
+  Make the sparc installer work again.  (mrg)
+
+gnu/lib/libbfd/config.h				1.2
+
+  nuke USE_MMAP.  (kristerw)
+
+sys/dev/usb/ohcivar.h				1.5
+
+  Keep track of vendor id and make sure the vendor string is NUL
+  terminated.  (augustss)
+
+lib/libc/arch/arm32/fplib/environment.h		1.5
+lib/libc/arch/arm32/fplib/fplib_glue.S		1.2
+lib/libc/arch/arm32/fplib/fplib_libc.c		1.3
+lib/libc/arch/arm32/fplib/softfloat-macros.h	1.5
+lib/libc/arch/arm32/fplib/softfloat-specialize.h	1.4
+lib/libc/arch/arm32/fplib/softfloat.c		1.4
+lib/libc/arch/arm32/fplib/softfloat.h		1.4
+sys/arch/arm32/include/asm.h			1.12
+
+  Fix namespace conflict.  (kleink)
+
+etc/etc.vax/MAKEDEV				1.24-1.25
+
+  Add `raid' and `rnd'.  (abs)
+
+libexec/lfs_cleanerd/cleanerd.c			1.15
+  Correct wrong conversion specifications in calls to syslog(3).  (perseant)
+
+usr.sbin/rpc.yppasswdd/rpc.yppasswdd.8		1.7
+share/man/man8/yp.8				1.14
+
+  Remove last traces of securenet and ypserv.acl.  (abs)
+
+sbin/dump/dump.8				1.33
+sbin/restore/restore.8				1.25
+
+  Correct default device from /dev/rst0 to /dev/nrst0.  (abs)
+
+sys/net/if_gre.c				1.8
+share/man/man4/gre.4				1.7
+
+  Add LINK1 flag to turn off that address munging thing, for cases
+  where the tunnel endpoint is not the same as the remote GRE
+  destination.  (explorer)
+
+sys/arch/x68k/dev/ite.c				1.20
+sys/arch/x68k/dev/ite_tv.c			1.7
+
+  Restore scroll registers after X server exits.  (minoura)
+
+sys/arch/sparc/include/pmap.h			1.39
+
+  Fix prototype for mmu_pagein() to use vaddr_t.  (pk)
+
+sys/arch/sparc/sparc/pmap.c			1.148
+
+  Refuse kernel address spaces in mmu_pagein().
+
+sys/arch/sparc/conf/Makefile.sparc		1.160
+
+  Allow SFILES to be empty; from Julian Coleman.  (pk)
+
+distrib/notes/amiga/hardware			1.33
+
+  NetBSD supports HyperCom[34]+.  Fix table formatting. (is)
+
+usr.bin/top/machine/m_netbsd13.c		1.5
+
+  Avoid duplicate free().  (tron)
+
+distrib/notes/x68k/hardware			patch
+
+  Update.  (minoura)
+
+usr.bin/ftp/fetch.c				1.58
+
+  Don't search for trailing `;type=' in a NULL path.  Fixes
+  PR #7800 by Mason Loring Bliss.  (lukem)
+
+sys/arch/alpha/alpha/cpu.c			1.36
+sys/arch/alpha/alpha/cpuconf.c			1.22
+sys/arch/alpha/conf/ALPHA			1.97
+sys/arch/alpha/conf/GENERIC			1.122
+sys/arch/alpha/conf/INSTALL			1.27
+sys/arch/alpha/conf/files.alpha			1.103
+sys/arch/alpha/include/intrcnt.h		1.18
+sys/arch/alpha/include/rpb.h			1.32
+sys/arch/alpha/include/alpha.h			1.4
+sys/arch/alpha/alpha/machdep.c			1.177
+
+  Add support for Alpha 21264 ev6 based systems.  (ross)
+
+distrib/notes/amiga/prep			1.19
+
+  Warn users to use 512 bps media.  (is)
+
+distrib/amiga/miniroot/install.md		1.10
+
+  Warn users not to use partition c.  (is)
+
+sys/arch/amiga/dev/grf_cl.c			1.25
+
+  Fix grf_cl console mode timing.  (is)
+
+distrib/amiga/miniroot/install.md		1.11
+
+  Fix installer programs.  (is)
+
+sys/netiso/iso_snpac.c				1.21
+
+  Add multicast address like everyone else, using if_ioctl.  (chopps)
+
+distrib/sparc/miniroot/list			1.13
+distrib/miniroot/mtree.conf			1.6
+
+  Fix sparc miniroot list to build /kern as other ports.  (mrg)
+
+bin/pax/pax.h					1.6
+bin/pax/tables.c				1.9
+
+  Use $TMPDIR and _PATH_TMP, rather than hardcoding /tmp.  (kleink)
+
+sys/dev/scsipi/atapiconf.c			1.26
+
+  Add another CD to the quirk table.  (bouyer)
+
+usr.bin/vi/vi/vs_refresh.c			1.3
+
+  Fix an ugly SEGV.  (dean)
+
+distrib/x68k/floppies/ramdisk/Makefile		patch
+
+  Wouldn't compile without this.  (minoura)
+
+lib/libz/Makefile				1.13
+
+  Do not link in main() to libz.  (garbled)
+
+sys/kern/vfs_getcwd.c				patch
+
+  Pull up NetBSD-current version of getcwd implementation.  Fixes:
+    PR #7944: getcwd permission checking overly strict.
+    PR #7761: getcwd with large buffer fails spuriously.
+    PR #7373: recursive lock deadlock for adosfs
+  Also, significant code cleanup to error paths which may fix the
+  problems reported in PR #7881.  (sommerfeld)
+
+sys/arch/vax/vax/trap.c				1.45-1.46
+sys/arch/vax/vax/intvec.s			1.38
+sys/arch/vax/vax/pmap.c				patch
+sys/arch/vax/include/pte.h			1.12
+
+  Fix critical paging/swapping problems.  (ragge)
+
+distrib/utils/sysinst/mbr.c			1.18
+distrib/utils/sysinst/mbr.h			1.8
+distrib/utils/sysinst/arch/bebox/md.c		1.13
+distrib/utils/sysinst/arch/i386/md.c		1.31
+
+  Fix upgrade core dump.  (fvdl)
+
+sys/conf/osrelease.sh				patch
+
+  Update version to 1.4.1.  (perry)
+
+sys/sys/param.h					patch
+
+  Update version to 1.4.1.  (perry)
+
+distrib/utils/sysinst/run.c			1.24
+
+  Avoid looping forever when installing.  (abs)
