@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.698 2004/11/25 04:52:23 yamt Exp $
+#	$NetBSD: files,v 1.699 2004/11/25 06:52:14 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -331,13 +331,6 @@ include "dev/dmover/files.dmover"
 #
 device	aic: scsi
 file	dev/ic/aic6360.c		aic
-
-define	scsi_low
-file	dev/scsipi/scsi_low.c	scsi_low
-
-# FutureDomain TMC18C[35]0
-device	stg: scsi, scsi_low
-file	dev/ic/tmc18c30.c	stg
 
 # SMC 93Cx6 Serial EEPROM devices
 #
