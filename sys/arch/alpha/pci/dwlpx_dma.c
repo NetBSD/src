@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.1.2.3 1997/06/05 23:57:05 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.1.2.4 1997/06/06 00:32:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.3 1997/06/05 23:57:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.1.2.4 1997/06/06 00:32:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ dwlpx_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 {
 	struct dwlpx_config *ccp = t->_cookie;
 
-	return (pci_pte32_sgmap_load(t, map, buf, buflen, p, flags,
+	return (pci_sgmap_pte32_load(t, map, buf, buflen, p, flags,
 	    &ccp->cc_sgmap));
 }
 
@@ -389,7 +389,7 @@ dwlpx_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 {
 	struct dwlpx_config *ccp = t->_cookie;
 
-	return (pci_pte32_sgmap_load_mbuf(t, map, m, flags, &ccp->cc_sgmap));
+	return (pci_sgmap_pte32_load_mbuf(t, map, m, flags, &ccp->cc_sgmap));
 }
 
 /*
@@ -419,7 +419,7 @@ dwlpx_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 {
 	struct dwlpx_config *ccp = t->_cookie;
 
-	return (pci_pte32_sgmap_load_uio(t, map, uio, flags, &ccp->cc_sgmap));
+	return (pci_sgmap_pte32_load_uio(t, map, uio, flags, &ccp->cc_sgmap));
 }
 
 /*
@@ -453,7 +453,7 @@ dwlpx_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 {
 	struct dwlpx_config *ccp = t->_cookie;
 
-	return (pci_pte32_sgmap_load_raw(t, map, segs, nsegs, size, flags,
+	return (pci_sgmap_pte32_load_raw(t, map, segs, nsegs, size, flags,
 	    &ccp->cc_sgmap));
 }
 
@@ -471,7 +471,7 @@ dwlpx_bus_dmamap_unload_sgmap(t, map)
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_pte32_sgmap_unload(t, map, &ccp->cc_sgmap);
+	pci_sgmap_pte32_unload(t, map, &ccp->cc_sgmap);
 
 	/*
 	 * Do the generic bits of the unload.

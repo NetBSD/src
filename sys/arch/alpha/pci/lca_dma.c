@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.1.2.3 1997/06/05 18:47:42 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.1.2.4 1997/06/06 00:32:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.1.2.3 1997/06/05 18:47:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.1.2.4 1997/06/06 00:32:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ lca_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct lca_config *lcp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load(t, map, buf, buflen, p, flags,
+	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
 	    &lcp->lc_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
@@ -365,7 +365,7 @@ lca_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct lca_config *lcp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_mbuf(t, map, m, flags, &lcp->lc_sgmap);
+	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, &lcp->lc_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
 
@@ -400,7 +400,7 @@ lca_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct lca_config *lcp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_uio(t, map, uio, flags, &lcp->lc_sgmap);
+	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, &lcp->lc_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
 
@@ -439,7 +439,7 @@ lca_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	struct lca_config *lcp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_raw(t, map, segs, nsegs, size, flags,
+	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
 	    &lcp->lc_sgmap);
 	if (error == 0)
 		LCA_TLB_INVALIDATE();
@@ -461,7 +461,7 @@ lca_bus_dmamap_unload_sgmap(t, map)
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_pte64_sgmap_unload(t, map, &lcp->lc_sgmap);
+	pci_sgmap_pte64_unload(t, map, &lcp->lc_sgmap);
 	LCA_TLB_INVALIDATE();
 
 	/*
