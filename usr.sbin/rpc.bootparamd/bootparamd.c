@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.8 1996/10/04 19:00:31 cgd Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.9 1996/10/14 19:28:09 cgd Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -20,15 +20,13 @@
 #include <ctype.h>
 #include <syslog.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "pathnames.h"
 
 #define MAXLEN 800
 
-struct hostent *he;
-static char buffer[MAXLEN];
 static char hostname[MAX_MACHINE_NAME];
 static char askname[MAX_MACHINE_NAME];
-static char path[MAX_PATH_LEN];
 static char domain_name[MAX_MACHINE_NAME];
 
 extern void bootparamprog_1 __P((struct svc_req *, SVCXPRT *));
@@ -62,11 +60,8 @@ main(argc, argv)
 	char  **argv;
 {
 	SVCXPRT *transp;
-	int     i, s, pid;
-	char   *rindex();
 	struct hostent *he;
 	struct stat buf;
-	char   *optstring;
 	int    c;
 
 	progname = rindex(argv[0], '/');
@@ -147,8 +142,10 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	bp_whoami_arg *whoami;
 	struct svc_req *rqstp;
 {
-	long    haddr;
 	static bp_whoami_res res;
+	struct hostent *he;
+	struct in_addr inaddr;
+	long    haddr;
 
 	if (debug)
 		fprintf(stderr, "whoami got question for %d.%d.%d.%d\n",
@@ -166,15 +163,18 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	bcopy((char *) &whoami->client_address.bp_address_u.ip_addr, (char *) &haddr,
 	    sizeof(haddr));
 	he = gethostbyaddr((char *) &haddr, sizeof(haddr), AF_INET);
-	if (!he)
-		goto failed;
+	if (he)
+		strcpy(askname, he->h_name);
+	else {
+		inaddr.s_addr = haddr;
+		strcpy(askname, inet_ntoa(inaddr));
+	}
 
 	if (debug)
-		fprintf(stderr, "This is host %s\n", he->h_name);
+		fprintf(stderr, "This is host %s\n", askname);
 	if (dolog)
-		syslog(LOG_NOTICE, "This is host %s\n", he->h_name);
+		syslog(LOG_NOTICE, "This is host %s\n", askname);
 
-	strcpy(askname, he->h_name);
 	if (!lookup_bootparam(askname, hostname, NULL, NULL, NULL)) {
 		res.client_name = hostname;
 		getdomainname(domain_name, MAX_MACHINE_NAME);
@@ -201,7 +201,6 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 
 		return (&res);
 	}
-failed:
 	if (debug)
 		fprintf(stderr, "whoami failed\n");
 	if (dolog)
@@ -215,8 +214,8 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	bp_getfile_arg *getfile;
 	struct svc_req *rqstp;
 {
-	char   *where, *index();
 	static bp_getfile_res res;
+	struct hostent *he;
 	int     err;
 
 	if (debug)
