@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.31 2002/01/09 19:37:02 drochner Exp $	*/
+/*	$NetBSD: wi.c,v 1.32 2002/01/18 11:41:49 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.31 2002/01/09 19:37:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.32 2002/01/18 11:41:49 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -788,10 +788,10 @@ static int wi_write_record(sc, ltv)
 			struct wi_ltv_str	ws;
 			struct wi_ltv_keys	*wk = (struct wi_ltv_keys *)ltv;
 			for (i = 0; i < 4; i++) {
-				ws.wi_len = 4;
+				ws.wi_len = 8;
 				ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
-				memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 5);
-				ws.wi_str[5] = '\0';
+				memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 13);
+				ws.wi_str[13] = '\0';
 				error = wi_write_record(sc,
 				    (struct wi_ltv_gen *)&ws);
 				if (error)
