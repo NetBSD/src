@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.24 1997/05/31 21:21:19 cjs Exp $
+#	$NetBSD: Makefile,v 1.25 1998/09/13 22:23:02 tv Exp $
 
-SUBDIR= libg++ libstdc++ # libio libiostream
+SUBDIR= libstdc++
 
 HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
          csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime \
@@ -8,20 +8,11 @@ HEADERS= cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
          algorithm deque list map queue set stack vector utility functional \
          iterator memory numeric
 
+INCS=    _G_config.h
+INCSDIR= /usr/include/${MACHINE}
 
-includes:
-	@echo installing includes from libg++/src
-	@(cd libg++/src ; for j in *.[ih]; do \
-		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
-		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
-			${DESTDIR}/usr/include/g++/$$j; \
-	done)
-	@echo installing includes from include/gen
-	@(cd include/gen ; for j in *.*P; do \
-		cmp -s $$j ${DESTDIR}/usr/include/g++/gen/$$j || \
-		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
-			${DESTDIR}/usr/include/g++/gen/$$j; \
-	done)
+incinstall:: other-includes
+other-includes:
 	@echo installing includes from libio
 	@(cd libio ; for j in *.h; do \
 		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
@@ -47,4 +38,5 @@ includes:
 			${DESTDIR}/usr/include/g++/$$j; \
 	done)
 
+.include <bsd.inc.mk>
 .include <bsd.subdir.mk>
