@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.358 2002/10/10 08:22:23 itojun Exp $
+# $NetBSD: mi,v 1.359 2002/10/16 15:31:26 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -36,6 +36,7 @@
 ./bin/stty		base-util-root
 ./bin/sync		base-util-root
 ./bin/systrace		base-util-root
+./bin/tar		base-util-root
 ./bin/test		base-util-root
 ./dev			base-sys-root
 ./dev/MAKEDEV		base-sysutil-root
@@ -389,7 +390,6 @@
 ./usr/bin/systat	base-util-bin
 ./usr/bin/tail		base-util-bin
 ./usr/bin/talk		base-netutil-bin
-./usr/bin/tar		base-util-bin
 ./usr/bin/tcopy		base-util-bin
 ./usr/bin/tee		base-util-bin
 ./usr/bin/telnet	base-netutil-bin
