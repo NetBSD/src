@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 2000/12/07 21:53:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116 2001/01/01 22:13:54 thorpej Exp $	*/
 
 /*
  *
@@ -571,7 +571,7 @@ pmap_map_ptes(pmap)
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
 		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V);
 		if (pmap_valid_entry(opde))
-			pmap_update();
+			tlbflush();
 	}
 	return(APTE_BASE);
 }
@@ -676,7 +676,7 @@ pmap_kremove(va, len)
 	}
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 #endif
 }
 
@@ -722,7 +722,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 	}
 #if defined(I386_CPU)
 	if (need_update && cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 #endif
 }
 
@@ -938,7 +938,7 @@ pmap_bootstrap(kva_start)
 	 * ensure the TLB is sync'd with reality by flushing it...
 	 */
 
-	pmap_update();
+	tlbflush();
 }
 
 /*
@@ -1661,7 +1661,7 @@ pmap_steal_ptp(obj, offset)
 				pmaps_hand->pm_pdir[idx] = 0;	/* zap! */
 				pmaps_hand->pm_stats.resident_count--;
 				if (pmap_is_curpmap(pmaps_hand))
-					pmap_update();
+					tlbflush();
 				else if (pmap_valid_entry(*APDP_PDE) &&
 					 (*APDP_PDE & PG_FRAME) ==
 					 pmaps_hand->pm_pdirpa) {
@@ -2563,12 +2563,12 @@ pmap_do_remove(pmap, sva, eva, flags)
 	if (prr && prr->prr_npages) {
 #if defined(I386_CPU)
 		if (cpu_class == CPUCLASS_386) {
-			pmap_update();
+			tlbflush();
 		} else
 #endif
 		{ /* not I386 */
 			if (prr->prr_npages > PMAP_RR_MAX) {
-				pmap_update();
+				tlbflush();
 			} else {
 				while (prr->prr_npages) {
 					pmap_update_pg(
@@ -2686,7 +2686,7 @@ pmap_page_remove(pg)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 #if defined(I386_CPU)
 	if (needs_update)
-		pmap_update();
+		tlbflush();
 #endif
 }
 
@@ -2831,7 +2831,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 
 #if defined(I386_CPU)
 	if (needs_update)
-		pmap_update();
+		tlbflush();
 #endif
 	return(result != 0);
 }
@@ -2959,12 +2959,12 @@ pmap_write_protect(pmap, sva, eva, prot)
 	if (prr && prr->prr_npages) {
 #if defined(I386_CPU)
 		if (cpu_class == CPUCLASS_386) {
-			pmap_update();
+			tlbflush();
 		} else
 #endif
 		{ /* not I386 */
 			if (prr->prr_npages > PMAP_RR_MAX) {
-				pmap_update();
+				tlbflush();
 			} else {
 				while (prr->prr_npages) {
 					pmap_update_pg(prr->prr_vas[
