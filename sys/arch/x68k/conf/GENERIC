@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.42 2000/02/26 17:35:43 oster Exp $
+#	$NetBSD: GENERIC,v 1.43 2000/02/29 06:32:31 simonb Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.43 $"
 
 maxusers	32
 
@@ -279,7 +279,7 @@ pseudo-device	ccd	4
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
 pseudo-device	raid	4
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.

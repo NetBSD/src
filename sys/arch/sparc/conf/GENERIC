@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.101 2000/02/26 17:35:41 oster Exp $
+# 	$NetBSD: GENERIC,v 1.102 2000/02/29 06:32:29 simonb Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 maxusers	32
 
@@ -404,7 +404,7 @@ pseudo-device	ccd	4
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
 #pseudo-device	raid	4
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
