@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.34 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: target.c,v 1.35 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.34 2003/01/10 20:00:28 christos Exp $");
+__RCSID("$NetBSD: target.c,v 1.35 2003/06/16 19:42:14 dsl Exp $");
 #endif
 
 /*
@@ -144,7 +144,7 @@ struct unwind_mount *unwind_mountlist = NULL;
  */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
 void
-backtowin()
+backtowin(void)
 {
 
 	fflush(stdout);	/* curses does not leave stdout linebuffered. */
@@ -160,7 +160,7 @@ backtowin()
  * or "sd0b" for root-in-swap.
  */
 static const char *
-get_rootdev()
+get_rootdev(void)
 {
 	int mib[2];
 	static char rootdev[STRSIZE];
@@ -185,7 +185,7 @@ get_rootdev()
  * e.g., target is "sd0" and root is "le0" (nfs).
  */
 int
-target_on_current_disk()
+target_on_current_disk(void)
 {
 	int same;
 
@@ -206,7 +206,7 @@ target_on_current_disk()
  * check to see if they're
  */
 int
-must_mount_root()
+must_mount_root(void)
 {
 	int result;
 
@@ -250,7 +250,7 @@ must_mount_root()
  * FIXME -- disklabel-editing code assumes that partition 'a' is always root.
  */
 int
-target_already_root()
+target_already_root(void)
 {
 	register int result;
 	char diskdevroot[STRSIZE];
@@ -288,7 +288,7 @@ target_already_root()
  * Don't cache the answer in case the user suspends and remounts.
  */
 static const char *
-mounted_rootpart()
+mounted_rootpart(void)
 {
 	struct statfs statfsbuf;
 	int result;
@@ -326,8 +326,7 @@ mounted_rootpart()
  * Note difference from target_on_current_disk()!
  */
 int
-is_active_rootpart(devpart)
-	const char *devpart;
+is_active_rootpart(const char *devpart)
 {
 	const char *root = 0;
 	int result;
@@ -364,7 +363,7 @@ is_active_rootpart(devpart)
  * no prefix is needed.
  */
 const char *
-target_prefix()
+target_prefix(void)
 {
 	/*
 	 * XXX fetch sysctl variable for current root, and compare 
@@ -380,10 +379,8 @@ target_prefix()
  * next call to a target-prefixing  function, or to modify the inputs..
  * Used only  internally so this is probably safe.
  */
-const char*  
-concat_paths(prefix, suffix)
-	const char* prefix;
-	const char *suffix;
+const char *  
+concat_paths(const char *prefix, const char *suffix)
 {
 	static char real_path[MAXPATHLEN];
 
@@ -414,8 +411,7 @@ concat_paths(prefix, suffix)
  * Not static so other functions can generate target related file names.
  */
 const char *
-target_expand(tgtpath)
-	const char *tgtpath;
+target_expand(const char *tgtpath)
 {
 
 	return concat_paths(target_prefix(), tgtpath);
@@ -423,9 +419,7 @@ target_expand(tgtpath)
 
 /* Make a directory, with a prefix like "/mnt" or possibly just "". */
 static void 
-make_prefixed_dir(prefix, path)
-	const char *prefix;
-	const char *path;
+make_prefixed_dir(const char *prefix, const char *path)
 {
 
 	run_prog(0, NULL, "/bin/mkdir -p %s", concat_paths(prefix, path));
@@ -433,8 +427,7 @@ make_prefixed_dir(prefix, path)
 
 /* Make a directory with a pathname relative to the installation target. */
 void
-make_target_dir(path)
-	const char *path;
+make_target_dir(const char *path)
 {
 
 	make_prefixed_dir(target_prefix(), path);
@@ -443,8 +436,7 @@ make_target_dir(path)
 #ifdef notdef
 /* Make a directory with a pathname in the currently-mounted root. */
 void
-make_ramdisk_dir(path)
-	const char *path;
+make_ramdisk_dir(const char *path)
 {
 
 	make_prefixed_dir(path, "");
@@ -460,9 +452,7 @@ make_ramdisk_dir(path)
  * would set the default hostname at the next reboot of the installed-on disk.
  */
 void
-append_to_target_file(path, string)
-	const char *path;
-	const char *string;
+append_to_target_file(const char *path, const char *string)
 {
 
 	run_prog(RUN_FATAL, NULL, "echo %s >> %s", string, target_expand(path));
@@ -472,9 +462,7 @@ append_to_target_file(path, string)
  * As append_to_target_file, but with ftrunc semantics. 
  */
 void
-echo_to_target_file(path, string)
-	const char *path;
-	const char *string;
+echo_to_target_file(const char *path, const char *string)
 {
 	trunc_target_file(path);
 	append_to_target_file(path, string);
@@ -497,8 +485,7 @@ sprintf_to_target_file(const char *path, const char *format, ...)
 
 
 void
-trunc_target_file(path)
-	const char *path;
+trunc_target_file(const char *path)
 {
 
 	run_prog(RUN_FATAL, NULL, "cat < /dev/null > %s",  target_expand(path));
@@ -506,9 +493,7 @@ trunc_target_file(path)
 #endif /* if 0 */
 
 static int
-do_target_chdir(dir, must_succeed)
-	const char *dir;
-	int must_succeed;
+do_target_chdir(const char *dir, int must_succeed)
 {
 	const char *tgt_dir;
 	int error;
@@ -545,20 +530,18 @@ do_target_chdir(dir, must_succeed)
 }
 
 void
-target_chdir_or_die(dir)
-	const char *dir;
+target_chdir_or_die(const char *dir)
 {
 
-	(void) do_target_chdir(dir, 1);
+	(void)do_target_chdir(dir, 1);
 }
 
 #ifdef notdef
 int
-target_chdir(dir)
-	const char *dir;
+target_chdir(const char *dir)
 {
 
-	return(do_target_chdir(dir, 0));
+	return do_target_chdir(dir, 0);
 }
 #endif
 
@@ -568,9 +551,7 @@ target_chdir(dir)
  * Does not check for copy-to-self when target is  current root.
  */
 int
-cp_to_target(srcpath, tgt_path)
-	const char *srcpath;
-	const char *tgt_path;
+cp_to_target(const char *srcpath, const char *tgt_path)
 {
 	const char *real_path = target_expand(tgt_path);
 
@@ -583,8 +564,7 @@ cp_to_target(srcpath, tgt_path)
  * If we're running in the target, do nothing. 
  */
 void
-dup_file_into_target(filename)
-	const char *filename;
+dup_file_into_target(const char *filename)
 {
 
 	if (!target_already_root())
@@ -596,9 +576,7 @@ dup_file_into_target(filename)
  * Do a mv where both pathnames are  within the target filesystem.
  */
 void
-mv_within_target_or_die(frompath, topath)
-	const char *frompath;
-	const char *topath;
+mv_within_target_or_die(const char *frompath, const char *topath)
 {
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
@@ -610,9 +588,7 @@ mv_within_target_or_die(frompath, topath)
 }
 
 /* Do a cp where both pathnames are  within the target filesystem. */
-int cp_within_target(frompath, topath)
-	const char *frompath;
-	const char *topath;
+int cp_within_target(const char *frompath, const char *topath)
 {
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
@@ -625,9 +601,7 @@ int cp_within_target(frompath, topath)
 
 /* fopen a pathname in the target. */
 FILE *
-target_fopen(filename, type)
-	const char *filename;
-	const char *type;
+target_fopen(const char *filename, const char *type)
 {
 
 	return fopen(target_expand(filename), type);
@@ -638,10 +612,7 @@ target_fopen(filename, type)
  * unwind after completing or aborting a mount.
  */
 int
-mount_with_unwind(fstype, from, on)
-	const char *fstype;
-	const char *from;
-	const char *on;
+mount_with_unwind(const char *fstype, const char *from, const char *on)
 {
 	int error;
 	struct unwind_mount * m;
@@ -671,7 +642,7 @@ mount_with_unwind(fstype, from, on)
  *  us and forked shell sitting somewhere in the target root?)
  */
 void
-unwind_mounts()
+unwind_mounts(void)
 {
 	struct unwind_mount *m;
 	volatile static int unwind_in_progress = 0;
@@ -702,10 +673,7 @@ unwind_mounts()
  * NB: does not prefix mount-from, which probably breaks  nullfs mounts.
  */
 int
-target_mount(fstype, from, on)
-	const char *fstype;
-	const char *from;
-	const char *on;
+target_mount(const char *fstype, const char *from, const char *on)
 {
 	int error;
 	const char *realmount = target_expand(on);
@@ -717,12 +685,9 @@ target_mount(fstype, from, on)
 }
 
 int
-target_collect_file(kind, buffer, name)
-	int kind;
-	char **buffer;
-	char *name;
+target_collect_file(int kind, char **buffer, char *name)
 {
-	const char *realname =target_expand(name);
+	const char *realname = target_expand(name);
 
 #ifdef	DEBUG
 	printf("collect real name %s\n", realname);
@@ -735,9 +700,7 @@ target_collect_file(kind, buffer, name)
  * by running  test "testflag" on the expanded target pathname.
  */
 int
-target_test(mode, path)
-	unsigned int mode;
-	const char *path;
+target_test(unsigned int mode, const char *path)
 {
 	const char *real_path = target_expand(path);
 	register int result;
@@ -757,8 +720,7 @@ target_test(mode, path)
  * Assumes that sysinst has already mounted the target root.
  */
 int
-target_test_dir(path)
-	const char *path;
+target_test_dir(const char *path)
 {
 
  	return target_test(S_IFDIR, path);
@@ -770,37 +732,35 @@ target_test_dir(path)
  * Assumes that sysinst has already mounted the target root.
  */
 int
-target_test_file(path)
-	const char *path;
+target_test_file(const char *path)
 {
 
  	return target_test(S_IFREG, path);
 }
 
 int
-target_test_symlink(path)
-	const char *path;
+target_test_symlink(const char *path)
 {
 
  	return target_test(S_IFLNK, path);
 }
 
-int target_file_exists_p(path)
-	const char *path;
+int
+target_file_exists_p(const char *path)
 {
 
 	return (target_test_file(path) == 0);
 }
 
-int target_dir_exists_p(path)
-	const char *path;
+int
+target_dir_exists_p(const char *path)
 {
 
 	return (target_test_dir(path) == 0);
 }
 
-int target_symlink_exists_p(path)
-	const char *path;
+int
+target_symlink_exists_p(const char *path)
 {
 
 	return (target_test_symlink(path) == 0);

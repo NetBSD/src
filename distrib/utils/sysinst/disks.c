@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.58 2003/06/16 10:42:47 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.59 2003/06/16 19:42:13 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -569,7 +569,7 @@ int target_mount_with_error_menu(const char *opt,
  * fsck and mount the root partition.
  */
 int
-fsck_root()
+fsck_root(void)
 {
 	int   error;
 	char	rootdev[STRSIZE];
@@ -603,7 +603,8 @@ fsck_root()
 
 int
 fsck_disks(void)
-{	char *fstab;
+{
+	char *fstab;
 	int   fstabsize;
 	int   i;
 	int   error;
@@ -650,9 +651,7 @@ fsck_disks(void)
 }
 
 int
-set_swap(dev, pp)
-	const char *dev;
-	partinfo *pp;
+set_swap(const char *dev, partinfo *pp)
 {
 	partinfo parts[16];
 	int i, maxpart;

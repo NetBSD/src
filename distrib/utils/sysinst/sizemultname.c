@@ -1,4 +1,4 @@
-/*	$NetBSD: sizemultname.c,v 1.2 2003/06/04 20:05:13 dsl Exp $	*/
+/*	$NetBSD: sizemultname.c,v 1.3 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,7 @@
  * check that there is at least a / somewhere.
  */
 int
-check_partitions()
+check_partitions(void)
 {
 	int i;
 
@@ -70,7 +70,7 @@ check_partitions()
 }
 
 void
-set_sizemultname_cyl()
+set_sizemultname_cyl(void)
 {
 
 	sizemult = dlcylsize; 
@@ -78,7 +78,7 @@ set_sizemultname_cyl()
 }
 
 void
-set_sizemultname_meg()
+set_sizemultname_meg(void)
 {
 
 	sizemult = MEG / sectorsize;
