@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 1998/08/22 10:55:37 scw Exp $	*/
+/*	$NetBSD: console.c,v 1.5 2000/07/24 18:40:01 jdolecek Exp $	*/
 
 /*
  *
@@ -52,6 +52,7 @@ struct zs_hw *zs =  (struct zs_hw *)CONS_ZS_ADDR;
  * consinit: init console
  */
 
+void
 consinit()
 
 {
@@ -81,7 +82,7 @@ consinit()
  * putchar: put char to console
  */
 
-void putchar(char c) 
+void putchar(int c) 
 {
   if (c == '\n') putchar('\r');  /* avoid the need for \r\n in printf */
   zs->ctl = 0;
@@ -89,7 +90,7 @@ void putchar(char c)
     zs->ctl = 0;
   }
   zs->ctl = 8;
-  zs->ctl = c;
+  zs->ctl = (char) c;
 }
 
 /*

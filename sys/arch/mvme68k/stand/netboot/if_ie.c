@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.4 2000/07/15 16:04:24 scw Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.5 2000/07/24 18:39:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -41,16 +41,20 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+
 #define NTXBUF	1
 #define NRXBUF	16
 #define IE_RBUF_SIZE	ETHER_MAX_LEN
 
 #include <machine/prom.h>
 
-#include "stand.h"
 #include "libsa.h"
 #include "netif.h"
 #include "config.h"
+#include "dev_net.h"
 
 #include "i82586.h"
 #include "if_iereg.h"
@@ -67,6 +71,7 @@ int ie_poll __P((struct iodesc *, void *, int));
 int ie_probe __P((struct netif *, void *));
 int ie_put __P((struct iodesc *, void *, size_t));
 void ie_reset __P((struct netif *, u_char *));
+void ieack __P((volatile struct iereg *, struct iemem *));
 
 struct netif_stats ie_stats;
 
@@ -154,6 +159,7 @@ ie_error(nif, str, ier)
 	panic("ie%d: unknown error\n", nif->nif_unit);
 }
 
+void
 ieack(ier, iem)
 	volatile struct iereg *ier;
 	struct iemem *iem;
@@ -172,7 +178,7 @@ ie_reset(nif, myea)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	int     timo = 10000, stat, i;
+	int     timo = 10000, i;
 	volatile int t;
 	u_int   a;
 
@@ -300,10 +306,8 @@ ie_poll(desc, pkt, len)
 {
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
-	u_char *p = pkt;
 	static int slot;
 	int     length = 0;
-	u_int   a;
 	u_short status;
 
 	asm(".word	0xf518\n");
@@ -369,8 +373,6 @@ ie_put(desc, pkt, len)
 	volatile struct iereg *ier = ie_softc.sc_reg;
 	struct iemem *iem = ie_softc.sc_mem;
 	u_char *p = pkt;
-	int     timo = 10000, stat, i;
-	volatile int t;
 	u_int   a;
 	int     xx = 0;
 
