@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.30 2003/08/07 16:34:04 agc Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.31 2003/10/30 07:27:02 provos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -50,11 +50,18 @@
  */
 #define	NDFILE		20
 #define	NDEXTENT	50		/* 250 bytes in 256-byte alloc */
+#define	NDENTRIES	32		/* 32 fds per entry */
+#define	NDENTRYMASK	(NDENTRIES - 1)
+#define	NDENTRYSHIFT	5		/* bits per entry */
+#define	NDLOSLOTS(x)	(((x) + NDENTRIES - 1) >> NDENTRYSHIFT)
+#define	NDHISLOTS(x)	((NDLOSLOTS(x) + NDENTRIES - 1) >> NDENTRYSHIFT)
 
 struct filedesc {
 	struct file	**fd_ofiles;	/* file structures for open files */
 	char		*fd_ofileflags;	/* per-process open file flags */
 	int		fd_nfiles;	/* number of open files allocated */
+	uint32_t	*fd_himap;	/* each bit points to 32 fds */
+	uint32_t	*fd_lomap;	/* bitmap of free fds */
 	int		fd_lastfile;	/* high-water mark of fd_ofiles */
 	int		fd_freefile;	/* approx. next free file */
 	int		fd_refcnt;	/* reference count */
@@ -91,6 +98,12 @@ struct filedesc0 {
 	 */
 	struct file	*fd_dfiles[NDFILE];
 	char		fd_dfileflags[NDFILE];
+	/*
+	 * These arrays are used when the number of open files is
+	 * <= 1024, and are then pointed to by the pointers above.
+	 */
+	uint32_t	fd_dhimap[NDENTRIES >> NDENTRYSHIFT];
+	uint32_t	fd_dlomap[NDENTRIES];
 };
 
 /*
