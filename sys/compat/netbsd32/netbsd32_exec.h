@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.10 2001/08/25 15:06:02 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.11 2002/06/04 14:49:15 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -61,6 +61,8 @@ int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
 #ifdef EXEC_ELF32
 int netbsd32_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
+int netbsd32_elf32_probe_noteless __P((struct proc *, struct exec_package *, 
+    void *, char *, vaddr_t *));
 int netbsd32_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
 #endif /* EXEC_ELF32 */
