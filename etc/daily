@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.23 1997/07/11 00:36:55 phil Exp $
+#	$NetBSD: daily,v 1.24 1997/10/27 04:18:06 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -119,10 +119,11 @@ if [ "$run_calendar" != NO ]; then
 	rm -f $TMP
 fi
 
-if [ "$check_uucp" != NO -a -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
+if [ "$check_uucp" != NO -a -d /var/spool/uucp -a \
+    -f /usr/libexec/uucp/clean.daily ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
-	echo /etc/uuclean.daily | su daemon
+	su daemon -c /usr/libexec/uucp/clean.daily
 fi
 
 if [ "$check_disks" != NO ]; then
