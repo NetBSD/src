@@ -247,6 +247,12 @@ CONFIGURATION
 
                  Default: ``yes''
 
+     MKTTINTERP  Can be set to ``yes'' or ``no''.  For X builds, decides if
+                 the TrueType bytecode interpreter is turned on.  See
+                 http://www.freetype.org/patents.html for details.
+
+                 Default: ``no''
+
      MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an
                  unprivileged install will occur.  The user, group, permis-
                  sions, and file flags, will not be set on the installed item;
