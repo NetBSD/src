@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.75 2002/10/23 09:14:41 jdolecek Exp $	*/
+/*	$NetBSD: bpf.c,v 1.76 2002/11/26 18:51:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.75 2002/10/23 09:14:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.76 2002/11/26 18:51:18 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -536,7 +536,7 @@ bpf_wakeup(d)
 
 	selnotify(&d->bd_sel, 0);
 	/* XXX */
-	d->bd_sel.si_pid = 0;
+	d->bd_sel.sel_pid = 0;
 }
 
 int
@@ -1067,7 +1067,7 @@ filt_bpfrdetach(struct knote *kn)
 	int s;
 
 	s = splnet();
-	SLIST_REMOVE(&d->bd_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&d->bd_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1096,7 +1096,7 @@ bpfkqfilter(dev, kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &d->bd_sel.si_klist;
+		klist = &d->bd_sel.sel_klist;
 		kn->kn_fop = &bpfread_filtops;
 		break;
 
