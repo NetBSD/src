@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.2 2001/09/16 16:34:28 wiz Exp $	*/
+/*	$NetBSD: opms.c,v 1.3 2001/09/28 11:59:51 chs Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -50,6 +50,7 @@
 #include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 #include <machine/kbdreg.h>
