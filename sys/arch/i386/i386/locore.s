@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.10 1993/05/20 14:33:41 cgd Exp $
+ *	$Id: locore.s,v 1.11 1993/05/21 11:06:13 cgd Exp $
  */
 
 
@@ -53,6 +53,8 @@
 #include "machine/trap.h"
 
 #include "machine/specialreg.h"
+
+#include "machine/cputypes.h"
 
 #define	KDSEL		0x10
 

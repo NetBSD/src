@@ -33,12 +33,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
+ *	from: @(#)genassym.c	5.11 (Berkeley) 5/10/91
+ *	$Id: genassym.c,v 1.4 1993/05/21 11:06:07 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/genassym.c,v 1.3 1993/05/09 23:02:34 deraadt Exp $";
 
 #ifndef lint
-static char sccsid[] = "@(#)genassym.c	5.11 (Berkeley) 5/10/91";
+/* from: static char sccsid[] = "@(#)genassym.c	5.11 (Berkeley) 5/10/91"; */
+static char rcsid[] = "$Id: genassym.c,v 1.4 1993/05/21 11:06:07 cgd Exp $";
 #endif /* not lint */
 
 #include "sys/param.h"
@@ -157,7 +158,5 @@ main()
 	printf("#define\tENOENT %d\n", ENOENT);
 	printf("#define\tEFAULT %d\n", EFAULT);
 	printf("#define\tENAMETOOLONG %d\n", ENAMETOOLONG);
-	printf("#define\tCPU_386 %d\n", CPU_386);
-	printf("#define\tCPU_486 %d\n", CPU_486);
 	exit(0);
 }
