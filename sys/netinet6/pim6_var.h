@@ -1,3 +1,5 @@
+/*	$NetBSD: pim6_var.h,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
@@ -26,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pim6_var.h,v 1.2 1999/07/01 08:12:58 itojun Exp $ */
+/* $Id: pim6_var.h,v 1.3 1999/07/03 21:30:19 thorpej Exp $ */
 
 #ifndef _NETINET6_PIM6_VAR_H_
 #define _NETINET6_PIM6_VAR_H_

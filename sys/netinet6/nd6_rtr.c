@@ -1,3 +1,5 @@
+/*	$NetBSD: nd6_rtr.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
