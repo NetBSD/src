@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.28 2000/02/02 10:00:06 itojun Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.29 2000/02/02 10:50:56 enami Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -148,7 +148,7 @@ dp8390_config(sc, media, nmedia, defmedia)
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
+	    RND_TYPE_NET, 0);
 #endif
 
 	/* Print additional info when attached. */
@@ -626,7 +626,8 @@ dp8390_intr(arg)
 	u_char rndisr;
 #endif
 
-	if (sc->sc_enabled == 0)
+	if (sc->sc_enabled == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 	/* Set NIC to page 0 registers. */
@@ -1313,6 +1314,9 @@ dp8390_detach(sc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 	dp8390_disable(sc);
+
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
