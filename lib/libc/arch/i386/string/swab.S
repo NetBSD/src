@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Winning Strategies, Inc.
+ * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,15 +27,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: swab.S,v 1.5 1994/01/28 20:34:57 jtc Exp $
+ *	$Id: swab.S,v 1.6 1994/02/14 17:43:19 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: swab.S,v 1.5 1994/01/28 20:34:57 jtc Exp $"
+	.asciz "$Id: swab.S,v 1.6 1994/02/14 17:43:19 jtc Exp $"
 #endif
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 /*
  * void
@@ -64,7 +64,7 @@ ENTRY(swab)
 	jz	L2			# while swaping alternate bytes.
 	.align	2,0x90
 L1:	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	decl	%ecx
 	testl	$7,%ecx
@@ -74,33 +74,32 @@ L2:	shrl	$3,%ecx			# copy remainder 8 words at a time
 	jz	L4			# while swapping alternate bytes.
 	.align	2,0x90
 L3:	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	lodsw
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	stosw
 	decl	%ecx
 	jnz	L3
 
-L4:
-	popl	%edi
+L4:	popl	%edi
 	popl	%esi
 	ret
