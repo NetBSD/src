@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.10 2002/10/21 15:36:35 uwe Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.11 2002/10/26 19:11:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,10 @@
  *	@(#)kbd.c	8.2 (Berkeley) 10/30/93
  */
 
+#include "wskbd.h"	/* for NWSKBD */
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+
 struct kbd_softc {
 	struct device k_dev;	/* required first: base device */
 
@@ -53,6 +57,12 @@ struct kbd_softc {
 	/* state of the upper layer */
 	int k_evmode;		/* set if we should produce events */
 	struct evvar k_events;	/* event queue state */
+
+#if NWSKBD > 0
+	struct device * k_wskbd;/* handle for wskbd, if it is attached */
+	int k_wsenabled;	/* set if we are using wskbd */
+	struct callout k_wsbell;/* to shut the bell off */
+#endif
 
 	/* ACSII translation state */
 	struct kbd_state k_state;
