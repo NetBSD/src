@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.50.2.1 1999/11/05 07:13:16 cgd Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.50.2.2 1999/11/09 22:13:21 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -324,12 +324,14 @@ nfs_disconnect(nmp)
 	register struct nfsmount *nmp;
 {
 	register struct socket *so;
-
+	int drain = 0;
+	
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
 		soshutdown(so, 2);
-		if (nmp->nm_iflag & NFSMNT_DISMNT) {
+		drain = (nmp->nm_iflag & NFSMNT_DISMNT) != 0;
+		if (drain) {
 			/*
 			 * soshutdown() above should wake up the current
 			 * listener.
@@ -345,7 +347,7 @@ nfs_disconnect(nmp)
 		soclose(so);
 	}
 #ifdef DIAGNOSTIC
-	if (nmp->nm_waiters > 0)
+	if (drain && (nmp->nm_waiters > 0))
 		panic("nfs_disconnect: waiters left after drain?\n");
 #endif
 }
@@ -961,7 +963,7 @@ tryagain:
 		if (nmp->nm_soflags & PR_CONNREQUIRED)
 			error = nfs_sndlock(&nmp->nm_iflag, rep);
 		if (!error) {
-			m = m_copym(m, 0, M_COPYALL, M_WAIT);
+			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
 			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep);
 			if (nmp->nm_soflags & PR_CONNREQUIRED)
 				nfs_sndunlock(&nmp->nm_iflag);
