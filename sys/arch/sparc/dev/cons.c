@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.20 1996/04/01 17:29:55 christos Exp $ */
+/*	$NetBSD: cons.c,v 1.21 1996/04/22 02:42:00 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,6 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
-#include <sys/cpu.h>
 #include <sys/conf.h>
 
 #include <dev/cons.h>
