@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.1 2001/01/19 01:36:47 manu Exp $ */
+/*	$NetBSD: linux_sigcode.S,v 1.2 2001/04/11 19:41:02 manu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,6 +43,11 @@
 #include <compat/linux/linux_syscall.h>
 
 /*
+ * This is copied from sys/compat/linux/arch/powerpc/linux_machdep.h
+ */
+#define LINUX__SIGNAL_FRAMESIZE 64
+
+/*
  * The following code gets copied to the top of the user stack on process
  * execution.  It does signal trampolining on signal delivery.
  *
@@ -57,7 +62,7 @@
 _C_LABEL(linux_sigcode):
 	addi	1,1,-16			/* reserved space for callee */
 	blrl
-	addi	3,1,16+8		/* compute &sf_sc */
+	addi	3,1,16+LINUX__SIGNAL_FRAMESIZE	/* compute &sf_sc */
 	li	0,LINUX_SYS_sigreturn
 	sc				/* linux_sys_sigreturn(scp) */
 	li	0,LINUX_SYS_exit
