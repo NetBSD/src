@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.7 2000/09/26 22:20:03 msaitoh Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.8 2000/09/29 08:08:38 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -14,7 +14,7 @@ options 	MINIROOTSIZE=3074	# size of memory disk, in blocks
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-options		SH7709A		# 100MHz
+options		SH7709A,SH7709A_BROKEN_IPR	# 100MHz
 options		PCLOCK=25000000		# 25.000MHz
 options		IOM_ROM_BEGIN=0x00000000
 options		IOM_ROM_SIZE=0x00100000	# 1MB
