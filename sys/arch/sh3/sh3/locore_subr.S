@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.19 2004/01/18 18:54:17 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.20 2004/03/26 19:05:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.19 2004/01/18 18:54:17 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.20 2004/03/26 19:05:33 drochner Exp $")
 
 
 	.text
@@ -471,7 +471,7 @@ NENTRY(sigcode)
 	mov.l	_L.SYS_exit, r0
 	trapa	#0x80			/* exit if sigreturn fails */
 	.align	2
-_L.SYS___sigreturn14:	.long	SYS___sigreturn14
+_L.SYS___sigreturn14:	.long	SYS_compat_16___sigreturn14
 _L.SYS_exit:		.long	SYS_exit
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.7 2004/03/26 19:05:33 drochner Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.7 2004/03/26 19:05:33 drochner Exp $")
 
 #include "assym.h"
 #include "opt_compat_netbsd.h"
@@ -52,13 +52,7 @@ ENTRY_NP(sigcode)
  * The stack pointer points to the saved sigcontext.
  */
 	mov	r0, sp
-#if defined(SYS_compat_16___sigreturn14)
 	swi	SYS_compat_16___sigreturn14
-#elif defined(SYS___sigreturn14)
-	swi	SYS___sigreturn14
-#else
-	#error "no sigreturn14 syscall"
-#endif
 
 /* Well if that failed we better exit quick ! */
 
