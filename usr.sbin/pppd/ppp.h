@@ -31,6 +31,7 @@
 #define IPCP		0x8021	/* IP Control Protocol */
 #define UPAP		0xc023	/* User/Password Authentication Protocol */
 #define CHAP            0xc223  /* Crytpographic Handshake Protocol */
+#define LQR		0xc025	/* Link Quality Report protocol */
 #define IP_VJ_COMP	0x002d	/* VJ TCP compressed IP packet */
 #define DLLHEADERLEN	(sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
 #define MTU		1500	/* Default MTU */
