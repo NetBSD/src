@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.25 2000/12/01 08:59:02 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.26 2000/12/01 12:28:33 jdolecek Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -55,7 +55,6 @@
 #include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
-const char netbsd32_emul_path[] = "/emul/netbsd32";
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
 extern struct sysent netbsd32_sysent[];
 #ifdef SYSCALL_DEBUG
@@ -73,6 +72,7 @@ static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
+	"/emul/netbsd32",
 	NULL,
 	netbsd32_sendsig,
 	netbsd32_SYS_syscall,
@@ -107,7 +107,7 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 		return error;
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, netbsd32_emul_path,
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
 				       itp, &bp, 0)) && 
 		    (error = emul_find(p, NULL, "", itp, &bp, 0)))
 			return error;

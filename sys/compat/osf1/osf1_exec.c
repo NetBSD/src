@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.14 2000/11/22 03:56:52 itojun Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.15 2000/12/01 12:28:34 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -46,7 +46,7 @@
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 #include <compat/osf1/osf1_exec.h>
 
@@ -66,6 +66,7 @@ extern char osf1_sigcode[], osf1_esigcode[];
 
 const struct emul emul_osf1 = {
 	"osf1",
+	"/emul/osf1",
 	(int *)osf1_errno_rxlist,
 	sendsig,
 	OSF1_SYS_syscall,
@@ -220,7 +221,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	/*
 	 * locate the loader
 	 */
-	error = emul_find(p, NULL, osf1_emul_path,
+	error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
 	    OSF1_LDR_EXEC_DEFAULT_LOADER, &pathbuf, 0);
 	/* includes /emul/osf1 if appropriate */
 	strncpy(emul_arg->loader_name, pathbuf, MAXPATHLEN + 1);
