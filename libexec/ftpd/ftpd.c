@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.51 1998/06/26 17:41:38 msaitoh Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.52 1998/07/06 06:47:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.51 1998/06/26 17:41:38 msaitoh Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.52 1998/07/06 06:47:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,8 +131,8 @@ sig_atomic_t transflag;
 off_t	file_size;
 off_t	byte_count;
 char	tmpline[7];
-char	hostname[MAXHOSTNAMELEN];
-char	remotehost[MAXHOSTNAMELEN];
+char	hostname[MAXHOSTNAMELEN+1];
+char	remotehost[MAXHOSTNAMELEN+1];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static char *anondir = NULL;
@@ -364,7 +364,8 @@ main(argc, argv)
 		(void) fclose(fd);
 		/* reply(220,) must follow */
 	}
-	(void) gethostname(hostname, sizeof(hostname));
+	(void)gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
 	(void) setjmp(errcatch);
 	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
@@ -1587,10 +1588,11 @@ dolog(sin)
 		sizeof(struct in_addr), AF_INET);
 
 	if (hp)
-		(void) strncpy(remotehost, hp->h_name, sizeof(remotehost));
+		(void)strncpy(remotehost, hp->h_name, sizeof(remotehost));
 	else
-		(void) strncpy(remotehost, inet_ntoa(sin->sin_addr),
+		(void)strncpy(remotehost, inet_ntoa(sin->sin_addr),
 		    sizeof(remotehost));
+	remotehost[sizeof(remotehost) - 1] = '\0';
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle(proctitle);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.25 1998/06/19 23:01:21 kleink Exp $	*/
+/*	$NetBSD: util.c,v 1.26 1998/07/06 06:50:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.25 1998/06/19 23:01:21 kleink Exp $");
+__RCSID("$NetBSD: util.c,v 1.26 1998/07/06 06:50:49 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -203,8 +203,8 @@ login(host, user, pass)
 {
 	char tmp[80];
 	char *acct;
-	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
-	char hostname[MAXHOSTNAMELEN];
+	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN + 1]; /* user@hostname */
+	char hostname[MAXHOSTNAMELEN + 1];
 	struct passwd *pw;
 	int n, aflag = 0;
 
@@ -233,6 +233,7 @@ login(host, user, pass)
 				user = pw->pw_name;
 		}
 		gethostname(hostname, MAXHOSTNAMELEN);
+		hostname[sizeof(hostname) - 1] = '\0';
 #ifndef DONT_CHEAT_ANONPASS
 		/*
 		 * Every anonymous FTP server I've encountered

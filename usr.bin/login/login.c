@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.36 1998/04/02 10:27:16 kleink Exp $       */
+/*     $NetBSD: login.c,v 1.37 1998/07/06 06:51:39 mrg Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.36 1998/04/02 10:27:16 kleink Exp $");
+__RCSID("$NetBSD: login.c,v 1.37 1998/07/06 06:51:39 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -146,7 +146,7 @@ main(argc, argv)
 	int nsaved_gids;
 	char *domain, *p, *salt, *ttyn, *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
-	char localhost[MAXHOSTNAMELEN];
+	char localhost[MAXHOSTNAMELEN + 1];
 	int need_chpass, require_chpass;
 #ifdef KERBEROS5
 	krb5_error_code kerror;
@@ -177,6 +177,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "couldn't get local hostname: %m");
 	else
 		domain = strchr(localhost, '.');
+	localhost[sizeof(localhost) - 1] = '\0';
 
 	fflag = hflag = pflag = sflag = 0;
 	uid = getuid();

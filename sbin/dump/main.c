@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1998/03/18 16:54:56 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1998/07/06 06:50:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 1998/03/18 16:54:56 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 1998/07/06 06:50:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,6 +353,7 @@ main(argc, argv)
 	}
 	(void)strncpy(spcl.c_label, "none", sizeof(spcl.c_label) - 1);
 	(void)gethostname(spcl.c_host, NAMELEN);
+	spcl.c_host[sizeof(spcl.c_host) - 1] = '\0';
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0) {
 		msg("Cannot open %s\n", disk);

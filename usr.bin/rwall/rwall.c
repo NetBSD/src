@@ -1,4 +1,4 @@
-/*	$NetBSD: rwall.c,v 1.7 1997/10/19 14:30:08 lukem Exp $	*/
+/*	$NetBSD: rwall.c,v 1.8 1998/07/06 06:54:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.7 1997/10/19 14:30:08 lukem Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.8 1998/07/06 06:54:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ makemsg(fname)
 	time_t now;
 	FILE *fp;
 	int fd;
-	char *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[32];
+	char *whom, hostname[MAXHOSTNAMELEN + 1], lbuf[100], tmpname[32];
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
@@ -139,6 +139,7 @@ makemsg(fname)
 	if (!(whom = getlogin()))
 		whom = (pw = getpwuid(getuid())) ? pw->pw_name : "???";
 	(void)gethostname(hostname, sizeof(hostname));
+	hostname[sizeof(hostname) - 1] = '\0';
 	(void)time(&now);
 	lt = localtime(&now);
 
