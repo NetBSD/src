@@ -1,3 +1,5 @@
+.\"	$NetBSD: arm_drain_writebuf.2,v 1.1 2002/03/30 06:24:34 thorpej Exp $
+.\"
 .\" Copyright (c) 1997 Mark Brinicombe
 .\" All rights reserved.
 .\"
@@ -28,29 +30,27 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: arm32_drain_writebuf.2,v 1.6 2002/02/08 01:28:13 ross Exp $
-.\"
-.Dd October 3, 1997
-.Dt ARM32_DRAIN_WRITEBUF 2 arm32
+.Dd March 29, 2002
+.Dt ARM_DRAIN_WRITEBUF 2 arm
 .Os
 .Sh NAME
-.Nm arm32_drain_writebuf
+.Nm arm_drain_writebuf
 .Nd drains the cpu write buffer
 .Sh LIBRARY
-.Lb libarm32
+.Lb libarm
 .Sh SYNOPSIS
 .Fd #include \*[Lt]machine/sysarch.h\*[Gt]
 .Ft int
-.Fn arm32_drain_writebuf
+.Fn arm_drain_writebuf
 .Sh DESCRIPTION
-.Fn arm32_drain_writebuf
+.Fn arm_drain_writebuf
 will make sure that all the entries in the processor write buffer are
 written out to memory.
 .Pp
 Not all processors support this operation (currently only the SA110).
 Those processes that do not treat this function as a null-op.
 .Sh ERRORS
-.Fn arm32_drain_writebuf
+.Fn arm_drain_writebuf
 will never fail so will always return 0.
 .Sh REFERENCES
 StrongARM Data Sheet
