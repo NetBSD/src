@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.18 2000/09/17 23:04:17 jsm Exp $	*/
+/*	$NetBSD: com6.c,v 1.19 2000/09/22 08:19:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.18 2000/09/17 23:04:17 jsm Exp $");
+__RCSID("$NetBSD: com6.c,v 1.19 2000/09/22 08:19:21 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -242,8 +242,7 @@ light()
 void
 dooropen()
 {				/* synonyms = {open, unlock} */
-	while(wordtype[++wordnumber] == ADJS)
-		;
+	wordnumber++;
 	if (wordnumber <= wordcount && wordtype[wordnumber] == NOUNS
 	    && wordvalue[wordnumber] == DOOR) {
 		switch(position) {
