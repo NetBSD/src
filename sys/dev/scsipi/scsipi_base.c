@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.14 2001/04/11 01:16:05 mjacob Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.15 2001/04/22 16:40:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1077,6 +1077,7 @@ scsipi_done(xs)
 	 * The resource this command was using is now free.
 	 */
 	scsipi_put_resource(chan);
+	xs->xs_periph->periph_sent--;
 
 	/*
 	 * If the command was tagged, free the tag.
@@ -1551,7 +1552,8 @@ scsipi_run_queue(chan)
 		     xs = TAILQ_NEXT(xs, channel_q)) {
 			periph = xs->xs_periph;
 
-			if ((periph->periph_active > periph->periph_openings) ||			    periph->periph_qfreeze != 0 ||
+			if ((periph->periph_sent >= periph->periph_openings) ||
+			    periph->periph_qfreeze != 0 ||
 			    (periph->periph_flags & PERIPH_UNTAG) != 0)
 				continue;
 
@@ -1616,6 +1618,7 @@ scsipi_run_queue(chan)
 			scsipi_get_tag(xs);
 		else
 			periph->periph_flags |= PERIPH_UNTAG;
+		periph->periph_sent++;
 		splx(s);
 
 		scsipi_adapter_request(chan, ADAPTER_REQ_RUN_XFER, xs);
@@ -2091,6 +2094,7 @@ scsipi_set_xfer_mode(chan, target, immed)
  * scsipi_channel_reset:
  *
  *	handle scsi bus reset
+ * called at splbio
  */
 void
 scsipi_async_event_channel_reset(chan)
@@ -2103,6 +2107,8 @@ scsipi_async_event_channel_reset(chan)
 	/*
 	 * Channel has been reset. Also mark as reset pending REQUEST_SENSE
 	 * commands; as the sense is not available any more.
+	 * can't call scsipi_done() from here, as the command has not been
+	 * sent to the adapter yet (this would corrupt accounting).
 	 */
 
 	for (xs = TAILQ_FIRST(&chan->chan_queue); xs != NULL; xs = xs_next) {
@@ -2110,9 +2116,12 @@ scsipi_async_event_channel_reset(chan)
 		if (xs->xs_control & XS_CTL_REQSENSE) {
 			TAILQ_REMOVE(&chan->chan_queue, xs, channel_q);
 			xs->error = XS_RESET;
-			scsipi_done(xs);
+			if ((xs->xs_control & XS_CTL_ASYNC) != 0)
+				TAILQ_INSERT_TAIL(&chan->chan_complete, xs,
+				    channel_q);
 		}
 	}
+	wakeup(&chan->chan_complete);
 	/* Catch xs with pending sense which may not have a REQSENSE xs yet */
 	for (target = 0; target < chan->chan_ntargets; target++) {
 		if (target == chan->chan_id)
