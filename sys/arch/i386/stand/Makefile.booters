@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.23 1999/05/11 19:43:09 drochner Exp $
+#	$NetBSD: Makefile.booters,v 1.24 1999/07/08 14:32:28 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -76,8 +76,7 @@ ${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${ROMSTART} ${OBJS} \
 	vers.o ${LIBLIST} >${BASE}.list
-	cp ${BASE}.sym ${BASE}.bin
-	strip ${BASE}.bin
+	objcopy --output-target=binary ${BASE}.sym ${BASE}.bin
 	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${BASE:Q}.bin \
 		ROMFILE=${.OBJDIR:Q}/${BASE:Q}.rom ROM_SIZE=${ROM_SIZE:Q})
 	rm -f ${BASE}.bin
@@ -85,9 +84,6 @@ ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI38
 ${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x100 ${DOSSTART} ${OBJS} \
 	vers.o ${LIBLIST} >${BASE}.list
-	cp ${BASE}.sym ${BASE}.bin
-	strip ${BASE}.bin
-	dd if=${BASE}.bin of=${BASE}.com ibs=32 skip=1 obs=1024b
-	rm -f ${BASE}.bin
+	objcopy --output-target=binary ${BASE}.sym ${BASE}.com
 
 .include <bsd.prog.mk>
