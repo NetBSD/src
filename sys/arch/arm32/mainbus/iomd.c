@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.c,v 1.4 1996/10/29 23:22:57 mark Exp $ */
+/* $NetBSD: iomd.c,v 1.5 1996/11/23 03:45:52 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -98,7 +98,7 @@ iomdattach(parent, self, aux)
 	int combo_time;
 	int loop;
 
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
+	id = IOMD_ID;
 
 	printf(": ");
 
