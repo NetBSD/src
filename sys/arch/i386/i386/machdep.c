@@ -303,7 +303,6 @@ allocsys(v)
 }
 
 struct cpu_nameclass i386_cpus[] = {
-	{ "Intel 80286",CPUCLASS_286 },	/* CPU_286   */
 	{ "i386SX",	CPUCLASS_386 },	/* CPU_386SX */
 	{ "i386DX",	CPUCLASS_386 },	/* CPU_386   */
 	{ "i486SX",	CPUCLASS_486 },	/* CPU_486SX */
@@ -322,9 +321,6 @@ identifycpu()
 	cpu_class = i386_cpus[cpu].cpu_class;
 	printf(" (");
 	switch(cpu_class) {
-	case CPUCLASS_286:
-		printf("286");
-		break;
 	case CPUCLASS_386:
 		printf("386");
 		break;
@@ -345,7 +341,6 @@ identifycpu()
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-	case CPUCLASS_286:	/* a 286 should not make it this far, anyway */
 #if !defined(I386_CPU)
 	case CPUCLASS_386:
 #endif
@@ -897,7 +892,7 @@ setidt(idx, func, typ, dpl)
 extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
 	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
-	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(rsvd0),
+	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align),
 	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
 	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
 	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
@@ -953,7 +948,7 @@ init386(first_avail)
 	setidt(14, &IDTVEC(page), SDT_SYS386TGT, SEL_KPL);
 	setidt(15, &IDTVEC(rsvd), SDT_SYS386TGT, SEL_KPL);
 	setidt(16, &IDTVEC(fpu), SDT_SYS386TGT, SEL_KPL);
-	setidt(17, &IDTVEC(rsvd0), SDT_SYS386TGT, SEL_KPL);
+	setidt(17, &IDTVEC(align), SDT_SYS386TGT, SEL_KPL);
 	setidt(18, &IDTVEC(rsvd1), SDT_SYS386TGT, SEL_KPL);
 	setidt(19, &IDTVEC(rsvd2), SDT_SYS386TGT, SEL_KPL);
 	setidt(20, &IDTVEC(rsvd3), SDT_SYS386TGT, SEL_KPL);
