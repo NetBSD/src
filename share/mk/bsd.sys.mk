@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.44 2000/12/23 22:47:28 itojun Exp $
+#	$NetBSD: bsd.sys.mk,v 1.45 2000/12/29 03:18:32 itojun Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -51,6 +51,8 @@ OBJCOPY?=	objcopy
 STRIP?=		strip
 CONFIG?=	config
 RPCGEN?=	rpcgen
+# note that MKLOCALE is not a variable to control build behavior.  this is a
+# host tool for generating /usr/share/locale/*/LC_CTYPE.
 MKLOCALE?=	mklocale
 
 .SUFFIXES:	.m .o .ln .lo
