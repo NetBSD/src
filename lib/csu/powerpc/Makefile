@@ -1,3 +1,5 @@
-#	$NetBSD: Makefile,v 1.11 1999/03/20 00:32:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11.10.1 2001/12/09 17:19:11 he Exp $
+
+CPPFLAGS+= -I- -I${.CURDIR}
 
 .include "${.CURDIR}/../common_elf/Makefile.inc"
