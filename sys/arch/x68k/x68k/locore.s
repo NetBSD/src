@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 1997/10/12 18:25:36 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 1997/10/15 23:39:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -671,7 +671,7 @@ _powtrap:
 
 _com0trap:
 #include "com.h"
-#if NCOM > 0
+#if NXCOM > 0
 	INTERRUPT_SAVEREG
 	movel	#0,sp@-
 	jbsr	_comintr
@@ -683,7 +683,7 @@ _com0trap:
 	jra	rei
 
 _com1trap:
-#if NCOM > 1
+#if NXCOM > 1
 	INTERRUPT_SAVEREG
 	movel	#1,sp@-
 	jbsr	_comintr
