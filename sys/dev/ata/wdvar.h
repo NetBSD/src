@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.26 2003/12/14 05:38:20 thorpej Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.27 2004/08/30 09:34:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,6 +31,10 @@
 
 #ifndef _DEV_ATA_WDVAR_H_
 #define	_DEV_ATA_WDVAR_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_wd_softbadsect.h"
+#endif
 
 struct wd_softc {
 	/* General disk infos */
@@ -67,9 +71,10 @@ struct wd_softc {
 
 	void *sc_sdhook;		/* our shutdown hook */
 
+#ifdef WD_SOFTBADSECT
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 	u_int sc_bscount;
-
+#endif
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
