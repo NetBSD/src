@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.23 2003/10/24 00:11:24 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.24 2004/01/17 20:17:44 dsl Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -106,15 +106,16 @@ ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	@echo "mdsetimage: ${_KERNNAME.${_K}.${_F}}"
 	@echo "      with: ${_I}"
 	@echo "      into: ${.TARGET}"
-	@rm -f ${.TARGET} ${.TARGET}.symbols.gz
-	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}
-	${TOOL_MDSETIMAGE} -v ${.TARGET} ${_I}
+	@rm -f ${.TARGET} ${.TARGET}.tmp ${.TARGET}.symbols.gz
+	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}.tmp
+	${TOOL_MDSETIMAGE} -v ${.TARGET}.tmp ${_I}
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME}) && !defined(MDSET_NOSYMBOLS)
-	${NM} ${.TARGET} | gzip -9 > ${.TARGET}.symbols.gz
+	${NM} ${.TARGET}.tmp | gzip -9 > ${.TARGET}.symbols.gz
 .endif
 .if !defined(MDSET_NOSTRIP.${_FILENAME}) && !defined(MDSET_NOSTRIP)
-	${STRIP} ${.TARGET}
+	${STRIP} ${.TARGET}.tmp
 .endif
+	@mv ${.TARGET}.tmp ${.TARGET}
 .if defined(MDSET_POST.${_FILENAME})
 	${_POST.${.TARGET}}
 .endif
