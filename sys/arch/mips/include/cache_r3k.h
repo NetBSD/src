@@ -1,11 +1,10 @@
-/*	$NetBSD: locore.h,v 1.1 2001/10/16 16:31:35 uch Exp $	*/
+/*	$NetBSD: cache_r3k.h,v 1.2 2001/11/14 18:26:21 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+/*
+ * Copyright 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by UCHIYAMA Yasushi.
+ * Written by Jason R. Thorpe for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,16 +16,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -36,13 +35,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LOCORE
-extern void	r5900_init(void);
+/*
+ * Cache definitions/operations for R3000-style caches.
+ */
 
-extern void	r5900_FlushCache(void);
-extern void	r5900_FlushDCache(vaddr_t, vaddr_t);
-extern void	r5900_FlushICache(vaddr_t, vaddr_t);
-extern void	r5900_HitFlushDCache(vaddr_t, vsize_t);
-extern void	r5900_InvalidateDCache(vaddr_t, vsize_t);
-#endif /* !_LOCORE */
+#ifdef _KERNEL
 
+void	r3k_icache_sync_all(void);
+void	r3k_icache_sync_range(vaddr_t, vsize_t);
+
+void	r3k_pdcache_wbinv_all(void);
+
+void	r3k_pdcache_inv_range(vaddr_t, vsize_t);
+void	r3k_pdcache_wb_range(vaddr_t, vsize_t);
+
+void	r3k_picache_do_inv(vaddr_t, vaddr_t);
+void	r3k_pdcache_do_inv(vaddr_t, vaddr_t);
+
+int	r3k_picache_size(void);
+int	r3k_pdcache_size(void);
+
+#endif /* _KERNEL */
