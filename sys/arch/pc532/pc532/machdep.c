@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 2003/11/06 00:41:21 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150 2003/11/06 00:58:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2003/11/06 00:41:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2003/11/06 00:58:17 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -367,6 +367,9 @@ getframe(struct lwp *l, int sig, int *onstack)
 
 struct sigframe_siginfo {
 	int sf_ra;
+	int sf_sig;
+	siginfo_t *sf_sip;
+	ucontext_t *sf_ucp;
 	siginfo_t sf_si;
 	ucontext_t sf_uc;
 };
@@ -389,8 +392,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	int sig = ksi->ksi_signo;
 	int onstack;
-	ucontext_t uc;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
+	struct sigframe_siginfo frame, *fp = getframe(l, sig, &onstack);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct reg *regs = l->l_md.md_regs;
 
@@ -405,21 +407,23 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		    ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
 	case 2:
+		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 	}
 
-	uc.uc_flags = _UC_SIGMASK
+	frame.sf_sig = sig;
+	frame.sf_sip = &fp->sf_si;
+	frame.sf_ucp = &fp->sf_uc;
+	frame.sf_si._info = ksi->ksi_info;
+	frame.sf_uc.uc_flags = _UC_SIGMASK
 	    | (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
-	uc.uc_sigmask = *mask;
-	uc.uc_link = NULL;
-	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
-	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = NULL;
+	(void)memset(&frame.sf_uc.uc_stack, 0, sizeof(uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
-	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
-	    copyout(&uc, &fp->sf_uc, sizeof(uc)) != 0 ||
-	    copyout(&ps->sa_sigdesc[sig].sd_tramp, &fp->sf_ra,
-		sizeof(fp->sf_ra)) != 0) {
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -427,7 +431,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
-
 
 	/*
 	 * Build context to run handler in.  We invoke the handler
