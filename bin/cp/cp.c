@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.12 1995/03/21 09:02:14 cgd Exp $	*/
+/*	$NetBSD: cp.c,v 1.13 1995/04/02 01:45:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.2 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: cp.c,v 1.12 1995/03/21 09:02:14 cgd Exp $";
+static char rcsid[] = "$NetBSD: cp.c,v 1.13 1995/04/02 01:45:25 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -408,10 +408,10 @@ copy(argv, type, fts_options)
 					rval = 1;
 			break;
 		case S_IFIFO:
-			if (Rflag)
+			if (Rflag) {
 				if (copy_fifo(curr->fts_statp, !dne))
 					rval = 1;
-			else 
+			} else 
 				if (copy_file(curr, dne))
 					rval = 1;
 			break;
