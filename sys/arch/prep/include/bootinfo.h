@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2000/02/29 15:21:26 nonaka Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2001/06/17 15:57:12 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -43,6 +43,7 @@ struct btinfo_common {
 #define BTINFO_RESIDUAL	0
 #define BTINFO_CONSOLE	1
 #define BTINFO_CLOCK	2
+#define BTINFO_MODEL	3
 
 struct btinfo_residual {
 	struct btinfo_common common;
@@ -61,8 +62,13 @@ struct btinfo_clock {
 	int ticks_per_sec;
 };
 
+struct btinfo_model {
+	struct btinfo_common common;
+	int model;
+};
+
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void *lookup_bootinfo(int);
 #endif
 
 #define BOOTINFO_MAXSIZE	0xd0

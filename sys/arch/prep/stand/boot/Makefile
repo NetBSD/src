@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/08/14 17:51:41 nonaka Exp $
+#	$NetBSD: Makefile,v 1.4 2001/06/17 15:57:13 nonaka Exp $
 
 COMMON= ${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -16,7 +16,7 @@ NEWVERSWHAT=	"BOOT"
 
 SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c fd.c
-SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
+SRCS+= filesystem.c ident.c inkernel.c io.c tgets.c prf.c monitor.c
 SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
 
 AFLAGS= -x assembler-with-cpp -traditional-cpp

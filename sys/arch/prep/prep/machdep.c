@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2001/06/15 15:24:03 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2001/06/17 15:57:14 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,6 +64,7 @@
 #include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
+#include <machine/preptype.h>
 #include <machine/residual.h>
 #include <machine/trap.h>
 
@@ -137,6 +138,7 @@ extern struct user *proc0paddr;
 struct bat battable[16];
 
 paddr_t prep_intr_reg;			/* PReP interrupt vector register */
+int prep_model;
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
@@ -226,6 +228,20 @@ initppc(startkernel, endkernel, args, btinfo)
 
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
+	}
+
+	/*
+	 * Set PReP type.
+	 */
+	{
+		struct btinfo_model *modelinfo;
+
+		modelinfo =
+		    (struct btinfo_model *)lookup_bootinfo(BTINFO_MODEL);
+		if (modelinfo == NULL)
+			prep_model = PREP_UNKNOWN;
+		else
+			prep_model = modelinfo->model;
 	}
 
 	proc0.p_addr = proc0paddr;
@@ -775,21 +791,29 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-	{
-		/* XXX: ibm_machdep */
-		int msr;
-		u_char reg;
+	switch (prep_model) {
+	case IBM_6050:
+	case IBM_7248:
+	case IBM_6040:
+		{
+			int msr;
+			u_char reg;
 
-		asm volatile("mfmsr %0" : "=r"(msr));
-		msr |= PSL_IP;
-		asm volatile("mtmsr %0" :: "r"(msr));
+			asm volatile("mfmsr %0" : "=r"(msr));
+			msr |= PSL_IP;
+			asm volatile("mtmsr %0" :: "r"(msr));
 
-		reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-		reg &= ~1UL;
-		*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
-		reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-		reg |= 1;
-		*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+			reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+			reg &= ~1UL;
+			*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+			reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+			reg |= 1;
+			*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+		}
+		break;
+
+	default:
+		break;
 	}
 
 	while(1);

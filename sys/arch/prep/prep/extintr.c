@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.6 2001/01/15 20:19:57 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.7 2001/06/17 15:57:14 nonaka Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -95,13 +95,14 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
+#include <machine/preptype.h>
 #include <machine/psl.h>
 
 #include <dev/isa/isavar.h>
 
-void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
-void ext_intr __P((void));
+void intr_calculatemasks(void);
+int fakeintr(void *);
+void ext_intr(void);
 
 extern paddr_t prep_intr_reg;
 extern int cold;
@@ -140,7 +141,14 @@ ext_intr()
 	/* what about enabling external interrupt in here? */
 	pcpl = splhigh();	/* Turn off all */
 
-	irq = isa_intr();
+	switch (prep_model) {
+	case IBM_6050:
+		irq = *(u_char *)(prep_intr_reg + INTR_VECTOR_REG);
+		break;
+	default:
+		irq = isa_intr();
+		break;
+	}
 	intrcnt2[irq]++;
 
 	r_imen = 1 << irq;
