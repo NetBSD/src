@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 1999/09/23 15:14:58 minoura Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 2001/09/27 09:55:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998 ITOH, Yasufumi
@@ -121,5 +121,10 @@
 
 #define X68K_BOOT_DEV_IS_NETIF(major)	\
 	((major) == X68K_MAJOR_NE)
+
+
+/* Kernel boot interface version */
+#define X68K_BOOTIF_VERS	0
+#define X68K_BOOTIF_VERS_COMPAT	0x4e73 /* rte instruction */
 
 #endif /* _X68K_BOOTINFO_H_ */

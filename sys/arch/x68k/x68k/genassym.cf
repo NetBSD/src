@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2001/03/22 12:47:11 minoura Exp $
+#	$NetBSD: genassym.cf,v 1.17 2001/09/27 09:55:10 minoura Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -224,3 +224,6 @@ define SVR4_SYS_context		SVR4_SYS_context
 define SVR4_SYS_exit		SVR4_SYS_exit
 define SVR4_SETCONTEXT		SVR4_SETCONTEXT
 endif
+
+# Bootloader / kernel interface
+define X68K_BOOTIF_VERS		X68K_BOOTIF_VERS
