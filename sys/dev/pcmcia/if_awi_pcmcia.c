@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.5 1999/11/06 16:43:54 sommerfeld Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.6 2000/02/01 08:52:05 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -130,7 +130,6 @@ struct cfattach awi_pcmcia_ca = {
  */
 
 struct awi_pcmcia_get_enaddr_args {
-	int got_enaddr;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 };
 int	awi_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
@@ -249,7 +248,7 @@ awi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_mem_handle memh;
 	struct awi_pcmcia_get_enaddr_args pgea;
 	bus_addr_t memoff;
-	int memwin;
+	int memwin, rv;
 
 #if 0
 	int i, j;
@@ -322,21 +321,26 @@ awi_pcmcia_attach(parent, self, aux)
 	sc->sc_disable = awi_pcmcia_disable;
 
 	/* Read station address. */
-	pgea.got_enaddr = 0;
-	if (pcmcia_scan_cis(parent, awi_pcmcia_get_enaddr, &pgea) == -1) {
+	rv = pcmcia_scan_cis(parent, awi_pcmcia_get_enaddr, &pgea);
+	if (rv == -1) {
 		printf("%s: Couldn't read CIS to get ethernet address\n",
 		    sc->sc_dev.dv_xname);
 		return;
-	} else if (!pgea.got_enaddr) {
+	} else if (rv == 0) {
 		printf("%s: Couldn't get ethernet address from CIS\n",
 		    sc->sc_dev.dv_xname);
 		return;
-	} else
+	}
+
 #ifdef DIAGNOSTIC
-		printf("%s: Ethernet address from CIS: %s\n",
-		    sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr))
+	if (rv != 1) {
+		printf("%s: pcmcia_scan_cis returns %d\n", sc->sc_dev.dv_xname,
+		    rv);
+		panic("awi_pcmcia_attach");
+	}
+	printf("%s: Ethernet address from CIS: %s\n",
+	    sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr));
 #endif
-		;
 
 	awi_attach(sc, pgea.enaddr);
 
@@ -396,7 +400,6 @@ awi_pcmcia_get_enaddr(tuple, arg)
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			p->enaddr[i] = pcmcia_tuple_read_1(tuple, i + 2);
-		p->got_enaddr = 1;
 		return (1);
 	}
 	return (0);
