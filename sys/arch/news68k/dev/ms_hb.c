@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.4 2002/10/02 04:40:08 thorpej Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.5 2003/01/11 16:00:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -77,7 +77,7 @@ ms_hb_match(parent, cf, aux)
 		return 0;
 
 	/* XXX no default address */
-	if (ha->ha_address == -1)
+	if (ha->ha_address == (u_int)-1)
 		return 0;
 
 	addr = IIOV(ha->ha_address); /* XXX */

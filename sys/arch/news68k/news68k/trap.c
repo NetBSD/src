@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2002/12/20 16:54:17 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2003/01/11 16:00:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -319,7 +319,7 @@ trap(type, code, v, frame)
 		}
 		regdump((struct trapframe *)&frame, 128);
 		type &= ~T_USER;
-		if ((u_int)type < trap_types)
+		if (type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
@@ -589,9 +589,9 @@ trap(type, code, v, frame)
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
 			if (rv == 0) {
-				unsigned nss;
+				int nss;
 
-				nss = btoc(USRSTACK-(unsigned)va);
+				nss = btoc(USRSTACK-(u_int)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == EACCES)

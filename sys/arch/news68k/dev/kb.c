@@ -1,4 +1,4 @@
-/*	$NetBSD: kb.c,v 1.2 2002/03/17 19:40:45 atatat Exp $	*/
+/*	$NetBSD: kb.c,v 1.3 2003/01/11 16:00:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -112,7 +112,7 @@ kb_cngetc(v, type, data)
 	int *data;
 {
 	struct console_softc *conssc = v;
-	int nkey;
+	u_int nkey;
 
 	/* set to polling mode */
 	conssc->cs_polling = 1;
