@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.11 2001/11/21 12:28:23 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.12 2001/12/31 12:16:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ typedef struct ehci_softc {
 	u_int8_t sc_conf;		/* device configuration */
 	usbd_xfer_handle sc_intrxfer;
 	char sc_isreset;
+	char sc_softwake;
 
 	u_int32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;
