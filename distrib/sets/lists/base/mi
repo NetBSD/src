@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.266 2001/06/14 11:10:38 kleink Exp $
+# $NetBSD: mi,v 1.267 2001/07/14 06:53:23 garbled Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1409,6 +1409,7 @@
 ./usr/share/sushi/network/interfaces/interface/script2		base-sysutil-share
 ./usr/share/sushi/network/interfaces/interface/script		base-sysutil-share
 ./usr/share/sushi/network/interfaces/interface/help		base-sysutil-share
+./usr/share/sushi/network/interfaces/interface/nwid.sed		base-sysutil-share
 ./usr/share/sushi/network/interfaces/index			base-sysutil-share
 ./usr/share/sushi/network/interfaces/listif			base-sysutil-share
 ./usr/share/sushi/network/interfaces/listif/script		base-sysutil-share
