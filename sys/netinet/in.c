@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.101 2005/01/24 21:25:09 matt Exp $	*/
+/*	$NetBSD: in.c,v 1.102 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.101 2005/01/24 21:25:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.102 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -135,13 +135,13 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.101 2005/01/24 21:25:09 matt Exp $");
 #endif
 
 #ifdef INET
-static u_int in_mask2len __P((struct in_addr *));
-static void in_len2mask __P((struct in_addr *, u_int));
-static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
-	struct ifnet *, struct proc *));
+static u_int in_mask2len(struct in_addr *);
+static void in_len2mask(struct in_addr *, u_int);
+static int in_lifaddr_ioctl(struct socket *, u_long, caddr_t,
+	struct ifnet *, struct proc *);
 
-static int in_addprefix __P((struct in_ifaddr *, int));
-static int in_scrubprefix __P((struct in_ifaddr *));
+static int in_addprefix(struct in_ifaddr *, int);
+static int in_scrubprefix(struct in_ifaddr *);
 
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.81 2004/09/04 23:30:07 manu Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.82 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.81 2004/09/04 23:30:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.82 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -102,11 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.81 2004/09/04 23:30:07 manu Exp $");
 
 struct inpcbtable rawcbtable;
 
-int	 rip_pcbnotify __P((struct inpcbtable *, struct in_addr,
-    struct in_addr, int, int, void (*) __P((struct inpcb *, int))));
-int	 rip_bind __P((struct inpcb *, struct mbuf *));
-int	 rip_connect __P((struct inpcb *, struct mbuf *));
-void	 rip_disconnect __P((struct inpcb *));
+int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
+    struct in_addr, int, int, void (*)(struct inpcb *, int));
+int	 rip_bind(struct inpcb *, struct mbuf *);
+int	 rip_connect(struct inpcb *, struct mbuf *);
+void	 rip_disconnect(struct inpcb *);
 
 /*
  * Nominal space allocated to a raw ip socket.
@@ -241,7 +241,7 @@ rip_pcbnotify(table, faddr, laddr, proto, errno, notify)
 	struct in_addr faddr, laddr;
 	int proto;
 	int errno;
-	void (*notify) __P((struct inpcb *, int));
+	void (*notify)(struct inpcb *, int);
 {
 	struct inpcb *inp, *ninp;
 	int nmatch;
@@ -272,7 +272,7 @@ rip_ctlinput(cmd, sa, v)
 	void *v;
 {
 	struct ip *ip = v;
-	void (*notify) __P((struct inpcb *, int)) = in_rtchange;
+	void (*notify)(struct inpcb *, int) = in_rtchange;
 	int errno;
 
 	if (sa->sa_family != AF_INET ||

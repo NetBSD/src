@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.31 2005/02/02 21:41:55 perry Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.31 2005/02/02 21:41:55 perry Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -102,9 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $");
 void gre_inet_ntoa(struct in_addr in); 	/* XXX */
 #endif
 
-struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
+struct gre_softc *gre_lookup(struct mbuf *, u_int8_t);
 
-int	gre_input2 __P((struct mbuf *, int, u_char));
+int	gre_input2(struct mbuf *, int, u_char);
 
 /*
  * De-encapsulate a packet and feed it back through ip input (this

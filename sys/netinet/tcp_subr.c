@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.177 2005/01/03 19:47:30 heas Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.178 2005/02/02 21:41:55 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.177 2005/01/03 19:47:30 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.178 2005/02/02 21:41:55 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -216,18 +216,18 @@ int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 
-int	tcp_freeq __P((struct tcpcb *));
+int	tcp_freeq(struct tcpcb *);
 
 #ifdef INET
-void	tcp_mtudisc_callback __P((struct in_addr));
+void	tcp_mtudisc_callback(struct in_addr);
 #endif
 #ifdef INET6
-void	tcp6_mtudisc_callback __P((struct in6_addr *));
+void	tcp6_mtudisc_callback(struct in6_addr *);
 #endif
 
-void	tcp_mtudisc __P((struct inpcb *, int));
+void	tcp_mtudisc(struct inpcb *, int);
 #ifdef INET6
-void	tcp6_mtudisc __P((struct in6pcb *, int));
+void	tcp6_mtudisc(struct in6pcb *, int);
 #endif
 
 POOL_INIT(tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl", NULL);
@@ -1368,7 +1368,7 @@ tcp6_ctlinput(cmd, sa, d)
 	void *d;
 {
 	struct tcphdr th;
-	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
+	void (*notify)(struct in6pcb *, int) = tcp6_notify;
 	int nmatch;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *sa6_src = NULL;
@@ -1479,7 +1479,7 @@ tcp_ctlinput(cmd, sa, v)
 	struct tcphdr *th;
 	struct icmp *icp;
 	extern const int inetctlerrmap[];
-	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	void (*notify)(struct inpcb *, int) = tcp_notify;
 	int errno;
 	int nmatch;
 #ifdef INET6
