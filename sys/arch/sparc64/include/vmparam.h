@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2003/08/10 02:30:52 chs Exp $ */
+/*	$NetBSD: vmparam.h,v 1.26 2003/10/21 12:08:11 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,7 +172,7 @@ struct vm_page_md {
 do {									\
 	(pg)->mdpage.mdpg_pvh.pv_next = NULL;				\
 	(pg)->mdpage.mdpg_pvh.pv_pmap = NULL;				\
-	(pg)->mdpage.mdpg_pvh.pv_va = NULL;				\
+	(pg)->mdpage.mdpg_pvh.pv_va = 0;				\
 } while (/*CONSTCOND*/0)
 
 #endif	/* _KERNEL */

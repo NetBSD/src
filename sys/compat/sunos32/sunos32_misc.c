@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.23 2003/08/07 16:30:47 agc Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.24 2003/10/21 12:08:11 kleink Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.23 2003/08/07 16:30:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.24 2003/10/21 12:08:11 kleink Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -616,7 +616,7 @@ async_daemon(l, v, retval)
 	struct netbsd32_nfssvc_args ouap;
 
 	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
+	SCARG(&ouap, argp) = 0;
 
 	return (netbsd32_nfssvc(l, &ouap, retval));
 }
