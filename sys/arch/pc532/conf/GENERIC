@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 1999/03/10 13:35:33 jonb Exp $
+#	$NetBSD: GENERIC,v 1.2 1999/03/24 03:48:04 jonb Exp $
 #
 # GENERIC: generic kernel for most machines
 #
@@ -44,8 +44,8 @@ options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
 options 	CPU30MHZ		# necessary for fast machines
-options 	CONSOLE_SPEED=B9600	# default console baud rate
-options 	SCNDEF_CFLAG="CREAD+CS8+HUPCL"
+#options 	CONSOLE_SPEED=B9600	# default console baud rate
+#options 	SCNDEF_CFLAG="CREAD|CS8|HUPCL"	# and settings
 
 config		netbsd	root on ? type ?
 
