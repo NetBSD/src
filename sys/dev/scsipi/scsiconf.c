@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.95 1998/01/21 08:41:28 mikel Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.96 1998/03/07 06:34:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -448,9 +448,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "0663H",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "IBM",	  "0664",		 ""},	  SDEV_AUTOSAVE},
+	 "IBM",	     "0664",		 ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "IBM     ", "KZ-C",         ""},     SDEV_AUTOSAVE},
+	 "IBM     ", "H3171-S2",	 ""},	  SDEV_NOLUNS|SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM     ", "KZ-C",		 ""},	  SDEV_AUTOSAVE},
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
@@ -478,6 +480,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MST     ", "SnapLink        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "NEC     ", "D3847           ", "0307"}, SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "QUANTUM ", "ELS85S          ", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "LPS525S         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
