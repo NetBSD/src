@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.2 1997/05/07 18:50:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -37,7 +37,8 @@ void db_stack_trace_cmd __P((db_expr_t, int, db_expr_t, char *));
 /* arch/<arch>/<arch>/db_disasm.c */
 db_addr_t db_disasm __P((db_addr_t, boolean_t));
 
-/* kern/kern_synch.c */
+/* kern/kern_proc.c */
+void db_kill_proc __P((db_expr_t, int, db_expr_t, char *));
 void db_show_all_procs __P((db_expr_t, int, db_expr_t, char *));
 
 /* kern/kern_clock.c */
