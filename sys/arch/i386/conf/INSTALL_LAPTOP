@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.64 2004/07/23 15:36:00 he Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.65 2004/07/28 12:34:04 jmmv Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -156,9 +156,16 @@ options 	INET6		# IPv6
 # builtin terminal emulations 
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-# different kernel output - see dev/wscons/wsdisplayvar.h
-options 	WS_KERNEL_FG=WSCOL_WHITE
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+#options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR=""
+#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
 # compatibility to other console drivers
 #options 	WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
 #options 	WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls

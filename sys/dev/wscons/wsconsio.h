@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.67 2004/07/20 20:28:20 heas Exp $ */
+/* $NetBSD: wsconsio.h,v 1.68 2004/07/28 12:34:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -442,6 +442,14 @@ struct wsdisplay_scroll_data {
 
 #define	WSDISPLAYIO_DGSCROLL	_IOR('W', 87, struct wsdisplay_scroll_data)
 #define	WSDISPLAYIO_DSSCROLL	_IOW('W', 88, struct wsdisplay_scroll_data)
+
+struct wsdisplay_msgattrs {
+	int default_attrs, default_bg, default_fg;
+	int kernel_attrs, kernel_bg, kernel_fg;
+};
+
+#define	WSDISPLAYIO_GMSGATTRS	_IOR('W', 89, struct wsdisplay_msgattrs)
+#define	WSDISPLAYIO_SMSGATTRS	_IOW('W', 90, struct wsdisplay_msgattrs)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

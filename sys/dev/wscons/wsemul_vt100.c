@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.25 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.26 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.25 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.26 2004/07/28 12:34:05 jmmv Exp $");
+
+#include "opt_wsmsgattrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.25 2004/03/24 17:26:53 drochner E
 #include <dev/wscons/wsemul_vt100var.h>
 #include <dev/wscons/ascii.h>
 
-#include "opt_wskernattr.h"
-
 void	*wsemul_vt100_cnattach(const struct wsscreen_descr *, void *,
 			       int, int, long);
 void	*wsemul_vt100_attach(int console, const struct wsscreen_descr *,
@@ -50,6 +50,11 @@ void	*wsemul_vt100_attach(int console, const struct wsscreen_descr *,
 void	wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int);
 void	wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp);
 void	wsemul_vt100_resetop(void *, enum wsemul_resetops);
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+static void wsemul_vt100_getmsgattrs(void *, struct wsdisplay_msgattrs *);
+static void wsemul_vt100_setmsgattrs(void *, const struct wsscreen_descr *,
+                                     const struct wsdisplay_msgattrs *);
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
 
 const struct wsemul_ops wsemul_vt100_ops = {
 	"vt100",
@@ -58,7 +63,14 @@ const struct wsemul_ops wsemul_vt100_ops = {
 	wsemul_vt100_output,
 	wsemul_vt100_translate,
 	wsemul_vt100_detach,
-	wsemul_vt100_resetop
+	wsemul_vt100_resetop,
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+	wsemul_vt100_getmsgattrs,
+	wsemul_vt100_setmsgattrs,
+#else
+	NULL,
+	NULL,
+#endif
 };
 
 struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
@@ -122,6 +134,8 @@ wsemul_vt100_init(struct wsemul_vt100_emuldata *edp,
 	const struct wsscreen_descr *type, void *cookie, int ccol, int crow,
 	long defattr)
 {
+	int error;
+
 	edp->emulops = type->textops;
 	edp->emulcookie = cookie;
 	edp->scrcapabilities = type->capabilities;
@@ -129,7 +143,64 @@ wsemul_vt100_init(struct wsemul_vt100_emuldata *edp,
 	edp->ncols = type->ncols;
 	edp->crow = crow;
 	edp->ccol = ccol;
-	edp->defattr = defattr;
+
+	/* The underlying driver has already allocated a default and simple
+	 * attribute for us, which is stored in defattr.  We try to set the
+	 * values specified by the kernel options below, but in case of
+	 * failure we fallback to the value given by the driver. */
+
+	if (type->capabilities & WSSCREEN_WSCOLORS) {
+		edp->msgattrs.default_attrs = WS_DEFAULT_COLATTR |
+		    WSATTR_WSCOLORS;
+		edp->msgattrs.default_bg = WS_DEFAULT_BG;
+		edp->msgattrs.default_fg = WS_DEFAULT_FG;
+
+		edp->msgattrs.kernel_attrs = WS_KERNEL_COLATTR |
+		    WSATTR_WSCOLORS;
+		edp->msgattrs.kernel_bg = WS_KERNEL_BG;
+		edp->msgattrs.kernel_fg = WS_KERNEL_FG;
+	} else {
+		edp->msgattrs.default_attrs = WS_DEFAULT_MONOATTR;
+		edp->msgattrs.default_bg = edp->msgattrs.default_fg = 0;
+
+		edp->msgattrs.kernel_attrs = WS_KERNEL_MONOATTR;
+		edp->msgattrs.kernel_bg = edp->msgattrs.kernel_fg = 0;
+	}
+
+	error = (*edp->emulops->allocattr)(cookie,
+					   edp->msgattrs.default_fg,
+					   edp->msgattrs.default_bg,
+					   edp->msgattrs.default_attrs,
+					   &edp->defattr);
+	if (error) {
+		edp->defattr = defattr;
+		/* XXX This assumes the driver has allocated white on black
+		 * XXX as the default attribute, which is not always true.
+		 * XXX Maybe we need an emulop that, given an attribute,
+		 * XXX (defattr) returns its flags and colors? */
+		edp->msgattrs.default_attrs = 0;
+		edp->msgattrs.default_bg = WSCOL_BLACK;
+		edp->msgattrs.default_fg = WSCOL_WHITE;
+	} else {
+		if (edp->emulops->replaceattr != NULL)
+			(*edp->emulops->replaceattr)(cookie, defattr,
+			                             edp->defattr);
+	}
+
+#if defined(WS_KERNEL_CUSTOMIZED)
+	/* Set up kernel colors, in case they were customized by the user;
+	 * otherwise default to the colors specified for the console.
+	 * In case of failure, we use console colors too; we can assume
+	 * they are good as they have been previously allocated and
+	 * verified. */
+	error = (*edp->emulops->allocattr)(cookie,
+					   edp->msgattrs.kernel_fg,
+					   edp->msgattrs.kernel_bg,
+					   edp->msgattrs.kernel_attrs,
+					   &edp->kernattr);
+	if (error)
+#endif
+	edp->kernattr = edp->defattr;
 }
 
 void *
@@ -137,10 +208,6 @@ wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie,
 	int ccol, int crow, long defattr)
 {
 	struct wsemul_vt100_emuldata *edp;
-#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
-  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
-	int res;
-#endif
 
 	edp = &wsemul_vt100_console_emuldata;
 	wsemul_vt100_init(edp, type, cookie, ccol, crow, defattr);
@@ -148,33 +215,6 @@ wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie,
 	edp->console = 1;
 #endif
 	edp->cbcookie = NULL;
-
-#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
-  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
-#ifndef WS_KERNEL_FG
-#define WS_KERNEL_FG WSCOL_WHITE
-#endif
-#ifndef WS_KERNEL_BG
-#define WS_KERNEL_BG WSCOL_BLACK
-#endif
-#ifndef WS_KERNEL_COLATTR
-#define WS_KERNEL_COLATTR 0
-#endif
-#ifndef WS_KERNEL_MONOATTR
-#define WS_KERNEL_MONOATTR 0
-#endif
-	if (type->capabilities & WSSCREEN_WSCOLORS)
-		res = (*edp->emulops->allocattr)(cookie,
-					    WS_KERNEL_FG, WS_KERNEL_BG,
-					    WS_KERNEL_COLATTR | WSATTR_WSCOLORS,
-					    &edp->kernattr);
-	else
-		res = (*edp->emulops->allocattr)(cookie, 0, 0,
-					    WS_KERNEL_MONOATTR,
-					    &edp->kernattr);
-	if (res)
-#endif
-	edp->kernattr = defattr;
 
 	edp->tabs = 0;
 	edp->dblwid = 0;
@@ -270,9 +310,9 @@ wsemul_vt100_reset(struct wsemul_vt100_emuldata *edp)
 	edp->state = VT100_EMUL_STATE_NORMAL;
 	edp->flags = VTFL_DECAWM | VTFL_CURSORON;
 	edp->bkgdattr = edp->curattr = edp->defattr;
-	edp->attrflags = 0;
-	edp->fgcol = WSCOL_WHITE;
-	edp->bgcol = WSCOL_BLACK;
+	edp->attrflags = edp->msgattrs.default_attrs;
+	edp->fgcol = edp->msgattrs.default_fg;
+	edp->bgcol = edp->msgattrs.default_bg;
 	edp->scrreg_startrow = 0;
 	edp->scrreg_nrows = edp->nrows;
 	if (edp->tabs) {
@@ -939,3 +979,78 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		(*edp->emulops->cursor)(edp->emulcookie, 1,
 					edp->crow, edp->ccol << edp->dw);
 }
+
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+static void
+wsemul_vt100_getmsgattrs(void *cookie, struct wsdisplay_msgattrs *ma)
+{
+	struct wsemul_vt100_emuldata *edp = cookie;
+
+	*ma = edp->msgattrs;
+}
+
+static void
+wsemul_vt100_setmsgattrs(void *cookie, const struct wsscreen_descr *type,
+                         const struct wsdisplay_msgattrs *ma)
+{
+	int error;
+	long tmp;
+	struct wsemul_vt100_emuldata *edp = cookie;
+
+	edp->msgattrs = *ma;
+	if (type->capabilities & WSSCREEN_WSCOLORS) {
+		edp->msgattrs.default_attrs |= WSATTR_WSCOLORS;
+		edp->msgattrs.kernel_attrs |= WSATTR_WSCOLORS;
+	} else {
+		edp->msgattrs.default_bg = edp->msgattrs.kernel_bg = 0;
+		edp->msgattrs.default_fg = edp->msgattrs.kernel_fg = 0;
+	}
+
+	error = (*edp->emulops->allocattr)(edp->emulcookie,
+	                                   edp->msgattrs.default_fg,
+					   edp->msgattrs.default_bg,
+	                                   edp->msgattrs.default_attrs,
+	                                   &tmp);
+#ifdef VT100_DEBUG
+	if (error)
+		printf("vt100: failed to allocate attribute for default "
+		       "messages\n");
+	else
+#endif
+	{
+		if (edp->curattr == edp->defattr) {
+			edp->bkgdattr = edp->curattr = tmp;
+			edp->attrflags = edp->msgattrs.default_attrs;
+			edp->bgcol = edp->msgattrs.default_bg;
+			edp->fgcol = edp->msgattrs.default_fg;
+		} else {
+			edp->savedbkgdattr = edp->savedattr = tmp;
+			edp->savedattrflags = edp->msgattrs.default_attrs;
+			edp->savedbgcol = edp->msgattrs.default_bg;
+			edp->savedfgcol = edp->msgattrs.default_fg;
+		}
+		if (edp->emulops->replaceattr != NULL)
+			(*edp->emulops->replaceattr)(edp->emulcookie,
+			                             edp->defattr, tmp);
+		edp->defattr = tmp;
+	}
+
+	error = (*edp->emulops->allocattr)(edp->emulcookie,
+	                                   edp->msgattrs.kernel_fg,
+					   edp->msgattrs.kernel_bg,
+	                                   edp->msgattrs.kernel_attrs,
+	                                   &tmp);
+#ifdef VT100_DEBUG
+	if (error)
+		printf("vt100: failed to allocate attribute for kernel "
+		       "messages\n");
+	else
+#endif
+	{
+		if (edp->emulops->replaceattr != NULL)
+			(*edp->emulops->replaceattr)(edp->emulcookie,
+			                             edp->kernattr, tmp);
+		edp->kernattr = tmp;
+	}
+}
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */

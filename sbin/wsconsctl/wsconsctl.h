@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.3 2002/04/07 10:40:04 hannken Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.4 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,24 @@
 
 #include <dev/wscons/wsksymvar.h>
 
+/* fg / bg values. Made identical to ANSI terminal color codes. */
+#define WSCOL_UNSUPPORTED	-1
+#define WSCOL_BLACK		0
+#define WSCOL_RED		1
+#define WSCOL_GREEN		2
+#define WSCOL_BROWN		3
+#define WSCOL_BLUE		4
+#define WSCOL_MAGENTA		5
+#define WSCOL_CYAN		6
+#define WSCOL_WHITE		7
+/* flag values: */
+#define WSATTR_NONE		0
+#define WSATTR_REVERSE		1
+#define WSATTR_HILIT		2
+#define WSATTR_BLINK		4
+#define WSATTR_UNDERLINE	8
+#define WSATTR_WSCOLORS 	16
+
 struct field {
 	char *name;
 	void *valp;
@@ -48,6 +66,8 @@ struct field {
 #define FMT_DPYTYPE	103		/* display type */
 #define FMT_KBDENC	104		/* keyboard encoding */
 #define FMT_KBMAP	105		/* keyboard map */
+#define FMT_COLOR	201		/* display color */
+#define FMT_ATTRS	202		/* display attributes */
 	int format;
 #define FLG_RDONLY	0x0001		/* variable cannot be modified */
 #define FLG_WRONLY	0x0002		/* variable cannot be displayed */

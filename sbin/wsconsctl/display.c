@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.4 2004/06/03 19:18:41 christos Exp $ */
+/*	$NetBSD: display.c,v 1.5 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,12 +52,20 @@ static int dpytype;
 static struct wsdisplay_usefontdata font;
 static struct wsdisplay_scroll_data scroll_l;
 static int havescroll = 1;
+static int msg_default_attrs, msg_default_bg, msg_default_fg;
+static int msg_kernel_attrs, msg_kernel_bg, msg_kernel_fg;
 
 struct field display_field_tab[] = {
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
     { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
     { "scroll.fastlines",	&scroll_l.fastlines, FMT_UINT, FLG_MODIFY },
     { "scroll.slowlines",	&scroll_l.slowlines, FMT_UINT, FLG_MODIFY },
+    { "msg.default.attrs",	&msg_default_attrs, FMT_ATTRS,	FLG_MODIFY },
+    { "msg.default.bg",		&msg_default_bg, FMT_COLOR,	FLG_MODIFY },
+    { "msg.default.fg",		&msg_default_fg, FMT_COLOR,	FLG_MODIFY },
+    { "msg.kernel.attrs",	&msg_kernel_attrs, FMT_ATTRS,	FLG_MODIFY },
+    { "msg.kernel.bg",		&msg_kernel_bg, FMT_COLOR,	FLG_MODIFY },
+    { "msg.kernel.fg",		&msg_kernel_fg, FMT_COLOR,	FLG_MODIFY },
 };
 
 int display_field_tab_len = sizeof(display_field_tab)/
@@ -84,6 +92,41 @@ display_get_values(fd)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
 			err(1, "WSDISPLAYIO_GTYPE");
 	
+	if (field_by_value(&msg_default_attrs)->flags & FLG_GET ||
+	    field_by_value(&msg_default_bg)->flags & FLG_GET ||
+	    field_by_value(&msg_default_fg)->flags & FLG_GET ||
+	    field_by_value(&msg_kernel_attrs)->flags & FLG_GET ||
+	    field_by_value(&msg_kernel_bg)->flags & FLG_GET ||
+	    field_by_value(&msg_kernel_fg)->flags & FLG_GET) {
+		struct wsdisplay_msgattrs ma;
+
+		if (ioctl(fd, WSDISPLAYIO_GMSGATTRS, &ma) < 0) {
+			warnx("no support to change console/kernel colors");
+
+			ma.default_attrs = -1;
+			ma.default_bg = -1;
+			ma.default_fg = -1;
+
+			ma.kernel_attrs = -1;
+			ma.kernel_bg = -1;
+			ma.kernel_fg = -1;
+		}
+
+		msg_default_attrs = ma.default_attrs;
+		if (ma.default_attrs & WSATTR_WSCOLORS) {
+			msg_default_bg = ma.default_bg;
+			msg_default_fg = ma.default_fg;
+		} else
+			msg_default_bg = msg_default_fg = -1;
+
+		msg_kernel_attrs = ma.kernel_attrs;
+		if (ma.kernel_attrs & WSATTR_WSCOLORS) {
+			msg_kernel_bg = ma.kernel_bg;
+			msg_kernel_fg = ma.kernel_fg;
+		} else
+			msg_kernel_bg = msg_kernel_fg = -1;
+	}
+
 	if (init_values() == 0 || havescroll == 0)
 		return;
 
@@ -104,7 +147,56 @@ display_put_values(fd)
 			err(1, "WSDISPLAYIO_SFONT");
 		pr_field(field_by_value(&font.name), " -> ");
 	}
-	
+
+	if (field_by_value(&msg_default_attrs)->flags & FLG_SET ||
+	    field_by_value(&msg_default_bg)->flags & FLG_SET ||
+	    field_by_value(&msg_default_fg)->flags & FLG_SET ||
+	    field_by_value(&msg_kernel_attrs)->flags & FLG_SET ||
+	    field_by_value(&msg_kernel_bg)->flags & FLG_SET ||
+	    field_by_value(&msg_kernel_fg)->flags & FLG_SET) {
+		struct wsdisplay_msgattrs ma;
+
+		if (ioctl(fd, WSDISPLAYIO_GMSGATTRS, &ma) < 0)
+			err(1, "WSDISPLAYIO_GMSGATTRS");
+
+		if (field_by_value(&msg_default_attrs)->flags & FLG_SET) {
+			ma.default_attrs = msg_default_attrs;
+			pr_field(field_by_value(&msg_default_attrs), " -> ");
+		}
+		if (ma.default_attrs & WSATTR_WSCOLORS) {
+			if (field_by_value(&msg_default_bg)->flags & FLG_SET) {
+				ma.default_bg = msg_default_bg;
+				pr_field(field_by_value(&msg_default_bg),
+				         " -> ");
+			}
+			if (field_by_value(&msg_default_fg)->flags & FLG_SET) {
+				ma.default_fg = msg_default_fg;
+				pr_field(field_by_value(&msg_default_fg),
+				         " -> ");
+			}
+		}
+
+		if (field_by_value(&msg_kernel_attrs)->flags & FLG_SET) {
+			ma.kernel_attrs = msg_kernel_attrs;
+			pr_field(field_by_value(&msg_kernel_attrs), " -> ");
+		}
+		if (ma.default_attrs & WSATTR_WSCOLORS) {
+			if (field_by_value(&msg_kernel_bg)->flags & FLG_SET) {
+				ma.kernel_bg = msg_kernel_bg;
+				pr_field(field_by_value(&msg_kernel_bg),
+				         " -> ");
+			}
+			if (field_by_value(&msg_kernel_fg)->flags & FLG_SET) {
+				ma.kernel_fg = msg_kernel_fg;
+				pr_field(field_by_value(&msg_kernel_fg),
+				         " -> ");
+			}
+		}
+
+		if (ioctl(fd, WSDISPLAYIO_SMSGATTRS, &ma) < 0)
+			err(1, "WSDISPLAYIO_SMSGATTRS");
+	}
+
 	if (init_values() == 0 || havescroll == 0)
 		return;
 
