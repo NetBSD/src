@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.3 1996/02/19 04:34:01 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.4 1996/03/17 00:48:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -133,9 +133,12 @@ struct zstty_softc {
 static int	zstty_match(struct device *, void *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
 
-struct cfdriver zsttycd = {
-	NULL, "zstty", zstty_match, zstty_attach,
-	DV_TTY, sizeof(struct zstty_softc), NULL,
+struct cfattach zstty_ca = {
+	sizeof(struct zstty_softc), zstty_match, zstty_attach
+};
+
+struct cfdriver zstty_cd = {
+	NULL, "zstty", DV_TTY
 };
 
 struct zsops zsops_tty;
@@ -268,10 +271,10 @@ zstty(dev)
 	int unit = minor(dev);
 
 #ifdef	DIAGNOSTIC
-	if (unit >= zsttycd.cd_ndevs)
+	if (unit >= zstty_cd.cd_ndevs)
 		panic("zstty");
 #endif
-	zst = zsttycd.cd_devs[unit];
+	zst = zstty_cd.cd_devs[unit];
 	return (zst->zst_tty);
 }
 
@@ -292,9 +295,9 @@ zsopen(dev, flags, mode, p)
 	int error, s, unit;
 
 	unit = minor(dev);
-	if (unit >= zsttycd.cd_ndevs)
+	if (unit >= zstty_cd.cd_ndevs)
 		return (ENXIO);
-	zst = zsttycd.cd_devs[unit];
+	zst = zstty_cd.cd_devs[unit];
 	if (zst == NULL)
 		return (ENXIO);
 	tp = zst->zst_tty;
@@ -397,7 +400,7 @@ zsclose(dev, flags, mode, p)
 	struct zsinfo *zi;
 	int hup, s;
 
-	zst = zsttycd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
 	tp = zst->zst_tty;
 
@@ -435,7 +438,7 @@ zsread(dev, uio, flags)
 	register struct zstty_softc *zst;
 	register struct tty *tp;
 
-	zst = zsttycd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[minor(dev)];
 	tp = zst->zst_tty;
 	return (linesw[tp->t_line].l_read(tp, uio, flags));
 }
@@ -449,7 +452,7 @@ zswrite(dev, uio, flags)
 	register struct zstty_softc *zst;
 	register struct tty *tp;
 
-	zst = zsttycd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[minor(dev)];
 	tp = zst->zst_tty;
 	return (linesw[tp->t_line].l_write(tp, uio, flags));
 }
@@ -470,7 +473,7 @@ zsioctl(dev, cmd, data, flag, p)
 	register struct tty *tp;
 	register int error, tmp;
 
-	zst = zsttycd.cd_devs[minor(dev)];
+	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
 	tp = zst->zst_tty;
 
@@ -539,7 +542,7 @@ zsstart(tp)
 	register struct zs_chanstate *cs;
 	register int s, nch;
 
-	zst = zsttycd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = spltty();
@@ -602,7 +605,7 @@ zsstop(tp, flag)
 	register struct zs_chanstate *cs;
 	register int s;
 
-	zst = zsttycd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	s = splzs();
@@ -634,7 +637,7 @@ zsparam(tp, t)
 	register int s, bps, cflag, tconst;
 	u_char tmp3, tmp4, tmp5, reset;
 
-	zst = zsttycd.cd_devs[minor(tp->t_dev)];
+	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.55 1995/12/24 02:31:06 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.56 1996/03/17 00:52:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -359,8 +359,12 @@ int	ahaprobe __P((struct device *, void *, void *));
 void	ahaattach __P((struct device *, struct device *, void *));
 int	ahaprint __P((void *, char *));
 
-struct cfdriver ahacd = {
-	NULL, "aha", ahaprobe, ahaattach, DV_DULL, sizeof(struct aha_softc)
+struct cfattach aha_ca = {
+	sizeof(struct aha_softc), ahaprobe, ahaattach
+};
+
+struct cfdriver aha_cd = {
+	NULL, "aha", DV_DULL
 };
 
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */

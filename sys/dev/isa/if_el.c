@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.34 1995/12/24 02:31:25 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.35 1996/03/17 00:53:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -96,9 +96,12 @@ static inline void el_hardreset __P((struct el_softc *));
 int elprobe __P((struct device *, void *, void *));
 void elattach __P((struct device *, struct device *, void *));
 
-/* isa_driver structure for autoconf */
-struct cfdriver elcd = {
-	NULL, "el", elprobe, elattach, DV_IFNET, sizeof(struct el_softc)
+struct cfattach el_ca = {
+	sizeof(struct el_softc), elprobe, elattach
+};
+
+struct cfdriver el_cd = {
+	NULL, "el", DV_IFNET
 };
 
 /*
@@ -185,7 +188,7 @@ elattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = elcd.cd_name;
+	ifp->if_name = el_cd.cd_name;
 	ifp->if_start = elstart;
 	ifp->if_ioctl = elioctl;
 	ifp->if_watchdog = elwatchdog;
@@ -303,7 +306,7 @@ void
 elstart(ifp)
 	struct ifnet *ifp;
 {
-	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
+	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
 	int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
 	int s, i, off, retries;
@@ -615,7 +618,7 @@ elioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
+	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -699,7 +702,7 @@ void
 elwatchdog(unit)
 	int unit;
 {
-	struct el_softc *sc = elcd.cd_devs[unit];
+	struct el_softc *sc = el_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;
