@@ -31,7 +31,7 @@ char	*version = "version 20001115";
 #include <string.h>
 #include <signal.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.h"
 
 extern	char	**environ;
 extern	int	nfields;
