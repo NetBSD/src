@@ -1,5 +1,6 @@
 /* tc-vax.h -- Header file for tc-vax.c.
-   Copyright (C) 1987, 91, 92, 93, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 93, 95, 96, 97, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -16,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA. */
+   02111-1307, USA.  */
 
 #define TC_VAX 1
 
@@ -47,5 +48,3 @@ extern const struct relax_type md_relax_table[];
  * fill-column: 131
  * End:
  */
-
-/* end of tc-vax.h */
