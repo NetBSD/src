@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.12 1999/12/13 15:17:24 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.13 1999/12/15 06:28:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -351,7 +351,8 @@ rip6_output(m, va_alist)
 	}
 
 	ip6->ip6_flow = in6p->in6p_flowinfo & IPV6_FLOWINFO_MASK;
-	ip6->ip6_vfc  = IPV6_VERSION;
+	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+	ip6->ip6_vfc |= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
 	ip6->ip6_plen  = htons((u_short)plen);
 #endif
