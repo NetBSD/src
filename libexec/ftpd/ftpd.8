@@ -1,6 +1,6 @@
-.\"	$NetBSD: ftpd.8,v 1.48 1999/12/19 00:09:31 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.49 2000/01/08 11:09:56 lukem Exp $
 .\"
-.\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd December 19, 1999
+.Dd January 8, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -364,10 +364,19 @@ The supported escape strings are:
 .Bl -tag -width "Escape" -offset indent -compact
 .It Sy "Escape"
 .Sy Description
+.It "\&%c"
+Class name.
 .It "\&%C"
 Current working directory.
 .It "\&%L"
 Local hostname.
+.It "\&%M"
+Maximum number of users for this class.
+Displays
+.Dq unlimited
+if there's no limit.
+.It "\&%N"
+Current number of users for this class.
 .It "\&%R"
 Remote hostname.
 .It "\&%T"
