@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.23 1998/08/29 03:21:33 mark Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.24 1998/11/25 06:41:26 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -60,6 +60,7 @@ int db_access_svc_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
 int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
+u_int db_fetch_reg __P((int, db_regs_t *));
 
 struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_TF->tf_spsr, FCN_NULL, },
@@ -389,6 +390,49 @@ db_machine_init()
 	db_machine_commands_install(arm32_db_command_table);
 }
 
+u_int
+db_fetch_reg(reg, db_regs)
+	int reg;
+	db_regs_t *db_regs;
+{
+
+	switch (reg) {
+	case 0:
+		return (db_regs->ddb_tf.tf_r0);
+	case 1:
+		return (db_regs->ddb_tf.tf_r1);
+	case 2:
+		return (db_regs->ddb_tf.tf_r2);
+	case 3:
+		return (db_regs->ddb_tf.tf_r3);
+	case 4:
+		return (db_regs->ddb_tf.tf_r4);
+	case 5:
+		return (db_regs->ddb_tf.tf_r5);
+	case 6:
+		return (db_regs->ddb_tf.tf_r6);
+	case 7:
+		return (db_regs->ddb_tf.tf_r7);
+	case 8:
+		return (db_regs->ddb_tf.tf_r8);
+	case 9:
+		return (db_regs->ddb_tf.tf_r9);
+	case 10:
+		return (db_regs->ddb_tf.tf_r10);
+	case 11:
+		return (db_regs->ddb_tf.tf_r11);
+	case 12:
+		return (db_regs->ddb_tf.tf_r12);
+	case 13:
+		return (get_stackptr(PSR_SVC32_MODE));
+	case 14:
+		return (db_regs->ddb_tf.tf_svc_lr);
+	case 15:
+		return (db_regs->ddb_tf.tf_pc);
+	default:
+		panic("db_fetch_reg: botch");
+	}
+}
 
 u_int
 branch_taken(insn, pc, db_regs)
@@ -396,10 +440,47 @@ branch_taken(insn, pc, db_regs)
 	u_int pc;
 	db_regs_t *db_regs;
 {
-	int branch;
+	u_int addr, nregs;
 
-	branch = ((insn << 2) & 0x03ffffff);
-	if (branch & 0x02000000)
-		branch |= 0xfc000000;
-	return(pc + 8 + branch);
+	switch ((insn >> 24) & 0xf) {
+	case 0xa:	/* b ... */
+	case 0xb:	/* bl ... */
+		addr = ((insn << 2) & 0x03ffffff);
+		if (addr & 0x02000000)
+			addr |= 0xfc000000;
+		return (pc + 8 + addr);
+	case 0x7:	/* ldr pc, [pc, reg, lsl #2] */
+		addr = db_fetch_reg(insn & 0xf, db_regs);
+		addr = pc + 8 + (addr << 2);
+		db_read_bytes(addr, 4, (char *)&addr);
+		return (addr);
+	case 0x1:	/* mov pc, reg */
+		addr = db_fetch_reg(insn & 0xf, db_regs);
+		return (addr);
+	case 0x8:	/* ldmxx reg, {..., pc} */
+	case 0x9:
+		addr = db_fetch_reg((insn >> 16) & 0xf, db_regs);
+		nregs = (insn  & 0x5555) + ((insn  >> 1) & 0x5555);
+		nregs = (nregs & 0x3333) + ((nregs >> 2) & 0x3333);
+		nregs = (nregs + (nregs >> 4)) & 0x0f0f;
+		nregs = (nregs + (nregs >> 8)) & 0x001f;
+		switch ((insn >> 23) & 0x3) {
+		case 0x0:	/* ldmda */
+			addr = addr - 0;
+			break;
+		case 0x1:	/* ldmia */
+			addr = addr + 0 + ((nregs - 1) << 2);
+			break;
+		case 0x2:	/* ldmdb */
+			addr = addr - 4;
+			break;
+		case 0x3:	/* ldmib */
+			addr = addr + 4 + ((nregs - 1) << 2);
+			break;
+		}
+		db_read_bytes(addr, 4, (char *)&addr);
+		return (addr);
+	default:
+		panic("branch_taken: botch");
+	}
 }

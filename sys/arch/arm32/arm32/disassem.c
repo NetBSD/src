@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.8 1998/01/20 00:51:24 mark Exp $	*/
+/*	$NetBSD: disassem.c,v 1.9 1998/11/25 06:41:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -211,7 +211,7 @@ static char *insn_block_transfers[] = {
 };
 
 static char *insn_stack_block_transfers[] = {
-	"fa", "ea", "fd", "fa"
+	"ed", "ea", "fd", "fa"
 };
 
 static char *op_shifts[] = {
