@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.1.1.1 2004/05/18 00:06:57 christos Exp $
+.\"     $NetBSD: named.conf.5,v 1.2 2004/05/20 00:26:19 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -629,7 +629,7 @@ the following:
         file \&"my_security_file\&";
         severity info;
     };
-    category security { my_security_channel; 
+    category security { my_security_channel;
                         default_syslog; default_debug; };
 .Ed
 .Pp
@@ -781,22 +781,22 @@ and a warning will be generated.  If there is no options statement,
 an options block with each option set to its default will be used.
 .Ss Server Information
 .Bl -tag -width 0n
-.It Ic hostname 
+.It Ic hostname
 This defaults to the hostname of the machine hosting the nameserver as found by gethostname().
 Its prime purpose is to be able to identify which of a number of anycast
 servers is actually answering your queries by sending a txt query for
 .Pa hostname.bind
 in class chaos to the anycast server and getting back a unique name.
 Setting
-the hostname to a empty string ("") will disable processing of the queries. 
+the hostname to a empty string ("") will disable processing of the queries.
 .It Ic version
-The version the server should report via the ndc command or via a query of 
-name 
-.Pa version.bind 
+The version the server should report via the ndc command or via a query of
+name
+.Pa version.bind
 in class chaos.
 The default is the real version number of the server,
 but some server operators prefer the string (
-.Ic surely you must be joking 
+.Ic surely you must be joking
 ).
 .El
 .Ss Pathnames
@@ -816,14 +816,14 @@ server was started.  The directory specified should be an absolute path.
 The pathname to the named-xfer program that the server uses for
 inbound zone transfers.  If not specified, the default is
 system dependent (e.g.
-.Pa /usr/sbin/named-xfer 
+.Pa /usr/sbin/named-xfer
 ).
 .It Ic dump-file
 The pathname of the file the server dumps the database to when it
 receives
 .Dv SIGINT
 signal (as sent by
-.Ic ndc dumpdb 
+.Ic ndc dumpdb
 ). If not specified, the default is
 .Pa named_dump.db .
 .It Ic memstatistics-file
@@ -864,7 +864,7 @@ bit is always set on
 responses, even if the server is not actually authoritative.
 The default is
 .Li no .
-Turning 
+Turning
 .Lc auth-nxdomain
 will allow older clients that require
 .Li AA
@@ -944,20 +944,20 @@ becoming corrupted (at the cost of requiring more work from the client).
 .It Ic has-old-clients
 Setting the option to
 .Li yes ,
-is equivalent to setting the following three options: 
+is equivalent to setting the following three options:
 .Ic auth-nxdomain yes ; ,
 .Ic maintain-ixfr-base yes ; ,
-and 
+and
 .Ic rfc2308-type1 no ;
 .Pp
 The use of
 .Ic has-old-clients
 with
-.Ic auth-nxdomain , 
+.Ic auth-nxdomain ,
 .Ic maintain-ixfr-base ,
-and 
-.Ic rfc2308-type1 
-is order dependent. 
+and
+.Ic rfc2308-type1
+is order dependent.
 .It Ic host-statistics
 If
 .Li yes ,
@@ -994,8 +994,8 @@ zone the server is authoritative for changes.  The use of NOTIFY
 speeds convergence between the master and its slaves.  Slave servers
 that receive a NOTIFY message and understand it will contact the
 master server for the zone and see if they need to do a zone transfer, and
-if they do, they will initiate it immediately.  
-If 
+if they do, they will initiate it immediately.
+If
 .Li explicit ,
 the DNS NOTIFY messages will only be sent to the addresses in the
 .Ic also-notify
@@ -1011,7 +1011,7 @@ statement.
 If
 .Li yes ,
 suppress the initial notify messages when the server first loads.
-The default is 
+The default is
 .Li no .
 .It Ic recursion
 If
@@ -1026,48 +1026,48 @@ See also
 above.
 .It Ic rfc2308-type1
 If
-.Li yes, 
-the server will send NS records along with the SOA record for negative 
-answers.  You need to set this to no if you have an old BIND server using 
-you as a forwarder that does not understand negative answers which contain 
-both SOA and NS records or you have an old version of sendmail.  The correct 
-fix is to upgrade the broken server or sendmail.  The default is 
+.Li yes,
+the server will send NS records along with the SOA record for negative
+answers.  You need to set this to no if you have an old BIND server using
+you as a forwarder that does not understand negative answers which contain
+both SOA and NS records or you have an old version of sendmail.  The correct
+fix is to upgrade the broken server or sendmail.  The default is
 .Li no .
 .It Ic use-id-pool
 If
 .Li yes,
 the server will keep track of its own outstanding query ID's to avoid duplication
-and increase randomness.  This will result in 128KB more memory being consumed 
+and increase randomness.  This will result in 128KB more memory being consumed
 by the server.  The default is
 .Li no .
 .It Ic treat-cr-as-space
-If 
-.Li yes, 
+If
+.Li yes,
 the server will treat CR characters the same way it treats a space
 or tab.  This may be necessary when loading zone files on a UNIX system
-that were generated on an NT or DOS machine.  The default is 
+that were generated on an NT or DOS machine.  The default is
 .Li no .
 .El
 .Ss Also-Notify
 .Ic also-notify
 .Pp
-Defines a global list of IP addresses that also get sent NOTIFY messages 
-whenever a fresh copy of the zone is loaded. This helps to ensure that copies of 
-the zones will quickly converge on ``stealth'' servers.  If an 
-.Ic also-notify 
-list is given in a 
-.Ic zone 
-statement, it will override the 
-.Ic options also-notify 
-statement. When a 
-.Ic zone notify 
-statement is set to 
-.Ic no ,
-the IP addresses in 
-the global 
+Defines a global list of IP addresses that also get sent NOTIFY messages
+whenever a fresh copy of the zone is loaded. This helps to ensure that copies of
+the zones will quickly converge on ``stealth'' servers.  If an
 .Ic also-notify
-list will not get sent NOTIFY messages for that zone. 
-The default is the empty list (no global notification list). 
+list is given in a
+.Ic zone
+statement, it will override the
+.Ic options also-notify
+statement. When a
+.Ic zone notify
+statement is set to
+.Ic no ,
+the IP addresses in
+the global
+.Ic also-notify
+list will not get sent NOTIFY messages for that zone.
+The default is the empty list (no global notification list).
 .Ss Forwarding
 The forwarding facility can be used to create a large site-wide
 cache on a few servers, reducing traffic over links to external
@@ -1164,7 +1164,7 @@ from all hosts.
 .Bl -tag -width 0n
 .It Ic allow-recursion
 Specifies which hosts are allowed to ask recursive questions.
-If not specified, the default is to allow recursive queries 
+If not specified, the default is to allow recursive queries
 from all hosts.
 .It Ic allow-transfer
 Specifies which hosts are allowed to receive zone transfers from the
@@ -1284,7 +1284,7 @@ statement.
 .Nm transfer-source
 determines which local address will be bound to the TCP connection used to fetch all zones
 transferred inbound by the server.  If not set, it defaults to a system controlled value which will usually be the address of the interface ``closest to`` the remote end.  This
-address must appear in the remote end's 
+address must appear in the remote end's
 .Nm allow-transfer
 option for the zones being transferred, if one is specified.  This statement sets the
 .Nm transfer-source
@@ -1348,7 +1348,7 @@ actual kernel limit is larger than this value, use
 to specify the limit explicitly.
 .It Ic max-ixfr-log-size
 The
-.Li max-ixfr-log-size 
+.Li max-ixfr-log-size
 will be used in a future release of the server to limit the size of the transaction
 log kept for Incremental Zone Transfer.
 .It Ic stacksize
@@ -1420,23 +1420,23 @@ As the order of RRs is not defined, this should not cause any problems.
 .Pp
 The client resolver code should re-arrange the RRs as appropriate, i.e. using
 any addresses on the local net in preference to other addresses. However, not all
-resolvers can do this, or are not correctly configured. 
+resolvers can do this, or are not correctly configured.
 .Pp
 When a client is using a local server, the sorting can be performed in the server,
 based on the client's address. This only requires configuring the nameservers,
-not all the clients. 
+not all the clients.
 .Pp
-The 
+The
 .Ic sortlist
 statement takes an address match list and interprets it even more
-specially than the 
+specially than the
 .Ic topology
-statement does. 
+statement does.
 .Pp
 Each top level statement in the sortlist must itself be an explicit address match
 list with one or two elements. The first element (which may be an IP address,
 an IP prefix, an ACL name or nested address match list) of each top level list is
-checked against the source address of the query until a match is found. 
+checked against the source address of the query until a match is found.
 .Pp
 Once the source address of the query has been matched, if the top level
 statement contains only one element, the actual primitive element that
@@ -1454,7 +1454,7 @@ preference shown between these two networks. Queries received from a host on
 the 192.168.1/24 network will prefer other addresses on that network to the
 192.168.2/24 and 192.168.3/24 networks. Queries received from a host on the
 192.168.4/24 or the 192.168.5/24 network will only prefer other addresses on
-their directly connected networks. 
+their directly connected networks.
 .Bd -literal
 sortlist {
            { localhost;         // IF   the local host
@@ -1494,26 +1494,26 @@ a zone might be configured to always be returned in the order they are defined
 in the zone file. Or perhaps a random shuffle of the records as they are
 returned is wanted. The rrset-order statement permits configuration of the
 ordering made of the records in a multiple record response. The default, if no
-ordering is defined, is a cyclic ordering (round robin). 
+ordering is defined, is a cyclic ordering (round robin).
 .Pp
-An 
+An
 .Ic order_spec
-is defined as follows: 
+is defined as follows:
 .Bd -literal
   [ \fIclass class_name\fR ][ \fItype type_name\fR ][ \fIname\fR "FQDN" ] \fIorder\fR ordering
 .Ed
 .Pp
-If no class is specified, the default is 
+If no class is specified, the default is
 .Ic ANY .
-If no 
-.Li Ictype 
+If no
+.Li Ictype
 is specified, the default is
-.Ic ANY . 
-If no name is specified, the default is "*". 
+.Ic ANY .
+If no name is specified, the default is "*".
 .Pp
-The legal values for 
-.Ic ordering 
-are: 
+The legal values for
+.Ic ordering
+are:
 .Bl -tag -width indent
 .It Ic fixed
 Records are returned in the order they are defined in the zone file.
@@ -1523,7 +1523,7 @@ Records are returned in some random order.
 Records are returned in a round-robin order.
 .El
 .Pp
-For example: 
+For example:
 .Bd -literal
     rrset-order {
         class IN type A name "rc.vix.com" order random;
@@ -1533,20 +1533,20 @@ For example:
 .Pp
 will cause any responses for type A records in class IN that have "rc.vix.com" as
 a suffix, to always be returned in random order. All other records are returned
-in cyclic order. 
+in cyclic order.
 .Pp
-If multiple 
+If multiple
 .Ic rrset-order
-statements appear, they are not combined--the last one applies. 
+statements appear, they are not combined--the last one applies.
 .Pp
-If no 
+If no
 .Ic rrset-order
-statement is specified, a default one of: 
+statement is specified, a default one of:
 .Bd -literal
     rrset-order { class ANY type ANY name "*" order cyclic ; };
 .Ed
 .Pp
-is used. 
+is used.
 .Ss Glue Ordering
 When running a root nameserver it is sometimes necessary to ensure that other
 nameservers that are priming are successful.
@@ -1554,7 +1554,7 @@ This requires that glue A records for at least of the nameservers are returned
 in the answer to a priming query.
 This can be achieved by setting
 .Ic preferred-glue A;
-which will add A records before other types in the additional section. 
+which will add A records before other types in the additional section.
 .Ss EDNS
 Some firewalls fail to pass EDNS/UDP messages that are larger than
 certain size, 512 or the UDP reassembly buffer.
@@ -1928,10 +1928,10 @@ associated with a remote name server.
 If you discover that a server does not support EDNS you can prevent
 named making EDNS queries to it by specifying
 .Ic edns
-.Ic no; .       
-The default value of 
+.Ic no; .
+The default value of
 .Ic edns
-is 
+is
 .Ic yes .
 .Pp
 If you discover that a server is giving out bad data, marking it as
@@ -1976,7 +1976,7 @@ checked for syntax but is otherwise ignored.
 .Pp
 The
 .Ic keys
-clause is used to identify a 
+clause is used to identify a
 .Va key_id
 defined by the
 .Ic key
