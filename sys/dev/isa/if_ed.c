@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.94 1996/04/29 20:03:13 christos Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.95 1996/05/03 17:29:29 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -249,7 +249,7 @@ ed_find_WD80x3(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	bus_mem_handle_t memh = NULL;
+	bus_mem_handle_t memh;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
 	int i, rv, mapped_mem = 0;
@@ -664,7 +664,7 @@ ed_find_3Com(sc, cf, ia)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	bus_mem_handle_t memh;
-	int i, rv, mapped_mem = 0;
+	int i;
 	u_int memsize;
 	u_char isa16bit, x;
 	int ptr, asicbase, nicbase;
@@ -677,7 +677,6 @@ ed_find_3Com(sc, cf, ia)
 
 
 	bc = ia->ia_bc;
-	rv = 0;
 
 	if (bus_io_map(bc, ia->ia_iobase, ED_WD_IO_PORTS, &ioh))
 		return (0);
@@ -695,28 +694,28 @@ ed_find_3Com(sc, cf, ia)
 	 */
 	x = bus_io_read_1(bc, ioh, asicbase + ED_3COM_BCFR);
 	if (x == 0 || (x & (x - 1)) != 0)
-		goto out;
+		goto err;
 	ptr = ffs(x) - 1;
 	if (ia->ia_iobase != IOBASEUNK) {
 		if (ia->ia_iobase != ed_3com_iobase[ptr]) {
 			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
 			    "iobase", sc->sc_dev.dv_xname, ia->ia_iobase,
 			    ed_3com_iobase[ptr]);
-			goto out;
+			goto err;
 		}
 	} else
 		ia->ia_iobase = ed_3com_iobase[ptr];	/* XXX --thorpej */
 
 	x = bus_io_read_1(bc, ioh, asicbase + ED_3COM_PCFR);
 	if (x == 0 || (x & (x - 1)) != 0)
-		goto out;
+		goto err;
 	ptr = ffs(x) - 1;
 	if (ia->ia_maddr != MADDRUNK) {
 		if (ia->ia_maddr != ed_3com_maddr[ptr]) {
 			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
 			    "maddr", sc->sc_dev.dv_xname, ia->ia_maddr,
 			    ed_3com_maddr[ptr]);
-			goto out;
+			goto err;
 		}
 	} else
 		ia->ia_maddr = ed_3com_maddr[ptr];
@@ -732,7 +731,7 @@ ed_find_3Com(sc, cf, ia)
 			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq,
 			    ed_3com_irq[ptr]);
-			goto out;
+			goto err;
 		}
 	} else
 		ia->ia_irq = ed_3com_irq[ptr];
@@ -810,8 +809,7 @@ ed_find_3Com(sc, cf, ia)
 	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
 
 	if (bus_mem_map(bc, ia->ia_maddr, memsize, 0, &memh))
-		goto out;
-	mapped_mem = 1;
+		goto err;
 	sc->mem_start = 0;		/* offset */
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
@@ -911,24 +909,21 @@ ed_find_3Com(sc, cf, ia)
 
 	ia->ia_msize = memsize;
 	ia->ia_iosize = ED_3COM_IO_PORTS;
-	rv = 1;
 
- out:
 	/*
 	 * XXX Sould always unmap, but we can't yet.
 	 * XXX Need to squish "indirect" first.
 	 */
-	if (rv == 0) {
-		bus_io_unmap(bc, ioh, ED_3COM_IO_PORTS);
-		if (mapped_mem)
-			bus_mem_unmap(bc, memh, memsize);
-	} else {
-		/* XXX this is all "indirect" brokenness */
-		sc->sc_bc = bc;
-		sc->sc_ioh = ioh;
-		sc->sc_memh = memh;
-	}
-	return (rv);
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	sc->sc_memh = memh;
+	return 1;
+
+ out:
+	bus_mem_unmap(bc, memh, memsize);
+ err:
+	bus_io_unmap(bc, ioh, ED_3COM_IO_PORTS);
+	return 0;
 }
 
 /*
@@ -942,15 +937,13 @@ ed_find_Novell(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	bus_mem_handle_t memh = NULL;
 	u_int memsize, n;
 	u_char romdata[16], tmp;
 	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
 	u_char test_buffer[32];
-	int rv, asicbase, nicbase;
+	int asicbase, nicbase;
 
 	bc = ia->ia_bc;
-	rv = 0;
 
 	if (bus_io_map(bc, ia->ia_iobase, ED_NOVELL_IO_PORTS, &ioh))
 		return (0);
@@ -991,7 +984,7 @@ ed_find_Novell(sc, cf, ia)
 
 	/* Make sure that we really have an 8390 based board. */
 	if (!ed_probe_generic8390(bc, ioh, nicbase))
-		goto out;
+		goto err;
 
 	sc->vendor = ED_VENDOR_NOVELL;
 	sc->mem_shared = 0;
@@ -1049,7 +1042,7 @@ ed_find_Novell(sc, cf, ia)
 		ed_pio_readmem(sc, 16384, test_buffer, sizeof(test_pattern));
 
 		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern)))
-			goto out; /* not an NE2000 either */
+			goto err; /* not an NE2000 either */
 
 		sc->type = ED_TYPE_NE2000;
 		sc->type_str = "NE2000";
@@ -1061,7 +1054,7 @@ ed_find_Novell(sc, cf, ia)
 	if (ia->ia_irq == IRQUNK) {
 		printf("%s: %s does not have soft configuration\n",
 		    sc->sc_dev.dv_xname, sc->type_str);
-		goto out;
+		goto err;
 	}
 
 	/* 8k of memory plus an additional 8k if 16-bit. */
@@ -1106,7 +1099,7 @@ ed_find_Novell(sc, cf, ia)
 		if (mstart == 0) {
 			printf("%s: cannot find start of RAM\n",
 			    sc->sc_dev.dv_xname);
-			goto out;
+			goto err;
 		}
 
 		/* Search for the end of RAM. */
@@ -1178,7 +1171,7 @@ ed_find_Novell(sc, cf, ia)
 		/* XXX this is all "indirect" brokenness */
 		sc->sc_bc = bc;
 		sc->sc_ioh = ioh;
-		sc->sc_memh = memh;
+		/* sc_memh is not used by this driver */
 	}
 	return (rv);
 }
