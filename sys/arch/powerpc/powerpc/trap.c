@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2000/11/24 21:49:06 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.31 2000/11/25 03:00:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -256,6 +257,15 @@ syscall_bad:
 		enable_fpu(p);
 		break;
 
+#ifdef ALTIVEC
+	case EXC_VEC|EXC_USER:
+		if (vecproc)
+			save_vec(vecproc);
+		vecproc = p;
+		enable_vec(p);
+		break;
+#endif
+
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
 		break;
@@ -343,10 +353,15 @@ brain_damage:
 			    (int)(p->p_sticks - sticks) * psratio);
 	}
 	/*
-	 * If someone stole the fpu while we were away, disable it
+	 * If someone stole the fp or vector unit while we were away,
+	 * disable it
 	 */
 	if (p != fpuproc)
 		frame->srr1 &= ~PSL_FP;
+#ifdef ALTIVEC
+	if (p != vecproc)
+		frame->srr1 &= ~PSL_VEC;
+#endif
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
@@ -360,7 +375,7 @@ child_return(arg)
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~PSL_FP;	/* Disable FPU, as we can't be fpuproc */
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't be them */
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
