@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.1 2000/06/14 16:06:57 soren Exp $	*/
+/*	$NetBSD: macepci.c,v 1.2 2000/06/14 16:32:22 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -46,9 +46,7 @@
 #include <sgimips/dev/macereg.h>
 #include <sgimips/dev/macevar.h>
 
-#ifdef notyet
 #include <sgimips/pci/macepcireg.h>
-#endif
 
 #include "pci.h"
 
