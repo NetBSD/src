@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.32 2000/12/25 23:30:58 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.33 2001/01/22 00:29:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.32 2000/12/25 23:30:58 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.33 2001/01/22 00:29:46 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,7 +91,6 @@ static char current_categories[_LC_LAST][32] = {
     "C"
 };
 
-size_t __mb_cur_max = 1;
 size_t __mb_len_max_runtime = MB_LEN_MAX;
 
 /*
