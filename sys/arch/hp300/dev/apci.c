@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.5 1999/07/31 21:14:36 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.6 1999/08/01 21:30:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -906,6 +906,13 @@ apcicnprobe(cp)
 #else
 	cp->cn_pri = CN_NORMAL;
 #endif
+
+	/*
+	 * If our priority is higher than the currently-remembered
+	 * console, install ourselves.
+	 */
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || conforced)
+		cn_tab = cp;
 }
 
 /* ARGSUSED */
