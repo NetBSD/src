@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.2 1996/05/07 02:35:07 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.3 1996/10/11 00:39:28 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -341,7 +341,7 @@ ed_check_type(sc)
 		ed_pio_readmem(sc, 16384, test_buffer, sizeof(test_pattern));
 
 		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
-			printf(": unknown type\n");
+			kprintf(": unknown type\n");
 			return (0); /* not an NE2000 either */
 		}
 
@@ -386,7 +386,7 @@ ed_check_type(sc)
 		}
 
 		if (mstart == 0) {
-			printf(": cannot find start of RAM\n");
+			kprintf(": cannot find start of RAM\n");
 			return (0);
 		}
 
@@ -407,7 +407,7 @@ ed_check_type(sc)
 				break;
 		}
 
-		printf("%s: RAM start %x, size %d\n",
+		kprintf("%s: RAM start %x, size %d\n",
 		    sc->sc_dev.dv_xname, mstart, memsize);
 
 		sc->mem_start = (caddr_t)mstart;
@@ -481,15 +481,15 @@ edattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	kprintf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->type_str)
-		printf("type %s ", sc->type_str);
+		kprintf("type %s ", sc->type_str);
 	else
-		printf("type unknown (0x%x) ", sc->type);
+		kprintf("type unknown (0x%x) ", sc->type);
 
-	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
-	printf("\n");
+	kprintf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
+	kprintf("\n");
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -837,9 +837,9 @@ loop:
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 		if (len != count) {
-			printf("%s: length does not match next packet pointer\n",
+			kprintf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
+			kprintf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname, count, len,
 			    sc->rec_page_start, sc->next_packet, current,
 			    packet_hdr.next_packet, sc->rec_page_stop);
@@ -1006,7 +1006,7 @@ edintr(unit)
 				if (isr & ED_ISR_RXE) {
 					++ifp->if_ierrors;
 #ifdef ED_DEBUG
-					printf("%s: receive error %x\n",
+					kprintf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
 					    NIC_GET(nicbase, ED_P0_RSR));
 #endif
