@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsncmp.c,v 1.1 2000/12/23 23:14:36 itojun Exp $	*/
+/*	$NetBSD: wcsncmp.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,9 +30,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcsncmp.c,v 1.1 2000/12/23 23:14:36 itojun Exp $");
+__RCSID("$NetBSD: wcsncmp.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <wchar.h>
 
 int
@@ -41,6 +42,9 @@ wcsncmp(s1, s2, n)
 	const wchar_t *s2;
 	size_t n;
 {
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+
 	while (n && *s1 == *s2 && *s1) {
 		s1++;
 		s2++;
