@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.1 1997/04/02 21:31:06 christos Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.2 1999/01/14 01:19:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -68,7 +68,7 @@ struct protosw		atalksw[] = {
 };
 
 struct domain		atalkdomain = {
-    AF_APPLETALK,	"appletalk",	0,	0,	0,
+    PF_APPLETALK,	"appletalk",	0,	0,	0,
     atalksw, &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
     0, rn_inithead,
     32,

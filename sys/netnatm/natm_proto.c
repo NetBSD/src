@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.3 1996/09/18 00:56:41 chuck Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.4 1999/01/14 01:25:19 thorpej Exp $	*/
 
 /*
  *
@@ -85,7 +85,7 @@ struct protosw natmsw[] = {
 };
 
 struct domain natmdomain =
-    { AF_NATM, "natm", natm_init, 0, 0, 
+    { PF_NATM, "natm", natm_init, 0, 0, 
       natmsw, &natmsw[sizeof(natmsw)/sizeof(natmsw[0])], 0,
       0, 0, 0};
 
