@@ -1,0 +1,406 @@
+#	$NetBSD: IOPENER,v 1.1 2000/04/08 21:27:07 tsarna Exp $
+#
+#	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
+#
+
+include "arch/i386/conf/std.i386"
+
+#ident 		"IOPENER-$Revision: 1.1 $"
+
+maxusers	32		# estimated number of users
+
+options 	I586_CPU
+
+# CPU-related options.
+#options 	VM86		# virtual 8086 emulation
+#options 	USER_LDT	# user-settable LDT; used by WINE
+# eliminate delay no-ops in I/O; recommended on all but very old machines
+options 	DUMMY_NOPS
+
+# delay between "rebooting ..." message and hardware reset, in milliseconds
+#options 	CPURESET_DELAY=2000
+
+# Misc. i386-specific options
+options 	XSERVER		# X server support in console drivers
+#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
+
+# This option allows you to force a serial console at the specified
+# I/O address.   see console(4) for details.
+#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#	you don't want the option below ON iff you are using the
+#	serial console option of the new boot strap code.
+#options 	CONS_OVERRIDE	# Always use above! independent of boot info
+
+# Standard system options
+
+options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+options 	INSECURE	# disable kernel security levels
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+#options 	LKM		# loadable kernel modules
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#makeoptions	DEBUG="-g"	# compile full symbol table
+
+# Compatibility options
+options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# NetBSD 1.2,
+options 	COMPAT_13	# NetBSD 1.3,
+options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_43	# and 4.3BSD
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+#options 	COMPAT_SVR4	# binary compatibility with SVR4
+#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+
+options 	COMPAT_AOUT	# binary compat for NetBSD a.out binaries
+
+# File systems
+file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+#file-system 	NTFS		# Windows/NT file system (experimental)
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	MSDOSFS		# MS-DOS file system
+#file-system 	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+#file-system 	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
+#file-system 	PORTAL		# portal filesystem (still experimental)
+#file-system 	PROCFS		# /proc
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+#file-system 	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+
+# File system options
+#options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	SOFTDEP         # FFS soft updates support.
+#options 	NFSSERVER	# Network File System server
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Pull in config fragments for kernel crypto.  This is required for
+# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
+# one of these, based on whether you use crypto-us or crypto-intl, and
+# adjust the prefixes as necessary.
+
+prefix ../crypto-us/sys
+cinclude "conf/files.crypto-us"
+prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
+
+# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
+#options 	TCP_COMPAT_42
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+#options 	PCDISPLAY_SOFTCURSOR
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+#config		netbsd	root on wd0a type ffs
+#config		netbsd	root on ? type nfs
+
+#
+# Device configuration
+#
+
+mainbus0 at root
+
+apm0	at mainbus0			# Advanced power management
+
+# Tuning for power management, see apm(4) for more details.
+#options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
+#options 	APM_V10_ONLY		# Use only the APM 1.0 calls
+#options 	APM_NO_POWEROFF		# Don't power off on halt(8)
+#options 	APM_POWER_PRINT		# Don't print stats on the console
+#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
+
+
+# Basic Bus Support
+
+# PCI bus support
+pci*	at mainbus? bus ?
+pci*	at pchb? bus ?
+pci*	at ppb? bus ?
+
+# Configure PCI using BIOS information
+#options 	PCIBIOS			# PCI BIOS support
+#options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
+#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
+
+# PCI bridges
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+
+# ISA bus support
+isa*	at pcib?
+
+# ISA Plug-and-Play bus support
+isapnp0	at isa?
+
+# Coprocessor Support
+
+# Math Coprocessor support
+npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
+
+
+# Console Devices
+
+# Keyboard layout configuration for pccons
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
+
+# wscons
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+# "opms" should not be enabled together with "pms" or "pmsi"
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
+#opms*		at pckbc?		# backwards compatible PS/2 mouse
+vga*		at pci? dev ? function ?
+wsdisplay*	at vga? console ?
+wskbd* 		at pckbd? console ?
+wsmouse*	at pms? mux 0
+#wsmouse*	at pmsi? mux 0
+
+pcppi0		at isa?
+sysbeep0	at pcppi?
+
+# Serial Devices
+
+# ISA serial interfaces
+com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+# Parallel Printer Interfaces
+
+# ISA parallel printer interfaces
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
+# IDE and related devices
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide* at pci? dev ? function ? flags 0x0000
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*	at pciide? channel ? drive ? flags 0x0000
+
+# Network Interfaces
+
+# MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# USB Controller and Devices
+
+# PCI USB controllers
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+
+# USB bus support
+usb*	at uhci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhub? port ? configuration ? interface ?
+wsmouse*	at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhub? port ? configuration ? interface ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass? channel ?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# USB Handspring Visor
+#uvisor*	at uhub? port ?
+#ucom*	at uvisor?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+
+# Audio Devices
+
+# ISA Plug-and-Play audio devices
+ym*	at isapnp?			# Yamaha OPL3-SA3 audio
+
+# OPL[23] FM synthesizers
+opl*	at ym?
+
+# Audio support
+audio*	at ym?
+
+# MPU 401 UARTs
+mpu*	at ym?
+
+# MIDI support
+midi*	at mpu?			# MPU 401
+midi*	at opl?			# OPL FM synth
+
+# The spkr driver provides a simple tone interface to the built in speaker.
+#spkr0	at pcppi?		# PC speaker
+
+
+# Pull in optional local configuration
+include	"arch/i386/conf/GENERIC.local"
+
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	vnd		4	# disk-like interface to files
+
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+#pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
+#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+
+# miscellaneous pseudo-devices
+pseudo-device	pty		64	# pseudo-terminals
+#pseudo-device	tb		1	# tablet line discipline
+pseudo-device	sequencer	1	# MIDI sequencer
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
