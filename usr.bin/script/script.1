@@ -1,4 +1,4 @@
-.\"	$NetBSD: script.1,v 1.3 1994/12/21 08:55:41 jtc Exp $
+.\"	$NetBSD: script.1,v 1.4 1997/10/19 22:57:47 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,11 @@
 .Nm script
 .Nd make typescript of terminal session
 .Sh SYNOPSIS
-.Nm script
+.Nm
 .Op Fl a
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Script
+.Nm
 makes a typescript of everything printed on your terminal.
 It is useful for students who need a hardcopy record of an interactive
 session as proof of an assignment, as the typescript file 
@@ -89,19 +89,19 @@ C-shell,
 Certain interactive commands, such as
 .Xr vi 1 ,
 create garbage in the typescript file.
-.Nm Script
+.Nm
 works best with commands that do not manipulate the
 screen, the results are meant to emulate a hardcopy
 terminal.
 .Sh ENVIRONMENT
 The following environment variable is utilized by
-.Nm script :
+.Nm "" :
 .Bl -tag -width SHELL
 .It Ev SHELL
 If the variable
 .Ev SHELL
 exists, the shell forked by
-.Nm script
+.Nm
 will be that shell. If
 .Ev SHELL
 is not set, the Bourne shell
@@ -114,11 +114,11 @@ is assumed. (Most shells set this variable automatically).
 mechanism).
 .Sh HISTORY
 The
-.Nm script
+.Nm
 command appeared in
 .Bx 3.0 .
 .Sh BUGS
-.Nm Script
+.Nm
 places
 .Sy everything
 in the log file, including linefeeds and backspaces.
