@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.121 2004/05/16 11:33:44 lukem Exp $
+$NetBSD: UPDATING,v 1.122 2004/05/31 00:18:58 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -34,6 +34,11 @@ Recent changes:
 	make USETOOLS=no dependall install
 	cd ../../sbin/sysctl
 	make USETOOLS=no dependall install
+
+	If you are using older sysctl binary, GNU autoconf would fail to
+	identify your machine architecture, and tries to build binary for
+	"unknown-unknown-netbsd20F" or something like that.  if that happens,
+	make sure to follow the above steps.
 
 20040425:
 	The ffs superblock issues listed below under 20040109 and 20030402
