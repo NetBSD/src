@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.28 1999/12/13 09:09:34 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.29 2000/02/07 19:02:49 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -600,36 +600,8 @@ _rtld_dlclose(handle)
 	_rtld_debug_state();
 
 	--root->dl_refcount;
-	_rtld_unref_dag(root);
-	if (root->refcount == 0) {	/* We are finished with some objects. */
-		Obj_Entry      *obj;
-		Obj_Entry     **linkp;
+	_rtld_unload_object(root, true);
 
-		/* Finalize objects that are about to be unmapped. */
-		for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-			if (obj->refcount == 0 && obj->fini != NULL)
-				(*obj->fini) ();
-
-		/* Unmap all objects that are no longer referenced. */
-		linkp = &_rtld_objlist->next;
-		while ((obj = *linkp) != NULL) {
-			if (obj->refcount == 0) {
-				munmap(obj->mapbase, obj->mapsize);
-				free(obj->path);
-				while (obj->needed != NULL) {
-					Needed_Entry   *needed = obj->needed;
-					obj->needed = needed->next;
-					free(needed);
-				}
-				_rtld_linkmap_delete(obj);
-				*linkp = obj->next;
-				if (obj->next == NULL)
-					_rtld_objtail = linkp;
-				free(obj);
-			} else
-				linkp = &obj->next;
-		}
-	}
 	_rtld_debug.r_state = RT_CONSISTENT;
 	_rtld_debug_state();
 
