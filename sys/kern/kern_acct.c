@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.58 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.59 2004/11/13 20:41:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.58 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.59 2004/11/13 20:41:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,14 +239,30 @@ sys_acct(l, v, retval)
 	 * writing and make sure it's a 'normal'.
 	 */
 	if (SCARG(uap, path) != NULL) {
+		struct vattr va;
+		size_t pad;
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
 		    p);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		if (nd.ni_vp->v_type != VREG) {
-			vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
-			return (EACCES);
+			error = EACCES;
+			goto bad;
+		}
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, p)) != 0)
+			goto bad;
+
+		if ((pad = (va.va_size % sizeof(struct acct))) != 0) {
+#ifdef DIAGNOSTIC
+			printf("Size of accounting file not a multiple of "
+			    "%lu - incomplete record truncated\n",
+			    (unsigned long)sizeof(struct acct));
+#endif
+			va.va_size -= pad;
+			if ((error = VOP_TRUNCATE(nd.ni_vp, va.va_size, 0,
+			     p->p_ucred, p)) != 0)
+				goto bad;
 		}
 	}
 
@@ -286,6 +302,9 @@ sys_acct(l, v, retval)
  out:
 	ACCT_UNLOCK();
 	return (error);
+ bad:
+	vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
+	return error;
 }
 
 /*
