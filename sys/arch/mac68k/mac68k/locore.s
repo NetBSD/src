@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 1994/10/31 01:15:53 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 1994/12/03 23:34:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,6 +92,7 @@
 
 #include "assym.s"
 #include "vectors.s"
+#include "macglobals.s"
 
 #define PSL_T	0x8000
 
@@ -119,17 +120,18 @@
 	moveml	sp@+,\#0xFFFF
 
 	.text
-	.space (4096-1024)
-	.space  4096
+
 /*
  * This is where we wind up if the kernel jumps to location 0.
  * (i.e. a bogus PC)  This is known to immediately follow the vector
  * table and is hence at 0x400 (see reset vector in vectors.s).
  */
 	.globl	_panic
+	.globl	_jmp0panic
 	pea	Ljmp0panic
 	jbsr	_panic
 	/* NOTREACHED */
+_jmp0panic:
 Ljmp0panic:
 	.asciz	"kernel jump to zero"
 	.even
@@ -283,7 +285,7 @@ _fpfline:
 	jbsr	_FPUemul	| handle it
 	movl	sp@(FR_SP), a0	| grab and restore
 	movl	a0, usp		|   user SP
-	moveml	sp@+, #0xFFFF	| restore most registers
+	moveml	sp@+, #0x7FFF	| restore most registers
 	addql	#8, sp		| pop ssp and align word
 	jra	rei		| all done
 
@@ -402,14 +404,12 @@ fault:
 
 	.globl	_straytrap
 _badtrap:
-	moveml	#0xC0C0,sp@-		| save scratch regs
-	movw	sp@(22),sp@-		| push exception vector info
-	clrw	sp@-
-	movl	sp@(22),sp@-		| and PC
+	clrl	sp@-			| do that alignment thang
+	moveml	#0xffff, sp@-		| save scratch regs
 	jbsr	_straytrap		| report
-	addql	#8,sp			| pop args
-	moveml	sp@+,#0x0303		| restore regs
-	jra	rei			| all done
+	moveml	sp@+, #0xffff		| restore regs
+	addql	#4, sp			| pop align thang
+	jra	rei
 
 	.globl	_syscall
 _trap0:
@@ -579,7 +579,7 @@ _lev6intr:
 	jra	rei
 
 _lev1intr:
-	|	addql	#1,_intrcnt+4
+	addql	#1,_intrcnt+4
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	movl	sp, sp@-
@@ -587,11 +587,11 @@ _lev1intr:
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
-	|	addql	#1,_cnt+V_INTR
+	addql	#1,_cnt+V_INTR
 	jra	rei
 
 _lev2intr:
-	| addql	#1,_intrcnt+8
+	addql	#1,_intrcnt+8
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	movl	sp, sp@-
@@ -599,13 +599,14 @@ _lev2intr:
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
-	| addql	#1,_cnt+V_INTR
+	addql	#1,_cnt+V_INTR
 	jra	rei
 
 	.globl _ser_intr
 
 _lev4intr:
 	/* handle level 4 (SCC) interrupt special... */
+	addql	#1,_intrcnt+12
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-	| save registers
 	movl	sp,sp@-		| push pointer to frame
@@ -626,7 +627,7 @@ _rtclock_intr:
 	movl	sp, sp@-		| push pointer to ps, pc
 	jbsr	_hardclock		| call generic clock int routine
 	lea	sp@(12), sp		| pop params
-	addql	#1,_intrcnt+28		| add another system clock interrupt
+	addql	#1,_intrcnt+20		| add another system clock interrupt
 
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 
@@ -635,6 +636,7 @@ _rtclock_intr:
 	|jra	rei			| all done
 
 _lev7intr:
+	addql	#1, _intrcnt+16
 	clrl	sp@-			| pad SR to longword
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -842,7 +844,6 @@ abouttouser:
 	.globl	_etext
 	.globl	start
 	.globl _gray_bar
-|	.globl _macinit
 	.globl _videoaddr, _videorowbytes
 	.globl _videobitdepth
 	.globl _machineid
@@ -850,6 +851,20 @@ abouttouser:
 	.globl _IOBase
 	.globl _NuBusBase
 
+	.globl _locore_dodebugmarks
+
+#define debug_mark(s) \
+	.data ; \
+0:	.asciz	s ; \
+	.text ; \
+	tstl	_locore_dodebugmarks ; \
+	beq	1f ; \
+	movml	#0xC0C0, sp@- ; \
+	pea	0b ; \
+	jbsr	_printf ; \
+	addql	#4, sp ; \
+	movml	sp@+, #0x0303 ; \
+1:	;
 
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
@@ -883,6 +898,8 @@ start:
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
 	jbsr	_consinit		| XXX Should only be if graybar on
 
+	debug_mark("DEBUG: Console initialized.\n")
+
 	tstl	_cpu040
 	beq	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
@@ -899,9 +916,6 @@ start:
 	.word	0x4e7b, 0x0007		| Disable dtt1
 	.word	0x4e7b, 0x0003		| Disable MMU
 	jbsr	_gray_bar
-
-|	jbsr	_macserinit		| For debugging
-|	jbsr	_macinit		| For debugging
 
 	jsr	_get_top_of_ram		| Get amount of memory in machine
 	addl	_load_addr, d0
@@ -943,6 +957,7 @@ Lmmufigured:
 | find out how it is mapped
 	jbsr	_get_mapping		| in machdep; returns logical 0 in d0
 	movl	d0,_load_addr		| this is our physical load address
+	debug_mark("DEBUG: 68030 - MMU mapping parsed.\n");
 	jra	Ldoneremap
 
 Lnoremap:
@@ -951,10 +966,9 @@ Lnoremap:
 	movl	#0,a0@
 	pmove	a0@,tc
 
-Ldoneremap:
-	jbsr	_gray_bar		| 5 - Handled MMU
+	debug_mark("DEBUG: 68020 - MMU turned off.\n");
 
-	jbsr	_gray_bar		| 6 - Initialized serial, no interrupts
+Ldoneremap:
 
 mmu_off:
 
@@ -962,7 +976,7 @@ mmu_off:
 	jsr	_get_top_of_ram		| Get amount of memory in machine
 	addl	_load_addr, d0
 	movl	d0,lastpage		| save very last page of memory
-	jbsr	_gray_bar		| 7 - got mem
+	debug_mark("DEBUG: Got memory size as passed from Booter.\n")
 
 	/* Start setting up the virtual memory spaces */
 
@@ -995,7 +1009,6 @@ mmu_off:
 	movl	a4,_Sysseg		| remember for pmap module
 	movl	a4,sp@-			| remember for loading MMU
 	addl	#NBPG,a4
-	jbsr	_gray_bar		| 8 - progress
 /* allocate initial page table pages (including internal IO map) */
 /* LAK: Sysptsize is initialized at 2 in pmap.c (from param.h)   */
 /* The IO map size and NuBus map size are defined in cpu.h.      */
@@ -1039,7 +1052,6 @@ index of Sysmap will give you a PTE of the page maps which map the kernel. */
 	orl	#SG_RW+SG_V,d4		| create proto STE for ST
 	orl	#PG_RW+PG_CI+PG_V,d3	| create proto PTE for PT map
 
-	jbsr	_gray_bar		| 9 - progress
 /* ALICE LAK 6/27/92: The next two loops (which have been #ifdefed out)
 used to map all of the page tables (which had previously been allocated)
 linearly.  This is bad.  This would mean that the IO space (both internal
@@ -1129,7 +1141,6 @@ List4:					| map Nubus space
 	movl	a2,a0			| a0 is now last entry in ST
 	movl	a3,a1			| a1 is now last entry in PM
 #endif
-	jbsr	_gray_bar		| 10 - progress
 /*
  * Portions of the last segment of KVA space (0xFFF00000 - 0xFFFFFFFF)
  * are mapped for a couple of purposes. 0xFFF00000 for UPAGES is used
@@ -1170,13 +1181,15 @@ Lispt7:
 	addl	d2,a2			| add size to get end of PT
 /* text pages are read-only */
 	movl	_load_addr,d1		| get load address
-#if defined(KGDB)
 	orl	#PG_RW+PG_V,d1		| XXX: RW for now
-#else
-	orl	#PG_RO+PG_V,d1		| create proto PTE
-#endif
 	movl	#_etext,a1		| go til end of text
 	addl	_load_addr,a1		| we want the physical address
+	movl	d1, a0@+		| low page of memory is read-write
+					|       (ack...!)
+	addl	#NBPG,d1		| increment page frame number
+#if !defined(KGDB)
+	orl	#PG_RO,d1		| XXX: RW for now
+#endif
 Lipt1:
 	movl	d1,a0@+			| load PTE
 	addl	#NBPG,d1		| increment page frame number
@@ -1222,7 +1235,6 @@ Lipt4:
 	| BARF: intiolimit is wrong:
 	movl	d0,_intiolimit		| external base is also internal limit
 
-	jbsr	_gray_bar		| 11 - progress
 /* LAK: Initialize external IO PTE in kernel PT (this is the nubus space) */
 	movl	_Sysptsize,d0		| initial system PT size (pages)
 	addl	#(IIOMAPSIZE+NPTEPG-1)/NPTEPG,d0 | start of nubus PT
@@ -1309,46 +1321,43 @@ Lclru1:
 	jcs	Lclru1			| no, keep going
 	movl	a2,a4			| save phys addr of first avail page
 
-	jbsr	_gray_bar		| 12 - progress
-
 	.globl	_dump_pmaps
 |	jbsr	_dump_pmaps
 
+	debug_mark("DEBUG: preparing new MMU context.\n")
 /*
  * Prepare to enable MMU.
  */
 	lea	_protorp,a0
-	jbsr	_gray_bar		| #13
 	movl	_Sysseg,a1		| system segment table addr
 	addl	_load_addr,a1		| we want physical address
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
 	movl	a1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
-	jbsr	_gray_bar		| #14
 	pflusha
-	jbsr	_gray_bar		| #15
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
 
 | LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
 	tstl	_mmutype		| ttx instructions will break 68851
 	jgt	LnokillTT
+	debug_mark("DEBUG: clearing TT registers...\n")
 	lea	longscratch,a0
 	movl	#0, a0@
 	.long	0xF0100800		| movl a0@,tt0
 	.long	0xF0100C00		| movl a0@,tt1
 LnokillTT:
 
-	jbsr	_gray_bar		| #16
 /* BARF: A line which was here enabled the FPE and i-cache */
 /* LAK: a2 is at a location we can clobber: */
+	debug_mark("DEBUG: about to set MMU control (hold your breath).\n")
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 
-	jbsr	_gray_bar		| #17
+	debug_mark("DEBUG: yay!  MMU enabled with new mapping.\n")
 
 	pflusha				| make sure it's clean
 
-	jbsr	_gray_bar		| #18
+	debug_mark("DEBUG: MMU flushed.\n")
 
 #if defined (MACHINE_NONCONTIG)
 #if 0
@@ -1379,14 +1388,14 @@ foobar2:
  * LAK: We do have PA == VA, but we'll leave things the way they
  *      are for now.
  */
+	debug_mark("DEBUG: calling pmap_bootstrap() ...\n")
 	lea	tmpstk,sp		| temporary stack
 	movl	_load_addr,sp@-		| phys load address
 	addl	_load_addr,a4		| need physical address
 	movl	a4,sp@-			| first available PA
-	jbsr	_gray_bar		| #19
 	jbsr	_pmap_bootstrap		| sync up pmap module
 	addql	#8,sp
-	jbsr	_gray_bar		| #20
+	debug_mark("DEBUG: done.\n")
 
 Ldoproc0:				| The 040 comes back here...
 /* set kernel stack, user SP, and initial pcb */
@@ -1399,28 +1408,31 @@ Ldoproc0:				| The 040 comes back here...
 	movl	a1,_curpcb		| proc0 is running
 	clrw	a1@(PCB_FLAGS)		| clear flags
 #ifdef FPCOPROC
+	debug_mark("DEBUG: ensuring NULL FPU context...\n")
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 |WRONG!	movl	a1,sp@-			| commented according to amiga.
 	pea	a1@(PCB_FPCTX)
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
+	debug_mark("DEBUG: done...\n")
 #endif
-	jbsr	_gray_bar		| #21
 /* flush TLB and turn on caches */
+	debug_mark("DEBUG: invalidating TLB.\n")
 	jbsr	_TBIA			| invalidate TLB
+	debug_mark("DEBUG: activating cache(s).\n")
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
-	jbsr	_gray_bar		| #22
 /* BARF: Enable external cache here */
 /* final setup for C code */
-	jbsr	_gray_bar		| #23
-	jbsr	_gray_bar		| #24
+	debug_mark("DEBUG: calling setmachdep().\n")
 	jbsr	_setmachdep		| Set some machine-dep stuff
-	jbsr	_gray_bar		| #25
-	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
-	jbsr	_gray_bar		| #26
+	debug_mark("DEBUG: done.\n")
+	debug_mark("DEBUG: enabling interrupts.\n")
 	movl	#0,a6			| LAK: so that stack_trace() works
+	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
+	debug_mark("DEBUG: done.\n")
 
+	debug_mark("DEBUG: away we go!  (calling _main)\n")
 	clrw	sp@-			| vector offset/frame type
 	clrl	sp@-			| PC - filled in by "execve"
 	movw	#PSL_USER,sp@-		| in user mode
@@ -2847,26 +2859,16 @@ timebomb:
 	.long	0
 #endif
 /* interrupt counters */
-	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
+	.globl	_intrcnt,_intrnames
 _intrnames:
 	.asciz	"spur"
-	.asciz	"hil"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"dma"
-	.asciz	"clock"
-#ifdef PROFTIMER
-	.asciz  "pclock"
-#endif
+	.asciz	"via1"
+	.asciz	"via2"
+	.asciz	"scc"
 	.asciz	"nmi"
-_eintrnames:
+	.asciz	"clock"
 	.even
 _intrcnt:
-#ifdef PROFTIMER
-	.long	0,0,0,0,0,0,0,0,0,0
-#else
-	.long	0,0,0,0,0,0,0,0,0
-#endif
-_eintrcnt:
+	.long	0,0,0,0,0,0,0,0,0,0,0,0
+_locore_dodebugmarks:
+	.long	0

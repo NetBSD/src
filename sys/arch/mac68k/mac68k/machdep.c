@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1994/10/31 23:47:23 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1994/12/03 23:34:55 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,6 +124,7 @@
 #include <dev/cons.h>
 
 #include "via.h"
+#include "macrom.h"
 
 /* The following is used externally (sysctl_hw) */
 char machine[] = "mac68k";	/* cpu "architecture" */
@@ -217,6 +218,8 @@ consinit(void)
 	}
 }
 
+#define CURRENTBOOTERVER	106
+
 /*
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
@@ -224,6 +227,7 @@ consinit(void)
 void
 cpu_startup(void)
 {
+	int	vers;
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
@@ -251,6 +255,21 @@ cpu_startup(void)
 	 */
 	printf(version);
 	identifycpu();
+
+	vers = mac68k_machine.booter_version;
+	if (vers < CURRENTBOOTERVER) {
+		int	delay;
+
+		/* fix older booters with indicies, not versions */
+		if (vers < 100) vers += 99;
+
+		printf("\nYou booted with booter version %d.%d.\n",
+			vers / 100, vers % 100);
+		printf("Booter version %d.%d is necessary to fully support\n",
+			CURRENTBOOTERVER / 100, CURRENTBOOTERVER % 100);
+		printf("this kernel.\n\n");
+		for (delay=0 ; delay < 1000000 ; delay++);
+	}
 	printf("real mem = %d\n", ctob(physmem));
 
 	/*
@@ -1116,13 +1135,14 @@ microtime(tvp)
 	splx(s);
 }
 
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(frame)
+	struct frame frame;
 {
-	printf("unexpected trap (vector offset (%x&0xfff) %x) from %x\n",
-	       evec, evec & 0xFFF, pc);
-	stacknquit();
+	printf("unexpected trap; vector offset 0x%x from 0x%x.\n",
+		frame.f_vector, frame.f_pc);
+	regdump(&frame, 128);
+	dumptrace();
+	Debugger();
 }
 
 int	*nofault;
@@ -1252,196 +1272,50 @@ extern long via1_spent[2][7];
 
 nmihand(struct frame frame)
 {
-#ifdef 1
-   int i;
-  /* LAK: Should call debugger */
-	printf("VIA1 interrupt timings:\n");
-	for(i = 0; i < 7; i++)
-		if(via1_spent[0][i] != 0)
-			printf("# %d: %d usec inside, %d invocations.\n",
-			    via1_spent[1][i], via1_spent[0][i]);
-#endif
-	regdump(&frame.f_regs, 128);
-	panic("debugger switch");
+	static int	nmihanddeep = 0;
+
+	if (nmihanddeep++ >= 4) /* then this is the fifth */
+		asm("stop #2700");
+	printf("PC is 0x%x.\n", frame.f_pc);
+	regdump(&frame, 128);
+/*	dumptrace(); */
+	Debugger();
+	nmihanddeep--;
 }
 
-#if defined(PARITY)
-nmihand(frame)
-	struct frame frame;
-{
-	if (kbdnmi()) {
-#ifdef PANICBUTTON
-		static int innmihand = 0;
-
-		/*
-		 * Attempt to reduce the window of vulnerability for recursive
-		 * NMIs (e.g. someone holding down the keyboard reset button).
-		 */
-		if (innmihand == 0) {
-			innmihand = 1;
-			printf("Got a keyboard NMI\n");
-			innmihand = 0;
-		}
-		if (panicbutton) {
-			if (crashandburn) {
-				crashandburn = 0;
-				panic(panicstr ?
-				      "forced crash, nosync" : "forced crash");
-			}
-			crashandburn++;
-			timeout((void *) candbtimer, (caddr_t)0, candbdelay);
-		}
-#endif
-		return;
-	}
-	if (parityerror(&frame))
-		return;
-	/* panic?? */
-	printf("unexpected level 7 interrupt ignored\n");
-}
-
-/*
- * Parity error section.  Contains magic.
- */
-#define PARREG		((volatile short *)IIOV(0x5B0000))
-static int gotparmem = 0;
-#ifdef DEBUG
-int ignorekperr = 0;	/* ignore kernel parity errors */
-#endif
-
-
-/*
- * Determine if level 7 interrupt was caused by a parity error
- * and deal with it if it was.  Returns 1 if it was a parity error.
- */
-parityerror(fp)
-	struct frame *fp;
-{
-	if (!gotparmem)
-		return(0);
-	*PARREG = 0;
-	delay(10);
-	*PARREG = 1;
-	if (panicstr) {
-		printf("parity error after panic ignored\n");
-		return(1);
-	}
-	if (!findparerror())
-		printf("WARNING: transient parity error ignored\n");
-	else if (USERMODE(fp->f_sr)) {
-		printf("pid %d: parity error\n", curproc->p_pid);
-		uprintf("sorry, pid %d killed due to memory parity error\n",
-			curproc->p_pid);
-		psignal(curproc, SIGKILL);
-#ifdef DEBUG
-	} else if (ignorekperr) {
-		printf("WARNING: kernel parity error ignored\n");
-#endif
-	} else {
-		regdump(fp->f_regs, 128);
-		panic("kernel parity error");
-	}
-	return(1);
-}
-
-/*
- * Yuk!  There has got to be a better way to do this!
- * Searching all of memory with interrupts blocked can lead to disaster.
- */
-findparerror()
-{
-	static label_t parcatch;
-	static int looking = 0;
-	volatile struct pte opte;
-	volatile int pg, o, s;
-	register volatile int *ip;
-	register int i;
-	int found;
-
-#ifdef lint
-	ip = &found;
-	i = o = pg = 0; if (i) return(0);
-#endif
-	/*
-	 * If looking is true we are searching for a known parity error
-	 * and it has just occured.  All we do is return to the higher
-	 * level invocation.
-	 */
-	if (looking)
-		longjmp(&parcatch);
-	s = splhigh();
-	/*
-	 * If setjmp returns true, the parity error we were searching
-	 * for has just occured (longjmp above) at the current pg+o
-	 */
-	if (setjmp(&parcatch)) {
-		printf("Parity error at 0x%x\n", ctob(pg)|o);
-		found = 1;
-		goto done;
-	}
-	/*
-	 * If we get here, a parity error has occured for the first time
-	 * and we need to find it.  We turn off any external caches and
-	 * loop thru memory, testing every longword til a fault occurs and
-	 * we regain control at setjmp above.  Note that because of the
-	 * setjmp, pg and o need to be volatile or their values will be lost.
-	 */
-	looking = 1;
-	ecacheoff();
-	/* LAK: the "pg = 0" below was "pg = lowram" */
-	for (pg = 0; pg < physmem; pg++) {
-		pmap_enter(pmap_kernel(), vmmap, ctob(pg), VM_PROT_READ, TRUE);
-		for (o = 0; o < NBPG; o += sizeof(int))
-			i = *(int *)(&vmmap[o]);
-	}
-	/*
-	 * Getting here implies no fault was found.  Should never happen.
-	 */
-	printf("Couldn't locate parity error\n");
-	found = 0;
-done:
-	looking = 0;
-	pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
-	ecacheon();
-	splx(s);
-	return(found);
-}
-#endif
-
-regdump(rp, sbytes)
-  int *rp; /* must not be register */
+regdump(frame, sbytes)
+  struct frame *frame;
   int sbytes;
 {
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
-	printf("ps = %s, ", hexstr(rp[PS], 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
+	printf("pid = %d, pc = 0x%08x, ", curproc->p_pid, frame->f_pc);
+	printf("ps = 0x%08x, ", frame->f_sr);
+	printf("sfc = 0x%08x, ", getsfc());
+	printf("dfc = 0x%08x\n", getdfc());
 	printf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
-		printf("        %d", i);
+		printf("         %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i], 8));
+		printf(" %08x", frame->f_regs[i]);
 	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i+8], 8));
+		printf(" %08x", frame->f_regs[i+8]);
 	if (sbytes > 0) {
-		if (rp[PS] & PSL_S) {
-			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
+		if (1) /* (frame->f_sr & PSL_S) */ { /* BARF - BG */
+			printf("\n\nKernel stack (%08x):",
+			       (int)(((int *)frame) - 1));
+			dumpmem(((int *)frame)-1, sbytes);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
-			dumpmem((int *)rp[SP], sbytes, 1);
+			printf("\n\nUser stack (%08x):", frame->f_regs[15]);
+			dumpmem((int *)frame->f_regs[15], sbytes);
 		}
 	}
 	doingdump = 0;
@@ -1452,32 +1326,21 @@ regdump(rp, sbytes)
 extern char kstack[];
 #define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
 
-dumpmem(ptr, sz, ustack)
+dumpmem(ptr, sz)
 	register int *ptr;
 	int sz;
 {
-	register int i, val;
-	extern char *hexstr();
+	register int i, val, same;
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
+			printf("\n%08x: ", (int) ptr);
 		else
 			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
-				break;
-		} else {
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
-				break;
-			val = *ptr++;
-		}
-		printf("%s", hexstr(val, 8));
+		printf("%08x ", *ptr++);
 	}
 	printf("\n");
 }
-
 
 char *
 hexstr(val, len)
@@ -2072,78 +1935,297 @@ static long getenv (char *str)
   }
 }
 
-struct cpu_model_info {
-	int	machineid;	/* MacOS Gestalt value. */
-	char	*model_major;	/* Make this distinction to save a few */
-	char	*model_minor;	/*      bytes--might be useful, too. */
-	int	class;		/* Rough class of machine. */
-} cpu_models[] = {
+/*
+ *ROM Vector information for calling drivers in ROMs 
+ */
+static romvec_t romvecs[]=
+{
+	/* 
+	 * Vectors verified for II, IIx, IIcx, SE/30
+	 */
+	{ /* 0 */
+		"Mac II class ROMs", 
+		(caddr_t)0x40807002,	/* where does ADB interrupt */
+		0,			/* PM interrupt (?) */
+		(caddr_t)0x4080a4d8,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x40807778,	/* CountADBs */
+		(caddr_t)0x40807792,	/* GetIndADB */
+		(caddr_t)0x408077be,	/* GetADBInfo */
+		(caddr_t)0x408077c4,	/* SetADBInfo */
+		(caddr_t)0x40807704,	/* ADBReInit */
+		(caddr_t)0x408072fa,	/* ADBOp */
+		0,			/* PMgrOp */
+		(caddr_t)0x4080dd78,	/* ReadXPRam */
+	},
+	/*
+	 * Vectors verified for PB 140, PB 170
+	 * (PB 100?)
+	 */
+	{ /* 1 */
+		"Powerbook class ROMs",
+		(caddr_t)0x4088ae5e,	/* ADB interrupt */
+		(caddr_t)0x408885ec,	/* PB ADB interrupt */
+		(caddr_t)0x4088ae0e,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		(caddr_t)0x408888ec,	/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Vectors verified for IIsi, IIvx, IIvi
+	 */
+	{ /* 2 */
+		"Mac IIsi class ROMs",
+		(caddr_t)0x40814912,	/* ADB interrupt */
+		(caddr_t)0,		/* PM ADB interrupt */
+		(caddr_t)0x408150f0,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		(caddr_t)0,		/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Vectors verified for Mac Classic II and LC II
+	 * (LC III?  Other LC's?  680x0 Performas?)
+	 */
+	{ /* 3 */
+		"Mac Classic II ROMs",
+		(caddr_t)0x40a14912,	/* ADB interrupt */
+		(caddr_t)0,		/* PM ADB interrupt */
+		(caddr_t)0x40a150f0,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x40a0a360,	/* CountADBs */
+		(caddr_t)0x40a0a37a,	/* GetIndADB */
+		(caddr_t)0x40a0a3a6,	/* GetADBInfo */
+		(caddr_t)0x40a0a3ac,	/* SetADBInfo */
+		(caddr_t)0x40a0a752,	/* ADBReInit */
+		(caddr_t)0x40a0a3dc,	/* ADBOp */
+		(caddr_t)0,		/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Vectors verified for IIci
+	 */
+	{ /* 4 */
+		"Mac IIci ROMs",
+		(caddr_t)0x4080a700,	/* ADB interrupt */
+		(caddr_t)0,		/* PM ADB interrupt */
+		(caddr_t)0x4080a5aa,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		(caddr_t)0,		/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Vectors verified for Duo 230, PB 180, PB 165
+	 * (Duo 210?  PB 165?  PB 160?  Duo 250?  Duo 270?)
+	 */
+	{ /* 5 */
+		"2nd Powerbook class ROMs",
+		(caddr_t)0x408b2eec,	/* ADB interrupt */
+		(caddr_t)0x408885ec,	/* PB ADB interrupt */
+		(caddr_t)0x408b2e76,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		(caddr_t)0x408888ec,	/* PMgrOp */
+		(caddr_t)0x4080B186,	/* ReadXPRam */
+	},
+	/*
+	 * Quadra, Centris merged table (650, 610, Q800)
+	 * (BG - this is a mish-mash of various sources, none complete,
+	 *  so this may not work.)
+	 */
+	{ /* 6 */
+		"Quadra/Centris ROMs",
+		(caddr_t)0x408b2dea,	/* ADB int */
+		0,			/* PM intr */
+		(caddr_t)0x408b2c72,	/* ADBBase + 130 */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		0,			/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Quadra 840AV (but ADBBase + 130 intr is unknown)
+	 * (PM intr is known to be 0, PMgrOp is guessed to be 0)
+	 */
+	{ /* 7 */
+		"Quadra AV ROMs",
+		(caddr_t)0x4080cac6,	/* ADB int */
+		0,			/* PM int */
+		/* !?! */ 0,		/* ADBBase + 130 */
+		(caddr_t)0x40839600,	/* CountADBs */
+		(caddr_t)0x4083961a,	/* GetIndADB */
+		(caddr_t)0x40839646,	/* GetADBInfo */
+		(caddr_t)0x4083964c,	/* SetADBInfo */
+		(caddr_t)0x408397b8,	/* ADBReInit */
+		(caddr_t)0x4083967c,	/* ADBOp */
+		0,			/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * PB 540 (but ADBBase + 130 intr and PMgrOp is unknown)
+	 * (PB 520?  Duo 280?)
+	 */
+	{ /* 8 */
+		"68040 PowerBook ROMs",
+		(caddr_t)0x400b2efc,	/* ADB int */
+		(caddr_t)0x400d8e66,	/* PM int */
+		/* !?! */ 0,		/* ADBBase + 130 */
+		(caddr_t)0x4000a360,	/* CountADBs */
+		(caddr_t)0x4000a37a,	/* GetIndADB */
+		(caddr_t)0x4000a3a6,	/* GetADBInfo */
+		(caddr_t)0x4000a3ac,	/* SetADBInfo */
+		(caddr_t)0x4000a752,	/* ADBReInit */
+		(caddr_t)0x4000a3dc,	/* ADBOp */
+		/* !?! */ 0,		/* PmgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Q 605 (but guessing at ADBBase + 130, based on Q 650)
+	 */
+	{ /* 9 */
+		"Quadra/Centris 605 ROMs",
+		(caddr_t)0x408a9b56,	/* ADB int */
+		0,			/* PM int */
+		(caddr_t)0x408a99de,	/* ADBBase + 130 */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		0,			/* PmgrOp */
+		0,	/* ReadXParam */
+	},
+	/*
+	 * Vectors verified for Duo 270c
+	 */
+	{ /* 10 */
+		"Duo 270C ROMs",
+		(caddr_t)0x408b2efc,	/* ADB interrupt */
+		(caddr_t)0x408885ec,	/* PB ADB interrupt */
+		(caddr_t)0x408b2e86,	/* ADBBase + 130 interrupt; whatzit? */
+		(caddr_t)0x4080a360,	/* CountADBs */
+		(caddr_t)0x4080a37a,	/* GetIndADB */
+		(caddr_t)0x4080a3a6,	/* GetADBInfo */
+		(caddr_t)0x4080a3ac,	/* SetADBInfo */
+		(caddr_t)0x4080a752,	/* ADBReInit */
+		(caddr_t)0x4080a3dc,	/* ADBOp */
+		(caddr_t)0x408888ec,	/* PMgrOp */
+		0,	/* ReadXParam */
+	},
+	/* Please fill these in! -BG */
+};
+
+
+struct cpu_model_info cpu_models[] = {
 
 /* The first four. */
-{ MACH_MACII,         "II ",       "",        MACH_CLASSII },
-{ MACH_MACIIX,        "IIx ",      "",        MACH_CLASSII },
-{ MACH_MACIICX,       "IIcx ",     "",        MACH_CLASSII },
-{ MACH_MACSE30,       "SE/30 ",    "",        MACH_CLASSII },
+{ MACH_MACII,         "II ",       "",        MACH_CLASSII,	&romvecs[0] },
+{ MACH_MACIIX,        "IIx ",      "",        MACH_CLASSII,	&romvecs[0] },
+{ MACH_MACIICX,       "IIcx ",     "",        MACH_CLASSII,	&romvecs[0] },
+{ MACH_MACSE30,       "SE/30 ",    "",        MACH_CLASSII,	&romvecs[0] },
 
 /* The rest of the II series... */
-{ MACH_MACIICI,       "IIci ",     "",        MACH_CLASSIIci },
-{ MACH_MACIISI,       "IIsi ",     "",        MACH_CLASSIIci },
-{ MACH_MACIIVI,       "IIvi ",     "",        MACH_CLASSIIci },
-{ MACH_MACIIVX,       "IIvx ",     "",        MACH_CLASSIIci },
-{ MACH_MACIIFX,       "IIfx ",     "",        MACH_CLASSIIfx },
+{ MACH_MACIICI,       "IIci ",     "",        MACH_CLASSIIci,	&romvecs[4] },
+{ MACH_MACIISI,       "IIsi ",     "",        MACH_CLASSIIsi,	&romvecs[2] },
+{ MACH_MACIIVI,       "IIvi ",     "",        MACH_CLASSIIsi,	&romvecs[2] },
+{ MACH_MACIIVX,       "IIvx ",     "",        MACH_CLASSIIsi,	&romvecs[2] },
+{ MACH_MACIIFX,       "IIfx ",     "",        MACH_CLASSIIfx,	NULL },
 
 /* The Centris/Quadra series. */
-{ MACH_MACQ700,       "Quadra",    " 700 ",   MACH_CLASSQ },
-{ MACH_MACQ900,       "Quadra",    " 900 ",   MACH_CLASSQ },
-{ MACH_MACQ950,       "Quadra",    " 950 ",   MACH_CLASSQ },
-{ MACH_MACQ800,       "Quadra",    " 800 ",   MACH_CLASSQ },
-{ MACH_MACQ650,	      "Quadra",    " 650 ",   MACH_CLASSQ },
-{ MACH_MACC650,       "Centris",   " 650 ",   MACH_CLASSQ },
-{ MACH_MACQ605,       "Quadra",    " 605",    MACH_CLASSQ },
-{ MACH_MACC610,	      "Centris",   " 610 ",   MACH_CLASSQ },
-{ MACH_MACQ610,       "Quadra",    " 610 ",   MACH_CLASSQ },
-{ MACH_MACC660AV,     "Centris",   " 660AV ", MACH_CLASSQ },
-{ MACH_MACQ840AV,     "Quadra",    " 840AV ", MACH_CLASSQ },
+{ MACH_MACQ700,       "Quadra",    " 700 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACQ900,       "Quadra",    " 900 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACQ950,       "Quadra",    " 950 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACQ800,       "Quadra",    " 800 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACQ650,	      "Quadra",    " 650 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACC650,       "Centris",   " 650 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACQ605,       "Quadra",    " 605",    MACH_CLASSQ,	&romvecs[9] },
+{ MACH_MACC610,	      "Centris",   " 610 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACQ610,       "Quadra",    " 610 ",   MACH_CLASSQ,	&romvecs[6] },
+{ MACH_MACC660AV,     "Centris",   " 660AV ", MACH_CLASSQ,	&romvecs[7] },
+{ MACH_MACQ840AV,     "Quadra",    " 840AV ", MACH_CLASSQ,	&romvecs[7] },
 
 /* The Powerbooks/Duos... */
-{ MACH_MACPB100,      "PowerBook", " 100 ",   MACH_CLASSPB },
-{ MACH_MACPB140,      "PowerBook", " 140 ",   MACH_CLASSPB },
-{ MACH_MACPB145,      "PowerBook", " 145 ",   MACH_CLASSPB },
-{ MACH_MACPB160,      "PowerBook", " 160 ",   MACH_CLASSPB },
-{ MACH_MACPB165,      "PowerBook", " 165 ",   MACH_CLASSPB },
-{ MACH_MACPB165C,     "PowerBook", " 165c ",  MACH_CLASSPB },
-{ MACH_MACPB170,      "PowerBook", " 170 ",   MACH_CLASSPB },
-{ MACH_MACPB180,      "PowerBook", " 180 ",   MACH_CLASSPB },
-{ MACH_MACPB180C,     "PowerBook", " 180c ",  MACH_CLASSPB },
-{ MACH_MACPB210,      "PowerBook", " 210 ",   MACH_CLASSPB },
-{ MACH_MACPB230,      "PowerBook", " 230 ",   MACH_CLASSPB },
-{ MACH_MACPB250,      "PowerBook", " 250 ",   MACH_CLASSPB },
-{ MACH_MACPB270,      "PowerBook", " 270 ",   MACH_CLASSPB },
+{ MACH_MACPB100,      "PowerBook", " 100 ",   MACH_CLASSPB,	&romvecs[1] },
+	/* PB 100 has no MMU! */
+{ MACH_MACPB140,      "PowerBook", " 140 ",   MACH_CLASSPB,	&romvecs[1] },
+{ MACH_MACPB145,      "PowerBook", " 145 ",   MACH_CLASSPB,	&romvecs[1] },
+{ MACH_MACPB160,      "PowerBook", " 160 ",   MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB165,      "PowerBook", " 165 ",   MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB165C,     "PowerBook", " 165c ",  MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB170,      "PowerBook", " 170 ",   MACH_CLASSPB,	&romvecs[1] },
+{ MACH_MACPB180,      "PowerBook", " 180 ",   MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB180C,     "PowerBook", " 180c ",  MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB210,      "PowerBook", " 210 ",   MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB230,      "PowerBook", " 230 ",   MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB250,      "PowerBook", " 250 ",   MACH_CLASSPB,	&romvecs[5] },
+{ MACH_MACPB270,      "PowerBook", " 270 ",   MACH_CLASSPB,	&romvecs[10] },
 
 /* The Performas... */
-{ MACH_MACP600,       "Performa",  " 600 ",   MACH_CLASSLC },
-{ MACH_MACP460,       "Performa",  " 460 ",   MACH_CLASSLC },
-{ MACH_MACP550,       "Performa",  " 550 ",   MACH_CLASSLC },
+{ MACH_MACP600,       "Performa",  " 600 ",   MACH_CLASSLC,	&romvecs[3] },
+{ MACH_MACP460,       "Performa",  " 460 ",   MACH_CLASSLC,	&romvecs[3] },
+{ MACH_MACP550,       "Performa",  " 550 ",   MACH_CLASSLC,	&romvecs[3] },
 
 /* The LCs... */
-{ MACH_MACLCII,       "LC",        " II ",    MACH_CLASSLC },
-{ MACH_MACLCIII,      "LC",        " III ",   MACH_CLASSLC },
-{ MACH_MACLC475,      "LC",        " 475 ",   MACH_CLASSLC },
-{ MACH_MACLC520,      "LC",        " 520 ",   MACH_CLASSLC },
-{ MACH_MACLC575,      "LC",        " 575 ",   MACH_CLASSLC },
+{ MACH_MACLCII,       "LC",        " II ",    MACH_CLASSLC,	&romvecs[3] },
+{ MACH_MACLCIII,      "LC",        " III ",   MACH_CLASSLC,	&romvecs[3] },
+{ MACH_MACLC475,      "LC",        " 475 ",   MACH_CLASSLC,	&romvecs[3] },
+{ MACH_MACLC520,      "LC",        " 520 ",   MACH_CLASSLC,	&romvecs[3] },
+{ MACH_MACLC575,      "LC",        " 575 ",   MACH_CLASSLC,	&romvecs[3] },
 /* Does this belong here? */
-{ MACH_MACCLASSICII,  "Classic",   " II ",    MACH_CLASSLC },
+{ MACH_MACCLASSICII,  "Classic",   " II ",    MACH_CLASSLC,	&romvecs[3] },
 
 /* The hopeless ones... */
-{ MACH_MACCCLASSIC,   "Classic ",  "",        MACH_CLASSH },
-{ MACH_MACTV,         "TV ",       "",        MACH_CLASSH },
+{ MACH_MACCCLASSIC,   "Classic ",  "",        MACH_CLASSH,	NULL },
+{ MACH_MACTV,         "TV ",       "",        MACH_CLASSH,	NULL },
 
 /* The unknown one and the end... */
-{ 0,                 "Unknown",    "",        MACH_CLASSII},
-{ 0,                 NULL,         NULL,      0 },
+{ 0,                 "Unknown",    "",        MACH_CLASSII,	NULL },
+{ 0,                 NULL,         NULL,      0,		NULL },
 }; /* End of cpu_models[] initialization. */
 
+/*
+ * Missing Mac Models:
+ *	PowerMac 6100
+ *	PowerMac 7100
+ *	PowerMac 8100
+ *	PowerBook 540
+ *	PowerBook 520
+ *	PowerBook 150
+ *	Duo 280
+ *	Quadra	630
+ *	Performa 6000s
+ * 	...?
+ */
+
 char	cpu_model[120];	/* for sysctl() */
+
+int
+mach_cputype(void)
+{
+	return(mac68k_machine.mach_processor);
+}
 
 static void
 identifycpu(void)
@@ -2207,6 +2289,7 @@ get_machine_info(void)
 extern void
 getenvvars (void)
 {
+  extern unsigned long	locore_dodebugmarks;
   extern unsigned long	bootdev, videobitdepth, videosize;
   extern unsigned long	end, esym;
   int			root_scsi_id;
@@ -2243,6 +2326,7 @@ getenvvars (void)
   mac68k_machine.mach_processor = getenv("PROCESSOR");
   mac68k_machine.mach_memsize = getenv("MEMSIZE");
   mac68k_machine.do_graybars = getenv("GRAYBARS");
+  locore_dodebugmarks = mac68k_machine.do_graybars;
   mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
   mac68k_machine.serial_console = getenv("SERIALCONSOLE");
 		/* Should probably check this and fail if old */
@@ -2254,11 +2338,19 @@ getenvvars (void)
   esym = getenv("END_SYM");
   if (esym == 0) esym = (long) &end;
   
-  /* Get MacOS time just in case we can't read PRAM */
+  /* Get MacOS time */
   macos_boottime = getenv("BOOTTIME");
 
   /* Save GMT BIAS saved in Booter parameters dialog box */
   macos_gmtbias = getenv("GMTBIAS");
+
+  /*
+   * Save globals stolen from MacOS
+   */
+
+  ROMBase = (caddr_t) getenv("ROMBASE");
+  TimeDBRA = getenv("TIMEDBRA");
+  ADBDelay = (caddr_t) getenv("ADBDELAY");
 }
 
 void printenvvars (void)
@@ -2281,6 +2373,8 @@ void printenvvars (void)
 extern volatile unsigned char	*sccA;
 extern volatile unsigned char	*ASCBase;
 
+struct cpu_model_info *current_mac_model;
+
 /*
  * Sets a bunch of machine-specific variables
  */
@@ -2302,6 +2396,12 @@ static	int			firstpass = 1;
 	}
 
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
+	current_mac_model = cpui;
+
+	/*
+	 * Set up current ROM Glue vectors
+	 */
+	mrg_setvectors(cpui->rom_vectors);
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2311,7 +2411,7 @@ static	int			firstpass = 1;
 		case MACH_CLASSII:
 			if (firstpass) {
 				VIA2 = 1;
-				IOBase = 0x50000000;
+				IOBase = 0x50f00000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
 				ASCBase = (volatile u_char *) 0x14000;
@@ -2324,14 +2424,16 @@ static	int			firstpass = 1;
 		case MACH_CLASSPB:
 			if (firstpass) {
 				VIA2 = 1;
-				IOBase = 0x50000000;
+				IOBase = 0x50f00000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
 				ASCBase = (volatile u_char *) 0x14000;
 				mac68k_machine.scsi80 = 1;
 				mac68k_machine.sccClkConst = 115200;
 			}
-			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			/* Disable everything but PM; we need it. */
+			via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
+			/* Are we disabling something important? */
 			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 			break;
 		case MACH_CLASSQ:
@@ -2350,7 +2452,28 @@ static	int			firstpass = 1;
 		case MACH_CLASSIIci:
 			if (firstpass) {
 				VIA2 = 0x13;
-				IOBase = 0x50000000;
+				IOBase = 0x50f00000;
+				Via1Base = (volatile u_char *) IOBase;
+				sccA = (volatile u_char *) 0x4000;
+				ASCBase = (volatile u_char *) 0x14000;
+				mac68k_machine.scsi80 = 1;
+				mac68k_machine.sccClkConst = 122400;
+			/*
+			 * LAK: Find out if internal video is on.  If yes, then
+			 * we loaded in bank B.  We need a better way to
+			 * determine this, like use the TT0 register.
+			 */
+				if (rbv_vidstatus ()) {
+					load_addr = 0x04000000;
+				}
+			}
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+			break;
+		case MACH_CLASSIIsi:
+			if (firstpass) {
+				VIA2 = 0x13;
+				IOBase = 0x50f00000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
 				ASCBase = (volatile u_char *) 0x14000;
@@ -2371,7 +2494,7 @@ static	int			firstpass = 1;
 		case MACH_CLASSLC:
 			if (firstpass) {
 				VIA2 = 0x13;
-				IOBase = 0x50000000;
+				IOBase = 0x50f00000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
 				ASCBase = (volatile u_char *) 0x14000;
@@ -2852,23 +2975,13 @@ static void remap_rom (unsigned long *st)
 {
         unsigned long   addr, index;
 
-	/*
-	 * Commented out right now because we don't use it and this code
-	 * hasn't been tested yet.  Make sure to uncomment the code in
-	 * pmap_init() if this is uncommented.
-	 */
+	addr = ROMBASE;
 
-#if 0
-	addr = 0x40000000;
-	index = addr / 0x400000;
-
-	st[index] = addr | 0x01;
-
-	addr += 0x400000;
-	index++;
-
-	st[index] = addr | 0x01;
-#endif
+	while (addr < ROMTOP) {	/* ROMSIZE must be a multiple of 4 MB! */
+		index = addr / 0x400000;
+		st[index] = addr | 0x01;
+		addr += 0x400000;
+	}
 }
 
 /*
