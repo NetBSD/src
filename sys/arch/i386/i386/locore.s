@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.252 2002/04/09 16:22:22 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.253 2002/04/09 16:29:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2070,9 +2070,6 @@ ENTRY(savectx)
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- *
- * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
- * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
 
 /*
