@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.16 1997/09/19 21:22:38 christos Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.17 1998/03/18 17:22:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.16 1997/09/19 21:22:38 christos Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.17 1998/03/18 17:22:38 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,9 @@ __RCSID("$NetBSD: quotacheck.c,v 1.16 1997/09/19 21:22:38 christos Exp $");
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/quota.h>
+#include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -111,6 +113,7 @@ static int	uflag;		/* check user quotas */
 static int	vflag;		/* verbose */
 static int	fi;		/* open disk file descriptor */
 static u_long	highid[MAXQUOTAS];/* highest addid()'ed identifier per type */
+static int needswap;	/* FS is in swapped order */
 
 
 int main __P((int, char *[]));
@@ -290,6 +293,13 @@ chkquota(type, fsname, mntpt, v, pid)
 	sync();
 	dev_bsize = 1;
 	bread(SBOFF, (char *)&sblock, (long)SBSIZE);
+	if (sblock.fs_magic != FS_MAGIC)
+		if (sblock.fs_magic== bswap32(FS_MAGIC)) {
+			needswap = 1;
+			ffs_sb_swap(&sblock, &sblock, 0);
+		} else
+			errx(1, "%s: superblock magic number 0x%x, not 0x%x",
+				fsname, sblock.fs_magic, FS_MAGIC);
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	resetinodebuf();
@@ -577,6 +587,8 @@ getnextinode(inumber)
 		bread(dblk, (char *)inodebuf, size);
 		dp = inodebuf;
 	}
+	if (needswap)
+		ffs_dinode_swap(dp, dp);
 	return (dp++);
 }
 
