@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.5 1997/07/05 05:12:40 darrenr Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.6 1997/09/21 16:47:51 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.1.1.5 1997/07/05 05:12:40 darrenr Exp $
+ * Id: ipf.h,v 2.0.2.9 1997/08/26 12:52:46 darrenr Exp 
  */
 
 #ifndef	__IPF_H__
@@ -36,6 +36,7 @@
 #define	OPT_ZERORULEST	0x10000
 #define	OPT_SAVEOUT	0x20000
 #define	OPT_AUTHSTATS	0x40000
+#define	OPT_RAW		0x80000
 
 #ifndef __P
 # ifdef	__STDC__
@@ -60,7 +61,7 @@ struct	ipopt_names	{
 };
 
 
-extern	u_32_t	buildopts __P((char *, char *));
+extern	u_32_t	buildopts __P((char *, char *, int));
 extern	u_32_t	hostnum __P((char *, int *));
 extern	u_32_t	optname __P((char ***, u_short *));
 extern	void	printpacket __P((struct ip *));
