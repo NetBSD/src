@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/05/09 07:50:08 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 1997/05/13 21:01:58 phil Exp $
 
 LIB=	cc1
 
@@ -18,15 +18,18 @@ BCDEF= ${.CURDIR}/bytecode.def
 
 .PATH:	${.CURDIR}/../arch/${MACHINE_ARCH}
 
-SRCS=	bc-arity.h bc-emit.c bc-opcode.h bc-opname.h bc-optab.c bi-reverse.c \
-	c-aux-info.c c-common.c c-convert.c c-decl.c c-iterate.c c-lex.c \
-	c-parse.h c-pragma.c c-typeck.c caller-save.c calls.c combine.c \
-	convert.c cse.c dbxout.c dwarfout.c emit-rtl.c explow.c expmed.c \
-	expr.c final.c flow.c fold-const.c function.c getpwd.c global.c \
-	integrate.c jump.c local-alloc.c loop.c obstack.c optabs.c print-rtl.c \
-	print-tree.c real.c recog.c reg-stack.c regclass.c reload.c reload1.c \
-	reorg.c rtl.c rtlanal.c sched.c sdbout.c stmt.c stor-layout.c stupid.c \
-	toplev.c tree.c unroll.c varasm.c version.c xcoffout.c \
+SRCS=	bc-arity.h bc-opcode.h bc-opname.h c-parse.h bc-emit.c \
+	bc-optab.c bi-reverse.c c-aux-info.c c-common.c c-convert.c \
+	c-decl.c c-iterate.c c-lex.c c-pragma.c c-typeck.c \
+	caller-save.c calls.c combine.c convert.c cse.c \
+	dbxout.c dwarfout.c emit-rtl.c explow.c expmed.c \
+	expr.c final.c flow.c fold-const.c function.c \
+	getpwd.c global.c integrate.c jump.c local-alloc.c \
+	loop.c obstack.c optabs.c print-rtl.c print-tree.c \
+	real.c recog.c reg-stack.c regclass.c reload.c \
+	reload1.c reorg.c rtl.c rtlanal.c sched.c \
+	sdbout.c stmt.c stor-layout.c stupid.c toplev.c \
+	tree.c unroll.c varasm.c version.c xcoffout.c \
 	$(MACHINE_ARCH).c insn-attr.h insn-codes.h insn-config.h insn-flags.h \
 	insn-peep.c insn-opinit.c insn-recog.c insn-extract.c insn-output.c \
 	insn-emit.c insn-attrtab.c 
@@ -49,15 +52,15 @@ insn-config.h: genconfig $(MD)
 	./genconfig $(MD) > insn-config.h
 CLEANFILES += insn-config.h genconfig genconfig.o
 
-bc-opcode.h: bi-opcode  $(BCDEF)
+bc-opcode.h: bi-opcode $(BCDEF)
 	./bi-opcode < $(BCDEF) > bc-opcode.h
 CLEANFILES += bc-opcode.h bi-opcode bi-opcode.o
 
-bc-opname.h: bi-opname  $(BCDEF)
+bc-opname.h: bi-opname $(BCDEF)
 	./bi-opname < $(BCDEF) > bc-opname.h
 CLEANFILES += bc-opname.h bi-opname bi-opname.o
 
-bc-arity.h: bi-arity  $(BCDEF)
+bc-arity.h: bi-arity $(BCDEF)
 	./bi-arity < $(BCDEF) > bc-arity.h
 CLEANFILES += bc-arity.h bi-arity bi-arity.o
 
