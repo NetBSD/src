@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.31 2003/05/03 18:11:32 wiz Exp $	*/
+/*	$NetBSD: auvia.c,v 1.32 2003/09/14 14:48:17 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31 2003/05/03 18:11:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.32 2003/09/14 14:48:17 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define		AUVIA_PCICONF_ACSGD	 0x00000400	/* SGD enab */
 #define		AUVIA_PCICONF_ACFM	 0x00000200	/* FM enab */
 #define		AUVIA_PCICONF_ACSB	 0x00000100	/* SB enab */
+#define		AUVIA_PCICONF_PRIVALID	 0x00000001	/* primary codec rdy */
 
 #define	AUVIA_PLAY_BASE			0x00
 #define	AUVIA_RECORD_BASE		0x10
@@ -364,7 +365,7 @@ auvia_attach_codec(void *addr, struct ac97_codec_if *cif)
 void
 auvia_reset_codec(void *addr)
 {
-#ifdef notyet /* XXX seems to make codec become unready... ??? */
+	int i;
 	struct auvia_softc *sc = addr;
 	pcireg_t r;
 
@@ -380,8 +381,11 @@ auvia_reset_codec(void *addr)
 	pci_conf_write(sc->sc_pc, sc->sc_pt, AUVIA_PCICONF_JUNK, r);
 	delay(200);
 
-	auvia_waitready_codec(sc);
-#endif
+	for (i = 500000; i != 0 && !(pci_conf_read(sc->sc_pc, sc->sc_pt,
+		AUVIA_PCICONF_JUNK) & AUVIA_PCICONF_PRIVALID); i--)
+		DELAY(1);
+	if (i == 0)
+		printf("%s: codec reset timed out\n", sc->sc_dev.dv_xname);
 }
 
 
