@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.19 1996/04/21 21:11:38 veego Exp $	*/
+/*	$NetBSD: idesc.c,v 1.20 1996/04/28 06:36:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -355,7 +355,7 @@ idescattach(pdp, dp, auxp)
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xda0000);
 		sc->sc_a1200 = ztwomap(0xda8000 + 0x1000);
 		sc->sc_flags |= IDECF_A1200;
-		printf(" A1200 @ %x:%p", rp, sc->sc_a1200);
+		printf(" A1200 @ %p:%p", rp, sc->sc_a1200);
 	}
 
 #ifdef DEBUG
