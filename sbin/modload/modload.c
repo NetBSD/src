@@ -1,19 +1,4 @@
 /*
- * This is the interface for the kernel module loader for statically
- * loadable kernel modules.  The interface is nearly identical to the
- * SunOS 4.1.3 not because I lack imagination but because I liked Sun's
- * approach in this particular revision of their BSD-derived OS.
- *
- * modload [-d] [-v] [-A <kernel>] [-e <entry] [-p <postinstall>]
- *         [-o <output file>] <input file>
- *
- *	-d			- debug
- *	-v			- verbose
- *	-A <kernel>		- specify symbol kernel (default="/netbsd")
- *	-e <entry>		- entry point (default="xxxinit")
- *	-p <postinstall>	- postinstall script or executable
- *	-o <output file>	- output file (default=<input file>-".o")
- *
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
  *
@@ -44,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.7 1994/03/31 23:26:15 mycroft Exp $
+ *	$Id: modload.c,v 1.8 1994/05/05 06:36:28 cgd Exp $
  */
 
 #include <stdio.h>
@@ -53,7 +38,6 @@
 #include <err.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/exec.h>

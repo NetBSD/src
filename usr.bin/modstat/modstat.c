@@ -1,16 +1,4 @@
 /*
- * This is the loadable kernel module status display program.  The
- * interface is nearly identical to the SunOS 4.1.3 not because I
- * lack imagination but because I liked Sun's approach in this
- * particular revision of their BSD-derived OS.
- *
- * modstat [-i <module id>] [-n <module name>]
- *
- * Default behaviour is to report status for all modules.
- *
- *	-i <module id>		- status for module by id
- *	-n <module name>	- status for module by name
- *
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
  *
@@ -41,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.3 1994/04/01 04:33:48 mycroft Exp $
+ *	$Id: modstat.c,v 1.4 1994/05/05 06:35:50 cgd Exp $
  */
 
 #include <stdio.h>
@@ -50,7 +38,6 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
