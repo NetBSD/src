@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.6 2002/06/18 04:33:36 itojun Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.7 2003/04/09 01:55:14 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -40,11 +40,6 @@ struct adb_attach_args {
 	int	adbaddr;
 	int	handler_id;
 };
-
-#define ADB_MAXTRACE	(NBPG / sizeof(int) - 1)
-extern int adb_traceq[ADB_MAXTRACE];
-extern int adb_traceq_tail;
-extern int adb_traceq_len;
 
 typedef struct adb_trace_xlate_s {
 	int     params;
