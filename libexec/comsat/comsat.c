@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.27 2004/06/25 17:34:38 christos Exp $	*/
+/*	$NetBSD: comsat.c,v 1.28 2004/07/10 00:00:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.27 2004/06/25 17:34:38 christos Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.28 2004/07/10 00:00:58 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	/* verify proper invocation */
 	fromlen = sizeof(from);
 	if (getsockname(0, (struct sockaddr *)(void *)&from, &fromlen) == -1)
-		err(1, "getsockname (%s)", strerror(errno));
+		err(1, "getsockname");
 
 	openlog("comsat", LOG_PID, LOG_DAEMON);
 	while ((ch = getopt(argc, argv, "l")) != -1)
