@@ -1,6 +1,6 @@
-/*	$NetBSD: strsuftoll.c,v 1.5 2004/01/17 23:02:51 dbj Exp $	*/
+/*	$NetBSD: strsuftoll.c,v 1.6 2004/03/05 05:58:29 lukem Exp $	*/
 /*-
- * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002,2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strsuftoll.c,v 1.5 2004/01/17 23:02:51 dbj Exp $");
+__RCSID("$NetBSD: strsuftoll.c,v 1.6 2004/03/05 05:58:29 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -108,8 +108,10 @@ __weak_alias(strsuftollx, _strsuftollx)
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
  *	4) A positive decimal number followed by a m (mult by 1048576).
- *	5) A positive decimal number followed by a w (mult by sizeof int)
- *	6) Two or more positive decimal numbers (with/without k,b or w).
+ *	5) A positive decimal number followed by a g (mult by 1073741824).
+ *	6) A positive decimal number followed by a t (mult by 1099511627776).
+ *	7) A positive decimal number followed by a w (mult by sizeof int)
+ *	8) Two or more positive decimal numbers (with/without k,b or w).
  *	   separated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  * Returns the result upon successful conversion, or exits with an
@@ -152,7 +154,7 @@ strsuftollx(const char *desc, const char *val,
 	while (isspace((unsigned char)*val))	/* Skip leading space */
 		val++;
 
-	num = strtoll(val, &expr, 0);
+	num = strtoll(val, &expr, 10);
 	if (errno == ERANGE)
 		goto erange;			/* Overflow */
 
