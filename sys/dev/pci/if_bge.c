@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.82 2005/01/26 21:52:47 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.83 2005/01/26 22:15:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.82 2005/01/26 21:52:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.83 2005/01/26 22:15:26 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -4037,6 +4037,7 @@ bge_powerhook(int why, void *hdl)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		pci_conf_capture(pc, tag, &sc->bge_pciconf);
+		break;
 	case PWR_RESUME:
 		pci_conf_restore(pc, tag, &sc->bge_pciconf);
 		break;
