@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.10 1999/08/24 15:52:54 bouyer Exp $	*/
+/*	$NetBSD: supextern.h,v 1.10.8.1 2000/07/22 01:40:13 enami Exp $	*/
 
 struct stat;
 
@@ -56,11 +56,7 @@ void path __P((char *, char *, char *));
 void quit __P((int, char *, ...));
 
 /* read_line.c */
-#ifdef NEED_READ_LINE
 char *read_line __P((FILE *, size_t *, int *, const char[3], int));
-#else
-#define read_line fparseln
-#endif
 
 /* run.c */
 int run __P((char *, ...));
