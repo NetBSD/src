@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1996/11/09 03:52:55 chuck Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1996/12/28 23:23:49 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,8 +54,8 @@ bdev_decl(vnd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
-#include "rd.h"
-bdev_decl(rd);
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
@@ -68,7 +68,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
 	bdev_tape_init(NST,st),		/* 7: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 8: SCSI CD-ROM */
-	bdev_disk_init(NRD,rd),		/* 9: RAM disk - for install tape */
+	bdev_disk_init(NMD,md),		/* 9: memory disk - for install tape */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
@@ -110,7 +110,7 @@ cdev_decl(st);
 #include "uk.h"
 cdev_decl(uk);
 
-cdev_decl(rd);
+cdev_decl(md);
 cdev_decl(vnd);
 cdev_decl(ccd);
 
@@ -164,7 +164,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_ch_init(NCH,ch),		/* 31: SCSI autochanger */
-	cdev_disk_init(NRD,rd),		/* 32: ram disk driver */
+	cdev_disk_init(NMD,md),		/* 32: memory disk driver */
 	cdev_scanner_init(NSS,ss),	/* 33: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
 
@@ -240,7 +240,7 @@ static int chrtoblktbl[] = {
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
-	/* 32 */	9,		/* rd */
+	/* 32 */	9,		/* md */
 };
 
 /*

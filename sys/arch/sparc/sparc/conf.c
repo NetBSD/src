@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 1996/11/11 23:54:56 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.45 1996/12/28 23:26:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "cgfourteen.h"
 #include "xd.h"
 #include "xy.h"
-#include "rd.h"
+#include "md.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -88,7 +88,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 2 */
 	bdev_disk_init(NXY,xy),		/* 3: SMD disk */
 	bdev_swap_init(1,sw),		/* 4 */
-	bdev_disk_init(NRD,rd),		/* 5: memory disk */
+	bdev_disk_init(NMD,md),		/* 5: memory disk */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
@@ -174,7 +174,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
 	cdev_scanner_init(NSS,ss),	/* 59: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 60: SCSI unknown */
-	cdev_disk_init(NRD,rd),		/* 61: memory disk */
+	cdev_disk_init(NMD,md),		/* 61: memory disk */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
 	cdev_fb_init(NCGEIGHT,cgeight),	/* 64: /dev/cgeight */

@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.10 1996/11/09 03:52:53 chuck Exp $
+#	$NetBSD: VME147,v 1.11 1996/12/28 23:23:19 pk Exp $
 
 machine		mvme68k m68k
 
@@ -48,7 +48,7 @@ pseudo-device	ppp 2
 pseudo-device	loop
 pseudo-device	bpfilter
 pseudo-device	pty
-pseudo-device	rd 2
+pseudo-device	md 2
 
 mainbus0	at root
 

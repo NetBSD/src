@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 1996/12/23 08:36:36 matthias Exp $
+#	$NetBSD: INSTALL,v 1.9 1996/12/28 23:25:12 pk Exp $
 #
 # INSTALL -- install kernel
 #
@@ -31,8 +31,8 @@ sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
 cd* at scsibus? target ? lun ?			# SCSI CD-ROMs
 
-options		RAMDISK_HOOKS, RAMDISK_SERVER=0
-pseudo-device	rd				# RAM disk
+options		MEMORY_DISK_HOOKS, MEMORY_DISK_SERVER=0
+pseudo-device	md				# Memory disk
 pseudo-device	loop 1				# loopback network
 pseudo-device	sl 1				# compressed SLIP
 pseudo-device	ppp 1				# Point-to-Point Protocol
