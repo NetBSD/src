@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.126 2002/11/30 18:28:06 bouyer Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.127 2002/12/11 07:14:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.126 2002/11/30 18:28:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.127 2002/12/11 07:14:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -212,7 +212,7 @@ uvm_mapent_alloc(map, flags)
 {
 	struct vm_map_entry *me;
 	int s;
-	int pflags = (flags & UVM_KMF_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
+	int pflags = (flags & UVM_FLAG_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
@@ -543,7 +543,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	uvm_flag_t flags;
 {
 	struct vm_map_entry *prev_entry, *new_entry;
-	const int amapwaitflag = (flags & UVM_KMF_NOWAIT) ?
+	const int amapwaitflag = (flags & UVM_FLAG_NOWAIT) ?
 	    AMAP_EXTEND_NOWAIT : 0;
 	vm_prot_t prot = UVM_PROTECTION(flags), maxprot =
 	    UVM_MAXPROTECTION(flags);
@@ -580,7 +580,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 
 	new_entry = NULL;
 	if (map == pager_map) {
-		new_entry = uvm_mapent_alloc(map, (flags & UVM_KMF_NOWAIT));
+		new_entry = uvm_mapent_alloc(map, (flags & UVM_FLAG_NOWAIT));
 		 if (__predict_false(new_entry == NULL))
 			return ENOMEM;
 	}
@@ -890,7 +890,7 @@ nomerge:
 
 		if (new_entry == NULL) {
 			new_entry = uvm_mapent_alloc(map,
-				(flags & UVM_KMF_NOWAIT));
+				(flags & UVM_FLAG_NOWAIT));
 			if (__predict_false(new_entry == NULL)) {
 				vm_map_unlock(map);
 				return ENOMEM;
@@ -927,7 +927,7 @@ nomerge:
 			vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ?
 				UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
 			struct vm_amap *amap = amap_alloc(size, to_add,
-			    (flags & UVM_KMF_NOWAIT) ? M_NOWAIT : M_WAITOK);
+			    (flags & UVM_FLAG_NOWAIT) ? M_NOWAIT : M_WAITOK);
 			if (__predict_false(amap == NULL)) {
 				vm_map_unlock(map);
 				uvm_mapent_free(new_entry);
