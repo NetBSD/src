@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.37 2000/06/26 15:35:03 mrg Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.38 2000/06/29 06:34:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.37 2000/06/26 15:35:03 mrg Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.38 2000/06/29 06:34:25 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,8 +101,6 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.37 2000/06/26 15:35:03 mrg Exp $");
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_amap.h>
