@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.57 1995/10/04 00:35:07 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.58 1995/11/10 04:42:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -941,7 +941,8 @@ u14_find(uha, ia)
 			uha->sc_drq = 7;
 			break;
 		default:
-			printf("illegal dma setting %x\n", config & U14_DMA_MASK);
+			printf("%s: illegal drq setting %x\n",
+			    uha->sc_dev.dv_xname, config & U14_DMA_MASK);
 			return EIO;
 		}
 		break;
@@ -961,7 +962,8 @@ u14_find(uha, ia)
 		uha->sc_irq = 15;
 		break;
 	default:
-		printf("illegal int setting %x\n", config & U14_IRQ_MASK);
+		printf("%s: illegal irq setting %x\n", uha->sc_dev.dv_xname,
+		    config & U14_IRQ_MASK);
 		return EIO;
 	}
 
@@ -1056,7 +1058,8 @@ u24_find(uha, ia)
 			uha->sc_irq = 15;
 			break;
 		default:
-			printf("illegal int setting %x\n", irq_ch);
+			printf("%s: illegal irq setting %x\n",
+			    uha->sc_dev.dv_xname, irq_ch);
 			continue;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.53 1995/10/03 20:58:56 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.54 1995/11/10 04:41:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1053,7 +1053,8 @@ noinquire:
 		aha->sc_drq = 7;
 		break;
 	default:
-		printf("illegal dma setting %x\n", conf.chan);
+		printf("%s: illegal drq setting %x\n", aha->sc_dev.dv_xname,
+		    conf.chan);
 		return EIO;
 	}
 
@@ -1077,7 +1078,8 @@ noinquire:
 		aha->sc_irq = 15;
 		break;
 	default:
-		printf("illegal int setting %x\n", conf.intr);
+		printf("%s: illegal irq setting %x\n", aha->sc_dev.dv_xname,
+		    conf.intr);
 		return EIO;
 	}
 
