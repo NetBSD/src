@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.16 2000/11/02 00:26:36 eeh Exp $ */
+/* $NetBSD: promcons.c,v 1.17 2001/01/03 22:15:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.16 2000/11/02 00:26:36 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.17 2001/01/03 22:15:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,17 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.16 2000/11/02 00:26:36 eeh Exp $");
 static struct  tty *prom_tty[1];
 static int polltime;
 
-void	promstart __P((struct tty *));
-void	promtimeout __P((void *));
-int	promparam __P((struct tty *, struct termios *));
+void	promstart(struct tty *);
+void	promtimeout(void *);
+int	promparam(struct tty *, struct termios *);
 
 struct callout prom_ch = CALLOUT_INITIALIZER;
 
 int
-promopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+promopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -117,10 +114,7 @@ promopen(dev, flag, mode, p)
 }
  
 int
-promclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+promclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
@@ -132,10 +126,7 @@ promclose(dev, flag, mode, p)
 }
  
 int
-promread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+promread(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = prom_tty[minor(dev)];
 
@@ -143,10 +134,7 @@ promread(dev, uio, flag)
 }
  
 int
-promwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+promwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp = prom_tty[minor(dev)];
  
@@ -154,12 +142,7 @@ promwrite(dev, uio, flag)
 }
  
 int
-promioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
@@ -176,17 +159,14 @@ promioctl(dev, cmd, data, flag, p)
 }
 
 int
-promparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+promparam(struct tty *tp, struct termios *t)
 {
 
 	return 0;
 }
 
 void
-promstart(tp)
-	struct tty *tp;
+promstart(struct tty *tp)
 {
 	int s;
 
@@ -212,8 +192,7 @@ out:
  * Stop output on a line.
  */
 void
-promstop(tp, flag)
-	struct tty *tp;
+promstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -225,8 +204,7 @@ promstop(tp, flag)
 }
 
 void
-promtimeout(v)
-	void *v;
+promtimeout(void *v)
 {
 	struct tty *tp = v;
 	u_char c;
@@ -239,8 +217,7 @@ promtimeout(v)
 }
 
 struct tty *
-promtty(dev)
-	dev_t dev;
+promtty(dev_t dev)
 {
 
 	if (minor(dev) != 0)
