@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.32 1996/09/23 05:04:23 ghudson Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.32.2.1 1997/01/14 21:28:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -303,13 +303,7 @@ emitfiles(fp, suffix)
 	 */
 	if (suffix == 'c') {
 		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
-			if (cf->cf_root == NULL)
-				(void)sprintf(swapname,
-				    "$S/arch/%s/%s/swapgeneric.c",
-				    machine, machine);
-			else
-				(void)sprintf(swapname, "swap%s.c",
-				    cf->cf_name);
+			(void)sprintf(swapname, "swap%s.c", cf->cf_name);
 			len = strlen(swapname);
 			if (lpos + len > 72) {
 				if (fputs(" \\\n", fp) < 0)

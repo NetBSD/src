@@ -1,4 +1,4 @@
-#	$NetBSD: NEWCONFIG,v 1.1 1996/12/17 08:40:56 thorpej Exp $
+#	$NetBSD: NEWCONFIG,v 1.1.2.1 1997/01/14 21:25:08 thorpej Exp $
 #
 # "Generic" kernel for new-style config.
 #
@@ -32,17 +32,20 @@ options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
 
-# Filesystem options
+# File systems
+file-system 	FFS		# fast filesystem with user and group quotas
+file-system 	CD9660		# CD-ROM ISO-9660 filesystem
+file-system 	NFS		# Network filesystem client
+file-system 	UNION		# Union filesystem (req. for FDESC)
+file-system 	KERNFS		# kernel data-structure filesystem
+file-system 	FDESC		# user file descriptor filesystem
+file-system 	PROCFS		# /proc filesystem
+file-system 	MFS		# Memory-based filesystem
+
+# File system options
 options 	FIFO		# POSIX fifo support (in all filesystems)
-options 	FFS,QUOTA	# fast filesystem with user and group quotas
-options         CD9660		# CD-ROM ISO-9660 filesystem
+options 	QUOTA		# user and group quotas for FFS
 options 	NFSSERVER	# Network filesystem server
-options 	NFSCLIENT	# Network filesystem client
-options 	UNION		# Union filesystem (req. for FDESC)
-options 	KERNFS		# kernel data-structure filesystem
-options 	FDESC		# user file descriptor filesystem
-options 	PROCFS		# /proc filesystem
-options 	MFS		# Memory-based filesystem
 
 # Networking options
 options		INET		# Internet protocols
@@ -76,7 +79,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 options		DDB		# Kernel Dynamic Debugger
 
-config		netbsd swap generic
+config		netbsd root on ? type ?
 
 mainbus0	at root		# root "bus"
 

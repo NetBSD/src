@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1997/01/11 13:50:20 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.2.1 1997/01/14 21:26:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -150,31 +150,42 @@ struct	cpu_dep cpu_calls[]={
 
 void	gencnslask __P((void));
 
+struct devnametobdevmaj vax_nam2blk[] = {
+	{ "hp",		0 },
+	{ "ra",		9 },
+	{ "sd",		20 },
+	{ "cd",		22 },
+	{ "md",		23 },
+	{ NULL,		0 },
+};
+
 void
 configure()
 {
+	struct device *booted_device;
+	int booted_partition;
 	extern int boothowto;
-
 
 	if (config_rootfound("backplane", NULL) == NULL)
 		panic("backplane not configured");
 
-#if GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
-	setroot();
-#endif
 	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
+	findroot(&booted_device, &booted_partition);
+
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, vax_nam2blk);
+
 	gencnslask(); /* XXX inte g|ras h{r */
 #if VAX410 || VAX43
 	dzcnslask(); /* XXX inte g|ras h{r */
 #endif
 	swapconf();
+	dumpconf();
 	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
 }

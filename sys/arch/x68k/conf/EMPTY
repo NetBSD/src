@@ -1,11 +1,11 @@
-#	$NetBSD: EMPTY,v 1.2 1996/08/26 23:41:24 mrg Exp $
+#	$NetBSD: EMPTY,v 1.2.2.1 1997/01/14 21:26:42 thorpej Exp $
 
 #
 #	EMPTY
 #
 
 #--- from std.x68k
-#	$NetBSD: EMPTY,v 1.2 1996/08/26 23:41:24 mrg Exp $
+#	$NetBSD: EMPTY,v 1.2.2.1 1997/01/14 21:26:42 thorpej Exp $
 #
 # standard x68k information
 #
@@ -50,7 +50,6 @@ options 	TIMEZONE=-540	# Set the timezone that the kernel will use
 options 	DST=0		# Set the timezone that the kernel will use
 
 # standard options
-options		GENERIC			# historical
 options 	SWAPPAGER		# swap pager (anonymous and swap space)
 options 	VNODEPAGER		# vnode pager (mapped files)
 options 	DEVPAGER		# device pager (mapped devices)
@@ -66,7 +65,8 @@ options 	COMPAT_11		# compatibility with NetBSD 1.1
 options		COMPAT_12
 
 # file system options
-options		FFS			# Berkeley fast file system
+file-system	FFS			# Berkeley fast file system
+
 options		FASTLINKS		# fast symbolic links in FFS
 
 # networking options
@@ -79,7 +79,7 @@ options		ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 options 	"EIOMAPSIZE=0"		# do not map PCI address space
 
-config		netbsd swap on generic
+config		netbsd root on ? type ?
 
 pseudo-device	pty		4	# pseudo-terminals
 pseudo-device	loop			# loopback; recommended

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
+/*	$NetBSD: sem.c,v 1.10.2.1 1997/01/14 21:29:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,9 +58,9 @@
 
 #define	NAMESIZE	100	/* local name buffers */
 
-const char *s_generic;
+static const char *s_ifnet;		/* magic attribute */
 const char *s_nfs;
-static const char *s_qmark;
+const char *s_qmark;
 
 static struct hashtab *attrtab;		/* for attribute lookup */
 static struct hashtab *cfhashtab;	/* for config lookup */
@@ -76,6 +76,7 @@ static struct devi **nextdevi;
 static struct devi **nextpseudo;
 
 static int has_errobj __P((struct nvlist *, void *));
+static int has_attr __P((struct nvlist *, const char *));
 static struct nvlist *addtoattr __P((struct nvlist *, struct devbase *));
 static int exclude __P((struct nvlist *, const char *, const char *));
 static int resolve __P((struct nvlist **, const char *, const char *,
@@ -115,7 +116,7 @@ initsem()
 	allpseudo = NULL;
 	nextpseudo = &allpseudo;
 
-	s_generic = intern("generic");
+	s_ifnet = intern("ifnet");
 	s_nfs = intern("nfs");
 	s_qmark = intern("?");
 }
@@ -228,6 +229,26 @@ has_errobj(nv, obj)
 
 	for (; nv != NULL; nv = nv->nv_next)
 		if (nv->nv_ptr == obj)
+			return (1);
+	return (0);
+}
+
+/*
+ * Return true if the given attribute is embedded in the given
+ * pointer list.
+ */
+static int
+has_attr(nv, attr)
+	register struct nvlist *nv;
+	register const char *attr;
+{
+	register struct attr *a;
+
+	if ((a = getattr(attr)) == NULL)
+		return (0);
+
+	for (; nv != NULL; nv = nv->nv_next)
+		if (nv->nv_ptr == a)
 			return (1);
 	return (0);
 }
@@ -526,7 +547,7 @@ exclude(nv, name, what)
 {
 
 	if (nv != NULL) {
-		error("%s: swap generic must not specify %s", name, what);
+		error("%s: wildcarded root must not specify %s", name, what);
 		return (1);
 	}
 	return (0);
@@ -544,12 +565,13 @@ resolve(nvp, name, what, dflt, part)
 	struct nvlist *dflt;
 	register int part;
 {
-	register struct nvlist *nv;
+	register struct nvlist *nv, *anv;
 	register struct devbase *dev;
 	register const char *cp;
-	register int maj, min, l;
+	register int maj, min, i, l;
+	register struct attr *a;
 	int unit;
-	char buf[NAMESIZE];
+	char buf[NAMESIZE], *s_ifnet;;
 
 	if ((u_int)(part -= 'a') >= maxpartitions)
 		panic("resolve");
@@ -585,9 +607,9 @@ resolve(nvp, name, what, dflt, part)
 		return (0);
 	}
 
-	if (nv->nv_str == NULL || nv->nv_str == s_nfs)
+	if (nv->nv_str == NULL || nv->nv_str == s_qmark)
 		/*
-		 * NFS spec. Leave as NODEV.
+		 * Wildcarded or unspecified; leave it as NODEV.
 		 */
 		return (0);
 
@@ -596,7 +618,7 @@ resolve(nvp, name, what, dflt, part)
 	 * suffix, remove it if there, and split into name ("ra") and
 	 * unit (2).
 	 */
-	l = strlen(nv->nv_str);
+	l = i = strlen(nv->nv_str);
 	cp = &nv->nv_str[l];
 	if (l > 1 && *--cp >= 'a' && *cp <= 'a'+maxpartitions &&
 	    isdigit(cp[-1])) {
@@ -609,13 +631,28 @@ resolve(nvp, name, what, dflt, part)
 		return (1);
 	}
 	dev = ht_lookup(devbasetab, intern(buf));
-	if (dev == NULL || dev->d_major == NODEV) {
-		error("%s: can't make %s device from `%s'",
-		    name, what, nv->nv_str);
+	if (dev == NULL) {
+		error("%s: device `%s' does not exist", buf);
 		return (1);
 	}
+
+	/*
+	 * Check for the magic network interface attribute, and
+	 * don't bother making a device number.
+	 */
+	if (has_attr(dev->d_attrs, s_ifnet))
+		nv->nv_int = NODEV;
+	else {
+		if (dev->d_major == NODEV) {
+			error("%s: can't make %s device from `%s'",
+			    name, what, nv->nv_str);
+			return (1);
+		}
+		nv->nv_int =
+		    makedev(dev->d_major, unit * maxpartitions + part);
+	}
+
 	nv->nv_name = dev->d_name;
-	nv->nv_int = makedev(dev->d_major, unit * maxpartitions + part);
 	return (0);
 }
 
@@ -655,19 +692,14 @@ addconf(cf0)
 	*cf = *cf0;
 
 	/*
-	 * Look for "swap generic".
+	 * Check for wildcarded root device.
 	 */
-	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-	    if (nv->nv_str == s_generic)
-		break;
-	if (nv != NULL) {
+	if (cf->cf_root->nv_str == s_qmark) {
 		/*
-		 * Make sure no root or dump device specified, and no
-		 * other swap devices.  Note single | here (check all).
+		 * Make sure no swap or dump device specified.
+		 * Note single | here (check all).
 		 */
-		nv = cf->cf_swap;
-		if (exclude(cf->cf_root, name, "root device") |
-		    exclude(nv->nv_next, name, "additional swap devices") |
+		if (exclude(cf->cf_swap, name, "swap devices") |
 		    exclude(cf->cf_dump, name, "dump device"))
 			goto bad;
 	} else {
@@ -681,6 +713,11 @@ addconf(cf0)
 		    resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
 			goto bad;
 	}
+
+	/* Wildcarded fstype is `unspecified'. */
+	if (cf->cf_fstype == s_qmark)
+		cf->cf_fstype = NULL;
+
 	*nextcf = cf;
 	nextcf = &cf->cf_next;
 	return;
@@ -702,6 +739,25 @@ setconf(npp, what, v)
 		nvfreel(v);
 	} else
 		*npp = v;
+}
+
+void
+setfstype(fstp, v)
+	const char **fstp;
+	const char *v;
+{
+
+	if (*fstp != NULL) {
+		error("multiple fstype specifications");
+		return;
+	}
+
+	if (v != s_qmark && ht_lookup(fsopttab, v) == NULL) {
+		error("\"%s\" is not a configured file system", v);
+		return;
+	}
+
+	*fstp = v;
 }
 
 static struct devi *

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1996/10/13 03:30:35 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.2.1 1997/01/14 21:25:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,9 +68,7 @@
 
 #include <mvme68k/mvme68k/isr.h>
 
-static	int getstr __P((char *, int));
-struct	device *parsedisk __P((char *, int, int, dev_t *));
-void	setroot __P((void));
+struct device *booted_device;	/* boot device */
 
 /*
  * The following several variables are related to
@@ -182,13 +180,21 @@ mainbus_print(aux, cp)
 	return (UNCONF);
 }
 
+struct devnametobdevmaj mvme68k_nam2blk[] = {
+	{ "sd",		4 },
+	{ "st",		7 },
+	{ "cd",		8 },
+	{ "md",		9 },
+	{ NULL,		0 },
+};
+
 /*
  * Determine mass storage and memory configuration for a machine.
  */
 configure()
 {
 
-	bootdv = NULL;	/* set by device drivers (if found) */
+	booted_device = NULL;	/* set by device drivers (if found) */
 
 	init_sir();
 	isrinit();
@@ -196,358 +202,15 @@ configure()
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
 
-	setroot();
+	printf("boot device: %s\n",
+		(booted_device) ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, 0, mvme68k_nam2blk);
+
 	swapconf();
+	dumpconf();
 	cold = 0;
 }
-
-/*
- * Configure swap space and related parameters.
- */
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-		}
-	dumpconf();
-}
-
-/*
- * the rest of this file was adapted from Theo de Raadt's code in the 
- * sparc port to nuke the "options GENERIC" stuff.
- */
-
-struct nam2blk {
-	char *name;
-	int maj;
-} nam2blk[] = {
-	{ "sd",		4 },
-	{ "st",		6 },
-};
-
-static int
-findblkmajor(dv)
-	struct device *dv;
-{
-	char *name = dv->dv_xname;
-	register int i;
-
-	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0)
-			return (nam2blk[i].maj);
-	return (-1);
-}
-
-static struct device *
-getdisk(str, len, defpart, devp)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
-{
-	register struct device *dv;
-
-	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		printf("use one of:");
-		for (dv = alldevs.tqh_first; dv != NULL;
-		    dv = dv->dv_list.tqe_next) {
-			if (dv->dv_class == DV_DISK)
-				printf(" %s[a-h]", dv->dv_xname);
-#ifdef NFSCLIENT
-			if (dv->dv_class == DV_IFNET)
-				printf(" %s", dv->dv_xname);
-#endif
-		}
-		printf("\n");
-	}
-	return (dv);
-}
-
-struct device *
-parsedisk(str, len, defpart, devp)
-	char *str;
-	int len, defpart;
-	dev_t *devp;
-{
-	register struct device *dv;
-	register char *cp, c;
-	int majdev, mindev, part;
-
-	if (len == 0)
-		return (NULL);
-	cp = str + len - 1;
-	c = *cp;
-	if (c >= 'a' && c <= 'h') {
-		part = c - 'a';
-		*cp = '\0';
-	} else
-		part = defpart;
-
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_class == DV_DISK &&
-		    strcmp(str, dv->dv_xname) == 0) {
-			majdev = findblkmajor(dv);
-			if (majdev < 0)
-				panic("parsedisk");
-			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
-			*devp = makedev(majdev, mindev);
-			break;
-		}
-#ifdef NFSCLIENT
-		if (dv->dv_class == DV_IFNET &&
-		    strcmp(str, dv->dv_xname) == 0) {
-			*devp = NODEV;
-			break;
-		}
-#endif
-	}
-
-	*cp = c;
-	return (dv);
-}
-
-/*
- * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
- *
- * XXX Actually, swap and root must be on the same type of device,
- * (ie. DV_DISK or DV_IFNET) because of how (*mountroot) is written.
- * That should be fixed.
- */
-void
-setroot()
-{
-	register struct swdevt *swp;
-	register struct device *dv;
-	register int len, majdev, mindev;
-	dev_t nrootdev, nswapdev = NODEV;
-	char buf[128];
-	extern int (*mountroot) __P((void *));
-	dev_t temp;
-#if defined(NFSCLIENT)
-	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
-#endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void *));
-#endif
-
-	printf("boot device: %s\n",
-		(bootdv) ? bootdv->dv_xname : "<unknown>");
-
-	if (boothowto & RB_ASKNAME) {
-		for (;;) {
-			printf("root device ");
-			if (bootdv != NULL)
-				printf("(default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK
-						? 'a' : ' ');
-			printf(": ");
-			len = getstr(buf, sizeof(buf));
-			if (len == 0 && bootdv != NULL) {
-				strcpy(buf, bootdv->dv_xname);
-				len = strlen(buf);
-			}
-			if (len > 0 && buf[len - 1] == '*') {
-				buf[--len] = '\0';
-				dv = getdisk(buf, len, 1, &nrootdev);
-				if (dv != NULL) {
-					bootdv = dv;
-					nswapdev = nrootdev;
-					goto gotswap;
-				}
-			}
-			dv = getdisk(buf, len, 0, &nrootdev);
-			if (dv != NULL) {
-				bootdv = dv;
-				break;
-			}
-		}
-
-		/*
-		 * because swap must be on same device as root, for
-		 * network devices this is easy.
-		 */
-		if (bootdv->dv_class == DV_IFNET) {
-			goto gotswap;
-		}
-		for (;;) {
-			printf("swap device ");
-			if (bootdv != NULL)
-				printf("(default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK?'b':' ');
-			printf(": ");
-			len = getstr(buf, sizeof(buf));
-			if (len == 0 && bootdv != NULL) {
-				switch (bootdv->dv_class) {
-				case DV_IFNET:
-					nswapdev = NODEV;
-					break;
-				case DV_DISK:
-					nswapdev = makedev(major(nrootdev),
-					    (minor(nrootdev) & ~ PARTITIONMASK) | 1);
-					break;
-				case DV_TAPE:
-				case DV_TTY:
-				case DV_DULL:
-				case DV_CPU:
-					break;
-				}
-				break;
-			}
-			dv = getdisk(buf, len, 1, &nswapdev);
-			if (dv) {
-				if (dv->dv_class == DV_IFNET)
-					nswapdev = NODEV;
-				break;
-			}
-		}
-gotswap:
-		rootdev = nrootdev;
-		dumpdev = nswapdev;
-		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
-
-	} else if (mountroot == NULL) {
-
-		/*
-		 * `swap generic': Use the device the ROM told us to use.
-		 */
-		if (bootdv == NULL)
-			panic("boot device not known");
-
-		majdev = findblkmajor(bootdv);
-		if (majdev >= 0) {
-			/*
-			 * Root and swap are on a disk.
-			 * val[2] of the boot device is the partition number.
-			 * Assume swap is on partition b.
-			 */
-			int part = bootpart;
-			mindev = (bootdv->dv_unit << PARTITIONSHIFT) + part;
-			rootdev = makedev(majdev, mindev);
-			nswapdev = dumpdev = makedev(major(rootdev),
-			    (minor(rootdev) & ~ PARTITIONMASK) | 1);
-		} else {
-			/*
-			 * Root and swap are on a net.
-			 */
-			nswapdev = dumpdev = NODEV;
-		}
-		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
-
-	} else {
-
-		/*
-		 * `root DEV swap DEV': honour rootdev/swdevt.
-		 * rootdev/swdevt/mountroot already properly set.
-		 */
-		return;
-	}
-
-	switch (bootdv->dv_class) {
-#if defined(NFSCLIENT)
-	case DV_IFNET:
-		mountroot = nfs_mountroot;
-		nfsbootdevname = bootdv->dv_xname;
-		return;
-#endif
-#if defined(FFS)
-	case DV_DISK:
-		mountroot = ffs_mountroot;
-		majdev = major(rootdev);
-		mindev = minor(rootdev);
-		printf("root on %s%c\n", bootdv->dv_xname,
-		    (mindev & PARTITIONMASK) + 'a');
-		break;
-#endif
-	default:
-		printf("can't figure root, hope your kernel is right\n");
-		return;
-	}
-
-	/*
-	 * XXX: What is this doing?
-	 */
-	mindev &= ~PARTITIONMASK;
-	temp = NODEV;
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap device, move
-	 * it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-}
-
-static int
-getstr(cp, size)
-	register char *cp;
-	register int size;
-{
-	register char *lp;
-	register int c;
-	register int len;
-
-	lp = cp;
-	len = 0;
-	for (;;) {
-		c = cngetc();
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			return (len);
-		case '\b':
-		case '\177':
-		case '#':
-			if (len) {
-				--len;
-				--lp;
-				printf("\b \b");
-			}
-			continue;
-		case '@':
-		case 'u'&037:
-			len = 0;
-			lp = cp;
-			printf("\n");
-			continue;
-		default:
-			if (len + 1 >= size || c < ' ') {
-				printf("\007");
-				continue;
-			}
-			printf("%c", c);
-			++len;
-			*lp++ = c;
-		}
-	}
-}
-
 
 /*
  * find a device matching "name" and unit number

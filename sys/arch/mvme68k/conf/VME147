@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.11 1996/12/28 23:23:19 pk Exp $
+#	$NetBSD: VME147,v 1.11.2.1 1997/01/14 21:25:32 thorpej Exp $
 
 machine		mvme68k m68k
 
@@ -13,16 +13,19 @@ maxusers	2
 options		TIMEZONE=0, DST=0
 
 options		DIAGNOSTIC, DEBUG
-options		FFS
-options		NFSCLIENT
-#options	NFSSERVER
+
 #options 	SYSVSHM
 options 	KTRACE
 options 	COMPAT_43
-options 	FIFO
-#options 	MFS
 options		DEVPAGER, SWAPPAGER, VNODEPAGER
-#options	MSDOSFS
+
+file-system 	FFS
+file-system 	NFS	
+#file-system 	MFS
+#file-system	MSDOSFS
+
+#options	NFSSERVER
+options 	FIFO
 
 # Networking options
 options		INET
@@ -38,9 +41,9 @@ options		COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 
 ## force NFS root and swap
-#config	netbsd		root on nfs swap on nfs
+#config	netbsd		root on ? type nfs
 ## "generic" boot (put root on boot device)
-config netbsd		swap generic
+config netbsd		root on ? type ?
 
 
 pseudo-device	sl

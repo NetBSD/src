@@ -1,4 +1,4 @@
-#	$NetBSD: JURA,v 1.11 1996/11/25 04:16:18 cgd Exp $
+#	$NetBSD: JURA,v 1.11.4.1 1997/01/14 21:24:43 thorpej Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
 #
@@ -21,11 +21,13 @@ options		DST=1			# Daylight savings rules (for param.c)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
+# File systems
+file-system 	FFS		# Fast file system
+file-system 	MFS		# Memory-based file system
+file-system 	NFS		# Sun NFS-compatible file system client
+
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
-options		FFS		# Fast file system
-options		MFS		# Memory-based file system
-options		NFSCLIENT	# Sun NFS-compatible file system client
 
 # Networking options
 options		INET		# Internet protocol suite
@@ -42,7 +44,7 @@ options		COMPAT_12
 # Loadable Kernel Modules
 options		LKM
 
-config		netbsd	root on nfs swap on nfs
+config		netbsd	root on ? type nfs
 
 mainbus0 at	root
 

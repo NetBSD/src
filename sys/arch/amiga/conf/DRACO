@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
+#	$NetBSD: DRACO,v 1.7.2.1 1997/01/14 21:24:51 thorpej Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -41,22 +41,22 @@ options		INET		# IP networking support (Required)
 #
 options		QUOTA		# Disk quotas for local disks
 options		NFSSERVER	# Network File System server side code
-options		NFSCLIENT	# Network File System client side code
+options		FIFO		# FIFO operations on vnodes (Recommended)
 
 #
 # File systems
 #
-options		FFS		# Berkeley fast file system
-options		MFS		# Memory based filesystem
-options		PROCFS		# Process filesystem
-options		KERNFS		# Kernel parameter filesystem (Recommended)
-options		FDESC		# /dev/fd filesystem
-options		NULLFS		# Loopback filesystem
-options		FIFO		# FIFO operations on vnodes (Recommended)
-options		ADOSFS		# AmigaDOS file system
-options		"CD9660"	# ISO 9660 file system, with Rock Ridge
-#options	PORTAL		# Portal filesystem
-options		MSDOSFS		# MS-DOS filesystem
+file-system 	FFS		# Berkeley fast file system
+file-system 	MFS		# Memory based filesystem
+file-system 	NFS		# Network File System client side code
+file-system 	PROCFS		# Process filesystem
+file-system 	KERNFS		# Kernel parameter filesystem (Recommended)
+file-system 	FDESC		# /dev/fd filesystem
+file-system 	NULLFS		# Loopback filesystem
+file-system 	ADOSFS		# AmigaDOS file system
+file-system 	"CD9660"	# ISO 9660 file system, with Rock Ridge
+#file-system 	PORTAL		# Portal filesystem
+file-system 	MSDOSFS		# MS-DOS filesystem
 
 
 #
@@ -157,4 +157,4 @@ pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 2		# berkeley packet filters
 pseudo-device	tun 2
 
-config	netbsd swap on generic
+config	netbsd root on ? type ?

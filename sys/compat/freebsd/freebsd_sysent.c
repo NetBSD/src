@@ -336,7 +336,7 @@ struct sysent freebsd_sysent[] = {
 	    sys_nosys },			/* 153 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 154 = unimplemented */
-#if defined(NFSCLIENT) || defined(NFSSERVER)
+#if defined(NFS) || defined(NFSSERVER)
 	{ 2, s(struct sys_nfssvc_args),
 	    sys_nfssvc },			/* 155 = nfssvc */
 #else
@@ -353,7 +353,7 @@ struct sysent freebsd_sysent[] = {
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
-#ifdef NFSCLIENT
+#ifdef NFS
 	{ 2, s(struct freebsd_sys_getfh_args),
 	    freebsd_sys_getfh },		/* 161 = getfh */
 #else

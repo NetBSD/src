@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.2 1996/08/26 23:41:38 mrg Exp $
+#	$NetBSD: SMALL,v 1.2.2.1 1997/01/14 21:26:46 thorpej Exp $
 
 #
 #	SMALL
@@ -18,7 +18,6 @@ options 	TIMEZONE=-540	# Set the timezone that the kernel will use
 options 	DST=0		# Set the timezone that the kernel will use
 
 # standard options
-options		GENERIC			# historical
 options 	SWAPPAGER		# swap pager (anonymous and swap space)
 options 	VNODEPAGER		# vnode pager (mapped files)
 options 	DEVPAGER		# device pager (mapped devices)
@@ -43,24 +42,25 @@ options		COMPAT_12
 #options 	"TCP_COMPAT_42"		# compatibility with 4.2BSD TCP/IP
 
 # file system options
+file-system 	FFS			# Berkeley fast file system
+#file-system 	MFS			# memory file system; uses RAM and swap
+#file-system 	NFS			# Network File System client
+#file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
+#file-system 	MSDOSFS			# MS-DOS FAT file system
+#file-system 	HUMANFS			# Human68k FAT file system
+#file-system 	FDESC			# /dev/fd
+#file-system 	KERNFS			# kernel file system; recommended
+#file-system 	PROCFS			# /proc
+#file-system 	NULLFS			# Loop-back filesystem
+#file-system 	PORTAL			# portal filesystem (still experimental)
+#file-system 	ADOSFS			# AmigaDOS filesystem
+#file-system 	LFS			# Log-based filesystem (still experimental)
+#file-system 	UMAPFS			# uid/gid remapping filesystem
+#file-system 	UNION			# union mount
+
 #options 	QUOTA			# file system quotas
-options		FFS			# Berkeley fast file system
 options		FASTLINKS		# fast symbolic links in FFS
-#options 	MFS			# memory file system; uses RAM and swap
 #options 	NFSSERVER		# Network File System server
-#options 	NFSCLIENT		# Network File System client
-#options 	"CD9660"		# ISO 9660 CD-ROM file system, with RR
-#options 	MSDOSFS			# MS-DOS FAT file system
-#options 	HUMANFS			# Human68k FAT file system
-#options 	FDESC			# /dev/fd
-#options 	KERNFS			# kernel file system; recommended
-#options 	PROCFS			# /proc
-#options 	NULLFS			# Loop-back filesystem
-#options 	PORTAL			# portal filesystem (still experimental)
-#options 	ADOSFS			# AmigaDOS filesystem
-#options 	LFS			# Log-based filesystem (still experimental)
-#options 	UMAPFS			# uid/gid remapping filesystem
-#options 	UNION			# union mount
 
 # networking options
 options 	INET			# IP
@@ -91,7 +91,7 @@ options 	"EIOMAPSIZE=0"		# do not mapping PCI address space
 #options 	PROFTIMER, PRF_INTERVAL=500
 
 #config		netbsd root on sd6a swap on sd6b
-config		netbsd swap on generic
+config		netbsd root on ? type ?
 
 # ethernet board
 #device		se0	at scsi? slave 2

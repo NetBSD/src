@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.31 1996/12/28 23:10:44 pk Exp $
+#	$NetBSD: ALPHA,v 1.31.2.1 1997/01/14 21:24:39 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -23,24 +23,26 @@ options		DST=1			# Daylight savings rules (for param.c)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
+# File systems
+file-system 	FFS		# Fast file system
+file-system 	MFS		# Memory-based file system
+file-system 	LFS		# Log-structured file system
+file-system 	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+file-system 	ADOSFS		# AmigaDOS-compatible file system
+file-system 	MSDOSFS		# MS-DOS-compatible file system
+file-system 	NFS		# Sun NFS-compatible file system client
+file-system 	NULLFS		# Null file system layer
+file-system 	KERNFS		# Kernel variable file system (/kern)
+file-system 	FDESC		# File descriptor file system (/dev/fd)
+file-system 	PORTAL		# Portal file system
+file-system 	UMAPFS		# User-mapping file system layer
+file-system 	PROCFS		# Process file system (/proc)
+file-system 	UNION		# union file system
+
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
-options		FFS		# Fast file system
 options		QUOTA		# User and group quotas for the FFS
-options		MFS		# Memory-based file system
-options		LFS		# Log-structured file system
-options		CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
-options		MSDOSFS		# MS-DOS-compatible file system
-options		ADOSFS		# AmigaDOS-compatible file system
 options		NFSSERVER	# Sun NFS-compatible file system server
-options		NFSCLIENT	# Sun NFS-compatible file system client
-options		NULLFS		# Null file system layer
-options		KERNFS		# Kernel variable file system (/kern)
-options		FDESC		# File descriptor file system (/dev/fd)
-options		PORTAL		# Portal file system
-options		UMAPFS		# User-mapping file system layer
-options		PROCFS		# Process file system (/proc)
-options		UNION		# union file system
 
 # Networking options
 options		INET		# Internet protocol suite
@@ -88,9 +90,9 @@ options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		TCVERBOSE		# recognize "unknown" TC devices
 options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
-config		netbsd	swap generic
-#config		netbsd	root on sd0 swap on sd0
-#config		netbsd	root nfs swap nfs
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0 type ffs swap on sd0
+#config		netbsd	root on ? type nfs
 
 mainbus0 at	root
 cpu*	at	mainbus0

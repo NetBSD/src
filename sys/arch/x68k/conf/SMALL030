@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-# $Id: SMALL030,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+# $Id: SMALL030,v 1.1.1.1.2.1 1997/01/14 21:26:47 thorpej Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -19,7 +19,6 @@ timezone	-9
 maxusers	8
 
 # standard options
-options		GENERIC			# historical
 options 	SWAPPAGER		# paging
 options 	VNODEPAGER,DEVPAGER	# vnode and device node caching
 options 	DDB			# kernel debugger; recommended
@@ -40,23 +39,24 @@ options		"COMPAT_43"		# 4.3 system calls
 #options	COMPAT_HPUX		# HP-UX binaries
 
 # file system options
+file-system 	FFS			# Berkeley fast file system
+#file-system 	MFS			# memory file system; uses RAM and swap
+#file-system 	NFS			# Network File System client
+#file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
+#file-system 	MSDOSFS			# MS-DOS FAT file system
+#file-system 	HUMANFS			# MS-DOS FAT file system with Human Ext.
+#file-system 	FDESC			# /dev/fd
+#file-system 	KERNFS			# kernel file system; recommended
+#file-system 	PROCFS			# /proc
+#file-system 	LOFS			# Loop-back filesystem
+#file-system 	PORTAL			# portal filesystem (still experimental)
+#file-system 	ADOSFS			# AmigaDOS filesystem
+#file-system 	LFS			# Log-based filesystem (still experimental)
+#file-system 	UMAPFS			# uid/gid remapping filesystem
+
 #options 	QUOTA			# file system quotas
-options		FFS			# Berkeley fast file system
 options		FASTLINKS		# fast symbolic links in FFS
-#options 	MFS			# memory file system; uses RAM and swap
 #options 	NFSSERVER		# Network File System server
-#options 	NFSCLIENT		# Network File System client
-#options 	"CD9660"		# ISO 9660 CD-ROM file system, with RR
-#options 	MSDOSFS			# MS-DOS FAT file system
-#options 	HUMANFS			# MS-DOS FAT file system with Human Ext.
-#options 	FDESC			# /dev/fd
-#options 	KERNFS			# kernel file system; recommended
-#options 	PROCFS			# /proc
-#options 	LOFS			# Loop-back filesystem
-#options 	PORTAL			# portal filesystem (still experimental)
-#options 	ADOSFS			# AmigaDOS filesystem
-#options 	LFS			# Log-based filesystem (still experimental)
-#options 	UMAPFS			# uid/gid remapping filesystem
 #options	HAVE_USL_UFS		# SVR4 ufs
 
 # networking options
@@ -81,7 +81,7 @@ options		ITEKANJI		# Kanji display for console
 #options 	PPP_OUTQ_SIZE=4096
 
 #config		netbsd root on sd6a swap on sd6b
-config		netbsd swap generic
+config		netbsd root on ? type ?
 
 # manufacturer 1 is a pseudo and stands for `builtin'
 master		scsi0	at nexus0

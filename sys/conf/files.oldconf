@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.79 1997/01/07 11:35:22 mrg Exp $
+#	$NetBSD: files.oldconf,v 1.79.2.1 1997/01/14 21:26:57 thorpej Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -242,18 +242,18 @@ netns/ns_pcb.c		optional ns
 netns/ns_proto.c	optional ns
 netns/spp_debug.c	optional ns
 netns/spp_usrreq.c	optional ns
-nfs/krpc_subr.c		optional nfsclient requires inet
-nfs/nfs_bio.c		optional nfsclient requires inet
-nfs/nfs_boot.c		optional nfsclient requires inet
-nfs/nfs_node.c		optional nfsclient requires inet
-nfs/nfs_nqlease.c	optional nfsclient or nfsserver requires inet
+nfs/krpc_subr.c		optional nfs requires inet
+nfs/nfs_bio.c		optional nfs requires inet
+nfs/nfs_boot.c		optional nfs requires inet
+nfs/nfs_node.c		optional nfs requires inet
+nfs/nfs_nqlease.c	optional nfs or nfsserver requires inet
 nfs/nfs_serv.c		optional nfsserver requires inet
-nfs/nfs_socket.c	optional nfsclient or nfsserver requires inet
+nfs/nfs_socket.c	optional nfs or nfsserver requires inet
 nfs/nfs_srvcache.c	optional nfsserver requires inet
-nfs/nfs_subs.c		optional nfsclient or nfsserver requires inet
-nfs/nfs_syscalls.c	optional nfsclient or nfsserver requires inet
-nfs/nfs_vfsops.c	optional nfsclient requires inet
-nfs/nfs_vnops.c		optional nfsclient requires inet
+nfs/nfs_subs.c		optional nfs or nfsserver requires inet
+nfs/nfs_syscalls.c	optional nfs or nfsserver requires inet
+nfs/nfs_vfsops.c	optional nfs requires inet
+nfs/nfs_vnops.c		optional nfs requires inet
 ufs/ffs/ffs_alloc.c	optional ffs or mfs
 ufs/ffs/ffs_balloc.c	optional ffs or mfs
 ufs/ffs/ffs_inode.c	optional ffs or mfs

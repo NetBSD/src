@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.16 1996/11/19 21:04:44 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.16.2.1 1997/01/14 21:26:22 thorpej Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -25,13 +25,13 @@ makeoptions DEBUG="-g"			# symbols for kgdb + nm
 options 	KGDB
 
 # Filesystem options
-options 	NFSCLIENT	# nfs client support
-#
-options 	FDESC		# /dev/fd/*
+file-system 	NFS		# nfs client support
+file-system 	FDESC		# /dev/fd/*
+file-system 	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+file-system 	PROCFS		# /proc
+
 options 	FIFO		# FIFOs; RECOMMENDED
-options 	KERNFS		# /kern
-options 	NULLFS		# loopback file system
-options 	PROCFS		# /proc
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -55,7 +55,7 @@ options 	UCONSOLE	# Allow non-root TIOCCONS
 #options 	EXEC_DEBUG
 #options 	DIAGNOSTIC
 
-config		netbsd root on nfs swap on nfs
+config		netbsd root on ? type nfs
 
 #
 # Serial ports

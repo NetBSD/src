@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.5.2.1 1997/01/14 21:28:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ mkswap()
 	register struct config *cf;
 
 	for (cf = allcf; cf != NULL; cf = cf->cf_next)
-		if (cf->cf_root != NULL && mkoneswap(cf))
+		if (mkoneswap(cf))
 			return (1);
 	return (0);
 }
@@ -88,7 +88,7 @@ mkoneswap(cf)
 	register struct nvlist *nv;
 	register FILE *fp;
 	char fname[200];
-	char *mountroot;
+	char rootinfo[200];
 
 	(void)sprintf(fname, "swap%s.c", cf->cf_name);
 	if ((fp = fopen(fname, "w")) == NULL) {
@@ -100,27 +100,59 @@ mkoneswap(cf)
 #include <sys/param.h>\n\
 #include <sys/conf.h>\n\n", fp) < 0)
 		goto wrerror;
+
+	/*
+	 * Emit the root device.
+	 */
 	nv = cf->cf_root;
-	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
-	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+	if (cf->cf_root->nv_str == s_qmark)
+		strcpy(rootinfo, "NULL");
+	else
+		sprintf(rootinfo, "\"%s\"", cf->cf_root->nv_str);
+	if (fprintf(fp, "const char *rootspec = %s;\n", rootinfo) < 0)
 		goto wrerror;
+	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
+	    mkdevstr(nv->nv_int),
+	    nv->nv_str == s_qmark ? "wildcarded" : nv->nv_str) < 0)
+		goto wrerror;
+
+	/*
+	 * Emit the dump device.
+	 */
 	nv = cf->cf_dump;
 	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
-	    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+	    nv ? mkdevstr(nv->nv_int) : "NODEV",
+	    nv ? nv->nv_str : "unspecified") < 0)
 		goto wrerror;
+
+	/*
+	 * Emit the swap devices.  If swap is unspecified (i.e. wildcarded
+	 * root device), leave room for it to be filled in at run-time.
+	 */
 	if (fputs("\nstruct\tswdevt swdevt[] = {\n", fp) < 0)
 		goto wrerror;
-	for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-		if (fprintf(fp, "\t{ %s,\t0,\t0 },\t/* %s */\n",
-		    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+	if (cf->cf_swap == NULL)
+		if (fputs("\t{ NODEV, 0, 0 },\t/* unspecified */\n", fp) < 0)
 			goto wrerror;
+	else
+		for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
+			if (fprintf(fp, "\t{ %s,\t0,\t0 },\t/* %s */\n",
+			    mkdevstr(nv->nv_int), nv->nv_str) < 0)
+				goto wrerror;
 	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
-	mountroot =
-	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "ffs_mountroot";
-	if (fprintf(fp, "extern int %s __P((void *));\n", mountroot) < 0)
-		goto wrerror;
-	if (fprintf(fp, "int (*mountroot) __P((void *)) = %s;\n", mountroot) < 0)
+
+	/*
+	 * Emit the root file system.
+	 */
+	if (cf->cf_fstype == NULL)
+		strcpy(rootinfo, "NULL");
+	else {
+		sprintf(rootinfo, "%s_mountroot", cf->cf_fstype);
+		if (fprintf(fp, "extern int %s __P((void));\n", rootinfo) < 0)
+			goto wrerror;
+	}
+	if (fprintf(fp, "int (*mountroot) __P((void)) = %s;\n", rootinfo) < 0)
 		goto wrerror;
 
 	if (fclose(fp)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.72.2.1 1997/01/14 21:24:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1018,9 +1018,6 @@ Lcacheon:
 	movw	#PSL_LOWIPL,sr		| lower SPL
 
 	movl	d7,_boothowto		| save reboot flags
-/*
-	movl	d6,_bootdev		|   and boot device
-*/
 /*
  * Create a fake exception frame that returns to user mode,
  * make space for the rest of a fake saved register set, and

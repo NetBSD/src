@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.29 1996/10/20 13:13:25 fvdl Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.29.2.1 1997/01/14 21:27:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -104,8 +105,6 @@ static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
 	struct nfs_args *argp));
 
-char	*nfsbootdevname;
-
 /*
  * Called with an empty nfs_diskless struct to be filled in.
  */
@@ -134,15 +133,11 @@ nfs_boot_init(nd, procp)
 	/*
 	 * Find a network interface.
 	 */
-	if (nfsbootdevname)
-		ifp = ifunit(nfsbootdevname);
-	else
-		for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-			if ((ifp->if_flags &
-			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
-				break;
-	if (ifp == NULL)
-		panic("nfs_boot: no suitable interface");
+	ifp = ifunit(root_device->dv_xname);
+	if (ifp == NULL) {
+		printf("nfs_boot: no suitable interface");
+		return (ENXIO);
+	}
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
 	printf("nfs_boot: using network interface '%s'\n",
 	    ireq.ifr_name);
@@ -166,8 +161,10 @@ nfs_boot_init(nd, procp)
 	/*
 	 * Do RARP for the interface address.
 	 */
-	if ((error = revarpwhoami(&my_ip, ifp)) != 0)
-		panic("revarp failed, error=%d", error);
+	if ((error = revarpwhoami(&my_ip, ifp)) != 0) {
+		printf("revarp failed, error=%d", error);
+		return (EIO);
+	}
 	printf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
 
 	/*
@@ -201,8 +198,10 @@ nfs_boot_init(nd, procp)
 
 	/* this returns gateway IP address */
 	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
-	if (error)
-		panic("nfs_boot: bootparam whoami, error=%d", error);
+	if (error) {
+		printf("nfs_boot: bootparam whoami, error=%d", error);
+		return (error);
+	}
 	printf("nfs_boot: server_addr=0x%x\n",
 		   (u_int32_t)ntohl(bp_sin.sin_addr.s_addr));
 	printf("nfs_boot: hostname=%s\n", hostname);

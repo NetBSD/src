@@ -2,7 +2,7 @@
 # Distribition miniroot kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.8 1996/11/16 23:10:53 jonathan Exp $
+# 	$NetBSD: GENERIC,v 1.8.2.1 1997/01/14 21:25:57 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -43,18 +43,19 @@ options		NTP			# network time protocol
 
 
 # Filesystem options
+file-system 	FFS             # fast filesystem with user and group quotas
+file-system 	MFS		# memory-based filesystem
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
+#file-system	KERNFS		# kernel data-structure filesystem
+#file-system	FDESC		# user file descriptor filesystem
+#file-system	UMAPFS		# uid/gid remapping filesystem
+file-system 	NULLFS		# null layer filesystem
+file-system	UNION
+#file-system	LFS		# Log-based filesystem (still experimental)
+#file-system	PORTAL		# portal filesystem (still experimental)
+
 options		FIFO		# POSIX fifo support (in all filesystems)
-options		FFS             # fast filesystem with user and group quotas
-options		MFS		# memory-based filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 options		NFSSERVER	# Sun NFS-compatible filesystem (server)
-#options	KERNFS		# kernel data-structure filesystem
-#options	FDESC		# user file descriptor filesystem
-#options	UMAPFS		# uid/gid remapping filesystem
-options		NULLFS		# null layer filesystem
-options         UNION
-#options	LFS		# Log-based filesystem (still experimental)
-#options	PORTAL		# portal filesystem (still experimental)
 
 # Networking options
 options		INET		# Internet protocols
@@ -79,7 +80,7 @@ options		"HZ=256"	# RTC rate required
 
 # Note that this configuration is unlikely to work, yet...
 #config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
-config		gennetbsd	swap generic
+config		gennetbsd	root on ? type ?
 
 
 ########################################################################

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.28 1996/11/11 23:40:09 gwr Exp $	*/
+/*	$NetBSD: config.h,v 1.28.2.1 1997/01/14 21:28:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,7 @@ struct config {
 	struct	config *cf_next;	/* linked list */
 	const char *cf_name;		/* "vmunix" */
 	int	cf_lineno;		/* source line */
+	const char *cf_fstype;		/* file system type */
 	struct	nvlist *cf_root;	/* "root on ra0a" */
 	struct	nvlist *cf_swap;	/* "swap on ra0b and ra1b" */
 	struct	nvlist *cf_dump;	/* "dumps on ra0b" */
@@ -274,11 +275,13 @@ int	maxmaxusers;		/* default "maxusers" parameter */
 int	maxusers;		/* configuration's "maxusers" parameter */
 int	maxpartitions;		/* configuration's "maxpartitions" parameter */
 struct	nvlist *options;	/* options */
+struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
 struct	hashtab *selecttab;	/* selects things that are "optional foo" */
 struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
+struct	hashtab *fsopttab;	/* table of configured file systems */
 
 struct	devbase *allbases;	/* list of all devbase structures */
 struct	deva *alldevas;		/* list of all devbase attachment structures */
@@ -319,6 +322,7 @@ const char *intern __P((const char *));
 
 /* main.c */
 void	addoption __P((const char *name, const char *value));
+void	addfsoption __P((const char *name));
 void	addmkoption __P((const char *name, const char *value));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));

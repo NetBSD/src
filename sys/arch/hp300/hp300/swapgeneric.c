@@ -1,4 +1,8 @@
-/*	$NetBSD: swapgeneric.c,v 1.15 1996/10/14 07:20:27 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.15.2.1 1997/01/14 21:25:12 thorpej Exp $	*/
+
+/*
+ * THIS FILE IS NOW OLD CONFIG ONLY!
+ */
 
 /*-
  * Copyright (c) 1994
@@ -42,12 +46,13 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 
-int (*mountroot) __P((void *)) = NULL;	/* tells autoconf.c that we are "generic" */
-
-dev_t	rootdev = NODEV;
-dev_t	dumpdev = NODEV;
+const char *rootspec = NULL;
+dev_t	rootdev = NODEV;	/* wildcarded */
+dev_t	dumpdev = NODEV;	/* unspecified */
 
 struct	swdevt swdevt[] = {
-	{ NODEV, 0, 0 },	/* to be filled in */
+	{ NODEV, 0, 0 },	/* unspecified */
 	{ NODEV, 0, 0 }
 };
+
+int (*mountroot) __P((void *)) = NULL;

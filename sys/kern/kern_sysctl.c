@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.20 1997/01/09 05:37:41 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.20.2.1 1997/01/14 21:27:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,6 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/disklabel.h>
+#include <sys/device.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
@@ -299,6 +300,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (autoniceval > PRIO_MAX)
 			autoniceval = PRIO_MAX;
 		return (error);
+	case KERN_ROOT_DEVICE:
+		return (sysctl_rdstring(oldp, oldlenp, newp,
+		    root_device->dv_xname));
 	default:
 		return (EOPNOTSUPP);
 	}

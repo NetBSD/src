@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1996/10/13 03:19:41 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.2.1 1997/01/14 21:25:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,8 +59,7 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
-void swapconf __P((void));
-void setroot __P((void));
+void findroot __P((struct device **, int *));
 
 /*
  * The following several variables are related to
@@ -69,12 +68,24 @@ void setroot __P((void));
  */
 extern int	cold;		/* cold start flag initialized in locore.s */
 
+struct devnametobdevmaj i386_nam2blk[] = {
+	{ "wd",		0 },
+	{ "sd",		4 },
+	{ "cd",		6 },
+	{ "mcd",	7 },
+	{ "fd",		2 },
+	{ "md",		17 },
+	{ NULL,		0 },
+};
+
 /*
  * Determine i/o configuration for a machine.
  */
 void
 configure()
 {
+	struct device *booted_device;
+	int booted_partition;
 
 	startrtclock();
 
@@ -87,13 +98,13 @@ configure()
 
 	spl0();
 
-#if GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
-	setroot();
-#endif
+	findroot(&booted_device, &booted_partition);
+
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, i386_nam2blk);
+
 	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
@@ -103,40 +114,7 @@ configure()
 	cold = 0;
 }
 
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		int maj = major(swp->sw_dev);
-
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
-}
-
-#define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
-
-static	char devname[][2] = {
-	{ 'w','d' },	/* 0 = wd */
-	{ 's','w' },	/* 1 = sw */
-	{ 'f','d' },	/* 2 = fd */
-	{ 'w','t' },	/* 3 = wt */
-	{ 's','d' },	/* 4 = sd -- new SCSI system */
-};
 
 /*
  * Attempt to find the device from which we were booted.
@@ -144,59 +122,44 @@ static	char devname[][2] = {
  * change rootdev to correspond to the load device.
  */
 void
-setroot()
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
 {
-	int  majdev, mindev, unit, part, adaptor;
-	dev_t orootdev;
-#ifdef DOSWAP
-	dev_t temp = 0;
-#endif
-	struct swdevt *swp;
+	int i, majdev, unit, part;
+	struct device *dv;
+	char buf[32];
+
+	/*
+	 * Default to "not found."
+	 */
+	*devpp = NULL;
+	*partp = 0;
 
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
 #endif
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
+
+	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
+
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
+	for (i = 0; i386_nam2blk[i].d_name != NULL; i++)
+		if (majdev == i386_nam2blk[i].d_maj)
+			break;
+	if (i386_nam2blk[i].d_name == NULL)
 		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
+
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	mindev = (unit * MAXPARTITIONS) + part;
-	orootdev = rootdev;
-	rootdev = makedev(majdev, mindev);
-	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
-	 */
-	if (rootdev == orootdev)
-		return;
-	printf("changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		unit, part + 'a');
 
-#ifdef DOSWAP
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    (mindev / MAXPARTITIONS)
-		    == (minor(swp->sw_dev) / MAXPARTITIONS)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
+	sprintf(buf, "%s%d", i386_nam2blk[i].d_name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL;
+	    dv = dv->dv_list.tqe_next) {
+		if (strcmp(buf, dv->dv_xname) == 0) {
+			*devpp = dv;
+			*partp = part;
+			return;
 		}
 	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap device, move
-	 * it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
 }

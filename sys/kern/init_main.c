@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.92 1996/12/22 10:21:06 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.92.2.1 1997/01/14 21:27:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/disklabel.h>
 #include <sys/buf.h>
 #ifdef REAL_CLISTS
 #include <sys/clist.h>
@@ -155,14 +156,13 @@ main(framep)
 	register struct proc *p;
 	register struct pdevinit *pdev;
 	register int i;
-	int s;
+	int s, error;
 	register_t rval[2];
-	extern int (*mountroot) __P((void));
 	extern struct pdevinit pdevinit[];
 	extern void roundrobin __P((void *));
 	extern void schedcpu __P((void *));
 	extern void disk_init __P((void));
-#if defined(NFSSERVER) || defined(NFSCLIENT)
+#if defined(NFSSERVER) || defined(NFS)
 	extern void nfs_init __P((void));
 #endif
 
@@ -264,7 +264,7 @@ main(framep)
 	vm_init_limits(p);
 
 	/* Initialize the file systems. */
-#if defined(NFSSERVER) || defined(NFSCLIENT)
+#if defined(NFSSERVER) || defined(NFS)
 	nfs_init();			/* initialize server/shared data */
 #endif
 	vfsinit();
@@ -318,8 +318,17 @@ main(framep)
 	schedcpu(NULL);
 
 	/* Mount the root file system. */
-	if ((*mountroot)())
-		panic("cannot mount root");
+	do {
+		domountroothook();
+		if ((error = vfs_mountroot())) {
+			printf("cannot mount root, error = %d", error);
+			boothowto |= RB_ASKNAME;
+			setroot(root_device,
+			    (rootdev != NODEV) ? DISKPART(rootdev) : 0, NULL);
+		}
+	} while (error != 0);
+	mountroothook_destroy();
+
 	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
 	mountlist.cqh_first->mnt_op->vfs_refcount++;
 

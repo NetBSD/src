@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.80 1996/12/07 00:26:16 thorpej Exp $
+#	$NetBSD: SUN_LAMP,v 1.80.2.1 1997/01/14 21:25:20 thorpej Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -48,23 +48,23 @@ options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 options		LKM		# loadable kernel modules
 options		INSECURE
 
-options		FFS #,QUOTA	# UFS and quotas
-#options	LFS		# log-structured file system
-options		MFS		# memory file system
+file-system 	FFS		# UFS
+#file-system	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFSCLIENT	# Network File System client
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+#file-system	KERNFS		# /kern
+file-system 	NULLFS		# loopback file system
+#file-system	PORTAL		# portal filesystem (still experimental)
+#file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
 
-options		NFSCLIENT	# Network File System client
 options		NFSSERVER	# Network File System server
-
-options		CD9660		# ISO 9660 + Rock Ridge file system
-#options	MSDOSFS		# MS-DOS file system
-#options	FDESC		# /dev/fd
-options		FIFO		# FIFOs; RECOMMENDED
-#options	KERNFS		# /kern
-options		NULLFS		# loopback file system
-#options	PORTAL		# portal filesystem (still experimental)
-#options	PROCFS		# /proc
-#options	UMAPFS		# NULLFS + uid and gid remapping
-#options	UNION		# union file system
+options 	FIFO		# FIFOs; RECOMMENDED
+#options 	QUOTA		# UFS quotas
 
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
@@ -73,7 +73,7 @@ options		INET		# IP + ICMP + TCP + UDP
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
 
-config		netbsd	root on sd0 swap on sd0 and sd1 and sd2
+config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and sd2
 #options	GENERIC
 
 mainbus0 at root

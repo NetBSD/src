@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.4 1996/12/23 08:36:33 matthias Exp $
+#	$NetBSD: DUMMY,v 1.4.2.1 1997/01/14 21:25:43 thorpej Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -17,7 +17,6 @@ options		KGDBRATE=9600		#	with 9600 baud
 options		KTRACE			# system call tracing, a la ktrace(1)
 
 #options	ACCOUNTING		# process accounting
-options		FIFO			# fifos; recommended
 #options	SYSVSHM			# System V shared memory; broken
 #options	SHMMAXPGS=1024
 options		LKM			# loadable kernel modules
@@ -27,11 +26,13 @@ options		COMPAT_43		# 4.3 system calls
 options		COMPAT_12
 
 # file system options
+file-system 	FFS			# Berkeley fast file system
+file-system 	UNION
+file-system 	NULLFS
+file-system 	NFS			# Network File System client
+
+options		FIFO			# fifos; recommended
 #options	QUOTA			# file system quotas
-options		FFS			# Berkeley fast file system
-options		UNION
-options		NULLFS
-options		NFSCLIENT		# Network File System client
 
 # networking options
 #options	GATEWAY			# packet forwarding
@@ -49,8 +50,7 @@ options		NS381			# FPU installed
 options		DEV_RTC			# RTC driver in pc532/mem.c
 options		NO_INLINE_SPLX
 
-config		netbsd swap generic
-options		GENERIC
+config		netbsd root on ? type ?
 
 sd0 at scsibus? target 0 lun 0		# Conner CP30100-121mb
 sd1 at scsibus? target 1 lun 0		# Emulex MD21/Seagate ST4383E

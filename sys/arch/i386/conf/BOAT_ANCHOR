@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.70 1996/11/16 01:16:38 fvdl Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.70.2.1 1997/01/14 21:25:14 thorpej Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -24,12 +24,11 @@ options		COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12
 options		COMPAT_43	# and 4.3BSD
 
-options		FFS		# UFS and quotas
+file-system	FFS		# UFS and quotas
+file-system	NFS		# Network File System client
+file-system	MSDOSFS		# MS-DOS file system
 
-options		NFSCLIENT	# Network File System client
 #options 	NFSSERVER	# Network File System server
-
-options		MSDOSFS		# MS-DOS file system
 options		FIFO		# FIFOs; RECOMMENDED
 
 #options	GATEWAY		# packet forwarding
