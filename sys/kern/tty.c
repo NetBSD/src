@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.147 2003/02/05 15:49:03 pk Exp $	*/
+/*	$NetBSD: tty.c,v 1.148 2003/02/06 12:21:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.147 2003/02/05 15:49:03 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.148 2003/02/06 12:21:21 pk Exp $");
 
 #include "opt_uconsole.h"
 
@@ -934,13 +934,18 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		s = spltty();
-		TTY_LOCK(tp);
+		/*
+		 * XXXSMP - some drivers call back on us from t_param(), so
+		 *	    don't take the tty spin lock here.
+		 *	    require t_param() to unlock upon callback?
+		 */
+		/* wanted here: TTY_LOCK(tp); */
 		if (!ISSET(t->c_cflag, CIGNORE)) {
 			/*
 			 * Set device hardware.
 			 */
 			if (tp->t_param && (error = (*tp->t_param)(tp, t))) {
-				TTY_UNLOCK(tp);
+				/* wanted here: TTY_UNLOCK(tp); */
 				splx(s);
 				return (error);
 			} else {
@@ -954,6 +959,8 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			ttsetwater(tp);
 		}
+
+		/* delayed lock acquiring */TTY_LOCK(tp);
 		if (cmd != TIOCSETAF) {
 			if (ISSET(t->c_lflag, ICANON) !=
 			    ISSET(tp->t_lflag, ICANON)) {
