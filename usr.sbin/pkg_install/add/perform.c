@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.48 2000/04/01 14:54:51 augustss Exp $	*/
+/*	$NetBSD: perform.c,v 1.49 2000/04/01 22:12:45 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.48 2000/04/01 14:54:51 augustss Exp $");
+__RCSID("$NetBSD: perform.c,v 1.49 2000/04/01 22:12:45 hubertf Exp $");
 #endif
 #endif
 
@@ -363,12 +363,24 @@ pkg_do(char *pkg)
 			 * and we better stop right now.
 			 */
 			char *s;
+			char *fmt = NULL;
+			int skip = -1;
+
+			/* doing this right required to parse the full version(s),
+			 * do a 99% solution here for now */
+			if ((s = strpbrk(p->name, "<>")) != NULL) {
+				fmt = "%.*s-[0-9]*";
+				skip = 0;
+			} else if ((s = strrchr(p->name, '-')) != NULL) {
+				fmt = "%.*s[0-9]*";
+				skip = 1;
+			}
 			
-			if ((s = strrchr(p->name, '-')) != NULL || (s = strpbrk(p->name, "<>[]?*{")) != NULL) {
+			if (fmt != NULL) {
 				char    buf[FILENAME_MAX];
 		
-				(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
-					(int)(s - p->name) + 1, p->name);
+				(void) snprintf(buf, sizeof(buf), fmt,
+					(int)(s - p->name) + skip, p->name);
 				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 					warnx("pkg `%s' required, but `%s' found installed.\n"
 					      "Please resolve this conflict!", p->name, installed);
