@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.1 2001/11/09 03:31:37 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.2 2001/11/09 20:58:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@
 #include <machine/bus.h>
 
 #include <evbarm/iq80310/iq80310reg.h>
+#include <evbarm/iq80310/iq80310var.h>
 
 #include <arm/xscale/i80312reg.h>
 #include <arm/xscale/i80312var.h>
@@ -190,6 +191,11 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_privio_size = sc->sc_sioout_size;
 	sc->sc_privmem_base = sc->sc_smemout_base;
 	sc->sc_privmem_size = sc->sc_smemout_size;
+
+	/*
+	 * Initialize the interrupt part of our PCI chipset tag.
+	 */
+	iq80310_pci_init(&sc->sc_pci_chipset, sc);
 
 	i80312_attach(sc);
 }
