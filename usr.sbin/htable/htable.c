@@ -31,32 +31,40 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983 Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)htable.c	5.10 (Berkeley) 2/6/91";*/
-static char rcsid[] = "$Id: htable.c,v 1.3 1994/12/23 16:47:04 cgd Exp $";
+#if 0
+static char sccsid[] = "from: @(#)htable.c	5.10 (Berkeley) 2/6/91";
+#else
+__RCSID("$NetBSD: htable.c,v 1.4 1997/10/17 08:00:38 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
  * htable - convert NIC host table into a UNIX format.
  * NIC format is described in RFC 810, 1 March 1982.
  */
-#include <stdio.h>
-#include <string.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "htable.h"		/* includes <sys/types.h> */
-
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
 
 #define	DATELINES	3	/* these lines usually contain the date */
 #define	MAXNETS		30	/* array size for local, connected nets */
@@ -64,14 +72,34 @@ static char rcsid[] = "$Id: htable.c,v 1.3 1994/12/23 16:47:04 cgd Exp $";
 FILE	*hf;			/* hosts file */
 FILE	*gf;			/* gateways file */
 FILE	*nf;			/* networks file */
-struct gateway *savegateway(), *gatewayto();
 
 int connected_nets[MAXNETS];
 int nconnected;
 int local_nets[MAXNETS];
 int nlocal;
-char *myname;
 
+int	addlocal __P((char *, int *));
+int	connectedto __P((u_int32_t));
+void	copycomments __P((FILE *, FILE *, int));
+void	copygateways __P((char *));
+void	copylocal __P((FILE *, char *));
+void	dogateways __P((void));
+void	freeaddrs __P((struct addr *));
+void	freenames __P((struct name *));
+struct gateway *gatewayto __P((int));
+int	gethostaddr __P((char *, u_int32_t *));
+int	getnetaddr __P((char *, int *));
+int	local __P((u_int32_t));
+char   *lower __P((char *));
+int	main __P((int, char **));
+void	printgateway __P((int, char *, int));
+void	putaddr __P((FILE *, struct in_addr));
+void	putnet __P((FILE *, int));
+struct gateway *savegateway __P((struct name *, int, struct in_addr, int));
+void	usage __P((void));
+int	yyparse __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -79,7 +107,6 @@ main(argc, argv)
 	int errs;
 
 	infile = "(stdin)";
-	myname = argv[0];
 	argc--;
 	argv++;
 	while (argc--) {
@@ -101,30 +128,22 @@ main(argc, argv)
 			}
 		} else {
 			infile = argv[0];
-			if (freopen(infile, "r", stdin) == NULL) {
-				perror(infile);
-				exit(1);
-			}
+			if (freopen(infile, "r", stdin) == NULL)
+				err(1, "reopen `%s'", infile);
 		}
 		argv++;
 	}
 	hf = fopen("hosts", "w");
-	if (hf == NULL) {
-		perror("hosts");
-		exit(1);
-	}
+	if (hf == NULL)
+		err(1, "hosts");
 	copylocal(hf, "localhosts");
 	gf = fopen("gateways", "w");
-	if (gf == NULL) {
-		perror("gateways");
-		exit(1);
-	}
+	if (gf == NULL)
+		err(1 ,"gateways");
 	copygateways("localgateways");
 	nf = fopen("networks", "w");
-	if (nf == NULL) {
-		perror("networks");
-		exit(1);
-	}
+	if (nf == NULL)
+		err(1, "networks");
 	copylocal(nf, "localnetworks");
 	copycomments(stdin, hf, DATELINES);
 	errs = yyparse();
@@ -132,11 +151,14 @@ main(argc, argv)
 	exit(errs);
 }
 
+void
 usage()
 {
+	extern char *__progname;
+
 	fprintf(stderr,
 	"usage: %s [ -c connected-nets ] [-l local-nets ] [ input-file ]\n",
-		myname);
+		__progname);
 	exit(1);
 }
 
@@ -144,12 +166,13 @@ usage()
  *  Turn a comma-separated list of network names or numbers in dot notation
  *  (e.g.  "arpanet, 128.32") into an array of net numbers.
  */
+int
 addlocal(arg, nets)
 	char *arg;
 	int *nets;
 {
-	register char *p, c;
-	register int nfound = 0;
+	char *p, c;
+	int nfound = 0;
 
 	do {
 		p = arg;
@@ -162,15 +185,13 @@ addlocal(arg, nets)
 		if (*arg == 0)
 			continue;
 		if (nfound == MAXNETS) {
-			fprintf(stderr, "%s: Too many networks in list\n",
-				myname);
+			warnx("Too many networks in list");
 			return (nfound);
 		}
 		if (getnetaddr(arg, &nets[nfound]))
 			nfound++;
 		else {
-			fprintf(stderr, "%s: %s: unknown network\n",
-				myname, arg);
+			warnx("%s: unknown network", arg);
 			exit(1);
 		}
 		arg = p + 1;
@@ -197,7 +218,7 @@ char *
 lower(str)
 	char *str;
 {
-	register char *cp = str;
+	char *cp = str;
 
 	while (*cp) {
 		if (isupper(*cp))
@@ -207,13 +228,14 @@ lower(str)
 	return (str);
 }
 
+void
 do_entry(keyword, addrlist, namelist, cputype, opsys, protos)
 	int keyword;
 	struct addr *addrlist;
 	struct name *namelist, *cputype, *opsys, *protos;
 {
-	register struct addr *al, *al2;
-	register struct name *nl;
+	struct addr *al, *al2;
+	struct name *nl;
 	struct addr *connect_addr;
 	char *cp;
 
@@ -229,12 +251,12 @@ do_entry(keyword, addrlist, namelist, cputype, opsys, protos)
 		}
 		fprintf(nf, "%-16.16s", lower(nl->name_val));
 		al2 = addrlist;
-		while (al = al2) {
+		while ((al = al2) != NULL) {
 			char *cp;
 
 			putnet(nf, inet_netof(al->addr_val));
 			cp = "\t%s";
-			while (nl = nl->name_link) {
+			while ((nl = nl->name_link) != NULL) {
 				fprintf(nf, cp, lower(nl->name_val));
 				cp = " %s";
 			}
@@ -256,7 +278,7 @@ do_entry(keyword, addrlist, namelist, cputype, opsys, protos)
 			struct gateway *gw, *firstgw = (struct gateway *) NULL;
 
 			for (al = addrlist; al; al = al->addr_link) {
-				register int net;
+				int net;
 
 				net = inet_netof(al->addr_val);
 				gw = savegateway(namelist, net,
@@ -276,7 +298,7 @@ do_entry(keyword, addrlist, namelist, cputype, opsys, protos)
 		 */
 		connect_addr = al;
 		for (al = addrlist; al; al = al->addr_link) {
-			register int net;
+			int net;
 
 			/* suppress duplicates -- not optimal */
 			net = inet_netof(al->addr_val);
@@ -300,7 +322,7 @@ do_entry(keyword, addrlist, namelist, cputype, opsys, protos)
 
 	case KW_HOST:
 		al2 = addrlist;
-		while (al = al2) {
+		while ((al = al2) != NULL) {
 			if (!local(inet_netof(al->addr_val))) {
 				char *cp;
 
@@ -318,13 +340,14 @@ do_entry(keyword, addrlist, namelist, cputype, opsys, protos)
 		break;
 
 	default:
-		fprintf(stderr, "Unknown keyword: %d.\n", keyword);
+		warnx("Unknown keyword: %d.", keyword);
 	}
 	freenames(namelist);
 dontfree:
 	freenames(protos);
 }
 
+void
 printgateway(net, name, metric)
 	int net;
 	char *name;
@@ -342,33 +365,32 @@ printgateway(net, name, metric)
 		lower(name), metric);
 }
 
+void
 copylocal(f, filename)
 	FILE *f;
 	char *filename;
 {
-	register FILE *lhf;
-	register cc;
+	FILE *lhf;
+	int cc;
 	char buf[BUFSIZ];
-	extern int errno;
 
 	lhf = fopen(filename, "r");
 	if (lhf == NULL) {
-		if (errno != ENOENT) {
-			perror(filename);
-			exit(1);
-		}
-		fprintf(stderr, "Warning, no %s file.\n", filename);
+		if (errno != ENOENT)
+			err(1, "open `%s'", filename);
+		warnx("Warning, no %s file.", filename);
 		return;
 	}
-	while (cc = fread(buf, 1, sizeof(buf), lhf))
+	while ((cc = fread(buf, 1, sizeof(buf), lhf)) > 0)
 		fwrite(buf, 1, cc, f);
 	fclose(lhf);
 }
 
+void
 copygateways(filename)
 	char *filename;
 {
-	register FILE *lhf;
+	FILE *lhf;
 	struct name *nl;
 	char type[80];
 	char dname[80];
@@ -377,15 +399,12 @@ copygateways(filename)
 	char buf[500];
 	struct in_addr addr;
 	int net, metric;
-	extern int errno;
 
 	lhf = fopen(filename, "r");
 	if (lhf == NULL) {
-		if (errno != ENOENT) {
-			perror(filename);
-			exit(1);
-		}
-		fprintf(stderr, "Warning, no %s file.\n", filename);
+		if (errno != ENOENT)
+			err(1, "open `%s'", filename);
+		warnx("Warning, no %s file.", filename);
 		return;
 	}
 	/* format: {net | host} XX gateway XX metric DD [passive]\n */
@@ -410,6 +429,7 @@ copygateways(filename)
 	fclose(lhf);
 }
 
+int
 getnetaddr(name, addr)
 	char *name;
 	int *addr;
@@ -427,27 +447,29 @@ getnetaddr(name, addr)
 	}
 }
 
+int
 gethostaddr(name, addr)
 	char *name;
-	u_long *addr;
+	u_int32_t *addr;
 {
 	struct hostent *hp;
 
 	hp = gethostbyname(name);
 	if (hp) {
-		*addr = *(u_long *)(hp->h_addr);
+		*addr = *(u_int32_t *)(hp->h_addr);
 		return (1);
 	}
 	*addr = inet_addr(name);
 	return (*addr != -1);
 }
 
+void
 copycomments(in, out, ccount)
 	FILE *in, *out;
 	int ccount;
 {
 	int count;
-	char buf[BUFSIZ], *fgets();
+	char buf[BUFSIZ];
 
 	for (count=0; count < ccount; count++) {
 		if ((fgets(buf, sizeof(buf), in) == NULL) || (buf[0] != ';'))
@@ -455,17 +477,18 @@ copycomments(in, out, ccount)
 		buf[0] = '#';
 		fputs(buf, out);
 	}
-	return;
 }
+
 #define	UC(b)	(((int)(b))&0xff)
 
 /*
  * Print network number in internet-standard dot notation;
  * v is in host byte order.
  */
+void
 putnet(f, v)
 	FILE *f;
-	register int v;
+	int v;
 {
 	if (v < 128)
 		fprintf(f, "%d", v);
@@ -475,6 +498,7 @@ putnet(f, v)
 		fprintf(f, "%d.%d.%d", UC(v >> 16), UC(v >> 8), UC(v));
 }
 
+void
 putaddr(f, v)
 	FILE *f;
 	struct in_addr v;
@@ -482,26 +506,28 @@ putaddr(f, v)
 	fprintf(f, "%-16.16s", inet_ntoa(v));
 }
 
+void
 freenames(list)
 	struct name *list;
 {
-	register struct name *nl, *nl2;
+	struct name *nl, *nl2;
 
 	nl2 = list;
-	while (nl = nl2) {
+	while ((nl = nl2) != NULL) {
 		nl2 = nl->name_link;
 		free(nl->name_val);
 		free((char *)nl);
 	}
 }
 
+void
 freeaddrs(list)
 	struct addr *list;
 {
-	register struct addr *al, *al2;
+	struct addr *al, *al2;
 
 	al2 = list;
-	while (al = al2)
+	while ((al = al2) != NULL)
 		al2 = al->addr_link, free((char *)al);
 }
 
@@ -510,9 +536,9 @@ struct gateway *lastgateway = 0;
 
 struct gateway *
 gatewayto(net)
-	register int net;
+	int net;
 {
-	register struct gateway *gp;
+	struct gateway *gp;
 
 	for (gp = gateways; gp; gp = gp->g_link)
 		if ((gp->g_net == net) && (gp->g_metric > 0))
@@ -523,16 +549,15 @@ gatewayto(net)
 struct gateway *
 savegateway(namelist, net, addr, metric)
 	struct name *namelist;
+	int net;
 	struct in_addr addr;
-	int net, metric;
+	int metric;
 {
-	register struct gateway *gp;
+	struct gateway *gp;
 
 	gp = (struct gateway *)malloc(sizeof (struct gateway));
-	if (gp == 0) {
-		fprintf(stderr, "htable: out of memory\n");
-		exit(1);
-	}
+	if (gp == 0)
+		errx(1, "out of memory");
 	gp->g_link = (struct gateway *) NULL;
 	if (lastgateway)
 		lastgateway->g_link = gp;
@@ -548,10 +573,11 @@ savegateway(namelist, net, addr, metric)
 	return (gp);
 }
 
+int
 connectedto(net)
-	u_long net;
+	u_int32_t net;
 {
-	register i;
+	int i;
 
 	for (i = 0; i < nconnected; i++)
 		if (connected_nets[i] == net)
@@ -559,10 +585,11 @@ connectedto(net)
 	return(0);
 }
 
+int
 local(net)
-	u_long net;
+	u_int32_t net;
 {
-	register i;
+	int i;
 
 	for (i = 0; i < nlocal; i++)
 		if (local_nets[i] == net)
@@ -576,10 +603,11 @@ local(net)
  * Go through list of gateways, finding connections for gateways
  * that are not yet connected.
  */
+void
 dogateways()
 {
-	register struct gateway *gp, *gw, *ggp;
-	register int hops, changed = 1;
+	struct gateway *gp, *gw, *ggp;
+	int hops, changed = 1;
 	struct name *nl;
 	char *cp;
 
