@@ -1,0 +1,11 @@
+@cwd /
+./usr/share/locale/ja_JP.ISO2022-JP
+./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE
+./usr/share/locale/ja_JP.ISO2022-JP2
+./usr/share/locale/ja_JP.ISO2022-JP2/LC_CTYPE
+./usr/share/locale/ja_JP.SJIS
+./usr/share/locale/ja_JP.SJIS/LC_CTYPE
+./usr/share/locale/ja_JP.ct
+./usr/share/locale/ja_JP.ct/LC_CTYPE
+./usr/share/locale/ja_JP.eucJP
+./usr/share/locale/ja_JP.eucJP/LC_CTYPE

@@ -1,0 +1,5 @@
+@cwd /
+./bin/rmail
+./etc/uucp
+./var/spool/uucp
+./var/spool/uucppublic
