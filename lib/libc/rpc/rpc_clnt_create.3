@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.1 2000/06/02 23:11:12 fvdl Exp $
+.\"	$NetBSD: rpc_clnt_create.3,v 1.2 2000/06/20 00:53:08 fvdl Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CREATE 3
 .Os
@@ -373,7 +373,7 @@ service (see
 is not consulted for the address of the remote
 service.
 .Pp
-..Fn clnt_tp_create
+.It Fn clnt_tp_create
 Like
 .Fn clnt_create
 except
@@ -401,7 +401,7 @@ The
 .Fn clnt_pcreateerror
 routine can be used to print the reason for failure.
 .Pp
-.Fn clnt_vc_create
+.It Fn clnt_vc_create
 This routine creates an RPC
 client for the remote program
 .Fa prognum
