@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2002/03/07 14:44:00 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/07/29 16:14:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,10 @@
 
 #define	IPL_NONE	0	/* disable only this interrupt */
 
-#define	IPL_SOFT	1	/* generic software interrupts (SI 0) */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts (SI 0) */
-#define	IPL_SOFTNET	3	/* network software interrupts (SI 1) */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts (SI 1) */
+#define	IPL_SOFT	1	/* generic software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
+#define	IPL_SOFTNET	3	/* network software interrupts */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
 
 #define	IPL_BIO		5	/* disable block I/O interrupts */
 #define	IPL_NET		6	/* disable network interrupts */
@@ -57,8 +57,8 @@
 #define	IPL_CLOCK	8	/* disable clock interrupts */
 #define	IPL_HIGH	8	/* disable all interrupts */
 
-#define	_IPL_NSOFT	4
-#define	_IPL_N		9
+#define	_IPL_NSOFT	4	/* max soft IPL + 1 */
+#define	_IPL_N		9	/* max IPL + 1 */
 
 #define	_IPL_SI0_FIRST	IPL_SOFT
 #define	_IPL_SI0_LAST	IPL_SOFTCLOCK
@@ -146,7 +146,6 @@ struct evbmips_soft_intr {
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_init(void);
-void	softintr_dispatch(void);
 
 #define	softintr_schedule(arg)						\
 do {									\
