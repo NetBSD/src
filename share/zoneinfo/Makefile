@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/01/16 21:27:22 perry Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/07 09:43:32 mycroft Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -51,22 +51,27 @@ USNO=		usno1988 usno1989
 
 ZIC=zic
 
+.PHONY:	posix_only
 posix_only: ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA})
 
+.PHONY:	right_only
 right_only: leapseconds ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA})
 
+.PHONY:	other_two
 other_two: leapseconds ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA})
 	(cd ${.CURDIR}/datfiles; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA})
 
+.PHONY:	posix_right
 posix_right: posix_only other_two
 
+.PHONY:	right_posix
 right_posix: right_only other_two
 
 realinstall: ${DATA} ${REDO}
