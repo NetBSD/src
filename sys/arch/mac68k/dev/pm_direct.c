@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.1 1997/04/08 03:11:37 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.2 1997/08/11 22:53:38 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -43,9 +43,9 @@
 #include <machine/cpu.h>
 #include <machine/adbsys.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include "adbvar.h"
-#include "pm_direct.h"
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adbvar.h>
+#include <mac68k/dev/pm_direct.h>
 
 /* hardware dependent values */
 extern u_short ADBDelay;

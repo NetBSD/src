@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.13 1997/04/14 16:56:33 scottr Exp $	*/
+/*	$NetBSD: pram.c,v 1.14 1997/08/11 22:53:50 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -35,7 +35,6 @@
 
 #include "opt_mrg_adb.h"
 
-/* #include "stand.h"  */
 #include <sys/types.h>
 #include <sys/param.h>
 #ifdef DEBUG
@@ -43,10 +42,10 @@
 #endif
 #include <machine/viareg.h>
 
-#include <arch/mac68k/mac68k/pram.h>
-#include <arch/mac68k/mac68k/macrom.h>
+#include <mac68k/mac68k/pram.h>
+#include <mac68k/mac68k/macrom.h>
 #ifndef MRG_ADB
-#include <arch/mac68k/dev/adbvar.h>
+#include <mac68k/dev/adbvar.h>
 #endif
 
 #if DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 1997/06/15 20:34:15 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 1997/08/11 22:53:43 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -51,7 +51,7 @@
 #include <sys/syslog.h>
 
 #include <dev/cons.h>
-#include "z8530reg.h"
+#include <mac68k/dev/z8530reg.h>
 #include <machine/z8530var.h>
 
 #include <machine/autoconf.h>

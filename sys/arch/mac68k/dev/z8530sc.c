@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.2 1996/08/26 14:09:19 scottr Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.3 1997/08/11 22:53:41 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -65,7 +65,7 @@
 #include <sys/syslog.h>
 
 /* #include <dev/ic/z8530reg.h> */
-#include "z8530reg.h"
+#include <mac68k/dev/z8530reg.h>
 #include <machine/z8530var.h>
 
 int
