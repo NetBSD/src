@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.2 2001/12/17 22:10:03 nathanw Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.3 2002/12/06 20:50:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2001/12/17 22:10:03 nathanw Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.3 2002/12/06 20:50:10 nathanw Exp $");
 #endif
 
 #include <stddef.h>
@@ -66,6 +66,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	/* Arrange for return via the trampoline code. */
 	gr[_REG_RA] = (__greg_t)_resumecontext;
 	gr[_REG_PC] = (__greg_t)func;
+	gr[_REG_PV] = (__greg_t)func;
 
 	va_start(ap, argc);
 	/* Pass up to six arguments in a0-5. */
