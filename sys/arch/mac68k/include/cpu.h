@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 1997/05/20 03:25:07 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 1997/05/22 18:40:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,6 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
-void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
