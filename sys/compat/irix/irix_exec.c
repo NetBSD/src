@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.21 2002/09/21 21:14:57 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.22 2002/10/14 21:14:23 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.21 2002/09/21 21:14:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.22 2002/10/14 21:14:23 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -262,6 +262,8 @@ irix_e_proc_init(p, vmspace)
 	struct vmspace *vmspace;
 {
 	struct irix_emuldata *ied;
+	vaddr_t vm_min;
+	vsize_t vm_len;
 
 	if (!p->p_emuldata)
 		p->p_emuldata = malloc(sizeof(struct irix_emuldata), 
@@ -269,6 +271,11 @@ irix_e_proc_init(p, vmspace)
 
 	ied = p->p_emuldata;
 	ied->ied_p = p;
+
+	LIST_INIT(&ied->ied_shared_regions);
+	vm_min = vm_map_min(&vmspace->vm_map);
+	vm_len = vm_map_max(&vmspace->vm_map) - vm_min;
+	irix_isrr_insert(vm_min, vm_len, IRIX_ISRR_SHARED, p);
 }  
 
 /* 
@@ -301,6 +308,7 @@ irix_e_proc_exit(p)
 	struct proc *pp;
 	struct irix_emuldata *ied;
 	struct irix_share_group *isg;
+	struct irix_shared_regions_rec *isrr;
 
 	/* 
 	 * Send SIGHUP to child process as requested using prctl(2)
@@ -360,6 +368,13 @@ irix_e_proc_exit(p)
 		 * by the process through the irix_usync_cntl system call.
 		 */
 		irix_usema_exit_cleanup(p, NULL);
+	}
+
+	/* Free (un)shared region list */
+	while (!LIST_EMPTY(&ied->ied_shared_regions)) {
+		isrr = LIST_FIRST(&ied->ied_shared_regions);
+		LIST_REMOVE(isrr , isrr_list);
+		free(isrr, M_EMULDATA);
 	}
 
 	free(p->p_emuldata, M_EMULDATA);

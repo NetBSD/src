@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.14 2002/08/26 21:05:59 christos Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.15 2002/10/14 21:14:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@ struct irix_emuldata {
 	LIST_ENTRY(irix_emuldata) ied_sglist;	
 	struct proc *ied_p;	/* points back to struct proc */
 	int ied_shareaddr;	/* share VM with the group */
+	LIST_HEAD(ied_shared_regions, irix_shared_regions_rec) 
+	    ied_shared_regions;	/* list of (un)shared memory regions */
 };
 
 /* e_flags used by IRIX for ABI selection */
