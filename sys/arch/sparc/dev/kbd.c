@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.7 1994/04/09 22:29:21 deraadt Exp $
+ * $Id: kbd.c,v 1.8 1994/04/10 21:02:23 deraadt Exp $
  */
 
 /*
@@ -229,6 +229,10 @@ int	kbdioctl(dev_t, int, caddr_t, int, struct proc *);
 int	kbdselect(dev_t, int, struct proc *);
 int	kbd_docmd(int, int);
 
+/* set in kbdattach() */
+int kbd_repeat_start;
+int kbd_repeat_step;
+
 /*
  * Attach the console keyboard ASCII (up-link) interface.
  * This happens before kbd_serial.
@@ -270,6 +274,9 @@ kbdattach(int nkbd)
 {
 	register struct kbd_softc *k;
 	register struct tty *tp;
+
+	kbd_repeat_start = hz/5;
+	kbd_repeat_step = hz/20;
 
 	if (kbd_softc.k_cons != NULL) {
 		k = &kbd_softc;
@@ -390,7 +397,7 @@ kbd_repeat(caddr_t arg)
 
 	if (k->k_repeatc >= 0 && k->k_cons != NULL) {
 		ttyinput(k->k_repeatc, k->k_cons);
-		timeout(kbd_repeat, (caddr_t)k, hz/20);
+		timeout(kbd_repeat, (caddr_t)k, kbd_repeat_step);
 	}
 	splx(s);
 }
@@ -444,7 +451,7 @@ kbd_rint(register int c)
 		if (c >= 0 && k->k_cons != NULL) {
 			ttyinput(c, k->k_cons);
 			k->k_repeatc = c;
-			timeout(kbd_repeat, (caddr_t)k, hz/5);
+			timeout(kbd_repeat, (caddr_t)k, kbd_repeat_start);
 		}
 		return;
 	}
