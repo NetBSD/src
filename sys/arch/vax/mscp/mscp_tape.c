@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.7 1998/01/12 20:52:44 thorpej Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.8 1998/01/24 14:16:42 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -72,7 +72,7 @@ struct mt_softc {
 #define	MT_OFFLINE	0
 #define	MT_ONLINE	1
 
-int	mtmatch __P((struct device *, void *, void *));
+int	mtmatch __P((struct device *, struct cfdata *, void *));
 void	mtattach __P((struct device *, struct device *, void *));
 void	mtdgram __P((struct device *, struct mscp *, struct mscp_softc *));
 void	mtiodone __P((struct device *, struct buf *));
@@ -118,11 +118,11 @@ extern struct cfdriver mt_cd;
  */
 
 int
-mtmatch(parent, match, aux)
+mtmatch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct	cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata *cf = match;
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 1998/01/12 20:52:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.30 1998/01/24 14:16:27 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -95,7 +95,7 @@ cpu_rootconf()
 }
 
 int	printut __P((void *, const char *));
-int	backplane_match __P((struct device *, void *, void *));
+int	backplane_match __P((struct device *, struct cfdata *, void *));
 void	backplane_attach __P((struct device *, struct device *, void *));
 
 int
@@ -110,12 +110,11 @@ printut(aux, hej)
 }
 
 int
-backplane_match(parent, gcf, aux)
+backplane_match(parent, cf, aux)
 	struct	device	*parent;
-	void	*gcf, *aux;
+	struct cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata	*cf = gcf;
-
 	if (cf->cf_unit == 0 &&
 	    strcmp(cf->cf_driver->cd_name, "backplane") == 0)
 		return 1; /* First (and only) backplane */
@@ -245,16 +244,16 @@ find_sbi(self, bp, print)
 }
 #endif
 
-int	cpu_match __P((struct  device  *, void *, void *));
+int	cpu_match __P((struct  device  *, struct cfdata *, void *));
 void	cpu_attach __P((struct	device	*, struct  device  *, void *));
 
 
 int
-cpu_match(parent, gcf, aux)
+cpu_match(parent, cf, aux)
 	struct	device	*parent;
-	void	*gcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct	cfdata	*cf = gcf;
 	struct bp_conf *bp = aux;
 
 	if (strcmp(bp->type, "cpu"))
@@ -285,15 +284,15 @@ cpu_attach(parent, self, aux)
 	(*dep_call->cpu_conf)(parent, self, aux);
 }
 
-int	mem_match __P((struct  device  *, void	*, void *));
+int	mem_match __P((struct  device  *, struct cfdata	*, void *));
 void	mem_attach __P((struct	device	*, struct  device  *, void *));
 
 int
-mem_match(parent, gcf, aux)
+mem_match(parent, cf, aux)
 	struct	device	*parent;
-	void	*gcf, *aux;
+	struct cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata	*cf = gcf;
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct	bp_conf *bp = aux;
 
