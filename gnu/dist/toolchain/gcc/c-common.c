@@ -1061,6 +1061,7 @@ strip_attrs (specs_attrs)
 #define T_V	&void_type_node
 #define T_W	&wchar_type_node
 #define T_ST    &sizetype
+#define T_PDT   &ptrdiff_type_node
 
 typedef struct {
   const char *format_chars;
@@ -1082,41 +1083,44 @@ typedef struct {
   /* Type of argument if length modifier `L' is used.
      If NULL, then this modifier is not allowed.  */
   tree *bigllen;
-  /* Type of argument if length modifier `Z' is used.
+  /* Type of argument if length modifier `Z' or `z' is used.
      If NULL, then this modifier is not allowed.  */
   tree *zlen;
+  /* Type of argument if length modifier `t' is used.
+     If NULL, then this modifier is not allowed.  */
+  tree *tlen;
   /* List of other modifier characters allowed with these options.  */
   const char *flag_chars;
 } format_char_info;
 
 static format_char_info print_char_table[] = {
-  { "di",	0,	T_I,	T_I,	T_I,	T_L,	T_LL,	T_LL,	T_ST,	"-wp0 +"	},
-  { "oxX",	0,	T_UI,	T_UI,	T_UI,	T_UL,	T_ULL,	T_ULL,	T_ST,	"-wp0#"		},
-  { "u",	0,	T_UI,	T_UI,	T_UI,	T_UL,	T_ULL,	T_ULL,	T_ST,	"-wp0"		},
+  { "di",	0,	T_I,	T_I,	T_I,	T_L,	T_LL,	T_LL,	T_ST,	T_PDT,	"-wp0 +"	},
+  { "oxX",	0,	T_UI,	T_UI,	T_UI,	T_UL,	T_ULL,	T_ULL,	T_ST,	T_PDT,	"-wp0#"		},
+  { "u",	0,	T_UI,	T_UI,	T_UI,	T_UL,	T_ULL,	T_ULL,	T_ST,	T_PDT,	"-wp0"		},
 /* A GNU extension.  */
-  { "m",	0,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
-  { "feEgGaA",	0,	T_D,	NULL,	NULL,	NULL,	NULL,	T_LD,	NULL,	"-wp0 +#"	},
-  { "c",	0,	T_I,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	"-w"		},
-  { "C",	0,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-w"		},
-  { "s",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	"-wp"		},
-  { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
-  { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-w"		},
-  { "n",	1,	T_I,	NULL,	T_S,	T_L,	T_LL,	NULL,	NULL,	""		},
-  { NULL,	0,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL		}
+  { "m",	0,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
+  { "feEgGaA",	0,	T_D,	NULL,	NULL,	NULL,	NULL,	T_LD,	NULL,	NULL,	"-wp0 +#"	},
+  { "c",	0,	T_I,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	NULL,	"-w"		},
+  { "C",	0,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-w"		},
+  { "s",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
+  { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-wp"		},
+  { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-w"		},
+  { "n",	1,	T_I,	NULL,	T_S,	T_L,	T_LL,	NULL,	NULL,	NULL,	""		},
+  { NULL,	0,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL		}
 };
 
 static format_char_info scan_char_table[] = {
-  { "di",	1,	T_I,	T_C,	T_S,	T_L,	T_LL,	T_LL,	NULL,	"*"	},
-  { "ouxX",	1,	T_UI,	T_UC,	T_US,	T_UL,	T_ULL,	T_ULL,	NULL,	"*"	},
-  { "efgEGaA",	1,	T_F,	NULL,	NULL,	T_D,	NULL,	T_LD,	NULL,	"*"	},
-  { "c",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	"*"	},
-  { "s",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	"*a"	},
-  { "[",	1,	T_C,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*a"	},
-  { "C",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*"	},
-  { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*a"	},
-  { "p",	2,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*"	},
-  { "n",	1,	T_I,	T_C,	T_S,	T_L,	T_LL,	NULL,	NULL,	""	},
-  { NULL,	0,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL	}
+  { "di",	1,	T_I,	T_C,	T_S,	T_L,	T_LL,	T_LL,	T_ST,	T_PDT,	"*"	},
+  { "ouxX",	1,	T_UI,	T_UC,	T_US,	T_UL,	T_ULL,	T_ULL,	T_ST,	T_PDT,	"*"	},
+  { "efgEGaA",	1,	T_F,	NULL,	NULL,	T_D,	NULL,	T_LD,	NULL,	NULL,	"*"	},
+  { "c",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	NULL,	"*"	},
+  { "s",	1,	T_C,	NULL,	NULL,	T_W,	NULL,	NULL,	NULL,	NULL,	"*a"	},
+  { "[",	1,	T_C,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*a"	},
+  { "C",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*"	},
+  { "S",	1,	T_W,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*a"	},
+  { "p",	2,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"*"	},
+  { "n",	1,	T_I,	T_C,	T_S,	T_L,	T_LL,	NULL,	NULL,	NULL,	""	},
+  { NULL,	0,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL	}
 };
 
 /* Handle format characters recognized by glibc's strftime.c.
@@ -1128,20 +1132,20 @@ static format_char_info scan_char_table[] = {
    'G' - other GNU extensions  */
 
 static format_char_info time_char_table[] = {
-  { "y", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2EO-_0w" },
-  { "D", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2" },
-  { "g", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2O-_0w" },
-  { "cx", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "3E" },
-  { "%FRTXnrt",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "" },
-  { "P",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "G" },
-  { "HIMSUWdemw",	0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0Ow" },
-  { "Vju",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0Oow" },
-  { "Gklsz",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0OGw" },
-  { "ABZa",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "^#" },
-  { "p",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "#" },
-  { "bh",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "^" },
-  { "CY",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0EOw" },
-  { NULL,		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+  { "y", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2EO-_0w" },
+  { "D", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2" },
+  { "g", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "2O-_0w" },
+  { "cx", 		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "3E" },
+  { "%FRTXnrt",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "" },
+  { "P",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "G" },
+  { "HIMSUWdemw",	0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0Ow" },
+  { "Vju",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0Oow" },
+  { "Gklsz",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0OGw" },
+  { "ABZa",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "^#" },
+  { "p",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "#" },
+  { "bh",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "^" },
+  { "CY",		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "-_0EOw" },
+  { NULL,		0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 typedef struct function_format_info
@@ -1625,6 +1629,12 @@ check_format_info (info, params)
 	{
 	  if (*format_chars == 'h' || *format_chars == 'l')
 	    length_char = *format_chars++;
+	  else if (*format_chars == 'z' || *format_chars == 't')
+	    {
+	      /* ISO C99 size_t and ptrdiff_t.  We don't bother warning
+		 about this if in pedantic mode.  */
+	      length_char = *format_chars++;
+	    }
 	  else if (*format_chars == 'q' || *format_chars == 'L')
 	    {
 	      length_char = *format_chars++;
@@ -1775,7 +1785,9 @@ check_format_info (info, params)
 	case 'l': wanted_type = fci->llen ? *(fci->llen) : 0; break;
 	case 'q': wanted_type = fci->qlen ? *(fci->qlen) : 0; break;
 	case 'L': wanted_type = fci->bigllen ? *(fci->bigllen) : 0; break;
+	case 'z': /* FALLTHROUGH */
 	case 'Z': wanted_type = fci->zlen ? *fci->zlen : 0; break;
+	case 't': wanted_type = fci->tlen ? *fci->tlen : 0; break;
 	}
       if (wanted_type == 0)
 	warning ("use of `%c' length character with `%c' type character",
