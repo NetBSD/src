@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.4 2002/10/02 16:51:42 thorpej Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.5 2002/10/23 14:57:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.4 2002/10/02 16:51:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.5 2002/10/23 14:57:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -260,7 +260,7 @@ iwic_pci_attach(struct device * parent, struct device * dev, void *aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* disable interrupts */
-	IWIC_WRITE(sc, IMASK, 0xff);
+	IWIC_WRITE(sc, IWIC_IMASK, 0xff);
 	IWIC_READ(sc, ISTA);
 
 	iwic_dchan_init(sc);
@@ -399,12 +399,12 @@ iwic_mph_command_req(isdn_layer1token t, int command, void *parm)
 	switch (command) {
 	case CMR_DOPEN:	/* Daemon running */
 		NDBGL1(L1_PRIM, "CMR_DOPEN");
-		IWIC_WRITE(sc, IMASK, IMASK_XINT0 | IMASK_XINT1);
+		IWIC_WRITE(sc, IWIC_IMASK, IMASK_XINT0 | IMASK_XINT1);
 		break;
 
 	case CMR_DCLOSE:	/* Daemon not running */
 		NDBGL1(L1_PRIM, "CMR_DCLOSE");
-		IWIC_WRITE(sc, IMASK, 0xff);
+		IWIC_WRITE(sc, IWIC_IMASK, 0xff);
 		break;
 
 	case CMR_SETTRACE:
