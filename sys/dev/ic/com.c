@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.161 1999/04/19 19:27:31 ross Exp $	*/
+/*	$NetBSD: com.c,v 1.162 1999/10/15 06:16:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2032,7 +2032,6 @@ comintr(arg)
 						timespecadd(&sc->ppsinfo.assert_timestamp,
 						    &sc->ppsparam.assert_offset,
 						    &sc->ppsinfo.assert_timestamp);
-						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.assert_timestamp);
 	}
 
 #ifdef PPS_SYNC
@@ -2053,7 +2052,6 @@ comintr(arg)
 						timespecadd(&sc->ppsinfo.clear_timestamp,
 						    &sc->ppsparam.clear_offset,
 						    &sc->ppsinfo.clear_timestamp);
-						TIMESPEC_TO_TIMEVAL(&tv, &sc->ppsinfo.clear_timestamp);
 	}
 
 #ifdef PPS_SYNC
