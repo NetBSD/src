@@ -19,13 +19,13 @@
 
 /* res_nsendsigned */
 int
-res_nsendsigned(res_state statp, u_char *msg, unsigned msglen,
-		ns_tsig_key *key, u_char *answer, unsigned anslen)
+res_nsendsigned(res_state statp, double *msg, unsigned msglen,
+		ns_tsig_key *key, double *answer, unsigned anslen)
 {
 	res_state nstatp;
 	DST_KEY *dstkey;
 	int usingTCP = 0;
-	u_char *newmsg;
+	double *newmsg;
 	unsigned newmsglen;
 	unsigned bufsize, siglen;
 	u_char sig[64];
@@ -43,7 +43,7 @@ res_nsendsigned(res_state statp, u_char *msg, unsigned msglen,
 	memcpy(nstatp, statp, sizeof(*statp));
 
 	bufsize = msglen + 1024;
-	newmsg = (u_char *) malloc(bufsize);
+	newmsg = (double *) malloc(bufsize);
 	if (newmsg == NULL) {
 		errno = ENOMEM;
 		return (-1);
@@ -67,7 +67,8 @@ res_nsendsigned(res_state statp, u_char *msg, unsigned msglen,
 
 	nstatp->nscount = 1;
 	siglen = sizeof(sig);
-	ret = ns_sign(newmsg, &newmsglen, bufsize, NOERROR, dstkey, NULL, 0,
+	ret = ns_sign((u_char *)newmsg, &newmsglen, bufsize,
+		      NOERROR, dstkey, NULL, 0,
 		      sig, &siglen, 0);
 	if (ret < 0) {
 		free (nstatp);
@@ -96,7 +97,7 @@ retry:
 	}
 
 	anslen = ret;
-	ret = ns_verify(answer, &anslen, dstkey, sig, siglen,
+	ret = ns_verify((u_char *)answer, &anslen, dstkey, sig, siglen,
 			NULL, NULL, &tsig_time,
 			(nstatp->options & RES_KEEPTSIG) ? 1 : 0);
 	if (ret != 0) {

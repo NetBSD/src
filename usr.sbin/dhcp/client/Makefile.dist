@@ -29,7 +29,8 @@ MAN    = dhclient.8 dhclient.conf.5 dhclient-script.8 dhclient.leases.5
 DEBUG  = -g
 INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
 DHCPLIB = ../common/libdhcp.a ../omapip/libomapi.a $(BINDLIB)
-CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
+CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS) \
+		-DCLIENT_PATH=${CLIENT_PATH}
 
 all:	$(PROG) $(CATMANPAGES)
 
