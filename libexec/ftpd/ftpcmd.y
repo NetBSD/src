@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.8 1997/03/30 22:53:38 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $";
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.8 1997/03/30 22:53:38 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ char	*fromname;
 %token	<s> STRING
 %token	<i> NUMBER
 
-%type	<i> check_login octal_number byte_size
+%type	<i> check_login check_login_noguest octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code
 %type	<s> pathstring pathname password username
 
@@ -290,7 +290,7 @@ cmd
 		{
 			statcmd();
 		}
-	| DELE check_login SP pathname CRLF
+	| DELE check_login_noguest SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				delete($4);
@@ -347,14 +347,14 @@ cmd
 		{
 			reply(200, "NOOP command successful.");
 		}
-	| MKD check_login SP pathname CRLF
+	| MKD check_login_noguest SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				makedir($4);
 			if ($4 != NULL)
 				free($4);
 		}
-	| RMD check_login SP pathname CRLF
+	| RMD check_login_noguest SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
 				removedir($4);
@@ -389,7 +389,7 @@ cmd
 				reply(200, "Current UMASK is %03o", oldmask);
 			}
 		}
-	| SITE SP UMASK check_login SP octal_number CRLF
+	| SITE SP UMASK check_login_noguest SP octal_number CRLF
 		{
 			int oldmask;
 
@@ -404,7 +404,7 @@ cmd
 				}
 			}
 		}
-	| SITE SP CHMOD check_login SP octal_number SP pathname CRLF
+	| SITE SP CHMOD check_login_noguest SP octal_number SP pathname CRLF
 		{
 			if ($4 && ($8 != NULL)) {
 				if ($6 > 0777)
@@ -726,6 +726,23 @@ check_login
 			}
 		}
 	;
+check_login_noguest
+	: /* empty */
+		{
+			if (logged_in)  {
+#ifndef INSECURE_GUEST
+				if (guest)  {
+					reply(502,
+				    "Guest users may not use this command.");
+					$$ = 0;
+				} else
+#endif
+				$$ = 1;
+			} else {
+				reply(530, "Please login with USER and PASS.");
+				$$ = 0;
+			}
+		}
 
 %%
 
