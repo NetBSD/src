@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.44.2.1 1998/11/09 06:06:33 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.44.2.2 1998/11/16 08:25:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -709,6 +709,7 @@ nfs_write(v)
 		nfsstats.biocache_writes++;
 
 #ifdef UBC
+		np->n_flag |= NMODIFIED;
 		if (np->n_size < uio->uio_offset + n) {
 			np->n_size = uio->uio_offset + n;
 			uvm_vnp_setsize(vp, np->n_size);
@@ -734,11 +735,6 @@ nfs_write(v)
 						 trunc_page(oldoff),
 						 oldoff + bytelen,
 						 PGO_CLEANIT | PGO_SYNCIO);
-#ifdef DEBUGxx
-printf("nfs_write: flush vp %p start 0x%x end 0x%x newsize 0x%x\n",
-       vp, (int)trunc_page(oldoff), (int)(oldoff + bytelen),
-       (int)vp->v_uvm.u_size);
-#endif
 		simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 		if (error) {
 			break;
@@ -1272,10 +1268,6 @@ nfs_getpages(v)
 		return 0;
 	}
 
-#if 0
-printf("nfs_getpages vp %p off 0x%x\n", vp, (int)ap->a_offset);
-#endif
-
 	/* vnode is VOP_LOCKed, uobj is locked */
 
 	/* XXX for now, just do one page at a time */
@@ -1307,7 +1299,6 @@ printf("nfs_getpages vp %p off 0x%x\n", vp, (int)ap->a_offset);
 	if (m->offset >= vp->v_uvm.u_size) {
 		UVMHIST_LOG(ubchist, "off 0x%x past EOF 0x%x, zeroed page",
 			    m->offset, vp->v_uvm.u_size,0,0);
-printf("past EOF, clearing\n");
 		pmap_zero_page(VM_PAGE_TO_PHYS(m));
 		return 0;
 	}
@@ -1411,7 +1402,6 @@ nfs_putpages(v)
 	/* XXX */
 	mode = NFSV3WRITE_FILESYNC;
 
-	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 	error = nfs_writerpc(vp, &uio, curproc->p_ucred, &mode, &commit);
 
 	uvm_pagermapout(kva, ap->a_count);
