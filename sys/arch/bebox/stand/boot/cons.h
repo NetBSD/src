@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.1 1998/01/16 04:17:41 sakamoto Exp $	*/
+/*	$NetBSD: cons.h,v 1.2 1998/10/26 00:45:47 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 struct consdev {
+	char	*cn_name;	/* console device name */
 	void	(*cn_probe)	/* probe hardware and fill in consdev info */
 		    __P((struct consdev *));
 	void	(*cn_init)	/* turn on as console */

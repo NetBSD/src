@@ -1,4 +1,4 @@
-/*	$Id: vreset.c,v 1.1 1998/01/16 04:18:06 sakamoto Exp $	*/
+/*	$Id: vreset.c,v 1.2 1998/10/26 00:45:48 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -456,7 +456,7 @@ outw(int port, unsigned short val)
 	outb(port+1, val);
 }
  
-vga_init(unsigned char *ISA_mem)
+vga_reset(unsigned char *ISA_mem)
 {
 	int slot;
         struct VgaRegs *VgaTextRegs;
@@ -539,11 +539,6 @@ vga_init(unsigned char *ISA_mem)
 #endif
 
 	delayLoop(2);		/* give time for the video monitor to come up */
-}
-
-static int
-NOP(int x)
-{
 }
 
 /*
@@ -701,10 +696,10 @@ struct PCI_ConfigInfo {
   unsigned long * config_addr;
   unsigned long regs[NPCIREGS];  
 } PCI_slots [NSLOTS] = {
-    { (unsigned long *)0x80808000, { 0xDE, 0xAD, 0xBE, 0xEF } }, /* onboard */
-    { (unsigned long *)0x80810000, { 0xDE, 0xAD, 0xBE, 0xEF } }, /* slot A/1 */
-    { (unsigned long *)0x80820000, { 0xDE, 0xAD, 0xBE, 0xEF } }, /* slot B/2 */
-    { (unsigned long *)0x80840000, { 0xDE, 0xAD, 0xBE, 0xEF } }  /* slot C/3 */
+    { (unsigned long *)0x80802000, { 0xDE, 0xAD, 0xBE, 0xEF } },
+    { (unsigned long *)0x80804000, { 0xDE, 0xAD, 0xBE, 0xEF } },
+    { (unsigned long *)0x80808000, { 0xDE, 0xAD, 0xBE, 0xEF } },
+    { (unsigned long *)0x80810000, { 0xDE, 0xAD, 0xBE, 0xEF } }
 };
 
 
@@ -724,18 +719,6 @@ enablePCIvideo(slot)
 	outb(0x3d5, 0x0e);   /* unlock CR0-CR7 */
 }
 
-long
-SwapBytes(long lv)   /* turn little endian into big indian long */
-{
-	long t;
-	t  = (lv&0x000000FF) << 24;
-	t |= (lv&0x0000FF00) << 8;
-	t |= (lv&0x00FF0000) >> 8;
-	t |= (lv&0xFF000000) >> 24;
-	return(t);
-}
-
-
 #define DEVID   0
 #define CMD     1
 #define CLASS   2
@@ -752,7 +735,7 @@ scanPCI(void)
 	for ( slt = 0; slt < NSLOTS; slt++) {
 		pslot = &PCI_slots[slt];
 		for ( r = 0; r < NPCIREGS; r++) {
-			pslot->regs[r] = SwapBytes ( pslot->config_addr[r] );
+			pslot->regs[r] = bswap32(pslot->config_addr[r]);
 		}
 
 		if ( pslot->regs[DEVID] != 0xFFFFFFFF ) {     /* card in slot ? */
