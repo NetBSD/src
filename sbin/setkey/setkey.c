@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.2 2000/10/03 21:48:33 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.3 2000/12/20 01:05:22 cgd Exp $	*/
 /*	$KAME: setkey.c,v 1.15 2000/08/31 06:09:27 sakane Exp $	*/
 
 /*
@@ -541,7 +541,7 @@ shortdump(msg)
 			snprintf(buf, sizeof(buf), "%-3lu", (u_long)t);
 		printf("%s", buf);
 	} else
-		printf(" ???/???");
+		printf(" ??\?/???");	/* backslash to avoid trigraph ??/ */
 
 	printf(" ");
 
