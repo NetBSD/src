@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.4 1997/10/11 01:53:26 lukem Exp $	*/
+/*	$NetBSD: hdr.h,v 1.5 1998/08/29 20:19:56 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,8 +55,10 @@
 
 /* hdr.h: included by c advent files */
 
+#include <signal.h>
+
 int     datfd;			/* message file descriptor */
-int     delhit;
+volatile sig_atomic_t delhit;
 int     yea;
 extern char data_file[];	/* Virtual data file */
 
