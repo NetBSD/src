@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.h,v 1.6 1998/01/13 12:45:02 kleink Exp $	*/
+/*	$NetBSD: fnmatch.h,v 1.6.10.1 2000/07/03 22:29:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,12 +38,17 @@
 #ifndef	_FNMATCH_H_
 #define	_FNMATCH_H_
 
+#include <sys/featuretest.h>
+
 #define	FNM_NOMATCH	1	/* Match failed. */
 #define	FNM_NOSYS	2	/* Function not implemented. */
 
 #define	FNM_NOESCAPE	0x01	/* Disable backslash escaping. */
 #define	FNM_PATHNAME	0x02	/* Slash must be matched by slash. */
 #define	FNM_PERIOD	0x04	/* Period must be matched by period. */
+#if !defined(_POSIX_C_SOURCE)
+#define	FNM_CASEFOLD	0x08	/* Pattern is matched case-insensitive */
+#endif
 
 #include <sys/cdefs.h>
 
