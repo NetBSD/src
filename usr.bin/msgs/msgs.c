@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.9 1997/07/24 22:45:23 phil Exp $	*/
+/*	$NetBSD: msgs.c,v 1.10 1997/10/14 01:28:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: msgs.c,v 1.9 1997/07/24 22:45:23 phil Exp $";
+__RCSID("$NetBSD: msgs.c,v 1.10 1997/10/14 01:28:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,15 +70,15 @@ static char rcsid[] = "$NetBSD: msgs.c,v 1.9 1997/07/24 22:45:23 phil Exp $";
 
 #define V7		/* will look for TERM in the environment */
 #define OBJECT		/* will object to messages without Subjects */
-#define REJECT	/* will reject messages without Subjects
+#define REJECT		/* will reject messages without Subjects
 			   (OBJECT must be defined also) */
-/* #define UNBUFFERED	/* use unbuffered output */
+/*#define UNBUFFERED */	/* use unbuffered output */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <pwd.h>
 #include <setjmp.h>
@@ -86,6 +86,7 @@ static char rcsid[] = "$NetBSD: msgs.c,v 1.9 1997/07/24 22:45:23 phil Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termcap.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
@@ -139,10 +140,15 @@ int	Lpp = 0;
 time_t	t;
 time_t	keep;
 
-char	*mktemp();
-char	*nxtfld();
-void	onintr();
-void	onsusp();
+void	ask __P((char *));
+void	gfrsub __P((FILE *));
+int	linecnt __P((FILE *));
+int	main __P((int, char *[]));
+int	next __P((char *));
+char	*nxtfld __P((char *));
+void	onintr __P((int));
+void	onsusp __P((int));
+void	prmesg __P((int));
 
 /* option initialization */
 bool	hdrs = NO;
@@ -155,8 +161,9 @@ bool	clean = NO;
 bool	lastcmd = NO;
 jmp_buf	tstpbuf;
 
+int
 main(argc, argv)
-int argc; char *argv[];
+	int argc; char *argv[];
 {
 	bool newrc, already;
 	int rcfirst = 0;		/* first message to print (from .rc) */
@@ -607,8 +614,9 @@ cmnd:
 	exit(0);
 }
 
+void
 prmesg(length)
-int length;
+	int length;
 {
 	FILE *outf;
 	char *env_pager;
@@ -655,7 +663,8 @@ int length;
 }
 
 void
-onintr()
+onintr(dummy)
+	int dummy;
 {
 	signal(SIGINT, onintr);
 	if (mailing)
@@ -680,7 +689,8 @@ onintr()
  * We have just gotten a susp.  Suspend and prepare to resume.
  */
 void
-onsusp()
+onsusp(dummy)
+	int dummy;
 {
 
 	signal(SIGTSTP, SIG_DFL);
@@ -691,8 +701,9 @@ onsusp()
 		longjmp(tstpbuf, 0);
 }
 
+int
 linecnt(f)
-FILE *f;
+	FILE *f;
 {
 	off_t oldpos = ftell(f);
 	int l = 0;
@@ -705,8 +716,9 @@ FILE *f;
 	return (l);
 }
 
+int
 next(buf)
-char *buf;
+	char *buf;
 {
 	int i;
 	sscanf(buf, "%d", &i);
@@ -714,8 +726,9 @@ char *buf;
 	return(--i);
 }
 
+void
 ask(prompt)
-char *prompt;
+	char *prompt;
 {
 	char	inch;
 	int	n, cmsg;
@@ -778,7 +791,7 @@ char *prompt;
 			return;
 		}
 
-		while (n = fread(inbuf, 1, sizeof inbuf, cpfrom))
+		while ((n = fread(inbuf, 1, sizeof inbuf, cpfrom)) != 0)
 			fwrite(inbuf, 1, n, cpto);
 
 		fclose(cpfrom);
@@ -795,8 +808,9 @@ char *prompt;
 	}
 }
 
+void
 gfrsub(infile)
-FILE *infile;
+	FILE *infile;
 {
 	off_t frompos;
 
@@ -873,7 +887,7 @@ FILE *infile;
 
 char *
 nxtfld(s)
-char *s;
+	char *s;
 {
 	if (*s) while (*s && *s > ' ') s++;	/* skip over this field */
 	if (*s) while (*s && *s <= ' ') s++;	/* find start of next field */
