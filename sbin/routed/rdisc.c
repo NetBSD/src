@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.7 1998/06/02 18:02:56 thorpej Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.8 1998/10/25 14:56:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rdisc.c,v 1.7 1998/06/02 18:02:56 thorpej Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.8 1998/10/25 14:56:08 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -83,7 +83,7 @@ int	rdisc_sock = -1;		/* router-discovery raw socket */
 struct interface *rdisc_sock_mcast;	/* current multicast interface */
 
 struct timeval rdisc_timer;
-int rdisc_ok;				/* using solicted route */
+int rdisc_ok;				/* using solicited route */
 
 
 #define MAX_ADS 16			/* at least one per interface */
@@ -264,7 +264,7 @@ set_supplier(void)
 	if (supplier_set)
 		return;
 
-	trace_act("start suppying routes");
+	trace_act("start supplying routes");
 
 	/* Forget discovered routes.
 	 */
@@ -306,7 +306,7 @@ rdisc_age(naddr bad_gate)
 	struct dr *drp;
 
 
-	/* If only adverising, then do only that. */
+	/* If only advertising, then do only that. */
 	if (supplier) {
 		/* If switching from client to server, get rid of old
 		 * default routes.
@@ -319,7 +319,7 @@ rdisc_age(naddr bad_gate)
 
 	/* If we are being told about a bad router,
 	 * then age the discovered default route, and if there is
-	 * no alternative, solicite a replacement.
+	 * no alternative, solicit a replacement.
 	 */
 	if (bad_gate != 0) {
 		/* Look for the bad discovered default route.
@@ -457,15 +457,13 @@ rdisc_sort(void)
 	struct rt_entry *rt;
 	struct rt_spare new;
 	struct interface *ifp;
-	u_int new_st;
-	n_long new_pref;
+	u_int new_st = 0;
+	n_long new_pref = 0;
 
 
 	/* Find the best discovered route.
 	 */
 	new_drp = 0;
-	new_st = 0;
-	new_pref = 0;
 	for (drp = drs; drp < &drs[MAX_ADS]; drp++) {
 		if (drp->dr_ts == 0)
 			continue;
@@ -543,7 +541,7 @@ rdisc_sort(void)
 					  new_drp->dr_ifp->int_name);
 			}
 
-			bzero(&new, sizeof(new));
+			memset(&new, 0, sizeof(new));
 			new.rts_ifp = new_drp->dr_ifp;
 			new.rts_gate = new_drp->dr_gate;
 			new.rts_router = new_drp->dr_gate;
@@ -637,7 +635,7 @@ parse_ad(naddr from,
 				new_drp = drp;
 
 		} else if (new_drp->dr_ts != 0) {
-			/* look for the least valueable entry to reuse
+			/* look for the least valuable entry to reuse
 			 */
 			if ((!(new_drp->dr_ifp->int_state & IS_SICK)
 			     && (drp->dr_ifp->int_state & IS_SICK))
@@ -741,7 +739,7 @@ send_rdisc(union ad_u *p,
 		if (rdisc_sock_mcast != ifp) {
 			/* select the right interface. */
 #ifdef MCAST_PPP_BUG
-			/* Do not specifiy the primary interface explicitly
+			/* Do not specify the primary interface explicitly
 			 * if we have the multicast point-to-point kernel
 			 * bug, since the kernel will do the wrong thing
 			 * if the local address of a point-to-point link
