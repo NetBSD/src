@@ -1,4 +1,4 @@
-#	$NetBSD: rc.lkm,v 1.2 1997/07/14 11:55:45 drochner Exp $
+#	$NetBSD: rc.lkm,v 1.3 1997/07/18 23:38:52 perry Exp $
 #
 # this script loads any LKM's that are required.
 
@@ -71,6 +71,7 @@
 			continue
 		fi
 
+		echo -n "`basename $path .o`: "
 		$cmd $path
 	done
 
