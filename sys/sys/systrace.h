@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.10 2003/06/03 05:24:00 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.11 2003/08/25 09:12:42 cb Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -50,6 +50,7 @@ struct str_msg_ugid {
 
 #define SYSTR_MAX_POLICIES	64
 #define SYSTR_MAXARGS		64
+#define SYSTR_MAXFNAME		8
 
 struct str_msg_ask {
 	int32_t code;
@@ -142,14 +143,19 @@ struct systrace_policy {
 #define strp_code	strp_data.assign.code
 #define strp_policy	strp_data.assign.policy
 
+#define SYSTR_NOLINKS	1
+
 struct systrace_replace {
 	pid_t strr_pid;
+	u_int16_t strr_seqnr;
+	int16_t reserved;
 	int32_t strr_nrepl;
 	caddr_t	strr_base;	/* Base memory */
 	size_t strr_len;	/* Length of memory */
 	int32_t strr_argind[SYSTR_MAXARGS];
 	size_t strr_off[SYSTR_MAXARGS];
 	size_t strr_offlen[SYSTR_MAXARGS];
+	int32_t strr_flags[SYSTR_MAXARGS];
 };
 
 #define STRIOCATTACH	_IOW('s', 101, pid_t)
@@ -171,6 +177,8 @@ struct systrace_replace {
 #define SYSTR_FLAGS_SETEGID	0x004
 
 #ifdef _KERNEL
+#include <sys/namei.h>
+
 /* XXX: these shouldn't be here. */
 #define SET(t, f)	((t) |= (f))
 #define	ISSET(t, f)	((t) & (f))
@@ -203,6 +211,7 @@ struct fsystrace {
 /* Internal prototypes */
 
 int systrace_enter(struct proc *, register_t, void *, register_t []);
+void systrace_namei(struct nameidata *);
 void systrace_exit(struct proc *, register_t, void *, register_t [], int);
 void systrace_sys_exit(struct proc *);
 void systrace_sys_fork(struct proc *, struct proc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.12 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.13 2003/08/25 09:12:45 cb Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.12 2003/06/03 04:33:44 provos Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.13 2003/08/25 09:12:45 cb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,7 +158,7 @@ static int nbsd_answer(int, pid_t, u_int32_t, short, int, short,
 static int nbsd_newpolicy(int);
 static int nbsd_assignpolicy(int, pid_t, int);
 static int nbsd_modifypolicy(int, int, int, short);
-static int nbsd_replace(int, pid_t, struct intercept_replace *);
+static int nbsd_replace(int, pid_t, u_int16_t, struct intercept_replace *);
 static int nbsd_io(int, pid_t, int, void *, u_char *, size_t);
 static int nbsd_setcwd(int, pid_t);
 static int nbsd_restcwd(int);
@@ -447,7 +447,8 @@ nbsd_modifypolicy(int fd, int num, int code, short policy)
 }
 
 static int
-nbsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
+nbsd_replace(int fd, pid_t pid, u_int16_t seqnr,
+    struct intercept_replace *repl)
 {
 	struct systrace_replace replace;
 	size_t len, off;
@@ -458,6 +459,7 @@ nbsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 	}
 
 	replace.strr_pid = pid;
+	replace.strr_seqnr = seqnr;
 	replace.strr_nrepl = repl->num;
 	replace.strr_base = malloc(len);
 	replace.strr_len = len;
@@ -475,6 +477,10 @@ nbsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 		replace.strr_off[i] = off;
 		memcpy(replace.strr_base + off,
 		    repl->address[i], repl->len[i]);
+		if (repl->flags[i] & ICTRANS_NOLINKS) {
+			replace.strr_flags[i] = SYSTR_NOLINKS;
+		} else
+			replace.strr_flags[i] = 0;
 
 		off += repl->len[i];
 	}
