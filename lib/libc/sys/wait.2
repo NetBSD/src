@@ -1,4 +1,4 @@
-.\"	$NetBSD: wait.2,v 1.13 2001/07/18 19:12:21 thorpej Exp $
+.\"	$NetBSD: wait.2,v 1.14 2001/09/01 02:01:48 simonb Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,6 @@
 .Fn wait "int *status"
 .Ft pid_t
 .Fn waitpid "pid_t wpid" "int *status" "int options"
-.Fd #include <sys/time.h>
 .Fd #include <sys/resource.h>
 .Ft pid_t
 .Fn wait3 "int *status" "int options" "struct rusage *rusage"
