@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerhook_establish.9,v 1.4 2002/10/14 13:43:30 wiz Exp $
+.\"	$NetBSD: powerhook_establish.9,v 1.5 2002/12/09 13:22:48 uwe Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@ is undefined.
 .Pp
 Power hooks should be used to perform activities
 that must happen when the power situation to the computer changes.
-Because of the environment in which they are run, shutdown hooks cannot
+Because of the environment in which they are run, power hooks cannot
 rely on many system services (including file systems, and timeouts
 and other interrupt-driven services).
 The power hooks are typically executed from an interrupt context.
@@ -100,7 +100,7 @@ back to normal.
 If successful,
 .Fn powerhook_establish
 returns an opaque pointer describing the newly-established
-shutdown hook.
+power hook.
 Otherwise, it returns NULL.
 .Sh SEE ALSO
 .Xr dopowerhooks 9
