@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.151 1999/02/03 23:20:33 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.152 1999/02/03 23:22:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -796,6 +796,7 @@ comopen(dev, flag, mode, p)
 
 		/* Clear PPS capture state on first open. */
 		sc->sc_ppsmask = 0;
+		sc->ppsparam.mode = 0;
 
 		splx(s2);
 
