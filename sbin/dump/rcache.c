@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.13 2003/02/03 23:08:37 hannken Exp $	*/
+/*	$NetBSD: rcache.c,v 1.14 2003/02/04 08:06:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.13 2003/02/03 23:08:37 hannken Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.14 2003/02/04 08:06:42 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ union cdesc {
 	volatile size_t cd_count;
 	struct {
 		volatile daddr_t blkstart;
-		volatile daddr_t blkend;/* start + nblksread */
+		volatile daddr_t blkend;	/* start + nblksread */
 		volatile daddr_t blocksRead;
 		volatile size_t time;
 #ifdef DIAGNOSTICS
@@ -103,16 +103,17 @@ void
 initcache(int cachesize, int readblksize)
 {
 	size_t len;
-	size_t  sharedSize;
+	size_t sharedSize;
 
-	nblksread = (readblksize + ufsib->ufs_bsize - 1) / ufsib->ufs_bsize;
-	if(cachesize == -1) {	/* Compute from memory available */
+	nblksread = howmany(readblksize, ufsib->ufs_bsize);
+	if (cachesize == -1) {	/* Compute from memory available */
 		int usermem;
 		int mib[2] = { CTL_HW, HW_USERMEM };
 
 		len = sizeof(usermem);
 		if (sysctl(mib, 2, &usermem, &len, NULL, 0) < 0) {
-			msg("sysctl(hw.usermem) failed: %s\n", strerror(errno));
+			msg("sysctl(hw.usermem) failed: %s\n",
+			    strerror(errno));
 			return;
 		}
 		cachebufs = (usermem / MAXMEMPART) / (nblksread * dev_bsize);
@@ -120,7 +121,7 @@ initcache(int cachesize, int readblksize)
 		cachebufs = cachesize;
 	}
 
-	if(cachebufs) {	/* Don't allocate if zero --> no caching */
+	if (cachebufs) {	/* Don't allocate if zero --> no caching */
 		if (cachebufs > MAXCACHEBUFS)
 			cachebufs = MAXCACHEBUFS;
 
@@ -133,7 +134,7 @@ initcache(int cachesize, int readblksize)
 #endif
 		shareBuffer = mmap(NULL, sharedSize, PROT_READ | PROT_WRITE,
 	   	    MAP_ANON | MAP_SHARED, -1, 0);
-		if (shareBuffer == (void *)-1) {
+		if (shareBuffer == MAP_FAILED) {
 			msg("can't mmap shared memory for buffer: %s\n",
 			    strerror(errno));
 			return;
@@ -182,17 +183,18 @@ void
 rawread(daddr_t blkno, char *buf, int size)
 {
 	int cnt, i;
+
 #ifdef STATS
 	nphysread++;
 	physreadsize += size;
 #endif
 
- loop:
-	if (lseek(diskfd, ((off_t) blkno << dev_bshift), 0) < 0) {
+loop:
+	if (lseek(diskfd, ((off_t) blkno << dev_bshift), SEEK_SET) < 0) {
 		msg("rawread: lseek fails\n");
 		goto err;
 	}
-	if ((cnt =  read(diskfd, buf, size)) == size)
+	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
 	if (blkno + (size / dev_bsize) > ufsib->ufs_dsize) {
 		/*
@@ -210,17 +212,18 @@ rawread(daddr_t blkno, char *buf, int size)
 	}
 	if (cnt == -1)
 		msg("read error from %s: %s: [block %lld]: count=%d\n",
-			disk, strerror(errno), (long long)blkno, size);
+		    disk, strerror(errno), (long long)blkno, size);
 	else
-		msg("short read error from %s: [block %lld]: count=%d, got=%d\n",
-			disk, (long long)blkno, size, cnt);
+		msg("short read error from %s: [block %lld]: "
+		    "count=%d, got=%d\n",
+		    disk, (long long)blkno, size, cnt);
 err:
 	if (++breaderrors > BREADEMAX) {
 		msg("More than %d block read errors from %s\n",
-			BREADEMAX, disk);
+		    BREADEMAX, disk);
 		broadcast("DUMP IS AILING!\n");
 		msg("This is an unrecoverable error.\n");
-		if (!query("Do you want to attempt to continue?")){
+		if (!query("Do you want to attempt to continue?")) {
 			dumpabort(0);
 			/*NOTREACHED*/
 		} else
@@ -231,7 +234,8 @@ err:
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0) {
+		if (lseek(diskfd, ((off_t)blkno << dev_bshift),
+		    SEEK_SET) < 0) {
 			msg("rawread: lseek2 fails: %s!\n",
 			    strerror(errno));
 			continue;
@@ -239,12 +243,14 @@ err:
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;
 		if (cnt == -1) {
-			msg("read error from %s: %s: [sector %lld]: count=%ld: "
-			    "%s\n", disk, strerror(errno), (long long)blkno,
+			msg("read error from %s: %s: [sector %lld]: "
+			    "count=%ld: %s\n", disk, strerror(errno),
+			    (long long)blkno,
 			    dev_bsize, strerror(errno));
 			continue;
 		}
-		msg("short read error from %s: [sector %lld]: count=%ld, got=%d\n",
+		msg("short read error from %s: [sector %lld]: "
+		    "count=%ld, got=%d\n",
 		    disk, (long long)blkno, dev_bsize, cnt);
 	}
 }
@@ -255,7 +261,7 @@ bread(daddr_t blkno, char *buf, int size)
 	int	osize = size;
 	daddr_t oblkno = blkno;
 	char   *obuf = buf;
-	daddr_t numBlocks = (size + dev_bsize -1) / dev_bsize;
+	daddr_t numBlocks = howmany(size, dev_bsize);
 
 #ifdef STATS
 	nreads++;
@@ -329,9 +335,8 @@ retry:
 
 				buf 	+= toCopy;
 				size 	-= toCopy;
-				blkno 	+= (toCopy + dev_bsize - 1) / dev_bsize;
-				numBlocks -=
-				    (toCopy  + dev_bsize - 1) / dev_bsize;
+				blkno 	+= howmany(toCopy, dev_bsize);
+				numBlocks -= howmany(toCopy, dev_bsize);
 
 				curr->cd_time = cheader->cd_count++;
 
@@ -342,7 +347,7 @@ retry:
 				 */
 
 				curr->cd_blocksRead +=
-				    (toCopy + dev_bsize -1) / dev_bsize;
+				    howmany(toCopy, dev_bsize);
 				if (curr->cd_blocksRead >= nblksread)
 					curr->cd_time = 0;
 
@@ -383,8 +388,8 @@ retry:
 			cdesc[idx].cd_blkstart = blockBlkNo;
 			cdesc[idx].cd_blocksRead = 0;
 
-			if (lseek(diskfd,
-			    ((off_t) (blockBlkNo) << dev_bshift), 0) < 0) {
+			if (lseek(diskfd, ((off_t) blockBlkNo << dev_bshift),
+			    SEEK_SET) < 0) {
 				msg("readBlocks: lseek fails: %s\n",
 				    strerror(errno));
 				rsize = -1;
@@ -436,12 +441,12 @@ retry:
 	if (flock(diskfd, LOCK_UN))
 		msg("flock(LOCK_UN) failed: %s\n",
 		    strerror(errno));
-	return;
 }
 
 void
 printcachestats(void)
 {
+
 #ifdef STATS
 	fprintf(stderr, "Pid %d: %d reads (%u bytes) "
 	    "%d physical reads (%u bytes) %d%% hits, %d%% overhead\n",
