@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 1997/02/20 00:54:21 jeremy Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 1997/03/05 23:54:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1282,6 +1282,15 @@ ENTRY(loadcrp)
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
 	pmove	a0@,crp			| load new user root pointer
+	rts
+
+/*
+ * Get the physical address of the PTE for a given VA.
+ */
+ENTRY(ptest_addr)
+	movl	sp@(4),a0		| VA
+	ptestr	#5,a0@,#7,a1		| a1 = addr of PTE
+	movl	a1,d0
 	rts
 
 /*
