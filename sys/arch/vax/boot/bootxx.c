@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.9 1997/03/22 12:47:29 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.10 1997/04/10 21:25:20 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -91,9 +91,11 @@ Xmain()
 
         switch (vax_cputype) {
 
-        case VAX_78032:
-        case VAX_650:
-
+        case VAX_TYP_UV2:
+        case VAX_TYP_CVAX:
+	case VAX_TYP_RIGEL:
+	case VAX_TYP_NVAX:
+	case VAX_TYP_SOC:
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
 		 */
@@ -180,16 +182,23 @@ getbootdev()
 	adaptor = controller = unit = partition = 0;
 
 	switch (vax_cputype) {
-	case VAX_78032:
-	case VAX_650:
+	case VAX_TYP_UV2:
+	case VAX_TYP_CVAX:
 		adaptor = 0;
 		controller = ((rpb->csrphy & 017777) == 0xDC)?1:0;
 		unit = rpb->unit;			/* DUC, DUD? */
 		
 		break;
 
-	case VAX_8200:
-	case VAX_750:
+	case VAX_TYP_RIGEL:
+		unit = rpb->unit;
+		if (unit > 99)
+			unit /= 100;		/* DKB300 is target 3 */
+		break;
+
+
+	case VAX_TYP_8SS:
+	case VAX_TYP_750:
 		controller = 0;	/* XXX Actually massbuss can be on 3 ctlr's */
 		unit = bootregs[3];
 		break;
@@ -207,9 +216,16 @@ getbootdev()
 
 	case BDEV_TK:		/* TK50 boot */
 	case BDEV_CNSL:		/* Console storage boot */
-	case BDEV_SCSI:		/* SCSI on MV2000 */
-	case BDEV_RD:		/* RD/RX on MV2000 */
+	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
 		controller = 0; /* They are always on ctlr 0 */
+		break;
+
+	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
+	case BDEV_SD:		/* SCSI-disk on NCR5380 (3100/76) */
+		/*
+		 * No standalone routines for SCSI support yet.
+		 * Use rom-routines instead!
+		 */
 		break;
 
 	default:
@@ -256,7 +272,7 @@ devopen(f, fname, file)
 	/*
 	 * On uVAX we need to init [T]MSCP ctlr to be able to use it.
 	 */
-	if (vax_cputype == VAX_78032 || vax_cputype == VAX_650) {
+	if (vax_cputype == VAX_TYP_UV2 || vax_cputype == VAX_TYP_CVAX) {
 		switch (bootdev) {
 		case BDEV_UDA:	/* MSCP */
 		case BDEV_TK:	/* TMSCP */
@@ -328,9 +344,12 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	int     nsize = size;
 
 	switch (vax_cputype) {
-
-	case VAX_650:
-	case VAX_78032:
+	/*
+	 * case VAX_TYP_UV2:
+	 * case VAX_TYP_CVAX:
+	 * case VAX_TYP_RIGEL:
+	 */
+	default:
 		switch (bootdev) {
 
 		case BDEV_UDA: /* MSCP */
@@ -362,7 +381,9 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 			}
 			break;
 		case BDEV_RD:
-		case BDEV_SCSI:
+		case BDEV_ST:
+		case BDEV_SD:
+
 		default:
 			romread_uvax(block, size, buf, bootregs);
 			break;

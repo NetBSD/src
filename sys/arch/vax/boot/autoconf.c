@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1997/03/22 12:47:27 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.9 1997/04/10 21:25:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,7 +77,8 @@ autoconf()
 
 	default:
 		printf("CPU type %d not supported by boot\n",vax_cputype);
-		asm("halt");
+		printf("trying anyway...\n");
+		break;
 
 	case VAX_8600:
 		memsz = 0;
