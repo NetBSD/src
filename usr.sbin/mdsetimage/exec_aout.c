@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.1 1996/10/04 00:18:55 cgd Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.2 1997/09/30 06:20:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: exec_aout.c,v 1.1 1996/10/04 00:18:55 cgd Exp $";
+static char *rcsid = "$NetBSD: exec_aout.c,v 1.2 1997/09/30 06:20:16 scottr Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,9 @@ static char *rcsid = "$NetBSD: exec_aout.c,v 1.1 1996/10/04 00:18:55 cgd Exp $";
 
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)
+
+extern int	T_flag_specified;
+extern u_long	text_start;
 
 int
 check_aout(mappedfile, mappedsize)
@@ -82,6 +85,10 @@ findoff_aout(mappedfile, mappedsize, vmaddr, fileoffp)
 	    execp->a_entry)
 		vmaddr += N_TXTADDR(*execp) +
 		    (execp->a_entry & (N_PAGSIZ(*execp)-1)) - execp->a_entry;
+
+	/* apply correction based on the supplied text start address, if any */
+	if (T_flag_specified)
+		vmaddr += N_TXTADDR(*execp) - text_start;
 
 	if (N_TXTADDR(*execp) <= vmaddr &&
 	    vmaddr < (N_TXTADDR(*execp) + execp->a_text))
