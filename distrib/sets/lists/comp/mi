@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.186 2000/01/24 18:53:53 augustss Exp $
+# $NetBSD: mi,v 1.187 2000/01/26 13:20:26 itojun Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1512,6 +1512,7 @@
 ./usr/share/man/cat3/bcmp.0
 ./usr/share/man/cat3/bcopy.0
 ./usr/share/man/cat3/bindresvport.0
+./usr/share/man/cat3/bindresvport_sa.0
 ./usr/share/man/cat3/bitstring.0
 ./usr/share/man/cat3/bm.0
 ./usr/share/man/cat3/bm_comp.0
