@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.48 1999/09/15 21:14:03 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.49 1999/09/18 11:25:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ ohci_activate(self, act)
 	device_ptr_t self;
 	enum devact act;
 {
-	/*struct ohci_softc *sc = (struct ohci_softc *)self;*/
+	struct ohci_softc *sc = (struct ohci_softc *)self;
 	int rv = 0;
 
 	switch (act) {
@@ -304,6 +304,8 @@ ohci_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
 		break;
 	}
 	return (rv);
