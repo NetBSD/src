@@ -1,11 +1,11 @@
-/*	$NetBSD: vmevar.h,v 1.3 1998/01/12 19:51:12 thorpej Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.2 2000/03/18 22:33:03 scw Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Steve C. Woodford
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	      This product includes software developed by the NetBSD
+ *	      Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,53 +36,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Autoconfiguration and glue definitions for VME support on the
- * Motorola MVME series of computers.
- */
-
-struct vmechip_softc {
-	struct	device sc_dev;		/* generic device info */
-	caddr_t	sc_reg;			/* chip registers */
-	struct	vme_chip *sc_chip;	/* controller vector */
-	u_long	sc_irqref[8];		/* ipl reference count */
-};
+#ifndef	_MVME68K_PCCTWOVAR_H
+#define	_MVME68K_PCCTWOVAR_H
 
 /*
- * Structure used to describe VME controller chips.
+ * Structure used to attach PCC devices.
  */
-struct vme_chip {
-	int	(*vme_translate_addr) __P((u_long, size_t, int, int, u_long *));
-	void	(*vme_intrline_enable) __P((int));
-	void	(*vme_intrline_disable) __P((int));
+struct pcctwo_attach_args {
+	const char	*pa_name;	/* name of device */
+	int		pa_ipl;		/* interrupt level */
+	bus_dma_tag_t	pa_dmat;	/* DMA tag */
+	bus_space_tag_t	pa_bust;	/* Bus tag */
+	bus_addr_t	pa_offset;	/* Offset with 'Bus tag' bus space */
 };
-
-/*
- * Structure used to attach childres to the VME busses and controller.
- */
-struct vme_attach_args {
-	int	va_bustype;		/* VME_D16 or VME_D32 */
-	int	va_atype;		/* VME_A16, VME_A24, or VME_A32 */
-	u_long	va_addr;		/* address of card in bus space */
-	int	va_ipl;			/* card interrupt level */
-	int	va_vec;			/* card interrupt vector */
-};
-
-#define VME_D16		0		/* D16 */
-#define VME_D32		1		/* D32 */
-
-#define VME_A16		16		/* A16 */
-#define VME_A24		24		/* A24 */
-#define VME_A32		32		/* A32 */
 
 /* Shorthand for locators. */
-#define vmecf_atype	cf_loc[0]
-#define vmecf_addr	cf_loc[1]
-#define vmecf_ipl	cf_loc[2]
-#define vmecf_vec	cf_loc[3]
+#include "locators.h"
+#define pcctwocf_ipl	cf_loc[PCCTWOCF_IPL]
 
-void	vme_config __P((struct vmechip_softc *));
-void	*vmemap __P((u_long, size_t, int, int));
-void	vmeunmap __P((void *, size_t));
-void	vmeintr_establish __P((int (*)(void *), void *, int, int));
-void	vmeintr_disestablish __P((int, int));
+/*
+ * PCCChip2 driver's soft state structure
+ */
+struct pcctwo_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_bust;	/* PCCChip2's register tag */
+	bus_space_handle_t	sc_bush;	/* PCCChip2's register handle */
+};
+
+extern struct pcctwo_softc *sys_pcctwo;
+
+extern void pcctwointr_establish __P((int, int (*)(void *), int, void *));
+extern void pcctwointr_disestablish __P((int));
+
+#endif	/* _MVME68K_PCCTWOVAR_H */

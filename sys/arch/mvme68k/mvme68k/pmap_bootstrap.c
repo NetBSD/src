@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 1999/09/18 09:37:35 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 2000/03/18 22:33:07 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -79,21 +79,7 @@ extern int protection_codes[];
 caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
 
-/*
- * We have to allocate the ethernet packet buffer early on
- * from physical memory <= 16Mb due to address limitations
- * in the ethernet chips. In fact, we also have to ensure
- * the memory is allocated from on-board RAM only.
- *
- * The driver for the ethernet chip appropriate to the
- * platform (lance or i82586) will use these two variables
- * to locate and size the chip's packet buffer.
- */
-#ifndef ETHER_DATA_BUFF_PAGES
-#define	ETHER_DATA_BUFF_PAGES	4
-#endif
-void	*ether_data_buff;
-u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * NBPG;
+void	pmap_bootstrap __P((paddr_t, paddr_t));
 
 /*
  * Bootstrap the VM system.
@@ -111,12 +97,12 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t nextpa;
 	paddr_t firstpa;
 {
-	paddr_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa, ebuff;
+	paddr_t kstpa, kptpa, iiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
 	psize_t size;
-	u_int iiomapsize;
+	u_int iiomappages;
 	int i;
 
 	/*
@@ -129,14 +115,11 @@ pmap_bootstrap(nextpa, firstpa)
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
 	 *	iiopa		internal IO space
-	 *			PT pages		iiomapsize pages
+	 *			PT pages		iiomappages pages
 	 *
-	 *	eiiopa		page following
-	 *			internal IO space
-	 *
-	 * [ Sysptsize is the number of pages of PT, and iiomapsize
-	 *   is the number of PTEs, hence we need to round
-	 *   the total to a page boundary with IO maps at the end. ]
+	 * [ Sysptsize is the number of pages of PT, iiomappages is the
+	 *   number of PTEs, hence we need to round the total to a page
+	 *   boundary with IO maps at the end. ]
 	 *
 	 *	kptmpa		kernel PT map		1 page
 	 *
@@ -147,7 +130,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
-	iiomapsize = m68k_btop(RELOC(intiotop_phys, u_int) -
+	iiomappages = m68k_btop(RELOC(intiotop_phys, u_int) -
 			       RELOC(intiobase_phys, u_int));
 
 	if (RELOC(mmutype, int) == MMU_68040)
@@ -158,18 +141,15 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(iiomapsize + NPTEPG - 1) / NPTEPG;
+		(iiomappages + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	eiiopa = nextpa;		/* just a reference for later */
-	iiopa = nextpa - iiomapsize * sizeof(pt_entry_t);
+	iiopa = nextpa - iiomappages * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-	ebuff = nextpa;
-	nextpa += RELOC(ether_data_buff_size, u_long);
 
 	/*
 	 * Clear all PTEs to zero
@@ -358,17 +338,10 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 
 	/*
-	 * Un-cache the ethernet data buffer
-	 */
-	pte = &((u_int *)kptpa)[m68k_btop(ebuff)];
-	for (i = 0; i < ETHER_DATA_BUFF_PAGES; i++)
-		pte[i] |= PG_CI;
-
-	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 */
 	pte = (u_int *)iiopa;
-	epte = (u_int *)eiiopa;
+	epte = (u_int *)kptmpa;
 	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -396,13 +369,13 @@ pmap_bootstrap(nextpa, firstpa)
 		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
 	 * intiobase, intiolimit: base and end of internal IO space.
-	 * iiomapsize pages prior to external IO space at end of static
+	 * iiomappages pages prior to VMEbus IO space at end of static
 	 * kernel page table.
 	 */
 	RELOC(intiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - iiomapsize);
+	    (char *)m68k_ptob(nptpages*NPTEPG - iiomappages);
 	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG);
+	    (char *)m68k_ptob(nptpages*NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.
@@ -420,11 +393,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 * proc struct p_addr field later.
 	 */
 	RELOC(proc0paddr, char *) = (char *)(p0upa - firstpa);
-
-	/*
-	 * Fix up the ethernet data buffer address
-	 */
-	RELOC(ether_data_buff, void *) = (void *)(ebuff - firstpa);
 
 	/*
 	 * Initialize the mem_clusters[] array for the crash dump
@@ -480,7 +448,9 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Reserve space at the end of on-board RAM for the message
 	 * buffer.  We force it into on-board RAM because VME RAM
-	 * isn't cached by the hardware (s-l-o-w).
+	 * gets cleared very early on in locore.s (to initialise
+	 * parity on boards that need it). This would clobber the
+	 * messages from a previous running NetBSD system.
 	 */
 	RELOC(phys_seg_list[0].ps_end, paddr_t) -=
 	    m68k_round_page(MSGBUFSIZE);

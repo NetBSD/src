@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.19 2000/03/18 22:33:05 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 #include <machine/z8530var.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/dev/zsvar.h>
 
@@ -116,26 +117,37 @@ u_char zs_init_reg[16] = {
 
 /* Definition of the driver for autoconfig. */
 static int	zsc_print __P((void *, const char *name));
+int	zs_getc __P((void *));
+void	zs_putc __P((void *, int));
 
+#if 0
 static int zs_get_speed __P((struct zs_chanstate *));
+#endif
 
 extern struct cfdriver zsc_cd;
+
+cons_decl(zsc_pcc);
+
 
 /*
  * Configure children of an SCC.
  */
 void
-zs_config(zsc, chan_addr)
+zs_config(zsc, bust, bush)
 	struct zsc_softc *zsc;
-	struct zschan *(*chan_addr) __P((int, int));
+	bus_space_tag_t bust;
+	bus_space_handle_t bush;
 {
 	struct zsc_attach_args zsc_args;
+	struct zsdevice *zs;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int zsc_unit, channel, s;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
 	printf(": Zilog 8530 SCC\n");
+
+	zs = (struct zsdevice *) bush;	/* XXXXXXXX */
 
 	/*
 	 * Initialize software state for each channel.
@@ -154,7 +166,7 @@ zs_config(zsc, chan_addr)
 			bcopy(zs_conschan, cs, sizeof(struct zs_chanstate));
 			zs_conschan = cs;
 		} else {
-			zc = (*chan_addr)(zsc_unit, channel);
+			zc = (channel == 0) ? &zs->zs_chan_a : &zs->zs_chan_b;
 			cs->cs_reg_csr  = &zc->zc_csr;
 			cs->cs_reg_data = &zc->zc_data;
 			bcopy(zs_init_reg, cs->cs_creg, 16);
@@ -258,7 +270,7 @@ zshard(arg)
 /*
  * Similar scheme as for zshard (look at all of them)
  */
-int
+void
 zssoft(arg)
 	void *arg;
 {
@@ -267,7 +279,7 @@ zssoft(arg)
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
-		return (0);
+		return;
 
 	/*
 	 * The soft intr. bit will be set by zshard only if
@@ -281,10 +293,9 @@ zssoft(arg)
 			continue;
 		(void) zsc_intr_soft(zsc);
 	}
-	return (1);
 }
 
-
+#if 0
 /*
  * Compute the current baud rate given a ZSCC channel.
  */
@@ -298,6 +309,7 @@ zs_get_speed(cs)
 	tconst |= zs_read_reg(cs, 13) << 8;
 	return (TCONST_TO_BPS(cs->cs_brg_clk, tconst));
 }
+#endif
 
 /*
  * MD functions for setting the baud rate and control modes.
@@ -506,11 +518,17 @@ zs_putc(arg, c)
  * Common parts of console init.
  */
 void
-zs_cnconfig(zsc_unit, channel, zc)
+zs_cnconfig(zsc_unit, channel, bust, bush)
 	int zsc_unit, channel;
-	struct zschan *zc;
+	bus_space_tag_t bust;
+	bus_space_handle_t bush;
 {
 	struct zs_chanstate *cs;
+	struct zsdevice *zs;
+	struct zschan *zc;
+
+	zs = (struct zsdevice *) bush;	/* XXXXXXXX */
+	zc = (channel == 0) ? &zs->zs_chan_a : &zs->zs_chan_b;
 
 	/*
 	 * Pointer to channel state.  Later, the console channel
@@ -528,10 +546,13 @@ zs_cnconfig(zsc_unit, channel, zc)
 	bcopy(zs_init_reg, cs->cs_preg, 16);
 	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
 
+#if 0
 	/* XXX: Preserve BAUD rate from boot loader. */
 	/* XXX: Also, why reset the chip here? -gwr */
-	/* cs->cs_defspeed = zs_get_speed(cs); */
+	cs->cs_defspeed = zs_get_speed(cs);
+#else
 	cs->cs_defspeed = 9600;	/* XXX */
+#endif
 
 	/* Clear the master interrupt enable. */
 	zs_write_reg(cs, 9, 0);
@@ -547,7 +568,7 @@ zs_cnconfig(zsc_unit, channel, zc)
  * Polled console input putchar.
  */
 int
-zscngetc(dev)
+zsc_pcccngetc(dev)
 	dev_t dev;
 {
 	struct zs_chanstate *cs = zs_conschan;
@@ -561,7 +582,7 @@ zscngetc(dev)
  * Polled console output putchar.
  */
 void
-zscnputc(dev, c)
+zsc_pcccnputc(dev, c)
 	dev_t dev;
 	int c;
 {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.30 2000/03/14 15:56:56 oster Exp $
+#	$NetBSD: files.mvme68k,v 1.31 2000/03/18 22:33:02 scw Exp $
 
 # config file for mvme68k
 
@@ -7,6 +7,7 @@ maxpartitions 8
 
 device mainbus { }
 attach mainbus at root
+file arch/mvme68k/dev/mainbus.c		mainbus
 
 # MVME-147 Peripheral Channel Controller
 device pcc { [ ipl = -1 ] }
@@ -17,6 +18,19 @@ file arch/mvme68k/dev/pcc.c			pcc needs-flag
 device pcctwo { [ ipl = -1 ] }
 attach pcctwo at mainbus
 file arch/mvme68k/dev/pcctwo.c			pcctwo needs-flag
+
+# Grab the MD VMEbus goop
+include "dev/vme/files.vme"
+
+# MVME-147 VME controller chip
+device	vmepcc: vmebus
+attach	vmepcc at pcc
+file	arch/mvme68k/dev/vme_pcc.c		vmepcc
+
+# MVME-1[67]7 VME controller chip
+device	vmetwo: vmebus
+attach	vmetwo at mainbus
+file	arch/mvme68k/dev/vme_two.c		vmetwo
 
 device clock
 attach clock at pcc with clock_pcc
@@ -45,37 +59,18 @@ file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo
 
 # device defined in sys/conf/files
 attach le at pcc with le_pcc: le24
-file arch/mvme68k/dev/if_le.c			le
+file arch/mvme68k/dev/if_le.c			le_pcc
 
 # i82596 Ethernet Interface on MVME1[67]7
-device ie: ifnet, ether, arp, i82586
 attach ie at pcctwo with ie_pcctwo
-file arch/mvme68k/dev/if_ie.c			ie
+file arch/mvme68k/dev/if_ie.c			ie_pcctwo
 
 # CD2401 Quad Serial Controller
 attach clmpcc at pcctwo with clmpcc_pcctwo
 file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 
-# Generic VME support
-device vmechip { }
-file arch/mvme68k/dev/vme.c			vmechip
-
-device vmes { [ atype = -1 ], addr = 0, [ ipl = -1 ], [ vec = - 1 ] }
-attach vmes at vmechip
-
-device vmel { [ atype = -1 ], addr = 0, [ ipl = -1 ], [ vec = - 1 ] }
-attach vmel at vmechip
-
 # Memory disk for boot tape
 file arch/mvme68k/dev/md_root.c		memory_disk_hooks
-
-# MVME-147 VME controller chip
-attach vmechip at pcc with vmechip_pcc
-file arch/mvme68k/dev/vme_pcc.c			vmechip_pcc
-
-# MVME-1[67] VME controller chip
-attach vmechip at mainbus with vmetwo
-file arch/mvme68k/dev/vme_two.c			vmetwo
 
 include "dev/scsipi/files.scsipi"
 
@@ -105,11 +100,12 @@ attach ncrsc at pcctwo with ncrsc_pcctwo
 file arch/mvme68k/dev/ncrsc_pcctwo.c		ncrsc_pcctwo
 
 file arch/mvme68k/mvme68k/autoconf.c
+file arch/mvme68k/mvme68k/bus_dma.c
+file arch/mvme68k/mvme68k/bus_space.c
 file arch/mvme68k/mvme68k/clock.c
 file arch/mvme68k/mvme68k/conf.c
 file arch/mvme68k/mvme68k/db_memrw.c		ddb | kgdb
 file arch/mvme68k/mvme68k/disksubr.c
-file arch/mvme68k/mvme68k/dkbad.c
 file arch/mvme68k/mvme68k/isr.c
 file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c

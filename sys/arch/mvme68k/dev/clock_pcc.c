@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.5 1998/01/12 19:51:05 thorpej Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.6 2000/03/18 22:33:02 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,92 +47,116 @@
 #include <sys/device.h>
 
 #include <machine/psl.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
 
 #include <mvme68k/mvme68k/clockreg.h>
 #include <mvme68k/mvme68k/clockvar.h>
-
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
-int 	clock_pcc_match __P((struct device *, struct cfdata  *, void *));
-void	clock_pcc_attach __P((struct device *, struct device *, void *));
-int 	clock_pcc_profintr __P((void *));
-int 	clock_pcc_statintr __P((void *));
-void	clock_pcc_initclocks __P((int, int));
-void	clock_pcc_shutdown __P((void *));
+int clock_pcc_match __P((struct device *, struct cfdata *, void *));
+void clock_pcc_attach __P((struct device *, struct device *, void *));
 
-u_char	clock_pcc_lvl;
+struct clock_pcc_softc {
+	struct device sc_dev;
+	struct clock_attach_args sc_clock_args;
+	u_char sc_clock_lvl;
+};
 
 struct cfattach clock_pcc_ca = {
-	sizeof(struct device), clock_pcc_match, clock_pcc_attach
+	sizeof(struct clock_pcc_softc), clock_pcc_match, clock_pcc_attach
 };
 
 extern struct cfdriver clock_cd;
 
+
+static int clock_pcc_profintr __P((void *));
+static int clock_pcc_statintr __P((void *));
+static void clock_pcc_initclocks __P((void *, int, int));
+static void clock_pcc_shutdown __P((void *));
+
+static struct clock_pcc_softc *clock_pcc_sc;
+
+/* ARGSUSED */
 int
 clock_pcc_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pcc_attach_args *pa = aux;
-	static int clock_pcc_matched;
+	struct pcc_attach_args *pa;
+
+	pa = aux;
 
 	/* Only one clock, please. */
-	if (clock_pcc_matched)
+	if (clock_pcc_sc)
 		return (0);
 
 	if (strcmp(pa->pa_name, clock_cd.cd_name))
 		return (0);
 
-	clock_pcc_matched = 1;
 	pa->pa_ipl = cf->pcccf_ipl;
 
 	return (1);
 }
 
+/* ARGSUSED */
 void
 clock_pcc_attach(parent, self, aux)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *aux;
 {
-	struct pcc_attach_args *pa = aux;
-	caddr_t nvram, clockregs;
+	struct pcc_attach_args *pa;
+	struct clock_pcc_softc *sc;
+
+	sc = (struct clock_pcc_softc *) self;
+	pa = aux;
 
 	if (pa->pa_ipl != CLOCK_LEVEL)
 		panic("clock_pcc_attach: wrong interrupt level");
 
-	nvram = PCC_VADDR(pa->pa_offset);
-	clockregs = PCC_VADDR(pa->pa_offset + PCC_RTC_OFF);
+	clock_pcc_sc = sc;
+
+	/* Map the RTC's registers */
+	sc->sc_clock_args.ca_bust = pa->pa_bust;
+	bus_space_map(pa->pa_bust, pa->pa_offset,
+	    MK48T_REGSIZE, 0, &sc->sc_clock_args.ca_bush);
+
+	sc->sc_clock_args.ca_arg = sc;
+	sc->sc_clock_args.ca_initfunc = clock_pcc_initclocks;
 
 	/* Do common portions of clock config. */
-	clock_config(self, clockregs, nvram, MK48T02_SIZE,
-	    clock_pcc_initclocks);
+	clock_config(self, &sc->sc_clock_args);
 
 	/* Ensure our interrupts get disabled at shutdown time. */
-	(void)shutdownhook_establish(clock_pcc_shutdown, NULL);
+	(void) shutdownhook_establish(clock_pcc_shutdown, NULL);
 
 	/* Attach the interrupt handlers. */
 	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl, NULL);
 	pccintr_establish(PCCV_TIMER2, clock_pcc_statintr, pa->pa_ipl, NULL);
-	clock_pcc_lvl = pa->pa_ipl | PCC_IENABLE | PCC_TIMERACK;
+	sc->sc_clock_lvl = pa->pa_ipl | PCC_IENABLE | PCC_TIMERACK;
 }
 
 void
-clock_pcc_initclocks(proftick, stattick)
-	int proftick, stattick;
+clock_pcc_initclocks(arg, proftick, stattick)
+	void *arg;
+	int proftick;
+	int stattick;
 {
+	struct clock_pcc_softc *sc = arg;
 
-	sys_pcc->t1_pload = pcc_timer_us2lim(proftick);
-	sys_pcc->t1_cr = PCC_TIMERCLEAR;
-	sys_pcc->t1_cr = PCC_TIMERSTART;
-	sys_pcc->t1_int = clock_pcc_lvl;
+	pcc_reg_write16(sys_pcc, PCCREG_TMR1_PRELOAD,
+	    pcc_timer_us2lim(proftick));
+	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
+	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
+	pcc_reg_write(sys_pcc, PCCREG_TMR1_INTR_CTRL, sc->sc_clock_lvl);
 
-	sys_pcc->t2_pload = pcc_timer_us2lim(stattick);
-	sys_pcc->t2_cr = PCC_TIMERCLEAR;
-	sys_pcc->t2_cr = PCC_TIMERSTART; 
-	sys_pcc->t2_int = clock_pcc_lvl;
+	pcc_reg_write16(sys_pcc, PCCREG_TMR2_PRELOAD,
+	    pcc_timer_us2lim(stattick));
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERCLEAR);
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERSTART);
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL, sc->sc_clock_lvl);
 }
 
 int
@@ -140,7 +164,8 @@ clock_pcc_profintr(frame)
 	void *frame;
 {
 
-	sys_pcc->t1_int = clock_pcc_lvl;
+	pcc_reg_write(sys_pcc, PCCREG_TMR1_INTR_CTRL,
+	    clock_pcc_sc->sc_clock_lvl);
 	hardclock(frame);
 	clock_profcnt.ev_count++;
 	return (1);
@@ -152,15 +177,17 @@ clock_pcc_statintr(frame)
 {
 
 	/* Disable the timer interrupt while we handle it. */
-	sys_pcc->t2_int = 0;
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL, 0);
 
-	statclock((struct clockframe *)frame);
+	statclock((struct clockframe *) frame);
 
-	sys_pcc->t2_pload =
-	    pcc_timer_us2lim(CLOCK_NEWINT(clock_statvar, clock_statmin));
-	sys_pcc->t2_cr = PCC_TIMERCLEAR;
-	sys_pcc->t2_cr = PCC_TIMERSTART;
-	sys_pcc->t2_int = clock_pcc_lvl;
+	pcc_reg_write16(sys_pcc, PCCREG_TMR2_PRELOAD,
+	    pcc_timer_us2lim(CLOCK_NEWINT(clock_statvar, clock_statmin)));
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERCLEAR);
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERSTART);
+
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL,
+	    clock_pcc_sc->sc_clock_lvl);
 
 	clock_statcnt.ev_count++;
 	return (1);
@@ -173,8 +200,8 @@ clock_pcc_shutdown(arg)
 {
 
 	/* Make sure the timer interrupts are turned off. */
-	sys_pcc->t1_cr = PCC_TIMERCLEAR;
-	sys_pcc->t1_int = 0;
-	sys_pcc->t2_cr = PCC_TIMERCLEAR;
-	sys_pcc->t2_int = 0;
+	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
+	pcc_reg_write(sys_pcc, PCCREG_TMR1_INTR_CTRL, 0);
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERCLEAR);
+	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL, 0);
 }
