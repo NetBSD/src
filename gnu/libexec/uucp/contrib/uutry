@@ -12,7 +12,7 @@
 
 #
 # The following variables should be gropped from the configuration
-# files rather then being hard coded here.
+# files rather than being hard coded here.
 #
 Spool=/usr/spool/uucp
 Lib=/usr/local/lib/uucp
