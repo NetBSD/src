@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.2 1993/10/11 02:16:15 deraadt Exp $
+ * $Id: clock.c,v 1.3 1993/11/28 03:47:11 deraadt Exp $
  */
 
 /*
@@ -128,7 +128,7 @@ clockattach(parent, self, aux)
 	h = cl->cl_idprom.id_machine << 24;
 	h |= cl->cl_idprom.id_hostid[0] << 16;
 	h |= cl->cl_idprom.id_hostid[1] << 8;
-	h |= cl->cl_idprom.id_hostid[0];
+	h |= cl->cl_idprom.id_hostid[2];
 	hostid = h;
 	clockreg = cl;
 }
