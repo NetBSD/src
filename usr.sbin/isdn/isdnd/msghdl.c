@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.1.1.1 2001/01/06 13:00:23 martin Exp $ 
+ *	$Id: msghdl.c,v 1.2 2002/03/17 11:09:16 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -898,7 +898,7 @@ msg_accounting(msg_accounting_ind_t *mp)
 {
 	cfg_entry_t *cep;
 
-	if((cep = find_active_entry_by_driver(mp->driver, mp->driver_unit)) == NULL)
+	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
 		log(LL_WRN, "msg_accounting: no config entry found!");	
 		return;
