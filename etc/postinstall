@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.63 2003/10/26 23:08:29 lukem Exp $
+# $NetBSD: postinstall,v 1.64 2003/12/22 12:07:59 tron Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -605,7 +605,8 @@ do_makedev()
 
 	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
 			# generate MAKEDEV from source if source is available
-		MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} awk \
+		MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
+		    NETBSDSRCDIR="${SRC_DIR}" awk \
 		    -v ETCDIR="${SRC_DIR}/etc" -f ${SRC_DIR}/etc/MAKEDEV.awk \
 		    ${SRC_DIR}/etc/MAKEDEV.tmpl > ${SCRATCHDIR}/MAKEDEV
 	fi
