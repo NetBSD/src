@@ -1,0 +1,4 @@
+# $NetBSD: md.atari,v 1.3.2.2 2003/10/26 18:27:31 cyber Exp $
+./usr/X11R6/lib/libXxf86dga.a
+./usr/X11R6/lib/libXxf86misc.a
+./usr/X11R6/lib/libXxf86vm.a
