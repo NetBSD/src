@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.16 1994/02/01 06:01:47 deraadt Exp $
+ * $Id: machdep.c,v 1.17 1994/02/26 10:30:35 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -64,6 +64,12 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -257,6 +263,18 @@ allocsys(v)
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 	
 	/*
