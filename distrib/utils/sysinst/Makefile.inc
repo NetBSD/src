@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2004/04/12 03:49:24 grant Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2004/04/25 21:55:18 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -19,7 +19,6 @@ _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 
 DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
 LDADD=		-lcurses -ltermcap -lutil
-LDSTATIC?=	-static
 
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.18 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: mbr.h,v 1.19 2004/04/25 21:55:18 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -62,7 +62,8 @@ typedef struct mbr_info_t mbr_info_t;
 struct mbr_info_t {
 	struct mbr_sector	mbr;
 #ifdef BOOTSEL
-	char		nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
+	struct mbr_bootsel	mbrb;	/* writeable for any mbr code */
+	uint		oflags;
 #endif
 	uint		sector;		/* where we read this from */
 	mbr_info_t	*extended;	/* next in extended partition list */
