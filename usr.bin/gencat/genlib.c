@@ -40,6 +40,8 @@ up-to-date.  Many thanks.
 */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef SYSV
 #include <sys/types.h>
 #include <unistd.h>
