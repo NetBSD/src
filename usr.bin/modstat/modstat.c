@@ -29,20 +29,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.4 1994/05/05 06:35:50 cgd Exp $
+ *	$Id: modstat.c,v 1.5 1994/05/23 05:44:08 cgd Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
 #include <string.h>
+#include <a.out.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
-#include <sys/exec.h>
 #include <sys/lkm.h>
-#include <a.out.h>
 #include <sys/file.h>
 #include <sys/errno.h>
 #include "pathnames.h"
