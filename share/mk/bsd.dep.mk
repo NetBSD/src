@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.34 2001/11/28 04:38:29 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.35 2002/06/04 21:22:54 thorpej Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -15,16 +15,21 @@ MKDEP?=		mkdep
 # some of the rules involve .h sources, so remove them from mkdep line
 
 .if defined(SRCS)
+.if defined(HAVE_GCC3)
+__acpp_flags=
+.else
+__acpp_flags=	-traditional-cpp
+.endif
 .NOPATH:	.depend
 .depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
 	if [ "$$files" != " " ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} -traditional-cpp ${AINC:Q} \
+	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${__acpp_flags} ${AINC:Q} \
 	    $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*} ${CPPFLAGS} -traditional-cpp ${AINC} $$files; \
+	    ${AFLAGS:M-[ID]*} ${CPPFLAGS} ${__acpp_flags} ${AINC} $$files; \
 	fi
 	@files="${.ALLSRC:M*.c}"; \
 	if [ "$$files" != "" ]; then \
