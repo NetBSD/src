@@ -1,5 +1,5 @@
-.\" Copyright (c) 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,8 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from @(#)doc-syms	5.6 (Berkeley) 8/5/91
-.\"	$NetBSD: doc-syms,v 1.21 1997/04/17 18:02:10 jtc Exp $
+.\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
+.\"	$NetBSD: doc-syms,v 1.22 1997/07/02 02:55:46 phil Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -52,13 +52,14 @@
 .\}
 .el .aZ
 ..
-.\" NS Bx macro -BSD UNIX (fix smaller nroff version)
+.\" NS Bx macro -BSD (fix smaller nroff version)
 .de Bx
 .nr cF \\n(.f
 .nr cZ \\n(.s
 .ds aa \&\f\\n(cF\s\\n(cZ
 .if \\n(aC==0 \{\
-.       ie \\n(.$==0 \&\\*(tNBSD\\*(aa \\*(tNUNIX\\*(aa
+.\" .       ie \\n(.$==0 \&\\*(tNBSD\\*(aa \\*(tNUNIX\\*(aa
+.       ie \\n(.$==0 \&\\*(tNBSD\\*(aa
 .       el .aV \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 .\}
 .if "\\$1"-alpha" \{\
@@ -111,7 +112,7 @@
 .		el .aZ
 .	\}
 .	el \{\
-.	       as b1 \&\\*(tNBSD\\*(aa U\\*(tNNIX\\*(aa
+.	       as b1 \&\\*(tNBSD\\*(aa
 .	       nR
 .	\}
 .\}
@@ -161,7 +162,7 @@
 .\}
 .if \\n(.$==0   \&\\*(tNNetBSD\\*(aa
 ..
-.\" Ns At macro - AT&T UNIX
+.\" Ns At macro - AT&T UNIX (this macro does not handle punctuation)
 .de At
 .nr cF \\n(.f
 .nr cZ \\n(.s
@@ -185,6 +186,9 @@
 .	if "\\$1"V.2"  \&\\*(tNAT&T\\*(aa System V.2 \\*(tNUNIX\\*(aa
 .	if "\\$1"V.3"  \&\\*(tNAT&T\\*(aa System V.3 \\*(tNUNIX\\*(aa
 .	if "\\$1"V.4"  \&\\*(tNAT&T\\*(aa System V.4 \\*(tNUNIX\\*(aa
+.\}
+.if \\n(.$==0 \{\
+\&\\*(tNAT&T UNIX\\*(aa
 .\}
 ..
 .\" The Bt macro should go away now
@@ -288,17 +292,17 @@
 .		\}
 .		el \{\
 .			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
+.			as b1 (``\\*(tNANSI C \\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-ansiC-89" \{\
 .		ie \\n(sT==1 \{\
 .			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
+.			as b1 (``\\*(tNANSI C \\*(aa'')
 .		\}
 .		el \{\
 .			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C\\*(aa'')
+.			as b1 (``\\*(tNANSI C \\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-ieee754" \{\
