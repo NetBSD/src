@@ -1,7 +1,7 @@
 #
 # @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
 #
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.1 1993/04/04 19:00:06 cgd Exp $
+# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.2 1993/04/26 05:04:58 deraadt Exp $
 #
 
 .SUFFIXES: .x
@@ -13,6 +13,7 @@ HDRS= klm_prot.h mount.h nfs_prot.h nlm_prot.h rex.h rquota.h rnusers.h\
 XFILES= bootparam_prot.x klm_prot.x mount.x nfs_prot.x nlm_prot.x \
       rex.x rnusers.x rquota.x rstat.x rwall.x sm_inter.x spray.x \
       yppasswd.x yp.x
+HFILES= yp_prot.h ypclnt.h
 
 CLEANFILES+= ${HDRS}
 
@@ -29,6 +30,8 @@ install:
 		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
 	@for i in $(HDRS); do \
 		(install -c -m 644 $$i ${DESTDIR}/usr/include/rpcsvc) done
+	@for i in $(HFILES); do \
+		(install -c -m 644 ${.CURDIR}/$$i ${DESTDIR}/usr/include/rpcsvc) done
 
 .x.h:
 	@echo generating $@...
