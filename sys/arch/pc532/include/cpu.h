@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 1995/06/28 02:55:56 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 1996/02/01 00:03:25 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,8 +38,9 @@
  *	@(#)cpu.h	5.4 (Berkeley) 5/9/91
  */
 
-#ifndef _MACHINE_CPU_H_
-#define _MACHINE_CPU_H_
+#ifndef _NS532_CPU_H_
+#define _NS532_CPU_H_
+
 /*
  * Definitions unique to ns532 cpu support.
  *
@@ -54,8 +55,7 @@
  * referenced in generic code
  */
 #define cpu_swapin(p)           	/* nothing */
-#define cpu_set_init_frame(p,fp)	(p)->p_md.md_regs = fp
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define	cpu_wait(p)			/* nothing */
 
 /*  XXX needed?  PAN
  * function vs. inline configuration;
@@ -75,14 +75,10 @@
 
 #define clockframe intrframe 
 
-#define	CLKF_USERMODE(framep)	((framep)->if_psr & PSR_USR)
+#define	CLKF_USERMODE(framep)	USERMODE((framep)->if_psr)
 #define	CLKF_BASEPRI(framep)	((framep)->if_pl == imask[IPL_ZERO])
 #define	CLKF_PC(framep)		((framep)->if_pc)
 #define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
-
-#ifdef _KERNEL
-#include <machine/icu.h>
-#endif
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -96,7 +92,6 @@ int	want_resched;	/* resched() was called */
  * interrupt.  On the pc532, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, setsoftast())
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 /*
@@ -104,6 +99,11 @@ int	want_resched;	/* resched() was called */
  * process as soon as possible.
  */
 #define	signotify(p)	setsoftast()
+
+/*
+ * We need a machine-independent name for this.
+ */
+#define	DELAY(n)	{ volatile int N = (n); while (--N > 0); }
 
 /* 
  * CTL_MACHDEP definitions.
@@ -116,4 +116,4 @@ int	want_resched;	/* resched() was called */
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-#endif
+#endif /* !_NS532_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.6 1995/03/28 18:18:24 jtc Exp $	*/
+/*	$NetBSD: pcb.h,v 1.7 1996/02/01 00:03:32 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,13 +72,11 @@ struct pcb {
 
 	long pcb_ksp;		/* Kernel stack -- sp0. */
 	long pcb_kfp;		/* Kernel fp. */
-	long pcb_ptb;		/* ptb0 */
-	long pcb_pl;		/* "processor level" */
+	long pcb_ptb;		/* ptb0, ptb1 */
 
 /*
  * Software pcb (extension)
  */
-	u_short	pcb_flags;	/* Used?  PAN */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
 };
 
