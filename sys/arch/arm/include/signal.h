@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 2003/10/18 17:57:21 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -55,6 +55,13 @@ typedef int sig_atomic_t;
 #define __HAVE_SIGINFO
 
 #if defined(_NETBSD_SOURCE)
+
+#ifdef COMPAT_16
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
+
 #ifndef _LOCORE
 /*
  * Information pushed on stack when a signal is delivered.
