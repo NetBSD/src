@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.25 2002/03/03 11:22:59 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.26 2002/03/23 02:22:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -552,7 +552,7 @@ initarm(bootargs)
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 	
-	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE, &kernel_ptpt);
+	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
@@ -626,22 +626,22 @@ initarm(bootargs)
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
 		pmap_map_entry(l1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_BASE +
+		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_map_entry(l1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
+		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);

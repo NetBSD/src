@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2002/03/23 01:56:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 2002/03/23 02:22:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -196,7 +196,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 /* Virtual address to page table entry */
 #define vtopte(va) \
-	((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE + \
+	((pt_entry_t *)(PTE_BASE + \
 	(arm_byte_to_page((unsigned int)(va)) << 2)))
 
 /* Virtual address to physical address */
