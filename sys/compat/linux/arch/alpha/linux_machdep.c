@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2 1998/10/03 20:17:37 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.3 1998/12/08 21:00:11 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
@@ -80,19 +79,17 @@
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_emuldata.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <machine/alpha.h>
 #include <machine/reg.h>
-#include <machine/vmparam.h>
 
 #include "wsdisplay.h"
 #if (NWSDISPLAY >0)
 #include <sys/ioctl.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
-#include "opt_xserver.h"
 #endif
 
 /*
@@ -122,7 +119,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	extern char linux_rt_sigcode[], linux_rt_esigcode[];
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = (psp->ps_sigstk.ss_flags & (SS_DIABLE | SS_ONSTACK)) == 0 &&
+	onstack = (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 		  (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context.  */
@@ -218,12 +215,12 @@ void setup_linux_sigframe(tf, sig, mask)
 	register struct proc *p = curproc;
 	struct linux_sigframe *sfp, sigframe;
 	struct sigacts *psp = p->p_sigacts;
-	int onstack
+	int onstack;
 	int fsize, rndfsize;
 	extern char linux_sigcode[], linux_esigcode[];
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = (psp->ps_sigstk.ss_flags & (SS_DIABLE | SS_ONSTACK)) == 0 &&
+	onstack = (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 		  (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context.  */
@@ -236,7 +233,7 @@ void setup_linux_sigframe(tf, sig, mask)
 						  psp->ps_sigstk.ss_size);
 	else
 		sfp = (struct linux_sigframe *)(alpha_pal_rdusp());
-	sfp = (struct linux_rt_sigframe *)((caddr_t)sfp - rndfsize);
+	sfp = (struct linux_sigframe *)((caddr_t)sfp - rndfsize);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid = sigpid)
@@ -317,14 +314,18 @@ linux_sendsig(catcher, sig, mask, code)
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf = p->p_md.md_tf;
+	struct linux_emuldata *edp;
 
 	/* Setup the signal frame (and part of the trapframe) */
 	/*OLD: if (p->p_sigacts->ps_siginfo & sigmask(sig))*/
-	XXX XAX this is broken now.  need someplace to store what
-	XXX XAX kind of signal handler a signal has.
-	if (p->p_emuldata && 
-	    sigismember((linux_emuldata *)(p->p_emuldata)->ps_siginfo,
-			sigmask(sig))
+/*	XXX XAX this is broken now.  need someplace to store what
+	XXX XAX kind of signal handler a signal has.*/
+#if 0
+	edp = (struct linux_emuldata *)p->p_emuldata;
+#else
+	edp = 0;
+#endif
+	if (edp && sigismember(&edp->ps_siginfo, sig))
 		setup_linux_rt_sigframe(tf, sig, mask);
 	else
 		setup_linux_sigframe(tf, sig, mask);
