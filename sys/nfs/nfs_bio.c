@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.111 2003/11/17 00:28:32 jonathan Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.112 2003/11/17 01:44:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.111 2003/11/17 00:28:32 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.112 2003/11/17 01:44:49 jonathan Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -845,13 +845,15 @@ again:
 	 * XXX: start non-loopback mounts straight away?  If "lots free",
 	 * let pagedaemon start loopback writes anyway?
 	 */
-	if (gotiod && (curproc != uvm.pagedaemon_proc)) {
-
+	if (gotiod) {
+	  
 		/*
 		 * Ensure that the queue never grows too large.
 		 */
-
-		while (nmp->nm_bufqlen >= 2*nfs_numasync) {
+		if (curproc == uvm.pagedaemon_proc)) {
+	  		/* Enque for later, to avoid free-page deadlock */
+			  (void) 0;
+		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
 			nmp->nm_bufqwant = TRUE;
 			error = ltsleep(&nmp->nm_bufq,
 			    slpflag | PRIBIO | PNORELOCK,
