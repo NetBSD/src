@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.59 2001/03/05 14:17:06 tron Exp $
+#	$NetBSD: bsd.man.mk,v 1.60 2001/03/21 04:04:15 simonb Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -88,7 +88,9 @@ __installpage: .USE
 	@chown ${MANOWN}:${MANGRP} ${.TARGET}
 	@chmod ${MANMODE} ${.TARGET}
 .else
-	${MINSTALL} ${.ALLSRC} ${.TARGET}
+	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
+	    (echo "${MINSTALL} ${.ALLSRC} ${.TARGET}" && \
+	     ${MINSTALL} ${.ALLSRC} ${.TARGET})
 .endif
 
 
