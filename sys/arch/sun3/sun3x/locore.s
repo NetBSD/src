@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 2003/08/07 16:29:59 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 2004/03/05 15:50:42 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -191,20 +191,6 @@ L_high_code:
 	movl	%a1,%a0@(L_MD_REGS)	|   trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
 	PANIC("main() returned")
-
-/*
- * proc_trampoline: call function in register %a2 with %a3 as an arg
- * and then rei.
- */
-GLOBAL(proc_trampoline)
-	movl	%a3,%sp@-		| push function arg
-	jbsr	%a2@			| call function
-	addql	#4,%sp			| pop arg
-	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-	jra	_ASM_LABEL(rei)		| and return
 
 | That is all the assembly startup code we need on the sun3x!
 | The rest of this is like the hp300/locore.s where possible.
