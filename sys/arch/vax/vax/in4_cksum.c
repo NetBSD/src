@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.1 2000/06/07 19:31:33 matt Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.2 2001/04/28 09:36:01 ragge Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -74,6 +74,15 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 
+#ifdef CKSUMDEBUG
+int in4_cksum_md_debug(struct mbuf *m, u_int8_t nxt, int off, int len);
+#define	in4_cksum in4_cksum_md_debug
+#include <netinet/in4_cksum.c>
+#undef in4_cksum
+#undef ADDCARRY
+#undef REDUCE
+#endif
+
 /*
  * Checksum routine for Internet Protocol family headers.
  * This is only for IPv4 pseudo header checksum.
@@ -83,6 +92,7 @@
  *
  * This implementation is VAX version.
  */
+
 
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16);}
 #define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
@@ -104,39 +114,43 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	u_int32_t sum = 0;
 	int mlen = 0;
 	int byte_swapped = 0;
+#ifdef CKSUMDEBUG
+	int debugrv = in4_cksum_md_debug(m, nxt, off, len);
+#endif
 
-	if (off > 0) {
-		struct ipovly ipov;
-		/* pseudo header */
-		if (off < sizeof(struct ipovly))
-			panic("in4_cksum: offset too short");
-		if (m->m_len < sizeof(struct ip))
-			panic("in4_cksum: bad mbuf chain");
-		bzero(&ipov, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt;
-		ipov.ih_src = mtod(m, struct ip *)->ip_src;
-		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (u_int8_t *)&ipov;
+#ifdef DIAGNOSTIC
+	if (off < sizeof(struct ipovly))
+		panic("in4_cksum: offset too short");
+	if (m->m_len < sizeof(struct ip))
+		panic("in4_cksum: bad mbuf chain");
+#endif
 
-		/* assumes sizeof(ipov) == 20 */
-		ADDL;	ADWC;	ADWC;	ADWC;
-		ADWC;	ADDC;
+	__asm __volatile("
+		movzwl	16(ap),%0	# mov len to sum
+		addb2	8(ap),%0	# add proto to sum
+		rotl	$8,%0,%0	# htons, carry is preserved
+		adwc	12(%2),%0	# add src ip
+		adwc	16(%2),%0	# add dst ip
+		adwc	$0,%0		# clean up carry
+		" : "=r" (sum) : "0" (sum), "r" (mtod(m, void *)));
 
-		/* skip unnecessary part */
-		while (m && off > 0) {
-			if (m->m_len > off)
-				break;
-			off -= m->m_len;
-			m = m->m_next;
-		}
+	/* skip unnecessary part */
+	while (m && off > 0) {
+		if (m->m_len > off)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
 	}
 
 	for (;m && len; m = m->m_next) {
 		if ((mlen = m->m_len) == 0)
 			continue;
-		w = mtod(m, u_int8_t *) + off;
-		off = 0;
+		w = mtod(m, u_int8_t *);
+		if (off) {
+			w += off;
+			mlen -= off;
+			off = 0;
+		}
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
@@ -207,5 +221,10 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	}
 	REDUCE;
 	ADDCARRY;
+#ifdef CKSUMDEBUG
+	if ((sum ^ 0xffff) != debugrv)
+		printf("in4_cksum: rv != debugrv (rv %x debugrv %x)\n",
+		    (sum ^ 0xffff), debugrv);
+#endif
 	return (sum ^ 0xffff);
 }
