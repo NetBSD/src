@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.22 2001/11/21 14:00:12 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.23 2001/11/21 16:05:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.22 2001/11/21 14:00:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.23 2001/11/21 16:05:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,6 +187,7 @@ Static usbd_status	ehci_device_request(usbd_xfer_handle xfer);
 Static void		ehci_add_qh(ehci_soft_qh_t *, ehci_soft_qh_t *);
 Static void		ehci_rem_qh(ehci_softc_t *, ehci_soft_qh_t *,
 				    ehci_soft_qh_t *);
+Static void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
 Static void		ehci_sync_hc(ehci_softc_t *);
 
 Static void		ehci_close_pipe(usbd_pipe_handle, ehci_soft_qh_t *);
@@ -677,8 +678,7 @@ ehci_idone(struct ehci_xfer *ex)
 	}
 
 #ifdef EHCI_DEBUG
-	DPRINTFN(10, ("ehci_idone: ex=%p, xfer=%p, pipe=%p ready\n",
-		      ex, xfer, epipe));
+	DPRINTFN(/*10*/2, ("ehci_idone: xfer=%p, pipe=%p ready\n", xfer, epipe));
 	if (ehcidebug > 10)
 		ehci_dump_sqtds(ex->sqtdstart);
 #endif
@@ -704,7 +704,7 @@ ehci_idone(struct ehci_xfer *ex)
 	}
 
 	status &= EHCI_QTD_STATERRS;
-	DPRINTFN(/*10*/2, ("ehci_idone: len=%d actlen=%d, status=0x%x\n",
+	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
 			   xfer->length, actlen, status));
 	xfer->actlen = actlen;
 	if (status != 0) {
@@ -712,8 +712,8 @@ ehci_idone(struct ehci_xfer *ex)
 		char sbuf[128];
 
 		bitmask_snprintf((u_int32_t)status,
-				 "\20\2MISSEDMICRO\3XACT\4BABBLE\5BABBLE"
-				 "\6HALTED",
+				 "\20\3MISSEDMICRO\4XACT\5BABBLE\6BABBLE"
+				 "\7HALTED",
 				 sbuf, sizeof(sbuf));
 
 		DPRINTFN((status == EHCI_QTD_HALTED)*/*10*/2,
@@ -722,8 +722,11 @@ ehci_idone(struct ehci_xfer *ex)
 			  xfer->pipe->device->address,
 			  xfer->pipe->endpoint->edesc->bEndpointAddress,
 			  sbuf));
+		if (ehcidebug > 2) {
+			ehci_dump_sqh(epipe->sqh);
+			ehci_dump_sqtds(ex->sqtdstart);
+		}
 #endif
-
 		if (status == EHCI_QTD_HALTED)
 			xfer->status = USBD_STALLED;
 		else
@@ -987,7 +990,8 @@ ehci_device_clear_toggle(usbd_pipe_handle pipe)
 {
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 
-	DPRINTF(("ehci_device_clear_toggle: epipe=%p\n", epipe));
+	DPRINTF(("ehci_device_clear_toggle: epipe=%p status=0x%x\n",
+		 epipe, epipe->sqh->qh.qh_qtd.qtd_status));
 #ifdef USB_DEBUG
 	if (ehcidebug)
 		usbd_dump_pipe(pipe);
@@ -1258,6 +1262,18 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 	p->qh.qh_link = sqh->qh.qh_link;
 
 	ehci_sync_hc(sc);
+}
+
+void
+ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
+{
+	/* Halt while we are messing. */
+	sqh->qh.qh_qtd.qtd_status |= htole32(EHCI_QTD_HALTED);
+	sqh->qh.qh_curqtd = 0;
+	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
+	sqh->sqtd = sqtd;
+	/* Keep toggle, clear the rest, including length. */
+	sqh->qh.qh_qtd.qtd_status &= htole32(EHCI_QTD_TOGGLE);
 }
 
 /*
@@ -2423,7 +2439,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	stat->len = 0;
 
 #ifdef EHCI_DEBUG
-	if (ehcidebug > 2) {
+	if (ehcidebug > 5) {
 		DPRINTF(("ehci_device_request:\n"));
 		ehci_dump_sqh(sqh);
 		ehci_dump_sqtds(setup);
@@ -2441,9 +2457,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 	/* Insert qTD in QH list. */
 	s = splusb();
-	sqh->qh.qh_curqtd = 0;
-	sqh->qh.qh_qtd.qtd_next = htole32(setup->physaddr);
-	sqh->sqtd = setup;
+	ehci_set_qh_qtd(sqh, setup);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
                 usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    ehci_timeout, xfer);
@@ -2454,9 +2468,9 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 #ifdef EHCI_DEBUG
 	if (ehcidebug > 10) {
-		delay(10000);
 		DPRINTF(("ehci_device_request: status=%x\n",
 			 EOREAD4(sc, EHCI_USBSTS)));
+		delay(10000);
 		ehci_dump_regs(sc);
 		ehci_dump_sqh(sc->sc_async_head);
 		ehci_dump_sqh(sqh);
@@ -2528,8 +2542,9 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 		return (err);
 
 #ifdef EHCI_DEBUG
-	if (ehcidebug > 8) {
+	if (ehcidebug > 5) {
 		DPRINTF(("ehci_device_bulk_transfer: data(1)\n"));
+		ehci_dump_sqh(sqh);
 		ehci_dump_sqtds(data);
 	}
 #endif
@@ -2545,9 +2560,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 #endif
 
 	s = splusb();
-	sqh->qh.qh_curqtd = 0;
-	sqh->qh.qh_qtd.qtd_next = htole32(data->physaddr);
-	sqh->sqtd = data;
+	ehci_set_qh_qtd(sqh, data);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    ehci_timeout, xfer);
@@ -2559,6 +2572,10 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 #ifdef EHCI_DEBUG
 	if (ehcidebug > 10) {
 		DPRINTF(("ehci_device_bulk_transfer: data(2)\n"));
+		delay(10000);
+		ehci_dump_regs(sc);
+		ehci_dump_sqh(sc->sc_async_head);
+		ehci_dump_sqh(sqh);
 		ehci_dump_sqtds(data);
 	}
 #endif
