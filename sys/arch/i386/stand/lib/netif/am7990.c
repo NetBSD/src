@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.2 1997/03/15 22:20:02 perry Exp $	*/
+/*	$NetBSD: am7990.c,v 1.3 1997/06/13 13:45:50 drochner Exp $	*/
 
 /* mostly from netbsd:sys/arch/i386/netboot/ne2100.c
  memory allocation now 1 chunk, added deallocation
@@ -23,8 +23,6 @@
 
 #include "etherdrv.h"
 #include "lance.h"
-
-extern void bzero __P((void*, int)); /* XXX */
 
 extern u_char eth_myaddr[6];
 
