@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.13 1996/10/14 23:53:58 mark Exp $ */
+/* $NetBSD: asc.c,v 1.14 1996/10/29 23:52:59 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -38,6 +38,8 @@
 
 /*
  * Driver for the Acorn SCSI card using the SBIC (WD3393) generic driver
+ *
+ * Thanks to Acorn for supplying programming information on this card.
  */
 
 /*

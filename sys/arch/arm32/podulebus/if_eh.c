@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.11 1996/10/14 23:55:01 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.12 1996/10/29 23:53:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -46,6 +46,10 @@
  * if_eh.c
  *
  * Ether H driver.
+ */
+
+/*
+ * Thanks to I-cubed for suppling some programming information for this card.
  */
 
 /* Some system includes *****************************************************/
