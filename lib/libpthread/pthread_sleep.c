@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.5 2004/08/24 02:08:08 nathanw Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.6 2005/01/06 17:33:36 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.5 2004/08/24 02:08:08 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.6 2005/01/06 17:33:36 mycroft Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -75,7 +75,6 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	int retval;
 	pthread_t self;
 	struct timespec sleeptime;
-	struct timeval now;
 	struct pt_alarm_t alarm;
 
 	if ((rqtp->tv_sec) < 0 ||
@@ -99,8 +98,7 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	 * than intended, but the same thing could happen just before
 	 * the thread called sleep too, so it's not our problem.
 	 */
-	gettimeofday(&now, NULL);
-	TIMEVAL_TO_TIMESPEC(&now, &sleeptime);
+	clock_gettime(CLOCK_REALTIME, &sleeptime);
 	timespecadd(&sleeptime, rqtp, &sleeptime);
 
 	do {
@@ -132,8 +130,7 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 			retval = -1;
 			errno = EINTR;
 			if (rmtp) {
-				gettimeofday(&now, NULL);
-				TIMEVAL_TO_TIMESPEC(&now, rmtp);
+				clock_gettime(CLOCK_REALTIME, rmtp);
 				timespecsub(&sleeptime, rmtp, rmtp);
 			}
 		} else if (rmtp)
