@@ -1,10 +1,15 @@
-#	$NetBSD: ALPHA,v 1.31.2.2 1997/01/18 03:55:55 thorpej Exp $
+#	$NetBSD: ALPHA,v 1.31.2.3 1997/01/30 05:15:02 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
+
+# set kernel load address a bit higher to allow kernel to be netbooted.
+# if not netbooting, the "makeoptions LOADADDRESS" line can be commented
+# out to save a fair chunk (~850k) of RAM.
+makeoptions	LOADADDRESS="fffffc0000300000"
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
@@ -48,7 +53,6 @@ options		CCITT,LLC,HDLC	# CCITT protocol suite
 #options	GATEWAY		# packet forwarding and more mbuf space
 options		PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options		PPP_DEFLATE	# Deflate compression support for PPP
-
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
 #options	TCP_COMPAT_42
