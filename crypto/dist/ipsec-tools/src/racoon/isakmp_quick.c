@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_quick.c,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.1.1.3 2005/03/14 08:14:31 manu Exp $	*/
 
-/* Id: isakmp_quick.c,v 1.13 2005/01/11 08:34:46 manubsd Exp */
+/* Id: isakmp_quick.c,v 1.13.2.1 2005/03/02 20:00:03 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1581,7 +1581,7 @@ end:
 	return error;
 }
 
-static int
+int
 tunnel_mode_prop(p)
 	struct saprop *p;
 {
