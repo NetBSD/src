@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 1996/04/12 01:20:44 cgd Exp $
+#	$NetBSD: GENERIC,v 1.12 1996/04/17 22:01:37 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -67,14 +67,15 @@ tc*	at	tcasic?
 
 # TurboChannel devices
 ioasic0	at	tc? slot ? offset ?
-clock0	at	ioasic? offset ?
-le0	at	ioasic? offset ?
+mcclock0 at	ioasic? offset ?
+le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
 #sfb*	at	tc? slot ? offset ?
+le*	at	tc? slot ? offset ?
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -102,7 +103,7 @@ eisa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-clock0	at	isa? port 0x70
+mcclock0 at	isa? port 0x70
 pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
 pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports

@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.11 1996/04/12 01:20:50 cgd Exp $
+#	$NetBSD: files.alpha,v 1.12 1996/04/17 22:01:50 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -191,18 +191,19 @@ file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 # Devices that can live on multiple busses
 #
 
-device	clock
-attach	clock at isa, ioasic
-file	arch/alpha/alpha/clock.c	#XXX clock
-file	arch/alpha/alpha/clock_mc.c	dec_3000_500 | dec_2000_300 |
-					dec_3000_300 | dec_2100_a50 |
-					dec_kn20aa | dec_axppci_33 | dec_21000
+device	mcclock
+attach	mcclock at ioasic with mcclock_ioasic
+attach	mcclock at isa with mcclock_isa
+file	arch/alpha/alpha/mcclock.c	mcclock
+file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
+file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
 
 #
 # Standard files
 #
 
 file	arch/alpha/alpha/autoconf.c
+file	arch/alpha/alpha/clock.c
 file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/machdep.c
