@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.13 2002/01/04 16:36:41 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.14 2002/02/08 10:37:16 chris Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 #include <hpcarm/sa11x0/sa11x0_comreg.h>
 #include <hpcarm/sa11x0/sa11x0_comvar.h>
 
-#include <hpc/hpc/platid.h>
+#include <hpc/include/platid.h>
 #include <hpc/include/platid_mask.h>
 
 #include "sacom.h"
