@@ -1,4 +1,4 @@
-/*	$NetBSD: decompress.c,v 1.5 1999/08/20 02:21:49 simonb Exp $	*/
+/*	$NetBSD: decompress.c,v 1.6 1999/08/20 06:13:00 simonb Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Decompression machinery                               ---*/
@@ -62,6 +62,14 @@
 
 #include "bzlib_private.h"
 
+/*--
+  XXX: The following are the maximum observed values in the
+  GET_MTF_VAL macro for each label pair (simonb 19990820).
+--*/
+#define MAX_MTF_ZVEC_12		 65536
+#define MAX_MTF_ZVEC_34		131072
+#define MAX_MTF_ZVEC_56		131072
+
 
 /*---------------------------------------------------*/
 static
@@ -110,7 +118,7 @@ void makeMaps_d ( DState* s )
    GET_BITS(lll,uuu,1)
 
 /*---------------------------------------------------*/
-#define GET_MTF_VAL(label1,label2,lval)           \
+#define GET_MTF_VAL(label1,label2,lval,maxzvec)   \
 {                                                 \
    if (groupPos == 0) {                           \
       groupNo++;                                  \
@@ -128,7 +136,13 @@ void makeMaps_d ( DState* s )
       zn++;                                       \
       GET_BIT(label2, zj);                        \
       zvec = (zvec << 1) | zj;                    \
+      if (zvec > maxzvec)                         \
+         RETURN(BZ_DATA_ERROR);                   \
+      if (zn > BZ_MAX_ALPHA_SIZE)                 \
+         RETURN(BZ_DATA_ERROR);                   \
    };                                             \
+   if (zvec - gBase[zn] > BZ_MAX_ALPHA_SIZE)      \
+      RETURN(BZ_DATA_ERROR);                      \
    lval = gPerm[zvec - gBase[zn]];                \
 }
 
@@ -394,7 +408,7 @@ Int32 __BZdecompress ( DState* s )
 
       nblock = 0;
 
-      GET_MTF_VAL(BZ_X_MTF_1, BZ_X_MTF_2, nextSym);
+      GET_MTF_VAL(BZ_X_MTF_1, BZ_X_MTF_2, nextSym, MAX_MTF_ZVEC_12);
 
       while (True) {
 
@@ -408,7 +422,7 @@ Int32 __BZdecompress ( DState* s )
                if (nextSym == BZ_RUNA) es = es + (0+1) * N; else
                if (nextSym == BZ_RUNB) es = es + (1+1) * N;
                N = N * 2;
-               GET_MTF_VAL(BZ_X_MTF_3, BZ_X_MTF_4, nextSym);
+               GET_MTF_VAL(BZ_X_MTF_3, BZ_X_MTF_4, nextSym, MAX_MTF_ZVEC_34);
             }
                while (nextSym == BZ_RUNA || nextSym == BZ_RUNB);
 
@@ -496,7 +510,7 @@ Int32 __BZdecompress ( DState* s )
                s->tt[nblock]   = (UInt32)(s->seqToUnseq[uc]);
             nblock++;
 
-            GET_MTF_VAL(BZ_X_MTF_5, BZ_X_MTF_6, nextSym);
+            GET_MTF_VAL(BZ_X_MTF_5, BZ_X_MTF_6, nextSym, MAX_MTF_ZVEC_56);
             continue;
          }
       }
