@@ -1,7 +1,7 @@
-/*	$NetBSD: float.h,v 1.2 1999/11/27 11:06:36 mrg Exp $ */
+/*	$NetBSD: float.h,v 1.3 2001/09/21 20:48:02 eeh Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 2001
  *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
@@ -44,8 +44,8 @@
  *	@(#)float.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SPARC_FLOAT_H_
-#define _SPARC_FLOAT_H_
+#ifndef _SPARC64_FLOAT_H_
+#define _SPARC64_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -76,14 +76,14 @@ __END_DECLS
 #define DBL_MAX		1.7976931348623157E+308
 #define DBL_MAX_10_EXP	308
 
-#define LDBL_MANT_DIG	DBL_MANT_DIG
-#define LDBL_EPSILON	DBL_EPSILON
-#define LDBL_DIG	DBL_DIG
-#define LDBL_MIN_EXP	DBL_MIN_EXP
-#define LDBL_MIN	DBL_MIN
-#define LDBL_MIN_10_EXP	DBL_MIN_10_EXP
-#define LDBL_MAX_EXP	DBL_MAX_EXP
-#define LDBL_MAX	DBL_MAX
-#define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
+#define LDBL_MANT_DIG	113
+#define LDBL_EPSILON	1.925929944387235853055977942584927319E-34L
+#define LDBL_DIG	33
+#define LDBL_MIN_EXP	(-16381)
+#define LDBL_MIN	3.362103143112093506262677817321752603E-4932L
+#define LDBL_MIN_10_EXP	(-4931)
+#define LDBL_MAX_EXP	(+16384)
+#define LDBL_MAX	1.189731495357231765085759326628007016E+4932L
+#define LDBL_MAX_10_EXP	(+4932)
 
-#endif	/* _SPARC_FLOAT_H_ */
+#endif	/* _SPARC64_FLOAT_H_ */
