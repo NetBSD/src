@@ -673,7 +673,7 @@ int iscond;
 
 		/* Builtins */
 	case Node_builtin:
-		return (*tree->awkproc)(tree->subnode);
+		return (*tree->proc)(tree->subnode);
 
 	case Node_K_getline:
 		return (do_getline(tree));
