@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.57 2002/11/30 15:41:31 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.58 2002/12/01 12:34:49 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1833,3 +1833,66 @@ share/mk/bsd.lib.mk				1.206
 	using the wrong lint libraries until a "lint -d ..."
 	equivalent is implemented for libraries.
 	[thorpej, ticket #814]
+
+lib/libposix/Makefile				1.11 via patch
+
+	Set LLIBS to nothing; no sense in warning about routines
+	from libc that we know we are replacing.
+	[thorpej, ticket #817]
+
+bin/sh/Makefile					1.59
+
+	Use ``unsigned char'' and ``char'' instead of ``u_int8_t''
+	and ``int8_t'' for TARGET_CHAR when building mksyntax.
+	This lets the host tool work on non-BSD systems without
+	causing too many changes to how sh is built.
+	[thorpej, ticket #819]
+
+usr.bin/file/apprentice.c			1.35
+usr.bin/file/print.c				1.28
+
+	Don't include <sys/cdefs.h> directly.  On NetBSD systems,
+	it will be pulled in by <sys/types.h>, and on non-NetBSD
+	systems (host tool case), it doesn't really matter since
+	it's just for the __RCSID macro.
+	[thorpej, ticket #820]
+
+usr.bin/tn3270/api/asc_ebc.c			1.6
+usr.bin/tn3270/api/ebc_disp.c			1.6
+usr.bin/tn3270/tools/mkastods/Makefile		1.10
+usr.bin/tn3270/tools/mkastods/mkastods.c	1.8
+usr.bin/tn3270/tools/mkastosc/Makefile		1.10
+usr.bin/tn3270/tools/mkastosc/mkastosc.c	1.10
+usr.bin/tn3270/tools/mkdctype/Makefile		1.11
+usr.bin/tn3270/tools/mkdstoas/Makefile		1.10
+usr.bin/tn3270/tools/mkdstoas/mkdstoas.c	1.8
+usr.bin/tn3270/tools/mkhits/Makefile		1.10
+usr.bin/tn3270/tools/mkhits/dohits.c		1.11-1.12
+usr.bin/tn3270/tools/mkhits/mkhits.c		1.7-1.8
+
+	Make the tn3270 host tools build on non-BSD systems.
+	Also, remove some non-__STDC__ handling.
+	[thorpej, ticket #821]
+
+share/locale/ctype/Makefile			1.8
+
+	Use ${CPP}, not cpp.
+	[thorpej, ticket #823]
+
+tools/compat/defs.mk.in				1.5
+
+	Add a HOST_BSHELL make variable which contains the path to
+	the working shell.
+	[thorpej, ticket #825]
+
+tools/lorder/Makefile				1.5
+
+	Patch lorder wirh the host's working shell.
+	[thorpej, ticket #826]
+
+share/mk/bsd.own.mk				1.309
+
+	No longer have to invoke lorder with the shell explicitly;
+	the host tool is patched to use the working shell as the
+	interpreter.
+	[thorpej, ticket #827]
