@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.1.1.1 2000/03/29 12:38:55 simonb Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.2 2000/10/09 14:57:22 is Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -251,8 +251,10 @@ static	void	raw		P((struct parse *, FILE *));
 static	void	cooked		P((struct parse *, FILE *));
 static	void	authenticate	P((struct parse *, FILE *));
 static	void	ntpversion	P((struct parse *, FILE *));
-static	void	warning		P((const char *, const char *, const char *));
-static	void	error		P((const char *, const char *, const char *));
+static	void	warning		P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+static	void	error		P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 static	u_long	getkeyid	P((const char *));
 static	void	atoascii	P((int, char *, char *));
 static	void	makeascii	P((int, char *, FILE *));
@@ -2345,12 +2347,17 @@ ntpversion(
 static void
 warning(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+        ...
 	)
 {
+	va_list ap;
+
 	(void) fprintf(stderr, "%s: ", progname);
-	(void) fprintf(stderr, fmt, st1, st2);
+
+	va_start(ap, fmt);
+	(void) vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	
 	(void) fprintf(stderr, ": ");
 	perror("");
 }
@@ -2362,11 +2369,19 @@ warning(
 static void
 error(
 	const char *fmt,
-	const char *st1,
-	const char *st2
+        ...
 	)
 {
-	warning(fmt, st1, st2);
+	va_list ap;
+
+	(void) fprintf(stderr, "%s: ", progname);
+
+	va_start(ap, fmt);
+	(void) vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	
+	(void) fprintf(stderr, ": ");
+	perror("");
 	exit(1);
 }
 
