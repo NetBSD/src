@@ -1,4 +1,4 @@
-LIB=${MOD}
+LIB=${MODULE}
 
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
@@ -8,6 +8,6 @@ __archivebuild: .USE
 __archiveinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LIBDIR}/${MOD}.o
+	    ${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LIBDIR}/${MODULE}.o
 
 .include <bsd.lib.mk>
