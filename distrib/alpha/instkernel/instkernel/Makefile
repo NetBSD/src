@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/05/07 18:21:17 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2000/09/30 19:57:46 jhawk Exp $
 
 .include "../../../../Makefile.inc"
 
@@ -12,15 +12,17 @@ STRIP?=		strip		# make STRIP=echo can be useful
 all:
 	cp ${KERNEL} netbsd
 	mdsetimage -v netbsd ${RAMDISK}
+	nm netbsd > netbsd.symbols
 	${STRIP} netbsd
 	gzip -9f netbsd
 
 clean cleandir distclean:
-	rm -f netbsd netbsd.gz
+	rm -f netbsd netbsd.gz netbsd.symbols
 
 release:
 	-mkdir -p ${RELEASEDIR}/binary/kernel
 	cp -p netbsd.gz ${RELEASEDIR}/binary/kernel/netbsd.INSTALL.gz
+	cp netbsd.symbols ${RELEASEDIR}/binary/kernel/netbsd.symbols
 
 # nothing to do here
 depend includes lint regress tags:
