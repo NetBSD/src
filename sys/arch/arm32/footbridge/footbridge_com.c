@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.1 1998/09/06 02:20:34 mark Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.2 1998/10/05 02:36:02 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -53,6 +53,9 @@
 #include <arm32/footbridge/dc21285mem.h>
 #include <arm32/footbridge/dc21285reg.h>
 #include <arm32/footbridge/footbridgevar.h>
+
+#include <dev/cons.h>
+
 #include "fcom.h"
 
 extern u_int dc21285_fclk;
@@ -97,12 +100,13 @@ struct fcom_softc {
 static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));
 
+int fcomopen __P((dev_t dev, int flag, int mode, struct proc *p));
 static int fcom_rxintr __P((void *));
 /*static int fcom_txintr __P((void *));*/
 
-struct consdev;
-void	fcomcnprobe	__P((struct consdev *));
-void	fcomcninit	__P((struct consdev *));
+/*struct consdev;*/
+/*void	fcomcnprobe	__P((struct consdev *));
+void	fcomcninit	__P((struct consdev *));*/
 int	fcomcngetc	__P((dev_t));
 void	fcomcnputc	__P((dev_t, int));
 void	fcomcnpollc	__P((dev_t, int));
@@ -180,8 +184,17 @@ fcom_attach(parent, self, aux)
 	if (fcomconstag)
 		sc->sc_hwflags |= HW_FLAG_CONSOLE;
 
-	if (sc->sc_hwflags & HW_FLAG_CONSOLE)
+	if (sc->sc_hwflags & HW_FLAG_CONSOLE) {
+		int major;
+
+		/* locate the major number */
+		for (major = 0; major < nchrdev; ++major)
+			if (cdevsw[major].d_open == fcomopen)
+				break;
+
+		cn_tab->cn_dev = makedev(major, sc->sc_dev.dv_unit);
 		printf(": console");
+	}
 	printf("\n");
 
 	sc->sc_ih = intr_claim(sc->sc_rx_irq, IPL_SERIAL, "serial rx",
@@ -603,8 +616,8 @@ fcom_iflush(sc)
 /*
  * Following are all routines needed for COM to act as console
  */
-#include <dev/cons.h>
 
+#if 0
 void
 fcomcnprobe(cp)
 	struct consdev *cp;
@@ -633,6 +646,42 @@ fcomcninit(cp)
 		panic("fcomcninit: mapping failed");
 
 	fcominitcons(fcomconstag, fcomconsioh);
+}
+#endif
+
+int
+fcomcnattach(iobase, rate, cflag)
+	u_int iobase;
+	int rate;
+	tcflag_t cflag;
+{
+	static struct consdev fcomcons = {
+		NULL, NULL, fcomcngetc, fcomcnputc, fcomcnpollc, NODEV,
+		CN_NORMAL
+	};
+
+	fcomconstag = &fcomcons_bs_tag;
+
+	if (bus_space_map(fcomconstag, iobase, DC21285_ARMCSR_SIZE,
+	    0, &fcomconsioh))
+		panic("fcomcninit: mapping failed");
+
+	fcominit(fcomconstag, fcomconsioh, rate, cflag);
+
+	cn_tab = &fcomcons;
+
+/*	comcnspeed = rate;
+	comcnmode = cflag;*/
+	return (0);
+}
+
+int
+fcomcndetach(void)
+{
+	bus_space_unmap(fcomconstag, fcomconsioh, DC21285_ARMCSR_SIZE);
+
+	cn_tab = NULL;
+	return (0);
 }
 
 /*
@@ -697,7 +746,7 @@ fcominit(iot, ioh, rate, mode)
 	bus_space_write_4(iot, ioh, UART_M_UBRLCR, m_ubrlcr);
 	bus_space_write_4(iot, ioh, UART_H_UBRLCR, h_ubrlcr);
 }
-
+#if 0
 /*
  * Set UART for console use. Do normal init, then enable interrupts.
  */
@@ -714,6 +763,7 @@ fcominitcons(iot, ioh)
 
 	(void)splx(s);
 }
+#endif
 
 int
 fcomcngetc(dev)
