@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.3 1996/11/14 17:15:16 gwr Exp $	*/
+/*	$NetBSD: util.h,v 1.4 1997/06/30 21:22:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -62,7 +62,9 @@ int	openpty __P((int *, int *, char *, struct termios *,
 pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
-int ttyaction __P((char *tty, char *act, char *user));
+int	ttyaction __P((char *tty, char *act, char *user));
+struct iovec;
+char   *ttymsg __P((struct iovec *, int, const char *, int));
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
