@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.1 1997/04/21 12:36:28 mrg Exp $	*/
+/*	$NetBSD: strptime.c,v 1.2 1997/04/23 00:01:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Powerdog Industries.  All rights reserved.
@@ -38,58 +38,22 @@ static char copyright[] =
 "@(#) Copyright (c) 1994 Powerdog Industries.  All rights reserved.";
 static char sccsid[] = "@(#)strptime.c  0.1 (Powerdog) 94/03/27";
 #else
-static char rcsid[] = "$NetBSD: strptime.c,v 1.1 1997/04/21 12:36:28 mrg Exp $";
+static char rcsid[] = "$NetBSD: strptime.c,v 1.2 1997/04/23 00:01:17 jtc Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/localedef.h>      
+#include <locale.h>
 #include <time.h>
 #include <ctype.h>
-#include <locale.h>
 #include <string.h>
 
-#define asizeof(a)      (sizeof (a) / sizeof ((a)[0]))
-
-#ifndef sun
-struct dtconv {
-        char    *abbrev_month_names[12];
-        char    *month_names[12];
-        char    *abbrev_weekday_names[7];
-        char    *weekday_names[7];
-        char    *time_format;
-        char    *sdate_format;
-        char    *dtime_format;
-        char    *am_string;
-        char    *pm_string;
-        char    *ldate_format;
-};
-#endif
-
-static struct dtconv    En_US = {
-        { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" },
-        { "January", "February", "March", "April",
-          "May", "June", "July", "August",
-          "September", "October", "November", "December" },
-        { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" },
-        { "Sunday", "Monday", "Tuesday", "Wednesday",
-          "Thursday", "Friday", "Saturday" },
-        "%H:%M:%S",
-        "%m/%d/%y",
-        "%a %b %e %T %Z %Y",
-        "AM",
-        "PM",
-        "%A, %B, %e, %Y"
-};
-
-
 char    *
-strptime(char *buf, char *fmt, struct tm *tm)
+strptime(const char *buf, const char *fmt, struct tm *tm)
 {
-        char    c,
-                *ptr;
-        int     i,
-                len;
+	const char *ptr;
+        char    c;
+	int     i, len;
 
         ptr = fmt;
         while (*ptr != 0) {
@@ -115,14 +79,8 @@ strptime(char *buf, char *fmt, struct tm *tm)
                                 return 0;
                         break;
 
-                case 'C':
-                        buf = strptime(buf, En_US.ldate_format, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
-
                 case 'c':
-                        buf = strptime(buf, "%x %X", tm);
+                        buf = strptime(buf, _CurrentTimeLocale->d_t_fmt, tm);
                         if (buf == 0)
                                 return 0;
                         break;
@@ -140,7 +98,7 @@ strptime(char *buf, char *fmt, struct tm *tm)
                         break;
 
                 case 'r':
-                        buf = strptime(buf, "%I:%M:%S %p", tm);
+                        buf = strptime(buf, _CurrentTimeLocale->t_fmt_ampm,tm);
                         if (buf == 0)
                                 return 0;
                         break;
@@ -152,13 +110,13 @@ strptime(char *buf, char *fmt, struct tm *tm)
                         break;
 
                 case 'X':
-                        buf = strptime(buf, En_US.time_format, tm);
+                        buf = strptime(buf, _CurrentTimeLocale->t_fmt, tm);
                         if (buf == 0)
                                 return 0;
                         break;
 
                 case 'x':
-                        buf = strptime(buf, En_US.sdate_format, tm);
+                        buf = strptime(buf, _CurrentTimeLocale->d_fmt, tm);
                         if (buf == 0)
                                 return 0;
                         break;
@@ -171,7 +129,7 @@ strptime(char *buf, char *fmt, struct tm *tm)
                                 i *= 10;
                                 i += *buf - '0';
                         }
-                        if (i > 365)
+                        if (i > 366)
                                 return 0;
 
                         tm->tm_yday = i;
@@ -227,8 +185,9 @@ strptime(char *buf, char *fmt, struct tm *tm)
                         break;
 
                 case 'p':
-                        len = strlen(En_US.am_string);
-                        if (strncasecmp(buf, En_US.am_string, len) == 0) {
+                        len = strlen(_CurrentTimeLocale->am_pm[0]);
+                        if (strncasecmp(buf, _CurrentTimeLocale->am_pm[0],
+					len) == 0) {
                                 if (tm->tm_hour > 12)
                                         return 0;
                                 if (tm->tm_hour == 12)
@@ -237,8 +196,9 @@ strptime(char *buf, char *fmt, struct tm *tm)
                                 break;
                         }
 
-                        len = strlen(En_US.pm_string);
-                        if (strncasecmp(buf, En_US.pm_string, len) == 0) {
+                        len = strlen(_CurrentTimeLocale->am_pm[1]);
+                        if (strncasecmp(buf, _CurrentTimeLocale->am_pm[1],
+					len) == 0) {
                                 if (tm->tm_hour > 12)
                                         return 0;
                                 if (tm->tm_hour != 12)
@@ -251,20 +211,20 @@ strptime(char *buf, char *fmt, struct tm *tm)
 
                 case 'A':
                 case 'a':
-                        for (i = 0; i < asizeof(En_US.weekday_names); i++) {
-                                len = strlen(En_US.weekday_names[i]);
+                        for (i = 0; i < 7; i++) {
+                                len = strlen(_CurrentTimeLocale->day[i]);
                                 if (strncasecmp(buf,
-                                                En_US.weekday_names[i],
-                                                len) == 0)
-                                        break;
+						_CurrentTimeLocale->day[i],
+						len) == 0)
+					break;
 
-                                len = strlen(En_US.abbrev_weekday_names[i]);
+                                len = strlen(_CurrentTimeLocale->abday[i]);
                                 if (strncasecmp(buf,
-                                                En_US.abbrev_weekday_names[i],
-                                                len) == 0)
-                                        break;
+						_CurrentTimeLocale->abday[i],
+						len) == 0)
+					break;
                         }
-                        if (i == asizeof(En_US.weekday_names))
+                        if (i == 7)
                                 return 0;
 
                         tm->tm_wday = i;
@@ -293,20 +253,20 @@ strptime(char *buf, char *fmt, struct tm *tm)
                 case 'B':
                 case 'b':
                 case 'h':
-                        for (i = 0; i < asizeof(En_US.month_names); i++) {
-                                len = strlen(En_US.month_names[i]);
+                        for (i = 0; i < 12; i++) {
+				len = strlen(_CurrentTimeLocale->mon[i]);
                                 if (strncasecmp(buf,
-                                                En_US.month_names[i],
+						_CurrentTimeLocale->mon[i],
                                                 len) == 0)
                                         break;
 
-                                len = strlen(En_US.abbrev_month_names[i]);
+				len = strlen(_CurrentTimeLocale->abmon[i]);
                                 if (strncasecmp(buf,
-                                                En_US.abbrev_month_names[i],
+						_CurrentTimeLocale->abmon[i],
                                                 len) == 0)
                                         break;
                         }
-                        if (i == asizeof(En_US.month_names))
+                        if (i == 12)
                                 return 0;
 
                         tm->tm_mon = i;
@@ -357,7 +317,7 @@ strptime(char *buf, char *fmt, struct tm *tm)
                 }
         }
 
-        return buf;
+        return (char *) buf;
 }
 
 
