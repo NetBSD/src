@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.1 2000/06/17 00:59:24 matt Exp $ */
+/* $NetBSD: installboot.c,v 1.2 2000/10/17 22:11:22 dmcmahill Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -80,18 +80,19 @@
 static void usage(void);
 static void clr_bootstrap(const char *disk);
 static void set_bootstrap(const char *disk, const char *bootstrap);
+static void set_sunsum(struct vax_boot_block *bb);
 
 extern char *__progname;
 
-int verbose, nowrite, append, isoblock;
+int verbose, nowrite, append, isoblock, sunsum;
 struct stat disksb;
 
 static void
 usage()
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-nv] [-i block | -a] disk bootstrap\n", __progname);
-	fprintf(stderr, "\t%s [-nv] -c disk\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] [-i block | -a] disk bootstrap\n", __progname);
+	fprintf(stderr, "\t%s [-nsv] -c disk\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -101,9 +102,9 @@ main(int argc, char **argv)
 	const char *disk, *bootstrap;
 	int c, clearflag;
 
-	clearflag = verbose = nowrite = append = isoblock = 0;
+	clearflag = verbose = nowrite = append = isoblock = sunsum = 0;
 
-	while ((c = getopt(argc, argv, "aci:nv")) != -1) {
+	while ((c = getopt(argc, argv, "aci:nsv")) != -1) {
 		switch (c) {
 		case 'a':
 			/* Append to disk (image) */
@@ -121,6 +122,10 @@ main(int argc, char **argv)
 		case 'n':
 			/* Do not actually write the boot file */
 			nowrite = 1;
+			break;
+		case 's':
+			/* Recompute the sun checksum */
+			sunsum = 1;
 			break;
 		case 'v':
 			/* Chat */
@@ -146,6 +151,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "disk: %s\n", disk);
 		fprintf(stderr, "bootstrap: %s\n",
 		    bootstrap != NULL ? bootstrap : "to be cleared");
+		if (sunsum){fprintf(stderr, "will restore sun checksum\n");}
 	}
 	if (sizeof (struct vax_boot_block) != VAX_BOOT_BLOCK_BLOCKSIZE)
 		errx(EXIT_FAILURE,
@@ -194,6 +200,10 @@ clr_bootstrap(const char *disk)
 	bb.bb_mbone = 0;
 	bb.bb_lbn_hi = 0;
 	bb.bb_lbn_low = 0;
+
+        /* restore sun checksum */
+	if (sunsum)
+		set_sunsum(&bb);
 
 	if (nowrite) {
 	    if (verbose)
@@ -273,6 +283,10 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	bb.bb_sum3 = htole32(le32toh(bb.bb_size) + le32toh(bb.bb_load) \
 	    + le32toh(bb.bb_entry));
 
+        /* restore sun checksum */
+	if (sunsum)
+		set_sunsum(&bb);
+
 	if (verbose) {
 		fprintf(stderr, "bootstrap starting sector: %i\n",
 		    startblock);
@@ -307,4 +321,23 @@ set_bootstrap(const char *disk, const char *bootstrap)
 
 done:
 	(void)close(diskfd);
+}
+
+static void
+set_sunsum(struct vax_boot_block *bb)
+{
+	u_int16_t *sp, sum;
+
+	sp = (u_int16_t *)bb;
+	sum = 0;
+	while (sp < (u_int16_t *)((bb)+1) - 1) {
+	sum ^= *sp++;   /* XXX no need to ntohs/htons for XOR */
+	}
+	sp = (u_int16_t *)bb;
+#define bb_sunsum sp[VAX_BOOT_BLOCK_BLOCKSIZE/2 - 1]
+	if (verbose) {
+		fprintf(stderr,"old sun checksum:  0x%04x\n",be16toh(bb_sunsum));
+		fprintf(stderr,"recalculated sun checksum:  0x%04x\n",be16toh(sum));
+	}
+	bb_sunsum = sum;
 }
