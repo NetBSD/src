@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.133 2001/09/05 14:12:22 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.134 2001/09/07 10:35:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2433,7 +2433,7 @@ pmap_kenter_pa(va, pa, prot)
 
 #ifdef	DIAGNOSTIC
 	if ((va < virtual_avail) || (va >= DVMA_MAP_END))
-		panic("pmap_enter_kernel: bad va=0x%lx", va);
+		panic("pmap_kenter_pa: bad va=0x%lx", va);
 #endif
 
 	if (va >= DVMA_MAP_BASE) {
@@ -2455,7 +2455,7 @@ pmap_kenter_pa(va, pa, prot)
 #ifdef	DIAGNOSTIC
 		/* Make sure it is the right PMEG. */
 		if (sme != pmap->pm_segmap[VA_SEGNUM(segva)])
-			panic("pmap_enter_kernel: wrong sme at VA=0x%lx", segva);
+			panic("pmap_kenter_pa: wrong sme at VA=0x%lx", segva);
 		/* Make sure it is ours. */
 		if (pmegp->pmeg_owner != pmap)
 			panic("pmap_kenter_pa: MMU has bad pmeg 0x%x", sme);
