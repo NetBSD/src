@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 1996/04/12 06:07:15 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 1996/04/17 21:50:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -73,11 +73,11 @@ cpuattach(parent, dev, aux)
 	char *cpu_major[] = {
 		"UNKNOWN MAJOR TYPE (0)",
 		"EV3",				/* PCS_PROC_EV3 */
-		"EV4 (21064)",			/* PCS_PROC_EV4 */
+		"21064 (EV4)",			/* PCS_PROC_EV4 */
 		"Simulator",			/* PCS_PROC_SIMULATOR */
-		"LCA4 (21066/21068)",		/* PCS_PROC_LCA4 */
-		"EV5 (21164)",			/* PCS_PROC_EV5 */
-		"EV45 (21064A)",		/* PCS_PROC_EV45 */
+		"21066/21068 (LCA4)",		/* PCS_PROC_LCA4 */
+		"21164 (EV5)",			/* PCS_PROC_EV5 */
+		"21064A (EV45)",		/* PCS_PROC_EV45 */
 	};
 	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
 	char *dc21064_cpu_minor[] = {
