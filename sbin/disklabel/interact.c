@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.5 1997/06/30 22:51:34 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.6 1997/09/18 22:20:36 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.5 1997/06/30 22:51:34 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.6 1997/09/18 22:20:36 enami Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -217,8 +217,8 @@ cmd_label(lp, s, fd)
 		return;
 	}
 
-	if ((i = writelabel(fd, bootarea, lp)) != 0) {
-		printf("Label not written %s\n", strerror(i));
+	if (writelabel(fd, bootarea, lp) != 0) {
+		printf("Label not written\n");
 		return;
 	}
 	printf("Label written\n");
