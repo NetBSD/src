@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.17 2003/04/02 10:39:27 fvdl Exp $	 */
+/* $NetBSD: inode.c,v 1.18 2003/07/12 16:13:38 yamt Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -121,7 +121,7 @@ ckinode(struct ufs1_dinode *dp, struct inodesc *idesc)
 	dino = *dp;
 	ndb = howmany(dino.di_size, fs->lfs_bsize);
 
-	thisvp = vget(fs, dino.di_u.inumber);
+	thisvp = vget(fs, idesc->id_number);
 	for (lbn = 0; lbn < NDADDR; lbn++) {
 		ap = dino.di_db + lbn;
 		if (thisvp)
