@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.20 2000/12/11 05:22:55 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.21 2001/05/04 19:41:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -222,6 +222,7 @@ void		pool_cache_init(struct pool_cache *, struct pool *,
 void		pool_cache_destroy(struct pool_cache *);
 void		*pool_cache_get(struct pool_cache *, int);
 void		pool_cache_put(struct pool_cache *, void *);
+void		pool_cache_destruct_object(struct pool_cache *, void *);
 void		pool_cache_invalidate(struct pool_cache *);
 #endif /* _KERNEL */
 

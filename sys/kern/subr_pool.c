@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.50 2001/01/29 02:38:02 enami Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.51 2001/05/04 19:41:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1736,9 +1736,7 @@ pool_cache_put(struct pool_cache *pc, void *object)
 		 * Unable to allocate a cache group; destruct the object
 		 * and free it back to the pool.
 		 */
-		if (pc->pc_dtor != NULL)
-			(*pc->pc_dtor)(pc->pc_arg, object);
-		pool_put(pc->pc_pool, object);
+		pool_cache_destruct_object(pc, object);
 		return;
 	}
 
@@ -1750,6 +1748,21 @@ pool_cache_put(struct pool_cache *pc, void *object)
 		pc->pc_freeto = NULL;
 
 	simple_unlock(&pc->pc_slock);
+}
+
+/*
+ * pool_cache_destruct_object:
+ *
+ *	Force destruction of an object and its release back into
+ *	the pool.
+ */
+void
+pool_cache_destruct_object(struct pool_cache *pc, void *object)
+{
+
+	if (pc->pc_dtor != NULL)
+		(*pc->pc_dtor)(pc->pc_arg, object);
+	pool_put(pc->pc_pool, object);
 }
 
 /*
