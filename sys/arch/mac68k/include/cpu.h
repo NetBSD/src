@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1995/07/06 13:25:30 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1995/08/12 04:08:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -257,8 +257,8 @@ extern unsigned long		IOBase;		/* Base address of I/O */
 extern unsigned long		NuBusBase;	/* Base address of NuBus */
 
 extern  struct mac68k_machine_S	mac68k_machine;
-extern	int			mmutype, cpu040;
-extern	unsigned long		load_addr      ;
+extern	int			mmutype  ;
+extern	unsigned long		load_addr;
 #endif /* _KERNEL */
 
 /* physical memory sections */

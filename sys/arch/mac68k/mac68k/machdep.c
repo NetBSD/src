@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1995/08/09 03:25:25 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1995/08/12 04:10:39 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1813,7 +1813,12 @@ getenvvars()
          * More misc stuff from booter.
          */
 	mac68k_machine.machineid = getenv("MACHINEID");
-	mac68k_machine.mach_processor = getenv("PROCESSOR");
+	switch (mac68k_machine.mach_processor = getenv("PROCESSOR")) {
+	case MACH_68040:
+		mmutype = MMU_68040;
+		break;
+	default:;
+	}
 	mac68k_machine.mach_memsize = getenv("MEMSIZE");
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
 	locore_dodebugmarks = mac68k_machine.do_graybars;
@@ -1909,7 +1914,6 @@ setmachdep()
 		break;
 	case MACH_CLASSQ:
 		VIA2 = 1;
-		cpu040 = 1;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi96 = 1;
