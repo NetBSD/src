@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.15 2003/11/16 00:07:13 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.16 2003/11/24 04:47:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
 #include <sh3/param.h>		/* UPAGES */
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
+
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.16 2003/11/24 04:47:42 uwe Exp $")
+
 
 	.text
 	.align 5	/* align cache line size (32B) */
@@ -322,7 +325,7 @@ NENTRY(_cpu_intr_resume)
 	 and	r2,	r0	/* return (SR & 0xf0) */
 
 /*
- * u_int32_t _cpu_exception_suspend(void):
+ * uint32_t _cpu_exception_suspend(void):
  *	Block exception (SR.BL). if external interrupt raise, pending interrupt.
  *	if exception occur, jump to 0xa0000000 (hard reset).
  */
@@ -338,7 +341,7 @@ NENTRY(_cpu_exception_suspend)
 	 and	r1,	r0	/* r0 &= 0x10000000 */
 
 /*
- * void _cpu_exception_resume(u_int32_t s):
+ * void _cpu_exception_resume(uint32_t s):
  *	restore 's' exception mask. (SR.BL)
  */
 NENTRY(_cpu_exception_resume)
@@ -354,7 +357,7 @@ NENTRY(_cpu_exception_resume)
 	 nop
 
 /*
- * void _cpu_spin(u_int32_t count)
+ * void _cpu_spin(uint32_t count)
  *	loop 'count' * 10 cycle.
  * [...]
  * add    IF ID EX MA WB
@@ -719,7 +722,7 @@ ENTRY(fuword)
 3:
 	bra	1b
 	 mov	#-1,	r0
-	
+
 	.align 2
 _Lfuword.onfault:
 	.long	3b
@@ -973,7 +976,7 @@ ENTRY(subyte)
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 2:
-	rts	
+	rts
 	 nop
 
 3:
