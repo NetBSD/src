@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.108 2002/11/18 05:48:00 rtr Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.109 2002/12/05 22:59:25 jonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.108 2002/11/18 05:48:00 rtr Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.109 2002/12/05 22:59:25 jonb Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1246,10 +1246,11 @@ editit(void)
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
 		/*
-		 * Use system(3) in case someone's editor is "editor arg1 arg2".
+		 * Jump through a few extra hoops in case someone's editor
+		 * is "editor arg1 arg2".
 		 */
 		asprintf(&buf, "%s %s", ed, tmpfil);
-		retval = system(buf);
+		retval = execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", buf, NULL);
 		if (retval == -1)
 			perror(ed);
 		exit(retval);
