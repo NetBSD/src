@@ -862,7 +862,7 @@ ALLDEPFILES = 29k-share/udi/udip2soc.c 29k-share/udi/udr.c \
 	i387-tdep.c \
 	i960-tdep.c \
 	infptrace.c inftarg.c irix4-nat.c irix5-nat.c isi-xdep.c \
-	lynx-nat.c m3-nat.c \
+	kcore-nbsd.c lynx-nat.c m3-nat.c \
 	m68k-tdep.c \
 	m88k-nat.c m88k-tdep.c mac-nat.c mips-nat.c \
 	mips-tdep.c mipsm3-nat.c mipsv4-nat.c news-xdep.c \
@@ -1173,6 +1173,9 @@ irix5-nat.o: irix5-nat.c $(defs_h) $(inferior_h) $(gdbcore_h) target.h \
 	language.h gdb_string.h
 
 isi-xdep.o: isi-xdep.c
+
+kcore-nbsd.o: kcore-nbsd.c $(command_h) $(defs_h) $(gdbcore_h) \
+	$(inferior_h) target.h gdb_string.h
 
 language.o: language.c $(bfd_h) $(defs_h) $(expression_h) $(frame_h) \
 	$(gdbcmd_h) $(gdbtypes_h) language.h parser-defs.h $(symtab_h) \
