@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.88 2004/11/24 15:14:13 briggs Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.89 2004/11/30 03:08:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.88 2004/11/24 15:14:13 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.89 2004/11/30 03:08:27 briggs Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -795,7 +795,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			 */
 			preg = pci_conf_read(pc, pa->pa_tag, i);
 			if (PCI_MAPREG_MEM_ADDR(preg) == 0) {
-				aprint_error("%s: WARNING: I/O BAR at zero.",
+				aprint_error("%s: WARNING: I/O BAR at zero.\n",
 				    sc->sc_dev.dv_xname);
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
