@@ -1,7 +1,7 @@
-/* 	$NetBSD: sticreg.h,v 1.3 2000/12/17 13:52:04 ad Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.4 2001/03/04 13:32:25 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -164,8 +164,8 @@
 
 #define	STAMP_OK		(0)
 #define	STAMP_BUSY		(1)
-#define	STAMP_RETRIES		(7000)
-#define	STAMP_DELAY		(20)
+#define	STAMP_RETRIES		(100000)
+#define	STAMP_DELAY		(10)
 
 /*
  * STIC registers.
