@@ -29,11 +29,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_msdos.c,v 1.6 1994/04/08 01:27:02 cgd Exp $";
+static char rcsid[] = "$Id: mount_msdos.c,v 1.7 1994/04/08 01:40:51 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -43,6 +43,7 @@ static char rcsid[] = "$Id: mount_msdos.c,v 1.6 1994/04/08 01:27:02 cgd Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 gid_t	a_gid __P((char *));
 uid_t	a_uid __P((char *));
@@ -57,7 +58,7 @@ main(argc, argv)
 	struct msdosfs_args args;
 	struct stat sb;
 	int c, opts, set_gid, set_uid, set_mask;
-	char *dev, *dir;
+	char *dev, *dir, ndir[MAXPATHLEN+1];
 
 	opts = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -91,6 +92,15 @@ main(argc, argv)
 
 	dev = argv[optind];
 	dir = argv[optind + 1];
+	if (dir[0] != '/') {
+		warnx("\"%s\" is a relative path.", dir);
+		if (getcwd(ndir, sizeof(ndir)) == NULL)
+			err(1, "getcwd");
+		strncat(ndir, "/", sizeof(ndir) - strlen(ndir) - 1);
+		strncat(ndir, dir, sizeof(ndir) - strlen(ndir) - 1);
+		dir = ndir;
+		warnx("using \"%s\" instead.", dir);
+	}
 
 	args.fspec = dev;
 	if (!set_gid || !set_uid || !set_mask) {
