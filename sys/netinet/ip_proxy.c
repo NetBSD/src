@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.3 1997/07/05 05:13:47 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.4 1997/09/21 16:49:45 veego Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ip_proxy.c,v 1.1.1.3 1997/07/05 05:13:47 darrenr Exp $";
+static	char	rcsid[] = "Id: ip_proxy.c,v 2.0.2.6 1997/07/27 07:24:54 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -107,12 +107,13 @@ static ap_session_t *ap_find(ip, tcp)
 ip_t *ip;
 tcphdr_t *tcp;
 {
-	struct in_addr src = ip->ip_src, dst = ip->ip_dst;
+	struct in_addr src, dst;
 	register u_long hv;
 	register u_short sp, dp;
 	register ap_session_t *aps;
 	register u_char p = ip->ip_p;
 
+	src = ip->ip_src, dst = ip->ip_dst;
 	sp = dp = 0;			/* XXX gcc -Wunitialized */
 
 	hv = ip->ip_src.s_addr ^ ip->ip_dst.s_addr;

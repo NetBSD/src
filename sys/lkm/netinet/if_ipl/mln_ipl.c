@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.4 1997/07/05 05:13:50 darrenr Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.5 1997/09/21 16:49:49 veego Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -37,9 +37,6 @@
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/mbuf.h>
-#if	BSD > 199506
-# include <sys/sysctl.h>
-#endif
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -66,17 +63,6 @@
 #include <net/pfil.h>
 #endif
 
-#ifndef IPFILTER_LOG
-# ifdef NETBSD_PF
-# define iplread enodev
-# else
-# define	iplread	nodev
-# endif
-#endif
-
-#ifdef NETBSD_PF
-int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **)) = NULL;
-#endif
 
 extern	int	lkmenodev __P((void));
 
@@ -87,7 +73,6 @@ static	int	ipl_remove __P((void));
 static	int	iplaction __P((struct lkm_table *, int));
 static	char	*ipf_devfiles[] = { IPL_NAME, IPL_NAT, IPL_STATE, IPL_AUTH,
 				    NULL };
-
 
 
 #if (defined(NetBSD1_0) && (NetBSD1_0 > 1)) || \
@@ -121,20 +106,21 @@ struct	cdevsw	ipldevsw =
 	NULL			/* strategy */
 };
 #endif
-
 int	ipl_major = 0;
 
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
 
+extern int vd_unuseddev __P((void));
 extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
 
-int xxxinit(lkmtp, cmd, ver)
+int
+xxxinit(lkmtp, cmd, ver)
 struct lkm_table *lkmtp;
 int cmd, ver;
 {
-        DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
+	DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
 }
 
 
@@ -142,7 +128,7 @@ static int iplaction(lkmtp, cmd)
 struct lkm_table *lkmtp;
 int cmd;
 {
-	int i = ipl_major;
+	int i;
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int err = 0;
 
@@ -165,20 +151,19 @@ int cmd;
 		args->lkm_offset = i;   /* slot in cdevsw[] */
 		printf("IP Filter: loaded into slot %d\n", ipl_major);
 		return ipl_load();
-		break;
 	case LKM_E_UNLOAD :
 		err = ipl_unload();
 		if (!err)
 			printf("IP Filter: unloaded from slot %d\n",
-				ipl_major);
-		return err;
+			       ipl_major);
+		break;
 	case LKM_E_STAT :
 		break;
 	default:
 		err = EIO;
 		break;
 	}
-	return 0;
+	return err;
 }
 
 
@@ -205,10 +190,12 @@ static int ipl_unload()
 {
 	int error = 0;
 
+	/*
+	 * Unloading - remove the filter rule check from the IP
+	 * input/output stream.
+	 */
 	error = ipldetach();
-#ifdef NETBSD_PF
-	pfil_remove_hook(fr_check, PFIL_IN|PFIL_OUT);
-#endif
+
 	if (!error)
 		error = ipl_remove();
 	return error;
@@ -222,9 +209,16 @@ static int ipl_load()
 	int error = 0, fmode = S_IFCHR|0600, i;
 	char *name;
 
+	/*
+	 * XXX Remove existing device nodes prior to creating new ones
+	 * XXX using the assigned LKM device slot's major number.  In a
+	 * XXX perfect world we could use the ones specified by cdevsw[].
+	 */
+	(void)ipl_remove();
+
 	error = iplattach();
 #ifdef NETBSD_PF
-	pfil_add_hook(fr_check, PFIL_IN|PFIL_OUT);
+	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #endif
 	if (error)
 		return error;

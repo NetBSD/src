@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.1.1.1 1997/07/06 04:58:52 thorpej Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.1.1.2 1997/09/21 16:49:28 veego Exp $	*/
 
 /*
  * (C)opyright 1997 by Darren Reed & Guido Van Rooij.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_auth.h,v 2.0.2.8 1997/06/23 04:52:53 darrenr Exp
+ * Id: ip_auth.h,v 2.0.2.8 1997/06/23 04:52:53 darrenr Exp 
  *
  */
 #ifndef	__IP_AUTH_H__

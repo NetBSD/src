@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.1.1.1 1997/05/27 22:18:16 thorpej Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.1.1.2 1997/09/21 16:49:12 veego Exp $	*/
 
 /*
  * ipsend.h (C) 1997 Darren Reed
@@ -23,7 +23,7 @@
 # endif
 #endif
 
-#include "ip_compat.h"
+#include <netinet/ip_compat.h>
 #ifdef	linux
 #include <linux/sockios.h>
 #endif
@@ -41,7 +41,7 @@ extern	int	send_icmp __P((int, int, ip_t *, struct in_addr));
 extern	int	send_packet __P((int, int, ip_t *, struct in_addr));
 extern	int	send_packets __P((char *, int, ip_t *, struct in_addr));
 extern	u_short	seclevel __P((char *));
-extern	u_long	optname __P((char *, char *));
+extern	u_32_t	buildopts __P((char *, char *, int));
 extern	int	initdevice __P((char *, int, int));
 extern	int	sendip __P((int, char *, int));
 #ifdef	linux
@@ -64,3 +64,5 @@ extern	int	openkmem __P((void));
 extern	int	kmemcpy __P((char *, void *, int));
 
 #define	KMCPY(a,b,c)	kmemcpy((char *)(a), (void *)(b), (int)(c))
+
+#define	OPT_RAW	0x80000

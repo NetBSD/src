@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.5 1997/07/05 05:13:35 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.6 1997/09/21 16:49:32 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.1.1.5 1997/07/05 05:13:35 darrenr Exp $";
+static	char	rcsid[] = "Id: fil.c,v 2.0.2.32 1997/08/26 13:27:00 darrenr Exp ";
 #endif
 
 #include <sys/errno.h>
@@ -83,7 +83,7 @@ extern	int	opts;
 # define	FR_IFDEBUG(ex,second,verb_pr)	;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
-# define	IPLLOG(a, c, d, e)		ipllog(a, IPL_LOGIPF, c, d, e)
+# define	IPLLOG(a, c, d, e)		ipflog(a, c, d, e)
 # if SOLARIS
 extern	kmutex_t	ipf_mutex, ipf_auth;
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, \
@@ -108,6 +108,7 @@ extern	kmutex_t	ipf_mutex, ipf_auth;
 struct	filterstats frstats[2] = {{0,0,0,0,0},{0,0,0,0,0}};
 struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct[2][2] = { { NULL, NULL }, { NULL, NULL } };
+struct	frgroup *ipfgroups[3][2];
 int	fr_flags = IPF_LOGGING, fr_active = 0;
 #if defined(IPFILTER_DEFAULT_BLOCK)
 int	fr_pass = FR_NOMATCH|FR_BLOCK;
@@ -494,6 +495,10 @@ void *m;
 			fin->fin_icode = fr->fr_icode;
 		fin->fin_rule = rulen;
 		fin->fin_fr = fr;
+		if (fr->fr_grp) {
+			fin->fin_fr = fr->fr_grp;
+			pass = fr_scanlist(pass, ip, fin, m);
+		}
 		if (pass & FR_QUICK)
 			break;
 	}
@@ -516,7 +521,7 @@ qif_t *qif;
 mb_t **mp;
 ip_t *ip;
 int hlen;
-struct ifnet *ifp;
+void *ifp;
 int out;
 {
 	/*
@@ -577,8 +582,8 @@ int out;
 			frstats[0].fr_acct++;
 	}
 
-	if (apass || !(pass = ipfr_knownfrag(ip, fin)) &&
-	    !(pass = fr_checkstate(ip, fin))) {
+	if (apass || (!(pass = ipfr_knownfrag(ip, fin)) &&
+	    !(pass = fr_checkstate(ip, fin)))) {
 		/*
 		 * If a packet is found in the auth table, then skip checking
 		 * the access lists for permission but we do need to consider
@@ -586,20 +591,20 @@ int out;
 		 */
 		if (!apass) {
 			fc = frcache + out;
-			if (fc->fin_fr &&
-			    !bcmp((char *)fin, (char *)fc, FI_CSIZE)) {
+			if (!bcmp((char *)fin, (char *)fc, FI_CSIZE)) {
 				/*
 				 * copy cached data so we can unlock the mutex
 				 * earlier.
 				 */
-				bcopy((char *)fc, (char *)fin, sizeof(*fin));
+				bcopy((char *)fc, (char *)fin, FI_COPYSIZE);
 				frstats[out].fr_chit++;
-				pass = fin->fin_fr->fr_flags;
+				fr = fin->fin_fr;
+				pass = fr ? fr->fr_flags : fr_pass;
 			} else {
 				pass = fr_pass;
 				if ((fin->fin_fr = ipfilter[out][fr_active]))
 					pass = FR_SCANLIST(fr_pass, ip, fin, m);
-				bcopy((char *)fin, (char *)fc, FI_CSIZE);
+				bcopy((char *)fin, (char *)fc, FI_COPYSIZE);
 				if (pass & FR_NOMATCH)
 					frstats[out].fr_nom++;
 			}
@@ -797,38 +802,10 @@ logit:
 }
 
 
-#ifdef	IPFILTER_LOG
-int fr_copytolog(dev, buf, len)
-int dev;
-char *buf;
-int len;
-{
-	register char *bufp = iplbuf[dev], *tp = iplt[dev], *hp = iplh[dev];
-	register int clen, tail;
-
-	tail = (hp >= tp) ? (bufp + IPLLOGSIZE - hp) : (tp - hp);
-	clen = MIN(tail, len);
-	bcopy(buf, hp, clen);
-	len -= clen;
-	tail -= clen;
-	hp += clen;
-	buf += clen;
-	if (hp == bufp + IPLLOGSIZE) {
-		hp = bufp;
-		tail = tp - hp;
-	}
-	if (len && tail) {
-		clen = MIN(tail, len);
-		bcopy(buf, hp, clen);
-		len -= clen;
-		hp += clen;
-	}
-	iplh[dev] = hp;
-	return len;
-}
-#endif
-
-
+/*
+ * ipf_cksum
+ * addr should be 16bit aligned and len is in bytes.
+ */
 u_short ipf_cksum(addr, len)
 register u_short *addr;
 register int len;
@@ -949,3 +926,136 @@ nodata:
 	sum = (u_short)((~sum) & 0xffff);
 	return sum;
 }
+
+
+#if defined(_KERNEL) && (BSD < 199306) && !SOLARIS
+/*
+ * Copyright (c) 1982, 1986, 1988, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
+ * Id: fil.c,v 2.0.2.32 1997/08/26 13:27:00 darrenr Exp 
+ */
+/*
+ * Copy data from an mbuf chain starting "off" bytes from the beginning,
+ * continuing for "len" bytes, into the indicated buffer.
+ */
+#include <sys/mbuf.h>
+
+void
+m_copydata(m, off, len, cp)
+	register struct mbuf *m;
+	register int off;
+	register int len;
+	caddr_t cp;
+{
+	register unsigned count;
+
+	if (off < 0 || len < 0)
+		panic("m_copydata");
+	while (off > 0) {
+		if (m == 0)
+			panic("m_copydata");
+		if (off < m->m_len)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+	while (len > 0) {
+		if (m == 0)
+			panic("m_copydata");
+		count = MIN(m->m_len - off, len);
+		bcopy(mtod(m, caddr_t) + off, cp, count);
+		len -= count;
+		cp += count;
+		off = 0;
+		m = m->m_next;
+	}
+}
+
+
+/*
+ * Copy data from a buffer back into the indicated mbuf chain,
+ * starting "off" bytes from the beginning, extending the mbuf
+ * chain if necessary.
+ */
+void
+m_copyback(m0, off, len, cp)
+	struct	mbuf *m0;
+	register int off;
+	register int len;
+	caddr_t cp;
+{
+	register int mlen;
+	register struct mbuf *m = m0, *n;
+	int totlen = 0;
+
+	if (m0 == 0)
+		return;
+	while (off > (mlen = m->m_len)) {
+		off -= mlen;
+		totlen += mlen;
+		if (m->m_next == 0) {
+			n = m_getclr(M_DONTWAIT, m->m_type);
+			if (n == 0)
+				goto out;
+			n->m_len = min(MLEN, len + off);
+			m->m_next = n;
+		}
+		m = m->m_next;
+	}
+	while (len > 0) {
+		mlen = min (m->m_len - off, len);
+		bcopy(cp, off + mtod(m, caddr_t), (unsigned)mlen);
+		cp += mlen;
+		len -= mlen;
+		mlen += off;
+		off = 0;
+		totlen += mlen;
+		if (len == 0)
+			break;
+		if (m->m_next == 0) {
+			n = m_get(M_DONTWAIT, m->m_type);
+			if (n == 0)
+				break;
+			n->m_len = min(MLEN, len);
+			m->m_next = n;
+		}
+		m = m->m_next;
+	}
+out:
+#if 0
+	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
+		m->m_pkthdr.len = totlen;
+#endif
+	return;
+}
+#endif

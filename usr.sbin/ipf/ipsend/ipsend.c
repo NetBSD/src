@@ -1,20 +1,16 @@
-/*	$NetBSD: ipsend.c,v 1.1.1.2 1997/05/27 22:18:15 thorpej Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.1.1.3 1997/09/21 16:49:11 veego Exp $	*/
 
 /*
- * ipsend.c (C) 1995 Darren Reed
+ * ipsend.c (C) 1995-1997 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * The author provides this program as-is, with no gaurantee for its
- * suitability for any specific purpose.  The author takes no responsibility
- * for the misuse/abuse of this program and provides it for the sole purpose
- * of testing packet filter policies.  This file maybe distributed freely
- * providing it is not modified and that this notice remains in tact.
- *
- * This was written and tested (successfully) on SunOS 4.1.x.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
@@ -38,12 +34,15 @@ static	char	sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
 #include <netinet/ip_var.h>
 #endif
 #include "ipsend.h"
+#include "ipf.h"
 
 
 extern	char	*optarg;
 extern	int	optind;
+extern	void	iplang __P((FILE *));
 
 char	options[68];
+int	opts;
 #ifdef	linux
 char	default_device[] = "eth0";
 #else
@@ -83,6 +82,12 @@ char	*prog;
 \t\t-T\t\tSet TCP protocol\n\
 \t\t-t port\t\tdestination port\n\
 \t\t-U\t\tSet UDP protocol\n\
+\t\t-v\tverbose mode\n\
+\t\t-w <window>\tSet the TCP window size\n\
+", prog);
+	fprintf(stderr, "Usage: %s [-v] -L <filename>\n\
+\toptions:\n\
+\t\t-L filename\tUse IP language for sending packets\n\
 ", prog);
 	exit(1);
 }
@@ -160,13 +165,14 @@ int main(argc, argv)
 int	argc;
 char	**argv;
 {
+	FILE	*langfile = NULL;
 	struct	tcpiphdr *ti;
 	struct	in_addr	gwip;
 	tcphdr_t	*tcp;
 	ip_t	*ip;
 	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
-	char	*src = NULL, *dst, c, *s;
-	int	mtu = 1500, olen = 0;
+	char	*src = NULL, *dst, *s;
+	int	mtu = 1500, olen = 0, c, nonl = 0;
 
 	/*
 	 * 65535 is maximum packet size...you never know...
@@ -177,10 +183,11 @@ char	**argv;
 	ip->ip_len = sizeof(*ip);
 	ip->ip_hl = sizeof(*ip) >> 2;
 
-	while ((c = (char)getopt(argc, argv, "IP:TUd:f:g:m:o:s:t:")) != -1)
+	while ((c = getopt(argc, argv, "IL:P:TUd:f:g:m:o:s:t:vw:")) != -1)
 		switch (c)
 		{
 		case 'I' :
+			nonl++;
 			if (ip->ip_p)
 			    {
 				fprintf(stderr, "Protocol already set: %d\n",
@@ -189,10 +196,26 @@ char	**argv;
 			    }
 			do_icmp(ip, optarg);
 			break;
+		case 'L' :
+			if (nonl) {
+				fprintf(stderr,
+					"Incorrect usage of -L option.\n");
+				usage(name);
+			}
+			if (!strcmp(optarg, "-"))
+				langfile = stdin;
+			else if (!(langfile = fopen(optarg, "r"))) {
+				fprintf(stderr, "can't open file %s\n",
+					optarg);
+				exit(1);
+			}
+			iplang(langfile);
+			return 0;
 		case 'P' :
 		    {
 			struct	protoent	*p;
 
+			nonl++;
 			if (ip->ip_p)
 			    {
 				fprintf(stderr, "Protocol already set: %d\n",
@@ -207,6 +230,7 @@ char	**argv;
 			break;
 		    }
 		case 'T' :
+			nonl++;
 			if (ip->ip_p)
 			    {
 				fprintf(stderr, "Protocol already set: %d\n",
@@ -217,6 +241,7 @@ char	**argv;
 			ip->ip_len += sizeof(tcphdr_t);
 			break;
 		case 'U' :
+			nonl++;
 			if (ip->ip_p)
 			    {
 				fprintf(stderr, "Protocol already set: %d\n",
@@ -227,15 +252,19 @@ char	**argv;
 			ip->ip_len += sizeof(udphdr_t);
 			break;
 		case 'd' :
+			nonl++;
 			dev = optarg;
 			break;
 		case 'f' :
+			nonl++;
 			ip->ip_off = strtol(optarg, NULL, 0);
 			break;
 		case 'g' :
+			nonl++;
 			gateway = optarg;
 			break;
 		case 'm' :
+			nonl++;
 			mtu = atoi(optarg);
 			if (mtu < 28)
 			    {
@@ -244,16 +273,23 @@ char	**argv;
 			    }
 			break;
 		case 'o' :
-			olen = optname(optarg, options);
+			nonl++;
+			olen = buildopts(optarg, options, (ip->ip_hl - 5) << 2);
 			break;
 		case 's' :
+			nonl++;
 			src = optarg;
 			break;
 		case 't' :
+			nonl++;
 			if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP)
 				tcp->th_dport = htons(atoi(optarg));
 			break;
+		case 'v' :
+			opts |= OPT_VERBOSE;
+			break;
 		case 'w' :
+			nonl++;
 			if (ip->ip_p == IPPROTO_TCP)
 				tcp->th_win = atoi(optarg);
 			else
@@ -264,7 +300,7 @@ char	**argv;
 			usage(name);
 		}
 
-	if (argc - optind < 2)
+	if (argc - optind < 1)
 		usage(name);
 	dst = argv[optind++];
 
@@ -292,6 +328,23 @@ char	**argv;
 	    {
 		fprintf(stderr,"Cant resolve %s\n", gateway);
 		exit(2);
+	    }
+
+	if (olen)
+	    {
+		caddr_t	ipo = (caddr_t)ip;
+
+		printf("Options: %d\n", olen);
+		ti = (struct tcpiphdr *)malloc(olen + ip->ip_len);
+		bcopy((char *)ip, (char *)ti, sizeof(*ip));
+		ip = (ip_t *)ti;
+		ip->ip_hl = (olen >> 2);
+		bcopy(options, (char *)(ip + 1), olen);
+		bcopy((char *)tcp, (char *)(ip + 1) + olen, sizeof(*tcp));
+		ip->ip_len += olen;
+		bcopy((char *)ip, (char *)ipo, ip->ip_len);
+		ip = (ip_t *)ipo;
+		tcp = (tcphdr_t *)((char *)(ip + 1) + olen);
 	    }
 
 	if (ip->ip_p == IPPROTO_TCP)
@@ -327,19 +380,6 @@ char	**argv;
 	if (ip->ip_p == IPPROTO_TCP && tcp->th_flags)
 		printf("Flags:   %#x\n", tcp->th_flags);
 	printf("mtu:     %d\n", mtu);
-
-	if (olen)
-	    {
-		printf("Options: %d\n", olen);
-		ti = (struct tcpiphdr *)malloc(olen + ip->ip_len);
-		bcopy((char *)ip, (char *)ti, sizeof(*ip));
-		ip = (ip_t *)ti;
-		ip->ip_hl += (olen >> 2);
-		bcopy(options, (char *)(ip + 1), olen);
-		bcopy((char *)tcp, (char *)(ip + 1) + olen, sizeof(*tcp));
-		tcp = (tcphdr_t *)((char *)(ip + 1) + olen);
-		ip->ip_len += olen;
-	    }
 
 #ifdef	DOSOCKET
 	if (tcp->th_dport)

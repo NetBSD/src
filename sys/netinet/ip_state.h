@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.5 1997/07/05 05:13:46 darrenr Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.1.6 1997/09/21 16:49:43 veego Exp $	*/
 
 /*
  * (C)opyright 1995-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id: ip_state.h,v 1.1.1.5 1997/07/05 05:13:46 darrenr Exp $
+ * Id: ip_state.h,v 2.0.2.12 1997/08/05 13:39:40 darrenr Exp 
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -75,7 +75,6 @@ typedef struct ipstate {
 
 
 typedef	struct	ipslog	{
-	struct	timeval	isl_tv;
 	U_QUAD_T	isl_pkts;
 	U_QUAD_T	isl_bytes;
 	struct	in_addr	isl_src;

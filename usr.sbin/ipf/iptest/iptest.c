@@ -1,20 +1,16 @@
-/*	$NetBSD: iptest.c,v 1.1.1.2 1997/05/27 22:18:22 thorpej Exp $	*/
+/*	$NetBSD: iptest.c,v 1.1.1.3 1997/09/21 16:49:18 veego Exp $	*/
 
 /*
- * ipsend.c (C) 1995 Darren Reed
+ * ipsend.c (C) 1995-1997 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * The author provides this program as-is, with no gaurantee for its
- * suitability for any specific purpose.  The author takes no responsibility
- * for the misuse/abuse of this program and provides it for the sole purpose
- * of testing packet filter policies.  This file maybe distributed freely
- * providing it is not modified and that this notice remains in tact.
- *
- * This was written and tested (successfully) on SunOS 4.1.x.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
@@ -99,8 +95,8 @@ char **argv;
 	struct	in_addr	gwip;
 	ip_t	*ip;
 	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
-	char	*src = NULL, *dst, c;
-	int	mtu = 1500, tests = 0, pointtest = 0;
+	char	*src = NULL, *dst;
+	int	mtu = 1500, tests = 0, pointtest = 0, c;
 
 	/*
 	 * 65535 is maximum packet size...you never know...
@@ -110,8 +106,7 @@ char **argv;
 	ip->ip_len = sizeof(*ip);
 	ip->ip_hl = sizeof(*ip) >> 2;
 
-	while ((c = (char)getopt(argc, argv,
-				 "1234567IP:TUd:f:g:m:o:p:s:t:")) != -1)
+	while ((c = getopt(argc, argv, "1234567d:g:m:p:s:")) != -1)
 		switch (c)
 		{
 		case '1' :

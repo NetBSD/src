@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_hx.c,v 1.1.1.5 1997/07/05 05:13:01 darrenr Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.1.1.6 1997/09/21 16:48:13 veego Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_hx.c,v 1.1.1.5 1997/07/05 05:13:01 darrenr Exp $";
+static	char	rcsid[] = "Id: ipft_hx.c,v 2.0.2.5 1997/07/20 11:10:32 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -113,19 +113,24 @@ int	cnt, *dir;
 		 * interpret start of line as possibly "[ifname]" or
 		 * "[in/out,ifname]".
 		 */
-		*ifn = NULL;
-		*dir = 0;
+		if (ifn)
+			*ifn = NULL;
+		if (dir)
+			*dir = 0;
 		if ((*buf == '[') && (s = index(line, ']'))) {
 			t = buf + 1;
 			if (t - s > 0) {
 				if ((u = index(t, ',')) && (u < s)) {
 					u++;
-					*ifn = u;
-					if (*t == 'i')
-						*dir = 0;
-					else if (*t == 'o')
-						*dir = 1;
-				} else
+					if (ifn)
+						*ifn = u;
+					if (dir) {
+						if (*t == 'i')
+							*dir = 0;
+						else if (*t == 'o')
+							*dir = 1;
+					}
+				} else if (ifn)
 					*ifn = t;
 				*s++ = '\0';
 			}

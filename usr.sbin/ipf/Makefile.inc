@@ -1,3 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.1.1.2 1997/09/21 16:47:45 veego Exp $
 
-.include "../../Makefile.inc"
+WARNS?=	1
+
+.include "${.CURDIR}/../../Makefile.inc"

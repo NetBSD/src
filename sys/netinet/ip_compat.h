@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.1.1.5 1997/07/05 05:13:42 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.1.1.6 1997/09/21 16:49:40 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_compat.h,v 1.1.1.5 1997/07/05 05:13:42 darrenr Exp $
+ * Id: ip_compat.h,v 2.0.2.22 1997/09/09 14:26:36 darrenr Exp 
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -159,7 +159,7 @@ typedef unsigned long   u_32_t;
 #define	IPOPT_FINN	205	/* FINN */
 
 
-#ifdef	__FreeBSD__
+#if defined(__FreeBSD__) && defined(KERNEL)
 # include <machine/spl.h>
 # if defined(IPFILTER_LKM) && !defined(ACTUALLY_LKM_NOT_KERNEL)
 #  define	ACTUALLY_LKM_NOT_KERNEL
@@ -198,10 +198,10 @@ typedef	struct	qif	{
 	void	*qf_optr;
 	queue_t	*qf_in;
 	queue_t	*qf_out;
-	void	*qf_wqinfo;
-	void	*qf_rqinfo;
-	int	(*qf_inp) __P((queue_t *, mblk_t *));
-	int	(*qf_outp) __P((queue_t *, mblk_t *));
+	struct	qinit	*qf_wqinfo;
+	struct	qinit	*qf_rqinfo;
+	struct	qinit	qf_wqinit;
+	struct	qinit	qf_rqinit;
 	mblk_t	*qf_m;	/* These three fields are for passing data up from */
 	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
 	int	qf_off;
@@ -235,7 +235,7 @@ extern	ill_t	*get_unit __P((char *));
 # endif /* sun */
 
 # if defined(sun) && !defined(linux)
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
+#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
 #  define	SLEEP(id, n)	sleep((id), PZERO+1)
 #  define	WAKEUP(id)	wakeup(id)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
@@ -441,4 +441,10 @@ typedef	struct	icmp	icmphdr_t;
 typedef	struct	ip	ip_t;
 #endif /* linux */
 
+#ifndef	ICMP_ROUTERADVERT
+# define	ICMP_ROUTERADVERT	9
+#endif
+#ifndef	ICMP_ROUTERSOLICIT
+# define	ICMP_ROUTERSOLICIT	10
+#endif
 #endif	/* __IP_COMPAT_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.5 1997/07/05 05:13:34 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.6 1997/09/21 16:49:30 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.1.1.5 1997/07/05 05:13:34 darrenr Exp $";
+static	char	rcsid[] = "Id: ip_fil.c,v 2.0.2.34 1997/09/10 13:08:16 darrenr Exp ";
 #endif
 
 #ifndef	SOLARIS
@@ -113,31 +113,28 @@ static	void	(*fr_saveslowtimo) __P((void));
 int	ipl_inited = 0;
 int	ipl_unreach = ICMP_UNREACH_FILTER;
 
-#ifdef	IPFILTER_LOG
-char	iplbuf[IPL_LOGMAX+1][IPLLOGSIZE];
-caddr_t	iplh[IPL_LOGMAX+1], iplt[IPL_LOGMAX+1];
-int	iplused[IPL_LOGMAX+1] = {0,0,0};
-#endif /* IPFILTER_LOG */
+static	void	fixskip __P((frentry_t **, frentry_t *, int));
+static	void	frzerostats __P((caddr_t));
 static	void	frflush __P((caddr_t));
+static	void	ipfsync __P((void));
+static	void	fr_delgroup __P((u_short, u_32_t, int, int));
+static	frgroup_t *fr_addgroup __P((u_short, frentry_t *, int, int));
+static	frgroup_t *fr_findgroup __P((u_short, u_32_t, int, int, frgroup_t ***));
 #ifdef	__NetBSD__
 static	int	frrequest __P((int, u_long, caddr_t, int));
 #else
 static	int	frrequest __P((int, int, caddr_t, int));
 #endif
-static	void	frzerostats __P((caddr_t));
 #ifdef	_KERNEL
-static	int	(*fr_savep) __P((struct ip *, int, struct ifnet *,
+static	int	(*fr_savep) __P((struct ip *, int, void *,
 				 int, struct mbuf **));
 #else
+int	ipllog __P((void));
 void	init_ifp __P((void));
-/*
-static	int	(*fr_savep) __P((struct ip *, int, struct ifnet *,
-				 int, char *));
-*/
 static int 	no_output __P((struct ifnet *, struct mbuf *,
 			       struct sockaddr *, struct rtentry *));
-static int write_output __P((struct ifnet *, struct mbuf *,
-			     struct sockaddr *, struct rtentry *));
+static int	write_output __P((struct ifnet *, struct mbuf *,
+				  struct sockaddr *, struct rtentry *));
 #endif
 
 #if (_BSDI_VERSION >= 199510) && defined(_KERNEL)
@@ -163,13 +160,7 @@ struct devsw iplsw = {
 /*
  * We provide the fr_checkp name just to minimize changes later.
  */
-#  ifndef	_KERNEL
-int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
-    char **mp));
-#  else
-int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
-    struct mbuf **mp));
-#  endif /* _KERNEL */
+int (*fr_checkp) __P((ip_t *ip, int hlen, void *ifp, int out, mb_t **mp));
 # endif /* NETBSD_PF */
 #endif /* __NetBSD__ */
 
@@ -202,9 +193,6 @@ int iplattach()
 {
 	char *defpass;
 	int s;
-# ifdef	IPFILTER_LOG
-	int i;
-# endif
 
 	SPLNET(s);
 	if (ipl_inited || (fr_checkp == fr_check)) {
@@ -218,21 +206,16 @@ int iplattach()
 # endif
 
 	ipl_inited = 1;
-	bzero((char *)nat_table, sizeof(nat_t *) * NAT_SIZE * 2);
+	bzero((char *)frcache, sizeof(frcache));
+	bzero((char *)nat_table, sizeof(nat_table));
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
 	fr_saveslowtimo = inetsw[0].pr_slowtimo;
 	inetsw[0].pr_slowtimo = ipfr_slowtimer;
 
-# ifdef	IPFILTER_LOG
-	/*
-	 * Set log buffer pointers for each of the log buffers
-	 */
-	for (i = 0; i <= 2; i++) {
-		iplh[i] = iplbuf[i];
-		iplt[i] = iplbuf[i];
-	}
-# endif
+#ifdef	IPFILTER_LOG
+	ipflog_init();
+#endif
 	SPLX(s);
 	if (fr_pass & FR_PASS)
 		defpass = "pass";
@@ -364,7 +347,7 @@ int mode;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
-	int error = 0, unit;
+	int error = 0, unit = 0;
 
 #ifdef	_KERNEL
 	unit = minor(dev);
@@ -387,7 +370,8 @@ int mode;
 	switch (cmd) {
 	case FIONREAD :
 #ifdef IPFILTER_LOG
-		*(int *)data = iplused[IPL_LOGIPF];
+		IWCOPY((caddr_t)&iplused[IPL_LOGIPF], (caddr_t)data,
+		       sizeof(iplused[IPL_LOGIPF]));
 #endif
 		break;
 #if !defined(IPFILTER_LKM) && defined(_KERNEL)
@@ -477,24 +461,27 @@ int mode;
 	case	SIOCIPFFB :
 		if (!(mode & FWRITE))
 			error = EPERM;
-		else {
-			*(int *)data = iplused[unit];
-			iplh[unit] = iplt[unit] = iplbuf[unit];
-			iplused[unit] = 0;
-		}
+		else
+			*(int *)data = ipflog_clear(unit);
 		break;
 #endif /* IPFILTER_LOG */
 	case SIOCGFRST :
 		IWCOPY((caddr_t)ipfr_fragstats(), data, sizeof(ipfrstat_t));
 		break;
-	case SIOCAUTHW:
-	case SIOCAUTHR:
+	case SIOCAUTHW :
+	case SIOCAUTHR :
 		if (!(mode & FWRITE)) {
 			error = EPERM;
 			break;
 		}
-	case SIOCATHST:
+	case SIOCATHST :
 		error = fr_auth_ioctl(data, cmd, NULL, NULL);
+		break;
+	case SIOCFRSYN :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			ipfsync();
 		break;
 	default :
 		error = EINVAL;
@@ -502,6 +489,21 @@ int mode;
 	}
 	SPLX(s);
 	return error;
+}
+
+
+static void ipfsync()
+{
+#ifdef KERNEL
+	struct ifnet *ifp;
+
+# if (NetBSD >= 199511)
+	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next)
+# else
+	for (ifp = ifnet; ifp; ifp = ifp->if_next)
+# endif
+		ip_natsync(ifp);
+#endif
 }
 
 
@@ -524,6 +526,71 @@ int addremove;
 }
 
 
+static frgroup_t *fr_findgroup(num, flags, which, set, fgpp)
+u_short num;
+u_32_t flags;
+int which, set;
+frgroup_t ***fgpp;
+{
+	frgroup_t *fg, **fgp;
+
+	if (which == IPL_LOGAUTH)
+		fgp = &ipfgroups[2][set];
+	else if (flags & FR_ACCOUNT)
+		fgp = &ipfgroups[1][set];
+	else if (flags & (FR_OUTQUE|FR_INQUE))
+		fgp = &ipfgroups[0][set];
+	else
+		return NULL;
+
+	while ((fg = *fgp))
+		if (fg->fg_num == num)
+			break;
+		else
+			fgp = &fg->fg_next;
+	if (fgpp)
+		*fgpp = fgp;
+	return fg;
+}
+
+
+static frgroup_t *fr_addgroup(num, fp, which, set)
+u_short num;
+frentry_t *fp;
+int which, set;
+{
+	frgroup_t *fg, **fgp;
+
+	if ((fg = fr_findgroup(num, fp->fr_flags, which, set, &fgp)))
+		return fg;
+
+	KMALLOC(fg, frgroup_t *, sizeof(*fg));
+	if (fg) {
+		fg->fg_num = num;
+		fg->fg_next = *fgp;
+		fg->fg_head = fp;
+		fg->fg_start = &fp->fr_grp;
+		*fgp = fg;
+	}
+	return fg;
+}
+
+
+static void fr_delgroup(num, flags, which, set)
+u_short num;
+u_32_t flags;
+int which, set;
+{
+	frgroup_t *fg, **fgp;
+
+	if (!(fg = fr_findgroup(num, flags, which, set, &fgp)))
+		return;
+
+	*fgp = fg->fg_next;
+	KFREE(fg);
+}
+
+
 static int frrequest(unit, req, data, set)
 int unit;
 #ifdef	__NetBSD__
@@ -538,12 +605,25 @@ caddr_t data;
 	register frentry_t **ftail;
 	frentry_t frd;
 	frdest_t *fdp;
-	int error = 0, in;
+	frgroup_t *fg = NULL;
+	int error = 0, in, group;
 
 	fp = &frd;
 	IRCOPY(data, (caddr_t)fp, sizeof(*fp));
 
+	/*
+	 * Check that the group number does exist and that if a head group
+	 * has been specified, doesn't exist.
+	 */
+	if (fp->fr_grhead &&
+	    fr_findgroup(fp->fr_grhead, fp->fr_flags, unit, set, NULL))
+		return EEXIST;
+	if (fp->fr_group &&
+	    !fr_findgroup(fp->fr_group, fp->fr_flags, unit, set, NULL))
+		return ESRCH;
+
 	in = (fp->fr_flags & FR_INQUE) ? 0 : 1;
+
 	if (unit == IPL_LOGAUTH)
 		ftail = fprev = &ipauth;
 	else if (fp->fr_flags & FR_ACCOUNT)
@@ -553,12 +633,18 @@ caddr_t data;
 	else
 		return ESRCH;
 
+	if ((group = fp->fr_group)) {
+		if (!(fg = fr_findgroup(group, fp->fr_flags, unit, set, NULL)))
+			return ESRCH;
+		ftail = fprev = fg->fg_start;
+	}
+
 	bzero((char *)frcache, sizeof(frcache[0]) * 2);
 
 	if (*fp->fr_ifname) {
 		fp->fr_ifa = GETUNIT(fp->fr_ifname);
 		if (!fp->fr_ifa)
-			fp->fr_ifa = (struct ifnet *)-1;
+			fp->fr_ifa = (void *)-1;
 	}
 
 	fdp = &fp->fr_dif;
@@ -614,8 +700,15 @@ caddr_t data;
 		if (!f)
 			error = ESRCH;
 		else {
+			if (f->fr_ref > 1)
+				return EBUSY;
+			if (fg && fg->fg_head)
+				fg->fg_head->fr_ref--;
 			if (unit == IPL_LOGAUTH)
 				return fr_auth_ioctl(data, req, f, ftail);
+			if (f->fr_grhead)
+				fr_delgroup(f->fr_grhead, fp->fr_flags, unit,
+					    set);
 			fixskip(fprev, f, -1);
 			*ftail = f->fr_next;
 			KFREE(f);
@@ -628,12 +721,18 @@ caddr_t data;
 				return fr_auth_ioctl(data, req, f, ftail);
 			KMALLOC(f, frentry_t *, sizeof(*f));
 			if (f != NULL) {
+				if (fg && fg->fg_head)
+					fg->fg_head->fr_ref++;
 				bcopy((char *)fp, (char *)f, sizeof(*f));
+				f->fr_ref = 1;
 				f->fr_hits = 0;
 				f->fr_next = *ftail;
 				*ftail = f;
 				if (req == SIOCINIFR || req == SIOCINAFR)
 					fixskip(fprev, f, 1);
+				f->fr_grp = NULL;
+				if ((group = f->fr_grhead))
+					fg = fr_addgroup(group, f, unit, set);
 			} else
 				error = ENOMEM;
 		}
@@ -705,133 +804,12 @@ dev_t dev;
 register struct uio *uio;
 {
 #  ifdef IPFILTER_LOG
-	register int ret, unit;
-	register size_t sz, sx;
-	int error;
-#  if defined(_KERNEL) && !SOLARIS
-	int s;
-#  endif
-
-	unit = minor(dev);
-	if ((2 < unit) || (unit < 0))
-		return ENXIO;
-
-	if (!uio->uio_resid)
-		return 0;
-
-	while (!iplused[unit]) {
-		error = SLEEP(iplbuf[unit], "ipl sleep");
-		if (error)
-			return error;
-	}
-	SPLNET(s);
-
-	sx = sz = MIN(uio->uio_resid, iplused[unit]);
-	if (iplh[unit] < iplt[unit])
-		sz = MIN(sz, IPLLOGSIZE - (iplt[unit] - iplbuf[unit]));
-	sx -= sz;
-
-#  if BSD >= 199306 || defined(__FreeBSD__)
-	uio->uio_rw = UIO_READ;
-#  endif
-	if (!(ret = UIOMOVE(iplt[unit], sz, UIO_READ, uio))) {
-		iplt[unit] += sz;
-		iplused[unit] -= sz;
-		if ((iplh[unit] < iplt[unit]) && (iplt[unit] == iplbuf[unit] + IPLLOGSIZE))
-			iplt[unit] = iplbuf[unit];
-
-		if (sx && !(ret = UIOMOVE(iplt[unit], sx, UIO_READ, uio))) {
-			iplt[unit] += sx;
-			iplused[unit] -= sx;
-			if ((iplh[unit] < iplt[unit]) && (iplt[unit] == iplbuf[unit] + IPLLOGSIZE))
-				iplt[unit] = iplbuf[unit];
-		}
-		if (!iplused[unit])	/* minimise wrapping around the end */
-			iplh[unit] = iplt[unit] = iplbuf[unit];
-	}
-	SPLX(s);
-	return ret;
+	return ipflog_read(minor(dev), uio);
 #  else
 	return ENXIO;
 #  endif
 }
 
-
-# ifdef	IPFILTER_LOG
-int ipllog(flags, dev, ip, fin, m)
-u_int flags;
-int dev;
-ip_t *ip;
-register fr_info_t *fin;
-struct mbuf *m;
-{
-	struct ipl_ci iplci;
-	register int len, mlen, hlen;
-	struct ifnet *ifp = fin->fin_ifp;
-
-	hlen = fin->fin_hlen;
-	if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP)
-		hlen += MIN(sizeof(tcphdr_t), fin->fin_dlen);
-	else if (ip->ip_p == IPPROTO_ICMP) {
-		struct	icmp	*icmp = (struct icmp *)((char *)ip + hlen);
-
-		switch (icmp->icmp_type) {
-		case ICMP_UNREACH :
-		case ICMP_SOURCEQUENCH :
-		case ICMP_REDIRECT :
-		case ICMP_TIMXCEED :
-		case ICMP_PARAMPROB :
-			hlen += MIN(sizeof(struct icmp) + 8, fin->fin_dlen);
-			break;
-		default :
-			hlen += MIN(sizeof(struct icmp), fin->fin_dlen);
-			break;
-		}
-	}
-
-	mlen = (flags & FR_LOGBODY) ? MIN(ip->ip_len - hlen, 128) : 0;
-	len = hlen + sizeof(iplci) + mlen;
-	if (iplused[dev] + len > IPLLOGSIZE)
-		return 0;
-	iplused[dev] += len;
-
-#  ifdef	sun
-	uniqtime(&iplci);
-#  endif
-#  if BSD >= 199306 || defined(__FreeBSD__)
-	microtime((struct timeval *)&iplci);
-#  endif
-	iplci.flags = flags;
-	iplci.hlen = (u_char)hlen;
-	iplci.plen = (u_char)mlen;
-	iplci.rule = fin->fin_rule;
-#  if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603))
-	strncpy(iplci.ifname, ifp->if_xname, IFNAMSIZ);
-#  else
-	iplci.unit = (u_char)ifp->if_unit;
-	if ((iplci.ifname[0] = ifp->if_name[0]))
-		if ((iplci.ifname[1] = ifp->if_name[1]))
-			if ((iplci.ifname[2] = ifp->if_name[2]))
-				iplci.ifname[3] = ifp->if_name[3];
-#  endif
-	if (iplh[dev] == iplbuf[dev] + IPLLOGSIZE)
-		iplh[dev] = iplbuf[dev];
-
-	/*      
-	 * Gauranteed to succeed from above
-	 */     
-	(void) fr_copytolog(dev, (char *)&iplci, sizeof(iplci));
-
-	for (len -= sizeof(iplci); m && len > 0; m = m->m_next, len -= hlen) {
-		hlen = MIN(len, m->m_len);
-		if (fr_copytolog(dev, mtod(m, char *), hlen))
-			break;
-	}
-
-	wakeup(iplbuf[dev]);
-	return 1;
-}
-# endif /* IPFILTER_LOG */
 
 /*
  * send_reset - this could conceivably be a call to tcp_respond(), but that
@@ -907,7 +885,7 @@ struct tcpiphdr *ti;
 }
 
 
-# if !defined(IPFILTER_LKM) && !(__FreeBSD_version >= 300000)
+# if !defined(IPFILTER_LKM) && (__FreeBSD_version < 300000)
 #  if	BSD < 199306
 int iplinit __P((void));
 
