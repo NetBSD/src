@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.52 1998/03/09 06:32:51 mikel Exp $	*/
+/*	$NetBSD: gus.c,v 1.53 1998/03/12 12:28:51 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
  * For more detailed information, see the GUS developers' kit
  * available on the net at:
  *
- * ftp://freedom.nmsu.edu/pub/ultrasound/gravis/util/
- * 	gusdkXXX.zip (developers' kit--get rev 2.22 or later)
+ * http://www.gravis.com/Public/sdk/GUSDK222.ZIP
+ *
  *		See ultrawrd.doc inside--it's MS Word (ick), but it's the bible
  *
  */
@@ -884,7 +884,7 @@ gusattach(parent, self, aux)
 	/*
 	 * Program the IRQ and DMA channels on the GUS.  Note that we hardwire
 	 * the GUS to only use one IRQ channel, but we give the user the
-	 * option of using two DMA channels (the other one given by the flags
+	 * option of using two DMA channels (the other one given by the drq2
 	 * option in the config file).  Two DMA channels are needed for full-
 	 * duplex operation.
 	 *
@@ -975,21 +975,29 @@ gusattach(parent, self, aux)
 	}
 
 	sc->sc_dsize = i;
-	sprintf(gus_device.version, "3.%d", sc->sc_revision);
 
-	printf("\n <Gravis UltraSound version 3.%d, %dKB DRAM, ",
-	       sc->sc_revision, sc->sc_dsize);
-	if (HAS_MIXER(sc))
-		printf("ICS2101 mixer, ");
-	if (HAS_CODEC(sc))
-		printf("%s codec/mixer, ", sc->sc_codec.chip_name);
-	if (sc->sc_recdrq == sc->sc_drq) {
-		printf("half-duplex");
-	} else {
-		printf("full-duplex, record drq %d", sc->sc_recdrq);
+	/* The "official" (3.x) version number cannot easily be obtained.
+	 * The revision register does not correspond to the minor number
+	 * of the board version. Simply use the revision register as
+	 * identification.
+	 */
+	sprintf(gus_device.version, "%d", sc->sc_revision);
+
+	printf("\n%s: Gravis UltraSound", sc->sc_dev.dv_xname);
+	if (sc->sc_revision >= 10)
+		printf(" MAX");
+	else {
+		if (HAS_MIXER(sc))
+			printf(", mixer");
+		if (HAS_CODEC(sc))
+			printf(" with CODEC module");
 	}
+	printf(", %dKB memory\n", sc->sc_dsize);
 
-	printf(">\n");
+	/* A GUS MAX should always have a CODEC installed */
+	if ((sc->sc_revision >= 10) & !(HAS_CODEC(sc)))
+		printf("%s: WARNING: did not attach CODEC on MAX\n", 
+                       sc->sc_dev.dv_xname);
 
 	/*
 	 * Setup a default interrupt handler
@@ -2880,7 +2888,7 @@ gus_init_cs4231(sc)
 	sc->sc_codec.sc_iot = sc->sc_iot;
 	sc->sc_codec.sc_iobase = port+GUS_MAX_CODEC_BASE;
 
-	if (ad1848_probe(&sc->sc_codec) == 0) {
+	if (ad1848_mapprobe(&sc->sc_codec, sc->sc_codec.sc_iobase) == 0) {
 		sc->sc_flags &= ~GUS_CODEC_INSTALLED;
 		return (0);
 	} else {

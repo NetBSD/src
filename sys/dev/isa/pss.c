@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.39 1998/03/12 12:28:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1060,8 +1060,7 @@ spattach(parent, self, aux)
     sc->sc_isa = parent->dv_parent;
 
     ad1848_attach(sc);
-
-    printf("\n");
+    printf(": %s\n", sc->chip_name);
 }
 
 #ifdef notyet

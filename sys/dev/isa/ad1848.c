@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.47 1998/03/11 09:26:05 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.48 1998/03/12 12:28:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -529,7 +529,7 @@ ad1848_attach(sc)
     if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
 	if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq, MAX_ISADMA,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-		printf("ad1848_attach: can't creape map for drq %d\n",
+		printf("ad1848_attach: can't create map for drq %d\n",
 		    sc->sc_recdrq);
 		return;
 	}
@@ -575,9 +575,6 @@ ad1848_attach(sc)
 
     /* Set default port */
     (void) ad1848_set_rec_port(sc, MIC_IN_PORT);
-
-    printf(": %s", sc->chip_name);
-#undef WAITREADY
 }
 
 /*
