@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.23 1998/10/04 18:07:57 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.24 1998/10/23 00:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -96,6 +96,7 @@ ffs_update(v)
 	struct inode *ip;
 	int error;
 	struct timespec ts;
+	caddr_t cp;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -121,14 +122,14 @@ ffs_update(v)
 		brelse(bp);
 		return (error);
 	}
+	cp = (caddr_t)bp->b_data +
+	    (ino_to_fsbo(fs, ip->i_number) * DINODE_SIZE);
 #ifdef FFS_EI
 	if (UFS_MPNEEDSWAP(ap->a_vp->v_mount))
-		ffs_dinode_swap(&ip->i_din.ffs_din,
-			(struct dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number));
+		ffs_dinode_swap(&ip->i_din.ffs_din, (struct dinode *)cp);
 	else
 #endif
-		*((struct dinode *)bp->b_data +
-	    	ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
+		memcpy(cp, &ip->i_din.ffs_din, DINODE_SIZE);
 	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {

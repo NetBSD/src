@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.43 1998/09/01 03:11:08 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.44 1998/10/23 00:31:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -319,6 +319,7 @@ ffs_reload(mountp, cred, p)
 	struct partinfo dpart;
 	int i, blks, size, error;
 	int32_t *lp;
+	caddr_t cp;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -428,14 +429,15 @@ loop:
 			vput(vp);
 			return (error);
 		}
+		cp = (caddr_t)bp->b_data +
+		    (ino_to_fsbo(fs, ip->i_number) * DINODE_SIZE);
 #ifdef FFS_EI
 		if (UFS_MPNEEDSWAP(mountp))
-			ffs_dinode_swap((struct dinode *)bp->b_data +
-			    ino_to_fsbo(fs, ip->i_number), &ip->i_din.ffs_din);
+			ffs_dinode_swap((struct dinode *)cp,
+			    &ip->i_din.ffs_din);
 		else
 #endif
-			ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
-			    ino_to_fsbo(fs, ip->i_number));
+			memcpy(&ip->i_din.ffs_din, cp, DINODE_SIZE);
 		brelse(bp);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -853,6 +855,7 @@ ffs_vget(mp, ino, vpp)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
+	caddr_t cp;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -911,14 +914,13 @@ ffs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
+	cp = (caddr_t)bp->b_data + (ino_to_fsbo(fs, ino) * DINODE_SIZE);
 #ifdef FFS_EI
 	if (UFS_MPNEEDSWAP(mp))
-		ffs_dinode_swap((struct dinode *)bp->b_data +
-		    ino_to_fsbo(fs, ino), &(ip->i_din.ffs_din));
+		ffs_dinode_swap((struct dinode *)cp, &ip->i_din.ffs_din);
 	else 
 #endif
-		ip->i_din.ffs_din =
-		    *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+		memcpy(&ip->i_din.ffs_din, cp, DINODE_SIZE);
 	brelse(bp);
 
 	/*
