@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.9 1994/06/06 22:45:39 jtc Exp $";
+static char *rcsid = "$Id: parse.c,v 1.10 1994/10/18 20:16:13 mycroft Exp $";
 #endif /* not lint */
 
 /*-
@@ -2442,10 +2442,6 @@ Parse_File(name, stream)
 		 * If it doesn't have an operator and we're in a dependency
 		 * line's script, we assume it's actually a shell command
 		 * and add it to the current list of targets.
-		 *
-		 * Note that POSIX declares all lines that start with
-		 * whitespace are shell commands, so there's no need to check
-		 * here...
 		 */
 #ifndef POSIX
 		Boolean	nonSpace = FALSE;
