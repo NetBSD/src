@@ -1,5 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.3 1998/09/08 07:18:56 mjacob Exp $	*/
-/* $Id: isp_netbsd.h,v 1.3 1998/09/08 07:18:56 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.4 1998/09/17 22:50:53 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
