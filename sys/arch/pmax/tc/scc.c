@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.54 1999/12/08 01:29:11 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.55 1999/12/23 15:34:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54 1999/12/08 01:29:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.55 1999/12/23 15:34:19 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -584,7 +584,7 @@ scc_kbd_init(sc, dev)
 	 * during booting. Fortunately the keyboard
 	 * works ok without it.
 	 */
-	KBDReset(ctty.t_dev, sccPutc);
+	lk_reset(ctty.t_dev, sccPutc);
 #endif /* notyet */
 	DELAY(10000);
 	splx(s);
@@ -615,7 +615,7 @@ scc_mouse_init(sc, dev)
 		goto done;
 
 	DELAY(10000);
-	MouseInit(ctty.t_dev, sccPutc, sccGetc);
+	lk_mouseinit(ctty.t_dev, sccPutc, sccGetc);
 	DELAY(10000);
 
 done:
@@ -1169,7 +1169,7 @@ scc_rxintr(sc, chan, regs, unit)
 			return;
 		}
 #ifdef HAVE_RCONS
-		if ((cp = kbdMapChar(cc, &cl)) == NULL)
+		if ((cp = lk_mapchar(cc, &cl)) == NULL)
 			return;
 
 		while (cl--)
