@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.62 2003/11/07 06:03:52 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.63 2003/11/22 08:32:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.62 2003/11/07 06:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.63 2003/11/22 08:32:12 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -558,6 +558,10 @@ const struct wm_product {
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
 	  WM_T_82546_3,		WMP_F_SERDES },
 #endif
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI,
+	  "Intel i82541EI 1000BASE-T Ethernet",
+	  WM_T_82541,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI_MOBILE,
 	  "Intel i82541EI Mobile 1000BASE-T Ethernet",
 	  WM_T_82541,		WMP_F_1000T },
