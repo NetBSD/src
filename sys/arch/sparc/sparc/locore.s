@@ -2446,6 +2446,15 @@ _getidprom:
 #endif
 
 dostart:
+	/*
+	 * Startup.
+	 *
+	 * We have been loaded in low RAM, at some address which
+	 * is page aligned (0x4000 actually) rather than where we
+	 * want to run (0xf8004000).  Until we get everything set,
+	 * we have to be sure to use only pc-relative addressing.
+	 */
+
 #ifdef DDB
 	/*
 	 * First, check for DDB arguments. The loader passes `_esym' in %o1.
@@ -2574,15 +2583,6 @@ is_sun4:
 #endif
 
 start_havetype:
-	/*
-	 * Startup.
-	 *
-	 * We have been loaded in low RAM, at some address which
-	 * is page aligned (0x4000 actually) rather than where we
-	 * want to run (0xf8004000).  Until we get everything set,
-	 * we have to be sure to use only pc-relative addressing.
-	 */
-
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
 	 * to KERNBASE (addresses [KERNBASE.._end-1]).  None of these
