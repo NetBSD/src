@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.10 2001/09/30 11:24:07 sato Exp $	*/
+/*	$NetBSD: rtc.c,v 1.11 2001/12/24 01:21:27 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -226,7 +226,7 @@ clock_get(struct device *dev, time_t base, struct clock_ymdhms *dt)
 	timeh = (timeh << 16) | bus_space_read_2(iot, ioh, ETIME_M_REG_W);
 	timel = bus_space_read_2(iot, ioh, ETIME_L_REG_W);
 
-	DPRINTF(("clock_get: timeh %08lx timel %08lx\n", timeh, timel));
+	DPRINTF(("clock_get: timeh %08x timel %08x\n", timeh, timel));
 
 	cvt_timehl_ymdhms(timeh, timel, dt);
 
@@ -313,7 +313,7 @@ cvt_timehl_ymdhms(
 		sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	}
 
-	DPRINTF(("cvt_timehl_ymdhms: timeh %08lx year %ld yrref %ld\n", 
+	DPRINTF(("cvt_timehl_ymdhms: timeh %08x year %d yrref %d\n", 
 	    timeh, year, sec2));
 
 	month = 0; /* now month is 0..11 */
@@ -327,14 +327,14 @@ cvt_timehl_ymdhms(
 	}
 	month +=1; /* now month is 1..12 */
 
-	DPRINTF(("cvt_timehl_ymdhms: timeh %08lx month %ld mref %ld\n", 
+	DPRINTF(("cvt_timehl_ymdhms: timeh %08x month %d mref %d\n", 
 	    timeh, month, sec2));
 
 	sec2 = SEC2DAY;
 	date = timeh/sec2+1; /* date is 1..31 */
 	timeh -= (date-1)*sec2;
 
-	DPRINTF(("cvt_timehl_ymdhms: timeh %08lx date %ld dref %ld\n", 
+	DPRINTF(("cvt_timehl_ymdhms: timeh %08x date %d dref %d\n", 
 	    timeh, date, sec2));
 
 	sec2 = SEC2HOUR;
@@ -347,7 +347,7 @@ cvt_timehl_ymdhms(
 
 	sec = timeh*2 + timel/ETIME_L_HZ;	
 
-	DPRINTF(("cvt_timehl_ymdhms: hour %ld min %ld sec %ld\n", hour, min, sec));
+	DPRINTF(("cvt_timehl_ymdhms: hour %d min %d sec %d\n", hour, min, sec));
 
 	if (dt) {
 		dt->dt_year	= year - YBASE; /* base 1900 */
