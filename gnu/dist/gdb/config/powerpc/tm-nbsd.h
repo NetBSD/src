@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #undef	TEXT_SEGMENT_BASE
 #define	TEXT_SEGMENT_BASE	1
 
+#define	FLOAT_INFO		{ ppc_float_info(); }
+
 
 /* return true if a given `pc' value is in `call dummy' function. */
 /* FIXME: This just checks for the end of the stack, which is broken
