@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2001/12/31 00:40:11 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/01/13 19:59:26 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -27,9 +27,7 @@ COPTS+=		-fPIC
 
 .PATH:		${.CURDIR}/../common_elf
 
-OBJS=		crt0.o gcrt0.o crtbegin.o crtbeginS.o crtend.o crtendS.o
-
-CLEANFILES+=	core a.out
+OBJS+=		crt0.o gcrt0.o crtbegin.o crtbeginS.o crtend.o crtendS.o
 
 realall: ${OBJS}
 
