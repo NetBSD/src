@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.23 1996/05/22 19:00:52 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.24 1996/05/22 19:06:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -459,8 +459,8 @@ nopages:
 			    so->so_options |= SO_DONTROUTE;
 		    s = splsoftnet();				/* XXX */
 		    error = (*so->so_proto->pr_usrreq)(so,
-			(flags & MSG_OOB) ?  PRU_SENDOOB : PRU_SEND,
-			top, addr, control, (struct proc *)0);
+			(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
+			top, addr, control, p);
 		    splx(s);
 		    if (dontroute)
 			    so->so_options &= ~SO_DONTROUTE;
