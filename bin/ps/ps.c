@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ps.c	5.43 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/ps.c,v 1.5 1993/06/01 01:38:32 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/ps.c,v 1.6 1993/07/11 17:34:29 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -102,7 +102,7 @@ main(argc, argv)
 	register int i;
 	struct winsize ws;
 	dev_t ttydev;
-	int all, ch, flag, fmt, lineno, pid, prtheader, uid, what, xflg;
+	int all, ch, flag, fmt, lineno, pid, prtheader, uid, wflag, what, xflg;
 	int pscomp();
 	char *nlistf, *memf, *swapf;
 	char *kludge_oldps_options();
@@ -119,7 +119,7 @@ main(argc, argv)
 		argv[1] = kludge_oldps_options(argv[1]);
 
 	fmt = 0;
-	all = xflg = 0;
+	all = wflag = xflg = 0;
 	pid = uid = -1;
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
@@ -222,10 +222,11 @@ main(argc, argv)
 			swapf = optarg;
 			break;
 		case 'w':
-			if (termwidth < 131)
-				termwidth = 131;
-			else
+			if (wflag)
 				termwidth = UNLIMITED;
+			else if (termwidth < 131)
+				termwidth = 131;
+                        wflag++;
 			break;
 		case 'x':
 			xflg = 1;
