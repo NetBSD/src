@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.5 2001/11/12 08:14:30 uwe Exp $ */
+/*	$NetBSD: fb.c,v 1.6 2001/11/13 06:54:32 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,9 @@
  * /dev/fb (indirect frame buffer driver).  This is gross; we should
  * just build cdevsw[] dynamically.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.6 2001/11/13 06:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

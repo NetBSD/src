@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.8 2001/09/28 14:34:49 pk Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.9 2001/11/13 06:54:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,9 @@
  * This is the 8530 portion of the driver that will be attached to
  * the "zsc" driver for a Sun keyboard.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.9 2001/11/13 06:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
