@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.17 1999/07/07 23:33:50 wrstuden Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.18 1999/08/03 18:20:22 wrstuden Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.18 1999/07/07 23:32:50 wrstuden Exp 
+ *	NetBSD: vnode_if.src,v 1.19 1999/08/03 18:19:08 wrstuden Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
  */
@@ -232,6 +232,22 @@ struct vnodeop_desc vop_ioctl_desc = {
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_ioctl_args, a_cred),
 	VOPARG_OFFSETOF(struct vop_ioctl_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int vop_fcntl_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_fcntl_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_fcntl_desc = {
+	0,
+	"vop_fcntl",
+	0,
+	vop_fcntl_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_fcntl_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_fcntl_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -788,6 +804,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_read_desc,
 	&vop_write_desc,
 	&vop_ioctl_desc,
+	&vop_fcntl_desc,
 	&vop_poll_desc,
 	&vop_revoke_desc,
 	&vop_mmap_desc,
