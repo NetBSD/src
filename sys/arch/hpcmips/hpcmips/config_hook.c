@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.2 2000/01/16 20:01:41 uch Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.3 2000/08/10 08:27:54 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -89,7 +89,7 @@ config_hook(type, id, mode, func, ctx)
 		if (hr->hr_id == id) {
 			if (hr->hr_mode != mode) {
 				panic("config_hook: incompatible mode on "
-				      "type=%d/id=%d != %d", 
+				      "type=%d/id=%ld != %d",
 				      type, id, hr->hr_mode);
 			}
 			prev_hr = hr;
@@ -112,7 +112,7 @@ config_hook(type, id, mode, func, ctx)
 	case CONFIG_HOOK_EXCLUSIVE:
 		if (prev_hr != NULL) {
 			panic("config_hook: type=%d/id=%ld is already "
-			      "hooked(%d)", type, id, prev_hr);
+			      "hooked(%p)", type, id, prev_hr);
 		}
 		break;
 	default:
