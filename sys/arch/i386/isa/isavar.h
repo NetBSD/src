@@ -3,7 +3,7 @@
  * The Berkeley Software Design Inc. software License Agreement specifies
  * the terms and conditions for redistribution.
  *
- *	BSDI $Id: isavar.h,v 1.1 1993/09/14 17:32:42 mycroft Exp $
+ *	BSDI $Id: isavar.h,v 1.2 1993/10/06 12:09:25 mycroft Exp $
  */
 
 /*
@@ -18,6 +18,9 @@ struct isa_attach_args {
 	u_int	ia_msize;		/* size of i/o memory */
 	void	*ia_aux;		/* driver specific */
 };
+
+#define	IOBASEUNK	0xffff		/* i/o address is unknown */
+#define	DRQUNK		0xffff		/* DMA request line is unknown */
 
 /*
  * per-device ISA variables
