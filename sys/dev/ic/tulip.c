@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.2 1999/09/01 05:07:03 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.3 1999/09/01 20:11:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -111,6 +111,12 @@ const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] = {
 	{ 0,			NULL },
 };
 
+#define	TXTH_72		0
+#define	TXTH_96		1
+#define	TXTH_128	2
+#define	TXTH_160	3
+#define	TXTH_SF		4
+
 void	tlp_start __P((struct ifnet *));
 void	tlp_watchdog __P((struct ifnet *));
 int	tlp_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -206,6 +212,15 @@ tlp_attach(sc, name, enaddr)
 	 * Set up various chip-specific quirks.
 	 */
 	switch (sc->sc_chip) {
+	case TULIP_CHIP_82C168:
+	case TULIP_CHIP_82C169:
+		/*
+		 * These chips seem to have busted DMA engines; just put them
+		 * in Store-and-Forward mode from the get-go.
+		 */
+		sc->sc_txthresh = TXTH_SF;
+		break;
+
 	case TULIP_CHIP_WB89C840F:
 		sc->sc_flags |= TULIPF_IC_FS;
 		break;
