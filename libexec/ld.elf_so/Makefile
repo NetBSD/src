@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2004/02/26 21:45:59 enami Exp $
+#	$NetBSD: Makefile,v 1.69 2004/03/24 08:01:26 skrll Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -23,7 +23,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 PROG=		ld.elf_so
 
-CFLAGS+=	-shared -symbolic -nostartfiles
+LINKFLAGS+=	-shared -symbolic -nostartfiles
 LDFLAGS+=	-non_shared
 
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
@@ -65,7 +65,7 @@ STRIPFLAG=
 
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKMSG_LINK} ${PROG}
-	${CC} ${CFLAGS} ${LDFLAGS:@F@-Wl,$F@} -o ${PROG} ${OBJS} ${LDADD}
+	${CC} ${LINKFLAGS} ${LDFLAGS:@F@-Wl,$F@} -o ${PROG} ${OBJS} ${LDADD}
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
