@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.4 1998/08/25 22:42:48 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.5 1998/09/05 16:47:06 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 #ifndef _SBUS_VAR_H
 #define _SBUS_VAR_H
 
-/* We use #defined(SUN4*) here while the ports are in flux */
-#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
 struct sbus_softc;
 
 /*
@@ -138,15 +136,6 @@ struct sbus_softc {
 };
 #endif
 
-#include <sparc/dev/sbusvar.h>
-
-#elif defined(SUN4U)
-
-#include <sparc64/dev/sbusvar.h>
-
-#endif
-
-
 
 /*
  * PROM-reported DMA burst sizes for the SBus
@@ -158,5 +147,12 @@ struct sbus_softc {
 #define SBUS_BURST_16	0x10
 #define SBUS_BURST_32	0x20
 #define SBUS_BURST_64	0x40
+
+/* We use #defined(SUN4*) here while the ports are in flux */
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
+#include <sparc/dev/sbusvar.h>
+#elif defined(SUN4U)
+#include <sparc64/dev/sbusvar.h>
+#endif
 
 #endif /* _SBUS_VAR_H */
