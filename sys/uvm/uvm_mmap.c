@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.40 2000/03/30 12:31:50 augustss Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.41 2000/05/23 02:19:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1234,10 +1234,6 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		vm_map_lock(map);
 
 		if (map->flags & VM_MAP_WIREFUTURE) {
-			/*
-			 * uvm_map_pageable() always returns the map
-			 * unlocked.
-			 */
 			if ((atop(size) + uvmexp.wired) > uvmexp.wiredmax
 #ifdef pmap_wired_count
 			    || (locklimit != 0 && (size +
@@ -1246,10 +1242,15 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 #endif
 			) {
 				retval = KERN_RESOURCE_SHORTAGE;
+				vm_map_unlock(map);
 				/* unmap the region! */
 				(void) uvm_unmap(map, *addr, *addr + size);
 				goto bad;
 			}
+			/*
+			 * uvm_map_pageable() always returns the map
+			 * unlocked.
+			 */
 			retval = uvm_map_pageable(map, *addr, *addr + size,
 			    FALSE, UVM_LK_ENTER);
 			if (retval != KERN_SUCCESS) {
