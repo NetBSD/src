@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.1.1.1.2.5 2003/09/17 23:46:43 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.1.1.1.2.6 2003/09/19 03:28:05 msaitoh Exp $	*/
 /*	$OpenBSD: ssh-agent.c,v 1.74 2001/12/05 10:06:12 deraadt Exp $	*/
 
 /*
@@ -651,7 +651,7 @@ new_socket(sock_type type, int fd)
 		sockets = xrealloc(sockets, new_alloc * sizeof(sockets[0]));
 	else
 		sockets = xmalloc(new_alloc * sizeof(sockets[0]));
-	for (i = old_alloc; i < sockets_alloc; i++)
+	for (i = old_alloc; i < new_alloc; i++)
 		sockets[i].type = AUTH_UNUSED;
 	sockets_alloc = new_alloc;
 	sockets[old_alloc].fd = fd;
