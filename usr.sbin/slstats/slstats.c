@@ -23,8 +23,8 @@
 
 #ifndef lint
 /*static char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.2 1993/12/22 12:16:00 cgd Exp $ (LBL)";*/
-static char rcsid[] = "$Id: slstats.c,v 1.2 1993/12/22 12:16:00 cgd Exp $";
+    "@(#) $Header: /cvsroot/src/usr.sbin/slstats/Attic/slstats.c,v 1.3 1994/03/28 07:22:05 cgd Exp $ (LBL)";*/
+static char rcsid[] = "$Id: slstats.c,v 1.3 1994/03/28 07:22:05 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -256,7 +256,7 @@ kread(addr, buf, size)
 	char *buf;
 	int size;
 {
-	if (kvm_read((char *)addr, buf, size) != size)
+	if (kvm_read((char *)(long)addr, buf, size) != size)
 		return -1;
 	return 0;
 }
