@@ -1,5 +1,5 @@
 
-.\"	$NetBSD: atalk.4,v 1.4 1999/03/16 01:19:15 garbled Exp $
+.\"	$NetBSD: atalk.4,v 1.5 1999/09/21 22:39:14 matt Exp $
 .\"
 .\" This file is derived from the atalk.4 man page in the Netatlk 1.4b2
 .\" distribution. That distribution is covered by the following copyright:
@@ -45,9 +45,9 @@ Datagram Delivery Protocol (DDP), using the SOCK_DGRAM socket type.
 In addition, access to in-kernel AppleTalk routing tables and network
 interface configurations is provided.
 .Pp
-The AppleTalk Protocol Suite provides support for four kinds of
+The AppleTalk Protocol Suite provides support for five kinds of
 physical media: LocalTalk (230kbps wire-or'd serial), Ethernet,
-Token Ring, and asynchronous serial connections (using either
+FDDI, Token Ring, and asynchronous serial connections (using either
 AppleTalk Remote Access
 .Pq Tn ARA
 or
@@ -55,9 +55,7 @@ or
 ).
 Currently,
 .Nx Ns 's
-AppleTalk implimentataion supports only Ethernet.
-.\" and Token Ring?
-.\" If NetBSD supported it....
+AppleTalk implementataion supports Ethernet, FDDI, and Token Ring.
 .Pp
 AppleTalk packets are encapsulated on the ethernet using the EtherTalk
 Link Access Protocol (ELAP).
