@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.7 1999/07/26 03:01:09 lukem Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.8 2002/07/06 21:39:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypdb.c,v 1.7 1999/07/26 03:01:09 lukem Exp $");
+__RCSID("$NetBSD: ypdb.c,v 1.8 2002/07/06 21:39:25 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,9 +64,7 @@ __RCSID("$NetBSD: ypdb.c,v 1.7 1999/07/26 03:01:09 lukem Exp $");
  */
 
 DBM *
-ypdb_open(file, flags, mode)
-	const char *file;
-	int flags, mode;
+ypdb_open(const char *file, int flags, int mode)
 {
 	char path[MAXPATHLEN], *cp;
 	DBM *db;
@@ -95,8 +93,7 @@ ypdb_open(file, flags, mode)
 }
 
 void
-ypdb_close(db)
-	DBM *db;
+ypdb_close(DBM *db)
 {
 	(void)(db->close)(db);
 }
@@ -108,9 +105,7 @@ ypdb_close(db)
  */
 
 datum
-ypdb_fetch(db, key)
-	DBM *db;
-	datum key;
+ypdb_fetch(DBM *db, datum key)
 {
 	datum retkey;
 	DBT nk, nd;
@@ -136,8 +131,7 @@ ypdb_fetch(db, key)
  */
 
 datum
-ypdb_firstkey(db)
-	DBM *db;
+ypdb_firstkey(DBM *db)
 {
 	int status;
 	datum retkey;
@@ -161,8 +155,7 @@ ypdb_firstkey(db)
  */
 
 datum
-ypdb_nextkey(db)
-	DBM *db;
+ypdb_nextkey(DBM *db)
 {
 	int status;
 	datum retkey;
@@ -186,9 +179,7 @@ ypdb_nextkey(db)
  */
 
 datum
-ypdb_setkey(db, key)
-	DBM *db;
-        datum key;
+ypdb_setkey(DBM *db, datum key)
 {
 	int status;
 	DBT nk, nd;
@@ -210,9 +201,7 @@ ypdb_setkey(db, key)
  */
 
 int
-ypdb_delete(db, key)
-	DBM *db;
-	datum key;
+ypdb_delete(DBM *db, datum key)
 {
 	int status;
 	DBT nk;
@@ -234,10 +223,7 @@ ypdb_delete(db, key)
  */
 
 int
-ypdb_store(db, key, content, flags)
-	DBM *db;
-	datum key, content;
-	int flags;
+ypdb_store(DBM *db, datum key, datum content, int flags)
 {
 	DBT nk, nd;
 

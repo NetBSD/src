@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.11 2001/02/19 23:22:51 cgd Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.12 2002/07/06 21:30:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.11 2001/02/19 23:22:51 cgd Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.12 2002/07/06 21:30:26 wiz Exp $");
 #endif
 
 /*
@@ -71,26 +71,24 @@ struct user {
 
 #define HASHMAX 55
 
-void	add_group __P((const char *, const char *));
-void	add_user __P((const char *, const char *, const char *));
-int	hashidx __P((char));
-int	isgsep __P((char));
-int	main __P((int, char *[]));
-void	print_hosts __P((const char *, const char *));
-void	print_netid __P((const char *));
-void	print_passwd_group __P((int, const char *));
-void	read_group __P((const char *));
-void	read_passwd __P((const char *));
-void	usage __P((void));
+void	add_group(const char *, const char *);
+void	add_user(const char *, const char *, const char *);
+int	hashidx(char);
+int	isgsep(char);
+int	main(int, char *[]);
+void	print_hosts(const char *, const char *);
+void	print_netid(const char *);
+void	print_passwd_group(int, const char *);
+void	read_group(const char *);
+void	read_passwd(const char *);
+void	usage(void);
 
 TAILQ_HEAD(user_list, user);
 struct user_list root;
 struct user_list hroot[HASHMAX];
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *HostFile = _PATH_HOSTS;
 	char *PasswdFile = _PATH_PASSWD;
@@ -155,8 +153,7 @@ main(argc, argv)
 }
 
 int
-hashidx(key)
-	char key;
+hashidx(char key)
 {
 	if (key < 'A')
 		return(0);
@@ -174,8 +171,7 @@ hashidx(key)
 }
 
 void
-add_user(username, uid, gid)
-	const char *username, *uid, *gid;
+add_user(const char *username, const char *uid, const char *gid)
 {
 	struct user *u;
 	int idx;
@@ -200,8 +196,7 @@ add_user(username, uid, gid)
 }
 
 void
-add_group(username, gid)
-	const char *username, *gid;
+add_group(const char *username, const char *gid)
 {
 	struct user *u;
 	int g, idx;
@@ -223,8 +218,7 @@ add_group(username, gid)
 }
 
 void
-read_passwd(fname)
-	const char *fname;
+read_passwd(const char *fname)
 {
 	FILE	*pfile;
 	size_t	 line_no;
@@ -284,8 +278,7 @@ read_passwd(fname)
 }
 
 int
-isgsep(ch)
-	char ch;
+isgsep(char ch)
 {
 
 	switch (ch) {
@@ -300,8 +293,7 @@ isgsep(ch)
 }
 
 void
-read_group(fname)
-	const char *fname;
+read_group(const char *fname)
 {
 	FILE	*gfile;
 	size_t	 line_no;
@@ -369,9 +361,7 @@ read_group(fname)
 }
 
 void
-print_passwd_group(qflag, domain)
-	int qflag;
-	const char *domain;
+print_passwd_group(int qflag, const char *domain)
 {
 	struct user *u, *p;
 	int i;
@@ -397,8 +387,7 @@ print_passwd_group(qflag, domain)
 }
 
 void
-print_hosts(fname, domain)
-	const char *fname, *domain;
+print_hosts(const char *fname, const char *domain)
 {
 	FILE	*hfile;
 	size_t	 len;
@@ -431,8 +420,7 @@ print_hosts(fname, domain)
 }
 
 void
-print_netid(fname)
-	const char *fname;
+print_netid(const char *fname)
 {
 	FILE	*mfile;
 	size_t	 len;
@@ -465,7 +453,7 @@ print_netid(fname)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s %s\n", getprogname(),
