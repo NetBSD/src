@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2003/09/27 20:01:58 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2005/01/01 21:02:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
 struct vm_map	*pt_map;
-struct vm_map	pt_map_store;
+struct vm_map_kernel pt_map_store;
 
 vsize_t		mem_size;	/* memory size in bytes */
 paddr_t		avail_end;	/* PA of last available physical page */
