@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.55 2000/08/15 01:08:00 hubertf Exp $	*/
+/*	$NetBSD: defs.h,v 1.56 2000/09/08 02:50:42 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -353,5 +353,6 @@ int	target_mount __P((const char *fstype, const char *from, const char* on));
 int	target_test __P((const char*, const char*));
 int	target_dir_exists_p __P((const char *path));
 int	target_file_exists_p __P((const char *path));
+int	target_symlink_exists_p __P((const char *path));
 void	unwind_mounts __P((void));
 
