@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.20 1999/01/25 01:09:13 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.21 1999/01/26 22:32:22 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.20 1999/01/25 01:02:59 augustss Exp 
+ *	NetBSD: usbdevs,v 1.21 1999/01/26 22:21:55 augustss Exp 
  */
 
 /*
@@ -68,6 +68,7 @@
 #define	USB_VENDOR_KONICA	0x04c8		/* Konica Corporation */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Jazz */
+#define	USB_VENDOR_AKS	0x0529		/* Aladdin Knowledge Systems */
 #define	USB_VENDOR_ATEN	0x0557		/* ATen */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
@@ -140,6 +141,9 @@
 
 /* Jazz products */
 #define	USB_PRODUCT_JAZZ_J6502	0x4201		/* J-6502 speakers */
+
+/* AKS products */
+#define	USB_PRODUCT_AKS_USBHASP	0x0001		/* USB-HASP 0.06 */
 
 /* ATen products */
 #define	USB_PRODUCT_ATEN_UC1284	0x2001		/* Parallel printer adapter */
