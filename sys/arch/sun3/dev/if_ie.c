@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.39 2003/07/15 03:36:14 lukem Exp $ */
+/*	$NetBSD: if_ie.c,v 1.39.4.1 2005/01/24 21:42:47 he Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.39 2003/07/15 03:36:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.39.4.1 2005/01/24 21:42:47 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1647,7 +1647,8 @@ ieioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			mc_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mc_reset(sc);
 			error = 0;
 		}
 		break;
