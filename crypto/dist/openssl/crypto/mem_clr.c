@@ -58,6 +58,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
+#include <inttypes.h>
 
 unsigned char cleanse_ctr = 0;
 
@@ -68,7 +69,7 @@ void OPENSSL_cleanse(void *ptr, size_t len)
 	while(loop--)
 		{
 		*(p++) = cleanse_ctr;
-		cleanse_ctr += (17 + (unsigned char)((int)p & 0xF));
+		cleanse_ctr += (17 + (unsigned char)((intptr_t)p & 0xF));
 		}
 	if(memchr(ptr, cleanse_ctr, len))
 		cleanse_ctr += 63;
