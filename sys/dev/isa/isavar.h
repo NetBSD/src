@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.31 1998/02/17 18:27:10 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.32 1998/04/15 01:44:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -136,8 +136,6 @@ struct isa_attach_args {
 	int	ia_maddr;		/* physical i/o mem addr */
 	u_int	ia_msize;		/* size of i/o memory */
 	void	*ia_aux;		/* driver specific */
-
-	bus_space_handle_t ia_delaybah; /* i/o handle for `delay port' */
 };
 
 #include "locators.h"
@@ -188,14 +186,6 @@ struct isa_softc {
 
 	int	sc_dmareads;		/* state for isa_dmadone() */
 	int	sc_dmafinished;		/* DMA completion state */
-
-	/*
-	 * This i/o handle is used to map port 0x84, which is
-	 * read to provide a 1.25us delay.  This access handle
-	 * is mapped in isaattach(), and exported to drivers
-	 * via isa_attach_args.
-	 */
-	bus_space_handle_t   sc_delaybah;
 };
 
 #define	ISA_DRQ_ISFREE(isadev, drq) \

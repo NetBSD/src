@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.98 1998/01/12 09:43:41 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.99 1998/04/15 01:44:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -119,14 +119,6 @@ isaattach(parent, self, aux)
 	if (bus_space_map(sc->sc_iot, IO_DMAPG, 0xf, 0, &sc->sc_dmapgh))
 		panic("isaattach: can't map DMA page registers");
 
-	/*
-	 * Map port 0x84, which causes a 1.25us delay when read.
-	 * We do this now, since several drivers need it.
-	 */
-	if (bus_space_subregion(sc->sc_iot, sc->sc_dmapgh, 0x04, 1,
-	    &sc->sc_delaybah))
-		panic("isaattach: can't map `delay port'");	/* XXX */
-
 	TAILQ_INIT(&sc->sc_subdevs);
 #ifdef __BROKEN_INDIRECT_CONFIG
 	config_scan(isascan, self);
@@ -186,7 +178,6 @@ isascan(parent, match)
 	ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
 	ia.ia_drq = cf->cf_drq;
 	ia.ia_drq2 = cf->cf_drq2;
-	ia.ia_delaybah = sc->sc_delaybah;
 
 	if ((*cf->cf_attach->ca_match)(parent, match, &ia) > 0)
 		config_attach(parent, match, &ia, isaprint);
@@ -216,7 +207,6 @@ isasearch(parent, cf, aux)
 		ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
 		ia.ia_drq = cf->cf_drq;
 		ia.ia_drq2 = cf->cf_drq2;
-		ia.ia_delaybah = sc->sc_delaybah;
 
 		tryagain = 0;
 		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0) {
