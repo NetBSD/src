@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.20 2005/01/09 21:45:53 fredb Exp $
+#	$NetBSD: Makefile.common,v 1.21 2005/03/21 00:49:17 rtr Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -103,6 +103,8 @@ XSERVER_XAMIGA?=no
 XSERVER_XARM32VIDC?=	no
 # Does this platform build the XdecNetBSD server?
 XSERVER_XDECNETBSD?=	no
+# Does this platform build the Xdmx server?
+XSERVER_XDMX?=		yes
 # Does this platform build the Xdreamcast server?
 XSERVER_XDREAMCAST?=	no
 # Does this platform build the Xnewsmips server?
