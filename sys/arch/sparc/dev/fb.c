@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.43 2000/03/19 13:48:45 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.44 2000/04/16 22:12:05 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -441,22 +441,39 @@ fbrcons_init(fb)
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
-	/* 
+	/*
 	 * - force monochrome output
 	 * - eraserows() hack to clear the *entire* display
 	 * - cursor is currently enabled
 	 * - center output
 	 */
-	ri->ri_flg = RI_FORCEMONO | RI_FULLCLEAR | RI_CURSOR | RI_CENTER;
+	ri->ri_flg = RI_FULLCLEAR | RI_CURSOR | RI_CENTER;
 
 	/* Get operations set and connect to rcons */
 	if (rasops_init(ri, maxrow, maxcol))
 		panic("fbrcons_init: rasops_init failed!");
-		
-	/* PROM sets up colormap so black is index 0x00 and white is 0xff */
+
 	if (ri->ri_depth == 8) {
-		ri->ri_devcmap[0] = 0x00000000;
-		ri->ri_devcmap[1] = 0xffffffff;
+		int i;
+		for (i = 0; i < 16; i++) {
+			/*
+			 * Use existing colormap entries for black and white
+			 */
+			if ((i & 7) == WSCOL_BLACK) {
+				ri->ri_devcmap[i] = 255;
+				continue;
+			}
+
+			if ((i & 7) == WSCOL_WHITE) {
+				ri->ri_devcmap[i] = 0;
+				continue;
+			}
+			/*
+			 * Other entries refer to ANSI map, which for now
+			 * is setup in bt_subr.c
+			 */
+			ri->ri_devcmap[i] = i + 1;
+		}
 	}
 
 	rc->rc_row = rc->rc_col = 0;
