@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.62 2002/01/12 01:07:00 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.63 2002/05/13 20:30:11 matt Exp $ */
 
 /*
  * Mach Operating System
@@ -216,8 +216,6 @@ const struct db_variable db_regs[] = {
 
 };
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
-
-extern label_t	*db_recover;
 
 int	db_active = 0;
 

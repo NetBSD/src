@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 2002/04/10 19:35:23 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.21 2002/05/13 20:30:08 matt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -90,8 +90,6 @@ const struct db_variable db_regs[] = {
 };
 
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
-
-extern label_t	*db_recover;
 
 int	db_active = 0;
 

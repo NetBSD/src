@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.32 2002/03/31 00:14:18 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.33 2002/05/13 20:30:13 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -69,7 +69,7 @@
 
 #include "ioconf.h"
 
-extern	label_t *db_recover;
+db_regs_t ddb_regs;
 
 void	kdbprinttrap(int, int);
 
