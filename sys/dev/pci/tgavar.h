@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.7 2000/03/12 05:32:30 nathanw Exp $ */
+/* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,6 +40,8 @@ struct fbcurpos;
 
 struct tga_conf {
 	char	    *tgac_name;		/* name for this board type */
+
+	struct ramdac_funcs *(*ramdac_funcs) __P((void));
 
 	int	    tgac_phys_depth;	/* physical frame buffer depth */
 	vsize_t   tgac_cspace_size;	/* core space size */
@@ -88,6 +90,7 @@ struct tga_devconfig {
 	void	    *dc_ramdac_private; /* RAMDAC private storage */
 
 	void	    (*dc_ramdac_intr) __P((void *));
+	int		dc_intrenabled; /* can we depend on interrupts yet? */
 };
 	
 struct tga_softc {

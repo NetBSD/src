@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.21 2000/03/12 05:32:29 nathanw Exp $ */
+/* $NetBSD: tga.c,v 1.22 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,6 +48,8 @@
 #include <dev/pci/tgavar.h>
 #include <dev/ic/bt485reg.h>
 #include <dev/ic/bt485var.h>
+#include <dev/ic/bt463reg.h>
+#include <dev/ic/bt463var.h>
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
@@ -68,7 +70,7 @@ struct cfattach tga_ca = {
 
 int	tga_identify __P((struct tga_devconfig *));
 const struct tga_conf *tga_getconf __P((int));
-void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
+static void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 	    pcitag_t tag, struct tga_devconfig *dc));
 
 struct tga_devconfig tga_console_dc;
@@ -91,15 +93,19 @@ static int tga_rop_vtov __P((struct raster *, int, int, int, int,
 	int, struct raster *, int, int ));
 void tga2_init __P((struct tga_devconfig *, int));
 
+static void tga_config_interrupts __P((struct device *));
+
 /* RAMDAC interface functions */
-int		tga_sched_update __P((void *, void (*)(void *)));
-void		tga_ramdac_wr __P((void *, u_int, u_int8_t));
-u_int8_t 	tga_ramdac_rd __P((void *, u_int));
-void		tga2_ramdac_wr __P((void *, u_int, u_int8_t));
-u_int8_t 	tga2_ramdac_rd __P((void *, u_int));
+static int		tga_sched_update __P((void *, void (*)(void *)));
+static void		tga_ramdac_wr __P((void *, u_int, u_int8_t));
+static u_int8_t	tga_ramdac_rd __P((void *, u_int));
+static void		tga_bt463_wr __P((void *, u_int, u_int8_t));
+static u_int8_t	tga_bt463_rd __P((void *, u_int));
+static void		tga2_ramdac_wr __P((void *, u_int, u_int8_t));
+static u_int8_t	tga2_ramdac_rd __P((void *, u_int));
 
 /* Interrupt handler */
-int	tga_intr __P((void *));
+static int	tga_intr __P((void *));
 
 struct wsdisplay_emulops tga_emulops = {
 	rcons_cursor,			/* could use hardware cursor; punt */
@@ -138,8 +144,8 @@ struct wsdisplay_accessops tga_accessops = {
 	0 /* load_font */
 };
 
-void	tga_blank __P((struct tga_devconfig *));
-void	tga_unblank __P((struct tga_devconfig *));
+static void	tga_blank __P((struct tga_devconfig *));
+static void	tga_unblank __P((struct tga_devconfig *));
 
 int
 tgamatch(parent, match, aux)
@@ -162,7 +168,7 @@ tgamatch(parent, match, aux)
 	return (0);
 }
 
-void
+static void
 tga_getdevconfig(memt, pc, tag, dc)
 	bus_space_tag_t memt;
 	pci_chipset_tag_t pc;
@@ -232,7 +238,7 @@ tga_getdevconfig(memt, pc, tag, dc)
 		monitor = (~TGARREG(dc, TGA_REG_GREV) >> 16) & 0x0f;
 		tga2_init(dc, monitor);
 	}
-
+	
 	switch (TGARREG(dc, TGA_REG_VHCR) & 0x1ff) {		/* XXX */
 	case 0:
 		dc->dc_wid = 8192;
@@ -301,6 +307,8 @@ tga_getdevconfig(memt, pc, tag, dc)
 
 	tga_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
 	tga_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+
+	dc->dc_intrenabled = 0;
 }
 
 void
@@ -379,15 +387,21 @@ tgaattach(parent, self, aux)
 	 * Get RAMDAC function vectors and call the RAMDAC functions
 	 * to allocate its private storage and pass that back to us.
 	 */
-	sc->sc_dc->dc_ramdac_funcs = bt485_funcs();
+
+	sc->sc_dc->dc_ramdac_funcs = sc->sc_dc->dc_tgaconf->ramdac_funcs();
 	if (!sc->sc_dc->dc_tga2) {
-		sc->sc_dc->dc_ramdac_cookie = bt485_register(
-		    sc->sc_dc, tga_sched_update, tga_ramdac_wr,
-		    tga_ramdac_rd);
+	    if (sc->sc_dc->dc_tgaconf->ramdac_funcs == bt485_funcs) 
+		  sc->sc_dc->dc_ramdac_cookie = 
+			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc,
+		    tga_sched_update, tga_ramdac_wr, tga_ramdac_rd);
+		else
+		  sc->sc_dc->dc_ramdac_cookie = 
+			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc,
+		    tga_sched_update, tga_bt463_wr, tga_bt463_rd);
 	} else {
-		sc->sc_dc->dc_ramdac_cookie = bt485_register(
-		    sc->sc_dc, tga_sched_update, tga2_ramdac_wr,
-		    tga2_ramdac_rd);
+		sc->sc_dc->dc_ramdac_cookie = 
+			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc, 
+			tga_sched_update, tga2_ramdac_wr, tga2_ramdac_rd);
 	}
 
 	/*
@@ -417,7 +431,18 @@ tgaattach(parent, self, aux)
 	aa.accesscookie = sc;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+
+	config_interrupts(self, tga_config_interrupts);
 }
+
+static void 
+tga_config_interrupts (d)
+	struct device *d;
+{
+	struct tga_softc *sc = (struct tga_softc *)d;
+	sc->sc_dc->dc_intrenabled = 1;
+}
+	
 
 int
 tga_ioctl(v, cmd, data, flag, p)
@@ -489,30 +514,60 @@ tga_ioctl(v, cmd, data, flag, p)
 	return (-1);
 }
 
-int
+static int
 tga_sched_update(v, f)
 	void	*v;
 	void	(*f) __P((void *));
 {
 	struct tga_devconfig *dc = v;
 
-	TGAWREG(dc, TGA_REG_SISR, 0x00010000);
-	dc->dc_ramdac_intr = f;
+	if (dc->dc_intrenabled) {
+		/* Arrange for f to be called at the next end-of-frame interrupt */
+		dc->dc_ramdac_intr = f;
+		TGAWREG(dc, TGA_REG_SISR, 0x00010000);
+	} else {
+		/* Spin until the end-of-frame, then call f */
+		TGAWREG(dc, TGA_REG_SISR, 0x00010001);
+		TGAREGWB(dc, TGA_REG_SISR, 1);
+		while ((TGARREG(dc, TGA_REG_SISR) & 0x00000001) == 0)
+			;
+		f(dc->dc_ramdac_cookie);
+		TGAWREG(dc, TGA_REG_SISR, 0x00000001);
+		TGAREGWB(dc, TGA_REG_SISR, 1);
+	}
+		
 	return 0;
 }
 
-int
+static int
 tga_intr(v)
 	void *v;
 {
 	struct tga_devconfig *dc = v;
 	struct ramdac_cookie *dcrc= dc->dc_ramdac_cookie;
 
-	if ((TGARREG(dc, TGA_REG_SISR) & 0x00010001) != 0x00010001)
-		return 0;
+	u_int32_t reg;
+
+	reg = TGARREG(dc, TGA_REG_SISR);
+	if (( reg & 0x00010001) != 0x00010001) {
+		/* Odd. We never set any of the other interrupt enables. */
+		if ((reg & 0x1f) != 0) {
+			/* Clear the mysterious pending interrupts. */
+			TGAWREG(dc, TGA_REG_SISR, (reg & 0x1f));
+			TGAREGWB(dc, TGA_REG_SISR, 1);
+			/* This was our interrupt, even if we're puzzled as to why
+			 * we got it.  Don't make the interrupt handler think it
+			 * was a stray.  
+			 */
+			return -1;
+		} else {
+			return 0;
+		}
+	}
 	dc->dc_ramdac_intr(dcrc);
 	dc->dc_ramdac_intr = NULL;
 	TGAWREG(dc, TGA_REG_SISR, 0x00000001);
+	TGAREGWB(dc, TGA_REG_SISR, 1);
 	return (1);
 }
 
@@ -536,7 +591,7 @@ tga_mmap(v, offset, prot)
 #endif
 }
 
-int
+static int
 tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
@@ -559,7 +614,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	return (0);
 }
 
-void
+static void
 tga_free_screen(v, cookie)
 	void *v;
 	void *cookie;
@@ -572,7 +627,7 @@ tga_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-int
+static int
 tga_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
@@ -631,7 +686,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 /*
  * Functions to blank and unblank the display.
  */
-void
+static void
 tga_blank(dc)
 	struct tga_devconfig *dc;
 {
@@ -643,7 +698,7 @@ tga_blank(dc)
 	}
 }
 
-void
+static void
 tga_unblank(dc)
 	struct tga_devconfig *dc;
 {
@@ -778,7 +833,7 @@ tga_builtin_get_curmax(dc, curposp)
 /*
  * Copy columns (characters) in a row (line).
  */
-void
+static void
 tga_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
@@ -799,7 +854,7 @@ tga_copycols(id, row, srccol, dstcol, ncols)
 /*
  * Copy rows (lines).
  */
-void
+static void
 tga_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
@@ -988,7 +1043,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	return 0;
 }
 
-void
+static void
 tga_ramdac_wr(v, btreg, val)
 	void *v;
 	u_int btreg;
@@ -1003,7 +1058,7 @@ tga_ramdac_wr(v, btreg, val)
 	TGAREGWB(dc, TGA_REG_EPDR, 1);
 }
 
-void
+static void
 tga2_ramdac_wr(v, btreg, val)
 	void *v;
 	u_int btreg;
@@ -1021,7 +1076,61 @@ tga2_ramdac_wr(v, btreg, val)
 	bus_space_barrier(dc->dc_memt, ramdac, 0, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
-u_int8_t
+static u_int8_t
+tga_bt463_rd(v, btreg)
+	void *v;
+	u_int btreg;
+{
+	struct tga_devconfig *dc = v;
+	tga_reg_t rdval;
+
+	/* 
+	 * Strobe CE# (high->low->high) since status and data are latched on 
+	 * the falling and rising edges (repsectively) of this active-low signal.
+	 */
+	
+	TGAREGWB(dc, TGA_REG_EPSR, 1);
+	TGAWREG(dc, TGA_REG_EPSR, (btreg << 2) | 2 | 1);
+	TGAREGWB(dc, TGA_REG_EPSR, 1);
+	TGAWREG(dc, TGA_REG_EPSR, (btreg << 2) | 2 | 0);
+
+	TGAREGRB(dc, TGA_REG_EPSR, 1);
+
+	rdval = TGARREG(dc, TGA_REG_EPDR);
+	TGAREGWB(dc, TGA_REG_EPSR, 1);
+	TGAWREG(dc, TGA_REG_EPSR, (btreg << 2) | 2 | 1);
+
+	return (rdval >> 16) & 0xff;
+}
+
+static void
+tga_bt463_wr(v, btreg, val)
+	void *v;
+	u_int btreg;
+	u_int8_t val;
+{
+	struct tga_devconfig *dc = v;
+
+	/* 
+	 * In spite of the 21030 documentation, to set the MPU bus bits for
+	 * a write, you set them in the upper bits of EPDR, not EPSR.
+	 */
+	
+	/* 
+	 * Strobe CE# (high->low->high) since status and data are latched on
+	 * the falling and rising edges of this active-low signal.
+	 */
+
+	TGAREGWB(dc, TGA_REG_EPDR, 1);
+	TGAWREG(dc, TGA_REG_EPDR, (btreg << 10) | 0x100 | val);
+	TGAREGWB(dc, TGA_REG_EPDR, 1);
+	TGAWREG(dc, TGA_REG_EPDR, (btreg << 10) | 0x000 | val);
+	TGAREGWB(dc, TGA_REG_EPDR, 1);
+	TGAWREG(dc, TGA_REG_EPDR, (btreg << 10) | 0x100 | val);
+
+}
+
+static u_int8_t
 tga_ramdac_rd(v, btreg)
 	void *v;
 	u_int btreg;
@@ -1039,7 +1148,7 @@ tga_ramdac_rd(v, btreg)
 	return (rdval >> 16) & 0xff;				/* XXX */
 }
 
-u_int8_t
+static u_int8_t
 tga2_ramdac_rd(v, btreg)
 	void *v;
 	u_int btreg;
