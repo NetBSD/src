@@ -1,7 +1,7 @@
-/* $NetBSD: wsmoused.h,v 1.6 2004/01/05 12:01:52 jmmv Exp $ */
+/* $NetBSD: wsmoused.h,v 1.7 2004/01/05 12:04:46 jmmv Exp $ */
 
 /*
- * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
