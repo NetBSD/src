@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.57 2002/07/22 14:38:11 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.58 2002/07/22 15:13:41 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .ds part_usr d
 .ds part_max h
 .if \n[arc]:\n[bebox]:\n[cobalt]:\n[hpcarm]:\n[hpcmips]:\n[i386]:\
-\n[sbmips]:\n[sh3]:\n[x86_64] \{\
+\n[sbmips]:\n[sh3eb]:\n[sh3el]:\n[x86_64] \{\
 .  ds part_raw d
 .  ds part_free e
 .  ds part_usr e
