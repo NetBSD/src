@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.43 2001/09/09 01:45:29 enami Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.44 2001/09/13 18:25:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -50,19 +50,6 @@
 #include <dev/pci/pcidevs.h>
 #endif
 
-static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
-static int pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
-    const pcireg_t *regs, int, const char *, int));
-static void pci_conf_print_regs __P((const pcireg_t *regs, int first,
-    int pastlast));
-static void pci_conf_print_type0 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs, int sizebars));
-static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs, int sizebars));
-static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs, int sizebars));
-
 /*
  * Descriptions of known PCI classes and subclasses.
  *
@@ -70,7 +57,7 @@ static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
  * NULL subclass pointer.
  */
 struct pci_class {
-	const char		*name;
+	const char	*name;
 	int		val;		/* as wide as pci_{,sub}class_t */
 	const struct pci_class *subclasses;
 };
@@ -297,8 +284,7 @@ struct pci_knowndev {
 #endif /* PCIVERBOSE */
 
 char *
-pci_findvendor(id_reg)
-	pcireg_t id_reg;
+pci_findvendor(pcireg_t id_reg)
 {
 #ifdef PCIVERBOSE
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
@@ -317,10 +303,7 @@ pci_findvendor(id_reg)
 }
 
 void
-pci_devinfo(id_reg, class_reg, showclass, cp)
-	pcireg_t id_reg, class_reg;
-	int showclass;
-	char *cp;
+pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp)
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
@@ -424,10 +407,7 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	printf("      %s: %s\n", (str), (rval & (bit)) ? "on" : "off");
 
 static void
-pci_conf_print_common(pc, tag, regs)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
+pci_conf_print_common(pci_chipset_tag_t pc, pcitag_t tag, const pcireg_t *regs)
 {
 #ifdef PCIVERBOSE
 	const struct pci_knowndev *kdp;
@@ -539,13 +519,8 @@ pci_conf_print_common(pc, tag, regs)
 }
 
 static int
-pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int reg;
-	const char *name;
-	int sizebar;
+pci_conf_print_bar(pci_chipset_tag_t pc, pcitag_t tag, const pcireg_t *regs,
+    int reg, const char *name, int sizebar)
 {
 	int s, width;
 	pcireg_t mask, rval;
@@ -664,9 +639,7 @@ pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 }
 
 static void
-pci_conf_print_regs(regs, first, pastlast)
-	const pcireg_t *regs;
-	int first, pastlast;
+pci_conf_print_regs(const pcireg_t *regs, int first, int pastlast)
 {
 	int off, needaddr, neednl;
 
@@ -689,11 +662,8 @@ pci_conf_print_regs(regs, first, pastlast)
 }
 
 static void
-pci_conf_print_type0(pc, tag, regs, sizebars)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int sizebars;
+pci_conf_print_type0(pci_chipset_tag_t pc, pcitag_t tag, const pcireg_t *regs,
+    int sizebars)
 {
 	int off, width;
 	pcireg_t rval;
@@ -805,11 +775,8 @@ pci_conf_print_type0(pc, tag, regs, sizebars)
 }
 
 static void
-pci_conf_print_type1(pc, tag, regs, sizebars)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int sizebars;
+pci_conf_print_type1(pci_chipset_tag_t pc, pcitag_t tag, const pcireg_t *regs,
+    int sizebars)
 {
 	int off, width;
 	pcireg_t rval;
@@ -931,11 +898,8 @@ pci_conf_print_type1(pc, tag, regs, sizebars)
 }
 
 static void
-pci_conf_print_type2(pc, tag, regs, sizebars)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	const pcireg_t *regs;
-	int sizebars;
+pci_conf_print_type2(pci_chipset_tag_t pc, pcitag_t tag, const pcireg_t *regs,
+    int sizebars)
 {
 	pcireg_t rval;
 
@@ -1055,10 +1019,8 @@ pci_conf_print_type2(pc, tag, regs, sizebars)
 }
 
 void
-pci_conf_print(pc, tag, printfn)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	void (*printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
+pci_conf_print(pci_chipset_tag_t pc, pcitag_t tag,
+    void (*printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *))
 {
 	pcireg_t regs[o2i(256)];
 	int off, endoff, hdrtype;
