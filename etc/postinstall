@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.29 2002/09/04 13:05:27 lukem Exp $
+# $NetBSD: postinstall,v 1.30 2002/09/06 06:41:32 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -271,7 +271,7 @@ rcconf_is_set()
 #
 #	defaults
 #
-additem defaults "/etc/defaults being up to date"
+additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
@@ -283,7 +283,7 @@ do_defaults()
 #
 #	mtree
 #
-additem mtree "/etc/mtree being up to date"
+additem mtree "/etc/mtree/ being up to date"
 do_mtree()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_mtree  fix|check"
@@ -529,7 +529,7 @@ do_makedev()
 #
 #	postfix
 #
-additem postfix "/etc/postfix/* being up to date"
+additem postfix "/etc/postfix/ being up to date"
 do_postfix()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_postfix  fix|check"
