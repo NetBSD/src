@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.83 1997/05/08 10:19:13 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.84 1997/05/08 16:20:07 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -105,11 +105,13 @@ check_exec(p, epp)
 		return error;
 	epp->ep_vp = vp = ndp->ni_vp;
 
-	/* check for regular file */
+	/* check access and type */
 	if (vp->v_type != VREG) {
 		error = EACCES;
 		goto bad1;
 	}
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+		goto bad1;
 
 	/* get attributes */
 	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
@@ -122,10 +124,6 @@ check_exec(p, epp)
 	}
 	if ((vp->v_mount->mnt_flag & MNT_NOSUID) || (p->p_flag & P_TRACED))
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
-
-	/* check access.  for root we have to see if any exec bit on */
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
-		goto bad1;
 
 	/* try to open it */
 	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.25 1997/05/08 12:17:47 mycroft Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.26 1997/05/08 16:20:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -350,11 +350,16 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 		return error;
 	vp = nd.ni_vp;
 
-	/* check for regular file */
+	/*
+	 * Similarly, if it's not marked as executable, or it's not a regular
+	 * file, we don't allow it to be used.
+	 */
 	if (vp->v_type != VREG) {
 		error = EACCES;
 		goto badunlock;
 	}
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
+		goto badunlock;
 
 	/* get attributes */
 	if ((error = VOP_GETATTR(vp, &attr, p->p_ucred, p)) != 0)
@@ -371,13 +376,6 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	}
 	if (vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
-
-	/*
-	 * Similarly, if it's not marked as executable, we don't allow
-	 * it to be used.  For root we have to see if any exec bit on.
-	 */
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
-		goto badunlock;
 
 #ifdef notyet /* XXX cgd 960926 */
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)

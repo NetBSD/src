@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.73 1997/05/08 10:57:44 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.74 1997/05/08 16:20:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -325,17 +325,17 @@ nfs_access(v)
 			mode = NFSV3ACCESS_READ;
 		else
 			mode = 0;
-		if (vp->v_type == VDIR) {
-			if (ap->a_mode & VWRITE)
-				mode |= (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND |
-					 NFSV3ACCESS_DELETE);
-			if (ap->a_mode & VLOOKUP)
-				mode |= NFSV3ACCESS_LOOKUP;
-		} else {
+		if (vp->v_type != VDIR) {
 			if (ap->a_mode & VWRITE)
 				mode |= (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND);
 			if (ap->a_mode & VEXEC)
 				mode |= NFSV3ACCESS_EXECUTE;
+		} else {
+			if (ap->a_mode & VWRITE)
+				mode |= (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND |
+					 NFSV3ACCESS_DELETE);
+			if (ap->a_mode & VEXEC)
+				mode |= NFSV3ACCESS_LOOKUP;
 		}
 		*tl = txdr_unsigned(mode);
 		nfsm_request(vp, NFSPROC_ACCESS, ap->a_p, ap->a_cred);
@@ -3122,8 +3122,8 @@ nfsspec_access(v)
 		}
 	}
 
-	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
-	    ap->a_cred));
+	return (vaccess(va.va_type, va.va_mode,
+	    va.va_uid, va.va_gid, ap->a_mode, ap->a_cred));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.31 1997/05/08 10:57:38 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.32 1997/05/08 16:20:25 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -130,9 +130,7 @@ msdosfs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((dp->de_Attributes & ATTR_DIRECTORY) == 0)
-		return (ENOTDIR);
-	if ((error = VOP_ACCESS(vdp, VLOOKUP, cnp->cn_cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cnp->cn_cred, cnp->cn_proc)) != 0)
 		return (error);
 
 	/*
