@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.1 1999/01/13 08:18:45 ross Exp $
+.\"	$NetBSD: postinstall,v 1.2 1999/05/04 03:35:03 simonb Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,8 +47,15 @@ message
 and with the root filesystem mounted read-write. When the system
 asks you to choose a shell, simply hit return to get to a
 prompt. If you are asked for a terminal type, respond with
+.ie r_pmax \{\
+the correct terminal type as discussed in the
+.Sx Once you've booted the diskimage
+section.
+.\}
+.el \{\
 .Ic vt220
 (or whatever is appropriate for your terminal type)
+.\}
 and hit return. At this point, you need to configure at least
 one file in the
 .Pa /etc No directory. Change to the
@@ -63,8 +70,14 @@ proceed. If your
 and you do not know how to use 'ed' or 'ex', you will have to mount your
 .Pa /usr
 partition to gain access to 'vi'. Do the following:
+.ie r_pmax \{\
+.D1 Ic "mount /usr
+.D1 Ic "export TERM=termtype
+.\}
+.el \{\
 .D1 Ic "mount /usr
 .D1 Ic "export TERM=vt220
+.\}
 If you have
 .Pa /var
 on a seperate partition, you need to repeat
@@ -87,10 +100,12 @@ furthermore add an
 for your interface
 .Aq int ,
 along the lines of
-.Dl ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
+.ie r_pmax .Dl ifconfig_le0="inet 123.45.67.89 netmask 255.255.255.0"
+.el .Dl ifconfig_de0="inet 123.45.67.89 netmask 255.255.255.0"
 or, if you have
 .Ar myname.my.dom No in Pa /etc/hosts :
-.Dl ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
+.ie r_pmax .Dl ifconfig_le0="inet myname.my.dom netmask 255.255.255.0"
+.el .Dl ifconfig_de0="inet myname.my.dom netmask 255.255.255.0"
 To enable proper hostname resolution, you will also want to add an
 .Pa /etc/resolv.conf
 file or (if you are feeling a little more adventurous) run
@@ -100,6 +115,15 @@ See
 or
 .Xr named 8
 for more information.
+.Pp
+Other files in
+.Pa /etc
+that are new to NetBSD 1.4 and may require modification or
+setting up include
+.Pa /etc/mailer.conf ,
+.Pa /etc/nsswitch.conf
+and
+.Pa /etc/wscons.conf .
 .It
 Logging in
 .Pp
@@ -126,25 +150,13 @@ The X Window System
 If you have installed the X window system, look at the files in
 .Pa /usr/X11R6/lib/X11/doc
 for information.
+.if \n[arm32]:\n[i386] \{\
 .Pp
-On NetBSD/i386 and NetBSD/arm32, you will need to set up a
-configuration file, see
+You will need to set up a configuration file, see
 .Pa /usr/X11R6/lib/X11/XF86Config.eg
-for an example. See
+for an example.  See
 .Lk http://www.xfree86.org/
 and the XFree86 manual page for more information.
-.if r_pmax \{\
-.Pp
-NetBSD/pmax \*V uses an X11R5 X server. These servers cannot read
-the compressed fonts which are shipped with standard X11R6
-configurations. You must take post-installation steps to make the
-X11R5 server work with the fonts that are standard for X11R6.3.
-The distribution file
-.Pa /usr/X11R6/bin/README.pmax
-contains
-information on how to choose an Xserver and how to access
-compressed fonts via a font server or to decompress the X fonts
-after installation. Please follow the directions there.
 .\}
 .Pp
 Don't forget to add
