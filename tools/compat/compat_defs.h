@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.9 2002/04/04 17:49:20 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.10 2002/04/18 15:31:51 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -163,6 +163,10 @@ int flock(int, int);
 # define FPARSELN_UNESCREST	0x08
 # define FPARSELN_UNESCALL	0x0f
 char *fparseln(FILE *, size_t *, size_t *, const char [3], int);
+#endif
+
+#if !HAVE_ISSETUGID
+int issetugid(void);
 #endif
 
 #if !HAVE_ISBLANK && !defined(isblank)

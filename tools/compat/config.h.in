@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.15 2002/04/04 17:52:04 bjh21 Exp $	*/
+/*	$NetBSD: config.h.in,v 1.16 2002/04/18 15:31:52 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -60,6 +60,7 @@
 #undef HAVE_GETOPT
 #undef HAVE_GETOPT_LONG
 #undef HAVE_ISBLANK
+#undef HAVE_ISSETUGID
 #undef HAVE_LCHMOD
 #undef HAVE_LCHOWN
 #undef HAVE_LUTIMES
