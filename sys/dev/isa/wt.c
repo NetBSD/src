@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.24 1995/04/17 12:09:37 cgd Exp $	*/
+/*	$NetBSD: wt.c,v 1.25 1995/06/26 05:37:16 cgd Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -254,12 +254,15 @@ wtattach(parent, self, aux)
 }
 
 int
-wtdump(dev)
+wtdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
 	/* Not implemented. */
-	return EINVAL;
+	return ENXIO;
 }
 
 int

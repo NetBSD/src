@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.38 1995/04/27 01:46:47 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.39 1995/06/26 05:37:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -688,11 +688,15 @@ mcdsize(dev)
 }
 
 int
-mcddump()
+mcddump(dev, blkno, va, size)
+	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
 	/* Not implemented. */
-	return EINVAL;
+	return ENXIO;
 }
 
 int

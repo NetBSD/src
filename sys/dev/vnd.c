@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.18 1995/02/27 19:31:00 cgd Exp $	*/
+/*	$NetBSD: vnd.c,v 1.19 1995/06/26 05:34:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -553,10 +553,14 @@ vndsize(dev)
 }
 
 int
-vnddump(dev)
+vnddump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 
-	return(ENXIO);
+	/* Not implemented. */
+	return ENXIO;
 }
 #endif
