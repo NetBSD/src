@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/11/30 21:33:41 tv Exp $
+# $NetBSD: Makefile,v 1.5 2001/01/17 02:07:25 tv Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -349,7 +349,11 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 # Actually build the image with all the bootstrap goo....
 
 ${IMAGEDIR}/${image}.iso: fetch size-${image}
+.if defined(LOG_MKISOFS)
+	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -v -v . >${IMAGEDIR}/${image}.iso.log 2>&1
+.else
 	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} .
+.endif
 .if !empty(SUN_BOOT_ARGS.${image})
 	${MKSUNBOOTCD} -c 640 $@ ${SUN_BOOT_ARGS.${image}}
 .endif
@@ -387,7 +391,7 @@ cleandir distclean: cleandistdir
 
 cleanimages:
 .for image in ${CD_IMAGES}
-	-rm -f ${IMAGEDIR}/${image}.iso
+	-rm -f ${IMAGEDIR}/${image}.iso ${IMAGEDIR}/${image}.iso.log
 .endfor
 
 cleanstagedir:
