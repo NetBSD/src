@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.20 1999/05/27 13:30:40 tron Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.21 1999/08/25 04:52:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -95,13 +95,13 @@ linux_to_bsd_ipc_perm(lpp, bpp)
 	struct ipc_perm *bpp;
 {
 
-	bpp->key = lpp->l_key;
+	bpp->_key = lpp->l_key;
 	bpp->uid = lpp->l_uid;
 	bpp->gid = lpp->l_gid;
 	bpp->cuid = lpp->l_cuid;
 	bpp->cgid = lpp->l_cgid;
 	bpp->mode = lpp->l_mode;
-	bpp->seq = lpp->l_seq;
+	bpp->_seq = lpp->l_seq;
 }
 
 void
@@ -110,13 +110,13 @@ bsd_to_linux_ipc_perm(bpp, lpp)
 	struct linux_ipc_perm *lpp;
 {
 
-	lpp->l_key = bpp->key;
+	lpp->l_key = bpp->_key;
 	lpp->l_uid = bpp->uid;
 	lpp->l_gid = bpp->gid;
 	lpp->l_cuid = bpp->cuid;
 	lpp->l_cgid = bpp->cgid;
 	lpp->l_mode = bpp->mode;
-	lpp->l_seq = bpp->seq;
+	lpp->l_seq = bpp->_seq;
 }
 #endif
 
@@ -139,7 +139,7 @@ bsd_to_linux_semid_ds(bs, ls)
 	ls->l_sem_otime = bs->sem_otime;
 	ls->l_sem_ctime = bs->sem_ctime;
 	ls->l_sem_nsems = bs->sem_nsems;
-	ls->l_sem_base = bs->sem_base;
+	ls->l_sem_base = bs->_sem_base;
 }
 
 void
@@ -152,14 +152,12 @@ linux_to_bsd_semid_ds(ls, bs)
 	bs->sem_otime = ls->l_sem_otime;
 	bs->sem_ctime = ls->l_sem_ctime;
 	bs->sem_nsems = ls->l_sem_nsems;
-	bs->sem_base = ls->l_sem_base;
+	bs->_sem_base = ls->l_sem_base;
 }
 
 /*
- * Most of this can be handled by directly passing the arguments on,
- * but IPC_* require a lot of copy{in,out} because of the extra indirection
- * (we need to pass a pointer to a union cointaining a pointer to a semid_ds
- * structure.  Linux actually handles this better than we do.)
+ * Most of this can be handled by directly passing the arguments on; we
+ * just need to frob the `cmd' and convert the semid_ds and semun.
  */
 int
 linux_sys_semctl(p, v, retval)
@@ -173,84 +171,85 @@ linux_sys_semctl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(union linux_semun) arg;
 	} */ *uap = v;
-	caddr_t sg;
-	struct sys___semctl_args nua;
-	struct semid_ds *bmp, bm;
-	struct linux_semid_ds lm;
-	union semun *bup;
-	int error;
+	struct semid_ds sembuf;
+	struct linux_semid_ds lsembuf;
+	union __semun semun;
+	int cmd, error;
+	void *pass_arg = NULL;
 
-	SCARG(&nua, semid) = SCARG(uap, semid);
-	SCARG(&nua, semnum) = SCARG(uap, semnum);
-	switch (SCARG(uap, cmd)) {
-	case LINUX_IPC_STAT:
-		sg = stackgap_init(p->p_emul);
-		bup = stackgap_alloc(&sg, sizeof (union semun));
-		bmp = stackgap_alloc(&sg, sizeof (struct semid_ds));
-		if ((error = copyout(&bmp, bup, sizeof bmp)))
-			return error;
-		SCARG(&nua, cmd) = IPC_STAT;
-		SCARG(&nua, arg) = bup;
-		if ((error = sys___semctl(p, &nua, retval)))
-			return error;
-		if ((error = copyin(bmp, &bm, sizeof bm)))
-			return error;
-		bsd_to_linux_semid_ds(&bm, &lm);
-		return copyout(&lm, SCARG(uap, arg).l_buf, sizeof lm);
+	cmd = SCARG(uap, cmd);
+
+	switch (cmd) {
 	case LINUX_IPC_SET:
-		if ((error = copyin(SCARG(uap, arg).l_buf, &lm, sizeof lm)))
-			return error;
-		linux_to_bsd_semid_ds(&lm, &bm);
-		sg = stackgap_init(p->p_emul);
-		bup = stackgap_alloc(&sg, sizeof (union semun));
-		bmp = stackgap_alloc(&sg, sizeof (struct semid_ds));
-		if ((error = copyout(&bm, bmp, sizeof bm)))
-			return error;
-		if ((error = copyout(&bmp, bup, sizeof bmp)))
-			return error;
-		SCARG(&nua, cmd) = IPC_SET;
-		SCARG(&nua, arg) = bup;
+		pass_arg = &sembuf;
+		cmd = IPC_SET;
 		break;
+
+	case LINUX_IPC_STAT:
+		pass_arg = &sembuf;
+		cmd = IPC_STAT;
+		break;
+
 	case LINUX_IPC_RMID:
-		SCARG(&nua, cmd) = IPC_RMID;
+		cmd = IPC_RMID;
 		break;
+
 	case LINUX_GETVAL:
-		SCARG(&nua, cmd) = GETVAL;
+		cmd = GETVAL;
 		break;
+
 	case LINUX_GETPID:
-		SCARG(&nua, cmd) = GETPID;
+		cmd = GETPID;
 		break;
+
 	case LINUX_GETNCNT:
-		SCARG(&nua, cmd) = GETNCNT;
+		cmd = GETNCNT;
 		break;
+
 	case LINUX_GETZCNT:
-		SCARG(&nua, cmd) = GETZCNT;
+		cmd = GETZCNT;
 		break;
-	case LINUX_SETVAL:
-		SCARG(&nua, cmd) = SETVAL;
-		sg = stackgap_init(p->p_emul);
-		bup = stackgap_alloc(&sg, sizeof(union semun));
-		bup->val = SCARG(uap, arg).l_val;
-		SCARG(&nua, arg) = bup;
-		break;
+
 	case LINUX_GETALL:
-		SCARG(&nua, cmd) = GETALL;
-		sg = stackgap_init(p->p_emul);
-		bup = stackgap_alloc(&sg, sizeof(union semun));
-		bup->array = SCARG(uap, arg).l_array;
-		SCARG(&nua, arg) = bup;
+		pass_arg = &semun;
+		semun.array = SCARG(uap, arg).l_array;
+		cmd = GETALL;
 		break;
+
+	case LINUX_SETVAL:
+		pass_arg = &semun;
+		semun.val = SCARG(uap, arg).l_val;
+		cmd = SETVAL;
+		break;
+
 	case LINUX_SETALL:
-		SCARG(&nua, cmd) = SETALL;
-		sg = stackgap_init(p->p_emul);
-		bup = stackgap_alloc(&sg, sizeof(union semun));
-		bup->array = SCARG(uap, arg).l_array;
-		SCARG(&nua, arg) = bup;
+		pass_arg = &semun;
+		semun.array = SCARG(uap, arg).l_array;
+		cmd = SETALL;
 		break;
+
 	default:
-		return EINVAL;
+		return (EINVAL);
 	}
-	return sys___semctl(p, &nua, retval);
+
+	if (cmd == IPC_SET) {
+		error = copyin(SCARG(uap, arg).l_buf, &lsembuf,
+		    sizeof(lsembuf));
+		if (error)
+			return (error);
+		linux_to_bsd_semid_ds(&lsembuf, &sembuf);
+	}
+
+	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	    pass_arg, retval);
+
+	if (error == 0 && cmd == IPC_STAT) {
+		bsd_to_linux_semid_ds(&sembuf, &lsembuf);
+		error = copyout(&lsembuf, SCARG(uap, arg).l_buf,
+		    sizeof(lsembuf));
+	}
+
+	return (error);
 }
 #endif /* SYSVSEM */
 
@@ -263,9 +262,9 @@ linux_to_bsd_msqid_ds(lmp, bmp)
 {
 
 	linux_to_bsd_ipc_perm(&lmp->l_msg_perm, &bmp->msg_perm);
-	bmp->msg_first = lmp->l_msg_first;
-	bmp->msg_last = lmp->l_msg_last;
-	bmp->msg_cbytes = lmp->l_msg_cbytes;
+	bmp->_msg_first = lmp->l_msg_first;
+	bmp->_msg_last = lmp->l_msg_last;
+	bmp->_msg_cbytes = lmp->l_msg_cbytes;
 	bmp->msg_qnum = lmp->l_msg_qnum;
 	bmp->msg_qbytes = lmp->l_msg_qbytes;
 	bmp->msg_lspid = lmp->l_msg_lspid;
@@ -282,9 +281,9 @@ bsd_to_linux_msqid_ds(bmp, lmp)
 {
 
 	bsd_to_linux_ipc_perm(&bmp->msg_perm, &lmp->l_msg_perm);
-	lmp->l_msg_first = bmp->msg_first;
-	lmp->l_msg_last = bmp->msg_last;
-	lmp->l_msg_cbytes = bmp->msg_cbytes;
+	lmp->l_msg_first = bmp->_msg_first;
+	lmp->l_msg_last = bmp->_msg_last;
+	lmp->l_msg_cbytes = bmp->_msg_cbytes;
 	lmp->l_msg_qnum = bmp->msg_qnum;
 	lmp->l_msg_qbytes = bmp->msg_qbytes;
 	lmp->l_msg_lspid = bmp->msg_lspid;
@@ -306,7 +305,7 @@ linux_sys_msgctl(p, v, retval)
 		syscallarg(struct linux_msqid_ds *) buf;
 	} */ *uap = v;
 	caddr_t sg;
-	struct sys_msgctl_args nua;
+	struct sys___msgctl13_args nua;
 	struct msqid_ds *bmp, bm;
 	struct linux_msqid_ds lm;
 	int error;
@@ -318,7 +317,7 @@ linux_sys_msgctl(p, v, retval)
 		bmp = stackgap_alloc(&sg, sizeof (struct msqid_ds));
 		SCARG(&nua, cmd) = IPC_STAT;
 		SCARG(&nua, buf) = bmp;
-		if ((error = sys_msgctl(p, &nua, retval)))
+		if ((error = sys___msgctl13(p, &nua, retval)))
 			return error;
 		if ((error = copyin(bmp, &bm, sizeof bm)))
 			return error;
@@ -342,7 +341,7 @@ linux_sys_msgctl(p, v, retval)
 	default:
 		return EINVAL;
 	}
-	return sys_msgctl(p, &nua, retval);
+	return sys___msgctl13(p, &nua, retval);
 }
 #endif /* SYSVMSG */
 
@@ -399,7 +398,7 @@ linux_to_bsd_shmid_ds(lsp, bsp)
 	bsp->shm_atime = lsp->l_shm_atime;
 	bsp->shm_dtime = lsp->l_shm_dtime;
 	bsp->shm_ctime = lsp->l_shm_ctime;
-	bsp->shm_internal = lsp->l_private2;	/* XXX Oh well. */
+	bsp->_shm_internal = lsp->l_private2;	/* XXX Oh well. */
 }
 
 void
@@ -416,7 +415,7 @@ bsd_to_linux_shmid_ds(bsp, lsp)
 	lsp->l_shm_atime = bsp->shm_atime;
 	lsp->l_shm_dtime = bsp->shm_dtime;
 	lsp->l_shm_ctime = bsp->shm_ctime;
-	lsp->l_private2 = bsp->shm_internal;	/* XXX */
+	lsp->l_private2 = bsp->_shm_internal;	/* XXX */
 }
 
 /*
@@ -438,7 +437,7 @@ linux_sys_shmctl(p, v, retval)
 		syscallarg(struct linux_shmid_ds *) buf;
 	} */ *uap = v;
 	caddr_t sg;
-	struct sys_shmctl_args nua;
+	struct sys___shmctl13_args nua;
 	struct shmid_ds *bsp, bs;
 	struct linux_shmid_ds ls;
 	int error;
@@ -450,7 +449,7 @@ linux_sys_shmctl(p, v, retval)
 		bsp = stackgap_alloc(&sg, sizeof(struct shmid_ds));
 		SCARG(&nua, cmd) = IPC_STAT;
 		SCARG(&nua, buf) = bsp;
-		if ((error = sys_shmctl(p, &nua, retval)))
+		if ((error = sys___shmctl13(p, &nua, retval)))
 			return error;
 		if ((error = copyin(SCARG(&nua, buf), &bs, sizeof bs)))
 			return error;
@@ -485,6 +484,6 @@ linux_sys_shmctl(p, v, retval)
 	default:
 		return EINVAL;
 	}
-	return sys_shmctl(p, &nua, retval);
+	return sys___shmctl13(p, &nua, retval);
 }
 #endif /* SYSVSHM */
