@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.14 1995/05/06 20:30:18 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.15 1995/10/09 06:34:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -107,23 +107,6 @@ union descriptor {
 };
 
 /*
- * Software definitions are in this convenient format,
- * which are translated into inconvenient segment descriptors
- * when needed to be used by the 386 hardware
- */
-struct soft_segment_descriptor {
-	unsigned ssd_base;		/* segment base address  */
-	unsigned ssd_limit;		/* segment extent */
-	unsigned ssd_type:5;		/* segment type */
-	unsigned ssd_dpl:2;		/* segment descriptor priority level */
-	unsigned ssd_p:1;		/* segment descriptor present */
-	unsigned ssd_xx:4;		/* unused */
-	unsigned ssd_xx1:2;		/* unused */
-	unsigned ssd_def32:1;		/* default 32 vs 16 bit size */
-	unsigned ssd_gran:1;		/* limit granularity (byte/page units)*/
-};
-
-/*
  * region descriptors, used to load gdt/idt tables before segments yet exist.
  */
 struct region_descriptor {
@@ -139,9 +122,10 @@ struct region_descriptor {
 extern int currentldt;
 extern union descriptor gdt[], ldt[];
 extern struct gate_descriptor idt[];
-extern struct soft_segment_descriptor gdt_segs[], ldt_segs[];
-void ssdtosd __P((struct soft_segment_descriptor *, struct segment_descriptor *));
-void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *));
+
+void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
+    int, int));
+void setgate __P((struct gate_descriptor *, void *, int, int, int));
 #endif /* _KERNEL */
 
 #endif /* !LOCORE */
@@ -236,6 +220,7 @@ void sdtossd __P((struct segment_descriptor *, struct soft_segment_descriptor *)
 #define	LSYS5SIGR_SEL	1	/* iBCS sigreturn gate */
 #define	LUCODE_SEL	2	/* User code descriptor */
 #define	LUDATA_SEL	3	/* User data descriptor */
-#define	NLDT		4
+#define	LBSDICALLS_SEL	16	/* BSDI system call gate */
+#define	NLDT		17
 
 #endif /* _I386_SEGMENTS_H_ */

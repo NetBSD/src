@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.7 1995/08/09 01:47:37 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.8 1995/10/09 06:34:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -54,7 +54,8 @@
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
-extern IDTVEC(wild), IDTVEC(intr)[], IDTVEC(fast)[];
+typedef (*vector)();
+extern vector IDTVEC(intr)[], IDTVEC(fast)[];
 extern struct gate_descriptor idt[];
 
 int isamatch __P((struct device *, void *, void *));
