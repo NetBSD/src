@@ -1,3 +1,53 @@
+Changes from 2.15.3 to 2.15.4
+-----------------------------
+
+Lots of lint fixes, and do_sprintf made mostly ANSI C compatible.
+
+Man page updated and edited.
+
+Copyrights updated.
+
+Arrays now grow dynamically, initially scaling up by an order of magnitude
+  and then doubling, up to ~ 64K.  This should keep gawk's performance
+  graceful under heavy load.
+
+New `delete array' feature added.  Only documented in the man page.
+
+Switched to dfa and regex suites from grep-2.0. These offer the ability to
+  move to POSIX regexps in the next release.
+
+Disabled GNU regex ops.
+
+Research awk -m option now recognized. It does nothing in gawk, since gawk
+  has no static limits.  Only documented in the man page.
+
+New bionic (faster, better, stronger than before) hashing function.
+
+Bug fix in argument handling. `gawk -X' now notices there was no program.
+  Additional bug fixes to make --compat and --lint work again.
+
+Many changes for 16-bit cleanliness.
+
+Add explicit alloca(0) in io.c to recover space from C alloca.
+
+Fixed file descriptor leak in io.c.
+
+The --version option now follows the GNU coding standards and exits.
+
+Fixed several prototypes in protos.h.
+
+Several tests updated. On Solaris, warn that the out? tests will fail.
+
+Configuration files for SunOS with cc and Solaris 2.x added.
+
+Improved error messages in awk.y on gawk extensions if do_unix or do_compat.
+
+INSTALL file added.
+
+Fixed Atari Makefile and several VMS specific changes.
+
+Better conversion of numbers to strings on systems with broken sprintfs.
+
 Changes from 2.15.2 to 2.15.3
 -----------------------------
 

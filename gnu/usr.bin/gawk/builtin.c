@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -24,11 +24,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: builtin.c,v 1.3 1993/11/13 02:26:27 jtc Exp $";
-#endif /* not lint */
+static char rcsid[] = "$Id: builtin.c,v 1.4 1994/02/17 01:22:04 jtc Exp $";
+#endif
 
 #include "awk.h"
-
 
 #ifndef SRANDOM_PROTO
 extern void srandom P((int seed));
@@ -43,10 +42,6 @@ extern NODE **fields_arr;
 extern int output_is_tty;
 
 static NODE *sub_common P((NODE *tree, int global));
-
-#ifdef GFMT_WORKAROUND
-char *gfmt P((double g, int prec, char *buf));
-#endif
 
 #ifdef _CRAY
 /* Work around a problem in conversion of doubles to exact integers. */
@@ -66,20 +61,18 @@ double (*Log)() = log;
 #define Ceil(n) ceil(n)
 #endif
 
-#if __STDC__
-static void
-efwrite(void *ptr, size_t size, size_t count, FILE *fp,
-	char *from, struct redirect *rp,int flush)
-#else
+
+static void efwrite P((const void *ptr, size_t size, size_t count, FILE *fp,
+		       const char *from, struct redirect *rp,int flush));
+
 static void
 efwrite(ptr, size, count, fp, from, rp, flush)
-void *ptr;
+const void *ptr;
 size_t size, count;
 FILE *fp;
-char *from;
+const char *from;
 struct redirect *rp;
 int flush;
-#endif
 {
 	errno = 0;
 	if (fwrite(ptr, size, count, fp) != count)
@@ -220,22 +213,41 @@ NODE *tree;
 	return tmp_number((AWKNUM) d);
 }
 
-/* %e and %f formats are not properly implemented.  Someone should fix them */
-/* Actually, this whole thing should be reimplemented. */
+/*
+ * do_sprintf does the sprintf function. It is one of the uglier parts of
+ * gawk.  Thanks to Michal Jaegerman for taming this beast and making it
+ * compatible with ANSI C.
+ */
 
 NODE *
 do_sprintf(tree)
 NODE *tree;
 {
+/* copy 'l' bytes from 's' to 'obufout' checking for space in the process */
+/* difference of pointers should be of ptrdiff_t type, but let us be kind */
 #define bchunk(s,l) if(l) {\
     while((l)>ofre) {\
+      long olen = obufout - obuf;\
       erealloc(obuf, char *, osiz*2, "do_sprintf");\
       ofre+=osiz;\
       osiz*=2;\
+      obufout = obuf + olen;\
     }\
-    memcpy(obuf+olen,s,(size_t)(l));\
-    olen+=(l);\
+    memcpy(obufout,s,(size_t)(l));\
+    obufout+=(l);\
     ofre-=(l);\
+  }
+/* copy one byte from 's' to 'obufout' checking for space in the process */
+#define bchunk_one(s) {\
+    if(ofre <= 0) {\
+      long olen = obufout - obuf;\
+      erealloc(obuf, char *, osiz*2, "do_sprintf");\
+      ofre+=osiz;\
+      osiz*=2;\
+      obufout = obuf + olen;\
+    }\
+    *obufout++ = *s;\
+    --ofre;\
   }
 
 	/* Is there space for something L big in the buffer? */
@@ -259,15 +271,16 @@ NODE *tree;
 
 	NODE *r;
 	int toofew = 0;
-	char *obuf;
-	size_t osiz, ofre, olen;
-	static char chbuf[] = "0123456789abcdef";
-	static char sp[] = " ";
+	char *obuf, *obufout;
+	size_t osiz, ofre;
+	char *chbuf;
 	char *s0, *s1;
+	int cs1;
 	int n0;
 	NODE *sfmt, *arg;
 	register NODE *carg;
-	long fw, prec, lj, alt, big;
+	long fw, prec;
+	int lj, alt, big;
 	long *cur;
 	long val;
 #ifdef sun386		/* Can't cast unsigned (int/long) from ptr->value */
@@ -281,16 +294,17 @@ NODE *tree;
 	char *cp;
 	char *fill;
 	double tmpval;
-	char *pr_str;
-	int ucasehex = 0;
 	char signchar = 0;
 	size_t len;
-
+	static char sp[] = " ";
+	static char zero_string[] = "0";
+	static char lchbuf[] = "0123456789abcdefx";
+	static char Uchbuf[] = "0123456789ABCDEFX";
 
 	emalloc(obuf, char *, 120, "do_sprintf");
+	obufout = obuf;
 	osiz = 120;
 	ofre = osiz - 1;
-	olen = 0;
 	sfmt = tree_eval(tree->lnode);
 	sfmt = force_string(sfmt);
 	carg = tree->rnode;
@@ -311,17 +325,17 @@ NODE *tree;
 
 retry:
 		--n0;
-		switch (*s1++) {
+		switch (cs1 = *s1++) {
 		case '%':
-			bchunk("%", 1);
+			bchunk_one("%");
 			s0 = s1;
 			break;
 
 		case '0':
-			if (fill != sp || lj)
-				goto lose;
+			if (lj)
+				goto retry;
 			if (cur == &fw)
-				fill = "0";	/* FALL through */
+				fill = zero_string;	/* FALL through */
 		case '1':
 		case '2':
 		case '3':
@@ -332,42 +346,58 @@ retry:
 		case '8':
 		case '9':
 			if (cur == 0)
-				goto lose;
-			*cur = s1[-1] - '0';
+				/* goto lose; */
+				break;
+			if (prec >= 0)  /* this happens only when we have */
+					/* a negative precision		  */
+				*cur = cs1 - '0';
 			while (n0 > 0 && *s1 >= '0' && *s1 <= '9') {
 				--n0;
 				*cur = *cur * 10 + *s1++ - '0';
 			}
+			if (prec < 0) {	/* negative precision is discarded */
+				prec = 0;
+				cur = 0;
+			}
 			goto retry;
 		case '*':
 			if (cur == 0)
-				goto lose;
+				/* goto lose; */
+				break;
 			parse_next_arg();
 			*cur = force_number(arg);
 			free_temp(arg);
 			goto retry;
 		case ' ':		/* print ' ' or '-' */
+					/* 'space' flag is ignored */
+					/* if '+' already present  */
+			if (signchar != 0) 
+				goto retry;
+			/* FALL THROUGH */
 		case '+':		/* print '+' or '-' */
-			signchar = *(s1-1);
+			signchar = cs1;
 			goto retry;
 		case '-':
-			if (lj || fill != sp)
-				goto lose;
-			lj++;
+			if (cur == &prec) {
+				prec = -1;
+				goto retry;
+			}
+			fill = sp;      /* if left justified then other */
+			lj++; 		/* filling is ignored */
 			goto retry;
 		case '.':
 			if (cur != &fw)
-				goto lose;
+				break;
 			cur = &prec;
 			goto retry;
 		case '#':
-			if (alt)
-				goto lose;
+			if (cur != &fw)
+				break;
 			alt++;
 			goto retry;
 		case 'l':
 			if (big)
-				goto lose;
+				break;
 			big++;
 			goto retry;
 		case 'c':
@@ -381,44 +411,26 @@ retry:
 #endif
 				cpbuf[0] = uval;
 				prec = 1;
-				pr_str = cpbuf;
-				goto dopr_string;
+				cp = cpbuf;
+				goto pr_tail;
 			}
-			if (! prec)
+			if (prec == 0)
 				prec = 1;
 			else if (prec > arg->stlen)
 				prec = arg->stlen;
-			pr_str = arg->stptr;
-			goto dopr_string;
+			cp = arg->stptr;
+			goto pr_tail;
 		case 's':
 			parse_next_arg();
 			arg = force_string(arg);
-			if (!prec || prec > arg->stlen)
+			if (prec == 0 || prec > arg->stlen)
 				prec = arg->stlen;
-			pr_str = arg->stptr;
-
-	dopr_string:
-			if (fw > prec && !lj) {
-				while (fw > prec) {
-					bchunk(fill, 1);
-					fw--;
-				}
-			}
-			bchunk(pr_str, (int) prec);
-			if (fw > prec) {
-				while (fw > prec) {
-					bchunk(fill, 1);
-					fw--;
-				}
-			}
-			s0 = s1;
-			free_temp(arg);
-			break;
+			cp = arg->stptr;
+			goto pr_tail;
 		case 'd':
 		case 'i':
 			parse_next_arg();
 			val = (long) force_number(arg);
-			free_temp(arg);
 			if (val < 0) {
 				sgn = 1;
 				val = -val;
@@ -432,30 +444,19 @@ retry:
 				*--cp = '-';
 			else if (signchar)
 				*--cp = signchar;
+			if (prec != 0)		/* ignore '0' flag if */
+				fill = sp; 	/* precision given    */
 			if (prec > fw)
 				fw = prec;
 			prec = cend - cp;
-			if (fw > prec && !lj) {
-				if (fill != sp && (*cp == '-' || signchar)) {
-					bchunk(cp, 1);
-					cp++;
-					prec--;
-					fw--;
-				}
-				while (fw > prec) {
-					bchunk(fill, 1);
-					fw--;
-				}
+			if (fw > prec && ! lj && fill != sp
+			    && (*cp == '-' || signchar)) {
+				bchunk_one(cp);
+				cp++;
+				prec--;
+				fw--;
 			}
-			bchunk(cp, (int) prec);
-			if (fw > prec) {
-				while (fw > prec) {
-					bchunk(fill, 1);
-					fw--;
-				}
-			}
-			s0 = s1;
-			break;
+			goto pr_tail;
 		case 'u':
 			base = 10;
 			goto pr_unsigned;
@@ -463,140 +464,91 @@ retry:
 			base = 8;
 			goto pr_unsigned;
 		case 'X':
-			ucasehex = 1;
 		case 'x':
 			base = 16;
-			goto pr_unsigned;
 	pr_unsigned:
+			if (cs1 == 'X')
+				chbuf = Uchbuf;
+			else
+				chbuf = lchbuf;
+			if (prec != 0)		/* ignore '0' flag if */
+				fill = sp; 	/* precision given    */
 			parse_next_arg();
 			uval = (unsigned long) force_number(arg);
-			free_temp(arg);
 			do {
 				*--cp = chbuf[uval % base];
-				if (ucasehex && isalpha(*cp))
-					*cp = toupper(*cp);
 				uval /= base;
 			} while (uval);
-			if (alt && (base == 8 || base == 16)) {
+			if (alt) {
 				if (base == 16) {
-					if (ucasehex)
-						*--cp = 'X';
-					else
-						*--cp = 'x';
-				}
-				*--cp = '0';
+					*--cp = cs1;
+					*--cp = '0';
+					if (fill != sp) {
+						bchunk(cp, 2);
+						cp += 2;
+						fw -= 2;
+					}
+				} else if (base == 8)
+					*--cp = '0';
 			}
 			prec = cend - cp;
-			if (fw > prec && !lj) {
+	pr_tail:
+			if (! lj) {
 				while (fw > prec) {
-					bchunk(fill, 1);
+			    		bchunk_one(fill);
 					fw--;
 				}
 			}
 			bchunk(cp, (int) prec);
-			if (fw > prec) {
-				while (fw > prec) {
-					bchunk(fill, 1);
-					fw--;
-				}
+			while (fw > prec) {
+				bchunk_one(fill);
+				fw--;
 			}
 			s0 = s1;
-			break;
-		case 'g':
-			parse_next_arg();
-			tmpval = force_number(arg);
 			free_temp(arg);
-			chksize(fw + prec + 9);	/* 9==slop */
-
-			cp = cpbuf;
-			*cp++ = '%';
-			if (lj)
-				*cp++ = '-';
-			if (fill != sp)
-				*cp++ = '0';
-#ifndef GFMT_WORKAROUND
-			if (cur != &fw) {
-				(void) strcpy(cp, "*.*g");
-				(void) sprintf(obuf + olen, cpbuf, (int) fw, (int) prec, (double) tmpval);
-			} else {
-				(void) strcpy(cp, "*g");
-				(void) sprintf(obuf + olen, cpbuf, (int) fw, (double) tmpval);
-			}
-#else	/* GFMT_WORKAROUND */
-		      {
-			char *gptr, gbuf[120];
-#define DEFAULT_G_PRECISION 6
-			if (fw + prec + 9 > sizeof gbuf) {	/* 9==slop */
-				emalloc(gptr, char *, fw+prec+9, "do_sprintf(gfmt)");
-			} else
-				gptr = gbuf;
-			(void) gfmt((double) tmpval, cur != &fw ?
-				    (int) prec : DEFAULT_G_PRECISION, gptr);
-			*cp++ = '*',  *cp++ = 's',  *cp = '\0';
-			(void) sprintf(obuf + olen, cpbuf, (int) fw, gptr);
-			if (fill != sp && *gptr == ' ') {
-				char *p = gptr;
-				do { *p++ = '0'; } while (*p == ' ');
-			}
-			if (gptr != gbuf) free(gptr);
-		      }
-#endif	/* GFMT_WORKAROUND */
-			len = strlen(obuf + olen);
-			ofre -= len;
-			olen += len;
-			s0 = s1;
-			break;
-
-		case 'f':
-			parse_next_arg();
-			tmpval = force_number(arg);
-			free_temp(arg);
-			chksize(fw + prec + 9);	/* 9==slop */
-
-			cp = cpbuf;
-			*cp++ = '%';
-			if (lj)
-				*cp++ = '-';
-			if (fill != sp)
-				*cp++ = '0';
-			if (cur != &fw) {
-				(void) strcpy(cp, "*.*f");
-				(void) sprintf(obuf + olen, cpbuf, (int) fw, (int) prec, (double) tmpval);
-			} else {
-				(void) strcpy(cp, "*f");
-				(void) sprintf(obuf + olen, cpbuf, (int) fw, (double) tmpval);
-			}
-			len = strlen(obuf + olen);
-			ofre -= len;
-			olen += len;
-			s0 = s1;
 			break;
 		case 'e':
+		case 'f':
+		case 'g':
+		case 'E':
+		case 'G':
 			parse_next_arg();
 			tmpval = force_number(arg);
 			free_temp(arg);
 			chksize(fw + prec + 9);	/* 9==slop */
+
 			cp = cpbuf;
 			*cp++ = '%';
 			if (lj)
 				*cp++ = '-';
+			if (signchar)
+				*cp++ = signchar;
+			if (alt)
+				*cp++ = '#';
 			if (fill != sp)
 				*cp++ = '0';
-			if (cur != &fw) {
-				(void) strcpy(cp, "*.*e");
-				(void) sprintf(obuf + olen, cpbuf, (int) fw, (int) prec, (double) tmpval);
-			} else {
-				(void) strcpy(cp, "*e");
-				(void) sprintf(obuf + olen, cpbuf, (int) fw, (double) tmpval);
-			}
-			len = strlen(obuf + olen);
+			cp = strcpy(cp, "*.*") + 3;
+			*cp++ = cs1;
+			*cp   = '\0';
+			if (prec <= 0)
+				prec = DEFAULT_G_PRECISION;
+#ifndef GFMT_WORKAROUND
+			(void) sprintf(obufout, cpbuf,
+				       (int) fw, (int) prec, (double) tmpval);
+#else	/* GFMT_WORKAROUND */
+			if (cs1 == 'g' || cs1 == 'G')
+				(void) sgfmt(obufout, cpbuf, (int) alt,
+				       (int) fw, (int) prec, (double) tmpval);
+			else
+				(void) sprintf(obufout, cpbuf,
+				       (int) fw, (int) prec, (double) tmpval);
+#endif	/* GFMT_WORKAROUND */
+			len = strlen(obufout);
 			ofre -= len;
-			olen += len;
+			obufout += len;
 			s0 = s1;
 			break;
-
 		default:
-	lose:
 			break;
 		}
 		if (toofew)
@@ -610,7 +562,7 @@ retry:
 		warning("too many arguments supplied for format string");
 	bchunk(s0, s1 - s0);
 	free_temp(sfmt);
-	r = make_str_node(obuf, olen, ALREADY_MALLOCED);
+	r = make_str_node(obuf, obufout - obuf, ALREADY_MALLOCED);
 	r->flags |= TEMP;
 	return r;
 }
@@ -799,7 +751,8 @@ register NODE *tree;
 			else {
 				char buf[100];
 
-				sprintf(buf, OFMT, t1->numbr);
+				NUMTOSTR(buf, OFMT, t1->numbr);
+				free_temp(t1);
 				t1 = tmp_string(buf, strlen(buf));
 			}
 		}
@@ -1128,41 +1081,75 @@ NODE *tree;
 }
 
 #ifdef GFMT_WORKAROUND
-	/*
-	 *	printf's %g format [can't rely on gcvt()]
-	 *		caveat: don't use as argument to *printf()!
-	 */
-char *
-gfmt(g, prec, buf)
-double g;	/* value to format */
-int prec;	/* indicates desired significant digits, not decimal places */
+/*
+ * printf's %g format [can't rely on gcvt()]
+ *	caveat: don't use as argument to *printf()!
+ * 'format' string HAS to be of "<flags>*.*g" kind, or we bomb!
+ */
+void
+sgfmt(buf, format, alt, fwidth, prec, g)
 char *buf;	/* return buffer; assumed big enough to hold result */
+const char *format;
+int alt;	/* use alternate form flag */
+int fwidth;	/* field width in a format */
+int prec;	/* indicates desired significant digits, not decimal places */
+double g;	/* value to format */
 {
-	if (g == 0.0) {
-		(void) strcpy(buf, "0");	/* easy special case */
-	} else {
-		register char *d, *e, *p;
+	char dform[40];
+	register char *gpos;
+	register char *d, *e, *p;
+	int again = 0;
 
-		/* start with 'e' format (it'll provide nice exponent) */
-		if (prec < 1) prec = 1;	    /* at least 1 significant digit */
-		(void) sprintf(buf, "%.*e", prec - 1, g);
-		if ((e = strchr(buf, 'e')) != 0) {	/* find exponent  */
-			int exp = atoi(e+1);		/* fetch exponent */
-			if (exp >= -4 && exp < prec) {	/* per K&R2, B1.2 */
-				/* switch to 'f' format and re-do */
-				prec -= (exp + 1);	/* decimal precision */
-				(void) sprintf(buf, "%.*f", prec, g);
-				e = buf + strlen(buf);
-			}
-			if ((d = strchr(buf, '.')) != 0) {
-				/* remove trailing zeroes and decimal point */
-				for (p = e; p > d && *--p == '0'; ) continue;
-				if (*p == '.') --p;
-				if (++p < e)	/* copy exponent and NUL */
-					while ((*p++ = *e++) != '\0') continue;
-			}
-		}
+	strncpy(dform, format, sizeof dform - 1);
+	dform[sizeof dform - 1] = '\0';
+	gpos = strrchr(dform, '.');
+
+	if (g == 0.0 && alt == 0) {	/* easy special case */
+		*gpos++ = 'd';
+		*gpos = '\0';
+		(void) sprintf(buf, dform, fwidth, 0);
+		return;
 	}
-	return buf;
+	gpos += 2;  /* advance to location of 'g' in the format */
+
+	if (prec <= 0)	      /* negative precision is ignored */
+		prec = (prec < 0 ?  DEFAULT_G_PRECISION : 1);
+
+	if (*gpos == 'G')
+		again = 1;
+	/* start with 'e' format (it'll provide nice exponent) */
+	*gpos = 'e';
+	prec -= 1;
+	(void) sprintf(buf, dform, fwidth, prec, g);
+	if ((e = strrchr(buf, 'e')) != NULL) {	/* find exponent  */
+		int exp = atoi(e+1);		/* fetch exponent */
+		if (exp >= -4 && exp <= prec) {	/* per K&R2, B1.2 */
+			/* switch to 'f' format and re-do */
+			*gpos = 'f';
+			prec -= exp;		/* decimal precision */
+			(void) sprintf(buf, dform, fwidth, prec, g);
+			e = buf + strlen(buf);
+			while (*--e == ' ')
+				continue;
+			e += 1;
+		}
+		else if (again != 0)
+			*gpos = 'E';
+
+		/* if 'alt' in force, then trailing zeros are not removed */
+		if (alt == 0 && (d = strrchr(buf, '.')) != NULL) {
+			/* throw away an excess of precision */
+			for (p = e; p > d && *--p == '0'; )
+				prec -= 1;
+			if (d == p)
+				prec -= 1;
+			if (prec < 0)
+				prec = 0;
+			/* and do that once again */
+			again = 1;
+		}
+		if (again != 0)
+			(void) sprintf(buf, dform, fwidth, prec, g);
+	}
 }
 #endif	/* GFMT_WORKAROUND */

@@ -15,7 +15,7 @@
    along with this program; if not, write to the Free Software
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
 
-	$Id: getopt.h,v 1.3 1993/11/13 02:26:50 jtc Exp $
+	$Id: getopt.h,v 1.4 1994/02/17 01:22:18 jtc Exp $
 */
 
 #ifndef _GETOPT_H
@@ -79,7 +79,7 @@ extern int optopt;
 
 struct option
 {
-#if	__STDC__
+#ifdef	__STDC__
   const char *name;
 #else
   char *name;
@@ -97,7 +97,7 @@ struct option
 #define required_argument	1
 #define optional_argument	2
 
-#if __STDC__
+#ifdef __STDC__
 #if defined(__GNU_LIBRARY__)
 /* Many other libraries have conflicting prototypes for getopt, with
    differences in the consts, in stdlib.h.  To avoid compilation

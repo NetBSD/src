@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -24,8 +24,8 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: msg.c,v 1.2 1993/08/02 17:29:55 mycroft Exp $";
-#endif /* not lint */
+static char rcsid[] = "$Id: msg.c,v 1.3 1994/02/17 01:22:25 jtc Exp $";
+#endif
 
 #include "awk.h"
 
@@ -35,8 +35,8 @@ char *source = NULL;
 /* VARARGS2 */
 void
 err(s, emsg, argp)
-char *s;
-char *emsg;
+const char *s;
+const char *emsg;
 va_list argp;
 {
 	char *file;
@@ -53,8 +53,9 @@ va_list argp;
 	}
 	if (FNR) {
 		file = FILENAME_node->var_value->stptr;
+		(void) putc('(', stderr);
 		if (file)
-			(void) fprintf(stderr, "(FILENAME=%s ", file);
+			(void) fprintf(stderr, "FILENAME=%s ", file);
 		(void) fprintf(stderr, "FNR=%d) ", FNR);
 	}
 	(void) fprintf(stderr, s);

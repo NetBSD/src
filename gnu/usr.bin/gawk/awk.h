@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -22,7 +22,7 @@
  * along with GAWK; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *	$Id: awk.h,v 1.3 1993/11/13 02:26:21 jtc Exp $
+ *	$Id: awk.h,v 1.4 1994/02/17 01:22:01 jtc Exp $
  */
 
 /* ------------------------------ Includes ------------------------------ */
@@ -174,7 +174,7 @@ extern int getpgrp P((void));
 typedef struct Regexp {
 	struct re_pattern_buffer pat;
 	struct re_registers regs;
-	struct regexp dfareg;
+	struct dfa dfareg;
 	int dfa;
 } Regexp;
 #define	RESTART(rp,s)	(rp)->regs.start[0]
@@ -197,6 +197,22 @@ extern int _text_read (int, char *, int);
 #ifndef ENVSEP
 #define ENVSEP	':'
 #endif
+
+#define DEFAULT_G_PRECISION 6
+
+/* semi-temporary hack, mostly to gracefully handle VMS */
+#ifdef GFMT_WORKAROUND
+extern void sgfmt P((char *, const char *, int, int, int, double)); /* builtin.c */
+
+/* Partial fix, to handle the most common case.  */
+#define NUMTOSTR(str, format, num)					   \
+	if (strcmp((format), "%.6g") == 0 || strcmp((format), "%g") == 0)  \
+		sgfmt(str, "%*.*g", 0, 1, DEFAULT_G_PRECISION, num);	   \
+	else								   \
+		(void) sprintf(str, format, num) /* NOTE: no semi-colon! */
+#else
+#define NUMTOSTR(str, format, num) (void) sprintf(str, format, num)
+#endif /* GFMT_WORKAROUND */
 
 /* ------------------ Constants, Structures, Typedefs  ------------------ */
 #define AWKNUM	double
@@ -335,6 +351,7 @@ typedef struct exp_node {
 			union {
 				struct exp_node *lptr;
 				char *param_name;
+				long ll;
 			} l;
 			union {
 				struct exp_node *rptr;
@@ -347,6 +364,7 @@ typedef struct exp_node {
 			union {
 				char *name;
 				struct exp_node *extra;
+				long xl;
 			} x;
 			short number;
 			unsigned char reflags;
@@ -392,8 +410,8 @@ typedef struct exp_node {
 #			define	NUM	32	/* numeric value is current */
 #			define	NUMBER	64	/* assigned as number */
 #			define	MAYBE_NUM 128	/* user input:  if NUMERIC then
-						 * a NUMBER
-						 */
+						 * a NUMBER */
+#			define	ARRAYMAXED 256	/* array is at max size */
 	char *vname;	/* variable's name */
 } NODE;
 
@@ -426,6 +444,8 @@ typedef struct exp_node {
 
 #define var_value lnode
 #define var_array sub.nodep.r.av
+#define array_size sub.nodep.l.ll
+#define table_size sub.nodep.x.xl
 
 #define condpair lnode
 #define triggered sub.nodep.r.r_ent
@@ -433,8 +453,6 @@ typedef struct exp_node {
 #ifdef DONTDEF
 int primes[] = {31, 61, 127, 257, 509, 1021, 2053, 4099, 8191, 16381};
 #endif
-/* a quick profile suggests that the following is a good value */
-#define	HASHSIZE	1021
 
 typedef struct for_loop_header {
 	NODE *init;
@@ -628,7 +646,7 @@ extern double _msc51bug;
 /* array.c */
 extern NODE *concat_exp P((NODE *tree));
 extern void assoc_clear P((NODE *symbol));
-extern unsigned int hash P((char *s, size_t len));
+extern unsigned int hash P((const char *s, size_t len, unsigned long hsize));
 extern int in_array P((NODE *symbol, NODE *subs));
 extern NODE **assoc_lookup P((NODE *symbol, NODE *subs));
 extern void do_delete P((NODE *symbol, NODE *tree));
@@ -639,7 +657,7 @@ extern char *tokexpand P((void));
 extern char nextc P((void));
 extern NODE *node P((NODE *left, NODETYPE op, NODE *right));
 extern NODE *install P((char *name, NODE *value));
-extern NODE *lookup P((char *name));
+extern NODE *lookup P((const char *name));
 extern NODE *variable P((char *name, int can_free));
 extern int yyparse P((void));
 /* builtin.c */
@@ -695,8 +713,8 @@ extern struct redirect *redirect P((NODE *tree, int *errflg));
 extern NODE *do_close P((NODE *tree));
 extern int flush_io P((void));
 extern int close_io P((void));
-extern int devopen P((char *name, char *mode));
-extern int pathopen P((char *file));
+extern int devopen P((const char *name, const char *mode));
+extern int pathopen P((const char *file));
 extern NODE *do_getline P((NODE *tree));
 extern void do_nextfile P((void));
 /* iop.c */
@@ -710,7 +728,7 @@ extern void load_environ P((void));
 extern char *arg_assign P((char *arg));
 extern SIGTYPE catchsig P((int sig, int code));
 /* msg.c */
-extern void err P((char *s, char *emsg, va_list argp));
+extern void err P((const char *s, const char *emsg, va_list argp));
 #if _MSC_VER == 510
 extern void msg P((va_list va_alist, ...));
 extern void warning P((va_list va_alist, ...));
@@ -734,8 +752,9 @@ extern void freenode P((NODE *it));
 extern void unref P((NODE *tmp));
 extern int parse_escape P((char **string_ptr));
 /* re.c */
-extern Regexp *make_regexp P((char *s, int len, int ignorecase, int dfa));
-extern int research P((Regexp *rp, char *str, int start, int len, int need_start));
+extern Regexp *make_regexp P((char *s, size_t len, int ignorecase, int dfa));
+extern int research P((Regexp *rp, char *str, int start,
+		       size_t len, int need_start));
 extern void refree P((Regexp *rp));
 extern void reg_error P((const char *s));
 extern Regexp *re_update P((NODE *t));

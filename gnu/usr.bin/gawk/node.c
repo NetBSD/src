@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -24,8 +24,8 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: node.c,v 1.3 1993/11/13 02:27:00 jtc Exp $";
-#endif /* not lint */
+static char rcsid[] = "$Id: node.c,v 1.4 1994/02/17 01:22:27 jtc Exp $";
+#endif
 
 #include "awk.h"
 
@@ -106,7 +106,7 @@ register NODE *n;
  * (more complicated) variations on this theme didn't seem to pay off, but 
  * systematic testing might be in order at some point
  */
-static char *values[] = {
+static const char *values[] = {
 	"0",
 	"1",
 	"2",
@@ -141,7 +141,7 @@ register NODE *s;
 		num = (long)s->numbr;
 	if ((AWKNUM) num == s->numbr) {	/* integral value */
 		if (num < NVAL && num >= 0) {
-			sp = values[num];
+			sp = (char *) values[num];
 			s->stlen = 1;
 		} else {
 			(void) sprintf(sp, "%ld", num);
@@ -149,7 +149,7 @@ register NODE *s;
 		}
 		s->stfmt = -1;
 	} else {
-		(void) sprintf(sp, CONVFMT, s->numbr);
+		NUMTOSTR(sp, CONVFMT, s->numbr);
 		s->stlen = strlen(sp);
 		s->stfmt = (char)CONVFMTidx;
 	}

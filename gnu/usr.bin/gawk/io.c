@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -24,8 +24,8 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: io.c,v 1.4 1993/11/13 02:26:54 jtc Exp $";
-#endif /* not lint */
+static char rcsid[] = "$Id: io.c,v 1.5 1994/02/17 01:22:21 jtc Exp $";
+#endif
 
 #if !defined(VMS) && !defined(VMS_POSIX) && !defined(_MSC_VER)
 #include <sys/param.h>
@@ -60,14 +60,14 @@ static int close_redir P((struct redirect *rp));
 static int wait_any P((int interesting));
 #endif
 static IOBUF *gawk_popen P((char *cmd, struct redirect *rp));
-static IOBUF *iop_open P((char *file, char *how));
+static IOBUF *iop_open P((const char *file, const char *how));
 static int gawk_pclose P((struct redirect *rp));
-static int do_pathopen P((char *file));
-static int str2mode P((char *mode));
+static int do_pathopen P((const char *file));
+static int str2mode P((const char *mode));
 static void spec_setup P((IOBUF *iop, int len, int allocate));
-static int specfdopen P((IOBUF *iop, char *name, char *mode));
-static int pidopen P((IOBUF *iop, char *name, char *mode));
-static int useropen P((IOBUF *iop, char *name, char *mode));
+static int specfdopen P((IOBUF *iop, const char *name, const char *mode));
+static int pidopen P((IOBUF *iop, const char *name, const char *mode));
+static int useropen P((IOBUF *iop, const char *name, const char *mode));
 
 extern FILE	*fdopen();
 
@@ -266,6 +266,9 @@ do_input()
 		if (inrec(iop) == 0)
 			while (interpret(expression_value) && inrec(iop) == 0)
 				;
+		/* recover any space from C based alloca */
+		(void) alloca(0);
+
 		if (exiting)
 			break;
 	}
@@ -282,10 +285,10 @@ int *errflg;
 	register char *str;
 	int tflag = 0;
 	int outflag = 0;
-	char *direction = "to";
-	char *mode;
+	const char *direction = "to";
+	const char *mode;
 	int fd;
-	char *what = NULL;
+	const char *what = NULL;
 
 	switch (tree->type) {
 	case Node_redirect_append:
@@ -398,9 +401,13 @@ int *errflg;
 					rp->fp = stdout;
 				else if (fd == fileno(stderr))
 					rp->fp = stderr;
-				else	
-					rp->fp = fdopen(fd, mode);
-				if (isatty(fd))
+				else {
+					rp->fp = fdopen(fd, (char *) mode);
+					/* don't leak file descriptors */
+					if (rp->fp == NULL)
+						close(fd);
+				}
+				if (rp->fp != NULL && isatty(fd))
 					rp->flag |= RED_NOBUF;
 			}
 		}
@@ -593,7 +600,7 @@ close_io ()
 
 static int
 str2mode(mode)
-char *mode;
+const char *mode;
 {
 	int ret;
 
@@ -609,7 +616,9 @@ char *mode;
 	case 'a':
 		ret = O_WRONLY|O_APPEND|O_CREAT;
 		break;
+
 	default:
+		ret = 0;		/* lint */
 		cant_happen();
 	}
 	return ret;
@@ -626,10 +635,10 @@ char *mode;
 
 int
 devopen(name, mode)
-char *name, *mode;
+const char *name, *mode;
 {
 	int openfd = INVALID_HANDLE;
-	char *cp, *ptr;
+	const char *cp, *ptr;
 	int flag = 0;
 	struct stat buf;
 	extern double strtod();
@@ -646,7 +655,7 @@ char *name, *mode;
 
 	if (STREQ(name, "-"))
 		openfd = fileno(stdin);
-	else if (STREQN(name, "/dev/", 5) && stat(name, &buf) == -1) {
+	else if (STREQN(name, "/dev/", 5) && stat((char *) name, &buf) == -1) {
 		cp = name + 5;
 		
 		if (STREQ(cp, "stdin") && (flag & O_RDONLY) == O_RDONLY)
@@ -705,7 +714,7 @@ int allocate;
 static int
 specfdopen(iop, name, mode)
 IOBUF *iop;
-char *name, *mode;
+const char *name, *mode;
 {
 	int fd;
 	IOBUF *tp;
@@ -728,7 +737,7 @@ char *name, *mode;
  * to maximize portability.
  */
 #ifndef GETPGRP_NOARG
-#if defined(__svr4__) || defined(BSD4_4) || defined(_POSIX_SOURCE) || defined(_POSIX_JOB_CONTROL)
+#if defined(__svr4__) || defined(BSD4_4) || defined(_POSIX_SOURCE)
 #define GETPGRP_NOARG
 #else
 #if defined(i860) || defined(_AIX) || defined(hpux) || defined(VMS)
@@ -752,7 +761,7 @@ char *name, *mode;
 static int
 pidopen(iop, name, mode)
 IOBUF *iop;
-char *name, *mode;
+const char *name, *mode;
 {
 	char tbuf[BUFSIZ];
 	int i;
@@ -784,12 +793,12 @@ char *name, *mode;
 static int
 useropen(iop, name, mode)
 IOBUF *iop;
-char *name, *mode;
+const char *name, *mode;
 {
 	char tbuf[BUFSIZ], *cp;
 	int i;
 #if defined(NGROUPS_MAX) && NGROUPS_MAX > 0
-#if defined(atarist)
+#if defined(atarist) || defined(__svr4__)
 	gid_t groupset[NGROUPS_MAX];
 #else
 	int groupset[NGROUPS_MAX];
@@ -825,16 +834,16 @@ char *name, *mode;
 
 static IOBUF *
 iop_open(name, mode)
-char *name, *mode;
+const char *name, *mode;
 {
 	int openfd = INVALID_HANDLE;
 	int flag = 0;
 	struct stat buf;
 	IOBUF *iop;
 	static struct internal {
-		char *name;
+		const char *name;
 		int compare;
-		int (*fp)();
+		int (*fp) P((IOBUF*,const char *,const char *));
 		IOBUF iob;
 	} table[] = {
 		{ "/dev/fd/",		8,	specfdopen },
@@ -855,12 +864,12 @@ char *name, *mode;
 
 	if (STREQ(name, "-"))
 		openfd = fileno(stdin);
-	else if (STREQN(name, "/dev/", 5) && stat(name, &buf) == -1) {
+	else if (STREQN(name, "/dev/", 5) && stat((char *) name, &buf) == -1) {
 		int i;
 
 		for (i = 0; i < devcount; i++) {
 			if (STREQN(name, table[i].name, table[i].compare)) {
-				IOBUF *iop = & table[i].iob;
+				iop = & table[i].iob;
 
 				if (iop->buf != NULL) {
 					spec_setup(iop, 0, 0);
@@ -1009,7 +1018,7 @@ gawk_pclose(rp)
 struct redirect *rp;
 {
 	int rval, aval, fd = rp->iop->fd;
-	FILE *kludge = fdopen(fd, "r"); /* pclose needs FILE* w/ right fileno */
+	FILE *kludge = fdopen(fd, (char *) "r"); /* pclose needs FILE* w/ right fileno */
 
 	rp->iop->fd = dup(fd);	  /* kludge to allow close() + pclose() */
 	rval = iop_close(rp->iop);
@@ -1017,7 +1026,7 @@ struct redirect *rp;
 	aval = pclose(kludge);
 	return (rval < 0 ? rval : aval);
 }
-#else	/* VMS */
+#else	/* VMS || OS2 || MSDOS */
 
 static
 struct {
@@ -1067,7 +1076,7 @@ struct redirect *rp;
 	free(pipes[cur].command);
 	return rval;
 }
-#endif	/* VMS */
+#endif	/* VMS || OS2 || MSDOS */
 
 #endif	/* PIPES_SIMULATED */
 
@@ -1092,7 +1101,7 @@ NODE *tree;
 			rp = redirect(tree->rnode, &redir_error);
 			if (rp == NULL && redir_error) { /* failed redirect */
 				if (! do_unix) {
-					char *s = strerror(redir_error);
+					s = strerror(redir_error);
 
 					unref(ERRNO_node->var_value);
 					ERRNO_node->var_value =
@@ -1107,7 +1116,7 @@ NODE *tree;
 		errcode = 0;
 		cnt = get_a_record(&s, iop, *RS, & errcode);
 		if (! do_unix && errcode != 0) {
-			char *s = strerror(errcode);
+			s = strerror(errcode);
 
 			unref(ERRNO_node->var_value);
 			ERRNO_node->var_value = make_string(s, strlen(s));
@@ -1153,7 +1162,7 @@ NODE *tree;
 
 int
 pathopen (file)
-char *file;
+const char *file;
 {
 	int fd = do_pathopen(file);
 
@@ -1185,12 +1194,12 @@ char *file;
 
 static int
 do_pathopen (file)
-char *file;
+const char *file;
 {
-	static char *savepath = DEFPATH;	/* defined in config.h */
+	static const char *savepath = DEFPATH;	/* defined in config.h */
 	static int first = 1;
-	char *awkpath, *cp;
-	char trypath[BUFSIZ];
+	const char *awkpath;
+	char *cp, trypath[BUFSIZ];
 	int fd;
 
 	if (STREQ(file, "-"))
