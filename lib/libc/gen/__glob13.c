@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.21 2001/04/03 14:50:37 christos Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.22 2001/09/08 22:39:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.21 2001/04/03 14:50:37 christos Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.22 2001/09/08 22:39:21 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -167,8 +167,9 @@ static Char	*g_strchr __P((const Char *, int));
 static int	 g_stat __P((Char *, struct STAT *, glob_t *));
 static int	 glob0 __P((const Char *, glob_t *));
 static int	 glob1 __P((Char *, glob_t *, size_t *));
-static int	 glob2 __P((Char *, Char *, Char *, glob_t *, size_t *));
-static int	 glob3 __P((Char *, Char *, Char *, Char *, glob_t *,
+static int	 glob2 __P((Char *, Char *, Char *, Char *, glob_t *,
+    size_t *));
+static int	 glob3 __P((Char *, Char *, Char *, Char *, Char *, glob_t *,
     size_t *));
 static int	 globextend __P((const Char *, glob_t *, size_t *));
 static const Char *globtilde __P((const Char *, Char *, size_t, glob_t *));
@@ -306,7 +307,11 @@ globexp2(ptr, pattern, pglob, rv)
 
 	/* Non matching braces; just glob the pattern */
 	if (i != 0 || *pe == EOS) {
-		*rv = glob0(patbuf, pglob);
+		/*
+		 * we use `pattern', not `patbuf' here so that that
+		 * unbalanced braces are passed to the match
+		 */
+		*rv = glob0(pattern, pglob);
 		return 0;
 	}
 
@@ -461,7 +466,7 @@ glob0(pattern, pglob)
 	glob_t *pglob;
 {
 	const Char *qpatnext;
-	int c, err, oldpathc;
+	int c, error, oldpathc;
 	Char *bufnext, patbuf[MAXPATHLEN+1];
 	size_t limit = 0;
 
@@ -526,8 +531,8 @@ glob0(pattern, pglob)
 	qprintf("glob0:", patbuf);
 #endif
 
-	if ((err = glob1(patbuf, pglob, &limit)) != 0)
-		return(err);
+	if ((error = glob1(patbuf, pglob, &limit)) != 0)
+		return(error);
 
 	if (pglob->gl_pathc == oldpathc) {	
 		/*
@@ -540,8 +545,7 @@ glob0(pattern, pglob)
 		if ((pglob->gl_flags & GLOB_NOCHECK) ||
 		    ((pglob->gl_flags & (GLOB_NOMAGIC|GLOB_MAGCHAR))
 		     == GLOB_NOMAGIC)) {
-			if ((err = globextend(pattern, pglob, &limit)) != 0)
-				return (err);
+			return globextend(pattern, pglob, &limit);
 		} else {
 			return (GLOB_NOMATCH);
 		}
@@ -579,7 +583,12 @@ glob1(pattern, pglob, limit)
 	/* A null pathname is invalid -- POSIX 1003.1 sect. 2.4. */
 	if (*pattern == EOS)
 		return(0);
-	return(glob2(pathbuf, pathbuf, pattern, pglob, limit));
+	/*
+	 * we save one character so that we can use ptr >= limit,
+	 * in the general case when we are appending non nul chars only.
+	 */
+	return(glob2(pathbuf, pathbuf, pathbuf + sizeof(pathbuf) - 1, pattern,
+	    pglob, limit));
 }
 
 /*
@@ -588,8 +597,8 @@ glob1(pattern, pglob, limit)
  * meta characters.
  */
 static int
-glob2(pathbuf, pathend, pattern, pglob, limit)
-	Char *pathbuf, *pathend, *pattern;
+glob2(pathbuf, pathend, pathlim, pattern, pglob, limit)
+	Char *pathbuf, *pathend, *pathlim, *pattern;
 	glob_t *pglob;
 	size_t *limit;
 {
@@ -617,6 +626,8 @@ glob2(pathbuf, pathend, pattern, pglob, limit)
 			    (S_ISLNK(sb.st_mode) &&
 			    (g_stat(pathbuf, &sb, pglob) == 0) &&
 			    S_ISDIR(sb.st_mode)))) {
+				if (pathend >= pathlim)
+					return (GLOB_ABORTED);
 				*pathend++ = SEP;
 				*pathend = EOS;
 			}
@@ -630,30 +641,35 @@ glob2(pathbuf, pathend, pattern, pglob, limit)
 		while (*p != EOS && *p != SEP) {
 			if (ismeta(*p))
 				anymeta = 1;
+			if (q >= pathlim)
+				return GLOB_ABORTED;
 			*q++ = *p++;
 		}
 
 		if (!anymeta) {		/* No expansion, do next segment. */
 			pathend = q;
 			pattern = p;
-			while (*pattern == SEP)
+			while (*pattern == SEP) {
+				if (pathend >= pathlim)
+					return GLOB_ABORTED;
 				*pathend++ = *pattern++;
+			}
 		} else			/* Need expansion, recurse. */
-			return(glob3(pathbuf, pathend, pattern, p, pglob,
-			    limit));
+			return(glob3(pathbuf, pathend, pathlim, pattern, p,
+			    pglob, limit));
 	}
 	/* NOTREACHED */
 }
 
 static int
-glob3(pathbuf, pathend, pattern, restpattern, pglob, limit)
-	Char *pathbuf, *pathend, *pattern, *restpattern;
+glob3(pathbuf, pathend, pathlim, pattern, restpattern, pglob, limit)
+	Char *pathbuf, *pathend, *pathlim, *pattern, *restpattern;
 	glob_t *pglob;
 	size_t *limit;
 {
 	struct dirent *dp;
 	DIR *dirp;
-	int err;
+	int error;
 	char buf[MAXPATHLEN];
 
 	/*
@@ -674,7 +690,6 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob, limit)
 	errno = 0;
 	    
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
-		/* TODO: don't call for ENOENT or ENOTDIR? */
 		if (pglob->gl_errfunc) {
 			if (g_Ctoc(pathbuf, buf, sizeof(buf)))
 				return (GLOB_ABORTED);
@@ -682,10 +697,19 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob, limit)
 			    pglob->gl_flags & GLOB_ERR)
 				return (GLOB_ABORTED);
 		}
+		/*
+		 * Posix/XOpen: glob should return when it encounters a
+		 * directory that it cannot open or read
+		 * XXX: Should we ignore ENOTDIR and ENOENT though?
+		 * I think that Posix had in mind EPERM...
+		 */
+		if (pglob->gl_flags & GLOB_ERR)
+			return (GLOB_ABORTED);
+
 		return(0);
 	}
 
-	err = 0;
+	error = 0;
 
 	/* Search directory for matching names. */
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
@@ -699,15 +723,25 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob, limit)
 		/* Initial DOT must be matched literally. */
 		if (dp->d_name[0] == DOT && *pattern != DOT)
 			continue;
+		/*
+		 * The resulting string contains EOS, so we can
+		 * use the pathlim character, if it is the nul
+		 */
 		for (sc = (u_char *) dp->d_name, dc = pathend; 
-		     (*dc++ = *sc++) != EOS;)
+		     dc <= pathlim && (*dc++ = *sc++) != EOS;)
 			continue;
+		/*
+		 * we compare to one after pathlim, since the pointer
+		 * has been post-incremented.
+		 */
+		if (dc > pathlim + 1)
+			return GLOB_ABORTED;
 		if (!match(pathend, pattern, restpattern)) {
 			*pathend = EOS;
 			continue;
 		}
-		err = glob2(pathbuf, --dc, restpattern, pglob, limit);
-		if (err)
+		error = glob2(pathbuf, --dc, pathlim, restpattern, pglob, limit);
+		if (error)
 			break;
 	}
 
@@ -715,7 +749,14 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob, limit)
 		(*pglob->gl_closedir)(dirp);
 	else
 		closedir(dirp);
-	return(err);
+
+	/*
+	 * Again Posix X/Open issue with regards to error handling.
+	 */
+	if ((error || errno) && (pglob->gl_flags & GLOB_ERR))
+		return (GLOB_ABORTED);
+
+	return(error);
 }
 
 
@@ -856,6 +897,7 @@ globfree(pglob)
 				free(*pp);
 		free(pglob->gl_pathv);
 		pglob->gl_pathv = NULL;
+		pglob->gl_pathc = 0;
 	}
 }
 
