@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.13 2003/10/31 03:28:12 simonb Exp $ */
+/* $NetBSD: syscall.c,v 1.14 2004/02/13 18:01:44 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2003/10/31 03:28:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2004/02/13 18:01:44 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,6 +301,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error) {
 			args = copyargs;
+			KERNEL_PROC_UNLOCK(l);
 			goto bad;
 		}
 	case 6:	
@@ -323,8 +324,10 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
