@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.61 2001/11/14 21:49:54 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.62 2001/11/15 12:15:09 wiz Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -28,7 +28,7 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${NOGCCERROR:U-Werror} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
-.if ${MKSOFTFLOAT} != "no"
+.if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
 COPTS+=		-msoft-float
 FOPTS+=		-msoft-float
 .endif
