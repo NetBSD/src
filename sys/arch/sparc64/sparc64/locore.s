@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143 2002/01/17 02:26:37 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.144 2002/01/17 22:23:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -1098,8 +1098,7 @@ kdatafault:
 	UTRAP(0x031)			! 031 = data MMU miss -- no MMU
 	VTRAP(T_DATA_ERROR, winfault)	! 032 = data fetch fault
 	VTRAP(T_DATA_PROT, winfault)	! 033 = data fetch fault
-	TRAP(T_ALIGN)			! 034 = address alignment error -- we could fix it inline...
-!	sir; nop; TA8	! DEBUG -- trap all kernel alignment errors
+	VTRAP(T_ALIGN, checkalign)	! 034 = address alignment error -- we could fix it inline...
 	TRAP(T_LDDF_ALIGN)		! 035 = LDDF address alignment error -- we could fix it inline...
 	TRAP(T_STDF_ALIGN)		! 036 = STDF address alignment error -- we could fix it inline...
 	TRAP(T_PRIVACT)			! 037 = privileged action
@@ -2376,7 +2375,7 @@ winfault:
 winfix:
 	rdpr	%tl, %g2
 	subcc	%g2, 1, %g1
-	brlez,pt	%g1, datafault	! Don't go below trap level 1
+	ble,pt	%icc, datafault		! Don't go below trap level 1
 	 sethi	%hi(CPCB), %g6		! get current pcb
 
 
@@ -2387,7 +2386,7 @@ winfix:
 	andn	%g7, 0x3f, %g5		!   window fill traps are all 0b 0000 11xx xxxx
 
 #if 1
-	cmp	%g7, 0x68		! If we took a datafault just before this trap
+	cmp	%g7, 0x30		! If we took a datafault just before this trap
 	bne,pt	%icc, winfixfill	! our stack's probably bad so we need to switch somewhere else
 	 nop
 
@@ -2529,7 +2528,6 @@ winfixspill:
 	!!
 #if 1
 	btst	TSTATE_PRIV, %g4			! From user mode?
-!	cmp	%g2, 2					! From normal execution? take a fault.
 	wrpr	%g2, 0, %tl				! We need to load the fault type so we can
 	rdpr	%tt, %g5				! overwrite the lower trap and get it to the fault handler
 	wrpr	%g1, 0, %tl
@@ -3418,6 +3416,59 @@ fp_exception:
 	 done
 	NOTREACHED
 
+
+/*
+ * We're here because we took an alignment fault in NUCLEUS context.
+ * This could be a kernel bug or it could be due to saving a user
+ * window to an invalid stack pointer.  If the latter is the case,
+ * we should emulate the save by storing all the user register windows 
+ * to the PCB and returning.
+ */
+checkalign:
+	rdpr	%tl, %g2
+	subcc	%g2, 1, %g1
+	bneg,pn	%icc, slowtrap		! Huh?
+	 sethi	%hi(CPCB), %g6		! get current pcb
+
+	wrpr	%g1, 0, %tl
+	rdpr	%tt, %g7
+	rdpr	%tstate, %g4
+	andn	%g7, 0x3f, %g5
+	cmp	%g5, 0x080		!   window spill traps are all 0b 0000 10xx xxxx
+	bne,a,pn	%icc, slowtrap
+	 wrpr	%g1, 0, %tl		! Revert TL  XXX wrpr in a delay slot...
+
+#ifdef DEBUG
+	cmp	%g7, 0x34		! If we took a datafault just before this trap
+	bne,pt	%icc, checkalignspill	! our stack's probably bad so we need to switch somewhere else
+	 nop
+
+	!!
+	!! Double data fault -- bad stack?
+	!!
+	wrpr	%g2, %tl	! Restore trap level.
+	sir			! Just issue a reset and don't try to recover.
+	mov	%fp, %l6		! Save the frame pointer
+	set	EINTSTACK+USPACE+CC64FSZ-STKB, %fp ! Set the frame pointer to the middle of the idle stack
+	add	%fp, -CC64FSZ, %sp	! Create a stackframe
+	wrpr	%g0, 15, %pil		! Disable interrupts, too
+	wrpr	%g0, %g0, %canrestore	! Our stack is hozed and our PCB
+	wrpr	%g0, 7, %cansave	!  probably is too, so blow away
+	ba	slowtrap		!  all our register windows.
+	 wrpr	%g0, 0x101, %tt
+#endif
+checkalignspill:	
+	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
+	ldxa	[SFSR] %asi, %g3			! get sync fault status register
+	stxa	%g0, [SFSR] %asi			! Clear out fault now
+	membar	#Sync					! No real reason for this XXXX
+	/*
+	 * Here we just jump to winfixspill and let it take care of
+	 * saving the windows.
+	 */
+	ba,pt	%icc, winfixspill	! Continue with the winfix
+	 orcc	%g0, %g0, %g0		! Make sure we compare to zero
+	
 /*
  * slowtrap() builds a trap frame and calls trap().
  * This is called `slowtrap' because it *is*....
