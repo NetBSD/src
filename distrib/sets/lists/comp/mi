@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.534 2003/02/11 00:50:22 seb Exp $
+#	$NetBSD: mi,v 1.535 2003/02/13 03:04:42 nathanw Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2643,6 +2643,7 @@
 ./usr/share/man/cat3/printf.0	comp-c-catman
 ./usr/share/man/cat3/printw.0		comp-c-catman
 ./usr/share/man/cat3/psignal.0	comp-c-catman
+./usr/share/man/cat3/pthread_atfork.0	comp-c-catman
 ./usr/share/man/cat3/putc.0	comp-c-catman
 ./usr/share/man/cat3/putc_unlocked.0	comp-c-catman
 ./usr/share/man/cat3/putchar.0	comp-c-catman
@@ -5679,6 +5680,7 @@
 ./usr/share/man/man3/printf.3		comp-c-man
 ./usr/share/man/man3/printw.3		comp-c-man
 ./usr/share/man/man3/psignal.3		comp-c-man
+./usr/share/man/man3/pthread_atfork.3		comp-c-man
 ./usr/share/man/man3/putc.3		comp-c-man
 ./usr/share/man/man3/putc_unlocked.3		comp-c-man
 ./usr/share/man/man3/putchar.3		comp-c-man
