@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.1 2001/10/15 16:22:52 uch Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:00 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -181,7 +181,7 @@ menu editfsparts, y=13, exit;
 
 menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
-	option	"Kernel",		 action { toggle_getit (0); };
+	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
 	option	"Base",			 action { toggle_getit (1); };
 	option	"System (/etc)",	 action { toggle_getit (2); };
 	option  "Compiler Tools", 	 action { toggle_getit (3); };
