@@ -1,6 +1,8 @@
-/*	$NetBSD: if_le.c,v 1.26 1996/03/17 02:01:10 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.27 1996/03/31 22:22:52 pk Exp $	*/
 
 /*-
+ * Copyright (c) 1996
+ *	The President and Fellows of Harvard University. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -18,6 +20,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
+ *	This product includes software developed by Aaron Brown and
+ *	Harvard University.
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -75,6 +79,31 @@ int	lematch __P((struct device *, void *, void *));
 void	leattach __P((struct device *, struct device *, void *));
 int	leintr __P((void *));
 
+#if defined(SUN4M)	/* XXX */
+int	myleintr __P((void *));
+int	ledmaintr __P((struct dma_softc *));
+
+int
+myleintr(arg)
+	void	*arg;
+{
+	register struct le_softc *sc = arg;
+	if (sc->sc_dma->sc_regs->csr & D_ERR_PEND)
+		return ledmaintr(sc->sc_dma);
+
+	/*
+	 * XXX There is a bug somewhere in the interrupt code that causes stray
+	 * ethernet interrupts under high network load. This bug has been
+	 * impossible to locate, so until it is found, we just ignore stray
+	 * interrupts, as they do not in fact correspond to dropped packets.
+	 */
+
+	/* return */ leintr(arg);
+	return 1;
+}
+#endif
+
+
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
@@ -105,7 +134,7 @@ lerdcsr(sc, port)
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
 	return (val);
-} 
+}
 
 int
 lematch(parent, match, aux)
@@ -134,7 +163,9 @@ leattach(parent, self, aux)
 	int pri;
 	struct bootpath *bp;
 	u_long laddr;
+#if defined(SUN4C) || defined(SUN4M)
 	int dmachild = strncmp(parent->dv_xname, "ledma", 5) == 0;
+#endif
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
@@ -152,7 +183,7 @@ leattach(parent, self, aux)
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
 #if defined (SUN4M)
-	if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE) 
+	if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE)
 		panic("if_le: Lance buffer crosses 16MB boundary");
 #endif
 	sc->sc_addr = laddr & 0xffffff;
@@ -179,12 +210,10 @@ leattach(parent, self, aux)
 	case BUS_SBUS:
 		sc->sc_sd.sd_reset = (void *)lereset;
 		if (dmachild) {
-#ifdef notyet
 			sc->sc_dma = (struct dma_softc *)parent;
 			sc->sc_dma->sc_le = sc;
 			sc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
 			sbus_establish(&sc->sc_sd, parent);
-#endif
 		} else {
 			sc->sc_dma = NULL;
 			sbus_establish(&sc->sc_sd, &sc->sc_dev);
@@ -205,7 +234,7 @@ leattach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = leintr;
 #if defined(SUN4M) /*XXX*/
-	if (cputyp == CPU_SUN4M)
+	if (CPU_ISSUN4M)
 		sc->sc_ih.ih_fun = myleintr;
 #endif
 	sc->sc_ih.ih_arg = sc;
