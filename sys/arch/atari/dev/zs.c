@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 1998/03/25 09:46:10 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.30 1999/02/11 15:28:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -82,7 +82,7 @@
 #if NZS > 0
 
 #define PCLK	(8053976)	/* PCLK pin input clock rate */
-#define PCLK_HD	(14745600)	/* PCLK on Hades pin input clock rate */
+#define PCLK_HD	(9600 * 1536)	/* PCLK on Hades pin input clock rate */
 
 #define splzs	spl5
 

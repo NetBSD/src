@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 1999/02/03 20:25:06 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.11 1999/02/11 15:28:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -80,7 +80,8 @@
 /* Booter flags interface */
 #define ZSMAC_RAW	0x01
 #define ZSMAC_LOCALTALK	0x02
-#define	ZS_STD_BRG	(57600*4)
+
+#define	PCLK	(9600 * 384)
 
 #include "zsc.h"	/* get the # of zs chips defined */
 
@@ -156,9 +157,9 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	1,	/*12: BAUDLO (default=38400) */
-	0,	/*13: BAUDHI (default=38400) */
-	ZSWR14_BAUD_ENA,
+	((PCLK/32)/38400)-2,	/*12: BAUDLO (default=38400) */
+	0,			/*13: BAUDHI (default=38400) */
+	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
 };
 
@@ -320,7 +321,7 @@ zsc_attach(parent, self, aux)
 		bcopy(zs_init_reg, cs->cs_preg, 16);
 
 		/* Current BAUD rate generator clock. */
-		cs->cs_brg_clk = ZS_STD_BRG;	/* RTxC is 230400*16, so use 230400 */
+		cs->cs_brg_clk = PCLK / 16;	/* RTxC is 230400*16, so use 230400 */
 		cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
@@ -335,7 +336,7 @@ zsc_attach(parent, self, aux)
 #endif
 
 		/* Define BAUD rate stuff. */
-		xcs->cs_clocks[0].clk = ZS_STD_BRG * 16;
+		xcs->cs_clocks[0].clk = PCLK;
 		xcs->cs_clocks[0].flags = ZSC_RTXBRG | ZSC_RTXDIV;
 		xcs->cs_clocks[1].flags =
 			ZSC_RTXBRG | ZSC_RTXDIV | ZSC_VARIABLE | ZSC_EXTERN;
@@ -617,10 +618,10 @@ zs_cn_check_speed(bps)
 {
 	int tc, rate;
 
-	tc = BPS_TO_TCONST(ZS_STD_BRG, bps);
+	tc = BPS_TO_TCONST(PCLK / 16, bps);
 	if (tc < 0)
 		return 0;
-	rate = TCONST_TO_BPS(ZS_STD_BRG, tc);
+	rate = TCONST_TO_BPS(PCLK / 16, tc);
 	if (ZS_TOLERANCE > abs(((rate - bps)*1000)/bps)) 
 		return 1;
 	else
@@ -734,7 +735,7 @@ zs_set_speed(cs, bps)
 	if (sf & ZSC_EXTERN)
 		cs->cs_brg_clk = xcs->cs_clocks[i].clk >> 4;
 	else
-		cs->cs_brg_clk = ZS_STD_BRG;
+		cs->cs_brg_clk = PCLK / 16;
 
 	/*
 	 * Now we have a source, so set it up.

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 1999/02/03 20:25:06 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 1999/02/11 15:28:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,9 +92,9 @@ int zs_major = 12;
  * The NeXT provides a 3.686400 MHz clock to the ZS chips.
  */
 #if 1
-#define PCLK	(57600*4*16)			/* PCLK pin input clock rate */
+#define PCLK	(9600 * 384)		/* PCLK pin input clock rate */
 #else
-#define PCLK 10000000
+#define PCLK	10000000
 #endif
 
 #define	ZS_DELAY()		delay(2)
@@ -131,8 +131,8 @@ static u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	14,	/*12: BAUDLO (default=9600) */
-	0,	/*13: BAUDHI (default=9600) */
+	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
 };
@@ -695,7 +695,7 @@ zscninit(cn)
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 		cs->cs_channel = zs_consunit;
-		cs->cs_brg_clk = PCLK/16;
+		cs->cs_brg_clk = PCLK / 16;
 
 		bcopy(zs_init_reg, cs->cs_preg, 16);
 		cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
