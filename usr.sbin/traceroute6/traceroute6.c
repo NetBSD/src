@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.5 1999/09/03 01:49:16 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.6 2000/01/31 14:26:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.5 1999/09/03 01:49:16 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.6 2000/01/31 14:26:44 itojun Exp $");
 #endif
 #endif
 
@@ -316,6 +316,11 @@ struct opacket	*outpacket;	/* last output (udp) packet */
 
 int	main __P((int, char *[]));
 int	wait_for_reply __P((int, struct msghdr *));
+#ifdef IPSEC
+#ifdef IPSEC_POLICY_IPSEC
+int	setpolicy __P((int so, char *policy));
+#endif
+#endif
 void	send_probe __P((int, int));
 struct udphdr *get_udphdr __P((struct ip6_hdr *, u_char *));
 int	get_hoplim __P((struct msghdr *));
@@ -526,18 +531,14 @@ main(argc, argv)
 				  (char *)&on, sizeof(on));
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-    {
-	int len;
-	char buf[16];
-
 	/*
 	 * do not raise error even if setsockopt fails, kernel may have ipsec
 	 * turned off.
 	 */
-	if ((len = ipsec_set_policy(buf, sizeof(buf), "bypass")) < 0)
+	if (setpolicy(rcvsock, "in bypass") < 0)
 		errx(1, ipsec_strerror());
-	(void)setsockopt(rcvsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf, len);
-    }
+	if (setpolicy(rcvsock, "out bypass") < 0)
+		errx(1, ipsec_strerror());
 #else
     {
 	int level = IPSEC_LEVEL_NONE;
@@ -588,18 +589,14 @@ main(argc, argv)
 	}
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-    {
-	int len;
-	char buf[16];
-
 	/*
 	 * do not raise error even if setsockopt fails, kernel may have ipsec
 	 * turned off.
 	 */
-	if ((len = ipsec_set_policy(buf, sizeof(buf), "bypass")) < 0)
+	if (setpolicy(sndsock, "in bypass") < 0)
 		errx(1, ipsec_strerror());
-	(void)setsockopt(sndsock, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf, len);
-    }
+	if (setpolicy(sndsock, "out bypass") < 0)
+		errx(1, ipsec_strerror());
 #else
     {
 	int level = IPSEC_LEVEL_BYPASS;
@@ -757,6 +754,30 @@ wait_for_reply(sock, mhdr)
 
 	return(cc);
 }
+
+#ifdef IPSEC
+#ifdef IPSEC_POLICY_IPSEC
+int
+setpolicy(so, policy)
+	int so;
+	char *policy;
+{
+	char *buf;
+
+	buf = ipsec_set_policy(policy, strlen(policy));
+	if (buf == NULL) {
+		warnx(ipsec_strerror());
+		return -1;
+	}
+	(void)setsockopt(so, IPPROTO_IPV6, IPV6_IPSEC_POLICY,
+		buf, ipsec_get_policylen(buf));
+
+	free(buf);
+
+	return 0;
+}
+#endif
+#endif
 
 
 void
