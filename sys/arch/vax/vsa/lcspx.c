@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.1 2003/10/19 15:02:17 ragge Exp $ */
+/*	$NetBSD: lcspx.c,v 1.2 2004/03/19 20:12:07 mhitch Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.1 2003/10/19 15:02:17 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.2 2004/03/19 20:12:07 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -196,7 +196,8 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	aa.console = lcspxaddr != NULL;
-	lcspxaddr = (caddr_t)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
+	if (lcspxaddr == 0)
+		lcspxaddr = (caddr_t)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
 	if (lcspxaddr == 0) {
 		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
 		return;
@@ -207,6 +208,9 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	aa.accessops = &lcspx_accessops;
 	qf = qvss8x15.data;
 
+	/* enable software cursor */
+	callout_reset(&lcspx_cursor_ch, hz / 2, lcspx_crsr_blink, NULL);
+
 	config_found(self, &aa, wsemuldisplaydevprint);
 }
 
@@ -216,8 +220,11 @@ static	int cur_on;
 static void
 lcspx_crsr_blink(void *arg)
 {
+	int i;
+
 	if (cur_on)
-		*cursor ^= 255;
+		for (i = 0; i < 8; ++i)
+			cursor[i] ^= 255;
 	callout_reset(&lcspx_cursor_ch, hz / 2, lcspx_crsr_blink, NULL);
 }
 
@@ -230,8 +237,9 @@ lcspx_cursor(void *id, int on, int row, int col)
 	if (ss == curscr) {
 		char ch = QFONT(ss->ss_image[ss->ss_cury][ss->ss_curx], 14);
 
-		for (i = 0; i < 8; i++)
-			cursor[i] = (ch >> i) & 1;
+		if (cursor != NULL)
+			for (i = 0; i < 8; i++)
+				cursor[i] = (ch >> i) & 1;
 		cursor = &SPX_ADDR(row, col, 14, 0);
 		if ((cur_on = on))
 			for (i = 0; i < 8; i++)
@@ -452,7 +460,7 @@ void
 lcspxcninit(struct consdev *cndev)
 {
 	/* Clear screen */
-	memset(lcspxaddr, 0, SPX_CHEIGHT * SPX_CWIDTH);
+	memset(lcspxaddr, 0, SPX_XWIDTH * SPX_YWIDTH);
 
 	curscr = &lcspx_conscreen;
 	wsdisplay_cnattach(&lcspx_stdscreen, &lcspx_conscreen, 0, 0, 0);
