@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.90 1999/05/09 13:57:44 lukem Exp $	*/
+/*	$NetBSD: systm.h,v 1.91 1999/05/20 05:53:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -187,6 +187,7 @@ void	ttyprintf __P((struct tty *, const char *, ...))
 
 char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 
+int	humanize_number __P((char *, size_t, u_int64_t, const char *));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
 void	tablefull __P((const char *));
@@ -277,6 +278,12 @@ void	mountroothook_destroy __P((void));
 void	domountroothook __P((void));
 
 int	uiomove __P((void *, int, struct uio *));
+
+#ifdef _KERNEL
+caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
+#define	ALLOCSYS(base, name, type, num) \
+	    (name) = (type *)(base); (base) = (caddr_t)ALIGN((name)+(num))
+#endif
 
 #ifdef _KERNEL
 int	setjmp	__P((label_t *));
