@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.25 2004/04/01 16:10:14 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.26 2004/04/01 23:08:12 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -250,3 +250,10 @@ usr.sbin/ipf/ipsend/Makefile			1.23
 	target now that only bar.y is a source.
 	[lukem, ticket #42]
 
+sys/dev/pci/pcidevs				1.616
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Correct entry for PCI vendor id 0x11af. It is assigned to Avid 
+	Technology Inc. and not to Pro-Log Corporation. PR#25004
+	[tron, ticket #38]
