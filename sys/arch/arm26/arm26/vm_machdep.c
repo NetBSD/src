@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.13 2001/02/27 13:58:13 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.14 2001/03/04 23:25:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,10 +66,9 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.13 2001/02/27 13:58:13 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.14 2001/03/04 23:25:01 bjh21 Exp $");
 
 #include <sys/buf.h>
-#include <sys/exec.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
@@ -143,21 +142,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	pcb->pcb_onfault = NULL;
 	sf->sf_r4 = (register_t)func;
 	sf->sf_r5 = (register_t)arg;
-}
-
-/*
- * Set up the registers for a newly-execked image.
- */
-void
-setregs(struct proc *p, struct exec_package *pack, u_long stack)
-{
-	struct trapframe *tf;
-
-	tf = p->p_addr->u_pcb.pcb_tf;
-	bzero(tf, sizeof(*tf));
-	tf->tf_r0 = (register_t)PS_STRINGS;
-	tf->tf_r13 = stack; /* sp */
-	tf->tf_r15 = pack->ep_entry;
 }
 
 void
