@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 1999/01/19 15:41:03 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 1999/01/27 21:03:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -100,9 +100,9 @@
 #define	MBRSIGOFS	0x1fe
 #define	MBRSIG		0x55aa
 
-int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
-		    DOSPTYP_FAT16B, DOSPTYP_FAT32,
-		    DOSPTYP_FAT32L, DOSPTYP_FAT16L,
+int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
+		    MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
+		    MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
 		    -1 };
 
 static int getFreeLabelEntry __P((struct disklabel *));
@@ -485,7 +485,7 @@ read_dos_label(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp;
+	struct mbr_partition *dp;
 	struct partition *pp;
 	struct buf *bp;
 	char *msg = NULL;
@@ -496,10 +496,10 @@ read_dos_label(dev, strat, lp, osdep)
 	bp->b_dev = dev;
 
 	/* read master boot record */
-	bp->b_blkno = DOSBBSECTOR;
+	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+	bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/* if successful, wander through dos partition table */
@@ -508,8 +508,8 @@ read_dos_label(dev, strat, lp, osdep)
 		goto done;
 	} else {
 		/* XXX */
-		dp = (struct dos_partition *)(bp->b_data + DOSPARTOFF);
-		for (i = 0; i < NDOSPART; i++, dp++) {
+		dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
+		for (i = 0; i < NMBRPART; i++, dp++) {
 			if (dp->dp_typ != 0) {
 				slot = getFreeLabelEntry(lp);
 				if (slot > maxslot)
@@ -730,9 +730,9 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 #endif
 
-#if defined(DOSBBSECTOR) && defined(notyet)
+#if defined(MBR_BBSECTOR) && defined(notyet)
 	/* overwriting master boot record? */
-	if (bp->b_blkno + p->p_offset <= DOSBBSECTOR &&
+	if (bp->b_blkno + p->p_offset <= MBR_BBSECTOR &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 1998/06/22 21:12:51 sommerfe Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 1999/01/27 21:00:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -45,8 +45,8 @@
 
 #define	b_cylin	b_resid
 
-int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
-		    DOSPTYP_FAT16B, DOSPTYP_FAT16C, -1 };
+int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
+		    MBR_PTYPE_FAT16B, MBR_PTYPE_FAT16L, -1 };
 
 /*
  * Attempt to read a disk label from a device
@@ -101,10 +101,10 @@ readdisklabel(dev, strat, lp, osdep)
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (osdep && (dp = osdep->dosparts) != NULL) {
 		/* read master boot record */
-		bp->b_blkno = DOSBBSECTOR;
+		bp->b_blkno = MBR_BBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+		bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
 		/* if successful, wander through dos partition table */
@@ -113,39 +113,39 @@ readdisklabel(dev, strat, lp, osdep)
 			goto done;
 		} else {
 			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
-			for (i = 0; i < NDOSPART; i++, dp++) {
+			bcopy(bp->b_data + MBR_PARTOFF, dp,
+			    NMBRPART * sizeof(*dp));
+			for (i = 0; i < NMBRPART; i++, dp++) {
 				/* Install in partition e, f, g, or h. */
 				pp = &lp->d_partitions[RAW_PART + 1 + i];
-				pp->p_offset = dp->dp_start;
-				pp->p_size = dp->dp_size;
+				pp->p_offset = dp->mbrp_start;
+				pp->p_size = dp->mbrp_size;
 				for (ip = fat_types; *ip != -1; ip++) {
-				    if (dp->dp_typ == *ip)
+				    if (dp->mbrp_typ == *ip)
 					pp->p_fstype = FS_MSDOS;
 				}
 
 				/* is this ours? */
-				if (dp->dp_size &&
-				    (dp->dp_typ == DOSPTYP_NETBSD
+				if (dp->mbrp_size &&
+				    (dp->mbrp_typ == MBR_PTYPE_NETBSD
 #ifdef COMPAT_386BSD_MBRPART
-				      || (dp->dp_typ == DOSPTYP_386BSD &&
+				      || (dp->mbrp_typ == MBR_PTYPE_386BSD &&
 				      (printf("old BSD partition ID!\n"), 1)
 				      /* XXX XXX - libsa printf() is void */)
 #endif
 				    ) && dospartoff == 0) {
 					/* need sector address for SCSI/IDE,
 					   cylinder for ESDI/ST506/RLL */
-					dospartoff = dp->dp_start;
-					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+					dospartoff = dp->mbrp_start;
+					cyl = MBR_PCYL(dp->mbrp_scyl, dp->mbrp_ssect);
 
 					/* update disklabel with details */
 					lp->d_partitions[2].p_size =
-					    dp->dp_size;
+					    dp->mbrp_size;
 					lp->d_partitions[2].p_offset = 
-					    dp->dp_start;
-					lp->d_ntracks = dp->dp_ehd + 1;
-					lp->d_nsectors = DPSECT(dp->dp_esect);
+					    dp->mbrp_start;
+					lp->d_ntracks = dp->mbrp_ehd + 1;
+					lp->d_nsectors = DPSECT(dp->mbrp_esect);
 					lp->d_secpercyl =
 					    lp->d_ntracks * lp->d_nsectors;
 				}
@@ -315,22 +315,22 @@ writedisklabel(dev, strat, lp, osdep)
 
 		if ((error = biowait(bp)) == 0) {
 			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
-			for (i = 0; i < NDOSPART; i++, dp++)
+			bcopy(bp->b_data + MBR_PARTOFF, dp,
+			    NMBRPART * sizeof(*dp));
+			for (i = 0; i < NMBRPART; i++, dp++)
 				/* is this ours? */
-				if (dp->dp_size &&
-				    (dp->dp_typ == DOSPTYP_NETBSD
+				if (dp->mbrp_size &&
+				    (dp->mbrp_typ == MBR_PTYPE_NETBSD
 #ifdef COMPAT_386BSD_MBRPART
-				     || (dp->dp_typ == DOSPTYP_386BSD &&
+				     || (dp->mbrp_typ == MBR_PTYPE_386BSD &&
 				      (printf("old BSD partition ID!\n"), 1)
 				      /* XXX XXX - libsa printf() is void */)
 #endif
 				    ) && dospartoff == 0) {
 					/* need sector address for SCSI/IDE,
 					   cylinder for ESDI/ST506/RLL */
-					dospartoff = dp->dp_start;
-					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+					dospartoff = dp->mbrp_start;
+					cyl = MBR_PCYL(dp->mbrp_scyl, dp->mbrp_ssect);
 				}
 		}
 			
