@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 1999/03/25 00:41:46 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.11 1999/11/17 14:56:10 kleink Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -1291,24 +1291,6 @@ _C_LABEL(setfault):
 	stmw	12,12(3)
 	xor	3,3,3
 	blr
-
-/*
- * The following code gets copied to the top of the user stack on process
- * execution.  It does signal trampolining on signal delivery.
- *
- * On entry r1 points to a struct sigframe at bottom of current stack.
- * All other registers are unchanged.
- */
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
-_C_LABEL(sigcode):
-	addi	1,1,-16			/* reserved space for callee */
-	blrl
-	addi	3,1,16+8		/* compute &sf_sc */
-	li	0,SYS___sigreturn14
-	sc				/* sigreturn(scp) */
-	li	0,SYS_exit
-	sc				/* exit(errno) */
-_C_LABEL(esigcode):
 
 	.globl	_C_LABEL(enable_intr)
 _C_LABEL(enable_intr):
