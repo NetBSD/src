@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.95 2003/01/01 02:20:47 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.96 2003/01/22 22:00:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -851,8 +851,12 @@ zs_getc(arg)
 {
 	struct zschan *zc = arg;
 	int s, c, rr0;
+	u_int omid;
 
+	/* Temporarily direct interrupts at ourselves */
 	s = splhigh();
+	omid = setitr(cpuinfo.mid);
+
 	/* Wait for a character to arrive. */
 	do {
 		rr0 = zc->zc_csr;
@@ -861,6 +865,7 @@ zs_getc(arg)
 
 	c = zc->zc_data;
 	ZS_DELAY();
+	setitr(omid);
 	splx(s);
 
 	/*
@@ -880,8 +885,11 @@ zs_putc(arg, c)
 {
 	struct zschan *zc = arg;
 	int s, rr0;
+	u_int omid;
 
+	/* Temporarily direct interrupts at ourselves */
 	s = splhigh();
+	omid = setitr(cpuinfo.mid);
 
 	/* Wait for transmitter to become ready. */
 	do {
@@ -901,6 +909,7 @@ zs_putc(arg, c)
 	zc->zc_data = c;
 	delay(2);
 
+	setitr(omid);
 	splx(s);
 }
 
