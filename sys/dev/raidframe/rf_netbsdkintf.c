@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.92 2000/06/04 02:16:05 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.1 2000/07/14 17:06:45 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1351,10 +1351,11 @@ raidioctl(dev, cmd, data, flag, p)
 		return (0);
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
+		progressInfoPtr = (RF_ProgressInfo_t **) data;
 		if (raidPtr->copyback_in_progress == 1) {
 			progressInfo.total = raidPtr->Layout.numStripe;
 			progressInfo.completed = 
-				raidPtr->parity_rewrite_stripes_done;
+				raidPtr->copyback_stripes_done;
 			progressInfo.remaining = progressInfo.total -
 				progressInfo.completed;
 		} else {
