@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.42 2000/12/30 14:21:22 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.43 2000/12/30 15:58:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.42 2000/12/30 14:21:22 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.43 2000/12/30 15:58:34 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.42 2000/12/30 14:21:22 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.43 2000/12/30 15:58:34 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1009,7 +1009,7 @@ JobFinish(job, status)
 
     if (done) {
 	Trace_Log(JOBEND, job);
-	if (!compatMake) {
+	if (!compatMake && !(job->flags & JOB_SPECIAL)) {
 	    if ((*status != 0) ||
 	        (aborting == ABORT_ERROR) ||
 	        (aborting == ABORT_INTERRUPT))
@@ -1035,6 +1035,8 @@ JobFinish(job, status)
 			    (ClientData)job->node);
 	}
 	job->node->made = MADE;
+	if (!(job->flags & JOB_SPECIAL))
+	    Job_TokenReturn();
 	Make_Update(job->node);
 	free((Address)job);
     } else if (*status != 0) {
@@ -1916,6 +1918,8 @@ JobStart(gn, flags, previous)
 				    JobSaveCommand,
 				   (ClientData)job->node);
 		}
+		if (!(job->flags & JOB_SPECIAL))
+		    Job_TokenReturn();
 		Make_Update(job->node);
 	    }
 	    free((Address)job);
