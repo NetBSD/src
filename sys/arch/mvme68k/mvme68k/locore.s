@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 1996/09/03 02:07:02 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 1996/09/12 05:57:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,9 @@ tmpstk:
 #define	RELOC(var, ar) \
 	lea	var,ar
 
+#define	CALLBUG(func)	\
+	trap #15; .short func
+
 /*
  * Initialization
  *
@@ -83,7 +86,18 @@ start:					| start of kernel and .text!
 	movl	sp@(16),d4		| get bootdevlun
 	movl	sp@(20),d3		| get bootpart
 	movl	sp@(24),d2		| get esyms
-	/* note: d2-d7 in use */
+
+	RELOC(_bootpart,a0)
+	movl	d3, a0@			| save bootpart
+	RELOC(_bootdevlun,a0)
+	movl	d4, a0@			| save bootdevlun
+	RELOC(_bootctrllun,a0)
+	movl	d5, a0@			| save booctrllun
+	RELOC(_bootaddr,a0)
+	movl	d6, a0@			| save bootaddr
+	RELOC(_boothowto,a0)
+	movl	d7, a0@			| save boothowto
+	/* note: d3-d7 free, d2 still in use */
 
 	RELOC(tmpstk, a0)
 	movl	a0,sp			| give ourselves a temporary stack
@@ -97,50 +111,55 @@ start:					| start of kernel and .text!
 
 	RELOC(_esym, a0)
 	movl	d2,a0@			| store end of symbol table
-	/* d2 now free, d3-d7 still in use */
+	/* d2 now free */
 	RELOC(_lowram, a0)
 	movl	a5,a0@			| store start of physical memory
 
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
-/* determine our CPU/MMU combo - check for all regardless of kernel config */
-	movl	#0x200,d0		| data freeze bit
-	movc	d0,cacr			|   only exists on 68030
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
-	jeq	Lnot68030		| yes, we have 68020/68040
-	RELOC(_mmutype, a0)		| no, we have 68030
-	movl	#-1,a0@			| set to reflect 68030 PMMU
-	jra	Lstart1
-Lnot68030:
-	bset	#31,d0			| data cache enable bit
-	movc	d0,cacr			|   only exists on 68040
-	movc	cacr,d0			| read it back
-	tstl	d0			| zero?
-	beq	Lis68020		| yes, we have 68020
-	moveq	#0,d0			| now turn it back off
-	movec	d0,cacr			|   before we access any data
-	RELOC(_mmutype, a0)
-	movl	#-2,a0@			| with a 68040 MMU
-	jra	Lstart1
-Lis68020:
-	RELOC(_mmutype, a0)
-	movl	#1,a0@			| no, we have PMMU
+	/* ask the Bug what we are... */
+	clrl	sp@-
+	CALLBUG(MVMEPROM_GETBRDID)
+	movl	sp@+,a1
 
-Lstart1:
+	/* copy to a struct mvmeprom_brdid */
+	movl	#MVMEPROM_BRDID_SIZE,d0
+	RELOC(_boardid,a0)
+1:	movb	a1@+,a0@+
+	subql	#1,d0
+	bne	1b
+
+	/*
+	 * Grab the model number from _boardid and use the value
+	 * to setup machineid, cputype, and mmutype.
+	 */
+	clrl	d0
+	RELOC(_boardid,a1)
+	movw	a1@(MVMEPROM_BRDID_MODEL_OFFSET),d0
+	RELOC(_machineid,a0)
+	movl	d0,a0@
+
+#ifdef MVME147
+	/* MVME-147 - 68030 CPU/MMU */
+	cmpw	#MVME_147,d0
+	jne	Lnot147
+	RELOC(_mmutype,a0)
+	movl	#MMU_68030,a0@
+	RELOC(_cputype,a0)
+	movl	#CPU_68030,a0@
+
 	/* XXXCDC SHUTUP 147 CALL */
 	movb	#0, 0xfffe1026		| serial interrupt off
 	movb	#0, 0xfffe1018		| timer 1 off
 	movb	#0, 0xfffe1028		| ethernet off
 	/* XXXCDC SHUTUP 147 CALL */
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,d0		| user space
-	movc	d0,sfc			|   as source
-	movc	d0,dfc			|   and destination of transfers
-/* initialize memory sizes (for pmap_bootstrap) */
+
+	/* Save our ethernet address */
+	movl	0xfffe0778,_myea	| XXXCDC -- HARDWIRED HEX
+
+	/* initialize memory sizes (for pmap_bootstrap) */
 	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
-	movl	0xfffe0778,_myea	| XXXCDC -- ethernet addr
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
 	RELOC(_maxmem, a0)
@@ -150,6 +169,110 @@ Lstart1:
 	subl	d0,d1			| compute amount of RAM present
 	RELOC(_physmem, a0)
 	movl	d1,a0@			| and physmem
+
+	jra	Lstart1
+Lnot147:
+#endif
+
+#ifdef MVME162
+	/* MVME-162 - 68040 CPU/MMU */
+	cmpw	#MVME_162,d0
+	jne	Lnot162
+	RELOC(_mmutype,a0)
+	movl	#MMU_68040,a0@
+	RELOC(_cputype,a0)
+	movl	#CPU_68040,a0@
+#if 1	/* XXX */
+	jra	Lnotyet
+#else
+	/* XXX more XXX */
+	jra	Lstart1
+#endif
+Lnot162:
+#endif
+
+#ifdef MVME167
+	/* MVME-167 (also 166) - 68040 CPU/MMU */
+	cmpw	#MVME_166,d0
+	jeq	Lis167
+	cmpw	#MVME_167,d0
+	jne	Lnot167
+Lis167:
+	RELOC(_mmutype,a0)
+	movl	#MMU_68040,a0@
+	RELOC(_cputype,a0)
+	movl	#CPU_68040,a0@
+#if 1	/* XXX */
+	jra	Lnotyet
+#else
+	/* XXX more XXX */
+	jra	Lstart1
+#endif
+Lnot167:
+#endif
+
+#ifdef MVME177
+	/* MVME-177 (what about 172??) - 68060 CPU/MMU */
+	cmpw	#MVME_177,d0
+	jne	Lnot177
+	RELOC(_mmutype,a0)
+	movl	#MMU_68060,a0@
+	RELOC(_cputype,a0)
+	movl	#CPU_68060,a0@
+#if 1
+	jra	Lnotyet
+#else
+	/* XXX more XXX */
+	jra	Lstart1
+#endif
+Lnot177:
+#endif
+
+	/*
+	 * If we fall to here, the board is not supported.
+	 * Print a warning, then drop out to the Bug.
+	 */
+	.data
+Lnotconf:
+	.ascii	"Sorry, the kernel isn't configured for this model."
+Lenotconf:
+
+	.even
+	.text
+	movl	#Lenotconf,sp@-
+	movl	#Lnotconf,sp@-
+	CALLBUG(MVMEPROM_OUTSTRCRLF)
+	addql	#8,sp			| clean up stack after call
+
+	CALLBUG(MVMEPROM_EXIT)
+	/* NOTREACHED */
+
+Lnotyet:
+	/*
+	 * If we get here, it means a particular model
+	 * doesn't have the necessary support code in the
+	 * kernel.  Print a warning, then drop out to the Bug.
+	 */
+	.data
+Lnotsupp:
+	.ascii	"Sorry, NetBSD doesn't support this model yet."
+Lenotsupp:
+
+	.even
+	.text
+	movl	#Lenotsupp,sp@-
+	movl	#Lnotsupp,sp@-
+	CALLBUG(MVMEPROM_OUTSTRCRLF)
+	addql	#8,sp			| clean up stack after call
+
+	CALLBUG(MVMEPROM_EXIT)
+	/* NOTREACHED */
+
+Lstart1:
+/* initialize source/destination control registers for movs */
+	moveq	#FC_USERD,d0		| user space
+	movc	d0,sfc			|   as source
+	movc	d0,dfc			|   and destination of transfers
 /* configure kernel and proc0 VA space so we can get going */
 	.globl	_Sysseg, _pmap_bootstrap, _avail_start
 #ifdef DDB
@@ -177,7 +300,7 @@ Lstart2:
 	movl	a0@,d1			| read value (a KVA)
 	addl	a5,d1			| convert to PA
 	RELOC(_mmutype, a0)
-	cmpl	#-2,a0@			| 68040?
+	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu1		| no, skip
 	.long	0x4e7b1807		| movc d1,srp
 	jra	Lstploaddone
@@ -189,7 +312,7 @@ Lmotommu1:
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
 Lstploaddone:
 	RELOC(_mmutype, a0)
-	cmpl	#-2,a0@			| 68040?
+	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu2		| no, skip
 	moveq	#0,d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc d0,itt0
@@ -228,7 +351,7 @@ Lenab1:
 #endif
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
@@ -239,12 +362,6 @@ Lnocache0:
 	jbsr	_isrinit		| be ready for stray ints
 	jbsr	_mvme68k_init		| early model-dependent init
 	movw	#PSL_LOWIPL,sr		| lower SPL
-	movl	d3, _bootpart		| save bootpart
-	movl	d4, _bootdevlun		| save bootdevlun
-	movl	d5, _bootctrllun	| save booctrllun
-	movl	d6, _bootaddr		| save bootaddr
-	movl	d7, _boothowto		| save boothowto
-	/* d3-d7 now free */
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -324,7 +441,7 @@ _buserr:
 	jbsr	_longjmp		|  longjmp(nofault)
 Lberr:
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_addrerr		| no, skip
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
@@ -359,7 +476,7 @@ _addrerr:
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	lea	sp@(FR_HW),a1		| grab base of HW berr frame
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lbenot040		| no, skip
 	movl	a1@(8),sp@-		| yes, push fault address
 	clrl	sp@-			| no SSW for address fault
@@ -486,7 +603,7 @@ _fpfline:
 
 _fpunsupp:
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_illinst		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
@@ -937,7 +1054,7 @@ ENTRY(copypage)
 	movl	sp@(8),a1		| destination address
 	movl	#NBPG/32,d0		| number of 32 byte chunks
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmlloop			| no, use movl
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
@@ -1218,7 +1335,7 @@ Lswnochg:
 
 	lea     tmpstk,sp               | now goto a tmp stack for NMI
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lres1a			| no, skip
 	.word	0xf518			| yes, pflusha
 	movl	a1@(PCB_USTP),d0	| get USTP
@@ -1246,7 +1363,7 @@ Lcxswdone:
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lresnot040		| no, skip
 	clrl	sp@-			| yes...
 	frestore sp@+			| ...magic!
@@ -1317,7 +1434,7 @@ Lsldone:
 ENTRY(TBIA)
 __TBIA:
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu3		| no, skip
 	.word	0xf518			| yes, pflusha
 	rts
@@ -1339,7 +1456,7 @@ ENTRY(TBIS)
 	jne	__TBIA			| yes, flush entire TLB
 #endif
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu4		| no, skip
 	movl	sp@(4),a0
 	movc	dfc,d1
@@ -1373,7 +1490,7 @@ ENTRY(TBIAS)
 	jne	__TBIA			| yes, flush everything
 #endif
 #if defined(M68040)
-	cmpl    #-2,_mmutype            | 68040?
+	cmpl    #MMU_68040,_mmutype     | 68040?
 	jne     Lmotommu5               | no, skip
 	.word   0xf518                  | yes, pflusha (for now) XXX
 	rts
@@ -1393,7 +1510,7 @@ ENTRY(TBIAU)
 	jne	__TBIA			| yes, flush everything
 #endif
 #if defined(M68040)
-	cmpl    #-2,_mmutype            | 68040?
+	cmpl    #MMU_68040,_mmutype     | 68040?
 	jne     Lmotommu6               | no, skip
 	.word   0xf518                  | yes, pflusha (for now) XXX
 	rts
@@ -1410,7 +1527,7 @@ Lmotommu6:
 ENTRY(ICIA)
 #if defined(M68040)
 ENTRY(ICPA)
-	cmpl    #-2,_mmutype            | 68040
+	cmpl    #MMU_68040,_mmutype     | 68040
 	jne     Lmotommu7               | no, skip
 	.word   0xf498                  | cinva ic
 	rts
@@ -1430,7 +1547,7 @@ Lmotommu7:
 ENTRY(DCIA)
 __DCIA:
 #if defined(M68040)
-	cmpl    #-2,_mmutype            | 68040
+	cmpl    #MMU_68040,_mmutype     | 68040
 	jne     Lmotommu8               | no, skip
 	/* XXX implement */
 	rts
@@ -1441,7 +1558,7 @@ Lmotommu8:
 ENTRY(DCIS)
 __DCIS:
 #if defined(M68040)
-	cmpl    #-2,_mmutype            | 68040
+	cmpl    #MMU_68040,_mmutype     | 68040
 	jne     Lmotommu9               | no, skip
 	/* XXX implement */
 	rts
@@ -1452,7 +1569,7 @@ Lmotommu9:
 ENTRY(DCIU)
 __DCIU:
 #if defined(M68040)
-	cmpl    #-2,_mmutype            | 68040
+	cmpl    #MMU_68040,_mmutype     | 68040
 	jne     LmotommuA               | no, skip
 	/* XXX implement */
 	rts
@@ -1493,7 +1610,7 @@ ENTRY(DCFP)
 ENTRY(PCIA)
 #if defined(M68040)
 ENTRY(DCFA)
-	cmpl    #-2,_mmutype            | 68040
+	cmpl    #MMU_68040,_mmutype     | 68040
 	jne     LmotommuB               | no, skip
 	.word   0xf478                  | cpusha dc
 	rts
@@ -1537,7 +1654,7 @@ ENTRY(loadustp)
 	moveq	#PGSHIFT, d1
 	lsll	d1,d0			| convert to addr
 #if defined(M68040)
-	cmpl    #-2,_mmutype            | 68040?
+	cmpl    #MMU_68040,_mmutype     | 68040?
 	jne     LmotommuC               | no, skip
 	.long   0x4e7b0806              | movc d0,urp
 	rts
@@ -1654,7 +1771,7 @@ Lm68881rdone:
 	.globl	_doboot
 _doboot:
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jeq	Lnocache5		| yes, skip
 #endif
 	movl	#CACHE_OFF,d0
@@ -1687,11 +1804,28 @@ Lsboot: /* sboot */
 1:	jmp	0x400a			| tell sboot to reboot us
 
 	.data
-	.globl	_mmutype,_protorp
+	.globl	_machineid,_mmutype,_cputype,_ectype,_protorp
+_machineid:
+	.long	MVME_147	| default to MVME_147
 _mmutype:
-	.long	-1		| default to MMU_68030
+	.long	MMU_68030	| default to MMU_68030
+_cputype:
+	.long	CPU_68030	| default to CPU_68030
+_ectype:
+	.long	EC_NONE		| external cache type, default to none
 _protorp:
 	.long	0,0		| prototype root pointer
+	.globl	_bootpart,_bootdevlun,_bootctrllun,_bootaddr,_boothowto
+_bootpart:
+	.long	0
+_bootdevlun:
+	.long	0
+_bootctrllun:
+	.long	0
+_bootaddr:
+	.long	0
+_boothowto:
+	.long	0
 	.globl	_cold
 _cold:
 	.long	1		| cold start flag
