@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.24 2003/12/29 03:13:25 lukem Exp $
+#	$NetBSD: checkflist,v 1.25 2004/01/08 01:31:57 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -102,8 +102,9 @@ comm -23 $SDIR/flist $SDIR/files > $SDIR/missing
 comm -13 $SDIR/flist $SDIR/files > $SDIR/extra
 
 if [ -s $SDIR/extra ]; then
+	count=$(awk 'END {print NR}' $SDIR/extra)
 	echo ""
-	echo "============  extra files  ==============="
+	echo "============  ${count} extra files  ==============="
 	echo "Files in DESTDIR but missing from flist."
 	echo "File is obsolete or flist is out of date ?"
 	if ${allowextra}; then
@@ -113,13 +114,14 @@ if [ -s $SDIR/extra ]; then
 	fi
 	echo "------------------------------------------"
 	cat $SDIR/extra
-	echo "=========  end of extra files  ==========="
+	echo "=========  end of ${count} extra files  ==========="
 	echo ""
 fi
 
 if [ -s $SDIR/missing ]; then
+	count=$(awk 'END {print NR}' $SDIR/missing)
 	echo ""
-	echo "===========  missing files  =============="
+	echo "===========  ${count} missing files  =============="
 	echo "Files in flist but missing from DESTDIR."
 	echo "File wasn't installed ?"
 	if ${allowmissing}; then
@@ -129,7 +131,7 @@ if [ -s $SDIR/missing ]; then
 	fi
 	echo "------------------------------------------"
 	cat $SDIR/missing
-	echo "========  end of missing files  =========="
+	echo "========  end of ${count} missing files  =========="
 	echo ""
 fi
 
