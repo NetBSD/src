@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.123 1999/09/07 15:45:07 perry Exp $
+# $NetBSD: mi,v 1.124 1999/09/20 06:12:07 veego Exp $
 .
 ./altroot
 ./bin
@@ -881,7 +881,9 @@
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arm32
 ./usr/share/man/cat8/atari
+./usr/share/man/cat8/bebox
 ./usr/share/man/cat8/hp300
+./usr/share/man/cat8/hpcmips
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mvme68k
@@ -920,6 +922,7 @@
 ./usr/share/man/man4/amiga
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
+./usr/share/man/man4/bebox
 ./usr/share/man/man4/hp300
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/mac68k
@@ -938,7 +941,9 @@
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arm32
 ./usr/share/man/man8/atari
+./usr/share/man/man8/bebox
 ./usr/share/man/man8/hp300
+./usr/share/man/man8/hpcmips
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/mvme68k
