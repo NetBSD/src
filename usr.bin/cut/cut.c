@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.8 1995/03/26 20:51:27 glass Exp $	*/
+/*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,10 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cut.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$NetBSD: cut.c,v 1.8 1995/03/26 20:51:27 glass Exp $";
+static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
+static char rcsid[] = "$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -58,6 +57,7 @@ static char rcsid[] = "$NetBSD: cut.c,v 1.8 1995/03/26 20:51:27 glass Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int	cflag;
 char	dchar;
