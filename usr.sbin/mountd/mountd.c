@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.38 1997/06/24 23:50:57 fvdl Exp $	*/
+/*	$NetBSD: mountd.c,v 1.39 1997/08/13 12:36:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.38 1997/06/24 23:50:57 fvdl Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.39 1997/08/13 12:36:04 bouyer Exp $";
 #endif
 #endif /* not lint */
 
@@ -709,6 +709,7 @@ get_exportlist()
 
 		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
