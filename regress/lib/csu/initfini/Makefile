@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/07/17 05:40:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/07/17 15:24:27 simonb Exp $
 
 .include <bsd.own.mk>
 
@@ -13,10 +13,6 @@ WARNS?=	1
 CLEANFILES+= output
 
 .PATH: ${.CURDIR}/arch/${MACHINE_CPU}
-
-.if (${MACHINE_CPU} == "mips")
-AFLAGS+= -fPIC
-.endif
 
 regress:
 	@./initfini > output
