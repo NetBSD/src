@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.37 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.38 1999/09/29 11:58:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -147,7 +147,7 @@ struct ctlname {
 #define	KERN_SYSVMSG		33	/* int: SysV message queue suppoprt */
 #define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
-#define	KERN_DEFCORENAME	36	/* string: default corename format */
+#define	KERN_OLDSHORTCORENAME	36	/* old, unimplemented */
 #define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
 #define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
 #define	KERN_MBUF		39	/* node: mbuf parameters */
@@ -156,7 +156,8 @@ struct ctlname {
 #define	KERN_MEMLOCK_RANGE	42	/* int: POSIX memory range locking */
 #define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
 #define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
-#define	KERN_MAXID		45	/* number of valid kern ids */
+#define	KERN_DEFCORENAME	45	/* old: sort core name format */
+#define	KERN_MAXID		46	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -195,7 +196,7 @@ struct ctlname {
 	{ "sysvmsg", CTLTYPE_INT }, \
 	{ "sysvsem", CTLTYPE_INT }, \
 	{ "sysvshm", CTLTYPE_INT }, \
-	{ "defcorename", CTLTYPE_STRING }, \
+	{ 0, 0 }, \
 	{ "synchronized_io", CTLTYPE_INT }, \
 	{ "iov_max", CTLTYPE_INT }, \
 	{ "mbuf", CTLTYPE_NODE }, \
@@ -204,6 +205,7 @@ struct ctlname {
 	{ "memlock_range", CTLTYPE_INT }, \
 	{ "memory_protection", CTLTYPE_INT }, \
 	{ "login_name_max", CTLTYPE_INT }, \
+	{ "defcorename", CTLTYPE_STRING }, \
 }
 
 /*
