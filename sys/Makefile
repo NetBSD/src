@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/04/30 00:49:09 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18 1997/05/07 13:33:59 mycroft Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -19,6 +19,7 @@ LDIRS=	dev net netatalk netinet netccitt netiso netns netnatm nfs sys ufs vm
 .include <bsd.own.mk>
 SYS_INCLUDE?=	copies
 
+.PHONY:	includes
 includes: ${SYS_INCLUDE}
 	@echo installing ${LFILES}
 	@-for i in ${LFILES}; do \
@@ -31,6 +32,7 @@ includes: ${SYS_INCLUDE}
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 
+.PHONY:	copies
 copies:
 	@echo copies: ${LDIRS}
 	@-for i in ${LDIRS}; do \
@@ -59,6 +61,7 @@ copies:
 		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	fi
 
+.PHONY:	symlinks
 symlinks:
 	@echo symlinks: ${LDIRS}
 	@for i in ${LDIRS}; do \
