@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 2000/01/11 12:59:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -158,10 +158,6 @@ lematch_sbus(parent, cf, aux)
 	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
 }
 
-#define SAME_LANCE(bp, sa) \
-	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
-
 void
 leattach_sbus(parent, self, aux)
 	struct device *parent, *self;
@@ -219,10 +215,6 @@ leattach_sbus(parent, self, aux)
 
 	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, &sc->sc_dev);
-
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
-	    SAME_LANCE(sa->sa_bp, sa))
-		sa->sa_bp->dev = &sc->sc_dev;
 
 	if (sc->sc_mem == 0) {
 		bus_dma_segment_t seg;

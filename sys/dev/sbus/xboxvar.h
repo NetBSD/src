@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxvar.h,v 1.1 1998/04/18 19:00:18 pk Exp $ */
+/*	$NetBSD: xboxvar.h,v 1.2 2000/01/11 12:59:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,5 @@ struct xbox_attach_args {
 	bus_dma_tag_t	xa_dmatag;
 	char		*xa_name;	/* PROM node name */
 	int		xa_node;	/* PROM handle */
-	struct bootpath *xa_bp;		/* used for locating boot device */
 };
 #endif /* _XBOX_VAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.2 1998/07/27 19:13:06 pk Exp $ */
+/*	$NetBSD: xbox.c,v 1.3 2000/01/11 12:59:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,6 @@ xbox_attach(parent, self, aux)
 {
 	struct xbox_softc *sc = (struct xbox_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	struct bootpath *bp = sa->sa_bp;
 	int node = sa->sa_node;
 	struct xbox_attach_args xa;
 	char *cp;
@@ -156,12 +155,6 @@ xbox_attach(parent, self, aux)
 
 	printf("\n");
 
-	/* Propagate bootpath */
-	if (bp != NULL && strcmp(bp->name, "xbox") == 0)
-		bp++;
-	else
-		bp = NULL;
-
 	/*
 	 * Now pretend to be another Sbus.
 	 */
@@ -170,7 +163,6 @@ xbox_attach(parent, self, aux)
 	xa.xa_node = node;
 	xa.xa_bustag = sa->sa_bustag;
 	xa.xa_dmatag = sa->sa_dmatag;
-	xa.xa_bp = bp;
 
 	(void) config_found(&sc->sc_dev, (void *)&xa, xbox_print);
 }

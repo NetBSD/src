@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.7 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.8 2000/01/11 12:59:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,16 +74,6 @@ struct esp_softc {
 
 	int	sc_pri;				/* SBUS priority */
 };
-
-/*
- * Is this esp on the bootpath?
- * We may get two forms of the bootpath:
- *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..	(PROM v3 style)
- *	(2) /sbus0/esp0/sd@..				(PROM v2 style)
- */
-#define SAME_ESP(sc, bp, sa) \
-	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 void	espattach_sbus	__P((struct device *, struct device *, void *));
 void	espattach_dma	__P((struct device *, struct device *, void *));
@@ -236,10 +226,6 @@ espattach_sbus(parent, self, aux)
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, &sc->sc_dev);
 
-	if (sa->sa_bp != NULL && strcmp("esp", sa->sa_bp->name) == 0 &&
-	    SAME_ESP(sc, sa->sa_bp, sa))
-		bootpath_store(1, sa->sa_bp + 1);
-
 	if (strcmp("ptscII", sa->sa_name) == 0) {
 		espattach(esc, &esp_sbus_glue1);
 	} else {
@@ -302,10 +288,6 @@ espattach_dma(parent, self, aux)
 	/* Assume SBus is grandparent */
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, parent);
-
-	if (sa->sa_bp != NULL && strcmp("esp", sa->sa_bp->name) == 0 &&
-	    SAME_ESP(sc, sa->sa_bp, sa))
-		bootpath_store(1, sa->sa_bp + 1);
 
 	espattach(esc, &esp_sbus_glue);
 }
@@ -423,8 +405,6 @@ espattach(esc, gluep)
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
-
-	bootpath_store(1, NULL);
 }
 
 /*

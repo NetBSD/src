@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.5 1998/08/29 20:49:37 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.6 2000/01/11 12:59:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -171,12 +171,6 @@ leattach_obio(parent, self, aux)
 		printf("%s @ obio: cannot map registers\n", self->dv_xname);
 		return;
 	}
-
-	if (oba->oba_bp != NULL &&
-	    strcmp(oba->oba_bp->name, le_cd.cd_name) == 0 &&
-	    sc->sc_dev.dv_unit == oba->oba_bp->val[1])
-		oba->oba_bp->dev = &sc->sc_dev;
-
 
 	if (bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
 			     &seg, 1, &rseg,

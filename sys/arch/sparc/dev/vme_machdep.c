@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.21 1999/11/13 00:32:12 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.22 2000/01/11 12:59:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@ struct sparcvme_softc {
 	volatile u_int32_t *sc_ioctags;	/* VME IO-cache tag registers */
 	volatile u_int32_t *sc_iocflush;/* VME IO-cache flush registers */
 	int 		 (*sc_vmeintr) __P((void *));
-	struct bootpath	 *sc_bp;
 };
 struct  sparcvme_softc *sparcvme_sc;/*XXX*/
 
@@ -297,11 +296,6 @@ vmeattach_mainbus(parent, self, aux)
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
 
-	if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "vme") == 0) {
-		sc->sc_bp = ma->ma_bp + 1;
-		bootpath_store(1, sc->sc_bp);
-	}
-
 	/* VME interrupt entry point */
 	sc->sc_vmeintr = vmeintr4;
 
@@ -329,7 +323,6 @@ vmeattach_mainbus(parent, self, aux)
 	printf("\n");
 	(void)config_found(self, &vba, 0);
 
-	bootpath_store(1, NULL);
 #endif
 	return;
 }

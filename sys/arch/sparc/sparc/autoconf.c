@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.127 2000/01/09 20:53:30 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.128 2000/01/11 13:01:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -121,6 +121,7 @@ int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
+static	struct bootpath	*bootpath_store __P((int, struct bootpath *));
 int	find_cpus __P((void));
 
 /*
@@ -650,12 +651,7 @@ bootpath_print(bp)
 
 /*
  * save or read a bootpath pointer from the boothpath store.
- *
- * XXX. required because of SCSI... we don't have control over the "sd"
- * device, so we can't set boot device there.   we patch in with
- * dk_establish(), and use this to recover the bootpath.
  */
-
 struct bootpath *
 bootpath_store(storep, bp)
 	int storep;
@@ -670,23 +666,6 @@ bootpath_store(storep, bp)
 
 	return (retval);
 }
-/* TEMP: */
-struct bootpath *altbootpath_store(int, struct bootpath *);
-struct bootpath *
-altbootpath_store(storep, bp)
-	int storep;
-	struct bootpath *bp;
-{
-	static struct bootpath *save;
-	struct bootpath *retval;
-
-	retval = save;
-	if (storep)
-		save = bp;
-
-	return (retval);
-}
-/* END TEMP */
 
 /*
  * Set up the sd target mappings for non SUN4 PROMs.
@@ -831,8 +810,6 @@ cpu_configure()
 	(void)spl0();
 }
 
-struct device *altbootdev;
-
 void
 cpu_rootconf()
 {
@@ -842,29 +819,8 @@ cpu_rootconf()
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = bp == NULL ? NULL : bp->dev;
-	bootpartition = bp == NULL ? 0 : bp->val[2];
+	bootpartition = bootdv == NULL ? 0 : bp->val[2];
 
-#if 1
-	/*
-	 * Old bootpath code no longer works now that SCSI autoconfiguration
-	 * can be delayed.  device_register() is the One True Way.
-	 */
-	bootdv = altbootdev;
-#else
-	if (bootdv != altbootdev) {
-		int c;
-		printf("device_register boot device mismatch\n");
-		printf("\tbootdv=%s\n",
-			bootdv==NULL?"NOT FOUND":bootdv->dv_xname);
-		printf("\taltbootdev=%s\n",
-			altbootdev==NULL?"NOT FOUND":altbootdev->dv_xname);
-		printf("RETURN to continue ");
-		cnpollc(1);
-		while ((c = cngetc()) != '\r' && c != '\n');
-		printf("\n");
-		cnpollc(0);
-	}
-#endif
 	setroot(bootdv, bootpartition);
 }
 
@@ -1016,7 +972,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 						namebuf, sizeof(namebuf)));
 
 	/* Establish the first component of the boot path */
-	altbootpath_store(1, bootpath);
+	bootpath_store(1, bootpath);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -1039,14 +995,12 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "obio";
-		ma.ma_bp = bootpath;
 		if (config_found(dev, (void *)&ma, mbprint) == NULL)
 			panic("obio missing");
 
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "vme";
-		ma.ma_bp = bootpath;
 		(void)config_found(dev, (void *)&ma, mbprint);
 		return;
 	}
@@ -1127,9 +1081,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
 
-		/* Start at the beginning of the bootpath */
-		ma.ma_bp = bootpath;
-
 		if (config_found(dev, (void *)&ma, mbprint) == NULL)
 			panic(sp);
 	}
@@ -1176,9 +1127,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 		if (getprop_address1(node, &ma.ma_promvaddr) != 0)
 			continue;
-
-		/* Start at the beginning of the bootpath */
-		ma.ma_bp = bootpath;
 
 		(void) config_found(dev, (void *)&ma, mbprint);
 	}
@@ -1651,18 +1599,23 @@ nail_bootdev(dev, bp)
 	struct device *dev;
 	struct bootpath *bp;
 {
-	/*bp->dev = dev;	-* got it! */
-	if (altbootdev != NULL)
+
+	if (bp->dev != NULL)
 		panic("device_register: already got a boot device: %s",
-			altbootdev->dv_xname);
-	altbootdev = dev;
+			bp->dev->dv_xname);
 
 	/*
-	 * Clear current bootpath component, so we don't spuriously
+	 * Mark this bootpath component by linking it to the matched
+	 * device. We pick up the device pointer in cpu_rootconf().
+	 */
+	bp->dev = dev;
+
+	/*
+	 * Then clear the current bootpath component, so we don't spuriously
 	 * match similar instances on other busses, e.g. a disk on
 	 * another SCSI bus with the same target.
 	 */
-	altbootpath_store(1, NULL);
+	bootpath_store(1, NULL);
 }
 
 void
@@ -1670,7 +1623,7 @@ device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	struct bootpath *bp = altbootpath_store(0, NULL);
+	struct bootpath *bp = bootpath_store(0, NULL);
 	char *dvname = dev->dv_cfdata->cf_driver->cd_name;
 
 	/*
@@ -1719,7 +1672,7 @@ device_register(dev, aux)
 				strcpy(bootpath[nbootpath].name, "fd");
 				nbootpath++;
 			}
-			altbootpath_store(1, bp + 1);
+			bootpath_store(1, bp + 1);
 			return;
 		}
 	} else if (strcmp(dvname, "le") == 0) {

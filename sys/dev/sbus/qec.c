@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.9 1999/06/24 19:56:51 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.10 2000/01/11 12:59:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ qecattach(parent, self, aux)
 	int sbusburst;
 	bus_space_tag_t sbt;
 	bus_space_handle_t bh;
-	struct bootpath *bp;
 	int error;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -190,12 +189,6 @@ qecattach(parent, self, aux)
 		panic("%s: error getting ranges property", self->dv_xname);
 	}
 
-	/* Propagate bootpath */
-	if (sa->sa_bp != NULL)
-		bp = sa->sa_bp + 1;
-	else
-		bp = NULL;
-
 	/* Allocate a bus tag */
 	sbt = (bus_space_tag_t)
 		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
@@ -229,7 +222,7 @@ qecattach(parent, self, aux)
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, bp, &sa);
+				       sbt, sc->sc_dmatag, node, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
 		sbus_destroy_attach_args(&sa);
 	}

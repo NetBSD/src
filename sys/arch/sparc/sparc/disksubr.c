@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 1999/02/14 12:42:33 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.24 2000/01/11 13:01:52 pk Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -61,72 +61,12 @@ static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
 extern struct device *bootdv;
 
-/*
- * find the boot device (if it was a disk).   we must check to see if
- * unit info in saved bootpath structure matches unit info in our softc.
- * note that knowing the device name (e.g. "xd0") is not useful... we
- * must check the drive number (or target/lun, in the case of SCSI).
- * (XXX is it worth ifdef'ing this?)
- */
-
 void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
-	struct scsibus_softc *sbsc;
-	int target, lun;
-
-	if (bp == NULL)
-		return;
-
-	/*
-	 * scsi: sd,cd
-	 */
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
-		sbsc = (struct scsibus_softc *)dev->dv_parent;
-
-		target = bp->val[0];
-		lun = bp->val[1];
-
-		if (CPU_ISSUN4 && dev->dv_xname[0] == 's' &&
-		    target == 0 && sbsc->sc_link[0][0] == NULL) {
-			/*
-			 * disk unit 0 is magic: if there is actually no
-			 * target 0 scsi device, the PROM will call
-			 * target 3 `sd0'.
-			 * XXX - what if someone puts a tape at target 0?
-			 */
-			target = 3;	/* remap to 3 */
-			lun = 0;
-		}
-
-		if (CPU_ISSUN4C && dev->dv_xname[0] == 's')
-			target = sd_crazymap(target);
-
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			bp->dev = dev;	/* got it! */
-			return;
-		}
-	}
-
-	/*
-	 * xd,xy
-	 */
-	if (strncmp("xd", dev->dv_xname, 2) == 0 ||
-	    strncmp("xy", dev->dv_xname, 2) == 0) {
-
-		/* XXX - dv_unit may not be the driver number.. */
-		if (dev->dv_unit == bp->val[0] &&
-		    strncmp(bp->name, dev->dv_xname, 2) == 0) {
-			bp->dev = dev;	/* got it! */
-			return;
-		}
-	}
+	return;
 }
 
 /*
