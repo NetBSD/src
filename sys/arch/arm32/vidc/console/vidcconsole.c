@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.25 2000/08/08 08:19:38 mark Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.26 2000/11/02 00:31:17 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -1585,7 +1585,7 @@ int vidcconsole_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
     		vc->MODECHANGE ( vc );
 		ws.ws_row=vc->ychars;
 		ws.ws_col=vc->xchars;
-		error = (*linesw[tp->t_line].l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
+		error = (*tp->t_linesw->l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
 		error = ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
 		return 0;
 		break;

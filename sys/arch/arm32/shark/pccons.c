@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.12 2000/07/24 21:56:09 is Exp $       */
+/*      $NetBSD: pccons.c,v 1.13 2000/11/02 00:31:16 eeh Exp $       */
 
 /*
  * Copyright 1997
@@ -1161,7 +1161,7 @@ pcopen(dev_t       dev,
     /* 
     ** Invoke the line discipline open routine 
     */
-    return ((*linesw[tp->t_line].l_open)(dev, tp));
+    return ((*tp->t_linesw->l_open)(dev, tp));
 } /* End pcopen() */
 
 
@@ -1218,7 +1218,7 @@ pcclose(dev_t       dev,
     ** Let the line discipline clean up any pending output and
     ** flush queues.
     */
-    (*linesw[tp->t_line].l_close)(tp, flag);
+    (*tp->t_linesw->l_close)(tp, flag);
     ttyclose(tp);
 
     return(0);
@@ -1268,7 +1268,7 @@ pcread(dev_t       dev,
     struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
     struct tty      *tp = sc->sc_tty;
     
-    return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+    return ((*tp->t_linesw->l_read)(tp, uio, flag));
 } /* End pcread() */
 
 
@@ -1315,7 +1315,7 @@ pcwrite(dev_t      dev,
     struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
     struct tty      *tp = sc->sc_tty;
     
-    return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+    return ((*tp->t_linesw->l_write)(tp, uio, flag));
 } /* End pcwrite() */
 
 
@@ -1421,7 +1421,7 @@ pcintr(void *arg)
         {
             do
             {
-                (*linesw[tp->t_line].l_rint)(*cp++, tp);
+                (*tp->t_linesw->l_rint)(*cp++, tp);
             }
             while (*cp);
         }
@@ -1510,7 +1510,7 @@ pcioctl(dev_t       dev,
     ** we don't need to to do anything. Error < 0 means the line
     ** discipline doesn't handle this sort of operation. 
     */
-    error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+    error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
     if (error < 0)
     {
         /* Try the common tty ioctl routine to see if it recognises the
