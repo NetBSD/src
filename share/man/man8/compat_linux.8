@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.15 1999/12/28 02:39:14 mjl Exp $
+.\"	$NetBSD: compat_linux.8,v 1.16 2000/04/15 00:16:56 hubertf Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -264,8 +264,12 @@ and install it on your system. The XXXX (name) and <N> (major
 revision number) should match; the minor number(s) <mm> are
 less important, though it is advised to take the most
 recent version.
+.Pp
+.It 3.
+For i386, you can simply install the SuSE shared libs using the
+.Pa pkgsrc/emulators/suse_linux
+package(s).
 .El
-
 .Ss Setting up other files
 Newer version of Linux use /etc/nsswitch.conf for network information,
 such as
