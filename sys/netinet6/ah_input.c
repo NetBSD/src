@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.37 2002/09/11 03:45:44 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.38 2003/05/14 06:47:38 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.37 2002/09/11 03:45:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38 2003/05/14 06:47:38 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -114,20 +114,6 @@ ah4_input(m, va_alist)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-#ifndef PULLDOWN_TEST
-	if (m->m_len < off + sizeof(struct newah)) {
-		m = m_pullup(m, off + sizeof(struct newah));
-		if (!m) {
-			ipseclog((LOG_DEBUG, "IPv4 AH input: can't pullup;"
-				"dropping the packet for simplicity\n"));
-			ipsecstat.in_inval++;
-			goto fail;
-		}
-	}
-
-	ip = mtod(m, struct ip *);
-	ah = (struct ah *)(((caddr_t)ip) + off);
-#else
 	ip = mtod(m, struct ip *);
 	IP6_EXTHDR_GET(ah, struct ah *, m, off, sizeof(struct newah));
 	if (ah == NULL) {
@@ -136,7 +122,6 @@ ah4_input(m, va_alist)
 		ipsecstat.in_inval++;
 		goto fail;
 	}
-#endif
 	nxt = ah->ah_nxt;
 #ifdef _IP_VHL
 	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
@@ -231,19 +216,6 @@ ah4_input(m, va_alist)
 		goto fail;
 	}
 
-#ifndef PULLDOWN_TEST
-	if (m->m_len < off + sizeof(struct ah) + sizoff + siz1) {
-		m = m_pullup(m, off + sizeof(struct ah) + sizoff + siz1);
-		if (!m) {
-			ipseclog((LOG_DEBUG, "IPv4 AH input: can't pullup\n"));
-			ipsecstat.in_inval++;
-			goto fail;
-		}
-
-		ip = mtod(m, struct ip *);
-		ah = (struct ah *)(((caddr_t)ip) + off);
-	}
-#else
 	IP6_EXTHDR_GET(ah, struct ah *, m, off,
 		sizeof(struct ah) + sizoff + siz1);
 	if (ah == NULL) {
@@ -251,7 +223,6 @@ ah4_input(m, va_alist)
 		ipsecstat.in_inval++;
 		goto fail;
 	}
-#endif
     }
 
 	/*
@@ -469,16 +440,6 @@ ah4_input(m, va_alist)
 		 */
 
 		ip = mtod(m, struct ip *);
-#ifndef PULLDOWN_TEST
-		/*
-		 * We do deep-copy since KAME requires that
-		 * the packet is placed in a single external mbuf.
-		 */
-		ovbcopy((caddr_t)ip, (caddr_t)(((u_char *)ip) + stripsiz), off);
-		m->m_data += stripsiz;
-		m->m_len -= stripsiz;
-		m->m_pkthdr.len -= stripsiz;
-#else
 		/*
 		 * even in m_pulldown case, we need to strip off AH so that
 		 * we can compute checksum for multiple AH correctly.
@@ -505,7 +466,6 @@ ah4_input(m, va_alist)
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
 		}
-#endif
 
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
@@ -635,17 +595,12 @@ ah6_input(mp, offp, proto)
 	int s;
 	size_t stripsiz = 0;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(struct ah), IPPROTO_DONE);
-	ah = (struct ah *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(ah, struct ah *, m, off, sizeof(struct newah));
 	if (ah == NULL) {
 		ipseclog((LOG_DEBUG, "IPv6 AH input: can't pullup\n"));
 		ipsec6stat.in_inval++;
 		return IPPROTO_DONE;
 	}
-#endif
 	ip6 = mtod(m, struct ip6_hdr *);
 	nxt = ah->ah_nxt;
 
@@ -726,9 +681,6 @@ ah6_input(mp, offp, proto)
 		goto fail;
 	}
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(struct ah) + sizoff + siz1, IPPROTO_DONE);
-#else
 	IP6_EXTHDR_GET(ah, struct ah *, m, off,
 		sizeof(struct ah) + sizoff + siz1);
 	if (ah == NULL) {
@@ -737,7 +689,6 @@ ah6_input(mp, offp, proto)
 		m = NULL;
 		goto fail;
 	}
-#endif
     }
 
 	/*
@@ -930,16 +881,6 @@ ah6_input(mp, offp, proto)
 		*prvnxtp = nxt;
 
 		ip6 = mtod(m, struct ip6_hdr *);
-#ifndef PULLDOWN_TEST
-		/*
-		 * We do deep-copy since KAME requires that
-		 * the packet is placed in a single mbuf.
-		 */
-		ovbcopy((caddr_t)ip6, ((caddr_t)ip6) + stripsiz, off);
-		m->m_data += stripsiz;
-		m->m_len -= stripsiz;
-		m->m_pkthdr.len -= stripsiz;
-#else
 		/*
 		 * even in m_pulldown case, we need to strip off AH so that
 		 * we can compute checksum for multiple AH correctly.
@@ -966,7 +907,6 @@ ah6_input(mp, offp, proto)
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
 		}
-#endif
 		ip6 = mtod(m, struct ip6_hdr *);
 		/* XXX jumbogram */
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.98 2003/02/26 06:31:17 matt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.99 2003/05/14 06:47:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.98 2003/02/26 06:31:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.99 2003/05/14 06:47:37 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -106,11 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.98 2003/02/26 06:31:17 matt Exp $")
 #include <netinet6/udp6_var.h>
 #endif
 
-#ifdef PULLDOWN_TEST
 #ifndef INET6
 /* always need ip6.h for IP6_EXTHDR_GET */
 #include <netinet/ip6.h>
-#endif
 #endif
 
 #include "faith.h"
@@ -236,44 +234,15 @@ udp_input(m, va_alist)
 	MCLAIM(m, &udp_rx_mowner);
 	udpstat.udps_ipackets++;
 
-#ifndef PULLDOWN_TEST
-	/*
-	 * Strip IP options, if any; should skip this,
-	 * make available to user, and use on returned packets,
-	 * but we don't yet have a way to check the checksum
-	 * with options still present.
-	 */
-	if (iphlen > sizeof (struct ip)) {
-		ip_stripoptions(m, (struct mbuf *)0);
-		iphlen = sizeof(struct ip);
-	}
-#else
-	/*
-	 * we may enable the above code if we save and pass IPv4 options
-	 * to the userland.
-	 */
-#endif
-
 	/*
 	 * Get IP and UDP header together in first mbuf.
 	 */
 	ip = mtod(m, struct ip *);
-#ifndef PULLDOWN_TEST
-	if (m->m_len < iphlen + sizeof(struct udphdr)) {
-		if ((m = m_pullup(m, iphlen + sizeof(struct udphdr))) == 0) {
-			udpstat.udps_hdrops++;
-			return;
-		}
-		ip = mtod(m, struct ip *);
-	}
-	uh = (struct udphdr *)((caddr_t)ip + iphlen);
-#else
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (uh == NULL) {
 		udpstat.udps_hdrops++;
 		return;
 	}
-#endif
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
 	/* destination port of 0 is illegal, based on RFC768. */
@@ -406,9 +375,6 @@ udp6_input(mp, offp, proto)
 	struct udphdr *uh;
 	u_int32_t plen, ulen;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(struct udphdr), IPPROTO_DONE);
-#endif
 	ip6 = mtod(m, struct ip6_hdr *);
 
 #if defined(NFAITH) && 0 < NFAITH
@@ -423,15 +389,11 @@ udp6_input(mp, offp, proto)
 
 	/* check for jumbogram is done in ip6_input.  we can trust pkthdr.len */
 	plen = m->m_pkthdr.len - off;
-#ifndef PULLDOWN_TEST
-	uh = (struct udphdr *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, off, sizeof(struct udphdr));
 	if (uh == NULL) {
 		ip6stat.ip6s_tooshort++;
 		return IPPROTO_DONE;
 	}
-#endif
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 	ulen = ntohs((u_short)uh->uh_ulen);
 	/*

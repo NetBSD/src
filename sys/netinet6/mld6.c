@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.20 2002/06/09 14:43:13 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.21 2003/05/14 06:47:43 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.20 2002/06/09 14:43:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.21 2003/05/14 06:47:43 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -194,16 +194,11 @@ mld6_input(m, off)
 	struct in6_ifaddr *ia;
 	int timer;		/* timer value in the MLD query header */
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, sizeof(*mldh),);
-	mldh = (struct mld6_hdr *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(mldh, struct mld6_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 
 	/* source address validation */
 	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */

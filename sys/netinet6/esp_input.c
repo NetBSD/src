@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.28 2003/01/20 00:39:30 simonb Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.29 2003/05/14 06:47:39 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.28 2003/01/20 00:39:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.29 2003/05/14 06:47:39 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -543,16 +543,11 @@ esp6_input(mp, offp, proto)
 		goto bad;
 	}
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, ESPMAXLEN, IPPROTO_DONE);
-	esp = (struct esp *)(mtod(m, caddr_t) + off);
-#else
 	IP6_EXTHDR_GET(esp, struct esp *, m, off, ESPMAXLEN);
 	if (esp == NULL) {
 		ipsec6stat.in_inval++;
 		return IPPROTO_DONE;
 	}
-#endif
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	if (ntohs(ip6->ip6_plen) == 0) {
@@ -702,16 +697,12 @@ noreplaycheck:
 		goto bad;
 	}
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, esplen + ivlen, IPPROTO_DONE);	/* XXX */
-#else
 	IP6_EXTHDR_GET(esp, struct esp *, m, off, esplen + ivlen);
 	if (esp == NULL) {
 		ipsec6stat.in_inval++;
 		m = NULL;
 		goto bad;
 	}
-#endif
 	ip6 = mtod(m, struct ip6_hdr *);	/* set it again just in case */
 
 	/*
@@ -774,14 +765,7 @@ noreplaycheck:
 		flowinfo = ip6->ip6_flow;
 		m_adj(m, off + esplen + ivlen);
 		if (m->m_len < sizeof(*ip6)) {
-#ifndef PULLDOWN_TEST
-			/*
-			 * m_pullup is prohibited in KAME IPv6 input processing
-			 * but there's no other way!
-			 */
-#else
 			/* okay to pullup in m_pulldown style */
-#endif
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m) {
 				ipsec6stat.in_inval++;
@@ -859,52 +843,6 @@ noreplaycheck:
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
 		}
-
-#ifndef PULLDOWN_TEST
-		/*
-		 * KAME requires that the packet to be contiguous on the
-		 * mbuf.  We need to make that sure.
-		 * this kind of code should be avoided.
-		 * XXX other conditions to avoid running this part?
-		 */
-		if (m->m_len != m->m_pkthdr.len) {
-			struct mbuf *n = NULL;
-			int maxlen;
-
-			MGETHDR(n, M_DONTWAIT, MT_HEADER);
-			maxlen = MHLEN;
-			if (n)
-				M_COPY_PKTHDR(n, m);
-			if (n && m->m_pkthdr.len > maxlen) {
-				MCLGET(n, M_DONTWAIT);
-				maxlen = MCLBYTES;
-				if ((n->m_flags & M_EXT) == 0) {
-					m_free(n);
-					n = NULL;
-				}
-			}
-			if (!n) {
-				printf("esp6_input: mbuf allocation failed\n");
-				goto bad;
-			}
-
-			if (m->m_pkthdr.len <= maxlen) {
-				m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
-				n->m_len = m->m_pkthdr.len;
-				n->m_pkthdr.len = m->m_pkthdr.len;
-				n->m_next = NULL;
-				m_freem(m);
-			} else {
-				m_copydata(m, 0, maxlen, mtod(n, caddr_t));
-				m_adj(m, maxlen);
-				n->m_len = maxlen;
-				n->m_pkthdr.len = m->m_pkthdr.len;
-				n->m_next = m;
-				m->m_flags &= ~M_PKTHDR;
-			}
-			m = n;
-		}
-#endif
 
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
