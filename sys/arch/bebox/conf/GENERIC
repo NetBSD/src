@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.35 2000/12/19 10:42:03 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.36 2001/02/12 06:12:18 briggs Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	32
 
@@ -84,6 +84,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	PCIVERBOSE	# verbose PCI device messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	PCI_NETBSD_CONFIGURE
 
 mainbus0 at root
 
@@ -124,8 +125,8 @@ wsdisplay*	at pfb? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
-#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-#scsibus* at ncr?
+#siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+#scsibus* at siop?
 
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
