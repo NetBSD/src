@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.20 2002/09/17 03:30:33 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.21 2002/11/15 03:57:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.20 2002/09/17 03:30:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.21 2002/11/15 03:57:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -236,6 +236,7 @@ rf_CopybackReconstructedData(raidPtr)
 	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				   &c_label);
+	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
 }
 
 
