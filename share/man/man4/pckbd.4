@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.12 2004/03/08 12:28:17 wiz Exp $
+.\" $NetBSD: pckbd.4,v 1.13 2004/03/20 16:48:10 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -112,7 +112,10 @@ Because PC keyboard hardware doesn't contain a beeper, requests for
 cannot be handled directly. On alpha and i386 a helper device attached
 to the
 .Xr pcppi 4
-driver allows to use the standard ISA speaker for this purpose.
+driver allows the use of the standard ISA speaker for this purpose.
+On acorn32,
+.Xr vidcaudio 4
+performs this function.
 .Sh EXAMPLES
 To set a German keyboard layout without
 .Dq dead accents
@@ -129,5 +132,5 @@ to the kernel configuration file.
 .Xr wskbd 4 ,
 .Xr wsconsctl 8
 .Sh BUGS
-The list of builtin mappings doesn't follow any logics.
+The list of builtin mappings doesn't follow any logic.
 It grew as people submitted what they needed.
