@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.21 2000/11/19 20:05:25 sommerfeld Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.22 2000/11/20 19:24:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.21 2000/11/19 20:05:25 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.22 2000/11/20 19:24:36 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.21 2000/11/19 20:05:25 sommerfeld Exp
 #include <machine/cpuvar.h>
 #include <machine/intr.h>
 #include <machine/rpb.h>
+
+typedef void (*ipifunc_t)(void);
 
 void	alpha_ipi_halt(void);
 void	alpha_ipi_tbia(void);
@@ -114,6 +116,43 @@ alpha_ipi_init(struct cpu_info *ci)
 		evcnt_attach_dynamic(&sc->sc_evcnt_which_ipi[i],
 		    EVCNT_TYPE_INTR, NULL, sc->sc_dev.dv_xname,
 		    ipinames[i]);
+	}
+}
+
+/*
+ * Process IPIs for a CPU.
+ */
+void
+alpha_ipi_process(struct cpu_info *ci)
+{
+	struct cpu_softc *sc = ci->ci_softc;
+	u_long pending_ipis, bit;
+
+#ifdef DIAGNOSTIC
+	if (sc == NULL) {
+		/* XXX panic? */
+		printf("WARNING: no softc for ID %lu\n", ci->ci_cpuid);
+		return;
+	}
+#endif
+
+	pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
+
+	/*
+	 * For various reasons, it is possible to have spurious calls
+	 * to this routine, so just bail out now if there are none
+	 * pending.
+	 */
+	if (pending_ipis == 0)
+		return;
+
+	sc->sc_evcnt_ipi.ev_count++;
+
+	for (bit = 0; bit < ALPHA_NIPIS; bit++) {
+		if (pending_ipis & (1UL << bit)) {
+			sc->sc_evcnt_which_ipi[bit].ev_count++;
+			(*ipifuncs[bit])();
+		}
 	}
 }
 
