@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.12 2000/07/14 21:09:45 soren Exp $ */
+/*      $NetBSD: ac97.c,v 1.13 2000/11/04 05:45:57 thorpej Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -273,21 +273,36 @@ static const struct ac97_codecid {
 	u_int32_t id;
 	const char *name;
 } ac97codecid[] = {
+	{ AC97_CODEC_ID('A', 'D', 'S', 64),	"Analog Devices AD1881" },
 	{ AC97_CODEC_ID('A', 'K', 'M', 0),	"Asahi Kasei AK4540"	},
-#if 0
+	{ AC97_CODEC_ID('A', 'K', 'M', 2),	"Asahi Kasei AK4543"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 0),	"Crystal CS4297"	},
-#endif
 	{ AC97_CODEC_ID('C', 'R', 'Y', 3),	"Crystal CS4297"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 19),	"Crystal CS4297A"	},
-	{ 0x83847600,				"SigmaTel STAC????"	},
-	{ 0x83847604,				"SigmaTel STAC9701/3/4/5" },
-	{ 0x83847605,				"SigmaTel STAC9704" 	},
-	{ 0x83847608,				"SigmaTel STAC9708" 	},
-	{ 0x83847609,				"SigmaTel STAC9721" 	},
-	{ 0,					NULL			}
+	{ AC97_CODEC_ID('C', 'R', 'Y', 35),	"Crystal CS4298",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 43),	"Crystal CS4294",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 49),	"Crystal CS4299",	},
+	{ AC97_CODEC_ID('C', 'R', 'Y', 51),	"Crystal CS4298A",	},
+	{ AC97_CODEC_ID('N', 'S', 'C', 49),
+					     "National Semiconductor LM4549", },
+	{ AC97_CODEC_ID('S', 'I', 'L', 34),	"Silicon Laboratory Si3036", },
+	{ AC97_CODEC_ID('S', 'I', 'L', 35),	"Silicon Laboratory Si3038", },
+	{ AC97_CODEC_ID('T', 'R', 'A', 2),	"TriTech TR28022",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 3),	"TriTech TR28023",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech unknown",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
+	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
+	{ 0x83847600,				"SigmaTel STAC9700",	},
+	{ 0x83847604,				"SigmaTel STAC9701/3/4/5", },
+	{ 0x83847605,				"SigmaTel STAC9704", 	},
+	{ 0x83847608,				"SigmaTel STAC9708", 	},
+	{ 0x83847609,				"SigmaTel STAC9721/23",	},
+	{ 0x83847644,				"SigmaTel STAC9744/45",	},
+	{ 0x83847684,				"SigmaTel STAC9783/84",	},
+	{ 0,					NULL,			}
 };
 
-static char *ac97enhancement[] = {
+static const char *ac97enhancement[] = {
 	"no 3D stereo",
 	"Analog Devices Phat Stereo",
 	"Creative"
@@ -322,7 +337,7 @@ static char *ac97enhancement[] = {
 	"Unknown 3D",
 };
 
-static char *ac97feature[] = {
+static const char *ac97feature[] = {
 	"mic channel",
 	"reserved",
 	"tone",
