@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.40 2000/05/20 03:08:41 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.41 2000/05/22 14:49:10 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -481,6 +481,7 @@ struct db_command db_command_table[] = {
 	{ "search",	db_search_cmd,		CS_OWN|CS_SET_DOT, NULL },
 	{ "set",	db_set_cmd,		CS_OWN,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
+	{ "sifting",    db_sifting_cmd,		CS_OWN,		NULL },
 	{ "step",	db_single_step_cmd,	0,		NULL },
 	{ "sync",	db_sync_cmd,		CS_OWN,		NULL },
 	{ "trace",	db_stack_trace_cmd,	0,		NULL },
@@ -643,6 +644,40 @@ db_reboot_cmd(addr, have_addr, count, modif)
 	    /*NOTREACHED*/
 	}
 	cpu_reboot((int)bootflags, NULL);
+}
+
+void
+db_sifting_cmd(addr, have_addr, count, omodif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		omodif;
+{
+	int	mode, t;
+
+	t = db_read_token();
+	if (t == tSLASH) {
+		t = db_read_token();
+		if (t != tIDENT) {
+			bad_modifier:
+			db_printf("Bad modifier\n");
+			db_flush_lex();
+			return;
+		}
+		if (!strcmp(db_tok_string, "F"))
+			mode = 'F';
+		else
+			goto bad_modifier;
+		t = db_read_token();
+	} else
+		mode = 0;
+
+	if (t==tIDENT)
+		db_sifting(db_tok_string, mode);
+	else {
+		db_printf("Bad argument (non-string)\n");
+		db_flush_lex();
+	}
 }
 
 void
