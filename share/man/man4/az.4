@@ -1,4 +1,4 @@
-.\"	$NetBSD: az.4,v 1.2 2002/01/01 22:34:06 augustss Exp $
+.\"	$NetBSD: az.4,v 1.3 2002/01/01 22:50:29 wiz Exp $
 .\"	$RuOBSD: az.4,v 1.3 2001/10/26 05:38:43 form Exp $
 .\"	$OpenBSD: az.4,v 1.1 2001/12/05 10:58:54 mickey Exp $
 .\"
@@ -29,7 +29,7 @@
 .Dt AZ 4
 .Os
 .Sh NAME
-.Nm az 
+.Nm az
 .Nd Aztech/PackardBell radio card device driver
 .Sh SYNOPSIS
 .Cd "az0    at isa? port 0x358"
@@ -50,18 +50,9 @@ The I/O port is set by the driver to the value specified in the configuration
 file.
 The I/O port must be one of
 0x350 and 0x358.
-.Sh BUGS
-It is impossible to determine which frequency the card is tuned to.
-Thus, the driver will report an internally stored value even if it is not
-correct (changed by some program that uses direct port access).
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr radio 4
-.Sh AUTHORS
-The
-.Nm
-driver was written by Vladimir Popov and Maxim Tsyplakov.
-The man page was written by Vladimir Popov.
 .Sh HISTORY
 The
 .Nm
@@ -69,3 +60,12 @@ device driver appeared in
 .Ox 3.0
 and
 .Nx 1.6 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Vladimir Popov and Maxim Tsyplakov.
+The man page was written by Vladimir Popov.
+.Sh BUGS
+It is impossible to determine which frequency the card is tuned to.
+Thus, the driver will report an internally stored value even if it is not
+correct (changed by some program that uses direct port access).
