@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.22 1998/05/11 12:00:27 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.23 1998/05/11 15:49:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -302,7 +302,7 @@ __END_DECLS
 /*
  * Functions defined in XPG4.2.
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) ||
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
 __BEGIN_DECLS
 int	 getw __P((FILE *));
