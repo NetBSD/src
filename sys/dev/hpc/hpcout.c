@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.3 2001/06/13 19:02:14 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <sys/device.h>
 
 #include <machine/config_hook.h>
+#include <machine/bus.h>
+
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>
 
@@ -78,6 +80,8 @@ hpcout_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcioman_attach_args *hma = aux;
 	struct hpcout_softc *sc = (void *)self;
+
+	sc->sc_hma = *hma;	/* structure assignment */
 
 	if (hma->hma_hc == NULL ||
 	    hma->hma_type == HPCIOMANCF_EVTYPE_DEFAULT ||

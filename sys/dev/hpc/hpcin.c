@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.3 2001/06/13 19:02:13 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <sys/device.h>
 
 #include <machine/config_hook.h>
+#include <machine/bus.h>
+
 #include <dev/hpc/hpciovar.h>
 #include <dev/hpc/hpciomanvar.h>
 
