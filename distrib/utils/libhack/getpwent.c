@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.7 2003/08/07 09:27:57 agc Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.7.6.1 2005/04/04 18:03:10 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1989, 1993, 1994, 1995
@@ -62,8 +62,10 @@ __weak_alias(setpassent,_setpassent)
 #include <string.h>
 
 static	int		pwstart(void);
-static	int		pwscan(int, uid_t, const char *);
-static	int		pwmatchline(int, uid_t, const char *);
+static	int		pwscan(int, uid_t, const char *, struct passwd *,
+    char *, size_t);
+static	int		pwmatchline(int, uid_t, const char *, struct passwd *,
+    char *);
 
 static	FILE		*_pw_fp;
 static	struct passwd	_pw_passwd;	/* password structure */
@@ -78,7 +80,8 @@ struct passwd *
 getpwent(void)
 {
 
-	if ((!_pw_fp && !pwstart()) || !pwscan(0, 0, NULL))
+	if ((!_pw_fp && !pwstart()) ||
+	    !pwscan(0, 0, NULL, &_pw_passwd, pwline, sizeof(pwline)))
 		return (NULL);
 	return (&_pw_passwd);
 }
@@ -86,27 +89,53 @@ getpwent(void)
 struct passwd *
 getpwnam(const char *name)
 {
+	struct passwd *pwd;
+	return getpwnam_r(name, &_pw_passwd, pwline, sizeof(pwline),
+	    &pwd) == 0 ? pwd : NULL;
+}
+
+int
+getpwnam_r(const char *name, struct passwd *pwres, char *buf, size_t bufsiz,
+    struct passwd **pwd)
+{
 	int rval;
 
 	if (!pwstart())
-		return NULL;
-	rval = pwscan(1, 0, name);
+		return 1;
+	rval = !pwscan(1, 0, name, pwres, buf, bufsiz);
 	if (!_pw_stayopen)
 		endpwent();
-	return (rval) ? &_pw_passwd : NULL;
+	if (rval)
+		*pwd = NULL;
+	else
+		*pwd = pwres;
+	return rval;
 }
 
 struct passwd *
 getpwuid(uid_t uid)
 {
+	struct passwd *pwd;
+	return getpwuid_r(uid, &_pw_passwd, pwline, sizeof(pwline),
+	    &pwd) == 0 ? pwd : NULL;
+}
+
+int
+getpwuid_r(uid_t uid, struct passwd *pwres, char *buf, size_t bufsiz,
+    struct passwd **pwd)
+{
 	int rval;
 
 	if (!pwstart())
-		return NULL;
-	rval = pwscan(1, uid, NULL);
+		return 1;
+	rval = !pwscan(1, uid, NULL, pwres, buf, bufsiz);
 	if (!_pw_stayopen)
 		endpwent();
-	return (rval) ? &_pw_passwd : NULL;
+	if (rval)
+		*pwd = NULL;
+	else
+		*pwd = pwres;
+	return rval;
 }
 
 void
@@ -151,54 +180,56 @@ pwstart(void)
 
 
 static int
-pwscan(int search, uid_t uid, const char *name)
+pwscan(int search, uid_t uid, const char *name, struct passwd *pwd, char *buf,
+    size_t bufsiz)
 {
 
 	if (_pw_filesdone)
 		return 0;
 	for (;;) {
-		if (!fgets(pwline, sizeof(pwline), _pw_fp)) {
+		if (!fgets(buf, bufsiz, _pw_fp)) {
 			if (!search)
 				_pw_filesdone = 1;
 			return 0;
 		}
 		/* skip lines that are too big */
-		if (!strchr(pwline, '\n')) {
+		if (!strchr(buf, '\n')) {
 			int ch;
 
 			while ((ch = getc(_pw_fp)) != '\n' && ch != EOF)
 				;
 			continue;
 		}
-		if (pwmatchline(search, uid, name))
+		if (pwmatchline(search, uid, name, pwd, buf))
 			return 1;
 	}
 	/* NOTREACHED */
 }
 
 static int
-pwmatchline(int search, uid_t uid, const char *name)
+pwmatchline(int search, uid_t uid, const char *name, struct passwd *pwd,
+    char *buf)
 {
 	unsigned long	id;
 	char		*cp, *bp, *ep;
 
 	/* name may be NULL if search is nonzero */
 
-	bp = pwline;
-	memset(&_pw_passwd, 0, sizeof(_pw_passwd));
-	_pw_passwd.pw_name = strsep(&bp, ":\n");		/* name */
-	if (search && name && strcmp(_pw_passwd.pw_name, name))
+	bp = buf;
+	memset(pwd, 0, sizeof(*pwd));
+	pwd->pw_name = strsep(&bp, ":\n");		/* name */
+	if (search && name && strcmp(pwd->pw_name, name))
 		return 0;
 
-	_pw_passwd.pw_passwd = strsep(&bp, ":\n");		/* passwd */
+	pwd->pw_passwd = strsep(&bp, ":\n");		/* passwd */
 
 	if (!(cp = strsep(&bp, ":\n")))				/* uid */
 		return 0;
 	id = strtoul(cp, &ep, 10);
 	if (id > UID_MAX || *ep != '\0')
 		return 0;
-	_pw_passwd.pw_uid = (uid_t)id;
-	if (search && name == NULL && _pw_passwd.pw_uid != uid)
+	pwd->pw_uid = (uid_t)id;
+	if (search && name == NULL && pwd->pw_uid != uid)
 		return 0;
 
 	if (!(cp = strsep(&bp, ":\n")))				/* gid */
@@ -206,20 +237,20 @@ pwmatchline(int search, uid_t uid, const char *name)
 	id = strtoul(cp, &ep, 10);
 	if (id > GID_MAX || *ep != '\0')
 		return 0;
-	_pw_passwd.pw_gid = (gid_t)id;
+	pwd->pw_gid = (gid_t)id;
 
-	if (!(_pw_passwd.pw_class = strsep(&bp, ":")))		/* class */
+	if (!(pwd->pw_class = strsep(&bp, ":")))		/* class */
 		return 0;
 	if (!(ep = strsep(&bp, ":")))				/* change */
 		return 0;
 	if (!(ep = strsep(&bp, ":")))				/* expire */
 		return 0;
 
-	if (!(_pw_passwd.pw_gecos = strsep(&bp, ":\n")))	/* gecos */
+	if (!(pwd->pw_gecos = strsep(&bp, ":\n")))		/* gecos */
 		return 0;
-	if (!(_pw_passwd.pw_dir = strsep(&bp, ":\n")))		/* directory */
+	if (!(pwd->pw_dir = strsep(&bp, ":\n")))		/* directory */
 		return 0;
-	if (!(_pw_passwd.pw_shell = strsep(&bp, ":\n")))	/* shell */
+	if (!(pwd->pw_shell = strsep(&bp, ":\n")))		/* shell */
 		return 0;
 
 	if (strchr(bp, ':') != NULL)
