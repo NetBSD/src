@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.4 1993/10/12 23:21:46 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.5 1993/10/13 02:22:01 mycroft Exp $
  */
 
 /*
@@ -128,6 +128,8 @@ trap(frame)
 	u_quad_t sticks;
 	int ucode, type, code, eva;
 	extern char fusubail[];
+
+	cnt.v_trap++;
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
@@ -431,6 +433,8 @@ syscall(frame)
 
 	if (ISPL(frame.tf_cs) != SEL_UPL)
 		panic("syscall");
+
+	cnt.v_syscall++;
 
 	sticks = p->p_sticks;
 	code = frame.tf_eax;
