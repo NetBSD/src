@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.9 2003/10/08 10:58:12 bouyer Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.10 2003/10/31 21:25:10 briggs Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.9 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.10 2003/10/31 21:25:10 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,7 +85,7 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_channel.ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue\n",
+		aprint_error("%s: can't allocate memory for command queue\n",
 		sc->sc_wdc.sc_dev.dv_xname);
 		return;
 	}
@@ -93,7 +93,8 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 	upc_intr_establish(ua->ua_irqhandle, IPL_BIO, wdcintr,
 			   &sc->sc_channel);
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	wdcattach(&sc->sc_channel);
 }

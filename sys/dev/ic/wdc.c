@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.150 2003/10/30 01:58:17 simonb Exp $ */
+/*	$NetBSD: wdc.c,v 1.151 2003/10/31 21:25:09 briggs Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.150 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.151 2003/10/31 21:25:09 briggs Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -232,7 +232,8 @@ atabusattach(parent, self, aux)
 
 	atabus_sc->sc_chan = chp;
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 	atabus_initq  = malloc(sizeof(struct atabus_initq), M_DEVBUF, M_NOWAIT);
 	atabus_initq->atabus_sc = atabus_sc;
 	TAILQ_INSERT_TAIL(&atabus_initq_head, atabus_initq, atabus_initq);
