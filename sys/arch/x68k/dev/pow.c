@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.6 1997/10/12 14:44:12 oki Exp $	*/
+/*	$NetBSD: pow.c,v 1.7 1998/08/04 16:07:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -63,6 +63,8 @@ void powattach __P((int));
 void powintr __P((void));
 static int setalarm __P((struct x68k_alarminfo *));
 
+static void pow_check_switch __P((void*));
+
 /* ARGSUSED */
 void
 powattach(num)
@@ -99,6 +101,8 @@ powattach(num)
 		else
 			printf ("???.\n");
 	}
+
+	shutdownhook_establish(pow_check_switch, 0);
 }
 
 /*ARGSUSED*/
@@ -291,4 +295,14 @@ powintr()
 		psignal(pows[0].proc, pows[0].signum);
 
 	splx(s);
+}
+
+static void
+pow_check_switch(dummy)
+	void *dummy;
+{
+	extern int power_switch_is_off;
+
+	if ((~mfp.gpip & (POW_FRONTSW | POW_EXTERNALSW)) == 0)
+		power_switch_is_off = 1;
 }
