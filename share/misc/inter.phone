@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.21 2003/03/27 22:44:02 agc Exp $
+#	$NetBSD: inter.phone,v 1.22 2003/03/28 09:07:02 skrll Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -122,6 +122,7 @@
 44:161:Manchester, Eng.:United Kingdom
 44:1752:Plymouth, Eng.:United Kingdom
 44:1782:Stoke-on-Trent, Eng.:United Kingdom
+44:1723:Scarborough, Eng.:United Kingdom
 44:1902:Wolverhampton, Eng.:United Kingdom
 44:191:Newcastle-upon-Tyne, Eng.:United Kingdom
 44:207:Inner-London, Eng.:United Kingdom
