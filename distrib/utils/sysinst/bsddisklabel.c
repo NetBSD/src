@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.16 2003/06/11 22:17:03 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.17 2003/06/13 11:45:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,6 +87,9 @@
 #ifndef DEFUSRSIZE
 #define DEFUSRSIZE	128
 #endif
+#ifndef DEFSWAPSIZE
+#define DEFSWAPSIZE	128
+#endif
 
 static int set_ptn_size(menudesc *, menu_ent *, void *);
 
@@ -98,6 +101,7 @@ struct ptn_info {
 		char	mount[20];
 		int	dflt_size;
 		int	size;
+		char	changed;
 	}		ptn_sizes[NUM_PTN_MENU];
 	int		menu_no;
 	int		free_parts;
@@ -245,12 +249,19 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 		msg_prompt_win(MSG_askfssize, -1, 18, 0, 0,
 			dflt, answer, sizeof answer,
 			p->mount, multname);
-		/* hack to add free space to default sized /usr */
-		if (p->size == 0 && !strcmp(answer, dflt)
-		    && !strcmp(p->mount, "/usr")) {
-			size = p->dflt_size;
-			pi->pool_part = p;
-			goto adjust_free;
+		/* Some special cases when /usr is first given a size */
+		if (p->size == 0 && !strcmp(p->mount, "/usr")) {
+			/* Remove space for /usr from / */
+			if (!pi->ptn_sizes[0].changed) {
+				pi->ptn_sizes[0].size -= p->dflt_size;
+				pi->free_space += p->dflt_size;
+			}
+			/* hack to add free space to default sized /usr */
+			if (!strcmp(answer, dflt)) {
+				size = p->dflt_size;
+				pi->pool_part = p;
+				goto adjust_free;
+			}
 		}
 		size = strtoul(answer, &cp, 0);
 		switch (*cp++) {
@@ -291,6 +302,8 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 	if (size != 0 && *cp == '+')
 		pi->pool_part = p;
     adjust_free:
+	if (size != p->size)
+		p->changed = 1;
 	pi->free_space += p->size - size;
 	if (size == 0) {
 		if (p->size != 0)
@@ -300,12 +313,20 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 				(char *)&pi->ptn_sizes[NUM_PTN_MENU - 1]
 				- (char *)p);
 	} else {
+		int f = pi->free_space;
 		if (p->size == 0)
 			pi->free_parts--;
-		if (pi->free_space < mult && -pi->free_space < mult) {
-			/* Round size to end of available space */
-			size += pi->free_space;
-			pi->free_space = 0;
+		if (f < mult && -f < mult) {
+			/*
+			 * Round size to end of available space,
+			 * but keep cylinder alignment
+			 */
+			if (f < 0)
+				f = -ROUNDUP(-f, dlcylsize);
+			else
+				f = ROUNDDOWN(f, dlcylsize);
+			size += f;
+			pi->free_space -= f;
 		}
 	}
 	p->size = size;
@@ -324,11 +345,13 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 	struct ptn_size *p;
 	int size;
 
-#define ROOT_SIZE (DEFROOTSIZE + DEFUSRSIZE)
 	static struct ptn_info pi = { {
-		{ PART_ROOT,	"/",	ROOT_SIZE,	ROOT_SIZE },
-		{ PART_SWAP,	"swap",	128,		128 },
+#define PI_ROOT 0
+		{ PART_ROOT,	"/",	DEFROOTSIZE,	DEFROOTSIZE },
+#define PI_SWAP 1
+		{ PART_SWAP,	"swap",	DEFSWAPSIZE,	DEFSWAPSIZE },
 		{ PART_TMP_MFS,	"tmp (mfs)",	64 },
+#define PI_USR 3
 		{ PART_USR,	"/usr",	DEFUSRSIZE },
 		{ PART_ANY,	"/var",	DEFVARSIZE },
 		{ PART_ANY,	"/home",	0 },
@@ -338,23 +361,43 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 	if (maxpart > MAXPARTITIONS)
 		maxpart = MAXPARTITIONS;	/* sanity */
 
-	if (pi.menu_no < 0) {
-		/* If installing X increase default size of / and /usr */
-		if (sets_selected & SET_X11) {
-			pi.ptn_sizes[0].size += XNEEDMB;
-			pi.ptn_sizes[0].dflt_size += XNEEDMB;
-		}
+	msg_display(MSG_ptnsizes);
+	msg_table_add(MSG_ptnheaders);
 
-		/* Change preset size from MB to sectors */
+	if (pi.menu_no < 0) {
+		/* If installing X increase default size of /usr */
+		if (sets_selected & SET_X11)
+			pi.ptn_sizes[PI_USR].dflt_size += XNEEDMB;
+
+		/* Make size of root include default size of /usr */
+		pi.ptn_sizes[PI_ROOT].size += pi.ptn_sizes[PI_USR].dflt_size;
+
+		/* Change preset sizes from MB to sectors */
 		sm = MEG / sectorsize;
 		pi.free_space = sectors;
 		for (p = pi.ptn_sizes; p->mount[0]; p++) {
-			if (sets_selected & SET_X11 &&
-			    strcmp(p->mount, "/usr") == 0)
-				p->dflt_size += XNEEDMB;
 			p->size = NUMSEC(p->size, sm, dlcylsize);
 			p->dflt_size = NUMSEC(p->dflt_size, sm, dlcylsize);
 			pi.free_space -= p->size;
+		}
+
+		/* Steal space from swap to make things fit.. */
+		if (pi.free_space < 0) {
+			i = ROUNDUP(-pi.free_space, dlcylsize);
+			if (i > pi.ptn_sizes[PI_SWAP].size)
+				i = pi.ptn_sizes[PI_SWAP].size;
+			pi.ptn_sizes[PI_SWAP].size -= i;
+			pi.free_space += i;
+		}
+
+		/* Add space for 2 system dumps to / (traditional) */
+		i = rammb * sm;
+		i = ROUNDUP(i, dlcylsize);
+		if (pi.free_space > i * 2)
+			i *= 2;
+		if (pi.free_space > i) {
+			pi.ptn_sizes[PI_ROOT].size += i;
+			pi.free_space -= i;
 		}
 
 		/* Count free partition slots */
@@ -365,7 +408,7 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 		}
 
 		/* Give free space to one of the partitions */
-		pi.pool_part = &pi.ptn_sizes[0];
+		pi.pool_part = &pi.ptn_sizes[PI_ROOT];
 
 		/* Link data areas together for menu */
 		for (i = 0; i < NUM_PTN_MENU; i++) {
@@ -385,18 +428,30 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 			return;
 	}
 
-	msg_display(MSG_ptnsizes);
-	msg_table_add(MSG_ptnheaders);
-
 	do {
 		set_ptn_menu_texts(&pi);
 		process_menu(pi.menu_no, &pi);
 	} while (pi.free_space < 0 || pi.free_parts < 0);
 
+	/* Give any cylinder fragment to last partition */
+	if (pi.pool_part != NULL || pi.free_space < dlcylsize) {
+		for (p = pi.ptn_sizes + nelem(pi.ptn_sizes) - 1; ;p--) {
+			if (p->size == 0) {
+				if (p == pi.ptn_sizes)
+					break;
+				continue;
+			}
+			if (p->ptn_id == PART_TMP_MFS)
+				continue;
+			p->size += pi.free_space % dlcylsize;
+			break;
+		}
+	}
+
 	for (p = pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
 		size = p->size;
 		if (p == pi.pool_part)
-			size += pi.free_space;
+			size += ROUNDDOWN(pi.free_space, dlcylsize);
 		i = p->ptn_id;
 		if (i == PART_TMP_MFS) {
 			tmp_mfs_size = size;
@@ -442,9 +497,9 @@ make_bsd_partitions(void)
 
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
-		    (1.0*ptsize*sectorsize)/MEG,
-		    (1.0*minfsdmb*sectorsize)/MEG,
-		    (1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
+		    ptsize / (MEG / sectorsize),
+		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE,
+		    DEFROOTSIZE + DEFSWAPSIZE + DEFUSRSIZE + XNEEDMB);
 
 	process_menu(MENU_layout, NULL);
 
