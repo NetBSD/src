@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)system.c	5.10 (Berkeley) 2/23/91";*/
-static char rcsid[] = "$Id: system.c,v 1.4 1993/08/01 18:36:52 mycroft Exp $";
+static char rcsid[] = "$Id: system.c,v 1.5 1993/08/20 23:00:46 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,10 +49,10 @@ extern char **environ;
 system(command)
 	const char *command;
 {
-	union wait pstat;
 	pid_t pid;
-	int omask;
 	sig_t intsave, quitsave;
+	int omask;
+	int pstat;
 	char *argp[] = {"sh", "-c", command, NULL};
 
 	if (!command)		/* just checking... */
@@ -62,19 +62,18 @@ system(command)
 	switch(pid = vfork()) {
 	case -1:			/* error */
 		(void)sigsetmask(omask);
-		pstat.w_status = 0;
-		pstat.w_retcode = 127;
-		return(pstat.w_status);
+		return(-1);
 	case 0:				/* child */
 		(void)sigsetmask(omask);
 		execve(_PATH_BSHELL, argp, environ);
 		_exit(127);
 	}
+
 	intsave = signal(SIGINT, SIG_IGN);
 	quitsave = signal(SIGQUIT, SIG_IGN);
 	pid = waitpid(pid, (int *)&pstat, 0);
 	(void)sigsetmask(omask);
 	(void)signal(SIGINT, intsave);
 	(void)signal(SIGQUIT, quitsave);
-	return(pid == -1 ? -1 : pstat.w_status);
+	return(pid == -1 ? -1 : pstat);
 }
