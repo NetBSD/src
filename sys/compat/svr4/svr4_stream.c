@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.28 1998/09/04 19:54:40 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.29 1998/10/03 22:03:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -396,23 +396,27 @@ getparm(fp, pa)
 
 	switch (so->so_type) {
 	case SOCK_DGRAM:
-		pa->type = SVR4_SOCK_DGRAM;
+		pa->type = SVR4_T_CLTS;
 		pa->protocol = IPPROTO_UDP;
+		DPRINTF(("getparm(dgram)\n"));
 		return;
 
 	case SOCK_STREAM:
-		pa->type = SVR4_SOCK_STREAM;
+	        pa->type = SVR4_T_COTS;  /* What about T_COTS_ORD? XXX */
 		pa->protocol = IPPROTO_IP;
+		DPRINTF(("getparm(stream)\n"));
 		return;
 
 	case SOCK_RAW:
-		pa->type = SVR4_SOCK_RAW;
+		pa->type = SVR4_T_CLTS;
 		pa->protocol = IPPROTO_RAW;
+		DPRINTF(("getparm(raw)\n"));
 		return;
 
 	default:
 		pa->type = 0;
 		pa->protocol = 0;
+		DPRINTF(("getparm(type %d?)\n", so->so_type));
 		return;
 	}
 }
