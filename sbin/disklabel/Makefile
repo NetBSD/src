@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.38 2000/05/02 19:00:41 soren Exp $
+#	$NetBSD: Makefile,v 1.39 2000/12/24 07:08:02 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
-SRCS=	disklabel.c dkcksum.c interact.c
+SRCS=	disklabel.c dkcksum.c interact.c printlabel.c
 MAN=	disklabel.5 disklabel.8
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}

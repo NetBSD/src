@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2000/12/24 05:59:11 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2000/12/24 07:08:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,8 +31,10 @@
 
 int	writelabel(int, const char *, struct disklabel *);
 int	checklabel(struct disklabel *);
-void	showinfo(FILE *, struct disklabel *);
-void	showpartitions(FILE *, struct disklabel *);
+void	showinfo(FILE *, struct disklabel *, const char *);
+void	showpartitions(FILE *, struct disklabel *, int);
 void	interact(struct disklabel *, int);
 
-extern char bootarea[];
+extern	char	 bootarea[];
+extern	char	*specname;
+extern	int	 Cflag;
