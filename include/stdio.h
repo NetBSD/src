@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.14 1994/10/26 00:56:28 cgd Exp $	*/
+/*	$NetBSD: stdio.h,v 1.15 1995/03/22 18:17:24 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -227,7 +227,7 @@ FILE	*freopen __P((const char *, const char *, FILE *));
 int	 fscanf __P((FILE *, const char *, ...));
 int	 fseek __P((FILE *, long, int));
 int	 fsetpos __P((FILE *, const fpos_t *));
-long	 ftell __P((const FILE *));
+long	 ftell __P((FILE *));
 size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
