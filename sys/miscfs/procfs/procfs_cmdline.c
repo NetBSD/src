@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.5 1999/04/27 06:02:09 thorpej Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.6 1999/07/22 18:13:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -83,7 +83,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	 * System processes also don't have a user stack.  This is what
 	 * ps(1) would display.
 	 */
-	if (p->p_stat == SZOMB || (p->p_flag & P_SYSTEM) != 0) {
+	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
 		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm);
 		goto doio;
 	}

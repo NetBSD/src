@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.16 1997/04/28 04:49:34 mycroft Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.17 1999/07/22 18:13:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -269,7 +269,7 @@ procfs_control(curp, p, op, sig)
 		/*
 		 * Wait for the target process to stop.
 		 */
-		while (p->p_stat != SSTOP && p->p_stat != SZOMB) {
+		while (p->p_stat != SSTOP && P_ZOMBIE(p)) {
 			error = tsleep(p, PWAIT|PCATCH, "procfsx", 0);
 			if (error)
 				return (error);

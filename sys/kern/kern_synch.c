@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.59 1999/04/21 02:37:07 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.60 1999/07/22 18:13:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -662,6 +662,7 @@ setrunnable(p)
 	case 0:
 	case SRUN:
 	case SZOMB:
+	case SDEAD:
 	default:
 		panic("setrunnable");
 	case SSTOP:

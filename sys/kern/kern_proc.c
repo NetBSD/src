@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.31 1998/09/08 23:47:49 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.32 1999/07/22 18:13:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -75,8 +75,17 @@ struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
 
 struct proclist allproc;
-struct proclist deadproc;	/* dead, but not yet undead */
 struct proclist zombproc;	/* resources have been freed */
+
+/*
+ * Locking of this proclist is special; it's accessed in a
+ * critical section of process exit, and thus locking it can't
+ * modify interrupt state.  We use a simple spin lock for this
+ * proclist.  Processes on this proclist are also on zombproc;
+ * we use the p_hash member to linkup to deadproc.
+ */
+struct simplelock deadproc_slock;
+struct proclist deadproc;	/* dead, but not yet undead */
 
 struct pool proc_pool;
 struct pool pcred_pool;
@@ -91,7 +100,6 @@ struct pool rusage_pool;
  */
 const struct proclist_desc proclists[] = {
 	{ &allproc	},
-	{ &deadproc	},
 	{ &zombproc	},
 	{ NULL		},
 };
@@ -111,6 +119,9 @@ procinit()
 
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
+
+	LIST_INIT(&deadproc);
+	simple_lock_init(&deadproc_slock);
 
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);
@@ -359,7 +370,7 @@ fixjobc(p, pgrp, entering)
 	for (p = p->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
 		if ((hispgrp = p->p_pgrp) != pgrp &&
 		    hispgrp->pg_session == mysession &&
-		    p->p_stat != SZOMB) {
+		    P_ZOMBIE(p) == 0) {
 			if (entering)
 				hispgrp->pg_jobc++;
 			else if (--hispgrp->pg_jobc == 0)

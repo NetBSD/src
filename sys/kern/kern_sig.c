@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.89 1999/04/30 21:23:49 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.90 1999/07/22 18:13:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -655,7 +655,7 @@ killpg1(cp, signum, pgid, all)
 			    !CANSIGNAL(cp, pc, p, signum))
 				continue;
 			nfound++;
-			if (signum && p->p_stat != SZOMB)
+			if (signum && P_ZOMBIE(p) == 0)
 				psignal(p, signum);
 		}
 	}
@@ -920,7 +920,7 @@ psignal(p, signum)
 
 	default:
 		/*
-		 * SRUN, SIDL, SZOMB do nothing with the signal,
+		 * SRUN, SIDL, SDEAD, SZOMB do nothing with the signal,
 		 * other than kicking ourselves if we are running.
 		 * It will either never be noticed, or noticed very soon.
 		 */

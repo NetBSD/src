@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.78 1999/07/15 23:18:42 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.79 1999/07/22 18:13:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -44,6 +44,7 @@
 #define	_SYS_PROC_H_
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
+#include <sys/lock.h>
 #include <sys/queue.h>
 
 /*
@@ -210,6 +211,9 @@ struct	proc {
 #define	SSLEEP	3		/* Sleeping on an address. */
 #define	SSTOP	4		/* Process debugging or suspension. */
 #define	SZOMB	5		/* Awaiting collection by parent. */
+#define	SDEAD	6		/* Process is almost a zombie. */
+
+#define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00001	/* Process may hold a POSIX advisory lock. */
@@ -314,8 +318,10 @@ extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 
 extern struct proclist allproc;		/* List of all processes. */
-extern struct proclist deadproc;	/* List of dead processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
+
+extern struct proclist deadproc;	/* List of dead processes. */
+extern struct simplelock deadproc_slock;
 
 struct proc *initproc;			/* Process slots for init, pager. */
 
