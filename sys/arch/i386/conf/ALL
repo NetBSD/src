@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.24 1993/09/06 23:35:19 mycroft Exp $
+#	$Id: ALL,v 1.25 1993/09/07 00:25:50 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -105,31 +105,63 @@ device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
 #bus mice
+# Microft InPort
 device		mms0	at isa? port "IO_BMS1" tty irq 5 vector mmsintr
+# Logitech
 device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
-device		pms0	at isa? port "IO_KBD" tty irq 5 vector pmsintr
+# PS/2 auxiliary port; BROKEN
+#device		pms0	at isa? port "IO_KBD" tty irq 5 vector pmsintr
 
 #scsi
 controller	scbus0
 
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
-controller	ahb0	at isa? bio irq 11  vector ahbintr
+device		sd0	at aha0 flags 0 drive ?
+device		sd1	at aha0 flags 0 drive ?
+device		sd2	at aha0 flags 0 drive ?
+device		sd3	at aha0 flags 0 drive ?
+device		st0	at aha0 flags 1 drive ?
+device		st1	at aha0 flags 1 drive ?
+device		cd0	at aha0 flags 2 drive ?
+device		cd1	at aha0 flags 2 drive ?
+device	        ch0	at aha0 flags 3 drive ?
+device	        ch1	at aha0 flags 3 drive ?
+
+controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
+device		sd0	at ahb0 flags 0 drive ?
+device		sd1	at ahb0 flags 0 drive ?
+device		sd2	at ahb0 flags 0 drive ?
+device		sd3	at ahb0 flags 0 drive ?
+device		st0	at ahb0 flags 1 drive ?
+device		st1	at ahb0 flags 1 drive ?
+device		cd0	at ahb0 flags 2 drive ?
+device		cd1	at ahb0 flags 2 drive ?
+device	        ch0	at ahb0 flags 3 drive ?
+device	        ch1	at ahb0 flags 3 drive ?
+
 controller	bt0	at isa? port "IO_BT0" bio irq 11  vector btintr
+device		sd0	at bt0 flags 0 drive ?
+device		sd1	at bt0 flags 0 drive ?
+device		sd2	at bt0 flags 0 drive ?
+device		sd3	at bt0 flags 0 drive ?
+device		st0	at bt0 flags 1 drive ?
+device		st1	at bt0 flags 1 drive ?
+device		cd0	at bt0 flags 2 drive ?
+device		cd1	at bt0 flags 2 drive ?
+device	        ch0	at bt0 flags 3 drive ?
+device	        ch1	at bt0 flags 3 drive ?
+
 controller	uha0	at isa? port "IO_UHA0" bio irq 11 drq 5 vector uhaintr
-
-device		sd0
-device		sd1
-device		sd2
-device		sd3
-
-device		st0
-device		st1
-
-device		cd0
-device		cd1
-
-device	        ch0
-device	        ch1
+device		sd0	at uha0 flags 0 drive ?
+device		sd1	at uha0 flags 0 drive ?
+device		sd2	at uha0 flags 0 drive ?
+device		sd3	at uha0 flags 0 drive ?
+device		st0	at uha0 flags 1 drive ?
+device		st1	at uha0 flags 1 drive ?
+device		cd0	at uha0 flags 2 drive ?
+device		cd1	at uha0 flags 2 drive ?
+device	        ch0	at uha0 flags 3 drive ?
+device	        ch1	at uha0 flags 3 drive ?
 
 #ethernet
 device ne0 at isa? port 0x300 net irq 9 vector neintr
