@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.32 1995/04/07 17:37:10 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.33 1995/06/02 14:52:34 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -121,9 +121,6 @@ msdosfs_create(ap)
 		goto bad;
 	}
 
-	bzero(&ndirent, sizeof(ndirent));
-	unix2dostime(NULL, &ndirent.de_Date, &ndirent.de_Time);
-
 	/*
 	 * Create a directory entry for the file, then call createde() to
 	 * have it installed. NOTE: DOS files are always executable.  We
@@ -134,8 +131,11 @@ msdosfs_create(ap)
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("msdosfs_create: no name");
 #endif
+	bzero(&ndirent, sizeof(ndirent));
+	unix2dostime(NULL, &ndirent.de_Date, &ndirent.de_Time);
 	unix2dosfn((u_char *)cnp->cn_nameptr, ndirent.de_Name, cnp->cn_namelen);
-	ndirent.de_Attributes = (ap->a_vap->va_mode & VWRITE) ? 0 : ATTR_READONLY;
+	ndirent.de_Attributes = (ap->a_vap->va_mode & VWRITE) ?
+				ATTR_ARCHIVE : ATTR_ARCHIVE | ATTR_READONLY;
 	ndirent.de_StartCluster = 0;
 	ndirent.de_FileSize = 0;
 	ndirent.de_dev = pdep->de_dev;
@@ -332,6 +332,11 @@ msdosfs_setattr(ap)
 			return (error);
 	}
 	if (vap->va_mtime.ts_sec != VNOVAL) {
+		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		    (error = suser(cred, &p->ap->a_p_acflag)) &&
+		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
+			return (error);
 		dep->de_flag |= DE_UPDATE;
 		if (error = deupdat(dep, &vap->va_mtime, 1))
 			return (error);
@@ -342,7 +347,10 @@ msdosfs_setattr(ap)
 	 * attribute.
 	 */
 	if (vap->va_mode != (mode_t)VNOVAL) {
-		/* We ignore the read and execute bits */
+		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		    (error = suser(cred, &ap->a_p->p_acflag)))
+			return (error);
+		/* We ignore the read and execute bits. */
 		if (vap->va_mode & VWRITE)
 			dep->de_Attributes &= ~ATTR_READONLY;
 		else
@@ -353,6 +361,9 @@ msdosfs_setattr(ap)
 	 * Allow the `archived' bit to be toggled.
 	 */
 	if (vap->va_flags != VNOVAL) {
+		if (cred->cr_uid != dep->de_pmp->pm_uid &&
+		    (error = suser(cred, &ap->a_p->p_acflag)))
+			return (error);
 		if (vap->va_flags & SF_ARCHIVED)
 			dep->de_Attributes &= ~ATTR_ARCHIVE;
 		else
