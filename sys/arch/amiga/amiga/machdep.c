@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1996/05/19 09:13:56 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 1996/05/19 14:55:31 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -500,6 +500,7 @@ identifycpu()
 	char cpubuf[16];
 	u_int32_t pcr;
 #endif
+
 #ifdef DRACO
 	char machbuf[16];
 
@@ -518,6 +519,7 @@ identifycpu()
 		mach = "Amiga 500/2000";
 
 	fpu = NULL;
+#ifdef M68060
 	if (machineid & AMIGA_68060) {
 		asm(".word 0x4e7a,0x0808; movl d0,%0" : "=d"(pcr) : : "d0");
 		sprintf(cpubuf, "68%s060 rev.%d",
@@ -526,7 +528,9 @@ identifycpu()
 		mmu = "/MMU";
 		fpu = "/FPU";
 		fputype = FPU_68040; /* XXX */
-	} else if (machineid & AMIGA_68040) {
+	} else 
+#endif
+	if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		fpu = "/FPU";
@@ -1194,11 +1198,13 @@ initcpu()
 	extern caddr_t vectab[256];
 #endif
 
+#ifdef M68060
 #if defined(M060SP)
 	extern u_int8_t I_CALL_TOP[];
 	extern u_int8_t FP_CALL_TOP[];
 #else
 	extern u_int8_t illinst;
+#endif
 #endif
 
 #ifdef DRACO
