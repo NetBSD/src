@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.22 2000/03/22 01:35:14 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.23 2000/04/04 19:22:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -112,8 +112,6 @@ struct tulip_cardbus_softc {
 	int	sc_csr;			/* CSR bits */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space
 					   region */
-					/* product info */
-	const struct tulip_cardbus_product *sc_product;
 
 	int	sc_cben;		/* CardBus enables */
 	int	sc_bar_reg;		/* which BAR to use */
@@ -136,16 +134,15 @@ const struct tulip_cardbus_product {
 	u_int32_t	tcp_vendor;	/* PCI vendor ID */
 	u_int32_t	tcp_product;	/* PCI product ID */
 	tulip_chip_t	tcp_chip;	/* base Tulip chip type */
-	int		tcp_pmreg;	/* power management register offset */
 } tlp_cardbus_products[] = {
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142,		0xe0 },
+	  TULIP_CHIP_21142 },
 
 	{ PCI_VENDOR_XIRCOM,		PCI_PRODUCT_XIRCOM_X3201_3_21143,
-	  TULIP_CHIP_X3201_3,		0xe0 },
+	  TULIP_CHIP_X3201_3 },
 
 	{ 0,				0,
-	  TULIP_CHIP_INVALID,		0 },
+	  TULIP_CHIP_INVALID },
 };
 
 void	tlp_cardbus_setup __P((struct tulip_cardbus_softc *));
@@ -213,7 +210,6 @@ tlp_cardbus_attach(parent, self, aux)
 		panic("tlp_cardbus_attach: impossible");
 	}
 	sc->sc_chip = tcp->tcp_chip;
-	csc->sc_product = tcp;
 
 	/*
 	 * By default, Tulip registers are 8 bytes long (4 bytes
@@ -325,11 +321,25 @@ tlp_cardbus_attach(parent, self, aux)
 			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
 		}
 
-		/*
-		 * Bail out now if we can't deal with this board.
-		 */
-		if (sc->sc_mediasw == NULL)
-			goto cant_cope;
+		if (sc->sc_mediasw == NULL) {
+			/*
+			 * If there's no MAC address in the CIS, bail out
+			 * now.
+			 */
+			if (ca->ca_cis.funce.network.netid_present == 0)
+				goto cant_cope;
+
+			/* Grab the MAC address from the CIS. */
+			memcpy(enaddr, ca->ca_cis.funce.network.netid,
+			    sizeof(enaddr));
+
+			/*
+			 * XXX Assume MII-on-SIO.  Should probably use
+			 * XXX CIS strings to determine the GPIO reset
+			 * XXX information.
+			 */
+			sc->sc_mediasw = &tlp_sio_mii_mediasw;
+		}
 		break;
 
 	case TULIP_CHIP_X3201_3:
@@ -352,6 +362,13 @@ tlp_cardbus_attach(parent, self, aux)
 
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
+
+	/*
+	 * The CardBus cards will make it to store-and-forward mode as
+	 * soon as you put them under any kind of load, so just start
+	 * out there.
+	 */
+	sc->sc_txthresh = TXTH_SF;
 
 	/*
 	 * Finish off the attach.
@@ -477,11 +494,11 @@ tlp_cardbus_setup(csc)
 	struct tulip_cardbus_softc *csc;
 {
 	struct tulip_softc *sc = &csc->sc_tulip;
-	const struct tulip_cardbus_product *tcp = csc->sc_product;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
+	int pmreg;
 
 	/*
 	 * Check to see if the device is in power-save mode, and
@@ -505,14 +522,8 @@ tlp_cardbus_setup(csc)
 	}
 
 	if (cardbus_get_capability(cc, cf, csc->sc_tag,
-	    PCI_CAP_PWRMGMT, 0, 0)) {
-		if (tcp->tcp_pmreg == 0) {
-			printf("%s: don't know location of PMCSR for this "
-			    "chip\n", sc->sc_dev.dv_xname);
-			return;
-		}
-		reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-		    tcp->tcp_pmreg) & 0x03;
+	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4) & 0x03;
 #if 1 /* XXX Probably not right for CardBus. */
 		if (reg == 3) {
 			/*
@@ -528,7 +539,7 @@ tlp_cardbus_setup(csc)
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, reg);
 			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    tcp->tcp_pmreg, 0);
+			    pmreg + 4, 0);
 		}
 	}
 

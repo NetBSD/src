@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.32 2000/03/23 07:01:33 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.33 2000/04/04 19:22:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -184,12 +184,54 @@ struct tulip_mediasw {
 };
 
 /*
- * Table which describes the transmit threshold mode.
+ * Table which describes the transmit threshold mode.  We generally
+ * start at index 0.  Whenever we get a transmit underrun, we increment
+ * our index, falling back if we encounter the NULL terminator.
  */
 struct tulip_txthresh_tab {
 	u_int32_t txth_opmode;		/* OPMODE bits */
 	const char *txth_name;		/* name of mode */
 };
+
+#define	TLP_TXTHRESH_TAB_10 {						\
+	{ OPMODE_TR_72,		"72 bytes" },				\
+	{ OPMODE_TR_96,		"96 bytes" },				\
+	{ OPMODE_TR_128,	"128 bytes" },				\
+	{ OPMODE_TR_160,	"160 bytes" },				\
+	{ 0,			NULL },					\
+}
+
+#define	TLP_TXTHRESH_TAB_10_100 {					\
+	{ OPMODE_TR_72,		"72/128 bytes" },			\
+	{ OPMODE_TR_96,		"96/256 bytes" },			\
+	{ OPMODE_TR_128,	"128/512 bytes" },			\
+	{ OPMODE_TR_160,	"160/1024 bytes" },			\
+	{ OPMODE_SF,		"store and forward mode" },		\
+	{ 0,			NULL },					\
+}
+
+#define	TXTH_72			0
+#define	TXTH_96			1
+#define	TXTH_128		2
+#define	TXTH_160		3
+#define	TXTH_SF			4
+
+/*
+ * The Winbond 89C840F does transmit threshold control totally
+ * differently.  It simply has a 7-bit field which indicates
+ * the threshold:
+ *
+ *	txth = ((OPMODE & OPMODE_WINB_TTH) >> OPMODE_WINB_TTH_SHIFT) * 16;
+ *
+ * However, we just do Store-and-Forward mode on these chips, since
+ * the DMA engines seem to be flaky.
+ */
+#define	TLP_TXTHRESH_TAB_WINB {						\
+	{ 0,			"store and forward mode" },		\
+	{ 0,			NULL },					\
+}
+
+#define	TXTH_WINB_SF		0
 
 /*
  * Settings for Tulip SIA media.
@@ -387,6 +429,7 @@ struct tulip_softc {
 #define	TULIPF_MRL		0x00000010	/* memory read line okay */
 #define	TULIPF_MRM		0x00000020	/* memory read multi okay */
 #define	TULIPF_MWI		0x00000040	/* memory write inval okay */
+#define	TULIPF_AUTOPOLL		0x00000080	/* chip supports auto-poll */
 #define	TULIPF_LINK_UP		0x00000100	/* link is up (non-MII) */
 #define	TULIPF_LINK_VALID	0x00000200	/* link state valid */
 #define	TULIPF_DOINGAUTO	0x00000400	/* doing autoneg (non-MII) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.59 2000/04/02 23:38:05 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.60 2000/04/04 19:22:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -92,53 +92,14 @@
 
 const char *tlp_chip_names[] = TULIP_CHIP_NAMES;
 
-/*
- * The following tables compute the transmit threshold mode.  We start
- * at index 0.  When ever we get a transmit underrun, we increment our
- * index, falling back if we encounter the NULL terminator.
- *
- * Note: Store and forward mode is only available on the 100mbps chips
- * (21140 and higher).
- */
-const struct tulip_txthresh_tab tlp_10_txthresh_tab[] = {
-	{ OPMODE_TR_72,		"72 bytes" },
-	{ OPMODE_TR_96,		"96 bytes" },
-	{ OPMODE_TR_128,	"128 bytes" },
-	{ OPMODE_TR_160,	"160 bytes" },
-	{ 0,			NULL },
-};
+const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
+    TLP_TXTHRESH_TAB_10;
 
-const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] = {
-	{ OPMODE_TR_72,		"72/128 bytes" },
-	{ OPMODE_TR_96,		"96/256 bytes" },
-	{ OPMODE_TR_128,	"128/512 bytes" },
-	{ OPMODE_TR_160,	"160/1024 bytes" },
-	{ OPMODE_SF,		"store and forward mode" },
-	{ 0,			NULL },
-};
+const struct tulip_txthresh_tab tlp_10_100_txthresh_tab[] =
+    TLP_TXTHRESH_TAB_10_100;
 
-#define	TXTH_72		0
-#define	TXTH_96		1
-#define	TXTH_128	2
-#define	TXTH_160	3
-#define	TXTH_SF		4
-
-/*
- * The Winbond 89C840F does transmit threshold control totally
- * differently.  It simply has a 7-bit field which indicates
- * the threshold:
- *
- *	txth = ((OPMODE & OPMODE_WINB_TTH) >> OPMODE_WINB_TTH_SHIFT) * 16;
- *
- * However, we just do Store-and-Forward mode on these chips, since
- * the DMA engines seem to be flaky.
- */
-const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] = {
-	{ 0,			"store and forward mode" },
-	{ 0,			NULL },
-};
-
-#define	TXTH_WINB_SF	0
+const struct tulip_txthresh_tab tlp_winb_txthresh_tab[] =
+    TLP_TXTHRESH_TAB_WINB;
 
 void	tlp_start __P((struct ifnet *));
 void	tlp_watchdog __P((struct ifnet *));
