@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: psl.h,v 1.2 2001/03/31 12:22:37 toshii Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -100,7 +100,7 @@ void setsoftintr	__P((u_int intrmask));
 
 extern int current_spl_level;
 
-extern u_int spl_masks[_SPL_LEVELS];
+extern u_int spl_masks[_SPL_LEVELS + 1];
 extern u_int spl_smasks[_SPL_LEVELS];
 #endif /* _LOCORE */
 #endif /* _KERNEL */
