@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.17 1995/04/09 05:08:36 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.18 1995/04/13 21:54:55 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -158,19 +158,17 @@ le_attach(parent, self, aux)
 	 */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = lecd.cd_name;
-	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
 	ifp->if_ioctl = leioctl;
 	ifp->if_watchdog = lewatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef IFF_NOTRAILERS
-	/* XXX still compile when the blasted things are gone... */
-	ifp->if_flags |= IFF_NOTRAILERS;
-#endif
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+
+	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_if.if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 }
 
@@ -778,15 +776,8 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			leinit(sc);	/* before arpwhohas */
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_ac, &IA_SIN(ifa)->sin_addr);
+			leinit(sc);
+			arp_ifinit(&sc->sc_ac, ifa);
 			break;
 #endif
 #ifdef NS
