@@ -1,6 +1,6 @@
-/*	$NetBSD: compat.c,v 1.1.1.9 2001/12/06 03:46:13 itojun Exp $	*/
+/*	$NetBSD: compat.c,v 1.1.1.10 2002/03/08 01:20:43 itojun Exp $	*/
 /*
- * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,8 +24,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.55 2001/12/05 16:54:51 markus Exp $");
+RCSID("$OpenBSD: compat.c,v 1.61 2002/03/06 00:24:39 markus Exp $");
 
+#include "buffer.h"
 #include "packet.h"
 #include "xmalloc.h"
 #include "compat.h"
@@ -73,8 +74,8 @@ compat_datafellows(const char *version)
 		{ "OpenSSH_2.5.0*,"
 		  "OpenSSH_2.5.1*,"
 		  "OpenSSH_2.5.2*",	SSH_OLD_DHGEX|SSH_BUG_NOREKEY },
-		{ "OpenSSH_2.5.3*",
-					SSH_BUG_NOREKEY },
+		{ "OpenSSH_2.5.3*",	SSH_BUG_NOREKEY },
+		{ "Sun_SSH_1.0*",	SSH_BUG_NOREKEY },
 		{ "OpenSSH*",		0 },
 		{ "*MindTerm*",		0 },
 		{ "2.1.0*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
@@ -83,19 +84,19 @@ compat_datafellows(const char *version)
 		{ "2.1 *",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_RSASIGMD5|SSH_BUG_HBSERVICE },
-		{ "2.0.13*,"	
-		  "2.0.14*,"	
-		  "2.0.15*,"	
-		  "2.0.16*,"	
-		  "2.0.17*,"	
-		  "2.0.18*,"	
+		{ "2.0.13*,"
+		  "2.0.14*,"
+		  "2.0.15*,"
+		  "2.0.16*,"
+		  "2.0.17*,"
+		  "2.0.18*,"
 		  "2.0.19*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
 					SSH_BUG_PKOK|SSH_BUG_RSASIGMD5|
 					SSH_BUG_HBSERVICE|SSH_BUG_OPENFAILURE|
 					SSH_BUG_DUMMYCHAN },
-		{ "2.0.11*,"	
+		{ "2.0.11*,"
 		  "2.0.12*",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
@@ -125,7 +126,7 @@ compat_datafellows(const char *version)
 		{ "1.3.2*",		SSH_BUG_IGNOREMSG },	/* f-secure */
 		{ "*SSH Compatible Server*",			/* Netscreen */
 					SSH_BUG_PASSWORDPAD },
-		{ "*OSU_0*,"		
+		{ "*OSU_0*,"
 		  "OSU_1.0*,"
 		  "OSU_1.1*,"
 		  "OSU_1.2*,"
@@ -183,24 +184,25 @@ proto_spec(const char *spec)
 char *
 compat_cipher_proposal(char *cipher_prop)
 {
+	Buffer b;
 	char *orig_prop, *fix_ciphers;
 	char *cp, *tmp;
-	size_t len;
 
 	if (!(datafellows & SSH_BUG_BIGENDIANAES))
 		return(cipher_prop);
 
-	len = strlen(cipher_prop) + 1;
-	fix_ciphers = xmalloc(len);
-	*fix_ciphers = '\0';
+	buffer_init(&b);
 	tmp = orig_prop = xstrdup(cipher_prop);
 	while ((cp = strsep(&tmp, ",")) != NULL) {
-		if (strncmp(cp, "aes", 3) && strncmp(cp, "rijndael", 8)) {
-			if (*fix_ciphers)
-				strlcat(fix_ciphers, ",", len);
-			strlcat(fix_ciphers, cp, len);
+		if (strncmp(cp, "aes", 3) != 0) {
+			if (buffer_len(&b) > 0)
+				buffer_append(&b, ",", 1);
+			buffer_append(&b, cp, strlen(cp));
 		}
 	}
+	buffer_append(&b, "\0", 1);
+	fix_ciphers = xstrdup(buffer_ptr(&b));
+	buffer_free(&b);
 	xfree(orig_prop);
 	debug2("Original cipher proposal: %s", cipher_prop);
 	debug2("Compat cipher proposal: %s", fix_ciphers);
