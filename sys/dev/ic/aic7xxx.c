@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.9 1996/07/10 22:50:44 explorer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.10 1996/08/10 08:45:17 mycroft Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -2646,7 +2646,12 @@ static void ahc_loadseq(ahc)
 	struct ahc_data *ahc;
 {
         static u_char seqprog[] = {
+#if defined(__FreeBSD__)
 #               include "aic7xxx_seq.h"
+#endif
+#if defined(__NetBSD__)
+#		include <dev/microcode/aic7xxx/aic7xxx_seq.h>
+#endif
 	};
 
 	AHC_OUTB(ahc, SEQCTL, PERRORDIS|SEQRESET|LOADRAM);
