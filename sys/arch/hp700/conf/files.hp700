@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.10 2004/07/25 21:52:56 jkunz Exp $
+#	$NetBSD: files.hp700,v 1.11 2004/07/29 19:10:23 jkunz Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -18,21 +18,35 @@ defflag 			USELEDS
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
+include "dev/pckbport/files.pckbport"
 #
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
 
-# I2O
+#
+# Machine-independent ATA drivers
+#
+include	"dev/ata/files.ata"
+
+#
+# Machine-independent I2O drivers
+#
 include "dev/i2o/files.i2o"
 
 #
-# MI ATAPI drivers
+# Machine-independent USB drivers
 #
-#include "dev/atapiscsi/files.atapiscsi"
-#include "dev/ata/files.ata"
+include	"dev/usb/files.usb"
 
-include "dev/pckbport/files.pckbport"
+#
+# Machine-independent IEEE1394 drivers
+#
+include	"dev/ieee1394/files.ieee1394"
+#
+# PCI Bus support
+#
+include "dev/pci/files.pci"
 
 #
 # ISA Bus support
@@ -44,10 +58,6 @@ include "dev/isa/files.isa"
 #
 include "dev/eisa/files.eisa"
 
-#
-# PCI Bus support
-#
-include "dev/pci/files.pci"
 
 #
 # Gonzo System Connect Bus
@@ -106,9 +116,14 @@ device	mongoose: isabus, eisabus
 attach	mongoose at mainbus
 file	arch/hp700/dev/mongoose.c	mongoose
 
-device	dino: pcibus
-attach	dino at mainbus
+# Dino, GSC to PCI bridge. Includes ps/2, serial, and flying toaster interfaces
+# Cujo is a 64-bit data path Dino
+device	dino { }: pcibus
+attach	dino at phantomas
 file	arch/hp700/dev/dino.c		dino
+
+attach	com at dino with com_dino
+file	arch/hp700/dev/com_dino.c	com_dino
 
 device	sti: wsemuldisplaydev
 attach	sti at mainbus with sti_sgc
@@ -199,12 +214,6 @@ file	arch/hp700/gsc/com_harmony.c	com_harmony
 #device	myri: ether
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
-
-#
-# PC Keyboard controller (ps2)
-#
-
-#include "dev/pckbc/files.pckbc"
 
 #
 # Non-device files
