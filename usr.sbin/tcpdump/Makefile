@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/03/23 00:02:24 bad Exp $	
+#	$NetBSD: Makefile,v 1.14.2.1 1999/10/11 05:38:49 cgd Exp $	
 
 PROG=	tcpdump
 MAN=	tcpdump.8 
@@ -23,6 +23,7 @@ print-hdlc.c print-token.c \
 print-atalk.c print-arp.c parsenfsfh.c machdep.c gmt2local.c bpf_dump.c \
 addrtoname.c print-mobile.c
 SRCS+= version.c
+SRCS+= print-ascii.c print-telnet.c
 
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   
 
