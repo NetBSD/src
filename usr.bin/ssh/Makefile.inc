@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/10/28 15:36:58 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/12/30 14:54:40 sommerfeld Exp $
 
 SSHDIST?= ${.CURDIR}/../../../crypto/dist/ssh
 
@@ -6,7 +6,7 @@ CPPFLAGS+=-I${SSHDIST}
 .PATH: ${SSHDIST}
 
 .if defined(PROG)
-LIBSSHOBJDIR != cd ${.CURDIR}/../libssh && ${MAKE} print-objdir
+LIBSSHOBJDIR != cd ${.CURDIR}/../libssh && ${PRINTOBJDIR}
 LDADD+= -L${LIBSSHOBJDIR} -lssh
 DPADD+= ${LIBSSHOBJDIR}/libssh.a
 .endif
