@@ -38,7 +38,7 @@
  * from: Utah $Hdr: st.c 1.8 90/10/14$
  *
  *      @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.13 1994/02/20 21:15:46 chopps Exp $
+ *	$Id: st.c,v 1.14 1994/04/10 23:16:29 chopps Exp $
  */
 
 /*
@@ -456,11 +456,10 @@ stident(sc, ad)
 		sc->sc_tapeid = MT_ISTZ30;
 		printf ("st%d: tape drive is DEC TZ30\n", ad->amiga_unit);
 	}
-	if (st_pretend_tobe_mt != 0)
-		sc->sc_tapeid = st_pretend_tobe_mt;
 	for (i = 0, parm = st_tape_table; i < NST_TYPES; ++i, ++parm) {
-		if (bcmp (&idstr[8], parm->venid, parm->venlen) == 0 ||
-		    parm->tapeid == sc->sc_tapeid) {
+		if (bcmp(&idstr[8], parm->venid, parm->venlen) == 0 ||
+		    parm->tapeid == sc->sc_tapeid ||
+		    parm->tapeid == st_pretend_tobe_mt) {
 			sc->sc_tapeid = parm->tapeid;
 			sc->sc_datalen[CMD_REQUEST_SENSE] = parm->senselen;
 			sc->sc_datalen[CMD_INQUIRY] = parm->inquirylen;
