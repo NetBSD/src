@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/06 16:36:04 ragge Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/27 09:33:30 ragge Exp $
 
 S=	${.CURDIR}/../../../../
 
 PROG=	boot
 NOMAN=	1
 DEVS=	hp.c ctu.c ra.c tmscp.c mfm.c if_qe.c if_le.c if_ze.c
-SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.c \
-	urem.c udiv.c consio.c str.c ${DEVS}
+SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
+	urem.s udiv.s consio.c str.s ${DEVS}
 
 CLEANFILES+=${PROG} ${PROG}.mop
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE
