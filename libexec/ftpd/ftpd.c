@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.31 1997/08/25 19:31:48 kleink Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.32 1997/08/26 13:10:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.31 1997/08/25 19:31:48 kleink Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.32 1997/08/26 13:10:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -265,7 +265,7 @@ main(argc, argv, envp)
 		case 't':
 		case 'T':
 		case 'u':
-			warnx("-%c has be deprecated in favour of ftpd.conf",
+			warnx("-%c has been deprecated in favour of ftpd.conf",
 			    ch);
 			break;
 
