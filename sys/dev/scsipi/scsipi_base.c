@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.12 2001/03/28 09:39:40 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.13 2001/04/03 15:27:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1073,6 +1073,8 @@ scsipi_done(xs)
 	 */
 	if (XS_CTL_TAGTYPE(xs) != 0)
 		scsipi_put_tag(xs);
+	else
+		periph->periph_flags &= ~PERIPH_UNTAG;
 
 	/* Mark the command as `done'. */
 	xs->xs_status |= XS_STS_DONE;
@@ -1539,7 +1541,8 @@ scsipi_run_queue(chan)
 		     xs = TAILQ_NEXT(xs, channel_q)) {
 			periph = xs->xs_periph;
 
-			if ((periph->periph_active > periph->periph_openings) ||			    periph->periph_qfreeze != 0)
+			if ((periph->periph_active > periph->periph_openings) ||			    periph->periph_qfreeze != 0 ||
+			    (periph->periph_flags & PERIPH_UNTAG) != 0)
 				continue;
 
 			if ((periph->periph_flags &
@@ -1601,6 +1604,8 @@ scsipi_run_queue(chan)
 		 */
 		if (XS_CTL_TAGTYPE(xs) != 0)
 			scsipi_get_tag(xs);
+		else
+			periph->periph_flags |= PERIPH_UNTAG;
 		splx(s);
 
 		scsipi_adapter_request(chan, ADAPTER_REQ_RUN_XFER, xs);
