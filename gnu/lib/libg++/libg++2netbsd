@@ -1,0 +1,643 @@
+#!/usr/gnu/bin/perl
+#
+#	$NetBSD: libg++2netbsd,v 1.1.1.1 1996/03/09 00:00:57 phil Exp $
+#
+#  Perl script to convert a standard distribution directory for libg++ into
+#	a NetBSD source tree.
+#
+#  This is done as a script so that as each distribution is released,
+#	only changes from the previous one need to be dealt with as
+#	modifications to this script and related files.  This should
+#	reduce the cost of updating from a new release of gcc by an
+#	order of magnitude (or more?)
+#
+#  Written by Phil Nelson,  December 13, 1995.  (for libg++-2.7.1)
+#
+
+$version = "2.7.1";
+$srcdir = $ENV{'SRCDIR'};
+if (!$srcdir) { $srcdir = "libg++-$version" };
+$targetdir = "libg++";
+
+# definitions ...
+
+@subdirs = ("include", "include/gen", "libg++", "libg++/genclass",
+	    "libg++/src", "libio", "libiostream", "libstdc++",
+	    "libstdc++/std", "libstdc++/stl");
+
+@gf = ("ACG.cc", "AllocRing.cc", "Binomial.cc", "BitSet.cc",
+       "BitString.cc", "CursesW.cc", "DLList.cc", "DiscUnif.cc",
+       "Erlang.cc", "Fix.cc", "Fix16.cc", "Fix24.cc", "Geom.cc",
+       "GetOpt.cc", "HypGeom.cc", "Intdouble.cc", "Integer.cc",
+       "LogNorm.cc", "MLCG.cc", "NegExp.cc", "Normal.cc",
+       "Obstack.cc", "Poisson.cc", "RNG.cc", "Random.cc",
+       "Rational.cc", "Regex.cc", "RndInt.cc", "SLList.cc",
+       "SmplHist.cc", "SmplStat.cc", "String.cc", "Uniform.cc",
+       "Weibull.cc", "bitand.c", "bitany.c", "bitblt.c", "bitclear.c",
+       "bitcopy.c", "bitcount.c", "bitinvert.c", "bitlcomp.c",
+       "bitset1.c", "bitxor.c", "builtin.cc", "chr.cc", "compare.cc",
+       "error.cc", "fmtq.cc", "gcd.cc", "hash.cc", "ioob.cc", "lg.cc",
+       "pow.cc", "sqrt.cc", "str.cc", "timer.c");
+
+@gh = ("ACG.h", "AllocRing.h", "Binomial.h", "BitSet.h",
+       "BitString.h", "Complex.h", "CursesW.h", "DLList.h",
+       "DiscUnif.h", "Erlang.h", "Fix.h", "Fix16.h", "Fix24.h",
+       "Geom.h", "GetOpt.h", "HypGeom.h", "Incremental.h",
+       "Integer.h", "Integer.hP", "LogNorm.h", "MLCG.h", "NegExp.h",
+       "Normal.h", "Obstack.h", "Pix.h", "Poisson.h", "RNG.h",
+       "Random.h", "Rational.h", "Regex.h", "RndInt.h", "SLList.h",
+       "SmplHist.h", "SmplStat.h", "String.h", "Uniform.h",
+       "Weibull.h", "bitdo1.h", "bitdo2.h", "bitprims.h", "bool.h",
+       "builtin.h", "compare.h", "generic.h", "getpagesize.h",
+       "libc.h", "minmax.h", "osfcn.h", "std.h", "strclass.h",
+       "swap.h", "sysent.h", "typemacros.h" );
+
+@iosf = ("PlotFile.cc", "SFile.cc", "builtinbuf.cc", "editbuf.cc",
+        "filebuf.cc", "fstream.cc", "indstream.cc", "ioassign.cc",
+        "ioextend.cc", "iomanip.cc", "iostream.cc", "isgetline.cc",
+        "isgetsb.cc", "isscan.cc", "osform.cc", "parsestream.cc",
+        "pfstream.cc", "procbuf.cc", "sbform.cc", "sbgetline.cc",
+        "sbscan.cc", "stdiostream.cc", "stdstrbufs.cc",
+        "stdstreams.cc", "stream.cc", "streambuf.cc", "strstream.cc",
+        "cleanup.c", "filedoalloc.c", "fileops.c", "floatconv.c",
+        "genops.c", "iofclose.c", "iofgetpos.c", "iofread.c",
+        "iofscanf.c", "iofsetpos.c", "iogetdelim.c", "iogetline.c",
+        "ioignore.c", "iopadn.c", "iopopen.c", "ioprims.c",
+        "ioprintf.c", "ioseekoff.c", "ioseekpos.c", "iostrerror.c",
+        "ioungetc.c", "iovfprintf.c", "iovfscanf.c", "outfloat.c",
+        "strops.c", );
+
+@iosh = ("PlotFile.h", "SFile.h", "builtinbuf.h",
+        "editbuf.h", "floatio.h", "fstream.h", "indstream.h",
+        "iolibio.h", "iomanip.h", "iostdio.h", "iostream.h",
+        "iostreamP.h", "istream.h", "libio.h", "libioP.h",
+        "ostream.h", "parsestream.h", "pfstream.h", "procbuf.h",
+        "stdiostream.h", "stream.h", "streambuf.h", "strfile.h",
+        "strstream.h" );
+
+@iof = ("cleanup.c", "filedoalloc.c", "fileops.c", "floatconv.c",
+	"genops.c", "iofclose.c", "iofdopen.c", "iofflush.c",
+	"iofgetpos.c", "iofgets.c", "iofopen.c", "iofprintf.c",
+	"iofputs.c", "iofread.c", "iofscanf.c", "iofsetpos.c",
+	"ioftell.c", "iofwrite.c", "iogetdelim.c", "iogetline.c",
+	"iogets.c", "ioignore.c", "iopadn.c", "ioperror.c",
+	"iopopen.c", "ioprims.c", "ioprintf.c", "ioputs.c",
+	"ioscanf.c", "ioseekoff.c", "ioseekpos.c", "iosetbuffer.c",
+	"iosetvbuf.c", "iosprintf.c", "iosscanf.c", "iostrerror.c",
+	"ioungetc.c", "iovfprintf.c", "iovfscanf.c", "iovsprintf.c",
+	"iovsscanf.c", "outfloat.c", "stdfiles.c", "strops.c");
+
+@iocf = ("iofdopen.c", "iofflush.c", "iofgets.c", "iofopen.c",
+	"iofprintf.c", "iofputs.c", "ioftell.c", "iofwrite.c",
+	"iogets.c", "ioperror.c", "ioputs.c", "ioscanf.c",
+	"iosetbuffer.c", "iosetvbuf.c", "iosprintf.c", "iosscanf.c",
+	"iovsprintf.c", "iovsscanf.c", "stdfiles.c");
+
+@genclf = ("genclass.sh");
+
+@genf = ("AVLMap.ccP", "AVLMap.hP", "AVLSet.ccP", "AVLSet.hP",
+         "AVec.ccP", "AVec.hP", "BSTSet.ccP", "BSTSet.hP", "Bag.ccP",
+         "Bag.hP", "CHBag.ccP", "CHBag.hP", "CHMap.ccP", "CHMap.hP",
+         "CHNode.ccP", "CHNode.hP", "CHSet.ccP", "CHSet.hP",
+         "DLDeque.ccP", "DLDeque.hP", "DLList.ccP", "DLList.hP",
+         "Deque.ccP", "Deque.hP", "FPQueue.ccP", "FPQueue.hP",
+         "FPStack.ccP", "FPStack.hP", "FPlex.ccP", "FPlex.hP",
+         "List.ccP", "List.hP", "MPlex.ccP", "MPlex.hP", "Map.ccP",
+         "Map.hP", "OSLBag.ccP", "OSLBag.hP", "OSLSet.ccP",
+         "OSLSet.hP", "OXPBag.ccP", "OXPBag.hP", "OXPSet.ccP",
+         "OXPSet.hP", "PHPQ.ccP", "PHPQ.hP", "PQ.ccP", "PQ.hP",
+         "PSList.hP", "PVec.hP", "Plex.ccP", "Plex.hP", "Queue.ccP",
+         "Queue.hP", "RAVLMap.ccP", "RAVLMap.hP", "RPlex.ccP",
+         "RPlex.hP", "SLBag.ccP", "SLBag.hP", "SLList.ccP",
+         "SLList.hP", "SLQueue.ccP", "SLQueue.hP", "SLSet.ccP",
+         "SLSet.hP", "SLStack.ccP", "SLStack.hP", "Set.ccP", "Set.hP",
+         "SkipBag.ccP", "SkipBag.hP", "SkipMap.ccP", "SkipMap.hP",
+         "SkipSet.ccP", "SkipSet.hP", "SplayBag.ccP", "SplayBag.hP",
+         "SplayMap.ccP", "SplayMap.hP", "SplayNode.ccP",
+         "SplayNode.hP", "SplayPQ.ccP", "SplayPQ.hP", "SplaySet.ccP",
+         "SplaySet.hP", "Stack.ccP", "Stack.hP", "VHBag.ccP",
+         "VHBag.hP", "VHMap.ccP", "VHMap.hP", "VHSet.ccP", "VHSet.hP",
+         "VOHSet.ccP", "VOHSet.hP", "VQueue.ccP", "VQueue.hP",
+         "VStack.ccP", "VStack.hP", "Vec.ccP", "Vec.hP", "XPBag.ccP",
+         "XPBag.hP", "XPDeque.ccP", "XPDeque.hP", "XPPQ.ccP",
+         "XPPQ.hP", "XPQueue.ccP", "XPQueue.hP", "XPSet.ccP",
+         "XPSet.hP", "XPStack.ccP", "XPStack.hP", "XPlex.ccP",
+         "XPlex.hP", "defs.hP", "intSList.hP", "intVec.hP" );
+
+@lstdcf =("cmathi.cc", "cstdlibi.cc", "cstringi.cc", "exceptioni.cc",
+	  "newi.cc", "stddefi.cc", "stdexcepti.cc", "typeinfoi.cc");
+
+@lstdcf2 = ("cstrmain.cc", "cstrio.cc", "fcomplex.cc", "fcomio.cc",
+	    "dcomplex.cc", "dcomio.cc", "ldcomplex.cc", "ldcomio.cc");
+
+@lstdcof =("algorithm", "cassert", "cctype", "cerrno", "cfloat",
+	   "ciso646", "climits", "clocale", "cmath", "complex",
+	   "complex.h", "csetjmp", "csignal", "cstdarg", "cstddef",
+	   "cstdio", "cstdlib", "cstring", "ctime", "cwchar",
+	   "cwctype", "deque", "exception", "functional", "iterator",
+	   "list", "map", "memory", "new", "new.h", "numeric",
+	   "queue", "set", "stack", "stddef", "stdexcept", "stl.h",
+	   "string", "typeinfo", "utility", "vector", "cinst.cc",
+	   "sinst.cc" );
+
+@stdf = ("bastring.cc",  "complext.cc");
+
+@stdof = ("bastring.h", "cassert.h", "cctype.h", "cerrno.h",
+	  "cfloat.h", "cinst.h", "ciso646.h", "climits.h",
+	  "clocale.h", "cmath.h", "complex.h", "complext.h",
+	  "csetjmp.h", "csignal.h", "cstdarg.h", "cstddef.h",
+	  "cstdio.h", "cstdlib.h", "cstring.h", "ctime.h", "cwchar.h",
+	  "cwctype.h", "dcomplex.h", "exception.h", "fcomplex.h",
+	  "ldcomplex.h", "new.h", "sinst.h", "stddef.h",
+	  "stdexcept.h", "straits.h", "string.h", "typeinfo.h" );
+
+@stlf = ("random.cc", "tempbuf.cc", "tree.cc");
+
+@stlof = ("algo.h", "algobase.h", "bvector.h", "defalloc.h",
+	 "deque.h", "faralloc.h", "fdeque.h", "flist.h", "fmap.h",
+	 "fmultmap.h", "fmultset.h", "fset.h", "function.h", "hdeque.h",
+	 "heap.h", "hlist.h", "hmap.h", "hmultmap.h", "hmultset.h",
+	 "hset.h", "hugalloc.h", "hvector.h", "iterator.h", "lbvector.h",
+	 "ldeque.h", "list.h", "llist.h", "lmap.h", "lmultmap.h",
+	 "lmultset.h", "lngalloc.h", "lset.h", "map.h", "multimap.h",
+	 "multiset.h", "neralloc.h", "nmap.h", "nmultmap.h", "nmultset.h",
+	 "nset.h", "pair.h", "projectn.h", "set.h", "stack.h", "tempbuf.h",
+	 "tree.h", "vector.h");
+
+# sed edit list: file, sed-program
+@sedlist = (
+    "libg++/genclass/genclass.sh", "'s/<VERSION>/$version/g'",
+    "libg++/genclass/genclass.sh",
+	    "'s/^PROTODIR=.*\$/PROTODIR=\\/usr\\/include\\/g++\\/gen/g'");
+
+#
+# Utility Subroutines
+#
+
+# &copyfiles (fromdir, todir, list of files);
+sub copyfiles {
+    local ($fdir, $tdir, @list) = @_;
+    local ($f);
+
+    foreach $f (@list) {
+	print "  $fdir/$f --> $tdir/$f\n";
+	system ("cp -p $fdir/$f $tdir/$f");
+    }
+}
+
+sub dumpsrcs {
+    local (@names) = @_;
+    local ($count);
+
+    print ODATA "SRCS=\t";
+    $count = 0;
+    foreach $f (@names) {
+        print ODATA "$f ";
+	if ($count == 5) {
+	    print ODATA "\\\n";
+	    $count = 0;
+	} else {
+	    $count += 1;
+	}
+    }
+    if ($count != 0) {
+	print ODATA "\n";
+    }
+}
+
+#  Following functions ritten by Christos Zoulas, January 15, 1996.
+
+sub dumparray {
+    local (@names) = @_;
+
+    foreach $f (@names) {
+	print ODATA "$f ";
+    }
+}
+
+sub dumpfrag {
+    @cstrmain = ("REP", "MAIN", "TRAITS", "ADDSS", "ADDPS", "ADDCS", "ADDSP",
+		 "ADDSC", "EQSS", "EQPS", "EQSP", "NESS", "NEPS", "NESP",
+		 "LTSS", "LTPS", "LTSP", "GTSS", "GTPS", "GTSP", "LESS",
+		 "LEPS", "LESP", "GESS", "GEPS", "GESP");
+
+    @complex = ("MAIN", "ADDCC", "ADDCF", "ADDFC", "SUBCC", "SUBCF", "SUBFC",
+		"MULCC", "MULCF", "MULFC", "DIVCC", "DIVCF", "DIVFC", "PLUS",
+		"MINUS", "EQCC", "EQCF", "EQFC", "NECC", "NECF", "NEFC", "ABS",
+		"ARG", "POLAR", "CONJ", "NORM", "COS", "COSH", "EXP", "LOG", 
+		"POWCC", "POWCF", "POWCI", "POWFC", "SIN", "SINH", "SQRT");
+
+    @cstrio = ("EXTRACT", "INSERT", "GETLINE");
+
+    @comio = ("EXTRACT", "INSERT");
+
+    %prefix = ("ld", "LD", "d", "D", "f", "F");
+
+    print "  Dumping frags\n";
+
+    foreach $f (@lstdcf2) {
+	print ODATA "$f: Makefile\n";
+	print ODATA "\t\@echo Creating $f\n";
+	print ODATA "\t@(for i in ";
+	if ($f eq "cstrmain.cc") {
+		&dumparray(@cstrmain);
+		$inc = "sinst.cc";
+		$fl = "C";
+	} 
+	elsif ($f eq "cstrio.cc") {
+		&dumparray(@cstrio);
+		$inc = "sinst.cc";
+		$fl = "C";
+	} 
+	elsif ($f =~ /(.*)complex\.cc/) {
+		$fl = $prefix{$1};
+		&dumparray(@complex);
+		$inc = "cinst.cc";
+	}
+	elsif ($f =~ /(.*)comio\.cc/) {
+		$fl = $prefix{$1};
+		&dumparray(@comio);
+		$inc = "cinst.cc";
+	}
+	else {
+		die "Unknown target type $f";
+	}
+	print ODATA "; do \\\n";
+	print ODATA "\t\techo \"#define \$\$i\"; \\\n";
+	print ODATA "\t\tdone;\\\n";
+	print ODATA "\techo '#define $fl';\\\n";
+	print ODATA "\tcat \$(.CURDIR)/$inc) > \$(.TARGET)";
+	print ODATA "\nCLEANFILES+=$f\n\n";
+    }
+}
+
+sub dumprtti {
+    local (@name) = @_;
+
+    print "  Dumping rtti for @name\n";
+
+    print ODATA "@name.o: @name.cc\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) -frtti \$(.ALLSRC)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) -frtti \$(.ALLSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@\$(LD) -x -r \$(.TARGET).o -o \$(.TARGET)\n";
+    print ODATA "\t\@rm -f \$(.TARGET).o\n";
+    print ODATA "\n";
+
+    print ODATA "@name.po: @name.cc\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) -p -frtti \$(.ALLSRC) -o \$(.TARGET)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) -p -frtti \$(.ALLSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@\$(LD) -X -r \$(.TARGET).o -o \$(.TARGET)\n";
+    print ODATA "\t\@rm -f \$(.TARGET).o\n";
+    print ODATA "\n";
+
+    print ODATA "@name.so: @name.cc\n";
+    print ODATA "\t\@echo \"\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.ALLSRC) -o \$(.TARGET)\"\n";
+    print ODATA "\t\@\$(COMPILE.cc) \$(PICFLAG) -frtti \$(.ALLSRC) -o \$(.TARGET).o\n";
+    print ODATA "\t\@\$(LD) -x -r \$(.TARGET).o -o \$(.TARGET)\n";
+    print ODATA "\t\@rm -f \$(.TARGET).o\n";
+    print ODATA "\n";
+}
+
+#
+# Main progarm.
+# 
+
+if (!$srcdir) {
+    die "You must define the environment variables SRCDIR.\n"
+} 
+print "Making the NetBSD directory tree.\n";
+mkdir ($targetdir,0777);
+foreach $f (@subdirs) { 
+    print "   -->$f\n";
+    mkdir ("$targetdir/$f",0777);
+}
+
+print "Populating $targetdir.\n";
+&copyfiles ($srcdir, $targetdir, "COPYING");
+
+print "Populating $targetdir/libg++/src\n";
+&copyfiles ("$srcdir/libg++/src", "$targetdir/libg++/src", @gf, @gh);
+# Special file needed.
+&copyfiles ("$srcdir/librx", "$targetdir/libg++/src", "rx.h");
+
+print "Populating $targetdir/libg++/genclass\n";
+&copyfiles ("$srcdir/libg++/genclass", "$targetdir/libg++/genclass", @genclf);
+
+print "Populating $targetdir/libio\n";
+&copyfiles ("$srcdir/libio", "$targetdir/libio", @iocf, @iosf, @iosh);
+
+print "Populating $targetdir/include/gen\n";
+&copyfiles ("$srcdir/libg++/src/gen", "$targetdir/include/gen", @genf);
+
+print "Populating $targetdir/libstdc++\n";
+&copyfiles ("$srcdir/libstdc++", "$targetdir/libstdc++", @lstdcf, @lstdcof);
+
+print "Populating $targetdir/libstdc++/std\n";
+&copyfiles ("$srcdir/libstdc++/std", "$targetdir/libstdc++/std",
+	    @stdf, @stdof);
+
+print "Populating $targetdir/libstdc++/stl\n";
+&copyfiles ("$srcdir/libstdc++/stl", "$targetdir/libstdc++/stl",
+	    @stlf, @stlof);
+
+#
+# Build makefiles
+#
+
+$first = "True";
+while ($line = <DATA>) {
+    chop ($line);
+    if (substr($line,0,2) eq "%%") {
+	@cmd = split (/ /,$line);
+	if ($cmd[1] eq "file") {
+	    print "Building $targetdir/$cmd[2]\n";
+	    if ($first eq "") {
+		close (ODATA);
+	    } else {
+		$first = "";
+	    }
+	    open (ODATA, ">$targetdir/$cmd[2]") ||
+		die "Could now create $targetdir/$cmd[2]";
+	} elsif ($cmd[1] eq "srcs") {
+	    print "  Defining SRCS for $cmd[2]\n";
+	    if ($first) {
+		die "Data section must start with a %% file!";
+	    }
+	    if ($cmd[2] eq "libg++") {
+		&dumpsrcs (@gf);
+	    } elsif ($cmd[2] eq "genclass") {
+		&dumpsrcs (@genclf);
+	    } elsif ($cmd[2] eq "iostream") {
+		&dumpsrcs (@iosf);
+	    } elsif ($cmd[2] eq "io") {
+		&dumpsrcs (@iof);
+	    } elsif ($cmd[2] eq "stdc++") {
+		&dumpsrcs (@iosf, @lstdcf, @lstdcf2, @stlf);
+	    } else {
+		die "Unknown SRCS command";
+	    }
+	} elsif ($cmd[1] eq "rtti") {
+	    &dumprtti($cmd[2]);
+	} elsif ($cmd[1] eq "frag") {
+	    &dumpfrag();
+	} elsif ($cmd[1] eq "NetBSD") {
+	    if ($first) {
+		die "Data section must start with a %% file!";
+	    }
+	    print ODATA "#	\$"."NetBSD".": \$\n";
+	}
+    } else {
+	if ($first) {
+	    die "Data section must start with a %% file!";
+	}
+	print ODATA "$line\n";
+    }
+}    
+close (ODATA);
+
+#
+# Sed transformations of files
+#
+
+for ($i=0; $i<@sedlist; $i+=2) {
+    $f = $sedlist[$i];
+    $p = $sedlist[$i+1];
+    print "Modifying $f\n";
+    system ("cd $targetdir; sed $p $f > tmp;  mv -f tmp $f");
+}
+
+#
+# end of the script
+#
+
+# what follows is the data for makefiles and other special files
+# that need to be created.
+
+__END__
+%% file Makefile
+%% NetBSD
+
+SUBDIR= libg++ libstdc++ # libio libiostream
+
+INCLUDEDIRS= include libg++/src 
+
+beforeinstall:
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/gen
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/std
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/g++/stl
+	@-for i in ${INCLUDEDIRS}; do \
+		echo installing includes from $$i ; \
+		(cd $$i; for j in *.[ih]; do \
+			cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
+			install -c -o ${BINOWN} -g ${BINGRP} -m 644 $$j \
+				${DESTDIR}/usr/include/g++/$$j; \
+		done); \
+	done
+	@echo installing includes from include/gen
+	@(cd include/gen ; for j in *.*P; do \
+		cmp -s $$j ${DESTDIR}/usr/include/g++/gen/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/include/g++/gen/$$j; \
+	done)
+	@echo installing includes from libstdc++/std
+	@(cd libstdc++/std ; for j in *.h; do \
+		cmp -s $$j ${DESTDIR}/usr/libstdc++/g++/std/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/libstdc++/g++/std/$$j; \
+	done)
+	@echo installing includes from libstdc++/stl
+	@(cd libstdc++/stl ; for j in *.h; do \
+		cmp -s $$j ${DESTDIR}/usr/libstdc++/g++/stl/$$j || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
+			${DESTDIR}/usr/libstdc++/g++/stl/$$j; \
+	done)
+
+.include <bsd.subdir.mk>
+%% file libg++/Makefile
+%% NetBSD
+SUBDIR = src genclass
+
+.include <bsd.subdir.mk>
+%% file libg++/genclass/Makefile
+%% NetBSD
+# Makefile for g++ library genclass 
+
+PROG=		genclass
+%% srcs genclass
+NOMAN=
+STRIP=
+
+SRCDIR=${.CURDIR}
+
+BINDIR ?= /usr/bin
+
+genclass:	genclass.sh
+	cp $(SRCDIR)/genclass.sh genclass
+
+.include <bsd.prog.mk>
+
+%% file libg++/src/Makefile
+%% NetBSD
+
+LIB=		g++
+
+%% srcs libg++
+
+CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
+		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++
+CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
+LDADD=		${DESTDIR}/usr/lib/c++rt0.o -lcurses
+DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
+NOMAN=		noman
+LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
+			$(MAKE) -r -s -f - xxx | grep curses
+
+.include <bsd.lib.mk>
+%% file libio/Makefile
+%% NetBSD
+
+LIB=	io
+
+%% srcs io
+
+CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include 
+CFLAGS+=	-I$(.CURDIR)
+NOMAN=		noman
+
+.include <bsd.lib.mk>
+%% file libiostream/Makefile
+%% NetBSD
+
+LIB=	iostream
+
+%% srcs iostream
+
+CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include \
+		  -I$(.CURDIR)/../libio 
+CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio
+NOMAN=		noman
+
+.PATH: $(.CURDIR)/../libio
+
+.include <bsd.lib.mk>
+%% file libstdc++/Makefile
+%% NetBSD
+
+LIB=	stdc++
+
+%% srcs stdc++
+
+CXXFLAGS+=  -nostdinc++ 
+CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
+NOMAN=	    noman
+
+.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl
+
+.include <bsd.lib.mk>
+
+%% frag
+%% rtti typeinfoi
+%% rtti stdexcepti
+
+%% file libio/_G_config.h
+/* AUTOMATICALLY GENERATED; DO NOT EDIT! */ 
+#ifndef _G_config_h
+#define _G_config_h
+#define _G_LIB_VERSION "2.7.1"
+#define _G_NAMES_HAVE_UNDERSCORE 1
+#define _G_VTABLE_LABEL_HAS_LENGTH 1
+#define _G_VTABLE_LABEL_PREFIX "__vt$"
+#define _G_HAVE_ST_BLKSIZE 1
+typedef unsigned long _G_clock_t;
+typedef int _G_dev_t;
+typedef long long _G_fpos_t;
+typedef unsigned int _G_gid_t;
+typedef unsigned int _G_ino_t;
+typedef unsigned short _G_mode_t;
+typedef unsigned short _G_nlink_t;
+typedef long long _G_off_t;
+typedef int _G_pid_t;
+#ifndef __PTRDIFF_TYPE__
+#define __PTRDIFF_TYPE__ int
+#endif
+typedef __PTRDIFF_TYPE__ _G_ptrdiff_t;
+typedef unsigned int _G_sigset_t;
+#ifndef __SIZE_TYPE__
+#define __SIZE_TYPE__ unsigned int
+#endif
+typedef __SIZE_TYPE__ _G_size_t;
+typedef long _G_time_t;
+typedef unsigned int _G_uid_t;
+typedef int _G_wchar_t;
+typedef int _G_ssize_t;
+typedef int /* default */ _G_wint_t;
+typedef char * _G_va_list;
+#define _G_signal_return_type void
+#define _G_sprintf_return_type int
+
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+typedef          int   _G_int8_t __attribute__((__mode__(__QI__)));
+typedef unsigned int  _G_uint8_t __attribute__((__mode__(__QI__)));
+typedef          int  _G_int16_t __attribute__((__mode__(__HI__)));
+typedef unsigned int _G_uint16_t __attribute__((__mode__(__HI__)));
+typedef          int  _G_int32_t __attribute__((__mode__(__SI__)));
+typedef unsigned int _G_uint32_t __attribute__((__mode__(__SI__)));
+typedef          int  _G_int64_t __attribute__((__mode__(__DI__)));
+typedef unsigned int _G_uint64_t __attribute__((__mode__(__DI__)));
+#else
+typedef  short  _G_int16_t;
+typedef unsigned short _G_uint16_t;
+typedef  int  _G_int32_t;
+typedef unsigned int _G_uint32_t;
+#endif
+
+#define _G_BUFSIZ 1024
+#define _G_FOPEN_MAX 20
+#define _G_FILENAME_MAX 1024
+#define _G_NULL 0 /* default */
+#if defined (__cplusplus) || defined (__STDC__)
+#define _G_ARGS(ARGLIST) ARGLIST
+#else
+#define _G_ARGS(ARGLIST) ()
+#endif
+#if !defined (__GNUG__) || defined (__STRICT_ANSI__)
+#define _G_NO_NRV
+#endif
+#if !defined (__GNUG__)
+#define _G_NO_EXTERN_TEMPLATES
+#endif
+#define _G_HAVE_ATEXIT 1
+#define _G_HAVE_SYS_RESOURCE 1
+#define _G_HAVE_SYS_TIMES 1
+#define _G_HAVE_SYS_SOCKET 1
+#define _G_HAVE_SYS_CDEFS 1
+#define _G_HAVE_SYS_WAIT 1
+#define _G_HAVE_UNISTD 1
+#define _G_HAVE_DIRENT 1
+#define _G_HAVE_CURSES 1
+#define _G_MATH_H_INLINES 0
+#define _G_HAVE_BOOL 1
+#endif /* !_G_config_h */
+%% file libg++/src/shlib_version
+major=3
+minor=0
+%% file libiostream/shlib_version
+major=0
+minor=0
+%% file libio/shlib_version
+major=0
+minor=0
+%% file libstdc++/shlib_version
+major=0
+minor=0
+%% file VERSION
+This is libg++ 2.7.1 from the Free Software Foundation.
+
+Complete, unmodified libg++ sources are available from
+prep.ai.mit.edu and prep's mirrors.
+
