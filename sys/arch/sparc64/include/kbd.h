@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: kbd.h,v 1.2 2001/12/04 00:53:19 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,10 @@
  *
  *	@(#)kbd.h	8.1 (Berkeley) 6/11/93
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Keyboard `registers'.  (This should be called kbd_reg.h but we need to
