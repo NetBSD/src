@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.13.4.1 2002/10/19 16:19:43 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.13.4.2 2002/10/24 23:12:56 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.13.4.1 2002/10/19 16:19:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.13.4.2 2002/10/24 23:12:56 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -366,6 +366,8 @@ cpu_hydra_hatch(void)
 	bus_space_write_1(iot, ioh,
 	    HYDRA_HALT_SET, 1 << (cpunum & 3));
 	printf("%s: I am needed?\n", curcpu()->ci_dev->dv_xname);
+	for (;;)
+		continue;
 	SCHED_LOCK(s);
 	cpu_switch(NULL, NULL);
 }
