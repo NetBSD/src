@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1998/07/08 04:43:20 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1998/08/31 14:43:40 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -83,12 +83,12 @@
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work
  */
-#define	VM_MIN_ADDRESS		((vm_offset_t)0)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xfffff000)
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	\
-	((vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT + SEGMENT_LENGTH - 1))
+	((vaddr_t)(KERNEL_SR << ADDR_SR_SHFT + SEGMENT_LENGTH - 1))
 
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)

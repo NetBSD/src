@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.3 1998/08/31 14:16:48 tsubai Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4 1998/08/31 14:43:39 tsubai Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,7 +41,7 @@
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 struct powerpc_saved_state {
 	u_int32_t	r[32];		/* data registers */

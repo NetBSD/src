@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1998/07/08 04:43:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1998/08/31 14:43:41 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -68,7 +68,7 @@ int physmem;
 static int npgs;
 static u_int nextavail;
 #ifdef __NO_FIXED_MSGBUF
-extern vm_offset_t msgbuf_paddr;
+extern paddr_t msgbuf_paddr;
 #endif
 
 static struct mem_region *mem, *avail;
@@ -83,7 +83,7 @@ static char *pmap_attrib;
 struct pv_entry {
 	struct pv_entry *pv_next;	/* Linked list of mappings */
 	int pv_idx;			/* Index into ptable */
-	vm_offset_t pv_va;		/* virtual address of mapping */
+	vaddr_t pv_va;			/* virtual address of mapping */
 };
 
 struct pv_entry *pv_table;
@@ -160,7 +160,7 @@ tlbia()
 static inline int
 ptesr(sr, addr)
 	sr_t *sr;
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 	return sr[(u_int)addr >> ADDR_SR_SHFT];
 }
@@ -168,7 +168,7 @@ ptesr(sr, addr)
 static inline int
 pteidx(sr, addr)
 	sr_t sr;
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 	int hash;
 	
@@ -180,7 +180,7 @@ static inline int
 ptematch(ptp, sr, va, which)
 	pte_t *ptp;
 	sr_t sr;
-	vm_offset_t va;
+	vaddr_t va;
 	int which;
 {
 	return ptp->pte_hi
@@ -192,7 +192,7 @@ ptematch(ptp, sr, va, which)
 #if defined(MACHINE_NEW_NONCONTIG)
 static __inline struct pv_entry *
 pa_to_pv(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int bank, pg;
 
@@ -208,7 +208,7 @@ pa_to_pv(pa)
 
 static __inline char *
 pa_to_attr(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	int bank, pg;
 
@@ -269,7 +269,7 @@ pte_insert(idx, pt)
  */
 int
 pte_spill(addr)
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 	int idx, i;
 	sr_t sr;
@@ -533,8 +533,8 @@ pmap_bootstrap(kernelstart, kernelend)
  */
 void
 pmap_real_memory(start, size)
-	vm_offset_t *start;
-	vm_size_t *size;
+	paddr_t *start;
+	psize_t *size;
 {
 	struct mem_region *mp;
 	
@@ -561,22 +561,22 @@ void
 pmap_init()
 {
 	struct pv_entry *pv;
-	vm_size_t sz;
-	vm_offset_t addr;
+	vsize_t sz;
+	vaddr_t addr;
 	int i, s;
 #if defined(MACHINE_NEW_NONCONTIG)
 	int bank;
 	char *attr;
 #endif
 
-	sz = (vm_size_t)((sizeof(struct pv_entry) + 1) * npgs);
+	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
 #if defined(UVM)
 	/* XXXCDC: ABSOLUTELY WRONG!   uvm_km_zalloc() _CAN_
 		return 0 if out of VM */
-	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, sz);
+	addr = uvm_km_zalloc(kernel_map, sz);
 #else
-	addr = (vm_offset_t)kmem_alloc(kernel_map, sz);
+	addr = kmem_alloc(kernel_map, sz);
 #endif
 	s = splimp();
 	pv = pv_table = (struct pv_entry *)addr;
@@ -608,10 +608,10 @@ pmap_init()
 #if !defined(MACHINE_NEW_NONCONTIG)
 int
 pmap_page_index(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	struct mem_region *mp;
-	vm_size_t pre;
+	psize_t pre;
 	
 	pa &= ~PGOFSET;
 	for (pre = 0, mp = avail; mp->size; mp++) {
@@ -629,12 +629,12 @@ pmap_page_index(pa)
  */
 void
 pmap_virtual_space(start, end)
-	vm_offset_t *start, *end;
+	vaddr_t *start, *end;
 {
 	/*
 	 * Reserve one segment for kernel virtual memory
 	 */
-	*start = (vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT);
+	*start = (vaddr_t)(KERNEL_SR << ADDR_SR_SHFT);
 	*end = *start + SEGMENT_LENGTH;
 }
 
@@ -656,7 +656,7 @@ pmap_free_pages()
  */
 int
 pmap_next_page(paddr)
-	vm_offset_t *paddr;
+	paddr_t *paddr;
 {
 	static int lastidx = -1;
 	
@@ -677,7 +677,7 @@ pmap_next_page(paddr)
  */
 struct pmap *
 pmap_create(size)
-	vm_size_t size;
+	vsize_t size;
 {
 	struct pmap *pm;
 	
@@ -764,8 +764,8 @@ pmap_release(pm)
 void
 pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	struct pmap *dst_pmap, *src_pmap;
-	vm_offset_t dst_addr, src_addr;
-	vm_size_t len;
+	vaddr_t dst_addr, src_addr;
+	vsize_t len;
 {
 }
 
@@ -800,7 +800,7 @@ pmap_collect(pm)
 void
 pmap_pageable(pm, start, end, pageable)
 	struct pmap *pm;
-	vm_offset_t start, end;
+	vaddr_t start, end;
 	int pageable;
 {
 }
@@ -810,7 +810,7 @@ pmap_pageable(pm, start, end, pageable)
  */
 void
 pmap_zero_page(pa)
-	vm_offset_t pa;
+	paddr_t pa;
 {
 	bzero((caddr_t)pa, NBPG);
 }
@@ -820,7 +820,7 @@ pmap_zero_page(pa)
  */
 void
 pmap_copy_page(src, dst)
-	vm_offset_t src, dst;
+	paddr_t src, dst;
 {
 	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
 }
@@ -879,9 +879,9 @@ pmap_free_pv(pv)
 		pv_pcnt--;
 		LIST_REMOVE(pvp, pvp_pgi.pgi_list);
 #if defined(UVM)
-		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
+		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
 #else
-		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+		kmem_free(kernel_map, (vaddr_t)pvp, NBPG);
 #endif
 		break;
 	}
@@ -968,7 +968,8 @@ pofree(po, freepage)
 static inline int
 pmap_enter_pv(pteidx, va, pa)
 	int pteidx;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 {
 	struct pv_entry *pv, *npv;
 	int s, first;
@@ -1004,7 +1005,8 @@ pmap_enter_pv(pteidx, va, pa)
 static void
 pmap_remove_pv(pteidx, va, pa, pte)
 	int pteidx;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	struct pte *pte;
 {
 	struct pv_entry *pv, *npv;
@@ -1057,7 +1059,8 @@ pmap_remove_pv(pteidx, va, pa, pte)
 void
 pmap_enter(pm, va, pa, prot, wired)
 	struct pmap *pm;
-	vm_offset_t va, pa;
+	vaddr_t va;
+	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
 {
@@ -1142,7 +1145,7 @@ pmap_enter(pm, va, pa, prot, wired)
 void
 pmap_remove(pm, va, endva)
 	struct pmap *pm;
-	vm_offset_t va, endva;
+	vaddr_t va, endva;
 {
 	int idx, i, s;
 	sr_t sr;
@@ -1185,7 +1188,7 @@ pmap_remove(pm, va, endva)
 static pte_t *
 pte_find(pm, va)
 	struct pmap *pm;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	int idx, i;
 	sr_t sr;
@@ -1208,13 +1211,13 @@ pte_find(pm, va)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-vm_offset_t
+paddr_t
 pmap_extract(pm, va)
 	struct pmap *pm;
-	vm_offset_t va;
+	vaddr_t va;
 {
 	pte_t *ptp;
-	vm_offset_t o;
+	paddr_t o;
 	int s = splimp();
 	
 	if (!(ptp = pte_find(pm, va))) {
@@ -1235,7 +1238,7 @@ pmap_extract(pm, va)
 void
 pmap_protect(pm, sva, eva, prot)
 	struct pmap *pm;
-	vm_offset_t sva, eva;
+	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
 	pte_t *ptp;
@@ -1265,7 +1268,7 @@ pmap_protect(pm, sva, eva, prot)
 
 void
 ptemodify(pa, mask, val)
-	vm_offset_t pa;
+	paddr_t pa;
 	u_int mask;
 	u_int val;
 {
@@ -1326,7 +1329,7 @@ ptemodify(pa, mask, val)
 
 int
 ptebits(pa, bit)
-	vm_offset_t pa;
+	paddr_t pa;
 	int bit;
 {
 	struct pv_entry *pv;
@@ -1390,10 +1393,10 @@ ptebits(pa, bit)
  */
 void
 pmap_page_protect(pa, prot)
-	vm_offset_t pa;
+	paddr_t pa;
 	vm_prot_t prot;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
 	int i, s, idx;
@@ -1465,7 +1468,7 @@ pmap_activate(p)
 	if (pcb->pcb_pm != pmap) {
 		pcb->pcb_pm = pmap;
 		pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(),
-		    (vm_offset_t)pcb->pcb_pm);
+		    (vaddr_t)pcb->pcb_pm);
 	}
 
 	if (p == curproc) {
