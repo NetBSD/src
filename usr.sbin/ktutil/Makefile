@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/02/11 18:02:04 assar Exp $
+# $NetBSD: Makefile,v 1.10 2001/09/17 12:34:45 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,8 @@ SRCS=		 add.c				\
 		 ktutil.c			\
 		 list.c				\
 		 purge.c			\
-		 remove.c
+		 remove.c			\
+		 rename.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/admin			\

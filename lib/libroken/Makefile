@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/02/11 18:02:06 assar Exp $
+# $NetBSD: Makefile,v 1.10 2001/09/17 12:34:43 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/roken
 .PATH: ${.CURDIR}/../../include/heimdal
@@ -11,6 +11,7 @@ LIB=	roken
 SRCS=						\
 	base64.c				\
 	concat.c				\
+	ecalloc.c				\
 	emalloc.c				\
 	environment.c				\
 	eread.c					\
@@ -23,6 +24,9 @@ SRCS=						\
 	getaddrinfo_hostspec.c			\
 	getarg.c				\
 	getnameinfo_verified.c			\
+	getprogname.c				\
+	h_errno.c				\
+	hostent_find_fqdn.c			\
 	issuid.c				\
 	k_getpwnam.c				\
 	k_getpwuid.c				\
@@ -35,6 +39,7 @@ SRCS=						\
 	resolve.c				\
 	roken_gethostby.c			\
 	rtbl.c					\
+	setprogname.c				\
 	signal.c				\
 	simple_exec.c				\
 	socket.c				\

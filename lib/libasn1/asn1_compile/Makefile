@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.8 2001/06/20 02:01:18 assar Exp $
+# $NetBSD: Makefile,v 1.9 2001/09/17 12:34:41 assar Exp $
 
 NOMAN=	noman
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken
+.PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
 WARNS?=  1
 MKLINT= no

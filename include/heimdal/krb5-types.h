@@ -1,5 +1,5 @@
-/* krb5-types.h -- this file was generated for i386-unknown-netbsd1.4P by
-                   $Id: krb5-types.h,v 1.1.1.1 2000/06/16 19:18:30 thorpej Exp $ */
+/* krb5-types.h -- this file was generated for i386-unknown-netbsdelf1.5X by
+                   $Id: krb5-types.h,v 1.2 2001/09/17 12:34:40 assar Exp $ */
 
 #ifndef __krb5_types_h__
 #define __krb5_types_h__

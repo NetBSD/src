@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2000/12/30 17:21:46 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.9 2001/09/17 12:34:41 assar Exp $
 
 NOMAN=	noman
 
@@ -10,7 +10,7 @@ DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${.CURDIR}/../../libc/string
 SRCS+=	strlcpy.c strlcat.c
 
-.PATH: ${DIST}/heimdal/lib/com_err ${DIST}/heimdal/lib/roken
+.PATH: ${DIST}/heimdal/lib/com_err ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
 HOSTPROG= compile_et
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/12/30 15:25:20 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.8 2001/09/17 12:34:44 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ MKLINT= no
 
 PROG= kinit
 
-SRCS= kinit.c kinit_options.c
+SRCS= kinit.c
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/kuser		\

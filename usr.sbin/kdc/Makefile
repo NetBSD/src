@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2001/01/11 13:15:07 enami Exp $
+# $NetBSD: Makefile,v 1.4 2001/09/17 12:34:45 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ SRCS= 	524.c		\
 	kaserver.c	\
 	kdc_locl.h	\
 	kerberos4.c	\
-	kerberos4.h	\
 	kerberos5.c	\
 	log.c		\
 	main.c		\
@@ -29,11 +28,6 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/krb5		\
 	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
-	-I${DIST}/openssl/crypto/md4		\
-	-I${DIST}/openssl/crypto/md5		\
-	-I${DIST}/openssl/crypto/sha		\
-	-I${DIST}/openssl/crypto/rc4		\
-	-I${DIST}/openssl/crypto/des		\
 	-DHAVE_CONFIG_H
 
 VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}

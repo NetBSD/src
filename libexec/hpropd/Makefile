@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2000/12/30 17:29:24 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.7 2001/09/17 12:34:43 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -19,11 +19,6 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/krb5		\
 	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
-	-I${DIST}/openssl/crypto/md4		\
-	-I${DIST}/openssl/crypto/md5		\
-	-I${DIST}/openssl/crypto/sha		\
-	-I${DIST}/openssl/crypto/rc4		\
-	-I${DIST}/openssl/crypto/des		\
 	-DHAVE_CONFIG_H
 
 VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
