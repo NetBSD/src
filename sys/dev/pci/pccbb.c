@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.37 2000/03/23 07:01:40 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.38 2000/04/06 09:11:57 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -502,11 +502,7 @@ pccbbattach(parent, self, aux)
 
 	shutdownhook_establish(pccbb_shutdown, sc);
 
-#if __NetBSD_Version__ > 103060000
 	config_defer(self, pccbb_pci_callback);
-#else
-	pccbb_pci_callback(self);
-#endif
 }
 
 
@@ -585,6 +581,10 @@ pccbb_pci_callback(self)
 	/* reset interrupt */
 	bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT,
 	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT));
+
+	/* clear data structure for child device interrupt handlers */
+	sc->sc_pil = NULL;
+	sc->sc_pil_intr_enable = 1;
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
@@ -905,7 +905,11 @@ pccbbintr(arg)
 
 	if (sockevent == 0) {
 		/* This intr is not for me: it may be for my child devices. */
-		return (pccbbintr_function(sc));
+		if (sc->sc_pil_intr_enable) {
+			return pccbbintr_function(sc);
+		} else {
+			return 0;
+		}
 	}
 
 	if (sockevent & CB_SOCKET_EVENT_CD) {
@@ -3094,6 +3098,17 @@ pccbb_powerhook(why, arg)
 
 	DPRINTF(("%s: power: why %d\n", sc->sc_dev.dv_xname, why));
 
+	if (why == PWR_SUSPEND || why == PWR_STANDBY) {
+		DPRINTF(("%s: power: why %d stopping intr\n", sc->sc_dev.dv_xname, why));
+		if (sc->sc_pil_intr_enable) {
+			(void)pccbbintr_function(sc);
+		}
+		sc->sc_pil_intr_enable = 0;
+
+		/* ToDo: deactivate or suspend child devices */
+		
+	}
+
 	if (why == PWR_RESUME) {
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
@@ -3110,5 +3125,10 @@ pccbb_powerhook(why, arg)
 		 * insert).  how can we detect such situation?
 		 */
 		(void)pccbbintr(sc);
+
+		sc->sc_pil_intr_enable = 1;
+		DPRINTF(("%s: power: RESUME enabling intr\n", sc->sc_dev.dv_xname));
+
+		/* ToDo: activate or wakeup child devices */
 	}
 }
