@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.5 2000/04/20 12:17:57 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.6 2000/07/11 06:07:26 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -216,10 +216,10 @@ menu_driver(MENU *menu, int c)
 	} else if (c > MAX_COMMAND) {
 		  /* must be a user command */
 		return E_UNKNOWN_COMMAND;
-	} else if (isprint((char) c)) {
+	} else if (isprint((unsigned char) c)) {
 		  /* otherwise search items for the character. */
-		status = _menui_match_pattern(menu, c, MATCH_FORWARD,
-					       &it);
+		status = _menui_match_pattern(menu, (unsigned char) c,
+					       MATCH_FORWARD, &it);
 		drv_new_item = menu->items[it];
 
 		  /* update the position of the cursor if we are doing

@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.17 2000/07/08 11:48:40 kleink Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.18 2000/07/11 06:07:27 itohy Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -510,9 +510,9 @@ static void skey_echo(int action)
 /* Convert string to lower case */
 static void lowcase(char *s)
 {
-	char *p;
+	u_char *p;
 
-	for (p = s; *p; p++)
+	for (p = (u_char *) s; *p; p++)
 		if (isupper(*p))
 			*p = tolower(*p);
 }
