@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/03/13 18:13:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2001/03/29 09:59:09 tron Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -14,8 +14,9 @@ DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
 BINDIR= ${PFIX_SBINDIR}           
 
 PSRCS=	postconf.c
-GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
-	str_vars.h
+GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h raw_table.h \
+	raw_vars.h str_table.h str_vars.h time_table.h time_vars.h
+
 SRCS=	${PSRCS} ${GENSRCS}
 
 CLEANFILES+= ${GENSRCS}
