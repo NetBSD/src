@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.4 1998/10/02 02:02:46 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.5 1998/10/05 00:00:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,9 +101,7 @@ _ASM_LABEL(faultstkadjnotrap2):
  * Trap 1 - compat_13_sigreturn13
  */
 ENTRY_NOPROFILE(trap1)
-	/* sigreturn trap handler expects syscall number in d0 */
-	movew	#SYS_compat_13_sigreturn13,d0
-	jra	_ASM_LABEL(sigreturn)
+	jra	_C_LABEL(m68k_compat_13_sigreturn13_stub)
 #endif
 
 /*
@@ -119,15 +117,10 @@ ENTRY_NOPROFILE(trap2)
 	jra	_C_LABEL(trace)
 
 /*
- * Trap 3 - special handling system calls
+ * Trap 3 - sigreturn system call
  */
 ENTRY_NOPROFILE(trap3)
-	/* System call number is in d0; see if it's one we know about. */
-	cmpl	#SYS___sigreturn14,d0
-	jeq	_ASM_LABEL(sigreturn)
-
-	/* Not one we know about.  Give them an illegal instruction. */
-	jra	_C_LABEL(illinst)
+	jra	_C_LABEL(m68k_sigreturn_stub)
 
 /*
  * The following exceptions only cause four and six word stack frames
