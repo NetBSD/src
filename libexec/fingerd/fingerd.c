@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.18 2002/09/10 04:06:26 itojun Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.19 2002/09/12 01:40:54 kim Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.18 2002/09/10 04:06:26 itojun Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.19 2002/09/12 01:40:54 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ main(argc, argv)
 	logging = no_forward = user_required = short_list = 0;
 	openlog("fingerd", LOG_PID, LOG_DAEMON);
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "gsluShmpP:i")) != -1)
+	while ((ch = getopt(argc, argv, "gsluShmpP:8")) != -1)
 		switch (ch) {
 		case 'l':
 			logging = 1;
@@ -97,18 +97,6 @@ main(argc, argv)
 			break;
 		case 'u':
 			user_required = 1;
-			break;
-		case 'i':
-			/*
-			 * This is a hack to enable single-byte 8-bit
-			 * characters in the output of the default
-			 * finger program.  The character set is not
-			 * communicated to the network client, and the
-			 * exact value does not matter much as long
-			 * as it enables as many 8-bit characters as
-			 * possible.
-			 */
-			(void) putenv("LC_CTYPE=en_US.ISO8859-15");
 			break;
 		case 'S':
 			short_list = 1;
@@ -125,6 +113,9 @@ main(argc, argv)
 			break;
 		case 'g':
 			av[ac++] = "-g";
+			break;
+		case '8':
+			av[ac++] = "-8";
 			break;
 		case '?':
 		default:
