@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/02/16 11:41:14 drochner Exp $
+#	$NetBSD: Makefile,v 1.16 1998/02/25 12:19:12 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -39,13 +39,19 @@ CPPFLAGS+= -DBOOTROM -DRELOC=0x$(RELOC)
 .PATH: ${.CURDIR}/../lib/netif
 
 #USE_NETIF= 3c509
-#USE_NETIF= 3c590 #handles 3c900 combo and 3c905 TX too
-#CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x5900 -DPCI_CLASS=0x020000
-#CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x9001 -DPCI_CLASS=0x020000
-#CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x9050 -DPCI_CLASS=0x020000
+#USE_NETIF= 3c590 #handles 3c900 TPO / combo and 3c905 TX too
+# uncomment next and one of the following to make a PCI expansion ROM for 3com
+#CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_CLASS=0x020000
+#CPPFLAGS+= -DPCI_DID=0x5900 # 3c590
+#CPPFLAGS+= -DPCI_DID=0x9000 # 3c900 TPO
+#CPPFLAGS+= -DPCI_DID=0x9001 # 3c900 combo
+#CPPFLAGS+= -DPCI_DID=0x9050 # 3c905 TX
+
 USE_NETIF= pcnet_pci
+# uncomment the following to make a PCI expansion ROM for PCNET-PCI
 #CPPFLAGS+= -DPCIROM -DPCI_VID=0x1022 -DPCI_DID=0x2000 -DPCI_CLASS=0x020000
-#USE_NETIF= pcnet_isapnp
+#USE_NETIF= pcnet_isapnp #boot device passing to kernel broken
+
 #USE_NETIF= wd80x3 #and uncomment at least one of the two following lines
 #CPPFLAGS+= -DSUPPORT_WD80X3
 #CPPFLAGS+= -DSUPPORT_SMC_ULTRA
