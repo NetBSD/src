@@ -1,6 +1,6 @@
-/*	$NetBSD: cftoken.l,v 1.1.1.3 2005/02/24 20:52:47 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.1.1.4 2005/03/16 23:52:10 manu Exp $	*/
 
-/* Id: cftoken.l,v 1.31.2.1 2005/02/24 18:31:56 manubsd Exp */
+/* Id: cftoken.l,v 1.31.2.2 2005/03/16 23:18:43 manubsd Exp */
 
 %{
 /*
@@ -164,6 +164,8 @@ hexstring	0x{hexdigit}+
 <S_PTH>pre_shared_key	{ YYD; yylval.num = LC_PATHTYPE_PSK;
 				return(PATHTYPE); }
 <S_PTH>certificate	{ YYD; yylval.num = LC_PATHTYPE_CERT;
+				return(PATHTYPE); }
+<S_PTH>script 		{ YYD; yylval.num = LC_PATHTYPE_SCRIPT;
 				return(PATHTYPE); }
 <S_PTH>backupsa		{ YYD; yylval.num = LC_PATHTYPE_BACKUPSA;
 				return(PATHTYPE); }

@@ -1,6 +1,6 @@
-/*	$NetBSD: remoteconf.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.1.1.3 2005/03/16 23:53:20 manu Exp $	*/
 
-/* Id: remoteconf.c,v 1.26.2.1 2005/02/17 21:24:17 manubsd Exp */
+/* Id: remoteconf.c,v 1.26.2.2 2005/03/16 23:18:43 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -607,10 +607,33 @@ int
 script_path_add(path)
 	vchar_t *path;
 {
+	char *script_dir;
 	vchar_t *new_storage;
+	vchar_t *new_path;
 	vchar_t **sp;
 	size_t len;
 	size_t size;
+
+	script_dir = lcconf->pathinfo[LC_PATHTYPE_SCRIPT];
+
+	/* Try to find the script in the script directory */
+	if ((path->v[0] != '/') && (script_dir != NULL)) {
+		len = strlen(script_dir) + sizeof("/") + path->l + 1;
+
+		if ((new_path = vmalloc(len)) == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "Cannot allocate memory: %s\n", strerror(errno));
+			return -1;
+		}
+
+		new_path->v[0] = '\0';
+		(void)strncat(new_path->v, script_dir, len);
+		(void)strncat(new_path->v, "/", len);
+		(void)strncat(new_path->v, path->v, len);
+
+		vfree(path);
+		path = new_path;
+	}
 
 	/* First time, initialize */
 	if (script_paths == NULL)
