@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp_var.h,v 1.9 1996/11/28 03:12:39 lukem Exp $      */
+/*      $NetBSD: ftp_var.h,v 1.10 1996/12/06 02:06:51 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -71,6 +71,7 @@ int	mcase;			/* map upper to lower case for mget names */
 int	ntflag;			/* use ntin ntout tables for name translation */
 int	mapflag;		/* use mapin mapout templates on file names */
 int	preserve;		/* preserve modification time on files */
+int	progress;		/* display transfer progress bar */
 int	code;			/* return/reply code for ftp command */
 int	crflag;			/* if 1, strip car. rets. on ascii gets */
 char	pasv[64];		/* passive port for proxy data connection */
