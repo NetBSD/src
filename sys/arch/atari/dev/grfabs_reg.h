@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.2 1995/03/28 06:35:42 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.3 1995/05/21 10:55:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -162,6 +162,7 @@ struct display_mode {
  * Prototypes:
  */
 view_t	*grf_alloc_view __P((dmode_t *d, dimen_t *dim, u_char depth));
+dmode_t	*grf_get_best_mode __P((dimen_t *dim, u_char depth));
 void	grf_display_view __P((view_t *v));
 void	grf_remove_view __P((view_t *v));
 void	grf_free_view __P((view_t *v));
