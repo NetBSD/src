@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.169 2003/05/26 13:34:38 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.170 2003/05/27 14:41:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.169 2003/05/26 13:34:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.170 2003/05/27 14:41:06 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -258,7 +258,7 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
 
-static void nfs_noop(struct mbuf *, caddr_t, size_t, void *);
+static void nfs_writerpc_extfree(struct mbuf *, caddr_t, size_t, void *);
 
 /*
  * Global variables
@@ -1210,11 +1210,14 @@ nfsmout:
 }
 
 /*
- * dummy callback for mbuf.
+ * free mbuf used to refer protected pages while write rpc call.
  */
 static void
-nfs_noop(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+nfs_writerpc_extfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
+
+	KASSERT(m != NULL);
+	pool_cache_put(&mbpool_cache, m);
 }
 
 /*
@@ -1288,8 +1291,9 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 			struct iovec *iovp = uiop->uio_iov;
 
 			m = m_get(M_WAIT, MT_DATA);
-			MCLAIM(m, &nfs_owner);
-			MEXTADD(m, iovp->iov_base, len, M_MBUF, nfs_noop, NULL);
+			MCLAIM(m, &nfs_mowner);
+			MEXTADD(m, iovp->iov_base, len, M_MBUF,
+			    nfs_writerpc_extfree, NULL);
 			m->m_flags |= M_EXT_ROMAP;
 			m->m_len = len;
 			mb->m_next = m;
