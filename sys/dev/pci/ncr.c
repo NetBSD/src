@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.32 1996/03/30 05:10:36 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.33 1996/04/03 08:44:15 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1329,7 +1329,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.32 1996/03/30 05:10:36 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.33 1996/04/03 08:44:15 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3339,8 +3339,14 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 #ifdef __NetBSD__
 
 int
-ncr_print()
+ncr_print(aux, name)
+	void *aux;
+	char *name;
 {
+
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 void
