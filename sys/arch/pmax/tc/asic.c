@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.25 1998/03/25 06:22:20 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.26 1998/03/26 06:35:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -128,9 +128,15 @@ asicmatch(parent, cf, aux)
 		return (0);
 #endif
 
+
+	/*
+	 * XXX This is wrong.
+	 */
 	/* The 3MAX (kn02) is special. */
 	if (TC_BUS_MATCHNAME(ta, KN02_ASIC_NAME)) {
+#if 0
 		printf("(configuring KN02 system slot as asic)\n");
+#endif
 		goto gotasic;
 	}
 
