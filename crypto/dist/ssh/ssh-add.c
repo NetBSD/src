@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.1.1.1 2000/09/28 22:10:26 thorpej Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.2 2000/10/04 03:43:58 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh-add.c,v 1.1.1.1 2000/09/28 22:10:26 thorpej Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.2 2000/10/04 03:43:58 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -260,7 +260,7 @@ main(int argc, char **argv)
 		extern char *__progname;
 
 		fprintf(stderr,
-			"%s: no RSA support in libssl and libcrypto.  See ssl(8).\n",
+			"%s: failed to generate RSA key: rnd(4) is mandatory.\n",
 			__progname);
 		exit(1);
 	}
