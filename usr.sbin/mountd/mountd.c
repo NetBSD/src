@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.20 1995/03/21 18:48:50 mycroft Exp $	*/
+/*	$NetBSD: mountd.c,v 1.21 1995/05/28 05:31:01 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.20 1995/03/21 18:48:50 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.21 1995/05/28 05:31:01 jtc Exp $";
 #endif
 #endif not lint
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$NetBSD: mountd.c,v 1.20 1995/03/21 18:48:50 mycroft Exp 
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 #include <sys/ucred.h>
 
 #include <rpc/rpc.h>

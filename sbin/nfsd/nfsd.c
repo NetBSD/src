@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.16 1995/03/18 14:59:00 cgd Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.17 1995/05/28 05:31:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,12 +46,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.7 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$NetBSD: nfsd.c,v 1.16 1995/03/18 14:59:00 cgd Exp $";
+static char rcsid[] = "$NetBSD: nfsd.c,v 1.17 1995/05/28 05:31:45 jtc Exp $";
 #endif
 #endif not lint
 
 #include <sys/param.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
