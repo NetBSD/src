@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.8.8.2 2001/01/22 18:25:15 bouyer Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.8.8.3 2001/03/29 10:47:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ se_attach(parent, self, args)
 		sc->sc_dma[i].dh_flags = 0;
 
 	ncr_sc->sc_channel.chan_id = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = se_minphys;
+	ncr_sc->sc_adapter.adapt_minphys = se_minphys;
 
 	/*
 	 *  Initialize se board itself.
