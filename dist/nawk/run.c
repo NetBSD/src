@@ -1951,10 +1951,22 @@ Cell *gensub(Node **a, int nnn)	/* global selective substitute */
 	tempfree(h);
 
 	if (pmatch(pfa, t)) {
+		char *sl;
+
 		tempstat = pfa->initstat;
 		pfa->initstat = 2;
 		pb = buf;
 		rptr = getsval(y);
+		/*
+		 * XXX if there are any backreferences in subst string,
+		 * complain now.
+		 */
+		for(sl=rptr; (sl = strchr(sl, '\\')) && sl[1]; sl++) {
+			if (strchr("0123456789", sl[1])) {
+				FATAL("gensub doesn't support backreferences (subst \"%s\")", rptr);
+			}
+		}
+		
 		do {
 			if (whichm >= 0 && whichm != num) {
 				num++;
