@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 2000/05/02 06:43:43 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 2001/02/11 17:56:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -286,7 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 96: RAIDframe disk driver */
 	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
 	cdev_fbm_init(NPX,px),	/* 98: PixelStamp board driver */
-	cdev_audio_init(NAUDIO,audio),  /* 99 generic audio I/O */
+	cdev_audio_init(NAUDIO,audio),  /* 99: generic audio I/O */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
