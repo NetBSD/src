@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.38 1997/02/05 07:48:42 mrg Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.39 1997/02/05 08:09:47 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -347,7 +347,7 @@ vm_object_terminate(object)
 	 * potential collapse operation is finished.
 	 */
 	while (object->paging_in_progress) {
-		vm_object_sleep(object, object, FALSE);
+		vm_object_sleep(object, object, FALSE, "vostrm");
 		vm_object_lock(object);
 	}
 
@@ -468,7 +468,7 @@ again:
 	 * Wait until the pageout daemon is through with the object.
 	 */
 	while (object->paging_in_progress) {
-		vm_object_sleep(object, object, FALSE);
+		vm_object_sleep(object, object, FALSE, "vospgc");
 		vm_object_lock(object);
 	}
 	/*
@@ -1331,12 +1331,12 @@ vm_object_collapse_aux(object)
 				    || object->paging_in_progress != 1) {
 					if (object->paging_in_progress != 1) {
 						vm_object_sleep(object, object,
-						    FALSE);
+						    FALSE, "vosca1");
 						vm_object_lock(object);
 						continue;
 					}
 					vm_object_sleep(backing_object,
-					    backing_object, FALSE);
+					    backing_object, FALSE, "vosca2");
 					vm_object_lock(backing_object);
 				}
 				backing_object->paging_in_progress--;
