@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.51 2000/09/04 00:31:59 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.52 2000/11/18 19:25:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.51 2000/09/04 00:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.52 2000/11/18 19:25:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,9 +129,12 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		sc->sc_evcnt_ipi.ev_count++;
 
 		pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
-		for (bit = 0; bit < ALPHA_NIPIS; bit++)
-			if (pending_ipis & (1UL << bit))
+		for (bit = 0; bit < ALPHA_NIPIS; bit++) {
+			if (pending_ipis & (1UL << bit)) {
+				sc->sc_evcnt_which_ipi[bit].ev_count++;
 				(*ipifuncs[bit])();
+			}
+		}
 
 		/*
 		 * Handle inter-console messages if we're the primary
