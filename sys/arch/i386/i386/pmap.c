@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2000/09/07 17:20:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2000/09/07 18:46:19 thorpej Exp $	*/
 
 /*
  *
@@ -64,6 +64,7 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_largepages.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -879,16 +880,11 @@ pmap_bootstrap(kva_start)
 		     kva += NBPD, pa += NBPD) {
 			pde = &kpm->pm_pdir[pdei(kva)];
 			*pde = pa | pmap_pg_g | PG_PS |
-#ifdef DDB
-			    PG_KW |
-#else
-			    PG_KR |
-#endif
-			    PG_V;	/* zap! */
+			    PG_KR | PG_V;	/* zap! */
 			tlbflush();
 		}
 	}
-#endif
+#endif /* LARGEPAGES */
 
 	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
