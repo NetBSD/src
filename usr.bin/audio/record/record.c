@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.11 2000/12/13 08:19:55 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.12 2000/12/22 11:38:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -70,12 +70,12 @@ int	channels;
 struct timeval record_time;
 struct timeval start_time;	/* XXX because that's what gettimeofday returns */
 
-void usage __P((void));
-int main __P((int, char *[]));
-int timeleft __P((struct timeval *, struct timeval *));
-void cleanup __P((int)) __attribute__((__noreturn__));
-void write_header __P((void));
-void rewrite_header __P((void));
+void usage (void);
+int main (int, char *[]);
+int timeleft (struct timeval *, struct timeval *);
+void cleanup (int) __attribute__((__noreturn__));
+void write_header (void);
+void rewrite_header (void);
 
 int
 main(argc, argv)

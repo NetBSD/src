@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.h,v 1.2 1999/03/26 15:46:22 mrg Exp $	*/
+/*	$NetBSD: audioctl.h,v 1.3 2000/12/22 11:38:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -30,7 +30,7 @@
 
 extern audio_info_t info;
 
-int audioctl __P((int, char *[]));
-int audiorecord __P((int, char *[]));
-int audioplay __P((int, char *[]));
-void audioctl_write __P((int, int, char *[]));
+int audioctl (int, char *[]);
+int audiorecord (int, char *[]);
+int audioplay (int, char *[]);
+void audioctl_write (int, int, char *[]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.23 1999/03/26 14:05:41 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.24 2000/12/22 11:38:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,13 +52,13 @@
 
 #include "libaudio.h"
 
-struct field *findfield __P((char *name));
-void prfield __P((struct field *p, char *sep));
-void rdfield __P((struct field *p, char *q));
-void getinfo __P((int fd));
-void audioctl_write __P((int, int, char *[]));
-void usage __P((void));
-int main __P((int argc, char **argv));
+struct field *findfield (char *name);
+void prfield (struct field *p, char *sep);
+void rdfield (struct field *p, char *q);
+void getinfo (int fd);
+void audioctl_write (int, int, char *[]);
+void usage (void);
+int main (int argc, char **argv);
 
 FILE *out = stdout;
 
