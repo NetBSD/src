@@ -1,5 +1,9 @@
 /* bsd-interf.c: test BSD interface.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: bsd-interf.c,v 1.2 1993/08/02 17:24:14 mycroft Exp $";
+#endif /* not lint */
+
 #ifndef _POSIX_SOURCE /* whole file */
 
 #include "test.h"

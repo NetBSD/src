@@ -1,5 +1,9 @@
 /* psx-basic.c: Test POSIX basic regular expressions.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: psx-basic.c,v 1.2 1993/08/02 17:24:24 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 

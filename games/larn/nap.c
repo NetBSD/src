@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: nap.c,v 1.2 1993/08/02 17:20:15 mycroft Exp $";
+#endif /* not lint */
+
 /* nap.c		 Larn is copyrighted 1986 by Noah Morgan. */
 #include <signal.h>
 #include <sys/types.h>

@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* makedefs.c - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: makedefs.c,v 1.2 1993/08/02 17:19:44 mycroft Exp $";
+#endif /* not lint */
 
 #include <stdio.h>
 

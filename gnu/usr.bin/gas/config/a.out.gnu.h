@@ -1,3 +1,5 @@
+/*	$Id: a.out.gnu.h,v 1.2 1993/08/02 17:26:41 mycroft Exp $ */
+
 #ifndef __A_OUT_GNU_H__
 #define __A_OUT_GNU_H__
 

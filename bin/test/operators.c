@@ -2,6 +2,10 @@
  * Operators used in the test command.
  */
 
+#ifndef lint
+static char rcsid[] = "$Id: operators.c,v 1.2 1993/08/02 17:18:54 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include "operators.h"
 

@@ -22,50 +22,8 @@
    The author of the program may be contacted at ian@airs.com or
    c/o AIRS, P.O. Box 520, Waltham, MA 02254.
 
-   $Log: port.h,v $
-   Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-   initial import of 386bsd-0.1 sources
-
-   Revision 1.13  1992/03/12  19:56:10  ian
-   Debugging based on types rather than number
-
-   Revision 1.12  1992/03/10  21:47:39  ian
-   Added protocol command for ports
-
-   Revision 1.11  1992/03/08  04:56:21  ian
-   Peter da Silva: added ``lockname'' command for ports
-
-   Revision 1.10  1992/03/04  00:36:44  ian
-   Michael Richardson: better chat script debugging
-
-   Revision 1.9  1992/02/08  03:54:18  ian
-   Include <string.h> only in <uucp.h>, added 1992 copyright
-
-   Revision 1.8  1991/12/17  23:14:08  ian
-   T. William Wells: allow dialer complete and abort to be chat scripts
-
-   Revision 1.7  1991/12/15  03:42:33  ian
-   Added tprocess_chat_cmd for all chat commands, and added CMDTABTYPE_PREFIX
-
-   Revision 1.6  1991/11/14  03:20:13  ian
-   Added seven-bit and reliable commands to help when selecting protocols
-
-   Revision 1.5  1991/11/13  20:38:00  ian
-   Added TCP port type for connections over TCP
-
-   Revision 1.4  1991/11/11  23:47:24  ian
-   Added chat-program to run a program to do a chat script
-
-   Revision 1.3  1991/11/11  16:59:05  ian
-   Eliminate fread_port_info, allow NULL pflock arg to ffind_port
-
-   Revision 1.2  1991/11/11  00:39:45  ian
-   Open port in seven bit mode, added fport_set to change to eight bit
-
-   Revision 1.1  1991/09/10  19:47:55  ian
-   Initial revision
-
-   */
+	$Id: port.h,v 1.2 1993/08/02 17:25:09 mycroft Exp $
+*/
 
 #ifndef PORT_H
 

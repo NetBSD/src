@@ -1,3 +1,5 @@
+//	$Id: types.h,v 1.2 1993/08/02 17:21:51 mycroft Exp $
+
 #ifndef __libgxx_sys_types_h
 
 extern "C"

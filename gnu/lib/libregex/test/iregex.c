@@ -1,6 +1,10 @@
 /* Main program for interactive testing.  For maximum output, compile
    this and regex.c with -DDEBUG.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: iregex.c,v 1.2 1993/08/02 17:24:19 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include "regex.h"

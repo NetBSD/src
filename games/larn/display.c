@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: display.c,v 1.2 1993/08/02 17:19:59 mycroft Exp $";
+#endif /* not lint */
+
 /*	display.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include "header.h"
 #define makecode(_a,_b,_c) (((_a)<<16) + ((_b)<<8) + (_c))

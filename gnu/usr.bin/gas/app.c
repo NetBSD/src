@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: app.c,v 1.2 1993/08/02 17:27:58 mycroft Exp $";
+#endif /* not lint */
+
 /* App, the assembler pre-processor.  This pre-processor strips out excess
    spaces, turns single-quoted characters into a decimal constant, and turns
    # <number> <filename> <garbage> into a .line <number>;.file <filename> pair.

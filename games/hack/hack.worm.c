@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.worm.c - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.worm.c,v 1.2 1993/08/02 17:19:40 mycroft Exp $";
+#endif /* not lint */
 
 #include "hack.h"
 #ifndef NOWORM

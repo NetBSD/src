@@ -18,6 +18,8 @@
   can know your rights and responsibilities.  It should be in a
   file named COPYING.  Among other things, the copyright notice
   and this notice must be preserved on all copies.
+
+	$Id: gnuchess.h,v 1.2 1993/08/02 17:21:18 mycroft Exp $
 */
 
 

@@ -1,4 +1,5 @@
-/* conf.h */
+/*	$Id: conf.h,v 1.2 1993/08/02 17:25:02 mycroft Exp $ */
+
 /* Configuration header file for Taylor UUCP.
    Generated on Mon Jun  1 16:01:13 PDT 1992.  */
 

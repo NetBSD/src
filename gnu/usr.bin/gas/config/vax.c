@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: vax.c,v 1.2 1993/08/02 17:27:32 mycroft Exp $";
+#endif /* not lint */
+
 /* JF I moved almost all the vax specific stuff into this one file 'cuz RMS
    seems to think its a good idea.  I hope I managed to get all the VAX-isms */
 

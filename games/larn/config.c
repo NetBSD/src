@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: config.c,v 1.2 1993/08/02 17:19:56 mycroft Exp $";
+#endif /* not lint */
+
 /*
  *	config.c	--	This defines the installation dependent variables.
  *                  Some strings are modified later.  ANSI C would

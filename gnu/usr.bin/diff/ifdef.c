@@ -18,6 +18,9 @@ can know your rights and responsibilities.  It should be in a
 file named COPYING.  Among other things, the copyright notice
 and this notice must be preserved on all copies.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: ifdef.c,v 1.3 1993/08/02 17:26:17 mycroft Exp $";
+#endif /* not lint */
 
 #include "diff.h"
 

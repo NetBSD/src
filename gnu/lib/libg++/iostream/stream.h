@@ -1,3 +1,5 @@
+//	$Id: stream.h,v 1.2 1993/08/02 17:22:40 mycroft Exp $
+
 #ifndef _COMPAT_STREAM_H
 #define _COMPAT_STREAM_H
 

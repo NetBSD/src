@@ -18,6 +18,10 @@ so you can know your rights and responsibilities.  It should be
 in a file named COPYING.  Among other things, the copyright
 notice and this notice must be preserved on all copies.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: flonum-mult.c,v 1.2 1993/08/02 17:28:19 mycroft Exp $";
+#endif /* not lint */
+
 #include "flonum.h"
 
 /*	plan for a . b => p(roduct)

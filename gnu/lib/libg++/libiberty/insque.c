@@ -17,6 +17,10 @@ License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: insque.c,v 1.2 1993/08/02 17:23:52 mycroft Exp $";
+#endif /* not lint */
+
 /*
 
 NAME

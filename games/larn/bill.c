@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: bill.c,v 1.2 1993/08/02 17:19:54 mycroft Exp $";
+#endif /* not lint */
+
 #include "header.h"
 /* bill.c		 "Larn is copyrighted 1986 by Noah Morgan. */
 static char mail600[32];

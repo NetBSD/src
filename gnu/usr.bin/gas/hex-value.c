@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: hex-value.c,v 1.2 1993/08/02 17:28:26 mycroft Exp $";
+#endif /* not lint */
+
 /*
  * Export: Hex_value[]. Converts digits to their radix-values.
  *	As distributed assumes 8 bits per char (256 entries) and ASCII.

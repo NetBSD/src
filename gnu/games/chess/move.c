@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: move.c,v 1.2 1993/08/02 17:21:19 mycroft Exp $";
+#endif /* not lint */
+
 /* move generator hes@log-sv.se 890318
    Modified: 890606 NEWMOVE Levels 1-6 for easier debugging */
 #include "move.h"

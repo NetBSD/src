@@ -1,6 +1,7 @@
 #
 # A makefile for bc.  This is part of the bc/sbc distribution.
 #
+#	$Id: Makefile.gnu,v 1.2 1993/08/02 17:25:30 mycroft Exp $
 #
 #  Make sure these have the correct directories for your machine.
 #

@@ -17,7 +17,10 @@ GNU Assembler General Public License.  A copy of this license is
 supposed to have been given to you along with the GNU Assembler
 so you can know your rights and responsibilities.  It should be
 in a file named COPYING.  Among other things, the copyright
-notice and this notice must be preserved on all copies.  */
+notice and this notice must be preserved on all copies.
+
+	$Id: md.h,v 1.2 1993/08/02 17:28:28 mycroft Exp $
+*/
 
 /* In theory (mine, at least!) the machine dependent part of the assembler
    should only have to include one file.  This one.  -- JF */

@@ -23,6 +23,8 @@
                 Computer Science Department, 9062
                 Western Washington University
                 Bellingham, WA 98226-9062
+
+	$Id: const.h,v 1.2 1993/08/02 17:25:34 mycroft Exp $
        
 *************************************************************************/
 

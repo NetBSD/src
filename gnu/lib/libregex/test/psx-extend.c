@@ -1,5 +1,9 @@
 /* psx-extend.c: Test POSIX extended regular expressions.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: psx-extend.c,v 1.2 1993/08/02 17:24:26 mycroft Exp $";
+#endif /* not lint */
+
 #include "test.h"
 
 

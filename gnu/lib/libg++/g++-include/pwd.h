@@ -1,3 +1,5 @@
+//	$Id: pwd.h,v 1.2 1993/08/02 17:22:12 mycroft Exp $
+
 #ifndef _pwd_h
 
 // the Interviews-based standard kludge again

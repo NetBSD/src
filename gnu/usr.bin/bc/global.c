@@ -26,6 +26,10 @@
        
 *************************************************************************/
 
+#ifndef lint
+static char rcsid[] = "$Id: global.c,v 1.2 1993/08/02 17:25:37 mycroft Exp $";
+#endif /* not lint */
+
 #include "bcdefs.h"
 
 /* Since we want to define them here, we use the following define. */

@@ -1,5 +1,9 @@
 /* psx-interf.c: test POSIX interface.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: psx-interf.c,v 1.2 1993/08/02 17:24:29 mycroft Exp $";
+#endif /* not lint */
+
 #include <string.h>
 #include <assert.h>
 

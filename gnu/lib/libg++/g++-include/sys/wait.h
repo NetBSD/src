@@ -1,3 +1,5 @@
+//	$Id: wait.h,v 1.2 1993/08/02 17:21:52 mycroft Exp $
+
 #ifndef __libgxx_sys_wait_h
 
 #include <_G_config.h>

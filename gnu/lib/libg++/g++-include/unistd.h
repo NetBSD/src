@@ -1,3 +1,5 @@
+//	$Id: unistd.h,v 1.2 1993/08/02 17:22:21 mycroft Exp $
+
 #ifndef _G_unistd_h
 #define _G_unistd_h 1
 

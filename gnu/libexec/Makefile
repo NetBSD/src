@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/gnu/libexec/Attic/Makefile,v 1.1 1993/04/29 11:38:55 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/08/02 17:25:19 mycroft Exp $
 
 #broken: uucp
 
