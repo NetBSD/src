@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.58 2002/06/30 19:13:46 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.59 2002/06/30 20:04:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.58 2002/06/30 19:13:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.59 2002/06/30 20:04:43 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -791,36 +791,63 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 */
 #ifdef DP83820
 	/*
-	 * XXX Need some PCI flags indicating support for
-	 * XXX 64-bit addressing.
+	 * Cause the chip to load configuration data from the EEPROM.
 	 */
-	sc->sc_cfg &= ~(CFG_M64ADDR | CFG_T64ADDR);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_PTSCR, PTSCR_EELOAD_EN);
+	for (i = 0; i < 10000; i++) {
+		delay(10);
+		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_PTSCR) &
+		    PTSCR_EELOAD_EN) == 0)
+			break;
+	}
+	if (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_PTSCR) &
+	    PTSCR_EELOAD_EN) {
+		printf("%s: timeout loading configuration from EEPROM\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
 		printf("%s: 64-bit PCI slot detected\n", sc->sc_dev.dv_xname);
-		if ((sc->sc_cfg & CFG_DATA64_EN) == 0)
+		if (reg & CFG_DATA64_EN)
+			sc->sc_cfg |= CFG_DATA64_EN;
+		else
 			printf("%s: 64-bit data transfers disabled in EEPROM\n",
 			    sc->sc_dev.dv_xname);
-	} else
-		sc->sc_cfg &= ~CFG_DATA64_EN;
+	}
 
-	if (sc->sc_cfg & (CFG_TBI_EN|CFG_EXT_125)) {
+	/*
+	 * XXX Need some PCI flags indicating support for
+	 * XXX 64-bit addressing.
+	 */
+#if 0
+	if (reg & CFG_M64ADDR)
+		sc->sc_cfg |= CFG_M64ADDR;
+	if (reg & CFG_T64ADDR)
+		sc->sc_cfg |= CFG_T64ADDR;
+#endif
+
+	if (reg & (CFG_TBI_EN|CFG_EXT_125)) {
 		const char *sep = "";
 		printf("%s: using ", sc->sc_dev.dv_xname);
-		if (sc->sc_cfg & CFG_EXT_125) {
+		if (reg & CFG_EXT_125) {
+			sc->sc_cfg |= CFG_EXT_125;
 			printf("%s125MHz clock", sep);
 			sep = ", ";
 		}
-		if (sc->sc_cfg & CFG_TBI_EN) {
+		if (reg & CFG_TBI_EN) {
+			sc->sc_cfg |= CFG_TBI_EN;
 			printf("%sten-bit interface", sep);
 			sep = ", ";
 		}
 		printf("\n");
 	}
-	if ((pa->pa_flags & PCI_FLAGS_MRM_OKAY) == 0)
+	if ((pa->pa_flags & PCI_FLAGS_MRM_OKAY) == 0 ||
+	    (reg & CFG_MRM_DIS) != 0)
 		sc->sc_cfg |= CFG_MRM_DIS;
-	if ((pa->pa_flags & PCI_FLAGS_MWI_OKAY) == 0)
+	if ((pa->pa_flags & PCI_FLAGS_MWI_OKAY) == 0 ||
+	    (reg & CFG_MWI_DIS) != 0)
 		sc->sc_cfg |= CFG_MWI_DIS;
 
 	/*
@@ -3078,18 +3105,6 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
 
 	/* Get the GPIOR bits. */
 	sc->sc_gpior = eeprom_data[0x04];
-
-	/* Get various CFG related bits. */
-	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_EXT_125)
-		sc->sc_cfg |= CFG_EXT_125;
-	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_M64ADDR)
-		sc->sc_cfg |= CFG_M64ADDR;
-	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_DATA64_EN)
-		sc->sc_cfg |= CFG_DATA64_EN;
-	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_T64ADDR)
-		sc->sc_cfg |= CFG_T64ADDR;
-	if (eeprom_data[0x05] & DP83820_CONFIG2_CFG_TBI_EN)
-		sc->sc_cfg |= CFG_TBI_EN;
 }
 #else /* ! DP83820 */
 void
