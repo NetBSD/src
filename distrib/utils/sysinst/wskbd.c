@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.4 2005/01/28 23:02:09 dsl Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.5 2005/03/09 20:59:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.4 2005/01/28 23:02:09 dsl Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.5 2005/03/09 20:59:09 dsl Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -62,26 +62,9 @@ struct kb_types {
 
 /* Types and names of keyboards, maybe the names should be translated... */
 static const struct kb_types kb_types[] = {
-    /* KB_ENCTAB - except that it is too terse, and variants need to be set */
-    { KB_US,		"us",	"US-English" },
-    { KB_UK,		"uk",	"UK-English" },
-    { KB_BE,		"be",	"Belgian" },
-    { KB_DK,		"dk",	"Danish" },
-    { KB_SV,		"sv",	"Finish" },
-    { KB_FR,		"fr",	"French" },
-    { KB_DE | KB_NODEAD,"de.nodead",	"German" },
-    { KB_HU,		"hu",	"Hungarian" },
-    { KB_IT,		"it",	"Italian" },
-    { KB_JP,		"jp",	"Japanese" },
-    { KB_NO,		"no",	"Norwegian" },
-    { KB_PL,		"pl",	"Polish" },
-    { KB_PT,		"pt",	"Portugese" },
-    { KB_RU,		"ru",	"Russian" },
-    { KB_ES,		"es",	"Spanish" },
-    { KB_SV,		"sv",	"Swedish" },
-    { KB_SF,		"sf",	"Swiss French" },
-    { KB_SG,		"sg",	"Swiss German" },
-    { KB_UA,		"ua",	"Ukrainian" },
+#define KB_sysinst(tag, tagf, value, cc, ccf, country) \
+	{tag | tagf, cc ccf, country},
+KB_ENC_FUN(KB_sysinst)
 };
 
 static int
