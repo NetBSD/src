@@ -1,6 +1,8 @@
+/*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kevin Ruddy.
@@ -35,14 +37,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fold.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fold.c,v 1.5 1993/10/13 18:34:13 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
