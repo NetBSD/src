@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.4 1999/12/24 09:08:50 agc Exp $ */
+.\" $NetBSD: useradd.8,v 1.5 2000/02/28 05:10:57 enami Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -61,19 +61,22 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Op Fl v
-user
+.Ar user
 .Sh DESCRIPTION
 The
 .Nm useradd
 utility adds a user to the system, creating and
 populating a home directory if necessary.
 Any skeleton dot files will be provided
-for the new user if they exist in the /etc/skel directory.
+for the new user if they exist in the
+.Pa /etc/skel
+directory.
 Default values for the base directory, the time of password expiry,
 the skeleton directory,
 seconds until password change, primary group, the range from which the uid will be
 allocated,
-and default login shell can be provided in the /etc/usermgmt.conf
+and default login shell can be provided in the
+.Pa /etc/usermgmt.conf
 file.
 .Pp
 The first format of the command shown above (utilising the -D option)
@@ -111,8 +114,9 @@ after setting any defaults, and then values from that file,
 the command line options are processed:
 .Bl -tag -width Ds
 .It Fl G Ar secondary-group
-is the secondary group to which the user will be added in
-the /etc/group file.
+is the secondary group to which the user will be added in the
+.Pa /etc/group
+file.
 .It Fl b Ar base-directory
 is the base directory name, in which the user's new home
 directory will be created, should the -m option be specified.
@@ -120,7 +124,7 @@ This value can be preset for all users
 by using the
 .Ar base_dir
 field in the
-.Xr /etc/usermgmt.conf
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .Ar base_dir <path-to-base-dir> .
 .It Fl c Ar comment
@@ -144,7 +148,7 @@ This value can be preset for all users
 by using the
 .Ar expire
 field in the
-.Xr /etc/usermgmt.conf
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .Ar expire <secs-to-expiry> .
 .It Fl g Ar gid/name/=uid
@@ -153,13 +157,13 @@ If this is
 .Ar "-g=uid" ,
 then a uid and gid will be picked which are both unique
 and the same, and a line added to
-.Ar /etc/group
+.Pa /etc/group
 to describe the new group.
 This value can be preset for all users
 by using the
 .Ar gid
 field in the
-.Xr /etc/usermgmt.conf
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .Ar group <groupname/groupid/=uid> .
 .It Fl k Ar skeleton directory
@@ -178,7 +182,7 @@ This value can be preset for all users
 by using the
 .Ar password
 field in the
-.Xr /etc/usermgmt.conf
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .Ar password <encrypted-password> .
 .It Fl s Ar shell
@@ -187,7 +191,7 @@ This value can be preset for all users
 by using the
 .Ar shell
 field in the
-.Xr /etc/usermgmt.conf
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .Ar shell <login-shell> .
 .It Fl u Ar uid
@@ -196,7 +200,7 @@ Boundaries for this value can be preset for all users
 by using the
 .Ar range
 field in the
-.Xr /etc/usermgmt.conf
+.Pa /etc/usermgmt.conf
 file - they have the format:
 .Ar range <starting-uid>..<ending-uid> .
 .It Fl v
@@ -206,6 +210,19 @@ enables verbose mode - explain the commands as they are executed.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Sh FILES
+.Bl -tag -width /etc/usermgmt.conf -compact
+.It Pa /etc/usermgmt.conf
+.It Pa /etc/skel/.[A-z]*
+.It Pa /usr/share/examples/usermgmt
+.El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr passwd 5 ,
+.Xr group 5 ,
+.Xr user 8 ,
+.Xr userdel 8 ,
+.Xr usermod 8
 .Sh HISTORY
 The
 .Nm
@@ -218,13 +235,3 @@ package by the same author.
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
-.Sh SEE ALSO
-.Xr chpass 1 ,
-.Xr passwd 5 ,
-.Xr group 5 ,
-.Xr user 8 ,
-.Xr userdel 8 ,
-.Xr usermod 8 ,
-.Xr /etc/usermgmt.conf ,
-.Xr /etc/skel/.[A-z]* ,
-.Xr /usr/share/examples/usermgmt
