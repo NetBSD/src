@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/04/26 03:15:15 lukem Exp $
-
-TOP=		${.CURDIR}/..
+#	$NetBSD: Makefile,v 1.12 2002/04/26 03:29:32 lukem Exp $
 
 .include <bsd.own.mk>
 .include <bsd.kernobj.mk>
@@ -17,13 +15,9 @@ CRUNCHBIN=	rd_bin
 LISTS=		${.CURDIR}/list
 MTREECONF=	${.CURDIR}/mtree.conf
 IMAGEENDIAN=	be
-PARSELISTENV=	TOPDIR=${TOP}
 MAKEDEVTARGETS=	__ramdisk std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		${TOPDIR}/common/rd.disktab ${TOPDIR}/common/rd.fstab \
-		${TOPDIR}/common/rd.passwd ${TOPDIR}/common/rd.protocols \
-		${TOPDIR}/common/rd.services ${TOPDIR}/common/rd.sshrc \
-		${TOPDIR}/common/rd.welcome \
+		disktab fstab passwd protocols services sshrc welcome \
 		${_SRC_TOP_}/etc/netconfig
 
 MDSETTARGETS=	RAMDISK ramdisk.fs -

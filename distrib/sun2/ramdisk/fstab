@@ -1,0 +1,2 @@
+# $NetBSD: fstab,v 1.1 2002/04/26 03:29:32 lukem Exp $
+/dev/md0a / ufs rw 1 1

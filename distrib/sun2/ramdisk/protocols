@@ -1,0 +1,6 @@
+# 
+# etc/protocols (ramdisk version)
+# $NetBSD: protocols,v 1.1 2002/04/26 03:29:32 lukem Exp $
+#
+ip	0	IP
+icmp	1	ICMP

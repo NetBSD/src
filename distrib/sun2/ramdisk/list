@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.1 2002/04/26 03:15:16 lukem Exp $
+#	$NetBSD: list,v 1.2 2002/04/26 03:29:32 lukem Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -90,13 +90,13 @@ SPECIAL route		srcdir	distrib/utils/x_route
 SPECIAL umount		srcdir	distrib/utils/x_umount
 
 # various files that we need in /etc for the install
-COPY	${TOPDIR}/common/rd.disktab	etc/disktab
-COPY	${TOPDIR}/common/rd.fstab	etc/fstab
-COPY	${TOPDIR}/common/rd.protocols	etc/protocols
-COPY	${TOPDIR}/common/rd.services	etc/services
-COPY	${TOPDIR}/common/rd.passwd	etc/passwd
-COPY	${TOPDIR}/common/rd.sshrc	.sshrc
-COPY	${TOPDIR}/common/rd.welcome	.welcome
+COPY	${CURDIR}/disktab	etc/disktab
+COPY	${CURDIR}/fstab		etc/fstab
+COPY	${CURDIR}/passwd	etc/passwd
+COPY	${CURDIR}/protocols	etc/protocols
+COPY	${CURDIR}/services	etc/services
+COPY	${CURDIR}/sshrc		.sshrc
+COPY	${CURDIR}/welcome	.welcome
 
 COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
 
