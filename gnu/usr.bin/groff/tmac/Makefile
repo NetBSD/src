@@ -24,5 +24,5 @@ afterinstall:
 	install -c -o ${TMACOWN} -g ${TMACGRP} -m ${TMACMODE} \
 		${.CURDIR}/tmac.an ${DESTDIR}${TMACDIR}/tmac.an.old
 
-.include <bsd.prog.mk>
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

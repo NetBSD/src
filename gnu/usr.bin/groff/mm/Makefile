@@ -32,5 +32,5 @@ afterinstall:
 		fi; \
 	done
 
-.include <bsd.prog.mk>
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

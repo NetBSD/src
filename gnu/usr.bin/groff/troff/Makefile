@@ -23,6 +23,6 @@ afterinstall:
 	install -c -o bin -g bin -m 444 $(.CURDIR)/hyphen.us \
 		$(DESTDIR)$(TMACDIR)/hyphen.us
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

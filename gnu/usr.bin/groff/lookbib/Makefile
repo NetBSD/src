@@ -6,6 +6,6 @@ CFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBBIB) $(LIBGROFF) -lm
 DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBMATH)
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

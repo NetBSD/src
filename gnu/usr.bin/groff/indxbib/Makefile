@@ -13,6 +13,6 @@ afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 $(.CURDIR)/eign \
 		$(DESTDIR)$(COMMON_WORDS_FILE)
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

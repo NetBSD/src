@@ -8,6 +8,6 @@ DPADD+=		$(LIBGROFF) $(LIBMATH)
 
 CLEANFILES+=	pic.cc pic.tab.h
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>

@@ -15,6 +15,6 @@ afterinstall:
 	chown ${BINOWN}.${BINGRP} $(DESTDIR)$(BINDIR)/neqn
 	chmod ${BINMODE} $(DESTDIR)$(BINDIR)/neqn
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"
+.include <bsd.prog.mk>
