@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.50 1999/05/31 02:46:17 ross Exp $
+# $NetBSD: Makefile.alpha,v 1.51 1999/05/31 18:54:49 ross Exp $
 
 # Makefile for NetBSD
 #
@@ -53,7 +53,7 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
 AFLAGS=		-traditional -D_LOCORE
 LOADADDRESS?=	fffffc0000300000
 LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __transfer -G 4
-STRIPFLAGS=	-g -X -x
+STRIPFLAGS=	-g -X
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
