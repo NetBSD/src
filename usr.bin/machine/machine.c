@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.c,v 1.3 1997/01/09 20:20:39 tls Exp $	*/
+/*	$NetBSD: machine.c,v 1.4 1997/10/19 04:41:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1986 Regents of the University of California.
@@ -33,20 +33,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1986 Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1986 Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)machine.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: machine.c,v 1.3 1997/01/09 20:20:39 tls Exp $";
+__RCSID("$NetBSD: machine.c,v 1.4 1997/10/19 04:41:04 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <stdio.h>
 
-main()
+int	main __P((int, char **));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	puts(MACHINE);
 	exit(0);
