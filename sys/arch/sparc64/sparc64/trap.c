@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 1999/02/28 00:26:46 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.24 1999/03/18 03:25:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -471,12 +471,15 @@ userret(p, pc, oticks)
  * on return.  This is not done in userret() above as it must follow
  * the ktrsysret() in syscall().  Actually, it is likely that the
  * ktrsysret should occur before the call to userret.
+ *
+ * Oh, and don't touch the FPU bit if we're returning to the kernel.
  */
 static __inline void share_fpu(p, tf)
 	struct proc *p;
 	struct trapframe *tf;
 {
-	if ((tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) != 0 && fpproc != p)
+	if (!(tf->tf_tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) &&
+	    (tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) && fpproc != p)
 		tf->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 }
 
