@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.6 1997/01/07 12:05:10 tls Exp $	*/
+/*	$NetBSD: factor.c,v 1.7 1997/10/10 12:51:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: factor.c,v 1.6 1997/01/07 12:05:10 tls Exp $";
+__RCSID("$NetBSD: factor.c,v 1.7 1997/10/10 12:51:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ static char rcsid[] = "$NetBSD: factor.c,v 1.6 1997/01/07 12:05:10 tls Exp $";
 extern ubig prime[];
 extern ubig *pr_limit;		/* largest prime in the prime array */
 
+int	main __P((int, char *[]));
 void	pr_fact __P((ubig));	/* print factors of a value */
 void	usage __P((void));
 
@@ -100,7 +101,7 @@ main(argc, argv)
 	int ch;
 	char *p, buf[100];		/* > max number of digits. */
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:
