@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.14 2000/08/12 07:38:40 tsutsui Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.15 2000/09/20 05:44:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -77,6 +77,7 @@
 #include <machine/intr.h>
 #include <machine/endian.h>
 
+#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/pci/pcireg.h>
@@ -84,23 +85,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_sipreg.h>
-
-/*
- * Devices supported by this driver.
- */
-const struct sip_product {
-	pci_vendor_id_t		sip_vendor;
-	pci_product_id_t	sip_product;
-	const char		*sip_name;
-} sip_products[] = {
-	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_900,
-	  "SiS 900 10/100 Ethernet" },
-	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7016,
-	  "SiS 7016 10/100 Ethernet" },
-
-	{ 0,			0,
-	  NULL },
-};
 
 /*
  * Transmit descriptor list size.  This is arbitrary, but allocate
@@ -174,7 +158,8 @@ struct sip_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
-	pci_product_id_t sc_model;	/* which model are we? */
+
+	const struct sip_product *sc_model; /* which model are we? */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -258,8 +243,8 @@ do {									\
 	struct sip_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
 	struct sip_desc *__sipd = &(sc)->sc_rxdescs[(x)];		\
 									\
-	__sipd->sipd_link = htole32(SIP_CDRXADDR((sc), SIP_NEXTRX((x))));	\
-	__sipd->sipd_bufptr = htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
+	__sipd->sipd_link = htole32(SIP_CDRXADDR((sc), SIP_NEXTRX((x)))); \
+	__sipd->sipd_bufptr = htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr); \
 	__sipd->sipd_cmdsts = htole32(CMDSTS_INTR |			\
 	    ((MCLBYTES - 1) & CMDSTS_SIZE_MASK));			\
 	SIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
@@ -279,16 +264,22 @@ void	sip_stop __P((struct sip_softc *, int));
 void	sip_rxdrain __P((struct sip_softc *));
 int	sip_add_rxbuf __P((struct sip_softc *, int));
 void	sip_read_eeprom __P((struct sip_softc *, int, int, u_int16_t *));
-void	sip_set_filter __P((struct sip_softc *));
 void	sip_tick __P((void *));
+
+void	sip_sis900_set_filter __P((struct sip_softc *));
+void	sip_dp83815_set_filter __P((struct sip_softc *));
 
 int	sip_intr __P((void *));
 void	sip_txintr __P((struct sip_softc *));
 void	sip_rxintr __P((struct sip_softc *));
 
-int	sip_mii_readreg __P((struct device *, int, int));
-void	sip_mii_writereg __P((struct device *, int, int, int));
-void	sip_mii_statchg __P((struct device *));
+int	sip_sis900_mii_readreg __P((struct device *, int, int));
+void	sip_sis900_mii_writereg __P((struct device *, int, int, int));
+void	sip_sis900_mii_statchg __P((struct device *));
+
+int	sip_dp83815_mii_readreg __P((struct device *, int, int));
+void	sip_dp83815_mii_writereg __P((struct device *, int, int, int));
+void	sip_dp83815_mii_statchg __P((struct device *));
 
 int	sip_mediachange __P((struct ifnet *));
 void	sip_mediastatus __P((struct ifnet *, struct ifmediareq *));
@@ -300,6 +291,51 @@ int	sip_copy_small = 0;
 
 struct cfattach sip_ca = {
 	sizeof(struct sip_softc), sip_match, sip_attach,
+};
+
+/*
+ * Descriptions of the variants of the SiS900.
+ */
+struct sip_variant {
+	int	(*sipv_mii_readreg) __P((struct device *, int, int));
+	void	(*sipv_mii_writereg) __P((struct device *, int, int, int));
+	void	(*sipv_mii_statchg) __P((struct device *));
+	void	(*sipv_set_filter) __P((struct sip_softc *));
+};
+
+const struct sip_variant sip_variant_sis900 = {
+	sip_sis900_mii_readreg, sip_sis900_mii_writereg,
+	    sip_sis900_mii_statchg, sip_sis900_set_filter
+};
+
+const struct sip_variant sip_variant_dp83815 = {
+	sip_dp83815_mii_readreg, sip_dp83815_mii_writereg,
+	    sip_dp83815_mii_statchg, sip_dp83815_set_filter
+};
+
+/*
+ * Devices supported by this driver.
+ */
+const struct sip_product {
+	pci_vendor_id_t		sip_vendor;
+	pci_product_id_t	sip_product;
+	const char		*sip_name;
+	const struct sip_variant *sip_variant;
+} sip_products[] = {
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_900,
+	  "SiS 900 10/100 Ethernet",
+	  &sip_variant_sis900 },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7016,
+	  "SiS 7016 10/100 Ethernet",
+	  &sip_variant_sis900 },
+
+	{ PCI_VENDOR_NS,	PCI_PRODUCT_NS_DP83815,
+	  "NatSemi DP83815 10/100 Ethernet",
+	  &sip_variant_dp83815 },
+
+	{ 0,			0,
+	  NULL,
+	  NULL },
 };
 
 const struct sip_product *sip_lookup __P((const struct pci_attach_args *));
@@ -364,7 +400,7 @@ sip_attach(parent, self, aux)
 
 	printf(": %s\n", sip->sip_name);
 
-	sc->sc_model = PCI_PRODUCT(pa->pa_id);
+	sc->sc_model = sip;
 
 	/*
 	 * Map the device.
@@ -524,9 +560,9 @@ sip_attach(parent, self, aux)
 	 * Initialize our media structures and probe the MII.
 	 */
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = sip_mii_readreg;
-	sc->sc_mii.mii_writereg = sip_mii_writereg;
-	sc->sc_mii.mii_statchg = sip_mii_statchg;
+	sc->sc_mii.mii_readreg = sip->sip_variant->sipv_mii_readreg;
+	sc->sc_mii.mii_writereg = sip->sip_variant->sipv_mii_writereg;
+	sc->sc_mii.mii_statchg = sip->sip_variant->sipv_mii_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, sip_mediachange,
 	    sip_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
@@ -934,7 +970,7 @@ sip_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			sip_set_filter(sc);
+			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 			error = 0;
 		}
 		break;
@@ -1499,7 +1535,7 @@ sip_init(sc)
 	bus_space_write_4(st, sh, SIP_RXCFG, sc->sc_rxcfg);
 
 	/* Set up the receive filter. */
-	sip_set_filter(sc);
+	(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 
 	/*
 	 * Give the transmit and receive rings to the chip.
@@ -1762,12 +1798,12 @@ sip_add_rxbuf(sc, idx)
 }
 
 /*
- * sip_set_filter:
+ * sip_sis900_set_filter:
  *
  *	Set up the receive filter.
  */
 void
-sip_set_filter(sc)
+sip_sis900_set_filter(sc)
 	struct sip_softc *sc;
 {
 	bus_space_tag_t st = sc->sc_st;
@@ -1870,12 +1906,120 @@ sip_set_filter(sc)
 }
 
 /*
- * sip_mii_readreg:	[mii interface function]
+ * sip_dp83815_set_filter:
+ *
+ *	Set up the receive filter.
+ */
+void
+sip_dp83815_set_filter(sc)
+	struct sip_softc *sc;
+{
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if; 
+	struct ether_multi *enm;
+	u_int8_t *cp;    
+	struct ether_multistep step; 
+	u_int32_t crc, mchash[16];
+	int i;
+
+	/*
+	 * Initialize the prototype RFCR.
+	 */
+	sc->sc_rfcr = RFCR_RFEN | RFCR_AARP | RFCR_APM;
+	if (ifp->if_flags & IFF_BROADCAST)
+		sc->sc_rfcr |= RFCR_AAB;
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_rfcr |= RFCR_AAP;
+		goto allmulti;
+	}
+
+	/*
+	 * Set up the multicast address filter by passing all multicast
+	 * addresses through a CRC generator, and then using the high-order
+	 * 9 bits as an index into the 512 bit multicast hash table.  The
+	 * high-order bits select the slot, while the rest of the bits
+	 * select the bit within the slot.  Note that only the low 16-bits
+	 * of each filter word are used, and there are 64 filter words.
+	 */
+
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			goto allmulti;
+		}
+
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 9 most significant bits. */
+		crc >>= 23;
+
+		/* Set the corresponding bit in the hash table. */
+		mchash[crc >> 5] |= 1 << (crc & 0x1f);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	ifp->if_flags |= ~IFF_ALLMULTI;
+	sc->sc_rfcr |= RFCR_MHEN;
+	goto setit;
+
+ allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	sc->sc_rfcr |= RFCR_AAM;
+
+ setit:
+#define	FILTER_EMIT(addr, data)						\
+	bus_space_write_4(st, sh, SIP_RFCR, (addr));			\
+	delay(1);							\
+	bus_space_write_4(st, sh, SIP_RFDR, (data));			\
+	delay(1);
+
+	/*
+	 * Disable receive filter, and program the node address.
+	 */
+	cp = LLADDR(ifp->if_sadl);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[1] << 8) | cp[0]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[3] << 8) | cp[2]);
+	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH, (cp[5] << 8) | cp[4]);
+
+	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
+		/*
+		 * Program the multicast hash table.
+		 */
+		for (i = 0; i < 16; i++) {
+			FILTER_EMIT(RFCR_NS_RFADDR_FILTMEM + (i * 2),
+			    mchash[i] & 0xffff);
+			FILTER_EMIT(RFCR_NS_RFADDR_FILTMEM + (i * 2) + 2,
+			    (mchash[i] >> 16) & 0xffff);
+		}
+	}
+#undef FILTER_EMIT
+
+	/*
+	 * Re-enable the receiver filter.
+	 */
+	bus_space_write_4(st, sh, SIP_RFCR, sc->sc_rfcr);
+}
+
+/*
+ * sip_sis900_mii_readreg:	[mii interface function]
  *
  *	Read a PHY register on the MII.
  */
 int
-sip_mii_readreg(self, phy, reg)
+sip_sis900_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
@@ -1886,7 +2030,7 @@ sip_mii_readreg(self, phy, reg)
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model == PCI_PRODUCT_SIS_900 && phy != 0)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
 		return (0);
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
@@ -1899,12 +2043,12 @@ sip_mii_readreg(self, phy, reg)
 }
 
 /*
- * sip_mii_writereg:	[mii interface function]
+ * sip_sis900_mii_writereg:	[mii interface function]
  *
  *	Write a PHY register on the MII.
  */
 void
-sip_mii_writereg(self, phy, reg, val)
+sip_sis900_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
@@ -1915,7 +2059,7 @@ sip_mii_writereg(self, phy, reg, val)
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model == PCI_PRODUCT_SIS_900 && phy != 0)
+	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
 		return;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
@@ -1927,12 +2071,12 @@ sip_mii_writereg(self, phy, reg, val)
 }
 
 /*
- * sip_mii_statchg:	[mii interface function]
+ * sip_sis900_mii_statchg:	[mii interface function]
  *
  *	Callback from MII layer when media changes.
  */
 void
-sip_mii_statchg(self)
+sip_sis900_mii_statchg(self)
 	struct device *self;
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
@@ -1970,6 +2114,101 @@ sip_mii_statchg(self)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IMR, sc->sc_imr);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_FLOWCTL, flowctl);
+}
+
+/*
+ * sip_dp83815_mii_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the MII.
+ */
+int
+sip_dp83815_mii_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct sip_softc *sc = (struct sip_softc *) self;
+	u_int32_t val;
+
+	/*
+	 * The DP83815 only has an internal PHY.  Only allow
+	 * MII address 0.
+	 */
+	if (phy != 0)
+		return (0);
+
+	/*
+	 * Apparently, after a reset, the DP83815 can take a while
+	 * to respond.  During this recovery period, the BMSR returns
+	 * a value of 0.  Catch this -- it's not supposed to happen
+	 * (the BMSR has some hardcoded-to-1 bits), and wait for the
+	 * PHY to come back to life.
+	 *
+	 * This works out because the BMSR is the first register
+	 * read during the PHY probe process.
+	 */
+	do {
+		val = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_NS_PHY(reg));
+	} while (reg == MII_BMSR && val == 0);
+
+	return (val & 0xffff);
+}
+
+/*
+ * sip_dp83815_mii_writereg:	[mii interface function]
+ *
+ *	Write a PHY register to the MII.
+ */
+void
+sip_dp83815_mii_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct sip_softc *sc = (struct sip_softc *) self;
+
+	/*
+	 * The DP83815 only has an internal PHY.  Only allow
+	 * MII address 0.
+	 */
+	if (phy != 0)
+		return;
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_NS_PHY(reg), val);
+}
+
+/*
+ * sip_dp83815_mii_statchg:	[mii interface function]
+ *
+ *	Callback from MII layer when media changes.
+ */
+void
+sip_dp83815_mii_statchg(self)
+	struct device *self;
+{
+	struct sip_softc *sc = (struct sip_softc *) self;
+
+	/*
+	 * Update TXCFG for full-duplex operation.
+	 */
+	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
+		sc->sc_txcfg |= (TXCFG_CSI | TXCFG_HBI);
+	else
+		sc->sc_txcfg &= ~(TXCFG_CSI | TXCFG_HBI);
+
+	/*
+	 * Update RXCFG for full-duplex or loopback.
+	 */
+	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0 ||
+	    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_LOOP)
+		sc->sc_rxcfg |= RXCFG_ATX;
+	else
+		sc->sc_rxcfg &= ~RXCFG_ATX;
+
+	/*
+	 * XXX 802.3x flow control.
+	 */
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXCFG, sc->sc_txcfg);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
 }
 
 /*
