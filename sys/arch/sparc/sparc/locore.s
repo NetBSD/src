@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205 2004/04/19 10:01:41 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.206 2004/04/20 08:36:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2899,6 +2899,17 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	b	ft_rett
 	 mov	SRMMU_CXR, %l7			! reload ctx register
 
+_ENTRY(_C_LABEL(ft_want_ast))
+	mov	1, %l4				! ack xcall in all cases
+	st	%l4, [%l6 + CPUINFO_XMSG_CMPLT]	! completed = 1
+
+	btst	PSR_PS, %l0		! if from user mode
+	be,a	slowtrap		!  call trap(T_AST)
+	 mov	T_AST, %l3
+
+	mov	%l0, %psr		! else return from trap
+	 nop				! AST will be noticed on out way out
+	RETT
 #endif /* MULTIPROCESSOR */
 
 #ifdef notyet
