@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser_compat.h,v 1.1.1.1 1999/11/20 18:54:04 veego Exp $	*/
+/*	$NetBSD: nameser_compat.h,v 1.1.1.1.10.1 2002/06/28 11:38:06 lukem Exp $	*/
 
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 /*
  *      from nameser.h	8.1 (Berkeley) 6/2/93
- *	Id: nameser_compat.h,v 8.11 1999/01/02 08:00:58 vixie Exp
+ *	Id: nameser_compat.h,v 8.14 2002/05/18 01:39:11 marka Exp
  */
 
 #ifndef _ARPA_NAMESER_COMPAT_
@@ -66,6 +66,7 @@
     defined(apollo) || defined(__convex__) || defined(_CRAY) || \
     defined(__hppa) || defined(__hp9000) || \
     defined(__hp9000s300) || defined(__hp9000s700) || \
+    defined(__hp3000s900) || defined(__hpux) || defined(MPE) || \
     defined (BIT_ZERO_ON_LEFT) || defined(m68k) || \
     (defined(__Lynx__) && \
      (defined(__68k__) || defined(__sparc__) || defined(__powerpc__)))
@@ -209,6 +210,7 @@ typedef struct {
 #define	T_SRV		ns_t_srv
 #define T_ATMA		ns_t_atma
 #define T_NAPTR		ns_t_naptr
+#define T_A6		ns_t_a6
 #define	T_TSIG		ns_t_tsig
 #define	T_IXFR		ns_t_ixfr
 #define T_AXFR		ns_t_axfr
