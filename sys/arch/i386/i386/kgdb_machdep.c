@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.10 2000/11/14 22:55:05 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.11 2001/06/17 21:01:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -191,6 +191,8 @@ kgdb_getregs(regs, gdb_regs)
 	gdb_regs[10] = regs->tf_cs;
 	gdb_regs[12] = regs->tf_ds;
 	gdb_regs[13] = regs->tf_es;
+	gdb_regs[14] = regs->tf_fs;
+	gdb_regs[15] = regs->tf_gs;
 
 	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/*
