@@ -86,6 +86,7 @@ MAKE_LIBPARSE = @MAKE_LIBPARSE@
 MAKE_LIBPARSE_KERNEL = @MAKE_LIBPARSE_KERNEL@
 MAKE_LIBRSAREF = @MAKE_LIBRSAREF@
 MAKE_NTPTIME = @MAKE_NTPTIME@
+MAKE_NTP_GENKEYS = @MAKE_NTP_GENKEYS@
 MAKE_PARSEKMODULE = @MAKE_PARSEKMODULE@
 MAKE_TICKADJ = @MAKE_TICKADJ@
 PACKAGE = @PACKAGE@
@@ -110,32 +111,32 @@ CLEANFILES = $(EXTRA_LIBRARIES)
 # NOTES:
 # don't use RSAREF's global.h - we use ours.
 
-librsaref_a_SOURCES = \
-	des.h \
+nodist_librsaref_a_SOURCES = \
 	desc.c \
 	digit.c \
-	digit.h \
-	md2.h \
 	md2c.c \
-	md5.h \
 	md5c.c \
 	nn.c \
-	nn.h \
 	prime.c \
-	prime.h \
 	r_dh.c \
 	r_encode.c \
 	r_enhanc.c \
 	r_keygen.c \
 	r_random.c \
-	r_random.h \
 	r_stdlib.c \
 	rsa.c \
+	des.h \
+	digit.h \
+	md2.h \
+	md5.h \
+	nn.h \
+	prime.h \
+	r_random.h \
 	rsa.h \
 	rsaref.h
 
 
-BUILT_SOURCES = $(librsaref_a_SOURCES)
+BUILT_SOURCES = $(nodist_librsaref_a_SOURCES)
 INCLUDES = -I$(top_srcdir)/include
 ETAGS_ARGS = Makefile.am
 subdir = librsaref
@@ -150,14 +151,14 @@ CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 librsaref_a_AR = $(AR) cru
 librsaref_a_LIBADD = 
-am_librsaref_a_OBJECTS =  desc.o digit.o md2c.o md5c.o nn.o prime.o \
+nodist_librsaref_a_OBJECTS =  desc.o digit.o md2c.o md5c.o nn.o prime.o \
 r_dh.o r_encode.o r_enhanc.o r_keygen.o r_random.o r_stdlib.o rsa.o
-librsaref_a_OBJECTS =  $(am_librsaref_a_OBJECTS)
+librsaref_a_OBJECTS =  $(nodist_librsaref_a_OBJECTS)
 AR = ar
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES =  $(librsaref_a_SOURCES)
+DIST_SOURCES = 
 DIST_COMMON =  Makefile.am Makefile.in
 
 
@@ -170,8 +171,8 @@ $(DEPDIR)/md2c.Po $(DEPDIR)/md5c.Po $(DEPDIR)/nn.Po $(DEPDIR)/prime.Po \
 $(DEPDIR)/r_dh.Po $(DEPDIR)/r_encode.Po $(DEPDIR)/r_enhanc.Po \
 $(DEPDIR)/r_keygen.Po $(DEPDIR)/r_random.Po $(DEPDIR)/r_stdlib.Po \
 $(DEPDIR)/rsa.Po
-SOURCES = $(librsaref_a_SOURCES)
-OBJECTS = $(am_librsaref_a_OBJECTS)
+SOURCES = $(nodist_librsaref_a_SOURCES)
+OBJECTS = $(nodist_librsaref_a_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -364,18 +365,23 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 #EXTRA_DIST = 
 
-$(librsaref_a_SOURCES): stamp-rsaref
+$(nodist_librsaref_a_SOURCES): stamp-rsaref
 
 stamp-rsaref:
 	@rm -f stamp-rsaref stamp-rsarefT
 	@echo timestamp > stamp-rsarefT 2> /dev/null
-	for i in $(librsaref_a_SOURCES); do \
+	for i in $(nodist_librsaref_a_SOURCES); do \
 	    case "@MAKE_LIBRSAREF@" in \
 	     '') touch $$i ;; \
-	     *) cmp -s $(srcdir)/$$i $(srcdir)/../rsaref2/source/$$i 2>/dev/null \
-		|| cp $(srcdir)/../rsaref2/source/$$i $(srcdir)/$$i ;; \
+	     *) case "$$i" in \
+		 *.h) r_dst=$(srcdir)/$$i ;; \
+		 *)   r_dst=$$i ;; \
+		esac ; \
+	 	cmp -s $${r_dst} $(srcdir)/../rsaref2/source/$$i 2>/dev/null \
+			|| cp $(srcdir)/../rsaref2/source/$$i $${r_dst} ;; \
 	    esac ; \
 	done
+	@echo timestamp > stamp-rsarefT 2> /dev/null
 	@mv stamp-rsarefT stamp-rsaref
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
