@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.33 2003/01/18 17:10:56 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.34 2003/10/29 20:43:27 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -8,9 +8,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char	elsieid[] = "@(#)localtime.c	7.75";
+static char	elsieid[] = "@(#)localtime.c	7.76";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.33 2003/01/18 17:10:56 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.34 2003/10/29 20:43:27 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -375,8 +375,8 @@ register struct state * const	sp;
 		i = read(fid, u.buf, sizeof u.buf);
 		if (close(fid) != 0)
 			return -1;
-		ttisstdcnt = (int) detzcode(u.tzhead.tzh_ttisgmtcnt);
-		ttisgmtcnt = (int) detzcode(u.tzhead.tzh_ttisstdcnt);
+		ttisstdcnt = (int) detzcode(u.tzhead.tzh_ttisstdcnt);
+		ttisgmtcnt = (int) detzcode(u.tzhead.tzh_ttisgmtcnt);
 		sp->leapcnt = (int) detzcode(u.tzhead.tzh_leapcnt);
 		sp->timecnt = (int) detzcode(u.tzhead.tzh_timecnt);
 		sp->typecnt = (int) detzcode(u.tzhead.tzh_typecnt);
