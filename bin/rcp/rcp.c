@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.24 1998/11/05 14:00:58 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.25 1999/02/17 06:45:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.24 1998/11/05 14:00:58 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.25 1999/02/17 06:45:38 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,13 +75,13 @@ __RCSID("$NetBSD: rcp.c,v 1.24 1998/11/05 14:00:58 christos Exp $");
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>
+#include "krb.h"
 
 char	dst_realm_buf[REALM_SZ];
 char	*dest_realm = NULL;
 int	use_kerberos = 1;
 CREDENTIALS 	cred;
 Key_schedule	schedule;
-extern	char	*krb_realmofhost();
 #ifdef CRYPT
 int	doencrypt = 0;
 #define	OPTIONS	"dfKk:prtx"
