@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.7 1994/11/18 15:36:19 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.8 1994/12/20 16:18:19 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -80,10 +80,11 @@ static nl_catd loadCat();
 static nl_catd loadSet();
 
 nl_catd 	_catopen( name, type)
-char *name;
+__const char *name;
 int type;
 {
-    char	path[MAXPATHLEN], *catpath = NULL;
+    char	path[MAXPATHLEN];
+    __const char *catpath = NULL;
     char	*nlspath, *tmppath = NULL;
     char	*lang;
     long	len;
@@ -235,15 +236,15 @@ int msgId;
     return(msg);
 }
 
-char		*_catgets( catd, setId, msgId, dflt)
+__const char	*_catgets( catd, setId, msgId, dflt)
 nl_catd catd;
 int setId;
 int msgId;
-char *dflt;
+__const char *dflt;
 {
     MCMsgT	*msg;
     MCCatT	*cat = (MCCatT *) catd;
-    char	*cptr;
+    __const char *cptr;
 
     msg = MCGetMsg(MCGetSet(cat, setId), msgId);
     if (msg) cptr = msg->msg.str;
@@ -286,7 +287,7 @@ nl_catd catd;
 #define NOSPACE() {fprintf(stderr, "%s: no more memory.\n", ERRNAME); return(NLERR);}
 
 static nl_catd loadCat( catpath, type)
-char *catpath;
+__const char *catpath;
 int type;
 {
     MCHeaderT	header;
