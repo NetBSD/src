@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 1997/10/30 00:03:36 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.9 1997/10/31 23:00:50 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,13 +65,19 @@ void get_ramsize(void)
 
 static int asked = 0;
 
-void ask_sizemult ()
+void ask_sizemult (void)
 {
 	if (!asked) {
 		msg_display (MSG_sizechoice, dlcylsize);
 		process_menu (MENU_sizechoice);
 	}
 	asked = 1;
+}
+
+void reask_sizemult (void)
+{
+	asked = 0;
+	ask_sizemult ();
 }
 
 /* Returns 1 for "y" or "Y" and "n" otherwise.  CR => default. */

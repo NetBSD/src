@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 1997/10/29 01:06:42 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 1997/10/31 23:00:32 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,7 @@
 
 /* Round up to the next full cylinder size */
 #define NUMSEC(size,sizemult,cylsize) \
-	((sizemult == 1) ? (size) : \
+	((size == -1) ? -1 : (sizemult == 1) ? (size) : \
 	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize))
    
 /* Types */
@@ -110,9 +110,14 @@ EXTERN char *disktype;		/* ST506, SCSI, ... */
 /* Used in editing partitions ... BSD disklabel and others */
 EXTERN int editpart;
 
-/* Final known sizes for the NetBSD partition, NetBSD disk sizes. */
-EXTERN int ptstart, ptsize;
-EXTERN int fsdsize, fsptsize;
+/* Partition start and size in disk sectors. */
+EXTERN int ptstart, ptsize;	
+
+/* File system disk size.  File system partition size. May not include
+   full disk size. */
+EXTERN int fsdsize, fsptsize;	
+
+
 EXTERN int fsdmb;
 EXTERN int minfsdmb;
 EXTERN int partstart;
@@ -224,6 +229,7 @@ void	do_upgrade __P((void));
 /* from util.c */
 void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
+void	reask_sizemult __P((void));
 int	ask_ynquestion __P((char *quest, char def, ...));
 void	extract_dist __P((void));
 void	run_makedev __P((void));
