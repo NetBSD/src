@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.8 2003/06/02 10:33:25 is Exp $	 */
+/*	$NetBSD: at_control.c,v 1.9 2004/04/18 18:55:57 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.8 2003/06/02 10:33:25 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.9 2004/04/18 18:55:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,12 +167,11 @@ at_control(cmd, data, ifp, p)
 		if (aa == (struct at_ifaddr *) 0) {
 			aa = (struct at_ifaddr *)
 			    malloc(sizeof(struct at_ifaddr), M_IFADDR, 
-			    M_WAITOK);
+			    M_WAITOK|M_ZERO);
 
 			if (aa == NULL)
 				return (ENOBUFS);
 
-			bzero(aa, sizeof *aa);
 			callout_init(&aa->aa_probe_ch);
 
 			if ((aa0 = at_ifaddr.tqh_first) != NULL) {
