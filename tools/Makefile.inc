@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.9 2001/10/31 01:20:10 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2001/10/31 16:15:01 tv Exp $
 
 .include <bsd.own.mk>
 
-.if ${USETOOLS} == "no"
+.if ${USETOOLS} != "yes"
 .undef HOSTPROG
 .endif
 
