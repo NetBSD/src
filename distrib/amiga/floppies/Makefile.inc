@@ -1,3 +1,1 @@
-#	$NetBSD: Makefile.inc,v 1.6 1998/01/06 04:44:59 perry Exp $
-
-REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+#	$NetBSD: Makefile.inc,v 1.7 2002/03/06 22:55:17 lukem Exp $
