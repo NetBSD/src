@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.39 1994/05/24 06:30:57 deraadt Exp $
+#	$Id: bsd.prog.mk,v 1.40 1994/05/24 09:37:30 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -52,11 +52,8 @@ CLEANFILES+=strings
 
 
 .if defined(PROG)
-.if defined(SRCS)
+SRCS?=	${PROG}.c
 OBJS+=  ${SRCS:N*.h:R:S/$/.o/g}
-.else
-OBJS+=	${PROG}.o
-.endif
 
 .if defined(LDONLY)
 
