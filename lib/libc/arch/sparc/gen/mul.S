@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: mul.s,v 1.5 92/06/25 13:24:03 torek Exp
- * $Id: mul.S,v 1.1 1993/10/07 00:21:38 cgd Exp $
+ * $Id: mul.S,v 1.2 1996/11/16 20:53:21 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -52,7 +52,7 @@
  * This code optimizes short (less than 13-bit) multiplies.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 FUNC(.mul)
 	mov	%o0, %y		! multiplier -> Y
 	andncc	%o0, 0xfff, %g0	! test bits 12..31

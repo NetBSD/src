@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: ntohl.s,v 1.1 92/06/25 12:47:06 torek Exp
- * $Id: ntohl.S,v 1.1 1993/10/07 00:21:48 cgd Exp $
+ * $Id: ntohl.S,v 1.2 1996/11/16 20:53:27 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,7 +44,7 @@
 
 /* hostorder = ntohl(netorder) */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(ntohl)
 	retl

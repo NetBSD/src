@@ -35,14 +35,14 @@
  * SUCH DAMAGE.
  *
  * from: Header: strlen.s,v 1.1 92/06/25 12:52:47 torek Exp
- * $Id: strlen.S,v 1.1 1993/10/07 00:22:07 cgd Exp $
+ * $Id: strlen.S,v 1.2 1996/11/16 20:53:32 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.asciz "@(#)strlen.s	8.1 (Berkeley) 6/4/93"
 #endif /* LIBC_SCCS and not lint */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(strlen)
 	add	%o0, 1, %o1	! save starting point + 1

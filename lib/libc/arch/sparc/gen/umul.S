@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: umul.s,v 1.4 92/06/25 13:24:05 torek Exp
- * $Id: umul.S,v 1.1 1993/10/07 00:21:41 cgd Exp $
+ * $Id: umul.S,v 1.2 1996/11/16 20:53:23 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -58,7 +58,7 @@
  *	bnz	overflow	(or tnz)
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 FUNC(.umul)
 	or	%o0, %o1, %o4
 	mov	%o0, %y		! multiplier -> Y

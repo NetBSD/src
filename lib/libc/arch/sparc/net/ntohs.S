@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: ntohs.s,v 1.1 92/06/25 12:47:07 torek Exp
- * $Id: ntohs.S,v 1.1 1993/10/07 00:21:49 cgd Exp $
+ * $Id: ntohs.S,v 1.2 1996/11/16 20:53:28 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -44,7 +44,7 @@
 
 /* hostorder = ntohs(netorder) */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(ntohs)
 	sethi	%hi(0xffff0000), %o1
