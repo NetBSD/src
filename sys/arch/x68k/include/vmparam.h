@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2001/01/11 10:40:55 minoura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2001/01/11 13:18:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,14 +59,10 @@
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * is the top (end) of the user stack.
  */
 #define	USRTEXT		8192			/* Must equal __LDPGSZ */
-#define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
-#define HIGHPAGES	3			/* UPAGES */
+#define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
