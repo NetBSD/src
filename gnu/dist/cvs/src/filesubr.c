@@ -17,6 +17,7 @@
    definitions under operating systems (like, say, Windows NT) with different
    file system semantics.  */
 
+#include <assert.h>
 #include "cvs.h"
 
 static int deep_remove_dir PROTO((const char *path));
@@ -51,7 +52,7 @@ copy_file (from, to)
 
     if (isdevice (from))
     {
-#if defined(HAVE_MKNOD) && defined(HAVE_ST_RDEV)
+#if defined(HAVE_MKNOD) && defined(HAVE_STRUCT_STAT_ST_RDEV)
 	if (stat (from, &sb) < 0)
 	    error (1, errno, "cannot stat %s", from);
 	mknod (to, sb.st_mode, sb.st_rdev);
@@ -215,7 +216,7 @@ isaccessible (file, mode)
     int umask = 0;
     int gmask = 0;
     int omask = 0;
-    int uid;
+    int uid, mask;
     
     if (stat(file, &sb) == -1)
 	return 0;
@@ -225,10 +226,11 @@ isaccessible (file, mode)
     uid = geteuid();
     if (uid == 0)		/* superuser */
     {
-	if (mode & X_OK)
-	    return sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH);
-	else
+	if (!(mode & X_OK) || (sb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH)))
 	    return 1;
+
+	errno = EACCES;
+	return 0;
     }
 	
     if (mode & R_OK)
@@ -250,12 +252,11 @@ isaccessible (file, mode)
 	omask |= S_IXOTH;
     }
 
-    if (sb.st_uid == uid)
-	return (sb.st_mode & umask) == umask;
-    else if (sb.st_gid == getegid())
-	return (sb.st_mode & gmask) == gmask;
-    else
-	return (sb.st_mode & omask) == omask;
+    mask = sb.st_uid == uid ? umask : sb.st_gid == getegid() ? gmask : omask;
+    if ((sb.st_mode & mask) == mask)
+	return 1;
+    errno = EACCES;
+    return 0;
 #else
     return access(file, mode) == 0;
 #endif
@@ -326,12 +327,11 @@ make_directories (name)
    existed.  */
 int
 mkdir_if_needed (name)
-    char *name;
+    const char *name;
 {
     if (mkdir (name, 0777) < 0)
     {
-	if (!(errno == EEXIST
-	      || (errno == EACCES && isdir (name))))
+	if (errno != EEXIST && !isdir (name))
 	    error (1, errno, "cannot make directory %s", name);
 	return 1;
     }
@@ -413,12 +413,12 @@ unlink_file (f)
     const char *f;
 {
     if (trace)
-	(void) fprintf (stderr, "%s-> unlink(%s)\n",
+	(void) fprintf (stderr, "%s-> unlink_file(%s)\n",
 			CLIENT_SERVER_STR, f);
     if (noexec)
 	return (0);
 
-    return (unlink (f));
+    return (CVS_UNLINK (f));
 }
 
 /*
@@ -464,7 +464,7 @@ unlink_file_dir (f)
     else if (S_ISDIR (sb.st_mode))
 	return deep_remove_dir (f);
 
-    return unlink (f);
+    return CVS_UNLINK (f);
 }
 
 /* Remove a directory and everything it contains.  Returns 0 for
@@ -487,14 +487,14 @@ deep_remove_dir (path)
 	       returns 87).  */
 	    || (ENOTEMPTY == 17 && EEXIST == 17 && errno == 87))
 	{
-	    if ((dirp = opendir (path)) == NULL)
+	    if ((dirp = CVS_OPENDIR (path)) == NULL)
 		/* If unable to open the directory return
 		 * an error
 		 */
 		return -1;
 
 	    errno = 0;
-	    while ((dp = readdir (dirp)) != NULL)
+	    while ((dp = CVS_READDIR (dirp)) != NULL)
 	    {
 		char *buf;
 
@@ -512,16 +512,16 @@ deep_remove_dir (path)
 		{
 		    if (deep_remove_dir(buf))
 		    {
-			closedir(dirp);
+			CVS_CLOSEDIR(dirp);
 			free (buf);
 			return -1;
 		    }
 		}
 		else
 		{
-		    if (unlink (buf) != 0)
+		    if (CVS_UNLINK (buf) != 0)
 		    {
-			closedir(dirp);
+			CVS_CLOSEDIR(dirp);
 			free (buf);
 			return -1;
 		    }
@@ -533,11 +533,11 @@ deep_remove_dir (path)
 	    if (errno != 0)
 	    {
 		int save_errno = errno;
-		closedir (dirp);
+		CVS_CLOSEDIR (dirp);
 		errno = save_errno;
 		return -1;
 	    }
-	    closedir (dirp);
+	    CVS_CLOSEDIR (dirp);
 	    return rmdir (path);
 	}
 	else
@@ -624,7 +624,7 @@ xcmp (file1, file2)
        numbers match. */
     if (S_ISBLK (sb1.st_mode) || S_ISCHR (sb1.st_mode))
     {
-#ifdef HAVE_ST_RDEV
+#ifdef HAVE_STRUCT_STAT_ST_RDEV
 	if (sb1.st_rdev == sb2.st_rdev)
 	    return 0;
 	else
@@ -684,53 +684,167 @@ xcmp (file1, file2)
 }
 
 /* Generate a unique temporary filename.  Returns a pointer to a newly
-   malloc'd string containing the name.  Returns successfully or not at
-   all.  */
-/* There are at least three functions for generating temporary
-   filenames.  We use tempnam (SVID 3) if possible, else mktemp (BSD
-   4.3), and as last resort tmpnam (POSIX). Reason is that tempnam and
-   mktemp both allow to specify the directory in which the temporary
-   file will be created.  */
-#ifdef HAVE_TEMPNAM
+ * malloc'd string containing the name.  Returns successfully or not at
+ * all.
+ *
+ *     THIS FUNCTION IS DEPRECATED!!!  USE cvs_temp_file INSTEAD!!!
+ *
+ * and yes, I know about the way the rcs commands use temp files.  I think
+ * they should be converted too but I don't have time to look into it right
+ * now.
+ */
 char *
 cvs_temp_name ()
 {
-    char *retval;
+    char *fn;
+    FILE *fp;
 
-    retval = tempnam (Tmpdir, "cvs");
-    if (retval == NULL)
-	error (1, errno, "cannot generate temporary filename");
+    fp = cvs_temp_file (&fn);
+    if (fp == NULL)
+	error (1, errno, "Failed to create temporary file");
+    if (fclose (fp) == EOF)
+	error (0, errno, "Failed to close temporary file %s", fn);
+    return fn;
+}
+
+/* Generate a unique temporary filename and return an open file stream
+ * to the truncated file by that name
+ *
+ *  INPUTS
+ *	filename	where to place the pointer to the newly allocated file
+ *   			name string
+ *
+ *  OUTPUTS
+ *	filename	dereferenced, will point to the newly allocated file
+ *			name string.  This value is undefined if the function
+ *			returns an error.
+ *
+ *  RETURNS
+ *	An open file pointer to a read/write mode empty temporary file with the
+ *	unique file name or NULL on failure.
+ *
+ *  ERRORS
+ *	on error, errno will be set to some value either by CVS_FOPEN or
+ *	whatever system function is called to generate the temporary file name
+ */
+/* There are at least four functions for generating temporary
+ * filenames.  We use mkstemp (BSD 4.3) if possible, else tempnam (SVID 3),
+ * else mktemp (BSD 4.3), and as last resort tmpnam (POSIX).  Reason is that
+ * mkstemp, tempnam, and mktemp both allow to specify the directory in which
+ * the temporary file will be created.
+ *
+ * And the _correct_ way to use the deprecated functions probably involves
+ * opening file descriptors using O_EXCL & O_CREAT and even doing the annoying
+ * NFS locking thing, but until I hear of more problems, I'm not going to
+ * bother.
+ */
+FILE *cvs_temp_file (filename)
+    char **filename;
+{
+    char *fn;
+    FILE *fp;
+
+    /* FIXME - I'd like to be returning NULL here in noexec mode, but I think
+     * some of the rcs & diff functions which rely on a temp file run in
+     * noexec mode too.
+     */
+
+    assert (filename != NULL);
+
+#ifdef HAVE_MKSTEMP
+
+    {
+    int fd;
+
+    fn = xmalloc (strlen (Tmpdir) + 11);
+    sprintf (fn, "%s/%s", Tmpdir, "cvsXXXXXX" );
+    fd = mkstemp (fn);
+
+    /* a NULL return will be interpreted by callers as an error and
+     * errno should still be set
+     */
+    if (fd == -1) fp = NULL;
+    else if ((fp = CVS_FDOPEN (fd, "w+")) == NULL)
+    {
+	/* attempt to close and unlink the file since mkstemp returned sucessfully and
+	 * we believe it's been created and opened
+	 */
+ 	int save_errno = errno;
+	if (close (fd))
+	    error (0, errno, "Failed to close temporary file %s", fn);
+	if (CVS_UNLINK (fn))
+	    error (0, errno, "Failed to unlink temporary file %s", fn);
+	errno = save_errno;
+    }
+
+    if (fp == NULL) free (fn);
+    /* mkstemp is defined to open mode 0600 using glibc 2.0.7+ */
+    /* FIXME - configure can probably tell us which version of glibc we are
+     * linking to and not chmod for 2.0.7+
+     */
+    else chmod (fn, 0600);
+
+    }
+
+#elif HAVE_TEMPNAM
+
+    /* tempnam has been deprecated due to under-specification */
+
+    fn = tempnam (Tmpdir, "cvs");
+    if (fn == NULL) fp = NULL;
+    else if ((fp = CVS_FOPEN (fn, "w+")) == NULL) free (fn);
+    else chmod (fn, 0600);
+
     /* tempnam returns a pointer to a newly malloc'd string, so there's
-       no need for a xstrdup  */
-    return retval;
-}
-#else
-char *
-cvs_temp_name ()
-{
-#  ifdef HAVE_MKTEMP
-    char *value;
-    char *retval;
+     * no need for a xstrdup
+     */
 
-    value = xmalloc (strlen (Tmpdir) + 40);
-    sprintf (value, "%s/%s", Tmpdir, "cvsXXXXXX" );
-    retval = mktemp (value);
+#elif HAVE_MKTEMP
 
-    if (retval == NULL)
-	error (1, errno, "cannot generate temporary filename");
-    return value;
-#  else
-    char value[L_tmpnam + 1];
-    char *retval;
+    /* mktemp has been deprecated due to the BSD 4.3 specification specifying
+     * that XXXXXX will be replaced by a PID and a letter, creating only 26
+     * possibilities, a security risk, and a race condition.
+     */
 
-    retval = tmpnam (value);
-    if (retval == NULL)
-	error (1, errno, "cannot generate temporary filename");
-    return xstrdup (value);
-#  endif
-}
+    {
+    char *ifn;
+
+    ifn = xmalloc (strlen (Tmpdir) + 11);
+    sprintf (ifn, "%s/%s", Tmpdir, "cvsXXXXXX" );
+    fn = mktemp (ifn);
+
+    if (fn == NULL) fp = NULL;
+    else fp = CVS_FOPEN (fn, "w+");
+
+    if (fp == NULL) free (ifn);
+    else chmod (fn, 0600);
+
+    }
+
+#else	/* use tmpnam if all else fails */
+
+    /* tmpnam is deprecated */
+
+    {
+    char ifn[L_tmpnam + 1];
+
+    fn = tmpnam (ifn);
+
+    if (fn == NULL) fp = NULL;
+    else if ((fp = CVS_FOPEN (ifn, "w+")) != NULL)
+    {
+	fn = xstrdup (ifn);
+	chmod (fn, 0600);
+    }
+
+    }
+
 #endif
-
+
+    *filename = fn;
+    return fp;
+}
+
 /* Return non-zero iff FILENAME is absolute.
    Trivial under Unix, but more complicated under other systems.  */
 int
@@ -819,13 +933,17 @@ char *
 get_homedir ()
 {
     static char *home = NULL;
-    char *env = getenv ("HOME");
+    char *env;
     struct passwd *pw;
 
     if (home != NULL)
 	return home;
 
-    if (env)
+    if (
+#ifdef SERVER_SUPPORT
+	!server_active &&
+#endif
+	(env = getenv ("HOME")) != NULL)
 	home = env;
     else if ((pw = (struct passwd *) getpwuid (getuid ()))
 	     && pw->pw_dir)
@@ -834,6 +952,26 @@ get_homedir ()
 	return 0;
 
     return home;
+}
+
+/* Compose a path to a file in the home directory.  This is necessary because
+ * of different behavior on UNIX and VMS.  See the notes in vms/filesubr.c.
+ *
+ * A more clean solution would be something more along the lines of a
+ * "join a directory to a filename" kind of thing which was not specific to
+ * the homedir.  This should aid portability between UNIX, Mac, Windows, VMS,
+ * and possibly others.  This is already handled by Perl - it might be
+ * interesting to see how much of the code was written in C since Perl is under
+ * the GPL and the Artistic license - we might be able to use it.
+ */
+char *
+strcat_filename_onto_homedir (dir, file)
+    const char *dir;
+    const char *file;
+{
+    char *path = xmalloc (strlen (dir) + 1 + strlen(file) + 1);
+    sprintf (path, "%s/%s", dir, file);
+    return path;
 }
 
 /* See cvs.h for description.  On unix this does nothing, because the
@@ -932,7 +1070,7 @@ fopen_case (name, mode, fp, pathp)
 	}
     }
     errno = 0;
-    while ((dp = readdir (dirp)) != NULL)
+    while ((dp = CVS_READDIR (dirp)) != NULL)
     {
 	if (cvs_casecmp (dp->d_name, fname) == 0)
 	{
@@ -944,7 +1082,7 @@ fopen_case (name, mode, fp, pathp)
     }
     if (errno != 0)
 	error (1, errno, "cannot read directory %s", dir);
-    closedir (dirp);
+    CVS_CLOSEDIR (dirp);
 
     if (found_name == NULL)
     {
@@ -980,3 +1118,5 @@ fopen_case (name, mode, fp, pathp)
     return retval;
 }
 #endif /* SERVER_SUPPORT */
+/* vim:tabstop=8:shiftwidth=4
+ */

@@ -1,4 +1,4 @@
-#! xPERL_PATHx
+#! @PERL@
 
 # Merge conflicted ChangeLogs
 # tromey Mon Aug 15 1994

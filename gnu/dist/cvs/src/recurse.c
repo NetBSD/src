@@ -33,7 +33,7 @@ struct recursion_frame {
     Dtype flags;
     int which;
     int aflag;
-    int readlock;
+    int locktype;
     int dosrcs;
 };
 
@@ -66,7 +66,7 @@ struct frame_and_entries {
    default to ".".  */
 int
 start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
-		 argc, argv, local, which, aflag, readlock,
+		 argc, argv, local, which, aflag, locktype,
 		 update_preload, dosrcs)
     FILEPROC fileproc;
     FILESDONEPROC filesdoneproc;
@@ -102,7 +102,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
     int which;
 
     int aflag;
-    int readlock;
+    int locktype;
     char *update_preload;
     int dosrcs;
 {
@@ -121,7 +121,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
     frame.flags = local ? R_SKIP_DIRS : R_PROCESS;
     frame.which = which;
     frame.aflag = aflag;
-    frame.readlock = readlock;
+    frame.locktype = locktype;
     frame.dosrcs = dosrcs;
 
     expand_wild (argc, argv, &argc, &argv);
@@ -157,10 +157,10 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 #ifdef CLIENT_SUPPORT
 	if (!just_subdirs
 	    && CVSroot_cmdline == NULL
-	    && client_active)
+	    && current_parsed_root->isremote)
 	{
 	    char *root = Name_Root (NULL, update_dir);
-	    if (root && strcmp (root, current_root) != 0)
+	    if (root && strcmp (root, current_parsed_root->original) != 0)
 		/* We're skipping this directory because it is for
 		   a different root.  Therefore, we just want to
 		   do the subdirectories only.  Processing files would
@@ -204,7 +204,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 		       program_name);
 	    }
 #ifdef CLIENT_SUPPORT
-	    else if (client_active && server_started)
+	    else if (current_parsed_root->isremote && server_started)
 	    {
 		/* In the the case "cvs update foo bar baz", a call to
 		   send_file_names in update.c will have sent the
@@ -247,7 +247,10 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	   directories. */
 
 	if (!wrap_name_has (argv[i], WRAP_TOCVS) && isdir (argv[i]))
+	{
+	    strip_trailing_slashes (argv[i]);
 	    addlist (&dirlist, argv[i]);
+	}
 	else
 	{
 	    /* otherwise, split argument into directory and component names. */
@@ -290,7 +293,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    {
 		if ((which & W_LOCAL) && isdir (CVSADM)
 #ifdef CLIENT_SUPPORT
-		    && !client_active
+		    && !current_parsed_root->isremote
 #endif
 		    )
 		{
@@ -363,8 +366,8 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	/* FIXME (njc): in the multiroot case, we don't want to send
 	   argument commands for those top-level directories which do
 	   not contain any subdirectories which have files checked out
-	   from current_root.  If we do, and two repositories have a
-	   module with the same name, nasty things could happen.
+	   from current_parsed_root->original.  If we do, and two repositories
+	   have a module with the same name, nasty things could happen.
 
 	   This is hard.  Perhaps we should send the Argument commands
 	   later in this procedure, after we've had a chance to notice
@@ -440,7 +443,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	   "Directory xxx" command, which forces the server to descend
 	   and serve the files there.  client.c (send_file_names) has
 	   also been modified to send only those arguments which are
-	   appropriate to current_root.
+	   appropriate to current_parsed_root->original.
 
 	*/
 		
@@ -501,14 +504,14 @@ do_recursion (frame)
     int dodoneproc = 1;
     char *srepository;
     List *entries = NULL;
-    int should_readlock;
+    int locktype;
     int process_this_directory = 1;
 
     /* do nothing if told */
     if (frame->flags == R_SKIP_ALL)
 	return (0);
 
-    should_readlock = nolock ? 0 : frame->readlock;
+    locktype = nolock ? CVS_LOCK_NONE : frame->locktype;
 
     /* The fact that locks are not active here is what makes us fail to have
        the
@@ -546,11 +549,9 @@ do_recursion (frame)
     /*
      * Now would be a good time to check to see if we need to stop
      * generating data, to give the buffers a chance to drain to the
-     * remote client.  We should not have locks active at this point.
-     */
-    if (server_active
-	/* If there are writelocks around, we cannot pause here.  */
-	&& (should_readlock || nolock))
+     * remote client.  We should not have locks active at this point,
+     * but if there are writelocks around, we cannot pause here.  */
+    if (server_active && locktype != CVS_LOCK_NONE)
 	server_pause_check();
 #endif
 
@@ -599,8 +600,9 @@ do_recursion (frame)
 	
 	    }
 	
-	    process_this_directory = (strcmp (current_root, this_root) == 0);
-	
+	    process_this_directory =
+		    (strcmp (current_parsed_root->original, this_root) == 0);
+
 	    free (this_root);
 	}
     }
@@ -702,15 +704,23 @@ do_recursion (frame)
 	struct frame_and_file frfile;
 
 	/* read lock it if necessary */
-	if (should_readlock && repository && Reader_Lock (repository) != 0)
-	    error (1, 0, "read lock failed - giving up");
+	if (repository)
+	{
+	    if (locktype == CVS_LOCK_READ)
+	    {
+		if (Reader_Lock (repository) != 0)
+		    error (1, 0, "read lock failed - giving up");
+	    }
+	    else if (locktype == CVS_LOCK_WRITE)
+		lock_dir_for_write (repository);
+	}
 
 #ifdef CLIENT_SUPPORT
 	/* For the server, we handle notifications in a completely different
 	   place (server_notify).  For local, we can't do them here--we don't
 	   have writelocks in place, and there is no way to get writelocks
 	   here.  */
-	if (client_active)
+	if (current_parsed_root->isremote)
 	    notify_check (repository, update_dir);
 #endif /* CLIENT_SUPPORT */
 
@@ -726,7 +736,7 @@ do_recursion (frame)
 	err += walklist (filelist, do_file_proc, &frfile);
 
 	/* unlock it */
-	if (should_readlock)
+	if (locktype != CVS_LOCK_NONE)
 	    Lock_Cleanup ();
 
 	/* clean up */
@@ -946,8 +956,8 @@ but CVS uses %s for its own purposes; skipping %s directory",
 	char *cvsadmdir;
 
 	cvsadmdir = xmalloc (strlen (dir)
-			     + sizeof (CVSADM_REP)
-			     + sizeof (CVSADM_ENT)
+			     + strlen (CVSADM_REP)
+			     + strlen (CVSADM_ENT)
 			     + 80);
 
 	strcpy (cvsadmdir, dir);
@@ -1024,7 +1034,8 @@ but CVS uses %s for its own purposes; skipping %s directory",
 
 	    }
 
-	    process_this_directory = (strcmp (current_root, this_root) == 0);
+	    process_this_directory = (strcmp (current_parsed_root->original, this_root) == 0);
+
 	    free (this_root);
 	}
     }

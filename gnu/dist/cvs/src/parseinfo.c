@@ -37,7 +37,7 @@ Parse_Info (infofile, repository, callproc, all)
     char *cp, *exp, *value, *srepos, bad;
     const char *regex_err;
 
-    if (CVSroot_original == NULL)
+    if (current_parsed_root == NULL)
     {
 	/* XXX - should be error maybe? */
 	error (0, 0, "CVSROOT variable not set");
@@ -45,11 +45,11 @@ Parse_Info (infofile, repository, callproc, all)
     }
 
     /* find the info file and open it */
-    infopath = xmalloc (strlen (CVSroot_directory)
+    infopath = xmalloc (strlen (current_parsed_root->directory)
 			+ strlen (infofile)
 			+ sizeof (CVSROOTADM)
-			+ 10);
-    (void) sprintf (infopath, "%s/%s/%s", CVSroot_directory,
+			+ 3);
+    (void) sprintf (infopath, "%s/%s/%s", current_parsed_root->directory,
 		    CVSROOTADM, infofile);
     fp_info = CVS_FOPEN (infopath, "r");
     if (fp_info == NULL)
@@ -65,7 +65,12 @@ Parse_Info (infofile, repository, callproc, all)
     srepos = Short_Repository (repository);
 
     if (trace)
-	(void) fprintf (stderr, " -> ParseInfo(%s, %s, %s)\n",
+	(void) fprintf (stderr, "%s-> Parse_Info (%s, %s, %s)\n",
+#ifdef SERVER_SUPPORT
+			server_active ? "S" : " ",
+#else
+			"",
+#endif
 			infopath, srepos, all ? "ALL" : "not ALL");
 
     /* search the info file for lines that match */
@@ -204,7 +209,7 @@ Parse_Info (infofile, repository, callproc, all)
    KEYWORD=VALUE.  There is currently no way to have a multi-line
    VALUE (would be nice if there was, probably).
 
-   CVSROOT is the $CVSROOT directory (CVSroot_directory might not be
+   CVSROOT is the $CVSROOT directory (current_parsed_root->directory might not be
    set yet).
 
    Returns 0 for success, negative value for failure.  Call
@@ -229,7 +234,7 @@ parse_config (cvsroot)
 	return 0;
     parsed = 1;
 
-    infopath = malloc (strlen (cvsroot)
+    infopath = xmalloc (strlen (cvsroot)
 			+ sizeof (CVSROOTADM_CONFIG)
 			+ sizeof (CVSROOTADM)
 			+ 10);
@@ -388,9 +393,18 @@ warning: this CVS does not support PreservePermissions");
 	{
 	    if (strcmp (p, "all") != 0)
 	    {
-		logHistory=malloc(strlen (p) + 1);
+		logHistory=xmalloc(strlen (p) + 1);
 		strcpy (logHistory, p);
 	    }
+	}
+	else if (strcmp (line, "RereadLogAfterVerify") == 0)
+	{
+	    if (strcmp (p, "no") == 0 || strcmp (p, "never") == 0)
+	      RereadLogAfterVerify = LOGMSG_REREAD_NEVER;
+	    else if (strcmp (p, "yes") == 0 || strcmp (p, "always") == 0)
+	      RereadLogAfterVerify = LOGMSG_REREAD_ALWAYS;
+	    else if (strcmp (p, "stat") == 0)
+	      RereadLogAfterVerify = LOGMSG_REREAD_STAT;
 	}
 	else
 	{

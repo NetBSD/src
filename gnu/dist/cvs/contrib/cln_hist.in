@@ -1,4 +1,4 @@
-#! xPERL_PATHx
+#! @PERL@
 # -*-Perl-*-
 #
 # Contributed by David G. Grubbs <dgg@ksr.com>
