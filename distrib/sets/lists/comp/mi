@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.450 2002/07/09 00:48:36 mycroft Exp $
+#	$NetBSD: mi,v 1.451 2002/07/10 10:44:24 agc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3100,6 +3100,7 @@
 ./usr/share/man/cat9/evcnt_attach_dynamic.0		comp-sys-catman
 ./usr/share/man/cat9/evcnt_attach_static.0		comp-sys-catman
 ./usr/share/man/cat9/evcnt_detach.0		comp-sys-catman
+./usr/share/man/cat9/execsigs.0			comp-sys-catman
 ./usr/share/man/cat9/extent.0		comp-sys-catman
 ./usr/share/man/cat9/extent_alloc.0		comp-sys-catman
 ./usr/share/man/cat9/extent_alloc_region.0		comp-sys-catman
@@ -3180,9 +3181,11 @@
 ./usr/share/man/cat9/isapnp_config.0		comp-sys-catman
 ./usr/share/man/cat9/isapnp_devmatch.0		comp-sys-catman
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman
+./usr/share/man/cat9/issignal.0		comp-sys-catman
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman
 ./usr/share/man/cat9/kcopy.0	comp-sys-catman
 ./usr/share/man/cat9/kernacc.0		comp-sys-catman
+./usr/share/man/cat9/killproc.0		comp-sys-catman
 ./usr/share/man/cat9/kprintf.0		comp-sys-catman
 ./usr/share/man/cat9/kthread.0		comp-sys-catman
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman
@@ -3310,6 +3313,7 @@
 ./usr/share/man/cat9/propdb_create.0	comp-sys-catman
 ./usr/share/man/cat9/propdb_destroy.0	comp-sys-catman
 ./usr/share/man/cat9/properties.0	comp-sys-catman
+./usr/share/man/cat9/postsig.0		comp-sys-catman
 ./usr/share/man/cat9/psignal.0		comp-sys-catman
 ./usr/share/man/cat9/radio.0		comp-sys-catman
 ./usr/share/man/cat9/rasops.0		comp-sys-catman
@@ -3332,12 +3336,28 @@
 ./usr/share/man/cat9/rt_timer_queue_destroy.0		comp-sys-catman
 ./usr/share/man/cat9/rt_timer_remove_all.0		comp-sys-catman
 ./usr/share/man/cat9/runtime.0		comp-sys-catman
+./usr/share/man/cat9/sched_psignal.0	comp-sys-catman
 ./usr/share/man/cat9/scsipi.0		comp-sys-catman
+./usr/share/man/cat9/sendsig.0		comp-sys-catman
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman
 ./usr/share/man/cat9/setjmp.0	comp-sys-catman
 ./usr/share/man/cat9/setrunqueue.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_disestablish.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_establish.0		comp-sys-catman
+./usr/share/man/cat9/sigaction1.0		comp-sys-catman
+./usr/share/man/cat9/sigactsfree.0		comp-sys-catman
+./usr/share/man/cat9/sigactsinit.0		comp-sys-catman
+./usr/share/man/cat9/sigactsunshare.0		comp-sys-catman
+./usr/share/man/cat9/sigaltstack1.0		comp-sys-catman
+./usr/share/man/cat9/sigcode.0		comp-sys-catman
+./usr/share/man/cat9/sigexit.0		comp-sys-catman
+./usr/share/man/cat9/siginit.0		comp-sys-catman
+./usr/share/man/cat9/sigmasked.0		comp-sys-catman
+./usr/share/man/cat9/signal.0		comp-sys-catman
+./usr/share/man/cat9/sigpending1.0		comp-sys-catman
+./usr/share/man/cat9/sigprocmask1.0		comp-sys-catman
+./usr/share/man/cat9/sigsuspend1.0		comp-sys-catman
+./usr/share/man/cat9/sigtramp.0		comp-sys-catman
 ./usr/share/man/cat9/simple_lock.0	comp-sys-catman
 ./usr/share/man/cat9/simple_lock_dump.0		comp-sys-catman
 ./usr/share/man/cat9/simple_lock_freecheck.0	comp-sys-catman
@@ -3400,6 +3420,7 @@
 ./usr/share/man/cat9/tprintf.0	comp-sys-catman
 ./usr/share/man/cat9/tprintf_close.0	comp-sys-catman
 ./usr/share/man/cat9/tprintf_open.0	comp-sys-catman
+./usr/share/man/cat9/trapsignal.0	comp-sys-catman
 ./usr/share/man/cat9/tsleep.0		comp-sys-catman
 ./usr/share/man/cat9/ttyprintf.0		comp-sys-catman
 ./usr/share/man/cat9/uao_create.0		comp-sys-catman
@@ -5640,6 +5661,7 @@
 ./usr/share/man/man9/evcnt_attach_dynamic.9		comp-sys-man
 ./usr/share/man/man9/evcnt_attach_static.9		comp-sys-man
 ./usr/share/man/man9/evcnt_detach.9		comp-sys-man
+./usr/share/man/man9/execsigs.9		comp-sys-man
 ./usr/share/man/man9/extent.9		comp-sys-man
 ./usr/share/man/man9/extent_alloc.9		comp-sys-man
 ./usr/share/man/man9/extent_alloc_region.9		comp-sys-man
@@ -5720,9 +5742,11 @@
 ./usr/share/man/man9/isapnp_config.9		comp-sys-man
 ./usr/share/man/man9/isapnp_devmatch.9		comp-sys-man
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man
+./usr/share/man/man9/issignal.9			comp-sys-man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man
 ./usr/share/man/man9/kcopy.9	comp-sys-man
 ./usr/share/man/man9/kernacc.9		comp-sys-man
+./usr/share/man/man9/killproc.9		comp-sys-man
 ./usr/share/man/man9/kprintf.9		comp-sys-man
 ./usr/share/man/man9/kthread.9		comp-sys-man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man
@@ -5836,6 +5860,7 @@
 ./usr/share/man/man9/pool_put.9		comp-sys-man
 ./usr/share/man/man9/pool_sethiwat.9		comp-sys-man
 ./usr/share/man/man9/pool_setlowat.9		comp-sys-man
+./usr/share/man/man9/postsig.9			comp-sys-man
 ./usr/share/man/man9/powerhook_disestablish.9		comp-sys-man
 ./usr/share/man/man9/powerhook_establish.9		comp-sys-man
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man
@@ -5873,11 +5898,27 @@
 ./usr/share/man/man9/rt_timer_remove_all.9		comp-sys-man
 ./usr/share/man/man9/runtime.9		comp-sys-man
 ./usr/share/man/man9/scsipi.9		comp-sys-man
+./usr/share/man/man9/sched_psignal.9	comp-sys-man
+./usr/share/man/man9/sendsig.9		comp-sys-man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man
 ./usr/share/man/man9/setjmp.9	comp-sys-man
 ./usr/share/man/man9/setrunqueue.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_disestablish.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_establish.9		comp-sys-man
+./usr/share/man/man9/sigaction1.9		comp-sys-man
+./usr/share/man/man9/sigactsfree.9		comp-sys-man
+./usr/share/man/man9/sigactsinit.9		comp-sys-man
+./usr/share/man/man9/sigactsunshare.9		comp-sys-man
+./usr/share/man/man9/sigaltstack1.9		comp-sys-man
+./usr/share/man/man9/sigcode.9		comp-sys-man
+./usr/share/man/man9/sigexit.9		comp-sys-man
+./usr/share/man/man9/siginit.9		comp-sys-man
+./usr/share/man/man9/sigmasked.9		comp-sys-man
+./usr/share/man/man9/signal.9		comp-sys-man
+./usr/share/man/man9/sigpending1.9		comp-sys-man
+./usr/share/man/man9/sigprocmask1.9		comp-sys-man
+./usr/share/man/man9/sigsuspend1.9		comp-sys-man
+./usr/share/man/man9/sigtramp.9		comp-sys-man
 ./usr/share/man/man9/simple_lock.9	comp-sys-man
 ./usr/share/man/man9/simple_lock_dump.9		comp-sys-man
 ./usr/share/man/man9/simple_lock_freecheck.9	comp-sys-man
@@ -5940,6 +5981,7 @@
 ./usr/share/man/man9/tprintf.9		comp-sys-man
 ./usr/share/man/man9/tprintf_close.9	comp-sys-man
 ./usr/share/man/man9/tprintf_open.9	comp-sys-man
+./usr/share/man/man9/trapsignal.9	comp-sys-man
 ./usr/share/man/man9/tsleep.9		comp-sys-man
 ./usr/share/man/man9/ttyprintf.9		comp-sys-man
 ./usr/share/man/man9/uao_create.9		comp-sys-man
