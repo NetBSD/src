@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.15 1997/06/12 15:03:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ static	void	check_maxpart __P((void));
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DUMPS
 %token	ENDFILE XFILE FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
-%token	SWAP TYPE WITH NEEDS_COUNT NEEDS_FLAG
+%token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD
 
@@ -122,7 +122,7 @@ static	void	check_maxpart __P((void));
 %type	<str>	locdefault
 %type	<list>	attrs_opt attrs
 %type	<list>	locators locator
-%type	<list>	swapdev_list dev_spec
+%type	<list>	dev_spec
 %type	<str>	device_instance
 %type	<str>	attachment
 %type	<str>	value
@@ -348,7 +348,6 @@ conf:
 					    conf.cf_lineno = currentline();
 					    conf.cf_fstype = NULL;
 					    conf.cf_root = NULL;
-					    conf.cf_swap = NULL;
 					    conf.cf_dump = NULL; };
 
 root_spec:
@@ -368,12 +367,7 @@ sysparam_list:
 	/* empty */;
 
 sysparam:
-	SWAP on_opt swapdev_list { setconf(&conf.cf_swap, "swap", $3); } |
 	DUMPS on_opt dev_spec	 { setconf(&conf.cf_dump, "dumps", $3); };
-
-swapdev_list:
-	dev_spec AND swapdev_list	{ ($$ = $1)->nv_next = $3; } |
-	dev_spec			{ $$ = $1; };
 
 dev_spec:
 	'?'				{ $$ = new_si(intern("?"), NODEV); } |

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.15 1997/05/25 18:42:56 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.16 1997/06/12 15:03:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -522,7 +522,7 @@ getattr(name)
 
 /*
  * Set the major device number for a device, so that it can be used
- * as a root/swap/dumps "on" device in a configuration.
+ * as a root/dumps "on" device in a configuration.
  */
 void
 setmajor(d, n)
@@ -713,11 +713,10 @@ addconf(cf0)
 	 */
 	if (cf->cf_root->nv_str == s_qmark) {
 		/*
-		 * Make sure no swap or dump device specified.
+		 * Make sure no dump device specified.
 		 * Note single | here (check all).
 		 */
-		if (exclude(cf->cf_swap, name, "swap devices") |
-		    exclude(cf->cf_dump, name, "dump device"))
+		if (exclude(cf->cf_dump, name, "dump device"))
 			goto bad;
 	} else {
 		nv = cf->cf_root;
@@ -726,7 +725,6 @@ addconf(cf0)
 			goto bad;
 		}
 		if (resolve(&cf->cf_root, name, "root", nv, 'a') |
-		    lresolve(&cf->cf_swap, name, "swap", nv, 'b') |
 		    resolve(&cf->cf_dump, name, "dumps", nv, 'b'))
 			goto bad;
 	}
@@ -740,7 +738,6 @@ addconf(cf0)
 	return;
 bad:
 	nvfreel(cf0->cf_root);
-	nvfreel(cf0->cf_swap);
 	nvfreel(cf0->cf_dump);
 }
 

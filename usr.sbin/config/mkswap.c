@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.6 1997/01/31 03:12:34 thorpej Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.7 1997/06/12 15:03:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,27 +123,6 @@ mkoneswap(cf)
 	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
 	    nv ? mkdevstr(nv->nv_int) : "NODEV",
 	    nv ? (nv->nv_str ? nv->nv_str : "none") : "unspecified") < 0)
-		goto wrerror;
-
-	/*
-	 * Emit the swap devices.  If swap is unspecified (i.e. wildcarded
-	 * root device), leave room for it to be filled in at run-time.
-	 */
-	if (fputs("\nstruct\tswdevt swdevt[] = {\n", fp) < 0)
-		goto wrerror;
-	if (cf->cf_swap == NULL) {
-		if (fputs("\t{ NODEV, 0, 0 },\t/* unspecified */\n", fp) < 0)
-			goto wrerror;
-	} else if (cf->cf_swap->nv_str == NULL) {
-		if (fputs("\t{ NODEV, 0, 0 },\t/* none */\n", fp) < 0)
-			goto wrerror;
-	} else {
-		for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
-			if (fprintf(fp, "\t{ %s,\t0,\t0 },\t/* %s */\n",
-			    mkdevstr(nv->nv_int), nv->nv_str) < 0)
-				goto wrerror;
-	}
-	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
 
 	/*
