@@ -1,3 +1,5 @@
+/*	$NetBSD: reentrant.h,v 1.5 1998/09/14 11:03:05 kleink Exp $	*/
+
 /*-
  * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,12 +97,14 @@
 #define mutex_t			pthread_mutex_t
 #define MUTEX_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
 
+#define mutex_init(m, a)	pthread_mutex_init(m, a)
 #define mutex_lock(m)		pthread_mutex_lock(m)
 #define mutex_unlock(m)		pthread_mutex_unlock(m)
 
 #define rwlock_t		pthread_rwlock_t
 #define RWLOCK_INITIALIZER	PTHREAD_RWLOCK_INITIALIZER
 
+#define rwlock_init(l, a)	pthread_rwlock_init(l, a)
 #define rwlock_rdlock(l)	pthread_rwlock_rdlock(l)
 #define rwlock_wrlock(l)	pthread_rwlock_wrlock(l)
 #define rwlock_unlock(l)	pthread_rwlock_unlock(l)
@@ -110,9 +114,11 @@
 
 #else
 
+#define mutex_init(m, a)	
 #define mutex_lock(m)		
 #define mutex_unlock(m)		
 
+#define rwlock_init(l, a)	
 #define rwlock_rdlock(l)	
 #define rwlock_wrlock(l)	
 #define rwlock_unlock(l)	
