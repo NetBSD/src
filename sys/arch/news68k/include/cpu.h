@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2002/10/20 02:37:31 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2002/11/02 20:03:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -263,5 +263,19 @@ int kvtop __P((caddr_t));
 #define ISEIOVA(va) \
 	((char *)(va) >= extiobase && (char *)(va) < (char *)EIOSIZE)
 #define EIOV(pa)	(((u_int)(pa) - extiobase_phys) + (u_int)extiobase)
+
+#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#define M68K_CACHEOPS_MACHDEP
+#endif
+
+#ifdef CACHE_HAVE_PAC
+#define M68K_CACHEOPS_MACHDEP_PCIA
+#endif
+
+#ifdef CACHE_HAVE_VAC
+#define M68K_CACHEOPS_MACHDEP_DCIA
+#define M68K_CACHEOPS_MACHDEP_DCIS
+#define M68K_CACHEOPS_MACHDEP_DCIU
+#endif
 
 #endif /* !_NEWS68K_CPU_H_ */

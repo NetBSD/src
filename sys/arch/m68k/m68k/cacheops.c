@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.6 2000/04/15 20:31:27 scw Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.7 2002/11/02 20:03:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,13 +39,19 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <machine/cpu.h>
-#include <m68k/cpu.h>
 #include <m68k/cacheops.h>
+#ifdef M68K_CACHEOPS_MACHDEP
+#include <machine/cacheops_machdep.h>
+#endif
 
-#if defined(_MULTI_CPU)
-
-void _TBIA()
+void
+_TBIA()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_TBIA
+	if (TBIA_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -71,8 +77,14 @@ void _TBIA()
 	}
 }
 
-void _TBIAS()
+void
+_TBIAS()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_TBIAS
+	if (TBIAS_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -98,8 +110,14 @@ void _TBIAS()
 	}
 }
 
-void _TBIAU()
+void
+_TBIAU()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_TBIAU
+	if (TBIAU_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -125,7 +143,8 @@ void _TBIAU()
 	}
 }
 
-void _ICIA()
+void
+_ICIA()
 {
 	switch (cputype) {
 	default:
@@ -152,7 +171,8 @@ void _ICIA()
 	}
 }
 
-void _ICPA()
+void
+_ICPA()
 {
 	switch (cputype) {
 	default:
@@ -179,8 +199,14 @@ void _ICPA()
 	}
 }
 
-void _DCIA()
+void
+_DCIA()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_DCIA
+	if (DCIA_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -206,8 +232,14 @@ void _DCIA()
 	}
 }
 
-void _DCIS()
+void
+_DCIS()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_DCIS
+	if (DCIS_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -233,8 +265,14 @@ void _DCIS()
 	}
 }
 
-void _DCIU()
+void
+_DCIU()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_DCIU
+	if (DCIU_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -260,8 +298,14 @@ void _DCIU()
 	}
 }
 
-void _PCIA()
+void
+_PCIA()
 {
+#ifdef M68K_CACHEOPS_MACHDEP_PCIA
+	if (PCIA_md())
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -287,27 +331,15 @@ void _PCIA()
 	}
 }
 
-#if defined(M68040) || defined(M68060)
-void _DCFA()
-{
-	switch (cputype) {
-#ifdef M68040
-	case CPU_68040:
-		DCFA_40();
-		break;
-#endif
-#ifdef M68060
-	case CPU_68060:
-		DCFA_60();
-		break;
-#endif
-	}
-}
-#endif /* M68040 || M68060 */
-
-void _TBIS(va)
+void
+_TBIS(va)
 	vaddr_t	va;
 {
+#ifdef M68K_CACHEOPS_MACHDEP_TBIS
+	if (TBIS_md(va))
+		return;
+#endif
+
 	switch (cputype) {
 	default:
 #ifdef M68020
@@ -333,7 +365,8 @@ void _TBIS(va)
 	}
 }
 
-void _DCIAS(pa)
+void
+_DCIAS(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -362,7 +395,25 @@ void _DCIAS(pa)
 }
 
 #if defined(M68040) || defined(M68060)
-void _DCPA()
+void
+_DCFA()
+{
+	switch (cputype) {
+#ifdef M68040
+	case CPU_68040:
+		DCFA_40();
+		break;
+#endif
+#ifdef M68060
+	case CPU_68060:
+		DCFA_60();
+		break;
+#endif
+	}
+}
+
+void
+_DCPA()
 {
 	switch (cputype) {
 	default:
@@ -379,7 +430,8 @@ void _DCPA()
 	}
 }
 
-void _ICPL(pa)
+void
+_ICPL(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -397,7 +449,8 @@ void _ICPL(pa)
 	}
 }
 
-void _ICPP(pa)
+void
+_ICPP(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -415,7 +468,8 @@ void _ICPP(pa)
 	}
 }
 
-void _DCPL(pa)
+void
+_DCPL(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -433,7 +487,8 @@ void _DCPL(pa)
 	}
 }
 
-void _DCPP(pa)
+void
+_DCPP(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -451,7 +506,8 @@ void _DCPP(pa)
 	}
 }
 
-void _DCFL(pa)
+void
+_DCFL(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -469,7 +525,8 @@ void _DCFL(pa)
 	}
 }
 
-void _DCFP(pa)
+void
+_DCFP(pa)
 	paddr_t	pa;
 {
 	switch (cputype) {
@@ -487,5 +544,3 @@ void _DCFP(pa)
 	}
 }
 #endif /* M68040 || M68060 */
-
-#endif /* defined(_MULTI_CPU) */
