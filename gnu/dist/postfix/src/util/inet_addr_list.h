@@ -27,6 +27,7 @@ typedef struct INET_ADDR_LIST {
 
 extern void inet_addr_list_init(INET_ADDR_LIST *);
 extern void inet_addr_list_free(INET_ADDR_LIST *);
+extern void inet_addr_list_uniq(INET_ADDR_LIST *);
 extern void inet_addr_list_append(INET_ADDR_LIST *, struct in_addr *);
 
 /* LICENSE
