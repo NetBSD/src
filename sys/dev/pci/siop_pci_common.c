@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.12 2002/04/23 10:11:39 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.13 2002/04/23 10:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.12 2002/04/23 10:11:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.13 2002/04/23 10:38:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,9 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 	}
 	/* copy interesting infos about the chip */
 	siop_sc->features = pci_sc->sc_pp->features;
+#ifdef SIOP_SYMLED    /* XXX Should be a devprop! */
+	siop_sc->features |= SF_CHIP_LED0;
+#endif
 	siop_sc->maxburst = pci_sc->sc_pp->maxburst;
 	siop_sc->maxoff = pci_sc->sc_pp->maxoff;
 	siop_sc->clock_div = pci_sc->sc_pp->clock_div;
