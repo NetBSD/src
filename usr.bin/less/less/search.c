@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.3 1999/04/06 05:57:36 mrg Exp $	*/
+/*	$NetBSD: search.c,v 1.4 1999/09/03 22:07:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -40,7 +40,7 @@
 #if HAVE_POSIX_REGCOMP
 #include <regex.h>
 #ifdef REG_EXTENDED
-#define	REGCOMP_FLAG	REG_EXTENDED
+#define	REGCOMP_FLAG	(more_mode ? 0 : REG_EXTENDED)
 #else
 #define	REGCOMP_FLAG	0
 #endif
@@ -81,6 +81,7 @@ extern int linenums;
 extern int sc_height;
 extern int jump_sline;
 extern int bs_mode;
+extern int more_mode;
 extern POSITION start_attnpos;
 extern POSITION end_attnpos;
 #if HILITE_SEARCH
