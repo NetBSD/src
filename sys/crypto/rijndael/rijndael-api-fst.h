@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.h,v 1.2 2000/10/02 17:19:15 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.h,v 1.3 2001/05/22 23:45:41 kleink Exp $	*/
 /*	$KAME: rijndael-api-fst.h,v 1.5 2000/10/02 17:14:27 itojun Exp $	*/
 
 /*
@@ -56,7 +56,11 @@ typedef struct {
         /*  The following parameters are algorithm dependent, replace or add as necessary  */
 	int   ROUNDS;                   /* key-length-dependent number of rounds */
     int   blockLen;                 /* block length */
-    u_int8_t keySched[RIJNDAEL_MAXROUNDS+1][4][4];	/* key schedule		*/
+    union {
+    	u_int8_t xkS8[RIJNDAEL_MAXROUNDS+1][4][4];	/* key schedule		*/
+    	u_int32_t xkS32[RIJNDAEL_MAXROUNDS+1][4];	/* key schedule		*/
+    } xKeySched;
+#define	keySched	xKeySched.xkS8
 } keyInstance;
 
 /*  The structure for cipher information */
