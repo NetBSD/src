@@ -118,9 +118,6 @@ wd1     at wdc? drive ?
 fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
 fd0     at fdc? drive ?
 
-# Ramdisk
-rd0	at mainbus?
-
 # kbd via IOMD
 kbd0	at mainbus? base 0x00000000
 
@@ -320,7 +317,7 @@ pseudo-device	tb	1		# tablet line discipline
 pseudo-device   vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 
+pseudo-device	rd	1		# Ramdisk driver
+
 makeoptions MONITOR="AKF85"
 makeoptions MODES="1280,1024 1024,768,60 1024,768,70 800,600,60 640,480,60 1152,900"
-
-
