@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.55 2003/10/21 16:51:17 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.56 2003/10/21 16:52:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -41,10 +41,12 @@
  * TODO (in order of importance):
  *
  *	- Fix hw VLAN assist.
+ *	- Figure out what to do with the i82545GM and i82546GB
+ *	  SERDES controllers.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.55 2003/10/21 16:51:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.56 2003/10/21 16:52:08 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
