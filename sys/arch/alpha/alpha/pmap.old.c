@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.42 1998/03/02 00:49:01 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.43 1998/03/06 23:19:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.42 1998/03/02 00:49:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.43 1998/03/06 23:19:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,28 +225,6 @@ struct chgstats {
 int debugmap = 0;
 int pmapdebug = PDB_PARANOIA;
 #endif
-
-/*
- * Get STEs and PTEs for user/kernel address space
- */
-#define	pmap_ste(m, v)	 (&((m)->pm_stab[l2pte_index((vm_offset_t)(v))]))
-#define pmap_ste_v(m, v) (*pmap_ste(m, v) & PG_V)
-
-#define pmap_pte(m, v)							\
-	(&((m)->pm_ptab[NPTEPG * l2pte_index((vm_offset_t)(v)) +	\
-	    l3pte_index((vm_offset_t)(v))]))
-#define pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
-#define pmap_pte_prot(pte)	(*(pte) & PG_PROT)
-#define pmap_pte_w(pte)		(*(pte) & PG_WIRED)
-#define pmap_pte_v(pte)		(*(pte) & PG_V)
-
-#define pmap_pte_set_w(pte, v) \
-	if (v) *(u_long *)(pte) |= PG_WIRED; else *(u_long *)(pte) &= ~PG_WIRED
-#define pmap_pte_w_chg(pte, nw)		((nw) ^ pmap_pte_w(pte))
-
-#define pmap_pte_set_prot(pte, np)	{ *(pte) &= ~PG_PROT ; *(pte) |= (np); }
-#define pmap_pte_prot_chg(pte, np)	((np) ^ pmap_pte_prot(pte))
-	
 
 /*
  * Given a map and a machine independent protection code,
@@ -936,7 +914,7 @@ pmap_remove(pmap, sva, eva)
 		 * If VA belongs to an unallocated segment,
 		 * skip to the next segment boundary.
 		 */
-		if (!pmap_ste_v(pmap, sva)) {
+		if (pmap_pte_v(pmap_ste(pmap, sva)) == 0) {
 			sva = nssva;
 			continue;
 		}
@@ -1013,7 +991,7 @@ pmap_page_protect(pa, prot)
 
 		pte = pmap_pte(pv->pv_pmap, pv->pv_va);
 #ifdef DEBUG
-		if (!pmap_ste_v(pv->pv_pmap, pv->pv_va) ||
+		if (pmap_pte_v(pmap_ste(pv->pv_pmap, pv->pv_va)) == 0 ||
 		    pmap_pte_pa(pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
@@ -1077,7 +1055,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * If VA belongs to an unallocated segment,
 		 * skip to the next segment boundary.
 		 */
-		if (!pmap_ste_v(pmap, sva)) {
+		if (pmap_pte_v(pmap_ste(pmap, sva)) == 0) {
 			sva = nssva;
 			continue;
 		}
@@ -1158,9 +1136,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * pre-allocated and mapped in.  Therefore, the
 		 * level 1 and level 2 PTEs must already be valid.
 		 */
-		if (pmap_pte_v(&pmap->pm_lev1map[l1pte_index(va)]) == 0)
+		if (pmap_pte_v(pmap_l1pte(pmap, va)) == 0)
 			panic("pmap_enter: kernel level 1 PTE not valid");
-		if (pmap_ste_v(pmap, va) == 0)
+		if (pmap_pte_v(pmap_ste(pmap, va)) == 0)
 			panic("pmap_enter: kernel level 2 PTE not valid");
 	} else {
 #ifdef PMAPSTATS
@@ -1182,7 +1160,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * Check to see if the level 2 PTE is valid, and
 		 * allocate a new level 3 page table page if it's not.
 		 */
-		if (pmap_ste_v(pmap, va) == 0)
+		if (pmap_pte_v(pmap_ste(pmap, va)) == 0)
 			pmap_enter_ptpage(pmap, va);
 	}
 
@@ -1357,7 +1335,7 @@ pmap_change_wiring(pmap, va, wired)
 	 * Should this ever happen?  Ignore it for now,
 	 * we don't want to force allocation of unnecessary PTE pages.
 	 */
-	if (!pmap_ste_v(pmap, va)) {
+	if (pmap_pte_v(pmap_ste(pmap, va)) == 0) {
 		if (pmapdebug & PDB_PARANOIA)
 			printf("pmap_change_wiring: invalid STE for %lx\n", va);
 		return;
@@ -1405,7 +1383,7 @@ pmap_extract(pmap, va)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
 	pa = 0;
-	if (pmap && pmap_ste_v(pmap, va)) {
+	if (pmap && pmap_pte_v(pmap_ste(pmap, va))) {
 		pte = *pmap_pte(pmap, va);
 		if (pte & PG_V)
 			pa = ctob(PG_PFNUM(pte)) | (va & PGOFSET);
@@ -1610,7 +1588,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 			printf("pmap_pageable(%p, %lx, %lx, %x)\n",
 			       pmap, sva, eva, pageable);
 #endif
-		if (!pmap_ste_v(pmap, sva))
+		if (pmap_pte_v(pmap_ste(pmap, sva)) == 0)
 			return;
 		pa = pmap_pte_pa(pmap_pte(pmap, sva));
 		if (!PAGE_IS_MANAGED(pa))
@@ -2334,8 +2312,8 @@ pmap_check_wiring(str, va)
 	register int count;
 
 	va = trunc_page(va);
-	if (!pmap_ste_v(pmap_kernel(), va) ||
-	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
+	if (pmap_pte_v(pmap_ste(pmap_kernel(), va)) == 0 ||
+	    pmap_pte_v(pmap_pte(pmap_kernel(), va)) == 0)
 		return;
 
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
