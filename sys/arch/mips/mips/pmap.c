@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138.2.3 2002/01/08 00:26:24 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138.2.4 2002/01/11 10:32:53 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.3 2002/01/08 00:26:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.4 2002/01/11 10:32:53 wdk Exp $");
 
 /*
  *	Manages physical address maps.
@@ -961,7 +961,7 @@ pmap_procwr(p, va, len)
 #if 0
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
-		if (p == curproc)
+		if (p == curproc->l_proc)
 			mips_icache_sync_range(va, len);
 		else
 			mips_icache_sync_range_index(va, len);
