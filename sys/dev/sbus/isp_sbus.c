@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.35 2001/02/23 17:28:58 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.36 2001/02/23 23:57:47 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -403,7 +403,7 @@ isp_sbus_mbxdma(isp)
 
 	/* Load the buffer */
 	if (bus_dmamap_load_raw(dmatag, sbc->sbus_rquest_dmamap,
-	    &seg, rs, len, BUS_DMA_NOWAIT) != 0) {
+	    &seg, rs, len, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
 		bus_dmamem_free(dmatag, &seg, rs);
 		goto dmafail;
 	}
@@ -434,7 +434,7 @@ isp_sbus_mbxdma(isp)
 
 	/* Load the buffer */
 	if (bus_dmamap_load_raw(dmatag, sbc->sbus_result_dmamap,
-	    &seg, rs, len, BUS_DMA_NOWAIT) != 0) {
+	    &seg, rs, len, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
 		bus_dmamem_free(dmatag, &seg, rs);
 		goto dmafail;
 	}
