@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.9 2002/01/21 11:28:18 ichiro Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.10 2002/03/27 08:01:23 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -291,6 +291,7 @@ struct wi_ltv_keys {
 #define WI_RID_STA_IDENTITY	0xFD20 /* station funcs firmware ident */
 #define WI_RID_STA_SUP_RANGE	0xFD21 /* station supplier compat */
 #define WI_RID_MFI_ACT_RANGE	0xFD22
+#define WI_RID_SYMBOL_IDENTITY	0xFD24
 #define WI_RID_CFI_ACT_RANGE	0xFD33
 #define WI_RID_COMMQUAL		0xFD43
 #define WI_RID_SCALETHRESH	0xFD46
