@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
-.\"	$Id: exp.3,v 1.6 1994/01/11 00:46:50 jtc Exp $
+.\"	$Id: exp.3,v 1.7 1994/02/11 18:34:05 jtc Exp $
 .\"
 .Dd July 31, 1991
 .Dt EXP 3
@@ -51,15 +51,9 @@
 .Ft double
 .Fn exp "double x"
 .Ft double
-.Fn exp2 "double x"
-.Ft double
-.Fn exp10 "double x"
-.Ft double
 .Fn expm1 "double x"
 .Ft double
 .Fn log "double x"
-.Ft double
-.Fn log2 "double x"
 .Ft double
 .Fn log10 "double x"
 .Ft double
@@ -81,12 +75,6 @@ The
 .Fn log
 function computes the value of the natural logarithm of argument 
 .Fa x.
-.Pp
-The
-.Fn log2
-function computes the value of the logarithm of argument
-.Fa x
-to base 2.
 .Pp
 The
 .Fn log10
