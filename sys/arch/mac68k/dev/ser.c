@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.23 1995/06/08 12:52:02 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.24 1995/06/09 02:19:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -142,8 +142,9 @@ volatile unsigned char *sccA = (unsigned char *) 0x4000;
 static void serstart __P((register struct tty *));
 static int serparam __P((register struct tty *, register struct termios *));
 static int serctl __P((dev_t dev, int bits, int how));
-extern int ser_intr __P((void));
+extern void ser_intr __P((void));
 
+static int initted = 0;
 static int ser_active = 0;
 static int nser = NSER;
 static int serdefaultrate = TTYDEF_SPEED;
@@ -189,7 +190,6 @@ static unsigned char ser_init_bytes[] = {
 static void
 serinit(int running_interrupts)
 {
-	static int initted = 0;
 	int     bcount;
 	int     i, s, spd;
 
