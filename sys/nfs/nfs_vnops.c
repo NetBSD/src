@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.98 1999/03/06 05:34:42 fair Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.99 1999/03/22 19:21:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2979,11 +2979,14 @@ nfs_pathconf(v)
 	} */ *ap = v;
 	struct nfsv3_pathconf *pcp;
 	struct vnode *vp = ap->a_vp;
+	struct nfsmount *nmp;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int32_t t1, t2;
 	u_int32_t *tl;
 	caddr_t bpos, dpos, cp, cp2;
 	int error = 0, attrflag;
+	unsigned int l;
+	u_int64_t maxsize;
 	int v3 = NFS_ISV3(vp);
 
 	switch (ap->a_name) {
@@ -3032,6 +3035,21 @@ nfs_pathconf(v)
 			}
 		}
 		nfsm_reqdone;
+		break;
+	case _PC_FILESIZEBITS:
+		if (v3) {
+			nmp = VFSTONFS(vp->v_mount);
+			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
+				if ((error = nfs_fsinfo(nmp, vp,
+				    curproc->p_ucred, curproc)) != 0) /* XXX */
+					break;
+			for (l = 0, maxsize = nmp->nm_maxfilesize;
+			    (maxsize >> l) > 0; l++)
+				;
+			*ap->a_retval = l + 1;
+		} else {
+			*ap->a_retval = 32;	/* NFS V2 limitation */
+		}
 		break;
 	default:
 		error = EINVAL;
