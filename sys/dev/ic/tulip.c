@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.103 2002/01/12 16:03:12 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.104 2002/03/14 04:44:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.103 2002/01/12 16:03:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.104 2002/03/14 04:44:34 chs Exp $");
 
 #include "bpfilter.h"
 
@@ -4536,8 +4536,12 @@ tlp_2114x_isv_tmsw_init(sc)
 	for (; m_cnt != 0; cp = ncp, m_cnt--) {
 		/*
 		 * Determine the type and length of this media block.
+		 * The 21143 is spec'd to always use extended format blocks,
+		 * but some cards don't set the bit to indicate this.
+		 * Hopefully there are no cards which really don't use
+		 * extended format blocks.
 		 */
-		if ((*cp & 0x80) == 0) {
+		if ((*cp & 0x80) == 0 && sc->sc_chip != TULIP_CHIP_21143) {
 			length = 4;
 			type = TULIP_ROM_MB_21140_GPR;
 		} else {
