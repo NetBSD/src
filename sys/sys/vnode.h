@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.56 1998/09/12 15:05:47 rvb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.57 1998/11/18 20:24:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -454,6 +454,7 @@ void	vflushbuf __P((struct vnode *vp, int sync));
 int	vflush __P((struct mount *mp, struct vnode *vp, int flags));
 void	vntblinit __P((void));
 void	vwakeup __P((struct buf *));
+void	vdevgone __P((int, int, int, enum vtype));
 int 	vget __P((struct vnode *vp, int lockflag));
 void 	vgone __P((struct vnode *vp));
 void	vgonel __P((struct vnode *vp, struct proc *p));
