@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.5 1997/03/25 18:46:27 perry Exp $	*/
+/*	$NetBSD: telnet.h,v 1.6 1998/02/02 16:32:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)telnet.h	8.1 (Berkeley) 6/2/93
+ *	@(#)telnet.h	8.2 (Berkeley) 12/15/93
  */
 
 #ifndef _TELNET_H_
