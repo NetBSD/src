@@ -1,4 +1,4 @@
-.\"	$NetBSD: cac.4,v 1.2 2000/03/21 13:11:45 ad Exp $
+.\"	$NetBSD: cac.4,v 1.3 2000/06/12 11:14:31 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,13 +49,14 @@ The
 driver provides basic message passing and DMA support for Compaq array
 controllers.  Disk arrays are supported by the 
 .Nm ca
-device.
+driver.
 .Sh HARDWARE
 The
 .Nm
 driver provides support for the following controllers:
 .Pp
 .Bl -tag -width -offset indent -compact
+.It Tn Compaq Integrated Array
 .It Tn Compaq SMART-2/E
 .It Tn Compaq SMART-2/P
 .It Tn Compaq SMART-2DH
@@ -65,24 +66,21 @@ driver provides support for the following controllers:
 .It Tn Compaq Smart Array 3200
 .It Tn Compaq Smart Array 4200
 .It Tn Compaq Smart Array 4250ES
-.It Tn Compaq Integrated Array
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr ca 4 .
+.Xr ca 4
 .Sh AUTHOR
 The
 .Nm
-driver was written by
-.An Andy Doran Aq ad@netbsd.org .
+driver was written by Andy Doran
+.Aq ad@netbsd.org .
 .Sh HISTORY
 The
 .Nm cac
 driver first appeared in
 .Nx 1.5 .
 .Sh BUGS
-This manpage is inadaquate.
-.Pp
 A command pass-through interface and user space control tool are needed.
 .Pp
 ISA and EISA front-ends are needed.
