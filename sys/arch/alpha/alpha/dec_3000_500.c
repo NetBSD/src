@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_500.c,v 1.2 1996/06/12 19:00:23 cgd Exp $	*/
+/*	$NetBSD: dec_3000_500.c,v 1.3 1996/06/12 22:06:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -73,8 +73,7 @@ systype_flamingo:
 }
 
 void
-dec_3000_500_consinit(constype)
-	char *constype;
+dec_3000_500_consinit()
 {
 
 }
