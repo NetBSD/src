@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.159 2002/09/27 21:37:58 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.160 2002/10/22 18:48:29 perry Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -187,7 +187,7 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 
 __proginstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
+		${STRIPFLAG} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 .if !defined(UPDATE)
 ${DESTDIR}${BINDIR}/${PROGNAME}! ${PROG} __proginstall
@@ -220,7 +220,7 @@ __scriptinstall: .USE
 	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
 	    -g ${SCRIPTSGRP_${.ALLSRC:T}:U${SCRIPTSGRP}} \
 	    -m ${SCRIPTSMODE_${.ALLSRC:T}:U${SCRIPTSMODE}} \
-	    ${.ALLSRC} ${.TARGET}
+	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 .for S in ${SCRIPTS:O:u}
 .if !defined(UPDATE)

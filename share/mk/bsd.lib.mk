@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.207 2002/09/27 21:37:56 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.208 2002/10/22 18:48:28 perry Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -379,10 +379,10 @@ __archivebuild: .USE
 
 __archiveinstall: .USE
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${UPDATE:D:U-a "${RANLIB} -t"} ${.ALLSRC} ${.TARGET}
+	    ${UPDATE:D:U-a "${RANLIB} -t"} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 __archivesymlinkpic: .USE
-	${INSTALL_SYMLINK} ${.ALLSRC} ${.TARGET}
+	${INSTALL_SYMLINK} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
@@ -530,27 +530,32 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-		${.ALLSRC} ${.TARGET}
+		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} ${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
 	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION} \
-	    ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+		lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} ${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .endif
 .if ${MKLINKLIB} != "no"
-	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION} \
-	    ${DESTDIR}${_LIBSODIR}/lib${LIB}.so
+	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+		lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${DESTDIR}${_LIBSODIR}/lib${LIB}.so
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} ${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
-	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
+	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
 .endif
@@ -572,7 +577,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-		${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
+		${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.22 2002/02/11 21:14:58 mycroft Exp $
+#	$NetBSD: bsd.inc.mk,v 1.23 2002/10/22 18:48:27 perry Exp $
 
 ##### Basic targets
 .PHONY:		incinstall
@@ -11,9 +11,9 @@ incinstall::	# ensure existence
 __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
+		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE:N-c} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
+		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})
 
 .for F in ${INCS:O:u}
 _FDIR:=		${INCSDIR_${F:C,/,_,g}:U${INCSDIR}}	# dir override

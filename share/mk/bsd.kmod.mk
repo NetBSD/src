@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.55 2002/07/29 07:42:52 jdolecek Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.56 2002/10/22 18:48:28 perry Exp $
 
 .include <bsd.init.mk>
 
@@ -74,7 +74,7 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 .endif
 	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
-		${.ALLSRC} ${.TARGET}
+		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 kmodinstall::	${_PROG}
 .PRECIOUS:	${_PROG}				# keep if install fails

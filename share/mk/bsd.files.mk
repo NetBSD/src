@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.19 2002/04/24 08:18:52 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.20 2002/10/22 18:48:27 perry Exp $
 
 .if !target(__fileinstall)
 ##### Basic targets
@@ -19,7 +19,7 @@ __fileinstall: .USE
 	    -o ${FILESOWN_${.ALLSRC:T}:U${FILESOWN}} \
 	    -g ${FILESGRP_${.ALLSRC:T}:U${FILESGRP}} \
 	    -m ${FILESMODE_${.ALLSRC:T}:U${FILESMODE}} \
-	    ${.ALLSRC} ${.TARGET}
+	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 .endif # !target(__fileinstall)
 
