@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.36 2003/08/07 16:32:57 agc Exp $	*/
+/*	$NetBSD: route.h,v 1.37 2004/04/21 04:17:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -100,7 +100,7 @@ struct rtentry {
 	u_long	rt_use;			/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
-	struct	sockaddr *rt_genmask;	/* for generation of cloned routes */
+	const struct sockaddr *rt_genmask; /* for generation of cloned routes */
 	caddr_t	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
@@ -223,7 +223,7 @@ struct rt_msghdr {
 
 struct rt_addrinfo {
 	int	rti_addrs;
-	struct	sockaddr *rti_info[RTAX_MAX];
+	const struct	sockaddr *rti_info[RTAX_MAX];
 	int	rti_flags;
 	struct	ifaddr *rti_ifa;
 	struct	ifnet *rti_ifp;
@@ -284,12 +284,12 @@ int	 route_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 rt_ifannouncemsg __P((struct ifnet *, int));
 void	 rt_ifmsg __P((struct ifnet *));
-void	 rt_maskedcopy __P((struct sockaddr *,
-	    struct sockaddr *, struct sockaddr *));
+void	 rt_maskedcopy __P((const struct sockaddr *,
+	    struct sockaddr *, const struct sockaddr *));
 void	 rt_missmsg __P((int, struct rt_addrinfo *, int, int));
 void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
 int	 rt_setgate __P((struct rtentry *,
-	    struct sockaddr *, struct sockaddr *));
+	    const struct sockaddr *, const struct sockaddr *));
 void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
 int      rt_timer_add __P((struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
@@ -306,15 +306,17 @@ void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
 struct rtentry *
-	 rtalloc1 __P((struct sockaddr *, int));
+	 rtalloc1 __P((const struct sockaddr *, int));
 void	 rtfree __P((struct rtentry *));
 int	 rt_getifa __P((struct rt_addrinfo *));
 int	 rtinit __P((struct ifaddr *, int, int));
 int	 rtioctl __P((u_long, caddr_t, struct proc *));
-void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
-	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
-int	 rtrequest __P((int, struct sockaddr *,
-	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
+void	 rtredirect __P((const struct sockaddr *, const struct sockaddr *,
+	    const struct sockaddr *, int, const struct sockaddr *,
+	    struct rtentry **));
+int	 rtrequest __P((int, const struct sockaddr *,
+	    const struct sockaddr *, const struct sockaddr *, int,
+	    struct rtentry **));
 int	 rtrequest1 __P((int, struct rt_addrinfo *, struct rtentry **));
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

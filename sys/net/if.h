@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.95 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.96 2004/04/21 04:17:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -756,14 +756,14 @@ int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((const char *));
 
-struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
+struct	ifaddr *ifa_ifwithaddr __P((const struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));
-struct	ifaddr *ifa_ifwithdstaddr __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithnet __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithladdr __P((struct sockaddr *));
-struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
-					struct sockaddr *));
-struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
+struct	ifaddr *ifa_ifwithdstaddr __P((const struct sockaddr *));
+struct	ifaddr *ifa_ifwithnet __P((const struct sockaddr *));
+struct	ifaddr *ifa_ifwithladdr __P((const struct sockaddr *));
+struct	ifaddr *ifa_ifwithroute __P((int, const struct sockaddr *,
+					const struct sockaddr *));
+struct	ifaddr *ifaof_ifpforaddr __P((const struct sockaddr *, struct ifnet *));
 void	ifafree __P((struct ifaddr *));
 void	link_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 

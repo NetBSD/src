@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.67 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.68 2004/04/21 04:17:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.67 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.68 2004/04/21 04:17:28 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -526,7 +526,7 @@ rt_msg1(type, rtinfo, data, datalen)
 	struct rt_msghdr *rtm;
 	struct mbuf *m;
 	int i;
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 	int len, dlen;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
@@ -642,7 +642,7 @@ again:
 	if ((cp0 = cp) != NULL)
 		cp += len;
 	for (i = 0; i < RTAX_MAX; i++) {
-		struct sockaddr *sa;
+		const struct sockaddr *sa;
 
 		if ((sa = rtinfo->rti_info[i]) == 0)
 			continue;
@@ -702,7 +702,7 @@ rt_missmsg(type, rtinfo, flags, error)
 {
 	struct rt_msghdr rtm;
 	struct mbuf *m;
-	struct sockaddr *sa = rtinfo->rti_info[RTAX_DST];
+	const struct sockaddr *sa = rtinfo->rti_info[RTAX_DST];
 
 	if (route_cb.any_count == 0)
 		return;

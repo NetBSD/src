@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.94 2003/09/24 06:52:47 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.95 2004/04/21 04:17:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.94 2003/09/24 06:52:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.95 2004/04/21 04:17:29 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -170,7 +170,7 @@ static int	revarp_in_progress = 0;
 static struct	ifnet *myip_ifp = NULL;
 
 #ifdef DDB
-static void db_print_sa __P((struct sockaddr *));
+static void db_print_sa __P((const struct sockaddr *));
 static void db_print_ifa __P((struct ifaddr *));
 static void db_print_llinfo __P((caddr_t));
 static int db_show_radix_node __P((struct radix_node *, void *));
@@ -1381,7 +1381,7 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 #include <ddb/db_output.h>
 static void
 db_print_sa(sa)
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 {
 	int len;
 	u_char *p;
