@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.6 1995/10/28 23:15:16 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.7 1995/11/29 01:45:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,12 +71,10 @@
 #endif
 
 #include <machine/cgtworeg.h>
-#include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
 struct cgtwo_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	caddr_t	sc_phys;		/* display RAM (phys addr) */
 	volatile struct cg2statusreg *sc_reg;	/* CG2 control registers */
@@ -158,16 +156,16 @@ cgtwoattach(parent, self, args)
 	register int node, i;
 	register struct cgtwo_all *p;
 	int isconsole;
-	int sbus = 1;
 	char *nam;
 
 	sc->sc_fb.fb_driver = &cgtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2COLOR;
+	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
-		sbus = node = 0;
+		node = 0;
 		nam = "cgtwo";
 		break;
 
@@ -204,10 +202,6 @@ cgtwoattach(parent, self, args)
 			isconsole = 0;
 	}
 #endif
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-		isconsole = node == fbnode && fbconstty != NULL;
-#endif
 	sc->sc_phys = (caddr_t)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
@@ -236,10 +230,8 @@ cgtwoattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	if (node == fbnode)
-		fb_attach(&sc->sc_fb);
+	if (node == fbnode || cputyp == CPU_SUN4)
+		fb_attach(&sc->sc_fb, isconsole);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.16 1995/10/08 01:39:16 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.17 1995/11/29 01:45:47 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -177,13 +177,14 @@ cgsixattach(parent, self, args)
 	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
 	register volatile struct cg6_layout *p;
-	int sbus = 1;
+	int isconsole, sbus = 1;
 	char *nam;
 	extern struct tty *fbconstty;
 
 	sc->sc_fb.fb_driver = &cg6_fbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
+	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
@@ -202,6 +203,8 @@ cgsixattach(parent, self, args)
 		printf("cgsix on mainbus?\n");
 		return;
 	}
+
+	isconsole = node == fbnode && fbconstty != NULL;
 
 	sc->sc_fb.fb_type.fb_depth = 8;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
@@ -247,14 +250,20 @@ cgsixattach(parent, self, args)
 	/* enable video */
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
-	if (node == fbnode && fbconstty != NULL) {
+	if (isconsole) {
 		printf(" (console)\n");
+#ifdef RASTERCONSOLE
+		sc->sc_fb.fb_pixels = (caddr_t)
+			mapiodev((caddr_t)p->cg6_ram, sizeof(p->cg6_ram),
+				 ca->ca_bustype);
+		fbrcons_init(&sc->sc_fb);
+#endif
 	} else
 		printf("\n");
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
-		fb_attach(&sc->sc_fb);
+		fb_attach(&sc->sc_fb, isconsole);
 }
 
 int
