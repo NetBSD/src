@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.60 2004/08/24 00:53:28 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.61 2004/08/28 07:02:11 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.60 2004/08/24 00:53:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.61 2004/08/28 07:02:11 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,6 +672,7 @@ static const char * const ac97feature[] = {
 
 
 /* #define AC97_DEBUG 10 */
+/* #define AC97_IO_DEBUG */
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (ac97debug) printf x
@@ -684,6 +685,27 @@ int	ac97debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#endif
+
+#ifdef AC97_IO_DEBUG
+static const char *ac97_register_names[0x80 / 2] = {
+	"RESET", "MASTER_VOLUME", "HEADPHONE_VOLUME", "MASTER_VOLUME_MONO",
+	"MASTER_TONE", "PCBEEP_VOLUME", "PHONE_VOLUME", "MIC_VOLUME",
+	"LINEIN_VOLUME", "CD_VOLUME", "VIDEO_VOLUME", "AUX_VOLUME",
+	"PCMOUT_VOLUME", "RECORD_SELECT", "RECORD_GATIN", "RECORD_GAIN_MIC",
+	"GP", "3D_CONTROL", "AUDIO_INT", "POWER",
+	"EXT_AUDIO_ID", "EXT_AUDIO_CTRL", "PCM_FRONT_DAC_RATE", "PCM_SURR_DAC_RATE",
+	"PCM_LFE_DAC_RATE", "PCM_LR_ADC_RATE", "PCM_MIC_ADC_RATE", "CENTER_LFE_MASTER",
+	"SURR_MASTER", "SPDIF_CTRL", "EXT_MODEM_ID", "EXT_MODEM_CTRL",
+	"LINE1_RATE", "LINE2_RATE", "HANDSET_RATE", "LINE1_LEVEL",
+	"LINE2_LEVEL", "HANDSET_LEVEL", "GPIO_PIN_CONFIG", "GPIO_PIN_POLARITY",
+	"GPIO_PIN_STICKY", "GPIO_PIN_WAKEUP", "GPIO_PIN_STATUS", "MISC_MODEM_CTRL",
+	"0x58", "VENDOR-5A", "VENDOR-5C", "VENDOR-5E",
+	"0x60", "0x62", "0x64", "0x66",
+	"0x68", "0x6a", "0x6c", "0x6e",
+	"VENDOR-70", "VENDOR-72", "VENDOR-74", "VENDOR-76",
+	"VENDOR-78", "VENDOR-7A", "VENDOR_ID1", "VENDOR_ID2"
+};
 #endif
 
 static void
@@ -704,8 +726,22 @@ ac97_read(struct ac97_softc *as, u_int8_t reg, u_int16_t *val)
 static int
 ac97_write(struct ac97_softc *as, u_int8_t reg, u_int16_t val)
 {
+#ifndef AC97_IO_DEBUG
 	as->shadow_reg[reg >> 1] = val;
 	return as->host_if->write(as->host_if->arg, reg, val);
+#else
+	int ret;
+	uint16_t actual;
+
+	as->shadow_reg[reg >> 1] = val;
+	ret = as->host_if->write(as->host_if->arg, reg, val);
+	as->host_if->read(as->host_if->arg, reg, &actual);
+	if (val != actual && reg < 0x80) {
+		printf("ac97_write: reg=%s, written=0x%04x, read=0x%04x\n",
+		       ac97_register_names[reg / 2], val, actual);
+	}
+	return ret;
+#endif
 }
 
 static void
