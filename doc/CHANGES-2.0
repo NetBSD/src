@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.321 2004/07/10 03:58:14 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.322 2004/07/10 09:33:17 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5178,3 +5178,27 @@ sys/arch/i386/conf/GENERIC			1.6188
 
 	Remove accidently added UMASS_DEBUG.
 	[abs, ticket #608]
+
+xfree/xc/config/imake/imakemdep.h		1.5
+
+	Include gcc's preprocessor define of __sparc64__ in Imake's defines.
+	XFree PR 1424.
+	[heas, ticket #618]
+
+lib/libedit/el.c				1.39
+lib/libedit/read.c				1.34
+
+	PR/23486: Andreas Gustafsson: gdb no longer works with emacs
+	- make sure that we keep previous contents of the buffer in unbuffered
+	  mode.
+	- when turning editing on and off keep tty consistent.
+	[christos, ticket #620]
+
+sys/dev/pci/if_txp.c				1.7
+
+	Disestablish the interupt if we fail to (among other things) download
+	the firmware successfully. This prevents the kernel from crashing later
+	at interupt enable time, if firmware download fails like with my 3c990B
+	card.
+	[is, ticket #626]
+
