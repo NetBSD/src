@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.50 2003/05/05 20:49:10 fvdl Exp $
+#	$NetBSD: Makefile.booters,v 1.51 2003/10/08 04:25:45 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ COPTS+= -ffreestanding
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
-# ensure the stuff we need to load all of 'biosboot' in in the first few
+# ensure the stuff we need to load all of 'boot' in in the first few
 # sectors, and that anything that goes to real mode is in the first 64k.
 # (prot_to_real will bleat if the return address is >64k)
 BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o \

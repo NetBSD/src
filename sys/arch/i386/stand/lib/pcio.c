@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.14 2003/04/16 14:56:55 dsl Exp $	 */
+/*	$NetBSD: pcio.c,v 1.15 2003/10/08 04:25:45 lukem Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -47,7 +47,7 @@
 extern void conputc __P((int));
 extern int congetc __P((void));
 extern int coniskey __P((void));
-extern struct i386_boot_params boot_params;
+extern struct x86_boot_params boot_params;
 
 struct btinfo_console btinfo_console;
 

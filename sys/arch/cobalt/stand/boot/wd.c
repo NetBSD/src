@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.1 2003/06/25 17:24:23 cdi Exp $	*/
+/*	$NetBSD: wd.c,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ wdgetdisklabel(wd)
 	if (wdstrategy(wd, F_READ, MBR_BBSECTOR, DEV_BSIZE, buf, &rsize))
 		return EOFFSET;
 
-	if (*(u_int16_t *)&buf[MBR_MAGICOFF] == MBR_MAGIC) {
+	if (*(u_int16_t *)&buf[MBR_MAGIC_OFFSET] == MBR_MAGIC) {
 		int i;
 		struct mbr_partition *mp;
 
@@ -155,9 +155,9 @@ wdgetdisklabel(wd)
 		 * Lookup NetBSD slice. If there is none, go ahead
 		 * and try to read the disklabel off sector #0.
 		 */
-		mp = (struct mbr_partition *)&buf[MBR_PARTOFF];
-		for (i = 0; i < NMBRPART; i++) {
-			if (mp[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+		mp = (struct mbr_partition *)&buf[MBR_PART_OFFSET];
+		for (i = 0; i < MBR_PART_COUNT; i++) {
+			if (mp[i].mbrp_type == MBR_PTYPE_NETBSD) {
 				sector = mp[i].mbrp_start;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2003/04/16 19:16:42 dsl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 2003/10/08 04:25:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -106,7 +106,7 @@ struct btinfo_memmap {
 	struct bi_memmap_entry entry[1]; /* var len */
 };
 
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*
  * Structure describing disk info as seen by the BIOS.
@@ -139,7 +139,7 @@ struct bi_biosgeom_entry {
 	unsigned int	cksum;			/* MBR checksum */
 	int		res0, res1, res2, res3;	/* future expansion; 0 now */
 #endif
-	struct mbr_partition dosparts[NMBRPART]; /* MBR itself */
+	struct mbr_partition dosparts[MBR_PART_COUNT]; /* MBR itself */
 } __attribute__((packed));
 
 struct btinfo_biosgeom {
