@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.26 1999/02/17 02:37:39 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.27 1999/02/17 23:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -46,22 +46,11 @@ struct ad1848_isa_softc {
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	int	sc_iooffs;		/* offset from handle */
 
-	u_int	sc_lastcc;		/* size of last DMA xfer */
-	
-#ifndef NEWCONFIG
-	int	sc_dma_flags;
-	void	*sc_dma_bp;
-	u_int	sc_dma_cnt;
-#endif
-
 	char	sc_playrun;		/* running in continuous mode */
 	char	sc_recrun;		/* running in continuous mode */
-#define NOTRUNNING 0
-#define DMARUNNING 1
-#define PCMRUNNING 2
 
 	int	sc_irq;			/* interrupt */
-	int	sc_drq;			/* DMA */
+	int	sc_playdrq;		/* playback DMA */
 	int	sc_recdrq;		/* record/capture DMA */
 	
 	u_long	sc_interrupts;		/* number of interrupts taken */
@@ -81,14 +70,10 @@ void	ad1848_isa_attach __P((struct ad1848_isa_softc *));
 int	ad1848_isa_open __P((void *, int));
 void	ad1848_isa_close __P((void *));
  
-int	ad1848_isa_round_blocksize __P((void *, int));
-
-int	ad1848_isa_dma_init_output __P((void *, void *, int));
-int	ad1848_isa_dma_init_input __P((void *, void *, int));
-int	ad1848_isa_dma_output __P((void *, void *, int,
-				   void (*)(void *), void*));
-int	ad1848_isa_dma_input __P((void *, void *, int,
-				  void (*)(void *), void*));
+int	ad1848_isa_trigger_output __P((void *, void *, void *, int,
+	    void (*)(void *), void *, struct audio_params *));
+int	ad1848_isa_trigger_input __P((void *, void *, void *, int,
+	    void (*)(void *), void *, struct audio_params *));
 
 int	ad1848_isa_intr __P((void *));
 

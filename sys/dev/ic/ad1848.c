@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.3 1998/08/27 18:45:12 pk Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.4 1999/02/17 23:05:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -317,8 +317,6 @@ ad1848_attach(sc)
 	static struct ad1848_volume vol_0   = {0, 0};
 	struct audio_params pparams, rparams;
 	int timeout;
-
-	sc->sc_locked = 0;
 
 	/* Initialize the ad1848... */
 	for (i = 0; i < 0x10; i++) {
@@ -968,8 +966,6 @@ ad1848_open(addr, flags)
 
 	DPRINTF(("ad1848_open: sc=%p\n", sc));
 
-	sc->sc_locked = 0;
-
 	/* Enable interrupts */
 	DPRINTF(("ad1848_open: enable intrs\n"));
 	ad_write(sc, SP_PIN_CONTROL,
@@ -1199,7 +1195,6 @@ ad1848_halt_out(addr)
 
 	reg = ad_read(sc, SP_INTERFACE_CONFIG);
 	ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~PLAYBACK_ENABLE));
-	sc->sc_locked = 0;
 
 	return(0);
 }
@@ -1215,7 +1210,6 @@ ad1848_halt_in(addr)
 
 	reg = ad_read(sc, SP_INTERFACE_CONFIG);
 	ad_write(sc, SP_INTERFACE_CONFIG, (reg & ~CAPTURE_ENABLE));
-	sc->sc_locked = 0;
 
 	return(0);
 }

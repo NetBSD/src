@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.51 1999/02/17 02:37:41 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.52 1999/02/17 23:05:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -226,12 +226,12 @@ struct audio_hw_if pss_audio_if = {
 	NULL,
 	ad1848_query_encoding,
 	ad1848_set_params,
-	ad1848_isa_round_blocksize,
+	ad1848_round_blocksize,
 	ad1848_commit_settings,
-	ad1848_isa_dma_init_output,
-	ad1848_isa_dma_init_input,
-	ad1848_isa_dma_output,
-	ad1848_isa_dma_input,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	ad1848_halt_out,
 	ad1848_halt_in,
 	pss_speaker_ctl,
@@ -245,6 +245,8 @@ struct audio_hw_if pss_audio_if = {
 	ad1848_isa_round_buffersize,
         ad1848_isa_mappage,
 	ad1848_isa_get_props,
+	ad1848_isa_trigger_output,
+	ad1848_isa_trigger_input,
 };
 
 /* Interrupt translation for WSS config */
@@ -887,18 +889,18 @@ spfind(parent, sc, ia)
 	    return 0;
 	}
 	else {
-	    sc->sc_drq = cf->cf_drq = i;
+	    sc->sc_playdrq = cf->cf_drq = i;
 	    DPRINTF(("sp: found DMA %d free\n", i));
 	}
     }
     else {
-	if (pss_testdma(pc, sc->sc_drq) == 0) {
-	    printf("sp: configured DMA channel unavailable (%d)\n", sc->sc_drq);
+	if (pss_testdma(pc, sc->sc_playdrq) == 0) {
+	    printf("sp: configured DMA channel unavailable (%d)\n", sc->sc_playdrq);
 	    return 0;
 	}
-	sc->sc_drq = cf->cf_drq;
+	sc->sc_playdrq = cf->cf_drq;
     }
-    sc->sc_recdrq = sc->sc_drq;
+    sc->sc_recdrq = sc->sc_playdrq;
 
     /* Set WSS config registers */
     if ((bits = wss_interrupt_bits[sc->sc_irq]) == 0xff) {
@@ -910,7 +912,7 @@ spfind(parent, sc, ia)
     if ((inb(sc->sc_iobase+WSS_STATUS) & 0x40) == 0)	/* XXX What do these bits mean ? */
 	DPRINTF(("sp: IRQ %x\n", inb(sc->sc_iobase+WSS_STATUS)));
     
-    outb(sc->sc_iobase+WSS_CONFIG, (bits | wss_dma_bits[sc->sc_drq]));
+    outb(sc->sc_iobase+WSS_CONFIG, (bits | wss_dma_bits[sc->sc_playdrq]));
 
     pc->ad1848_sc = (struct ad1848_softc *)sc;
     sc->sc_ad1848.parent = pc;
@@ -1001,7 +1003,7 @@ spattach(parent, self, aux)
     }
 
     sc->sc_iobase = iobase;
-    sc->sc_drq = cf->cf_drq;
+    sc->sc_playdrq = cf->cf_drq;
 
 #ifdef NEWCONFIG
     isa_establish(&sc->sc_id, &sc->sc_dev);
