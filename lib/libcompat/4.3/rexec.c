@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.9 1999/05/04 17:13:57 christos Exp $	*/
+/*	$NetBSD: rexec.c,v 1.10 1999/05/09 12:28:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.9 1999/05/04 17:13:57 christos Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.10 1999/05/09 12:28:15 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,8 @@ rexec(ahost, rport, name, pass, cmd, fd2p)
 	char *name, *pass, *cmd;
 	int *fd2p;
 {
-	struct sockaddr_in sin, sin2, from;
+	struct sockaddr_in sin, from;
+	socklen_t fromlen;
 	struct hostent *hp;
 	u_short port;
 	size_t len;
@@ -111,6 +112,7 @@ retry:
 	} else {
 		char num[8];
 		int s2;
+		struct sockaddr_in sin2;
 		socklen_t sin2len;
 		
 		s2 = socket(AF_INET, SOCK_STREAM, 0);
@@ -131,8 +133,8 @@ retry:
 		(void)snprintf(num, sizeof(num), "%u", port);
 		(void)write(s, num, strlen(num)+1);
 
-		len = sizeof(from);
-		s3 = accept(s2, (struct sockaddr *)(void *)&from, &len);
+		fromlen = sizeof(from);
+		s3 = accept(s2, (struct sockaddr *)(void *)&from, &fromlen);
 		(void)close(s2);
 		if (s3 == -1) {
 			warn("Error accepting connection");
