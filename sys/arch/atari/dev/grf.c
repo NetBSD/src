@@ -1,6 +1,7 @@
-/*	$NetBSD: grf.c,v 1.33 2003/08/07 16:26:58 agc Exp $	*/
+/*	$NetBSD: grf.c,v 1.34 2004/03/25 10:17:19 leo Exp $	*/
 
 /*
+ * Copyright (c) 1995 Leo Weppelman
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -38,7 +39,6 @@
  */
 
 /*
- * Copyright (c) 1995 Leo Weppelman
  * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.33 2003/08/07 16:26:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.34 2004/03/25 10:17:19 leo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
