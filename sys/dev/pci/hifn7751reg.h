@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751reg.h,v 1.1 2000/10/12 02:59:59 itojun Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.2 2003/01/06 12:14:30 wiz Exp $	*/
 /*	$OpenBSD: hifn7751reg.h,v 1.15 2000/09/21 13:34:58 jason Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct hifn_dma {
 	u_char	result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
 
 	/*
-	 *  Our current positions for insertion and removal from the desriptor
+	 *  Our current positions for insertion and removal from the descriptor
 	 *  rings. 
 	 */
 	int		cmdi, srci, dsti, resi;
