@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.38 1997/05/27 23:14:44 gwr Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.39 1997/08/04 06:18:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -66,6 +66,8 @@
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 
+#include "loop.h"
+
 #define SIN(s) ((struct sockaddr_in *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
 #define SRP(s) ((struct sockaddr_inarp *)s)
@@ -89,7 +91,7 @@ static	void arptimer __P((void *));
 static	struct llinfo_arp *arplookup __P((struct in_addr *, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
-extern	struct ifnet loif;
+extern	struct ifnet loif[NLOOP];
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
 int	arp_inuse, arp_allocated, arp_intimer;
@@ -274,7 +276,7 @@ arp_rtrequest(req, rt, sa)
 			    SDL(gate)->sdl_alen = 
 			    rt->rt_ifp->if_data.ifi_addrlen);
 			if (useloopback)
-				rt->rt_ifp = &loif;
+				rt->rt_ifp = &loif[0];
 		}
 		break;
 
