@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2000/06/29 07:58:50 mrg Exp $        */
+/*	$NetBSD: pmap.c,v 1.25 2000/09/13 15:00:21 thorpej Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -419,28 +419,28 @@ pmap_init()
 	 */
 	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr, m68k_ptob(IIOMAPSIZE),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
 	addr = (vaddr_t) monobase;
 	if (uvm_map(kernel_map, &addr, m68k_ptob(MONOMAPSIZE),
-				NULL, UVM_UNKNOWN_OFFSET,
+				NULL, UVM_UNKNOWN_OFFSET, 0,
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
 	addr = (vaddr_t) colorbase;
 	if (uvm_map(kernel_map, &addr, m68k_ptob(COLORMAPSIZE),
-				NULL, UVM_UNKNOWN_OFFSET,
+				NULL, UVM_UNKNOWN_OFFSET, 0,
 				UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, HP_MAX_PTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
@@ -518,7 +518,7 @@ bogons:
 	 * we already have kernel PT pages.
 	 */
 	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET,
+	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
