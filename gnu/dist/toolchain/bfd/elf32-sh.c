@@ -121,8 +121,8 @@ static reloc_howto_type sh_elf_howto_table[] =
 	 complain_overflow_signed, /* complain_on_overflow */
 	 sh_elf_ignore_reloc,	/* special_function */
 	 "R_SH_REL32",		/* name */
-	 false,			/* partial_inplace */
-	 0,			/* src_mask */
+	 true,			/* partial_inplace */
+	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -2918,7 +2918,11 @@ sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 
       howto = sh_elf_howto_table + r_type;
 
-      /* This is a final link.  */
+      /* For relocs that aren't partial_inplace, we get the addend from
+         the relocation.  */
+      if (! howto->partial_inplace)
+	addend = rel->r_addend;
+
       h = NULL;
       sym = NULL;
       sec = NULL;
@@ -2938,7 +2942,32 @@ sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		 section symbol winds up in the output section.  */
 	      sym = local_syms + r_symndx;
 	      if (ELF_ST_TYPE (sym->st_info) == STT_SECTION)
-		goto final_link_relocate;
+		{
+		  if (! howto->partial_inplace)
+		    {
+		      /* For relocations with the addend in the
+			 relocation, we need just to update the addend.
+			 All real relocs are of type partial_inplace; this
+			 code is mostly for completeness.  */
+		      rel->r_addend += sec->output_offset + sym->st_value;
+
+		      continue;
+		    }
+
+		  /* Relocs of type partial_inplace need to pick up the
+		     contents in the contents and add the offset resulting
+		     from the changed location of the section symbol.
+		     Using _bfd_final_link_relocate (e.g. goto
+		     final_link_relocate) here would be wrong, because
+		     relocations marked pc_relative would get the current
+		     location subtracted, and we must only do that at the
+		     final link.  */
+		  r = _bfd_relocate_contents (howto, input_bfd,
+					      sec->output_offset
+					      + sym->st_value,
+					      contents + rel->r_offset);
+		  goto relocation_done;
+		}
 
 	      continue;
 	    }
@@ -3111,7 +3140,8 @@ sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		  BFD_ASSERT (h != NULL && h->dynindx != -1);
 		  relocate = false;
 		  outrel.r_info = ELF32_R_INFO (h->dynindx, R_SH_REL32);
-		  outrel.r_addend = rel->r_addend;
+		  outrel.r_addend
+		    = bfd_get_32 (input_bfd, contents + rel->r_offset);
 		}
 	      else
 		{
@@ -3124,14 +3154,18 @@ sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 		    {
 		      relocate = true;
 		      outrel.r_info = ELF32_R_INFO (0, R_SH_RELATIVE);
-		      outrel.r_addend = relocation + rel->r_addend;
+		      outrel.r_addend
+			= relocation + bfd_get_32 (input_bfd,
+						   contents + rel->r_offset);
 		    }
 		  else
 		    {
 		      BFD_ASSERT (h->dynindx != -1);
 		      relocate = false;
 		      outrel.r_info = ELF32_R_INFO (h->dynindx, R_SH_DIR32);
-		      outrel.r_addend = relocation + rel->r_addend;
+		      outrel.r_addend
+			= relocation + bfd_get_32 (input_bfd,
+						   contents + rel->r_offset);
 		    }
 		}
 
@@ -3148,8 +3182,6 @@ sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	      if (! relocate)
 		continue;
 	    }
-	  else if (r_type == R_SH_DIR32)
-	    addend = rel->r_addend;
 	  goto final_link_relocate;
 
 	case R_SH_GOT32:
@@ -3329,6 +3361,7 @@ sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	  }
 	}
 
+    relocation_done:
       if (r != bfd_reloc_ok)
 	{
 	  switch (r)

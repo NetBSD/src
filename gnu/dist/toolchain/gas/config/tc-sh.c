@@ -3136,9 +3136,23 @@ md_number_to_chars (ptr, use, nbytes)
 }
 
 long
-md_pcrel_from (fixP)
+md_pcrel_from_section (fixP, sec)
      fixS *fixP;
+     segT sec;
 {
+  if (fixP->fx_addsy != (symbolS *) NULL
+      && (! S_IS_DEFINED (fixP->fx_addsy)
+	  || S_IS_EXTERN (fixP->fx_addsy)
+	  || S_IS_WEAK (fixP->fx_addsy)
+	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
+    {
+      /* The symbol is undefined (or is defined but not in this section,
+	 or we're not sure about it being the final definition).  Let the
+	 linker figure it out.  We need to adjust the subtraction of a
+	 symbol to the position of the relocated data, though.  */
+      return fixP->fx_subsy ? fixP->fx_where + fixP->fx_frag->fr_address : 0;
+    }
+
   return fixP->fx_size + fixP->fx_where + fixP->fx_frag->fr_address + 2;
 }
 
