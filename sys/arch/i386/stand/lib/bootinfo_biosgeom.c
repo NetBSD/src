@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.7 1999/03/28 19:41:27 fvdl Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.8 1999/03/30 17:58:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -72,8 +72,8 @@ void bi_getbiosgeom()
 		bzero(&bibg->disk[nvalid], sizeof(bibg->disk[nvalid]));
 
 		bibg->disk[nvalid].sec = d.sec;
-		bibg->disk[nvalid].head = d.head + 1;
-		bibg->disk[nvalid].cyl = d.cyl + 1;
+		bibg->disk[nvalid].head = d.head;
+		bibg->disk[nvalid].cyl = d.cyl;
 		bibg->disk[nvalid].dev = d.dev;
 
 		if (readsects(&d, 0, 1, buf, 0)) {
