@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.11 2001/07/26 13:43:46 mrg Exp $	*/
+/*	$NetBSD: screen.c,v 1.12 2002/01/14 10:36:25 pk Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -1121,10 +1121,14 @@ get_term()
 	 * that switch to/from an alternate screen, and we're in quit_at_eof
 	 * (eg, more(1)).
 	 */
-	if (!quit_at_eof && !more_mode) {
+	if (quit_at_eof != OPT_ONPLUS && !more_mode) {
 		sc_init = ltgetstr("ti", &sp);
 		sc_deinit = ltgetstr("te", &sp);
+	} else {
+		sc_init = NULL;
+		sc_deinit = NULL;
 	}
+
 	if (sc_init == NULL)
 		sc_init = "";
 	if (sc_deinit == NULL)
