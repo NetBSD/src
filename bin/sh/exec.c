@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.28 2000/05/13 20:50:14 elric Exp $	*/
+/*	$NetBSD: exec.c,v 1.29 2000/05/22 10:18:46 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,17 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.28 2000/05/13 20:50:14 elric Exp $");
+__RCSID("$NetBSD: exec.c,v 1.29 2000/05/22 10:18:46 elric Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 /*
@@ -104,7 +102,7 @@ STATIC int builtinloc = -1;		/* index in path of %builtin, or -1 */
 int exerrno = 0;			/* Last exec error */
 
 
-STATIC void tryexec __P((char *, char **, char **, int));
+STATIC void tryexec __P((char *, char **, char **));
 STATIC void execinterp __P((char **, char **));
 STATIC void printentry __P((struct tblentry *, int));
 STATIC void clearcmdentry __P((int));
@@ -119,23 +117,22 @@ STATIC void delete_cmd_entry __P((void));
  */
 
 void
-shellexec(argv, envp, path, idx, vforked)
+shellexec(argv, envp, path, idx)
 	char **argv, **envp;
 	const char *path;
 	int idx;
-	int vforked;
 {
 	char *cmdname;
 	int e;
 
 	if (strchr(argv[0], '/') != NULL) {
-		tryexec(argv[0], argv, envp, vforked);
+		tryexec(argv[0], argv, envp);
 		e = errno;
 	} else {
 		e = ENOENT;
 		while ((cmdname = padvance(&path, argv[0])) != NULL) {
 			if (--idx < 0 && pathopt == NULL) {
-				tryexec(cmdname, argv, envp, vforked);
+				tryexec(cmdname, argv, envp);
 				if (errno != ENOENT && errno != ENOTDIR)
 					e = errno;
 			}
@@ -161,11 +158,10 @@ shellexec(argv, envp, path, idx, vforked)
 
 
 STATIC void
-tryexec(cmd, argv, envp, vforked)
+tryexec(cmd, argv, envp)
 	char *cmd;
 	char **argv;
 	char **envp;
-	int vforked;
 	{
 	int e;
 #ifndef BSD
@@ -181,13 +177,6 @@ tryexec(cmd, argv, envp, vforked)
 #endif
 	e = errno;
 	if (e == ENOEXEC) {
-		if (vforked) {
-			/* We are currently vfork(2)ed, so raise an
-			 * exception, and evalcommand will try again
-			 * with a normal fork(2).
-			 */
-			exraise(EXSHELLPROC);
-		}
 		initshellproc();
 		setinputfile(cmd, 0);
 		commandname = arg0 = savestr(argv[0]);
