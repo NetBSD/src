@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.65 2003/05/17 23:14:42 itojun Exp $ */
+/*	$NetBSD: fdisk.c,v 1.66 2003/07/07 11:45:00 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.65 2003/05/17 23:14:42 itojun Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.66 2003/07/07 11:45:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1348,10 +1348,10 @@ intuit_translated_geometry(void)
 	}
 
 	/* Try to deduce the number of heads from two different mappings. */
-	for (i = 0; i < NMBRPART * 2; i++) {
+	for (i = 0; i < NMBRPART * 2 - 1; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
-		for (j = 0; j < 8; j++) {
+		for (j = i + 1; j < NMBRPART * 2; j++) {
 			if (get_mapping(j, &c2, &h2, &s2, &a2) < 0)
 				continue;
 			a1 -= s1;
