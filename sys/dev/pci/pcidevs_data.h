@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.336 2001/06/20 16:33:11 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.337 2001/06/20 19:52:19 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.332 2001/06/20 16:32:32 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.333 2001/06/20 19:51:12 thorpej Exp 
  */
 
 /*
@@ -184,10 +184,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "3c980C-TXM 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX95,
+	    0,
+	    "3Com",
+	    "3CR990-TX-95 10/100 Ethernet with 3XP",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97,
 	    0,
 	    "3Com",
-	    "3CR990-TX-97 10/100 Ethernet",
+	    "3CR990-TX-97 10/100 Ethernet with 3XP",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95,
+	    0,
+	    "3Com",
+	    "3CR990-SVR-95 10/100 Ethernet with 3XP",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR97,
+	    0,
+	    "3Com",
+	    "3CR990-SVR-97 10/100 Ethernet with 3XP",
 	},
 	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
