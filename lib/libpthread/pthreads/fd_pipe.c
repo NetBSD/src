@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: fd_pipe.c,v 1.3 1994/02/07 22:04:17 proven Exp $ $provenid: fd_pipe.c,v 1.16 1994/02/07 02:18:52 proven Exp $";
+static const char rcsid[] = "$Id: fd_pipe.c,v 1.4 1997/10/08 00:52:48 christos Exp $ $provenid: fd_pipe.c,v 1.16 1994/02/07 02:18:52 proven Exp $";
 #endif
 
 #include <pthread.h>
@@ -55,8 +55,9 @@ static const char rcsid[] = "$Id: fd_pipe.c,v 1.3 1994/02/07 22:04:17 proven Exp
  * The pipe lock is never unlocked until all pthreads waiting are done with it
  * read()
  */
-ssize_t __pipe_read(struct __pipe *fd, int flags, void *buf, size_t nbytes)
+ssize_t __pipe_read(union fd_data f, int flags, void *buf, size_t nbytes)
 {
+	struct __pipe *fd = f.ptr;
 	semaphore *lock, *plock;
 	int ret = 0;
 
@@ -116,7 +117,8 @@ ssize_t __pipe_read(struct __pipe *fd, int flags, void *buf, size_t nbytes)
  * copies as much data as it can into the pipe buffer and it there
  * is still data it goes to sleep.
  */
-ssize_t __pipe_write(struct __pipe *fd, int flags, const void *buf, size_t nbytes) {
+ssize_t __pipe_write(union fd_data f, int flags, const void *buf, size_t nbytes) {
+	struct __pipe *fd = f.ptr;
 	semaphore *lock, *plock;
 	int ret, count;
 
@@ -182,8 +184,9 @@ ssize_t __pipe_write(struct __pipe *fd, int flags, const void *buf, size_t nbyte
  * RELEASED). close() then calls fd_unlock which give the fd to the next queued
  * element which determins that the fd is closed and then calls fd_unlock etc...
  */
-int __pipe_close(struct __pipe *fd, int flags)
+int __pipe_close(union fd_data f, int flags)
 {
+	struct __pipe *fd = f.ptr;
 	semaphore *lock, *plock;
 
 	lock = &(fd->lock);
@@ -233,9 +236,13 @@ static int __pipe_enosys()
  * File descriptor operations
  */
 struct fd_ops fd_ops[] = {
-{	NULL, NULL, },		/* Non operations */
-{	__pipe_write, __pipe_read, __pipe_close, __pipe_enosys, __pipe_enosys,
-	__pipe_enosys },
+	__pipe_write,
+	__pipe_read,
+	__pipe_close,
+	(int (*) __P((union fd_data, int, int, ...))) __pipe_enosys,
+	(int (*) __P((union fd_data, int, const struct iovec *, int))) __pipe_enosys,
+	(int (*) __P((union fd_data, int, const struct iovec *, int))) __pipe_enosys,
+	(off_t (*) __P((union fd_data, int, off_t, int))) __pipe_enosys
 };
 
 /* ==========================================================================
