@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.8 2002/03/02 22:26:26 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.9 2002/03/03 14:34:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -132,6 +132,9 @@ hd64461uart_kgdb_init()
 	if (strcmp(kgdb_devname, "hd64461uart") != 0)
 		return (1);
 
+	if (hd64461uart_chip.console)
+		return (1);	/* can't share with console */
+
 	hd64461uart_init();
 
 	if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, kgdb_rate,
@@ -164,7 +167,8 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_module_id = ha->ha_module_id;
 
-	hd64461uart_init();
+	if (!sc->sc_chip->console)
+		hd64461uart_init();
 
 	csc->sc_iot = sc->sc_chip->io_tag;
 	bus_space_map(csc->sc_iot, 0, 8, 0, &csc->sc_ioh);
