@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.94 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.95 2004/05/20 05:08:29 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.94 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.95 2004/05/20 05:08:29 atatat Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -670,6 +670,9 @@ pool_get(struct pool *pp, int flags)
 	void *v;
 
 #ifdef DIAGNOSTIC
+	if (__predict_false(pp->pr_itemsperpage == 0))
+		panic("pool_get: pool %p: pr_itemsperpage is zero, "
+		    "pool not initialized?", pp);
 	if (__predict_false(curlwp == NULL && doing_shutdown == 0 &&
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: %s: must have NOWAIT", pp->pr_wchan);
