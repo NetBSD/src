@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.33 2003/04/12 09:03:25 christos Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.34 2003/04/19 15:47:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.33 2003/04/12 09:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.34 2003/04/19 15:47:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,14 +295,12 @@ ex_pci_attach(parent, self, aux)
 
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D3:
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			aprint_error(
-			    "%s: unable to wake up from power state D3\n",
+			aprint_normal("%s: found in power state D3, "
+			    "attempting to recover.\n", sc->sc_dev.dv_xname);
+			ex_d3tod0(sc, pa);
+			aprint_normal("%s: changed power state to D0.\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			break;
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
 			aprint_normal("%s: waking up from power state D%d\n",
