@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.23 2002/09/13 14:51:25 gehenna Exp $	*/
+/*	$NetBSD: lkm.h,v 1.24 2002/09/18 22:59:36 lha Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -392,8 +392,8 @@ struct lmc_stat {
 	int	ver;			/* OUT: lkm compile version */
 };
 
-#define	makemajor(b, c)		((((b) & 0xffff) << 16) | ((c) & 0xffff))
-#define	block_major(v)		(int)((int16_t)(((v) >> 16) & 0xffff))
-#define	char_major(v)		(int)((int16_t)((v) & 0xffff))
+#define	LKM_MAKEMAJOR(b, c)	((((b) & 0xffff) << 16) | ((c) & 0xffff))
+#define	LKM_BLOCK_MAJOR(v)	(int)((int16_t)(((v) >> 16) & 0xffff))
+#define	LKM_CHAR_MAJOR(v)	(int)((int16_t)((v) & 0xffff))
 
 #endif	/* !_SYS_LKM_H_ */

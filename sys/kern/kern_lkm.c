@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.59 2002/09/13 13:08:53 gehenna Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.60 2002/09/18 22:59:36 lha Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.59 2002/09/13 13:08:53 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.60 2002/09/18 22:59:36 lha Exp $");
 
 #include "opt_ddb.h"
 
@@ -747,8 +747,8 @@ _lkm_dev(lkmtp, cmd)
 		if (error != 0)
 			return (error);
 
-		args->lkm_offset = makemajor(args->lkm_bdevmaj,
-					     args->lkm_cdevmaj);
+		args->lkm_offset = 
+			LKM_MAKEMAJOR(args->lkm_bdevmaj, args->lkm_cdevmaj);
 		break;
 
 	case LKM_E_UNLOAD:
