@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.199 2003/10/25 01:18:01 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.200 2003/11/09 07:55:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.199 2003/10/25 01:18:01 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.200 2003/11/09 07:55:38 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1119,6 +1119,7 @@ sys_open(l, v, retval)
 	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		FILE_UNUSE(fp, p);
+		fdp->fd_ofiles[indx] = NULL;
 		ffree(fp);
 		if ((error == ENODEV || error == ENXIO) &&
 		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
