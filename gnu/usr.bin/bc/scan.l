@@ -107,7 +107,9 @@ rl_input (buf, result, max)
       if (rl_len != 1)
 	add_history (rl_line); 
       rl_line[rl_len-1] = '\n';
+#if 0
       printf ("\r");
+#endif
       fflush (stdout);
     }
 
