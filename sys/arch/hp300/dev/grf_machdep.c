@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.4 1996/02/24 00:55:13 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.5 1996/10/11 00:11:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -99,7 +99,7 @@ grfmatch(hd)
 	sc->sc_data = (struct grf_data *)malloc(sizeof(struct grf_data),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_data == NULL) {
-		printf("grfmatch: malloc for grf_data failed\n");
+		kprintf("grfmatch: malloc for grf_data failed\n");
 		return (0);
 	}
 	bzero(sc->sc_data, sizeof(struct grf_data));
@@ -125,16 +125,16 @@ grfattach(hd)
 	else
 		isconsole = 0;
 
-	printf(": %d x %d ", gp->g_display.gd_dwidth,
+	kprintf(": %d x %d ", gp->g_display.gd_dwidth,
 	    gp->g_display.gd_dheight);
 	if (gp->g_display.gd_colors == 2)
-		printf("monochrome");
+		kprintf("monochrome");
 	else
-		printf("%d color", gp->g_display.gd_colors);
-	printf(" %s display", gp->g_sw->gd_desc);
+		kprintf("%d color", gp->g_display.gd_colors);
+	kprintf(" %s display", gp->g_sw->gd_desc);
 	if (isconsole)
-		printf(" (console)");
-	printf("\n");
+		kprintf(" (console)");
+	kprintf("\n");
 
 #if NITE > 0
 	/* XXX hack */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.1 1996/10/04 07:27:54 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.2 1996/10/11 00:09:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -189,7 +189,7 @@ view_t *v;
 	if (v->save_area == NULL)
 		return; /* XXX: Can't happen.... */
 	if (RGfx(et_priv.regkva, GCT_ID_MISC) & 1) {
-		printf("et_display_view: Don't know how to restore"
+		kprintf("et_display_view: Don't know how to restore"
 			" a graphics mode\n");
 		return;
 	}
@@ -234,7 +234,7 @@ view_t *v;
 	if (!atari_realconfig)
 		return;
 	if (RGfx(et_priv.regkva, GCT_ID_MISC) & 1) {
-		printf("et_save_view: Don't know how to save"
+		kprintf("et_save_view: Don't know how to save"
 			" a graphics mode\n");
 		return;
 	}

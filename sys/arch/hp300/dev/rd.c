@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.22 1996/10/06 00:14:17 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.23 1996/10/11 00:11:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -243,7 +243,7 @@ rdmatch(hd)
 
 	/* XXX set up the external name */
 	bzero(rs->sc_xname, sizeof(rs->sc_xname));
-	sprintf(rs->sc_xname, "rd%d", hd->hp_unit);
+	ksprintf(rs->sc_xname, "rd%d", hd->hp_unit);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -302,7 +302,7 @@ rdident(rs, hd, verbose)
 	id = hpibid(ctlr, slave);
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT)
-		printf("hpibid(%d, %d) -> %x\n", ctlr, slave, id);
+		kprintf("hpibid(%d, %d) -> %x\n", ctlr, slave, id);
 #endif
 	if ((id & 0x200) == 0)
 		return(-1);
@@ -335,17 +335,17 @@ rdident(rs, hd, verbose)
 	}
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT) {
-		printf("rd%d: name: %x ('%s')\n",
+		kprintf("rd%d: name: %x ('%s')\n",
 		       lunit, desc->d_name, name);
-		printf("  iuw %x, maxxfr %d, ctype %d\n",
+		kprintf("  iuw %x, maxxfr %d, ctype %d\n",
 		       desc->d_iuw, desc->d_cmaxxfr, desc->d_ctype);
-		printf("  utype %d, bps %d, blkbuf %d, burst %d, blktime %d\n",
+		kprintf("  utype %d, bps %d, blkbuf %d, burst %d, blktime %d\n",
 		       desc->d_utype, desc->d_sectsize,
 		       desc->d_blkbuf, desc->d_burstsize, desc->d_blocktime);
-		printf("  avxfr %d, ort %d, atp %d, maxint %d, fv %x, rv %x\n",
+		kprintf("  avxfr %d, ort %d, atp %d, maxint %d, fv %x, rv %x\n",
 		       desc->d_uavexfr, desc->d_retry, desc->d_access,
 		       desc->d_maxint, desc->d_fvbyte, desc->d_rvbyte);
-		printf("  maxcyl/head/sect %d/%d/%d, maxvsect %d, inter %d\n",
+		kprintf("  maxcyl/head/sect %d/%d/%d, maxvsect %d, inter %d\n",
 		       desc->d_maxcyl, desc->d_maxhead, desc->d_maxsect,
 		       desc->d_maxvsectl, desc->d_interleave);
 	}
@@ -384,8 +384,8 @@ rdident(rs, hd, verbose)
 	 * blocks.  ICK!
 	 */
 	if (verbose) {
-		printf(": %s\n", rdidentinfo[id].ri_desc);
-		printf("%s: %d cylinders, %d heads, %d blocks, %d bytes/block\n",
+		kprintf(": %s\n", rdidentinfo[id].ri_desc);
+		kprintf("%s: %d cylinders, %d heads, %d blocks, %d bytes/block\n",
 		    rs->sc_hd->hp_xname, rdidentinfo[id].ri_ncyl,
 		    rdidentinfo[id].ri_ntpc, rdidentinfo[id].ri_nblocks,
 		    DEV_BSIZE);
@@ -464,12 +464,12 @@ rdgetinfo(dev)
 		return(0);
 
 	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, ", rs->sc_hd->hp_xname, msg);
+	kprintf("%s: WARNING: %s, ", rs->sc_hd->hp_xname, msg);
 #ifdef COMPAT_NOLABEL
-	printf("using old default partitioning\n");
+	kprintf("using old default partitioning\n");
 	rdmakedisklabel(unit, lp);
 #else
-	printf("defining `c' partition as entire disk\n");
+	kprintf("defining `c' partition as entire disk\n");
 	pi[2].p_size = rdidentinfo[rs->sc_type].ri_nblocks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;
@@ -571,7 +571,7 @@ rdstrategy(bp)
 
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdstrategy(%x): dev %x, bn %x, bcount %x, %c\n",
+		kprintf("rdstrategy(%x): dev %x, bn %x, bcount %x, %c\n",
 		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
@@ -675,7 +675,7 @@ rdstart(unit)
 again:
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdstart(%d): bp %x, %c\n", unit, bp,
+		kprintf("rdstart(%d): bp %x, %c\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 	part = rdpart(bp->b_dev);
@@ -691,7 +691,7 @@ again:
 	rs->sc_ioc.c_cmd = bp->b_flags & B_READ ? C_READ : C_WRITE;
 #ifdef DEBUG
 	if (rddebug & RDB_IO)
-		printf("rdstart: hpibsend(%x, %x, %x, %x, %x)\n",
+		kprintf("rdstart: hpibsend(%x, %x, %x, %x, %x)\n",
 		       hp->hp_ctlr, hp->hp_slave, C_CMD,
 		       &rs->sc_ioc.c_unit, sizeof(rs->sc_ioc)-2);
 #endif
@@ -704,7 +704,7 @@ again:
 
 #ifdef DEBUG
 		if (rddebug & RDB_IO)
-			printf("rdstart: hpibawait(%x)\n", hp->hp_ctlr);
+			kprintf("rdstart: hpibawait(%x)\n", hp->hp_ctlr);
 #endif
 		hpibawait(hp->hp_ctlr);
 		return;
@@ -717,7 +717,7 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("%s: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
+		kprintf("%s: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
 		       rs->sc_hd->hp_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rdtab[unit].b_errcnt);
 	rdstats[unit].rdretries++;
@@ -726,7 +726,7 @@ again:
 	rdreset(rs, hp);
 	if (rdtab[unit].b_errcnt++ < RDRETRY)
 		goto again;
-	printf("%s: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
+	kprintf("%s: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
 	       rs->sc_hd->hp_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
 	bp->b_flags |= B_ERROR;
@@ -773,10 +773,10 @@ rdintr(arg)
 	
 #ifdef DEBUG
 	if (rddebug & RDB_FOLLOW)
-		printf("rdintr(%d): bp %x, %c, flags %x\n", unit, bp,
+		kprintf("rdintr(%d): bp %x, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
-		printf("%s: bp == NULL\n", rs->sc_hd->hp_xname);
+		kprintf("%s: bp == NULL\n", rs->sc_hd->hp_xname);
 		return;
 	}
 #endif
@@ -809,7 +809,7 @@ rdintr(arg)
 	if (rv != 1 || stat) {
 #ifdef DEBUG
 		if (rddebug & RDB_ERROR)
-			printf("rdintr: recv failed or bad stat %d\n", stat);
+			kprintf("rdintr: recv failed or bad stat %d\n", stat);
 #endif
 		restart = rderror(unit);
 #ifdef DEBUG
@@ -845,7 +845,7 @@ rdstatus(rs)
 	if (rv != sizeof(rs->sc_rsc)) {
 #ifdef DEBUG
 		if (rddebug & RDB_STATUS)
-			printf("rdstatus: send C_CMD failed %d != %d\n",
+			kprintf("rdstatus: send C_CMD failed %d != %d\n",
 			       rv, sizeof(rs->sc_rsc));
 #endif
 		return(1);
@@ -854,7 +854,7 @@ rdstatus(rs)
 	if (rv != sizeof(rs->sc_stat)) {
 #ifdef DEBUG
 		if (rddebug & RDB_STATUS)
-			printf("rdstatus: send C_EXEC failed %d != %d\n",
+			kprintf("rdstatus: send C_EXEC failed %d != %d\n",
 			       rv, sizeof(rs->sc_stat));
 #endif
 		return(1);
@@ -863,7 +863,7 @@ rdstatus(rs)
 	if (rv != 1 || stat) {
 #ifdef DEBUG
 		if (rddebug & RDB_STATUS)
-			printf("rdstatus: recv failed %d or bad stat %d\n",
+			kprintf("rdstatus: recv failed %d or bad stat %d\n",
 			       rv, stat);
 #endif
 		return(1);
@@ -886,7 +886,7 @@ rderror(unit)
 
 	if (rdstatus(rs)) {
 #ifdef DEBUG
-		printf("%s: couldn't get status\n", rs->sc_hd->hp_xname);
+		kprintf("%s: couldn't get status\n", rs->sc_hd->hp_xname);
 #endif
 		rdreset(rs, rs->sc_hd);
 		return(1);
@@ -909,7 +909,7 @@ rderror(unit)
 		extern int hz;
 		int rdtimo = RDWAITC << rdtab[unit].b_errcnt;
 #ifdef DEBUG
-		printf("%s: internal maintenance, %d second timeout\n",
+		kprintf("%s: internal maintenance, %d second timeout\n",
 		       rs->sc_hd->hp_xname, rdtimo);
 		rdstats[unit].rdtimeouts++;
 #endif
@@ -946,45 +946,45 @@ rderror(unit)
 	 * out b_blkno which is just the beginning block number
 	 * of the transfer, not necessary where the error occured.
 	 */
-	printf("rd%d%c: hard error sn%d\n",
+	kprintf("rd%d%c: hard error sn%d\n",
 	       rdunit(bp->b_dev), 'a'+rdpart(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation (unless debugging).
 	 */
-	printf("rd%d %s error:",
+	kprintf("rd%d %s error:",
 	       unit, (bp->b_flags & B_READ) ? "read" : "write");
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR) {
 		/* status info */
-		printf("\n    volume: %d, unit: %d\n",
+		kprintf("\n    volume: %d, unit: %d\n",
 		       (sp->c_vu>>4)&0xF, sp->c_vu&0xF);
 		rdprinterr("reject", sp->c_ref, err_reject);
 		rdprinterr("fault", sp->c_fef, err_fault);
 		rdprinterr("access", sp->c_aef, err_access);
 		rdprinterr("info", sp->c_ief, err_info);
-		printf("    block: %d, P1-P10: ", hwbn);
-		printf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
-		printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
-		printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
+		kprintf("    block: %d, P1-P10: ", hwbn);
+		kprintf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
+		kprintf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
+		kprintf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
 		/* command */
-		printf("    ioc: ");
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_pad, 8));
-		printf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_hiaddr, 4));
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_addr, 8));
-		printf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_nop2, 4));
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_len, 8));
-		printf("%s\n", hexstr(*(u_short *)&rs->sc_ioc.c_cmd, 4));
+		kprintf("    ioc: ");
+		kprintf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_pad, 8));
+		kprintf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_hiaddr, 4));
+		kprintf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_addr, 8));
+		kprintf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_nop2, 4));
+		kprintf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_len, 8));
+		kprintf("%s\n", hexstr(*(u_short *)&rs->sc_ioc.c_cmd, 4));
 		return(1);
 	}
 #endif
-	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x\n",
+	kprintf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x\n",
 	       (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
 	       sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
-	printf("P1-P10: ");
-	printf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
-	printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
-	printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
+	kprintf("P1-P10: ");
+	kprintf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
+	kprintf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
+	kprintf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
 	return(1);
 }
 
@@ -1106,12 +1106,12 @@ rdprinterr(str, err, tab)
 
 	if (err == 0)
 		return;
-	printf("    %s error field:", str, err);
+	kprintf("    %s error field:", str, err);
 	printed = 0;
 	for (i = 0; i < 16; i++)
 		if (err & (0x8000 >> i))
-			printf("%s%s", printed++ ? " + " : " ", tab[i]);
-	printf("\n");
+			kprintf("%s%s", printed++ ? " + " : " ", tab[i]);
+	kprintf("\n");
 }
 #endif
 
@@ -1206,7 +1206,7 @@ rddump(dev, blkno, va, size)
 			return (EIO);
 #else /* RD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
-		printf("%s: dump addr %p, blk %d\n", hp->hp_xname,
+		kprintf("%s: dump addr %p, blk %d\n", hp->hp_xname,
 		    va, blkno);
 		delay(500 * 1000);	/* half a second */
 #endif /* RD_DUMP_NOT_TRUSTED */

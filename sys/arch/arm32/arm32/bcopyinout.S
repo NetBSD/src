@@ -1,4 +1,4 @@
-/* $NetBSD: bcopyinout.S,v 1.5 1996/06/12 20:06:00 mark Exp $ */
+/* $NetBSD: bcopyinout.S,v 1.6 1996/10/11 00:06:31 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -175,7 +175,7 @@ copyinoutpcbfault:
 	mov	r2, r3
 	ldr	r3, Lcurproc
 	ldr	r3, [r3]
-	bl	_printf
+	bl	_kprintf
 	mov	r0, #EFAULT
 	ldmfd	sp!, {lr}
 	ldmfd	sp!, {r4}

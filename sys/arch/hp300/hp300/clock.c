@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 1996/10/05 09:17:38 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 1996/10/11 00:11:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,7 +196,7 @@ cpu_initclocks()
 	clk = (volatile struct clkreg *)clkstd[0];
 
 	if (COUNTS_PER_SEC % hz) {
-		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
+		kprintf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
 	/*
@@ -206,13 +206,13 @@ cpu_initclocks()
 	if (stathz == 0)		/* XXX should be set in param.c */
 		stathz = hz;
 	else if (COUNTS_PER_SEC % stathz) {
-		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		kprintf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
 	if (profhz == 0)		/* XXX should be set in param.c */
 		profhz = stathz * 5;
 	else if (profhz < stathz || COUNTS_PER_SEC % profhz) {
-		printf("cannot get %d Hz profclock; using %d Hz\n",
+		kprintf("cannot get %d Hz profclock; using %d Hz\n",
 		    profhz, stathz);
 		profhz = stathz;
 	}
@@ -353,7 +353,7 @@ inittodr(base)
 	/* XXX */
 	if (!bbcinited) {
 		if (badbaddr((caddr_t)&BBCADDR->hil_stat))
-			printf("WARNING: no battery clock\n");
+			kprintf("WARNING: no battery clock\n");
 		else
 			bbcaddr = BBCADDR;
 		bbcinited = 1;
@@ -366,13 +366,13 @@ inittodr(base)
 	 * then use the filesystem time and warn the user.
  	 */
 	if (!bbc_to_gmt(&timbuf) || timbuf < base) {
-		printf("WARNING: bad date in battery clock\n");
+		kprintf("WARNING: bad date in battery clock\n");
 		timbuf = base;
 	}
 	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
+		kprintf("WARNING: preposterous time in file system");
 		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		printf(" -- CHECK AND RESET THE DATE!\n");
+		kprintf(" -- CHECK AND RESET THE DATE!\n");
 	}
 	
 	/* Battery clock does not store usec's, so forget about it. */
@@ -403,7 +403,7 @@ resettodr()
 
 	for (i = 0; i <= NUM_BBC_REGS; i++)
 	  	if (bbc_registers[i] != write_bbc_reg(i, bbc_registers[i])) {
-			printf("Cannot set battery backed clock\n");
+			kprintf("Cannot set battery backed clock\n");
 			break;
 		}
 }

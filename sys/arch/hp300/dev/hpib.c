@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.9 1996/05/17 15:09:39 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.10 1996/10/11 00:11:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -139,7 +139,7 @@ hpibattach(hc)
 
 	/* Reset the controller, display what we've seen, and we're done. */
 	hpibreset(hc->hp_unit);
-	printf(": %s\n", hs->sc_descrip);
+	kprintf(": %s\n", hs->sc_descrip);
 }
 
 void
@@ -252,7 +252,7 @@ hpibswait(unit, slave)
 	mask = 0x80 >> slave;
 	while (((ppoll)(unit) & mask) == 0)
 		if (--timo == 0) {
-			printf("%s: swait timeout\n",
+			kprintf("%s: swait timeout\n",
 			    hpib_softc[unit].sc_hc->hp_xname);
 			return(-1);
 		}

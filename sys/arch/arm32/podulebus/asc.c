@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.10 1996/08/28 18:59:51 cgd Exp $ */
+/* $NetBSD: asc.c,v 1.11 1996/10/11 00:07:33 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -150,11 +150,11 @@ ascattach(pdp, dp, auxp)
 	}
 
 	if (asc_poll)
-		printf(" polling");
+		kprintf(" polling");
 	else
-		printf(" using interrupts");
+		kprintf(" using interrupts");
 #endif
-	printf("\n");
+	kprintf("\n");
 
 	sbic = &sc->sc_softc;
 
@@ -216,7 +216,7 @@ asc_enintr(sbicsc)
 	struct sbic_softc *sbicsc;
 {
 	struct asc_softc *sc = (struct asc_softc *)sbicsc;
-/*	printf("asc_enintr\n");*/
+/*	kprintf("asc_enintr\n");*/
 /*
 	volatile struct sdmac *sdp;
 
@@ -236,7 +236,7 @@ asc_dmago(dev, addr, count, flags)
 	char *addr;
 	int count, flags;
 {
-	printf("asc_dmago\n");
+	kprintf("asc_dmago\n");
 #ifdef DDB
 	Debugger();
 #else
@@ -254,7 +254,7 @@ asc_dmago(dev, addr, count, flags)
 		dev->sc_dmacmd |= CNTR_DDIR;
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_IO)
-		printf("ahsc_dmago: cmd %x\n", dev->sc_dmacmd);
+		kprintf("ahsc_dmago: cmd %x\n", dev->sc_dmacmd);
 #endif
 
 	dev->sc_flags |= SBICF_INTR;
@@ -271,7 +271,7 @@ void
 asc_dmastop(dev)
 	struct sbic_softc *dev;
 {
-/*	printf("asc_dmastop\n");*/
+/*	kprintf("asc_dmastop\n");*/
 #if 0
 	volatile struct sdmac *sdp;
 	int s;
@@ -280,7 +280,7 @@ asc_dmastop(dev)
 
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_FOLLOW)
-		printf("ahsc_dmastop()\n");
+		kprintf("ahsc_dmastop()\n");
 #endif
 	if (dev->sc_dmacmd) {
 		s = splbio();
@@ -321,7 +321,7 @@ asc_dmaintr(dev)
 
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_FOLLOW)
-		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
+		kprintf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
 
 	/*
@@ -353,7 +353,7 @@ int
 asc_dmanext(dev)
 	struct sbic_softc *dev;
 {
-	printf("asc_dmanext\n");
+	kprintf("asc_dmanext\n");
 #ifdef DDB
 	Debugger();
 #else
@@ -367,7 +367,7 @@ asc_dmanext(dev)
 
 	if (dev->sc_cur > dev->sc_last) {
 		/* shouldn't happen !! */
-		printf("ahsc_dmanext at end !!!\n");
+		kprintf("ahsc_dmanext at end !!!\n");
 		asc_dmastop(dev);
 		return(0);
 	}
@@ -417,7 +417,7 @@ asc_scsicmd(xs)
 		xs->flags |= SCSI_POLL;
 #endif
 
-/*	printf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
+/*	kprintf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
 	    sc_link->target, sc_link->lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
 	    xs->flags, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
 
@@ -431,9 +431,9 @@ asc_intr(sc)
 {
 	int intr;
 	
-/*	printf("ascintr:");*/
+/*	kprintf("ascintr:");*/
        	intr = ReadByte(sc->sc_intstat);
-/*	printf("%02x\n", intr);*/
+/*	kprintf("%02x\n", intr);*/
 
 	if (intr & IS_SBIC_IRQ)
 		sbicintr((struct sbic_softc *)sc);
@@ -444,7 +444,7 @@ asc_intr(sc)
 
 int kvtop()
 {
-	printf("kvtop\n");
+	kprintf("kvtop\n");
 #ifdef DDB
 	Debugger();
 #else

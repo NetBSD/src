@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.7 1996/02/14 02:44:17 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.8 1996/10/11 00:11:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -178,7 +178,7 @@ dmainit()
 	timeout(dmatimeout, sc, 30 * hz);
 #endif
 
-	printf("%s: 98620%c, 2 channels, %d bit\n", sc->sc_xname,
+	kprintf("%s: 98620%c, 2 channels, %d bit\n", sc->sc_xname,
 	       rev, (rev == 'B') ? 16 : 32);
 
 	/* Establish the interrupt handler */
@@ -286,7 +286,7 @@ dmago(unit, addr, count, flags)
 #endif
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
-		printf("dmago(%d, %x, %x, %x)\n",
+		kprintf("dmago(%d, %x, %x, %x)\n",
 		       unit, addr, count, flags);
 	if (flags & DMAGO_LWORD)
 		dmalword[unit]++;
@@ -388,10 +388,10 @@ dmago(unit, addr, count, flags)
 	if (dmadebug & DDB_IO)
 		if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
 		    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)) {
-			printf("dmago: cmd %x, flags %x\n",
+			kprintf("dmago: cmd %x, flags %x\n",
 			       dc->dm_cmd, dc->dm_flags);
 			for (dcp = dc->dm_chain; dcp <= dc->dm_last; dcp++)
-				printf("  %d: %d@%x\n", dcp-dc->dm_chain,
+				kprintf("  %d: %d@%x\n", dcp-dc->dm_chain,
 				       dcp->dc_count, dcp->dc_addr);
 		}
 	dmatimo[unit] = 1;
@@ -409,7 +409,7 @@ dmastop(unit)
 
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
-		printf("dmastop(%d)\n", unit);
+		kprintf("dmastop(%d)\n", unit);
 	dmatimo[unit] = 0;
 #endif
 	DMA_CLEAR(dc);
@@ -455,7 +455,7 @@ dmaintr(arg)
 
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
-		printf("dmaintr\n");
+		kprintf("dmaintr\n");
 #endif
 	for (i = 0; i < NDMACHAN; i++) {
 		dc = &sc->sc_chan[i];
@@ -467,11 +467,11 @@ dmaintr(arg)
 		if (dmadebug & DDB_IO) {
 			if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
 			    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))
-				printf("dmaintr: unit %d stat %x next %d\n",
+				kprintf("dmaintr: unit %d stat %x next %d\n",
 				       i, stat, (dc->dm_cur-dc->dm_chain)+1);
 		}
 		if (stat & DMA_ARMED)
-			printf("%s, chan %d: intr when armed\n",
+			kprintf("%s, chan %d: intr when armed\n",
 			    sc->sc_xname, i);
 #endif
 		if (++dc->dm_cur <= dc->dm_last) {
@@ -504,7 +504,7 @@ dmatimeout(arg)
 		s = splbio();
 		if (dmatimo[i]) {
 			if (dmatimo[i] > 1)
-				printf("%s: timeout #%d\n", sc->sc_xname,
+				kprintf("%s: timeout #%d\n", sc->sc_xname,
 				       i, dmatimo[i]-1);
 			dmatimo[i]++;
 		}

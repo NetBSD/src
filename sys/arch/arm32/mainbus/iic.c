@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.3 1996/08/27 21:55:22 cgd Exp $ */
+/* $NetBSD: iic.c,v 1.4 1996/10/11 00:07:19 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -252,7 +252,7 @@ iicmatch(parent, match, aux)
 		return(1);
 		break;
 	default:
-		printf("iic: Unknown IOMD id=%04x", id);
+		kprintf("iic: Unknown IOMD id=%04x", id);
 		break;
 	}
 
@@ -268,7 +268,7 @@ iicprint(aux, name)
 
 	if (!name) {
 		if (ib->ib_addr)
-			printf(" addr 0x%02x", ib->ib_addr);
+			kprintf(" addr 0x%02x", ib->ib_addr);
 	}
 
 /* XXXX print flags */
@@ -304,7 +304,7 @@ iicattach(parent, self, aux)
 {
 	struct iicbus_attach_args iaa;
 
-	printf("\n");
+	kprintf("\n");
 
 	while (config_found_sm(self, &iaa, iicprint, iicsubmatch));
 }

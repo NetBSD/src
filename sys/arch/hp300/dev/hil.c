@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.26 1996/10/05 05:22:09 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.27 1996/10/11 00:11:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,7 +113,7 @@ hilsoftinit(unit, hilbase)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilsoftinit(%d, %x)\n", unit, hilbase);
+		kprintf("hilsoftinit(%d, %x)\n", unit, hilbase);
 #endif
 	/*
 	 * Initialize loop information
@@ -147,7 +147,7 @@ hilinit(unit, hilbase)
   	register struct hil_softc *hilp = &hil_softc[unit];
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilinit(%d, %x)\n", unit, hilbase);
+		kprintf("hilinit(%d, %x)\n", unit, hilbase);
 #endif
 	/*
 	 * Initialize software (if not already done).
@@ -176,7 +176,7 @@ hilopen(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilopen(%d): loop %x device %x\n",
+		kprintf("hilopen(%d): loop %x device %x\n",
 		       p->p_pid, HILLOOP(dev), device);
 #endif
 	
@@ -235,7 +235,7 @@ hilopen(dev, flags, mode, p)
 		hilp->hl_kbdflags |= KBD_RAW;
 #ifdef DEBUG
 		if (hildebug & HDB_KEYBOARD)
-			printf("hilopen: keyboard %d raw\n", hilp->hl_kbddev);
+			kprintf("hilopen: keyboard %d raw\n", hilp->hl_kbddev);
 #endif
 	}
 	splx(s);
@@ -258,7 +258,7 @@ hilclose(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilclose(%d): device %x\n", p->p_pid, device);
+		kprintf("hilclose(%d): device %x\n", p->p_pid, device);
 #endif
 
 	dptr = &hilp->hl_device[device];
@@ -306,7 +306,7 @@ hilclose(dev, flags, mode, p)
 		 */
 		send_hil_cmd(hilp->hl_addr, HIL_READLPCTRL, NULL, 0, &lpctrl);
 		if ((lpctrl & LPC_KBDCOOK) == 0) {
-			printf("hilclose: bad LPCTRL %x, reset to %x\n",
+			kprintf("hilclose: bad LPCTRL %x, reset to %x\n",
 			       lpctrl, lpctrl|LPC_KBDCOOK);
 			lpctrl |= LPC_KBDCOOK;
 			send_hil_cmd(hilp->hl_addr, HIL_WRITELPCTRL,
@@ -314,7 +314,7 @@ hilclose(dev, flags, mode, p)
 		}
 #ifdef DEBUG
 		if (hildebug & HDB_KEYBOARD)
-			printf("hilclose: keyboard %d cooked\n",
+			kprintf("hilclose: keyboard %d cooked\n",
 			       hilp->hl_kbddev);
 #endif
 		kbdenable(HILLOOP(dev));
@@ -392,7 +392,7 @@ hilioctl(dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilioctl(%d): dev %x cmd %x\n",
+		kprintf("hilioctl(%d): dev %x cmd %x\n",
 		       p->p_pid, device, cmd);
 #endif
 
@@ -783,7 +783,7 @@ hil_process_int(hilp, stat, c)
 {
 #ifdef DEBUG
 	if (hildebug & HDB_EVENTS)
-		printf("hilint: %x %x\n", stat, c);
+		kprintf("hilint: %x %x\n", stat, c);
 #endif
 
 	/* the shift enables the compiler to generate a jump table */
@@ -867,9 +867,9 @@ hilevent(hilp)
 
 #ifdef DEBUG
 	if (hildebug & HDB_EVENTS) {
-		printf("hilevent: dev %d pollbuf: ", hilp->hl_actdev);
+		kprintf("hilevent: dev %d pollbuf: ", hilp->hl_actdev);
 		printhilpollbuf(hilp);
-		printf("\n");
+		kprintf("\n");
 	}
 #endif
 
@@ -1000,7 +1000,7 @@ hilqalloc(hilp, qip, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilqalloc(%d): addr %x\n", p->p_pid, qip->addr);
+		kprintf("hilqalloc(%d): addr %x\n", p->p_pid, qip->addr);
 #endif
 	return(EINVAL);
 }
@@ -1013,7 +1013,7 @@ hilqfree(hilp, qnum, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilqfree(%d): qnum %d\n", p->p_pid, qnum);
+		kprintf("hilqfree(%d): qnum %d\n", p->p_pid, qnum);
 #endif
 	return(EINVAL);
 }
@@ -1028,7 +1028,7 @@ hilqmap(hilp, qnum, device, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilqmap(%d): qnum %d device %x\n",
+		kprintf("hilqmap(%d): qnum %d device %x\n",
 		       p->p_pid, qnum, device);
 #endif
 	if (qnum >= NHILQ || hilp->hl_queue[qnum].hq_procp != p)
@@ -1047,7 +1047,7 @@ hilqmap(hilp, qnum, device, p)
 	splx(s);
 #ifdef DEBUG
 	if (hildebug & HDB_MASK)
-		printf("hilqmap(%d): devmask %x qmask %x\n",
+		kprintf("hilqmap(%d): devmask %x qmask %x\n",
 		       p->p_pid, hilp->hl_queue[qnum].hq_devmask,
 		       dptr->hd_qmask);
 #endif
@@ -1063,7 +1063,7 @@ hilqunmap(hilp, qnum, device, p)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilqunmap(%d): qnum %d device %x\n",
+		kprintf("hilqunmap(%d): qnum %d device %x\n",
 		       p->p_pid, qnum, device);
 #endif
 
@@ -1076,7 +1076,7 @@ hilqunmap(hilp, qnum, device, p)
 	splx(s);
 #ifdef DEBUG
 	if (hildebug & HDB_MASK)
-		printf("hilqunmap(%d): devmask %x qmask %x\n",
+		kprintf("hilqunmap(%d): devmask %x qmask %x\n",
 		       p->p_pid, hilp->hl_queue[qnum].hq_devmask,
 		       hilp->hl_device[device].hd_qmask);
 #endif
@@ -1248,13 +1248,13 @@ hilinfo(unit)
 	 * Keyboard info.
 	 */
 	if (hilp->hl_kbddev) {
-		printf("hil%d: ", hilp->hl_kbddev);
+		kprintf("hil%d: ", hilp->hl_kbddev);
 		for (km = kbd_map; km->kbd_code; km++)
 			if (km->kbd_code == hilp->hl_kbdlang) {
-				printf("%s ", km->kbd_desc);
+				kprintf("%s ", km->kbd_desc);
 				break;
 			}
-		printf("keyboard\n");
+		kprintf("keyboard\n");
 	}
 	/*
 	 * ID module.
@@ -1269,12 +1269,12 @@ hilinfo(unit)
 		len = hilp->hl_cmdbp - hilp->hl_cmdbuf;
 		hilp->hl_cmdbp = hilp->hl_cmdbuf;
 		hilp->hl_cmddev = 0;
-		printf("hil%d: security code", id);
+		kprintf("hil%d: security code", id);
 		for (id = 0; id < len; id++)
-			printf(" %x", hilp->hl_cmdbuf[id]);
+			kprintf(" %x", hilp->hl_cmdbuf[id]);
 		while (id++ < 16)
-			printf(" 0");
-		printf("\n");
+			kprintf(" 0");
+		kprintf("\n");
 	}
 }
 
@@ -1306,13 +1306,13 @@ hilconfig(hilp)
 	s = splhil();
 #ifdef DEBUG
 	if (hildebug & HDB_CONFIG) {
-		printf("hilconfig: reconfigured: ");
+		kprintf("hilconfig: reconfigured: ");
 		send_hil_cmd(hilp->hl_addr, HIL_READLPSTAT, NULL, 0, &db);
-		printf("LPSTAT %x, ", db);
+		kprintf("LPSTAT %x, ", db);
 		send_hil_cmd(hilp->hl_addr, HIL_READLPCTRL, NULL, 0, &db);
-		printf("LPCTRL %x, ", db);
+		kprintf("LPCTRL %x, ", db);
 		send_hil_cmd(hilp->hl_addr, HIL_READKBDSADR, NULL, 0, &db);
-		printf("KBDSADR %x\n", db);
+		kprintf("KBDSADR %x\n", db);
 		hilreport(hilp);
 	}
 #endif
@@ -1325,7 +1325,7 @@ hilconfig(hilp)
 	hilp->hl_maxdev = db & LPS_DEVMASK;
 #ifdef DEBUG
 	if (hildebug & HDB_CONFIG)
-		printf("hilconfig: %d devices found\n", hilp->hl_maxdev);
+		kprintf("hilconfig: %d devices found\n", hilp->hl_maxdev);
 #endif
 	for (db = 1; db < NHILD; db++) {
 		if (db <= hilp->hl_maxdev)
@@ -1336,7 +1336,7 @@ hilconfig(hilp)
 	}
 #ifdef DEBUG
 	if (hildebug & (HDB_CONFIG|HDB_KEYBOARD))
-		printf("hilconfig: max device %d\n", hilp->hl_maxdev);
+		kprintf("hilconfig: max device %d\n", hilp->hl_maxdev);
 #endif
 	if (hilp->hl_maxdev == 0) {
 		hilp->hl_kbddev = 0;
@@ -1351,7 +1351,7 @@ hilconfig(hilp)
 	send_hil_cmd(hilp->hl_addr, HIL_READKBDSADR, NULL, 0, &db);
 #ifdef DEBUG
 	if (hildebug & HDB_KEYBOARD)
-		printf("hilconfig: keyboard: KBDSADR %x, old %d, new %d\n",
+		kprintf("hilconfig: keyboard: KBDSADR %x, old %d, new %d\n",
 		       db, hilp->hl_kbddev, ffs((int)db));
 #endif
 	hilp->hl_kbddev = ffs((int)db);
@@ -1381,7 +1381,7 @@ hilconfig(hilp)
 	send_hil_cmd(hilp->hl_addr, HIL_READKBDLANG, NULL, 0, &db);
 #ifdef DEBUG
 	if (hildebug & HDB_KEYBOARD)
-		printf("hilconfig: language: old %x new %x\n",
+		kprintf("hilconfig: language: old %x new %x\n",
 		       hilp->hl_kbdlang, db);
 #endif
 	if (hilp->hl_kbdlang != KBD_SPECIAL) {
@@ -1409,7 +1409,7 @@ hilreset(hilp)
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
-		printf("hilreset(%x)\n", hilp);
+		kprintf("hilreset(%x)\n", hilp);
 #endif
 	/*
 	 * Initialize the loop: reconfigure, don't report errors,
@@ -1462,7 +1462,7 @@ hiliddev(hilp)
 
 #ifdef DEBUG
 	if (hildebug & HDB_IDMODULE)
-		printf("hiliddev(%x): max %d, looking for idmodule...",
+		kprintf("hiliddev(%x): max %d, looking for idmodule...",
 		       hilp, hilp->hl_maxdev);
 #endif
 	for (i = 1; i <= hilp->hl_maxdev; i++) {
@@ -1487,9 +1487,9 @@ hiliddev(hilp)
 #ifdef DEBUG
 	if (hildebug & HDB_IDMODULE)
 		if (i <= hilp->hl_maxdev)
-			printf("found at %d\n", i);
+			kprintf("found at %d\n", i);
 		else
-			printf("not found\n");
+			kprintf("not found\n");
 #endif
 	return(i <= hilp->hl_maxdev ? i : 0);
 }
@@ -1676,8 +1676,8 @@ printhilpollbuf(hilp)
 	cp = hilp->hl_pollbuf;
 	len = hilp->hl_pollbp - cp;
 	for (i = 0; i < len; i++)
-		printf("%x ", hilp->hl_pollbuf[i]);
-	printf("\n");
+		kprintf("%x ", hilp->hl_pollbuf[i]);
+	kprintf("\n");
 }
 
 printhilcmdbuf(hilp)
@@ -1689,8 +1689,8 @@ printhilcmdbuf(hilp)
 	cp = hilp->hl_cmdbuf;
 	len = hilp->hl_cmdbp - cp;
 	for (i = 0; i < len; i++)
-		printf("%x ", hilp->hl_cmdbuf[i]);
-	printf("\n");
+		kprintf("%x ", hilp->hl_cmdbuf[i]);
+	kprintf("\n");
 }
 
 hilreport(hilp)
@@ -1703,14 +1703,14 @@ hilreport(hilp)
 		hilp->hl_cmdbp = hilp->hl_cmdbuf;
 		hilp->hl_cmddev = i;
 		send_hildev_cmd(hilp, i, HILIDENTIFY);
-		printf("hil%d: id: ", i);
+		kprintf("hil%d: id: ", i);
 		printhilcmdbuf(hilp);
 		len = hilp->hl_cmdbp - hilp->hl_cmdbuf;
 		if (len > 1 && (hilp->hl_cmdbuf[1] & HILSCBIT)) {
 			hilp->hl_cmdbp = hilp->hl_cmdbuf;
 			hilp->hl_cmddev = i;
 			send_hildev_cmd(hilp, i, HILSECURITY);
-			printf("hil%d: sc: ", i);
+			kprintf("hil%d: sc: ", i);
 			printhilcmdbuf(hilp);
 		}
 	}		

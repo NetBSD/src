@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.18 1996/09/16 06:20:44 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.19 1996/10/11 00:09:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -275,7 +275,7 @@ scsi_tt_init(struct ncr_softc *sc)
 	 * try turning on NO_TTRAM_DMA.
 	 */
 #ifdef NO_TTRAM_DMA
-	printf(": DMA to TT-RAM is disabled!");
+	kprintf(": DMA to TT-RAM is disabled!");
 #endif
 }
 

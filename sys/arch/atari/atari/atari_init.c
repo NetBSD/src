@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.18 1996/09/16 06:28:41 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.19 1996/10/11 00:08:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -816,8 +816,8 @@ dump_segtable(stp)
 	 */
 	for (i = 0; s < es; s++, i++)
 		if (*s & SG_V)
-			printf("$%08lx: $%08lx\t", i << shift, *s & SG_FRAME);
-	printf("\n");
+			kprintf("$%08lx: $%08lx\t", i << shift, *s & SG_FRAME);
+	kprintf("\n");
 }
 
 void
@@ -830,8 +830,8 @@ dump_pagetable(ptp, i, n)
 	ep = p + n;
 	for (; p < ep; p++, i++)
 		if (*p & PG_V)
-			printf("$%08lx -> $%08lx\t", i, *p & PG_FRAME);
-	printf("\n");
+			kprintf("$%08lx -> $%08lx\t", i, *p & PG_FRAME);
+	kprintf("\n");
 }
 
 u_int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1.1.1 1996/10/05 21:41:36 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 1996/10/11 00:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -191,7 +191,7 @@ pci_intr_string(pc, ih)
 	if (ih == 0)
 		panic("pci_intr_string: bogus handle 0x%x\n", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+	ksprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
 }

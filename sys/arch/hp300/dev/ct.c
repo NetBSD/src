@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.15 1996/02/14 02:44:02 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.16 1996/10/11 00:11:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -232,7 +232,7 @@ ctident(sc, hd, verbose)
 		break;
 	}
 	if (verbose)
-		printf(": %s %stape\n", ctinfo[id].desc,
+		kprintf(": %s %stape\n", ctinfo[id].desc,
 		    (sc->sc_flags & CTF_CANSTREAM) ? "streaming " : " ");
 	return(id);
 }
@@ -334,7 +334,7 @@ ctclose(dev, flag)
 			sc->sc_eofp--;
 #ifdef DEBUG
 		if(ctdebug & CT_BSF)
-			printf("%s: ctclose backup eofs prt %d blk %d\n",
+			kprintf("%s: ctclose backup eofs prt %d blk %d\n",
 			       sc->sc_hd->hp_xname, sc->sc_eofp,
 			       sc->sc_eofs[sc->sc_eofp]);
 #endif
@@ -345,7 +345,7 @@ ctclose(dev, flag)
 	tprintf_close(sc->sc_tpr);
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("ctclose: flags %x\n", sc->sc_flags);
+		kprintf("ctclose: flags %x\n", sc->sc_flags);
 #endif
 	return(0);	/* XXX */
 }
@@ -389,7 +389,7 @@ ctcommand(dev, cmd, cnt)
 			sc->sc_eofp--;
 #ifdef DEBUG
 			if (ctdebug & CT_BSF)
-				printf("%s: backup eof pos %d blk %d\n",
+				kprintf("%s: backup eof pos %d blk %d\n",
 				    sc->sc_hd->hp_xname, sc->sc_eofp, 
 				    sc->sc_eofs[sc->sc_eofp]);
 #endif
@@ -485,7 +485,7 @@ ctstart(unit)
 			sc->sc_blkno = 0;
 #ifdef DEBUG
 			if(ctdebug & CT_BSF)
-				printf("%s: clearing eofs\n",
+				kprintf("%s: clearing eofs\n",
 				    sc->sc_hd->hp_xname);
 #endif
 			for (i=0; i<EOFS; i++)
@@ -513,14 +513,14 @@ mustio:
 		    sc->sc_flags & (CTF_BEOF|CTF_EOT)) {
 #ifdef DEBUG
 			if (ctdebug & CDB_FILES)
-				printf("ctstart: before flags %x\n", sc->sc_flags);
+				kprintf("ctstart: before flags %x\n", sc->sc_flags);
 #endif
 			if (sc->sc_flags & CTF_BEOF) {
 				sc->sc_flags &= ~CTF_BEOF;
 				sc->sc_flags |= CTF_AEOF;
 #ifdef DEBUG
 				if (ctdebug & CDB_FILES)
-					printf("ctstart: after flags %x\n", sc->sc_flags);
+					kprintf("ctstart: after flags %x\n", sc->sc_flags);
 #endif
 			}
 			bp->b_resid = bp->b_bcount;
@@ -587,7 +587,7 @@ cteof(sc, bp)
 	blks = sc->sc_stat.c_blk - sc->sc_blkno - 1;
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("cteof: bc %d oblk %d nblk %d read %d, resid %d\n",
+		kprintf("cteof: bc %d oblk %d nblk %d read %d, resid %d\n",
 		       bp->b_bcount, sc->sc_blkno, sc->sc_stat.c_blk,
 		       blks, bp->b_bcount - CTKTOB(blks));
 #endif
@@ -632,7 +632,7 @@ cteof(sc, bp)
 		sc->sc_flags |= CTF_AEOF;
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("cteof: leaving flags %x\n", sc->sc_flags);
+		kprintf("cteof: leaving flags %x\n", sc->sc_flags);
 #endif
 }
 
@@ -647,7 +647,7 @@ ctintr(arg)
 
 	bp = cttab[unit].b_actf;
 	if (bp == NULL) {
-		printf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
+		kprintf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
 		return;
 	}
 	if (sc->sc_flags & CTF_IO) {
@@ -667,7 +667,7 @@ ctintr(arg)
 	hpibrecv(sc->sc_hd->hp_ctlr, sc->sc_hd->hp_slave, C_QSTAT, &stat, 1);
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("ctintr: before flags %x\n", sc->sc_flags);
+		kprintf("ctintr: before flags %x\n", sc->sc_flags);
 #endif
 	if (stat) {
 		sc->sc_rsc.unit = C_SUNIT(sc->sc_punit);
@@ -680,7 +680,7 @@ ctintr(arg)
 			&stat, 1);
 #ifdef DEBUG
 		if (ctdebug & CDB_FILES)
-			printf("ctintr: return stat 0x%x, A%x F%x blk %d\n",
+			kprintf("ctintr: return stat 0x%x, A%x F%x blk %d\n",
 			       stat, sc->sc_stat.c_aef,
 			       sc->sc_stat.c_fef, sc->sc_stat.c_blk);
 #endif
@@ -713,20 +713,20 @@ ctintr(arg)
 						"%s: write protect\n",
 						sc->sc_hd->hp_xname);
 			} else {
-				printf("%s err: v%d u%d ru%d bn%d, ",
+				kprintf("%s err: v%d u%d ru%d bn%d, ",
 				       sc->sc_hd->hp_xname,
 				       (sc->sc_stat.c_vu>>4)&0xF,
 				       sc->sc_stat.c_vu&0xF,
 				       sc->sc_stat.c_pend,
 				       sc->sc_stat.c_blk);
-				printf("R0x%x F0x%x A0x%x I0x%x\n",
+				kprintf("R0x%x F0x%x A0x%x I0x%x\n",
 				       sc->sc_stat.c_ref,
 				       sc->sc_stat.c_fef,
 				       sc->sc_stat.c_aef,
 				       sc->sc_stat.c_ief);
 			}
 		} else
-			printf("%s: request status failed\n",
+			kprintf("%s: request status failed\n",
 			    sc->sc_hd->hp_xname);
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
@@ -773,7 +773,7 @@ ctintr(arg)
 done:
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("ctintr: after flags %x\n", sc->sc_flags);
+		kprintf("ctintr: after flags %x\n", sc->sc_flags);
 #endif
 	ctdone(unit, bp);
 }
@@ -887,7 +887,7 @@ ctaddeof(unit)
 	}
 #ifdef DEBUG
 	if (ctdebug & CT_BSF)
-		printf("%s: add eof pos %d blk %d\n",
+		kprintf("%s: add eof pos %d blk %d\n",
 		       sc->sc_hd->hp_xname, sc->sc_eofp,
 		       sc->sc_eofs[sc->sc_eofp]);
 #endif

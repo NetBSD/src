@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1996/03/04 05:04:20 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.14 1996/10/11 00:09:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -159,7 +159,7 @@
         __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
 	if ((_spl_r&PSL_IPL) > (s&PSL_IPL)) \
-		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
+		kprintf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
 		    ((PSL_IPL&_spl_r)>>8), ((PSL_IPL&s)>>8)); \
         _spl_r; \
 })

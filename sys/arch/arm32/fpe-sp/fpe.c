@@ -1,4 +1,4 @@
-/* $NetBSD: fpe.c,v 1.2 1996/03/18 19:58:09 mark Exp $ */
+/* $NetBSD: fpe.c,v 1.3 1996/10/11 00:07:04 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -624,7 +624,7 @@ fpetos(address, fpreg)
 
 	*(fpe_sprec_t *)address = real;
 	if (real.sign == 1 && real.mantissa == 0 && real.exponent == 0)
-		printf("single result = %08x", *address);
+		kprintf("single result = %08x", *address);
 	return(0);
 }
 
@@ -1202,7 +1202,7 @@ fpe_ldfstf(instruction, frame)
 		offset = -offset;
 
 	if (reg == 15)
-		printf("WARNING: LDF/STF using r15\n");
+		kprintf("WARNING: LDF/STF using r15\n");
 
 	address = regs[reg];
 
@@ -1288,33 +1288,33 @@ fpe_dump()
 void
 fpe_dump_prof()
 {
-	printf("adf : %6d\n", fp_profile[FPP_ADD]);
-	printf("suf : %6d\n", fp_profile[FPP_SUB]);
-	printf("muf : %6d\n", fp_profile[FPP_MUL]);
-	printf("dvf : %6d\n", fp_profile[FPP_DIV]);
-	printf("cmf : %6d\n", fp_profile[FPP_CMF]);
-	printf("cnf : %6d\n", fp_profile[FPP_CNF]);
-	printf("fix : %6d\n", fp_profile[FPP_FIX]);
-	printf("flt : %6d\n", fp_profile[FPP_FLT]);
-	printf("abs : %6d\n", fp_profile[FPP_ABS]);
-	printf("mvf : %6d\n", fp_profile[FPP_MOV]);
-	printf("mnf : %6d\n", fp_profile[FPP_MVN]);
-	printf("rdf : %6d\n", fp_profile[FPP_RDV]);
-	printf("rsf : %6d\n", fp_profile[FPP_RSB]);
-	printf("strs: %6d\n", fp_profile[FPP_STRS]);
-	printf("strd: %6d\n", fp_profile[FPP_STRD]);
-	printf("stre: %6d\n", fp_profile[FPP_STRE]);
-	printf("strp: %6d\n", fp_profile[FPP_STRP]);
-	printf("ldrs: %6d\n", fp_profile[FPP_LDRS]);
-	printf("ldrd: %6d\n", fp_profile[FPP_LDRD]);
-	printf("ldre: %6d\n", fp_profile[FPP_LDRE]);
-	printf("ldrp: %6d\n", fp_profile[FPP_LDRP]);
+	kprintf("adf : %6d\n", fp_profile[FPP_ADD]);
+	kprintf("suf : %6d\n", fp_profile[FPP_SUB]);
+	kprintf("muf : %6d\n", fp_profile[FPP_MUL]);
+	kprintf("dvf : %6d\n", fp_profile[FPP_DIV]);
+	kprintf("cmf : %6d\n", fp_profile[FPP_CMF]);
+	kprintf("cnf : %6d\n", fp_profile[FPP_CNF]);
+	kprintf("fix : %6d\n", fp_profile[FPP_FIX]);
+	kprintf("flt : %6d\n", fp_profile[FPP_FLT]);
+	kprintf("abs : %6d\n", fp_profile[FPP_ABS]);
+	kprintf("mvf : %6d\n", fp_profile[FPP_MOV]);
+	kprintf("mnf : %6d\n", fp_profile[FPP_MVN]);
+	kprintf("rdf : %6d\n", fp_profile[FPP_RDV]);
+	kprintf("rsf : %6d\n", fp_profile[FPP_RSB]);
+	kprintf("strs: %6d\n", fp_profile[FPP_STRS]);
+	kprintf("strd: %6d\n", fp_profile[FPP_STRD]);
+	kprintf("stre: %6d\n", fp_profile[FPP_STRE]);
+	kprintf("strp: %6d\n", fp_profile[FPP_STRP]);
+	kprintf("ldrs: %6d\n", fp_profile[FPP_LDRS]);
+	kprintf("ldrd: %6d\n", fp_profile[FPP_LDRD]);
+	kprintf("ldre: %6d\n", fp_profile[FPP_LDRE]);
+	kprintf("ldrp: %6d\n", fp_profile[FPP_LDRP]);
 }
 #else
 void
 fpe_dump_prof()
 {
-	printf("kernel not compiled with FPE profiling\n");
+	kprintf("kernel not compiled with FPE profiling\n");
 }
 #endif
 

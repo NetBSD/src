@@ -1,4 +1,4 @@
-$NetBSD: Options,v 1.3 1994/10/26 07:22:52 cgd Exp $
+$NetBSD: Options,v 1.4 1996/10/11 00:11:00 christos Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
 mean:
@@ -63,7 +63,7 @@ PANICBUTTON
 	works if HIL (level 1) interrupts are not masked.
 
 DEBUG
-	Compiles in a variety of consistency checks and debug printfs
+	Compiles in a variety of consistency checks and debug kprintfs
 	throughout the hp300 MD code and device drivers.
 
 COMPAT_HPUX

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.2 1996/03/27 22:42:16 mark Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.3 1996/10/11 00:06:45 christos Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -49,19 +49,19 @@ dump(p, l)
 	int i, j, n;
 	
 	while (l > 0) {
-		printf("%08x: ", p);
+		kprintf("%08x: ", p);
 		n = l > 16 ? 16 : l;
 		for (i = 4; --i >= 0;) {
 			for (j = 4; --j >= 0;)
-				printf(--n >= 0 ? "%02x " : "   ", *p++);
-			printf(" ");
+				kprintf(--n >= 0 ? "%02x " : "   ", *p++);
+			kprintf(" ");
 		}
 		p -= 16;
 		n = l > 16 ? 16 : l;
 		n = (n + 3) & ~3;
 		for (i = 4; --i >= 0;)
-			printf((n -= 4) >= 0 ? "%08x " : "", *((long *)p)++);
-		printf("\n");
+			kprintf((n -= 4) >= 0 ? "%08x " : "", *((long *)p)++);
+		kprintf("\n");
 		l -= 16;
 	}
 }
@@ -113,7 +113,7 @@ kgdb_connect(when)
 {
 	boothowto |= RB_KDB;
 	if (when == 0)
-		printf("waiting for remote GDB\n");
+		kprintf("waiting for remote GDB\n");
 	__asm(".word 0xe6000010");
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: scratch.S,v 1.3 1996/06/03 21:21:36 mark Exp $ */
+/* $NetBSD: scratch.S,v 1.4 1996/10/11 00:06:54 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -85,7 +85,7 @@ ReadWordPCBFault:
 	mov	r2, r0
 	add	r0, pc, #ReadWordText1 - . - 8
 	mov	r1, r2
-	bl	_printf
+	bl	_kprintf
 	mov	r0, #0x00000001
 	ldmfd	sp!, {lr}
 	mov	pc, lr
@@ -186,7 +186,7 @@ fusupcbfault:
 	mov	r2, r0
 	add	r0, pc, #ReadWordText1 - . - 8
 	mov	r1, r2
-	bl	_printf
+	bl	_kprintf
 	mvn	r0, #0x00000000
 	ldmfd	sp!, {lr}
 	mov	pc, lr

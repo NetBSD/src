@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.8 1996/09/07 22:26:45 mycroft Exp $ */
+/* $NetBSD: fault.c,v 1.9 1996/10/11 00:06:40 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -181,11 +181,11 @@ data_abort_handler(frame)
 
 	s = spltty();
 	if (pmap_debug_level >= 0) {
-		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+		kprintf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff,
 		    fault_address, fault_pc);
 
-		printf("Instruction @V%08x = %08x\n",
+		kprintf("Instruction @V%08x = %08x\n",
 		    fault_pc, fault_instruction);
 	}
 
@@ -195,7 +195,7 @@ data_abort_handler(frame)
 
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
 		if (pmap_debug_level >= 0) {
-			printf("SWP\n");
+			kprintf("SWP\n");
 			disassemble(fault_pc);
 		}
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
@@ -213,7 +213,7 @@ data_abort_handler(frame)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
-/*			printf("LDR/STR\n");*/
+/*			kprintf("LDR/STR\n");*/
 			disassemble(fault_pc);
 		}
 #endif
@@ -235,7 +235,7 @@ data_abort_handler(frame)
 		}
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >=0)
-			printf("late abt fix: r%d=%08x ", base, registers[base]);
+			kprintf("late abt fix: r%d=%08x ", base, registers[base]);
 #endif
 		if ((fault_instruction & (1 << 25)) == 0) {
 /* Immediate offset - easy */                  
@@ -245,7 +245,7 @@ data_abort_handler(frame)
 			registers[base] += offset;
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
-				printf("imm=%08x ", offset);
+				kprintf("imm=%08x ", offset);
 #endif
 		} else {
 			int shift;
@@ -273,13 +273,13 @@ data_abort_handler(frame)
 				}
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >=0)
-					printf("shift reg=%d ", shift);
+					kprintf("shift reg=%d ", shift);
 #endif
 				shift = registers[shift];
 			}
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
-				printf("shift=%08x ", shift);
+				kprintf("shift=%08x ", shift);
 #endif
 			switch (((fault_instruction >> 5) & 0x3)) {
 			case 0 : /* Logical left */
@@ -301,19 +301,19 @@ data_abort_handler(frame)
 
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
-				printf("abt: fixed LDR/STR with register offset\n");
+				kprintf("abt: fixed LDR/STR with register offset\n");
 #endif                  
 			if ((fault_instruction & (1 << 23)))
 				offset = -offset;
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >=0)
-				printf("offset=%08x ", offset);
+				kprintf("offset=%08x ", offset);
 #endif
 			registers[base] += offset;
 		}
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >=0)
-			printf("r%d=%08x\n", base, registers[base]);
+			kprintf("r%d=%08x\n", base, registers[base]);
 #endif
 	}
 #endif
@@ -326,14 +326,14 @@ data_abort_handler(frame)
         
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
-			printf("LDM/STM\n");
+			kprintf("LDM/STM\n");
 			disassemble(fault_pc);
 		}
 #endif
 		if (fault_instruction & (1 << 21)) {
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0)
-				printf("This instruction must be corrected\n");
+				kprintf("This instruction must be corrected\n");
 #endif
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
@@ -347,20 +347,20 @@ data_abort_handler(frame)
 			}
 #ifdef DEBUG_FAULT_CORRECTION
 			if (pmap_debug_level >= 0) {
-				printf("%d registers used\n", count);
-				printf("Corrected r%d by %d bytes ", base, count * 4);
+				kprintf("%d registers used\n", count);
+				kprintf("Corrected r%d by %d bytes ", base, count * 4);
 			}
 #endif
 			if (fault_instruction & (1 << 23)) {
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >= 0)
-					printf("down\n");
+					kprintf("down\n");
 #endif
 				registers[base] -= count * 4;
 			} else {
 #ifdef DEBUG_FAULT_CORRECTION
 				if (pmap_debug_level >= 0)
-					printf("up\n");
+					kprintf("up\n");
 #endif
 				registers[base] += count * 4;
 			}
@@ -374,7 +374,7 @@ data_abort_handler(frame)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
-			printf("LDC/STC\n");
+			kprintf("LDC/STC\n");
 			disassemble(fault_pc);
 		}
 #endif
@@ -394,12 +394,12 @@ data_abort_handler(frame)
 
 			offset = (fault_instruction & 0xff) << 2;
 			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
+				kprintf("r%d=%08x\n", base, registers[base]);
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
 			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
+				kprintf("r%d=%08x\n", base, registers[base]);
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
 		disassemble(fault_pc);
@@ -446,7 +446,7 @@ data_abort_handler(frame)
 		p = &proc0;
 
 	if (pmap_debug_level >= 0)
-		printf("fault in process %08x\n", (u_int)p);
+		kprintf("fault in process %08x\n", (u_int)p);
 
 /* can't use curpcb, as it might be NULL; and we have p in a register anyway */
 
@@ -463,9 +463,9 @@ data_abort_handler(frame)
 	}
 
 	if (pcb != curpcb) {
-		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
+		kprintf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
 		    (u_int)curpcb);
-		printf("data_abort: Alert ! proc(%08x), curproc(%08x)\n", (u_int)p,
+		kprintf("data_abort: Alert ! proc(%08x), curproc(%08x)\n", (u_int)p,
 		    (u_int)curproc);
 	}
 
@@ -475,7 +475,7 @@ data_abort_handler(frame)
 	    && (fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P))
 	    || pcb->pcb_onfault == fusubailout) {
 copyfault:
-		printf("Using pcb_onfault=%08x addr=%08x st=%08x\n",
+		kprintf("Using pcb_onfault=%08x addr=%08x st=%08x\n",
 		    (u_int)pcb->pcb_onfault, fault_address, fault_status);
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
@@ -486,7 +486,7 @@ copyfault:
 #endif
 		++onfault_count;
 		if (onfault_count > 10) {
-			printf("Bummer: OD'ing on onfault_count\n");
+			kprintf("Bummer: OD'ing on onfault_count\n");
 #ifdef DDB
 			Debugger();
 			onfault_count = 0;
@@ -590,7 +590,7 @@ copyfault:
 		va = trunc_page((vm_offset_t)fault_address);
 
 		if (pmap_debug_level >= 0)
-			printf("ok we have a page permission fault - addr=V%08x ",
+			kprintf("ok we have a page permission fault - addr=V%08x ",
 			    (u_int)va);
 
 /*
@@ -607,7 +607,7 @@ copyfault:
  /* Was the fault due to the FPE/KGDB ? */
  
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
-				printf("UND32 Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+				kprintf("UND32 Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 				    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 				    fault_pc);
 				    postmortem(frame);
@@ -615,7 +615,7 @@ copyfault:
 				goto out;
 			}
 
-			printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+			kprintf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 			    fault_pc);
 			postmortem(frame);
@@ -625,13 +625,13 @@ copyfault:
 
 #ifdef DIAGNOSTIC
 		if (va == 0 && map == kernel_map) {
-			printf("fault: bad kernel access at %x\n", (u_int)va);
+			kprintf("fault: bad kernel access at %x\n", (u_int)va);
 			goto we_re_toast;
 		}
 #endif
 
 		if (pmap_debug_level >= 0)
-			printf("vmmap=%08x ", (u_int)map);
+			kprintf("vmmap=%08x ", (u_int)map);
 
 /*
  * We need to know whether the page should be mapped as R or R/W.
@@ -661,10 +661,10 @@ copyfault:
 
 			rv = vm_fault(map, va, ftype, FALSE);
 			if (pmap_debug_level >= 0)
-				printf("fault result=%d\n", rv);
+				kprintf("fault result=%d\n", rv);
 			if (rv == KERN_SUCCESS)
 				goto out;
-			printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+			kprintf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 			    fault_pc);
 			postmortem(frame);
@@ -690,7 +690,7 @@ copyfault:
  * the FAULT_PERM_P | FAULT_USER case similarly to FAULT_TRANS_P
  */
 
-		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+		kprintf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 		    fault_pc);
 		postmortem(frame);
@@ -704,7 +704,7 @@ copyfault:
  * However I have had this panic once so it can occor
  * Yes they do ... Writing to -1 in user space does it ...
  */
-		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+		kprintf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 		    fault_pc);
 		disassemble(fault_pc);
@@ -744,7 +744,7 @@ copyfault:
 		va = trunc_page((vm_offset_t)fault_address);
 
 		if (pmap_debug_level >= 0)
-			printf("ok we have a page fault - addr=V%08x ", (u_int)va);
+			kprintf("ok we have a page fault - addr=V%08x ", (u_int)va);
           
 /*
  * It is only a kernel address space fault iff:
@@ -762,7 +762,7 @@ copyfault:
 			map = &vm->vm_map;
 
 		if (pmap_debug_level >= 0)
-			printf("vmmap=%08x ", (u_int)map);
+			kprintf("vmmap=%08x ", (u_int)map);
 
 		if (pmap_handled_emulation(map->pmap, va))
 			goto out;
@@ -791,11 +791,11 @@ copyfault:
 			ftype |= VM_PROT_WRITE; 
 
 		if (pmap_debug_level >= 0)
-			printf("fault protection = %d\n", ftype);
+			kprintf("fault protection = %d\n", ftype);
             
 #ifdef DIAGNOSTIC
 		if (va == 0 && map == kernel_map) {
-			printf("trap: bad kernel access at %x\n", (u_int)va);
+			kprintf("trap: bad kernel access at %x\n", (u_int)va);
 			goto we_re_toast;
 		}
 #endif
@@ -819,7 +819,7 @@ copyfault:
 */
 
 		rv = vm_fault(map, va, ftype, FALSE);
-/*printf("fault result=%d\n", rv);*/
+/*kprintf("fault result=%d\n", rv);*/
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -836,14 +836,14 @@ copyfault:
 		}
 nogo:
 		if (fault_code == FAULT_TRANS_P) {
-			printf("Failed page fault in kernel\n");
+			kprintf("Failed page fault in kernel\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			kprintf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			    (u_int)map, (u_int)va, ftype, rv);
 			goto we_re_toast;
 		}
-		printf("nogo, Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+		kprintf("nogo, Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 		    fault_pc);
 		disassemble(fault_pc);
@@ -868,7 +868,7 @@ nogo:
 		va = trunc_page((vm_offset_t)fault_address);
 
 		if (pmap_debug_level >= 0)
-			printf("ok we have a section fault page addr=V%08x\n",
+			kprintf("ok we have a section fault page addr=V%08x\n",
 			    (u_int)va);
           
 /*
@@ -895,7 +895,7 @@ nogo:
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", (u_int)va);
+			kprintf("trap: bad kernel access at %x\n", (u_int)va);
 			goto we_re_toast;
 		}
 #endif
@@ -904,10 +904,10 @@ nogo:
 		if ((caddr_t)va >= vm->vm_maxsaddr
 		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 		    && map != kernel_map) {
-/*			printf("Address is in the stack\n");*/
+/*			kprintf("Address is in the stack\n");*/
 			nss = clrnd(btoc(USRSTACK-(u_int)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				printf("Stack limit exceeded %08x %08x\n",
+				kprintf("Stack limit exceeded %08x %08x\n",
 				    nss, btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur));
 				rv = KERN_FAILURE;
 				goto nogo1;
@@ -918,20 +918,20 @@ nogo:
 
 		v = trunc_page(vtopte(va));
 		if (pmap_debug_level >= 0)
-			printf("v=%08x\n", v);
+			kprintf("v=%08x\n", v);
 		rv = vm_fault(map, v, ftype, FALSE);
 		if (rv != KERN_SUCCESS)
 			goto nogo1;
 
 		if (pmap_debug_level >= 0)
-			printf("vm_fault succeeded\n");
+			kprintf("vm_fault succeeded\n");
 
 /* update increment wiring as this is a page table fault */
 
 		vm_map_pageable(map, v, round_page(v+1), FALSE);
 
 		if (pmap_debug_level >= 0)
-			printf("faulting in page %08x\n", (u_int)va);
+			kprintf("faulting in page %08x\n", (u_int)va);
 
 		ftype = VM_PROT_READ;
 
@@ -951,15 +951,15 @@ nogo:
 			goto out;
 		}
 nogo1:
-		printf("nogo1, Data abort: '%s' status = %03x address = %08x PC = %08x\n",
+		kprintf("nogo1, Data abort: '%s' status = %03x address = %08x PC = %08x\n",
 		    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 		    fault_pc);
 		disassemble(fault_pc);
 			if (fault_code == FAULT_TRANS_S) {
-			printf("Section fault in SVC mode\n");
+			kprintf("Section fault in SVC mode\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			kprintf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			    (u_int)map, (u_int)va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -973,7 +973,7 @@ nogo1:
 	default :
 /* Are there any combinations I have missed ? */
 
-		printf("fault status = %08x fault code = %08x\n",
+		kprintf("fault status = %08x fault code = %08x\n",
 		    fault_status, fault_code);
 
 we_re_toast:
@@ -1029,7 +1029,7 @@ prefetch_abort_handler(frame)
 #ifdef DIAGNOSTIC
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
 		s = spltty();
-		printf("fault being handled in non SVC32 mode\n");
+		kprintf("fault being handled in non SVC32 mode\n");
 		postmortem(frame);
 		pmap_debug_level = 0;
 		(void)splx(s);
@@ -1056,11 +1056,11 @@ prefetch_abort_handler(frame)
 
 	if ((p = curproc) == 0) {
 		p = &proc0;
-		printf("Prefetch about with curproc == 0\n");
+		kprintf("Prefetch about with curproc == 0\n");
 	}
 
 	if (pmap_debug_level >= 0)
-		printf("prefetch fault in process %08x\n", (u_int)p);
+		kprintf("prefetch fault in process %08x\n", (u_int)p);
 
 /* can't use curpcb, as it might be NULL; and we have p in a register anyway */
 
@@ -1069,9 +1069,9 @@ prefetch_abort_handler(frame)
 		panic("prefetch_abort_handler: no pcb ... we're toast !\n");
 
 	if (pcb != curpcb) {
-		printf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
+		kprintf("data_abort: Alert ! pcb(%08x) != curpcb(%08x)\n", (u_int)pcb,
 		    (u_int)curpcb);
-		printf("data_abort: Alert ! proc(%08x), curproc(%08x)\n", (u_int)p,
+		kprintf("data_abort: Alert ! proc(%08x), curproc(%08x)\n", (u_int)p,
 		    (u_int)curproc);
 	}
 
@@ -1086,14 +1086,14 @@ prefetch_abort_handler(frame)
 /* All the kernel code pages are loaded at boot and do not get paged */
 
 		s = spltty();
-		printf("Prefetch address = %08x\n", frame->tf_pc);
+		kprintf("Prefetch address = %08x\n", frame->tf_pc);
  
 		postmortem(frame);
 
 #ifdef CONTINUE_AFTER_SVC_PREFETCH
 
-		printf("prefetch abort in SVC mode !\n");
-		printf("The system should now be considered very unstable :-)\n");
+		kprintf("prefetch abort in SVC mode !\n");
+		kprintf("The system should now be considered very unstable :-)\n");
 		sigexit(curproc, SIGILL);
 /* Not reached */
 	        panic("prefetch_abort_handler: How did we get here ?\n");
@@ -1107,13 +1107,13 @@ prefetch_abort_handler(frame)
 	fault_pc = frame->tf_pc;
 
 	if (pmap_debug_level >= 0)
-		printf("Prefetch abort: PC = %08x\n", fault_pc);
+		kprintf("Prefetch abort: PC = %08x\n", fault_pc);
 
 /* Ok validate the address, can only execute in USER space */
 
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
 		s = spltty();
-		printf("prefetch: pc (%08x) not in user process space\n", fault_pc);
+		kprintf("prefetch: pc (%08x) not in user process space\n", fault_pc);
 		postmortem(frame);
 		trapsignal(p, SIGSEGV, FAULT_PERM_P);
 		(void)splx(s);
@@ -1125,7 +1125,7 @@ prefetch_abort_handler(frame)
 
 	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
 		s = spltty();
-		printf("prefetch: faultin failed for address %08x!!\n", fault_pc);
+		kprintf("prefetch: faultin failed for address %08x!!\n", fault_pc);
 		postmortem(frame);
 		trapsignal(p, SIGSEGV, fault_pc);
 		(void)splx(s);
@@ -1136,9 +1136,9 @@ prefetch_abort_handler(frame)
 
 		if (pmap_debug_level >= 0) {
 			s = spltty();
-			printf("Instruction @V%08x = %08x\n", fault_pc, fault_instruction);
+			kprintf("Instruction @V%08x = %08x\n", fault_pc, fault_instruction);
 			disassemble(fault_pc);
-			printf("return addr=%08x\n", frame->tf_pc);
+			kprintf("return addr=%08x\n", frame->tf_pc);
 
 			(void)splx(s);
 		}
@@ -1166,7 +1166,7 @@ validate_trapframe(frame, where)
 	u_int mode;
 
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		printf("VTF Warning : validate_trapframe : Not in SVC32 mode\n");
+		kprintf("VTF Warning : validate_trapframe : Not in SVC32 mode\n");
     
 	mode = frame->tf_spsr & PSR_MODE;
         
@@ -1177,27 +1177,27 @@ validate_trapframe(frame, where)
 	case 2:
 		ptr = "prefetch abort handler";
 		if (mode != PSR_USR32_MODE)
-			printf("VTF Warning : %s : not USR32 mode\n", ptr);
+			kprintf("VTF Warning : %s : not USR32 mode\n", ptr);
 		break;
 	case 3:
 		ptr = "ast handler";
 		if (mode != PSR_USR32_MODE)
-			printf("VTF Warning : %s : not USR32 mode\n", ptr);
+			kprintf("VTF Warning : %s : not USR32 mode\n", ptr);
 		break;
 	case 4:
 		ptr = "syscall handler";
 		if (mode != PSR_USR32_MODE)
-			printf("VTF Warning : %s : not USR32 mode\n", ptr);
+			kprintf("VTF Warning : %s : not USR32 mode\n", ptr);
 		break;
 	case 5:
 		ptr = "undefined handler";
 		if (mode != PSR_USR32_MODE)
-			printf("VTF Warning : %s : not USR32 mode\n", ptr);
+			kprintf("VTF Warning : %s : not USR32 mode\n", ptr);
 		break;
 	case 6:
 		ptr = "sigreturn handler";
 		if (mode != PSR_USR32_MODE)
-			printf("VTF Warning : %s : not USR32 mode\n", ptr);
+			kprintf("VTF Warning : %s : not USR32 mode\n", ptr);
 		break;
 	default:
 		ptr = "unknown handler";
@@ -1205,18 +1205,18 @@ validate_trapframe(frame, where)
 	}
 
 	if (frame->tf_usr_sp >= VM_MAXUSER_ADDRESS)
-		printf("VTF WARNING: %s : frame->tf_usr_sp >= VM_MAXUSER_ADDRESS [%08x]\n", ptr, frame->tf_usr_sp);
+		kprintf("VTF WARNING: %s : frame->tf_usr_sp >= VM_MAXUSER_ADDRESS [%08x]\n", ptr, frame->tf_usr_sp);
 	if (frame->tf_svc_lr >= 0xf1000000)
-		printf("VTF WARNING: %s : frame->tf_svc_lr >= 0xf1000000 [%08x]\n", ptr, frame->tf_svc_lr);
+		kprintf("VTF WARNING: %s : frame->tf_svc_lr >= 0xf1000000 [%08x]\n", ptr, frame->tf_svc_lr);
 	if (frame->tf_pc >= 0xf1000000)
-		printf("VTF WARNING: %s: frame->tf_pc >= 0xf1000000 [%08x]\n", ptr, frame->tf_pc);
+		kprintf("VTF WARNING: %s: frame->tf_pc >= 0xf1000000 [%08x]\n", ptr, frame->tf_pc);
 	if (frame->tf_pc < VM_MIN_ADDRESS)
-		printf("VTF WARNING: %s: frame->tf_pc >= VM_MIN_ADDRESS [%08x]\n", ptr, frame->tf_pc);
+		kprintf("VTF WARNING: %s: frame->tf_pc >= VM_MIN_ADDRESS [%08x]\n", ptr, frame->tf_pc);
 	if (mode != PSR_USR32_MODE) {
 		if (frame->tf_svc_lr < 0xf0000000)
-			printf("VTF WARNING: %s : frame->tf_svc_lr < 0xf0000000 [%08x]\n", ptr, frame->tf_svc_lr);
+			kprintf("VTF WARNING: %s : frame->tf_svc_lr < 0xf0000000 [%08x]\n", ptr, frame->tf_svc_lr);
 		if (frame->tf_pc < 0xf0000000)
-			printf("VTF WARNING: %s: frame->tf_pc < 0xf0000000 [%08x]\n", ptr, frame->tf_pc);
+			kprintf("VTF WARNING: %s: frame->tf_pc < 0xf0000000 [%08x]\n", ptr, frame->tf_pc);
 	}
 }
   

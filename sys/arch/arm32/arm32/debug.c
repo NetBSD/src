@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.2 1996/03/08 20:14:48 mark Exp $ */
+/* $NetBSD: debug.c,v 1.3 1996/10/11 00:06:37 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Melvin Tang-Richardson (Nut)
@@ -65,7 +65,7 @@ debug_count_processes_on_q(queue)
 	queue_head=(struct proc *)&qs[queue];
 	for (lastproc=qs[queue].ph_link;lastproc!=queue_head;lastproc=lastproc->p_forw) {
 		if (lastproc != queue_head)
-			printf("Process queue=%8x proc=%08x p_addr=%8x, comm=%s\n",
+			kprintf("Process queue=%8x proc=%08x p_addr=%8x, comm=%s\n",
 			    queue, (u_int) lastproc, (u_int) lastproc->p_addr,
 			    lastproc->p_comm);
 		counter++;
@@ -85,7 +85,7 @@ debug_show_q_details()
  		debug_count_processes_on_q(counter);
 
 	if (whichqs == 0)
-		printf("queues empty\n");
+		kprintf("queues empty\n");
 	(void)splx(s);
 }
 
@@ -103,22 +103,22 @@ debug_show_all_procs(argc, argv)
 	np = nprocs;
 	p = ap = (struct proc *)allproc.lh_first;
 	if (argc > 1)
-		printf("  pid   proc     addr      map      pcb     pmap     comm       wchan\n");
+		kprintf("  pid   proc     addr      map      pcb     pmap     comm       wchan\n");
 	else
-		printf("  pid   proc     addr     uid  ppid  pgrp    flag  stat comm          cputime  \n");
+		kprintf("  pid   proc     addr     uid  ppid  pgrp    flag  stat comm          cputime  \n");
 	while (--np >= 0) {
 		pp = p->p_pptr;
 		if (pp == 0)
 			pp = p;
 		if (p->p_stat) {
 			if (argc > 1)
-				printf("%5d %08x %08x %08x %08x %08x %12s  ",
+				kprintf("%5d %08x %08x %08x %08x %08x %12s  ",
 				    p->p_pid, (u_int) ap, (u_int)p->p_addr,
 				    (u_int) p->p_vmspace,
 				    (u_int) &p->p_addr->u_pcb, (p->p_vmspace ? (u_int)&p->p_vmspace->vm_pmap : 0),
 				    ((p->p_comm == 0) ? "..." : p->p_comm));
 			else
-				printf("%5d %08x %08x %5d %5d %5d  %08x  %d  %12s %5u.%02d  ",
+				kprintf("%5d %08x %08x %5d %5d %5d  %08x  %d  %12s %5u.%02d  ",
 				    p->p_pid, (u_int) ap, (u_int) p->p_addr,
 				    p->p_cred->p_ruid,
 				    pp->p_pid, p->p_pgrp->pg_id, p->p_flag,
@@ -127,10 +127,10 @@ debug_show_all_procs(argc, argv)
 				    (u_int)p->p_rtime.tv_usec / 10000);
 			if (p->p_wchan && argc > 1) {
 				if (p->p_wmesg)
-					printf("%12s ", p->p_wmesg);
-				printf("%x", (u_int)p->p_wchan);
+					kprintf("%12s ", p->p_wmesg);
+				kprintf("%x", (u_int)p->p_wchan);
 			}
-			printf("\n");
+			kprintf("\n");
 		}
 		ap = p->p_list.le_next;
 		if (ap == 0 && np > 0)
@@ -152,12 +152,12 @@ debug_show_callout(argc, argv)
 	register int	t;
 
 	s = splhigh();
-	printf("      cum     ticks   func     arg\n");
+	kprintf("      cum     ticks   func     arg\n");
 	for (cum = 0, p1 = calltodo.c_next; p1; p1 = p1->c_next) {
 		t = p1->c_time;
 		if (t > 0)
 			cum += t;
-		printf("%9d %9d %08x %08x\n", cum, t, (u_int) p1->c_func,
+		kprintf("%9d %9d %08x %08x\n", cum, t, (u_int) p1->c_func,
 		    (u_int) p1->c_arg);
 	}
 	(void)splx(s);
@@ -173,12 +173,12 @@ debug_show_fs(argc, argv)
 	
 	s = splhigh();
 
-	printf("Registered filesystems (%d)\n", nvfssw);
+	kprintf("Registered filesystems (%d)\n", nvfssw);
          
 	for (vfsp = &vfssw[0]; vfsp < &vfssw[nvfssw]; vfsp++) {
 		if (*vfsp == NULL)
 			continue;
-		printf("  %s\n", (*vfsp)->vfs_name);
+		kprintf("  %s\n", (*vfsp)->vfs_name);
 	}
 	(void)splx(s);
 }
@@ -194,12 +194,12 @@ debug_show_vm_map(map, text)
 	
 	s = splhigh();
     
-	printf("vm_map dump : %s\n", text);
+	kprintf("vm_map dump : %s\n", text);
 
 	mapentry = &map->header;
 
 	do {
-		printf("vm_map_entry: start = %08x end = %08x\n",
+		kprintf("vm_map_entry: start = %08x end = %08x\n",
 		    (u_int) mapentry->start, (u_int) mapentry->end);
 		mapentry = mapentry->next;
 	} while (mapentry != &map->header);
@@ -222,11 +222,11 @@ debug_show_pmap(pmap)
 
 	pd = (pd_entry_t *)pmap;
 
-	printf("pdir=%08x\n", (u_int) pd);    
+	kprintf("pdir=%08x\n", (u_int) pd);    
 	for (loop = 0; loop < 4096; ++loop) {
 		if (pd[loop] == 0)
 			continue;
-		printf("%08x : %08x\n", loop * 1024*1024, pd[loop]);
+		kprintf("%08x : %08x\n", loop * 1024*1024, pd[loop]);
 		if ((pd[loop] & 0xff) == 0x11) {
 			pt = (pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
 			    + loop * 1024);
@@ -237,7 +237,7 @@ debug_show_pmap(pmap)
 					++loop1;
 					while (loop1 < 256 && pt[loop1])
 						++loop1;
-					printf("  %08x -> %08x\n",
+					kprintf("  %08x -> %08x\n",
 					  loop * 1024*1024 + start * 4096,
 					  loop * 1024*1024 + loop1 * 4096 - 1);
 				}

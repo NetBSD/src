@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.2 1996/03/27 22:42:31 mark Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.3 1996/10/11 00:06:56 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -66,7 +66,7 @@ sys_sysarch(p, v, retval)
 		syscallarg(char *) parms;
 	} */ *uap = v;
 
-	printf("sys_sysarch: Currently stoned - Cannot support the operation (%d)\n",
+	kprintf("sys_sysarch: Currently stoned - Cannot support the operation (%d)\n",
 	    SCARG(uap, op));
 
 	return(EINVAL);

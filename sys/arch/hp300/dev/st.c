@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.15 1996/06/10 06:39:31 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.16 1996/10/11 00:11:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -309,7 +309,7 @@ stident(sc, hd, verbose)
 	      */
 	     st_inqbuf.inqbuf.version != 0x09))	/* M4 tape */
 {
-printf("st: wrong specs: type %x qual %x version %d\n", st_inqbuf.inqbuf.type,
+kprintf("st: wrong specs: type %x qual %x version %d\n", st_inqbuf.inqbuf.type,
 st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		goto failed;
 }
@@ -332,11 +332,11 @@ st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		scsi_str(st_inqbuf.inqbuf.rev, revision,
 		    sizeof(st_inqbuf.inqbuf.rev));
 		if (verbose)
-			printf(": <%s, %s, %s>\n", vendor, product, revision);
+			kprintf(": <%s, %s, %s>\n", vendor, product, revision);
 	}
 
 	if (stat == 0xff) { 
-		printf("st%d: Can't handle this tape drive\n", hd->hp_unit);
+		kprintf("st%d: Can't handle this tape drive\n", hd->hp_unit);
 		goto failed;
 	}
 
@@ -377,7 +377,7 @@ st_inqbuf.inqbuf.qual, st_inqbuf.inqbuf.version);
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
 	} else {
 		if (verbose)
-			printf("%s: Unsupported tape device, faking it\n",
+			kprintf("%s: Unsupported tape device, faking it\n",
 			    sc->sc_hd->hp_xname);
 		sc->sc_tapeid = MT_ISAR;
 		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
@@ -561,7 +561,7 @@ retryselect:
 					  (u_char *)&msd, modlen, B_WRITE);
 #ifdef DEBUG
 		if (stat && (st_debug & ST_OPEN))
-			printf("stopen: stat on mode select 0x%x second try\n", stat);
+			kprintf("stopen: stat on mode select 0x%x second try\n", stat);
 #endif
 		if (stat == STS_CHECKCOND) {
 			stxsense(ctlr, slave, unit, sc);
@@ -678,7 +678,7 @@ retryselect:
 		sc->sc_filepos = 0;
 #ifdef DEBUG
 	if (st_debug & ST_FMKS)
-		printf("%s: open filepos = %d\n", sc->sc_hd->hp_xname,
+		kprintf("%s: open filepos = %d\n", sc->sc_hd->hp_xname,
 		    sc->sc_filepos);
 #endif
 
@@ -821,7 +821,7 @@ stgo(unit)
 
 #ifdef DEBUG
 	if (st_debug & ST_GO)
-		printf("stgo: cmd len %d [0]0x%x [1]0x%x [2]0x%x [3]0x%x [4]0x%x [5]0x%x\n",
+		kprintf("stgo: cmd len %d [0]0x%x [1]0x%x [2]0x%x [3]0x%x [4]0x%x [5]0x%x\n",
 		       cmd->len, cmd->cdb[0], cmd->cdb[1], cmd->cdb[2],
 		       cmd->cdb[3], cmd->cdb[4], cmd->cdb[5]);
 #endif
@@ -830,7 +830,7 @@ stgo(unit)
 	if (bp->b_bcount & 1) {
 #ifdef DEBUG
 		if (st_debug & ST_ODDIO)
-			printf("%s: stgo: odd count %d using manual transfer\n",
+			kprintf("%s: stgo: odd count %d using manual transfer\n",
 			       sc->sc_hd->hp_xname, bp->b_bcount);
 #endif
 		stat = scsi_tt_oddio(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
@@ -1002,7 +1002,7 @@ stintr(arg, stat)
 
 #ifdef DEBUG
 	if (bp == NULL) {
-		printf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
+		kprintf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
 		return;
 	}
 #endif
@@ -1082,7 +1082,7 @@ stintr(arg, stat)
 				 */
 #ifdef DEBUG
 				if (st_debug & ST_ODDIO)
-					printf("%s: stintr odd count %d, do BSR then oddio\n",
+					kprintf("%s: stintr odd count %d, do BSR then oddio\n",
 					       sc->sc_hd->hp_xname,
 					       bp->b_bcount - bp->b_resid);
 #endif
@@ -1117,13 +1117,13 @@ stintr(arg, stat)
 		break;
 
 	default:
-		printf("%s: stintr unknown stat 0x%x\n", sc->sc_hd->hp_xname,
+		kprintf("%s: stintr unknown stat 0x%x\n", sc->sc_hd->hp_xname,
 		    stat);
 		break;
 	}
 #ifdef DEBUG
 	if ((st_debug & ST_BRESID) && bp->b_resid != 0)
-		printf("b_resid %d b_flags 0x%x b_error 0x%x\n", 
+		kprintf("b_resid %d b_flags 0x%x b_error 0x%x\n", 
 		       bp->b_resid, bp->b_flags, bp->b_error);
 #endif
 	/* asked for more filemarks then on tape */
@@ -1230,7 +1230,7 @@ stcommand(dev, command, cnt)
 		sc->sc_filepos = 0;
 		break;
 	default:
-		printf("%s: stcommand bad command 0x%x\n", 
+		kprintf("%s: stcommand bad command 0x%x\n", 
 		       sc->sc_hd->hp_xname, command);
 	}
 
@@ -1241,7 +1241,7 @@ stcommand(dev, command, cnt)
 again:
 #ifdef DEBUG
 	if (st_debug & ST_FMKS)
-		printf("%s: stcommand filepos %d cmdcnt %d cnt %d\n", 
+		kprintf("%s: stcommand filepos %d cmdcnt %d cnt %d\n", 
 		       sc->sc_hd->hp_xname, sc->sc_filepos, cmdcnt, cnt);
 #endif
 	s = splbio();
@@ -1423,38 +1423,38 @@ dumpxsense(sensebuf)
 {
         struct st_xsense *xp = sensebuf;
 
-	printf("valid 0x%x errorclass 0x%x errorcode 0x%x\n", 
+	kprintf("valid 0x%x errorclass 0x%x errorcode 0x%x\n", 
 	       xp->sc_xsense.valid, 
 	       xp->sc_xsense.class, xp->sc_xsense.code);
-	printf("seg number 0x%x\n", xp->sc_xsense.segment);
-	printf("FMK 0x%x EOM 0x%x ILI 0x%x RSVD 0x%x sensekey 0x%x\n", 
+	kprintf("seg number 0x%x\n", xp->sc_xsense.segment);
+	kprintf("FMK 0x%x EOM 0x%x ILI 0x%x RSVD 0x%x sensekey 0x%x\n", 
 	       xp->sc_xsense.filemark, xp->sc_xsense.eom, xp->sc_xsense.ili, 
 	       xp->sc_xsense.rsvd, xp->sc_xsense.key);
-	printf("info 0x%lx\n", 
+	kprintf("info 0x%lx\n", 
 	       (u_long)((xp->sc_xsense.info1<<24)|(xp->sc_xsense.info2<<16)|
 			(xp->sc_xsense.info3<<8)|(xp->sc_xsense.info4)) );
-	printf("ASenseL 0x%x\n", xp->sc_xsense.len);
+	kprintf("ASenseL 0x%x\n", xp->sc_xsense.len);
 
 	if (xp->sc_xsense.len != 0x12) /* MT_ISEXB Exabyte only ?? */
 		return;			/* What about others */
 
-	printf("ASenseC 0x%x\n", xp->exb_xsense.addsens);
-	printf("AsenseQ 0x%x\n", xp->exb_xsense.addsensq);
-	printf("R/W Errors 0x%lx\n", 
+	kprintf("ASenseC 0x%x\n", xp->exb_xsense.addsens);
+	kprintf("AsenseQ 0x%x\n", xp->exb_xsense.addsensq);
+	kprintf("R/W Errors 0x%lx\n", 
 	       (u_long)((xp->exb_xsense.rwerrcnt2<<16)|
 			(xp->exb_xsense.rwerrcnt1<<8)|
 			(xp->exb_xsense.rwerrcnt1)) );
-	printf("PF   0x%x BPE  0x%x FPE 0x%x ME   0x%x ECO 0x%x TME 0x%x TNP 0x%x BOT 0x%x\n",
+	kprintf("PF   0x%x BPE  0x%x FPE 0x%x ME   0x%x ECO 0x%x TME 0x%x TNP 0x%x BOT 0x%x\n",
 	       xp->exb_xsense.pf, xp->exb_xsense.bpe, xp->exb_xsense.fpe, 
 	       xp->exb_xsense.me, xp->exb_xsense.eco, xp->exb_xsense.tme, 
 	       xp->exb_xsense.tnp, xp->exb_xsense.bot);
-	printf("XFR  0x%x TMD  0x%x WP  0x%x FMKE 0x%x URE 0x%x WE1 0x%x SSE 0x%x FE  0x%x\n",
+	kprintf("XFR  0x%x TMD  0x%x WP  0x%x FMKE 0x%x URE 0x%x WE1 0x%x SSE 0x%x FE  0x%x\n",
 	       xp->exb_xsense.xfr, xp->exb_xsense.tmd, xp->exb_xsense.wp, 
 	       xp->exb_xsense.fmke, xp->exb_xsense.ure, xp->exb_xsense.we1, 
 	       xp->exb_xsense.sse, xp->exb_xsense.fe);
-	printf("WSEB 0x%x WSEO 0x%x\n",
+	kprintf("WSEB 0x%x WSEO 0x%x\n",
 	       xp->exb_xsense.wseb, xp->exb_xsense.wseo);
-	printf("Remaining Tape 0x%lx\n", 
+	kprintf("Remaining Tape 0x%lx\n", 
 	       (u_long)((xp->exb_xsense.tplft2<<16)|
 			(xp->exb_xsense.tplft1<<8)|
 			(xp->exb_xsense.tplft0)) );
@@ -1464,30 +1464,30 @@ prtmodsel(msd, modlen)
 	struct mode_select_data *msd;
 	int modlen;
 {
-	printf("Modsel command. len is 0x%x.\n", modlen);
-	printf("rsvd1 0x%x rsvd2 0x%x rsvd3 0x%x bufferd 0x%x speed 0x%x bckdeslen 0x%x\n",
+	kprintf("Modsel command. len is 0x%x.\n", modlen);
+	kprintf("rsvd1 0x%x rsvd2 0x%x rsvd3 0x%x bufferd 0x%x speed 0x%x bckdeslen 0x%x\n",
 	       msd->rsvd1,msd->rsvd2,msd->rsvd3,msd->buff,msd->speed,msd->blkdeslen);
-	printf("density 0x%x blks2 0x%x blks1 0x%x blks0 0x%x rsvd 0x%x blklen2 0x%x blklen1 0x%x blklen0 0x%x\n",
+	kprintf("density 0x%x blks2 0x%x blks1 0x%x blks0 0x%x rsvd 0x%x blklen2 0x%x blklen1 0x%x blklen0 0x%x\n",
 	       msd->density,msd->blks2,msd->blks1,msd->blks0,msd->rsvd4,msd->blklen2,msd->blklen1,msd->blklen0);
-	printf("vupb 0x%x rsvd 0x%x p5 0x%x motionthres 0x%x reconthres 0x%x gapthres 0x%x \n",
+	kprintf("vupb 0x%x rsvd 0x%x p5 0x%x motionthres 0x%x reconthres 0x%x gapthres 0x%x \n",
 	       msd->vupb,msd->rsvd5,msd->p5,msd->motionthres,msd->reconthres,msd->gapthres);
 }
 
 prtmodstat(mode)
 	struct mode_sense *mode;
 {
-	printf("Mode Status\n");
-	printf("sdl 0x%x medtype 0x%x wp 0x%x bfmd 0x%x speed 0x%x bdl 0x%x\n",
+	kprintf("Mode Status\n");
+	kprintf("sdl 0x%x medtype 0x%x wp 0x%x bfmd 0x%x speed 0x%x bdl 0x%x\n",
 	       mode->md.sdl, mode->md.medtype, mode->md.wp, mode->md.bfmd, 
 	       mode->md.speed, mode->md.bdl);
-	printf("dencod 0x%x numblk 0x%x blklen 0x%x\n",
+	kprintf("dencod 0x%x numblk 0x%x blklen 0x%x\n",
 	       mode->md.dencod, 
 	       (mode->md.numblk2<<16)|(mode->md.numblk1<<8)|(mode->md.numblk0),
 	       (mode->md.blklen2<<16)|(mode->md.blklen1<<8)|(mode->md.blklen0) );
-	printf("ct 0x%x nd 0x%x nbe 0x%x edb 0x%x pe 0x%x nal 0x%x p5 0x%x\n",
+	kprintf("ct 0x%x nd 0x%x nbe 0x%x edb 0x%x pe 0x%x nal 0x%x p5 0x%x\n",
 	       mode->ex.ct, mode->ex.nd, mode->ex.nbe, 
 	       mode->ex.ebd, mode->ex.pe, mode->ex.nal, mode->ex.p5);
-	printf("motionthres 0x%x reconthres 0x%x gapthres 0x%x\n",
+	kprintf("motionthres 0x%x reconthres 0x%x gapthres 0x%x\n",
 	       mode->ex.motionthres, mode->ex.reconthres,  mode->ex.gapthres);
 }
 #endif /* DEBUG */

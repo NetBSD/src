@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.3 1996/05/14 10:25:01 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.4 1996/10/11 00:09:28 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -80,9 +80,9 @@
 #define	LPT_BSIZE	1024
 
 #if !defined(DEBUG) || !defined(notdef)
-#define lprintf		if (0) printf
+#define lprintf		if (0) kprintf
 #else
-#define lprintf		if (lptdebug) printf
+#define lprintf		if (lptdebug) kprintf
 int lptdebug = 1;
 #endif
 
@@ -155,7 +155,7 @@ void	*auxp;
 
 	ym2149_strobe(1);
 
-	printf("\n");
+	kprintf("\n");
 }
 
 /*
@@ -182,7 +182,7 @@ lptopen(dev, flag, mode, p)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		kprintf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
 		    sc->sc_state);
 #endif
 

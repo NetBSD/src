@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.11 1996/05/18 23:56:59 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.12 1996/10/11 00:11:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -159,7 +159,7 @@ fhpibreset(unit)
 		hs->sc_flags |= HPIBF_DMA16;
 #ifdef DEBUG
 		if (fhpibdebug & FDB_DMA)
-			printf("fhpibtype: unit %d has word dma\n", unit);
+			kprintf("fhpibtype: unit %d has word dma\n", unit);
 
 #endif
 	}
@@ -232,9 +232,9 @@ senderr:
 	fhpibifc(hd);
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
-		printf("%s: fhpibsend failed: slave %d, sec %x, ",
+		kprintf("%s: fhpibsend failed: slave %d, sec %x, ",
 		    hs->sc_hc->hp_xname, slave, sec);
-		printf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
+		kprintf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
 	return (origcnt - cnt - 1);
@@ -296,9 +296,9 @@ recvbyteserror:
 	hd->hpib_imask = 0;
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
-		printf("%s: fhpibrecv failed: slave %d, sec %x, ",
+		kprintf("%s: fhpibrecv failed: slave %d, sec %x, ",
 		    hs->sc_hc->hp_xname, slave, sec);
-		printf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
+		kprintf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
 	return (origcnt - cnt - 1);
@@ -323,7 +323,7 @@ fhpibgo(unit, slave, sec, ptr, count, rw, timo)
 		hs->sc_flags |= HPIBF_READ;
 #ifdef DEBUG
 	else if (hs->sc_flags & HPIBF_READ) {
-		printf("fhpibgo: HPIBF_READ still set\n");
+		kprintf("fhpibgo: HPIBF_READ still set\n");
 		hs->sc_flags &= ~HPIBF_READ;
 	}
 #endif
@@ -354,7 +354,7 @@ fhpibgo(unit, slave, sec, ptr, count, rw, timo)
 		dmago(hs->sc_dq.dq_ctlr, addr, count, flags|DMAGO_READ);
 		if (fhpibrecv(unit, slave, sec, 0, 0) < 0) {
 #ifdef DEBUG
-			printf("fhpibgo: recv failed, retrying...\n");
+			kprintf("fhpibgo: recv failed, retrying...\n");
 #endif
 			(void) fhpibrecv(unit, slave, sec, 0, 0);
 		}
@@ -381,7 +381,7 @@ fhpibgo(unit, slave, sec, ptr, count, rw, timo)
 	dmago(hs->sc_dq.dq_ctlr, addr, count, flags);
 	if (fhpibsend(unit, slave, sec, 0, 0) < 0) {
 #ifdef DEBUG
-		printf("fhpibgo: send failed, retrying...\n");
+		kprintf("fhpibgo: send failed, retrying...\n");
 #endif
 		(void) fhpibsend(unit, slave, sec, 0, 0);
 	}
@@ -442,7 +442,7 @@ fhpibdone(unit)
 	hs->sc_count -= cnt;
 #ifdef DEBUG
 	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == unit)
-		printf("fhpibdone: addr %x cnt %d\n",
+		kprintf("fhpibdone: addr %x cnt %d\n",
 		       hs->sc_addr, hs->sc_count);
 #endif
 	if (hs->sc_flags & HPIBF_READ) {
@@ -485,7 +485,7 @@ fhpibintr(arg)
 #ifdef DEBUG
 		if ((fhpibdebug & FDB_FAIL) && (stat0 & IDS_IR) &&
 		    (hs->sc_flags & (HPIBF_IO|HPIBF_DONE)) != HPIBF_IO)
-			printf("%s: fhpibintr: bad status %x\n",
+			kprintf("%s: fhpibintr: bad status %x\n",
 			hs->sc_hc->hp_xname, stat0);
 		fhpibbadint[0]++;
 #endif
@@ -499,7 +499,7 @@ fhpibintr(arg)
 	}
 #ifdef DEBUG
 	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == unit)
-		printf("fhpibintr: flags %x\n", hs->sc_flags);
+		kprintf("fhpibintr: flags %x\n", hs->sc_flags);
 #endif
 	dq = hs->sc_sq.dq_forw;
 	if (hs->sc_flags & HPIBF_IO) {
@@ -519,7 +519,7 @@ fhpibintr(arg)
 #ifdef DEBUG
 		if ((fhpibdebug & FDB_FAIL) &&
 		    doppollint && (stat0 & IM_PPRESP) == 0)
-			printf("%s: fhpibintr: bad intr reg %x\n",
+			kprintf("%s: fhpibintr: bad intr reg %x\n",
 			    hs->sc_hc->hp_xname, stat0);
 #endif
 		hd->hpib_stat = 0;
@@ -527,7 +527,7 @@ fhpibintr(arg)
 #ifdef DEBUG
 		stat0 = fhpibppoll(unit);
 		if ((fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
-			printf("fhpibintr: got PPOLL status %x\n", stat0);
+			kprintf("fhpibintr: got PPOLL status %x\n", stat0);
 		if ((stat0 & (0x80 >> dq->dq_slave)) == 0) {
 			/*
 			 * XXX give it another shot (68040)
@@ -537,7 +537,7 @@ fhpibintr(arg)
 			stat0 = fhpibppoll(unit);
 			if ((stat0 & (0x80 >> dq->dq_slave)) == 0 &&
 			    (fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
-				printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
+				kprintf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
 				       unit, dq->dq_slave, stat0);
 		}
 #endif
@@ -582,7 +582,7 @@ fhpibwait(hd, x)
 	if (timo == 0) {
 #ifdef DEBUG
 		if (fhpibdebug & FDB_FAIL)
-			printf("fhpibwait(%x, %x) timeout\n", hd, x);
+			kprintf("fhpibwait(%x, %x) timeout\n", hd, x);
 #endif
 		return(-1);
 	}
@@ -618,7 +618,7 @@ fhpibppwatch(arg)
 		return;
 	}
 	if ((fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
-		printf("fhpibppwatch: sense request on %d\n", unit);
+		kprintf("fhpibppwatch: sense request on %d\n", unit);
 #endif
 	hd->hpib_psense = ~slave;
 	hd->hpib_pmask = slave;

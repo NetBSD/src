@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.8 1996/08/28 18:59:54 cgd Exp $ */
+/* $NetBSD: ptsc.c,v 1.9 1996/10/11 00:07:47 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -199,7 +199,7 @@ ptscattach(pdp, dp, auxp)
 	    panic("ptsc: Cannot install IRQ handler\n");
 #endif
 	
-	printf("\n");
+	kprintf("\n");
 
 /* attach all scsi units on us */
 	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
@@ -246,7 +246,7 @@ ptsc_set_dma_adr(sc, ptr)
 	unsigned int	d;
 #endif
 #if 0
-	printf("ptsc_set_dma_adr(sc = 0x%08x, ptr = 0x%08x)\n", (u_int)sc, (u_int)ptr);
+	kprintf("ptsc_set_dma_adr(sc = 0x%08x, ptr = 0x%08x)\n", (u_int)sc, (u_int)ptr);
 #endif
 	return;
 #if 0
@@ -266,7 +266,7 @@ ptsc_set_dma_tc(sc, len)
 	struct sfas_softc *sc;
 	unsigned int	  len;
 {
-	printf("ptsc_set_dma_tc(sc, len = 0x%08x)", len);
+	kprintf("ptsc_set_dma_tc(sc, len = 0x%08x)", len);
 
 	*sc->sc_fas->sfas_tc_low  = len; len >>= 8;
 	*sc->sc_fas->sfas_tc_mid  = len; len >>= 8;
@@ -302,7 +302,7 @@ ptsc_setup_dma(sc, ptr, len, mode)
 	retval = 0;
 
 #if 0
-	printf("ptsc_setup_dma(sc, ptr = 0x%08x, len = 0x%08x, mode = 0x%08x)\n", (u_int)ptr, len, mode);
+	kprintf("ptsc_setup_dma(sc, ptr = 0x%08x, len = 0x%08x, mode = 0x%08x)\n", (u_int)ptr, len, mode);
 #endif
 	return(0);
 
@@ -371,7 +371,7 @@ ptsc_build_dma_chain(sc, chain, p, l)
 	int	     len, prelen, postlen, max_t, n;
 #endif
 #if 0
-	printf("ptsc_build_dma_chain()\n");
+	kprintf("ptsc_build_dma_chain()\n");
 #endif
 	return(0);
 
@@ -469,7 +469,7 @@ ptsc_scsicmd(xs)
 	xs->flags |= SCSI_POLL;
 #endif
 #if 0
-	printf("Opcode %d\n", (int)(xs->cmd->opcode));
+	kprintf("Opcode %d\n", (int)(xs->cmd->opcode));
 #endif
 	return(sfas_scsicmd(xs));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.7 1996/06/12 20:23:58 mark Exp $ */
+/* $NetBSD: iomd_irqhandler.c,v 1.8 1996/10/11 00:06:43 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -205,13 +205,13 @@ irq_claim(irq, handler)
 	if (/*handler->ih_next == NULL && */handler->ih_name) {
 		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
-/*		printf("intrnames=%08x ptr=%08x irq=%d\n", (u_int)_intrnames, (u_int)ptr, irq);*/
+/*		kprintf("intrnames=%08x ptr=%08x irq=%d\n", (u_int)_intrnames, (u_int)ptr, irq);*/
 		strcpy(ptr, "             ");
 		strncpy(ptr, handler->ih_name, min(strlen(handler->ih_name), 13));
 	} else {
 		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
+		ksprintf(ptr, "irq %2d     ", irq);
 	}
 #endif
 
@@ -249,7 +249,7 @@ irq_claim(irq, handler)
                  
 /*
 	for (level = 0; level < IRQ_LEVELS; ++level)
-		printf("irqmask[%d] = %08x\n", level, irqmasks[level]);
+		kprintf("irqmask[%d] = %08x\n", level, irqmasks[level]);
 */
 
 #if NPODULEBUS > 0
@@ -336,7 +336,7 @@ irq_release(irq, handler)
 	} else {
 		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
+		ksprintf(ptr, "irq %2d     ", irq);
 	}
 #endif
 
@@ -398,7 +398,7 @@ disable_interrupts(mask)
 	cpsr = SetCPSR(mask, mask);
 #ifdef DIAGNOSTIC
 	if ((GetCPSR() & I32_bit) == 0)
-		printf("Alert ! disable_interrupts has failed\n");
+		kprintf("Alert ! disable_interrupts has failed\n");
 #endif
 	return(cpsr);
 }
@@ -492,8 +492,8 @@ dosoftints()
 	softints = soft_interrupts & spl_mask;
 
 /*	if (soft_interrupts) {
-		printf("current_spl_level=%d ", current_spl_level);
-		printf("soft_interrupts=%08x spl_mask=%08x\n", soft_interrupts, spl_mask);
+		kprintf("current_spl_level=%d ", current_spl_level);
+		kprintf("soft_interrupts=%08x spl_mask=%08x\n", soft_interrupts, spl_mask);
 	}*/
 
 	/*
@@ -592,14 +592,14 @@ validate_irq_address(irqf, mask)
 	if (irqf->if_pc > (int)SetCPSR && irqf->if_pc < (int)GetCPSR)
 		return;
 	if ((irqf->if_spsr & PSR_MODE) != PSR_USR32_MODE) {
-		printf("Alert! IRQ while in non USR mode (%08x) pc=%08x\n",
+		kprintf("Alert! IRQ while in non USR mode (%08x) pc=%08x\n",
 		    irqf->if_spsr, irqf->if_pc);
 	}
 	if ((GetCPSR() & I32_bit) == 0) {
-		printf("Alert! IRQ's enabled during IRQ handler\n");
+		kprintf("Alert! IRQ's enabled during IRQ handler\n");
 	}
 	if (irqf->if_pc >= (int)vgone && irqf->if_pc < (int)vfinddev)
-		printf("Alert! IRQ between vgone & vfinddev : pc=%08x\n",
+		kprintf("Alert! IRQ between vgone & vfinddev : pc=%08x\n",
 		    irqf->if_pc);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.11 1996/05/18 23:57:01 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.12 1996/10/11 00:11:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -309,7 +309,7 @@ nhpibgo(unit, slave, sec, ptr, count, rw, timo)
 		hs->sc_flags |= HPIBF_READ;
 #ifdef DEBUG
 	else if (hs->sc_flags & HPIBF_READ) {
-		printf("nhpibgo: HPIBF_READ still set\n");
+		kprintf("nhpibgo: HPIBF_READ still set\n");
 		hs->sc_flags &= ~HPIBF_READ;
 	}
 #endif
@@ -438,7 +438,7 @@ nhpibintr(arg)
 		}
 #ifdef DEBUG
 		else
-			printf("%s: PPOLL intr bad status %x\n",
+			kprintf("%s: PPOLL intr bad status %x\n",
 			       hs->sc_hc->hp_xname, stat0);
 #endif
 	}
@@ -476,7 +476,7 @@ nhpibwait(hd, x)
 	if (timo == 0) {
 #ifdef DEBUG
 		if (nhpibreporttimo)
-			printf("hpib0: %s timo\n", x==MIS_BO?"OUT":"IN");
+			kprintf("hpib0: %s timo\n", x==MIS_BO?"OUT":"IN");
 #endif
 		return(-1);
 	}

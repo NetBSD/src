@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.8 1996/10/07 03:16:47 scottr Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.9 1996/10/11 00:11:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -68,7 +68,7 @@ static int global_debug_level = DL_DEFAULT;
 
 #define DUMP_INSN(insn)							\
 if (fpu_debug_level & DL_DUMPINSN) {					\
-    printf("  fpu_emulate: insn={adv=%d,siz=%d,op=%04x,w1=%04x}\n",	\
+    kprintf("  fpu_emulate: insn={adv=%d,siz=%d,op=%04x,w1=%04x}\n",	\
 	   (insn)->is_advance, (insn)->is_datasize,			\
 	   (insn)->is_opcode, (insn)->is_word1);			\
 }
@@ -116,7 +116,7 @@ fpu_emulate(frame, fpf)
 #endif
 
     if (fpu_debug_level & DL_VERBOSE) {
-	printf("ENTERING fpu_emulate: FPSR=%08x, FPCR=%08x\n",
+	kprintf("ENTERING fpu_emulate: FPSR=%08x, FPCR=%08x\n",
 	       fe.fe_fpsr, fe.fe_fpcr);
     }
     if (frame->f_format == 4) {
@@ -138,14 +138,14 @@ fpu_emulate(frame, fpf)
     word = fusword((void *) (frame->f_pc));
     if (word < 0) {
 #ifdef DEBUG
-	printf("  fpu_emulate: fault reading opcode\n");
+	kprintf("  fpu_emulate: fault reading opcode\n");
 #endif
 	return SIGSEGV;
     }
 
     if ((word & 0xf000) != 0xf000) {
 #ifdef DEBUG
-	printf("  fpu_emulate: not coproc. insn.: opcode=0x%x\n", word);
+	kprintf("  fpu_emulate: not coproc. insn.: opcode=0x%x\n", word);
 #endif
 	return SIGILL;
     }
@@ -158,7 +158,7 @@ fpu_emulate(frame, fpf)
 #endif
 	) {
 #ifdef DEBUG
-	printf("  fpu_emulate: bad coproc. id: opcode=0x%x\n", word);
+	kprintf("  fpu_emulate: bad coproc. id: opcode=0x%x\n", word);
 #endif
 	return SIGILL;
     }
@@ -169,7 +169,7 @@ fpu_emulate(frame, fpf)
     word = fusword((void *) (frame->f_pc + 2));
     if (word < 0) {
 #ifdef DEBUG
-	printf("  fpu_emulate: fault reading word1\n");
+	kprintf("  fpu_emulate: fault reading word1\n");
 #endif
 	return SIGSEGV;
     }
@@ -188,48 +188,48 @@ fpu_emulate(frame, fpf)
 	/* type=0: generic */
 	if ((word & 0xc000) == 0xc000) {
 	    if (fpu_debug_level & DL_INSN)
-		printf("  fpu_emulate: fmovm FPr\n");
+		kprintf("  fpu_emulate: fmovm FPr\n");
 	    sig = fpu_emul_fmovm(&fe, &insn);
 	} else if ((word & 0xc000) == 0x8000) {
 	    if (fpu_debug_level & DL_INSN)
-		printf("  fpu_emulate: fmovm FPcr\n");
+		kprintf("  fpu_emulate: fmovm FPcr\n");
 	    sig = fpu_emul_fmovmcr(&fe, &insn);
 	} else if ((word & 0xe000) == 0x6000) {
 	    /* fstore = fmove FPn,mem */
 	    if (fpu_debug_level & DL_INSN)
-		printf("  fpu_emulate: fmove to mem\n");
+		kprintf("  fpu_emulate: fmove to mem\n");
 	    sig = fpu_emul_fstore(&fe, &insn);
 	} else if ((word & 0xfc00) == 0x5c00) {
 	    /* fmovecr */
 	    if (fpu_debug_level & DL_INSN)
-		printf("  fpu_emulate: fmovecr\n");
+		kprintf("  fpu_emulate: fmovecr\n");
 	    sig = fpu_emul_fmovecr(&fe, &insn);
 	} else if ((word & 0xa07f) == 0x26) {
 	    /* fscale */
 	    if (fpu_debug_level & DL_INSN)
-		printf("  fpu_emulate: fscale\n");
+		kprintf("  fpu_emulate: fscale\n");
 	    sig = fpu_emul_fscale(&fe, &insn);
 	} else {
 	    if (fpu_debug_level & DL_INSN)
-		printf("  fpu_emulte: other type0\n");
+		kprintf("  fpu_emulte: other type0\n");
 	    /* all other type0 insns are arithmetic */
 	    sig = fpu_emul_arith(&fe, &insn);
 	}
 	if (sig == 0) {
 	    if (fpu_debug_level & DL_VERBOSE)
-		printf("  fpu_emulate: type 0 returned 0\n");
+		kprintf("  fpu_emulate: type 0 returned 0\n");
 	    sig = fpu_upd_excp(&fe);
 	}
     } else if (optype == 0x0080 || optype == 0x00C0) {
 	/* type=2 or 3: fbcc, short or long disp. */
 	if (fpu_debug_level & DL_INSN)
-	    printf("  fpu_emulate: fbcc %s\n",
+	    kprintf("  fpu_emulate: fbcc %s\n",
 		   (optype & 0x40) ? "long" : "short");
 	sig = fpu_emul_brcc(&fe, &insn);
     } else if (optype == 0x0040) {
 	/* type=1: fdbcc, fscc, ftrapcc */
 	if (fpu_debug_level & DL_INSN)
-	    printf("  fpu_emulate: type1\n");
+	    kprintf("  fpu_emulate: type1\n");
 	sig = fpu_emul_type1(&fe, &insn);
     } else {
 	/* type=4: fsave    (privileged) */
@@ -237,7 +237,7 @@ fpu_emulate(frame, fpf)
 	/* type=6: reserved */
 	/* type=7: reserved */
 #ifdef DEBUG
-	printf(" fpu_emulate: bad opcode type: opcode=0x%x\n", insn.is_opcode);
+	kprintf(" fpu_emulate: bad opcode type: opcode=0x%x\n", insn.is_opcode);
 #endif
 	sig = SIGILL;
     }
@@ -248,7 +248,7 @@ fpu_emulate(frame, fpf)
 	frame->f_pc += insn.is_advance;
 #if defined(DDB) && defined(DEBUG)
     else {
-	printf(" fpu_emulate: sig=%d, opcode=%x, word1=%x\n",
+	kprintf(" fpu_emulate: sig=%d, opcode=%x, word1=%x\n",
 	       sig, insn.is_opcode, insn.is_word1);
 	kdb_trap(-1, frame);
     }
@@ -257,7 +257,7 @@ fpu_emulate(frame, fpf)
 	frame->f_pc = savedpc;	/* XXX Restore PC -- 68{EC,LC}040 only */
 
     if (fpu_debug_level & DL_VERBOSE)
-	printf("EXITING fpu_emulate: w/FPSR=%08x, FPCR=%08x\n",
+	kprintf("EXITING fpu_emulate: w/FPSR=%08x, FPCR=%08x\n",
 	       fe.fe_fpsr, fe.fe_fpcr);
 
     return (sig);
@@ -305,47 +305,47 @@ fpu_upd_fpsr(fe, fp)
     u_int fpsr;
 
     if (fpu_debug_level & DL_RESULT)
-	printf("  fpu_upd_fpsr: previous fpsr=%08x\n", fe->fe_fpsr);
+	kprintf("  fpu_upd_fpsr: previous fpsr=%08x\n", fe->fe_fpsr);
 
     /* clear all condition code */
     fpsr = fe->fe_fpsr & ~FPSR_CCB;
 
     if (fpu_debug_level & DL_RESULT)
-	printf("  fpu_upd_fpsr: result is a ");
+	kprintf("  fpu_upd_fpsr: result is a ");
 
     if (fp->fp_sign) {
 	if (fpu_debug_level & DL_RESULT)
-	    printf("negative ");
+	    kprintf("negative ");
 	fpsr |= FPSR_NEG;
     } else {
 	if (fpu_debug_level & DL_RESULT)
-	    printf("positive ");
+	    kprintf("positive ");
     }
 
     switch (fp->fp_class) {
     case FPC_SNAN:
 	if (fpu_debug_level & DL_RESULT)
-	    printf("signaling NAN\n");
+	    kprintf("signaling NAN\n");
 	fpsr |= (FPSR_NAN | FPSR_SNAN);
 	break;
     case FPC_QNAN:
 	if (fpu_debug_level & DL_RESULT)
-	    printf("quiet NAN\n");
+	    kprintf("quiet NAN\n");
 	fpsr |= FPSR_NAN;
 	break;
     case FPC_ZERO:
 	if (fpu_debug_level & DL_RESULT)
-	    printf("Zero\n");
+	    kprintf("Zero\n");
 	fpsr |= FPSR_ZERO;
 	break;
     case FPC_INF:
 	if (fpu_debug_level & DL_RESULT)
-	    printf("Inf\n");
+	    kprintf("Inf\n");
 	fpsr |= FPSR_INF;
 	break;
     default:
 	if (fpu_debug_level & DL_RESULT)
-	    printf("Number\n");
+	    kprintf("Number\n");
 	/* anything else is treated as if it is a number */
 	break;
     }
@@ -353,7 +353,7 @@ fpu_upd_fpsr(fe, fp)
     fe->fe_fpsr = fe->fe_fpframe->fpf_fpsr = fpsr;
 
     if (fpu_debug_level & DL_RESULT)
-	printf("  fpu_upd_fpsr: new fpsr=%08x\n", fe->fe_fpframe->fpf_fpsr);
+	kprintf("  fpu_upd_fpsr: new fpsr=%08x\n", fe->fe_fpframe->fpf_fpsr);
 
     return fpsr;
 }
@@ -383,7 +383,7 @@ fpu_emul_fmovmcr(fe, insn)
 	(insn->is_ea0.ea_flags & EA_DIRECT)) {
 	/* attempted to copy more than one FPcr to CPU regs */
 #ifdef DEBUG
-	printf("  fpu_emul_fmovmcr: tried to copy too many FPcr\n");
+	kprintf("  fpu_emul_fmovmcr: tried to copy too many FPcr\n");
 #endif
 	return SIGILL;
     }
@@ -394,7 +394,7 @@ fpu_emul_fmovmcr(fe, insn)
 	    insn->is_ea0.ea_regnum >= 8 /* address reg */) {
 	    /* attempted to copy FPCR to An */
 #ifdef DEBUG
-	    printf("  fpu_emul_fmovmcr: tried to copy FPCR from/to A%d\n",
+	    kprintf("  fpu_emul_fmovmcr: tried to copy FPCR from/to A%d\n",
 		   insn->is_ea0.ea_regnum & 7);
 #endif
 	    return SIGILL;
@@ -415,7 +415,7 @@ fpu_emul_fmovmcr(fe, insn)
 	    insn->is_ea0.ea_regnum >= 8 /* address reg */) {
 	    /* attempted to copy FPSR to An */
 #ifdef DEBUG
-	    printf("  fpu_emul_fmovmcr: tried to copy FPSR from/to A%d\n",
+	    kprintf("  fpu_emul_fmovmcr: tried to copy FPSR from/to A%d\n",
 		   insn->is_ea0.ea_regnum & 7);
 #endif
 	    return SIGILL;
@@ -514,14 +514,14 @@ fpu_emul_fmovm(fe, insn)
 		sig = fpu_store_ea(frame, insn, &insn->is_ea0,
 				   (char*)&fpregs[regnum * 3]);
 		if (fpu_debug_level & DL_RESULT)
-		    printf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) saved\n",
+		    kprintf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) saved\n",
 			   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 			   fpregs[regnum * 3 + 2]);
 	    } else {		/* mem to fpu */
 		sig = fpu_load_ea(frame, insn, &insn->is_ea0,
 				  (char*)&fpregs[regnum * 3]);
 		if (fpu_debug_level & DL_RESULT)
-		    printf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) loaded\n",
+		    kprintf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) loaded\n",
 			   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 			   fpregs[regnum * 3 + 2]);
 	    }
@@ -604,7 +604,7 @@ fpu_emul_arith(fe, insn)
     DUMP_INSN(insn);
 
     if (fpu_debug_level & DL_ARITH) {
-	printf("  fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
+	kprintf("  fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
 	       fe->fe_fpsr, fe->fe_fpcr);
     }
 
@@ -614,7 +614,7 @@ fpu_emul_arith(fe, insn)
 
     /* fetch a source operand : may not be used */
     if (fpu_debug_level & DL_ARITH) {
-	printf("  fpu_emul_arith: dst/src FP%d=%08x,%08x,%08x\n",
+	kprintf("  fpu_emul_arith: dst/src FP%d=%08x,%08x,%08x\n",
 	       regnum, fpregs[regnum*3], fpregs[regnum*3+1],
 	       fpregs[regnum*3+2]);
     }
@@ -625,9 +625,9 @@ fpu_emul_arith(fe, insn)
     /* get the other operand which is always the source */
     if ((word1 & 0x4000) == 0) {
 	if (fpu_debug_level & DL_ARITH) {
-	    printf("  fpu_emul_arith: FP%d op FP%d => FP%d\n",
+	    kprintf("  fpu_emul_arith: FP%d op FP%d => FP%d\n",
 		   format, regnum, regnum);
-	    printf("  fpu_emul_arith: src opr FP%d=%08x,%08x,%08x\n",
+	    kprintf("  fpu_emul_arith: src opr FP%d=%08x,%08x,%08x\n",
 		   format, fpregs[format*3], fpregs[format*3+1],
 		   fpregs[format*3+2]);
 	}
@@ -654,7 +654,7 @@ fpu_emul_arith(fe, insn)
 	sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
 	if (sig) {
 	    if (fpu_debug_level & DL_ARITH) {
-		printf("  fpu_emul_arith: error in fpu_decode_ea\n");
+		kprintf("  fpu_emul_arith: error in fpu_decode_ea\n");
 	    }
 	    return sig;
 	}
@@ -662,37 +662,37 @@ fpu_emul_arith(fe, insn)
 	DUMP_INSN(insn);
 
 	if (fpu_debug_level & DL_ARITH) {
-	    printf("  fpu_emul_arith: addr mode = ");
+	    kprintf("  fpu_emul_arith: addr mode = ");
 	    flags = insn->is_ea0.ea_flags;
 	    regname = (insn->is_ea0.ea_regnum & 8) ? 'a' : 'd';
 
 	    if (flags & EA_DIRECT) {
-		printf("%c%d\n",
+		kprintf("%c%d\n",
 		       regname, insn->is_ea0.ea_regnum & 7);
 	    } else if (flags & EA_PC_REL) {
 		if (flags & EA_OFFSET) {
-		    printf("pc@(%d)\n", insn->is_ea0.ea_offset);
+		    kprintf("pc@(%d)\n", insn->is_ea0.ea_offset);
 		} else if (flags & EA_INDEXED) {
-		    printf("pc@(...)\n");
+		    kprintf("pc@(...)\n");
 		}
 	    } else if (flags & EA_PREDECR) {
-		printf("%c%d@-\n",
+		kprintf("%c%d@-\n",
 		       regname, insn->is_ea0.ea_regnum & 7);
 	    } else if (flags & EA_POSTINCR) {
-		printf("%c%d@+\n", regname, insn->is_ea0.ea_regnum & 7);
+		kprintf("%c%d@+\n", regname, insn->is_ea0.ea_regnum & 7);
 	    } else if (flags & EA_OFFSET) {
-		printf("%c%d@(%d)\n", regname, insn->is_ea0.ea_regnum & 7,
+		kprintf("%c%d@(%d)\n", regname, insn->is_ea0.ea_regnum & 7,
 		       insn->is_ea0.ea_offset);
 	    } else if (flags & EA_INDEXED) {
-		printf("%c%d@(...)\n", regname, insn->is_ea0.ea_regnum & 7);
+		kprintf("%c%d@(...)\n", regname, insn->is_ea0.ea_regnum & 7);
 	    } else if (flags & EA_ABS) {
-		printf("0x%08x\n", insn->is_ea0.ea_absaddr);
+		kprintf("0x%08x\n", insn->is_ea0.ea_absaddr);
 	    } else if (flags & EA_IMMED) {
 
-		printf("#0x%08x,%08x,%08x\n", insn->is_ea0.ea_immed[0],
+		kprintf("#0x%08x,%08x,%08x\n", insn->is_ea0.ea_immed[0],
 		       insn->is_ea0.ea_immed[1], insn->is_ea0.ea_immed[2]);
 	    } else {
-		printf("%c%d@\n", regname, insn->is_ea0.ea_regnum & 7);
+		kprintf("%c%d@\n", regname, insn->is_ea0.ea_regnum & 7);
 	    }
 	} /* if (fpu_debug_level & DL_ARITH) */
 
@@ -713,7 +713,7 @@ fpu_emul_arith(fe, insn)
 	    format = FTYPE_LNG;
 	}
 	if (fpu_debug_level & DL_ARITH) {
-	    printf("  fpu_emul_arith: src = %08x %08x %08x, siz = %d\n",
+	    kprintf("  fpu_emul_arith: src = %08x %08x %08x, siz = %d\n",
 		   buf[0], buf[1], buf[2], insn->is_datasize);
 	}
 	fpu_explode(fe, &fe->fe_f2, format, buf);
@@ -891,7 +891,7 @@ fpu_emul_arith(fe, insn)
 
     default:
 #ifdef DEBUG
-	printf("  fpu_emul_arith: bad opcode=0x%x, word1=0x%x\n",
+	kprintf("  fpu_emul_arith: bad opcode=0x%x, word1=0x%x\n",
 	       insn->is_opcode, insn->is_word1);
 #endif
 	sig = SIGILL;
@@ -900,26 +900,26 @@ fpu_emul_arith(fe, insn)
     if (!discard_result && sig == 0) {
 	fpu_implode(fe, res, FTYPE_EXT, &fpregs[regnum * 3]);
 	if (fpu_debug_level & DL_ARITH) {
-	    printf("  fpu_emul_arith: %08x,%08x,%08x stored in FP%d\n",
+	    kprintf("  fpu_emul_arith: %08x,%08x,%08x stored in FP%d\n",
 		   fpregs[regnum*3], fpregs[regnum*3+1],
 		   fpregs[regnum*3+2], regnum);
 	}
     } else if (sig == 0 && fpu_debug_level & DL_ARITH) {
 	static char *class_name[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
-	printf("  fpu_emul_arith: result(%s,%c,%d,%08x,%08x,%08x,%08x) discarded\n",
+	kprintf("  fpu_emul_arith: result(%s,%c,%d,%08x,%08x,%08x,%08x) discarded\n",
 	       class_name[res->fp_class + 2],
 	       res->fp_sign ? '-' : '+', res->fp_exp,
 	       res->fp_mant[0], res->fp_mant[1],
 	       res->fp_mant[2], res->fp_mant[3]);
     } else if (fpu_debug_level & DL_ARITH) {
-	printf("  fpu_emul_arith: received signal %d\n", sig);
+	kprintf("  fpu_emul_arith: received signal %d\n", sig);
     }
 
     /* update fpsr according to the result of operation */
     fpu_upd_fpsr(fe, res);
 
     if (fpu_debug_level & DL_ARITH) {
-	printf("  fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
+	kprintf("  fpu_emul_arith: FPSR = %08x, FPCR = %08x\n",
 	       fe->fe_fpsr, fe->fe_fpcr);
     }
 
@@ -944,12 +944,12 @@ test_cc(fe, pred)
     invert = 0;
     fpsr &= ~FPSR_EXCP;		/* clear all exceptions */
     if (fpu_debug_level & DL_TESTCC) {
-	printf("  test_cc: fpsr=0x%08x\n", fpsr);
+	kprintf("  test_cc: fpsr=0x%08x\n", fpsr);
     }
     pred &= 0x3f;		/* lowest 6 bits */
 
     if (fpu_debug_level & DL_TESTCC) {
-	printf("  test_cc: ");
+	kprintf("  test_cc: ");
     }
 
     if (pred >= 040) {
@@ -961,14 +961,14 @@ test_cc(fe, pred)
     } else {
 	/* IEEE aware tests */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("IEEE ");
+	    kprintf("IEEE ");
 	}
 	sig_bsun = 0;
     }
 
     if (pred >= 010) {
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("Not ");
+	    kprintf("Not ");
 	}
 	/* predicate is "NOT ..." */
 	pred ^= 0xf;		/* invert */
@@ -977,51 +977,51 @@ test_cc(fe, pred)
     switch (pred) {
     case 0:			/* (Signaling) False */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("False");
+	    kprintf("False");
 	}
 	result = 0;
 	break;
     case 1:			/* (Signaling) Equal */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("Equal");
+	    kprintf("Equal");
 	}
 	result = -((fpsr & FPSR_ZERO) == FPSR_ZERO);
 	break;
     case 2:			/* Greater Than */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("GT");
+	    kprintf("GT");
 	}
 	result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == 0);
 	break;
     case 3:			/* Greater or Equal */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("GE");
+	    kprintf("GE");
 	}
 	result = -((fpsr & FPSR_ZERO) ||
 		   (fpsr & (FPSR_NAN|FPSR_NEG)) == 0);
 	break;
     case 4:			/* Less Than */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("LT");
+	    kprintf("LT");
 	}
 	result = -((fpsr & (FPSR_NAN|FPSR_ZERO|FPSR_NEG)) == FPSR_NEG);
 	break;
     case 5:			/* Less or Equal */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("LE");
+	    kprintf("LE");
 	}
 	result = -((fpsr & FPSR_ZERO) ||
 		   ((fpsr & (FPSR_NAN|FPSR_NEG)) == FPSR_NEG));
 	break;
     case 6:			/* Greater or Less than */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("GLT");
+	    kprintf("GLT");
 	}
 	result = -((fpsr & (FPSR_NAN|FPSR_ZERO)) == 0);
 	break;
     case 7:			/* Greater, Less or Equal */
 	if (fpu_debug_level & DL_TESTCC) {
-	    printf("GLE");
+	    kprintf("GLE");
 	}
 	result = -((fpsr & FPSR_NAN) == 0);
 	break;
@@ -1032,7 +1032,7 @@ test_cc(fe, pred)
     result ^= invert;		/* if the predicate is "NOT ...", then
 				   invert the result */
     if (fpu_debug_level & DL_TESTCC) {
-	printf(" => %s (%d)\n", result ? "true" : "false", result);
+	kprintf(" => %s (%d)\n", result ? "true" : "false", result);
     }
     /* if it's an IEEE unaware test and NAN is set, BSUN is set */
     if (sig_bsun && (fpsr & FPSR_NAN)) {
@@ -1077,7 +1077,7 @@ fpu_emul_type1(fe, insn)
 		displ = fusword((void *) (frame->f_pc + insn->is_advance));
 		if (displ < 0) {
 #ifdef DEBUG
-		    printf("  fpu_emul_type1: fault reading displacement\n");
+		    kprintf("  fpu_emul_type1: fault reading displacement\n");
 #endif
 		    return SIGSEGV;
 		}
@@ -1167,7 +1167,7 @@ fpu_emul_brcc(fe, insn)
 	word2 = fusword((void *) (frame->f_pc + insn->is_advance));
 	if (word2 < 0) {
 #ifdef DEBUG
-	    printf("  fpu_emul_brcc: fault reading word2\n");
+	    kprintf("  fpu_emul_brcc: fault reading word2\n");
 #endif
 	    return SIGSEGV;
 	}
@@ -1192,7 +1192,7 @@ fpu_emul_brcc(fe, insn)
 	return SIGILL;		/* got a signal */
     }
     if (fpu_debug_level & DL_BRANCH) {
-	printf("  fpu_emul_brcc: %s insn @ %x (%x+%x) (disp=%x)\n",
+	kprintf("  fpu_emul_brcc: %s insn @ %x (%x+%x) (disp=%x)\n",
 	       (sig == -1) ? "BRANCH to" : "NEXT",
 	       frame->f_pc + insn->is_advance, frame->f_pc, insn->is_advance,
 	       displ);

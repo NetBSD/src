@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.8 1996/08/29 22:33:24 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.9 1996/10/11 00:06:55 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -317,16 +317,16 @@ dumpsys()
 		if (dumpsize == 0)
 			return;
 	}
-	printf("\ndumping to dev %x, offset %d\n", (u_int)dumpdev,
+	kprintf("\ndumping to dev %x, offset %d\n", (u_int)dumpdev,
 	    (u_int)dumplo);
 
 	blkno = dumplo;
 	dumpspace = page_hook0.va;
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-	printf("dump ");
+	kprintf("dump ");
 	if (psize == -1) {
-		printf("area unavailable\n");
+		kprintf("area unavailable\n");
 		return;
 	}
 
@@ -354,30 +354,30 @@ dumpsys()
 
 	switch (error) {
 	case ENXIO:
-		printf("device bad\n");
+		kprintf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		kprintf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		kprintf("area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		kprintf("i/o error\n");
 		break;
 
 	case EINTR:
-		printf("aborted from console\n");
+		kprintf("aborted from console\n");
 		break;
 
 	default:
-		printf("succeeded\n");
+		kprintf("succeeded\n");
 		break;
 	}
-	printf("\n\n");
+	kprintf("\n\n");
 	delay(1000000);
 }
 
@@ -422,9 +422,9 @@ set_spl_masks()
 void
 dump_spl_masks()
 {
-	printf("spl0=%08x splsoft=%08x splbio=%08x splnet=%08x\n",
+	kprintf("spl0=%08x splsoft=%08x splbio=%08x splnet=%08x\n",
 	    spl_masks[SPL_0], spl_masks[SPL_SOFT], spl_masks[SPL_BIO], spl_masks[SPL_NET]);
-	printf("spltty=%08x splclock=%08x splimp=%08x splhigh=%08x\n",
+	kprintf("spltty=%08x splclock=%08x splimp=%08x splhigh=%08x\n",
 	    spl_masks[SPL_TTY], spl_masks[SPL_CLOCK], spl_masks[SPL_IMP], spl_masks[SPL_HIGH]);
 }
 

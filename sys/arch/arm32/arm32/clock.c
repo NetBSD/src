@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.7 1996/08/21 19:07:19 mark Exp $ */
+/* $NetBSD: clock.c,v 1.8 1996/10/11 00:06:32 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -128,7 +128,7 @@ setstatclockrate(hz)
     
 	count = TIMER_FREQUENCY / hz;
     
-	printf("Setting statclock to %dHz (%d ticks)\n", hz, count);
+	kprintf("Setting statclock to %dHz (%d ticks)\n", hz, count);
     
 	WriteByte(IOMD_T1LOW,  (count >> 0) & 0xff);
 	WriteByte(IOMD_T1HIGH, (count >> 8) & 0xff);
@@ -156,7 +156,7 @@ cpu_initclocks()
  * This timer generates 100Hz interrupts for the system clock
  */
 
-	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
+	kprintf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
 	WriteByte(IOMD_T0LOW,  (TIMER0_COUNT >> 0) & 0xff);
 	WriteByte(IOMD_T0HIGH, (TIMER0_COUNT >> 8) & 0xff);
@@ -213,7 +213,7 @@ microtime(tvp)
 	deltatm = tm - oldtm;
 	if (deltatm < 0) deltatm += TIMER0_COUNT;
 	if (deltatm < 0) {
-		printf("opps deltatm < 0 tm=%d oldtm=%d deltatm=%d\n",
+		kprintf("opps deltatm < 0 tm=%d oldtm=%d deltatm=%d\n",
 		    tm, oldtm, deltatm);
 	}
 	oldtm = tm;
@@ -325,7 +325,7 @@ resettodr()
 	rtc.rtc_micro = 0;
 
 /*
-	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
+	kprintf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
 	    rtc.rtc_min, rtc.rtc_sec);
 */
@@ -392,14 +392,14 @@ inittodr(base)
 /* If the base was 0 then keep quiet */
 
 	if (base) {
-		printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
+		kprintf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
 		    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
 		    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
 		    rtc.rtc_year);
 
 		if (n > base + 60) {
 			days = (n - base) / SECPERDAY;
-			printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
+			kprintf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
 			    days, ((days == 1) ? 0 : 's'), ((n - base)  / 3600) % 24,
 			    ((n - base) / 60) % 60, (n - base) % 60);
 		}
