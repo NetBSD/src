@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.47.2.1 1997/11/04 21:27:08 thorpej Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.47.2.2 1997/12/09 20:30:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -97,6 +97,13 @@
 #define VMSDB_SWFLOW	0x0010
 #define VMSDB_INFO	0x0020
 int vmswapdebug = 0;
+
+#define DPRINTF(f, m) do {		\
+	if (vmswapdebug & (f))		\
+		printf m;		\
+} while(0)
+#else
+#define DPRINTF(f, m)
 #endif
 
 #define SWAP_TO_FILES
@@ -261,6 +268,9 @@ struct vndxfer {
 	struct swapdev	*vx_sdp;
 	int		vx_error;
 	int		vx_pending;		/* # of pending aux buffers */
+	int		vx_flags;
+#define VX_BUSY		1
+#define VX_DEAD		2
 };
 
 
@@ -363,11 +373,8 @@ again:
 			tsleep((caddr_t)&lbolt, PSWP, "memory", 0);
 			goto again;
 		}
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: had to create a new swappri = %d\n",
-			   priority);
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_SWFLOW,
+			("sw: had to create a new swappri = %d\n", priority));
 
 		spp->spi_priority = priority;
 		CIRCLEQ_INIT(&spp->spi_swapdev);
@@ -455,17 +462,11 @@ sys_swapctl(p, v, retval)
 
 	misc = SCARG(uap, misc);
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("entering sys_swapctl\n");
-#endif /* SWAPDEBUG */
+	DPRINTF(VMSDB_SWFLOW, ("entering sys_swapctl\n"));
 	
 	/* how many swap devices */
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("did SWAP_NSWAP:  leaving sys_swapctl\n");
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_SWFLOW,("did SWAP_NSWAP: leaving sys_swapctl\n"));
 		*retval = nswapdev;
 		return (0);
 	}
@@ -494,10 +495,9 @@ sys_swapctl(p, v, retval)
 		(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0, p);
 		if (error)
 			return (error);
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: did SWAP_STATS:  leaving sys_swapctl\n");
-#endif /* SWAPDEBUG */
+
+		DPRINTF(VMSDB_SWFLOW,("did SWAP_STATS: leaving sys_swapctl\n"));
+
 		*retval = count;
 		return (0);
 	} 
@@ -544,7 +544,8 @@ sys_swapctl(p, v, retval)
 
 		sdp = (struct swapdev *)
 			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
-		sdp->swd_inuse = sdp->swd_flags = 0;
+		bzero(sdp, sizeof(*sdp));
+
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 
@@ -566,10 +567,7 @@ sys_swapctl(p, v, retval)
 		break;
 
 	case SWAP_OFF:
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing SWAP_OFF...\n");
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_SWFLOW, ("doing SWAP_OFF...\n"));
 #ifdef SWAP_OFF_WORKS
 		if ((sdp = find_swapdev(vp, 0)) == NULL) {
 			error = ENXIO;
@@ -599,10 +597,8 @@ sys_swapctl(p, v, retval)
 		break;
 
 	default:
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing default...\n");
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_SWFLOW,
+			("unhandled command: %x\n", SCARG(uap, cmd)));
 		error = EINVAL;
 	}
 
@@ -611,10 +607,7 @@ bad:
 bad2:
 	vput(vp);
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("leaving sys_swapctl:  error %d\n", error);
-#endif /* SWAPDEBUG */
+	DPRINTF(VMSDB_SWFLOW, ("leaving sys_swapctl: error %d\n", error));
 	return (error);
 }
 
@@ -649,10 +642,8 @@ swap_on(p, sdp)
 			return (error);
 	}
 
-#ifdef SWAPDEBUG	/* this wants only for block devices */
-	if (vmswapdebug & VMSDB_INFO)
-		printf("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev));
-#endif /* SWAPDEBUG */
+	DPRINTF(VMSDB_INFO,
+		("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev)));
 
 	switch (vp->v_type) {
 	case VBLK:
@@ -687,10 +678,7 @@ swap_on(p, sdp)
 		goto bad;
 	}
 	if (nblks == 0) {
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("swap_on: nblks == 0\n");
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_SWFLOW, ("swap_on: nblks == 0\n"));
 		error = EINVAL;
 		goto bad;
 	}
@@ -710,10 +698,8 @@ swap_on(p, sdp)
 		addr = (long)0;
 	}
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWON)
-		printf("swap_on: dev %x: size %d, addr %ld\n", dev, size, addr);
-#endif /* SWAPDEBUG */
+	DPRINTF(VMSDB_SWON,
+		("swap_on: dev %x: size %d, addr %ld\n", dev, size, addr));
 
 	name = malloc(12, M_VMSWAP, M_WAITOK);
 	sprintf(name, "swap0x%04x", count++);
@@ -791,10 +777,7 @@ swap_off(p, sdp)
 	/* turn off the enable flag */
 	sdp->swd_flags &= ~SWF_ENABLE;
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWOFF)
-		printf("swap_off: %x\n", sdp->swd_dev);
-#endif /* SWAPDEBUG */
+	DPRINTF(VMSDB_SWOFF, ("swap_off: %x\n", sdp->swd_dev));
 
 	/*
 	 * XXX write me
@@ -991,12 +974,10 @@ swstrategy(bp)
 
 	bn -= sdp->swd_mapoffset;
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("swstrategy(%s): mapoff %x, bn %x, bcount %ld\n",
+	DPRINTF(VMSDB_SWFLOW,
+		("swstrategy(%s): mapoff %x, bn %x, bcount %ld\n",
 			((bp->b_flags & B_READ) == 0) ? "write" : "read",
-			sdp->swd_mapoffset, bn, bp->b_bcount);
-#endif
+			sdp->swd_mapoffset, bn, bp->b_bcount));
 
 	switch (sdp->swd_vp->v_type) {
 	default:
@@ -1037,7 +1018,6 @@ sw_reg_strategy(sdp, bp, bn)
 	int		bn;
 {
 	struct vnode	*vp;
-	struct vndbuf	*nbp;
 	struct vndxfer	*vnx;
 	daddr_t		nbn;
 	caddr_t		addr;
@@ -1053,12 +1033,16 @@ sw_reg_strategy(sdp, bp, bn)
 
 	/* Allocate a header for this transfer and link it to the buffer */
 	getvndxfer(vnx);
+	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
 	vnx->vx_bp = bp;
 	vnx->vx_sdp = sdp;
 
+	error = 0;
 	for (resid = bp->b_resid; resid; resid -= sz) {
+		struct vndbuf	*nbp;
+
 		nra = 0;
 		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
@@ -1076,16 +1060,9 @@ sw_reg_strategy(sdp, bp, bn)
 		 * a hassle (in the write case).
 		 */
 		if (error) {
-			vnx->vx_error = error;
 			s = splbio();
-			if (vnx->vx_pending == 0) {
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-				putvndxfer(vnx);
-				biodone(bp);
-			}
-			splx(s);
-			return;
+			vnx->vx_error = error;
+			goto out;
 		}
 
 		if ((off = bn % sdp->swd_bsize) != 0)
@@ -1096,19 +1073,15 @@ sw_reg_strategy(sdp, bp, bn)
 		if (resid < sz)
 			sz = resid;
 
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw_reg_strategy: vp %p/%p bn 0x%x/0x%x"
-				" sz 0x%x\n", sdp->swd_vp, vp, bn, nbn, sz);
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_SWFLOW,
+			("sw_reg_strategy: vp %p/%p bn 0x%x/0x%x"
+				" sz 0x%x\n", sdp->swd_vp, vp, bn, nbn, sz));
 
 		getvndbuf(nbp);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = bp->b_bufsize;
 		nbp->vb_buf.b_error    = 0;
-		nbp->vb_buf.b_dev      = vp->v_type == VREG
-						? NODEV : vp->v_rdev;
 		nbp->vb_buf.b_data     = addr;
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_proc     = bp->b_proc;
@@ -1144,18 +1117,33 @@ sw_reg_strategy(sdp, bp, bn)
 		 */
 		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
 		s = splbio();
+		if (vnx->vx_error != 0) {
+			putvndbuf(nbp);
+			goto out;
+		}
 		vnx->vx_pending++;
 		bgetvp(vp, &nbp->vb_buf);
 		disksort(&sdp->swd_tab, &nbp->vb_buf);
-		if (sdp->swd_tab.b_active < sdp->swd_maxactive) {
-			sdp->swd_tab.b_active++;
-			sw_reg_start(sdp);
-		}
+		sw_reg_start(sdp);
 		splx(s);
 
 		bn   += sz;
 		addr += sz;
 	}
+
+	s = splbio();
+
+out: /* Arrive here at splbio */
+	vnx->vx_flags &= ~VX_BUSY;
+	if (vnx->vx_pending == 0) {
+		if (vnx->vx_error != 0) {
+			bp->b_error = vnx->vx_error;
+			bp->b_flags |= B_ERROR;
+		}
+		putvndxfer(vnx);
+		biodone(bp);
+	}
+	splx(s);
 }
 
 /*
@@ -1170,17 +1158,28 @@ sw_reg_start(sdp)
 {
 	struct buf	*bp;
 
-	bp = sdp->swd_tab.b_actf;
-	sdp->swd_tab.b_actf = bp->b_actf;
+	if ((sdp->swd_flags & SWF_BUSY) != 0)
+		/* Recursion control */
+		return;
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("sw_reg_start:  bp %p vp %p blkno %x addr %p cnt %lx\n",
-			bp, bp->b_vp, bp->b_blkno,bp->b_data, bp->b_bcount);
-#endif
-	if ((bp->b_flags & B_READ) == 0)
-		bp->b_vp->v_numoutput++;
-	VOP_STRATEGY(bp);
+	sdp->swd_flags |= SWF_BUSY;
+
+	while (sdp->swd_tab.b_active < sdp->swd_maxactive) {
+		bp = sdp->swd_tab.b_actf;
+		if (bp == NULL)
+			break;
+		sdp->swd_tab.b_actf = bp->b_actf;
+		sdp->swd_tab.b_active++;
+
+		DPRINTF(VMSDB_SWFLOW,
+			("sw_reg_start: bp %p vp %p blkno %x addr %p cnt %lx\n",
+			bp, bp->b_vp, bp->b_blkno,bp->b_data, bp->b_bcount));
+
+		if ((bp->b_flags & B_READ) == 0)
+			bp->b_vp->v_numoutput++;
+		VOP_STRATEGY(bp);
+	}
+	sdp->swd_flags &= ~SWF_BUSY;
 }
 
 static void
@@ -1193,14 +1192,12 @@ sw_reg_iodone(bp)
 	struct swapdev	*sdp = vnx->vx_sdp;
 	int		s, resid;
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("sw_reg_iodone: vbp %p vp %p blkno %x addr %p "
-				"cnt %lx(%lx)\n",
-				vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
-				vbp->vb_buf.b_data, vbp->vb_buf.b_bcount,
-				vbp->vb_buf.b_resid);
-#endif /* SWAPDEBUG */
+	DPRINTF(VMSDB_SWFLOW,
+		("sw_reg_iodone: vbp %p vp %p blkno %x addr %p "
+			"cnt %lx(%lx)\n",
+			vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
+			vbp->vb_buf.b_data, vbp->vb_buf.b_bcount,
+			vbp->vb_buf.b_resid));
 
 	s = splbio();
 	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
@@ -1208,11 +1205,8 @@ sw_reg_iodone(bp)
 	vnx->vx_pending--;
 
 	if (vbp->vb_buf.b_error) {
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw_reg_iodone: vbp %p error %d\n", vbp,
-				vbp->vb_buf.b_error);
-#endif /* SWAPDEBUG */
+		DPRINTF(VMSDB_INFO, ("sw_reg_iodone: vbp %p error %d\n", vbp,
+					vbp->vb_buf.b_error));
 
 		vnx->vx_error = vbp->vb_buf.b_error;
 	}
@@ -1226,24 +1220,34 @@ sw_reg_iodone(bp)
 	 * Wrap up this transaction if it has run to completion or, in
 	 * case of an error, when all auxiliary buffers have returned.
 	 */
-	if (pbp->b_resid == 0 || (vnx->vx_error && vnx->vx_pending == 0)) {
+	if (vnx->vx_error != 0) {
+		pbp->b_flags |= B_ERROR;
+		pbp->b_error = vnx->vx_error;
+		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
 
-		if (vnx->vx_error != 0) {
-			pbp->b_flags |= B_ERROR;
-			pbp->b_error = vnx->vx_error;
+			DPRINTF(VMSDB_SWFLOW,
+				("swiodone: pbp %p iodone: error %d\n",
+				pbp, vnx->vx_error));
+			putvndxfer(vnx);
+			biodone(pbp);
 		}
-		putvndxfer(vnx);
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("swiodone: pbp %p iodone\n", pbp);
+	} else if (pbp->b_resid == 0) {
+
+#ifdef DIAGNOSTIC
+		if (vnx->vx_pending != 0)
+			panic("swiodone: vnx pending: %d", vnx->vx_pending);
 #endif
-		biodone(pbp);
+
+		if ((vnx->vx_flags & VX_BUSY) == 0) {
+			DPRINTF(VMSDB_SWFLOW,
+				("swiodone: pbp %p iodone\n", pbp));
+			putvndxfer(vnx);
+			biodone(pbp);
+		}
 	}
 
-	if (sdp->swd_tab.b_actf)
-		sw_reg_start(sdp);
-	else
-		sdp->swd_tab.b_active--;
+	sdp->swd_tab.b_active--;
+	sw_reg_start(sdp);
 
 	splx(s);
 }
@@ -1256,10 +1260,8 @@ swapinit()
 	struct proc *p = &proc0;       /* XXX */
 	int i;
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWINIT)
-		printf("swapinit\n");
-#endif
+	DPRINTF(VMSDB_SWINIT, ("swapinit\n"));
+
 	nswapdev = 0;
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("swapinit: can setup swapdev_vp");
@@ -1291,8 +1293,6 @@ swapinit()
 	sp->b_rcred = sp->b_wcred = p->p_ucred;
 	sp->b_vnbufs.le_next = NOLIST;
 	sp->b_actf = NULL;
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWINIT)
-		printf("leaving swapinit\n");
-#endif
+
+	DPRINTF(VMSDB_SWINIT, ("leaving swapinit\n"));
 }
