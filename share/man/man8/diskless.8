@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.14 1998/07/18 23:03:05 frueauf Exp $
+.\"	$NetBSD: diskless.8,v 1.15 1998/09/08 10:08:30 mrg Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -232,8 +232,7 @@ myclient  root=server:/export/myclient/root
 .It 6.
 Build the swap file for myclient:
 .Bd -literal -offset indent -compact
-# mkdir /export/myclient
-# cd /export/myclient
+# cd /export/myclient/root
 # dd if=/dev/zero of=swap bs=16k count=1024
 .Ed
 This creates a 16 Megabyte swap file.
@@ -248,16 +247,6 @@ distribution.
 It can be as simple as copying and modifying the server's root
 filesystem, or perhaps you need to get those files out of the
 standard binary distribution.
-.Pp
-Historically, it has been necessary to create a mount point for the
-client's swap:
-.Bd -literal -offset indent -compact
-# mkdir /export/myclient/root/swap
-.Ed
-In
-.Nx
-1.3, the swap file can simply be located on an NFS volume and specified
-by path name in /etc/fstab.
 .Pp
 .It 8.
 Export the required filesystems in
@@ -312,7 +301,7 @@ ie.
 .Bd -literal -offset indent -compact
 myserver:/export/myclient/root / nfs rw 0 0
 myserver:/usr /usr nfs rw 0 0
-myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap
+/swap none swap sw
 .Ed
 .Pp
 Note, you must specify the swap file in
