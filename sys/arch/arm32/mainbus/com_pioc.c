@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.4 1998/06/17 00:37:00 mark Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.5 1998/08/04 20:09:37 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -146,7 +146,7 @@ com_pioc_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	if (pa->pa_irq != MAINBUSCF_IRQ_DEFAULT) {
-		psc->sc_ih = intr_claim(pa->pa_irq, IPL_TTY, "com",
+		psc->sc_ih = intr_claim(pa->pa_irq, IPL_SERIAL, "com",
 		    comintr, sc);
 	}
 
