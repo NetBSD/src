@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.137 1995/10/10 01:26:38 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.138 1995/10/10 18:27:25 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -611,7 +611,7 @@ ENTRY(freebsd_sigcode)
 					# the copy at SIGF_SCP(%esp))
 	pushl	%eax
 	pushl	%eax			# junk to fake return address
-	movl	$FREEBSD_SYS_freebsd_sigreturn,%eax
+	movl	$FREEBSD_SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$FREEBSD_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
