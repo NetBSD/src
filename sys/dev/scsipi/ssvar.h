@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.3 1997/08/27 11:27:12 bouyer Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.4 1998/02/13 04:19:36 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_SCSIPI_SSVAR_H_
+#define _DEV_SCSIPI_SSVAR_H_
 
 /*
  * SCSI scanner interface description
@@ -81,3 +84,5 @@ struct ss_softc {
  */
 void mustek_attach __P((struct ss_softc *, struct scsipibus_attach_args *));
 void scanjet_attach __P((struct ss_softc *, struct scsipibus_attach_args *));
+
+#endif /* _DEV_SCSIPI_SSVAR_H_ */

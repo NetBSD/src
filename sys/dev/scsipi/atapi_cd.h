@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.5 1998/01/15 02:21:28 cgd Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.6 1998/02/13 04:19:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_SCSIPI_ATAPI_CD_H_
+#define _DEV_SCSIPI_ATAPI_CD_H_
 
 struct atapi_cdrom_page {
 	u_int8_t page;
@@ -109,3 +112,5 @@ struct atapi_cd_mode_data {
 	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cdrom_page))
 #define CAPPAGESIZE \
 	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cap_page))
+
+#endif /* _DEV_SCSIPI_ATAPI_CD_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.7 1998/01/15 02:21:37 cgd Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.8 1998/02/13 04:19:33 enami Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_SCSIPI_SCSIPICONF_H_
+#define _DEV_SCSIPI_SCSIPICONF_H_
+
 /*
  * Originally written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
@@ -45,9 +48,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-
-#ifndef	SCSI_BUSCONF_H
-#define SCSI_BUSCONF_H 1
 
 typedef	int	boolean;
 
@@ -524,4 +524,4 @@ bswap (buf, len)
 		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
 }
 
-#endif /* SCSI_BUSCONF_H */
+#endif /* _DEV_SCSIPI_SCSIPICONF_H_ */

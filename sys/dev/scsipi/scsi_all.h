@@ -1,8 +1,11 @@
-/*	$NetBSD: scsi_all.h,v 1.12 1997/10/01 01:18:54 enami Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.13 1998/02/13 04:19:18 enami Exp $	*/
 
 /*
  * SCSI-specific insterface description.
  */
+
+#ifndef _DEV_SCSIPI_SCSI_ALL_H_
+#define _DEV_SCSIPI_SCSI_ALL_H_
 
 /*
  * Largely written by Julian Elischer (julian@tfs.com)
@@ -20,9 +23,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-
-#ifndef	_SCSI_SCSI_ALL_H
-#define	_SCSI_SCSI_ALL_H 1
 
 /*
  * SCSI command format
@@ -177,4 +177,4 @@ struct scsi_mode_header_big {
 #define	SCSI_INTERM	0x10
 #define	SCSI_QUEUE_FULL	0x28
 
-#endif /* _SCSI_SCSI_ALL_H */
+#endif /* _DEV_SCSIPI_SCSI_ALL_H_ */

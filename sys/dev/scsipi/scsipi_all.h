@@ -1,8 +1,11 @@
-/*	$NetBSD: scsipi_all.h,v 1.5 1997/10/03 02:04:19 thorpej Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.6 1998/02/13 04:19:28 enami Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
  */
+
+#ifndef _DEV_SCSIPI_SCSIPI_ALL_H_
+#define _DEV_SCSIPI_SCSIPI_ALL_H_
 
 /*
  * Largely written by Julian Elischer (julian@tfs.com)
@@ -20,9 +23,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-
-#ifndef	_SCSI_PI_ALL_H
-#define	_SCSI_PI_ALL_H 1
 
 /*
  * SCSI-like command format and opcode
@@ -163,4 +163,4 @@ struct scsipi_inquiry_data {
 	u_int8_t extra[8];
 };
 
-#endif /* _SCSI_PI_ALL_H */
+#endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */

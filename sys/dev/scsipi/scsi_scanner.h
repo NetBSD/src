@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_scanner.h,v 1.4 1998/01/05 07:31:14 perry Exp $	*/
+/*	$NetBSD: scsi_scanner.h,v 1.5 1998/02/13 04:19:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -30,12 +30,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_SCSIPI_SCSI_SCANNER_H_
+#define _DEV_SCSIPI_SCSI_SCANNER_H_
+
 /*
  * SCSI scanner interface description
  */
-
-#ifndef	_SCSI_SCANNER_H_
-#define _SCSI_SCANNER_H_
 
 /* SCSI scanner commands */
 #define GET_IMAGE_STATUS	0x0f
@@ -113,4 +113,4 @@ struct scsi_window_data {
 #define MUSTEK_ADF		0x10	/* ADF and backtracking selection */
 #define MUSTEK_LUT		0x55	/* look up table download */
 
-#endif /* _SCSI_SCANNER_H_ */
+#endif /* _DEV_SCSIPI_SCSI_SCANNER_H_ */

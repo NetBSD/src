@@ -1,8 +1,11 @@
-/*	$NetBSD: scsipi_disk.h,v 1.3 1997/10/01 01:19:10 enami Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.4 1998/02/13 04:19:32 enami Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
  */
+
+#ifndef _DEV_SCSIPI_SCSIPI_DISK_H_
+#define _DEV_SCSIPI_SCSIPI_DISK_H_
 
 /*
  * Some lines of this file come from a file of the name "scsi.h"
@@ -53,9 +56,6 @@
  * SCSI command format
  */
 
-#ifndef	_SCSI_PI_DISK_H
-#define _SCSI_PI_DISK_H 1
-
 #define	READ_BIG		0x28
 #define WRITE_BIG		0x2a
 struct scsipi_rw_big {
@@ -97,4 +97,4 @@ struct scsipi_read_cap_data {
 	u_int8_t length[4];
 };
 
-#endif /* _SCSI_PI_DISK_H */
+#endif /* _DEV_SCSIPI_SCSIPI_DISK_H_ */
