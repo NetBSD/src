@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.7 2002/06/21 07:48:53 itojun Exp $ */
+/*	$NetBSD: pppoectl.c,v 1.8 2002/08/16 23:54:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
