@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.17 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.18 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -326,7 +326,7 @@ static void
 pdc202xx_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	pcireg_t mode, st;
 	u_int32_t idedma_ctl, scr, atapi;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
@@ -395,7 +395,9 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			mode = PDC2xx_TIM_SET_MB(mode,
 			    pdc2xx_udma_mb[drvp->UDMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,
@@ -441,7 +443,7 @@ static void
 pdc20268_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
@@ -470,7 +472,9 @@ pdc20268_setup_channel(struct ata_channel *chp)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			if (drvp->UDMA_mode > 2 && u100 == 0)
 				drvp->UDMA_mode = 2;

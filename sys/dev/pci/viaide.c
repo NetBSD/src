@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.17 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.18 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -341,7 +341,7 @@ via_setup_channel(struct ata_channel *chp)
 {
 	u_int32_t udmatim_reg, datatim_reg;
 	u_int8_t idedma_ctl;
-	int mode, drive;
+	int mode, drive, s;
 	struct ata_drive_datas *drvp;
 	struct atac_softc *atac = chp->ch_atac;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
@@ -374,7 +374,9 @@ via_setup_channel(struct ata_channel *chp)
 		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			udmatim_reg |= APO_UDMA_EN(chp->ch_channel, drive) |
 			    APO_UDMA_EN_MTH(chp->ch_channel, drive);
 			switch (PCI_VENDOR(sc->sc_pci_id)) {
@@ -417,7 +419,9 @@ via_setup_channel(struct ata_channel *chp)
 			mode = drvp->PIO_mode;
 		} else {
 			/* use Multiword DMA, but only if revision is OK */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 #ifndef PCIIDE_AMD756_ENABLEDMA
 			/*
 			 * The workaround doesn't seem to be necessary
@@ -435,7 +439,9 @@ via_setup_channel(struct ata_channel *chp)
 				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 				    chp->ch_channel, drive);
 				mode = drvp->PIO_mode;
+				s = splbio();
 				drvp->drive_flags &= ~DRIVE_DMA;
+				splx(s);
 				goto pio;
 			}
 #endif

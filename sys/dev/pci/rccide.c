@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.11 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: rccide.c,v 1.12 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.11 2004/08/20 06:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.12 2004/08/21 00:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ serverworks_setup_channel(struct ata_channel *chp)
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int channel = chp->ch_channel;
-	int drive, unit;
+	int drive, unit, s;
 	u_int32_t pio_time, dma_time, pio_mode, udma_mode;
 	u_int32_t idedma_ctl;
 	static const u_int8_t pio_modes[5] = {0x5d, 0x47, 0x34, 0x22, 0x20};
@@ -225,12 +225,16 @@ serverworks_setup_channel(struct ata_channel *chp)
 		} else if ((atac->atac_cap & ATAC_CAP_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 			dma_time |= dma_modes[drvp->DMA_mode] << (8 * (unit^1));
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			splx(s);
 		}
 	}
 

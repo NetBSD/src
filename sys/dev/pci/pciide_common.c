@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.20 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.21 2004/08/21 00:28:34 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.20 2004/08/20 06:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.21 2004/08/21 00:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -491,7 +491,7 @@ void
 pciide_channel_dma_setup(cp)
 	struct pciide_channel *cp;
 {
-	int drive;
+	int drive, s;
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_drive_datas *drvp;
 
@@ -506,13 +506,17 @@ pciide_channel_dma_setup(cp)
 		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
 		    (drvp->drive_flags & DRIVE_UDMA) == 0) ||
 		    sc->sc_dma_ok == 0) {
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+			splx(s);
 			continue;
 		}
 		if (pciide_dma_table_setup(sc, cp->ata_channel.ch_channel,
 					   drive) != 0) {
 			/* Abort DMA setup */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+			splx(s);
 			continue;
 		}
 	}
@@ -830,7 +834,7 @@ default_chip_map(sc, pa)
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t csr;
-	int channel, drive;
+	int channel, drive, s;
 	struct ata_drive_datas *drvp;
 	u_int8_t idedma_ctl;
 	bus_size_t cmdsize, ctlsize;
@@ -957,7 +961,9 @@ next:
 				    "using PIO transfers\n",
 				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 				    channel, drive);
+				s = splbio();
 				drvp->drive_flags &= ~DRIVE_DMA;
+				splx(s);
 			}
 			aprint_normal("%s:%d:%d: using DMA data transfers\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
@@ -977,7 +983,7 @@ sata_setup_channel(chp)
 	struct ata_channel *chp;
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
@@ -994,7 +1000,9 @@ sata_setup_channel(chp)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else if (drvp->drive_flags & DRIVE_DMA) {
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);

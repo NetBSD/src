@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.211 2004/08/20 23:26:54 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.212 2004/08/21 00:28:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.211 2004/08/20 23:26:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.212 2004/08/21 00:28:34 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -207,7 +207,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	u_int8_t st0 = 0, st1 = 0;
-	int i, error;
+	int i, error, s;
 
 	if (wdcprobe1(chp, 0) == 0) {
 		/* No drives, abort the attach here. */
@@ -245,10 +245,12 @@ wdc_drvprobe(struct ata_channel *chp)
 			break;
 		tsleep(&params, PRIBIO, "atadrdy", 1);
 	}
+	s = splbio();
 	if ((st0 & WDCS_DRDY) == 0)
 		chp->ch_drive[0].drive_flags &= ~(DRIVE_ATA|DRIVE_OLD);
 	if ((st1 & WDCS_DRDY) == 0)
 		chp->ch_drive[1].drive_flags &= ~(DRIVE_ATA|DRIVE_OLD);
+	splx(s);
 
 	ATADEBUG_PRINT(("%s:%d: wait DRDY st0 0x%x st1 0x%x\n",
 	    atac->atac_dev.dv_xname,
@@ -270,8 +272,11 @@ wdc_drvprobe(struct ata_channel *chp)
 
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((atac->atac_cap &
-		    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) == ATAC_CAP_DATA32)
+		    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) == ATAC_CAP_DATA32) {
+			s = splbio();
 			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
+			splx(s);
+		}
 		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
 			continue;
 
@@ -294,11 +299,16 @@ wdc_drvprobe(struct ata_channel *chp)
 		}
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
+			s = splbio();
+			/* XXXJRT ch_ndrive */
 			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
 			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
+			splx(s);
 		} else {
+			s = splbio();
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
+			splx(s);
 			ATADEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
 			    atac->atac_dev.dv_xname,
 			    chp->ch_channel, i, error), DEBUG_PROBE);
@@ -326,14 +336,18 @@ wdc_drvprobe(struct ata_channel *chp)
 				    "writability failed\n",
 				    atac->atac_dev.dv_xname,
 				    chp->ch_channel, i), DEBUG_PROBE);
+				    s = splbio();
 				    chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+				    splx(s);
 				    continue;
 			}
 			if (wdc_wait_for_ready(chp, 10000, 0) == WDCWAIT_TOUT) {
 				ATADEBUG_PRINT(("%s:%d:%d: not ready\n",
 				    atac->atac_dev.dv_xname,
 				    chp->ch_channel, i), DEBUG_PROBE);
+				s = splbio();
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+				splx(s);
 				continue;
 			}
 			bus_space_write_1(wdr->cmd_iot,
@@ -343,12 +357,17 @@ wdc_drvprobe(struct ata_channel *chp)
 				ATADEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 				    atac->atac_dev.dv_xname,
 				    chp->ch_channel, i), DEBUG_PROBE);
+				s = splbio();
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+				splx(s);
 			} else {
+				s = splbio();
+				/* XXXJRT ch_ndrive */
 				chp->ch_drive[0].drive_flags &=
 				    ~(DRIVE_ATA | DRIVE_ATAPI);
 				chp->ch_drive[1].drive_flags &=
 				    ~(DRIVE_ATA | DRIVE_ATAPI);
+				splx(s);
 			}
 		}
 	}
@@ -628,6 +647,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		 * sc & sn are supposted to be 0x1 for ATAPI but in some cases
 		 * we get wrong values here, so ignore it.
 		 */
+		s = splbio();
 		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		} else {
@@ -636,6 +656,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			    (wdc->cap & WDC_CAPABILITY_PREATA) != 0)
 				chp->ch_drive[drive].drive_flags |= DRIVE_OLD;
 		}
+		splx(s);
 	}
 	return (ret_value);	
 }

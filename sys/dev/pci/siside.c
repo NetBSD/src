@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.12 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: siside.c,v 1.13 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -304,7 +304,7 @@ static void
 sis96x_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
 	int regtim;
@@ -327,7 +327,9 @@ sis96x_setup_channel(struct ata_channel *chp)
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS96x_REG_CBL(chp->ch_channel)) & SIS96x_REG_CBL_33) {
 				if (drvp->UDMA_mode > 2)
@@ -368,7 +370,7 @@ static void
 sis_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
@@ -395,7 +397,9 @@ sis_setup_channel(struct ata_channel *chp)
 
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS_REG_CBL) & SIS_REG_CBL_33(chp->ch_channel)) {
 				if (drvp->UDMA_mode > 2)

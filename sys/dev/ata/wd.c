@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.290 2004/08/20 17:19:44 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.291 2004/08/21 00:28:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.290 2004/08/20 17:19:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.291 2004/08/21 00:28:34 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1017,6 +1017,7 @@ wdgetdisklabel(struct wd_softc *wd)
 {
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	const char *errstring;
+	int s;
 
 	ATADEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
@@ -1026,8 +1027,11 @@ wdgetdisklabel(struct wd_softc *wd)
 
 	wd->sc_badsect[0] = -1;
 
-	if (wd->drvp->state > RESET)
+	if (wd->drvp->state > RESET) {
+		s = splbio();
 		wd->drvp->drive_flags |= DRIVE_RESET;
+		splx(s);
+	}
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
 	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	if (errstring) {
@@ -1037,8 +1041,11 @@ wdgetdisklabel(struct wd_softc *wd)
 		 * assume the DOS geometry is now in the label and try
 		 * again.  XXX This is a kluge.
 		 */
-		if (wd->drvp->state > RESET)
+		if (wd->drvp->state > RESET) {
+			s = splbio();
 			wd->drvp->drive_flags |= DRIVE_RESET;
+			splx(s);
+		}
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit,
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
@@ -1047,8 +1054,11 @@ wdgetdisklabel(struct wd_softc *wd)
 		return;
 	}
 
-	if (wd->drvp->state > RESET)
+	if (wd->drvp->state > RESET) {
+		s = splbio();
 		wd->drvp->drive_flags |= DRIVE_RESET;
+		splx(s);
+	}
 #ifdef HAS_BAD144_HANDLING
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
@@ -1098,7 +1108,7 @@ int
 wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
-	int error = 0;
+	int error = 0, s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1228,8 +1238,11 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		    lp, /*wd->sc_dk.dk_openmask : */0,
 		    wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
-			if (wd->drvp->state > RESET)
+			if (wd->drvp->state > RESET) {
+				s = splbio();
 				wd->drvp->drive_flags |= DRIVE_RESET;
+				splx(s);
+			}
 			if (xfer == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
 			    || xfer == ODIOCWDINFO

@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.12 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.13 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -173,7 +173,7 @@ static void
 acer_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t acer_fifo_udma;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
@@ -222,7 +222,9 @@ acer_setup_channel(struct ata_channel *chp)
 		acer_fifo_udma |= ACER_FTH_OPL(chp->ch_channel, drive, 0x2);
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			acer_fifo_udma |= ACER_UDMA_EN(chp->ch_channel, drive);
 			acer_fifo_udma |= 
 			    ACER_UDMA_TIM(chp->ch_channel, drive,

@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.6 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.7 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.6 2004/08/20 06:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.7 2004/08/21 00:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ geodeide_setup_channel(struct ata_channel *chp)
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int channel = chp->ch_channel;
-	int drive;
+	int drive, s;
 	u_int32_t dma_timing;
 	u_int8_t idedma_ctl;
 	const int32_t *geode_pio;
@@ -224,7 +224,9 @@ geodeide_setup_channel(struct ata_channel *chp)
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			splx(s);
 		}
 
 		switch (sc->sc_pp->ide_product) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.8 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.9 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Toru Nishimura
@@ -142,7 +142,7 @@ stpc_setup_channel(struct ata_channel *chp)
 	int channel = chp->ch_channel;
 	struct ata_drive_datas *drvp;
 	u_int32_t idedma_ctl, idetim;
-	int drive, bits[2];
+	int drive, bits[2], s;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -160,13 +160,17 @@ stpc_setup_channel(struct ata_channel *chp)
 		if ((atac->atac_cap & ATAC_CAP_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			bits[drive] = 0xe; /* IOCHRDY,wr/post,rd/prefetch */
 		}
 		else {
 			/* PIO only */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			splx(s);
 			bits[drive] = 0x8; /* IOCHRDY */
 		}
 		bits[drive] |= dmatbl[drvp->DMA_mode] | piotbl[drvp->PIO_mode];

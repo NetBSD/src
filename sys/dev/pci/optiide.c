@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.9 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: optiide.c,v 1.10 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ opti_setup_channel(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
-	int drive, spd;
+	int drive, spd, s;
 	int mode[2];
 	u_int8_t rv, mr;
 
@@ -236,7 +236,9 @@ opti_setup_channel(struct ata_channel *chp)
 			mode[d] = mode[1-d];
 			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
 			chp->ch_drive[d].DMA_mode = 0;
+			s = splbio();
 			chp->ch_drive[d].drive_flags &= ~DRIVE_DMA;
+			splx(s);
 		}
 	}
 
