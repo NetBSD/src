@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.30.2.2 2003/09/10 16:55:36 grant Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.30.2.3 2003/10/20 05:19:12 cyber Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -397,6 +397,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
