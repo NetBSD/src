@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.5 1998/09/07 08:19:31 veego Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.6 1998/10/05 02:31:13 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.4 1998/09/07 08:18:40 veego Exp 
+ *	NetBSD: usbdevs,v 1.5 1998/10/05 02:30:17 mark Exp 
  */
 
 /*
@@ -55,6 +55,7 @@
 #define	USB_VENDOR_CHERRY	0x046a		/* Cherry */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
+#define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semicondutor */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
 #define	USB_VENDOR_BELKIN	0x05ab		/* Belkin */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
@@ -94,6 +95,9 @@
 
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
+
+/* Cypress Semiconduuctor products */
+#define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
 
 /* Belkin products */
 #define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */

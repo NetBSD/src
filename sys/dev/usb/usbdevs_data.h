@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.5 1998/09/07 08:19:31 veego Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.6 1998/10/05 02:31:14 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.4 1998/09/07 08:18:40 veego Exp 
+ *	NetBSD: usbdevs,v 1.5 1998/10/05 02:30:17 mark Exp 
  */
 
 /*
@@ -117,6 +117,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "QuickCam",
 	},
 	{
+	    USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_MOUSE,
+	    0,
+	    "Cypress Semicondutor",
+	    "mouse",
+	},
+	{
 	    USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U002,
 	    0,
 	    "Belkin",
@@ -216,6 +222,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_CONNECTIX, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Connectix",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_CYPRESS, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Cypress Semicondutor",
 	    NULL,
 	},
 	{
