@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.10 1994/11/21 21:38:23 gwr Exp $	*/
+/*	$NetBSD: control.c,v 1.11 1995/06/01 20:44:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -32,7 +32,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/types.h>
 
 #include <machine/pte.h>
