@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)idreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: idreg.h,v 1.1 1994/02/22 23:50:28 paulus Exp $
+ *	$Id: idreg.h,v 1.2 1994/07/08 12:02:30 paulus Exp $
  */
 
 /*
@@ -94,6 +94,7 @@ struct idc {
 #define	IDCC_IDC	0x91		/* initialize drive command */
 
 #define	IDCC_EXTDCMD	0xE0		/* send extended command */
+#define IDCC_STANDBY	0xE2		/* stop the disk */
 #define	IDCC_READP	0xEC		/* read parameters from controller */
 #define	IDCC_CACHEC	0xEF		/* cache control */
 
@@ -141,7 +142,7 @@ int idopen(dev_t, int, int, struct proc *);
 int idclose(dev_t dev, int flags, int fmt);
 int idioctl(dev_t, int, caddr_t, int, struct proc *);
 /* int idformat(struct buf *bp); */
-int idsize(dev_t, int *);
+int idsize(dev_t);
 int iddump(dev_t);
 
 #endif KERNEL
