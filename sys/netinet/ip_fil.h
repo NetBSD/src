@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.9 1997/03/29 19:50:51 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.10 1997/04/15 00:44:43 christos Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -8,19 +8,11 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.9 1997/03/29 19:50:51 thorpej Exp $
+ * $Id: ip_fil.h,v 1.10 1997/04/15 00:44:43 christos Exp $
  */
 
 #ifndef	__IP_FIL_H__
 #define	__IP_FIL_H__
-
-#if defined(__NetBSD__)
-/*
- * XXX This doesn't compile without this turned on.
- * XXX --thorpej
- */
-#define	IPFILTER_LOG	1
-#endif
 
 /*
  * Pathnames for various IP Filter control devices.  Used by LKM
@@ -358,15 +350,11 @@ extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 #  endif /* (_BSDI_VERSION >= 199510) */
-#  ifdef IPFILTER_LOG
-#   if	BSD >= 199306
+#  if	BSD >= 199306
 extern	int	iplread __P((dev_t, struct uio *, int));
-#   else
-extern	int	iplread __P((dev_t, struct uio *));
-#   endif /* BSD >= 199306 */
 #  else
-#   define	iplread	noread
-#  endif /* IPFILTER_LOG */
+extern	int	iplread __P((dev_t, struct uio *));
+#  endif /* BSD >= 199306 */
 # endif /* SOLARIS */
 #endif /* _KERNEL */
 
