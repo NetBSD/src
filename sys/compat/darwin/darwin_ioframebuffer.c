@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.13 2003/08/28 21:47:02 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.14 2003/08/29 22:03:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.13 2003/08/28 21:47:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.14 2003/08/29 22:03:13 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -477,6 +477,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		int major, minor;
 		dev_t device;
 		int screen;
+		int mode;
 		struct uvm_object *udo;
 		struct wsdisplay_fbinfo fbi;
 
@@ -516,6 +517,12 @@ darwin_ioframebuffer_connect_map_memory(args)
 		    fbi.width, fbi.height, fbi.depth);
 #endif
 		len = round_page(fbi.height * fbi.width * fbi.depth / 8);
+
+		/* Switch to graphic mode */
+		mode = WSDISPLAYIO_MODE_MAPPED;
+		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p)) != 0)
+			printf("*** Cannot switch to graphic mode ***\n");
 
 		/* Create the uvm_object */
 		udo = udv_attach(&device, UVM_PROT_RW, 0, len);
