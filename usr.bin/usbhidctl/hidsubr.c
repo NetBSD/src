@@ -1,4 +1,4 @@
-/*	$NetBSD: hidsubr.c,v 1.4 1998/12/02 16:37:48 augustss Exp $	*/
+/*	$NetBSD: hidsubr.c,v 1.5 1999/04/21 16:23:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -350,17 +350,23 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 }
 
 int 
-hid_report_size(u_char *buf, int len, enum hid_kind k)
+hid_report_size(u_char *buf, int len, enum hid_kind k, int *idp)
 {
 	struct hid_data *d;
 	struct hid_item h;
 	int size, id;
 
 	id = 0;
+	if (idp)
+		*idp = 0;
 	memset(&h, 0, sizeof h);
-	for (d = hid_start_parse(buf, len, 1<<k); hid_get_item(d, &h); )
-		if (h.report_ID != 0)
+	for (d = hid_start_parse(buf, len, 1<<k); hid_get_item(d, &h); ) {
+		if (h.report_ID != 0) {
+			if (idp)
+				*idp = h.report_ID;
 			id = 8;
+		}
+	}
 	hid_end_parse(d);
 	size = h.pos + id;
 	return ((size + 7) / 8);
