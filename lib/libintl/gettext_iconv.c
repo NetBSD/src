@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext_iconv.c,v 1.2 2004/01/18 08:53:09 yamt Exp $	*/
+/*	$NetBSD: gettext_iconv.c,v 1.3 2004/01/18 08:54:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Citrus Project,
@@ -53,6 +53,7 @@ static int cache_cmp(const void *, const void *);
 
 static void *cacheroot;
 
+/* ARGSUSED1 */
 static const struct cache *
 cache_find(const char *msg, struct domainbinding *db)
 {
