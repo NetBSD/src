@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.338 2001/04/09 20:56:17 wiz Exp $
+# $NetBSD: mi,v 1.339 2001/04/10 21:19:05 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -464,7 +464,6 @@
 ./usr/share/man/cat4/arm26/arcwsmouse.0		man-sys-catman
 ./usr/share/man/cat4/arm26/cpu.0		man-sys-catman
 ./usr/share/man/cat4/arm26/dtide.0		man-sys-catman
-./usr/share/man/cat4/arm26/ea.0			man-sys-catman
 ./usr/share/man/cat4/arm26/eh.0			man-sys-catman
 ./usr/share/man/cat4/arm26/ei.0			man-sys-catman
 ./usr/share/man/cat4/arm26/podulebus.0		man-sys-catman
@@ -475,8 +474,6 @@
 ./usr/share/man/cat4/arm32/com.0		man-sys-catman
 ./usr/share/man/cat4/arm32/cosc.0		man-sys-catman
 ./usr/share/man/cat4/arm32/csc.0		man-sys-catman
-./usr/share/man/cat4/arm32/ea.0			man-sys-catman
-./usr/share/man/cat4/arm32/eb.0			man-sys-catman
 ./usr/share/man/cat4/arm32/eh.0			man-sys-catman
 ./usr/share/man/cat4/arm32/em.0			man-sys-catman
 ./usr/share/man/cat4/arm32/es.0			man-sys-catman
@@ -540,7 +537,9 @@
 ./usr/share/man/cat4/dpt.0			man-sys-catman
 ./usr/share/man/cat4/drum.0			man-sys-catman
 ./usr/share/man/cat4/dty.0			man-sys-catman
+./usr/share/man/cat4/ea.0			man-sys-catman
 ./usr/share/man/cat4/eap.0			man-sys-catman
+./usr/share/man/cat4/eb.0			man-sys-catman
 ./usr/share/man/cat4/ec.0			man-sys-catman
 ./usr/share/man/cat4/ef.0			man-sys-catman
 ./usr/share/man/cat4/eg.0			man-sys-catman
@@ -1956,7 +1955,6 @@
 ./usr/share/man/man4/arm26/arcwsmouse.4		man-sys-man
 ./usr/share/man/man4/arm26/cpu.4		man-sys-man
 ./usr/share/man/man4/arm26/dtide.4		man-sys-man
-./usr/share/man/man4/arm26/ea.4			man-sys-man
 ./usr/share/man/man4/arm26/eh.4			man-sys-man
 ./usr/share/man/man4/arm26/ei.4			man-sys-man
 ./usr/share/man/man4/arm26/podulebus.4		man-sys-man
@@ -1967,8 +1965,6 @@
 ./usr/share/man/man4/arm32/com.4		man-sys-man
 ./usr/share/man/man4/arm32/cosc.4		man-sys-man
 ./usr/share/man/man4/arm32/csc.4		man-sys-man
-./usr/share/man/man4/arm32/ea.4			man-sys-man
-./usr/share/man/man4/arm32/eb.4			man-sys-man
 ./usr/share/man/man4/arm32/eh.4			man-sys-man
 ./usr/share/man/man4/arm32/em.4			man-sys-man
 ./usr/share/man/man4/arm32/es.4			man-sys-man
@@ -2032,7 +2028,9 @@
 ./usr/share/man/man4/dpt.4			man-sys-man
 ./usr/share/man/man4/drum.4			man-sys-man
 ./usr/share/man/man4/dty.4			man-sys-man
+./usr/share/man/man4/ea.4			man-sys-man
 ./usr/share/man/man4/eap.4			man-sys-man
+./usr/share/man/man4/eb.4			man-sys-man
 ./usr/share/man/man4/ec.4			man-sys-man
 ./usr/share/man/man4/ef.4			man-sys-man
 ./usr/share/man/man4/eg.4			man-sys-man
