@@ -1,10 +1,7 @@
-.\"	$NetBSD: cac.4,v 1.2.2.1 2000/06/22 16:17:04 minoura Exp $
+.\" $NetBSD: mca.4,v 1.2.4.2 2000/06/22 16:17:10 minoura Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\"
-.\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Andy Doran.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -34,54 +31,50 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 9, 2000
-.Dt CAC 4
+.Dd May 28, 2000
+.Dt MCA 4
 .Os
 .Sh NAME
-.Nm cac
-.Nd
-.Tn Compaq array controller driver
+.Nm mca
+.Nd introduction to machine-independent MCA bus support and drivers
 .Sh SYNOPSIS
-.Cd "cac* at pci? dev ? function ?"
-.Sh DESCRIPTION
-The
-.Nm
-driver provides basic message passing and DMA support for Compaq array
-controllers.  Disk arrays are supported by the 
-.Nm ca
-driver.
-.Sh HARDWARE
-The
-.Nm
-driver provides support for the following controllers:
+.Cd "mca0 at mainbus?"
+.Cd "XX*  at mca? slot ?"
+.Sh INTRODUCTION
+.Nx
+includes a machine-independent
+.Tn MCA
+bus subsystem and several machine-independent
+.Tn MCA
+device drivers.
 .Pp
-.Bl -tag -width -offset indent -compact
-.It Tn Compaq Integrated Array
-.It Tn Compaq SMART-2/E
-.It Tn Compaq SMART-2/P
-.It Tn Compaq SMART-2DH
-.It Tn Compaq SMART-2SL
-.It Tn Compaq Smart Array 221
-.It Tn Compaq Smart Array 3100ES
-.It Tn Compaq Smart Array 3200
-.It Tn Compaq Smart Array 4200
-.It Tn Compaq Smart Array 4250ES
+.Sh SUPPORTED DEVICES
+.Nx
+includes machine-independent
+.Tn MCA
+drivers, sorted by device type and driver name:
+.Pp
+.\"
+.Ss SCSI controllers
+.Bl -tag -width speaker -offset indent
+.It aha
+Adaptec AHA-1640
+.Tn SCSI
+interface.
 .El
+.\"
+.Ss Network interfaces
+.Bl -tag -width speaker -offset indent
+.It tr
+TROPIC based token ring interfaces.
+.El
+.\"
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr ca 4
-.Sh AUTHOR
-The
-.Nm
-driver was written by Andy Doran
-.Aq ad@netbsd.org .
+.Xr aha 4 ,
+.Xr tr 4
+.\"
 .Sh HISTORY
-The
-.Nm cac
-driver first appeared in
+The machine-independent
+.Tn MCA
+subsystem appeared in
 .Nx 1.5 .
-.Sh BUGS
-A command pass-through interface and user space control tool are needed.
-.Pp
-ISA and EISA front-ends are needed.
-.Pp

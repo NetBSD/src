@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.34 2000/04/16 08:37:27 mrg Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.34.2.1 2000/06/22 16:17:57 minoura Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -24,24 +24,29 @@ _M=-m ${DESTDIR}/usr/share/mk
 _M=
 .endif
 
-.for dir in ${__REALSUBDIR}
-.for targ in ${TARGETS}
-.PHONY: ${targ}-${dir}
-${targ}-${dir}: .MAKE
-	@case "${dir}" in /*) \
-		echo "${targ} ===> ${dir}"; \
-		cd ${dir}; \
-		${MAKE} ${_M} "_THISDIR_=${dir}/" ${targ}; \
-		;; \
-	*) \
-		echo "${targ} ===> ${_THISDIR_}${dir}"; \
-		cd ${.CURDIR}/${dir}; \
-		${MAKE} ${_M} "_THISDIR_=${_THISDIR_}${dir}/" ${targ}; \
-		;; \
+__recurse: .USE
+	@targ=${.TARGET:C/-.*$//};dir=${.TARGET:C/^[^-]*-//};		\
+	case "$$dir" in /*)						\
+		echo "$$targ ===> $$dir";				\
+		cd "$$dir";						\
+		${MAKE} ${_M} "_THISDIR_=$$dir/" $$targ;		\
+		;;							\
+	*)								\
+		echo "$$targ ===> ${_THISDIR_}$$dir";			\
+		cd "${.CURDIR}/$$dir";					\
+		${MAKE} ${_M} "_THISDIR_=${_THISDIR_}$$dir/" $$targ;	\
+		;;							\
 	esac
+
+.for targ in ${TARGETS}
+.for dir in ${__REALSUBDIR}
+.PHONY: ${targ}-${dir}
+${targ}-${dir}: .MAKE __recurse
 subdir-${targ}: ${targ}-${dir}
-${targ}: subdir-${targ}
 .endfor
+.if defined(__REALSUBDIR)
+${targ}: subdir-${targ}
+.endif
 .endfor
 
 # Make sure all of the standard targets are defined, even if they do nothing.

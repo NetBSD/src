@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.36 2000/01/22 19:31:01 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.36.2.1 2000/06/22 16:17:54 minoura Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -60,17 +60,19 @@ cleankmod:
 #
 .if !target(kmodinstall)
 kmodinstall:: ${DESTDIR}${KMODDIR}/${PROG}
+.PRECIOUS: ${DESTDIR}${KMODDIR}/${PROG}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${KMODDIR}/${PROG}
 .endif
+
+__kmodinstall: .USE
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${KMODOWN} \
+	    -g ${KMODGRP} -m ${KMODMODE} ${.ALLSRC} ${.TARGET}
+
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${KMODDIR}/${PROG}: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${KMODDIR}/${PROG}
-${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${KMODOWN} \
-	    -g ${KMODGRP} -m ${KMODMODE} ${.ALLSRC} ${.TARGET}
+${DESTDIR}${KMODDIR}/${PROG}: ${PROG} __kmodinstall
 .endif
 
 lint: ${LOBJS}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.4,v 1.6 2000/05/26 19:01:51 jdolecek Exp $
+.\"	$NetBSD: tr.4,v 1.6.2.1 2000/06/22 16:17:15 minoura Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,12 +45,13 @@
 .Cd "tr* at isa? port ? irq ?"
 .Cd "tr* at isapnp?"
 .Cd "tr* at mca? slot ?"
+.Cd "tr* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 device driver supports TROPIC I based shared-memory Token-Ring cards.
 .Sh HARDWARE
-Supported cards include the  following IBM and 3COM models:
+Supported cards include the following IBM and 3COM models:
 .pP
 .Bl -tag -width xxxx -offset indent
 .It IBM
@@ -64,13 +65,27 @@ Token-Ring Network 16/4 Adapter
 .It IBM
 Token-Ring Network 16/4 Adapter/A
 .It IBM
+Token-Ring 16/4 Credit Card Adapter
+.It IBM
+Token Ring Auto 16/4 Credit Card Adapter
+.It IBM
+Turbo 16/4 Token Ring PC Card
+.It IBM
 16/4 ISA Adapter
 .It IBM
 Auto 16/4 Token-Ring ISA Adapter
+.It IBM
+Token Ring 16/4 Credit Card Adapter
+.It IBM
+Token Ring Auto 16/4 Credit Card Adapter
+.It IBM
+Turbo 16/4 Token Ring PC Card
 .It 3COM
 3C619 TokenLink
 .It 3COM
 3C319 TokenLink Velocity
+.It 3COM
+3C389 TokenLink Velocity PC Card
 .El
 .Sh "SOURCE ROUTING"
 Setting IFF_LINK0 enables Token-Ring source routing.  Setting
@@ -84,11 +99,17 @@ It doesn't support
 yet, too.
 .\".Sh MEDIA SELECTION
 .\".Sh DIAGNOSTICS
+.Sh "BUGS"
+The PCMCIA attachment does not work with the
+.Xr cbb 4
+Cardbus driver.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
+.Xr mca 4 ,
+.Xr pcmcia 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

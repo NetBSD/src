@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.10 1999/07/20 22:38:49 perry Exp $
+.\"	$NetBSD: dlfcn.3,v 1.10.6.1 2000/06/22 16:17:01 minoura Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,6 +81,13 @@ The argument can either be an absolute pathname or it can be of the form
 in which case the same library search rules apply that are used for
 .Dq intrinsic
 shared library searches.
+If the first argument is 
+.Dv NULL ,
+.Fn dlopen
+returns a handle on the global symbol object. This object
+provides access to all symbols from an ordered set of objects consisting
+of the original program image and any dependencies loaded during startup.
+.Pp
 The second argument has currently no effect, but should be set to
 .Dv DL_LAZY
 for future compatibility.

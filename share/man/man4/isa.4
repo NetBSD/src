@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.21 2000/05/02 11:11:39 augustss Exp $
+.\"	$NetBSD: isa.4,v 1.21.2.1 2000/06/22 16:17:08 minoura Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -181,6 +181,8 @@ SDL Communications Riscom/N2 synchronous serial interfaces.
 SMC91C9x-based
 .Tn Ethernet
 interfaces.
+.It tr
+TROPIC based token ring interfaces.
 .It we
 Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ
 .Tn Ethernet
@@ -228,11 +230,12 @@ devices.
 .Xr bha 4 ,
 .Xr cms 4 ,
 .Xr cy 4 ,
-.Xr gus 4 ,
+.Xr dpt 4 ,
 .Xr ec 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
 .Xr ess 4 ,
+.Xr gus 4 ,
 .Xr ie 4 ,
 .Xr isapnp 4 ,
 .Xr iy 4 ,
@@ -251,6 +254,7 @@ devices.
 .Xr sm 4 ,
 .Xr uha 4 ,
 .Xr wd 4 ,
+.Xr wdc 4 ,
 .Xr wds 4 ,
 .Xr we 4 ,
 .Xr wss 4 ,

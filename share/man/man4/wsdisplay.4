@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
+.\" $NetBSD: wsdisplay.4,v 1.5.2.1 2000/06/22 16:17:17 minoura Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSDISPLAY 4
@@ -6,6 +6,8 @@
 .Nm wsdisplay
 .Nd generic display device support in wscons
 .Sh SYNOPSIS
+.Cd wsdisplay* at ega? console ?
+(EGA display on ISA)
 .Cd wsdisplay* at vga? console ?
 (VGA display on ISA or PCI)
 .Cd wsdisplay* at pcdisplay? console ?
@@ -109,6 +111,8 @@ display devices are not tested.
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8 ,
 .Xr wsfontload 8 ,
+.Xr ega 4 ,
 .Xr vga 4 ,
 .Xr pcdisplay 4 ,
 .Xr tty 4
+

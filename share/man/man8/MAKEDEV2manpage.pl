@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.3 2000/05/02 00:15:41 hubertf Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.3.2.1 2000/06/22 16:17:38 minoura Exp $
 #
 # Copyright (c) 1999
 #	Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
@@ -226,11 +226,13 @@ sub doarch
     close(MANPAGE);
 
     $rc=system("cmp >/dev/null 2>&1 'man8.${arch}/MAKEDEV.8.old' 'man8.${arch}/MAKEDEV.8'");
-    unlink("man8.${arch}/MAKEDEV.8.old");
 
     if ($rc) {
+	unlink("man8.${arch}/MAKEDEV.8.old");
 	return "updated";
     } else {
+	unlink("man8.${arch}/MAKEDEV.8");
+	rename("man8.${arch}/MAKEDEV.8.old", "man8.${arch}/MAKEDEV.8");
 	return "unchanged";
     }
 }

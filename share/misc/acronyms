@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.60 2000/05/14 01:32:58 wiz Exp $
+$NetBSD: acronyms,v 1.60.2.1 2000/06/22 16:17:51 minoura Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -29,6 +29,7 @@ DWIM	do what I mean
 EG	evil grin
 EMSG	email message
 ETLA	extended three letter acronym
+FAQ	frequently asked question
 FIIK	fuck if I know
 FSDO	for some definition of
 FUBAR	fucked up beyond all recognition
@@ -56,6 +57,7 @@ JK	just kidding
 JMO	just my opinion
 JTLYK	just to let you know
 KISS	keep it simple, stupid
+KITA	kick in the ass
 KNF	kernel normal form
 L8R	later
 LMSO	laughing my socks off

@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.4 2000/02/04 02:17:16 mjl Exp $
+.\"	$NetBSD: login.conf.5,v 1.4.2.1 2000/06/22 16:17:32 minoura Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm login.conf
 .Nd login class capability data base
 .Sh SYNOPSIS
-.Nm /etc/login.conf
+.Nm login.conf
 .Sh DESCRIPTION
 The
 .Nm login.conf
@@ -306,10 +306,19 @@ field in the password file (see
 The class is used to look up a corresponding entry in the
 .Pa login.conf
 file.
+.Sh FILES
+.Bl -tag -width /etc/login.conf.db -compact
+.It Pa /etc/login.conf
+login class capability database
+.It Pa /etc/login.conf.db
+hashed database built with
+.Xr cap_mkdb 1
+.El
 .Sh SEE ALSO
 .Xr getcap 3 ,
 .Xr login_cap 3 ,
 .Xr ttys 5 ,
+.Xr cap_mkdb 1 ,
 .Xr ftpd 8 ,
 .Xr login 8
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.24 2000/05/11 19:35:03 bjh21 Exp $
+.\"	$NetBSD: hier.7,v 1.24.2.1 2000/06/22 16:17:36 minoura Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -106,9 +106,6 @@ repository
 system configuration files and scripts
 .Pp
 .Bl -tag -width "master.passwd" -compact
-.It Sy aliases*
-name alias files for
-.Xr sendmail 8
 .It Sy amd*
 configuration files for
 .Xr amd 8
@@ -182,6 +179,17 @@ see
 local timezone information;
 see
 .Xr ctime 3
+.It Sy mail/
+configuration files for
+.Xr sendmail 8
+.Bp
+.Bl -tag -width "sendmail.*" -compact
+.It Sy aliases*
+name alias files
+.It Sy sendmail.*
+.Xr sendmail 8
+configuration information
+.El
 .It Sy mail.rc
 system-wide initialization script for
 .Xr mail 1
@@ -232,18 +240,19 @@ system printer configuration; see
 protocol name database; see
 .Xr protocols 5
 .It Sy rc
+.It Sy rc.shutdown
 .It Sy rc.local
-system startup files; see
+.It Sy rc.d/
+system startup and shutdown scripts; see
 .Xr rc 8
+and
+.Xr rc.d 8
 .It Sy remote
 remote host description file; see
 .Xr remote 5
 .It Sy security
 daily (in)security script run by
 .Xr cron 8
-.It Sy sendmail.*
-.Xr sendmail 8
-configuration information
 .It Sy services
 service name data base; see
 .Xr services 5
