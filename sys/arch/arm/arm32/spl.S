@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1 2001/07/28 13:28:04 chris Exp $	*/
+/*	$NetBSD: spl.S,v 1.2 2001/09/28 10:01:02 chris Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -69,6 +69,7 @@ ENTRY(raisespl)
 	ldr	r1, Lspl_mask		/* Store in the current spl mask */
 	str	r2, [r1]
 
+					/* stack alignment is 8 bytes */
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	ldmfd	sp!, {r0, pc}		/* Exit */
@@ -88,14 +89,15 @@ ENTRY(lowerspl)
 	ldr	r1, Lspl_mask		/* Store in the current spl mask */
 	str	r2, [r1]
 
+					/* stack alignment is 8 bytes */
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 	ldmfd	sp!, {r0, pc}		/* Exit */
 
 ENTRY(splx)
-	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
+	mov	r3, r0			/* Save the new value */
 	ldr	r0, [r1]
 	cmp	r3, r0
 	moveq	pc, lr
@@ -103,12 +105,15 @@ ENTRY(splx)
 	str	r3, [r1]		/* Store the new spl level */
 
 	ldr	r2, Lspl_masks		/* Get the spl mask */
-	ldr	r2, [r2, r3, lsl #2]	/* Use r4 so available later */
 
 	ldr	r1, Lspl_mask		/* Store in the current spl mask */
+
+	ldr	r2, [r2, r3, lsl #2]	/* Use r4 so available later */
+	
+					/* stack alignment is 8 bytes */
+	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	str	r2, [r1]
 
-	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 	ldmfd	sp!, {r0, pc}		/* Exit */
