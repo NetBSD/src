@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ops.c,v 1.7 1999/10/15 20:39:52 jdolecek Exp $	*/
+/*	$NetBSD: procfs_ops.c,v 1.8 2000/04/07 18:04:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -282,6 +282,8 @@ getkinfo_procfs(op, arg, cnt)
 			if (strcmp(dp->d_name, "..") == 0)
 				continue;
 			if (strcmp(dp->d_name, "curproc") == 0)
+				continue;
+			if (strcmp(dp->d_name, "self") == 0)
 				continue;
 			ki[knum].ki_p = &kp[knum];
 			if (parsekinfo(dp->d_name, &ki[knum]) != 0)
