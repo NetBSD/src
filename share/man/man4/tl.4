@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.5.2.1 1999/04/07 08:13:12 pk Exp $
+.\"	$NetBSD: tl.4,v 1.5.2.2 2000/02/07 20:12:54 he Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -36,13 +36,14 @@
 .Nd Ethernet driver for Texas Instruments ThunderLAN based board
 .Sh SYNOPSIS
 .Cd "tl* at pci? dev ? function ?"
-.Cd "tlphy* at mii?"
-.Cd "nsphy* at mii?"
+.Pp
+Configuration of PHYs are necessary.  See
+.Xr mii 4 .
 .Sh DESCRIPTION
 The
 .Nm tl
 device driver supports network adapters based on
-the Texas Instruments ThunderLAN chip on i386 CPUs.
+the Texas Instruments ThunderLAN chip.
 Supported cards include:
 .Pp
 .Bl -tag -width xxxxxx -offset indent
@@ -55,43 +56,28 @@ in baseboard variant only (the PCI variant doesn't use the same chip !).
 .El
 .Sh MEDIA SELECTION
 The different models of the supported boards come with some subset of RJ-45,
-BNC and AUI connectors.   Supported media include:
-.Pp
-.Bl -tag -width xxxxxxxxxx -offset indent
-.It AUI/DIX
-Standard 15 pin connector
-.It 10Base2
-BNC, also known as thin-net
-.It 10BaseT
-UTP, also known as twisted pair
-.It 100baseTX
-100Mbit over cat-5 UTP
-.El
+BNC and AUI connectors.  Media selection is done using
+.Xr ifconfig 8
+using the standard
+.Xr ifmedia 4
+mechanism.  Refer to those manual pages for more information.
 .Pp
 The
 .Nm 
-driver don't have automatic media selection, and there is no media selected
-by default. An explicit medium must be specified to
+driver don't have full automatic media selection. By default it will do an NWay
+on the UTP port for negotiation of the speed and duplex mode with the
+link partner. If the AUI or BNC port is used, an explicit medium must be
+specified to
 .Xr ifconfig 8
-or in your /etc/ifconfig.tl? file. The media option
-.Em full-duplex
-can be used to switch the UTP port in full-duplex mode.
-.Sh DIAGNOSTICS
-.Dl "tl0: no carrier"
-.Dl "nsphy0: 10baseT: no carrier"
-.in +4
-means that the driver detected a carrier loss. This usually indicates a bad
-link.
+or in your /etc/ifconfig.tl? file.
 .in -4
 .Sh BUGS
 The board marked as untested will always claim having an AUI connector, where
 it may be a BNC one.
 .Pp
-The driver really should have a media autosensing function.
-.Pp
-On AUI and BNC ports, false carrier loss may be detected on heavily-loaded
-networks.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
-.Xr intro 4 ,
-.Xr pci 4
+.Xr ifmedia 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr mii 4
