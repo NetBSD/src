@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.2 1999/02/27 13:17:08 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.3 1999/02/27 22:21:13 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -236,13 +236,10 @@ stp4020print(aux, busname)
 	void *aux;
 	const char *busname;
 {
-	struct sbus_attach_args *sa = aux;
-	bus_space_tag_t t = sa->sa_bustag;
-	struct stp4020_softc *sc = t->cookie;
+	struct pcmciabus_attach_args *paa;
+	struct stp4020_socket *h = paa->pch;
 
-	sa->sa_bustag = sc->sc_bustag;	/* XXX */
-	sbus_print(aux, busname);	/* XXX */
-	sa->sa_bustag = t;		/* XXX */
+	printf(" socket %d", h->sock);
 	return (UNCONF);
 }
 
