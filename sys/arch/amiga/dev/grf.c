@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.26 1996/04/21 21:11:07 veego Exp $	*/
+/*	$NetBSD: grf.c,v 1.27 1996/05/19 20:06:20 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 #include <machine/cpu.h>
+#include <machine/fbio.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>
@@ -278,6 +279,10 @@ grfioctl(dev, cmd, data, flag, p)
 		 * information for grf_ul.
 		 */
 		return(gp->g_mode(gp, GM_GRFIOCTL, data, cmd, dev));
+
+	case FBIOSVIDEO:
+		return(gp->g_mode(gp, GM_GRFIOCTL, data, GRFIOCBLANK, dev));
+
 	default:
 #if NVIEW > 0
 		/*
