@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)logger.c	6.15 (Berkeley) 3/1/91";
 #endif /* not lint */
 
 #include <stdio.h>
+#define	SYSLOG_NAMES
 #include <syslog.h>
 #include <ctype.h>
 
@@ -126,9 +127,6 @@ main(argc, argv)
 
 	exit(0);
 }
-
-#define	SYSLOG_NAMES
-#include <syslog.h>
 
 /*
  *  Decode a symbolic name to a numeric value
