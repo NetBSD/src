@@ -1,4 +1,4 @@
-.\"	$NetBSD: yppoll.8,v 1.5 1997/10/06 00:57:09 lukem Exp $
+.\"	$NetBSD: yppoll.8,v 1.6 1998/01/23 13:38:24 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,14 +47,18 @@
 .Ar mapname
 .Sh DESCRIPTION
 .Nm
-asks a YP server process for the order number and which host is the master
+asks a
+.Tn YP
+server process for the order number and which host is the master
 server for
 .Ar mapname .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl h Ar host
-Ask the YP server process running on
+Ask the
+.Tn YP
+server process running on
 .Ar host
 for information about
 .Ar mapname .
@@ -63,7 +67,9 @@ If
 is not specified, the server polled is the default server returned by
 .Xr ypwhich 1 .
 .It Fl d Ar domain
-Use the YP domain
+Use the
+.Tn YP
+domain
 .Ar domain
 instead of the default domain as returned by
 .Xr domainname 1 .
