@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 1997/06/12 15:03:10 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.25 1997/10/10 10:27:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@ int	yyparse __P((void));
 
 extern char *optarg;
 extern int optind;
+extern int yydebug;
 
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
@@ -93,8 +94,12 @@ main(argc, argv)
 	int pflag, ch;
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "gpb:s:")) != EOF) {
+	while ((ch = getopt(argc, argv, "Dgpb:s:")) != EOF) {
 		switch (ch) {
+
+		case 'D':
+			yydebug = 1;
+			break;
 
 		case 'g':
 			/*
@@ -198,6 +203,12 @@ usage:
 	 * Fix (as in `set firmly in place') files.
 	 */
 	if (fixfiles())
+		stop();
+
+	/*
+	 * Fix objects and libraries.
+	 */
+	if (fixobjects())
 		stop();
 
 	/*

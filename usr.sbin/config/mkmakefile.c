@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.35 1997/10/10 10:27:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -219,6 +219,7 @@ emitobjs(fp)
 	register FILE *fp;
 {
 	register struct files *fi;
+	register struct objects *oi;
 	register int lpos, len, sp;
 
 	if (fputs("OBJS=", fp) < 0)
@@ -236,6 +237,21 @@ emitobjs(fp)
 			lpos = 7;
 		}
 		if (fprintf(fp, "%c%s.o", sp, fi->fi_base) < 0)
+			return (1);
+		lpos += len + 1;
+		sp = ' ';
+	}
+	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
+		if ((oi->oi_flags & OI_SEL) == 0)
+			continue;
+		len = strlen(oi->oi_path) + 3;
+		if (lpos + len > 72) {
+			if (fputs(" \\\n", fp) < 0)
+				return (1);
+			sp = '\t';
+			lpos = 7;
+		}
+		if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
 			return (1);
 		lpos += len + 1;
 		sp = ' ';
