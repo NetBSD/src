@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.95.2.2 2003/01/26 10:32:57 jmc Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.95.2.3 2003/06/02 14:49:47 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.2 2003/01/26 10:32:57 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.3 2003/06/02 14:49:47 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -796,6 +796,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
+#ifndef PPPOE_SERVER
+		if (m->m_flags & (M_MCAST | M_BCAST)) {
+			m_freem(m);
+			return;
+		}
+#endif
+
 		if (etype == ETHERTYPE_PPPOEDISC) 
 			inq = &ppoediscinq;
 		else
