@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.12 2001/04/05 04:39:02 thorpej Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.13 2002/12/30 16:41:53 veego Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -43,7 +43,7 @@
 #else
 #include <string.h>
 #endif
-#include <isofs/cd9660/iso.h>
+#include <fs/cd9660/iso.h>
 
 #include "stand.h"
 #include "cd9660.h"
