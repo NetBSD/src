@@ -1,24 +1,17 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.10 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.11 2004/04/22 22:31:18 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
-DEPFILEGLOB=	${DESTDIR}/usr/include/sys/*.h \
-		${DESTDIR}/usr/include/net/*.h \
-		${DESTDIR}/usr/include/netinet/*.h \
-		${DESTDIR}/usr/include/crypto/*.h
+DEPFILEGLOB=	${DESTDIR}/usr/include/*/*.h
 
-SEARCHFILES=	${DESTDIR}/usr/include/sys/ioctl.h \
-		${DESTDIR}/usr/include/sys/ioctl_compat.h \
-		${DESTDIR}/usr/include/crypto/cryptodev.h
-
-.if !target(cleandir) && !target(obj)
-DEPFILES != grep -l '_IO.*(' ${DEPFILEGLOB}
+.if !target(obj) && !target(clean)
+DEPFILES != egrep -l '(_IO\(|_IOR\(|_IOW\(|_IORW\()' ${DEPFILEGLOB}
 .endif
 
-ioctl.c: mkioctls ${DEPFILES}
+ioctl.c: mkioctls Makefile ${DEPFILES}
 	${_MKTARGET_CREATE}
 	CC="${CC}" DESTDIR=${DESTDIR} \
 	    ${HOST_SH} ${NETBSDSRCDIR}/usr.bin/kdump/mkioctls \
-	    ${SEARCHFILES} > ioctl.c
+	    ${DEPFILES} > ioctl.c
 
 ${DEPFILES}: .PRECIOUS
