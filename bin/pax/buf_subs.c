@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.7 1997/07/20 20:32:20 christos Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.8 1997/07/25 23:53:54 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.7 1997/07/20 20:32:20 christos Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.8 1997/07/25 23:53:54 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,9 @@ appnd_start(skcnt)
 	int res;
 	off_t cnt;
 
+#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
+	(void)&cnt;
+#endif
 	if (exit_val != 0) {
 		tty_warn(0, "Cannot append to an archive that may have flaws.");
 		return(-1);
@@ -442,6 +445,10 @@ rd_skip(skcnt)
 	off_t res;
 	off_t cnt;
 	off_t skipped = 0;
+
+#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
+	(void)&cnt;
+#endif
 
 	/*
 	 * consume what data we have in the buffer. If we have to move foward
