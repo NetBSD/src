@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.14 2001/02/19 23:22:46 cgd Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.15 2002/07/20 08:40:20 grant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.14 2001/02/19 23:22:46 cgd Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.15 2002/07/20 08:40:20 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ main(argc, argv)
 		if (ConfigFile == NULL)
 			ConfigFile = argv[optind];
 		else {
-			warnx("too many config files (`%s' ignored)\n",
+			warnx("too many config files (`%s' ignored)",
 			    argv[optind]);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.2 1997/10/18 04:01:21 lukem Exp $	*/
+/*	$NetBSD: test.c,v 1.3 2002/07/20 08:40:20 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #include <rpc/rpc.h>
@@ -8,7 +8,7 @@
 static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";
 static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: test.c,v 1.2 1997/10/18 04:01:21 lukem Exp $");
+__RCSID("$NetBSD: test.c,v 1.3 2002/07/20 08:40:20 grant Exp $");
 #endif
 #endif				/* not lint */
 
@@ -316,7 +316,7 @@ main(int argc, char **argv)
 	printf("Creating client for host %s\n", argv[1]);
 	cli = clnt_create(argv[1], NLM_PROG, NLM_VERS, "udp");
 	if (!cli) {
-		errx(1, "Failed to create client\n");
+		errx(1, "Failed to create client");
 		/* NOTREACHED */
 	}
 	clnt_control(cli, CLGET_TIMEOUT, &tim);

@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.28 2002/06/14 23:20:42 simonb Exp $ */
+/* $NetBSD: xlint.c,v 1.29 2002/07/20 08:40:17 grant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.28 2002/06/14 23:20:42 simonb Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.29 2002/07/20 08:40:17 grant Exp $");
 #endif
 
 #include <sys/param.h>
@@ -602,7 +602,7 @@ fname(const char *name)
 
 	if (!is_stdin && strcmp(suff, "c") != 0 &&
 	    (strncmp(bn, "llib-l", 6) != 0 || bn != suff)) {
-		warnx("unknown file type: %s\n", name);
+		warnx("unknown file type: %s", name);
 		return;
 	}
 
