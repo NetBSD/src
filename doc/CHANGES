@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.7 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.294.2.8 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -658,6 +658,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	acorn32: Generate sparkive with new bootloader for install
 		[gavan/abs 20040608]
 	cvs: cvs upgraded to 1.11.17 [christos 20040616]
+	libc: Add strcasestr(3), case insensitive version of strstr(3).
+		[junyoung 20040703]
 	geodeide(4): Added driver for the AMD Geode CS5530A IDE controller
 		[bouyer 20040709]
 	sgimips: Add support for on-board MACE MAC-110 Ethernet on O2.
