@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.49 2004/10/26 06:54:53 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.50 2004/10/26 07:03:29 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.49 2004/10/26 06:54:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.50 2004/10/26 07:03:29 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1860,11 +1860,6 @@ nd6_setdefaultiface(ifindex)
 			nd6_defifp = ifindex2ifnet[nd6_defifindex];
 		} else
 			nd6_defifp = NULL;
-
-		/*
-		 * Rescan default router list, refresh default route(s).
-		 */
-		defrouter_select();
 	}
 
 	return (error);
