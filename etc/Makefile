@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.273 2004/01/08 02:37:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.274 2004/01/11 04:21:18 tls Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -124,6 +124,8 @@ ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 
+SSH=	ssh_known_hosts
+
 .if ${TARGET_ENDIANNESS} == "1234"
 PWD_MKDB_ENDIAN=	-L
 .elif ${TARGET_ENDIANNESS} == "4321"
@@ -245,6 +247,10 @@ install-etc-files: check_DESTDIR MAKEDEV
 .for file in ${NAMEDB}
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    namedb/${file} ${DESTDIR}/etc/namedb
+.endfor
+.for file in ${SSH}
+	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ssh/${file} ${DESTDIR}/etc/ssh
 .endfor
 	(cd ${.CURDIR}/powerd; ${MAKE} install)
 	(cd ${.CURDIR}/rc.d; ${MAKE} install)
