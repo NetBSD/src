@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.34 1999/02/18 06:09:25 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.35 1999/05/02 22:50:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.34 1999/02/18 06:09:25 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.35 1999/05/02 22:50:19 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,6 +292,7 @@ dofiles(kp)
 	struct file file;
 	struct filedesc0 filed0;
 #define	filed	filed0.fd_fd
+	struct cwdinfo cwdi;
 	struct proc *p = &kp->kp_proc;
 	struct eproc *ep = &kp->kp_eproc;
 
@@ -299,10 +300,14 @@ dofiles(kp)
 	Pid = p->p_pid;
 	Comm = p->p_comm;
 
-	if (p->p_fd == NULL)
+	if (p->p_fd == NULL || p->p_cwdi == NULL)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
 		warnx("can't read filedesc at %p for pid %d", p->p_fd, Pid);
+		return;
+	}
+	if (!KVM_READ(p->p_cwdi, &cwdi, sizeof(cwdi))) {
+		warnx("can't read cwdinfo at %p for pid %d", p->p_cwdi, Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
@@ -313,12 +318,12 @@ dofiles(kp)
 	/*
 	 * root directory vnode, if one
 	 */
-	if (filed.fd_rdir)
-		vtrans(filed.fd_rdir, RDIR, FREAD);
+	if (cwdi.cwdi_rdir)
+		vtrans(cwdi.cwdi_rdir, RDIR, FREAD);
 	/*
 	 * current working directory vnode
 	 */
-	vtrans(filed.fd_cdir, CDIR, FREAD);
+	vtrans(cwdi.cwdi_cdir, CDIR, FREAD);
 	/*
 	 * ktrace vnode, if one
 	 */
