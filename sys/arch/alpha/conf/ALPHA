@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.104 1999/09/09 12:33:43 augustss Exp $
+# $NetBSD: ALPHA,v 1.105 1999/09/28 23:43:07 ad Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -191,6 +191,7 @@ adv*	at	pci? dev ? function ?		# AdvanSys SCSI
 adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -281,6 +282,7 @@ scsibus* at	ahb?
 scsibus* at	ahc?
 scsibus* at	asc?
 scsibus* at	bha?
+scsibus* at	dpt?
 scsibus* at	isp?
 scsibus* at	ncr?
 scsibus* at	pcscp?

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.29 1999/08/07 07:40:41 thorpej Exp $
+# $NetBSD: INSTALL,v 1.30 1999/09/28 23:43:07 ad Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -131,6 +131,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
@@ -197,6 +198,7 @@ scsibus* at	adw?
 scsibus* at	ahc?
 scsibus* at	asc?
 scsibus* at	bha?
+scsibus* at	dpt?
 scsibus* at	isp?
 scsibus* at	ncr?
 
