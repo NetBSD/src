@@ -2,6 +2,6 @@
 
 PROG=	msgs
 DPADD=	${LIBTERM} ${LIBCOMPAT}
-LDADD=	-ltermlib -lcompat
+LDADD=	-ltermlib
 
 .include <bsd.prog.mk>
