@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.30 2003/08/07 11:25:36 agc Exp $	*/
+/*	$NetBSD: mtree.c,v 1.30.2.1 2004/06/22 07:22:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
@@ -39,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.30 2003/08/07 11:25:36 agc Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.30.2.1 2004/06/22 07:22:39 tron Exp $");
 #endif
 #endif /* not lint */
 
