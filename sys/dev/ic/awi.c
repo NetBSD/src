@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.29 2000/12/14 06:27:24 thorpej Exp $	*/
+/*	$NetBSD: awi.c,v 1.30 2000/12/18 23:57:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -962,7 +962,6 @@ awi_start(ifp)
 				len += IEEE80211_WEP_IVLEN +
 				    IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
 			if (awi_next_txd(sc, len, &frame, &ntxd)) {
-				IF_PREPEND(&ifp->if_snd, m0);
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
