@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.7 2002/03/22 04:33:58 thorpej Exp $
+# $NetBSD: ipnat,v 1.8 2002/09/24 11:03:53 martti Exp $
 #
 
 # PROVIDE: ipnat
@@ -21,6 +21,10 @@ ipnat_start()
 {
 	if [ ! -f ${config} ]; then
 		return 0
+	fi
+	if [ "`/sbin/sysctl -n net.inet.ip.forwarding`" = "0" ]; then
+		logger -s -p daemon.warning -t ipnat \
+			"WARNING: net.inet.ip.forwarding is 0"
 	fi
 	if ! checkyesno ipfilter || [ ! -f /etc/ipf.conf ]; then
 		echo "Enabling ipfilter for NAT."
