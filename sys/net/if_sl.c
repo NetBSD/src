@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.73 2001/03/31 00:35:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -262,7 +262,7 @@ slopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw && (tp->t_linesw->l_no == SLIPDISC))
+	if (tp->t_linesw->l_no == SLIPDISC)
 		return (0);
 
 	for (nsl = NSL, sc = sl_softc; --nsl >= 0; sc++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.25 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.26 2001/03/31 00:35:23 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -127,7 +127,7 @@ tbopen(dev, tp)
 {
 	struct tb *tbp;
 
-	if (tp->t_linesw && (tp->t_linesw->l_no == TABLDISC))
+	if (tp->t_linesw->l_no == TABLDISC)
 		return (ENODEV);
 	ttywflush(tp);
 	for (tbp = tb; tbp < &tb[NTB]; tbp++)
