@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/04/26 15:50:26 lukem Exp $
+#	$NetBSD: list,v 1.3 2002/06/01 08:18:45 leo Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -45,6 +45,7 @@ PROG	usr/sbin/chroot
 PROG	sbin/ahdilabel
 PROG	usr/sbin/loadkmap
 
+SPECIAL	installboot	srcdir	sys/arch/atari/stand/installboot
 SPECIAL	ftp		srcdir	distrib/utils/x_ftp
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	mount		srcdir	distrib/utils/x_mount
