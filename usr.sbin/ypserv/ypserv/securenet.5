@@ -1,4 +1,4 @@
-.\"	$NetBSD: securenet.5,v 1.2 1997/10/02 14:16:48 lukem Exp $
+.\"	$NetBSD: securenet.5,v 1.3 1997/11/08 15:03:42 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -40,7 +40,9 @@ configuration file for secure networks
 .Sh DESCRIPTION
 The 
 .Nm
-file controls which hosts can connect to the YP server.
+file controls which hosts can connect to the
+.Tn YP
+server.
 .Pp
 The format is rather simple. Each row consists of two items. The first item
 is the network mask. The second item is the network.
@@ -67,4 +69,6 @@ configuration file.
 .Sh HISTORY
 The
 .Nm
-file was added to YP by Sun Microsystems, Inc. as a bugfix for weak security.
+file was added to
+.Tn YP
+by Sun Microsystems, Inc. as a bugfix for weak security.
