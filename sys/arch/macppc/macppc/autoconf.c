@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1998/07/13 19:37:28 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1998/07/24 14:40:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,8 @@ configure()
 	interrupt_reg = mapiodev(0xf3000000, NBPG);
 	out32rb(INT_ENABLE_REG, 0);		/* disable all intr. */
 	out32rb(INT_CLEAR_REG, 0xffffffff);	/* clear pending intr. */
+
+	calc_delayconst();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
