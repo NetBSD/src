@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.8 1997/05/04 06:40:57 kleink Exp $
+ *	$NetBSD: SYS.h,v 1.9 1999/03/31 18:14:27 kleink Exp $
  */
 
 #include <machine/asm.h>
@@ -50,6 +50,14 @@
 #define _CAT(x,y) x/**/y
 #endif
 
+#ifdef __ELF__
+#define CERROR		_C_LABEL(__cerror)
+#define CURBRK		_C_LABEL(__curbrk)
+#else
+#define CERROR		_ASM_LABEL(cerror)
+#define CURBRK		_ASM_LABEL(curbrk)
+#endif
+
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can
  * change it to be position independent later, if need be.
@@ -57,10 +65,10 @@
 #ifdef PIC
 #define	ERROR() \
 	PIC_PROLOGUE(%g1,%g2); \
-	ld [%g1+cerror],%g2; jmp %g2; nop
+	ld [%g1+CERROR],%g2; jmp %g2; nop
 #else
 #define	ERROR() \
-	sethi %hi(cerror),%g1; or %lo(cerror),%g1,%g1; jmp %g1; nop
+	sethi %hi(CERROR),%g1; or %lo(CERROR),%g1,%g1; jmp %g1; nop
 #endif
 
 /*
@@ -113,4 +121,4 @@
 	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL
 
-	.globl	cerror
+	.globl	CERROR
