@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.17 1997/09/14 14:36:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $";
+__RCSID("$NetBSD: pass1.c,v 1.17 1997/09/14 14:36:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,9 +105,9 @@ pass1()
 static void
 checkinode(inumber, idesc)
 	ino_t inumber;
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct dinode *dp;
+	struct dinode *dp;
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
@@ -269,12 +270,12 @@ unknown:
 
 int
 pass1check(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
 	int res = KEEPON;
 	int anyout, nfrags;
 	daddr_t blkno = idesc->id_blkno;
-	register struct dups *dlp;
+	struct dups *dlp;
 	struct dups *new;
 
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
