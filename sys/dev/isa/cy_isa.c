@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.1 1996/09/24 17:45:54 christos Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.2 1996/09/26 19:24:04 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -38,6 +38,7 @@ cy_probe_isa(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct cy_softc sc;
+	int found;
 
 	memcpy(&sc.sc_dev, match, sizeof(struct device));
 
@@ -53,15 +54,16 @@ cy_probe_isa(parent, match, aux)
 	    &sc.sc_memh) != 0)
 		return 0;
 
-	if (cy_find(&sc) == 0)
-		return 0;
+	found = cy_find(&sc);
 
 	bus_mem_unmap(ia->ia_bc, sc.sc_memh, CY_MEMSIZE);
 
-	ia->ia_iosize = 0;
-	ia->ia_msize = CY_MEMSIZE;
+	if (found) {
+		ia->ia_iosize = 0;
+		ia->ia_msize = CY_MEMSIZE;
+	}
 
-	return 1;
+	return found;
 }
 
 static void
