@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.47 2000/03/10 15:30:55 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.48 2000/06/26 15:48:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,6 +42,13 @@
 
 #ifndef _NETINET_IN_H_
 #define	_NETINET_IN_H_
+
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	sa_family_t
+#endif
 
 /*
  * Protocols
@@ -193,11 +200,11 @@ struct in_addr {
  * Socket address, internet style.
  */
 struct sockaddr_in {
-	u_int8_t  sin_len;
-	u_int8_t  sin_family;
-	u_int16_t sin_port;
-	struct	  in_addr sin_addr;
-	int8_t	  sin_zero[8];
+	u_int8_t	sin_len;
+	sa_family_t	sin_family;
+	u_int16_t	sin_port;
+	struct in_addr	sin_addr;
+	int8_t		sin_zero[8];
 };
 
 #define INET_ADDRSTRLEN                 16
