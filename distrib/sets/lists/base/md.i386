@@ -1,17 +1,27 @@
-# $NetBSD: md.i386,v 1.90 2002/03/25 08:04:06 kent Exp $
+# $NetBSD: md.i386,v 1.91 2002/07/04 00:52:49 itojun Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
 ./usr/bin/pmc				base-util-bin
+./usr/lib/libi386.a			base-sys-shlib
+./usr/lib/libi386.so			base-sys-shlib
+./usr/lib/libi386.so.0			base-sys-shlib
 ./usr/lib/libi386.so.0.4		base-sys-shlib
+./usr/lib/libi386_p.a			base-sys-shlib
+./usr/lib/libi386_pic.a			base-sys-shlib
+./usr/lib/libm387.a			base-sys-shlib
+./usr/lib/libm387.so			base-sys-shlib
+./usr/lib/libm387.so.0			base-sys-shlib
 ./usr/lib/libm387.so.0.0		base-sys-shlib
+./usr/lib/libm387_p.a			base-sys-shlib
+./usr/lib/libm387_pic.a			base-sys-shlib
 ./usr/libexec/ld.so			base-sys-shlib
 ./usr/lkm/compat_freebsd.o		base-sys-lkm
 ./usr/lkm/compat_linux.o		base-sys-lkm
 ./usr/lkm/compat_pecoff.o		base-sys-lkm
 ./usr/lkm/compat_svr4.o			base-sys-lkm
-./usr/lkm/exec_freebsd_elf.o		base-sys-lkm
 ./usr/lkm/exec_freebsd_aout.o		base-sys-lkm
+./usr/lkm/exec_freebsd_elf.o		base-sys-lkm
 ./usr/lkm/exec_linux_elf.o		base-sys-lkm
 ./usr/lkm/exec_pecoff.o			base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o		base-sys-lkm
