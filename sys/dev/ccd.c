@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.17 1995/10/09 05:21:09 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.18 1995/10/09 05:37:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -1039,7 +1039,7 @@ ccdioctl(dev, cmd, data, flag, p)
 				--dkn;
 #endif
 			for (j = 0; j < lookedup; ++j)
-				(void)vn_close(vpp[i], FREAD|FWRITE,
+				(void)vn_close(vpp[j], FREAD|FWRITE,
 				    p->p_ucred, p);
 			bzero(&ccd_softc[unit], sizeof(struct ccd_softc));
 			free(vpp, M_DEVBUF);
