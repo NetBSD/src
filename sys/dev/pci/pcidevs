@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.373 2001/12/13 20:40:28 bouyer Exp $
+$NetBSD: pcidevs,v 1.374 2001/12/15 13:17:49 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -523,6 +523,7 @@ vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor LEVELONE		0x1394	Level One
+vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hi/Fn
 vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -960,7 +961,10 @@ product CMEDIA CMI8738B		0x0112	CMI8738B PCI Audio Device
 product CMEDIA HSP56		0x0211	HSP56 Audiomodem Riser
 
 /* Cogent Data Technologies products */
-product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
+product COGENT EM110TX		0x1400	EX110TX PCI Fast Ethernet Adapter
+
+/* Cologne Chip Designs */
+product COLOGNECHIP HFC		0x2bd0	HFC-S
 
 /* COMPAL products */
 product	COMPAL 38W2		0x0011	COMPAL 38W2 OEM Notebook
