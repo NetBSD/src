@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0reg.h,v 1.3 1998/07/21 19:54:19 thorpej Exp $	*/
+/*	$NetBSD: cs89x0reg.h,v 1.4 1998/07/21 22:04:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -115,6 +115,7 @@
 #define PKTPG_SELF_CTL		0x0114
 #define PKTPG_BUS_CTL		0x0116
 #define PKTPG_TEST_CTL		0x0118
+#define	PKTPG_AUTONEG_CTL	0x011C
 #define PKTPG_ISQ		0x0120
 #define PKTPG_RX_EVENT		0x0124
 #define PKTPG_TX_EVENT		0x0128
@@ -124,6 +125,8 @@
 #define PKTPG_LINE_ST		0x0134
 #define PKTPG_SELF_ST		0x0136
 #define PKTPG_BUS_ST		0x0138
+#define	PKTPG_TDR		0x013c
+#define	PKTPG_AUTONEG_ST	0x013e
 #define PKTPG_TX_CMD		0x0144
 #define PKTPG_TX_LENGTH		0x0146
 #define PKTPG_LOG_ADDR		0x0150	/* logical address filter hash tbl */
