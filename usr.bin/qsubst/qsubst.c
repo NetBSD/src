@@ -1,4 +1,4 @@
-/*	$NetBSD: qsubst.c,v 1.4 2001/04/22 05:35:35 simonb Exp $	*/
+/*	$NetBSD: qsubst.c,v 1.5 2002/12/08 21:29:27 perry Exp $	*/
 
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
@@ -124,8 +124,8 @@ static char *str1;
 static char *str2;
 static int s1l;
 static int s2l;
-static long nls[MAX_C_A+1];
-static char buf[(BUF_SIZ*2)+2];
+static long nls[MAX_C_A + 1];
+static char buf[(BUF_SIZ * 2) + 2];
 static char *bufp;
 static char *bufp0;
 static char *bufpmax;
@@ -145,475 +145,476 @@ static char tcp_buf[1024];
 static char cap_buf[1024];
 static struct termios orig_tio;
 
-static void tstp_self(void)
+static void 
+tstp_self(void)
 {
- void (*old_tstp)(int);
- int mask;
+	void (*old_tstp) (int);
+	int mask;
 
- mask = sigblock(0);
- kill(getpid(),SIGTSTP);
- old_tstp = signal(SIGTSTP,SIG_DFL);
- sigsetmask(mask&~sigmask(SIGTSTP));
- signal(SIGTSTP,old_tstp);
+	mask = sigblock(0);
+	kill(getpid(), SIGTSTP);
+	old_tstp = signal(SIGTSTP, SIG_DFL);
+	sigsetmask(mask & ~sigmask(SIGTSTP));
+	signal(SIGTSTP, old_tstp);
 }
 
 /* ARGSUSED */
-static void sigtstp(int sig)
+static void 
+sigtstp(int sig)
 {
- struct termios tio;
+	struct termios tio;
 
- if (tcgetattr(0,&tio) < 0)
-  { tstp_self();
-    return;
-  }
- tcsetattr(0,TCSAFLUSH|TCSASOFT,&orig_tio);
- tstp_self();
- tcsetattr(0,TCSADRAIN|TCSASOFT,&tio);
+	if (tcgetattr(0, &tio) < 0) {
+		tstp_self();
+		return;
+	}
+	tcsetattr(0, TCSAFLUSH | TCSASOFT, &orig_tio);
+	tstp_self();
+	tcsetattr(0, TCSADRAIN | TCSASOFT, &tio);
 }
 
-static void limit_above_below(void)
+static void 
+limit_above_below(void)
 {
- if (cabove > MAX_C_A)
-  { cabove = MAX_C_A;
-  }
- if (cbelow > MAX_C_B)
-  { cbelow = MAX_C_B;
-  }
+	if (cabove > MAX_C_A) {
+		cabove = MAX_C_A;
+	}
+	if (cbelow > MAX_C_B) {
+		cbelow = MAX_C_B;
+	}
 }
 
-static int issymchar(char c)
+static int 
+issymchar(char c)
 {
- return( isascii(c) &&
-	 ( isalnum(c) ||
-	   (c == '_') ||
-	   (c == '$') ) );
+	return (isascii(c) && (isalnum(c) || (c == '_') || (c == '$')));
 }
 
-static int foundit(void)
+static int 
+foundit(void)
 {
- if (wordmode)
-  { return( !issymchar(bufp[-1]) &&
-	    !issymchar(bufp[-2-s1l]) &&
-	    !bcmp(bufp-1-s1l,str1,s1l) );
-  }
- else
-  { return(!bcmp(bufp-s1l,str1,s1l));
-  }
+	if (wordmode) {
+		return (!issymchar(bufp[-1]) &&
+		    !issymchar(bufp[-2 - s1l]) &&
+		    !bcmp(bufp - 1 - s1l, str1, s1l));
+	} else {
+		return (!bcmp(bufp - s1l, str1, s1l));
+	}
 }
 
-static int putcharf(int c)
+static int 
+putcharf(int c)
 {
- return(putchar(c));
+	return (putchar(c));
 }
 
-static void put_ul(char *s)
+static void 
+put_ul(char *s)
 {
- if (ul_)
-  { for (;*s;s++)
-     { printf("_\b%c",*s);
-     }
-  }
- else
-  { tputs(beginul,1,putcharf);
-    fputs(s,stdout);
-    tputs(endul,1,putcharf);
-  }
+	if (ul_) {
+		for (; *s; s++) {
+			printf("_\b%c", *s);
+		}
+	} else {
+		tputs(beginul, 1, putcharf);
+		fputs(s, stdout);
+		tputs(endul, 1, putcharf);
+	}
 }
 
-static int getc_cbreak(void)
+static int 
+getc_cbreak(void)
 {
- struct termios tio;
- struct termios otio;
- char c;
+	struct termios tio;
+	struct termios otio;
+	char c;
 
- if (tcgetattr(0,&tio) < 0) return(getchar());
- otio = tio;
- tio.c_lflag &= ~(ICANON|ECHOKE|ECHOE|ECHO|ECHONL);
- tio.c_cc[VMIN] = 1;
- tio.c_cc[VTIME] = 0;
- tcsetattr(0,TCSANOW|TCSASOFT,&tio);
- switch (read(0,&c,1))
-  { case -1:
-       break;
-    case 0:
-       break;
-    case 1:
-       break;
-  }
- tcsetattr(0,TCSANOW|TCSASOFT,&otio);
- return(c);
+	if (tcgetattr(0, &tio) < 0)
+		return (getchar());
+	otio = tio;
+	tio.c_lflag &= ~(ICANON | ECHOKE | ECHOE | ECHO | ECHONL);
+	tio.c_cc[VMIN] = 1;
+	tio.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW | TCSASOFT, &tio);
+	switch (read(0, &c, 1)) {
+	case -1:
+		break;
+	case 0:
+		break;
+	case 1:
+		break;
+	}
+	tcsetattr(0, TCSANOW | TCSASOFT, &otio);
+	return (c);
 }
 
-static int doit(void)
+static int 
+doit(void)
 {
- long save;
- int i;
- int lastnl;
- int use_replacement;
+	long save;
+	int i;
+	int lastnl;
+	int use_replacement;
 
- if (flying)
-  { return(flystate);
-  }
- use_replacement = 0;
- save = ftell(workf);
- do
-  { for (i=MAX_C_A-cabove;nls[i]<0;i++) ;
-    fseek(workf,nls[i],0);
-    for (i=save-nls[i]-rahead;i;i--)
-     { putchar(getc(workf));
-     }
-    put_ul(use_replacement?str2:str1);
-    fseek(workf,save+s1l-rahead,0);
-    lastnl = 0;
-    i = cbelow + 1;
-    while (i > 0)
-     { int c;
-       c = getc(workf);
-       if (c == EOF)
-	{ clearerr(workf);
-	  break;
+	if (flying) {
+		return (flystate);
 	}
-       putchar(c);
-       lastnl = 0;
-       if (c == '\n')
-	{ i --;
-	  lastnl = 1;
+	use_replacement = 0;
+	save = ftell(workf);
+	do {
+		for (i = MAX_C_A - cabove; nls[i] < 0; i++);
+		fseek(workf, nls[i], 0);
+		for (i = save - nls[i] - rahead; i; i--) {
+			putchar(getc(workf));
+		}
+		put_ul(use_replacement ? str2 : str1);
+		fseek(workf, save + s1l - rahead, 0);
+		lastnl = 0;
+		i = cbelow + 1;
+		while (i > 0) {
+			int c;
+			c = getc(workf);
+			if (c == EOF) {
+				clearerr(workf);
+				break;
+			}
+			putchar(c);
+			lastnl = 0;
+			if (c == '\n') {
+				i--;
+				lastnl = 1;
+			}
+		}
+		if (!lastnl)
+			printf("\n[no final newline] ");
+		fseek(workf, save, 0);
+		i = -1;
+		while (i == -1) {
+			switch (getc_cbreak()) {
+			case ' ':
+				i = 1;
+				break;
+			case '.':
+				i = 1;
+				flying = 1;
+				flystate = 0;
+				break;
+			case 'n':
+				i = 0;
+				break;
+			case '\7':
+				i = 0;
+				flying = 1;
+				flystate = 0;
+				break;
+			case '!':
+				i = 1;
+				flying = 1;
+				flystate = 1;
+				break;
+			case ',':
+				use_replacement = !use_replacement;
+				i = -2;
+				printf("(using %s string gives)\n",
+				    use_replacement ? "new" : "old");
+				break;
+			case '?':
+				printf("File is `%s'\n", current_file);
+				break;
+			default:
+				putchar('\7');
+				break;
+			}
+		}
+	} while (i < 0);
+	if (i) {
+		printf("(replacing");
+	} else {
+		printf("(leaving");
 	}
-     }
-    if (! lastnl) printf("\n[no final newline] ");
-    fseek(workf,save,0);
-    i = -1;
-    while (i == -1)
-     { switch (getc_cbreak())
-	{ case ' ':
-	     i = 1;
-	     break;
-	  case '.':
-	     i = 1;
-	     flying = 1;
-	     flystate = 0;
-	     break;
-	  case 'n':
-	     i = 0;
-	     break;
-	  case '\7':
-	     i = 0;
-	     flying = 1;
-	     flystate = 0;
-	     break;
-	  case '!':
-	     i = 1;
-	     flying = 1;
-	     flystate = 1;
-	     break;
-	  case ',':
-	     use_replacement = ! use_replacement;
-	     i = -2;
-	     printf("(using %s string gives)\n",use_replacement?"new":"old");
-	     break;
-	  case '?':
-	     printf("File is `%s'\n",current_file);
-	     break;
-	  default:
-	     putchar('\7');
-	     break;
+	if (flying) {
+		if (flystate == i) {
+			printf(" this and all the rest");
+		} else if (flystate) {
+			printf(" this, replacing all the rest");
+		} else {
+			printf(" this, leaving all the rest");
+		}
 	}
-     }
-  } while (i < 0);
- if (i)
-  { printf("(replacing");
-  }
- else
-  { printf("(leaving");
-  }
- if (flying)
-  { if (flystate == i)
-     { printf(" this and all the rest");
-     }
-    else if (flystate)
-     { printf(" this, replacing all the rest");
-     }
-    else
-     { printf(" this, leaving all the rest");
-     }
-  }
- printf(")\n");
- return(i);
+	printf(")\n");
+	return (i);
 }
 
-static void add_shift(long *a, long e, int n)
+static void 
+add_shift(long *a, long e, int n)
 {
- int i;
+	int i;
 
- n --;
- for (i=0;i<n;i++)
-  { a[i] = a[i+1];
-  }
- a[n] = e;
+	n--;
+	for (i = 0; i < n; i++) {
+		a[i] = a[i + 1];
+	}
+	a[n] = e;
 }
 
-static void process_file(char *fn)
+static void 
+process_file(char *fn)
 {
- int i;
- long n;
- int c;
+	int i;
+	long n;
+	int c;
 
- workf = fopen(fn,"r+");
- if (workf == NULL)
-  { fprintf(stderr,"%s: cannot read %s\n",__progname,fn);
-    return;
-  }
- printf("(file: %s)\n",fn);
- current_file = fn;
- for (i=0;i<=MAX_C_A;i++)
-  { nls[i] = -1;
-  }
- nls[MAX_C_A] = 0;
- tbeg = -1;
- if (wordmode)
-  { bufp0 = &buf[1];
-    rahead = s1l + 1;
-    buf[0] = '\0';
-  }
- else
-  { bufp0 = &buf[0];
-    rahead = s1l;
-  }
- if (debugging)
-  { printf("[rahead = %d, bufp0-buf = %ld]\n",rahead,(long)(bufp0-&buf[0]));
-  }
- n = 0;
- bufp = bufp0;
- bufpmax = &buf[sizeof(buf)-s1l-2];
- flying = allfly;
- flystate = 1;
- while (1)
-  { c = getc(workf);
-    if (c == EOF)
-     { if (tbeg >= 0)
-	{ if (bufp > bufp0) fwrite(bufp0,1,bufp-bufp0,tempf);
-	  fseek(workf,tbeg,0);
-	  n = ftell(tempf);
-	  fseek(tempf,0L,0);
-	  for (;n;n--)
-	   { putc(getc(tempf),workf);
-	   }
-	  fflush(workf);
-	  ftruncate(fileno(workf),ftell(workf));
+	workf = fopen(fn, "r+");
+	if (workf == NULL) {
+		fprintf(stderr, "%s: cannot read %s\n", __progname, fn);
+		return;
 	}
-       fclose(workf);
-       return;
-     }
-    *bufp++ = c;
-    n ++;
-    if (debugging)
-     { printf("[got %c, n now %ld, bufp-buf %ld]\n",c,n,(long)(bufp-bufp0));
-     }
-    if ((n >= rahead) && foundit() && doit())
-     { int wbehind;
-       if (debugging)
-	{ printf("[doing change]\n");
+	printf("(file: %s)\n", fn);
+	current_file = fn;
+	for (i = 0; i <= MAX_C_A; i++) {
+		nls[i] = -1;
 	}
-       wbehind = 1;
-       if (tbeg < 0)
-	{ tbeg = ftell(workf) - rahead;
-	  fseek(tempf,0L,0);
-	  if (debugging)
-	   { printf("[tbeg set to %d]\n",(int)tbeg);
-	   }
-	  wbehind = 0;
+	nls[MAX_C_A] = 0;
+	tbeg = -1;
+	if (wordmode) {
+		bufp0 = &buf[1];
+		rahead = s1l + 1;
+		buf[0] = '\0';
+	} else {
+		bufp0 = &buf[0];
+		rahead = s1l;
 	}
-       if (bufp[-1] == '\n') add_shift(nls,ftell(workf),MAX_C_A+1);
-       if ((n > rahead) && wbehind)
-	{ fwrite(bufp0,1,n-rahead,tempf);
-	  if (debugging)
-	   { printf("[writing %ld from bufp0]\n",n-rahead);
-	   }
+	if (debugging) {
+		printf("[rahead = %d, bufp0-buf = %ld]\n",
+		    rahead, (long) (bufp0 - &buf[0]));
 	}
-       fwrite(str2,1,s2l,tempf);
-       n = rahead - s1l;
-       if (debugging)
-	{ printf("[n now %ld]\n",n);
+	n = 0;
+	bufp = bufp0;
+	bufpmax = &buf[sizeof(buf) - s1l - 2];
+	flying = allfly;
+	flystate = 1;
+	while (1) {
+		c = getc(workf);
+		if (c == EOF) {
+			if (tbeg >= 0) {
+				if (bufp > bufp0)
+					fwrite(bufp0, 1, bufp - bufp0, tempf);
+				fseek(workf, tbeg, 0);
+				n = ftell(tempf);
+				fseek(tempf, 0L, 0);
+				for (; n; n--) {
+					putc(getc(tempf), workf);
+				}
+				fflush(workf);
+				ftruncate(fileno(workf), ftell(workf));
+			}
+			fclose(workf);
+			return;
+		}
+		*bufp++ = c;
+		n++;
+		if (debugging) {
+			printf("[got %c, n now %ld, bufp-buf %ld]\n",
+			    c, n, (long) (bufp - bufp0));
+		}
+		if ((n >= rahead) && foundit() && doit()) {
+			int wbehind;
+			if (debugging) {
+				printf("[doing change]\n");
+			}
+			wbehind = 1;
+			if (tbeg < 0) {
+				tbeg = ftell(workf) - rahead;
+				fseek(tempf, 0L, 0);
+				if (debugging) {
+					printf("[tbeg set to %d]\n",
+					    (int)tbeg);
+				}
+				wbehind = 0;
+			}
+			if (bufp[-1] == '\n')
+				add_shift(nls, ftell(workf), MAX_C_A + 1);
+			if ((n > rahead) && wbehind) {
+				fwrite(bufp0, 1, n - rahead, tempf);
+				if (debugging) {
+					printf("[writing %ld from bufp0]\n",
+					    n - rahead);
+				}
+			}
+			fwrite(str2, 1, s2l, tempf);
+			n = rahead - s1l;
+			if (debugging) {
+				printf("[n now %ld]\n", n);
+			}
+			if (n > 0) {
+				bcopy(bufp - n, bufp0, n);
+				if (debugging) {
+					printf("[copying %ld back]\n", n);
+				}
+			}
+			bufp = bufp0 + n;
+		} else {
+			if (bufp[-1] == '\n')
+				add_shift(nls, ftell(workf), MAX_C_A + 1);
+			if (bufp >= bufpmax) {
+				if (tbeg >= 0) {
+					fwrite(bufp0, 1, n - rahead, tempf);
+					if (debugging) {
+						printf("[flushing %ld]\n",
+						    n - rahead);
+					}
+				}
+				n = rahead;
+				bcopy(bufp - n, bufp0, n);
+				if (debugging) {
+					printf("[n now %ld]\n[copying %ld back]\n", n, n);
+				}
+				bufp = bufp0 + n;
+			}
+		}
 	}
-       if (n > 0)
-	{ bcopy(bufp-n,bufp0,n);
-	  if (debugging)
-	   { printf("[copying %ld back]\n",n);
-	   }
-	}
-       bufp = bufp0 + n;
-     }
-    else
-     { if (bufp[-1] == '\n') add_shift(nls,ftell(workf),MAX_C_A+1);
-       if (bufp >= bufpmax)
-	{ if (tbeg >= 0)
-	   { fwrite(bufp0,1,n-rahead,tempf);
-	     if (debugging)
-	      { printf("[flushing %ld]\n",n-rahead);
-	      }
-	   }
-	  n = rahead;
-	  bcopy(bufp-n,bufp0,n);
-	  if (debugging)
-	   { printf("[n now %ld]\n[copying %ld back]\n",n,n);
-	   }
-	  bufp = bufp0 + n;
-	}
-     }
-  }
 }
 
-static void process_indir_file(char *fn)
+static void 
+process_indir_file(char *fn)
 {
- char newfn[1024];
- FILE *f;
+	char newfn[1024];
+	FILE *f;
 
- f = fopen(fn,"r");
- if (f == NULL)
-  { fprintf(stderr,"%s: cannot read %s\n",__progname,fn);
-    return;
-  }
- while (fgets(newfn,sizeof(newfn),f) == newfn)
-  { newfn[strlen(newfn)-1] = '\0';
-    process_file(newfn);
-  }
- fclose(f);
+	f = fopen(fn, "r");
+	if (f == NULL) {
+		fprintf(stderr, "%s: cannot read %s\n", __progname, fn);
+		return;
+	}
+	while (fgets(newfn, sizeof(newfn), f) == newfn) {
+		newfn[strlen(newfn) - 1] = '\0';
+		process_file(newfn);
+	}
+	fclose(f);
 }
 
-int main(int ac, char **av)
+int 
+main(int ac, char **av)
 {
- int skip;
- char *cp;
+	int skip;
+	char *cp;
 
- if (ac < 3)
-  { fprintf(stderr,"Usage: %s str1 str2 [ -w -! -noask -go -f file -F file ]\n",
-				__progname);
-    exit(1);
-  }
- cp = getenv("TERM");
- if (cp == 0)
-  { beginul = nullstr;
-    endul = nullstr;
-  }
- else
-  { if (tgetent(tcp_buf,cp) != 1)
-     { beginul = nullstr;
-       endul = nullstr;
-     }
-    else
-     { cp = cap_buf;
-       if (tgetflag("os") || tgetflag("ul"))
-	{ ul_ = 1;
+	if (ac < 3) {
+		fprintf(stderr, "Usage: %s str1 str2 [ -w -! -noask -go -f file -F file ]\n",
+		    __progname);
+		exit(1);
 	}
-       else
-	{ ul_ = 0;
-	  beginul = tgetstr("us",&cp);
-	  if (beginul == 0)
-	   { beginul = tgetstr("so",&cp);
-	     if (beginul == 0)
-	      { beginul = nullstr;
+	cp = getenv("TERM");
+	if (cp == 0) {
+		beginul = nullstr;
 		endul = nullstr;
-	      }
-	     else
-	      { endul = tgetstr("se",&cp);
-	      }
-	   }
-	  else
-	   { endul = tgetstr("ue",&cp);
-	   }
+	} else {
+		if (tgetent(tcp_buf, cp) != 1) {
+			beginul = nullstr;
+			endul = nullstr;
+		} else {
+			cp = cap_buf;
+			if (tgetflag("os") || tgetflag("ul")) {
+				ul_ = 1;
+			} else {
+				ul_ = 0;
+				beginul = tgetstr("us", &cp);
+				if (beginul == 0) {
+					beginul = tgetstr("so", &cp);
+					if (beginul == 0) {
+						beginul = nullstr;
+						endul = nullstr;
+					} else {
+						endul = tgetstr("se", &cp);
+					}
+				} else {
+					endul = tgetstr("ue", &cp);
+				}
+			}
+		}
 	}
-     }
-  }
-  { static char tmp[] = "/tmp/qsubst.XXXXXX";
-    int fd;
-    fd = mkstemp(&tmp[0]);
-    if (fd < 0)
-     { fprintf(stderr,"%s: cannot create temp file: %s\n",__progname,strerror(errno));
-       exit(1);
-     }
-    tempf = fdopen(fd,"w+");
-  }
- if ( (access(av[1],R_OK|W_OK) == 0) &&
-      (access(av[ac-1],R_OK|W_OK) < 0) &&
-      (access(av[ac-2],R_OK|W_OK) < 0) )
-  { fprintf(stderr,"%s: argument order has changed, it's now: str1 str2 files...\n",__progname);
-  }
- str1 = av[1];
- str2 = av[2];
- av += 2;
- ac -= 2;
- s1l = strlen(str1);
- s2l = strlen(str2);
- if (s1l > BUF_SIZ)
-  { fprintf(stderr,"%s: search string too long (max %d chars)\n",__progname,BUF_SIZ);
-    exit(1);
-  }
- tcgetattr(0,&orig_tio);
- signal(SIGTSTP,sigtstp);
- allfly = 0;
- cabove = 2;
- cbelow = 2;
- skip = 0;
- for (ac--,av++;ac;ac--,av++)
-  { if (skip > 0)
-     { skip --;
-       continue;
-     }
-    if (**av == '-')
-     { ++*av;
-       if (!strcmp(*av,"debug"))
-	{ debugging ++;
+	{
+		static char tmp[] = "/tmp/qsubst.XXXXXX";
+		int fd;
+		fd = mkstemp(&tmp[0]);
+		if (fd < 0) {
+			fprintf(stderr, "%s: cannot create temp file: %s\n",
+			    __progname, strerror(errno));
+			exit(1);
+		}
+		tempf = fdopen(fd, "w+");
 	}
-       else if (!strcmp(*av,"w"))
-	{ wordmode = ! wordmode;
+	if ((access(av[1], R_OK | W_OK) == 0) &&
+	    (access(av[ac - 1], R_OK | W_OK) < 0) &&
+	    (access(av[ac - 2], R_OK | W_OK) < 0)) {
+		fprintf(stderr, "%s: argument order has changed, it's now: str1 str2 files...\n", __progname);
 	}
-       else if ( (strcmp(*av,"!") == 0) ||
-		 (strcmp(*av,"go") == 0) ||
-		 (strcmp(*av,"noask") == 0) )
-	{ allfly = 1;
+	str1 = av[1];
+	str2 = av[2];
+	av += 2;
+	ac -= 2;
+	s1l = strlen(str1);
+	s2l = strlen(str2);
+	if (s1l > BUF_SIZ) {
+		fprintf(stderr, "%s: search string too long (max %d chars)\n",
+		    __progname, BUF_SIZ);
+		exit(1);
 	}
-       else if ( (strcmp(*av,"nogo") == 0) ||
-		 (strcmp(*av,"ask") == 0) )
-	{ allfly = 0;
+	tcgetattr(0, &orig_tio);
+	signal(SIGTSTP, sigtstp);
+	allfly = 0;
+	cabove = 2;
+	cbelow = 2;
+	skip = 0;
+	for (ac--, av++; ac; ac--, av++) {
+		if (skip > 0) {
+			skip--;
+			continue;
+		}
+		if (**av == '-') {
+			++*av;
+			if (!strcmp(*av, "debug")) {
+				debugging++;
+			} else if (!strcmp(*av, "w")) {
+				wordmode = !wordmode;
+			} else if ((strcmp(*av, "!") == 0) ||
+				    (strcmp(*av, "go") == 0) ||
+			    (strcmp(*av, "noask") == 0)) {
+				allfly = 1;
+			} else if ((strcmp(*av, "nogo") == 0) ||
+			    (strcmp(*av, "ask") == 0)) {
+				allfly = 0;
+			} else if (**av == 'c') {
+				cabove = atoi(++*av);
+				cbelow = cabove;
+				limit_above_below();
+			} else if (**av == 'C') {
+				++*av;
+				if (**av == 'A') {
+					cabove = atoi(++*av);
+					limit_above_below();
+				} else if (**av == 'B') {
+					cbelow = atoi(++*av);
+					limit_above_below();
+				} else {
+					fprintf(stderr, "%s: -C must be -CA or -CB\n", __progname);
+				}
+			} else if ((strcmp(*av, "f") == 0) ||
+			    (strcmp(*av, "F") == 0)) {
+				if (++skip >= ac) {
+					fprintf(stderr, "%s: -%s what?\n",
+					    __progname, *av);
+				} else {
+					if (**av == 'f') {
+						process_file(av[skip]);
+					} else {
+						process_indir_file(av[skip]);
+					}
+				}
+			}
+		} else {
+			process_file(*av);
+		}
 	}
-       else if (**av == 'c')
-	{ cabove = atoi(++*av);
-	  cbelow = cabove;
-	  limit_above_below();
-	}
-       else if (**av == 'C')
-	{ ++*av;
-	  if (**av == 'A')
-	   { cabove = atoi(++*av);
-	     limit_above_below();
-	   }
-	  else if (**av == 'B')
-	   { cbelow = atoi(++*av);
-	     limit_above_below();
-	   }
-	  else
-	   { fprintf(stderr,"%s: -C must be -CA or -CB\n",__progname);
-	   }
-	}
-       else if ( (strcmp(*av,"f") == 0) ||
-		 (strcmp(*av,"F") == 0) )
-	{ if (++skip >= ac)
-	   { fprintf(stderr,"%s: -%s what?\n",__progname,*av);
-	   }
-	  else
-	   { if (**av == 'f')
-	      { process_file(av[skip]);
-	      }
-	     else
-	      { process_indir_file(av[skip]);
-	      }
-	   }
-	}
-     }
-    else
-     { process_file(*av);
-     }
-  }
- exit(0);
+	exit(0);
 }
-
