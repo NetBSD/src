@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/02/19 07:45:40 wdk Exp $
+#	$NetBSD: Makefile,v 1.2 2001/02/25 03:36:20 wdk Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=	${.CURDIR}/../miniroot
 
 .include "${TOP}/Makefile.inc"
 
-DESTDIR=	${RELEASEDIR}/installation/netboot
+NETBOOTDIR=	${RELEASEDIR}/installation/netboot
 
 IMAGE=		ramdisk.fs
 DISKIMAGE=	diskimage.tgz
@@ -29,7 +29,7 @@ LISTS=		${.CURDIR}/list
 CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
 
-all: ${IMAGE}
+realall: ${IMAGE}
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
@@ -64,15 +64,14 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 echoimage:
 	@echo ${.OBJDIR}/${IMAGE}
 
-realinstall:
+realinstall release:
+	-mkdir -p ${NETBOOTDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${NONBINMODE} ${DISKIMAGE} ${DESTDIR}
+		-m ${NONBINMODE} ${DISKIMAGE} ${NETBOOTDIR}
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} *.o *.cro *.c
 
-# XXX
-depend:
-
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
+.include <bsd.depall.mk>
