@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.89 1998/10/29 20:24:56 bad Exp $
+#	$NetBSD: Makefile,v 1.90 1998/11/02 03:32:22 kim Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
+# XXX: For NO_SENDMAIL and USE_BIND8
+.include <bsd.own.mk>
+
 TZDIR=		/usr/share/zoneinfo
-LOCALTIME=	US/Pacific
+LOCALTIME?=	US/Pacific
 
 # setting NOOBJ prevents "make obj" from doing anything;
 # an objdir would break the installation stuff below
@@ -36,7 +39,12 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
-NAMEDB=	localhost.rev named.boot root.cache
+NAMEDB=	localhost.rev root.cache
+.ifdef USE_BIND8
+NAMEDB+=	named.conf
+.else
+NAMEDB+=	named.boot
+.endif
 PCS=	pcs750.bin
 
 all clean cleandir depend distclean etc includes install lint:
@@ -140,7 +148,9 @@ distribution: distrib-dirs
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
+.ifndef NO_SENDMAIL
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+.endif
 
 
 distrib-dirs:
