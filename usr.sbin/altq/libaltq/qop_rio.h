@@ -1,3 +1,4 @@
+/*	$NetBSD: qop_rio.h,v 1.2 2001/08/16 07:48:15 itojun Exp $	*/
 /*	$KAME: qop_rio.h,v 1.2 2000/10/18 09:15:20 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000

@@ -1,3 +1,4 @@
+/*	$NetBSD: qop_priq.c,v 1.3 2001/08/16 07:48:14 itojun Exp $	*/
 /*	$KAME: qop_priq.c,v 1.1 2000/10/18 09:15:19 kjc Exp $	*/
 /*
  * Copyright (C) 2000
