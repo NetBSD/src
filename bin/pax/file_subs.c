@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.23.2.2 2004/06/16 01:27:38 jmc Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.23.2.3 2004/08/25 20:51:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.23.2.2 2004/06/16 01:27:38 jmc Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.23.2.3 2004/08/25 20:51:49 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,14 +67,22 @@ char *xtmp_name;
 static int
 mk_link(char *,struct stat *,char *, int);
 
+static int warn_broken;
+
 /*
  * routines that deal with file operations such as: creating, removing;
  * and setting access modes, uid/gid and times of files
  */
+#define SET_BITS		(S_ISUID | S_ISGID)
+#define FILE_BITS		(S_IRWXU | S_IRWXG | S_IRWXO)
+#define A_BITS			(FILE_BITS | SET_BITS | S_ISVTX)
 
-#define FILEBITS		(S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-#define SETBITS			(S_ISUID | S_ISGID)
-#define ABITS			(FILEBITS | SETBITS)
+/*
+ * The S_ISVTX (sticky bit) can be set by non-superuser on directories
+ * but not other kinds of files.
+ */
+#define FILEBITS(dir)		((dir) ? (FILE_BITS | S_ISVTX) : FILE_BITS)
+#define SETBITS(dir)		((dir) ? SET_BITS : (SET_BITS | S_ISVTX))
 
 /*
  * file_creat()
@@ -89,6 +97,21 @@ file_creat(ARCHD *arcn)
 	int fd = -1;
 	int oerrno;
 
+	/*
+	 * Some horribly busted tar implementations, have directory nodes
+	 * that end in a /, but they mark as files. Compensate for that
+	 * by not creating a directory node at this point, but a file node,
+	 * and not creating the temp file.
+	 */
+	if (arcn->nlen != 0 && arcn->name[arcn->nlen - 1] == '/') {
+		if (!warn_broken) {
+			tty_warn(0, "Archive was created with a broken tar;"
+			    " file `%s' is a directory, but marked as plain.",
+			    arcn->name);
+			warn_broken = 1;
+		}
+		return -1;
+	}
 	/*
 	 * Create a temporary file name so that the file doesn't have partial
 	 * contents while restoring.
@@ -118,6 +141,7 @@ file_creat(ARCHD *arcn)
 		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			(void)fflush(listf);
 			syswarn(1, oerrno, "Cannot create %s", arcn->tmp_name);
+			xtmp_name = NULL;
 			free(arcn->tmp_name);
 			arcn->tmp_name = NULL;
 			return(-1);
@@ -159,18 +183,13 @@ file_close(ARCHD *arcn, int fd)
 	 * set uid/gid bits but restore the file modes (since mkstemp doesn't).
 	 */
 	if (!pmode || res)
-		arcn->sb.st_mode &= ~(SETBITS);
+		arcn->sb.st_mode &= ~SETBITS(0);
 	if (pmode)
 		set_pmode(arcn->tmp_name, arcn->sb.st_mode);
 	else
-		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS);
+		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS(0));
 	if (patime || pmtime)
 		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
-#if HAVE_STRUCT_STAT_ST_FLAGS
-	if (pfflags && arcn->type != PAX_SLK)
-		set_chflags(arcn->tmp_name, arcn->sb.st_flags);
-#endif
-
 	/*
 	 * Finally, now the temp file is fully instantiated rename it to
 	 * the desired file name.
@@ -180,6 +199,11 @@ file_close(ARCHD *arcn, int fd)
 		    arcn->tmp_name, arcn->name);
 		(void)unlink(arcn->tmp_name);
 	}
+
+#if HAVE_STRUCT_STAT_ST_FLAGS
+	if (pfflags && arcn->type != PAX_SLK)
+		set_chflags(arcn->name, arcn->sb.st_flags);
+#endif
 
 	free(arcn->tmp_name);
 	arcn->tmp_name = NULL;
@@ -314,7 +338,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		/*
 		 * try to get rid of the file, based on the type
 		 */
-		if (S_ISDIR(sb.st_mode)) {
+		if (S_ISDIR(sb.st_mode) && strcmp(from, ".") != 0) {
 			if (rmdir(from) < 0) {
 				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
@@ -380,10 +404,10 @@ node_creat(ARCHD *arcn)
 	 * file and link creation routines, this method seems to exhibit the
 	 * best performance in general use workloads.
 	 */
-	file_mode = arcn->sb.st_mode & FILEBITS;
+	file_mode = arcn->sb.st_mode & FILEBITS(arcn->type == PAX_DIR);
 
 	for (;;) {
-		switch(arcn->type) {
+		switch (arcn->type) {
 		case PAX_DIR:
 			/*
 			 * If -h (or -L) was given in tar-mode, follow the
@@ -397,7 +421,8 @@ node_creat(ARCHD *arcn)
 					    sizeof target - 1);
 					if (len == -1) {
 						syswarn(0, errno,
-						   "cannot follow symlink %s in chain for %s",
+						   "cannot follow symlink %s "
+						   "in chain for %s",
 						    nm, arcn->name);
 						res = -1;
 						goto badlink;
@@ -430,7 +455,7 @@ badlink:
 			tty_warn(0,
 			    "%s skipped. Sockets cannot be copied or extracted",
 			    nm);
-			return(-1);
+			return (-1);
 		case PAX_SLK:
 			res = symlink(arcn->ln_name, nm);
 			break;
@@ -444,7 +469,7 @@ badlink:
 			 */
 			tty_warn(0, "%s has an unknown file type, skipping",
 			    nm);
-			return(-1);
+			return (-1);
 		}
 
 		/*
@@ -459,16 +484,27 @@ badlink:
 		 * we failed to make the node
 		 */
 		oerrno = errno;
-		if ((ign = unlnk_exist(nm, arcn->type)) < 0)
-			return(-1);
-
-		if (++pass <= 1)
+		switch (pass++) {
+		case 0:
+			if ((ign = unlnk_exist(nm, arcn->type)) < 0)
+				return (-1);
 			continue;
 
-		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Cannot create %s", nm);
-			return(-1);
+		case 1:
+			if (nodirs ||
+			    chk_path(nm, arcn->sb.st_uid,
+			    arcn->sb.st_gid) < 0) {
+				syswarn(1, oerrno, "Cannot create %s", nm);
+				return (-1);
+			}
+			continue;
 		}
+
+		/*
+		 * it must be a file that exists but we can't create or
+		 * remove, but we must avoid the infinite loop.
+		 */
+		break;
 	}
 
 	/*
@@ -485,7 +521,7 @@ badlink:
 	 * set uid/gid bits
 	 */
 	if (!pmode || res)
-		arcn->sb.st_mode &= ~(SETBITS);
+		arcn->sb.st_mode &= ~SETBITS(arcn->type == PAX_DIR);
 	if (pmode)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
@@ -511,8 +547,9 @@ badlink:
 				 * restored AS CREATED and not as stored if
 				 * pmode is not set.
 				 */
-				set_pmode(nm,
-				    ((sb.st_mode & FILEBITS) | S_IRWXU));
+				set_pmode(nm, ((sb.st_mode &
+				    FILEBITS(arcn->type == PAX_DIR)) |
+				    S_IRWXU));
 				if (!pmode)
 					arcn->sb.st_mode = sb.st_mode;
 			}
@@ -568,8 +605,13 @@ unlnk_exist(char *name, int type)
 	if (S_ISDIR(sb.st_mode)) {
 		/*
 		 * try to remove a directory, if it fails and we were going to
-		 * create a directory anyway, tell the caller (return a 1)
+		 * create a directory anyway, tell the caller (return a 1).
+		 *
+		 * don't try to remove the directory if the name is "."
+		 * otherwise later file/directory creation fails.
 		 */
+		if (strcmp(name, ".") == 0)
+			return(1);
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
 				return(1);
@@ -605,7 +647,7 @@ unlnk_exist(char *name, int type)
  */
 
 int
-chk_path( char *name, uid_t st_uid, gid_t st_gid)
+chk_path(char *name, uid_t st_uid, gid_t st_gid)
 {
 	char *spt = name;
 	struct stat sb;
@@ -668,7 +710,8 @@ chk_path( char *name, uid_t st_uid, gid_t st_gid)
 		 */
 		if ((access(name, R_OK | W_OK | X_OK) < 0) &&
 		    (lstat(name, &sb) == 0)) {
-			set_pmode(name, ((sb.st_mode & FILEBITS) | S_IRWXU));
+			set_pmode(name, ((sb.st_mode & FILEBITS(0)) |
+			    S_IRWXU));
 			add_dir(name, spt - name, &sb, 1);
 		}
 		*(spt++) = '/';
@@ -761,7 +804,7 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 void
 set_pmode(char *fnm, mode_t mode)
 {
-	mode &= ABITS;
+	mode &= A_BITS;
 	if (lchmod(fnm, mode)) {
 		(void)fflush(listf);
 		syswarn(1, errno, "Cannot set permissions on %s", fnm);
