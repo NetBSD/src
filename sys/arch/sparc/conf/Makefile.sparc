@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.15 1994/11/20 20:51:36 deraadt Exp $
+# 	$NetBSD: Makefile.sparc,v 1.16 1994/12/06 20:54:46 deraadt Exp $
 
 # @(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
 # Makefile for 4.4 BSD
@@ -100,7 +100,7 @@ newvers:
 
 clean:
 	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] tags1 *.[io] \
-		[a-z]*.s Errs errs linterrs makelinks
+		[a-z]*.s Errs errs linterrs makelinks genassym
 
 locore.o: ${SPARC}/sparc/locore.s assym.s
 	${NORMAL_S}
