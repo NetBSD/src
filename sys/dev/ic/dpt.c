@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.10 1999/10/20 11:54:10 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.11 1999/10/20 12:27:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,12 +65,11 @@
  * o Test with a bunch of different boards.
  * o dpt_readcfg() should not be using CP_PIO_GETCFG.
  * o An interface to userland applications.
- * o A port of DPT Storage Manager included in the base system would be nice.
  * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.10 1999/10/20 11:54:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.11 1999/10/20 12:27:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.10 1999/10/20 11:54:10 ad Exp $");
 #include <sys/buf.h>
 
 #include <machine/endian.h>
+#include <machine/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
