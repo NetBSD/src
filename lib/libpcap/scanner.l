@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.6 1999/03/22 09:15:10 ross Exp $	*/
+/*	$NetBSD: scanner.l,v 1.7 1999/07/02 10:05:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.6 1999/03/22 09:15:10 ross Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.7 1999/07/02 10:05:22 itojun Exp $");
 #endif
 #endif
 
@@ -42,6 +42,10 @@ __RCSID("$NetBSD: scanner.l,v 1.6 1999/03/22 09:15:10 ross Exp $");
 
 #include "gencode.h"
 #include <pcap-namedb.h>
+#ifdef INET6
+#include <netdb.h>
+#include <sys/socket.h>
+#endif /*INET6*/
 #include "grammar.h"
 
 #include "gnuc.h"
@@ -83,6 +87,7 @@ static char *in_buffer;
 
 N		([0-9]+|(0X|0x)[0-9A-Fa-f]+)
 B		([0-9A-Fa-f][0-9A-Fa-f]?)
+W		([0-9A-Fa-f][0-9A-Fa-f]?[0-9A-Fa-f]?[0-9A-Fa-f]?)
 
 %a 3000
 
@@ -100,6 +105,12 @@ udp		return UDP;
 icmp		return ICMP;
 igmp		return IGMP;
 igrp		return IGRP;
+pim		return PIM;
+
+ip6		return IPV6;
+icmp6		return ICMPV6;
+ah		return AH;
+esp		return ESP;
 
 atalk		return ATALK;
 decnet		return DECNET;
@@ -113,6 +124,7 @@ net		return NET;
 mask		return MASK;
 port		return PORT;
 proto		return PROTO;
+protochain	return PROTOCHAIN;
 
 gateway		return GATEWAY;
 
@@ -143,8 +155,23 @@ outbound	return OUTBOUND;
 			yylval.s = sdup((char *)yytext); return HID; }
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
+[0-9a-zA-Z:]*:[0-9a-zA-Z:]*(:{N}\.{N}\.{N}\.{N})?	{
+#ifdef INET6
+			  struct addrinfo hints, *res;
+			  memset(&hints, 0, sizeof(hints));
+			  hints.ai_family = AF_INET6;
+			  hints.ai_flags = AI_NUMERICHOST;
+			  if (getaddrinfo(yytext, NULL, &hints, &res))
+				bpf_error("bogus IPv6 address %s", yytext);
+			  else {
+				yylval.e = sdup((char *)yytext); return HID6;
+			  }
+#else
+			  bpf_error("IPv6 address %s not supported", yytext);
+#endif /*INET6*/
+			}
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
-[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9]|[A-Za-z] {
+[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
 			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
 [^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
