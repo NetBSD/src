@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.1 2002/10/06 17:28:47 thorpej Exp $
+# $NetBSD: rescue.mi,v 1.2 2003/05/26 10:38:48 lukem Exp $
 ./rescue/[		base-rescue-root
 ./rescue/atactl		base-rescue-root
 ./rescue/badsect	base-rescue-root
@@ -34,6 +34,7 @@
 ./rescue/fsck_msdos	base-rescue-root
 ./rescue/fsdb		base-rescue-root
 ./rescue/fsirand	base-rescue-root
+./rescue/ftp		base-rescue-root
 ./rescue/gunzip		base-rescue-root
 ./rescue/gzcat		base-rescue-root
 ./rescue/gzip		base-rescue-root
