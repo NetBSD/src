@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.390 2002/01/15 20:16:37 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.391 2002/01/21 17:20:07 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.387 2002/01/15 20:14:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.388 2002/01/21 17:19:23 thorpej Exp 
  */
 
 /*
@@ -44,6 +44,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c985 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996,
+	    0,
+	    "3Com",
+	    "3c996 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
@@ -752,6 +758,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alteon",
 	    "ACEnic 1000baseT Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700,
+	    0,
+	    "Alteon",
+	    "ACEnic BCM5700 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701,
+	    0,
+	    "Alteon",
+	    "ACEnic BCM5701 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -1544,6 +1562,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 2706",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5700 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5701,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5701 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -5432,6 +5462,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Schneider & Koch",
 	    "SK-NET GE",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_ALTIMA,
+	    0,
+	    "Schneider & Koch",
+	    "SK-NET Altima Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21,
+	    0,
+	    "Schneider & Koch",
+	    "SK-9D21 1000BASE-T",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D41,
+	    0,
+	    "Schneider & Koch",
+	    "SK-9D41 1000BASE-X",
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
@@ -9823,6 +9871,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INVERTEX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Invertex",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_BROADCOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Broadcom Corporation",
 	    NULL,
 	},
 	{
