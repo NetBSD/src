@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.121 1998/05/08 17:13:37 kleink Exp $ */
+/* $NetBSD: machdep.c,v 1.122 1998/05/19 18:35:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 1998/05/08 17:13:37 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 1998/05/19 18:35:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1351,7 +1351,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map);
+	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)kernel_lev1map);
 	cpuhdrp->page_size = PAGE_SIZE;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
