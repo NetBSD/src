@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.14 2004/08/02 22:20:54 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.15 2004/08/13 03:12:59 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.14 2004/08/02 22:20:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.15 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -853,7 +853,7 @@ default_chip_map(sc, pa)
 	}
 	aprint_normal("\n");
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	sc->sc_wdcdev.PIO_cap = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.7 2004/08/02 19:08:16 bouyer Exp $	*/
+/*	$NetBSD: aceride.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -102,8 +102,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		if (rev >= 0x20) {
@@ -115,7 +114,6 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			else
 				sc->sc_wdcdev.UDMA_cap = 2;
 		}
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	    
