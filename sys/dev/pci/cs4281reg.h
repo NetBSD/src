@@ -1,5 +1,4 @@
-/*	$NetBSD: cs4281reg.h,v 1.1 2001/01/22 01:34:42 augustss Exp $	*/
-/*	$Tera: cs4281reg.h,v 1.11 2001/01/21 04:13:13 tacha Exp $	*/
+/*	$NetBSD: cs4281reg.h,v 1.2 2001/01/22 01:44:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
