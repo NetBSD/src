@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.7 1997/10/13 02:18:37 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.7.2.1 1997/11/24 01:49:07 mrg Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -93,6 +93,13 @@ main(argc, argv)
 	    {
 	    if (!strcmp(*filename, _PATH_PEOPLE))
 		/* do not reset character file if it already exists */
+		{
+		++filename;
+		continue;
+		}
+
+	    if (!strcmp(*filename, _PATH_SCORE))
+		/* do not reset score file if it already exists */
 		{
 		++filename;
 		continue;
