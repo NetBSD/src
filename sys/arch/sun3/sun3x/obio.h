@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.5 1998/02/05 04:58:01 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.6 1999/04/06 02:07:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@
 #define	OBIO_INTEL_ETHER	0x65000000
 #define	OBIO_LANCE_ETHER	0x65002000
 
-#define	OBIO_EMULEX_SCSI	0x66000000 /* 3/80 only? */
+#define	OBIO_EMULEX_SCSI	0x66000000 /* 3/80 only */
+#define	OBIO_EMULEX_DMA 	0x66001000 /* 3/80 only */
 
 #define	OBIO_PCACHE_TAGS	0x68000000
 #define	OBIO_ECCPARREG		0x6A1E0000
