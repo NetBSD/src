@@ -1,7 +1,7 @@
-.\"     $NetBSD: awi.4,v 1.3 1999/12/15 22:07:30 abs Exp $
+.\"     $NetBSD: awi.4,v 1.4 1999/12/17 16:53:31 abs Exp $
 .\"
 .\"
-.\"	$Id: awi.4,v 1.3 1999/12/15 22:07:30 abs Exp $
+.\"	$Id: awi.4,v 1.4 1999/12/17 16:53:31 abs Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4 
@@ -13,14 +13,6 @@ Bay Networks BayStack 650 IEEE 802.11 PCMCIA wireless network driver
 .Sh SYNOPSIS
 .Cd "awi*     at pcmcia? function ?"
 .Sh DESCRIPTION
-The
-.Nm
-driver provides support for BayStack 650 IEEE 802.11 Frequency Hopping
-PCCARD adapters.  It is also reported to support the Netwave AirSurfer
-.Dq Plus 
-The original Xircom Netwave AirSurfer is supported by the 
-.Xr cnw 4
-driver.
 .Pp
 The BayStack 650 is based on an AMD 79c930 controller, which provides
 access to 32kb of memory shared between the controller and the host.
@@ -45,6 +37,22 @@ after the card is brought up using
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8
+.Sh HARDWARE
+The
+.Nm
+driver provides support for the following cards:
+.Pp
+.Bl -item -compact
+.It
+BayStack 650/660 IEEE 802.11 Frequency Hopping PCCARD adapter
+.It
+Netwave AirSurfer
+.Dq Plus 
+.El
+.Pp
+The original Xircom Netwave AirSurfer is supported by the 
+.Xr cnw 4
+driver.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "awi0: unable to allocate memory space; using i/o only"
