@@ -1,4 +1,4 @@
-/*      $NetBSD: n_lgamma.c,v 1.1 1995/10/10 23:36:56 ragge Exp $ */
+/*      $NetBSD: n_lgamma.c,v 1.2 1997/10/20 14:12:59 ragge Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)lgamma.c	8.2 (Berkeley) 11/30/93";
+#endif
 #endif /* not lint */
 
 /*
@@ -84,7 +86,7 @@ static int endian;
 static double small_lgam(double);
 static double large_lgam(double);
 static double neg_lgam(double);
-static double zero = 0.0, one = 1.0;
+static double one = 1.0;
 int signgam;
 
 #define UNDERFL (1e-1020 * 1e-1020)
@@ -92,7 +94,7 @@ int signgam;
 #define LEFT	(1.0 - (x0 + .25))
 #define RIGHT	(x0 - .218)
 /*
-/* Constants for approximation in [1.244,1.712]
+ * Constants for approximation in [1.244,1.712]
 */
 #define x0	0.461632144968362356785
 #define x0_lo	-.000000000000000015522348162858676890521
@@ -169,7 +171,6 @@ static double
 large_lgam(double x)
 {
 	double z, p, x1;
-	int i;
 	struct Double t, u, v;
 	u = __log__D(x);
 	u.a -= 1.0;
@@ -271,7 +272,6 @@ neg_lgam(double x)
 {
 	int xi;
 	double y, z, one = 1.0, zero = 0.0;
-	extern double gamma();
 
 	/* avoid destructive cancellation as much as possible */
 	if (x > -170) {
