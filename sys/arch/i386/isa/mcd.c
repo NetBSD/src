@@ -2,7 +2,7 @@
  * Copyright (c) 1993 Charles Hannum.
  * Copyright 1993 by Holger Veit (data part)
  * Copyright 1993 by Brian Moore (audio part)
- * CHANGES Copyright 1993 Gary Clark II (gclarkii@freefall.cdrom.com)
+ * Changes Copyright 1993 by Gary Clark II
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.1.2.4 1994/02/01 06:30:28 mycroft Exp $
+ *	$Id: mcd.c,v 1.1.2.5 1994/02/02 07:00:15 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -563,7 +563,7 @@ mcdprobe(parent, cf, aux)
 {
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
-	int i;
+	int i, j;
 	u_char st, check, junk;
 
 	if (iobase == IOBASEUNK)
@@ -571,57 +571,41 @@ mcdprobe(parent, cf, aux)
 
 	/* send a reset */
 	outb(iobase + MCD_FLAGS, 0);
-	delay(100000);
+	delay(3000);
 
-	/* get any pending status and throw away...*/
-	for (i=10; i; i--)
+    for (j = 3; j; j--) {	/* XXX why the loop? */
+
+	/* get any pending garbage (old data) and throw away...*/
+	for (i = 10; i; i--)
 		inb(iobase + MCD_DATA);
-
-	delay(1000);
-	outb(iobase + MCD_DATA, MCD_CMDGETSTAT);/* Send get status command */
-	/* Loop looking for avail of status */
-	/* XXX May have to increase for fast machinces */
-	for (i = 1000; i; i--) {
-		if ((inb(iobase + MCD_FLAGS) & 0xf) == STATUS_AVAIL)
-			break;
-		delay(10);
-	}
-	if (!i)
-		return 0;
-
-/*
- * The following code uses the 0xDC command, it returns a M from the
- * second byte and a number in the third.  Does anyone know what the
- * number is for? Better yet, how about someone thats REAL good in
- * i80x86 asm looking at the Dos driver... Most of this info came
- * from a friend of mine spending a whole weekend.....
- */
 
 	delay(2000);
 	outb(iobase + MCD_DATA, MCD_CMDCONTINFO);
-	for (i = 1000; i; i--) {
-		if ((inb(iobase + MCD_FLAGS) & 0xf) == STATUS_AVAIL)
+	for (i = 30000; i; i--)
+		if ((inb(iobase + MCD_FLAGS) & M_STATUS_AVAIL) == M_STATUS_AVAIL) {	/* XXX looks bogus */
+			delay(600);
+			st = inb(iobase + MCD_DATA);
+			delay(500);
+			check = inb(iobase + MCD_DATA);
+			delay(500);
+			junk = inb(iobase + MCD_DATA);	/* XXX what is this? */
+
+			if (check == 'M')
+				goto found;
+			else
+				return 0;
 			break;
-		delay(10);
+		}
 	}
-	if (!i)
-		return 0;
+    }
+	return 0;
 
-	delay(40000);
-	st = inb(iobase + MCD_DATA);
-	delay(500);
-	check = inb(iobase + MCD_DATA);
-	delay(500);
-	junk = inb(iobase + MCD_DATA);	/* What is this byte used for? */
-
-	if (check != 'M')
-		return 0;
-
+found:
 	/* XXXX check irq and drq */
 	printf("mcd%d: config register says %x\n", cf->cf_unit,
 		inb(iobase + mcd_config));
 
-	return 4;
+	return 1;
 }
 
 static int
