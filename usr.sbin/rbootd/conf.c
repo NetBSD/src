@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.1 (Berkeley) 6/4/93
- *	      $Id: conf.c,v 1.2 1994/01/11 16:41:26 brezak Exp $
+ *	      $Id: conf.c,v 1.3 1995/08/21 16:57:54 thorpej Exp $
  *
  * From: Utah Hdr: conf.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
@@ -47,7 +47,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)conf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: conf.c,v 1.2 1994/01/11 16:41:26 brezak Exp $";
+static char rcsid[] = "$Id: conf.c,v 1.3 1995/08/21 16:57:54 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,6 @@ static char rcsid[] = "$Id: conf.c,v 1.2 1994/01/11 16:41:26 brezak Exp $";
 **	simplify the boot file search code.
 */
 
-char	*ProgName;				/* path-stripped argv[0] */
 char	MyHost[MAXHOSTNAMELEN+1];		/* host name */
 int	MyPid;					/* process id */
 int	DebugFlg = 0;				/* set true if debugging */
