@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.8 1998/07/27 01:07:01 mycroft Exp $	*/
+/*	$NetBSD: supextern.h,v 1.9 1999/08/02 05:36:05 erh Exp $	*/
 
 struct stat;
 
@@ -52,7 +52,11 @@ void path __P((char *, char *, char *));
 void quit __P((int, char *, ...));
 
 /* read_line.c */
-char *read_line __P((FILE *, size_t *, int *));
+#ifdef NEED_READ_LINE
+char *read_line __P((FILE *, size_t *, int *, const char[3], int));
+#else
+#define read_line fparseln
+#endif
 
 /* run.c */
 int run __P((char *, ...));
@@ -128,7 +132,7 @@ TREE *getcollhost __P((int *, int *, long *, int *));
 void getcoll __P((void));
 int signon __P((TREE *, int, int *));
 int setup __P((TREE *));
-void login __P((void));
+void suplogin __P((void));
 void listfiles __P((void));
 void recvfiles __P((void));
 int prepare __P((char *, int, int *, struct stat *));

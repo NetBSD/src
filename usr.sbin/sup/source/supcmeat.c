@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.20 1999/06/17 05:11:48 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.21 1999/08/02 05:36:05 erh Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -225,7 +225,7 @@ void getcoll (void)
 	if (setjmp (sjbuf))
 		x = SCMERR;
 	else {
-		login ();
+		suplogin ();
 		listfiles ();
 		recvfiles ();
 		x = SCMOK;
@@ -391,7 +391,7 @@ register TREE *t;
 
 /***  Tell file server what account to use ***/
 
-void login (void)
+void suplogin (void)
 {
 	char buf[STRINGLENGTH];
 	register int f,x;

@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.13 1999/06/17 05:11:48 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.14 1999/08/02 05:36:05 erh Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -659,7 +659,7 @@ char **argv;
 	firstC = NULL;
 	lastC = NULL;
 	bogus = FALSE;
-	while ((p = read_line(f, NULL, NULL)) != NULL) {
+	while ((p = read_line(f, NULL, NULL, NULL, 0)) != NULL) {
 		if (index ("#;:",*p))  continue;
 		arg = nxtarg (&p," \t");
 		if (*arg == '\0') {

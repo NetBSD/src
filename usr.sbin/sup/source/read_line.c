@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.1 1997/11/13 01:05:28 thorpej Exp $	*/
+/*	$NetBSD: read_line.c,v 1.2 1999/08/02 05:36:05 erh Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -31,9 +31,11 @@
  * SUCH DAMAGE.
  */
 
+#ifdef NEED_READ_LINE
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read_line.c,v 1.1 1997/11/13 01:05:28 thorpej Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.2 1999/08/02 05:36:05 erh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,10 +54,12 @@ __RCSID("$NetBSD: read_line.c,v 1.1 1997/11/13 01:05:28 thorpej Exp $");
  *	next invocation.
  */
 char *
-read_line(fp, size, lineno)
-	FILE	*fp;
-	size_t	*size;
-	int	*lineno;
+read_line(fp, size, lineno, delim, flags)
+	FILE		*fp;
+	size_t		*size;
+	int		*lineno;
+	const char	delim[3];	/* unused */
+	int		flags;		/* unused */
 {
 	static char	*buf;
 	static int	 buflen;
@@ -100,3 +104,5 @@ read_line(fp, size, lineno)
 		*size = len;
 	return buf;
 }
+
+#endif /* NEED_READ_LINE */
