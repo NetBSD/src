@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.20 2002/04/11 02:52:45 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.21 2002/04/24 05:27:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@ extern pthread_spin_t runqueue_lock;
 
 static int started;
 
+static int nextthread;
+pthread_spin_t nextthread_lock;
+
 /* This needs to be started by the library loading code, before main() 
  * gets to run, for various things that use the state of the initial thread
  * to work properly (thread-specific data is an application-visible example; 
@@ -93,7 +96,7 @@ void pthread_init(void)
 	
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
-	pthread__initthread(first);
+	pthread__initthread(first, first);
 	sigprocmask(0, NULL, &first->pt_sigmask);
 	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
 
@@ -118,7 +121,7 @@ pthread__start(void)
 		ret = pthread__stackalloc(&idle);
 		if (ret != 0)
 			err(1, "Couldn't allocate stack for idle thread!");
-		pthread__initthread(idle);
+		pthread__initthread(self, idle);
 		sigfillset(&idle->pt_sigmask);
 		PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
 		pthread__sched_idle(self, idle);
@@ -131,8 +134,16 @@ pthread__start(void)
 
 /* General-purpose thread data structure sanitization. */
 void
-pthread__initthread(pthread_t t)
+pthread__initthread(pthread_t self, pthread_t t)
 {
+	int id;
+
+	pthread_spinlock(self, &nextthread_lock);
+	id = nextthread;
+	nextthread++;
+	pthread_spinunlock(self, &nextthread_lock);
+	t->pt_num = id;
+
 	t->pt_magic = PT_MAGIC;
 	t->pt_type = PT_THREAD_NORMAL;
 	t->pt_state = PT_STATE_RUNNABLE;
@@ -204,7 +215,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	}
 		
 	/* 2. Set up state. */
-	pthread__initthread(newthread);
+	pthread__initthread(self, newthread);
 	newthread->pt_flags = nattr.pta_flags;
 	newthread->pt_sigmask = self->pt_sigmask;
 	
@@ -557,7 +568,8 @@ pthread_cancel(pthread_t thread)
 	pthread_t self;
 	int flags;
 
-	if (!(thread->pt_state == PT_STATE_RUNNABLE || 
+	if (!(thread->pt_state == PT_STATE_RUNNING ||
+	    thread->pt_state == PT_STATE_RUNNABLE || 
 	    thread->pt_state == PT_STATE_BLOCKED_QUEUE ||
 	    thread->pt_state == PT_STATE_BLOCKED_SYS))
 		return ESRCH;
