@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.10 2003/09/26 13:39:49 skrll Exp $
+# $NetBSD: HACKS,v 1.11 2003/10/26 01:56:54 lukem Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -236,4 +236,16 @@ descr
 	fail with "makes integer from pointer without a cast".  This
 	is observed on e.g. the sun3 port.  Ideally the "types" for
 	symbols should be consistent across all ports.
+kcah
+
+hack	gcc 3.3.x bug
+cdate	Sun Oct 26 01:50:16 UTC 2003
+who	lukem
+port	MACHINE_ARCH == arm
+file	usr.bin/newsyslog/newsyslog.c
+pr	22986 23002 23217
+descr
+	newsyslog fails with
+		newsyslog: config line 7: bad flags
+	solved when compiled with -fno-gcse-lm
 kcah
