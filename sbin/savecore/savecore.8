@@ -1,4 +1,4 @@
-.\"	$NetBSD: savecore.8,v 1.20 2001/06/05 11:22:53 wiz Exp $
+.\"	$NetBSD: savecore.8,v 1.21 2001/06/13 23:24:32 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -101,7 +101,8 @@ is insufficient disk space.
 .It Fl N
 Use
 .Ar system
-as the kernel instead of the default ``/netbsd''.
+as the kernel instead of the default (returned by
+.Xr getbootfile 3 ) .
 .It Fl v
 Prints out some additional debugging information.
 .It Fl z
@@ -145,27 +146,21 @@ successfully copies the kernel and the core dump, the core dump is cleared
 so that future invocations of
 .Nm
 will ignore it.
-.Pp
-.Sh FILES
-.Bl -tag -width /netbsdxx -compact
-.It Pa /netbsd
-current kernel
-.El
 .Sh BUGS
 The minfree code does not consider the effect of compression.
 .Sh SEE ALSO
-.Xr dmesg 8 ,
 .Xr fstat 1 ,
 .Xr gdb 1 ,
 .Xr gzip 1 ,
-.Xr iostat 8 ,
+.Xr send-pr 1 ,
 .Xr netstat 1 ,
 .Xr ps 1 ,
+.Xr dmesg 8 ,
+.Xr iostat 8 ,
 .Xr pstat 8 ,
-.Xr panic 9 ,
 .Xr rc 8 ,
-.Xr send-pr 1 ,
-.Xr syslogd 8
+.Xr syslogd 8 ,
+.Xr panic 9
 .Sh HISTORY
 The
 .Nm
