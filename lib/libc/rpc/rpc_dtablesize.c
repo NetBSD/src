@@ -30,8 +30,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: rpc_dtablesize.c,v 1.1 1993/10/07 07:30:12 cgd Exp $";
+static char *rcsid = "$Id: rpc_dtablesize.c,v 1.2 1994/08/15 07:56:50 andrew Exp $";
 #endif
+
+#include <sys/types.h>
 
 /*
  * Cache the result of getdtablesize(), so we don't have to do an
@@ -43,6 +45,11 @@ _rpc_dtablesize()
 	
 	if (size == 0) {
 		size = getdtablesize();
+#ifdef FD_SETSIZE
+		/* prevent select() from breaking */
+		if (size > FD_SETSIZE)
+			size = FD_SETSIZE;
+#endif
 	}
 	return (size);
 }
