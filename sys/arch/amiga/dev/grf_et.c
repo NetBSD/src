@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.16 2002/08/03 00:12:55 itojun Exp $ */
+/*	$NetBSD: grf_et.c,v 1.17 2002/09/27 20:30:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.16 2002/08/03 00:12:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.17 2002/09/27 20:30:00 thorpej Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -179,7 +179,7 @@ static unsigned char et_imageptr[8 * 64], et_maskptr[8 * 64];
 static unsigned char et_sprred[2], et_sprgreen[2], et_sprblue[2];
 
 /* standard driver stuff */
-struct cfattach grfet_ca = {
+const struct cfattach grfet_ca = {
 	sizeof(struct grf_softc), grfetmatch, grfetattach
 };
 

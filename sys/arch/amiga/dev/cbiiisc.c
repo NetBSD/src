@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.8 2002/01/28 09:56:52 aymeric Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.9 2002/09/27 20:29:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.8 2002/01/28 09:56:52 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.9 2002/09/27 20:29:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ void cbiiisc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach cbiiisc_ca = {
+const struct cfattach cbiiisc_ca = {
 	sizeof(struct siop_softc), cbiiiscmatch, cbiiiscattach
 };
 

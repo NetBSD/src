@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.15 2002/09/27 02:16:28 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.16 2002/09/27 20:31:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.15 2002/09/27 02:16:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.16 2002/09/27 20:31:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ struct pvr_softc {
 int	pvr_match(struct device *, struct cfdata *, void *);
 void	pvr_attach(struct device *, struct device *, void *);
 
-struct cfattach pvr_ca = {
+const struct cfattach pvr_ca = {
 	sizeof(struct pvr_softc), pvr_match, pvr_attach,
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_jensenio.c,v 1.2 2002/09/27 02:24:08 thorpej Exp $ */
+/* $NetBSD: mcclock_jensenio.c,v 1.3 2002/09/27 20:29:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.2 2002/09/27 02:24:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.3 2002/09/27 20:29:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ struct mcclock_jensenio_softc {
 int	mcclock_jensenio_match(struct device *, struct cfdata *, void *);
 void	mcclock_jensenio_attach(struct device *, struct device *, void *);
 
-struct cfattach mcclock_jensenio_ca = {
+const struct cfattach mcclock_jensenio_ca = {
 	sizeof (struct mcclock_jensenio_softc), mcclock_jensenio_match,
 	    mcclock_jensenio_attach, 
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.19 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: kbd.c,v 1.20 2002/09/27 20:30:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -87,7 +87,7 @@ static int  kbd_do_modifier __P((u_char));
 static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
-struct cfattach kbd_ca = {
+const struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
 };
 

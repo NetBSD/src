@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.6 2002/05/16 01:01:30 thorpej Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.7 2002/09/27 20:29:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct vtpbc_softc {
 int	vtpbc_mainbus_match(struct device *, struct cfdata *, void *);
 void	vtpbc_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach vtpbc_mainbus_ca = {
+const struct cfattach vtpbc_mainbus_ca = {
 	sizeof(struct vtpbc_softc), vtpbc_mainbus_match, vtpbc_mainbus_attach,
 };
 extern struct cfdriver vtpbc_cd;

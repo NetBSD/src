@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.37 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 2002/09/27 20:30:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -246,7 +246,7 @@ findroot(void)
 /* 
  * mainbus driver 
  */
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mbmatch, mbattach
 };
 

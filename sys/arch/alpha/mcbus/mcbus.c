@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.10 2002/09/27 03:17:43 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.11 2002/09/27 20:29:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.10 2002/09/27 03:17:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.11 2002/09/27 20:29:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ typedef struct {
 	u_int8_t	mcbus_types[MCBUS_MID_MAX];
 } mcbus_softc_t;
 
-struct cfattach mcbus_ca = {
+const struct cfattach mcbus_ca = {
 	sizeof (mcbus_softc_t), mcbusmatch, mcbusattach
 };
 
