@@ -1,4 +1,4 @@
-/*	$NetBSD: printlabel.c,v 1.3 2001/10/19 01:16:38 lukem Exp $	*/
+/*	$NetBSD: printlabel.c,v 1.4 2002/05/27 17:33:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: printlabel.c,v 1.3 2001/10/19 01:16:38 lukem Exp $");
+__RCSID("$NetBSD: printlabel.c,v 1.4 2002/05/27 17:33:09 drochner Exp $");
 #endif	/* not lint */
 
 #include <sys/param.h>
@@ -152,6 +152,10 @@ showpartition(FILE *f, struct disklabel *lp, int i, int ctsformat)
 	case FS_EX2FS:
 		(void)fprintf(f, "  %5d %5d       ",
 		    pp->p_fsize, pp->p_fsize * pp->p_frag);
+		break;
+
+	case FS_ISO9660:
+		(void)fprintf(f, "  %6d            ", pp->p_cdsession);
 		break;
 
 	default:
