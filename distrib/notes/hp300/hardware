@@ -1,27 +1,9 @@
-.\"	$NetBSD: hardware,v 1.11 2002/04/23 05:56:44 gmcgarry Exp $
+.\"	$NetBSD: hardware,v 1.12 2002/05/03 04:01:08 mbw Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
 The smallest amount of RAM that has been tested is 4 MB.  If you wish to
 run X, more RAM is recommended.
-.Pp
-Here is a table of recommended HD partition sizes for a full install:
-.Bl -column -offset indent Partition Suggested Needed
-.It Partition Ta Suggested Ta Needed
-.It /\ (root) Ta "25 MB"   Ta "15 MB"
-.It /usr      Ta "150 MB"  Ta "100 MB"
-.It /var      Ta "20 MB"   Ta "5 MB"
-.It swap      Ta Em "2-3 *RAM" Ta 6 MB
-.El
-.(item -offset indent
-Anything else is up to you!
-.item)
-.Pp
-.(Note
-If you're planning to do the installation using the miniroot file system
-which is placed into the swap area of the disk, the swap partition must
-be large enough to hold this miniroot image.
-.Note)
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
@@ -110,6 +92,10 @@ CS80 High-density 32 track cartridge (134 MB): 9145
 .It
 .Em mt ;
 CS80 Half-inch tape: 7974A, 7978A/B, 7979A, 7980A, and 7980XC.
+.(Note
+You should connect HP-IB tape drives and printers to the slow HP-IB
+interface and hard drives to the fast HP-IB interface (if present).
+.Note)
 .bullet)
 .It
 SCSI devices
@@ -136,9 +122,7 @@ SCSI tape drives: HP 35450A (DDS-1 DAT), Exabyte EXB-8200 (8mm), Archive
 SCSI autochangers
 .bullet)
 .It
-Serial interfaces (see the FAQ for more detailed specs and information on
-configuring:
-.Lk http://www.netbsd.org/Ports/hp300/faq.html#serialinfo
+Serial interfaces
 .(bullet -compact
 .Em dca ;
 Built-in single serial port on System Interface board and Human Interface board
@@ -158,6 +142,10 @@ Built-in Apollo 4-port on Series 400 workstations
 .Em dcl ;
 98628A single port (DIO-I board)
 .bullet)
+.(Note
+See the FAQ for more detailed specs and information on configuring:
+.Lk http://www.netbsd.org/Ports/hp300/faq.html#serialinfo
+.Note)
 .It
 Network interfaces
 .(bullet -compact
@@ -227,5 +215,57 @@ daughterboard)
 .It
 98625A and 98625B 'fast' HP-IB interface (DIO-I board or
 daughtercard for 98562) 
+.bullet)
+.bullet)
+.Pp
+Each serial interface has its own quirks, and some of them use
+non-standard pins.  The FAQ describes how to configure and connect serial
+consoles to \*M systems.
+.Lk http://www.netbsd.org/Ports/hp300/faq.html#serialconsole
+.Pp
+When you try booting from a system with a framebuffer that is not
+supported by
+.Nx*M ,
+the screen will turn black, and it will try using the serial port for the
+console.
+.
+.Ss2 Unsupported hardware
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+310 (16? MHz 68010, with built-in monochrome framebuffer, rs232
+(25, hil, and slow hpib)
+.It
+332 (16? MHz 68030, with no floating point unit)
+.bullet)
+.It
+Graphics Devices
+.(bullet -compact
+SGC support (for 425e built-in EVRX framebuffer) 
+.It
+SGC support (for some rare configurations of 4XXt and 4XXdl workstations) 
+.It
+98702 TurboVRX DIO-II graphics device 
+.It
+98705 Tigershark PersonalVRX DIO-II graphics device 
+.It
+internal video on models 362/382 
+.bullet)
+.It
+Miscellaneous boards/interfaces
+.(bullet -compact
+domain keyboard and mouse, on Series 400 workstations. Needs wscons 
+.It
+parallel port, on 345, 375, 380, and Series 400 workstations 
+.It
+EISA support, on Series 400 workstations 
+.It
+Token Ring cards (a.k.a. ATR) 
+.It
+VME bus adapter, on Series 300 workstations 
+.It
+98625C fast HP-IB option on models 345 and 375 
+.It
+floppy drive on 425e 
 .bullet)
 .bullet)
