@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.13 1996/04/29 20:28:50 christos Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.14 1997/01/16 21:03:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -75,6 +75,9 @@
 struct sbdsp_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
+	isa_chipset_tag_t sc_ic;
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* I/O port base address */
@@ -193,8 +196,8 @@ int	sbdsp_reset __P((struct sbdsp_softc *));
 void	sbdsp_spkron __P((struct sbdsp_softc *));
 void	sbdsp_spkroff __P((struct sbdsp_softc *));
 
-int	sbdsp_wdsp(int iobase, int v);
-int	sbdsp_rdsp(int iobase);
+int	sbdsp_wdsp __P((struct sbdsp_softc *, int v));
+int	sbdsp_rdsp __P((struct sbdsp_softc *));
 
 int	sbdsp_intr __P((void *));
 short	sbversion __P((struct sbdsp_softc *));
