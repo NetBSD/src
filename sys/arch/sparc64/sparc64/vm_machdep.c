@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2002/05/14 02:34:15 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.43 2002/06/03 18:08:43 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -281,6 +281,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	} else
 		p2->p_md.md_fpstate = NULL;
 
+	if (p1->p_flag & P_32)
+		p2->p_flag |= P_32;
+
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
 	 * out of the kernel. (The trap frame invariably resides at
@@ -299,7 +302,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf2->tf_out[6] = (u_int64_t)(u_long)stack + stacksize;
 
 	/* Duplicate efforts of syscall(), but slightly differently */
-	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
+	if (tf2->tf_global[1] & SYSCALL_G7RFLAG) {
+		/* jmp %g2 (or %g7, deprecated) on success */
+		tf2->tf_npc = tf2->tf_global[7];
+	} else if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
 		/* jmp %g2 (or %g7, deprecated) on success */
 		tf2->tf_npc = tf2->tf_global[2];
 	} else {
