@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 2002/10/02 05:47:09 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.4 2002/10/05 21:18:44 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -133,6 +133,9 @@ struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
 #endif /* !TRAPLOG */
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
+
+static void	cpu_set_tss_gates(struct cpu_info *ci);
+static void	cpu_init_tss(struct i386tss *, void *, void *);
 
 #ifdef MULTIPROCESSOR
 /*
@@ -302,6 +305,7 @@ cpu_attach(parent, self, aux)
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		identifycpu(ci);
 		cpu_init(ci);
+		cpu_set_tss_gates(ci);
 		break;
 
 	case CPU_ROLE_BP:
@@ -309,6 +313,7 @@ cpu_attach(parent, self, aux)
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		identifycpu(ci);
 		cpu_init(ci);
+		cpu_set_tss_gates(ci);
 
 #if NLAPIC > 0
 		/*
@@ -330,6 +335,7 @@ cpu_attach(parent, self, aux)
 
 #if defined(MULTIPROCESSOR)
 		gdt_alloc_cpu(ci);
+		cpu_set_tss_gates(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			identifycpu(ci);
@@ -627,3 +633,65 @@ cpu_copy_trampoline()
 }
 
 #endif
+
+
+static void
+cpu_init_tss(struct i386tss *tss, void *stack, void *func)
+{
+	memset(tss, 0, sizeof *tss);
+	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
+	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
+	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
+	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
+	tss->__tss_eip = (int)func;
+}
+
+/* XXX */
+#define IDTVEC(name)	__CONCAT(X, name)
+typedef void (vector)(void);
+extern vector IDTVEC(tss_trap08);
+#ifdef DDB
+extern vector Xintr_tss_ddbipi;
+extern int ddb_vec;
+#endif
+
+static void
+cpu_set_tss_gates(struct cpu_info *ci)
+{
+	struct segment_descriptor sd;
+
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
+	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	    IDTVEC(tss_trap08));
+	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
+	setgate(&idt[8].gd, NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GTRAPTSS_SEL, SEL_KPL));
+
+#if defined(DDB) && defined(MULTIPROCESSOR)
+	/*
+	 * Set up seperate handler for the DDB IPI, so that it doesn't
+	 * stomp on a possibly corrupted stack.
+	 *
+	 * XXX overwriting the gate set in db_machine_init.
+	 * Should rearrange the code so that it's set only once.
+	 */
+	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
+	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	    Xintr_tss_ddbipi);
+
+	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GIPITSS_SEL].sd = sd;
+
+	setgate(&idt[ddb_vec].gd, NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GIPITSS_SEL, SEL_KPL));
+#endif
+}
