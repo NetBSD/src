@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.16 2004/03/19 21:10:31 petrov Exp $	*/
+/*	$NetBSD: consinit.c,v 1.17 2004/03/21 15:08:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2004/03/19 21:10:31 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.17 2004/03/21 15:08:24 pk Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -65,8 +65,6 @@ int  prom_cngetc __P((dev_t));
 static void prom_cnputc __P((dev_t, int));
 static void prom_cnpollc __P((dev_t, int));
 static void prom_cnputc __P((dev_t, int));
-
-int stdin = 0, stdout = 0;
 
 /*
  * The console is set to this one initially,
@@ -113,7 +111,7 @@ prom_cngetc(dev)
 	static int nplus = 0;
 #endif
 
-	while ((l = OF_read(stdin, &ch, 1)) != 1)
+	while ((l = prom_read(prom_stdin(), &ch, 1)) != 1)
 		/* void */;
 #ifdef DDB
 	if (ch == '+') {
@@ -129,8 +127,6 @@ static void
 prom_cninit(cn)
 	struct consdev *cn;
 {
-	if (!stdin) stdin = OF_stdin();
-	if (!stdout) stdout = OF_stdout();
 }
 
 /*
@@ -144,11 +140,8 @@ prom_cnputc(dev, c)
 	int s;
 	char c0 = (c & 0x7f);
 
-#if 0
-	if (!stdout) stdout = OF_stdout();
-#endif
 	s = splhigh();
-	OF_write(stdout, &c0, 1);
+	prom_write(prom_stdout(), &c0, 1);
 	splx(s);
 }
 
@@ -198,38 +191,27 @@ consinit()
 	if (cn_tab != &consdev_prom)
 		return;
 
-	chosen = OF_finddevice("/chosen");
+	chosen = prom_finddevice("/chosen");
 
-	DBPRINT(("setting up stdin\r\n"));
-	DBPRINT(("chosen = %x, stdin @ %p\r\n", chosen, &stdin));
-	OF_getprop(chosen, "stdin",  &stdin, sizeof(stdin));
-	DBPRINT(("stdin instance = %x\r\n", stdin));
-
-	if ((prom_stdin_node = OF_instance_to_package(stdin)) == 0) {
+	if ((prom_stdin_node = prom_instance_to_package(prom_stdin())) == 0) {
 		printf("WARNING: no PROM stdin\n");
 	}
-
 	DBPRINT(("stdin node = %x\r\n", prom_stdin_node));
 
-	DBPRINT(("setting up stdout\r\n"));
-	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	DBPRINT(("stdout instance = %x\r\n", stdout));
-
-	if ((prom_stdout_node = OF_instance_to_package(stdout)) == 0)
+	if ((prom_stdout_node = prom_instance_to_package(prom_stdout())) == 0)
 		printf("WARNING: no PROM stdout\n");
-
 	DBPRINT(("stdout package = %x\r\n", prom_stdout_node));
 
 	DBPRINT(("buffer @ %p\r\n", buffer));
 
 	if (prom_stdin_node != 0 &&
-	    (OF_getproplen(prom_stdin_node, "keyboard") >= 0)) {
+	    (prom_getproplen(prom_stdin_node, "keyboard") >= 0)) {
 #if NKBD > 0
 		printf("cninit: kdb/display not configured\n");
 #endif
 		consname = "keyboard/display";
 	} else if (prom_stdout_node != 0 &&
-		   (OF_instance_to_path(stdin, buffer, sizeof(buffer)) >= 0)) {
+		   (OF_instance_to_path(prom_stdin(), buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}
 	printf("console is %s\n", consname);
