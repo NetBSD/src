@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.98 2002/06/19 15:00:04 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.99 2002/06/27 18:34:32 ross Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -123,6 +123,7 @@
 #	agp*	AGP GART devices
 #	stic*	PixelStamp interface chip
 #	systrace syscall tracer
+#	bktr	Brooktree 848/849/878/879 based TV cards
 
 dialin=0
 dialout=524288
@@ -169,6 +170,7 @@ all)
 	makedev altq
 	makedev clockctl
 	makedev systrace
+	makedev bktr
 	;;
 
 minimal)
@@ -700,6 +702,22 @@ scsibus*)
 	rm -f scsibus$unit
 	mknod scsibus$unit c 42 $unit
 	chmod 644 scsibus$unit
+	;;
+
+bktr)
+	makedev bktr0 bktr1
+	ln -fs bktr0 bktr
+	ln -fs tuner0 tuner
+	ln -fs vbi0 vbi
+	;;
+
+bktr*)
+	unit=${i#bktr}
+	rm -f bktr$unit tuner$unit vbi$unit
+	mknod bktr$unit c 71 $(($unit + 0))
+	mknod tuner$unit c 71 $(($unit + 16))
+	mknod vbi$unit c 71 $(($unit + 32))
+	chmod 444 bktr$unit tuner$unit vbi$unit
 	;;
 
 isdn)
