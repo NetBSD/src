@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setenv.c	5.6 (Berkeley) 6/4/91";*/
-static char *rcsid = "$Id: setenv.c,v 1.6 1995/02/28 01:46:53 jtc Exp $";
+static char *rcsid = "$Id: setenv.c,v 1.7 1995/06/14 05:19:57 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$Id: setenv.c,v 1.6 1995/02/28 01:46:53 jtc Exp $";
  *	Set the value of the environmental variable "name" to be
  *	"value".  If rewrite is set, replace any current value.
  */
+int
 setenv(name, value, rewrite)
 	register const char *name;
 	register const char *value;
