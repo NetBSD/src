@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.43 2005/03/24 08:34:00 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.44 2005/04/02 22:34:56 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -903,3 +903,105 @@ distrib/evbppc/md-kernel/Makefile		1.2
 	One more place that needs $HOST_SH to run a script correctly.
 	[jmc, ticket #1353]
 
+sys/dev/pci/pdcsata.c				1.1 via patch
+sys/dev/pci/files.pci				1.224 via patch
+share/man/man4/pdcsata.4			1.1 (new)
+share/man/man4/Makefile				1.336 via patch
+distrib/sets/lists/man/mi			1.735
+distrib/notes/i386/hardware			1.116
+sys/arch/algor/conf/P4032			1.26
+sys/arch/algor/conf/P5064			1.31
+sys/arch/algor/conf/P6032			1.25
+sys/arch/alpha/conf/ALPHA			1.197
+sys/arch/alpha/conf/BASIL			1.28
+sys/arch/alpha/conf/FRAU-FARBISSINA		1.33
+sys/arch/alpha/conf/GENERIC			1.257 via patch
+sys/arch/alpha/conf/INSTALL			1.82
+sys/arch/amd64/conf/GENERIC			1.32
+sys/arch/amd64/conf/INSTALL			1.21
+sys/arch/amd64/conf/INSTALL_ACPI		1.13
+sys/arch/amd64/conf/SIMICS			1.11
+sys/arch/arc/conf/GENERIC			1.107
+sys/arch/arc/conf/MIMORI			1.30
+sys/arch/arc/conf/PCCONS			1.38
+sys/arch/arc/conf/RAMDISK			1.51
+sys/arch/atari/conf/MILAN.in			1.17
+sys/arch/atari/conf/BOOT			regenerated
+sys/arch/atari/conf/BOOTX			regenerated
+sys/arch/atari/conf/ATARITT			regenerated
+sys/arch/atari/conf/FALCON			regenerated
+sys/arch/atari/conf/HADES			regenerated
+sys/arch/atari/conf/MILAN-ISAIDE		regenerated
+sys/arch/atari/conf/MILAN-PCIIDE		regenerated
+sys/arch/cats/conf/GENERIC			1.71
+sys/arch/cats/conf/INSTALL			1.42
+sys/arch/cobalt/conf/GENERIC			1.64
+sys/arch/evbarm/conf/ADI_BRH			1.22
+sys/arch/evbarm/conf/INTEGRATOR			1.32
+sys/arch/evbarm/conf/IQ31244			1.18
+sys/arch/evbarm/conf/SMDK2800			1.18
+sys/arch/evbarm/conf/IQ80310			1.40
+sys/arch/evbarm/conf/IQ80321			1.35
+sys/arch/evbmips/conf/MALTA			1.24
+sys/arch/evbppc/conf/EV64260			1.16
+sys/arch/evbppc/conf/OPENBLOCKS266		1.12
+sys/arch/evbppc/conf/WALNUT			1.15
+sys/arch/i386/conf/DELPHI			1.45
+sys/arch/i386/conf/GENERIC			1.641
+sys/arch/i386/conf/GENERIC_LAPTOP		1.121
+sys/arch/i386/conf/INSTALL			1.254
+sys/arch/i386/conf/INSTALL_LAPTOP		1.74
+sys/arch/i386/conf/IOPENER			1.53
+sys/arch/i386/conf/SWINGER			1.57
+sys/arch/macppc/conf/GENERIC			1.185
+sys/arch/macppc/conf/INSTALL			1.80
+sys/arch/sandpoint/conf/GENERIC.sandpoint	1.18
+sys/arch/sparc64/conf/GENERIC32			1.91
+sys/arch/sparc64/conf/POWEROFSEVEN.inc		1.28
+sys/arch/sparc64/conf/SPLODE			1.27
+
+	Add pdcsata(4), a driver for the Promise SATA150 (aka
+	PDC203xx) series of controllers.
+	[bouyer, ticket #1019]
+
+sys/dev/ic/iha.c				1.26
+
+	When checking the CDB length, check against the field
+	in the SCB that we're actually storing it to.
+	[thorpej, ticket #1021]
+
+sys/arch/arc/dti/btl.c				1.15
+sys/arch/arc/dti/btlreg.h			1.5
+sys/dev/eisa/ahb.c				1.41
+sys/dev/eisa/ahbreg.h				1.12
+sys/dev/ic/aha.c				1.45
+sys/dev/ic/uhareg.h				1.10
+sys/dev/ic/ahareg.h				1.10
+sys/dev/ic/bha.c				1.60
+sys/dev/ic/uha.c				1.33
+sys/dev/isa/wds.c				1.59
+sys/dev/isa/wdsreg.h				1.6
+
+	Don't use "struct scsi_generic" in a hardware-defined
+	structure.  Instead, use an array of 12 bytes.  Check the
+	incoming CDB to see that it will fit, and print and error
+	and fail the command if it won't.
+	[thorpej, ticket #1022]
+
+sys/dev/ic/bha.c				1.61
+
+	Fix a straggling reference to "struct scsi_generic" in
+	some debug-only code.
+	[thorpej, ticket #1023]
+
+distrib/sets/lists/base/md.hp300		1.38
+share/mk/bsd.own.mk				1.427
+sys/arch/hp300/stand/Makefile.buildboot		1.25
+sys/arch/hp300/stand/mkboot/Makefile		1.10
+sys/arch/hp300/stand/mkboot/mkboot.c		1.7
+tools/Makefile					1.86 (via patch)
+tools/hp300-mkboot/Makefile			1.1 (new)
+
+	Convert mkboot into a full cross tool.  Last hurdle for
+	hp300 to building on non NetBSD/bsd hosts.
+	[jmc, ticket #1025]
