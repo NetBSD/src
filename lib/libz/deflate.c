@@ -1,4 +1,4 @@
-/* $NetBSD: deflate.c,v 1.8 2002/03/11 23:40:17 fvdl Exp $ */
+/* $NetBSD: deflate.c,v 1.9 2002/05/07 09:06:51 tron Exp $ */
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -49,7 +49,7 @@
  *
  */
 
-/* @(#) $Id: deflate.c,v 1.8 2002/03/11 23:40:17 fvdl Exp $ */
+/* @(#) $Id: deflate.c,v 1.9 2002/05/07 09:06:51 tron Exp $ */
 
 #include "deflate.h"
 
@@ -276,6 +276,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
     if (s->window == Z_NULL || s->prev == Z_NULL || s->head == Z_NULL ||
         s->pending_buf == Z_NULL) {
         strm->msg = (char*)ERR_MSG(Z_MEM_ERROR);
+	s->status = INIT_STATE;
         deflateEnd (strm);
         return Z_MEM_ERROR;
     }
@@ -633,6 +634,7 @@ int ZEXPORT deflateCopy (dest, source)
 
     if (ds->window == Z_NULL || ds->prev == Z_NULL || ds->head == Z_NULL ||
         ds->pending_buf == Z_NULL) {
+	ds->status = INIT_STATE;
         deflateEnd (dest);
         return Z_MEM_ERROR;
     }
