@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.3 2001/03/22 18:26:46 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.4 2001/03/25 17:13:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -115,6 +115,8 @@ public:
 		BOOL	pause_before_boot;
 		BOOL	load_debug_info;
 		BOOL	safety_message;
+		// serial console speed
+		int	serial_speed;
 	};
 	struct support_status {
 		u_int32_t cpu, machine;
@@ -151,7 +153,7 @@ private:
 		_pref.platid_hi		= 0;
 		_pref.platid_lo		= 0;
 		_pref.rootfs		= 0;
-
+		wsprintf(_pref.rootfs_file, TEXT("miniroot.fs"));
 		_pref.boot_serial	= FALSE;
 		_pref.boot_verbose	= FALSE;
 		_pref.boot_single_user	= FALSE;
@@ -160,6 +162,11 @@ private:
 		_pref.reverse_video	= FALSE;
 		_pref.pause_before_boot	= TRUE;
 		_pref.safety_message	= TRUE;
+#ifdef MIPS
+		_pref.serial_speed	= 9600; // historical reason.
+#else
+		_pref.serial_speed	= 19200;
+#endif
 	}
 	enum _platform_op {
 		_PLATFORM_OP_GET,

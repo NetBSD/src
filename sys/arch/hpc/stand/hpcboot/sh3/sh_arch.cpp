@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.5 2001/03/25 17:13:17 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ SHArchitecture::systemInfo()
 	pfc_dump();
 
 	// SCIF
-	scif_dump(19200);
+	scif_dump(menu._pref.serial_speed);
 
 	// HD64461
 	platid_t platform;
