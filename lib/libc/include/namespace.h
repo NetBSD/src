@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.23 1998/10/14 19:41:03 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.24 1998/10/15 09:28:13 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@
 #define dbopen			_dbopen
 #define devname			_devname
 #define dirname			_dirname
+#define dn_expand		_dn_expand
 #define drand48			_drand48
 #define endfsent		_endfsent
 #define endgrent		_endgrent
