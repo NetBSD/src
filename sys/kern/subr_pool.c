@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.72 2002/03/09 01:56:27 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.73 2002/03/09 05:14:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.72 2002/03/09 01:56:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.73 2002/03/09 05:14:33 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1120,9 +1120,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
  *
  * Note 1, we never wait for memory here, we let the caller decide what to do.
  *
- * Note 2, this doesn't work with static pools.
- *
- * Note 3, we must be called with the pool already locked, and we return
+ * Note 2, we must be called with the pool already locked, and we return
  * with it locked.
  */
 static int
@@ -1916,9 +1914,9 @@ pool_allocator_alloc(struct pool *org, int flags)
 			TAILQ_INSERT_TAIL(&pa->pa_list, pp, pr_alloc_list);
 			if (pp == org)
 				continue;
-			simple_unlock(&pa->pa_list);
+			simple_unlock(&pa->pa_slock);
 			freed = pool_reclaim(pp);
-			simple_lock(&pa->pa_list);
+			simple_lock(&pa->pa_slock);
 		} while ((pp = TAILQ_FIRST(&pa->pa_list)) != start &&
 			 freed == 0);
 
