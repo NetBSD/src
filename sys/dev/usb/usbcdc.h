@@ -1,4 +1,4 @@
-/*	$NetBSD: usbcdc.h,v 1.3 1999/01/03 01:09:18 augustss Exp $	*/
+/*	$NetBSD: usbcdc.h,v 1.4 1999/08/16 20:20:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ typedef struct {
 	uByte		bDescriptorSubtype;
 	uByte		bmCapabilities;
 #define USB_CDC_CM_DOES_CM		0x01
-#define USB_CDC_CM_CM_OVER_DATA		0x02
+#define USB_CDC_CM_OVER_DATA		0x02
 	uByte		bDataInterface;
 } usb_cdc_cm_descriptor_t;
 
@@ -96,12 +96,19 @@ typedef struct {
 #define UCDC_CLEAR_COMM_FEATURE		0x04
 #define UCDC_SET_LINE_CODING		0x20
 #define UCDC_GET_LINE_CODING		0x21
+#define UCDC_SET_CONTROL_LINE_STATE	0x22
+#define  UCDC_LINE_DTR			0x0001
+#define  UCDC_LINE_RTS			0x0002
+#define UCDC_SEND_BREAK			0x23
+#define  UCDC_BREAK_ON			0xffff
+#define  UCDC_BREAK_OFF			0x0000
 
 typedef struct {
 	uWord	wState;
 #define UCDC_IDLE_SETTING		0x0001
 #define UCDC_DATA_MULTIPLEXED		0x0002
 } usb_cdc_abstract_state_t;
+#define UCDC_ABSTRACT_STATE_LENGTH 2
 
 typedef struct {
 	uDWord	dwDTERate;
@@ -117,6 +124,7 @@ typedef struct {
 #define UCDC_PARITY_SPACE		4
 	uByte	bDataBits;
 } usb_cdc_line_state_t;
+#define UCDC_LINE_STATE_LENGTH 7
 
 typedef struct {
 	uByte	bmRequestType;
