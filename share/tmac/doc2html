@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.6 1999/03/07 08:37:03 mycroft Exp $
+.\" $NetBSD: doc2html,v 1.7 1999/03/07 08:48:48 mycroft Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -803,7 +803,7 @@ AT&T UNIX\\$*
 .	pc-fin \\$3
 \\*[dot-dot]
 ..
-.\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Qq Qo Qc Sq So Sc Oo Oc
+.\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Pq Po Pc Qq Qo Qc Sq So Sc Oo Oc
 .make-quoter A &lt; &gt;
 .make-quoter B \&[ \&]
 .make-quoter D \&`` \&''
@@ -1144,9 +1144,14 @@ AT&T UNIX\\$*
 .als doc2html@@Qq Qq
 .als doc2html@@Qo Qo
 .als doc2html@@Qc Qc
+.als doc2html@@Pq Pq
+.als doc2html@@Po Po
+.als doc2html@@Pc Pc
 .als doc2html@@Sq Sq
 .als doc2html@@So So
 .als doc2html@@Sc Sc
+.als doc2html@@Oo Oo
+.als doc2html@@Oc Oc
 .als doc2html@@Ta Ta
 .als doc2html@@Mt Mt
 .als doc2html@@Lk Lk
