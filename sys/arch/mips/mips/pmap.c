@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2003/01/17 23:36:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2003/05/08 18:13:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/01/17 23:36:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2003/05/08 18:13:19 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -190,7 +190,6 @@ struct pmap	kernel_pmap_store;
 
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */
-vaddr_t virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 struct pv_entry	*pv_table;
 int		 pv_table_npages;
@@ -331,6 +330,13 @@ pmap_bootstrap()
 	 */
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+
+	/*
+	 * Note: we can't grow the kernel pmap, so the end of the
+	 * managed kernel virtual address space is defined by how
+	 * large we make the initial sysmap.
+	 */
+	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
 	/*
@@ -394,17 +400,6 @@ pmap_bootstrap()
 }
 
 /*
- * Define the initial bounds of the kernel virtual address space.
- */
-void
-pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
-{
-
-	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
-	*vendp = trunc_page(virtual_end);	/* XXX need pmap_growkernel() */
-}
-
-/*
  * Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
  * This function allows for early dynamic memory allocation until the virtual
  * memory system has been bootstrapped.  After that point, either kmem_alloc
@@ -419,14 +414,10 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
  *
  * Note that this memory will never be freed, and in essence it is wired
  * down.
- *
- * We must adjust *vstartp and/or *vendp iff we use address space
- * from the kernel virtual address range defined by pmap_virtual_space().
  */
 vaddr_t
-pmap_steal_memory(size, vstartp, vendp)
+pmap_steal_memory(size)
 	vsize_t size;
-	vaddr_t *vstartp, *vendp;
 {
 	int bank, x;
 	u_int npgs;
