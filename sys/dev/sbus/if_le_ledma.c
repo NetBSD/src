@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.3 1998/08/31 11:13:54 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.4 1998/09/06 22:43:16 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct	le_softc {
 	bus_space_tag_t		sc_bustag;
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
 	struct	lsi64854_softc	*sc_dma;	/* pointer to my dma */
-	u_long			sc_laddr;	/* LANCE DMA address */
+	u_int			sc_laddr;	/* LANCE DMA address */
 };
 
 #define MEMSIZE		(16*1024)	/* LANCE memory size */
@@ -249,7 +249,7 @@ lehwreset(sc)
 	struct le_softc *lesc = (struct le_softc *)sc;
 	struct lsi64854_softc *dma = lesc->sc_dma;
 	u_int32_t csr;
-	u_long aui_bit;
+	u_int aui_bit;
 
 	/*
 	 * Reset DMA channel.
