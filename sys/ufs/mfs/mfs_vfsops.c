@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.57 2004/04/21 07:58:02 enami Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.58 2004/04/21 12:00:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.57 2004/04/21 07:58:02 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.58 2004/04/21 12:00:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -344,13 +344,13 @@ mfs_mount(mp, path, data, ndp, p)
 	fs = ump->um_fs;
 	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
-	if (error == 0) {
-		(void)memcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
-		    sizeof(fs->fs_fsmnt));
-		fs->fs_fsmnt[sizeof(fs->fs_fsmnt) - 1] = 0;
-	}
+	if (error)
+		return error;
+	(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
+		sizeof(fs->fs_fsmnt));
+	fs->fs_fsmnt[sizeof(fs->fs_fsmnt) - 1] = '\0';
 	/* XXX: cleanup on error */
-	return error;
+	return 0;
 }
 
 int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
@@ -428,6 +428,10 @@ mfs_statvfs(mp, sbp, p)
 	int error;
 
 	error = ffs_statvfs(mp, sbp, p);
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
-	return (error);
+	if (error)
+		return error;
+	(void)strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name,
+	    sizeof(sbp->f_fstypename));
+	sbp->f_fstypename[sizeof(sbp->f_fstypename) - 1] = '\0';
+	return 0;
 }
