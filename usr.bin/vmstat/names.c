@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	5.2 (Berkeley) 6/4/91
- *	$Id: names.c,v 1.4 1993/12/06 09:21:56 cgd Exp $
+ *	$Id: names.c,v 1.5 1994/03/13 03:38:30 cgd Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(vax) && !defined(i386)
@@ -52,29 +52,34 @@ void
 read_names()
 {
 	register char *p;
-	register u_long isa_bio;
+	register u_long isa_devtab;
 	static char buf[BUFSIZ];
 	struct isa_device dev;
 	struct isa_driver drv;
 	char name[10];
 	int i = 0;
 
-	isa_bio = nl[X_ISA_BIO].n_value;
-	if (isa_bio == 0) {
+	isa_devtab = nl[X_ISADEVTAB].n_value;
+	if (isa_devtab == 0) {
 		(void) fprintf(stderr,
 		    "vmstat: disk init info not in namelist\n");
 		exit(1);
 	}
 		
 	p = buf;
-	for (;; isa_bio += sizeof dev) {
-		(void)kvm_read((void *)isa_bio, &dev, sizeof dev);
+	for (;; isa_devtab += sizeof dev) {
+		(void)kvm_read((void *)isa_devtab, &dev, sizeof dev);
 		if (dev.id_driver == 0)
 			break;
 		if (dev.id_alive == 0)
 			continue;
+		if (dev.id_parent == NULL)
+			continue;
+
 		(void)kvm_read(dev.id_driver, &drv, sizeof drv);
 		(void)kvm_read(drv.name, name, sizeof name);
+
+		/* XXX this is *totally* broken for scsi devices */
 
 		dr_name[i] = p;
 		if( strlen(name) > 2 && name[strlen(name)-1]=='c')
