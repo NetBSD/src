@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.15 1999/04/01 19:07:40 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.16 1999/06/12 10:58:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -671,8 +671,11 @@ static rnd_sample_t *
 rnd_sample_allocate(rndsource_t *source)
 {
 	rnd_sample_t *c;
+	int s;
 
-	c = pool_get(&rnd_mempool, M_WAITOK);
+	s = splhigh();
+	c = pool_get(&rnd_mempool, PR_WAITOK);
+	splx(s);
 	if (c == NULL)
 		return (NULL);
 
@@ -690,8 +693,11 @@ static rnd_sample_t *
 rnd_sample_allocate_isr(rndsource_t *source)
 {
 	rnd_sample_t *c;
+	int s;
 
+	s = splhigh();
 	c = pool_get(&rnd_mempool, 0);
+	splx(s);
 	if (c == NULL)
 		return (NULL);
 
@@ -705,8 +711,12 @@ rnd_sample_allocate_isr(rndsource_t *source)
 static void
 rnd_sample_free(rnd_sample_t *c)
 {
+	int s;
+
 	memset(c, 0, sizeof(rnd_sample_t));
+	s = splhigh();
 	pool_put(&rnd_mempool, c);
+	splx(s);
 }
 
 /*
