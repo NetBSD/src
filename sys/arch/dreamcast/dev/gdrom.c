@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.4 2001/04/24 19:43:25 marcus Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.5 2001/07/22 15:46:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -275,7 +275,7 @@ int gdrom_command_sense(sc, req, buf, nbyt)
 	  return (0);
 	}
 	
-	bzero(cmd, sizeof(cmd));
+	memset(cmd, 0, sizeof(cmd));
 	
 	cmd[0] = 0x13;
 	cmd[4] = sizeof(sense_data);
@@ -312,7 +312,7 @@ int gdrom_read_toc(sc, toc)
 	 10    -        -        */
 	unsigned char cmd[12];
 
-	bzero(cmd, sizeof(cmd));
+	memset(cmd, 0, sizeof(cmd));
 	
 	cmd[0] = 0x14;
 	cmd[3] = sizeof(struct gd_toc)>>8;
@@ -336,7 +336,7 @@ int gdrom_read_sectors(sc, buf, sector, cnt)
 	 10  cnt(lo)    -        */
 	unsigned char cmd[12];
 
-	bzero(cmd, sizeof(cmd));
+	memset(cmd, 0, sizeof(cmd));
 
 	cmd[0] = 0x30;
 	cmd[1] = 0x20;
@@ -362,7 +362,7 @@ int gdrom_mount_disk(sc)
 	 10    -        -        */
 	unsigned char cmd[12];
 
-	bzero(cmd, sizeof(cmd));
+	memset(cmd, 0, sizeof(cmd));
 	
 	cmd[0] = 0x70;
 	cmd[1] = 0x1f;
