@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/07/14 15:03:05 veego Exp $
+#	$NetBSD: Makefile,v 1.14 1998/05/08 19:08:18 chopps Exp $
 
 ### what we need:
 
@@ -40,7 +40,7 @@ INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${.CURDIR} -I${.CURDIR}/../../..
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
 
-COPTIM= -O2 -fomit-frame-pointer -fno-function-cse -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
 CFLAGS = ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:

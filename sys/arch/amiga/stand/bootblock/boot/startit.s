@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.2 1997/02/01 01:46:27 mhitch Exp $	*/
+/*	$NetBSD: startit.s,v 1.3 1998/05/08 19:08:18 chopps Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.2 1997/02/01 01:46:27 mhitch Exp $
+ * From: $NetBSD: startit.s,v 1.3 1998/05/08 19:08:18 chopps Exp $
  */
 
 	.set	ABSEXECBASE,4
@@ -144,31 +144,82 @@ nott:
 |	moveb	#24,0x200003c9
 |	moveb	#0,0x200003c9
 
+| ---- switch off cache ----
+	btst	#3,d5
+	jeq	L3
+	.word	0xf4f8
+L3:	movl	d2,sp@-			| save d2
+	movql	#0,d2			| switch off cache to ensure we use
+	movec	d2,cacr			| valid kernel data
+	movl	sp@+,d2			| restore d2
+
 | ---- copy kernel start ----
 
-	tstl	a3			| Can we load to fastmem?
-	jeq	L0			| No, leave destination at 0
+| removed Z flag
+|	tstl	a3			| Can we load to fastmem?
+|	jeq	L0			| No, leave destination at 0
 	movl	a0,a3			| Move to start of fastmem chunk
 	addl	a0,a6			| relocate kernel entry point
-L0:
-	movl	a1@+,a3@+
+
+	addl	#3,d2
+	andl	#0xfffffffc,d2		| round up.
+
+	| determine if the kernel need be copied upwards or downwards
+
+	cmpl	a1,a3			| a3-a1
+	bcs	above			| source is above
+
+	movl	a0,sp
+	addl	d0,sp			| move the stack to the end of segment
+
+	| copy from below upwards requires copying from end to start.
+
+	addl	d2,a3			| one long word past
+	addl	d2,a1			| one long word past
+
+	subl	#4,sp			| alloc space
+	movl	a1,sp@-			| save source
+	movl	a3,sp@-			| save destination
+
+	| copy copier to end of segment
+
+	movl	sp,a3
+	subl	#256,a3			| end of segment save our stack
+
+	lea	pc@(_startit_end:w),a1
+	movl	a0,sp@-			| save segment start
+	lea	pc@(below:w),a0
+
+L0:	movw	a1@-,a3@-
+	cmpl	a0,a1
+	bne	L0
+	movl	sp@,a0			| restore segment start
+	movl	a3,sp@			| address of relocated below
+	addl	#(ckend - below),a3
+	movl	a3,sp@(12)		| address of ckend for later
+	rts
+
+below:	movl	sp@+,a3			| recover destination
+	movl	sp@+,a1			| recover source
+
+L1:	movl	a1@-,a3@-		| copy kernel
 	subl	#4,d2
-	bcc	L0
+	bne	L1
+
+	rts				| jmps to relocated ckend
+
+above:	movl	a1@+,a3@+
+	subl	#4,d2
+	bne	above
 
 	lea	pc@(ckend:w),a1
 	movl	a3,sp@-
 	pea	pc@(_startit_end:w)
-L1:
+L2:
 	movl	a1@+,a3@+
 	cmpl	sp@,a1
-	bcs	L1
+	bcs	L2
 	addql	#4,sp
-
-	btst	#3,d5
-	jeq	L2
-	.word	0xf4f8
-L2:	movql	#0,d2			| switch off cache to ensure we use
-	movec	d2,cacr			| valid kernel data
 
 #if TESTONAMIGA
 	movew	#0xFF0,0xdff180		| yellow
