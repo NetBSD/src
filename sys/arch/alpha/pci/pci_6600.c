@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.10 2002/09/27 15:35:38 provos Exp $ */
+/* $NetBSD: pci_6600.c,v 1.10.20.1 2005/03/30 10:21:21 tron Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.10 2002/09/27 15:35:38 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.10.20.1 2005/03/30 10:21:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,8 @@ dec_6600_iointr(arg, vec)
 		    irqtype);
 		if (ALPHA_SHARED_INTR_DISABLE(dec_6600_pci_intr, irq))
 			dec_6600_intr_disable(irq);
-	}
+	} else
+		alpha_shared_intr_reset_strays(dec_6600_pci_intr, irq);
 }
 
 void
