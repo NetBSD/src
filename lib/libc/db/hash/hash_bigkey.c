@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.10 1999/07/10 17:48:54 christos Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.11 1999/07/28 19:33:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.10 1999/07/10 17:48:54 christos Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.11 1999/07/28 19:33:03 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,11 +131,17 @@ __big_insert(hashp, bufp, key, val)
 		if (!key_size) {
 			if (FREESPACE(p)) {
 				move_bytes = MIN(FREESPACE(p), val_size);
+				/*
+				 * Here's the hack to make sure that if the data ends on the
+				 * same page as the key ends, FREESPACE is at least one.
+				 */
+				if (move_bytes == val_size && val_size == val->size)
+					move_bytes--;
 				off = OFFSET(p) - move_bytes;
-				p[n] = off;
 				memmove(cp + off, val_data, (size_t)move_bytes);
 				val_data += move_bytes;
 				val_size -= move_bytes;
+				p[n] = off;
 				p[n - 2] = FULL_KEY_DATA;
 				FREESPACE(p) = FREESPACE(p) - move_bytes;
 				OFFSET(p) = off;
@@ -155,7 +161,7 @@ __big_insert(hashp, bufp, key, val)
 		 * Here's the hack to make sure that if the data ends on the
 		 * same page as the key ends, FREESPACE is at least one.
 		 */
-		if (space == val_size && val_size == val->size)
+		if (move_bytes == val_size && val_size == val->size)
 			move_bytes--;
 		off = OFFSET(p) - move_bytes;
 		memmove(cp + off, val_data, (size_t)move_bytes);
