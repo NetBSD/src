@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1997/01/23 22:47:36 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.5 1997/02/02 08:38:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -803,8 +803,6 @@ _esigcode:
  * Primitives
  */
 #include <machine/asm.h>
-
-/* XXX copypage(fromaddr, toaddr) */
 
 /*
  * non-local gotos
