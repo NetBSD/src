@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 1997/06/12 19:14:28 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.84 1997/06/12 21:02:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -180,10 +180,10 @@ vm_offset_t	vm_first_phys, vm_num_phys;
  * THIS SHOULD BE PART OF THE CORE MAP
  */
 struct pvlist {
-	struct	pvlist *pv_next;	/* next pvlist, if any */
-	struct	pmap *pv_pmap;		/* pmap of this va */
-	int	pv_va;			/* virtual address */
-	int	pv_flags;		/* flags (below) */
+	struct		pvlist *pv_next;	/* next pvlist, if any */
+	struct		pmap *pv_pmap;		/* pmap of this va */
+	vm_offset_t	pv_va;			/* virtual address */
+	int		pv_flags;		/* flags (below) */
 };
 
 /*
@@ -2165,10 +2165,12 @@ pv_link4_4c(pv, pm, va)
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
-				if (pmapdebug) printf(
-				"pv_link: badalias: pid %d, %lx<=>%x, pa %lx\n",
-				curproc?curproc->p_pid:-1, va, npv->pv_va,
-				vm_first_phys + (pv-pv_table)*NBPG);
+				if (pmapdebug & PDB_CACHESTUFF)
+					printf(
+			"pv_link: badalias: pid %d, %lx<=>%lx, pa %lx\n",
+					curproc ? curproc->p_pid : -1,
+					va, npv->pv_va,
+					vm_first_phys + (pv-pv_table)*NBPG);
 #endif
 				pv->pv_flags |= PV_NC;
 				pv_changepte4_4c(pv, ret = PG_NC, 0);
@@ -2436,10 +2438,12 @@ pv_link4m(pv, pm, va)
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
-				if (pmapdebug & PDB_CACHESTUFF) printf(
-				"pv_link: badalias: pid %d, %lx<=>%x, pa %lx\n",
-				curproc?curproc->p_pid:-1, va, npv->pv_va,
-				vm_first_phys + (pv-pv_table)*NBPG);
+				if (pmapdebug & PDB_CACHESTUFF)
+					printf(
+			"pv_link: badalias: pid %d, %lx<=>%lx, pa %lx\n",
+					curproc ? curproc->p_pid : -1,
+					va, npv->pv_va,
+					vm_first_phys + (pv-pv_table)*NBPG);
 #endif
 				pv->pv_flags &= ~PV_C4M;
 				pv_changepte4m(pv, 0, ret = SRMMU_PG_C);
@@ -4058,10 +4062,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		}
 		nleft--;
 		setpte4(pteva, 0);
-#define PMAP_PTESYNC
-#ifdef PMAP_PTESYNC
 		pte0[VA_VPG(pteva)] = 0;
-#endif
 	}
 
 	/*
@@ -4308,6 +4309,7 @@ pmap_page_protect4_4c(pa, prot)
 			}
 			goto nextpv;
 		}
+
 		if (CTX_USABLE(pm,rp)) {
 			setcontext4(pm->pm_ctxnum);
 			pteva = va;
@@ -4323,67 +4325,69 @@ pmap_page_protect4_4c(pa, prot)
 
 		tpte = getpte4(pteva);
 		if ((tpte & PG_V) == 0)
-			panic("pmap_page_protect !PG_V");
+			panic("pmap_page_protect !PG_V: ctx %d, va %x, pte %x",
+			      pm->pm_ctxnum, va, tpte);
 		flags |= MR4_4C(tpte);
 
 		if (nleft) {
 			setpte4(pteva, 0);
-#ifdef PMAP_PTESYNC
 			if (sp->sg_pte != NULL)
 				sp->sg_pte[VA_VPG(pteva)] = 0;
-#endif
-		} else {
-			if (pm == pmap_kernel()) {
+			goto nextpv;
+		}
+
+		/* Entire segment is gone */
+		if (pm == pmap_kernel()) {
 #if defined(SUN4_MMU3L)
-				if (!HASSUN4_MMU3L)
+			if (!HASSUN4_MMU3L)
 #endif
+				for (i = ncontext; --i >= 0;) {
+					setcontext4(i);
+					setsegmap(va, seginval);
+				}
+			me_free(pm, sp->sg_pmeg);
+			if (--rp->rg_nsegmap == 0) {
+#if defined(SUN4_MMU3L)
+				if (HASSUN4_MMU3L) {
 					for (i = ncontext; --i >= 0;) {
 						setcontext4(i);
-						setsegmap(va, seginval);
+						setregmap(va, reginval);
 					}
-				me_free(pm, sp->sg_pmeg);
-				if (--rp->rg_nsegmap == 0) {
-#if defined(SUN4_MMU3L)
-					if (HASSUN4_MMU3L) {
-						for (i = ncontext; --i >= 0;) {
-							setcontext4(i);
-							setregmap(va, reginval);
-						}
-						region_free(pm, rp->rg_smeg);
-					}
-#endif
-				}
-			} else {
-				if (CTX_USABLE(pm,rp))
-					/* `pteva'; we might be using tregion */
-					setsegmap(pteva, seginval);
-#if defined(SUN4_MMU3L)
-				else if (HASSUN4_MMU3L &&
-					 rp->rg_smeg != reginval) {
-					/* note: context already set earlier */
-					setregmap(0, rp->rg_smeg);
-					setsegmap(vs << SGSHIFT, seginval);
+					region_free(pm, rp->rg_smeg);
 				}
 #endif
-				free(sp->sg_pte, M_VMPMAP);
-				sp->sg_pte = NULL;
-				me_free(pm, sp->sg_pmeg);
+			}
+		} else {
+			if (CTX_USABLE(pm,rp))
+				/* `pteva'; we might be using tregion */
+				setsegmap(pteva, seginval);
+#if defined(SUN4_MMU3L)
+			else if (HASSUN4_MMU3L &&
+				 rp->rg_smeg != reginval) {
+				/* note: context already set earlier */
+				setregmap(0, rp->rg_smeg);
+				setsegmap(vs << SGSHIFT, seginval);
+			}
+#endif
+			free(sp->sg_pte, M_VMPMAP);
+			sp->sg_pte = NULL;
+			me_free(pm, sp->sg_pmeg);
 
-				if (--rp->rg_nsegmap == 0) {
+			if (--rp->rg_nsegmap == 0) {
 #if defined(SUN4_MMU3L)
-					if (HASSUN4_MMU3L &&
-					    rp->rg_smeg != reginval) {
-						if (pm->pm_ctx)
-							setregmap(va, reginval);
-						region_free(pm, rp->rg_smeg);
-					}
-#endif
-					free(rp->rg_segmap, M_VMPMAP);
-					rp->rg_segmap = NULL;
-					GAP_WIDEN(pm,vr);
+				if (HASSUN4_MMU3L &&
+				    rp->rg_smeg != reginval) {
+					if (pm->pm_ctx)
+						setregmap(va, reginval);
+					region_free(pm, rp->rg_smeg);
 				}
+#endif
+				free(rp->rg_segmap, M_VMPMAP);
+				rp->rg_segmap = NULL;
+				GAP_WIDEN(pm,vr);
 			}
 		}
+
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
