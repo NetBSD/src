@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.36 2001/09/04 02:37:09 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.37 2001/09/23 19:59:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1141,7 +1141,7 @@ struct i386_bus_dma_tag {
  */
 struct i386_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
