@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.45 1999/11/03 14:12:19 jdolecek Exp $	*/
+/*	$NetBSD: si.c,v 1.46 1999/11/22 18:34:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,8 +75,6 @@
  *
  * The autoconfiguration boilerplate came from Adam Glass.
  */
-
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,9 +221,7 @@ si_minphys(struct buf *bp)
 #ifdef	DEBUG
 		if (si_debug) {
 			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
-#ifdef DDB
 			Debugger();
-#endif
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
@@ -272,10 +268,8 @@ si_intr(void *arg)
 #ifdef	DEBUG
 		if (!claimed) {
 			printf("si_intr: spurious from SBC\n");
-#ifdef	DDB
 			if (si_debug & 4)
 				Debugger();	/* XXX */
-#endif
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */
@@ -332,9 +326,7 @@ si_dma_alloc(ncr_sc)
 	 */
 	if (xlen > MAX_DMA_LEN) {
 		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
-#ifdef	DDB
 		Debugger();
-#endif
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 

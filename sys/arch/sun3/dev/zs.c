@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.58 1999/10/17 09:32:14 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.59 1999/11/22 18:34:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
  * Plain tty/async lines use the zs_async slave.
  * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
  */
-
-#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,9 +632,8 @@ zs_abort(cs)
 		ZS_DELAY();
 	} while (rr0 & ZSRR0_BREAK);
 
-#ifdef DDB
+	/* This is always available on the Sun3. */
 	Debugger();
-#endif
 }
 
 /*
