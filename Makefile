@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 1998/10/15 02:50:00 mycroft Exp $
+#	$NetBSD: Makefile,v 1.71 1998/10/16 05:05:09 mycroft Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -54,6 +54,18 @@ build: beforeinstall
 .if !defined(UPDATE)
 	${MAKE} cleandir
 .endif
+.if defined(USE_EGCS) && empty(HAVE_GCC28)
+.if defined(DESTDIR)
+	@echo "*** CAPUTE!"
+	@echo "    You attempted to compile the world with egcs.  You must"
+	@echo "    first install a native egcs compiler."
+	false
+.else
+	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install && \
+	    ${MAKE} cleandir)
+.endif
+.endif
 	${MAKE} includes
 	(cd ${.CURDIR}/lib/csu && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
@@ -61,10 +73,7 @@ build: beforeinstall
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
-.if defined(USE_EGCS) && !empty(HAVE_GCC28)
-	(cd ${.CURDIR}/gnu/lib/libgcc && \
-	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
-.else
+.if !defined(USE_EGCS)
 .if	(${MACHINE_ARCH} != "alpha") && \
 	(${MACHINE_ARCH} != "powerpc")
 	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc && \
@@ -93,17 +102,6 @@ build: beforeinstall
 	ldconfig -m /usr/lib
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
-.if defined(USE_EGCS)
-.if defined(DESTDIR) && (${HAVE_GCC28} == "")
-	@echo '***** WARNING ***** Your system compiler is not GCC 2.8 or higher'
-	@echo 'and you have built a distribution with GCC 2.8 and DESTDIR set.'
-	@echo 'You will need to rebuild libgcc from gnu/usr.bin/egcs/libgcc'
-	@echo 'in order to have full C++ support in the binary set.'
-.else
-	(cd ${.CURDIR}/gnu/lib/libgcc &&\
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.endif # DESTDIR && !HAVE_GCC28
-.endif # USE_EGCS
 	@echo -n "Build finished at: "
 	@date
 
