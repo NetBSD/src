@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.16 1996/09/24 17:47:14 christos Exp $
+$NetBSD: pcidevs,v 1.17 1996/10/08 03:04:09 gibbs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -415,6 +415,9 @@ product ALI M4803	0x5215	M4803
 
 /* Adaptec products */
 product ADP AIC7850	0x5078	AIC-7850
+product ADP AIC7855	0x5578	AIC-7855
+product ADP AIC7860	0x6078	AIC-7860
+product ADP 2940AU	0x6178	AHA-2940A Ultra
 product ADP AIC7870	0x7078	AIC-7870
 product ADP 2940	0x7178	AHA-2940
 product ADP 3940	0x7278	AHA-3940
