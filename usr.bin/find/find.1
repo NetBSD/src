@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.19 1999/01/19 23:22:27 simonb Exp $
+.\"	$NetBSD: find.1,v 1.20 1999/03/07 00:12:13 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -281,7 +281,13 @@ expression is false.
 .It Ic -name Ar pattern 
 True if the last component of the pathname being examined matches
 .Ar pattern  .
-Special shell pattern matching characters (``['', ``]'', ``*'', and ``?'')
+Special shell pattern matching characters
+.Po
+.Dq \&[ ,
+.Dq \&] ,
+.Dq \&* ,
+.Dq \&?
+.Pc
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
