@@ -1,4 +1,4 @@
-/*	$NetBSD: getmount.c,v 1.3 1998/03/01 13:22:55 fvdl Exp $ */
+/*	$NetBSD: getmount.c,v 1.4 1998/06/01 14:13:34 kleink Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,6 +37,7 @@
 #include <ufs/ufs/ufsmount.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <err.h>
