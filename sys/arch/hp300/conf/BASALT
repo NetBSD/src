@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.14 1997/01/30 09:58:57 thorpej Exp $
+#	$NetBSD: BASALT,v 1.15 1997/01/31 05:56:10 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -24,15 +24,17 @@ options 	KTRACE			# system call tracing support
 options 	NKMEMCLUSTERS=2048	# # 4K pages in kernel malloc pool
 options		LKM			# loadable kernel modules
 
+# Filesystems
+file-system	FFS		# fast filesystem
+file-system	NFS		# Network filesystem client
+file-system	KERNFS		# kernel data-structure filesystem
+file-system	FDESC		# user file descriptor filesystem
+file-system	PROCFS		# /proc filesystem
+file-system	MFS		# Memory-based filesystem
+
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
-options		FFS		# fast filesystem
-options		NFSCLIENT	# Network filesystem client
 options		NFSSERVER	# Network filesystem server
-options		KERNFS		# kernel data-structure filesystem
-options		FDESC		# user file descriptor filesystem
-options		PROCFS		# /proc filesystem
-options		MFS		# Memory-based filesystem
 
 # Networking options
 options		INET		# Internet protocols
@@ -50,7 +52,7 @@ options		COMPAT_M68K4K	# m68k4k executables
 options 	DIAGNOSTIC	# Kernel sanity checks
 options 	DDB		# Kernel Dynamic Debugger
 
-config		netbsd swap generic
+config		netbsd root on ? type ?
 
 mainbus0	at root		# root "bus"
 
