@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 1996/12/17 07:32:52 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1050,11 +1050,12 @@ Lcacheon:
 	jne	Lnoflush		| no, skip
 	.word	0xf478			| cpusha dc
 	.word	0xf498			| cinva ic
-	btst	#7,_machineid+3
-	jeq	Lnoflush
-	movc	cacr,d0
-	orl	#IC60_CUBC,d0
-	movc	d0,cacr
+| XXX dont need these; the cinva ic also clears the branch cache.
+|	btst	#7,_machineid+3
+|	jeq	Lnoflush
+|	movc	cacr,d0
+|	orl	#IC60_CUBC,d0
+|	movc	d0,cacr
 Lnoflush:
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
@@ -2337,10 +2338,10 @@ _fpiemu60:
 	jra	_FP_CALL_TOP+128+0x30
 _fpdemu60:
 	addql	#1,L60fpdem
-	jra	_I_CALL_TOP+128+0x38
+	jra	_FP_CALL_TOP+128+0x38
 _fpeaemu60:
 	addql	#1,L60fpeaem
-	jra	_I_CALL_TOP+128+0x40
+	jra	_FP_CALL_TOP+128+0x40
 #endif
 
 	.data
@@ -2417,6 +2418,6 @@ L60iem:		.long	0
 L60fpiem:	.long	0
 L60fpdem:	.long	0
 L60fpeaem:	.long	0
-L60bpe:	.long	0
+L60bpe:		.long	0
 #endif
 _eintrcnt:
