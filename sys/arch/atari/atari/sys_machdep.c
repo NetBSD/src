@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 1996/08/23 11:12:51 leo Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 1997/01/03 22:54:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -127,7 +127,7 @@ cachectl(req, addr, len)
 {
 	int error = 0;
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		register int		inc = 0;
 			 int		pa = 0, doall = 0;
 			 caddr_t	end = 0;
@@ -237,7 +237,7 @@ dma_cachectl(addr, len)
 	int len;
 {
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0;
 		caddr_t end;
