@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.17 1999/10/15 17:17:07 jdolecek Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.17.6.1 2000/08/09 17:42:24 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.17 1999/10/15 17:17:07 jdolecek Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.17.6.1 2000/08/09 17:42:24 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: setlocale.c,v 1.17 1999/10/15 17:17:07 jdolecek Exp $");
 #include <sys/localedef.h>
 #include <ctype.h>
 #include <limits.h>
+#define __SETLOCALE_SOURCE__
 #include <locale.h>
 #include <paths.h>
 #include <stdio.h>
@@ -83,6 +84,7 @@ static char current_categories[_LC_LAST][32] = {
     "C",
     "C"
 };
+int __mb_cur_max = 1;
 
 /*
  * The locales we are going to try and load
@@ -96,7 +98,7 @@ static char	*currentlocale __P((void));
 static char	*loadlocale __P((int));
 
 char *
-setlocale(category, locale)
+__setlocale_mb_len_max_32(category, locale)
 	int category;
 	const char *locale;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.13 2000/03/07 19:31:50 kleink Exp $	*/
+/*	$NetBSD: limits.h,v 1.13.4.1 2000/08/09 17:42:04 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #define	_MIPS_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
+#define	MB_LEN_MAX	32		/* Allow 31 bit UTF2 */
 
 /*
  * According to ANSI (section 2.2.4.2), the values below must be usable by
