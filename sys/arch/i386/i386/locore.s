@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.71 1994/05/24 11:53:17 mycroft Exp $
+ *	$Id: locore.s,v 1.72 1994/05/27 11:18:26 mycroft Exp $
  */
 
 /*
@@ -83,6 +83,25 @@
 #define	FASTER_NOP	pushl %eax ; inb $0x84,%al ; popl %eax
 #define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
 #endif
+
+/*
+ * These are used on interrupt or trap entry or exit.
+ */
+#define	INTRENTRY \
+	pushal			; \
+	pushl	%ds		; \
+	pushl	%es		; \
+	movl	$KDSEL,%eax	; \
+	movl	%ax,%ds		; \
+	movl	%ax,%es
+#define	INTREXIT \
+	jmp	_Xdoreti
+#define	INTRFASTEXIT \
+	popl	%es		; \
+	popl	%ds		; \
+	popal			; \
+	addl	$8,%esp		; \
+	iret
 
 
 /*
@@ -496,24 +515,36 @@ reloc_gdt:
 1:
 #endif
 
-	/*
-	 * Some BIOSes leave trash in the spare segment registers.  We need to
-	 * clear them so we don't get a protection fault in cpu_switch() later
-	 * on.  Since the kernel itself does not use these except in
-	 * copyin/out, it seems best to make them null selectors so we get a
-	 * trap if they are accidentally referenced.
-	 */
-	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
-
 	leal	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
 	pushl	%esi
 	call	_init386		# wire 386 chip for unix operation
-	
+	addl	$4,%esp
+
 	movl	$0,_PTD
+
+	/*
+	 * Set up the initial stack frame for execve() to munge.
+	 */
+	.globl	__ucodesel,__udatasel
+	movl	__ucodesel,%eax
+	movl	__udatasel,%ecx
+	pushl	%ecx			# user ss
+	pushl	$0xdeadbeef		# user esp (set by execve)
+	pushl	$PSL_USERSET		# user eflags
+	pushl	%eax			# user cs
+	pushl	$0xdeadbeef		# user eip (set by execve)
+	subl	$40,%esp		# error code, trap number, registers
+	pushl	%ecx			# user ds
+	pushl	%ecx			# user es
+	/* We used to clear these, but now we need gs for start_init() and
+	   don't have another chance to set it. */
+	movl	%cx,%fs			# user fs (not used)
+	movl	%cx,%gs			# user gs (used by copyin/out)
+
+	movl	%esp,%eax		# push pointer to frame
+	pushl	%eax
 	call 	_main
-	popl	%esi
+	addl	$4,%esp
 
 #if defined(I486_CPU) || defined(I586_CPU)
 	/*
@@ -539,27 +570,14 @@ reloc_gdt:
 1:
 #endif
 
-	/*
-	 * Prepare for initial return to user space.
-	 */
-	.globl	__ucodesel,__udatasel
-	movl	__ucodesel,%eax
-	movl	__udatasel,%ecx
-	# build outer stack frame
-	pushl	%ecx		# user ss
-	pushl	$USRSTACK	# user esp
-	pushl	%eax		# user cs
-	pushl	$0		# user ip
-	movl	%cx,%ds
-	movl	%cx,%es
-	movl	%ax,%fs		# double map cs to fs
-	movl	%cx,%gs		# and ds to gs
-	lret			# goto user!
+	INTRFASTEXIT
 	/* NOTREACHED */
 
 /*****************************************************************************/
 
 #define	LCALL(x,y)	.byte 0x9a ; .long y ; .word x
+
+#ifdef nolonger
 
 /*
  * This is the initial process used to start init(8).  It's copied out to
@@ -594,6 +612,8 @@ eicode:
 	.globl	_szicode
 _szicode:
 	.long	eicode-_icode
+
+#endif /* nolonger */
 
 /*
  * Signal trampoline; copied to top of user stack.
@@ -1903,21 +1923,6 @@ ENTRY(proffault)
  * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */ 
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
-#define	INTRENTRY \
-	pushal			; \
-	pushl	%ds		; \
-	pushl	%es		; /* now the stack frame is a trap frame */ \
-	movl	$KDSEL,%eax	; \
-	movl	%ax,%ds		; \
-	movl	%ax,%es
-#define	INTREXIT \
-	jmp	_Xdoreti
-#define	INTRFASTEXIT \
-	popl	%es		; \
-	popl	%ds		; \
-	popal			; \
-	addl	$8,%esp		; \
-	iret
 
 #define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
