@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.39 2003/08/07 09:46:52 agc Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.40 2003/09/19 05:54:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.39 2003/08/07 09:46:52 agc Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.40 2003/09/19 05:54:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -700,6 +700,7 @@ addarg(argv, val)
 	register char *val;
 {
 	register char **cpp;
+	char **nargv;
 
 	if (argv == NULL) {
 		/*
@@ -715,12 +716,14 @@ addarg(argv, val)
 		;
 	if (cpp == &argv[(long)argv[-1]]) {
 		--argv;
-		*argv = (char *)((long)(*argv) + 10);
-		argv = (char **)realloc(argv, sizeof(*argv) * ((long)(*argv) + 2));
+		nargv = (char **)realloc(argv,
+		    sizeof(*argv) * ((long)(*argv) + 10 + 2));
 		if (argv == NULL) {
 			fatal(net, "not enough memory");
 			/*NOTREACHED*/
 		}
+		argv = nargv;
+		*argv = (char *)((long)(*argv) + 10);
 		argv++;
 		cpp = &argv[(long)argv[-1] - 10];
 	}
