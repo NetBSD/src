@@ -28,9 +28,7 @@
 /*	named dictionaries.
 /*	The result is a handle that must be specified along with all
 /*	other virtual8_maps_xxx() operations.
-/*	See dict_open(3) for a description of flags. virtual8_maps_create()
-/*	implicitly sets the DICT_FLAG_NO_REGSUB flag in order to disable
-/*	regular expression substitution into the lookup result.
+/*	See dict_open(3) for a description of flags.
 /*
 /*	virtual8_maps_find() searches the specified list of dictionaries
 /*	in the specified order for the named key. The result is in

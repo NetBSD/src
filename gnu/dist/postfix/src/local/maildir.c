@@ -40,7 +40,9 @@
 /* System library. */
 
 #include "sys_defs.h"
+#include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
 #include <errno.h>
 
 /* Utility library. */
@@ -83,7 +85,8 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     int     mail_copy_status;
     int     deliver_status;
     int     copy_flags;
-    static int count;
+    struct stat st;
+    time_t  starttime = time((time_t *) 0);
 
     /*
      * Make verbose logging easier to understand.
@@ -124,20 +127,63 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      * use starttime.pid_count.host, where starttime is the time that your
      * process started, and count is the number of messages you've
      * delivered."
+     * 
+     * Well, that stopped working on fast machines, and on operating systems
+     * that randomize process ID values. When creating a file in tmp/ we use
+     * the process ID because it still is an exclusive resource. When moving
+     * the file to new/ we use the device number and inode number. I do not
+     * care if this breaks on a remote AFS file system, because people should
+     * know better.
+     * 
+     * On January 26, 2003, http://cr.yp.to/proto/maildir.html said:
+     * 
+     * A unique name has three pieces, separated by dots. On the left is the
+     * result of time() or the second counter from gettimeofday(). On the
+     * right is the result of gethostname(). (To deal with invalid host
+     * names, replace / with \057 and : with \072.) In the middle is a
+     * delivery identifier, discussed below.
+     * 
+     * [...]
+     * 
+     * Modern delivery identifiers are created by concatenating enough of the
+     * following strings to guarantee uniqueness:
+     * 
+     * [...]
+     * 
+     * In, where n is (in hexadecimal) the UNIX inode number of this file.
+     * Unfortunately, inode numbers aren't always available through NFS.
+     * 
+     * Vn, where n is (in hexadecimal) the UNIX device number of this file.
+     * Unfortunately, device numbers aren't always available through NFS.
+     * (Device numbers are also not helpful with the standard UNIX
+     * filesystem: a maildir has to be within a single UNIX device for link()
+     * and rename() to work.)
+     * 
+     * [...]
+     * 
+     * Pn, where n is (in decimal) the process ID.
+     * 
+     * [...]
      */
 #define STR vstring_str
 
     set_eugid(usr_attr.uid, usr_attr.gid);
-    vstring_sprintf(buf, "%ld.%d_%d.%s", (long) var_starttime,
-		    var_pid, count++, get_hostname());
+    vstring_sprintf(buf, "%lu.P%d.%s",
+		    (unsigned long) starttime, var_pid, get_hostname());
     tmpfile = concatenate(tmpdir, STR(buf), (char *) 0);
-    newfile = concatenate(newdir, STR(buf), (char *) 0);
+    newfile = 0;
     if ((dst = vstream_fopen(tmpfile, O_WRONLY | O_CREAT | O_EXCL, 0600)) == 0
 	&& (errno != ENOENT
 	    || make_dirs(tmpdir, 0700) < 0
 	    || (dst = vstream_fopen(tmpfile, O_WRONLY | O_CREAT | O_EXCL, 0600)) == 0)) {
 	vstring_sprintf(why, "create %s: %m", tmpfile);
+    } else if (fstat(vstream_fileno(dst), &st) < 0) {
+	vstring_sprintf(why, "create %s: %m", tmpfile);
     } else {
+	vstring_sprintf(buf, "%lu.V%lxI%lx.%s",
+			(unsigned long) starttime, (unsigned long) st.st_dev,
+			(unsigned long) st.st_ino, get_hostname());
+	newfile = concatenate(newdir, STR(buf), (char *) 0);
 	if ((mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr),
 					dst, copy_flags, "\n", why)) == 0) {
 	    if (sane_link(tmpfile, newfile) < 0
@@ -172,6 +218,7 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     myfree(tmpdir);
     myfree(curdir);
     myfree(tmpfile);
-    myfree(newfile);
+    if (newfile)
+	myfree(newfile);
     return (deliver_status);
 }

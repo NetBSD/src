@@ -53,7 +53,10 @@ The application is expected to remove its own lock file, as well as
 stale lock files that were left behind after abnormal termination.
 .RE
 .IP \fB-m\fR
-List the names of all supported lookup table types.
+List the names of all supported lookup table types. Postfix
+lookup tables are specified as \fItype\fB:\fIname\fR, where
+\fItype\fR is one of the types listed below. The table \fIname\fR
+syntax depends on the lookup table type.
 .RS
 .IP \fBbtree\fR
 A sorted, balanced tree structure.
@@ -79,6 +82,10 @@ in a MYSQL_README file.
 .IP "\fBpcre\fR (read-only)"
 A lookup table based on Perl Compatible Regular Expressions. The
 file format is described in \fBpcre_table\fR(5).
+.IP "\fBproxy\fR (read-only)"
+A lookup table that is implemented via the Postfix
+\fBproxymap\fR(8) service. The table name syntax is
+\fItype\fB:\fIname\fR.
 .IP "\fBregexp\fR (read-only)"
 A lookup table based on regular expressions. The file format is
 described in \fBregexp_table\fR(5).

@@ -14,7 +14,7 @@
 /*
 /*	This delivery agent only delivers mail.  Other features such as
 /*	mail forwarding, out-of-office notifications, etc., must be
-/*	configured via virtual maps or via similar lookup mechanisms.
+/*	configured via virtual_alias maps or via similar lookup mechanisms.
 /* MAILBOX LOCATION
 /* .ad
 /* .fi
@@ -133,6 +133,9 @@
 /*	For security reasons, regular expression maps are allowed but
 /*	regular expression substitution of $1 etc. is disallowed,
 /*	because that would open a security hole.
+/*
+/*	For security reasons, proxied table lookup is not allowed,
+/*	because that would open a security hole.
 /* .IP \fBvirtual_mailbox_domains\fR
 /*	The list of domains that should be delivered via the Postfix virtual
 /*	delivery agent. This uses the same syntax as the \fBmydestination\fR
@@ -156,6 +159,9 @@
 /*	For security reasons, regular expression maps are allowed but
 /*	regular expression substitution of $1 etc. is disallowed,
 /*	because that would open a security hole.
+/*
+/*	For security reasons, proxied table lookup is not allowed,
+/*	because that would open a security hole.
 /* .IP \fBvirtual_gid_maps\fR
 /*	Recipients are looked up in these maps to determine the group ID to be
 /*	used when writing to the target mailbox.
@@ -169,6 +175,9 @@
 /*
 /*	For security reasons, regular expression maps are allowed but
 /*	regular expression substitution of $1 etc. is disallowed,
+/*	because that would open a security hole.
+/*
+/*	For security reasons, proxied table lookup is not allowed,
 /*	because that would open a security hole.
 /* .SH "Locking controls"
 /* .ad
@@ -404,15 +413,15 @@ static void post_init(char *unused_name, char **unused_argv)
 
     virtual_mailbox_maps =
 	virtual8_maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
-			     DICT_FLAG_LOCK);
+			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     virtual_uid_maps =
 	virtual8_maps_create(VAR_VIRT_UID_MAPS, var_virt_uid_maps,
-			     DICT_FLAG_LOCK);
+			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     virtual_gid_maps =
 	virtual8_maps_create(VAR_VIRT_GID_MAPS, var_virt_gid_maps,
-			     DICT_FLAG_LOCK);
+			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 
     virtual_mbox_lock_mask = mbox_lock_mask(var_virt_mailbox_lock);
 }

@@ -50,6 +50,7 @@
 #define MAIL_SERVICE_ERROR	"error"
 #define MAIL_SERVICE_FLUSH	"flush"
 #define MAIL_SERVICE_RELAY	"relay"
+#define MAIL_SERVICE_PROXYMAP	"proxymap"
 
  /*
   * Well-known socket or FIFO directories. The main difference is in file
@@ -106,6 +107,9 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_ADDR		"address"
 #define MAIL_ATTR_TRANSPORT	"transport"
 #define MAIL_ATTR_NEXTHOP	"nexthop"
+#define MAIL_ATTR_TABLE		"table"
+#define MAIL_ATTR_KEY		"key"
+#define MAIL_ATTR_VALUE		"value"
 
  /*
   * Suffixes for sender_name, sender_domain etc.

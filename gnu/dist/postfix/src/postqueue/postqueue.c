@@ -11,8 +11,11 @@
 /*	\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-s \fIsite\fR
 /* DESCRIPTION
 /*	The \fBpostqueue\fR program implements the Postfix user interface
-/*	for queue management. It implements all the operations that are
+/*	for queue management. It implements operations that are
 /*	traditionally available via the \fBsendmail\fR(1) command.
+/*	See the \fBpostsuper\fR(1) command for queue operations
+/*	that require super-user privileges such as deleting a message
+/*	from the queue or changing the status of a message.
 /*
 /*	The following options are recognized:
 /* .IP "\fB-c \fIconfig_dir\fR"
@@ -94,7 +97,8 @@
 /*	specifies the domains that Postfix accepts in the SMTP \fBETRN\fR
 /*	request and in the \fBsendmail -qR\fR command.
 /* SEE ALSO
-/*	sendmail(8) sendmail-compatible user interface
+/*	sendmail(1) sendmail-compatible user interface
+/*	postsuper(1) privileged queue operations
 /*	qmgr(8) queue manager
 /*	showq(8) list mail queue
 /*	flush(8) fast flush service

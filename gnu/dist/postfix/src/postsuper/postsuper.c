@@ -12,6 +12,8 @@
 /* DESCRIPTION
 /*	The \fBpostsuper\fR command does maintenance jobs on the Postfix
 /*	queue. Use of the command is restricted to the superuser.
+/*	See the \fBpostqueue\fR command for unprivileged queue operations
+/*	such as listing or flushing the mail queue.
 /*
 /*	By default, \fBpostsuper\fR performs the operations requested with the
 /*	\fB-s\fR and \fB-p\fR command-line options on all Postfix queue
@@ -162,6 +164,9 @@
 /* .IP \fBhash_queue_names\fR
 /*	The names of queues that are organized into multiple levels of
 /*	subdirectories.
+/* SEE ALSO
+/*	sendmail(1) sendmail-compatible user interface
+/*	postqueue(1) unprivileged queue operations
 /* LICENSE
 /* .ad
 /* .fi

@@ -316,6 +316,9 @@ static int cleanup_act(CLEANUP_STATE *state, char *context, const char *buf,
     if (STREQUAL(value, "FILTER", command_len)) {
 	if (*optional_text == 0) {
 	    msg_warn("missing FILTER command argument in %s map", map_class);
+	} else if (strchr(optional_text, ':') == 0) {
+	    msg_warn("bad FILTER command %s in %s, need transport:destination",
+		     optional_text, map_class);
 	} else {
 	    if (state->filter)
 		myfree(state->filter);

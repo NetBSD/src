@@ -169,6 +169,7 @@
 
 #include <tok822.h>
 #include <mail_conf.h>
+#include <mail_dict.h>
 #include <mail_params.h>
 #include <mkmap.h>
 
@@ -587,6 +588,7 @@ int     main(int argc, char **argv)
 	}
     }
     mail_conf_read();
+    mail_dict_init();
 
     /*
      * Use the map type specified by the user, or fall back to a default

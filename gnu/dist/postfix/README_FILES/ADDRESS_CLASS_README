@@ -47,16 +47,18 @@ alias	    domains
 	    is $virtual_alias_maps for Postfix 1.1 compatibility)
 
 virtual	For hosted domains with their own mailboxes
-mailbox	Known recipients are listed in $virtual_mailbox_maps
+mailbox	Known recipients are listed in $virtual_mailbox_maps (if
+	    this parameter is empty, the Postfix SMTP server accepts
+	    all recipients for domains listed in $virtual_mailbox_domains)
 	Domain names are listed in $virtual_mailbox_domains (default
 	    is $virtual_mailbox_maps for Postfix 1.1 compatibility)
 	Default delivery agent: virtual
 
 relay	For remote destinations that list your system as MX host
 	Domain names are listed in $relay_domains
-	Known recipients are listed in $relay_recipient_maps (default
-	    is empty; if $relay_recipient_maps is empty, the Postfix
-	    SMTP server accepts all recipients)
+	Known recipients are listed in $relay_recipient_maps (if
+	    this parameter is empty, the Postfix SMTP server accepts
+	    all recipients for domains listed in $relay_domains)
 	Default delivery agent: relay (clone of default smtp agent)
 
 other	Restricted to mail from authorized clients

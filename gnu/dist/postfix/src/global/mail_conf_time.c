@@ -140,7 +140,7 @@ static int get_def_time_unit(const char *name, const char *defval)
 {
     const char *cp;
 
-    for (cp = defval; /* void */ ; cp++) {
+    for (cp = mail_conf_eval(defval); /* void */ ; cp++) {
 	if (*cp == 0)
 	    msg_panic("parameter %s: missing time unit in default value: %s",
 		      name, defval);

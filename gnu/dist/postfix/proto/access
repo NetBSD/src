@@ -136,7 +136,8 @@
 #       a content filter.  More information about content filters
 #	is in the Postfix FILTER_README file.
 # .sp
-#	Note: this action currently affects all recipients of the message.
+#	Note: this action overrides the \fBmain.cf content_filter\fR setting,
+#	and currently affects all recipients of the message.
 # .IP \fIrestriction...\fR
 #	Apply the named UCE restriction(s) (\fBpermit\fR, \fBreject\fR,
 #	\fBreject_unauth_destination\fR, and so on).

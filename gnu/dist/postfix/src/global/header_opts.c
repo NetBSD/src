@@ -59,6 +59,7 @@ static HEADER_OPTS header_opts[] = {
     "Content-Transfer-Encoding", HDR_CONTENT_TRANSFER_ENCODING, HDR_OPT_MIME,
     "Content-Type", HDR_CONTENT_TYPE, HDR_OPT_MIME,
     "Delivered-To", HDR_DELIVERED_TO, 0,
+    "Disposition-Notification-To", HDR_DISP_NOTIFICATION, HDR_OPT_SENDER,
     "Date", HDR_DATE, 0,
     "Errors-To", HDR_ERRORS_TO, HDR_OPT_SENDER,
     "From", HDR_FROM, HDR_OPT_SENDER,

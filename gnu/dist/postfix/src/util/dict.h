@@ -59,6 +59,9 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_DEBUG		(1<<9)	/* log access */
 #define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
 #define DICT_FLAG_NO_REGSUB	(1<<11)	/* no lhs->rhs regexp substitution */
+#define DICT_FLAG_NO_PROXY	(1<<12)	/* no proxy mapping */
+
+#define DICT_FLAG_PARANOID	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY)
 
 extern int dict_unknown_allowed;
 extern int dict_errno;

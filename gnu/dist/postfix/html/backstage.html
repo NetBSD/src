@@ -66,6 +66,14 @@ destinations.
 
 <p>
 
+<li>The <a href="proxymap.8.html">proxymap</a> daemon provides
+read-only lookup service to Postfix client processes. The purpose
+is to overcome chroot restrictions, and to consolidate the number
+of open lookup tables by sharing one open table among multiple
+processes.
+
+<p>
+
 <li>The <a href="spawn.8.html">spawn</a> daemon listens on a TCP
 port, UNIX-domain socket or FIFO, and runs non-Postfix commands on
 request, with the socket or FIFO connected to the standard input,

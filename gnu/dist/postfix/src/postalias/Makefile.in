@@ -95,6 +95,7 @@ postalias.o: ../../include/set_eugid.h
 postalias.o: ../../include/tok822.h
 postalias.o: ../../include/resolve_clnt.h
 postalias.o: ../../include/mail_conf.h
+postalias.o: ../../include/mail_dict.h
 postalias.o: ../../include/mail_params.h
 postalias.o: ../../include/mkmap.h
 postalias.o: ../../include/dict.h

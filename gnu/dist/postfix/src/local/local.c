@@ -697,7 +697,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 	set_file_limit(var_mailbox_limit);
     }
     alias_maps = maps_create("aliases", var_alias_maps,
-			     DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
+			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
 }
 
 /* main - pass control to the single-threaded skeleton */

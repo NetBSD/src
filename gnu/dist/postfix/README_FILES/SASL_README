@@ -126,6 +126,13 @@ In /usr/local/lib/sasl/smtpd.conf (SASL version 1.5.5) or
 /usr/local/lib/sasl2/smtpd.conf (SASL version 2.1.1) you need to
 specify how the server should validate client passwords.
 
+IMPORTANT: If you configure SASL to use PAM (pluggable authentication
+modules) authentication, the Postfix SMTP server will abort because
+the SASL password file does not exist (default:  /etc/sasldb in
+version 1.5.5, or /etc/sasldb2 in version 2.1.1), To fix, disable
+CRAM-MD5 authentication by deleting /usr/lib/sasl/libcrammd5.so or
+/usr/lib/sasl2/libcrammd5.so depending on your SASL library version.
+
 In order to authenticate against the UNIX password database, try:
 
 (SASL version 1.5.5)

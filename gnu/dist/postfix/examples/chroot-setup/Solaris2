@@ -25,7 +25,7 @@ fi
 for dir in etc/default etc/inet dev usr/lib usr/share/lib/zoneinfo ; do
   if [ ! -d ${CHROOT}/${dir} ]; then mkdir -p ${CHROOT}/${dir} ; fi
 done
-chmod -R 755 ${CHROOT}
+#chmod -R 755 ${CHROOT}
 
 # AFS support.
 if [ "`echo $CHROOT | cut -c1-4`" = "/afs" ]; then

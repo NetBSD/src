@@ -242,6 +242,7 @@ multi_server.o: ../../include/mail_task.h
 multi_server.o: ../../include/debug_process.h
 multi_server.o: ../../include/mail_params.h
 multi_server.o: ../../include/mail_conf.h
+multi_server.o: ../../include/mail_dict.h
 multi_server.o: ../../include/timed_ipc.h
 multi_server.o: ../../include/resolve_local.h
 multi_server.o: mail_flow.h
@@ -270,6 +271,7 @@ single_server.o: ../../include/mail_params.h
 single_server.o: ../../include/mail_task.h
 single_server.o: ../../include/debug_process.h
 single_server.o: ../../include/mail_conf.h
+single_server.o: ../../include/mail_dict.h
 single_server.o: ../../include/timed_ipc.h
 single_server.o: ../../include/resolve_local.h
 single_server.o: mail_flow.h
@@ -298,6 +300,7 @@ trigger_server.o: ../../include/mail_params.h
 trigger_server.o: ../../include/mail_task.h
 trigger_server.o: ../../include/debug_process.h
 trigger_server.o: ../../include/mail_conf.h
+trigger_server.o: ../../include/mail_dict.h
 trigger_server.o: ../../include/resolve_local.h
 trigger_server.o: mail_flow.h
 trigger_server.o: master_proto.h

@@ -114,7 +114,7 @@
 /*	The var_idle_limit variable limits the time that a service
 /*	receives no client connection requests before it commits suicide.
 /*	This value is taken from the global \fBmain.cf\fR configuration
-/*	file. Setting \fBvar_use_limit\fR to zero disables the idle limit.
+/*	file. Setting \fBvar_idle_limit\fR to zero disables the idle limit.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* SEE ALSO
@@ -173,6 +173,7 @@
 #include <debug_process.h>
 #include <mail_params.h>
 #include <mail_conf.h>
+#include <mail_dict.h>
 #include <timed_ipc.h>
 #include <resolve_local.h>
 #include <mail_flow.h>
@@ -437,6 +438,11 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     mail_conf_suck();
 
     /*
+     * Register dictionaries that use higher-level interfaces and protocols.
+     */
+    mail_dict_init();
+
+    /*
      * Pick up policy settings from master process. Shut up error messages to
      * stderr, because no-one is going to see them.
      */
@@ -619,14 +625,14 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     /*
      * Run pre-jail initialization.
      */
+    if (chdir(var_queue_dir) < 0)
+	msg_fatal("chdir(\"%s\"): %m", var_queue_dir);
     if (pre_init)
 	pre_init(multi_server_name, multi_server_argv);
 
     /*
      * Optionally, restrict the damage that this process can do.
      */
-    if (chdir(var_queue_dir) < 0)
-	msg_fatal("chdir(\"%s\"): %m", var_queue_dir);
     resolve_local_init();
     chroot_uid(root_dir, user_name);
 

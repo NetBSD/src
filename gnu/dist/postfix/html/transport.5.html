@@ -102,8 +102,8 @@ TRANSPORT(5)                                         TRANSPORT(5)
        dependent. In the case of SMTP, specify <i>host</i>:<i>service</i> for a
        non-default  server port, and use [<i>host</i>] or [<i>host</i>]:<i>port</i> in
        order to disable MX (mail exchanger) DNS lookups.  The  []
-       form  can  also be used with IP addresses instead of host-
-       names.
+       form is required when you specify an IP address instead of
+       a hostname.
 
        A null <i>transport</i> and null <i>nexthop</i>  result  means  "do  not
        change":  use  the delivery transport and nexthop informa-

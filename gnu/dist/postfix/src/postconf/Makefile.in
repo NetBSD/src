@@ -88,6 +88,7 @@ postconf.o: ../../include/vstring_vstream.h
 postconf.o: ../../include/myflock.h
 postconf.o: ../../include/mynetworks.h
 postconf.o: ../../include/mail_conf.h
+postconf.o: ../../include/mail_dict.h
 postconf.o: ../../include/mail_proto.h
 postconf.o: ../../include/iostuff.h
 postconf.o: ../../include/attr.h

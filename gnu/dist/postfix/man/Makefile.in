@@ -5,7 +5,8 @@ SHELL	= /bin/sh
 DAEMONS	= man8/bounce.8 man8/defer.8 man8/cleanup.8 man8/error.8 man8/local.8 \
 	man8/lmtp.8 man8/master.8 man8/pickup.8 man8/pipe.8 man8/qmgr.8 \
 	man8/showq.8 man8/smtp.8 man8/smtpd.8 man8/trivial-rewrite.8 \
-	man8/nqmgr.8 man8/spawn.8 man8/flush.8 man8/virtual.8 man8/qmqpd.8
+	man8/nqmgr.8 man8/spawn.8 man8/flush.8 man8/virtual.8 man8/qmqpd.8 \
+	man8/proxymap.8
 COMMANDS= man1/postalias.1 man1/postcat.1 man1/postconf.1 man1/postfix.1 \
 	man1/postkick.1 man1/postlock.1 man1/postlog.1 man1/postdrop.1 \
 	man1/postmap.1 man1/sendmail.1 man1/mailq.1 man1/newaliases.1 \
@@ -62,6 +63,9 @@ man8/pickup.8: ../src/pickup/pickup.c
 	../mantools/srctoman $? >$@
 
 man8/pipe.8: ../src/pipe/pipe.c
+	../mantools/srctoman $? >$@
+
+man8/proxymap.8: ../src/proxymap/proxymap.c
 	../mantools/srctoman $? >$@
 
 man8/qmgr.8: ../src/qmgr/qmgr.c

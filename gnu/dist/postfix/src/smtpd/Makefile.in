@@ -221,6 +221,7 @@ smtpd_check.o: ../../include/rec_type.h
 smtpd_check.o: ../../include/mail_proto.h
 smtpd_check.o: ../../include/iostuff.h
 smtpd_check.o: ../../include/attr.h
+smtpd_check.o: ../../include/mail_addr.h
 smtpd_check.o: smtpd.h
 smtpd_check.o: ../../include/mail_stream.h
 smtpd_check.o: smtpd_sasl_glue.h

@@ -132,6 +132,7 @@
 #include <iostuff.h>
 #include <timed_wait.h>
 #include <set_ugid.h>
+#include <set_eugid.h>
 #include <argv.h>
 
 /* Global library. */
@@ -292,9 +293,28 @@ static int pipe_command_read(int fd, void *buf, unsigned len)
     }
 }
 
+/* kill_command - terminate command forcibly */
+
+static void kill_command(pid_t pid, int sig, uid_t kill_uid, gid_t kill_gid)
+{
+    pid_t   saved_euid = geteuid();
+    gid_t   saved_egid = getegid();
+
+    /*
+     * Switch privileges to that of the child process. Terminate the child
+     * and its offspring.
+     */
+    set_eugid(kill_uid, kill_gid);
+    if (kill(-pid, sig) < 0 && kill(pid, sig) < 0)
+	msg_warn("cannot kill process (group) %lu: %m",
+		 (unsigned long) pid);
+    set_eugid(saved_euid, saved_egid);
+}
+
 /* pipe_command_wait_or_kill - wait for command with time limit, or kill it */
 
-static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig)
+static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig,
+				             uid_t kill_uid, gid_t kill_gid)
 {
     int     maxtime = (pipe_command_timeout == 0) ? pipe_command_maxtime : 1;
     char   *myname = "pipe_command_wait_or_kill";
@@ -309,7 +329,7 @@ static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig)
 		msg_info("%s: time limit exceeded", myname);
 	    pipe_command_timeout = 1;
 	}
-	kill(-pid, sig);
+	kill_command(pid, sig, kill_uid, kill_gid);
 	n = waitpid(pid, statusp, 0);
     }
     return (n);
@@ -358,10 +378,14 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
      * truncated without too much loss. I could even argue that truncating
      * the amount of diagnostic output is a good thing to do, but I won't go
      * that far.
+     * 
+     * Turn on non-blocking writes to the child process so that we can enforce
+     * timeouts after partial writes.
      */
     if (pipe(cmd_in_pipe) < 0 || pipe(cmd_out_pipe) < 0)
 	msg_fatal("%s: pipe: %m", myname);
     non_blocking(cmd_out_pipe[1], NON_BLOCKING);
+    non_blocking(cmd_in_pipe[1], NON_BLOCKING);
 
     /*
      * Spawn off a child process and irrevocably change privilege to the
@@ -488,8 +512,9 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	 * not just the child process but also its offspring.
 	 */
 	if (pipe_command_timeout)
-	    (void) kill(-pid, SIGKILL);
-	if (pipe_command_wait_or_kill(pid, &wait_status, SIGKILL) < 0)
+	    kill_command(pid, SIGKILL, args.uid, args.gid);
+	if (pipe_command_wait_or_kill(pid, &wait_status, SIGKILL,
+				      args.uid, args.gid) < 0)
 	    msg_fatal("wait: %m");
 	if (pipe_command_timeout) {
 	    vstring_sprintf(why, "Command time limit exceeded: \"%s\"%s%s",

@@ -101,8 +101,8 @@
 #        dependent. In the case of SMTP, specify host:service for a
 #        non-default  server port, and use [host] or [host]:port in
 #        order to disable MX (mail exchanger) DNS lookups.  The  []
-#        form  can  also be used with IP addresses instead of host-
-#        names.
+#        form is required when you specify an IP address instead of
+#        a hostname.
 # 
 #        A null transport and null nexthop  result  means  "do  not
 #        change":  use  the delivery transport and nexthop informa-

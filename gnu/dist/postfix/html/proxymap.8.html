@@ -1,0 +1,132 @@
+<html> <head> </head> <body> <pre>
+PROXYMAP(8)                                           PROXYMAP(8)
+
+<b>NAME</b>
+       proxymap - Postfix lookup table proxy server
+
+<b>SYNOPSIS</b>
+       <b>proxymap</b> [generic Postfix daemon options]
+
+<b>DESCRIPTION</b>
+       The  <b>proxymap</b>  server provides read-only table lookup ser-
+       vice to Postfix client processes. The purpose of the  ser-
+       vice is:
+
+       <b>o</b>      To  overcome  chroot  restrictions.  For example, a
+              chrooted SMTP server needs  access  to  the  system
+              passwd  file  in order to reject mail for non-exis-
+              tent local addresses, but it is  not  practical  to
+              maintain  a  copy  of the passwd file in the chroot
+              jail.  The solution:
+
+              local_recipient_maps =
+                  proxy:unix:passwd.byname $alias_maps
+
+       <b>o</b>      To consolidate the number of open lookup tables  by
+              sharing  one  open  table among multiple processes.
+              For example, making mysql  connections  from  every
+              Postfix daemon process results in "too many connec-
+              tions" errors. The solution:
+
+              virtual_alias_maps =
+                  proxy:mysql:/etc/postfix/virtual_alias.cf
+
+              The total number of connections is limited  by  the
+              number of proxymap server processes.
+
+       The proxymap server implements the following requests:
+
+       <b>PROXY</b><i>_</i><b>REQ</b><i>_</i><b>OPEN</b> <i>maptype:mapname</i> <i>flags</i>
+              Open  the table with type <i>maptype</i> and name <i>mapname</i>,
+              as controlled by <i>flags</i>.  The reply is  the  request
+              completion  status  code  (below)  and the map type
+              dependent flags.
+
+       <b>PROXY</b><i>_</i><b>REQ</b><i>_</i><b>LOOKUP</b> <i>maptype:mapname</i> <i>flags</i> <i>key</i>
+              Look up the data stored under  the  requested  key.
+              The  reply  is  the  request completion status code
+              (below) and the  lookup  result  value.   The  <i>map-</i>
+              <i>type:mapname</i>  and  <i>flags</i>  are  the same as with the
+              <b>PROXY</b><i>_</i><b>REQ</b><i>_</i><b>OPEN</b> request.
+
+       There is no  close  command,  nor  are  tables  implicitly
+       closed  when  a client disconnects. One of the purposes of
+       the proxymap server is  to  share  tables  among  multiple
+       client processes.
+
+       The request completion status code is one of:
+
+       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>OK</b>
+              The  specified  table  was opened, or the requested
+              entry was found.
+
+       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>NOKEY</b>
+              The requested table entry was not found.
+
+       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>BAD</b>
+              The request was  rejected  (bad  request  parameter
+              value).
+
+       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>RETRY</b>
+              The lookup request could not be completed.
+
+       <b>PROXY</b><i>_</i><b>STAT</b><i>_</i><b>DENY</b>
+              The specified table was not approved for access via
+              the proxymap service.
+
+<b>SERVER</b> <b>PROCESS</b> <b>MANAGEMENT</b>
+       The proxymap servers run under control by the Postfix mas-
+       ter  server.  Each server can handle multiple simultaneous
+       connections.  When all servers are  busy  while  a  client
+       connects,  the  master  creates a new proxymap server pro-
+       cess, provided that the proxymap server process  limit  is
+       not exceeded.  Each proxymap server terminates after serv-
+       ing at least <b>$max</b><i>_</i><b>use</b> clients or after  <b>$max</b><i>_</i><b>idle</b>  seconds
+       of idle time.
+
+<b>SECURITY</b>
+       The  proxymap  server  opens only tables that are approved
+       via the <b>proxy</b><i>_</i><b>read</b><i>_</i><b>maps</b> configuration parameter, does  not
+       talk  to  users,  and  can  run  at  fixed  low privilege,
+       chrooted or not.
+
+       The proxymap server is not a trusted daemon  process,  and
+       must  not be used to look up sensitive information such as
+       user or group IDs, mailbox file/directory names or  exter-
+       nal commands.
+
+<b>DIAGNOSTICS</b>
+       Problems and transactions are logged to <b>syslogd</b>(8).
+
+<b>BUGS</b>
+       The  proxymap server provides service to multiple clients,
+       and must therefore not be used for tables that have  high-
+       latency lookups.
+
+<b>CONFIGURATION</b> <b>PARAMETERS</b>
+       The  following  main.cf parameters are especially relevant
+       to this program. Use the <b>postfix</b> <b>reload</b>  command  after  a
+       configuration change.
+
+       <b>proxy</b><i>_</i><b>read</b><i>_</i><b>maps</b>
+              A  list  of  zero or more parameter values that may
+              contain references to Postfix lookup  tables.  Only
+              table   references   that  begin  with  <b>proxy:</b>  are
+              approved for  read-only  access  via  the  proxymap
+              server.
+
+<b>SEE</b> <b>ALSO</b>
+       dict_proxy(3) proxy map client
+
+<b>LICENSE</b>
+       The  Secure  Mailer  license must be distributed with this
+       software.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                      PROXYMAP(8)
+</pre> </body> </html>

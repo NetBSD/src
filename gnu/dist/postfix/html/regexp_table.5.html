@@ -90,7 +90,9 @@ REGEXP_TABLE(5)                                   REGEXP_TABLE(5)
        /^postmaster@/       OK
 
        # Protect your outgoing majordomo exploders
-       /^(.*)-outgoing@(.*)$/!/^owner-/         550 Use ${1}@${2} instead
+       if !/^owner-/
+       /^(.*)-outgoing@(.*)$/   550 Use ${1}@${2} instead
+       endif
 
 <b>EXAMPLE</b> <b>HEADER</b> <b>FILTER</b> <b>MAP</b>
        # These were once common in junk mail.
