@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_open.3,v 1.2 2005/01/22 03:16:33 briggs Exp $
+.\" $NetBSD: sem_open.3,v 1.3 2005/01/29 14:19:43 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -170,7 +170,7 @@ argument is too long.
 The system limit on semaphores has been reached.
 .It Bq Er ENOENT
 .Dv O_CREAT
-is set but the named semaphore does not exist.
+is not set and the named semaphore does not exist.
 .It Bq Er ENOSPC
 There is not enough space to create the semaphore.
 .El
