@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.25 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.26 2002/09/24 06:19:09 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -145,7 +145,7 @@ dz_ibus_attach(parent, self, aux)
 
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc, NULL);
+	dzattach(sc, NULL, minor(cn_tab->cn_dev);
 }
 
 int

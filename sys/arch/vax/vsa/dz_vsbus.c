@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.25 2002/09/18 18:36:52 ad Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.26 2002/09/24 06:19:10 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -153,15 +153,18 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 #if NDZKBD > 0 || NDZMS > 0
 	struct dzkm_attach_args daa;
 #endif
-	int s;
+	int s, consline;
 
 	/* 
 	 * XXX - This is evil and ugly, but...
 	 * due to the nature of how bus_space_* works on VAX, this will
 	 * be perfectly good until everything is converted.
 	 */
-	if (dz_regs == 0) /* This isn't console */
+	if (dz_regs == 0) /* This isn't console */ {
 		dz_regs = vax_map_physmem(va->va_paddr, 1);
+		consline = -1;
+	} else
+		consline = minor(cn_tab->cn_dev);
 	sc->sc_ioh = dz_regs;
 	sc->sc_dr.dr_csr = 0;
 	sc->sc_dr.dr_rbuf = 4;
@@ -181,7 +184,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc, NULL);
+	dzattach(sc, NULL, consline);
 	DELAY(10000);
 
 #if NDZKBD > 0
