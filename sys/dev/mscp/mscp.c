@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.18 2002/03/04 02:19:10 simonb Exp $	*/
+/*	$NetBSD: mscp.c,v 1.19 2003/02/04 13:20:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.18 2002/03/04 02:19:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.19 2003/02/04 13:20:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -183,12 +183,13 @@ loop:
 	 * nothing else to do, jump to `done' to get the next response.
 	 */
 	if (mp->mscp_unit >= mi->mi_driveno) { /* Must expand drive table */
-		int tmpno = ((mp->mscp_unit + 32) & 0xffe0) * sizeof(void *);
+		int tmpno = (mp->mscp_unit + 32) & ~31;
 		struct device **tmp = (struct device **)
-		    malloc(tmpno, M_DEVBUF, M_NOWAIT|M_ZERO);
+		    malloc(tmpno * sizeof(tmp[0]), M_DEVBUF, M_NOWAIT|M_ZERO);
+		/* XXX tmp should be checked for NULL */
 		if (mi->mi_driveno) {
-			bcopy(mi->mi_dp, tmp, mi->mi_driveno);
-			free(mi->mi_dp, mi->mi_driveno);
+			memcpy(tmp, mi->mi_dp, mi->mi_driveno * sizeof(tmp[0]));
+			free(mi->mi_dp, M_DEVBUF);
 		}
 		mi->mi_driveno = tmpno;
 		mi->mi_dp = tmp;
