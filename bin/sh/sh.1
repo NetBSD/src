@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.58 2003/01/23 18:32:07 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.59 2003/02/12 02:55:14 gmcgarry Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -96,9 +96,9 @@ but it is not a Korn shell clone (see
 Only features designated by
 .Tn POSIX ,
 plus a few Berkeley extensions, are being incorporated into this shell.
-We expect
-.Tn POSIX
-conformance by the time 4.4 BSD is released.
+.\" We expect
+.\" .Tn POSIX
+.\" conformance by the time 4.4 BSD is released.
 This man page is not intended
 to be a tutorial or a complete specification of the shell.
 .Ss Overview
@@ -1761,6 +1761,10 @@ See the above section
 .Sx Path Search .
 .It Ev CDPATH
 The search path used with the cd builtin.
+.It Ev LANG
+The string used to specify localization information that allows users
+to work with different culture-specific and language conventions.  See
+.Xr nls 7 .
 .It Ev MAIL
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
@@ -1829,6 +1833,7 @@ The number of lines in the history buffer for the shell.
 .Xr passwd 5 ,
 .\" .Xr profile 4 ,
 .Xr environ 7 ,
+.Xr nls 7 ,
 .Xr sysctl 8
 .Sh HISTORY
 A
