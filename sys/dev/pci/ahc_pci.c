@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.40 2003/04/25 16:02:52 fvdl Exp $
+ * $Id: ahc_pci.c,v 1.41 2003/06/04 11:55:05 pk Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -743,7 +743,7 @@ ahc_pci_probe(parent, match, aux)
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	entry = ahc_find_pci_device(pa->pa_id, subid, pa->pa_function);
-	return entry != NULL ? 1 : 0;
+	return (entry != NULL && entry->setup != NULL) ? 1 : 0;
 }
 
 void
