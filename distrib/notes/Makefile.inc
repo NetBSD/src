@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.15 2000/11/26 02:50:12 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2001/01/14 21:30:58 mycroft Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
 
-.include <bsd.obj.mk>	# So we get /etc/mk.conf vars.
+.include <bsd.own.mk>	# So we get /etc/mk.conf vars.
 
 M?=	${.CURDIR:T}
 V!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh
