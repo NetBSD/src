@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.118 2001/12/27 18:48:28 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.119 2001/12/31 12:20:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.118 2001/12/27 18:48:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.119 2001/12/31 12:20:35 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1406,6 +1406,11 @@ ohci_softintr(void *v)
 		}
 	}
 
+	if (sc->sc_softwake) {
+		sc->sc_softwake = 0;
+		wakeup(&sc->sc_softwake);
+	}
+
 	sc->sc_bus.intr_context--;
 	DPRINTFN(10,("ohci_softintr: done:\n"));
 }
@@ -2148,11 +2153,13 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * use of the xfer.  Also make sure the soft interrupt routine
 	 * has run.
 	 */
-	usb_delay_ms(opipe->pipe.device->bus, 1); /* Hardware finishes in 1ms */
-	/* XXX should have some communication with softintr() to know
-	   when it's done */
-	usb_delay_ms(opipe->pipe.device->bus, 250);
-		
+	usb_delay_ms(opipe->pipe.device->bus, 20); /* Hardware finishes in 1ms */
+	s = splusb();
+	sc->sc_softwake = 1;
+	usb_schedsoftintr(&sc->sc_bus);
+	tsleep(&sc->sc_softwake, PZERO, "ohciab", 0);
+	splx(s);
+
 	/* 
 	 * Step 3: Remove any vestiges of the xfer from the hardware.
 	 * The complication here is that the hardware may have executed
