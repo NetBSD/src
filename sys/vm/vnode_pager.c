@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	8.8 (Berkeley) 2/13/94
- *	$Id: vnode_pager.c,v 1.11 1994/05/30 13:10:06 mycroft Exp $
+ *	$Id: vnode_pager.c,v 1.12 1994/06/08 11:45:15 mycroft Exp $
  */
 
 /*
@@ -310,16 +310,9 @@ vnode_pager_haspage(pager, offset)
 	 *
 	 * Assumes that the vnode has whole page or nothing.
 	 */
-#if (BSD > 199103)
-#warning if should go away now
 	err = VOP_BMAP(vnp->vnp_vp,
 		       offset / vnp->vnp_vp->v_mount->mnt_stat.f_iosize,
 		       (struct vnode **)0, &bn, NULL);
-#else
-	err = VOP_BMAP(vnp->vnp_vp,
-		       offset / vnp->vnp_vp->v_mount->mnt_stat.f_iosize,
-		       (struct vnode **)0, &bn);
-#endif
 	VOP_UNLOCK(vnp->vnp_vp);
 	if (err) {
 #ifdef DEBUG
@@ -473,15 +466,9 @@ vnode_pager_uncache(vp)
 #ifdef DEBUG
 	if (!VOP_ISLOCKED(vp)) {
 #ifdef NFSCLIENT
-#if (BSD > 199103)
 		extern int (**nfsv2_vnodeop_p)();
 
 		if (vp->v_op != nfsv2_vnodeop_p)
-#else
-		extern struct vnodeops nfsv2_vnodeops;
-
-		if (vp->v_op != &nfsv2_vnodeops)
-#endif
 #endif
 			panic("vnode_pager_uncache: vnode not locked!");
 	}

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	8.5 (Berkeley) 2/17/94
- *	$Id: vm_swap.c,v 1.19 1994/05/23 03:12:08 cgd Exp $
+ *	$Id: vm_swap.c,v 1.20 1994/06/08 11:45:13 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -276,29 +276,16 @@ swapon(p, uap, retval)
 {
 	register struct vnode *vp;
 	register struct swdevt *sp;
-#ifndef notdef
-	register struct nameidata *ndp;
-#endif
 	dev_t dev;
 	int error;
 	struct nameidata nd;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-#ifdef notdef
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->name, p);
 	if (error = namei(&nd))
                 return (error);
 	vp = nd.ni_vp;
-#else
-	ndp = &nd;
-	ndp->ni_nameiop = LOOKUP | FOLLOW;
-	ndp->ni_segflg = UIO_USERSPACE;
-	ndp->ni_dirp = uap->name;
-	if (error = namei(ndp, p))
-		return (error);
-	vp = ndp->ni_vp;
-#endif
 	if (vp->v_type != VBLK) {
 		vrele(vp);
 		return (ENOTBLK);
