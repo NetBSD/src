@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.12 1999/11/06 17:35:55 mhitch Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.13 1999/11/30 11:53:24 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1278,8 +1278,8 @@ END(mips3_GetWIRED)
 LEAF(mips3_TLBFlush)
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
-	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
+	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
 
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
