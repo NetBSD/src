@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.39 2002/11/30 04:04:23 christos Exp $
+.\"	$NetBSD: routed.8,v 1.40 2002/12/18 19:20:05 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,7 +118,7 @@ The advertised metric for a route reflects the metrics associated
 with interfaces
 (see
 .Xr ifconfig 8 )
-though which it is received and sent,
+through which it is received and sent,
 so setting the metric on an interface
 is an effective way to steer traffic.
 See also
@@ -213,11 +213,10 @@ It continues listening to RIP while using Router Discovery
 if multi-homed to ensure all interfaces are used.
 .Pp
 The Router Discovery standard requires that advertisements
+have a default "lifetime" of 30 minutes.
+That means should something happen, a client can be without a good route for
+30 minutes.
 It is a good idea to reduce the default to 45 seconds using
-have a default "lifetime" of 30 minutes.  That means should
-something happen, a client can be without a good route for
-30 minutes.  It is a good idea to reduce the default to 45
-seconds using
 .Fl P Cm rdisc_interval=45
 on the command line or
 .Cm rdisc_interval=45
@@ -231,7 +230,7 @@ is received), there is a single default route and a variable number of
 redirected host routes in the kernel table.
 On a host with more than one network interface,
 this default route will be via only one of the interfaces.
-Thus, multi-homed hosts running with \f3\-q\f1 might need
+Thus, multi-homed hosts running with
 .Fl q
 might need
 .Cm no_rdisc
@@ -255,6 +254,7 @@ The following options are available:
 force
 .Nm
 to supply routing information.
+This is the default if multiple network interfaces are present on which
 RIP or Router Discovery have not been disabled, and if the sysctl
 net.inet.ip.forwarding=1.
 .It Fl q
@@ -287,8 +287,8 @@ default route.
 This is typically used on a gateway to the Internet,
 or on a gateway that uses another routing protocol whose routes
 are not reported to other local routers.
-Notice that because a metric of 1 is used, this feature is
-dangerous.  It is more commonly accidentally used to create chaos with a
+Notice that because a metric of 1 is used, this feature is dangerous.
+It is more commonly accidentally used to create chaos with a
 routing loop than to solve problems.
 .It Fl h
 cause host or point-to-point routes to not be advertised,
@@ -516,7 +516,6 @@ a line starting with
 .Cm if=remote(Hname) ,
 etc. should be used.
 .Ss Parameters
-.Pp
 Lines that start with neither "net" nor "host" must consist of one
 or more of the following parameter settings, separated by commas or
 blanks:
@@ -536,7 +535,8 @@ This parameter must appear by itself on a line.
 The network number must specify a full, 32-bit value, as in 192.0.2.0
 instead of 192.0.2.
 .Pp
-Do not use this feature unless necessary.  It is dangerous.
+Do not use this feature unless necessary.
+It is dangerous.
 .It Cm ripv1_mask Ns \&= Ns Ar nname/mask1,mask2
 specifies that netmask of the network of which
 .Cm nname/mask1
@@ -701,7 +701,6 @@ as a router and forwarding packets.
 Otherwise, ICMP Redirect messages are overridden and deleted when the
 system is acting as a router.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /etc/gateways -compact
 .It Pa /etc/gateways
@@ -716,11 +715,11 @@ for distant gateways
 .%R XSIS 028112
 .%Q Xerox System Integration Standard
 .Re
-.Sh BUGS
-It does not always detect unidirectional failures in network interfaces,
-for example, when the output side fails.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+It does not always detect unidirectional failures in network interfaces,
+for example, when the output side fails.
