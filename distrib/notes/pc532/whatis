@@ -1,12 +1,16 @@
-.\"	$NetBSD: whatis,v 1.5 1999/01/13 07:30:08 ross Exp $	
+.\"	$NetBSD: whatis,v 1.5.10.1 2000/11/01 03:48:28 tv Exp $
 .
-For the pc532 port, there are a few known problems.  They include:
-.Bl -enum
-.It
-ppp reports a lot of input errors on some machines.
+This is the sixth major release of
+.Nx*M .
+.Pp
+There are a few known problems in the \*M port.  They include:
+.(enum
+.Ic ppp
+reports a lot of input errors on some machines.
 .It
 Some tape drives do not work very well.  Some have hung the system.
 .It
-The serial drivers do not have all the desired features.  (ttyflags
+The serial drivers do not have all the desired features.
+.Ic ( ttyflags
 is the most glaring omission.)
-.El
+.enum)

@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.7 2000/05/13 08:13:55 lukem Exp $	
+.\"	$NetBSD: upgrade,v 1.7.4.1 2000/11/01 03:48:40 tv Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -33,96 +33,121 @@
 .\"
 .
 .if r_sun3 \{\
-It is possible to easily upgrade your existing NetBSD/sun3 system
+It is possible to easily upgrade your existing
+.Nx*M
+system
 using the upgrade program in the miniroot. If you wish to upgrade
-your system by this method, simply select the `upgrade' option once
+your system by this method, simply select the
+.Ic upgrade
+option once
 the miniroot has booted. The upgrade program with then guide you
 through the procedure. The upgrade program will:
-.	Bl -bullet -offset indent
-.	It
+.(bullet -offset indent
 Enable the network based on your system's current network configuration.
-.	It
-Mount your existing filesystems.
-.	It
+.It
+Mount your existing file systems.
+.It
 Extract binary sets from the media of your choice.
-.	It
-Make new device nodes in your root filesystem.
-.	It
-Copy a new kernel onto your root partition.
-.	(Note
+.It
+Make new device nodes in your root file system under
+.Pa /dev .
+.It
+Copy a new kernel onto your root partition
+.Pq Pa / .
+.(Note
 the existing kernel
-.	Em will not
+.Em will not
 be backed up; doing
 so would be pointless, since older kernels may not be
 capable of running
-.	Nx \*V
+.Nx \*V
 executables.
-.	Note)
-.	It
+.Note)
+.It
 Install a new boot block.
-.	It
-Check your filesystems for integrity.
-.	El
-.	Pp
+.It
+Check your file systems for integrity.
+.bullet)
+.Pp
 Using the miniroot's upgrade program is the preferred method
 of upgrading your system.
 .\}
 .Pp
 However, it is possible to upgrade your system
 manually. To do this, follow the following procedure:
-.Bl -bullet -offset indent
-.It
+.(bullet -offset indent
 Place
 .Em at least
-the `base' binary set in a filesystem
-accessible to the target machine. A local filesystem
+the
+.Sy base
+binary set in a file system
+accessible to the target machine. A local file system
 is preferred, since the NFS subsystem in the
 .Nx \*V
 kernel may be incompatible with your old binaries.
 .It
 Back up your pre-existing kernel and copy the \*V
-kernel into your root partition.
+kernel into your root partition
+.Pq Pa / .
 .It
 Reboot with the \*V kernel into single-user mode.
 (Otherwise you can not install the boot block.)
 .It
-Check all filesystems:
-.D1 Ic /sbin/fsck -pf
+Check all file systems:
+.Pp
+.Dl # Ic "/sbin/fsck -pf"
 .It
-Mount all local filesystems:
-.D1 Ic /sbin/mount -a -t nonfs
+Mount all local file systems:
+.Pp
+.Dl # Ic "/sbin/mount -a -t nonfs"
 .It
-If you keep /usr or /usr/share on an NFS server, you
-will want to mount those filesystems as well. To do
+If you keep
+.Pa /usr
+or
+.Pa /usr/share
+on an NFS server, you
+will want to mount those file systems as well. To do
 this, you will need to enable the network:
-.D1 Ic sh /etc/rc.d/network
+.Pp
+.Dl # Ic "sh /etc/rc.d/network start"
 .It
-Run the update(8) daemon, to ensure that new programs
+Run the
+.Xr update 8
+daemon, to ensure that new programs
 are actually stored on disk.
-.D1 Ic update
+.\" XXX: check this
+.Pp
+.Dl # Ic update
 .It
-Make sure you are in the root filesystem and extract
-the `base' binary set:
-.D1 Ic cd /
-.D1 Ic pax -zrvpe -f Ar /path/to/base.tar.gz
+Make sure you are in the root file system
+.Pq Pa / and extract the
+.Sy base
+binary set:
+.Pp
+.Dl # Ic "cd /"
+.Dl # Ic "pax -zrvpe -f Ar /path/to/base.tgz
 .It
 Install a new boot block:
-(assuming root is on /dev/rsd0a)
-.D1 Ic "cd /usr/mdec
-.D1 Ic "cp -p \&./ufsboot /mnt/ufsboot
-.D1 Ic "sync ; sleep 1 ; sync
-.D1 Ic "\&./installboot -v /ufsboot bootxx /dev/rsd0a
+(assuming root is on
+.Pa /dev/rsd0a )
+.Pp
+.Dl # Ic "cd /usr/mdec"
+.Dl # Ic "cp -p \&./ufsboot /mnt/ufsboot"
+.Dl # Ic "sync ; sleep 1 ; sync"
+.Dl # Ic "\&./installboot -v /ufsboot bootxx /dev/rsd0a"
 .It
-Sync the filesystems:
-.D1 Ic sync
+Sync the file systems:
+.Pp
+.Dl Ic sync
 .It
 At this point you may extract any other binary sets
-you may have placed on local filesystems, or you may
+you may have placed on local file systems, or you may
 wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
-.D1 Ic cd /
-.D1 Ic pax -zrvpe -f Ar "path to set
-.El
+.Pp
+.Dl # "Ic cd /"
+.Dl # "Ic pax -zrvpe -f Ar \&"path to set\&""
+.bullet)
 .(Note
 .No You Em should not
 extract the

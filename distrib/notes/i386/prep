@@ -1,5 +1,5 @@
-.\"	$NetBSD: prep,v 1.8 1999/05/04 20:07:02 fvdl Exp $	
-
+.\"	$NetBSD: prep,v 1.8.8.1 2000/11/01 03:48:08 tv Exp $
+.
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
 of any data on your hard disk that you
@@ -63,7 +63,11 @@ disk entirely for
 .Nx ,
 you may wish to check your
 .Tn BIOS
-settings for the 'Large' or 'LBA' modes, and activate
+settings for the
+.Sq Large
+or
+.Sq LBA
+modes, and activate
 them for the hard disk in question. While they are not needed
 by
 .Nx
@@ -92,7 +96,7 @@ the geometry that
 uses is the
 .Em real geometry .
 .Pp
-.Li Sysinst
+.Li sysinst
 will try to discover both the real geometry and
 .Tn BIOS
 geometry.
