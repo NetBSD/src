@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.21 1995/08/14 20:00:00 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.22 1995/10/08 23:42:58 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -109,12 +109,8 @@ static int si_flags = 0 /* | SDEV_DB2 */ ;
 
 #define ARBITRATION_RETRIES 1000
 
-#ifdef DDB
+/* XXX - Always available, but might do nothing. */
 int Debugger();
-#else
-#define Debugger() panic("Should call Debugger here %s:%d", \
-			 __FILE__, __LINE__)
-#endif
 
 struct ncr5380_softc {
     struct device sc_dev;
@@ -171,6 +167,9 @@ si_print(aux, name)
 	void *aux;
 	char *name;
 {
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 static int
@@ -231,20 +230,20 @@ si_attach(parent, self, args)
 	void		*args;
 {
 	struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
-	volatile sci_regmap_t *regs;
+	volatile struct si_regs *regs;
 	struct confargs *ca = args;
 
 	switch (ca->ca_bustype) {
 
 	case BUS_OBIO:
-		regs = (sci_regmap_t *)
+		regs = (struct si_regs *)
 			obio_alloc(ca->ca_paddr, sizeof(*regs));
 		isr_add_autovect(ncr_intr, (void *)ncr5380,
 						 ca->ca_intpri);
 		break;
 
 	case BUS_VME16:
-		regs = (sci_regmap_t *)
+		regs = (struct si_regs *)
 			bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(*regs));
 		isr_add_vectored(ncr_intr, (void *)ncr5380,
 						 ca->ca_intpri, ca->ca_intvec);

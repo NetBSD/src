@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 1995/08/08 20:54:08 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.30 1995/10/08 23:42:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -979,11 +979,8 @@ zssint(cs, zc)
 
 zsabort()
 {
-#ifdef DDB
+	/* XXX - Always available, but may be the PROM monitor. */
 	Debugger();
-#else
-	sun3_mon_abort();
-#endif
 }
 
 #ifdef KGDB
