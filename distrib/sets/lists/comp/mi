@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.250 2000/07/28 00:15:49 wiz Exp $
+#	$NetBSD: mi,v 1.251 2000/08/01 00:53:14 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1114,7 +1114,6 @@
 ./usr/include/uvm/uvm_fault.h		comp-c-include
 ./usr/include/uvm/uvm_fault_i.h		comp-c-include
 ./usr/include/uvm/uvm_glue.h		comp-c-include
-./usr/include/uvm/uvm_inherit.h		comp-c-include
 ./usr/include/uvm/uvm_km.h		comp-c-include
 ./usr/include/uvm/uvm_loan.h		comp-c-include
 ./usr/include/uvm/uvm_map.h		comp-c-include
