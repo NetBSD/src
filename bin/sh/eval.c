@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.80 2004/10/30 19:29:27 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.81 2005/03/02 20:57:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.80 2004/10/30 19:29:27 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.81 2005/03/02 20:57:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -977,6 +977,7 @@ normal_fork:
 		}
 		e = -1;
 		savehandler = handler;
+		savecmdname = commandname;
 		handler = &jmploc;
 		if (!setjmp(jmploc.loc)) {
 			/* We need to ensure the command hash table isn't
@@ -993,7 +994,6 @@ normal_fork:
 				temp_path = 0;
 			redirect(cmd->ncmd.redirect, mode);
 
-			savecmdname = commandname;
 			/* exec is a special builtin, but needs this list... */
 			cmdenviron = varlist.list;
 			/* we must check 'readonly' flag for all builtins */
