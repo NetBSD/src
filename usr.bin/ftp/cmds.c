@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.42 1998/08/08 02:51:49 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.43 1998/09/01 14:25:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.42 1998/08/08 02:51:49 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.43 1998/09/01 14:25:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1520,7 +1520,7 @@ quote1(initial, argc, argv)
 	}
 		/* Ensure buf is NUL terminated */
 	buf[sizeof(buf) - 1] = '\0';
-	if (command(buf) == PRELIM) {
+	if (command("%s", buf) == PRELIM) {
 		while (getreply(0) == PRELIM)
 			continue;
 	}
