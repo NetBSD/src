@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.47 1996/08/02 15:07:23 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.48 1996/09/24 16:08:36 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -923,9 +923,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		*draco_intpen = 0;
 		*draco_intfrc = 0;
 		ciaa.icr = 0x7f;			/* and keyboard */
-#if 0
 		ciab.icr = 0x7f;			/* and again */
-#endif
+		draco_ioct->io_control |= DRCNTRL_WDOGENA; /* stop Fido */
+
 		*(volatile u_int8_t *)(DRCCADDR + 
 		    DRSUPIOPG*NBPG + 4*(0x3F8 + 1)) = 0; /* and com0 */
 		*(volatile u_int8_t *)(DRCCADDR +
