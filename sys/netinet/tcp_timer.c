@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.57.10.2 2003/10/22 06:06:05 jmc Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.57.10.3 2004/03/15 05:49:10 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.57.10.2 2003/10/22 06:06:05 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.57.10.3 2004/03/15 05:49:10 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -291,7 +291,7 @@ tcp_timer_rexmt(void *arg)
 #endif
 
 	s = splsoftnet();
-	callout_ack(&tp->t_timer[TCPT_KEEP]);
+	callout_ack(&tp->t_timer[TCPT_REXMT]);
 	if (tcp_isdead(tp)) {
 		splx(s);
 		return;
