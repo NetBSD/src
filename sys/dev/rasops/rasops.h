@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.10 1999/12/14 22:20:28 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.11 1999/12/14 22:25:13 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,10 @@ struct rasops_info {
  * to -1 (or a new, valid cookie).
  */
 
-/* Per-depth initalization functions */
+/* 
+ * Per-depth initalization functions. These should not be called outside
+ * the rasops code.
+ */
 void	rasops1_init __P((struct rasops_info *));
 void	rasops2_init __P((struct rasops_info *));
 void	rasops8_init __P((struct rasops_info *));
