@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.51 2000/12/28 22:59:14 sommerfeld Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.52 2000/12/30 00:37:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -49,6 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/reboot.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -668,10 +669,13 @@ pccbb_pci_callback(self)
 		cba.cba_cacheline = PCI_CACHELINE(bhlc);
 		cba.cba_lattimer = PCI_CB_LATENCY(busreg);
 
-		printf("%s: cacheline 0x%x lattimer 0x%x\n",
-		    sc->sc_dev.dv_xname, cba.cba_cacheline, cba.cba_lattimer);
-		printf("%s: bhlc 0x%x lscp 0x%x\n", sc->sc_dev.dv_xname, bhlc,
-		    busreg);
+		if (bootverbose) {
+			printf("%s: cacheline 0x%x lattimer 0x%x\n",
+			    sc->sc_dev.dv_xname, cba.cba_cacheline,
+			    cba.cba_lattimer);
+			printf("%s: bhlc 0x%x lscp 0x%x\n",
+			    sc->sc_dev.dv_xname, bhlc, busreg);
+		}
 #if defined SHOW_REGS
 		cb_show_regs(sc->sc_pc, sc->sc_tag, sc->sc_base_memt,
 		    sc->sc_base_memh);
