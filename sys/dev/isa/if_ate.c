@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.41 2004/12/12 21:03:07 abs Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.42 2005/01/09 16:59:41 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.41 2004/12/12 21:03:07 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.42 2005/01/09 16:59:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.41 2004/12/12 21:03:07 abs Exp $");
 
 #include <dev/isa/isavar.h>
 
-int	ate_match __P((struct device *, struct cfdata *, void *));
-void	ate_attach __P((struct device *, struct device *, void *));
+int	ate_match(struct device *, struct cfdata *, void *);
+void	ate_attach(struct device *, struct device *, void *);
 
 struct ate_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
@@ -66,23 +66,28 @@ CFATTACH_DECL(ate_isa, sizeof(struct ate_softc),
     ate_match, ate_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
-	u_char port;	/* Offset from the base I/O address. */
-	u_char mask;	/* Bits to be checked. */
-	u_char bits;	/* Values to be compared against. */
+	uint8_t port;	/* Offset from the base I/O address. */
+	uint8_t mask;	/* Bits to be checked. */
+	uint8_t bits;	/* Values to be compared against. */
 };
 
-static __inline__ int fe_simple_probe __P((bus_space_tag_t, 
-    bus_space_handle_t, struct fe_simple_probe_struct const *));
-static int ate_find __P((bus_space_tag_t, bus_space_handle_t, int *,
-    int *));
-static int ate_detect __P((bus_space_tag_t, bus_space_handle_t,
-    u_int8_t enaddr[ETHER_ADDR_LEN]));
+static __inline__ int fe_simple_probe(bus_space_tag_t, bus_space_handle_t,
+    struct fe_simple_probe_struct const *);
+static int ate_find(bus_space_tag_t, bus_space_handle_t, int *, int *);
+static int ate_detect(bus_space_tag_t, bus_space_handle_t,
+    uint8_t enaddr[ETHER_ADDR_LEN]);
 
 static int const ate_iomap[8] = {
 	0x260, 0x280, 0x2A0, 0x240, 0x340, 0x320, 0x380, 0x300
 };
 #define NATE_IOMAP (sizeof (ate_iomap) / sizeof (ate_iomap[0]))
 #define ATE_NPORTS 0x20
+
+#ifdef ATE_DEBUG
+#define DPRINTF	printf
+#else
+#define DPRINTF	while (/*CONSTCOND*/0) printf
+#endif
 
 /*
  * Hardware probe routines.
@@ -92,28 +97,25 @@ static int const ate_iomap[8] = {
  * Determine if the device is present.
  */
 int
-ate_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ate_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int i, iobase, irq, rv = 0;
-	u_int8_t myea[ETHER_ADDR_LEN];
+	uint8_t myea[ETHER_ADDR_LEN];
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded values. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 
 	/*
 	 * See if the sepcified address is valid for MB86965A JLI mode.
@@ -122,40 +124,31 @@ ate_match(parent, match, aux)
 		if (ate_iomap[i] == ia->ia_io[0].ir_addr)
 			break;
 	if (i == NATE_IOMAP) {
-#ifdef ATE_DEBUG
-		printf("ate_match: unknown iobase 0x%x\n", ia->ia_iobase);
-#endif
-		return (0);
+		DPRINTF("ate_match: unknown iobase 0x%x\n",
+		    ia->ia_io[0].ir_addr);
+		return 0;
 	}
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ATE_NPORTS, 0, &ioh)) {
-#ifdef ATE_DEBUG
-		printf("ate_match: couldn't map iospace 0x%x\n",
+		DPRINTF("ate_match: couldn't map iospace 0x%x\n",
 		    ia->ia_io[0].ir_addr);
-#endif
-		return (0);
+		return 0;
 	}
 
 	if (ate_find(iot, ioh, &iobase, &irq) == 0) {
-#ifdef ATE_DEBUG
-		printf("ate_match: ate_find failed\n");
-#endif
+		DPRINTF("ate_match: ate_find failed\n");
 		goto out;
 	}
 
 	if (iobase != ia->ia_io[0].ir_addr) {
-#ifdef ATE_DEBUG
-		printf("ate_match: unexpected iobase in board: 0x%x\n",
-		    ia->ia_iobase);
-#endif
+		DPRINTF("ate_match: unexpected iobase in board: 0x%x\n",
+		    iobase);
 		goto out;
 	}
 
 	if (ate_detect(iot, ioh, myea) == 0) { /* XXX necessary? */
-#ifdef ATE_DEBUG
-		printf("ate_match: ate_detect failed\n");
-#endif
+		DPRINTF("ate_match: ate_detect failed\n");
 		goto out;
 	}
 
@@ -181,33 +174,29 @@ ate_match(parent, match, aux)
 
  out:
 	bus_space_unmap(iot, ioh, ATE_NPORTS);
-	return (rv);
+	return rv;
 }
 
 /*
  * Check for specific bits in specific registers have specific values.
  */
 static __inline__ int
-fe_simple_probe (iot, ioh, sp)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct fe_simple_probe_struct const *sp;
+fe_simple_probe(bus_space_tag_t iot, bus_space_handle_t ioh,
+    struct fe_simple_probe_struct const *sp)
 {
-	u_int8_t val;
+	uint8_t val;
 	struct fe_simple_probe_struct const *p;
 
 	for (p = sp; p->mask != 0; p++) {
 		val = bus_space_read_1(iot, ioh, p->port);
 		if ((val & p->mask) != p->bits) {
-#ifdef ATE_DEBUG
-			printf("fe_simple_probe: %x & %x != %x\n",
+			DPRINTF("fe_simple_probe: %x & %x != %x\n",
 			    val, p->mask, p->bits);
-#endif
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -218,12 +207,9 @@ fe_simple_probe (iot, ioh, sp)
  * Probe and initialization for Allied-Telesis AT1700/RE2000 series.
  */
 static int
-ate_find(iot, ioh, iobase, irq)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int *iobase, *irq;
+ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 {
-	u_int8_t eeprom[FE_EEPROM_SIZE];
+	uint8_t eeprom[FE_EEPROM_SIZE];
 	int n;
 
 	static int const irqmap[4][4] = {
@@ -259,7 +245,7 @@ ate_find(iot, ioh, iobase, irq)
 	 * we can predict almost nothing about register values.
 	 */
 	if (!fe_simple_probe(iot, ioh, probe_table))
-		return (0);
+		return 0;
 
 	/* Check if our I/O address matches config info on 86965. */
 	n = (bus_space_read_1(iot, ioh, FE_BMPR19) & FE_B19_ADDR)
@@ -281,7 +267,7 @@ ate_find(iot, ioh, iobase, irq)
 		printf("ate_find: "
 		    "incorrect configuration in eeprom and chip\n");
 #endif
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -309,19 +295,17 @@ ate_find(iot, ioh, iobase, irq)
 		break;
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
  * Determine type and ethernet address.
  */
 static int
-ate_detect(iot, ioh, enaddr)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
+ate_detect(bus_space_tag_t iot, bus_space_handle_t ioh,
+    uint8_t enaddr[ETHER_ADDR_LEN])
 {
-	u_int8_t eeprom[FE_EEPROM_SIZE];
+	uint8_t eeprom[FE_EEPROM_SIZE];
 	int type;
 
 	/* Get our station address from EEPROM. */
@@ -331,10 +315,8 @@ ate_detect(iot, ioh, enaddr)
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
-#ifdef ATE_DEBUG
-		printf("ate_detect: invalid ethernet address\n");
-#endif
-		return (0);
+		DPRINTF("ate_detect: invalid ethernet address\n");
+		return 0;
 	}
 
 	/*
@@ -358,20 +340,18 @@ ate_detect(iot, ioh, enaddr)
 		break;
 	}
 
-	return (type);
+	return type;
 }
 
 void
-ate_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ate_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ate_softc *isc = (struct ate_softc *)self;
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	u_int8_t myea[ETHER_ADDR_LEN];
+	uint8_t myea[ETHER_ADDR_LEN];
 	const char *typestr;
 	int type;
 
