@@ -1,6 +1,7 @@
 #!/bin/sh -
 #
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
+#	$Id: netstart,v 1.12 1993/12/16 04:02:23 deraadt Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -90,8 +91,4 @@ route add $hostname localhost
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
 	route add default `cat /etc/mygate`
-fi
-
-if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
-	ypbind;		echo ypbind
 fi
