@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.22 1999/08/27 18:29:08 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.23 1999/08/27 18:33:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.22 1999/08/27 18:29:08 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.23 1999/08/27 18:33:29 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1039,10 +1039,8 @@ fts_palloc(sp, size)
 #endif
 	size = fts_pow2(size);
 	new = realloc(sp->fts_path, size);
-	if (new == 0) {
-		errno = ENOMEM;
+	if (new == 0)
 		return (1);
-	}
 	sp->fts_path = new;
 	sp->fts_pathlen = size;
 	return (0);
