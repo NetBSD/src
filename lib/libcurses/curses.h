@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)curses.h	5.12 (Berkeley) 9/1/92
- *	$Id: curses.h,v 1.5 1993/08/15 16:23:59 mycroft Exp $
+ *	$Id: curses.h,v 1.6 1993/08/15 16:43:27 mycroft Exp $
  */
 
 #ifndef _CURSES_H_
@@ -150,7 +150,7 @@ extern char	 __unctrllen[0x80];	/* Control strings length. */
 #define	getch()			wgetch(stdscr)
 #define	getstr(str)		wgetstr(stdscr, str)
 #define	inch()			winch(stdscr)
-#define	insch(ch))		winsch(stdscr, ch)
+#define	insch(ch)		winsch(stdscr, ch)
 #define	insertln()		winsertln(stdscr)
 #define	move(y, x)		wmove(stdscr, y, x)
 #define	refresh()		wrefresh(stdscr)
