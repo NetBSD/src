@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.2 1999/01/27 21:12:22 thorpej Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.3 1999/03/28 20:01:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -73,7 +73,9 @@ struct mbr_partition {
 #define	MBR_PTYPE_FAT32L	0x0c	/* 32-bit FAT, LBA-mapped */
 #define	MBR_PTYPE_FAT16L	0x0e	/* 16-bit FAT, LBA-mapped */
 #define	MBR_PTYPE_EXT_LBA	0x0f	/* extended partition, LBA-mapped */
+#define MBR_PTYPE_LNXSWAP	0x82	/* Linux swap or Solaris */
 #define	MBR_PTYPE_LNXEXT2	0x83	/* Linux native */
+#define MBR_PTYPE_NTFS		0x87	/* Windows NT filesystem */
 
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	MBR_PSECT(s)	((s) & 0x3f)
