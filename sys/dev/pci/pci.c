@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.73 2002/10/02 16:51:50 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.74 2002/10/23 01:50:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.73 2002/10/02 16:51:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.74 2002/10/23 01:50:12 perry Exp $");
 
 #include "opt_pci.h"
 
@@ -140,7 +140,7 @@ pciattach(parent, self, aux)
 		return;
 	}
 
-#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
+#define	PRINT(str)	do { printf("%s%s", sep, str); sep = ", "; } while (0)
 
 	printf("%s: ", self->dv_xname);
 

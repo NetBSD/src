@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.16 2002/10/22 16:13:44 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.17 2002/10/23 01:50:12 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.16 2002/10/22 16:13:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.17 2002/10/23 01:50:12 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -1410,10 +1410,10 @@ pcn_rxintr(struct pcn_softc *sc)
 					printf("%s: overflow error\n",
 					    sc->sc_dev.dv_xname);
 				else {
-#define	PRINTIT(x, s)							\
+#define	PRINTIT(x, str)							\
 					if (rmd1 & (x))			\
 						printf("%s: %s\n",	\
-						    sc->sc_dev.dv_xname, s);
+						    sc->sc_dev.dv_xname, str);
 					PRINTIT(LE_R1_FRAM, "framing error");
 					PRINTIT(LE_R1_CRC, "CRC error");
 					PRINTIT(LE_R1_BUFF, "buffer error");
@@ -1952,9 +1952,9 @@ pcn_79c970_mediainit(struct pcn_softc *sc)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, pcn_79c970_mediachange,
 	    pcn_79c970_mediastatus);
 
-#define	ADD(s, m, d)							\
+#define	ADD(str, m, d)							\
 do {									\
-	printf("%s%s", sep, s);						\
+	printf("%s%s", sep, str);					\
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(m), (d), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
