@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:46:51 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$Id: Makefile,v 1.5 1994/09/22 09:26:01 mycroft Exp $
 
 PROG=	sleep
 

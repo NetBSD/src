@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Keith Muller of the University of California, San Diego and Lance
@@ -36,14 +36,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dd.c	5.16 (Berkeley) 4/28/93";*/
-static char rcsid[] = "$Id: dd.c,v 1.2 1993/08/01 19:00:08 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)dd.c	8.5 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: dd.c,v 1.3 1994/09/22 09:25:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: dd.c,v 1.2 1993/08/01 19:00:08 mycroft Exp $";
 #include <sys/mtio.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -65,6 +66,7 @@ static char rcsid[] = "$Id: dd.c,v 1.2 1993/08/01 19:00:08 mycroft Exp $";
 
 static void dd_close __P((void));
 static void dd_in __P((void));
+static void getfdtype __P((IO *));
 static void setup __P((void));
 
 IO	in, out;		/* input/output state */
@@ -74,7 +76,6 @@ u_long	cpy_cnt;		/* # of blocks to copy */
 u_int	ddflags;		/* conversion options */
 u_int	cbsz;			/* conversion block size */
 u_int	files_cnt = 1;		/* # of files to copy */
-int	errstats;		/* show statistics on error */
 u_char	*ctab;			/* conversion table */
 
 int
@@ -85,23 +86,22 @@ main(argc, argv)
 	jcl(argv);
 	setup();
 
-	(void)signal(SIGINFO, summary);
+	(void)signal(SIGINFO, summaryx);
 	(void)signal(SIGINT, terminate);
 
-	for (errstats = 1; files_cnt--;)
+	atexit(summary);
+
+	while (files_cnt--)
 		dd_in();
 
 	dd_close();
-	summary(0);
 	exit(0);
 }
 
 static void
 setup()
 {
-	register u_int cnt;
-	struct stat sb;
-	struct mtget mt;
+	u_int cnt;
 
 	if (in.name == NULL) {
 		in.name = "stdin";
@@ -109,18 +109,13 @@ setup()
 	} else {
 		in.fd = open(in.name, O_RDONLY, 0);
 		if (in.fd < 0)
-			err("%s: %s", in.name, strerror(errno));
+			err(1, "%s", in.name);
 	}
 
-	if (fstat(in.fd, &sb))
-		err("%s: %s", in.name, strerror(errno));
-	if (S_ISCHR(sb.st_mode))
-		in.flags |= ioctl(in.fd, MTIOCGET, &mt) ? ISCHR : ISTAPE;
-	else if (lseek(in.fd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE)
-		in.flags |= ISPIPE;		/* XXX fixed in 4.4BSD */
+	getfdtype(&in);
 
 	if (files_cnt > 1 && !(in.flags & ISTAPE))
-		err("files is not supported for non-tape devices");
+		errx(1, "files is not supported for non-tape devices");
 
 	if (out.name == NULL) {
 		/* No way to check for read access here. */
@@ -140,15 +135,10 @@ setup()
 			out.flags |= NOREAD;
 		}
 		if (out.fd < 0)
-			err("%s: %s", out.name, strerror(errno));
+			err(1, "%s", out.name);
 	}
 
-	if (fstat(out.fd, &sb))
-		err("%s: %s", out.name, strerror(errno));
-	if (S_ISCHR(sb.st_mode))
-		out.flags |= ioctl(out.fd, MTIOCGET, &mt) ? ISCHR : ISTAPE;
-	else if (lseek(out.fd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE)
-		out.flags |= ISPIPE;		/* XXX fixed in 4.4BSD */
+	getfdtype(&out);
 
 	/*
 	 * Allocate space for the input and output buffers.  If not doing
@@ -156,12 +146,12 @@ setup()
 	 */
 	if (!(ddflags & (C_BLOCK|C_UNBLOCK))) {
 		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
-			err("%s", strerror(errno));
+			err(1, NULL);
 		out.db = in.db;
 	} else if ((in.db =
 	    malloc((u_int)(MAX(in.dbsz, cbsz) + cbsz))) == NULL ||
 	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 	in.dbp = in.db;
 	out.dbp = out.db;
 
@@ -210,9 +200,24 @@ setup()
 }
 
 static void
+getfdtype(io)
+	IO *io;
+{
+	struct mtget mt;
+	struct stat sb;
+
+	if (fstat(io->fd, &sb))
+		err(1, "%s", io->name);
+	if (S_ISCHR(sb.st_mode))
+		io->flags |= ioctl(io->fd, MTIOCGET, &mt) ? ISCHR : ISTAPE;
+	else if (lseek(io->fd, (off_t)0, SEEK_CUR) == -1 && errno == ESPIPE)
+		io->flags |= ISPIPE;		/* XXX fixed in 4.4BSD */
+}
+
+static void
 dd_in()
 {
-	register int flags, n;
+	int flags, n;
 
 	for (flags = ddflags;;) {
 		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
@@ -223,7 +228,7 @@ dd_in()
 		 * lose the minimum amount of data.  If doing block operations
 		 * use spaces.
 		 */
-		if (flags & (C_NOERROR|C_SYNC))
+		if ((flags & (C_NOERROR|C_SYNC)) == (C_NOERROR|C_SYNC))
 			if (flags & (C_BLOCK|C_UNBLOCK))
 				memset(in.dbp, ' ', in.dbsz);
 			else
@@ -242,9 +247,9 @@ dd_in()
 			 * the warning message be followed by an I/O display.
 			 */
 			if (!(flags & C_NOERROR))
-				err("%s: %s", in.name, strerror(errno));
-			warn("%s: %s", in.name, strerror(errno));
-			summary(0);
+				err(1, "%s", in.name);
+			warn("%s", in.name);
+			summary();
 
 			/*
 			 * If it's not a tape drive or a pipe, seek past the
@@ -254,7 +259,7 @@ dd_in()
 			 */
 			if (!(in.flags & (ISPIPE|ISTAPE)) &&
 			    lseek(in.fd, (off_t)in.dbsz, SEEK_CUR))
-				warn("%s: %s", in.name, strerror(errno));
+				warn("%s", in.name);
 
 			/* If sync not specified, omit block and continue. */
 			if (!(ddflags & C_SYNC))
@@ -317,6 +322,10 @@ dd_close()
 		block_close();
 	else if (cfunc == unblock)
 		unblock_close();
+	if (ddflags & C_OSYNC && out.dbcnt < out.dbsz) {
+		memset(out.dbp, 0, out.dbsz - out.dbcnt);
+		out.dbcnt = out.dbsz;
+	}
 	if (out.dbcnt)
 		dd_out(1);
 }
@@ -326,8 +335,8 @@ dd_out(force)
 	int force;
 {
 	static int warned;
-	register int cnt, n, nw;
-	register u_char *outp;
+	int cnt, n, nw;
+	u_char *outp;
 
 	/*
 	 * Write one or more blocks out.  The common case is writing a full
@@ -349,8 +358,13 @@ dd_out(force)
 	for (n = force ? out.dbcnt : out.dbsz;; n = out.dbsz) {
 		for (cnt = n;; cnt -= nw) {
 			nw = write(out.fd, outp, cnt);
-			if (nw < 0)
-				err("%s: %s", out.name, strerror(errno));
+			if (nw <= 0) {
+				if (nw == 0)
+					errx(1, "%s: end of device", out.name);
+				if (errno != EINTR)
+					err(1, "%s", out.name);
+				nw = 0;
+			}
 			outp += nw;
 			st.bytes += nw;
 			if (nw == n) {
@@ -365,11 +379,11 @@ dd_out(force)
 				break;
 			if (out.flags & ISCHR && !warned) {
 				warned = 1;
-				warn("%s: short write on character device",
+				warnx("%s: short write on character device",
 				    out.name);
 			}
 			if (out.flags & ISTAPE)
-				err("%s: short write on tape device", out.name);
+				errx(1, "%s: short write on tape device", out.name);
 		}
 		if ((out.dbcnt -= n) < out.dbsz)
 			break;

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1980, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1980, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)kill.1	6.8 (Berkeley) 7/27/91
-.\"	$Id: kill.1,v 1.5 1993/08/01 07:48:36 mycroft Exp $
+.\"	from: @(#)kill.1	8.1 (Berkeley) 5/31/93
+.\"	$Id: kill.1,v 1.6 1994/09/22 09:25:26 mycroft Exp $
 .\"
-.Dd July 27, 1991
+.Dd May 31, 1993
 .Dt KILL 1
 .Os
 .Sh NAME
@@ -43,24 +43,22 @@
 .Nd terminate or signal a process
 .Sh SYNOPSIS
 .Nm kill
-.Op Fl s Ar signal_name 
+.Op Fl s Ar signal_name
 .Ar pid
 \&...
 .Nm kill
 .Fl l
 .Op Ar exit_status
 .Nm kill
-.Op Fl signal_name
+.Fl signal_name
 .Ar pid
 \&...
 .Nm kill
-.Op Fl signal_number
+.Fl signal_number
 .Ar pid
 \&...
 .Sh DESCRIPTION
-The kill utility sends the
-.Dv TERM
-signal to the processes specified
+The kill utility sends a signal to the processes specified
 by the pid operand(s).
 .Pp
 Only the super-user may send signals to other users' processes.
@@ -68,14 +66,14 @@ Only the super-user may send signals to other users' processes.
 The options are as follows:
 .Pp
 .Bl -tag -width Ds
-.It Fl l Op Ar exit_status
-If no operand is given, list the signal names; otherwise, write 
-the signal name corresponding to
-.Ar exit_status .
 .It Fl s Ar signal_name
 A symbolic signal name specifying the signal to be sent instead of the
 default
 .Dv TERM .
+.It Fl l Op Ar exit_status
+If no operand is given, list the signal names; otherwise, write
+the signal name corresponding to
+.Ar exit_status .
 .It Fl signal_name
 A symbolic signal name specifying the signal to be sent instead of the
 default
@@ -86,18 +84,30 @@ of the default
 .Dv TERM .
 .El
 .Pp
-Some of the more commonly used signals:
-.Bd -ragged -offset indent -compact
-.Bl -column XXX TERM
-.It 1	HUP	(hang up)
-.It 2	INT	(interupt)
-.It 3	QUIT	(quit)
-.It 6	ABRT	(abort)
-.It 9	KILL	(non-catchable, non-ignorable kill)
-.It 14	ALRM	(alarm clock)
-.It 15	TERM	(software termination signal)
+The following pids have special meanings:
+.Bl -tag -width Ds -compact
+.It -1
+If superuser, broadcast the signal to all processes; otherwise broadcast
+to all processes belonging to the user.
 .El
-.Ed
+.Pp
+Some of the more commonly used signals:
+.Bl -tag -width Ds -compact
+.It 1
+HUP (hang up)
+.It 2
+INT (interrupt)
+.It 3
+QUIT (quit)
+.It 6
+ABRT (abort)
+.It 9
+KILL (non-catchable, non-ignorable kill)
+.It 14
+ALRM (alarm clock)
+.It 15
+TERM (software termination signal)
+.El
 .Pp
 .Nm Kill
 is a built-in to
@@ -115,9 +125,9 @@ for details.
 .Xr kill 2 ,
 .Xr sigvec 2
 .Sh STANDARDS
-The 
+The
 .Nm kill
-function is expected to be 
+function is expected to be
 .St -p1003.2
 compatible.
 .Sh HISTORY

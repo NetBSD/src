@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,64 +32,64 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)hostname.c	5.4 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: hostname.c,v 1.5 1993/09/10 01:24:53 jtc Exp $";
+/*static char sccsid[] = "from: @(#)hostname.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: hostname.c,v 1.6 1994/09/22 09:25:22 mycroft Exp $";
 #endif /* not lint */
 
+#include <sys/param.h>
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
 
-static void usage __P((void));
+void usage __P((void));
 
+int
 main(argc,argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int ch, sflag;
-	char hostname[MAXHOSTNAMELEN], *p;
+	char *p, hostname[MAXHOSTNAMELEN];
 
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "s")) != -1)
-		switch((char)ch) {
+		switch (ch) {
 		case 's':
 			sflag = 1;
 			break;
 		case '?':
 		default:
 			usage();
-			/* NOTREACHED */
 		}
+	argc -= optind;
 	argv += optind;
 
 	if (*argv) {
-		if (sethostname(*argv, strlen(*argv))) {
-			perror("sethostname");
-			exit(1);
-		}
+		if (sethostname(*argv, strlen(*argv)))
+			err(1, "sethostname");
 	} else {
-		if (gethostname(hostname, sizeof(hostname))) {
-			perror("gethostname");
-			exit(1);
-		}
-		if (sflag && (p = index(hostname, '.')))
+		if (gethostname(hostname, sizeof(hostname)))
+			err(1, "gethostname");
+		if (sflag && (p = strchr(hostname, '.')))
 			*p = '\0';
-		puts(hostname);
+		(void)printf("%s\n", hostname);
 	}
 	exit(0);
 }
 
-static void 
-usage ()
+void
+usage()
 {
+
 	(void)fprintf(stderr, "usage: hostname [-s] [hostname]\n");
 	exit(1);
 }

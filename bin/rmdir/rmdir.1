@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)rmdir.1	6.5 (Berkeley) 6/27/91
-.\"	$Id: rmdir.1,v 1.7 1993/09/10 18:57:43 jtc Exp $
+.\"	from: @(#)rmdir.1	8.1 (Berkeley) 5/31/93
+.\"	$Id: rmdir.1,v 1.8 1994/09/22 09:25:58 mycroft Exp $
 .\"
-.Dd June 27, 1991
+.Dd May 31, 1993
 .Dt RMDIR 1
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@ components will be removed, if they are empty,
 starting with the last most component.
 (See
 .Xr rm 1
-for fully non-discriminant recursive removal).
+for fully non-discriminant recursive removal.)
 .El
 .Pp
 The
@@ -88,5 +88,6 @@ An error occurred.
 .Sh STANDARDS
 The
 .Nm rmdir
-utility conforms to
-.St -p1003.2-92 . 
+command is expected to be
+.St -p1003.2
+compatible.
