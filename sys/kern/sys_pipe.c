@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.21 2001/12/18 08:49:40 chs Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.22 2002/02/28 04:43:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.21 2001/12/18 08:49:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.22 2002/02/28 04:43:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -943,7 +943,7 @@ pipe_loan_alloc(wpipe, npages)
 
 	len = (vsize_t)npages << PAGE_SHIFT;
 	wpipe->pipe_map.kva = uvm_km_valloc_wait(kernel_map, len);
-	if (wpipe->pipe_map.kva == NULL)
+	if (wpipe->pipe_map.kva == 0)
 		return (ENOMEM);
 
 	amountpipekva += len;
@@ -964,7 +964,7 @@ pipe_loan_free(wpipe)
 
 	len = (vsize_t)wpipe->pipe_map.npages << PAGE_SHIFT;
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len);
-	wpipe->pipe_map.kva = NULL;
+	wpipe->pipe_map.kva = 0;
 	amountpipekva -= len;
 	free(wpipe->pipe_map.pgs, M_PIPE);
 	wpipe->pipe_map.pgs = NULL;
@@ -1052,7 +1052,7 @@ retry:
 		pipe_loan_free(wpipe);
 
 	/* Allocate new kva. */
-	if (wpipe->pipe_map.kva == NULL) {
+	if (wpipe->pipe_map.kva == 0) {
 		error = pipe_loan_alloc(wpipe, npages);
 		if (error) {
 			goto error;
@@ -1620,7 +1620,7 @@ pipe_free_kmem(cpipe)
 		cpipe->pipe_buffer.buffer = NULL;
 	}
 #ifndef PIPE_NODIRECT
-	if (cpipe->pipe_map.kva != NULL) {
+	if (cpipe->pipe_map.kva != 0) {
 #ifdef __FreeBSD__
 		amountpipekva -= cpipe->pipe_buffer.size + PAGE_SIZE;
 		kmem_free(kernel_map,
@@ -1630,7 +1630,7 @@ pipe_free_kmem(cpipe)
 		pipe_loan_free(cpipe);
 #endif /* NetBSD */
 		cpipe->pipe_map.cnt = 0;
-		cpipe->pipe_map.kva = NULL;
+		cpipe->pipe_map.kva = 0;
 		cpipe->pipe_map.pos = 0;
 		cpipe->pipe_map.npages = 0;
 	}
