@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.1 1997/10/14 23:20:51 mark Exp $	*/
+/*	$NetBSD: simide.c,v 1.2 1997/10/17 06:49:20 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -65,7 +65,7 @@
 #include <arm32/podulebus/simidereg.h>
 
 #include <arm32/dev/wdreg.h>
-#include <arm32/dev/wdcvar.h>
+#include <arm32/dev/wdlink.h>
 
 /*
  * Simtec IDE podule device.
