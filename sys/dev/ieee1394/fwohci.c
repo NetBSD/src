@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.78 2003/06/29 22:30:16 fvdl Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.79 2003/10/22 09:02:49 mjl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78 2003/06/29 22:30:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.79 2003/10/22 09:02:49 mjl Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2598,7 +2598,7 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 }
 
 /*
- * Asynchronous Transmit Reponse -- in response of request packet.
+ * Asynchronous Transmit Response -- in response of request packet.
  */
 static void
 fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
