@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/04/01 23:11:30 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/09/05 04:31:56 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -6,21 +6,23 @@
 # But note: this is w.r.t. a subdirectory
 S=	${.CURDIR}/../../../..
 
-RELOC?= 240000
-DEFS?= -Dsun3x -DSTANDALONE
-INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
-COPTS?= -msoft-float ${DEFS} ${INCL} ${DBG}
-
-LIBSA?= ../libsa
-SRTOBJ?= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
-SRTLIB?= ${LIBSA}/libsa.a
-
+LIBSA!=cd ${.CURDIR}/../libsa; $(MAKE) echo_objdir
 MDEC_DIR?=/usr/mdec
 
 SRCS?=	${SA_PROG}.c
-OBJS?=	${SRCS:S/.c/.o/g}
+OBJS?=	${SRCS:.c=.o}
 
-CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin
+RELOC?= 240000
+DEFS?= -Dsun3x -D_STANDALONE
+INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
+
+CFLAGS= -O2 -msoft-float -fno-defer-pop
+CPPFLAGS= ${DEFS} ${DBG} ${INCL}
+
+SRTOBJ= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
+SRTLIB= ${LIBSA}/libsa.a
+
+CLEANFILES+= ${SA_PROG} ${SA_PROG}.bin machine m68k
 
 # Make a copy of the executable with its exec header removed,
 # and with its length padded to a multiple of 1k bytes.
@@ -30,21 +32,31 @@ ${SA_PROG}.bin : ${SA_PROG}
 	dd if=a.out ibs=32 skip=1 of=$@ obs=1k conv=osync
 	-rm -f a.out
 
-${SA_PROG} : ${OBJS} ${DPADD}
+${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 	${LD} -N -Ttext ${RELOC} -e start -o $@ \
 	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
 	@size $@
 
-.if !target(clean)
-clean:
+${OBJS} : machine m68k
+
+machine :
+	-rm -f $@
+	ln -s ${S}/arch/sun3x/include $@
+
+m68k :
+	-rm -f $@
+	ln -s ${S}/arch/m68k/include $@
+
+.if !target(cleanprog)
+cleanprog:
 	-rm -f a.out [Ee]rrs mklog core *.core
 	-rm -f ${CLEANFILES} *.o
 .endif
 
-.if !target(install)
-install: ${SA_PROG}.bin
+.if !target(proginstall)
+proginstall: ${SA_PROG}.bin
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  ${SA_PROG}.bin ${DESTDIR}${MDEC_DIR}/${SA_PROG}
 .endif
 
-.endif
+.endif	# defined(SA_PROG)
