@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.8 1995/09/01 21:55:47 thorpej Exp $";
+"@(#) $Id: rarpd.c,v 1.8.2.1 1996/02/23 23:41:22 hpeyerl Exp $";
 #endif
 
 
@@ -215,7 +215,7 @@ init_all()
 {
 	char inbuf[8192];
 	struct ifconf ifc;
-	struct ifreq *ifr;
+	struct ifreq ifreq, *ifr;
 	int fd;
 	int i, len;
 
@@ -232,9 +232,13 @@ init_all()
 		/* NOTREACHED */
 	}
 	ifr = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		if (!strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name)))
+			continue;
+		ifreq = *ifr; 
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
 			err(FATAL, "init_all: SIOCGIFFLAGS: %s",
 			    strerror(errno));
