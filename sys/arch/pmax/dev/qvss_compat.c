@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.21 1999/11/16 06:00:12 nisimura Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.22 1999/12/30 00:57:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -109,13 +109,9 @@ struct termios; struct dcregs;
 /*
  * Prototypes of local functions
  */
-extern void pmEventQueueInit __P((pmEventQueue *qe));
-void	genKbdEvent __P((int ch));
-void	genMouseEvent __P((MouseReport *newRepPtr));
-void	genMouseButtons __P((MouseReport *newRepPtr));
-void	genConfigMouse __P((void));
-void	genDeconfigMouse __P((void));
-void	mouseInput __P((int cc));
+static	void genKbdEvent __P((int ch));
+static	void genMouseEvent __P((MouseReport *newRepPtr));
+static	void genMouseButtons __P((MouseReport *newRepPtr));
 
 
 #if NSCC > 0
@@ -516,21 +512,21 @@ fbmmap_fb(fi, dev, data, p)
  * thus finessing the problem.
  */
 
-void
+static void
 genKbdEvent(ch)
 	int ch;
 {
 	fbKbdEvent(ch, firstfi);
 }
 
-void
+static void
 genMouseEvent(newRepPtr)
 	MouseReport *newRepPtr;
 {
 	fbMouseEvent(newRepPtr, firstfi);
 }
 
-void
+static void
 genMouseButtons(newRepPtr)
 	MouseReport *newRepPtr;
 {
