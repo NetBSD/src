@@ -4583,9 +4583,9 @@ fi
 
 for ac_func in asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
-	isblank issetugid lchmod lchown lutimes pread pwcache_userdb \
-	pwrite random setenv setgroupent setprogname setpassent \
-	snprintf strlcat strlcpy strsep \
+	isblank issetugid lchmod lchown lutimes mkstemp mkdtemp \
+	pread pwcache_userdb pwrite random setenv setgroupent \
+	setprogname setpassent snprintf strlcat strlcpy strsep \
 	vasprintf vasnprintf vsnprintf
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
