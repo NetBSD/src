@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.48 2005/01/11 02:02:41 chs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.49 2005/01/18 15:20:23 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.48 2005/01/11 02:02:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.49 2005/01/18 15:20:23 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -224,14 +224,14 @@ gc_read_irq()
 		if (events)
 			out32rb(INT_CLEAR_REG_H, events);
 
-			while (events) {
-				e = 31 - cntlzw(events);
-				rv |= 1 << virq[e + 32];
-				events &= ~(1 << e);
-			}
+		while (events) {
+			e = 31 - cntlzw(events);
+			rv |= 1 << virq[e + 32];
+			events &= ~(1 << e);
 		}
+	}
 
-	/* 1 << 0 is invalid. */
+	/* 1 << 0 is invalid because virq will always be at least 1. */
 	return rv & ~1;
 }
 
@@ -677,6 +677,13 @@ ext_intr()
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			ih = is->is_hand;
 			while (ih) {
+#ifdef DIAGNOSTIC
+				if (!ih->ih_fun) {
+					printf("NULL interrupt handler!\n");
+					panic("irq %02d, hwirq %02d, is %p\n",
+						irq, is->is_hwirq, is);
+				}
+#endif
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
 			}
@@ -820,6 +827,13 @@ again:
 		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = is->is_hand;
 		while (ih) {
+#ifdef DIAGNOSTIC
+			if (!ih->ih_fun) {
+				printf("NULL interrupt handler!\n");
+				panic("irq %02d, hwirq %02d, is %p\n",
+					irq, is->is_hwirq, is);
+			}
+#endif
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
