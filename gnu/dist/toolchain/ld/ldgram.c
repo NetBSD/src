@@ -1630,7 +1630,7 @@ case 69:
     break;}
 case 70:
 #line 311 "ldgram.y"
-{ ldfile_add_library_path (yyvsp[-1].name, false); ;
+{ if (!config.no_std_path) ldfile_add_library_path (yyvsp[-1].name, false); ;
     break;}
 case 71:
 #line 313 "ldgram.y"

@@ -123,6 +123,7 @@ int parsing_defsym = 0;
 #define OPTION_NO_UNDEFINED		(OPTION_MPC860C0 + 1)
 #define OPTION_INIT                     (OPTION_NO_UNDEFINED + 1)
 #define OPTION_FINI                     (OPTION_INIT + 1)
+#define OPTION_NO_STD_PATH		(OPTION_FINI + 1)
 
 /* The long options.  This structure is used for both the option
    parsing and the help text.  */
@@ -303,6 +304,8 @@ static const struct ld_option ld_options[] =
       '\0', NULL, N_("Create an output file even if errors occur"), TWO_DASHES },
   { {"noinhibit_exec", no_argument, NULL, OPTION_NOINHIBIT_EXEC},
       '\0', NULL, NULL, NO_HELP },
+  { {"nostdlib", no_argument, NULL, OPTION_NO_STD_PATH}, /* NetBSD.  */
+      '\0', NULL, "Do not use default library search path", ONE_DASH },
   { {"oformat", required_argument, NULL, OPTION_OFORMAT},
       '\0', N_("TARGET"), N_("Specify target of output file"), TWO_DASHES },
   { {"qmagic", no_argument, NULL, OPTION_IGNORE},
@@ -318,7 +321,7 @@ static const struct ld_option ld_options[] =
       '\0', N_("PATH"), N_("Set link time shared library search path"), ONE_DASH },
   { {"shared", no_argument, NULL, OPTION_SHARED},
       '\0', NULL, N_("Create a shared library"), ONE_DASH },
-  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD.  */
+  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD, NetBSD. */
       '\0', NULL, NULL, ONE_DASH },
   { {"sort-common", no_argument, NULL, OPTION_SORT_COMMON},
       '\0', NULL, N_("Sort common symbols by size"), TWO_DASHES },
@@ -364,6 +367,8 @@ static const struct ld_option ld_options[] =
       TWO_DASHES },
   { {"whole-archive", no_argument, NULL, OPTION_WHOLE_ARCHIVE},
       '\0', NULL, N_("Include all objects from following archives"), TWO_DASHES },
+  { {"Bforcearchive", no_argument, NULL, OPTION_WHOLE_ARCHIVE}, /* NetBSD. */
+      '\0', NULL, NULL, TWO_DASHES },
   { {"wrap", required_argument, NULL, OPTION_WRAP},
       '\0', N_("SYMBOL"), N_("Use wrapper functions for SYMBOL"), TWO_DASHES },
   { {"mpc860c0", optional_argument, NULL, OPTION_MPC860C0},
@@ -687,6 +692,9 @@ parse_args (argc, argv)
 	  break;
 	case OPTION_NO_KEEP_MEMORY:
 	  link_info.keep_memory = false;
+	  break;
+	case OPTION_NO_STD_PATH:
+	  config.no_std_path = true;
 	  break;
 	case OPTION_NO_UNDEFINED:
 	  link_info.no_undefined = true;

@@ -178,6 +178,9 @@ typedef struct
      parameter.  */
   boolean has_shared;
 
+  /* If true, do not use SEARCH_DIR directives from the linker script.  */
+  boolean no_std_path;
+
   /* If true, build constructors.  */
   boolean build_constructors;
 

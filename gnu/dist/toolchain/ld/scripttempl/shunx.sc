@@ -16,7 +16,8 @@ ${LIB_SEARCH_DIRS}
 
 SECTIONS
 {
-  .text :
+  . = ${TEXT_START_ADDR} + SIZEOF_HEADERS;
+  .text ALIGN(0x10):
   {
     *(.text)
     *(.strings)
@@ -50,7 +51,3 @@ SECTIONS
   }
 }
 EOF
-
-
-
-
