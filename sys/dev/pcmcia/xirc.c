@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.5 2004/08/09 18:11:01 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.6 2004/08/09 18:30:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.5 2004/08/09 18:11:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.6 2004/08/09 18:30:51 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -553,8 +553,8 @@ xirc_disable(sc, flag, media)
 	if ((sc->sc_flags & (XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED)) != 0)
 		return;
 
-	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	pcmcia_function_disable(sc->sc_pf);
+	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 }
 
 /****** Here begins the com attachment code. ******/

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.50 2004/08/09 18:11:01 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.51 2004/08/09 18:30:51 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.50 2004/08/09 18:11:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.51 2004/08/09 18:30:51 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,8 +314,8 @@ wi_pcmcia_disable(sc)
 {
 	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
 
-	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 }
 
 static void

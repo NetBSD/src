@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.42 2004/08/09 17:00:53 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.43 2004/08/09 18:30:51 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.42 2004/08/09 17:00:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.43 2004/08/09 18:30:51 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,6 @@ void com_pcmcia_cleanup __P((void *));
 
 int com_pcmcia_enable __P((struct com_softc *));
 void com_pcmcia_disable __P((struct com_softc *));
-int com_pcmcia_enable1 __P((struct com_softc *));
-void com_pcmcia_disable1 __P((struct com_softc *));
 
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */
@@ -340,27 +338,13 @@ com_pcmcia_enable(sc)
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
-		return 1;
+		return (1);
 	}
 
-	if ((error = com_pcmcia_enable1(sc)) != 0) {
+	if ((error = pcmcia_function_enable(pf)) != 0) {
 		pcmcia_intr_disestablish(pf, psc->sc_ih);
-		return error;
+		return (error);
 	}
-
-	return 0;
-}
-
-int
-com_pcmcia_enable1(sc)
-	struct com_softc *sc;
-{
-	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
-	struct pcmcia_function *pf = psc->sc_pf;
-	int ret;
-
-	if ((ret = pcmcia_function_enable(pf)) != 0)
-		return ret;
 
 	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
 	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556) ||
@@ -368,14 +352,14 @@ com_pcmcia_enable1(sc)
 		int reg;
 
 		/* turn off the ethernet-disable bit */
-
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		if (reg & 0x08) {
 			reg &= ~0x08;
 			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 		}
 	}
-	return ret;
+
+	return (0);
 }
 
 void
@@ -384,15 +368,6 @@ com_pcmcia_disable(sc)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
 
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	com_pcmcia_disable1(sc);
-}
-
-void
-com_pcmcia_disable1(sc)
-	struct com_softc *sc;
-{
-	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) sc;
-
 	pcmcia_function_disable(psc->sc_pf);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
