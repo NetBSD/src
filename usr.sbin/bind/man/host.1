@@ -50,9 +50,9 @@
 .\" SOFTWARE.
 .\" -
 .\" --Copyright--
-.\" $Id: host.1,v 1.3 1999/03/30 20:38:33 ross Exp $
+.\" $Id: host.1,v 1.4 1999/09/23 19:38:10 tron Exp $
 .Dd December 15, 1994
-.Dt HOST @CMD_EXT_U@
+.Dt HOST 1
 .Os BSD 4
 .Sh NAME
 .Nm host 
@@ -96,7 +96,7 @@ If this fails, the name is tried unchanged (in this case, "topaz").
 This same convention is used for mail and other network utilities.
 The actual suffix to tack on the end is obtained
 by looking at the results of a 
-.Xr hostname @CMD_EXT@
+.Xr hostname 1
 call, and using everything
 starting at the first dot.  (See below for a description of
 .Sx CUSTOMIZING HOST NAME LOOKUP . )
@@ -167,7 +167,7 @@ it will time out after approximate one minute.
 Use "verbose" format for printout.  This
 is the official domain master file format, which is documented 
 in the man page for 
-.Xr @INDOT@named @SYS_OPS_EXT@ .
+.Xr named 8 .
 Without this option, output still follows
 this format in general terms, but some attempt is made to make it
 more intelligible to normal users.  Without 
@@ -187,7 +187,7 @@ Allows you to specify a particular
 .Ar querytype 
 of information
 to be looked up.  The arguments are defined in the man page for
-.Xr @INDOT@named @SYS_OPS_EXT@ .
+.Xr named 8 .
 Currently-supported types include: 
 .Dq Cm a , 
 .Dq Cm ns , 
@@ -283,15 +283,15 @@ pairs.
 .Bl -tag -width "/etc/resolv.conf  " -compress
 .It Pa /etc/resolv.conf 
 See
-.Xr resolver @FORMAT_EXT@ .
+.Xr resolver 3 .
 .It Ev HOSTALIASES
 Name of file containing
 .Pq Ar host alias , full hostname
 pairs.
 .El
 .Sh SEE ALSO
-.Xr @INDOT@named  @SYS_OPS_EXT@ , 
-.Xr resolver @FORMAT_EXT@ .
+.Xr named  8 , 
+.Xr resolver 3 .
 .Sh BUGS
 Unexpected effects can happen when you type a name that is not
 part of the local domain.  Please always keep in mind the
