@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.16 1998/08/15 01:20:05 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -107,6 +107,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
       0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_STR_LINKSYS_TRUST_COMBO_ECARD,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_TRUST_COMBO_ECARD,
+      PCMCIA_CIS_LINKSYS_TRUST_COMBO_ECARD,
+      0, 0x0120, { 0x20, 0x04, 0x49 } },
 
     { PCMCIA_STR_PLANET_SMARTCOM2000,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
