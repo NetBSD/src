@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.689 2004/10/04 01:07:25 thorpej Exp $
+#	$NetBSD: files,v 1.690 2004/10/04 01:07:57 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -61,7 +61,6 @@ defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
 				EXEC_ELF_NOTELESS
 
 defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
-				DKWEDGE_METHOD_BSDLABEL
 				DKWEDGE_METHOD_GPT
 
 # compatibility options
