@@ -1,6 +1,6 @@
-.\"     $NetBSD: pci.9,v 1.9 2003/02/04 22:38:19 perry Exp $
+.\"     $NetBSD: pci.9,v 1.10 2003/03/25 22:04:50 thorpej Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 19, 2001
+.Dd March 25, 2003
 .Dt PCI 9
 .Os
 .Sh NAME
@@ -54,6 +54,8 @@
 .Nm pci_intr_disestablish ,
 .Nm pci_get_powerstate ,
 .Nm pci_set_powerstate ,
+.Nm pci_vpd_read ,
+.Nm pci_vpd_write ,
 .Nm pci_make_tag ,
 .Nm pci_decompose_tag ,
 .Nm pci_findvendor ,
@@ -106,6 +108,12 @@
 "int newstate"
 .Ft int
 .Fn pci_get_powerstate "pci_chipset_tag_t pc" "pcitag_t tag"
+.Ft int
+.Fn pci_vpd_read "pci_chipset_tag_t pc" "pcitag_t tag" "int offset" \
+"int count" "pcireg_t *data"
+.Ft int
+.Fn pci_vpd_write "pci_chipset_tag_t pc" "pcitag_t tag" "int offset" \
+"int count" "pcireg_t *data"
 .Ft pcitag_t
 .Fn pci_make_tag "pci_chipset_tag_t pc" "int bus" "int device" \
 "int function"
@@ -381,6 +389,24 @@ are:
 .El
 .It Fn pci_get_powerstate "pc" "tag"
 Get current power state of the device.
+.It Fn pci_vpd_read "pc" "tag" "offset" "count" "data"
+Read
+.Fa count
+32-bit words of Vital Product Data for the device starting at offset
+.Fa offset
+into the buffer pointed to by
+.Fa data .
+Returns 0 on sucess or non-zero if the device has no Vital Product Data
+capability or if reading of the Vital Product Data fails.
+.It Fn pci_vpd_write "pc" "tag" "offset" "count" "data"
+Write
+.Fa count
+32-bit words of Vital Product Data for the device starting at offset
+.Fa offset
+from the buffer pointed to by
+.Fa data .
+Returns 0 on success or non-zero if the device has no Vital Product Data
+capability of if writing of the Vital Product Data fails.
 .It Fn pci_make_tag "pc" "bus" "device" "function"
 Create a new PCI tag for the PCI device specified by the tuple
 .Ao
