@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.2 2003/09/14 01:14:54 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.3 2003/10/13 04:28:35 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -51,6 +51,9 @@ struct ieee80211_plcp_hdr {
 	u_int16_t	i_length;
 	u_int16_t	i_crc;
 } __attribute__((__packed__));
+
+#define IEEE80211_PLCP_SFD      0xF3A0 
+#define IEEE80211_PLCP_SERVICE  0x00
 
 /*
  * generic definitions for IEEE 802.11 frames
@@ -315,6 +318,15 @@ enum {
 #define	IEEE80211_MTU				1500
 #define	IEEE80211_MAX_LEN			(2300 + IEEE80211_CRC_LEN + \
     (IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN))
+
+#define	IEEE80211_MAX_AID			2007
+
+#define	IEEE80211_AID_SET(b, w) \
+	((w)[((b) & ~0xc000) / 32] |= (1 << (((b) & ~0xc000) % 32)))
+#define	IEEE80211_AID_CLR(b, w) \
+	((w)[((b) & ~0xc000) / 32] &= ~(1 << (((b) & ~0xc000) % 32)))
+#define	IEEE80211_AID_ISSET(b, w) \
+	((w)[((b) & ~0xc000) / 32] & (1 << (((b) & ~0xc000) % 32)))
 
 /* 
  * RTS frame length parameters.  The default is specified in
