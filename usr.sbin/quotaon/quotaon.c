@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.8 1996/09/28 19:06:07 christos Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.9 1997/06/21 09:36:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: quotaon.c,v 1.8 1996/09/28 19:06:07 christos Exp $";
+static char rcsid[] = "$NetBSD: quotaon.c,v 1.9 1997/06/21 09:36:48 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,11 +178,13 @@ quotaonoff(fs, offmode, type, qfpathname)
 			return (1);
 		}
 		if (vflag)
-			printf("%s: quotas turned off\n", fs->fs_file);
+			printf("%s: %s quotas turned off\n",
+			    fs->fs_file, qfextension[type]);
 		return (0);
 	}
 	if (quotactl(fs->fs_file, QCMD(Q_QUOTAON, type), 0, qfpathname) < 0) {
-		warn("Using %s on %s", qfpathname, fs->fs_file);
+		warn("%s quotas using %s on %s",
+		    qfextension[type], qfpathname, fs->fs_file);
 		return (1);
 	}
 	if (vflag)
