@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.76 2003/01/18 10:52:17 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.77 2003/03/01 05:41:56 atatat Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.76 2003/01/18 10:52:17 thorpej Exp $");
+__RCSID("$NetBSD: print.c,v 1.77 2003/03/01 05:41:56 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ __RCSID("$NetBSD: print.c,v 1.76 2003/01/18 10:52:17 thorpej Exp $");
 #include <sys/sysctl.h>
 
 #include <err.h>
+#include <grp.h>
 #include <kvm.h>
 #include <math.h>
 #include <nlist.h>
@@ -346,6 +347,91 @@ command(arg, ve, mode)
 }
 
 void
+groups(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *ki;
+	VAR *v;
+	int left, i;
+	char buf[16], *p;
+
+	if (mode == WIDTHMODE)
+		return;
+
+	ki = arg;
+	v = ve->var;
+	if (ve->next != NULL || termwidth != UNLIMITED) {
+		if (ve->next == NULL) {
+			left = termwidth - (totwidth - v->width);
+			if (left < 1) /* already wrapped, just use std width */
+				left = v->width;
+		} else
+			left = v->width;
+	} else
+		left = -1;
+
+	if (ki->p_ngroups == 0) {
+		fmt_putc('-', &left);
+		return;
+	}
+
+	for (i = 0; i < ki->p_ngroups; i++) {
+		(void)snprintf(buf, sizeof(buf), "%d", ki->p_groups[i]);
+		if (i)
+			fmt_putc(' ', &left);
+		for (p = &buf[0]; *p; p++)
+			fmt_putc(*p, &left);
+	}
+
+	if (ve->next && left > 0)
+		printf("%*s", left, "");
+}
+
+void
+groupnames(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *ki;
+	VAR *v;
+	int left, i;
+	const char *p;
+
+	if (mode == WIDTHMODE)
+		return;
+
+	ki = arg;
+	v = ve->var;
+	if (ve->next != NULL || termwidth != UNLIMITED) {
+		if (ve->next == NULL) {
+			left = termwidth - (totwidth - v->width);
+			if (left < 1) /* already wrapped, just use std width */
+				left = v->width;
+		} else
+			left = v->width;
+	} else
+		left = -1;
+
+	if (ki->p_ngroups == 0) {
+		fmt_putc('-', &left);
+		return;
+	}
+
+	for (i = 0; i < ki->p_ngroups; i++) {
+		if (i)
+			fmt_putc(' ', &left);
+		for (p = group_from_gid(ki->p_groups[i], 0); *p; p++)
+			fmt_putc(*p, &left);
+	}
+
+	if (ve->next && left > 0)
+		printf("%*s", left, "");
+}
+
+void
 ucomm(arg, ve, mode)
 	void *arg;
 	VARENT *ve;
@@ -572,6 +658,62 @@ runame(arg, ve, mode)
 	k = arg;
 	v = ve->var;
 	strprintorsetwidth(v, user_from_uid(k->p_ruid, 0), mode);
+}
+
+void
+svuname(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+
+	k = arg;
+	v = ve->var;
+	strprintorsetwidth(v, user_from_uid(k->p_svuid, 0), mode);
+}
+
+void
+gname(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+
+	k = arg;
+	v = ve->var;
+	strprintorsetwidth(v, group_from_gid(k->p_gid, 0), mode);
+}
+
+void
+rgname(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+
+	k = arg;
+	v = ve->var;
+	strprintorsetwidth(v, group_from_gid(k->p_rgid, 0), mode);
+}
+
+void
+svgname(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+
+	k = arg;
+	v = ve->var;
+	strprintorsetwidth(v, group_from_gid(k->p_svgid, 0), mode);
 }
 
 void
