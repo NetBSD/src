@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 2002/08/12 12:04:31 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.126 2002/09/03 05:08:21 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2006,6 +2006,8 @@ pmap_kremove(va, size)
 {
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
+	vaddr_t flushva = va;
+	vsize_t flushsize = size;
 	int i, s, flush = 0;
 
 	ASSERT(va < INTSTACK || va > EINTSTACK);
@@ -2084,6 +2086,7 @@ pmap_kremove(va, size)
 #ifdef DEBUG
 		remove_stats.flushes ++;
 #endif
+		cache_flush_virt(flushva, flushsize);
 	}
 	simple_unlock(&pm->pm_lock);
 	splx(s);
@@ -2906,6 +2909,7 @@ pmap_clear_reference(pg)
 		}
 	}
 	splx(s);
+	dcache_flush_page(pa);
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced(pg)) {
@@ -3271,6 +3275,7 @@ pmap_page_protect(pg, prot)
 			}
 		}
 		splx(s);
+		dcache_flush_page(pa);
 	}
 	/* We should really only flush the pages we demapped. */
 	pv_check();
