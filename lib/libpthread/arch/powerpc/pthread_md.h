@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.5 2002/04/24 05:20:47 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.6 2002/10/22 16:20:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -50,6 +50,14 @@ pthread__sp(void)
 
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[1])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[34])
+
+/*
+ * Set initial, sane values for registers whose values aren't just
+ * "don't care".
+ * 0xd032 is PSL_USERSET from arch/powerpc/include/psl.h
+ */
+#define _INITCONTEXT_U_MD(ucp)						\
+	(ucp)->uc_mcontext.__gregs[35] = 0xd032;
 
 /*
  * Usable stack space below the ucontext_t.
