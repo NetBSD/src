@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.3 1995/08/21 17:05:10 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.4 1995/09/12 07:13:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -48,7 +48,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: bpf.c,v 1.3 1995/08/21 17:05:10 thorpej Exp $";
+static char rcsid[] = "$NetBSD: bpf.c,v 1.4 1995/09/12 07:13:06 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -350,7 +350,7 @@ BpfRead(rconn, doread)
 			syslog(LOG_ERR, "bpf: large packet dropped (%d bytes)",
 			       caplen);
 		else {
-			rconn->rmplen = caplen;
+			rconn->rmplen = htons(caplen);
 			bcopy((char *)&bhp->bh_tstamp, (char *)&rconn->tstamp,
 			      sizeof(struct timeval));
 			bcopy((char *)bp + hdrlen, (char *)&rconn->rmp, caplen);
@@ -379,7 +379,7 @@ int
 BpfWrite(rconn)
 	RMPCONN *rconn;
 {
-	if (write(BpfFd, (char *)&rconn->rmp, rconn->rmplen) < 0) {
+	if (write(BpfFd, (char *)&rconn->rmp, ntohs(rconn->rmplen)) < 0) {
 		syslog(LOG_ERR, "write: %s: %m", EnetStr(rconn));
 		return(0);
 	}

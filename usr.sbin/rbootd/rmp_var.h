@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp_var.h,v 1.3 1995/08/21 17:05:20 thorpej Exp $	*/
+/*	$NetBSD: rmp_var.h,v 1.4 1995/09/12 07:13:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -119,9 +119,9 @@ typedef char	restofpkt;
 
 /*
  * Due to the RMP packet layout, we'll run into alignment problems
- * on machines that cant access words on half-word boundaries.  If
- * you know that your machine does not suffer from this problem,
- * add it to the hp300 #define below.
+ * on machines that can't access (or don't, by default, align) words
+ * on half-word boundaries.  If you know that your machine does not suffer
+ * from this problem, add it to the vax/tahoe/m68k #define below.
  *
  * The following macros are used to deal with this problem:
  *	WORDZE(w)	Return True if u_word `w' is zero, False otherwise.
@@ -132,7 +132,7 @@ typedef char	restofpkt;
  * 
  * N.B. Endianness is handled by use of ntohl/htonl
  */
-#if defined(vax) || defined(tahoe) || defined(m68k) || defined(i386)
+#if defined(__vax__) || defined(__tahoe__) || defined(__m68k__)
 
 typedef	u_int		u_word;
 
