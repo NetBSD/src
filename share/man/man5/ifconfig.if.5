@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.2 2001/01/12 02:55:28 itojun Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.3 2001/09/08 01:29:06 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -46,7 +46,7 @@ One file should exist for each interface that is to be configured, such as
 The file will get evaluated only if the interface exists on the system.
 Multiple lines can be placed in a file, and will be evaluated sequentially.
 .Pp
-Normally, a line will be evaluated as command line arguments to 
+Normally, a line will be evaluated as command line arguments to
 .Xr ifconfig 8 .
 .Dq Li ifconfig if
 will be prepended on evaluation.
@@ -61,7 +61,7 @@ the rest of line will get evaluated as shell script fragment.
 Shell variables declared in
 .Pa /etc/rc.d/network
 are accessible.
-The most useful variable is 
+The most useful variable is
 .Li $int ,
 as it will be bound to the interface being configured with the file.
 .Pp

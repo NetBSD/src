@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.17 2000/11/17 10:06:27 lukem Exp $
+.\"	$NetBSD: passwd.5,v 1.18 2001/09/08 01:29:07 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ maps
 .Sq passwd.byname ,
 .Sq passwd.byuid ,
 .Sq master.passwd.byname ,
-and 
+and
 .Sq master.passwd.byuid ,
 as controlled by
 .Xr nsswitch.conf 5 .
@@ -96,8 +96,8 @@ User's login shell.
 .El
 .Pp
 The
-.Nm 
-file is generated from the 
+.Nm
+file is generated from the
 .Nm master.passwd
 file by
 .Xr pwd_mkdb 8 ,
@@ -187,7 +187,7 @@ If either of the
 or
 .Em expire
 fields are set, the system will remind the user of the impending
-change or expiry if they login within a configurable period 
+change or expiry if they login within a configurable period
 (defaulting to 14 days) before the event.
 .Pp
 The
@@ -256,7 +256,7 @@ lookups occur from the
 .Sq passwd.byname ,
 .Sq passwd.byuid ,
 .Sq master.passwd.byname ,
-and 
+and
 .Sq master.passwd.byuid
 .Tn NIS
 maps.
@@ -321,7 +321,7 @@ fields, the specified numbers will override the information retrieved
 from the Hesiod domain or the
 .Tn NIS
 maps. As well, if the
-.Em gecos,
+.Em gecos ,
 .Em home_dir
 or
 .Em shell
