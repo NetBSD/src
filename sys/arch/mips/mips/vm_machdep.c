@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62 2000/05/30 01:42:43 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.63 2000/06/09 05:51:49 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62 2000/05/30 01:42:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2000/06/09 05:51:49 soda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ kvtophys(kva)
 		if (!mips_pg_v(pte->pt_entry)) {
 			printf("kvtophys: pte not valid for %lx\n", kva);
 		}
-		phys = pfn_to_vad(pte->pt_entry) | (kva & PGOFSET);
+		phys = mips_tlbpfn_to_paddr(pte->pt_entry) | (kva & PGOFSET);
 		return phys;
 	}
 	if (kva >= MIPS_KSEG1_START)
