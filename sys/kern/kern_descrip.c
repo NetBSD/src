@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.119 2003/11/09 07:57:15 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.120 2003/11/26 12:42:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.119 2003/11/09 07:57:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.120 2003/11/26 12:42:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1135,6 +1135,8 @@ fdcopy(struct proc *p)
 	newfdp->fd_nfiles = i;
 	memcpy(newfdp->fd_ofiles, fdp->fd_ofiles, i * sizeof(struct file **));
 	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
+	if (i < NDENTRIES * NDENTRIES)
+		i = NDENTRIES * NDENTRIES; /* size of inlined bitmaps */
 	memcpy(newfdp->fd_himap, fdp->fd_himap, NDHISLOTS(i)*sizeof(uint32_t));
 	memcpy(newfdp->fd_lomap, fdp->fd_lomap, NDLOSLOTS(i)*sizeof(uint32_t));
 	/*
