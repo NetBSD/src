@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.16 2000/04/15 00:16:56 hubertf Exp $
+.\"	$NetBSD: compat_linux.8,v 1.17 2001/08/23 19:58:03 manu Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -37,11 +37,11 @@
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
 .Nx
-supports running Linux binaries. This only applies to i386 systems
-for now. Both the a.out and ELF binary formats are supported. Most programs
-should work, including the ones that use the Linux SVGAlib. Programs that
-will not work include the Linux /proc filesystem (which is different from
-the optional
+supports running Linux binaries. This applies to i386, PowerPC, alpha
+and m68k systems for now. Both the a.out and ELF binary formats are supported. 
+Most programs should work, including the ones that use the Linux SVGAlib (only 
+on i386). Programs that will not work include the Linux /proc filesystem 
+(which is different from the optional
 .Nx
 /proc filesystem), and i386-specific calls, such as
 enabling virtual 8086 mode. Currently, sound is only partially
@@ -268,7 +268,9 @@ recent version.
 .It 3.
 For i386, you can simply install the SuSE shared libs using the
 .Pa pkgsrc/emulators/suse_linux
-package(s).
+package(s). On PowerPC ports, the
+.Pa pkgsrc/emulators/linuxppc_lib
+will install the needed libraries.
 .El
 .Ss Setting up other files
 Newer version of Linux use /etc/nsswitch.conf for network information,
@@ -390,6 +392,10 @@ work, but may confuse others, so you may have to remove it again at
 some point.
 .Sh BUGS
 The information about Linux distributions may become outdated.
+.Pp
+On the PowerPC, Linux's ldd command is not emulated correctly. The NetBSD
+.Xr ldd 1
+command is able to retreive the information, hence this is not a real problem.
 .Pp
 Pathnames pointed to by symbolic links are not looked up in the
 shadow root when running a Linux executable. This is not consistent.
