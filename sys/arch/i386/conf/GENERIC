@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.544 2003/01/21 02:44:15 itojun Exp $
+# $NetBSD: GENERIC,v 1.545 2003/01/27 22:31:12 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.544 $"
+#ident 		"GENERIC-$Revision: 1.545 $"
 
 maxusers	32		# estimated number of users
 
@@ -609,6 +609,10 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0000 means "use whatever the drive claims to support".
 wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
+
+# ATA RAID configuration support, as found on some Promise controllers.
+pseudo-device	ataraid
+ld*	at ataraid? vendtype ? unit ?
 
 # ATAPI bus support
 atapibus* at atapi?
