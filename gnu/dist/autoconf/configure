@@ -1367,7 +1367,7 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 # Automake can't see inner AC_SUBSTS (`aclocal' is bypassed), so we tag the
 # AC_SUBSTS here too.
 
-ac_config_files="$ac_config_files Makefile m4/Makefile man/Makefile doc/Makefile config/Makefile tests/Makefile tests/atconfig"
+ac_config_files="$ac_config_files Makefile m4/Makefile man/Makefile config/Makefile tests/Makefile tests/atconfig"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
