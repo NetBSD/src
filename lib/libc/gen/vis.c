@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.24 2002/07/03 17:18:09 pooka Exp $	*/
+/*	$NetBSD: vis.c,v 1.25 2003/07/16 22:34:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.24 2002/07/03 17:18:09 pooka Exp $");
+__RCSID("$NetBSD: vis.c,v 1.25 2003/07/16 22:34:34 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -115,49 +115,53 @@ while (/*CONSTCOND*/0)
  */
 #define SVIS(dst, c, flag, nextc, extra)				      \
 do {									      \
-	int isextra, isc;						      \
+	int isextra;							      \
 	isextra = strchr(extra, c) != NULL;				      \
 	if (!isextra && isascii(c) && (isgraph(c) || iswhite(c) ||	      \
 	    ((flag & VIS_SAFE) && issafe(c)))) {			      \
 		*dst++ = c;						      \
 		break;							      \
 	}								      \
-	isc = 0;							      \
 	if (flag & VIS_CSTYLE) {					      \
 		switch (c) {						      \
 		case '\n':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 'n';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 'n';			      \
+			continue;					      \
 		case '\r':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 'r';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 'r';			      \
+			continue;					      \
 		case '\b':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 'b';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 'b';			      \
+			continue;					      \
 		case BELL:						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 'a';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 'a';			      \
+			continue;					      \
 		case '\v':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 'v';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 'v';			      \
+			continue;					      \
 		case '\t':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 't';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 't';			      \
+			continue;					      \
 		case '\f':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 'f';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 'f';			      \
+			continue;					      \
 		case ' ':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = 's';		      \
-			break;						      \
+			*dst++ = '\\'; *dst++ = 's';			      \
+			continue;					      \
 		case '\0':						      \
-			isc = 1; *dst++ = '\\'; *dst++ = '0';		      \
+			*dst++ = '\\'; *dst++ = '0';			      \
 			if (isoctal(nextc)) {				      \
 				*dst++ = '0';				      \
 				*dst++ = '0';				      \
 			}						      \
+			continue;					      \
+		default:						      \
+			if (isgraph(c)) {				      \
+				*dst++ = '\\'; *dst++ = c;		      \
+				continue;				      \
+			}						      \
 		}							      \
 	}								      \
-	if (isc) break;							      \
 	if (isextra || ((c & 0177) == ' ') || (flag & VIS_OCTAL)) {	      \
 		*dst++ = '\\';						      \
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 6) & 03) + '0';    \
@@ -220,15 +224,16 @@ svis(dst, c, flag, nextc, extra)
  *	This is useful for encoding a block of data.
  */
 int
-strsvis(dst, src, flag, extra)
+strsvis(dst, csrc, flag, extra)
 	char *dst;
-	const char *src;
+	const char *csrc;
 	int flag;
 	const char *extra;
 {
-	char c;
+	int c;
 	char *start;
 	char *nextra;
+	const unsigned char *src = (const unsigned char *)csrc;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
@@ -247,16 +252,17 @@ strsvis(dst, src, flag, extra)
 
 
 int
-strsvisx(dst, src, len, flag, extra)
+strsvisx(dst, csrc, len, flag, extra)
 	char *dst;
-	const char *src;
+	const char *csrc;
 	size_t len;
 	int flag;
 	const char *extra;
 {
-	char c;
+	int c;
 	char *start;
 	char *nextra;
+	const unsigned char *src = (const unsigned char *)csrc;
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
