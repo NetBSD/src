@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1996/05/25 17:08:51 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 1996/05/25 21:54:22 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1205,6 +1205,7 @@ initcpu()
 #else
 	extern u_int8_t illinst;
 #endif
+	extern u_int8_t fpfault;
 #endif
 
 #ifdef DRACO
@@ -1235,6 +1236,7 @@ initcpu()
 #else
 		vectab[61] = &illinst;
 #endif
+		vectab[48] = &fpfault;
 	}
 #endif
 
