@@ -1,5 +1,5 @@
-/*	$NetBSD: cli.c,v 1.1.1.5 2001/04/10 07:13:53 itojun Exp $	*/
-/*	$OpenBSD: cli.c,v 1.11 2001/03/06 00:33:04 deraadt Exp $	*/
+/*	$NetBSD: cli.c,v 1.1.1.6 2001/05/15 15:02:27 itojun Exp $	*/
+/*	$OpenBSD: cli.c,v 1.13 2001/05/06 21:23:31 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cli.c,v 1.11 2001/03/06 00:33:04 deraadt Exp $");
+RCSID("$OpenBSD: cli.c,v 1.13 2001/05/06 21:23:31 markus Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -144,15 +144,19 @@ cli_read(char* buf, int size, int echo)
 
 	while (ch != '\n') {
 		n = read(cli_input, &ch, 1);
+		if (intr)
+			break;
 		if (n == -1 && (errno == EAGAIN || errno == EINTR))
 			continue;
 		if (n != 1)
 			break;
-		if (ch == '\n' || intr != 0)
+		if (ch == '\n')
 			break;
-		if (i < size)
+		if (i < size - 1)
 			buf[i++] = ch;
 	}
+	if (intr)
+		i = 0;
 	buf[i] = '\0';
 
 	if (!echo)
@@ -163,7 +167,7 @@ cli_read(char* buf, int size, int echo)
 }
 
 static int
-cli_write(char* buf, int size)
+cli_write(const char* buf, int size)
 {
 	int i, len, pos, ret = 0;
 	char *output, *p;
@@ -195,7 +199,7 @@ cli_write(char* buf, int size)
  * buffer is storing the response.
  */
 char*
-cli_read_passphrase(char* prompt, int from_stdin, int echo_enable)
+cli_read_passphrase(const char* prompt, int from_stdin, int echo_enable)
 {
 	char	buf[BUFSIZ];
 	char*	p;

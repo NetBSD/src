@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.1.1.6 2001/04/10 07:14:09 itojun Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.1.1.7 2001/05/15 15:02:34 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.33 2001/04/05 10:42:53 markus Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.36 2001/04/15 08:43:46 markus Exp $");
 
 #include <glob.h>
 
@@ -89,6 +89,7 @@ const struct CMD cmds[] = {
 	{ "dir",	I_LS },
 	{ "exit",	I_QUIT },
 	{ "get",	I_GET },
+	{ "mget",	I_GET },
 	{ "help",	I_HELP },
 	{ "lcd",	I_LCHDIR },
 	{ "lchdir",	I_LCHDIR },
@@ -100,6 +101,7 @@ const struct CMD cmds[] = {
 	{ "lumask",	I_LUMASK },
 	{ "mkdir",	I_MKDIR },
 	{ "put",	I_PUT },
+	{ "mput",	I_PUT },
 	{ "pwd",	I_PWD },
 	{ "quit",	I_QUIT },
 	{ "rename",	I_RENAME },
@@ -147,7 +149,7 @@ help(void)
 void
 local_do_shell(const char *args)
 {
-	int ret, status;
+	int status;
 	char *shell;
 	pid_t pid;
 
@@ -164,10 +166,10 @@ local_do_shell(const char *args)
 		/* XXX: child has pipe fds to ssh subproc open - issue? */
 		if (args) {
 			debug3("Executing %s -c \"%s\"", shell, args);
-			ret = execl(shell, shell, "-c", args, NULL);
+			execl(shell, shell, "-c", args, NULL);
 		} else {
 			debug3("Executing %s", shell);
-			ret = execl(shell, shell, NULL);
+			execl(shell, shell, NULL);
 		}
 		fprintf(stderr, "Couldn't execute \"%s\": %s\n", shell,
 		    strerror(errno));
@@ -857,9 +859,10 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 }
 
 void
-interactive_loop(int fd_in, int fd_out)
+interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 {
 	char *pwd;
+	char *dir = NULL;
 	char cmd[2048];
 
 	version = do_init(fd_in, fd_out);
@@ -870,6 +873,25 @@ interactive_loop(int fd_in, int fd_out)
 	if (pwd == NULL)
 		fatal("Need cwd");
 
+	if (file1 != NULL) {
+		dir = xstrdup(file1);
+		dir = make_absolute(dir, pwd);
+
+		if (remote_is_dir(fd_in, fd_out, dir) && file2 == NULL) {
+			printf("Changing to: %s\n", dir);
+			snprintf(cmd, sizeof cmd, "cd \"%s\"", dir);
+			parse_dispatch_command(fd_in, fd_out, cmd, &pwd);
+		} else {
+			if (file2 == NULL)
+				snprintf(cmd, sizeof cmd, "get %s", dir);
+			else
+				snprintf(cmd, sizeof cmd, "get %s %s", dir,
+				    file2);
+
+			parse_dispatch_command(fd_in, fd_out, cmd, &pwd);
+			return;
+		}
+	}
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(infile, NULL, _IOLBF, 0);
 

@@ -1,4 +1,5 @@
-#	$OpenBSD: sshd_config,v 1.35 2001/03/25 13:16:11 stevesk Exp $
+#	$NetBSD: sshd_config,v 1.1.1.4 2001/05/15 15:02:40 itojun Exp $
+#	$OpenBSD: sshd_config,v 1.38 2001/04/15 21:41:29 deraadt Exp $
 
 # This is the sshd server system-wide configuration file.  See sshd(8)
 # for more information.
@@ -35,6 +36,8 @@ RhostsAuthentication no
 #
 # For this to work you will also need host keys in /etc/ssh_known_hosts
 RhostsRSAAuthentication no
+# similar for protocol version 2
+HostbasedAuthentication no
 #
 RSAAuthentication yes
 

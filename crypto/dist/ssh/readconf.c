@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.7 2001/04/10 07:13:59 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.8 2001/05/15 15:02:31 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.71 2001/04/07 08:55:17 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.77 2001/04/30 11:18:51 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -111,7 +111,8 @@ typedef enum {
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol, oMacs,
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
-	oDynamicForward, oPreferredAuthentications
+	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
+	oHostKeyAlgorithms, oBindAddress
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -132,6 +133,8 @@ static struct {
 	{ "rsaauthentication", oRSAAuthentication },
 	{ "pubkeyauthentication", oPubkeyAuthentication },
 	{ "dsaauthentication", oPubkeyAuthentication },		    /* alias */
+	{ "rhostsrsaauthentication", oRhostsRSAAuthentication },
+	{ "hostbasedauthentication", oHostbasedAuthentication },
 	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
 	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
 	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
@@ -159,7 +162,6 @@ static struct {
 	{ "user", oUser },
 	{ "host", oHost },
 	{ "escapechar", oEscapeChar },
-	{ "rhostsrsaauthentication", oRhostsRSAAuthentication },
 	{ "globalknownhostsfile", oGlobalKnownHostsFile },
 	{ "userknownhostsfile", oUserKnownHostsFile },
 	{ "globalknownhostsfile2", oGlobalKnownHostsFile2 },
@@ -175,6 +177,8 @@ static struct {
 	{ "loglevel", oLogLevel },
 	{ "dynamicforward", oDynamicForward },
 	{ "preferredauthentications", oPreferredAuthentications },
+	{ "hostkeyalgorithms", oHostKeyAlgorithms },
+	{ "bindaddress", oBindAddress },
 	{ NULL, 0 }
 };
 
@@ -231,8 +235,8 @@ parse_token(const char *cp, const char *filename, int linenum)
 		if (strcasecmp(cp, keywords[i].name) == 0)
 			return keywords[i].opcode;
 
-	fprintf(stderr, "%s: line %d: Bad configuration option: %s\n",
-		filename, linenum, cp);
+	error("%s: line %d: Bad configuration option: %s",
+	    filename, linenum, cp);
 	return oBadOption;
 }
 
@@ -321,6 +325,10 @@ parse_flag:
 
 	case oRhostsRSAAuthentication:
 		intptr = &options->rhosts_rsa_authentication;
+		goto parse_flag;
+
+	case oHostbasedAuthentication:
+		intptr = &options->hostbased_authentication;
 		goto parse_flag;
 
 	case oChallengeResponseAuthentication:
@@ -451,6 +459,10 @@ parse_string:
 		charptr = &options->preferred_authentications;
 		goto parse_string;
 
+	case oBindAddress:
+		charptr = &options->bind_address;
+		goto parse_string;
+
 	case oProxyCommand:
 		charptr = &options->proxy_command;
 		string = xstrdup("");
@@ -521,6 +533,17 @@ parse_int:
 			options->macs = xstrdup(arg);
 		break;
 
+	case oHostKeyAlgorithms:
+		arg = strdelim(&s);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing argument.", filename, linenum);
+		if (!key_names_valid2(arg))
+			fatal("%.200s line %d: Bad protocol 2 host key algorithms '%s'.",
+			      filename, linenum, arg ? arg : "<NONE>");
+		if (*activep && options->hostkeyalgorithms == NULL)
+			options->hostkeyalgorithms = xstrdup(arg);
+		break;
+
 	case oProtocol:
 		intptr = &options->protocol;
 		arg = strdelim(&s);
@@ -549,10 +572,10 @@ parse_int:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		if (arg[0] < '0' || arg[0] > '9')
+		fwd_port = a2port(arg);
+		if (fwd_port == 0)
 			fatal("%.200s line %d: Badly formatted port number.",
 			      filename, linenum);
-		fwd_port = atoi(arg);
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing second argument.",
@@ -568,10 +591,10 @@ parse_int:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		if (arg[0] < '0' || arg[0] > '9')
+		fwd_port = a2port(arg);
+		if (fwd_port == 0)
 			fatal("%.200s line %d: Badly formatted port number.",
 			      filename, linenum);
-		fwd_port = atoi(arg);
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing second argument.",
@@ -588,12 +611,12 @@ parse_int:
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing port argument.",
 			    filename, linenum);
-		if (arg[0] < '0' || arg[0] > '9')
+		fwd_port = a2port(arg);
+		if (fwd_port == 0)
 			fatal("%.200s line %d: Badly formatted port number.",
 			    filename, linenum);
-		fwd_port = atoi(arg);
 		add_local_forward(options, fwd_port, "socks4", 0);
-                break;
+		break;
 
 	case oHost:
 		*activep = 0;
@@ -711,6 +734,7 @@ initialize_options(Options * options)
 	options->kbd_interactive_authentication = -1;
 	options->kbd_interactive_devices = NULL;
 	options->rhosts_rsa_authentication = -1;
+	options->hostbased_authentication = -1;
 	options->fallback_to_rsh = -1;
 	options->use_rsh = -1;
 	options->batch_mode = -1;
@@ -725,6 +749,7 @@ initialize_options(Options * options)
 	options->cipher = -1;
 	options->ciphers = NULL;
 	options->macs = NULL;
+	options->hostkeyalgorithms = NULL;
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->num_identity_files = 0;
 	options->hostname = NULL;
@@ -740,6 +765,7 @@ initialize_options(Options * options)
 	options->num_remote_forwards = 0;
 	options->log_level = (LogLevel) - 1;
 	options->preferred_authentications = NULL;
+	options->bind_address = NULL;
 }
 
 /*
@@ -788,6 +814,8 @@ fill_default_options(Options * options)
 		options->kbd_interactive_authentication = 1;
 	if (options->rhosts_rsa_authentication == -1)
 		options->rhosts_rsa_authentication = 1;
+	if (options->hostbased_authentication == -1)
+		options->hostbased_authentication = 0;
 	if (options->fallback_to_rsh == -1)
 		options->fallback_to_rsh = 0;
 	if (options->use_rsh == -1)
@@ -815,6 +843,7 @@ fill_default_options(Options * options)
 		options->cipher = SSH_CIPHER_NOT_SET;
 	/* options->ciphers, default set in myproposals.h */
 	/* options->macs, default set in myproposals.h */
+	/* options->hostkeyalgorithms, default set in myproposals.h */
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
 	if (options->num_identity_files == 0) {
