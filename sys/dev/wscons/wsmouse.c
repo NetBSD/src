@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.31.2.4 2004/09/21 13:34:29 skrll Exp $ */
+/* $NetBSD: wsmouse.c,v 1.31.2.5 2004/11/21 13:54:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.4 2004/09/21 13:34:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.31.2.5 2004/11/21 13:54:36 skrll Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -602,7 +602,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
 	 * if it didn't recognize the request.
 	 */
 	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
-	    data, flag, l->l_proc);
+	    data, flag, l);
 	return (error); /* may be EPASSTHROUGH */
 }
 

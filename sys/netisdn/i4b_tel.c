@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.13.2.3 2004/09/21 13:38:00 skrll Exp $
+ *	$Id: i4b_tel.c,v 1.13.2.4 2004/11/21 13:54:37 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.13.2.3 2004/09/21 13:38:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.13.2.4 2004/11/21 13:54:37 skrll Exp $");
 
 #include "isdntel.h"
 
@@ -179,18 +179,18 @@ static u_char sinetab[];
 #ifndef __FreeBSD__
 #define	PDEVSTATIC	/* - not static - */
 PDEVSTATIC void isdntelattach __P((void));
-PDEVSTATIC int isdntelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC int isdntelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l));
 
-int isdntelopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-int isdntelclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+int isdntelopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
+int isdntelclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdntelread __P((dev_t dev, struct uio *uio, int ioflag));
 int isdntelwrite __P((dev_t dev, struct uio * uio, int ioflag));
 
 #ifdef OS_USES_POLL
-int isdntelpoll	__P((dev_t dev, int events, struct proc *p));
+int isdntelpoll	__P((dev_t dev, int events, struct lwp *l));
 int isdntelkqfilter __P((dev_t dev, struct knote *kn));
 #else
-int isdntelsel __P((dev_t dev, int rw, struct proc *p));
+int isdntelsel __P((dev_t dev, int rw, struct lwp *l));
 #endif
 
 #endif /* __FreeBSD__ */
@@ -276,7 +276,7 @@ SYSINIT(i4bteldev, SI_SUB_DRIVERS,
 
 #ifdef __bsdi__
 
-int i4btelsel(dev_t dev, int rw, struct proc *p);
+int i4btelsel(dev_t dev, int rw, struct lwp *l);
 int i4btelmatch(struct device *parent, struct cfdata *cf, void *aux);
 void dummy_i4btelattach(struct device*, struct device *, void *);
 
@@ -388,7 +388,7 @@ isdntelattach()
  *	open tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdntelopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -417,7 +417,7 @@ isdntelopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	close tel device
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdntelclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -459,7 +459,7 @@ isdntelclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int func = FUNC(dev);
@@ -869,7 +869,7 @@ tel_tone(tel_sc_t *sc)
  *	device driver poll
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelpoll(dev_t dev, int events, struct proc *p)
+isdntelpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;	/* Events we found */
 	int s;
@@ -917,7 +917,7 @@ isdntelpoll(dev_t dev, int events, struct proc *p)
 		if(revents == 0)
 		{
 			NDBGL4(L4_TELDBG, "i4btel%d, selrecord", unit);
-			selrecord(p, &sc->selp);
+			selrecord(l, &sc->selp);
 		}
 	}
 	else if(func == FUNCDIAL)
@@ -938,7 +938,7 @@ isdntelpoll(dev_t dev, int events, struct proc *p)
 		if(revents == 0)
 		{
 			NDBGL4(L4_TELDBG, "i4bteld%d,  selrecord", unit);
-			selrecord(p, &sc->selp);
+			selrecord(l, &sc->selp);
 		}
 	}
 	splx(s);
@@ -1062,7 +1062,7 @@ isdntelkqfilter(dev_t dev, struct knote *kn)
  *	device driver select
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4btelsel(dev_t dev, int rw, struct proc *p)
+i4btelsel(dev_t dev, int rw, struct lwp *l)
 {
 	int s;
 	int unit = UNIT(dev);
@@ -1128,7 +1128,7 @@ i4btelsel(dev_t dev, int rw, struct proc *p)
 	}
 
 	NDBGL4(L4_TELDBG, "i4bteld%d,  selrecord", unit);
-	selrecord(p, &sc->selp);
+	selrecord(l, &sc->selp);
 	splx(s);
 	return 0;
 }

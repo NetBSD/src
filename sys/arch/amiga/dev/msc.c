@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.26.6.3 2004/09/21 13:12:30 skrll Exp $ */
+/*	$NetBSD: msc.c,v 1.26.6.4 2004/11/21 13:54:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.26.6.3 2004/09/21 13:12:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.26.6.4 2004/11/21 13:54:35 skrll Exp $");
 
 #include "msc.h"
 
@@ -315,7 +315,7 @@ mscattach(struct device *pdp, struct device *dp, void *auxp)
 
 /* ARGSUSED */
 int
-mscopen(dev_t dev, int flag, int mode, struct proc *p)
+mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	register struct tty *tp;
 	struct mscdevice *msc;
@@ -407,7 +407,7 @@ mscopen(dev_t dev, int flag, int mode, struct proc *p)
 			tp->t_state &= ~TS_CARR_ON;
 
 	} else {
-		if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+		if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
 			splx(s);
 			return (EBUSY);
 		}
@@ -470,7 +470,7 @@ mscopen(dev_t dev, int flag, int mode, struct proc *p)
 
 
 int
-mscclose(dev_t dev, int flag, int mode, struct proc *p)
+mscclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	register struct tty *tp;
 	int slot;
@@ -534,7 +534,7 @@ mscwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-mscpoll(dev_t dev, int events, struct proc *p)
+mscpoll(dev_t dev, int events, struct lwp *l)
 {
 	register struct tty *tp;
 
@@ -543,7 +543,7 @@ mscpoll(dev_t dev, int events, struct proc *p)
 	if (! tp)
 		return ENXIO;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*
@@ -777,7 +777,7 @@ NoRoomForYa:
 
 
 int
-mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	register struct tty *tp;
 	register int slot;
@@ -801,11 +801,11 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (!(tp = msc_tty[MSCTTY(dev)]))
 		return ENXIO;
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -860,7 +860,7 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 
 		case TIOCSFLAGS:
-			error = suser(p->p_ucred, &p->p_acflag);
+			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 			if (error != 0)
 				return(EPERM);
 			msc->openflags = *(int *)data;

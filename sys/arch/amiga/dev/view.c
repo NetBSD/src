@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.24 2002/10/23 09:10:37 jdolecek Exp $ */
+/*	$NetBSD: view.c,v 1.24.6.1 2004/11/21 13:54:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.24 2002/10/23 09:10:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.24.6.1 2004/11/21 13:54:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ view_setsize(struct view_softc *vu, struct view_size *vs)
 
 /*ARGSUSED*/
 int
-viewopen(dev_t dev, int flags, int mode, struct proc *p)
+viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	dimen_t size;
 	struct view_softc *vu;
@@ -269,7 +269,7 @@ viewopen(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-viewclose(dev_t dev, int flags, int mode, struct proc *p)
+viewclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct view_softc *vu;
 
@@ -289,7 +289,7 @@ viewclose(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-viewioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+viewioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct view_softc *vu;
 	bmap_t *bm;

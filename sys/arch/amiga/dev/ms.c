@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.25.2.3 2004/09/21 13:12:30 skrll Exp $ */
+/*	$NetBSD: ms.c,v 1.25.2.4 2004/11/21 13:54:35 skrll Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.25.2.3 2004/09/21 13:12:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.25.2.4 2004/11/21 13:54:35 skrll Exp $");
 
 /*
  * Mouse driver.
@@ -151,7 +151,7 @@ const struct cdevsw ms_cdevsw = {
  * Callbacks for wscons.
  */
 static int ms_wscons_enable(void *);
-static int ms_wscons_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int ms_wscons_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void ms_wscons_disable(void *);
 
 static struct wsmouse_accessops ms_wscons_accessops = {
@@ -425,7 +425,7 @@ out:
 }
 
 int
-msopen(dev_t dev, int flags, int mode, struct proc *p)
+msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *sc;
 	struct ms_port *ms;
@@ -451,14 +451,14 @@ msopen(dev_t dev, int flags, int mode, struct proc *p)
 	/* initialize potgo bits for mouse mode */
 	custom.potgo = custom.potgor | (0xf00 << (port * 4));
 
-	ms->ms_events.ev_io = p;
+	ms->ms_events.ev_io = l->l_proc;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 	ms_enable(ms);
 	return(0);
 }
 
 int
-msclose(dev_t dev, int flags, int mode, struct proc *p)
+msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_port *ms;
 
@@ -482,7 +482,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 
 int
 msioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
-        struct proc *p)
+        struct lwp *l)
 {
 	struct ms_port *ms;
 
@@ -515,13 +515,13 @@ msioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
 }
 
 int
-mspoll(dev_t dev, int events, struct proc *p)
+mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_port *ms;
 
 	ms = MS_DEV2MSPORT(dev);
 
-	return(ev_poll(&ms->ms_events, events, p));
+	return(ev_poll(&ms->ms_events, events, l));
 }
 
 int
@@ -540,7 +540,7 @@ mskqfilter(dev, kn)
 
 static int
 ms_wscons_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, 
-		struct proc *p)
+		struct lwp *l)
 {
 	switch(cmd) {
 	case WSMOUSEIO_GTYPE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.9.6.3 2004/09/21 13:12:26 skrll Exp $ */
+/*	$NetBSD: event.c,v 1.9.6.4 2004/11/21 13:54:32 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.9.6.3 2004/09/21 13:12:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.9.6.4 2004/11/21 13:54:32 skrll Exp $");
 
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
@@ -143,7 +143,7 @@ ev_read(register struct evvar *ev, struct uio *uio, int flags)
 }
 
 int
-ev_poll(register struct evvar *ev, int events, struct proc *p)
+ev_poll(register struct evvar *ev, int events, struct lwp *l)
 {
 	int s = splev();
 	int revents = 0;
@@ -154,7 +154,7 @@ ev_poll(register struct evvar *ev, int events, struct proc *p)
 			revents |= events & (POLLIN | POLLRDNORM);
 	if (revents == 0)
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &ev->ev_sel);
+			selrecord(l, &ev->ev_sel);
 	splx(s);
 	return (revents);
 }

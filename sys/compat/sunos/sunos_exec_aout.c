@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.10.2.4 2004/09/21 13:25:59 skrll Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.10.2.5 2004/11/21 13:54:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.4 2004/09/21 13:25:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.5 2004/11/21 13:54:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,13 @@ exec_sunos_aout_makecmds(l, epp)
 
 	switch (sunmag->a_magic) {
 	case ZMAGIC:
-		error = sunos_exec_aout_prep_zmagic(p, epp);
+		error = sunos_exec_aout_prep_zmagic(l->l_proc, epp);
 		break;
 	case NMAGIC:
-		error = sunos_exec_aout_prep_nmagic(p, epp);
+		error = sunos_exec_aout_prep_nmagic(l->l_proc, epp);
 		break;
 	case OMAGIC:
-		error = sunos_exec_aout_prep_omagic(p, epp);
+		error = sunos_exec_aout_prep_omagic(l->l_proc, epp);
 		break;
 	}
 	return error;

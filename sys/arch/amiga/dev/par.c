@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.29.6.3 2004/09/21 13:12:31 skrll Exp $ */
+/*	$NetBSD: par.c,v 1.29.6.4 2004/11/21 13:54:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.29.6.3 2004/09/21 13:12:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.29.6.4 2004/11/21 13:54:35 skrll Exp $");
 
 /*
  * parallel port interface
@@ -147,7 +147,7 @@ parattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 int
-paropen(dev_t dev, int flags, int mode, struct proc *p)
+paropen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct par_softc *sc = getparsp(unit);
@@ -184,7 +184,7 @@ paropen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-parclose(dev_t dev, int flags, int mode, struct proc *p)
+parclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
   int unit = UNIT(dev);
   struct par_softc *sc = getparsp(unit);
@@ -432,7 +432,7 @@ again:
 }
 
 int
-parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
   struct par_softc *sc = getparsp(UNIT(dev));
   struct parparam *pp, *upp;
