@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.13 2004/10/20 13:57:36 augustss Exp $
+.\" $NetBSD: usbhidaction.1,v 1.14 2004/10/20 23:52:04 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,11 +98,11 @@ The item names are similar to those used by
 .Xr usbhidctl 1 ,
 but each part must be prefixed by its page name
 (use the
-.Ar -v
+.Fl v
 flag to
 .Xr usbhidctl 1
 to see the page name).
-Spaces in the item name by underscores.
+Replace spaces in the item name by underscores.
 .Pp
 The value is simply a numeric value.
 When the item reports this value
@@ -142,7 +142,7 @@ A sample invocation using this configuration would be
 usbhidaction -f /dev/uhid1 -c conf /dev/mixer1
 .Ed
 .Pp
-This configuration file can be used for various keyboard with extra keys:
+This configuration file can be used for various keyboards with extra keys:
 .Bd -literal -offset indent
 # Configuration for extra keyboard keys
 Consumer:Consumer_Control.Consumer:Volume_Up			1
@@ -161,7 +161,7 @@ Consumer:Consumer_Control.Consumer:Scan_Next_Track		1
 	xmms -f
 .Ed
 .Pp
-And this configuration can be used with, e.g., 
+And this configuration can be used with, e.g.,
 .Bd -literal -offset indent
 usbhidaction -f /dev/uhid0 -c conf -i
 .Ed
