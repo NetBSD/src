@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.138 2002/03/22 03:21:13 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.139 2002/03/22 04:31:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.138 2002/03/22 03:21:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.139 2002/03/22 04:31:01 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2248,11 +2248,6 @@ dropwithreset:
 	 * Make ACK acceptable to originator of segment.
 	 */
 	if (tiflags & TH_RST)
-		goto drop;
-
-	if (af == AF_INET &&
-	    (IN_MULTICAST(ip->ip_dst.s_addr) ||
-	     in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)))
 		goto drop;
 
     {
