@@ -1,4 +1,4 @@
-/*	$NetBSD: adosglue.h,v 1.3 1994/10/26 02:01:29 cgd Exp $	*/
+/*	$NetBSD: adosglue.h,v 1.4 1994/12/28 09:27:45 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,6 +43,7 @@
 #define DOST_NBU	0x4e425500	/* 'NBUx' Netbsd user partition */
 #define DOST_DOS	0x444f5300	/* 'DOSx' AmigaDos partition */
 #define DOST_AMIX	0x554e4900	/* 'UNIx' AmigaDos partition */
+#define DOST_MUFS	0x6d754600	/* 'muFx' AmigaDos partition (muFS) */
 
 struct adostype {
 	u_char archtype;	/* see ADT_xxx below */
