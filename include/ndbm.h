@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.12 2004/04/27 20:59:43 kleink Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.13 2004/04/28 00:10:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,8 +59,12 @@
 #endif
 
 typedef struct {
-	void *dptr;
-	int dsize;		/* XXX */
+	void	*dptr;
+#if defined(__LIBC12_SOURCE__)
+	int	 dsize;		/* XXX */
+#else
+	size_t	 dsize;		/* XPG4.2 */
+#endif
 } datum;
 
 typedef DB DBM;
@@ -70,16 +74,24 @@ typedef DB DBM;
 
 __BEGIN_DECLS
 void	 dbm_close(DBM *);
-int	 dbm_delete(DBM *, datum);
-datum	 dbm_fetch(DBM *, datum);
-datum	 dbm_firstkey(DBM *);
-datum	 dbm_nextkey(DBM *);
 DBM	*dbm_open(const char *, int, mode_t);
-int	 dbm_store(DBM *, datum, datum, int);
 int	 dbm_error(DBM *);
 int	 dbm_clearerr(DBM *);
 #if defined(_NETBSD_SOURCE)
 int	 dbm_dirfno(DBM *);
+#endif
+#if defined(__LIBC12_SOURCE__)
+int	 dbm_delete(DBM *, datum);
+datum	 dbm_fetch(DBM *, datum);
+datum	 dbm_firstkey(DBM *);
+datum	 dbm_nextkey(DBM *);
+int	 dbm_store(DBM *, datum, datum, int);
+#else
+int	 dbm_delete(DBM *, datum)		__RENAME(__dbm_delete13);
+datum	 dbm_fetch(DBM *, datum)		__RENAME(__dbm_fetch13);
+datum	 dbm_firstkey(DBM *)			__RENAME(__dbm_firstkey13);
+datum	 dbm_nextkey(DBM *)			__RENAME(__dbm_nextkey13);
+int	 dbm_store(DBM *, datum, datum, int)	__RENAME(__dbm_store13);
 #endif
 __END_DECLS
 
