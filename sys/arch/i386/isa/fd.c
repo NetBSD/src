@@ -1,7 +1,8 @@
-/*	$NetBSD: fd.c,v 1.91 1996/08/27 21:55:58 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.92 1996/08/30 19:59:07 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -511,15 +512,12 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd;
-	int unit = FDUNIT(bp->b_dev);
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
 	int sz;
  	int s;
 
 	/* Valid unit, controller, and request? */
-	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
-	    bp->b_blkno < 0 ||
+	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -535,7 +533,6 @@ fdstrategy(bp)
 		sz = fd->sc_type->size - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
-			bp->b_resid = bp->b_bcount;
 			goto done;
 		}
 		if (sz < 0) {
@@ -576,6 +573,7 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
+	b->b_resid = b->b_bcount;
 	biodone(bp);
 }
 
