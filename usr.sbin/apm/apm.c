@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.14 2002/08/08 13:24:14 soren Exp $ */
+/*	$NetBSD: apm.c,v 1.15 2004/03/31 12:00:57 tron Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 
 	doac = dobstate = domin = dopct = dostatus = nodaemon =
 	    verbose = FALSE;
-	while ((ch = getopt(argc, argv, "lmbvadsSzf:d")) != -1)
+	while ((ch = getopt(argc, argv, "lmbvadsSzf:")) != -1)
 		switch (ch) {
 		case 'v':
 			verbose = TRUE;
