@@ -1,3 +1,5 @@
+/*	$NetBSD: btlreg.h,v 1.3 2000/02/22 11:26:01 soda Exp $	*/
+
 typedef u_int8_t physaddr[4];
 typedef u_int8_t physlen[4];
 #define	ltophys	_lto4l

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_sn.c,v 1.15 2000/01/23 21:01:54 soda Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.9 1997/04/19 17:19:52 pefo Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.16 2000/02/22 11:26:00 soda Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -11,7 +11,6 @@
  * it.
  */
 
-#include "sn.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
@@ -33,7 +32,6 @@
 #include <machine/autoconf.h>
 
 #include <arc/arc/arctype.h>	/* XXX - cputype */
-extern int cputype;
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -48,6 +46,11 @@ extern int cputype;
 #include <netinet/if_inarp.h>
 #endif
 
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
 #include <vm/vm.h>
 
 #if NBPFILTER > 0
@@ -59,19 +62,20 @@ extern int cputype;
 #include <sys/rnd.h>
 #endif
 
-#include <arc/dev/dma.h>
-
-#define SONICDW 32
-typedef unsigned char uchar;
-
-#include <mips/cpuregs.h>	/* XXX */
-#include <arc/dev/if_snreg.h>
-#define SWR(a, x) 	(a) = (x)
-#define SRD(a)		((a) & 0xffff)
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
 #include <mips/locore.h> /* for mips3_HitFlushDCache() */
+#include <mips/cpuregs.h>	/* XXX */
+
+#include <arc/dev/dma.h>
+
+#define SONICDW 32
+#include <arc/dev/if_snreg.h>
+
+#define SWR(a, x) 	(a) = (x)
+#define SRD(a)		((a) & 0xffff)
 
 /*
  * Statistics collected over time
@@ -232,7 +236,7 @@ struct mtd *mtdnext;		/* next descriptor to give to chip */
 void mtd_free __P((struct mtd *));
 struct mtd *mtd_alloc __P((void));
 
-int sngetaddr __P((struct sn_softc *sc, uchar *ap));
+int sngetaddr __P((struct sn_softc *sc, u_int8_t *ap));
 int sninit __P((struct sn_softc *sc));
 int snstop __P((struct sn_softc *sc));
 int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
@@ -269,7 +273,7 @@ snattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_if;
 	int p, pp;
-	uchar myaddr[ETHER_ADDR_LEN];
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->sc_csr = (struct sonic_reg *)BUS_CVTADDR(ca);
 
@@ -372,6 +376,22 @@ snioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_ec.ec_if, ifa);
 			break;
 #endif
+#ifdef NS
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)
+				    LLADDR(ifp->if_sadl);
+			else
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    ifp->if_addrlen);
+			/* Set new address. */
+			(void)sninit(sc);
+			break;
+		    }
+#endif /* NS */
 		default:
 			(void)sninit(sc);
 			break;
@@ -393,7 +413,6 @@ snioctl(ifp, cmd, data)
 		if (((ifp->if_flags ^ sc->sc_iflags) & IFF_PROMISC) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 			sc->sc_iflags = ifp->if_flags;
-			printf("change in flags\n");
 			temp = sc->sc_if.if_flags & IFF_UP;
 			snreset(sc);
 			sc->sc_if.if_flags |= temp;
@@ -639,7 +658,7 @@ sonicput(sc, m0)
 	 * keeping the fragments in order. (read lazy programmer).
 	 */
 	for (m = m0; m; m = m->m_next) {
-		vm_offset_t va = (unsigned) mtod(m, caddr_t);
+		vaddr_t va = (vaddr_t) mtod(m, caddr_t);
 		int resid = m->m_len;
 
 		if(resid != 0) {
@@ -735,7 +754,7 @@ sonicput(sc, m0)
 int 
 sngetaddr(sc, ap)
 	struct sn_softc *sc;
-	uchar *ap;
+	u_int8_t *ap;
 {
 #if 0
 	int i;
@@ -845,7 +864,7 @@ camprogram(sc)
 		continue;
 	if (timeout == 0) {
 		/* XXX */
-		panic("sonic: CAM initialisation failed\n");
+		panic("sonic: CAM initialisation failed");
 	}
 	timeout = 10000;
 	while ((csr->s_isr & ISR_LCD) == 0 && timeout--)
@@ -970,7 +989,7 @@ snintr(sc)
 	struct sonic_reg *csr = sc->sc_csr;
 	int	isr;
 #if NRND > 0
-	it	isr_save = 0;
+	int	isr_save = 0;
 #endif
 
 	while ((isr = (csr->s_isr & ISR_ALL))) {
@@ -1063,10 +1082,7 @@ sonictxint(sc)
 		mtd_free(mtd);
 
 		if ((SRD(txp->status) & TCR_PTX) == 0) {
-			printf("sonic: Tx packet status=0x%lx\n", txp->status);
-
 			if (mtdhead != mtdnext) {
-				printf("resubmitting remaining packets\n");
 				csr->s_ctda = LOWER(v_tda + (mtdhead->mtd_txp - p_tda));
 				csr->s_cr = CR_TXP;
 				wbflush();

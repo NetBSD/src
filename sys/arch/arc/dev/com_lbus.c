@@ -1,4 +1,5 @@
-/*	$OpenBSD: com_lbus.c,v 1.4 1997/05/01 15:18:13 pefo Exp $	*/
+/*	$NetBSD: com_lbus.c,v 1.10 2000/02/22 11:26:00 soda Exp $	*/
+/*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
 /*-
@@ -151,7 +152,7 @@ com_localbus_attach(parent, self, aux)
 	}
 
 	sc->sc_frequency = com_freq;
-	SET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE);
+	SET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE); /* XXX - NEC M403 */
 	BUS_INTR_ESTABLISH(ca, comintr, sc);
 
 	com_attach_subr(sc);

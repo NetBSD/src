@@ -1,7 +1,8 @@
-/*	$NetBSD: clock.c,v 1.9 2000/01/23 21:01:50 soda Exp $	*/
-/*	$OpenBSD: clock.c,v 1.5 1997/04/19 17:19:39 pefo Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2000/02/22 11:25:57 soda Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
+ * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,8 +56,6 @@
 
 #include <dev/isa/isavar.h>
 #include <machine/isa_machdep.h>
-
-extern int cputype;	/* What kind of cpu we are running on */
 
 int	clock_started = 0;
 
