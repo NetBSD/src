@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.36 2003/03/08 02:55:49 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.37 2003/03/11 02:47:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.36 2003/03/08 02:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.37 2003/03/11 02:47:41 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,10 +424,8 @@ lfs_segunlock(struct lfs *fs)
 	struct segment *sp;
 	unsigned long sync, ckp;
 	struct buf *bp;
-#ifdef LFS_MALLOC_SUMMARY
 	extern int locked_queue_count;
 	extern long locked_queue_bytes;
-#endif
 	
 	sp = fs->lfs_sp;
 
@@ -440,17 +438,7 @@ lfs_segunlock(struct lfs *fs)
 			/* Free allocated segment summary */
 			fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
 			bp = *sp->bpp;
-#ifdef LFS_MALLOC_SUMMARY
 			lfs_freebuf(fs, bp);
-#else
-			s = splbio();
-			bremfree(bp);
-			bp->b_flags |= B_DONE|B_INVAL;
-			bp->b_flags &= ~B_DELWRI;
-			reassignbuf(bp,bp->b_vp);
-			splx(s);
-			brelse(bp);
-#endif
 		} else
 			printf ("unlock to 0 with no summary");
 
