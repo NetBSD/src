@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.2 2001/04/19 17:17:29 jdolecek Exp $	*/
+/*	$NetBSD: edvar.h,v 1.3 2001/04/22 11:32:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,18 +48,18 @@ struct ed_softc {
 	struct buf *sc_bp; /* buf being transfered */
 	struct edc_mca_softc *edc_softc;   /* pointer to our parent */
 
-	int sc_flags;	  
-#define WDF_LOCKED	0x001
-#define WDF_WANTED	0x002
-#define WDF_WLABEL	0x004 /* label is writable */
-#define WDF_LABELLING   0x008 /* writing label */
-#define WDF_LOADED	0x010 /* parameters loaded */
-#define WDF_WAIT	0x020 /* waiting for resources */
-#define WDF_KLABEL	0x080 /* retain label after 'full' close */
-#define EDF_BOUNCEBUF		0x100	/* use bounce buffer */
-#define EDF_DMAMAP_LOADED	0x200	/* dmamap_xfer loaded */
-#define EDF_PROCESS_QUEUE	0x400
+	volatile int sc_flags;	  
+#define WDF_WLABEL	0x001 /* label is writable */
+#define WDF_LABELLING   0x002 /* writing label */
+#define WDF_LOADED	0x004 /* parameters loaded */
+#define WDF_KLABEL	0x008 /* retain label after 'full' close */
+#define EDF_BOUNCEBUF		0x010	/* use bounce buffer */
+#define EDF_DMAMAP_LOADED	0x020	/* dmamap_xfer loaded */
+#define EDF_PROCESS_QUEUE	0x040
+#define EDF_DK_BUSY		0x080	/* disk_busy() called */
+#define EDF_IODONE		0x100
 	int sc_capacity;
+	struct lock sc_lock;	/* drive lock */
 
 	/* actual drive parameters */
 	int sc_devno;		/* DASD device number */
@@ -72,8 +72,6 @@ struct ed_softc {
 
 	u_int16_t sc_status_block[DASD_MAX_CMD_RES_LEN]; /* CMD status block */
 
-	int retries; /* number of xfer retry */
-	int sc_dk_busy;
 	daddr_t sc_badsect[127];	/* 126 plus trailing -1 marker */
 
 	/* Info needed for DMA */
@@ -92,5 +90,5 @@ struct ed_softc {
 #endif
 
 	struct proc *sc_worker;		/* Worker thread */
-	int sc_error;
+	volatile int sc_error;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: edcreg.h,v 1.1 2001/04/19 17:17:29 jdolecek Exp $	*/
+/*	$NetBSD: edcreg.h,v 1.2 2001/04/22 11:32:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@
 
 /* Macros to get info from command status block */
 #define SB_GET_CMD_STATUS(sb)	(((sb)[1] & 0xff00) >> 8)
+#define SB_RESBLKCNT_IDX	3
 
 #define ATN			3	/* write, Attention register */
 #define ATN_CMD_REQ		1
