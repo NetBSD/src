@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoimax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $	*/
+/*	$NetBSD: strtoimax.c,v 1.2 2001/05/07 08:29:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,16 +38,17 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoimax.c,v 1.1 2001/04/28 15:41:30 kleink Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.2 2001/05/07 08:29:25 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <sys/types.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stddef.h>
 
 #ifdef __weak_alias
 __weak_alias(strtoimax, _strtoimax)
@@ -69,6 +70,9 @@ _strtoimax(nptr, endptr, base)
 	intmax_t acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	_DIAGASSERT(nptr != NULL);
+	/* endptr may be NULL */
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */
