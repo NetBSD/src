@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.192 2000/01/19 06:10:11 mycroft Exp $
+# $NetBSD: mi,v 1.193 2000/01/19 06:35:22 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -842,6 +842,7 @@
 ./usr/share/man/cat8/restore.0
 ./usr/share/man/cat8/revnetgroup.0
 ./usr/share/man/cat8/rexecd.0
+./usr/share/man/cat8/rip6query.0
 ./usr/share/man/cat8/rlogind.0
 ./usr/share/man/cat8/rmail.0
 ./usr/share/man/cat8/rmt.0
@@ -1769,6 +1770,7 @@
 ./usr/share/man/man8/restore.8
 ./usr/share/man/man8/revnetgroup.8
 ./usr/share/man/man8/rexecd.8
+./usr/share/man/man8/rip6query.8
 ./usr/share/man/man8/rlogind.8
 ./usr/share/man/man8/rmail.8
 ./usr/share/man/man8/rmt.8
