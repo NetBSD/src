@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 1996/01/22 04:07:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
@@ -13,12 +13,18 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	rdist renice rev rlogin rpcgen rpcinfo rs \
 	rsh rup ruptime rusers rwall rwho \
 	script sed shar showmount skey skeyinit soelim split strings \
-	su systat tail talk tcopy tee telnet tftp time \
+	su systat tail talk tcopy tee tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vis vmstat w wall wc what whatis whereis \
 	which who whois window write \
 	xargs xinstall xlint xstr yacc yes ypcat ypmatch ypwhich
+
+# XXX Keep telnet(1) and libtelnet from getting out of sync during the build
+# XXX process.
+.if !exists(${.CURDIR}/../domestic/usr.bin/telnet) || defined(EXPORTABLE_SYSTEM)
+SUBDIR+=telnet
+.endif
 
 # Don't use the standard tool chain on the alpha.
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
