@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.5 2004/06/25 13:17:01 itojun Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.6 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -98,7 +98,9 @@
 #endif
 
 void			 pfattach(int);
-int			 pfdetach(void);
+#ifdef _LKM
+void			 pfdetach(void);
+#endif
 int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
 struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
@@ -126,14 +128,7 @@ const struct cdevsw pf_cdevsw = {
 static int pf_pfil_attach(void);
 static int pf_pfil_detach(void);
 
-POOL_INIT(pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
-    &pool_allocator_nointr);
-POOL_INIT(pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
-    "pfsrctrpl", NULL);
-POOL_INIT(pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl", NULL);
-POOL_INIT(pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl", NULL);
-POOL_INIT(pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
-    "pfpooladdrpl", NULL);
+static int pf_pfil_attached = 0;
 #endif
 
 #ifdef __OpenBSD__
@@ -158,8 +153,6 @@ static void		 tag_unref(struct pf_tags *, u_int16_t);
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
 #ifdef __NetBSD__
-struct pfil_head pf_ioctl_head;
-struct pfil_head pf_newif_head;
 extern struct pfil_head if_pfil;
 #endif
 
@@ -168,12 +161,6 @@ pfattach(int num)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
 
-#ifdef __NetBSD__
-	pfil_head_register(&pf_ioctl_head);
-	pfil_head_register(&pf_newif_head);
-#endif
-
-#ifdef __OpenBSD__
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
 	    &pool_allocator_nointr);
 	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
@@ -184,7 +171,7 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
 	    "pfpooladdrpl", NULL);
-#endif
+
 	pfr_initialize();
 	pfi_initialize();
 	pf_osfp_initialize();
@@ -243,18 +230,50 @@ pfattach(int num)
 	pf_status.hostid = arc4random();
 }
 
+#ifdef _LKM
+#define TAILQ_DRAIN(list, element)				\
+	do {							\
+		while ((element = TAILQ_FIRST(list)) != NULL) {	\
+			TAILQ_REMOVE(list, element, entries);	\
+			free(element, M_TEMP);			\
+		}						\
+	} while (0)
+
+void
+pfdetach(void)
+{
+	struct pf_pooladdr	*pooladdr_e;
+	struct pf_altq		*altq_e;
+	struct pf_anchor	*anchor_e;
+
+	(void)pf_pfil_detach();
+
+	callout_stop(&pf_expire_to);
+	pf_normalize_destroy();
+	pf_osfp_destroy();
+	pfi_destroy();
+
+	TAILQ_DRAIN(&pf_pabuf, pooladdr_e);
+	TAILQ_DRAIN(&pf_altqs[1], altq_e);
+	TAILQ_DRAIN(&pf_altqs[0], altq_e);
+	TAILQ_DRAIN(&pf_anchors, anchor_e);
+
+	pf_remove_if_empty_ruleset(&pf_main_ruleset);
+	pfr_destroy();
+	pool_destroy(&pf_pooladdr_pl);
+	pool_destroy(&pf_altq_pl);
+	pool_destroy(&pf_state_pl);
+	pool_destroy(&pf_rule_pl);
+	pool_destroy(&pf_src_tree_pl);
+}
+#endif
+
 int
 pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
 	return (0);
-}
-
-int
-pfdetach(void)
-{
-	return pf_pfil_detach();
 }
 
 int
@@ -2811,6 +2830,9 @@ pf_pfil_attach(void)
 	int error;
 	int i;
 
+	if (pf_pfil_attached)
+		return (0);
+
 	error = pfil_add_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF,
 	    &if_pfil);
 	if (error)
@@ -2847,6 +2869,7 @@ pf_pfil_attach(void)
 			if (ifindex2ifnet[i])
 				pfi_attach_ifnet(ifindex2ifnet[i]);
 		}
+		pf_pfil_attached = 1;
 	}
 	return (error);
 }
@@ -2860,6 +2883,9 @@ pf_pfil_detach(void)
 #endif
 	int i;
 
+	if (pf_pfil_attached == 0)
+		return (0);
+
 	for (i = 0; i < if_indexlim; i++) {
 		if (pfi_index2kif[i])
 			pfi_detach_ifnet(ifindex2ifnet[i]);
@@ -2872,10 +2898,12 @@ pf_pfil_detach(void)
 		    PFIL_IN|PFIL_OUT, ph_inet);
 #ifdef INET6
 	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
-	if (ph_inet)
+	if (ph_inet6)
 		pfil_remove_hook((void *)pfil6_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet6);
 #endif
+	pf_pfil_attached = 0;
+
 	return (0);
 }
 #endif
