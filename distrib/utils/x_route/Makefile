@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/08/20 12:19:46 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2001/10/05 01:17:32 jmc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	route
@@ -11,7 +11,7 @@ CPPFLAGS+= -DSMALL -I${SRCDIR}
 CPPFLAGS+= -DINET6
 .endif
 .if ${MACHINE_ARCH} != "sparc64"
-COPTS+= -Os
+DBG= -Os
 .endif
 LDSTATIC?=-static
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2001/08/20 12:19:44 martin Exp $
+# $NetBSD: Makefile,v 1.3 2001/10/05 01:17:30 jmc Exp $
 # Build dmesg without kvm support
 
 SRCDIR= ${.CURDIR}/../../../sbin/dmesg
@@ -7,7 +7,7 @@ MKMAN=	no
 LDSTATIC?=-static
 CPPFLAGS+= -DSMALL
 .if ${MACHINE_ARCH} != "sparc64"
-COPTS+= -Os
+DBG= -Os
 .endif
 WARNS?=	1
 
