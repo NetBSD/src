@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.20 2002/04/02 00:31:52 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.21 2002/04/12 04:52:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		/* Initialize. */
 		memset(s, 0, sizeof(*s));
 		simple_lock_init(&s->sa_lock);
+		s->sa_vp = NULL;
 		s->sa_concurrency = 1;
 		s->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
@@ -204,6 +205,9 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	p->p_flag |= P_SA;
 	l->l_flag |= L_SA; /* We are now an activation LWP */
 
+	/* Assign this LWP to the virtual processor */
+	s->sa_vp = l;
+
 	/* This will not return to the place in user space it came from. */
 	return (0);
 }
@@ -249,14 +253,17 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 
 	if (s == NULL || !(p->p_flag & P_SA))
 		return (EINVAL);
-	
+
+	/* We are no longer using this VP */
+	s->sa_vp = NULL;
+
 	/* Don't let a process sa_yield() itself into oblivion. */
 	if ((p->p_nlwps - p->p_nzlwps) == 1) {
 		DPRINTFN(1,("sa_yield(%d.%d) going dormant\n", 
 		    p->p_pid, l->l_lid));
 		/* A signal will probably wake us up. Worst case, the upcall
 		 * happens and just causes the process to yield again.
-		 **/
+		 */
 		l->l_flag &= ~L_SA;
 		tsleep((caddr_t) p, PUSER | PCATCH, "sawait", 0);
 		l->l_flag |= L_SA;
@@ -352,6 +359,7 @@ void
 sa_switch(struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
+	struct sadata *s = p->p_sa;
 	struct sadata_upcall *sd;
 	struct lwp *l2;
 	int error;
@@ -368,10 +376,7 @@ sa_switch(struct lwp *l, int type)
 		 * Instead, simply let the LWP that was running before
 		 * we woke up have another go.
 		 */
-		/* Find the interrupted LWP */
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
-		    if (l2->l_stat == LSRUN)
-			    break;
+		l2 = s->sa_vp;
 	} else {
 		/* Get an LWP */
 		/* The process of allocating a new LWP could cause
@@ -438,6 +443,7 @@ sa_switch(struct lwp *l, int type)
 	else
 		DPRINTFN(4,("NULL\n"));
 
+	s->sa_vp = l2;
 	mi_switch(l, l2);
 
 	DPRINTFN(4,("sa_switch(%d.%d) returned.\n", p->p_pid, l->l_lid));
@@ -588,10 +594,12 @@ sa_upcall_userret(struct lwp *l)
 		struct lwp *l2;
 		int s;
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",p->p_pid, l->l_lid));
-		/* Find the interrupted LWP */
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
-		    if (l2->l_stat == LSRUN)
-			    break;
+		/* Put ourselves on the virtual processor and note that the
+		 * previous occupant of that position was interrupted.
+		 */
+		l2 = sa->sa_vp;
+		sa->sa_vp = l;
+
 		if (l2) {
 			SCHED_LOCK(s);
 			remrunqueue(l2);
