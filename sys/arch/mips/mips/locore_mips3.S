@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.20 2000/04/11 02:30:17 nisimura Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.21 2000/04/11 04:42:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -304,7 +304,7 @@ VECTOR(mips3_exception, unknown)
 						#  shifted left by 2 bits so
 						#  we dont have to shift.
 	lw	k0, 0(k0)			# get the function address
-	nop
+	#nop					# -slip-
 	j	k0				# jump to the function
 	nop
 	.set	at
@@ -495,7 +495,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
  * Save all of the registers except for the kernel temporaries in u_pcb.
  */
 	lw	k1, _C_LABEL(curpcb)
-	nop
+	#nop					# -slip-
 	addiu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -623,7 +623,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 	lw	k1, _C_LABEL(curpcb)
-	nop
+	#nop					# -slip-
 	addiu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -869,7 +869,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
 	lw	k1, _C_LABEL(curpcb)
-	nop
+	#nop					# -slip-
 	addiu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
