@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2000/05/25 19:36:20 matt Exp $ */
+/*	$NetBSD: boot.c,v 1.9 2000/05/26 20:15:21 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -136,7 +136,8 @@ Xmain(struct rpb *prpb)
 	/* First try to autoboot */
 	if (askname == 0) {
 		int fileindex;
-		for (fileindex = 0; filelist[fileindex].name[0] != '\0'; fileindex++) {
+		for (fileindex = 0; filelist[fileindex].name[0] != '\0';
+		    fileindex++) {
 			errno = 0;
 			if (!filelist[fileindex].quiet)
 				printf("> boot %s\n", filelist[fileindex].name);
@@ -144,8 +145,10 @@ Xmain(struct rpb *prpb)
 			if (!filelist[fileindex].quiet)
 				printf("%s: boot failed: %s\n", 
 				    filelist[fileindex].name, strerror(errno));
+#if 0 /* Will hang VAX 4000 machines */
 			if (testkey())
 				break;
+#endif
 		}
 	}
 
