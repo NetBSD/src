@@ -753,7 +753,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 				{
 				    if ((errmsg = kill_procs(tempbuf2)) != NULL)
 				    {
-					new_message(MT_standout, errmsg);
+					new_message(MT_standout, "%s", errmsg);
 					putchar('\r');
 					no_command = Yes;
 				    }
@@ -770,7 +770,7 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 				{
 				    if ((errmsg = renice_procs(tempbuf2)) != NULL)
 				    {
-					new_message(MT_standout, errmsg);
+					new_message(MT_standout, "%s", errmsg);
 					putchar('\r');
 					no_command = Yes;
 				    }
