@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.18 1998/12/17 10:54:34 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.19 1998/12/17 14:29:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,10 @@
 #include <string.h>
 
 #include "ld.h"
+#ifndef RTLD
+/* Pull in the ld(1) bits as well */
+#include "ld_i.h"
+#endif
 
 /*
  * Relocation masks and sizes for the Sparc architecture.
