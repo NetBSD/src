@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.17 2004/04/25 22:25:05 jonathan Exp $
+.\"	$NetBSD: tcp.4,v 1.18 2004/04/29 12:44:46 wiz Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -127,7 +127,7 @@ provides a boolean option,
 .Aq Pa netinet/tcp.h ,
 to defeat this algorithm.
 .It Dv TCP_MAXSEG
-By default, a sender\- and receiver-TCP
+By default, a sender- and receiver-TCP
 will negotiate among themselves to determine the maximum segment size
 to be used for each connection.
 The
@@ -142,7 +142,9 @@ digests on incoming traffic are not verified.
 The current default behavior for the system is to respond to a system
 advertising this option with TCP-MD5; this may change.
 .Pp
-One common use for this in a FreeBSD router deployment is to enable
+One common use for this in a
+.Fx
+router deployment is to enable
 based routers to interwork with Cisco equipment at peering points.
 Support for this feature conforms to RFC 2385.
 Only IPv4 (AF_INET) sessions are supported.
