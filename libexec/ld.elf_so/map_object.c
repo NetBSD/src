@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.20 2002/09/24 12:44:58 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.21 2002/09/27 19:48:24 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -226,8 +226,8 @@ _rtld_map_object(path, fd, sb)
 	/* Unmap the gap between the text and data. */
 	gap_addr = base_addr + round_up(text_vlimit - base_vaddr);
 	gap_size = data_addr - gap_addr;
-	if (gap_size != 0 && munmap(gap_addr, gap_size) == -1) {
-		_rtld_error("munmap of text -> data gap failed: %s",
+	if (gap_size != 0 && mprotect(gap_addr, gap_size, PROT_NONE) == -1) {
+		_rtld_error("mprotect of text -> data gap failed: %s",
 		    xstrerror(errno));
 		goto bad2;
 	}
