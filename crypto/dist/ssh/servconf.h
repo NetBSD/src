@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.1.1.1 2000/09/28 22:10:16 thorpej Exp $	*/
+/*	$NetBSD: servconf.h,v 1.2 2000/10/03 09:56:38 lukem Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,10 @@ typedef struct {
 					 * (sec). */
 	int     key_regeneration_time;	/* Server key lifetime (seconds). */
 	int     permit_root_login;	/* If true, permit root login. */
-	int     ignore_rhosts;	/* Ignore .rhosts and .shosts. */
+	int     ignore_rhosts;		/* Ignore .rhosts and .shosts. */
+	int     ignore_root_rhosts;	/* Ignore .rhosts and .shosts for root;
+					   defaults to ignore_rhosts if not
+					   given. */
 	int     ignore_user_known_hosts;	/* Ignore ~/.ssh/known_hosts
 						 * for RhostsRsaAuth */
 	int     print_motd;	/* If true, print /etc/motd. */

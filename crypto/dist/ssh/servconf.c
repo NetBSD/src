@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.1.1.1 2000/09/28 22:10:15 thorpej Exp $	*/
+/*	$NetBSD: servconf.c,v 1.2 2000/10/03 09:56:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: servconf.c,v 1.1.1.1 2000/09/28 22:10:15 thorpej Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.2 2000/10/03 09:56:38 lukem Exp $");
 #endif
 
 #include "includes.h"
@@ -46,6 +46,7 @@ initialize_server_options(ServerOptions *options)
 	options->key_regeneration_time = -1;
 	options->permit_root_login = -1;
 	options->ignore_rhosts = -1;
+	options->ignore_root_rhosts = -1;
 	options->ignore_user_known_hosts = -1;
 	options->print_motd = -1;
 	options->check_mail = -1;
@@ -111,6 +112,8 @@ fill_default_server_options(ServerOptions *options)
 		options->permit_root_login = 1;			/* yes */
 	if (options->ignore_rhosts == -1)
 		options->ignore_rhosts = 1;
+	if (options->ignore_root_rhosts == -1)
+		options->ignore_root_rhosts = options->ignore_rhosts;
 	if (options->ignore_user_known_hosts == -1)
 		options->ignore_user_known_hosts = 0;
 	if (options->check_mail == -1)
@@ -197,7 +200,8 @@ typedef enum {
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
 	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile,
-	sGatewayPorts, sDSAAuthentication, sXAuthLocation, sSubsystem, sMaxStartups
+	sGatewayPorts, sDSAAuthentication, sXAuthLocation, sSubsystem,
+	sMaxStartups, sIgnoreRootRhosts
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -236,6 +240,7 @@ static struct {
 	{ "listenaddress", sListenAddress },
 	{ "printmotd", sPrintMotd },
 	{ "ignorerhosts", sIgnoreRhosts },
+	{ "ignorerootrhosts", sIgnoreRootRhosts },
 	{ "ignoreuserknownhosts", sIgnoreUserKnownHosts },
 	{ "x11forwarding", sX11Forwarding },
 	{ "x11displayoffset", sX11DisplayOffset },
@@ -457,6 +462,10 @@ parse_flag:
 			if (*intptr == -1)
 				*intptr = value;
 			break;
+
+		case sIgnoreRootRhosts:
+			intptr = &options->ignore_root_rhosts;
+			goto parse_flag;
 
 		case sIgnoreUserKnownHosts:
 			intptr = &options->ignore_user_known_hosts;

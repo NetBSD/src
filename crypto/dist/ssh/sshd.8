@@ -1,6 +1,6 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: sshd.8,v 1.1.1.1 2000/09/28 22:10:39 thorpej Exp $
+.\" $NetBSD: sshd.8,v 1.2 2000/10/03 09:56:38 lukem Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 25, 2000
+.Dd October 3, 2000
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -347,13 +347,27 @@ Specifies that
 .Pa .rhosts
 and
 .Pa .shosts
-files will not be used in authentication.
+files will not be used in authentication for non-root users.
 .Pa /etc/hosts.equiv
 and
 .Pa /etc/shosts.equiv
 are still used.
 The default is
 .Dq yes .
+.It Cm IgnoreRootRhosts
+Specifies that
+.Pa .rhosts
+and
+.Pa .shosts
+files
+will not be used in authentication for root.
+The default is the value of
+.Cm IgnoreRhosts .
+.Pa /etc/hosts.equiv
+and
+.Pa /etc/shosts.equiv
+are never used in authentication for root, irregardless of the setting of
+.Cm IgnoreRootRhosts .
 .It Cm IgnoreUserKnownHosts
 Specifies whether
 .Nm
@@ -892,7 +906,7 @@ not used by rlogin and rshd, so using this permits access using SSH only.
 .It Pa /etc/hosts.equiv
 This file is used during
 .Pa .rhosts
-authentication.
+authentication for non root users.
 In the simplest form, this file contains host names, one per line.
 Users on
 those hosts are permitted to log in without a password, provided they
@@ -929,7 +943,7 @@ Note that this warning also applies to rsh/rlogin.
 This is processed exactly as
 .Pa /etc/hosts.equiv .
 However, this file may be useful in environments that want to run both
-rsh/rlogin and ssh.
+rsh/rlogin and ssh, with separate access control files for each service.
 .It Pa $HOME/.ssh/environment
 This file is read into the environment at login (if it exists).
 It can only contain empty lines, comment lines (that start with
