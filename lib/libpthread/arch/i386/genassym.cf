@@ -1,0 +1,20 @@
+#	$Id: genassym.cf,v 1.1.2.1 2001/03/05 23:52:04 nathanw Exp $
+
+# Copyright
+
+include <ucontext.h>
+include <sys/queue.h>
+include "pthread.h"
+include "pthread_int.h"
+
+define PT_NEXT		offsetof(struct pthread_st, pt_next)
+define PT_STATE		offsetof(struct pthread_st, pt_state)
+define PT_SWITCHTO	offsetof(struct pthread_st, pt_switchto)
+define PT_SWITCHTOUC	offsetof(struct pthread_st, pt_switchtouc)
+define PT_SPINLOCKS	offsetof(struct pthread_st, pt_spinlocks)
+define PT_HELDLOCK	offsetof(struct pthread_st, pt_heldlock)
+define PT_UC		offsetof(struct pthread_st, pt_uc)
+define CONTEXTSIZE	sizeof(ucontext_t)
+
+define PT_STATE_RECYCLABLE	PT_STATE_RECYCLABLE
+

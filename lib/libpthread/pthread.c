@@ -1,0 +1,472 @@
+/* Copyright */
+
+#include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <ucontext.h>
+#include <sys/queue.h>
+
+#include "sched.h"
+#include "pthread.h"
+#include "pthread_int.h"
+
+
+static void	pthread__create_tramp(void *(*start)(void *), void *arg);
+
+static pthread_attr_t pthread_default_attr;
+
+pt_spin_t allqueue_lock;
+struct pt_list_t allqueue;
+
+
+pt_spin_t deadqueue_lock;
+struct pt_list_t deadqueue;
+struct pt_queue_t reidlequeue;
+
+
+extern struct pt_queue_t runqueue;
+extern struct pt_queue_t idlequeue;
+extern pt_spin_t runqueue_lock;
+
+static int started;
+
+#ifdef PTHREAD__DEBUG
+
+int pthread__debug_counters[PTHREADD_NCOUNTERS];
+
+#endif /* PTHREAD_DEBUG */
+
+
+static void
+pthread__start(void)
+{
+	pthread_t first, idle;
+	int ret;
+
+	/* Basic data structure setup */
+	pthread_attr_init(&pthread_default_attr);
+	LIST_INIT(&allqueue);
+	LIST_INIT(&deadqueue);
+	SIMPLEQ_INIT(&reidlequeue);
+	SIMPLEQ_INIT(&runqueue);
+	SIMPLEQ_INIT(&idlequeue);
+
+	/* Create the thread structure corresponding to main() */
+	pthread__initmain(&first);
+	pthread__initthread(first);
+	sigprocmask(0, NULL, &first->pt_sigmask);
+	LIST_INSERT_HEAD(&allqueue, first, pt_allq);
+
+	/* Create idle threads */
+	ret = pthread__stackalloc(&idle);
+	if (ret != 0)
+		err(1, "Couldn't allocate stack for idle thread!");
+	pthread__initthread(idle);
+	LIST_INSERT_HEAD(&allqueue, idle, pt_allq);
+	pthread__sched_idle(first, idle);
+
+	/* Start up the SA subsystem */
+	pthread__sa_start();
+}
+
+/* General-purpose thread data structure sanitization. */
+void
+pthread__initthread(pthread_t t)
+{
+	t->pt_magic = PT_MAGIC;
+	t->pt_type = PT_THREAD_NORMAL;
+	t->pt_state = PT_STATE_RUNNABLE;
+	t->pt_spinlocks = 0;
+	t->pt_next = NULL;
+	t->pt_exitval = NULL;
+	t->pt_flags = 0;
+	t->pt_parent = NULL;
+	t->pt_heldlock = NULL;
+	sigemptyset(&t->pt_siglist);
+	sigemptyset(&t->pt_sigmask);
+	SIMPLEQ_INIT(&t->pt_joiners);
+#ifdef PTHREAD__DEBUG
+	t->blocks = 0;
+	t->preempts = 0;
+	t->rescheds = 0;
+#endif
+}
+
+int
+pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
+	    void *(*startfunc)(void *), void *arg)
+{
+	pthread_t self, newthread;
+	pthread_attr_t nattr;
+	int ret;
+
+	PTHREADD_ADD(PTHREADD_CREATE);
+	assert(thread != NULL);
+
+	/* It's okay to check this without a lock because there can
+         * only be one thread before it becomes true 
+	 */
+	if (started == 0) {
+		started = 1;
+		pthread__start();
+	}
+
+	if (attr == NULL)
+		nattr = pthread_default_attr;
+	else if (((*attr != NULL) && ((*attr)->pta_magic == PT_ATTR_MAGIC)))
+		nattr = *attr;
+	else
+		return EINVAL;
+		
+
+	self = pthread__self();
+
+	/* 1. Set up a stack and allocate space for a pthread_st. */
+	ret = pthread__stackalloc(&newthread);
+	if (ret != 0)
+		return ret;
+		
+	/* 2. Set up state. */
+	pthread__initthread(newthread);
+	newthread->pt_flags = nattr->pta_flags;
+	newthread->pt_sigmask = self->pt_sigmask;
+	
+	/* 3. Set up context. */
+	/* The pt_uc pointer points to a location safely below the
+	 * stack start; this is arranged by pthread__stackalloc().
+	 */
+	_getcontext_u(newthread->pt_uc);
+	newthread->pt_uc->uc_stack = newthread->pt_stack;
+	newthread->pt_uc->uc_link = NULL;
+	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
+	    startfunc, arg);
+
+	/* 4. Add to queues. */
+	pthread_spinlock(self, &allqueue_lock);
+	LIST_INSERT_HEAD(&allqueue, newthread, pt_allq);
+	pthread_spinunlock(self, &allqueue_lock);
+
+	pthread__sched(self, newthread);
+	
+	*thread = newthread;
+
+	return 0;
+}
+
+static void
+pthread__create_tramp(void *(*start)(void *), void *arg)
+{
+	void *retval;
+
+	retval = start(arg);
+
+	pthread_exit(retval);
+
+	/* NOTREACHED */
+}
+
+
+/*
+ * Other threads will switch to the idle thread so that they
+ * can dispose of any awkward locks or recycle upcall state.
+ */
+void
+pthread__idle(void)
+{
+	pthread_t self;
+
+	PTHREADD_ADD(PTHREADD_IDLE);
+	self = pthread__self();
+
+	/* The drill here is that we want to yield the processor, 
+	 * but for the thread itself to be recovered, we need to be on
+	 * a list somewhere for the thread system to know about us. 
+	 */
+	pthread_spinlock(self, &deadqueue_lock);
+	SIMPLEQ_INSERT_TAIL(&reidlequeue, self, pt_runq);
+	self->pt_flags |= PT_FLAG_IDLED;
+	pthread_spinunlock(self, &deadqueue_lock);
+
+	/*
+	 * If we get to run this, then no preemption has happened
+	 * (because the upcall handler will not contiune an idle thread with
+	 * PT_FLAG_IDLED set), and so we can yield the processor safely.
+	 */
+         sa_yield();
+}
+
+
+void
+pthread_exit(void *retval)
+{
+	pthread_t self, joiner;
+
+	self = pthread__self();
+	
+	self->pt_exitval = retval;
+
+	pthread_spinlock(self, &self->pt_join_lock);
+	if (self->pt_flags & PT_FLAG_DETACHED) {
+		pthread_spinunlock(self, &self->pt_join_lock);
+
+		pthread_spinlock(self, &allqueue_lock);
+		LIST_REMOVE(self, pt_allq);
+		pthread_spinunlock(self, &allqueue_lock); 
+
+		self->pt_state = PT_STATE_DEAD;
+		/* Yeah, yeah, doing work while we're dead is tacky. */
+		pthread_spinlock(self, &deadqueue_lock);
+		LIST_INSERT_HEAD(&deadqueue, self, pt_allq);
+		pthread__block(self, &deadqueue_lock);
+	} else {
+		self->pt_state = PT_STATE_ZOMBIE;
+		/* Wake up all the potential joiners. Only one can win.
+		 * (Can you say "Thundering Herd"? I knew you could.)
+		 */
+		SIMPLEQ_FOREACH(joiner, &self->pt_joiners, pt_sleep) 
+		    pthread__sched(self, joiner);
+		pthread__block(self, &self->pt_join_lock);
+	}
+
+
+	/* NOTREACHED */
+	assert(0);
+}
+
+
+int
+pthread_join(pthread_t thread, void **valptr)
+{
+	pthread_t self;
+
+	if ((thread == NULL) || (thread->pt_magic != PT_MAGIC))
+		return EINVAL;
+	
+	self = pthread__self();
+	pthread_spinlock(self, &thread->pt_join_lock);
+
+	if (thread->pt_flags & PT_FLAG_DETACHED) {
+		pthread_spinunlock(self, &thread->pt_join_lock);
+		return EINVAL;
+	}
+
+	if ((thread->pt_state != PT_STATE_ZOMBIE) &&
+	    (thread->pt_state != PT_STATE_DEAD)) {
+		/*
+		 * "I'm not dead yet!"
+		 * "You will be soon enough."
+		 */
+		SIMPLEQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
+
+		self->pt_state = PT_STATE_BLOCKED;
+		pthread__block(self, &thread->pt_join_lock);
+
+		pthread_spinlock(self, &thread->pt_join_lock);
+	}
+	
+	if ((thread->pt_state == PT_STATE_DEAD) ||
+	    (thread->pt_flags & PT_FLAG_DETACHED)) {
+		/* Someone beat us to the join, or called pthread_detach(). */
+		pthread_spinunlock(self, &thread->pt_join_lock);
+		return ESRCH;
+	}
+
+	/* All ours. */
+	thread->pt_state = PT_STATE_DEAD;
+	pthread_spinunlock(self, &self->pt_join_lock);
+
+	if (valptr != NULL)
+		*valptr = thread->pt_exitval;
+
+	/* Cleanup time. Move the dead thread from allqueue to the deadqueue */
+	pthread_spinlock(self, &allqueue_lock);
+	LIST_REMOVE(thread, pt_allq);
+	pthread_spinunlock(self, &allqueue_lock);
+
+	pthread_spinlock(self, &deadqueue_lock);
+	LIST_INSERT_HEAD(&deadqueue, thread, pt_allq);
+	pthread_spinunlock(self, &deadqueue_lock);
+
+	return 0;
+}
+
+
+int
+pthread_equal(pthread_t t1, pthread_t t2)
+{
+
+	/* Nothing special here. */
+	return (t1 == t2);
+}
+
+int
+pthread_detach(pthread_t thread)
+{
+	pthread_t self, joiner;
+
+	if ((thread == NULL) || (thread->pt_magic != PT_MAGIC))
+		return EINVAL;
+
+	self = pthread__self();
+	pthread_spinlock(self, &thread->pt_join_lock);
+	
+	if (thread->pt_flags & PT_FLAG_DETACHED) {
+		pthread_spinunlock(self, &thread->pt_join_lock);
+		return EINVAL;
+	}
+
+	thread->pt_flags |= PT_FLAG_DETACHED;
+
+	/* Any joiners have to be punted now. */
+	SIMPLEQ_FOREACH(joiner, &thread->pt_joiners, pt_sleep) 
+	    pthread__sched(self, joiner);
+
+	pthread_spinunlock(self, &thread->pt_join_lock);
+
+	return 0;
+}
+
+int
+sched_yield(void)
+{
+	/* XXX implement me */
+	return 0;
+}
+
+
+
+int
+pthread_attr_init(pthread_attr_t *attr)
+{
+	pthread_attr_t newattr;
+
+	assert(attr != NULL);
+
+	/* Allocate. */
+	newattr = pthread__malloc(sizeof(struct pthread_attr_st));
+	if (newattr == NULL)
+		return ENOMEM;
+
+	newattr->pta_magic = PT_ATTR_MAGIC;
+	newattr->pta_flags = 0;
+
+	*attr = newattr;
+
+	return 0;
+}
+
+
+int
+pthread_attr_destroy(pthread_attr_t *attr)
+{
+
+	if ((attr == NULL) || (*attr == NULL) ||
+	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+
+	(*attr)->pta_magic = PT_ATTR_DEAD;
+	pthread__free(*attr);
+
+	return 0;
+}
+
+
+int
+pthread_attr_getdetachstate(pthread_attr_t *attr, int *detachstate)
+{
+
+	if ((attr == NULL) || (*attr == NULL) ||
+	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+
+	*detachstate = ((*attr)->pta_flags & PT_FLAG_DETACHED);
+
+	return 0;
+}
+
+
+int
+pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
+{
+	if ((attr == NULL) || (*attr == NULL) ||
+	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+	
+	switch (detachstate) {
+	case PTHREAD_CREATE_JOINABLE:
+		(*attr)->pta_flags &= ~PT_FLAG_DETACHED;
+		break;
+	case PTHREAD_CREATE_DETACHED:
+		(*attr)->pta_flags |= PT_FLAG_DETACHED;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+
+int
+pthread_attr_setschedparam(pthread_attr_t *attr, 
+    const struct sched_param *param)
+{
+
+	if ((attr == NULL) || (*attr == NULL) ||
+	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+	
+	if (param == NULL)
+		return EINVAL;
+
+	if (param->sched_priority != 0)
+		return EINVAL;
+
+	return 0;
+}
+
+
+int
+pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
+{
+
+	if ((attr == NULL) || (*attr == NULL) ||
+	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+		return EINVAL;
+	
+	if (param == NULL)
+		return EINVAL;
+	
+	param->sched_priority = 0;
+
+	return 0;
+}
+
+
+
+void *
+pthread__malloc(size_t size)
+{
+	/* XXX locking */
+	return malloc(size);
+}
+
+
+void
+pthread__free(void *ptr)
+{
+	/* XXX locking */
+	free(ptr);
+}
+
+/* XXX There should be a way for applications to use the efficent
+ *  inline version, but there are opacity/namespace issues. 
+ */
+
+pthread_t
+pthread_self(void)
+{
+	return pthread__self();
+}
