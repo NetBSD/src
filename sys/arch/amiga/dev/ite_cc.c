@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.22 1995/02/16 21:57:42 chopps Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.23 1995/03/02 04:42:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -755,19 +755,20 @@ cc_putc_func *put_func[ATTR_ALL+1] = {
         be output is not available in the font? -ch */
 
 static void
-putc8(struct ite_softc *ip, int c, int dy, int dx, int mode)
+putc8(ip, c, dy, dx, mode)
+	struct ite_softc *ip;
+	int c, dy, dx, mode;
 {
-    register ipriv_t *cci = (ipriv_t *) ip->priv;
-    if (c < ip->font_lo || c > ip->font_hi)
-	return;
-
-    put_func[mode](cci,
-		   cci->row_ptr[dy],
-		   cci->font_cell[c],
-		   cci->column_offset[dx],
-		   cci->row_offset,
-		   cci->ft_x,
-		   cci->ft_y);
+	ipriv_t *cci = (ipriv_t *) ip->priv;
+	/*
+	 * if character is higher than font has glyphs, substitute
+	 * highest glyph.
+	 */
+	c = (u_char)c;
+	if (c < ip->font_lo || c > ip->font_hi)
+		c = ip->font_hi;
+	put_func[mode](cci, cci->row_ptr[dy], cci->font_cell[c],
+	    cci->column_offset[dx], cci->row_offset, cci->ft_x, cci->ft_y);
 }
 
 static void
