@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.334 1999/01/09 22:10:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.335 1999/01/16 20:30:34 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -280,9 +280,6 @@ vm_map_t buffer_map;
 extern	int biosbasemem, biosextmem;
 extern	paddr_t avail_start, avail_end;
 extern	paddr_t hole_start, hole_end;
-#if !defined(MACHINE_NEW_NONCONTIG)
-static	paddr_t avail_next;
-#endif
 
 /*
  * Extent maps to manage I/O and ISA memory hole space.  Allocate
@@ -1895,13 +1892,6 @@ init386(first_avail)
 	/* Call pmap initialization to make new kernel address space. */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-	/*
-	 * Initialize for pmap_free_pages and pmap_next_page.
-	 */
-	avail_next = avail_start;
-#endif
-
 #if NBIOSCALL > 0
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG, VM_PROT_ALL, TRUE);
@@ -2140,47 +2130,6 @@ cpu_exec_aout_makecmds(p, epp)
 
 	return error;
 }
-
-#if !defined(MACHINE_NEW_NONCONTIG)
-u_int
-pmap_free_pages()
-{
-
-	if (avail_next <= hole_start)
-		return ((hole_start - avail_next) / NBPG +
-			(avail_end - hole_end) / NBPG);
-	else
-		return ((avail_end - avail_next) / NBPG);
-}
-
-int
-pmap_next_page(addrp)
-	vaddr_t *addrp;
-{
-
-	if (avail_next + NBPG > avail_end)
-		return FALSE;
-
-	if (avail_next + NBPG > hole_start && avail_next < hole_end)
-		avail_next = hole_end;
-
-	*addrp = avail_next;
-	avail_next += NBPG;
-	return TRUE;
-}
-
-int
-pmap_page_index(pa)
-	paddr_t pa;
-{
-
-	if (pa >= avail_start && pa < hole_start)
-		return i386_btop(pa - avail_start);
-	if (pa >= hole_end && pa < avail_end)
-		return i386_btop(pa - hole_end + hole_start - avail_start);
-	return -1;
-}
-#endif
 
 void *
 lookup_bootinfo(type)
