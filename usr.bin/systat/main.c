@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1995/04/29 05:54:42 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1995/05/06 06:25:07 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1995/04/29 05:54:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1995/05/06 06:25:07 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,12 @@ main(argc, argv)
 	 * an overlapping sub-window of stdscr configured by the display
 	 * routines to minimize update work by curses.
 	 */
-	initscr();
+	if (initscr() == NULL)
+	{
+		warnx("couldn't initialize screen");
+		exit(0);
+	}
+
 	CMDLINE = LINES - 1;
 	wnd = (*curcmd->c_open)();
 	if (wnd == NULL) {
