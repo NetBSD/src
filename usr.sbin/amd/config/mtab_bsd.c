@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: mtab_bsd.c,v 1.1 1993/11/27 21:18:49 mycroft Exp $
+ * $Id: mtab_bsd.c,v 1.2 1994/04/14 03:21:32 cgd Exp $
  *
  */
 
@@ -55,12 +55,23 @@ struct statfs *mp;
 
 	new_mp->mnt_fsname = strdup(mp->f_mntfromname);
 	new_mp->mnt_dir = strdup(mp->f_mntonname);
+#ifndef __NetBSD__
 	switch (mp->f_type) {
 	case MOUNT_UFS:  ty = MTAB_TYPE_UFS; break;
 	case MOUNT_NFS:  ty = MTAB_TYPE_NFS; break;
 	case MOUNT_MFS:  ty = MTAB_TYPE_MFS; break;
 	default:  ty = "unknown"; break;
 	}
+#else
+	if (strncmp(mp->f_fstypename, MOUNT_UFS, MFSNAMELEN) == 0)
+		ty = MTAB_TYPE_UFS;
+	else if (strncmp(mp->f_fstypename, MOUNT_NFS, MFSNAMELEN) == 0)
+		ty = MTAB_TYPE_NFS;
+	else if (strncmp(mp->f_fstypename, MOUNT_MFS, MFSNAMELEN) == 0)
+		ty = MTAB_TYPE_MFS;
+	else
+		ty = "unknown";
+#endif
 	new_mp->mnt_type = strdup(ty);
 	new_mp->mnt_opts = strdup("unset");
 	new_mp->mnt_freq = 0;
