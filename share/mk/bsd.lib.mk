@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.129 1998/04/09 00:32:36 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.130 1998/04/09 00:51:06 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -176,11 +176,14 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+.if !defined(NOSTATICLIB) || defined(NOPIC)
+_LIBS=lib${LIB}.a
+.else
+_LIBS=
+.endif
 
 .if !defined(NOPROFILE)
-_LIBS=lib${LIB}.a lib${LIB}_p.a
-.else
-_LIBS=lib${LIB}.a
+_LIBS+=lib${LIB}_p.a
 .endif
 
 .if !defined(NOPIC)
@@ -257,6 +260,7 @@ afterdepend: .depend
 .endif
 
 .if !target(libinstall)
+.if !defined(NOSTATICLIB) || defined(NOPIC)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
@@ -267,6 +271,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 
 .PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
+.endif
 
 .if !defined(NOPROFILE)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
@@ -281,7 +286,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
-.if !defined(NOPIC)
+.if !defined(NOPIC) && !defined(NOPICINSTALL)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
