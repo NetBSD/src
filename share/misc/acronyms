@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.68 2000/09/10 20:49:20 wiz Exp $
+$NetBSD: acronyms,v 1.69 2000/10/10 14:19:34 ad Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -30,7 +30,7 @@ EG	evil grin
 EMSG	email message
 ETLA	extended three letter acronym
 FAQ	frequently asked question
-FIIK	fuck if I know
+FIIK	fuck[ed] if I know
 FOAD	fall over and die
 FSDO	for some definition of
 FUBAR	fucked up beyond all recognition
@@ -56,6 +56,7 @@ IRL	in real life
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
+JIC	just in case
 JK	just kidding
 JMO	just my opinion
 JTLYK	just to let you know
@@ -93,10 +94,10 @@ RL	real life
 ROTFL	rolling on the floor laughing
 RP	responsible person
 RSN	real soon now
-RTFB	read the fine book
-RTFM	read the fine manual
-RTFMP	read the fine man page
-RTFS	read the fine source
+RTFB	read the fine/fucking book
+RTFM	read the fine/fucking manual
+RTFMP	read the fine/fucking man page
+RTFS	read the fine/fucking source
 SCNR	sorry, could not resist
 SEP	someone else's problem
 SFA	sweet fuck all
