@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1996/01/19 13:46:56 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 1996/04/18 08:52:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,4 +200,123 @@ extern int machineid, mmutype, cpu040, fputype;
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
+#ifdef _KERNEL
+/*
+ * Prototypes from atari_init.c
+ */
+int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+int	cpu_dumpsize __P((void));
+
+/*
+ * Prototypes from autoconf.c
+ */
+void	configure __P((void));
+void	config_console __P((void));
+
+/*
+ * Prototypes from clock.c
+ */
+long	clkread __P((void));
+
+/*
+ * Prototypes from disksubr.c
+ */
+struct buf;
+struct disklabel;
+int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
+
+/*
+ * Prototypes from fpu.c
+ */
+char	*fpu_describe __P((int));
+int	fpu_probe __P((void));
+
+
+/*
+ * Prototypes from grfabs.c
+ */
+int	grfabs_probe __P((void));
+
+
+/*
+ * Prototypes from vm_machdep.c
+ */
+int		badbaddr __P((caddr_t));
+void		consinit __P((void));
+void		cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+void		dumpconf __P((void));
+vm_offset_t	kvtop __P((caddr_t));
+void		physaccess __P((caddr_t, caddr_t, int, int));
+void		physunaccess __P((caddr_t, int));
+void		setredzone __P((u_int *, caddr_t));
+
+/*
+ * Prototypes from locore.s
+ */
+struct fpframe;
+struct user;
+struct pcb;
+
+void	clearseg __P((vm_offset_t));
+void	doboot __P((void));
+u_long	getdfc __P((void));
+u_long	getsfc __P((void));
+void	loadustp __P((int));
+void	m68881_save __P((struct fpframe *));
+void	m68881_restore __P((struct fpframe *));
+void	physcopyseg __P((vm_offset_t, vm_offset_t));
+u_int	probeva __P((u_int, u_int));
+void	proc_trampoline __P((void));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	DCIS __P((void));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+
+/*
+ * Prototypes from machdep.c:
+ */
+typedef void (*si_farg)(void *, void *);	/* XXX */
+void	add_sicallback __P((si_farg, void *, void *));
+void	rem_sicallback __P((si_farg));
+struct frame;
+void	regdump __P((struct frame *, int));
+void	boot __P((int));
+void	cpu_startup __P((void));
+void	dumpsys __P((void));
+vm_offset_t reserve_dumppages __P((vm_offset_t));
+void	softint __P((void));
+
+
+/*
+ * Prototypes from nvram.c:
+ */
+struct uio;
+int	nvram_uio __P((struct uio *));
+
+/*
+ * Prototypes from sys_machdep.c:
+ */
+int	cachectl __P((int, caddr_t, int));
+int	dma_cachectl __P((caddr_t, int));
+
+/*
+ * Prototypes from swapgeneric.c:
+ */
+void	setconf __P((void));
+
+/*
+ * Prototypes from trap.c:
+ */
+#ifdef _MACHINE_FRAME_H_ /* XXX: We don't want to include this everywhere */
+void  child_return __P((struct proc *, struct frame));
+#endif
+
+#endif /* _KERNEL */
 #endif /* !_MACHINE_CPU_H_ */

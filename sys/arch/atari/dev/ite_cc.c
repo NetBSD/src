@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.5 1996/02/22 10:11:29 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.6 1996/04/18 08:52:02 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -146,7 +146,7 @@ register struct ite_softc *ip;
 	struct itewinsize	wsz;
 	ipriv_t			*cci;
 
-	if(cci = ip->priv)
+	if((cci = ip->priv) != NULL)
 		return;
 
 #if defined(KFONT_8X8)
@@ -202,7 +202,8 @@ struct itewinsize	*winsz;
 	vs.height = winsz->height;
 	vs.depth  = winsz->depth;
 
-	error = viewioctl(ip->grf->g_viewdev, VIOCSSIZE, &vs, 0, -1);
+	error = viewioctl(ip->grf->g_viewdev, VIOCSSIZE, (caddr_t)&vs, 0,
+								NOPROC);
 	view  = viewview(ip->grf->g_viewdev);
 
 	/*
@@ -347,10 +348,11 @@ struct proc		*p;
 	case VIOCSCMAP:
 	case VIOCGCMAP:
 		/*
-		 * XXX watchout for that -1 its not really the kernel talking
-		 * XXX these two commands don't use the proc pointer though
+		 * XXX watchout for that NOPROC. its not really the kernel
+		 * XXX talking these two commands don't use the proc pointer
+		 * XXX though.
 		 */
-		error = viewioctl(ip->grf->g_viewdev, cmd, addr, flag, -1);
+		error = viewioctl(ip->grf->g_viewdev, cmd, addr, flag, NOPROC);
 		break;
 	default:
 		error = -1;
