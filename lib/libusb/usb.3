@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.9 1999/11/08 22:33:40 augustss Exp $
+.\"	$NetBSD: usb.3,v 1.10 2000/02/22 12:39:22 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -75,7 +75,7 @@ The
 .Nm
 library provides routines to extract data from USB Human Interface Devices.
 .Ss INTRODUCTION
-USB HID devices send and receive data layed out a device dependent
+USB HID devices send and receive data layed out in a device dependent
 way.  The
 .Nm
 library contains routines to extract the
@@ -102,7 +102,7 @@ To parse the report descriptor the
 .Fn hid_start_parse
 function should be called with a report descriptor and a set that
 describes which items that are interesting.  The set is obtained
-by oring together values
+by or-ing together values
 .Fa "(1 << k)"
 where
 .Fa k
