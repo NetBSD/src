@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.7 2005/02/21 15:00:05 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.8 2005/03/25 18:07:09 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -50,7 +50,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.82 2004/11/24 18:56:04 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.7 2005/02/21 15:00:05 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.8 2005/03/25 18:07:09 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1231,7 +1231,7 @@ bs1(struct magic *m)
 	m->cont_level = swap2(m->cont_level);
 	m->offset = swap4((uint32_t)m->offset);
 	m->in_offset = swap4((uint32_t)m->in_offset);
-	if (IS_STRING(m->type))
+	if (!IS_STRING(m->type))
 		m->value.l = swap4(m->value.l);
 	m->mask = swap4(m->mask);
 }
