@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/05/22 15:33:13 matt Exp $
+#	$NetBSD: Makefile,v 1.9 2000/06/11 23:30:35 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -28,6 +28,12 @@ LIBZ=	${ZLIB}
 KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
+
+.BEGIN:
+	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
+	@[ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+.NOPATH: machine ${MACHINE_ARCH}
+CLEANFILES+= machine ${MACHINE_ARCH}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	ld -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \
