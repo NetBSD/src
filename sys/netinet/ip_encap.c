@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.14 2003/10/25 18:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.15 2003/10/28 20:27:22 mycroft Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -755,35 +755,33 @@ encap6_ctlinput(cmd, sa, d0)
 		cmdarg = ip6cp->ip6c_cmdarg;
 		sa6_src = ip6cp->ip6c_src;
 		nxt = ip6cp->ip6c_nxt;
+
+		if (ip6 && cmd == PRC_MSGSIZE) {
+			int valid = 0;
+			struct encaptab *match;
+
+			/*
+		 	* Check to see if we have a valid encap configuration.
+		 	*/
+			match = encap6_lookup(m, off, nxt, OUTBOUND);
+			if (match)
+				valid++;
+
+			/*
+		 	* Depending on the value of "valid" and routing table
+		 	* size (mtudisc_{hi,lo}wat), we will:
+		 	* - recalcurate the new MTU and create the
+		 	*   corresponding routing entry, or
+		 	* - ignore the MTU change notification.
+		 	*/
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
+		}
 	} else {
 		m = NULL;
 		ip6 = NULL;
 		cmdarg = NULL;
 		sa6_src = &sa6_any;
 		nxt = -1;
-		off = 0; /* XXX: gcc */
-	}
-
-	if (ip6 && cmd == PRC_MSGSIZE) {
-		int valid = 0;
-		struct encaptab *match;
-
-		/*
-		 * Check to see if we have a valid encap configuration.
-		 */
-		match = encap6_lookup(m, off, nxt, OUTBOUND);
-
-		if (match)
-			valid++;
-
-		/*
-		 * Depending on the value of "valid" and routing table
-		 * size (mtudisc_{hi,lo}wat), we will:
-		 * - recalcurate the new MTU and create the
-		 *   corresponding routing entry, or
-		 * - ignore the MTU change notification.
-		 */
-		icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 	}
 
 	/* inform all listeners */
