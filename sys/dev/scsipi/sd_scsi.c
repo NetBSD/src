@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.4 1998/08/12 22:15:57 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.5 1998/08/15 01:10:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -98,12 +98,12 @@ static int	sd_scsibus_get_parms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_get_optparms __P((struct sd_softc *,
 		    struct disk_parms *, int));
+static void	sd_scsibus_flush __P((struct sd_softc *, int));
 
 const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
+	sd_scsibus_flush,
 };
-
-static void	sd_scsibus_shutdown __P((void *));
 
 int
 sd_scsibus_match(parent, match, aux)
@@ -141,7 +141,7 @@ sd_scsibus_attach(parent, self, aux)
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("sd_scsibus_attach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
@@ -153,19 +153,6 @@ sd_scsibus_attach(parent, self, aux)
 		sd->flags |= SDF_ANCIENT;
 
 	sdattach(parent, sd, sc_link, &sd_scsibus_ops);
-
-	/*
-	 * Establish a shutdown hook so that we can ensure that
-	 * our data has actually made it onto the platter at
-	 * shutdown time.  Note that this relies on the fact
-	 * that the shutdown hook code puts us at the head of
-	 * the list (thus guaranteeing that our hook runs before
-	 * our ancestors').
-	 */
-	if ((sd->sc_sdhook =
-	    shutdownhook_establish(sd_scsibus_shutdown, sd)) == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sd->sc_dev.dv_xname);
 }
 
 static int
@@ -344,10 +331,10 @@ fake_it:
 }
 
 static void
-sd_scsibus_shutdown(arg)
-	void *arg;
+sd_scsibus_flush(sd, flags)
+	struct sd_softc *sd;
+	int flags;
 {
-	struct sd_softc *sd = arg;
 	struct scsipi_link *sc_link = sd->sc_link;
 	struct scsi_synchronize_cache sync_cmd;
 
@@ -369,8 +356,10 @@ sd_scsibus_shutdown(arg)
 		if (scsipi_command(sc_link,
 		    (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
 		    NULL, 0, SDRETRIES, 100000, NULL,
-		    SCSI_AUTOCONF|SCSI_IGNORE_ILLEGAL_REQUEST))
+		    flags|SCSI_IGNORE_ILLEGAL_REQUEST))
 			printf("%s: WARNING: cache synchronization failed\n",
 			    sd->sc_dev.dv_xname);
+		else
+			sd->flags |= SDF_FLUSHING;
 	}
 }
