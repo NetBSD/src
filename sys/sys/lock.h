@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14.2.1 1998/11/09 06:06:35 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.14.2.2 1999/02/25 03:59:34 chs Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -65,6 +65,12 @@ struct simplelock {
 	unsigned long lock_holder;		/* CPU ID */
 #endif
 };
+
+#ifdef LOCKDEBUG
+#define SLOCK_UNLOCKED	0
+#define SLOCK_LOCKED	1
+#endif
+
 #if defined(UVM) /* XXXCDC: kill typedefs later? */
 typedef struct simplelock       simple_lock_data_t;
 typedef struct simplelock       *simple_lock_t;
