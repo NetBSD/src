@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.13.2.1 1998/11/09 06:06:39 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.13.2.2 1999/02/25 04:23:54 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -38,7 +38,6 @@
  * from: Id: uvm_pager.c,v 1.1.2.23 1998/02/02 20:38:06 chuck Exp
  */
 
-#include "opt_uvmhist.h"
 #include "opt_pmap_new.h"
 
 /*
@@ -49,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -56,6 +56,8 @@
 
 #define UVM_PAGER
 #include <uvm/uvm.h>
+
+struct pool *uvm_aiobuf_pool;
 
 /*
  * list of uvm pagers in the system
@@ -100,16 +102,19 @@ uvm_pager_init()
 	 * init pager map
 	 */
 
-	 pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
-	 			PAGER_MAP_SIZE, FALSE, FALSE, NULL);
-	 simple_lock_init(&pager_map_wanted_lock);
-	 pager_map_wanted = FALSE;
+	pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
+				    PAGER_MAP_SIZE, FALSE, FALSE, NULL);
+	simple_lock_init(&pager_map_wanted_lock);
+	pager_map_wanted = FALSE;
 
 	/*
 	 * init ASYNC I/O queue
 	 */
 	
 	TAILQ_INIT(&uvm.aio_done);
+	uvm_aiobuf_pool = pool_create(sizeof(struct uvm_aiobuf),
+				      0, 0, 0, "aiobuf", 0, NULL, NULL, 0);
+
 
 	/*
 	 * call pager init functions
@@ -272,7 +277,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 {
 	struct vm_page **ppsp, *pclust;
 	vaddr_t lo, hi, curoff;
-	int center_idx, forward;
+	int center_idx, forward, incr;
 	UVMHIST_FUNC("uvm_mk_pcluster"); UVMHIST_CALLED(maphist);
 
 	/* 
@@ -312,7 +317,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	pps[center_idx] = center;	/* plug in the center page */
 	ppsp = &pps[center_idx];
 	*npages = 1;
-	
+
 	/*
 	 * attempt to cluster around the left [backward], and then 
 	 * the right side [forward].    
@@ -324,21 +329,23 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	 */
 
 	for (forward  = 0 ; forward <= 1 ; forward++) {
-
-		curoff = center->offset + PAGE_SIZE * (forward) ? 1 : -1;
+		incr = forward ? PAGE_SIZE : -PAGE_SIZE;
+		curoff = center->offset + incr;
 		for ( ;(forward == 0 && curoff >= lo) ||
 		       (forward && curoff < hi);
-		      curoff += (forward ? 1 : -1) << PAGE_SHIFT) {
+		      curoff += incr) {
 
 			pclust = uvm_pagelookup(uobj, curoff); /* lookup page */
-			if (pclust == NULL)
+			if (pclust == NULL) {
 				break;			/* no page */
+			}
 			/* handle active pages */
 			/* NOTE: inactive pages don't have pmap mappings */
 			if ((pclust->pqflags & PQ_INACTIVE) == 0) {
-				if ((flags & PGO_DOACTCLUST) == 0)
+				if ((flags & PGO_DOACTCLUST) == 0) {
 					/* dont want mapped pages at all */
 					break;
+				}
 
 				/* make sure "clean" bit is sync'd */
 				if ((pclust->flags & PG_CLEANCHK) == 0) {
@@ -350,13 +357,25 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 					pclust->flags |= PG_CLEANCHK;
 				}
 			}
+
 			/* is page available for cleaning and does it need it */
-			if ((pclust->flags & (PG_CLEAN|PG_BUSY)) != 0)
+			if ((pclust->flags & (PG_CLEAN|PG_BUSY)) != 0) {
 				break;	/* page is already clean or is busy */
+			}
+
+#ifdef UBC
+			/* XXX assumes blkno in units of DEV_BSIZE */
+			/* check physical adjacency too */
+			if (pclust->blkno != center->blkno +
+			    ((pclust->offset - center->offset) >> DEV_BSHIFT)) {
+				break;
+			}
+#endif
 
 			/* yes!   enroll the page in our array */
 			pclust->flags |= PG_BUSY;		/* busy! */
 			UVM_PAGE_OWN(pclust, "uvm_mk_pcluster");
+
 			/* XXX: protect wired page?   see above comment. */
 			pmap_page_protect(PMAP_PGARG(pclust), VM_PROT_READ);
 			if (!forward) {
@@ -366,7 +385,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 				/* move forward one page */
 				ppsp[*npages] = pclust;
 			}
-			*npages = *npages + 1;
+			(*npages)++;
 		}
 	}
 	
@@ -459,7 +478,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;	/* IN, IN */
+	vaddr_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;
@@ -485,7 +504,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 		} else {
 			ppsp[0] = pg;
 			*npages = 1;
-		 }
+		}
 					  
 		swblk = 0;		/* XXX: keep gcc happy */
 
@@ -514,10 +533,10 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 ReTry:
 	if (uobj) {
 		/* object is locked */
-		simple_lock_assert(&uobj->vmobjlock, 1);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
 		/* object is now unlocked */
-		simple_lock_assert(&uobj->vmobjlock, 0);
+		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 	} else {
 		/* nothing locked */
 /* XXX should we pass more than just PGO_SYNCIO here too? */
@@ -552,6 +571,15 @@ ReTry:
 				    PGO_PDFREECLUST, 0);
 			/* if (uobj): object still locked, as per
 			 * return-state item #3 */
+		}
+		if (result == VM_PAGER_PEND) {
+			/* XXX uvmexp.paging needs spinlock */
+			/*
+			 * XXX also, uvmexp.paging could briefly be negative
+			 * if the iodone handler runs before we bump the
+			 * counter here.
+			 */
+			uvmexp.paging += *npages;
 		}
 		return (result);
 	}
@@ -601,14 +629,14 @@ ReTry:
  */
 
 
-void uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
-
-struct uvm_object *uobj;	/* IN */
-struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
-int *npages;			/* IN/OUT */
-int flags;
-int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
-
+void
+uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
+	struct uvm_object *uobj;	/* IN */
+	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
+	int *npages;			/* IN/OUT */
+	int flags;
+	int swblk;			/* valid if (uobj == NULL &&
+					   PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 
@@ -636,7 +664,8 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 
 	for (lcv = 0 ; lcv < *npages ; lcv++) {
 
-		if (ppsp[lcv] == pg)		/* skip "pg" */
+		/* skip "pg" or empty slot */
+		if (ppsp[lcv] == pg || ppsp[lcv] == NULL)
 			continue;
 	
 		/*
@@ -663,9 +692,10 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 		}
 
 		/* did someone want the page while we had it busy-locked? */
-		if (ppsp[lcv]->flags & PG_WANTED)
+		if (ppsp[lcv]->flags & PG_WANTED) {
 			/* still holding obj lock */
-			thread_wakeup(ppsp[lcv]);
+			wakeup(ppsp[lcv]);
+		}
 
 		/* if page was released, release it.  otherwise un-busy it */
 		if (ppsp[lcv]->flags & PG_RELEASED) {
@@ -770,4 +800,57 @@ int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
 			}
 		}
 	}
+}
+
+void
+uvm_aio_biodone(bp)
+	struct buf *bp;
+{
+	struct uvm_aiobuf *abp = (void *)bp;
+	int s;
+
+	s = splbio();
+	simple_lock(&uvm.pagedaemon_lock);	/* locks uvm.aio_done */
+	TAILQ_INSERT_TAIL(&uvm.aio_done, &abp->aio, aioq);
+	wakeup(&uvm.pagedaemon);
+	simple_unlock(&uvm.pagedaemon_lock);
+	splx(s);
+}
+
+void
+uvm_aio_aiodone(aio)
+	struct uvm_aiodesc *aio;
+{
+	struct uvm_aiobuf *abp = aio->pd_ptr;
+	struct vm_page *pgs[aio->npages];
+	struct uvm_object *uobj;
+	struct vnode *vp;
+	int s, i;
+
+	for (i = 0; i < aio->npages; i++) {
+		pgs[i] = uvm_pageratop(aio->kva + (i << PAGE_SHIFT));
+	}
+	uvm_pagermapout(aio->kva, aio->npages);
+
+	uobj = pgs[0]->uobject;
+	vp = (struct vnode *)uobj;
+
+	/* XXX why don't we need to do this? */
+#if 0
+	vp->v_numoutput--;
+	if (vp->v_flag & VBWAIT && vp->v_numoutput == 0) {
+		vp->v_flag &= ~VBWAIT;
+		wakeup(&vp->v_numoutput);
+	}
+	if (vp->v_numoutput < 0) {
+		panic("uvn_aiodone: neg numoutput vp %p", vp);
+	}
+#endif
+
+	uvm_pager_dropcluster(uobj, NULL, pgs, &aio->npages,
+			      PGO_PDFREECLUST, 0);
+
+	s = splbio();
+	pool_put(uvm_aiobuf_pool, abp);
+	splx(s);
 }
