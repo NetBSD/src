@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_procfs.c,v 1.6 1995/03/18 14:58:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1992, 1993 Jan-Simon Pendry
  * Copyright (c) 1992, 1993, 1994
@@ -42,8 +44,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_procfs.c,v 1.5 1994/06/08 19:25:36 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
+#else
+static char rcsid[] = "$NetBSD: mount_procfs.c,v 1.6 1995/03/18 14:58:11 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

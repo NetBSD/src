@@ -1,3 +1,5 @@
+/*	$NetBSD: portald.h,v 1.3 1995/03/18 14:58:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: portald.h,v 1.1 1992/05/25 21:43:09 jsp Exp
- *	from: @(#)portald.h	8.1 (Berkeley) 6/5/93
- *	$Id: portald.h,v 1.2 1994/06/08 19:24:52 mycroft Exp $
+ *	@(#)portald.h	8.1 (Berkeley) 6/5/93
  */
 
 #include <sys/cdefs.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: timer.c,v 1.7 1995/03/18 15:00:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)timer.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: timer.c,v 1.6 1994/12/18 05:44:02 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)timer.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: timer.c,v 1.7 1995/03/18 15:00:45 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

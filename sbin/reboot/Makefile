@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.6 (Berkeley) 6/29/90
-#	$Id: Makefile,v 1.5 1994/12/22 10:48:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1995/03/18 14:59:24 cgd Exp $
+#	@(#)Makefile	5.6 (Berkeley) 6/29/90
 
 PROG=	reboot
 DPADD=	${LIBUTIL}
