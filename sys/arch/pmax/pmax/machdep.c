@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 1999/02/01 00:32:18 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 1999/03/15 09:47:36 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 1999/02/01 00:32:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 1999/03/15 09:47:36 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -853,7 +853,13 @@ clkread()
 		extern u_int32_t mips3_cycle_count __P((void));
 		register u_int32_t mips3_cycles =
 		    mips3_cycle_count() - (u_int32_t)latched_cycle_cnt;
+		/* XXX divides take 78 cycles: approximate with * 41/2048  */
+#if 0
 		return (mips3_cycles / cpu_mhz);
+#else
+		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
+		       (mips3_cycles >> 11));
+#endif
 	} else
 #endif
 #ifdef DEC_MAXINE
