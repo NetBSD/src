@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/12/22 05:54:41 tsubai Exp $
+#	$NetBSD: Makefile,v 1.5 1999/12/23 01:40:06 tsubai Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -37,6 +37,5 @@ ${PROG}: ${OBJS}
 	tail -c +177 ${PROG} > ${PROG}.tmp
 	mv ${PROG}.tmp ${PROG}
 #	${OBJCOPY} -O binary ${PROG}.elf ${PROG}	# XXX
-	cp boot /tftpboot
 
 .include <bsd.prog.mk>
