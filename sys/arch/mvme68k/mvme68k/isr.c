@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1 1996/04/26 19:26:43 chuck Exp $	*/
+/*	$NetBSD: isr.c,v 1.2 1996/10/10 23:41:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -216,7 +216,7 @@ isrdispatch_autovec(evec)
 
 	list = &isr_autovec[ipl];
 	if (list->lh_first == NULL) {
-		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
+		kprintf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
 		return;
@@ -231,7 +231,7 @@ isrdispatch_autovec(evec)
 	else if (++straycount > 50)
 		panic("isr_dispatch_autovec: too many stray interrupts");
 	else
-		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
+		kprintf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
 }
 
 /*
@@ -257,7 +257,7 @@ isrdispatch_vectored(pc, evec, frame)
 	isr = &isr_vectored[vec - ISRVECTORED];
 
 	if (isr->isr_func == NULL) {
-		printf("isrdispatch_vectored: no handler for vec 0x%x\n", vec);
+		kprintf("isrdispatch_vectored: no handler for vec 0x%x\n", vec);
 		vectab[vec] = badtrap;
 		return;
 	}
@@ -266,7 +266,7 @@ isrdispatch_vectored(pc, evec, frame)
 	 * Handler gets exception frame if argument is NULL.
 	 */
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
-		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
+		kprintf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 }
 
 /*

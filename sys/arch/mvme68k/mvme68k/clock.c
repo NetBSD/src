@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.5 1996/09/12 05:10:44 thorpej Exp $	*/
+/*      $NetBSD: clock.c,v 1.6 1996/10/10 23:41:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,9 +125,9 @@ clock_config(dev, clockregs, nvram, nvramsize, initfunc)
 	evcnt_attach(dev, "statintr", &clock_statcnt);
 
 	/* Print info about the clock. */
-	printf(": Mostek MK48T0%d, %d bytes of NVRAM\n", (nvramsize / 1024),
+	kprintf(": Mostek MK48T0%d, %d bytes of NVRAM\n", (nvramsize / 1024),
 	    nvramsize);
-	printf("%s: delay_divisor %d\n", dev->dv_xname, delay_divisor);
+	kprintf("%s: delay_divisor %d\n", dev->dv_xname, delay_divisor);
 }
 
 /*
@@ -145,14 +145,14 @@ cpu_initclocks()
 		panic("clock not configured");
 
 	if (1000000 % hz) {
-		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
+		kprintf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
 	}
 	if (stathz == 0)
 		stathz = hz;
 	if (1000000 % stathz) {
-		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		kprintf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
 		stathz = 100;
 	}
 	profhz = stathz;	/* always */ 
@@ -316,7 +316,7 @@ inittodr(base)
                  * in stead of preposterous. Don't bark.
                  */
                 if (base != 0)
-                        printf("WARNING: preposterous time in file system\n");
+                        kprintf("WARNING: preposterous time in file system\n");
                 /* not going to use it anyway, if the chip is readable */
                 base = 21*SECYR + 186*SECDAY + SECDAY/2;
                 badbase = 1;
@@ -330,7 +330,7 @@ inittodr(base)
         year = cl->cl_year;
         cl->cl_csr &= ~CLK_READ;        /* time wears on */
         if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
-                printf("WARNING: bad date in battery clock");
+                kprintf("WARNING: bad date in battery clock");
                 /*
                  * Believe the time in the file system for lack of
                  * anything better, resetting the clock.
@@ -345,10 +345,10 @@ inittodr(base)
                         deltat = -deltat;
                 if (waszero || deltat < 2 * SECDAY)
                         return;
-                printf("WARNING: clock %s %d days",
+                kprintf("WARNING: clock %s %d days",
                     time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
         }
-        printf(" -- CHECK AND RESET THE DATE!\n");
+        kprintf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 
