@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 1999/05/20 03:34:06 nisimura Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.17 1999/05/27 01:56:34 nisimura Exp $	*/
 
 /*
  * Mach Operating System
@@ -291,7 +291,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 				i, tlb.tlb_hi,
 				tlb.tlb_lo & MIPS1_PG_FRAME);
 			db_printf(" %c%c%c\n",
-				(tlb.tlb_lo & MIPS1_PG_M) ? 'D' : ' ',
+				(tlb.tlb_lo & MIPS1_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo & MIPS1_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo & MIPS1_PG_N) ? 'N' : ' ');
 		}
@@ -309,12 +309,12 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 				i, tlb.tlb_hi);
 			db_printf("Lo0=0x%08x %c%c attr %x",
 				(unsigned)pfn_to_vad(tlb.tlb_lo0),
-				(tlb.tlb_lo0 & MIPS3_PG_M) ? 'D' : ' ',
+				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo0 >> 3) & 7);
 			db_printf("Lo1=0x%08x %c%c atr %x sz=%x\n",
 				(unsigned)pfn_to_vad(tlb.tlb_lo1),
-				(tlb.tlb_lo1 & MIPS3_PG_M) ? 'D' : ' ',
+				(tlb.tlb_lo1 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo1 >> 3) & 7,
 				tlb.tlb_mask);
