@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/08/04 20:30:10 jtc Exp $
+#	$NetBSD: Makefile,v 1.4 1995/04/23 07:52:55 cgd Exp $
 
 SUBDIR=	uucp
 
