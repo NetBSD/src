@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2004/03/21 10:25:59 aymeric Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2004/03/21 10:34:56 aymeric Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2004/03/21 10:25:59 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2004/03/21 10:34:56 aymeric Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1169,15 +1169,17 @@ pmap_pinit(pmap_t pm)
 		 */
 		pmap_vsidcontext = (pmap_vsidcontext * 0x1105) + entropy;
 		hash = pmap_vsidcontext & (NPMAPS - 1);
-		if (hash == 0)			/* 0 is special, avoid it */
+		if (hash == 0) {		/* 0 is special, avoid it */
+			entropy += 0xbadf00d;
 			continue;
+		}
 		n = hash >> 5;
 		mask = 1L << (hash & (VSID_NBPW-1));
 		hash = pmap_vsidcontext;
 		if (pmap_vsid_bitmap[n] & mask) {	/* collision? */
 			/* anything free in this bucket? */
 			if (~pmap_vsid_bitmap[n] == 0) {
-				entropy = hash >> PTE_VSID_SHFT;
+				entropy = hash ^ (hash >> 16);
 				continue;
 			}
 			i = ffs(~pmap_vsid_bitmap[n]) - 1;
