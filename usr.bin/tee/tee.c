@@ -1,3 +1,5 @@
+/*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,9 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tee.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: tee.c,v 1.4 1994/05/19 04:20:33 mycroft Exp $";
-#endif /* not lint */
+#if 0
+static char sccsid[] = "@(#)tee.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $";
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -94,7 +98,7 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 
-	if ((buf = malloc((u_int)BSIZE)) == NULL)
+	if ((buf = malloc((size_t)BSIZE)) == NULL)
 		err(1, NULL);
 
 	add(STDOUT_FILENO, "stdout");
@@ -142,7 +146,7 @@ add(fd, name)
 {
 	LIST *p;
 
-	if ((p = malloc((u_int)sizeof(LIST))) == NULL)
+	if ((p = malloc((size_t)sizeof(LIST))) == NULL)
 		err(1, NULL);
 	p->fd = fd;
 	p->name = name;
