@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofisa.4,v 1.1 2000/07/26 22:09:45 augustss Exp $
+.\"	$NetBSD: ofisa.4,v 1.2 2000/07/31 11:41:24 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ bus subsystem and several machine-independent
 device drivers.
 The
 .Nm
-bus uses Open Firmware to figure out how to attach the devices.
+bus uses Open Firmware to determine how to attach devices.
 .Pp
 .Sh SUPPORTED DEVICES
 .Nx
@@ -90,9 +90,10 @@ ESS Technology AudioDrive 1788-, 1888-, 1887-, and 888-based sound cards.
 .Ss Miscellaneous devices
 .Bl -tag -width mmmm -offset indent
 .It joy
-games adapter driver
+Game (joystick) adapters.
 .El
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr com 4 ,
 .Xr cs 4 ,
 .Xr ess 4 ,
@@ -101,7 +102,7 @@ games adapter driver
 .Xr lpt 4 ,
 .Xr wdc 4
 .Sh HISTORY
-The Open Formware
+The Open Firmware
 .Tn ISA
 subsystem appeared in
 .Nx 1.4 .
