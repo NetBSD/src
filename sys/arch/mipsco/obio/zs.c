@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2003/01/01 01:49:56 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 2003/01/28 12:35:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ zs_attach(parent, self, aux)
 		ch = &zsc->zsc_cs_store[channel];
 		cs = zsc->zsc_cs[channel] = (struct zs_chanstate *)ch;
 
+		simple_lock_init(&cs->cs_lock);
 		cs->cs_reg_csr = NULL;
 		cs->cs_reg_data = NULL;
 		cs->cs_channel = channel;
