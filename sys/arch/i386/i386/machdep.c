@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.501 2002/12/06 02:38:25 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.502 2002/12/06 05:03:02 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.501 2002/12/06 02:38:25 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.502 2002/12/06 05:03:02 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -345,7 +345,7 @@ static void via_cpu_probe __P((struct cpu_info *));
 static void amd_family6_probe __P((struct cpu_info *));
 
 static void transmeta_cpu_info __P((struct cpu_info *));
-static void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
+static void amd_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -794,7 +794,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			amd_family5_setup,
 			NULL,
-			amd_cpuid_cpu_cacheinfo,
+			amd_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -808,7 +808,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			amd_family6_probe,
-			amd_cpuid_cpu_cacheinfo,
+			amd_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -1595,7 +1595,7 @@ static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
 };
 
 void
-amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
+amd_cpu_cacheinfo(struct cpu_info *ci)
 {
 	const struct i386_cache_info *cp;
 	struct i386_cache_info *cai;
@@ -1605,7 +1605,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 
 	family = (ci->ci_signature >> 8) & 15;
 	if (family < CPU_MINFAMILY)
-		panic("amd_cpuid_cpu_cacheinfo: strange family value");
+		panic("amd_cpu_cacheinfo: strange family value");
 	model = CPUID2MODEL(ci->ci_signature);
 
 	/*
