@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/05/02 04:42:48 ross Exp $
+#	$NetBSD: Makefile,v 1.6 2000/02/01 06:01:19 tsutsui Exp $
 
 MAN=	mbr.8
 
@@ -21,7 +21,7 @@ SRCS=	mbr.S
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
-	${STRIPPROG} ${PROG}.tmp
+	${STRIP} ${PROG}.tmp
 	objcopy -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp
 .endif
