@@ -71,7 +71,9 @@ struct varinit {
 #if ATTY
 struct var vatty;
 #endif
+#ifndef NO_HISTORY
 struct var vhistsize;
+#endif
 struct var vifs;
 struct var vmail;
 struct var vmpath;
@@ -87,7 +89,9 @@ const struct varinit varinit[] = {
 #if ATTY
 	{&vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY="},
 #endif
+#ifndef NO_HISTORY
 	{&vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE="},
+#endif
 	{&vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n"},
 	{&vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL="},
 	{&vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH="},
@@ -239,8 +243,10 @@ setvareq(s, flags)
 			vp->text = s;
 			if (vp == &vmpath || (vp == &vmail && ! mpathset()))
 				chkmail(1);
+#ifndef NO_HISTORY
 			if (vp == &vhistsize)
 				sethistsize();
+#endif
 			INTON;
 			return;
 		}

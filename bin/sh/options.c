@@ -117,7 +117,9 @@ procargs(argc, argv)
 
 optschanged() {
 	setinteractive(iflag);
+#ifndef NO_HISTORY
 	histedit();
+#endif
 	setjobctl(mflag);
 }
 

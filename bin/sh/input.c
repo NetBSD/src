@@ -183,7 +183,9 @@ preadbuffer() {
 	register char *p, *q;
 	register int i;
 	register int something;
+#ifndef NO_HISTORY
 	extern EditLine *el;
+#endif
 
 	if (parsefile->strpush) {
 		popstring();
@@ -195,6 +197,7 @@ preadbuffer() {
 	flushout(&output);
 	flushout(&errout);
 retry:
+#ifndef NO_HISTORY
 	p = parsenextc = parsefile->buf;
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
@@ -209,9 +212,12 @@ retry:
 		i = len;
 
 	} else {
+#endif
 regular_read:
 		i = read(parsefile->fd, p, BUFSIZ - 1);
+#ifndef NO_HISTORY
 	}
+#endif
 eof:
 	if (i <= 0) {
                 if (i < 0) {
@@ -261,12 +267,14 @@ eof:
 	parsenleft = q - parsefile->buf - 1;
 
 done:
+#ifndef NO_HISTORY
 	if (parsefile->fd == 0 && hist && something) {
 		INTOFF;
 		history(hist, whichprompt == 1 ? H_ENTER : H_ADD, 
 			   parsefile->buf);
 		INTON;
 	}
+#endif
 	if (vflag) {
 		/*
 		 * This isn't right.  Most shells coordinate it with

@@ -21,7 +21,7 @@ token.def: mktokens
 	sh ${.CURDIR}/mktokens
 
 builtins.h builtins.c: ${.CURDIR}/mkbuiltins ${.CURDIR}/builtins
-	cd ${.CURDIR}; sh mkbuiltins
+	cd ${.CURDIR}; sh mkbuiltins ${.OBJDIR}
 
 init.c: mkinit ${SRCS}
 	./mkinit '${CC} -c ${CFLAGS} init.c' ${.ALLSRC}

@@ -198,7 +198,9 @@ evaltree(n, flags)
 		exitstatus = 0;
 		goto out;
 	}
+#ifndef NO_HISTORY
 	displayhist = 1;	/* show history substitutions done with fc */
+#endif
 	TRACE(("evaltree(0x%x: %d) called\n", (int)n, n->type));
 	switch (n->type) {
 	case NSEMI:
@@ -788,7 +790,9 @@ cmddone:
 			if (e != EXERROR || cmdentry.u.index == BLTINCMD
 					       || cmdentry.u.index == DOTCMD
 					       || cmdentry.u.index == EVALCMD
+#ifndef NO_HISTORY
 					       || cmdentry.u.index == HISTCMD
+#endif
 					       || cmdentry.u.index == EXECCMD)
 				exraise(e);
 			FORCEINTON;
