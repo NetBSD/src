@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.111 1994/11/22 05:39:16 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.112 1994/11/22 05:50:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -1095,7 +1095,7 @@ wdsetctlr(wd)
 	struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
 
 #ifdef WDDEBUG
-	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_ctrlr, wd->sc_drive,
+	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_dev.dv_unit, wd->sc_drive,
 	    wd->sc_dk.dk_label.d_ncylinders, wd->sc_dk.dk_label.d_ntracks,
 	    wd->sc_dk.dk_label.d_nsectors);
 #endif
