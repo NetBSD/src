@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2002/03/20 17:59:22 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 2002/03/25 15:42:09 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2002/03/20 17:59:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2002/03/25 15:42:09 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2002/03/20 17:59:22 christos Exp $
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#include <sys/exec.h>
+
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
+
+#include <sys/exec_aout.h>
 
 #include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
