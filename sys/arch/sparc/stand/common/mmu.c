@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.3 2003/07/10 09:00:33 pk Exp $	*/
+/*	$NetBSD: mmu.c,v 1.4 2003/10/24 09:48:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -147,20 +147,13 @@ int pmap_extract4(vaddr_t va, paddr_t *ppa)
 int pmap_map_srmmu(vaddr_t va, paddr_t pa, psize_t size)
 {
 	char buf[64];
-	u_int n = (size + NBPG - 1) >> PGSHIFT;
+
+	sprintf(buf, "%lx %x %lx %lx map-pages", pa, obmem, va, size);
 
 	if (boothowto & AB_VERBOSE)
-		printf("Mapping %lx -> %lx (%d pages)\n", va, pa, n);
-	while (n--) {
-		sprintf(buf, "%lx %x %lx map-page", pa, obmem, va);
-		prom_interpret(buf);
-		va += NBPG;
-		pa += NBPG;
-		if (boothowto & AB_VERBOSE && (va & (NBPSG - 1)) == 0)
-			printf("%d ", n);
-	}
-	if (boothowto & AB_VERBOSE)
-		printf("\n");
+		printf("Mapping kernel: %s\n", buf);
+
+	prom_interpret(buf);
 	return (0);
 }
 
