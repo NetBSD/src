@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.3 2003/04/25 20:30:58 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.4 2003/04/26 10:24:58 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -199,7 +199,7 @@ addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
  * Setup the kernel symbol table stuff.
  */
 void
-ksyms_init(int symsize, caddr_t start, caddr_t end)
+ksyms_init(int symsize, void *start, void *end)
 {
 	Elf_Ehdr *ehdr;
 
