@@ -1,4 +1,5 @@
 #	@(#)Makefile	5.11 (Berkeley) 9/6/90
+CFLAGS+=-DYP
 
 LIB=	rpc
 SRCS=	auth_none.c auth_unix.c  authunix_prot.c bindresvport.c \
