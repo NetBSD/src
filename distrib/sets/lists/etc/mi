@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.125 2003/12/11 09:46:27 dyoung Exp $
+# $NetBSD: mi,v 1.126 2003/12/26 12:04:35 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -102,6 +102,7 @@
 ./etc/rc.d/ipnat			etc-ipf-rc
 ./etc/rc.d/ipsec			etc-net-rc
 ./etc/rc.d/isdnd			etc-isdn-rc
+./etc/rc.d/kdc				etc-krb5-rc
 ./etc/rc.d/ldconfig			etc-sys-rc
 ./etc/rc.d/lkm1				etc-sys-rc
 ./etc/rc.d/lkm2				etc-sys-rc
