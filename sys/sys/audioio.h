@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.23 1998/08/12 03:18:35 mycroft Exp $	*/
+/*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -47,7 +47,7 @@ struct audio_prinfo {
 	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
 	u_int	gain;		/* volume level */
 	u_int	port;		/* selected I/O port */
-	u_long	seek;		/* BSD extension */
+	u_int	seek;		/* BSD extension */
 	u_int	avail_ports;	/* available I/O ports */
 	u_int	buffer_size;	/* total size audio buffer */
 	u_int	_ispare[1];
