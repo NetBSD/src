@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.12 2002/06/24 22:05:48 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.13 2002/07/07 07:56:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -463,7 +463,7 @@ cpu_switch_queuescan:
 #endif
 
 	/*
-	 * regardless of whether a context switch is requites, we need
+	 * regardless of whether a context switch is required, we need
 	 * to update curlwp and other globals.  We must do this even
 	 * if switching to ourselves because we might have re-entered
 	 * cpu_switch() from idle() - in which case curlwp would be NULL
