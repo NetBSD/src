@@ -1,0 +1,3 @@
+# $NetBSD: md.cobalt,v 1.1 2000/03/30 21:13:06 soren Exp $
+./sbin/fdisk
+./usr/mdec/installboot
