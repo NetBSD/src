@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.10 2003/02/23 21:55:20 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.11 2003/02/24 10:01:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -281,8 +281,10 @@ smbfs_closel(struct vop_close_args *ap)
 	smb_makescred(&scred, p, ap->a_cred);
 
 	if (np->n_opencount == 0) {
+#ifdef DIAGNOSTIC
 		if (vp->v_type != VDIR)
-			SMBERROR("Negative opencount\n");
+			panic("smbfs_closel: negative opencount");
+#endif
 		return 0;
 	}
 	np->n_opencount--;
@@ -475,11 +477,10 @@ smbfs_setattr(v)
 				error = smbfs_smb_setftime(np, mtime, atime, &scred);
 			} else {
 				/*
-				 * I have no idea how to handle this for core
+				 * XXX I have no idea how to handle this for core
 				 * level servers. The possible solution is to
 				 * update mtime after file is closed.
 				 */
-				 SMBERROR("can't update times on an opened file\n");
 			}
 		}
 	}
