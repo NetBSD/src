@@ -1,23 +1,42 @@
 .\"	dhcp-eval.5
 .\"
-.\" Copyright (c) 1996-1999 Internet Software Consortium.
-.\" Use is subject to license terms which appear in the file named
-.\" ISC-LICENSE that should have accompanied this file when you
-.\" received it.   If a file named ISC-LICENSE did not accompany this
-.\" file, or you are not sure the one you have is correct, you may
-.\" obtain an applicable copy of the license at:
+.\" Copyright (c) 1996-2001 Internet Software Consortium.
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\"
-.\"             http://www.isc.org/isc-license-1.0.html. 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The Internet Software Consortium nor the names
+.\"    of its contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" This file is part of the ISC DHCP distribution.   The documentation
-.\" associated with this file is listed in the file DOCUMENTATION,
-.\" included in the top-level directory of this release.
+.\" THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE INTERNET SOFTWARE CONSORTIUM OR
+.\" CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\" ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+.\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
 .\"
-.\" Support and other services are available for ISC products - see
-.\" http://www.isc.org for more information.
-.TH dhcpd-eval 5
+.\" This software has been written for the Internet Software Consortium
+.\" by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
+.\" To learn more about the Internet Software Consortium, see
+.\" ``http://www.isc.org/''.  To learn more about Vixie Enterprises,
+.\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
+.\" ``http://www.nominum.com''.
+.TH dhcp-eval 5
 .SH NAME
-dhcp-conditionals - ISC DHCP conditional evaluation
+dhcp-eval - ISC DHCP conditional evaluation
 .SH DESCRIPTION
 The Internet Software Consortium DHCP client and server both provide
 the ability to perform conditional behavior depending on the contents
@@ -226,7 +245,13 @@ contents packet as in the \fBsubstring\fR operator.
 .PP
 .RS 0.25i
 A string, enclosed in quotes, may be specified as a data expression,
-and returns the text between the quotes, encoded in ASCII.
+and returns the text between the quotes, encoded in ASCII.   The
+backslash ('\\') character is treated specially, as in C programming:
+'\\t' means TAB, '\\r' means carriage return, '\\n' means newline, and
+'\\b' means bell.   Any octal value can be specified with '\\nnn',
+where nnn is any positive octal number less than 0400.  Any
+hexadecimal value can be specified with '\xnn', where nn is any
+positive hexadecimal number less than 0xff.
 .RE
 .PP
 .I colon-seperated hexadecimal list
@@ -338,6 +363,51 @@ the current time and the time that the lease expires.
 .RS 0.25i
 Any number between zero and the maximum representable size may be
 specified as a numeric expression.
+.RE
+.PP
+.B client-state
+.PP
+.RS 0.25i
+The current state of the client instance being processed.   This is
+only useful in DHCP client configuration files.   Possible values are:
+.TP 2
+.I \(bu
+Booting - DHCP client is in the INIT state, and does not yet have an
+IP address.   The next message transmitted will be a DHCPDISCOVER,
+which will be broadcast.
+.TP
+.I \(bu
+Reboot - DHCP client is in the INIT-REBOOT state.   It has an IP
+address, but is not yet using it.   The next message to be transmitted
+will be a DHCPREQUEST, which will be broadcast.   If no response is
+heard, the client will bind to its address and move to the BOUND state.
+.TP
+.I \(bu
+Select - DHCP client is in the SELECTING state - it has received at
+least one DHCPOFFER message, but is waiting to see if it may receive
+other DHCPOFFER messages from other servers.   No messages are sent in
+the SELECTING state.
+.TP
+.I \(bu
+Request - DHCP client is in the REQUESTING state - it has received at
+least one DHCPOFFER message, and has chosen which one it will
+request.   The next message to be sent will be a DHCPREQUEST message,
+which will be broadcast.
+.TP
+.I \(bu
+Bound - DHCP client is in the BOUND state - it has an IP address.   No
+messages are transmitted in this state.
+.TP
+.I \(bu
+Renew - DHCP client is in the RENEWING state - it has an IP address,
+and is trying to contact the server to renew it.   The next message to
+be sent will be a DHCPREQUEST message, which will be unicast directly
+to the server.
+.TP
+.I \(bu
+Rebind - DHCP client is in the REBINDING state - it has an IP address,
+and is trying to contact any server to renew it.   The next message to
+be sent will be a DHCPREQUEST, which will be broadcast.
 .RE
 .SH
 FUNCTIONS

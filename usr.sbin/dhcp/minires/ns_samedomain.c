@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_samedomain.c,v 1.1.1.1 2000/04/22 07:11:54 mellon Exp $";
+static const char rcsid[] = "$Id: ns_samedomain.c,v 1.1.1.2 2001/04/02 21:57:08 mellon Exp $";
 #endif
 
 #include <sys/types.h>
@@ -163,13 +163,12 @@ ns_subdomain(const char *a, const char *b) {
  *	foo\\. -> foo\\.
  */
 
-int
+isc_result_t
 ns_makecanon(const char *src, char *dst, size_t dstsize) {
 	size_t n = strlen(src);
 
 	if (n + sizeof "." > dstsize) {
-		errno = EMSGSIZE;
-		return (-1);
+		ISC_R_NOSPACE;
 	}
 	strcpy(dst, src);
 	while (n > 0 && dst[n - 1] == '.')		/* Ends in "." */
@@ -180,7 +179,7 @@ ns_makecanon(const char *src, char *dst, size_t dstsize) {
 			dst[--n] = '\0';
 	dst[n++] = '.';
 	dst[n] = '\0';
-	return (0);
+	return ISC_R_SUCCESS;
 }
 
 /*
@@ -196,9 +195,13 @@ ns_makecanon(const char *src, char *dst, size_t dstsize) {
 int
 ns_samename(const char *a, const char *b) {
 	char ta[NS_MAXDNAME], tb[NS_MAXDNAME];
+	isc_result_t status;
 
-	if (ns_makecanon(a, ta, sizeof ta) < 0 ||
-	    ns_makecanon(b, tb, sizeof tb) < 0)
+	status = ns_makecanon(a, ta, sizeof ta);
+	if (status != ISC_R_SUCCESS)
+		return status;
+	status = ns_makecanon(b, tb, sizeof tb);
+	if (status != ISC_R_SUCCESS)
 		return (-1);
 	if (strcasecmp(ta, tb) == 0)
 		return (1);
