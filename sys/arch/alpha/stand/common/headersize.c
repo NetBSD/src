@@ -1,4 +1,4 @@
-/* $NetBSD: headersize.c,v 1.2 1997/04/06 08:40:58 cgd Exp $ */
+/* $NetBSD: headersize.c,v 1.3 1997/09/06 14:03:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@
 
 #include <unistd.h>
 #include <stdio.h>
+#include <err.h>
 
 #define	HDR_BUFSIZE	512
 
@@ -58,7 +59,7 @@ main(argc, argv)
 	fname = argv[2];
 
 	if ((fd = open(fname, O_RDONLY, 0)) == -1)
-		err(1, "%s: open failed", 0);
+		err(1, "%s: open failed", fname);
 
 	if (read(fd, &buf, HDR_BUFSIZE) < HDR_BUFSIZE)
 		err(1, "%s: read failed", fname);
@@ -66,7 +67,7 @@ main(argc, argv)
 	elfp = (Elf_Ehdr *)buf;
 
 	if (!ECOFF_BADMAG(ecoffp)) {
-		printf("%d\n", ECOFF_TXTOFF(ecoffp));
+		printf("%ld\n", ECOFF_TXTOFF(ecoffp));
 	} else if (memcmp(Elf_e_ident, elfp->e_ident, Elf_e_siz) == 0) {
 		Elf_Phdr phdr;
 
@@ -76,9 +77,10 @@ main(argc, argv)
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr))
 			err(1, "%s: read phdr failed", fname);
 
-		printf("%d\n", phdr.p_offset + (loadaddr - phdr.p_vaddr));
+		printf("%ld\n", phdr.p_offset + (loadaddr - phdr.p_vaddr));
 	} else
 		errx(1, "%s: bad magic number", fname);
 
 	close(fd);
+	return(0);
 }
