@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.411 2000/11/10 03:58:15 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.412 2000/11/10 04:00:25 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2050,17 +2050,18 @@ init386(first_avail)
 				    atop(tmp), atop(seg_start1),
 				    atop(tmp), first16q);
 				seg_start1 = tmp;
-				if (seg_start1 == seg_end1)
-					continue;
 			}
+
+			if (seg_start1 != seg_end1) {
 #if DEBUG_MEMLOAD
-			printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-			    seg_start1, seg_end1,
-			    atop(seg_start1), atop(seg_end1));
+				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				    seg_start1, seg_end1,
+				    atop(seg_start1), atop(seg_end1));
 #endif
-			uvm_page_physload(atop(seg_start1), atop(seg_end1),
-			    atop(seg_start1), atop(seg_end1),
-			    VM_FREELIST_DEFAULT);
+				uvm_page_physload(atop(seg_start1),
+				    atop(seg_end1), atop(seg_start1),
+				    atop(seg_end1), VM_FREELIST_DEFAULT);
+			}
 		}
 	}
 
