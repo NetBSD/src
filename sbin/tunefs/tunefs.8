@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.25 2001/09/03 16:30:02 lukem Exp $
+.\"	$NetBSD: tunefs.8,v 1.26 2001/09/06 02:16:01 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd September 3, 2001
+.Dd September 6, 2001
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@
 .Op Fl a Ar maxcontig
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
+.Op Fl g Ar avgfilesize
+.Op Fl h Ar avgfpdir
 .Op Fl k Ar trackskew
 .Op Fl m Ar minfree
 .Bk -words
@@ -111,6 +113,10 @@ more frequently than if they were allowed to allocate all the blocks
 in a cylinder group before seeking elsewhere.
 For file systems with exclusively large files,
 this parameter should be set higher.
+.It Fl g Ar avgfilesize
+This specifies the expected average file size.
+.It Fl h Ar avgfpdir
+This specifies the expected number of files per directory.
 .It Fl k Ar trackskew
 This specifies the skew in sectors from one track to the next in a cylinder.
 The default value is zero, indicating that each track in a cylinder begins at
