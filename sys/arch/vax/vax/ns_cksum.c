@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.1 1996/03/03 11:54:37 ragge Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.2 1996/10/11 01:51:28 christos Exp $	*/
 /*
  * Copyright (c) 1985, 1986 Regents of the University of California.
  * All rights reserved.
@@ -141,7 +141,7 @@ ns_cksum(m, len)
 		 */
 		for (;;) {
 			if (m == 0) {
-				printf("idpcksum: out of data\n");
+				kprintf("idpcksum: out of data\n");
 				goto done;
 			}
 			if (m->m_len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.3 1996/07/20 18:14:57 ragge Exp $	*/
+/*	$NetBSD: crl.c,v 1.4 1996/10/11 01:51:04 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 /*
  * TO DO (tef  7/18/85):
- *	1) change printf's to log() instead???
+ *	1) change kprintf's to log() instead???
  */
 
 #include <sys/param.h>
@@ -211,7 +211,7 @@ crlintr(arg)
 
 		case CRL_F_RETSTS:
 			crlstat.crl_ds = mfpr(PR_STXDB);
-			printf("crlcs=0x%b, crlds=0x%b\n", crlstat.crl_cs,
+			kprintf("crlcs=0x%b, crlds=0x%b\n", crlstat.crl_cs,
 				CRLCS_BITS, crlstat.crl_ds, CRLDS_BITS); 
 			break;
 
@@ -249,14 +249,14 @@ crlintr(arg)
 		break;
 
 	case CRL_S_HNDSHK:
-		printf("crl: hndshk error\n");	/* dump out some status too? */
+		kprintf("crl: hndshk error\n");	/* dump out some status too? */
 		crltab.crl_active = 0;
 		bp->b_flags |= B_DONE|B_ERROR;
 		wakeup((caddr_t)bp);
 		break;
 
 	case CRL_S_HWERR:
-		printf("crl: hard error sn%d\n", bp->b_blkno);
+		kprintf("crl: hard error sn%d\n", bp->b_blkno);
 		crltab.crl_active = CRL_F_ABORT;
 		mtpr(STXCS_IE | CRL_F_ABORT, PR_STXCS);
 		break;

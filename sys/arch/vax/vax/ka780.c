@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.4 1996/07/20 18:14:51 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.5 1996/10/11 01:51:22 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -119,26 +119,26 @@ ka780_memenable(sa, osc)
 	struct	mem_softc *sc = osc;
 	register struct mcr780 *mcr = (void *)sc->sc_memaddr;
 
-	printf(": ");
+	kprintf(": ");
 	switch (sc->sc_memtype) {
 
 	case M780C:
-		printf("standard");
+		kprintf("standard");
 		M780C_ENA(mcr);
 		break;
 
 	case M780EL:
-		printf("(el) ");
+		kprintf("(el) ");
 		M780EL_ENA(mcr);
 		if (sc->sc_memnr != NEX_MEM64I && sc->sc_memnr != NEX_MEM256I)
 			break;
 
 	case M780EU:
-		printf("(eu)");
+		kprintf("(eu)");
 		M780EU_ENA(mcr);
 		break;
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 /* log crd errors */
@@ -160,7 +160,7 @@ ka780_memerr()
 
 		case M780C:
 			if (M780C_ERR(mcr)) {
-				printf("%s: soft ecc addr %x syn %x\n",
+				kprintf("%s: soft ecc addr %x syn %x\n",
 				    sc->sc_dev.dv_xname, M780C_ADDR(mcr),
 				    M780C_SYN(mcr));
 #ifdef TRENDATA
@@ -172,7 +172,7 @@ ka780_memerr()
 
 		case M780EL:
 			if (M780EL_ERR(mcr)) {
-				printf("%s: soft ecc addr %x syn %x\n",
+				kprintf("%s: soft ecc addr %x syn %x\n",
 				    sc->sc_dev.dv_xname, M780EL_ADDR(mcr),
 				    M780EL_SYN(mcr));
 				M780EL_INH(mcr);
@@ -183,7 +183,7 @@ ka780_memerr()
 
 		case M780EU:
 			if (M780EU_ERR(mcr)) {
-				printf("%s: soft ecc addr %x syn %x\n",
+				kprintf("%s: soft ecc addr %x syn %x\n",
 				    sc->sc_dev.dv_xname, M780EU_ADDR(mcr),
 				    M780EU_SYN(mcr));
 				M780EU_INH(mcr);
@@ -231,7 +231,7 @@ memlog(m, mcr)
 
 	for (i = 0; i < (sizeof (memlogtab) / sizeof (memlogtab[0])); i++)
 		if ((u_char)(M780C_SYN(mcr)) == memlogtab[i].m_syndrome) {
-			printf (
+			kprintf (
 	"mcr%d: replace %s chip in %s bank of memory board %d (0-15)\n",
 				m,
 				memlogtab[i].m_chip,
@@ -239,7 +239,7 @@ memlog(m, mcr)
 				(M780C_ADDR(mcr) >> 16));
 			return;
 		}
-	printf ("mcr%d: multiple errors, not traceable\n", m);
+	kprintf ("mcr%d: multiple errors, not traceable\n", m);
 	break;
 }
 #endif TRENDATA
@@ -271,13 +271,13 @@ ka780_mchk(cmcf)
 	register int type = mcf->mc8_summary;
 	register int sbifs;
 
-	printf("machine check %x: %s%s\n", type, mc780[type&0xf],
+	kprintf("machine check %x: %s%s\n", type, mc780[type&0xf],
 	    (type&0xf0) ? " abort" : " fault"); 
-	printf("\tcpues %x upc %x va/viba %x dreg %x tber %x %x\n",
+	kprintf("\tcpues %x upc %x va/viba %x dreg %x tber %x %x\n",
 	   mcf->mc8_cpues, mcf->mc8_upc, mcf->mc8_vaviba,
 	   mcf->mc8_dreg, mcf->mc8_tber0, mcf->mc8_tber1);
 	sbifs = mfpr(PR_SBIFS);
-	printf("\ttimo %x parity %x sbier %x pc %x psl %x sbifs %x\n",
+	kprintf("\ttimo %x parity %x sbier %x pc %x psl %x sbifs %x\n",
 	   mcf->mc8_timo*4, mcf->mc8_parity, mcf->mc8_sbier,
 	   mcf->mc8_pc, mcf->mc8_psl, sbifs);
 	/* THE FUNNY BITS IN THE FOLLOWING ARE FROM THE ``BLACK BOOK'' */
@@ -309,14 +309,14 @@ ka780_conf(parent, self, aux)
 	strcpy(cpu_model,"VAX 11/780");
 	if (ka78->v785)
 		cpu_model[9] = '5';
-	printf(": %s, serial number %d(%d), hardware ECO level %d(%d)\n",
+	kprintf(": %s, serial number %d(%d), hardware ECO level %d(%d)\n",
 	    &cpu_model[4], ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
-	printf("%s: ", self->dv_xname);
+	kprintf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
-		printf("FPA present, enabling.\n");
+		kprintf("FPA present, enabling.\n");
 		mtpr(0x8000, PR_ACCS);
 	} else
-		printf("no FPA\n");
+		kprintf("no FPA\n");
 
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1996/08/27 21:58:24 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1996/10/11 01:51:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -187,7 +187,7 @@ printut(aux, hej)
 {
 	struct bp_conf *bp = aux;
 	if (hej)
-		printf("printut %s %s %d\n",hej, bp->type, bp->num);
+		kprintf("printut %s %s %d\n",hej, bp->type, bp->num);
 	return (UNSUPP);
 }
 
@@ -216,7 +216,7 @@ backplane_attach(parent, self, hej)
 {
 	struct bp_conf bp;
 
-	printf("\n");
+	kprintf("\n");
 	bp.partyp = BACKPLANE;
 
 	if (vax_bustype & VAX_CPUBUS) {
@@ -320,7 +320,7 @@ find_sbi(self, bp, print)
 			break;
 
 		default:
-			printf("IOAdapter %x unsupported\n", type);
+			kprintf("IOAdapter %x unsupported\n", type);
 			break;
 		}
 	}
@@ -430,7 +430,7 @@ mem_attach(parent, self, aux)
 #if VAX8600
 	if (vax_cputype == VAX_8600) {
 		ka86_memenable(0, 0);
-		printf("\n");
+		kprintf("\n");
 		return;
 	}
 #endif

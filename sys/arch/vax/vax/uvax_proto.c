@@ -1,4 +1,4 @@
-/*	$NetBSD: uvax_proto.c,v 1.1 1996/07/20 18:29:53 ragge Exp $	*/
+/*	$NetBSD: uvax_proto.c,v 1.2 1996/10/11 01:51:39 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  * 	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,7 @@ uVAX_clkread(base)
 	claddr->csr1 = uVAX_CLKSET;
 	while ((claddr->csr0 & uVAX_CLKUIP) != 0)
 		if (--timeout == 0) {
-			printf ("TOY clock timed out");
+			kprintf ("TOY clock timed out");
 			return CLKREAD_BAD;
 		}
 
@@ -94,7 +94,7 @@ uVAX_clkread(base)
 		time.tv_sec = chiptotime(&c);
 		if (c.mon < 1 || c.mon > 12 ||
 		    c.day < 1 || c.day > 31) {
-			printf("WARNING: preposterous clock chip time");
+			kprintf("WARNING: preposterous clock chip time");
 			rv = CLKREAD_WARN;
 		} else
 			rv = CLKREAD_OK;
@@ -104,7 +104,7 @@ uVAX_clkread(base)
 		return rv;
 	}
 
-	printf("WARNING: TOY clock invalid");
+	kprintf("WARNING: TOY clock invalid");
 	return CLKREAD_BAD;
 }
 
@@ -124,7 +124,7 @@ uVAX_clkwrite()
 	claddr->csr1 = uVAX_CLKSET;
 	while ((claddr->csr0 & uVAX_CLKUIP) != 0)
 		if (--timeout == 0) {
-			printf("Trouble saving date, TOY clock timed out\n");
+			kprintf("Trouble saving date, TOY clock timed out\n");
 			break;
 		}
  
