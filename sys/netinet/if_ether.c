@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.4 1997/02/17 20:09:56 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.5 1997/02/17 20:16:31 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -722,32 +722,29 @@ revarprequest(ifp)
 {
 	struct sockaddr sa;
 	struct mbuf *m;
-	struct ether_header *eh;
-	struct ether_arp *ea;
+	struct arphdr *ah;
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
-	m->m_len = sizeof(*ea);
-	m->m_pkthdr.len = sizeof(*ea);
-	MH_ALIGN(m, sizeof(*ea));
-	ea = mtod(m, struct ether_arp *);
-	eh = (struct ether_header *)sa.sa_data;
-	bzero((caddr_t)ea, sizeof(*ea));
-	bcopy((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
-	    sizeof(eh->ether_dhost));
-	eh->ether_type = htons(ETHERTYPE_REVARP);
-	ea->arp_hrd = htons(ARPHRD_ETHER);
-	ea->arp_pro = htons(ETHERTYPE_IP);
-	ea->arp_hln = sizeof(ea->arp_sha);	/* hardware address length */
-	ea->arp_pln = sizeof(ea->arp_spa);	/* protocol address length */
-	ea->arp_op = htons(ARPOP_REVREQUEST);
-	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ea->arp_sha,
-	   sizeof(ea->arp_sha));
-	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ea->arp_tha,
-	   sizeof(ea->arp_tha));
-	sa.sa_family = AF_UNSPEC;
-	sa.sa_len = sizeof(sa);
-	ifp->if_output(ifp, m, &sa, (struct rtentry *)0);
+	m->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
+	    2*ifp->if_data.ifi_addrlen;
+	m->m_pkthdr.len = m->m_len;
+	MH_ALIGN(m, m->m_len);
+	ah = mtod(m, struct arphdr *);
+	bzero((caddr_t)ah, m->m_len);
+	ah->ar_pro = htons(ETHERTYPE_IP);
+	ah->ar_hln = ifp->if_data.ifi_addrlen;	/* hardware address length */
+	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
+	ah->ar_op = htons(ARPOP_REVREQUEST);
+
+	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
+	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_tha(ah), ah->ar_hln);
+
+	sa.sa_family = AF_ARP;
+	sa.sa_len = 2;
+	m->m_flags |= M_BCAST;
+	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+
 }
 
 /*
