@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.5 2001/11/13 07:26:33 lukem Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.6 2001/12/15 11:45:24 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *  This product includes software developed by Soren S. Jorvang.
+ *  This product includes software developed by Onno van der Linden.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -40,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.5 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.6 2001/12/15 11:45:24 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
