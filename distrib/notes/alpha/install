@@ -1,17 +1,15 @@
-	$NetBSD: install,v 1.4 1998/05/09 03:42:00 ross Exp $	
+	$NetBSD: install,v 1.5 1998/05/11 20:04:47 ross Exp $	
 
 0. Introduction
 
-    This is the first release of NetBSD/alpha with regular packaging
-    and install tools, and the installation program is still rather
-    primitive. It also hasn't been tested very well, so there may
-    be bugs in both it and this document. However, if you have
-    problems, don't despair; most complications you might encounter
-    are very easy to fix. We strongly suggest you join the port-alpha
-    list (see the section on mailing lists on http://www.netbsd.org)
-    and ask questions there if you run into any problems. Also report
-    problem you've gotten around there or by using send-pr so that
-    they can be fixed for the next release.
+    It's getting easier with every release to install NetBSD/alpha.
+    If you do have problems, don't despair; most complications you
+    might encounter are very easy to fix. We strongly suggest you
+    join the port-alpha list (see the section on mailing lists on
+    http://www.netbsd.org) and ask questions there.
+    Also, please report any problems you've solved by
+    using the mailing list or by running send-pr(1) so that they
+    can be fixed for the next release.
         
 1. General
 
@@ -270,7 +268,7 @@
 
         10base2         BNC connector, 10 Mbps
         AUI             AUI connector, 10 Mbps
-        10baseT         Twisted pair connector, 10 Mbps
+        10baseT/UTP     Twisted pair connector, 10 Mbps
         100baseTX       Twisted pair connector, 100 Mbps
         100baseFX       Fibre-optic connector, 100 Mbps
         100baseT4       T4 twisted pair interface, 100 Mbps
@@ -281,10 +279,12 @@
 
         route add default <gateway-IP-address>
 
-    If you will need name services you can set up a /etc/resolv.conf
-    file for those with a `nameserver <ip-address>' line in it, e.g.:
-
-        echo "nameserver 198.41.0.4" >>/etc/resolv.conf
+    In order to save space on the install floppy, the resolver does
+    not implement the DNS protocol, ignores /etc/resolv.conf and
+    does only host table lookups.  You can specify all host addresses
+    as IP numbers or you can enter the host names and numbers into
+    /etc/hosts. For example, you can prepare a hosts table beforehand,
+    and ftp(1) it down (by IP number) to /etc/hosts
 
     Once networking has been configured, you may mount the directory
     with the install files via NFS, or download them via FTP.
@@ -298,6 +298,7 @@
 
     To download the install sets with ftp, create a directory in
     which to put them and then use the ftp client to download them.
+    Mirror sites are listed at: "http://www.netbsd.org/Sites/net.html".
     A typical session might be:
 
         mkdir /mnt/var/tmp
@@ -306,12 +307,8 @@
         [all the following commmands are given to the ftp program
             after logging in]
         prompt
-        cd /pub/NetBSD/NetBSD-1.3/alpha/binary/sets
+        cd /pub/NetBSD/NetBSD-1.3.2/alpha/binary/sets
         mget *
-        cd /pub/NetBSD/NetBSD-1.3/alpha/binary/kernel
-        get netbsd-GENERIC.gz
-        cd /pub/NetBSD/NetBSD-1.3/alpha/binary/toolchain
-        get netbsd-GENERIC.gz
         bye
 
     Feel free, of course, to leave off the sets that you don't need
@@ -327,23 +324,15 @@
 
         cd /mnt
 
-    Then extract the kernel with:
-
-        zcat /mnt/var/tmp/netbsd-GENERIC.gz >/mnt/netbsd
-
     For this and the following commands, replace `/mnt/var/tmp/'
     with the path to your NFS volume or CD-ROM if that's how you
     chose to access your install files instead.
 
-    The sets are extracted with
+    The sets and kernel are extracted with
 
-        for file in base comp etc games man misc text; do
-            tar --unlink -t -z -f /mnt/var/tmp/$file;
-            done
-
-    and the toolchain with
-
-        tar --unlink -t -z -f /mnt/var/tmp/toolchain.tar.gz
+        for file in base kern comp etc games man misc text; do
+            tar xpfz /mnt/var/tmp/$file.tgz;
+	done
 
     You will now be ready to reboot from your hard disk. Type `sync'
     twice to make sure all the data is written out to disk and then
@@ -356,6 +345,20 @@
     usually use `show device' to see a full list of bootable devices
     in your system). Your system will come up in single-user mode,
     ready for you to configure it.
+
+4.4 Optional Toolchain Source Module
+
+    The source to the toolchain components is available in:
+
+	/pub/NetBSD/NetBSD-1.3.2/alpha/source/toolchain.tgz
+
+    This module unpacks into ./toolchain, so:
+
+	cd /usr/local
+	ftp ftp://hostname/pub/NetBSD/NetBSD-1.3.2/alpha/source/toolchain.tgz
+	tar xpfz toolchain.tgz
+	rm toolchain.rgz
+
 
 5. Configuring NetBSD
 
@@ -373,3 +376,5 @@
     accounts to your system, edit /etc/aliases to forward root mail to
     the right place (run `newaliases' afterwards) and edit /etc/rc.local
     to run any local daemons you use.
+
+
