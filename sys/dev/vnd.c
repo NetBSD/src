@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.32 1997/03/12 22:31:40 mycroft Exp $	*/
+/*	$NetBSD: vnd.c,v 1.33 1997/05/19 14:41:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -329,10 +329,24 @@ vndstrategy(bp)
 		nbp->vb_buf.b_vp = vp;
 		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
-		nbp->vb_buf.b_dirtyoff = bp->b_dirtyoff;
-		nbp->vb_buf.b_dirtyend = bp->b_dirtyend;
-		nbp->vb_buf.b_validoff = bp->b_validoff;
-		nbp->vb_buf.b_validend = bp->b_validend;
+		if (bp->b_dirtyend == 0) {
+			nbp->vb_buf.b_dirtyoff = 0;
+			nbp->vb_buf.b_dirtyend = sz;
+		} else {
+			nbp->vb_buf.b_dirtyoff =
+			    max(0, bp->b_dirtyoff - (bp->b_bcount - resid));
+			nbp->vb_buf.b_dirtyend =
+			    min(sz, bp->b_dirtyend - (bp->b_bcount - resid));
+		}
+		if (bp->b_validend == 0) {
+			nbp->vb_buf.b_validoff = 0;
+			nbp->vb_buf.b_validend = sz;
+		} else {
+			nbp->vb_buf.b_validoff =
+			    max(0, bp->b_validoff - (bp->b_bcount - resid));
+			nbp->vb_buf.b_validend =
+			    min(sz, bp->b_validend - (bp->b_bcount - resid));
+		}
 
 		/* save a reference to the old buffer */
 		nbp->vb_obp = bp;
