@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.67.2.3 2001/11/25 19:17:43 he Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.67.2.4 2001/11/25 19:21:19 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -365,7 +365,7 @@ ffs_mount(mp, path, data, ndp, p)
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time.tv_sec;
 		else
-			printf("%s: file system not clean (fs_flags=%x); please fsck(8)\n",
+			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
