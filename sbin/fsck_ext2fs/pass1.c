@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,16 +79,18 @@ pass1()
 		dbase = c * sblock.e2fs.e2fs_bpg +
 		    sblock.e2fs.e2fs_first_dblock;
 		/* Mark the blocks used for the inode table */
-		if (sblock.e2fs_gd[c].ext2bgd_i_tables >= dbase) {
+		if (fs2h32(sblock.e2fs_gd[c].ext2bgd_i_tables) >= dbase) {
 			for (i = 0; i < sblock.e2fs_itpg; i++)
-				setbmap(sblock.e2fs_gd[c].ext2bgd_i_tables + i);
+				setbmap(
+				    fs2h32(sblock.e2fs_gd[c].ext2bgd_i_tables)
+				    + i);
 		}
 		/* Mark the blocks used for the block bitmap */
-		if (sblock.e2fs_gd[c].ext2bgd_b_bitmap >= dbase)
-			setbmap(sblock.e2fs_gd[c].ext2bgd_b_bitmap);
+		if (fs2h32(sblock.e2fs_gd[c].ext2bgd_b_bitmap) >= dbase)
+			setbmap(fs2h32(sblock.e2fs_gd[c].ext2bgd_b_bitmap));
 		/* Mark the blocks used for the inode bitmap */
-		if (sblock.e2fs_gd[c].ext2bgd_i_bitmap >= dbase)
-			setbmap(sblock.e2fs_gd[c].ext2bgd_i_bitmap);
+		if (fs2h32(sblock.e2fs_gd[c].ext2bgd_i_bitmap) >= dbase)
+			setbmap(fs2h32(sblock.e2fs_gd[c].ext2bgd_i_bitmap));
 
 		if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
 		    (sblock.e2fs.e2fs_features_rocompat &
