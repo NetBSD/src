@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.112 2000/07/06 12:36:19 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.113 2000/07/09 12:49:08 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -2213,8 +2213,10 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 		if (opt == TCPOPT_NOP)
 			optlen = 1;
 		else {
+			if (cnt < 2)
+				break;
 			optlen = cp[1];
-			if (optlen <= 0)
+			if (optlen < 2 || optlen > cnt)
 				break;
 		}
 		switch (opt) {
