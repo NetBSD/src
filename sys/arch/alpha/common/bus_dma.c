@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.20 1998/05/29 15:25:07 matt Exp $ */
+/* $NetBSD: bus_dma.c,v 1.21 1998/05/29 15:55:34 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 1998/05/29 15:25:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 1998/05/29 15:55:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,10 +155,7 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 	int seg;
 
 	lastaddr = *lastaddrp;
-	if (map->_dm_boundary > 0)
-		bmask = ~(map->_dm_boundary - 1);
-	else
-		bmask = 0;
+	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0 ; ) {
 		/*
@@ -188,7 +185,7 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 		/*
 		 * Make sure we don't cross any boundaries
 		 */
-		if (bmask) {
+		if (map->_dm_boundary > 0) {
 			baddr = (curaddr + map->_dm_boundary) & bmask;
 			if (baddr - curaddr < sgsize)
 				sgsize = baddr - curaddr;
@@ -208,7 +205,7 @@ _bus_dmamap_load_buffer_direct_common(map, buf, buflen, p, flags, wbase,
 			    map->_dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     ((curaddr + sgsize - 1) & bmask)))
+			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
