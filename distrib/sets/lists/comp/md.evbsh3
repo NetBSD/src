@@ -23,6 +23,7 @@
 ./usr/include/evbsh3/intr.h
 ./usr/include/evbsh3/limits.h
 ./usr/include/evbsh3/loadfile_machdep.h
+./usr/include/evbsh3/math.h
 ./usr/include/evbsh3/mmeye.h
 ./usr/include/evbsh3/param.h
 ./usr/include/evbsh3/pcb.h
