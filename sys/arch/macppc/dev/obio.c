@@ -1,3 +1,36 @@
+/*	$NetBSD: obio.c,v 1.2 1998/06/21 15:06:19 tsubai Exp $	*/
+
+/*-
+ * Copyright (C) 1998	Internet Research Institute, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by
+ *	Internet Research Institute, Inc.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,9 +66,13 @@ obio_match(parent, cf, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
-	    PCI_PRODUCT(pa->pa_id) == 2)
-		return 1;
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+
+		case 2:		/* gc */
+		case 7:		/* ohare */
+			return 1;
+		}
 
 	return 0;
 }
@@ -49,13 +86,28 @@ obio_attach(parent, self, aux)
 	void *aux;
 {
 	struct obio_softc *sc = (struct obio_softc *)self;
+	struct pci_attach_args *pa = aux;
 	struct confargs ca;
 	int node, child, namelen;
 	u_int reg[20];
 	int intr[5];
 	char name[32];
 
-	node = OF_finddevice("/bandit/gc");		/* XXX */
+	switch (PCI_PRODUCT(pa->pa_id)) {
+
+	case 2:
+		node = OF_finddevice("/bandit/gc");
+		break;
+
+	case 7:
+		node = OF_finddevice("/bandit/ohare");
+		break;
+
+	default:
+		printf("obio_attach: unknown obio controller\n");
+		return;
+	}
+
 	sc->sc_node = node;
 
 	if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) < 12)
