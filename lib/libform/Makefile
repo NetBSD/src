@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/07/08 12:12:38 blymn Exp $
+#	$NetBSD: Makefile,v 1.5 2002/02/20 11:30:57 wiz Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
@@ -16,6 +16,7 @@ MAN=	form_cursor.3 form_data.3 form_driver.3 form_field.3 \
 	form_field_userptr.3 form_field_validation.3 form_fieldtype.3 \
 	form_hook.3 form_new.3 form_new_page.3 form_opts.3 form_page.3 \
 	form_post.3 form_userptr.3 form_win.3 forms.3
+MLINKS+=	forms.3 form.3
 
 INCS=	form.h
 INCSDIR=/usr/include
