@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.5 1997/10/09 21:39:33 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5.2.1 1997/11/07 22:47:21 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -410,16 +410,28 @@ pmap_bootstrap(nextpa, firstpa)
 	 * the pmap module.
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
+
+#ifndef MACHINE_NONCONTIG
 	RELOC(avail_end, vm_offset_t) =
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
 			- m68k_round_page(MSGBUFSIZE);
 
-#ifdef MACHINE_NONCONTIG
+#else
 	RELOC(avail_next, vm_offset_t) = RELOC(avail_start, vm_offset_t);
+
+	/* leave space at end of onboard RAM for message buffer */
+	RELOC(phys_seg_list[0].ps_end, vm_offset_t) -=
+		m68k_round_page(MSGBUFSIZE);
+
+	/* initial avail_end is end of onboard RAM */
+	RELOC(avail_end, vm_offset_t) =
+		m68k_ptob(RELOC(phys_seg_list[0].ps_end, vm_offset_t));
+
 	RELOC(avail_remaining, vm_size_t) =
 		(RELOC(phys_seg_list[0].ps_end, vm_offset_t) -
 		 RELOC(avail_start, vm_offset_t)) >> PGSHIFT;
+
 	RELOC(phys_seg_list[0].ps_start, vm_offset_t) = 
 		RELOC(avail_start, vm_offset_t);
 	RELOC(phys_seg_list[0].ps_startpage, vm_offset_t) = 0;
@@ -430,8 +442,7 @@ pmap_bootstrap(nextpa, firstpa)
 		     RELOC(phys_seg_list[0].ps_start, vm_offset_t)) / NBPG;
 
 	/* iterate over any remaining segments */
-	for (i = 1; i < MAX_PHYS_SEGS; i++)
-	{
+	for (i = 1; i < MAX_PHYS_SEGS; i++) {
 		vm_offset_t	len;
 
 		if ( RELOC(phys_seg_list[i].ps_start, vm_offset_t) == 0 )
@@ -448,12 +459,15 @@ pmap_bootstrap(nextpa, firstpa)
 
 		RELOC(avail_remaining, vm_size_t) += (len / NBPG);
 		RELOC(physmem, int) += (len / NBPG);
-	}
 
-	/* correct for message buffer */
-	RELOC(phys_seg_list[i - 1].ps_end, vm_offset_t) -=
-				m68k_round_page(MSGBUFSIZE);
+		if ( m68k_ptob(RELOC(phys_seg_list[i].ps_end, vm_offset_t)) >
+			RELOC(avail_end, vm_offset_t) ) {
+			RELOC(avail_end, vm_offset_t) =
+				m68k_ptob(RELOC(phys_seg_list[i].ps_end, vm_offset_t));
+		}
+	}
 #endif
+
 	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
