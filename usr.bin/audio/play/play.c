@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.34 2002/02/02 20:20:24 jdolecek Exp $	*/
+/*	$NetBSD: play.c,v 1.35 2002/02/05 00:17:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -79,6 +79,7 @@ main(argc, argv)
 	size_t	len;
 	int	ch;
 	int	iflag = 0;
+	const char *defdevice = _PATH_SOUND;
 	const char *device = NULL;
 
 	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
@@ -161,10 +162,10 @@ main(argc, argv)
 
 	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
-		device = _PATH_SOUND;
+		device = defdevice;
 
 	audiofd = open(device, O_WRONLY);
-	if (audiofd < 0 && device == _PATH_SOUND) {
+	if (audiofd < 0 && device == defdevice) {
 		device = _PATH_SOUND0;
 		audiofd = open(device, O_WRONLY);
 	}
