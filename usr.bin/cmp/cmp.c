@@ -39,32 +39,42 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmp.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmp.c,v 1.3 1993/09/21 22:35:56 jtc Exp $";
+static char rcsid[] = "$Id: cmp.c,v 1.4 1993/11/23 00:50:46 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <locale.h>
+#include <unistd.h>
 
 #define	EXITNODIFF	0
 #define	EXITDIFF	1
 #define	EXITERR		2
 
+void skip		__P(());
+__dead void cmp		__P(());
+__dead void error	__P(());
+__dead void endoffile	__P(());
+__dead void usage	__P(());
+
 int	all, fd1, fd2, silent;
 u_char	buf1[MAXBSIZE], buf2[MAXBSIZE];
 char	*file1, *file2;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	int ch;
-	u_long otoi();
+
+	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "ls")) != -1)
 		switch (ch) {
@@ -103,9 +113,9 @@ main(argc, argv)
 
 	/* handle skip arguments */
 	if (argc > 2) {
-		skip(otoi(argv[2]), fd1, file1);
+		skip(strtoul(argv[2], NULL, 0), fd1, file1);
 		if (argc == 4)
-			skip(otoi(argv[3]), fd2, file2);
+			skip(strtoul(argv[3], NULL, 0), fd2, file2);
 	}
 	cmp();
 	/*NOTREACHED*/
@@ -115,6 +125,7 @@ main(argc, argv)
  * skip --
  *	skip first part of file
  */
+void
 skip(dist, fd, fname)
 	register u_long dist;
 	register int fd;
@@ -133,6 +144,7 @@ skip(dist, fd, fname)
 	}
 }
 
+void
 cmp()
 {
 	register u_char	*p1, *p2;
@@ -168,7 +180,7 @@ cmp()
 		 */
 		if ((len2 = read(fd2, buf2, len1)) == -1)
 			error(file2);
-		if (bcmp(buf1, buf2, len2)) {
+		if (memcmp(buf1, buf2, len2)) {
 			if (silent)
 				exit(EXITDIFF);
 			if (all) {
@@ -213,26 +225,10 @@ cmp()
 }
 
 /*
- * otoi --
- *	octal/decimal string to u_long
- */
-u_long
-otoi(s)
-	register char *s;
-{
-	register u_long val;
-	register int base;
-
-	base = (*s == '0') ? 8 : 10;
-	for (val = 0; isdigit(*s); ++s)
-		val = val * base + *s - '0';
-	return (val);
-}
-
-/*
  * error --
  *	print I/O error message and die
  */
+void
 error(filename)
 	char *filename;
 {
@@ -249,6 +245,7 @@ error(filename)
  * endoffile --
  *	print end-of-file message and exit indicating the files were different
  */
+void
 endoffile(filename)
 	char *filename;
 {
@@ -261,6 +258,7 @@ endoffile(filename)
  * usage --
  *	print usage and die
  */
+void
 usage()
 {
 	fputs("usage: cmp [-l | -s] file1 file2 [skip1] [skip2]\n", stderr);
