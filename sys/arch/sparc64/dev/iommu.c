@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.60 2002/10/13 20:17:55 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.61 2002/10/16 11:05:11 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -498,13 +498,13 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	sgend = sgstart + buflen - 1;
 	map->dm_segs[seg].ds_addr = sgstart;
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: boundary %lx boundary-1 %lx "
-		"~(boundary-1) %lx\n", boundary, (boundary-1), ~(boundary-1)));
+		"~(boundary-1) %lx\n", (long)boundary, (long)(boundary-1), (long)~(boundary-1)));
 	while ((sgstart & ~(boundary - 1)) != (sgend & ~(boundary - 1))) {
 		/* Oops.  We crossed a boundary.  Split the xfer. */
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 			"seg %d start %lx size %lx\n", seg,
 			(long)map->dm_segs[seg].ds_addr,
-			map->dm_segs[seg].ds_len));
+			(long)map->dm_segs[seg].ds_len));
 		map->dm_segs[seg].ds_len =
 		    boundary - (sgstart & (boundary - 1));
 		if (++seg >= map->_dm_segcnt) {
@@ -526,7 +526,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	map->dm_segs[seg].ds_len = sgend - sgstart + 1;
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 		"seg %d start %lx size %lx\n", seg,
-		(long)map->dm_segs[seg].ds_addr, map->dm_segs[seg].ds_len));
+		(long)map->dm_segs[seg].ds_addr, (long)map->dm_segs[seg].ds_len));
 	map->dm_nsegs = seg+1;
 	map->dm_mapsize = buflen;
 
@@ -734,7 +734,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: converting "
 				"physseg %d start %lx size %lx\n", i,
-				(long)segs[i].ds_addr, segs[i].ds_len));
+				(long)segs[i].ds_addr, (long)segs[i].ds_len));
 
 			if ((pa == prev_pa) &&
 				((offset != 0) || (end != offset))) {
@@ -753,7 +753,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"appending seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr,
-					map->dm_segs[j].ds_len));
+					(long)map->dm_segs[j].ds_len));
 			} else {
 				if (j >= map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, sb, map);
@@ -764,7 +764,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr,
-					map->dm_segs[j].ds_len));
+					(long)map->dm_segs[j].ds_len));
 			}
 			end = (offset + left) & PGOFSET;
 
@@ -777,7 +777,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr,
-					map->dm_segs[j].ds_len));
+					(long)map->dm_segs[j].ds_len));
 				if (++j >= map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, sb, map);
 					return (E2BIG);
@@ -844,7 +844,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 			"seg %d start %lx size %lx\n", i,
 			(long)map->dm_segs[i].ds_addr,
-			map->dm_segs[i].ds_len));
+			(long)map->dm_segs[i].ds_len));
 		if (++i >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			s = splhigh();
@@ -861,7 +861,7 @@ iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 	}
 	DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 			"seg %d start %lx size %lx\n", i,
-			(long)map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
+			(long)map->dm_segs[i].ds_addr, (long)map->dm_segs[i].ds_len));
 	map->dm_segs[i].ds_len = sgend - sgstart + 1;
 
 	TAILQ_FOREACH(pg, pglist, pageq) {
