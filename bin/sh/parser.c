@@ -837,13 +837,6 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 		CHECKEND();	/* set c to PEOF if at end of here document */
 		for (;;) {	/* until end of line or end of word */
 			CHECKSTRSPACE(3, out);	/* permit 3 calls to USTPUTC */
-			if (parsebackquote && c == '\\') {
-				c = pgetc();	/* XXX - compat with old /bin/sh */
-				if (c != '\\' && c != '`' && c != '$') {
-					pungetc();
-					c = '\\';
-				}
-			}
 			switch(syntax[c]) {
 			case CNL:	/* '\n' */
 				if (syntax == BASESYNTAX)
