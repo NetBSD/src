@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.93.2.3 1999/04/09 04:29:28 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.93.2.4 1999/05/30 14:57:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -558,8 +558,9 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flush_flags);
 	simple_unlock(&uobj->vmobjlock);
 
-	if (rv == 0)
+	if (rv == 0) {
 		return EIO;
+	}
 
 	}
 #endif
@@ -1509,8 +1510,8 @@ printlockedvnodes()
 const char buf_flagbits[] =
 	"\20\1AGE\2NEEDCOMMIT\3ASYNC\4BAD\5BUSY\6CACHE\7CALL\10DELWRI"
 	"\11DIRTY\12DONE\13EINTR\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE"
-	"\21PAGET\22PHYS\23RAW\24READ\25TAPE\26UAREA\27WANTED\30WRITEINPROG"
-	"\31XXX\32VFLUSH";
+	"\21PAGET\22PGIN\23PHYS\24RAW\25READ\26TAPE\27UAREA\30WANTED"
+	"\31WRITEINPROG\32XXX\33VFLUSH";
 
 void
 vfs_buf_print(bp, full, pr)
