@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwhod.c	5.20 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.6 1994/03/30 02:34:03 cgd Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.7 1994/04/06 03:01:48 andrew Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ struct	neighbor {
 struct	neighbor *neighbors;
 struct	whod mywd;
 struct	servent *sp;
-int	s, utmpf, kmemf = -1;
+int	s, utmpf;
 
 #define	WHDRSIZE	(sizeof (mywd) - sizeof (mywd.wd_we))
 
@@ -353,21 +353,13 @@ getkmem()
 		vmunixctime = sb.st_ctime;
 		vmunixino= sb.st_ino;
 	}
-	if (kmemf >= 0)
-		(void) close(kmemf);
-loop:
-	if (nlist(_PATH_UNIX, nl)) {
+
+	if (kvm_nlist(nl)) {
 		syslog(LOG_WARNING, "%s: namelist botch", _PATH_UNIX);
-		sleep(300);
-		goto loop;
+		mywd.wd_boottime = 0;
+		return;
 	}
-	kmemf = open(_PATH_KMEM, O_RDONLY, 0);
-	if (kmemf < 0) {
-		syslog(LOG_ERR, "%s: %m", _PATH_KMEM);
-		exit(1);
-	}
-	(void) lseek(kmemf, nl[NL_BOOTTIME].n_value, L_SET);
-	(void) read(kmemf, (char *)&mywd.wd_boottime,
+	(void) kvm_read((void *)nl[NL_BOOTTIME].n_value, &mywd.wd_boottime,
 	    sizeof (mywd.wd_boottime));
 	mywd.wd_boottime = htonl(mywd.wd_boottime);
 }
