@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.196 2004/06/19 04:15:30 itohy Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.197 2004/07/07 04:19:16 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.194 2004/06/19 04:13:12 itohy Exp 
+ *	NetBSD: pcmciadevs,v 1.195 2004/07/07 04:19:01 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -776,6 +776,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "National Instruments",
 	    "National Instruments PCMCIA-GPIB",	}
+	,
+	{
+	    PCMCIA_VENDOR_NEXTCOM, PCMCIA_PRODUCT_NEXTCOM_NEXTHAWK,
+	    PCMCIA_CIS_NEXTCOM_NEXTHAWK,
+	    0,
+	    "NextCom K.K.",
+	    "Next Hawk Ethernet",	}
 	,
 	{
 	    PCMCIA_VENDOR_NOKIA, PCMCIA_PRODUCT_NOKIA_C020_WLAN,
@@ -2161,6 +2168,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_NEXTCOM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "NextCom K.K.",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_EMTAC,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2177,19 +2192,19 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCMCIA_VENDOR_AMBICOM,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "AmbiCom Inc",
-	    NULL,
-	},
-	{
 	    PCMCIA_VENDOR_ACCTON,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "ACCTON",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_AMBICOM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "AmbiCom Inc",
 	    NULL,
 	},
 	{
