@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.70 2000/11/01 23:54:57 eeh Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.71 2000/11/05 23:00:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -1383,7 +1383,6 @@ zstty_rxint(cs)
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 
-if (ISSET(rr1, ZSRR1_DO)) Debugger();
 		put[0] = c;
 		put[1] = rr1;
 		put += 2;
