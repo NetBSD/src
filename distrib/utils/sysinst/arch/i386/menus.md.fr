@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.11 1999/03/14 14:19:06 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.12 1999/03/31 00:44:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,39 +76,10 @@ menu dlgeom, title "  Choisissez une option";
 		};
 
 
-
-menu nobiosgeom, title  "  Choisissez une option", y=16;
-	display action { msg_display (MSG_nobiosgeom, diskdev);
-			 disp_cur_geom ();
-			};
-	option "Arrêter l'installation",
-		action (endwin)  { exit(1); };
-	option "Entrer la géométrie",
-		action  { msg_clear(); set_fdisk_geom(); },
-		next menu confirmbiosgeom;
-
-menu confirmbiosgeom, y=16;
-	display action  {
-		extern int mbr_present; /* XXX */
-		msg_clear();
-		if (mbr_present)
-			msg_display_add(MSG_confirmbiosgeom);
-		msg_display_add(MSG_badgeom);
-		disp_cur_geom ();
-	};
-	option "Entrer à nouveau la géométrie du BIOS",
-		action  { msg_clear(); set_fdisk_geom(); };
-	option "Continuer l'installation",
-		action  {
-			if (check_geom())
-				return TRUE;
-			msg_display (MSG_reentergeom);
-			set_fdisk_geom();
-		};
-
 menu editparttable, title  "  Choisissez votre partition", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part (activepart,-1);
+			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
+], activepart,-1);
 			};
 	option "Edition de la partition 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -123,7 +94,8 @@ menu editparttable, title  "  Choisissez votre partition", exit;
 
 menu editpart, title  " Changement ";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part (activepart,editpart);
+			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
+], activepart,editpart);
 			   msg_printf_add ("\n");
 			};
 	option "du type de FS", sub menu chooseid;
@@ -143,9 +115,8 @@ menu editpart, title  " Changement ";
 				size = 0;
 				start = 0;
 			}
-			part[editpart][START] = start;
-			part[editpart][SIZE] = size;
-			part[editpart][SET] = 1;
+			part[editpart].mbrp_start = start;
+			part[editpart].mbrp_size = size;
 		};
 	option "Rendre la partition active", action { activepart = editpart; };
 	option "Partition OK", exit;
@@ -153,23 +124,19 @@ menu editpart, title  " Changement ";
 menu chooseid, title  "  Type de Partition? ";
 	option "NetBSD", 	exit,	action
 	{
-		part[editpart][ID] = 169;
-		part[editpart][SET] = 1;
+		part[editpart].mbrp_typ = 169;
 	};
 	option "DOS < 32 Meg",	exit,	action
 	{
-		part[editpart][ID] = 4;
-		part[editpart][SET] = 1;
+		part[editpart].mbrp_typ = 4;
 	};
 	option "DOS > 32 Meg",	exit,	action
 	{
-		part[editpart][ID] = 6;
-		part[editpart][SET] = 1;
+		part[editpart].mbrp_typ = 6;
 	};
 	option "unused",	exit,	action
 	{
-		part[editpart][ID] = 0;
-		part[editpart][SET] = 1;
+		part[editpart].mbrp_typ = 0;
 	};
 
 menu cyl1024;
