@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1998/11/13 04:47:06 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1998/12/26 00:53:49 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 19: vme */
 	cdev_notdef(),			/* 20: gpib */
 	cdev_notdef(),			/* 21: rd */
-	cdev_tty_init(1,bmcn),		/* 22: bitmap console (was zd XXX) */
+	cdev_tty_init(NFB,bmcn),	/* 22: bitmap console (was zd XXX) */
 	cdev_notdef(),			/* 23: ether */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 24: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 25: network tunnel */

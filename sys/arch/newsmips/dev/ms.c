@@ -1,3 +1,5 @@
+/*	$NetBSD: ms.c,v 1.3 1998/12/26 00:53:49 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,11 +40,12 @@
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  */
 
-#include "ms.h"
-#if NMS > 0
 /*
  * mouse 
  */
+
+#include "fb.h"
+#include "ms.h"
 
 #include <sys/types.h>
 #include <machine/cpu.h>
@@ -62,6 +65,12 @@
 
 #include <newsmips/dev/msreg.h>
 #include <newsmips/dev/scc.h>
+
+#if NFB == 0
+#define lock_bitmap()
+#define updateCursor(x, y, flag)
+#define unlock_bitmap()
+#endif
 
 #ifndef mips
 #define volatile
@@ -95,12 +104,11 @@ static int msputevent __P((int, int, int, int));
 static void msconv __P((int, char[]));
 static void mscheckevent __P((int));
 
-
 extern void kbm_open(int);
 extern void kbm_close(int);
-extern void lock_bitmap();
-extern void updateCursor();
-extern void unlock_bitmap();
+extern void lock_bitmap __P((void));
+extern void updateCursor __P((int *, int *, int));
+extern void unlock_bitmap __P((void));
 extern void selwakeup();
 extern int xgetc();
 
@@ -731,4 +739,3 @@ _ms_helper(unit)
 		}
 	}
 }
-#endif /* NMS > 0 */

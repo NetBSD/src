@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1998/09/28 23:42:48 erh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1998/12/26 00:53:49 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 1998/09/28 23:42:48 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 1998/12/26 00:53:49 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -102,8 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 1998/09/28 23:42:48 erh Exp $");
 #include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-char	cpu_model[30];
+char machine[] = MACHINE;	/* from <machine/param.h> */
+char machine_arch[] = MACHINE_ARCH;
+char cpu_model[30];
 
 /* maps for VM objects */
 
@@ -115,8 +116,8 @@ vm_map_t phys_map = NULL;
 vm_map_t buffer_map;
 #endif
 
-int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
+int maxmem;			/* max memory per process */
+int physmem;			/* max supported memory, changes to actual */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -305,6 +306,10 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 
 	switch (i) {
 
+	default:
+		printf("kernel not configured for systype 0x%x\n", i);
+		/* cpu_reboot(RB_HALT | RB_NOSYNC, NULL); */
+
 #ifdef news3400
 	case 3: /* NWS-3410 */
 	case 6: /* NWS-3470 */
@@ -322,10 +327,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 		cpuspeed = 10;
 		break;
 #endif
-
-	default:
-		printf("kernel not configured for systype 0x%x\n", i);
-		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
