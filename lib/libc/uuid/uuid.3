@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuid.3,v 1.1 2004/09/13 21:44:54 thorpej Exp $
+.\"	$NetBSD: uuid.3,v 1.2 2004/09/13 22:52:39 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,7 +106,8 @@ also referred to as Globally Unique Identifiers
 .Pp
 The
 .Fn uuid_compare
-function compares two UUIDs.  It returns -1 if
+function compares two UUIDs.
+It returns \-1 if
 .Fa uuid1
 preceeds
 .Fa uuid2 ,
@@ -152,7 +153,7 @@ function converts a UUID from binary representation to string representation.
 Storage for the string is dynamically allocated and returned via the
 .Fa str
 argument.
-This poinger should be passed to
+This pointer should be passed to
 .Xr free 3
 to release the allocated storage when it is no longer needed.
 .Pp
@@ -193,12 +194,12 @@ The function completed successfully.
 .It Dv uuid_s_bad_version
 The UUID does not have a known version.
 .It Dv uuid_s_invalid_string_uuid
-The string representation of an UUID is not valid.
+The string representation of a UUID is not valid.
 .It Dv uuid_s_no_memory
 Memory could not be allocated for the operation.
 .El
 .Sh SEE ALSO
-.Xr uuidgen 1 ,
+.\" .Xr uuidgen 1 ,
 .Xr uuidgen 2
 .Sh STANDARDS
 The
