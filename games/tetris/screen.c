@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
+/*	$NetBSD: screen.c,v 1.5 1997/10/12 02:03:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -71,9 +71,12 @@ static cell curscreen[B_SIZE];	/* 1 => standout (or otherwise marked) */
 static int curscore;
 static int isset;		/* true => terminal is in game mode */
 static struct termios oldtt;
-static void (*tstp)();
+static void (*tstp) __P((int));
 
-char	*tgetstr(), *tgoto();
+static	void	scr_stop __P((int));
+static	void	stopset __P((int));
+extern	char   *tgetstr __P((char *, char **));
+extern	char   *tgoto __P((char *, int, int));
 
 
 /*
@@ -108,21 +111,21 @@ struct tcsinfo {	/* termcap string info; some abbrevs above */
 	char tcname[3];
 	char **tcaddr;
 } tcstrings[] = {
-	"bc", &bcstr,
-	"ce", &CEstr,
-	"cl", &CLstr,
-	"cm", &CMstr,
+	{"bc", &bcstr},
+	{"ce", &CEstr},
+	{"cl", &CLstr},
+	{"cm", &CMstr},
 #ifdef unneeded
-	"cr", &CRstr,
+	{"cr", &CRstr},
 #endif
-	"le", &BC,		/* move cursor left one space */
-	"pc", &pcstr,
-	"se", &SEstr,
-	"so", &SOstr,
-	"te", &TEstr,
-	"ti", &TIstr,
-	"up", &UP,		/* cursor up */
-	0
+	{"le", &BC},		/* move cursor left one space */
+	{"pc", &pcstr},
+	{"se", &SEstr},
+	{"so", &SOstr},
+	{"te", &TEstr},
+	{"ti", &TIstr},
+	{"up", &UP},		/* cursor up */
+	{ {0}, NULL}
 };
 
 /* This is where we will actually stuff the information */
@@ -164,18 +167,18 @@ scr_init()
 		char tcname[3];
 		int *tcaddr;
 	} tcflags[] = {
-		"bs", &bsflag,
-		"ms", &MSflag,
+		{"bs", &bsflag},
+		{"ms", &MSflag},
 #ifdef unneeded
-		"nc", &ncflag,
+		{"nc", &ncflag},
 #endif
-		"xs", &xsflag,
-		0
+		{"xs", &xsflag},
+		{ {0}, NULL}
 	}, tcnums[] = {
-		"co", &COnum,
-		"li", &LInum,
-		"sg", &sgnum,
-		0
+		{"co", &COnum},
+		{"li", &LInum},
+		{"sg", &sgnum},
+		{ {0}, NULL}
 	};
 	
 	if ((term = getenv("TERM")) == NULL)
@@ -257,7 +260,7 @@ scr_set()
 	struct winsize ws;
 	struct termios newtt;
 	sigset_t sigset, osigset;
-	void (*ttou)();
+	void (*ttou) __P((int));
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGTSTP);
