@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.10 1999/02/05 01:17:24 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.11 1999/02/05 02:58:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -94,6 +94,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -108,8 +109,6 @@
 #endif
 
 #define	VR_USEIOSPACE
-
-/* #define	VR_BACKGROUND_AUTONEG */
 
 #define	ETHER_CRC_LEN	4	/* XXX Should be in a common header. */
 
@@ -127,35 +126,6 @@ static struct vr_type {
 		"VIA VT86C100A Rhine II 10/100BaseTX" },
 	{ 0, 0, NULL }
 };
-
-/*
- * Various supported PHY vendors/types and their names. Note that
- * this driver will work with pretty much any MII-compliant PHY,
- * so failure to positively identify the chip is not a fatal error.
- */
-
-static struct vr_type vr_phys[] = {
-	{ TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
-	{ TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
-	{ NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
-	{ LEVEL1_PHY_VENDORID, LEVEL1_PHY_LXT970, "<Level 1 LXT970>" },
-	{ INTEL_PHY_VENDORID, INTEL_PHY_82555, "<Intel 82555>" },
-	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
-	{ 0, 0, "<MII-compliant physical interface>" }
-};
-
-struct vr_mii_frame {
-	u_int8_t		mii_stdelim;
-	u_int8_t		mii_opcode;
-	u_int8_t		mii_phyaddr;
-	u_int8_t		mii_regaddr;
-	u_int8_t		mii_turnaround;
-	u_int16_t		mii_data;
-};
-
-#define	VR_FLAG_FORCEDELAY	1
-#define	VR_FLAG_SCHEDDELAY	2
-#define	VR_FLAG_DELAYTIMEO	3
 
 struct vr_list_data {
 	struct vr_desc		vr_rx_list[VR_RX_LIST_CNT];
@@ -194,17 +164,9 @@ struct vr_softc {
 	pci_chipset_tag_t	vr_pc;
 	struct ethercom		vr_ec;
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
-	struct ifmedia		ifmedia;	/* media info */
+	struct mii_data		vr_mii;		/* MII/media info */
 	bus_space_handle_t	vr_bhandle;	/* bus space handle */
 	bus_space_tag_t		vr_btag;	/* bus space tag */
-	struct vr_type		*vr_info;	/* Rhine adapter info */
-	struct vr_type		*vr_pinfo;	/* phy info */
-	u_int8_t		vr_unit;	/* interface number */
-	u_int8_t		vr_type;
-	u_int8_t		vr_phy_addr;	/* PHY address */
-	u_int8_t		vr_tx_pend;	/* TX pending */
-	u_int8_t		vr_want_auto;
-	u_int8_t		vr_autoneg;
 	caddr_t			vr_ldata_ptr;
 	struct vr_list_data	*vr_ldata;
 	struct vr_chain_data	vr_cdata;
@@ -244,21 +206,17 @@ static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static void vr_init		__P((void *));
 static void vr_stop		__P((struct vr_softc *));
 static void vr_watchdog		__P((struct ifnet *));
+static void vr_tick		__P((void *));
+
 static int vr_ifmedia_upd	__P((struct ifnet *));
 static void vr_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
 static void vr_mii_sync		__P((struct vr_softc *));
 static void vr_mii_send		__P((struct vr_softc *, u_int32_t, int));
-static int vr_mii_readreg	__P((struct vr_softc *, struct vr_mii_frame *));
-static int vr_mii_writereg	__P((struct vr_softc *, struct vr_mii_frame *));
-static u_int16_t vr_phy_readreg	__P((struct vr_softc *, int));
-static void vr_phy_writereg	__P((struct vr_softc *, u_int16_t, u_int16_t));
+static int vr_mii_readreg	__P((struct device *, int, int));
+static void vr_mii_writereg	__P((struct device *, int, int, int));
+static void vr_mii_statchg	__P((struct device *));
 
-static void vr_autoneg_xmit	__P((struct vr_softc *));
-static void vr_autoneg_mii	__P((struct vr_softc *, int, int));
-static void vr_setmode_mii	__P((struct vr_softc *, int));
-static void vr_getmode_mii	__P((struct vr_softc *));
-static void vr_setcfg		__P((struct vr_softc *, u_int16_t));
 static u_int8_t vr_calchash	__P((u_int8_t *));
 static void vr_setmulti		__P((struct vr_softc *));
 static void vr_reset		__P((struct vr_softc *));
@@ -345,22 +303,14 @@ static void vr_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int vr_mii_readreg(sc, frame)
-	struct vr_softc		*sc;
-	struct vr_mii_frame	*frame;
-
+static int vr_mii_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
 {
-	int			i, ack, s;
+	struct vr_softc *sc = (struct vr_softc *)self;
+	int i, ack, s, val = 0;
 
 	s = splimp();
-
-	/*
-	 * Set up frame for RX.
-	 */
-	frame->mii_stdelim = MII_COMMAND_START;
-	frame->mii_opcode = MII_COMMAND_READ;
-	frame->mii_turnaround = 0;
-	frame->mii_data = 0;
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
@@ -375,10 +325,10 @@ static int vr_mii_readreg(sc, frame)
 	/*
 	 * Send command/address info.
 	 */
-	vr_mii_send(sc, frame->mii_stdelim, 2);
-	vr_mii_send(sc, frame->mii_opcode, 2);
-	vr_mii_send(sc, frame->mii_phyaddr, 5);
-	vr_mii_send(sc, frame->mii_regaddr, 5);
+	vr_mii_send(sc, MII_COMMAND_START, 2);
+	vr_mii_send(sc, MII_COMMAND_READ, 2);
+	vr_mii_send(sc, phy, 5);
+	vr_mii_send(sc, reg, 5);
 
 	/* Idle bit */
 	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAOUT));
@@ -415,14 +365,14 @@ static int vr_mii_readreg(sc, frame)
 		DELAY(1);
 		if (!ack) {
 			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN)
-				frame->mii_data |= i;
+				val |= i;
 			DELAY(1);
 		}
 		SIO_SET(VR_MIICMD_CLK);
 		DELAY(1);
 	}
 
-fail:
+ fail:
 
 	SIO_CLR(VR_MIICMD_CLK);
 	DELAY(1);
@@ -431,32 +381,23 @@ fail:
 
 	splx(s);
 
-	if (ack)
-		return (1);
-	return (0);
+	return (val);
 }
 
 /*
  * Write to a PHY register through the MII.
  */
-static int vr_mii_writereg(sc, frame)
-	struct vr_softc		*sc;
-	struct vr_mii_frame	*frame;
+static void vr_mii_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
 {
-	int			s;
+	struct vr_softc *sc = (struct vr_softc *)self;
+	int s;
 
 	s = splimp();
 
 	CSR_WRITE_1(sc, VR_MIICMD, 0);
 	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
-	 * Set up frame for TX.
-	 */
-
-	frame->mii_stdelim = MII_COMMAND_START;
-	frame->mii_opcode = MII_COMMAND_WRITE;
-	frame->mii_turnaround = MII_COMMAND_ACK;
 
 	/*
 	 * Turn on data output.
@@ -465,12 +406,12 @@ static int vr_mii_writereg(sc, frame)
 
 	vr_mii_sync(sc);
 
-	vr_mii_send(sc, frame->mii_stdelim, 2);
-	vr_mii_send(sc, frame->mii_opcode, 2);
-	vr_mii_send(sc, frame->mii_phyaddr, 5);
-	vr_mii_send(sc, frame->mii_regaddr, 5);
-	vr_mii_send(sc, frame->mii_turnaround, 2);
-	vr_mii_send(sc, frame->mii_data, 16);
+	vr_mii_send(sc, MII_COMMAND_START, 2);
+	vr_mii_send(sc, MII_COMMAND_WRITE, 2);
+	vr_mii_send(sc, phy, 5);
+	vr_mii_send(sc, reg, 5);
+	vr_mii_send(sc, MII_COMMAND_ACK, 2);
+	vr_mii_send(sc, val, 16);
 
 	/* Idle bit. */
 	SIO_SET(VR_MIICMD_CLK);
@@ -484,41 +425,33 @@ static int vr_mii_writereg(sc, frame)
 	SIO_CLR(VR_MIICMD_DIR);
 
 	splx(s);
-
-	return (0);
 }
 
-static u_int16_t vr_phy_readreg(sc, reg)
-	struct vr_softc		*sc;
-	int			reg;
+static void vr_mii_statchg(self)
+	struct device *self;
 {
-	struct vr_mii_frame	frame;
+	struct vr_softc *sc = (struct vr_softc *)self;
+	int restart = 0;
 
-	bzero((char *)&frame, sizeof (frame));
+	/*
+	 * In order to fiddle with the 'full-duplex' bit in the netconfig
+	 * register, we first have to put the transmit and/or receive logic
+	 * in the idle state.
+	 */
+	if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON)) {
+		restart = 1;
+		VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_TX_ON|VR_CMD_RX_ON));
+	}
 
-	frame.mii_phyaddr = sc->vr_phy_addr;
-	frame.mii_regaddr = reg;
-	vr_mii_readreg(sc, &frame);
+	if (sc->vr_mii.mii_media_active & IFM_FDX)
+		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+	else
+		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
 
-	return (frame.mii_data);
-}
+	if (restart)
+		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
 
-static void vr_phy_writereg(sc, reg, data)
-	struct vr_softc		*sc;
-	u_int16_t		reg;
-	u_int16_t		data;
-{
-	struct vr_mii_frame	frame;
-
-	bzero((char *)&frame, sizeof (frame));
-
-	frame.mii_phyaddr = sc->vr_phy_addr;
-	frame.mii_regaddr = reg;
-	frame.mii_data = data;
-
-	vr_mii_writereg(sc, &frame);
-
-	return;
+	/* XXX Update ifp->if_baudrate */
 }
 
 /*
@@ -603,322 +536,6 @@ static void vr_setmulti(sc)
 	CSR_WRITE_4(sc, VR_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, VR_MAR1, hashes[1]);
 	CSR_WRITE_1(sc, VR_RXCFG, rxfilt);
-
-	return;
-}
-
-/*
- * Initiate an autonegotiation session.
- */
-static void vr_autoneg_xmit(sc)
-	struct vr_softc		*sc;
-{
-	u_int16_t		phy_sts;
-
-	vr_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-	DELAY(500);
-	while (vr_phy_readreg(sc, PHY_BMCR)
-			& PHY_BMCR_RESET);
-
-	phy_sts = vr_phy_readreg(sc, PHY_BMCR);
-	phy_sts |= PHY_BMCR_AUTONEGENBL|PHY_BMCR_AUTONEGRSTR;
-	vr_phy_writereg(sc, PHY_BMCR, phy_sts);
-
-	return;
-}
-
-/*
- * Invoke autonegotiation on a PHY.
- */
-static void vr_autoneg_mii(sc, flag, verbose)
-	struct vr_softc		*sc;
-	int			flag;
-	int			verbose;
-{
-	u_int16_t		phy_sts = 0, media, advert, ability;
-	struct ifnet		*ifp;
-	struct ifmedia		*ifm;
-
-	ifm = &sc->ifmedia;
-	ifp = &sc->vr_ec.ec_if;
-
-	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
-
-	/*
-	 * The 100baseT4 PHY on the 3c905-T4 has the 'autoneg supported'
-	 * bit cleared in the status register, but has the 'autoneg enabled'
-	 * bit set in the control register. This is a contradiction, and
-	 * I'm not sure how to handle it. If you want to force an attempt
-	 * to autoneg for 100baseT4 PHYs, #define FORCE_AUTONEG_TFOUR
-	 * and see what happens.
-	 */
-#ifndef FORCE_AUTONEG_TFOUR
-	/*
-	 * First, see if autoneg is supported. If not, there's
-	 * no point in continuing.
-	 */
-	phy_sts = vr_phy_readreg(sc, PHY_BMSR);
-	if (!(phy_sts & PHY_BMSR_CANAUTONEG)) {
-		if (verbose)
-			printf("%s: autonegotiation not supported\n",
-				sc->vr_dev.dv_xname);
-		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-		return;
-	}
-#endif
-
-	switch (flag) {
-	case VR_FLAG_FORCEDELAY:
-		/*
-		 * XXX Never use this option anywhere but in the probe
-		 * routine: making the kernel stop dead in its tracks
-		 * for three whole seconds after we've gone multi-user
-		 * is really bad manners.
-		 */
-		vr_autoneg_xmit(sc);
-		DELAY(5000000);
-		break;
-	case VR_FLAG_SCHEDDELAY:
-		/*
-		 * Wait for the transmitter to go idle before starting
-		 * an autoneg session, otherwise vr_start() may clobber
-		 * our timeout, and we don't want to allow transmission
-		 * during an autoneg session since that can screw it up.
-		 */
-		if (sc->vr_cdata.vr_tx_head != NULL) {
-			sc->vr_want_auto = 1;
-			return;
-		}
-		vr_autoneg_xmit(sc);
-		ifp->if_timer = 5;
-		sc->vr_autoneg = 1;
-		sc->vr_want_auto = 0;
-		return;
-		break;
-	case VR_FLAG_DELAYTIMEO:
-		ifp->if_timer = 0;
-		sc->vr_autoneg = 0;
-		break;
-	default:
-		printf("%s: invalid autoneg flag: %d\n",
-			sc->vr_dev.dv_xname, flag);
-		return;
-	}
-
-	if (vr_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_AUTONEGCOMP) {
-		if (verbose)
-			printf("%s: autoneg complete, ",
-				sc->vr_dev.dv_xname);
-		phy_sts = vr_phy_readreg(sc, PHY_BMSR);
-	} else {
-		if (verbose)
-			printf("%s: autoneg not complete, ",
-				sc->vr_dev.dv_xname);
-	}
-
-	media = vr_phy_readreg(sc, PHY_BMCR);
-
-	/* Link is good. Report modes and set duplex mode. */
-	if (vr_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT) {
-		if (verbose)
-			printf("link status good ");
-		advert = vr_phy_readreg(sc, PHY_ANAR);
-		ability = vr_phy_readreg(sc, PHY_LPAR);
-
-		if (advert & PHY_ANAR_100BT4 && ability & PHY_ANAR_100BT4) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_T4;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(100baseT4)\n");
-		} else if (advert & PHY_ANAR_100BTXFULL &&
-			ability & PHY_ANAR_100BTXFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_100BTXHALF &&
-			ability & PHY_ANAR_100BTXHALF) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_10BTFULL &&
-			ability & PHY_ANAR_10BTFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 10Mbps)\n");
-		} else {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 10Mbps)\n");
-		}
-
-		media &= ~PHY_BMCR_AUTONEGENBL;
-
-		/* Set ASIC's duplex mode to match the PHY. */
-		vr_setcfg(sc, media);
-		vr_phy_writereg(sc, PHY_BMCR, media);
-	} else {
-		if (verbose)
-			printf("no carrier\n");
-	}
-
-	vr_init(sc);
-
-	if (sc->vr_tx_pend) {
-		sc->vr_autoneg = 0;
-		sc->vr_tx_pend = 0;
-		vr_start(ifp);
-	}
-
-	return;
-}
-
-static void vr_getmode_mii(sc)
-	struct vr_softc		*sc;
-{
-	u_int16_t		bmsr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->vr_ec.ec_if;
-
-	bmsr = vr_phy_readreg(sc, PHY_BMSR);
-
-	/* fallback */
-	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-
-	if (bmsr & PHY_BMSR_10BTHALF) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-	}
-
-	if (bmsr & PHY_BMSR_10BTFULL) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXHALF) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXFULL) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	}
-
-	/* Some also support 100BaseT4. */
-	if (bmsr & PHY_BMSR_100BT4) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
-#ifdef FORCE_AUTONEG_TFOUR
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-#endif
-	}
-
-	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-	}
-
-	return;
-}
-
-/*
- * Set speed and duplex mode.
- */
-static void vr_setmode_mii(sc, media)
-	struct vr_softc		*sc;
-	int			media;
-{
-	u_int16_t		bmcr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->vr_ec.ec_if;
-
-	/*
-	 * If an autoneg session is in progress, stop it.
-	 */
-	if (sc->vr_autoneg) {
-		printf("%s: canceling autoneg session\n",
-			sc->vr_dev.dv_xname);
-		ifp->if_timer = sc->vr_autoneg = sc->vr_want_auto = 0;
-		bmcr = vr_phy_readreg(sc, PHY_BMCR);
-		bmcr &= ~PHY_BMCR_AUTONEGENBL;
-		vr_phy_writereg(sc, PHY_BMCR, bmcr);
-	}
-
-	printf("%s: selecting MII, ", sc->vr_dev.dv_xname);
-
-	bmcr = vr_phy_readreg(sc, PHY_BMCR);
-
-	bmcr &= ~(PHY_BMCR_AUTONEGENBL|PHY_BMCR_SPEEDSEL|
-			PHY_BMCR_DUPLEX|PHY_BMCR_LOOPBK);
-
-	if (IFM_SUBTYPE(media) == IFM_100_T4) {
-		printf("100Mbps/T4, half-duplex\n");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_100_TX) {
-		printf("100Mbps, ");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_10_T) {
-		printf("10Mbps, ");
-		bmcr &= ~PHY_BMCR_SPEEDSEL;
-	}
-
-	if ((media & IFM_GMASK) == IFM_FDX) {
-		printf("full duplex\n");
-		bmcr |= PHY_BMCR_DUPLEX;
-	} else {
-		printf("half duplex\n");
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	vr_setcfg(sc, bmcr);
-	vr_phy_writereg(sc, PHY_BMCR, bmcr);
-
-	return;
-}
-
-/*
- * In order to fiddle with the
- * 'full-duplex' and '100Mbps' bits in the netconfig register, we
- * first have to put the transmit and/or receive logic in the idle state.
- */
-static void vr_setcfg(sc, bmcr)
-	struct vr_softc		*sc;
-	u_int16_t		bmcr;
-{
-	int			restart = 0;
-
-	if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON)) {
-		restart = 1;
-		VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_TX_ON|VR_CMD_RX_ON));
-	}
-
-	if (bmcr & PHY_BMCR_DUPLEX)
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
-	else
-		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
-
-	if (restart)
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
 
 	return;
 }
@@ -1254,8 +871,6 @@ static void vr_txeoc(sc)
 	if (sc->vr_cdata.vr_tx_head == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->vr_cdata.vr_tx_tail = NULL;
-		if (sc->vr_want_auto)
-			vr_autoneg_mii(sc, VR_FLAG_SCHEDDELAY, 1);
 	}
 
 	return;
@@ -1415,11 +1030,6 @@ static void vr_start(ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->vr_autoneg) {
-		sc->vr_tx_pend = 1;
-		return;
-	}
-
 	/*
 	 * Check for an available queue slot. If there are none,
 	 * punt.
@@ -1482,16 +1092,9 @@ static void vr_init(xsc)
 {
 	struct vr_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->vr_ec.ec_if;
-	u_int16_t		phy_bmcr = 0;
 	int			s;
 
-	if (sc->vr_autoneg)
-		return;
-
 	s = splimp();
-
-	if (sc->vr_pinfo != NULL)
-		phy_bmcr = vr_phy_readreg(sc, PHY_BMCR);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1546,7 +1149,8 @@ static void vr_init(xsc)
 				    VR_CMD_TX_ON|VR_CMD_RX_ON|
 				    VR_CMD_RX_GO);
 
-	vr_setcfg(sc, vr_phy_readreg(sc, PHY_BMCR));
+	/* Set current media. */
+	mii_mediachg(&sc->vr_mii);
 
 	CSR_WRITE_4(sc, VR_TXADDR, vtophys(&sc->vr_ldata->vr_tx_list[0]));
 
@@ -1556,14 +1160,13 @@ static void vr_init(xsc)
 	CSR_WRITE_2(sc, VR_ISR, 0xFFFF);
 	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
-	/* Restore state of BMCR */
-	if (sc->vr_pinfo != NULL)
-		vr_phy_writereg(sc, PHY_BMCR, phy_bmcr);
-
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	(void)splx(s);
+
+	/* Start one second timer. */
+	timeout(vr_tick, sc, hz);
 
 	return;
 }
@@ -1574,20 +1177,10 @@ static void vr_init(xsc)
 static int vr_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
-	struct vr_softc		*sc;
-	struct ifmedia		*ifm;
+	struct vr_softc *sc = ifp->if_softc;
 
-	sc = ifp->if_softc;
-	ifm = &sc->ifmedia;
-
-	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return (EINVAL);
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
-		vr_autoneg_mii(sc, VR_FLAG_SCHEDDELAY, 1);
-	else
-		vr_setmode_mii(sc, ifm->ifm_media);
-
+	if (ifp->if_flags & IFF_UP)
+		mii_mediachg(&sc->vr_mii);
 	return (0);
 }
 
@@ -1598,45 +1191,11 @@ static void vr_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
-	struct vr_softc		*sc;
-	u_int16_t		advert = 0, ability = 0;
+	struct vr_softc *sc = ifp->if_softc;
 
-	sc = ifp->if_softc;
-
-	ifmr->ifm_active = IFM_ETHER;
-
-	if (!(vr_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_AUTONEGENBL)) {
-		if (vr_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_SPEEDSEL)
-			ifmr->ifm_active = IFM_ETHER|IFM_100_TX;
-		else
-			ifmr->ifm_active = IFM_ETHER|IFM_10_T;
-		if (vr_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_DUPLEX)
-			ifmr->ifm_active |= IFM_FDX;
-		else
-			ifmr->ifm_active |= IFM_HDX;
-		return;
-	}
-
-	ability = vr_phy_readreg(sc, PHY_LPAR);
-	advert = vr_phy_readreg(sc, PHY_ANAR);
-	if (advert & PHY_ANAR_100BT4 &&
-		ability & PHY_ANAR_100BT4) {
-		ifmr->ifm_active = IFM_ETHER|IFM_100_T4;
-	} else if (advert & PHY_ANAR_100BTXFULL &&
-		ability & PHY_ANAR_100BTXFULL) {
-		ifmr->ifm_active = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	} else if (advert & PHY_ANAR_100BTXHALF &&
-		ability & PHY_ANAR_100BTXHALF) {
-		ifmr->ifm_active = IFM_ETHER|IFM_100_TX|IFM_HDX;
-	} else if (advert & PHY_ANAR_10BTFULL &&
-		ability & PHY_ANAR_10BTFULL) {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T|IFM_FDX;
-	} else if (advert & PHY_ANAR_10BTHALF &&
-		ability & PHY_ANAR_10BTHALF) {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T|IFM_HDX;
-	}
-
-	return;
+	mii_pollstat(&sc->vr_mii);
+	ifmr->ifm_status = sc->vr_mii.mii_media_status;
+	ifmr->ifm_active = sc->vr_mii.mii_media_active;
 }
 
 static int vr_ioctl(ifp, command, data)
@@ -1704,7 +1263,7 @@ static int vr_ioctl(ifp, command, data)
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
 		break;
 	default:
 		error = EINVAL;
@@ -1723,17 +1282,8 @@ static void vr_watchdog(ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->vr_autoneg) {
-		vr_autoneg_mii(sc, VR_FLAG_DELAYTIMEO, 1);
-		return;
-	}
-
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", sc->vr_dev.dv_xname);
-
-	if (!(vr_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT))
-		printf("%s: no carrier - transceiver cable problem?\n",
-			sc->vr_dev.dv_xname);
 
 	vr_stop(sc);
 	vr_reset(sc);
@@ -1746,6 +1296,23 @@ static void vr_watchdog(ifp)
 }
 
 /*
+ * One second timer, used to tick MII.
+ */
+static void
+vr_tick(arg)
+	void *arg;
+{
+	struct vr_softc *sc = arg;
+	int s;
+
+	s = splimp();
+	mii_tick(&sc->vr_mii);
+	splx(s);
+
+	timeout(vr_tick, sc, hz);
+}
+
+/*
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
@@ -1754,6 +1321,9 @@ static void vr_stop(sc)
 {
 	register int		i;
 	struct ifnet		*ifp;
+
+	/* Cancel one second timer. */
+	untimeout(vr_tick, sc);
 
 	ifp = &sc->vr_ec.ec_if;
 	ifp->if_timer = 0;
@@ -1863,12 +1433,9 @@ vr_attach(parent, self, aux)
 	int			i;
 	u_int32_t		command;
 	struct ifnet		*ifp;
-	int			media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	unsigned int		round;
 	caddr_t			roundptr;
 	u_char			eaddr[ETHER_ADDR_LEN];
-	struct vr_type		*p;
-	u_int16_t		phy_vid, phy_did, phy_sts;
 
 	vrt = vr_lookup(pa);
 	if (vrt == NULL) {
@@ -2035,46 +1602,20 @@ vr_attach(parent, self, aux)
 	ifp->if_baudrate = 10000000;
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	for (i = VR_PHYADDR_MIN; i < VR_PHYADDR_MAX + 1; i++) {
-		sc->vr_phy_addr = i;
-		vr_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-		DELAY(500);
-		while (vr_phy_readreg(sc, PHY_BMCR)
-				& PHY_BMCR_RESET);
-		if ((phy_sts = vr_phy_readreg(sc, PHY_BMSR)))
-			break;
-	}
-	if (phy_sts) {
-		phy_vid = vr_phy_readreg(sc, PHY_VENID);
-		phy_did = vr_phy_readreg(sc, PHY_DEVID);
-		p = vr_phys;
-		while (p->vr_vid) {
-			if (phy_vid == p->vr_vid &&
-				(phy_did | 0x000F) == p->vr_did) {
-				sc->vr_pinfo = p;
-				break;
-			}
-			p++;
-		}
-		if (sc->vr_pinfo == NULL)
-			sc->vr_pinfo = &vr_phys[PHY_UNKNOWN];
-	} else {
-		printf("%s: MII without any phy!\n",
-			sc->vr_dev.dv_xname);
-		goto fail;
-	}
-
 	/*
-	 * Do ifmedia setup.
+	 * Initialize MII/media info.
 	 */
-	ifmedia_init(&sc->ifmedia, 0, vr_ifmedia_upd, vr_ifmedia_sts);
-
-	vr_getmode_mii(sc);
-	vr_autoneg_mii(sc, VR_FLAG_FORCEDELAY, 1);
-	media = sc->ifmedia.ifm_media;
-	vr_stop(sc);
-
-	ifmedia_set(&sc->ifmedia, media);
+	sc->vr_mii.mii_ifp = ifp;
+	sc->vr_mii.mii_readreg = vr_mii_readreg;
+	sc->vr_mii.mii_writereg = vr_mii_writereg;
+	sc->vr_mii.mii_statchg = vr_mii_statchg;
+	ifmedia_init(&sc->vr_mii.mii_media, 0, vr_ifmedia_upd, vr_ifmedia_sts);
+	mii_phy_probe(&sc->vr_dev, &sc->vr_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	/*
 	 * Call MI attach routines.
