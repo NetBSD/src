@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.57 1999/11/10 12:31:01 augustss Exp $
+$NetBSD: usbdevs,v 1.58 1999/11/10 15:55:51 matt Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -299,6 +299,7 @@ product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA EZUSB		0x8000	EZ-USB
 product ENTREGA SERIAL		0x8001	DB25 Serial connector
+product ENTREGA SERIAL_DB9	0x8093	DB9 Serial connector
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
