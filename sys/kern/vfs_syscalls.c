@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.147.4.2 1999/10/21 19:21:30 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.147.4.3 1999/10/23 14:09:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -493,10 +493,10 @@ dounmount(mp, flags, p)
 		error = VFS_UNMOUNT(mp, flags, p);
 	simple_lock(&mountlist_slock);
 	if (error) {
-		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
-			(void) vfs_allocate_syncvnode(mp);
 		mp->mnt_flag &= ~MNT_UNMOUNT;
 		mp->mnt_unmounter = NULL;
+		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
+			(void) vfs_allocate_syncvnode(mp);
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
