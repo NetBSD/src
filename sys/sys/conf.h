@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.91 2001/09/16 07:21:08 manu Exp $	*/
+/*	$NetBSD: conf.h,v 1.92 2001/09/18 19:55:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -182,6 +182,13 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_noimpl(mmap,enodev), 0 }
+
+/*  open, close, mmap */
+#define cdev__ocm_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
+        dev_noimpl(write,enodev), dev_noimpl(ioctl,enodev), \
+        dev_noimpl(stop,enodev), 0, dev_noimpl(poll,enodev), \
+        dev_init(c,n,mmap), 0 }
 
 /*  open, close, ioctl, poll */
 #define cdev__ocip_init(c,n) { \
