@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2003/06/16 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.19 2003/09/03 21:33:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ set_sint(int pending)
 #define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
 #define	I8259_INTR_NUM		16
 #define	OPENPIC_INTR_NUM	((ICU_LEN)-(I8259_INTR_NUM))
+#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 
 #define	PREP_INTR_REG	0xbffff000
 #define	INTR_VECTOR_REG	0xff0
