@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.21 1994/07/10 16:58:13 briggs Exp $
+ *	$Id: machdep.c,v 1.22 1994/07/21 00:55:07 briggs Exp $
  */
 
 #include <param.h>
@@ -2155,7 +2155,7 @@ struct cpu_model_info {
 { 0,                 NULL,         NULL,      0 },
 }; /* End of cpu_models[] initialization. */
 
-char	cpu_model[120];	/* for sysctl */
+char	cpu_model[120];	/* for sysctl() */
 
 static void
 identifycpu(void)
@@ -2282,6 +2282,7 @@ void printenvvars (void)
 }
 
 extern volatile unsigned char	*sccA;
+extern volatile unsigned char	*ASCBase;
 
 /*
  * Sets a bunch of machine-specific variables
@@ -2316,6 +2317,7 @@ static	int			firstpass = 1;
 				IOBase = 0x50000000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
+				ASCBase = (volatile u_char *) 0x14000;
 				mac68k_machine.scsi80 = 1;
 				mac68k_machine.sccClkConst = 115200;
 			}
@@ -2328,6 +2330,7 @@ static	int			firstpass = 1;
 				IOBase = 0x50000000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
+				ASCBase = (volatile u_char *) 0x14000;
 				mac68k_machine.scsi80 = 1;
 				mac68k_machine.sccClkConst = 115200;
 			}
@@ -2340,6 +2343,7 @@ static	int			firstpass = 1;
 				IOBase = 0x50f00000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0xc000;
+				ASCBase = (volatile u_char *) 0x14000;
 				mac68k_machine.scsi96 = 1;
 				mac68k_machine.sccClkConst = 249600;
 			}
@@ -2352,6 +2356,7 @@ static	int			firstpass = 1;
 				IOBase = 0x50000000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
+				ASCBase = (volatile u_char *) 0x14000;
 				mac68k_machine.scsi80 = 1;
 				mac68k_machine.sccClkConst = 122400;
 			/*
@@ -2372,6 +2377,7 @@ static	int			firstpass = 1;
 				IOBase = 0x50000000;
 				Via1Base = (volatile u_char *) IOBase;
 				sccA = (volatile u_char *) 0x4000;
+				ASCBase = (volatile u_char *) 0x14000;
 				mac68k_machine.scsi80 = 1;
 				mac68k_machine.sccClkConst = 122400;
 			/*
