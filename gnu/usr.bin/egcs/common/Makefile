@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/08/17 13:58:55 tv Exp $
+#	$NetBSD: Makefile,v 1.15 1998/08/17 21:23:25 tv Exp $
 
 .include "../Makefile.inc"
 
@@ -79,7 +79,7 @@ install: __libinstall
 
 .include <bsd.lib.mk>
 
-${OBJS} genattrtab.lo genextract.lo: \
+${OBJS} ${SOBJS} genattrtab.lo genextract.lo: \
 		insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 
 .PATH:		${DIST}/config/${MACHINE_GNU_ARCH}
