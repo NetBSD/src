@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.5 2004/03/23 08:31:43 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.6 2004/09/16 13:43:44 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -37,9 +37,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: funcs.c,v 1.11 2003/11/11 20:01:46 christos Exp")
+FILE_RCSID("@(#)Id: funcs.c,v 1.12 2004/06/04 14:40:20 christos Exp")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.1.1.5 2004/03/23 08:31:43 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.1.1.6 2004/09/16 13:43:44 pooka Exp $");
 #endif
 #endif	/* lint */
 /*
@@ -116,6 +116,7 @@ file_badread(struct magic_set *ms)
 	file_error(ms, errno, "error reading");
 }
 
+#ifndef COMPILE_ONLY
 protected int
 file_buffer(struct magic_set *ms, const void *buf, size_t nb)
 {
@@ -139,6 +140,7 @@ file_buffer(struct magic_set *ms, const void *buf, size_t nb)
     }
     return m;
 }
+#endif
 
 protected int
 file_reset(struct magic_set *ms)

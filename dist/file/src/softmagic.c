@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.5 2004/03/23 08:31:45 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.6 2004/09/16 13:43:47 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -47,9 +47,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: softmagic.c,v 1.65 2004/03/09 18:49:58 christos Exp")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.66 2004/07/24 20:38:56 christos Exp")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.1.1.5 2004/03/23 08:31:45 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.1.1.6 2004/09/16 13:43:47 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -684,7 +684,7 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 	if (m->flag & INDIR) {
 		switch (m->in_type) {
 		case FILE_BYTE:
-			if (m->in_offset)
+			if (m->in_offset) {
 				switch (m->in_op&0x7F) {
 				case FILE_OPAND:
 					offset = p->b & m->in_offset;
@@ -711,12 +711,14 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 					offset = p->b % m->in_offset;
 					break;
 				}
+			} else
+				offset = p->b;
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
 		case FILE_BESHORT:
-			if (m->in_offset)
-				switch (m->in_op&0x7F) {
+			if (m->in_offset) {
+				switch (m->in_op & 0x7F) {
 				case FILE_OPAND:
 					offset = (short)((p->hs[0]<<8)|
 							 (p->hs[1])) &
@@ -758,12 +760,15 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 						 m->in_offset;
 					break;
 				}
+			} else
+				offset = (short)((p->hs[0]<<8)|
+						 (p->hs[1]));
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
 		case FILE_LESHORT:
-			if (m->in_offset)
-				switch (m->in_op&0x7F) {
+			if (m->in_offset) {
+				switch (m->in_op & 0x7F) {
 				case FILE_OPAND:
 					offset = (short)((p->hs[1]<<8)|
 							 (p->hs[0])) &
@@ -805,12 +810,15 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 						 m->in_offset;
 					break;
 				}
+			} else
+				offset = (short)((p->hs[1]<<8)|
+						 (p->hs[0]));
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
 		case FILE_SHORT:
-			if (m->in_offset)
-				switch (m->in_op&0x7F) {
+			if (m->in_offset) {
+				switch (m->in_op & 0x7F) {
 				case FILE_OPAND:
 					offset = p->h & m->in_offset;
 					break;
@@ -836,12 +844,15 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 					offset = p->h % m->in_offset;
 					break;
 				}
+			}
+			else
+				offset = p->h;
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
 		case FILE_BELONG:
-			if (m->in_offset)
-				switch (m->in_op&0x7F) {
+			if (m->in_offset) {
+				switch (m->in_op & 0x7F) {
 				case FILE_OPAND:
 					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
@@ -899,12 +910,17 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 						 m->in_offset;
 					break;
 				}
+			} else
+				offset = (int32_t)((p->hl[0]<<24)|
+						 (p->hl[1]<<16)|
+						 (p->hl[2]<<8)|
+						 (p->hl[3]));
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
 		case FILE_LELONG:
-			if (m->in_offset)
-				switch (m->in_op&0x7F) {
+			if (m->in_offset) {
+				switch (m->in_op & 0x7F) {
 				case FILE_OPAND:
 					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
@@ -962,12 +978,17 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 						 m->in_offset;
 					break;
 				}
+			} else
+				offset = (int32_t)((p->hl[3]<<24)|
+						 (p->hl[2]<<16)|
+						 (p->hl[1]<<8)|
+						 (p->hl[0]));
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
 		case FILE_LONG:
-			if (m->in_offset)
-				switch (m->in_op&0x7F) {
+			if (m->in_offset) {
+				switch (m->in_op & 0x7F) {
 				case FILE_OPAND:
 					offset = p->l & m->in_offset;
 					break;
@@ -1000,6 +1021,8 @@ mget(struct magic_set *ms, union VALUETYPE *p, const unsigned char *s,
 			 *		sleep;
 			 */
 				}
+			} else
+				offset = p->l;
 			if (m->in_op & FILE_OPINVERSE)
 				offset = ~offset;
 			break;
