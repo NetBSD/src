@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2004/06/16 10:01:31 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2004/06/16 10:13:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2004/06/16 10:01:31 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2004/06/16 10:13:46 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -320,7 +320,8 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + PAGE_SIZE;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack
+	    + PAGE_SIZE - 16;
 	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
 	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
