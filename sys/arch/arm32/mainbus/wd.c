@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.10 1996/10/13 03:06:33 christos Exp $	*/
+/*	$NetBSD: wd.c,v 1.11 1996/10/18 00:48:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -745,7 +745,7 @@ loop:
 
 		/* Push out data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
-			outsw(wdc->sc_iobase+wd_data, (u_int)bp->b_data + wd->sc_skip,
+			outsw(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip,
 			    wd->sc_nbytes >> 1);
 		else
 			panic("wd cannot do 32 bit transfers\n");
@@ -850,7 +850,7 @@ wdcintr(arg)
 
 		/* Pull in data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
-			insw(wdc->sc_iobase+wd_data, (u_int)bp->b_data + wd->sc_skip, 
+			insw(wdc->sc_iobase+wd_data, bp->b_data + wd->sc_skip, 
 			    wd->sc_nbytes >> 1);
 		else
 			panic("wd cannot do 32 bit transfers\n");
@@ -1324,7 +1324,7 @@ wd_get_parms(wd)
 		wd->sc_dk.dk_label->d_type = DTYPE_ESDI;
 
 		/* Read in parameter block. */
-		insw(wdc->sc_iobase+wd_data, (u_int)tb, sizeof(tb) / sizeof(short));
+		insw(wdc->sc_iobase+wd_data, tb, sizeof(tb) / sizeof(short));
 		bcopy(tb, &wd->sc_params, sizeof(struct wdparams));
 
 		/* Shuffle string byte order. */
@@ -1591,7 +1591,7 @@ wddump(dev, blkno, va, size)
 			return EIO;
 		}
 	
-		outsw(wdc->sc_iobase+wd_data, (u_int)va, lp->d_secsize >> 1);
+		outsw(wdc->sc_iobase+wd_data, va, lp->d_secsize >> 1);
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
