@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2002/08/26 10:21:04 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2002/08/26 10:21:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -101,6 +101,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1916,6 +1918,7 @@ pmap_unmap_poolpage(vaddr_t va)
 	return (0);
 }
 
+#ifdef DDB
 void dump_kipt(void);
 void
 dump_kipt(void)
@@ -1933,3 +1936,4 @@ dump_kipt(void)
 
 	printf("\n");
 }
+#endif
