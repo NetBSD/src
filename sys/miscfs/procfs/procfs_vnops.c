@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.50 1997/08/12 22:47:22 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.51 1997/08/27 08:52:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -216,8 +216,8 @@ procfs_open(v)
 	struct proc *p1, *p2;
 	int error;
 
-	p1 = ap->a_p;
-	p2 = PFIND(pfs->pfs_pid);
+	p1 = ap->a_p;				/* tracer */
+	p2 = PFIND(pfs->pfs_pid);		/* traced */
 
 	if (p2 == NULL)
 		return (ENOENT);		/* was ESRCH, jsp */
