@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.24 1999/06/27 20:01:49 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.25 1999/06/27 20:06:48 abs Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -187,6 +187,15 @@ ht*|tm*|mt*|ts*|ut*|st*)
 		echo bad unit for tape in: $1
 		;;
 	esac
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c 67 0
+	mknod urandom c 67 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
 	;;
 
 hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
@@ -505,15 +514,6 @@ ttyv0)
 	if [ ! -f ttyqe ]; then sh ./$0 pty1; fi
 	mv ttyqf ttyv0
 	mv ptyqf ptyv0
-	;;
-
-random)
-	rm -f random urandom
-	mknod random c 67 0
-	mknod urandom c 67 1
-	chown root.wheel random urandom
-	chmod 444 random
-	chmod 644 urandom
 	;;
 
 scsibus*)
