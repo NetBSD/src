@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/07/14 18:19:11 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2003/07/26 16:04:29 mrg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 CPPFLAGS+= -I${.CURDIR}
@@ -26,3 +26,4 @@ MAKE_VERSION:= netbsd-${BUILD_DATE}
 CPPFLAGS_main.o:= "-DMAKE_VERSION=\"${MAKE_VERSION}\""
 CPPFLAGS+= ${CPPFLAGS_${.TARGET}}
 main.o:	${OBJS:Nmain.o} ${MAKEFILE}
+COPTS.var.c+= -Wno-cast-qual
