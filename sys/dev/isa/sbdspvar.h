@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.44 1999/08/02 17:37:43 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.45 1999/10/09 20:54:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -172,7 +172,7 @@ struct sbdsp_softc {
 #define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
 #define SBVER_MINOR(v)	((v)&0xff)
 
-#if NMIDI > 0
+#if NMPU > 0
 	int	sc_hasmpu;
 	struct device *sc_mpudev;
 	bus_space_tag_t sc_mpu_iot;	/* tag */
