@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.16 (Berkeley) 6/19/91
-#	$Id: Makefile,v 1.2 1993/07/31 15:19:49 mycroft Exp $
+#	$Id: Makefile,v 1.3 1993/08/27 20:31:07 jtc Exp $
 
 PROG=	mail
 CFLAGS+=-R -DUSE_OLD_TTY
@@ -8,8 +8,9 @@ SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c edit.c fio.c \
 	quit.c send.c strings.c temp.c tty.c vars.c
 SFILES=	mail.help mail.tildehelp
 EFILES=	mail.rc
-LINKS=	${BINDIR}/mail ${BINDIR}/Mail
-MLINKS=	mail.1 Mail.1
+LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
+MLINKS=	mail.1 Mail.1 mail.1 mailx.1
+
 
 beforeinstall:
 	cd ${.CURDIR}/misc; install -c -o ${BINOWN} -g ${BINGRP} \
