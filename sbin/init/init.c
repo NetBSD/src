@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.38 2000/12/30 14:46:21 wiz Exp $	*/
+/*	$NetBSD: init.c,v 1.39 2000/12/30 15:01:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.38 2000/12/30 14:46:21 wiz Exp $");
+__RCSID("$NetBSD: init.c,v 1.39 2000/12/30 15:01:42 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,46 +97,46 @@ __RCSID("$NetBSD: init.c,v 1.38 2000/12/30 14:46:21 wiz Exp $");
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
-void handle __P((sig_t, ...));
-void delset __P((sigset_t *, ...));
+void handle(sig_t, ...);
+void delset(sigset_t *, ...);
 
-void stall __P((const char *, ...))
+void stall(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void warning __P((const char *, ...))
+void warning(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void emergency __P((const char *, ...))
+void emergency(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void disaster __P((int));
-void badsys __P((int));
+void disaster(int);
+void badsys(int);
 
 /*
  * We really need a recursive typedef...
  * The following at least guarantees that the return type of (*state_t)()
  * is sufficiently wide to hold a function pointer.
  */
-typedef long (*state_func_t) __P((void));
-typedef state_func_t (*state_t) __P((void));
+typedef long (*state_func_t)(void);
+typedef state_func_t (*state_t)(void);
 
-state_func_t single_user __P((void));
-state_func_t runcom __P((void));
-state_func_t read_ttys __P((void));
-state_func_t multi_user __P((void));
-state_func_t clean_ttys __P((void));
-state_func_t catatonia __P((void));
-state_func_t death __P((void));
+state_func_t single_user(void);
+state_func_t runcom(void);
+state_func_t read_ttys(void);
+state_func_t multi_user(void);
+state_func_t clean_ttys(void);
+state_func_t catatonia(void);
+state_func_t death(void);
 
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
-void transition __P((state_t));
+void transition(state_t);
 #ifndef LETS_GET_SMALL
 state_t requested_transition = runcom;
 #else /* LETS_GET_SMALL */
 state_t requested_transition = single_user;
 #endif /* LETS_GET_SMALL */
 
-void setctty __P((char *));
+void setctty(char *);
 
 typedef struct init_session {
 	int	se_index;		/* index of entry in ttys file */
@@ -154,31 +154,31 @@ typedef struct init_session {
 	struct	init_session *se_next;
 } session_t;
 
-void free_session __P((session_t *));
-session_t *new_session __P((session_t *, int, struct ttyent *));
+void free_session(session_t *);
+session_t *new_session(session_t *, int, struct ttyent *);
 session_t *sessions;
 
-char **construct_argv __P((char *));
-void start_window_system __P((session_t *));
-void collect_child __P((pid_t));
-pid_t start_getty __P((session_t *));
-void transition_handler __P((int));
-void alrm_handler __P((int));
-void setsecuritylevel __P((int));
-int getsecuritylevel __P((void));
-int setupargv __P((session_t *, struct ttyent *));
+char **construct_argv(char *);
+void start_window_system(session_t *);
+void collect_child(pid_t);
+pid_t start_getty(session_t *);
+void transition_handler(int);
+void alrm_handler(int);
+void setsecuritylevel(int);
+int getsecuritylevel(void);
+int setupargv(session_t *, struct ttyent *);
 int clang;
 
-void clear_session_logs __P((session_t *));
+void clear_session_logs(session_t *);
 
-int start_session_db __P((void));
-void add_session __P((session_t *));
-void del_session __P((session_t *));
-session_t *find_session __P((pid_t));
+int start_session_db(void);
+void add_session(session_t *);
+void del_session(session_t *);
+session_t *find_session(pid_t);
 DB *session_db;
 
 #ifdef MSDOSFS_ROOT
-static void msdosfs_root __P((void));
+static void msdosfs_root(void);
 #endif
 
 /*
@@ -446,8 +446,7 @@ emergency(va_alist)
  * We tolerate up to 25 of these, then throw in the towel.
  */
 void
-badsys(sig)
-	int sig;
+badsys(int sig)
 {
 	static int badcount = 0;
 
@@ -460,8 +459,7 @@ badsys(sig)
  * Catch an unexpected signal.
  */
 void
-disaster(sig)
-	int sig;
+disaster(int sig)
 {
 	emergency("fatal signal: %s", strsignal(sig));
 
@@ -473,7 +471,7 @@ disaster(sig)
  * Get the security level of the kernel.
  */
 int
-getsecuritylevel()
+getsecuritylevel(void)
 {
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
@@ -497,8 +495,7 @@ getsecuritylevel()
  * Set the security level of the kernel.
  */
 void
-setsecuritylevel(newlevel)
-	int newlevel;
+setsecuritylevel(int newlevel)
 {
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
@@ -526,8 +523,7 @@ setsecuritylevel(newlevel)
  * The initial state is passed as an argument.
  */
 void
-transition(s)
-	state_t s;
+transition(state_t s)
 {
 	for (;;)
 		s = (state_t) (*s)();
@@ -538,8 +534,7 @@ transition(s)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-clear_session_logs(sp)
-	session_t *sp;
+clear_session_logs(session_t *sp)
 {
 	char *line = sp->se_device + sizeof(_PATH_DEV) - 1;
 
@@ -552,8 +547,7 @@ clear_session_logs(sp)
  * Only called by children of init after forking.
  */
 void
-setctty(name)
-	char *name;
+setctty(char *name)
 {
 	int fd;
 
@@ -573,7 +567,7 @@ setctty(name)
  * Bring the system up single user.
  */
 state_func_t
-single_user()
+single_user(void)
 {
 	pid_t pid, wpid;
 	int status;
@@ -733,7 +727,7 @@ single_user()
  * Run the system startup script.
  */
 state_func_t
-runcom()
+runcom(void)
 {
 	pid_t pid, wpid;
 	int status;
@@ -822,7 +816,7 @@ runcom()
  * NB: We could pass in the size here; is it necessary?
  */
 int
-start_session_db()
+start_session_db(void)
 {
 	if (session_db && (*session_db->close)(session_db))
 		emergency("session database close: %s", strerror(errno));
@@ -838,8 +832,7 @@ start_session_db()
  * Add a new login session.
  */
 void
-add_session(sp)
-	session_t *sp;
+add_session(session_t *sp)
 {
 	DBT key;
 	DBT data;
@@ -857,8 +850,7 @@ add_session(sp)
  * Delete an old login session.
  */
 void
-del_session(sp)
-	session_t *sp;
+del_session(session_t *sp)
 {
 	DBT key;
 
@@ -896,8 +888,7 @@ find_session(pid)
  * Construct an argument vector from a command line.
  */
 char **
-construct_argv(command)
-	char *command;
+construct_argv(char *command)
 {
 	int argc = 0;
 	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
@@ -915,8 +906,7 @@ construct_argv(command)
  * Deallocate a session descriptor.
  */
 void
-free_session(sp)
-	session_t *sp;
+free_session(session_t *sp)
 {
 	free(sp->se_device);
 	if (sp->se_getty) {
@@ -934,10 +924,7 @@ free_session(sp)
  * Allocate a new session descriptor.
  */
 session_t *
-new_session(sprev, session_index, typ)
-	session_t *sprev;
-	int session_index;
-	struct ttyent *typ;
+new_session(session_t *sprev, int session_index, struct ttyent *typ)
 {
 	session_t *sp;
 
@@ -976,9 +963,7 @@ new_session(sprev, session_index, typ)
  * Calculate getty and if useful window argv vectors.
  */
 int
-setupargv(sp, typ)
-	session_t *sp;
-	struct ttyent *typ;
+setupargv(session_t *sp, struct ttyent *typ)
 {
 
 	if (sp->se_getty) {
@@ -1014,7 +999,7 @@ setupargv(sp, typ)
  * Walk the list of ttys and create sessions for each active line.
  */
 state_func_t
-read_ttys()
+read_ttys(void)
 {
 	int session_index = 0;
 	session_t *sp, *snext;
@@ -1051,8 +1036,7 @@ read_ttys()
  * Start a window system running.
  */
 void
-start_window_system(sp)
-	session_t *sp;
+start_window_system(session_t *sp)
 {
 	pid_t pid;
 	sigset_t mask;
@@ -1083,8 +1067,7 @@ start_window_system(sp)
  * Start a login session running.
  */
 pid_t
-start_getty(sp)
-	session_t *sp;
+start_getty(session_t *sp)
 {
 	pid_t pid;
 	sigset_t mask;
@@ -1175,8 +1158,7 @@ collect_child(pid)
  * Catch a signal and request a state transition.
  */
 void
-transition_handler(sig)
-	int sig;
+transition_handler(int sig)
 {
 
 	switch (sig) {
@@ -1202,7 +1184,7 @@ transition_handler(sig)
  * Take the system multiuser.
  */
 state_func_t
-multi_user()
+multi_user(void)
 {
 	pid_t pid;
 	session_t *sp;
@@ -1242,7 +1224,7 @@ multi_user()
  * This is an n-squared algorithm.  We hope it isn't run often...
  */
 state_func_t
-clean_ttys()
+clean_ttys(void)
 {
 	session_t *sp, *sprev;
 	struct ttyent *typ;
@@ -1302,7 +1284,7 @@ clean_ttys()
  * Block further logins.
  */
 state_func_t
-catatonia()
+catatonia(void)
 {
 	session_t *sp;
 
@@ -1317,8 +1299,7 @@ catatonia()
  * Note SIGALRM.
  */
 void
-alrm_handler(sig)
-	int sig;
+alrm_handler(int sig)
 {
 	clang = 1;
 }
@@ -1328,7 +1309,7 @@ alrm_handler(sig)
  * Bring the system down to single user.
  */
 state_func_t
-death()
+death(void)
 {
 	session_t *sp;
 	int i;
@@ -1365,7 +1346,7 @@ death()
 #ifdef MSDOSFS_ROOT
 
 static void
-msdosfs_root()
+msdosfs_root(void)
 {
 	/*
 	 * We cannot print errors so we bail out silently...
