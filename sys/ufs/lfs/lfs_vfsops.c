@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.74 2002/05/14 20:03:54 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.75 2002/05/16 02:23:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74 2002/05/14 20:03:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.75 2002/05/16 02:23:55 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1216,7 +1216,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		if (fs->lfs_ivnode->v_size / fs->lfs_bsize > LFS_MAX_BUFS)
 			printf("lfs_unmount: please consider increasing"
 				" NBUF to at least %lld\n",
-				(fs->lfs_ivnode->v_size / fs->lfs_bsize) *
+				(long long)(fs->lfs_ivnode->v_size /
+					    fs->lfs_bsize) *
 				(long long)(nbuf / LFS_MAX_BUFS));
 		if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES)
 			printf("lfs_unmount: please consider increasing"
