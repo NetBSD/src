@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.2 2005/01/21 11:55:52 yamt Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.3 2005/02/04 15:17:31 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.2 2005/01/21 11:55:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.3 2005/02/04 15:17:31 kanaoka Exp $");
 
 
 /*
@@ -348,6 +348,12 @@ rgephy_status(sc)
 	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
 
 	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
+
+	if (bmcr & RGEPHY_BMCR_ISO) {
+		mii->mii_media_active |= IFM_NONE;
+		mii->mii_media_status = 0;
+		return;
+	}
 
 	if (bmcr & RGEPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
