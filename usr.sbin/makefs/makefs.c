@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.5 2001/11/08 12:24:12 simonb Exp $	*/
+/*	$NetBSD: makefs.c,v 1.6 2001/11/25 11:22:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.5 2001/11/08 12:24:12 simonb Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.6 2001/11/25 11:22:09 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: makefs.c,v 1.5 2001/11/08 12:24:12 simonb Exp $");
 #include <unistd.h>
 
 #include "makefs.h"
+#include "strsuftoull.h"
 
 
 /*
@@ -68,12 +69,11 @@ static fstype_t fstypes[] = {
 	{ NULL	},
 };
 
-int		debug;
+u_int		debug;
 struct timespec	start_time;
 
 
 static	fstype_t *get_fstype(const char *);
-static	long long strsuftoll(const char *, const char *, long long, long long);
 static	void	usage(void);
 int		main(int, char *[]);
 
@@ -122,17 +122,18 @@ main(int argc, char *argv[])
 			if (optarg[len] == '%') {
 				optarg[len] = '\0';
 				fsoptions.freeblockpc =
-				    strsuftoll("free block percentage",
-				    optarg, 0, LLONG_MAX);
+				    strsuftoull("free block percentage",
+					optarg, 0, 99);
 			} else {
-				fsoptions.freeblocks = strsuftoll("free blocks",
-				    optarg, 0, LLONG_MAX);
+				fsoptions.freeblocks =
+				    strsuftoull("free blocks",
+					optarg, 0, LLONG_MAX);
 			}
 			break;
 
 		case 'd':
-			debug = (int)strsuftoll("debug mask", optarg,
-			    0, LLONG_MAX);
+			debug =
+			    (int)strsuftoull("debug mask", optarg, 0, UINT_MAX);
 			break;
 
 		case 'f':
@@ -140,11 +141,12 @@ main(int argc, char *argv[])
 			if (optarg[len] == '%') {
 				optarg[len] = '\0';
 				fsoptions.freefilepc =
-				    strsuftoll("free file percentage",
-				    optarg, 0, LLONG_MAX);
+				    strsuftoull("free file percentage",
+					optarg, 0, 99);
 			} else {
-				fsoptions.freefiles = strsuftoll("free files",
-				    optarg, 0, LLONG_MAX);
+				fsoptions.freefiles =
+				    strsuftoull("free files",
+					optarg, 0, LLONG_MAX);
 			}
 			break;
 
@@ -153,13 +155,13 @@ main(int argc, char *argv[])
 			break;
 
 		case 'M':
-			fsoptions.minsize = strsuftoll("minimum size",
-			    optarg, 1LL, LLONG_MAX);
+			fsoptions.minsize =
+			    strsuftoull("minimum size", optarg, 1LL, LLONG_MAX);
 			break;
 
 		case 'm':
-			fsoptions.maxsize = strsuftoll("maximum size",
-			    optarg, 1LL, LLONG_MAX);
+			fsoptions.maxsize =
+			    strsuftoull("maximum size", optarg, 1LL, LLONG_MAX);
 			break;
 			
 		case 'o':
@@ -177,12 +179,13 @@ main(int argc, char *argv[])
 
 		case 's':
 			fsoptions.minsize = fsoptions.maxsize =
-			    strsuftoll("size", optarg, 1LL, LLONG_MAX);
+			    strsuftoull("size", optarg, 1LL, LLONG_MAX);
 			break;
 
 		case 'S':
-			fsoptions.sectorsize = strsuftoll("sector size",
-			    optarg, 1LL, LLONG_MAX);
+			fsoptions.sectorsize =
+			    (int)strsuftoull("sector size", optarg,
+				1LL, INT_MAX);
 			break;
 
 		case 't':
@@ -244,7 +247,7 @@ set_option(option_t *options, const char *var, const char *val)
 	for (i = 0; options[i].name != NULL; i++) {
 		if (strcmp(options[i].name, var) != 0)
 			continue;
-		*options[i].value = (int)strsuftoll(options[i].desc, val,
+		*options[i].value = (int)strsuftoull(options[i].desc, val,
 		    options[i].minimum, options[i].maximum);
 		return (1);
 	}
@@ -263,61 +266,6 @@ get_fstype(const char *type)
 			return (&fstypes[i]);
 	return (NULL);
 }
-
-
-static long long
-strsuftoll(const char *desc, const char *arg, long long min, long long max)
-{
-	long long	result;
-	char		*ep;
-
-	assert(desc != NULL);
-	assert(arg != NULL);
-
-	errno = 0;
-	result = strtoll(arg, &ep, 0);
-	if ((result == LLONG_MIN || result == LLONG_MAX) && errno == ERANGE) {
-		warn("%s `%s'", desc, arg);
-		usage();
-	}
-	if (ep[0] != '\0' && ep[1] != '\0') {
-		warnx("`%s' is not a valid number for %s.", optarg, desc);
-		usage();
-	}
-	switch (tolower((unsigned char)ep[0])) {
-	case '\0':
-	case 'b':
-		break;
-	case 'k':
-		result <<= 10;
-		break;
-	case 'm':
-		result <<= 20;
-		break;
-	case 'g':
-		result <<= 30;
-		break;
-	default:
-		warnx("`%s' is not a valid suffix for %s.", ep, desc);
-		usage();
-	}
-
-	if (result < min) {
-		warnx("%s `%s' (%lld) is less than %lld.",
-		    desc, optarg, result, min);
-		usage();
-	}
-	if (result > max) {
-		warnx("%s `%s' (%lld) is greater than %lld.",
-		    desc, optarg, result, max);
-		usage();
-	}
-	if (debug & DEBUG_STRSUFTOLL)
-		printf("strsuftoll: got %lld for %s %s\n",
-		    result, desc, arg);
-	return (result);
-}
-
 
 static void
 usage(void)
