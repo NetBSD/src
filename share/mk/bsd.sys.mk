@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.70 2002/01/27 23:33:51 ross Exp $
+#	$NetBSD: bsd.sys.mk,v 1.71 2002/03/31 11:48:45 bjh21 Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -73,6 +73,7 @@ MKLOCALE?=	mklocale
 MKDEP?=		mkdep
 MTREE?=		mtree
 PAX?=		pax
+PWD_MKDB?=	pwd_mkdb
 
 .SUFFIXES:	.m .o .ln .lo
 
