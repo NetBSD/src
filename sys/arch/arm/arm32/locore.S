@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2003/04/20 15:42:51 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -125,6 +125,7 @@ ENTRY_NP(cpu_reset)
 	ldr	r1, .Lcpu_reset_needs_v4_MMU_disable
 	ldr	r1, [r1]
 	cmp	r1, #0
+	mov	r2, #0
 
 	/*
  	 * MMU & IDC off, 32 bit program & data space
@@ -132,7 +133,7 @@ ENTRY_NP(cpu_reset)
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
-	mcrne   15, 0, r0, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
+	mcrne   15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
 
 	/*
