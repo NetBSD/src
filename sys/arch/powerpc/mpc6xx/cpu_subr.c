@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8 2002/03/02 02:18:38 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.9 2002/03/03 06:56:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -100,6 +100,7 @@ cpu_attach_common(struct device *self, int id)
 		case MPC7400:
 		case MPC7410:
 		case MPC7450:
+		case MPC7455:
 			__asm __volatile ("mtspr %1,%0" :: "r"(id), "n"(SPR_PIR));
 		}
 		break;
@@ -136,9 +137,10 @@ cpu_attach_common(struct device *self, int id)
 		powersave = 1;
 		break;
 
+	case MPC7455:
 	case MPC7450:
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
-		if ((pvr & 0xFFFF) <= 0x0200)
+		if ((pvr >> 16) == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
@@ -166,12 +168,14 @@ cpu_attach_common(struct device *self, int id)
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
+#if 0
 	case MPC7400:
 	case MPC7410:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
 		break;
+#endif
 	}
 
 	__asm __volatile ("mtspr %1,%0" :: "r"(hid0), "n"(SPR_HID0));
@@ -185,6 +189,7 @@ cpu_attach_common(struct device *self, int id)
 			bitmask = HID0_601_BITMASK;
 			break;
 		case MPC7450:
+		case MPC7455:
 			bitmask = HID0_7450_BITMASK;
 			break;
 		default:
@@ -199,7 +204,7 @@ cpu_attach_common(struct device *self, int id)
 	 * Display cache configuration.
 	 */
 	if (vers == MPC750 || vers == MPC7400 ||
-	    vers == MPC7410 || vers == MPC7450) {
+	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
 		printf("%s", self->dv_xname);
 		cpu_config_l2cr(vers);
 	}
@@ -257,6 +262,7 @@ static const struct cputab models[] = {
 	{ MPC7400,   "7400" },
 	{ MPC7410,   "7410" },
 	{ MPC7450,   "7450" },
+	{ MPC7455,   "7455" },
 	{ MPC8240,   "8240" },
 	{ 0,	       NULL }
 };
