@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.14 1999/03/12 06:42:48 tsubai Exp $
+#	$NetBSD: Makefile.newsmips,v 1.15 1999/03/15 01:55:32 tsubai Exp $
 
 # Makefile for NetBSD
 #
@@ -181,7 +181,9 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${NEWS}/newsmips/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+.if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
