@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.2 2003/09/21 19:32:40 matt Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.3 2004/01/12 10:25:06 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -72,6 +72,9 @@ ixp425_splx(int new)
 	extern void ixp425_do_pending(void);
 	int oldirqstate, hwpend;
 
+	/* Don't let the compiler re-order this code with preceding code */
+	__insn_barrier();
+
 	current_spl_level = new;
 
 	hwpend = (ixp425_ipending & IXP425_INT_HWMASK) & ~new;
@@ -95,6 +98,9 @@ ixp425_splraise(int ipl)
 
 	old = current_spl_level;
 	current_spl_level |= ixp425_imask[ipl];
+
+	/* Don't let the compiler re-order this code with subsequent code */
+	__insn_barrier();
 
 	return (old);
 }
