@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.4 2002/10/01 07:50:36 scw Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.5 2002/10/07 14:48:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -51,5 +51,6 @@ extern void (*__cpu_cache_dinv)(vaddr_t, paddr_t, vsize_t);
 extern void (*__cpu_cache_dinv_iinv)(vaddr_t, paddr_t, vsize_t);
 extern void (*__cpu_cache_iinv)(vaddr_t, paddr_t, vsize_t);
 extern void (*__cpu_cache_iinv_all)(void);
+extern void (*__cpu_cache_purge_all)(void);
 
 #endif /* __SH5_CACHEOPS_H */

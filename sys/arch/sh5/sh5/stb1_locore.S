@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.7 2002/09/12 12:44:14 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.8 2002/10/07 14:48:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -611,6 +611,51 @@ ENTRY_NOPROFILE(_sh5_stb1_cache_iinv_all)
 	movi	3, r1			/* Inv/Enable the Cache */
 	LDC32(STB1_ICCR, r0)		/* Instruction Cache Control Register */
 	putcfg	r0, 0, r1		/* Inv & Enable instruction cache */
+	blink	tr0, r63
+
+/******************************************************************************
+ *
+ * void _sh5_stb1_cache_purge_all(void)
+ *
+ * This one's just stupid. The SH5 has no easy was to writeback and invalidate
+ * all cachelines. We have to force all the cachelines out by accessing
+ * the fixed KSEG0 mapping in such a way that we cover all cache sets. This
+ * will purge any dirty cachelines. We can then safely invalidate the
+ * operand and insn caches.
+ */
+ENTRY_NOPROFILE(_sh5_stb1_cache_purge_all)
+	ptabs/u	r18, tr0
+	pta/l	1f, tr1
+	movi	(STB1_CACHE_NSETS * STB1_CACHE_LINE_SIZE), r0
+
+	/*
+	 * r1-r4 are associated with each of the 4 ways
+	 */
+#ifndef _LP64
+	LDSC32(SH5_KSEG0_BASE, r1)
+#else
+	LDSC64(SH5_KSEG0_BASE, r1)
+#endif
+	add	r1, r0, r2
+	add	r2, r0, r3
+	add	r3, r0, r4
+
+1:	addi	r0, -STB1_CACHE_LINE_SIZE, r0
+	ldx.q	r1, r0, r5
+	ldx.q	r2, r0, r5
+	ldx.q	r3, r0, r5
+	ldx.q	r4, r0, r5
+	bnei/l	r0, 0, tr1
+	synci
+	synco
+
+	movi	3, r1			/* Inv/Enable the Cache */
+	LDC32(STB1_ICCR, r0)		/* Instruction Cache Control Register */
+	putcfg	r0, 0, r1		/* Inv & Enable instruction cache */
+	LDC32(STB1_OCCR, r0)		/* Operand Cache Control Register */
+	putcfg	r0, 0, r1		/* Inv & Enable operand cache */
+	synci
+	synco
 	blink	tr0, r63
 
 
