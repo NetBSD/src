@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.13 1998/05/28 08:12:13 sakamoto Exp $
+#	$NetBSD: Makefile.ofppc,v 1.14 1998/05/31 23:25:42 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -78,6 +78,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.74 1998/05/24 20:06:32 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.75 1998/05/31 23:25:41 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -86,6 +86,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOPROF_C=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 .SUFFIXES: .o .g
