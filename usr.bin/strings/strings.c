@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
+/*	$NetBSD: strings.c,v 1.8 1996/10/08 15:50:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $";
+static char rcsid[] = "$NetBSD: strings.c,v 1.8 1996/10/08 15:50:53 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ static long	foff;			/* offset in the file */
 static int	hcnt,			/* head count */
 		head_len,		/* length of header */
 		read_len;		/* length to read */
-static u_char	hbfr[sizeof(EXEC)];	/* buffer for struct exec */
+static EXEC	hbfr;			/* buffer for struct exec */
 
 static void usage();
 
@@ -180,7 +180,7 @@ main(argc, argv)
 		if (asdata)
 			DO_EVERYTHING()
 		else {
-			head = (EXEC *)hbfr;
+			head = &hbfr;
 			if ((head_len =
 			    read(fileno(stdin), head, sizeof(EXEC))) == -1)
 				DO_EVERYTHING()
@@ -231,7 +231,7 @@ getch()
 	++foff;
 	if (head_len) {
 		if (hcnt < head_len)
-			return((int)hbfr[hcnt++]);
+			return((int)((u_char *)&hbfr)[hcnt++]);
 		head_len = 0;
 	}
 	if (read_len == -1 || read_len-- > 0)
