@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.5 1996/06/29 14:30:32 abrown Exp $	*/
+/*	$NetBSD: mcount.c,v 1.6 1996/12/04 00:04:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,12 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.5 1996/06/29 14:30:32 abrown Exp $";
+static char rcsid[] = "$NetBSD: mcount.c,v 1.6 1996/12/04 00:04:40 fvdl Exp $";
 #endif
 #endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>
+
+_MCOUNT_DECL __P((u_long, u_long));
 
 /*
  * mcount is called on entry to each function compiled with the profiling
