@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.32 1998/09/19 15:49:50 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.33 1998/09/20 20:08:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ sbus_attach_mainbus(parent, self, aux)
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
 
+#if 0	/* sbus at mainbus (sun4c): `reg' prop is not control space */
 	if (ma->ma_size == 0)
 		printf("%s: no Sbus registers", self->dv_xname);
 
@@ -295,6 +296,7 @@ sbus_attach_mainbus(parent, self, aux)
 			  0, &sc->sc_bh) != 0) {
 		panic("%s: can't map sbusbusreg", self->dv_xname);
 	}
+#endif
 
 	/* Setup interrupt translation tables */
 	sc->sc_intr2ipl = CPU_ISSUN4C
@@ -309,7 +311,6 @@ sbus_attach_mainbus(parent, self, aux)
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
-	sbuserr_handler = sbus_error;
 	sbus_attach_common(sc, "sbus", node, ma->ma_bp, NULL);
 }
 
