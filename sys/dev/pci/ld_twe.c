@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.19 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.20 2004/05/27 23:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.19 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.20 2004/05/27 23:48:34 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -76,6 +76,7 @@ static int	ld_twe_detach(struct device *, int);
 static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
 			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
+static int	ld_twe_flush(struct ld_softc *);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
 static int	ld_twe_start(struct ld_softc *, struct buf *);
@@ -125,6 +126,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_maxqueuecnt = twe->sc_openings;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
+	ld->sc_flush = ld_twe_flush;
 
 	typestr = twe_describe_code(twe_table_unittype, td->td_type);
 	if (typestr == NULL) {
@@ -274,6 +276,42 @@ ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return (ld_twe_dobio((struct ld_twe_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));
+}
+
+static int
+ld_twe_flush(struct ld_softc *ld)
+{
+	struct ld_twe_softc *sc = (void *) ld;
+	struct twe_softc *twe = (void *) ld->sc_dv.dv_parent;
+	struct twe_ccb *ccb;
+	struct twe_cmd *tc;
+	int s, rv;
+
+	ccb = twe_ccb_alloc_wait(twe, 0);
+	KASSERT(ccb != NULL);
+
+	ccb->ccb_data = NULL;
+	ccb->ccb_datasize = 0;
+	ccb->ccb_tx.tx_handler = twe_ccb_wait_handler;
+	ccb->ccb_tx.tx_context = NULL;
+	ccb->ccb_tx.tx_dv = &ld->sc_dv;
+
+	tc = ccb->ccb_cmd;
+	tc->tc_size = 2;
+	tc->tc_opcode = TWE_OP_FLUSH;
+	tc->tc_unit = sc->sc_hwunit;
+	tc->tc_count = 0;
+
+	rv = 0;
+	twe_ccb_enqueue(twe, ccb);
+	s = splbio();
+	while ((ccb->ccb_flags & TWE_CCB_COMPLETE) == 0)
+		if ((rv = tsleep(ccb, PRIBIO, "tweflush", 60 * hz)) != 0)
+			break;
+	twe_ccb_free(twe, ccb);
+	splx(s);
+
+	return (rv);
 }
 
 static void
