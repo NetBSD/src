@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.40 2003/03/21 23:11:28 dsl Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.41 2003/04/10 20:38:12 jdolecek Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.31 2002/10/23 09:14:32 jdolecek Exp 
+ *	NetBSD: vnode_if.src,v 1.33 2003/04/10 20:35:36 jdolecek Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
  */
