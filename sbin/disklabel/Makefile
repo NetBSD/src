@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2000/05/02 18:21:41 nonaka Exp $
+#	$NetBSD: Makefile,v 1.38 2000/05/02 19:00:41 soren Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -31,7 +31,8 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 CPPFLAGS+= -DSAVEBOOTAREA
 .endif
 
-.if (${MACHINE} == "hpcmips" || ${MACHINE} == "arc" || ${MACHINE} == "prep")
+.if (${MACHINE} == "hpcmips" || ${MACHINE} == "arc" || ${MACHINE} == "prep" \
+	|| ${MACHINE} == "cobalt")
 # recognize old partition ID for a while
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 # use MBR partition info
