@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.28 2000/03/30 12:22:12 augustss Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.29 2000/05/27 04:52:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -346,7 +346,7 @@ chkvnlock(vp)
 
 	while (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		sleep((caddr_t)vp, PINOD);
+		(void) tsleep(vp, PINOD, "deadchk", 0);
 		locked = 1;
 	}
 	return (locked);

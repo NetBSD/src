@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.12 2000/03/30 12:45:34 augustss Exp $	*/
+/*	$NetBSD: mscp.c,v 1.13 2000/05/27 04:52:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -84,7 +84,7 @@ again:
 			return (NULL);
 		}
 		mi->mi_wantcredits = 1;
-		sleep((caddr_t) &mi->mi_wantcredits, PCMD);
+		(void) tsleep(&mi->mi_wantcredits, PCMD, "mscpwcrd", 0);
 		goto again;
 	}
 	i = mri->mri_next;
@@ -94,7 +94,7 @@ again:
 			return (NULL);
 		}
 		mi->mi_wantcmd = 1;
-		sleep((caddr_t) &mi->mi_wantcmd, PCMD);
+		(void) tsleep(&mi->mi_wantcmd, PCMD, "mscpwcmd", 0);
 		goto again;
 	}
 	mi->mi_credits--;

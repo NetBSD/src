@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.26 2000/05/27 00:40:44 sommerfeld Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.27 2000/05/27 04:52:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -4145,7 +4145,7 @@ netbsd32___sysctl(p, v, retval)
 #if 0 /* XXXXXXXX */
 		while (memlock.sl_lock) {
 			memlock.sl_want = 1;
-			sleep((caddr_t)&memlock, PRIBIO+1);
+			(void) tsleep(&memlock, PRIBIO+1, "memlock", 0);
 			memlock.sl_locked++;
 		}
 		memlock.sl_lock = 1;

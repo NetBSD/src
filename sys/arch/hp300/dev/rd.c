@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.42 2000/05/19 18:54:31 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.43 2000/05/27 04:52:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -572,7 +572,7 @@ rdopen(dev, flags, mode, p)
 	 * Wait for any pending opens/closes to complete
 	 */
 	while (rs->sc_flags & (RDF_OPENING|RDF_CLOSING))
-		sleep((caddr_t)rs, PRIBIO);
+		(void) tsleep(rs, PRIBIO, "rdopen", 0);
 
 	/*
 	 * On first open, get label and partition info.
@@ -641,7 +641,7 @@ rdclose(dev, flag, mode, p)
 		s = splbio();
 		while (rs->sc_active) {
 			rs->sc_flags |= RDF_WANTED;
-			sleep((caddr_t)&rs->sc_tab, PRIBIO);
+			(void) tsleep(&rs->sc_tab, PRIBIO, "rdclose", 0);
 		}
 		splx(s);
 		rs->sc_flags &= ~(RDF_CLOSING|RDF_WLABEL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.29 2000/05/19 18:54:27 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.30 2000/05/27 04:52:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -335,7 +335,7 @@ tzcommand(dev, command, code, count, data)
 	/* wait for pending operations to finish */
 	while (BUFQ_FIRST(&sc->sc_tab) != NULL) {
 		sc->sc_flags |= TZF_WAIT;
-		sleep(&sc->sc_flags, PZERO);
+		(void) tsleep(&sc->sc_flags, PZERO, "tzcmd", 0);
 	}
 	sc->sc_flags |= TZF_DONTCOUNT;	/* don't count any operations in blkno */
 	sc->sc_flags |= TZF_ALTCMD;	/* force use of sc_cdb */

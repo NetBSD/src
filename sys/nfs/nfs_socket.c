@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.55 2000/03/30 12:51:15 augustss Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.56 2000/05/27 04:52:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -344,7 +344,8 @@ nfs_disconnect(nmp)
 			 */
 			while (nmp->nm_waiters > 0) {
 				wakeup (&nmp->nm_iflag);
-				sleep(&nmp->nm_waiters, PVFS);
+				(void) tsleep(&nmp->nm_waiters, PVFS,
+				    "nfsdis", 0);
 			}
 		}
 		soclose(so);

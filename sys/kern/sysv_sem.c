@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.35 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.36 2000/05/27 04:52:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,8 @@ semlock(p)
 {
 
 	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+		(void) tsleep(&semlock_holder, (PZERO - 4),
+		    "semlock", 0);
 }
 
 /*
@@ -925,7 +926,8 @@ semexit(p)
 		 */
 
 		while (semlock_holder != NULL)
-			sleep((caddr_t)&semlock_holder, (PZERO - 4));
+			(void) tsleep(&semlock_holder, (PZERO - 4),
+			    "semlock", 0);
 
 		/*
 		 * Nobody is holding the facility (i.e. we are now in case 1).

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.41 2000/05/19 18:54:32 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.42 2000/05/27 04:52:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -522,7 +522,7 @@ sdopen(dev, flags, mode, p)
 	 * Wait for any pending opens/closes to complete
 	 */
 	while (sc->sc_flags & (SDF_OPENING|SDF_CLOSING))
-		sleep((caddr_t)sc, PRIBIO);
+		(void) tsleep(sc, PRIBIO, "sdopen", 0);
 
 	/*
 	 * On first open, get label and partition info.
@@ -591,7 +591,7 @@ sdclose(dev, flag, mode, p)
 		s = splbio();
 		while (sc->sc_active) {
 			sc->sc_flags |= SDF_WANTED;
-			sleep((caddr_t)&sc->sc_tab, PRIBIO);
+			(void) tsleep(&sc->sc_tab, PRIBIO, "sdclose", 0);
 		}
 		splx(s);
 		sc->sc_flags &= ~(SDF_CLOSING|SDF_WLABEL|SDF_ERROR);

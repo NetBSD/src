@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.4 2000/01/24 02:40:33 matt Exp $	*/
+/*	$NetBSD: crx.c,v 1.5 2000/05/27 04:52:33 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -156,7 +156,7 @@ crxrw(dev, uio, flags)
 	i = spl4();
 	while (rs->rs_flags & RS_BUSY) {
 		rs->rs_flags |= RS_WANT;
-		sleep((caddr_t) &rx50state, PRIBIO);
+		(void) tsleep(&rx50state, PRIBIO, "crxbusy", 0);
 	}
 	rs->rs_flags |= RS_BUSY;
 	rs->rs_drive = rx50unit(dev);
@@ -207,7 +207,7 @@ crxrw(dev, uio, flags)
 			printf("crx: sleeping on I/O\n");
 			printf("crxopen: ka820port = %x\n", ka820port_ptr->csr);
 #endif
-			sleep((caddr_t) &rs->rs_blkno, PRIBIO);
+			(void) tsleep(&rs->rs_blkno, PRIBIO, "crxrw", 0);
 		}
 		splx(i);
 		if (rs->rs_flags & RS_ERROR) {

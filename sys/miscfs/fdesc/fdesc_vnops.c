@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.54 2000/03/16 18:08:24 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.55 2000/05/27 04:52:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -238,7 +238,7 @@ loop:
 	 */ 
 	if (fdcache_lock & FDL_LOCKED) {
 		fdcache_lock |= FDL_WANT;
-		sleep((caddr_t) &fdcache_lock, PINOD);
+		(void) tsleep(&fdcache_lock, PINOD, "fdcache", 0);
 		goto loop;
 	}
 	fdcache_lock |= FDL_LOCKED;

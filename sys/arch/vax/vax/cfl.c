@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.3 2000/05/19 18:54:32 thorpej Exp $	*/
+/*	$NetBSD: cfl.c,v 1.4 2000/05/27 04:52:33 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -137,7 +137,7 @@ cflrw(dev, uio, flag)
 		return (0);
 	s = spl4();
 	while (cfltab.cfl_state == BUSY)
-		sleep((caddr_t)&cfltab, PRIBIO);
+		(void) tsleep(&cfltab, PRIBIO, "cflbusy", 0);
 	cfltab.cfl_state = BUSY;
 	splx(s);
 
@@ -159,7 +159,7 @@ cflrw(dev, uio, flag)
 		s = spl4(); 
 		cflstart();
 		while ((bp->b_flags & B_DONE) == 0)
-			sleep((caddr_t)bp, PRIBIO);	
+			(void) tsleep(bp, PRIBIO, "cflrw", 0);
 		splx(s);
 		if (bp->b_flags & B_ERROR) {
 			error = EIO;

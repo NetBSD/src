@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_start.c,v 1.4 1999/12/04 21:20:57 ragge Exp $	*/
+/*	$NetBSD: fb_start.c,v 1.5 2000/05/27 04:52:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -212,7 +212,7 @@ lock_bitmap()
 	s = splbitmap();
 	while (bitmap_use & FB_BUSY) {
 		bitmap_use |= FB_WANTED;
-		sleep((caddr_t)&bitmap_use, FBPRI);
+		(void) tsleep(&bitmap_use, FBPRI, "fbbitmap", 0);
 	}
 	bitmap_use |= FB_BUSY;
 	splx(s);
@@ -294,7 +294,8 @@ rop_wait(fb)
 				fbbm_ioctl(fb, FB_INTCLEAR, &i);
 			} else {
 				fb->run_flag |= FB_WAITING;
-				sleep((caddr_t)&fb->run_flag, FBPRI);
+				(void) tsleep(&fb->run_flag, FBPRI,
+				    "fbrop", 0);
 			}
 		}
 		splx(s);

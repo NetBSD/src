@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.18 2000/03/30 12:45:37 augustss Exp $	*/
+/*	$NetBSD: qd.c,v 1.19 2000/05/27 04:52:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -1693,7 +1693,8 @@ panic("qd_strategy");
 	dga->bytcnt_hi = (short) (bp->b_bcount >> 16);
        
 	while (qdflags[unit].user_dma) {
-		sleep((caddr_t)&qdflags[unit].user_dma, QDPRIOR);
+		(void) tsleep(&qdflags[unit].user_dma, QSPRIOR,
+		    "qdstrat", 0);
 	}
 	splx(s);
 #ifdef notyet
