@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.26 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.27 2003/12/30 22:11:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.26 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.27 2003/12/30 22:11:14 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -43,10 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.26 2003/12/30 21:59:03 oster Exp $");
 #include "rf_map.h"
 #include "rf_shutdown.h"
 
-static void rf_FreePDAList(RF_PhysDiskAddr_t * start, RF_PhysDiskAddr_t * end,
-			   int count);
-static void rf_FreeASMList(RF_AccessStripeMap_t * start, 
-			   RF_AccessStripeMap_t * end, int count);
+static void rf_FreePDAList(RF_PhysDiskAddr_t *pda_list);
+static void rf_FreeASMList(RF_AccessStripeMap_t *asm_list);
 
 /***************************************************************************
  *
@@ -426,15 +424,12 @@ rf_FreePhysDiskAddr(RF_PhysDiskAddr_t *p)
 }
 #endif
 
-/* l_start, l_end - pointers to start and end of list
- * count          - number of elements in list
- */
 static void 
-rf_FreePDAList(RF_PhysDiskAddr_t *l_start, RF_PhysDiskAddr_t *l_end, int count)
+rf_FreePDAList(RF_PhysDiskAddr_t *pda_list)
 {
 	RF_PhysDiskAddr_t *p, *tmp;
 
-	p=l_start;
+	p=pda_list;
 	while (p) {
 		tmp = p->next;
 		pool_put(&rf_pda_pool, p);
@@ -464,12 +459,11 @@ rf_AllocASMList(int count)
 }
 
 static void 
-rf_FreeASMList(RF_AccessStripeMap_t *l_start, RF_AccessStripeMap_t *l_end,
-	       int count)
+rf_FreeASMList(RF_AccessStripeMap_t *asm_list)
 {
 	RF_AccessStripeMap_t *p, *tmp;
 
-	p=l_start;
+	p=asm_list;
 	while (p) {
 		tmp = p->next;
 		pool_put(&rf_asm_pool, p);
@@ -534,8 +528,8 @@ rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 	RF_ASSERT(t == count);
 
 	if (pdaList)
-		rf_FreePDAList(pdaList, pdaEnd, count);
-	rf_FreeASMList(hdr->stripeMap, pt, asm_count);
+		rf_FreePDAList(pdaList);
+	rf_FreeASMList(hdr->stripeMap);
 	rf_FreeAccessStripeMapHeader(hdr);
 }
 /* We can't use the large write optimization if there are any failures
