@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16.2.3 1997/11/20 08:35:22 mellon Exp $
+#	$NetBSD: MAKEDEV,v 1.16.2.4 1997/12/14 00:49:39 mellon Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -84,7 +84,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-	sh $0 std fd pty0 random
+	sh $0 std fd pty0
 	sh $0 bwtwo0 cgtwo0 cgfour0
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6
 	sh $0 cd0 cd1 st0 st1 st2
@@ -92,6 +92,7 @@ all)
 	sh $0 xy0 xy1 xy2 xy3
 	sh $0 bpf0 bpf1 bpf2 bpf3
 	sh $0 tun0 tun1
+	sh $0 lkm random
 	sh $0 local
 	;;
 
@@ -124,10 +125,11 @@ fd)
 	mkdir fd > /dev/null 2>&1
 	n=0
 	while [ $n -lt 64 ]; do
-		mk fd/$n c 23 $n
+		mk fd/$n c 23 $n 666
 		n=$(($n + 1))
 	done
-	chown -R bin.bin fd
+	chown -R root.wheel fd
+	chmod 755 fd
 	;;
 
 bpf*)
