@@ -26,15 +26,17 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: accountant.c,v 1.1 1993/05/03 01:02:52 cgd Exp $";
+static char *rcsid = "$Id: accountant.c,v 1.2 1993/05/03 03:06:33 cgd Exp $";
 #endif
 
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/acct.h>
+#include <sys/mount.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <syslog.h>
 
 #include "pathnames.h"
 
@@ -42,6 +44,13 @@ char *acctfile = _PATH_ACCTLOG;
 char *acctdev = _PATH_ACCTDEV;
 int devfd = -1;
 int filefd = -1;
+int min_on = 2;
+int max_off = 4;
+int sleeptime = 15;
+int debug;
+
+#define dprintf		if (debug) printf
+#define dperror		if (debug) perror
 
 void usage(char *progname)
 {
@@ -63,12 +72,43 @@ void reinitfiles(int num)
 	}
 }
 
+void checkspace()
+{
+	struct statfs fs;
+	int freespace = 1;
+	int slept = 0;
+
+	do {
+		if (fstatfs(filefd, &fs) < 0) {
+			perror("checkspace");
+			freespace = 0;
+		} else {
+			if (fs.f_bavail < fs.f_blocks / (100 / min_on)) {
+				freespace = 0;
+			} else if (fs.f_bavail > fs.f_blocks / (100 / max_off)) {
+				freespace = 1;
+			}
+		}
+		if (!freespace) {
+			if (!slept) syslog(LOG_NOTICE, "Accounting suspended");
+			dprintf("going to sleep...\n");
+			sleep(sleeptime);
+			slept = 1;
+		}
+	} while (!freespace);
+
+	if (slept) {
+		syslog(LOG_NOTICE, "Accounting resumed");
+		dprintf("awake and happy...\n");
+	}
+}
+
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	int ch;
-	int debug = 0;
+	int dosync = 0;
 	extern char *optarg;
 	extern int optind;
 	FILE *pidf;
@@ -77,6 +117,9 @@ main(argc, argv)
 		switch ((char) ch) {
 		case 'd':	/* debug it */
 			debug = 1;
+			break;
+		case 's':	/* force syncs after writes */
+			dosync = 1;
 			break;
 		case 'f':	/* set log file */
 			acctfile = optarg;
@@ -93,10 +136,12 @@ main(argc, argv)
 	if (argc -= optind)
 		usage(argv[0]);
 
+	openlog("accountant", LOG_PERROR, LOG_DAEMON);
+
 	if (!debug)
 		daemon(0, 0);
 
-	if (debug) printf("%s: in debugging mode\n", argv[0]);
+	dprintf("%s: in debugging mode\n", argv[0]);
 
 	signal(SIGHUP, reinitfiles);
 	reinitfiles(0);
@@ -112,22 +157,24 @@ main(argc, argv)
 
 		rv = read(devfd, &abuf, sizeof(struct acct));
 		if (rv == sizeof(struct acct)) {
-			if (debug)
-				printf("accounting record copied for: %s\n",
-					abuf.ac_comm);
+			checkspace();
+			dprintf("accounting record copied for: %s\n",
+				abuf.ac_comm);
 			rv = write(filefd, &abuf, sizeof(struct acct));
 			if (rv != sizeof(struct acct)) {
 				if (rv < 0) {
-					if (debug) perror("write");
+					dperror("write");
 				} else {
-					if (debug) printf("weird write result: %d\n", rv);
+					dprintf("weird write result: %d\n", rv);
 				}
 			}
+			if (dosync)
+				fsync(filefd);
 		} else {
 			if (rv < 0) {
-				if (debug) perror("read");
+				dperror("read");
 			} else {
-				if (debug) printf("weird read result: %d\n", rv);
+				dprintf("weird read result: %d\n", rv);
 			}
 		}
 	}
