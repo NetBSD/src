@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.122 2001/01/08 07:36:10 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.123 2001/01/08 07:41:10 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -37,6 +37,8 @@ LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
+LIBCRYPTO_RC5?=	${DESTDIR}/usr/lib/libcrypto_rc5.a
+LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
