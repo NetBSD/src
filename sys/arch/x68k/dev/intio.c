@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.17 2003/01/01 02:31:13 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.18 2003/04/01 15:15:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -508,7 +508,7 @@ _intio_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * need bounce buffers.  We check and remember that here.
 	 *
 	 * ...or, there is an opposite case.  The most segments
-	 * a transfer will require is (maxxfer / NBPG) + 1.  If
+	 * a transfer will require is (maxxfer / PAGE_SIZE) + 1.  If
 	 * the caller can't handle that many segments (e.g. the
 	 * DMAC), we may have to bounce it as well.
 	 */
@@ -517,7 +517,7 @@ _intio_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 		map->x68k_dm_bounce_thresh = 0;
 	cookieflags = 0;
 	if (map->x68k_dm_bounce_thresh != 0 ||
-	    ((map->x68k_dm_size / NBPG) + 1) > map->x68k_dm_segcnt) {
+	    ((map->x68k_dm_size / PAGE_SIZE) + 1) > map->x68k_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) * map->x68k_dm_segcnt);
 	}
@@ -938,7 +938,7 @@ _intio_dma_alloc_bouncebuf(t, map, size, flags)
 
 	cookie->id_bouncebuflen = round_page(size);
 	error = _intio_bus_dmamem_alloc(t, cookie->id_bouncebuflen,
-	    NBPG, map->x68k_dm_boundary, cookie->id_bouncesegs,
+	    PAGE_SIZE, map->x68k_dm_boundary, cookie->id_bouncesegs,
 	    map->x68k_dm_segcnt, &cookie->id_nbouncesegs, flags);
 	if (error)
 		goto out;
