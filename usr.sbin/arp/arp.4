@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.4,v 1.5 2000/10/17 12:23:03 kleink Exp $
+.\"	$NetBSD: arp.4,v 1.6 2002/01/19 03:05:58 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@ It is used by all the Ethernet interface drivers.
 It is not specific to Internet protocols or to Ethernet,
 but this implementation currently supports only that combination.
 .Pp
-ARP caches Internet-Ethernet address mappings. 
+ARP caches Internet-Ethernet address mappings.
 When an interface requests a mapping for an address not in the cache,
 ARP queues the message which requires the mapping and broadcasts
 a message on the associated network requesting the address mapping.
@@ -125,4 +125,3 @@ same Internet address.
 .%B "Trailer Encapsulations"
 .%T RFC893
 .Re
-

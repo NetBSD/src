@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.12 2001/04/24 23:11:06 atatat Exp $
+.\"	$NetBSD: arp.8,v 1.13 2002/01/19 03:06:07 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Fl a
 .Nm ""
 .Op Fl v
-.Fl d 
+.Fl d
 .Op Ar -a|hostname
 .Nm ""
 .Fl s Ar hostname ether_addr
@@ -94,19 +94,19 @@ Create an
 .Tn ARP
 entry for the host called
 .Ar hostname
-with the Ethernet address 
+with the Ethernet address
 .Ar ether_addr .
 The Ethernet address is given as six hex bytes separated by colons.
 The entry will be permanent unless the word
 .Ar temp
-is given in the command. 
+is given in the command.
 If the word
 .Ar pub
 is given, the entry will be "published"; i.e., this system will
 act as an
 .Tn ARP
 server,
-responding to requests for 
+responding to requests for
 .Ar hostname
 even though the host address is not its own.
 .It Fl f
