@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.16 2001/10/09 04:50:01 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.17 2001/10/18 04:37:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.16 2001/10/09 04:50:01 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17 2001/10/18 04:37:56 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ int
 keycompare(const void *a, const void *b)
 {
 
-	return (strcmp(((KEY *)a)->name, ((KEY *)b)->name));
+	return (strcmp(((const KEY *)a)->name, ((const KEY *)b)->name));
 }
 
 void
