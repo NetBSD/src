@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA690,v 1.1 2001/01/17 05:21:48 itojun Exp $
+#	$NetBSD: JORNADA690,v 1.2 2001/02/07 15:29:21 uch Exp $
 #
 #	JORNADA690 uch's Jornada 690
 #
@@ -17,14 +17,6 @@ maxusers	32			# estimated number of users
 options		SH7709A			# 133MHz
 options		SH7709A_BROKEN_IPR
 options		PCLOCK=22000000		# 22MHz
-
-options		IOM_ROM_BEGIN=0x00000000	# XXX dummy
-options		IOM_ROM_SIZE=0x00200000		# XXX dummy
-options		IOM_RAM_BEGIN=0x8c000000
-options		IOM_RAM_SIZE=0x01000000		# 16MB XXX first bank only
-options		LED_ADDR=0xa8000000		# XXX dummy
-
-options		DONT_INIT_BSC		# XXX use WindowsCE setting.
 
 # Standard system options
 
