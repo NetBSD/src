@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.42 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: tfb.c,v 1.43 2003/12/17 03:59:33 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.42 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.43 2003/12/17 03:59:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ CFATTACH_DECL(tfb, sizeof(struct tfb_softc),
     tfbmatch, tfbattach, NULL, NULL);
 
 static void tfb_common_init __P((struct rasops_info *));
+static void tfb_cmap_init __P((struct tfb_softc *));
 static struct rasops_info tfb_console_ri;
 static tc_addr_t tfb_consaddr;
 
@@ -312,9 +313,7 @@ tfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap256 *cm;
-	const u_int8_t *p;
-	int console, index;
+	int console;
 
 	console = (ta->ta_addr == tfb_consaddr);
 	if (console) {
@@ -336,13 +335,7 @@ tfbattach(parent, self, aux)
 	}
 	printf(": %dx%d, 8,24bpp\n", ri->ri_width, ri->ri_height);
 
-	cm = &sc->sc_cmap;
-	p = rasops_cmap;
-	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
-		cm->r[index] = p[0];
-		cm->g[index] = p[1];
-		cm->b[index] = p[2];
-	}
+	tfb_cmap_init(sc);
 
 	sc->sc_vaddr = ta->ta_addr;
 	sc->sc_cursor.cc_magic.x = TX_MAGIC_X;
@@ -411,6 +404,23 @@ tfb_common_init(ri)
 	tfb_stdscreen.capabilities = ri->ri_caps;
 }
 
+static void
+tfb_cmap_init(sc)
+	struct tfb_softc *sc;
+{
+	struct hwcmap256 *cm;
+	const u_int8_t *p;
+	int index;
+
+	cm = &sc->sc_cmap;
+	p = rasops_cmap;
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+		cm->r[index] = p[0];
+		cm->g[index] = p[1];
+		cm->b[index] = p[2];
+	}
+}
+
 static int
 tfbioctl(v, cmd, data, flag, p)
 	void *v;
@@ -421,7 +431,7 @@ tfbioctl(v, cmd, data, flag, p)
 {
 	struct tfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
-	int turnoff;
+	int turnoff, s;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -465,8 +475,10 @@ tfbioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_SCURPOS:
+		s = spltty();
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
+		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
+		splx(s);
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -479,6 +491,18 @@ tfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			s = spltty();
+			tfb_cmap_init(sc);
+			sc->sc_curenb = 0;
+			sc->sc_blanked = 0;
+			sc->sc_changed |= (WSDISPLAY_CURSOR_DOCUR |
+			    WSDISPLAY_CMAP_DOLUT);
+			splx(s);
+		}
+		return (0);
 	}
 	return (EPASSTHROUGH);
 }
@@ -773,7 +797,7 @@ set_cmap(sc, p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
-	int error;
+	int error, s;
 
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
@@ -787,10 +811,12 @@ set_cmap(sc, p)
 	error = copyin(p->blue, &cmap.b[index], count);
 	if (error)
 		return error;
+	s = spltty();
 	memcpy(&sc->sc_cmap.r[index], &cmap.r[index], count);
 	memcpy(&sc->sc_cmap.g[index], &cmap.g[index], count);
 	memcpy(&sc->sc_cmap.b[index], &cmap.b[index], count);
 	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
+	splx(s);
 	return (0);
 }
 
@@ -802,7 +828,7 @@ set_cursor(sc, p)
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
 	uint8_t r[2], g[2], b[2], image[512], mask[512];
-	int error;
+	int error, s;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -832,6 +858,7 @@ set_cursor(sc, p)
 			return error;
 	}
 
+	s = spltty();
 	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
 	if (v & WSDISPLAY_CURSOR_DOPOS)
@@ -850,7 +877,8 @@ set_cursor(sc, p)
 		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
 		memcpy(cc->cc_mask, mask, icount);
 	}
-	sc->sc_changed = v;
+	sc->sc_changed |= v;
+	splx(s);
 
 	return (0);
 #undef cc
