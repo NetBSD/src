@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1998/08/22 19:39:23 tv Exp $
+#	$NetBSD: Makefile,v 1.18 1998/08/24 16:32:48 tv Exp $
 
 LIB=		bfd
 
@@ -22,7 +22,7 @@ CPPFLAGS+= 	-I. -I${.CURDIR} \
 
 DIST=		${.CURDIR}/../../dist
 
-INCSDIR=	/usr/include/machine/bfd
+INCSDIR=	/usr/include/bfd
 INCS=		ansidecl.h bfd.h libiberty.h
 
 DPSRCS+=	bfd.h elf32-target.h elf64-target.h targmatch.h
