@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.10 2004/04/11 06:48:25 kochi Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.11 2004/04/11 08:56:48 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.10 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.11 2004/04/11 08:56:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,8 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,
-	    aa->aa_node, &res, &acpi_resource_parse_ops_default);
+	    aa->aa_node->ad_handle, "_CRS", &res,
+	    &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
 
