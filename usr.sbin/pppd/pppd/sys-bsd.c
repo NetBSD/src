@@ -19,7 +19,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.3 1994/01/25 05:58:14 paulus Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.4 1994/05/08 12:16:31 paulus Exp $";
 #endif
 
 /*
@@ -42,8 +42,8 @@ static char rcsid[] = "$Id: sys-bsd.c,v 1.3 1994/01/25 05:58:14 paulus Exp $";
 #include "pppd.h"
 #include "ppp.h"
 
-static int initdisc;		/* Initial TTY discipline */
-
+static int initdisc = -1;		/* Initial TTY discipline */
+extern int kdebugflag;
 
 /*
  * establish_ppp - Turn the serial port into a ppp interface.
@@ -52,6 +52,7 @@ void
 establish_ppp()
 {
     int pppdisc = PPPDISC;
+    int x;
 
     if (ioctl(fd, TIOCGETD, &initdisc) < 0) {
 	syslog(LOG_ERR, "ioctl(TIOCGETD): %m");
@@ -69,6 +70,19 @@ establish_ppp()
 	syslog(LOG_ERR, "ioctl(PPPIOCGUNIT): %m");
 	die(1);
     }
+
+    /*
+     * Enable debug in the driver if requested.
+     */
+    if (kdebugflag) {
+	if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+	    syslog(LOG_WARNING, "ioctl (PPPIOCGFLAGS): %m");
+	} else {
+	    x |= (kdebugflag & 0xFF) * SC_DEBUG;
+	    if (ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) < 0)
+		syslog(LOG_WARNING, "ioctl(PPPIOCSFLAGS): %m");
+	}
+    }
 }
 
 
@@ -79,8 +93,37 @@ establish_ppp()
 void
 disestablish_ppp()
 {
-    if (ioctl(fd, TIOCSETD, &initdisc) < 0)
-	syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
+    int x;
+    char *s;
+
+    if (initdisc >= 0) {
+	/*
+	 * Check whether the link seems not to be 8-bit clean.
+	 */
+	if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) == 0) {
+	    s = NULL;
+	    switch (~x & (SC_RCV_B7_0|SC_RCV_B7_1|SC_RCV_EVNP|SC_RCV_ODDP)) {
+	    case SC_RCV_B7_0:
+		s = "bit 7 set to 1";
+		break;
+	    case SC_RCV_B7_1:
+		s = "bit 7 set to 0";
+		break;
+	    case SC_RCV_EVNP:
+		s = "odd parity";
+		break;
+	    case SC_RCV_ODDP:
+		s = "even parity";
+		break;
+	    }
+	    if (s != NULL) {
+		syslog(LOG_WARNING, "Serial link is not 8-bit clean:");
+		syslog(LOG_WARNING, "All received characters had %s", s);
+	    }
+	}
+	if (ioctl(fd, TIOCSETD, &initdisc) < 0)
+	    syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
+    }
 }
 
 
@@ -95,6 +138,8 @@ output(unit, p, len)
 {
     if (unit != 0)
 	MAINDEBUG((LOG_WARNING, "output: unit != 0!"));
+    if (debug)
+	log_packet(p, len, "sent ");
 
     if (write(fd, p, len) < 0) {
 	syslog(LOG_ERR, "write: %m");
@@ -161,9 +206,23 @@ ppp_send_config(unit, mtu, asyncmap, pcomp, accomp)
     }
 }
 
+
+/*
+ * ppp_set_xaccm - set the extended transmit ACCM for the interface.
+ */
+void
+ppp_set_xaccm(unit, accm)
+    int unit;
+    ext_accm accm;
+{
+    if (ioctl(fd, PPPIOCSXASYNCMAP, accm) < 0 && errno != ENOTTY)
+	syslog(LOG_WARNING, "ioctl(set extended ACCM): %m");
+}
+
+
 /*
  * ppp_recv_config - configure the receive-side characteristics of
- * the ppp interface.  At present this does nothing.
+ * the ppp interface.
  */
 void
 ppp_recv_config(unit, mru, asyncmap, pcomp, accomp)
@@ -171,12 +230,16 @@ ppp_recv_config(unit, mru, asyncmap, pcomp, accomp)
     u_long asyncmap;
     int pcomp, accomp;
 {
-#ifdef notyet
+    int x;
+
+    if (ioctl(fd, PPPIOCSMRU, (caddr_t) &mru) < 0) {
+	syslog(LOG_ERR, "ioctl(PPPIOCSMRU): %m");
+	quit();
+    }
     if (ioctl(fd, PPPIOCSRASYNCMAP, (caddr_t) &asyncmap) < 0) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSRASYNCMAP): %m");
 	quit();
     }
-
     if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
 	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
 	quit();
@@ -186,14 +249,14 @@ ppp_recv_config(unit, mru, asyncmap, pcomp, accomp)
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	quit();
     }
-#endif	/* notyet */
 }
 
 /*
  * sifvjcomp - config tcp header compression
  */
 int
-sifvjcomp(u, vjcomp, cidcomp)
+sifvjcomp(u, vjcomp, cidcomp, maxcid)
+    int u, vjcomp, cidcomp, maxcid;
 {
     u_int x;
 
@@ -203,7 +266,11 @@ sifvjcomp(u, vjcomp, cidcomp)
     }
     x = vjcomp ? x | SC_COMP_TCP: x &~ SC_COMP_TCP;
     x = cidcomp? x & ~SC_NO_TCP_CCID: x | SC_NO_TCP_CCID;
-    if(ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
+	return 0;
+    }
+    if (ioctl(fd, PPPIOCSMAXCID, (caddr_t) &maxcid) < 0) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
@@ -211,12 +278,14 @@ sifvjcomp(u, vjcomp, cidcomp)
 }
 
 /*
- * sifup - Config the interface up.
+ * sifup - Config the interface up and enable IP packets to pass.
  */
 int
 sifup(u)
 {
     struct ifreq ifr;
+    u_int x;
+
     strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
     if (ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
 	syslog(LOG_ERR, "ioctl (SIOCGIFFLAGS): %m");
@@ -227,27 +296,51 @@ sifup(u)
 	syslog(LOG_ERR, "ioctl(SIOCSIFFLAGS): %m");
 	return 0;
     }
+    if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
+	return 0;
+    }
+    x |= SC_ENABLE_IP;
+    if (ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
+	return 0;
+    }
     return 1;
 }
 
 /*
- * sifdown - Config the interface down.
+ * sifdown - Config the interface down and disable IP.
  */
 int
 sifdown(u)
 {
     struct ifreq ifr;
+    u_int x;
+    int rv;
+
+    rv = 1;
+    if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
+	rv = 0;
+    } else {
+	x &= ~SC_ENABLE_IP;
+	if (ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+	    syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
+	    rv = 0;
+	}
+    }
     strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
     if (ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
 	syslog(LOG_ERR, "ioctl (SIOCGIFFLAGS): %m");
-	return 0;
+	rv = 0;
+    } else {
+	ifr.ifr_flags &= ~IFF_UP;
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
+	    syslog(LOG_ERR, "ioctl(SIOCSIFFLAGS): %m");
+	    rv = 0;
+	}
     }
-    ifr.ifr_flags &= ~IFF_UP;
-    if (ioctl(s, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
-	syslog(LOG_ERR, "ioctl(SIOCSIFFLAGS): %m");
-	return 0;
-    }
-    return 1;
+    return rv;
 }
 
 /*
@@ -481,11 +574,11 @@ get_ether_addr(ipaddr, hwaddr)
     return 0;
 }
 
+
 /*
  * ppp_available - check whether the system has any ppp interfaces
  * (in fact we check whether we can do an ioctl on ppp0).
  */
-
 int
 ppp_available()
 {
