@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.8 1999/02/01 14:08:35 he Exp $	*/
+/*	$NetBSD: run.c,v 1.9 1999/03/09 19:30:00 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -419,6 +419,12 @@ run_prog(int fatal, int display, char *cmd, ...)
 			++aps;
 
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
+	/* Apparently, we sometimes get 0x0 back, and that's not useful */
+	if (win.ws_row == 0)
+		win.ws_row = 24;
+	if (win.ws_col == 0)
+		win.ws_col = 80;
+
 	if (display) {
 		statuswin = subwin(stdscr, win.ws_row, win.ws_col, 0, 0);
 		boxwin = subwin(statuswin, win.ws_row - 3, win.ws_col, 3, 0);
