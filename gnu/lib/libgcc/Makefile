@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/07/19 12:51:05 tv Exp $
+#	$NetBSD: Makefile,v 1.22 2001/07/19 18:06:19 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,15 +15,20 @@ MKPIC=no	# XXX to be fixed
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 GCCARCH=	${TOP}/usr.bin/gcc/arch/${MACHINE_ARCH}
+GCCCPINC=	${DIST}/gcc/cp/inc
 
-SRCS=		${G_LIB2ADD:M*.c*} ${G_CXX_LIB2SRCS:N*/new?.cc}
+G_CXXSRCS=	${G_CXX_LIB2SRCS:N*/new?.cc:M*/*.cc}
+G_CSRCS=	${G_LIB2ADD:M*.c*}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
-CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
+CPPFLAGS+=	-I${GCCARCH} -I${GCCCPINC} ${GCPPFLAGS:M-D*} \
+		${GCPPFLAGS:M-I*:N-I.*}
 
 .PATH: ${DIST}/gcc
 
-OBJS+=		${G_LIB2FUNCS:=.o} ${G_LIB2FUNCS_EH:=.o} ${G_CXX_LIB2FUNCS:Mop*}
+OBJS+=		${G_LIB2FUNCS:=.o} ${G_LIB2FUNCS_EH:=.o} \
+		${G_CXX_LIB2FUNCS:Mop*} ${G_CXXSRCS:T:R:=.o} \
+		${G_CSRCS:T:R:=.o}
 
 ${G_LIB2FUNCS:=.o}: libgcc2.c
 	${COMPILE.c} -DL$* -o $@ ${>:M*.c}
@@ -43,6 +48,16 @@ op${f}.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
 
 opdel.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
 	${COMPILE.c} -DL_op_delete -o $@ ${>:M*.cc}
+
+.for f in ${G_CXXSRCS:T:R}
+${f}.o: ${G_CXX_LIB2SRCS:M*/${f}.cc}
+	${COMPILE.c} -o $@ ${>:M*.cc}
+.endfor
+
+.for f in ${G_CSRCS:T:R}
+${f}.o: ${G_CXX_LIB2ADD:M*/${f}.c}
+	${COMPILE.c} -o $@ ${>:M*.c}
+.endfor
 
 .include <bsd.lib.mk>
 
