@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.56.4.3 1997/02/28 16:02:13 is Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.56.4.4 1997/03/10 13:46:13 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -134,7 +134,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.19.6.1 1997/02/18 18:34:47 is Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.19.6.2 1997/03/10 13:25:45 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -99,7 +99,6 @@ SOFTWARE.
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/if_ether.h>
 
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
