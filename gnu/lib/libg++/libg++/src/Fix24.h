@@ -254,6 +254,11 @@ inline Fix24::Fix24(int i)
   m = i; 
 }
 
+inline Fix48::Fix48(const Fix48& f)
+{
+ m = f.m;
+}
+
 inline Fix24::operator double() const
 { 
   return  Fix24_div * m; 
@@ -456,11 +461,6 @@ inline Fix48::Fix48()
 { 
   m.u = 0;
   m.l = 0;
-}
-
-inline Fix48::Fix48(const Fix48& f)		
-{ 
-  m = f.m;
 }
 
 inline Fix48::Fix48(const Fix24&  f)    
