@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.86 2004/04/20 20:31:20 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.87 2004/04/21 20:03:18 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -376,7 +376,7 @@ crypto/dist/openssl/ssl/ssl_cert.c		patch
 crypto/dist/openssl/ssl/ssl_ciph.c		patch
 
 	Pull up major differences from openssl 0.9.6l->0.9.6m. Major fix is
-	a null pointer check that can cause crashes.
+	a null pointer check that can cause crashes. SA#2004-005
 	[groo, ticket #1640]
 
 gnu/dist/toolchain/gcc/config/arm/arm.c		patch
@@ -628,4 +628,5 @@ sys/netinet/tcp_var.h				patch
 	Respond to RST by ACK, as suggested in NISCC recommendation.
 	Rate-limit ACKs against RSTs and SYNs. 
 	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
+	SA#2004-006.
 	[itojun, ticket #1680]
