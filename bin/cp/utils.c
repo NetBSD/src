@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.5 1997/01/09 16:07:33 tls Exp $	*/
+/*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: utils.c,v 1.5 1997/01/09 16:07:33 tls Exp $";
+static char rcsid[] = "$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -271,11 +271,19 @@ setfile(fs, fd)
 		rval = 1;
 	}
 
-	if (fd ?
-	    fchflags(fd, fs->st_flags) : chflags(to.p_path, fs->st_flags)) {
-		warn("chflags: %s", to.p_path);
-		rval = 1;
-	}
+	/*
+	 * XXX
+	 * NFS doesn't support chflags; ignore errors unless there's reason
+	 * to believe we're losing bits.  (Note, this still won't be right
+	 * if the server supports flags and we were trying to *remove* flags
+	 * on a file that we copied, i.e., that we didn't create.)
+	 */
+	errno = 0;
+	if (fd ? fchflags(fd, fs->st_flags) : chflags(to.p_path, fs->st_flags))
+		if (errno != EOPNOTSUPP || fs->st_flags != 0) {
+			warn("chflags: %s", to.p_path);
+			rval = 1;
+		}
 	return (rval);
 }
 
