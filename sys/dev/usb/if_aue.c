@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.22 2000/02/12 15:02:21 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.23 2000/02/17 05:41:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -115,10 +115,10 @@
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <net/if_ether.h>
-
-#define bpf_mtap(ifp, m) bpf_tap((ifp)->if_bpf, mtod((m), caddr_t), (m)->m_len)
-
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
+#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
+#else
+#define BPF_MTAP(ifp, m) bpf_mtap((ifp), (m))
+#endif
 
 #if defined(__FreeBSD__) || NBPFILTER > 0
 #include <net/bpf.h>
@@ -1213,7 +1213,7 @@ aue_rxeof(xfer, priv, status)
 	 */
 	if (ifp->if_bpf) {
 		struct ether_header *eh = mtod(m, struct ether_header *);
-		bpf_mtap(ifp, m);
+		BPF_MTAP(ifp, m);
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			   ETHER_ADDR_LEN) &&
@@ -1426,7 +1426,7 @@ aue_start(ifp)
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp, m_head);
+		BPF_MTAP(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
