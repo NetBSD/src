@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.62 1998/09/27 18:15:58 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.63 1999/04/01 09:53:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.62 1998/09/27 18:15:58 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.63 1999/04/01 09:53:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: kvm.c,v 1.62 1998/09/27 18:15:58 christos Exp $");
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
-#include <vm/swap_pager.h>
 
 #include <ctype.h>
 #include <db.h>
