@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.14.2.3 2000/07/27 02:10:46 mycroft Exp $
+#	$NetBSD: CARDBUS,v 1.14.2.4 2000/08/10 23:10:28 soda Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -228,11 +228,12 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
-#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
-#options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 #options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
+#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
+#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
+#options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
