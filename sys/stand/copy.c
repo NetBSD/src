@@ -38,9 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* From:
-      static char sccsid[] = "@(#)copy.c	8.1 (Berkeley) 6/11/93"; */
-static char rcsid[] = "$Id: copy.c,v 1.3 1994/01/26 03:21:42 cgd Exp $";
+/*static char sccsid[] = "from: @(#)copy.c	8.1 (Berkeley) 6/11/93";*/
+static char rcsid[] = "NetBSD $Id: copy.c,v 1.4 1994/06/27 19:54:47 cgd Exp $";
 #endif /* not lint */
 
 #define	BSIZE	10240
