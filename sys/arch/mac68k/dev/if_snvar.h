@@ -1,4 +1,4 @@
-/*      $NetBSD: if_snvar.h,v 1.6 1997/04/13 14:21:12 briggs Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.7 1997/04/22 21:00:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -47,11 +47,11 @@
  * 1 Rda   is 4 words == 16 bytes
  */
 
-#define NRBA    8		/* # receive buffers < NRRA */
-#define RBAMASK (NRBA-1)
-#define NRDA    NRBA*4
-#define NTDA    4		/* # transmit descriptors */
-#define NRRA    32		/* # receive resource descriptors */
+#define NRBA	8		/* # receive buffers < NRRA */
+#define RBAMASK	(NRBA-1)
+#define NRDA	NRBA*4
+#define NTDA	4		/* # transmit descriptors */
+#define NRRA	32		/* # receive resource descriptors */
 #define RRAMASK (NRRA-1)	/* the reason why it must be power of two */
 
 #define FCSSIZE 4		/* size of FCS appended to packets */
@@ -66,8 +66,8 @@
 /*
  * transmit buffer area
  */
-#define NTXB    10      /* Number of xmit buffers */
-#define TXBSIZE 1536    /* 6*2^8 -- the same size as the 8390 TXBUF */
+#define NTXB	10	/* Number of xmit buffers */
+#define TXBSIZE	1536	/* 6*2^8 -- the same size as the 8390 TXBUF */
 
 #define	SN_NPAGES	1 + 8 + 5
 
@@ -75,29 +75,29 @@
  * Statistics collected over time
  */
 struct sn_stats {
-	int     ls_opacks;	/* packets transmitted */
-	int     ls_ipacks;	/* packets received */
-	int     ls_tdr;		/* contents of tdr after collision */
-	int     ls_tdef;	/* packets where had to wait */
-	int     ls_tone;	/* packets with one retry */
-	int     ls_tmore;	/* packets with more than one retry */
-	int     ls_tbuff;	/* transmit buff errors */
-	int     ls_tuflo;       /* "      uflo  "     */
-	int     ls_tlcol;
-	int     ls_tlcar;
-	int     ls_trtry;
-	int     ls_rbuff;       /* receive buff errors */
-	int     ls_rfram;       /* framing     */
-	int     ls_roflo;       /* overflow    */
-	int     ls_rcrc;
-	int     ls_rrng;	/* rx ring sequence error */
-	int     ls_babl;	/* chip babl error */
-	int     ls_cerr;	/* collision error */
-	int     ls_miss;	/* missed packet */
-	int     ls_merr;	/* memory error */
-	int     ls_copies;      /* copies due to out of range mbufs */
-	int     ls_maxmbufs;    /* max mbufs on transmit */
-	int     ls_maxslots;    /* max ring slots on transmit */
+	int	ls_opacks;	/* packets transmitted */
+	int	ls_ipacks;	/* packets received */
+	int	ls_tdr;		/* contents of tdr after collision */
+	int	ls_tdef;	/* packets where had to wait */
+	int	ls_tone;	/* packets with one retry */
+	int	ls_tmore;	/* packets with more than one retry */
+	int	ls_tbuff;	/* transmit buff errors */
+	int	ls_tuflo;	/*    "     uflo   "    */
+	int	ls_tlcol;
+	int	ls_tlcar;
+	int	ls_trtry;
+	int	ls_rbuff;	/* receive buff errors */
+	int	ls_rfram;	/* framing     */
+	int	ls_roflo;	/* overflow    */
+	int	ls_rcrc;
+	int	ls_rrng;	/* rx ring sequence error */
+	int	ls_babl;	/* chip babl error */
+	int	ls_cerr;	/* collision error */
+	int	ls_miss;	/* missed packet */
+	int	ls_merr;	/* memory error */
+	int	ls_copies;	/* copies due to out of range mbufs */
+	int	ls_maxmbufs;	/* max mbufs on transmit */
+	int	ls_maxslots;	/* max ring slots on transmit */
 };
 
 typedef struct mtd {
@@ -238,4 +238,4 @@ typedef struct sn_softc {
 int	snsetup __P((struct sn_softc *sc, u_int8_t *));
 void	snintr __P((void *, int));
 void	sn_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
-			   vm_offset_t o, u_char *dst));
+	    vm_offset_t o, u_char *dst));
