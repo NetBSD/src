@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.h,v 1.4 1995/03/04 07:16:29 cgd Exp $	*/
+/*	$NetBSD: talkd.h,v 1.5 1995/03/04 07:59:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -67,7 +67,7 @@ typedef struct {
 	u_int32_t id_num;		/* message id */
 	struct	  osockaddr addr;	/* old (4.3) style */
 	struct	  osockaddr ctl_addr;	/* old (4.3) style */
-	u_int32_t pid;			/* caller's process id */
+	int32_t	  pid;			/* caller's process id */
 #define	NAME_SIZE	12
 	char	  l_name[NAME_SIZE];	/* caller's name */
 	char	  r_name[NAME_SIZE];	/* callee's name */
