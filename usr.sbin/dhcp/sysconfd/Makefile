@@ -1,6 +1,7 @@
-# Makefile.dist
+# Makefile
 #
-# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+# Copyright (c) 1996, 1997 The Internet Software Consortium.
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,16 +30,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-LIB=dhcp
-SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
-	 packet.c memory.c print.c options.c inet.c convert.c \
-	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c resolv.c
+SRCS   = sysconfd.c
+PROG   = sysconfd
+MAN    = sysconfd.8
 
-NOPROFILE=
-NOPIC=
-NOLINT=
-
-# only needed during build
-libinstall::
-
-.include <bsd.lib.mk>
+.include <bsd.prog.mk>
