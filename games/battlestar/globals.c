@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.17 2000/09/25 14:08:08 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.18 2000/09/25 14:45:01 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.17 2000/09/25 14:08:08 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.18 2000/09/25 14:45:01 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -221,14 +221,22 @@ const int     objcumber[NUMOFOBJECTS] = {
 };
 
 const int objflags[NUMOFOBJECTS] = {
-	0,	0,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,  OBJ_PLURAL,	0,  OBJ_PLURAL,
-	0,    OBJ_AN,	0,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,  OBJ_PLURAL,	0,	0,	0,
-	0,	0,    OBJ_AN,	0,  OBJ_PLURAL,	0,	0,  OBJ_PLURAL,
-	0,	0,  OBJ_PLURAL,	0,	0,	0,	0,	0,
-	0,	0,	0,	0,	0,	0,	0,	0,
-      OBJ_AN,	0,	0,	0,	0,	0,	0,	0
+	0,		0,	    OBJ_NONOBJ,	    OBJ_PERSON,
+	0,		0,		0,		0,
+	0,		0,		0,		0,
+	0,	    OBJ_PLURAL,	    OBJ_NONOBJ,	    OBJ_PLURAL,
+	0,	      OBJ_AN,		0,		0,
+	0,		0,		0,	    OBJ_PERSON,
+    OBJ_PERSON,		0,		0,		0,
+    OBJ_PLURAL,		0,		0,		0,
+	0,		0,	OBJ_AN|OBJ_PERSON,  OBJ_NONOBJ,
+    OBJ_PLURAL,		0,	    OBJ_PERSON,	    OBJ_PLURAL,
+	0,		0,	    OBJ_PLURAL,		0,
+	0,		0,		0,	    OBJ_PERSON,
+    OBJ_PERSON,	    OBJ_PERSON,	    OBJ_PERSON,	    OBJ_NONOBJ,
+    OBJ_NONOBJ,	    OBJ_NONOBJ,		0,		0,
+      OBJ_AN,		0,	    OBJ_PERSON,		0,
+	0,		0,		0,		0
 };
 
 int     win = 1;
