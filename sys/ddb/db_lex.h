@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.10 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_lex.h,v 1.11 2000/03/30 02:01:49 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,7 +44,6 @@ int db_lex __P((void));
 db_expr_t db_tok_number;
 #define	TOK_STRING_SIZE		120 
 char	db_tok_string[TOK_STRING_SIZE];
-int	db_radix;
 
 #define	tEOF		(-1)
 #define	tEOL		1
