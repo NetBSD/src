@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.9 1998/10/27 19:49:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,40 +83,53 @@ struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
 };
 
-struct ne_pci_compatdev {
-	pci_vendor_id_t vendor;
-	pci_product_id_t product;
-	char *name;
-};
+const struct ne_pci_product {
+	pci_vendor_id_t npp_vendor;
+	pci_product_id_t npp_product;
+	const char *npp_name;
+} ne_pci_products[] = {
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8029,
+	  "Realtek 8029" },
 
-struct ne_pci_compatdev ne_pci_compatdevs[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029, "Realtek 8029" },
-	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, "Winbond 89C940F" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
-		"VIA Technologies VT86C926" },
-	{ PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34, "Surecom NE-34" },
-	{ PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000, "NetVin 5000" },
+	{ PCI_VENDOR_WINBOND,	PCI_PRODUCT_WINBOND_W89C940F,
+	  "Winbond 89C940F" },
+
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT86C926,
+	  "VIA Technologies VT86C926" },
+
+	{ PCI_VENDOR_SURECOM,	PCI_PRODUCT_SURECOM_NE34,
+	  "Surecom NE-34" },
+
+	{ PCI_VENDOR_NETVIN,	PCI_PRODUCT_NETVIN_5000,
+	  "NetVin 5000" },
+
 	/* XXX The following entries need sanity checking in pcidevs */
-	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_NE2KETHER, "Compex" },
-	{ PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER, "ProLAN" },
-	{ PCI_VENDOR_KTI, PCI_PRODUCT_KTI_NE2KETHER, "KTI" },
-	{ 0, 0, NULL },
+	{ PCI_VENDOR_COMPEX,	PCI_PRODUCT_COMPEX_NE2KETHER,
+	  "Compex" },
+
+	{ PCI_VENDOR_PROLAN,	PCI_PRODUCT_PROLAN_NE2KETHER,
+	  "ProLAN" },
+
+	{ PCI_VENDOR_KTI,	PCI_PRODUCT_KTI_NE2KETHER,
+	  "KTI" },
+
+	{ 0,			0,
+	  NULL },
 };
 
-char *ne_pci_lookup __P((pcireg_t));
+const struct ne_pci_product *ne_pci_lookup __P((struct pci_attach_args *));
 
-char *
-ne_pci_lookup(id)
-	pcireg_t id;
+const struct ne_pci_product *
+ne_pci_lookup(pa)
+	struct pci_attach_args *pa;
 {
-	struct ne_pci_compatdev *nc;
+	const struct ne_pci_product *npp;
 
-	for (nc = ne_pci_compatdevs; nc->vendor != 0; nc++) {
-		if (PCI_VENDOR(id) == nc->vendor &&
-		    PCI_PRODUCT(id) == nc->product)
-			return (nc->name);
+	for (npp = ne_pci_products; npp->npp_name != NULL; npp++) {
+		if (PCI_VENDOR(pa->pa_id) == npp->npp_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == npp->npp_product)
+			return (npp);
 	}
-
 	return (NULL);
 }
 
@@ -134,7 +147,7 @@ ne_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (ne_pci_lookup(pa->pa_id) != NULL)
+	if (ne_pci_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
@@ -154,17 +167,18 @@ ne_pci_attach(parent, self, aux)
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
-	const char *typestr = NULL, *intrstr;
+	const char *intrstr;
+	const struct ne_pci_product *npp;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 
-	typestr = ne_pci_lookup(pa->pa_id);
-	if (typestr == NULL) {
-		printf(": unknown model?!\n");
-		return;
+	npp = ne_pci_lookup(pa);
+	if (npp == NULL) {
+		printf("\n");
+		panic("ne_pci_attach: impossible");
 	}
 
-	printf(": %s Ethernet\n", typestr);
+	printf(": %s Ethernet\n", npp->npp_name);
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &nict, &nich, NULL, NULL)) {
