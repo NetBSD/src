@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.130 2001/06/23 23:36:47 gehenna Exp $
+.\"	$NetBSD: main,v 1.131 2001/07/04 23:33:18 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,6 +97,218 @@ You are reading the
 .Em \*[format]
 version.
 .
+.if \n[i386]:\n[macppc]:\n[sparc] \{
+.Ss "Quick install notes for the impatient"
+.Pp
+This section contains some brief notes describing what you need to
+install
+.Nx \*V
+on a machine of the \*M architecture.
+.Bl -bullet
+.It
+Fetch the
+.if r_i386 \{\
+appropriate pair of boot floppy images from the
+.Pa installation/floppy/
+directory.  Most people will need the
+.Pa boot1.fs
+and
+.Pa boot2.fs
+images, or possibly (but not necessarily)
+.Pa bootlap1.fs
+and
+.Pa bootlap2.fs
+if installing on a laptop.
+.\}
+.if r_macppc \{\
+boot floppy image
+.Pa installation/boot.fs
+and bootloader
+.Pa installation/ofwboot.xcf ,
+or the CD image,
+.Pa macppc_bootable.iso .
+You only need the floppy image and bootloader, or the CD image to boot
+your system.
+.\}
+.if r_sparc \{\
+CD image,
+.Pa sparc_bootable.iso
+or the floppy disk images,
+.Pa install/floppy/disk1.gz No and Pa install/floppy/disk2 .
+You need either the pair of floppies or the CD to boot your system,
+unless you plan to netboot the installation kernel, which requires
+a local rarp, tftp, bootparams and NFS server and is not covered in
+further detail here.
+.\}
+.It
+The actual binary distribution is in the
+.Pa binary/sets/
+directory.
+When you boot the install
+.if r_i386 floppies,
+.if r_macppc floppy or CD-ROM,
+.if r_sparc floppies or CD-ROM,
+the installation program
+can fetch these files for you (using e.g. ftp),
+if you have a network connection.
+There are several other methods to get the binary sets onto
+the machine you install.
+.Pp
+You will at a minimum need
+.ie r_i386 \{\
+one of the kernel sets, typically
+.Pa kern.tgz ,
+as well as
+.\}
+.el \{\
+the following sets:
+.Pa kern.tgz ,
+.\}
+.Pa base.tgz
+and
+.Pa etc.tgz .
+In a typical workstation installation you will probably want
+all the installation sets.
+.if \n[i386] \{
+.It
+Write the floppy images directly to a pair of floppies.
+If you have problems writing a raw image to a floppy,
+the
+.Ic rawrite.exe
+MS-DOS program
+or the
+.Ic Rawrite32.exe
+Windows32 program (inside
+.Pa rawrite32.zip )
+in the
+.Pa utilities/
+directory may be of help.
+.\}
+.if \n[macppc] \{
+.It
+If your mac has a floppy drive,
+write the floppy image directly to a floppy disk.
+Otherwise, drag the uncompressed floppy image and bootloader to your
+hard drive icon (the top level of the drive, not the desktop).  If you are
+making a CD, burn it now.
+If you have problems writing a raw image to a floppy, the
+.Ic suntar
+.Tn MacOS
+program may be of help.
+.\}
+.if \n[sparc] \{
+.It
+Make sure your sparc's CD-ROM drive is bootable.  Burn the CD.  Otherwise,
+write the floppy images directly to a pair of floppies (after
+uncompressing disk1.gz).
+.\}
+.Pp
+The disk(s) you just prepared will be used to boot the installation
+kernel, which contains all the tools required to install
+.Nx .
+.if r_macppc \{\
+.It
+Determine your machine's model, quirks, and Open Firmware version from the
+.Nx*M
+Model Support webpage.
+.Lk http://www.netbsd.org/Ports/macppc/models.html
+.Pp
+At present,
+.Nx*M
+cannot exist on the same hard drive as
+.Tn MacOS
+unless you partition your disk using a
+.Tn MacOS
+partitioning utility.  Open Firmware versions prior to 3 cannot boot into
+.Nx
+on a drive partitioned this way -- you must use the entire disk,
+partitioned with the installation tools.  Open Firmware version 3 cannot
+boot into
+.Nx
+on a drive partitioned with the installation tools, you must use a
+.Tn MacOS
+partitioning utility and the
+.Dq Me "Re-install sets or install additional sets"
+option in the installer (selecting the
+.Dq Me "Install NetBSD to hard disk"
+or
+.Dq Me "Upgrade NetBSD on a hard disk"
+options will render your drive unbootable).  If you are unsure, you may
+want to read the section below on
+.Sx Partitioning your hard drive for NetBSD
+.It
+For systems with Open Firmware versions prior to 3, you may need to use
+Apple's System Disk utility to enter Open Firmware and use your screen and
+keyboard.  To enter Open Firmware, hold down the
+.Key COMMAND-OPTION-O-F
+keys after the boot chime starts, but before it ends.  Entering Open
+Firmware versions prior to 3 is usually the most frustrating part of
+installation -- you may want to read the section below on
+.Sx Older Open Firmware System Preparation
+.Pp
+You should have the Open Firmware
+.Dq Pa "0 >"
+prompt on your screen before attempting to boot
+.Nx*M .
+.\}
+.if r_macppc \{\
+.It
+At the Open Firmware prompt, type the command to boot.  For the boot
+floppy, the command is
+.Dq Ic "boot fd:0" .
+For the boot floppy image and bootloader on your hard drive (Open Firmware
+3), the command is something like
+.Dq Ic "boot hd:9,ofwboot.xcf hd:9,boot.fs" .
+You may need to replace both 9's with your drive's partition number.
+.Pp
+For boot CDs, the command is something like
+.Dq Ic "boot cd:0,OFWBOOT.XCF NETBSD.RAM" .
+You will most likely need to keep
+.Ic OFWBOOT.XCF No and Ic NETBSD.RAM
+capitalized.  You may need to replace
+.Ic cd
+with
+.Ic "scsi/sd@3 , scsi-int/sd@3 , scsi-ext/sd@3 , ata/atapi-disk ,"
+or some other device alias.  You should also use the Open Firmware
+.Ic dir
+command to confirm that the
+.Nx*M
+kernel is called
+.Pa NETBSD.RAM .
+.\}
+.if r_sparc \{\
+.It
+You will need to get to the OpenBoot PROM
+.Dq Ic "ok"
+prompt.  After your system first powers on, and displays some initial
+information, press the
+.Key STOP-A
+keys.  At the
+.Dq Ic "ok"
+prompt, type the command to boot your system into
+.Nx .
+The command to boot from CD is one of the following commands (depending on
+your model):
+.Dq Ic b sd(,30,) ,
+.Dq Ic boot sd(,30,) ,
+or
+.Dq Ic boot cdrom .
+.Pp
+The command to boot from floppy is either
+.Dq Ic boot fd(,,1)
+or
+.Dq Ic boot floppy .
+The installer will prompt you to insert the second floppy when it is ready
+for it.
+.\}
+.It
+For third-party programs which are not part of the base
+.Nx
+distribution, you will want to explore the
+.Ic pkgsrc
+system with its more than 2100 program packages.
+.El
+.\}
 .Ss "What is NetBSD?"
 .Pp
 .
