@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.164 2000/04/24 14:22:05 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.165 2000/04/29 17:41:11 dmcmahill Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -62,7 +62,7 @@ checkver:
 
 .if ${MACHINE_ARCH} == "alpha"
 		# Alpha-specific shared library flags
-CPICFLAGS ?= -fpic -DPIC
+CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
@@ -79,7 +79,7 @@ AS+=	-KPIC
 
 .elif ${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} == "ELF"
 
-CPICFLAGS ?= -fpic -DPIC
+CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?= -KPIC
@@ -91,7 +91,7 @@ SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
 SHLIB_SHFLAGS=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-CPICFLAGS?= -fpic -DPIC
+CPICFLAGS?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
