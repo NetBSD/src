@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.10 1995/06/18 01:28:23 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.11 1995/06/21 03:56:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -192,7 +192,7 @@ struct pci_class pci_class[] = {
 	{ "network",		PCI_CLASS_NETWORK,
 	    pci_subclass_network,				},
 	{ "display",		PCI_CLASS_DISPLAY,
-	    pci_subclass_network,				},
+	    pci_subclass_display,				},
 	{ "multimedia",		PCI_CLASS_MULTIMEDIA,
 	    pci_subclass_multimedia,				},
 	{ "memory",		PCI_CLASS_MEMORY,
