@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.31 1996/03/27 04:06:53 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.32 1996/03/30 05:10:36 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -194,6 +194,9 @@ extern PRINT_ADDR();
 #else
 #include <sys/device.h>
 #include <machine/bus.h>
+#ifdef __alpha__
+#include <machine/intr.h>
+#endif
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -996,6 +999,7 @@ struct ncb {
 	struct device sc_dev;
 	void *sc_ih;
 	bus_chipset_tag_t sc_bc;
+	pci_chipset_tag_t sc_pc;
 #ifdef NCR_IOMAPPED
 	bus_io_handle_t sc_ioh;
 #else /* !NCR_IOMAPPED */
@@ -1325,7 +1329,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.31 1996/03/27 04:06:53 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.32 1996/03/30 05:10:36 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3345,6 +3349,8 @@ ncr_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+	bus_chipset_tag_t bc = pa->pa_bc;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_mem_size_t memsize;
 	int retval, cacheable;
 	pci_intr_handle_t intrhandle;
@@ -3374,12 +3380,15 @@ ncr_attach(parent, self, aux)
 	}
 	printf(" SCSI\n");
 
+	np->sc_bc = bc;
+	np->sc_pc = pc;
+
 	/*
 	**	Try to map the controller chip to
 	**	virtual and physical memory.
 	*/
 
-	retval = pci_mem_find(pa->pa_pc, pa->pa_tag, 0x14, &np->paddr,
+	retval = pci_mem_find(pc, pa->pa_tag, 0x14, &np->paddr,
 	    &memsize, &cacheable);
 	if (retval) {
 		printf("%s: couldn't find memory region\n", self->dv_xname);
@@ -3396,14 +3405,14 @@ ncr_attach(parent, self, aux)
 	/*
 	**	Set up the controller chip's interrupt.
 	*/
-	retval = pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+	retval = pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle);
 	if (retval) {
 		printf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	np->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
+	intrstr = pci_intr_string(pc, intrhandle);
+	np->sc_ih = pci_intr_establish(pc, intrhandle, IPL_BIO,
 	    ncr_intr, np);
 	if (np->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", self->dv_xname);
