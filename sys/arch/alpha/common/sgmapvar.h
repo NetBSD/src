@@ -1,9 +1,9 @@
-/* $NetBSD: sgmapvar.h,v 1.3 1997/09/05 02:21:51 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.4 1998/01/17 03:37:23 thorpej Exp $ */
 
 #define	SGMAP_LOG
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -93,7 +93,8 @@ struct sgmap_log_entry {
 #endif
 
 void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
-	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *));
+	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *,
+	    bus_size_t));
 
 int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
 	    struct alpha_sgmap *, int));
