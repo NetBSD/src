@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.115 2003/04/23 07:20:38 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.116 2003/04/29 17:45:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.115 2003/04/23 07:20:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.116 2003/04/29 17:45:11 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1898,9 +1898,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			break;
 		}
 
-		iobytes = MIN(MAXPHYS, bytes);
+		/*
+		 * XXX this finds holes for us, but it also doesn't cluster
+		 * XXX pages which are not already contiguous on disk.
+		 */
+		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
+		    bytes);
 		if (blkno == (daddr_t)-1) {
-			iobytes = MIN(fs->lfs_bsize, bytes);
 			skipbytes += iobytes;
 			continue;
 		}
