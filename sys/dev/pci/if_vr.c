@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.16 1999/02/05 21:20:31 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.17 1999/02/05 22:09:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -56,9 +56,14 @@
  *
  * The Rhine has a serious flaw in its transmit DMA mechanism:
  * transmit buffers must be longword aligned. Unfortunately,
- * FreeBSD doesn't guarantee that mbufs will be filled in starting
+ * the kernel doesn't guarantee that mbufs will be filled in starting
  * at longword boundaries, so we have to do a buffer copy before
  * transmission.
+ *
+ * Apparently, the receive DMA mechanism also has the same flaw.  This
+ * means that on systems with struct alignment requirements, incoming
+ * frames must be copied to a new buffer which shifts the data forward
+ * 2 bytes so that the payload is aligned on a 4-byte boundary.
  */
 
 #include "opt_inet.h"
@@ -728,7 +733,6 @@ vr_rxeof(sc)
 		}
 
 		/* No errors; receive the packet. */
-		m = cur_rx->vr_mbuf;
 		total_len = VR_RXBYTES(cur_rx->vr_ptr->vr_status);
 
 		/*
@@ -740,6 +744,7 @@ vr_rxeof(sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
+#ifdef __NO_STRICT_ALIGNMENT
 		/*
 		 * Try to conjure up a new mbuf cluster. If that
 		 * fails, it means we have an out of memory condition and
@@ -747,12 +752,46 @@ vr_rxeof(sc)
 		 * result in a lost packet, but there's little else we
 		 * can do in this situation.
 		 */
+		m = cur_rx->vr_mbuf;
 		if (vr_newbuf(sc, cur_rx) == ENOBUFS) {
 			ifp->if_ierrors++;
 			cur_rx->vr_ptr->vr_status = VR_RXSTAT;
 			cur_rx->vr_ptr->vr_ctl = VR_RXCTL|VR_RXLEN;
 			continue;
 		}
+#else
+		/*
+		 * The Rhine's packet buffers must be 4-byte aligned.
+		 * But this means that the data after the Ethernet header
+		 * is misaligned.  We must allocate a new buffer and
+		 * copy the data, shifted forward 2 bytes.
+		 */
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+ dropit:
+			ifp->if_ierrors++;
+			cur_rx->vr_ptr->vr_status = VR_RXSTAT;
+			cur_rx->vr_ptr->vr_ctl = VR_RXCTL|VR_RXLEN;
+			continue;
+		}
+		if (total_len > (MHLEN - 2)) {
+			MCLGET(m, M_DONTWAIT);
+			if (m == NULL)
+				goto dropit;
+		}
+		m->m_data += 2;
+
+		/*
+		 * Note that we use clusters for incoming frames, so the
+		 * buffer is virtually contiguous.
+		 */
+		memcpy(mtod(m, caddr_t), mtod(cur_rx->vr_mbuf, caddr_t),
+		    total_len);
+
+		/* Allow the recieve descriptor to continue using its mbuf. */
+		cur_rx->vr_ptr->vr_status = VR_RXSTAT;
+		cur_rx->vr_ptr->vr_ctl = VR_RXCTL|VR_RXLEN;
+#endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
