@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript.be,v 1.2 2000/05/21 02:51:58 soren Exp $ */
+/* $NetBSD: kern.ldscript.be,v 1.3 2001/06/01 03:55:30 thorpej Exp $ */
 
 /*  ldscript for NetBSD/mipseb kernels */
 OUTPUT_FORMAT("elf32-bigmips", "elf32-bigmips",
@@ -23,7 +23,7 @@ SECTIONS
   PROVIDE (etext = .);
   .rodata    : { *(.rodata)  }
   .reginfo : { *(.reginfo) }
-  . = . + 0x1000;
+/*  . = . + 0x1000; */
   .data    :
   {
     _fdata = . ;
