@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.8 1999/03/23 18:57:19 perry Exp $
+.\"	$NetBSD: whatis,v 1.9 1999/03/23 21:02:09 perry Exp $
 .Pp
 As is usual between releases, the i386 port has had many improvements
 made to it -- too many to detail all of them here.
@@ -9,13 +9,6 @@ for details.
 Some (but not all!) notable i386-specific improvements include:
 .Pp
 .Bl -bullet
-.It
-Lennart Augustsson has added full USB support, permitting the use of a 
-wide variety of Universal Serial Bus peripherals.
-.It
-Manuel Bouyer's PCIIDE work now permits full DMA support on IDE
-controller/drive combinations that support it. This dramatically
-improves performance on supported hardware.
 .It
 New i386 boot blocks now support INT13 extensions. This means that on
 modern BIOSes, it is possible to boot a NetBSD partition that is past
