@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.14 1999/08/06 18:58:28 ragge Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -106,7 +106,7 @@ dz_vsbus_match(parent, cf, aux)
 
 	dzP = (struct ss_dz *)va->va_addr;
 	i = dzP->tcr;
-	dzP->csr = DZ_CSR_MSE;
+	dzP->csr = DZ_CSR_MSE|DZ_CSR_TXIE;
 	dzP->tcr = 0;
 	DELAY(1000);
 	dzP->tcr = 1;
@@ -186,6 +186,7 @@ dzcnprobe(cndev)
 {
 	extern	vaddr_t iospace;
 	int diagcons;
+	paddr_t ioaddr = 0x200A0000;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -200,6 +201,7 @@ dzcnprobe(cndev)
 		break;
 
 	case VAX_BTYP_49:
+		ioaddr = 0x25000000;
 		diagcons = 3;
 		break;
 
@@ -213,7 +215,7 @@ dzcnprobe(cndev)
 		cndev->cn_pri = CN_NORMAL;
 	cndev->cn_dev = makedev(DZMAJOR, diagcons);
 	dz_regs = iospace;
-	ioaccess(iospace, 0x200A0000, 1);
+	ioaccess(iospace, ioaddr, 1);
 }
 
 void
