@@ -12,7 +12,6 @@
 ./usr/bin/g++
 ./usr/bin/gcc
 ./usr/bin/gdb
-./usr/bin/genclass
 ./usr/bin/gprof
 ./usr/bin/ld
 ./usr/bin/lex
@@ -39,15 +38,17 @@
 ./usr/include/bfd/ansidecl.h
 ./usr/include/bfd/bfd.h
 ./usr/include/bfd/libiberty.h
-./usr/include/bzlib.h
 ./usr/include/bitstring.h
 ./usr/include/bm.h
+./usr/include/bzlib.h
 ./usr/include/cpio.h
 ./usr/include/ctype.h
 ./usr/include/curses.h
 ./usr/include/db.h
 ./usr/include/dev/ata
-./usr/include/dev/ata/wdlink.h
+./usr/include/dev/ata/atareg.h
+./usr/include/dev/ata/atavar.h
+./usr/include/dev/ata/wdvar.h
 ./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
@@ -486,6 +487,7 @@
 ./usr/include/net/if_dl.h
 ./usr/include/net/if_ether.h
 ./usr/include/net/if_fddi.h
+./usr/include/net/if_gre.h
 ./usr/include/net/if_hippi.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_media.h
@@ -896,6 +898,7 @@
 ./usr/lib/gcrt0.o
 ./usr/lib/libbfd.a
 ./usr/lib/libbz2.a
+./usr/lib/libbz2_p.a
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libcompat.a
@@ -949,6 +952,7 @@
 ./usr/lib/liby_p.a
 ./usr/lib/libz.a
 ./usr/lib/libz_p.a
+./usr/libdata/lint/llib-lbz2.ln
 ./usr/libdata/lint/llib-lc.ln
 ./usr/libdata/lint/llib-lcompat.ln
 ./usr/libdata/lint/llib-lcrypt.ln
@@ -1218,6 +1222,7 @@
 ./usr/share/man/cat3/asctime.0
 ./usr/share/man/cat3/asin.0
 ./usr/share/man/cat3/asinh.0
+./usr/share/man/cat3/asprintf.0
 ./usr/share/man/cat3/assert.0
 ./usr/share/man/cat3/atan.0
 ./usr/share/man/cat3/atan2.0
@@ -1328,6 +1333,7 @@
 ./usr/share/man/cat3/editline.0
 ./usr/share/man/cat3/el_deletestr.0
 ./usr/share/man/cat3/el_end.0
+./usr/share/man/cat3/el_get.0
 ./usr/share/man/cat3/el_getc.0
 ./usr/share/man/cat3/el_gets.0
 ./usr/share/man/cat3/el_init.0
@@ -1475,6 +1481,7 @@
 ./usr/share/man/cat3/getusershell.0
 ./usr/share/man/cat3/getw.0
 ./usr/share/man/cat3/getwd.0
+./usr/share/man/cat3/gid_from_group.0
 ./usr/share/man/cat3/glob.0
 ./usr/share/man/cat3/globfree.0
 ./usr/share/man/cat3/gmtime.0
@@ -1599,6 +1606,7 @@
 ./usr/share/man/cat3/memory.0
 ./usr/share/man/cat3/memset.0
 ./usr/share/man/cat3/mergesort.0
+./usr/share/man/cat3/mkdtemp.0
 ./usr/share/man/cat3/mkstemp.0
 ./usr/share/man/cat3/mktemp.0
 ./usr/share/man/cat3/mktime.0
@@ -1892,6 +1900,7 @@
 ./usr/share/man/cat3/tzset.0
 ./usr/share/man/cat3/tzsetwall.0
 ./usr/share/man/cat3/ualarm.0
+./usr/share/man/cat3/uid_from_user.0
 ./usr/share/man/cat3/uname.0
 ./usr/share/man/cat3/ungetc.0
 ./usr/share/man/cat3/unsetenv.0
@@ -1904,6 +1913,7 @@
 ./usr/share/man/cat3/va_start.0
 ./usr/share/man/cat3/valloc.0
 ./usr/share/man/cat3/varargs.0
+./usr/share/man/cat3/vasprintf.0
 ./usr/share/man/cat3/verr.0
 ./usr/share/man/cat3/verrx.0
 ./usr/share/man/cat3/vfprintf.0
@@ -2201,6 +2211,7 @@
 ./usr/share/man/man3/asctime.3
 ./usr/share/man/man3/asin.3
 ./usr/share/man/man3/asinh.3
+./usr/share/man/man3/asprintf.3
 ./usr/share/man/man3/assert.3
 ./usr/share/man/man3/atan.3
 ./usr/share/man/man3/atan2.3
@@ -2311,6 +2322,7 @@
 ./usr/share/man/man3/editline.3
 ./usr/share/man/man3/el_deletestr.3
 ./usr/share/man/man3/el_end.3
+./usr/share/man/man3/el_get.3
 ./usr/share/man/man3/el_getc.3
 ./usr/share/man/man3/el_gets.3
 ./usr/share/man/man3/el_init.3
@@ -2458,6 +2470,7 @@
 ./usr/share/man/man3/getusershell.3
 ./usr/share/man/man3/getw.3
 ./usr/share/man/man3/getwd.3
+./usr/share/man/man3/gid_from_group.3
 ./usr/share/man/man3/glob.3
 ./usr/share/man/man3/globfree.3
 ./usr/share/man/man3/gmtime.3
@@ -2582,6 +2595,7 @@
 ./usr/share/man/man3/memory.3
 ./usr/share/man/man3/memset.3
 ./usr/share/man/man3/mergesort.3
+./usr/share/man/man3/mkdtemp.3
 ./usr/share/man/man3/mkstemp.3
 ./usr/share/man/man3/mktemp.3
 ./usr/share/man/man3/mktime.3
@@ -2875,6 +2889,7 @@
 ./usr/share/man/man3/tzset.3
 ./usr/share/man/man3/tzsetwall.3
 ./usr/share/man/man3/ualarm.3
+./usr/share/man/man3/uid_from_user.3
 ./usr/share/man/man3/uname.3
 ./usr/share/man/man3/ungetc.3
 ./usr/share/man/man3/unsetenv.3
@@ -2887,6 +2902,7 @@
 ./usr/share/man/man3/va_start.3
 ./usr/share/man/man3/valloc.3
 ./usr/share/man/man3/varargs.3
+./usr/share/man/man3/vasprintf.3
 ./usr/share/man/man3/verr.3
 ./usr/share/man/man3/verrx.3
 ./usr/share/man/man3/vfprintf.3
