@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2004/06/22 15:41:54 itojun Exp $
+#	$NetBSD: Makefile,v 1.45 2004/06/22 15:53:18 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -17,6 +17,6 @@ SUBDIR+=login_chpass login_krb5 login_krb5-or-pwd login_lchpass \
 	login_passwd login_radius login_reject login_skey login_token
 
 # PF
-SUBDIR+=spamd
+SUBDIR+=spamd spamd-setup
 
 .include <bsd.subdir.mk>

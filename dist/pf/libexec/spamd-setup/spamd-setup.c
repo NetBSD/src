@@ -1,3 +1,4 @@
+/*	$NetBSD: spamd-setup.c,v 1.2 2004/06/22 15:53:18 itojun Exp $ */
 /*	$OpenBSD: spamd-setup.c,v 1.17 2004/02/26 08:18:56 deraadt Exp $ */
 
 /*
@@ -35,7 +36,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
-#include <netinet/ip_ipsp.h>
 #include <netdb.h>
 #include <machine/endian.h>
 #include <zlib.h>
@@ -44,6 +44,8 @@
 #define PATH_PFCTL		"/sbin/pfctl"
 #define PATH_SPAMD_CONF		"/etc/spamd.conf"
 #define SPAMD_ARG_MAX		256 /* max # of args to an exec */
+
+#define MAX(a, b)	((a) > (b) ? (a) : (b))
 
 struct cidr {
 	u_int32_t addr;
@@ -688,7 +690,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 	struct bl *bl = NULL;
 	gzFile gzf;
 
-	if (cgetent(&buf, db_array, name) != 0)
+	if (cgetent(&buf, (const char * const *)db_array, name) != 0)
 		err(1, "Can't find \"%s\" in spamd config", name);
 	buf = fix_quoted_colons(buf);
 	if (cgetcap(buf, "black", ':') != NULL) {
@@ -805,7 +807,7 @@ main(int argc, char *argv[])
 
 	blists = NULL;
 	blc = bls = 0;
-	if (cgetent(&buf, db_array, "all") != 0)
+	if (cgetent(&buf, (const char * const *)db_array, "all") != 0)
 		err(1, "Can't find \"all\" in spamd config");
 	name = strsep(&buf, ": \t"); /* skip "all" at start */
 	blc = 0;
