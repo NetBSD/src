@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.26 1998/07/12 09:13:27 mrg Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.27 1999/01/25 10:12:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.26 1998/07/12 09:13:27 mrg Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.27 1999/01/25 10:12:33 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,6 @@ main(argc, argv)
 		(void)signal(SIGINT, SIG_IGN);
 		(void)signal(SIGQUIT, SIG_IGN);
 		(void)signal(SIGSYS, nonfs);
-		(void)signal(SIGTERM, SIG_IGN);
 	}
 	(void)signal(SIGCHLD, reapchild);
 
