@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.23 2002/06/29 22:25:23 lukem Exp $
+# $NetBSD: postinstall,v 1.24 2002/07/03 06:19:41 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -128,6 +128,10 @@ check_ids()
 		msg "${_file} is not readable; can't check for missing ${_type}"
 		return 1
 	fi
+	_notfixed=""
+	if [ "${_op}" = "fix" ]; then
+		_notfixed=${NOT_FIXED}
+	fi
 	_missing=$(awk -F: '
 		BEGIN {
 			for (x = 1; x < ARGC; x++)
@@ -145,7 +149,7 @@ check_ids()
 		}
 	' ${_ids} < ${_file})	|| return 1
 	if [ -n "${_missing}" ]; then
-		msg "Missing ${_type}:" $(echo ${_missing})
+		msg "Missing ${_type}${_notfixed}:" $(echo ${_missing})
 		return 1
 	fi
 	return 0
@@ -175,16 +179,16 @@ compare_dir()
 	for f in ${_files}; do
 		fs=${_src}/${f}
 		fd=${_dest}/${f}
-		error=""
+		_error=""
 		if [ ! -f "${fd}" ]; then
-			error="${fd} does not exist"
+			_error="${fd} does not exist"
 		elif ! cmp -s ${fs} ${fd} ; then
-			error="${fd} != ${fs}"
+			_error="${fd} != ${fs}"
 		else
 			continue
 		fi
 		if [ "${_op}" = "check" ]; then
-			msg ${error}
+			msg ${_error}
 			_cmpdir_rv=1
 		elif ! cp -f ${fs} ${fd}; then
 			msg "Can't copy ${fs} to ${fd}"
@@ -224,25 +228,31 @@ move_file()
 	return 0
 }
 
-# rcconf_is_set name var --
+# rcconf_is_set op name var --
 #	load the rcconf for name, and check if obsolete rc.conf(5) variable
 #	var is defined or not.
 #	returns 0 if defined (even to ""), otherwise 1.
 #
 rcconf_is_set()
 {
-	[ $# -eq 2 ] || err 2 "USAGE: rcconf_is_set name var"
-	_name=$1
-	_var=$2
+	[ $# -eq 3 ] || err 2 "USAGE: rcconf_is_set op name var"
+	_rcis_op=$1
+	_rcis_name=$2
+	_rcis_var=$3
+	_rcis_notfixed=""
+	if [ "${_rcis_op}" = "fix" ]; then
+		_rcis_notfixed=${NOT_FIXED}
+	fi
 	(
 		for f in \
 		    ${DEST_DIR}/etc/rc.conf \
-		    ${DEST_DIR}/etc/rc.conf.d/${_name}; do
+		    ${DEST_DIR}/etc/rc.conf.d/${_rcis_name}; do
 			[ -f "${f}" ] && . "${f}";
 		done
-		if eval "[ -n \"\${${_var}}\" \
-			    -o \"\${${_var}-UNSET}\" != \"UNSET\" ]"; then
-			msg "Obsolete rc.conf(5) variable '\$${_var}' found."
+		if eval "[ -n \"\${${_rcis_var}}\" \
+			    -o \"\${${_rcis_var}-UNSET}\" != \"UNSET\" ]"; then
+			msg \
+	"Obsolete rc.conf(5) variable '\$${_rcis_var}' found.${_rcis_notfixed}"
 			exit 0
 		else
 			exit 1
@@ -372,7 +382,7 @@ do_rc()
 		sysctl defcorename \
 		sysctl nfsiod_flags
 	while [ $# -gt 1 ]; do
-		if rcconf_is_set $1 $2; then
+		if rcconf_is_set ${op} $1 $2; then
 			failed=1
 		fi
 		shift 2
@@ -467,7 +477,7 @@ do_ssh()
 		failed=1
 	fi
 
-	if rcconf_is_set sshd sshd_conf_dir ; then
+	if rcconf_is_set ${op} sshd sshd_conf_dir ; then
 		failed=1
 	fi
 
@@ -486,10 +496,14 @@ do_wscons()
 	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
 
 	failed=0
+	notfixed=""
+	if [ "${op}" = "fix" ]; then
+		notfixed=${NOT_FIXED}
+	fi
 	while read _type _arg1 _rest; do
 		if [ "${_type}" = "mux" -a "${_arg1}" = "1" ]; then
 			msg \
-		"Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found."
+    "Obsolete wscons.conf(5) entry \""${_type} ${_arg1}"\" found.${notfixed}"
 			failed=1
 		fi
 	done < ${DEST_DIR}/etc/wscons.conf
@@ -507,9 +521,6 @@ do_makedev()
 
 	compare_dir $1 ${SRC_DIR}/etc/etc.${MACHINE} \
 		${DEST_DIR}/dev 555 MAKEDEV || return 1
-	if [ "${op}" = "fix" ]; then
-		(cd ${DEST_DIR}/dev; /bin/sh ./MAKEDEV all)
-	fi
 }
 
 
@@ -662,9 +673,12 @@ mkdtemp ()
 PROGNAME=${0##*/}
 SRC_DIR="/usr/src"
 DEST_DIR="/"
-SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 : ${MACHINE:=$( uname -m )}	# assume native build if $MACHINE is not set
+NOT_FIXED=" [NOT FIXED]"
+
+SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
+
 umask 022
 
 main $*
