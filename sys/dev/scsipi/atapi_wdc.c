@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.81 2004/08/12 21:34:52 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.82 2004/08/12 22:39:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.81 2004/08/12 21:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.82 2004/08/12 22:39:41 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -165,7 +165,7 @@ wdc_atapi_kill_pending(struct scsipi_periph *periph)
 	struct wdc_channel *chp =
 	    wdc->channels[periph->periph_channel->chan_channel];
 
-	wdc_kill_pending(&chp->ch_drive[periph->periph_target]);
+	ata_kill_pending(&chp->ch_drive[periph->periph_target]);
 }
 
 static void

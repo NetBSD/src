@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.66 2004/08/12 22:33:46 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.67 2004/08/12 22:39:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.66 2004/08/12 22:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.67 2004/08/12 22:39:40 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -772,7 +772,7 @@ wdc_ata_addref(struct ata_drive_datas *drvp)
 {
 	struct wdc_channel *chp = drvp->chnl_softc;
 
-	return (wdc_addref(chp));
+	return (ata_addref(chp));
 }
 
 static void
@@ -780,5 +780,5 @@ wdc_ata_delref(struct ata_drive_datas *drvp)
 {
 	struct wdc_channel *chp = drvp->chnl_softc;
 
-	wdc_delref(chp);
+	ata_delref(chp);
 }

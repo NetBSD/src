@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.88 2004/08/11 20:27:42 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.89 2004/08/12 22:39:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.88 2004/08/11 20:27:42 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.89 2004/08/12 22:39:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -291,7 +291,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_refcnt = 1;
 
 	wdcattach(&sc->wdc_channel);
-	wdc_delref(&sc->wdc_channel);
+	ata_delref(&sc->wdc_channel);
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
 

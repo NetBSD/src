@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.42 2004/08/12 22:33:46 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.43 2004/08/12 22:39:40 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.42 2004/08/12 22:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.43 2004/08/12 22:39:40 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -240,7 +240,7 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
-        if (wdc_addref(chp))
+        if (ata_addref(chp))
                 return;
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
@@ -560,6 +560,38 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 			break;
 		}
 	}
+	splx(s);
+}
+
+int
+ata_addref(struct wdc_channel *chp)
+{
+	struct wdc_softc *wdc = chp->ch_wdc; 
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
+	int s, error = 0;
+
+	s = splbio();
+	if (adapt->adapt_refcnt++ == 0 &&
+	    adapt->adapt_enable != NULL) {
+		error = (*adapt->adapt_enable)(&wdc->sc_dev, 1);
+		if (error)
+			adapt->adapt_refcnt--;
+	}
+	splx(s);
+	return (error);
+}
+
+void
+ata_delref(struct wdc_channel *chp)
+{
+	struct wdc_softc *wdc = chp->ch_wdc;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
+	int s;
+
+	s = splbio();
+	if (adapt->adapt_refcnt-- == 1 &&
+	    adapt->adapt_enable != NULL)
+		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	splx(s);
 }
 
@@ -888,7 +920,7 @@ int atabusopen(dev, flag, fmt, p)
         if (sc->sc_flags & ATABUSCF_OPEN)
                 return (EBUSY);
 
-        if ((error = wdc_addref(sc->sc_chan)) != 0)
+        if ((error = ata_addref(sc->sc_chan)) != 0)
                 return (error);
 
         sc->sc_flags |= ATABUSCF_OPEN;
@@ -905,7 +937,7 @@ atabusclose(dev, flag, fmt, p)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
-        wdc_delref(sc->sc_chan);
+        ata_delref(sc->sc_chan);
 
         sc->sc_flags &= ~ATABUSCF_OPEN;
 
