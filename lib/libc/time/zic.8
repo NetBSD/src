@@ -81,6 +81,10 @@ Complain if a year that appears in a data file is outside the range
 of years representable by
 .IR time (2)
 values.
+Also complain if a time of 24:00
+(which cannot be handled by pre-1998 versions of
+.IR zic )
+appears in the input.
 .TP
 .B \-s
 Limit time values stored in output files to values that are the same
@@ -417,4 +421,4 @@ the earliest transition time recorded in the compiled file is correct.
 /usr/local/etc/zoneinfo	standard directory used for created files
 .SH "SEE ALSO"
 newctime(3), tzfile(5), zdump(8)
-.\" @(#)zic.8	7.20
+.\" @(#)zic.8	7.22

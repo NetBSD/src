@@ -1,4 +1,4 @@
-static char	elsieid[] = "@(#)zic.c	7.113";
+static char	elsieid[] = "@(#)zic.c	7.115";
 
 #include "private.h"
 #include "locale.h"
@@ -931,6 +931,8 @@ const int		signable;
 			error(errstring);
 			return 0;
 	}
+	if (noise && hh == HOURSPERDAY)
+		warning(_("24:00 not handled by pre-1998 versions of zic"));
 	return eitol(sign) *
 		(eitol(hh * MINSPERHOUR + mm) *
 		eitol(SECSPERMIN) + eitol(ss));
@@ -2230,5 +2232,5 @@ const int	i;
 }
 
 /*
-** UNIX was a registered trademark of UNIX System Laboratories in 1993.
+** UNIX was a registered trademark of The Open Group in 2003.
 */
