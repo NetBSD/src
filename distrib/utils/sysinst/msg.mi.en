@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.105 2003/06/12 11:20:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.106 2003/06/13 11:45:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -178,12 +178,11 @@ message layout
 into multiple BSD partitions.  You must now set up your BSD disklabel.
 You have several choices.  They are summarized below. 
 -- Standard: the BSD disklabel partitions are computed by this program. 
--- Standard with X: additional space for X binaries. 
 -- Use existing: use current partitions. You must assign mount points. 
 
-The NetBSD part of your disk is %.2f Megabytes. 
-Standard requires at least %.2f Megabytes. 
-Standard with X requires at least %.2f Megabytes.
+The NetBSD part of your disk is %d Megabytes. 
+Standard requires at least %d Megabytes. 
+Standard with X requires at least %d Megabytes.
 }
 
 message sizechoice
