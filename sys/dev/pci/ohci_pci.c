@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.1 1998/07/12 19:51:58 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.2 1998/07/22 10:43:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,10 +76,12 @@ ohci_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_OPTI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_OPTI_RM861HA)
-		return 1;
-
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_OPTI &&
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_OPTI_RM861HA) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M5237))
+                return 1;
+ 
 	return 0;
 }
 
