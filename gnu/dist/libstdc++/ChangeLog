@@ -1,4 +1,84 @@
-Tue Feb 24 20:56:03 1998  H.J. Lu  (hjl@gnu.org)
+1998-08-17  Mark Mitchell  <mark@markmitchell.com>
+
+	* stdexcept: Put things in the std namespace, if appropriate.
+
+1998-07-12  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (VERSION): Bump to 2.9.0.
+
+1998-07-12  Lars Albertsson <lalle@sics.se>
+
+	* std/bastring.cc (find_last_of): Fix.
+	(find_last_not_of): Likewise.
+
+1998-07-06  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* configure.in (INSTALLDIR): Make sed pattern failsafe.
+
+1998-07-06  Ulrich Drepper  <drepper@cygnus.com>
+
+	* std/bastring.h (class basic_string): Correct iterator return
+	values in insert member functions.
+
+1998-07-02  Ulrich Drepper  <drepper@cygnus.com>
+
+	* std/bastring.h (class basic_string): Return correct iterators in
+	erase member functions.
+
+1998-06-24  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (INSTALLDIR): Add comment to document the fact,
+	this macro will be properly initialized at make's runtime.
+	(install): Add initialization of INSTALLDIR depending on $(libsubdir)
+	and ${enable_version_specific_runtime_libs}; use $${INSTALLDIR} shell
+	variable instead of the $(INSTALLDIR) make macro.
+
+Tue Mar 24 10:13:07 1998  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* std/bastring.cc (basic_string::copy): Mark const here, too.
+
+1998-03-23 15:59  Ulrich Drepper  <drepper@cygnus.com>
+
+	* std/bastring.h (basic_string::copy): Mark copy function as const.
+	Reported by Scott Schurr <scotts@ims.com>.
+
+Thu Mar  5 09:23:28 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* configure.in: Make locating frag files failsafe even for the
+	special case if configuring and building in srcdir.
+
+1998-03-04 12:37  Ulrich Drepper <drepper@cygnus.com>
+
+	* cinst.cc [INSERT] (operator<<): Correct type of numeric argument.
+
+Fri Feb  6 01:36:21 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* Makefile.in (piclist): Check value of enable_shared, not PICFLAG.
+	(stmp-string, ...): Dito.
+	(bigstmp-string, ...): Dito.
+
+Sun Feb  1 13:38:07 1998  H.J. Lu  (hjl@gnu.org)
+
+	* config/linux.mt: Don't define _PTHREADS, but define
+	_IO_MTSAFE_IO.
+
+Wed Jan 28 10:27:11 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+        * tests/configure.in, testsuite/configure.in: Update with yesterday's
+	toplevel configure.in changes.
+
+Tue Jan 27 23:27:32 1998  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* configure.in (package_makefile_rules_frag): New variable
+	which is used in the call to config.shared; redirect file descriptor 2
+	to ${package_makefile_rules_frag}.
+
+Tue Jan 27 10:11:27 1998  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* Makefile.in (install): Remove the shared library symlink even if
+ 	we aren't installing it.
+
+Tue Jan 27 10:29:44 1998  H.J. Lu  (hjl@gnu.org)
 
 	* configure.in (topsrcdir): New.
 	(configdirs): Check ${topsrcdir}/gcc instead.
@@ -7,36 +87,23 @@ Tue Feb 24 20:56:03 1998  H.J. Lu  (hjl@gnu.org)
 	* tests/configure.in (topsrcdir): New.
 	(check): Check ${topsrcdir}/gcc instead.
 
-	* configure.in (configdirs): Include testsuite only if
-	${srcdir}/../gcc exists.
-
-	* tests/configure.in (check): Set to ${CHECK} if
-	${srcdir}/../../gcc doesn't exists.
-
-1998-02-18  Jason Merrill  <jason@yorick.cygnus.com>
-
-	* std/bastring.h: Don't #include <std/bastring.cc> yet.
-	* sinst.cc: Revert.
-
-Tue Feb 10 01:03:19 1998  Jason Merrill  <jason@yorick.cygnus.com>
+Sun Jan 25 14:01:50 1998  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* std/bastring.h (unique): We only need length bytes.
 	(c_str): Avoid writing over random memory.
 	#include <std/bastring.cc>.
 	Lose _G_ALLOC_CONTROL.
 	* std/bastring.cc: Likewise.
-	(nilRep): Add initializer for selfish.
+ 	(nilRep): Add initializer for selfish.
 	* sinst.cc: Just #include <string>.
 
-Mon Feb  9 13:38:07 1998  H.J. Lu  (hjl@gnu.org)
+Tue Jan 13 21:23:05 1998  H.J. Lu  (hjl@gnu.org)
 
-	* config/linux.mt: Don't define _PTHREADS, but define
-	_IO_MTSAFE_IO.
+	* configure.in (configdirs): Include testsuite only if
+	${srcdir}/../gcc exists.
 
-Mon Feb  9 00:09:16 1998  Jason Merrill  <jason@yorick.cygnus.com>
-
-	* Makefile.in (install): Remove the shared library symlink even if
-	we aren't installing it.
+	* tests/configure.in (check): Set to ${CHECK} if
+	${srcdir}/../../gcc doesn't exists.
 
 1998-01-05  Brendan Kehoe  <brendan@lisa.cygnus.com>
 
@@ -64,9 +131,9 @@ Sun Dec  7 02:32:20 1997  Jason Merrill  <jason@yorick.cygnus.com>
 
 Sun Dec  7 02:32:20 1997  Gregory L. Galloway (gregg@eoeml.gtri.gatech.edu)
 
-	* Makefile.in (HEADERS): Modified list of headers to 
-	install to include all of SGI STL headers especially hash_set and 
-	hash_map, and added ANSI C++ style wrappers for fstream, iomanip, 
+	* Makefile.in (HEADERS): Modified list of headers to
+	install to include all of SGI STL headers especially hash_set and
+	hash_map, and added ANSI C++ style wrappers for fstream, iomanip,
 	iostream, and strstream.
 
 	* fstream, iomanip, iostream, strstream: New forwarding headers
@@ -201,7 +268,7 @@ Sat Aug 23 21:25:37 1997  Mark Mitchell  <mmitchell@usa.net>
 
 Wed Jul 30 10:59:00 1997  Benjamin Kosnik  <bkoz@rhino.cygnus.com>
 
-	* stlinst.cc: Add instantiation file for 
+	* stlinst.cc: Add instantiation file for
 	__default_alloc_template<fale, 0> and
 	__malloc_alloc_template<0>
 
@@ -240,7 +307,7 @@ Fri Apr  4 03:25:13 1997  Ulrich Drepper  <drepper@cygnus.com>
 
 	* configure.in: Enable multilibing by default.
 	Update multilib template to read config-ml.in.
-	
+
 Wed Mar 12 16:09:34 1997  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* configure.in (XCXXINCLUDES): Add the STL directory.
@@ -435,7 +502,7 @@ Wed Feb 14 14:39:07 1996  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* std/bastring.cc (check_realloc): Fix for sizeof (charT) > 1.
 	From John Hickin <hickin@bnr.ca>.
-	
+
 Wed Jan 10 11:05:04 1996  Jason Merrill  <jason@yorick.cygnus.com>
 
 	* std/bastring.h (insert): Fix iterator handling.
@@ -544,7 +611,7 @@ Mon Oct 30 23:09:48 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 	now that we are using target-libiberty instead.
 	* Makefile.in (LIBIBERTY_DIR):  Simplify.
 	(LIBIBERTY):  Remove.
-	
+
 Wed Oct 11 14:56:49 1995  Brendan Kehoe  <brendan@lisa.cygnus.com>
 
 	* config/sol2shm.ml: New files with -rpath.
@@ -635,7 +702,7 @@ Mon Aug 21 00:57:03 1995  Jeffrey A. Law  <law@rtl.cygnus.com>
 
 Tue Jul 25 18:41:29 1995  Per Bothner  <bothner@kalessin.cygnus.com>
 
-	* std/stddef.h:  Remove obsolete definition of enum capacity. 
+	* std/stddef.h:  Remove obsolete definition of enum capacity.
 
 Sat Jul 22 13:37:01 1995  Doug Evans  <dje@canuck.cygnus.com>
 
