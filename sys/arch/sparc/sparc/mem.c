@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 1995/04/13 14:31:39 pk Exp $ */
+/*	$NetBSD: mem.c,v 1.11 1995/05/29 23:57:16 pk Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 
 #include <sparc/sparc/vaddrs.h>
+#include <machine/eeprom.h>
 
 #include <vm/vm.h>
 
@@ -156,7 +157,18 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
-/* XXX should add sbus, `prom', etc */
+/* XXX should add sbus, etc */
+
+#if defined(SUN4)
+/* minor device 11 (/dev/eeprom) is the old-style (a'la Sun 3) EEPROM */
+		case 11:
+			if (cputyp == CPU_SUN4)
+				error = eeprom_uio(uio);
+			else
+				error = ENXIO;
+
+			continue;
+#endif /* SUN4 */
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
