@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.7 1997/05/08 00:23:57 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.8 1997/05/08 00:50:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -224,9 +224,9 @@ sys_swapon(p, v, retval)
 	case SWAP_ON:
 	{
 		int	priority = SCARG(uap, misc);
-		struct swappri *nspp = NULL;
-		struct swapdev *nsdp = NULL;
-		struct swappri *pspp;
+		struct	swappri *nspp = NULL;
+		struct	swapdev *nsdp = NULL;
+		struct	swappri *pspp;
 
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
@@ -261,10 +261,17 @@ sys_swapon(p, v, retval)
 				   priority);
 #endif /* SWAPDEBUG */
 
-			CIRCLEQ_INIT(&nspp->spi_swapdev);
 			nspp->spi_priority = priority;
-			if (spp == NULL)
-				spp = pspp;
+			CIRCLEQ_INIT(&nspp->spi_swapdev);
+
+			if (pspp) {
+				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
+			} else {
+				LIST_INSERT_HEAD(&swap_priority, nspp,
+						 spi_swappri);
+			}
+
+			spp = nspp;
 		}
 
 		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
@@ -275,20 +282,17 @@ sys_swapon(p, v, retval)
 		nsdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		if ((error = swap_on(p, nsdp)) != 0) {
 			free((caddr_t)nsdp, M_VMSWAP);
-			if (nspp)
+			if (nspp) {
+				LIST_REMOVE(nspp, spi_swappri);
 				free((caddr_t)nspp, M_VMSWAP);
+			}
 			break;
 		}
 
-		if (nspp) {
-			if (pspp) {
-				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
-			} else {
-				LIST_INSERT_HEAD(&swap_priority, nspp,
-						 spi_swappri);
-			}
-		}
-		CIRCLEQ_INSERT_TAIL(&nspp->spi_swapdev, nsdp, swd_next);
+		/* Onto priority list */
+		CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, nsdp, swd_next);
+
+		/* Keep reference to vnode */
 		vref(vp);
 		break;
 	}
