@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.10 1998/12/21 15:42:59 augustss Exp $
+$NetBSD: usbdevs,v 1.11 1998/12/21 17:18:29 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ product EIZONANAO MONITOR	0x0001	monitor
 product CHIC MOUSE1		0x0001	mouse
 
 /* ADS products */
-product ADS			0x0008	Ethernet adapter
+product ADS ENET		0x0008	Ethernet adapter
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
