@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.18 1996/07/12 22:00:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -50,7 +50,6 @@
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkstat.h>		/* XXX */
 
 /*
  * A global list of all disks attached to the system.  May grow or
@@ -58,19 +57,6 @@
  */
 struct	disklist_head disklist;	/* TAILQ_HEAD */
 int	disk_count;		/* number of drives in global disklist */
-
-/*
- * Old-style disk instrumentation structures.  These will go away
- * someday.
- */
-long	dk_seek[DK_NDRIVE];
-long	dk_time[DK_NDRIVE];
-long	dk_wds[DK_NDRIVE];
-long	dk_wpms[DK_NDRIVE];
-long	dk_xfer[DK_NDRIVE];
-int	dk_busy;
-int	dk_ndrive;
-int	dkn;			/* number of slots filled so far */
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -254,7 +240,6 @@ disk_init()
 
 	TAILQ_INIT(&disklist);
 	disk_count = 0;
-	dk_ndrive = DK_NDRIVE;		/* XXX */
 }
 
 /*
