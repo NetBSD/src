@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.2 2001/02/24 19:52:22 uch Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.3 2001/03/02 19:19:34 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -424,8 +424,8 @@ static const keysym_t sigmarion_cmdmap[] = {
 #endif /* hpcmips */
 
 #ifdef hpcsh
-/* HP Jornada 690 (Japanese) */
-const u_int8_t jornada690_jp_keytrans[] = {
+/* HP Jornada 680/690 (Japanese) */
+const u_int8_t jornada6x0_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK, /* ctrl 29 */
 /* 1 */ 60 , 46 , 32 , 18 , 4  , 42 , UNK, UNK, /* shift L 42 */
@@ -445,7 +445,7 @@ const u_int8_t jornada690_jp_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-const int jornada690_jp_special_keymap[] = {
+const int jornada6x0_jp_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
@@ -551,8 +551,13 @@ const struct hpckbd_keymap_table {
 #endif /* hpcmips */
 #ifdef hpcsh
 	{	&platid_mask_MACH_HP_JORNADA_690JP,
-		jornada690_jp_keytrans,
-		jornada690_jp_special_keymap,
+		jornada6x0_jp_keytrans,
+		jornada6x0_jp_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+	{	&platid_mask_MACH_HP_JORNADA_680JP,
+		jornada6x0_jp_keytrans,
+		jornada6x0_jp_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
 #endif /* hpcsh */
