@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.60 1998/08/29 17:01:15 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.61 1998/09/06 11:59:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -442,10 +442,10 @@ out:
 			if ((error = copyinstr(SCARG(uap, arg), userpath,
 			    sizeof userpath, &len)))
 				return (error);
-			space = UIO_USERSPACE;
+			space = UIO_SYSSPACE;
 			where = userpath;
 		} else {
-			space = UIO_SYSSPACE;
+			space = UIO_USERSPACE;
 			where = (char *)SCARG(uap, arg);
 		}
 		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, space, where, p);
