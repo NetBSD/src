@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.285 2004/08/04 22:44:04 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.286 2004/08/10 02:33:58 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.285 2004/08/04 22:44:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.286 2004/08/10 02:33:58 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -188,6 +188,7 @@ void  __wdstart(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
+int   wd_standby(struct wd_softc *, int);
 int   wd_flushcache(struct wd_softc *, int);
 void  wd_shutdown(void *);
 
@@ -419,6 +420,13 @@ wddetach(struct device *self, int flags)
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
 
+	/* Nuke the vnodes for any open instances. */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = WDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
 	s = splbio();
 
 	/* Kill off any queued buffers. */
@@ -433,13 +441,6 @@ wddetach(struct device *self, int flags)
 	sc->atabus->ata_killpending(sc->drvp);
 
 	splx(s);
-
-	/* Nuke the vnodes for any open instances. */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = WDMINOR(self->dv_unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
@@ -956,7 +957,6 @@ wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	if (wd->sc_dk.dk_openmask == 0) {
 		wd_flushcache(wd, AT_WAIT);
-		/* XXXX Must wait for I/O to complete! */
 
 		if (! (wd->sc_flags & WDF_KLABEL))
 			wd->sc_flags &= ~WDF_LOADED;
@@ -1605,6 +1605,8 @@ wd_getcache(struct wd_softc *wd, int *bitsp)
 	return 0;
 }
 
+const char at_errbits[] = "\20\10ERROR\11TIMEOU\12DF";
+
 int
 wd_setcache(struct wd_softc *wd, int bits)
 {
@@ -1639,12 +1641,42 @@ wd_setcache(struct wd_softc *wd, int bits)
 		return EIO;
 	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		printf("%s: wd_setcache command error 0x%x\n",
-		    wd->sc_dev.dv_xname, wdc_c.flags);
+		char sbuf[sizeof(at_errbits) + 64];
+		bitmask_snprintf(wdc_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		printf("%s: wd_setcache: status=%s\n", wd->sc_dev.dv_xname,
+		    sbuf);
 		return EIO;
 	}
-	if (wdc_c.flags & ERR_NODEV)
-		return ENODEV;
+	return 0;
+}
+
+int
+wd_standby(struct wd_softc *wd, int flags)
+{
+	struct wdc_command wdc_c;
+
+	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	wdc_c.r_command = WDCC_STANDBY_IMMED;
+	wdc_c.r_st_bmask = WDCS_DRDY;
+	wdc_c.r_st_pmask = WDCS_DRDY;
+	wdc_c.flags = flags;
+	wdc_c.timeout = 30000; /* 30s timeout */
+	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+		printf("%s: standby immediate command didn't complete\n",
+		    wd->sc_dev.dv_xname);
+		return EIO;
+	}
+	if (wdc_c.flags & AT_ERROR) {
+		if (wdc_c.r_error == WDCE_ABRT) /* command not supported */
+			return ENODEV;
+	}
+	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		bitmask_snprintf(wdc_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		printf("%s: wd_standby: status=%s\n", wd->sc_dev.dv_xname,
+		    sbuf);
+		return EIO;
+	}
 	return 0;
 }
 
@@ -1670,23 +1702,15 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		    wd->sc_dev.dv_xname);
 		return EIO;
 	}
-	if (wdc_c.flags & ERR_NODEV)
-		return ENODEV;
-	if (wdc_c.flags & AT_TIMEOU) {
-		printf("%s: flush cache command timeout\n",
-		    wd->sc_dev.dv_xname);
-		return EIO;
-	}
 	if (wdc_c.flags & AT_ERROR) {
 		if (wdc_c.r_error == WDCE_ABRT) /* command not supported */
 			return ENODEV;
-		printf("%s: flush cache command: error 0x%x\n",
-		    wd->sc_dev.dv_xname, wdc_c.r_error);
-		return EIO;
 	}
-	if (wdc_c.flags & AT_DF) {
-		printf("%s: flush cache command: drive fault\n",
-		    wd->sc_dev.dv_xname);
+	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		bitmask_snprintf(wdc_c.flags, at_errbits, sbuf, sizeof(sbuf));
+		printf("%s: wd_flushcache: status=%s\n", wd->sc_dev.dv_xname,
+		    sbuf);
 		return EIO;
 	}
 	return 0;
