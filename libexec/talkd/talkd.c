@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.3 1997/01/29 03:21:01 explorer Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.4 1997/01/29 10:30:14 explorer Exp $";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,8 @@ static char rcsid[] = "$Id: talkd.c,v 1.3 1997/01/29 03:21:01 explorer Exp $";
  */
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/param.h>
+
 #include <protocols/talkd.h>
 #include <signal.h>
 #include <syslog.h>
@@ -69,7 +71,7 @@ int	debug = 0;
 void	timeout();
 long	lastmsgtime;
 
-char	hostname[MAXHOSTNAME + 1];
+char	hostname[MAXHOSTNAMELEN + 1];
 
 #define TIMEOUT 30
 #define MAXIDLE 120
@@ -90,7 +92,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
 	}
-	hostname[MAXHOSTNAME] = 0;  /* ensure null termination */
+	hostname[MAXHOSTNAMELEN] = 0;  /* ensure null termination */
 	if (chdir(_PATH_DEV) < 0) {
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_DEV);
 		_exit(1);
