@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.5 1998/07/15 14:06:34 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.h,v 1.6 1998/09/01 18:11:13 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -213,7 +213,33 @@ static const keysym_t pckbd_keydesc_dk_nodead[] = {
     KC(27),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
 };
 
-static const keysym_t pckbd_keydesc_declk[] = {
+static const keysym_t pckbd_keydesc_it[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(3),   KS_2,	    	KS_quotedbl,	KS_twosuperior,
+    KC(4),   KS_3,	    	KS_sterling,	KS_threesuperior,
+    KC(5),   KS_4,	    	KS_dollar,
+    KC(6),   KS_5,	    	KS_percent,
+    KC(7),   KS_6,	    	KS_ampersand,
+    KC(8),   KS_7,	    	KS_slash,
+    KC(9),   KS_8,	    	KS_parenleft,
+    KC(10),  KS_9,	    	KS_parenright,
+    KC(11),  KS_0,	    	KS_equal,
+    KC(12),  KS_apostrophe,	KS_question,
+    KC(13),  KS_igrave,	    	KS_asciicircum,
+    KC(26),  KS_egrave,		KS_eacute,	KS_braceleft,	KS_bracketleft,
+    KC(27),  KS_plus,		KS_asterisk,	KS_braceright,	KS_bracketright,
+    KC(39),  KS_ograve,		KS_Ccedilla,	KS_at,
+    KC(40),  KS_agrave,		KS_degree,	KS_numbersign,
+    KC(41),  KS_backslash,	KS_bar,
+    KC(43),  KS_ugrave,		KS_section,
+    KC(51),  KS_comma,		KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_minus,		KS_underscore,
+    KC(86),  KS_less,		KS_greater,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
     KC(143),	KS_Multi_key, /* left compose */
@@ -260,7 +286,8 @@ static const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
-	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_declk),
+	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
+	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
 };
 
 #undef KBD_MAP
