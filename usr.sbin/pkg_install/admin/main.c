@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.33 2003/03/15 20:49:25 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2003/03/24 21:44:45 seb Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.33 2003/03/15 20:49:25 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2003/03/24 21:44:45 seb Exp $");
 #endif
 
 /*
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 
 			while (*argv != NULL) {
 				if (ispkgpattern(*argv)) {
-					if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, checkpattern_fn, NULL) == 0)
+					if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, checkpattern_fn, NULL) <= 0)
 						errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 				} else {
 					rc = chdir(*argv);
