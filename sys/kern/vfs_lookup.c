@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.38 2001/11/12 15:25:39 lukem Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.39 2001/12/08 04:09:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.38 2001/11/12 15:25:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.39 2001/12/08 04:09:59 lukem Exp $");
 
 #include "opt_ktrace.h"
 
@@ -53,8 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.38 2001/11/12 15:25:39 lukem Exp $"
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/filedesc.h>
+#include <sys/hash.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #ifdef KTRACE
@@ -236,6 +237,34 @@ namei(ndp)
 }
 
 /*
+ * Determine the namei hash (for cn_hash) for name.
+ * If *ep != NULL, hash from name to ep-1.
+ * If *ep == NULL, hash from name until the first NUL or '/', and
+ * return the location of this termination character in *ep.
+ *
+ * This function returns an equivalent hash to the MI hash32_strn().
+ * The latter isn't used because in the *ep == NULL case, determining
+ * the length of the string to the first NUL or `/' and then calling
+ * hash32_strn() involves unnecessary double-handling of the data.
+ */
+uint32_t
+namei_hash(const char *name, const char **ep)
+{
+	uint32_t	hash;
+
+	hash = HASH32_STR_INIT;
+	if (*ep != NULL) {
+		for (; name < *ep; name++)
+			hash = hash * 33 + *(uint8_t *)name;
+	} else {
+		for (; *name != '\0' && *name != '/'; name++)
+			hash = hash * 33 + *(uint8_t *)name;
+		*ep = name;
+	}
+	return (hash + (hash >> 5));
+}
+
+/*
  * Search a pathname.
  * This is a very central and rather complicated routine.
  *
@@ -349,9 +378,8 @@ dirloop:
 	 * responsibility for freeing the pathname buffer.
 	 */
 	cnp->cn_consume = 0;
-	cnp->cn_hash = 0;
-	for (cp = cnp->cn_nameptr; *cp != '\0' && *cp != '/'; cp++)
-		cnp->cn_hash += (unsigned char)*cp;
+	cp = NULL;
+	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
 	cnp->cn_namelen = cp - cnp->cn_nameptr;
 	if (cnp->cn_namelen > NAME_MAX) {
 		error = ENAMETOOLONG;
@@ -638,8 +666,8 @@ relookup(dvp, vpp, cnp)
 	 * responsibility for freeing the pathname buffer.
 	 */
 #ifdef NAMEI_DIAGNOSTIC
-	for (newhash = 0, cp = cnp->cn_nameptr; *cp != 0 && *cp != '/'; cp++)
-		newhash += (unsigned char)*cp;
+	cp = NULL;
+	newhash = namei_hash(cnp->cn_nameptr, &cp);
 	if (newhash != cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
