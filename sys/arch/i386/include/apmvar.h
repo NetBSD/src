@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.6 1997/10/15 01:21:20 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.7 1998/08/31 23:54:33 jtk Exp $	*/
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -46,7 +46,7 @@
 #define APM_DISABLED		0x08
 #define APM_DISENGAGED		0x10
 
-#define	APM_ERR_CODE(regs)	(((regs)->ax & 0xff00) >> 8)
+#define	APM_ERR_CODE(regs)	(((regs)->AX & 0xff00) >> 8)
 #define	APM_ERR_PM_DISABLED	0x01
 #define	APM_ERR_REALALREADY	0x02
 #define	APM_ERR_NOTCONN		0x03
@@ -57,6 +57,8 @@
 #define	APM_ERR_UNRECOG_DEV	0x09
 #define	APM_ERR_ERANGE		0x0A
 #define	APM_ERR_NOTENGAGED	0x0B
+#define	APM_ERR_EOPNOTSUPP	0x0C
+#define	APM_ERR_RTIMER_DISABLED	0x0D
 #define APM_ERR_UNABLE		0x60
 #define APM_ERR_NOEVENTS	0x80
 #define	APM_ERR_NOT_PRESENT	0x86
@@ -98,6 +100,7 @@
 
 #define APM_SYSTEM_DEFAULTS	0x09
 #define		APM_DEFAULTS_ALL	0xffff	/* %bx */
+#define		APM_DEFAULTS_ALL_V12	0x0001	/* %bx */
 
 #define APM_POWER_STATUS	0x0a
 #define		APM_AC_OFF		0x00
@@ -117,24 +120,32 @@
 #define		APM_BATT_FLAG_LOW	0x02
 #define		APM_BATT_FLAG_CRITICAL	0x04
 #define		APM_BATT_FLAG_CHARGING	0x08
-#define		APM_BATT_FLAG_NOBATTERY	0x80
+#define		APM_BATT_FLAG_NOBATTERY	0x10
+#define		APM_BATT_FLAG_NO_SYSTEM_BATTERY	0x80
+#define		APM_BATT_FLAG_UNKNOWN	0xff
 
 #define		APM_BATT_LIFE_UNKNOWN	0xff
-#define		APM_BATT_STATE(regp) ((regp)->bx & 0xff)
-#define		APM_BATT_FLAGS(regp) (((regp)->cx & 0xff00) >> 8)
-#define		APM_AC_STATE(regp) (((regp)->bx & 0xff00) >> 8)
-#define		APM_BATT_LIFE(regp) ((regp)->cx & 0xff) /* in % */
+#define		APM_BATT_STATE(regp) ((regp)->BX & 0xff)
+#define		APM_BATT_FLAGS(regp) (((regp)->CX & 0xff00) >> 8)
+#define		APM_AC_STATE(regp) (((regp)->BX & 0xff00) >> 8)
+#define		APM_BATT_LIFE(regp) ((regp)->CX & 0xff) /* in % */
 /* BATT_REMAINING returns minutes remaining */
-#define		APM_BATT_REMAINING(regp) (((regp)->dx & 0x8000) ? \
-					  ((regp)->dx & 0x7fff) : \
-					  ((regp)->dx & 0x7fff)/60)
-#define		APM_BATT_REM_VALID(regp) (((regp)->dx & 0xffff) != 0xffff)
+#define		APM_BATT_REMAINING(regp) (((regp)->DX & 0x8000) ? \
+					  ((regp)->DX & 0x7fff) : \
+					  ((regp)->DX & 0x7fff)/60)
+#define		APM_BATT_REM_VALID(regp) (((regp)->DX & 0xffff) != 0xffff)
+#define		APM_BATTERY_COUNT(regp) ((regp)->SI)
+
 #define	APM_GET_PM_EVENT	0x0b
 #define		APM_STANDBY_REQ		0x0001 /* %bx on return */
 #define		APM_SUSPEND_REQ		0x0002
 #define		APM_NORMAL_RESUME	0x0003
 #define		APM_CRIT_RESUME		0x0004 /* suspend/resume happened
 						  without us */
+     /* If set, the pccard sockets were powered off in the
+	suspend/standby state (V1.2 only) */
+#define		APM_PCCARD_POWEREDOFF(regp) ((regp)->CX & 0x0001)
+
 #define		APM_BATTERY_LOW		0x0005
 #define		APM_POWER_CHANGE	0x0006
 #define		APM_UPDATE_TIME		0x0007
@@ -144,7 +155,10 @@
 #define		APM_SYS_STANDBY_RESUME	0x000B
 
 #define	APM_GET_POWER_STATE	0x0c
+     /* device to query in %bx */
+     /* returns power states in %cx */
 #define	APM_DEVICE_MGMT_ENABLE	0x0d
+     /* device to enable/disable in %bx */
 
 #define	APM_DRIVER_VERSION	0x0e
 /* %bx should be DEV value (APM_DEV_APM_BIOS)
@@ -152,12 +166,59 @@
    %cl = driver minor vno
    return: %ah = conn major; %al = conn minor
    */
-#define		APM_CONN_MINOR(regp) ((regp)->ax & 0xff)
-#define		APM_CONN_MAJOR(regp) (((regp)->ax & 0xff00) >> 8)
+#define		APM_CONN_MINOR(regp) ((regp)->AX & 0xff)
+#define		APM_CONN_MAJOR(regp) (((regp)->AX & 0xff00) >> 8)
 
 #define APM_PWR_MGT_ENGAGE	0x0F
+     /* device in %bx */
 #define		APM_MGT_DISENGAGE	0x0	/* %cx */
 #define		APM_MGT_ENGAGE		0x1
+
+#define APM_GET_CAPABILITIES	0x10
+     /* device in %bx (APM_DEV_APM_BIOS) */
+     /* %bl: number of batteries */
+#define		APM_NBATTERIES(regp) ((regp)->BX & 0xff)
+     /* %cx capabilities */
+#define		APM_GLOBAL_STANDBY	0x0001
+#define		APM_GLOBAL_SUSPEND	0x0002
+#define		APM_RTIMER_STANDBY	0x0004 /* resume timer wakes standby */
+#define		APM_RTIMER_SUSPEND	0x0008 /* resume timer wakes suspend */
+#define		APM_IRRING_SUSPEND	0x0010 /* internal ring wakes suspend */
+#define		APM_IRRING_STANDBY	0x0020 /* internal ring wakes standby */
+#define		APM_PCRING_SUSPEND	0x0040 /* pccard ring wakes suspend */
+#define		APM_PCRING_STANDBY	0x0080 /* pccard ring wakes standby */
+
+#define	APM_RESUME_TIMER_CTL	0x11	/* get/set/disable resume timer */
+     /* device in %bx (APM_DEV_APM_BIOS) */
+     /* function code in %cl */
+#define		APM_RTIMER_DISABLE	0x00
+#define		APM_RTIMER_GET		0x01
+#define		APM_RTIMER_SET		0x02
+     /* if %cl = set, or %cl = get, then: */
+     /* %ch: seconds */
+     /* %dh: hours */
+     /* %dl: minutes */
+     /* %sih: month (bcd), %sil: day (bcd) */
+     /* %di: year (bcd, 4 digits) */
+#define APM_RESUME_RING_CTL		0x12
+     /* device in %bx (APM_DEV_APM_BIOS) */
+     /* %cx: function code */
+#define		APM_RRING_DISABLE	0x0000
+#define		APM_RRING_ENABLE	0x0001
+#define		APM_RRING_GET		0x0002
+     /* returns state in %cx */
+#define		APM_RRING_DISABLED	0x0000
+#define		APM_RRING_ENABLED	0x0001
+
+#define APM_TIMER_REQS_CTL	0x13
+     /* device in %bx (APM_DEV_APM_BIOS) */
+     /* %cx: function code */
+#define		APM_TIMER_REQS_DISABLE	0x0000
+#define		APM_TIMER_REQS_ENABLE	0x0001
+#define		APM_TIMER_REQS_GET	0x0002
+     /* returns state in %cx */
+#define		APM_TIMER_REQS_DISABLED	0x0000
+#define		APM_TIEMR_REQS_ENABLED	0x0001
 
 #define APM_OEM			0x80
 
@@ -193,6 +254,7 @@ struct apm_connect_info {
 	u_short	apm_segsel;		/* segment selector for APM */
 	u_short _pad1;
 	u_int apm_code32_seg_len;
+	u_int apm_code16_seg_len;
 	u_int apm_data_seg_len;
 	u_int apm_detail;
 };

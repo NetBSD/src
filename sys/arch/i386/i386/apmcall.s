@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.2 1997/10/15 01:21:05 jtk Exp $ */
+/*	$NetBSD: apmcall.s,v 1.3 1998/08/31 23:54:32 jtk Exp $ */
 /*
  *  Copyright (c) 1997 John T. Kohl
  *  All rights reserved.
@@ -61,13 +61,16 @@ NENTRY(apmcall)
 	movl	%ax,%fs
 	movl	%ax,%gs
 #endif
+	xorl	%eax,%eax
 	movb	%cs:8(%ebp),%al
 	movb	$0x53,%ah
 	movl	%cs:12(%ebp),%ebx
-	movw	%cs:BIOSCALLREG_CX(%ebx),%cx
-	movw	%cs:BIOSCALLREG_DX(%ebx),%dx
-	movw	%cs:BIOSCALLREG_BX(%ebx),%bx
+	movl	%cs:BIOSCALLREG_ECX(%ebx),%ecx
+	movl	%cs:BIOSCALLREG_EDX(%ebx),%edx
+	movl	%cs:BIOSCALLREG_EBX(%ebx),%ebx
 	pushfl
+	movl	$0,apmstatus	/* zero out just in case %ds is hosed? */
+	clc /* clear carry in case BIOS doesn't do it for us on no-error */
 	cli
 	pushl	%ds
 	/* Now call the 32-bit code segment entry point */
@@ -81,12 +84,13 @@ NENTRY(apmcall)
 	popl	%es
 	popl	%ds		# see above
 #endif
-	movl	12(%ebp),%esi
-	movw	%ax,BIOSCALLREG_AX(%esi)
-	movw	%bx,BIOSCALLREG_BX(%esi)
-	movw	%cx,BIOSCALLREG_CX(%esi)
-	movw	%dx,BIOSCALLREG_DX(%esi)
-/* todo: do something with %edi? */
+	movl	12(%ebp),%edi
+	/* XXX other addressing mode? */
+	movl	%eax,BIOSCALLREG_EAX(%edi)
+	movl	%ebx,BIOSCALLREG_EBX(%edi)
+	movl	%ecx,BIOSCALLREG_ECX(%edi)
+	movl	%edx,BIOSCALLREG_EDX(%edi)
+	movl	%esi,BIOSCALLREG_ESI(%edi)
 	movl	$1,%eax
 	cmpl	$0,apmstatus
 	jne	1f
