@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.11 2003/03/06 13:33:29 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.12 2003/04/16 09:09:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -206,16 +206,16 @@ usage()
 {
 	fprintf(stderr, 
 	    "usage:\n"
-	    "\tifwatchd [-h] [-v] [-u up-script] [-d down-script] [-A arrival-script] [-D departure-script] ifname(s)\n"
+	    "\tifwatchd [-hiv] [-A arrival-script] [-D departure-script] [-d down-script] [-u up-script] ifname(s)\n"
 	    "\twhere:\n"
+	    "\t -A <cmd> specify command to run on interface arrival event\n"
+	    "\t -D <cmd> specify command to run on interface departure event\n"
+	    "\t -d <cmd> specify command to run on interface down event\n"
 	    "\t -h       show this help message\n"
-	    "\t -v       verbose/debug output, don't run in background\n"
 	    "\t -i       no (!) initial run of the up script if the interface\n"
 	    "\t          is already up on ifwatchd startup\n"
 	    "\t -u <cmd> specify command to run on interface up event\n"
-	    "\t -d <cmd> specify command to run on interface down event\n"
-	    "\t -A <cmd> specify command to run on interface arrival event\n"
-	    "\t -D <cmd> specify command to run on interface departure event\n");
+	    "\t -v       verbose/debug output, don't run in background\n");
 	exit(EXIT_FAILURE);
 }
 
