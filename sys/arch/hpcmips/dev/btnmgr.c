@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.6 2000/03/30 03:29:47 sato Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.7 2000/05/04 08:19:00 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,9 +43,13 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
+#include "opt_wsdisplay_compat.h"
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <hpcmips/dev/pckbd_encode.h>
+#endif
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -70,6 +74,9 @@ struct btnmgr_softc {
 	config_hook_tag	sc_hook_tag;
 	int sc_enabled;
 	struct device *sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 /*
@@ -109,58 +116,35 @@ static const struct {
 	int  keycode;
 	char *name;
 } button_config[] = {
-  /* kevent keycode     name		   id */
-	{ 0,  1,	"Power" },	  /* CONFIG_HOOK_BUTTONEVENT_POWER */
-	{ 1,  2,	"OK" },		  /* CONFIG_HOOK_BUTTONEVENT_OK */
-	{ 1,  3,	"Cancel" },	  /* CONFIG_HOOK_BUTTONEVENT_CANCEL */
-	{ 1,  4,	"Up" },		  /* CONFIG_HOOK_BUTTONEVENT_UP */
-	{ 1,  5,	"Down" },	  /* CONFIG_HOOK_BUTTONEVENT_DOWN */
-	{ 0,  6,	"Rec" },	  /* CONFIG_HOOK_BUTTONEVENT_REC */
-	{ 0,  7,	"Cover" },	  /* CONFIG_HOOK_BUTTONEVENT_COVER */
-	{ 0,  8,	"Light" },	  /* CONFIG_HOOK_BUTTONEVENT_LIGHT */
-	{ 0,  9,	"Contrast" },	  /* CONFIG_HOOK_BUTTONEVENT_CONTRAST */
-	{ 1, 10,	"Application 0" },/* CONFIG_HOOK_BUTTONEVENT_APP0 */
-	{ 1, 11,	"Application 1" },/* CONFIG_HOOK_BUTTONEVENT_APP1 */
-	{ 1, 12,	"Application 2" },/* CONFIG_HOOK_BUTTONEVENT_APP2 */
-	{ 1, 13,	"Application 3" },/* CONFIG_HOOK_BUTTONEVENT_APP3 */
+	/* id					kevent keycode name	*/
+	[CONFIG_HOOK_BUTTONEVENT_POWER] =	{ 0,   0, "Power"	},
+	[CONFIG_HOOK_BUTTONEVENT_OK] =		{ 1,  28, "OK"		},
+	[CONFIG_HOOK_BUTTONEVENT_CANCEL] =	{ 1,   0, "Cancel"	},
+	[CONFIG_HOOK_BUTTONEVENT_UP] =		{ 1,  72, "Up"		},
+	[CONFIG_HOOK_BUTTONEVENT_DOWN] =	{ 1,  80, "Down"	},
+	[CONFIG_HOOK_BUTTONEVENT_REC] =		{ 0,   0, "Rec"		},
+	[CONFIG_HOOK_BUTTONEVENT_COVER] =	{ 0,   0, "Cover"	},
+	[CONFIG_HOOK_BUTTONEVENT_LIGHT] =	{ 0,   0, "Light"	},
+	[CONFIG_HOOK_BUTTONEVENT_CONTRAST] =	{ 0,   0, "Contrast"	},
+	[CONFIG_HOOK_BUTTONEVENT_APP0] =	{ 1,  67, "Application 0" },
+	[CONFIG_HOOK_BUTTONEVENT_APP1] =	{ 1,  68, "Application 1" },
+	[CONFIG_HOOK_BUTTONEVENT_APP2] =	{ 1,  87, "Application 2" },
+	[CONFIG_HOOK_BUTTONEVENT_APP3] =	{ 1,  88, "Application 3" },
 };
-
 static const int n_button_config = 
 	sizeof(button_config) / sizeof(*button_config);
-
-static const struct {
-	long id;
-	char *name;
-} button_names[] = {
-/*	button id				name		   key code */
-	{ CONFIG_HOOK_BUTTONEVENT_POWER,	"Power"		}, /*   1 */
-	{ CONFIG_HOOK_BUTTONEVENT_OK,		"OK"	       	}, /*   2 */
-	{ CONFIG_HOOK_BUTTONEVENT_CANCEL,	"Cancel"       	}, /*   3 */
-	{ CONFIG_HOOK_BUTTONEVENT_UP,		"Up"	       	}, /*   4 */
-	{ CONFIG_HOOK_BUTTONEVENT_DOWN,		"Down"		}, /*   5 */
-	{ CONFIG_HOOK_BUTTONEVENT_REC,		"Rec"	       	}, /*   6 */
-	{ CONFIG_HOOK_BUTTONEVENT_COVER,	"Cover"		}, /*   7 */
-	{ CONFIG_HOOK_BUTTONEVENT_LIGHT,	"Light"		}, /*   8 */
-	{ CONFIG_HOOK_BUTTONEVENT_CONTRAST,	"Contrast"     	}, /*   9 */
-	{ CONFIG_HOOK_BUTTONEVENT_APP0,		"Application 0"	}, /*  10 */
-	{ CONFIG_HOOK_BUTTONEVENT_APP1,		"Application 1"	}, /*  11 */
-	{ CONFIG_HOOK_BUTTONEVENT_APP2,		"Application 2"	}, /*  12 */
-	{ CONFIG_HOOK_BUTTONEVENT_APP3,		"Application 3"	}, /*  13 */
-};
-static const int n_button_names = 
-	sizeof(button_names) / sizeof(*button_names);
 
 #define KC(n) KS_KEYCODE(n)
 static const keysym_t btnmgr_keydesc_default[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
-    KC(2), 			KS_Return,
-    KC(3), 			KS_Escape,
-    KC(4), 			KS_KP_Up,
-    KC(5), 			KS_KP_Down,
-    KC(10), 			KS_f9,
-    KC(11), 			KS_f10,
-    KC(12), 			KS_f11,
-    KC(13), 			KS_f12,
+    KC(1), 			KS_Escape,
+    KC(28), 			KS_Return,
+    KC(67), 			KS_f9,
+    KC(68), 			KS_f10,
+    KC(72), 			KS_KP_Up,
+    KC(80), 			KS_KP_Down,
+    KC(87), 			KS_f11,
+    KC(88), 			KS_f12,
 };
 #undef KC
 #define KBD_MAP(name, base, map) \
@@ -234,10 +218,21 @@ btnmgr_hook(ctx, type, id, msg)
 
 	DPRINTF(("%s button: %s\n", btnmgr_name(id), msg ? "ON" : "OFF"));
 
-	if (button_config[id].kevent)
-		wskbd_input(sc->sc_wskbddev,
-			    msg ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP,
-		    button_config[id].keycode);
+	if (button_config[id].kevent) {
+		u_int evtype;
+		evtype = msg ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+		if (sc->sc_rawkbd) {
+			int n;
+			u_char data[16];
+			n = pckbd_encode(evtype, button_config[id].keycode,
+					 data);
+			wskbd_rawinput(sc->sc_wskbddev, data, n);
+		} else
+#endif
+		wskbd_input(sc->sc_wskbddev, evtype, 
+			    button_config[id].keycode);
+	}
 
 	return (0);
 }
@@ -287,6 +282,9 @@ btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct btnmgr_softc *sc = scx;
+#endif
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_HPC_BTN;
@@ -298,8 +296,15 @@ btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
 		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
 		*(int *)data = 0;
 		return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
+		DPRINTF(("%s(%d): rawkbd is %s\n", __FILE__, __LINE__,
+			sc->sc_rawkbd ? "on" : "off"));
+		return (0);
+#endif
 	}
-	return -1;
+	return (-1);
 }
 
 #ifdef notyet
