@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/02 17:19:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/19 00:30:01 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -25,11 +25,6 @@ CPPFLAGS.resource.c=	\
 	-DDEF_XDM_CONFIG=\"${X11LIBDIR}/xdm/xdm-config\" \
 	-DDEF_AUTH_DIR=\"${X11LIBDIR}/xdm\" \
 	-DDEF_GREETER_LIB=\"${X11LIBDIR}/xdm/libXdmGreet.so\"
-
-#FILESDIR=${X11LIBDIR}/etc
-#FILES=	xterm.termcap xterm.terminfo
-#
-#realall: ${FILES}
 
 LDADD+=		-lXau -lXdmcp -lXinerama -lXpm -lXmu
 LDADD+=		-lXt -lSM -lICE -lXext -lX11 -lcrypt
