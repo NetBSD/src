@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.1.1.2 2002/02/18 09:07:40 itojun Exp $	*/
+/*	$NetBSD: nameser.h,v 1.2 2002/09/10 01:47:31 itojun Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/nameser.h,v 1.9 2001/06/27 05:40:16 guy Exp (LBL) */
 /*
@@ -77,6 +77,7 @@
  * Internet nameserver port number
  */
 #define NAMESERVER_PORT	53
+#define MULTICASTDNS_PORT	5353
 
 /*
  * Currently defined opcodes
@@ -233,7 +234,7 @@ typedef struct {
  */
 #define INDIR_MASK	0xc0	/* 11.... */
 #define EDNS0_MASK	0x40	/* 01.... */
-#  define EDNS0_ELT_BITLABEL 0x01 
+#  define EDNS0_ELT_BITLABEL 0x01
 
 /*
  * Structure for passing resource records around.
