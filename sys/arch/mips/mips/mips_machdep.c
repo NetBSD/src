@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.38 1998/10/19 22:09:19 tron Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.39 1998/11/02 07:43:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.38 1998/10/19 22:09:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.39 1998/11/02 07:43:37 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -122,17 +122,20 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
 /*
  * Declare these as initialized data so we can patch them.
  */
+#ifndef NBUF
+#define NBUF		0
+#endif
+#ifndef BUFPAGES
+#define BUFPAGES	0
+#endif
+#ifndef BUFCACHE
+#define BUFCACHE	10
+#endif
+
 int	nswbuf = 0;
-#ifdef NBUF
 int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
+int	bufpages = BUFPAGES;	/* optional hardwired count */
+int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
 
 int cpu_mhz;
 int mips_num_tlb_entries;
@@ -1173,14 +1176,13 @@ allocsys(v)
 #endif
 	
 	/*
-	 * Determine how many buffers to allocate.  We allocate more
-	 * than the BSD standard of using 10% of memory for the first 2 Meg,
-	 * 5% of remaining.  We just allocate a flat 10%.  Ensure a minimum
-	 * of 16 buffers.  We allocate 1/2 as many swap buffer headers
-	 * as file i/o buffers.
+	 * Determine how many buffers to allocate.
+	 * We allocate bufcache % of memory for buffer space.  Ensure a
+	 * minimum of 16 buffers.  We allocate 1/2 as many swap buffer
+	 * headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
+		bufpages = physmem / CLSIZE * bufcache / 100;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
