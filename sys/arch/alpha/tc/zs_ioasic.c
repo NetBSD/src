@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.4 1998/10/22 01:03:09 briggs Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.5 1999/02/03 20:25:05 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.4 1998/10/22 01:03:09 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.5 1999/02/03 20:25:05 mycroft Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -310,11 +310,9 @@ zs_ioasic_attach(parent, self, aux)
 		 *
 		 * XXX This is sorta gross.
 		 */
-		if (d->iada_offset == 0x00100000 && channel == 1) {
-			cs->cs_creg[15] |= ZSWR15_DCD_IE;
-			cs->cs_preg[15] |= ZSWR15_DCD_IE;
+		if (d->iada_offset == 0x00100000 && channel == 1)
 			(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
-		} else
+		else
 			cs->cs_private = NULL;
 
 		/*
@@ -768,10 +766,9 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	 *
 	 * XXX This is sorta gross.
 	 */
-	if (zs_offset == 0x00100000 && channel == 1) {
-		cs->cs_preg[15] |= ZSWR15_DCD_IE;
+	if (zs_offset == 0x00100000 && channel == 1)
 		(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
-	} else
+	else
 		cs->cs_private = NULL;
 
 	/* Clear the master interrupt enable. */

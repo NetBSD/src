@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.2 1997/10/22 17:03:35 gwr Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.3 1999/02/03 20:25:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ static u_char zs_kgdb_regs[16] = {
 	14,	/*12: BAUDLO (default=9600) */
 	0,	/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
-	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
+	ZSWR15_BREAK_IE,
 };
 
 /*
@@ -214,8 +214,8 @@ zskgdb(cs)
  ****************************************************************/
 
 static void zs_kgdb_rxint __P((struct zs_chanstate *));
+static void zs_kgdb_stint __P((struct zs_chanstate *, int));
 static void zs_kgdb_txint __P((struct zs_chanstate *));
-static void zs_kgdb_stint __P((struct zs_chanstate *));
 static void zs_kgdb_softint __P((struct zs_chanstate *));
 
 int kgdb_input_lost;
@@ -256,8 +256,9 @@ zs_kgdb_txint(cs)
 }
 
 static void
-zs_kgdb_stint(cs)
+zs_kgdb_stint(cs, force)
 	register struct zs_chanstate *cs;
+	int force;
 {
 	register int rr0;
 

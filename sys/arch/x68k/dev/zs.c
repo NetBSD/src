@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1998/08/05 16:08:36 minoura Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 1999/02/03 20:25:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -101,7 +101,7 @@ static u_char zs_init_reg[16] = {
 	14,	/*12: BAUDLO (default=9600) */
 	0,	/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
-	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
+	ZSWR15_BREAK_IE,
 };
 
 static volatile struct zschan *conschan = 0;
