@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/09/26 19:59:14 skrll Exp $
+# $NetBSD: defs.mk,v 1.2 2003/10/21 19:07:36 skrll Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -102,6 +102,7 @@ mi-parse.o \
 minsyms.o \
 mipsread.o \
 nbsd-tdep.o \
+nbsd-thread.o \
 nlmread.o \
 objfiles.o \
 osabi.o \
@@ -189,6 +190,24 @@ stabs.o \
 syms.o \
 targets.o \
 tekhex.o
+
+G_TUI_OBJS= \
+tui-file.o \
+tui-hooks.o \
+tui-out.o \
+tui.o \
+tuiCommand.o \
+tuiData.o \
+tuiDataWin.o \
+tuiDisassem.o \
+tuiGeneralWin.o \
+tuiIO.o \
+tuiLayout.o \
+tuiRegs.o \
+tuiSource.o \
+tuiSourceWin.o \
+tuiStack.o \
+tuiWin.o
 
 G_OPCODES_OBJS=\
 dis-buf.o \
