@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.1 2001/11/14 06:16:10 tv Exp $	*/
+/*	$NetBSD: trace.c,v 1.2 2001/11/14 14:44:29 tv Exp $	*/
 /* $OpenBSD: trace.c,v 1.3 2001/09/29 15:47:18 espie Exp $ */
 
 /*
@@ -126,7 +126,6 @@ void
 trace_file(name)
 	const char *name;
 {
-
 	if (traceout != stderr)
 		fclose(traceout);
 	traceout = fopen(name, "w");
