@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 2002/09/18 02:43:59 lukem Exp $
+# $NetBSD: GENERIC,v 1.130 2002/10/06 02:11:57 provos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.130 $"
 
 maxusers	16
 
@@ -43,6 +43,7 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	MSGBUFSIZE=8192		# dmesg buffer size
 
 ## UVM options.

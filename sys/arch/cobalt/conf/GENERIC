@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35 2002/09/25 11:49:50 martti Exp $
+# $NetBSD: GENERIC,v 1.36 2002/10/06 02:11:56 provos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,12 +22,13 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing support
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
