@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.1 2002/03/27 21:51:29 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.2 2002/04/12 19:35:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = oba->oba_st;
 	sc->sc_iobase = oba->oba_addr;
 	sc->sc_frequency = COM_FREQ;
+	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
 	error = bus_space_map(sc->sc_iot, oba->oba_addr, 8, 0, &sc->sc_ioh);
 
 	if (error) {
