@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.10 1994/06/29 06:43:35 cgd Exp $	*/
+/*	$NetBSD: acct.h,v 1.11 1994/10/29 08:20:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  * exponent, 13 bit fraction ``floating point'' number.  Units are 1/AHZ
  * seconds.
  */
-typedef u_short comp_t;
+typedef u_int16_t comp_t;
 
 struct acct {
 	char	ac_comm[10];	/* command name */
@@ -55,16 +55,17 @@ struct acct {
 	time_t	ac_btime;	/* starting time */
 	uid_t	ac_uid;		/* user id */
 	gid_t	ac_gid;		/* group id */
-	short	ac_mem;		/* average memory usage */
+	int16_t	ac_mem;		/* average memory usage */
 	comp_t	ac_io;		/* count of IO blocks */
 	dev_t	ac_tty;		/* controlling tty */
-#define	AFORK	0x01			/* forked but not execed */
-#define	ASU	0x02			/* used super-user permissions */
-#define	ACOMPAT	0x04			/* used compatibility mode */
-#define	ACORE	0x08			/* dumped core */
-#define	AXSIG	0x10			/* killed by a signal */
-	char	ac_flag;	/* accounting flags */
+	int8_t	ac_flag;	/* accounting flags; see below. */
 };
+
+#define	AFORK	0x01		/* forked but not execed */
+#define	ASU	0x02		/* used super-user permissions */
+#define	ACOMPAT	0x04		/* used compatibility mode */
+#define	ACORE	0x08		/* dumped core */
+#define	AXSIG	0x10		/* killed by a signal */
 
 /*
  * 1/AHZ is the granularity of the data encoded in the comp_t fields.
