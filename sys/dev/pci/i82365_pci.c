@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.9 2000/02/22 16:04:47 thorpej Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.10 2000/02/22 22:46:16 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -45,6 +45,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/i82365_pcivar.h>
+
+#include <dev/isa/isavar.h>
 #include <dev/isa/i82365_isavar.h>
 
 /*
