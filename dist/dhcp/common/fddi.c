@@ -3,7 +3,7 @@
    Packet assembly code, originally contributed by Archie Cobbs. */
 
 /*
- * Copyright (c) 1996-2000 Internet Software Consortium.
+ * Copyright (c) 1996-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: fddi.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: fddi.c,v 1.4 2003/02/18 17:08:41 drochner Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -57,7 +57,7 @@ static char copyright[] =
 #if defined (NETBSD_FDDI)
 #include <net/if_fddi.h>
 #include <net/if_llc.h>
-#define	LLC_SNAP_LEN	LLC_SNAPFRAMELEN
+#define       LLC_SNAP_LEN    LLC_SNAPFRAMELEN
 #endif /* NETBSD_FDDI */
 
 #if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
