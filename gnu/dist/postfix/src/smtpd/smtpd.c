@@ -59,7 +59,7 @@
 /*	Disallow non-RFC 821 style addresses in SMTP commands. For example,
 /*	the RFC822-style address forms with comments that Sendmail allows.
 /* .IP \fBbroken_sasl_auth_clients\fR
-/*	Support older Microsoft clients that mis-implement the AUTH
+/*	Support Microsoft clients that implement an older version of the AUTH
 /*	protocol, and that expect an EHLO response of "250 AUTH=list"
 /*	instead of "250 AUTH list".
 /* .IP \fBsmtpd_noop_commands\fR
@@ -73,7 +73,7 @@
 /*	This parameter uses the same syntax as the right-hand side of
 /*	a Postfix transport table.
 /* .SH "Authentication controls"
-/* .IP \fBenable_sasl_authentication\fR
+/* .IP \fBsmtpd_sasl_auth_enable\fR
 /*	Enable per-session authentication as per RFC 2554 (SASL).
 /*	This functionality is available only when explicitly selected
 /*	at program build time and explicitly enabled at runtime.
@@ -629,7 +629,9 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
     int     naddr;
     int     non_addr;
     char   *err = 0;
-    char   *junk;
+    char   *junk = 0;
+    char   *text;
+    char   *colon;
 
     /*
      * Special case.
@@ -653,11 +655,19 @@ static char *extract_addr(SMTPD_STATE *state, SMTPD_TOKEN *arg,
 	msg_info("%s: input: %s", myname, STR(arg->vstrval));
     if (STR(arg->vstrval)[0] == '<'
 	&& STR(arg->vstrval)[LEN(arg->vstrval) - 1] == '>') {
-	junk = mystrndup(STR(arg->vstrval) + 1, LEN(arg->vstrval) - 2);
-	tree = tok822_parse(junk);
-	myfree(junk);
+	junk = text = mystrndup(STR(arg->vstrval) + 1, LEN(arg->vstrval) - 2);
     } else
-	tree = tok822_parse(STR(arg->vstrval));
+	text = STR(arg->vstrval);
+
+    /*
+     * Truncate deprecated route address form.
+     */
+    if (*text == '@' && (colon = strchr(text, ':')) != 0)
+	text = colon + 1;
+    tree = tok822_parse(text);
+
+    if (junk)
+	myfree(junk);
 
     /*
      * Find trouble.
@@ -796,7 +806,7 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 		verp_delims = arg + VERP_CMD_LEN + 1;
 		if (verp_delims_verify(verp_delims) != 0) {
 		    state->error_mask |= MAIL_ERROR_PROTOCOL;
-		    smtpd_chat_reply(state, "501 %s needs two characters from %s",
+		    smtpd_chat_reply(state, "501 Error: %s needs two characters from %s",
 				     VERP_CMD, var_verp_filter);
 		    return (-1);
 		}
@@ -808,7 +818,8 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	}
     }
     if (verp_delims && argv[2].strval[0] == 0) {
-	smtpd_chat_reply(state, "503 Error: XVERP requires non-null sender");
+	smtpd_chat_reply(state, "503 Error: %s requires non-null sender",
+			 VERP_CMD);
 	return (-1);
     }
     state->time = time((time_t *) 0);
@@ -837,10 +848,12 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     /*
      * Record the time of arrival and the sender envelope address.
      */
-    rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld",
-		(long) time((time_t *) 0));
-    if (*var_filter_xport)
-	rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
+    if (SMTPD_STAND_ALONE(state) == 0) {
+	rec_fprintf(state->cleanup, REC_TYPE_TIME, "%ld",
+		    (long) time((time_t *) 0));
+	if (*var_filter_xport)
+	    rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
+    }
     rec_fputs(state->cleanup, REC_TYPE_FROM, argv[2].strval);
     if (encoding != 0)
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
@@ -893,6 +906,7 @@ static void mail_reset(SMTPD_STATE *state)
     if (var_smtpd_sasl_enable)
 	smtpd_sasl_mail_reset(state);
 #endif
+    state->discard = 0;
 }
 
 /* rcpt_cmd - process RCPT TO command */
@@ -948,10 +962,6 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     }
     if (SMTPD_STAND_ALONE(state) == 0) {
 	if ((err = smtpd_check_rcpt(state, argv[2].strval)) != 0) {
-	    smtpd_chat_reply(state, "%s", err);
-	    return (-1);
-	}
-	if ((err = smtpd_check_rcptmap(state, argv[2].strval)) != 0) {
 	    smtpd_chat_reply(state, "%s", err);
 	    return (-1);
 	}
@@ -1259,7 +1269,7 @@ static int vrfy_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	return (-1);
     }
     if (SMTPD_STAND_ALONE(state) == 0
-	&& (err = smtpd_check_rcptmap(state, argv[1].strval)) != 0) {
+	&& (err = smtpd_check_rcpt(state, argv[1].strval)) != 0) {
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
@@ -1463,7 +1473,8 @@ static void smtpd_proto(SMTPD_STATE *state)
 	break;
 
     case 0:
-	if (var_smtpd_delay_reject == 0
+	if (SMTPD_STAND_ALONE(state) == 0
+	    && var_smtpd_delay_reject == 0
 	    && (state->access_denied = smtpd_check_client(state)) != 0) {
 	    smtpd_chat_reply(state, "%s", state->access_denied);
 	} else {

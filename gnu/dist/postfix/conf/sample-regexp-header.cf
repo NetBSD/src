@@ -1,4 +1,4 @@
-#	$NetBSD: sample-regexp-header.cf,v 1.3 2003/03/08 19:43:58 perry Exp $
+#	$NetBSD: sample-regexp-header.cf,v 1.4 2004/03/27 16:31:19 heas Exp $
 #
 # Sample regexp message header filter lookup "table". See regexp_table(5)
 # for a description of the syntax.
@@ -20,18 +20,19 @@
 #
 # A block of table entries may be "enclosed" by a line with `if
 # /pattern/flags' or `if !/pattern/flags' and a line with `endif'.
-# This causes the block of table entries to be examined only when
-# the pattern produces a successful (non)match. The `if..endif' may
+# This causes the block of table entries to be examined only when the
+# search string produces a successful (non)match. The `if..endif' may
 # be nested. There currently is no `else' operator.
 #
 # The result is one of the following:
 # REJECT [optional text...]
 #       Reject the entire message. The optional text is sent to the
 #       originator and is logged to the maillog file.
+# OK	Skip all further header patterns for this header line.
 # IGNORE Silently discard the message header.
 # WARN [optional text...]
 #       Log the message header and the optional text. This is useful
-#       for testing. When the pattern is OK, change the WARN into a
+#       for testing. When the pattern is good, change the WARN into a
 #       REJECT or into a DISCARD.
 # HOLD [optional text...]
 #       Place the message on the hold queue. Mail on hold can be

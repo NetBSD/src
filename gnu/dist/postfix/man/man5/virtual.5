@@ -55,8 +55,7 @@ the lookups are done in a slightly different way as described below.
 .nf
 .ad
 .fi
-The format of the virtual table is as follows, mappings being
-tried in the order as listed in this manual page:
+The input format for the \fBpostmap\fR(1) command is as follows:
 .IP "\fIpattern result\fR"
 When \fIpattern\fR matches a mail address, replace it by the
 corresponding \fIresult\fR.
@@ -141,9 +140,9 @@ See the output from \fBpostconf -m\fR for available database types.
 .fi
 .sp
 The \fIvirtual-alias.domain anything\fR entry is required for a
-virtual alias domain. Without this entry, mail is rejected
+virtual alias domain. \fBWithout this entry, mail is rejected
 with "relay access denied", or bounces with
-"mail loops back to myself".
+"mail loops back to myself".\fR
 
 Do not specify virtual alias domain names in the \fBmain.cf
 mydestination\fR or \fBrelay_domains\fR configuration parameters.
