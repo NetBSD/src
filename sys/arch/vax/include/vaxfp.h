@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxfp.h,v 1.2 2003/10/30 12:05:41 kleink Exp $	*/
+/*	$NetBSD: vaxfp.h,v 1.3 2004/01/20 19:09:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * Only F_floating and D_floating types are defined here;
  * G_floating and H_floating are not supported by NetBSD.
  */
+#ifndef _VAX_VAXFP_H__
+#define	_VAX_VAXFP_H__
 
 #define	FFLT_EXPBITS		8
 #define	FFLT_FRACBITS		23
@@ -49,18 +51,18 @@
 #define	DFLT_FRACBITS		55
 
 struct vax_f_floating {
-	u_int	fflt_frach:7;
-	u_int	fflt_exp:8;
-	u_int	fflt_sign:1;
-	u_int	fflt_fracl:16;
+	unsigned int	fflt_frach:7;
+	unsigned int	fflt_exp:8;
+	unsigned int	fflt_sign:1;
+	unsigned int	fflt_fracl:16;
 };
 
 struct vax_d_floating {
-	u_int	dflt_frach:7;
-	u_int	dflt_exp:8;
-	u_int	dflt_sign:1;
-	u_int	dflt_fracm:16;
-	u_int	dflt_fracl;
+	unsigned int	dflt_frach:7;
+	unsigned int	dflt_exp:8;
+	unsigned int	dflt_sign:1;
+	unsigned int	dflt_fracm:16;
+	unsigned int	dflt_fracl;
 };
 
 /*
@@ -80,4 +82,6 @@ union vax_ffloating_u {
 union vax_dfloating_u {
 	double			dfltu_d;
 	struct vax_d_floating	dfltu_dflt;
-;}
+};
+
+#endif /* _VAX_VAXFP_H__ */
