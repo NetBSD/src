@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.1.1 1996/03/13 04:58:13 jonathan Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 1998/02/25 21:41:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@ sys_sysarch(p, v, retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
-		syscallarg(char *) parms;
+		syscallarg(void *) parms;
 	} */ *uap = v;
 	int error = 0;
 
@@ -125,5 +125,5 @@ sys_sysarch(p, v, retval)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 1997/03/20 12:00:58 matthias Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8 1998/02/25 21:41:57 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,5 +115,5 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return ENOSYS;
+	return (ENOSYS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 1997/10/14 06:47:56 sakamoto Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 1998/02/25 21:41:56 perry Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -42,5 +42,5 @@ sys_sysarch(p, v, retval)
 	/*
 	 * Currently no special system calls
 	 */
-	return EINVAL;
+	return (ENOSYS);
 }
