@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.5 2003/10/10 20:16:54 tron Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.5.2.1 2004/06/01 04:30:40 jmc Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2003/10/10 20:16:54 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5.2.1 2004/06/01 04:30:40 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ acpi_md_OsWritable(void *Pointer, UINT32 Length)
 	return (rv);
 }
 
-void 
+void
 acpi_md_OsDisableInterrupt(void)
 {
 	disable_intr();
