@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.26 2004/05/08 23:40:01 christos Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.27 2004/08/19 14:50:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -251,7 +251,6 @@ struct cardbus_cis_info {
 };
 
 struct cardbus_attach_args {
-	int ca_unit;
 	cardbus_devfunc_t ca_ct;
 
 	bus_space_tag_t ca_iot;		/* CardBus I/O space tag */
