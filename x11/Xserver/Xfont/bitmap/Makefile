@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/03/16 17:40:53 matt Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
@@ -17,10 +17,17 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR}
 
-CPPFLAGS+=	-DBDFFORMAT -DSNFFORMAT -DPCFFORMAT -DFONTMODULE
+CPPFLAGS+=	-DBDFFORMAT -DSNFFORMAT -DPCFFORMAT
 
 CPPFLAGS.bitmapfunc.c=	-DX_GZIP_FONT_COMPRESSION
 
 .include <bsd.x11.mk>
+
+.if !empty(X11FLAGS.LOADABLE)
+CPPFLAGS+=	-DFONTMODULE
 LIBDIR=	${XMODULEDIR}
+.else
+libinstall::
+.endif
+
 .include <bsd.lib.mk>
