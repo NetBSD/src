@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.32 1999/11/12 18:14:18 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.33 1999/11/19 18:22:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
@@ -162,10 +163,8 @@ void	tlp_winb_mii_statchg __P((struct device *));
 void	tlp_mii_getmedia __P((struct tulip_softc *, struct ifmediareq *));
 int	tlp_mii_setmedia __P((struct tulip_softc *));
 
-void	tlp_sio_mii_sync __P((struct tulip_softc *));
-void	tlp_sio_mii_sendbits __P((struct tulip_softc *, u_int32_t, int));
-int	tlp_sio_mii_readreg __P((struct device *, int, int));
-void	tlp_sio_mii_writereg __P((struct device *, int, int, int));
+int	tlp_bitbang_mii_readreg __P((struct device *, int, int));
+void	tlp_bitbang_mii_writereg __P((struct device *, int, int, int));
 
 int	tlp_pnic_mii_readreg __P((struct device *, int, int));
 void	tlp_pnic_mii_writereg __P((struct device *, int, int, int));
@@ -178,10 +177,29 @@ void	tlp_2114x_mii_preinit __P((struct tulip_softc *));
 void	tlp_pnic_preinit __P((struct tulip_softc *));
 
 void	tlp_21140_reset __P((struct tulip_softc *));
+void	tlp_21142_reset __P((struct tulip_softc *));
 void	tlp_pmac_reset __P((struct tulip_softc *));
 
 u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
 #define	tlp_mchash(addr, sz) (tlp_crc32((addr), ETHER_ADDR_LEN) & ((sz) - 1))
+
+/*
+ * MII bit-bang glue.
+ */
+u_int32_t tlp_sio_mii_bitbang_read __P((struct device *));
+void	tlp_sio_mii_bitbang_write __P((struct device *, u_int32_t));
+
+const struct mii_bitbang_ops tlp_sio_mii_bitbang_ops = {
+	tlp_sio_mii_bitbang_read,
+	tlp_sio_mii_bitbang_write,
+	{
+		MIIROM_MDO,		/* MII_BIT_MDO */
+		MIIROM_MDI,		/* MII_BIT_MDI */
+		MIIROM_MDC,		/* MII_BIT_MDC */
+		0,			/* MII_BIT_DIR_HOST_PHY */
+		MIIROM_MIIDIR,		/* MII_BIT_DIR_PHY_HOST */
+	}
+};
 
 #ifdef TLP_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
@@ -297,6 +315,18 @@ tlp_attach(sc, enaddr)
 
 	default:
 		/* Nothing. */
+	}
+
+	/*
+	 * Set up the MII bit-bang operations.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_WB89C840F:	/* XXX direction bit different? */
+		sc->sc_bitbang_ops = &tlp_sio_mii_bitbang_ops;
+		break;
+
+	default:
+		sc->sc_bitbang_ops = &tlp_sio_mii_bitbang_ops;
 	}
 
 	SIMPLEQ_INIT(&sc->sc_txfreeq);
@@ -1789,7 +1819,7 @@ tlp_read_srom(sc, word, wordcnt, data)
 		}
 
 		/* Shift in address. */
-		for (x = 6; x > 0; x--) {
+		for (x = sc->sc_srom_addrbits; x > 0; x--) {
 			if ((word + i) & (1 << (x - 1)))
 				miirom |= MIIROM_SROMDI;
 			else
@@ -2681,132 +2711,64 @@ tlp_mii_setmedia(sc)
 	return (0);
 }
 
-#define	MII_EMIT(sc, x)							\
-do {									\
-	TULIP_WRITE((sc), CSR_MIIROM, (x));				\
-	delay(1);							\
-} while (0)
-
 /*
- * tlp_sio_mii_sync:
+ * tlp_bitbang_mii_readreg:
  *
- *	Synchronize the SIO-attached MII.
- */
-void
-tlp_sio_mii_sync(sc)
-	struct tulip_softc *sc;
-{
-	u_int32_t miirom;
-	int i;
-
-	miirom = MIIROM_MDO;
-
-	MII_EMIT(sc, miirom);
-	for (i = 0; i < 32; i++) {
-		MII_EMIT(sc, miirom | MIIROM_MDC);
-		MII_EMIT(sc, miirom);
-	}
-}
-
-/*
- * tlp_sio_mii_sendbits:
- *
- *	Send a series of bits out the SIO to the MII.
- */
-void
-tlp_sio_mii_sendbits(sc, data, nbits)
-	struct tulip_softc *sc;
-	u_int32_t data;
-	int nbits;
-{
-	u_int32_t miirom, i;
-
-	miirom = 0;
-	MII_EMIT(sc, miirom);
-
-	for (i = 1 << (nbits - 1); i != 0; i >>= 1) {
-		if (data & i)
-			miirom |= MIIROM_MDO;
-		else
-			miirom &= ~MIIROM_MDO;
-		MII_EMIT(sc, miirom);
-		MII_EMIT(sc, miirom|MIIROM_MDC);
-		MII_EMIT(sc, miirom);
-	}
-}
-
-/*
- * tlp_sio_mii_readreg:
- *
- *	Read a PHY register via SIO-attached MII.
+ *	Read a PHY register via bit-bang'ing the MII.
  */
 int
-tlp_sio_mii_readreg(self, phy, reg)
+tlp_bitbang_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
 	struct tulip_softc *sc = (void *) self;
-	int val = 0, err = 0, i;
 
-	tlp_sio_mii_sync(sc);
-
-	tlp_sio_mii_sendbits(sc, MII_COMMAND_START, 2);
-	tlp_sio_mii_sendbits(sc, MII_COMMAND_READ, 2);
-	tlp_sio_mii_sendbits(sc, phy, 5);
-	tlp_sio_mii_sendbits(sc, reg, 5);
-
-	/* Switch direction to PHY->host, without a clock transition. */
-	MII_EMIT(sc, MIIROM_MIIDIR);
-
-	MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
-	MII_EMIT(sc, MIIROM_MIIDIR);
-
-	err = TULIP_ISSET(sc, CSR_MIIROM, MIIROM_MDI);
-
-	MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
-	MII_EMIT(sc, MIIROM_MIIDIR);
-
-	for (i = 0; i < 16; i++) {
-		val <<= 1;
-		/* Read data prior to clock low-high transition. */
-		if (err == 0 && TULIP_ISSET(sc, CSR_MIIROM, MIIROM_MDI))
-			val |= 1;
-
-		MII_EMIT(sc, MIIROM_MIIDIR|MIIROM_MDC);
-		MII_EMIT(sc, MIIROM_MIIDIR);
-	}
-
-	/* Set direction to host->PHY, without a clock transition. */
-	MII_EMIT(sc, 0);
-
-	return (err ? 0 : val);
+	return (mii_bitbang_readreg(self, sc->sc_bitbang_ops, phy, reg));
 }
 
 /*
- * tlp_sio_mii_writereg:
+ * tlp_bitbang_mii_writereg:
  *
- *	Write a PHY register via SIO-attached MII.
+ *	Write a PHY register via bit-bang'ing the MII.
  */
 void
-tlp_sio_mii_writereg(self, phy, reg, val)
+tlp_bitbang_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
 	struct tulip_softc *sc = (void *) self;
 
-	tlp_sio_mii_sync(sc);
-
-	tlp_sio_mii_sendbits(sc, MII_COMMAND_START, 2);
-	tlp_sio_mii_sendbits(sc, MII_COMMAND_WRITE, 2);
-	tlp_sio_mii_sendbits(sc, phy, 5);
-	tlp_sio_mii_sendbits(sc, reg, 5);
-	tlp_sio_mii_sendbits(sc, MII_COMMAND_ACK, 2);
-	tlp_sio_mii_sendbits(sc, val, 16);
-
-	MII_EMIT(sc, 0);
+	mii_bitbang_writereg(self, sc->sc_bitbang_ops, phy, reg, val);
 }
 
-#undef MII_EMIT
+/*
+ * tlp_sio_mii_bitbang_read:
+ *
+ *	Read the MII serial port for the MII bit-bang module.
+ */
+u_int32_t
+tlp_sio_mii_bitbang_read(self)
+	struct device *self;
+{
+	struct tulip_softc *sc = (void *) self;
+
+	return (TULIP_READ(sc, CSR_MIIROM));
+}
+
+/*
+ * tlp_sio_mii_bitbang_write:
+ *
+ *	Write the MII serial port for the MII bit-bang module.
+ */
+void
+tlp_sio_mii_bitbang_write(self, val)
+	struct device *self;
+	u_int32_t val;
+{
+	struct tulip_softc *sc = (void *) self;
+
+	TULIP_WRITE(sc, CSR_MIIROM, val);
+}
 
 /*
  * tlp_pnic_mii_readreg:
@@ -3044,6 +3006,41 @@ tlp_21140_reset(sc)
 	/* If there were no sequences, just lower the pins. */
 	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0)
 		TULIP_WRITE(sc, CSR_GPP, 0);
+}
+
+/*
+ * tlp_21142_reset:
+ *
+ *	Issue a reset sequence on the 21142 via the GPIO facility.
+ */
+void
+tlp_21142_reset(sc)
+	struct tulip_softc *sc;
+{
+	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct tulip_21x4x_media *tm = ife->ifm_aux;
+	const u_int8_t *ncp;
+	int i;
+
+	ncp = &sc->sc_srom[tm->tm_reset_offset];
+	for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+		delay(10);
+		TULIP_WRITE(sc, CSR_SIAGEN,
+		    TULIP_ROM_GETW(ncp, 0) << 16);
+	}
+
+	ncp = &sc->sc_srom[tm->tm_gp_offset];
+	for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+		delay(10);
+		TULIP_WRITE(sc, CSR_SIAGEN,
+		    TULIP_ROM_GETW(ncp, 0) << 16);
+	}
+
+	/* If there were no sequences, just lower the pins. */
+	if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0) {
+		delay(10);
+		TULIP_WRITE(sc, CSR_SIAGEN, 0);
+	}
 }
 
 /*
@@ -3935,8 +3932,8 @@ tlp_2114x_isv_tmsw_init(sc)
 	defmedia = miidef = 0;
 
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = tlp_sio_mii_readreg;
-	sc->sc_mii.mii_writereg = tlp_sio_mii_writereg;
+	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 
 	/*
@@ -4214,7 +4211,119 @@ tlp_2114x_isv_tmsw_init(sc)
 			break;
 
 		case TULIP_ROM_MB_21142_MII:
-			printf("%s: 21142 MII block\n", sc->sc_dev.dv_xname);
+			sc->sc_media_seen |= 1 << TULIP_ROM_MB_21142_MII;
+
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK);
+			memset(tm, 0, sizeof(*tm));
+
+			tm->tm_type = TULIP_ROM_MB_21142_MII;
+			tm->tm_get = tlp_mii_getmedia;
+			tm->tm_set = tlp_mii_setmedia;
+			tm->tm_opmode = OPMODE_PS;
+
+			if (sc->sc_reset == NULL)
+				sc->sc_reset = tlp_21142_reset;
+
+			/* First is the PHY number. */
+			tm->tm_phyno = *cp++;
+
+			/* Next is the MII select sequence length and offset. */
+			tm->tm_gp_length = *cp++;
+			tm->tm_gp_offset = cp - &sc->sc_srom[0];
+			cp += tm->tm_gp_length * 2;
+
+			/* Next is the MII reset sequence length and offset. */
+			tm->tm_reset_length = *cp++;
+			tm->tm_reset_offset = cp - &sc->sc_srom[0];
+			cp += tm->tm_reset_length * 2;
+
+			/*
+			 * The following items are left in the media block
+			 * that we don't particularly care about:
+			 *
+			 *	capabilities		W
+			 *	advertisement		W
+			 *	full duplex		W
+			 *	tx threshold		W
+			 *	MII interrupt		W
+			 *
+			 * These appear to be bits in the PHY registers,
+			 * which our MII code handles on its own.
+			 */
+
+			/*
+			 * Before we probe the MII bus, we need to reset
+			 * it and issue the selection sequence.
+			 */
+
+			ncp = &sc->sc_srom[tm->tm_reset_offset];
+			for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+				delay(10);
+				TULIP_WRITE(sc, CSR_SIAGEN,
+				    TULIP_ROM_GETW(ncp, 0) << 16);
+			}
+
+			ncp = &sc->sc_srom[tm->tm_gp_offset];
+			for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+				delay(10);
+				TULIP_WRITE(sc, CSR_SIAGEN,
+				    TULIP_ROM_GETW(ncp, 0) << 16);
+			}
+
+			/* If there were no sequences, just lower the pins. */
+			if (tm->tm_reset_length == 0 && tm->tm_gp_length == 0) {
+				delay(10);
+				TULIP_WRITE(sc, CSR_SIAGEN, 0);
+			}
+
+			/*
+			 * Now, probe the MII for the PHY.  Note, we know
+			 * the location of the PHY on the bus, but we don't
+			 * particularly care; the MII code just likes to
+			 * search the whole thing anyhow.
+			 */
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
+			    MII_PHY_ANY, tm->tm_phyno);
+
+			/*
+			 * Now, search for the PHY we hopefully just
+			 * configured.  If it's not configured into the
+			 * kernel, we lose.  The PHY's default media always
+			 * takes priority.
+			 */
+			for (phy = LIST_FIRST(&sc->sc_mii.mii_phys);
+			     phy != NULL;
+			     phy = LIST_NEXT(phy, mii_list))
+				if (phy->mii_offset == tm->tm_phyno)
+					break;
+			if (phy == NULL) {
+				printf("%s: unable to configure MII\n",
+				    sc->sc_dev.dv_xname);
+				break;
+			}
+
+			sc->sc_flags |= TULIPF_HAS_MII;
+			sc->sc_tick = tlp_mii_tick;
+			miidef = IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0,
+			    phy->mii_inst);
+
+			/*
+			 * Okay, now that we've found the PHY and the MII
+			 * layer has added all of the media associated
+			 * with that PHY, we need to traverse the media
+			 * list, and add our `tm' to each entry's `aux'
+			 * pointer.
+			 *
+			 * We do this by looking for media with our
+			 * PHY's `instance'.
+			 */
+			for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
+			     ife != NULL;
+			     ife = TAILQ_NEXT(ife, ifm_list)) {
+				if (IFM_INST(ife->ifm_media) != phy->mii_inst)
+					continue;
+				ife->ifm_aux = tm;
+			}
 			break;
 
 		case TULIP_ROM_MB_21143_SYM:
@@ -4385,8 +4494,8 @@ tlp_sio_mii_tmsw_init(sc)
 		sc->sc_preinit = tlp_2114x_mii_preinit;
 
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = tlp_sio_mii_readreg;
-	sc->sc_mii.mii_writereg = tlp_sio_mii_writereg;
+	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);
@@ -4840,8 +4949,8 @@ tlp_pmac_tmsw_init(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = tlp_sio_mii_readreg;
-	sc->sc_mii.mii_writereg = tlp_sio_mii_writereg;
+	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
 	sc->sc_mii.mii_statchg = sc->sc_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
 	    tlp_mediastatus);

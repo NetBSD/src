@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.12 1999/11/03 22:22:49 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.13 1999/11/19 18:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -241,7 +241,8 @@ struct tulip_desc {
 /*
  * Maximum size of a Tulip Ethernet Address ROM or SROM.
  */
-#define	TULIP_MAX_ROM_SIZE	128
+#define	TULIP_ROM_SIZE(bits)	(2 << (bits))
+#define	TULIP_MAX_ROM_SIZE	512
 
 /*
  * Format of the standard Tulip SROM information:

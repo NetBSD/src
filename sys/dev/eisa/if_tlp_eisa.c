@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.2 1999/09/14 22:25:48 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.3 1999/11/19 18:22:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
