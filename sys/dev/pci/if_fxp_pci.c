@@ -1,7 +1,7 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.8.4.3 2001/08/16 17:37:40 tv Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.8.4.4 2002/06/06 19:42:42 he Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,9 +42,6 @@
  * driver.  Works with Intel Etherexpress Pro 10+, 100B, 100+ cards.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -67,20 +64,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -131,16 +114,16 @@ const struct fxp_pci_product {
 	  "Intel InBusiness Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801BA_LAN,
 	  "Intel i82562 Ethernet" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
+	  "Intel PRO/100 VE Network Controller" },
 	{ 0,
 	  NULL },
 };
 
-const struct fxp_pci_product *fxp_pci_lookup
-    __P((const struct pci_attach_args *));
-
-const struct fxp_pci_product *
-fxp_pci_lookup(pa)
-	const struct pci_attach_args *pa;
+static const struct fxp_pci_product *
+fxp_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct fxp_pci_product *fpp;
 
@@ -232,10 +215,8 @@ fxp_pci_power(why, arg)
 
 	if (why == PWR_RESUME)
 		fxp_pci_confreg_restore(psc);
-
 }
 
-	
 void
 fxp_pci_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -315,10 +296,72 @@ fxp_pci_attach(parent, self, aux)
 		panic("fxp_pci_attach: impossible");
 	}
 
-	/*
-	 * XXX Perhaps report '557, '558, '559 based on revision?
-	 */
-	printf(": %s, rev %d\n", fpp->fpp_name, PCI_REVISION(pa->pa_class));
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
+
+	switch (fpp->fpp_prodid) {
+	case PCI_PRODUCT_INTEL_82557:
+	case PCI_PRODUCT_INTEL_82559ER:
+	case PCI_PRODUCT_INTEL_IN_BUSINESS:
+	    {
+		const char *chipname = NULL;
+
+		if (sc->sc_rev >= FXP_REV_82558_A4) {
+			chipname = "i82558 Ethernet";
+			/*
+			 * Enable the MWI command for memory writes.
+			 */
+			if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+				sc->sc_flags |= FXPF_MWI;
+		}
+		if (sc->sc_rev >= FXP_REV_82559_A0)
+			chipname = "i82559 Ethernet";
+		if (sc->sc_rev >= FXP_REV_82559S_A)
+			chipname = "i82559S Ethernet";
+		if (sc->sc_rev >= FXP_REV_82550)
+			chipname = "i82550 Ethernet";
+
+		/*
+		 * Mark all i82559 and i82550 revisions as having
+		 * the "resume bug".  See i82557.c for details.
+		 */
+		if (sc->sc_rev >= FXP_REV_82559_A0)
+			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+
+		printf(": %s, rev %d\n", chipname != NULL ? chipname :
+		    fpp->fpp_name, sc->sc_rev);
+		break;
+	    }
+
+	case PCI_PRODUCT_INTEL_82801BA_LAN:
+		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+
+		/*
+		 * The 82801BA Ethernet has a bug which requires us to send a
+		 * NOP before a CU_RESUME if we're in 10baseT mode.
+		 */
+		if (fpp->fpp_prodid == PCI_PRODUCT_INTEL_82801BA_LAN)
+			sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+		break;
+
+	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
+	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_1:
+	case PCI_PRODUCT_INTEL_82562EH_HPNA_0:
+	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
+	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
+		printf(": %s, rev %d\n", fpp->fpp_name, sc->sc_rev);
+
+		/*
+		 * ICH3 chips apparently have problems with the enhanced
+		 * features, so just treat them as an i82557.  It also
+		 * has the resume bug that the ICH2 has.
+		 */
+		sc->sc_rev = 1;
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+		break;
+	}
 
 	/* Make sure bus-mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
