@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.5 2003/02/18 10:20:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -247,7 +247,7 @@ smb_rq_bend(struct smb_rq *rqp)
 	bcnt = rqp->sr_rq.mb_count;
 	if (bcnt > 0xffff)
 		SMBERROR("byte count too large (%d)\n", bcnt);
-	*rqp->sr_bcount = htoles(bcnt);
+	*rqp->sr_bcount = htole16(bcnt);
 }
 
 int
@@ -332,32 +332,32 @@ smb_rq_reply(struct smb_rq *rqp)
 	error = md_get_uint32(mdp, &tdw);
 	if (error)
 		return error;
-	error = md_get_uint8(mdp, &tb);
+	(void) md_get_uint8(mdp, &tb);
 	if (rqp->sr_vc->vc_hflags2 & SMB_FLAGS2_ERR_STATUS) {
-		error = md_get_uint32le(mdp, &rqp->sr_error);
+		(void) md_get_uint32le(mdp, &rqp->sr_error);
 	} else {
-		error = md_get_uint8(mdp, &rqp->sr_errclass);
-		error = md_get_uint8(mdp, &tb);
+		(void) md_get_uint8(mdp, &rqp->sr_errclass);
+		(void) md_get_uint8(mdp, &tb);
 		error = md_get_uint16le(mdp, &rqp->sr_serror);
 		if (!error)
 			rperror = smb_maperror(rqp->sr_errclass, rqp->sr_serror);
 	}
-	error = md_get_uint8(mdp, &rqp->sr_rpflags);
-	error = md_get_uint16le(mdp, &rqp->sr_rpflags2);
+	(void) md_get_uint8(mdp, &rqp->sr_rpflags);
+	(void) md_get_uint16le(mdp, &rqp->sr_rpflags2);
 
-	error = md_get_uint32(mdp, &tdw);
-	error = md_get_uint32(mdp, &tdw);
-	error = md_get_uint32(mdp, &tdw);
+	(void) md_get_uint32(mdp, &tdw);
+	(void) md_get_uint32(mdp, &tdw);
+	(void) md_get_uint32(mdp, &tdw);
 
-	error = md_get_uint16le(mdp, &rqp->sr_rptid);
-	error = md_get_uint16le(mdp, &rqp->sr_rppid);
-	error = md_get_uint16le(mdp, &rqp->sr_rpuid);
-	error = md_get_uint16le(mdp, &rqp->sr_rpmid);
+	(void) md_get_uint16le(mdp, &rqp->sr_rptid);
+	(void) md_get_uint16le(mdp, &rqp->sr_rppid);
+	(void) md_get_uint16le(mdp, &rqp->sr_rpuid);
+	(void) md_get_uint16le(mdp, &rqp->sr_rpmid);
 
-	SMBSDEBUG("M:%04x, P:%04x, U:%04x, T:%04x, E: %d:%d\n",
+	printf("M:%04x, P:%04x, U:%04x, T:%04x, E: %d:%d\n",
 	    rqp->sr_rpmid, rqp->sr_rppid, rqp->sr_rpuid, rqp->sr_rptid,
 	    rqp->sr_errclass, rqp->sr_serror);
-	return error ? error : rperror;
+	return (rperror);
 }
 
 
