@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.49 1996/06/11 22:26:16 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.50 1996/06/12 12:46:21 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -149,7 +149,7 @@ espattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	struct esp_softc *sc = (void *)self;
 	struct bootpath *bp;
-	int dmachild = strncmp(parent->dv_xname, "sbus", 4) != 0;
+	int dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
 
 	/*
 	 * Make sure things are sane. I don't know if this is ever
