@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.34 2000/04/15 23:37:30 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.35 2000/04/16 01:23:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -444,6 +444,7 @@ int standend(void);
 int standout(void);
 void timeout(int delay);
 int underscore(void);
+int underend(void);
 int attron(int attr);
 int attroff(int attr);
 int attrset(int attr);
@@ -541,6 +542,7 @@ int	 scanw(const char *, ...);
 int	 scroll(WINDOW *win);
 int	 scrollok(WINDOW *win, bool bf);
 int	 setterm(char *);
+int	 start_color(void);
 WINDOW	*subwin(WINDOW *orig, int nl, int nc, int by, int bx);
 int	 touchline(WINDOW *win, int start, int count);
 int	 touchoverlap(WINDOW *win1, WINDOW *win2);
