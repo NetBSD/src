@@ -1,38 +1,30 @@
-#	$NetBSD: list,v 1.15 2000/11/05 18:35:56 pk Exp $
-
-LIBS	libhack.o -lz
-
-CRUNCHSPECIAL	gzip srcdir distrib/utils/x_gzip
-CRUNCHSPECIAL	init srcdir distrib/utils/init_s
-CRUNCHSPECIAL	sh srcdir distrib/utils/x_sh
-CRUNCHSPECIAL	umount srcdir distrib/utils/x_umount
+#	$NetBSD: list,v 1.16 2002/03/11 07:04:21 lukem Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin
 
-# copy the crunched binary, link to it, and kill it
-COPY	${OBJDIR}/ramdiskbin		ramdiskbin
-LINK	ramdiskbin			bin/pax usr/bin/tar usr/bin/cpio
-LINK	ramdiskbin			bin/sh
-LINK	ramdiskbin			bin/test bin/[
-LINK	ramdiskbin			bin/mt
+PROG	bin/pax usr/bin/tar usr/bin/cpio
+PROG	bin/sh
+PROG	bin/mt
 
-LINK	ramdiskbin			sbin/init
-LINK	ramdiskbin			sbin/newfs sbin/mount_mfs
-LINK	ramdiskbin			sbin/mount_ffs
-LINK	ramdiskbin			sbin/mount_cd9660
-LINK	ramdiskbin			sbin/umount
-LINK	ramdiskbin			sbin/reboot sbin/halt
-LINK	ramdiskbin			usr/sbin/chroot
-LINK	ramdiskbin			usr/bin/eject
-LINK	ramdiskbin			usr/bin/gzip usr/bin/gunzip usr/bin/zcat
+PROG	sbin/init
+PROG	sbin/newfs sbin/mount_mfs
+PROG	sbin/mount_ffs
+PROG	sbin/mount_cd9660
+PROG	sbin/umount
+PROG	sbin/reboot sbin/halt
+PROG	usr/sbin/chroot
+PROG	usr/bin/eject
+PROG	usr/bin/gzip usr/bin/gunzip usr/bin/zcat
+
+SPECIAL	gzip	srcdir distrib/utils/x_gzip
+SPECIAL	umount	srcdir distrib/utils/x_umount
+
+LIBS	libhack.o -lz -ll -lutil -lrmt
 
 # `internal' crunchgen links
-ARGVLINK sh             -sh
+ARGVLN	sh -sh
 
-# no longer needed...
-SPECIAL	/bin/rm ramdiskbin
+COPY	${CURDIR}/dot.profile .profile
 
-# copy the MAKEDEV script and make some devices
-SPECIAL cd dev; sh ${TOPDIR}/../../etc/etc.sparc/MAKEDEV floppy
-
-COPY	${REALCURDIR}/dot.profile		.profile
+MTREE	./cdrom		type=dir uname=root gname=wheel mode=0755
+MTREE	./instfs	type=dir uname=root gname=wheel mode=0755
