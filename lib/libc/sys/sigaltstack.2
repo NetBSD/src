@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaltstack.2,v 1.4 1997/03/08 13:47:08 mouse Exp $
+.\"	$NetBSD: sigaltstack.2,v 1.5 1997/09/20 02:49:43 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <signal.h>
+.Pp
 .Bd -literal
 struct sigaltstack {
 	char   *ss_sp;
@@ -73,7 +74,7 @@ the system arranges a switch to the signal stack for the
 duration of the signal handler's execution. 
 .Pp
 If
-.Dv SA_DISABLE
+.Dv SS_DISABLE
 is set in
 .Fa ss_flags ,
 .Fa ss_sp
@@ -97,9 +98,9 @@ is non-zero, the current signal stack state is returned.
 The
 .Fa ss_flags
 field will contain the value
-.Dv SA_ONSTACK
+.Dv SS_ONSTACK
 if the process is currently on a signal stack and
-.Dv SA_DISABLE
+.Dv SS_DISABLE
 if the signal stack is currently disabled.
 .Sh NOTES
 The value
@@ -115,6 +116,7 @@ sigstk.ss_flags = 0;
 if (sigaltstack(&sigstk,0) < 0)
 	perror("sigaltstack");
 .Ed
+.Pp
 An alternative approach is provided for programs with signal handlers
 that require a specific amount of stack space other than the default size.
 The value
@@ -141,7 +143,7 @@ is set to indicate the error.
 .Fn Sigstack
 will fail and the signal stack context will remain unchanged
 if one of the following occurs.
-.Bl -tag -width [ENOMEM]
+.Bl -tag -width Er
 .It Bq Er EFAULT
 Either
 .Fa ss
