@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.13 2002/09/13 13:28:43 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.14 2002/09/25 06:43:46 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -194,7 +194,7 @@ _rtld_digest_dynamic(obj)
 #endif
 			break;
 
-#if defined(__mips__)
+#ifdef __mips__
 		case DT_MIPS_LOCAL_GOTNO:
 			obj->local_gotno = dynp->d_un.d_val;
 			break;
