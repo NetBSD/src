@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.8 1998/03/27 01:30:08 cgd Exp $	*/
+/*	$NetBSD: quad.h,v 1.9 1998/08/29 18:16:57 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -112,6 +112,14 @@ typedef unsigned int	qshift_t;
 #else
 typedef u_quad_t	qshift_t;
 #endif
+
+/* Breakage for egcs-solaris2.x */
+
+#define __muldi3	__mul64
+#define __divdi3	__div64
+#define __udivdi3	__udiv64
+#define __moddi3	__rem64
+#define __umoddi3	__urem64
 
 __BEGIN_DECLS
 int __cmpdi2 __P((quad_t, quad_t));

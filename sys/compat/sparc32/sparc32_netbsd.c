@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_netbsd.c,v 1.2 1998/08/26 13:42:22 mrg Exp $	*/
+/*	$NetBSD: sparc32_netbsd.c,v 1.3 1998/08/29 18:16:57 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1513,6 +1513,7 @@ compat_sparc32_connect(p, v, retval)
 	return (sys_connect(p, &ua, retval));
 }
 
+#undef DEBUG
 int
 compat_sparc32_sigreturn(p, v, retval)
 	struct proc *p;
@@ -1520,10 +1521,105 @@ compat_sparc32_sigreturn(p, v, retval)
 	register_t *retval;
 {
 	struct compat_sparc32_sigreturn_args /* {
-		syscallarg(sparc32_sigcontextp_t) sigcntxp;
+		syscallarg(struct sparc32_sigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct sparc32_sigcontext *scp;
+	struct sparc32_sigcontext sc;
+	register struct trapframe *tf;
+	struct rwindow32 *rwstack, *kstack;
 
+	/* First ensure consistent stack state (see sendsig). */
+	write_user_windows();
+	if (rwindow_save(p)) {
+#ifdef DEBUG
+		printf("sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
+		Debugger();
+#endif
+		sigexit(p, SIGILL);
+	}
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sigreturn: %s[%d], sigcntxp %p\n",
+		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
+	scp = SCARG(uap, sigcntxp);
+ 	if ((int)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+#ifdef DEBUG
+	{
+		printf("sigreturn: copyin failed\n");
+		Debugger();
+		return (EINVAL);
+	}
+#else
+		return (EINVAL);
+#endif
+	tf = p->p_md.md_tf;
+	/*
+	 * Only the icc bits in the psr are used, so it need not be
+	 * verified.  pc and npc must be multiples of 4.  This is all
+	 * that is required; if it holds, just do it.
+	 */
+	if (((sc.sc_pc | sc.sc_npc) & 3) != 0)
+#ifdef DEBUG
+	{
+		printf("sigreturn: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+		Debugger();
+		return (EINVAL);
+	}
+#else
+		return (EINVAL);
+#endif
+	/* take only psr ICC field */
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(sc.sc_psr);
+	tf->tf_pc = (int64_t)sc.sc_pc;
+	tf->tf_npc = (int64_t)sc.sc_npc;
+	tf->tf_global[1] = (int64_t)sc.sc_g1;
+	tf->tf_out[0] = (int64_t)sc.sc_o0;
+	tf->tf_out[6] = (int64_t)sc.sc_sp;
+	rwstack = (struct rwindow32 *)tf->tf_out[6];
+	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
+	for (i=0; i<8; i++) {
+		int tmp;
+		if (copyin((caddr_t)&rwstack->rw_local[i], &tmp, sizeof tmp)) {
+			printf("sigreturn: cannot load \%l%d from %p\n", i, &rwstack->rw_local[i]);
+			Debugger();
+		}
+		tf->tf_local[i] = (int64_t)tmp;
+		if (copyin((caddr_t)&rwstack->rw_in[i], &tmp, sizeof tmp)) {
+			printf("sigreturn: cannot load \%i%d from %p\n", i, &rwstack->rw_in[i]);
+			Debugger();
+		}
+		tf->tf_in[i] = (int)tmp;
+	}
+#ifdef DEBUG
+	/* Need to sync tf locals and ins with stack to prevent panic */
+	{
+		int i;
+
+		kstack = (struct rwindow32 *)tf->tf_out[6];
+		for (i=0; i<8; i++) {
+			tf->tf_local[i] = fuword(&kstack->rw_local[i]);
+			tf->tf_in[i] = fuword(&kstack->rw_in[i]);
+		}
+	}
+#endif
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW) {
+		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
+		       (int)tf->tf_pc, (int)tf->tf_out[6], (int)tf->tf_tstate);
+		if (sigdebug & SDB_DDB) Debugger();
+	}
+#endif
+	if (sc.sc_onstack & 1)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = sc.sc_mask & ~sigcantmask;
+	return (EJUSTRETURN);
 }
+
 
 int
 compat_sparc32_bind(p, v, retval)
