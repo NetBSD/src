@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.13 1996/10/13 02:04:29 christos Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.14 1997/06/24 02:26:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -222,6 +222,7 @@ iso_pcbbind(v, nam, p)
 	} else {
 		if ((nam = m_copy(nam, 0, (int) M_COPYALL)) == 0)
 			return ENOBUFS;
+		isop->isop_mladdr = nam;
 		isop->isop_laddr = mtod(nam, struct sockaddr_iso *);
 	}
 	bcopy((caddr_t) siso, (caddr_t) isop->isop_laddr, siso->siso_len);
@@ -376,6 +377,7 @@ iso_pcbconnect(v, nam)
 			if (m == 0)
 				return ENOBUFS;
 			m->m_len = totlen;
+			isop->isop_mladdr = m;
 			isop->isop_laddr = siso = mtod(m, struct sockaddr_iso *);
 		}
 		siso->siso_nlen = ia->ia_addr.siso_nlen;
@@ -408,6 +410,7 @@ iso_pcbconnect(v, nam)
 			struct mbuf    *m = m_get(M_DONTWAIT, MT_SONAME);
 			if (m == 0)
 				return ENOBUFS;
+			isop->isop_mfaddr = m;
 			isop->isop_faddr = mtod(m, struct sockaddr_iso *);
 		}
 	}
@@ -460,7 +463,7 @@ iso_pcbdisconnect(v)
 		ovbcopy(otsel, TSEL(siso), siso->siso_tlen);
 	}
 	if (isop->isop_faddr && isop->isop_faddr != &isop->isop_sfaddr)
-		m_freem(dtom(isop->isop_faddr));
+		m_freem(isop->isop_mfaddr);
 	isop->isop_faddr = 0;
 	if (isop->isop_socket->so_state & SS_NOFDREF)
 		iso_pcbdetach(isop);
@@ -560,7 +563,7 @@ iso_pcbdetach(v)
 	}
 #endif
 	if (isop->isop_laddr && (isop->isop_laddr != &isop->isop_sladdr))
-		m_freem(dtom(isop->isop_laddr));
+		m_freem(isop->isop_mladdr);
 	free((caddr_t) isop, M_PCB);
 }
 
