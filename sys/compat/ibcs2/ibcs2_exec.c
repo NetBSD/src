@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.6 1995/04/13 20:49:06 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.7 1995/04/18 02:18:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -57,14 +57,16 @@ int exec_ibcs2_coff_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct coff_filehdr *, 
 				     struct coff_aouthdr *));
 int exec_ibcs2_coff_setup_stack __P((struct proc *, struct exec_package *));
-void cpu_exec_ibcs2_coff_setup __P((struct proc *, struct exec_package *));
+void cpu_exec_ibcs2_coff_setup __P((int, struct proc *, struct exec_package *,
+				    void *));
 
 int exec_ibcs2_xout_prep_nmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 int exec_ibcs2_xout_setup_stack __P((struct proc *, struct exec_package *));
-void cpu_exec_ibcs2_xout_setup __P((struct proc *, struct exec_package *));
+void cpu_exec_ibcs2_xout_setup __P((int, struct proc *, struct exec_package *,
+				    void *));
 int coff_load_shlib __P((struct proc *, char *, struct exec_package *));
 
 /*
@@ -532,10 +534,13 @@ coff_load_shlib(p, path, epp)
 }
 
 void
-cpu_exec_ibcs2_coff_setup(p, epp)
+cpu_exec_ibcs2_coff_setup(cmd, p, epp, sp)
+	int cmd;
         struct proc *p;
         struct exec_package *epp;
+	void *sp;
 {
+
 #if 0
         struct coff_aouthdr *ap;
 
@@ -583,12 +588,13 @@ exec_ibcs2_xout_makecmds(p, epp)
 }
 
 void
-cpu_exec_ibcs2_xout_setup(p, epp)
+cpu_exec_ibcs2_xout_setup(cmd, p, epp, sp)
+	int cmd;
         struct proc *p;
         struct exec_package *epp;
+	void *sp;
 {
 
-	return;
 }
 
 /*
