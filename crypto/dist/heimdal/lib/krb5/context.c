@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: context.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: context.c,v 1.2 2000/07/16 18:27:53 thorpej Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -179,11 +179,14 @@ krb5_init_context(krb5_context *context)
 
     if (ret == 0)
 	p->cf = tmp_cf;
+    else {
 #if 0
-    else
 	krb5_warnx (p, "Unable to parse config file %s.  Ignoring.",
 		    config_file); /* XXX */
 #endif
+	free(p);
+	return ENXIO;	/* XXX close enough for "not configured"? */
+    }
 
     ret = init_context_from_config_file(p);
     if(ret)
