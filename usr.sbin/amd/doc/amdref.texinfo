@@ -35,9 +35,9 @@
 @c LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
-@c	%W% (Berkeley) %G%
+@c	@(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
 @c
-@c $Id: amdref.texinfo,v 1.1 1993/11/27 21:19:48 mycroft Exp $
+@c $Id: amdref.texinfo,v 1.2 1994/06/13 19:49:24 mycroft Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
