@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.23 2001/07/18 05:46:44 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.24 2002/04/30 00:28:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.23 2001/07/18 05:46:44 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.24 2002/04/30 00:28:58 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,9 +354,12 @@ lfs_segmapv(FS_INFO *fsp, int seg, caddr_t seg_buf, BLOCK_INFO_15 **blocks, int 
 	i = 0;
 	bip = NULL;
 	lfsp = &fsp->fi_lfs;
-	nelem = 2 * lfsp->lfs_ssize;
-	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO_15))))
+	nelem = 2 * segtod(lfsp, 1);
+	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO_15)))) {
+		syslog(LOG_DEBUG, "couldn't allocate %d bytes in lfs_segmapv",
+			nelem * sizeof(BLOCK_INFO_15));
 		goto err0;
+	}
 
 	sup = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, seg);
 	s = seg_buf + (sup->su_flags & SEGUSE_SUPERBLOCK ? LFS_SBPAD : 0);
@@ -624,7 +627,7 @@ pseg_valid (FS_INFO *fsp, SEGSUM *ssp, daddr_t addr)
         }
 
 	if ((nblocks = dump_summary(&fsp->fi_lfs, ssp, 0, NULL, addr)) <= 0 ||
-	    nblocks > fsp->fi_lfs.lfs_ssize - 1)
+	    nblocks > (fsp->fi_lfs.lfs_ssize / fsp->fi_lfs.lfs_fsize) - 1)
 		return(0);
 
 #if 0
