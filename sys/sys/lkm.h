@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
+/*	$NetBSD: lkm.h,v 1.13 1997/05/28 02:35:33 thorpej Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -221,7 +221,7 @@ struct lkm_table {
 		name,				\
 		devslot,			\
 		devtype,			\
-		(void *)devp			\
+		{ (void *)devp }, 		\
 	};
 
 #define	MOD_EXEC(name,execslot,execsw)		\
