@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.3 2000/05/20 13:21:29 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.4 2000/05/21 08:13:20 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -132,6 +132,7 @@ _from:	.long	0		# boot prog type
  */
 	.align 2
 cont_750:
+	movl	$_start, sp	# move stack to avoid clobbering the code
 	pushr	$0x131		# save clobbered registers
 	clrl	r4		# r4 == # of blocks transferred
 	movab	_start,r5	# r5 have base address for next transfer
