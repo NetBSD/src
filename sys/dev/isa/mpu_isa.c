@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.1 1999/08/01 17:53:39 augustss Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.2 1999/08/01 18:05:41 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/mpuvar.h>
+#include <dev/ic/mpuvar.h>
 
 struct mpu_isa_softc {
 	struct mpu_softc sc_mpu;	/* generic part */

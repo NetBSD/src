@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.2 1999/08/01 18:05:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -49,7 +49,7 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#include <dev/isa/mpuvar.h>	/* XXX move this out of dev/isa */
+#include <dev/ic/mpuvar.h>
 #include <dev/ic/i8237reg.h>
 #include <dev/pci/esoreg.h>
 #include <dev/pci/esovar.h>
