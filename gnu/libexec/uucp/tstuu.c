@@ -20,193 +20,26 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o AIRS, P.O. Box 520, Waltham, MA 02254.
-
-   $Log: tstuu.c,v $
-   Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-   initial import of 386bsd-0.1 sources
-
- * Revision 1.2  1992/05/13  05:42:07  rich
- * ported to 386bsd
- *
- * Revision 1.1  1992/05/10  20:03:07  rich
- * Initial revision
- *
-   Revision 1.52  1992/04/02  23:02:40  ian
-   Conditionally declare times
-
-   Revision 1.51  1992/03/28  04:29:19  ian
-   Roberto Biancardi: define SIGCHLD as SIGCLD if necessary
-
-   Revision 1.50  1992/03/16  22:22:35  ian
-   Adjusted external declarations
-
-   Revision 1.49  1992/03/15  01:54:46  ian
-   All execs are now done in isspawn, all waits are done in iswait
-
-   Revision 1.48  1992/03/12  19:54:43  ian
-   Debugging based on types rather than number
-
-   Revision 1.47  1992/03/08  17:02:24  ian
-   Ted Lindgreen: don't include <sys/ioctl.h> if it's not there
-
-   Revision 1.46  1992/03/04  15:38:19  ian
-   Roberto Biancardi: use poll if we haven't got select
-
-   Revision 1.45  1992/03/04  01:40:51  ian
-   Thomas Fischer: tweaked a bit for the NeXT
-
-   Revision 1.44  1992/02/27  05:40:54  ian
-   T. William Wells: detach from controlling terminal, handle signals safely
-
-   Revision 1.43  1992/02/24  20:07:43  ian
-   John Theus: some systems don't have <fcntl.h>
-
-   Revision 1.42  1992/02/24  04:58:47  ian
-   Only permit files to be received into directories that are world-writeable
-
-   Revision 1.41  1992/02/23  03:26:51  ian
-   Overhaul to use automatic configure shell script
-
-   Revision 1.40  1992/02/08  03:54:18  ian
-   Include <string.h> only in <uucp.h>, added 1992 copyright
-
-   Revision 1.39  1992/01/29  04:27:11  ian
-   Jay Vassos-Libove: removed some conflicting declarations
-
-   Revision 1.38  1992/01/19  02:53:05  ian
-   Mike Park: don't sleep when buffer is full; it's too slow
-
-   Revision 1.37  1992/01/16  16:32:44  ian
-   Mike Park: ioctl is sometimes declared varadic, so we can't declare it
-
-   Revision 1.36  1992/01/15  21:06:11  ian
-   Mike Park: some systems can't include <sys/time.h> and <time.h> together
-
-   Revision 1.35  1992/01/15  20:48:41  ian
-   Mike Park: removed prototype for times
-
-   Revision 1.34  1992/01/15  20:02:05  ian
-   Mike Park: sh on NeXT interprets leading ~ (incredible, isn't it)
-
-   Revision 1.33  1992/01/15  19:40:35  ian
-   Mike Park: handle HAVE_UNION_WAIT correctly and completely
-
-   Revision 1.32  1992/01/13  19:38:16  ian
-   Chip Salzenberg: can't declare execl, since it is varadic
-
-   Revision 1.31  1992/01/13  06:11:39  ian
-   David Nugent: can't declare open or fcntl
-
-   Revision 1.30  1992/01/13  05:53:04  ian
-   Mike Park: added HAVE_WAITPID and HAVE_WAIT4 configuration parameters
-
-   Revision 1.29  1992/01/13  05:37:20  ian
-   Mike Park: use IPUBLIC_DIRECTORY_MODE rather than S_ macros
-
-   Revision 1.28  1991/12/29  04:04:18  ian
-   Added a bunch of extern definitions
-
-   Revision 1.27  1991/12/29  00:55:23  ian
-   Monty Solomon: added HAVE_UNION_WAIT
-
-   Revision 1.26  1991/12/28  06:35:05  ian
-   Use TIMES_TICK rather than CLK_TCK
-
-   Revision 1.25  1991/12/28  06:10:50  ian
-   Added HAVE_STRCHR and HAVE_INDEX to conf.h
-
-   Revision 1.24  1991/12/28  04:05:13  ian
-   Create spool directories
-
-   Revision 1.23  1991/12/28  03:49:23  ian
-   Added HAVE_MEMFNS and HAVE_BFNS; changed uses of memset to bzero
-
-   Revision 1.22  1991/12/22  22:14:19  ian
-   Monty Solomon: added HAVE_UNISTD_H configuration parameter
-
-   Revision 1.21  1991/12/21  22:07:47  ian
-   John Theus: don't warn if port file does not exist
-
-   Revision 1.20  1991/12/19  04:25:57  ian
-   Terry Gardner: configuration parameter to not use both NONBLOCK and NDELAY
-
-   Revision 1.19  1991/12/19  03:55:40  ian
-   Give the uucico processes a chance to die on their own
-
-   Revision 1.18  1991/12/18  05:12:00  ian
-   Added -l option to uucico to prompt for login name once and then exit
-
-   Revision 1.17  1991/12/17  22:21:19  ian
-   Sleep before printing login to wait until input has been flushed
-
-   Revision 1.16  1991/12/17  04:55:01  ian
-   David Nugent: ignore SIGHUP in uucico and uuxqt
-
-   Revision 1.15  1991/12/11  04:21:37  ian
-   Arne Ludwig: merge in Arne Ludwig's patches for V2 and BNU style logging
-
-   Revision 1.14  1991/12/07  02:57:28  ian
-   Allow failure message to be sent from uux test
-
-   Revision 1.13  1991/12/01  19:58:01  ian
-   Don't use the not-very-portable fd_set typedef at all
-
-   Revision 1.12  1991/12/01  19:41:00  ian
-   Don't read V2 or BNU configuration files while testing
-
-   Revision 1.11  1991/12/01  03:29:30  ian
-   Bob Izenberg: get definitions for EAGAIN and EWOULDBLOCK
-
-   Revision 1.10  1991/12/01  02:23:12  ian
-   Niels Baggesen: don't multiply include <unistd.h>
-
-   Revision 1.9  1991/12/01  02:12:02  ian
-   David Nugent: some systems don't define O_NDELAY
-
-   Revision 1.8  1991/11/26  02:13:48  ian
-   Bob Denny: Add definitions for FD_SET, FD_ZERO and FD_ISSET
-
-   Revision 1.7  1991/11/26  01:45:42  ian
-   Marty Shannon: configuration option to not include <sys/wait.h>
-
-   Revision 1.6  1991/11/21  22:17:06  ian
-   Add version string, print version when printing usage
-
-   Revision 1.5  1991/11/14  21:07:15  ian
-   Create port file and add protocol command for second system
-
-   Revision 1.4  1991/11/12  19:47:04  ian
-   Add called-chat set of commands to run a chat script on an incoming call
-
-   Revision 1.3  1991/11/11  23:47:24  ian
-   Added chat-program to run a program to do a chat script
-
-   Revision 1.2  1991/11/11  04:21:16  ian
-   Added 'f' protocol
-
-   Revision 1.1  1991/09/10  19:40:31  ian
-   Initial revision
-
+   c/o Infinity Development Systems, P.O. Box 520, Waltham, MA 02254.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-char tstuu_rcsid[] = "$Id: tstuu.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+const char tstuu_rcsid[] = "$Id: tstuu.c,v 1.2 1993/08/04 19:29:58 jtc Exp $";
 #endif
+
+#include "sysdep.h"
+#include "system.h"
+#include "getopt.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
 
-#if USE_STDIO && HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include "sysdep.h"
-
+#if HAVE_SYS_TIMES_H
 #include <sys/times.h>
+#endif
 
 #if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -214,11 +47,18 @@ char tstuu_rcsid[] = "$Id: tstuu.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
 
 #if HAVE_SELECT
 #include <sys/time.h>
+#if HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 #endif
 
 #if HAVE_POLL
+#if HAVE_STROPTS_H
 #include <stropts.h>
+#endif
+#if HAVE_POLL_H
 #include <poll.h>
+#endif
 #endif
 
 #if HAVE_FCNTL_H
@@ -249,7 +89,10 @@ typedef union wait wait_status;
 typedef int wait_status;
 #endif
 
-#include "getopt.h"
+#if HAVE_STREAMS_PTYS
+#include <termio.h>
+extern char *ptsname ();
+#endif
 
 /* Get definitions for both O_NONBLOCK and O_NDELAY.  */
 
@@ -273,17 +116,7 @@ typedef int wait_status;
  #error No way to do nonblocking I/O
 #endif
 
-/* If we can define them both together, do so.  This is because some
-   ancient drivers on some systems appear to look for one but not the
-   other.  Otherwise just use O_NONBLOCK.  */
-#if COMBINED_UNBLOCK
-#define FILE_UNBLOCKED (O_NDELAY | O_NONBLOCK)
-#else
-#define FILE_UNBLOCKED O_NONBLOCK
-#endif
-
-/* Get definitions for both EAGAIN and EWOULDBLOCK.  */
-
+/* Get definitions for EAGAIN, EWOULDBLOCK and ENODATA.  */
 #ifndef EAGAIN
 #ifndef EWOULDBLOCK
 #define EAGAIN (-1)
@@ -296,6 +129,10 @@ typedef int wait_status;
 #define EWOULDBLOCK EAGAIN
 #endif /* ! defined (EWOULDBLOCK) */
 #endif /* defined (EAGAIN) */
+
+#ifndef ENODATA
+#define ENODATA EAGAIN
+#endif
 
 /* Make sure we have a CLK_TCK definition, even if it makes no sense.
    This is in case TIMES_TICK is defined as CLK_TCK.  */
@@ -318,29 +155,16 @@ extern long times ();
 #define SIGCHLD SIGCLD
 #endif
 
+#if 1
 #define ZUUCICO_CMD "login uucp"
 #define UUCICO_EXECL "/bin/login", "login", "uucp"
+#else
+#define ZUUCICO_CMD "su - nuucp"
+#define UUCICO_EXECL "/bin/su", "su", "-", "nuucp"
+#endif
 
 #if ! HAVE_SELECT && ! HAVE_POLL
  #error You need select or poll
-#endif
-
-/* External functions.  */
-extern int close (), dup2 (), access ();
-extern int read (), write (), unlink ();
-extern int fclose (), fflush (), rand (), system ();
-extern pid_t fork ();
-
-#if HAVE_SELECT
-extern int select ();
-#endif
-
-#if HAVE_POLL
-extern int poll ();
-#endif
-
-#if ! HAVE_WAITPID && HAVE_WAIT4
-extern pid_t wait4 ();
 #endif
 
 #if ! HAVE_REMOVE
@@ -348,20 +172,35 @@ extern pid_t wait4 ();
 #define remove unlink
 #endif
 
+/* Buffer chain to hold data read from a uucico.  */
+
+#define BUFCHARS (512)
+
+struct sbuf
+{
+  struct sbuf *qnext;
+  int cstart;
+  int cend;
+  char ab[BUFCHARS];
+};
+  
 /* Local functions.  */
 
 static void umake_file P((const char *zfile, int cextra));
-static void uprepare_test P((int itest, boolean fcall_uucico,
+static void uprepare_test P((boolean fmake, int itest,
+			     boolean fcall_uucico,
 			     const char *zsys));
 static void ucheck_file P((const char *zfile, const char *zerr,
 			   int cextra));
 static void ucheck_test P((int itest, boolean fcall_uucico));
-static void utransfer P((int ofrom, int oto, int otoslave, int *pc));
-static SIGtype uchild P((int isig));
+static RETSIGTYPE uchild P((int isig));
 static int cpshow P((char *z, int bchar));
 static void uchoose P((int *po1, int *po2));
+static long cread P((int o, struct sbuf **));
+static boolean fsend P((int o, int oslave, struct sbuf **));
 static boolean fwritable P((int o));
 static void xsystem P((const char *zcmd));
+static FILE *xfopen P((const char *zname, const char *zmode));
 
 static char *zDebug;
 static int iTest;
@@ -380,32 +219,36 @@ main (argc, argv)
 {
   int iopt;
   const char *zcmd1, *zcmd2;
-  const char *zpty;
   const char *zsys;
+  boolean fmake = TRUE;
+  int omaster1, oslave1, omaster2, oslave2;
   char abpty1[sizeof "/dev/ptyp0"];
   char abpty2[sizeof "/dev/ptyp0"];
-  char *zptyname;
-  int omaster1, oslave1, omaster2, oslave2;
+  struct sbuf *qbuf1, *qbuf2;
 
   zcmd1 = NULL;
   zcmd2 = NULL;
   zsys = "test2";
 
-  while ((iopt = getopt (argc, argv, "c:p:s:t:ux:1:2:")) != EOF)
+  while ((iopt = getopt (argc, argv, "c:np:s:t:ux:1:2:")) != EOF)
     {
       switch (iopt)
 	{
 	case 'c':
 	  zProtocols = optarg;
 	  break;
+	case 'n':
+	  fmake = FALSE;
+	  break;
 	case 'p':
-	  iPercent = atoi (optarg);
+	  iPercent = (int) strtol (optarg, (char **) NULL, 10);
+	  srand ((unsigned int) ixsysdep_time ((long *) NULL));
 	  break;
 	case 's':
 	  zsys = optarg;
 	  break;
 	case 't':
-	  iTest = atoi (optarg);
+	  iTest = (int) strtol (optarg, (char **) NULL, 10);
 	  break;
 	case 'u':
 	  fCall_uucico = TRUE;
@@ -422,9 +265,9 @@ main (argc, argv)
 	default:
 	  fprintf (stderr,
 		   "Taylor UUCP version %s, copyright (C) 1991, 1992 Ian Lance Taylor\n",
-		   abVersion);
+		   VERSION);
 	  fprintf (stderr,
-		   "Usage: tstuu [-x] [-t #] [-u] [-1 cmd] [-2 cmd]\n");
+		   "Usage: tstuu [-xn] [-t #] [-u] [-1 cmd] [-2 cmd]\n");
 	  exit (EXIT_FAILURE);
 	}
     }
@@ -432,7 +275,7 @@ main (argc, argv)
   if (fCall_uucico && zcmd2 == NULL)
     zcmd2 = ZUUCICO_CMD;
 
-  uprepare_test (iTest, fCall_uucico, zsys);
+  uprepare_test (fmake, iTest, fCall_uucico, zsys);
 
   (void) remove ("/usr/tmp/tstuu/spool1/core");
   (void) remove ("/usr/tmp/tstuu/spool2/core");
@@ -441,74 +284,170 @@ main (argc, argv)
   oslave1 = -1;
   omaster2 = -1;
   oslave2 = -1;
-  zptyname = abpty1;
 
-  for (zpty = "pqrs"; *zpty != '\0'; ++zpty)
-    {
-      int ipty;
+#if ! HAVE_STREAMS_PTYS
 
-      for (ipty = 0; ipty < 16; ipty++)
-	{
-	  int om, os;
-	  FILE *e;
+  {
+    char *zptyname;
+    const char *zpty;
+
+    zptyname = abpty1;
+
+    for (zpty = "pqrs"; *zpty != '\0'; ++zpty)
+      {
+	int ipty;
+
+	for (ipty = 0; ipty < 16; ipty++)
+	  {
+	    int om, os;
+	    FILE *e;
   
-	  sprintf (zptyname, "/dev/pty%c%c", *zpty,
-		   "0123456789abcdef"[ipty]);
-	  om = open (zptyname, O_RDWR);
-	  if (om < 0)
-	    continue;
-	  zptyname[5] = 't';
-	  os = open (zptyname, O_RDWR);
-	  if (os < 0)
-	    {
-	      (void) close (om);
+	    sprintf (zptyname, "/dev/pty%c%c", *zpty,
+		     "0123456789abcdef"[ipty]);
+	    om = open (zptyname, O_RDWR);
+	    if (om < 0)
 	      continue;
-	    }
+	    zptyname[5] = 't';
+	    os = open (zptyname, O_RDWR);
+	    if (os < 0)
+	      {
+		(void) close (om);
+		continue;
+	      }
 
-	  if (omaster1 == -1)
-	    {
-	      omaster1 = om;
-	      oslave1 = os;
+	    if (omaster1 == -1)
+	      {
+		omaster1 = om;
+		oslave1 = os;
 
-	      e = fopen ("/usr/tmp/tstuu/pty1", "w");
-	      if (e == NULL)
-		{
-		  perror ("fopen");
-		  exit (EXIT_FAILURE);
-		}
-	      fprintf (e, "%s", zptyname + 5);
-	      if (fclose (e) != 0)
-		{
-		  perror ("fclose");
-		  exit (EXIT_FAILURE);
-		}
+		e = fopen ("/usr/tmp/tstuu/pty1", "w");
+		if (e == NULL)
+		  {
+		    perror ("fopen");
+		    exit (EXIT_FAILURE);
+		  }
+		fprintf (e, "%s", zptyname + 5);
+		if (fclose (e) != 0)
+		  {
+		    perror ("fclose");
+		    exit (EXIT_FAILURE);
+		  }
 
-	      zptyname = abpty2;
-	    }
-	  else
-	    {
-	      omaster2 = om;
-	      oslave2 = os;
+		zptyname = abpty2;
+	      }
+	    else
+	      {
+		omaster2 = om;
+		oslave2 = os;
 
-	      e = fopen ("/usr/tmp/tstuu/pty2", "w");
-	      if (e == NULL)
-		{
-		  perror ("fopen");
-		  exit (EXIT_FAILURE);
-		}
-	      fprintf (e, "%s", zptyname + 5);
-	      if (fclose (e) != 0)
-		{
-		  perror ("fclose");
-		  exit (EXIT_FAILURE);
-		}
-	      break;
-	    }
-	}
+		e = fopen ("/usr/tmp/tstuu/pty2", "w");
+		if (e == NULL)
+		  {
+		    perror ("fopen");
+		    exit (EXIT_FAILURE);
+		  }
+		fprintf (e, "%s", zptyname + 5);
+		if (fclose (e) != 0)
+		  {
+		    perror ("fclose");
+		    exit (EXIT_FAILURE);
+		  }
+		break;
+	      }
+	  }
 
-      if (omaster1 != -1 && omaster2 != -1)
-	break;
-    }
+	if (omaster1 != -1 && omaster2 != -1)
+	  break;
+      }
+  }
+
+#else /* HAVE_STREAMS_PTYS */
+
+  {
+    int ipty;
+
+    for (ipty = 0; ipty < 2; ipty++)
+      {
+	int om, os;
+	FILE *e;
+	char *znam;
+	struct termio stio;
+
+	om = open ((char *) "/dev/ptmx", O_RDWR);
+	if (om < 0)
+	  break;
+	znam = ptsname (om);
+	if (znam == NULL)
+	  break;
+	if (unlockpt (om) != 0
+	    || grantpt (om) != 0)
+	  break;
+
+	os = open (znam, O_RDWR);
+	if (os < 0)
+	  {
+	    (void) close (om);
+	    om = -1;
+	    break;
+	  }
+
+	if (ioctl (os, I_PUSH, "ptem") < 0
+	    || ioctl(os, I_PUSH, "ldterm") < 0)
+	  {
+	    perror ("ioctl");
+	    exit (EXIT_FAILURE);
+	  }
+
+	/* Can this really be right? */
+	memset (&stio, 0, sizeof (stio));
+	stio.c_cflag = B9600 | CS8 | CREAD | HUPCL;
+
+	if (ioctl(os, TCSETA, &stio) < 0)
+	  {
+	    perror ("TCSETA");
+	    exit (EXIT_FAILURE);
+	  }
+
+	if (omaster1 == -1)
+	  {
+	    strcpy (abpty1, znam);
+	    omaster1 = om;
+	    oslave1 = os;
+	    e = fopen ("/usr/tmp/tstuu/pty1", "w");
+	    if (e == NULL)
+	      {
+		perror ("fopen");
+		exit (EXIT_FAILURE);
+	      }
+	    fprintf (e, "%s", znam + 5);
+	    if (fclose (e) != 0)
+	      {
+		perror ("fclose");
+		exit (EXIT_FAILURE);
+	      }
+	  }
+	else
+	  {
+	    strcpy (abpty2, znam);
+	    omaster2 = om;
+	    oslave2 = os;
+	    e = fopen ("/usr/tmp/tstuu/pty2", "w");
+	    if (e == NULL)
+	      {
+		perror ("fopen");
+		exit (EXIT_FAILURE);
+	      }
+	    fprintf (e, "%s", znam + 5);
+	    if (fclose (e) != 0)
+	      {
+		perror ("fclose");
+		exit (EXIT_FAILURE);
+	      }
+	  }
+      }
+  }
+
+#endif /* HAVE_STREAMS_PTYS */
 
   if (omaster2 == -1)
     {
@@ -571,7 +510,7 @@ main (argc, argv)
 	{
 	  (void) execl ("uucico", "uucico", "-I", "/usr/tmp/tstuu/Config1",
 			"-q", "-S", zsys, "-pstdin", (const char *) NULL);
-	  fprintf (stderr, "execl failed\n");
+	  perror ("execl failed");
 	  exit (EXIT_FAILURE);
 	}
     }
@@ -605,7 +544,7 @@ main (argc, argv)
       if (fCall_uucico)
 	{
 	  (void) execl (UUCICO_EXECL, (const char *) NULL);
-	  fprintf (stderr, "execl failed\n");
+	  perror ("execl failed");
 	  exit (EXIT_FAILURE);
 	}
       else if (zcmd2 != NULL)
@@ -614,19 +553,27 @@ main (argc, argv)
 	{
 	  (void) execl ("uucico", "uucico", "-I", "/usr/tmp/tstuu/Config2",
 			"-lq", (const char *)NULL);
-	  fprintf (stderr, "execl failed\n");
+	  perror ("execl failed");
 	  exit (EXIT_FAILURE);
 	}
     }
 
   signal (SIGCHLD, uchild);
 
-  (void) fcntl (omaster1, F_SETFL, FILE_UNBLOCKED);
-  (void) fcntl (omaster2, F_SETFL, FILE_UNBLOCKED);
+  if (fcntl (omaster1, F_SETFL, O_NDELAY | O_NONBLOCK) < 0
+      && errno == EINVAL)
+    (void) fcntl (omaster1, F_SETFL, O_NONBLOCK);
+  if (fcntl (omaster2, F_SETFL, O_NDELAY | O_NONBLOCK) < 0
+      && errno == EINVAL)
+    (void) fcntl (omaster2, F_SETFL, O_NONBLOCK);
+
+  qbuf1 = NULL;
+  qbuf2 = NULL;
 
   while (TRUE)
     {
       int o1, o2;
+      boolean fcont;
 
       o1 = omaster1;
       o2 = omaster2;
@@ -639,13 +586,39 @@ main (argc, argv)
 	  continue;
 	}
 
-      if (o1 != -1
-	  && fwritable (omaster2))
-	utransfer (omaster1, omaster2, oslave2, &cFrom1);
+      if (o1 != -1)
+	cFrom1 += cread (omaster1, &qbuf1);
 
-      if (o2 != - 1
-	  && fwritable (omaster1))
-	utransfer (omaster2, omaster1, oslave1, &cFrom2);
+      if (o2 != -1)
+	cFrom2 += cread (omaster2, &qbuf2);
+
+      do
+	{
+	  fcont = FALSE;
+
+	  if (qbuf1 != NULL
+	      && fwritable (omaster2)
+	      && fsend (omaster2, oslave2, &qbuf1))
+	    fcont = TRUE;
+
+	  if (qbuf2 != NULL
+	      && fwritable (omaster1)
+	      && fsend (omaster1, oslave1, &qbuf2))
+	    fcont = TRUE;
+
+	  if (! fcont
+	      && (qbuf1 != NULL || qbuf2 != NULL))
+	    {
+	      long cgot1, cgot2;
+
+	      cgot1 = cread (omaster1, &qbuf1);
+	      cFrom1 += cgot1;
+	      cgot2 = cread (omaster2, &qbuf2);
+	      cFrom2 += cgot2;
+	      fcont = TRUE;
+	    }
+	}
+      while (fcont);
     }
 
   /*NOTREACHED*/
@@ -653,7 +626,7 @@ main (argc, argv)
 
 /* When a child dies, kill them both.  */
 
-static SIGtype
+static RETSIGTYPE
 uchild (isig)
      int isig;
 {
@@ -662,7 +635,7 @@ uchild (isig)
   signal (SIGCHLD, SIG_DFL);
 
   /* Give the processes a chance to die on their own.  */
-  sleep (1);
+  sleep (2);
 
   (void) kill (iPid1, SIGTERM);
   (void) kill (iPid2, SIGTERM);
@@ -670,10 +643,10 @@ uchild (isig)
   (void) times (&sbase);
 
 #if HAVE_WAITPID
-  (void) waitpid (iPid1, (wait_status *) NULL, 0);
+  (void) waitpid (iPid1, (pointer) NULL, 0);
 #else /* ! HAVE_WAITPID */
 #if HAVE_WAIT4
-  (void) wait4 (iPid1, (wait_status *) NULL, 0, (struct rusage *) NULL);
+  (void) wait4 (iPid1, (pointer) NULL, 0, (struct rusage *) NULL);
 #else /* ! HAVE_WAIT4 */
   (void) wait ((wait_status *) NULL);
 #endif /* ! HAVE_WAIT4 */
@@ -682,7 +655,7 @@ uchild (isig)
   (void) times (&s1);
 
 #if HAVE_WAITPID
-  (void) waitpid (iPid2, (wait_status *) NULL, 0);
+  (void) waitpid (iPid2, (pointer) NULL, 0);
 #else /* ! HAVE_WAITPID */
 #if HAVE_WAIT4
   (void) wait4 (iPid2, (wait_status *) NULL, 0, (struct rusage *) NULL);
@@ -729,8 +702,6 @@ uchild (isig)
 }
 
 /* Open a file without error.  */
-
-static FILE *xfopen P((const char *zname, const char *zmode));
 
 static FILE *
 xfopen (zname, zmode)
@@ -851,7 +822,8 @@ ucheck_file (z, zerr, c)
 /* Prepare all the configuration files for testing.  */
 
 static void
-uprepare_test (itest, fcall_uucico, zsys)
+uprepare_test (fmake, itest, fcall_uucico, zsys)
+     boolean fmake;
      int itest;
      boolean fcall_uucico;
      const char *zsys;
@@ -865,7 +837,6 @@ uprepare_test (itest, fcall_uucico, zsys)
 
 /* We must make /usr/tmp/tstuu world writeable or we won't be able to
    receive files into it.  */
-
   (void) umask (0);
 
 #ifndef S_IWOTH
@@ -894,161 +865,180 @@ uprepare_test (itest, fcall_uucico, zsys)
       exit (EXIT_FAILURE);
     }
 
-  e = xfopen ("/usr/tmp/tstuu/Config1", "w");
+  if (fmake)
+    {
+      e = xfopen ("/usr/tmp/tstuu/Config1", "w");
 
-  fprintf (e, "# First test configuration file\n");
-  fprintf (e, "nodename test1\n");
-  fprintf (e, "spool /usr/tmp/tstuu/spool1\n");
-  fprintf (e, "sysfile /usr/tmp/tstuu/System1\n");
-  fprintf (e, "sysfile /usr/tmp/tstuu/System1.2\n");
-  fprintf (e, "portfile /usr/tmp/tstuu/Port1\n");
-  (void) remove ("/usr/tmp/tstuu/Log1");
-#if ! HAVE_BNU_LOGGING
-  fprintf (e, "logfile /usr/tmp/tstuu/Log1\n");
+      fprintf (e, "# First test configuration file\n");
+      fprintf (e, "nodename test1\n");
+      fprintf (e, "spool /usr/tmp/tstuu/spool1\n");
+      fprintf (e, "lockdir /usr/tmp/tstuu/spool1\n");
+      fprintf (e, "sysfile /usr/tmp/tstuu/System1\n");
+      fprintf (e, "sysfile /usr/tmp/tstuu/System1.2\n");
+      fprintf (e, "portfile /usr/tmp/tstuu/Port1\n");
+      (void) remove ("/usr/tmp/tstuu/Log1");
+#if ! HAVE_HDB_LOGGING
+      fprintf (e, "logfile /usr/tmp/tstuu/Log1\n");
 #else
-  fprintf (e, "%s\n", "logfile /usr/tmp/tstuu/Log1/%s/%s");
+      fprintf (e, "%s\n", "logfile /usr/tmp/tstuu/Log1/%s/%s");
 #endif
-  fprintf (e, "statfile /usr/tmp/tstuu/Stats1\n");
-  fprintf (e, "debugfile /usr/tmp/tstuu/Debug1\n");
-  fprintf (e, "callfile /usr/tmp/tstuu/Call1\n");
-  fprintf (e, "pubdir /usr/tmp/tstuu\n");
-#if HAVE_V2_CONFIG
-  fprintf (e, "v2-files no\n");
-#endif
-#if HAVE_BNU_CONFIG
-  fprintf (e, "bnu-files no\n");
-#endif
-  if (zDebug != NULL)
-    fprintf (e, "debug %s\n", zDebug);
-
-  xfclose (e);
-
-  e = xfopen ("/usr/tmp/tstuu/System1", "w");
-
-  fprintf (e, "# This file is ignored, to test multiple system files\n");
-  fprintf (e, "time never\n");
-
-  xfclose (e);
-
-  e = xfopen ("/usr/tmp/tstuu/System1.2", "w");
-
-  fprintf (e, "# First test system file\n");
-  fprintf (e, "time Any\n");
-  fprintf (e, "port stdin\n");
-  fprintf (e, "# That was the defaults\n");
-  fprintf (e, "system %s\n", zsys);
-  if (! fcall_uucico)
-    {
-      FILE *eprog;
-
-      eprog = xfopen ("/usr/tmp/tstuu/Chat1", "w");
-
-      /* Wait for the other side to open the port and flush input.  */
-      fprintf (eprog, "sleep 1\n");
-      fprintf (eprog,
-	       "echo password $1 speed $2 1>&2\n");
-      fprintf (eprog, "echo test1\n");
-      fprintf (eprog, "exit 0\n");
-
-      xfclose (eprog);
-
-      (void) chmod ("/usr/tmp/tstuu/Chat1", S_IRWXU);
-
-      fprintf (e, "chat-program /usr/tmp/tstuu/Chat1 \\P \\S\n");
-
-      fprintf (e, "chat word: \\P\n");
-      fprintf (e, "chat-fail login;\n");
-      fprintf (e, "call-login *\n");
-      fprintf (e, "call-password *\n");
-    }
-  else
-    fprintf (e, "chat \"\"\n");
-  fprintf (e, "call-transfer yes\n");
-  fprintf (e, "commands cat\n");
-  if (! fcall_uucico && iPercent == 0)
-    {
-      fprintf (e, "protocol-parameter g window 7\n");
-      fprintf (e, "protocol-parameter g packet-size 4096\n");
-    }
-  if (zProtocols != NULL)
-    fprintf (e, "protocol %s\n", zProtocols);
-
-  xfclose (e);
-
-  e = xfopen ("/usr/tmp/tstuu/Port1", "w");
-
-  fprintf (e, "port stdin\n");
-  fprintf (e, "type stdin\n");
-  fprintf (e, "pty true\n");
-
-  xfclose (e);
-
-  e = xfopen ("/usr/tmp/tstuu/Call1", "w");
-
-  fprintf (e, "Call out password file\n");
-  fprintf (e, "%s test1 pass1\n", zsys);
-
-  xfclose (e);
-
-  if (! fcall_uucico)
-    {
-      FILE *eprog;
-
-      e = xfopen ("/usr/tmp/tstuu/Config2", "w");
-
-      fprintf (e, "# Second test configuration file\n");
-      fprintf (e, "nodename test2\n");
-      fprintf (e, "spool /usr/tmp/tstuu/spool2\n");
-      fprintf (e, "sysfile /usr/tmp/tstuu/System2\n");
-      (void) remove ("/usr/tmp/tstuu/Log2");
-#if ! HAVE_BNU_LOGGING
-      fprintf (e, "logfile /usr/tmp/tstuu/Log2\n");
-#else
-      fprintf (e, "%s\n", "logfile /usr/tmp/tstuu/Log2/%s/%s");
-#endif
-      fprintf (e, "statfile /usr/tmp/tstuu/Stats2\n");
-      fprintf (e, "debugfile /usr/tmp/tstuu/Debug2\n");
-      fprintf (e, "passwdfile /usr/tmp/tstuu/Pass2\n");
+      fprintf (e, "statfile /usr/tmp/tstuu/Stats1\n");
+      fprintf (e, "debugfile /usr/tmp/tstuu/Debug1\n");
+      fprintf (e, "callfile /usr/tmp/tstuu/Call1\n");
       fprintf (e, "pubdir /usr/tmp/tstuu\n");
 #if HAVE_V2_CONFIG
       fprintf (e, "v2-files no\n");
 #endif
-#if HAVE_BNU_CONFIG
-      fprintf (e, "bnu-files no\n");
+#if HAVE_HDB_CONFIG
+      fprintf (e, "hdb-files no\n");
 #endif
       if (zDebug != NULL)
 	fprintf (e, "debug %s\n", zDebug);
 
       xfclose (e);
 
-      e = xfopen ("/usr/tmp/tstuu/System2", "w");
+      e = xfopen ("/usr/tmp/tstuu/System1", "w");
 
-      fprintf (e, "# Second test system file\n");
-      fprintf (e, "system test1\n");
-      fprintf (e, "called-login test1\n");
-      fprintf (e, "called-request true\n");
+      fprintf (e, "# This file is ignored, to test multiple system files\n");
+      fprintf (e, "time never\n");
+
+      xfclose (e);
+
+      e = xfopen ("/usr/tmp/tstuu/System1.2", "w");
+
+      fprintf (e, "# First test system file\n");
+      fprintf (e, "time any\n");
+      fprintf (e, "port stdin\n");
+      fprintf (e, "# That was the defaults\n");
+      fprintf (e, "system %s\n", zsys);
+      if (! fcall_uucico)
+	{
+	  FILE *eprog;
+
+	  eprog = xfopen ("/usr/tmp/tstuu/Chat1", "w");
+
+	  /* Wait for the other side to open the port and flush input.  */
+	  fprintf (eprog, "sleep 2\n");
+	  fprintf (eprog,
+		   "echo password $1 speed $2 1>&2\n");
+	  fprintf (eprog, "echo test1\n");
+	  fprintf (eprog, "exit 0\n");
+
+	  xfclose (eprog);
+
+	  if (chmod ("/usr/tmp/tstuu/Chat1",
+		     S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) < 0)
+	    {
+	      perror ("chmod (/usr/tmp/tstuu/Chat1)");
+	      exit (EXIT_FAILURE);
+	    }
+
+	  fprintf (e, "chat-program /usr/tmp/tstuu/Chat1 \\P \\S\n");
+
+	  fprintf (e, "chat word: \\P\n");
+	  fprintf (e, "chat-fail login;\n");
+	  fprintf (e, "call-login *\n");
+	  fprintf (e, "call-password *\n");
+	}
+      else
+	fprintf (e, "chat \"\"\n");
+      fprintf (e, "call-transfer yes\n");
+      fprintf (e, "commands cat\n");
+      if (! fcall_uucico && iPercent == 0)
+	{
+	  fprintf (e, "protocol-parameter g window 7\n");
+	  fprintf (e, "protocol-parameter g packet-size 4096\n");
+	  fprintf (e, "protocol-parameter j avoid \\377\n");
+	}
       if (zProtocols != NULL)
 	fprintf (e, "protocol %s\n", zProtocols);
 
-      eprog = xfopen ("/usr/tmp/tstuu/Chat2", "w");
+      xfclose (e);
 
-      fprintf (eprog,
-	       "echo port $1 1>&2\n");
-      fprintf (eprog, "exit 0\n");
+      e = xfopen ("/usr/tmp/tstuu/Port1", "w");
 
-      xfclose (eprog);
-
-      fprintf (e, "called-chat-program /bin/sh /usr/tmp/tstuu/Chat2 \\Y\n");
-      fprintf (e, "time Any\n");
+      fprintf (e, "port stdin\n");
+      fprintf (e, "type stdin\n");
+      fprintf (e, "pty true\n");
 
       xfclose (e);
 
-      e = xfopen ("/usr/tmp/tstuu/Pass2", "w");
+      e = xfopen ("/usr/tmp/tstuu/Call1", "w");
 
-      fprintf (e, "# Call in password file\n");
-      fprintf (e, "test1 pass1\n");
+      fprintf (e, "Call out password file\n");
+      fprintf (e, "%s test1 pass1\n", zsys);
 
       xfclose (e);
+
+      if (! fcall_uucico)
+	{
+	  FILE *eprog;
+
+	  e = xfopen ("/usr/tmp/tstuu/Config2", "w");
+
+	  fprintf (e, "# Second test configuration file\n");
+	  fprintf (e, "nodename test2\n");
+	  fprintf (e, "spool /usr/tmp/tstuu/spool2\n");
+	  fprintf (e, "lockdir /usr/tmp/tstuu/spool2\n");
+	  fprintf (e, "sysfile /usr/tmp/tstuu/System2\n");
+	  (void) remove ("/usr/tmp/tstuu/Log2");
+#if ! HAVE_HDB_LOGGING
+	  fprintf (e, "logfile /usr/tmp/tstuu/Log2\n");
+#else
+	  fprintf (e, "%s\n", "logfile /usr/tmp/tstuu/Log2/%s/%s");
+#endif
+	  fprintf (e, "statfile /usr/tmp/tstuu/Stats2\n");
+	  fprintf (e, "debugfile /usr/tmp/tstuu/Debug2\n");
+	  fprintf (e, "passwdfile /usr/tmp/tstuu/Pass2\n");
+	  fprintf (e, "pubdir /usr/tmp/tstuu\n");
+#if HAVE_V2_CONFIG
+	  fprintf (e, "v2-files no\n");
+#endif
+#if HAVE_HDB_CONFIG
+	  fprintf (e, "hdb-files no\n");
+#endif
+	  if (zDebug != NULL)
+	    fprintf (e, "debug %s\n", zDebug);
+
+	  xfclose (e);
+
+	  e = xfopen ("/usr/tmp/tstuu/System2", "w");
+
+	  fprintf (e, "# Second test system file\n");
+	  fprintf (e, "system test1\n");
+	  fprintf (e, "called-login test1\n");
+	  fprintf (e, "request true\n");
+	  fprintf (e, "commands cat\n");
+	  if (zProtocols != NULL)
+	    fprintf (e, "protocol %s\n", zProtocols);
+
+	  eprog = xfopen ("/usr/tmp/tstuu/Chat2", "w");
+
+	  fprintf (eprog,
+		   "echo port $1 1>&2\n");
+	  fprintf (eprog, "exit 0\n");
+
+	  xfclose (eprog);
+
+	  if (chmod ("/usr/tmp/tstuu/Chat2",
+		     S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) < 0)
+	    {
+	      perror ("chmod (/usr/tmp/tstuu/Chat2");
+	      exit (EXIT_FAILURE);
+	    }
+
+	  fprintf (e, "called-chat-program /bin/sh /usr/tmp/tstuu/Chat2 \\Y\n");
+	  fprintf (e, "time any\n");
+
+	  xfclose (e);
+
+	  e = xfopen ("/usr/tmp/tstuu/Pass2", "w");
+
+	  fprintf (e, "# Call in password file\n");
+	  fprintf (e, "test1 pass1\n");
+
+	  xfclose (e);
+	}
     }
 
   zuucp1 = "./uucp -I /usr/tmp/tstuu/Config1 -r";
@@ -1066,7 +1056,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test transferring a file from the first system to the second.  */
-
   if (itest == 0 || itest == 1)
     {
       zfrom = "/usr/tmp/tstuu/from1";
@@ -1083,7 +1072,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test having the first system request a file from the second.  */
-
   if (itest == 0 || itest == 2)
     {
       if (fcall_uucico)
@@ -1100,7 +1088,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test having the second system send a file to the first.  */
-
   if (itest == 0 || itest == 3)
     {
       if (fcall_uucico)
@@ -1117,7 +1104,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test having the second system request a file from the first.  */
-
   if (itest == 0 || itest == 4)
     {
       zfrom = "/usr/tmp/tstuu/from4";
@@ -1134,7 +1120,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test having the second system make an execution request.  */
-
   if (itest == 0 || itest == 5)
     {
       zfrom = "/usr/tmp/tstuu/from5";
@@ -1151,7 +1136,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test having the first system request a wildcard.  */
-
   if (itest == 0 || itest == 6)
     {
       const char *zfrom1, *zfrom2;
@@ -1179,7 +1163,6 @@ uprepare_test (itest, fcall_uucico, zsys)
     }
 
   /* Test having the second system request a wildcard.  */
-
   if (itest == 0 || itest == 7)
     {
       const char *zto1, *zto2;
@@ -1204,6 +1187,14 @@ uprepare_test (itest, fcall_uucico, zsys)
 
       sprintf (ab, "%s test1!/usr/tmp/tstuu/spool1/to7.\\* %s", zuucp2,
 	       zto);
+      xsystem (ab);
+    }
+
+  /* Test an E command.  This runs cat, discarding the output.  */
+  if ((itest == 0 || itest == 8) && ! fcall_uucico)
+    {
+      umake_file ("/usr/tmp/tstuu/from8", 30);
+      sprintf (ab, "%s - test2!cat < /usr/tmp/tstuu/from8", zuux1);
       xsystem (ab);
     }
 }
@@ -1294,129 +1285,6 @@ cpshow (z, ichar)
       return strlen (z) + 1;
     }
 }      
-
-/* Transfer data from one pseudo-terminal to the other.  */
-
-static void
-utransfer (ofrom, oto, otoslave, pc)
-     int ofrom;
-     int oto;
-     int otoslave;
-     int *pc;
-{
-  int cread;
-#ifdef FIONREAD
-  char abbuf[10000];
-#else
-  char abbuf[80];
-#endif
-  char *zwrite;
-
-  cread = read (ofrom, abbuf, sizeof abbuf);
-  if (cread < 0)
-    {
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
-	cread = 0;
-      else
-	{
-	  perror ("read");
-	  uchild (SIGCHLD);
-	}
-    }
-
-  if (zDebug != NULL)
-    {
-      char abshow[325];
-      char *zshow;
-      int i;
-
-      zshow = abshow;
-      for (i = 0; i < cread && i < 80; i++)
-	zshow += cpshow (zshow, abbuf[i]);
-      if (i < cread)
-	{
-	  *zshow++ = '.';
-	  *zshow++ = '.';
-	  *zshow++ = '.';
-	}
-      *zshow = '\0';
-      fprintf (stderr, "Writing to %d: %d \"%s\"\n", oto, cread, abshow);
-      fflush (stderr);
-    }
-
-  if (iPercent > 0)
-    {
-      int i;
-      int c;
-
-      c = 0;
-      for (i = 0; i < cread; i++)
-	{
-	  if (rand () % 100 < iPercent)
-	    {
-	      ++abbuf[i];
-	      ++c;
-	    }
-	}
-      if (zDebug != NULL && c > 0)
-	fprintf (stderr, "Clobbered %d bytes\n", c);
-    }
-
-  zwrite = abbuf;
-  while (cread > 0)
-    {
-      long cunread;
-      int cdo;
-      int cwrote;
-  
-#ifdef FIONREAD
-      if (ioctl (otoslave, FIONREAD, &cunread) < 0)
-	{
-	  perror ("FIONREAD");
-	  uchild (SIGCHLD);
-	}
-      if (zDebug != NULL)
-	fprintf (stderr, "%ld unread\n", cunread);
-#else /* ! FIONREAD */
-      cunread = 0;
-#endif /* ! FIONREAD */
-
-      cdo = cread;
-      if (256 - cunread < cdo)
-	{
-	  cdo = 256 - cunread;
-	  if (cdo == 0)
-	    continue;
-	}
-
-      cwrote = write (oto, zwrite, cdo);
-      if (cwrote < 0)
-	{
-	  perror ("write");
-	  uchild (SIGCHLD);
-	}
-      cread -= cwrote;
-      zwrite += cwrote;
-      *pc += cwrote;
-    }
-}
-
-/* A version of the system command that checks for errors.  */
-
-static void
-xsystem (zcmd)
-     const char *zcmd;
-{
-  int istat;
-
-  istat = system ((char *) zcmd);
-  if (istat != 0)
-    {
-      fprintf (stderr, "Command failed with status %d\n", istat);
-      fprintf (stderr, "%s\n", zcmd);
-      exit (EXIT_FAILURE);
-    }
-}
 
 /* Pick one of two file descriptors which is ready for reading, or
    return in five seconds.  If the argument is ready for reading,
@@ -1436,8 +1304,8 @@ uchoose (po1, po2)
   stime.tv_sec = 5;
   stime.tv_usec = 0;
 
-  if (select ((*po1 > *po2 ? *po1 : *po2) + 1, &iread, (int *) NULL,
-	      (int *) NULL, &stime) < 0)
+  if (select ((*po1 > *po2 ? *po1 : *po2) + 1, (pointer) &iread,
+	      (pointer) NULL, (pointer) NULL, &stime) < 0)
     {
       perror ("select");
       uchild (SIGCHLD);
@@ -1476,6 +1344,182 @@ uchoose (po1, po2)
 #endif /* ! HAVE_SELECT */
 }
 
+/* Read some data from a file descriptor.  This keeps reading until
+   one of the reads gets no data.  */
+
+static long
+cread (o, pqbuf)
+     int o;
+     struct sbuf **pqbuf;
+{
+  long ctotal;
+
+  while (*pqbuf != NULL && (*pqbuf)->qnext != NULL)
+    pqbuf = &(*pqbuf)->qnext;
+
+  ctotal = 0;
+
+  while (TRUE)
+    {
+      int cgot;
+
+      if (*pqbuf != NULL
+	  && (*pqbuf)->cend >= sizeof (*pqbuf)->ab)
+	pqbuf = &(*pqbuf)->qnext;
+
+      if (*pqbuf == NULL)
+	{
+	  *pqbuf = (struct sbuf *) malloc (sizeof (struct sbuf));
+	  if (*pqbuf == NULL)
+	    {
+	      fprintf (stderr, "Out of memory\n");
+	      uchild (SIGCHLD);
+	    }
+	  (*pqbuf)->qnext = NULL;
+	  (*pqbuf)->cstart = 0;
+	  (*pqbuf)->cend = 0;
+	}
+      
+      cgot = read (o, (*pqbuf)->ab + (*pqbuf)->cend,
+		   (sizeof (*pqbuf)->ab) - (*pqbuf)->cend);
+      if (cgot < 0)
+	{
+	  if (errno == EAGAIN || errno == EWOULDBLOCK || errno == ENODATA)
+	    cgot = 0;
+	  else
+	    {
+	      perror ("read");
+	      uchild (SIGCHLD);
+	    }
+	}
+
+      if (cgot == 0)
+	return ctotal;
+
+      ctotal += cgot;
+
+      if (zDebug != NULL)
+	{
+	  char abshow[325];
+	  char *zfrom;
+	  char *zshow;
+	  int i;
+
+	  zfrom = (*pqbuf)->ab + (*pqbuf)->cend;
+	  zshow = abshow;
+	  for (i = 0; i < cgot && i < 80; i++, zfrom++)
+	    zshow += cpshow (zshow, *zfrom);
+	  if (i < cgot)
+	    {
+	      *zshow++ = '.';
+	      *zshow++ = '.';
+	      *zshow++ = '.';
+	    }
+	  *zshow = '\0';
+	  fprintf (stderr, "Read from %d: %d \"%s\"\n", o, cgot, abshow);
+	  fflush (stderr);
+	}
+
+      if (iPercent > 0)
+	{
+	  int i;
+	  int c;
+
+	  c = 0;
+	  for (i = 0; i < cgot; i++)
+	    {
+	      if (rand () % 1000 < iPercent)
+		{
+		  ++(*pqbuf)->ab[(*pqbuf)->cend + i];
+		  ++c;
+		}
+	    }
+	  if (zDebug != NULL && c > 0)
+	    fprintf (stderr, "Clobbered %d bytes\n", c);
+	}
+
+      (*pqbuf)->cend += cgot;
+
+      if (ctotal > 256)
+	return ctotal;
+    }
+}
+
+/* Write data to a file descriptor until one of the writes gets no
+   data.  */
+
+static boolean
+fsend (o, oslave, pqbuf)
+     int o;
+     int oslave;
+     struct sbuf **pqbuf;
+{
+  long ctotal;
+
+  ctotal = 0;
+  while (*pqbuf != NULL)
+    {
+      int cwrite, cwrote;
+
+      if ((*pqbuf)->cstart >= (*pqbuf)->cend)
+	{
+	  struct sbuf *qfree;
+
+	  qfree = *pqbuf;
+	  *pqbuf = (*pqbuf)->qnext;
+	  free ((pointer) qfree);
+	  continue;
+	}
+
+#ifdef FIONREAD
+      {
+	long cunread;
+
+	if (ioctl (oslave, FIONREAD, &cunread) < 0)
+	  {
+	    perror ("FIONREAD");
+	    uchild (SIGCHLD);
+	  }
+	if (zDebug != NULL)
+	  fprintf (stderr, "%ld unread\n", cunread);
+	cwrite = 256 - cunread;
+	if (cwrite <= 0)
+	  break;
+      }
+#else /* ! FIONREAD */
+      if (! fwritable (o))
+	break;
+      cwrite = 1;
+#endif /* ! FIONREAD */
+
+      if (cwrite > (*pqbuf)->cend - (*pqbuf)->cstart)
+	cwrite = (*pqbuf)->cend - (*pqbuf)->cstart;
+
+      cwrote = write (o, (*pqbuf)->ab + (*pqbuf)->cstart, cwrite);
+      if (cwrote < 0)
+	{
+	  if (errno == EAGAIN || errno == EWOULDBLOCK || errno == ENODATA)
+	    cwrote = 0;
+	  else
+	    {
+	      perror ("write");
+	      uchild (SIGCHLD);
+	    }
+	}
+      
+      if (cwrote == 0)
+	break;
+
+      ctotal += cwrote;
+      (*pqbuf)->cstart += cwrote;
+    }
+
+  if (zDebug != NULL && ctotal > 0)
+    fprintf (stderr, "Wrote %ld to %d\n", ctotal, o);
+
+  return ctotal > 0;
+}
+
 /* Check whether a file descriptor can be written to.  */
 
 static boolean
@@ -1493,7 +1537,8 @@ fwritable (o)
   stime.tv_sec = 0;
   stime.tv_usec = 0;
 
-  cfds = select (o + 1, (int *) NULL, &iwrite, (int *) NULL, &stime);
+  cfds = select (o + 1, (pointer) NULL, (pointer) &iwrite,
+		 (pointer) NULL, &stime);
   if (cfds < 0)
     {
       perror ("select");
@@ -1525,45 +1570,19 @@ fwritable (o)
 #endif /* ! HAVE_SELECT */
 }
 
-/* We don't want to link in util.c, since that would bring in the log
-   file stuff.  Instead, we have local copies of functions that may be
-   needed by getopt.c.  This should be done in a cleaner way.  */
+/* A version of the system command that checks for errors.  */
 
-#if ! HAVE_MEMCPY && ! HAVE_BCOPY
-
-/* Copy one block of memory to another.  */
-
-pointer
-memcpy (ptoarg, pfromarg, c)
-     pointer ptoarg;
-     constpointer pfromarg;
-     int c;
+static void
+xsystem (zcmd)
+     const char *zcmd;
 {
-  char *pto = (char *) ptoarg;
-  const char *pfrom = (const char *) pfromarg;
+  int istat;
 
-  while (c-- != 0)
-    *pto++ = *pfrom++;
-  return ptoarg;
+  istat = system ((char *) zcmd);
+  if (istat != 0)
+    {
+      fprintf (stderr, "Command failed with status %d\n", istat);
+      fprintf (stderr, "%s\n", zcmd);
+      exit (EXIT_FAILURE);
+    }
 }
-
-#endif /* ! HAVE_MEMCPY && ! HAVE_BCOPY */
-
-#if ! HAVE_STRCHR && ! HAVE_INDEX
-
-/* Look for a character in a string.  This is supposed to work for a
-   null byte, although we never actually call it with one.  */
-
-char *
-strchr (z, b)
-     const char *z;
-     int b;
-{
-  b = (char) b;
-  while (*z != b)
-    if (*z++ == '\0')
-      return NULL;
-  return (char *) z;
-}
-
-#endif /* ! HAVE_STRCHR && ! HAVE_INDEX */
