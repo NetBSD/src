@@ -308,17 +308,16 @@ md_number_to_chars (con, value, nbytes)
    that they reference.  */
 
 #ifdef BFD_ASSEMBLER
-#ifndef OBJ_ELF
 int				/* Knows about order of bytes in address. */
 md_apply_fix (fixP, valP)
      fixS *fixP;
      valueT *valP;
 {
-  number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
-				(valueT) *valP, fixP->fx_size);
+  if (fixP->fx_r_type == NO_RELOC)
+    number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
+				  (valueT) *valP, fixP->fx_size);
   return 0;
 }
-#endif
 #else
 void				/* Knows about order of bytes in address.  */
 md_apply_fix (fixP, value)
