@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.6 1997/03/29 20:42:18 thorpej Exp $	*/
+/*	$NetBSD: data.c,v 1.7 1997/07/13 20:21:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-static char rcsid[] = "$NetBSD: data.c,v 1.6 1997/03/29 20:42:18 thorpej Exp $";
+static char rcsid[] = "$NetBSD: data.c,v 1.7 1997/07/13 20:21:33 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ short lasthx=0,lasthy=0;	/* location of monster last hit by player		*/
 short nobeep=0;			/* true if program is not to beep  					*/
 unsigned long randx=33601;	/*	the random number seed						*/
 long initialtime=0;			/* time playing began 							*/
-long gtime=0;				/*	the clock for the game						*/
+long gltime=0;				/*	the clock for the game						*/
 long outstanding_taxes=0;	/* present tax bill from score file 			*/
 long c[100],cbak[100];		/*	the character description arrays			*/
 int enable_scroll=0;		/* constant for enabled/disabled scrolling regn */
