@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.7 1996/07/14 04:08:56 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.8 1996/08/07 04:22:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -289,13 +289,23 @@ kn20aa_enable_intr(irq)
 {
 
 	/*
-	 * From disassembling the OSF/1 source code:
+	 * From disassembling small bits of the OSF/1 kernel:
 	 * the following appears to enable a given interrupt request.
 	 * "blech."  I'd give valuable body parts for better docs or
 	 * for a good decompiler.
 	 */
 	alpha_mb();
 	REGVAL(0x8780000000L + 0x40L) |= (1 << irq);	/* XXX */
+	alpha_mb();
+}
+
+void
+kn20aa_disable_intr(irq)
+	int irq;
+{
+
+	alpha_mb();
+	REGVAL(0x8780000000L + 0x40L) &= ~(1 << irq);	/* XXX */
 	alpha_mb();
 }
 
