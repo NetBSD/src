@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.31 2001/04/26 19:16:07 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.32 2001/05/13 15:23:37 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -79,6 +79,7 @@ struct	uba_softc {
 	void	(*uh_ubainit) __P((struct uba_softc *));
 	void	(*uh_ubapurge) __P((struct uba_softc *, int));
 	short	uh_nr;			/* Unibus sequential number */
+	short	uh_type;		/* Type of bus */
 	bus_space_tag_t	uh_iot;		/* Tag for this Unibus */
 	bus_space_handle_t uh_ioh;	/* Handle for I/O space */
 	bus_dma_tag_t	uh_dmat;
@@ -134,6 +135,12 @@ struct uba_attach_args {
 #define	UBA_HAVEBDP	0x08		/* use bdp specified in high bits */
 #define	UBA_DONTQUE	0x10		/* Do not enqueue xfer */
 
+/*
+ * Type of adapter.
+ */
+#define	UBA_UBA		0		/* Traditional unibus adapter */
+#define	UBA_MVI		1		/* MVI direct-mapped unibus */
+#define	UBA_QBUS	2		/* Qbus with map registers */
 /*
  * Struct for unibus allocation.
  */
