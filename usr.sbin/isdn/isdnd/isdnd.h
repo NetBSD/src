@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.1.1.1 2001/01/06 13:00:16 martin Exp $ 
+ *	$Id: isdnd.h,v 1.2 2001/04/09 21:18:00 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -69,6 +69,13 @@
 #include <sys/rtprio.h>
 #endif
 
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <net/if.h>
+#include <net/if_sppp.h>
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_cause.h>
 
@@ -360,8 +367,6 @@ typedef struct cfg_entry {
 #define AUTH_RECHALLENGE 0x01
 #define AUTH_REQUIRED    0x02
 
-#define AUTHNAMELEN	32 /* AUTHNAMELEN must match in <machine/i4b_isppp.h> */
-#define AUTHKEYLEN	16
 	char	ppp_expect_name[AUTHNAMELEN];	/* PPP PAP/CHAP login name */
 	char	ppp_send_name[AUTHNAMELEN];
 
