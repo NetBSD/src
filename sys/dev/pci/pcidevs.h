@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.509 2003/02/18 00:10:31 grant Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.510 2003/02/26 11:51:05 salo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.506 2003/02/18 00:09:43 grant Exp 
+ *	NetBSD: pcidevs,v 1.507 2003/02/26 11:48:58 salo Exp 
  */
 
 /*
@@ -192,7 +192,7 @@
 #define	PCI_VENDOR_BIT3	0x108a		/* Bit3 Computer Corp. */
 #define	PCI_VENDOR_ELONEX	0x108c		/* Elonex PLC c/o Oakleigh Systems */
 #define	PCI_VENDOR_OLICOM	0x108d		/* Olicom */
-#define	PCI_VENDOR_SUN	0x108e		/* Sun Microsystems */
+#define	PCI_VENDOR_SUN	0x108e		/* Sun Microsystems, Inc. */
 #define	PCI_VENDOR_SYSTEMSOFT	0x108f		/* Systemsoft */
 #define	PCI_VENDOR_ENCORE	0x1090		/* Encore Computer */
 #define	PCI_VENDOR_INTERGRAPH	0x1091		/* Intergraph */
@@ -400,7 +400,7 @@
 #define	PCI_VENDOR_MEGASOFT	0x1160		/* Megasoft */
 #define	PCI_VENDOR_PFU	0x1161		/* PFU Limited */
 #define	PCI_VENDOR_OALAB	0x1162		/* OA Laboratory */
-#define	PCI_VENDOR_RENDITION	0x1163		/* Rendition Inc. */
+#define	PCI_VENDOR_RENDITION	0x1163		/* Rendition, Inc. */
 #define	PCI_VENDOR_APT	0x1164		/* Advanced Peripherals Technologies */
 #define	PCI_VENDOR_IMAGRAPH	0x1165		/* Imagraph */
 #define	PCI_VENDOR_SERVERWORKS	0x1166		/* ServerWorks */
@@ -498,7 +498,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
-#define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro Inc */
+#define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro, Inc. */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_HEURICON	0x1223		/* Heurikon/Computer Products */
@@ -511,15 +511,15 @@
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX Electronics */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
-#define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
+#define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology, Inc. */
 #define	PCI_VENDOR_INTERSIL	0x1260		/* Intersil */
-#define	PCI_VENDOR_SILMOTION	0x126f		/* Silicon Motion */
+#define	PCI_VENDOR_SILMOTION	0x126f		/* Silicon Motion, Inc. */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_TRANSMETA	0x1279		/* Transmeta Corp */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_DAVICOM	0x1282		/* Davicom Semiconductor */
-#define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology Inc */
+#define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology, Inc. */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
@@ -531,7 +531,7 @@
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
-#define	PCI_VENDOR_SIIG	0x131f		/* Siig Inc. */
+#define	PCI_VENDOR_SIIG	0x131f		/* Siig, Inc. */
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
@@ -540,7 +540,7 @@
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
-#define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
+#define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics, Inc. */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
 #define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology Co. Ltd. */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor Ltd. */
@@ -582,7 +582,7 @@
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
-#define	PCI_VENDOR_MEDIAQ	0x4d51		/* MediaQ Inc. */
+#define	PCI_VENDOR_MEDIAQ	0x4d51		/* MediaQ, Inc. */
 #define	PCI_VENDOR_GUILLEMOT	0x5046		/* Guillemot */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
@@ -1219,7 +1219,7 @@
 /* Emulex products */
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* \"Light Pulse\" FibreChannel adapter */
 
-/* ENE Technology Inc. products */
+/* ENE Technology, Inc. products */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB1410 Cardbus Controller */
 
 /* Ensoniq products */
@@ -1231,7 +1231,7 @@
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
 
-/* ESS Technology Inc products */
+/* ESS Technology, Inc. products */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO2	0x1968		/* Maestro 2 PCI Audio Accelerator */
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* Solo-1 PCI AudioDrive */
@@ -1241,13 +1241,13 @@
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3MODEM	0x1999		/* Maestro 3 Modem */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3_2	0x199a		/* Maestro 3 PCI Audio Accelerator */
 
-/* ESS Technology Inc products */
+/* ESS Technology, Inc. products */
 #define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
 /* Eumitcom products */
 #define	PCI_PRODUCT_EUMITCOM_WL11000P	0x1100		/* WL11000P PCI WaveLAN/IEEE 802.11 */
 
-/* O2 Micro Inc */
+/* O2 Micro, Inc. */
 #define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6730	0x673A		/* OZ6730 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832/OZ6833 PCI-CardBus Bridge */
@@ -1650,7 +1650,7 @@
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
 
-/* MediaQ Inc. products */
+/* MediaQ, Inc. products */
 #define	PCI_PRODUCT_MEDIAQ_MQ200	0x0200		/* MQ200 */
 
 /* Middle Digital, Inc. products */
@@ -2012,9 +2012,14 @@
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* SiS 7016 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* SiS 7018 Sound */
 
-/* Silicon Motion products */
-#define	PCI_PRODUCT_SILMOTION_LYNX_EMP	0x0712		/* Lynx EM+ */
-#define	PCI_PRODUCT_SILMOTION_LYNX_E	0x0810		/* Lynx E */
+/* Silicon Motion, Inc. products */
+#define	PCI_PRODUCT_SILMOTION_SM710	0x0710		/* Lynx EM */
+#define	PCI_PRODUCT_SILMOTION_SM712	0x0712		/* Lynx EM+ */
+#define	PCI_PRODUCT_SILMOTION_SM720	0x0720		/* Lynx 3DM */
+#define	PCI_PRODUCT_SILMOTION_SM810	0x0810		/* Lynx E */
+#define	PCI_PRODUCT_SILMOTION_SM811	0x0811		/* Lynx E */
+#define	PCI_PRODUCT_SILMOTION_SM820	0x0820		/* Lynx 3D */
+#define	PCI_PRODUCT_SILMOTION_SM910	0x0910		/* Lynx */
 
 /* SMC products */
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
@@ -2032,7 +2037,7 @@
 #define	PCI_PRODUCT_SONY_CXD3222	0x8039		/* CXD3222 OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_SONY_MEMSTICK	0x808a		/* Memory Stick I/F Controller */
 
-/* Sun Microsystems products */
+/* Sun Microsystems, Inc. products */
 #define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
 #define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* PCIO Happy Meal Ethernet */
 #define	PCI_PRODUCT_SUN_EBUSIII	0x1100		/* PCIO Ebus2 (US III) */

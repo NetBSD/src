@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.507 2003/02/18 00:10:32 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.508 2003/02/26 11:51:06 salo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.506 2003/02/18 00:09:43 grant Exp 
+ *	NetBSD: pcidevs,v 1.507 2003/02/26 11:48:58 salo Exp 
  */
 
 /*
@@ -2196,31 +2196,31 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A,
 	    0,
-	    "C-Media Electronics Inc",
+	    "C-Media Electronics, Inc.",
 	    "CMI8338A PCI Audio Device",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338B,
 	    0,
-	    "C-Media Electronics Inc",
+	    "C-Media Electronics, Inc.",
 	    "CMI8338B PCI Audio Device",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738,
 	    0,
-	    "C-Media Electronics Inc",
+	    "C-Media Electronics, Inc.",
 	    "CMI8738/C3DX PCI Audio Device",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738B,
 	    0,
-	    "C-Media Electronics Inc",
+	    "C-Media Electronics, Inc.",
 	    "CMI8738B PCI Audio Device",
 	},
 	{
 	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_HSP56,
 	    0,
-	    "C-Media Electronics Inc",
+	    "C-Media Electronics, Inc.",
 	    "HSP56 Audiomodem Riser",
 	},
 	{
@@ -2868,55 +2868,55 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO1,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 2 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Solo-1 PCI AudioDrive",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 2E PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ALLEGRO1,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Allegro-1 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 3 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3MODEM,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 3 Modem",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 3 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
@@ -2928,37 +2928,37 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
 	    0,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    "OZ6729 PCI-PCMCIA Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730,
 	    0,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    "OZ6730 PCI-PCMCIA Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
 	    0,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    "OZ6832/OZ6833 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6860,
 	    0,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    "OZ6860 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872,
 	    0,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    "OZ6812/OZ6872 PCI-Cardbus Bridge",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
 	    0,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    "OZ6912/OZ6972 PCI-Cardbus Bridge",
 	},
 	{
@@ -4914,7 +4914,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_MEDIAQ, PCI_PRODUCT_MEDIAQ_MQ200,
 	    0,
-	    "MediaQ Inc.",
+	    "MediaQ, Inc.",
 	    "MQ200",
 	},
 	{
@@ -6466,16 +6466,46 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 7018 Sound",
 	},
 	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_EMP,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM710,
 	    0,
-	    "Silicon Motion",
+	    "Silicon Motion, Inc.",
+	    "Lynx EM",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM712,
+	    0,
+	    "Silicon Motion, Inc.",
 	    "Lynx EM+",
 	},
 	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_E,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM720,
 	    0,
-	    "Silicon Motion",
+	    "Silicon Motion, Inc.",
+	    "Lynx 3DM",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM810,
+	    0,
+	    "Silicon Motion, Inc.",
 	    "Lynx E",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM811,
+	    0,
+	    "Silicon Motion, Inc.",
+	    "Lynx E",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM820,
+	    0,
+	    "Silicon Motion, Inc.",
+	    "Lynx 3D",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM910,
+	    0,
+	    "Silicon Motion, Inc.",
+	    "Lynx",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
@@ -6540,73 +6570,73 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "PCIO Ebus2",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "PCIO Happy Meal Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "PCIO Ebus2 (US III)",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "ERI Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_FIREWIRE,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "FireWire controller",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_USB,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "USB controller",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "GEM Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "Simba PCI bridge",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "psycho PCI controller",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "microSPARC IIep PCI",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "UltraSPARC IIi PCI",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe,
 	    0,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    "UltraSPARC IIe PCI",
 	},
 	{
@@ -9072,7 +9102,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SUN, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Sun Microsystems",
+	    "Sun Microsystems, Inc.",
 	    NULL,
 	},
 	{
@@ -10320,7 +10350,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_RENDITION, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Rendition Inc.",
+	    "Rendition, Inc.",
 	    NULL,
 	},
 	{
@@ -10908,7 +10938,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_O2MICRO, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "O2 Micro Inc",
+	    "O2 Micro, Inc.",
 	    NULL,
 	},
 	{
@@ -10986,7 +11016,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ESSTECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    NULL,
 	},
 	{
@@ -10998,7 +11028,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SILMOTION, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Silicon Motion",
+	    "Silicon Motion, Inc.",
 	    NULL,
 	},
 	{
@@ -11034,7 +11064,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ESSTECH2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ESS Technology Inc",
+	    "ESS Technology, Inc.",
 	    NULL,
 	},
 	{
@@ -11106,7 +11136,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SIIG, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Siig Inc.",
+	    "Siig, Inc.",
 	    NULL,
 	},
 	{
@@ -11160,7 +11190,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_CMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "C-Media Electronics Inc",
+	    "C-Media Electronics, Inc.",
 	    NULL,
 	},
 	{
@@ -11412,7 +11442,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_MEDIAQ, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "MediaQ Inc.",
+	    "MediaQ, Inc.",
 	    NULL,
 	},
 	{
