@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.17 1996/10/08 03:04:09 gibbs Exp $
+$NetBSD: pcidevs,v 1.18 1996/10/13 22:19:20 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -399,10 +399,14 @@ vendor ARK		0xedd8	ARK Logic
  */
 
 /* 3COM Products */
-product 3COM 3C590	0x5900	3c590 10bT
-product 3COM 3C595	0x5950	3c595 100bTX
-product 3COM 3C595T4	0x5951	3c595 100bT4
+product 3COM 3C590	0x5900	3c590 10b-T
+product 3COM 3C595	0x5950	3c595 100b-TX
+product 3COM 3C595T4	0x5951	3c595 100b-T4
 product 3COM 3C595MII	0x5952	3c595 10b-MII
+product	3COM 3C900	0x9000	3c900 10b-T
+product	3COM 3C900Combo	0x9001	3c900 10b-Combo
+product	3COM 3C905	0x9050	3c905 100b-TX
+product	3COM 3C905T4	0x9051	3c905 100b-T4
 
 /* Acer products */
 product ACER M1435	0x1435	M1435
