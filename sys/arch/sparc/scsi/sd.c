@@ -16,7 +16,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: sd.c,v 1.27 93/04/29 01:22:19 torek Exp 
- * $Id: sd.c,v 1.1 1993/10/27 17:48:43 deraadt Exp $
+ * $Id: sd.c,v 1.2 1993/10/27 18:15:07 deraadt Exp $
  */
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 
-#include <dev/scsi/scsi.h>
-#include <dev/scsi/disk.h>
-#include <dev/scsi/scsivar.h>
-#include <dev/scsi/scsi_ioctl.h>
+#include <sparc/scsi/scsi.h>
+#include <sparc/scsi/disk.h>
+#include <sparc/scsi/scsivar.h>
+#include <sparc/scsi/scsi_ioctl.h>
 
 #include <machine/cpu.h>
 
-#include <dev/scsi/sdtrace.h>
+#include <sparc/scsi/sdtrace.h>
 
 #ifdef sparc					/* XXX */
 #define SUN_LABEL_HACK				/* XXX */
