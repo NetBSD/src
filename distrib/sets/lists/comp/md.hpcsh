@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.9 2002/05/02 15:42:19 wiz Exp $
+# $NetBSD: md.hpcsh,v 1.10 2002/05/09 18:15:13 uch Exp $
 ./usr/include/hpcsh	comp-c-include
 ./usr/include/hpcsh/ansi.h	comp-c-include
 ./usr/include/hpcsh/aout_machdep.h	comp-c-include
@@ -41,7 +41,6 @@
 ./usr/include/hpcsh/setjmp.h	comp-c-include
 ./usr/include/hpcsh/signal.h	comp-c-include
 ./usr/include/hpcsh/stdarg.h	comp-c-include
-./usr/include/hpcsh/trap.h	comp-c-include
 ./usr/include/hpcsh/types.h	comp-c-include
 ./usr/include/hpcsh/varargs.h	comp-c-include
 ./usr/include/hpcsh/vmparam.h	comp-c-include

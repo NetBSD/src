@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.15 2002/05/02 15:42:19 wiz Exp $
+# $NetBSD: md.evbsh3,v 1.16 2002/05/09 18:15:13 uch Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
@@ -40,7 +40,6 @@
 ./usr/include/evbsh3/setjmp.h	comp-c-include
 ./usr/include/evbsh3/signal.h	comp-c-include
 ./usr/include/evbsh3/stdarg.h	comp-c-include
-./usr/include/evbsh3/trap.h	comp-c-include
 ./usr/include/evbsh3/types.h	comp-c-include
 ./usr/include/evbsh3/varargs.h	comp-c-include
 ./usr/include/evbsh3/vmparam.h	comp-c-include
