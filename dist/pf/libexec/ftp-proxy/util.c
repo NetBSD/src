@@ -1,3 +1,4 @@
+/*	$NetBSD: util.c,v 1.2 2004/06/22 22:19:36 itojun Exp $	*/
 /*	$OpenBSD: util.c,v 1.18 2004/01/22 16:10:30 beck Exp $ */
 
 /*
