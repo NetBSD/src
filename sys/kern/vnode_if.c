@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.41 2003/03/21 23:11:27 dsl Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.42 2003/04/10 20:38:12 jdolecek Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.31 2002/10/23 09:14:32 jdolecek Exp 
+ *	NetBSD: vnode_if.src,v 1.33 2003/04/10 20:35:36 jdolecek Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
  */
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.41 2003/03/21 23:11:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.42 2003/04/10 20:38:12 jdolecek Exp $");
 
 
 /*
@@ -799,7 +799,7 @@ const int vop_rename_vp_offsets[] = {
 const struct vnodeop_desc vop_rename_desc = {
 	23,
 	"vop_rename",
-	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLPUT | VDESC_VP3_WILLRELE,
+	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLPUT | VDESC_VP3_WILLPUT,
 	vop_rename_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
