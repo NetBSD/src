@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.9 2000/02/01 22:39:51 chopps Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.10 2000/02/02 10:19:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -51,8 +51,8 @@ struct pcic_handle {
 	struct device *ph_parent;
 	bus_space_tag_t ph_bus_t;	/* I/O or MEM?  I don't mind */
 	bus_space_handle_t ph_bus_h;
-	u_int8_t (* ph_read) __P((struct pcic_handle*, int));
-	void (* ph_write) __P((struct pcic_handle *, int, u_int8_t));
+	u_int8_t (*ph_read) __P((struct pcic_handle *, int));
+	void (*ph_write) __P((struct pcic_handle *, int, u_int8_t));
 
 	int	vendor;		/* vendor of chip */
 	int	chip;		/* chip index 0 or 1 */
