@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.5 1994/06/29 06:39:35 cgd Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.6 1995/03/28 20:01:29 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #ifdef TPCONS
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifdef ARGO_DEBUG
 #define Static  
 unsigned LAST_CALL_PCB;
@@ -514,7 +514,7 @@ done:
 
 
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /*
  * NAME:	make_partial_x25_packet()

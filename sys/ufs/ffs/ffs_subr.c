@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.3 1994/10/20 04:20:58 cgd Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.4 1995/03/28 20:01:44 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,7 @@
 #include <sys/param.h>
 #include <ufs/ffs/fs.h>
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -118,7 +118,7 @@ ffs_fragacct(fs, fragmap, fraglist, cnt)
 	}
 }
 
-#if defined(KERNEL) && defined(DIAGNOSTIC)
+#if defined(_KERNEL) && defined(DIAGNOSTIC)
 void
 ffs_checkoverlap(bp, ip)
 	struct buf *bp;
