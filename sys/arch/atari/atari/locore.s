@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 1996/11/17 13:47:09 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 1996/12/18 12:35:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -573,8 +573,7 @@ _spurintr:
 	/* MFP timer A handler --- System clock --- */
 mfp_tima:
 	moveml	d0-d1/a0-a1,sp@-	|  save scratch registers
-	lea	sp@(16),a1		|  get pointer to PS
-	movl	a1,sp@-			|  push pointer to PS, PC
+	movl	sp,sp@-			|  push pointer to clockframe
 	jbsr	_hardclock		|  call generic clock int routine
 	addql	#4,sp			|  pop params
 	addql	#1,_intrcnt+4		|  add another system clock interrupt
@@ -586,10 +585,7 @@ mfp_tima:
 	/* MFP timer C handler --- Stat/Prof clock --- */
 mfp_timc:
 	moveml	d0-d1/a0-a1,sp@-	|  save scratch registers
-	lea	sp@(16),a1		|  get pointer to PS
-	movl	a1,sp@-			|  push pointer to PS, PC
 	jbsr	_statintr		|  call statistics clock handler
-	addql	#4,sp			|  pop params
 	addql	#1,_intrcnt+36		|  add another stat clock interrupt
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.2 1996/12/14 13:47:13 leo Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.3 1996/12/18 12:35:36 leo Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -133,10 +133,7 @@ hdfdc_xit:
 	 * stuff.
 	 */
 hdfdc_norm:
-	lea	sp@(16),a0		|  push pointer to trap-frame
-	movl	a0,sp@-
 	jbsr	_fdc_ctrl_intr		|  handle interrupt
-	addql	#4,sp			|  pop trap-frame pointer
 	moveml	sp@+,d0-d1/a0-a1	|    and saved registers
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei

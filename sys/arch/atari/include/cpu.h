@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1996/10/25 20:02:34 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1996/12/18 12:35:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,17 +69,18 @@
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
-	u_short	sr;		/* sr at time of interrupt */
-	u_long	pc;		/* pc at time of interrupt */
-	u_short	vo;		/* vector offset (4-word frame) */
+	u_int	cf_regs[4];	/* d0,d1,a0,a1 (see locore.s)	*/
+	u_short	cf_sr;		/* sr at time of interrupt	*/
+	u_long	cf_pc;		/* pc at time of interrupt	*/
+	u_short	cf_vo;		/* vector offset (4-word frame)	*/
 };
 
-#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->cf_sr & PSL_IPL) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_pc)
 #if 0
 /* We would like to do it this way... */
-#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
+#define	CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
 #define	CLKF_INTR(framep)	(0)	/* XXX */
