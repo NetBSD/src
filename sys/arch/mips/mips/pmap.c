@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2001/08/26 06:03:11 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132 2001/09/01 17:08:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2001/08/26 06:03:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2001/09/01 17:08:19 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1317,6 +1317,7 @@ pmap_kenter_pa(va, pa, prot)
 {
 	pt_entry_t *pte;
 	u_int npte;
+	boolean_t managed = PAGE_IS_MANAGED(pa);
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1324,14 +1325,29 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit();
-	if (prot & VM_PROT_WRITE) {
-		npte |= mips_pg_rwpage_bit();
-	} else {
-		npte |= mips_pg_ropage_bit();
-	}
 	if (CPUISMIPS3) {
-		npte |= MIPS3_PG_G;
+		if (prot & VM_PROT_WRITE) {
+			npte |= MIPS3_PG_D;
+		} else {
+			npte |= MIPS3_PG_RO;
+		}
+		if (managed) {
+			npte |= MIPS3_PG_CACHED;
+		} else {
+			npte |= MIPS3_PG_UNCACHED;
+		}
+		npte |= MIPS3_PG_V | MIPS3_PG_G;
 	} else {
+		if (prot & VM_PROT_WRITE) {
+			npte |= MIPS1_PG_D;
+		} else {
+			npte |= MIPS1_PG_RO;
+		}
+		if (managed) {
+			npte |= 0;
+		} else {
+			npte |= MIPS1_PG_N;
+		}
 		npte |= MIPS1_PG_V | MIPS1_PG_G;
 	}
 	pte = kvtopte(va);
@@ -1345,7 +1361,6 @@ pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	struct vm_page *pg;
 	pt_entry_t *pte;
 	vaddr_t eva;
 	paddr_t pa;
@@ -1367,8 +1382,7 @@ pmap_kremove(va, len)
 			MachFlushDCache(va, PAGE_SIZE);
 			if (mips_L2CachePresent) {
 				pa = mips_tlbpfn_to_paddr(entry);
-				pg = PHYS_TO_VM_PAGE(pa);
-				MachFlushDCache(VM_PAGE_TO_PHYS(pg), PAGE_SIZE);
+				MachFlushDCache(pa, PAGE_SIZE);
 			}
 			pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
 		} else {
