@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.6 1996/11/23 03:56:44 mark Exp $ */
+/*	$NetBSD: disksubr.c,v 1.7 1998/02/22 00:31:00 mark Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -47,12 +47,13 @@
 
 #define	b_cylin	b_resid
 
-/* int filecore_checksum(char *bootblock)
+/*
+ * int filecore_checksum(char *bootblock)
  *
- * Calculates the filecore boot block checksum. This is used to validate
- * a filecore boot block on the disc. If a boot block is validated then
- * it is used to locate the partition table. If the boot block is not
- * validated, it is assumed that the whole disc is RiscBSD.
+ * Calculates the Acorn filecore boot block checksum. This is used to
+ * validate a filecore boot block on the disc. If a boot block is
+ * validated then it is used to locate the partition table. If the boot
+ * block is not validated, it is assumed that the whole disc is NetBSD.
  */
 
 /*
@@ -67,14 +68,17 @@ filecore_checksum(bootblock)
 	register u_int sum;
 	register u_int loop;
 
-/* A boot block of zero has a zero checksum - clever thinking Acorn, NOT ! */
+	/*
+	 * A boot block of all zeros has a zero checksum
+	 * clever thinking Acorn, NOT !
+	 */
 
 	sum = 0;
 
 	for (loop = 0; loop < 512; ++loop)
 		sum += bootblock[loop];
 
-/* If the whole block is zero then it is invalid */
+	/* If the whole block is zero then it is invalid */
 
 	if (sum == 0) return(0xffff);
     
@@ -118,11 +122,11 @@ readdisklabel(dev, strat, lp, osdep)
 	register struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int cyl, riscbsdpartoff, i;
+	int cyl, netbsdpartoff, i;
 
 /*	printf("Reading disclabel for %04x\n", dev);*/
 
-/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archtypal disk label */
 
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEV_BSIZE;
@@ -144,17 +148,17 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 	}
 
-/* obtain buffer to probe drive with */
+	/* obtain buffer to probe drive with */
     
 	bp = geteblk((int)lp->d_secsize);
 	
-/* request no partition relocation by driver on I/O operations */
+	/* request no partition relocation by driver on I/O operations */
 
 	bp->b_dev = dev;
 
-/* do riscbsd partitions in the process of getting disklabel? */
+	/* do netbsd partitions in the process of getting disklabel? */
 
-	riscbsdpartoff = 0;
+	netbsdpartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	if (rp) {
@@ -162,7 +166,7 @@ readdisklabel(dev, strat, lp, osdep)
 		int heads;
 		int sectors;
 
-/* read the filecore boot block */
+		/* read the Acorn filecore boot block */
 
 /*		printf("readdisclabel: Reading boot block\n");*/
 
@@ -172,7 +176,10 @@ readdisklabel(dev, strat, lp, osdep)
 		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 		(*strat)(bp);
 
-/* if successful, validate boot block and locate parition table */
+		/*
+		 * if successful, validate boot block and
+		 * locate partition table
+		 */
 
 		if (biowait(bp)) {
 			msg = "filecore boot block I/O error";
@@ -181,45 +188,53 @@ readdisklabel(dev, strat, lp, osdep)
 
 		bb = (struct filecore_bootblock *)bp->b_data;
 
-/* Validate boot block */
+		/* Validate boot block */
         
 		if (bb->checksum != filecore_checksum((u_char *)bb)) {
-
-/* Invalid boot block so lets assume the entire disc is RiscBSD */
+			/*
+			 * Invalid boot block so lets assume the
+			 *  entire disc is NetBSD
+			 */
 
 /*			printf("readdisklabel: Invalid filecore boot block (incorrect checksum)\n");*/
 			goto readlabel;
 		}
 
-/* Get some information from the boot block */
+		/* Get some information from the boot block */
 
 		cyl = bb->partition_cyl_low + (bb->partition_cyl_high << 8);
 
 		heads = bb->heads;
 		sectors = bb->secspertrack;
                         
-/* Do we have a RiscBSD partition table ? */
+		/* Do we have a NETBSD partition table ? */
 
 		if (bb->partition_type == PARTITION_FORMAT_RISCBSD) {
 /*			printf("heads = %d nsectors = %d\n", heads, sectors);*/
-
-			riscbsdpartoff = cyl * heads * sectors;
+			netbsdpartoff = cyl * heads * sectors;
 		} else if (bb->partition_type == PARTITION_FORMAT_RISCIX) {
 			struct riscix_partition_table *rpt;
 			int loop;
 			
-/* We have a RISCiX partition table :-( groan */
-
-/* Ok read the RISCiX partition table and see if there is a RiscBSD partition */
+			/*
+			 * We have a RISCiX partition table :-( groan
+			 * 
+			 * Read the RISCiX partition table and see if
+			 * there is a NetBSD partition
+			 */
 
 			bp->b_blkno = cyl * heads * sectors;
-			printf("Found RiscIX partition table @ %08x\n", bp->b_blkno);
+/*			printf("Found RiscIX partition table @ %08x\n",
+			    bp->b_blkno);*/
 			bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 			bp->b_bcount = lp->d_secsize;
 			bp->b_flags = B_BUSY | B_READ;
 			(*strat)(bp);
 
-/* if successful, locate disk label within block and validate */
+			/*
+			 * if successful, locate disk label within block
+			 * and validate
+			 */
 
 			if (biowait(bp)) {
 				msg = "disk label I/O error";
@@ -235,15 +250,19 @@ readdisklabel(dev, strat, lp, osdep)
 				    rpt->partitions[loop].rp_type);
 */
 			for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
-				if (strcmp(rpt->partitions[loop].rp_name, "RiscBSD") == 0
-				    || strcmp(rpt->partitions[loop].rp_name, "NetBSD") == 0
-				    || strcmp(rpt->partitions[loop].rp_name, "Empty:") == 0) {
-					riscbsdpartoff = rpt->partitions[loop].rp_start;
+				if (strcmp(rpt->partitions[loop].rp_name,
+				    "RiscBSD") == 0 ||
+				    strcmp(rpt->partitions[loop].rp_name,
+				    "NetBSD") == 0 ||
+				    strcmp(rpt->partitions[loop].rp_name,
+				    "Empty:") == 0) {
+					netbsdpartoff =
+					    rpt->partitions[loop].rp_start;
 					break;
 				}
 			}
 			if (loop == NRISCIX_PARTITIONS) {
-				msg = "RiscBSD partition identifier string not found.";
+				msg = "NetBSD partition identifier string not found.";
 				goto done;
 			}
 		} else {
@@ -252,18 +271,18 @@ readdisklabel(dev, strat, lp, osdep)
 		}
 	}
 
-/* next, dig out disk label */
+	/* next, dig out disk label */
 
 readlabel:
-/*	printf("Reading disklabel addr=%08x\n", riscbsdpartoff * DEV_BSIZE);*/
+/*	printf("Reading disklabel addr=%08x\n", netbsdpartoff * DEV_BSIZE);*/
   
-	bp->b_blkno = riscbsdpartoff + LABELSECTOR;
+	bp->b_blkno = netbsdpartoff + LABELSECTOR;
 	bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
-/* if successful, locate disk label within block and validate */
+	/* if successful, locate disk label within block and validate */
 
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
@@ -345,13 +364,13 @@ setdisklabel(olp, nlp, openmask, osdep)
 	register i;
 	register struct partition *opp, *npp;
 
-/* sanity clause */
+	/* sanity clause */
 
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
 	    || (nlp->d_secsize % DEV_BSIZE) != 0)
 		return(EINVAL);
 
-/* special case to allow disklabel to be invalidated */
+	/* special case to allow disklabel to be invalidated */
 
 	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
@@ -362,7 +381,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	    || dkcksum(nlp) != 0)
 		return (EINVAL);
 
-/* XXX missing check if other dos partitions will be overwritten */
+	/* XXX missing check if other dos partitions will be overwritten */
 
 	while (openmask != 0) {
 		i = ffs(openmask) - 1;
@@ -406,17 +425,17 @@ writedisklabel(dev, strat, lp, osdep)
 	struct riscbsd_partition *rp = osdep->partitions;
 	register struct buf *bp;
 	struct disklabel *dlp;
-	int cyl, riscbsdpartoff;
+	int cyl, netbsdpartoff;
 	int error = 0;
 
-/* get a buffer and initialize it */
+	/* get a buffer and initialize it */
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-/* do riscbsd partitions in the process of getting disklabel? */
+	/* do netbsd partitions in the process of getting disklabel? */
 
-	riscbsdpartoff = 0;
+	netbsdpartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	if (rp) {
@@ -424,9 +443,9 @@ writedisklabel(dev, strat, lp, osdep)
 		int heads;
 		int sectors;
 
-/* read the filecore boot block */
+		/* read the filecore boot block */
 
-		printf("writedisklabel: Reading boot block\n");
+/*		printf("writedisklabel: Reading boot block\n");*/
 
 		bp->b_blkno = FILECORE_BOOT_SECTOR;
 		bp->b_bcount = lp->d_secsize;
@@ -434,7 +453,10 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
 		(*strat)(bp);
 
-/* if successful, validate boot block and locate parition table */
+		/*
+		 * if successful, validate boot block and locate
+		 * partition table
+		 */
 
 		if (biowait(bp)) {
 			printf("writedisklabel: filecore boot block I/O error\n");
@@ -443,16 +465,19 @@ writedisklabel(dev, strat, lp, osdep)
 
 		bb = (struct filecore_bootblock *)bp->b_data;
 
-/* Validate boot block */
+		/* Validate boot block */
         
 		if (bb->checksum != filecore_checksum((u_char *)bb)) {
-/* Invalid boot block so lets assume the entire disc is RiscBSD */
+			/*
+			 * Invalid boot block so lets assume the
+			 * entire disc is NetBSD
+			 */
 
-			printf("writedisklabel: Invalid filecore boot block (incorrect checksum)\n");
+/*			printf("writedisklabel: Invalid filecore boot block (incorrect checksum)\n");*/
 			goto writelabel;
 		}
 
-/* Do we have a RiscBSD partition ? */
+		/* Do we have a NetBSD partition ? */
 
 		if (bb->partition_type != PARTITION_FORMAT_RISCBSD) {
 			printf("writedisklabel: Invalid partition format\n");
@@ -466,22 +491,23 @@ writedisklabel(dev, strat, lp, osdep)
                         
 		/*printf("heads = %d nsectors = %d\n", heads, sectors);*/
 
-		riscbsdpartoff = cyl * heads * sectors;
+		netbsdpartoff = cyl * heads * sectors;
 	}
 
 writelabel:
 
-/*	printf("writedisklabel: Reading disklabel addr=%08x\n", riscbsdpartoff * DEV_BSIZE);*/
+/*	printf("writedisklabel: Reading disklabel addr=%08x\n",
+	     netbsdpartoff * DEV_BSIZE);*/
 
-/* next, dig out disk label */
+	/* next, dig out disk label */
 
-	bp->b_blkno = riscbsdpartoff + LABELSECTOR;
+	bp->b_blkno = netbsdpartoff + LABELSECTOR;
 	bp->b_cylin = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
-/* if successful, locate disk label within block and validate */
+	/* if successful, locate disk label within block and validate */
 
 	if ((error = biowait(bp)))
 		goto done;
