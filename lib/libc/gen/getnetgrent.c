@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.9.2.1 1996/09/16 18:40:26 jtc Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.9.2.2 1996/09/19 20:02:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9.2.1 1996/09/16 18:40:26 jtc Exp $";
+static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9.2.2 1996/09/19 20:02:58 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,6 +46,13 @@ static char *rcsid = "$NetBSD: getnetgrent.c,v 1.9.2.1 1996/09/16 18:40:26 jtc E
 #include <ctype.h>
 #include <stdlib.h>
 #include <db.h>
+
+#ifdef __weak_alias
+__weak_alias(endnetgrent,_endnetgrent);
+__weak_alias(getnetgrent,_getnetgrent);
+__weak_alias(innetgr,_innetgr);
+__weak_alias(setnetgrent,_setnetgrent);
+#endif
 
 #define _NG_STAR(s)	(((s) == NULL || *(s) == '\0') ? _ngstar : s)
 #define _NG_EMPTY(s)	((s) == NULL ? "" : s)

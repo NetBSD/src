@@ -1,4 +1,4 @@
-/*	$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $	*/
+/*	$NetBSD: setproctitle.c,v 1.4.4.1 1996/09/19 20:03:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -32,9 +32,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft Exp $";
+static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4.4.1 1996/09/19 20:03:41 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -48,6 +49,10 @@ static char rcsid[] = "$NetBSD: setproctitle.c,v 1.4 1995/05/16 14:23:06 mycroft
 #include <stdarg.h>
 #else
 #include <varargs.h>
+#endif
+
+#ifdef __weak_alias
+__weak_alias(setproctitle,_setproctitle);
 #endif
 
 #define	MAX_PROCTITLE	2048

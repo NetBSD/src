@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.2 1996/07/04 07:18:56 jtc Exp $	*/
+/*	$NetBSD: execl.c,v 1.2.2.1 1996/09/19 20:02:26 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: execl.c,v 1.2 1996/07/04 07:18:56 jtc Exp $";
+static char rcsid[] = "$NetBSD: execl.c,v 1.2.2.1 1996/09/19 20:02:26 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -50,6 +51,10 @@ static char rcsid[] = "$NetBSD: execl.c,v 1.2 1996/07/04 07:18:56 jtc Exp $";
 #else
 #include <varargs.h>
 #define VA_START(ap, last)	va_start(ap)
+#endif
+
+#ifdef __weak_alias
+__weak_alias(execl,_execl);
 #endif
 
 extern char **environ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $	*/
+/*	$NetBSD: execvp.c,v 1.1.2.1 1996/09/19 20:02:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $";
+static char rcsid[] = "$NetBSD: execvp.c,v 1.1.2.1 1996/09/19 20:02:32 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,6 +49,10 @@ static char rcsid[] = "$NetBSD: execvp.c,v 1.1 1996/07/03 21:41:54 jtc Exp $";
 #include <limits.h>
 #include <unistd.h>
 #include <paths.h>
+
+#ifdef __weak_alias
+__weak_alias(execvp,_execvp);
+#endif
 
 extern char **environ;
 

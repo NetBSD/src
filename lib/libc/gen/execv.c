@@ -1,4 +1,4 @@
-/*	$NetBSD: execv.c,v 1.1 1996/07/03 21:41:53 jtc Exp $	*/
+/*	$NetBSD: execv.c,v 1.1.2.1 1996/09/19 20:02:30 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,11 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: execv.c,v 1.1 1996/07/03 21:41:53 jtc Exp $";
+static char rcsid[] = "$NetBSD: execv.c,v 1.1.2.1 1996/09/19 20:02:30 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(execv,_execv);
+#endif
 
 extern char **environ;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $	*/
+/*	$NetBSD: unvis.c,v 1.5.4.1 1996/09/19 20:04:20 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,13 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: unvis.c,v 1.5 1995/02/25 17:18:31 cgd Exp $";
+static char rcsid[] = "$NetBSD: unvis.c,v 1.5.4.1 1996/09/19 20:04:20 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <ctype.h>
 #include <vis.h>
+
+#ifdef __weak_alias
+__weak_alias(unvis,_unvis);
+__weak_alias(strunvis,_strunvis);
+#endif
 
 /*
  * decode driven by state machine

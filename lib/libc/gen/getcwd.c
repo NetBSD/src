@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.5.4.1 1996/09/16 18:40:24 jtc Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.5.4.2 1996/09/19 20:02:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getcwd.c,v 1.5.4.1 1996/09/16 18:40:24 jtc Exp $";
+static char rcsid[] = "$NetBSD: getcwd.c,v 1.5.4.2 1996/09/19 20:02:41 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,10 @@ static char rcsid[] = "$NetBSD: getcwd.c,v 1.5.4.1 1996/09/16 18:40:24 jtc Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(getcwd,_getcwd);
+#endif
 
 #define	ISDOT(dp) \
 	(dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \

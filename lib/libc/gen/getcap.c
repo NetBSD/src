@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.10.4.1 1996/09/16 18:40:22 jtc Exp $	*/
+/*	$NetBSD: getcap.c,v 1.10.4.2 1996/09/19 20:02:39 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.10.4.1 1996/09/16 18:40:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: getcap.c,v 1.10.4.2 1996/09/19 20:02:39 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,19 @@ static char rcsid[] = "$NetBSD: getcap.c,v 1.10.4.1 1996/09/16 18:40:22 jtc Exp 
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(cgetcap,_cgetcap);
+__weak_alias(cgetclose,_cgetclose);
+__weak_alias(cgetent,_cgetent);
+__weak_alias(cgetfirst,_cgetfirst);
+__weak_alias(cgetmatch,_cgetmatch);
+__weak_alias(cgetnext,_cgetnext);
+__weak_alias(cgetnum,_cgetnum);
+__weak_alias(cgetset,_cgetset);
+__weak_alias(cgetstr,_cgetstr);
+__weak_alias(cgetustr,_cgetustr);
+#endif
 
 #define	BFRAG		1024
 #define	BSIZE		1024

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyslot.c,v 1.5 1995/02/27 05:55:04 cgd Exp $	*/
+/*	$NetBSD: ttyslot.c,v 1.5.4.1 1996/09/19 20:04:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)ttyslot.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: ttyslot.c,v 1.5 1995/02/27 05:55:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: ttyslot.c,v 1.5.4.1 1996/09/19 20:04:12 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <ttyent.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(ttyslot,_ttyslot);
+#endif
 
 int
 ttyslot()

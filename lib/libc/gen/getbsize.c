@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.8.2.1 1996/09/19 20:02:37 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getbsize.c,v 1.8 1996/01/22 16:34:08 mycroft Exp $";
+static char rcsid[] = "$NetBSD: getbsize.c,v 1.8.2.1 1996/09/19 20:02:37 jtc Exp $";
 #endif
 #endif /* not lint */
 
+#include "namespace.h"
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(getbsize,_getbsize);
+#endif
 
 char *
 getbsize(headerlenp, blocksizep)

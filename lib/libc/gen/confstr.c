@@ -1,4 +1,4 @@
-/*	$NetBSD: confstr.c,v 1.6 1995/05/13 06:58:18 jtc Exp $	*/
+/*	$NetBSD: confstr.c,v 1.6.4.1 1996/09/19 20:02:18 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)confstr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: confstr.c,v 1.6 1995/05/13 06:58:18 jtc Exp $";
+static char rcsid[] = "$NetBSD: confstr.c,v 1.6.4.1 1996/09/19 20:02:18 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
@@ -49,6 +50,10 @@ static char rcsid[] = "$NetBSD: confstr.c,v 1.6 1995/05/13 06:58:18 jtc Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(confstr,_confstr);
+#endif
 
 size_t
 confstr(name, buf, len)

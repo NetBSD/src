@@ -1,4 +1,4 @@
-/*	$NetBSD: raise.c,v 1.5 1995/02/27 04:35:54 cgd Exp $	*/
+/*	$NetBSD: raise.c,v 1.5.4.1 1996/09/19 20:03:31 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)raise.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: raise.c,v 1.5 1995/02/27 04:35:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: raise.c,v 1.5.4.1 1996/09/19 20:03:31 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <signal.h>
 #include <unistd.h>
 

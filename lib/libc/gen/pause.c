@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.4 1995/02/27 04:35:36 cgd Exp $	*/
+/*	$NetBSD: pause.c,v 1.4.4.1 1996/09/19 20:03:25 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,12 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)pause.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pause.c,v 1.4 1995/02/27 04:35:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: pause.c,v 1.4.4.1 1996/09/19 20:03:25 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(pause,_pause);
+#endif
 
 /*
  * Backwards compatible pause.

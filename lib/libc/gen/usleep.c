@@ -1,4 +1,4 @@
-/*	$NetBSD: usleep.c,v 1.10 1995/10/26 22:07:02 pk Exp $	*/
+/*	$NetBSD: usleep.c,v 1.10.2.1 1996/09/19 20:04:21 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,13 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)usleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: usleep.c,v 1.10 1995/10/26 22:07:02 pk Exp $";
+static char rcsid[] = "$NetBSD: usleep.c,v 1.10.2.1 1996/09/19 20:04:21 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(usleep,_usleep);
+#endif
 
 #define	TICK	10000		/* system clock resolution in microseconds */
 

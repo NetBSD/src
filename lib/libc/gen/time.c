@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.4 1995/02/27 05:53:56 cgd Exp $	*/
+/*	$NetBSD: time.c,v 1.4.4.1 1996/09/19 20:04:04 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: time.c,v 1.4 1995/02/27 05:53:56 cgd Exp $";
+static char rcsid[] = "$NetBSD: time.c,v 1.4.4.1 1996/09/19 20:04:04 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/time.h>
 
