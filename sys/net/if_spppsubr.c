@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.68 2003/09/03 20:48:46 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.69 2003/09/05 23:02:41 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.68 2003/09/03 20:48:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.69 2003/09/05 23:02:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -189,16 +189,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.68 2003/09/03 20:48:46 martin Exp 
 #define STATE_OPENED	9
 
 struct ppp_header {
-	u_char address;
-	u_char control;
-	u_short protocol;
+	u_int8_t address;
+	u_int8_t control;
+	u_int16_t protocol;
 } __attribute__((__packed__));
 #define PPP_HEADER_LEN          sizeof (struct ppp_header)
 
 struct lcp_header {
-	u_char type;
-	u_char ident;
-	u_short len;
+	u_int8_t type;
+	u_int8_t ident;
+	u_int16_t len;
 } __attribute__((__packed__));
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
@@ -206,9 +206,9 @@ struct cisco_packet {
 	u_int32_t type;
 	u_int32_t par1;
 	u_int32_t par2;
-	u_short rel;
-	u_short time0;
-	u_short time1;
+	u_int16_t rel;
+	u_int16_t time0;
+	u_int16_t time1;
 } __attribute__((__packed__));
 #define CISCO_PACKET_LEN 18
 
