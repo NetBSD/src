@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.11 1996/08/03 15:48:18 neil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,10 +35,19 @@
  *	@(#)ip_icmp.h	8.1 (Berkeley) 6/10/93
  */
 
+
 /*
  * Interface Control Message Protocol Definitions.
  * Per RFC 792, September 1981.
  */
+
+/*
+ * Internal of an ICMP Router Advertisement
+ */
+struct icmp_ra_addr {
+	u_int32_t ira_addr;
+	u_int32_t ira_preference;
+};
 
 /*
  * Structure of an icmp header.
@@ -61,6 +70,11 @@ struct icmp {
 			  n_short ipm_void;    
 			  n_short ipm_nextmtu;
 		} ih_pmtu;
+		struct ih_rtradv {
+			u_int8_t irt_num_addrs;
+			u_int8_t irt_wpa;
+			u_int16_t irt_lifetime;
+		} ih_rtradv;
 	} icmp_hun;
 #define	icmp_pptr	  icmp_hun.ih_pptr
 #define	icmp_gwaddr	  icmp_hun.ih_gwaddr
@@ -69,6 +83,9 @@ struct icmp {
 #define	icmp_void	  icmp_hun.ih_void
 #define	icmp_pmvoid	  icmp_hun.ih_pmtu.ipm_void
 #define	icmp_nextmtu	  icmp_hun.ih_pmtu.ipm_nextmtu
+#define icmp_num_addrs    icmp_hun.ih_rtradv.irt_num_addrs
+#define icmp_wpa	  icmp_hun.ih_rtradv.irt_wpa
+#define icmp_lifetime	  icmp_hun.ih_rtradv.irt_lifetime
 	union {
 		struct id_ts {
 			  n_time its_otime;
@@ -79,6 +96,7 @@ struct icmp {
 			  struct ip idi_ip;
 			  /* options and then 64 bits of data */
 		} id_ip;
+		struct icmp_ra_addr id_radv;
 		u_int32_t id_mask;
 		int8_t	  id_data[1];
 	} icmp_dun;
@@ -86,6 +104,7 @@ struct icmp {
 #define	icmp_rtime	  icmp_dun.id_ts.its_rtime
 #define	icmp_ttime	  icmp_dun.id_ts.its_ttime
 #define	icmp_ip		  icmp_dun.id_ip.idi_ip
+#define icmp_radv	  icmp_dun.id_mask
 #define	icmp_mask	  icmp_dun.id_mask
 #define	icmp_data	  icmp_dun.id_data
 };
@@ -160,3 +179,4 @@ void	icmp_reflect __P((struct mbuf *));
 void	icmp_send __P((struct mbuf *, struct mbuf *));
 int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
+
