@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.6 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.7 1998/10/11 23:07:42 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -60,15 +60,12 @@
 
 
 struct uvm_faultinfo {
-	vm_map_t orig_map;		/* original map (IN) */
-	vaddr_t orig_rvaddr;	/* original rounded VA (IN) */
-	vsize_t orig_size;		/* original size of interest (IN) */
-	vaddr_t rvaddr;		/* rounded virtual address */
-	vm_map_t parent_map;		/* parent map */
-	unsigned int parentv;		/* parent map version number */
-	vm_map_t map;			/* map */
-	unsigned int mapv;		/* map version number */
-	vm_map_entry_t entry;		/* map entry of rvaddr */
+	vm_map_t orig_map;		/* IN: original map */
+	vaddr_t orig_rvaddr;		/* IN: original rounded VA */
+	vsize_t orig_size;		/* IN: original size of interest */
+	vm_map_t map;			/* map (could be a submap) */
+	unsigned int mapv;		/* map's version number */
+	vm_map_entry_t entry;		/* map entry (from 'map') */
 	vsize_t size;			/* size of interest */
 };
 

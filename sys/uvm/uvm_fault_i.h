@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.5 1998/03/09 00:58:56 mrg Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.6 1998/10/11 23:07:42 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -57,10 +57,8 @@ uvmfault_unlockmaps(ufi, write_locked)
 
 	if (write_locked) {
 		vm_map_unlock(ufi->map);
-		if (ufi->parent_map) vm_map_unlock(ufi->parent_map);
 	} else {
 		vm_map_unlock_read(ufi->map);
-		if (ufi->parent_map) vm_map_unlock_read(ufi->parent_map);
 	}
 }
 
@@ -90,24 +88,16 @@ uvmfault_unlockall(ufi, amap, uobj, anon)
 /*
  * uvmfault_lookup: lookup a virtual address in a map
  *
- * => caller must provide a uvm_faultinfo structure with the (IN)
+ * => caller must provide a uvm_faultinfo structure with the IN
  *	params properly filled in
- * => we will lookup the map entry and fill in parent_map, etc, as we go
+ * => we will lookup the map entry (handling submaps) as we go
  * => if the lookup is a success we will return with the maps locked
  * => if "write_lock" is TRUE, we write_lock the map, otherwise we only
  *	get a read lock.
- * => currently we require sharemaps to have the same virtual addresses
- *	as the main maps they are attached to.   in other words, the share
- *	map starts at zero and goes to the map user address.   the main
- *	map references it by setting its offset to be the same as the
- *	starting virtual address.    if we ever wanted to have sharemaps
- *	have different virtual addresses than main maps we would calculate
- *	it like:
- *		share_va = (rvaddr - entry->start) + entry->offset
- *	[i.e. offset from start of map entry plus offset of mapping]
- *	since (entry->start == entry->offset), share_va must equal rvaddr.
- *	if we need to change this we should store share_va in rvaddr
- *	and move rvaddr to orig_rvaddr.
+ * => note that submaps can only appear in the kernel and they are 
+ *	required to use the same virtual addresses as the map they
+ *	are referenced by (thus address translation between the main
+ *	map and the submap is unnecessary).
  */
 
 static __inline boolean_t
@@ -122,8 +112,6 @@ uvmfault_lookup(ufi, write_lock)
 	 */
 
 	ufi->map = ufi->orig_map;
-	ufi->rvaddr = ufi->orig_rvaddr;
-	ufi->parent_map = NULL;
 	ufi->size = ufi->orig_size;
 
 	/*
@@ -145,7 +133,8 @@ uvmfault_lookup(ufi, write_lock)
 		/*
 		 * lookup
 		 */
-		if (!uvm_map_lookup_entry(ufi->map, ufi->rvaddr, &ufi->entry)) {
+		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr, 
+								&ufi->entry)) {
 			uvmfault_unlockmaps(ufi, write_lock);
 			return(FALSE);
 		}
@@ -153,17 +142,14 @@ uvmfault_lookup(ufi, write_lock)
 		/*
 		 * reduce size if necessary
 		 */
-		if (ufi->entry->end - ufi->rvaddr < ufi->size)
-			ufi->size = ufi->entry->end - ufi->rvaddr;
+		if (ufi->entry->end - ufi->orig_rvaddr < ufi->size)
+			ufi->size = ufi->entry->end - ufi->orig_rvaddr;
 
 		/*
 		 * submap?    replace map with the submap and lookup again.
 		 * note: VAs in submaps must match VAs in main map.
 		 */
 		if (UVM_ET_ISSUBMAP(ufi->entry)) {
-			if (ufi->parent_map)
-				panic("uvmfault_lookup: submap inside a "
-				    "sharemap (illegal)");
 			tmpmap = ufi->entry->object.sub_map;
 			if (write_lock) {
 				vm_map_unlock(ufi->map);
@@ -174,26 +160,6 @@ uvmfault_lookup(ufi, write_lock)
 			continue;
 		}
 
-		/*
-		 * share map?  drop down a level.   already taken care of
-		 * submap case.
-		 */
-		if (UVM_ET_ISMAP(ufi->entry)) {
-			if (ufi->parent_map)
-				panic("uvmfault_lookup: sharemap inside a "
-				    "sharemap (illegal)");
-			ufi->parent_map = ufi->map;
-			ufi->parentv = ufi->parent_map->timestamp;
-			ufi->map = ufi->entry->object.share_map;
-#ifdef DIAGNOSTIC
-			/* see note above */
-			if (ufi->entry->offset != ufi->entry->start)
-				panic("uvmfault_lookup: sharemap VA != "
-				    "mainmap VA (not supported)");
-#endif
-			continue;
-		}
-		
 		/*
 		 * got it!
 		 */
@@ -220,22 +186,12 @@ uvmfault_relock(ufi)
 
 	uvmexp.fltrelck++;
 	/*
-	 * simply relock parent (if any) then map in order.   fail if version
-	 * mismatch (in which case nothing gets locked).
+	 * relock map.   fail if version mismatch (in which case nothing 
+	 * gets locked).
 	 */
-
-	if (ufi->parent_map) {
-		vm_map_lock_read(ufi->parent_map);
-		if (ufi->parentv != ufi->parent_map->timestamp) {
-			vm_map_unlock_read(ufi->parent_map);
-			return(FALSE);
-		}
-	}
 
 	vm_map_lock_read(ufi->map);
 	if (ufi->mapv != ufi->map->timestamp) {
-		if (ufi->parent_map)
-			vm_map_unlock_read(ufi->parent_map);
 		vm_map_unlock_read(ufi->map);
 		return(FALSE);
 	}
