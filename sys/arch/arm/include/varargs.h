@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.2 2002/11/08 00:08:02 thorpej Exp $	*/
+/*	$NetBSD: varargs.h,v 1.3 2002/11/08 02:35:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -64,7 +64,7 @@
 #if __GNUC_PREREQ__(2, 96)
 #define	va_start(ap)	__builtin_varargs_start((ap))
 #else
-#define	va_start(ap) \ 
+#define	va_start(ap) \
 	((ap) = (va_list)&__builtin_va_alist)
 #endif
 
