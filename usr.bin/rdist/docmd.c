@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.12 1997/10/18 14:34:47 mrg Exp $	*/
+/*	$NetBSD: docmd.c,v 1.13 1997/10/19 13:58:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: docmd.c,v 1.12 1997/10/18 14:34:47 mrg Exp $";
+__RCSID("$NetBSD: docmd.c,v 1.13 1997/10/19 13:58:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,9 +78,9 @@ docmds(dhosts, argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct cmd *c;
-	register struct namelist *f;
-	register char **cpp;
+	struct cmd *c;
+	struct namelist *f;
+	char **cpp;
 	extern struct cmd *cmds;
 
 	signal(SIGHUP, cleanup);
@@ -134,13 +135,18 @@ doarrow(filev, files, rhost, cmds)
 	char *rhost;
 	struct subcmd *cmds;
 {
-	register struct namelist *f;
-	register struct subcmd *sc;
-	register char **cpp;
+	struct namelist *f;
+	struct subcmd *sc;
+	char **cpp;
 	int n, ddir, opts = options;
 
+#if __GNUC__		/* XXX borken compiler alert! */
+	(void)&opts;
+#endif
+
 	if (debug)
-		printf("doarrow(%x, %s, %x)\n", files, rhost, cmds);
+		printf("doarrow(%lx, %s, %lx)\n",
+		    (long)files, rhost, (long)cmds);
 
 	if (files == NULL) {
 		error("no files to be updated\n");
@@ -214,7 +220,7 @@ static int
 makeconn(rhost)
 	char *rhost;
 {
-	register char *ruser, *cp;
+	char *ruser, *cp;
 	static char *cur_host = NULL;
 	static int port = -1;
 	char tuser[20];
@@ -231,7 +237,7 @@ makeconn(rhost)
 		closeconn();
 	}
 	cur_host = rhost;
-	cp = index(rhost, '@');
+	cp = strchr(rhost, '@');
 	if (cp != NULL) {
 		char c = *cp;
 
@@ -346,10 +352,10 @@ lostconn(signo)
 
 static int
 okname(name)
-	register char *name;
+	char *name;
 {
-	register char *cp = name;
-	register int c;
+	char *cp = name;
+	int c;
 
 	do {
 		c = *cp;
@@ -379,9 +385,9 @@ dodcolon(filev, files, stamp, cmds)
 	char *stamp;
 	struct subcmd *cmds;
 {
-	register struct subcmd *sc;
-	register struct namelist *f;
-	register char **cpp;
+	struct subcmd *sc;
+	struct namelist *f;
+	char **cpp;
 	struct timeval tv[2];
 	struct timezone tz;
 	struct stat stb;
@@ -491,14 +497,14 @@ static void
 rcmptime(st)
 	struct stat *st;
 {
-	register DIR *d;
-	register struct direct *dp;
-	register char *cp;
+	DIR *d;
+	struct direct *dp;
+	char *cp;
 	char *otp;
 	int len;
 
 	if (debug)
-		printf("rcmptime(%x)\n", st);
+		printf("rcmptime(%lx)\n", (long)st);
 
 	if ((d = opendir(target)) == NULL) {
 		error("%s: %s\n", target, strerror(errno));
@@ -506,7 +512,7 @@ rcmptime(st)
 	}
 	otp = tp;
 	len = tp - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d)) != NULL) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
 		if (len + 1 + strlen(dp->d_name) >= BUFSIZ - 1) {
@@ -516,7 +522,7 @@ rcmptime(st)
 		tp = otp;
 		*tp++ = '/';
 		cp = dp->d_name;
-		while (*tp++ = *cp++)
+		while ((*tp++ = *cp++) != 0)
 			;
 		tp--;
 		cmptime(target);
@@ -534,10 +540,10 @@ rcmptime(st)
 static void
 notify(file, rhost, to, lmod)
 	char *file, *rhost;
-	register struct namelist *to;
+	struct namelist *to;
 	time_t lmod;
 {
-	register int fd, len;
+	int fd, len;
 	struct stat stb;
 	FILE *pf;
 
@@ -614,7 +620,7 @@ inlist(list, file)
 	struct namelist *list;
 	char *file;
 {
-	register struct namelist *nl;
+	struct namelist *nl;
 
 	for (nl = list; nl != NULL; nl = nl->n_next)
 		if (!strcmp(file, nl->n_name))
@@ -629,8 +635,8 @@ int
 except(file)
 	char *file;
 {
-	register struct	subcmd *sc;
-	register struct	namelist *nl;
+	struct	subcmd *sc;
+	struct	namelist *nl;
 	int err;
 	regex_t s;
 
@@ -663,7 +669,7 @@ except(file)
 
 char *
 colon(cp)
-	register char *cp;
+	char *cp;
 {
 
 	while (*cp) {

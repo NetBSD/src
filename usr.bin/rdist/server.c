@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.12 1997/10/18 14:35:04 mrg Exp $	*/
+/*	$NetBSD: server.c,v 1.13 1997/10/19 13:59:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: server.c,v 1.12 1997/10/18 14:35:04 mrg Exp $";
+__RCSID("$NetBSD: server.c,v 1.13 1997/10/19 13:59:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +93,7 @@ void
 server()
 {
 	char cmdbuf[BUFSIZ];
-	register char *cp;
+	char *cp;
 
 	signal(SIGHUP, cleanup);
 	signal(SIGINT, cleanup);
@@ -276,7 +277,7 @@ install(src, dest, destdir, opts)
 			rname++;
 		destdir = 1;
 	} else {
-		rname = rindex(target, '/');
+		rname = strrchr(target, '/');
 		if (rname == NULL)
 			rname = target;
 		else
@@ -313,7 +314,7 @@ sendf(rname, opts)
 	char *rname;
 	int opts;
 {
-	register struct subcmd *sc;
+	struct subcmd *sc;
 	struct stat stb;
 	int sizerr, f, u, len;
 	off_t i;
@@ -343,7 +344,8 @@ sendf(rname, opts)
 			log(lfp, "%s: no password entry for uid %d \n",
 				target, stb.st_uid);
 			pw = NULL;
-			(void)snprintf(user, sizeof(user), ":%lu", stb.st_uid);
+			(void)snprintf(user, sizeof(user), ":%lu",
+			    (u_long)stb.st_uid);
 		}
 	if (gr == NULL || gr->gr_gid != stb.st_gid)
 		if ((gr = getgrgid(stb.st_gid)) == NULL) {
@@ -351,7 +353,7 @@ sendf(rname, opts)
 				target, stb.st_gid);
 			gr = NULL;
 			(void)snprintf(group, sizeof(group), ":%lu",
-			    stb.st_gid);
+			    (u_long)stb.st_gid);
 		}
 	if (u == 1) {
 		if (opts & VERIFY) {
@@ -384,7 +386,7 @@ sendf(rname, opts)
 
 		otp = tp;
 		len = tp - target;
-		while (dp = readdir(d)) {
+		while ((dp = readdir(d)) != NULL) {
 			if (!strcmp(dp->d_name, ".") ||
 			    !strcmp(dp->d_name, ".."))
 				continue;
@@ -396,7 +398,7 @@ sendf(rname, opts)
 			tp = otp;
 			*tp++ = '/';
 			cp = dp->d_name;
-			while (*tp++ = *cp++)
+			while ((*tp++ = *cp++) != 0)
 				;
 			tp--;
 			sendf(dp->d_name, opts);
@@ -510,7 +512,7 @@ done:
 	} else
 		ack();
 	f = response();
-	if (f < 0 || f == 0 && (opts & COMPARE))
+	if (f < 0 || (f == 0 && (opts & COMPARE)))
 		return;
 dospecial:
 	for (sc = subcmds; sc != NULL; sc = sc->sc_next) {
@@ -571,12 +573,12 @@ update(rname, opts, stp)
 	int opts;
 	struct stat *stp;
 {
-	register char *cp, *s;
-	register off_t size;
-	register time_t mtime;
+	char *cp, *s;
+	off_t size;
+	time_t mtime;
 
 	if (debug) 
-		printf("update(%s, %x, %x)\n", rname, opts, stp);
+		printf("update(%s, %lx, %lx)\n", rname, (long)opts, (long)stp);
 
 	/*
 	 * Check to see if the file exists on the remote machine.
@@ -708,7 +710,7 @@ recvf(cmd, type)
 	char *cmd;
 	int type;
 {
-	register char *cp = cmd;
+	char *cp = cmd;
 	int f = -1, mode, opts = 0, wrerr, olderrno;
 	off_t i, size;
 	time_t mtime;
@@ -771,7 +773,7 @@ recvf(cmd, type)
 		stp[catname] = tp;
 		if (catname++) {
 			*tp++ = '/';
-			while (*tp++ = *cp++)
+			while ((*tp++ = *cp++) != 0)
 				;
 			tp--;
 		}
@@ -793,8 +795,8 @@ recvf(cmd, type)
 				return;
 			}
 			errno = ENOTDIR;
-		} else if (errno == ENOENT && (mkdir(target, mode) == 0 ||
-		    chkparent(target) == 0 && mkdir(target, mode) == 0)) {
+		} else if ((errno == ENOENT && (mkdir(target, mode) == 0)) ||
+		    (chkparent(target) == 0 && mkdir(target, mode) == 0)) {
 			if (fchog(-1, target, owner, group, mode) == 0)
 				ack();
 			return;
@@ -807,7 +809,7 @@ recvf(cmd, type)
 
 	if (catname)
 		(void) snprintf(tp, sizeof(target) - (tp - target), "/%s", cp);
-	cp = rindex(target, '/');
+	cp = strrchr(target, '/');
 	if (cp == NULL)
 		strcpy(new, tempname);
 	else if (cp == target)
@@ -962,7 +964,7 @@ static void
 hardlink(cmd)
 	char *cmd;
 {
-	register char *cp;
+	char *cp;
 	struct stat stb;
 	char *oldname;
 	int opts, exists = 0;
@@ -1020,10 +1022,10 @@ static int
 chkparent(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 	struct stat stb;
 
-	cp = rindex(name, '/');
+	cp = strrchr(name, '/');
 	if (cp == NULL || cp == name)
 		return(0);
 	*cp = '\0';
@@ -1050,7 +1052,7 @@ fchog(fd, file, owner, group, mode)
 	char *file, *owner, *group;
 	int mode;
 {
-	register int i;
+	int i;
 	int uid, gid;
 	extern char user[];
 	extern int userid;
@@ -1096,10 +1098,10 @@ fchog(fd, file, owner, group, mode)
 		mode &= ~02000;
 		gid = -1;
 	}
-ok:	if (fd != -1 && fchown(fd, uid, gid) < 0 || chown(file, uid, gid) < 0)
+ok:	if ((fd != -1 && fchown(fd, uid, gid) < 0) || chown(file, uid, gid) < 0)
 		note("%s: %s chown: %s", host, file, strerror(errno));
 	else if (mode & 07000 &&
-	   (fd != -1 && fchmod(fd, mode) < 0 || chmod(file, mode) < 0))
+	   ((fd != -1 && fchmod(fd, mode) < 0) || chmod(file, mode) < 0))
 		note("%s: %s chmod: %s", host, file, strerror(errno));
 	return(0);
 }
@@ -1112,7 +1114,7 @@ static void
 rmchk(opts)
 	int opts;
 {
-	register char *cp, *s;
+	char *cp, *s;
 	struct stat stb;
 
 	if (debug)
@@ -1193,10 +1195,10 @@ rmchk(opts)
  */
 static void
 clean(cp)
-	register char *cp;
+	char *cp;
 {
 	DIR *d;
-	register struct direct *dp;
+	struct direct *dp;
 	struct stat stb;
 	char *otp;
 	int len, opts;
@@ -1216,7 +1218,7 @@ clean(cp)
 
 	otp = tp;
 	len = tp - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d)) != NULL) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
 		if (len + 1 + strlen(dp->d_name) >= BUFSIZ - 1) {
@@ -1227,7 +1229,7 @@ clean(cp)
 		tp = otp;
 		*tp++ = '/';
 		cp = dp->d_name;;
-		while (*tp++ = *cp++)
+		while ((*tp++ = *cp++) != 0)
 			;
 		tp--;
 		if (lstat(target, &stb) < 0) {
@@ -1271,7 +1273,7 @@ removeit(stp)
 {
 	DIR *d;
 	struct direct *dp;
-	register char *cp;
+	char *cp;
 	struct stat stb;
 	char *otp;
 	int len;
@@ -1296,7 +1298,7 @@ removeit(stp)
 
 	otp = tp;
 	len = tp - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d)) != NULL) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
 		if (len + 1 + strlen(dp->d_name) >= BUFSIZ - 1) {
@@ -1307,7 +1309,7 @@ removeit(stp)
 		tp = otp;
 		*tp++ = '/';
 		cp = dp->d_name;;
-		while (*tp++ = *cp++)
+		while ((*tp++ = *cp++) != 0)
 			;
 		tp--;
 		if (lstat(target, &stb) < 0) {
@@ -1339,7 +1341,7 @@ dospecial(cmd)
 	char *cmd;
 {
 	int fd[2], status, pid, i;
-	register char *cp, *s;
+	char *cp, *s;
 	char sbuf[BUFSIZ];
 	extern int userid, groupid;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.5 1996/07/12 00:46:25 thorpej Exp $	*/
+/*	$NetBSD: lookup.c,v 1.6 1997/10/19 13:59:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: lookup.c,v 1.5 1996/07/12 00:46:25 thorpej Exp $";
+__RCSID("$NetBSD: lookup.c,v 1.6 1997/10/19 13:59:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,14 +64,16 @@ void
 define(name)
 	char *name;
 {
-	register char *cp, *s;
-	register struct namelist *nl;
+	char *cp, *s;
+	struct namelist *nl;
 	struct namelist *value;
+
+	value = NULL;
 
 	if (debug)
 		printf("define(%s)\n", name);
 
-	cp = index(name, '=');
+	cp = strchr(name, '=');
 	if (cp == NULL)
 		value = NULL;
 	else if (cp[1] == '\0') {
@@ -129,13 +132,13 @@ lookup(name, action, value)
 	int action;
 	struct namelist *value;
 {
-	register unsigned n;
-	register char *cp;
-	register struct syment *s;
+	unsigned n;
+	char *cp;
+	struct syment *s;
 	char buf[256];
 
 	if (debug)
-		printf("lookup(%s, %d, %x)\n", name, action, value);
+		printf("lookup(%s, %d, %lx)\n", name, action, (long)value);
 
 	n = 0;
 	for (cp = name; *cp; )

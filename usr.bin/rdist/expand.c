@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.9 1997/10/18 14:34:51 mrg Exp $	*/
+/*	$NetBSD: expand.c,v 1.10 1997/10/19 13:58:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: expand.c,v 1.9 1997/10/18 14:34:51 mrg Exp $";
+__RCSID("$NetBSD: expand.c,v 1.10 1997/10/19 13:58:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,18 +97,18 @@ expand(list, wh)
 	struct namelist *list;
 	int wh;
 {
-	register struct namelist *nl, *prev;
-	register int n;
+	struct namelist *nl, *prev;
+	int n;
 	char pathbuf[BUFSIZ];
 	char *argvbuf[GAVSIZ];
 
 	if (debug) {
-		printf("expand(%x, %d)\nlist = ", list, wh);
+		printf("expand(%lx, %d)\nlist = ", (long)list, wh);
 		prnames(list);
 	}
 
 	if (wh == 0) {
-		register char *cp;
+		char *cp;
 
 		for (nl = list; nl != NULL; nl = nl->n_next)
 			for (cp = nl->n_name; *cp; cp++)
@@ -154,8 +155,8 @@ static void
 expstr(s)
 	char *s;
 {
-	register char *cp, *cp1;
-	register struct namelist *tp;
+	char *cp, *cp1;
+	struct namelist *tp;
 	char *tail;
 	char buf[BUFSIZ];
 	int savec, oeargc;
@@ -164,7 +165,7 @@ expstr(s)
 	if (s == NULL || *s == '\0')
 		return;
 
-	if ((which & E_VARS) && (cp = index(s, '$')) != NULL) {
+	if ((which & E_VARS) && (cp = strchr(s, '$')) != NULL) {
 		*cp++ = '\0';
 		if (*cp == '\0') {
 			yyerror("no variable name after '$'");
@@ -172,7 +173,7 @@ expstr(s)
 		}
 		if (*cp == LC) {
 			cp++;
-			if ((tail = index(cp, RC)) == NULL) {
+			if ((tail = strchr(cp, RC)) == NULL) {
 				yyerror("unmatched '{'");
 				return;
 			}
@@ -228,7 +229,7 @@ expstr(s)
 			cp1 = pw->pw_dir;
 			s = cp;
 		}
-		for (cp = path; *cp++ = *cp1++; )
+		for (cp = path; (*cp++ = *cp1++) != 0; )
 			;
 		tpathp = pathp = cp - 1;
 	} else {
@@ -268,8 +269,8 @@ static void
 expsh(s)
 	char *s;
 {
-	register char *cp;
-	register char *spathp, *oldcp;
+	char *cp;
+	char *spathp, *oldcp;
 	struct stat stb;
 
 	spathp = pathp;
@@ -307,7 +308,7 @@ matchdir(pattern)
 	char *pattern;
 {
 	struct stat stb;
-	register struct direct *dp;
+	struct direct *dp;
 	DIR *dirp;
 
 	dirp = opendir(path);
@@ -348,7 +349,7 @@ execbrc(p, s)
 	char *p, *s;
 {
 	char restbuf[BUFSIZ + 2];
-	register char *pe, *pm, *pl;
+	char *pe, *pm, *pl;
 	int brclev = 0;
 	char *lm, savec, *spathp;
 
@@ -427,8 +428,8 @@ static int
 match(s, p)
 	char *s, *p;
 {
-	register int c;
-	register char *sentp;
+	int c;
+	char *sentp;
 	char sexpany = expany;
 
 	if (*s == '.' && *p != '.')
@@ -443,9 +444,9 @@ match(s, p)
 
 static int
 amatch(s, p)
-	register char *s, *p;
+	char *s, *p;
 {
-	register int scc;
+	int scc;
 	int ok, lc;
 	char *spathp;
 	struct stat stb;
@@ -462,7 +463,7 @@ amatch(s, p)
 		case '[':
 			ok = 0;
 			lc = 077777;
-			while (cc = *p++) {
+			while ((cc = *p++) != 0) {
 				if (cc == ']') {
 					if (ok)
 						break;
@@ -532,9 +533,9 @@ slash:
 
 static int
 smatch(s, p)
-	register char *s, *p;
+	char *s, *p;
 {
-	register int scc;
+	int scc;
 	int ok, lc;
 	int c, cc;
 
@@ -545,7 +546,7 @@ smatch(s, p)
 		case '[':
 			ok = 0;
 			lc = 077777;
-			while (cc = *p++) {
+			while ((cc = *p++) != 0) {
 				if (cc == ']') {
 					if (ok)
 						break;
@@ -591,10 +592,10 @@ smatch(s, p)
 
 static void
 Cat(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
 	int len = strlen(s1) + strlen(s2) + 1;
-	register char *s;
+	char *s;
 
 	nleft -= len;
 	if (nleft <= 0 || ++eargc >= GAVSIZ)
@@ -603,10 +604,10 @@ Cat(s1, s2)
 	eargv[eargc - 1] = s = malloc(len);
 	if (s == NULL)
 		fatal("ran out of memory\n");
-	while (*s++ = *s1++ & TRIM)
+	while ((*s++ = *s1++ & TRIM) != 0)
 		;
 	s--;
-	while (*s++ = *s2++ & TRIM)
+	while ((*s++ = *s2++ & TRIM) != 0)
 		;
 }
 
@@ -631,9 +632,9 @@ addpath(c)
 char *
 exptilde(buf, file)
 	char buf[];
-	register char *file;
+	char *file;
 {
-	register char *s1, *s2, *s3;
+	char *s1, *s2, *s3;
 	extern char homedir[];
 
 	if (*file != '~') {
@@ -666,12 +667,12 @@ exptilde(buf, file)
 			*s3 = '/';
 		s2 = pw->pw_dir;
 	}
-	for (s1 = buf; *s1++ = *s2++; )
+	for (s1 = buf; (*s1++ = *s2++) != 0; )
 		;
 	s2 = --s1;
 	if (s3 != NULL) {
 		s2++;
-		while (*s1++ = *s3++)
+		while ((*s1++ = *s3++) != 0)
 			;
 	}
 	return(s2);

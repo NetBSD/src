@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.7 1997/10/18 14:34:54 mrg Exp $	*/
+/*	$NetBSD: gram.y,v 1.8 1997/10/19 13:59:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: gram.y,v 1.7 1997/10/18 14:34:54 mrg Exp $";
+__RCSID("$NetBSD: gram.y,v 1.8 1997/10/19 13:59:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +50,8 @@ struct	cmd *last_cmd;
 struct	namelist *last_n;
 struct	subcmd *last_sc;
 
-static char  *makestr __P((char *));
+static char   *makestr __P((char *));
+void	append __P((char *, struct namelist *, char *, struct subcmd *));
 
 %}
 
@@ -142,7 +144,7 @@ cmdlist:	  /* VOID */ {
 		;
 
 cmd:		  INSTALL options opt_namelist SM = {
-			register struct namelist *nl;
+			struct namelist *nl;
 
 			$1->sc_options = $2 | options;
 			if ($3 != NULL) {
@@ -201,12 +203,14 @@ opt_namelist:	  /* VOID */ = {
 int	yylineno = 1;
 extern	FILE *fin;
 
+int	yylex __P((void));
+
 int
 yylex()
 {
 	static char yytext[INMAX];
-	register int c;
-	register char *cp1, *cp2;
+	int c;
+	char *cp1, *cp2;
 	static char quotechars[] = "[]{}*?$";
 	
 again:
@@ -354,8 +358,8 @@ again:
 
 int
 any(c, str)
-	register int c;
-	register char *str;
+	int c;
+	char *str;
 {
 	while (*str)
 		if (c == *str++)
@@ -372,8 +376,8 @@ insert(label, files, hosts, subcmds)
 	struct namelist *files, *hosts;
 	struct subcmd *subcmds;
 {
-	register struct cmd *c, *prev, *nc;
-	register struct namelist *h, *nexth;
+	struct cmd *c, *prev, *nc;
+	struct namelist *h, *nexth;
 
 	files = expand(files, E_VARS|E_SHELL);
 	hosts = expand(hosts, E_ALL);
@@ -424,7 +428,7 @@ append(label, files, stamp, subcmds)
 	char *stamp;
 	struct subcmd *subcmds;
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	c = ALLOC(cmd);
 	if (c == NULL)
@@ -463,12 +467,12 @@ static char *
 makestr(str)
 	char *str;
 {
-	register char *cp, *s;
+	char *cp, *s;
 
 	str = cp = malloc(strlen(s = str) + 1);
 	if (cp == NULL)
 		fatal("ran out of memory\n");
-	while (*cp++ = *s++)
+	while ((*cp++ = *s++) != NULL)
 		;
 	return(str);
 }
@@ -480,7 +484,7 @@ struct namelist *
 makenl(name)
 	char *name;
 {
-	register struct namelist *nl;
+	struct namelist *nl;
 
 	nl = ALLOC(namelist);
 	if (nl == NULL)
@@ -497,7 +501,7 @@ struct subcmd *
 makesubcmd(type)
 	int	type;
 {
-	register struct subcmd *sc;
+	struct subcmd *sc;
 
 	sc = ALLOC(subcmd);
 	if (sc == NULL)
