@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.2 1999/01/26 02:34:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,61 +28,6 @@
 /*
  * revent.c -- reconstruction event handling code
  */
-/*
- * :  
- * Log: rf_revent.c,v 
- * Revision 1.22  1996/08/11 00:41:11  jimz
- * extern hz only for kernel
- *
- * Revision 1.21  1996/07/15  05:40:41  jimz
- * some recon datastructure cleanup
- * better handling of multiple failures
- * added undocumented double-recon test
- *
- * Revision 1.20  1996/06/17  03:18:04  jimz
- * include shutdown.h for macroized ShutdownCreate
- *
- * Revision 1.19  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.18  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.17  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.16  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.15  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.14  1996/05/20  16:13:40  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- * use RF_FREELIST for revents
- *
- * Revision 1.13  1996/05/18  20:09:47  jimz
- * bit of cleanup to compile cleanly in kernel, once again
- *
- * Revision 1.12  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
 
 #include <sys/errno.h>
 
@@ -100,27 +45,15 @@ static RF_FreeList_t *rf_revent_freelist;
 #define RF_REVENT_INITIAL    8
 
 
-#ifdef KERNEL
 
 #include <sys/proc.h>
 
 extern int hz;
 
-#ifndef __NetBSD__
-#define DO_WAIT(_rc)       mpsleep(&(_rc)->eventQueue, PZERO, "raidframe eventq", 0, \
-			      (void *) simple_lock_addr((_rc)->eq_mutex), MS_LOCK_SIMPLE)
-#else
 #define DO_WAIT(_rc)   tsleep(&(_rc)->eventQueue, PRIBIO | PCATCH, "raidframe eventq", 0)
-#endif
 
 #define DO_SIGNAL(_rc)     wakeup(&(_rc)->eventQueue)
 
-#else      /* KERNEL */
-
-#define DO_WAIT(_rc)       RF_WAIT_COND((_rc)->eq_cond, (_rc)->eq_mutex)
-#define DO_SIGNAL(_rc)     RF_SIGNAL_COND((_rc)->eq_cond)
-
-#endif     /* KERNEL */
 
 static void rf_ShutdownReconEvent(void *);
 
@@ -181,14 +114,6 @@ RF_ReconEvent_t *rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
   rctrl->continueFunc=continueFunc;
   rctrl->continueArg=continueArg;
 
-#ifdef SIMULATE
-  if (!rctrl->eventQueue) {
-    RF_UNLOCK_MUTEX(rctrl->eq_mutex);
-    return (NULL);
-  }
-#else /* SIMULATE */
-
-#ifdef KERNEL
 
 /* mpsleep timeout value: secs = timo_val/hz.  'ticks' here is defined as cycle-counter ticks, not softclock ticks */
 #define MAX_RECON_EXEC_TICKS 15000000  /* 150 Mhz => this many ticks in 100 ms */
@@ -212,34 +137,23 @@ RF_ReconEvent_t *rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 #if RF_RECON_STATS > 0
       reconDesc->numReconExecDelays++;
 #endif /* RF_RECON_STATS > 0 */
-#ifndef __NetBSD__
-      status = mpsleep(&reconDesc->reconExecTicks, PZERO, "recon delay", RECON_TIMO, (void *) simple_lock_addr(rctrl->eq_mutex), MS_LOCK_SIMPLE);
-#else
       status = tsleep(&reconDesc->reconExecTicks, PRIBIO | PCATCH, "recon delay", RECON_TIMO );
-#endif
       RF_ASSERT(status == EWOULDBLOCK);
       reconDesc->reconExecTicks = 0;
     }
   }
 
-#endif /* KERNEL */
 
   while (!rctrl->eventQueue) {
 #if RF_RECON_STATS > 0
     reconDesc->numReconEventWaits++;
 #endif /* RF_RECON_STATS > 0 */
     DO_WAIT(rctrl);
-#ifdef KERNEL
     reconDesc->reconExecTicks = 0; /* we've just waited */
-#endif /* KERNEL */
   }
 
-#endif /* SIMULATE */
-
-#ifdef KERNEL
   reconDesc->reconExecTimerRunning = 1;
   RF_ETIMER_START(reconDesc->recon_exec_timer);
-#endif /* KERNEL */
 
   event = rctrl->eventQueue;
   rctrl->eventQueue = event->next;
@@ -273,11 +187,7 @@ void rf_CauseReconEvent(raidPtr, row, col, arg, type)
   rctrl->eq_count++;
   RF_UNLOCK_MUTEX(rctrl->eq_mutex);
 
-#ifndef SIMULATE
   DO_SIGNAL(rctrl);
-#else /* !SIMULATE */
-  (rctrl->continueFunc)(rctrl->continueArg);
-#endif /* !SIMULATE */
 }
 
 /* allocates and initializes a recon event descriptor */

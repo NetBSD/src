@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_acctrace.c,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_acctrace.c,v 1.2 1999/01/26 02:33:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,95 +32,12 @@
  *
  *****************************************************************************/
 
-/* :  
- * Log: rf_acctrace.c,v 
- * Revision 1.29  1996/07/27 23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.28  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.27  1996/06/14  14:35:24  jimz
- * clean up dfstrace protection
- *
- * Revision 1.26  1996/06/13  19:09:04  jimz
- * remove trace.dat file before beginning
- *
- * Revision 1.25  1996/06/12  04:41:26  jimz
- * tweaks to make genplot work with user-level driver
- * (mainly change stat collection)
- *
- * Revision 1.24  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.23  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.22  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.21  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.20  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.19  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.18  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.17  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.16  1996/05/20  16:15:49  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.15  1996/05/18  20:10:00  jimz
- * bit of cleanup to compile cleanly in kernel, once again
- *
- * Revision 1.14  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.13  1995/11/30  16:26:43  wvcii
- * added copyright info
- *
- */
 
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#include "rf_threadstuff.h"
-#include "rf_types.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef KERNEL
-#ifndef __NetBSD__
-#include <dfstrace.h>
-#endif /* !__NetBSD__ */
-#if DFSTRACE > 0
-#include <sys/dfs_log.h>
-#include <sys/dfstracebuf.h>
-#endif /* DFSTRACE > 0 */
-#endif /* KERNEL */
-
+#include "rf_threadstuff.h"
+#include "rf_types.h"
 #include "rf_debugMem.h"
 #include "rf_acctrace.h"
 #include "rf_general.h"
@@ -146,15 +63,9 @@ static void rf_ShutdownAccessTrace(ignored)
 {
   if (rf_accessTraceBufSize) {
     if (accessTraceBufCount) rf_FlushAccessTraceBuf();
-#ifndef KERNEL
-    close(rf_trace_fd);
-#endif /* !KERNEL */
     RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
   }
   rf_mutex_destroy(&rf_tracing_mutex);
-#if defined(KERNEL) && DFSTRACE > 0
-  printf("RAIDFRAME: %d trace entries were sent to dfstrace\n",traceCount);
-#endif /* KERNEL && DFSTRACE > 0 */
 }
 
 int rf_ConfigureAccessTrace(listp)
@@ -166,18 +77,6 @@ int rf_ConfigureAccessTrace(listp)
   if (rf_accessTraceBufSize) {
     RF_Malloc(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t), (RF_AccTraceEntry_t *));
     accessTraceBufCount = 0;
-#ifndef KERNEL
-    rc = unlink("trace.dat");
-    if (rc && (errno != ENOENT)) {
-      perror("unlink");
-      RF_ERRORMSG("Unable to remove existing trace.dat\n");
-      return(errno);
-    }
-    if ((rf_trace_fd = open("trace.dat",O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 ) {
-      perror("Unable to open trace.dat for output");
-      return(errno);
-    }
-#endif /* !KERNEL */
   }
   traceCount = 0;
   numTracesSoFar = 0;
@@ -192,9 +91,6 @@ int rf_ConfigureAccessTrace(listp)
       __LINE__, rc);
     if (rf_accessTraceBufSize) {
       RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
-#ifndef KERNEL
-      close(rf_trace_fd);
-#endif /* !KERNEL */
       rf_mutex_destroy(&rf_tracing_mutex);
     }
   }
@@ -217,22 +113,6 @@ void rf_LogTraceRec(raid, rec)
   if (rf_stopCollectingTraces || ((rf_maxNumTraces >= 0) && (numTracesSoFar >= rf_maxNumTraces)))
     return;
 
-#ifndef KERNEL
-  if (rf_accessTraceBufSize) {
-    RF_LOCK_MUTEX(rf_tracing_mutex);
-    numTracesSoFar++;
-    bcopy((char *)rec, (char *)&access_tracebuf[ accessTraceBufCount++ ], sizeof(RF_AccTraceEntry_t));
-    if (accessTraceBufCount == rf_accessTraceBufSize)
-      rf_FlushAccessTraceBuf();
-    RF_UNLOCK_MUTEX(rf_tracing_mutex);
-  }
-#endif /* !KERNEL */
-#if defined(KERNEL) && DFSTRACE > 0
-  rec->index = traceCount++;
-  if (traceon & DFS_TRACE_RAIDFRAME) {
-    dfs_log(DFS_NOTE, (char *) rec, (int) sizeof(*rec), 0);
-  }
-#endif /* KERNEL && DFSTRACE > 0 */
 	/* update AccTotals for this device */
 	if (!raid->keep_acc_totals)
 		return;
@@ -280,15 +160,5 @@ void rf_LogTraceRec(raid, rec)
  */
 void rf_FlushAccessTraceBuf()
 {
-#ifndef KERNEL
-  int size = accessTraceBufCount * sizeof(RF_AccTraceEntry_t);
-  
-  if (write(rf_trace_fd, (char *) access_tracebuf, size) < size ) {
-    fprintf(stderr, "Unable to write traces to file.  tracing disabled\n");
-    RF_Free(access_tracebuf, rf_accessTraceBufSize * sizeof(RF_AccTraceEntry_t));
-    rf_accessTraceBufSize = 0;
-    close(rf_trace_fd);
-  }
-#endif /* !KERNEL */
   accessTraceBufCount = 0;
 }

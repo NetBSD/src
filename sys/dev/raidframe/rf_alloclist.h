@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.h,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.h,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,29 +31,6 @@
  * alloclist.h -- header file for alloclist.c
  *
  ***************************************************************************/
-
-/* :  
- * Log: rf_alloclist.h,v 
- * Revision 1.11  1996/07/18 22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.10  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.9  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.8  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.7  1995/11/30  16:27:13  wvcii
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_ALLOCLIST_H_
 #define _RF__RF_ALLOCLIST_H_

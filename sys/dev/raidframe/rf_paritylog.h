@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,70 +27,6 @@
  */
 
 /* header file for parity log
- *
- * :  
- * Log: rf_paritylog.h,v 
- * Revision 1.21  1996/07/17 21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.20  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.19  1996/06/11  10:17:57  jimz
- * definitions and run state for parity logging thread
- *
- * Revision 1.18  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.17  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.16  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.15  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.14  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.13  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.12  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.11  1995/12/06  20:54:58  wvcii
- * added prototyping
- *
- * Revision 1.10  1995/11/30  16:05:50  wvcii
- * added copyright info
- *
- * Revision 1.9  1995/10/07  05:09:27  wvcii
- * removed #define BYTESPERSECTOR 512
- *
- * Revision 1.8  1995/09/06  19:27:52  wvcii
- * added startTime to commonLogData
- *
- * Revision 1.7  1995/07/07  00:13:42  wvcii
- * this version free from deadlock, fails parity verification
  *
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.1 1998/11/13 04:20:32 oster Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.2 1999/01/26 02:34:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,106 +28,6 @@
 
 /*
  * Code for RAID level 6 (P + Q) disk array architecture.
- *
- * :  
- * Log: rf_pq.c,v 
- * Revision 1.33  1996/11/05 21:10:40  jimz
- * failed pda generalization
- *
- * Revision 1.32  1996/07/31  16:29:50  jimz
- * "fix" math on 32-bit machines using RF_LONGSHIFT
- * (may be incorrect)
- *
- * Revision 1.31  1996/07/31  15:35:01  jimz
- * evenodd changes; bugfixes for double-degraded archs, generalize
- * some formerly PQ-only functions
- *
- * Revision 1.30  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.29  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.28  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.27  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.26  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.25  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.24  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.23  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.22  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.21  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.20  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.19  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.18  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.17  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.16  1996/05/17  14:52:04  wvcii
- * added prototyping to QDelta()
- *   - changed buf params from volatile unsigned long * to char *
- * changed QDelta for kernel
- *   - just bzero the buf since kernel doesn't include pq decode table
- *
- * Revision 1.15  1996/05/03  19:40:20  wvcii
- * added includes for dag library
- *
- * Revision 1.14  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.13  1995/11/30  16:19:55  wvcii
- * added copyright info
- *
- * Revision 1.12  1995/11/07  16:13:47  wvcii
- * changed PQDagSelect prototype
- * function no longer returns numHdrSucc, numTermAnt
- * note:  this file contains node functions which should be
- * moved to rf_dagfuncs.c so that all node funcs are bundled together
- *
- * Revision 1.11  1995/10/04  03:50:33  wvcii
- * removed panics, minor code cleanup in dag selection
- *
- *
  */
 
 #include "rf_archs.h"
@@ -847,7 +747,7 @@ static void QDelta(
   unsigned int *q = &(rf_qfor[28-coeff][0]);
   unsigned r = rf_rn[coeff+1];
 
-#ifdef KERNEL
+#ifdef _KERNEL
   /* PQ in kernel currently not supported because the encoding/decoding table is not present */
   bzero(dest, length);
 #else  /* KERNEL */
@@ -900,7 +800,7 @@ static void QDelta(
       *dest++ = d;
       length--;
     }
-#endif  /* KERNEL */
+#endif  /* _KERNEL */
 }
 
 /*

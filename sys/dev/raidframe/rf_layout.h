@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,194 +29,16 @@
 /* rf_layout.h -- header file defining layout data structures
  */
 
-/*
- * :  
- * Log: rf_layout.h,v 
- * Revision 1.50  1996/11/05 21:10:40  jimz
- * failed pda generalization
- *
- * Revision 1.49  1996/07/29  14:05:12  jimz
- * fix numPUs/numRUs confusion (everything is now numRUs)
- * clean up some commenting, return values
- *
- * Revision 1.48  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.47  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.46  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.45  1996/07/11  19:08:00  jimz
- * generalize reconstruction mechanism
- * allow raid1 reconstructs via copyback (done with array
- * quiesced, not online, therefore not disk-directed)
- *
- * Revision 1.44  1996/06/19  22:23:01  jimz
- * parity verification is now a layout-configurable thing
- * not all layouts currently support it (correctly, anyway)
- *
- * Revision 1.43  1996/06/19  17:53:48  jimz
- * move GetNumSparePUs, InstallSpareTable ops into layout switch
- *
- * Revision 1.42  1996/06/19  14:56:48  jimz
- * move layout-specific config parsing hooks into RF_LayoutSW_t
- * table in rf_layout.c
- *
- * Revision 1.41  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.40  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.39  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.38  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.37  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.36  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.35  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.34  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.33  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.32  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.31  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.30  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.29  1995/12/01  19:16:19  root
- * added copyright info
- *
- * Revision 1.28  1995/11/28  21:26:49  amiri
- * defined a declustering flag RF_BD_DECLUSTERED
- *
- * Revision 1.27  1995/11/17  19:00:59  wvcii
- * created MapQ entry in switch table
- * added prototyping to MapParity
- *
- * Revision 1.26  1995/11/07  15:40:27  wvcii
- * changed prototype of SeclectionFunc in mapsw
- * function no longer returns numHdrSucc, numTermAnt
- *
- * Revision 1.25  1995/10/12  20:57:08  arw
- * added lots of comments
- *
- * Revision 1.24  1995/10/12  16:04:08  jimz
- * added config name to mapsw
- *
- * Revision 1.23  1995/07/26  03:28:31  robby
- * intermediary checkin
- *
- * Revision 1.22  1995/07/10  20:51:08  robby
- * added to the asm info for the virtual striping locks
- *
- * Revision 1.21  1995/07/10  16:57:47  robby
- * updated alloclistelem struct to the correct struct name
- *
- * Revision 1.20  1995/07/08  20:06:11  rachad
- * *** empty log message ***
- *
- * Revision 1.19  1995/07/08  18:05:39  rachad
- * Linked up Claudsons code with the real cache
- *
- * Revision 1.18  1995/07/06  14:29:36  robby
- * added defaults states list to the layout switch
- *
- * Revision 1.17  1995/06/23  13:40:14  robby
- * updeated to prototypes in rf_layout.h
- *
- * Revision 1.16  1995/06/08  22:11:03  holland
- * bug fixes related to mutiple-row arrays
- *
- * Revision 1.15  1995/05/24  21:43:23  wvcii
- * added field numParityLogCol to RaidLayout
- *
- * Revision 1.14  95/05/02  22:46:53  holland
- * minor code cleanups.
- * 
- * Revision 1.13  1995/05/02  12:48:01  holland
- * eliminated some unused code.
- *
- * Revision 1.12  1995/05/01  13:28:00  holland
- * parity range locks, locking disk requests, recon+parityscan in kernel, etc.
- *
- * Revision 1.11  1995/03/15  20:01:17  holland
- * added REMAP and DONT_REMAP
- *
- * Revision 1.10  1995/03/09  19:54:11  rachad
- * Added suport for threadless simulator
- *
- * Revision 1.9  1995/03/03  21:48:58  holland
- * minor changes.
- *
- * Revision 1.8  1995/03/01  20:25:48  holland
- * kernelization changes
- *
- * Revision 1.7  1995/02/03  22:31:36  holland
- * many changes related to kernelization
- *
- * Revision 1.6  1995/01/30  14:53:46  holland
- * extensive changes related to making DoIO non-blocking
- *
- * Revision 1.5  1995/01/24  23:58:46  holland
- * multi-way recon XOR, plus various small changes
- *
- * Revision 1.4  1995/01/04  19:28:35  holland
- * corrected comments around mapsw
- *
- * Revision 1.3  1994/11/28  22:15:45  danner
- * Added type field to the physdiskaddr struct.
- *
- */
-
 #ifndef _RF__RF_LAYOUT_H_
 #define _RF__RF_LAYOUT_H_
 
 #include "rf_types.h"
 #include "rf_archs.h"
 #include "rf_alloclist.h"
+
+#ifndef _KERNEL
+#include <stdio.h>
+#endif
 
 /*****************************************************************************************
  *
@@ -228,7 +50,7 @@ typedef struct RF_LayoutSW_s {
   RF_ParityConfig_t   parityConfig;
   char               *configName;
 
-#ifndef KERNEL
+#ifndef _KERNEL
  /* layout-specific parsing */
   int (*MakeLayoutSpecific)(FILE *fp, RF_Config_t *cfgPtr, void *arg);
   void *makeLayoutSpecificArg;

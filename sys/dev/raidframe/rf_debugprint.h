@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugprint.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_debugprint.h,v 1.2 1999/01/26 02:33:54 oster Exp $	*/
 /*
  * rf_debugprint.h
  */
@@ -27,27 +27,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * :  
- * Log: rf_debugprint.h,v 
- * Revision 1.4  1996/06/10 11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.3  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.2  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.1  1996/05/18  19:55:43  jimz
- * Initial revision
- *
  */
 
 #ifndef _RF__RF_DEBUGPRINT_H_

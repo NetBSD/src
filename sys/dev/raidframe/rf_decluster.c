@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.2 1999/01/26 02:33:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,139 +46,6 @@
  *                   +------------------------------+
  *
  *--------------------------------------------------------------------*/
-
-/*
- * :  
- * Log: rf_decluster.c,v 
- * Revision 1.51  1996/08/21 19:47:10  jimz
- * fix bogus return values from config
- *
- * Revision 1.50  1996/08/20  22:41:42  jimz
- * better diagnostics for bad blockdesigns
- *
- * Revision 1.49  1996/07/31  16:56:18  jimz
- * dataBytesPerStripe, sectorsPerDisk init arch-indep.
- *
- * Revision 1.48  1996/07/29  14:05:12  jimz
- * fix numPUs/numRUs confusion (everything is now numRUs)
- * clean up some commenting, return values
- *
- * Revision 1.47  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.46  1996/07/27  18:40:11  jimz
- * cleanup sweep
- *
- * Revision 1.45  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.44  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.43  1996/06/19  17:53:48  jimz
- * move GetNumSparePUs, InstallSpareTable ops into layout switch
- *
- * Revision 1.42  1996/06/17  03:23:48  jimz
- * switch DeclusteredDS typing
- *
- * Revision 1.41  1996/06/11  08:55:15  jimz
- * improved error-checking at configuration time
- *
- * Revision 1.40  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.39  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.38  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.37  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.36  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.35  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.34  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.33  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.32  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.31  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.30  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.29  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.28  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.27  1995/12/01  16:00:08  root
- * added copyright info
- *
- * Revision 1.26  1995/11/28  21:35:12  amiri
- * set the RF_BD_DECLUSTERED flag
- *
- * Revision 1.25  1995/11/17  18:56:00  wvcii
- * added prototyping to MapParity
- *
- * Revision 1.24  1995/07/04  22:25:33  holland
- * increased default num bufs
- *
- * Revision 1.23  1995/07/03  20:23:51  holland
- * changed floating recon bufs & head sep yet again
- *
- * Revision 1.22  1995/07/03  18:12:14  holland
- * changed the way the number of floating recon bufs & the head sep
- * limit are set
- *
- * Revision 1.21  1995/07/02  15:07:42  holland
- * bug fixes related to getting distributed sparing numbers
- *
- * Revision 1.20  1995/06/23  13:41:28  robby
- * updeated to prototypes in rf_layout.h
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 
 #include "rf_types.h"
 #include "rf_raid.h"
@@ -773,19 +640,11 @@ int rf_InstallSpareTable(
   req->TableDepthInPUs               = info->TableDepthInPUs;
   req->SpareSpaceDepthPerRegionInSUs = info->SpareSpaceDepthPerRegionInSUs;
 
-#ifndef KERNEL
-  info->SpareTable = rf_ReadSpareTable(req, info->sparemap_fname);
-  RF_Free(req, sizeof(*req));
-  retcode = (info->SpareTable) ? 0 : 1;
-#else /* !KERNEL */
   retcode = rf_GetSpareTableFromDaemon(req);
   RF_ASSERT(!retcode);                                     /* XXX -- fix this to recover gracefully -- XXX */
-#endif /* !KERNEL */
-
   return(retcode);
 }
 
-#ifdef KERNEL
 /*
  * Invoked via ioctl to install a spare table in the kernel.
  */
@@ -821,7 +680,6 @@ int rf_SetSpareTable(raidPtr, data)
 
   return(0);
 }
-#endif /* KERNEL */
 
 RF_ReconUnitCount_t rf_GetNumSpareRUsDeclustered(raidPtr)
   RF_Raid_t *raidPtr;

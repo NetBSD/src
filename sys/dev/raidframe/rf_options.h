@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_options.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_options.h,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * rf_options.h
  */
@@ -31,16 +31,6 @@
 
 #ifndef _RF__RF_OPTIONS_H_
 #define _RF__RF_OPTIONS_H_
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifdef KERNEL
-#ifndef __NetBSD__
-#include <dfstrace.h>
-#endif /* !__NetBSD__ */
-#endif /* KERNEL */
 
 #define RF_DEFAULT_LOCK_TABLE_SIZE 256
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.1 1998/11/13 04:20:33 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,103 +31,6 @@
  * rf_raid5.c -- implements RAID Level 5
  *
  *****************************************************************************/
-
-/*
- * :  
- * Log: rf_raid5.c,v 
- * Revision 1.26  1996/11/05 21:10:40  jimz
- * failed pda generalization
- *
- * Revision 1.25  1996/07/31  16:56:18  jimz
- * dataBytesPerStripe, sectorsPerDisk init arch-indep.
- *
- * Revision 1.24  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.23  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.22  1996/06/11  08:54:27  jimz
- * improved error-checking at configuration time
- *
- * Revision 1.21  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.20  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.19  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.18  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.17  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.16  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.15  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.14  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.13  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.12  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.11  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.10  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.9  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.8  1996/05/03  19:38:58  wvcii
- * moved dag creation routines to dag library
- *
- * Revision 1.7  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.6  1995/12/06  15:04:28  root
- * added copyright info
- *
- * Revision 1.5  1995/11/17  18:59:41  wvcii
- * added prototyping to MapParity
- *
- * Revision 1.4  1995/06/23  13:38:21  robby
- * updeated to prototypes in rf_layout.h
- *
- */
 
 #include "rf_types.h"
 #include "rf_raid.h"

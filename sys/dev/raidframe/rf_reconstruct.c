@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.1 1998/11/13 04:20:33 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,194 +32,9 @@
  *
  ************************************************************/
 
-/*
- * :  
- * Log: rf_reconstruct.c,v 
- * Revision 1.65  1996/08/06 22:24:56  jimz
- * get rid of sys/buf.h on linux
- *
- * Revision 1.64  1996/07/30  04:28:53  jimz
- * include rf_types.h first
- *
- * Revision 1.63  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.62  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.61  1996/07/15  05:40:41  jimz
- * some recon datastructure cleanup
- * better handling of multiple failures
- * added undocumented double-recon test
- *
- * Revision 1.60  1996/07/15  02:57:18  jimz
- * added debugging (peek at first couple bytes of recon buffers
- * as they go by)
- *
- * Revision 1.59  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.58  1996/07/11  19:08:00  jimz
- * generalize reconstruction mechanism
- * allow raid1 reconstructs via copyback (done with array
- * quiesced, not online, therefore not disk-directed)
- *
- * Revision 1.57  1996/06/17  14:38:33  jimz
- * properly #if out RF_DEMO code
- * fix bug in MakeConfig that was causing weird behavior
- * in configuration routines (config was not zeroed at start)
- * clean up genplot handling of stacks
- *
- * Revision 1.56  1996/06/17  03:24:59  jimz
- * include shutdown.h for define of now-macroized ShutdownCreate
- *
- * Revision 1.55  1996/06/11  10:58:36  jimz
- * get rid of simulator-testcode artifacts
- * add generic ReconDoneProc mechanism instead
- *
- * Revision 1.54  1996/06/10  14:18:58  jimz
- * move user, throughput stats into per-array structure
- *
- * Revision 1.53  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.52  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.51  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.50  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.49  1996/06/06  01:24:36  jimz
- * don't get rid of reconCtrlPtr until we're done with it
- *
- * Revision 1.48  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.47  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.46  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.45  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.44  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.43  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.42  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.41  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.40  1996/05/24  04:40:40  jimz
- * don't do demoMode stuff in kernel
- *
- * Revision 1.39  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.38  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.37  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.36  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.35  1996/05/01  16:28:16  jimz
- * don't include ccmn.h
- *
- * Revision 1.34  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.33  1995/12/06  15:05:09  root
- * added copyright info
- *
- * Revision 1.32  1995/11/17  19:04:11  wvcii
- * added prototyping to ComputePSDiskOffsets
- * prow and pcol now type int (were u_int)
- *
- * Revision 1.31  1995/11/17  01:39:35  amiri
- * isolated some demo related stuff
- *
- * Revision 1.30  1995/10/18  19:33:14  amiri
- * removed fflush (stdin/stdout) calls from ReconstructFailedDisk
- *
- * Revision 1.29  1995/10/11  10:20:33  jimz
- * #if 0'd problem code for sigmetrics
- *
- * Revision 1.28  1995/10/10  23:18:15  amiri
- * added fflushes to stdin/stdout before requesting
- * input in demo mode.
- *
- * Revision 1.27  1995/10/10  19:24:47  amiri
- * took out update_mode (for demo) from
- * KERNEL source.
- *
- * Revision 1.26  1995/10/09  23:35:48  amiri
- * added support for more meters in recon. demo
- *
- * Revision 1.25  1995/07/03  18:14:30  holland
- * changed the way the number of floating recon bufs &
- * the head sep limit get set
- *
- * Revision 1.24  1995/07/02  15:07:42  holland
- * bug fixes related to getting distributed sparing numbers
- *
- * Revision 1.23  1995/06/23  13:36:36  robby
- * updeated to prototypes in rf_layout.h
- *
-*/
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 #include "rf_types.h"
 #include <sys/time.h>
-#ifndef LINUX
 #include <sys/buf.h>
-#endif /* !LINUX */
 #include <sys/errno.h>
 #include "rf_raid.h"
 #include "rf_reconutil.h"
@@ -243,9 +58,7 @@
 #include "rf_demo.h"
 #endif /* RF_DEMO > 0 */
 
-#ifdef KERNEL
 #include "rf_kintf.h"
-#endif /* KERNEL */
 
 /* setting these to -1 causes them to be set to their default values if not set by debug options */
 
@@ -268,10 +81,8 @@
 #define DDprintf7(s,a,b,c,d,e,f,g) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define DDprintf8(s,a,b,c,d,e,f,g,h) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
-#ifdef KERNEL
 static RF_Thread_t      recon_thr_handle;
 static int              recon_thread_initialized = 0;
-#endif /* KERNEL */
 
 static RF_FreeList_t *rf_recond_freelist;
 #define RF_MAX_FREE_RECOND  4
@@ -389,12 +200,10 @@ int rf_ConfigureReconstruction(listp)
     return(rc);
   }
 
-#ifdef KERNEL
   if (!recon_thread_initialized) {
 	  RF_CREATE_THREAD(recon_thr_handle, rf_ReconKernelThread, NULL); 
 	  recon_thread_initialized = 1;
   }
-#endif /* KERNEL */
 
   return(0);
 }
@@ -433,10 +242,8 @@ static void FreeReconDesc(reconDesc)
   printf("RAIDframe: %lu recon event waits, %lu recon delays\n",
     (long)reconDesc->numReconEventWaits, (long)reconDesc->numReconExecDelays);
 #endif /* RF_RECON_STATS > 0 */
-#ifdef KERNEL
   printf("RAIDframe: %lu max exec ticks\n", 
 	 (long)reconDesc->maxReconExecTicks);
-#endif /* KERNEL */
 #if (RF_RECON_STATS > 0) || defined(KERNEL)
   printf("\n");
 #endif /* (RF_RECON_STATS > 0) || KERNEL */
@@ -455,10 +262,6 @@ int rf_ReconstructFailedDisk(raidPtr, row, col)
   RF_RowCol_t   row;
   RF_RowCol_t   col;
 {
-#ifdef SIMULATE
-  RF_PendingRecon_t *pend;
-  RF_RowCol_t r, c;
-#endif /* SIMULATE */
   RF_LayoutSW_t *lp;
   int rc;
 
@@ -468,25 +271,12 @@ int rf_ReconstructFailedDisk(raidPtr, row, col)
      * The current infrastructure only supports reconstructing one
      * disk at a time for each array.
      */
-#ifdef SIMULATE
-    if (raidPtr->reconInProgress) {
-      RF_Malloc(pend, sizeof(RF_PendingRecon_t), (RF_PendingRecon_t *));
-      pend->row = row;
-      pend->col = col;
-      pend->next = raidPtr->pendingRecon;
-      raidPtr->pendingRecon = pend;
-      /* defer until current recon completes */
-      return(0);
-    }
-    raidPtr->reconInProgress++;
-#else /* SIMULATE */
     RF_LOCK_MUTEX(raidPtr->mutex);
     while (raidPtr->reconInProgress) {
       RF_WAIT_COND(raidPtr->waitForReconCond, raidPtr->mutex);
     }
     raidPtr->reconInProgress++;
     RF_UNLOCK_MUTEX(raidPtr->mutex);
-#endif /* SIMULATE */
     rc = rf_ReconstructFailedDiskBasic(raidPtr, row, col);
   }
   else {
@@ -494,28 +284,12 @@ int rf_ReconstructFailedDisk(raidPtr, row, col)
       lp->parityConfig);
     rc = EIO;
   }
-#ifdef SIMULATE
-  pend = raidPtr->pendingRecon;
-  if (pend) {
-    /* launch next recon */
-    raidPtr->pendingRecon = pend->next;
-    r = pend->row;
-    c = pend->col;
-    RF_Free(pend, sizeof(RF_PendingRecon_t));
-    return(rf_ReconstructFailedDisk(raidPtr, r, c));
-  }
-#else /* SIMULATE */
   RF_LOCK_MUTEX(raidPtr->mutex);
   raidPtr->reconInProgress--;
   RF_UNLOCK_MUTEX(raidPtr->mutex);
   RF_SIGNAL_COND(raidPtr->waitForReconCond);
-#if 1
-#if defined(__NetBSD__) && defined(_KERNEL)
   wakeup(&raidPtr->waitForReconCond); /* XXX Methinks this will be needed
 					at some point... GO*/
-#endif
-#endif
-#endif /* SIMULATE */
   return(rc);
 }
 
@@ -576,11 +350,9 @@ int rf_ReconstructFailedDiskBasic(raidPtr, row, col)
   reconDesc->numReconExecDelays = 0;
   reconDesc->numReconEventWaits = 0;
 #endif /* RF_RECON_STATS > 0 */
-#ifdef KERNEL
   reconDesc->reconExecTimerRunning = 0;
   reconDesc->reconExecTicks = 0;
   reconDesc->maxReconExecTicks = 0;
-#endif /* KERNEL */
 #if RF_DEMO > 0 && !defined(SIMULATE)
   if (rf_demoMode) {
     char cbuf[10]; 
@@ -628,10 +400,6 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
       retcode =  rf_SuspendNewRequestsAndWait(raidPtr);
       Dprintf("RECON: end request suspend\n");      
       rf_StartUserStats(raidPtr);              /* zero out the stats kept on user accs */
-
-#ifdef SIMULATE
-      if (retcode) return(0);
-#endif /* SIMULATE */
 
       /* fall through to state 1 */
 
@@ -688,11 +456,7 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
       while (reconDesc->numDisksDone < raidPtr->numCol-1) {
 
 	event = rf_GetNextReconEvent(reconDesc, row, (void (*)(void *))rf_ContinueReconstructFailedDisk,reconDesc);
-#ifdef SIMULATE
-	if (event==NULL) {return(0);}
-#else /* SIMULATE */
 	RF_ASSERT(event);
-#endif /* SIMULATE */
 
 	if (ProcessReconEvent(raidPtr, row, event)) reconDesc->numDisksDone++;
 	raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
@@ -726,11 +490,7 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
       while (rf_UnitsLeftToReconstruct(raidPtr->reconControl[row]->reconMap) > 0) {
 	
 	event = rf_GetNextReconEvent(reconDesc, row, (void (*)(void *))rf_ContinueReconstructFailedDisk,reconDesc);
-#ifdef SIMULATE
-	if (event==NULL) {return(0);}
-#else /* SIMULATE */
 	RF_ASSERT(event);
-#endif /* SIMULATE */
 	
 	(void) ProcessReconEvent(raidPtr, row, event);         /* ignore return code */
 	raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
@@ -760,10 +520,6 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
       retcode =  rf_SuspendNewRequestsAndWait(raidPtr);
       rf_StopUserStats(raidPtr);
       rf_PrintUserStats(raidPtr);               /* print out the stats on user accs accumulated during recon */
-
-#ifdef SIMULATE
-      if (retcode) return(0);
-#endif /* SIMULATE */
 
       /* fall through to state 6 */
     case 6:

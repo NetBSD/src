@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_geniq.c,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_geniq.c,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,38 +30,6 @@
  *  code which implements Reed-Solomon encoding for RAID level 6
  */
 
-/* :  
- * Log: rf_geniq.c,v 
- * Revision 1.12  1996/07/29 16:37:00  jimz
- * remove archs.h include to avoid VPATH problems in kernel
- * rf_invertq.c now must include archs.h before invertq.h
- *
- * Revision 1.11  1996/07/29  15:04:16  jimz
- * correct rf_archs.h path for kernel
- *
- * Revision 1.10  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.9  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.8  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.7  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.6  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.5  1995/12/01  18:29:18  root
- * added copyright info
- *
- */
 
 #define RF_UTILITY 1
 #include "rf_pqdeg.h"

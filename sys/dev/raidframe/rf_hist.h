@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_hist.h,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_hist.h,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * rf_hist.h
  *
@@ -29,22 +29,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/* :  
- * Log: rf_hist.h,v 
- * Revision 1.3  1996/06/09 02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.2  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.1  1996/05/31  10:33:05  jimz
- * Initial revision
- *
  */
 
 #ifndef _RF__RF_HIST_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdeg.h,v 1.1 1998/11/13 04:20:32 oster Exp $	*/
+/*	$NetBSD: rf_pqdeg.h,v 1.2 1999/01/26 02:34:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -24,25 +24,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-
-/* :  
- * Log: rf_pqdeg.h,v 
- * Revision 1.7  1996/07/18 22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.6  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.5  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.4  1995/11/30  16:19:11  wvcii
- * added copyright info
- *
  */
 
 #ifndef _RF__RF_PQDEG_H_
@@ -83,10 +64,10 @@ typedef RF_uint8      RF_ua1024_t[1024];
 
 extern RF_ua32_t rf_rn;
 extern RF_ua32_t rf_qfor[32];
-#ifndef KERNEL                 /* we don't support PQ in the kernel yet, so don't link in this monster table */
+#ifndef _KERNEL                 /* we don't support PQ in the kernel yet, so don't link in this monster table */
 extern RF_ua1024_t rf_qinv[29*29];
-#else /* !KERNEL */
+#else /* !_KERNEL */
 extern RF_ua1024_t rf_qinv[1];
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_RF__RF_PQDEG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagflags.h,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$NetBSD: rf_dagflags.h,v 1.2 1999/01/26 02:33:53 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,32 +34,6 @@
  *
  **************************************************************************************/
 
-/* :  
- * Log: rf_dagflags.h,v 
- * Revision 1.10  1996/06/13 19:08:23  jimz
- * remove unused BD flag
- *
- * Revision 1.9  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.8  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.7  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.6  1995/12/01  15:59:40  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_DAGFLAGS_H_
 #define _RF__RF_DAGFLAGS_H_

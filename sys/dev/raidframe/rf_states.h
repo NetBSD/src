@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.h,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$NetBSD: rf_states.h,v 1.2 1999/01/26 02:34:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -24,28 +24,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-
-/* :  
- * Log: rf_states.h,v 
- * Revision 1.5  1996/05/27 18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.4  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.3  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.2  1996/05/06  22:08:28  wvcii
- * added copyright info and change log
- *
- * Revision 1.1  1995/07/06  14:23:39  robby
- * Initial revision
- *
  */
 
 #ifndef _RF__RF_STATES_H_

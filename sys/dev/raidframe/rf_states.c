@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.3 1999/01/15 17:55:52 explorer Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.4 1999/01/26 02:34:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,197 +25,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-/*
- * :  
- * Log: rf_states.c,v 
- * Revision 1.45  1996/07/28 20:31:39  jimz
- * i386netbsd port
- * true/false fixup
- *
- * Revision 1.44  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.43  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.42  1996/07/17  21:00:58  jimz
- * clean up timer interface, tracing
- *
- * Revision 1.41  1996/07/11  19:08:00  jimz
- * generalize reconstruction mechanism
- * allow raid1 reconstructs via copyback (done with array
- * quiesced, not online, therefore not disk-directed)
- *
- * Revision 1.40  1996/06/17  14:38:33  jimz
- * properly #if out RF_DEMO code
- * fix bug in MakeConfig that was causing weird behavior
- * in configuration routines (config was not zeroed at start)
- * clean up genplot handling of stacks
- *
- * Revision 1.39  1996/06/11  18:12:17  jimz
- * got rid of evil race condition in LastState
- *
- * Revision 1.38  1996/06/10  14:18:58  jimz
- * move user, throughput stats into per-array structure
- *
- * Revision 1.37  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.36  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.35  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.34  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.33  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.32  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.31  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.30  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.29  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.28  1996/05/24  04:28:55  jimz
- * release cleanup ckpt
- *
- * Revision 1.27  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.26  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.25  1996/05/20  19:31:46  jimz
- * straighten out syntax problems
- *
- * Revision 1.24  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.23  1996/05/16  23:37:33  jimz
- * fix misspelled "else"
- *
- * Revision 1.22  1996/05/15  22:33:32  jimz
- * appropriately #ifdef cache stuff
- *
- * Revision 1.21  1996/05/06  22:09:20  wvcii
- * rf_State_ExecuteDAG now only executes the first dag
- * of each parity stripe in a multi-stripe access
- *
- * rf_State_ProcessDAG now executes all dags in a
- * multi-stripe access except the first dag of each stripe.
- *
- * Revision 1.20  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.19  1995/11/19  16:29:50  wvcii
- * replaced LaunchDAGState with CreateDAGState, ExecuteDAGState
- * created rf_ContinueDagAccess
- *
- * Revision 1.18  1995/11/07  15:37:23  wvcii
- * deleted states SendDAGState, RetryDAGState
- * added staes: LaunchDAGState, ProcessDAGState
- * code no longer has a hard-coded retry count of 1 but will support
- * retries until a dag can not be found (selected) to perform the user request
- *
- * Revision 1.17  1995/10/09  23:36:08  amiri
- * *** empty log message ***
- *
- * Revision 1.16  1995/10/09  18:36:58  jimz
- * moved call to StopThroughput for user-level driver to rf_driver.c
- *
- * Revision 1.15  1995/10/09  18:07:23  wvcii
- * lastState now call rf_StopThroughputStats
- *
- * Revision 1.14  1995/10/05  18:56:31  jimz
- * no-op file if !INCLUDE_VS
- *
- * Revision 1.13  1995/09/30  20:38:24  jimz
- * LogTraceRec now takes a Raid * as its first argument
- *
- * Revision 1.12  1995/09/19  22:58:54  jimz
- * integrate DKUSAGE into raidframe
- *
- * Revision 1.11  1995/09/07  01:26:55  jimz
- * Achive basic compilation in kernel. Kernel functionality
- * is not guaranteed at all, but it'll compile. Mostly. I hope.
- *
- * Revision 1.10  1995/07/26  03:28:31  robby
- * intermediary checkin
- *
- * Revision 1.9  1995/07/23  02:50:33  robby
- * oops. fixed boo boo
- *
- * Revision 1.8  1995/07/22  22:54:54  robby
- * removed incorrect comment
- *
- * Revision 1.7  1995/07/21  19:30:26  robby
- * added idle state for rf_when-idle.c
- *
- * Revision 1.6  1995/07/10  19:06:28  rachad
- * *** empty log message ***
- *
- * Revision 1.5  1995/07/10  17:30:38  robby
- * added virtual striping lock states
- *
- * Revision 1.4  1995/07/08  18:05:39  rachad
- * Linked up Claudsons code with the real cache
- *
- * Revision 1.3  1995/07/06  14:38:50  robby
- * changed get_thread_id to get_threadid
- *
- * Revision 1.2  1995/07/06  14:24:15  robby
- * added log
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifdef KERNEL
-#ifndef __NetBSD__
-#include <dkusage.h>
-#endif /* !__NetBSD__ */
-#endif /* KERNEL */
 
 #include <sys/errno.h>
 
@@ -254,11 +63,6 @@
      - increment desc->state when they have finished their work.
 */
 
-
-#ifdef SIMULATE
-extern int global_async_flag;
-#endif /* SIMULATE */
-
 static char *StateName(RF_AccessState_t state)
 {
   switch (state) {
@@ -281,10 +85,6 @@ void rf_ContinueRaidAccess(RF_RaidAccessDesc_t *desc)
   int suspended = RF_FALSE;
   int current_state_index = desc->state;
   RF_AccessState_t current_state = desc->states[current_state_index];
-
-#ifdef SIMULATE
-  rf_SetCurrentOwner(desc->owner);
-#endif /* SIMULATE */
   
   do {
 
@@ -383,37 +183,6 @@ int rf_State_LastState(RF_RaidAccessDesc_t *desc)
 
   callbackArg.p = desc->callbackArg;
 
-#ifdef SIMULATE
-  int tid;
-  rf_get_threadid(tid);
-
-  if (rf_accessDebug)
-    printf("async_flag set to  %d\n",global_async_flag);
-  global_async_flag=desc->async_flag;
-  if (rf_accessDebug)
-    printf("Will now do clean up for %d\n",rf_GetCurrentOwner());
-  rf_FreeRaidAccDesc(desc);
-  
-  if (callbackFunc)
-    callbackFunc(callbackArg);
-#else /* SIMULATE */
-
-#ifndef KERNEL
-      
-  if (!(desc->flags & RF_DAG_NONBLOCKING_IO)) {
-    /* bummer that we have to take another lock here */
-    RF_LOCK_MUTEX(desc->mutex);
-    RF_ASSERT(desc->flags&RF_DAG_ACCESS_COMPLETE);
-    RF_SIGNAL_COND(desc->cond);  /* DoAccess frees the desc in the blocking-I/O case */
-    RF_UNLOCK_MUTEX(desc->mutex);
-  }
-  else 
-    rf_FreeRaidAccDesc(desc);
-      
-  if (callbackFunc)
-    callbackFunc(callbackArg);
-
-#else  /* KERNEL */
   if (!(desc->flags & RF_DAG_TEST_ACCESS)) {/* don't biodone if this */
 #if DKUSAGE > 0
     RF_DKU_END_IO(((RF_Raid_t *)desc->raidPtr)->raidid,(struct buf *)desc->bp);
@@ -433,9 +202,6 @@ int rf_State_LastState(RF_RaidAccessDesc_t *desc)
 
   if (callbackFunc) callbackFunc(callbackArg);
   rf_FreeRaidAccDesc(desc);
-
-#endif /* ! KERNEL */
-#endif /* SIMULATE */
 
   return RF_FALSE;
 }
@@ -666,9 +432,7 @@ int rf_State_CreateDAG (RF_RaidAccessDesc_t *desc)
     for (i = 0; i < desc->numStripes; i++) {
       dag_h = desc->dagArray[i].dags;
       while (dag_h) {
-#ifdef KERNEL
 	dag_h->bp = (struct buf *) desc->bp;
-#endif /* KERNEL */
 	dag_h->tracerec = tracerec;
 	dag_h = dag_h->next;
       }
@@ -845,11 +609,6 @@ int rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
     }
   }
   
-#ifdef SIMULATE
-  /* refresh current owner in case blocked ios where allowed to run */
-  rf_SetCurrentOwner(desc->owner);
-#endif /* SIMULATE */
-
   RF_ETIMER_STOP(timer); 
   RF_ETIMER_EVAL(timer); 
   tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);

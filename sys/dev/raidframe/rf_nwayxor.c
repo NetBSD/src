@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_nwayxor.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_nwayxor.c,v 1.2 1999/01/26 02:33:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,30 +34,6 @@
  * adapted from danner's longword_bxor code.
  *
  ************************************************************/
-
-/* :  
- * Log: rf_nwayxor.c,v 
- * Revision 1.6  1996/06/12 03:31:18  jimz
- * only print call counts if rf_showXorCallCounts != 0
- *
- * Revision 1.5  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.4  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.3  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.2  1995/12/01  19:29:14  root
- * added copyright info
- *
- */
 
 #include "rf_nwayxor.h"
 #include "rf_shutdown.h"
