@@ -231,16 +231,38 @@ pcmcia_print(arg, pnp)
     return(UNCONF);
 }
 
-int
-pcmcia_enable_function(pf, pcmcia, cfe)
+/* Initialize a PCMCIA function.  May be called as long as the function
+   is disabled. */
+void
+pcmcia_function_init(pf, cfe)
      struct pcmcia_function *pf;
-     struct device *pcmcia;
      struct pcmcia_config_entry *cfe;
+{
+
+     if (pf->pf_flags & PFF_ENABLED)
+	panic("pcmcia_function_init: function is enabled");
+     
+     /* Remember which configuration entry we are using. */
+     pf->cfe = cfe;
+}
+
+/* Enable a PCMCIA function */
+int
+pcmcia_function_enable(pf)
+     struct pcmcia_function *pf;
 {
     struct pcmcia_function *tmp;
     int reg;
 
-    pf->cfe = cfe;
+    if (pf->cfe == NULL)
+	panic("pcmcia_function_enable: function not initialized");
+    if (pf->pf_flags & PFF_ENABLED)
+	panic("pcmcia_function_enable: function already enabled");
+
+    /* Increase the reference count on the socket, enabling power,
+       if necessary. */
+    if (pf->sc->sc_enabled_count++ == 0)
+	pcmcia_chip_socket_enable(pf->sc->pct, pf->sc->pch);
 
     /* it's possible for different functions' CCRs to be in the same
        underlying page.  Check for that. */
@@ -248,7 +270,7 @@ pcmcia_enable_function(pf, pcmcia, cfe)
     for (tmp = pf->sc->card.pf_head.sqh_first;
 	 tmp;
 	 tmp = tmp->pf_list.sqe_next) {
-	if (tmp->cfe &&
+	if ((tmp->pf_flags & PFF_ENABLED) &&
 	    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
 	    ((pf->ccr_base+PCMCIA_CCR_SIZE) <=
 	     (tmp->ccr_base - tmp->pf_ccr_offset + tmp->pf_ccr_realsize))) {
@@ -261,21 +283,20 @@ pcmcia_enable_function(pf, pcmcia, cfe)
 	    pf->pf_ccr_offset =
 	        (tmp->pf_ccr_offset + pf->ccr_base) - tmp->ccr_base;
 	    pf->pf_ccr_window = tmp->pf_ccr_window;
-	    /* XXX when shutting down one function, it will be necessary
-	       to make sure this window is no longer in use before
-	       actually unmapping and freeing it */
 	    break;
 	}
     }
 
     if (tmp == NULL) {
 	if (pcmcia_mem_alloc(pf, PCMCIA_CCR_SIZE, &pf->pf_pcmh))
-	    return(1);
+	    goto bad;
 
 	if (pcmcia_mem_map(pf, PCMCIA_MEM_ATTR, pf->ccr_base,
 			   PCMCIA_CCR_SIZE, &pf->pf_pcmh,
-			   &pf->pf_ccr_offset, &pf->pf_ccr_window))
-	    return(1);
+			   &pf->pf_ccr_offset, &pf->pf_ccr_window)) {
+	    pcmcia_mem_free(pf, &pf->pf_pcmh);
+	    goto bad;
+	}
     }
 
     DPRINTF(("%s: function %d CCR at %d offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
@@ -302,11 +323,67 @@ pcmcia_enable_function(pf, pcmcia, cfe)
 	reg |= PCMCIA_CCR_STATUS_IOIS8;
     if (pf->cfe->flags & PCMCIA_CFE_AUDIO)
 	reg |= PCMCIA_CCR_STATUS_AUDIO;
+    /* Not really needed, since we start with 0. */
+    if (pf->cfe->flags & PCMCIA_CFE_POWERDOWN)
+	reg &= ~PCMCIA_CCR_STATUS_PWRDWN;
     pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
 
     pcmcia_ccr_write(pf, PCMCIA_CCR_SOCKETCOPY, 0);
 
+    pf->pf_flags |= PFF_ENABLED;
     return(0);
+
+ bad:
+    /* Decrement the refernce count, and power down the socket,
+       if necessary. */
+    if (pf->sc->sc_enabled_count-- == 1)
+	pcmcia_chip_socket_disable(pf->sc->pct, pf->sc->pch);
+    return (1);
+}
+
+/* Disable PCMCIA function. */
+void
+pcmcia_function_disable(pf)
+     struct pcmcia_function *pf;
+{
+    struct pcmcia_function *tmp;
+    int reg;
+
+    if (pf->cfe == NULL)
+	panic("pcmcia_function_enable: function not initialized");
+
+    /* Power down the function if the card supports it. */
+    if (pf->cfe->flags & PCMCIA_CFE_POWERDOWN) {
+    	reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
+	reg |= PCMCIA_CCR_STATUS_PWRDWN;
+	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
+    }
+
+    /* it's possible for different functions' CCRs to be in the same
+       underlying page.  Check for that.  Note we mark us as disabled
+       first to avoid matching ourself. */
+
+    pf->pf_flags &= ~PFF_ENABLED;
+    for (tmp = pf->sc->card.pf_head.sqh_first;
+	 tmp;
+	 tmp = tmp->pf_list.sqe_next) {
+	if ((tmp->pf_flags & PFF_ENABLED) &&
+	    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
+	    ((pf->ccr_base+PCMCIA_CCR_SIZE) <=
+	     (tmp->ccr_base - tmp->pf_ccr_offset + tmp->pf_ccr_realsize)))
+	    break;
+    }
+
+    /* Not used by anyone else; unmap the CCR. */
+    if (tmp == NULL) {
+	pcmcia_mem_unmap(pf, pf->pf_ccr_window);
+	pcmcia_mem_free(pf, &pf->pf_pcmh);
+    }
+
+    /* Decrement the refernce count, and power down the socket,
+       if necessary. */
+    if (pf->sc->sc_enabled_count-- == 1)
+	pcmcia_chip_socket_disable(pf->sc->pct, pf->sc->pch);
 }
 
 int

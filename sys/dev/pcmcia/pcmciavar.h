@@ -90,7 +90,11 @@ struct pcmcia_function {
     int (*ih_fct) __P((void *));
     void *ih_arg;
     int ih_ipl;
+    int pf_flags;
 };
+
+/* pf_flags */
+#define	PFF_ENABLED	0x0001		/* function is enabled */
 
 struct pcmcia_card {
     int cis1_major, cis1_minor;
@@ -111,6 +115,7 @@ struct pcmcia_softc {
     /* this stuff is for the card */
     struct pcmcia_card card;
     void *ih;
+    int sc_enabled_count;		/* how many functions are enabled */
 };
 
 struct pcmcia_attach_args {
@@ -166,9 +171,10 @@ void pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 #define pcmcia_mfc(sc) ((sc)->card.pf_head.sqh_first && \
 			(sc)->card.pf_head.sqh_first->pf_list.sqe_next)
 
-int pcmcia_enable_function __P((struct pcmcia_function *,
-				struct device *,
-				struct pcmcia_config_entry *));
+void pcmcia_function_init __P((struct pcmcia_function *,
+			       struct pcmcia_config_entry *));
+int pcmcia_function_enable __P((struct pcmcia_function *));
+void pcmcia_function_disable __P((struct pcmcia_function *));
 
 #define pcmcia_io_alloc(pf, start, size, pciop) \
 	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, \
