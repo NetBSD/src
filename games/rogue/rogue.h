@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.6 1998/07/27 01:12:36 mycroft Exp $	*/
+/*	$NetBSD: rogue.h,v 1.7 1998/09/13 15:27:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -491,7 +491,7 @@ boolean	check_hunger __P((boolean));
 boolean	check_imitator __P((object *));
 void	check_message __P((void));
 int	check_up __P((void));
-void	clean_up __P((char *));
+void	clean_up __P((char *)) __attribute__((__noreturn__));
 void	clear_level __P((void));
 void	cnfs __P((void));
 int	coin_toss __P((void));
@@ -517,7 +517,7 @@ void	drop_level __P((void));
 void	eat __P((void));
 void	edit_opts __P((void));
 void	env_get_value __P((char **, char *, boolean));
-void	error_save __P((int));
+void	error_save __P((int)) __attribute__((__noreturn__));
 void	fight __P((int));
 void	fill_it __P((int, boolean));
 void	fill_out_level __P((void));
@@ -601,7 +601,7 @@ boolean	mask_pack __P((object *, unsigned short));
 boolean	mask_room __P((short, short *, short *, unsigned short));
 void	md_cbreak_no_echo_nonl __P((boolean));
 boolean	md_df __P((char *));
-void	md_exit __P((int));
+void	md_exit __P((int)) __attribute__((__noreturn__));
 void	md_gct __P((struct rogue_time *));
 char   *md_gdtcf __P((void));
 int	md_get_file_id __P((char *));
@@ -663,7 +663,7 @@ void	put_mons __P((void));
 void	put_objects __P((void));
 void	put_on_ring __P((void));
 void	put_player __P((short));
-void	put_scores __P((object *, short));
+void	put_scores __P((object *, short)) __attribute__((__noreturn__));
 void	put_stairs __P((void));
 void	quaff __P((void));
 void	quit __P((boolean));
@@ -703,7 +703,7 @@ void	save_screen __P((void));
 void	search __P((short, boolean));
 boolean	seek_gold __P((object *));
 void	sell_pack __P((void));
-void	sf_error __P((void));
+void	sf_error __P((void)) __attribute__((__noreturn__));
 void	show_average_hp __P((void));
 void	show_monsters __P((void));
 void	show_objects __P((void));

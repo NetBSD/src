@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/10/10 02:07:06 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1998/09/13 15:27:26 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -89,8 +89,8 @@ void		ioerror __P((int, int, char *));
 void		iomove __P((int));
 int		list_games __P((void));
 int		log_score __P((int));
-void		log_score_quit __P((int));
-void		loser __P((PLANE *, char *));
+void		log_score_quit __P((int)) __attribute__((__noreturn__));
+void		loser __P((PLANE *, char *)) __attribute__((__noreturn__));
 int		main __P((int, char *[]));
 char		name __P((PLANE *));
 int		next_plane __P((void));

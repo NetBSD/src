@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
+/*	$NetBSD: tetris.h,v 1.3 1998/09/13 15:27:30 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -168,4 +168,4 @@ char	key_msg[100];
 
 int	fits_in __P((struct shape *, int));
 void	place __P((struct shape *, int, int));
-void	stop __P((char *));
+void	stop __P((char *)) __attribute__((__noreturn__));
