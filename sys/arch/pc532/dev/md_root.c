@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.3 1997/04/01 16:31:37 matthias Exp $	*/
+/*	$NetBSD: md_root.c,v 1.4 1997/04/21 16:20:39 matthias Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -61,7 +61,8 @@ md_attach_hook(unit, md)
 		md->md_addr = (caddr_t) md_root_image;
 		md->md_size = (size_t)  md_root_size;
 		md->md_type = MD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		printf("md%d: internal %dK image area\n", unit,
+		    ROOTBYTES / 1024);
 	}
 }
 
