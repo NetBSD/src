@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.86 1997/03/15 11:35:04 jonathan Exp $
+#	$NetBSD: bsd.lib.mk,v 1.87 1997/03/22 22:33:57 perry Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -272,7 +272,7 @@ realinstall:
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 	@set ${SYMLINKS}; \
 	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
+		l=$$1; \
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.61 1997/03/13 02:46:00 perry Exp $
+#	$NetBSD: bsd.prog.mk,v 1.62 1997/03/22 22:34:02 perry Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -142,7 +142,7 @@ install: maninstall _SUBDIRUSE
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 	@set ${SYMLINKS}; \
 	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
+		l=$$1; \
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \
