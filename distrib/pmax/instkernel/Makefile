@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2002/05/02 18:02:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2002/05/03 14:20:55 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,6 +8,7 @@
 IMAGE=		diskimage
 IMAGESIZE=	2m
 LISTS=		${.CURDIR}/list
+MTREECONF=	${DISTRIBDIR}/common/mtree.dot
 IMAGEENDIAN=	le
 PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
 IMAGEDEPENDS=	install.gz ${DESTDIR}/usr/mdec/boot.pmax ${PRIMARYBOOT}
