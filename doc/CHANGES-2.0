@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.394 2004/08/12 20:06:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.395 2004/08/12 20:10:09 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6474,3 +6474,8 @@ sys/dev/ic/ac97.c				1.54-1.58
 
 	Support for some AC'97 codecs
 	[kent, ticket #758]
+
+libexec/ftpd/ftpcmd.y				1.78
+
+	Fix minor memory leak with fromname.
+	[lukem, ticket #755]
