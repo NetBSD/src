@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.16 1998/10/04 15:01:55 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.17 1998/10/05 08:17:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -737,6 +737,8 @@ default_setup_chip(sc, pc, tag)
 			/* If no drive, skip */
 			if ((drvp->drive_flags & DRIVE) == 0)
 				continue;
+			if ((drvp->drive_flags & DRIVE_DMA) == 0)
+				continue;
 			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
 				/* Abort DMA setup */
 				printf("%s:%d:%d: can't allocate DMA maps, "
@@ -810,7 +812,7 @@ piix_setup_cap(sc)
 {
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371AB_IDE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_PIO |
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
 	sc->sc_wdcdev.dma_mode = 2;
@@ -1187,7 +1189,7 @@ apollo_setup_cap(sc)
 {
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586_IDE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_PIO |
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
 	sc->sc_wdcdev.dma_mode = 2;
