@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.9 1996/04/07 22:46:29 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.10 1996/04/10 16:33:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,23 +58,17 @@
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
 
+#include <sys/conf.h>
+#include <machine/conf.h>
+
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
 
 int	tzprobe __P(( void *sd /*struct pmax_scsi_device *sd*/));
 int	tzcommand __P((dev_t dev, int command, int code,
 		       int count, caddr_t data));
-void	tzstrategy __P((register struct buf *bp));
 void	tzstart __P((int unit));
 void	tzdone __P((int unit, int error, int resid, int status));
-
-int	tzopen __P((dev_t dev, int flags, int mode, struct proc *p));
-int	tzclose __P((dev_t dev, int flags));
-int	tzread  __P((dev_t dev, struct uio *uio));
-int	tzwrite __P((dev_t dev, struct uio *uio));
-int	tzioctl __P((dev_t dev, int cmd, caddr_t data, int flag));
-int	tzdump __P((dev_t dev));
-
 
 struct	pmax_driver tzdriver = {
 	"tz", tzprobe,
@@ -682,9 +676,11 @@ tzopen(dev, flags, type, p)
 }
 
 int
-tzclose(dev, flag)
+tzclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
+	struct proc *p;
+	
 {
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
 	int error = 0;
@@ -718,9 +714,10 @@ tzclose(dev, flag)
 }
 
 int
-tzread(dev, uio)
+tzread(dev, uio, iomode)
 	dev_t dev;
 	struct uio *uio;
+	int iomode;
 {
 #if 0
 	/*XXX*/ /* check for hardware write-protect? */
@@ -738,9 +735,10 @@ tzread(dev, uio)
 }
 
 int
-tzwrite(dev, uio)
+tzwrite(dev, uio, iomode)
 	dev_t dev;
 	struct uio *uio;
+	int iomode;
 {
 #if 0
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
@@ -754,11 +752,12 @@ tzwrite(dev, uio)
 }
 
 int
-tzioctl(dev, cmd, data, flag)
+tzioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
 	struct mtop *mtop;
@@ -859,8 +858,11 @@ tzstrategy(bp)
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-tzdump(dev)
+tzdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 	/* Not implemented. */
 	return (ENXIO);
