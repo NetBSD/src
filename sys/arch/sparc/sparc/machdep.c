@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 1998/09/07 22:56:46 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.125 1998/09/13 12:13:50 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -573,31 +573,33 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
-	int addr, oonstack, oldsp, newsp;
+	int addr, onstack, oldsp, newsp;
 	struct sigframe sf;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 		                                  psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
 
@@ -606,6 +608,7 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig: %s[%d] sig %d newusp %p scp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc);
 #endif
+
 	/*
 	 * Now set up the signal frame.  We build it in kernel space
 	 * and then copy it out.  We probably ought to just build it
@@ -618,17 +621,29 @@ sendsig(catcher, sig, mask, code)
 #endif
 	sf.sf_addr = 0;			/* XXX */
 
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	sf.sf_sc.sc_onstack = oonstack;
-	sf.sf_sc.sc_mask = mask;
+	/* Save register context. */
 	sf.sf_sc.sc_sp = oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
 	sf.sf_sc.sc_psr = tf->tf_psr;
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
+
+	/* Save signal stack. */
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	frame.sf_sc.sc_mask = *mask;
+
+#ifdef COMPAT_13
+	/*
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
+	 */
+	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
+#endif
 
 	/*
 	 * Put the stack in a consistent state before we whack away
@@ -654,11 +669,13 @@ sendsig(catcher, sig, mask, code)
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
+
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig: %s[%d] sig %d scp %p\n",
 		       p->p_comm, p->p_pid, sig, &fp->sf_sc);
 #endif
+
 	/*
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
@@ -669,12 +686,17 @@ sendsig(catcher, sig, mask, code)
 	} else
 #endif
 	{
-		addr = (int)PS_STRINGS - szsigcode;
+		addr = (int)psp->ps_sigcode;
 		tf->tf_global[1] = (int)catcher;
 	}
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig: about to return to catcher\n");
@@ -730,11 +752,16 @@ sys_sigreturn(p, v, retval)
 	tf->tf_global[1] = scp->sc_g1;
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
-	if (scp->sc_onstack & 1)
+
+	/* Restore signal stack. */
+	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask & ~sigcantmask;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &scp->sc_mask, 0);
+
 	return (EJUSTRETURN);
 }
 
