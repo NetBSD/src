@@ -27,21 +27,20 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: dc.4,v 1.2 1997/10/13 11:23:45 lukem Exp $
+.\"	$NetBSD: dc.4,v 1.3 1998/02/23 19:46:24 jonathan Exp $
 .\"
-.Dd August 6, 1996
+.Dd February 20, 1998
 .Dt DC 4 pmax
-.Os NetBSD 1.2a
+.Os NetBSD
 .Sh NAME
 .Nm dc
 .Nd
-dc659,dc7085 DZ11-on-a-chip serial communications interface 
+dc659, dc7085 DZ11-on-a-chip serial communications interface 
 .Sh SYNOPSIS
 .Cd "dc0 at ioasic?"
 .Cd "dc0 at mainbus"
 .Cd "dc1 at mainbus"
 .Cd "dc2 at mainbus"
-.Cd "dc0 at vsbus"
 .Sh DESCRIPTION
 THe
 .Nm
@@ -64,34 +63,54 @@ baseboard devices on the Vaxstation 2000 and 3100.
 .Pp
 The
 .Nm
-device is essentially a single-chip clone of the DZ-11.
-It has a small input silo shared across all input ports.
-Model control lines are present on two of the four ports.
-The device does not interrupt on modem transitions; instead,
+device is in essence a single-chip clone of the DZ-11.
+The DZ-11 hardware design severely constrains performance.
+One small input silo is shared across all input ports.
+The 
+.Nm dc
+hardware does not interrupt on modem transitions; instead,
 they are detected via polling.
-Only two lines on  a baseboard dc7085 have modem control signals; the
-other two are wired for a keyboard and mouse.
-On some implementations, only partial modem control (sufficent for
-Unix dialup) is provided, while others provide full modem control.
-Speeds greater than 19200 are not supported. The 19200 speed is rumoured
-to actually be 19600, presumably for bug-compatibility with the DZ-11.
+Only two lines on a baseboard 
+.Nm dc
+device  have any modem control signals;
+the other two lines are wired for a keyboard and mouse.
+
+On some implementations (e.g., Decstation 3100), the hardware does not
+bring out modem flow-control signals to the bulkhead. Only modem
+carrier transition are provided. This is adequate for Unix dialin
+and dialout detection, but without hardware flow control, the
+.Nm
+device is prone to overruns when used for serial-line protocols.
+
+The Decstation 5000/200 
+.Nm
+hardware provides full modem control on 
+both bulkhead RS-232 ports and is less prone to overrun.
+.Sh BUGS
 .Pp
+The 19200 speed on all
+.Nm
+devices is actually implemented as 19800,
+presumably for bug-compatibility with the original DZ-11.
+This is a hardware feature and cannot be corrected in software.
+Many serial devices at 19200 fail to interoperate with the
+.Nm
+at its 19800 speed setting.
+.Pp
+The Decstation 5000/200 can set a bit in the system register
+to allow the
+.Nm 
+to run at 38400, but this applies to all four lines and disables
+the 19200 speed on all four lines. This feature is not currently supported.
+.Pp
+The 
+.Nm
+driver should be merged into a single driver supporting the original
+DZ-11, DZ-32, and Qbus DZV-11 and DZQ-11 clones.
 .Sh HISTORY
 The
 .Nm
 driver
 first appeared in
-.Bx 4.4 /pmax. Support for Vax implementations is
-.Ud .
-.Sh BUGS
-The Decstation 5000 can set a bit in the system register
-to allow the
-.Nm 
-to run at 38400, but this applies to all four lines and disables
-the 19200 speed.  This feature is not currently supported.
-.Pp
-The driver should probably support the original DZ-11, DZ-32,
- and Qbus DZV-11 and DZQ-11 clones.
-
-
-
+.Bx 4.4 /pmax. This manual page first appeared in 
+.Nx 1.2 .
