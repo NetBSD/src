@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 1999/06/09 06:59:53 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.38 1999/06/11 06:51:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,7 +100,6 @@ int	clock_debug = 0;
 #endif
 
 void	rtclock_intr __P((void));
-int	_delay __P((u_int));
 
 #define	DIFF19041970	2082844800
 #define	DIFF19701990	630720000
@@ -412,6 +411,8 @@ resettodr()
 		    "to the PRAM on this system.\n");
 #endif
 }
+
+
 /*
  * The Macintosh timers decrement once every 1.2766 microseconds.
  * MGFH2, p. 180
@@ -419,52 +420,11 @@ resettodr()
 #define	CLK_RATE	12766
 
 #define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
-#define	LARGE_DELAY	0x40000		/* About 335 msec */
 
 u_int		delay_factor = DELAY_CALIBRATE;
 volatile int	delay_flag = 1;
 
-/*
- * delay(usec)
- *	Delay at least usec microseconds.
- *
- * The delay_factor is scaled up by a factor of 128 to avoid loss
- * of precision for small delays.
- */
-void
-delay(usec)
-	u_int usec;
-{
-	volatile u_int cycles;
-
-	if (usec > LARGE_DELAY)
-		cycles = ((usec + 127) >> 7) * delay_factor;
-	else
-		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
-
-	(void)_delay(cycles);
-}
-
-static u_int	dummy_delay __P((u_int));
-/*
- * Dummy delay calibration.  Functionally identical to delay(), but
- * returns the number of times through the loop.
- */
-static u_int
-dummy_delay(usec)
-	u_int usec;
-{
-	volatile u_int cycles;
-
-	if (usec > LARGE_DELAY)
-		cycles = ((usec + 127) >> 7) * delay_factor;
-	else
-		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
-
-	cycles = _delay(cycles);
-	return ((delay_factor >> 7) - cycles);
-}
-
+int		_delay __P((u_int));
 static void	delay_timer1_irq __P((void *));
 
 static void
@@ -500,7 +460,7 @@ mac68k_calibrate_delay()
 		delay_flag = 1;
 		via_reg(VIA1, vT1C) = 0;	/* 1024 clock ticks */
 		via_reg(VIA1, vT1CH) = 4;	/* (approx 1.3 msec) */
-		sum += dummy_delay(1);
+		sum += ((delay_factor >> 7) - _delay(1));
 	}
 
 	/* Disable timer interrupts and reset service routine */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 1999/06/09 15:34:08 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 1999/06/11 06:51:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1491,7 +1491,12 @@ Lm68881rdone:
 	rts
 
 /*
- * Low-level microsecond delay helper
+ * delay() - delay for a specified number of microseconds
+ * _delay() - calibrator helper for delay()
+ *
+ * Notice that delay_factor is scaled up by a factor of 128 to avoid loss
+ * of precision for small delays.  As a result of this we need to avoid
+ * overflow.
  *
  * The branch target for the loops must be aligned on a half-line (8-byte)
  * boundary to minimize cache effects.  This guarantees both that there
@@ -1499,11 +1504,21 @@ Lm68881rdone:
  * the loops will run from a single cache half-line.
  */
 	.align	8			| align to half-line boundary
-	nop				| pad to align Ldelay
-	nop
-	nop
-ENTRY(_delay)
-	movl	sp@(4),d0		| get iterations
+					| (use nop instructions if necessary!)
+ALTENTRY(_delay, _delay)
+ENTRY(delay)
+	movl	sp@(4),d0		| get microseconds to delay
+	cmpl	#0x40000,d0		| is it a "large" delay?
+	bls	Ldelayshort		| no, normal calculation
+	movql	#0x7f,d1		| adjust for scaled multipler (to
+	addl	d1,d0			|   avoid overflow)
+	lsrl	#7,d0
+	mulul	_C_LABEL(delay_factor),d0 | calculate number of loop iterations
+	bra	Ldelaysetup		| go do it!
+Ldelayshort:
+	mulul	_C_LABEL(delay_factor),d0 | calculate number of loop iterations
+	lsrl	#7,d0			| adjust for scaled multiplier
+Ldelaysetup:
 	jeq	Ldelayexit		| bail out if nothing to do
 	movql	#0,d1			| put bits 15-0 in d1 for the
 	movw	d0,d1			|   inner loop, and move bits
