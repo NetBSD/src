@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1997/03/20 12:00:54 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1997/03/22 08:28:59 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -97,7 +97,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 #endif
 #ifdef NS
@@ -115,6 +115,7 @@
 #ifdef NATM
 #include <netnatm/natm.h>
 #endif
+#include "arp.h"
 #include "ppp.h"
 #if NPPP > 0
 #include <net/ppp_defs.h>
@@ -180,7 +181,6 @@ static void	cpu_reset __P((void));
 static void	dumpsys __P((void));
 void		init532 __P((void));
 static void	map __P((pd_entry_t *, vm_offset_t, vm_offset_t, int, int));
-static void	softnet __P((void *));
 
 /*
  * Machine-dependent startup code
@@ -975,7 +975,6 @@ init532()
 	extern char *esym;
 #endif
 	pd_entry_t *pd;
-	int clk, net;
 
 #if VERYLOWDEBUG
 	umprintf ("Starting init532\n");
@@ -1094,17 +1093,6 @@ init532()
 
 	/* Jump to high memory */
 	__asm __volatile("jump @1f; 1:");
-
-	/* Set up the ICU. */
-	intr_init();
-
-	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
-	clk = intr_establish(SOFTINT, (void (*)(void *))softclock, NULL,
-				"softclock", IPL_NET, IPL_NET, 0);
-	net = intr_establish(SOFTINT, softnet, NULL,
-				"softnet", IPL_NET, IPL_NET, 0);
-	if (clk != SIR_CLOCK || net != SIR_NET)
-		panic("Wrong clock or net softint allocated");
 
 	/* Initialize the pmap module. */
 	pmap_bootstrap(avail_start + KERNBASE);
@@ -1240,7 +1228,7 @@ cpu_reset()
 /*
  * Network software interrupt routine
  */
-static void
+void
 softnet(arg)
 	void *arg;
 {
@@ -1250,14 +1238,10 @@ softnet(arg)
 	if (isr == 0) return;
 
 #ifdef INET
-#include "ether.h"
-#if NETHER > 0
+#if NARP > 0
 	if (isr & (1 << NETISR_ARP)) arpintr();
 #endif
 	if (isr & (1 << NETISR_IP)) ipintr();
-#endif
-#ifdef IMP
-	if (isr & (1 << NETISR_IMP)) impintr();
 #endif
 #ifdef NS
 	if (isr & (1 << NETISR_NS)) nsintr();
@@ -1268,7 +1252,9 @@ softnet(arg)
 #ifdef CCITT
 	if (isr & (1 << NETISR_CCITT)) ccittintr();
 #endif
-#include "ppp.h"
+#ifdef NATM
+	if (isr & (1 << NETISR_NATM)) natmintr();
+#endif
 #if NPPP > 0
 	if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
