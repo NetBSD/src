@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.7 2001/07/16 22:01:38 hpeyerl Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.8 2001/07/22 09:56:40 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -278,9 +278,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	case BIFB_D16_0000:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-#if BYTE_ORDER == BIG_ENDIAN
-		fb->hf_swap_flags = HPCFB_SWAP_BYTE;
-#endif
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;
 		fb->hf_pixel_width = 16;
