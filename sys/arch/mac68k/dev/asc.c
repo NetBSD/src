@@ -36,25 +36,10 @@
 /*
  * ASC driver code and asc_ringbell() support
  *
- * $Id: asc.c,v 1.4 1994/06/26 13:02:49 briggs Exp $
+ * $Id: asc.c,v 1.5 1994/07/21 00:44:00 briggs Exp $
  *
  * 12/12/93 01:14:45 grantham
  *	initial revision
- *
- * $Log: asc.c,v $
- * Revision 1.4  1994/06/26 13:02:49  briggs
- * Minor mods.  Get rid of constants, or update to use a better default
- * value.
- *
- * Revision 1.3  1994/05/06  17:38:38  briggs
- * Missed some warnings...
- *
- * Revision 1.2  1994/05/06  03:34:53  briggs
- * Clean up some warnings, mainly w/ timeout().
- *
- * Revision 1.1  1993/12/21  03:16:05  briggs
- * Add basic sound support and a beeping (instead of flashing) console...
- * from Brad Grantham.
  *
  */
 
@@ -64,10 +49,12 @@
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/device.h>
+#include <machine/cpu.h>
 
 
 /* Global ASC location */
-unsigned char *ASCBase = (unsigned char *)0x50f14000;
+volatile unsigned char *ASCBase = (unsigned char *)0x14000;
 
 
 /* bell support data */
@@ -76,25 +63,36 @@ static int bell_length = 10;
 static int bell_volume = 100;
 static int bell_ringing = 0;
 
+static int	ascprobe(struct device *, struct cfdata *, void *);
+static void	ascattach(struct device *, struct device *, void *);
+extern int	matchbyname(struct device *, struct cfdata *, void *);
 
-#if 0
+struct cfdriver asccd =
+	{ NULL, "asc", matchbyname, ascattach,
+	  DV_DULL, sizeof(struct device), NULL, 0 };
 
-
-int asc_probe()
+static int
+ascprobe(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
 {
+	if (strcmp(*((char **) aux), asccd.cd_name))
+		return 0;
+
+	return 1;
 }
 
 
-int asc_attach(int n)
+static void
+ascattach(parent, dev, aux)
+	struct device	*parent, *dev;
+	void		*aux;
 {
-	/* Check gestalt values and set ASCBase properly, */
-	/* or use value from MacOS */
+	printf(" Apple sound chip.\n");
+
+	ASCBase = IOBase + ASCBase;
 }
-
-
-#endif
-
-
 
 int asc_setbellparams(
 	int freq,
