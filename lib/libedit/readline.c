@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.25 2002/10/27 21:43:35 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.26 2003/01/21 17:41:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.25 2002/10/27 21:43:35 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.26 2003/01/21 17:41:38 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1281,10 +1281,6 @@ filename_completion_function(const char *text, int state)
 	size_t len;
 
 	if (state == 0 || dir == NULL) {
-		if (dir != NULL) {
-			closedir(dir);
-			dir = NULL;
-		}
 		temp = strrchr(text, '/');
 		if (temp) {
 			char *nptr;
@@ -1332,6 +1328,10 @@ filename_completion_function(const char *text, int state)
 		if (filename_len == 0)
 			return (NULL);	/* no expansion possible */
 
+		if (dir != NULL) {
+			(void)closedir(dir);
+			dir = NULL;
+		}
 		dir = opendir(dirname ? dirname : ".");
 		if (!dir)
 			return (NULL);	/* cannot open the directory */
@@ -1369,8 +1369,11 @@ filename_completion_function(const char *text, int state)
 		/* test, if it's directory */
 		if (stat(temp, &stbuf) == 0 && S_ISDIR(stbuf.st_mode))
 			strcat(temp, "/");	/* safe */
-	} else
+	} else {
+		(void)closedir(dir);
+		dir = NULL;
 		temp = NULL;
+	}
 
 	return (temp);
 }
