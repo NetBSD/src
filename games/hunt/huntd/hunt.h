@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.6 2000/01/21 17:08:34 mycroft Exp $	*/
+/*	$NetBSD: hunt.h,v 1.7 2002/09/20 20:54:17 mycroft Exp $	*/
 
 /*
  *  Hunt
@@ -20,7 +20,7 @@
 # endif
 # include	<sys/types.h>
 # include	<sys/uio.h>
-# include	<sys/socket.h>
+# include	<sys/poll.h>
 # ifdef	INTERNET
 # include	<netinet/in.h>
 # include	<netdb.h>
@@ -81,6 +81,7 @@
 # define	MAXMON		1
 # else
 # define	MAXPL		17
+# define	MAXMON		0
 # endif
 # define	SHORTLEN	2		/* sizeof (network short) */
 # define	LONGLEN		4		/* sizeof (network long) */
@@ -346,8 +347,8 @@ extern char	Buf[BUFSIZ], Maze[HEIGHT][WIDTH2], Orig_maze[HEIGHT][WIDTH2];
 
 extern char	*Sock_name, *Driver;
 
-extern int	Nplayer, Num_fds, Socket, Status;
-extern fd_set	Fds_mask, Have_inp;
+extern int	Nplayer, Socket, Status;
+extern struct	pollfd fdset[];
 
 # ifdef INTERNET
 extern u_short	Test_port;
