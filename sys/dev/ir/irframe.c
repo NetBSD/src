@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.20 2002/09/30 21:22:22 thorpej Exp $	*/
+/*	$NetBSD: irframe.c,v 1.21 2002/10/02 02:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -90,9 +90,8 @@ struct cfdriver irframe_cd = {
 #endif
 
 CFATTACH_DECL(irframe, sizeof(struct irframe_softc),
-    irframe_match, irframe_attach, irframe_detach, irframe_activate)
+    irframe_match, irframe_attach, irframe_detach, irframe_activate);
 
-extern const struct cfattach irframe_ca;
 extern struct cfdriver irframe_cd;
 
 #define IRFRAMEUNIT(dev) (minor(dev))
