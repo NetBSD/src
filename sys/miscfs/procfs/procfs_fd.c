@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.2 2003/04/17 19:04:25 jdolecek Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.3 2003/05/08 13:46:50 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.2 2003/04/17 19:04:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.3 2003/05/08 13:46:50 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,10 @@ procfs_dofd(curp, p, pfs, uio)
 	switch (uio->uio_rw) {
 	case UIO_READ:
 		error = (*fp->f_ops->fo_read)(fp, &offs, uio, curp->p_ucred, 0);
+		break;
 	case UIO_WRITE:
 		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curp->p_ucred,0);
+		break;
 	default:
 		panic("bad uio op");
 	}
