@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.27 2003/09/02 21:48:50 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.28 2003/09/03 07:28:39 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -114,6 +114,12 @@ struct darwin_sys_sigaction_args {
 
 struct bsd_sys_acct_args {
 	syscallarg(const char *) path;
+};
+
+struct darwin_sys_ioctl_args {
+	syscallarg(int) fd;
+	syscallarg(u_long) com;
+	syscallarg(void *) data;
 };
 
 struct bsd_sys_revoke_args {
@@ -321,7 +327,7 @@ int	sys___setlogin(struct lwp *, void *, register_t *);
 int	bsd_sys_acct(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigpending(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigaltstack(struct lwp *, void *, register_t *);
-int	sys_ioctl(struct lwp *, void *, register_t *);
+int	darwin_sys_ioctl(struct lwp *, void *, register_t *);
 int	sys_reboot(struct lwp *, void *, register_t *);
 int	bsd_sys_revoke(struct lwp *, void *, register_t *);
 int	bsd_sys_symlink(struct lwp *, void *, register_t *);

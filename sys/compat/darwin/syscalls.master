@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 2003/09/02 21:31:04 manu Exp $
+	$NetBSD: syscalls.master,v 1.15 2003/09/03 07:28:40 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -159,7 +159,7 @@
 53	NOARGS    	{ int compat_13_sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); } sigaltstack13
-54	NOARGS		{ int sys_ioctl(int fd, \
+54	STD		{ int darwin_sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	NOARGS		{ int sys_reboot(int opt); } oreboot
 56	NODEF		{ int bsd_sys_revoke(const char *path); }
