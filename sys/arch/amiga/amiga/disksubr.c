@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 1995/02/12 19:18:36 chopps Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 1995/03/28 19:59:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -139,7 +139,7 @@ readdisklabel(dev, strat, lp, clp)
 	/*
 	 * request no partition relocation by driver on I/O operations
 	 */
-#ifdef KERNEL
+#ifdef _KERNEL
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
 #else
 	bp->b_dev = dev;

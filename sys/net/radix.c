@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.7 1994/06/29 06:36:33 cgd Exp $	*/
+/*	$NetBSD: radix.c,v 1.8 1995/03/28 20:01:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -43,7 +43,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #define	M_DONTWAIT M_NOWAIT
-#ifdef	KERNEL
+#ifdef _KERNEL
 #include <sys/domain.h>
 #endif
 #endif
@@ -735,7 +735,7 @@ void
 rn_init()
 {
 	char *cp, *cplim;
-#ifdef KERNEL
+#ifdef _KERNEL
 	struct domain *dom;
 
 	for (dom = domains; dom; dom = dom->dom_next)
