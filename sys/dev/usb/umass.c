@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.56 2001/04/13 12:24:10 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.57 2001/04/13 12:51:43 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -124,6 +124,8 @@
 
 
 #ifdef UMASS_DEBUG
+int umassdebug = 0;
+
 char *states[TSTATE_STATES+1] = {
 	/* should be kept in sync with the list at transfer_state */
 	"Idle",
