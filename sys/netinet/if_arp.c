@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.48 1998/07/02 11:39:56 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.49 1998/07/02 14:00:39 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -537,17 +537,20 @@ in_arpinput(m)
 	 * as a dummy address in the rest of this function
 	 */
 	INADDR_TO_IA(itaddr, ia);
-	if (ia == NULL) {
-		INADDR_TO_IA(isaddr, ia);
-		if (ia == NULL)
-			IFP_TO_IA(ifp, ia);
-	}
-
 	while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
 		NEXT_IA_WITH_SAME_ADDR(ia);
 
-	if (ia == NULL)
-		goto out;
+	if (ia == NULL) {
+		INADDR_TO_IA(isaddr, ia);
+		while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
+			NEXT_IA_WITH_SAME_ADDR(ia);
+
+		if (ia == NULL) {
+			IFP_TO_IA(ifp, ia);
+			if (ia == NULL)
+				goto out;
+		}
+	}
 
 	myaddr = ia->ia_addr.sin_addr;
 
