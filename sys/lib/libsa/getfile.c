@@ -1,4 +1,4 @@
-/*	$NetBSD: getfile.c,v 1.4 1996/10/10 22:46:23 christos Exp $	*/
+/*	$NetBSD: getfile.c,v 1.5 1996/10/13 02:27:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,6 +36,8 @@
  */
 #include "stand.h"
 
+#define CTRL(x) (a&037)
+
 int
 getfile(prompt, mode)
 	char *prompt;
@@ -45,8 +47,10 @@ getfile(prompt, mode)
 	char buf[100];
 
 	do {
-		kprintf("%s: ", prompt);
+		printf("%s: ", prompt);
 		gets(buf);
+		if (buf[0] == CTRL('d') && buf[1] == 0)
+			return (-1);
 	} while ((fd = open(buf, mode)) < 0);
 
 	return (fd);

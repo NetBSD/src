@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.20 1996/10/10 22:54:00 christos Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.21 1996/10/13 02:21:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -318,7 +318,7 @@ int
 dead_print(v)
 	void *v;
 {
-	kprintf("tag VT_NON, dead vnode\n");
+	printf("tag VT_NON, dead vnode\n");
 	return 0;
 }
 

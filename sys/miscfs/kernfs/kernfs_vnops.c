@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.46 1996/10/10 22:54:08 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.47 1996/10/13 02:21:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -215,14 +215,14 @@ kernfs_xread(kt, off, bufp, len)
 		struct timeval tv;
 
 		microtime(&tv);
-		ksprintf(*bufp, "%ld %ld\n", tv.tv_sec, tv.tv_usec);
+		sprintf(*bufp, "%ld %ld\n", tv.tv_sec, tv.tv_usec);
 		break;
 	}
 
 	case KTT_INT: {
 		int *ip = kt->kt_data;
 
-		ksprintf(*bufp, "%d\n", *ip);
+		sprintf(*bufp, "%d\n", *ip);
 		break;
 	}
 
@@ -262,7 +262,7 @@ kernfs_xread(kt, off, bufp, len)
 
 	case KTT_AVENRUN:
 		averunnable.fscale = FSCALE;
-		ksprintf(*bufp, "%d %d %d %ld\n",
+		sprintf(*bufp, "%d %d %d %ld\n",
 		    averunnable.ldavg[0], averunnable.ldavg[1],
 		    averunnable.ldavg[2], averunnable.fscale);
 		break;
@@ -322,9 +322,9 @@ kernfs_lookup(v)
 	int error, i;
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_lookup(%x)\n", ap);
-	kprintf("kernfs_lookup(dp = %x, vpp = %x, cnp = %x)\n", dvp, vpp, ap->a_cnp);
-	kprintf("kernfs_lookup(%s)\n", pname);
+	printf("kernfs_lookup(%x)\n", ap);
+	printf("kernfs_lookup(dp = %x, vpp = %x, cnp = %x)\n", dvp, vpp, ap->a_cnp);
+	printf("kernfs_lookup(%s)\n", pname);
 #endif
 
 	*vpp = NULLVP;
@@ -355,7 +355,7 @@ kernfs_lookup(v)
 	}
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_lookup: i = %d, failed", i);
+	printf("kernfs_lookup: i = %d, failed", i);
 #endif
 
 	return (cnp->cn_nameiop == LOOKUP ? ENOENT : EROFS);
@@ -373,7 +373,7 @@ found:
 	}
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_lookup: allocate new vnode\n");
+	printf("kernfs_lookup: allocate new vnode\n");
 #endif
 	error = getnewvnode(VT_KERNFS, dvp->v_mount, kernfs_vnodeop_p, &fvp);
 	if (error)
@@ -386,7 +386,7 @@ found:
 	*vpp = fvp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_lookup: newvp = %x\n", fvp);
+	printf("kernfs_lookup: newvp = %x\n", fvp);
 #endif
 	return (0);
 }
@@ -442,7 +442,7 @@ kernfs_getattr(v)
 
 	if (vp->v_flag & VROOT) {
 #ifdef KERNFS_DIAGNOSTIC
-		kprintf("kernfs_getattr: stat rootdir\n");
+		printf("kernfs_getattr: stat rootdir\n");
 #endif
 		vap->va_type = VDIR;
 		vap->va_mode = DIR_MODE;
@@ -453,7 +453,7 @@ kernfs_getattr(v)
 		struct kern_target *kt = VTOKERN(vp)->kf_kt;
 		int nbytes, total;
 #ifdef KERNFS_DIAGNOSTIC
-		kprintf("kernfs_getattr: stat target %s\n", kt->kt_name);
+		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
 #endif
 		vap->va_type = kt->kt_vtype;
 		vap->va_mode = kt->kt_mode;
@@ -467,7 +467,7 @@ kernfs_getattr(v)
 	}
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_getattr: return error %d\n", error);
+	printf("kernfs_getattr: return error %d\n", error);
 #endif
 	return (error);
 }
@@ -509,7 +509,7 @@ kernfs_read(v)
 	kt = VTOKERN(vp)->kf_kt;
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kern_read %s\n", kt->kt_name);
+	printf("kern_read %s\n", kt->kt_name);
 #endif
 
 	off = uio->uio_offset;
@@ -598,7 +598,7 @@ kernfs_readdir(v)
 	for (kt = &kern_targets[i];
 	     uio->uio_resid >= UIO_MX && i < nkern_targets; kt++, i++) {
 #ifdef KERNFS_DIAGNOSTIC
-		kprintf("kernfs_readdir: i = %d\n", i);
+		printf("kernfs_readdir: i = %d\n", i);
 #endif
 
 		if (kt->kt_tag == KTT_DEVICE) {
@@ -634,7 +634,7 @@ kernfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_inactive(%x)\n", vp);
+	printf("kernfs_inactive(%x)\n", vp);
 #endif
 	/*
 	 * Clear out the v_type field to avoid
@@ -654,7 +654,7 @@ kernfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 
 #ifdef KERNFS_DIAGNOSTIC
-	kprintf("kernfs_reclaim(%x)\n", vp);
+	printf("kernfs_reclaim(%x)\n", vp);
 #endif
 	if (vp->v_data) {
 		FREE(vp->v_data, M_TEMP);
@@ -710,7 +710,7 @@ kernfs_print(v)
 	void *v;
 {
 
-	kprintf("tag VT_KERNFS, kernfs vnode\n");
+	printf("tag VT_KERNFS, kernfs vnode\n");
 	return (0);
 }
 
