@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 1994/10/26 06:43:10 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4 1995/04/22 14:09:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -61,7 +61,7 @@ in_cksum(p, len)
 			sum += v + *cp++;
 			len--;
 		}
-		if (((int)cp & 1) == 0) {
+		if (((long)cp & 1) == 0) {
 			while ((len -= 2) >= 0) {
 				sum += *(u_short *)cp;
 				cp += 2;
