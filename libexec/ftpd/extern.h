@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.40 2001/04/01 23:11:55 aidan Exp $	*/
+/*	$NetBSD: extern.h,v 1.41 2001/04/25 01:46:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 /*-
- * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

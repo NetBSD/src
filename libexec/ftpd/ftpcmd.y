@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpcmd.y,v 1.64 2001/04/17 01:37:04 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.65 2001/04/25 01:46:25 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.64 2001/04/17 01:37:04 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.65 2001/04/25 01:46:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
