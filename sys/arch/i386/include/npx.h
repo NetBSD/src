@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.12 1998/01/24 13:19:57 mycroft Exp $	*/
+/*	$NetBSD: npx.h,v 1.13 1998/01/24 14:00:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,14 +88,21 @@ struct	emcsts {
 	long	em_dl;		/* memory mapped D low register when swtched */
 };
 
+/*
+ * The i387 defaults to Intel extended precision mode and round to nearest,
+ * with all exceptions masked.
+ */
 #define	__INITIAL_NPXCW__	0x037f
-/* Intel prefers long real (53 bit) precision. */
-#define	__iBCS2_NPXCW__		0x0262
-/* NetBSD uses double precision with IEEE rounding and (lack of) exceptions. */
+/* NetBSD uses IEEE double precision. */
 #define	__NetBSD_NPXCW__	0x127f
-#define	__FreeBSD_NPXCW__	0x1272	/* XXX */
-#define	__Linux_NPXCW__		0x037f	/* XXX */
-#define	__SVR4_NPXCW__		0x0262	/* XXX */
+/* FreeBSD leaves some exceptions unmasked as well. */
+#define	__FreeBSD_NPXCW__	0x1272
+/* iBCS2 goes a bit further and leaves the underflow exception unmasked. */
+#define	__iBCS2_NPXCW__		0x0262
+/* Linux just uses the default control word. */
+#define	__Linux_NPXCW__		0x037f
+/* SVR4 uses the same control word as iBCS2. */
+#define	__SVR4_NPXCW__		0x0262
 
 /*
  * The standard control word from finit is 0x37F, giving:
