@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.23 2003/07/14 11:52:24 itojun Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.24 2003/08/05 21:26:55 martin Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.23 2003/07/14 11:52:24 itojun Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.24 2003/08/05 21:26:55 martin Exp $");
 #endif
 #endif
 
@@ -61,10 +61,6 @@ __RCSID("$NetBSD: rpc_main.c,v 1.23 2003/07/14 11:52:24 itojun Exp $");
 
 #define EXTEND	1		/* alias for TRUE */
 #define DONT_EXTEND	0	/* alias for FALSE */
-
-#define SVR4_CPP "/usr/ccs/lib/cpp"
-#define SUNOS_CPP "/lib/cpp"
-static int cppDefined = 0;	/* explicit path for C preprocessor */
 
 struct commandline {
 	int     cflag;		/* xdr C routines */
@@ -137,7 +133,6 @@ static char *extendfile __P((char *, char *));
 static void open_output __P((char *, char *));
 static void add_warning __P((void));
 static void clear_args __P((void));
-static void find_cpp __P((void));
 static void open_input __P((char *, char *));
 static int check_nettype __P((char *, char *[]));
 static void c_output __P((char *, char *, int, char *));
@@ -156,7 +151,6 @@ static void checkfiles __P((char *, char *));
 static int parseargs __P((int, char *[], struct commandline *));
 static void usage __P((void));
 static void options_usage __P((void));
-
 
 int
 main(argc, argv)
@@ -316,25 +310,7 @@ clear_args()
 		arglist[i] = NULL;
 	argcount = FIXEDARGS;
 }
-/* make sure that a CPP exists */
-static void 
-find_cpp()
-{
-	struct stat buf;
 
-	if (stat(CPP, &buf) < 0) {	/* SVR4 or explicit cpp does not exist */
-		if (cppDefined) {
-			fprintf(stderr, "cannot find C preprocessor: %s\n", CPP);
-			crash();
-		} else {	/* try the other one */
-			CPP = SUNOS_CPP;
-			if (stat(CPP, &buf) < 0) {	/* can't find any cpp */
-				fprintf(stderr, "cannot find any C preprocessor (cpp)\n");
-				crash();
-			}
-		}
-	}
-}
 /*
  * Open input file with given define for C-preprocessor
  */
@@ -389,7 +365,6 @@ open_input(infile, define)
 	(void) pipe(pd);
 	switch (fork()) {
 	case 0:
-		find_cpp();
 		putarg(0, CPP);
 		putarg(1, CPPFLAGS);
 		addarg(define);
@@ -398,9 +373,8 @@ open_input(infile, define)
 		(void) close(1);
 		(void) dup2(pd[1], 1);
 		(void) close(pd[0]);
-		execv(arglist[0], arglist);
-		perror("execv");
-		exit(1);
+		execvp(arglist[0], arglist);
+		err(1, "$CPP: %s", CPP);
 	case -1:
 		perror("fork");
 		exit(1);
@@ -1067,7 +1041,6 @@ parseargs(argc, argv, cmd)
 					(void) strlcat(pathbuf, "/cpp",
 					    sizeof(pathbuf));
 					CPP = pathbuf;
-					cppDefined = 1;
 					goto nextarg;
 
 
