@@ -1,7 +1,7 @@
-/*	$NetBSD: wdvar.h,v 1.9 2001/12/03 00:11:16 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.10 2001/12/03 00:20:23 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

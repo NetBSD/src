@@ -1,7 +1,7 @@
-/*	$NetBSD: atapiconf.h,v 1.13 2001/12/02 22:44:34 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.14 2001/12/03 00:20:24 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

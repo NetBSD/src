@@ -1,7 +1,7 @@
-/*	$NetBSD: atapiconf.c,v 1.45 2001/12/02 23:00:34 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.46 2001/12/03 00:20:24 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.45 2001/12/02 23:00:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.46 2001/12/03 00:20:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
