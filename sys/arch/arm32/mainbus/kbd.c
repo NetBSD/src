@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.2 1996/02/15 23:24:44 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.3 1996/03/08 16:28:54 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * Keyboard driver functions
  *
  * Created      : 09/10/94
- * Last updated : 21/05/95
- *
- *    $Id: kbd.c,v 1.2 1996/02/15 23:24:44 mark Exp $
  */
 
 #include <sys/param.h>
@@ -512,7 +509,7 @@ key_struct E0keys[128] = {
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
 
 /* 0x70 - 0x7f */
-    { 0x108, 0x00, 0x00, 0x00, 0x00 },
+    { 0x108, 0x00, 0x00, 0x208, 0x00 },
     { 0x109, 0x00, 0x00, 0x209, 0x00 },
     { 0x101, 0x105, 0x00, 0x201, 0x00 },
     { 0x00, 0x00, 0x00, 0x00, 0x00 },
@@ -563,16 +560,10 @@ key_struct E0keys[128] = {
 #define BUFFER_SIZE 32
 #define RAWKBD_BSIZE 128
 
-caddr_t kbd_wakeup = 0;
-
-static volatile int buffer_ins_ptr = 0;
-static volatile int buffer_rem_ptr = 0;
-static int kbdbuffer[BUFFER_SIZE];
-int kbdinited = 0;
 static int autorepeatkey = -1;
 static struct kbd_autorepeat kbdautorepeat = { 5, 20 };
-int rawkbd_device = 0;
-int modifiers;
+static int rawkbd_device = 0;
+int modifiers = 0;
 static int kbd_ack = 0;
 static int kbd_resend = 0;
 
@@ -616,8 +607,6 @@ int kbdintr __P((struct kbd_softc *));
 
 void autorepeatstart __P((void *));
 void autorepeat __P((void *));
-int key_buffer_insert __P((int));
-
 
 struct cfdriver	kbdcd = {
 	NULL, "kbd", kbdprobe, kbdattach, DV_TTY, sizeof(struct kbd_softc)
@@ -635,12 +624,18 @@ kbdprobe(parent, match, aux)
 
 /* Make sure we have an IOMD we understand */
     
-	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) >> 8);
+	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
 
 /* So far I only know about this IOMD */
 
-	if (id == RPC600_IOMD_ID)
+	switch (id) {
+	case RPC600_IOMD_ID:
 		return(1);
+		break;
+	default:
+		printf("kbd: Unknown IOMD id=%04x", id);
+		break;
+	}
 
 	return(0);
 }
@@ -895,118 +890,14 @@ void
 kbdinit(sc)
 	struct kbd_softc *sc;
 {
-	buffer_ins_ptr = 0;
-	buffer_rem_ptr = 0;
-    
 	sc->sc_ih.ih_func = kbdintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_TTY;
-	if (irq_claim(IRQ_KBDRX, &sc->sc_ih) == -1)
-		panic("Cannot install keyboard handler\n");
-	kbdinited = 1;
-/*	kbdstate = KBD_STATE_IDLE;*/
+	if (irq_claim(IRQ_KBDRX, &sc->sc_ih))
+		panic("Cannot claim IRQ for kbd%d\n", sc->sc_device.dv_unit);
 
 	modifiers = 0;
 	kbdsetleds((modifiers >> 3) & 7);
-}
-
-
-/*
-void
-testkbd(void)
-{
-	int key;
-
-	SetCPSR(I32_bit | F32_bit, F32_bit);
-    
-	splx((1 << IRQ_KBDRX));
-    
-	do {
-		printf("key: ");
-		key = GetKey();
-		printf(" %02x\n", key);
-	} while (key != 0x04);
-    
-	splhigh();
-}
-
-*/
-
-/* Test routine to return raw keycodes */
-
-/*
-int
-GetKey(void)
-{
-	int code;
-	char buffer[8];
-
-	do {
-		code = ReadByte(IOMD_KBDDAT);
-
-		sprintf(buffer, "%02x ", code);
-		text(&display, buffer);
-	} while(code != 0x29);
-
-	return(0x04);
-}
-*/
-
-
-int
-KBD_Empty(void)
-{
-	return(buffer_ins_ptr == buffer_rem_ptr);
-}
-
-
-/* Wait for a key in the keyboard buffer and returns am ASCII code */
-
-int
-GetKey(void)
-{
-	int key;
-
-/* Wait for something in the keyboard buffer */
-
-	while (buffer_ins_ptr == buffer_rem_ptr) {
-	}
-
-/* Extract the keycode, updating the buffer pointer */
-
-	key = kbdbuffer[buffer_rem_ptr];
-	++buffer_rem_ptr;
-	if (buffer_rem_ptr >= BUFFER_SIZE)
-		buffer_rem_ptr = 0;
-
-	return(key);
-}
-
-
-int
-WaitForKey(ident)
-	caddr_t ident; 
-{
-	int key;
-
-/* Wait for something in the keyboard buffer */
-
-	if (ident == 0)
-		return(GetKey());
-
-	while (buffer_ins_ptr == buffer_rem_ptr) {
-		kbd_wakeup = ident;
-		tsleep(ident, PVM, "kdbwait", 0);
-	}
-
-/* Extract the keycode, updating the buffer pointer */
-
-	key = kbdbuffer[buffer_rem_ptr];
-	++buffer_rem_ptr;
-	if (buffer_rem_ptr >= BUFFER_SIZE)
-		buffer_rem_ptr = 0;
-
-	return(key);
 }
 
 
@@ -1034,7 +925,7 @@ getkey_polled()
 			up = (code & 0x100);
 			key = code & 0xff;
 
-	printf("code=%04x mod=%04x\n", code, modifiers);
+/*			printf("code=%04x mod=%04x\n", code, modifiers);*/
 
 /* By default we use the main keycode lookup table */
 
@@ -1131,14 +1022,8 @@ kbdintr(sc)
 
 /* If we have a raw keycode convert it to an ASCII code */
 
-	if (key != 0) {
-		if (kbddecodekey(sc, key)) {
-			if (kbd_wakeup) {
-				wakeup(kbd_wakeup);
-				kbd_wakeup = 0;
-			}
-		}
-	}
+	if (key != 0)
+		kbddecodekey(sc, key);
 	return(1);
 }
 
@@ -1405,14 +1290,14 @@ kbddecodekey(sc, code)
 					if (kbdautorepeat.ka_delay < 1)
 						kbdautorepeat.ka_delay = 1;
 					break;
-	
-				case 0x21b:
 #ifdef DDB
+				case 0x208:
 					Debugger();
-#else
+					break;
+#endif
+				case 0x21b:
 					printf("Kernel interruption\n");
 					boot(RB_HALT);
-#endif
 					break;
 				case 0x209:
 					printf("Kernel interruption - nosync\n");
@@ -1431,8 +1316,6 @@ kbddecodekey(sc, code)
 					autorepeatkey = key;
 					timeout(autorepeatstart, &autorepeatkey, hz/kbdautorepeat.ka_delay);
 				}
-			} else {
-				key_buffer_insert(key);
 			}
 
 			return(1);
@@ -1463,20 +1346,4 @@ autorepeat(key)
 	timeout(autorepeat, key, hz/kbdautorepeat.ka_rate);
 }
 
-
-int
-key_buffer_insert(byte)
-	int byte;
-{
-	int s;
-    
-	s = splimp();
-	kbdbuffer[buffer_ins_ptr] = byte;
-	++buffer_ins_ptr;
-	if (buffer_ins_ptr >= BUFFER_SIZE)
-		buffer_ins_ptr = 0;
-	splx(s);
-	return(0);
-}
-
-/* End of keys.c */
+/* End of kbd.c */
