@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.26 2003/07/21 22:14:57 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.27 2003/07/21 22:17:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.26 2003/07/21 22:14:57 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.27 2003/07/21 22:17:14 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -909,6 +909,8 @@ pthread__errno(void)
 	return &(self->pt_errno);
 }
 
+ssize_t	_sys_write(int, const void *, size_t);
+
 void
 pthread__assertfunc(char *file, int line, char *function, char *expr)
 {
@@ -926,7 +928,7 @@ pthread__assertfunc(char *file, int line, char *function, char *expr)
 	    function ? function : "",
 	    function ? "\"" : "");
 
-	write(STDERR_FILENO, buf, (size_t)len);
+	_sys_write(STDERR_FILENO, buf, (size_t)len);
 	(void)kill(getpid(), SIGABRT);
 
 	_exit(1);
@@ -956,7 +958,7 @@ pthread__errorfunc(char *file, int line, char *function, char *msg)
 	    function ? "\"" : "");
 
 	if (pthread__diagassert & DIAGASSERT_STDERR)
-		write(STDERR_FILENO, buf, len);
+		_sys_write(STDERR_FILENO, buf, len);
 
 	if (pthread__diagassert & DIAGASSERT_SYSLOG)
 		syslog(LOG_DEBUG | LOG_USER, "%s", buf);
