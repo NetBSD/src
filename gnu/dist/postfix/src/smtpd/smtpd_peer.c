@@ -142,9 +142,11 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 		    )) {
 #ifdef INET6
 	char hbuf[NI_MAXHOST];
+	char abuf[NI_MAXHOST];
 	struct addrinfo hints, *rnull = NULL;
 #else
-	char hbuf[sizeof("255.255.255.255") + 1];
+	char abuf[sizeof("255.255.255.255") + 1];
+	char *hbuf;
 #endif
 	int error = -1;
 
@@ -152,17 +154,17 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	(void)getnameinfo(sa, len, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 #else
 	in = &((struct sockaddr_in *)sa)->sin_addr;
-	inet_ntop(AF_INET, in, hbuf, sizeof(hbuf));
+	inet_ntop(AF_INET, in, abuf, sizeof(abuf));
 #endif
-	state->addr = mystrdup(hbuf);
+	state->addr = mystrdup(abuf);
 #ifdef INET6
 	error = getnameinfo(sa, len, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD);
 #else
+	hbuf = NULL;
 	hp = gethostbyaddr((char *)in, sizeof(*in), AF_INET);
 	if (hp && strlen(hp->h_name) < sizeof(hbuf) - 1) {
 	    error = 0;
-	    strncpy(hbuf, hp->h_name, sizeof(hbuf) - 1);
-	    hbuf[sizeof(hbuf) - 1] = '\0';
+	    hbuf = mystrdup(hp->h_name);
 	} else
 	    error = 1;
 #endif
@@ -227,6 +229,11 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	    }
 #endif
 	}
+
+#ifndef INET6
+	if (hbuf)
+	    myfree(hbuf);
+#endif
     }
 
     /*
