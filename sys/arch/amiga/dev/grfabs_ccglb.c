@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_ccglb.c,v 1.8 1996/04/28 06:33:58 mhitch Exp $	*/
+/*	$NetBSD: grfabs_ccglb.c,v 1.9 1999/03/25 21:55:17 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_amigaccgrf.h"
 
 #include <sys/types.h>
 #include <sys/queue.h>

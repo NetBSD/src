@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.64 1998/09/07 19:50:17 mhitch Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.65 1999/03/25 21:55:18 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_amigaccgrf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
