@@ -1,4 +1,40 @@
-/*	$NetBSD: fd.c,v 1.70 2000/01/17 16:57:15 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.71 2000/01/21 13:22:02 pk Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -90,21 +126,23 @@ int	fdc_debug = 0;
 
 enum fdc_state {
 	DEVIDLE = 0,
-	MOTORWAIT,
-	DOSEEK,
-	SEEKWAIT,
-	SEEKTIMEDOUT,
-	SEEKCOMPLETE,
-	DOIO,
-	IOCOMPLETE,
-	IOTIMEDOUT,
-	DORESET,
-	RESETCOMPLETE,
-	RESETTIMEDOUT,
-	DORECAL,
-	RECALWAIT,
-	RECALTIMEDOUT,
-	RECALCOMPLETE,
+	MOTORWAIT,	/*  1 */
+	DOSEEK,		/*  2 */
+	SEEKWAIT,	/*  3 */
+	SEEKTIMEDOUT,	/*  4 */
+	SEEKCOMPLETE,	/*  5 */
+	DOIO,		/*  6 */
+	IOCOMPLETE,	/*  7 */
+	IOTIMEDOUT,	/*  8 */
+	IOCLEANUPWAIT,	/*  9 */
+	IOCLEANUPTIMEDOUT,/*10 */
+	DORESET,	/* 11 */
+	RESETCOMPLETE,	/* 12 */
+	RESETTIMEDOUT,	/* 13 */
+	DORECAL,	/* 14 */
+	RECALWAIT,	/* 15 */
+	RECALTIMEDOUT,	/* 16 */
+	RECALCOMPLETE,	/* 17 */
 };
 
 /* software state, per controller */
@@ -128,7 +166,8 @@ struct fdc_softc {
 #define sc_reg_fifo	sc_io.fdcio_reg_fifo
 #define sc_reg_dor	sc_io.fdcio_reg_dor
 #define sc_reg_drs	sc_io.fdcio_reg_msr
-#define sc_istate	sc_io.fdcio_istate
+#define sc_itask	sc_io.fdcio_itask
+#define sc_istatus	sc_io.fdcio_istatus
 #define sc_data		sc_io.fdcio_data
 #define sc_tc		sc_io.fdcio_tc
 #define sc_nstat	sc_io.fdcio_nstat
@@ -136,6 +175,7 @@ struct fdc_softc {
 #define sc_intrcnt	sc_io.fdcio_intrcnt
 };
 
+#undef FDC_C_HANDLER
 #ifndef FDC_C_HANDLER
 extern	struct fdcio	*fdciop;
 #endif
@@ -181,7 +221,7 @@ struct fd_type {
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x54,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS,0xf6,1, "1.2MB/NEC" } /* 1.2 MB japanese format */
@@ -239,14 +279,14 @@ void	fd_set_motor __P((struct fdc_softc *fdc));
 void	fd_motor_off __P((void *arg));
 void	fd_motor_on __P((void *arg));
 int	fdcresult __P((struct fdc_softc *fdc));
-int	out_fdc __P((struct fdc_softc *fdc, u_char x));
+int	fdc_wrfifo __P((struct fdc_softc *fdc, u_char x));
 void	fdcstart __P((struct fdc_softc *fdc));
-void	fdcstatus __P((struct device *dv, int n, char *s));
+void	fdcstatus __P((struct fdc_softc *fdc, char *s));
 void	fdc_reset __P((struct fdc_softc *fdc));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
 #ifdef FDC_C_HANDLER
-int	fdchwintr __P((void *));
+int	fdc_c_hwintr __P((void *));
 #else
 void	fdchwintr __P((void));
 #endif
@@ -282,7 +322,7 @@ static void establish_chip_type __P((
 		ienab_bis(IE_L4);	\
 } while(0)
 #else
-#define AUDIO_SET_SWINTR ienab_bis(IE_FDSOFT)
+#define FD_SET_SWINTR ienab_bis(IE_FDSOFT)
 #endif /* defined(SUN4M) */
 #endif /* FDC_C_HANDLER */
 
@@ -423,13 +463,17 @@ fdprint(aux, fdc)
 	return (QUIET);
 }
 
+/*
+ * Configure several parameters and features on the FDC.
+ * Return 0 on success.
+ */
 static int
 fdconf(fdc)
 	struct fdc_softc *fdc;
 {
 	int	vroom;
 
-	if (out_fdc(fdc, NE7CMD_DUMPREG) || fdcresult(fdc) != 10)
+	if (fdc_wrfifo(fdc, NE7CMD_DUMPREG) || fdcresult(fdc) != 10)
 		return (-1);
 
 	/*
@@ -440,16 +484,20 @@ fdconf(fdc)
 		vroom = 0x64;
 
 	/* Configure controller to use FIFO and Implied Seek */
-	out_fdc(fdc, NE7CMD_CFG);
-	out_fdc(fdc, vroom);
-	out_fdc(fdc, fdc->sc_cfg);
-	out_fdc(fdc, 0); /* PRETRK */
+	if (fdc_wrfifo(fdc, NE7CMD_CFG) != 0)
+		return (-1);
+	if (fdc_wrfifo(fdc, vroom) != 0)
+		return (-1);
+	if (fdc_wrfifo(fdc, fdc->sc_cfg) != 0)
+		return (-1);
+	if (fdc_wrfifo(fdc, 0) != 0)	/* PRETRK */
+		return (-1);
 	/* No result phase for the NE7CMD_CFG command */
 
 	if ((fdc->sc_flags & FDC_82077) != 0) {
 		/* Lock configuration across soft resets. */
-		out_fdc(fdc, NE7CMD_LOCK | CFG_LOCK);
-		if (fdcresult(fdc) != 1) {
+		if (fdc_wrfifo(fdc, NE7CMD_LOCK | CFG_LOCK) != 0 ||
+		    fdcresult(fdc) != 1) {
 #ifdef DEBUG
 			printf("fdconf: CFGLOCK failed");
 #endif
@@ -459,18 +507,13 @@ fdconf(fdc)
 
 	return (0);
 #if 0
-	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&
+	if (fdc_wrfifo(fdc, NE7CMD_VERSION) == 0 &&
 	    fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x90) {
 		if (fdc_debug)
 			printf("[version cmd]");
 	}
 #endif
 }
-
-	/*
-	 * Controller and drives are represented by one and the same
-	 * Openprom node, so we can as well check for the floppy boots here.
-	 */
 
 void
 fdcattach_mainbus(parent, self, aux)
@@ -541,6 +584,11 @@ fdcattach_obio(parent, self, aux)
 			    sa->sa_size,
 			    fdc->sc_handle);
 
+	if (strcmp(getpropstring(sa->sa_node, "status"), "disabled") == 0) {
+		printf(": no drives attached\n");
+		return;
+	}
+
 	if (sa->sa_nintr != 0)
 		fdcattach(fdc, sa->sa_pri);
 }
@@ -554,7 +602,8 @@ fdcattach(fdc, pri)
 	char code;
 
 	fdc->sc_state = DEVIDLE;
-	fdc->sc_istate = ISTATE_IDLE;
+	fdc->sc_itask = FDC_ITASK_NONE;
+	fdc->sc_istatus = FDC_ISTATUS_NONE;
 	fdc->sc_flags |= FDC_EIS;
 	TAILQ_INIT(&fdc->sc_drives);
 
@@ -584,7 +633,7 @@ fdcattach(fdc, pri)
 
 #ifdef FDC_C_HANDLER
 	(void)bus_intr_establish(fdc->sc_bustag, pri, 0,
-				 fdchwintr, fdc);
+				 fdc_c_hwintr, fdc);
 #else
 	fdciop = &fdc->sc_io;
 	(void)bus_intr_establish(fdc->sc_bustag, pri,
@@ -632,8 +681,8 @@ fdmatch(parent, match, aux)
 		auxregbisc(AUXIO4C_FDS, 0);
 	}
 	fdc->sc_nstat = 0;
-	out_fdc(fdc, NE7CMD_RECAL);
-	out_fdc(fdc, drive);
+	fdc_wrfifo(fdc, NE7CMD_RECAL);
+	fdc_wrfifo(fdc, drive);
 
 	/* Wait for recalibration to complete */
 	for (n = 0; n < 10000; n++) {
@@ -644,7 +693,7 @@ fdmatch(parent, match, aux)
 		if ((v & (NE7_RQM|NE7_DIO|NE7_CB)) == NE7_RQM) {
 			/* wait a bit longer till device *really* is ready */
 			delay(100000);
-			if (out_fdc(fdc, NE7CMD_SENSEI))
+			if (fdc_wrfifo(fdc, NE7CMD_SENSEI))
 				break;
 			if (fdcresult(fdc) == 1 && fdc->sc_status[0] == 0x80)
 				/*
@@ -706,9 +755,9 @@ fdattach(parent, self, aux)
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
 
-	out_fdc(fdc, NE7CMD_SPECIFY);
-	out_fdc(fdc, type->steprate);
-	out_fdc(fdc, 6 | NE7_SPECIFY_NODMA);
+	fdc_wrfifo(fdc, NE7CMD_SPECIFY);
+	fdc_wrfifo(fdc, type->steprate);
+	fdc_wrfifo(fdc, 6 | NE7_SPECIFY_NODMA);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -952,16 +1001,20 @@ fd_motor_on(arg)
 	splx(s);
 }
 
+/*
+ * Get status bytes off the FDC after a command has finished
+ * Returns the number of status bytes read; -1 on error.
+ * The return value is also stored in `sc_nstat'.
+ */
 int
 fdcresult(fdc)
 	struct fdc_softc *fdc;
 {
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
-	int j = 100000,
-	    n = 0;
+	int j, n = 0;
 
-	for (; j; j--) {
+	for (j = 10000; j; j--) {
 		u_int8_t v = bus_space_read_1(t, h, fdc->sc_reg_msr);
 		v &= (NE7_DIO | NE7_RQM | NE7_CB);
 		if (v == NE7_RQM)
@@ -974,14 +1027,18 @@ fdcresult(fdc)
 			fdc->sc_status[n++] =
 				bus_space_read_1(t, h, fdc->sc_reg_fifo);
 		} else
-			delay(10);
+			delay(1);
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return (fdc->sc_nstat = -1);
 }
 
+/*
+ * Write a command byte to the FDC.
+ * Returns 0 on success; -1 on failure (i.e. timeout)
+ */
 int
-out_fdc(fdc, x)
+fdc_wrfifo(fdc, x)
 	struct fdc_softc *fdc;
 	u_int8_t x;
 {
@@ -1016,7 +1073,7 @@ fdopen(dev, flags, fmt, p)
 	if (unit >= fd_cd.cd_ndevs)
 		return (ENXIO);
 	fd = fd_cd.cd_devs[unit];
-	if (fd == 0)
+	if (fd == NULL)
 		return (ENXIO);
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
@@ -1117,29 +1174,31 @@ fdcstart(fdc)
 }
 
 void
-fdcstatus(dv, n, s)
-	struct device *dv;
-	int n;
+fdcstatus(fdc, s)
+	struct fdc_softc *fdc;
 	char *s;
 {
-	struct fdc_softc *fdc = (void *)dv->dv_parent;
+	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	int n;
 	char bits[64];
+
+	/* Just print last status */
+	n = fdc->sc_nstat;
+
 #if 0
 	/*
 	 * A 82072 seems to return <invalid command> on
 	 * gratuitous Sense Interrupt commands.
 	 */
 	if (n == 0 && (fdc->sc_flags & FDC_82077)) {
-		out_fdc(fdc, NE7CMD_SENSEI);
+		fdc_wrfifo(fdc, NE7CMD_SENSEI);
 		(void) fdcresult(fdc);
 		n = 2;
 	}
 #endif
 
-	/* Just print last status */
-	n = fdc->sc_nstat;
-
-	printf("%s: %s: state %d", dv->dv_xname, s, fdc->sc_state);
+	printf("%s: %s: state %d",
+		fd ? fd->sc_dv.dv_xname : "fdc", s, fdc->sc_state);
 
 	switch (n) {
 	case 0:
@@ -1173,11 +1232,25 @@ fdctimeout(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
-	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	struct fd_softc *fd;
 	int s;
 
 	s = splbio();
-	fdcstatus(&fd->sc_dv, 0, "timeout");
+	fd = fdc->sc_drives.tqh_first;
+	if (fd == NULL) {
+		printf("%s: timeout but no I/O pending: state %d, istatus=%d\n",
+			fdc->sc_dev.dv_xname,
+			fdc->sc_state, fdc->sc_istatus);
+		fdc->sc_state = DEVIDLE;
+		goto out;
+	}
+
+	/*
+	 * When waiting for I/O don't report the timeout now; there
+	 * might just be no floppy disk in the drive.
+	 */
+	if (fdc->sc_state != IOCOMPLETE)
+		fdcstatus(fdc, "timeout");
 
 	if (fd->sc_q.b_actf)
 		fdc->sc_state++;
@@ -1185,7 +1258,9 @@ fdctimeout(arg)
 		fdc->sc_state = DEVIDLE;
 
 	(void) fdcstate(fdc);
+out:
 	splx(s);
+
 }
 
 void
@@ -1208,61 +1283,64 @@ fdcpseudointr(arg)
  * (in-window) handler.
  */
 int
-fdchwintr(arg)
+fdc_c_hwintr(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
 
-	switch (fdc->sc_istate) {
-	case ISTATE_IDLE:
+	switch (fdc->sc_itask) {
+	case FDC_ITASK_NONE:
 		return (0);
-	case ISTATE_SENSEI:
-		out_fdc(fdc, NE7CMD_SENSEI);
-		fdcresult(fdc);
-		fdc->sc_istate = ISTATE_IDLE;
+	case FDC_ITASK_SENSI:
+		if (fdc_wrfifo(fdc, NE7CMD_SENSEI) != 0 || fdcresult(fdc) != 0)
+			fdc->sc_istatus = FDC_ISTATUS_ERROR;
+		else
+			fdc->sc_istatus = FDC_ISTATUS_DONE;
 		FD_SET_SWINTR;
 		return (1);
-	case ISTATE_SPURIOUS:
-		fdcresult(fdc);
-		fdc->sc_istate = ISTATE_SPURIOUS;
-		printf("fdc: stray hard interrupt... ");
-		FD_SET_SWINTR;
-		return (1);
-	case ISTATE_DMA:
+	case FDC_ITASK_DMA:
+		/* Proceed with pseudo-dma below */
 		break;
 	default:
-		printf("fdc: goofed ...\n");
+		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);
+		fdc->sc_istatus = FDC_ISTATUS_SPURIOUS;
+		FD_SET_SWINTR;
 		return (1);
 	}
 
+	/*
+	 * Pseudo DMA in progress
+	 */
 	for (;;) {
 		u_int8_t msr;
 
 		msr = bus_space_read_1(t, h, fdc->sc_reg_msr);
 
 		if ((msr & NE7_RQM) == 0)
+			/* That's all this round */
 			break;
 
 		if ((msr & NE7_NDM) == 0) {
 			fdcresult(fdc);
-			fdc->sc_istate = ISTATE_IDLE;
-			ienab_bis(IE_FDSOFT);
+			fdc->sc_istatus = FDC_ISTATUS_DONE;
+			FD_SET_SWINTR;
 			printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
 			break;
 		}
 
-		if (msr & NE7_DIO) {
-			*fdc->sc_data++ =
+		/* Another byte can be transferred */
+		if ((msr & NE7_DIO) != 0)
+			*fdc->sc_data =
 				bus_space_read_1(t, h, fdc->sc_reg_fifo);
-		} else {
+		else
 			bus_space_write_1(t, h, fdc->sc_reg_fifo,
 					  *fdc->sc_data);
-			fdc->sc_data++;
-		}
+
+		fdc->sc_data++;
 		if (--fdc->sc_tc == 0) {
-			fdc->sc_istate = ISTATE_DONE;
+			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
 			fdcresult(fdc);
 			FD_SET_SWINTR;
@@ -1280,10 +1358,19 @@ fdcswintr(arg)
 	struct fdc_softc *fdc = arg;
 	int s;
 
-	if (fdc->sc_istate != ISTATE_DONE)
+	if (fdc->sc_istatus == FDC_ISTATUS_NONE)
+		/* This (software) interrupt is not for us */
 		return (0);
 
-	fdc->sc_istate = ISTATE_IDLE;
+	switch (fdc->sc_istatus) {
+	case FDC_ISTATUS_ERROR:
+		printf("fdc: ierror status: state %d\n", fdc->sc_state);
+		break;
+	case FDC_ISTATUS_SPURIOUS:
+		printf("fdc: spurious interrupt: state %d\n", fdc->sc_state);
+		break;
+	}
+
 	s = splbio();
 	fdcstate(fdc);
 	splx(s);
@@ -1297,8 +1384,11 @@ fdcstate(fdc)
 #define	st0	fdc->sc_status[0]
 #define	st1	fdc->sc_status[1]
 #define	cyl	fdc->sc_status[1]
-#define OUT_FDC(fdc, c, s) \
-    do { if (out_fdc(fdc, (c))) { (fdc)->sc_state = (s); goto loop; } } while(0)
+#define FDC_WRFIFO(fdc, c) do {			\
+	if (fdc_wrfifo(fdc, (c))) {		\
+		goto xxx;			\
+	}					\
+} while(0)
 
 	struct fd_softc *fd;
 	struct buf *bp;
@@ -1306,18 +1396,12 @@ fdcstate(fdc)
 	struct fd_type *type;
 	struct ne7_fd_formb *finfo = NULL;
 
+	if (fdc->sc_istatus == FDC_ISTATUS_ERROR)
+		fdc->sc_state = DORESET;
 
-	if (fdc->sc_istate != ISTATE_IDLE) {
-		/* Trouble... */
-		printf("fdc: spurious interrupt: state %d, istate=%d\n",
-			fdc->sc_state, fdc->sc_istate);
-		fdc->sc_istate = ISTATE_IDLE;
-		if (fdc->sc_state == RESETCOMPLETE ||
-		    fdc->sc_state == RESETTIMEDOUT) {
-			panic("fdcintr: spurious interrupt can't be cleared");
-		}
-		goto doreset;
-	}
+	/* Clear I task/status field */
+	fdc->sc_istatus = FDC_ISTATUS_NONE;
+	fdc->sc_itask = FDC_ITASK_NONE;
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
@@ -1385,26 +1469,27 @@ loop:
 		if (fd->sc_cylin == bp->b_cylin)
 			goto doio;
 
-		/* specify command */
-		OUT_FDC(fdc, NE7CMD_SPECIFY, SEEKTIMEDOUT);
-		OUT_FDC(fdc, fd->sc_type->steprate, SEEKTIMEDOUT);
-		/* XXX head load time == 6ms */
-		OUT_FDC(fdc, 6 | NE7_SPECIFY_NODMA, SEEKTIMEDOUT);
-
-		fdc->sc_istate = ISTATE_SENSEI;
-		/* seek function */
-		OUT_FDC(fdc, NE7CMD_SEEK, SEEKTIMEDOUT);
-		OUT_FDC(fdc, fd->sc_drive, SEEKTIMEDOUT); /* drive number */
-		OUT_FDC(fdc, bp->b_cylin * fd->sc_type->step, SEEKTIMEDOUT);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 		fdc->sc_nstat = 0;
 
 		fd->sc_dk.dk_seek++;
-		disk_busy(&fd->sc_dk);
 
+		disk_busy(&fd->sc_dk);
 		timeout(fdctimeout, fdc, 4 * hz);
+
+		/* specify command */
+		FDC_WRFIFO(fdc, NE7CMD_SPECIFY);
+		FDC_WRFIFO(fdc, fd->sc_type->steprate);
+		/* XXX head load time == 6ms */
+		FDC_WRFIFO(fdc, 6 | NE7_SPECIFY_NODMA);
+
+		fdc->sc_itask = FDC_ITASK_SENSEI;
+		/* seek function */
+		FDC_WRFIFO(fdc, NE7CMD_SEEK);
+		FDC_WRFIFO(fdc, fd->sc_drive); /* drive number */
+		FDC_WRFIFO(fdc, bp->b_cylin * fd->sc_type->step);
 		return (1);
 
 	case DOIO:
@@ -1441,40 +1526,44 @@ loop:
 				  fdc->sc_reg_drs, type->rate);
 #ifdef FD_DEBUG
 		if (fdc_debug > 1)
-			printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
-				read ? "read" : "write", fd->sc_drive,
-				fd->sc_cylin, head, sec, nblks);
+			printf("fdcintr: %s drive %d "
+				"track %d head %d sec %d nblks %d\n",
+				finfo ? "format" :
+					(read ? "read" : "write"),
+				fd->sc_drive, fd->sc_cylin, head, sec, nblks);
 #endif
 		fdc->sc_state = IOCOMPLETE;
-		fdc->sc_istate = ISTATE_DMA;
+		fdc->sc_itask = FDC_ITASK_DMA;
 		fdc->sc_nstat = 0;
-		if (finfo != NULL) {
-			/* formatting */
-			OUT_FDC(fdc, NE7CMD_FORMAT, IOTIMEDOUT);
-			OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
-			OUT_FDC(fdc, finfo->fd_formb_secshift, IOTIMEDOUT);
-			OUT_FDC(fdc, finfo->fd_formb_nsecs, IOTIMEDOUT);
-			OUT_FDC(fdc, finfo->fd_formb_gaplen, IOTIMEDOUT);
-			OUT_FDC(fdc, finfo->fd_formb_fillbyte, IOTIMEDOUT);
-		} else {
-			if (read)
-				OUT_FDC(fdc, NE7CMD_READ, IOTIMEDOUT);
-			else
-				OUT_FDC(fdc, NE7CMD_WRITE, IOTIMEDOUT);
-			OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
-			OUT_FDC(fdc, fd->sc_cylin, IOTIMEDOUT);	/*track*/
-			OUT_FDC(fdc, head, IOTIMEDOUT);
-			OUT_FDC(fdc, sec + 1, IOTIMEDOUT);	/*sector+1*/
-			OUT_FDC(fdc, type->secsize, IOTIMEDOUT);/*sector size*/
-			OUT_FDC(fdc, type->sectrac, IOTIMEDOUT);/*secs/track*/
-			OUT_FDC(fdc, type->gap1, IOTIMEDOUT);	/*gap1 size*/
-			OUT_FDC(fdc, type->datalen, IOTIMEDOUT);/*data length*/
-		}
 
 		disk_busy(&fd->sc_dk);
 
-		/* allow 2 seconds for operation */
-		timeout(fdctimeout, fdc, 2 * hz);
+		/* allow 3 seconds for operation */
+		timeout(fdctimeout, fdc, 3 * hz);
+
+		if (finfo != NULL) {
+			/* formatting */
+			FDC_WRFIFO(fdc, NE7CMD_FORMAT);
+			FDC_WRFIFO(fdc, (head << 2) | fd->sc_drive);
+			FDC_WRFIFO(fdc, finfo->fd_formb_secshift);
+			FDC_WRFIFO(fdc, finfo->fd_formb_nsecs);
+			FDC_WRFIFO(fdc, finfo->fd_formb_gaplen);
+			FDC_WRFIFO(fdc, finfo->fd_formb_fillbyte);
+		} else {
+			if (read)
+				FDC_WRFIFO(fdc, NE7CMD_READ);
+			else
+				FDC_WRFIFO(fdc, NE7CMD_WRITE);
+			FDC_WRFIFO(fdc, (head << 2) | fd->sc_drive);
+			FDC_WRFIFO(fdc, fd->sc_cylin);	/*track*/
+			FDC_WRFIFO(fdc, head);
+			FDC_WRFIFO(fdc, sec + 1);	/*sector+1*/
+			FDC_WRFIFO(fdc, type->secsize);/*sector size*/
+			FDC_WRFIFO(fdc, type->sectrac);/*secs/track*/
+			FDC_WRFIFO(fdc, type->gap1);	/*gap1 size*/
+			FDC_WRFIFO(fdc, type->datalen);/*data length*/
+		}
+
 		return (1);				/* will return later */
 
 	case SEEKWAIT:
@@ -1494,7 +1583,7 @@ loop:
 		    cyl != bp->b_cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			if (fdc_debug)
-				fdcstatus(&fd->sc_dv, 2, "seek failed");
+				fdcstatus(fdc, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1503,12 +1592,33 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
+		/*
+		 * Try to abort the I/O operation without resetting
+		 * the chip first.  Poke TC and arrange to pick up
+		 * the timed out I/O command's status.
+		 */
+		fdc->sc_itask = FDC_ITASK_RESULT;
+		fdc->sc_state = IOCLEANUPWAIT;
+		fdc->sc_nstat = 0;
+		/* 1/2 second should be enough */
+		timeout(fdctimeout, fdc, hz/10);
 		FTC_FLIP;
-		(void)fdcresult(fdc);
-		/*FALLTHROUGH*/
+		return (1);
+
+	case IOCLEANUPTIMEDOUT:
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
+		/* All other timeouts always roll through to a chip reset */
+		fdcretry(fdc);
+
+		/* Force reset, no matter what fdcretry() says */
+		fdc->sc_state = DORESET;
+		goto loop;
+
+	case IOCLEANUPWAIT: /* IO FAILED, cleanup succeeded */
+		untimeout(fdctimeout, fdc);
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 		fdcretry(fdc);
 		goto loop;
 
@@ -1522,7 +1632,7 @@ loop:
 		     ((st0 & 0xf8) != 0x20 || (fdc->sc_cfg & CFG_EIS) == 0))) {
 #ifdef FD_DEBUG
 			if (fdc_debug) {
-				fdcstatus(&fd->sc_dv, 7,
+				fdcstatus(fdc,
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
 				printf("blkno %d nblks %d nstat %d tc %d\n",
@@ -1590,30 +1700,29 @@ loop:
 		goto loop;
 
 	case DORESET:
-	doreset:
 		/* try a reset, keep motor on */
 		fd_set_motor(fdc);
 		delay(100);
-		fdc_reset(fdc);
 		fdc->sc_nstat = 0;
-		fdc->sc_istate = ISTATE_SENSEI;
+		fdc->sc_itask = FDC_ITASK_SENSEI;
 		fdc->sc_state = RESETCOMPLETE;
 		timeout(fdctimeout, fdc, hz / 2);
+		fdc_reset(fdc);
 		return (1);			/* will return later */
 
 	case RESETCOMPLETE:
 		untimeout(fdctimeout, fdc);
 		fdconf(fdc);
 
-		/* fall through */
+		/* FALLTHROUGH */
 	case DORECAL:
 		fdc->sc_state = RECALWAIT;
-		fdc->sc_istate = ISTATE_SENSEI;
+		fdc->sc_itask = FDC_ITASK_SENSEI;
 		fdc->sc_nstat = 0;
-		/* recalibrate function */
-		OUT_FDC(fdc, NE7CMD_RECAL, RECALTIMEDOUT);
-		OUT_FDC(fdc, fd->sc_drive, RECALTIMEDOUT);
 		timeout(fdctimeout, fdc, 5 * hz);
+		/* recalibrate function */
+		FDC_WRFIFO(fdc, NE7CMD_RECAL);
+		FDC_WRFIFO(fdc, fd->sc_drive);
 		return (1);			/* will return later */
 
 	case RECALWAIT:
@@ -1629,7 +1738,7 @@ loop:
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
 			if (fdc_debug)
-				fdcstatus(&fd->sc_dv, 2, "recalibrate failed");
+				fdcstatus(fdc, "recalibrate failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1643,12 +1752,23 @@ loop:
 		goto doseek;
 
 	default:
-		fdcstatus(&fd->sc_dv, 0, "stray interrupt");
+		fdcstatus(fdc, "stray interrupt");
 		return (1);
 	}
 #ifdef DIAGNOSTIC
 	panic("fdcintr: impossible");
 #endif
+
+xxx:
+	/*
+	 * We get here if the chip locks up in FDC_WRFIFO()
+	 * Cancel any operation and schedule a reset
+	 */
+	untimeout(fdctimeout, fdc);
+	fdcretry(fdc);
+	(fdc)->sc_state = DORESET;
+	goto loop;
+
 #undef	st0
 #undef	st1
 #undef	cyl
@@ -1682,6 +1802,20 @@ fdcretry(fdc)
 		break;
 
 	case 4:
+		if (fdc->sc_nstat == 7 &&
+		    fdc->sc_status[0] == 0 &&
+		    fdc->sc_status[1] == 0 &&
+		    fdc->sc_status[2] == 0) {
+			/*
+			 * We've retried a few times and we've got
+			 * valid status and all three status bytes
+			 * are zero.  Assume this condition is the
+			 * result of no disk loaded into the drive.
+			 */
+			printf("%s: no medium?\n", fd->sc_dv.dv_xname);
+			goto failsilent;
+		}
+
 		/* still no go; reset the bastard */
 		fdc->sc_state = DORESET;
 		break;
@@ -1704,6 +1838,7 @@ fdcretry(fdc)
 				fdc->sc_status[5]);
 		}
 
+	failsilent:
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
@@ -1928,7 +2063,7 @@ fdioctl(dev, cmd, addr, flag, p)
 
 #ifdef DEBUG
 	case _IO('f', 100):
-		out_fdc(fdc, NE7CMD_DUMPREG);
+		fdc_wrfifo(fdc, NE7CMD_DUMPREG);
 		fdcresult(fdc);
 		printf("fdc: dumpreg(%d regs): <", fdc->sc_nstat);
 		for (i = 0; i < fdc->sc_nstat; i++)
@@ -1943,7 +2078,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		return (0);
 
 	case _IO('f', 102):
-		out_fdc(fdc, NE7CMD_SENSEI);
+		fdc_wrfifo(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
 		printf("fdc: sensei(%d regs): <", fdc->sc_nstat);
 		for (i=0; i< fdc->sc_nstat; i++)
@@ -1994,9 +2129,28 @@ fdformat(dev, finfo, p)
 	bp->b_data = (caddr_t)finfo;
 
 #ifdef FD_DEBUG
-	if (fdc_debug)
+	if (fdc_debug) {
+		int i;
+
 		printf("fdformat: blkno 0x%x count %ld\n",
 			bp->b_blkno, bp->b_bcount);
+
+		printf("\tcyl:\t%d\n", finfo->cyl);
+		printf("\thead:\t%d\n", finfo->head);
+		printf("\tnsecs:\t%d\n", finfo->fd_formb_nsecs);
+		printf("\tsshft:\t%d\n", finfo->fd_formb_secshift);
+		printf("\tgaplen:\t%d\n", finfo->fd_formb_gaplen);
+		printf("\ttrack data:");
+		for (i = 0; i < finfo->fd_formb_nsecs; i++) {
+			printf(" [c%d h%d s%d]",
+					finfo->fd_formb_cylno(i),
+					finfo->fd_formb_headno(i),
+					finfo->fd_formb_secno(i) );
+			if (finfo->fd_formb_secsize(i) != 2)
+				printf("<sz:%d>", finfo->fd_formb_secsize(i));
+		}
+		printf("\n");
+	}
 #endif
 
 	/* now do the format */
@@ -2042,6 +2196,7 @@ fdgetdisklabel(dev)
 	lp->d_nsectors = fd->sc_type->sectrac;
 	lp->d_ncylinders = fd->sc_type->cylinders;
 	lp->d_ntracks = fd->sc_type->heads;	/* Go figure... */
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 	lp->d_rpm = 3600;	/* XXX like it matters... */
 
 	strncpy(lp->d_typename, "floppy", sizeof(lp->d_typename));
