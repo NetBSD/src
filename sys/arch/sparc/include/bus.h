@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1997/11/02 21:28:33 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1997/11/23 16:31:30 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,32 +76,53 @@
 /*
  * Bus address and size types
  */
-typedef u_long bus_addr_t;
-typedef u_long bus_size_t;
+typedef	u_long	bus_space_handle_t;
+typedef u_long	bus_addr_t;
+typedef u_long	bus_size_t;
 
 /*
  * Access methods for bus resources and address space.
  */
 struct sparc_bus_space_tag {
 	void	*cookie;
+
+	int	(*sparc_bus_map) __P((
+				void *,
+				bus_addr_t,
+				bus_size_t,
+				int,
+				bus_space_handle_t *));
+	int	(*sparc_bus_unmap) __P((
+				void *,
+				bus_space_handle_t,
+				bus_size_t));
+	int	(*sparc_bus_subregion) __P((
+				void *,
+				bus_space_handle_t,
+				bus_size_t,
+				bus_size_t,
+				bus_space_handle_t *));
+
 	void	(*sparc_barrier) __P((void *));
 };
 
 typedef struct sparc_bus_space_tag	*bus_space_tag_t;
-typedef	u_long				bus_space_handle_t;
 
-int	bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int flags, bus_space_handle_t *bshp));
-void	bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
-int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
+#define bus_space_map(t, a, s, f, hp)					\
+	(*(t)->sparc_bus_map)((t)->cookie, (a), (s), (f), (hp))
+#define bus_space_unmap(t, h, s)					\
+	(*(t)->sparc_bus_unmap)((t)->cookie, (h), (s))
+#define bus_space_subregion(t, h, o, s, hp)				\
+	(*(t)->sparc_bus_subregion)((t)->cookie, (h), (o), (s), (hp))
+
+#if 0
 int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
 	    bus_size_t boundary, int flags, bus_addr_t *addrp,
 	    bus_space_handle_t *bshp));
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
+#endif
 
 #define BUS_SPACE_MAP_CACHEABLE		0x01
 #define BUS_SPACE_MAP_LINEAR		0x02
@@ -348,8 +369,9 @@ typedef struct sparc_bus_dmamap		*bus_dmamap_t;
  *	are suitable for programming into DMA registers.
  */
 struct sparc_bus_dma_segment {
-	bus_addr_t	ds_addr;	/* DMA address */
+	bus_addr_t	ds_addr;	/* DVMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	void		*_ds_mlist;	/* XXX - dmamap_alloc'ed pages */
 };
 typedef struct sparc_bus_dma_segment	bus_dma_segment_t;
 
@@ -438,8 +460,6 @@ struct sparc_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	int		_dm_pn;		/* DVMA page number */
-	int		_dm_npf;	/* # of DVMA pages allocated */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
