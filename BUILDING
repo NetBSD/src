@@ -282,49 +282,54 @@ CONFIGURATION
      These variables only affect the top level ``Makefile'' and do not affect
      manually building subtrees of the NetBSD source code.
 
-     MKOBJDIRS      Can be set to ``yes'' or ``no''.  Indicates whether object
-                    directories will be created automatically (via a ``make
-                    obj'' pass) at the start of a build.
+     INSTALLWORLDDIR  Location for the ``make installworld'' target to install
+                      to.
 
-                    Default: ``yes''
+                      Default: ``/''
 
-     NBUILDJOBS     Now obsolete.  Use the make(1) option -j, instead (see be-
-                    low)
+     MKOBJDIRS        Can be set to ``yes'' or ``no''.  Indicates whether ob-
+                      ject directories will be created automatically (via a
+                      ``make obj'' pass) at the start of a build.
 
-                    Default: Unset.
+                      Default: ``yes''
 
-     NOCLEANDIR     If set, avoids the ``make cleandir'' phase of a full
-                    build.  This has the effect of allowing only changed files
-                    in a source tree to be recompiled.  This can speed up
-                    builds when updating only a few files in the tree.
+     NBUILDJOBS       Now obsolete.  Use the make(1) option -j, instead (see
+                      below)
 
-                    Default: Unset.
+                      Default: Unset.
 
-     NODISTRIBDIRS  If set, avoids the ``make distrib-dirs'' phase of a full
-                    build.  This skips running mtree(8) on DESTDIR, useful on
-                    systems where building as an unprivileged user, or where
-                    it is known that the system-wide mtree files have not
-                    changed.
+     NOCLEANDIR       If set, avoids the ``make cleandir'' phase of a full
+                      build.  This has the effect of allowing only changed
+                      files in a source tree to be recompiled.  This can speed
+                      up builds when updating only a few files in the tree.
 
-                    Default: Unset.
+                      Default: Unset.
 
-     NOINCLUDES     If set, avoids the ``make includes'' phase of a full
-                    build.  This has the effect of preventing make(1) from
-                    thinking that some programs are out-of-date simply because
-                    the system include files have changed.  However, this op-
-                    tion should not be used when updating the entire NetBSD
-                    source tree arbitrarily; it is suggested to use UPDATE in
-                    that case.
+     NODISTRIBDIRS    If set, avoids the ``make distrib-dirs'' phase of a full
+                      build.  This skips running mtree(8) on DESTDIR, useful
+                      on systems where building as an unprivileged user, or
+                      where it is known that the system-wide mtree files have
+                      not changed.
 
-                    Default: Unset.
+                      Default: Unset.
 
-     RELEASEDIR     If set, specifies the directory to which a release(7) lay-
-                    out will be written at the end of a ``make release''.
+     NOINCLUDES       If set, avoids the ``make includes'' phase of a full
+                      build.  This has the effect of preventing make(1) from
+                      thinking that some programs are out-of-date simply be-
+                      cause the system include files have changed.  However,
+                      this option should not be used when updating the entire
+                      NetBSD source tree arbitrarily; it is suggested to use
+                      UPDATE in that case.
 
-                    Default: Unset.
+                      Default: Unset.
 
-     UPDATE         If set, then in addition to the effects described for UP-
-                    DATE above, this implies the effects of NOCLEANDIR.
+     RELEASEDIR       If set, specifies the directory to which a release(7)
+                      layout will be written at the end of a ``make release''.
+
+                      Default: Unset.
+
+     UPDATE           If set, then in addition to the effects described for
+                      UPDATE above, this implies the effects of NOCLEANDIR.
 
 BUILDING
    "make" command line options
@@ -400,18 +405,32 @@ BUILDING
      Additional make(1) targets are usable specifically from the top source
      level to facilitate building the entire NetBSD source tree.
 
-     build      Build the entire NetBSD system.  This orders portions of the
-                source tree such that prerequisites will be built in the prop-
-                er order.
+     build         Build the entire NetBSD system.  This orders portions of
+                   the source tree such that prerequisites will be built in
+                   the proper order.
 
-     release    Do a ``make build'', then package the system into a standard
-                release layout as described by release(7).  This requires that
-                RELEASEDIR be set (see above).
+     distribution  Do a ``make build'', and then install a full distribution
+                   into DESTDIR.
+
+     buildworld    As per ``make distribution'', except that it ensures that
+                   DESTDIR is not the root directory.
+
+     installworld  Install the distribution from DESTDIR to INSTALLWORLDDIR
+                   (which defaults to the root directory).  Ensures that
+                   INSTALLWORLDDIR is the not root directory if cross compil-
+                   ing.
+
+                   Note: It is highly recommended that you upgrade your kernel
+                   and reboot before performing this operation.
+
+     release       Do a ``make build'', then package the system into a stan-
+                   dard release layout as described by release(7).  This re-
+                   quires that RELEASEDIR be set (see above).
 
      regression-tests
-                Can only be run after building the regression tests in the di-
-                rectory ``regress''.  Runs the compiled regression tests on
-                the local host.
+                   Can only be run after building the regression tests in the
+                   directory ``regress''.  Runs the compiled regression tests
+                   on the local host.
 
    The "build.sh" script
      This script file is a Bourne shell script designed to build the entire
@@ -453,6 +472,11 @@ BUILDING
 
      -E        Set `expert' mode; DESTDIR does not have to be set to a non-
                root path for builds when this is set.
+
+     -i installworlddir
+               Install the contents of DESTDIR to installworlddir after all
+               other operations have completed, using the top level
+               ``installworld'' target.
 
      -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
                explicit dependancies as necessary to enforce build ordering.
@@ -568,4 +592,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         December 8, 2002                              9
+NetBSD                         December 25, 2002                             9
