@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.32 2004/03/16 00:23:31 uwe Exp $
+# $NetBSD: GENERIC,v 1.33 2004/03/23 03:48:39 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -59,7 +59,8 @@ options 	DEBUG			# extra kernel debugging support
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
-options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
+				# (overrides tz info that hpcboot.exe passes)
 
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	USERCONF		# userconf(4) support
