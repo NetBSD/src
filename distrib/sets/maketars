@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.24 2002/05/19 13:24:22 lukem Exp $
+# $NetBSD: maketars,v 1.24.2.1 2002/07/23 09:16:32 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir]
@@ -8,9 +8,9 @@
 #
 
 # set defaults
-: ${MAKE=make}
 : ${PAX=pax}
 : ${MTREE=mtree}
+MAKE="${MAKE:-make} -j 1"
 
 machine=`${MAKE} print_machine`
 machine_arch=`${MAKE} print_machine_arch`
