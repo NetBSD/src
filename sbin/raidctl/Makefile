@@ -2,8 +2,6 @@ PROG=	raidctl
 SRCS=	rf_configure.c rf_layout.c rf_strutils.c raidctl.c
 MAN=	raidctl.8
 
-CWARNFLAGS += -Wall
-
 LOOKHERE = ${.CURDIR}/../../sys/dev/raidframe
 
 COPTS+= -DCSRG_BASED -DNARROWPROTO -DRF_UTILITY=1 -DSIMULATE=1
