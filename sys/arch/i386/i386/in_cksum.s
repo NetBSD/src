@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.16 2001/05/26 17:46:12 sommerfeld Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.17 2002/10/02 06:18:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ ENTRY(in6_cksum)
 	movl	24(%esp), %edx		/* %edx = off */
 	movl	28(%esp), %esi		/* %esi = len */
 	testl	%eax, %eax
-	jz	mbuf_loop_0		/* skip if nxt == 0 */
+	jz	.Lmbuf_loop_0		/* skip if nxt == 0 */
 	movl	M_DATA(%ebp), %ebx
 	addl	%esi, %eax		/* sum += len */
 	shll	$8, %eax		/* sum = htons(sum) */
@@ -186,7 +186,7 @@ ENTRY(in6_cksum)
 	
 	MOP
 #ifdef INET
-	jmp	mbuf_loop_0
+	jmp	.Lmbuf_loop_0
 #endif
 #endif
 
@@ -202,7 +202,7 @@ ENTRY(in4_cksum)
 	movl	24(%esp), %edx		/* %edx = off */
 	movl	28(%esp), %esi		/* %esi = len */
 	testl	%eax, %eax
-	jz	mbuf_loop_0		/* skip if nxt == 0 */
+	jz	.Lmbuf_loop_0		/* skip if nxt == 0 */
 	movl	M_DATA(%ebp), %ebx
 	addl	%esi, %eax		/* sum += len */
 	shll	$8, %eax		/* sum = htons(sum) */
@@ -211,16 +211,16 @@ ENTRY(in4_cksum)
 	ADC(IP_DST)			/* sum += ip->ip_dst */
 	MOP
 #endif
-mbuf_loop_0:
+.Lmbuf_loop_0:
 	testl	%ebp, %ebp
-	jz	out_of_mbufs
+	jz	.Lout_of_mbufs
 
 	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
 	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
 	movl	M_NEXT(%ebp), %ebp
 
 	subl	%ecx, %edx		/* %edx = off - m_len */
-	jnb	mbuf_loop_0
+	jnb	.Lmbuf_loop_0
 
 	addl	%edx, %ebx		/* %ebx = m_data + off - m_len */
 	negl	%edx			/* %edx = m_len - off */
@@ -233,7 +233,7 @@ mbuf_loop_0:
 	 * this case never happens in practice, so it's sufficient that it
 	 * doesn't explode.
 	 */
-	jmp	in4_entry
+	jmp	.Lin4_entry
 
 
 /* LINTSTUB: Func: int in_cksum(struct mbuf *m, int len) */
@@ -247,19 +247,19 @@ ENTRY(in_cksum)
 	xorl	%eax, %eax
 	xorb	%cl, %cl
 
-mbuf_loop_1:
+.Lmbuf_loop_1:
 	testl	%esi, %esi
-	jz	done
+	jz	.Ldone
 
-mbuf_loop_2:
+.Lmbuf_loop_2:
 	testl	%ebp, %ebp
-	jz	out_of_mbufs
+	jz	.Lout_of_mbufs
 
 	movl	M_DATA(%ebp), %ebx
 	movl	M_LEN(%ebp), %edx
 	movl	M_NEXT(%ebp), %ebp
 
-in4_entry:
+.Lin4_entry:
 	cmpl	%esi, %edx
 	jbe	1f
 	movl	%esi, %edx
@@ -268,49 +268,49 @@ in4_entry:
 	subl	%edx, %esi
 
 	cmpl	$32, %edx
-	jb	short_mbuf
+	jb	.Lshort_mbuf
 
 	testb	$3, %bl
-	jz	dword_aligned
+	jz	.Ldword_aligned
 
 	testb	$1, %bl
-	jz	byte_aligned
+	jz	.Lbyte_aligned
 
 	ADDBYTE
 	ADVANCE(1)
 	MOP
 
 	testb	$2, %bl
-	jz	word_aligned
+	jz	.Lword_aligned
 
-byte_aligned:
+.Lbyte_aligned:
 	ADDWORD
 	ADVANCE(2)
 	MOP
 
-word_aligned:
-dword_aligned:
+.Lword_aligned:
+.Ldword_aligned:
 	testb	$4, %bl
-	jnz	qword_aligned
+	jnz	.Lqword_aligned
 
 	ADD(0)
 	ADVANCE(4)
 	MOP
 
-qword_aligned:
+.Lqword_aligned:
 	testb	$8, %bl
-	jz	oword_aligned
+	jz	.Loword_aligned
 
 	ADD(0)
 	ADC(4)
 	ADVANCE(8)
 	MOP
 
-oword_aligned:
+.Loword_aligned:
 	subl	$128, %edx
-	jb	finished_128
+	jb	.Lfinished_128
 
-loop_128:
+.Lloop_128:
 	ADD(12)
 	ADC(0)
 	ADC(4)
@@ -347,13 +347,13 @@ loop_128:
 	MOP
 
 	subl	$128, %edx
-	jnb	loop_128
+	jnb	.Lloop_128
 
-finished_128:
+.Lfinished_128:
 	subl	$32-128, %edx
-	jb	finished_32
+	jb	.Lfinished_32
 
-loop_32:
+.Lloop_32:
 	ADD(12)
 	ADC(0)
 	ADC(4)
@@ -366,12 +366,12 @@ loop_32:
 	MOP
 
 	subl	$32, %edx
-	jnb	loop_32
+	jnb	.Lloop_32
 
-finished_32:
-short_mbuf:
+.Lfinished_32:
+.Lshort_mbuf:
 	testb	$16, %dl
-	jz	finished_16
+	jz	.Lfinished_16
 
 	ADD(12)
 	ADC(0)
@@ -380,61 +380,61 @@ short_mbuf:
 	leal	16(%ebx), %ebx
 	MOP
 
-finished_16:
+.Lfinished_16:
 	testb	$8, %dl
-	jz	finished_8
+	jz	.Lfinished_8
 
 	ADD(0)
 	ADC(4)
 	leal	8(%ebx), %ebx
 	MOP
 
-finished_8:
+.Lfinished_8:
 	testb	$4, %dl
-	jz	finished_4
+	jz	.Lfinished_4
 
 	ADD(0)
 	leal	4(%ebx), %ebx
 	MOP
 
-finished_4:
+.Lfinished_4:
 	testb	$3, %dl
-	jz	mbuf_loop_1
+	jz	.Lmbuf_loop_1
 
 	testb	$2, %dl
-	jz	finished_2
+	jz	.Lfinished_2
 
 	ADDWORD
 	leal	2(%ebx), %ebx
 	MOP
 
 	testb	$1, %dl
-	jz	finished_1
+	jz	.Lfinished_1
 
-finished_2:
+.Lfinished_2:
 	ADDBYTE
 	MOP
 
-finished_1:
-mbuf_done:
+.Lfinished_1:
+.Lmbuf_done:
 	testl	%esi, %esi
-	jnz	mbuf_loop_2
+	jnz	.Lmbuf_loop_2
 
-done:
+.Ldone:
 	UNSWAP
 	REDUCE
 	notw	%ax
 
-return:
+.Lreturn:
 	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
 
-out_of_mbufs:
+.Lout_of_mbufs:
 	pushl	$1f
 	call	_C_LABEL(printf)
 	leal	4(%esp), %esp
-	jmp	return
+	jmp	.Lreturn
 1:
 	.asciz	"cksum: out of data\n"
