@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.4 2001/06/13 06:01:45 simonb Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.5 2001/06/14 01:06:56 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -214,7 +214,7 @@ probe_bus(pciconf_bus_t *pb)
 		tag = pci_make_tag(pb->pc, pb->busno, device, 0);
 		if (pci_conf_debug) {
 			print_tag(pb->pc, tag);
-			printf("probing with tag %x.\n", tag);
+			printf("probing with tag 0x%lx.\n", (u_long) tag);
 		}
 		id = pci_conf_read(pb->pc, tag, PCI_ID_REG);
 
