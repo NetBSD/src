@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.50 2003/01/18 09:42:57 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.51 2003/01/27 22:14:48 pk Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.50 2003/01/18 09:42:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.51 2003/01/27 22:14:48 pk Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -813,7 +813,6 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	if (srcamap->am_ref == 1) {		/* take it over? */
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		amap->am_ref--;		/* drop final reference to map */
-		amap_unlock(amap);
 		amap_free(amap);	/* dispose of new (unused) amap */
 		amap_unlock(srcamap);
 		return;
