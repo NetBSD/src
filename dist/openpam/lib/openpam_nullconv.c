@@ -54,9 +54,13 @@ openpam_nullconv(int n,
 {
 
 	ENTER();
+	/*LINTED unused*/
 	(void)n;
+	/*LINTED unused*/
 	(void)msg;
+	/*LINTED unused*/
 	(void)resp;
+	/*LINTED unused*/
 	(void)data;
 	RETURNC(PAM_CONV_ERR);
 }
