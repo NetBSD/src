@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.25 2000/03/30 12:41:14 augustss Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.26 2000/05/16 00:24:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -156,7 +156,7 @@ mfs_mountroot()
 	mfsp->mfs_baseoff = mfs_rootbase;
 	mfsp->mfs_size = mfs_rootsize;
 	mfsp->mfs_vnode = rootvp;
-	mfsp->mfs_pid = p->p_pid;
+	mfsp->mfs_proc = NULL;		/* indicate kernel space */
 	BUFQ_INIT(&mfsp->mfs_buflist);
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
@@ -259,7 +259,7 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_baseoff = args.base;
 	mfsp->mfs_size = args.size;
 	mfsp->mfs_vnode = devvp;
-	mfsp->mfs_pid = p->p_pid;
+	mfsp->mfs_proc = p;
 	BUFQ_INIT(&mfsp->mfs_buflist);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;

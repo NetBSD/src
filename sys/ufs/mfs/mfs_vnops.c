@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.20 2000/03/30 12:41:14 augustss Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.21 2000/05/16 00:24:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -150,7 +150,7 @@ mfs_strategy(v)
 		panic("mfs_strategy: bad dev");
 	mfsp = VTOMFS(vp);
 	/* check for mini-root access */
-	if (mfsp->mfs_pid == 0) {
+	if (mfsp->mfs_proc == NULL) {
 		caddr_t base;
 
 		base = mfsp->mfs_baseoff + (bp->b_blkno << DEV_BSHIFT);
@@ -159,7 +159,7 @@ mfs_strategy(v)
 		else
 			memcpy(base, bp->b_data, bp->b_bcount);
 		biodone(bp);
-	} else if (mfsp->mfs_pid == p->p_pid) {
+	} else if (mfsp->mfs_proc == p) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else {
 		BUFQ_INSERT_TAIL(&mfsp->mfs_buflist, bp);
@@ -316,7 +316,8 @@ mfs_print(v)
 	} */ *ap = v;
 	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
+	printf("tag VT_MFS, pid %d, base %p, size %ld\n",
+	    (mfsp->mfs_proc != NULL) ? mfsp->mfs_proc->p_pid : 0,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
 }
