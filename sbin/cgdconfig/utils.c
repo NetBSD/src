@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.6 2005/03/30 17:10:18 christos Exp $ */
+/* $NetBSD: utils.c,v 1.7 2005/03/30 17:17:51 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.6 2005/03/30 17:10:18 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.7 2005/03/30 17:17:51 elric Exp $");
 #endif
 
 #include <sys/param.h>
@@ -277,8 +277,7 @@ bits_new(const void *buf, int len)
 {
 	bits_t	*b;
 
-	/* XXX do some level of error checking here */
-	b = malloc(sizeof(*b));
+	b = emalloc(sizeof(*b));
 	b->length = len;
 	b->text = emalloc(BITS2BYTES(b->length));
 	memcpy(b->text, buf, BITS2BYTES(b->length));
