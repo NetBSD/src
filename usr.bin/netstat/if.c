@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.52 2002/06/19 23:38:59 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.53 2003/04/15 08:07:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.52 2002/06/19 23:38:59 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.53 2003/04/15 08:07:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,7 @@ intpr(interval, ifnetaddr, pfunc)
 				struct sockaddr_ns *sns =
 					(struct sockaddr_ns *)sa;
 				u_long net;
-				char netnum[8];
+				char netnum[10];
 
 				*(union ns_net *)&net = sns->sns_addr.x_net;
 				(void)snprintf(netnum, sizeof(netnum), "%xH",
