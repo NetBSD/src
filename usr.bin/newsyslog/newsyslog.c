@@ -25,11 +25,11 @@ provided "as is" without express or implied warranty.
  *              keeping the a specified number of backup files around.
  *
  *      $Source: /cvsroot/src/usr.bin/newsyslog/newsyslog.c,v $
- *      $Author: mycroft $
+ *      $Author: cgd $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: newsyslog.c,v 1.5 1993/08/10 00:05:51 mycroft Exp $";
+static char rcsid[] = "$Id: newsyslog.c,v 1.6 1994/02/07 07:00:26 cgd Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -46,7 +46,7 @@ static char rcsid[] = "$Id: newsyslog.c,v 1.5 1993/08/10 00:05:51 mycroft Exp $"
 #endif
 
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 #include <signal.h>
 #include <pwd.h>
@@ -257,7 +257,7 @@ struct conf_entry *parse_file()
 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
-                if ((group = index(q, '.')) != NULL) {
+                if ((group = strchr(q, '.')) != NULL) {
                     *group++ = '\0';
                     if (*q) {
                         if (!(isnumber(q))) {
