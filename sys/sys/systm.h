@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.44 1996/03/16 23:12:14 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.45 1996/03/17 02:43:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -195,6 +195,10 @@ int	uiomove __P((caddr_t, int, struct uio *));
 
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
+
+#ifdef GPROF
+void	kmstartup __P((void));
+#endif
 
 #include <lib/libkern/libkern.h>
 
