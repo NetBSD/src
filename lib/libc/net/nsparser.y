@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.3 1999/01/25 00:16:18 lukem Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.4 1999/07/02 15:27:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,9 +39,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsparser.y,v 1.3 1999/01/25 00:16:18 lukem Exp $");
+__RCSID("$NetBSD: nsparser.y,v 1.4 1999/07/02 15:27:09 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <err.h>
 #define _NS_PRIVATE
 #include <nsswitch.h>
