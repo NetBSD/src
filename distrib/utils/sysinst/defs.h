@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.13 1998/03/09 22:08:53 mellon Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.14 1998/05/29 18:01:09 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -210,6 +210,7 @@ void	md_post_newfs __P((void));
 void	md_copy_filesystem __P((void));
 int	md_make_bsd_partitions __P((void));
 int	md_update __P((void));
+void	md_cleanup_install __P((void));
 
 /* from main.c */
 void toplevel __P((void));
