@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.8 1998/01/31 04:14:47 ross Exp $	*/
 
 /* 
  * Mach Operating System
@@ -66,6 +66,7 @@ extern boolean_t	db_qualify_ambiguous_names;
 					 * for multiple occurrences of a name.
 					 * Might slow down quite a bit */
 
+extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 /*
  * Functions exported by the symtable module
  */
