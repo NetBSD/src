@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.33 2001/05/28 19:38:10 he Exp $
+.\"	$NetBSD: main,v 1.61.2.34 2001/06/07 15:37:03 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,8 +45,9 @@
 .nr FOR_RELEASE 1
 .ds MACHINE_LIST alpha amiga amigappc arc arm26 arm32 atari bebox cobalt
 .as MACHINE_LIST " evbsh3 hp300 hpcmips i386 luna68k mac68k macppc mmeye
-.as MACHINE_LIST " mvme68k news68k newsmips next68k ofppc pc532 pmax
-.as MACHINE_LIST " prep sgimips sparc sparc64 sun3 vax x68k
+.as MACHINE_LIST " mvme68k news68k newsmips next68k ofppc
+.as MACHINE_LIST " pc532 pmax prep
+.as MACHINE_LIST " sgimips sparc sparc64 sun3 vax x68k
 .
 .so \*[.CURDIR]/../common/macros
 .
@@ -310,6 +311,45 @@ In addition, many bugs have been fixed\(emmore than 95 problems
 reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
 See the CHANGES-1.5.1 file for the complete list.
+.Pp
+The NetBSD Packages Collection (pkgsrc) which is used to maintain,
+build, track dependencies, and maintain NetBSD-specific fixes to
+third-party programs, has received a major overhaul for NetBSD 1.5.1.
+Some highlights are:
+.Bl -bullet
+.It
+Many new packages were added to the collection, which now includes
+about 2100 packages.  Many of them are also available as pre-compiled
+binaries on ftp.netbsd.org and its mirrors.  All packages have been
+verified on a release candidate of 1.5.1/i386, and have been found to
+compile, install and de-install cleanly.  Many packages have been
+modified and enhanced to compile and function properly on big-endian
+(m68k, sparc), and LP64 architectures (alpha, sparc64).
+.It
+KDE2 and KOffice together consitutes a fully integrated office
+environment with no license problems, available for i386, alpha and
+many other architectures.
+.It
+Mozilla 0.9, KDE2's Konqueror, and Links 0.95 are just a few
+examples of the web browsers available.
+.It
+A support package for running VMware on NetBSD/i386 was added, it's
+called suse_vmware.  The official VMware code, a valid license, and
+Wasabi Systems' compatibility package are all needed to run VMware.
+.It
+Internal changes of the pkgsrc system include strong checksums to
+prevent malicious distribution files, as well as restructuring of the
+package structure in pkgsrc for faster extraction of pkgsrc tar files
+and upgrades via SUP and CVS.
+.El
+.Pp
+Please note that at the moment,
+.Ic sysinst
+will not assist you in
+installing pre-built third-party binary packages or the pkgsrc
+system itself, so you will have to manually install packages using
+.Ic pkg_install
+or fetch and extract the pkgsrc.tgz tar file to get started.
 .if \n[FOR_RELEASE] \{\
 .if r_i386 \{
 .Ss New Compatibility Issues Introduced With NetBSD 1.5.1
