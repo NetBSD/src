@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.52 2004/03/30 06:00:13 oki Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.52 2004/03/30 06:00:13 oki Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -807,8 +807,10 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	struct ether_header *eh;
 	u_int16_t etype;
 
-	if (sc->sc_eth_if == NULL)
+	if (sc->sc_eth_if == NULL) {
+		m_freem(m);
 		return EIO;
+	}
 
 	memset(&dst, 0, sizeof dst);
 	dst.sa_family = AF_UNSPEC;
