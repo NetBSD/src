@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/08 17:39:42 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.3 2003/08/10 02:01:26 chs Exp $
 
 LIB=sa
 
@@ -14,7 +14,7 @@ SRC_sa = alloc.c memcpy.c memset.c close.c exit.c files.c getfile.c gets.c \
 	 open.c printf.c read.c strerror.c ufs.c globals.c lseek.c panic.c \
 	 closeall.c dev.c dkcksum.c nullfs.c fstat.c twiddle.c sprintf.c \
 	 subr_prf.c intoa.c udp.c memcmp.c loadfile.c loadfile_aout.c \
-	 loadfile_elf32.c dev_net.c
+	 loadfile_elf32.c dev_net.c ether_sprintf.c snprintf.c
 
 # XXX Needed until libsa's memcmp.c doesn't depend on bcmp...
 SRC_sa+= bcmp.c
