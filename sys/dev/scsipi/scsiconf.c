@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.125 1999/09/09 20:06:52 hwr Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.126 1999/09/11 21:25:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,10 +99,14 @@ struct scsipi_device probe_switch = {
 
 int scsibusmatch __P((struct device *, struct cfdata *, void *));
 void scsibusattach __P((struct device *, struct device *, void *));
+int scsibusactivate __P((struct device *, enum devact));
+int scsibusdetach __P((struct device *, int flags));
+
 int scsibussubmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach scsibus_ca = {
-	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach
+	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach,
+	    scsibusdetach, scsibusactivate,
 };
 
 extern struct cfdriver scsibus_cd;
@@ -223,6 +227,69 @@ scsibussubmatch(parent, cf, aux)
 	    cf->cf_loc[SCSIBUSCF_LUN] != sc_link->scsipi_scsi.lun)
 		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
+int
+scsibusactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct scsibus_softc *sc = (struct scsibus_softc *) self;
+	struct scsipi_link *sc_link;
+	int target, lun, error = 0, s;
+
+	s = splbio();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		for (target = 0; target <= sc->sc_maxtarget; target++) {
+			if (target ==
+			    sc->adapter_link->scsipi_scsi.adapter_target)
+				continue;
+			for (lun = 0; lun <= sc->sc_maxlun; lun++) {
+				sc_link = sc->sc_link[target][lun];
+				if (sc_link == NULL)
+					continue;
+				error =
+				    config_deactivate(sc_link->device_softc);
+				if (error)
+					goto out;
+			}
+		}
+		break;
+	}
+ out:
+	splx(s);
+	return (error);
+}
+
+int
+scsibusdetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct scsibus_softc *sc = (struct scsibus_softc *) self;
+	struct scsipi_link *sc_link;
+	int target, lun, error;
+
+	for (target = 0; target <= sc->sc_maxtarget; target++) {
+		if (target == sc->adapter_link->scsipi_scsi.adapter_target)
+			continue;
+		for (lun = 0; lun <= sc->sc_maxlun; lun++) {
+			sc_link = sc->sc_link[target][lun];
+			if (sc_link == NULL)
+				continue;
+			error = config_detach(sc_link->device_softc, flags);
+			if (error)
+				return (error);
+			free(sc_link, M_DEVBUF);
+			sc->sc_link[target][lun] = NULL;
+		}
+	}
+	return (0);
 }
 
 /*
