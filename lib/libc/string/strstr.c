@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.7 1998/02/03 18:49:24 perry Exp $	*/
+/*	$NetBSD: strstr.c,v 1.8 1998/11/15 17:21:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.7 1998/02/03 18:49:24 perry Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.8 1998/11/15 17:21:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,5 +67,6 @@ strstr(s, find)
 		} while (strncmp(s, find, len) != 0);
 		s--;
 	}
+	/* LINTED interface specification */
 	return ((char *)s);
 }
