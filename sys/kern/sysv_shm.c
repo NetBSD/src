@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.69 2003/09/09 15:02:45 drochner Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.70 2003/09/10 17:01:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.69 2003/09/09 15:02:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.70 2003/09/10 17:01:04 drochner Exp $");
 
 #define SYSVSHM
 
@@ -138,6 +138,8 @@ static int shmget_existing __P((struct proc *, struct sys_shmget_args *,
 static int shmget_allocate_segment __P((struct proc *, struct sys_shmget_args *,
 					int, register_t *));
 static struct shmmap_state *shmmap_getprivate __P((struct proc *));
+static struct shmmap_entry *
+  shm_find_mapping __P((struct shmmap_state *, vaddr_t));
 
 static int
 shm_find_segment_by_key(key)
@@ -242,7 +244,7 @@ shmmap_getprivate(struct proc *p)
 		return (shmmap_s);
 
 #ifdef SHMDEBUG
-	printf("shmmap_getprivate: vm %p split (%d entries), used by %d\n",
+	printf("shmmap_getprivate: vm %p split (%d entries), was used by %d\n",
 	       p->p_vmspace, oshmmap_s->nitems, oshmmap_s->nrefs);
 #endif
 	SLIST_FOREACH(oshmmap_se, &oshmmap_s->entries, next) {
@@ -256,6 +258,20 @@ shmmap_getprivate(struct proc *p)
 	return (shmmap_s);
 }
 
+static struct shmmap_entry *
+shm_find_mapping(map, va)
+	struct shmmap_state *map;
+	vaddr_t va;
+{
+	struct shmmap_entry *shmmap_se;
+
+	SLIST_FOREACH(shmmap_se, &map->entries, next) {
+		if (shmmap_se->va == va)
+			return shmmap_se;
+	}
+	return 0;
+}
+
 int
 sys_shmdt(l, v, retval)
 	struct lwp *l;
@@ -266,27 +282,30 @@ sys_shmdt(l, v, retval)
 		syscallarg(const void *) shmaddr;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct shmmap_state *shmmap_s;
+	struct shmmap_state *shmmap_s, *shmmap_s1;
 	struct shmmap_entry *shmmap_se;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
 	if (shmmap_s == NULL)
 		return EINVAL;
 
-	SLIST_FOREACH(shmmap_se, &shmmap_s->entries, next) {
-		if (shmmap_se->va == (vaddr_t)SCARG(uap, shmaddr)) {
-			shmmap_s = shmmap_getprivate(p);
-#ifdef SHMDEBUG
-			printf("shmdt: vm %p: remove %d @%lx\n",
-			       p->p_vmspace, shmmap_se->shmid, shmmap_se->va);
-#endif
-			shm_delete_mapping(p->p_vmspace, shmmap_s, shmmap_se);
-			return 0;
-		}
-	}
+	shmmap_se = shm_find_mapping(shmmap_s, (vaddr_t)SCARG(uap, shmaddr));
+	if (!shmmap_se)
+		return EINVAL;
 
-	/* not found */
-	return EINVAL;
+	shmmap_s1 = shmmap_getprivate(p);
+	if (shmmap_s1 != shmmap_s) {
+		/* map has been copied, lookup entry in new map */
+		shmmap_se = shm_find_mapping(shmmap_s1,
+					     (vaddr_t)SCARG(uap, shmaddr));
+		KASSERT(shmmap_se != NULL);
+	}
+#ifdef SHMDEBUG
+	printf("shmdt: vm %p: remove %d @%lx\n",
+	       p->p_vmspace, shmmap_se->shmid, shmmap_se->va);
+#endif
+	shm_delete_mapping(p->p_vmspace, shmmap_s1, shmmap_se);
+	return 0;
 }
 
 int
@@ -648,7 +667,7 @@ shmexit(vm)
 
 	if (--shmmap_s->nrefs > 0) {
 #ifdef SHMDEBUG
-		printf("shmexit: vm %p drop ref (%d entries), used by %d\n",
+		printf("shmexit: vm %p drop ref (%d entries), now used by %d\n",
 		       vm, shmmap_s->nitems, shmmap_s->nrefs);
 #endif
 		SLIST_FOREACH(shmmap_se, &shmmap_s->entries, next)
