@@ -27,8 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cpufunc.h,v 1.6 1994/10/09 13:02:56 mycroft Exp $
+ *	$Id: cpufunc.h,v 1.7 1994/10/09 15:00:38 mycroft Exp $
  */
+
+#ifndef _I386_CPUFUNC_H_
+#define	_I386_CPUFUNC_H_
 
 /*
  * Functions to provide access to i386-specific instructions.
@@ -128,3 +131,4 @@ enable_intr(void)
 	__asm __volatile("sti");
 }
 
+#endif /* !_I386_CPUFUNC_H_ */
