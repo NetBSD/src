@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.5 1999/01/20 23:26:50 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.6 1999/02/09 23:38:25 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -211,6 +211,11 @@ and
 .Xr nsswitch.conf 4
 manual pages.
 .Sh BUGS
+The
+.Nm
+routines are not thread safe.
+This will be rectified in the future.
+.Pp
 Currently there is no support for dynamically loadable dispatcher callback
 functions.
 It is anticipated that this will be added in the future in the back-end
