@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/10/25 02:42:00 dmcmahill Exp $
+#	$NetBSD: Makefile,v 1.10 2003/10/26 03:50:07 lukem Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -106,12 +106,12 @@ config.h: Makefile
 	TM_DEFINES="$(G_tm_defines)" \
 	HEADERS="$(G_host_xm_file)" XM_DEFINES="$(G_host_xm_defines)" \
 	TARGET_CPU_DEFAULT="$(G_target_cpu_default)" \
-	/bin/sh $(GNUHOSTDIST)/gcc/mkconfig.sh config.h
+	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh config.h
 
 tm_p.h: Makefile
 	TM_DEFINES="" \
 	HEADERS="$(G_tm_p_file)" XM_DEFINES="" TARGET_CPU_DEFAULT="" \
-	/bin/sh $(GNUHOSTDIST)/gcc/mkconfig.sh tm_p.h
+	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tm_p.h
 
 CLEANFILES+=	options.h
 options.h: Makefile
@@ -126,7 +126,7 @@ auto-build.h: Makefile
 	rm -rf .ab && \
 	mkdir .ab && \
 	(cd .ab && \
-		/bin/sh $(GNUHOSTDIST)/gcc/configure \
+		${HOST_SH} $(GNUHOSTDIST)/gcc/configure \
 			--build=`${.CURDIR}/../../../dist/gcc/config.guess` \
 			--host=`${.CURDIR}/../../../dist/gcc/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
