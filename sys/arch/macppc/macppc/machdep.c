@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1998/06/26 14:18:08 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1998/07/02 18:21:03 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,6 +81,7 @@
 #include <machine/trap.h>
 
 #include <dev/cons.h>
+#include <dev/ofw/openfirm.h>
 
 #include "adb.h"
 
@@ -125,7 +126,6 @@ int	bufpages = 0;
 
 caddr_t allocsys __P((caddr_t));
 void install_extint __P((void (*)(void)));
-static void ofwinit __P((void));
 
 extern u_int openfirmware_entry;
 static u_int ofw_va, ofw_pa, ofw_len;
@@ -219,10 +219,30 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtdbatu 3,%0" :: "r"(0));
 
 	/*
-	 * Set up initial BAT table to only map the lowest 256 MB area
+	 * Set up BAT0 to only map the lowest 256 MB area
 	 */
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
+
+	/*
+	 * BAT1 maps Openfirmware working area
+	 */
+	battable[1].batl = ofw_pa | 0x02;
+	battable[1].batu = 0xff80001e;		/* 1MB */
+
+	/*
+	 * BAT2 maps most I/O devices
+	 * 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000-
+	 */
+	battable[2].batl = 0xf0000002 | BAT_I;
+	battable[2].batu = 0xf0000ffe;
+
+	/*
+	 * BAT3 maps video ram
+	 * (XXX upper half slots only...)
+	 */
+	battable[3].batl = BATL(0x80000000, BAT_I);
+	battable[3].batu = BATU(0x80000000);
 
 	/*
 	 * Now setup fixed bat registers
@@ -230,12 +250,20 @@ initppc(startkernel, endkernel, args)
 	 * Note that we still run in real mode, and the BAT
 	 * registers were cleared above.
 	 */
-	/* IBAT0 used for initial 256 MB segment */
-	asm volatile ("mtibatl 0,%0; mtibatu 0,%1"
+	/* BAT0 used for initial 256 MB segment */
+	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
+		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-	/* DBAT0 used similar */
-	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+	/* BAT1 Openfirmware */
+	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
+		      "mtibatl 1,%0; mtibatu 1,%1;"
+		      :: "r"(battable[1].batl), "r"(battable[1].batu));
+	/* BAT2 obio devices */
+	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
+		      :: "r"(battable[2].batl), "r"(battable[2].batu));
+	/* BAT3 video ram */
+	asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
+		      :: "r"(battable[3].batl), "r"(battable[3].batu));
 
 	/*
 	 * Set up trap vectors
@@ -341,36 +369,6 @@ initppc(startkernel, endkernel, args)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
-
-	/*
-	 * Map Openfirmware address into the kernel space.
-	 */
-	ofwinit();
-}
-
-void
-ofwinit()
-{
-	int len  = ofw_len;
-	u_int pa = ofw_pa;
-	u_int va = ofw_va;
-
-	/*
-	 * Map 0xf0000000 - 0xf7ffffff (128MB) --> 0xf0000000 -
-	 */
-	battable[1].batl = 0xf0000002 | BAT_I;
-	battable[1].batu = 0xf0000ffe;
-
-	/* DBAT1 used for mapping I/O devices */
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
-
-	while (len > 0) {
-		pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 1);
-		pa += NBPG;
-		va += NBPG;
-		len -= NBPG;
-	}
 }
 
 /*
