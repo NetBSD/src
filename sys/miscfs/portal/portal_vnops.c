@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.24 1996/10/25 21:58:02 cgd Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.25 1997/05/09 04:05:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,6 +232,7 @@ portal_lookup(v)
 	for (size = 0, path = pname; *path; path++)
 		size++;
 	cnp->cn_consume = size - cnp->cn_namelen;
+	cnp->cn_flags &= ~REQUIREDIR;
 
 	pt->pt_arg = malloc(size+1, M_TEMP, M_WAITOK);
 	pt->pt_size = size+1;
