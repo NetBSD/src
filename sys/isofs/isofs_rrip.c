@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.3 1993/09/07 15:40:57 ws Exp $
+ *	$Id: isofs_rrip.c,v 1.4 1993/10/28 17:38:47 ws Exp $
  */
 
 #include "param.h"
@@ -257,7 +257,7 @@ isofs_rrip_defname(isodir,ana)
 	default:
 		isofntrans(isodir->name,isonum_711(isodir->name_len),
 			   ana->outbuf,ana->outlen,
-			   0,isonum_711(isodir->flags)&4);
+			   1,isonum_711(isodir->flags)&4);
 		break;
 	case 0:
 		*ana->outlen = 1;
@@ -276,25 +276,9 @@ isofs_rrip_pclink(p,ana)
 	ISO_RRIP_CLINK  *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	*ana->inump = isonum_733(p->dir_loc);
+	*ana->inump = isonum_733(p->dir_loc) << ana->imp->im_bshift;
 	ana->fields &= ~(ISO_SUSP_CLINK|ISO_SUSP_PLINK);
 	return *p->h.type == 'C' ? ISO_SUSP_CLINK : ISO_SUSP_PLINK;
-}
-
-void
-isofs_defino(isodir,inump)
-	struct iso_directory_record *isodir;
-	ino_t *inump;
-{
-	*inump = isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length);
-}
-
-static void
-isofs_rrip_defino(isodir,ana)
-	struct iso_directory_record *isodir;
-	ISO_RRIP_ANALYZE *ana;
-{
-	isofs_defino(isodir,ana->inump);
 }
 
 /*
@@ -523,10 +507,10 @@ isofs_rrip_loop(isodir,ana,table)
 		
 		if ( ana->fields && ana->iso_ce_len ) {
 			if (ana->iso_ce_blk >= ana->imp->volume_space_size
-			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->im_bsize
+			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
-				     ana->iso_ce_blk * ana->imp->im_bsize / DEV_BSIZE,
-				     ana->imp->im_bsize,NOCRED,&bp))
+				     ana->iso_ce_blk * ana->imp->logical_block_size / DEV_BSIZE,
+				     ana->imp->logical_block_size,NOCRED,&bp))
 				/* what to do now? */
 				break;
 			phead = (ISO_SUSP_HEADER *)(bp->b_un.b_addr + ana->iso_ce_off);
@@ -579,7 +563,7 @@ isofs_rrip_analyze(isodir,inop,imp)
  */
 static RRIP_TABLE rrip_table_getname[] = {
 	{ "NM", isofs_rrip_altname,	isofs_rrip_defname,	ISO_SUSP_ALTNAME },
-	{ "CL", isofs_rrip_pclink,	isofs_rrip_defino,	ISO_SUSP_CLINK|ISO_SUSP_PLINK },
+	{ "CL", isofs_rrip_pclink,	0,			ISO_SUSP_CLINK|ISO_SUSP_PLINK },
 	{ "PL", isofs_rrip_pclink,	0,			ISO_SUSP_CLINK|ISO_SUSP_PLINK },
 	{ "RE", isofs_rrip_reldir,	0,			ISO_SUSP_RELDIR },
 	{ "RR", isofs_rrip_idflag,	0,			ISO_SUSP_IDFLAG },

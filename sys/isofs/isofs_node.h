@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_node.h,v 1.7 1993/09/07 15:40:56 ws Exp $
+ *	$Id: isofs_node.h,v 1.8 1993/10/28 17:38:46 ws Exp $
  */
 
 
@@ -43,19 +43,10 @@ struct iso_node {
 	long	i_spare0;
 	long	i_spare1;
 
-	long iso_extent;
+	long iso_extent;	/* extent of file */
 	long i_size;
-#ifdef	__notdef__
-	int iso_reclen;
-	int iso_extlen;
-	int iso_flags;
-	long iso_unit_size;
-	int iso_interleave_gap;
-	int iso_volume_seq;
-	int iso_namelen;	/* ISO9660/RRIP name len */
-#endif
-	int iso_parent;		/* byte offset in beginning of dir record */
-	long iso_parent_ino;	/* ino number of dir */
+	long iso_start;		/* actual start of data of file (may be different */
+				/* from iso_extent, if file has extended attributes) */
 	ISO_RRIP_INODE  inode;
 };
 

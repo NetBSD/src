@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isofs_inode.c
- *	$Id: isofs_node.c,v 1.6 1993/09/07 15:40:55 ws Exp $
+ *	$Id: isofs_node.c,v 1.7 1993/10/28 17:38:45 ws Exp $
  */
 
 #include "param.h"
@@ -51,15 +51,15 @@
 
 #define	IFTOVT(mode)	(iftovt_tab[((mode) & 0170000) >> 12])
 static enum vtype iftovt_tab[16] = {
-    VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
-    VREG, VNON, VLNK, VNON, VSOCK, VNON, VNON, VBAD,
+	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
+	VREG, VNON, VLNK, VNON, VSOCK, VNON, VNON, VBAD,
 };
 
 #define	INOHSZ	512
 #if	((INOHSZ&(INOHSZ-1)) == 0)
-#define	INOHASH(dev,ino)	(((dev)+(ino))&(INOHSZ-1))
+#define	INOHASH(dev,ino)	(((dev)+((ino)>>12))&(INOHSZ-1))
 #else
-#define	INOHASH(dev,ino)	(((unsigned)((dev)+(ino)))%INOHSZ)
+#define	INOHASH(dev,ino)	(((unsigned)((dev)+((ino)>>12)))%INOHSZ)
 #endif
 
 union iso_ihead {
@@ -70,9 +70,9 @@ union iso_ihead {
 #ifdef	ISODEVMAP
 #define	DNOHSZ	64
 #if	((DNOHSZ&(DNOHSZ-1)) == 0)
-#define	DNOHASH(dev,ino)	(((dev)+(ino))&(DNOHSZ-1))
+#define	DNOHASH(dev,ino)	(((dev)+((ino)>>12))&(DNOHSZ-1))
 #else
-#define	DNOHASH(dev,ino)	(((unsigned)((dev)+(ino)))%DNOHSZ)
+#define	DNOHASH(dev,ino)	(((unsigned)((dev)+((ino)>>12)))%DNOHSZ)
 #endif
 
 union iso_dhead {
@@ -169,7 +169,7 @@ iso_dunmap(dev)
  * return the inode locked. Detection and handling of mount
  * points must be done by the calling routine.
  */
-iso_iget(xp, ino, ipp, isodir)
+iso_iget(xp, ino, relocated, ipp, isodir)
 	struct iso_node *xp;
 	ino_t ino;
 	struct iso_node **ipp;
@@ -204,22 +204,20 @@ loop:
 		if (vget(ITOV(ip)))
 			goto loop;
 		*ipp = ip;
-		return(0);
+		return 0;
 	}
 	/*
 	 * Allocate a new inode.
 	 */
 	if (error = getnewvnode(VT_ISOFS, mntp, &isofs_vnodeops, &nvp)) {
 		*ipp = 0;
-		return (error);
+		return error;
 	}
 	ip = VTOI(nvp);
 	ip->i_vnode = nvp;
 	ip->i_flag = 0;
 	ip->i_devvp = 0;
 	ip->i_diroff = 0;
-	ip->iso_parent = xp->i_diroff; /* Parent directory's */
-	ip->iso_parent_ino = xp->i_number;
 	ip->i_lockf = 0;
 	
 	/*
@@ -238,26 +236,27 @@ loop:
 	ip->i_devvp = imp->im_devvp;
 	VREF(ip->i_devvp);
 	
-	isofs_defino(isodir,&defino);
-	if (defino != ino) {
-	    /*
-	     * This is a Rock Ridge relocated directory
-	     * Read the `.' entry out of it.
-	     */
-	    if (error = iso_blkatoff(ip,0,&bp)) {
-		vrele(ip->i_devvp);
-		remque(ip);
-		ip->i_forw = ip;
-		ip->i_back = ip;
-		iso_iput(ip);
-		*ipp = 0;
-		return error;
-	    }
-	    isodir = (struct iso_directory_record *)bp->b_un.b_addr;
+	if (relocated) {
+		/*
+		 * On relocated directories we must
+		 * read the `.' entry out of a dir.
+		 */
+		ip->iso_start = ino >> imp->im_bshift;
+		if (error = iso_blkatoff(ip,0,&bp)) {
+			vrele(ip->i_devvp);
+			remque(ip);
+			ip->i_forw = ip;
+			ip->i_back = ip;
+			iso_iput(ip);
+			*ipp = 0;
+			return error;
+		}
+		isodir = (struct iso_directory_record *)bp->b_un.b_addr;
 	}
 	
-	ip->iso_extent = isonum_733 (isodir->extent);
-	ip->i_size = isonum_733 (isodir->size);
+	ip->iso_extent = isonum_733(isodir->extent);
+	ip->i_size = isonum_733(isodir->size);
+	ip->iso_start = isonum_711(isodir->ext_attr_length) + ip->iso_extent;
 	
 	vp = ITOV(ip);
 	
@@ -265,18 +264,18 @@ loop:
 	 * Setup time stamp, attribute
 	 */
 	vp->v_type = VNON;
-	switch ( imp->iso_ftype ) {
-		default:	/* ISO_FTYPE_9660 */
-			if ((imp->im_flags&ISOFSMNT_EXTATT)
-			    && isonum_711(isodir->ext_attr_length))
-				iso_blkatoff(ip,-isonum_711(isodir->ext_attr_length),
-					     &bp2);
-			isofs_defattr  ( isodir, ip, bp2 );
-			isofs_deftstamp( isodir, ip, bp2 );
-			break;  
-		case ISO_FTYPE_RRIP:
-			result = isofs_rrip_analyze( isodir, ip, imp );
-			break;  
+	switch (imp->iso_ftype) {
+	default:	/* ISO_FTYPE_9660 */
+		if ((imp->im_flags&ISOFSMNT_EXTATT)
+		    && isonum_711(isodir->ext_attr_length))
+			iso_blkatoff(ip,-isonum_711(isodir->ext_attr_length),
+				     &bp2);
+		isofs_defattr(isodir,ip,bp2 );
+		isofs_deftstamp(isodir,ip,bp2 );
+		break;
+	case ISO_FTYPE_RRIP:
+		result = isofs_rrip_analyze(isodir,ip,imp);
+		break;
 	}
 	if (bp2)
 		brelse(bp2);
@@ -295,7 +294,7 @@ loop:
 #else
 		iso_iput(ip);
 		*ipp = 0;
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 #endif	/* FIFO */
 	} else if ( vp->v_type == VCHR || vp->v_type == VBLK ) {
 		/*
@@ -319,7 +318,7 @@ loop:
 			iq->i_number = ino;
 			iq->i_mnt = ip->i_mnt;
 			bcopy(&ip->iso_extent,&iq->iso_extent,
-			      (char *)(ip + 1) - (char *)ip->iso_extent);
+			      (char *)(ip + 1) - (char *)&ip->iso_extent);
 			insque(iq, ih);
 			/*
 			 * Discard unneeded vnode
@@ -335,7 +334,7 @@ loop:
 		vp->v_flag |= VROOT;
 	
 	*ipp = ip;
-	return (0);
+	return 0;
 }
 
 /*
@@ -372,7 +371,7 @@ isofs_inactive(vp, p)
 	 */
 	if (vp->v_usecount == 0 && ip->inode.iso_mode == 0)
 		vgone(vp);
-	return (error);
+	return error;
 }
 
 /*
@@ -401,7 +400,7 @@ isofs_reclaim(vp)
 		ip->i_devvp = 0;
 	}
 	ip->i_flag = 0;
-	return (0);
+	return 0;
 }
 
 /*
@@ -443,182 +442,197 @@ iso_iunlock(ip)
 /*
  * File attributes
  */
-void isofs_defattr(isodir,inop,bp)
-struct iso_directory_record *isodir;
-struct iso_node *inop;
-struct buf *bp;
+void
+isofs_defattr(isodir,inop,bp)
+	struct iso_directory_record *isodir;
+	struct iso_node *inop;
+	struct buf *bp;
 {
-    struct buf *bp2 = NULL;
-    struct iso_mnt *imp;
-    struct iso_extended_attributes *ap = NULL;
-    int off;
-    
-    if (isonum_711(isodir->flags)&2) {
-	inop->inode.iso_mode = S_IFDIR;
-	inop->inode.iso_links = 2;
-    } else {
-	inop->inode.iso_mode = S_IFREG;
-	inop->inode.iso_links = 1;
-    }
-    if (!bp
-	&& ((imp = inop->i_mnt)->im_flags&ISOFSMNT_EXTATT)
-	&& (off = isonum_711(isodir->ext_attr_length))) {
-    	iso_blkatoff(inop,-off * imp->im_bsize,&bp2);
-	bp = bp2;
-    }
-    if (bp) {
-	ap = (struct iso_extended_attributes *)bp->b_un.b_addr;
+	struct buf *bp2 = NULL;
+	struct iso_mnt *imp;
+	struct iso_extended_attributes *ap = NULL;
+	int off;
 	
-	if (isonum_711(ap->version) == 1) {
-	    if (!(ap->perm[0]&0x40))
-		inop->inode.iso_mode |= VEXEC >> 6;
-	    if (!(ap->perm[0]&0x10))
-		inop->inode.iso_mode |= VREAD >> 6;
-	    if (!(ap->perm[0]&4))
-		inop->inode.iso_mode |= VEXEC >> 3;
-	    if (!(ap->perm[0]&1))
-		inop->inode.iso_mode |= VREAD >> 3;
-	    if (!(ap->perm[1]&0x40))
-		inop->inode.iso_mode |= VEXEC;
-	    if (!(ap->perm[1]&0x10))
-		inop->inode.iso_mode |= VREAD;
-	    inop->inode.iso_uid = isonum_723(ap->owner); /* what about 0? */
-	    inop->inode.iso_gid = isonum_723(ap->group); /* what about 0? */
-	} else
-	    ap = NULL;
-    }
-    if (!ap) {
-	inop->inode.iso_mode |= VREAD|VEXEC|(VREAD|VEXEC)>>3|(VREAD|VEXEC)>>6;
-	inop->inode.iso_uid = (uid_t)0;
-	inop->inode.iso_gid = (gid_t)0;
-    }
-    if (bp2)
-	brelse(bp2);
+	if (isonum_711(isodir->flags)&2) {
+		inop->inode.iso_mode = S_IFDIR;
+		inop->inode.iso_links = 2;
+	} else {
+		inop->inode.iso_mode = S_IFREG;
+		inop->inode.iso_links = 1;
+	}
+	if (!bp
+	    && ((imp = inop->i_mnt)->im_flags&ISOFSMNT_EXTATT)
+	    && (off = isonum_711(isodir->ext_attr_length))) {
+		iso_blkatoff(inop,-off * imp->logical_block_size,&bp2);
+		bp = bp2;
+	}
+	if (bp) {
+		ap = (struct iso_extended_attributes *)bp->b_un.b_addr;
+		
+		if (isonum_711(ap->version) == 1) {
+			if (!(ap->perm[0]&0x40))
+				inop->inode.iso_mode |= VEXEC >> 6;
+			if (!(ap->perm[0]&0x10))
+				inop->inode.iso_mode |= VREAD >> 6;
+			if (!(ap->perm[0]&4))
+				inop->inode.iso_mode |= VEXEC >> 3;
+			if (!(ap->perm[0]&1))
+				inop->inode.iso_mode |= VREAD >> 3;
+			if (!(ap->perm[1]&0x40))
+				inop->inode.iso_mode |= VEXEC;
+			if (!(ap->perm[1]&0x10))
+				inop->inode.iso_mode |= VREAD;
+			inop->inode.iso_uid = isonum_723(ap->owner); /* what about 0? */
+			inop->inode.iso_gid = isonum_723(ap->group); /* what about 0? */
+		} else
+			ap = NULL;
+	}
+	if (!ap) {
+		inop->inode.iso_mode |= VREAD|VEXEC|(VREAD|VEXEC)>>3|(VREAD|VEXEC)>>6;
+		inop->inode.iso_uid = (uid_t)0;
+		inop->inode.iso_gid = (gid_t)0;
+	}
+	if (bp2)
+		brelse(bp2);
 }
 
 /*
  * Time stamps
  */
-void isofs_deftstamp(isodir,inop,bp)
-struct iso_directory_record *isodir;
-struct iso_node *inop;
-struct buf *bp;
+void
+isofs_deftstamp(isodir,inop,bp)
+	struct iso_directory_record *isodir;
+	struct iso_node *inop;
+	struct buf *bp;
 {
-    struct buf *bp2 = NULL;
-    struct iso_mnt *imp;
-    struct iso_extended_attributes *ap = NULL;
-    int off;
-    
-    if (!bp
-	&& ((imp = inop->i_mnt)->im_flags&ISOFSMNT_EXTATT)
-	&& (off = isonum_711(isodir->ext_attr_length))) {
-    	iso_blkatoff(inop,-off * imp->im_bsize,&bp2);
-	bp = bp2;
-    }
-    if (bp) {
-	ap = (struct iso_extended_attributes *)bp->b_un.b_addr;
+	struct buf *bp2 = NULL;
+	struct iso_mnt *imp;
+	struct iso_extended_attributes *ap = NULL;
+	int off;
 	
-	if (isonum_711(ap->version) == 1) {
-	    if (!isofs_tstamp_conv17(ap->ftime,&inop->inode.iso_atime))
-		isofs_tstamp_conv17(ap->ctime,&inop->inode.iso_atime);
-	    if (!isofs_tstamp_conv17(ap->ctime,&inop->inode.iso_ctime))
-		inop->inode.iso_ctime = inop->inode.iso_atime;
-	    if (!isofs_tstamp_conv17(ap->mtime,&inop->inode.iso_mtime))
+	if (!bp
+	    && ((imp = inop->i_mnt)->im_flags&ISOFSMNT_EXTATT)
+	    && (off = isonum_711(isodir->ext_attr_length))) {
+		iso_blkatoff(inop,-off * imp->logical_block_size,&bp2);
+		bp = bp2;
+	}
+	if (bp) {
+		ap = (struct iso_extended_attributes *)bp->b_un.b_addr;
+		
+		if (isonum_711(ap->version) == 1) {
+			if (!isofs_tstamp_conv17(ap->ftime,&inop->inode.iso_atime))
+				isofs_tstamp_conv17(ap->ctime,&inop->inode.iso_atime);
+			if (!isofs_tstamp_conv17(ap->ctime,&inop->inode.iso_ctime))
+				inop->inode.iso_ctime = inop->inode.iso_atime;
+			if (!isofs_tstamp_conv17(ap->mtime,&inop->inode.iso_mtime))
+				inop->inode.iso_mtime = inop->inode.iso_ctime;
+		} else
+			ap = NULL;
+	}
+	if (!ap) {
+		isofs_tstamp_conv7(isodir->date,&inop->inode.iso_ctime);
+		inop->inode.iso_atime = inop->inode.iso_ctime;
 		inop->inode.iso_mtime = inop->inode.iso_ctime;
-	} else
-	    ap = NULL;
-    }
-    if (!ap) {
-	isofs_tstamp_conv7(isodir->date,&inop->inode.iso_ctime);
-	inop->inode.iso_atime = inop->inode.iso_ctime;
-	inop->inode.iso_mtime = inop->inode.iso_ctime;
-    }
-    if (bp2)
-	brelse(bp2);
+	}
+	if (bp2)
+		brelse(bp2);
 }
 
-int isofs_tstamp_conv7(pi,pu)
+int
+isofs_tstamp_conv7(pi,pu)
 char *pi;
 struct timeval *pu;
 {
-    int i;
-    int crtime, days;
-    int y, m, d, hour, minute, second, tz;
-    
-    y = pi[0] + 1900;
-    m = pi[1];
-    d = pi[2];
-    hour = pi[3];
-    minute = pi[4];
-    second = pi[5];
-    tz = pi[6];
-    
-    if (y < 1970) {
-	pu->tv_sec  = 0;
-	pu->tv_usec = 0;
-	return 0;
-    } else {
-#ifdef	ORIGINAL
-	/* computes day number relative to Sept. 19th,1989 */
-	/* don't even *THINK* about changing formula. It works! */
-	days = 367*(y-1980)-7*(y+(m+9)/12)/4-3*((y+(m-9)/7)/100+1)/4+275*m/9+d-100;
-#else
-	/*
-	 * Changed :-) to make it relative to Jan. 1st, 1970
-	 * and to disambiguate negative division
-	 */
-	days = 367*(y-1960)-7*(y+(m+9)/12)/4-3*((y+(m+9)/12-1)/100+1)/4+275*m/9+d-239;
-#endif
-	crtime = ((((days * 24) + hour) * 60 + minute) * 60) + second;
+	int i;
+	int crtime, days;
+	int y, m, d, hour, minute, second, tz;
 	
-	/* timezone offset is unreliable on some disks */
-	if (-48 <= tz && tz <= 52)
-	    crtime += tz * 15 * 60;
-    }
-    pu->tv_sec  = crtime;
-    pu->tv_usec = 0;
-    return 1;
+	y = pi[0] + 1900;
+	m = pi[1];
+	d = pi[2];
+	hour = pi[3];
+	minute = pi[4];
+	second = pi[5];
+	tz = pi[6];
+	
+	if (y < 1970) {
+		pu->tv_sec  = 0;
+		pu->tv_usec = 0;
+		return 0;
+	} else {
+#ifdef	ORIGINAL
+		/* computes day number relative to Sept. 19th,1989 */
+		/* don't even *THINK* about changing formula. It works! */
+		days = 367*(y-1980)-7*(y+(m+9)/12)/4-3*((y+(m-9)/7)/100+1)/4+275*m/9+d-100;
+#else
+		/*
+		 * Changed :-) to make it relative to Jan. 1st, 1970
+		 * and to disambiguate negative division
+		 */
+		days = 367*(y-1960)-7*(y+(m+9)/12)/4-3*((y+(m+9)/12-1)/100+1)/4+275*m/9+d-239;
+#endif
+		crtime = ((((days * 24) + hour) * 60 + minute) * 60) + second;
+		
+		/* timezone offset is unreliable on some disks */
+		if (-48 <= tz && tz <= 52)
+			crtime += tz * 15 * 60;
+	}
+	pu->tv_sec  = crtime;
+	pu->tv_usec = 0;
+	return 1;
 }
 
-static unsigned isofs_chars2ui(begin,len)
-unsigned char *begin;
-int len;
+static unsigned
+isofs_chars2ui(begin,len)
+	unsigned char *begin;
+	int len;
 {
-    unsigned rc;
-    
-    for (rc = 0; --len >= 0;) {
-	rc *= 10;
-	rc += *begin++ - '0';
-    }
-    return rc;
+	unsigned rc;
+	
+	for (rc = 0; --len >= 0;) {
+		rc *= 10;
+		rc += *begin++ - '0';
+	}
+	return rc;
 }
 
-int isofs_tstamp_conv17(pi,pu)
-unsigned char *pi;
-struct timeval *pu;
+int
+isofs_tstamp_conv17(pi,pu)
+	unsigned char *pi;
+	struct timeval *pu;
 {
-    unsigned char buf[7];
-    
-    /* year:"0001"-"9999" -> -1900  */
-    buf[0] = isofs_chars2ui(pi,4) - 1900;
-    
-    /* month: " 1"-"12"      -> 1 - 12 */
-    buf[1] = isofs_chars2ui(pi + 4,2);
-    
-    /* day:   " 1"-"31"      -> 1 - 31 */
-    buf[2] = isofs_chars2ui(pi + 6,2);
-    
-    /* hour:  " 0"-"23"      -> 0 - 23 */
-    buf[3] = isofs_chars2ui(pi + 8,2);
-    
-    /* minute:" 0"-"59"      -> 0 - 59 */
-    buf[4] = isofs_chars2ui(pi + 10,2);
-    
-    /* second:" 0"-"59"      -> 0 - 59 */
-    buf[5] = isofs_chars2ui(pi + 12,2);
-    
-    /* difference of GMT */
-    buf[6] = pi[16];
-    
-    return isofs_tstamp_conv7(buf,pu);
+	unsigned char buf[7];
+	
+	/* year:"0001"-"9999" -> -1900  */
+	buf[0] = isofs_chars2ui(pi,4) - 1900;
+	
+	/* month: " 1"-"12"      -> 1 - 12 */
+	buf[1] = isofs_chars2ui(pi + 4,2);
+	
+	/* day:   " 1"-"31"      -> 1 - 31 */
+	buf[2] = isofs_chars2ui(pi + 6,2);
+	
+	/* hour:  " 0"-"23"      -> 0 - 23 */
+	buf[3] = isofs_chars2ui(pi + 8,2);
+	
+	/* minute:" 0"-"59"      -> 0 - 59 */
+	buf[4] = isofs_chars2ui(pi + 10,2);
+	
+	/* second:" 0"-"59"      -> 0 - 59 */
+	buf[5] = isofs_chars2ui(pi + 12,2);
+	
+	/* difference of GMT */
+	buf[6] = pi[16];
+	
+	return isofs_tstamp_conv7(buf,pu);
+}
+
+void
+isodirino(inump,isodir,imp)
+	ino_t *inump;
+	struct iso_directory_record *isodir;
+	struct iso_mnt *imp;
+{
+	*inump = (isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length))
+		 * imp->logical_block_size;
 }
