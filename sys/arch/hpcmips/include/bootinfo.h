@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1.1.1 1999/09/16 12:23:21 takemura Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 1999/09/23 08:30:58 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -47,6 +47,8 @@ struct bootinfo {
 	short bi_cnuse;
 	unsigned long platid_cpu;
 	unsigned long platid_machine;
+
+	long timezone;
 };
 
 #define BI_CNUSE_BUILTIN	(1<<0)
