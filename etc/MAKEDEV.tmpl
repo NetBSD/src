@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.8 2003/10/26 21:21:50 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.9 2003/11/22 17:26:45 tsutsui Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -125,9 +125,7 @@
 #	ttyA1	8530 Channel B (formerly mdm02) (atari)
 #	ttyB0	UART on first 68901 (formerly mdm01) (atari)
 #	ixpcom	IXP12x0 COM ports
-#	dca*	HP200/300 single port serial interface
-#	dcm*	HP200/300 4 port serial mux interface
-#	apci*	HP400     4 port serial mux interface
+#	ttyM?	HP200/300 4 port serial mux interface (hp300)
 #	ttya	"ttya" system console (luna68k)
 #	ttyb	second system serial port (luna68k)
 #	tty*	Onboard serial ports (mvme68k)
@@ -151,10 +149,7 @@
 #	dl*	UNIBUS DL11 (vax)
 #
 # Terminal multiplexors:
-#	apci*	HP400     4 port serial mux interface
 #	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
-#	dca*	HP200/300 single port serial interface
-#	dcm*	HP200/300 4 port serial mux interface
 #	dh*	UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11)
 #	dhu*	UNIBUS DHU11
 #	dl*	UNIBUS DL11
