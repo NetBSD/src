@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.10 2000/05/05 20:12:00 hannken Exp $ */
+/*	$NetBSD: lock.h,v 1.10.16.1 2002/03/19 05:13:51 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,13 +44,12 @@
  */
 
 /*
- * The value for __SIMPLELOCK_LOCKED is what ldstub() naturally stores
- * `lock_data' given its address (and the fact that SPARC is big-endian).
+ * The value for __SIMPLELOCK_LOCKED is what ldstub() naturally stores.
  */
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	__volatile unsigned char __cpu_simple_lock_t;
 
-#define	__SIMPLELOCK_LOCKED	0xff000000
+#define	__SIMPLELOCK_LOCKED	0xff
 #define	__SIMPLELOCK_UNLOCKED	0
 
 /* XXX So we can expose this to userland. */
