@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.6 1999/03/25 04:45:37 explorer Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.7 1999/03/25 23:08:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,18 +39,26 @@
 #define _NET_IF_ETHER_H_
 
 /*
+ * Some basic Ethernet constants.
+ */
+#define	ETHER_ADDR_LEN	6	/* length of an Ethernet address */
+#define	ETHER_TYPE_LEN	2	/* length of the Ethernet type field */
+#define	ETHER_CRC_LEN	4	/* length of the Ethernet CRC */
+#define	ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
+#define	ETHER_MIN_LEN	64	/* minimum frame length, including CRC */
+#define	ETHER_MAX_LEN	1518	/* maximum frame length, including CRC */
+
+/*
  * Ethernet address - 6 octets
  * this is only used by the ethers(3) functions.
  */
 struct ether_addr {
-	u_int8_t ether_addr_octet[6];
+	u_int8_t ether_addr_octet[ETHER_ADDR_LEN];
 };
 
 /*
  * Structure of a 10Mb/s Ethernet header.
  */
-#define	ETHER_ADDR_LEN	6
-
 struct	ether_header {
 	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
 	u_int8_t  ether_shost[ETHER_ADDR_LEN];
@@ -61,9 +69,8 @@ struct	ether_header {
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
 
-#define	ETHERMTU	1500
-#define	ETHERMIN	(60-14)
-#define	ETHER_CRC_LEN	4
+#define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+#define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #ifdef _KERNEL
 /*
