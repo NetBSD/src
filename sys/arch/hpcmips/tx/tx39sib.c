@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.4 2000/03/03 19:54:36 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.5 2000/03/04 11:39:29 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -95,7 +95,7 @@ struct tx39sib_param {
 };
 
 struct tx39sib_param tx39sib_param_default_3912 = {
-	0,			/* SIBSCLK = 9.216MHz */
+	0,			/* SIBSCLK = 9.216MHz (div2) */
 #if 0 /* setting sample */
 	40,			/* audio: 7.2kHz */
 	26,			/* audio: CD-Audio(/4) 11.077kHz*/
@@ -108,8 +108,8 @@ struct tx39sib_param tx39sib_param_default_3912 = {
 };
 
 struct tx39sib_param tx39sib_param_default_3922 = {
-	0,			/* SIBSCLK = 9.216MHz */
-	13,			/* audio: CD-Audio(/4) 11.077kHz */
+	7,			/* SIBSCLK = 9.216MHz (div1) */
+	13,			/* audio: CD-Audio(/2 = 22.050) 22.154kHz*/
 	40,			/* telecom: 7.2kHz */
 	TX39_SIBCTRL_SND16,	/* Audio 16bit mono */
 	TX39_SIBCTRL_TEL16	/* Telecom 16bit mono */
