@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pdp10,v 1.1 2003/08/19 10:49:57 ragge Exp $
+#	$NetBSD: Makefile.pdp10,v 1.2 2003/11/17 09:41:19 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ KERN_AS=	obj
 MD_SFILES=	${PDP10}/pdp10/locore.S
 MD_OBJS=	locore.o
 #XCFLAGS=	${DEBUG} ${CWARNFLAGS} -ffreestanding 
-#NOOPT_C?=       ${CC} ${XCFLAGS} ${CPPFLAGS} ${${<:T:R}_G} ${PROF} -c $<
+#NOOPT_C?=       ${CC} ${XCFLAGS} ${CPPFLAGS} ${PROF} -c $<
 
 locore.o: ${PDP10}/pdp10/locore.S
 	${NORMAL_S}
