@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.1 1999/08/07 10:36:47 ragge Exp $ */
+/*	$NetBSD: cmi.c,v 1.2 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -79,7 +79,6 @@ cmi_attach(parent, self, aux)
 	void	*aux;
 {
 	struct	sbi_attach_args sa;
-	struct	nexus *nexusP;
 
 	printf("\n");
 	/*
@@ -87,12 +86,11 @@ cmi_attach(parent, self, aux)
 	 */
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	for (sa.nexnum = 0; sa.nexnum < 4; sa.nexnum++) {
-		nexusP = (struct nexus *)vax_map_physmem(NEX750 +
+		sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
 		    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
-		if (badaddr((caddr_t)nexusP, 4)) {
-			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		if (badaddr((caddr_t)sa.nexaddr, 4)) {
+			vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
 		} else {
-			sa.nexaddr = nexusP;
 			sa.type = NEX_MEM16;
 			config_found(self, (void*)&sa, cmi_print);
 		}
@@ -102,12 +100,11 @@ cmi_attach(parent, self, aux)
 	 * Probe for mba's, can be in slot 4 - 7.
 	 */
 	for (sa.nexnum = 4; sa.nexnum < 7; sa.nexnum++) {
-		nexusP = (struct nexus *)vax_map_physmem(NEX750 +
+		sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
 		    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
-		if (badaddr((caddr_t)nexusP, 4)) {
-			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		if (badaddr((caddr_t)sa.nexaddr, 4)) {
+			vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
 		} else {
-			sa.nexaddr = nexusP;
 			sa.type = NEX_MBA;
 			config_found(self, (void*)&sa, cmi_print);
 		}
@@ -126,7 +123,7 @@ cmi_attach(parent, self, aux)
 	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
 	    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
 	sa.type = NEX_UBA1;
-	if (badaddr((caddr_t)nexusP, 4))
+	if (badaddr((caddr_t)sa.nexaddr, 4))
 		vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
 	else
 		config_found(self, (void*)&sa, cmi_print);
