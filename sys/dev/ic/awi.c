@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.10 2000/03/22 11:22:22 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.11 2000/03/23 05:19:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,7 +137,9 @@
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
+#if 0
 #include <dev/ic/awictl.h>
+#endif
 #endif
 #ifdef __FreeBSD__
 #include <dev/awi/am79c930reg.h>
@@ -683,6 +685,7 @@ awi_drvget(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
+#if 0
 	struct awi_softc *sc = ifp->if_softc;
 	struct ifdrv *ifd = (struct ifdrv *)data;
 	u_int8_t buf[AWICTL_BUFSIZE];
@@ -710,30 +713,6 @@ awi_drvget(ifp, cmd, data)
 		ifd->ifd_len = 1;
 		buf[0] = sc->sc_rawbpf;
 		break;
-	case AWICTL_DESSID:
-	case AWICTL_CESSID:
-		if (ifd->ifd_cmd == AWICTL_DESSID)
-			essid = sc->sc_mib_mac.aDesired_ESS_ID;
-		else
-			essid = sc->sc_bss.essid;
-		if (ifd->ifd_len < essid[1])
-			return ENOSPC;
-		ifd->ifd_len = essid[1];
-		if (ifd->ifd_len > 0)
-			memcpy(buf, essid, ifd->ifd_len);
-		break;
-	case AWICTL_MODE:
-		if (ifd->ifd_len < 1)
-			return ENOSPC;
-		ifd->ifd_len = 1;
-		if (sc->sc_mib_local.Network_Mode == 0) {
-			if (sc->sc_no_bssid)
-				buf[0] = AWICTL_MODE_NOBSSID;
-			else
-				buf[0] = AWICTL_MODE_ADHOC;
-		} else
-			buf[0] = AWICTL_MODE_INFRA;
-		break;
 	default:
 		error = EINVAL;
 		break;
@@ -741,6 +720,9 @@ awi_drvget(ifp, cmd, data)
 	if (error == 0 && ifd->ifd_len > 0)
 		error = copyout(ifd->ifd_data, buf, ifd->ifd_len);
 	return error;
+#else
+	return EINVAL;
+#endif
 }
 
 static int
@@ -749,6 +731,7 @@ awi_drvset(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
+#if 0
 	struct awi_softc *sc = ifp->if_softc;
 	struct ifdrv *ifd = (struct ifdrv *)data;
 	u_int8_t buf[AWICTL_BUFSIZE];
@@ -803,52 +786,14 @@ awi_drvset(ifp, cmd, data)
 			return EINVAL;
 		sc->sc_rawbpf = buf[0];
 		break;
-	case AWICTL_DESSID:
-		if (ifd->ifd_len > IEEE80211_NWID_LEN)
-			return EINVAL;
-		if (sc->sc_mib_mac.aDesired_ESS_ID[1] == ifd->ifd_len &&
-		    memcmp(&sc->sc_mib_mac.aDesired_ESS_ID[2], buf,
-		    ifd->ifd_len) == 0)
-			break;
-		memset(sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
-		sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
-		sc->sc_mib_mac.aDesired_ESS_ID[1] = ifd->ifd_len;
-		memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], buf, ifd->ifd_len);
-		if (sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
-		}
-		break;
-	case AWICTL_CESSID:
-		error = EINVAL;
-		break;
-	case AWICTL_MODE:
-		switch (buf[0]) {
-		case AWICTL_MODE_INFRA:
-			sc->sc_mib_local.Network_Mode = 1;
-			sc->sc_no_bssid = 0;
-			break;
-		case AWICTL_MODE_ADHOC:
-			sc->sc_mib_local.Network_Mode = 0;
-			sc->sc_no_bssid = 0;
-			break;
-		case AWICTL_MODE_NOBSSID:
-			sc->sc_mib_local.Network_Mode = 0;
-			sc->sc_no_bssid = 1;
-			break;
-		default:
-			return EINVAL;
-		}
-		if (sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
-		}
-		break;
 	default:
 		error = EINVAL;
 		break;
 	}
 	return error;
+#else
+	return EINVAL;
+#endif
 }
 
 int
