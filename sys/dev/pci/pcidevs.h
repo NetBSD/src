@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.188 2000/01/05 11:32:43 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.189 2000/01/09 09:20:01 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.181 2000/01/05 11:32:06 drochner Exp 
+ *	NetBSD: pcidevs,v 1.182 2000/01/09 09:19:26 soren Exp 
  */
 
 /*
@@ -943,7 +943,7 @@
 /* Galileo Technology products */
 #define	PCI_PRODUCT_GALILEO_GT64010A	0x0146		/* GT-64010A System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64115	0x4111		/* GT-64115 System Controller */
-#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011/GT-64111 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64111 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 
@@ -1081,7 +1081,8 @@
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
 
 /* Motorola products */
-#define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 Host-PCI Bridge (grackle) */
+#define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 \"Eagle\" Host Bridge */
+#define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID controller */

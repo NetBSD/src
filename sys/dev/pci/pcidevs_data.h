@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.186 2000/01/05 11:32:44 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.187 2000/01/09 09:20:02 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.181 2000/01/05 11:32:06 drochner Exp 
+ *	NetBSD: pcidevs,v 1.182 2000/01/09 09:19:26 soren Exp 
  */
 
 /*
@@ -1597,7 +1597,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
 	    0,
 	    "Galileo Technology",
-	    "GT-64011/GT-64111 System Controller",
+	    "GT-64111 System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
@@ -2230,10 +2230,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA G100 AGP",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
+	    0,
+	    "Motorola",
+	    "MPC105 \"Eagle\" Host Bridge",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
 	    0,
 	    "Motorola",
-	    "MPC106 Host-PCI Bridge (grackle)",
+	    "MPC106 \"Grackle\" Host Bridge",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
