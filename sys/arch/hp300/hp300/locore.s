@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 1996/11/06 20:19:30 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 1997/02/02 07:55:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -103,8 +103,10 @@ _buserr:
 	jbsr	_longjmp		|  longjmp(nofault)
 Lberr:
 #if defined(M68040)
+#if defined(M68020) || defined(M68030)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_addrerr		| no, skip
+#endif
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
@@ -138,8 +140,10 @@ _addrerr:
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	lea	sp@(FR_HW),a1		| grab base of HW berr frame
 #if defined(M68040)
+#if defined(M68020) || defined(M68030)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lbenot040		| no, skip
+#endif
 	movl	a1@(8),sp@-		| yes, push fault address
 	clrl	sp@-			| no SSW for address fault
 	jra	Lisaerr			| go deal with it
@@ -187,8 +191,10 @@ Lbe10:
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
 #if defined(M68K_MMU_MOTOROLA)
+#if defined(M68K_MMU_HP)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lbehpmmu		| yes, skip
+#endif
 	movl	d1,a0			| fault address
 	movl	sp@,d0			| function code from ssw
 	btst	#8,d0			| data fault?
@@ -260,7 +266,7 @@ Lstkadj:
 /*
  * FP exceptions.
  */
-_fpfline:
+_fpfline:		/* XXXthorpej - candidate for vector patch */
 #if defined(M68040)
 	cmpw	#0x202c,sp@(6)		| format type 2?
 	jne	_illinst		| no, not an FP emulation
@@ -277,7 +283,7 @@ _fpfline:
 	jra	_illinst
 #endif
 
-_fpunsupp:
+_fpunsupp:		/* XXXthorpej - candidate for vector patch */
 #if defined(M68040)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_illinst		| no, treat as illinst
@@ -1141,38 +1147,6 @@ _esigcode:
 #include <machine/asm.h>
 
 /*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movl	#NBPG/32,d0		| number of 32 byte chunks
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lmlloop			| no, use movl
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
-	rts
-#endif
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
-	rts
-
-/*
  * non-local gotos
  */
 ENTRY(setjmp)
@@ -1431,8 +1405,10 @@ Lswnochg:
 
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
 #if defined(M68040)
+#if defined(M68020) || defined(M68030)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lres1a			| no, skip
+#endif
 	.word	0xf518			| yes, pflusha
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
@@ -1444,8 +1420,10 @@ Lres1a:
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 #if defined(M68K_MMU_MOTOROLA)
+#if defined(M68K_MMU_HP)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu4			| yes, skip
+#endif
 	pflusha				| flush entire TLB
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
@@ -1475,8 +1453,10 @@ Lcxswdone:
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
 #if defined(M68040)
+#if defined(M68020) || defined(M68030)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lresnot040		| no, skip
+#endif
 	clrl	sp@-			| yes...
 	frestore sp@+			| ...magic!
 Lresnot040:
