@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.10 1998/12/19 21:27:40 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.11 1998/12/19 21:31:37 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";
 static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpcinfo.c,v 1.10 1998/12/19 21:27:40 christos Exp $");
+__RCSID("$NetBSD: rpcinfo.c,v 1.11 1998/12/19 21:31:37 christos Exp $");
 #endif
 #endif
 
@@ -582,7 +582,7 @@ brdcst(argc, argv)
 	prognum = getprognum(argv[0]);
 	vers = getvers(argv[1]);
 	rpc_stat = clnt_broadcast(prognum, vers, NULLPROC, xdr_void,
-	    (char *)NULL, xdr_void, (char *)NULL, (resultproc_t)reply_proc);
+	    (char *)NULL, xdr_void, (char *)NULL, reply_proc);
 	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT)) {
 		fprintf(stderr, "rpcinfo: broadcast failed: %s\n",
 		    clnt_sperrno(rpc_stat));
