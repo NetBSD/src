@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.19 2001/08/30 04:45:56 chs Exp $	*/
+/* $NetBSD: utils.c,v 1.20 2001/09/13 09:53:59 wiz Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.19 2001/08/30 04:45:56 chs Exp $");
+__RCSID("$NetBSD: utils.c,v 1.20 2001/09/13 09:53:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/mman.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <sys/time.h>
 
 #include <err.h>
@@ -59,9 +59,7 @@ __RCSID("$NetBSD: utils.c,v 1.19 2001/08/30 04:45:56 chs Exp $");
 #include "extern.h"
 
 int
-set_utimes(file, fs)
-	const char * file;
-	struct stat * fs;
+set_utimes(const char *file, struct stat *fs)
 {
     static struct timeval tv[2];
 
@@ -76,9 +74,7 @@ set_utimes(file, fs)
 }
 
 int
-copy_file(entp, dne)
-	FTSENT *entp;
-	int dne;
+copy_file(FTSENT *entp, int dne)
 {
 	static char buf[MAXBSIZE];
 	struct stat to_stat, *fs;
@@ -220,9 +216,7 @@ mmap_failed:
 }
 
 int
-copy_link(p, exists)
-	FTSENT *p;
-	int exists;
+copy_link(FTSENT *p, int exists)
 {
 	int len;
 	char target[MAXPATHLEN];
@@ -244,9 +238,7 @@ copy_link(p, exists)
 }
 
 int
-copy_fifo(from_stat, exists)
-	struct stat *from_stat;
-	int exists;
+copy_fifo(struct stat *from_stat, int exists)
 {
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
@@ -260,9 +252,7 @@ copy_fifo(from_stat, exists)
 }
 
 int
-copy_special(from_stat, exists)
-	struct stat *from_stat;
-	int exists;
+copy_special(struct stat *from_stat, int exists)
 {
 	if (exists && unlink(to.p_path)) {
 		warn("unlink: %s", to.p_path);
@@ -286,9 +276,7 @@ copy_special(from_stat, exists)
  *   itself after close(fd).
  */
 int
-setfile(fs, fd)
-	struct stat *fs;
-	int fd;
+setfile(struct stat *fs, int fd)
 {
 	int rval, islink;
 
@@ -339,11 +327,12 @@ setfile(fs, fd)
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "%s\n%s\n",
-	    "usage: cp [-R [-H | -L | -P]] [-f | -i] [-p] src target",
-	    "       cp [-R [-H | -L | -P]] [-f | -i] [-p] src1 ... srcN directory");
+	(void)fprintf(stderr,
+	    "usage: %s [-R [-H | -L | -P]] [-f | -i] [-p] src target\n"
+	    "       %s [-R [-H | -L | -P]] [-f | -i] [-p] src1 ... srcN directory\n",
+	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
