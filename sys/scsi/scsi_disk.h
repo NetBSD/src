@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.6 1994/11/22 00:05:39 deraadt Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.7 1994/12/28 19:43:02 mycroft Exp $	*/
 
 /*
  * SCSI interface description
@@ -56,17 +56,15 @@
 #ifndef	_SCSI_SCSI_DISK_H
 #define _SCSI_SCSI_DISK_H 1
 
-struct scsi_reassign_blocks
-{
-	u_char	op_code;
+struct scsi_reassign_blocks {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused[3];
 	u_char	control;
 };
 
-struct scsi_rw
-{
-	u_char	op_code;
+struct scsi_rw {
+	u_char	opcode;
 	u_char	addr_2;		/* Most significant */
 #define	SRW_TOPADDR	0x1F	/* only 5 bits here */
 	u_char	addr_1;
@@ -75,9 +73,8 @@ struct scsi_rw
 	u_char	control;
 };
 
-struct scsi_rw_big
-{
-	u_char	op_code;
+struct scsi_rw_big {
+	u_char	opcode;
 	u_char	byte2;
 #define	SRWB_RELADDR	0x01
 	u_char	addr_3;		/* Most significant */
@@ -90,9 +87,8 @@ struct scsi_rw_big
 	u_char	control;
 };
 
-struct scsi_read_capacity
-{
-	u_char	op_code;
+struct scsi_read_capacity {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	addr_3;	/* Most Significant */
 	u_char	addr_2;
@@ -102,9 +98,8 @@ struct scsi_read_capacity
 	u_char	control;
 };
 
-struct scsi_start_stop
-{
-	u_char	op_code;
+struct scsi_start_stop {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused[2];
 	u_char	how;
@@ -132,9 +127,7 @@ struct scsi_start_stop
 #define WRITE_BIG		0x2a
 
 
-
-struct scsi_read_cap_data
-{
+struct scsi_read_cap_data {
 	u_char	addr_3;	/* Most significant */
 	u_char	addr_2;
 	u_char	addr_1;
@@ -145,13 +138,11 @@ struct scsi_read_cap_data
 	u_char	length_0;	/* Least significant */
 };
 
-struct scsi_reassign_blocks_data
-{
+struct scsi_reassign_blocks_data {
 	u_char	reserved[2];
 	u_char	length_msb;
 	u_char	length_lsb;
-	struct
-	{
+	struct {
 		u_char	dlbaddr_3;	/* defect logical block address (MSB) */
 		u_char	dlbaddr_2;
 		u_char	dlbaddr_1;
@@ -159,8 +150,7 @@ struct scsi_reassign_blocks_data
 	} defect_descriptor[1];
 };
 
-union	disk_pages /* this is the structure copied from osf */
-{
+union disk_pages { /* this is the structure copied from osf */
 	struct page_disk_format {
 	   u_char pg_code;	/* page code (should be 3)	      */
 #define	DISK_PGCODE	0x3F	/* only 6 bits valid */
@@ -213,5 +203,6 @@ union	disk_pages /* this is the structure copied from osf */
 	   u_char reserved2;
 	   u_char reserved3;
     	} rigid_geometry;
-} ;
-#endif /* _SCSI_SCSI_DISK_H*/
+};
+
+#endif /* _SCSI_SCSI_DISK_H */

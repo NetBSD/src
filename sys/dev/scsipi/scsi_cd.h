@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_cd.h,v 1.4 1994/06/29 06:43:01 cgd Exp $	*/
+/*	$NetBSD: scsi_cd.h,v 1.5 1994/12/28 19:42:58 mycroft Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -29,9 +29,8 @@
  * SCSI command format
  */
 
-struct scsi_read_capacity_cd
-{
-	u_char	op_code;
+struct scsi_read_capacity_cd {
+	u_int8_t opcode;
 	u_char	byte2;
 	u_char	addr_3;	/* Most Significant */
 	u_char	addr_2;
@@ -41,9 +40,8 @@ struct scsi_read_capacity_cd
 	u_char	control;
 };
 
-struct scsi_pause
-{
-	u_char	op_code;
+struct scsi_pause {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused[6];
 	u_char	resume;
@@ -52,9 +50,8 @@ struct scsi_pause
 #define	PA_PAUSE	1
 #define PA_RESUME	0
 
-struct scsi_play_msf
-{
-	u_char	op_code;
+struct scsi_play_msf {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused;
 	u_char	start_m;
@@ -66,9 +63,8 @@ struct scsi_play_msf
 	u_char	control;
 };
 
-struct scsi_play_track
-{
-	u_char	op_code;
+struct scsi_play_track {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused[2];
 	u_char	start_track;
@@ -79,9 +75,8 @@ struct scsi_play_track
 	u_char	control;
 };
 
-struct scsi_play
-{
-	u_char	op_code;
+struct scsi_play {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	blk_addr[4];
 	u_char	unused;
@@ -89,9 +84,8 @@ struct scsi_play
 	u_char	control;
 };
 
-struct scsi_play_big	
-{
-	u_char	op_code;
+struct scsi_play_big {
+	u_char	opcode;
 	u_char	byte2;	/* same as above */
 	u_char	blk_addr[4];
 	u_char	xfer_len[4];
@@ -99,9 +93,8 @@ struct scsi_play_big
 	u_char	control;
 };
 
-struct scsi_play_rel_big
-{
-	u_char	op_code;
+struct scsi_play_rel_big {
+	u_char	opcode;
 	u_char	byte2;	/* same as above */
 	u_char	blk_addr[4];
 	u_char	xfer_len[4];
@@ -109,9 +102,8 @@ struct scsi_play_rel_big
 	u_char	control;
 };
 
-struct scsi_read_header
-{
-	u_char	op_code;
+struct scsi_read_header {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	blk_addr[4];
 	u_char	unused;
@@ -119,9 +111,8 @@ struct scsi_read_header
 	u_char	control;
 };
 
-struct scsi_read_subchannel
-{
-	u_char	op_code;
+struct scsi_read_subchannel {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	byte3;
 #define	SRS_SUBQ	0x40
@@ -132,9 +123,8 @@ struct scsi_read_subchannel
 	u_char	control;
 };
 
-struct scsi_read_toc
-{
-	u_char	op_code;
+struct scsi_read_toc {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	unused[4];
 	u_char	from_track;
@@ -143,9 +133,8 @@ struct scsi_read_toc
 };
 ;
 
-struct scsi_read_cd_capacity
-{
-	u_char	op_code;
+struct scsi_read_cd_capacity {
+	u_char	opcode;
 	u_char	byte2;
 	u_char	addr_3;	/* Most Significant */
 	u_char	addr_2;
@@ -172,9 +161,7 @@ struct scsi_read_cd_capacity
 #define PLAY_TRACK_REL_BIG	0xa9	/* cdrom play track/index mode */
 
 
-
-struct scsi_read_cd_cap_data
-{
+struct scsi_read_cd_cap_data {
 	u_char	addr_3;	/* Most significant */
 	u_char	addr_2;
 	u_char	addr_1;
@@ -185,10 +172,8 @@ struct scsi_read_cd_cap_data
 	u_char	length_0;	/* Least significant */
 };
 
-union	cd_pages
-{
-	struct	audio_page
-	{
+union cd_pages {
+	struct audio_page {
 		u_char	page_code;
 #define	CD_PAGE_CODE	0x3F
 #define	AUDIO_PAGE	0x0e
@@ -202,8 +187,7 @@ union	cd_pages
 #define		CD_PA_FORMAT_LBA	0x0F
 #define		CD_PA_APR_VALID	0x80
 		u_char	lb_per_sec[2];
-		struct	port_control
-		{
+		struct	port_control {
 			u_char	channels;
 #define	CHANNEL 0x0F
 #define	CHANNEL_0 1
@@ -216,13 +200,12 @@ union	cd_pages
 		} port[4];
 #define	LEFT_PORT	0
 #define	RIGHT_PORT	1
-	}audio;
+	} audio;
 };
 
-struct cd_mode_data
-{
+struct cd_mode_data {
 	struct scsi_mode_header header;
-	struct blk_desc blk_desc;
+	struct scsi_blk_desc blk_desc;
 	union cd_pages page;
 };
 #endif /*_SCSI_SCSI_CD_H*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.4 1994/06/29 06:43:02 cgd Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.5 1994/12/28 19:42:59 mycroft Exp $	*/
 
 /*
  * SCSI changer interface description
@@ -27,9 +27,8 @@
 /*
  * SCSI command format
  */
-struct scsi_read_element_status
-{
-        u_char  op_code;
+struct scsi_read_element_status {
+        u_char  opcode;
 	u_char	byte2;
 #define	SRES_ELEM_TYPE_CODE 	0x0F
 #define	SRES_ELEM_VOLTAG 	0x10
@@ -46,9 +45,8 @@ struct scsi_read_element_status
 #define RE_IMPORT_EXPORT		3
 #define RE_DATA_TRANSFER_ELEMENT	4
 
-struct scsi_move_medium
-{
-	u_char  op_code;
+struct scsi_move_medium {
+	u_char  opcode;
 	u_char	byte2;
 	u_char  transport_element_address[2];
 	u_char  source_address[2];
@@ -58,9 +56,8 @@ struct scsi_move_medium
 	u_char	control;
 };
 
-struct scsi_position_to_element
-{
-	u_char  op_code;
+struct scsi_position_to_element {
+	u_char  opcode;
         u_char  byte2;
 	u_char  transport_element_address[2];
 	u_char  source_address[2];
@@ -76,16 +73,14 @@ struct scsi_position_to_element
 #define MOVE_MEDIUM             0xa5
 #define READ_ELEMENT_STATUS     0xb8
 
-struct scsi_element_status_data 
-{
+struct scsi_element_status_data {
 	u_char	first_element_reported[2];
 	u_char	number_of_elements_reported[2];
 	u_char  rsvd;
 	u_char	byte_count_of_report[3];
 };
 
-struct element_status_page 
-{
+struct element_status_page {
 	u_char	element_type_code;
 	u_char	flags;
 #define	ESP_AVOLTAG	0x40
@@ -94,5 +89,6 @@ struct element_status_page
 	u_char rsvd;
 	u_char byte_count_of_descriptor_data[3];
 };
-#endif /*_SCSI_SCSI_CHANGER_H*/
+
+#endif /* _SCSI_SCSI_CHANGER_H */
 

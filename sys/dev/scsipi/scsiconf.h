@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.16 1994/11/21 10:39:21 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.17 1994/12/28 19:43:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -48,13 +48,8 @@
 
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
+
 typedef	int			boolean;
-typedef	long int		int32;
-typedef	short int		int16;
-typedef	char 			int8;
-typedef	unsigned long int	u_int32;
-typedef	unsigned short int	u_int16;
-typedef	unsigned char 		u_int8;
 
 #include <sys/queue.h>
 #include <machine/cpu.h>
@@ -98,11 +93,8 @@ typedef	unsigned char 		u_int8;
 struct scsi_adapter {
 /* 4*/	int		(*scsi_cmd)();
 /* 8*/	void		(*scsi_minphys)();
-/*12*/	int32		(*open_target_lu)();
-/*16*/	int32		(*close_target_lu)();
-/*20*/	u_int		(*adapter_info)(); /* see definitions below */
-/*24*/	char		*name; /* name of scsi bus controller */
-/*32*/	u_long	spare[2];
+/*12*/	int		(*open_target_lu)();
+/*16*/	int		(*close_target_lu)();
 };
 
 /*
@@ -111,15 +103,7 @@ struct scsi_adapter {
 #define SUCCESSFULLY_QUEUED	0
 #define TRY_AGAIN_LATER		1
 #define	COMPLETE		2
-#define	HAD_ERROR		3 /* do not use this, use COMPLETE */
-#define	ESCAPE_NOT_SUPPORTED	4
-
-/*
- * Format of adapter_info() response data
- * e.g. maximum number of entries queuable to a device by the adapter
- */
-#define	AD_INF_MAX_CMDS		0x000000FF
-/* 24 bits of other adapter characteristics go here */
+#define	ESCAPE_NOT_SUPPORTED	3
 
 /*
  * These entry points are called by the low-end drivers to get services from
@@ -129,11 +113,8 @@ struct scsi_adapter {
 struct scsi_device {
 /*  4*/	int	(*err_handler)(); /* returns -1 to say err processing complete */
 /*  8*/	void	(*start)();
-/* 12*/	int32	(*async)();
-/* 16*/	int32	(*done)();	/* returns -1 to say done processing complete */
-/* 20*/	char	*name;		/* name of device type */
-/* 24*/	int	flags;		/* device type dependent flags */
-/* 32*/	int32	spare[2];
+/* 12*/	int	(*async)();
+/* 16*/	int	(*done)();	/* returns -1 to say done processing complete */
 };
 
 /*
@@ -143,24 +124,39 @@ struct scsi_device {
  * as well.
  */
 struct scsi_link {
-/*  1*/	u_int8	scsibus;		/* the Nth scsibus */
-/*  2*/	u_int8	target;			/* targ of this dev */
-/*  3*/	u_int8	lun;			/* lun of this dev */
-/*  4*/	u_int8	adapter_targ;		/* what are we on the scsi bus */
-/*  5*/	u_int8	opennings;		/* available operations */
-/*  6*/	u_int8	active;			/* operations in progress */
-/*  8*/ u_int8	sparea[2];
-/* 12*/	int	flags;			/* flags that all devices have */
-/* 16*/	struct	scsi_device *device;	/* device entry points etc. */
-/* 20*/	void	*device_softc;		/* needed for call to foo_start */
-/* 24*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
-/* 28*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
-/* 32*/	void	*fordriver;		/* for private use by the driver */
+/*  1*/	u_int8_t scsibus;		/* the Nth scsibus */
+/*  2*/	u_int8_t target;		/* targ of this dev */
+/*  3*/	u_int8_t lun;			/* lun of this dev */
+/*  4*/	u_int8_t adapter_target;	/* what are we on the scsi bus */
+/*  5*/	u_int8_t openings;		/* available operations */
+/*  6*/	u_int8_t active;		/* operations in progress */
+/*  7*/	u_int8_t flags;			/* flags that all devices have */
+#define	SDEV_REMOVABLE	 	0x01	/* media is removable */
+#define	SDEV_MEDIA_LOADED 	0x02	/* device figures are still valid */
+#define	SDEV_WAITING	 	0x04	/* a process is waiting for this */
+#define	SDEV_OPEN	 	0x08	/* at least 1 open session */
+#define	SDEV_DBX		0xf0	/* debuging flags (scsi_debug.h) */	
+/*  8*/	u_int8_t quirks;		/* per-device oddities */
+#define	SDEV_AUTOSAVE		0x01	/* do implicit SAVEDATAPOINTER on disconnect */
+#define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
+#define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
+/* 12*/	struct	scsi_device *device;	/* device entry points etc. */
+/* 16*/	void	*device_softc;		/* needed for call to foo_start */
+/* 20*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
+/* 24*/	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 };
-#define	SDEV_MEDIA_LOADED 	0x01	/* device figures are still valid */
-#define	SDEV_WAITING	 	0x02	/* a process is waiting for this */
-#define	SDEV_OPEN	 	0x04	/* at least 1 open session */
-#define	SDEV_DBX		0xF0	/* debuging flags (scsi_debug.h) */	
+
+/*
+ * This describes matching information for scsi_inqmatch().  The more things
+ * match, the higher the configuration priority.
+ */
+struct scsi_inquiry_pattern {
+	u_int8_t type;
+	boolean removable;
+	char *vendor;
+	char *product;
+	char *revision;
+};
 
 /*
  * One of these is allocated and filled in for each scsi bus.
@@ -170,10 +166,20 @@ struct scsi_link {
  * supplied by the adapter driver, this is used to initialise
  * the others, before they have the rest of the fields filled in
  */
-struct scsibus_data {
+struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
 	struct scsi_link *sc_link[8][8];
+	u_int8_t moreluns;
+};
+
+/*
+ * This is used to pass information from the high-level configuration code
+ * to the device-specific drivers.
+ */
+struct scsibus_attach_args {
+	struct scsi_link *sa_sc_link;
+	struct scsi_inquiry_data *sa_inqbuf;
 };
 
 /*
@@ -189,10 +195,10 @@ struct scsi_xfer {
 /*20*/	int	retries;		/* the number of times to retry */
 /*24*/	int	timeout;		/* in milliseconds */
 /*28*/	struct	scsi_generic *cmd;	/* The scsi command to execute */
-/*32*/	int32	cmdlen;			/* how long it is */
+/*32*/	int	cmdlen;			/* how long it is */
 /*36*/	u_char	*data;			/* dma address OR a uio address */
-/*40*/	int32	datalen;		/* data len (blank if uio)    */
-/*44*/	int32	resid;			/* how much buffer was not touched */
+/*40*/	int	datalen;		/* data len (blank if uio)    */
+/*44*/	int	resid;			/* how much buffer was not touched */
 /*48*/	int	error;			/* an error value	*/
 /*52*/	struct	buf *bp;		/* If we need to associate with a buf */
 /*84*/	struct	scsi_sense_data	sense; /* 32 bytes*/
@@ -200,28 +206,30 @@ struct scsi_xfer {
 	 * Believe it or not, Some targets fall on the ground with
 	 * anything but a certain sense length.
 	 */
-/*88*/	int32 req_sense_length;		/* Explicit request sense length */
-/*92*/	int32 status;			/* SCSI status */
+/*88*/	int	req_sense_length;	/* Explicit request sense length */
+/*92*/	u_int8_t status;		/* SCSI status */
 /*104*/	struct	scsi_generic cmdstore;	/* stash the command in here */
 };
 
 /*
  * Per-request Flag values
  */
-#define	SCSI_NOSLEEP	0x01	/* Not a user... don't sleep		*/
-#define	SCSI_NOMASK	0x02	/* dont allow interrupts.. booting	*/
-#define	SCSI_NOSTART	0x04	/* left over from ancient history	*/
-#define	SCSI_USER	0x08	/* Is a user cmd, call scsi_user_done	*/
-#define	ITSDONE		0x10	/* the transfer is as done as it gets	*/
-#define	INUSE		0x20	/* The scsi_xfer block is in use	*/
-#define	SCSI_SILENT	0x40	/* Don't report errors to console	*/
-#define SCSI_ERR_OK	0x80	/* An error on this operation is OK.	*/
-#define	SCSI_RESET	0x100	/* Reset the device in question		*/
-#define	SCSI_DATA_UIO	0x200	/* The data address refers to a UIO	*/
-#define	SCSI_DATA_IN	0x400	/* expect data to come INTO memory	*/
-#define	SCSI_DATA_OUT	0x800	/* expect data to flow OUT of memory	*/
-#define	SCSI_TARGET	0x1000	/* This defines a TARGET mode op.	*/
-#define	SCSI_ESCAPE	0x2000	/* Escape operation			*/
+#define	SCSI_NOSLEEP	0x0001	/* don't sleep */
+#define	SCSI_POLL	0x0002	/* poll for completion */
+#define	SCSI_AUTOCONF	0x0003	/* shorthand for SCSI_POLL | SCSI_NOSLEEP */
+#define	SCSI_USER	0x0004	/* Is a user cmd, call scsi_user_done	*/
+#define	ITSDONE		0x0008	/* the transfer is as done as it gets	*/
+#define	INUSE		0x0010	/* The scsi_xfer block is in use	*/
+#define	SCSI_SILENT	0x0020	/* don't announce NOT READY or MEDIA CHANGE */
+#define	SCSI_IGNORE_NOT_READY		0x0040	/* ignore NOT READY */
+#define	SCSI_IGNORE_MEDIA_CHANGE	0x0080	/* ignore MEDIA CHANGE */
+#define	SCSI_IGNORE_ILLEGAL_REQUEST	0x0100	/* ignore ILLEGAL REQUEST */
+#define	SCSI_RESET	0x0200	/* Reset the device in question		*/
+#define	SCSI_DATA_UIO	0x0400	/* The data address refers to a UIO	*/
+#define	SCSI_DATA_IN	0x0800	/* expect data to come INTO memory	*/
+#define	SCSI_DATA_OUT	0x1000	/* expect data to flow OUT of memory	*/
+#define	SCSI_TARGET	0x2000	/* This defines a TARGET mode op.	*/
+#define	SCSI_ESCAPE	0x4000	/* Escape operation			*/
 
 /*
  * Escape op codes.  This provides an extensible setup for operations
@@ -235,38 +243,39 @@ struct scsi_xfer {
 /*
  * Error values an adapter driver may return
  */
-#define XS_NOERROR	0x0	/* there is no error, (sense is invalid)  */
-#define XS_SENSE	0x1	/* Check the returned sense for the error */
-#define	XS_DRIVER_STUFFUP 0x2	/* Driver failed to perform operation	  */
-#define XS_TIMEOUT	0x03	/* The device timed out.. turned off?	  */
-#define XS_SWTIMEOUT	0x04	/* The Timeout reported was caught by SW  */
-#define XS_BUSY		0x08	/* The device busy, try again later?	  */
+#define XS_NOERROR	0	/* there is no error, (sense is invalid)  */
+#define XS_SENSE	1	/* Check the returned sense for the error */
+#define	XS_DRIVER_STUFFUP 2	/* Driver failed to perform operation	  */
+#define XS_SELTIMEOUT	3	/* The device timed out.. turned off?	  */
+#define XS_TIMEOUT	4	/* The Timeout reported was caught by SW  */
+#define XS_BUSY		5	/* The device busy, try again later?	  */
 
-int scsi_targmatch __P((struct device *, void *, void *));
+caddr_t scsi_inqmatch __P((struct scsi_inquiry_data *, caddr_t, int, int, int *));
 
-struct scsi_xfer *get_xs __P((struct scsi_link *, int));
-void free_xs __P((struct scsi_xfer *, struct scsi_link *, int));
-void sc_print_addr __P((struct scsi_link *sc_link));
-u_int32 scsi_size __P((struct scsi_link *, int));
+struct scsi_xfer *scsi_get_xs __P((struct scsi_link *, int));
+void scsi_free_xs __P((struct scsi_xfer *, int));
+int scsi_execute_xs __P((struct scsi_xfer *));
+u_long scsi_size __P((struct scsi_link *, int));
 int scsi_test_unit_ready __P((struct scsi_link *, int));
 int scsi_change_def __P((struct scsi_link *, int));
 int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, int));
 int scsi_prevent __P((struct scsi_link *, int, int));
 int scsi_start __P((struct scsi_link *, int, int));
+int scsi_start_and_wait __P((struct scsi_link *, int, int));
 void scsi_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
-			u_int32 cmdlen, u_char *data_addr,
-			u_int32 datalen, int retries,
+			int cmdlen, u_char *data_addr,
+			int datalen, int retries,
 			int timeout, struct buf *bp,
 			int flags));
-int scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t, int));
+int scsi_do_ioctl __P((struct scsi_link *, dev_t, u_long, caddr_t, int, struct proc *));
+void sc_print_addr __P((struct scsi_link *));
 
 void show_scsi_xs __P((struct scsi_xfer *));
 void show_scsi_cmd __P((struct scsi_xfer *));
-void show_mem __P((unsigned char *, u_int32));
+void show_mem __P((unsigned char *, int));
 
-void	lto3b __P((int val, u_char *bytes));
-int	_3btol __P((u_char *bytes));
+void lto3b __P((u_int32_t val, u_int8_t *bytes));
+u_int32_t _3btol __P((u_int8_t *bytes));
 
-#endif /*SCSI_SCSICONF_H*/
-/* END OF FILE */
+#endif /* SCSI_SCSICONF_H */

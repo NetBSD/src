@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.12 1994/11/21 11:28:47 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.13 1994/12/28 19:42:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -54,28 +54,29 @@
 #define CHMODE(z)	(minor(z) & 0x0f)
 #define CHUNIT(z)	(minor(z) >> 4)
 
-struct ch_data {
+struct ch_softc {
 	struct device sc_dev;
 
 	struct scsi_link *sc_link;	/* all the inter level info */
-	u_int16 chmo;			/* Offset of first CHM */
-	u_int16 chms;			/* No. of CHM */
-	u_int16 slots;			/* No. of Storage Elements */
-	u_int16 sloto;			/* Offset of first SE */
-	u_int16 imexs;			/* No. of Import/Export Slots */
-	u_int16 imexo;			/* Offset of first IM/EX */
-	u_int16 drives;			/* No. of CTS */
-	u_int16 driveo;			/* Offset of first CTS */
-	u_int16 rot;			/* CHM can rotate */
-	u_long  op_matrix;		/* possible opertaions */
-	u_int16 lsterr;			/* details of lasterror */
+	u_int16_t chmo;			/* Offset of first CHM */
+	u_int16_t chms;			/* No. of CHM */
+	u_int16_t slots;		/* No. of Storage Elements */
+	u_int16_t sloto;		/* Offset of first SE */
+	u_int16_t imexs;		/* No. of Import/Export Slots */
+	u_int16_t imexo;		/* Offset of first IM/EX */
+	u_int16_t drives;		/* No. of CTS */
+	u_int16_t driveo;		/* Offset of first CTS */
+	u_int16_t rot;			/* CHM can rotate */
+	u_long  op_matrix;		/* possible operations */
+	u_int16_t lsterr;		/* details of lasterror */
 	u_char  stor;			/* posible Storage locations */
 };
 
+int chmatch __P((struct device *, void *, void *));
 void chattach __P((struct device *, struct device *, void *));
 
 struct cfdriver chcd = {
-	NULL, "ch", scsi_targmatch, chattach, DV_DULL, sizeof(struct ch_data)
+	NULL, "ch", chmatch, chattach, DV_DULL, sizeof(struct ch_softc)
 };
 
 /*
@@ -86,9 +87,27 @@ struct scsi_device ch_switch = {
 	NULL,
 	NULL,
 	NULL,
-	"ch",
-	0
 };
+
+struct scsi_inquiry_pattern ch_patterns[] = {
+	{T_CHANGER, T_REMOV,
+	 "",         "",                 ""},
+};
+
+int
+chmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct scsibus_attach_args *sa = aux;
+	int priority;
+
+	(void)scsi_inqmatch(sa->sa_inqbuf,
+	    (caddr_t)ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
+	    sizeof(ch_patterns[0]), &priority);
+	return (priority);
+}
 
 /*
  * The routine called by the low level scsi routine when it discovers
@@ -99,9 +118,9 @@ chattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ch_data *ch = (void *)self;
-	struct scsi_link *sc_link = aux;
-	unsigned char *tbl;
+	struct ch_softc *ch = (void *)self;
+	struct scsibus_attach_args *sa = aux;
+	struct scsi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("chattach: "));
 
@@ -111,13 +130,14 @@ chattach(parent, self, aux)
 	ch->sc_link = sc_link;
 	sc_link->device = &ch_switch;
 	sc_link->device_softc = ch;
+	sc_link->openings = 1;
 
 	/*
 	 * Use the subdriver to request information regarding
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if ((ch_mode_sense(ch, SCSI_NOSLEEP | SCSI_NOMASK)))
+	if (ch_mode_sense(ch, SCSI_AUTOCONF) != 0)
 		printf(": offline\n");
 	else
 		printf(": %d slot(s), %d drive(s), %d arm(s), %d i/e-slot(s)\n",
@@ -133,7 +153,7 @@ chopen(dev)
 {
 	int error = 0;
 	int unit, mode;
-	struct ch_data *ch;
+	struct ch_softc *ch;
 	struct scsi_link *sc_link;
 
 	unit = CHUNIT(dev);
@@ -160,23 +180,15 @@ chopen(dev)
 	/*
 	 * Catch any unit attention errors.
 	 */
-	scsi_test_unit_ready(sc_link, SCSI_SILENT);
-
-	/*
-	 * Check that it is still responding and ok.
-	 */
-	sc_link->flags |= SDEV_OPEN;
-	if (scsi_test_unit_ready(sc_link, 0)) {
-		SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
-		error = ENXIO;
+	if (error = scsi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE))
 		goto bad;
-	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("device ok\n"));
+
+	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
 
 	/*
 	 * Make sure data is loaded
 	 */
-	if (error = (ch_mode_sense(ch, SCSI_NOSLEEP | SCSI_NOMASK))) {
+	if (error = ch_mode_sense(ch, 0)) {
 		printf("%s: offline\n", ch->sc_dev.dv_xname);
 		goto bad;
 	}
@@ -197,7 +209,7 @@ int
 chclose(dev)
 	dev_t dev;
 {
-	struct ch_data *ch = chcd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *ch = chcd.cd_devs[CHUNIT(dev)];
 
 	SC_DEBUG(ch->sc_link, SDEV_DB1, ("closing\n"));
 	ch->sc_link->flags &= ~SDEV_OPEN;
@@ -210,13 +222,14 @@ chclose(dev)
  * Knows about the internals of this device
  */
 int 
-chioctl(dev, cmd, arg, mode)
+chioctl(dev, cmd, arg, mode, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t arg;
 	int mode;
+	struct proc *p;
 {
-	struct ch_data *ch = chcd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *ch = chcd.cd_devs[CHUNIT(dev)];
 	struct scsi_link *sc_link = ch->sc_link;
 	int number;
 	int flags;
@@ -262,7 +275,7 @@ chioctl(dev, cmd, arg, mode)
 		}
 	}
 	default:
-		return scsi_do_ioctl(sc_link, dev, cmd, arg, mode);
+		return scsi_do_ioctl(sc_link, dev, cmd, arg, mode, p);
 	}
 #ifdef DIAGNOSTIC
 	panic("chioctl: impossible");
@@ -271,7 +284,7 @@ chioctl(dev, cmd, arg, mode)
 
 int 
 ch_getelem(ch, stat, type, from, data, flags)
-	struct ch_data *ch;
+	struct ch_softc *ch;
 	short *stat;
 	int type, from;
 	char *data;
@@ -282,7 +295,7 @@ ch_getelem(ch, stat, type, from, data, flags)
 	int error;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = READ_ELEMENT_STATUS;
+	scsi_cmd.opcode = READ_ELEMENT_STATUS;
 	scsi_cmd.byte2 = type;
 	scsi_cmd.starting_element_addr[0] = (from >> 8) & 0xff;
 	scsi_cmd.starting_element_addr[1] = from & 0xff;
@@ -302,7 +315,7 @@ ch_getelem(ch, stat, type, from, data, flags)
 
 int 
 ch_move(ch, stat, chm, from, to, flags)
-	struct ch_data *ch;
+	struct ch_softc *ch;
 	short *stat;
 	int chm, from, to, flags;
 {
@@ -310,7 +323,7 @@ ch_move(ch, stat, chm, from, to, flags)
 	int error;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = MOVE_MEDIUM;
+	scsi_cmd.opcode = MOVE_MEDIUM;
 	scsi_cmd.transport_element_address[0] = (chm >> 8) & 0xff;
 	scsi_cmd.transport_element_address[1] = chm & 0xff;
 	scsi_cmd.source_address[0] = (from >> 8) & 0xff;
@@ -329,7 +342,7 @@ ch_move(ch, stat, chm, from, to, flags)
 
 int 
 ch_position(ch, stat, chm, to, flags)
-	struct ch_data *ch;
+	struct ch_softc *ch;
 	short *stat;
 	int chm, to, flags;
 {
@@ -337,7 +350,7 @@ ch_position(ch, stat, chm, to, flags)
 	int error;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = POSITION_TO_ELEMENT;
+	scsi_cmd.opcode = POSITION_TO_ELEMENT;
 	scsi_cmd.transport_element_address[0] = (chm >> 8) & 0xff;
 	scsi_cmd.transport_element_address[1] = chm & 0xff;
 	scsi_cmd.source_address[0] = (to >> 8) & 0xff;
@@ -365,7 +378,7 @@ ch_position(ch, stat, chm, to, flags)
  */
 int 
 ch_mode_sense(ch, flags)
-	struct ch_data *ch;
+	struct ch_softc *ch;
 	int flags;
 {
 	struct scsi_mode_sense scsi_cmd;
@@ -386,9 +399,8 @@ ch_mode_sense(ch, flags)
 	/*
 	 * First do a mode sense 
 	 */
-	/* sc_link->flags &= ~SDEV_MEDIA_LOADED; *//*XXX */
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = MODE_SENSE;
+	scsi_cmd.opcode = MODE_SENSE;
 	scsi_cmd.byte2 = SMS_DBD;
 	scsi_cmd.page = 0x3f;	/* All Pages */
 	scsi_cmd.length = sizeof(scsi_sense);
@@ -396,13 +408,10 @@ ch_mode_sense(ch, flags)
 	/*
 	 * Read in the pages
 	 */
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
+	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *) &scsi_sense, sizeof(scsi_sense),
-	    CHRETRIES, 5000, NULL, flags | SCSI_DATA_IN);
-	if (error) {
-		if (!(flags & SCSI_SILENT))
-			printf("%s: could not mode sense\n",
-			    ch->sc_dev.dv_xname);
+	    CHRETRIES, 5000, NULL, flags | SCSI_DATA_IN)) {
+		printf("%s: could not mode sense\n", ch->sc_dev.dv_xname);
 		return error;
 	}
 

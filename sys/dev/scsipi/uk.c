@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.11 1994/11/21 11:28:57 mycroft Exp $	*/
+/*	$NetBSD: uk.c,v 1.12 1994/12/28 19:43:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -45,16 +45,17 @@
 
 #define	UKUNIT(z)	(minor(z))
 
-struct uk_data {
+struct uk_softc {
 	struct device sc_dev;
 
 	struct scsi_link *sc_link;	/* all the inter level info */
 };
 
+int ukmatch __P((struct device *, void *, void *));
 void ukattach __P((struct device *, struct device *, void *));
 
 struct cfdriver ukcd = {
-	NULL, "uk", scsi_targmatch, ukattach, DV_DULL, sizeof(struct uk_data)
+	NULL, "uk", ukmatch, ukattach, DV_DULL, sizeof(struct uk_softc)
 };
 
 /*
@@ -65,9 +66,16 @@ struct scsi_device uk_switch = {
 	NULL,
 	NULL,
 	NULL,
-	"uk",
-	0
 };
+
+int
+ukmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+
+	return 1;
+}
 
 /*
  * The routine called by the low level scsi routine when it discovers
@@ -78,8 +86,9 @@ ukattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct uk_data *uk = (void *)self;
-	struct scsi_link *sc_link = aux;
+	struct uk_softc *uk = (void *)self;
+	struct scsibus_attach_args *sa = aux;
+	struct scsi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ukattach: "));
 
@@ -89,6 +98,7 @@ ukattach(parent, self, aux)
 	uk->sc_link = sc_link;
 	sc_link->device = &uk_switch;
 	sc_link->device_softc = uk;
+	sc_link->openings = 1;
 
 	printf(": unknown device\n");
 }
@@ -101,7 +111,7 @@ ukopen(dev)
 	dev_t dev;
 {
 	int unit;
-	struct uk_data *uk;
+	struct uk_softc *uk;
 	struct scsi_link *sc_link;
 
 	unit = UKUNIT(dev);
@@ -138,7 +148,7 @@ int
 ukclose(dev)
 	dev_t dev;
 {
-	struct uk_data *uk = ukcd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = ukcd.cd_devs[UKUNIT(dev)];
 
 	SC_DEBUG(uk->sc_link, SDEV_DB1, ("closing\n"));
 	uk->sc_link->flags &= ~SDEV_OPEN;
@@ -151,13 +161,14 @@ ukclose(dev)
  * Only does generic scsi ioctls.
  */
 int
-ukioctl(dev, cmd, addr, flag)
+ukioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
-	register struct uk_data *uk = ukcd.cd_devs[UKUNIT(dev)];
+	register struct uk_softc *uk = ukcd.cd_devs[UKUNIT(dev)];
 
-	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag));
+	return scsi_do_ioctl(uk->sc_link, dev, cmd, addr, flag, p));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.15 1994/12/01 12:36:35 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.16 1994/12/28 19:43:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -269,12 +269,13 @@ bad:
  * in the context of the calling process
  */
 int
-scsi_do_ioctl(sc_link, dev, cmd, addr, f)
+scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	struct scsi_link *sc_link;
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
-	int f;
+	int flag;
+	struct proc *p;
 {
 	int error;
 
@@ -297,7 +298,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 		si = si_get();
 		si->si_screq = *screq;
 		si->si_sc_link = sc_link;
-		si->si_bp.b_bcount = len = screq->datalen;
+		len = screq->datalen;
 		if (len) {
 			si->si_iov.iov_base = screq->databuf;
 			si->si_iov.iov_len = len;
@@ -308,18 +309,21 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw = 
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_procp = curproc;	/* XXX */
+			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    sc_link->adapter->scsi_minphys, &si->si_uio);
 		} else {
 			/* if no data, no need to translate it.. */
-			si->si_bp.b_data = 0;
-			si->si_bp.b_dev = dev;
 			si->si_bp.b_flags = 0;
+			si->si_bp.b_data = 0;
+			si->si_bp.b_bcount = 0;
+			si->si_bp.b_dev = dev;
+			si->si_bp.b_proc = p;
 			scsistrategy(&si->si_bp);
 			error = si->si_bp.b_error;
 		}
+		*screq = si->si_screq;
 		si_free(si);
 		return error;
 	}
