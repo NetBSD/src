@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.17 1994/12/05 08:28:53 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.18 1994/12/05 08:30:30 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -19,8 +19,7 @@
 #include <sys/syscallargs.h>
 
 int	semtot = 0;
-
-static struct proc *semlock_holder = NULL;
+struct	proc *semlock_holder = NULL;
 
 int
 seminit()
@@ -932,7 +931,6 @@ semexit(p)
 	 * We are now in case 1 or 2, and we have an undo vector for this
 	 * process.
 	 */
-
 
 #ifdef SEM_DEBUG
 	printf("proc @%08x has undo structure with %d entries\n", p,
