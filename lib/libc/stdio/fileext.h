@@ -1,4 +1,4 @@
-/* $NetBSD: fileext.h,v 1.4 2003/02/01 03:25:00 nathanw Exp $ */
+/* $NetBSD: fileext.h,v 1.5 2003/07/18 21:46:41 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -39,6 +39,8 @@ struct __sfileext {
 	cond_t _lockcond; /* Condition variable for signalling lock releases */
 	thr_t _lockowner; /* The thread currently holding the lock */
 	int _lockcount; /* Count of recursive locks */
+	int _lockinternal; /* Flag of whether the lock is held inside stdio */
+	int _lockcancelstate; /* Stashed cancellation state on internal lock */
 #endif	
 };
 
@@ -49,12 +51,15 @@ struct __sfileext {
 #define _LOCKCOND(fp) (_EXT(fp)->_lockcond)
 #define _LOCKOWNER(fp) (_EXT(fp)->_lockowner)
 #define _LOCKCOUNT(fp) (_EXT(fp)->_lockcount)
+#define _LOCKINTERNAL(fp) (_EXT(fp)->_lockinternal)
+#define _LOCKCANCELSTATE(fp) (_EXT(fp)->_lockcancelstate)
 #define _FILEEXT_SETUP(f, fext) do { \
 	/* LINTED */(f)->_ext._base = (unsigned char *)(fext); \
 	mutex_init(&_LOCK(f), NULL); \
 	cond_init(&_LOCKCOND(f), 0, NULL); \
 	_LOCKOWNER(f) = NULL; \
 	_LOCKCOUNT(f) = 0; \
+	_LOCKINTERNAL(f) = 0; \
 	} while (/* LINTED */ 0)
 #else
 #define _FILEEXT_SETUP(f, fext) /* LINTED */(f)->_ext._base = (unsigned char *)(fext)
