@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.1 2003/04/21 00:14:52 fvdl Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.2 2003/05/14 12:57:46 wiz Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -343,11 +343,11 @@ ahd_pci_attach(parent, self, aux)
 	LIST_INIT(&ahd->pending_scbs);
 	ahd_timer_init(&ahd->reset_timer);
 	ahd_timer_init(&ahd->stat_timer);
-	ahd->int_coalessing_timer = AHD_INT_COALESSING_TIMER_DEFAULT;
-	ahd->int_coalessing_maxcmds = AHD_INT_COALESSING_MAXCMDS_DEFAULT;
-	ahd->int_coalessing_mincmds = AHD_INT_COALESSING_MINCMDS_DEFAULT;
-	ahd->int_coalessing_threshold = AHD_INT_COALESSING_THRESHOLD_DEFAULT;
-	ahd->int_coalessing_stop_threshold = AHD_INT_COALESSING_STOP_THRESHOLD_DEFAULT;
+	ahd->int_coalescing_timer = AHD_INT_COALESCING_TIMER_DEFAULT;
+	ahd->int_coalescing_maxcmds = AHD_INT_COALESCING_MAXCMDS_DEFAULT;
+	ahd->int_coalescing_mincmds = AHD_INT_COALESCING_MINCMDS_DEFAULT;
+	ahd->int_coalescing_threshold = AHD_INT_COALESCING_THRESHOLD_DEFAULT;
+	ahd->int_coalescing_stop_threshold = AHD_INT_COALESCING_STOP_THRESHOLD_DEFAULT;
 
 	if (ahd_platform_alloc(ahd, NULL) != 0) {
                 ahd_free(ahd);
