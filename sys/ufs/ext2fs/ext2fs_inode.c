@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.2 1997/07/04 20:22:13 drochner Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.3 1997/10/09 15:42:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -172,9 +172,8 @@ ext2fs_update(v)
 		brelse(bp);
 		return (error);
 	}
-	bcopy(&ip->i_din.e2fs_din,
-		((struct ext2fs_dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number)),
-		sizeof(struct ext2fs_dinode));
+	e2fs_isave(&ip->i_din.e2fs_din,
+		(struct ext2fs_dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number));
 	if (ap->a_waitfor)
 		return (bwrite(bp));
 	else {
@@ -346,7 +345,7 @@ ext2fs_truncate(v)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) -1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		bn = oip->i_e2fs_blocks[NDADDR + level];
+		bn = fs2h32(oip->i_e2fs_blocks[NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
 				fsbtodb(fs, bn), lastiblock[level], level, &count);
@@ -367,7 +366,7 @@ ext2fs_truncate(v)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = NDADDR - 1; i > lastblock; i--) {
-		bn = oip->i_e2fs_blocks[i];
+		bn = fs2h32(oip->i_e2fs_blocks[i]);
 		if (bn == 0)
 			continue;
 		oip->i_e2fs_blocks[i] = 0;
@@ -380,10 +379,11 @@ ext2fs_truncate(v)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] != oip->i_e2fs_blocks[NDADDR + level])
+		if (newblks[NDADDR + level] !=
+			fs2h32(oip->i_e2fs_blocks[NDADDR + level]))
 			panic("itrunc1");
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != oip->i_e2fs_blocks[i])
+		if (newblks[i] != fs2h32(oip->i_e2fs_blocks[i]))
 			panic("itrunc2");
 	if (length == 0 &&
 		(ovp->v_dirtyblkhd.lh_first || ovp->v_cleanblkhd.lh_first))
@@ -486,7 +486,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	for (i = NINDIR(fs) - 1,
 		nlbn = lbn + 1 - i * factor; i > last;
 		i--, nlbn += factor) {
-		nb = bap[i];
+		nb = fs2h32(bap[i]);
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
@@ -506,7 +506,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
-		nb = bap[i];
+		nb = fs2h32(bap[i]);
 		if (nb != 0) {
 			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
 						   last, level - 1, &blkcount);
