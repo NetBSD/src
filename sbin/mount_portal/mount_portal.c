@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.26 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.27 2005/02/09 13:57:57 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.26 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.27 2005/02/09 13:57:57 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,17 +75,15 @@ static const struct mntopt mopts[] = {
 
 static char mountpt[MAXPATHLEN];  /* made available to signal handler */
 
-	int	main __P((int, char *[]));
-static	void	sigchld __P((int));
-static	void	sighup __P((int));
-static	void	sigterm __P((int));
-static	void	usage __P((void));
+static	void	sigchld(int);
+static	void	sighup(int);
+static	void	sigterm(int);
+static	void	usage(void);
 
 static sig_atomic_t readcf;	/* Set when SIGHUP received */
 
 static void
-sigchld(sig)
-	int sig;
+sigchld(int sig)
 {
 	pid_t pid;
 
@@ -96,16 +94,14 @@ sigchld(sig)
 }
 
 static void
-sighup(sig)
-	int sig;
+sighup(int sig)
 {
 
 	readcf = 1;
 }
 
 static void
-sigterm(sig)
-	int sig;
+sigterm(int sig)
 {
 
 	if (unmount(mountpt, MNT_FORCE) < 0)
@@ -114,9 +110,7 @@ sigterm(sig)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct portal_args args;
 	struct sockaddr_un un;
@@ -308,7 +302,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
