@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.12 2001/12/28 20:35:47 christos Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.13 2002/06/20 23:47:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,3 +154,6 @@ void	ex_watchdog __P((struct ifnet *));
 int	ex_ioctl __P((struct ifnet *ifp, u_long, caddr_t));
 int	ex_activate __P((struct device *, enum devact));
 int	ex_detach __P((struct ex_softc *));
+
+int	ex_enable __P((struct ex_softc *));
+void	ex_disable __P((struct ex_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.63 2002/05/12 15:48:38 wiz Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.64 2002/06/20 23:47:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.63 2002/05/12 15:48:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.64 2002/06/20 23:47:25 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -104,8 +104,6 @@ void ex_getstats __P((struct ex_softc *));
 void ex_printstats __P((struct ex_softc *));
 void ex_tick __P((void *));
 
-int ex_enable __P((struct ex_softc *));
-void ex_disable __P((struct ex_softc *));
 void ex_power __P((int, void *));
 
 static int ex_eeprom_busy __P((struct ex_softc *));
