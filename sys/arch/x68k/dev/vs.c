@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.8 2001/10/03 00:04:49 augustss Exp $	*/
+/*	$NetBSD: vs.c,v 1.9 2001/11/13 09:06:00 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -57,12 +57,13 @@
 #include <arch/x68k/dev/vsvar.h>
 
 #ifdef VS_DEBUG
-#define DPRINTF(x)	printf x
+#define DPRINTF(y,x)	if(vs_debug>=(y))printf x
+static int vs_debug;
 #ifdef AUDIO_DEBUG
 extern int audiodebug;
 #endif
 #else
-#define DPRINTF(x)
+#define DPRINTF(y,x)
 #endif
 
 static int  vs_match __P((struct device *, struct cfdata *, void *));
@@ -190,8 +191,11 @@ vs_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (ia->ia_dmaintr != VS_DMAINTR)
 		return 0;
 
+#ifdef VS_DEBUG
+	vs_debug = 1;
 #ifdef AUDIO_DEBUG
 	audiodebug = 2;
+#endif
 #endif
 
 	return 1;
@@ -248,7 +252,7 @@ vs_dmaintr(void *hdl)
 {
 	struct vs_softc *sc = hdl;
 
-	DPRINTF(("vs_dmaintr\n"));
+	DPRINTF(2, ("vs_dmaintr\n"));
 
 	if (sc->sc_pintr) {
 		/* start next transfer */
@@ -284,7 +288,7 @@ vs_dmaerrintr(void *hdl)
 {
 	struct vs_softc *sc = hdl;
 
-	DPRINTF(("%s: DMA transfer error.\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, ("%s: DMA transfer error.\n", sc->sc_dev.dv_xname));
 	/* XXX */
 	vs_dmaintr(hdl);
 
@@ -301,7 +305,7 @@ vs_open(void *hdl, int flags)
 {
 	struct vs_softc *sc = hdl;
 
-	DPRINTF(("%s: open: flags=%d\n", sc->sc_dev.dv_xname, flags));
+	DPRINTF(1, ("vs_open: flags=%d\n", flags));
 
 	sc->sc_pintr = NULL;
 	sc->sc_rintr = NULL;
@@ -312,13 +316,13 @@ vs_open(void *hdl, int flags)
 static void
 vs_close(void *hdl)
 {
-	DPRINTF(("vs_close\n"));
+	DPRINTF(1, ("vs_close\n"));
 }
 
 static int
 vs_query_encoding(void *hdl, struct audio_encoding *fp)
 {
-	DPRINTF(("vs_query_encoding\n"));
+	DPRINTF(1, ("vs_query_encoding\n"));
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEadpcm);
@@ -379,7 +383,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	int mode;
 	int rate;
 
-	DPRINTF(("vs_set_params: setmode=%d, usemode=%d\n", setmode, usemode));
+	DPRINTF(1, ("vs_set_params: setmode=%d, usemode=%d\n", setmode, usemode));
 
 	/* set first record info, then play info */
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -424,11 +428,13 @@ vs_set_params(void *hdl, int setmode, int usemode,
 				return EINVAL;
 			break;
 		default:
-			DPRINTF(("vs_set_params: mode=%d, encoding=%d\n",
+			DPRINTF(1, ("vs_set_params: mode=%d, encoding=%d\n",
 				mode, p->encoding));
 			return (EINVAL);
 		}
+		DPRINTF(1, ("vs_set_params: rate=%d -> ", rate));
 		rate = vs_round_sr(rate);
+		DPRINTF(1, ("%d\n", rate));
 		if (rate < 0)
 			return (EINVAL);
 		if (mode == AUMODE_PLAY)
@@ -443,7 +449,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 static void
 vs_set_sr(struct vs_softc *sc, int rate)
 {
-	DPRINTF(("setting sample rate to %d, %d\n",
+	DPRINTF(1, ("setting sample rate to %d, %d\n",
 		 rate, (int)vs_l2r[rate].rate));
 	bus_space_write_1(sc->sc_iot, sc->sc_ppi, PPI_PORTC,
 			  (bus_space_read_1 (sc->sc_iot, sc->sc_ppi,
@@ -470,8 +476,7 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	struct dmac_dma_xfer *xf;
 	struct dmac_channel_stat *chan = sc->sc_dma_ch;
 
-	DPRINTF(("vs_trigger_output\n"));
-	DPRINTF(("trigger_output: start=%p, bsize=%d, intr=%p, arg=%p\n",
+	DPRINTF(2, ("vs_trigger_output: start=%p, bsize=%d, intr=%p, arg=%p\n",
 		 start, bsize, intr, arg));
 
 	sc->sc_pintr = intr;
@@ -519,8 +524,7 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 	struct dmac_dma_xfer *xf;
 	struct dmac_channel_stat *chan = sc->sc_dma_ch;
 
-	DPRINTF(("vs_trigger_input\n"));
-	DPRINTF(("trigger_input: start=%p, bsize=%d, intr=%p, arg=%p\n",
+	DPRINTF(2, ("vs_trigger_input: start=%p, bsize=%d, intr=%p, arg=%p\n",
 		 start, bsize, intr, arg));
 
 	sc->sc_rintr = intr;
@@ -561,7 +565,7 @@ vs_halt_output(void *hdl)
 {
 	struct vs_softc *sc = hdl;
 
-	DPRINTF(("vs_halt_output\n"));
+	DPRINTF(1, ("vs_halt_output\n"));
 
 	/* stop ADPCM play */
 	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
@@ -575,7 +579,7 @@ vs_halt_input(void *hdl)
 {
 	struct vs_softc *sc = hdl;
 
-	DPRINTF(("vs_halt_input\n"));
+	DPRINTF(1, ("vs_halt_input\n"));
 
 	/* stop ADPCM recoding */
 	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
@@ -652,7 +656,7 @@ vs_freemem(vd)
 static int
 vs_getdev(void *hdl, struct audio_device *retp)
 {
-	DPRINTF(("vs_getdev\n"));
+	DPRINTF(1, ("vs_getdev\n"));
 
 	*retp = vs_device;
 	return 0;
@@ -661,21 +665,21 @@ vs_getdev(void *hdl, struct audio_device *retp)
 static int
 vs_set_port(void *hdl, mixer_ctrl_t *cp)
 {
-	DPRINTF(("vs_set_port\n"));
+	DPRINTF(1, ("vs_set_port\n"));
 	return 0;
 }
 
 static int
 vs_get_port(void *hdl, mixer_ctrl_t *cp)
 {
-	DPRINTF(("vs_get_port\n"));
+	DPRINTF(1, ("vs_get_port\n"));
 	return 0;
 }
 
 static int
 vs_query_devinfo(void *hdl, mixer_devinfo_t *mi)
 {
-	DPRINTF(("vs_query_devinfo\n"));
+	DPRINTF(1, ("vs_query_devinfo\n"));
 	switch (mi->index) {
 	default:
 		return EINVAL;
@@ -768,7 +772,7 @@ vs_mappage(addr, mem, off, prot)
 static int
 vs_get_props(void *hdl)
 {
-	DPRINTF(("vs_get_props\n"));
+	DPRINTF(1, ("vs_get_props\n"));
 	return 0 /* | dependent | half duplex | no mmap */;
 }
 #endif /* NAUDIO > 0 && NVS > 0*/
