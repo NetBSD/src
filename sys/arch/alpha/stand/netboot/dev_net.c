@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.1 1996/09/18 20:03:07 cgd Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.2 1997/01/16 01:21:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -56,10 +56,10 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include "stand.h"
-#include "net.h"
-#include "netif.h"
-#include "bootparam.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
 #include "dev_net.h"
 
 extern int debug;
