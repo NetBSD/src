@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.15 1999/06/20 17:58:56 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.16 2000/01/18 19:53:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -1702,7 +1702,7 @@ panic("qd_strategy");
 	ubarelse(uh, &QBAreg);
 #endif
 	if (!(dga->csr & DMA_ERR)) {
-		iodone(bp);
+		biodone(bp);
 		return;
 	}
 
@@ -1723,7 +1723,7 @@ panic("qd_strategy");
 		DMA_SETIGNORE(DMAheader[unit]);
 		dga->csr |= DMA_IE;
 	}
-	iodone(bp);
+	biodone(bp);
 } /* qd_strategy */
 
 
