@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.11 2003/03/01 12:59:54 mrg Exp $
+# $NetBSD: etcupdate,v 1.12 2003/03/03 14:07:11 martti Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -149,8 +149,8 @@ install_checksum() {
 	[ "${AUTOMATIC}" != "YES" ] && return
 
 	D=`dirname "${1}"`
-	mkdir -p "/etc/etcupdate/${D}"
-	md5 "${1}" > "/etc/etcupdate/${1}"
+	mkdir -p "/var/etcupdate/${D}"
+	md5 "${1}" > "/var/etcupdate/${1}"
 }
 
 diff_and_merge_file() {
@@ -163,9 +163,9 @@ diff_and_merge_file() {
 		return
 	fi
 
-	if [ "${AUTOMATIC}" = "YES" -a -f "/etc/etcupdate/${1}"  ] ; then
+	if [ "${AUTOMATIC}" = "YES" -a -f "/var/etcupdate/${1}"  ] ; then
 		SUM1=`md5 "${1}"`
-		SUM2=`cat "/etc/etcupdate/${1}"`
+		SUM2=`cat "/var/etcupdate/${1}"`
 		if [ "${SUM1}" = "${SUM2}" ] ; then
 			install_file "${1}"
 			install_checksum "${1}"
