@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.96 2000/07/27 06:28:06 jeffs Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.97 2000/07/27 08:28:36 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.96 2000/07/27 06:28:06 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.97 2000/07/27 08:28:36 jeffs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -662,7 +662,6 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	u_long stack;
 {
-	int szsigcode = pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode;
 	struct frame *f = (struct frame *)p->p_md.md_regs;
 
 	/*
@@ -670,6 +669,8 @@ setregs(p, pack, stack)
 	 */
 #ifdef MIPS3
 	if (CPUISMIPS3) {
+		int szsigcode = pack->ep_emul->e_esigcode -
+				pack->ep_emul->e_sigcode;
 		MachFlushDCache((vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
 		MachFlushICache((vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
 	}
