@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.20 2003/07/03 11:12:32 drochner Exp $	*/
+/*	$NetBSD: esiop.c,v 1.21 2003/08/04 19:50:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.20 2003/07/03 11:12:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.21 2003/08/04 19:50:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ void	esiop_unqueue __P((struct esiop_softc *, int, int));
 int	esiop_handle_qtag_reject __P((struct esiop_cmd *));
 static void	esiop_start __P((struct esiop_softc *, struct esiop_cmd *));
 void 	esiop_timeout __P((void *));
-int	esiop_scsicmd __P((struct scsipi_xfer *));
 void	esiop_scsipi_request __P((struct scsipi_channel *,
 			scsipi_adapter_req_t, void *));
 void	esiop_dump_script __P((struct esiop_softc *));
