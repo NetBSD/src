@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.759 2005/02/20 00:49:06 christos Exp $
+# $NetBSD: mi,v 1.760 2005/02/20 06:49:01 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1959,6 +1959,7 @@
 ./usr/share/man/cat8/pam_login_access.0		man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_nologin.0		man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_permit.0		man-sysutil-catman	pam,.cat
+./usr/share/man/cat8/pam_radius.0		man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_rhosts.0		man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_rootok.0		man-sysutil-catman	pam,.cat
 ./usr/share/man/cat8/pam_securetty.0		man-sysutil-catman	pam,.cat
@@ -4152,6 +4153,7 @@
 ./usr/share/man/man8/pam_login_access.8		man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_nologin.8		man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_permit.8		man-sysutil-man		.man,pam
+./usr/share/man/man8/pam_radius.8		man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_rhosts.8		man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_rootok.8		man-sysutil-man		.man,pam
 ./usr/share/man/man8/pam_securetty.8		man-sysutil-man		.man,pam
