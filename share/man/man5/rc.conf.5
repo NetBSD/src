@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.80 2003/04/06 15:24:09 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.81 2003/06/27 22:33:19 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -694,7 +694,7 @@ as the unprivileged user and group
 .Xr chroot 2 Ns ed
 to
 .Sy named_chrootdir .
-.Pa Sy named_chrootdir Ns /var/run/log
+.Sy named_chrootdir Ns Pa /var/run/log
 will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
@@ -738,7 +738,7 @@ as the unprivileged user and group
 .Xr chroot 2 Ns ed
 to
 .Sy ntpd_chrootdir .
-.Pa Sy ntpd_chrootdir Ns Pa /var/run/log
+.Sy ntpd_chrootdir Ns Pa /var/run/log
 will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
