@@ -5649,8 +5649,8 @@ Keywords: UUCP, protocol, FAQ
 Approved: news-answers-request@@MIT.Edu
 
 Archive-name: uucp-internals
-Version: $Revision: 1.1.1.1 $
-Last-modified: $Date: 1999/03/29 11:16:59 $
+Version: $Revision: 1.2 $
+Last-modified: $Date: 2000/03/13 20:41:50 $
 @end format
 @end ifset
 
@@ -6137,7 +6137,7 @@ following @file{X.}  file:
 @example
 U ian test1
 F D.test1N003r qux
-O /usr/spool/uucppublic test1
+O /usr/spool/uucppublic/gorp test1
 F D.test1N003s
 I D.test1N003s
 C cat - ~ian/bar qux
