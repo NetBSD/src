@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.2.2 1997/12/04 11:44:58 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.2.2.3 1997/12/10 07:46:47 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,9 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+/* Maximum */
+#define MAX(i,j) ((i)>(j)?(i):(j))
+   
 
 int	md_get_info (void)
 {	struct disklabel disklabel;
@@ -71,13 +74,24 @@ int	md_get_info (void)
 		exit(1);
 	}
 	close(fd);
- 
+
 	dlcyl = disklabel.d_ncylinders;
 	dlhead = disklabel.d_ntracks;
 	dlsec = disklabel.d_nsectors;
 	sectorsize = disklabel.d_secsize;
 	dlcylsize = disklabel.d_secpercyl;
+
+	disktype = "SCSI";
+	if (disk->geom[0]*disk->geom[1]*disk->geom[2] != disk->geom[4])
+		if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
+		    || disk->geom[2] != dlsec)
+			process_menu (MENU_scsigeom1);
+		else
+			process_menu (MENU_scsigeom2);
+
 	dlsize = dlcyl*dlhead*dlsec;
+	fsdsize = dlsize;
+	fsdmb = fsdsize / MEG;
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
@@ -105,6 +119,8 @@ int md_make_bsd_partitions (void)
 {
 	FILE *f;
 	int i;
+	int part, partsize, partstart, remain;
+	char isize[SSTRSIZE];
 	int maxpart = getmaxpartitions();
 
 	/* Ask for layout type -- standard or special */
@@ -116,7 +132,9 @@ int md_make_bsd_partitions (void)
 
 	if (layoutkind == 3) {
 		ask_sizemult();
-	} else
+	} else {
+		multname = msg_string(MSG_megname);
+	}
 		sizemult = MEG / sectorsize;
 
 
@@ -127,11 +145,12 @@ int md_make_bsd_partitions (void)
 	bsdlabel[C][D_FSTYPE] = T_UNUSED;
 	bsdlabel[C][D_OFFSET] = 0;
 	bsdlabel[C][D_SIZE] = dlsize;
-	
+
 	/* Standard fstypes */
 	bsdlabel[A][D_FSTYPE] = T_42BSD;
 	bsdlabel[B][D_FSTYPE] = T_SWAP;
-	bsdlabel[E][D_FSTYPE] = T_42BSD;
+	bsdlabel[D][D_FSTYPE] = T_UNUSED;
+	bsdlabel[E][D_FSTYPE] = T_UNUSED;
 	bsdlabel[F][D_FSTYPE] = T_UNUSED;
 	bsdlabel[G][D_FSTYPE] = T_UNUSED;
 	bsdlabel[H][D_FSTYPE] = T_UNUSED;
@@ -139,7 +158,13 @@ int md_make_bsd_partitions (void)
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
 	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
-		partstart = ptstart;
+
+		bsdlabel[D][D_FSTYPE] = T_BOOT;
+		bsdlabel[D][D_OFFSET] = 2;
+		bsdlabel[D][D_SIZE] = BOOT_SIZE;
+	
+		partstart = BOOT_SIZE + 2;
+		swapadj = partstart;
 
 		/* Root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
@@ -153,7 +178,7 @@ int md_make_bsd_partitions (void)
 		partstart += partsize;
 
 		/* swap */
-		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
+		i = NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
@@ -163,16 +188,112 @@ int md_make_bsd_partitions (void)
 
 		/* /usr */
 		partsize = fsdsize - partstart;
-		bsdlabel[D][D_OFFSET] = partstart;
-		bsdlabel[D][D_SIZE] = partsize;
-		bsdlabel[D][D_BSIZE] = 8192;
-		bsdlabel[D][D_FSIZE] = 1024;
+		bsdlabel[E][D_FSTYPE] = T_42BSD;
+		bsdlabel[E][D_OFFSET] = partstart;
+		bsdlabel[E][D_SIZE] = partsize;
+		bsdlabel[E][D_BSIZE] = 8192;
+		bsdlabel[E][D_FSIZE] = 1024;
 		strcpy (fsmount[E], "/usr");
 
 		break;
 
 	case 3: /* custom: ask user for all sizes */
-		process_menu(MENU_editfsparts);
+		ask_sizemult();
+		/* boot */
+		partstart = 2;
+		remain = fsdsize - partstart;
+		snprintf (isize, SSTRSIZE, "%d", BOOT_SIZE);
+		msg_prompt (MSG_askboot, isize, isize, SSTRSIZE);
+		partsize = atoi(isize);
+		if (partsize > 0) {
+			partsize = MAX(partsize, BOOT_SIZE);
+			bsdlabel[D][D_FSTYPE] = T_BOOT;
+			bsdlabel[D][D_OFFSET] = 2;
+			bsdlabel[D][D_SIZE] = partsize;
+			partstart = partsize + 2;
+			swapadj = partstart;
+		}
+		
+		/* root */
+		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
+				   dlcylsize) - partstart;
+		snprintf (isize, SSTRSIZE, "%d", partsize/sizemult);
+		msg_prompt (MSG_askfsroot, isize, isize, SSTRSIZE,
+			    remain/sizemult, multname);
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+		bsdlabel[A][D_OFFSET] = partstart;
+		bsdlabel[A][D_SIZE] = partsize;
+		bsdlabel[A][D_BSIZE] = 8192;
+		bsdlabel[A][D_FSIZE] = 1024;
+		strcpy (fsmount[A], "/");
+		partstart += partsize;
+		
+		/* swap */
+		remain = fsdsize - partstart;
+		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
+			   MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
+			   dlcylsize) - partstart - swapadj;
+		snprintf (isize, SSTRSIZE, "%d", partsize/sizemult);
+		msg_prompt_add (MSG_askfsswap, isize, isize, SSTRSIZE,
+			    remain/sizemult, multname);
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+		bsdlabel[B][D_OFFSET] = partstart;
+		bsdlabel[B][D_SIZE] = partsize;
+		partstart += partsize;
+		
+		/* /usr */
+		remain = fsdsize - partstart;
+		partsize = fsdsize - partstart;
+		snprintf (isize, SSTRSIZE, "%d", partsize/sizemult);
+		msg_prompt_add (MSG_askfsusr, isize, isize, SSTRSIZE,
+			    remain/sizemult, multname);
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+		if (remain - partsize < sizemult)
+			partsize = remain;
+		bsdlabel[E][D_FSTYPE] = T_42BSD;
+		bsdlabel[E][D_OFFSET] = partstart;
+		bsdlabel[E][D_SIZE] = partsize;
+		bsdlabel[E][D_BSIZE] = 8192;
+		bsdlabel[E][D_FSIZE] = 1024;
+		strcpy (fsmount[E], "/usr");
+		partstart += partsize;
+
+		/* Others ... */
+		remain = fsdsize - partstart;
+		part = D;
+		if (remain > 0)
+			msg_display (MSG_otherparts);
+		while (remain > 0 && part <= H) {
+			if (bsdlabel[part][D_FSTYPE] == T_UNUSED) {
+				partsize = fsdsize - partstart;
+				snprintf (isize, SSTRSIZE, "%d",
+					  partsize/sizemult);
+				msg_prompt_add (MSG_askfspart, isize, isize,
+						SSTRSIZE, diskdev,
+						partname[part],
+						remain/sizemult, multname);
+				partsize = NUMSEC(atoi(isize), sizemult,
+						  dlcylsize);
+				if (remain - partsize < sizemult)
+					partsize = remain;
+				bsdlabel[part][D_FSTYPE] = T_42BSD;
+				bsdlabel[part][D_OFFSET] = partstart;
+				bsdlabel[part][D_SIZE] = partsize;
+				bsdlabel[part][D_BSIZE] = 8192;
+				bsdlabel[part][D_FSIZE] = 1024;
+				msg_prompt_add (MSG_mountpoint, NULL,
+						fsmount[part], 20);
+				partstart += partsize;
+				remain = fsdsize - partstart;
+			}
+			part++;
+		}
+		
+
+		/* Verify Partitions. */
+		process_menu(MENU_fspartok);
 		break;
 	}
 
