@@ -1,6 +1,8 @@
+/*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
+
 /*
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)checknr.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: checknr.c,v 1.3 1994/12/24 15:57:02 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
+#else 
+static char rcsid[] = "$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $";
+#endif
 #endif /* not lint */
 
 /*
