@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cut.c	5.4 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: cut.c,v 1.6 1993/12/31 19:24:42 jtc Exp $";
+static char rcsid[] = "$Id: cut.c,v 1.7 1995/03/20 23:50:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -223,7 +223,8 @@ f_cut(fp, fname)
 	int output;
 	char lbuf[_POSIX2_LINE_MAX + 1];
 
-	for (sep = dchar, output = 0; fgets(lbuf, sizeof(lbuf), fp); output = 0) {
+	for (sep = dchar; fgets(lbuf, sizeof(lbuf), fp);) {
+		output = 0;
 		for (isdelim = 0, p = lbuf;; ++p) {
 			if (!(ch = *p)) {
 				(void)fprintf(stderr,
