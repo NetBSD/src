@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.12 2000/02/13 04:55:30 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.13 2000/02/24 23:52:46 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -548,7 +548,9 @@ get_component_label(fd, component)
 	printf("   Autoconfig: %s\n", 
 	       component_label.autoconfigure ? "Yes" : "No" );
 	printf("   Last configured as: raid%d\n", component_label.last_unit );
+#if 0
 	printf("   Config order: %d\n", component_label.config_order);
+#endif
 #if 0
 	/* old version */
 	printf("Version: %d\n",component_label.version);
@@ -975,6 +977,7 @@ static void
 usage()
 {
 	fprintf(stderr, "usage: %s [-v] -a component dev\n", __progname);
+	fprintf(stderr, "       %s [-v] -A yes | no | root dev\n", __progname);
 	fprintf(stderr, "       %s [-v] -B dev\n", __progname);
 	fprintf(stderr, "       %s [-v] -c config_file dev\n", __progname);
 	fprintf(stderr, "       %s [-v] -C config_file dev\n", __progname);
