@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2000/05/23 00:46:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2001/01/27 19:32:47 oster Exp $
 PROG=	raidctl 
-SRCS=	rf_configure.c rf_layout.c raidctl.c
+SRCS=	rf_configure.c raidctl.c
 MAN=	raidctl.8
 
 WARNS=2
