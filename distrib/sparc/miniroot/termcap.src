@@ -1,3 +1,5 @@
+#	$NetBSD: termcap.src,v 1.2 2002/03/10 20:23:28 lukem Exp $
+#
 adm+sgr|adm style highlight capabilities:\
 	:me=\EG0:mk=\EG1:mr=\EG4:se=\EG0:so=\EG4:ue=\EG0:us=\EG8:
 dumb|80-column dumb tty:\
