@@ -1,23 +1,43 @@
-#	$NetBSD: Makefile,v 1.4 1994/10/26 21:10:48 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/01/18 06:53:36 mellon Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 DESTDIR=
 STAND=	../../stand
-INCPATH=-I. -I/sys
-VPATH=	${STAND}
+#VPATH=	${STAND}
 
 # RELOC=80200000 allows for boot prog up to 1D0000 (1900544) bytes long
 RELOC=	80200000
+
+S=      ${.CURDIR}/../../..
 
 DEFS= -DSTANDALONE -DSMALL
 CFLAGS=	-O2 ${INCPATH} ${DEFS}
 AFLAGS=	-O2 ${INCPATH} ${DEFS} -DLOCORE
 
+.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
+.PATH: ${S}/stand ${S}/lib/libsa
+
+#INCPATH=-I. -I/sys
+INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+#LIBKERN= ${KERNLIB}
+#KERNLIB= ${.CURDIR}/../compile/libkern.a
+
+.include "$S/lib/libsa/Makefile.inc"
+LIBSA=  ${SA_LIB}
+
+# not yet: need to write libsa/Makefile.inc first
+LIBS=  ${.OBJDIR}/libdrive.a ${.CURDIR}/libsa/libsa.a  ${KERNLIB}
+#LIBS=	libdrive.a libsa/libsa.a ../../libkern/obj/libkern.a 
+
 DRIVERS= rz.c
 SRCS=	${DRIVERS}
-LIBS=	libdrive.a libsa/libsa.a ../../libkern/obj/libkern.a
+#STUFF=	callvec.c devopen.c getenv.c gets.c strcmp.c
+STUFF=
 
-ALL=	boot mkboot mkboottape dec_label
+ALL=	boot mkboot mkboottape dec_label rzboot bootrz
 
 .s.o:
 	${CPP} -E ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
@@ -27,38 +47,45 @@ all: ${ALL}
 
 boot: ${LIBS}
 
-libsa/libsa.a::
-	cd libsa; make
+#libsa/libsa.a::
+#	cd libsa; make
 
-libdrive.a: conf.o ${DRIVERS:.c=.o}
+${.OBJDIR}/libdrive.a: conf.o ${DRIVERS:.c=.o}
 	ar crv $@ $?
 	ranlib $@
 
 # depend on DEFS
 
-# bootable from real disks
-
-boot:	start.o boot.o bootconf.o ${LIBS}
-	ld -N -Ttext ${RELOC} -e start start.o boot.o bootconf.o ${LIBS} -o $@ 
-
-start.o: start.s
-	${CPP} -E ${CFLAGS:M-[ID]*} -DLOCORE ${AINC} ${.IMPSRC} | \
-	    ${AS} -o ${.TARGET}
-
+#before other deps on bootconf.o
 bootconf.o: conf.o
 	rm -f bootconf.c
-	ln -s conf.c bootconf.c
+	ln -s ${.CURDIR}/conf.c bootconf.c
 	${CC} -c ${CFLAGS} -DBOOT bootconf.c
 	rm -f bootconf.c
 
-mkboot: mkboot.c
-	${CC} ${CFLAGS} -o mkboot mkboot.c
 
-mkboottape: mkboottape.c
-	${CC} ${CFLAGS} -o mkboottape mkboottape.c
+# bootable from real disks
 
-dec_label: dec_label.c
-	${CC} ${CFLAGS} -o dec_label dec_label.c
+boot:	start.o boot.o bootconf.o filesystem.o ${LIBS}
+	ld -Map boot.map -N -Ttext ${RELOC} -e start start.o boot.o bootconf.o filesystem.o ${LIBS} -o boot.elf
+	elf2aout boot.elf boot
+
+start.o: ${.CURDIR}/start.S
+
+#	${CPP} -E ${CFLAGS:M-[ID]*} -DLOCORE ${AINC} ${.IMPSRC} | \
+#	    ${AS} -o ${.TARGET}
+
+mkboot: ${.CURDIR}/mkboot.c
+	${CC} ${CFLAGS} -o mkboot ${.CURDIR}/mkboot.c
+
+mkboottape: ${.CURDIR}/mkboottape.c
+	${CC} ${CFLAGS} -o mkboottape ${.CURDIR}/mkboottape.c
+
+dec_label: ${.CURDIR}/dec_label.c
+	${CC} ${CFLAGS} -o dec_label ${.CURDIR}/dec_label.c
+
+rzboot bootrz:	mkboot boot
+	./mkboot boot rzboot bootrz
 
 # utilities
 
@@ -78,3 +105,6 @@ depend: ${SRCS}
 	mkdep ${INCPATH} ${DEFS} ${SRCS}
 	mkdep -a -p ${INCPATH} ${DEFS} mkboot.c mkboottape.c
 	cd libsa; make depend
+
+.include <bsd.dep.mk>
+.include <bsd.obj.mk>
