@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2003/05/04 15:09:45 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.17 2003/07/15 05:59:58 itojun Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.16 2003/05/04 15:09:45 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.17 2003/07/15 05:59:58 itojun Exp $");
 #endif
 
 #include <string.h>
@@ -491,11 +491,11 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		prot[0] = '\0';
 		prot[1] = '\0';
 		if (vme->protection & VM_PROT_READ)
-			strcat(prot, "/read");
+			strlcat(prot, "/read", sizeof(prot));
 		if (vme->protection & VM_PROT_WRITE)
-			strcat(prot, "/write");
+			strlcat(prot, "/write", sizeof(prot));
 		if (vme->protection & VM_PROT_EXECUTE)
-			strcat(prot, "/exec");
+			strlcat(prot, "/exec", sizeof(prot));
 
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf("%*s%0*lX %6luK %-15s   %s\n",
