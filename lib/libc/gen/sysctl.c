@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.20 2004/03/24 19:31:46 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.21 2004/03/25 18:36:49 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.20 2004/03/24 19:31:46 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.21 2004/03/25 18:36:49 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,8 +118,8 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	.sysctl_size = sizeof(int),				\
 	.sysctl_name = (s),					\
 	.sysctl_num = (n),					\
-	.sysctl_idata = (v),					\
-	.sysctl_desc = (d), }
+	.sysctl_un = { .scu_idata = (v), },			\
+	._sysctl_desc = { .__sysc_ustr = { . __sysc_sdatum = (d), }, }, }
 
 	/*
 	 * the nodes under the "user" node
@@ -137,8 +137,19 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			.sysctl_size = sizeof(_PATH_STDPATH),
 			.sysctl_name = "cs_path",
 			.sysctl_num = USER_CS_PATH,
-			.sysctl_data = _PATH_STDPATH,
-			.sysctl_desc = NULL,
+			/*
+			 * XXX these nasty initializers (and the one in
+			 * the _INT() macro) can go away once all ports
+			 * are using gcc3, and become
+			 *
+			 *	.sysctl_data = _PATH_STDPATH,
+			 *	.sysctl_desc = NULL,
+			 */
+			.sysctl_un = { .scu_data = { ._sud_data =
+				{ .__sysc_ustr = { .__sysc_sdatum =
+				_PATH_STDPATH, }, }, }, },
+			._sysctl_desc = { .__sysc_ustr = { .__sysc_sdatum =
+				NULL, }, },
 		},
 		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX, NULL),
 		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX, NULL),
