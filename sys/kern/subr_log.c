@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.25 2002/11/26 18:44:34 christos Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.26 2003/03/13 10:20:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.25 2002/11/26 18:44:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.26 2003/03/13 10:20:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ logopen(dev, flags, mode, p)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
-	logsoftc.sc_pgid = p->p_pid;		/* signal process only */
+	logsoftc.sc_pgid = -p->p_pid;		/* signal process only */
 	/*
 	 * The message buffer is initialized during system configuration.
 	 * If it's been clobbered, note that and return an error.  (This
@@ -287,10 +287,10 @@ logwakeup()
 		return;
 	selnotify(&logsoftc.sc_selp, 0);
 	if (logsoftc.sc_state & LOG_ASYNC) {
-		if (logsoftc.sc_pgid < 0)
-			gsignal(-logsoftc.sc_pgid, SIGIO); 
-		else if (logsoftc.sc_pgid > 0 &&
-		    (p = pfind(logsoftc.sc_pgid)) != NULL)
+		if (logsoftc.sc_pgid > 0)
+			gsignal(logsoftc.sc_pgid, SIGIO); 
+		else if (logsoftc.sc_pgid < 0 &&
+		    (p = pfind(-logsoftc.sc_pgid)) != NULL)
 			psignal(p, SIGIO);
 	}
 	if (logsoftc.sc_state & LOG_RDWAIT) {
@@ -310,6 +310,8 @@ logioctl(dev, com, data, flag, p)
 {
 	long l;
 	int s;
+	pid_t pgid;
+	int error;
 
 	switch (com) {
 
@@ -334,7 +336,13 @@ logioctl(dev, com, data, flag, p)
 		break;
 
 	case TIOCSPGRP:
-		logsoftc.sc_pgid = *(int *)data;
+		pgid = *(int *)data;
+		if (pgid != 0) {
+			error = pgid_in_session(p, pgid);
+			if (error)
+				return error;
+		}
+		logsoftc.sc_pgid = pgid;
 		break;
 
 	case TIOCGPGRP:
