@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.77 1996/02/28 01:43:48 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.78 1996/03/08 20:36:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -72,6 +72,8 @@ isaattach(parent, self, aux)
 
 	printf("\n");
 
+	sc->sc_bc = iba->iba_bc;
+
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_scan(isascan, self);
 }
@@ -103,6 +105,7 @@ isascan(parent, match)
 	struct device *parent;
 	void *match;
 {
+	struct isa_softc *sc = (struct isa_softc *)parent;
 	struct device *dev = match;
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
@@ -110,6 +113,7 @@ isascan(parent, match)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("clone devices not supported on ISA bus");
 
+	ia.ia_bc = sc->sc_bc;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
 	ia.ia_maddr = cf->cf_loc[2];
