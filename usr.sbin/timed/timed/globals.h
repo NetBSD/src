@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.5 2000/01/21 17:08:39 mycroft Exp $	*/
+/*	$NetBSD: globals.h,v 1.6 2001/03/07 21:46:04 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif
 
 #include <sys/param.h>
@@ -174,8 +174,7 @@ extern int nnets;			/* nets I am connected to */
 
 #define trace_sendto_err(addr) {					\
 	int st_errno = errno;						\
-	syslog(LOG_ERR, "%s %d: sendto %s: %m",				\
-		__FILE__, __LINE__, inet_ntoa(addr));			\
+	syslog(LOG_ERR, "sendto %s: %m", inet_ntoa(addr));		\
 	if (trace)							\
 		fprintf(fd, "%s %d: sendto %s: %d", __FILE__, __LINE__,	\
 			inet_ntoa(addr), st_errno);			\
