@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.18 1999/07/30 01:29:30 hubertf Exp $	*/
+/*	$NetBSD: rup.c,v 1.19 2000/03/08 12:10:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.18 1999/07/30 01:29:30 hubertf Exp $");
+__RCSID("$NetBSD: rup.c,v 1.19 2000/03/08 12:10:28 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,10 +99,8 @@ remember_host(addr)
 	hosts = hp;
 }
 
-
-
 struct rup_data {
-	char *host;
+	const char *host;
 	struct statstime statstime;
 };
 struct rup_data *rup_data;
@@ -118,9 +116,9 @@ enum sort_type {
 enum sort_type sort_type;
 
 int compare __P((struct rup_data *, struct rup_data *));
-void remember_rup_data __P((char *, struct statstime *));
+void remember_rup_data __P((const char *, struct statstime *));
 int rstat_reply __P((char *, struct sockaddr_in *));
-int print_rup_data __P((char *, statstime *));
+int print_rup_data __P((const char *, statstime *));
 void onehost __P((char *));
 void allhosts __P((void));
 int main __P((int, char *[]));
@@ -148,7 +146,7 @@ compare(d1, d2)
 
 void
 remember_rup_data(host, st)
-	char *host;
+	const char *host;
 	struct statstime *st;
 {
         if (rup_data_idx >= rup_data_max) {
@@ -200,7 +198,7 @@ rstat_reply(replyp, raddrp)
 
 int
 print_rup_data(host, host_stat)
-	char *host;
+	const char *host;
 	statstime *host_stat;
 {
 	struct tm *tmp_time;
