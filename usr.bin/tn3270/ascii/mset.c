@@ -1,4 +1,4 @@
-/*	$NetBSD: mset.c,v 1.3 1997/01/09 20:21:59 tls Exp $	*/
+/*	$NetBSD: mset.c,v 1.4 1998/02/04 21:33:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mset.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mset.c,v 1.3 1997/01/09 20:21:59 tls Exp $";
+static char rcsid[] = "$NetBSD: mset.c,v 1.4 1998/02/04 21:33:31 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -52,11 +52,7 @@ static char rcsid[] = "$NetBSD: mset.c,v 1.3 1997/01/09 20:21:59 tls Exp $";
  */
 
 #include <stdio.h>
-#if	defined(unix)
-#include <strings.h>
-#else	/* defined(unix) */
 #include <string.h>
-#endif	/* defined(unix) */
 #include "../ctlr/function.h"
 
 #include "state.h"
