@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.11 1999/05/12 15:33:29 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.12 1999/05/14 15:54:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1369,6 +1369,7 @@ ex_getstats(sc)
 	/*
 	 * Clear the following to avoid stats overflow interrupts
 	 */
+	bus_space_read_1(iot, ioh, TX_DEFERRALS);
 	bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
 	bus_space_read_1(iot, ioh, TX_NO_SQE);
 	bus_space_read_1(iot, ioh, TX_CD_LOST);
