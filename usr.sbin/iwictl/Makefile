@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2005/01/11 18:52:11 skrll Exp $
+#	$NetBSD: Makefile,v 1.3 2005/04/03 17:21:29 christos Exp $
 
+WARNS=3
 .if ${MACHINE} == "i386"
 PROG	= iwictl
 .endif
