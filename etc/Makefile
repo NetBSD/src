@@ -98,7 +98,7 @@ distrib-dirs:
 		  ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
 		  ${DESTDIR}/var/spool/uucppublic
 	rm -f ${DESTDIR}/sys
-	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
+	ln -s ${DESTDIR}/usr/src/sys ${DESTDIR}/sys
 	-mkdir ${DESTDIR}/usr/obj
 	chmod 755 ${DESTDIR}/usr/obj
 
