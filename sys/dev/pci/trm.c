@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.1 2001/11/03 17:01:17 tsutsui Exp $	*/
+/*	$NetBSD: trm.c,v 1.2 2001/11/04 17:17:22 tsutsui Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -40,7 +40,7 @@
  *   (C)Copyright 1995-1999 Tekram Technology Co., Ltd. All rights reserved.
  */
 
-#undef TRM_DEBUG
+/* #define TRM_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,8 +290,8 @@ struct trm_softc {
 	struct trm_dcb *sc_dcb[TRM_MAX_TARGETS][8];
 
 	struct trm_srb *sc_freesrb;
-	struct trm_srb *sc_tempsrb;
 	struct trm_srb *sc_srb;	/* SRB array */
+	struct trm_srb sc_tempsrb;
 
 	struct trm_sg_entry *sc_sglist;
 
@@ -1774,7 +1774,7 @@ trm_msgin_phase0(sc, srb, pstat)
 					srb->state = SRB_DATA_XFER;
 				} else {
 			mingx0:
-					srb = sc->sc_tempsrb;
+					srb = &sc->sc_tempsrb;
 					srb->state = SRB_UNEXPECT_RESEL;
 					dcb->actsrb = srb;
 					srb->msgout[0] = MSG_ABORT_TAG;
@@ -2131,7 +2131,7 @@ trm_reselect(sc)
 
 	sc->sc_actdcb = dcb;
 	if (dcb->mode & EN_TAG_QUEUING) {
-		srb = sc->sc_tempsrb;
+		srb = &sc->sc_tempsrb;
 		dcb->actsrb = srb;
 	} else {
 		srb = dcb->actsrb;
@@ -2139,7 +2139,7 @@ trm_reselect(sc)
 			/*
 			 * abort command
 			 */
-			srb = sc->sc_tempsrb;
+			srb = &sc->sc_tempsrb;
 			srb->state = SRB_UNEXPECT_RESEL;
 			dcb->actsrb = srb;
 			srb->msgout[0] = MSG_ABORT;
@@ -2723,9 +2723,9 @@ trm_link_srb(sc)
 			/*
 			 * link all SRB
 			 */
-			srb->next = sc->sc_srb + 1;
+			srb->next = srb + 1;
 #ifdef TRM_DEBUG
-			printf("srb->next = %8x ", (int) (sc->sc_srb + 1));
+			printf("srb->next = %8x ", (int) (srb + 1));
 #endif
 		} else {
 			/*
@@ -2734,7 +2734,7 @@ trm_link_srb(sc)
 			srb->next = NULL;
 		}
 #ifdef TRM_DEBUG
-		printf("srb = %8x\n", (int) sc->sc_srb);
+		printf("srb = %8x\n", (int) srb);
 #endif
 	}
 	return;
@@ -2750,7 +2750,6 @@ trm_init_sc(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct trm_nvram *eeprom;
-	struct trm_srb tempsrb;
 	int i, j;
 
 	eeprom = &sc->sc_eeprom;
@@ -2779,7 +2778,6 @@ trm_init_sc(sc)
 	/*
 	 * temp SRB for Q tag used or abord command used
 	 */
-	sc->sc_tempsrb = &tempsrb;
 	/* allocate DCB array for scan device */
 	for (i = 0; i <= sc->maxid; i++)
 		if (sc->sc_id != i)
