@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.9 2000/06/03 05:31:23 matt Exp $
+# $NetBSD: ad.powerpc,v 1.10 2000/06/11 14:13:00 tsubai Exp $
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
 ./usr/include/powerpc/aout_machdep.h	comp-c-include
@@ -10,9 +10,11 @@
 ./usr/include/powerpc/db_machdep.h	comp-c-include
 ./usr/include/powerpc/elf_machdep.h	comp-c-include
 ./usr/include/powerpc/endian.h	comp-c-include
+./usr/include/powerpc/endian_machdep.h	comp-c-include
 ./usr/include/powerpc/float.h	comp-c-include
 ./usr/include/powerpc/fpu.h	comp-c-include
 ./usr/include/powerpc/frame.h	comp-c-include
+./usr/include/powerpc/hid_601.h	comp-c-include
 ./usr/include/powerpc/ieee.h	comp-c-include
 ./usr/include/powerpc/ieeefp.h	comp-c-include
 ./usr/include/powerpc/ipkdb.h	comp-c-include
