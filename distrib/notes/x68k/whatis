@@ -1,1 +1,3 @@
-NetBSD 1.2 is the first public release of NetBSD for the x68k platform.
+	$NetBSD: whatis,v 1.1.4.1 1998/11/07 04:18:40 cgd Exp $	
+
+NetBSD _VER is the second public release of NetBSD for the x68k platform.
