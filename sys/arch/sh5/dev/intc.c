@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.2 2002/08/26 10:45:55 scw Exp $	*/
+/*	$NetBSD: intc.c,v 1.3 2002/08/30 10:41:24 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,6 +39,8 @@
  * SH-5 Interrupt Controller
  */
 
+#include "opt_sh5_intc.h"
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -51,6 +53,22 @@
 #include <sh5/dev/pbridgevar.h>
 #include <sh5/dev/intcvar.h>
 #include <sh5/dev/intcreg.h>
+
+/*
+ * Check the IRL mode setting, from the config file via opt_sh5_intc.h
+ */
+#ifdef SH5_INTC_IRL_MODE_INDEP
+#ifdef SH5_INTC_IRL_MODE_LEVEL
+#error "Only one of SH5_INTC_IRL_MODE_INDEP and SH5_INTC_IRL_MODE_INDEP should be defined"
+#endif
+#else
+#ifndef SH5_INTC_IRL_MODE_LEVEL
+/*
+ * Default to Independent Mode if no option specified
+ */
+#define SH5_INTC_IRL_MODE_INDEP
+#endif
+#endif
 
 
 static int intcmatch(struct device *, struct cfdata *, void *);
@@ -135,6 +153,12 @@ intcattach(struct device *parent, struct device *self, void *args)
 	intc_reg_write(sc, INTC_REG_INTDISB(0x20), INTC_INTDISB_ALL);
 	intc_reg_write(sc, INTC_REG_INTPRI(0x00), 0);
 	intc_reg_write(sc, INTC_REG_INTPRI(0x20), 0);
+
+#ifdef SH5_INTC_IRL_MODE_INDEP
+	intc_reg_write(sc, INTC_REG_ICR_SET, INTC_ICR_SET_IRL_MODE_INDEP);
+#else
+	intc_reg_write(sc, INTC_REG_ICR_CLEAR, INTC_ICR_CLEAR_IRL_MODE_LEVEL);
+#endif
 
 	sh5_intr_init(31, intc_enable, intc_disable, sc);
 
