@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.21 2003/03/30 21:37:52 wiz Exp $
+.\" $NetBSD: traceroute.8,v 1.22 2003/03/31 00:32:54 perry Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -13,7 +13,7 @@
 .\" from this software without specific prior written permission.
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
-.\" WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
 .\"	Header: traceroute.8,v 1.11 97/04/22 13:45:13 leres Exp
 .\"
@@ -181,7 +181,7 @@ Set the
 in probe packets to the following value (default zero).  The value must be
 a decimal integer in the range 0 to 255.  This option can be used to
 see if different types-of-service result in different paths.  (If you
-are not running 4.4bsd, this may be academic since the normal network
+are not running 4.4BSD, this may be academic since the normal network
 services like telnet and ftp don't let you control the TOS).
 Not all values of TOS are legal or
 meaningful \- see the IP spec for definitions.  Useful values are
