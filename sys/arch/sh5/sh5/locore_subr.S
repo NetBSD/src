@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.12 2002/10/09 18:52:36 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.13 2002/10/19 08:56:45 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * If we're using the asm version of memcpy() in /sys/lib/libkern/arch/sh5,
+ * then copyin(), copyout() and kcopy() can take advantage of it.
+ */
+#define	_COPYINOUT_USE_MEMCPY
 
 /*
  * ##########
@@ -324,9 +330,9 @@ ENTRY_NOPROFILE(splraise)
  *                         r2           r3            r4
  */
 ENTRY(copyout)
-	ptabs/l	r18, tr0
+	add	r18, r63, r61
+	movi	EFAULT, r60		/* Assume there was a problem */
 	pta/u	Lcopyexit, tr1
-	movi	EFAULT, r5		/* Assume there was a problem */
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
@@ -355,14 +361,27 @@ ENTRY(copyout)
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
 
+#ifdef _COPYINOUT_USE_MEMCPY
+	/*
+	 * Note: This assumes we're using the asm version of memcpy()
+	 */
+	LEAF(_C_LABEL(memcpy), r25)
+	ptabs/l	r25, tr0
+	add	r2, r63, r0
+	add	r3, r63, r2
+	add	r0, r63, r3
+	blink	tr0, r18
+#else
 	movi	0, r1
 	pta/l	1f, tr1
-
 1:	ldx.b	r2, r1, r0		/* Copy (XXX: SLOWWWWWWW!!) */
 	stx.b	r3, r1, r0
 	addi	r1, 1, r1
 	bgt/l	r4, r1, tr1
-	movi	0, r5			/* No error! */
+#endif
+
+	pta/l	Lcopyerr, tr2
+	movi	0, r60			/* No error! */
 	blink	tr2, r63
 
 
@@ -373,9 +392,9 @@ ENTRY(copyout)
  *                        r2           r3            r4
  */
 ENTRY(copyin)
-	ptabs/l	r18, tr0
+	add	r18, r63, r61
+	movi	EFAULT, r60		/* Assume there was a problem */
 	pta/u	Lcopyexit, tr1
-	movi	EFAULT, r5		/* Assume there was a problem */
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
@@ -404,6 +423,17 @@ ENTRY(copyin)
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
 
+#ifdef _COPYINOUT_USE_MEMCPY
+	/*
+	 * Note: This assumes we're using the asm version of memcpy()
+	 */
+	LEAF(_C_LABEL(memcpy), r25)
+	ptabs/l	r25, tr0
+	add	r2, r63, r0
+	add	r3, r63, r2
+	add	r0, r63, r3
+	blink	tr0, r18
+#else
 	movi	0, r1
 	pta/l	1f, tr1
 
@@ -411,14 +441,16 @@ ENTRY(copyin)
 	stx.b	r3, r1, r0
 	addi	r1, 1, r1
 	bgt/l	r4, r1, tr1
-	movi	0, r5			/* No error! */
+#endif
+	movi	0, r60			/* No error! */
 
 Lcopyerr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r63	/* Clear pcb_onfault */
 Lcopyexit:
-	or	r5, r63, r2		/* Copy error code */
+	ptabs/l	r61, tr0
+	or	r60, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
 
@@ -556,9 +588,9 @@ ENTRY(copystr)
  *                       r2         r3          r4
  */
 ENTRY(kcopy)
-	ptabs/l	r18, tr0
+	add	r18, r63, r61
+	movi	EFAULT, r60		/* Assume there was a problem */
 	pta/u	Lkcopyexit, tr1
-	movi	EFAULT, r5		/* Assume there was a problem */
 	bge/u	r63, r4, tr1		/* Return EFAULT if len <= 0 */
 
 #ifndef _LP64
@@ -583,6 +615,17 @@ ENTRY(kcopy)
 	LDPTR	r0, PCB_ONFAULT, r6	/* Preserve current pcb_onfault */
 	STPTR	r0, PCB_ONFAULT, r1	/* Set pcb_onfault to Lcopyerr */
 
+#ifdef _COPYINOUT_USE_MEMCPY
+	/*
+	 * Note: This assumes we're using the asm version of memcpy()
+	 */
+	LEAF(_C_LABEL(memcpy), r25)
+	ptabs/l	r25, tr0
+	add	r2, r63, r0
+	add	r3, r63, r2
+	add	r0, r63, r3
+	blink	tr0, r18
+#else
 	movi	0, r1
 	pta/l	1f, tr1
 
@@ -590,13 +633,17 @@ ENTRY(kcopy)
 	stx.b	r3, r1, r0
 	addi	r1, 1, r1
 	bgt/l	r4, r1, tr1
-	movi	0, r5			/* No error! */
+#endif
+
+	movi	0, r60			/* No error! */
+
 Lkcopyerr:
 	getcon	kcr0, r0		/* Refetch cpu_info */
 	LDPTR	r0, CI_CURPCB, r0
 	STPTR	r0, PCB_ONFAULT, r6	/* Restore pcb_onfault */
 Lkcopyexit:
-	or	r5, r63, r2		/* Copy error code */
+	ptabs/l	r61, tr0
+	or	r60, r63, r2		/* Copy error code */
 	blink	tr0, r63
 
 
