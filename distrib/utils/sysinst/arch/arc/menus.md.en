@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.5 2003/05/07 19:02:54 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.6 2003/05/18 18:54:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,10 +38,6 @@
 
 /* Menu definitions for sysinst. arc version, machine dependent. */
 
-menu fullpart, title  "Select your choice";
-	option "Use only part of the disk", exit, action  {usefull = 0;};
-	option "Use the entire disk", 	    exit, action  {usefull = 1;};
-
 menu wdtype, title  "Select type";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
@@ -74,50 +70,6 @@ menu dlgeom, title "Choose an option";
 			disk->dd_head = dlhead;
 			disk->dd_sec = dlsec;
 		};
-
-menu editparttable, title  "Choose your partition", exit;
-	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
-			};
-	option "Edit partition 0",  sub menu editpart,
-		action  { editpart = 0; };
-	option "Edit partition 1",  sub menu editpart,
-		action  { editpart = 1; };
-	option "Edit partition 2",  sub menu editpart,
-		action  { editpart = 2; };
-	option "Edit partition 3",  sub menu editpart,
-		action  { editpart = 3; };
-	option "Reselect size specification",
-		action  { reask_sizemult(bcylsize); }; 
-
-menu editpart, title  "Select to change";
-	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part(&mbr.mbr_parts[0], editpart,-1);
-			   msg_display_add(MSG_newline);
-			};
-	option "Kind", sub menu chooseid;
-	option "Start and size", action { edit_ptn_bounds(); };
-	option "Set active", action { activepart = editpart; };
-	option "Partition OK", exit;
-
-menu chooseid, title  "Partition Kind?";
-	option "NetBSD", 	exit,	action
-	{
-		part[editpart].mbrp_typ = 169;
-	};
-	option "DOS < 32 Meg",	exit,	action
-	{
-		part[editpart].mbrp_typ = 4;
-	};
-	option "DOS > 32 Meg",	exit,	action
-	{
-		part[editpart].mbrp_typ = 6;
-	};
-	option "unused",	exit,	action
-	{
-		part[editpart].mbrp_typ = 0;
-	};
-	option "don't change",	exit;
 
 menu cyl1024;
 	display action {

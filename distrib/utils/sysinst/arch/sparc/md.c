@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.32 2003/02/19 02:09:46 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.33 2003/05/18 18:54:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ md_get_info(void)
 	int fd;
 	char devname[100];
 
-	snprintf(devname, 100, "/dev/r%sc", diskdev);
+	snprintf(devname, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
 
 	fd = open(devname, O_RDONLY, 0);
 	if (fd < 0) {

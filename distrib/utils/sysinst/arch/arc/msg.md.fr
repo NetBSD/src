@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.3 2003/05/14 22:11:42 he Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.4 2003/05/18 18:54:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,22 +43,6 @@ message md_hello
 
 }
 
-message fullpart
-{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
-choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
-sur une partie de celui-ci.
-Une installation sur une partie du disque crée une partition, ou `slice', pour
-NetBSD dans le secteur de démarage (Master Boot Record, alias MBR) de votre
-disque. Une installation sur la totalité du disque est `dangereusement
-dédiée' : elle réinitialise complétement le MBR, ce qui efface tout système
-d'exploitation ou données existants sur le disque. Cela rend également
-impossible l'installation ultérieure d'un deuxième système d'exploitation,
-sauf si vous reinstallez complètement NetBSD en utilisant uniquement une
-partie du disque.
-
-Que désirez vous faire ?
-}
-
 message wdtype
 {Quel type de disque est %s?}
 
@@ -74,110 +58,6 @@ géom réelle:	%d cylindres, %d têtes, %d secteurs
 }
 
 /* the %s's will expand into three character strings */
-message part_header
-{   Total disksize %d %s.
-
-   Début(%3s) Fin(%3s)   Taille(%3s) Type
-   ---------- ---------- ----------- ----
-}
-
-message part_row_start_unused
-{%-1d:                                  }
-
-message part_row_start_used
-{%-1d: %-10d %-10d %-11d}
-
-message part_row_end
-{ %s\n}
-
-message setbiosgeom
-{On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
-Rappelez vous que le nombre de cylindre doit être <= 1024 et que le nombre
-de secteur doit être <=63. Si votre BIOS est configuré avec plus de 1024
-cylindre, tronquez ce nombre à 1024 ici, NetBSD saura utiliser les cylindres
-restant.
-}
-
-message confirmbiosgeom
-{SVP vérifiez que la géometrie du BIOS ci-dessous est correcte. Le nombre
-de cylindre à pu etre tronquée à 1024. Ce n'est pas un problème du moment
-que les autres paramètres sont corrects. Seulement 1024 cuylindres peuvent
-etre specifiés dans le secteur de boot, le reste sera trouvé d'une manière
-différente par NetBSD.
-
-Si vous réentrez ces valeurs, vérifiez qu'elles sont correctes et
-correspondent à celles utilisées par d'autre systèmes sur ce disque. Des
-valeurs différentes peuvent conduire à des pertes de données.
-}
-
-message badgeom
-{Les valeurs actuelles de la géométrie de votre disque sont :
-
-}
-
-message realgeom
-{ géom réelle: %d cylindres, %d têtes, %d secteurs (pour information)\n}
-
-message biosgeom
-{ géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
-
-message reentergeom
-{La géométrie que vous venez de spécifier n'est pas utilisable. SVP entrez
-de nouveau la géométrie.
-}
-
-message ovrwrite
-{Votre disque a actuellement une partition autre que NetBSD. Voulez vous
-vraiment l'écraser par une partition NetBSD ?
-}
-
-message parttable
-{La table des partitions de votre disque est :
-}
-
-message editpart
-{La partition %d ressemble à:\n\n}
-
-message editparttable
-{Editez votre table de partition DOS. La partition en surbrillance est
-actuellement active. La table des partitions est :
-
-}
-
-message mbrpart_start_special
-{
-  Valeurs spéciales qui peuvent être entrées pour la valeur Début:
- -N: commence à la fin de la parition N
-  0: commence au début du disque
-}
-
-message mbrpart_size_special
-{
-  Valeurs spéciales qui peuvent être entrées pour la valeur Taille:
-  -N: dimentionne la partition de façon à finir au début de la partition N
-   0: finit à la fin du disque
-}
-
-message reeditpart
-{Il y a des partitions BIOS qui se recouvrent ou bien vous n'avez pas
-exactement une partition NetBSD. Vous devez éditer de nouveau la table
-des partitions.
-
-Voulez vous la rééditer ?
-}
-
-message nobsdpart
-{Il n'y a pas de partition NetBSD dans la table des partitions du secteur de
-boot.}
-
-message multbsdpart
-{Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
-boot. La partition %d sera utilisée.}
-
-message dofdisk
-{Configuration de la table des partition DOS ...
-}
-
 message dobad144
 {Installation de la table des block défectueux ...
 }
