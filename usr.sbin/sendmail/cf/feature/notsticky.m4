@@ -32,8 +32,9 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.1 (Berkeley) 6/7/93')
-#
+
 divert(0)
-# Configuration version number
-DZ8.1
+VERSIONID(`@(#)notsticky.m4	8.1 (Berkeley) 6/7/93')
+divert(-1)
+
+define(`_LOCAL_NOT_STICKY_', 1)
