@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.45 2000/07/27 18:05:15 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.46 2000/07/31 18:35:30 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1074,3 +1074,39 @@ distrib/x68k/floppies/ramdisk/Makefile		patch
 distrib/x68k/Makefile				1.1-1.2 (new)
 
   Improve ``make release'' target, following the MI changes.
+
+sys/dev/mii/nsphy.c				1.28
+
+  Fix autonegotiation problem with some fxp cards.  Fixes PR#10550.
+
+usr.sbin/pkg_install/README			1.4
+usr.sbin/pkg_install/add/add.h			1.5
+usr.sbin/pkg_install/add/extract.c		1.21-1.22
+usr.sbin/pkg_install/add/main.c			1.15
+usr.sbin/pkg_install/add/perform.c		1.46-1.52
+usr.sbin/pkg_install/admin/main.c		1.12-1.13
+usr.sbin/pkg_install/admin/pkg_admin.1		1.8-1.9
+usr.sbin/pkg_install/create/pkg_create.1	1.23-1.24
+usr.sbin/pkg_install/create/pl.c		1.17-1.19
+usr.sbin/pkg_install/delete/main.c		1.14-1.16
+usr.sbin/pkg_install/delete/perform.c		1.31
+usr.sbin/pkg_install/delete/pkg_delete.1	1.15-1.16
+usr.sbin/pkg_install/info/main.c		1.21-1.23
+usr.sbin/pkg_install/info/perform.c		1.31
+usr.sbin/pkg_install/info/pkg_info.1		1.22
+usr.sbin/pkg_install/lib/file.c			1.38
+usr.sbin/pkg_install/lib/ftpio.c		1.19-1.21 via patch
+usr.sbin/pkg_install/lib/pen.c			1.17
+usr.sbin/pkg_install/lib/pkgdb.c		1.7
+usr.sbin/pkg_install/lib/plist.c		1.23-1.27
+usr.sbin/pkg_install/lib/str.c			1.22-1.23
+  
+  Update pkg_install tools by bringing in bug fixes and feature
+  additions since the last release.  Fixes PR#10083 and PR#10687
+  and a number of problems not formally reported.
+
+sys/msdosfs/msdosfs_vnops.c			1.102 via patch
+
+  Do not report archived files as having SF_ARCHIVED set, as the
+  semantics between Unix and MS-DOS/Windows differ significantly
+  on how to interpret this flag.  Fixes PR#8439.
