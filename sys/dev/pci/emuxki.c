@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.33 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.34 2004/05/23 11:37:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.33 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.34 2004/05/23 11:37:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -739,7 +739,7 @@ emuxki_init(struct emuxki_softc *sc)
 	silentpage = DMAADDR(sc->silentpage) << 1;
 	ptb = KERNADDR(sc->ptb);
 	for (i = 0; i < EMU_MAXPTE; i++)
-		ptb[i] = silentpage | i;
+		ptb[i] = htole32(silentpage | i);
 
 	/* Write PTB address and set TCB to none */
 	emuxki_write(sc, 0, EMU_PTB, DMAADDR(sc->ptb));
@@ -860,12 +860,12 @@ emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size,
 		numblocks++;
 
 	for (i = 0; i < EMU_MAXPTE; i++)
-		if ((ptb[i] & EMU_CHAN_MAP_PTE_MASK) == silentpage) {
+		if ((le32toh(ptb[i]) & EMU_CHAN_MAP_PTE_MASK) == silentpage) {
 			/* We look for a free PTE */
 			s = splaudio();
 			for (j = 0; j < numblocks; j++)
-				if ((ptb[i + j] & EMU_CHAN_MAP_PTE_MASK)
-				    != silentpage)
+				if ((le32toh(ptb[i + j])
+				    & EMU_CHAN_MAP_PTE_MASK) != silentpage)
 					break;
 			if (j == numblocks) {
 				if ((mem = emuxki_mem_new(sc, i,
@@ -875,9 +875,8 @@ emuxki_pmem_alloc(struct emuxki_softc *sc, size_t size,
 				}
 				for (j = 0; j < numblocks; j++)
 					ptb[i + j] =
-						(((DMAADDR(mem->dmamem) +
-						 j * EMU_PTESIZE)) << 1)
-						| (i + j);
+					    htole32((((DMAADDR(mem->dmamem) +
+					    j * EMU_PTESIZE)) << 1) | (i + j));
 				LIST_INSERT_HEAD(&(sc->mem), mem, next);
 				splx(s);
 				return (KERNADDR(mem->dmamem));
@@ -2050,7 +2049,7 @@ emuxki_freem(void *addr, void *ptr, struct malloc_type *type)
 				numblocks++;
 			for (i = 0; i < numblocks; i++)
 				ptb[mem->ptbidx + i] =
-					silentpage | (mem->ptbidx + i);
+				    htole32(silentpage | (mem->ptbidx + i));
 		}
 		LIST_REMOVE(mem, next);
 		splx(s);
