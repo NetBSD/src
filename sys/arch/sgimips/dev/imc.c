@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.20 2004/08/17 00:44:39 rumble Exp $	*/
+/*	$NetBSD: imc.c,v 1.21 2004/09/05 11:48:34 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.20 2004/08/17 00:44:39 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.21 2004/09/05 11:48:34 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -235,14 +235,13 @@ imc_attach(parent, self, aux)
 		memset(&iaa, 0, sizeof(iaa));
 
 		iaa.iaa_name = "eisa";
-		(void)config_found(self, (void*)&iaa, imc_print);
+		config_found_ia(self, "eisabus", (void*)&iaa, imc_print);
 #endif
 	}
 
 	memset(&iaa, 0, sizeof(iaa));
 
-	iaa.iaa_name = "gio";
-	(void)config_found(self, (void*)&iaa, imc_print);
+	config_found_ia(self, "giobus", (void*)&iaa, imc_print);
 
 	imc_watchdog_enable();
 }
