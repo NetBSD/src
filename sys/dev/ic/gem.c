@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.13 2002/03/29 00:00:10 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.14 2002/05/08 02:12:55 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.13 2002/03/29 00:00:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.14 2002/05/08 02:12:55 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -624,8 +624,9 @@ gem_meminit(struct gem_softc *sc)
 	}
 	GEM_CDTXSYNC(sc, 0, GEM_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	sc->sc_txfree = GEM_NTXDESC;
+	sc->sc_txfree = GEM_NTXDESC-1;
 	sc->sc_txnext = 0;
+	sc->sc_txwin = 0;
 
 	/*
 	 * Initialize the receive descriptor and receive job
@@ -1028,6 +1029,10 @@ gem_start(ifp)
 			flags = dmamap->dm_segs[seg].ds_len & GEM_TD_BUFSIZE;
 			if (nexttx == firsttx) {
 				flags |= GEM_TD_START_OF_PACKET;
+				if (++sc->sc_txwin > GEM_NTXSEGS * 2 / 3) {
+					sc->sc_txwin = 0;
+					flags |= GEM_TD_INTERRUPT_ME;
+				}
 			}
 			if (seg == dmamap->dm_nsegs - 1) {
 				flags |= GEM_TD_END_OF_PACKET;
@@ -1120,6 +1125,7 @@ gem_tint(sc)
 	bus_space_handle_t mac = sc->sc_h;
 	struct gem_txsoft *txs;
 	int txlast;
+	int progress = 0;
 
 
 	DPRINTF(sc, ("%s: gem_tint\n", sc->sc_dev.dv_xname));
@@ -1209,6 +1215,7 @@ gem_tint(sc)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 
 		ifp->if_opackets++;
+		progress = 1;
 	}
 
 	DPRINTF(sc, ("gem_tint: GEM_TX_STATE_MACHINE %x "
@@ -1221,10 +1228,16 @@ gem_tint(sc)
 			GEM_TX_DATA_PTR_LO),
 		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_COMPLETION)));
 
-	gem_start(ifp);
+	if (progress) {
+		if (sc->sc_txfree == GEM_NTXDESC - 1)
+			sc->sc_txwin = 0;
 
-	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) == NULL)
-		ifp->if_timer = 0;
+		ifp->if_flags &= ~IFF_OACTIVE;
+		gem_start(ifp);
+
+		if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) == NULL)
+			ifp->if_timer = 0;
+	}
 	DPRINTF(sc, ("%s: gem_tint: watchdog %d\n",
 		sc->sc_dev.dv_xname, ifp->if_timer));
 
@@ -1430,9 +1443,7 @@ gem_intr(v)
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
 
-	if ((status & 
-		(GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME))
-		!= 0)
+	if ((status & (GEM_INTR_TX_EMPTY | GEM_INTR_TX_INTME)) != 0)
 		r |= gem_tint(sc);
 
 	if ((status & (GEM_INTR_RX_DONE | GEM_INTR_RX_NOBUF)) != 0)
@@ -1442,12 +1453,14 @@ gem_intr(v)
 	if (status & GEM_INTR_TX_MAC) {
 		int txstat = bus_space_read_4(t, seb, GEM_MAC_TX_STATUS);
 		if (txstat & ~GEM_MAC_TX_XMIT_DONE)
-			printf("MAC tx fault, status %x\n", txstat);
+			printf("%s: MAC tx fault, status %x\n",
+			    sc->sc_dev.dv_xname, txstat);
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, GEM_MAC_RX_STATUS);
 		if (rxstat & ~GEM_MAC_RX_DONE)
-			printf("MAC rx fault, status %x\n", rxstat);
+			printf("%s: MAC rx fault, status %x\n",
+			    sc->sc_dev.dv_xname, rxstat);
 	}
 	return (r);
 }
@@ -1633,6 +1646,10 @@ gem_mii_statchg(dev)
  			else
 	 			/* half duplex -- disable echo */
 		 		v |= GEM_MAC_XIF_ECHO_DISABL;
+		if (sc->sc_ethercom.ec_if.if_baudrate == IF_Mbps(1000))
+			v |= GEM_MAC_XIF_GMII_MODE;
+		else
+			v &= ~GEM_MAC_XIF_GMII_MODE;
 	} else 
 		/* Internal MII needs buf enable */
 		v |= GEM_MAC_XIF_MII_BUF_ENA;
