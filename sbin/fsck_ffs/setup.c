@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.67 2004/01/10 14:28:37 mrg Exp $	*/
+/*	$NetBSD: setup.c,v 1.68 2004/01/12 19:40:24 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.67 2004/01/10 14:28:37 mrg Exp $");
+__RCSID("$NetBSD: setup.c,v 1.68 2004/01/12 19:40:24 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,8 +185,8 @@ setup(dev)
 	if ((!is_ufs2 && cvtlevel >= 4) &&
 			(sblock->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
 		if (preen)
-			pwarn("CONVERTING TO FFSv2 SUPERBLOCK\n");
-		else if (!reply("CONVERT TO FFSv2 SUPERBLOCK"))
+			pwarn("CONVERTING TO NEW SUPERBLOCK LAYOUT\n");
+		else if (!reply("CONVERT TO NEW SUPERBLOCK LAYOUT"))
 			return(0);
 		sblock->fs_old_flags |= FS_FLAGS_UPDATED;
 		/* Disable the postbl tables */
