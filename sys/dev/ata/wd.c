@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.282 2004/08/03 21:38:45 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.283 2004/08/03 22:03:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.282 2004/08/03 21:38:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.283 2004/08/03 22:03:46 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -415,8 +415,6 @@ wddetach(struct device *self, int flags)
 	struct buf *bp;
 	int s, bmaj, cmaj, i, mn;
 
-	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
-
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
@@ -461,6 +459,8 @@ wddetach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+
+	lockmgr(&sc->sc_lock, LK_DRAIN, NULL);
 
 	return (0);
 }
@@ -857,6 +857,9 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	wd = device_lookup(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
+
+	if ((wd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/*
 	 * If this is the first open of this device, add a reference
