@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_skey.c,v 1.1 2005/02/27 21:01:59 thorpej Exp $	*/
+/*	$NetBSD: pam_skey.c,v 1.2 2005/03/20 16:48:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_skey.c,v 1.1 2005/02/27 21:01:59 thorpej Exp $");
+__RCSID("$NetBSD: pam_skey.c,v 1.2 2005/03/20 16:48:47 christos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -85,7 +85,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	}
 
 	(void) snprintf(skprompt, sizeof(skprompt),
-	    "Password [%s]:", skinfo);
+	    "Password [ %s ]:", skinfo);
 
 	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, skprompt);
 	if (retval != PAM_SUCCESS)
