@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.6 2002/10/02 04:59:49 thorpej Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.7 2002/12/28 16:25:39 tsutsui Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -79,8 +79,8 @@ pckbc_jazzio_match(parent, match, aux)
 	bus_addr_t addr = ja->ja_addr;
 	int res, ok = 1;
 
-	if (strcmp(ja->ja_name, "pckbd") != 0)
-		return(0);
+	if (strcmp(ja->ja_name, "I8742") != 0)
+		return (0);
 
 	if (pckbc_is_console(iot, addr) == 0) {
 		struct pckbc_internal t;

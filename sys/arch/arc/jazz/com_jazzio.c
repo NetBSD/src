@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.3 2002/10/02 04:59:48 thorpej Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.4 2002/12/28 16:25:39 tsutsui Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -110,7 +110,8 @@ com_jazzio_probe(parent, match, aux)
 	int iobase;
 	int rv = 1;
 
-	if(strcmp(ja->ja_name, "com") != 0)
+	if (strcmp(ja->ja_name, "COM1") != 0 &&
+	    strcmp(ja->ja_name, "COM2") != 0)
 		return (0);
 
 	iot = ja->ja_bust;
