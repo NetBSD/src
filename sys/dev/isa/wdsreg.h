@@ -65,12 +65,12 @@ struct wds_scb {
 	struct wds_cmd sense;
 
 	struct wds_scat_gath scat_gath[WDS_NSEG];
-	struct scsi_sense_data sense_data;
+	struct scsipi_sense_data sense_data;
 
 	TAILQ_ENTRY(wds_scb) chain;
 	struct wds_scb *nexthash;
 	long hashkey;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int flags;
 #define	SCB_ALLOC	0x01
 #define	SCB_ABORT	0x02
