@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.1.1.3.2.3 1998/07/23 00:47:52 mellon Exp $
+.\"	$NetBSD: ipmon.8,v 1.1.1.3.2.4 1998/11/24 07:21:06 cgd Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -66,7 +66,8 @@ as for \fB-o\fP.
 .TP
 .B \-s
 Packet information read in will be sent through syslogd rather than
-saved to a file.  The following levels are used:
+saved to a file.  The default facility when compiled and installed is
+\fBlocal0\fP.  The following levels are used:
 .TP
 .B "\-S <device>"
 Set the logfile to be opened for reading state log records from to <device>.
@@ -91,6 +92,9 @@ Treat the logfile as being composed of state log records.
 .TP
 .B \-t
 read the input file/device in a manner akin to tail(1).
+.TP
+.B \-v
+show tcp window, ack and sequence fields.
 .TP
 .B \-x
 show the packet data in hex.
