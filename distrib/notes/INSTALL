@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.56 1998/04/27 02:51:26 thorpej Exp $
+	$NetBSD: INSTALL,v 1.57 1998/04/27 03:09:42 thorpej Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -666,6 +666,7 @@ Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
 Matthias Scheler	<tron@NetBSD.ORG>
 Karl Schilke (rAT)	<rat@NetBSD.ORG>
+Tim Shepard		<shep@NetBSD.ORG>
 Chuck Silvers		<chs@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
 Noriyuki Soda		<soda@NetBSD.ORG>
