@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.2 1998/02/06 22:31:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.3 1998/02/07 02:26:04 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -129,7 +129,9 @@ int len, rw;
 
   saddr = trunc_page(addr);
   eaddr = round_page(addr+len);
+  vm_map_lock_read(kernel_map);
   rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
+  vm_map_unlock_read(kernel_map);
 
   /*
    * XXX there are still some things (e.g. the buffer cache) that
@@ -271,6 +273,7 @@ boolean_t shared;
 {
   register struct user *up;
   vm_offset_t addr;
+  int rv;
 
   if (shared == TRUE)
     uvmspace_share(p1, p2);				/* share vmspace */
@@ -286,7 +289,9 @@ boolean_t shared;
   addr = uvm_km_valloc(kernel_map, USPACE);
   if (addr == 0)
     panic("uvm_fork: no more kernel virtual memory");
-  uvm_fault_wire(kernel_map, addr, addr + USPACE);  /* P_INMEM true to start */
+  rv = uvm_fault_wire(kernel_map, addr, addr + USPACE);
+  if (rv != KERN_SUCCESS)
+    panic("uvm_fork: uvm_fault_wire failed: %d\n", rv);
 #else
   /*
    * XXXCDC: Why does VAX need this?
@@ -373,7 +378,7 @@ struct proc *p;
   uvm_fault_wire(kernel_map, addr, addr + USPACE);	/* make P_INMEM true */
   /*
    * Some architectures need to be notified when the user area has
-   * moved to new physical page(s) (e.g.  see pmax/pmax/vm_machdep.c).
+   * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
    */
   cpu_swapin(p);
   s = splstatclock();
@@ -401,13 +406,6 @@ void uvm_scheduler()
   struct proc *pp;
   int ppri;
   UVMHIST_FUNC("uvm_scheduler"); UVMHIST_CALLED(maphist);
-
-  /*XXXCDC: UVM: DISABLE SWAP */
-  while (1) {
-    UVMHIST_LOG(maphist,">>SLEEPING<<",0,0,0,0);
-    tsleep((caddr_t)&proc0, PVM, "noswap", 0);
-    UVMHIST_LOG(maphist,">>WOKE UP<<",0,0,0,0);
-  }
 
 loop:
 #ifdef DEBUG
@@ -505,8 +503,6 @@ void uvm_swapout_threads()
   extern int maxslp; 
   /* XXXCDC: should move off to uvmexp. or uvm., also in uvm_meter */
 
-  if (1)
-    return; /*XXXCDC: UVM: NO SWAP NOW */
 #ifdef DEBUG
   if (!enableswap)
     return;
