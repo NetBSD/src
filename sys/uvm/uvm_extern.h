@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.77 2003/02/01 06:23:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.78 2003/05/03 19:01:06 wiz Exp $	*/
 
 /*
  *
@@ -340,7 +340,7 @@ struct uvmexp {
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */
 	int pdfreed;	/* number of pages daemon freed since boot */
-	int pdscans;	/* number of pages daemon scaned since boot */
+	int pdscans;	/* number of pages daemon scanned since boot */
 	int pdanscan;	/* number of anonymous pages scanned by daemon */
 	int pdobscan;	/* number of object pages scanned by daemon */
 	int pdreact;	/* number of pages daemon reactivated since boot */
