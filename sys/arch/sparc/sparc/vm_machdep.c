@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 1995/05/08 17:50:00 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.13 1995/05/19 06:58:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,21 +267,6 @@ cpu_exit(p)
 	vmspace_free(p->p_vmspace);
 	switchexit(kernel_map, p->p_addr, USPACE);
 	/* NOTREACHED */
-}
-
-void
-cpu_swapout(p)
-	struct proc *p;
-{
-	register struct fpstate *fs;
-
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == fpproc) {
-			savefpstate(fs);
-			fpproc = NULL;
-			p->p_addr->u_pcb.pcb_psr &= ~PSR_EF;
-		}
-	}
 }
 
 /*
