@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.18 2002/05/25 23:29:17 wiz Exp $ */
+/* $NetBSD: set.c,v 1.19 2003/01/16 09:38:41 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.18 2002/05/25 23:29:17 wiz Exp $");
+__RCSID("$NetBSD: set.c,v 1.19 2003/01/16 09:38:41 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -761,13 +761,13 @@ void
 plist(struct varent *p)
 {
     struct varent *c;
-    sigset_t sigset;
+    sigset_t nsigset;
     int len;
 
     if (setintr) {
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGINT);
-	(void)sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGINT);
+	(void)sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
     }
 
     for (;;) {

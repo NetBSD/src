@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.32 2003/01/06 13:19:51 wiz Exp $ */
+/* $NetBSD: csh.c,v 1.33 2003/01/16 09:38:37 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.32 2003/01/06 13:19:51 wiz Exp $");
+__RCSID("$NetBSD: csh.c,v 1.33 2003/01/16 09:38:37 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
     Char *cp;
     char *tcp, **tempv;
     const char *ecp;
-    sigset_t sigset;
+    sigset_t nsigset;
     int f;
 
     cshin = stdin;
@@ -444,9 +444,9 @@ main(int argc, char *argv[])
 	if (!quitit)		/* Wary! */
 	    (void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGINT, pintr);
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGINT);
-	(void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGINT);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
 	(void)signal(SIGTERM, SIG_IGN);
 	if (quitit == 0 && arginp == 0) {
 	    (void)signal(SIGTSTP, SIG_IGN);
@@ -518,9 +518,9 @@ notty:
 
 	    oparintr = parintr;
 	    osetintr = setintr;
-	    sigemptyset(&sigset);
-	    (void)sigaddset(&sigset, SIGINT);
-	    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	    sigemptyset(&nsigset);
+	    (void)sigaddset(&nsigset, SIGINT);
+	    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 
 	    setintr = 0;
 	    parintr = SIG_IGN;	/* Disable onintr */
@@ -675,7 +675,7 @@ srcunit(int unit, bool onlyown, bool hflg)
     /* All this could go into a structure */
     struct whyle *oldwhyl;
     struct Bin saveB;
-    sigset_t sigset, osigset;
+    sigset_t nsigset, osigset;
     jmp_buf oldexit;
     Char *oarginp, *oevalp, **oevalvec, *ogointr;
     char OHIST;
@@ -724,9 +724,9 @@ srcunit(int unit, bool onlyown, bool hflg)
     getexit(oldexit);
 
     if (setintr) {
-	sigemptyset(&sigset);
-	(void)sigaddset(&sigset, SIGINT);
-	(void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGINT);
+	(void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     }
     /* Setup the new values of the state stuff saved above */
     (void)memcpy(&saveB, &B, sizeof(B));
@@ -931,14 +931,14 @@ void
 pintr1(bool wantnl)
 {
     Char **v;
-    sigset_t sigset, osigset;
+    sigset_t nsigset, osigset;
 
-    sigemptyset(&sigset);
-    (void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    sigemptyset(&nsigset);
+    (void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
     if (setintr) {
-	sigset = osigset;
-	(void)sigdelset(&sigset, SIGINT);
-	(void)sigprocmask(SIG_SETMASK, &sigset, NULL);
+	nsigset = osigset;
+	(void)sigdelset(&nsigset, SIGINT);
+	(void)sigprocmask(SIG_SETMASK, &nsigset, NULL);
 	if (pjobs) {
 	    pjobs = 0;
 	    (void)fprintf(cshout, "\n");
@@ -994,7 +994,7 @@ process(bool catch)
 {
     struct command *t;
     jmp_buf osetexit;
-    sigset_t sigset;
+    sigset_t nsigset;
 
     t = savet;    
     savet = NULL;
@@ -1010,9 +1010,9 @@ process(bool catch)
 	 * Interruptible during interactive reads
 	 */
 	if (setintr) {
-	    sigemptyset(&sigset);
-	    (void)sigaddset(&sigset, SIGINT);
-	    (void)sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	    sigemptyset(&nsigset);
+	    (void)sigaddset(&nsigset, SIGINT);
+	    (void)sigprocmask(SIG_UNBLOCK, &nsigset, NULL);
 	}
 
 	/*
@@ -1082,7 +1082,7 @@ process(bool catch)
 	 * The parser may lose space if interrupted.
 	 */
 	if (setintr)
-	    (void)sigprocmask(SIG_BLOCK, &sigset, NULL);
+	    (void)sigprocmask(SIG_BLOCK, &nsigset, NULL);
 
 	/*
 	 * Save input text on the history list if reading in old history, or it

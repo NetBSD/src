@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.20 2002/05/25 23:29:16 wiz Exp $ */
+/* $NetBSD: sem.c,v 1.21 2003/01/16 09:38:41 kleink Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.20 2002/05/25 23:29:16 wiz Exp $");
+__RCSID("$NetBSD: sem.c,v 1.21 2003/01/16 09:38:41 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ execute(struct command *t, int wanttty, int *pipein, int *pipeout)
     static int nosigchld = 0, onosigchld = 0;
     struct biltins *bifunc;
     int pv[2], pid;
-    sigset_t sigset;
+    sigset_t nsigset;
     bool forked;
 
     UNREGISTER(forked);
@@ -207,9 +207,9 @@ execute(struct command *t, int wanttty, int *pipein, int *pipeout)
 		 * not die before we can set the process group
 		 */
 		if (wanttty >= 0 && !nosigchld) {
-		    sigemptyset(&sigset);
-		    (void)sigaddset(&sigset, SIGCHLD);
-		    (void)sigprocmask(SIG_BLOCK, &sigset, &csigset);
+		    sigemptyset(&nsigset);
+		    (void)sigaddset(&nsigset, SIGCHLD);
+		    (void)sigprocmask(SIG_BLOCK, &nsigset, &csigset);
 		    nosigchld = 1;
 		}
 
@@ -236,15 +236,15 @@ execute(struct command *t, int wanttty, int *pipein, int *pipeout)
 		 * before it exec's.
 		 */
 		if (wanttty >= 0 && !nosigchld && !noexec) {
-		    sigemptyset(&sigset);
-		    (void)sigaddset(&sigset, SIGCHLD);
-		    (void)sigprocmask(SIG_BLOCK, &sigset, &csigset);
+		    sigemptyset(&nsigset);
+		    (void)sigaddset(&nsigset, SIGCHLD);
+		    (void)sigprocmask(SIG_BLOCK, &nsigset, &csigset);
 		    nosigchld = 1;
 		}
-		sigemptyset(&sigset);
-		(void)sigaddset(&sigset, SIGCHLD);
-		(void)sigaddset(&sigset, SIGINT);
-		(void)sigprocmask(SIG_BLOCK, &sigset, &osigset);
+		sigemptyset(&nsigset);
+		(void)sigaddset(&nsigset, SIGCHLD);
+		(void)sigaddset(&nsigset, SIGINT);
+		(void)sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 		ochild = child;
 		osetintr = setintr;
 		ohaderr = haderr;

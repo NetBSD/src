@@ -1,4 +1,4 @@
-/*	$NetBSD: wwenviron.c,v 1.7 2002/06/14 01:06:58 wiz Exp $	*/
+/*	$NetBSD: wwenviron.c,v 1.8 2003/01/16 09:46:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwenviron.c,v 1.7 2002/06/14 01:06:58 wiz Exp $");
+__RCSID("$NetBSD: wwenviron.c,v 1.8 2003/01/16 09:46:46 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ wwenviron(struct ww *wp)
 	int pgrp = getpid();
 #endif
 	char buf[1024];
-	sigset_t sigset;
+	sigset_t nsigset;
 
 #ifndef TIOCSCTTY
 	if ((i = open("/dev/tty", 0)) < 0)
@@ -97,8 +97,8 @@ wwenviron(struct ww *wp)
 #endif
 	/* SIGPIPE is the only one we ignore */
 	(void) signal(SIGPIPE, SIG_DFL);
-	sigemptyset(&sigset);
-	sigprocmask(SIG_SETMASK, &sigset, (sigset_t *)0);
+	sigemptyset(&nsigset);
+	sigprocmask(SIG_SETMASK, &nsigset, (sigset_t *)0);
 	/*
 	 * Two conditions that make destructive setenv ok:
 	 * 1. setenv() copies the string,

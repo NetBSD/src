@@ -1,4 +1,4 @@
-/*	$NetBSD: wwflush.c,v 1.7 2002/06/14 01:06:59 wiz Exp $	*/
+/*	$NetBSD: wwflush.c,v 1.8 2003/01/16 09:46:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwflush.c,v 1.7 2002/06/14 01:06:59 wiz Exp $");
+__RCSID("$NetBSD: wwflush.c,v 1.8 2003/01/16 09:46:47 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,11 +76,11 @@ wwflush(void)
 void
 wwcheckpoint(void)
 {
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGALRM);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGALRM);
+	sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 
 	tt.tt_ack = 0;
 	do {
