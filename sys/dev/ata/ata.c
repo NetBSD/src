@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.38 2004/08/12 20:59:27 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.39 2004/08/12 21:05:09 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.38 2004/08/12 20:59:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.39 2004/08/12 21:05:09 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -486,7 +486,7 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 	 */
 	drvp->n_dmaerrs++;
 	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
-		wdc_downgrade_mode(drvp, flags);
+		ata_downgrade_mode(drvp, flags);
 		drvp->n_dmaerrs = NERRS_MAX-1;
 		drvp->n_xfers = 0;
 		return;
@@ -529,6 +529,55 @@ ata_print_modes(struct wdc_channel *chp)
 			aprint_normal(" (using DMA data transfers)");
 		aprint_normal("\n");
 	}
+}
+
+/*
+ * downgrade the transfer mode of a drive after an error. return 1 if
+ * downgrade was possible, 0 otherwise.
+ */
+int
+ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
+{
+	struct wdc_channel *chp = drvp->chnl_softc;
+	struct wdc_softc *wdc = chp->ch_wdc;
+	struct device *drv_dev = drvp->drv_softc;
+	int cf_flags = drv_dev->dv_cfdata->cf_flags;
+
+	/* if drive or controller don't know its mode, we can't do much */
+	if ((drvp->drive_flags & DRIVE_MODE) == 0 ||
+	    (wdc->cap & WDC_CAPABILITY_MODE) == 0)
+		return 0;
+	/* current drive mode was set by a config flag, let it this way */
+	if ((cf_flags & ATA_CONFIG_PIO_SET) ||
+	    (cf_flags & ATA_CONFIG_DMA_SET) ||
+	    (cf_flags & ATA_CONFIG_UDMA_SET))
+		return 0;
+
+	/*
+	 * If we were using Ultra-DMA mode, downgrade to the next lower mode.
+	 */
+	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
+		drvp->UDMA_mode--;
+		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
+		    drv_dev->dv_xname, drvp->UDMA_mode);
+	}
+
+	/*
+	 * If we were using ultra-DMA, don't downgrade to multiword DMA.
+	 */
+	else if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
+		drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+		drvp->PIO_mode = drvp->PIO_cap;
+		printf("%s: transfer error, downgrading to PIO mode %d\n",
+		    drv_dev->dv_xname, drvp->PIO_mode);
+	} else /* already using PIO, can't downgrade */
+		return 0;
+
+	wdc->set_modes(chp);
+	ata_print_modes(chp);
+	/* reset the channel, which will shedule all drives for setup */
+	wdc_reset_channel(chp, flags | AT_RST_NOCMD);
+	return 1;
 }
 
 /* management of the /dev/atabus* devices */
