@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.12 2003/07/14 15:56:39 aymeric Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.13 2003/11/12 17:26:36 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.12 2003/07/14 15:56:39 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.13 2003/11/12 17:26:36 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1396,7 +1396,7 @@ amidisplaycc_free_screen(void *dp, void *screen)
 	struct amidisplaycc_softc   * adp;
 
 	scr = screen;
-	adp = (struct amidisplaycc_softc*)adp;
+	adp = (struct amidisplaycc_softc*)dp;
 
 	if (scr == NULL)
 		return;
@@ -1890,16 +1890,11 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 {
 	u_long      cmentries [MAXCOLORS];
 
-	int         green_div;
-	int         blue_div;
-	int         grey_div;
-	int         red_div;
 	u_int       colors;
 	int         index;
 	int         count;
 	int         err;
 	colormap_t  cm;
-	int         c;
 
 	if (view == NULL)
 		return (EINVAL);
@@ -1940,38 +1935,33 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 	 */
 
 	if (cm.type == CM_COLOR) {
+		int c, green_div, blue_div, red_div;
+		
 		red_div = 256 / (cm.red_mask + 1);
 		green_div = 256 / (cm.green_mask + 1);
 		blue_div = 256 / (cm.blue_mask + 1);
-	} else if (cm.type == CM_GREYSCALE)
-		grey_div = 256 / (cm.grey_mask + 1);
-	else
-		return (EINVAL); /* Hmhh */
-
-	/* Copy our new values to the current colormap */
-
-	for (c = 0 ; c < count ; c++) {
-
-		if (cm.type == CM_COLOR) {
-
+		
+		for (c = 0 ; c < count ; c++)
 			cm.entry[c + index] = MAKE_COLOR_ENTRY(
 				cmap->red[c] / red_div,
 				cmap->green[c] / green_div,
 				cmap->blue[c] / blue_div);
 
-		} else if (cm.type == CM_GREYSCALE) {
+	} else if (cm.type == CM_GREYSCALE) {
+		int c, grey_div;
 
-			/* Generate grey from average of r-g-b (?) */
+		grey_div = 256 / (cm.grey_mask + 1);
 
+		/* Generate grey from average of r-g-b (?) */
+		for (c = 0 ; c < count ; c++)
 			cm.entry[c + index] = MAKE_COLOR_ENTRY(
 				0,
 				0,
 				(cmap->red[c] +
 				 cmap->green[c] +
 				 cmap->blue[c]) / 3 / grey_div);
-		}
-	}
-
+	} else
+		return (EINVAL); /* Hmhh */
 
 	/*
 	 * Now we have a new colormap that contains all the entries. Set
@@ -1994,16 +1984,11 @@ amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 {
 	u_long      cmentries [MAXCOLORS];
 
-	int         green_mul;
-	int         blue_mul;
-	int         grey_mul;
-	int         red_mul;
 	u_int       colors;
 	int         index;
 	int         count;
 	int         err;
 	colormap_t  cm;
-	int         c;
 
 	if (view == NULL)
 		return (EINVAL);
@@ -2025,45 +2010,44 @@ amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 	cm.first = index;
 	cm.size  = count;
 
-
 	err = grf_get_colormap(view, &cm);
 	if (err)
 		return (err);
-
-	if (cm.type == CM_COLOR) {
-		red_mul   = 256 / (cm.red_mask + 1);
-		green_mul = 256 / (cm.green_mask + 1);
-		blue_mul  = 256 / (cm.blue_mask + 1);
-	} else if (cm.type == CM_GREYSCALE) {
-		grey_mul  = 256 / (cm.grey_mask + 1);
-	} else
-		return (EINVAL);
 
 	/*
 	 * Copy color data to wscons-style structure. Translate to
 	 * 8 bits/gun from whatever resolution the color natively is.
 	 */
+	if (cm.type == CM_COLOR) {
+		int c, red_mul, green_mul, blue_mul;
+		
+		red_mul   = 256 / (cm.red_mask + 1);
+		green_mul = 256 / (cm.green_mask + 1);
+		blue_mul  = 256 / (cm.blue_mask + 1);
 
-	for (c = 0 ; c < count ; c++) {
-
-		if (cm.type == CM_COLOR) {
-
-			cmap->red[c]   = CM_GET_RED(cm.entry[index+c]);
-			cmap->green[c] = CM_GET_GREEN(cm.entry[index+c]);
-			cmap->blue[c]  = CM_GET_BLUE(cm.entry[index+c]);
-
-			cmap->red[c]   *= red_mul;
-			cmap->green[c] *= green_mul;
-			cmap->blue[c]  *= blue_mul;
-
-		} else if (cm.type == CM_GREYSCALE) {
-			cmap->red[c]   = CM_GET_GREY(cm.entry[index+c]);
-			cmap->red[c]  *= grey_mul;
-
-			cmap->green[c] = cmap->red[c];
-			cmap->blue[c]  = cmap->red[c];
+		for (c = 0 ; c < count ; c++) {
+			cmap->red[c] = red_mul *
+				CM_GET_RED(cm.entry[index+c]);
+			cmap->green[c] = green_mul *
+				CM_GET_GREEN(cm.entry[index+c]);
+			cmap->blue[c] = blue_mul *
+				CM_GET_BLUE(cm.entry[index+c]);
 		}
-	}
+	} else if (cm.type == CM_GREYSCALE) {
+		int c, grey_mul;
+
+		grey_mul = 256 / (cm.grey_mask + 1);
+
+		for (c = 0 ; c < count ; c++) {
+			cmap->red[c] = grey_mul *
+				CM_GET_GREY(cm.entry[index+c]);
+			cmap->green[c] = grey_mul *
+				CM_GET_GREY(cm.entry[index+c]);
+			cmap->blue[c] = grey_mul *
+				CM_GET_GREY(cm.entry[index+c]);
+		}
+	} else
+		return (EINVAL);
 
 	return (0);
 }
