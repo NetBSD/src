@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.38 2000/04/17 17:30:48 drochner Exp $ */
+/* $NetBSD: bus.h,v 1.39 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -124,122 +124,122 @@ struct alpha_bus_space {
 	void		*abs_cookie;
 
 	/* mapping/unmapping */
-	int		(*abs_map) __P((void *, bus_addr_t, bus_size_t,
-			    int, bus_space_handle_t *, int));
-	void		(*abs_unmap) __P((void *, bus_space_handle_t,
-			    bus_size_t, int));
-	int		(*abs_subregion) __P((void *, bus_space_handle_t,
-			    bus_size_t, bus_size_t, bus_space_handle_t *));
+	int		(*abs_map)(void *, bus_addr_t, bus_size_t,
+			    int, bus_space_handle_t *, int);
+	void		(*abs_unmap)(void *, bus_space_handle_t,
+			    bus_size_t, int);
+	int		(*abs_subregion)(void *, bus_space_handle_t,
+			    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 	/* ALPHA SPECIFIC MAPPING METHOD */
-	int		(*abs_translate) __P((void *, bus_addr_t, bus_size_t,
-			    int, struct alpha_bus_space_translation *));
-	int		(*abs_get_window) __P((void *, int,
-			    struct alpha_bus_space_translation *));
+	int		(*abs_translate)(void *, bus_addr_t, bus_size_t,
+			    int, struct alpha_bus_space_translation *);
+	int		(*abs_get_window)(void *, int,
+			    struct alpha_bus_space_translation *);
 
 	/* allocation/deallocation */
-	int		(*abs_alloc) __P((void *, bus_addr_t, bus_addr_t,
+	int		(*abs_alloc)(void *, bus_addr_t, bus_addr_t,
 			    bus_size_t, bus_size_t, bus_size_t, int,
-			    bus_addr_t *, bus_space_handle_t *));
-	void		(*abs_free) __P((void *, bus_space_handle_t,
-			    bus_size_t));
+			    bus_addr_t *, bus_space_handle_t *);
+	void		(*abs_free)(void *, bus_space_handle_t,
+			    bus_size_t);
 
 	/* get kernel virtual address */
-	void *		(*abs_vaddr) __P((void *, bus_space_handle_t));
+	void *		(*abs_vaddr)(void *, bus_space_handle_t);
 
 	/* barrier */
-	void		(*abs_barrier) __P((void *, bus_space_handle_t,
-			    bus_size_t, bus_size_t, int));
+	void		(*abs_barrier)(void *, bus_space_handle_t,
+			    bus_size_t, bus_size_t, int);
 
 	/* read (single) */
-	u_int8_t	(*abs_r_1) __P((void *, bus_space_handle_t,
-			    bus_size_t));
-	u_int16_t	(*abs_r_2) __P((void *, bus_space_handle_t,
-			    bus_size_t));
-	u_int32_t	(*abs_r_4) __P((void *, bus_space_handle_t,
-			    bus_size_t));
-	u_int64_t	(*abs_r_8) __P((void *, bus_space_handle_t,
-			    bus_size_t));
+	u_int8_t	(*abs_r_1)(void *, bus_space_handle_t,
+			    bus_size_t);
+	u_int16_t	(*abs_r_2)(void *, bus_space_handle_t,
+			    bus_size_t);
+	u_int32_t	(*abs_r_4)(void *, bus_space_handle_t,
+			    bus_size_t);
+	u_int64_t	(*abs_r_8)(void *, bus_space_handle_t,
+			    bus_size_t);
 
 	/* read multiple */
-	void		(*abs_rm_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t));
-	void		(*abs_rm_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t));
-	void		(*abs_rm_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t));
-	void		(*abs_rm_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t));
+	void		(*abs_rm_1)(void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t);
+	void		(*abs_rm_2)(void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t *, bus_size_t);
+	void		(*abs_rm_4)(void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t *, bus_size_t);
+	void		(*abs_rm_8)(void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t *, bus_size_t);
 					
 	/* read region */
-	void		(*abs_rr_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t));
-	void		(*abs_rr_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t));
-	void		(*abs_rr_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t));
-	void		(*abs_rr_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t));
+	void		(*abs_rr_1)(void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t);
+	void		(*abs_rr_2)(void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t *, bus_size_t);
+	void		(*abs_rr_4)(void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t *, bus_size_t);
+	void		(*abs_rr_8)(void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t *, bus_size_t);
 					
 	/* write (single) */
-	void		(*abs_w_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t));
-	void		(*abs_w_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t));
-	void		(*abs_w_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t));
-	void		(*abs_w_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t));
+	void		(*abs_w_1)(void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t);
+	void		(*abs_w_2)(void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t);
+	void		(*abs_w_4)(void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t);
+	void		(*abs_w_8)(void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t);
 
 	/* write multiple */
-	void		(*abs_wm_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t));
-	void		(*abs_wm_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t));
-	void		(*abs_wm_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t));
-	void		(*abs_wm_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t));
+	void		(*abs_wm_1)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t);
+	void		(*abs_wm_2)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t);
+	void		(*abs_wm_4)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t);
+	void		(*abs_wm_8)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int64_t *, bus_size_t);
 					
 	/* write region */
-	void		(*abs_wr_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t));
-	void		(*abs_wr_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t));
-	void		(*abs_wr_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t));
-	void		(*abs_wr_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t));
+	void		(*abs_wr_1)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t);
+	void		(*abs_wr_2)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t);
+	void		(*abs_wr_4)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t);
+	void		(*abs_wr_8)(void *, bus_space_handle_t,
+			    bus_size_t, const u_int64_t *, bus_size_t);
 
 	/* set multiple */
-	void		(*abs_sm_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t));
-	void		(*abs_sm_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t));
-	void		(*abs_sm_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t));
-	void		(*abs_sm_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t));
+	void		(*abs_sm_1)(void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t, bus_size_t);
+	void		(*abs_sm_2)(void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t, bus_size_t);
+	void		(*abs_sm_4)(void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t, bus_size_t);
+	void		(*abs_sm_8)(void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t, bus_size_t);
 
 	/* set region */
-	void		(*abs_sr_1) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t));
-	void		(*abs_sr_2) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t));
-	void		(*abs_sr_4) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t));
-	void		(*abs_sr_8) __P((void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t));
+	void		(*abs_sr_1)(void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t, bus_size_t);
+	void		(*abs_sr_2)(void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t, bus_size_t);
+	void		(*abs_sr_4)(void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t, bus_size_t);
+	void		(*abs_sr_8)(void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t, bus_size_t);
 
 	/* copy */
-	void		(*abs_c_1) __P((void *, bus_space_handle_t, bus_size_t,
-			    bus_space_handle_t, bus_size_t, bus_size_t));
-	void		(*abs_c_2) __P((void *, bus_space_handle_t, bus_size_t,
-			    bus_space_handle_t, bus_size_t, bus_size_t));
-	void		(*abs_c_4) __P((void *, bus_space_handle_t, bus_size_t,
-			    bus_space_handle_t, bus_size_t, bus_size_t));
-	void		(*abs_c_8) __P((void *, bus_space_handle_t, bus_size_t,
-			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_1)(void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t);
+	void		(*abs_c_2)(void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t);
+	void		(*abs_c_4)(void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t);
+	void		(*abs_c_8)(void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t);
 };
 
 /*
@@ -569,38 +569,38 @@ struct alpha_bus_dma_tag {
 	 * Internal-use only utility methods.  NOT TO BE USED BY
 	 * MACHINE-INDEPENDENT CODE!
 	 */
-	bus_dma_tag_t (*_get_tag) __P((bus_dma_tag_t, alpha_bus_t));
+	bus_dma_tag_t (*_get_tag)(bus_dma_tag_t, alpha_bus_t);
 
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
-	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, int, int, int));
+	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(bus_dma_tag_t,
+		    bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+	int	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, int, int, int);
 };
 
 #define	alphabus_dma_get_tag(t, b)				\
@@ -671,38 +671,38 @@ struct alpha_bus_dmamap {
 };
 
 #ifdef _ALPHA_BUS_DMA_PRIVATE
-int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
-void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
 
-int	_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, struct mbuf *, int));
-int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, struct uio *, int));
-int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
+int	_bus_dmamap_load_direct(bus_dma_tag_t, bus_dmamap_t,
+	    void *, bus_size_t, struct proc *, int);
+int	_bus_dmamap_load_mbuf_direct(bus_dma_tag_t,
+	    bus_dmamap_t, struct mbuf *, int);
+int	_bus_dmamap_load_uio_direct(bus_dma_tag_t,
+	    bus_dmamap_t, struct uio *, int);
+int	_bus_dmamap_load_raw_direct(bus_dma_tag_t,
+	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int);
 
-void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
-int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    paddr_t low, paddr_t high));
-void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
-int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
-	    size_t size));
-int	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, int off, int prot, int flags));
+	    paddr_t low, paddr_t high);
+void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    size_t size);
+int	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, int off, int prot, int flags);
 #endif /* _ALPHA_BUS_DMA_PRIVATE */
 
 #endif /* _KERNEL */
