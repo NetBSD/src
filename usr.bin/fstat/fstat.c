@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.58 2003/01/19 18:14:06 dsl Exp $	*/
+/*	$NetBSD: fstat.c,v 1.59 2003/01/20 06:20:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.58 2003/01/19 18:14:06 dsl Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.59 2003/01/20 06:20:37 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,16 +326,16 @@ dofiles(p)
 	if (p->p_fd == NULL || p->p_cwdi == NULL)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
-		warnx("can't read filedesc at %#llx for pid %d", p->p_fd, Pid);
+		warnx("can't read filedesc at %#llx for pid %d", (unsigned long long)p->p_fd, Pid);
 		return;
 	}
 	if (!KVM_READ(p->p_cwdi, &cwdi, sizeof(cwdi))) {
-		warnx("can't read cwdinfo at %#llx for pid %d", p->p_cwdi, Pid);
+		warnx("can't read cwdinfo at %#llx for pid %d", (unsigned long long)p->p_cwdi, Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf("filedesc corrupted at %#llx for pid %d", p->p_fd, Pid);
+		dprintf("filedesc corrupted at %#llx for pid %d", (unsigned long long)p->p_fd, Pid);
 		return;
 	}
 	/*
