@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.33 2002/11/02 07:30:56 perry Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.34 2003/02/01 06:23:47 thorpej Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -448,6 +448,8 @@ struct	in6_rrenumreq {
 #endif
 
 #ifdef _KERNEL
+MALLOC_DECLARE(M_IP6OPT);
+
 extern struct in6_ifaddr *in6_ifaddr;
 
 extern struct icmp6stat icmp6stat;

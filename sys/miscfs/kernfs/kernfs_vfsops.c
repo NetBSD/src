@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.46 2002/09/21 18:09:29 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.47 2003/02/01 06:23:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.46 2002/09/21 18:09:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.47 2003/02/01 06:23:46 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.46 2002/09/21 18:09:29 christos 
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
+
+MALLOC_DEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 
@@ -151,7 +153,7 @@ kernfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	MALLOC(fmp, struct kernfs_mount *, sizeof(struct kernfs_mount),
-	    M_MISCFSMNT, M_WAITOK);
+	    M_KERNFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 #ifdef KERNFS_DIAGNOSTIC
@@ -225,7 +227,7 @@ kernfs_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the kernfs_mount structure
 	 */
-	free(mp->mnt_data, M_MISCFSMNT);
+	free(mp->mnt_data, M_KERNFSMNT);
 	mp->mnt_data = 0;
 	return (0);
 }

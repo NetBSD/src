@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.33 2002/11/02 07:31:00 perry Exp $	*/
+/*	$NetBSD: nd6.h,v 1.34 2003/02/01 06:23:47 thorpej Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -306,6 +306,9 @@ struct nd_pfxrouter {
 };
 
 LIST_HEAD(nd_prhead, nd_prefix);
+
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_IP6NDP);
 
 /* nd6.c */
 extern int nd6_prune;

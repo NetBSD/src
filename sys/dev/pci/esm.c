@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.20 2003/01/31 00:07:42 thorpej Exp $      */
+/*      $NetBSD: esm.c,v 1.21 2003/02/01 06:23:39 thorpej Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.20 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.21 2003/02/01 06:23:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1324,7 +1324,8 @@ esm_query_devinfo(void *sc, mixer_devinfo_t *dip)
 
 
 void *
-esm_malloc(void *sc, int direction, size_t size, int pool, int flags)
+esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
+    int flags)
 {
 	struct esm_softc *ess = sc;
 	int off;
@@ -1356,7 +1357,7 @@ esm_malloc(void *sc, int direction, size_t size, int pool, int flags)
 
 
 void
-esm_free(void *sc, void *ptr, int pool)
+esm_free(void *sc, void *ptr, struct malloc_type *pool)
 {
 	struct esm_softc *ess = sc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.3 2003/02/01 06:23:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -52,9 +52,7 @@
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
-#ifndef __NetBSD__
 MALLOC_DEFINE(M_SMBFSDATA, "SMBFS data", "SMBFS private data");
-#endif
 
 /* 
  * Time & date conversion routines taken from msdosfs. Although leap

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.157 2003/01/24 01:42:52 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.158 2003/02/01 06:23:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -174,8 +174,10 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-void	*hashinit __P((u_int, enum hashtype, int, int, u_long *));
-void	hashdone __P((void *, int));
+struct malloc_type;
+void	*hashinit __P((u_int, enum hashtype, struct malloc_type *,
+	    int, u_long *));
+void	hashdone __P((void *, struct malloc_type *));
 int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct lwp *, void *, register_t *));
 

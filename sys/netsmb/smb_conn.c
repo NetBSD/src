@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.3 2002/01/04 02:39:39 deberg Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.3 2002/01/04 02:39:39 deberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $");
 
 /*
  * Connection engine.
@@ -63,9 +63,9 @@ static int smb_vcnext = 1;	/* next unique id for VC */
 
 #ifndef __NetBSD__
 SYSCTL_NODE(_net, OID_AUTO, smb, CTLFLAG_RW, NULL, "SMB protocol");
+#endif
 
 MALLOC_DEFINE(M_SMBCONN, "SMB conn", "SMB connection");
-#endif
 
 static void smb_co_init(struct smb_connobj *cp, int level, char *objname);
 static void smb_co_done(struct smb_connobj *cp);

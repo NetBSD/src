@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.15 2002/10/02 16:52:01 thorpej Exp $	*/
+/*	$NetBSD: yds.c,v 1.16 2003/02/01 06:23:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.15 2002/10/02 16:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.16 2003/02/01 06:23:39 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -162,8 +162,8 @@ int	yds_halt_input __P((void *));
 int	yds_getdev __P((void *, struct audio_device *));
 int	yds_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	yds_mixer_get_port __P((void *, mixer_ctrl_t *));
-void   *yds_malloc __P((void *, int, size_t, int, int));
-void	yds_free __P((void *, void *, int));
+void   *yds_malloc __P((void *, int, size_t, struct malloc_type *, int));
+void	yds_free __P((void *, void *, struct malloc_type *));
 size_t	yds_round_buffersize __P((void *, int, size_t));
 paddr_t yds_mappage __P((void *, void *, off_t, int));
 int	yds_get_props __P((void *));
@@ -1770,7 +1770,8 @@ yds_malloc(addr, direction, size, pool, flags)
 	void *addr;
 	int direction;
 	size_t size;
-	int pool, flags;
+	struct malloc_type *pool;
+	int flags;
 {
 	struct yds_softc *sc = addr;
 	struct yds_dma *p;
@@ -1793,7 +1794,7 @@ void
 yds_free(addr, ptr, pool)
 	void *addr;
 	void *ptr;
-	int pool;
+	struct malloc_type *pool;
 {
 	struct yds_softc *sc = addr;
 	struct yds_dma **pp, *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.155 2003/01/24 16:24:44 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.156 2003/02/01 06:23:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -331,6 +331,12 @@ struct proclist_desc {
 };
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_EMULDATA);
+MALLOC_DECLARE(M_PROC);
+MALLOC_DECLARE(M_SESSION);
+MALLOC_DECLARE(M_SUBPROC);
+
 /*
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
  * as it is used to represent "no process group".

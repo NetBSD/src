@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.116 2002/11/02 07:26:53 perry Exp $	*/
+/*	$NetBSD: if.c,v 1.117 2003/02/01 06:23:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.116 2002/11/02 07:26:53 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.117 2003/02/01 06:23:46 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -141,6 +141,9 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.116 2002/11/02 07:26:53 perry Exp $");
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif
+
+MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
+MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
 
 int	ifqmaxlen = IFQ_MAXLEN;
 struct	callout if_slowtimo_ch;

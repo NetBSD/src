@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.47 2002/09/04 01:32:42 matt Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.48 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.47 2002/09/04 01:32:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.48 2003/02/01 06:23:44 thorpej Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -153,7 +153,7 @@ struct extent *
 extent_create(name, start, end, mtype, storage, storagesize, flags)
 	const char *name;
 	u_long start, end;
-	int mtype;
+	struct malloc_type *mtype;
 	caddr_t storage;
 	size_t storagesize;
 	int flags;

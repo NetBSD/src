@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.15 2002/02/06 14:50:42 pooka Exp $	*/
+/*	$NetBSD: interwave.c,v 1.16 2003/02/01 06:23:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.15 2002/02/06 14:50:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.16 2003/02/01 06:23:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1615,7 +1615,8 @@ iw_malloc(addr, direction, size, pool, flags)
 	void	*addr;
 	int	direction;
 	size_t	size;
-	int	pool, flags;
+	struct malloc_type *pool;
+	int	flags;
 {
 	struct iw_softc *sc = addr;
 	int drq;
@@ -1631,7 +1632,7 @@ void
 iw_free(addr, ptr, pool)
 	void	*addr;
 	void	*ptr;
-	int	pool;
+	struct malloc_type *pool;
 {
 	isa_free(ptr, pool);
 }

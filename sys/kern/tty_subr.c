@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.23 2003/01/08 12:00:25 msaitoh Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.24 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.23 2003/01/08 12:00:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.24 2003/02/01 06:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.23 2003/01/08 12:00:25 msaitoh Exp $"
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/malloc.h>
+
+MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
 
 /*
  * At compile time, choose:

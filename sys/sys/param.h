@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.157 2003/01/18 10:09:03 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.158 2003/02/01 06:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -269,7 +269,11 @@
  * Constraints: NBPG <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
  * MAXALLOCSAVE must be a power of two.
  */
+#ifdef _LP64
+#define	MINBUCKET	5		/* 5 => min allocation of 32 bytes */
+#else
 #define	MINBUCKET	4		/* 4 => min allocation of 16 bytes */
+#endif
 #define	MAXALLOCSAVE	(2 * NBPG)
 
 /*

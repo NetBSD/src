@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.3 2002/11/02 07:33:08 perry Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -40,9 +40,7 @@
 #error "This file shouldn't be included from userland programs"
 #endif
 
-#ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_SMBTEMP);
-#endif
 
 #define	FB_CURRENT
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.33 2003/01/18 10:06:34 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.34 2003/02/01 06:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.33 2003/01/18 10:06:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.34 2003/02/01 06:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,6 +204,8 @@ static int nbigpipe = 0;
  * Amount of KVA consumed by pipe buffers.
  */
 static int amountpipekva = 0;
+
+MALLOC_DEFINE(M_PIPE, "pipe", "Pipe structures");
 
 static void pipeclose(struct pipe *cpipe);
 static void pipe_free_kmem(struct pipe *cpipe);

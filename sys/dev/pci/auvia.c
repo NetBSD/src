@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.29 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.30 2003/02/01 06:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.29 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.30 2003/02/01 06:23:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,8 @@ int	auvia_getdev(void *, struct audio_device *);
 int	auvia_set_port(void *, mixer_ctrl_t *);
 int	auvia_get_port(void *, mixer_ctrl_t *);
 int	auvia_query_devinfo(void *, mixer_devinfo_t *);
-void *	auvia_malloc(void *, int, size_t, int, int);
-void	auvia_free(void *, void *, int);
+void *	auvia_malloc(void *, int, size_t, struct malloc_type *, int);
+void	auvia_free(void *, void *, struct malloc_type *);
 size_t	auvia_round_buffersize(void *, int, size_t);
 paddr_t	auvia_mappage(void *, void *, off_t, int);
 int	auvia_get_props(void *);
@@ -805,7 +805,8 @@ auvia_query_devinfo(void *addr, mixer_devinfo_t *dip)
 
 
 void *
-auvia_malloc(void *addr, int direction, size_t size, int pool, int flags)
+auvia_malloc(void *addr, int direction, size_t size, struct malloc_type * pool,
+    int flags)
 {
 	struct auvia_softc *sc = addr;
 	struct auvia_dma *p;
@@ -864,7 +865,7 @@ fail_alloc:
 
 
 void
-auvia_free(void *addr, void *ptr, int pool)
+auvia_free(void *addr, void *ptr, struct malloc_type *pool)
 {
 	struct auvia_softc *sc = addr;
 	struct auvia_dma **pp, *p;

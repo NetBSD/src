@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.72 2003/01/31 05:00:24 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.73 2003/02/01 06:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ struct m_ext {
 		(struct mbuf *, caddr_t, size_t, void *);
 	void	*ext_arg;		/* argument for ext_free */
 	size_t	ext_size;		/* size of buffer, for ext_free */
-	int	ext_type;		/* malloc type */
+	struct malloc_type *ext_type;	/* malloc type */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
 #ifdef DEBUG
@@ -626,11 +626,13 @@ extern int	max_hdr;		/* largest link+protocol header */
 extern int	max_datalen;		/* MHLEN - max_hdr */
 extern const int msize;			/* mbuf base size */
 extern const int mclbytes;		/* mbuf cluster size */
-extern const int mbtypes[];		/* XXX */
 extern struct pool mbpool;
 extern struct pool mclpool;
 extern struct pool_cache mbpool_cache;
 extern struct pool_cache mclpool_cache;
+
+MALLOC_DECLARE(M_MBUF);
+MALLOC_DECLARE(M_SOOPTS);
 
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_copypacket(struct mbuf *, int);
@@ -683,7 +685,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 #ifdef _KERNEL
 #ifdef MBTYPES
-const int mbtypes[] = {				/* XXX */
+struct malloc_type *mbtypes[] = {		/* XXX */
 	M_FREE,		/* MT_FREE	0	should be on free list */
 	M_MBUF,		/* MT_DATA	1	dynamic (data) allocation */
 	M_MBUF,		/* MT_HEADER	2	packet header */
@@ -695,6 +697,6 @@ const int mbtypes[] = {				/* XXX */
 };
 #undef MBTYPES
 #else
-extern const int mbtypes[];
+extern struct malloc_type *mbtypes[];
 #endif /* MBTYPES */
 #endif /* _KERNEL */

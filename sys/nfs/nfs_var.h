@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.26 2003/01/18 09:34:32 thorpej Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.27 2003/02/01 06:23:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,17 @@
 /*
  * XXX needs <nfs/rpcv2.h> and <nfs/nfs.h> because of typedefs
  */
+
+#include <sys/mallocvar.h>
+
+MALLOC_DECLARE(M_NFSREQ);
+MALLOC_DECLARE(M_NFSMNT);
+MALLOC_DECLARE(M_NFSUID);
+MALLOC_DECLARE(M_NFSD);
+MALLOC_DECLARE(M_NFSRVDESC);
+MALLOC_DECLARE(M_NFSDIROFF);
+MALLOC_DECLARE(M_NFSBIGFH);
+MALLOC_DECLARE(M_NQLEASE);
 
 struct vnode;
 struct uio;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -101,6 +101,9 @@ int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
     struct msdosfs_args *));
 
 static int update_mp __P((struct mount *, struct msdosfs_args *));
+
+MALLOC_DEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
+MALLOC_DEFINE(M_MSDOSFSFAT, "MSDOSFS fat", "MSDOS FS fat table");
 
 #define ROOTNAME "root_device"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.164 2003/01/18 10:06:25 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.165 2003/02/01 06:23:43 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.164 2003/01/18 10:06:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.165 2003/02/01 06:23:43 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.164 2003/01/18 10:06:25 thorpej Exp 
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
+
+MALLOC_DEFINE(M_EXEC, "exec", "argument lists & other mem used by exec");
 
 /*
  * Exec function switch:
