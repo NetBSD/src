@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.2 1997/11/27 10:19:39 sakamoto Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.3 1997/12/18 09:08:37 sakamoto Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -101,8 +101,6 @@
  * ISA can DMA to 0-4G.
  */
 #define	ISA_DMA_BOUNCE_THRESHOLD	0xffffffff
-
-extern	vm_offset_t avail_end;
 
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
@@ -230,12 +228,14 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
 	cookieflags = 0;
+#if 0
 	if ((avail_end > ISA_DMA_BOUNCE_THRESHOLD &&
 	    (flags & ISABUS_DMA_32BIT) == 0) ||
 	    ((map->_dm_size / NBPG) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
 	}
+#endif 0
 
 	/*
 	 * Allocate our cookie.
@@ -498,10 +498,12 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 {
 	vm_offset_t high;
 
+#if 0
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
 		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
 	else
 		high = trunc_page(avail_end);
+#endif
 
 	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high));
