@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.102 2004/05/07 15:33:17 cl Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.103 2004/05/12 02:07:37 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.102 2004/05/07 15:33:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.103 2004/05/12 02:07:37 jrf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1240,7 +1240,7 @@ kernfs_readdir(v)
 				break;
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
