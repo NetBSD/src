@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.16 1998/08/15 16:47:30 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.17 1998/08/15 16:50:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -410,6 +410,8 @@
 #define	EP_PCI_MEDIAMASK	(EP_PCI_100BASE_T4|EP_PCI_100BASE_TX| \
 				 EP_PCI_100BASE_FX|EP_PCI_10BASE_T| \
 				 EP_PCI_BNC|EP_PCI_AUI|EP_PCI_100BASE_MII)
+
+#define	EP_RUNNER_ENABLE_MII		0x8000
 
 /*
  * FIFO Status (Window 4)
