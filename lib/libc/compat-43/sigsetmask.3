@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigsetmask.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigsetmask.3,v 1.13 2002/02/07 07:00:09 ross Exp $
+.\"	$NetBSD: sigsetmask.3,v 1.14 2002/08/10 02:41:21 yamt Exp $
 .\"
 .Dd June 2, 1993
 .Dt SIGSETMASK 3
@@ -67,6 +67,65 @@ quietly disallows
 or
 .Dv SIGSTOP
 to be blocked.
+.Sh EXAMPLES
+The following example utilizing
+.Fn sigsetmask :
+.Bd -literal -offset indent
+int omask;
+
+omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+
+\&...
+
+sigsetmask(omask & ~(sigmask(SIGINT) | sigmask(SIGHUP)));
+.Ed
+.Pp
+Could be converted literally to:
+.Bd -literal -offset indent
+sigset_t set, oset;
+
+sigemptyset(&set);
+sigaddset(&set, SIGINT);
+sigaddset(&set, SIGHUP);
+sigprocmask(SIG_BLOCK, &set, &oset);
+
+\&...
+
+sigdelset(&oset, SIGINT);
+sigdelset(&oset, SIGHUP);
+sigprocmask(SIG_SETMASK, &oset, NULL);
+.Ed
+.Pp
+Another, clearer, alternative is:
+.Bd -literal -offset indent
+sigset_t set;
+
+sigemptyset(&set);
+sigaddset(&set, SIGINT);
+sigaddset(&set, SIGHUP);
+sigprocmask(SIG_BLOCK, &set, NULL);
+
+\&...
+
+sigprocmask(SIG_UNBLOCK, &set, NULL);
+.Ed
+.Pp
+To completely clear the signal mask using
+.Fn sigsetmask
+one can do:
+.Bd -literal -offset indent
+(void) sigsetmask(0);
+.Ed
+.Pp
+Which can be expressed via
+.Xr sigprocmask 2
+as:
+.Bd -literal -offset indent
+sigset_t eset;
+
+sigemptyset(&eset);
+(void) sigprocmask(SIG_SETMASK, &eset, NULL);
+.Ed
 .Sh RETURN VALUES
 The previous set of masked signals is returned.
 .Sh SEE ALSO
