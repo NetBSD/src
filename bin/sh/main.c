@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2000/01/27 23:39:40 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2000/04/14 05:54:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,10 +46,11 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2000/01/27 23:39:40 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2000/04/14 05:54:20 simonb Exp $");
 #endif
 #endif /* not lint */
 
+#include <errno.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/stat.h>
@@ -84,7 +85,6 @@ int rootpid;
 int rootshell;
 STATIC union node *curcmd;
 STATIC union node *prevcmd;
-extern int errno;
 #if PROFILE
 short profile_buf[16384];
 extern int etext();
