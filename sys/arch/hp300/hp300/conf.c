@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39.4.1 1997/09/29 07:20:09 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.39.4.2 1997/10/14 08:55:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -144,6 +144,7 @@ cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
 #include "ipfilter.h"
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -180,6 +181,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_tty_init(NAPCI,apci),	/* 31: Apollo APCI UARTs */
 	cdev_disk_init(NMD,md),		/* 32: memory disk */
+	cdev_rnd_init(NRND,rnd),	/* 33: random source pseudo-device */
+
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -254,6 +257,7 @@ static int chrtoblktbl[] = {
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
 	/* 32 */	14,
+	/* 33 */	NODEV,
 };
 
 /*

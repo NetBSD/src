@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94.4.2 1997/09/22 06:30:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94.4.3 1997/10/14 08:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,6 +156,7 @@ void	cpu_init_kcore_hdr __P((void));
 
 /* functions called from locore.s */
 void    dumpsys __P((void));
+void	hp300_init __P((void));
 void    straytrap __P((int, u_short));
 void	nmihand __P((struct frame));
 
@@ -182,6 +183,30 @@ int	conforced;		/* console has been forced */
  */
 int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
 int	delay_divisor;		/* delay constant */
+
+/*
+ * Early initialization, before main() is called.
+ */
+void
+hp300_init()
+{
+	int i;
+
+	/* Initialize the interrupt handlers. */
+	intr_init();
+
+	/* Calibrate the delay loop. */
+	hp300_calibrate_delay();
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
+	 */
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+}
 
 /*
  * Console initialization: called early on from main,
@@ -244,15 +269,6 @@ cpu_startup()
 	 * Initialize the kernel crash dump header.
 	 */
 	cpu_init_kcore_hdr();
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-			avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -1304,19 +1320,23 @@ cpu_exec_aout_makecmds(p, epp)
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(p, epp);
-		break;
+		return(error);
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(p, epp);
-		break;
+		return(error);
 #endif
-	default:
-		error = ENOEXEC;
 	}
+#endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 
-	return error;
-#else /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
+#ifdef COMPAT_SUNOS
+	{
+		extern sunos_exec_aout_makecmds __P((struct proc *,
+						     struct exec_package *));
+		error = sunos_exec_aout_makecmds(p, epp);
+		return(error);
+	}
+#endif /* COMPAT_SUNOS */
 	return ENOEXEC;
-#endif
 }
