@@ -1,9 +1,10 @@
-/*	$NetBSD: udp6_var.h,v 1.8 2000/05/22 15:22:36 itojun Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.9 2000/06/05 06:38:23 itojun Exp $	*/
+/*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -105,8 +106,8 @@ struct	udp6stat udp6stat;
 void	udp6_ctlinput __P((int, struct sockaddr *, void *));
 void	udp6_init __P((void));
 int	udp6_input __P((struct mbuf **, int *, int));
-int	udp6_output __P((struct in6pcb *,
-			 struct mbuf *, struct mbuf *, struct mbuf *));
+int	udp6_output __P((struct in6pcb *, struct mbuf *, struct mbuf *,
+	struct mbuf *, struct proc *));
 int	udp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	udp6_usrreq __P((struct socket *,
 			 int, struct mbuf *, struct mbuf *, struct mbuf *,
