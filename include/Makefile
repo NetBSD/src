@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.44 1994/07/08 06:17:23 jtc Exp $
+#	$Id: Makefile,v 1.45 1994/07/21 07:33:11 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -57,7 +57,9 @@ realinstall:
 	done
 	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
 	find ${DESTDIR}/usr/include -type f | \
-		xargs chmod a-w
+		xargs chmod a=r
+	find ${DESTDIR}/usr/include -type d | \
+		xargs chmod u=rwx,go=rx
 
 beforeinstall:
 	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include
