@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.24 2003/04/06 17:58:50 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.25 2003/04/29 22:12:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.24 2003/04/06 17:58:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25 2003/04/29 22:12:51 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,6 +160,12 @@ mach_ports_lookup(args)
 	msp[MACH_TASK_BOOTSTRAP_PORT] = 
 	    mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
 
+#ifdef DEBUG_MACH
+	printf("mach_ports_lookup: kernel %08x, host %08x, boostrap %08x\n",
+	    msp[MACH_TASK_KERNEL_PORT]->mr_name, 
+	    msp[MACH_TASK_HOST_PORT]->mr_name,
+	    msp[MACH_TASK_BOOTSTRAP_PORT]->mr_name);
+#endif
 	/*
 	 * On Darwin, the data seems always null...
 	 */
