@@ -1,3 +1,5 @@
+/*	$NetBSD: vfprintf.c,v 1.18 1997/04/02 12:50:25 kleink Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.17 1995/05/02 19:52:41 jtc Exp $";
+static char *rcsid = "$NetBSD: vfprintf.c,v 1.18 1997/04/02 12:50:25 kleink Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
