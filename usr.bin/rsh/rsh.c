@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.22 2003/08/07 11:15:43 agc Exp $	*/
+/*	$NetBSD: rsh.c,v 1.23 2004/10/16 02:03:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.22 2003/08/07 11:15:43 agc Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.23 2004/10/16 02:03:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: rsh.c,v 1.22 2003/08/07 11:15:43 agc Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -64,6 +65,7 @@ __RCSID("$NetBSD: rsh.c,v 1.22 2003/08/07 11:15:43 agc Exp $");
 #include <unistd.h>
 
 #include "pathnames.h"
+#include "getport.h"
 
 #ifdef KERBEROS
 #include <des.h>
@@ -112,7 +114,7 @@ main(int argc, char **argv)
 	pid_t pid;
 	uid_t uid;
 	char *args, *host, *p, *user, *name;
-	char *service=NULL;
+	char *service = NULL;
 
 	argoff = asrsh = dflag = nflag = 0;
 	one = 1;
@@ -202,17 +204,7 @@ main(int argc, char **argv)
 			nflag = 1;
 			break;
 		case 'p':
-			service = optarg;
-			sp = getservbyname(service, "tcp");
-			if (sp == NULL) {	/* number given, no name */
-				sp = malloc(sizeof(*sp));
-				memset(sp, 0, sizeof(*sp));
-				sp->s_name = service;
-				sp->s_proto = "tcp"; 
-				sp->s_port = atoi(service);
-				if (sp->s_port <= 0 || sp->s_port > IPPORT_ANONMAX)
-					errx(1,"port must be between 1 and %d", IPPORT_ANONMAX);
-			}
+			sp = getport(optarg, "tcp");
 			break;
 #ifdef IN_RCMD
 		case 'u':
@@ -246,7 +238,7 @@ main(int argc, char **argv)
 		usage();
 #else
 		if (asrsh)
-			*argv = "rlogin";
+			*argv = __UNCONST("rlogin");
 		execv(_PATH_RLOGIN, argv);
 		err(1, "can't exec %s", _PATH_RLOGIN);
 #endif
